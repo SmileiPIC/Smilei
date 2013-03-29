@@ -6,7 +6,7 @@ OUTPUT = $(patsubst %.in,%.out,$(INPUT))
 all: $(OUTPUT)
 
 %.out : %.in
-	../spice $< > $@ 2>&1
+	../smilei $< > $@ 2>&1
 	
 clean:
 	rm -f $(OUTPUT)

@@ -18,7 +18,7 @@ clean:
 doc: pdfdoc htmldoc
 
 htmldoc:
-	cd doc ; (cat spice.dox; echo "PROJECT_NUMBER=${VERSION}") | doxygen -
+	cd doc ; (cat smilei.dox; echo "PROJECT_NUMBER=${VERSION}") | doxygen -
 
 pdfdoc: doc
 	cd doc/latex; pdflatex refman.tex; pdflatex refman.tex

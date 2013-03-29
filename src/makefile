@@ -4,8 +4,10 @@ CC      = g++
 CFLAGS  = -D__VERSION=\"$(VERSION)\"
 LDFLAGS = -lm 
 
-all: release
-EXEC=../spice
+all: release install
+
+INSTALLDIR = ..
+EXEC = smilei
 
 SRCS = $(wildcard *.cpp)
 OBJS := $(patsubst %.cpp,%.o,$(SRCS))
@@ -28,6 +30,9 @@ include .depend
 $(EXEC): $(OBJS)
 	$(CC) $(CFLAGS) -o $(EXEC) $(OBJS) $(LDFLAGS)
 
+install: $(EXEC)
+	install $(EXEC) $(INSTALLDIR)
+	
 clean:
 	rm -f $(EXEC) $(OBJS) .depend
 
