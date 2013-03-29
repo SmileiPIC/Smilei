@@ -1,0 +1,105 @@
+# DEBUG PARAMETERS
+# debug: debug level (integer from 0 to 10 used only if the code is compiled in debug mode)
+# 
+debug = 0
+
+# SIMULATION PARAMETERS
+# dim: Geometry of the simulation
+#      1d3v = cartesian grid with 1d in space + 3d in velocity
+#      2d3v = cartesian grid with 2d in space + 3d in velocity
+#      3d3v = cartesian grid with 3d in space + 3d in velocity
+#      2drz = cylindrical (r,z) grid with 3d3v particles
+#
+dim = 1d3v
+
+# order of interpolation
+interpolation_order =2 
+
+# SIMULATION TIME
+# res_time: temporal resolution (integer = number of time−steps within one normalization period)
+# sim_time: duration of the simulation in units of the normalization period 
+#
+res_time = 1000
+sim_time = 10.0
+
+# SIMULATION BOX : for all space directions (use vector)
+# res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
+# sim_length: length of the simulation in units of the normalization wavelength 
+#
+res_space=500
+sim_length=11.0
+
+# PLASMA GEOMETRY
+# plasma_geometry: string defining the plasma geometry
+# ***_length: characteristic length for a given geometry
+# n_species: number of species 
+#
+plasma_geometry = constant
+vacuum_length   = 1.0
+plasma_length   = 1.0
+n_species=2
+
+# DEFINE ALL SPECIES
+# species_type: ion, electron, positron, test ...
+# initialization_type: regular, cold or (isotrop) Maxwell−Juettner distribution
+# n_part_per_cell: number of particle−per−cell
+# c_part_max: factor on the memory reserved for the total number of particles
+# mass: particle mass in units of the electron mass
+# charge: particle charge in units of e (−e is the electron charge)
+# density: species density in units of the normalization density
+# mean_velocity: mean velocity of the species (3D vector) in units of the light velocity
+# temperature: temperature of the species in units of m_e c^2
+# dynamics_type: species type of dynamics = norm or rrLL
+# time_frozen: time during which the particles are frozen in units of the normalization time
+# radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
+#
+species 0
+	species_type = ion
+	initialization_type = cold
+	n_part_per_cell=10
+	c_part_max=1.0
+	mass = 1836.0
+	charge = 1.0
+	density = 1.0e-4
+	mean_velocity = 0.0
+	temperature = 0.0
+	dynamics_type = norm
+	time_frozen = 10.0
+	radiating = false
+end
+
+species 1
+	species_type = electron
+	initialization_type = maxwell-juettner
+	n_part_per_cell=10
+	c_part_max=1.0
+	mass = 1.0
+	charge = -1.0
+	density = 1.0e-4
+	mean_velocity = 0.0
+	temperature = 0.01
+	dynamics_type = norm	
+	time_frozen = 10.0
+	radiating = false
+end
+
+# LASER PROPERTIES
+# n_laser: number of incoming laser
+#
+# for each laser define:
+# a0: maximum amplitude of the laser electric field (in units of the normalization field)
+# angle: angle (in degree) at which the laser enters the simulation box
+# delta: polarization parameter, (0:y) (1:z) (0.707106781:circ)
+# time_profile: string defining the time profile
+# double_params: vector of real parameters used by the different time-profiles
+n_laser=1
+
+laser 0
+	a0=5.0
+	angle=0
+	delta=0.707106781                 
+	time_profile = constant
+	double_params = 4.0
+end	
+
+
