@@ -17,7 +17,7 @@ class Particle;
 class Pusher {
 public:
 	Pusher(PicParams *params, int ispec);
-	virtual void operator() (Particle* part, chLocaux Epart, chLocaux Bpart, double& gf) = 0;
+	virtual void operator() (Particle* part, LocalFields Epart, LocalFields Bpart, double& gf) = 0;
 
 	inline double getMass()   {return mass_  ;};
 	inline double getCharge() {return charge_;};

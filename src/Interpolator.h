@@ -11,7 +11,7 @@ class Particle;
 class Interpolator {
 public:
 	Interpolator(PicParams *){;};
-	virtual void operator() (ElectroMagn* champs, Particle* part, chLocaux* ELoc, chLocaux* BLoc) = 0;
+	virtual void operator() (ElectroMagn* champs, Particle* part, LocalFields* ELoc, LocalFields* BLoc) = 0;
 private:
 };
 

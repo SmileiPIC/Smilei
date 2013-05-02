@@ -13,7 +13,7 @@
 
 inline void refl_particle( Particle* part, double limit_pos ) {
         part->position(0) = limit_pos - part->position(0);
-        part->moments (0) = -part->moments(0);
+        part->momentum(0) = -part->momentum(0);
 
 }
 

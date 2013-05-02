@@ -12,9 +12,11 @@
 #include <vector>
 #include <string>
 
-//**********************************************************************************************************************
+// ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each species
+// ---------------------------------------------------------------------------------------------------------------------
 struct LaserStructure {
+
 	//! Laser field amplitude
 	double a0;
 
@@ -34,8 +36,11 @@ struct LaserStructure {
 	std::vector<double> double_params;
 };
 
-//**********************************************************************************************************************
+
+
+// ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each species
+// ---------------------------------------------------------------------------------------------------------------------
 struct SpeciesStructure {
 	//! kind of species possible values: "ion" "electron" "test"
 	std::string species_type;
@@ -79,20 +84,20 @@ struct SpeciesStructure {
 
 };
 
-//**********************************************************************************************************************
-//! PicParams class: this holds all the properties of the simulation that are read from the input file
-//
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! PicParams class: holds all the properties of the simulation that are read from the input file
+// ---------------------------------------------------------------------------------------------------------------------
 class PicParams {
 	
 public:
+    //! Creator for PicParams
 	PicParams(std::string);
 
+    //! \todo Comment these 2 stuffs
 	void parseFile(std::string);
 	void print();
-
-	/*******************************************************************************************************************
-	 Variable declaration
-	 ******************************************************************************************************************/
 	
 	//! defines the geometry of the simulation
 	std::string geometry;
@@ -166,10 +171,8 @@ public:
 	unsigned int n_laser;
 	
 	//! laser parameters
-	std::vector<LaserStructure> laser_param;
-	
+	std::vector<LaserStructure> laser_param;	
 	
 };
 
 #endif
-

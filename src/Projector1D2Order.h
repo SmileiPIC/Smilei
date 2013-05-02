@@ -10,6 +10,7 @@ public:
 	void operator() (ElectroMagn* champs, Particle* part, double gf);
 	void operator() (Field* rho, Particle* part);
 private:
+    double dx_ov_dt;
 };
 
 #endif

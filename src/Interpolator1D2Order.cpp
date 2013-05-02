@@ -19,7 +19,7 @@ Interpolator1D2Order::Interpolator1D2Order(PicParams *params) : Interpolator1D(p
 	with size nstp_x and space step stp_x_inv at the position 
 	xj and return the value fxj
 ***********************************************************************/
-void Interpolator1D2Order::operator() (ElectroMagn* champs, Particle* part, chLocaux* ELoc, chLocaux* BLoc)
+void Interpolator1D2Order::operator() (ElectroMagn* champs, Particle* part, LocalFields* ELoc, LocalFields* BLoc)
 {
     int i;
     double xjn, xjmxi, xjmxi2;

@@ -15,7 +15,7 @@ PusherBoris::PusherBoris(PicParams *params, int ispec)
 /***********************************************************************
 	Lorentz Force -- leap-frog (Boris) scheme
 ***********************************************************************/
-void PusherBoris::operator() (Particle* part, chLocaux Epart, chLocaux Bpart, double& gf)
+void PusherBoris::operator() (Particle* part, LocalFields Epart, LocalFields Bpart, double& gf)
 {
 	// Declaration of local variables
 	// ------------------------------
@@ -31,9 +31,9 @@ void PusherBoris::operator() (Particle* part, chLocaux Epart, chLocaux Bpart, do
 	// --------------------------------------
 	
 	// Half-acceleration in the electric field
-	umx = part->moments(0) + charge_over_mass_*Epart.x*dts2;
-	umy = part->moments(1) + charge_over_mass_*Epart.y*dts2;
-	umz = part->moments(2) + charge_over_mass_*Epart.z*dts2;
+	umx = part->momentum(0) + charge_over_mass_*Epart.x*dts2;
+	umy = part->momentum(1) + charge_over_mass_*Epart.y*dts2;
+	umz = part->momentum(2) + charge_over_mass_*Epart.z*dts2;
 	gf  = sqrt( 1.0 + umx*umx + umy*umy + umz*umz );
 	
 	// Rotation in the magnetic field
@@ -59,12 +59,14 @@ void PusherBoris::operator() (Particle* part, chLocaux Epart, chLocaux Bpart, do
 	pzsm = upz + charge_over_mass_*Epart.z*dts2;
 	gf = sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
 	
-	part->moments(0) = pxsm;
-	part->moments(1) = pysm;
-	part->moments(2) = pzsm;
+	part->momentum(0) = pxsm;
+	part->momentum(1) = pysm;
+	part->momentum(2) = pzsm;
 	
-	// Move the particle  
-	part->position(0) += dt*pxsm/gf;
+	// Move the particle
+    //!\todo Make a loop on all spatial dimensions (also separate change_momentum & change_position) (MG & JD)
+    part->position_old(0)  = part->position(0);
+	part->position(0)     += dt*part->momentum(0)/gf;
 	DEBUG(5, "\t END "<< part->position(0) );
 
 }

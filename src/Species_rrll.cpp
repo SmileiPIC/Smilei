@@ -1,7 +1,5 @@
-
 #include "Species_rrll.h"
 #include "Particle.h"
-
 #include "Interpolator.h"
 #include "Projector.h"
 #include "Pusher.h"
@@ -10,19 +8,21 @@
 
 using namespace std;
 
-Species_rrll::Species_rrll( PicParams* params, int ispec)
-: Species( params, ispec )
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Creator for Species_rrLL
+// ---------------------------------------------------------------------------------------------------------------------
+Species_rrLL::Species_rrLL(PicParams* params, unsigned int ispec) : Species(params, ispec)
 {
-	DEBUG(10,"Species_rrll created "<<ispec);
+	DEBUG(10,"Species " << ispec << "created as rrLL");
 }
 
-Species_rrll::~Species_rrll()
-{
-	DEBUG(10,"Species_rrll deleted");
-}
 
-void Species_rrll::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Interp, Projector* proj)
+// ---------------------------------------------------------------------------------------------------------------------
+// Destructor for Species_rrLL
+// ---------------------------------------------------------------------------------------------------------------------
+Species_rrLL::~Species_rrLL()
 {
-	DEBUG(10,"Species_rrll dynamic");
+	DEBUG(10,"Species rrLL deleted ");
 }
-

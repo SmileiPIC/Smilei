@@ -1,9 +1,9 @@
-
-#ifndef SPECIESRRLL_H
-#define SPECIESRRLL_H
+#ifndef SPECIESNORM_H
+#define SPECIESNORM_H
 
 #include "Species.h"
 #include <string>
+
 
 class ElectroMagn;
 class Pusher;
@@ -11,13 +11,19 @@ class Interpolator;
 class Projector;
 class PicParams;
 
-class Species_norm : public Species {
+//! class Species_norm (Species for which the dynamics is governed by the Lorentz force (Boris pusher))
+class Species_norm : public Species
+{
+    
 public:
-  Species_norm(PicParams*, int);
-  ~Species_norm();
-  //void dynamic(ElectroMagn* Champs, Pusher* ppush, Interpolator* Interp, Projector* proj);
+    //! Creator for Species_norm
+    Species_norm(PicParams*, unsigned int);
+    //! Destructor for Species_norm
+    ~Species_norm();
+    
+    
 private:
+    
 };
 
 #endif
-

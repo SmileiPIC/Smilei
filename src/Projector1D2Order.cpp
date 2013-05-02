@@ -1,63 +1,95 @@
-
-#include "Projector1D2Order.h" 
+#include "Projector1D2Order.h"
+#include "ElectroMagn.h"
+#include "Field1D.h"
+#include "Particle.h"
+#include "Tools.h"
 
 #include <iostream>
 #include <cmath>
+
 using namespace std;
 
-#include "ElectroMagn.h"
-#include "Field1D.h"
-#include "Particle.h" 
 
-#include "Tools.h"
 
-/***********************************************************************************************************************
- Projection of the total density and currents on the primal grid
- **********************************************************************************************************************/
+// ---------------------------------------------------------------------------------------------------------------------
+// Constructor for Projector1D2Order
+// ---------------------------------------------------------------------------------------------------------------------
 Projector1D2Order::Projector1D2Order (PicParams* params) :Projector1D(params)
 {
-	dx_inv_ = 1.0/params->cell_length[0];               // inverse of the spatial-step
-	DEBUG("cell_length "<< params->cell_length[0]);
+	dx_inv_  = 1.0/params->cell_length[0];
+    dx_ov_dt = params->cell_length[0] / params->timestep;
+	DEBUG("cell_length " << params->cell_length[0]);
 }
 
 
-void Projector1D2Order::operator() (ElectroMagn* champs, Particle* part, double gf)
+
+// ---------------------------------------------------------------------------------------------------------------------
+// 2nd order projection in 1d3v simulations
+// ---------------------------------------------------------------------------------------------------------------------
+void Projector1D2Order::operator() (ElectroMagn* EMfields, Particle* part, double gf)
 {
-	Field1D* rho1D  = static_cast<Field1D*>(champs->rho_);
-	Field1D* Jy1D   = static_cast<Field1D*>(champs->Jy_);	
-	Field1D* Jz1D   = static_cast<Field1D*>(champs->Jz_);
+	Field1D* Jx1D  = static_cast<Field1D*>(EMfields->Jx_);
+	Field1D* Jy1D  = static_cast<Field1D*>(EMfields->Jy_);
+	Field1D* Jz1D  = static_cast<Field1D*>(EMfields->Jz_);
 
-	
-    //Declaration of local variables
-    int i;
-	double xjn,xjmxi,xjmxi2;
-    double rho_j = part->chargeDensity();  // charge density of the macro-particle
-    double cry_j = rho_j*part->moments(1)/gf;       // current density allow the y-direction of the macroparticle
-    double crz_j = rho_j*part->moments(2)/gf;       // current density allow the y-direction of the macroparticle
+	// Declare local variables
+    int unsigned ipo, ip, ip_m_ipo, iloc;
+    double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;
+    double S0[5], S1[5], Wl[5], Wt[5], Jx_p[5];
+
     
+    double crx_p = part->weight()*dx_ov_dt;                // current density for particle moving in the x-direction
+    double cry_p = part->weight()*part->momentum(1)/gf;    // current density in the y-direction of the macroparticle
+    double crz_p = part->weight()*part->momentum(2)/gf;    // current density allow the y-direction of the macroparticle
+    
+    
+    // Locate particle old position on the primal grid
+    xjn        = part->position_old(0) * dx_inv_;
+	ipo        = round(xjn);                          // index of the central node
+	xj_m_xipo  = xjn - (double)ipo;                   // normalized distance to the nearest grid point
+	xj_m_xipo2 = xj_m_xipo*xj_m_xipo;                 // square of the normalized distance to the nearest grid point
+    
+	// Locate particle new position on the primal grid
+    xjn       = part->position(0) * dx_inv_;
+	ip        = round(xjn);                           // index of the central node
+	xj_m_xip  = xjn - (double)ip;                     // normalized distance to the nearest grid point
+	xj_m_xip2 = xj_m_xip*xj_m_xip;                    // square of the normalized distance to the nearest grid point
 
-	//Locate particle on the primal grid
-	xjn    = part->position(0) * dx_inv_;     // normalized distance to the first node
-	i      = round(xjn);                  // index of the central node
-	xjmxi  = xjn - (double)i;             // normalized distance to the nearest grid point
-	xjmxi2 = xjmxi*xjmxi;                 // square of the normalized distance to the nearest grid point
+    
+    // coefficients 2nd order interpolation on 3 nodes
+	S0[1] = 0.5 * (xj_m_xipo2-xj_m_xipo+0.25);
+	S0[2] = (0.75-xj_m_xipo2);
+	S0[3] = 0.5 * (xj_m_xipo2+xj_m_xipo+0.25);
+ 
+    // coefficients 2nd order interpolation on 3 nodes
+    ip_m_ipo = ip-ipo;
+	S1[ip_m_ipo+1] = 0.5 * (xj_m_xip2-xj_m_xip+0.25);
+	S1[ip_m_ipo+2] = (0.75-xj_m_xip2);
+	S1[ip_m_ipo+3] = 0.5 * (xj_m_xip2+xj_m_xip+0.25);
+    
+    // coefficients used in the Esirkepov method
+    for (unsigned int i=0; i<5; i++)
+    {
+        Wl[i] = S1[i] - S0[i];           // for longitudinal current (x)
+        Wt[i] = 0.5 * (S1[i] + S0[i]);   // for transverse currents (y,z)
+    }//i
+    
+    // local current created by the particle
+    Jx_p[0]=0.0;
+    for (unsigned int i=1; i<5; i++){
+        Jx_p[i] = Jx_p[i-1] + crx_p * Wl[i];
+    }
 
-	
-    // 2nd order projection for the total density
-	(*rho1D)( i-1) = ((*rho1D)(i-1) + 0.5 * (xjmxi2-xjmxi+0.25) * rho_j );
-	(*rho1D)( i  ) = ((*rho1D)(i  ) +  (0.75-xjmxi2)            * rho_j );
-	(*rho1D)( i+1) = ((*rho1D)(i+1) + 0.5 * (xjmxi2+xjmxi+0.25) * rho_j );
-
-    // 2nd order projection for the total current
-	(*Jy1D)( i-1) = ((*Jy1D)(i-1) + 0.5 * (xjmxi2-xjmxi+0.25) * cry_j );
-	(*Jy1D)( i  ) = ((*Jy1D)(i  ) +  (0.75-xjmxi2)            * cry_j );
-	(*Jy1D)( i+1) = ((*Jy1D)(i+1) + 0.5 * (xjmxi2+xjmxi+0.25) * cry_j );
-
-	(*Jz1D)( i-1) = ((*Jz1D)(i-1) + 0.5 * (xjmxi2-xjmxi+0.25) * crz_j );
-	(*Jz1D)( i  ) = ((*Jz1D)(i  ) +  (0.75-xjmxi2)            * crz_j );
-	(*Jz1D)( i+1) = ((*Jz1D)(i+1) + 0.5 * (xjmxi2+xjmxi+0.25) * crz_j );
-	
-}
+    // 2nd order projection for the total currents
+    for (unsigned int i=0; i<5; i++)
+    {
+        iloc = i+ipo-2;
+        (*Jx1D)(iloc) += Jx_p[i];
+        (*Jy1D)(iloc) += cry_p * Wt[i];
+        (*Jz1D)(iloc) += crz_p * Wt[i];
+    }
+    
+}//END Projector1D2Order
 
 void Projector1D2Order::operator() (Field* rho, Particle* part)
 {
@@ -67,7 +99,7 @@ void Projector1D2Order::operator() (Field* rho, Particle* part)
 	//Declaration of local variables
 	int i;
 	double xjn,xjmxi,xjmxi2;
-	double rho_j = part->chargeDensity();  // charge density of the macro-particle
+	double rho_j = part->weight();  // charge density of the macro-particle
     
 
 	//Locate particle on the grid

@@ -15,10 +15,10 @@ clean:
 	rm -rf doc/latex doc/html
 	rm -rf build
 	
-doc: pdfdoc htmldoc
+doc: htmldoc pdfdoc
 
 htmldoc:
 	cd doc ; (cat smilei.dox; echo "PROJECT_NUMBER=${VERSION}") | doxygen -
 
-pdfdoc: doc
+pdfdoc:
 	cd doc/latex; pdflatex refman.tex; pdflatex refman.tex

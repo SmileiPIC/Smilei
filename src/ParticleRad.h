@@ -1,37 +1,48 @@
-
 #ifndef ParticleRad_H
 #define ParticleRad_H
 
 #include "Particle.h"
 
+
 class PicParams;
 
+
+
+//----------------------------------------------------------------------------------------------------------------------
+//! Class ParticleRad: contains properties of a radiating Particle
+//----------------------------------------------------------------------------------------------------------------------
 class ParticleRad : public Particle {
-public:	
+public:
+    
+    //! Constructor for ParticleRad
 	ParticleRad(int);
+    
+    //! Destructor for ParticleRad
 	~ParticleRad();
 
+    //! Method used to get the power radiated by the particle
 	inline double  radPower() const {return rad_power;};
+
+    //! Method used to set a new value to the power radiated by the particle
 	inline double& radPower()       {return rad_power;};
-	inline double  omegaCrit() const {return omega_crit;};
+
+	//! Method used to get the critical frequency of the radiation emitted by the particle
+    inline double  omegaCrit() const {return omega_crit;};
+    
+    //! Method used to set a new value to the critical frequency of the radiation emitted by the particle
 	inline double& omegaCrit()       {return omega_crit;};
-	
-	//void Initialize(PicParams* params) {;};  
-	//void Print(PicParams* params) {;};
+    
   
 private:
+    //! \todo For radiating particle use the eta parameter (MG)
+    
+    //! Power radiated away by the particle
 	double rad_power;
+    
+    //! Critical frequency of the radiation emitted by the particle
 	double omega_crit;
 
 };
 
-//ostream& operator <<(std::ostream& Stream, const Particle1D& Obj)
-//{
-//    Stream << "sizeof Particle : " << sizeof( Obj ) << endl;
-//    //Stream <<  &Obj.Psm_[0] << " " << &Obj.weight_ << " " << &Obj.masse_ << " " << &Obj.charge_;
-//    Stream <<  &Obj.Psm_[0] - &Obj.weight_ << " " << &Obj.weight_ - &Obj.masse_ << " " << &Obj.masse_ - &Obj.charge_ << &Obj.charge_ - &Obj.pos_[0];
-//    return Stream; // N'oubliez pas de renvoyer le flux, afin de pouvoir chaîner les appels
-//}
 
 #endif
-
