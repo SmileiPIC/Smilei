@@ -85,10 +85,12 @@ struct SpeciesStructure {
 class PicParams {
 	
 public:
+	PicParams();
 	PicParams(std::string);
 
 	void parseFile(std::string);
 	void print();
+	void setDimensions();
 
 	/*******************************************************************************************************************
 	 Variable declaration
@@ -119,7 +121,7 @@ public:
 	*/
 	std::vector<unsigned int> res_space;
 
-	//! simulation box size in \f$2\pi/k_N \f$
+	//! local simulation box size in \f$2\pi/k_N \f$
 	std::vector<double> sim_length;
 
 	//! plasma geometry
@@ -146,8 +148,11 @@ public:
 	//! dt for the simulation (CFL)
 	double timestep;
 
-	//! number of cells in every direction
+	//! number of cells in every direction of the local domain
 	std::vector<unsigned int> n_space;
+
+	//! number of cells in every direction of the global domain
+	std::vector<unsigned int> n_space_global;
 	
 	//! spatial step (cell dimension in every direction)
 	std::vector<double> cell_length;
@@ -167,6 +172,9 @@ public:
 	
 	//! laser parameters
 	std::vector<LaserStructure> laser_param;
+
+	//! Oversize domain to exchange less particles
+	std::vector<unsigned int> oversize;
 	
 	
 };

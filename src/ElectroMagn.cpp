@@ -15,8 +15,7 @@ using namespace std;
 #include <limits>
 
 //! Creator for the virtual class ElectroMagn
-ElectroMagn::ElectroMagn(PicParams* params)
-//: ElectroMagn(dims, dx, lase_type)
+ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi)
 {
 
 	laser_.resize(params->n_laser);
@@ -24,6 +23,7 @@ ElectroMagn::ElectroMagn(PicParams* params)
 		DEBUG(5,"Initializing Laser "<<i);
 		laser_[i] = new Laser(params->laser_param[i]);
 	}
+
 }
 
 //! Destructor for the virtual class ElectroMagn
@@ -80,4 +80,5 @@ void ElectroMagn::initRho(vector<Species*> vecSpecies, Projector* Proj)
 	}
 
 }
+
 

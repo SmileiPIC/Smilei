@@ -34,7 +34,9 @@ public:
 		return data_[i][j][k]; 
 	};
 	
+
 	void dump(std::vector<unsigned int> dims);
+
 private:
 	double*** data_;
 	double *data_3D;

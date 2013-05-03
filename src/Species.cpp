@@ -16,6 +16,9 @@
 #include "PartBoundCond.h"
 #include "BoundaryConditionType.h"
 
+#include "SmileiMPI.h"
+#include "SmileiMPI_Cart1D.h"
+
 #include <iostream>
 #include <cmath>
 #include <ctime>
@@ -23,7 +26,10 @@
 
 using namespace std;
 
-Species::Species(PicParams* params, int ispec) {
+Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
+	SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
+	int process_coord_x = smpi1D->getProcCoord(0);
+
 	ndim=params->nDim_particle;
 	
 	time_frozen = params->species_param[ispec].time_frozen;
@@ -37,23 +43,29 @@ Species::Species(PicParams* params, int ispec) {
 	
 	// calculate density and number of particles for species ispec
 	npart_effective=0;
-	for (unsigned int k=0; k<params->n_space[2]; k++) {
-		for (unsigned int j=0; j<params->n_space[1]; j++) {
-			for (unsigned int i=0; i<params->n_space[0]; i++) {
+
+	
+	int cellx_index = process_coord_x*(params->n_space[0]-2*params->oversize[0]);
+	int celly_index = 0;//process_coord_y*(params->n_space[1]-2*params->oversize[1]);
+	int cellz_index = 0;//process_coord_z*(params->n_space[2]-2*params->oversize[2]);
+
+	for (unsigned int k=params->oversize[2]; k<params->n_space[2]-params->oversize[2]; k++) {
+		for (unsigned int j=params->oversize[1]; j<params->n_space[1]-params->oversize[1]; j++) {
+			for (unsigned int i=params->oversize[0]; i<params->n_space[0]-params->oversize[0]; i++) {
 			//	int icell = i + j*params->n_space[0] +k*params->n_space[0]*params->n_space[1];
 				if (params->plasma_geometry=="constant") {
 		//			DEBUG(i << " " << j << " " << k << " ");
 					if (((params->cell_length[0]==0.0) || (
-						 (i+0.5)*params->cell_length[0] > params->vacuum_length[0] && 
-						 (i+0.5)*params->cell_length[0] < params->vacuum_length[0]+params->plasma_length[0]
+						 (cellx_index+i+0.5-params->oversize[0])*params->cell_length[0] > params->vacuum_length[0] && 
+						 (cellx_index+i+0.5-params->oversize[0])*params->cell_length[0] < params->vacuum_length[0]+params->plasma_length[0]
 						 )) &&
 						((params->cell_length[1]==0.0) || (
-						 (j+0.5)*params->cell_length[1] > params->vacuum_length[1] && 
-						 (j+0.5)*params->cell_length[1] < params->vacuum_length[1]+params->plasma_length[1]
+						 (celly_index+j+0.5)*params->cell_length[1] > params->vacuum_length[1] && 
+						 (celly_index+j+0.5)*params->cell_length[1] < params->vacuum_length[1]+params->plasma_length[1]
 						 )) &&
 						((params->cell_length[2]==0.0) || (
-						 (k+0.5)*params->cell_length[2] > params->vacuum_length[2] && 
-						 (k+0.5)*params->cell_length[2] < params->vacuum_length[2]+params->plasma_length[2])
+						 (cellz_index+k+0.5)*params->cell_length[2] > params->vacuum_length[2] && 
+						 (cellz_index+k+0.5)*params->cell_length[2] < params->vacuum_length[2]+params->plasma_length[2])
 						)) {
 
 						density(i,j,k) = params->species_param[ispec].density;
@@ -74,7 +86,6 @@ Species::Species(PicParams* params, int ispec) {
 		}
 	}
 
-
     params->species_param[ispec].n_part_max = round( params->species_param[ispec].c_part_max*npart_effective );
 	
 /*	if (npart_effective > params->species_param[ispec].n_part_max) {
@@ -83,7 +94,8 @@ Species::Species(PicParams* params, int ispec) {
 	}
 */
     
-	particles.resize(params->species_param[ispec].n_part_max);
+	particles.resize(npart_effective);
+	particles.reserve(params->species_param[ispec].n_part_max);
 	for (unsigned int k=0; k<npart_effective; k++) {
 		if (params->species_param[ispec].radiating) {
 			particles[k]=new ParticleRad(ndim);
@@ -122,21 +134,26 @@ Species::Species(PicParams* params, int ispec) {
 	size_t *indexes=new size_t[ndim];
 	double *temp=new double[ndim];
 	double *vel=new double[ndim];
-	
-	for (unsigned int k=0; k<params->n_space[2]; k++) {
-		for (unsigned int j=0; j<params->n_space[1]; j++) {
-			for (unsigned int i=0; i<params->n_space[0]; i++) {
+
+	// Rappel :
+      	// int cellx_index = process_coord_x*(params->n_space[0]-2*params->oversize[0]);
+	// int celly_index = process_coord_y*(params->n_space[1]-2*params->oversize[1]);
+	// int cellz_index = process_coord_z*(params->n_space[2]-2*params->oversize[2]);
+
+	for (unsigned int k=params->oversize[2]; k<params->n_space[2]-params->oversize[2]; k++) {
+	  for (unsigned int j=params->oversize[1]; j<params->n_space[1]-params->oversize[1]; j++) {
+	    for (unsigned int i=params->oversize[0]; i<params->n_space[0]-params->oversize[0]; i++) {
 				if (density(i,j,k)>0) {
 					DEBUG(0,i);
-					indexes[0]=i;
+					indexes[0]=i+cellx_index-params->oversize[0];
 					temp[0]=temperature[0](i,j,k);
 					vel[0]=velocity[0](i,j,k);
 					if (ndim > 1) {
-						indexes[1]=j;
+						indexes[1]=j+celly_index;
 						temp[1]=temperature[1](i,j,k);
 						vel[1]=velocity[1](i,j,k);
 						if (ndim > 2) {
-							indexes[2]=k;
+							indexes[2]=k+cellz_index;
 							temp[2]=temperature[2](i,j,k);
 							vel[2]=velocity[2](i,j,k);
 						}
@@ -163,7 +180,7 @@ Species::Species(PicParams* params, int ispec) {
 	//! \todo{other dimensions to store in class members, n_ord_proj_max to define as input}
 	partBoundCond = new PartBoundCond(  params, ispec );
 
-	MESSAGE(1,"Specie "<< ispec <<" # part "<< npart_effective);
+	PMESSAGE( 1, smpi->getRank(),"Specie "<< ispec <<" # part "<< npart_effective );
 }
 
 Species::~Species()
@@ -188,9 +205,9 @@ void Species::initPosition(unsigned int np, unsigned int iPart, size_t *indexes,
 	for (unsigned  p= iPart; p<iPart+np; p++) {
 		for (unsigned  i=0; i<ndim ; i++) {
 			if (initialization_type == "regular") {
-				particles[p]->position(0)=indexes[i]*cell_length[i]+(p-iPart)*cell_length[i]/np;
+				particles[p]->position(i)=indexes[i]*cell_length[i]+(p-iPart)*cell_length[i]/np;
 			} else if (initialization_type == "cold" || initialization_type == "maxwell-juettner") {
-				particles[p]->position(0)=(indexes[i]+((double)rand() / RAND_MAX))*cell_length[i];
+				particles[p]->position(i)=(indexes[i]+((double)rand() / RAND_MAX))*cell_length[i];
 			}
 		}
 	}
@@ -243,8 +260,11 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
 
 }
 
-void Species::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Interp, Projector* Proj)
+void Species::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Interp, Projector* Proj, SmileiMPI* smpi)
 {
+ 	//! \todo{benefit from locate to create list of particles to send}
+  	// SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
+
 	chLocaux Epart;
 	chLocaux Bpart;
 	
@@ -257,15 +277,19 @@ void Species::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Inter
 			DEBUG(5,"ipart= "<<iPart);
 			(*Interp)(Champs, particles[iPart], &Epart, &Bpart);
 			gf = 1.0;
+
 			(*Push)(particles[iPart], Epart, Bpart, gf);
 
+			//! \todo{replace by call to cartesian/cylindrical operator}
 			//! \todo{locate : define 0 to ...}
 			locate = partBoundCond->locateParticle( particles[iPart] );
 			if ( locate == 0 )	{}
-			else if ( locate == 1 )	(*partBoundCond->bc_west)( particles[iPart], 2.*partBoundCond->x_min );
-			else if ( locate == 2 )	(*partBoundCond->bc_east)( particles[iPart], 2.*partBoundCond->x_max );
+			else if ( ( locate == 1 ) )//&& ( smpi1D->isWester() ) )
+				(*partBoundCond->bc_west)( particles[iPart], 2.*partBoundCond->x_min );
+			else if ( ( locate == 2 ) )//&& ( smpi1D->isEaster() ) )
+				(*partBoundCond->bc_east)( particles[iPart], 2.*partBoundCond->x_max );
 			// else ...
-
+			
 			(*Proj)(Champs, particles[iPart], gf);
 		}
 	}

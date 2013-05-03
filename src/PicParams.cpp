@@ -6,7 +6,9 @@
 using namespace std;
 
 PicParams::PicParams(string fname= string()) {
-	parseFile(fname);
+}
+
+PicParams::PicParams() {
 }
 
 void PicParams::parseFile(string fname) {
@@ -24,21 +26,7 @@ void PicParams::parseFile(string fname) {
 	ifile.extract("sim_time", sim_time);
 	
 	ifile.extract("dim", geometry);
-	if (geometry=="1d3v") {
-		nDim_particle=1;
-		nDim_field=1;
-	} else if (geometry=="2d3v") {
-		nDim_particle=2;
-		nDim_field=2;
-	} else if (geometry=="3d3v") {
-		nDim_particle=3;
-		nDim_field=3;
-	} else if (geometry=="2drz") {
-		nDim_particle=3;
-		nDim_field=2;
-	} else {
-		ERROR("unacceptable geometry! [" << geometry << "]");
-	}
+	setDimensions();
 
 	ifile.extract("interpolation_order", interpolation_order);
 	if (interpolation_order!=2) {
@@ -211,8 +199,78 @@ void PicParams::parseFile(string fname) {
 	
 }
 
+void PicParams::setDimensions()
+{
+	if (geometry=="1d3v") {
+		nDim_particle=1;
+		nDim_field=1;
+	} else if (geometry=="2d3v") {
+		nDim_particle=2;
+		nDim_field=2;
+	} else if (geometry=="3d3v") {
+		nDim_particle=3;
+		nDim_field=3;
+	} else if (geometry=="2drz") {
+		nDim_particle=3;
+		nDim_field=2;
+	} else {
+		ERROR("unacceptable geometry! [" << geometry << "]");
+	}
+}
+
 void PicParams::print()
 {
 	//! \todo{Display parameters at runtime}
+	cout << "\tGeometry : " << geometry
+		<< "\t\t-> (nDim_particle, nDim_field) : (" << nDim_particle << ", "  << nDim_field << ")" << endl;
+	cout << "\t(res_time, sim_time) : (" << res_time << ", " << sim_time << ")"
+		<< "\t\t-> (n_time, timestep) : (" << n_time << ", " << timestep << ")" << endl;
+	
+	//! \ sim_length[i]*=2.0*M_PI;
+	//! \ cell_length[i]=2.0*M_PI/res_space[i];
+	for ( unsigned int i=0 ; i<sim_length.size() ; i++ )
+		cout << "\tdim " << i << " - (res_space, sim_length) : (" << res_space[i] << ", " << sim_length[i] << ")"
+			<< "\t\t-> (n_space, cell_length) : " << "(" << n_space[i] << ", " << cell_length[i] << ")" << endl;
+	cout << "\t\tcell_volume : " << cell_volume << endl;
+
+	//! \ vacuum_length[i]*=2.0*M_PI;
+	//! \ plasma_length[i]*=2.0*M_PI;
+	cout << "\tplasma_geometry : " << plasma_geometry << endl;
+	for ( unsigned int i=0 ; i<plasma_length.size() ; i++ )
+		cout << "\t(plasma_length, vacuum_length) : (" << plasma_length[i] << ", " << vacuum_length[i] << ")" << endl;
+	cout << "\tn_species : " << n_species << endl;
+
+	cout << "\twavelength, sim_units, n_particles : parameters not used for now" << endl;
+	//! \ n_part_max : Initialised in Species::Species()
+	for ( unsigned int i=0 ; i<n_species ; i++ ) {
+		cout << "\t(species_type, initialization_type, n_part_per_cell, c_part_max) : ("
+			<< species_param[i].species_type << ", " << species_param[i].initialization_type << ", " << species_param[i].n_part_per_cell << ", " << species_param[i].c_part_max << ") - "  
+			<< "(mass, charge, density) : (" << species_param[i].mass << ", " <<  species_param[i].charge << ", " << species_param[i].density << ")" << endl;
+			for ( unsigned int j=0 ; j<species_param[i].mean_velocity.size() ; j++ )
+				cout << "\t\tdim " << j << " - (mean_velocity, temperature) : (" << species_param[i].mean_velocity[j] << ", " << species_param[i].temperature[j] << ")" << endl;
+		cout << "\t\t (dynamics_type, bc_part_type, time_frozen, radiating) : (" << species_param[i].dynamics_type <<  ", " << species_param[i].bc_part_type <<  ", " << species_param[i].time_frozen <<  ", " << species_param[i].radiating << ")" << endl;
+	}
+
+	cout << "\tn_laser : " << n_laser << endl;
+	for ( unsigned int i=0 ; i<n_laser ; i++ ) {
+		cout << "\t\t(a0, angle, delta, time_profile) : (" << laser_param[i].a0 <<  ", " << laser_param[i].angle <<  ", " << laser_param[i].delta <<  ", " << laser_param[i].time_profile << ")" << endl;
+
+		if (!laser_param[i].int_params.empty()) {
+			cout << "\t\tint_params : ";
+			for ( unsigned int j=0 ; j<laser_param[i].int_params.size()-1 ; j++ )
+				cout << laser_param[i].int_params[j] << ", ";
+			cout << laser_param[i].int_params[laser_param[i].int_params.size()-1] << endl;
+		}
+		if (!laser_param[i].double_params.empty()) {
+			//! \ laser_param[i].double_params[0]*= 2.0*M_PI;
+			cout << "\t\tdouble_params : ";
+			for ( unsigned int j=0 ; j<laser_param[i].double_params.size()-1 ; j++ )
+				cout << laser_param[i].double_params[j] << ", ";
+			cout << laser_param[i].double_params[laser_param[i].double_params.size()-1] << endl;
+		}
+	}
+
+	cout << "\tInterpolation_order : " <<  interpolation_order << endl;
+
 }
 

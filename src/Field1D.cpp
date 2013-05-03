@@ -47,4 +47,3 @@ void Field1D::dump(vector<unsigned int> dims)
 	fdata_ << endl;
 	fdata_ << endl;
 }
-

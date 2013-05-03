@@ -27,8 +27,9 @@ public:
 	virtual void allocateDims(std::vector<unsigned int> dims) = 0;
 	virtual void dump(std::vector<unsigned int> dims) = 0;
 
-protected:
 	std::vector<unsigned int> dims_;
+
+protected:
 	
 private:
 	

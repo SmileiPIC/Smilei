@@ -13,7 +13,7 @@ class PicParams;
 
 class Species_norm : public Species {
 public:
-  Species_norm(PicParams*, int);
+  Species_norm(PicParams*, int, SmileiMPI*);
   ~Species_norm();
   //void dynamic(ElectroMagn* Champs, Pusher* ppush, Interpolator* Interp, Projector* proj);
 private:

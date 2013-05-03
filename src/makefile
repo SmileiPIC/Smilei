@@ -1,7 +1,8 @@
 VERSION:="v$(shell git rev-list HEAD --count):$(shell git log -1 --pretty=format:%h)"
 
-CC      = g++
-CFLAGS  = -D__VERSION=\"$(VERSION)\"
+CC      = mpiCC
+#CC      = g++
+CFLAGS  = -D__VERSION=\"$(VERSION)\" -D_MPI
 LDFLAGS = -lm 
 
 all: release

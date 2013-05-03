@@ -9,14 +9,46 @@ using namespace std;
 
 Particle::Particle(int nDim)
 {
-	Pos_ = new double[nDim];
-//	DEBUG("Particle created "<<nDim<<"D");
+  //Pos_ = new double[nDim];
+	buf  = new double[nDim+3+1];
+	Pos_ = new (buf) double[nDim];
+	Psm_ = new (buf+nDim) double[3];
+	charge_density_	= new (buf+nDim+3) double[1];
+
+	Pos_[0] = 0.;
+	for (unsigned int i=0 ; i<3 ; i++ ) Psm_[i] = 0.;
+	charge_density_[0] = 0.;
+
+	//DEBUG("Particle created "<<nDim<<"D");
 }
 
 Particle::~Particle()
 {
-	delete [] Pos_;
+	//DEBUG( "particle deleted" );
+	delete [] buf;
+	//delete [] Pos_;
+	//delete [] Pos_;
+	//delete [] charge_density_;
 }
+
+/*void* Particle::operator new(size_t) {
+	for(int i = 0; i < psize; i++)
+		if(!alloc_map[i]) {
+			out << "utilise le bloc " << i << " ... ";
+			alloc_map[i] = true; // le marquer utilisé
+			return pool + (i * sizeof(Framis));
+		}
+	out << "plus de memoire" << endl;
+}
+
+void Particle::operator delete(void* m) {
+	if(!m) return; // Vérifie si le pointeur est nul
+	unsigned long block = (unsigned long)m - (unsigned long)pool;
+	block /= sizeof(Framis);
+	out << "libère le bloc " << block << endl;
+	// le marque libre :
+	alloc_map[block] = false;
+}*/
 
 //void Particle::Initialize(PicParams* params, int ispec, int np, double x0_pos, double x1_pos, double x2_pos, 
 //						  double density, double temperature, double velocity_x, double velocity_y, double velocity_z)

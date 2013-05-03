@@ -35,6 +35,7 @@ public:
 	};
 	
 	void dump(std::vector<unsigned int> dims);
+
 private:
 	double** data_;
 	double *data_2D;

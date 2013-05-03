@@ -30,9 +30,12 @@ public:
 	};
 
 	void dump(std::vector<unsigned int> dims);
-private:
+
 	double* data_;
+
+private:
 };
+
 
 #endif
 

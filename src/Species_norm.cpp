@@ -10,8 +10,8 @@
 
 using namespace std;
 
-Species_norm::Species_norm( PicParams* params, int ispec)
- : Species( params, ispec )
+Species_norm::Species_norm( PicParams* params, int ispec, SmileiMPI* smpi)
+ : Species( params, ispec, smpi )
 {
 	DEBUG(10,"Species norm created "<<ispec);
 }

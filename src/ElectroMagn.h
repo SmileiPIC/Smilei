@@ -15,10 +15,20 @@ class Projector;
 class Field;
 class Laser;
 
+class SmileiMPI;
+
 class ElectroMagn {
 public:
 	std::vector<unsigned int> dimPrim;
 	std::vector<unsigned int> dimDual;
+
+	std::vector<unsigned int> iPrim_beg;
+	std::vector<unsigned int> iPrim_end;
+	std::vector<unsigned int> iDual_beg;
+	std::vector<unsigned int> iDual_end;
+	std::vector<unsigned int> iDual_beg_nobc;
+	std::vector<unsigned int> iDual_end_nobc;
+
 	std::vector<double> dspace;
 	std::vector<double> dspacesdt;
 	std::vector<double> dtsdspace;
@@ -47,18 +57,19 @@ public:
 	std::vector<Laser*> laser_;
 	
 	
-	ElectroMagn(PicParams* paramsdouble);
+	ElectroMagn( PicParams* params, SmileiMPI* smpi );
 	virtual ~ElectroMagn();
 	
 	void dump();
 	
 	void initRho(std::vector<Species*> vecSpecies, Projector* Proj);
 	
-	virtual void initMaxwell() = 0;
+	virtual void initMaxwell(SmileiMPI* smpi) = 0;
 	virtual void initRhoJ() = 0;
-	virtual void chargeConserving() = 0;
-	virtual void solveMaxwell(double time_dual, double dt) = 0;
-	
+	virtual void chargeConserving(SmileiMPI* smpi) = 0;
+
+	virtual void solveMaxwell(double time_dual, double dt, SmileiMPI* smpi) = 0;
+
 private:
 };
 

@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include "PicParams.h"
+#include "SmileiMPI.h"
 #include "Pusher.h" 
 
 //#include "PartBoundCond.h" 
@@ -17,21 +18,27 @@ class PartBoundCond;
 
 class Species {	
 public:
-	Species(PicParams*, int);
+	Species(PicParams*, int, SmileiMPI*);
 	virtual ~Species();
 
 	inline std::vector<Particle*> getParticlesList() const {return particles;}
-	inline unsigned int getNbrOfParticles() const {return npart_effective;}
+	inline std::vector<Particle*>& getParticlesList() {return particles;}
+	// size() = npart_effective
+	inline unsigned int getNbrOfParticles() const {return particles.size();}
+	// capacity() = vect ever oversize
+	inline unsigned int getParticlesCapacity() const {return particles.capacity();}
 
-	virtual void dynamic(double, ElectroMagn* , Interpolator* , Projector* );
 	void initPosition(unsigned int, unsigned int, size_t *, unsigned int, std::vector<double>, std::string);
 	void initMomentum(unsigned int, unsigned int, double *, double *, std::string, std::vector<double>&);
 	void initMassChargeWeight(PicParams*, int, int, double);
 
+	virtual void dynamic(double time, ElectroMagn* champs, Interpolator* interp, Projector* proj, SmileiMPI* smpi);
+
+
 	void dump(std::ofstream&);
+	std::vector<Particle*> particles;
 
 private:
-	std::vector<Particle*> particles;
 	unsigned int npart_effective;
 
 	//! number of steps for Maxwell-Juettner cumulative function integration
