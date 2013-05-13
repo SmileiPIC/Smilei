@@ -167,11 +167,10 @@ int main (int argc, char* argv[])
     double time_dual = -0.5 * params.timestep;
     
     
-    
     // ------------------------------------------------------------------
     //                     HERE STARTS THE PIC LOOP
     // ------------------------------------------------------------------
-    MESSAGE(0,"Time-Loop is started");
+    MESSAGE(0,"Time-Loop is started: number of time-steps n_time =" << params.n_time);
     for (unsigned int itime=1 ; itime <= params.n_time ; itime++)
     {
         
@@ -214,14 +213,18 @@ int main (int argc, char* argv[])
         
         // call the various diagnostics
         // ----------------------------
-        if (itime % 1000 == 0)
+        if (itime % 5000 == 0)
         {
-            MESSAGE(1,"diags at " << time_dual << " " << itime);
-            EMfields->dump();
-            for (unsigned int ispec=0 ; ispec<params.n_species ; ispec++) {
+            MESSAGE(1,"diags at time t=" << time_dual);
+            EMfields->dump(&params);
+/*            for (unsigned int ispec=0 ; ispec<params.n_species ; ispec++) {
                 vecSpecies[ispec]->dump(ofile);
                 ofile << endl;
             }
+ */
+            vecSpecies[0]->dump(ofile);
+            ofile << endl;
+
         }
         
     }//END of the time loop

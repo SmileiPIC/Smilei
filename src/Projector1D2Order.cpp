@@ -35,13 +35,16 @@ void Projector1D2Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
 	// Declare local variables
     int unsigned ipo, ip, ip_m_ipo, iloc;
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;
-    double S0[5], S1[5], Wl[5], Wt[5], Jx_p[5];
-
-    
     double crx_p = part->weight()*dx_ov_dt;                // current density for particle moving in the x-direction
     double cry_p = part->weight()*part->momentum(1)/gf;    // current density in the y-direction of the macroparticle
     double crz_p = part->weight()*part->momentum(2)/gf;    // current density allow the y-direction of the macroparticle
+    double S0[5], S1[5], Wl[5], Wt[5], Jx_p[5];            // arrays used for the Esirkepov projection method
     
+    // Initialize variables
+    for (unsigned int i=0; i<5; i++){
+        S0[i]=0.; S1[i]=0.; Wl[i]=0.; Wt[i]=0.; Jx_p[i]=0.;
+    }//i
+
     
     // Locate particle old position on the primal grid
     xjn        = part->position_old(0) * dx_inv_;
@@ -70,12 +73,11 @@ void Projector1D2Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
     // coefficients used in the Esirkepov method
     for (unsigned int i=0; i<5; i++)
     {
-        Wl[i] = S1[i] - S0[i];           // for longitudinal current (x)
+        Wl[i] = S0[i] - S1[i];           // for longitudinal current (x)
         Wt[i] = 0.5 * (S1[i] + S0[i]);   // for transverse currents (y,z)
     }//i
     
     // local current created by the particle
-    Jx_p[0]=0.0;
     for (unsigned int i=1; i<5; i++){
         Jx_p[i] = Jx_p[i-1] + crx_p * Wl[i];
     }
@@ -83,11 +85,11 @@ void Projector1D2Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
     // 2nd order projection for the total currents
     for (unsigned int i=0; i<5; i++)
     {
-        iloc = i+ipo-2;
+        iloc = i+ipo-1;
         (*Jx1D)(iloc) += Jx_p[i];
         (*Jy1D)(iloc) += cry_p * Wt[i];
         (*Jz1D)(iloc) += crz_p * Wt[i];
-    }
+    }//i
     
 }//END Projector1D2Order
 
@@ -103,10 +105,10 @@ void Projector1D2Order::operator() (Field* rho, Particle* part)
     
 
 	//Locate particle on the grid
-	xjn    = part->position(0) * dx_inv_;     // normalized distance to the first node
-	i      = round(xjn);                  // index of the central node
-	xjmxi  = xjn - (double)i;             // normalized distance to the nearest grid point
-	xjmxi2 = xjmxi*xjmxi;                 // square of the normalized distance to the nearest grid point
+	xjn    = part->position(0) * dx_inv_;  // normalized distance to the first node
+	i      = round(xjn);                   // index of the central node
+	xjmxi  = xjn - (double)i;              // normalized distance to the nearest grid point
+	xjmxi2 = xjmxi*xjmxi;                  // square of the normalized distance to the nearest grid point
 
 	
 	// 2nd order projection for the total density
