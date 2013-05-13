@@ -217,13 +217,10 @@ int main (int argc, char* argv[])
         {
             MESSAGE(1,"diags at time t=" << time_dual);
             EMfields->dump(&params);
-/*            for (unsigned int ispec=0 ; ispec<params.n_species ; ispec++) {
+            for (unsigned int ispec=0 ; ispec<params.n_species ; ispec++) {
                 vecSpecies[ispec]->dump(ofile);
                 ofile << endl;
             }
- */
-            vecSpecies[0]->dump(ofile);
-            ofile << endl;
 
         }
         
