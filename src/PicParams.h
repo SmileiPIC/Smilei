@@ -12,9 +12,11 @@
 #include <vector>
 #include <string>
 
-//**********************************************************************************************************************
+// ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each species
+// ---------------------------------------------------------------------------------------------------------------------
 struct LaserStructure {
+
 	//! Laser field amplitude
 	double a0;
 
@@ -34,23 +36,26 @@ struct LaserStructure {
 	std::vector<double> double_params;
 };
 
-//**********************************************************************************************************************
+
+
+// ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each species
+// ---------------------------------------------------------------------------------------------------------------------
 struct SpeciesStructure {
 	//! kind of species possible values: "ion" "electron" "test"
 	std::string species_type;
     
-    //! initialization type. Possible values: "regular" "cold" "Maxwell-Juettner"
+	//! initialization type. Possible values: "regular" "cold" "Maxwell-Juettner"
 	std::string initialization_type;
 	
 	//! number of particles per cell
 	unsigned int n_part_per_cell;
 	
-    //! coefficient on the maximum number of particles for the species
+	//! coefficient on the maximum number of particles for the species
 	double c_part_max;
     
-    //! maximum number of particles for the species
-    unsigned int n_part_max;
+	//! maximum number of particles for the species
+	unsigned int n_part_max;
     
 	//! mass [electron mass]
 	double mass;
@@ -58,7 +63,7 @@ struct SpeciesStructure {
 	//! charge [proton charge]
 	double charge;
 	
-    //! density [\f$n_N=\epsilon_0\,m_e\,\omega_N^{2}/e^2\f$ ]
+	//! density [\f$n_N=\epsilon_0\,m_e\,\omega_N^{2}/e^2\f$ ]
 	double density;
 	//! mean velocity in units of light velocity
 	std::vector<double> mean_velocity; // must be params.nDim_field
@@ -79,23 +84,23 @@ struct SpeciesStructure {
 
 };
 
-//**********************************************************************************************************************
-//! PicParams class: this holds all the properties of the simulation that are read from the input file
-//
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! PicParams class: holds all the properties of the simulation that are read from the input file
+// ---------------------------------------------------------------------------------------------------------------------
 class PicParams {
 	
-public:
+ public:
+	//! Creator for PicParams
 	PicParams();
 	PicParams(std::string);
 
+	//! \todo Comment these 3 stuffs
 	void parseFile(std::string);
 	void print();
 	void setDimensions();
 
-	/*******************************************************************************************************************
-	 Variable declaration
-	 ******************************************************************************************************************/
-	
 	//! defines the geometry of the simulation
 	std::string geometry;
 
@@ -109,7 +114,7 @@ public:
 	unsigned int nDim_field;
 	
 	/*! \brief Time resolution.
-	Number of timesteps in \f$ 2\pi/\omega_N \f$ where \f$ \omega_N \f$ is the normalization (plasma or laser) frequency 
+	  Number of timesteps in \f$ 2\pi/\omega_N \f$ where \f$ \omega_N \f$ is the normalization (plasma or laser) frequency 
 	*/
 	unsigned int res_time;
 	
@@ -117,7 +122,7 @@ public:
 	double sim_time;
 
 	/*! \brief Space resolution.
-	Number of cells in every direction in \f$ 2\pi/k_N \f$ where \f$ k_N=\omega_N/c \f$ is the normalization wavenumber
+	  Number of cells in every direction in \f$ 2\pi/k_N \f$ where \f$ k_N=\omega_N/c \f$ is the normalization wavenumber
 	*/
 	std::vector<unsigned int> res_space;
 
@@ -180,4 +185,3 @@ public:
 };
 
 #endif
-

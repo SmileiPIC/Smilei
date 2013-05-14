@@ -27,7 +27,7 @@ Interpolator1D3Order::Interpolator1D3Order(PicParams *params, SmileiMPI* smpi) :
 	with size nstp_x and space step stp_x_inv at the position 
 	xj and return the value fxj
 ***********************************************************************/
-void Interpolator1D3Order::operator() (ElectroMagn* champs, Particle* part, chLocaux* ELoc, chLocaux* BLoc)
+void Interpolator1D3Order::operator() (ElectroMagn* champs, Particle* part, LocalFields* ELoc, LocalFields* BLoc)
 {
 	int i, im1, ip1, ip2;
 	double xjn, xi, xi2, xi3;

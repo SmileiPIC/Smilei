@@ -1,84 +1,48 @@
-
 #include "Particle.h"
-
 #include "PicParams.h"
 
 #include <iostream>
 
 using namespace std;
 
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Constructor for Particle (takes the dimension of the particle as input parameter)
+// ---------------------------------------------------------------------------------------------------------------------
 Particle::Particle(int nDim)
 {
-  //Pos_ = new double[nDim];
-	buf  = new double[nDim+3+1];
-	Pos_ = new (buf) double[nDim];
-	Psm_ = new (buf+nDim) double[3];
-	charge_density_	= new (buf+nDim+3) double[1];
+	buf  = new double[nDim+3+1+nDim];
 
-	Pos_[0] = 0.;
-	for (unsigned int i=0 ; i<3 ; i++ ) Psm_[i] = 0.;
-	charge_density_[0] = 0.;
+	Position = new (buf)        double[nDim];
+	Momentum = new (buf+nDim)   double[3];
+	Weight	 = new (buf+nDim+3) double[1];
 
-	//DEBUG("Particle created "<<nDim<<"D");
+	Position_old = new (buf+nDim+3+1) double[nDim];
+
+	Position[0]     = 0.;
+	Position_old[0] = 0.;
+	for (unsigned int i=0 ; i<3 ; i++ ) Momentum[i] = 0.;
+	Weight[0] = 0.;
+
 }
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Destructor for Particle
+// ---------------------------------------------------------------------------------------------------------------------
 Particle::~Particle()
 {
-	//DEBUG( "particle deleted" );
 	delete [] buf;
-	//delete [] Pos_;
-	//delete [] Pos_;
-	//delete [] charge_density_;
 }
 
-/*void* Particle::operator new(size_t) {
-	for(int i = 0; i < psize; i++)
-		if(!alloc_map[i]) {
-			out << "utilise le bloc " << i << " ... ";
-			alloc_map[i] = true; // le marquer utilisé
-			return pool + (i * sizeof(Framis));
-		}
-	out << "plus de memoire" << endl;
-}
 
-void Particle::operator delete(void* m) {
-	if(!m) return; // Vérifie si le pointeur est nul
-	unsigned long block = (unsigned long)m - (unsigned long)pool;
-	block /= sizeof(Framis);
-	out << "libère le bloc " << block << endl;
-	// le marque libre :
-	alloc_map[block] = false;
-}*/
-
-//void Particle::Initialize(PicParams* params, int ispec, int np, double x0_pos, double x1_pos, double x2_pos, 
-//						  double density, double temperature, double velocity_x, double velocity_y, double velocity_z)
-//{	
-//	weight_ = density / params->species_param[ispec].n_part_per_cell; 
-//
-//	if (params->species_param[ispec].initialization_type=="regular") {
-//		Psm_[0]=0.0;
-//		Psm_[1]=0.0;
-//		Psm_[2]=0.0;
-//	}
-//	
-//		
-//	/*do j=ndeb_s(is)+(ix-1)*nppm_s(is),ndeb_s(is)+ix*nppm_s(is)-1
-//     ! RANDOMLY DISTRIBUTED PARTICLES
-//     particle(posx,j)     = (real(nv+ix-1,rprec)+ran2(seed_ran2))*dx
-//     particle(pxsm,j)     = 0.d0
-//     particle(pysm,j)     = 0.d0
-//     particle(pzsm,j)     = 0.d0
-//     particle(weight,j)   = dens_loc/nppm_s(is)
-//     particle(charge,j)   = q_s(is)
-//     particle(mass,j)     = m_s(is)
-//	 enddo!j*/
-//	
-//}
-
+// ---------------------------------------------------------------------------------------------------------------------
+// Method used to print the Particle properties
+// ---------------------------------------------------------------------------------------------------------------------
 void Particle::Print(PicParams* params)
 {
-	for (unsigned int i=0 ; i<params->nDim_field ; i++ ) cout << Pos_[i] << " ";
-	for (unsigned int i=0 ; i<3 ; i++ )                  cout << Psm_[i] << " ";
-	cout <<  charge_density_ << " " << endl;
+	for (unsigned int i=0 ; i<params->nDim_field ; i++ ) cout << Position[i] << " ";
+	for (unsigned int i=0 ; i<3 ; i++ )                  cout << Momentum[i] << " ";
+	cout <<  Weight << " " << endl;
 }
-

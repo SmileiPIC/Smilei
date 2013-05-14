@@ -1,4 +1,4 @@
-/*! \mainpage Spice overview
+/*! \mainpage SMILEI overview
  
  \section intro Introduction
  

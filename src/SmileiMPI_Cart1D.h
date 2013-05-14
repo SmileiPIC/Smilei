@@ -22,7 +22,7 @@ public:
 
 	virtual void writeField( Field* field, std::string name );
 	virtual void writePlasma( std::vector<Species*> vecSpecies, std::string name );
-	void initMaxwellPara( ElectroMagn* champs );
+	void solvePoissonPara( ElectroMagn* champs );
 	void chargeConservingPara( ElectroMagn* champs );
 
 	inline int getProcCoord(int i) {return coords_[i];}

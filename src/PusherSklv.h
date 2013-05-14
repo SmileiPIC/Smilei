@@ -10,7 +10,7 @@ class Particle;
 class PusherSklv : public Pusher {
 public:
 	PusherSklv(PicParams *params, int ispec);
-	virtual void operator() (Particle* part, chLocaux Epart, chLocaux Bpart, double& gf) { std::cout << "\tSokolov Push particle" << std::endl; };
+	virtual void operator() (Particle* part, LocalFields Epart, LocalFields Bpart, double& gf) { std::cout << "\tSokolov Push particle" << std::endl; };
 private:
 };
 

@@ -1,13 +1,27 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////                                                                                                                ////
+////                                                                                                                ////
+////                                   PARTICLE-IN-CELL CODE SMILEI                                                 ////
+////                    Simulation of Matter Irradiated by Laser at Extreme Intensity                               ////
+////                                                                                                                ////
+////                          Cooperative OpenSource Object-Oriented Project                                        ////
+////                                      from the Plateau de Saclay                                                ////
+////                                          started January 2013                                                  ////
+////                                                                                                                ////
+////                                                                                                                ////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 #include "Pic.h"
 #include "Tools.h"
 #include "PicParams.h"
-
 #include "Species.h"
 #include "Species_norm.h"
 #include "Species_rrll.h"
 #include "ElectroMagn.h"
 #include "ElectroMagn1D.h"
-
 #include "Pusher.h"
 #include "PusherBoris.h"
 #include "PusherSklv.h"
@@ -16,7 +30,6 @@
 #include "Interpolator1D3Order.h"
 #include "Projector.h"
 #include "Projector1D2Order.h"
-
 #include "Field3D.h"
 #include "Field1D.h"
 
@@ -25,189 +38,246 @@
 
 #include <ctime>
 #include <cstdlib>
-
 #include <iostream>
 
 using namespace std;
 
-int main (int argc, char* argv[]) {
 
+// ------------------------------------------------------------------------------------------------------------------ //
+//                                                   MAIN CODE
+// ------------------------------------------------------------------------------------------------------------------ //
+int main (int argc, char* argv[])
+{
 	//! \todo{convert SmileiMPI in SmileiMPI_Cart1D}
  	// SmileiMPI smpi( &argc, &argv )
  	SmileiMPI_Cart1D smpi( &argc, &argv );
+   
+	// -------------------------
+	// Simulation Initialisation
+	// -------------------------
+     
+	// Check for namelist (input file)
+	string namelist;
+	if (argc<2) ERROR("No namelists given!");
+	namelist=argv[1];
 
+	// Send information on current simulation
 	if ( smpi.isMaster() ) {
 		MESSAGE("------------------------------------------");
 		MESSAGE(" Version : " << __VERSION DEBUGEXEC(<< " DEBUG") << " Compiled : " << __DATE__ << " " << __TIME__);
 		MESSAGE("------------------------------------------");
+		MESSAGE(" Namelist  : " << namelist);
+		MESSAGE("------------------------------------------");
 	}
 
-	if (argc<2) ERROR("No namelists given!");
+	// Read simulation parameters
+	PicParams params;
 
-	for (int arg=1; arg<argc;arg++) {
-		
-		string namelist=argv[arg];
-		/*******************************************************************************************************************
-		 Simulation init
-		 ******************************************************************************************************************/
-		if ( smpi.isMaster() ) {
-			MESSAGE(" Namelist  : " << namelist);
-			MESSAGE("------------------------------------------");
-		}
+	// Process 0 read namelist, then broadcast
+	if ( smpi.isMaster() ) 
+		params.parseFile(namelist); // this variable will hold the imput parameters from file
+	if ( smpi.isMaster() ) params.print();
+	smpi.bcast( params );
 
-		/*******************************************************************************************************************
-		 Simulation parameters
-		 ******************************************************************************************************************/
-		PicParams params;
+	// Creation of a cartesian topology
+	smpi.createTopology();
 
-		// Process 0 read namelist, then broadcast
-		if ( smpi.isMaster() ) 
-			params.parseFile(namelist); // this variable will hold the imput parameters from file
-		if ( smpi.isMaster() ) params.print();
-		smpi.bcast( params );
+	// Randomize the seed for simulations running in release mode
+	//! \todo{Save the seed in case one wants to re-run the exact same simulation (MG)}
+	RELEASEEXEC(srand (time(NULL)));
 
-		// Creation of a cartesian topology
-		smpi.createTopology();
-		
-		/*******************************************************************************************************************
-		 Variable declaration
-		 ******************************************************************************************************************/
-		vector<Species*> vecSpecies; // vector of species
-		ElectroMagn* champs = NULL; // fields
-		
-		// operators
-		Interpolator* Interp = NULL;
-		Projector* Proj = NULL;
-		
-		// initialise Species
-		ofstream ofile("dump", ios::out);
-		
-		//! this will randomizie each simulation done just in the release mode
-	        //! \todo{check if one wants to run the same again: save seed}
-		RELEASEEXEC(srand (time(NULL)));
-		
-		vecSpecies.resize(params.n_species);
-		for (unsigned int ispec=0 ; ispec<params.n_species ; ispec++) {
-			PMESSAGE( 0, smpi.getRank(), "Initializing Species "<<ispec);
-			Species* sp = NULL;
-			if (params.species_param[ispec].dynamics_type=="norm") {
-				sp = new Species_norm(&params, ispec, &smpi);
-			} else if (params.species_param[ispec].dynamics_type=="rrll") {
-				sp = new Species_rrll(&params, ispec, &smpi);
-			}
-			vecSpecies[ispec] = sp;
-			sp->dump(ofile);
-			ofile << endl;
+	// -------------------------------------------
+	// Declaration of the main objects & operators
+	// -------------------------------------------
+    
+	// object containing the electromagnetic fields (virtual)
+	ElectroMagn* EMfields = NULL;
+    
+	// interpolation operator (virtual)
+	Interpolator* Interp = NULL;
+    
+	// projection operator (virtual)
+	Projector* Proj = NULL;
+    
+	// vector of Species (virtual)
+	vector<Species*> vecSpecies;
+    
+	// species "dump" file
+	//! \todo{Check if we keep going like that (MG)}
+	ofstream ofile("dump", ios::out);
 
-			smpi.exchangeParticles(vecSpecies[ispec], &params);
-			//MESSAGE( 0, "\tProcess " << smpi.getRank() << " : " << sp->getNbrOfParticles() << " Particles of species " << ispec );
-			PMESSAGE( 0, smpi.getRank(), sp->getNbrOfParticles() << " Particles of species " << ispec );
-		}// END for ispec
+	// ------------------------------------------------------------------------------------
+	// Initialize the vecSpecies object containing all information of the different Species
+	// ------------------------------------------------------------------------------------
+
+	vecSpecies.resize(params.n_species);
+	for (unsigned int ispec=0 ; ispec<params.n_species ; ispec++) {
+		PMESSAGE( 0, smpi.getRank(), "Initializing Species "<<ispec);
+		Species* sp = NULL;
+		if (params.species_param[ispec].dynamics_type=="norm") {
+			// Species with Boris dynamics
+			sp = new Species_norm(&params, ispec, &smpi);
+		} else if (params.species_param[ispec].dynamics_type=="rrll") {
+			// Species with Boris dynamics + Radiation Back-Reaction (using the Landau-Lifshitz formula)
+			sp = new Species_rrll(&params, ispec, &smpi);
+		}//endif
+
+		//save temporary species sp in vecSpecies
+		vecSpecies[ispec] = sp;
+
+		//dump species at time 0
+		sp->dump(ofile); ofile << endl;
+
+		smpi.exchangeParticles(vecSpecies[ispec], &params);
+		PMESSAGE( 0, smpi.getRank(), sp->getNbrOfParticles() << " Particles of species " << ispec );
+	}// END for ispec
 
 
-		// allocate
-		if ( params.geometry == "1d3v" ) {
-		  champs = new ElectroMagn1D(&params, &smpi);
-			if ( params.interpolation_order == 2 )
+	// ----------------------------------------------------------------------------
+	// Initialize the electromagnetic fields and interpolation-projection operators
+	// according to the simulation geometry
+	// ----------------------------------------------------------------------------
+	if ( params.geometry == "1d3v" ) {
+		// ---------------
+		// 1d3v Simulation
+		// ---------------
+		EMfields = new ElectroMagn1D(&params, &smpi);
+		if ( params.interpolation_order == 2 )
 			{
 				Interp = new Interpolator1D2Order(&params, &smpi);
 				Proj   = new Projector1D2Order(&params, &smpi);
 			}
+	}
+	else {
+		ERROR( "Unknwon geometry : " << params.geometry );
+	}//endif params.geometry
+
+	// -----------------------------------
+	// Inialize the electromagnetic fields
+	// -----------------------------------   
+	//!\todo{Check & describe what is done here (MG)}
+	// Init rho by pro all particles of subdomain -> local stuff
+	EMfields->initRho(vecSpecies, Proj);
+	smpi.sumRho( EMfields );
+	//! \todo{FalseNot //, current algorithm is instrinsically sequential}
+	smpi.solvePoissonPara( EMfields );		//champs->initMaxwell();
+
+
+	// ------------------------------------------------------------------------
+	// Initialise the simulation times time_prim at n=0 and time_dual at n=-1/2
+	// ------------------------------------------------------------------------
+	// time at integer time-steps (primal grid)
+	double time_prim = 0.;
+	// time at half-integer time-steps (dual grid)
+	double time_dual = -0.5 * params.timestep;
+
+	// ------------------------------------------------------------------
+	//                     HERE STARTS THE PIC LOOP
+	// ------------------------------------------------------------------
+	if ( smpi.isMaster() ) MESSAGE(0,"Time-Loop is started");
+	// t1-t0  = elapsed time in simulation time loop
+	double t0, t1;
+	t0 = MPI_Wtime();
+	for (unsigned int itime=1 ; itime <= params.n_time ; itime++) {
+        
+		// calculate new times
+		// -------------------
+		time_prim += params.timestep;
+		time_dual += params.timestep; 
+
+		// send message at given time-steps
+		// --------------------------------
+		//!\todo{Introduce a control parameter in PicParams (MG)}
+		if ( (itime % 100 == 0) &&  ( smpi.isMaster() ) )
+			MESSAGE(1,"Time: " << time_dual << " " << itime);
+
+		// put density and currents to 0
+		// -----------------------------
+		EMfields->initRhoJ();
+
+		// apply the PIC method
+		// --------------------
+        
+		// for all particles of all species (see dunamic in Species.cpp)
+		// (1) interpolate the fields at the particle position
+		// (2) move the particle
+		// (3) calculate the currents (charge conserving method)
+		for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
+			if ( smpi.isMaster() ) DEBUG(2, "Dynamic Species "<<ispec );
+			vecSpecies[ispec]->dynamic(time_dual, EMfields, Interp, Proj, &smpi);
+			smpi.exchangeParticles(vecSpecies[ispec], &params);
+			DEBUG( 2, "\tProcess " << smpi.getRank() << " : " << vecSpecies[ispec]->getNbrOfParticles() << " Particles of species " << ispec << " in loop" );
 		}
-		else {
-			ERROR( "Unknwon geometry : " << params.geometry );
-		}
+		smpi.sumDensities( EMfields );
 
-		// Init rho by pro all particles of subdomain -> local stuff
-		champs->initRho(vecSpecies, Proj);
-		smpi.sumRho( champs );
-		//! \todo{FalseNot //, current algorithm is instrinsically sequential}
-		smpi.initMaxwellPara( champs );		//champs->initMaxwell();
+		// calculate the longitudinal current using the charge conservation equation
+		//! \todo{Not //, current algorithm is instrinsically sequential}
+		//smpi.chargeConservingPara( EMfields);	//EMfields->chargeConserving();
 		
-		// ------------------------------------------------------------------
-		// ------------------------------------------------------------------
-		// ------------------------------------------------------------------
-		
-		//! \todo{clarify this}
-		double time_dual = 0.; //-params.timestep/2.;
-		if ( smpi.isMaster() ) MESSAGE( 0, "Start time loop" );
+		// solve Maxwell's equations
+		EMfields->solveMaxwell(time_dual, params.timestep, &smpi);
 
-		// t1-t0  = elapsed time in simulation time loop
-		double t0, t1;
-		t0 = MPI_Wtime();
-
-		for (unsigned int itps=1 ; itps <= params.n_time ; itps++) {
-			//calculate new time
-			time_dual += params.timestep ;
-			if (itps % 100 == 0) {
-				if ( smpi.isMaster() ) MESSAGE( 1, "Time: " << time_dual << " " << itps );
-				//if ( smpi.isMaster() ) champs->dump();
-			}
-			
-			//put density and currents to 0
-			champs->initRhoJ();
-			
-			//plasma
-			for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-				if ( smpi.isMaster() ) DEBUG( 2, "Dynamic Species " << ispec );
-				vecSpecies[ispec]->dynamic(time_dual, champs, Interp, Proj, &smpi);
-				smpi.exchangeParticles(vecSpecies[ispec], &params);
-				DEBUG( 2, "\tProcess " << smpi.getRank() << " : " << vecSpecies[ispec]->getNbrOfParticles() << " Particles of species " << ispec << " in loop" );
-			}
-			smpi.sumDensities( champs );
-
-			//! \todo{Not //, current algorithm is instrinsically sequential}
-			smpi.chargeConservingPara( champs );	//champs->chargeConserving();
-			champs->solveMaxwell(time_dual, params.timestep, &smpi);
-
-		}
-
-		smpi.barrier();
-		t1 = MPI_Wtime();
-		if ( smpi.isMaster() ) MESSAGE(0, "Time in time loop : " << t1-t0 );
-		if ( smpi.isMaster() ) MESSAGE(0, "End time loop");
-		
-		if ( smpi.isMaster() ) {
+	        // call the various diagnostics
+		// ----------------------------
+		if (itime % 1000 == 0) {
+			MESSAGE(1,"diags at " << time_dual << " " << itime);
+			EMfields->dump();
 			for (unsigned int ispec=0 ; ispec<params.n_species ; ispec++) {
 				vecSpecies[ispec]->dump(ofile);
 				ofile << endl;
 			}
 		}
-
-		//! \todo{Not //, processes write sequentially to validate. OK in 1D}
-		smpi.writePlasma( vecSpecies, "dump_new" );  
 		
-		if ( smpi.isMaster() ) champs->dump();
+	}//END of the time loop	
+
+	smpi.barrier();
+	t1 = MPI_Wtime();
+	if ( smpi.isMaster() ) MESSAGE(0, "Time in time loop : " << t1-t0 );
+	if ( smpi.isMaster() ) MESSAGE(0, "End time loop");
+	// ------------------------------------------------------------------
+	//                      HERE ENDS THE PIC LOOP
+	// ------------------------------------------------------------------
+	
 		
-		//! \todo{Not //, processes write sequentially to validate. OK in 1D}
-		smpi.writeField( champs->Ex_, "fex_new" );
-		smpi.writeField( champs->Ey_, "fey_new" );
-		smpi.writeField( champs->Ez_, "fez_new" );
-		smpi.writeField( champs->Bx_, "fbx_new" );
-		smpi.writeField( champs->By_, "fby_new" );
-		smpi.writeField( champs->Bz_, "fbz_new" );
-		smpi.writeField( champs->Jx_, "fjx_new" );
-		smpi.writeField( champs->Jy_, "fjy_new" );
-		smpi.writeField( champs->Jz_, "fjz_new" );		
-		smpi.writeField( champs->rho_, "rho_new" );
-
-		/*******************************************************************************************************************
-		 cleanup
-		 ******************************************************************************************************************/
-		delete Proj;
-		delete Interp;
-		delete champs;
-		for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
-		vecSpecies.clear();
-
-		if ( smpi.isMaster() ) {
-			MESSAGE("------------------------------------------");
-			MESSAGE("END " << namelist);
-			MESSAGE("------------------------------------------");
+	// ------------------------------------------------------------------
+	//                      Temporary validation diagnostics
+	// ------------------------------------------------------------------
+	if ( smpi.isMaster() ) {
+		for (unsigned int ispec=0 ; ispec<params.n_species ; ispec++) {
+			vecSpecies[ispec]->dump(ofile);
+			ofile << endl;
 		}
+	}
+	//! \todo{Not //, processes write sequentially to validate. OK in 1D}
+	smpi.writePlasma( vecSpecies, "dump_new" );  
+		
+	if ( smpi.isMaster() ) EMfields->dump();	
+	//! \todo{Not //, processes write sequentially to validate. OK in 1D}
+	smpi.writeField( EMfields->Ex_, "fex_new" );
+	smpi.writeField( EMfields->Ey_, "fey_new" );
+	smpi.writeField( EMfields->Ez_, "fez_new" );
+	smpi.writeField( EMfields->Bx_, "fbx_new" );
+	smpi.writeField( EMfields->By_, "fby_new" );
+	smpi.writeField( EMfields->Bz_, "fbz_new" );
+	smpi.writeField( EMfields->Jx_, "fjx_new" );
+	smpi.writeField( EMfields->Jy_, "fjy_new" );
+	smpi.writeField( EMfields->Jz_, "fjz_new" );		
+	smpi.writeField( EMfields->rho_, "rho_new" );
+
+	// ------------------------------
+	//  Cleanup & End the simulation
+	// ------------------------------
+	delete Proj;
+	delete Interp;
+	delete EMfields;	for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
+	vecSpecies.clear();
+    
+	if ( smpi.isMaster() ) {
+		MESSAGE("------------------------------------------");
+		MESSAGE("END " << namelist);
+		MESSAGE("------------------------------------------");
 	}
 
 	return 0;
-}
-
-
+    
+}//END MAIN 

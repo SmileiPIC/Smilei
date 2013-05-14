@@ -73,8 +73,8 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, PicParams* params)
 
 	//! \todo{store following variables as members of MPI environment}
 	int cellx_index = smilei_rk*(params->n_space[0]-2*params->oversize[0]);
-	int celly_index = 0;//f(smilei_rk)*(params->n_space[1]-2*params->oversize[1]);
-	int cellz_index = 0;//f(smilei_rk)*(params->n_space[2]-2*params->oversize[2]); 
+	//int celly_index = 0;//f(smilei_rk)*(params->n_space[1]-2*params->oversize[1]);
+	//int cellz_index = 0;//f(smilei_rk)*(params->n_space[2]-2*params->oversize[2]); 
 	double x_min_local = (cellx_index)*params->cell_length[0];
 	double x_max_local = (cellx_index+params->n_space[0]-2*params->oversize[0])*params->cell_length[0];
 
@@ -127,7 +127,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, PicParams* params)
 
 			if (n_part_send!=0) {
 				//DEBUG( smilei_rk << " send " << n_part_send << " to process " << neighbor_[iNeighbor] );
-				for (unsigned int iPart=0 ; iPart<n_part_send; iPart++ ) {
+				for (int iPart=0 ; iPart<n_part_send; iPart++ ) {
 					MPI_Send( &(buff_send[iNeighbor][iPart]->position(0)), 5, MPI_DOUBLE, neighbor_[iNeighbor], 0, SMILEI_COMM_1D );
 				}
 			}
@@ -144,7 +144,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, PicParams* params)
 				n_particles = species->getNbrOfParticles();
 				//cuParticles->resize( n_particles + n_part_recv );
 
-				for (unsigned int iPart=0 ; iPart<n_part_recv; iPart++ ) {
+				for (int iPart=0 ; iPart<n_part_recv; iPart++ ) {
 					buff_recv[(iNeighbor+1)%2][iPart] = new Particle(ndims_);
 					MPI_Recv( &(buff_recv[(iNeighbor+1)%2][iPart]->position(0)), 5, MPI_DOUBLE, neighbor_[(iNeighbor+1)%2], 0, SMILEI_COMM_1D, &stat );
 					cuParticles->push_back(buff_recv[(iNeighbor+1)%2][iPart]);
@@ -188,7 +188,7 @@ void SmileiMPI_Cart1D::sumField( Field* field )
 	// Size buffer is 2 oversize (1 inside & 1 outside of the current subdomain)
 	std::vector<unsigned int> oversize2 = oversize;
 	oversize2[0] *= 2;
-	for (size_t i=0;i<nbNeighbors_ ;i++)  buf[i].allocateDims( oversize2 );
+	for (int i=0;i<nbNeighbors_ ;i++)  buf[i].allocateDims( oversize2 );
 
 	// istart store in the first part starting index of data to send, then the starting index of data to write in
 	// Send point of vue : istart =           iNeighbor * ( n_elem[0]- 2*oversize[0] ) + (1-iNeighbor)       * ( 0 );
@@ -237,7 +237,7 @@ void SmileiMPI_Cart1D::sumField( Field* field )
 		// Using Receiver point of vue
 		if (neighbor_[(iNeighbor+1)%2]!=MPI_PROC_NULL) {
 			//cout << "SUM : " << smilei_rk << " sum " << oversize2[0] << " data from " << istart << endl;
-			for (int i=0 ; i<oversize2[0] ; i++)
+			for (unsigned int i=0 ; i<oversize2[0] ; i++)
 				f1D->data_[istart+i] += (buf[(iNeighbor+1)%2])(i);
 		}
 	} // END for iNeighbor
@@ -289,7 +289,7 @@ void SmileiMPI_Cart1D::writeField( Field* field, string name )
 		if (i_rk==smilei_rk) {
 			if (smilei_rk==0) ff.open(name.c_str(), ios::out);
 			else ff.open(name.c_str(), ios::app);
-			for (unsigned int i=istart ; i<istart+bufsize-1 ; i++)
+			for (int i=istart ; i<istart+bufsize-1 ; i++)
 				ff << f1D->data_[i] << endl;
 			if (smilei_rk==smilei_sz-1)ff << endl;
 			if (smilei_rk==smilei_sz-1)ff << endl;
@@ -323,11 +323,11 @@ void SmileiMPI_Cart1D::writePlasma( vector<Species*> vecSpecies, string name )
 
 } // END writePlasma
 
-void SmileiMPI_Cart1D::initMaxwellPara( ElectroMagn* champs )
+void SmileiMPI_Cart1D::solvePoissonPara( ElectroMagn* champs )
 {
 	for ( int i_rk = 0 ; i_rk < smilei_sz ; i_rk++ ) {
 		if (i_rk==smilei_rk)
-			champs->initMaxwell(this);
+			champs->solvePoisson(this);
 
 		barrier();      
 		exchangeField( champs->Ex_ );

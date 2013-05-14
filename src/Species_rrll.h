@@ -1,9 +1,9 @@
-
-#ifndef Species_rrll_H
-#define Species_rrll_H
+#ifndef SPECIESRRLL_H
+#define SPECIESRRLL_H
 
 #include "Species.h"
 #include <string>
+
 
 class ElectroMagn;
 class Pusher;
@@ -11,13 +11,19 @@ class Interpolator;
 class Projector;
 class PicParams;
 
-class Species_rrll : public Species {
+//! class Species_rrll
+//! Species for which the dynamics is governed by the Lorentz force and the classical radiation reaction force:
+//! Boris pusher + first order spliting
+class Species_rrll : public Species
+{
 public:
-  Species_rrll(PicParams*, int, SmileiMPI*);
-  ~Species_rrll();
-  void dynamic(double, ElectroMagn* Champs, Interpolator* Interp, Projector* proj, SmileiMPI* smpi);
+	//! Creator for Species_rrLL
+	Species_rrll(PicParams*, int, SmileiMPI*);
+	//! Destructor for Species_rrLL
+	~Species_rrll();
+
 private:
+    
 };
 
 #endif
-
