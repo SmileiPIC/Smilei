@@ -60,11 +60,14 @@ ElectroMagn::~ElectroMagn()
 // ---------------------------------------------------------------------------------------------------------------------
 // Method used to create a dump of the data contained in ElectroMagn
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn::dump()
+void ElectroMagn::dump(PicParams* params)
 {
     //!\todo Check for none-cartesian grid & for generic grid (neither all dual or all primal) (MG & JD)
     
-/*    // dump of the electromagnetic fields
+    std::vector<unsigned int> dimPrim; dimPrim.resize(1); dimPrim[0] = params->n_space[0]+1;
+    std::vector<unsigned int> dimDual; dimDual.resize(1); dimDual[0] = params->n_space[0]+2;
+    
+    // dump of the electromagnetic fields
 	Ex_->dump(dimDual);
 	Ey_->dump(dimPrim);
 	Ez_->dump(dimPrim);
@@ -75,7 +78,7 @@ void ElectroMagn::dump()
 	rho_->dump(dimPrim);
 	Jx_->dump(dimDual);
 	Jy_->dump(dimPrim);
-	Jz_->dump(dimPrim); */
+	Jz_->dump(dimPrim); 
 }
 
 

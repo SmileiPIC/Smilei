@@ -152,6 +152,7 @@ int main (int argc, char* argv[])
 		ERROR( "Unknwon geometry : " << params.geometry );
 	}//endif params.geometry
 
+
 	// -----------------------------------
 	// Inialize the electromagnetic fields
 	// -----------------------------------   
@@ -174,7 +175,7 @@ int main (int argc, char* argv[])
 	// ------------------------------------------------------------------
 	//                     HERE STARTS THE PIC LOOP
 	// ------------------------------------------------------------------
-	if ( smpi.isMaster() ) MESSAGE(0,"Time-Loop is started");
+	if ( smpi.isMaster() ) MESSAGE(0,"Time-Loop is started: number of time-steps n_time =" << params.n_time);
 	// t1-t0  = elapsed time in simulation time loop
 	double t0, t1;
 	t0 = MPI_Wtime();
@@ -197,7 +198,6 @@ int main (int argc, char* argv[])
 
 		// apply the PIC method
 		// --------------------
-        
 		// for all particles of all species (see dunamic in Species.cpp)
 		// (1) interpolate the fields at the particle position
 		// (2) move the particle
@@ -221,7 +221,7 @@ int main (int argc, char* argv[])
 		// ----------------------------
 		if (itime % 1000 == 0) {
 			MESSAGE(1,"diags at " << time_dual << " " << itime);
-			EMfields->dump();
+			EMfields->dump(&params);
 			for (unsigned int ispec=0 ; ispec<params.n_species ; ispec++) {
 				vecSpecies[ispec]->dump(ofile);
 				ofile << endl;
@@ -251,7 +251,7 @@ int main (int argc, char* argv[])
 	//! \todo{Not //, processes write sequentially to validate. OK in 1D}
 	smpi.writePlasma( vecSpecies, "dump_new" );  
 		
-	if ( smpi.isMaster() ) EMfields->dump();	
+	if ( smpi.isMaster() ) EMfields->dump(&params);	
 	//! \todo{Not //, processes write sequentially to validate. OK in 1D}
 	smpi.writeField( EMfields->Ex_, "fex_new" );
 	smpi.writeField( EMfields->Ey_, "fey_new" );

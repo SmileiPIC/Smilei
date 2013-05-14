@@ -184,8 +184,7 @@ void ElectroMagn1D::solveMaxwell(double time_dual, double dt, SmileiMPI* smpi)
 	// --------------------
 	// Calculate the electrostatic field ex on the dual grid
 	//for (unsigned int ix=0 ; ix<nx_d ; ix++){
-	//for (unsigned int ix=iDual_beg[0]-1 ; ix<iDual_end[0]+1 ; ix++) {
-	for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
+	for (unsigned int ix=iDual_beg[0] ; ix<iDual_end[0] ; ix++) {
 		(*Ex1D)(ix)= (*Ex1D)(ix) - dt* (*Jx1D)(ix) ;
 	}
 	// Transverse fields ey, ez  are defined on the primal grid
