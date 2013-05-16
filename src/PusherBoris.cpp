@@ -24,7 +24,7 @@ void PusherBoris::operator() (Particle* part, LocalFields Epart, LocalFields Bpa
 	double TxTy, TyTz, TzTx;
 	double pxsm, pysm, pzsm;
     	
-	DEBUG(5, "\tPush particle"<< part->position(0) );
+	//DEBUG(5, "\tPush particle"<< part->position(0) );
 	
 	// --------------------------------------
 	// SOLVE THE PARTICLE EQUATION OF MOTIONS
@@ -67,7 +67,7 @@ void PusherBoris::operator() (Particle* part, LocalFields Epart, LocalFields Bpa
     //!\todo Make a loop on all spatial dimensions (also separate change_momentum & change_position) (MG & JD)
 	part->position_old(0)  = part->position(0);
 	part->position(0)     += dt*part->momentum(0)/gf;
-	DEBUG(5, "\t END "<< part->position(0) );
+	//DEBUG(5, "\t END "<< part->position(0) );
 
 }
 

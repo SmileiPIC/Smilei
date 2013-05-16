@@ -382,7 +382,7 @@ void Species::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Inter
 
 		// for all particles of the Species
 		for (unsigned int iPart=0 ; iPart<nParticles; iPart++ ) {
-			DEBUG(5,"ipart= "<<iPart);
+			//DEBUG(5,"ipart= "<<iPart);
 			// Interpolate the fields at the particle position
 			(*Interp)(Champs, particles[iPart], &Epart, &Bpart);
 

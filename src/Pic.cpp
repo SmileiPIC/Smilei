@@ -128,6 +128,7 @@ int main (int argc, char* argv[])
 		//dump species at time 0
 		sp->dump(ofile); ofile << endl;
 
+		PMESSAGE( 0, smpi.getRank(), sp->getNbrOfParticles() << " Particles of species " << ispec );
 		smpi.exchangeParticles(vecSpecies[ispec], &params);
 		PMESSAGE( 0, smpi.getRank(), sp->getNbrOfParticles() << " Particles of species " << ispec );
 	}// END for ispec
@@ -160,6 +161,7 @@ int main (int argc, char* argv[])
 	// Init rho by pro all particles of subdomain -> local stuff
 	EMfields->initRho(vecSpecies, Proj);
 	smpi.sumRho( EMfields );
+
 	//! \todo{FalseNot //, current algorithm is instrinsically sequential}
 	smpi.solvePoissonPara( EMfields );		//champs->initMaxwell();
 
@@ -206,8 +208,9 @@ int main (int argc, char* argv[])
 			if ( smpi.isMaster() ) DEBUG(2, "Dynamic Species "<<ispec );
 			vecSpecies[ispec]->dynamic(time_dual, EMfields, Interp, Proj, &smpi);
 			smpi.exchangeParticles(vecSpecies[ispec], &params);
-			DEBUG( 2, "\tProcess " << smpi.getRank() << " : " << vecSpecies[ispec]->getNbrOfParticles() << " Particles of species " << ispec << " in loop" );
+			//DEBUG( 2, "\tProcess " << smpi.getRank() << " : " << vecSpecies[ispec]->getNbrOfParticles() << " Particles of species " << ispec << " in loop" );
 		}
+		//EMfields->dump(&params);
 		smpi.sumDensities( EMfields );
 
 		// calculate the longitudinal current using the charge conservation equation
@@ -217,13 +220,27 @@ int main (int argc, char* argv[])
 		// solve Maxwell's equations
 		EMfields->solveMaxwell(time_dual, params.timestep, &smpi);
 
+
+		/*smpi.writeField( EMfields->Ex_, "fex_new" );
+		smpi.writeField( EMfields->Ey_, "fey_new" );
+		smpi.writeField( EMfields->Ez_, "fez_new" );
+		smpi.writeField( EMfields->Bx_, "fbx_new" );
+		smpi.writeField( EMfields->By_, "fby_new" );
+		smpi.writeField( EMfields->Bz_, "fbz_new" );
+		smpi.writeField( EMfields->Jx_, "fjx_new" );
+		smpi.writeField( EMfields->Jy_, "fjy_new" );
+		smpi.writeField( EMfields->Jz_, "fjz_new" );		
+		smpi.writeField( EMfields->rho_, "rho_new" );
+
+		return 0;*/
+
 	        // call the various diagnostics
 		// ----------------------------
-		if (itime % 1000 == 0) {
-			MESSAGE(1,"diags at " << time_dual << " " << itime);
-			EMfields->dump(&params);
+		if (itime % 5000 == 0) {
+			if ( smpi.isMaster() ) MESSAGE(1,"diags at " << time_dual << " " << itime);
+			//EMfields->dump(&params);
 			for (unsigned int ispec=0 ; ispec<params.n_species ; ispec++) {
-				vecSpecies[ispec]->dump(ofile);
+			  //vecSpecies[ispec]->dump(ofile);
 				ofile << endl;
 			}
 		}
@@ -251,7 +268,8 @@ int main (int argc, char* argv[])
 	//! \todo{Not //, processes write sequentially to validate. OK in 1D}
 	smpi.writePlasma( vecSpecies, "dump_new" );  
 		
-	if ( smpi.isMaster() ) EMfields->dump(&params);	
+	//if ( smpi.isMaster() ) 
+	  EMfields->dump(&params);	
 	//! \todo{Not //, processes write sequentially to validate. OK in 1D}
 	smpi.writeField( EMfields->Ex_, "fex_new" );
 	smpi.writeField( EMfields->Ey_, "fey_new" );

@@ -23,6 +23,8 @@ Projector1D2Order::Projector1D2Order (PicParams* params, SmileiMPI* smpi) :Proje
 
 	int process_coord_x = smpi1D->getProcCoord(0);
 	index_domain_begin = process_coord_x*(params->n_space[0]-2*params->oversize[0]) - params->oversize[0];
+	//if (process_coord_x!=0) index_domain_begin-=1;
+
 	DEBUG("cell_length "<< params->cell_length[0]);
 
 }
@@ -38,7 +40,8 @@ void Projector1D2Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
 	Field1D* Jz1D  = static_cast<Field1D*>(EMfields->Jz_);
 
 	// Declare local variables
-	int unsigned ipo, ip, ip_m_ipo, iloc;
+	int unsigned ipo, ip, iloc;
+	int ip_m_ipo;
 	double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;
 	double crx_p = part->weight()*dx_ov_dt;                // current density for particle moving in the x-direction
 	double cry_p = part->weight()*part->momentum(1)/gf;    // current density in the y-direction of the macroparticle
@@ -83,7 +86,7 @@ void Projector1D2Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
     
 	// local current created by the particle
 	for (unsigned int i=1; i<5; i++) {
-		Jx_p[i] = Jx_p[i-1] + crx_p * Wl[i];
+		Jx_p[i] = Jx_p[i-1] + crx_p * Wl[i-1];
 	}
 
 	ipo -= index_domain_begin;
@@ -91,7 +94,7 @@ void Projector1D2Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
 
 	// 2nd order projection for the total currents
 	for (unsigned int i=0; i<5; i++) {
-		iloc = i+ipo-1;
+		iloc = i+ipo-2;
 		(*Jx1D)(iloc) += Jx_p[i];
 		(*Jy1D)(iloc) += cry_p * Wt[i];
 		(*Jz1D)(iloc) += crz_p * Wt[i];

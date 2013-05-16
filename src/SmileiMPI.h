@@ -44,11 +44,13 @@ public:
 	void sumDensities( ElectroMagn* champs );
 
 	virtual void sumField( Field* field ) = 0;
+	virtual void sumFieldPrim( Field* field ) = 0;
 
 	void exchangeE( ElectroMagn* champs );
 	void exchangeB( ElectroMagn* champs );
 
 	virtual void exchangeField( Field* field ) = 0;
+	virtual void exchangeFieldPrim( Field* field ) = 0;
 
 	inline int getRank() {return smilei_rk;}
 

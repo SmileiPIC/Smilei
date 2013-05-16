@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <math.h>
+#include <sstream>
 
 using namespace std;
 
@@ -18,6 +19,9 @@ using namespace std;
 ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
 	: ElectroMagn(params, smpi)
 {
+	SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
+	int process_coord_x = smpi1D->getProcCoord(0);
+
 	// spatial-step and ratios time-step by spatial-step & spatial-step by time-step
 	dx       = params->cell_length[0];
 	dt_ov_dx = params->timestep/params->cell_length[0];
@@ -42,11 +46,13 @@ ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
 	dimDual.resize( params->nDim_field );	
 	
 	for (size_t i=0 ; i<params->nDim_field ; i++) {
-		dimPrim[i] = params->n_space[i]+1;
-		dimDual[i] = params->n_space[i]+2;
+	  dimPrim[i] = params->n_space[i]+1;
+	  dimDual[i] = params->n_space[i]+2; // +1 but +2 to create décallage
 	}
+	cout << process_coord_x << " : " << dimPrim[0] << " " << dimDual[0] << endl;
 
-	Ex_ = new Field1D( dimDual, "fex" );
+	ostringstream name("");	name << "fex." << process_coord_x;
+	Ex_ = new Field1D( dimDual, name.str() );
 	Ey_ = new Field1D( dimPrim, "fey" );
 	Ez_ = new Field1D( dimPrim, "fez" );
 	Bx_ = new Field1D( dimPrim, "fbx" );
@@ -57,10 +63,12 @@ ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
 	Bz_m = new Field1D(dimDual);
 	
 	// Total charge currents and densities
-	Jx_ = new Field1D(dimDual, "fjx");
+	ostringstream name2("");	name2 << "fjx." << process_coord_x;
+	Jx_ = new Field1D(dimDual, name2.str());
 	Jy_ = new Field1D(dimPrim, "fjy");
 	Jz_ = new Field1D(dimPrim, "fjz");
-	rho_ = new Field1D(dimPrim, "rho");
+	ostringstream name1("");	name1 << "rho." << process_coord_x;
+	rho_ = new Field1D(dimPrim, name1.str() );
 	rho_o = new Field1D(dimPrim, "rho_old");
 
 	iPrim_beg.resize(params->nDim_field, 0);
@@ -70,8 +78,6 @@ ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
 	iDual_beg_nobc.resize(params->nDim_field, 0);
 	iDual_end_nobc.resize(params->nDim_field, 0);
 
-	SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
-	//int process_coord_x = smpi1D->getProcCoord(0);
 
 	for (size_t i=0 ; i<params->nDim_field ; i++) {
 	  iPrim_beg[0] = params->oversize[0];
@@ -110,10 +116,12 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
 
 	// Initialize the electrostatic field by solving Poisson at t = 0
 	// \todo Generalise this so one minimises the electrostatic energy (MG)
-        if (process_coord_x==0) (*Ex1D)(iDual_beg[0]) = 0.0;
+        //if (process_coord_x==0) (*Ex1D)(iDual_beg[0]) = 0.0;
 	//for (unsigned int i=1 ; i<nx_d ; i++) {
-	for ( unsigned int ix = iDual_beg_nobc[0] ; ix < iDual_end_nobc[0] ; ix++ ){
-		(*Ex1D)(ix) = (*Ex1D)(ix-1) + dx* (*rho1D)(ix-1);
+	for ( unsigned int ix = iDual_beg[0] ; ix < iDual_end[0] ; ix++ ){
+	  //if (process_coord_x==0)  
+	    (*Ex1D)(ix) = (*Ex1D)(ix-1) + dx* (*rho1D)(ix-1);
+	    //if (process_coord_x!=0)  (*Ex1D)(ix) = (*Ex1D)(ix-1) + dx* (*rho1D)(ix);
 	}
 	
 }//END solvePoisson
@@ -184,8 +192,9 @@ void ElectroMagn1D::solveMaxwell(double time_dual, double dt, SmileiMPI* smpi)
 	// --------------------
 	// Calculate the electrostatic field ex on the dual grid
 	//for (unsigned int ix=0 ; ix<nx_d ; ix++){
+	//for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
 	for (unsigned int ix=iDual_beg[0] ; ix<iDual_end[0] ; ix++) {
-		(*Ex1D)(ix)= (*Ex1D)(ix) - dt* (*Jx1D)(ix) ;
+	  (*Ex1D)(ix)= (*Ex1D)(ix) - dt* (*Jx1D)(ix) ;
 	}
 	// Transverse fields ey, ez  are defined on the primal grid
 	//for (unsigned int ix=0 ; ix<nx_p ; ix++) {
@@ -218,8 +227,8 @@ void ElectroMagn1D::solveMaxwell(double time_dual, double dt, SmileiMPI* smpi)
 	}
 	if ( iDual_end_nobc[0] != iDual_end[0] ) {
 	  // Silver-Mueller boundary conditions (right)
-	  (*By1D)(iDual_end[0])= A_*byR + B_* (*By1D)(iDual_end[0]-1) - C_* (*Ez1D)(iDual_end[0]);
-	  (*Bz1D)(iDual_end[0])= A_*bzR + B_* (*Bz1D)(iDual_end[0]-1) + C_* (*Ey1D)(iDual_end[0]);
+	  (*By1D)(iDual_end_nobc[0])= A_*byR + B_* (*By1D)(iDual_end_nobc[0]-1) - C_* (*Ez1D)(iDual_end_nobc[0]);
+	  (*Bz1D)(iDual_end_nobc[0])= A_*bzR + B_* (*Bz1D)(iDual_end_nobc[0]-1) + C_* (*Ey1D)(iDual_end_nobc[0]);
 	}
 	{
 		/*

@@ -187,7 +187,7 @@ void SmileiMPI_Cart1D::sumField( Field* field )
 	Field1D buf[ nbNeighbors_ ];
 	// Size buffer is 2 oversize (1 inside & 1 outside of the current subdomain)
 	std::vector<unsigned int> oversize2 = oversize;
-	oversize2[0] *= 2;
+	oversize2[0] *= 2; oversize2[0] += 2;;
 	for (int i=0;i<nbNeighbors_ ;i++)  buf[i].allocateDims( oversize2 );
 
 	// istart store in the first part starting index of data to send, then the starting index of data to write in
@@ -214,13 +214,13 @@ void SmileiMPI_Cart1D::sumField( Field* field )
 	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
 
 		if (neighbor_[iNeighbor]!=MPI_PROC_NULL) {
-			istart = iNeighbor * ( n_elem[0]- 2*oversize[0] ) + (1-iNeighbor) * ( 0 );
+			istart = iNeighbor * ( n_elem[0]- 2*oversize[0]-2 ) + (1-iNeighbor) * ( 0 );
 			MPI_Send( &(f1D->data_[istart]), oversize2[0], MPI_DOUBLE, neighbor_[iNeighbor], 0, SMILEI_COMM_1D );
 			//cout << "SUM : " << smilei_rk << " send " << oversize2[0] << " data to " << neighbor_[iNeighbor] << " starting at " << istart << endl;
 		} // END of Send
 
 		if (neighbor_[(iNeighbor+1)%2]!=MPI_PROC_NULL) {
-			istart = ( (iNeighbor+1)%2 ) * ( n_elem[0]- 2*oversize[0] ) + (1-(iNeighbor+1)%2) * ( 0 );
+			istart = ( (iNeighbor+1)%2 ) * ( n_elem[0]- 2*oversize[0]-2 ) + (1-(iNeighbor+1)%2) * ( 0 );
 			MPI_Recv( &( (buf[(iNeighbor+1)%2]).data_[0] ), oversize2[0], MPI_DOUBLE, neighbor_[(iNeighbor+1)%2], 0, SMILEI_COMM_1D, &stat );
 			//cout << "SUM : " << smilei_rk << " recv " << oversize2[0] << " data to " << neighbor_[(iNeighbor+1)%2] << " starting at " << istart << endl;
 		} // END of Recv
@@ -233,7 +233,7 @@ void SmileiMPI_Cart1D::sumField( Field* field )
 	// Sum data on each process, same operation on both side
 	/********************************************************************************/
 	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-		istart = ( (iNeighbor+1)%2 ) * ( n_elem[0]- 2*oversize[0] ) + (1-(iNeighbor+1)%2) * ( 0 );
+		istart = ( (iNeighbor+1)%2 ) * ( n_elem[0]- 2*oversize[0]-2 ) + (1-(iNeighbor+1)%2) * ( 0 );
 		// Using Receiver point of vue
 		if (neighbor_[(iNeighbor+1)%2]!=MPI_PROC_NULL) {
 			//cout << "SUM : " << smilei_rk << " sum " << oversize2[0] << " data from " << istart << endl;
@@ -244,6 +244,73 @@ void SmileiMPI_Cart1D::sumField( Field* field )
 
 
 } // END sumField
+
+void SmileiMPI_Cart1D::sumFieldPrim( Field* field )
+{
+	std::vector<unsigned int> n_elem = field->dims_;
+	Field1D* f1D =  static_cast<Field1D*>(field);
+
+	// Use a buffer per direction to exchange data before summing
+	Field1D buf[ nbNeighbors_ ];
+	// Size buffer is 2 oversize (1 inside & 1 outside of the current subdomain)
+	std::vector<unsigned int> oversize2 = oversize;
+	oversize2[0] *= 2; oversize2[0] += 1;
+	for (int i=0;i<nbNeighbors_ ;i++)  buf[i].allocateDims( oversize2 );
+
+	// istart store in the first part starting index of data to send, then the starting index of data to write in
+	// Send point of vue : istart =           iNeighbor * ( n_elem[0]- 2*oversize[0] ) + (1-iNeighbor)       * ( 0 );
+	// Rank = 0 : iNeighbor = 0 : send - neighbor_[0] = NONE
+	//            iNeighbor = 1 : send - neighbor_[1] = 1 / istart = ( n_elem[0]- 2*oversize[0] )
+	// Rank = 1 : iNeighbor = 0 : send - neighbor_[0] = 0 / istart = 0
+	//            iNeighbor = 1 : send - neighbor_[1] = NONE
+	// Recv point of vue : istart = ( (iNeighbor+1)%2 ) * ( n_elem[0]- 2*oversize[0] ) + (1-(iNeighbor+1)%2) * ( 0 );
+	// Rank = 0 : iNeighbor = 0 : recv - neighbor_[1] = 1 / istart = ( n_elem[0]- 2*oversize[0] )
+	//            iNeighbor = 1 : recv - neighbor_[0] = NONE
+	// Rank = 1 : iNeighbor = 0 : recv - neighbor_[1] = NONE
+	//            iNeighbor = 1 : recv - neighbor_[0] = 0 / istart = 0
+	int istart;
+
+	MPI_Status stat;
+
+	/********************************************************************************/
+	// Send/Recv in a buffer data to sum
+	/********************************************************************************/
+	// Loop over neighbors in a direction
+	// Send to neighbor_[iNeighbor] / Recv from neighbor_[(iNeighbor+1)%2] :
+	// See in exchangeParticles()
+	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+
+		if (neighbor_[iNeighbor]!=MPI_PROC_NULL) {
+			istart = iNeighbor * ( n_elem[0]- 2*oversize[0]-1 ) + (1-iNeighbor) * ( 0 );
+			MPI_Send( &(f1D->data_[istart]), oversize2[0], MPI_DOUBLE, neighbor_[iNeighbor], 0, SMILEI_COMM_1D );
+			//cout << "SUM : " << smilei_rk << " send " << oversize2[0] << " data to " << neighbor_[iNeighbor] << " starting at " << istart << endl;
+		} // END of Send
+
+		if (neighbor_[(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+			istart = ( (iNeighbor+1)%2 ) * ( n_elem[0]- 2*oversize[0]-1 ) + (1-(iNeighbor+1)%2) * ( 0 );
+			MPI_Recv( &( (buf[(iNeighbor+1)%2]).data_[0] ), oversize2[0], MPI_DOUBLE, neighbor_[(iNeighbor+1)%2], 0, SMILEI_COMM_1D, &stat );
+			//cout << "SUM : " << smilei_rk << " recv " << oversize2[0] << " data to " << neighbor_[(iNeighbor+1)%2] << " starting at " << istart << endl;
+		} // END of Recv
+
+	} // END for iNeighbor
+
+	// Synchro before summing, to not sum with data ever sum
+	barrier();
+	/********************************************************************************/
+	// Sum data on each process, same operation on both side
+	/********************************************************************************/
+	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+		istart = ( (iNeighbor+1)%2 ) * ( n_elem[0]- 2*oversize[0]-1 ) + (1-(iNeighbor+1)%2) * ( 0 );
+		// Using Receiver point of vue
+		if (neighbor_[(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+		  //cout << "SUM : " << smilei_rk << " sum " << oversize2[0] << " data from " << istart << endl;
+			for (unsigned int i=0 ; i<oversize2[0] ; i++)
+				f1D->data_[istart+i] += (buf[(iNeighbor+1)%2])(i);
+		}
+	} // END for iNeighbor
+
+
+} // END sumFieldPrim (VALIDATED initRho)
 
 void SmileiMPI_Cart1D::exchangeField( Field* field )
 {
@@ -260,7 +327,38 @@ void SmileiMPI_Cart1D::exchangeField( Field* field )
 	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
 
 		if (neighbor_[iNeighbor]!=MPI_PROC_NULL) {
-			istart = iNeighbor * ( n_elem[0]- 2*oversize[0] ) + (1-iNeighbor) * ( oversize[0] );
+			istart = iNeighbor * ( n_elem[0]- 2*oversize[0]-1 ) + (1-iNeighbor) * ( oversize[0]+1 );
+			MPI_Send( &(f1D->data_[istart]), oversize[0], MPI_DOUBLE, neighbor_[iNeighbor], 0, SMILEI_COMM_1D );
+			//cout << "EXCH : " << smilei_rk << " send " << oversize[0] << " data to " << neighbor_[iNeighbor] << " starting at " << istart << endl;
+		} // END of Send
+
+		if (neighbor_[(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+			istart = ( (iNeighbor+1)%2 ) * ( n_elem[0]- oversize[0]-1 ) + (1-(iNeighbor+1)%2) * ( 0+1 )  ;
+			MPI_Recv( &(f1D->data_[istart]), oversize[0], MPI_DOUBLE, neighbor_[(iNeighbor+1)%2], 0, SMILEI_COMM_1D, &stat );
+			//cout << "EXCH : " << smilei_rk << " recv " << oversize[0] << " data to " << neighbor_[(iNeighbor+1)%2] << " starting at " << istart << endl;
+		} // END of Recv
+
+	} // END for iNeighbor
+
+
+} // END exchangeField VALIDATED (solvePoisson)
+
+void SmileiMPI_Cart1D::exchangeFieldPrim( Field* field )
+{
+	std::vector<unsigned int> n_elem = field->dims_;
+	Field1D* f1D =  static_cast<Field1D*>(field);
+
+	// Loop over dimField
+	// See sumField for details
+	int istart;
+	MPI_Status stat;
+	// Loop over neighbors in a direction
+	// Send to neighbor_[iNeighbor] / Recv from neighbor_[(iNeighbor+1)%2] :
+	// See in exchangeParticles()
+	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+
+		if (neighbor_[iNeighbor]!=MPI_PROC_NULL) {
+			istart = iNeighbor * ( n_elem[0]- 2*oversize[0]-1 ) + (1-iNeighbor) * ( oversize[0] );
 			MPI_Send( &(f1D->data_[istart]), oversize[0], MPI_DOUBLE, neighbor_[iNeighbor], 0, SMILEI_COMM_1D );
 			//cout << "EXCH : " << smilei_rk << " send " << oversize[0] << " data to " << neighbor_[iNeighbor] << " starting at " << istart << endl;
 		} // END of Send
@@ -274,14 +372,15 @@ void SmileiMPI_Cart1D::exchangeField( Field* field )
 	} // END for iNeighbor
 
 
-} // END exchangeField
+} // END exchangeFieldPrim
 
 void SmileiMPI_Cart1D::writeField( Field* field, string name )
 {
 	Field1D* f1D =  static_cast<Field1D*>(field);
 	std::vector<unsigned int> n_elem = field->dims_;
-	int istart = oversize[0];
-	int bufsize = n_elem[0]- 2*oversize[0];
+	int istart = oversize[0];//1;
+	if (smilei_rk!=0) istart+=1;
+	int bufsize = n_elem[0]- 2*oversize[0] - 1;
 
 	std::ofstream ff;
 
@@ -289,7 +388,8 @@ void SmileiMPI_Cart1D::writeField( Field* field, string name )
 		if (i_rk==smilei_rk) {
 			if (smilei_rk==0) ff.open(name.c_str(), ios::out);
 			else ff.open(name.c_str(), ios::app);
-			for (int i=istart ; i<istart+bufsize-1 ; i++)
+			//cout << i_rk << " write " << bufsize-1 << " elements from " << istart << " to " << istart+bufsize-1 <<  endl;
+			for (int i=istart ; i<istart+bufsize ; i++)
 				ff << f1D->data_[i] << endl;
 			if (smilei_rk==smilei_sz-1)ff << endl;
 			if (smilei_rk==smilei_sz-1)ff << endl;
@@ -299,7 +399,35 @@ void SmileiMPI_Cart1D::writeField( Field* field, string name )
 	}
 
 
-} // END writeField
+} // END writeField (VALIDATED solvePoisson)
+
+void SmileiMPI_Cart1D::writeFieldPrim( Field* field, string name )
+{
+	Field1D* f1D =  static_cast<Field1D*>(field);
+	std::vector<unsigned int> n_elem = field->dims_;
+	int istart = oversize[0];
+	if (smilei_rk!=0) istart+=1;
+	int bufsize = n_elem[0]- 2*oversize[0];
+	if (smilei_rk!=0) bufsize-=1;
+
+	std::ofstream ff;
+
+	for ( int i_rk = 0 ; i_rk < smilei_sz ; i_rk++ ) {
+		if (i_rk==smilei_rk) {
+			if (smilei_rk==0) ff.open(name.c_str(), ios::out);
+			else ff.open(name.c_str(), ios::app);
+			//cout << i_rk << " write " << bufsize-1 << " elements from " << istart << " to " << istart+bufsize-1 <<  endl;
+			for (int i=istart ; i<istart+bufsize ; i++)
+				ff << f1D->data_[i] << endl;
+			if (smilei_rk==smilei_sz-1)ff << endl;
+			if (smilei_rk==smilei_sz-1)ff << endl;
+			ff.close();
+		}
+		barrier();
+	}
+
+
+} // END writeFieldPrim (VALIDATED initRho)
 
 void SmileiMPI_Cart1D::writePlasma( vector<Species*> vecSpecies, string name )
 {
@@ -310,7 +438,7 @@ void SmileiMPI_Cart1D::writePlasma( vector<Species*> vecSpecies, string name )
 
 		for ( int i_rk = 0 ; i_rk < smilei_sz ; i_rk++ ) {
 			if (i_rk==smilei_rk) {
-				if (smilei_rk==0) ofile.open(name.c_str(), ios::out);
+			  if ((smilei_rk==0)&&(ispec==0)) ofile.open(name.c_str(), ios::out);
 				else ofile.open(name.c_str(), ios::app);
 				vecSpecies[ispec]->dump(ofile);
 				ofile.close();
@@ -333,7 +461,7 @@ void SmileiMPI_Cart1D::solvePoissonPara( ElectroMagn* champs )
 		exchangeField( champs->Ex_ );
 	}
 	
-}//END initMaxwellPara
+}//END solvePoissonPara
 
 
 void SmileiMPI_Cart1D::chargeConservingPara( ElectroMagn* champs )

@@ -18,9 +18,12 @@ public:
 	virtual void exchangeParticles(Species* species, PicParams* params);
 
 	virtual void sumField( Field* field );
+	virtual void sumFieldPrim( Field* field );
 	virtual void exchangeField( Field* field );
+	virtual void exchangeFieldPrim( Field* field );
 
 	virtual void writeField( Field* field, std::string name );
+	virtual void writeFieldPrim( Field* field, std::string name );
 	virtual void writePlasma( std::vector<Species*> vecSpecies, std::string name );
 	void solvePoissonPara( ElectroMagn* champs );
 	void chargeConservingPara( ElectroMagn* champs );

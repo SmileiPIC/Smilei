@@ -55,7 +55,7 @@ void SmileiMPI::bcast( PicParams& params )
 		if ( smilei_sz*params.n_space[i] != params.n_space_global[i] )
 			WARNING( "Domain splitting does not match to the global domain" );
 		//! \todo{ghost cells + oversize domain to be defined}
-		oversize[i] = params.oversize[i] = 2;
+		oversize[i] = params.oversize[i] = 4;
 		params.n_space[i] += 2*params.oversize[i];
 
 		//sim_length[i]*=2.0*M_PI;
@@ -191,7 +191,7 @@ void SmileiMPI::bcast_type_der( PicParams& params )
 
 void SmileiMPI::sumRho( ElectroMagn* champs )
 {
-  sumField( champs->rho_ );
+  sumFieldPrim( champs->rho_ );
 
 }
 
@@ -199,22 +199,22 @@ void SmileiMPI::sumDensities( ElectroMagn* champs )
 {
   //sumField( champs->rho_ );
   sumField( champs->Jx_ );
-  sumField( champs->Jy_ );
-  sumField( champs->Jz_ );
+  sumFieldPrim( champs->Jy_ );
+  sumFieldPrim( champs->Jz_ );
 
 }
 
 void SmileiMPI::exchangeE( ElectroMagn* champs )
 {
-  //exchangeField( champs->Ex_ );
-  exchangeField( champs->Ey_ );
-  exchangeField( champs->Ez_ );
+  exchangeField( champs->Ex_ );
+  exchangeFieldPrim( champs->Ey_ );
+  exchangeFieldPrim( champs->Ez_ );
 
 }
 
 void SmileiMPI::exchangeB( ElectroMagn* champs )
 {
-  exchangeField( champs->Bx_ );
+  //exchangeField( champs->Bx_ );
   exchangeField( champs->By_ );
   exchangeField( champs->Bz_ );
 
