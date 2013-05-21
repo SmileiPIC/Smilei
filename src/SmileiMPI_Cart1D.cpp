@@ -1,4 +1,3 @@
-
 #include "SmileiMPI_Cart1D.h"
 
 #include "Species.h"
@@ -255,7 +254,10 @@ void SmileiMPI_Cart1D::sumFieldPrim( Field* field )
 	// Size buffer is 2 oversize (1 inside & 1 outside of the current subdomain)
 	std::vector<unsigned int> oversize2 = oversize;
 	oversize2[0] *= 2; oversize2[0] += 1;
-	for (int i=0;i<nbNeighbors_ ;i++)  buf[i].allocateDims( oversize2 );
+	for (int i=0;i<nbNeighbors_ ;i++)  {
+	  buf[i].allocateDims( oversize2 );
+	  for (int j=0;j<oversize2[0] ;j++)  buf[i].data_[j] = 0.;
+	}
 
 	// istart store in the first part starting index of data to send, then the starting index of data to write in
 	// Send point of vue : istart =           iNeighbor * ( n_elem[0]- 2*oversize[0] ) + (1-iNeighbor)       * ( 0 );
@@ -389,10 +391,11 @@ void SmileiMPI_Cart1D::writeField( Field* field, string name )
 			if (smilei_rk==0) ff.open(name.c_str(), ios::out);
 			else ff.open(name.c_str(), ios::app);
 			//cout << i_rk << " write " << bufsize-1 << " elements from " << istart << " to " << istart+bufsize-1 <<  endl;
+			ff.precision( 20 );
 			for (int i=istart ; i<istart+bufsize ; i++)
 				ff << f1D->data_[i] << endl;
 			if (smilei_rk==smilei_sz-1)ff << endl;
-			if (smilei_rk==smilei_sz-1)ff << endl;
+			//if (smilei_rk==smilei_sz-1)ff << endl;
 			ff.close();
 		}
 		barrier();
@@ -416,11 +419,12 @@ void SmileiMPI_Cart1D::writeFieldPrim( Field* field, string name )
 		if (i_rk==smilei_rk) {
 			if (smilei_rk==0) ff.open(name.c_str(), ios::out);
 			else ff.open(name.c_str(), ios::app);
+			ff.precision( 20 );
 			//cout << i_rk << " write " << bufsize-1 << " elements from " << istart << " to " << istart+bufsize-1 <<  endl;
 			for (int i=istart ; i<istart+bufsize ; i++)
 				ff << f1D->data_[i] << endl;
 			if (smilei_rk==smilei_sz-1)ff << endl;
-			if (smilei_rk==smilei_sz-1)ff << endl;
+			//if (smilei_rk==smilei_sz-1)ff << endl;
 			ff.close();
 		}
 		barrier();
@@ -439,9 +443,10 @@ void SmileiMPI_Cart1D::writePlasma( vector<Species*> vecSpecies, string name )
 		for ( int i_rk = 0 ; i_rk < smilei_sz ; i_rk++ ) {
 			if (i_rk==smilei_rk) {
 			  if ((smilei_rk==0)&&(ispec==0)) ofile.open(name.c_str(), ios::out);
-				else ofile.open(name.c_str(), ios::app);
-				vecSpecies[ispec]->dump(ofile);
-				ofile.close();
+			  else                            ofile.open(name.c_str(), ios::app);
+
+			  vecSpecies[ispec]->dump(ofile);
+			  ofile.close();
 			}
 			barrier();
 		}

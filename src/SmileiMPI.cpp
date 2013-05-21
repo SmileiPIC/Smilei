@@ -1,4 +1,3 @@
-
 #include "SmileiMPI.h"
 
 #include "PicParams.h"
@@ -55,7 +54,7 @@ void SmileiMPI::bcast( PicParams& params )
 		if ( smilei_sz*params.n_space[i] != params.n_space_global[i] )
 			WARNING( "Domain splitting does not match to the global domain" );
 		//! \todo{ghost cells + oversize domain to be defined}
-		oversize[i] = params.oversize[i] = 4;
+		oversize[i] = params.oversize[i] = 2;
 		params.n_space[i] += 2*params.oversize[i];
 
 		//sim_length[i]*=2.0*M_PI;

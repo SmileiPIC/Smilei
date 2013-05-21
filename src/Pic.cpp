@@ -48,6 +48,7 @@ using namespace std;
 // ------------------------------------------------------------------------------------------------------------------ //
 int main (int argc, char* argv[])
 {
+  std::cout.setf( std::ios::fixed, std:: ios::floatfield ); // floatfield set to fixed
 	//! \todo{convert SmileiMPI in SmileiMPI_Cart1D}
  	// SmileiMPI smpi( &argc, &argv )
  	SmileiMPI_Cart1D smpi( &argc, &argv );
@@ -128,11 +129,10 @@ int main (int argc, char* argv[])
 		//dump species at time 0
 		sp->dump(ofile); ofile << endl;
 
-		PMESSAGE( 0, smpi.getRank(), sp->getNbrOfParticles() << " Particles of species " << ispec );
+		//PMESSAGE( 0, smpi.getRank(), sp->getNbrOfParticles() << " Particles of species " << ispec );
 		smpi.exchangeParticles(vecSpecies[ispec], &params);
 		PMESSAGE( 0, smpi.getRank(), sp->getNbrOfParticles() << " Particles of species " << ispec );
 	}// END for ispec
-
 
 	// ----------------------------------------------------------------------------
 	// Initialize the electromagnetic fields and interpolation-projection operators
@@ -221,18 +221,20 @@ int main (int argc, char* argv[])
 		EMfields->solveMaxwell(time_dual, params.timestep, &smpi);
 
 
-		/*smpi.writeField( EMfields->Ex_, "fex_new" );
-		smpi.writeField( EMfields->Ey_, "fey_new" );
-		smpi.writeField( EMfields->Ez_, "fez_new" );
-		smpi.writeField( EMfields->Bx_, "fbx_new" );
-		smpi.writeField( EMfields->By_, "fby_new" );
-		smpi.writeField( EMfields->Bz_, "fbz_new" );
-		smpi.writeField( EMfields->Jx_, "fjx_new" );
-		smpi.writeField( EMfields->Jy_, "fjy_new" );
-		smpi.writeField( EMfields->Jz_, "fjz_new" );		
-		smpi.writeField( EMfields->rho_, "rho_new" );
+		/*if (itime == 10000) {
+		  smpi.writeField( EMfields->Ex_, "fex_new" );
+		  smpi.writeField( EMfields->Ey_, "fey_new" );
+		  smpi.writeField( EMfields->Ez_, "fez_new" );
+		  smpi.writeField( EMfields->Bx_, "fbx_new" );
+		  smpi.writeField( EMfields->By_, "fby_new" );
+		  smpi.writeField( EMfields->Bz_, "fbz_new" );
+		  smpi.writeField( EMfields->Jx_, "fjx_new" );
+		  smpi.writeField( EMfields->Jy_, "fjy_new" );
+		  smpi.writeField( EMfields->Jz_, "fjz_new" );		
+		  smpi.writeField( EMfields->rho_, "rho_new" );
 
-		return 0;*/
+		  return 0;
+		}*/
 
 	        // call the various diagnostics
 		// ----------------------------
@@ -250,7 +252,7 @@ int main (int argc, char* argv[])
 	smpi.barrier();
 	t1 = MPI_Wtime();
 	if ( smpi.isMaster() ) MESSAGE(0, "Time in time loop : " << t1-t0 );
-	if ( smpi.isMaster() ) MESSAGE(0, "End time loop");
+	if ( smpi.isMaster() ) MESSAGE(0, "End time loop, time dual = " << time_dual);
 	// ------------------------------------------------------------------
 	//                      HERE ENDS THE PIC LOOP
 	// ------------------------------------------------------------------
@@ -272,15 +274,15 @@ int main (int argc, char* argv[])
 	  EMfields->dump(&params);	
 	//! \todo{Not //, processes write sequentially to validate. OK in 1D}
 	smpi.writeField( EMfields->Ex_, "fex_new" );
-	smpi.writeField( EMfields->Ey_, "fey_new" );
-	smpi.writeField( EMfields->Ez_, "fez_new" );
-	smpi.writeField( EMfields->Bx_, "fbx_new" );
+	smpi.writeFieldPrim( EMfields->Ey_, "fey_new" );
+	smpi.writeFieldPrim( EMfields->Ez_, "fez_new" );
+	smpi.writeFieldPrim( EMfields->Bx_, "fbx_new" );
 	smpi.writeField( EMfields->By_, "fby_new" );
 	smpi.writeField( EMfields->Bz_, "fbz_new" );
 	smpi.writeField( EMfields->Jx_, "fjx_new" );
-	smpi.writeField( EMfields->Jy_, "fjy_new" );
-	smpi.writeField( EMfields->Jz_, "fjz_new" );		
-	smpi.writeField( EMfields->rho_, "rho_new" );
+	smpi.writeFieldPrim( EMfields->Jy_, "fjy_new" );
+	smpi.writeFieldPrim( EMfields->Jz_, "fjz_new" );		
+	smpi.writeFieldPrim( EMfields->rho_, "rho_new" );
 
 	// ------------------------------
 	//  Cleanup & End the simulation

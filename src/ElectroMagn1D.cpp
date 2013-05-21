@@ -51,25 +51,34 @@ ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
 	}
 	cout << process_coord_x << " : " << dimPrim[0] << " " << dimDual[0] << endl;
 
-	ostringstream name("");	name << "fex." << process_coord_x;
+	ostringstream name;
+	name.str(""); name << "fex." << process_coord_x;
 	Ex_ = new Field1D( dimDual, name.str() );
-	Ey_ = new Field1D( dimPrim, "fey" );
-	Ez_ = new Field1D( dimPrim, "fez" );
-	Bx_ = new Field1D( dimPrim, "fbx" );
-	By_ = new Field1D( dimDual, "fby" );
-	Bz_ = new Field1D( dimDual, "fbz" );
+	name.str(""); name << "fey." << process_coord_x;
+	Ey_ = new Field1D( dimPrim, name.str() );
+	name.str(""); name << "fez." << process_coord_x;
+	Ez_ = new Field1D( dimPrim, name.str() );
+	name.str(""); name << "fbx." << process_coord_x;
+	Bx_ = new Field1D( dimPrim, name.str() );
+	name.str(""); name << "fby." << process_coord_x;
+	By_ = new Field1D( dimDual, name.str() );
+	name.str(""); name << "fbz." << process_coord_x;
+	Bz_ = new Field1D( dimDual, name.str() );
 	Bx_m = new Field1D(dimPrim);
 	By_m = new Field1D(dimDual);
 	Bz_m = new Field1D(dimDual);
 	
 	// Total charge currents and densities
-	ostringstream name2("");	name2 << "fjx." << process_coord_x;
-	Jx_ = new Field1D(dimDual, name2.str());
-	Jy_ = new Field1D(dimPrim, "fjy");
-	Jz_ = new Field1D(dimPrim, "fjz");
-	ostringstream name1("");	name1 << "rho." << process_coord_x;
-	rho_ = new Field1D(dimPrim, name1.str() );
-	rho_o = new Field1D(dimPrim, "rho_old");
+	name.str(""); name << "fjx." << process_coord_x;
+	Jx_ = new Field1D(dimDual, name.str() );
+	name.str(""); name << "fjy." << process_coord_x;
+	Jy_ = new Field1D(dimPrim, name.str() );
+	name.str(""); name << "fjz." << process_coord_x;
+	Jz_ = new Field1D(dimPrim, name.str() );
+	name.str(""); name << "rho." << process_coord_x;
+	rho_ = new Field1D(dimPrim, name.str() );
+	name.str(""); name << "rho_old." << process_coord_x;
+	rho_o = new Field1D(dimPrim, name.str() );
 
 	iPrim_beg.resize(params->nDim_field, 0);
 	iPrim_end.resize(params->nDim_field, 0);
