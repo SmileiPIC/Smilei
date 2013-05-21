@@ -103,64 +103,85 @@ int main (int argc, char* argv[])
 	// vector of Species (virtual)
 	vector<Species*> vecSpecies;
     
-    // ------------------------------------------------------------------
-    //                     HERE STARTS THE PIC LOOP
-    // ------------------------------------------------------------------
-    MESSAGE(0,"Time-Loop is started: number of time-steps n_time =" << params.n_time);
-    for (unsigned int itime=1 ; itime <= params.n_time ; itime++)
-    {
-        
-        // calculate new times
-        // -------------------
-        time_prim += params.timestep;
-        time_dual += params.timestep;
-        
-        
-        // send message at given time-steps
-        // --------------------------------
-        //!\todo{Introduce a control parameter in PicParams (MG)}
-        if (itime % 100 == 0)   MESSAGE(1,"Time: " << time_dual << " " << itime);
-        
-        
-        // put density and currents to 0
-        // -----------------------------
-        EMfields->initRhoJ();
-        
-        
-        // apply the PIC method
-        // --------------------
-        
-        // for all particles of all species (see dunamic in Species.cpp)
-        // (1) interpolate the fields at the particle position
-        // (2) move the particle
-        // (3) calculate the currents (charge conserving method)
-        for (unsigned int ispec=0 ; ispec<params.n_species; ispec++)
-        {
-            DEBUG(2, "Dynamic Species "<<ispec );
-            vecSpecies[ispec]->dynamics(time_dual, EMfields, Interp, Proj);
-        }
-        
-        // calculate the longitudinal current using the charge conservation equation
-        // EMfields->chargeConserving();
-        
-        // solve Maxwell's equations
-        EMfields->solveMaxwell(time_dual, params.timestep);
-        
-        
-        // call the various diagnostics
-        // ----------------------------
-        if (itime % 5000 == 0)
-        {
-            MESSAGE(1,"diags at time t=" << time_dual);
-/*            EMfields->dump(&params);
-            for (unsigned int ispec=0 ; ispec<params.n_species ; ispec++) {
-                vecSpecies[ispec]->dump(ofile);
-                ofile << endl;
-            }
-*/
-            vecSpecies[0]->dump(ofile);
-            ofile << endl;
-        }
+	// species "dump" file
+	//! \todo{Check if we keep going like that (MG)}
+	ofstream ofile("dump", ios::out);
+
+	// ------------------------------------------------------------------------------------
+	// Initialize the vecSpecies object containing all information of the different Species
+	// ------------------------------------------------------------------------------------
+
+	vecSpecies.resize(params.n_species);
+	for (unsigned int ispec=0 ; ispec<params.n_species ; ispec++) {
+		PMESSAGE( 0, smpi.getRank(), "Initializing Species "<<ispec);
+		Species* sp = NULL;
+		if (params.species_param[ispec].dynamics_type=="norm") {
+			// Species with Boris dynamics
+			sp = new Species_norm(&params, ispec, &smpi);
+		} else if (params.species_param[ispec].dynamics_type=="rrll") {
+			// Species with Boris dynamics + Radiation Back-Reaction (using the Landau-Lifshitz formula)
+			sp = new Species_rrll(&params, ispec, &smpi);
+		}//endif
+
+		//save temporary species sp in vecSpecies
+		vecSpecies[ispec] = sp;
+
+		//dump species at time 0
+		sp->dump(ofile); ofile << endl;
+
+		//PMESSAGE( 0, smpi.getRank(), sp->getNbrOfParticles() << " Particles of species " << ispec );
+		smpi.exchangeParticles(vecSpecies[ispec], &params);
+		PMESSAGE( 0, smpi.getRank(), sp->getNbrOfParticles() << " Particles of species " << ispec );
+	}// END for ispec
+
+	// ----------------------------------------------------------------------------
+	// Initialize the electromagnetic fields and interpolation-projection operators
+	// according to the simulation geometry
+	// ----------------------------------------------------------------------------
+	if ( params.geometry == "1d3v" ) {
+		// ---------------
+		// 1d3v Simulation
+		// ---------------
+		EMfields = new ElectroMagn1D(&params, &smpi);
+		if ( params.interpolation_order == 2 )
+			{
+				Interp = new Interpolator1D2Order(&params, &smpi);
+				Proj   = new Projector1D2Order(&params, &smpi);
+			}
+	}
+	else {
+		ERROR( "Unknwon geometry : " << params.geometry );
+	}//endif params.geometry
+
+
+	// -----------------------------------
+	// Inialize the electromagnetic fields
+	// -----------------------------------   
+	//!\todo{Check & describe what is done here (MG)}
+	// Init rho by pro all particles of subdomain -> local stuff
+	EMfields->initRho(vecSpecies, Proj);
+	smpi.sumRho( EMfields );
+
+	//! \todo{FalseNot //, current algorithm is instrinsically sequential}
+	smpi.solvePoissonPara( EMfields );		//champs->initMaxwell();
+
+
+	// ------------------------------------------------------------------------
+	// Initialise the simulation times time_prim at n=0 and time_dual at n=-1/2
+	// ------------------------------------------------------------------------
+	// time at integer time-steps (primal grid)
+	double time_prim = 0.;
+	// time at half-integer time-steps (dual grid)
+	double time_dual = -0.5 * params.timestep;
+
+	// ------------------------------------------------------------------
+	//                     HERE STARTS THE PIC LOOP
+	// ------------------------------------------------------------------
+	if ( smpi.isMaster() ) MESSAGE(0,"Time-Loop is started: number of time-steps n_time =" << params.n_time);
+	// t1-t0  = elapsed time in simulation time loop
+	double t0, t1;
+	t0 = MPI_Wtime();
+	for (unsigned int itime=1 ; itime <= params.n_time ; itime++) {
         
 		// calculate new times
 		// -------------------

@@ -12,11 +12,7 @@ class Interpolator1D2Order : public Interpolator1D
 {
     
 public:
-    //! Creator for Interpolator1D2Order
-	Interpolator1D2Order(PicParams *);
-    
-    // \todo Comment
-    //! Overloading of the () operator
+	Interpolator1D2Order(PicParams*, SmileiMPI*);
 	void operator() (ElectroMagn* champs, Particle* part, LocalFields* ELoc, LocalFields* BLoc);
     
 private:

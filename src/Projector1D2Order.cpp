@@ -90,13 +90,17 @@ void Projector1D2Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
         Jx_p[i] = Jx_p[i-1] + crx_p * Wl[i-1];
     }
 
-    // 2nd order projection for the total currents
-    for (unsigned int i=0; i<5; i++){
-        iloc = i+ipo-2;
-        (*Jx1D)(iloc) += Jx_p[i];
-        (*Jy1D)(iloc) += cry_p * Wt[i];
-        (*Jz1D)(iloc) += crz_p * Wt[i];
-    }//i
+	ipo -= index_domain_begin;
+	ip  -= index_domain_begin;
+
+	// 2nd order projection for the total currents
+	for (unsigned int i=0; i<5; i++) {
+		iloc = i+ipo-2;
+		(*Jx1D)(iloc) += Jx_p[i];
+		(*Jy1D)(iloc) += cry_p * Wt[i];
+		(*Jz1D)(iloc) += crz_p * Wt[i];
+	}//i
+
     
 }//END Projector1D2Order
 

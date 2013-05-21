@@ -10,10 +10,7 @@ using namespace std;
 #include "Particle.h" 
 #include "SmileiMPI_Cart1D.h" 
 
-// ---------------------------------------------------------------------------------------------------------------------
-// Creator for Interpolator1D2Order
-// ---------------------------------------------------------------------------------------------------------------------
-Interpolator1D2Order::Interpolator1D2Order(PicParams *params) : Interpolator1D(params)  
+Interpolator1D2Order::Interpolator1D2Order(PicParams *params, SmileiMPI* smpi) : Interpolator1D(params, smpi)  
 {
 	SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
 

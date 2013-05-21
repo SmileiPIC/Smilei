@@ -17,11 +17,7 @@ class Particle;
 class Interpolator
 {
 public:
-    //! Creator for Interpolator
-	Interpolator(PicParams *){;};
-    
-    //! \todo Why is the () operator overloaded? (MG to JD)
-    //! Overloading of the () operator
+	Interpolator(PicParams*, SmileiMPI*){;};
 	virtual void operator() (ElectroMagn* champs, Particle* part, LocalFields* ELoc, LocalFields* BLoc) = 0;
 private:
     
