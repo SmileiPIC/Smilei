@@ -2,6 +2,7 @@
 #define PROJECTOR_H
 
 #include "PicParams.h"
+#include "SmileiMPI.h"
 
 class ElectroMagn;
 class Field;
@@ -15,15 +16,14 @@ class Projector {
     
 public: 
 	//! Creator for the Projector
-    Projector(PicParams*){};
+	Projector(PicParams*, SmileiMPI*){};
+	//! \todo Comment more on this overloading of the () operator
+	//! overloading of the () operator
+	virtual void operator() (ElectroMagn* champs, Particle* part, double gf) = 0;
+	//! \todo Comment more on this overloading of the () operator
+	//! overloading of the () operator
+	virtual void operator() (Field* rho, Particle* part) = 0;
     
-    //! \todo Comment more on this overloading of the () operator
-    //! overloading of the () operator
-	virtual void operator() (ElectroMagn*, Particle*, double) = 0;
-    
-    //! \todo Comment more on this overloading of the () operator
-    //! overloading of the () operator
-	virtual void operator() (Field*, Particle*) = 0;
 private:
 };
 

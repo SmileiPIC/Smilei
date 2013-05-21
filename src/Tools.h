@@ -32,6 +32,11 @@
 #define MESSAGE4(...) MESSAGE3(__VA_ARGS__,MESSAGE2,MESSAGE1,)
 #define MESSAGE(...) MESSAGE4(__VA_ARGS__)(__VA_ARGS__)
 
+#define PMESSAGE1(rank, __txt)  {std::cout << "[Process " << rank << "] : " << __txt << std::endl;}
+#define PMESSAGE2(__val,rank,__txt) {for (int __i=0;__i<__val;__i++) std::cout << "\t"; std::cout << "[Process " << rank << "], " << "[" << __val << "] " << __txt << std::endl;}
+#define PMESSAGE3(arg1,arg2,arg3,arg4,...) arg4
+#define PMESSAGE4(...) PMESSAGE3(__VA_ARGS__,PMESSAGE2,PMESSAGE1,)
+#define PMESSAGE(...) PMESSAGE4(__VA_ARGS__)(__VA_ARGS__)
 
 #ifdef  __DEBUG
 extern unsigned int debug_level;

@@ -15,17 +15,17 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for the virtual class ElectroMagn
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn::ElectroMagn(PicParams* params)
+ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi)
 {
 
-    // check for laser conditions
+	// check for laser conditions
 	laser_.resize(params->n_laser);
     
-	for (unsigned int i=0; i<laser_.size(); i++)
-    {
+	for (unsigned int i=0; i<laser_.size(); i++) {
 		DEBUG(5,"Initializing Laser "<<i);
 		laser_[i] = new Laser(params->laser_param[i]);
 	}
+
 }
 
 
@@ -65,7 +65,7 @@ void ElectroMagn::dump(PicParams* params)
     //!\todo Check for none-cartesian grid & for generic grid (neither all dual or all primal) (MG & JD)
     
     std::vector<unsigned int> dimPrim; dimPrim.resize(1); dimPrim[0] = params->n_space[0]+1;
-    std::vector<unsigned int> dimDual; dimDual.resize(1); dimDual[0] = params->n_space[0]+2;
+    std::vector<unsigned int> dimDual; dimDual.resize(1); dimDual[0] = params->n_space[0]+1;
     
     // dump of the electromagnetic fields
 	Ex_->dump(dimDual);
@@ -104,3 +104,4 @@ void ElectroMagn::initRho(vector<Species*> vecSpecies, Projector* Proj)
 	}//iSpec
 
 }
+

@@ -8,12 +8,11 @@
 
 using namespace std;
 
-
-
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for Species_norm
 // ---------------------------------------------------------------------------------------------------------------------
-Species_norm::Species_norm(PicParams* params, unsigned int ispec) : Species(params, ispec)
+Species_norm::Species_norm( PicParams* params, int ispec, SmileiMPI* smpi)
+ : Species( params, ispec, smpi )
 {
 	DEBUG(10,"Species " << ispec << "created as norm");
 }

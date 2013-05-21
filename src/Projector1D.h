@@ -12,19 +12,20 @@
 class Projector1D : public Projector
 {
 
-public:
-    //! Constructor for Projector1D
-	Projector1D(PicParams* params) : Projector(params) {};
+ public:
+	//! Constructor for Projector1D
+	 Projector1D(PicParams* params, SmileiMPI* smpi) : Projector(params, smpi) {};
     
-    //! \todo comment this overloading of () operator (MG for JD)
+	//! \todo comment this overloading of () operator (MG for JD)
 	virtual void operator() (ElectroMagn* champs, Particle* part, double gf) = 0;
     
-    //!\todo comment this overloading of () operator (MG for JD)
+	//!\todo comment this overloading of () operator (MG for JD)
 	virtual void operator() (Field* rho, Particle* part) = 0;
 	
-protected:
-    //! Inverse of the spatial step 1/dx
+ protected:
+	//! Inverse of the spatial step 1/dx
 	double dx_inv_;
+	int index_domain_begin;
 };
 
 #endif

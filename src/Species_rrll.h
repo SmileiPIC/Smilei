@@ -11,19 +11,17 @@ class Interpolator;
 class Projector;
 class PicParams;
 
-//! class Species_rrLL
+//! class Species_rrll
 //! Species for which the dynamics is governed by the Lorentz force and the classical radiation reaction force:
 //! Boris pusher + first order spliting
-class Species_rrLL : public Species
+class Species_rrll : public Species
 {
-    
 public:
-    //! Creator for Species_rrLL
-    Species_rrLL(PicParams*, unsigned int);
-    //! Destructor for Species_rrLL
-    ~Species_rrLL();
-    
-    
+	//! Creator for Species_rrLL
+	Species_rrll(PicParams*, int, SmileiMPI*);
+	//! Destructor for Species_rrLL
+	~Species_rrll();
+
 private:
     
 };

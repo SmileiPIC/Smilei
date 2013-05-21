@@ -12,10 +12,20 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 Particle::Particle(int nDim)
 {
-	Position     = new double[nDim];
-    Position_old = new double[nDim];
-}
+	buf  = new double[nDim+3+1+nDim];
 
+	Position = new (buf)        double[nDim];
+	Momentum = new (buf+nDim)   double[3];
+	Weight	 = new (buf+nDim+3) double[1];
+
+	Position_old = new (buf+nDim+3+1) double[nDim];
+
+	Position[0]     = 0.;
+	Position_old[0] = 0.;
+	for (unsigned int i=0 ; i<3 ; i++ ) Momentum[i] = 0.;
+	Weight[0] = 0.;
+
+}
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -23,10 +33,8 @@ Particle::Particle(int nDim)
 // ---------------------------------------------------------------------------------------------------------------------
 Particle::~Particle()
 {
-	delete [] Position;
-    delete [] Position_old;
+	delete [] buf;
 }
-
 
 
 // ---------------------------------------------------------------------------------------------------------------------

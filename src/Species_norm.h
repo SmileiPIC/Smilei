@@ -15,14 +15,13 @@ class PicParams;
 class Species_norm : public Species
 {
     
-public:
-    //! Creator for Species_norm
-    Species_norm(PicParams*, unsigned int);
-    //! Destructor for Species_norm
-    ~Species_norm();
+ public:
+	//! Creator for Species_norm
+	Species_norm(PicParams*, int, SmileiMPI*);
+	//! Destructor for Species_norm
+	~Species_norm();
     
-    
-private:
+ private:
     
 };
 

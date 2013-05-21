@@ -31,7 +31,7 @@ PartBoundCond::PartBoundCond( PicParams *params, int ispec )
 	
 	if ( params->nDim_particle == 1 ) {
         	x_min = params->cell_length[0]*n_ord_proj_max;
-	        x_max = params->cell_length[0]*( params->n_space[ispec]+1-n_ord_proj_max );
+	        x_max = params->cell_length[0]*( params->n_space_global[ispec]+1-n_ord_proj_max );
 		if ( params->species_param[ispec].bc_part_type == "refl" ) {
 			bc_east = &refl_particle;
 			bc_west = &refl_particle;

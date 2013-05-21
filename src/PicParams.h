@@ -45,17 +45,17 @@ struct SpeciesStructure {
 	//! kind of species possible values: "ion" "electron" "test"
 	std::string species_type;
     
-    //! initialization type. Possible values: "regular" "cold" "Maxwell-Juettner"
+	//! initialization type. Possible values: "regular" "cold" "Maxwell-Juettner"
 	std::string initialization_type;
 	
 	//! number of particles per cell
 	unsigned int n_part_per_cell;
 	
-    //! coefficient on the maximum number of particles for the species
+	//! coefficient on the maximum number of particles for the species
 	double c_part_max;
     
-    //! maximum number of particles for the species
-    unsigned int n_part_max;
+	//! maximum number of particles for the species
+	unsigned int n_part_max;
     
 	//! mass [electron mass]
 	double mass;
@@ -63,7 +63,7 @@ struct SpeciesStructure {
 	//! charge [proton charge]
 	double charge;
 	
-    //! density [\f$n_N=\epsilon_0\,m_e\,\omega_N^{2}/e^2\f$ ]
+	//! density [\f$n_N=\epsilon_0\,m_e\,\omega_N^{2}/e^2\f$ ]
 	double density;
 	//! mean velocity in units of light velocity
 	std::vector<double> mean_velocity; // must be params.nDim_field
@@ -91,14 +91,16 @@ struct SpeciesStructure {
 // ---------------------------------------------------------------------------------------------------------------------
 class PicParams {
 	
-public:
-    //! Creator for PicParams
+ public:
+	//! Creator for PicParams
+	PicParams();
 	PicParams(std::string);
 
-    //! \todo Comment these 2 stuffs
+	//! \todo Comment these 3 stuffs
 	void parseFile(std::string);
 	void print();
-	
+	void setDimensions();
+
 	//! defines the geometry of the simulation
 	std::string geometry;
 
@@ -112,7 +114,7 @@ public:
 	unsigned int nDim_field;
 	
 	/*! \brief Time resolution.
-	Number of timesteps in \f$ 2\pi/\omega_N \f$ where \f$ \omega_N \f$ is the normalization (plasma or laser) frequency 
+	  Number of timesteps in \f$ 2\pi/\omega_N \f$ where \f$ \omega_N \f$ is the normalization (plasma or laser) frequency 
 	*/
 	unsigned int res_time;
 	
@@ -120,11 +122,11 @@ public:
 	double sim_time;
 
 	/*! \brief Space resolution.
-	Number of cells in every direction in \f$ 2\pi/k_N \f$ where \f$ k_N=\omega_N/c \f$ is the normalization wavenumber
+	  Number of cells in every direction in \f$ 2\pi/k_N \f$ where \f$ k_N=\omega_N/c \f$ is the normalization wavenumber
 	*/
 	std::vector<unsigned int> res_space;
 
-	//! simulation box size in \f$2\pi/k_N \f$
+	//! local simulation box size in \f$2\pi/k_N \f$
 	std::vector<double> sim_length;
 
 	//! plasma geometry
@@ -151,8 +153,11 @@ public:
 	//! dt for the simulation (CFL)
 	double timestep;
 
-	//! number of cells in every direction
+	//! number of cells in every direction of the local domain
 	std::vector<unsigned int> n_space;
+
+	//! number of cells in every direction of the global domain
+	std::vector<unsigned int> n_space_global;
 	
 	//! spatial step (cell dimension in every direction)
 	std::vector<double> cell_length;
@@ -171,7 +176,11 @@ public:
 	unsigned int n_laser;
 	
 	//! laser parameters
-	std::vector<LaserStructure> laser_param;	
+	std::vector<LaserStructure> laser_param;
+
+	//! Oversize domain to exchange less particles
+	std::vector<unsigned int> oversize;
+	
 	
 };
 

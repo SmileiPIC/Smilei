@@ -43,7 +43,7 @@ Field3D::~Field3D()
 	delete data_;
 	
 	fdata_.close();
-	DEBUG(10,"Field 3D deleted");
+	//DEBUG(10,"Field 3D deleted");
 }
 
 
@@ -69,7 +69,7 @@ void Field3D::allocateDims(std::vector<unsigned int> dims ) {
 		}
 	}//i
 	
-	DEBUG(10,"Fields 3D created: " << dims_[0] << "x" << dims_[1] << "x" << dims_[2]);
+	//DEBUG(10,"Fields 3D created: " << dims_[0] << "x" << dims_[1] << "x" << dims_[2]);
 
 }
 

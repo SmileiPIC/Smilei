@@ -62,6 +62,8 @@ void Field1D::allocateDims(std::vector<unsigned int> dims )
 // ---------------------------------------------------------------------------------------------------------------------
 void Field1D::dump(vector<unsigned int> dims)
 {
+  fdata_.precision( 20 ); // floatfield set to fixed
+  //cout << "print " << dims[0] << " elements " << endl;
 	for (unsigned int i=0 ; i<dims[0] ; i++)  fdata_ << data_[i] << endl;
 	fdata_ << endl;
 }

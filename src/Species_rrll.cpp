@@ -8,21 +8,20 @@
 
 using namespace std;
 
-
-
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for Species_rrLL
 // ---------------------------------------------------------------------------------------------------------------------
-Species_rrLL::Species_rrLL(PicParams* params, unsigned int ispec) : Species(params, ispec)
+Species_rrll::Species_rrll( PicParams* params, int ispec, SmileiMPI* smpi)
+  : Species( params, ispec, smpi )
 {
-	DEBUG(10,"Species " << ispec << "created as rrLL");
+  DEBUG(10,"Species " << ispec << "created as rrLL");
 }
 
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Destructor for Species_rrLL
 // ---------------------------------------------------------------------------------------------------------------------
-Species_rrLL::~Species_rrLL()
+Species_rrll::~Species_rrll()
 {
-	DEBUG(10,"Species rrLL deleted ");
+  DEBUG(10,"Species rrLL deleted ");
 }
