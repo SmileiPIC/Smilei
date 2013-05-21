@@ -33,7 +33,8 @@ void Projector1D2Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
 	Field1D* Jz1D  = static_cast<Field1D*>(EMfields->Jz_);
 
 	// Declare local variables
-    int unsigned ipo, ip, ip_m_ipo, iloc;
+    int unsigned ipo, ip, iloc;
+    int ip_m_ipo;
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;
     double crx_p = part->weight()*dx_ov_dt;                // current density for particle moving in the x-direction
     double cry_p = part->weight()*part->momentum(1)/gf;    // current density in the y-direction of the macroparticle
@@ -71,21 +72,20 @@ void Projector1D2Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
 	S1[ip_m_ipo+3] = 0.5 * (xj_m_xip2+xj_m_xip+0.25);
     
     // coefficients used in the Esirkepov method
-    for (unsigned int i=0; i<5; i++)
-    {
+    for (unsigned int i=0; i<5; i++){
         Wl[i] = S0[i] - S1[i];           // for longitudinal current (x)
-        Wt[i] = 0.5 * (S1[i] + S0[i]);   // for transverse currents (y,z)
+        Wt[i] = 0.5 * (S0[i] + S1[i]);   // for transverse currents (y,z)
     }//i
     
     // local current created by the particle
+    // calculate using the charge conservation equation
     for (unsigned int i=1; i<5; i++){
-        Jx_p[i] = Jx_p[i-1] + crx_p * Wl[i];
+        Jx_p[i] = Jx_p[i-1] + crx_p * Wl[i-1];
     }
 
     // 2nd order projection for the total currents
-    for (unsigned int i=0; i<5; i++)
-    {
-        iloc = i+ipo-1;
+    for (unsigned int i=0; i<5; i++){
+        iloc = i+ipo-2;
         (*Jx1D)(iloc) += Jx_p[i];
         (*Jy1D)(iloc) += cry_p * Wt[i];
         (*Jz1D)(iloc) += crz_p * Wt[i];

@@ -216,12 +216,14 @@ int main (int argc, char* argv[])
         if (itime % 5000 == 0)
         {
             MESSAGE(1,"diags at time t=" << time_dual);
-            EMfields->dump(&params);
+/*            EMfields->dump(&params);
             for (unsigned int ispec=0 ; ispec<params.n_species ; ispec++) {
                 vecSpecies[ispec]->dump(ofile);
                 ofile << endl;
             }
-
+*/
+            vecSpecies[0]->dump(ofile);
+            ofile << endl;
         }
         
     }//END of the time loop
