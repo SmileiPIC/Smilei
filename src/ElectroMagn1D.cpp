@@ -46,8 +46,8 @@ ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
 	dimDual.resize( params->nDim_field );	
 	
 	for (size_t i=0 ; i<params->nDim_field ; i++) {
-	  dimPrim[i] = params->n_space[i]+1;
-	  dimDual[i] = params->n_space[i]+2; // +1 but +2 to create décallage
+	  dimPrim[i] = params->n_space[i]+1; // +1 really used on rank 0
+	  dimDual[i] = params->n_space[i]+2; // +1 needed but +2 to preserve scheme
 	}
 	cout << process_coord_x << " : " << dimPrim[0] << " " << dimDual[0] << endl;
 
@@ -93,6 +93,10 @@ ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
 	  iPrim_end[0] = dimPrim[0] - params->oversize[0];
 	  iDual_beg[0] = params->oversize[0];
 	  iDual_end[0] = dimDual[0] - params->oversize[0];
+
+	  //if ( !smpi1D->isWester() ) iDual_beg[0]++;
+	  //if (  smpi1D->isWester() ) iDual_end[0]--;
+
 	  if ( smpi1D->isWester() ) iDual_beg_nobc[0] = iDual_beg[0]+1;
 	  else                      iDual_beg_nobc[0] = iDual_beg[0];
 	  if ( smpi1D->isEaster() ) iDual_end_nobc[0] = iDual_end[0]-1;
