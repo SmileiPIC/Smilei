@@ -64,8 +64,8 @@ void ElectroMagn::dump(PicParams* params)
 {
     //!\todo Check for none-cartesian grid & for generic grid (neither all dual or all primal) (MG & JD)
     
-    std::vector<unsigned int> dimPrim; dimPrim.resize(1); dimPrim[0] = params->n_space[0]+1;
-    std::vector<unsigned int> dimDual; dimDual.resize(1); dimDual[0] = params->n_space[0]+1;
+    std::vector<unsigned int> dimPrim; dimPrim.resize(1); dimPrim[0] = params->n_space[0]+2*params->oversize[0]+1;
+    std::vector<unsigned int> dimDual; dimDual.resize(1); dimDual[0] = params->n_space[0]+2*params->oversize[0]+2;
     
     // dump of the electromagnetic fields
 	Ex_->dump(dimDual);

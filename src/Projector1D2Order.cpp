@@ -14,16 +14,14 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Projector1D2Order
 // ---------------------------------------------------------------------------------------------------------------------
-Projector1D2Order::Projector1D2Order (PicParams* params, SmileiMPI* smpi) :Projector1D(params, smpi)
+Projector1D2Order::Projector1D2Order (PicParams* params, SmileiMPI* smpi) : Projector1D(params, smpi)
 {
 	SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
 
 	dx_inv_  = 1.0/params->cell_length[0];
 	dx_ov_dt = params->cell_length[0] / params->timestep;
 
-	int process_coord_x = smpi1D->getProcCoord(0);
-	index_domain_begin = process_coord_x*(params->n_space[0]-2*params->oversize[0]) - params->oversize[0];
-	//if (process_coord_x!=0) index_domain_begin-=1;
+	index_domain_begin = (smpi1D->getCellStartingGlobalIndex())[0];
 
 	DEBUG("cell_length "<< params->cell_length[0]);
 
@@ -59,7 +57,8 @@ void Projector1D2Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
 	ipo        = round(xjn);                          // index of the central node
 	xj_m_xipo  = xjn - (double)ipo;                   // normalized distance to the nearest grid point
 	xj_m_xipo2 = xj_m_xipo*xj_m_xipo;                 // square of the normalized distance to the nearest grid point
-    
+	//cout << "old coords = " << part->position_old(0);
+
 	// Locate particle new position on the primal grid
 	xjn       = part->position(0) * dx_inv_;
 	ip        = round(xjn);                           // index of the central node
@@ -91,7 +90,9 @@ void Projector1D2Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
     }
 
 	ipo -= index_domain_begin;
+	//cout << "\tcoords = " << part->position(0) << "\tglobal index = " << ip;
 	ip  -= index_domain_begin;
+	//cout << "\tlocal index = " << ip << endl;
 
 	// 2nd order projection for the total currents
 	for (unsigned int i=0; i<5; i++) {

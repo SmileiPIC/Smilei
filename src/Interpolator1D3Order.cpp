@@ -18,8 +18,7 @@ Interpolator1D3Order::Interpolator1D3Order(PicParams *params, SmileiMPI* smpi) :
 	dble_1ov6 = 1.0/6.0;
 	dble_2ov3 = 2.0/3.0;
 
-	int process_coord_x = smpi1D->getProcCoord(0);
-	index_domain_begin =  process_coord_x*(params->n_space[0]-2*params->oversize[0]);
+	index_domain_begin = (smpi1D->getCellStartingGlobalIndex())[0];
 }
 
 /***********************************************************************

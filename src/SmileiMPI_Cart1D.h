@@ -17,18 +17,8 @@ public:
 	virtual void createTopology();
 	virtual void exchangeParticles(Species* species, PicParams* params);
 
-	virtual void sumField( Field* field );
-	virtual void sumFieldPrim( Field* field );
-	virtual void exchangeField( Field* field );
-	virtual void exchangeFieldPrim( Field* field );
-
-	virtual void writeField( Field* field, std::string name );
-	virtual void writeFieldPrim( Field* field, std::string name );
-	virtual void writePlasma( std::vector<Species*> vecSpecies, std::string name );
-	void solvePoissonPara( ElectroMagn* champs );
-	void chargeConservingPara( ElectroMagn* champs );
-
 	inline int getProcCoord(int i) {return coords_[i];}
+
 	inline bool isWester() {return (coords_[0]==0);}
 	inline bool isEaster() {return (coords_[0]==dims_[0]-1);}
 
@@ -36,15 +26,22 @@ protected:
 	MPI_Comm SMILEI_COMM_1D;
 
 	int ndims_;
-        int* dims_;
+    int* dims_;
 
 	// Cartesian ...
-        int* coords_;
+    int* coords_;
 	int* periods_;
 	int reorder_;
 
 	int nbNeighbors_;
 	int* neighbor_;
+
+	virtual void sumFieldDual( Field* field );
+	virtual void sumFieldPrim( Field* field );
+	virtual void exchangeFieldDual( Field* field );
+	virtual void exchangeFieldPrim( Field* field );
+	virtual void writeFieldDual( Field* field, std::string name );
+	virtual void writeFieldPrim( Field* field, std::string name );
 
 };
 

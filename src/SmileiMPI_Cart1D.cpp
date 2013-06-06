@@ -70,14 +70,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, PicParams* params)
 
 	int n_particles = species->getNbrOfParticles();
 
-	//! \todo{store following variables as members of MPI environment}
-	int cellx_index = smilei_rk*(params->n_space[0]-2*params->oversize[0]);
-	//int celly_index = 0;//f(smilei_rk)*(params->n_space[1]-2*params->oversize[1]);
-	//int cellz_index = 0;//f(smilei_rk)*(params->n_space[2]-2*params->oversize[2]); 
-	double x_min_local = (cellx_index)*params->cell_length[0];
-	double x_max_local = (cellx_index+params->n_space[0]-2*params->oversize[0])*params->cell_length[0];
-
-	//DEBUG( "x_min_local = " << x_min_local << " - x_max_local = " << x_max_local );
+	DEBUG( "xmin_local = " << min_local[0] << " - x_max_local = " << max_local[0] );
   
 	/********************************************************************************/
 	// Build list of particle to exchange
@@ -85,14 +78,14 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, PicParams* params)
 	/********************************************************************************/
 	//! \todo{to be merge with particles boundary condition in Species::dynamics to not reread the full list}
 	for (int iPart=n_particles-1 ; iPart>=0; iPart-- ) {
-		if      ( (*cuParticles)[iPart]->position(0) < x_min_local) {
+		if      ( (*cuParticles)[iPart]->position(0) < min_local[0]) {
 			//DEBUG( smilei_rk << " : Particle to send to west " << iPart << " - x = " << (*cuParticles)[iPart]->position(0) );
 			buff_send[0].push_back( (*cuParticles)[iPart] );
 			cuParticles->erase(cuParticles->begin()+iPart);
 			//! todo{before : species->getNbrOfParticles() = npart_effective, now = particles.size() and getParticlesCapacity() = particles.capacity()}
 			// Ne devrait pas être nécessaire : species->getNbrOfParticles()--;      
 		}
-		else if ( (*cuParticles)[iPart]->position(0) >= x_max_local) {
+		else if ( (*cuParticles)[iPart]->position(0) >= max_local[0]) {
 			//DEBUG( smilei_rk << " : Particle to send to east " << iPart << " - x = " << (*cuParticles)[iPart]->position(0) );
 			buff_send[1].push_back( (*cuParticles)[iPart] );
 			cuParticles->erase(cuParticles->begin()+iPart);
@@ -177,7 +170,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, PicParams* params)
 
 } // END exchangeParticles
 
-void SmileiMPI_Cart1D::sumField( Field* field )
+void SmileiMPI_Cart1D::sumFieldDual( Field* field )
 {
 	std::vector<unsigned int> n_elem = field->dims_;
 	Field1D* f1D =  static_cast<Field1D*>(field);
@@ -213,7 +206,7 @@ void SmileiMPI_Cart1D::sumField( Field* field )
 	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
 
 		if (neighbor_[iNeighbor]!=MPI_PROC_NULL) {
-			istart = iNeighbor * ( n_elem[0]- oversize2[0] ) + (1-iNeighbor) * ( 0 );
+			istart = iNeighbor * ( n_elem[0] - oversize2[0] ) + (1-iNeighbor) * ( 0 );
 			MPI_Send( &(f1D->data_[istart]), oversize2[0], MPI_DOUBLE, neighbor_[iNeighbor], 0, SMILEI_COMM_1D );
 			//cout << "SUM : " << smilei_rk << " send " << oversize2[0] << " data to " << neighbor_[iNeighbor] << " starting at " << istart << endl;
 		} // END of Send
@@ -235,7 +228,7 @@ void SmileiMPI_Cart1D::sumField( Field* field )
 		istart = ( (iNeighbor+1)%2 ) * ( n_elem[0]- oversize2[0] ) + (1-(iNeighbor+1)%2) * ( 0 );
 		// Using Receiver point of vue
 		if (neighbor_[(iNeighbor+1)%2]!=MPI_PROC_NULL) {
-		  //cout << "SUM : " << smilei_rk << " sum " << oversize2[0] << " data from " << istart << endl;
+			//cout << "SUM : " << smilei_rk << " sum " << oversize2[0] << " data from " << istart << endl;
 			for (unsigned int i=0 ; i<oversize2[0] ; i++)
 				f1D->data_[istart+i] += (buf[(iNeighbor+1)%2])(i);
 		}
@@ -314,7 +307,7 @@ void SmileiMPI_Cart1D::sumFieldPrim( Field* field )
 
 } // END sumFieldPrim (VALIDATED initRho)
 
-void SmileiMPI_Cart1D::exchangeField( Field* field )
+void SmileiMPI_Cart1D::exchangeFieldDual( Field* field )
 {
 	std::vector<unsigned int> n_elem = field->dims_;
 	Field1D* f1D =  static_cast<Field1D*>(field);
@@ -329,18 +322,14 @@ void SmileiMPI_Cart1D::exchangeField( Field* field )
 	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
 
 		if (neighbor_[iNeighbor]!=MPI_PROC_NULL) {
-			istart = iNeighbor * ( n_elem[0]- 2*oversize[0] ) + (1-iNeighbor) * ( oversize[0] );
-			if (smilei_rk==0) istart--; 
-			else              istart++;// +1 to preserve scheme
-			MPI_Send( &(f1D->data_[istart]), oversize[0], MPI_DOUBLE, neighbor_[iNeighbor], 0, SMILEI_COMM_1D );
+			istart = iNeighbor * ( n_elem[0]- (2*oversize[0]+2) ) + (1-iNeighbor) * ( 2*oversize[0]+1 );
+			MPI_Send( &(f1D->data_[istart]), 1, MPI_DOUBLE, neighbor_[iNeighbor], 0, SMILEI_COMM_1D );
 			//cout << "EXCH : " << smilei_rk << " send " << oversize[0] << " data to " << neighbor_[iNeighbor] << " starting at " << istart << endl;
 		} // END of Send
 
 		if (neighbor_[(iNeighbor+1)%2]!=MPI_PROC_NULL) {
-			istart = ( (iNeighbor+1)%2 ) * ( n_elem[0]- oversize[0] ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
-			if (smilei_rk==0) istart--;
-			else              istart++; // +1 to preserve scheme
-			MPI_Recv( &(f1D->data_[istart]), oversize[0], MPI_DOUBLE, neighbor_[(iNeighbor+1)%2], 0, SMILEI_COMM_1D, &stat );
+			istart = ( (iNeighbor+1)%2 ) * ( n_elem[0] - 1 ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
+			MPI_Recv( &(f1D->data_[istart]), 1, MPI_DOUBLE, neighbor_[(iNeighbor+1)%2], 0, SMILEI_COMM_1D, &stat );
 			//cout << "EXCH : " << smilei_rk << " recv " << oversize[0] << " data to " << neighbor_[(iNeighbor+1)%2] << " starting at " << istart << endl;
 		} // END of Recv
 
@@ -364,14 +353,14 @@ void SmileiMPI_Cart1D::exchangeFieldPrim( Field* field )
 	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
 
 		if (neighbor_[iNeighbor]!=MPI_PROC_NULL) {
-			istart = iNeighbor * ( n_elem[0]- 2*oversize[0]-1 ) + (1-iNeighbor) * ( oversize[0]+1 ); //  f1D_current[n_elem[0]-2*oversize[0]+1] = f1D_west[oversize[0]]
-			MPI_Send( &(f1D->data_[istart]), oversize[0], MPI_DOUBLE, neighbor_[iNeighbor], 0, SMILEI_COMM_1D );
+			istart = iNeighbor * ( n_elem[0] - (2*oversize[0]+1) ) + (1-iNeighbor) * ( 2*oversize[0] ); //  f1D_current[n_elem[0]-2*oversize[0]+1] = f1D_west[oversize[0]]
+			MPI_Send( &(f1D->data_[istart]), 1, MPI_DOUBLE, neighbor_[iNeighbor], 0, SMILEI_COMM_1D );
 			//cout << "EXCH : " << smilei_rk << " send " << oversize[0] << " data to " << neighbor_[iNeighbor] << " starting at " << istart << endl;
 		} // END of Send
 
 		if (neighbor_[(iNeighbor+1)%2]!=MPI_PROC_NULL) {
-			istart = ( (iNeighbor+1)%2 ) * ( n_elem[0]- oversize[0] ) + (1-(iNeighbor+1)%2) * ( 0 );
-			MPI_Recv( &(f1D->data_[istart]), oversize[0], MPI_DOUBLE, neighbor_[(iNeighbor+1)%2], 0, SMILEI_COMM_1D, &stat );
+			istart = ( (iNeighbor+1)%2 ) * ( n_elem[0] - 1 ) + (1-(iNeighbor+1)%2) * ( 0 );
+			MPI_Recv( &(f1D->data_[istart]), 1, MPI_DOUBLE, neighbor_[(iNeighbor+1)%2], 0, SMILEI_COMM_1D, &stat );
 			//cout << "EXCH : " << smilei_rk << " recv " << oversize[0] << " data to " << neighbor_[(iNeighbor+1)%2] << " starting at " << istart << endl;
 		} // END of Recv
 
@@ -380,13 +369,14 @@ void SmileiMPI_Cart1D::exchangeFieldPrim( Field* field )
 
 } // END exchangeFieldPrim
 
-void SmileiMPI_Cart1D::writeField( Field* field, string name )
+void SmileiMPI_Cart1D::writeFieldDual( Field* field, string name )
 {
 	Field1D* f1D =  static_cast<Field1D*>(field);
 	std::vector<unsigned int> n_elem = field->dims_;
 	int istart = oversize[0];
 	if (smilei_rk!=0) istart+=1; //+1 to preserve scheme
 	int bufsize = n_elem[0]- 2*oversize[0] - 1; //-1, additionnal element to preserve scheme
+	if ( (smilei_rk!=0)&&(smilei_rk!=smilei_sz-1) ) bufsize-=1;
 
 	std::ofstream ff;
 
@@ -395,7 +385,6 @@ void SmileiMPI_Cart1D::writeField( Field* field, string name )
 			if (smilei_rk==0) ff.open(name.c_str(), ios::out);
 			else ff.open(name.c_str(), ios::app);
 			//cout << i_rk << " write " << bufsize-1 << " elements from " << istart << " to " << istart+bufsize-1 <<  endl;
-			ff.precision( 20 );
 			for (int i=istart ; i<istart+bufsize ; i++)
 				ff << f1D->data_[i] << endl;
 			if (smilei_rk==smilei_sz-1)ff << endl;
@@ -423,7 +412,6 @@ void SmileiMPI_Cart1D::writeFieldPrim( Field* field, string name )
 		if (i_rk==smilei_rk) {
 			if (smilei_rk==0) ff.open(name.c_str(), ios::out);
 			else ff.open(name.c_str(), ios::app);
-			ff.precision( 20 );
 			//cout << i_rk << " write " << bufsize-1 << " elements from " << istart << " to " << istart+bufsize-1 <<  endl;
 			for (int i=istart ; i<istart+bufsize ; i++)
 				ff << f1D->data_[i] << endl;
@@ -436,51 +424,3 @@ void SmileiMPI_Cart1D::writeFieldPrim( Field* field, string name )
 
 
 } // END writeFieldPrim (VALIDATED initRho)
-
-void SmileiMPI_Cart1D::writePlasma( vector<Species*> vecSpecies, string name )
-{
-	ofstream ofile;
-	int n_species = vecSpecies.size();
-
-	for (int ispec=0 ; ispec<n_species ; ispec++) {
-
-		for ( int i_rk = 0 ; i_rk < smilei_sz ; i_rk++ ) {
-			if (i_rk==smilei_rk) {
-			  if ((smilei_rk==0)&&(ispec==0)) ofile.open(name.c_str(), ios::out);
-			  else                            ofile.open(name.c_str(), ios::app);
-
-			  vecSpecies[ispec]->dump(ofile);
-			  ofile.close();
-			}
-			barrier();
-		}
-
-		ofile << endl;
-	}
-
-} // END writePlasma
-
-void SmileiMPI_Cart1D::solvePoissonPara( ElectroMagn* champs )
-{
-	for ( int i_rk = 0 ; i_rk < smilei_sz ; i_rk++ ) {
-		if (i_rk==smilei_rk)
-			champs->solvePoisson(this);
-
-		barrier();      
-		exchangeField( champs->Ex_ );
-	}
-	
-}//END solvePoissonPara
-
-
-void SmileiMPI_Cart1D::chargeConservingPara( ElectroMagn* champs )
-{
-	for ( int i_rk = 0 ; i_rk < smilei_sz ; i_rk++ ) {
-		if (i_rk==smilei_rk)
-			champs->chargeConserving(this);
-    
-		barrier();
-		exchangeField( champs->Jx_ );   
-	}
-  
-}//END chargeConservingPara

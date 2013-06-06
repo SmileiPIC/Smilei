@@ -6,6 +6,8 @@
 #include "ElectroMagn.h"
 #include "Field.h"
 
+#include "Species.h"
+
 #include <iostream>
 #include <sstream>
 #include <cmath>
@@ -40,29 +42,36 @@ void SmileiMPI::bcast( PicParams& params )
 	//! \ cell_length[i]=2.0*M_PI/res_space[i];
 	bcast( params.res_space );
 	bcast( params.sim_length );
-	params.n_space_global.resize(3, 1.);	//! \todo{3 but not real size !!! Pbs in Species::Species}
-	params.n_space.resize(3, 1.);
+	params.n_space_global.resize(3, 1);	//! \todo{3 but not real size !!! Pbs in Species::Species}
+	params.n_space.resize(3, 1);
 	params.cell_length.resize(3, 0.);	//! \todo{3 but not real size !!! Pbs in Species::Species}
-	cell_length.resize(3, 0.);		//! \todo{3 but not real size !!! Pbs in Species::Species}
 	params.cell_volume = 1;
 
-	params.oversize.resize(3, 0.);
-	oversize.resize(params.nDim_field, 0.);
+	params.oversize.resize(3, 0);
+	oversize.resize(params.nDim_field, 0);
+	cell_starting_global_index.resize(params.nDim_field, 0.);
+	min_local.resize(params.nDim_field, 0.);
+	max_local.resize(params.nDim_field, 0.);
 	for (unsigned int i=0 ; i<params.nDim_field ; i++) {
+		//sim_length[i]*=2.0*M_PI;
+		params.cell_length[i]=2.0*M_PI/params.res_space[i];
+		params.cell_volume *= params.cell_length[i];
+
 		params.n_space_global[i] = params.res_space[i]*params.sim_length[i]/(2.0*M_PI)+1;
 		params.n_space[i] = params.n_space_global[i] / smilei_sz;
 		if ( smilei_sz*params.n_space[i] != params.n_space_global[i] )
 			WARNING( "Domain splitting does not match to the global domain" );
-		//! \todo{ghost cells + oversize domain to be defined}
 		oversize[i] = params.oversize[i] = 2;
-		params.n_space[i] += 2*params.oversize[i];
 
-		//sim_length[i]*=2.0*M_PI;
-		params.cell_length[i]=2.0*M_PI/params.res_space[i];
-		cell_length[i]=2.0*M_PI/params.res_space[i];
-		params.cell_volume *= params.cell_length[i];
+		//! \todo{replace cell_starting_global_index compute by a most sophisticated or input data}
+		cell_starting_global_index[i] = smilei_rk*params.n_space[i];
+		// min/max_local : describe local domain in which particles cat be moved
+		//                 different from domain on which E, B, J are defined
+		min_local[i] = (cell_starting_global_index[i]                  )*params.cell_length[i];
+		max_local[i] = (cell_starting_global_index[i]+params.n_space[i])*params.cell_length[i];
+		cell_starting_global_index[i] -= params.oversize[i];
+
 	}
-	
 
 	bcast( params.plasma_geometry );
 	bcast( params.plasma_length );	//! \todo{vacuum_length[i]*=2.0*M_PI};
@@ -196,8 +205,8 @@ void SmileiMPI::sumRho( ElectroMagn* champs )
 
 void SmileiMPI::sumDensities( ElectroMagn* champs )
 {
-  //sumField( champs->rho_ );
-  sumField( champs->Jx_ );
+  //sumFieldPrim( champs->rho_ );
+  sumFieldDual( champs->Jx_ );
   sumFieldPrim( champs->Jy_ );
   sumFieldPrim( champs->Jz_ );
 
@@ -205,7 +214,7 @@ void SmileiMPI::sumDensities( ElectroMagn* champs )
 
 void SmileiMPI::exchangeE( ElectroMagn* champs )
 {
-  exchangeField( champs->Ex_ );
+  //exchangeFieldDual( champs->Ex_ );
   exchangeFieldPrim( champs->Ey_ );
   exchangeFieldPrim( champs->Ez_ );
 
@@ -213,9 +222,72 @@ void SmileiMPI::exchangeE( ElectroMagn* champs )
 
 void SmileiMPI::exchangeB( ElectroMagn* champs )
 {
-  //exchangeField( champs->Bx_ );
-  exchangeField( champs->By_ );
-  exchangeField( champs->Bz_ );
+  //exchangeFieldPrim( champs->Bx_ );
+  exchangeFieldDual( champs->By_ );
+  exchangeFieldDual( champs->Bz_ );
 
 }
+
+void SmileiMPI::solvePoissonPara( ElectroMagn* champs )
+{
+	for ( int i_rk = 0 ; i_rk < smilei_sz ; i_rk++ ) {
+		if (i_rk==smilei_rk)
+			champs->solvePoisson(this);
+
+		barrier();
+		exchangeFieldDual( champs->Ex_ );
+	}
+
+} // END solvePoissonPara
+
+
+void SmileiMPI::chargeConservingPara( ElectroMagn* champs )
+{
+	for ( int i_rk = 0 ; i_rk < smilei_sz ; i_rk++ ) {
+		if (i_rk==smilei_rk)
+			champs->chargeConserving(this);
+
+		barrier();
+		exchangeFieldDual( champs->Jx_ );
+	}
+
+} // END chargeConservingPara
+
+void SmileiMPI::writeFields( ElectroMagn* champs )
+{
+	writeFieldDual( champs->Ex_, "fex_new" );
+	writeFieldPrim( champs->Ey_, "fey_new" );
+	writeFieldPrim( champs->Ez_, "fez_new" );
+	writeFieldPrim( champs->Bx_, "fbx_new" );
+	writeFieldDual( champs->By_, "fby_new" );
+	writeFieldDual( champs->Bz_, "fbz_new" );
+	writeFieldDual( champs->Jx_, "fjx_new" );
+	writeFieldPrim( champs->Jy_, "fjy_new" );
+	writeFieldPrim( champs->Jz_, "fjz_new" );
+	writeFieldPrim( champs->rho_, "rho_new" );
+
+} // END writeFields
+
+void SmileiMPI::writePlasma( vector<Species*> vecSpecies, string name )
+{
+	ofstream ofile;
+	int n_species = vecSpecies.size();
+
+	for (int ispec=0 ; ispec<n_species ; ispec++) {
+
+		for ( int i_rk = 0 ; i_rk < smilei_sz ; i_rk++ ) {
+			if (i_rk==smilei_rk) {
+			  if ((smilei_rk==0)&&(ispec==0)) ofile.open(name.c_str(), ios::out);
+			  else                            ofile.open(name.c_str(), ios::app);
+
+			  vecSpecies[ispec]->dump(ofile);
+			  ofile.close();
+			}
+			barrier();
+		}
+
+		ofile << endl;
+	}
+
+} // END writePlasma
 

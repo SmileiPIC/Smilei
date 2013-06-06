@@ -129,8 +129,6 @@ int main (int argc, char* argv[])
 		//dump species at time 0
 		sp->dump(ofile); ofile << endl;
 
-		//PMESSAGE( 0, smpi.getRank(), sp->getNbrOfParticles() << " Particles of species " << ispec );
-		smpi.exchangeParticles(vecSpecies[ispec], &params);
 		PMESSAGE( 0, smpi.getRank(), sp->getNbrOfParticles() << " Particles of species " << ispec );
 	}// END for ispec
 
@@ -143,11 +141,10 @@ int main (int argc, char* argv[])
 		// 1d3v Simulation
 		// ---------------
 		EMfields = new ElectroMagn1D(&params, &smpi);
-		if ( params.interpolation_order == 2 )
-			{
-				Interp = new Interpolator1D2Order(&params, &smpi);
-				Proj   = new Projector1D2Order(&params, &smpi);
-			}
+		if ( params.interpolation_order == 2 ) {
+			Interp = new Interpolator1D2Order(&params, &smpi);
+			Proj   = new Projector1D2Order(&params, &smpi);
+		}
 	}
 	else {
 		ERROR( "Unknwon geometry : " << params.geometry );
@@ -182,7 +179,7 @@ int main (int argc, char* argv[])
 	double t0, t1;
 	t0 = MPI_Wtime();
 	for (unsigned int itime=1 ; itime <= params.n_time ; itime++) {
-        
+		
 		// calculate new times
 		// -------------------
 		time_prim += params.timestep;
@@ -222,17 +219,7 @@ int main (int argc, char* argv[])
 
 
 		/*if (itime == 10000) {
-		  smpi.writeField( EMfields->Ex_, "fex_new" );
-		  smpi.writeField( EMfields->Ey_, "fey_new" );
-		  smpi.writeField( EMfields->Ez_, "fez_new" );
-		  smpi.writeField( EMfields->Bx_, "fbx_new" );
-		  smpi.writeField( EMfields->By_, "fby_new" );
-		  smpi.writeField( EMfields->Bz_, "fbz_new" );
-		  smpi.writeField( EMfields->Jx_, "fjx_new" );
-		  smpi.writeField( EMfields->Jy_, "fjy_new" );
-		  smpi.writeField( EMfields->Jz_, "fjz_new" );		
-		  smpi.writeField( EMfields->rho_, "rho_new" );
-
+		  smpi.writeFields( EMfields );
 		  return 0;
 		}*/
 
@@ -251,8 +238,8 @@ int main (int argc, char* argv[])
 
 	smpi.barrier();
 	t1 = MPI_Wtime();
-	if ( smpi.isMaster() ) MESSAGE(0, "Time in time loop : " << t1-t0 );
 	if ( smpi.isMaster() ) MESSAGE(0, "End time loop, time dual = " << time_dual);
+	if ( smpi.isMaster() ) MESSAGE(0, "Time in time loop : " << t1-t0 );
 	// ------------------------------------------------------------------
 	//                      HERE ENDS THE PIC LOOP
 	// ------------------------------------------------------------------
@@ -271,18 +258,9 @@ int main (int argc, char* argv[])
 	smpi.writePlasma( vecSpecies, "dump_new" );  
 		
 	//if ( smpi.isMaster() ) 
-	  EMfields->dump(&params);	
+	EMfields->dump(&params);
 	//! \todo{Not //, processes write sequentially to validate. OK in 1D}
-	smpi.writeField( EMfields->Ex_, "fex_new" );
-	smpi.writeFieldPrim( EMfields->Ey_, "fey_new" );
-	smpi.writeFieldPrim( EMfields->Ez_, "fez_new" );
-	smpi.writeFieldPrim( EMfields->Bx_, "fbx_new" );
-	smpi.writeField( EMfields->By_, "fby_new" );
-	smpi.writeField( EMfields->Bz_, "fbz_new" );
-	smpi.writeField( EMfields->Jx_, "fjx_new" );
-	smpi.writeFieldPrim( EMfields->Jy_, "fjy_new" );
-	smpi.writeFieldPrim( EMfields->Jz_, "fjz_new" );		
-	smpi.writeFieldPrim( EMfields->rho_, "rho_new" );
+	smpi.writeFields( EMfields );
 
 	// ------------------------------
 	//  Cleanup & End the simulation

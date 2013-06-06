@@ -61,21 +61,21 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 	// do a loop over all cells in the simulation
 	// consider a 3d volume with size n_space[0]*n_space[1]*n_space[2]
 
-	int cellx_index = process_coord_x*(params->n_space[0]-2*params->oversize[0]);
-	int celly_index = 0;//process_coord_y*(params->n_space[1]-2*params->oversize[1]);
-	int cellz_index = 0;//process_coord_z*(params->n_space[2]-2*params->oversize[2]);
+	int cellx_index = process_coord_x*(params->n_space[0]);
+	int celly_index = 0;//process_coord_y*(params->n_space[1]);
+	int cellz_index = 0;//process_coord_z*(params->n_space[2]);
 
-	for (unsigned int k=params->oversize[2]; k<params->n_space[2]-params->oversize[2]; k++) {
-		for (unsigned int j=params->oversize[1]; j<params->n_space[1]-params->oversize[1]; j++) {
-			for (unsigned int i=params->oversize[0]; i<params->n_space[0]-params->oversize[0]; i++) {
+	for (unsigned int k=0; k<params->n_space[2]; k++) {
+		for (unsigned int j=0; j<params->n_space[1]; j++) {
+			for (unsigned int i=0; i<params->n_space[0]; i++) {
 				// ------------------------
 				// Constant density profile
 				// ------------------------
 				if (params->plasma_geometry=="constant") {
 
 					if (((params->cell_length[0]==0.0) || (
-						 (cellx_index+i+0.5-params->oversize[0])*params->cell_length[0] > params->vacuum_length[0] && 
-						 (cellx_index+i+0.5-params->oversize[0])*params->cell_length[0] < params->vacuum_length[0]+params->plasma_length[0]
+						 (cellx_index+i+0.5)*params->cell_length[0] > params->vacuum_length[0] &&
+						 (cellx_index+i+0.5)*params->cell_length[0] < params->vacuum_length[0]+params->plasma_length[0]
 						 )) &&
 						((params->cell_length[1]==0.0) || (
 						 (celly_index+j+0.5)*params->cell_length[1] > params->vacuum_length[1] && 
@@ -171,17 +171,17 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
     // start a loop on all cells
 
     // Rappel :
-    // int cellx_index = process_coord_x*(params->n_space[0]-2*params->oversize[0]);
-    // int celly_index = process_coord_y*(params->n_space[1]-2*params->oversize[1]);
-    // int cellz_index = process_coord_z*(params->n_space[2]-2*params->oversize[2]);
+    // int cellx_index = process_coord_x*(params->n_space[0]);
+    // int celly_index = process_coord_y*(params->n_space[1]);
+    // int cellz_index = process_coord_z*(params->n_space[2]);
 
-    for (unsigned int k=params->oversize[2]; k<params->n_space[2]-params->oversize[2]; k++) {
-	    for (unsigned int j=params->oversize[1]; j<params->n_space[1]-params->oversize[1]; j++) {
-		    for (unsigned int i=params->oversize[0]; i<params->n_space[0]-params->oversize[0]; i++) {
+    for (unsigned int k=0; k<params->n_space[2]; k++) {
+	    for (unsigned int j=0; j<params->n_space[1]; j++) {
+		    for (unsigned int i=0; i<params->n_space[0]; i++) {
 			    // initialize particles in meshes where the density is non-zero
 				if (density(i,j,k)>0) {
 				  //DEBUG(0,i);
-					indexes[0]=i+cellx_index-params->oversize[0];
+					indexes[0]=i+cellx_index;
 					temp[0]=temperature[0](i,j,k);
 					vel[0]=velocity[0](i,j,k);
 					if (ndim > 1) {

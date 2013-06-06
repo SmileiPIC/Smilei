@@ -16,8 +16,8 @@ Interpolator1D2Order::Interpolator1D2Order(PicParams *params, SmileiMPI* smpi) :
 
 	dx_inv_ = 1.0/params->cell_length[0];
 
-	int process_coord_x = smpi1D->getProcCoord(0);
-	index_domain_begin = process_coord_x*(params->n_space[0]-2*params->oversize[0]) - params->oversize[0];
+	index_domain_begin = (smpi1D->getCellStartingGlobalIndex())[0];
+
 }
 
 

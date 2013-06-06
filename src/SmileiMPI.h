@@ -24,6 +24,48 @@ public:
 	inline void barrier() { MPI_Barrier( SMILEI_COMM_WORLD );}
 
 	void bcast( PicParams& params );
+
+	virtual void createTopology() = 0;
+
+	virtual void exchangeParticles(Species* species, PicParams* params) = 0;
+	void writePlasma( std::vector<Species*> vecSpecies, std::string name );
+
+	void sumRho( ElectroMagn* champs );
+	void sumDensities( ElectroMagn* champs );
+	void exchangeE( ElectroMagn* champs );
+	void exchangeB( ElectroMagn* champs );
+	void writeFields( ElectroMagn* champs );
+
+	void solvePoissonPara( ElectroMagn* champs );
+	void chargeConservingPara( ElectroMagn* champs );
+
+	inline int getRank() {return smilei_rk;}
+	inline int getSize() {return smilei_sz;}
+	inline std::vector<int> getCellStartingGlobalIndex() {return cell_starting_global_index;}
+
+
+protected:
+	MPI_Comm SMILEI_COMM_WORLD;
+
+	int smilei_sz;
+	int smilei_rk;
+
+	std::vector<Particle*>* buff_send;
+	std::vector<Particle*>* buff_recv;
+
+	std::vector<unsigned int> oversize;
+	std::vector<int> cell_starting_global_index;
+	std::vector<double> min_local;
+	std::vector<double> max_local;
+
+	virtual void sumFieldDual( Field* field ) = 0;
+	virtual void sumFieldPrim( Field* field ) = 0;
+	virtual void exchangeFieldDual( Field* field ) = 0;
+	virtual void exchangeFieldPrim( Field* field ) = 0;
+	virtual void writeFieldDual( Field* field, std::string name ) = 0;
+	virtual void writeFieldPrim( Field* field, std::string name ) = 0;
+
+private:
 	void bcast( std::string& val );
 	void bcast( unsigned int &val );
 	void bcast( double& val );
@@ -36,35 +78,6 @@ public:
 	void bcast( LaserStructure& laserStructure );
 	void bcast( std::vector<LaserStructure>& vecLaserStructure );
 	void bcast_type_der( PicParams& params );
-
-	virtual void createTopology() = 0;
-	virtual void exchangeParticles(Species* species, PicParams* params) = 0;
-
-	void sumRho( ElectroMagn* champs );
-	void sumDensities( ElectroMagn* champs );
-
-	virtual void sumField( Field* field ) = 0;
-	virtual void sumFieldPrim( Field* field ) = 0;
-
-	void exchangeE( ElectroMagn* champs );
-	void exchangeB( ElectroMagn* champs );
-
-	virtual void exchangeField( Field* field ) = 0;
-	virtual void exchangeFieldPrim( Field* field ) = 0;
-
-	inline int getRank() {return smilei_rk;}
-
- protected:
-	MPI_Comm SMILEI_COMM_WORLD;
-
-	int smilei_sz;
-	int smilei_rk;
-
-	std::vector<Particle*>* buff_send;
-	std::vector<Particle*>* buff_recv;
-
-	std::vector<unsigned int> oversize;
-	std::vector<double> cell_length;
 
 };
 

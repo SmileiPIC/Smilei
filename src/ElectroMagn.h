@@ -23,12 +23,8 @@ public:
 	std::vector<unsigned int> dimPrim;
 	std::vector<unsigned int> dimDual;
 
-	std::vector<unsigned int> iPrim_beg;
-	std::vector<unsigned int> iPrim_end;
-	std::vector<unsigned int> iDual_beg;
-	std::vector<unsigned int> iDual_end;
-	std::vector<unsigned int> iDual_beg_nobc;
-	std::vector<unsigned int> iDual_end_nobc;
+	std::vector<unsigned int> index_bc_min;
+	std::vector<unsigned int> index_bc_max;
 
 	//! time at n steps for which electric fields are defined
 	double time_prim;
