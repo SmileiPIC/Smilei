@@ -1,19 +1,20 @@
-#include "Tools.h"
+
 #include "Species.h"
-#include "Particle.h"
-#include "ParticleRad.h"
-#include "Interpolator.h"
-#include "Interpolator1D2Order.h"
-#include "Projector.h"
-#include "Pusher.h"
-#include "PusherBoris.h"
-#include "Field3D.h"
-#include "ElectroMagn1D.h"
+
+#include "ParticleFactory.h"
+#include "PusherFactory.h"
+
 #include "PartBoundCond.h"
 #include "BoundaryConditionType.h"
 
+#include "ElectroMagn.h"
+#include "Interpolator.h"
+#include "Projector.h"
+
 #include "SmileiMPI.h"
-#include "SmileiMPI_Cart1D.h"
+
+#include "Field3D.h"
+#include "Tools.h"
 
 #include <iostream>
 #include <cmath>
@@ -27,8 +28,7 @@ using namespace std;
 // input: simulation parameters & Species index
 // ---------------------------------------------------------------------------------------------------------------------
 Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
-	SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
-	int process_coord_x = smpi1D->getProcCoord(0);
+
 	// Variable declaration
 	// --------------------
     
@@ -61,9 +61,11 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 	// do a loop over all cells in the simulation
 	// consider a 3d volume with size n_space[0]*n_space[1]*n_space[2]
 
-	int cellx_index = process_coord_x*(params->n_space[0]);
-	int celly_index = 0;//process_coord_y*(params->n_space[1]);
-	int cellz_index = 0;//process_coord_z*(params->n_space[2]);
+	vector<int> cell_index(3,0);
+	for (unsigned int i=0 ; i<params->nDim_field ; i++) {
+		if (params->cell_length[i]!=0)
+			cell_index[i] = (int) (smpi->getDomainLocalMin(i)/params->cell_length[i]);
+	}
 
 	for (unsigned int k=0; k<params->n_space[2]; k++) {
 		for (unsigned int j=0; j<params->n_space[1]; j++) {
@@ -74,16 +76,16 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 				if (params->plasma_geometry=="constant") {
 
 					if (((params->cell_length[0]==0.0) || (
-						 (cellx_index+i+0.5)*params->cell_length[0] > params->vacuum_length[0] &&
-						 (cellx_index+i+0.5)*params->cell_length[0] < params->vacuum_length[0]+params->plasma_length[0]
+						 (cell_index[0]+i+0.5)*params->cell_length[0] > params->vacuum_length[0] &&
+						 (cell_index[0]+i+0.5)*params->cell_length[0] < params->vacuum_length[0]+params->plasma_length[0]
 						 )) &&
 						((params->cell_length[1]==0.0) || (
-						 (celly_index+j+0.5)*params->cell_length[1] > params->vacuum_length[1] && 
-						 (celly_index+j+0.5)*params->cell_length[1] < params->vacuum_length[1]+params->plasma_length[1]
+						 (cell_index[1]+j+0.5)*params->cell_length[1] > params->vacuum_length[1] &&
+						 (cell_index[1]+j+0.5)*params->cell_length[1] < params->vacuum_length[1]+params->plasma_length[1]
 						 )) &&
 						((params->cell_length[2]==0.0) || (
-						 (cellz_index+k+0.5)*params->cell_length[2] > params->vacuum_length[2] && 
-						 (cellz_index+k+0.5)*params->cell_length[2] < params->vacuum_length[2]+params->plasma_length[2])
+						 (cell_index[2]+k+0.5)*params->cell_length[2] > params->vacuum_length[2] &&
+						 (cell_index[2]+k+0.5)*params->cell_length[2] < params->vacuum_length[2]+params->plasma_length[2])
 						)) {
 
 						// assign density its correct value in the cell
@@ -117,20 +119,11 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 		}//j
 	}//k end the loop on all cells
 
-    // defines n_part_max for the Species & create the corresponding particles
+    // defines npart_effective for the Species & create the corresponding particles
     // -----------------------------------------------------------------------
     params->species_param[ispec].n_part_max = round( params->species_param[ispec].c_part_max*npart_effective );
- 
-    particles.resize(npart_effective);
-    particles.reserve(params->species_param[ispec].n_part_max);
-
-    for (unsigned int k=0; k<npart_effective; k++) {
-	    if (params->species_param[ispec].radiating) {
-		    particles[k]=new ParticleRad(ndim);
-	    } else {
-		    particles[k]=new Particle(ndim);
-	    }
-    }
+	particles.reserve(params->species_param[ispec].n_part_max);
+    particles = ParticleFactory::createVector(params, ispec, npart_effective);
     
     // define Maxwell-Juettner related quantities
     // ------------------------------------------
@@ -171,9 +164,9 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
     // start a loop on all cells
 
     // Rappel :
-    // int cellx_index = process_coord_x*(params->n_space[0]);
-    // int celly_index = process_coord_y*(params->n_space[1]);
-    // int cellz_index = process_coord_z*(params->n_space[2]);
+    // int cell_index[0] = process_coord_x*(params->n_space[0]);
+    // int cell_index[1] = process_coord_y*(params->n_space[1]);
+    // int cell_index[2] = process_coord_z*(params->n_space[2]);
 
     for (unsigned int k=0; k<params->n_space[2]; k++) {
 	    for (unsigned int j=0; j<params->n_space[1]; j++) {
@@ -181,15 +174,15 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 			    // initialize particles in meshes where the density is non-zero
 				if (density(i,j,k)>0) {
 				  //DEBUG(0,i);
-					indexes[0]=i+cellx_index;
+					indexes[0]=i+cell_index[0];
 					temp[0]=temperature[0](i,j,k);
 					vel[0]=velocity[0](i,j,k);
 					if (ndim > 1) {
-						indexes[1]=j+celly_index;
+						indexes[1]=j+cell_index[1];
 						temp[1]=temperature[1](i,j,k);
 						vel[1]=velocity[1](i,j,k);
 						if (ndim > 2) {
-							indexes[2]=k+cellz_index;
+							indexes[2]=k+cell_index[2];
 							temp[2]=temperature[2](i,j,k);
 							vel[2]=velocity[2](i,j,k);
 						}//ndim > 2
@@ -214,15 +207,12 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
     delete vel;
    
     // assign the correct Pusher to Push
-    if ( params->species_param[ispec].dynamics_type == "norm" )
-	    Push = new PusherBoris( params, ispec );
-    else
-	    ERROR( "Unknwon dynamics : " << params->species_param[ispec].dynamics_type );
+    Push = PusherFactory::create( params, ispec );
 	  
-    //! \todo{other dimensions to store in class members, n_ord_proj_max to define as input (JD)}
-    partBoundCond = new PartBoundCond(  params, ispec );
+    // define limits for BC and functions applied and for domain decomposition
+    partBoundCond = new PartBoundCond( params, ispec, smpi);
 
-    PMESSAGE( 1, smpi->getRank(),"Specie "<< ispec <<" # part "<< npart_effective );
+    PMESSAGE( 1, smpi->getRank(),"Species "<< ispec <<" # part "<< npart_effective );
     
 }//END Species creator
 
@@ -371,40 +361,29 @@ void Species::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Inter
 	
 	// number of particles for this Species
 	int unsigned nParticles = getNbrOfParticles();
+	smpi->clearExchList();
 
 	// -------------------------------
 	// calculate the particle dynamics
 	// -------------------------------
 	if (time_dual>time_frozen) {
 		// moving particle
-		int locate;
+		//int locate;
 		double gf = 1.0;
 
 		// for all particles of the Species
 		for (unsigned int iPart=0 ; iPart<nParticles; iPart++ ) {
-			//DEBUG(5,"ipart= "<<iPart);
 			// Interpolate the fields at the particle position
 			(*Interp)(Champs, particles[iPart], &Epart, &Bpart);
 
 			// Push the particle
-			//! \todo{make 2 different methods: (1) changeMomentum, (2) changePosition (MG)}
-			gf = 1.0;
 			(*Push)(particles[iPart], Epart, Bpart, gf);
 
 			// Apply boundary condition on the particles
-			//! \todo{generalize to any dimensions (MG)}
-			//! \todo{locate : define 0 to ... (JD)}
-			//! \todo{replace by call to cartesian/cylindrical operator (JD)}
-			//! \todo{locate : define 0 to ... (JD)}
-			locate = partBoundCond->locateParticle( particles[iPart] );
-			if ( locate == 0 )	{}
-			else if ( ( locate == 1 ) )//&& ( smpi1D->isWester() ) )
-				(*partBoundCond->bc_west)( particles[iPart], 2.*partBoundCond->x_min );
-			else if ( ( locate == 2 ) )//&& ( smpi1D->isEaster() ) )
-				(*partBoundCond->bc_east)( particles[iPart], 2.*partBoundCond->x_max );
-			// else ...
-			
-			// Project the particle currents
+			// Boundary Condition may be physical or due to domain decomposition
+			// apply returns 0 if iPart is no more in the domain local
+			if ( !partBoundCond->apply( particles[iPart] ) ) smpi->addPartInExchList( iPart );
+
 			(*Proj)(Champs, particles[iPart], gf);
 
 		}// iPart

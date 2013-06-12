@@ -18,8 +18,13 @@ Interpolator1D3Order::Interpolator1D3Order(PicParams *params, SmileiMPI* smpi) :
 	dble_1ov6 = 1.0/6.0;
 	dble_2ov3 = 2.0/3.0;
 
-	index_domain_begin = (smpi1D->getCellStartingGlobalIndex())[0];
+	index_domain_begin = smpi1D->getCellStartingGlobalIndex(0);
 }
+
+Interpolator1D3Order::~Interpolator1D3Order()
+{
+}
+
 
 /***********************************************************************
 	Interpolate the field fx defined on the primal grid 

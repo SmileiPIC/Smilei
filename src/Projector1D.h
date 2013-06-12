@@ -15,6 +15,8 @@ class Projector1D : public Projector
  public:
 	//! Constructor for Projector1D
 	 Projector1D(PicParams* params, SmileiMPI* smpi) : Projector(params, smpi) {};
+
+	 virtual ~Projector1D() {};
     
 	//! \todo comment this overloading of () operator (MG for JD)
 	virtual void operator() (ElectroMagn* champs, Particle* part, double gf) = 0;

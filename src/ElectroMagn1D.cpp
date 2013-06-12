@@ -19,11 +19,13 @@ using namespace std;
 ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
 	: ElectroMagn(params, smpi)
 {
+	// local dt to store
 	SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
 	int process_coord_x = smpi1D->getProcCoord(0);
 
 	// spatial-step and ratios time-step by spatial-step & spatial-step by time-step
 	dx       = params->cell_length[0];
+	dt       = params->timestep;
 	dt_ov_dx = params->timestep/params->cell_length[0];
 	dx_ov_dt = 1.0/dt_ov_dx;
 
@@ -53,32 +55,32 @@ ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
 
 	ostringstream name;
 	name.str(""); name << "fex." << process_coord_x;
-	Ex_ = new Field1D( dimDual, name.str() );
+	Ex_ = new Field1D( dimPrim, 0, false, name.str() );
 	name.str(""); name << "fey." << process_coord_x;
-	Ey_ = new Field1D( dimPrim, name.str() );
+	Ey_ = new Field1D( dimPrim, 1, false, name.str() );
 	name.str(""); name << "fez." << process_coord_x;
-	Ez_ = new Field1D( dimPrim, name.str() );
+	Ez_ = new Field1D( dimPrim, 2, false, name.str() );
 	name.str(""); name << "fbx." << process_coord_x;
-	Bx_ = new Field1D( dimPrim, name.str() );
+	Bx_ = new Field1D( dimPrim, 0, true, name.str() );
 	name.str(""); name << "fby." << process_coord_x;
-	By_ = new Field1D( dimDual, name.str() );
+	By_ = new Field1D( dimPrim, 1, true, name.str() );
 	name.str(""); name << "fbz." << process_coord_x;
-	Bz_ = new Field1D( dimDual, name.str() );
-	Bx_m = new Field1D(dimPrim);
-	By_m = new Field1D(dimDual);
-	Bz_m = new Field1D(dimDual);
+	Bz_ = new Field1D( dimPrim, 2, true, name.str() );
+	Bx_m = new Field1D(dimPrim, 0, true);
+	By_m = new Field1D(dimPrim, 1, true);
+	Bz_m = new Field1D(dimPrim, 2, true);
 	
 	// Total charge currents and densities
 	name.str(""); name << "fjx." << process_coord_x;
-	Jx_ = new Field1D(dimDual, name.str() );
+	Jx_ = new Field1D(dimPrim, 0, false, name.str() );
 	name.str(""); name << "fjy." << process_coord_x;
-	Jy_ = new Field1D(dimPrim, name.str() );
+	Jy_ = new Field1D(dimPrim, 1, false, name.str() );
 	name.str(""); name << "fjz." << process_coord_x;
-	Jz_ = new Field1D(dimPrim, name.str() );
+	Jz_ = new Field1D(dimPrim, 2, false, name.str() );
 	name.str(""); name << "rho." << process_coord_x;
 	rho_ = new Field1D(dimPrim, name.str() );
 	name.str(""); name << "rho_old." << process_coord_x;
-	rho_o = new Field1D(dimPrim, name.str() );
+	rho_o = new Field1D(dimPrim );
 
 	index_bc_min.resize( params->nDim_field, 0 );
 	index_bc_max.resize( params->nDim_field, 0 );
@@ -104,8 +106,8 @@ ElectroMagn1D::~ElectroMagn1D()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
 {
-	SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
-	int process_coord_x = smpi1D->getProcCoord(0);
+	//SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
+	//int process_coord_x = smpi1D->getProcCoord(0);
 
 	Field1D* Ex1D  = static_cast<Field1D*>(Ex_);
 	Field1D* rho1D = static_cast<Field1D*>(rho_);
@@ -129,7 +131,7 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
 // ---------------------------------------------------------------------------------------------------------------------
 // Maxwell solver using the FDTD scheme
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn1D::solveMaxwell(double time_dual, double dt, SmileiMPI* smpi)
+void ElectroMagn1D::solveMaxwell(double time_dual, SmileiMPI* smpi)
 {
 	SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
 
@@ -146,7 +148,7 @@ void ElectroMagn1D::solveMaxwell(double time_dual, double dt, SmileiMPI* smpi)
 	Field1D* Jy1D = static_cast<Field1D*>(Jy_);
 	Field1D* Jz1D = static_cast<Field1D*>(Jz_);
 
-	DEBUG(5,"solveMaxwell ElectroMagn1D " << time_dual);
+	//DEBUG(5,"solveMaxwell ElectroMagn1D " << time_dual);
 
 	// --------------------------------------------------
 	// Define the laser fields at left & right boundaries
@@ -269,25 +271,169 @@ void ElectroMagn1D::solveMaxwell(double time_dual, double dt, SmileiMPI* smpi)
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Calculate the longitudinal current by solving the charge-conservation equation
+// Maxwell solver using the FDTD scheme
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn1D::chargeConserving(SmileiMPI* smpi)
+void ElectroMagn1D::solveMaxwellAmpere()
+{
+
+	Field1D* Ex1D   = static_cast<Field1D*>(Ex_);
+	Field1D* Ey1D   = static_cast<Field1D*>(Ey_);
+	Field1D* Ez1D   = static_cast<Field1D*>(Ez_);
+	//Field1D* Bx1D   = static_cast<Field1D*>(Bx_);
+	Field1D* By1D   = static_cast<Field1D*>(By_);
+	Field1D* Bz1D   = static_cast<Field1D*>(Bz_);
+	Field1D* Jx1D = static_cast<Field1D*>(Jx_);
+	Field1D* Jy1D = static_cast<Field1D*>(Jy_);
+	Field1D* Jz1D = static_cast<Field1D*>(Jz_);
+
+	// --------------------
+	// Solve Maxwell-Ampere
+	// --------------------
+	// Calculate the electrostatic field ex on the dual grid
+	//for (unsigned int ix=0 ; ix<nx_d ; ix++){
+	for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
+	  (*Ex1D)(ix)= (*Ex1D)(ix) - dt* (*Jx1D)(ix) ;
+	}
+	// Transverse fields ey, ez  are defined on the primal grid
+	//for (unsigned int ix=0 ; ix<nx_p ; ix++) {
+	for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
+		(*Ey1D)(ix)= (*Ey1D)(ix) - dt_ov_dx * ( (*Bz1D)(ix+1) - (*Bz1D)(ix)) - dt * (*Jy1D)(ix) ;
+		(*Ez1D)(ix)= (*Ez1D)(ix) + dt_ov_dx * ( (*By1D)(ix+1) - (*By1D)(ix)) - dt * (*Jz1D)(ix) ;
+	}
+
+	//smpi->exchangeE( this ); 			// Useless by construction
+
+}
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Maxwell solver using the FDTD scheme
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn1D::solveMaxwellFaraday()
+{
+	//Field1D* Ex1D   = static_cast<Field1D*>(Ex_);
+	Field1D* Ey1D   = static_cast<Field1D*>(Ey_);
+	Field1D* Ez1D   = static_cast<Field1D*>(Ez_);
+	Field1D* Bx1D   = static_cast<Field1D*>(Bx_);
+	Field1D* By1D   = static_cast<Field1D*>(By_);
+	Field1D* Bz1D   = static_cast<Field1D*>(Bz_);
+	Field1D* Bx1D_m = static_cast<Field1D*>(Bx_m);
+	Field1D* By1D_m = static_cast<Field1D*>(By_m);
+	Field1D* Bz1D_m = static_cast<Field1D*>(Bz_m);
+
+	// ----------------------------------------------
+	// Save the magnetic fields (used to center them)
+	// ----------------------------------------------
+	//for (unsigned int ix=0 ; ix<nx_p ; ix++) {
+	for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
+		(*Bx1D_m)(ix)=(*Bx1D)(ix);
+	}
+	//for (unsigned int ix=0 ; ix<nx_d ; ix++) {
+	for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
+		(*By1D_m)(ix) = (*By1D)(ix);
+		(*Bz1D_m)(ix) = (*Bz1D)(ix);
+	}
+
+	// ---------------------
+	// Solve Maxwell-Faraday
+	// ---------------------
+	// NB: bx is given in 1d and defined when initializing the fields (here put to 0)
+	// Transverse fields  by & bz are defined on the dual grid
+	//for (unsigned int ix=1 ; ix<nx_p ; ix++) {
+	for (unsigned int ix=1 ; ix<dimDual[0]-1 ; ix++) {
+		(*By1D)(ix)= (*By1D)(ix) + dt_ov_dx * ( (*Ez1D)(ix) - (*Ez1D)(ix-1)) ;
+		(*Bz1D)(ix)= (*Bz1D)(ix) - dt_ov_dx * ( (*Ey1D)(ix) - (*Ey1D)(ix-1)) ;
+	}
+
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Maxwell solver using the FDTD scheme
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn1D::boundaryConditions(double time_dual, SmileiMPI* smpi)
 {
 	SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
-	int process_coord_x = smpi1D->getProcCoord(0);
 
-	Field1D* Jx1D = static_cast<Field1D*>(Jx_);
-	Field1D* rho1D   = static_cast<Field1D*>(rho_);
-	Field1D* rho1D_o = static_cast<Field1D*>(rho_o);
+	//Field1D* Ex1D   = static_cast<Field1D*>(Ex_);
+	Field1D* Ey1D   = static_cast<Field1D*>(Ey_);
+	Field1D* Ez1D   = static_cast<Field1D*>(Ez_);
+	Field1D* Bx1D   = static_cast<Field1D*>(Bx_);
+	Field1D* By1D   = static_cast<Field1D*>(By_);
+	Field1D* Bz1D   = static_cast<Field1D*>(Bz_);
+	Field1D* Bx1D_m = static_cast<Field1D*>(Bx_m);
+	Field1D* By1D_m = static_cast<Field1D*>(By_m);
+	Field1D* Bz1D_m = static_cast<Field1D*>(Bz_m);
 
-	//!\todo Replace this by Esirkepov method for the calculation of longitudinal currents (MG)
-	// longitudinal currents defined on the dual-grid
-	if (process_coord_x==0) (*Jx1D)(0) = 0.0;
-	// else Recv from ...
-	//for (unsigned int i=1 ; i<nx_d ; i++) {
-	for ( unsigned int ix = 1 ; ix < dimDual[0] ; ix++ ){
-		(*Jx1D)(ix) = (*Jx1D)(ix-1) - dx_ov_dt * ( (*rho1D)(ix-1)-(*rho1D_o)(ix-1) );
+	// --------------------------------------------------
+	// Define the laser fields at left & right boundaries
+	// --------------------------------------------------
+
+	double byL=0, bzL=0, byR=0, bzR=0;
+
+	for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
+		// testing the time-profile
+		// ------------------------
+
+		if (laser_[ilaser]->laser_struct.time_profile == "constant") {
+			if (laser_[ilaser]->laser_struct.angle == 0){
+				// Incident field (left boundary)
+				byL += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
+				bzL += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
+			} else if (laser_[ilaser]->laser_struct.angle == 180){
+				// Incident field (right boundary)
+				byR += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
+				bzR += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
+			} else {
+				ERROR("Angle not allowed for 1D laser pulse " << ilaser);
+			}
+		} else {
+			ERROR("Laser profile "<< ilaser <<" not allowed");
+		}//ENDif time_profile
+	}//ilaser
+
+	// ----------------------------
+	// Apply EM boundary conditions
+	// ----------------------------
+	//!\todo Make boundary conditions on the EM fields as an external method (MG)
+	if ( smpi1D->isWester() ) {
+		// Silver-Mueller boundary conditions (left)
+		//(*By1D)(0) = A_*byL + B_* (*By1D)(1) + C_* (*Ez1D)(0) ;
+		//(*Bz1D)(0) = A_*bzL + B_* (*Bz1D)(1) - C_* (*Ey1D)(0) ;
+		// Silver-Mueller boundary conditions (left)
+		(*By1D)(index_bc_min[0])= A_*byL + B_* (*By1D)(index_bc_min[0]+1) + C_* (*Ez1D)(index_bc_min[0]);
+		(*Bz1D)(index_bc_min[0])= A_*bzL + B_* (*Bz1D)(index_bc_min[0]+1) - C_* (*Ey1D)(index_bc_min[0]);
+		// Correction on unused extreme ghost
+		for (unsigned int ix=0 ; ix<index_bc_min[0] ; ix++) {
+			(*By1D)(ix)=0; (*Bz1D)(ix)=0;
+			(*Ey1D)(ix)=0; (*Ez1D)(ix)=0;
+		}
 	}
+	if ( smpi1D->isEaster() ) {
+		// Silver-Mueller boundary conditions (right)
+		//(*By1D)(nx_d-1) = A_*byR + B_* (*By1D)(nx_d-2) - C_* (*Ez1D)(nx_p-1) ;
+		//(*Bz1D)(nx_d-1) = A_*bzR + B_* (*Bz1D)(nx_d-2) + C_* (*Ey1D)(nx_p-1) ;
+		// Silver-Mueller boundary conditions (right)
+		(*By1D)(index_bc_max[0])= A_*byR + B_* (*By1D)(index_bc_max[0]-1) - C_* (*Ez1D)(index_bc_max[0]);
+		(*Bz1D)(index_bc_max[0])= A_*bzR + B_* (*Bz1D)(index_bc_max[0]-1) + C_* (*Ey1D)(index_bc_max[0]);
+		// Correction on unused extreme ghost
+		for (unsigned int ix=index_bc_max[0]+1 ; ix<dimDual[0] ; ix++) {
+			(*By1D)(ix  )=0; (*Bz1D)(ix  )=0;
+			(*Ey1D)(ix-1)=0; (*Ez1D)(ix-1)=0;
+
+		}
+	}
+
+	// ------------------------------------------------
+	// Center the magnetic fields (for particle pusher)
+	// ------------------------------------------------
+	//for (unsigned int ix=0 ; ix<nx_p ; ix++)
+	for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++)
+		(*Bx1D_m)(ix)= ( (*Bx1D)(ix)+ (*Bx1D_m)(ix))*0.5 ;
+	//for (unsigned int ix=0 ; ix<nx_d ; ix++) {
+	for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
+		(*By1D_m)(ix)= ((*By1D)(ix)+(*By1D_m)(ix))*0.5 ;
+		(*Bz1D_m)(ix)= ((*Bz1D)(ix)+(*Bz1D_m)(ix))*0.5 ;
+    }
 
 }
 

@@ -26,6 +26,9 @@ public:
 	std::vector<unsigned int> index_bc_min;
 	std::vector<unsigned int> index_bc_max;
 
+	//! time-step
+	double dt;
+
 	//! time at n steps for which electric fields are defined
 	double time_prim;
     
@@ -97,13 +100,13 @@ public:
 	//! Method used to initialize the Maxwell solver
 	virtual void solvePoisson(SmileiMPI* smpi) = 0;
 
-	//! \todo This method will be removed when using the Esirkepov method for calculating the longitudinal currents (MG)
-	//! Method used to calculate the longitudinal currents from the time-variation of the total charge density
-	virtual void chargeConserving(SmileiMPI* smpi) = 0;
-    
 	//! \todo check time_dual or time_prim (MG)
 	//! method used to solve Maxwell's equation (takes current time and time-step as input parameter)
-	virtual void solveMaxwell(double time_dual, double dt, SmileiMPI* smpi) = 0;
+	virtual void solveMaxwell(double time_dual, SmileiMPI* smpi) = 0;
+	//void solveMaxwell(double time_dual, SmileiMPI* smpi);
+	virtual void solveMaxwellAmpere() = 0;
+	virtual void solveMaxwellFaraday() = 0;
+	virtual void boundaryConditions(double time_dual, SmileiMPI* smpi) = 0;
 	
 private:
     

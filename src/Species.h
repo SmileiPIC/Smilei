@@ -18,6 +18,7 @@ class Pusher;
 class Interpolator;
 class Projector;
 class PartBoundCond;
+class PartBoundCondMix;
 
 
 //! class Species
@@ -57,6 +58,7 @@ class Species
 
 	//! Vector containing all Particles of the considered Species
 	std::vector<Particle*> particles;
+	//std::vector<int> index_of_particles_to_exchange;
     
  private:
 	//! Effective number of particles (different than the maximum number of particles)

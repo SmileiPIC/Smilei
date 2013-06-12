@@ -8,7 +8,12 @@ Pusher::Pusher(PicParams *params, int ispec)
 	charge_ = params->species_param[ispec].charge;
 	charge_over_mass_ = charge_/mass_;
 	dt      = params->timestep;
-	dts2    = params->timestep/2.; 
+	dts2    = params->timestep/2.;
+
+	nDim_   = params->nDim_particle;
 
 }
 
+Pusher::~Pusher()
+{
+}

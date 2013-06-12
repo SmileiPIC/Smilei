@@ -18,16 +18,20 @@ class Field;
 class SmileiMPI {
 public:
 	SmileiMPI( int* argc, char*** argv );
+	SmileiMPI(SmileiMPI *smpi);
+	SmileiMPI(){};
 	virtual ~SmileiMPI();
+
+	virtual void whoami() {std::cout << "SmileiMPI" << std::endl;}
 
 	inline bool isMaster() { return (smilei_rk==0); }
 	inline void barrier() { MPI_Barrier( SMILEI_COMM_WORLD );}
 
 	void bcast( PicParams& params );
 
-	virtual void createTopology() = 0;
+	virtual void createTopology() {};
 
-	virtual void exchangeParticles(Species* species, PicParams* params) = 0;
+	virtual void exchangeParticles(Species* species, int ispec, PicParams* params) {};
 	void writePlasma( std::vector<Species*> vecSpecies, std::string name );
 
 	void sumRho( ElectroMagn* champs );
@@ -37,11 +41,15 @@ public:
 	void writeFields( ElectroMagn* champs );
 
 	void solvePoissonPara( ElectroMagn* champs );
-	void chargeConservingPara( ElectroMagn* champs );
 
 	inline int getRank() {return smilei_rk;}
 	inline int getSize() {return smilei_sz;}
-	inline std::vector<int> getCellStartingGlobalIndex() {return cell_starting_global_index;}
+	inline int    getCellStartingGlobalIndex(int i) {return cell_starting_global_index[i];}
+	inline double getDomainLocalMin(int i) {return min_local[i];}
+	inline double getDomainLocalMax(int i) {return max_local[i];}
+
+	inline void clearExchList() {indexes_of_particles_to_exchange.clear();};
+	inline void addPartInExchList(int iPart) {indexes_of_particles_to_exchange.push_back(iPart);}
 
 
 protected:
@@ -58,12 +66,12 @@ protected:
 	std::vector<double> min_local;
 	std::vector<double> max_local;
 
-	virtual void sumFieldDual( Field* field ) = 0;
-	virtual void sumFieldPrim( Field* field ) = 0;
-	virtual void exchangeFieldDual( Field* field ) = 0;
-	virtual void exchangeFieldPrim( Field* field ) = 0;
-	virtual void writeFieldDual( Field* field, std::string name ) = 0;
-	virtual void writeFieldPrim( Field* field, std::string name ) = 0;
+	virtual void sumField      ( Field* field ) {};
+	virtual void exchangeField ( Field* field ) {};
+	virtual void writeField    ( Field* field, std::string name ) {};
+
+	std::vector<int> indexes_of_particles_to_exchange;
+
 
 private:
 	void bcast( std::string& val );

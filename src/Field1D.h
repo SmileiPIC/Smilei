@@ -13,21 +13,23 @@ class Field1D : public Field
 {
     
  public:
-    
 	//! Constructor for Field1D: with no input argument
 	Field1D();
     
 	//! Constructor for Field1D: with the vector dimension as input argument
 	Field1D( std::vector<unsigned int> dims );
+	Field1D( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal );
     
 	//! Constructor for Field1D: with the vector dimension and filename for the dump as input argument
 	Field1D( std::vector<unsigned int> dims, std::string name );
+	Field1D( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name );
 	
 	//! Destructor for Field1D
 	~Field1D();
 	
 	//! Method used to allocate a Field1D
 	void allocateDims(std::vector<unsigned int> dims);
+	void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal);
 
 	//! Method used to dump the data contained in a Field1D
 	void dump(std::vector<unsigned int> dims);

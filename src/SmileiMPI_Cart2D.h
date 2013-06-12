@@ -1,6 +1,6 @@
 
-#ifndef SMILEIMPI_CART1D_H
-#define SMILEIMPI_CART1D_H
+#ifndef SMILEIMPI_CART2D_H
+#define SMILEIMPI_CART2D_H
 
 #include "SmileiMPI.h"
 
@@ -9,13 +9,13 @@
 
 class Species;
 
-class SmileiMPI_Cart1D : public SmileiMPI {
+class SmileiMPI_Cart2D : public SmileiMPI {
 public:
-	SmileiMPI_Cart1D( int* argc, char*** argv );
-	SmileiMPI_Cart1D(SmileiMPI *smpi);
-	virtual ~SmileiMPI_Cart1D();
+	SmileiMPI_Cart2D( int* argc, char*** argv );
+	SmileiMPI_Cart2D(SmileiMPI *smpi);
+	virtual ~SmileiMPI_Cart2D();
 
-	virtual void whoami() {std::cout << "SmileiMPI_Cart1D" << std::endl;}
+	virtual void whoami() {std::cout << "SmileiMPI_Cart2D" << std::endl;}
 
 	virtual void createTopology();
 	virtual void exchangeParticles(Species* species, int ispec, PicParams* params);
@@ -26,7 +26,7 @@ public:
 	inline bool isEaster() {return (coords_[0]==dims_[0]-1);}
 
 protected:
-	MPI_Comm SMILEI_COMM_1D;
+	MPI_Comm SMILEI_COMM_2D;
 
 	int ndims_;
     int* dims_;

@@ -22,7 +22,10 @@
  
 #ifndef Tools_h
 #define Tools_h
+
 #include "signal.h"
+#include "stdlib.h"
+#include <iostream>
 
 
 

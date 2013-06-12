@@ -16,11 +16,13 @@ Interpolator1D2Order::Interpolator1D2Order(PicParams *params, SmileiMPI* smpi) :
 
 	dx_inv_ = 1.0/params->cell_length[0];
 
-	index_domain_begin = (smpi1D->getCellStartingGlobalIndex())[0];
+	index_domain_begin = smpi1D->getCellStartingGlobalIndex(0);
 
 }
 
-
+Interpolator1D2Order::~Interpolator1D2Order()
+{
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // 2nd Order Interpolation of the fields at a the particle position (3 nodes are used)

@@ -56,6 +56,20 @@ ElectroMagn::~ElectroMagn()
 }//END Destructer
 
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Maxwell solver using the FDTD scheme
+// ---------------------------------------------------------------------------------------------------------------------
+/*void ElectroMagn::solveMaxwell(double time_dual, SmileiMPI* smpi)
+{
+	//solve Maxwell's equations
+	solveMaxwellAmpere();
+	//smpi->exchangeE( EMfields );
+	solveMaxwellFaraday();
+	smpi->exchangeB( this );
+	boundaryConditions(time_dual, smpi);
+
+}*/
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Method used to create a dump of the data contained in ElectroMagn

@@ -16,7 +16,8 @@ class Projector {
     
 public: 
 	//! Creator for the Projector
-	Projector(PicParams*, SmileiMPI*){};
+	Projector(PicParams*, SmileiMPI*) {};
+	virtual ~Projector() {};
 	//! \todo Comment more on this overloading of the () operator
 	//! overloading of the () operator
 	virtual void operator() (ElectroMagn* champs, Particle* part, double gf) = 0;

@@ -33,15 +33,18 @@ class Field
 
 	//! Constructor for Field: with the Field dimensions as input argument
 	Field( std::vector<unsigned int> dims ) {;};
+	Field( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal ) {;};
 
 	//! Constructor for Field: with the Field dimensions and dump file name as input argument
 	Field( std::vector<unsigned int> dims, std::string name ) {;} ;
+	Field( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name ) {;} ;
 
 	//! Destructor for Field
 	virtual ~Field() {;} ;
     
 	//! Virtual method used to allocate Field
 	virtual void allocateDims(std::vector<unsigned int> dims) = 0;
+	virtual void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal) = 0;
 
 	//! Virtual method used to make a dump of the Field data
 	virtual void dump(std::vector<unsigned int> dims) = 0;
@@ -49,6 +52,7 @@ class Field
 	//! vector containing the dimensions of the Field
 	//! \todo{private/friend/modify SmileiMPI* (JD)}
 	std::vector<unsigned int> dims_;
+	std::vector<unsigned int> isPrimal_;
 
  protected:
 

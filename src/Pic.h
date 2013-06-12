@@ -31,6 +31,9 @@
  @date 2013-02-15
  */
 
+#include "Tools.h"
+#include <string>
+
 //! verbosity level use verbose keyword in data parameter
 #ifdef  __DEBUG
 unsigned int debug_level = 10;
@@ -38,3 +41,12 @@ unsigned int debug_level = 10;
 
 //! main function
 int main (int argc, char* argv[]);
+
+void startingMessage(std::string inputfile) {
+	MESSAGE("------------------------------------------");
+	MESSAGE(" Version : " << __VERSION DEBUGEXEC(<< " DEBUG") << " Compiled : " << __DATE__ << " " << __TIME__);
+	MESSAGE("------------------------------------------");
+	MESSAGE(" Namelist  : " << inputfile);
+	MESSAGE("------------------------------------------");
+}
+

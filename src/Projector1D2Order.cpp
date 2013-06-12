@@ -21,12 +21,15 @@ Projector1D2Order::Projector1D2Order (PicParams* params, SmileiMPI* smpi) : Proj
 	dx_inv_  = 1.0/params->cell_length[0];
 	dx_ov_dt = params->cell_length[0] / params->timestep;
 
-	index_domain_begin = (smpi1D->getCellStartingGlobalIndex())[0];
+	index_domain_begin = smpi1D->getCellStartingGlobalIndex(0);
 
 	DEBUG("cell_length "<< params->cell_length[0]);
 
 }
 
+Projector1D2Order::~Projector1D2Order()
+{
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // 2nd order projection in 1d3v simulations
@@ -105,47 +108,6 @@ void Projector1D2Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
     
 }//END Projector1D2Order
 
-
-// ---------------------------------------------------------------------------------------------------------------------
-// 2nd order projection in 1d3v simulations OLD
-// ---------------------------------------------------------------------------------------------------------------------
-void Projector1D2Order::oldoperator (ElectroMagn* champs, Particle* part, double gf)
-{
-	Field1D* rho1D  = static_cast<Field1D*>(champs->rho_);
-	Field1D* Jy1D   = static_cast<Field1D*>(champs->Jy_);	
-	Field1D* Jz1D   = static_cast<Field1D*>(champs->Jz_);
-
-	
-	//Declaration of local variables
-	int i;
-	double xjn,xjmxi,xjmxi2;
-	double rho_j = part->weight();  // charge density of the macro-particle
-	double cry_j = rho_j*part->momentum(1)/gf;       // current density allow the y-direction of the macroparticle
-	double crz_j = rho_j*part->momentum(2)/gf;       // current density allow the y-direction of the macroparticle
-
-	//Locate particle on the primal grid
-	xjn    = part->position(0) * dx_inv_;     // normalized distance to the first node
-	i      = round(xjn);                  // index of the central node
-	xjmxi  = xjn - (double)i;             // normalized distance to the nearest grid point
-	xjmxi2 = xjmxi*xjmxi;                 // square of the normalized distance to the nearest grid point
-
-	i -= index_domain_begin;
-	
-	// 2nd order projection for the total density
-	(*rho1D)( i-1) = ((*rho1D)(i-1) + 0.5 * (xjmxi2-xjmxi+0.25) * rho_j );
-	(*rho1D)( i  ) = ((*rho1D)(i  ) +  (0.75-xjmxi2)            * rho_j );
-	(*rho1D)( i+1) = ((*rho1D)(i+1) + 0.5 * (xjmxi2+xjmxi+0.25) * rho_j );
-
-	// 2nd order projection for the total current
-	(*Jy1D)( i-1) = ((*Jy1D)(i-1) + 0.5 * (xjmxi2-xjmxi+0.25) * cry_j );
-	(*Jy1D)( i  ) = ((*Jy1D)(i  ) +  (0.75-xjmxi2)            * cry_j );
-	(*Jy1D)( i+1) = ((*Jy1D)(i+1) + 0.5 * (xjmxi2+xjmxi+0.25) * cry_j );
-	
-	(*Jz1D)( i-1) = ((*Jz1D)(i-1) + 0.5 * (xjmxi2-xjmxi+0.25) * crz_j );
-	(*Jz1D)( i  ) = ((*Jz1D)(i  ) +  (0.75-xjmxi2)            * crz_j );
-	(*Jz1D)( i+1) = ((*Jz1D)(i+1) + 0.5 * (xjmxi2+xjmxi+0.25) * crz_j );
-	
-}
 
 void Projector1D2Order::operator() (Field* rho, Particle* part)
 {

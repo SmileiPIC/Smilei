@@ -1,19 +1,19 @@
-#ifndef INTERPOLATOR1D2ORDER_H
-#define INTERPOLATOR1D2ORDER_H
+#ifndef INTERPOLATOR2D2ORDER_H
+#define INTERPOLATOR2D2ORDER_H
 
 
-#include "Interpolator1D.h"
+#include "Interpolator2D.h"
 
 
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class for 2nd order interpolator for 1d3v simulations
 //  --------------------------------------------------------------------------------------------------------------------
-class Interpolator1D2Order : public Interpolator1D
+class Interpolator2D2Order : public Interpolator2D
 {
     
 public:
-	Interpolator1D2Order(PicParams*, SmileiMPI*);
-	~Interpolator1D2Order();
+	Interpolator2D2Order(PicParams*, SmileiMPI*);
+	~Interpolator2D2Order();
 
 	void operator() (ElectroMagn* champs, Particle* part, LocalFields* ELoc, LocalFields* BLoc);
     

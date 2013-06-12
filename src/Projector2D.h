@@ -1,15 +1,32 @@
-
 #ifndef PROJECTOR2D_H
 #define PROJECTOR2D_H
 
 #include "Projector.h"
+#include "PicParams.h"
 
-class Projector2D : public Projector {
-public:
+
+
+//----------------------------------------------------------------------------------------------------------------------
+//! class Projector2D: defines a virtual method for projection in 1d3v simulations
+//----------------------------------------------------------------------------------------------------------------------
+class Projector2D : public Projector
+{
+
+ public:
+	//! Constructor for Projector2D
+	 Projector2D(PicParams* params, SmileiMPI* smpi) : Projector(params, smpi) {};
+	 virtual ~Projector2D() {};
+
+	//! \todo comment this overloading of () operator (MG for JD)
 	virtual void operator() (ElectroMagn* champs, Particle* part, double gf) = 0;
+
+	//!\todo comment this overloading of () operator (MG for JD)
 	virtual void operator() (Field* rho, Particle* part) = 0;
 
-private:
+ protected:
+	//! Inverse of the spatial step 1/dx
+	double dx_inv_;
+	int index_domain_begin;
 };
 
 #endif

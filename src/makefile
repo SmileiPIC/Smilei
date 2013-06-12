@@ -2,7 +2,7 @@ VERSION:="v$(shell git rev-list HEAD --count):$(shell git log -1 --pretty=format
 
 CC      = mpiCC
 #CC      = g++
-CFLAGS  = -D__VERSION=\"$(VERSION)\" -D_MPI #-Wstrict-aliasing
+CFLAGS  = -D__VERSION=\"$(VERSION)\" #-Wstrict-aliasing
 LDFLAGS = -lm 
 
 all: release install

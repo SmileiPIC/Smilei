@@ -16,15 +16,18 @@ class Field2D : public Field
     
 	//! Constructor for Field2D: with the vector dimension as input argument
 	Field2D( std::vector<unsigned int> dims );
+	Field2D( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal );
     
 	//! Constructor for Field2D: with the vector dimension and filename for the dump as input argument
 	Field2D( std::vector<unsigned int> dims, std::string name );
+	Field2D( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name );
     
 	//! Destructor for Field2D
 	~Field2D();
 
 	//! Method used to allocate a Field2D
 	void allocateDims(std::vector<unsigned int> dims );
+	void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal );
     
 	//! Method used to dump the data contained in a Field2D
 	void dump(std::vector<unsigned int> dims);
@@ -40,10 +43,10 @@ class Field2D : public Field
 		DEBUGEXEC(if (i>=dims_[0] || j>=dims_[1]) ERROR("Out of limits "<< i << " " << j));
 		return data_[i][j]; 
 	};
+	double** data_;
 	
  private:
 	//!\todo{Comment what are these stuffs (MG for JD)}
-	double** data_;
 	double *data_2D;
 };
 

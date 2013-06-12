@@ -1,18 +1,18 @@
-#ifndef ELECTROMAGN1D_H
-#define ELECTROMAGN1D_H
+#ifndef ELECTROMAGN2D_H
+#define ELECTROMAGN2D_H
 
 #include "ElectroMagn.h"
 
 class PicParams;
 
-//! class ElectroMagn1D containing all information on the electromagnetic fields & currents for 1d3v simulations
-class ElectroMagn1D : public ElectroMagn
+//! class ElectroMagn2D containing all information on the electromagnetic fields & currents for 2d3v simulations
+class ElectroMagn2D : public ElectroMagn
 {
 public:
-	//! Constructor for ElectroMagn1D
-	ElectroMagn1D(PicParams* params, SmileiMPI* smpi);
-	//! Destructor for ElectroMagn1D
-	~ElectroMagn1D();
+	//! Constructor for ElectroMagn2D
+	ElectroMagn2D(PicParams* params, SmileiMPI* smpi);
+	//! Destructor for ElectroMagn2D
+	~ElectroMagn2D();
 
 	//! Constant used for the Silver-Mueller boundary conditions
 	double A_;
@@ -41,14 +41,17 @@ public:
 	//! Number of nodes on the dual grid
 	unsigned int nx_d;
     
-	//! Spatial step dx for 1d3v cartesian simulations
+	//! Spatial step dx for 2D3v cartesian simulations
 	double dx;
+	double dy;
     
-	//! Ratio of the time-step by the spatial-step dt/dx for 1d3v cartesian simulations
+	//! Ratio of the time-step by the spatial-step dt/dx for 2d3v cartesian simulations
 	double dt_ov_dx;
+	double dt_ov_dy;
     
-	//! Ratio of the spatial-step by the time-step dx/dt for 1d3v cartesian simulations
+	//! Ratio of the spatial-step by the time-step dx/dt for 2d3v cartesian simulations
 	double dx_ov_dt;
+	double dy_ov_dt;
     
 private:
 };

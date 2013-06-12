@@ -16,15 +16,18 @@ class Field3D : public Field
     
 	//! Constructor for Field2D: with the vector dimension as input argument
 	Field3D( std::vector<unsigned int> dims );
+	Field3D( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal );
     
 	//! Constructor for Field2D: with the vector dimension and filename for the dump as input argument
 	Field3D( std::vector<unsigned int> dims, std::string name );
+	Field3D( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name );
 	
 	//! Destructor for Field3D
 	~Field3D();
 
 	//! Method used to allocate a Field3D
 	void allocateDims(std::vector<unsigned int> dims );
+	void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal );
 
 	//! Method used to dump the data contained in a Field3D
 	void dump(std::vector<unsigned int> dims);

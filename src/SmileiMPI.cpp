@@ -17,15 +17,30 @@ SmileiMPI::SmileiMPI( int* argc, char*** argv )
 {
 	MPI_Init( argc, argv );
 	SMILEI_COMM_WORLD = MPI_COMM_WORLD;
-
 	MPI_Comm_size( SMILEI_COMM_WORLD, &smilei_sz );
 	MPI_Comm_rank( SMILEI_COMM_WORLD, &smilei_rk );
 
 }
 
+SmileiMPI::SmileiMPI( SmileiMPI *smpi )
+{
+	SMILEI_COMM_WORLD = smpi->SMILEI_COMM_WORLD;
+	MPI_Comm_size( SMILEI_COMM_WORLD, &smilei_sz );
+	MPI_Comm_rank( SMILEI_COMM_WORLD, &smilei_rk );
+
+	oversize = smpi->oversize;
+	cell_starting_global_index = smpi->cell_starting_global_index;
+	min_local = smpi->min_local;
+	max_local = smpi->max_local;
+
+}
+
 SmileiMPI::~SmileiMPI()
 {
-	MPI_Finalize();
+	int status = 0;
+	MPI_Finalized( &status );
+	if (!status) MPI_Finalize();
+
 }
 
 void SmileiMPI::bcast( PicParams& params )
@@ -49,13 +64,15 @@ void SmileiMPI::bcast( PicParams& params )
 
 	params.oversize.resize(3, 0);
 	oversize.resize(params.nDim_field, 0);
-	cell_starting_global_index.resize(params.nDim_field, 0.);
+	cell_starting_global_index.resize(params.nDim_field, 0);
 	min_local.resize(params.nDim_field, 0.);
 	max_local.resize(params.nDim_field, 0.);
 	for (unsigned int i=0 ; i<params.nDim_field ; i++) {
 		//sim_length[i]*=2.0*M_PI;
 		params.cell_length[i]=2.0*M_PI/params.res_space[i];
 		params.cell_volume *= params.cell_length[i];
+
+		//! \todo{préciser la décomposition de domaine XD}
 
 		params.n_space_global[i] = params.res_space[i]*params.sim_length[i]/(2.0*M_PI)+1;
 		params.n_space[i] = params.n_space_global[i] / smilei_sz;
@@ -199,32 +216,32 @@ void SmileiMPI::bcast_type_der( PicParams& params )
 
 void SmileiMPI::sumRho( ElectroMagn* champs )
 {
-  sumFieldPrim( champs->rho_ );
+  sumField( champs->rho_ );
 
 }
 
 void SmileiMPI::sumDensities( ElectroMagn* champs )
 {
-  //sumFieldPrim( champs->rho_ );
-  sumFieldDual( champs->Jx_ );
-  sumFieldPrim( champs->Jy_ );
-  sumFieldPrim( champs->Jz_ );
+  //sumField( champs->rho_ );
+  sumField( champs->Jx_ );
+  sumField( champs->Jy_ );
+  sumField( champs->Jz_ );
 
 }
 
 void SmileiMPI::exchangeE( ElectroMagn* champs )
 {
-  //exchangeFieldDual( champs->Ex_ );
-  exchangeFieldPrim( champs->Ey_ );
-  exchangeFieldPrim( champs->Ez_ );
+  //exchangeField( champs->Ex_ );
+  exchangeField( champs->Ey_ );
+  exchangeField( champs->Ez_ );
 
 }
 
 void SmileiMPI::exchangeB( ElectroMagn* champs )
 {
-  //exchangeFieldPrim( champs->Bx_ );
-  exchangeFieldDual( champs->By_ );
-  exchangeFieldDual( champs->Bz_ );
+  //exchangeField( champs->Bx_ );
+  exchangeField( champs->By_ );
+  exchangeField( champs->Bz_ );
 
 }
 
@@ -235,36 +252,24 @@ void SmileiMPI::solvePoissonPara( ElectroMagn* champs )
 			champs->solvePoisson(this);
 
 		barrier();
-		exchangeFieldDual( champs->Ex_ );
+		exchangeField( champs->Ex_ );
 	}
 
 } // END solvePoissonPara
 
 
-void SmileiMPI::chargeConservingPara( ElectroMagn* champs )
-{
-	for ( int i_rk = 0 ; i_rk < smilei_sz ; i_rk++ ) {
-		if (i_rk==smilei_rk)
-			champs->chargeConserving(this);
-
-		barrier();
-		exchangeFieldDual( champs->Jx_ );
-	}
-
-} // END chargeConservingPara
-
 void SmileiMPI::writeFields( ElectroMagn* champs )
 {
-	writeFieldDual( champs->Ex_, "fex_new" );
-	writeFieldPrim( champs->Ey_, "fey_new" );
-	writeFieldPrim( champs->Ez_, "fez_new" );
-	writeFieldPrim( champs->Bx_, "fbx_new" );
-	writeFieldDual( champs->By_, "fby_new" );
-	writeFieldDual( champs->Bz_, "fbz_new" );
-	writeFieldDual( champs->Jx_, "fjx_new" );
-	writeFieldPrim( champs->Jy_, "fjy_new" );
-	writeFieldPrim( champs->Jz_, "fjz_new" );
-	writeFieldPrim( champs->rho_, "rho_new" );
+	writeField( champs->Ex_, "fex_new" );
+	writeField( champs->Ey_, "fey_new" );
+	writeField( champs->Ez_, "fez_new" );
+	writeField( champs->Bx_, "fbx_new" );
+	writeField( champs->By_, "fby_new" );
+	writeField( champs->Bz_, "fbz_new" );
+	writeField( champs->Jx_, "fjx_new" );
+	writeField( champs->Jy_, "fjy_new" );
+	writeField( champs->Jz_, "fjz_new" );
+	writeField( champs->rho_, "rho_new" );
 
 } // END writeFields
 

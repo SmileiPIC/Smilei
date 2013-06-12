@@ -12,6 +12,10 @@ PusherBoris::PusherBoris(PicParams *params, int ispec)
 {
 }
 
+PusherBoris::~PusherBoris()
+{
+}
+
 /***********************************************************************
 	Lorentz Force -- leap-frog (Boris) scheme
 ***********************************************************************/
@@ -64,9 +68,11 @@ void PusherBoris::operator() (Particle* part, LocalFields Epart, LocalFields Bpa
 	part->momentum(2) = pzsm;
 	
 	// Move the particle
-    //!\todo Make a loop on all spatial dimensions (also separate change_momentum & change_position) (MG & JD)
-	part->position_old(0)  = part->position(0);
-	part->position(0)     += dt*part->momentum(0)/gf;
+	for ( int i = 0 ; i<nDim_ ; i++ ) {
+		part->position_old(i)  = part->position(i);
+		part->position(i)     += dt*part->momentum(i)/gf;
+	}
+
 	//DEBUG(5, "\t END "<< part->position(0) );
 
 }
