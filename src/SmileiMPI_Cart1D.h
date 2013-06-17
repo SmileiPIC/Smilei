@@ -25,6 +25,8 @@ public:
 	inline bool isWester() {return (coords_[0]==0);}
 	inline bool isEaster() {return (coords_[0]==dims_[0]-1);}
 
+	void createType( PicParams& params ) {};
+
 protected:
 	MPI_Comm SMILEI_COMM_1D;
 

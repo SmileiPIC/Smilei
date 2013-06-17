@@ -263,7 +263,7 @@ void SmileiMPI_Cart1D::exchangeField( Field* field )
 	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
 
 		if (neighbor_[iNeighbor]!=MPI_PROC_NULL) {
-			istart = iNeighbor * ( n_elem[0]- (2*oversize[0]+1+isPrimal[0]) ) + (1-iNeighbor) * ( 2*oversize[0]+1 );
+			istart = iNeighbor * ( n_elem[0]- (2*oversize[0]+1+isPrimal[0]) ) + (1-iNeighbor) * ( 2*oversize[0]+1-(1-isPrimal[0]) );
 			MPI_Send( &(f1D->data_[istart]), 1, MPI_DOUBLE, neighbor_[iNeighbor], 0, SMILEI_COMM_1D );
 			//cout << "EXCH : " << smilei_rk << " send " << oversize[0] << " data to " << neighbor_[iNeighbor] << " starting at " << istart << endl;
 		} // END of Send

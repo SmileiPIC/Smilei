@@ -5,6 +5,7 @@
 #include <mpi.h>
 
 #include "PicParams.h"
+#include "Tools.h"
 #include <string>
 #include <vector>
 
@@ -30,6 +31,7 @@ public:
 	void bcast( PicParams& params );
 
 	virtual void createTopology() {};
+	virtual void createType( PicParams& params ) {};
 
 	virtual void exchangeParticles(Species* species, int ispec, PicParams* params) {};
 	void writePlasma( std::vector<Species*> vecSpecies, std::string name );
@@ -58,8 +60,8 @@ protected:
 	int smilei_sz;
 	int smilei_rk;
 
-	std::vector<Particle*>* buff_send;
-	std::vector<Particle*>* buff_recv;
+	std::vector<Particle*>* buff_send;		// -> **
+	std::vector<Particle*>* buff_recv;		// -> **
 
 	std::vector<unsigned int> oversize;
 	std::vector<int> cell_starting_global_index;
@@ -71,6 +73,7 @@ protected:
 	virtual void writeField    ( Field* field, std::string name ) {};
 
 	std::vector<int> indexes_of_particles_to_exchange;
+	std::vector<int> number_of_procs;
 
 
 private:

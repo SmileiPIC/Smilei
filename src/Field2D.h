@@ -44,6 +44,8 @@ class Field2D : public Field
 		return data_[i][j]; 
 	};
 	double** data_;
+	//! \todo{for debbugging, to remove (JD)}
+	inline void setData_(int i, double val) {data_2D[i] = val;}
 	
  private:
 	//!\todo{Comment what are these stuffs (MG for JD)}

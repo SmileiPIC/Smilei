@@ -75,9 +75,9 @@ void Field2D::allocateDims(std::vector<unsigned int> dims )
 	//! \todo{check row major order!!! (JD)}
 
 	data_= new double*[dims_[0]];
-	for (unsigned int i=0; i<dims_[0]; i++)
-    {
+	for (unsigned int i=0; i<dims_[0]; i++) {
 		data_[i] = data_2D + i*dims_[1];
+		for (unsigned int j=0;j<dims_[1];j++) data_[i][j] = 0.0;
 	}
 
 	DEBUG(10,"Fields 2D created: " << data_[0] << "x" << data_[1]);
@@ -114,6 +114,7 @@ void Field2D::allocateDims(std::vector<unsigned int> dims, unsigned int mainDim,
 	data_= new double*[dims_[0]];
 	for (unsigned int i=0; i<dims_[0]; i++)  {
 		data_[i] = data_2D + i*dims_[1];
+		for (unsigned int j=0;j<dims_[1];j++) data_[i][j] = 0.0;
 	}
 	
 	DEBUG(10,"Fields 2D created: " << data_[0] << "x" << data_[1]);

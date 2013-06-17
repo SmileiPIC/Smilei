@@ -54,6 +54,9 @@ class Field
 	std::vector<unsigned int> dims_;
 	std::vector<unsigned int> isPrimal_;
 
+	//! \todo{for debbugging, to remove (JD)}
+	virtual void setData_(int i, double val) {};
+
  protected:
 
  private:

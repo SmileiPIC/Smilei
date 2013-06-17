@@ -25,6 +25,11 @@ public:
 	inline bool isWester() {return (coords_[0]==0);}
 	inline bool isEaster() {return (coords_[0]==dims_[0]-1);}
 
+	void createType( PicParams& params );
+
+	virtual void exchangeField ( Field* field );
+	virtual void sumField      ( Field* field );
+
 protected:
 	MPI_Comm SMILEI_COMM_2D;
 
@@ -37,11 +42,12 @@ protected:
 	int reorder_;
 
 	int nbNeighbors_;
-	int* neighbor_;
+	int neighbor_[3][2];	// 
 
-	virtual void sumField      ( Field* field );
-	virtual void exchangeField ( Field* field );
 	virtual void writeField    ( Field* field, std::string name );
+
+	MPI_Datatype ntype_   [2][2][2];
+	MPI_Datatype ntypeSum_[2][2][2];
 
 };
 

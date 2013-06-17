@@ -29,6 +29,7 @@ SmileiMPI::SmileiMPI( SmileiMPI *smpi )
 	MPI_Comm_rank( SMILEI_COMM_WORLD, &smilei_rk );
 
 	oversize = smpi->oversize;
+	number_of_procs = smpi->number_of_procs;
 	cell_starting_global_index = smpi->cell_starting_global_index;
 	min_local = smpi->min_local;
 	max_local = smpi->max_local;
@@ -67,19 +68,33 @@ void SmileiMPI::bcast( PicParams& params )
 	cell_starting_global_index.resize(params.nDim_field, 0);
 	min_local.resize(params.nDim_field, 0.);
 	max_local.resize(params.nDim_field, 0.);
+
+
+	number_of_procs.resize(params.nDim_field, 1);
+	number_of_procs[0] = smilei_sz;
+	if (params.nDim_field == 2) {
+		double tmp = params.res_space[0]*params.sim_length[0] / ( params.res_space[1]*params.sim_length[1] );
+		number_of_procs[0] = min( smilei_sz, max(1, (int)sqrt ( (double)smilei_sz*tmp*tmp) ) );
+		number_of_procs[1] = (int)(smilei_sz / number_of_procs[0]);
+	}
+
 	for (unsigned int i=0 ; i<params.nDim_field ; i++) {
 		//sim_length[i]*=2.0*M_PI;
 		params.cell_length[i]=2.0*M_PI/params.res_space[i];
 		params.cell_volume *= params.cell_length[i];
 
-		//! \todo{préciser la décomposition de domaine XD}
-
 		params.n_space_global[i] = params.res_space[i]*params.sim_length[i]/(2.0*M_PI)+1;
-		params.n_space[i] = params.n_space_global[i] / smilei_sz;
-		if ( smilei_sz*params.n_space[i] != params.n_space_global[i] )
-			WARNING( "Domain splitting does not match to the global domain" );
-		oversize[i] = params.oversize[i] = 2;
 
+		//if (i==0) {
+			//params.n_space[i] = params.n_space_global[i] / smilei_sz;
+			params.n_space[i] = params.n_space_global[i] / number_of_procs[i];
+			if ( smilei_sz*params.n_space[i] != params.n_space_global[i] )
+				WARNING( "Domain splitting does not match to the global domain" );
+		/*}
+		else
+			params.n_space[i] = params.n_space_global[i];*/
+
+		oversize[i] = params.oversize[i] = 2;
 		//! \todo{replace cell_starting_global_index compute by a most sophisticated or input data}
 		cell_starting_global_index[i] = smilei_rk*params.n_space[i];
 		// min/max_local : describe local domain in which particles cat be moved
@@ -89,6 +104,7 @@ void SmileiMPI::bcast( PicParams& params )
 		cell_starting_global_index[i] -= params.oversize[i];
 
 	}
+	DEBUG( "n_space = " << params.n_space[0] << " " << params.n_space[1] );
 
 	bcast( params.plasma_geometry );
 	bcast( params.plasma_length );	//! \todo{vacuum_length[i]*=2.0*M_PI};
