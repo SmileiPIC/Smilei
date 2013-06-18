@@ -77,7 +77,37 @@ void SmileiMPI_Cart2D::createTopology()
 	MPI_Cart_create( SMILEI_COMM_WORLD, ndims_, dims_, periods_, reorder_, &SMILEI_COMM_2D );
 	MPI_Cart_coords( SMILEI_COMM_2D, smilei_rk, ndims_, coords_ );
 
-	// neighbor_[0]  |  Current process  |  neighbor_[1] //
+	//                  |                   |                  //
+	//                  |  neighbor_[2][1]  |                  //
+	//                  |                   |                  //
+
+	//                  |  neighbor_[1][1]  |                  //
+	// neighbor_[0][0]  |  Current process  |  neighbor_[0][1] //
+	//                  |  neighbor_[1][0]  |                  //
+
+	//                  |                   |                  //
+	//                  |  neighbor_[2][0]  |                  //
+	//                  |                   |                  //
+
+	// ==========================================================
+	// ==========================================================
+	// ==========================================================
+
+	// crossNei_[x][x]  | crossNei_[x][x]   | crossNei_[x][x]  //
+	// crossNei_[x][x]  |                   | crossNei_[x][x]  //
+	// crossNei_[x][x]  | crossNei_[x][x]   | crossNei_[x][x]  //
+
+	// crossNei_[x][x]  |                   | crossNei_[x][x]  //
+	//                  |  Current process  |                  //
+	// crossNei_[x][x]  |                   | crossNei_[x][x]  //
+
+	// crossNei_[x][x]  | crossNei_[x][x]   | crossNei_[x][x]  //
+	// crossNei_[x][x]  |                   | crossNei_[x][x]  //
+	// crossNei_[x][x]  | crossNei_[x][x]   | crossNei_[x][x]  //
+
+
+
+
 	for (int iDim=0 ; iDim<ndims_ ; iDim++) {
 		MPI_Cart_shift( SMILEI_COMM_2D, iDim, 1, &(neighbor_[iDim][0]), &(neighbor_[iDim][1]) );
 		PMESSAGE ( 0, smilei_rk, "Neighbors of process in direction " << iDim << " : " << neighbor_[iDim][0] << " - " << neighbor_[iDim][1]  );
@@ -260,14 +290,15 @@ void SmileiMPI_Cart2D::sumField( Field* field )
 
 		} // END for iNeighbor
 
-	} // END for iDim
 
-	// Synchro before summing, to not sum with data ever sum
-	barrier();
-	/********************************************************************************/
-	// Sum data on each process, same operation on both side
-	/********************************************************************************/
-	for (int iDim=0 ; iDim<ndims_ ; iDim++) {
+
+		// Synchro before summing, to not sum with data ever sum
+		// Merge loops, Sum direction by direction permits to not communicate with diagonal neighbors
+		barrier();
+		/********************************************************************************/
+		// Sum data on each process, same operation on both side
+		/********************************************************************************/
+
 		for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
 			istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim]- oversize2[iDim] ) + (1-(iNeighbor+1)%2) * ( 0 );
 			int ix0 = (1-iDim)*istart;
@@ -280,6 +311,9 @@ void SmileiMPI_Cart2D::sumField( Field* field )
 			} // END if
 
 		} // END for iNeighbor
+		
+		barrier();
+		
 	} // END for iDim
 
 } // END sumField
