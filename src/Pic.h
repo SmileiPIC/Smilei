@@ -1,8 +1,10 @@
 /*! \mainpage SMILEI overview
  
  \section intro Introduction
- 
+  
  This is the introduction.
+ 
+ You can add interesting cite commands like this \cite Grech2011 (you need to put the BIBTEX record in doc/smilei.bib)
  
  \section install_sec Installation
  

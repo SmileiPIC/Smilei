@@ -21,4 +21,4 @@ htmldoc:
 	cd doc ; (cat smilei.dox; echo "PROJECT_NUMBER=${VERSION}") | doxygen -
 
 pdfdoc:
-	cd doc/latex; pdflatex refman.tex; pdflatex refman.tex
+	cd doc/latex; pdflatex refman.tex; bibtex refman; pdflatex refman.tex
