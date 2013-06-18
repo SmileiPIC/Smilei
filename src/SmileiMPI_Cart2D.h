@@ -46,42 +46,14 @@ protected:
 
 	virtual void writeField    ( Field* field, std::string name );
 
+	// MPI_Datatype [ndims_][iDim=0 prim/dial][iDim=1 prim/dial]
 	MPI_Datatype ntype_   [2][2][2];
 	MPI_Datatype ntypeSum_[2][2][2];
 
+	//std::vector<Particle*> buff_send_[ndims_][2];
+	std::vector<Particle*> buff_send_[3][2];
+	std::vector<Particle*> buff_recv_[3][2];
 };
-
-
-/*
-	if (n_particles!=0) {
-		cout << "Size of particle : " << sizeof(*buff_send[0]) << endl;
-		cout << "Diff between pointers" << endl;
-		cout << &buff_send[0]->position(0)-(double*)(buff_send[0]) << endl;
-		cout << &buff_send[0]->moments(0)-&buff_send[0]->position(0) << endl;
-		//cout << &buff_send[0]->moments(0)-(double*)(buff_send[0]) << endl;
-		cout << &buff_send[0]->moments(2)-&buff_send[0]->moments(0) << endl;
-		cout << &buff_send[0]->chargeDensity()-&buff_send[0]->moments(2) << endl;
-		//cout << &buff_send[0]->position(0)-&buff_send[0]->chargeDensity() << endl;
-
-		cout << &buff_send[1]->position(0)-(double*)(buff_send[0]) << endl;
-		cout << &buff_send[1]->position(0)-&buff_send[0]->position(0) << endl;
-		cout << &buff_send[1]->moments(0)-&buff_send[1]->position(0) << endl;
-		cout << &buff_send[1]->moments(2)-&buff_send[1]->moments(0) << endl;
-		cout << &buff_send[1]->chargeDensity()-&buff_send[1]->moments(2) << endl;
-
-		cout << "Diff between values" << endl;
-
-		cout << buff_send[0]->moments(0) << " " << (double)(*((double*)(buff_send[0])+7)) << endl;
-		cout << buff_send[0]->moments(1) << " " << (double)(*((double*)(buff_send[0])+8)) << endl;
-		cout << buff_send[0]->moments(2) << " " << (double)(*((double*)(buff_send[0])+9)) << endl;
-		cout << buff_send[0]->chargeDensity() << " " << (double)(*((double*)(buff_send[0])+10)) << endl;
-
-		cout << buff_send[0]->position(0) << " " << (double)(*((double*)(buff_send[0])+6)) << endl;
-		//cout << buff_send[0]->position(0) << " " << (double)(*((double*)(buff_send[0])+7)) << endl;
-		//cout << buff_send[0]->position(0) << " " << (double)(*((double*)(buff_send[0])+8)) << endl;
-	}
-*/
-
 
 
 

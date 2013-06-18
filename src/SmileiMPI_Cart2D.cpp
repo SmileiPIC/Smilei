@@ -29,9 +29,6 @@ SmileiMPI_Cart2D::SmileiMPI_Cart2D( SmileiMPI* smpi)
 	nbNeighbors_ = 2; // per direction
 	//neighbor_  = new int(nbNeighbors_);
 
-	buff_send = new std::vector<Particle*>[nbNeighbors_];
-	buff_recv = new std::vector<Particle*>[nbNeighbors_];
-
 	for (int i=0 ; i<ndims_ ; i++) periods_[i] = 0;
 	for (int i=0 ; i<ndims_ ; i++) coords_[i] = 0;
 	for (int i=0 ; i<ndims_ ; i++) dims_[i] = 0;
@@ -40,9 +37,11 @@ SmileiMPI_Cart2D::SmileiMPI_Cart2D( SmileiMPI* smpi)
 		for (int iNeighbors=0 ; iNeighbors<nbNeighbors_ ; iNeighbors++)
 			neighbor_[iDim][iNeighbors] = MPI_PROC_NULL;
 
-	for (int i=0 ; i<nbNeighbors_ ; i++) {
-		buff_send[i].resize(0);
-		buff_recv[i].resize(0);
+	for (int iDim=0 ; iDim<ndims_ ; iDim++) {
+		for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+			buff_send_[iDim][iNeighbor].resize(0);
+			buff_recv_[iDim][iNeighbor].resize(0);
+		}
 	}
 }
 
@@ -88,7 +87,92 @@ void SmileiMPI_Cart2D::createTopology()
 
 void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams* params)
 {
-	MESSAGE( "to be implemented" );
+	std::vector<Particle*>* cuParticles = &species->particles;
+
+	//int n_particles = species->getNbrOfParticles();
+
+	//DEBUG( 2, "\tProcess " << smilei_rk << " : " << species->getNbrOfParticles() << " Particles of species " << ispec );
+	//MESSAGE( "xmin_local = " << min_local[0] << " - x_max_local = " << max_local[0] );
+
+	/********************************************************************************/
+	// Build list of particle to exchange
+	// Arrays buff_send/buff_recv indexed as array neighbors_
+	/********************************************************************************/
+	int iPart = 0;
+	int n_part_send = indexes_of_particles_to_exchange.size();
+	int n_part_recv;
+	for (int i=n_part_send-1 ; i>=0 ; i--) {
+		iPart = indexes_of_particles_to_exchange[i];
+
+		for (int iDim=0 ; iDim<ndims_ ; iDim++) {
+			if ( (*cuParticles)[iPart]->position(iDim) < min_local[iDim]) {
+				buff_send_[iDim][0].push_back( (*cuParticles)[iPart] );
+				cuParticles->erase(cuParticles->begin()+iPart);
+				break;
+			}
+			if ( (*cuParticles)[iPart]->position(iDim) >= max_local[iDim]) {
+				buff_send_[iDim][1].push_back( (*cuParticles)[iPart] );
+				cuParticles->erase(cuParticles->begin()+iPart);
+				break;
+			}
+		}
+
+	} // END for iPart
+
+
+	/********************************************************************************/
+	// Exchange particles
+	/********************************************************************************/
+	MPI_Status stat;
+	for (int iDim=0 ; iDim<ndims_ ; iDim++) {
+
+		for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+
+			n_part_send = buff_send_[iDim][iNeighbor].size();
+
+			if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
+				MPI_Send( &n_part_send, 1, MPI_INT, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D );
+
+				if (n_part_send!=0) {
+					for (int iPart=0 ; iPart<n_part_send; iPart++ ) {
+						MPI_Send( &(buff_send[iNeighbor][iPart]->position(0)), 6, MPI_DOUBLE, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D );
+					}
+				}
+			} // END of Send
+
+			if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+				MPI_Recv( &n_part_recv, 1, MPI_INT, neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &stat );
+
+				if (n_part_recv!=0) {
+					buff_recv_[iDim][(iNeighbor+1)%2] = ParticleFactory::createVector(params, ispec, n_part_recv);
+					for (int iPart=0 ; iPart<n_part_recv; iPart++ ) {
+						MPI_Recv( &(buff_recv_[iDim][(iNeighbor+1)%2][iPart]->position(0)), 6, MPI_DOUBLE, neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &stat );
+						cuParticles->push_back(buff_recv_[iDim][(iNeighbor+1)%2][iPart]);
+					}
+				}
+			} // END of Recv
+
+		} // END for iNeighbor
+
+	} // END for iDim
+
+	/********************************************************************************/
+	// delete Particles included in buff_send/buff_recv
+	/********************************************************************************/
+	for (int iDim=0 ; iDim<ndims_ ; iDim++) {
+		for (int i=0 ; i<nbNeighbors_ ; i++) {
+			// Particles must be deleted on process sender
+			n_part_send =  buff_send_[iDim][i].size();
+			/*for (unsigned int iPart=0 ; iPart<n_part_send; iPart++ ) {
+				delete buff_send[i][iPart];
+			}*/
+			buff_send_[iDim][i].clear();
+
+			// Not on process receiver, Particles are stored in species
+			// Just clean the buffer
+			buff_recv_[iDim][i].clear();
+		} // END for iNeighbor
+	} // END for iDim
 
 } // END exchangeParticles
 
