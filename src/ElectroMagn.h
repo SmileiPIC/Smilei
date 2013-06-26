@@ -106,7 +106,8 @@ public:
 	//void solveMaxwell(double time_dual, SmileiMPI* smpi);
 	virtual void solveMaxwellAmpere() = 0;
 	virtual void solveMaxwellFaraday() = 0;
-	virtual void boundaryConditions(double time_dual, SmileiMPI* smpi) = 0;
+	//virtual void boundaryConditions(double time_dual, SmileiMPI* smpi) = 0;
+    virtual void applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi) = 0;
 	
 private:
     

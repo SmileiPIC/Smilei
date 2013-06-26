@@ -18,7 +18,7 @@ public:
 protected:
     //! Inverse of the spatial-step
 	double dx_inv_;
-	int index_domain_begin;
+	unsigned int index_domain_begin;
 };
 
 #endif

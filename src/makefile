@@ -1,6 +1,6 @@
 VERSION:="v$(shell git rev-list HEAD --count):$(shell git log -1 --pretty=format:%h)"
 
-CC      = openmpic++
+CC      = mpic++
 #CC      = g++
 CFLAGS  = -D__VERSION=\"$(VERSION)\" #-Wstrict-aliasing
 LDFLAGS = -lm 

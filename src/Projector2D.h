@@ -26,7 +26,11 @@ class Projector2D : public Projector
  protected:
 	//! Inverse of the spatial step 1/dx
 	double dx_inv_;
-	int index_domain_begin;
+    double dy_inv_;
+    double dx_ov_dt;
+    double dy_ov_dt;
+	unsigned int i_domain_begin;
+    unsigned int j_domain_begin;
 };
 
 #endif
