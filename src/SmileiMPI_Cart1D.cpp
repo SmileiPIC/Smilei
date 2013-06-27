@@ -9,6 +9,8 @@
 #include "Tools.h" 
 
 #include <string>
+#include <cmath>
+
 using namespace std;
 
 SmileiMPI_Cart1D::SmileiMPI_Cart1D( int* argc, char*** argv )
@@ -20,7 +22,7 @@ SmileiMPI_Cart1D::SmileiMPI_Cart1D( SmileiMPI* smpi)
 	: SmileiMPI( smpi )
 {
 	ndims_ = 1;
-	dims_  = new int(ndims_);
+	number_of_procs  = new int(ndims_);
 	coords_  = new int(ndims_);
 	periods_  = new int(ndims_);
 	reorder_ = 0;
@@ -33,7 +35,7 @@ SmileiMPI_Cart1D::SmileiMPI_Cart1D( SmileiMPI* smpi)
 
 	for (int i=0 ; i<ndims_ ; i++) periods_[i] = 0;
 	for (int i=0 ; i<ndims_ ; i++) coords_[i] = 0;
-	for (int i=0 ; i<ndims_ ; i++) dims_[i] = 0;
+	for (int i=0 ; i<ndims_ ; i++) number_of_procs[i] = 1;
 
 	for (int i=0 ; i<nbNeighbors_ ; i++) {
 		neighbor_[i] = MPI_PROC_NULL;
@@ -45,7 +47,7 @@ SmileiMPI_Cart1D::SmileiMPI_Cart1D( SmileiMPI* smpi)
 
 SmileiMPI_Cart1D::~SmileiMPI_Cart1D()
 {
-	delete dims_;
+	delete number_of_procs;
 	delete periods_;
 	delete coords_;
 	delete neighbor_;
@@ -57,16 +59,39 @@ SmileiMPI_Cart1D::~SmileiMPI_Cart1D()
 
 }
 
-void SmileiMPI_Cart1D::createTopology()
+void SmileiMPI_Cart1D::createTopology(PicParams& params)
 {
-	MPI_Dims_create( smilei_sz, ndims_, dims_ );
-	MPI_Cart_create( SMILEI_COMM_WORLD, ndims_, dims_, periods_, reorder_, &SMILEI_COMM_1D );
+	number_of_procs[0] = smilei_sz;
+
+	MPI_Cart_create( SMILEI_COMM_WORLD, ndims_, number_of_procs, periods_, reorder_, &SMILEI_COMM_1D );
 	MPI_Cart_coords( SMILEI_COMM_1D, smilei_rk, ndims_, coords_ );
 
 	// neighbor_[0]  |  Current process  |  neighbor_[1] //
 	MPI_Cart_shift( SMILEI_COMM_1D, 0, 1, &(neighbor_[0]), &(neighbor_[1]) );
 	PMESSAGE ( 0, smilei_rk, "Neighbors of process : " << neighbor_[0] << " - " << neighbor_[1]  );
 
+
+	for (unsigned int i=0 ; i<params.nDim_field ; i++) {
+
+		params.n_space[i] = params.n_space_global[i] / number_of_procs[i];
+		if ( number_of_procs[i]*params.n_space[i] != params.n_space_global[i] ) {
+			//WARNING( "Domain splitting does not match to the global domain" );
+			if (coords_[i]==number_of_procs[i]-1) {
+				params.n_space[i] = params.n_space_global[i] - params.n_space[i]*(number_of_procs[i]-1);
+			}
+		}
+
+		n_space_global[i] = params.n_space_global[i];
+		oversize[i] = params.oversize[i] = 2;
+		//! \todo{replace cell_starting_global_index compute by a most sophisticated or input data}
+		cell_starting_global_index[i] = coords_[i]*params.n_space[i];
+		// min/max_local : describe local domain in which particles cat be moved
+		//                 different from domain on which E, B, J are defined
+		min_local[i] = (cell_starting_global_index[i]                  )*params.cell_length[i];
+		max_local[i] = (cell_starting_global_index[i]+params.n_space[i])*params.cell_length[i];
+		cell_starting_global_index[i] -= params.oversize[i];
+
+	}
 }
 
 void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams* params)
