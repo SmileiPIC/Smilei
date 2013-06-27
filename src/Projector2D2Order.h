@@ -1,8 +1,8 @@
-
 #ifndef PROJECTOR2D2ORDER_H
 #define PROJECTOR2D2ORDER_H
 
 #include "Projector2D.h"
+
 
 class Projector2D2Order : public Projector2D {
 public:
@@ -12,7 +12,7 @@ public:
 	void operator() (ElectroMagn* champs, Particle* part, double gf);
 	void operator() (Field* rho, Particle* part);
 private:
-    double dx_ov_dt;
+    double one_third;
 };
 
 #endif

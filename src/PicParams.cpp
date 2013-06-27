@@ -241,7 +241,7 @@ void PicParams::print()
 	cout << "\tn_species : " << n_species << endl;
 
 	cout << "\twavelength, sim_units, n_particles : parameters not used for now" << endl;
-	//! \ n_part_max : Initialised in Species::Species()
+	//! \ n_part_max : Initialised in Species::Species()
 	for ( unsigned int i=0 ; i<n_species ; i++ ) {
 		cout << "\t(species_type, initialization_type, n_part_per_cell, c_part_max) : ("
 			<< species_param[i].species_type << ", " << species_param[i].initialization_type << ", " << species_param[i].n_part_per_cell << ", " << species_param[i].c_part_max << ") - "  

@@ -11,15 +11,19 @@ class ElectroMagn1D : public ElectroMagn
 public:
 	//! Constructor for ElectroMagn1D
 	ElectroMagn1D(PicParams* params, SmileiMPI* smpi);
+    
 	//! Destructor for ElectroMagn1D
 	~ElectroMagn1D();
 
 	//! Constant used for the Silver-Mueller boundary conditions
-	double A_;
+	double Alpha_SM;
+    
 	//! Constant used for the Silver-Mueller boundary conditions
-	double B_;
+	double Beta_SM;
+    
 	//! Constant used for the Silver-Mueller boundary conditions
-	double C_;
+	double Gamma_SM;
+    
 	    
 	//! Method used for initializing Maxwell solver
 	void solvePoisson(SmileiMPI* smpi);
@@ -29,10 +33,22 @@ public:
     
 	//! Method used to solve Maxwell's equations
 	void solveMaxwell(double time_dual, SmileiMPI* smpi);
-	void solveMaxwellAmpere();
+	
+    //! Method used to solve Maxwell-Ampere equation
+    void solveMaxwellAmpere();
+    
+    //! Method used to solve Maxwell-Faraday equation
 	void solveMaxwellFaraday();
-	void boundaryConditions(double time_dual, SmileiMPI* smpi);
+    
+    //! Method used to apply EM boundary conditions
+	void applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi);
 
+    //! Method used to save the Magnetic fields (used to center them)
+    void saveMagneticFields();
+    
+    //! Method used to center the Magnetic fields (used to push the particles)
+    void centerMagneticFields();
+    
 	//! \todo Create properties the laser time-profile (MG & TV)
 
 	//! Number of nodes on the primal grid

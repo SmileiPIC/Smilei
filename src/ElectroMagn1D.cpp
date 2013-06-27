@@ -30,9 +30,9 @@ ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
 	dx_ov_dt = 1.0/dt_ov_dx;
 
 	// Parameters for the Silver-Mueller boundary conditions
-	A_ = 4./(1.+dt_ov_dx);
-	B_ = (dt_ov_dx-1.)/(1.+dt_ov_dx);
-	C_ = 2./(1.+dt_ov_dx);
+	Alpha_SM = 2./(1.+dt_ov_dx);
+	Beta_SM  = (dt_ov_dx-1.)/(1.+dt_ov_dx);
+	Gamma_SM = 4./(1.+dt_ov_dx);
 
 	// Electromagnetic fields
 	// ----------------------
@@ -135,6 +135,15 @@ void ElectroMagn1D::solveMaxwell(double time_dual, SmileiMPI* smpi)
 {
 	SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
 
+
+    saveMagneticFields();
+    solveMaxwellAmpere();
+    solveMaxwellFaraday();
+    applyEMBoundaryConditions(time_dual, smpi1D);
+    centerMagneticFields();
+
+
+/*
 	Field1D* Ex1D   = static_cast<Field1D*>(Ex_);
 	Field1D* Ey1D   = static_cast<Field1D*>(Ey_);
 	Field1D* Ez1D   = static_cast<Field1D*>(Ez_);
@@ -144,9 +153,9 @@ void ElectroMagn1D::solveMaxwell(double time_dual, SmileiMPI* smpi)
 	Field1D* Bx1D_m = static_cast<Field1D*>(Bx_m);
 	Field1D* By1D_m = static_cast<Field1D*>(By_m);
 	Field1D* Bz1D_m = static_cast<Field1D*>(Bz_m);
-	Field1D* Jx1D = static_cast<Field1D*>(Jx_);
-	Field1D* Jy1D = static_cast<Field1D*>(Jy_);
-	Field1D* Jz1D = static_cast<Field1D*>(Jz_);
+	Field1D* Jx1D   = static_cast<Field1D*>(Jx_);
+	Field1D* Jy1D   = static_cast<Field1D*>(Jy_);
+	Field1D* Jz1D   = static_cast<Field1D*>(Jz_);
 
 	//DEBUG(5,"solveMaxwell ElectroMagn1D " << time_dual);
 
@@ -177,6 +186,7 @@ void ElectroMagn1D::solveMaxwell(double time_dual, SmileiMPI* smpi)
 		}//ENDif time_profile
 	}//ilaser
 
+
 	// ----------------------------------------------
 	// Save the magnetic fields (used to center them)
 	// ----------------------------------------------
@@ -190,6 +200,7 @@ void ElectroMagn1D::solveMaxwell(double time_dual, SmileiMPI* smpi)
 		(*Bz1D_m)(ix) = (*Bz1D)(ix);
 	}
 
+    
 	// --------------------
 	// Solve Maxwell-Ampere
 	// --------------------
@@ -204,15 +215,13 @@ void ElectroMagn1D::solveMaxwell(double time_dual, SmileiMPI* smpi)
 		(*Ey1D)(ix)= (*Ey1D)(ix) - dt_ov_dx * ( (*Bz1D)(ix+1) - (*Bz1D)(ix)) - dt * (*Jy1D)(ix) ;
 		(*Ez1D)(ix)= (*Ez1D)(ix) + dt_ov_dx * ( (*By1D)(ix+1) - (*By1D)(ix)) - dt * (*Jz1D)(ix) ;
 	}
-	//smpi->exchangeE( this );
-			// Useless by constuction
 
+    
 	// ---------------------
 	// Solve Maxwell-Faraday
 	// ---------------------
 	// NB: bx is given in 1d and defined when initializing the fields (here put to 0)
 	// Transverse fields  by & bz are defined on the dual grid
-	//for (unsigned int ix=1 ; ix<nx_p ; ix++) {
 	for (unsigned int ix=1 ; ix<dimDual[0]-1 ; ix++) {
 		(*By1D)(ix)= (*By1D)(ix) + dt_ov_dx * ( (*Ez1D)(ix) - (*Ez1D)(ix-1)) ;
 		(*Bz1D)(ix)= (*Bz1D)(ix) - dt_ov_dx * ( (*Ey1D)(ix) - (*Ey1D)(ix-1)) ;
@@ -222,6 +231,7 @@ void ElectroMagn1D::solveMaxwell(double time_dual, SmileiMPI* smpi)
 			// (*By1D)(0)       = (*By1D_west_neighbor)(dimDual-2*oversize)
 			// (*By1D)(dimDual) = (*By1D_east_neighbor)(2*oversize)
 			// ....
+    
 
 	// ----------------------------
 	// Apply EM boundary conditions
@@ -232,28 +242,28 @@ void ElectroMagn1D::solveMaxwell(double time_dual, SmileiMPI* smpi)
 		//(*By1D)(0) = A_*byL + B_* (*By1D)(1) + C_* (*Ez1D)(0) ;
 		//(*Bz1D)(0) = A_*bzL + B_* (*Bz1D)(1) - C_* (*Ey1D)(0) ;
 		// Silver-Mueller boundary conditions (left)
-		(*By1D)(index_bc_min[0])= A_*byL + B_* (*By1D)(index_bc_min[0]+1) + C_* (*Ez1D)(index_bc_min[0]);
-		(*Bz1D)(index_bc_min[0])= A_*bzL + B_* (*Bz1D)(index_bc_min[0]+1) - C_* (*Ey1D)(index_bc_min[0]);
+		(*By1D)(index_bc_min[0])= Alpha_SM*(*Ez1D)(index_bc_min[0]) + Beta_SM*(*By1D)(index_bc_min[0]+1) + Gamma_SM*byL;
+		(*Bz1D)(index_bc_min[0])=-Alpha_SM*(*Ey1D)(index_bc_min[0]) + Beta_SM*(*Bz1D)(index_bc_min[0]+1) + Gamma_SM*bzL;
 		// Correction on unused extreme ghost
 		for (unsigned int ix=0 ; ix<index_bc_min[0] ; ix++) {
 			(*By1D)(ix)=0; (*Bz1D)(ix)=0;
 			(*Ey1D)(ix)=0; (*Ez1D)(ix)=0;
 		}
-	}
+	}//if West
+    
 	if ( smpi1D->isEaster() ) {
 		// Silver-Mueller boundary conditions (right)
 		//(*By1D)(nx_d-1) = A_*byR + B_* (*By1D)(nx_d-2) - C_* (*Ez1D)(nx_p-1) ;
 		//(*Bz1D)(nx_d-1) = A_*bzR + B_* (*Bz1D)(nx_d-2) + C_* (*Ey1D)(nx_p-1) ;
 		// Silver-Mueller boundary conditions (right)
-		(*By1D)(index_bc_max[0])= A_*byR + B_* (*By1D)(index_bc_max[0]-1) - C_* (*Ez1D)(index_bc_max[0]);
-		(*Bz1D)(index_bc_max[0])= A_*bzR + B_* (*Bz1D)(index_bc_max[0]-1) + C_* (*Ey1D)(index_bc_max[0]);
+		(*By1D)(index_bc_max[0])=-Alpha_SM*(*Ez1D)(index_bc_max[0]) + Beta_SM*(*By1D)(index_bc_max[0]-1) + Gamma_SM*byR;
+		(*Bz1D)(index_bc_max[0])= Alpha_SM*(*Ey1D)(index_bc_max[0]) + Beta_SM*(*Bz1D)(index_bc_max[0]-1) + Gamma_SM*bzR;
 		// Correction on unused extreme ghost
 		for (unsigned int ix=index_bc_max[0]+1 ; ix<dimDual[0] ; ix++) {
 			(*By1D)(ix  )=0; (*Bz1D)(ix  )=0;
 			(*Ey1D)(ix-1)=0; (*Ez1D)(ix-1)=0;
-
 		}
-	}
+	}//if East
 
 	// ------------------------------------------------
 	// Center the magnetic fields (for particle pusher)
@@ -266,8 +276,36 @@ void ElectroMagn1D::solveMaxwell(double time_dual, SmileiMPI* smpi)
 		(*By1D_m)(ix)= ((*By1D)(ix)+(*By1D_m)(ix))*0.5 ;
 		(*Bz1D_m)(ix)= ((*Bz1D)(ix)+(*Bz1D_m)(ix))*0.5 ;
     }
-	
+*/
 }
+
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Save the former Magnetic-Fields (used to center them)
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn1D::saveMagneticFields()
+{
+    // Static cast of the fields
+	Field1D* Bx1D   = static_cast<Field1D*>(Bx_);
+	Field1D* By1D   = static_cast<Field1D*>(By_);
+	Field1D* Bz1D   = static_cast<Field1D*>(Bz_);
+	Field1D* Bx1D_m = static_cast<Field1D*>(Bx_m);
+	Field1D* By1D_m = static_cast<Field1D*>(By_m);
+	Field1D* Bz1D_m = static_cast<Field1D*>(Bz_m);
+    
+    // for Bx^(p)
+	for (unsigned int i=0 ; i<dimPrim[0] ; i++) {
+		(*Bx1D_m)(i)=(*Bx1D)(i);
+	}
+	//for By^(d) & Bz^(d)
+	for (unsigned int i=0 ; i<dimDual[0] ; i++) {
+		(*By1D_m)(i) = (*By1D)(i);
+		(*Bz1D_m)(i) = (*Bz1D)(i);
+	}
+    
+}//END saveMagneticFields
+
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -276,12 +314,11 @@ void ElectroMagn1D::solveMaxwell(double time_dual, SmileiMPI* smpi)
 void ElectroMagn1D::solveMaxwellAmpere()
 {
 
-	Field1D* Ex1D   = static_cast<Field1D*>(Ex_);
-	Field1D* Ey1D   = static_cast<Field1D*>(Ey_);
-	Field1D* Ez1D   = static_cast<Field1D*>(Ez_);
-	//Field1D* Bx1D   = static_cast<Field1D*>(Bx_);
-	Field1D* By1D   = static_cast<Field1D*>(By_);
-	Field1D* Bz1D   = static_cast<Field1D*>(Bz_);
+	Field1D* Ex1D = static_cast<Field1D*>(Ex_);
+	Field1D* Ey1D = static_cast<Field1D*>(Ey_);
+	Field1D* Ez1D = static_cast<Field1D*>(Ez_);
+	Field1D* By1D = static_cast<Field1D*>(By_);
+	Field1D* Bz1D = static_cast<Field1D*>(Bz_);
 	Field1D* Jx1D = static_cast<Field1D*>(Jx_);
 	Field1D* Jy1D = static_cast<Field1D*>(Jy_);
 	Field1D* Jz1D = static_cast<Field1D*>(Jz_);
@@ -321,18 +358,6 @@ void ElectroMagn1D::solveMaxwellFaraday()
 	Field1D* By1D_m = static_cast<Field1D*>(By_m);
 	Field1D* Bz1D_m = static_cast<Field1D*>(Bz_m);
 
-	// ----------------------------------------------
-	// Save the magnetic fields (used to center them)
-	// ----------------------------------------------
-	//for (unsigned int ix=0 ; ix<nx_p ; ix++) {
-	for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
-		(*Bx1D_m)(ix)=(*Bx1D)(ix);
-	}
-	//for (unsigned int ix=0 ; ix<nx_d ; ix++) {
-	for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
-		(*By1D_m)(ix) = (*By1D)(ix);
-		(*Bz1D_m)(ix) = (*Bz1D)(ix);
-	}
 
 	// ---------------------
 	// Solve Maxwell-Faraday
@@ -350,7 +375,7 @@ void ElectroMagn1D::solveMaxwellFaraday()
 // ---------------------------------------------------------------------------------------------------------------------
 // Maxwell solver using the FDTD scheme
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn1D::boundaryConditions(double time_dual, SmileiMPI* smpi)
+void ElectroMagn1D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
 {
 	SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
 
@@ -363,11 +388,10 @@ void ElectroMagn1D::boundaryConditions(double time_dual, SmileiMPI* smpi)
 	Field1D* Bx1D_m = static_cast<Field1D*>(Bx_m);
 	Field1D* By1D_m = static_cast<Field1D*>(By_m);
 	Field1D* Bz1D_m = static_cast<Field1D*>(Bz_m);
-
+    
 	// --------------------------------------------------
-	// Define the laser fields at left & right boundaries
+	// Laser temporal profile
 	// --------------------------------------------------
-
 	double byL=0, bzL=0, byR=0, bzR=0;
 
 	for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
@@ -394,48 +418,67 @@ void ElectroMagn1D::boundaryConditions(double time_dual, SmileiMPI* smpi)
 	// ----------------------------
 	// Apply EM boundary conditions
 	// ----------------------------
-	//!\todo Make boundary conditions on the EM fields as an external method (MG)
-	if ( smpi1D->isWester() ) {
+    
+	//!\todo Take care that there is a difference between primal and dual grid when putting the fields to 0 on the ghost cells (MG to JD)
+    if ( smpi1D->isWester() ) {
 		// Silver-Mueller boundary conditions (left)
 		//(*By1D)(0) = A_*byL + B_* (*By1D)(1) + C_* (*Ez1D)(0) ;
 		//(*Bz1D)(0) = A_*bzL + B_* (*Bz1D)(1) - C_* (*Ey1D)(0) ;
 		// Silver-Mueller boundary conditions (left)
-		(*By1D)(index_bc_min[0])= A_*byL + B_* (*By1D)(index_bc_min[0]+1) + C_* (*Ez1D)(index_bc_min[0]);
-		(*Bz1D)(index_bc_min[0])= A_*bzL + B_* (*Bz1D)(index_bc_min[0]+1) - C_* (*Ey1D)(index_bc_min[0]);
+		(*By1D)(index_bc_min[0])= Alpha_SM*(*Ez1D)(index_bc_min[0]) + Beta_SM*(*By1D)(index_bc_min[0]+1) + Gamma_SM*byL;
+		(*Bz1D)(index_bc_min[0])=-Alpha_SM*(*Ey1D)(index_bc_min[0]) + Beta_SM*(*Bz1D)(index_bc_min[0]+1) + Gamma_SM*bzL;
 		// Correction on unused extreme ghost
 		for (unsigned int ix=0 ; ix<index_bc_min[0] ; ix++) {
 			(*By1D)(ix)=0; (*Bz1D)(ix)=0;
 			(*Ey1D)(ix)=0; (*Ez1D)(ix)=0;
 		}
-	}
+	}//if West
+    
 	if ( smpi1D->isEaster() ) {
 		// Silver-Mueller boundary conditions (right)
 		//(*By1D)(nx_d-1) = A_*byR + B_* (*By1D)(nx_d-2) - C_* (*Ez1D)(nx_p-1) ;
 		//(*Bz1D)(nx_d-1) = A_*bzR + B_* (*Bz1D)(nx_d-2) + C_* (*Ey1D)(nx_p-1) ;
 		// Silver-Mueller boundary conditions (right)
-		(*By1D)(index_bc_max[0])= A_*byR + B_* (*By1D)(index_bc_max[0]-1) - C_* (*Ez1D)(index_bc_max[0]);
-		(*Bz1D)(index_bc_max[0])= A_*bzR + B_* (*Bz1D)(index_bc_max[0]-1) + C_* (*Ey1D)(index_bc_max[0]);
+		(*By1D)(index_bc_max[0])=-Alpha_SM*(*Ez1D)(index_bc_max[0]) + Beta_SM*(*By1D)(index_bc_max[0]-1) + Gamma_SM*byR;
+		(*Bz1D)(index_bc_max[0])= Alpha_SM*(*Ey1D)(index_bc_max[0]) + Beta_SM*(*Bz1D)(index_bc_max[0]-1) + Gamma_SM*bzR;
 		// Correction on unused extreme ghost
 		for (unsigned int ix=index_bc_max[0]+1 ; ix<dimDual[0] ; ix++) {
 			(*By1D)(ix  )=0; (*Bz1D)(ix  )=0;
 			(*Ey1D)(ix-1)=0; (*Ez1D)(ix-1)=0;
-
 		}
-	}
-
-	// ------------------------------------------------
-	// Center the magnetic fields (for particle pusher)
-	// ------------------------------------------------
-	//for (unsigned int ix=0 ; ix<nx_p ; ix++)
-	for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++)
-		(*Bx1D_m)(ix)= ( (*Bx1D)(ix)+ (*Bx1D_m)(ix))*0.5 ;
-	//for (unsigned int ix=0 ; ix<nx_d ; ix++) {
-	for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
-		(*By1D_m)(ix)= ((*By1D)(ix)+(*By1D_m)(ix))*0.5 ;
-		(*Bz1D_m)(ix)= ((*Bz1D)(ix)+(*Bz1D_m)(ix))*0.5 ;
-    }
+	}//if East
 
 }
+
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Center the Magnetic Fields (used to push the particle)
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn1D::centerMagneticFields()
+{
+    // Static cast of the fields
+	Field1D* Bx1D   = static_cast<Field1D*>(Bx_);
+	Field1D* By1D   = static_cast<Field1D*>(By_);
+	Field1D* Bz1D   = static_cast<Field1D*>(Bz_);
+	Field1D* Bx1D_m = static_cast<Field1D*>(Bx_m);
+	Field1D* By1D_m = static_cast<Field1D*>(By_m);
+	Field1D* Bz1D_m = static_cast<Field1D*>(Bz_m);
+    
+    // for Bx^(p)
+	for (unsigned int i=0 ; i<dimPrim[0] ; i++) {
+		(*Bx1D_m)(i) = ( (*Bx1D)(i)+ (*Bx1D_m)(i))*0.5 ;
+    }
+    
+	// for By^(d) & Bz^(d)
+	for (unsigned int i=0 ; i<dimDual[0] ; i++) {
+		(*By1D_m)(i)= ((*By1D)(i)+(*By1D_m)(i))*0.5 ;
+		(*Bz1D_m)(i)= ((*Bz1D)(i)+(*Bz1D_m)(i))*0.5 ;
+    }
+    
+}//END centerMagneticFields
+
+
 
 
 // ---------------------------------------------------------------------------------------------------------------------
