@@ -60,8 +60,9 @@ protected:
 	int smilei_sz;
 	int smilei_rk;
 
-	std::vector<Particle*>* buff_send;		// -> **
-	std::vector<Particle*>* buff_recv;		// -> **
+	std::vector<int> indexes_of_particles_to_exchange;
+	std::vector<int> buff_index_send[3][2];
+	int buff_index_recv_sz[3][2];
 
 	std::vector<unsigned int> oversize;
 	std::vector<int> cell_starting_global_index;
@@ -73,7 +74,6 @@ protected:
 	virtual void exchangeField ( Field* field ) {};
 	virtual void writeField    ( Field* field, std::string name ) {};
 
-	std::vector<int> indexes_of_particles_to_exchange;
 
 private:
 	void bcast( std::string& val );

@@ -49,9 +49,6 @@ protected:
 	MPI_Datatype ntype_   [2][2][2];
 	MPI_Datatype ntypeSum_[2][2][2];
 
-	//std::vector<Particle*> buff_send_[ndims_][2];
-	std::vector<Particle*> buff_send_[3][2];
-	std::vector<Particle*> buff_recv_[3][2];
 
 };
 
