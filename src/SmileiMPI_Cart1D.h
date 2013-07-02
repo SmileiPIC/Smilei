@@ -39,7 +39,7 @@ protected:
 	int reorder_;
 
 	int nbNeighbors_;
-	int* neighbor_;
+	int neighbor_[3][2];	// 
 
 	virtual void sumField      ( Field* field );
 	virtual void exchangeField ( Field* field );

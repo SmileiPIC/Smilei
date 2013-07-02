@@ -20,12 +20,14 @@ Field2D::Field2D() : Field()
 // with the dimensions as input argument
 Field2D::Field2D(vector<unsigned int> dims) : Field(dims)
 {
+	data_2D=NULL;
 	allocateDims(dims);
 }
 
 // with the dimensions and output (dump) file name as input argument
 Field2D::Field2D(vector<unsigned int> dims, string name) : Field(dims)
 {
+	data_2D=NULL;
 	allocateDims(dims);
 	fdata_.open(name.c_str(), ios::out);
 }
@@ -54,7 +56,6 @@ Field2D::~Field2D()
 {
 	delete [] data_2D;
 	
-	DEBUG(10,"Field 2D deleted");
 	fdata_.close();
 }
 
@@ -79,8 +80,6 @@ void Field2D::allocateDims(std::vector<unsigned int> dims )
 		data_[i] = data_2D + i*dims_[1];
 		for (unsigned int j=0;j<dims_[1];j++) data_[i][j] = 0.0;
 	}
-
-	DEBUG(10,"Fields 2D created: " << data_[0] << "x" << data_[1]);
 
 }
 
@@ -117,8 +116,6 @@ void Field2D::allocateDims(std::vector<unsigned int> dims, unsigned int mainDim,
 		for (unsigned int j=0;j<dims_[1];j++) data_[i][j] = 0.0;
 	}
 	
-	DEBUG(10,"Fields 2D created: " << data_[0] << "x" << data_[1]);
-
 }
 
 

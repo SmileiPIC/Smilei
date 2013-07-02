@@ -44,5 +44,5 @@ void Particle::Print(PicParams* params)
 {
 	for (unsigned int i=0 ; i<params->nDim_field ; i++ ) cout << Position[i] << " ";
 	for (unsigned int i=0 ; i<3 ; i++ )                  cout << Momentum[i] << " ";
-	cout <<  Weight << " " << endl;
+	cout <<  Weight[0] << " " << endl;
 }
