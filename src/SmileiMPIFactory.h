@@ -25,7 +25,7 @@ public:
     	}
 
     	// Creation of a cartesian topology
-    	smpi->createTopology();
+    	smpi->createTopology(params);
 
 
     	if ( params.geometry == "2d3v" ) smpi->createType(params);

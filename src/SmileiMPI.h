@@ -30,7 +30,7 @@ public:
 
 	void bcast( PicParams& params );
 
-	virtual void createTopology() {};
+	virtual void createTopology( PicParams& params ) {};
 	virtual void createType( PicParams& params ) {};
 
 	virtual void exchangeParticles(Species* species, int ispec, PicParams* params) {};
@@ -60,20 +60,19 @@ protected:
 	int smilei_sz;
 	int smilei_rk;
 
-	std::vector<Particle*>* buff_send;		// -> **
-	std::vector<Particle*>* buff_recv;		// -> **
+	std::vector<int> indexes_of_particles_to_exchange;
+	std::vector<int> buff_index_send[3][2];
+	int buff_index_recv_sz[3][2];
 
 	std::vector<unsigned int> oversize;
 	std::vector<int> cell_starting_global_index;
 	std::vector<double> min_local;
 	std::vector<double> max_local;
+	std::vector<int> n_space_global;
 
 	virtual void sumField      ( Field* field ) {};
 	virtual void exchangeField ( Field* field ) {};
 	virtual void writeField    ( Field* field, std::string name ) {};
-
-	std::vector<int> indexes_of_particles_to_exchange;
-	std::vector<int> number_of_procs;
 
 
 private:

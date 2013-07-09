@@ -2,8 +2,9 @@ VERSION:="v$(shell git rev-list HEAD --count):$(shell git log -1 --pretty=format
 
 CC      = mpic++
 #CC      = g++
-CFLAGS  = -D__VERSION=\"$(VERSION)\" #-Wstrict-aliasing
-LDFLAGS = -lm 
+CFLAGS  = -D__VERSION=\"$(VERSION)\" #-I/local/home/jderouil/applications/hdf5-1.8.11/include  #-Wstrict-aliasing
+LDFLAGS = -lm #-L/local/home/jderouil/applications/hdf5-1.8.11/lib -lhdf5
+# -I/local/home/jderouil/applications/hdf5-1.8.11/include -L/local/home/jderouil/applications/hdf5-1.8.11/lib -lhdf5
 
 all: release install
 

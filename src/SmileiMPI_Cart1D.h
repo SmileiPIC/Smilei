@@ -17,13 +17,13 @@ public:
 
 	virtual void whoami() {std::cout << "SmileiMPI_Cart1D" << std::endl;}
 
-	virtual void createTopology();
+	virtual void createTopology(PicParams& params);
 	virtual void exchangeParticles(Species* species, int ispec, PicParams* params);
 
 	inline int getProcCoord(int i) {return coords_[i];}
 
 	inline bool isWester() {return (coords_[0]==0);}
-	inline bool isEaster() {return (coords_[0]==dims_[0]-1);}
+	inline bool isEaster() {return (coords_[0]==number_of_procs[0]-1);}
 
 	void createType( PicParams& params ) {};
 
@@ -31,7 +31,7 @@ protected:
 	MPI_Comm SMILEI_COMM_1D;
 
 	int ndims_;
-    int* dims_;
+	int* number_of_procs;
 
 	// Cartesian ...
     int* coords_;
@@ -39,7 +39,7 @@ protected:
 	int reorder_;
 
 	int nbNeighbors_;
-	int* neighbor_;
+	int neighbor_[3][2];	// 
 
 	virtual void sumField      ( Field* field );
 	virtual void exchangeField ( Field* field );

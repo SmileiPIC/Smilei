@@ -10,6 +10,8 @@
 
 #include <string>
 #include <mpi.h>
+#include <cmath>
+
 using namespace std;
 
 SmileiMPI_Cart2D::SmileiMPI_Cart2D( int* argc, char*** argv )
@@ -21,28 +23,30 @@ SmileiMPI_Cart2D::SmileiMPI_Cart2D( SmileiMPI* smpi)
 	: SmileiMPI( smpi )
 {
 	ndims_ = 2;
-	dims_  = new int(ndims_);
+	number_of_procs = new int(ndims_);
 	coords_  = new int(ndims_);
 	periods_  = new int(ndims_);
 	reorder_ = 0;
 
 	nbNeighbors_ = 2; // per direction
-	//neighbor_  = new int(nbNeighbors_);
 
 	for (int i=0 ; i<ndims_ ; i++) periods_[i] = 0;
+	// Geometry periodic in y
+	periods_[1] = 1;
 	for (int i=0 ; i<ndims_ ; i++) coords_[i] = 0;
-	for (int i=0 ; i<ndims_ ; i++) dims_[i] = 0;
+	for (int i=0 ; i<ndims_ ; i++) number_of_procs[i] = 1;
 
 	for (int iDim=0 ; iDim<ndims_ ; iDim++)
 		for (int iNeighbors=0 ; iNeighbors<nbNeighbors_ ; iNeighbors++)
 			neighbor_[iDim][iNeighbors] = MPI_PROC_NULL;
 
 	for (int iDim=0 ; iDim<ndims_ ; iDim++) {
-		for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-			buff_send_[iDim][iNeighbor].resize(0);
-			buff_recv_[iDim][iNeighbor].resize(0);
+		for (int i=0 ; i<nbNeighbors_ ; i++) {
+			buff_index_send[iDim][i].resize(0);
+			buff_index_recv_sz[iDim][i] = 0;
 		}
 	}
+
 }
 
 SmileiMPI_Cart2D::~SmileiMPI_Cart2D()
@@ -57,24 +61,23 @@ SmileiMPI_Cart2D::~SmileiMPI_Cart2D()
 		}
 	}
 
-	delete dims_;
+	delete number_of_procs;
 	delete periods_;
 	delete coords_;
-	//delete neighbor_;
-
-	delete [] buff_send;
-	delete [] buff_recv;
 
 	if ( SMILEI_COMM_2D != MPI_COMM_NULL) MPI_Comm_free(&SMILEI_COMM_2D);
 
 }
 
-void SmileiMPI_Cart2D::createTopology()
+void SmileiMPI_Cart2D::createTopology(PicParams& params)
 {
-	dims_[0] = number_of_procs[0];
-	dims_[1] = number_of_procs[1];
+	if (params.nDim_field == 2) {
+		double tmp = params.res_space[0]*params.sim_length[0] / ( params.res_space[1]*params.sim_length[1] );
+		number_of_procs[0] = 2;//min( smilei_sz, max(1, (int)sqrt ( (double)smilei_sz*tmp*tmp) ) );
+		number_of_procs[1] = 2;//(int)(smilei_sz / number_of_procs[0]);
+	}
 
-	MPI_Cart_create( SMILEI_COMM_WORLD, ndims_, dims_, periods_, reorder_, &SMILEI_COMM_2D );
+	MPI_Cart_create( SMILEI_COMM_WORLD, ndims_, number_of_procs, periods_, reorder_, &SMILEI_COMM_2D );
 	MPI_Cart_coords( SMILEI_COMM_2D, smilei_rk, ndims_, coords_ );
 
 	//                  |                   |                  //
@@ -98,14 +101,12 @@ void SmileiMPI_Cart2D::createTopology()
 	// crossNei_[x][x]  | crossNei_[x][x]   | crossNei_[x][x]  //
 
 	// crossNei_[x][x]  |                   | crossNei_[x][x]  //
-	//                  |  Current process  |                  //
+	//                  |  Current process  |                  //		-> Manage working direction per direction
 	// crossNei_[x][x]  |                   | crossNei_[x][x]  //
 
 	// crossNei_[x][x]  | crossNei_[x][x]   | crossNei_[x][x]  //
 	// crossNei_[x][x]  |                   | crossNei_[x][x]  //
 	// crossNei_[x][x]  | crossNei_[x][x]   | crossNei_[x][x]  //
-
-
 
 
 	for (int iDim=0 ; iDim<ndims_ ; iDim++) {
@@ -113,96 +114,171 @@ void SmileiMPI_Cart2D::createTopology()
 		PMESSAGE ( 0, smilei_rk, "Neighbors of process in direction " << iDim << " : " << neighbor_[iDim][0] << " - " << neighbor_[iDim][1]  );
 	}
 
+
+	for (unsigned int i=0 ; i<params.nDim_field ; i++) {
+
+		params.n_space[i] = params.n_space_global[i] / number_of_procs[i];
+		if ( number_of_procs[i]*params.n_space[i] != params.n_space_global[i] ) {
+			//WARNING( "Domain splitting does not match to the global domain" );
+			if (coords_[i]==number_of_procs[i]-1) {
+				params.n_space[i] = params.n_space_global[i] - params.n_space[i]*(number_of_procs[i]-1);
+			}
+		}
+
+		n_space_global[i] = params.n_space_global[i];
+		oversize[i] = params.oversize[i] = 2;
+		//! \todo{replace cell_starting_global_index compute by a most sophisticated or input data}
+		cell_starting_global_index[i] = coords_[i]*(params.n_space_global[i] / number_of_procs[i]);
+		// min/max_local : describe local domain in which particles cat be moved
+		//                 different from domain on which E, B, J are defined
+		min_local[i] = (cell_starting_global_index[i]                  )*params.cell_length[i];
+		max_local[i] = (cell_starting_global_index[i]+params.n_space[i])*params.cell_length[i];
+		cell_starting_global_index[i] -= params.oversize[i];
+
+	}
+	MESSAGE( "n_space / rank " << smilei_rk << " = " << params.n_space[0] << " " << params.n_space[1] );
+
+
 }
 
 void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams* params)
 {
 	std::vector<Particle*>* cuParticles = &species->particles;
 
-	//int n_particles = species->getNbrOfParticles();
-
-	//DEBUG( 2, "\tProcess " << smilei_rk << " : " << species->getNbrOfParticles() << " Particles of species " << ispec );
-	//MESSAGE( "xmin_local = " << min_local[0] << " - x_max_local = " << max_local[0] );
-
 	/********************************************************************************/
-	// Build list of particle to exchange
-	// Arrays buff_send/buff_recv indexed as array neighbors_
+	// Build lists of indexes of particle to exchange per neighbor
+	// Computed from indexes_of_particles_to_exchange computed during particles' BC
 	/********************************************************************************/
-	int iPart = 0;
 	int n_part_send = indexes_of_particles_to_exchange.size();
 	int n_part_recv;
-	for (int i=n_part_send-1 ; i>=0 ; i--) {
-		iPart = indexes_of_particles_to_exchange[i];
 
+	int iPart;
+	for (int i=0 ; i<n_part_send ; i++) {
+		iPart = indexes_of_particles_to_exchange[i];
 		for (int iDim=0 ; iDim<ndims_ ; iDim++) {
 			if ( (*cuParticles)[iPart]->position(iDim) < min_local[iDim]) {
-				buff_send_[iDim][0].push_back( (*cuParticles)[iPart] );
-				cuParticles->erase(cuParticles->begin()+iPart);
+				buff_index_send[iDim][0].push_back( indexes_of_particles_to_exchange[i] );
 				break;
 			}
 			if ( (*cuParticles)[iPart]->position(iDim) >= max_local[iDim]) {
-				buff_send_[iDim][1].push_back( (*cuParticles)[iPart] );
-				cuParticles->erase(cuParticles->begin()+iPart);
+				buff_index_send[iDim][1].push_back( indexes_of_particles_to_exchange[i] );
 				break;
 			}
 		}
-
-	} // END for iPart
+	} // END for iPart = f(i)
 
 
 	/********************************************************************************/
 	// Exchange particles
 	/********************************************************************************/
-	MPI_Status stat;
 	for (int iDim=0 ; iDim<ndims_ ; iDim++) {
 
+		MPI_Status stat[2];
+		MPI_Request request[2];
+
+		/********************************************************************************/
+		// Exchange number of particles to exchange to establish or not a communication
+		/********************************************************************************/
+		for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+			if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
+				n_part_send = (buff_index_send[iDim][iNeighbor]).size();
+				MPI_Isend( &n_part_send, 1, MPI_INT, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D, &(request[iNeighbor]) );
+			} // END of Send
+			if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+				MPI_Irecv( &(buff_index_recv_sz[iDim][(iNeighbor+1)%2]), 1, MPI_INT, neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &(request[(iNeighbor+1)%2]) );
+			}
+		}
+
+		/********************************************************************************/
+		// Wait for end of communications over number of particles
+		/********************************************************************************/
+		for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+			if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
+				MPI_Wait( &(request[iNeighbor]), &(stat[iNeighbor]) );
+			}
+			if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+				MPI_Wait( &(request[(iNeighbor+1)%2]), &(stat[(iNeighbor+1)%2]) );
+			}
+		}
+
+
+		/********************************************************************************/
+		// Define buffers to exchange buff_index_send[iDim][iNeighbor].size();
+		/********************************************************************************/
+		std::vector<unsigned int> partSize(2,0);
+		partSize[0] = 0; // Number of particle exchanged per direction
+		//! \todo{6 replaced by number of properties by particle}
+		partSize[1] = 6;
+		Field2D partArrayRecv[2];
+		Field2D partArraySend[2];
+
+
+		/********************************************************************************/
+		// Proceed to effective Particles' communications
+		/********************************************************************************/
 		for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
 
-			n_part_send = buff_send_[iDim][iNeighbor].size();
-
-			if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
-				MPI_Send( &n_part_send, 1, MPI_INT, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D );
-
-				if (n_part_send!=0) {
-					for (int iPart=0 ; iPart<n_part_send; iPart++ ) {
-						MPI_Send( &(buff_send[iNeighbor][iPart]->position(0)), 6, MPI_DOUBLE, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D );
-					}
+			// n_part_send : number of particles to send to current neighbor
+			n_part_send = (buff_index_send[iDim][iNeighbor]).size();
+			if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (n_part_send!=0) ) {
+				partSize[0] = n_part_send;
+				partArraySend[iNeighbor].allocateDims(partSize);
+				for (int iPart=0 ; iPart<n_part_send ; iPart++) {
+					memcpy(&(partArraySend[iNeighbor](iPart,0)), &((*cuParticles)[ buff_index_send[iDim][iNeighbor][iPart] ]->position(0)), 6*sizeof(double) );
 				}
+				MPI_Isend( &(partArraySend[iNeighbor](0,0)), (int)6*n_part_send, MPI_DOUBLE, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D, &(request[iNeighbor]) );
+
 			} // END of Send
 
-			if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
-				MPI_Recv( &n_part_recv, 1, MPI_INT, neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &stat );
-
-				if (n_part_recv!=0) {
-					buff_recv_[iDim][(iNeighbor+1)%2] = ParticleFactory::createVector(params, ispec, n_part_recv);
-					for (int iPart=0 ; iPart<n_part_recv; iPart++ ) {
-						MPI_Recv( &(buff_recv_[iDim][(iNeighbor+1)%2][iPart]->position(0)), 6, MPI_DOUBLE, neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &stat );
-						cuParticles->push_back(buff_recv_[iDim][(iNeighbor+1)%2][iPart]);
-					}
-				}
+			n_part_recv = buff_index_recv_sz[iDim][(iNeighbor+1)%2];
+			if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
+				partSize[0] = n_part_recv;
+				partArrayRecv[(iNeighbor+1)%2].allocateDims(partSize);
+				MPI_Irecv( &(partArrayRecv[(iNeighbor+1)%2](0,0)), (int)6*n_part_recv, MPI_DOUBLE,  neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &(request[(iNeighbor+1)%2]) );
 			} // END of Recv
 
 		} // END for iNeighbor
 
-	} // END for iDim
+
+		/********************************************************************************/
+		// Wait for end of communications over Particles
+		/********************************************************************************/
+		for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+
+			n_part_send = buff_index_send[iDim][iNeighbor].size();
+			if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (n_part_send!=0) ){
+				MPI_Wait( &(request[iNeighbor]), &(stat[iNeighbor]) );
+			}
+
+			n_part_recv = buff_index_recv_sz[iDim][(iNeighbor+1)%2];
+			if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
+				MPI_Wait( &(request[(iNeighbor+1)%2]), &(stat[(iNeighbor+1)%2]) );
+				int n_particles = species->getNbrOfParticles();
+				cuParticles->resize( n_particles + n_part_recv );
+				for (int iPart=0 ; iPart<n_part_recv; iPart++ ) {
+					(*cuParticles)[n_particles+iPart] = ParticleFactory::create(params, ispec);
+					memcpy( &( ((*cuParticles)[n_particles+iPart])->position(0) ), &(partArrayRecv[(iNeighbor+1)%2](iPart,0)),6*sizeof(double) );
+				}
+			}
+
+		}
+
+		/********************************************************************************/
+		// Clean lists of indexes of particle to exchange per neighbor
+		/********************************************************************************/
+		for (int i=0 ; i<nbNeighbors_ ; i++)
+			buff_index_send[iDim][i].clear();
+
+	}
 
 	/********************************************************************************/
-	// delete Particles included in buff_send/buff_recv
+	// Delete Particles included in buff_send/buff_recv
 	/********************************************************************************/
-	for (int iDim=0 ; iDim<ndims_ ; iDim++) {
-		for (int i=0 ; i<nbNeighbors_ ; i++) {
-			// Particles must be deleted on process sender
-			n_part_send =  buff_send_[iDim][i].size();
-			/*for (unsigned int iPart=0 ; iPart<n_part_send; iPart++ ) {
-				delete buff_send[i][iPart];
-			}*/
-			buff_send_[iDim][i].clear();
-
-			// Not on process receiver, Particles are stored in species
-			// Just clean the buffer
-			buff_recv_[iDim][i].clear();
-		} // END for iNeighbor
-	} // END for iDim
+	for (int i=n_part_send-1 ; i>=0 ; i--) {
+		iPart = indexes_of_particles_to_exchange[i];
+		(*cuParticles)[iPart]->~Particle();
+		cuParticles->erase( cuParticles->begin() + iPart );
+	} // END for iPart = f(i)
 
 } // END exchangeParticles
 
@@ -265,7 +341,6 @@ void SmileiMPI_Cart2D::sumField( Field* field )
 	}
 
 	int istart, ix, iy;
-	MPI_Status stat;
 
 	/********************************************************************************/
 	// Send/Recv in a buffer data to sum
@@ -273,6 +348,8 @@ void SmileiMPI_Cart2D::sumField( Field* field )
 	for (int iDim=0 ; iDim<ndims_ ; iDim++) {
 
 		MPI_Datatype ntype = ntypeSum_[iDim][isPrimal[0]][isPrimal[1]];
+		MPI_Status stat[2];
+		MPI_Request request[2];
 
 		for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
 
@@ -280,16 +357,25 @@ void SmileiMPI_Cart2D::sumField( Field* field )
 				istart = iNeighbor * ( n_elem[iDim]- oversize2[iDim] ) + (1-iNeighbor) * ( 0 );
 				ix = (1-iDim)*istart;
 				iy =    iDim *istart;
-				MPI_Send( &(f2D->data_[ix][iy]), 1, ntype, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D );
+				MPI_Isend( &(f2D->data_[ix][iy]), 1, ntype, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D, &(request[iNeighbor]) );
 			} // END of Send
 
 			if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
 				int tmp_elem = (buf[iDim][(iNeighbor+1)%2]).dims_[0]*(buf[iDim][(iNeighbor+1)%2]).dims_[1];
-				MPI_Recv( &( (buf[iDim][(iNeighbor+1)%2]).data_[0][0] ), tmp_elem, MPI_DOUBLE, neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &stat );
+				MPI_Irecv( &( (buf[iDim][(iNeighbor+1)%2]).data_[0][0] ), tmp_elem, MPI_DOUBLE, neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &(request[(iNeighbor+1)%2]) );
 			} // END of Recv
 
 		} // END for iNeighbor
 
+
+		for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+			if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
+				MPI_Wait( &(request[iNeighbor]), &(stat[iNeighbor]) );
+			}
+			if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+				MPI_Wait( &(request[(iNeighbor+1)%2]), &(stat[(iNeighbor+1)%2]) );
+			}
+		}
 
 
 		// Synchro before summing, to not sum with data ever sum
@@ -325,14 +411,15 @@ void SmileiMPI_Cart2D::exchangeField( Field* field )
 	std::vector<unsigned int> isPrimal = field->isPrimal_;
 	Field2D* f2D =  static_cast<Field2D*>(field);
 
-	MPI_Status stat;
-
 	int istart, ix, iy;
 
 	// Loop over dimField
 	for (int iDim=0 ; iDim<ndims_ ; iDim++) {
 
 		MPI_Datatype ntype = ntype_[iDim][isPrimal[0]][isPrimal[1]];
+		MPI_Status stat[2];
+		MPI_Request request[2];
+
 		for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
 
 			if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
@@ -340,7 +427,7 @@ void SmileiMPI_Cart2D::exchangeField( Field* field )
 				istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isPrimal[iDim]) ) + (1-iNeighbor) * ( 2*oversize[iDim]+1-(1-isPrimal[iDim]) );
 				ix = (1-iDim)*istart;
 				iy =    iDim *istart;
-				MPI_Send( &(f2D->data_[ix][iy]), 1, ntype, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D );
+				MPI_Isend( &(f2D->data_[ix][iy]), 1, ntype, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D, &(request[iNeighbor]) );
 
 			} // END of Send
 
@@ -349,20 +436,198 @@ void SmileiMPI_Cart2D::exchangeField( Field* field )
 				istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - 1 ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
 				ix = (1-iDim)*istart;
 				iy =    iDim *istart;
-				MPI_Recv( &(f2D->data_[ix][iy]), 1, ntype, neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &stat );
+				MPI_Irecv( &(f2D->data_[ix][iy]), 1, ntype, neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &(request[(iNeighbor+1)%2]));
 
 			} // END of Recv
 
 		} // END for iNeighbor
+
+		for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+			if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
+				MPI_Wait( &(request[iNeighbor]), &(stat[iNeighbor]) );
+			}
+			if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+				MPI_Wait( &(request[(iNeighbor+1)%2]), &(stat[(iNeighbor+1)%2]) );
+			}
+		}
 
 	} // END for iDim
 
 
 } // END exchangeField
 
+#ifdef _HDF5
+#include "hdf5.h"
+#endif
 
 void SmileiMPI_Cart2D::writeField( Field* field, string name )
 {
+#ifdef _HDF5
 	MESSAGE( "to be implemented" );
 
+	Field2D* f2D =  static_cast<Field2D*>(field);
+	std::vector<unsigned int> n_elem = field->dims_;
+
+	std::vector<unsigned int> istart = oversize;
+	std::vector<unsigned int> bufsize = n_elem;
+
+	for (int i=0 ; i<ndims_ ; i++) {
+
+		if (coords_[i]!=0) istart[i]+=1;  							// A ajuster 2D -> coords_
+
+		bufsize[i] = n_elem[i] - 2*oversize[i];
+
+		if (number_of_procs[i] != 1) {
+
+			if ( f2D->isPrimal_[i] == 0 ) {
+				if (coords_[i]!=0) {
+					bufsize[i]--;
+				}
+			}
+			else {
+				if ( (coords_[i]!=0) && (coords_[i]!=number_of_procs[i]-1) )
+					bufsize[i] -= 2;
+				else
+					bufsize[i] -= 1;
+			}
+
+//			bufsize[i] -= f2D->isPrimal_[i];
+//			if (coords_[i]!=0) {										// A ajuster 2D -> coords_
+//				if (f2D->isPrimal_[i] == 0) bufsize[i]-=1;
+//			}
+//			else if (coords_[i]!=number_of_procs[i]-1)  bufsize[i]-=1;			// A ajuster 2D -> coords_
+
+
+		}
+	}
+
+	MPI_Info info  = MPI_INFO_NULL;
+
+    /*
+     * Set up file access property list with parallel I/O access
+     */
+	hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
+    H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, info);
+   /*
+    * Create a new file collectively and release property list identifier.
+    */
+   hid_t file_id = H5Fcreate(name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+   //H5Pclose(plist_id);
+   MESSAGE( "file created" );
+   barrier();
+   cout.flush();
+
+   /*
+    * Create the dataspace for the dataset.
+    */
+   hsize_t     chunk_dims[2];            /* chunk dimensions */
+   hsize_t     offset[2];
+   hsize_t     stride[2];
+   hsize_t     count[2];
+   hsize_t     block[2];
+
+   chunk_dims[0] = n_elem[0];
+   chunk_dims[1] = n_elem[1];
+   for ( int ik=0 ; ik<getSize(); ik++) {
+	   if (ik==getRank() ) {
+		   cout << smilei_rk << " - coords = " << coords_[0] << ", " << coords_[1] << " -> chunk OK : " << chunk_dims[0] << ", " << chunk_dims[1] << endl;
+		   sleep(1);
+		   cout.flush();
+	   }
+	   barrier();
+   }
+   hid_t memspace  = H5Screate_simple(ndims_, chunk_dims, NULL);
+   offset[0] = istart[0];
+   offset[1] = istart[1];
+   stride[0] = 1;
+   stride[1] = 1;
+   count[0] = bufsize[0];
+   count[1] = bufsize[1];
+   for ( int ik=0 ; ik<getSize(); ik++) {
+	   if (ik==getRank() ) {
+		   cout << smilei_rk << " - coords = " << coords_[0] << ", " << coords_[1] << " -> offset OK : " << offset[0] << ", " << offset[1] << endl;
+		   cout << smilei_rk << " - coords = " << coords_[0] << ", " << coords_[1] << " -> count  OK : " << count[0] << ", " << count[1] << endl;
+		   sleep(1);
+		   cout.flush();
+	   }
+	   barrier();
+   }
+   herr_t status = H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset, stride, count, NULL);
+   MESSAGE( "memspace created" );
+   barrier();
+   sleep(1);
+   cout.flush();
+
+   //
+   // Each process defines dataset in memory and writes it to the hyperslab
+   // in the file.
+   //
+   hsize_t     dimsf[2];
+   dimsf[0] = n_space_global[0]+1+f2D->isPrimal_[0]; // +1	// A ajuster
+   dimsf[1] = n_space_global[1]+1+f2D->isPrimal_[1]; // +1	// A ajuster
+
+   cout << "\tfilespace OK : " << dimsf[0] << " " << dimsf[1] << endl;
+
+   hid_t filespace = H5Screate_simple(ndims_, dimsf, NULL);
+   hid_t plist_id2 = H5Pcreate(H5P_DATASET_CREATE);
+   chunk_dims[0] = bufsize[0];
+   chunk_dims[1] = bufsize[1];
+   for ( int ik=0 ; ik<getSize(); ik++) {
+	   if (ik==getRank() ) {
+		   cout << smilei_rk << " - coords = " << coords_[0] << ", " << coords_[1] << " -> write OK " << bufsize[0] << ", " << bufsize[1] << endl;
+		   //cout << endl << endl;
+		   sleep(1);
+		   cout.flush();
+	   }
+	   barrier();
+   }
+
+   //H5Pset_chunk(plist_id2, ndims_, chunk_dims);
+   hid_t dset_id = H5Dcreate(file_id, "Field", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id2, H5P_DEFAULT);
+   //H5Pclose(plist_id);
+
+   //
+   // Select hyperslab in the file.
+   //
+   offset[0] = cell_starting_global_index[0]+istart[0]; // istart = oversize (+1 if != coords_[i])
+   offset[1] = cell_starting_global_index[1]+istart[1];
+
+   cout << "\t\t" << smilei_rk << ", offset = " << offset[0] << " " << offset[1] << ", size = " << bufsize[0] << " " << bufsize[1] << endl;
+   cout << "\t\t" << smilei_rk << ", global index = " << cell_starting_global_index[0] << " " << cell_starting_global_index[1] << ", " << istart[0] << " " << istart[1] << endl;
+   stride[0] = 1;
+   stride[1] = 1;
+   count[0] = 1;
+   count[1] = 1;
+   block[0] = bufsize[0];
+   block[1] = bufsize[1];
+   status = H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, stride, count, block);
+   MESSAGE( "filespace created" );
+
+   //
+   // Create property list for collective dataset write.
+   //
+   hid_t plist_id3 = H5Pcreate(H5P_DATASET_XFER);
+   H5Pset_dxpl_mpio(plist_id3, H5FD_MPIO_INDEPENDENT);
+   MESSAGE( "Start H5Dwrite" );
+   //status = H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, plist_id3, &(f2D->data_[0][0]) );
+   for ( int ik=0 ; ik<getSize(); ik++) {
+	   if (ik==getRank() ) {
+		   status = H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, plist_id3, &(f2D->data_[0][0]) );
+	   }
+	   barrier();
+   }
+
+   MESSAGE( "End H5Dwrite" );
+
+   //
+   // Close/release resources.
+   //
+   H5Pclose(plist_id3);
+   H5Dclose(dset_id);
+   H5Pclose(plist_id2);
+   H5Sclose(filespace);
+   H5Sclose(memspace);
+   H5Fclose(file_id);
+   H5Pclose(plist_id);
+#endif
 } // END writeField
