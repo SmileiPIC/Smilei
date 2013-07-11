@@ -463,7 +463,7 @@ void SmileiMPI_Cart2D::exchangeField( Field* field )
 void SmileiMPI_Cart2D::writeField( Field* field, string name )
 {
 #ifdef _HDF5
-	MESSAGE( "to be implemented" );
+	DEBUG( "to be implemented1" );
 
 	Field2D* f2D =  static_cast<Field2D*>(field);
 	std::vector<unsigned int> n_elem = field->dims_;
@@ -531,7 +531,7 @@ void SmileiMPI_Cart2D::writeField( Field* field, string name )
    for ( int ik=0 ; ik<getSize(); ik++) {
 	   if (ik==getRank() ) {
 		   cout << smilei_rk << " - coords = " << coords_[0] << ", " << coords_[1] << " -> chunk OK : " << chunk_dims[0] << ", " << chunk_dims[1] << endl;
-		   sleep(1);
+	//	   sleep(1);
 		   cout.flush();
 	   }
 	   barrier();
@@ -547,7 +547,7 @@ void SmileiMPI_Cart2D::writeField( Field* field, string name )
 	   if (ik==getRank() ) {
 		   cout << smilei_rk << " - coords = " << coords_[0] << ", " << coords_[1] << " -> offset OK : " << offset[0] << ", " << offset[1] << endl;
 		   cout << smilei_rk << " - coords = " << coords_[0] << ", " << coords_[1] << " -> count  OK : " << count[0] << ", " << count[1] << endl;
-		   sleep(1);
+	//	   sleep(1);
 		   cout.flush();
 	   }
 	   barrier();
@@ -555,7 +555,7 @@ void SmileiMPI_Cart2D::writeField( Field* field, string name )
    herr_t status = H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset, stride, count, NULL);
    MESSAGE( "memspace created" );
    barrier();
-   sleep(1);
+   //sleep(1);
    cout.flush();
 
    //
@@ -576,7 +576,7 @@ void SmileiMPI_Cart2D::writeField( Field* field, string name )
 	   if (ik==getRank() ) {
 		   cout << smilei_rk << " - coords = " << coords_[0] << ", " << coords_[1] << " -> write OK " << bufsize[0] << ", " << bufsize[1] << endl;
 		   //cout << endl << endl;
-		   sleep(1);
+//		   sleep(1);
 		   cout.flush();
 	   }
 	   barrier();
