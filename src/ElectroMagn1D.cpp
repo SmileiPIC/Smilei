@@ -139,6 +139,11 @@ void ElectroMagn1D::solveMaxwell(double time_dual, SmileiMPI* smpi)
     saveMagneticFields();
     solveMaxwellAmpere();
     solveMaxwellFaraday();
+    smpi1D->exchangeB( this );
+    // ..
+    // (*By1D)(0)       = (*By1D_west_neighbor)(dimDual-2*oversize)
+    // (*By1D)(dimDual) = (*By1D_east_neighbor)(2*oversize)
+    // ....
     applyEMBoundaryConditions(time_dual, smpi1D);
     centerMagneticFields();
 
@@ -348,6 +353,7 @@ void ElectroMagn1D::solveMaxwellAmpere()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn1D::solveMaxwellFaraday()
 {
+    
 	//Field1D* Ex1D   = static_cast<Field1D*>(Ex_);
 	Field1D* Ey1D   = static_cast<Field1D*>(Ey_);
 	Field1D* Ez1D   = static_cast<Field1D*>(Ez_);
@@ -369,7 +375,7 @@ void ElectroMagn1D::solveMaxwellFaraday()
 		(*By1D)(ix)= (*By1D)(ix) + dt_ov_dx * ( (*Ez1D)(ix) - (*Ez1D)(ix-1)) ;
 		(*Bz1D)(ix)= (*Bz1D)(ix) - dt_ov_dx * ( (*Ey1D)(ix) - (*Ey1D)(ix-1)) ;
 	}
-
+    
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

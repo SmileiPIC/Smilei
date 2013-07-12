@@ -153,9 +153,46 @@ ElectroMagn2D::~ElectroMagn2D()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn2D::solvePoisson(SmileiMPI* smpi)
 {
-	DEBUG( "to be implemented" );
+    Field2D* Ex2D = static_cast<Field2D*>(Ex_);
+	Field2D* Ey2D = static_cast<Field2D*>(Ey_);
+	Field2D* Ez2D = static_cast<Field2D*>(Ez_);
+	Field2D* Bx2D = static_cast<Field2D*>(Bx_);
+	Field2D* By2D = static_cast<Field2D*>(By_);
+	Field2D* Bz2D = static_cast<Field2D*>(Bz_);
+    
     // AT THE MOMENT PUT ALL FIELDS TO 0 WHEN THEY ARE CREATED !!! (useful to test the Maxwell Solver)
-	
+    for (unsigned int i=0 ; i<nx_d ; i++) {
+        for (unsigned int j=0 ; j<ny_p ; j++) {
+            (*Ex2D)(i,j) = 0.0;
+        }
+    }
+    for (unsigned int i=0 ; i<nx_p ; i++) {
+        for (unsigned int j=0 ; j<ny_d ; j++) {
+            (*Ey2D)(i,j) = 0.0;
+        }
+    }
+	for (unsigned int i=0 ; i<nx_p ; i++) {
+        for (unsigned int j=0 ; j<ny_p ; j++) {
+            (*Ez2D)(i,j) = 0.0;
+        }
+    }
+    
+    for (unsigned int i=0 ; i<nx_p ; i++) {
+        for (unsigned int j=0 ; j<ny_d ; j++) {
+            (*Bx2D)(i,j) = 0.0;
+        }
+    }
+    for (unsigned int i=0 ; i<nx_d ; i++) {
+        for (unsigned int j=0 ; j<ny_p ; j++) {
+            (*By2D)(i,j) = 0.0;
+        }
+    }
+	for (unsigned int i=0 ; i<nx_d ; i++) {
+        for (unsigned int j=0 ; j<ny_d ; j++) {
+            (*Bz2D)(i,j) = 0.0;
+        }
+    }
+    
 }//END solvePoisson
 
 
@@ -170,6 +207,11 @@ void ElectroMagn2D::solveMaxwell(double time_dual, SmileiMPI* smpi)
     saveMagneticFields();
     solveMaxwellAmpere();
     solveMaxwellFaraday();
+    smpi2D->exchangeB( this );
+    // ..
+    // (*By1D)(0)       = (*By1D_west_neighbor)(dimDual-2*oversize)
+    // (*By1D)(dimDual) = (*By1D_east_neighbor)(2*oversize)
+    // ....
     applyEMBoundaryConditions(time_dual, smpi2D);
     centerMagneticFields();
     
@@ -263,7 +305,7 @@ void ElectroMagn2D::solveMaxwellAmpere()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn2D::solveMaxwellFaraday()
 {
-    
+        
     // Static-cast of the fields
     Field2D* Ex2D = static_cast<Field2D*>(Ex_);
 	Field2D* Ey2D = static_cast<Field2D*>(Ey_);
@@ -327,12 +369,12 @@ void ElectroMagn2D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
 		if (laser_[ilaser]->laser_struct.time_profile == "constant") {
 			if (laser_[ilaser]->laser_struct.angle == 0){
 				// Incident field (left boundary)
-				byW += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
-				bzW += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
+				byW += laser_[ilaser]->a0_delta_y_ * sin(time_dual) ;//* laser_[ilaser]->time_profile(time_dual);
+				bzW += laser_[ilaser]->a0_delta_z_ * cos(time_dual) ;//* laser_[ilaser]->time_profile(time_dual);
 			} else if (laser_[ilaser]->laser_struct.angle == 180){
 				// Incident field (right boundary)
-				byE += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
-				bzE += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
+				byE += laser_[ilaser]->a0_delta_y_ * sin(time_dual) ;//* laser_[ilaser]->time_profile(time_dual);
+				bzE += laser_[ilaser]->a0_delta_z_ * cos(time_dual) ;//* laser_[ilaser]->time_profile(time_dual);
 			} else {
 				ERROR("Angle not yet implemented for laser " << ilaser);
 			}
