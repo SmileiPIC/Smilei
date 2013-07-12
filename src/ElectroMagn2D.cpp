@@ -458,7 +458,7 @@ void ElectroMagn2D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
         
 		// Correction on unused extreme ghost
         // ----------------------------------
-        
+  
         // for By^(d,p)
 		for (unsigned int i=index_bc_max[0]+1 ; i<nx_d ; i++) {
             for (unsigned int j=0 ; j<ny_p ; j++) {
@@ -472,17 +472,18 @@ void ElectroMagn2D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
             }
         }
         // for Ey^(p,d)
-		for (unsigned int i=index_bc_max[0]+1 ; i<nx_p ; i++) {
+		for (unsigned int i=index_bc_max[0] ; i<nx_p ; i++) {
             for (unsigned int j=0 ; j<ny_d ; j++) {
                 (*Ey2D)(i,j)=0.0;
             }
 		}
         // for Ez^(p,p)
-		for (unsigned int i=index_bc_max[0]+1 ; i<nx_p ; i++) {
+		for (unsigned int i=index_bc_max[0] ; i<nx_p ; i++) {
             for (unsigned int j=0 ; j<ny_p ; j++) {
                 (*Ez2D)(i,j)=0.0;
             }
 		}
+   
 	}//if East
     
 }// END applyEMBoundaryConditions
