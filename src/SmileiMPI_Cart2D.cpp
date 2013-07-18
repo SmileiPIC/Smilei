@@ -33,6 +33,8 @@ SmileiMPI_Cart2D::SmileiMPI_Cart2D( SmileiMPI* smpi)
 	for (int i=0 ; i<ndims_ ; i++) periods_[i] = 0;
 	// Geometry periodic in y
 	periods_[1] = 1;
+	if (periods_[1] == 1)
+		PMESSAGE( 0, smilei_rk, "Periodic geometry / y");
 	for (int i=0 ; i<ndims_ ; i++) coords_[i] = 0;
 	for (int i=0 ; i<ndims_ ; i++) number_of_procs[i] = 1;
 
@@ -73,9 +75,11 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
 {
 	if (params.nDim_field == 2) {
 		double tmp = params.res_space[0]*params.sim_length[0] / ( params.res_space[1]*params.sim_length[1] );
-		number_of_procs[0] = 2;//min( smilei_sz, max(1, (int)sqrt ( (double)smilei_sz*tmp*tmp) ) );
-		number_of_procs[1] = 2;//(int)(smilei_sz / number_of_procs[0]);
+		number_of_procs[0] = min( smilei_sz, max(1, (int)sqrt ( (double)smilei_sz*tmp*tmp) ) );
+		number_of_procs[1] = (int)(smilei_sz / number_of_procs[0]);
 	}
+//	number_of_procs[0] = 3;
+//	number_of_procs[1] = 1;
 
 	MPI_Cart_create( SMILEI_COMM_WORLD, ndims_, number_of_procs, periods_, reorder_, &SMILEI_COMM_2D );
 	MPI_Cart_coords( SMILEI_COMM_2D, smilei_rk, ndims_, coords_ );
@@ -119,7 +123,7 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
 
 		params.n_space[i] = params.n_space_global[i] / number_of_procs[i];
 		if ( number_of_procs[i]*params.n_space[i] != params.n_space_global[i] ) {
-			//WARNING( "Domain splitting does not match to the global domain" );
+			// Correction on the last MPI process of the direction to use the wished number of cells
 			if (coords_[i]==number_of_procs[i]-1) {
 				params.n_space[i] = params.n_space_global[i] - params.n_space[i]*(number_of_procs[i]-1);
 			}
@@ -127,7 +131,6 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
 
 		n_space_global[i] = params.n_space_global[i];
 		oversize[i] = params.oversize[i] = 2;
-		//! \todo{replace cell_starting_global_index compute by a most sophisticated or input data}
 		cell_starting_global_index[i] = coords_[i]*(params.n_space_global[i] / number_of_procs[i]);
 		// min/max_local : describe local domain in which particles cat be moved
 		//                 different from domain on which E, B, J are defined
@@ -456,14 +459,13 @@ void SmileiMPI_Cart2D::exchangeField( Field* field )
 
 } // END exchangeField
 
-#ifdef _HDF5
+#ifdef __HDF5
 #include "hdf5.h"
 #endif
-
 void SmileiMPI_Cart2D::writeField( Field* field, string name )
 {
-#ifdef _HDF5
-	MESSAGE( "to be implemented" );
+#ifdef __HDF5
+//	MESSAGE( "to be implemented" );
 
 	Field2D* f2D =  static_cast<Field2D*>(field);
 	std::vector<unsigned int> n_elem = field->dims_;
@@ -513,9 +515,9 @@ void SmileiMPI_Cart2D::writeField( Field* field, string name )
     */
    hid_t file_id = H5Fcreate(name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
    //H5Pclose(plist_id);
-   MESSAGE( "file created" );
-   barrier();
-   cout.flush();
+//   MESSAGE( "file created" );
+//   barrier();
+//   cout.flush();
 
    /*
     * Create the dataspace for the dataset.
@@ -528,14 +530,14 @@ void SmileiMPI_Cart2D::writeField( Field* field, string name )
 
    chunk_dims[0] = n_elem[0];
    chunk_dims[1] = n_elem[1];
-   for ( int ik=0 ; ik<getSize(); ik++) {
-	   if (ik==getRank() ) {
-		   cout << smilei_rk << " - coords = " << coords_[0] << ", " << coords_[1] << " -> chunk OK : " << chunk_dims[0] << ", " << chunk_dims[1] << endl;
-		   sleep(1);
-		   cout.flush();
-	   }
-	   barrier();
-   }
+//   for ( int ik=0 ; ik<getSize(); ik++) {
+//	   if (ik==getRank() ) {
+//		   cout << smilei_rk << " - coords = " << coords_[0] << ", " << coords_[1] << " -> chunk OK : " << chunk_dims[0] << ", " << chunk_dims[1] << endl;
+//		   sleep(1);
+//		   cout.flush();
+//	   }
+//	   barrier();
+//   }
    hid_t memspace  = H5Screate_simple(ndims_, chunk_dims, NULL);
    offset[0] = istart[0];
    offset[1] = istart[1];
@@ -543,20 +545,20 @@ void SmileiMPI_Cart2D::writeField( Field* field, string name )
    stride[1] = 1;
    count[0] = bufsize[0];
    count[1] = bufsize[1];
-   for ( int ik=0 ; ik<getSize(); ik++) {
-	   if (ik==getRank() ) {
-		   cout << smilei_rk << " - coords = " << coords_[0] << ", " << coords_[1] << " -> offset OK : " << offset[0] << ", " << offset[1] << endl;
-		   cout << smilei_rk << " - coords = " << coords_[0] << ", " << coords_[1] << " -> count  OK : " << count[0] << ", " << count[1] << endl;
-		   sleep(1);
-		   cout.flush();
-	   }
-	   barrier();
-   }
-   herr_t status = H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset, stride, count, NULL);
-   MESSAGE( "memspace created" );
-   barrier();
-   sleep(1);
-   cout.flush();
+//   for ( int ik=0 ; ik<getSize(); ik++) {
+//	   if (ik==getRank() ) {
+//		   cout << smilei_rk << " - coords = " << coords_[0] << ", " << coords_[1] << " -> offset OK : " << offset[0] << ", " << offset[1] << endl;
+//		   cout << smilei_rk << " - coords = " << coords_[0] << ", " << coords_[1] << " -> count  OK : " << count[0] << ", " << count[1] << endl;
+//		   sleep(1);
+//		   cout.flush();
+//	   }
+//	   barrier();
+//   }
+   H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset, stride, count, NULL);
+//   MESSAGE( "memspace created" );
+//   barrier();
+//   sleep(1);
+//   cout.flush();
 
    //
    // Each process defines dataset in memory and writes it to the hyperslab
@@ -566,21 +568,21 @@ void SmileiMPI_Cart2D::writeField( Field* field, string name )
    dimsf[0] = n_space_global[0]+1+f2D->isPrimal_[0]; // +1	// A ajuster
    dimsf[1] = n_space_global[1]+1+f2D->isPrimal_[1]; // +1	// A ajuster
 
-   cout << "\tfilespace OK : " << dimsf[0] << " " << dimsf[1] << endl;
+//   cout << "\tfilespace OK : " << dimsf[0] << " " << dimsf[1] << endl;
 
    hid_t filespace = H5Screate_simple(ndims_, dimsf, NULL);
    hid_t plist_id2 = H5Pcreate(H5P_DATASET_CREATE);
    chunk_dims[0] = bufsize[0];
    chunk_dims[1] = bufsize[1];
-   for ( int ik=0 ; ik<getSize(); ik++) {
-	   if (ik==getRank() ) {
-		   cout << smilei_rk << " - coords = " << coords_[0] << ", " << coords_[1] << " -> write OK " << bufsize[0] << ", " << bufsize[1] << endl;
-		   //cout << endl << endl;
-		   sleep(1);
-		   cout.flush();
-	   }
-	   barrier();
-   }
+//   for ( int ik=0 ; ik<getSize(); ik++) {
+//	   if (ik==getRank() ) {
+//		   cout << smilei_rk << " - coords = " << coords_[0] << ", " << coords_[1] << " -> write OK " << bufsize[0] << ", " << bufsize[1] << endl;
+//		   //cout << endl << endl;
+//		   sleep(1);
+//		   cout.flush();
+//	   }
+//	   barrier();
+//   }
 
    //H5Pset_chunk(plist_id2, ndims_, chunk_dims);
    hid_t dset_id = H5Dcreate(file_id, "Field", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id2, H5P_DEFAULT);
@@ -592,32 +594,32 @@ void SmileiMPI_Cart2D::writeField( Field* field, string name )
    offset[0] = cell_starting_global_index[0]+istart[0]; // istart = oversize (+1 if != coords_[i])
    offset[1] = cell_starting_global_index[1]+istart[1];
 
-   cout << "\t\t" << smilei_rk << ", offset = " << offset[0] << " " << offset[1] << ", size = " << bufsize[0] << " " << bufsize[1] << endl;
-   cout << "\t\t" << smilei_rk << ", global index = " << cell_starting_global_index[0] << " " << cell_starting_global_index[1] << ", " << istart[0] << " " << istart[1] << endl;
+//   cout << "\t\t" << smilei_rk << ", offset = " << offset[0] << " " << offset[1] << ", size = " << bufsize[0] << " " << bufsize[1] << endl;
+//   cout << "\t\t" << smilei_rk << ", global index = " << cell_starting_global_index[0] << " " << cell_starting_global_index[1] << ", " << istart[0] << " " << istart[1] << endl;
    stride[0] = 1;
    stride[1] = 1;
    count[0] = 1;
    count[1] = 1;
    block[0] = bufsize[0];
    block[1] = bufsize[1];
-   status = H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, stride, count, block);
-   MESSAGE( "filespace created" );
+   H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, stride, count, block);
+//   MESSAGE( "filespace created" );
 
    //
    // Create property list for collective dataset write.
    //
    hid_t plist_id3 = H5Pcreate(H5P_DATASET_XFER);
    H5Pset_dxpl_mpio(plist_id3, H5FD_MPIO_INDEPENDENT);
-   MESSAGE( "Start H5Dwrite" );
-   //status = H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, plist_id3, &(f2D->data_[0][0]) );
-   for ( int ik=0 ; ik<getSize(); ik++) {
-	   if (ik==getRank() ) {
-		   status = H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, plist_id3, &(f2D->data_[0][0]) );
-	   }
-	   barrier();
-   }
-
-   MESSAGE( "End H5Dwrite" );
+//   MESSAGE( "Start H5Dwrite" );
+   H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, plist_id3, &(f2D->data_[0][0]) );
+//   for ( int ik=0 ; ik<getSize(); ik++) {
+//	   if (ik==getRank() ) {
+//		   status = H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, plist_id3, &(f2D->data_[0][0]) );
+//	   }
+//	   barrier();
+//   }
+//
+//   MESSAGE( "End H5Dwrite" );
 
    //
    // Close/release resources.

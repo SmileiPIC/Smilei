@@ -88,29 +88,9 @@ void SmileiMPI::bcast( PicParams& params )
 		params.n_space_global[i] = params.res_space[i]*params.sim_length[i]/(2.0*M_PI)+1;
 
 		params.n_space[i] = params.n_space_global[i];
-		//		params.n_space[i] = params.n_space_global[i] / number_of_procs[i];
-//		if ( smilei_sz*params.n_space[i] != params.n_space_global[i] )
-//			WARNING( "Domain splitting does not match to the global domain" );
-//
-//		n_space_global[i] = params.n_space_global[i];;
-//		oversize[i] = params.oversize[i] = 2;
-//		//! \todo{replace cell_starting_global_index compute by a most sophisticated or input data}
-//		// ERROR
-//		// ERROR
-//		// ERROR
-//		cell_starting_global_index[i] = smilei_rk*params.n_space[i]; // smilei_rk by coords_ !!!
-//		// ERROR
-//		// ERROR
-//		// ERROR
-//		// ERROR
-//		// min/max_local : describe local domain in which particles cat be moved
-//		//                 different from domain on which E, B, J are defined
-//		min_local[i] = (cell_starting_global_index[i]                  )*params.cell_length[i];
-//		max_local[i] = (cell_starting_global_index[i]+params.n_space[i])*params.cell_length[i];
-//		cell_starting_global_index[i] -= params.oversize[i];
-
 	}
-	MESSAGE( "n_space_global = " << params.n_space[0] << " " << params.n_space[1] );
+	// Before splitting
+	// MESSAGE( "n_space_global = " << params.n_space[0] << " " << params.n_space[1] );
 
 	bcast( params.plasma_geometry );
 	bcast( params.plasma_length );	//! \todo{vacuum_length[i]*=2.0*M_PI};
@@ -253,7 +233,7 @@ void SmileiMPI::sumDensities( ElectroMagn* champs )
 
 void SmileiMPI::exchangeE( ElectroMagn* champs )
 {
-  //exchangeField( champs->Ex_ );
+  exchangeField( champs->Ex_ );
   exchangeField( champs->Ey_ );
   exchangeField( champs->Ez_ );
 
@@ -261,7 +241,7 @@ void SmileiMPI::exchangeE( ElectroMagn* champs )
 
 void SmileiMPI::exchangeB( ElectroMagn* champs )
 {
-  //exchangeField( champs->Bx_ );
+  exchangeField( champs->Bx_ );
   exchangeField( champs->By_ );
   exchangeField( champs->Bz_ );
 

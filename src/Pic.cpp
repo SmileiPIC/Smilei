@@ -18,6 +18,7 @@
 #include "PicParams.h"
 
 #include "SmileiMPIFactory.h"
+#include "SmileiIOFactory.h"
 
 #include "SpeciesFactory.h"
 #include "ElectroMagnFactory.h"
@@ -67,6 +68,7 @@ int main (int argc, char* argv[])
 
 	// Geometry known, MPI environment specified
 	SmileiMPI* smpi = SmileiMPIFactory::create(params, smpiData);
+	SmileiIO*  sio  = SmileiIOFactory::create(params, smpi);
 
 
 	// Randomize the seed for simulations running in release mode
@@ -82,13 +84,8 @@ int main (int argc, char* argv[])
 	// ------------------------------------------------------------------------------------
 	// vector of Species (virtual)
 	vector<Species*> vecSpecies = SpeciesFactory::createVector(params, smpi);
-
-	// species "dump" file
-	//! \todo{Check if we keep going like that (MG)}
-	ofstream ofile("dump", ios::out);
-	//dump species at time 0
-	for (unsigned int ispec=0 ; ispec<params.n_species ; ispec++)
-		vecSpecies[ispec]->dump(ofile); ofile << endl;
+	// dump species at time 0
+	sio->writePlasma( vecSpecies, 0., smpi );
 
 	// ----------------------------------------------------------------------------
 	// Initialize the electromagnetic fields and interpolation-projection operators
@@ -157,7 +154,6 @@ int main (int argc, char* argv[])
 			vecSpecies[ispec]->dynamic(time_dual, EMfields, Interp, Proj, smpi);
 			smpi->exchangeParticles(vecSpecies[ispec], ispec, &params);
 		}
-		//EMfields->dump(&params);
 		smpi->sumDensities( EMfields );
 
 		// solve Maxwell's equations
@@ -168,10 +164,7 @@ int main (int argc, char* argv[])
 		if (itime % 5000 == 0) {
 			if ( smpi->isMaster() ) MESSAGE(1,"diags at " << time_dual << " " << itime);
 			//EMfields->dump(&params);
-			for (unsigned int ispec=0 ; ispec<params.n_species ; ispec++) {
-			  //vecSpecies[ispec]->dump(ofile);
-				ofile << endl;
-			}
+			//sio->writePlasma( vecSpecies, time_dual, smpi );
 		}
 		
 	}//END of the time loop	
@@ -188,19 +181,16 @@ int main (int argc, char* argv[])
 	// ------------------------------------------------------------------
 	//                      Temporary validation diagnostics
 	// ------------------------------------------------------------------
-	if ( smpi->isMaster() ) {
-		for (unsigned int ispec=0 ; ispec<params.n_species ; ispec++) {
-			vecSpecies[ispec]->dump(ofile);
-			ofile << endl;
-		}
-	}
-	//! \todo{Not //, processes write sequentially to validate. OK in 1D}
-	smpi->writePlasma( vecSpecies, "dump_new" );
+	// 1 HDF5 file per process
+	sio->writePlasma( vecSpecies, time_dual, smpi );
 		
-	//if ( smpi.isMaster() ) 
-	EMfields->dump(&params);
-	//! \todo{Not //, processes write sequentially to validate. OK in 1D}
-	smpi->writeFields( EMfields );
+	//EMfields->dump(&params);  	// Sequential results, 1 file per process
+	if (params.nDim_field == 1) { // If 1D
+			//! \todo{Not //, processes write sequentially to validate. OK in 1D}
+		smpi->writeFields( EMfields );
+	}
+	else // If 2D
+		sio->writeFields( EMfields, time_dual );
 
 	// ------------------------------
 	//  Cleanup & End the simulation
@@ -211,6 +201,7 @@ int main (int argc, char* argv[])
 	for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
 	vecSpecies.clear();
     
+	delete sio;
 	if ( smpi->isMaster() ) {
 		MESSAGE("------------------------------------------");
 		MESSAGE("END " << namelist);
