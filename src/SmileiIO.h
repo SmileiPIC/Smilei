@@ -36,10 +36,10 @@ public:
 	hid_t write_plist;
 
 	hid_t  partFile_id;
-	int nDatasetSpecies;
+	unsigned int nDatasetSpecies;
 	hid_t* partDataset_id;  /* identifiers */
 	hid_t partMemSpace;
-
+	int particleSize;
 
 private:
 };

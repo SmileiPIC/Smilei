@@ -26,7 +26,7 @@ SmileiIO::SmileiIO( PicParams* params, SmileiMPI* smpi )
 	// Create 1 file containing 1 dataset per Species
 	partFile_id = H5Fcreate( name.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
-	int particleSize = params->nDim_particle + 3 + 1;
+	particleSize = params->nDim_particle + 3 + 1;
 	hsize_t dims[2] = {0, particleSize};
 	hsize_t max_dims[2] = {H5S_UNLIMITED, particleSize};
 	hid_t file_space = H5Screate_simple(2, dims, max_dims);
@@ -71,7 +71,7 @@ SmileiIO::SmileiIO( PicParams* params, SmileiMPI* smpi )
 SmileiIO::~SmileiIO()
 {
 	H5Sclose(partMemSpace);
-	for ( int s=0 ; s<nDatasetSpecies ; s++ )
+	for ( unsigned int s=0 ; s<nDatasetSpecies ; s++ )
 		H5Dclose(partDataset_id[s]);
 	delete partDataset_id;
 	H5Fclose(partFile_id);
@@ -114,7 +114,6 @@ void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI*
 
 			file_space = H5Dget_space(partDataset_id[ispec]);
 			hsize_t start[2];
-			int particleSize = 5;
 			hsize_t count[2] = {1, particleSize};
 			start[0] = dimsO[0];
 			start[1] = 0;

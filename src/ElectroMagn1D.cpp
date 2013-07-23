@@ -230,7 +230,7 @@ void ElectroMagn1D::solveMaxwellFaraday()
 		(*By1D)(ix)= (*By1D)(ix) + dt_ov_dx * ( (*Ez1D)(ix) - (*Ez1D)(ix-1)) ;
 		(*Bz1D)(ix)= (*Bz1D)(ix) - dt_ov_dx * ( (*Ey1D)(ix) - (*Ey1D)(ix-1)) ;
 	}
-
+    
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -240,7 +240,7 @@ void ElectroMagn1D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
 {
 	SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
 
-	Field1D* Ex1D   = static_cast<Field1D*>(Ey_);
+	Field1D* Ex1D   = static_cast<Field1D*>(Ex_);
 	Field1D* Ey1D   = static_cast<Field1D*>(Ey_);
 	Field1D* Ez1D   = static_cast<Field1D*>(Ez_);
 	Field1D* By1D   = static_cast<Field1D*>(By_);

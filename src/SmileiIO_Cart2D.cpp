@@ -143,7 +143,6 @@ void SmileiIO_Cart2D::createPattern( PicParams* params, SmileiMPI* smpi )
 			}
 			if (smpi2D->number_of_procs[1] != 1) {
 				if ( iy_isPrim == 0 ) {
-					if (!smpi->getRank()) cout << "Here : " << iy_isPrim<< endl;
 					if (smpi2D->getProcCoord(1)!=0)
 						bufsize[1]--;
 				}
@@ -160,9 +159,9 @@ void SmileiIO_Cart2D::createPattern( PicParams* params, SmileiMPI* smpi )
 			memspace_ [ ix_isPrim ][ iy_isPrim ] = memspace;
 
 
-			if ( ( iy_isPrim == 0 ) && ( ix_isPrim == 1 ) ) {
-				cout << smpi->getRank() << " " << offset[0] << " " << offset[1] << " " << stride[0] << " " << stride[1] << " " << count[0] << " " << count[1] << endl;
-			}
+//			if ( ( iy_isPrim == 0 ) && ( ix_isPrim == 1 ) ) {
+//				cout << smpi->getRank() << " " << offset[0] << " " << offset[1] << " " << stride[0] << " " << stride[1] << " " << count[0] << " " << count[1] << endl;
+//			}
 			//
 			// Each process defines dataset in memory and writes it to the hyperslab
 			// in the file.

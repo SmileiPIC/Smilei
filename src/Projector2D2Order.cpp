@@ -191,7 +191,43 @@ void Projector2D2Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
 
 void Projector2D2Order::operator() (Field* rho, Particle* part)
 {
-	MESSAGE( "to be implemented" );
-
-}
+    
+    //Static cast of the total charge density
+    Field2D* rho2D  = static_cast<Field2D*>(rho);
+	
+	//Declaration of local variables
+	double delta, delta2;
+	double rho_p = part->weight();   // charge density of the macro-particle
+    double Sx[3], Sy[3];             // projection coefficient arrays
+    
+	//Locate particle on the primal grid & calculate the projection coefficients
+	double       xpn = part->position(0) * dx_inv_;  // normalized distance to the first node
+	unsigned int ic  = round(xpn);                   // index of the central node
+	delta  = xpn - (double)ic;                       // normalized distance to the nearest grid point
+	delta2 = delta*delta;                            // square of the normalized distance to the nearest grid point
+    Sx[0]  = 0.5 * (delta2-delta+0.25);
+    Sx[1]  = 0.75-delta;
+    Sx[2]  = 0.5 * (delta2+delta+0.25);
+    
+    double       ypn = part->position(1) * dy_inv_;  // normalized distance to the first node
+	unsigned int jc   = round(ypn);                  // index of the central node
+	delta  = ypn - (double)jc;                       // normalized distance to the nearest grid point
+	delta2 = delta*delta;                            // square of the normalized distance to the nearest grid point
+    Sy[0]  = 0.5 * (delta2-delta+0.25);
+    Sy[1]  = 0.75-delta;
+    Sy[2]  = 0.5 * (delta2+delta+0.25);
+    
+	//cout << "Pos = " << part->position(0) << " - i global = " << i << " - i local = " << i-index_domain_begin <<endl;
+    
+	unsigned int i = ic-1-i_domain_begin; // index of first point for projection in x
+    unsigned int j = jc-1-j_domain_begin; // index of first point for projection in y
+	
+	// 2nd order projection for the total charge density
+    for (unsigned int iloc=0 ; iloc<3 ; iloc++) {
+        for (unsigned int jloc=0 ; jloc<3 ; jloc++) {
+            (*rho2D)(i+iloc,j+jloc) += Sx[iloc]*Sy[jloc]*rho_p;
+        }
+    }
+    
+}//END TotalChargeDensityProjection
 

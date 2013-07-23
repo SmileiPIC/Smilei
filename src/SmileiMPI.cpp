@@ -262,16 +262,16 @@ void SmileiMPI::solvePoissonPara( ElectroMagn* champs )
 
 void SmileiMPI::writeFields( ElectroMagn* champs )
 {
-	writeField( champs->Ex_, "fex_new" );
-	writeField( champs->Ey_, "fey_new" );
-	writeField( champs->Ez_, "fez_new" );
-	writeField( champs->Bx_, "fbx_new" );
-	writeField( champs->By_, "fby_new" );
-	writeField( champs->Bz_, "fbz_new" );
-	writeField( champs->Jx_, "fjx_new" );
-	writeField( champs->Jy_, "fjy_new" );
-	writeField( champs->Jz_, "fjz_new" );
-	writeField( champs->rho_, "rho_new" );
+	writeField( champs->Ex_, "fex" );
+	writeField( champs->Ey_, "fey" );
+	writeField( champs->Ez_, "fez" );
+	writeField( champs->Bx_, "fbx" );
+	writeField( champs->By_, "fby" );
+	writeField( champs->Bz_, "fbz" );
+	writeField( champs->Jx_, "fjx" );
+	writeField( champs->Jy_, "fjy" );
+	writeField( champs->Jz_, "fjz" );
+	writeField( champs->rho_, "rho" );
 
 } // END writeFields
 

@@ -47,6 +47,7 @@ void Projector1D2Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
     double crx_p = part->weight()*dx_ov_dt;                // current density for particle moving in the x-direction
     double cry_p = part->weight()*part->momentum(1)/gf;    // current density in the y-direction of the macroparticle
     double crz_p = part->weight()*part->momentum(2)/gf;    // current density allow the y-direction of the macroparticle
+    //double rho_p = part->weight();                         // charge density for the macroparticle
     double S0[5], S1[5], Wl[5], Wt[5], Jx_p[5];            // arrays used for the Esirkepov projection method
     
     // Initialize variables
@@ -97,12 +98,13 @@ void Projector1D2Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
 	ip  -= index_domain_begin;
 	//cout << "\tlocal index = " << ip << endl;
 
-	// 2nd order projection for the total currents
+	// 2nd order projection for the total currents & charge density
 	for (unsigned int i=0; i<5; i++) {
 		iloc = i+ipo-2;
 		(*Jx1D)(iloc) += Jx_p[i];
 		(*Jy1D)(iloc) += cry_p * Wt[i];
 		(*Jz1D)(iloc) += crz_p * Wt[i];
+        //(*rho)(iloc)  += rho_p * S1[i];
 	}//i
 
     

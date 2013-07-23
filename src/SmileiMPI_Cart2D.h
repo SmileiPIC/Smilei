@@ -31,7 +31,7 @@ public:
 
 	virtual void exchangeField ( Field* field );
 	virtual void sumField      ( Field* field );
-	virtual void writeField    ( Field* field, std::string name );
+	virtual void writeField    ( Field* field, std::string name ) {};
 
 protected:
 	MPI_Comm SMILEI_COMM_2D;

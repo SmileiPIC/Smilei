@@ -71,12 +71,12 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
 	for (unsigned int i=0 ; i<params.nDim_field ; i++) {
 
 		params.n_space[i] = params.n_space_global[i] / number_of_procs[i];
-		if ( number_of_procs[i]*params.n_space[i] != params.n_space_global[i] ) {
-			//WARNING( "Domain splitting does not match to the global domain" );
-			if (coords_[i]==number_of_procs[i]-1) {
-				params.n_space[i] = params.n_space_global[i] - params.n_space[i]*(number_of_procs[i]-1);
-			}
-		}
+//		if ( number_of_procs[i]*params.n_space[i] != params.n_space_global[i] ) {
+//			//WARNING( "Domain splitting does not match to the global domain" );
+//			if (coords_[i]==number_of_procs[i]-1) {
+//				params.n_space[i] = params.n_space_global[i] - params.n_space[i]*(number_of_procs[i]-1);
+//			}
+//		}
 
 		n_space_global[i] = params.n_space_global[i];
 		oversize[i] = params.oversize[i] = 2;
@@ -87,6 +87,13 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
 		min_local[i] = (cell_starting_global_index[i]                  )*params.cell_length[i];
 		max_local[i] = (cell_starting_global_index[i]+params.n_space[i])*params.cell_length[i];
 		cell_starting_global_index[i] -= params.oversize[i];
+
+		if ( number_of_procs[i]*params.n_space[i] != params.n_space_global[i] ) {
+			//WARNING( "Domain splitting does not match to the global domain" );
+			if (coords_[i]==number_of_procs[i]-1) {
+				params.n_space[i] = params.n_space_global[i] - params.n_space[i]*(number_of_procs[i]-1);
+			}
+		}
 
 	}
 }
