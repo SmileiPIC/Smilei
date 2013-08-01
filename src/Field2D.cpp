@@ -54,9 +54,11 @@ Field2D::Field2D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal,
 // ---------------------------------------------------------------------------------------------------------------------
 Field2D::~Field2D()
 {
-	delete [] data_2D;
-	
-	fdata_.close();
+
+	if (data_2D!=NULL) {
+		delete [] data_2D;
+	}
+	if (fdata_.is_open()) fdata_.close();
 }
 
 
@@ -68,7 +70,7 @@ void Field2D::allocateDims(std::vector<unsigned int> dims )
     //! \todo{Comment on what you are doing here (MG for JD)}
 	dims_=dims;
 	if (dims_.size()!=2) ERROR("Alloc error must be 2 : " << dims.size());
-	if (data_2D) delete [] data_2D;
+	if (data_2D!=NULL) delete [] data_2D;
 
 	isPrimal_.resize( dims.size(), 0 );
 

@@ -29,8 +29,8 @@ class Projector2D : public Projector
     double dy_inv_;
     double dx_ov_dt;
     double dy_ov_dt;
-	unsigned int i_domain_begin;
-    unsigned int j_domain_begin;
+	int i_domain_begin;
+    int j_domain_begin;
 };
 
 #endif

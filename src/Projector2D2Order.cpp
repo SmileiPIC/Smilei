@@ -178,9 +178,12 @@ void Projector2D2Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
         
         for (unsigned int j=0 ; j<5 ; j++) {
             unsigned int jloc = j+jpo-2;
-            (*Jx2D)(iloc,jloc) += Jx_p[i][j];
-            (*Jy2D)(iloc,jloc) += Jy_p[i][j];
-            (*Jz2D)(iloc,jloc) += crz_p * Wz[i][j];
+//#pragma omp atomic
+          (*Jx2D)(iloc,jloc) += Jx_p[i][j];
+//#pragma omp atomic
+          (*Jy2D)(iloc,jloc) += Jy_p[i][j];
+//#pragma omp atomic
+         (*Jz2D)(iloc,jloc) += crz_p * Wz[i][j];
         }
         
 	}//i

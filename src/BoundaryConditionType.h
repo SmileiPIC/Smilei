@@ -11,9 +11,9 @@
 
 #include "Particle.h"
 
-inline void refl_particle( Particle* part, double limit_pos ) {
-        part->position(0) = limit_pos - part->position(0);
-        part->momentum(0) = -part->momentum(0);
+inline void refl_particle( Particle* part, int direction, double limit_pos ) {
+        part->position(direction) = limit_pos - part->position(direction);
+        part->momentum(direction) = -part->momentum(direction);
 
 }
 
