@@ -1,10 +1,24 @@
 VERSION:="v$(shell git rev-list HEAD --count):$(shell git log -1 --pretty=format:%h)"
 
+# ---------------------
+# Make by J. Derouillat
+# ---------------------
+
+#CC      = openmpic++
+#CC      = g++
+#CFLAGS  = -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include  #-Wstrict-aliasing
+#LDFLAGS = -lm -L${HDF5_ROOT_DIR}/lib -lhdf5
+
+# ----------------
+# Make by M. Grech
+# ----------------
+
 CC      = mpic++
 #CC      = g++
+CFLAGS  = -D__VERSION=\"$(VERSION)\" -I/opt/local/include -D_HDF5 #-Wstrict-aliasing
+LDFLAGS = -lm -L/opt/local/lib -lhdf5
 
-CFLAGS  = -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include  #-Wstrict-aliasing
-LDFLAGS = -lm -L${HDF5_ROOT_DIR}/lib -lhdf5
+
 
 all: release install
 
