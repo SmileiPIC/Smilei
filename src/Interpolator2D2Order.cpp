@@ -49,10 +49,10 @@ void Interpolator2D2Order::operator() (ElectroMagn* champs, Particle* part, Loca
     
     
     // Indexes of the central nodes
-    unsigned int ic_p = round(xpn);
-    unsigned int ic_d = round(xpn+0.5);
-    unsigned int jc_p = round(ypn);
-    unsigned int jc_d = round(ypn+0.5);
+    int ic_p = round(xpn);
+    int ic_d = round(xpn+0.5);
+    int jc_p = round(ypn);
+    int jc_d = round(ypn+0.5);
     
     
     // Declaration and calculation of the coefficient for interpolation
@@ -88,18 +88,18 @@ void Interpolator2D2Order::operator() (ElectroMagn* champs, Particle* part, Loca
     
     //!\todo CHECK if this is correct for both primal & dual grids !!!
     // First index for summation
-    unsigned int ip = ic_p - 1 - i_domain_begin;
-    unsigned int id = ic_d - 1 - i_domain_begin;
-    unsigned int jp = jc_p - 1 - j_domain_begin;
-    unsigned int jd = jc_d - 1 - j_domain_begin;
+    int ip = ic_p - 1 - i_domain_begin;
+    int id = ic_d - 1 - i_domain_begin;
+    int jp = jc_p - 1 - j_domain_begin;
+    int jd = jc_d - 1 - j_domain_begin;
     
     
     // -------------------------
 	// Interpolation of Ex^(d,p)
     // -------------------------
     (*ELoc).x = 0.0;
-    for (unsigned int iloc=0 ; iloc<3 ; iloc++) {
-        for (unsigned int jloc=0 ; jloc<3 ; jloc++) {
+    for (int iloc=0 ; iloc<3 ; iloc++) {
+        for (int jloc=0 ; jloc<3 ; jloc++) {
             (*ELoc).x += Cx_d[iloc] * Cy_p[jloc] * (*Ex2D)(id+iloc,jp+jloc);
         }
     }
@@ -108,8 +108,8 @@ void Interpolator2D2Order::operator() (ElectroMagn* champs, Particle* part, Loca
 	// Interpolation of Ey^(p,d)
     // -------------------------
     (*ELoc).y = 0.0;
-    for (unsigned int iloc=0 ; iloc<3 ; iloc++) {
-        for (unsigned int jloc=0 ; jloc<3 ; jloc++) {
+    for (int iloc=0 ; iloc<3 ; iloc++) {
+        for (int jloc=0 ; jloc<3 ; jloc++) {
             (*ELoc).y += Cx_p[iloc] * Cy_d[jloc] * (*Ey2D)(ip+iloc,jd+jloc);
         }
     }
@@ -118,8 +118,8 @@ void Interpolator2D2Order::operator() (ElectroMagn* champs, Particle* part, Loca
 	// Interpolation of Ez^(p,p)
     // -------------------------
     (*ELoc).z = 0.0;
-    for (unsigned int iloc=0 ; iloc<3 ; iloc++) {
-        for (unsigned int jloc=0 ; jloc<3 ; jloc++) {
+    for (int iloc=0 ; iloc<3 ; iloc++) {
+        for (int jloc=0 ; jloc<3 ; jloc++) {
             (*ELoc).z += Cx_p[iloc] * Cy_p[jloc] * (*Ez2D)(ip+iloc,jp+jloc);
         }
     }
@@ -128,8 +128,8 @@ void Interpolator2D2Order::operator() (ElectroMagn* champs, Particle* part, Loca
 	// Interpolation of Bx^(p,d)
     // -------------------------
     (*BLoc).x = 0.0;
-    for (unsigned int iloc=0 ; iloc<3 ; iloc++) {
-        for (unsigned int jloc=0 ; jloc<3 ; jloc++) {
+    for (int iloc=0 ; iloc<3 ; iloc++) {
+        for (int jloc=0 ; jloc<3 ; jloc++) {
             (*BLoc).x += Cx_p[iloc] * Cy_d[jloc] * (*Bx2D)(ip+iloc,jd+jloc);
         }
     }
@@ -138,8 +138,8 @@ void Interpolator2D2Order::operator() (ElectroMagn* champs, Particle* part, Loca
 	// Interpolation of By^(d,p)
     // -------------------------
     (*BLoc).y = 0.0;
-    for (unsigned int iloc=0 ; iloc<3 ; iloc++) {
-        for (unsigned int jloc=0 ; jloc<3 ; jloc++) {
+    for (int iloc=0 ; iloc<3 ; iloc++) {
+        for (int jloc=0 ; jloc<3 ; jloc++) {
             (*BLoc).y += Cx_d[iloc] * Cy_p[jloc] * (*By2D)(id+iloc,jp+jloc);
         }
     }
@@ -148,8 +148,8 @@ void Interpolator2D2Order::operator() (ElectroMagn* champs, Particle* part, Loca
 	// Interpolation of Bz^(d,d)
     // -------------------------
     (*BLoc).z = 0.0;
-    for (unsigned int iloc=0 ; iloc<3 ; iloc++) {
-        for (unsigned int jloc=0 ; jloc<3 ; jloc++) {
+    for (int iloc=0 ; iloc<3 ; iloc++) {
+        for (int jloc=0 ; jloc<3 ; jloc++) {
             (*BLoc).z += Cx_d[iloc] * Cy_d[jloc] * (*Bz2D)(id+iloc,jd+jloc);
         }
     }

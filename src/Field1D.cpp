@@ -47,8 +47,10 @@ Field1D::Field1D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal,
 // ---------------------------------------------------------------------------------------------------------------------
 Field1D::~Field1D()
 {
-	delete [] data_;
-	fdata_.close();
+	if (data_!=NULL) {
+		delete [] data_;
+	}
+	if (fdata_.is_open()) fdata_.close();
 }
 
 

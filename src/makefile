@@ -28,7 +28,7 @@ EXEC = smilei
 SRCS = $(wildcard *.cpp)
 OBJS := $(patsubst %.cpp,%.o,$(SRCS))
 
-release: CFLAGS += -O3
+release: CFLAGS += -O3 #-g #-fopenmp
 release: $(EXEC)
 
 debug: CFLAGS += -g -pg -Wall -D__DEBUG

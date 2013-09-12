@@ -101,8 +101,11 @@ void Projector1D2Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
 	// 2nd order projection for the total currents & charge density
 	for (unsigned int i=0; i<5; i++) {
 		iloc = i+ipo-2;
+		//#pragma omp atomic
 		(*Jx1D)(iloc) += Jx_p[i];
+		//#pragma omp atomic
 		(*Jy1D)(iloc) += cry_p * Wt[i];
+		//#pragma omp atomic
 		(*Jz1D)(iloc) += crz_p * Wt[i];
         //(*rho)(iloc)  += rho_p * S1[i];
 	}//i

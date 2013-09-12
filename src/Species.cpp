@@ -372,6 +372,7 @@ void Species::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Inter
 		double gf = 1.0;
 
 		// for all particles of the Species
+//		#pragma omp parallel for shared (Champs,smpi)
 		for (unsigned int iPart=0 ; iPart<nParticles; iPart++ ) {
 			// Interpolate the fields at the particle position
 			(*Interp)(Champs, particles[iPart], &Epart, &Bpart);
@@ -382,6 +383,7 @@ void Species::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Inter
 			// Apply boundary condition on the particles
 			// Boundary Condition may be physical or due to domain decomposition
 			// apply returns 0 if iPart is no more in the domain local
+			//	if omp then critical on smpi->addPartInExchList, may be applied after // loop
 			if ( !partBoundCond->apply( particles[iPart] ) ) smpi->addPartInExchList( iPart );
 
 			(*Proj)(Champs, particles[iPart], gf);
@@ -396,6 +398,10 @@ void Species::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Inter
 		}
 	}//END if time vs. time_frozen
 	
+//	for (unsigned int iPart=0 ; iPart<nParticles; iPart++ ) {
+//		if ( !partBoundCond->apply( particles[iPart] ) ) smpi->addPartInExchList( iPart );
+//	}
+
 }//END dynamic
 
 
