@@ -243,10 +243,10 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
                 double y_max = params->cell_length[1]*( params->n_space_global[1] );
 				for (int iPart=0 ; iPart<n_part_send ; iPart++) {
 					if ( iDim == 1 ) {
-						if ( (*cuParticles)[ buff_index_send[iDim][iNeighbor][iPart] ]->position(1) < 0 ) {
+						if ( (*cuParticles)[ buff_index_send[iDim][iNeighbor][iPart] ]->position(1) < 0. ) {
 							(*cuParticles)[ buff_index_send[iDim][iNeighbor][iPart] ]->position(1)     += y_max;
 						}
-						else if ( (*cuParticles)[ buff_index_send[iDim][iNeighbor][iPart] ]->position(1) > y_max ) {
+						else if ( (*cuParticles)[ buff_index_send[iDim][iNeighbor][iPart] ]->position(1) >= y_max ) {
 							(*cuParticles)[ buff_index_send[iDim][iNeighbor][iPart] ]->position(1)     -= y_max;
 						}
 					}

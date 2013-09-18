@@ -38,15 +38,23 @@ void SmileiIO_Cart2D::open(  )
     * Create a new file collectively and release property list identifier.
     */
     string fieldStr, dirStr, name;
-	for (int itype=0 ; itype<2 ; itype++) {
+	for (int itype=0 ; itype<4 ; itype++) {
 		if      (itype==0) fieldStr = "e";
 		else if (itype==1) fieldStr = "b";
-		for (int iDim=0 ; iDim<3 ; iDim++) {
-			if      (iDim==0) dirStr = "x";
-			else if (iDim==1) dirStr = "y";
-			else if (iDim==2) dirStr = "z";
-			name = fieldStr + dirStr+".h5";
-			file_id_ [itype][iDim] = H5Fcreate( name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+		else if (itype==2) fieldStr = "j";
+		else if (itype==3) {
+			fieldStr = "r";
+			name = "rho.h5";
+			file_id_ [itype][0] = H5Fcreate( name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+		}
+		if (itype!=3) {
+			for (int iDim=0 ; iDim<3 ; iDim++) {
+				if      (iDim==0) dirStr = "x";
+				else if (iDim==1) dirStr = "y";
+				else if (iDim==2) dirStr = "z";
+				name = fieldStr + dirStr + ".h5";
+				file_id_ [itype][iDim] = H5Fcreate( name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+			}
 		}
 	}
 	H5Pclose(plist_id);
@@ -68,10 +76,14 @@ void SmileiIO_Cart2D::close(  )
 //		}
 //	}
 
-	for (int itype=0 ; itype<2 ; itype++) {
-		for (int iDim=0 ; iDim<3 ; iDim++) {
-			H5Fclose( file_id_  [itype][iDim]);
+	for (int itype=0 ; itype<4 ; itype++) {
+		if (itype!=3) {
+			for (int iDim=0 ; iDim<3 ; iDim++) {
+				H5Fclose( file_id_  [itype][iDim]);
+			}
 		}
+		else
+			H5Fclose( file_id_  [itype][0]);
 	}
 
 
@@ -204,10 +216,18 @@ void SmileiIO_Cart2D::write( Field* field, string name, double time )
 	int itype;
 	if      ( typeStr.compare( (string)"e" ) == 0 ) itype = 0;
 	else if ( typeStr.compare( (string)"b" ) == 0 ) itype = 1;
+	else if ( typeStr.compare( (string)"j" ) == 0 ) itype = 2;
+	else if ( typeStr.compare( (string)"r" ) == 0 ) itype = 3;
+
 	int idir;
-	if      ( dirStr.compare( (string)"x" ) == 0 ) idir = 0;
-	else if ( dirStr.compare( (string)"y" ) == 0 ) idir = 1;
-	else if ( dirStr.compare( (string)"z" ) == 0 ) idir = 2;
+	if (itype != 3) {
+		if      ( dirStr.compare( (string)"x" ) == 0 ) idir = 0;
+		else if ( dirStr.compare( (string)"y" ) == 0 ) idir = 1;
+		else if ( dirStr.compare( (string)"z" ) == 0 ) idir = 2;
+	}
+	else {
+		idir = 0;
+	}
 
 	hid_t file_id   = file_id_  [ itype ][ idir ];
 

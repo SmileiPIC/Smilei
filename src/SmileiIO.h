@@ -31,7 +31,7 @@ public:
 
 	// [2][3] : [2] -> 0 = E, 1 = B
 	// [2][3] : [3] -> x, y, z
-	hid_t file_id_  [2][3];
+	hid_t file_id_  [4][3];
 
 	hid_t write_plist;
 
