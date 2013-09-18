@@ -87,10 +87,10 @@ void SmileiIO::writeFields( ElectroMagn* EMfields, double time )
 	write( EMfields->Bx_, "bx.h5", time );
 	write( EMfields->By_, "by.h5", time );
 	write( EMfields->Bz_, "bz.h5", time );
-//	write( EMfields->Jx_, "jx.h5", time );
-//	write( EMfields->Jy_, "jy.h5", time );
-//	write( EMfields->Jz_, "jz.h5", time );
-//	//write( EMfields->rho_, "rho.h5", time );
+	write( EMfields->Jx_, "jx.h5", time );
+	write( EMfields->Jy_, "jy.h5", time );
+	write( EMfields->Jz_, "jz.h5", time );
+	write( EMfields->rho_, "rho.h5", time );
 }
 
 

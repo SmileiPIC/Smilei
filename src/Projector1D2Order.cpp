@@ -136,9 +136,12 @@ void Projector1D2Order::operator() (Field* rho, Particle* part)
 	i -= index_domain_begin;
 	
 	// 2nd order projection for the total density
-	(*rho1D)( i-1)  = ((*rho1D)(i-1) + 0.5 * (xjmxi2-xjmxi+0.25) * rho_j );
-	(*rho1D)( i  )  = ((*rho1D)(i  ) +  (0.75-xjmxi2)            * rho_j );
-	(*rho1D)( i+1)  = ((*rho1D)(i+1) + 0.5 * (xjmxi2+xjmxi+0.25) * rho_j );
+	//#pragma omp atomic
+	(*rho1D)( i-1)  += 0.5 * (xjmxi2-xjmxi+0.25) * rho_j;
+	//#pragma omp atomic
+	(*rho1D)( i  )  += (0.75-xjmxi2)             * rho_j ;
+	//#pragma omp atomic
+	(*rho1D)( i+1)  += 0.5 * (xjmxi2+xjmxi+0.25) * rho_j;
 
 }
 

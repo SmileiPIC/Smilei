@@ -85,7 +85,7 @@ void SmileiMPI::bcast( PicParams& params )
 		params.cell_length[i]=2.0*M_PI/params.res_space[i];
 		params.cell_volume *= params.cell_length[i];
 
-		params.n_space_global[i] = params.res_space[i]*params.sim_length[i]/(2.0*M_PI)+1;
+		params.n_space_global[i] = params.res_space[i]*params.sim_length[i]/(2.0*M_PI);
 
 		params.n_space[i] = params.n_space_global[i];
 	}
