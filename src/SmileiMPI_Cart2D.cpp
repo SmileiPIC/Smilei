@@ -238,7 +238,9 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
 			// n_part_send : number of particles to send to current neighbor
 			n_part_send = (buff_index_send[iDim][iNeighbor]).size();
 			if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (n_part_send!=0) ) {
-				double y_max = params->cell_length[1]*( params->n_space_global[1]-1 );
+                // (JD/13/09/16 proposed this modification to fix the bug on 2D simulations)
+				//double y_max = params->cell_length[1]*( params->n_space_global[1]-1 );
+                double y_max = params->cell_length[1]*( params->n_space_global[1] );
 				for (int iPart=0 ; iPart<n_part_send ; iPart++) {
 					if ( iDim == 1 ) {
 						if ( (*cuParticles)[ buff_index_send[iDim][iNeighbor][iPart] ]->position(1) < 0 ) {
