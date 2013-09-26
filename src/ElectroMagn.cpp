@@ -98,7 +98,7 @@ void ElectroMagn::dump(PicParams* params)
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Method used initialize the total charge density
+// Method used to initialize the total charge density
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn::initRho(vector<Species*> vecSpecies, Projector* Proj)
 {

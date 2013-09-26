@@ -288,7 +288,7 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
         // initialize momentum at 0 for regular or cold initialization type
 		for (unsigned int p= iPart; p<iPart+np; p++) {
 			for (unsigned int i=0; i<3 ; i++) {
-				particles[p]->momentum(i) = 0.0;
+				particles[p]->momentum(i) = 0.001;
 			}
 		}
         

@@ -157,7 +157,7 @@ int main (int argc, char* argv[])
 		smpi->sumDensities( EMfields );
 
 		// solve Maxwell's equations
-		EMfields->solveMaxwell(time_dual, smpi);
+		//EMfields->solveMaxwell(time_dual, smpi);
 
         // call the various diagnostics
 		// ----------------------------
@@ -182,11 +182,12 @@ int main (int argc, char* argv[])
 	//                      Temporary validation diagnostics
 	// ------------------------------------------------------------------
 
-/*	// 1 HDF5 file per process
+	// 1 HDF5 file per process
 	sio->writePlasma( vecSpecies, time_dual, smpi );
-*/
-    smpi->writePlasma(vecSpecies,"toto");
-    
+		
+	EMfields->initRho(vecSpecies, Proj);
+	smpi->sumRho( EMfields );
+
 	//EMfields->dump(&params);  	// Sequential results, 1 file per process
 	if (params.nDim_field == 1) { // If 1D
 			//! \todo{Not //, processes write sequentially to validate. OK in 1D}

@@ -85,10 +85,8 @@ void SmileiMPI::bcast( PicParams& params )
 		params.cell_length[i]=2.0*M_PI/params.res_space[i];
 		params.cell_volume *= params.cell_length[i];
 
-		// (JD/13/09/16 proposed this modification to fix the bug on 2D simulations)
-        // params.n_space_global[i] = params.res_space[i]*params.sim_length[i]/(2.0*M_PI)+1;
-        params.n_space_global[i] = params.res_space[i]*params.sim_length[i]/(2.0*M_PI);
-        
+		params.n_space_global[i] = params.res_space[i]*params.sim_length[i]/(2.0*M_PI);
+
 		params.n_space[i] = params.n_space_global[i];
 	}
 	// Before splitting
