@@ -20,6 +20,7 @@ public:
 
 	void createPattern( PicParams* params, SmileiMPI* smpi );
 	void write( Field* field, std::string name, double time );
+	void writePerProcess( Field* field, std::string name, double time, int rank ) {;}
 	void open (  );
 	void close(  );
 

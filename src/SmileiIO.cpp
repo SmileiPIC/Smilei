@@ -93,6 +93,20 @@ void SmileiIO::writeFields( ElectroMagn* EMfields, double time )
 	write( EMfields->rho_, "rho.h5", time );
 }
 
+void SmileiIO::writeFieldsPP( ElectroMagn* EMfields, double time, int rank )
+{
+	// Each process write is own "name_mpirank.h5" 
+	writePerProcess( EMfields->rho_, "rho", time, rank );
+	writePerProcess( EMfields->Ex_, "Ex", time, rank );
+	writePerProcess( EMfields->Ey_, "Ey", time, rank );
+	writePerProcess( EMfields->Ez_, "Ez", time, rank );
+	writePerProcess( EMfields->Bx_, "Bx", time, rank );
+	writePerProcess( EMfields->By_, "By", time, rank );
+	writePerProcess( EMfields->Bz_, "Bz", time, rank );
+	writePerProcess( EMfields->Jx_, "Jx", time, rank );
+	writePerProcess( EMfields->Jy_, "Jy", time, rank );
+	writePerProcess( EMfields->Jz_, "Jz", time, rank );
+}
 
 void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI* smpi )
 {

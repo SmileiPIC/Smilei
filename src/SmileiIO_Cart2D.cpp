@@ -11,6 +11,8 @@
 #include "SmileiMPI_Cart2D.h"
 #include "Field2D.h"
 
+#include <sstream>
+
 using namespace std;
 
 SmileiIO_Cart2D::SmileiIO_Cart2D( PicParams* params, SmileiMPI* smpi )
@@ -241,5 +243,34 @@ void SmileiIO_Cart2D::write( Field* field, string name, double time )
 	H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &(f2D->data_[0][0]) );
 	H5Dclose(dset_id);
 
+
+}
+
+
+void SmileiIO_Cart2D::writePerProcess( Field* field, string name, double time, int rank )
+{
+	ostringstream iname;
+
+	iname.str(""); iname << name << "_" << rank << ".h5";
+
+	Field2D* f2D =  static_cast<Field2D*>(field);
+	hid_t       file_id;
+	herr_t      status;
+
+	file_id = H5Fcreate(iname.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+
+	hid_t       dataset_id, dataspace_id;
+	hsize_t     dims[2];
+	dims[0] = field->dims_[0];
+	dims[1] = field->dims_[1];
+	dataspace_id = H5Screate_simple(2, dims, NULL);
+	dataset_id = H5Dcreate2(file_id, "Field", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+	status = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &(f2D->data_[0][0]));
+
+	status = H5Dclose(dataset_id);
+	status = H5Sclose(dataspace_id);
+
+	status = H5Fclose(file_id);
 
 }
