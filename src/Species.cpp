@@ -29,8 +29,9 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 
-	// Variable declaration
-	// --------------------
+    // -------------------
+	// Variable definition
+	// -------------------
     
 	// number of spatial dimensions for the particles
 	ndim = params->nDim_particle;
@@ -53,13 +54,14 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 	}
     
 	
-	// calculate density and number of particles for species ispec
-	// -----------------------------------------------------------
+    // ---------------------------------------------------------
+	// Calculate density and number of particles for the species
+	// ---------------------------------------------------------
     
 	npart_effective=0;
 
-	// do a loop over all cells in the simulation
-	// consider a 3d volume with size n_space[0]*n_space[1]*n_space[2]
+	// does a loop over all cells in the simulation
+	// considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
 
 	vector<int> cell_index(3,0);
 	for (unsigned int i=0 ; i<params->nDim_field ; i++) {
@@ -70,6 +72,7 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 	for (unsigned int k=0; k<params->n_space[2]; k++) {
 		for (unsigned int j=0; j<params->n_space[1]; j++) {
 			for (unsigned int i=0; i<params->n_space[0]; i++) {
+                
 				// ------------------------
 				// Constant density profile
 				// ------------------------
@@ -121,7 +124,7 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 
     // defines npart_effective for the Species & create the corresponding particles
     // -----------------------------------------------------------------------
-    params->species_param[ispec].n_part_max = round( params->species_param[ispec].c_part_max*npart_effective );
+    params->species_param[ispec].n_part_max = round( params->species_param[ispec].c_part_max * npart_effective );
 	particles.reserve(params->species_param[ispec].n_part_max);
     particles = ParticleFactory::createVector(params, ispec, npart_effective);
     
@@ -145,7 +148,7 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 	    double fr=0;
 	    max_jutt_cumul[0]=0.0;
 	    for (unsigned  i=1; i<nE; i++ ) {
-		    //! \todo{this is just the isotropic case, generalise to isotropic (MG)}
+		    //! \todo{this is just the isotropic case, generalise to non-isotropic (MG)}
 		    fr=(1+i*dE)*sqrt(pow(1.0+i*dE,2)-1.0) * exp(-mu*i*dE);
 		    max_jutt_cumul[i]=max_jutt_cumul[i-1] + 0.5*dE*(fr+fl);
 		    fl=fr;
@@ -238,7 +241,6 @@ Species::~Species()
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::initWeight(PicParams* params, unsigned int ispec, unsigned int iPart, double density)
 {
-    //!\todo{Change chargeDensity to weight (MG)}
 	for (unsigned  p= iPart; p<iPart+params->species_param[ispec].n_part_per_cell; p++) {
 		particles[p]->weight() = density * params->species_param[ispec].charge
         /                        params->species_param[ispec].n_part_per_cell;

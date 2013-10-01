@@ -31,6 +31,7 @@
 
 using namespace std;
 
+
 // ------------------------------------------------------------------------------------------------------------------ //
 //                                                   MAIN CODE
 // ------------------------------------------------------------------------------------------------------------------ //
@@ -105,7 +106,8 @@ int main (int argc, char* argv[])
 	//!\todo{Check & describe what is done here (MG)}
 	// Init rho by pro all particles of subdomain -> local stuff
 	EMfields->initRho(vecSpecies, Proj);
-	smpi->sumRho( EMfields );
+	//smpi->sumRho( EMfields );
+    smpi->sumDensities( EMfields );
 
 	//! \todo{FalseNot //, current algorithm is instrinsicaly sequential}
 	smpi->solvePoissonPara( EMfields );		//champs->initMaxwell();
@@ -181,11 +183,12 @@ int main (int argc, char* argv[])
 	// ------------------------------------------------------------------
 	//                      Temporary validation diagnostics
 	// ------------------------------------------------------------------
+
 	// 1 HDF5 file per process
 	sio->writePlasma( vecSpecies, time_dual, smpi );
 		
-	EMfields->initRho(vecSpecies, Proj);
-	smpi->sumRho( EMfields );
+	//EMfields->initRho(vecSpecies, Proj);
+	//smpi->sumRho( EMfields );
 
 	//EMfields->dump(&params);  	// Sequential results, 1 file per process
 	if (params.nDim_field == 1) { // If 1D
@@ -197,6 +200,7 @@ int main (int argc, char* argv[])
 		sio->writeFieldsPP( EMfields, time_dual, smpi->getRank() );
 	}
 
+ 
 	// ------------------------------
 	//  Cleanup & End the simulation
 	// ------------------------------

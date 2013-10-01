@@ -1,10 +1,20 @@
 VERSION:="v$(shell git rev-list HEAD --count):$(shell git log -1 --pretty=format:%h)"
 
 CC      = mpic++
-#CC      = g++
+# ---------------------
+# Make by J. Derouillat
+# ---------------------
 
 CFLAGS  = -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include  #-Wstrict-aliasing
 LDFLAGS = -lm -L${HDF5_ROOT_DIR}/lib -lhdf5
+
+# ----------------
+# Make by M. Grech
+# ----------------
+#CFLAGS  = -D__VERSION=\"$(VERSION)\" -I/opt/local/include -D_HDF5 #-Wstrict-aliasing
+#LDFLAGS = -lm -L/opt/local/lib -lhdf5
+
+
 
 all: release install
 
@@ -14,7 +24,7 @@ EXEC = smilei
 SRCS = $(wildcard *.cpp)
 OBJS := $(patsubst %.cpp,%.o,$(SRCS))
 
-release: CFLAGS += -O3 -frounding-math -fno-signed-zeros #-g #-fopenmp
+release: CFLAGS += -O3
 release: $(EXEC)
 
 debug: CFLAGS += -g -pg -Wall -D__DEBUG
