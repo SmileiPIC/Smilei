@@ -133,7 +133,7 @@ void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI*
 			start[1] = 0;
 			H5Sselect_hyperslab(file_space, H5S_SELECT_SET, start, NULL, count, NULL);
 
-			H5Dwrite(partDataset_id[ispec], H5T_NATIVE_FLOAT, partMemSpace, file_space, H5P_DEFAULT, &((*cuParticles)[ p ]->position(0)));
+			H5Dwrite(partDataset_id[ispec], H5T_NATIVE_DOUBLE, partMemSpace, file_space, H5P_DEFAULT, &((*cuParticles)[ p ]->position(0)));
 
 			H5Sclose(file_space);
 

@@ -52,7 +52,7 @@ void SmileiMPI::bcast( PicParams& params )
 
 	bcast( params.res_time );
 	bcast( params.sim_time );
-	params.n_time=params.res_time*params.sim_time/(2.0*M_PI);
+	params.n_time=params.res_time*(params.sim_time/(2.0*M_PI));
 	params.timestep = 2.0*M_PI/params.res_time;
 
 	//! \ sim_length[i]*=2.0*M_PI;
