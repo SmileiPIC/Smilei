@@ -195,8 +195,10 @@ int main (int argc, char* argv[])
 			//! \todo{Not //, processes write sequentially to validate. OK in 1D}
 		smpi->writeFields( EMfields );
 	}
-	else // If 2D
+	else { // If 2D
 		sio->writeFields( EMfields, time_dual );
+		sio->writeFieldsPP( EMfields, time_dual, smpi->getRank() );
+	}
 
  
 	// ------------------------------
