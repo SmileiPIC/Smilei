@@ -111,6 +111,7 @@ void ElectroMagn::initRho(vector<Species*> vecSpecies, Projector* Proj)
     {
 		std::vector<Particle*> cuParticles = vecSpecies[iSpec]->getParticlesList();
 		unsigned int n_particles = vecSpecies[iSpec]->getNbrOfParticles();
+        MESSAGE(n_particles);
 		for (unsigned int iPart=0 ; iPart<n_particles; iPart++ )
         {
 			(*Proj)( rho_ , cuParticles[iPart] );

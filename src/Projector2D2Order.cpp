@@ -102,7 +102,7 @@ void Projector2D2Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
     delta  = xpn - (double)ipo;
     delta2 = delta*delta;
     Sx0[1] = 0.5 * (delta2-delta+0.25);
-	Sx0[2] = 0.75-delta;
+	Sx0[2] = 0.75-delta2;
 	Sx0[3] = 0.5 * (delta2+delta+0.25);
     
     ypn = part->position_old(1) * dy_inv_;
@@ -110,7 +110,7 @@ void Projector2D2Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
     delta  = ypn - (double)jpo;
     delta2 = delta*delta;
     Sy0[1] = 0.5 * (delta2-delta+0.25);
-	Sy0[2] = 0.75-delta;
+	Sy0[2] = 0.75-delta2;
 	Sy0[3] = 0.5 * (delta2+delta+0.25);
     
     
@@ -121,7 +121,7 @@ void Projector2D2Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
     delta  = xpn - (double)ip;
     delta2 = delta*delta;
     Sx1[ip_m_ipo+1] = 0.5 * (delta2-delta+0.25);
-	Sx1[ip_m_ipo+2] = 0.75-delta;
+	Sx1[ip_m_ipo+2] = 0.75-delta2;
 	Sx1[ip_m_ipo+3] = 0.5 * (delta2+delta+0.25);
     
     ypn = part->position(1) * dy_inv_;
@@ -130,7 +130,7 @@ void Projector2D2Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
     delta  = ypn - (double)jp;
     delta2 = delta*delta;
     Sy1[jp_m_jpo+1] = 0.5 * (delta2-delta+0.25);
-	Sy1[jp_m_jpo+2] = 0.75-delta;
+	Sy1[jp_m_jpo+2] = 0.75-delta2;
 	Sy1[jp_m_jpo+3] = 0.5 * (delta2+delta+0.25);
     
     
@@ -209,7 +209,7 @@ void Projector2D2Order::operator() (Field* rho, Particle* part)
 	delta  = xpn - (double)ic;                       // normalized distance to the nearest grid point
 	delta2 = delta*delta;                            // square of the normalized distance to the nearest grid point
     Sx[0]  = 0.5 * (delta2-delta+0.25);
-    Sx[1]  = 0.75-delta;
+    Sx[1]  = 0.75-delta2;
     Sx[2]  = 0.5 * (delta2+delta+0.25);
     
     double       ypn = part->position(1) * dy_inv_;  // normalized distance to the first node
@@ -217,13 +217,13 @@ void Projector2D2Order::operator() (Field* rho, Particle* part)
 	delta  = ypn - (double)jc;                       // normalized distance to the nearest grid point
 	delta2 = delta*delta;                            // square of the normalized distance to the nearest grid point
     Sy[0]  = 0.5 * (delta2-delta+0.25);
-    Sy[1]  = 0.75-delta;
+    Sy[1]  = 0.75-delta2;
     Sy[2]  = 0.5 * (delta2+delta+0.25);
     
 	//cout << "Pos = " << part->position(0) << " - i global = " << i << " - i local = " << i-index_domain_begin <<endl;
     
-	unsigned int i = ic-1-i_domain_begin; // index of first point for projection in x
-    unsigned int j = jc-1-j_domain_begin; // index of first point for projection in y
+	unsigned int i = ic-i_domain_begin-1; // index of first point for projection in x
+    unsigned int j = jc-j_domain_begin-1; // index of first point for projection in y
 	
 	// 2nd order projection for the total charge density
     for (unsigned int iloc=0 ; iloc<3 ; iloc++) {
