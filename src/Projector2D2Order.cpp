@@ -155,12 +155,12 @@ void Projector2D2Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
     // ------------------------------------------------
     for (unsigned int i=1 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
-            Jx_p[i][j] = Jx_p[i-1][j] + crx_p * Wx[i-1][j];
+            Jx_p[i][j] = Jx_p[i-1][j] - crx_p * Wx[i-1][j];
         }
     }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=1 ; j<5 ; j++) {
-            Jy_p[i][j] = Jy_p[i][j-1] + cry_p * Wy[i][j-1];
+            Jy_p[i][j] = Jy_p[i][j-1] - cry_p * Wy[i][j-1];
         }
     }
     
