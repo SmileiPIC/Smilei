@@ -52,8 +52,8 @@ void SmileiMPI::bcast( PicParams& params )
 
 	bcast( params.res_time );
 	bcast( params.sim_time );
-	params.n_time=params.res_time*(params.sim_time/(2.0*M_PI));
-	params.timestep = 2.0*M_PI/params.res_time;
+//	params.n_time=params.res_time*(params.sim_time/(2.0*M_PI));
+//	params.timestep = 2.0*M_PI/params.res_time;
 
 	//! \ sim_length[i]*=2.0*M_PI;
 	//! \ cell_length[i]=2.0*M_PI/res_space[i];
@@ -80,15 +80,15 @@ void SmileiMPI::bcast( PicParams& params )
 //		number_of_procs[1] = (int)(smilei_sz / number_of_procs[0]);
 //	}
 
-	for (unsigned int i=0 ; i<params.nDim_field ; i++) {
-		//sim_length[i]*=2.0*M_PI;
-		params.cell_length[i]=2.0*M_PI/params.res_space[i];
-		params.cell_volume *= params.cell_length[i];
-
-		params.n_space_global[i] = params.res_space[i]*params.sim_length[i]/(2.0*M_PI);
-
-		params.n_space[i] = params.n_space_global[i];
-	}
+//	for (unsigned int i=0 ; i<params.nDim_field ; i++) {
+//		//sim_length[i]*=2.0*M_PI;
+//		params.cell_length[i]=2.0*M_PI/params.res_space[i];
+//		params.cell_volume *= params.cell_length[i];
+//
+//		params.n_space_global[i] = params.res_space[i]*params.sim_length[i]/(2.0*M_PI);
+//
+//		params.n_space[i] = params.n_space_global[i];
+//	}
 	// Before splitting
 	// MESSAGE( "n_space_global = " << params.n_space[0] << " " << params.n_space[1] );
 
@@ -103,6 +103,9 @@ void SmileiMPI::bcast( PicParams& params )
 	bcast( params.laser_param );
 
 	bcast( params.interpolation_order );
+
+	params.compute();
+
 }
 
 void SmileiMPI::bcast( string& val )

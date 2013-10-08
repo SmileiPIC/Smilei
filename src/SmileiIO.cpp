@@ -110,6 +110,8 @@ void SmileiIO::writeFieldsPP( ElectroMagn* EMfields, double time, int rank )
 
 void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI* smpi )
 {
+	cout << "write species disabled" << endl;
+	return;
 	int n_species = vecSpecies.size();
 	for (int ispec=0 ; ispec<n_species ; ispec++) {
 		std::vector<Particle*>* cuParticles = &(vecSpecies[ispec])->particles;

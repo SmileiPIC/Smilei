@@ -73,14 +73,30 @@ SmileiMPI_Cart2D::~SmileiMPI_Cart2D()
 
 void SmileiMPI_Cart2D::createTopology(PicParams& params)
 {
+	for (unsigned int i=0 ; i<params.nDim_field ; i++)
+		params.n_space_global[i] = round(params.res_space[i]*params.sim_length[i]/(2.0*M_PI));
+
 	if (params.nDim_field == 2) {
 		double tmp = params.res_space[0]*params.sim_length[0] / ( params.res_space[1]*params.sim_length[1] );
 		number_of_procs[0] = min( smilei_sz, max(1, (int)sqrt ( (double)smilei_sz*tmp*tmp) ) );
 		number_of_procs[1] = (int)(smilei_sz / number_of_procs[0]);
+
+		while ( number_of_procs[0]*number_of_procs[1] != smilei_sz ) {
+			if (number_of_procs[0]>=number_of_procs[1] ) {
+				number_of_procs[0]++;
+				number_of_procs[1] = (int)(smilei_sz / number_of_procs[0]);
+			}
+			else {
+				number_of_procs[1]++;
+				number_of_procs[0] = (int)(smilei_sz / number_of_procs[1]);
+			}
+		}
+
 	}
 	// Force configuration of MPI domain decomposition
-	//number_of_procs[0] = 2;
-	//number_of_procs[1] = 1;
+	//number_of_procs[0] = 1;
+	//number_of_procs[1] = 2;
+	cout << "Split : " << smilei_sz << " : " << number_of_procs[0] << " - " << number_of_procs[1] << endl;
 
 	MPI_Cart_create( SMILEI_COMM_WORLD, ndims_, number_of_procs, periods_, reorder_, &SMILEI_COMM_2D );
 	MPI_Cart_coords( SMILEI_COMM_2D, smilei_rk, ndims_, coords_ );
@@ -127,12 +143,7 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
 		n_space_global[i] = params.n_space_global[i];
 		oversize[i] = params.oversize[i] = 2;
 		cell_starting_global_index[i] = coords_[i]*(params.n_space_global[i] / number_of_procs[i]);
-		// min/max_local : describe local domain in which particles cat be moved
-		//                 different from domain on which E, B, J are defined
-		min_local[i] = (cell_starting_global_index[i]                  )*params.cell_length[i];
-		max_local[i] = (cell_starting_global_index[i]+params.n_space[i])*params.cell_length[i];
-		PMESSAGE( 0, smilei_rk, "min_local / mac_local on " << smilei_rk << " = " << min_local[i] << " / " << max_local[i] << " selon la direction " << i );
-		cell_starting_global_index[i] -= params.oversize[i];
+
 
 		if ( number_of_procs[i]*params.n_space[i] != params.n_space_global[i] ) {
 			// Correction on the last MPI process of the direction to use the wished number of cells
@@ -140,8 +151,18 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
 				params.n_space[i] = params.n_space_global[i] - params.n_space[i]*(number_of_procs[i]-1);
 			}
 		}
+		// min/max_local : describe local domain in which particles cat be moved
+		//                 different from domain on which E, B, J are defined
+		min_local[i] = (cell_starting_global_index[i]                  )*params.cell_length[i];
+		max_local[i] = (cell_starting_global_index[i]+params.n_space[i])*params.cell_length[i];
+		PMESSAGE( 0, smilei_rk, "min_local / mac_local on " << smilei_rk << " = " << min_local[i] << " / " << max_local[i] << " selon la direction " << i );
+
+		cell_starting_global_index[i] -= params.oversize[i];
 
 	}
+
+
+
 	MESSAGE( "n_space / rank " << smilei_rk << " = " << params.n_space[0] << " " << params.n_space[1] );
 
 

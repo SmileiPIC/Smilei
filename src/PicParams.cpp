@@ -156,11 +156,13 @@ void PicParams::parseFile(string fname) {
 		}// endif laser
 	}
 	
-	
+}
+
 	/*******************************************************************************************************************
 	 caclulate useful parameters
 	 ******************************************************************************************************************/
-		
+void PicParams::compute()
+{
 	n_time=res_time*sim_time;
 	//! \todo{clean this Mickael!!}
 	sim_time*=2.0*M_PI;

@@ -98,6 +98,7 @@ class PicParams {
 
 	//! \todo Comment these 3 stuffs
 	void parseFile(std::string);
+	void compute();
 	void print();
 	void setDimensions();
 
