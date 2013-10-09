@@ -207,6 +207,33 @@ void SmileiIO_Cart2D::createPattern( PicParams* params, SmileiMPI* smpi )
 
 void SmileiIO_Cart2D::write( Field* field, string name, double time )
 {
+	MPI_Info info  = MPI_INFO_NULL;
+	hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
+	H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, info);
+	ostringstream name_t;
+	name_t.str(""); name_t << name << "_" << time << ".h5";
+	hid_t file_t = H5Fcreate( name_t.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+	H5Pclose(plist_id);
+
+	std::vector<unsigned int> isPrimal = field->isPrimal_;
+	Field2D* f2D =  static_cast<Field2D*>(field);
+
+	hid_t memspace  = memspace_ [ isPrimal[0] ][ isPrimal[1] ];
+	hid_t filespace = filespace_[ isPrimal[0] ][ isPrimal[1] ];
+
+	plist_id = H5Pcreate(H5P_DATASET_CREATE);
+	hid_t dset_id = H5Dcreate(file_t, "Field", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+	H5Pclose(plist_id);
+	H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &(f2D->data_[0][0]) );
+	H5Dclose( dset_id );
+
+
+	H5Fclose( file_t );
+
+}
+
+void SmileiIO_Cart2D::write( Field* field, string name )
+{
 	std::vector<unsigned int> isPrimal = field->isPrimal_;
 	Field2D* f2D =  static_cast<Field2D*>(field);
 

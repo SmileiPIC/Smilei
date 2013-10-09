@@ -19,6 +19,7 @@ public:
 	~SmileiIO_Cart2D();
 
 	void createPattern( PicParams* params, SmileiMPI* smpi );
+	void write( Field* field, std::string name );
 	void write( Field* field, std::string name, double time );
 	void writePerProcess( Field* field, std::string name, double time, int rank );
 	void open (  );

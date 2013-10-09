@@ -23,9 +23,11 @@ public:
 	SmileiIO( PicParams* params, SmileiMPI* smpi );
 	virtual ~SmileiIO();
 
+	virtual void write( Field* field, std::string name ) = 0;
 	virtual void write( Field* field, std::string name, double time ) = 0;
 	virtual void writePerProcess( Field* field, std::string name, double time, int rank ) = 0;
 
+	void writeFields( ElectroMagn* EMfields );
 	void writeFields( ElectroMagn* EMfields, double time );
 	void writeFieldsPP( ElectroMagn* EMfields, double time, int rank );
 	void writePlasma( std::vector<Species*> vecSpecies, double time, SmileiMPI* smpi );
