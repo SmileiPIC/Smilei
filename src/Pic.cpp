@@ -163,8 +163,9 @@ int main (int argc, char* argv[])
 
         // call the various diagnostics
 		// ----------------------------
-		if (itime % 5000 == 0) {
+		if (itime % 200 == 0) {
 			if ( smpi->isMaster() ) MESSAGE(1,"diags at " << time_dual << " " << itime);
+			sio->writeFields( EMfields, time_dual );
 			//EMfields->dump(&params);
 			//sio->writePlasma( vecSpecies, time_dual, smpi );
 		}
@@ -196,7 +197,7 @@ int main (int argc, char* argv[])
 		smpi->writeFields( EMfields );
 	}
 	else { // If 2D
-		sio->writeFields( EMfields, time_dual );
+		sio->writeFields( EMfields );
 		sio->writeFieldsPP( EMfields, time_dual, smpi->getRank() );
 	}
 

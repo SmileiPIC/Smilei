@@ -83,7 +83,7 @@ void SmileiIO_Cart1D::createPattern( PicParams* params, SmileiMPI* smpi )
 
 }
 
-void SmileiIO_Cart1D::write( Field* field, string name, double time )
+void SmileiIO_Cart1D::write( Field* field, string name )
 {
 
 }

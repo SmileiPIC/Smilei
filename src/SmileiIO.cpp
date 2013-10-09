@@ -78,21 +78,35 @@ SmileiIO::~SmileiIO()
 
 }
 
+void SmileiIO::writeFields( ElectroMagn* EMfields )
+{
+	// File opened in constructor
+	write( EMfields->Ex_, "ex.h5" );
+	write( EMfields->Ey_, "ey.h5" );
+	write( EMfields->Ez_, "ez.h5" );
+	write( EMfields->Bx_, "bx.h5" );
+	write( EMfields->By_, "by.h5" );
+	write( EMfields->Bz_, "bz.h5" );
+	write( EMfields->Jx_, "jx.h5" );
+	write( EMfields->Jy_, "jy.h5" );
+	write( EMfields->Jz_, "jz.h5" );
+	write( EMfields->rho_, "rho.h5" );
+}
+
 void SmileiIO::writeFields( ElectroMagn* EMfields, double time )
 {
 	// File opened in constructor
-	write( EMfields->Ex_, "ex.h5", time );
-	write( EMfields->Ey_, "ey.h5", time );
-	write( EMfields->Ez_, "ez.h5", time );
-	write( EMfields->Bx_, "bx.h5", time );
-	write( EMfields->By_, "by.h5", time );
-	write( EMfields->Bz_, "bz.h5", time );
-	write( EMfields->Jx_, "jx.h5", time );
-	write( EMfields->Jy_, "jy.h5", time );
-	write( EMfields->Jz_, "jz.h5", time );
-	write( EMfields->rho_, "rho.h5", time );
+	write( EMfields->Ex_, "ex", time );
+	write( EMfields->Ey_, "ey", time );
+	write( EMfields->Ez_, "ez", time );
+	write( EMfields->Bx_, "bx", time );
+	write( EMfields->By_, "by", time );
+	write( EMfields->Bz_, "bz", time );
+	write( EMfields->Jx_, "jx", time );
+	write( EMfields->Jy_, "jy", time );
+	write( EMfields->Jz_, "jz", time );
+	write( EMfields->rho_, "rho", time );
 }
-
 void SmileiIO::writeFieldsPP( ElectroMagn* EMfields, double time, int rank )
 {
 	// Each process write is own "name_mpirank.h5" 
