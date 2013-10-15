@@ -182,7 +182,8 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
 	int iPart;
 	for (int i=0 ; i<n_part_send ; i++) {
 		iPart = indexes_of_particles_to_exchange[i];
-		for (int iDim=0 ; iDim<ndims_ ; iDim++) {
+		// Y direction managed firstly to force considering periodic modification 
+		for (int iDim=1 ; iDim>=0 ; iDim--) {
 			if ( (*cuParticles)[iPart]->position(iDim) < min_local[iDim]) {
 				buff_index_send[iDim][0].push_back( indexes_of_particles_to_exchange[i] );
 				break;
@@ -261,13 +262,11 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
 			if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (n_part_send!=0) ) {
 				double y_max = params->cell_length[1]*( params->n_space_global[1] );
 				for (int iPart=0 ; iPart<n_part_send ; iPart++) {
-					if ( iDim == 1 ) {
-						if ( (*cuParticles)[ buff_index_send[iDim][iNeighbor][iPart] ]->position(1) < 0. ) {
-							(*cuParticles)[ buff_index_send[iDim][iNeighbor][iPart] ]->position(1)     += y_max;
-						}
-						else if ( (*cuParticles)[ buff_index_send[iDim][iNeighbor][iPart] ]->position(1) >= y_max ) {
-							(*cuParticles)[ buff_index_send[iDim][iNeighbor][iPart] ]->position(1)     -= y_max;
-						}
+					if ( ( iNeighbor==0 ) &&  (coords_[1] == 0 ) &&( (*cuParticles)[ buff_index_send[iDim][iNeighbor][iPart] ]->position(1) < 0. ) ){
+						(*cuParticles)[ buff_index_send[iDim][iNeighbor][iPart] ]->position(1)     += y_max;
+					}
+					else if ( ( iNeighbor==1 ) &&  (coords_[1] == number_of_procs[1]-1 ) && ( (*cuParticles)[ buff_index_send[iDim][iNeighbor][iPart] ]->position(1) >= y_max ) ) {
+						(*cuParticles)[ buff_index_send[iDim][iNeighbor][iPart] ]->position(1)     -= y_max;
 					}
 					memcpy(&(partArraySend[iDim][iNeighbor](iPart,0)), &((*cuParticles)[ buff_index_send[iDim][iNeighbor][iPart] ]->position(0)), 6*sizeof(double) );
 				}
