@@ -66,12 +66,11 @@ ElectroMagn2D::ElectroMagn2D(PicParams* params, SmileiMPI* smpi)
     // East boundary
     theta        = M_PI;
     factor       = 1.0 / (cos(theta) - dt_ov_dx);
-    Alpha_SM_E   = 2.0                     * factor;
-    Beta_SM_E    = (dt_ov_dx + cos(theta)) * factor;
-    Gamma_SM_E   = 4.0 * cos(theta)        * factor;
-    Delta_SM_E   = (sin(theta)+dt_ov_dy)   * factor;
-    Epsilon_SM_E = (sin(theta)-dt_ov_dy)   * factor;
-    
+    Alpha_SM_E   = 2.0                      * factor;
+    Beta_SM_E    = -(dt_ov_dx + cos(theta)) * factor;
+    Gamma_SM_E   = 4.0 * cos(theta)         * factor;
+    Delta_SM_E   = - (sin(theta)+dt_ov_dy)  * factor;
+    Epsilon_SM_E = - (sin(theta)-dt_ov_dy)  * factor;
     
     // ----------------------
     // Electromagnetic fields
