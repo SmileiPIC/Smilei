@@ -58,20 +58,21 @@ ElectroMagn2D::ElectroMagn2D(PicParams* params, SmileiMPI* smpi)
     double theta  = 0.0; //! \todo Introduce in parameters for Boundary cond., e.g., params->EMBoundary->theta_W
     double factor = 1.0 / (cos(theta) + dt_ov_dx);
     Alpha_SM_W    = 2.0                     * factor;
-    Beta_SM_W     = (dt_ov_dx - cos(theta)) * factor;
+    Beta_SM_W     = - (cos(theta)-dt_ov_dx) * factor;
     Gamma_SM_W    = 4.0 * cos(theta)        * factor;
     Delta_SM_W    = - (sin(theta)+dt_ov_dy) * factor;
     Epsilon_SM_W  = - (sin(theta)-dt_ov_dy) * factor;
+    MESSAGE("WEST : " << Alpha_SM_W << Beta_SM_W << Gamma_SM_W);
     
     // East boundary
-    theta        = M_PI;
-    factor       = 1.0 / (cos(theta) - dt_ov_dx);
-    Alpha_SM_E   = 2.0                     * factor;
-    Beta_SM_E    = (dt_ov_dx + cos(theta)) * factor;
-    Gamma_SM_E   = 4.0 * cos(theta)        * factor;
-    Delta_SM_E   = (sin(theta)+dt_ov_dy)   * factor;
-    Epsilon_SM_E = (sin(theta)-dt_ov_dy)   * factor;
-    
+    theta         = M_PI;
+    factor        = 1.0 / (cos(theta) - dt_ov_dx);
+    Alpha_SM_E    = 2.0                      * factor;
+    Beta_SM_E     = - (cos(theta)+dt_ov_dx)  * factor;
+    Gamma_SM_E    = 4.0 * cos(theta)         * factor;
+    Delta_SM_E    = - (sin(theta)+dt_ov_dy)  * factor;
+    Epsilon_SM_E  = - (sin(theta)-dt_ov_dy)  * factor;
+    MESSAGE("EAST : " << Alpha_SM_E << Beta_SM_E << Gamma_SM_E);
     
     // ----------------------
     // Electromagnetic fields
@@ -132,10 +133,11 @@ ElectroMagn2D::ElectroMagn2D(PicParams* params, SmileiMPI* smpi)
     // ----------------------------------------------------------------
     index_bc_min.resize( params->nDim_field, 0 );
     index_bc_max.resize( params->nDim_field, 0 );
-    for (size_t i=0 ; i<params->nDim_field ; i++) {
-	index_bc_min[i] = params->oversize[i];
-	index_bc_max[i] = dimDual[i]-params->oversize[i]-1;
+    for (unsigned int i=0 ; i<params->nDim_field ; i++) {
+        index_bc_min[i] = params->oversize[i];
+        index_bc_max[i] = dimDual[i]-params->oversize[i]-1;
     }
+    MESSAGE("index_bc_min / index_bc_max / nx_p / nx_d" << index_bc_min[0] << " " << index_bc_max[0] << " " << nx_p<< " " << nx_d);
 
 }//END constructor Electromagn2D
 
@@ -365,11 +367,11 @@ void ElectroMagn2D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
         
 	if (laser_[ilaser]->laser_struct.time_profile == "constant") {
 	    if (laser_[ilaser]->laser_struct.angle == 0){
-		// Incident field (left boundary)
+		// Incident field (west boundary)
 		byW += laser_[ilaser]->a0_delta_y_ * sin(time_dual) ;//* laser_[ilaser]->time_profile(time_dual);
 		bzW += laser_[ilaser]->a0_delta_z_ * cos(time_dual) ;//* laser_[ilaser]->time_profile(time_dual);
 	    } else if (laser_[ilaser]->laser_struct.angle == 180){
-		// Incident field (right boundary)
+		// Incident field (east boundary)
 		byE += laser_[ilaser]->a0_delta_y_ * sin(time_dual) ;//* laser_[ilaser]->time_profile(time_dual);
 		bzE += laser_[ilaser]->a0_delta_z_ * cos(time_dual) ;//* laser_[ilaser]->time_profile(time_dual);
 	    } else {
@@ -412,8 +414,8 @@ void ElectroMagn2D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
 			+                             Gamma_SM_W * bzW;
 		}
 		
-		// Correction on unused extreme ghost cells : put the fields to 0
-		// -------------------------------------------------------------
+/*		// Correction on unused extreme ghost cells : put the fields to 0
+		// --------------------------------------------------------------
 		//! \todo{Alloc Fields only if necessary to not doing this correction}
 		for (unsigned int i=0 ; i<index_bc_min[0] ; i++) {
 			// for Ey^(p,d), Bx^(p,d), Bz^(d,d)
@@ -429,6 +431,9 @@ void ElectroMagn2D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
 			(*By2D)(i,j)=0.0;
 			}
 		}
+*/        
+        MESSAGE( "WEST BC ==> By_inc, By " << byW << " " << (*By2D)(index_bc_min[0],250) );
+        
     }//if West
     
     // -----------------------------------------
@@ -436,23 +441,24 @@ void ElectroMagn2D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
     // -----------------------------------------
     if ( smpi2D->isEaster() ) {
 		//MESSAGE( smpi->getRank() << " is easter" );
+        //MESSAGE("Here once");
 		// for By^(d,p)
 		for (unsigned int j=0 ; j<ny_p ; j++) {
-			(*By2D)(index_bc_max[0],j) = Alpha_SM_E   * (*Ez2D)(index_bc_max[0],j)
+			(*By2D)(index_bc_max[0],j) = Alpha_SM_E   * (*Ez2D)(index_bc_max[0]-1,j)
 			+                            Beta_SM_E    * (*By2D)(index_bc_max[0]-1,j)
 			+                            Gamma_SM_E   * byE
-			+                            Delta_SM_E   * (*Bx2D)(index_bc_max[0]-1,j+1)
-			+                            Epsilon_SM_E * (*Bx2D)(index_bc_max[0]-1,j);
+			+                            Delta_SM_E   * (*Bx2D)(index_bc_max[0],j+1) // Check x-index
+			+                            Epsilon_SM_E * (*Bx2D)(index_bc_max[0],j);
 		}
 		// for Bz^(d,d)
 		for (unsigned int j=0 ; j<ny_d ; j++) {
-			(*Bz2D)(index_bc_max[0],j) = -Alpha_SM_E * (*Ey2D)(index_bc_max[0],j)
-			+                           Beta_SM_E    * (*Bz2D)(index_bc_max[0]-1,j)
-			+                           Gamma_SM_E   * bzE;
+			(*Bz2D)(index_bc_max[0],j) = -Alpha_SM_E * (*Ey2D)(index_bc_max[0]-1,j)
+			+                             Beta_SM_E  * (*Bz2D)(index_bc_max[0]-1,j)
+			+                             Gamma_SM_E * bzE;
 		}
 
-		// Correction on unused extreme ghost cells : put the fields to 0
-		// -------------------------------------------------------------
+/*		// Correction on unused extreme ghost cells : put the fields to 0
+		// --------------------------------------------------------------
 		// for Ex^(d,p), By^(d,p), Bz^(d,d)
 		for (unsigned int i=index_bc_max[0]+1 ; i<nx_d ; i++) {
 			for (unsigned int j=0 ; j<ny_p ; j++) {
@@ -476,6 +482,8 @@ void ElectroMagn2D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
 			(*Ez2D)(i,j)=0.0;
 			}
 		}
+*/
+        MESSAGE( "EAST BC ==> By_inc, By " << byE << " " << (*By2D)(index_bc_max[0],250) );
 
     }//if East
     

@@ -3,6 +3,7 @@
 
 #include "Field.h"
 #include <vector>
+#include <cmath>
 
 
 
@@ -35,13 +36,15 @@ class Field2D : public Field
 	//! Overloading of the () operator allowing to set a new value for the (i,j) element of a Field2D
 	inline double& operator () (unsigned int i,unsigned int j) {
 		DEBUGEXEC(if (i>=dims_[0] || j>=dims_[1]) ERROR("Out of limits "<< i << " " << j));
-		return data_[i][j]; 
+		DEBUGEXEC(if (!std::isfinite(data_[i][j])) ERROR("Not finite "<< i << "," << j << " = " << data_[i][j]));
+		return data_[i][j];
 	};
 
 	//! Overloading of the () operator allowing to get the value of the (i,j) element of a Field2D
 	inline double operator () (unsigned int i,unsigned int j) const { 
 		DEBUGEXEC(if (i>=dims_[0] || j>=dims_[1]) ERROR("Out of limits "<< i << " " << j));
-		return data_[i][j]; 
+		DEBUGEXEC(if (!std::isfinite(data_[i][j])) ERROR("Not finite "<< i << "," << j << " = " << data_[i][j]));
+		return data_[i][j];
 	};
 	double** data_;
 	//! \todo{for debbugging, to remove (JD)}
