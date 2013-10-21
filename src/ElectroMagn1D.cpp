@@ -52,6 +52,7 @@ ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
 		dimPrim[i] += 2*params->oversize[i];
 		dimDual[i] += 2*params->oversize[i];
 	}
+    MESSAGE( "dimPrim[0]  " <<  dimPrim[0] );
 
     // Allocation of the EM fields
 	ostringstream name;
