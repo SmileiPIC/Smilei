@@ -60,6 +60,9 @@ struct SpeciesStructure {
 	//! mass [electron mass]
 	double mass;
 	
+	//! atomic number
+	double atomic_number;
+	
 	//! charge [proton charge]
 	double charge;
 	
@@ -81,6 +84,9 @@ struct SpeciesStructure {
 
 	//! Boundary conditions for particules
 	std::string bc_part_type;
+	
+	//! Ionization model per Specie (tunnel)
+	std::string ionization_model;
 
 };
 

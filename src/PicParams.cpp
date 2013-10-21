@@ -112,6 +112,10 @@ void PicParams::parseFile(string fname) {
 				species_param[i].radiating=true;
 			}
 			ifile.extract("bc_part_type",species_param[i].bc_part_type ,group);
+			
+			ifile.extract("ionization", species_param[i].ionization_model, group);
+			ifile.extract("atomic_number", species_param[i].atomic_number, group);
+			
 		} else {
 			ERROR("species " << i << " not defined");
 		}

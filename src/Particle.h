@@ -39,10 +39,15 @@ class Particle {
 	//! Method used to set a new value to the Particle weight
 	inline double& weight()       {return Weight[0];}
 
+	//! Method used to get the Partcle charge
+	inline char  charge() const {return Charge[0];}
+	//! Method used to set a new value to the Particle weight
+	inline char& charge()       {return Charge[0];}
+	
 	//! \todo What is this doing here (MG for TV or JD)
 	virtual void Print(PicParams* params);
 
-	double *buf;
+	char *buf;
     
  private:
 	//! array containing the particle position
@@ -57,6 +62,8 @@ class Particle {
 	//! containing the particle weight: equivalent to a charge density
 	double* Weight;
     
+	//! charge state of the particle (multiples of e>0)
+	char* Charge;
 };
 
 #endif

@@ -11,6 +11,7 @@
 #include "PicParams.h"
 #include "SmileiMPI.h"
 #include "Pusher.h" 
+#include "Ionization.h" 
 
 
 class ElectroMagn;
@@ -85,6 +86,9 @@ class Species
 	
 	//! Method used to Push the particles (change momentum & change position)
 	Pusher* Push;
+	
+	//! Ionization method 
+	Ionization* Ionize;
 
 };
 
