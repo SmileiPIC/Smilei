@@ -432,7 +432,7 @@ void ElectroMagn2D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
 			}
 		}
 */        
-        MESSAGE( "WEST BC ==> By_inc, By " << byW << " " << (*By2D)(index_bc_min[0],250) );
+        //MESSAGE( "WEST BC ==> By_inc, By " << byW << " " << (*By2D)(index_bc_min[0],250) );
         
     }//if West
     
@@ -483,7 +483,7 @@ void ElectroMagn2D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
 			}
 		}
 */
-        MESSAGE( "EAST BC ==> By_inc, By " << byE << " " << (*By2D)(index_bc_max[0],250) );
+        //MESSAGE( "EAST BC ==> By_inc, By " << byE << " " << (*By2D)(index_bc_max[0],250) );
 
     }//if East
     
