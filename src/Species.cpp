@@ -3,6 +3,7 @@
 
 #include "ParticleFactory.h"
 #include "PusherFactory.h"
+#include "IonizationFactory.h"
 
 #include "PartBoundCond.h"
 #include "BoundaryConditionType.h"
@@ -212,6 +213,9 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
     // assign the correct Pusher to Push
     Push = PusherFactory::create( params, ispec );
 	  
+	// assign the Ionization model (if needed) to Ionize
+	Ionize = IonizationFactory::create( params, ispec );
+	
     // define limits for BC and functions applied and for domain decomposition
     partBoundCond = new PartBoundCond( params, ispec, smpi);
 
@@ -232,6 +236,8 @@ Species::~Species()
 	DEBUG(10,"Species deleted ");
 
 	delete Push;
+	if (Ionize) delete Ionize;
+	if (partBoundCond) delete partBoundCond;
 }
 
 
@@ -378,6 +384,10 @@ void Species::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Inter
 		for (unsigned int iPart=0 ; iPart<nParticles; iPart++ ) {
 			// Interpolate the fields at the particle position
 			(*Interp)(Champs, particles[iPart], &Epart, &Bpart);
+			
+			// Do the ionization
+			if (Ionize)
+				(*Ionize)(particles[iPart], Epart);
 
 			// Push the particle
 			(*Push)(particles[iPart], Epart, Bpart, gf);

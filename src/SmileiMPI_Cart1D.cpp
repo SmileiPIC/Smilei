@@ -58,10 +58,53 @@ SmileiMPI_Cart1D::~SmileiMPI_Cart1D()
 
 void SmileiMPI_Cart1D::createTopology(PicParams& params)
 {
-	for (unsigned int i=0 ; i<params.nDim_field ; i++)
+    for (unsigned int i=0 ; i<params.nDim_field ; i++)
 		params.n_space_global[i] = round(params.res_space[i]*params.sim_length[i]/(2.0*M_PI));
 
-	number_of_procs[0] = smilei_sz;
+    number_of_procs[0] = smilei_sz;
+    
+	MPI_Cart_create( SMILEI_COMM_WORLD, ndims_, number_of_procs, periods_, reorder_, &SMILEI_COMM_1D );
+	MPI_Cart_coords( SMILEI_COMM_1D, smilei_rk, ndims_, coords_ );
+    
+    
+	for (int iDim=0 ; iDim<ndims_ ; iDim++) {
+		MPI_Cart_shift( SMILEI_COMM_1D, iDim, 1, &(neighbor_[iDim][0]), &(neighbor_[iDim][1]) );
+		//PMESSAGE ( 0, smilei_rk, "Neighbors of process in direction " << iDim << " : " << neighbor_[iDim][0] << " - " << neighbor_[iDim][1]  );
+	}
+    
+    
+	for (unsigned int i=0 ; i<params.nDim_field ; i++) {
+        
+		params.n_space[i] = params.n_space_global[i] / number_of_procs[i];
+        
+		n_space_global[i] = params.n_space_global[i];
+		oversize[i] = params.oversize[i] = 2;
+		cell_starting_global_index[i] = coords_[i]*(params.n_space_global[i] / number_of_procs[i]);
+        
+        
+		if ( number_of_procs[i]*params.n_space[i] != params.n_space_global[i] ) {
+			// Correction on the last MPI process of the direction to use the wished number of cells
+			if (coords_[i]==number_of_procs[i]-1) {
+				params.n_space[i] = params.n_space_global[i] - params.n_space[i]*(number_of_procs[i]-1);
+			}
+		}
+		// min/max_local : describe local domain in which particles cat be moved
+		//                 different from domain on which E, B, J are defined
+		min_local[i] = (cell_starting_global_index[i]                  )*params.cell_length[i];
+		max_local[i] = (cell_starting_global_index[i]+params.n_space[i])*params.cell_length[i];
+		//PMESSAGE( 0, smilei_rk, "min_local / mac_local on " << smilei_rk << " = " << min_local[i] << " / " << max_local[i] << " selon la direction " << i );
+        
+		cell_starting_global_index[i] -= params.oversize[i];
+        
+	}
+    
+    
+    
+	MESSAGE( "n_space / rank " << smilei_rk << " = " << params.n_space[0]  );
+    
+    
+    
+/*	number_of_procs[0] = smilei_sz;
 
 	MPI_Cart_create( SMILEI_COMM_WORLD, ndims_, number_of_procs, periods_, reorder_, &SMILEI_COMM_1D );
 	MPI_Cart_coords( SMILEI_COMM_1D, smilei_rk, ndims_, coords_ );
@@ -74,28 +117,31 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
 	for (unsigned int i=0 ; i<params.nDim_field ; i++) {
 
 		params.n_space[i] = params.n_space_global[i] / number_of_procs[i];
+//		if ( number_of_procs[i]*params.n_space[i] != params.n_space_global[i] ) {
+//			//WARNING( "Domain splitting does not match to the global domain" );
+//			if (coords_[i]==number_of_procs[i]-1) {
+//				params.n_space[i] = params.n_space_global[i] - params.n_space[i]*(number_of_procs[i]-1);
+//			}
+//		}
 
 		n_space_global[i] = params.n_space_global[i];
 		oversize[i] = params.oversize[i] = 2;
-		cell_starting_global_index[i] = coords_[i]*(params.n_space_global[i] / number_of_procs[i]);
+		//! \todo{replace cell_starting_global_index compute by a most sophisticated or input data}
+		cell_starting_global_index[i] = coords_[i]*params.n_space[i];
+		// min/max_local : describe local domain in which particles cat be moved
+		//                 different from domain on which E, B, J are defined
+		min_local[i] = (cell_starting_global_index[i]                  )*params.cell_length[i];
+		max_local[i] = (cell_starting_global_index[i]+params.n_space[i])*params.cell_length[i];
+		cell_starting_global_index[i] -= params.oversize[i];
 
 		if ( number_of_procs[i]*params.n_space[i] != params.n_space_global[i] ) {
-			// Correction on the last MPI process of the direction to use the wished number of cells
+			//WARNING( "Domain splitting does not match to the global domain" );
 			if (coords_[i]==number_of_procs[i]-1) {
 				params.n_space[i] = params.n_space_global[i] - params.n_space[i]*(number_of_procs[i]-1);
 			}
 		}
 
-		// min/max_local : describe local domain in which particles cat be moved
-		//                 different from domain on which E, B, J are defined
-		min_local[i] = (cell_starting_global_index[i]                  )*params.cell_length[i];
-		max_local[i] = (cell_starting_global_index[i]+params.n_space[i])*params.cell_length[i];
-		PMESSAGE( 0, smilei_rk, "min_local / mac_local on " << smilei_rk << " = " << min_local[i] << " / " << max_local[i] << " selon la direction " << i );
-
-		cell_starting_global_index[i] -= params.oversize[i];
-
-	}
-	MESSAGE( "n_space / rank " << smilei_rk << " = " << params.n_space[0] );
+	}*/
 }
 
 void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams* params)
@@ -372,7 +418,7 @@ void SmileiMPI_Cart1D::writeField( Field* field, string name )
 	int istart = oversize[0];
 	if (smilei_rk!=0) istart+=1;  // f1D_current[n_elem[0]-2*oversize[0]+1] = f1D_west[oversize[0]]
 	int bufsize = n_elem[0]- 2*oversize[0] - f1D->isPrimal_[0];
-
+    
 	if (smilei_rk!=0) {
 		if (f1D->isPrimal_[0] == 0) bufsize-=1;
 		else if (smilei_rk!=smilei_sz-1) bufsize-=1;

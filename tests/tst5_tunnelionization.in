@@ -19,15 +19,15 @@ interpolation_order =2
 # res_time: temporal resolution (integer = number of time−steps within one normalization period)
 # sim_time: duration of the simulation in units of the normalization period 
 #
-res_time = 500
-sim_time = 5.0
+res_time = 200
+sim_time = 10.0
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
 # sim_length: length of the simulation in units of the normalization wavelength 
 #
-res_space=500
-sim_length=10.0
+res_space  = 100
+sim_length = 2.0
 
 # PLASMA GEOMETRY
 # plasma_geometry: string defining the plasma geometry
@@ -36,8 +36,8 @@ sim_length=10.0
 #
 plasma_geometry = constant
 vacuum_length   = 1.0
-plasma_length   = 1.0
-n_species=0
+plasma_length   = 0.01
+n_species = 2
 
 # DEFINE ALL SPECIES
 # species_type: ion, electron, positron, test ...
@@ -54,32 +54,34 @@ n_species=0
 # radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
 #
 species 0
-	species_type = ion
+	species_type = helium
+	atomic_number = 2
 	initialization_type = cold
-	n_part_per_cell=10
+	n_part_per_cell=10000
 	c_part_max=1.0
 	mass = 1836.0
-	charge = 1.0
-	density = 1.0e-4
+	charge = 0.0
+	density = 1.0e0
 	mean_velocity = 0.0
 	temperature = 0.0
 	dynamics_type = norm
-	time_frozen = 10.0
+	ionization = tunnel
+	time_frozen = 0.0
 	radiating = false
 end
 
 species 1
 	species_type = electron
-	initialization_type = maxwell-juettner
-	n_part_per_cell=10
+	initialization_type = cold
+	n_part_per_cell=10000
 	c_part_max=1.0
 	mass = 1.0
 	charge = -1.0
-	density = 1.0e-4
+	density = 0.0e0
 	mean_velocity = 0.0
-	temperature = 0.01
+	temperature = 0.1
 	dynamics_type = norm	
-	time_frozen = 10.0
+	time_frozen = 0.0
 	radiating = false
 end
 
@@ -92,14 +94,14 @@ end
 # delta: polarization parameter, (0:y) (1:z) (0.707106781:circ)
 # time_profile: string defining the time profile
 # double_params: vector of real parameters used by the different time-profiles
-n_laser=1
+n_laser = 1
 
 laser 0
 	a0=1.0
 	angle=0
-	delta=1.0              
+	delta=1.0               
 	time_profile = constant
-	double_params = 4.0
+	#double_params = 10.0
 end	
 
 

@@ -12,18 +12,21 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 Particle::Particle(int nDim)
 {
-	buf  = new double[nDim+3+1+nDim];
+	buf  = new char[(nDim+3+1+nDim)*sizeof(double)+1];
+	
+	Position = new (buf)								double[nDim];
+	Momentum = new (buf+nDim*sizeof(double))			double[3];
+	Weight	 = new (buf+(nDim+3)*sizeof(double))		double[1];
 
-	Position = new (buf)        double[nDim];
-	Momentum = new (buf+nDim)   double[3];
-	Weight	 = new (buf+nDim+3) double[1];
+	Position_old = new (buf+(nDim+3+1)*sizeof(double))	double[nDim];
 
-	Position_old = new (buf+nDim+3+1) double[nDim];
+	Charge = new (buf+(nDim+3+1)*sizeof(double)+1)		char[1];
 
 	Position[0]     = 0.;
 	Position_old[0] = 0.;
 	for (unsigned int i=0 ; i<3 ; i++ ) Momentum[i] = 0.;
 	Weight[0] = 0.;
+	Charge[0] = 0;
 
 }
 
