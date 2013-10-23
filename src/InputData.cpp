@@ -2,6 +2,10 @@
 
 using namespace std;
 
+InputData::InputData(std::string fname) {
+	parseFile(fname);
+}
+
 string InputData::cleanString(string str) {
 	transform(str.begin(), str.end(), str.begin(), ::tolower);
 	const string whiteSpaces( " \f\n\r\t\v" );

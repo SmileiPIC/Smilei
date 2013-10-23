@@ -1,22 +1,15 @@
 #include "PicParams.h"
-#include "InputData.h"
 #include "Tools.h"
 #include <cmath>
 
 using namespace std;
 
-PicParams::PicParams(string fname= string()) {
-}
-
 PicParams::PicParams() {
 }
 
-void PicParams::parseFile(string fname) {
+void PicParams::parseInputData(InputData &ifile) {
 	//open and parse the input data file
-	InputData ifile;
-	ifile.parseFile(fname);
 	
-	DEBUGEXEC(ifile.write(fname+".debug","parsed namelist"));
 	DEBUGEXEC(ifile.extract("debug",debug_level));
 	
 	RELEASEEXEC(int debug_level=-1; ifile.extract("debug",debug_level));

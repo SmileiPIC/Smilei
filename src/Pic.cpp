@@ -16,6 +16,8 @@
 
 #include "Pic.h"
 #include "PicParams.h"
+#include "InputData.h"
+#include "DiagParams.h"
 
 #include "SmileiMPIFactory.h"
 #include "SmileiIOFactory.h"
@@ -56,13 +58,19 @@ int main (int argc, char* argv[])
 	// Send information on current simulation
 	if ( smpiData->isMaster() ) startingMessage(namelist);
 
+	// Parse the namelist file (no check!)
+	InputData input_data(namelist);
+	DEBUGEXEC(input_data.write(namelist+".debug","parsed namelist"));
 
 	// Read simulation parameters
 	PicParams params;
+	DiagParams diag_params;
 
 	// Process 0 read namelist, then broadcast to all process
-	if ( smpiData->isMaster() )
-		params.parseFile(namelist); // this variable will hold the input parameters from file
+	if ( smpiData->isMaster() ) {
+		params.parseInputData(input_data); // this variable will hold the input parameters from file
+		diag_params.parseInputData(input_data, params); // this variable will hold the diagnostics parameters from file
+	}
 	smpiData->bcast( params );
 	if ( smpiData->isMaster() ) params.print();
 
@@ -163,7 +171,10 @@ int main (int argc, char* argv[])
 
         // call the various diagnostics
 		// ----------------------------
-		if (itime % 200 == 0) {
+		if (itime % diag_params.scalar_every == 0) {
+		}
+		
+		if (itime % diag_params.map_every == 0) {
 			if ( smpi->isMaster() ) MESSAGE(1,"diags at " << time_dual << " " << itime);
 			sio->writeFields( EMfields, time_dual );
 			//EMfields->dump(&params);

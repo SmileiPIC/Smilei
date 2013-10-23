@@ -4,7 +4,6 @@ IonizationTunnel::IonizationTunnel(PicParams *params, int ispec) : Ionization(pa
 	DEBUG("Creating the Tunnel Ionizaton class");
 }
 
-
 void IonizationTunnel::operator() (Particle* part, LocalFields Epart) {
-
+	
 }

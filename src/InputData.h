@@ -29,6 +29,7 @@ class PicParams;
 class InputData {
 	
 public:	
+	InputData(std::string);
 	//! parse file
 	void parseFile(std::string=std::string());
 	

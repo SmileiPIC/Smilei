@@ -8,7 +8,7 @@
 #include <cmath>
 
 
-//! class Ionization1D used to defined a 1d vector
+//! calculate the particle tunnel ionization
 class IonizationTunnel : public Ionization
 {
     

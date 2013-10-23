@@ -104,4 +104,11 @@ laser 0
 	#double_params = 10.0
 end	
 
+diagnostic scalar
+	every = 10
+end
+
+diagnostic map
+	every = 10
+end
 

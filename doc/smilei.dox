@@ -12,3 +12,7 @@ HTML_TIMESTAMP         = NO
 LATEX_SOURCE_CODE      = YES
 SORT_MEMBER_DOCS       = NO
 SOURCE_BROWSER         = YES
+GENERATE_HTML          = YES 
+HTML_FOOTER            = footer.html
+HTML_STYLESHEET        = stylesheet.css
+HTML_HEADER            = header.html

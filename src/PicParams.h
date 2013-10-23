@@ -11,6 +11,7 @@
 
 #include <vector>
 #include <string>
+#include "InputData.h"
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each species
@@ -100,10 +101,9 @@ class PicParams {
  public:
 	//! Creator for PicParams
 	PicParams();
-	PicParams(std::string);
 
 	//! \todo Comment these 3 stuffs
-	void parseFile(std::string);
+	void parseInputData(InputData &);
 	void compute();
 	void print();
 	void setDimensions();
