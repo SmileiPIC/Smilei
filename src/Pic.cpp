@@ -31,6 +31,8 @@
 #include <cstdlib>
 #include <iostream>
 
+#include "Diagnostic.h"
+
 using namespace std;
 
 
@@ -71,6 +73,7 @@ int main (int argc, char* argv[])
 		params.parseInputData(input_data); // this variable will hold the input parameters from file
 		diag_params.parseInputData(input_data, params); // this variable will hold the diagnostics parameters from file
 	}
+	
 	smpiData->bcast( params );
 	if ( smpiData->isMaster() ) params.print();
 
@@ -80,6 +83,10 @@ int main (int argc, char* argv[])
 	SmileiIO*  sio  = SmileiIOFactory::create(params, smpi);
 
 
+	// Create diagnostic
+	Diagnostic diags(&params,&diag_params, smpi);
+	
+	
 	// Randomize the seed for simulations running in release mode
 	//! \todo{Save the seed in case one wants to re-run the exact same simulation (MG)}
 	RELEASEEXEC(srand (time(NULL)));
@@ -171,16 +178,8 @@ int main (int argc, char* argv[])
 
         // call the various diagnostics
 		// ----------------------------
-		if (itime % diag_params.scalar_every == 0) {
-		}
 		
-		if (itime % diag_params.map_every == 0) {
-			if ( smpi->isMaster() ) MESSAGE(1,"diags at " << time_dual << " " << itime);
-			sio->writeFields( EMfields, time_dual );
-			//EMfields->dump(&params);
-			//sio->writePlasma( vecSpecies, time_dual, smpi );
-		}
-		
+		diags.compute(itime, EMfields, vecSpecies);
 	}//END of the time loop	
 
 	smpi->barrier();

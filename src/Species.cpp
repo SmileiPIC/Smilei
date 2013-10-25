@@ -436,3 +436,20 @@ void Species::dump(std::ofstream& ofile)
 	}
 	ofile << endl;
 }
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Calcualte mean charge
+// ---------------------------------------------------------------------------------------------------------------------
+double Species::meanCharge()
+{
+	double mean_charge=0.0;
+	if (getNbrOfParticles()) {
+		for (unsigned int iPart=0 ; iPart<getNbrOfParticles(); iPart++ ) {
+			mean_charge+=(double)particles[iPart]->charge();
+		}
+		mean_charge/=(double)getNbrOfParticles();
+	}
+	DEBUG(mean_charge);
+	return mean_charge;
+}

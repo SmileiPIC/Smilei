@@ -24,8 +24,6 @@ public:
 
 	//! \todo Comment these 3 stuffs
 	void parseInputData(InputData &, PicParams&);
-	void compute();
-	void print();
 
 	int scalar_every;
 	int map_every;

@@ -62,7 +62,7 @@ struct SpeciesStructure {
 	double mass;
 	
 	//! atomic number
-	double atomic_number;
+	unsigned int atomic_number;
 	
 	//! charge [proton charge]
 	double charge;

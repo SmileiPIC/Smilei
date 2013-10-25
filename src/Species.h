@@ -61,6 +61,9 @@ class Species
 	std::vector<Particle*> particles;
 	//std::vector<int> index_of_particles_to_exchange;
     
+	//! calculate mean charge of particles
+	double meanCharge();
+	
  private:
 	//! Effective number of particles (different than the maximum number of particles)
 	unsigned int npart_effective;
