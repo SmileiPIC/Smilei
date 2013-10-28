@@ -65,6 +65,9 @@ class Species
 	double meanCharge();
 	
  private:
+	//! species number ()
+	unsigned int speciesNumber;
+	
 	//! Effective number of particles (different than the maximum number of particles)
 	unsigned int npart_effective;
 

@@ -33,7 +33,8 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
     // -------------------
 	// Variable definition
 	// -------------------
-    
+    speciesNumber=ispec;
+	
 	// number of spatial dimensions for the particles
 	ndim = params->nDim_particle;
 	
@@ -386,9 +387,10 @@ void Species::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Inter
 			(*Interp)(Champs, particles[iPart], &Epart, &Bpart);
 			
 			// Do the ionization
-			if (Ionize)
+			if (Ionize) {
 				(*Ionize)(particles[iPart], Epart);
-
+			}
+			
 			// Push the particle
 			(*Push)(particles[iPart], Epart, Bpart, gf);
 

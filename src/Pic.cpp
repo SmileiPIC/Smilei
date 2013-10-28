@@ -143,8 +143,7 @@ int main (int argc, char* argv[])
 	// t1-t0  = elapsed time in simulation time loop
 	double t0, t1;
 	t0 = MPI_Wtime();
-	for (unsigned int itime=1 ; itime <= params.n_time ; itime++) {
-		
+	for (unsigned int itime=1 ; itime <= params.n_time ; itime++) {		
 		// calculate new times
 		// -------------------
 		time_prim += params.timestep;

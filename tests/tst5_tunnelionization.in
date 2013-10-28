@@ -57,7 +57,7 @@ species 0
 	species_type = helium
 	atomic_number = 2
 	initialization_type = cold
-	n_part_per_cell=10000
+	n_part_per_cell=100
 	c_part_max=1.0
 	mass = 1836.0
 	charge = 0.0
@@ -73,7 +73,7 @@ end
 species 1
 	species_type = electron
 	initialization_type = cold
-	n_part_per_cell=10000
+	n_part_per_cell=100
 	c_part_max=1.0
 	mass = 1.0
 	charge = -1.0
