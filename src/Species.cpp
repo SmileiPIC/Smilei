@@ -446,12 +446,12 @@ void Species::dump(std::ofstream& ofile)
 double Species::meanCharge()
 {
 	double mean_charge=0.0;
-	if (getNbrOfParticles()) {
+	if (getNbrOfParticles()>0) {
 		for (unsigned int iPart=0 ; iPart<getNbrOfParticles(); iPart++ ) {
 			mean_charge+=(double)particles[iPart]->charge();
 		}
 		mean_charge/=(double)getNbrOfParticles();
 	}
-	DEBUG(mean_charge);
+	DEBUG(speciesNumber << " " << mean_charge << " " <<  getNbrOfParticles());
 	return mean_charge;
 }

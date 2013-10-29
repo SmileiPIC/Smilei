@@ -13,16 +13,16 @@ Diagnostic::Diagnostic( PicParams* params,  DiagParams* diagparams, SmileiMPI* s
 }
 
 void Diagnostic::compute (int itime, ElectroMagn* EMfields, std::vector<Species*>& vecSpecies) {
-	
-	for (unsigned int ispec; ispec<vecSpecies.size(); ispec++) {
+
+	for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
 		data_[ispec]=vecSpecies[ispec]->meanCharge();
 	}
 	
+	DEBUG(every);
+	
 	if (itime % every == 0) {
-		DEBUG("here " << itime);
 		fout << itime ;
 		for (int i=0;i<data_.size();i++) fout << "\t" << data_[i];
 		fout << std::endl ;
 	}
-	
 }

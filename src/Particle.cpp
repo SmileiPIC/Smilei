@@ -12,7 +12,9 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 Particle::Particle(int nDim)
 {
-	buf  = new char[(nDim+3+1+nDim)*sizeof(double)+1];
+	int particle_memory_size=(2*nDim+3+1)*sizeof(double)+1;
+	
+	buf  = new char[particle_memory_size];
 	
 	Position = new (buf)								double[nDim];
 	Momentum = new (buf+nDim*sizeof(double))			double[3];
@@ -45,7 +47,7 @@ Particle::~Particle()
 // ---------------------------------------------------------------------------------------------------------------------
 void Particle::Print(PicParams* params)
 {
-	for (unsigned int i=0 ; i<params->nDim_field ; i++ ) cout << Position[i] << " ";
-	for (unsigned int i=0 ; i<3 ; i++ )                  cout << Momentum[i] << " ";
-	cout <<  Weight[0] << " " << endl;
+	for (unsigned int i=0 ; i<params->nDim_field ; i++ ) cout << position(i) << " ";
+	for (unsigned int i=0 ; i<3 ; i++ )                  cout << momentum(i) << " ";
+	cout <<  weight() << " " << charge() << endl;
 }

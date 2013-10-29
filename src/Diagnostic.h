@@ -26,6 +26,8 @@ public:
 	~Diagnostic(){};
 	void compute(int timestep, ElectroMagn* EMfields, std::vector<Species*>&);
 	
+	void write(int timestep);
+
 private:
 	std::vector<double> data_;
 	int every;

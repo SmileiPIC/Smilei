@@ -18,7 +18,7 @@ public:
 			Ionize=NULL;
 		} else if ( model == "tunnel" ) {
 			if (params->species_param[ispec].charge > params->species_param[ispec].atomic_number)
-				ERROR( "Unknown Charge > atomic_number for specie " << ispec );
+				ERROR( "Charge > atomic_number for specie " << ispec );
 
 		    Ionize = new IonizationTunnel( params, ispec );
 	    } else {

@@ -57,15 +57,15 @@ species 0
 	species_type = helium
 	atomic_number = 2
 	initialization_type = cold
-	n_part_per_cell=100
+	n_part_per_cell=1000
 	c_part_max=1.0
 	mass = 1836.0
-	charge = 0.0
+	charge = 1.0
 	density = 1.0e0
 	mean_velocity = 0.0
 	temperature = 0.0
 	dynamics_type = norm
-	ionization = tunnel
+	ionization_model = tunnel
 	time_frozen = 0.0
 	radiating = false
 end
@@ -73,7 +73,7 @@ end
 species 1
 	species_type = electron
 	initialization_type = cold
-	n_part_per_cell=100
+	n_part_per_cell=0
 	c_part_max=1.0
 	mass = 1.0
 	charge = -1.0
@@ -81,6 +81,7 @@ species 1
 	mean_velocity = 0.0
 	temperature = 0.1
 	dynamics_type = norm	
+	ionization_model = none
 	time_frozen = 0.0
 	radiating = false
 end

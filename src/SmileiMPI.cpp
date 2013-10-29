@@ -110,7 +110,8 @@ void SmileiMPI::bcast( PicParams& params )
 
 void SmileiMPI::bcast( string& val )
 {
-	int charSize;
+	DEBUG("passing "<< val.c_str());
+	int charSize=0;
 	if (isMaster()) charSize = val.size()+1;
 	MPI_Bcast(&charSize, 1, MPI_INT, 0, SMILEI_COMM_WORLD);
 
@@ -159,7 +160,7 @@ void SmileiMPI::bcast( vector<int>& val )
 
 void SmileiMPI::bcast( vector<double>& val )
 {
-	int vecSize;
+	int vecSize=0;
 	if (isMaster()) vecSize = val.size();
 	MPI_Bcast( &vecSize, 1, MPI_INT, 0, SMILEI_COMM_WORLD);
 	if (!isMaster()) val.resize( vecSize ); 
@@ -182,6 +183,7 @@ void SmileiMPI::bcast( SpeciesStructure& speciesStructure )
 	bcast( speciesStructure.bc_part_type );
 	bcast( speciesStructure.time_frozen );
 	bcast( speciesStructure.radiating );
+	bcast( speciesStructure.ionization_model );
 }
 
 void SmileiMPI::bcast( vector<SpeciesStructure>& val )
