@@ -41,7 +41,7 @@ void PicParams::parseInputData(InputData &ifile) {
 		ERROR("Dimension of res_space ("<< res_space.size() << ") != " << nDim_field << " for geometry " << geometry);
 	}
 	
-	ifile.extract("wavelength",wavelength);	
+	ifile.extract("wavelength_SI",wavelength_SI);
 	ifile.extract("sim_units",sim_units);
 	if (sim_units == "physicist") {
 		//! \todo{change units to code units}

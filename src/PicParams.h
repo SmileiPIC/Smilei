@@ -172,8 +172,8 @@ class PicParams {
 	//! volume of cell (this will be removed by untructured mesh!)
 	double cell_volume;
 	
-	//! wavelength
-	double wavelength;
+	//! wavelength (in SI units)
+	double wavelength_SI;
 	
 	//! physicist (cgs with temperatures in eV) theorist
 	std::string sim_units;

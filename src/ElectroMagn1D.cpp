@@ -114,6 +114,8 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
 	//SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
 	//int process_coord_x = smpi1D->getProcCoord(0);
 
+    DEBUG("Entering Poisson Solver");
+    
 	Field1D* Ex1D  = static_cast<Field1D*>(Ex_);
 	Field1D* rho1D = static_cast<Field1D*>(rho_);
 
@@ -129,6 +131,8 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
 	//for (unsigned int i=1 ; i<nx_d ; i++) {
 	for ( unsigned int ix = 1 ; ix < dimDual[0] ; ix++ )
 	    (*Ex1D)(ix) = (*Ex1D)(ix-1) + dx* (*rho1D)(ix-1);
+    
+    DEBUG("Poisson Solved");
 	
 }//END solvePoisson
 
@@ -376,3 +380,27 @@ void ElectroMagn1D::initRhoJ()
 	}
     
 }
+
+
+
+/*
+// ---------------------------------------------------------------------------------------------------------------------
+// Reinitialize the total charge density and transverse currents
+// - save current density as old density (charge conserving scheme)
+// - put the new density and currents to 0
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn1D::initRho()
+{
+    MESSAGE(" >>> DIMPRIM >>> DIMDUAL >>>" << dimPrim[0] << " " << dimDual[0]);
+	Field1D* rho1D_o    = static_cast<Field1D*>(rho1D_o);
+    Field1D* rho1D      = static_cast<Field1D*>(rho1D);
+    
+	// all fields are defined on the primal grid
+	//for (unsigned int i=0 ; i<nx_p ; i++) {
+    for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
+		(*rho1D_o)(ix) = 0.0;
+		(*rho1D)(ix)   = 0.0;
+	}
+    
+}
+*/

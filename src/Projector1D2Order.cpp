@@ -43,10 +43,11 @@ void Projector1D2Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
 	// Declare local variables
     int unsigned ipo, ip, iloc;
     int ip_m_ipo;
+    double charge_weight = part->charge()*part->weight();
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;
-    double crx_p = part->weight()*dx_ov_dt;                // current density for particle moving in the x-direction
-    double cry_p = part->weight()*part->momentum(1)/gf;    // current density in the y-direction of the macroparticle
-    double crz_p = part->weight()*part->momentum(2)/gf;    // current density allow the y-direction of the macroparticle
+    double crx_p = charge_weight*dx_ov_dt;                // current density for particle moving in the x-direction
+    double cry_p = charge_weight*part->momentum(1)/gf;    // current density in the y-direction of the macroparticle
+    double crz_p = charge_weight*part->momentum(2)/gf;    // current density allow the y-direction of the macroparticle
     //double rho_p = part->weight();                         // charge density for the macroparticle
     double S0[5], S1[5], Wl[5], Wt[5], Jx_p[5];            // arrays used for the Esirkepov projection method
     
@@ -122,7 +123,7 @@ void Projector1D2Order::operator() (Field* rho, Particle* part)
 	//Declaration of local variables
 	int i;
 	double xjn,xjmxi,xjmxi2;
-	double rho_j = part->weight();  // charge density of the macro-particle
+	double rho_j = part->charge()*part->weight();  // charge density of the macro-particle
     
 
 	//Locate particle on the grid

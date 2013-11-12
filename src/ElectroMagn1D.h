@@ -29,6 +29,9 @@ public:
 	void solvePoisson(SmileiMPI* smpi);
     
 	//! Method used to initialize the total charge densities and currents
+	void initRho();
+
+    //! Method used to initialize the total charge densities and currents
 	void initRhoJ();
     
 	//! Method used to solve Maxwell's equations

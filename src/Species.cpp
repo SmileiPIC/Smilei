@@ -33,13 +33,21 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
     // -------------------
 	// Variable definition
 	// -------------------
-    speciesNumber=ispec;
-	
+    
+    
+    electron_species = NULL;
+    
+    // species index
+    speciesNumber = ispec;
+    
 	// number of spatial dimensions for the particles
 	ndim = params->nDim_particle;
 	
 	// time over which particles remain frozen
 	time_frozen = params->species_param[ispec].time_frozen;
+    
+    // atomic number
+    atomic_number = params->species_param[ispec].atomic_number;
     
 	// field containing the density distribution (always 3d)
 	Field3D density(params->n_space);
@@ -198,6 +206,7 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 					initMomentum(params->species_param[ispec].n_part_per_cell,iPart, temp, vel, 
 						     params->species_param[ispec].initialization_type, max_jutt_cumul);
 					initWeight(params, ispec, iPart, density(i,j,k));
+                    initCharge(params, ispec, iPart, density(i,j,k));
                     
 					//calculate new iPart (jump to next cell)
 					iPart+=params->species_param[ispec].n_part_per_cell;
@@ -216,7 +225,8 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 	  
 	// assign the Ionization model (if needed) to Ionize
 	Ionize = IonizationFactory::create( params, ispec );
-	
+    if (Ionize) DEBUG("------------------------------------------------------------ " <<ispec);
+    
     // define limits for BC and functions applied and for domain decomposition
     partBoundCond = new PartBoundCond( params, ispec, smpi);
 
@@ -244,13 +254,28 @@ Species::~Species()
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// For all (np) particles in a mesh initialize its numerical weight (equivalent to a charge density)
+// For all (np) particles in a mesh initialize its numerical weight (equivalent to a number density)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::initWeight(PicParams* params, unsigned int ispec, unsigned int iPart, double density)
 {
 	for (unsigned  p= iPart; p<iPart+params->species_param[ispec].n_part_per_cell; p++) {
+        particles[p]->weight() = density / params->species_param[ispec].n_part_per_cell;
+/*
 		particles[p]->weight() = density * params->species_param[ispec].charge
-        /                        params->species_param[ispec].n_part_per_cell;
+       /                        params->species_param[ispec].n_part_per_cell;
+*/
+	}
+}
+
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// For all (np) particles in a mesh initialize its charge state
+// ---------------------------------------------------------------------------------------------------------------------
+void Species::initCharge(PicParams* params, unsigned int ispec, unsigned int iPart, double density)
+{
+	for (unsigned  p= iPart; p<iPart+params->species_param[ispec].n_part_per_cell; p++) {
+		particles[p]->charge() = params->species_param[ispec].charge;
 	}
 }
 
@@ -387,12 +412,12 @@ void Species::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Inter
 			(*Interp)(Champs, particles[iPart], &Epart, &Bpart);
 			
 			// Do the ionization
-			if (Ionize) {
+			if (Ionize && particles[iPart]->charge() < (int) atomic_number) { //AND
 				(*Ionize)(particles[iPart], Epart);
-			}
-			
+            }
+
 			// Push the particle
-			(*Push)(particles[iPart], Epart, Bpart, gf);
+			//(*Push)(particles[iPart], Epart, Bpart, gf);
 
 			// Apply boundary condition on the particles
 			// Boundary Condition may be physical or due to domain decomposition
@@ -407,9 +432,17 @@ void Species::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Inter
 //		for (unsigned int iPart=0 ; iPart<nParticles; iPart++ ) {
 //			if ( !partBoundCond->apply( particles[iPart] ) ) smpi->addPartInExchList( iPart );
 //		}
+        if (Ionize && electron_species) {
+            if (Ionize->new_electrons.size()) DEBUG("passing ionized electrons " << Ionize->new_electrons.size());
+            for (unsigned int i; i < Ionize->new_electrons.size(); i++) {
+                electron_species->particles.push_back(Ionize->new_electrons[i]);
+            }
+            Ionize->new_electrons.clear();
+        }
 	}
 	else {
 		// immobile particle (at the moment only project density)
+                
 		//! \todo{Implement Esirkepov method for the longitudinal currents (MG)}
 		//#pragma omp parallel for shared (Champs)
 		for (unsigned int iPart=0 ; iPart<nParticles; iPart++ ) {
@@ -433,7 +466,7 @@ void Species::dump(std::ofstream& ofile)
 		ofile << i ;
 		for (unsigned int m=0; m<ndim; m++) ofile << "\t" << particles[i]->position(m);
 		for (unsigned int m=0; m<3; m++)    ofile << "\t" << particles[i]->momentum(m);
-		ofile << "\t" << particles[i]->weight() << "\t" << Push->getMass() << "\t" << Push->getCharge();
+		ofile << "\t" << particles[i]->weight(); //<< "\t" << Push->getMass() << "\t" << Push->getCharge();
 		ofile << endl;
 	}
 	ofile << endl;
@@ -441,7 +474,7 @@ void Species::dump(std::ofstream& ofile)
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Calcualte mean charge
+// Calculate mean charge
 // ---------------------------------------------------------------------------------------------------------------------
 double Species::meanCharge()
 {

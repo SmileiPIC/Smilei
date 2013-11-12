@@ -116,6 +116,7 @@ void ElectroMagn::initRho(vector<Species*> vecSpecies, Projector* Proj)
         {
 			(*Proj)( rho_ , cuParticles[iPart] );
 		}
+        DEBUG("projection done for initRho");
 	}//iSpec
 
 }

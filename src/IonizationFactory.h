@@ -17,15 +17,18 @@ public:
 		if ( model.empty() || model == "none") {
 			Ionize=NULL;
 		} else if ( model == "tunnel" ) {
+            DEBUG("0 IONIZE IONIZE IONIZE IONIZE IONIZE IONIZE "<< Ionize);
 			if (params->species_param[ispec].charge > params->species_param[ispec].atomic_number)
 				ERROR( "Charge > atomic_number for specie " << ispec );
 
 		    Ionize = new IonizationTunnel( params, ispec );
+            DEBUG("1 IONIZE IONIZE IONIZE IONIZE IONIZE IONIZE "<< Ionize);
+            
 	    } else {
 		    ERROR( "Unknown Ionization Model : " << model );
 		}
 		
-
+        DEBUG("2 IONIZE IONIZE IONIZE IONIZE IONIZE IONIZE "<< Ionize);
 		return Ionize;
 	}
 	

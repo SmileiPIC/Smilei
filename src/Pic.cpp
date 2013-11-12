@@ -109,25 +109,38 @@ int main (int argc, char* argv[])
 	// ----------------------------------------------------------------------------
 	// object containing the electromagnetic fields (virtual)
 	ElectroMagn* EMfields = ElectroMagnFactory::create(params, smpi);
+    MESSAGE("HERE(0) !!!!!!!!!!!!!!!!!!!!!!!");
 
 	// interpolation operator (virtual)
 	Interpolator* Interp = InterpolatorFactory::create(params, smpi);
+    MESSAGE("HERE(1) !!!!!!!!!!!!!!!!!!!!!!!");
+    
 	// projection operator (virtual)
 	Projector* Proj = ProjectorFactory::create(params, smpi);
 
+    MESSAGE("HERE(2) !!!!!!!!!!!!!!!!!!!!!!!");
+    
 	// -----------------------------------
 	// Initialize the electromagnetic fields
 	// -----------------------------------   
 	//!\todo{Check & describe what is done here (MG)}
 	// Init rho by pro all particles of subdomain -> local stuff
 	EMfields->initRho(vecSpecies, Proj);
+    
+    MESSAGE("HERE(3) !!!!!!!!!!!!!!!!!!!!!!!");
+    
 	//smpi->sumRho( EMfields );
     smpi->sumDensities( EMfields );
 
+    MESSAGE("MESSAGE HERE (4) !!!!!!!!!!!!!!!!!!!!!!!");
+    
 	//! \todo{FalseNot //, current algorithm is instrinsicaly sequential}
 	smpi->solvePoissonPara( EMfields );		//champs->initMaxwell();
 
-
+    MESSAGE("OP INIT DONE");
+    smpi->barrier();
+    
+    
 	// ------------------------------------------------------------------------
 	// Initialize the simulation times time_prim at n=0 and time_dual at n=-1/2
 	// ------------------------------------------------------------------------
@@ -143,6 +156,7 @@ int main (int argc, char* argv[])
 	// t1-t0  = elapsed time in simulation time loop
 	double t0, t1;
 	t0 = MPI_Wtime();
+    
 	for (unsigned int itime=1 ; itime <= params.n_time ; itime++) {		
 		// calculate new times
 		// -------------------
@@ -157,7 +171,10 @@ int main (int argc, char* argv[])
 
 		// put density and currents to 0
 		// -----------------------------
+        MESSAGE("initRhoJ enter");
 		EMfields->initRhoJ();
+        MESSAGE("initRhoJ done");
+        
 
 		// apply the PIC method
 		// --------------------
@@ -166,7 +183,7 @@ int main (int argc, char* argv[])
 		// (2) move the particle
 		// (3) calculate the currents (charge conserving method)
 		for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-			if ( smpi->isMaster() ) DEBUG(2, "Dynamic Species "<<ispec );
+			if ( smpi->isMaster() ) DEBUG(2, "Dynamic Species " << ispec );
 			vecSpecies[ispec]->dynamic(time_dual, EMfields, Interp, Proj, smpi);
 			smpi->exchangeParticles(vecSpecies[ispec], ispec, &params);
 		}
@@ -178,7 +195,7 @@ int main (int argc, char* argv[])
         // call the various diagnostics
 		// ----------------------------
 		
-		diags.compute(itime, EMfields, vecSpecies);
+		//diags.compute(itime, EMfields, vecSpecies);
 	}//END of the time loop	
 
 	smpi->barrier();
@@ -219,7 +236,7 @@ int main (int argc, char* argv[])
 	delete EMfields;
 	for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
 	vecSpecies.clear();
-    
+  
 	delete sio;
 	if ( smpi->isMaster() ) {
 		MESSAGE("------------------------------------------");

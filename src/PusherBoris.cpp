@@ -23,6 +23,7 @@ void PusherBoris::operator() (Particle* part, LocalFields Epart, LocalFields Bpa
 {
 	// Declaration of local variables
 	// ------------------------------
+    double charge_over_mass_ = part->charge()*one_over_mass_;
 	double umx, umy, umz, upx, upy, upz;
 	double alpha, inv_det_T, Tx, Ty, Tz, Tx2, Ty2, Tz2;
 	double TxTy, TyTz, TzTx;

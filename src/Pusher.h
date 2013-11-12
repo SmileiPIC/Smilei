@@ -24,17 +24,16 @@ public:
 	virtual void operator() (Particle* part, LocalFields Epart, LocalFields Bpart, double& gf) = 0;
 
     //! Method used to get the particle mass
-	inline double getMass()   {return mass_  ;};
+	//inline double getMass()   {return mass_  ;};
     
     //! Method used to get the particle charge
-	inline double getCharge() {return charge_;};
+	//inline double getCharge() {return charge_;};
 
 protected:
 	double dt, dts2;
 	// mass_ and charge_ relative to Species but used in the particle pusher
 	double mass_;
-	double charge_;
-	double charge_over_mass_;
+	double one_over_mass_;
 
 	int nDim_;
     

@@ -20,20 +20,25 @@ public:
     //! Overloading of () operator
 	virtual void operator() (Particle* part, LocalFields Epart) = 0;
 	
+    std::vector<Particle*> new_electrons;
 	
 protected:
 	std::vector<double> Potential;
-	std::vector<int> azimuthal_quantum_number;
+	std::vector<double> Azimuthal_quantum_number;
+    
+    double eV_to_au;
+    double EC_to_au;
+    double au_to_w0;
 	
+    double wavelength_SI;
+	double dt;
+	unsigned int nDim_field;
+	unsigned int nDim_particle;
+	unsigned int atomic_number_;
+    unsigned int ionized_species_mass;
+    
 private:
-	double dt, dts2;
-	// mass_ and charge_ relative to Species but used in the particle pusher
-	double mass_;
-	double charge_;
-	double charge_over_mass_;
-	
-	int atomic_number_;
-	int nDim_;
+
 
 };
 

@@ -32,6 +32,9 @@ class Species
 	//! Species destructor
 	virtual ~Species();
 
+    //! Species index
+    unsigned int speciesNumber;
+    
 	//! Method returning the Particle list for the considered Species
 	inline std::vector<Particle*> getParticlesList() const {return particles;}
 	inline std::vector<Particle*>& getParticlesList() {return particles;}
@@ -53,6 +56,9 @@ class Species
     
 	//! Method used to initialize the Particle weight (equivalent to a charge density) in a given cell
 	void initWeight(PicParams*, unsigned int, unsigned int, double);
+    
+    //! Method used to initialize the Particle charge
+    void initCharge(PicParams*, unsigned int, unsigned int, double);
 
 	//! Method used to save all Particles properties for the considered Species
 	void dump(std::ofstream&);
@@ -61,13 +67,15 @@ class Species
 	std::vector<Particle*> particles;
 	//std::vector<int> index_of_particles_to_exchange;
     
-	//! calculate mean charge of particles
-	double meanCharge();
-	
- private:
-	//! species number ()
-	unsigned int speciesNumber;
-	
+	//! Ionization method
+	Ionization* Ionize;
+    
+    double meanCharge();
+
+    //!
+    Species *electron_species;
+
+private:
 	//! Effective number of particles (different than the maximum number of particles)
 	unsigned int npart_effective;
 
@@ -92,9 +100,9 @@ class Species
 	
 	//! Method used to Push the particles (change momentum & change position)
 	Pusher* Push;
-	
-	//! Ionization method 
-	Ionization* Ionize;
+    
+    unsigned int atomic_number;
+    
 
 };
 

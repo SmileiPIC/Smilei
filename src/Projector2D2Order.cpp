@@ -59,9 +59,10 @@ void Projector2D2Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
     
     
     // (x,y,z) components of the current density for the macro-particle
-    double crx_p = part->weight()*dx_ov_dt;
-    double cry_p = part->weight()*dy_ov_dt;
-    double crz_p = part->weight()*part->momentum(2)/gf;
+    double charge_weight = part->charge()*part->weight();
+    double crx_p = charge_weight*dx_ov_dt;
+    double cry_p = charge_weight*dy_ov_dt;
+    double crz_p = charge_weight*part->momentum(2)/gf;
     
     
     // variable declaration
@@ -200,7 +201,7 @@ void Projector2D2Order::operator() (Field* rho, Particle* part)
 	
 	//Declaration of local variables
 	double delta, delta2;
-	double rho_p = part->weight();   // charge density of the macro-particle
+	double rho_p = part->charge()*part->weight();   // charge density of the macro-particle
     double Sx[3], Sy[3];             // projection coefficient arrays
     
 	//Locate particle on the primal grid & calculate the projection coefficients
