@@ -12,6 +12,9 @@ debug = 0
 #
 dim = 1d3v
 
+# wavelength_SI
+wavelength_SI = 1e-6
+
 # order of interpolation
 interpolation_order =2 
 
@@ -60,7 +63,7 @@ species 0
 	n_part_per_cell=1000
 	c_part_max=1.0
 	mass = 1836.0
-	charge = 1.0
+	charge = 0.0
 	density = 1.0e0
 	mean_velocity = 0.0
 	temperature = 0.0
@@ -98,7 +101,7 @@ end
 n_laser = 1
 
 laser 0
-	a0=1.0
+	a0=.1
 	angle=0
 	delta=1.0               
 	time_profile = constant

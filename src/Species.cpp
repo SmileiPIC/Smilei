@@ -434,7 +434,7 @@ void Species::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Inter
 //			if ( !partBoundCond->apply( particles[iPart] ) ) smpi->addPartInExchList( iPart );
 //		}
         if (Ionize && electron_species) {
-            if (Ionize->new_electrons.size()) DEBUG("passing ionized electrons " << Ionize->new_electrons.size());
+//            if (Ionize->new_electrons.size()) DEBUG("passing ionized electrons " << Ionize->new_electrons.size());
             for (unsigned int i; i < Ionize->new_electrons.size(); i++) {
                 electron_species->particles.push_back(Ionize->new_electrons[i]);
             }
@@ -486,6 +486,6 @@ double Species::meanCharge()
 		}
 		mean_charge/=(double)getNbrOfParticles();
 	}
-	DEBUG(speciesNumber << " " << mean_charge << " " <<  getNbrOfParticles());
+//	DEBUG(speciesNumber << " " << mean_charge << " " <<  getNbrOfParticles());
 	return mean_charge;
 }

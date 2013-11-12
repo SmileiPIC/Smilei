@@ -8,7 +8,6 @@
 #ifndef Diagnostic_H
 #define Diagnostic_H
 
-#include <string>
 #include <vector>
 #include <iostream>
 #include <fstream>

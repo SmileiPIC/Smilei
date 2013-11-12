@@ -43,8 +43,9 @@ void IonizationTunnel::operator() (Particle* part, LocalFields Epart) {
     
 	// Absolute value of the electric field normalized in atomic units
     double E = EC_to_au * sqrt( Epart.x*Epart.x + Epart.y*Epart.y + Epart.z*Epart.z );
-    //MESSAGE( " >>> Ex, Ey, Ez, E = " << Epart.x << " " << Epart.y << " " << Epart.z << " " << E );
+    //MESSAGE( " >>> Ex, Ey, Ez, E = " << Epart.x << " " << Epart.y << " " << Epart.z << " " << EC_to_au );
     
+//    if (std::isfinite(E)) {
     if (E!=0) {
         // Calculation of the ionization rate in normalized (SMILEI) units
         double delta     = gamma_tunnel[Z] / E;
@@ -55,6 +56,7 @@ void IonizationTunnel::operator() (Particle* part, LocalFields Epart) {
         double ran_p = (double)rand() / RAND_MAX;
         //MESSAGE(" >>>> ran_p = " << ran_p << " cond. " << " Ionization rate = " << IonizRate << " dt = " << dt);
         
+//		DEBUG(ran_p << " " << beta_tunnel[Z] << " " << alpha_tunnel[Z] << " " << gamma_tunnel[Z] << " " << E << " " << dt);
         
         // Calculate new charge state of the particle
         if ( ran_p < 1.0 -exp(-IonizRate*dt) ) {

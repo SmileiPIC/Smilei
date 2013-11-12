@@ -25,8 +25,8 @@ public:
 	//! \todo Comment these 3 stuffs
 	void parseInputData(InputData &, PicParams&);
 
-	int scalar_every;
-	int map_every;
+	unsigned int scalar_every;
+	unsigned int map_every;
 	
 };
 

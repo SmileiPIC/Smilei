@@ -74,8 +74,11 @@ int main (int argc, char* argv[])
 		diag_params.parseInputData(input_data, params); // this variable will hold the diagnostics parameters from file
 	}
 	
+	// Brodcast importa parameters to all nodes
 	smpiData->bcast( params );
 	if ( smpiData->isMaster() ) params.print();
+
+	smpiData->bcast( diag_params );
 
 
 	// Geometry known, MPI environment specified
@@ -109,16 +112,12 @@ int main (int argc, char* argv[])
 	// ----------------------------------------------------------------------------
 	// object containing the electromagnetic fields (virtual)
 	ElectroMagn* EMfields = ElectroMagnFactory::create(params, smpi);
-    MESSAGE("HERE(0) !!!!!!!!!!!!!!!!!!!!!!!");
 
 	// interpolation operator (virtual)
 	Interpolator* Interp = InterpolatorFactory::create(params, smpi);
-    MESSAGE("HERE(1) !!!!!!!!!!!!!!!!!!!!!!!");
     
 	// projection operator (virtual)
 	Projector* Proj = ProjectorFactory::create(params, smpi);
-
-    MESSAGE("HERE(2) !!!!!!!!!!!!!!!!!!!!!!!");
     
 	// -----------------------------------
 	// Initialize the electromagnetic fields
@@ -127,17 +126,12 @@ int main (int argc, char* argv[])
 	// Init rho by pro all particles of subdomain -> local stuff
 	EMfields->initRho(vecSpecies, Proj);
     
-    MESSAGE("HERE(3) !!!!!!!!!!!!!!!!!!!!!!!");
-    
 	//smpi->sumRho( EMfields );
     smpi->sumDensities( EMfields );
-
-    MESSAGE("MESSAGE HERE (4) !!!!!!!!!!!!!!!!!!!!!!!");
     
 	//! \todo{FalseNot //, current algorithm is instrinsicaly sequential}
 	smpi->solvePoissonPara( EMfields );		//champs->initMaxwell();
 
-    MESSAGE("OP INIT DONE");
     smpi->barrier();
     
     
@@ -171,9 +165,7 @@ int main (int argc, char* argv[])
 
 		// put density and currents to 0
 		// -----------------------------
-        MESSAGE("initRhoJ enter");
 		EMfields->initRhoJ();
-        MESSAGE("initRhoJ done");
         
 
 		// apply the PIC method
@@ -195,7 +187,7 @@ int main (int argc, char* argv[])
         // call the various diagnostics
 		// ----------------------------
 		
-		//diags.compute(itime, EMfields, vecSpecies);
+		diags.compute(itime, EMfields, vecSpecies);
 	}//END of the time loop	
 
 	smpi->barrier();

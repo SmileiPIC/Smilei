@@ -10,6 +10,7 @@
 #include <vector>
 
 class PicParams;
+class DiagParams;
 class Species;
 class Particle;
 
@@ -29,6 +30,7 @@ public:
 	inline void barrier() { MPI_Barrier( SMILEI_COMM_WORLD );}
 
 	void bcast( PicParams& params );
+	void bcast( DiagParams& params );
 
 	virtual void createTopology( PicParams& params ) {};
 	virtual void createType( PicParams& params ) {};

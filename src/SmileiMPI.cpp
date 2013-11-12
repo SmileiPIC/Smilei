@@ -1,6 +1,7 @@
 #include "SmileiMPI.h"
 
 #include "PicParams.h"
+#include "DiagParams.h"
 #include "Tools.h"
 
 #include "ElectroMagn.h"
@@ -48,6 +49,7 @@ SmileiMPI::~SmileiMPI()
 void SmileiMPI::bcast( PicParams& params )
 {
 	bcast( params.geometry );
+	bcast(params.wavelength_SI);
 	params.setDimensions();
 
 	bcast( params.res_time );
@@ -106,6 +108,11 @@ void SmileiMPI::bcast( PicParams& params )
 
 	params.compute();
 
+}
+
+void SmileiMPI::bcast( DiagParams& params )
+{
+	bcast(params.scalar_every);
 }
 
 void SmileiMPI::bcast( string& val )
