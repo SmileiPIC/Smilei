@@ -171,6 +171,7 @@ void SmileiMPI::bcast( vector<double>& val )
 void SmileiMPI::bcast( SpeciesStructure& speciesStructure )
 {
 	bcast( speciesStructure.species_type );
+	bcast( speciesStructure.atomic_number );
 	bcast( speciesStructure.initialization_type );
 	bcast( speciesStructure.n_part_per_cell );
 	bcast( speciesStructure.c_part_max );
@@ -184,6 +185,7 @@ void SmileiMPI::bcast( SpeciesStructure& speciesStructure )
 	bcast( speciesStructure.time_frozen );
 	bcast( speciesStructure.radiating );
 	bcast( speciesStructure.ionization_model );
+	cout << "ioni ... " << speciesStructure.ionization_model << endl;
 }
 
 void SmileiMPI::bcast( vector<SpeciesStructure>& val )

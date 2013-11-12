@@ -43,7 +43,7 @@ void Projector1D2Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
 	// Declare local variables
     int unsigned ipo, ip, iloc;
     int ip_m_ipo;
-    double charge_weight = part->charge()*part->weight();
+    double charge_weight = (double)(part->charge())*part->weight();
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;
     double crx_p = charge_weight*dx_ov_dt;                // current density for particle moving in the x-direction
     double cry_p = charge_weight*part->momentum(1)/gf;    // current density in the y-direction of the macroparticle

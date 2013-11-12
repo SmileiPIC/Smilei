@@ -59,7 +59,7 @@ void Projector2D2Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
     
     
     // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = part->charge()*part->weight();
+	double charge_weight = (double)(part->charge())*part->weight();
     double crx_p = charge_weight*dx_ov_dt;
     double cry_p = charge_weight*dy_ov_dt;
     double crz_p = charge_weight*part->momentum(2)/gf;

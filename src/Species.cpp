@@ -298,6 +298,7 @@ void Species::initPosition(unsigned int np, unsigned int iPart, unsigned int *in
 			} else if (initialization_type == "cold" || initialization_type == "maxwell-juettner") {
 				particles[p]->position(i)=(indexes[i]+((double)rand() / RAND_MAX))*cell_length[i];
 			}
+			particles[p]->position_old(i) = particles[p]->position(i);
 		}// i
 	}// p
 }
@@ -414,7 +415,7 @@ void Species::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Inter
 			// Do the ionization
 			if (Ionize && particles[iPart]->charge() < (int) atomic_number) { //AND
 				(*Ionize)(particles[iPart], Epart);
-            }
+			}
 
 			// Push the particle
 			//(*Push)(particles[iPart], Epart, Bpart, gf);
