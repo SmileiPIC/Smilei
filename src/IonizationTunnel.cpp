@@ -71,8 +71,8 @@ void IonizationTunnel::operator() (Particle* part, LocalFields Epart) {
                 newParticle->momentum(i) = part->momentum(i)/ionized_species_mass;
             }
             newParticle->weight()=part->weight();
-            newParticle->charge()=part->charge();
-            
+            //newParticle->charge()=part->charge();
+            newParticle->charge()=1;
             new_electrons.push_back(newParticle);
             
             // Increase the charge of the particle

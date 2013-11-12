@@ -25,6 +25,7 @@ public:
 	~Diagnostic(){};
 	void compute(int timestep, ElectroMagn* EMfields, std::vector<Species*>&);
 	
+	
 	void write(int timestep);
 
 private:
@@ -32,6 +33,11 @@ private:
 	std::vector<double> data_;
 	int every;
 	std::ofstream fout;
+	std:: vector<double> mean_values;
+	std::vector<unsigned int> mean_weight;
+	
+	int num_CPUs;
+	
 };
 
 #endif
