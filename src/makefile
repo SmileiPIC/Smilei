@@ -1,6 +1,6 @@
 VERSION:="v$(shell git rev-list HEAD --count):$(shell git log -1 --pretty=format:%h)"
 
-CC      ?= mpic++
+SMILEICXX      ?= mpic++
 HDF5_ROOT_DIR ?=
 
 CFLAGS  = -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include  #-Wstrict-aliasing
@@ -22,15 +22,15 @@ debug: $(EXEC)
 
 .depend: $(SRCS)
 	rm -rf .depend
-	$(CC) $(CFLAGS) -MM $^ >> .depend;
+	$(SMILEICXX) $(CFLAGS) -MM $^ >> .depend;
 
 include .depend 
 
 %.o : %.cpp
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(SMILEICXX) $(CFLAGS) -c $< -o $@
 
 $(EXEC): $(OBJS)
-	$(CC) $(CFLAGS) -o $(EXEC) $(OBJS) $(LDFLAGS)
+	$(SMILEICXX) $(CFLAGS) -o $(EXEC) $(OBJS) $(LDFLAGS)
 
 install: $(EXEC)
 	install $(EXEC) $(INSTALLDIR)
