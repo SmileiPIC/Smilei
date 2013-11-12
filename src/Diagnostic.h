@@ -28,6 +28,7 @@ public:
 	void write(int timestep);
 
 private:
+	SmileiMPI* smpi_;
 	std::vector<double> data_;
 	int every;
 	std::ofstream fout;
