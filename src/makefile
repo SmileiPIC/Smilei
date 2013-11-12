@@ -1,6 +1,8 @@
 VERSION:="v$(shell git rev-list HEAD --count):$(shell git log -1 --pretty=format:%h)"
 
-CC      = mpic++
+CC      ?= mpic++
+HDF5_ROOT_DIR ?=
+
 CFLAGS  = -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include  #-Wstrict-aliasing
 LDFLAGS = -lm -L${HDF5_ROOT_DIR}/lib -lhdf5
 
