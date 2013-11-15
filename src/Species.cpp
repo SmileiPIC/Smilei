@@ -489,3 +489,9 @@ double Species::meanCharge()
 //	DEBUG(speciesNumber << " " << mean_charge << " " <<  getNbrOfParticles());
 	return mean_charge;
 }
+
+
+void Species::computeScalar(){
+scalar_data.mean_charge=meanCharge();
+scalar_data.part_number=getNbrOfParticles();
+}

@@ -72,7 +72,7 @@ void IonizationTunnel::operator() (Particle* part, LocalFields Epart) {
             }
             newParticle->weight()=part->weight();
             //newParticle->charge()=part->charge();
-            newParticle->charge()=1;
+            newParticle->charge()=-1;
             new_electrons.push_back(newParticle);
             
             // Increase the charge of the particle

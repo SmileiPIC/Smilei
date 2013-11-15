@@ -79,6 +79,7 @@ protected:
 
 private:
 	void bcast( std::string& val );
+	void bcast( short &val );
 	void bcast( unsigned int &val );
 	void bcast( double& val );
 	void bcast( bool& val );

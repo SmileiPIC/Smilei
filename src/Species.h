@@ -21,6 +21,11 @@ class Projector;
 class PartBoundCond;
 class PartBoundCondMix;
 
+// struct for scalar diagnostic
+typedef struct{
+double mean_charge;
+unsigned int part_number;
+}spec_scalar_data;
 
 //! class Species
 class Species
@@ -71,7 +76,10 @@ class Species
 	Ionization* Ionize;
     
     double meanCharge();
-
+// method used to fill a a struct spec_scalar_data variable type
+	void computeScalar();
+// 	method used to return a struct spec_scalar_data variable type
+	inline spec_scalar_data scalar_struct(){return scalar_data;}
     //!
     Species *electron_species;
 
@@ -103,6 +111,7 @@ private:
     
     unsigned int atomic_number;
     
+	spec_scalar_data scalar_data; 
 
 };
 

@@ -12,7 +12,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 Particle::Particle(int nDim)
 {
-	int particle_memory_size=(2*nDim+3+1)*sizeof(double)+1;
+	int particle_memory_size=(2*nDim+3+1)*sizeof(double)+sizeof(short);
 	
 	buf  = new char[particle_memory_size];
 	
@@ -22,7 +22,7 @@ Particle::Particle(int nDim)
 
 	Position_old = new (buf+(nDim+3+1)*sizeof(double))	double[nDim];
 
-	Charge = new (buf+(2*nDim+3+1)*sizeof(double))		char[1];
+	Charge = new (buf+(2*nDim+3+1)*sizeof(double))		short[1];
 
 	Position[0]     = 0.;
 	Position_old[0] = 0.;

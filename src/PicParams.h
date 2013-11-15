@@ -65,7 +65,7 @@ struct SpeciesStructure {
 	unsigned int atomic_number;
 	
 	//! charge [proton charge]
-	double charge;
+	short charge;
 	
 	//! density [\f$n_N=\epsilon_0\,m_e\,\omega_N^{2}/e^2\f$ ]
 	double density;

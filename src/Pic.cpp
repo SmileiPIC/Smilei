@@ -175,7 +175,7 @@ int main (int argc, char* argv[])
 		// (2) move the particle
 		// (3) calculate the currents (charge conserving method)
 		for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-			if ( smpi->isMaster() ) DEBUG(2, "Dynamic Species " << ispec );
+// 			if ( smpi->isMaster() ) DEBUG(2, "Dynamic Species " << ispec );
 			vecSpecies[ispec]->dynamic(time_dual, EMfields, Interp, Proj, smpi);
 			smpi->exchangeParticles(vecSpecies[ispec], ispec, &params);
 		}
@@ -187,7 +187,7 @@ int main (int argc, char* argv[])
         // call the various diagnostics
 		// ----------------------------
 		
-		diags.compute(itime, EMfields, vecSpecies);
+		diags.runAllDiags(itime, EMfields, vecSpecies);
 	}//END of the time loop	
 
 	smpi->barrier();

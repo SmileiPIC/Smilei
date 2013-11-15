@@ -130,6 +130,11 @@ void SmileiMPI::bcast( string& val )
 	sstream >> val;
 }
 
+void SmileiMPI::bcast( short& val )
+{
+	MPI_Bcast( &val, 1, MPI_SHORT, 0, SMILEI_COMM_WORLD);
+}
+
 void SmileiMPI::bcast( unsigned int& val )
 {
 	MPI_Bcast( &val, 1, MPI_UNSIGNED, 0, SMILEI_COMM_WORLD);

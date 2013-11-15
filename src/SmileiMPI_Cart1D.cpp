@@ -209,7 +209,8 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
 	/********************************************************************************/
 	// Define buffers to exchange buff_index_send[iDim][iNeighbor].size();
 	/********************************************************************************/	
-	int part_mem_size=(2*params->nDim_particle+3+1)*sizeof(double)+1;
+	//! \todo Define this as a main parameter for the code so that it needs not be defined all the time
+	int part_mem_size=(2*params->nDim_particle+3+1)*sizeof(double)+sizeof(short);
 	
 	char *partBufRecv[2];
 	char *partBufSend[2];
