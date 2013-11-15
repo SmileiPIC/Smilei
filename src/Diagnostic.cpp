@@ -15,11 +15,10 @@ Diagnostic::Diagnostic( PicParams* params,  DiagParams* diagparams, SmileiMPI* s
 }
 
 void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Species*>& vecSpecies){
-
-if (everyScalar && timestep % everyScalar == 0) {
-
-	DiagScal.run(timestep, EMfields, vecSpecies);
-}
-
-}
 	
+	if (everyScalar && timestep % everyScalar == 0) {
+		
+		DiagScal.run(timestep, EMfields, vecSpecies);
+	}
+	
+}
