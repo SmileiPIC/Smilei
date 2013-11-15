@@ -68,7 +68,7 @@ void DiagnosticScalar::compute (int itime, ElectroMagn* EMfields, vector<Species
 			double charge_tot=0;
 			unsigned int part_tot=0;
 			for(unsigned int iCPU=0;iCPU<num_CPUs;iCPU++){
-				int k=ispec+iCPU*num_CPUs;
+				int k=ispec+vecSpecies.size()*iCPU;
 		 		charge_tot+=mpi_data_scalar_all[k].mean_charge*mpi_data_scalar_all[k].part_number;
  				part_tot+=mpi_data_scalar_all[k].part_number;
 //				cerr << "------------------------ " << ispec << " " << iCPU << " " << mpi_data_scalar_all[k].mean_charge << endl;
