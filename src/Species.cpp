@@ -62,7 +62,32 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 		velocity[i].allocateDims(params->n_space);
 		temperature[i].allocateDims(params->n_space);
 	}
+
+        // Arrays of the min and max indices of the particle bins
+        bmin.resize(params->n_space[ndim-1]);
+        bmax.resize(params->n_space[ndim-1]);
     
+        //number of cell per bin
+        int ncell_per_bin;
+
+        switch (ndim){
+            case 1:
+                ncell_per_bin = 1;
+            break;
+            case 2:
+                ncell_per_bin = params->n_space[0];
+            break;
+            case 3:
+                ncell_per_bin = params->n_space[0]*params->n_space[1];
+            break;
+        } 
+        
+        //initialisation of the indices
+        for (unsigned int i=0;i<bmin.size();i++) {
+
+            bmin[i]=i*ncell_per_bin*params->species_param[ispec].n_part_per_cell;
+            bmax[i]=(i+1)*ncell_per_bin*params->species_param[ispec].n_part_per_cell-1;
+        } 
 	
     // ---------------------------------------------------------
 	// Calculate density and number of particles for the species
@@ -496,3 +521,12 @@ void Species::computeScalar(){
 scalar_data.mean_charge=meanCharge();
 scalar_data.part_number=getNbrOfParticles();
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Sort particles
+// ---------------------------------------------------------------------------------------------------------------------
+void Species::sort_part()
+{
+
+}
+

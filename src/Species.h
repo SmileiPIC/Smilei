@@ -62,11 +62,14 @@ class Species
 	//! Method used to initialize the Particle weight (equivalent to a charge density) in a given cell
 	void initWeight(PicParams*, unsigned int, unsigned int, double);
     
-    //! Method used to initialize the Particle charge
-    void initCharge(PicParams*, unsigned int, unsigned int, double);
+        //! Method used to initialize the Particle charge
+        void initCharge(PicParams*, unsigned int, unsigned int, double);
 
 	//! Method used to save all Particles properties for the considered Species
 	void dump(std::ofstream&);
+
+        //! Method used to sort particles
+        void sort_part();
 
 	//! Vector containing all Particles of the considered Species
 	std::vector<Particle*> particles;
@@ -113,6 +116,8 @@ private:
     
 	spec_scalar_data scalar_data; 
 
+        //! first and last index of each particle bin
+        std::vector<int> bmin, bmax;
 };
 
 #endif

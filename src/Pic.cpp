@@ -178,6 +178,7 @@ int main (int argc, char* argv[])
 // 			if ( smpi->isMaster() ) DEBUG(2, "Dynamic Species " << ispec );
 			vecSpecies[ispec]->dynamic(time_dual, EMfields, Interp, Proj, smpi);
 			smpi->exchangeParticles(vecSpecies[ispec], ispec, &params);
+                        vecSpecies[ispec]->sort_part();
 		}
 		smpi->sumDensities( EMfields );
 
