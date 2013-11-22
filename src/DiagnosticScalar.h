@@ -33,7 +33,7 @@ public:
 private:
 	std::ofstream fout;
 	SmileiMPI* smpi_;
-	int num_CPUs;
+	unsigned int num_CPUs;
 	MPI_Datatype mpi_data_scalar;
 	std::vector<double> vecScalar;
 	
