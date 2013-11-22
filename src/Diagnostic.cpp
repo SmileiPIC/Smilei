@@ -19,7 +19,3 @@ void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Specie
 		DiagScal.run(timestep, EMfields, vecSpecies);
 	}	
 }
-
-void Diagnostic::initAllDiags (ElectroMagn* EMfields, vector<Species*>& vecSpecies){		
-	DiagScal.init(EMfields, vecSpecies);
-}

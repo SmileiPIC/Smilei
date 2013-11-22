@@ -153,8 +153,6 @@ int main (int argc, char* argv[])
 	double t0, t1;
 	t0 = MPI_Wtime();
     
-	diags.initAllDiags(EMfields, vecSpecies);
-
 	for (unsigned int itime=1 ; itime <= params.n_time ; itime++) {		
 		// calculate new times
 		// -------------------

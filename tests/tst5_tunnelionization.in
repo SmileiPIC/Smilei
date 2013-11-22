@@ -38,8 +38,8 @@ sim_length = 2.0
 # n_species: number of species 
 #
 plasma_geometry = constant
-vacuum_length   = 1.0
-plasma_length   = 0.01
+vacuum_length   = 0.99
+plasma_length   = 0.02
 n_species = 2
 
 # DEFINE ALL SPECIES

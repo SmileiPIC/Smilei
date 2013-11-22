@@ -21,13 +21,6 @@ class Projector;
 class PartBoundCond;
 class PartBoundCondMix;
 
-// struct for scalar diagnostic
-typedef struct{
-	std::map<std::string, double> map_dbl;
-	std::map<std::string, unsigned int> map_uint;
-	std::map<std::string, int> map_int;
-} spec_scalar_data;
-
 //! class Species
 class Species
 {
@@ -78,17 +71,13 @@ public:
     
 	//! Ionization method
 	Ionization* Ionize;
-    
-	
-	//!TODO: this must be changed to virtual
-    //! method used to initialize the variables used in spec_scalar_data 
-	void initScalar();
-	
+    	
 	//! method used to fill a a struct spec_scalar_data variable type
 	void computeScalar();
 	
-	// 	method used to return a struct spec_scalar_data variable type
-	spec_scalar_data scalar_data; 
+	// 	variable definitions
+	std::map<std::string, double> scalars;
+
     //!
     Species *electron_species;
 	

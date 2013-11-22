@@ -256,10 +256,7 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
     partBoundCond = new PartBoundCond( params, ispec, smpi);
 
     PMESSAGE( 1, smpi->getRank(),"Species "<< ispec <<" # part "<< npart_effective );
-    	
-	//initialize scalars map
-	initScalar();
-	
+    		
 }//END Species creator
 
 
@@ -502,11 +499,6 @@ void Species::dump(std::ofstream& ofile)
 	ofile << endl;
 }
 
-void Species::initScalar(){
-	scalar_data.map_dbl["charge_tot"]=0.0;
-	scalar_data.map_uint["part_number"]=0;
-}
-
 void Species::computeScalar(){
 	double charge_tot=0.0;
 	if (getNbrOfParticles()>0) {
@@ -514,8 +506,10 @@ void Species::computeScalar(){
 			charge_tot+=(double)particles[iPart]->charge();
 		}
 	}
-	scalar_data.map_dbl["charge_tot"]=charge_tot;
-	scalar_data.map_uint["part_number"]=getNbrOfParticles();
+	scalars["charge_tot"]=charge_tot;
+	scalars["part_number"]=getNbrOfParticles();
+	
+//	scalars["toto"]=max(0.0,charge_tot);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
