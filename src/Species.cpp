@@ -503,20 +503,18 @@ void Species::dump(std::ofstream& ofile)
 }
 
 void Species::initScalar(){
-	scalar_data.map_dbl["mean_charge"]=10.0;
-	scalar_data.map_uint["part_number"]=10;
-	scalar_data.map_uint["pippo"]=11;
+	scalar_data.map_dbl["charge_tot"]=0.0;
+	scalar_data.map_uint["part_number"]=0;
 }
 
 void Species::computeScalar(){
-	double mean_charge=0.0;
+	double charge_tot=0.0;
 	if (getNbrOfParticles()>0) {
 		for (unsigned int iPart=0 ; iPart<getNbrOfParticles(); iPart++ ) {
-			mean_charge+=(double)particles[iPart]->charge();
+			charge_tot+=(double)particles[iPart]->charge();
 		}
-		mean_charge/=(double)getNbrOfParticles();
 	}
-	scalar_data.map_dbl["mean_charge"]=mean_charge;
+	scalar_data.map_dbl["charge_tot"]=charge_tot;
 	scalar_data.map_uint["part_number"]=getNbrOfParticles();
 }
 

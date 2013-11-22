@@ -27,7 +27,7 @@ public:
 	~DiagnosticScalar(){};	
 	
 	void run(int timestep, ElectroMagn* EMfields, std::vector<Species*>&);
-	void compute(int timestep, ElectroMagn* EMfields, std::vector<Species*>&);
+	void compute_gather(int timestep, ElectroMagn* EMfields, std::vector<Species*>&);
 	void init(ElectroMagn* EMfields, std::vector<Species*>&);
 	void write(int timestep,std::vector<Species*>&);
 		

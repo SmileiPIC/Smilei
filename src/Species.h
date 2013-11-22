@@ -88,7 +88,7 @@ public:
 	void computeScalar();
 	
 	// 	method used to return a struct spec_scalar_data variable type
-	inline spec_scalar_data scalar_struct(){return scalar_data;}
+	spec_scalar_data scalar_data; 
     //!
     Species *electron_species;
 	
@@ -119,9 +119,7 @@ private:
 	Pusher* Push;
     
     unsigned int atomic_number;
-    
-	spec_scalar_data scalar_data; 
-	
+    	
 	//! first and last index of each particle bin
 	std::vector<int> bmin, bmax;
 };
