@@ -498,7 +498,7 @@ void Species::dump(std::ofstream& ofile)
 	}
 	ofile << endl;
 }
-
+// It computes the method on the singole specie. You can add here your parameter for a new diagnostic.
 void Species::computeScalar(){
 	double charge_tot=0.0;
 	if (getNbrOfParticles()>0) {

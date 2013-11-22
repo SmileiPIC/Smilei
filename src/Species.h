@@ -75,7 +75,7 @@ public:
 	//! method used to fill a a struct spec_scalar_data variable type
 	void computeScalar();
 	
-	// 	variable definitions
+	//! map structure for the scalar diagnostics
 	std::map<std::string, double> scalars;
 
     //!

@@ -25,20 +25,20 @@ void DiagnosticScalar::run(int timestep, ElectroMagn* EMfields, vector<Species*>
 }
 
 
-// it contains all the methods to evaluate the scalar data
+// it contains all to manage the communication of data. It is "transparent" to the user.
 void DiagnosticScalar::compute_gather (int itime, ElectroMagn* EMfields, vector<Species*>& vecSpecies) {
-	// 	it fills the structure "spec_scalar_data" on each specie
+	// 	it fills the map on each specie
 	for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
 		vecSpecies[ispec]->computeScalar();		
 	}
-	
+// 	it evaluates the total length of the memory vector (of type char)
 	unsigned int totsize_struct_char=0;
 	for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
 		totsize_struct_char+=sizeof(double)*vecSpecies[ispec]->scalars.size();
 	}
-			
+// 		definition of the iterator	
 	typedef map<string, double>::iterator map_iter_dbl;
-
+// definition of the memory allocation vector
 	vector<char> struct_char_transl(totsize_struct_char);
 	unsigned int count=0;
 	for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
@@ -61,7 +61,7 @@ void DiagnosticScalar::compute_gather (int itime, ElectroMagn* EMfields, vector<
 	
 	smpi_->barrier();
 	
-	// 	method to evaluate the mean charge. It is on master processor. 
+	// 	method to reconstruct the information on the master processor
 	if(smpi_->isMaster()){
 		unsigned int count=0;
 		mpi_spec_scalars.resize(smpi_->getSize());
@@ -79,7 +79,7 @@ void DiagnosticScalar::compute_gather (int itime, ElectroMagn* EMfields, vector<
 	}
 }
 
-// It writes the scalar data on a file (it is a sequential method on master processor)
+// Each single method of the diagnostic scalar must implemented here. it writes also on a file.
 void DiagnosticScalar::write(int itime,std::vector<Species*>& vecSpecies){
 
 	if(smpi_->isMaster()){
