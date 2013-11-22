@@ -84,11 +84,6 @@ int main (int argc, char* argv[])
 	// Geometry known, MPI environment specified
 	SmileiMPI* smpi = SmileiMPIFactory::create(params, smpiData);
 	SmileiIO*  sio  = SmileiIOFactory::create(params, smpi);
-
-
-	// Create diagnostic
-	Diagnostic diags(&params,&diag_params, smpi);
-	
 	
 	// Randomize the seed for simulations running in release mode
 	//! \todo{Save the seed in case one wants to re-run the exact same simulation (MG)}
@@ -106,6 +101,13 @@ int main (int argc, char* argv[])
 	// dump species at time 0
 	sio->writePlasma( vecSpecies, 0., smpi );
 
+	
+	// ----------------------------------------------------------------------------
+	// Create diagnostics
+	// ----------------------------------------------------------------------------
+	Diagnostic diags(&params,&diag_params, smpi);
+
+	
 	// ----------------------------------------------------------------------------
 	// Initialize the electromagnetic fields and interpolation-projection operators
 	// according to the simulation geometry
@@ -151,6 +153,8 @@ int main (int argc, char* argv[])
 	double t0, t1;
 	t0 = MPI_Wtime();
     
+	diags.initAllDiags(EMfields, vecSpecies);
+
 	for (unsigned int itime=1 ; itime <= params.n_time ; itime++) {		
 		// calculate new times
 		// -------------------

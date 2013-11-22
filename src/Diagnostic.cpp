@@ -10,15 +10,16 @@
 
 using namespace std;
 
-Diagnostic::Diagnostic( PicParams* params,  DiagParams* diagparams, SmileiMPI* smpi ) : DiagScal(smpi) {
+Diagnostic::Diagnostic( PicParams* params,  DiagParams* diagparams, SmileiMPI* smpi ) : DiagScal(params, smpi) {
 	everyScalar = diagparams->scalar_every;
 }
 
-void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Species*>& vecSpecies){
-	
+void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Species*>& vecSpecies){	
 	if (everyScalar && timestep % everyScalar == 0) {
-		
 		DiagScal.run(timestep, EMfields, vecSpecies);
-	}
-	
+	}	
+}
+
+void Diagnostic::initAllDiags (ElectroMagn* EMfields, vector<Species*>& vecSpecies){		
+	DiagScal.init(EMfields, vecSpecies);
 }

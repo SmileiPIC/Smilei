@@ -9,12 +9,12 @@
 #include <iostream>
 #include <fstream>
 #include <hdf5.h>
+#include "Species.h"
 
 class PicParams;
 class SmileiMPI;
 class DiagParams;
 class ElectroMagn;
-class Species;
 
 
 
@@ -22,21 +22,19 @@ class DiagnosticScalar{
 
 public:
 	
-	DiagnosticScalar(SmileiMPI* smpi);
+	DiagnosticScalar(PicParams* params, SmileiMPI* smpi);
 	//destructor
 	~DiagnosticScalar(){};	
 	
 	void run(int timestep, ElectroMagn* EMfields, std::vector<Species*>&);
 	void compute(int timestep, ElectroMagn* EMfields, std::vector<Species*>&);
+	void init(ElectroMagn* EMfields, std::vector<Species*>&);
 	void write(int timestep,std::vector<Species*>&);
 		
 private:
 	std::ofstream fout;
 	SmileiMPI* smpi_;
-	unsigned int num_CPUs;
-	MPI_Datatype mpi_data_scalar;
-	std::vector<double> vecScalar;
-	
+	std::vector<std::vector<spec_scalar_data> > mpi_spec_scalar_data;
 };
 
 #endif

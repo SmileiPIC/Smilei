@@ -25,6 +25,7 @@ class Diagnostic {
 public:
 	Diagnostic(PicParams* params,  DiagParams* diagparams, SmileiMPI* smpi);
 	~Diagnostic(){};
+	void initAllDiags (ElectroMagn* EMfields, std::vector<Species*>&);
 	void runAllDiags (int timestep, ElectroMagn* EMfields, std::vector<Species*>&);
 
 

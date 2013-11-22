@@ -256,7 +256,10 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
     partBoundCond = new PartBoundCond( params, ispec, smpi);
 
     PMESSAGE( 1, smpi->getRank(),"Species "<< ispec <<" # part "<< npart_effective );
-    
+    	
+	//initialize scalars map
+	initScalar();
+	
 }//END Species creator
 
 
@@ -499,12 +502,13 @@ void Species::dump(std::ofstream& ofile)
 	ofile << endl;
 }
 
+void Species::initScalar(){
+	scalar_data.map_dbl["mean_charge"]=10.0;
+	scalar_data.map_uint["part_number"]=10;
+	scalar_data.map_uint["pippo"]=11;
+}
 
-// ---------------------------------------------------------------------------------------------------------------------
-// Calculate mean charge
-// ---------------------------------------------------------------------------------------------------------------------
-double Species::meanCharge()
-{
+void Species::computeScalar(){
 	double mean_charge=0.0;
 	if (getNbrOfParticles()>0) {
 		for (unsigned int iPart=0 ; iPart<getNbrOfParticles(); iPart++ ) {
@@ -512,14 +516,8 @@ double Species::meanCharge()
 		}
 		mean_charge/=(double)getNbrOfParticles();
 	}
-//	cerr << "=================== " << speciesNumber << " " << mean_charge << " " <<  getNbrOfParticles() << endl;
-	return mean_charge;
-}
-
-
-void Species::computeScalar(){
-scalar_data.mean_charge=meanCharge();
-scalar_data.part_number=getNbrOfParticles();
+	scalar_data.map_dbl["mean_charge"]=mean_charge;
+	scalar_data.map_uint["part_number"]=getNbrOfParticles();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
