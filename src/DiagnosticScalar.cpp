@@ -31,33 +31,22 @@ void DiagnosticScalar::compute_gather (int itime, ElectroMagn* EMfields, vector<
 	for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
 		vecSpecies[ispec]->computeScalar();		
 	}
-// 	it evaluates the total length of the memory vector (of type char)
-	unsigned int totsize_struct_char=0;
+	
+	// definition of the memory allocation vector
+	vector<double> oneProc;
 	for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
-		totsize_struct_char+=sizeof(double)*vecSpecies[ispec]->scalars.size();
-	}
-// 		definition of the iterator	
-	typedef map<string, double>::iterator map_iter_dbl;
-// definition of the memory allocation vector
-	vector<char> struct_char_transl(totsize_struct_char);
-	unsigned int count=0;
-	for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
-		for (map_iter_dbl iter = vecSpecies[ispec]->scalars.begin(); 
-			 iter != vecSpecies[ispec]->scalars.end(); iter++) {
-			memcpy(&struct_char_transl[count],(char*)(&(iter->second)),sizeof(double));
-			count+=sizeof(double);
+		for (map<string, double>::iterator iter = vecSpecies[ispec]->scalars.begin(); iter != vecSpecies[ispec]->scalars.end(); iter++) {
+			oneProc.push_back(iter->second);
         }
 	}
-	if (count!=struct_char_transl.size()) ERROR("Something wrong here " << count << " " << struct_char_transl.size());
 	
 	// 	it constructs the receiving structure on the master processor	
-    vector<char> mpi_struct_char_transl;
+    vector<double> allProcs;
     if(smpi_->isMaster()){
-    	mpi_struct_char_transl.resize(smpi_->getSize()*totsize_struct_char);
+    	allProcs.resize(smpi_->getSize()*oneProc.size());
     }
-	
 	// gathering chars of the master processor
-	MPI_Gather(&struct_char_transl[0],struct_char_transl.size(),MPI_CHAR,&mpi_struct_char_transl[0],struct_char_transl.size(),MPI_CHAR,0,MPI_COMM_WORLD);
+	MPI_Gather(&oneProc[0],oneProc.size(),MPI_DOUBLE,&allProcs[0],oneProc.size(),MPI_DOUBLE,0,MPI_COMM_WORLD);
 	
 	smpi_->barrier();
 	
@@ -68,20 +57,19 @@ void DiagnosticScalar::compute_gather (int itime, ElectroMagn* EMfields, vector<
 		for(int iCPU=0;iCPU<smpi_->getSize();iCPU++){
 			mpi_spec_scalars[iCPU].resize(vecSpecies.size());
 			for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
-				for (map_iter_dbl iter = vecSpecies[ispec]->scalars.begin(); iter != vecSpecies[ispec]->scalars.end(); ++iter) {
-					mpi_spec_scalars[iCPU][ispec][iter->first] = (*(double*)(&mpi_struct_char_transl[count]));
-					count+=sizeof(double);
-				}				
+				for (map<string, double>::iterator iter = vecSpecies[ispec]->scalars.begin(); iter != vecSpecies[ispec]->scalars.end(); ++iter) {
+					mpi_spec_scalars[iCPU][ispec][iter->first] = allProcs[count];
+					count++;
+				}
 			}			
 		}
-		if (count!=mpi_struct_char_transl.size()) ERROR("problem here " << itime << " " << count << " " << mpi_struct_char_transl.size());
-		
+		if (count!=allProcs.size()) ERROR("problem here " << itime << " " << count << " " << allProcs.size());
 	}
 }
 
 // Each single method of the diagnostic scalar must implemented here. it writes also on a file.
 void DiagnosticScalar::write(int itime,std::vector<Species*>& vecSpecies){
-
+	
 	if(smpi_->isMaster()){
 		vector<double> vecScalar;
 		for(unsigned int ispec=0; ispec<vecSpecies.size();++ispec){
@@ -96,14 +84,14 @@ void DiagnosticScalar::write(int itime,std::vector<Species*>& vecSpecies){
 			vecScalar.push_back(charge_tot);
 			vecScalar.push_back(part_tot);
 		}
-
-//		for(int iCPU=0;iCPU<smpi_->getSize();iCPU++){
-//			double totosum=0.0;
-//			for(unsigned int ispec=0; ispec<vecSpecies.size();++ispec){
-// 				totosum+=mpi_spec_scalars[iCPU][ispec]["toto"];
-//			}
-//			vecScalar.push_back(totosum);
-//		}
+		
+		//		for(int iCPU=0;iCPU<smpi_->getSize();iCPU++){
+		//			double totosum=0.0;
+		//			for(unsigned int ispec=0; ispec<vecSpecies.size();++ispec){
+		// 				totosum+=mpi_spec_scalars[iCPU][ispec]["toto"];
+		//			}
+		//			vecScalar.push_back(totosum);
+		//		}
 		
 		fout << itime;
 		for (unsigned int k=0;k<vecScalar.size();k++) fout << "\t" << vecScalar[k];
