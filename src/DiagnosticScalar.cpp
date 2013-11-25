@@ -20,13 +20,14 @@ DiagnosticScalar::DiagnosticScalar(PicParams* params, SmileiMPI* smpi) {
 
 // wrapper of the methods
 void DiagnosticScalar::run(int timestep, ElectroMagn* EMfields, vector<Species*>& vecSpecies){
-	compute_gather(timestep,EMfields,vecSpecies);
-	write(timestep,vecSpecies);
+	compute_proc_gather(timestep,EMfields,vecSpecies);
+	compute(vecSpecies);
+	write(timestep);
 }
 
 
 // it contains all to manage the communication of data. It is "transparent" to the user.
-void DiagnosticScalar::compute_gather (int itime, ElectroMagn* EMfields, vector<Species*>& vecSpecies) {
+void DiagnosticScalar::compute_proc_gather (int itime, ElectroMagn* EMfields, vector<Species*>& vecSpecies) {
 	// 	it fills the map on each specie
 	for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
 		vecSpecies[ispec]->computeScalar();		
@@ -67,11 +68,10 @@ void DiagnosticScalar::compute_gather (int itime, ElectroMagn* EMfields, vector<
 	}
 }
 
-// Each single method of the diagnostic scalar must implemented here. it writes also on a file.
-void DiagnosticScalar::write(int itime,std::vector<Species*>& vecSpecies){
-	
+// Each scalar diagnostic should be calculated here
+void DiagnosticScalar::compute(vector<Species*>& vecSpecies){	
 	if(smpi_->isMaster()){
-		vector<double> vecScalar;
+		out_list.clear();
 		for(unsigned int ispec=0; ispec<vecSpecies.size();++ispec){
 			double charge_tot=0;
 			unsigned int part_tot=0;
@@ -81,20 +81,28 @@ void DiagnosticScalar::write(int itime,std::vector<Species*>& vecSpecies){
 			}
 			if (part_tot) charge_tot/=part_tot;
 			
-			vecScalar.push_back(charge_tot);
-			vecScalar.push_back(part_tot);
+			out_list.push_back(make_pair("charge_tot",charge_tot));
+			out_list.push_back(make_pair("part_tot",part_tot));
 		}
+	}
+}
+
+void DiagnosticScalar::write(int itime){	
+	if(smpi_->isMaster()){
 		
-		//		for(int iCPU=0;iCPU<smpi_->getSize();iCPU++){
-		//			double totosum=0.0;
-		//			for(unsigned int ispec=0; ispec<vecSpecies.size();++ispec){
-		// 				totosum+=mpi_spec_scalars[iCPU][ispec]["toto"];
-		//			}
-		//			vecScalar.push_back(totosum);
-		//		}
-		
+		if (fout.tellp()==0) {
+			fout << "# time";
+			
+			for(vector<pair<string,double> >::iterator iter = out_list.begin(); iter !=out_list.end(); iter++) {
+				fout << "\t" << (*iter).first;
+			}			
+			fout << endl;
+		}
+			
 		fout << itime;
-		for (unsigned int k=0;k<vecScalar.size();k++) fout << "\t" << vecScalar[k];
+		for(vector<pair<string,double> >::iterator iter = out_list.begin(); iter !=out_list.end(); iter++) {
+			fout << "\t" << (*iter).second;
+		}
 		fout << endl;
 	}
 }	
