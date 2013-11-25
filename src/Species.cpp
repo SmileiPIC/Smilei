@@ -525,7 +525,43 @@ scalar_data.part_number=getNbrOfParticles();
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::sort_part()
+void Species::sort_part(double dbin)
+{
+    //dbin is the width of one bin. dbin= dx in 1D, dy in 2D and dz in 3D.
+   
+    int p; 
+    double limit;
+    
+    //Backward pass
+    for (unsigned int bin=0;bin<bmin.size()-1;bin++) { //Loop on the bins (cluster of particles). To be parallelized with openMP.
+        limit = (bin+1)*dbin;
+        for( p = bmax[bin] ; p >= bmin[bin] ; p-- ) { //Loop on the bin's particles.
+            if (particles[p]->position(ndim-1) > limit ) {
+                //This particle goes up one bin.
+                swap_part(p,bmax[bin]);
+                bmax[bin]--;
+            }
+        }
+    }
+    //Forward pass
+    for (unsigned int bin=1;bin<bmin.size();bin++) { //Loop on the bins (cluster of particles). To be parallelized with openMP.
+        limit = (bin)*dbin;
+        for( p = bmin[bin] ; p <= bmax[bin] ; p++ ) { //Loop on the bin's particles.
+            if (particles[p]->position(ndim-1) < limit ) {
+                //This particle goes down one bin.
+                swap_part(p,bmin[bin]);
+                bmin[bin]++;
+            }
+        }
+    }
+   
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Swap particles
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Species::swap_part(unsigned int p1, unsigned int p2)
 {
 
 }

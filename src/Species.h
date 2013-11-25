@@ -69,7 +69,10 @@ class Species
 	void dump(std::ofstream&);
 
         //! Method used to sort particles
-        void sort_part();
+        void sort_part(double);
+
+        //! Method used to swap particles
+        void swap_part(unsigned int, unsigned int);
 
 	//! Vector containing all Particles of the considered Species
 	std::vector<Particle*> particles;
