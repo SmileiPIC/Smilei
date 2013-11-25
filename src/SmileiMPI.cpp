@@ -117,7 +117,6 @@ void SmileiMPI::bcast( DiagParams& params )
 
 void SmileiMPI::bcast( string& val )
 {
-	DEBUG("passing "<< val.c_str());
 	int charSize=0;
 	if (isMaster()) charSize = val.size()+1;
 	MPI_Bcast(&charSize, 1, MPI_INT, 0, SMILEI_COMM_WORLD);

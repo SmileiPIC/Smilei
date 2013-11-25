@@ -14,7 +14,7 @@ using namespace std;
 Species_rrll::Species_rrll( PicParams* params, int ispec, SmileiMPI* smpi)
   : Species( params, ispec, smpi )
 {
-  DEBUG(10,"Species " << ispec << "created as rrLL");
+  DEBUG(20,"Species " << ispec << "created as rrLL");
 }
 
 
@@ -23,5 +23,5 @@ Species_rrll::Species_rrll( PicParams* params, int ispec, SmileiMPI* smpi)
 // ---------------------------------------------------------------------------------------------------------------------
 Species_rrll::~Species_rrll()
 {
-  DEBUG(10,"Species rrLL deleted ");
+  DEBUG(20,"Species rrLL deleted ");
 }

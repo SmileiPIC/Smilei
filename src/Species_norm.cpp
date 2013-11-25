@@ -14,7 +14,7 @@ using namespace std;
 Species_norm::Species_norm( PicParams* params, int ispec, SmileiMPI* smpi)
  : Species( params, ispec, smpi )
 {
-	DEBUG(10,"Species " << ispec << "created as norm");
+	DEBUG(20,"Species " << ispec << "created as norm");
 }
 
 
@@ -23,5 +23,5 @@ Species_norm::Species_norm( PicParams* params, int ispec, SmileiMPI* smpi)
 // ---------------------------------------------------------------------------------------------------------------------
 Species_norm::~Species_norm()
 {
-	DEBUG(10,"Species norm deleted ");
+	DEBUG(20,"Species norm deleted ");
 }

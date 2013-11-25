@@ -18,16 +18,22 @@ DiagnosticScalar::DiagnosticScalar(PicParams* params, SmileiMPI* smpi) {
 	}
 }
 
+DiagnosticScalar::~DiagnosticScalar() {
+	if (smpi_->isMaster()) {
+		fout.close();
+	}
+}
+
 // wrapper of the methods
 void DiagnosticScalar::run(int timestep, ElectroMagn* EMfields, vector<Species*>& vecSpecies){
-	compute_proc_gather(timestep,EMfields,vecSpecies);
-	compute(vecSpecies);
+	compute_proc_gather(EMfields,vecSpecies);
+	compute();
 	write(timestep);
 }
 
 
 // it contains all to manage the communication of data. It is "transparent" to the user.
-void DiagnosticScalar::compute_proc_gather (int itime, ElectroMagn* EMfields, vector<Species*>& vecSpecies) {
+void DiagnosticScalar::compute_proc_gather (ElectroMagn* EMfields, vector<Species*>& vecSpecies) {
 	// 	it fills the map on each specie
 	for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
 		vecSpecies[ispec]->computeScalar();		
@@ -64,15 +70,15 @@ void DiagnosticScalar::compute_proc_gather (int itime, ElectroMagn* EMfields, ve
 				}
 			}			
 		}
-		if (count!=allProcs.size()) ERROR("problem here " << itime << " " << count << " " << allProcs.size());
+		if (count!=allProcs.size()) ERROR("problem here " << count << " != " << allProcs.size());
 	}
 }
 
 // Each scalar diagnostic should be calculated here
-void DiagnosticScalar::compute(vector<Species*>& vecSpecies){	
+void DiagnosticScalar::compute(){	
 	if(smpi_->isMaster()){
 		out_list.clear();
-		for(unsigned int ispec=0; ispec<vecSpecies.size();++ispec){
+		for(unsigned int ispec=0; ispec<mpi_spec_scalars[0].size();++ispec){
 			double charge_tot=0;
 			unsigned int part_tot=0;
 			for(int iCPU=0;iCPU<smpi_->getSize();iCPU++){
@@ -89,16 +95,13 @@ void DiagnosticScalar::compute(vector<Species*>& vecSpecies){
 
 void DiagnosticScalar::write(int itime){	
 	if(smpi_->isMaster()){
-		
 		if (fout.tellp()==0) {
-			fout << "# time";
-			
+			fout << "# time";			
 			for(vector<pair<string,double> >::iterator iter = out_list.begin(); iter !=out_list.end(); iter++) {
 				fout << "\t" << (*iter).first;
 			}			
 			fout << endl;
 		}
-			
 		fout << itime;
 		for(vector<pair<string,double> >::iterator iter = out_list.begin(); iter !=out_list.end(); iter++) {
 			fout << "\t" << (*iter).second;

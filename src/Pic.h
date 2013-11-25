@@ -12,7 +12,8 @@
  
  \subsection compiling
  
- The compilation wrks fine using <tt>g++</tt> and intel <tt>icpc</tt> compiler. 
+ This is (o should be) a massive parallel code which heavily uses MPI routines. 
+ The compilation works fine using <tt>g++</tt> and intel <tt>icpc</tt> compiler and openmpi. 
  
  Two basic compilation mode: "release" and debug (accessible via the make commands <tt>make release</tt> and 
  <tt>make debug</tt>). 
@@ -22,6 +23,11 @@
  "release" mode is with <tt>-O3</tt> option and suppress the debug messages from <tt>DEBUG()</tt> macro.
  
  By default the code is compiled in "release" mode. 
+ 
+ \subsection Dependencies
+ The code needs hdf5 libraries installed with parallel support (on mac with macport you need to install the package with:
+
+ <tt>sudo port install hdf5-18 +openmpi</tt>
  
  */
 
@@ -44,11 +50,5 @@ unsigned int debug_level = 10;
 //! main function
 int main (int argc, char* argv[]);
 
-void startingMessage(std::string inputfile) {
-	MESSAGE("------------------------------------------");
-	MESSAGE(" Version : " << __VERSION DEBUGEXEC(<< " DEBUG") << " Compiled : " << __DATE__ << " " << __TIME__);
-	MESSAGE("------------------------------------------");
-	MESSAGE(" Namelist  : " << inputfile);
-	MESSAGE("------------------------------------------");
-}
-
+//! header of the standard message
+void startingMessage(std::string inputfile);
