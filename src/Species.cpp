@@ -256,7 +256,7 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
     partBoundCond = new PartBoundCond( params, ispec, smpi);
 
     PMESSAGE( 1, smpi->getRank(),"Species "<< ispec <<" # part "<< npart_effective );
-    
+    		
 }//END Species creator
 
 
@@ -498,28 +498,18 @@ void Species::dump(std::ofstream& ofile)
 	}
 	ofile << endl;
 }
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Calculate mean charge
-// ---------------------------------------------------------------------------------------------------------------------
-double Species::meanCharge()
-{
-	double mean_charge=0.0;
+// It computes the method on the singole specie. You can add here your parameter for a new diagnostic.
+void Species::computeScalar(){
+	double charge_tot=0.0;
 	if (getNbrOfParticles()>0) {
 		for (unsigned int iPart=0 ; iPart<getNbrOfParticles(); iPart++ ) {
-			mean_charge+=(double)particles[iPart]->charge();
+			charge_tot+=(double)particles[iPart]->charge();
 		}
-		mean_charge/=(double)getNbrOfParticles();
 	}
-//	cerr << "=================== " << speciesNumber << " " << mean_charge << " " <<  getNbrOfParticles() << endl;
-	return mean_charge;
-}
-
-
-void Species::computeScalar(){
-scalar_data.mean_charge=meanCharge();
-scalar_data.part_number=getNbrOfParticles();
+	scalars["charge_tot"]=charge_tot;
+	scalars["part_number"]=getNbrOfParticles();
+	
+//	scalars["toto"]=max(0.0,charge_tot);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

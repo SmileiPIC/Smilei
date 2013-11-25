@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <math.h>
 #include "Tools.h"
 
 class PicParams;
@@ -39,11 +40,14 @@ class Particle {
 	//! Method used to set a new value to the Particle weight
 	inline double& weight()       {return Weight[0];}
 
-	//! Method used to get the Partcle charge
+	//! Method used to get the Particle charge
 	inline short  charge() const {return Charge[0];}
 	//! Method used to set a new value to the Particle weight
 	inline short& charge()       {return Charge[0];}
 	
+	//! Method used to get the Particle Lorentz factor
+	inline double lor_fac() {return sqrt(1+pow(momentum(0),2)+pow(momentum(1),2)+pow(momentum(2),2));}
+		
 	//! \todo What is this doing here (MG for TV or JD)
 	virtual void Print(PicParams* params);
 
