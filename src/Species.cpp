@@ -534,6 +534,7 @@ void Species::sort_part(double dbin)
         p1 = bmax[bin];
         //If first particles change bin, they do not need to be swapped.
         while (p1 == bmax[bin] ){
+			DEBUG(p1 << " " << bmax[bin]);
             if (particles[p1]->position(ndim-1) > limit ) {
                 bmax[bin]--;
             }
@@ -578,6 +579,7 @@ void Species::sort_part(double dbin)
         bmax[bin-1] += bmin[bin] - bmin_init;
         bmin[bin] = bmax[bin-1] + 1;
     }
+	DEBUG("out of here!");
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -585,7 +587,7 @@ void Species::sort_part(double dbin)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::swap_part(Particle* part1, Particle* part2)
 {
-	// hard compute of part_mem_size must be replaced
+	//!\todo hard compute of part_mem_size must be replaced
 	int part_mem_size=(2*ndim+3+1)*sizeof(double)+sizeof(short);
 	memcpy( &(swapPart->buf), &(part1->buf), part_mem_size);
 	memcpy( &(part1->buf), &(part2->buf), part_mem_size);
