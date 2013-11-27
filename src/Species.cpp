@@ -260,6 +260,9 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 
     PMESSAGE( 1, smpi->getRank(),"Species "<< ispec <<" # part "<< npart_effective );
     		
+    // define a template particle for particles sorting
+    swapPart = ParticleFactory::create(params, ispec);
+
 }//END Species creator
 
 
@@ -276,6 +279,7 @@ Species::~Species()
 	if (Ionize) delete Ionize;
 	if (partBoundCond) delete partBoundCond;
 	DEBUG(10,"Species deleted ");
+	delete swapPart;
 }
 
 
@@ -519,6 +523,18 @@ void Species::computeScalar(){
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::sort_part()
 {
-
+	swap_part(particles[0], particles[1]);
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Exchange particles part1 & part2 memory location
+// ---------------------------------------------------------------------------------------------------------------------
+void Species::swap_part(Particle* part1, Particle* part2)
+{
+	// hard compute of part_mem_size must be replaced
+	int part_mem_size=(2*ndim+3+1)*sizeof(double)+sizeof(short);
+	memcpy( &(swapPart->buf), &(part1->buf), part_mem_size);
+	memcpy( &(part1->buf), &(part2->buf), part_mem_size);
+	memcpy( &(part2->buf), &(swapPart->buf), part_mem_size);
+
+}
