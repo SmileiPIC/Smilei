@@ -153,7 +153,7 @@ int main (int argc, char* argv[])
 	double t0, t1;
 	t0 = MPI_Wtime();
     
-	for (unsigned int itime=1 ; itime <= params.n_time ; itime++) {		
+	for (unsigned int itime=1 ; itime <= params.n_time ; itime++) {
 		// calculate new times
 		// -------------------
 		time_prim += params.timestep;
@@ -180,7 +180,7 @@ int main (int argc, char* argv[])
 // 			if ( smpi->isMaster() ) DEBUG(2, "Dynamic Species " << ispec );
 			vecSpecies[ispec]->dynamic(time_dual, EMfields, Interp, Proj, smpi);
 			smpi->exchangeParticles(vecSpecies[ispec], ispec, &params);
-                        vecSpecies[ispec]->sort_part();
+                        vecSpecies[ispec]->sort_part(params.cell_length[params.nDim_particle-1]);
 		}
 		smpi->sumDensities( EMfields );
 
@@ -216,6 +216,7 @@ int main (int argc, char* argv[])
 	if (params.nDim_field == 1) { // If 1D
 			//! \todo{Not //, processes write sequentially to validate. OK in 1D}
 		smpi->writeFields( EMfields );
+		sio->writeFields( EMfields );
 	}
 	else { // If 2D
 		sio->writeFields( EMfields );

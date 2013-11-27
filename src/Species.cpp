@@ -260,6 +260,9 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 
     PMESSAGE( 1, smpi->getRank(),"Species "<< ispec <<" # part "<< npart_effective );
     		
+    // define a template particle for particles sorting
+    swapPart = ParticleFactory::create(params, ispec);
+
 }//END Species creator
 
 
@@ -276,6 +279,7 @@ Species::~Species()
 	if (Ionize) delete Ionize;
 	if (partBoundCond) delete partBoundCond;
 	DEBUG(10,"Species deleted ");
+	//delete swapPart;
 }
 
 
@@ -445,7 +449,7 @@ void Species::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Inter
 			}
 
 			// Push the particle
-			//(*Push)(particles[iPart], Epart, Bpart, gf);
+			(*Push)(particles[iPart], Epart, Bpart, gf);
 
 			// Apply boundary condition on the particles
 			// Boundary Condition may be physical or due to domain decomposition
@@ -517,8 +521,74 @@ void Species::computeScalars(){
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::sort_part()
+void Species::sort_part(double dbin)
 {
+    //dbin is the width of one bin. dbin= dx in 1D, dy in 2D and dz in 3D.
+   
+    int p1,p2,bmin_init; 
+    double limit;
 
+    //Backward pass
+    for (unsigned int bin=0;bin<bmin.size()-1;bin++) { //Loop on the bins. To be parallelized with openMP.
+        limit = (bin+1)*dbin;
+        p1 = bmax[bin];
+        //If first particles change bin, they do not need to be swapped.
+        while (p1 == bmax[bin] ){
+            if (particles[p1]->position(ndim-1) > limit ) {
+                bmax[bin]--;
+            }
+            p1--;
+        }
+        // Now particles have to be swapped
+        for( p2 = p1 ; p2 >= bmin[bin] ; p2-- ) { //Loop on the bin's particles.
+            if (particles[p2]->position(ndim-1) > limit ) {
+                //This particle goes up one bin.
+                swap_part(particles[p2],particles[bmax[bin]]);
+                bmax[bin]--;
+            }
+        }
+    }
+    //Forward pass + Rebracketting
+    for (unsigned int bin=1;bin<bmin.size();bin++) { //Loop on the bins. To be parallelized with openMP.
+        limit = (bin)*dbin;
+        p1 = bmin[bin];
+        bmin_init = bmin[bin];
+        while (p1 == bmin[bin] ){
+            if (particles[p1]->position(ndim-1) < limit ) {
+                bmin[bin]++;
+            }
+            p1++;
+        }
+        for( p2 = p1 ; p2 <= bmax[bin] ; p2++ ) { //Loop on the bin's particles.
+            if (particles[p2]->position(ndim-1) < limit ) {
+                //This particle goes down one bin.
+                swap_part(particles[p2],particles[bmin[bin]]);
+                bmin[bin]++;
+            }
+        }
+    
+        //Rebracketting
+            //Number of particles from bin going down is: bmin[bin]-bmin_init.
+            //Number of particles from bin-1 going up is: bmin_init-bmax[bin-1]-1.
+            //Total number of particles we need to swap is the min of both.
+        p2 = min(bmin[bin]-bmin_init,bmin_init-bmax[bin-1]-1);
+        for ( p1 = 0 ; p1 < p2; p1++ ) {
+            swap_part(particles[ bmax[bin-1] + 1 + p1],particles[ bmin[bin] - 1 - p1 ]);
+        } 
+        bmax[bin-1] += bmin[bin] - bmin_init;
+        bmin[bin] = bmax[bin-1] + 1;
+    }
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Exchange particles part1 & part2 memory location
+// ---------------------------------------------------------------------------------------------------------------------
+void Species::swap_part(Particle* part1, Particle* part2)
+{
+	// hard compute of part_mem_size must be replaced
+	int part_mem_size=(2*ndim+3+1)*sizeof(double)+sizeof(short);
+	memcpy( &(swapPart->buf), &(part1->buf), part_mem_size);
+	memcpy( &(part1->buf), &(part2->buf), part_mem_size);
+	memcpy( &(part2->buf), &(swapPart->buf), part_mem_size);
+
+}
