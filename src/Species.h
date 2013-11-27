@@ -81,8 +81,11 @@ public:
 	//! map structure for the scalar diagnostics
 	std::map<std::string, double> scalars;
 
-    //!
+    //! to keep rack of ionized electrons
     Species *electron_species;
+	
+	//! string for the species
+	std::string name_str;
 	
 private:
 	//! Effective number of particles (different than the maximum number of particles)

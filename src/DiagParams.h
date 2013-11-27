@@ -22,10 +22,13 @@ public:
 	//! Creator for DiagParams
 	DiagParams();
 
-	//! \todo Comment these 3 stuffs
+	//! parse input data for diagnostics
 	void parseInputData(InputData &, PicParams&);
 
+	//! scalar output every scalar_every (namelist group "diagnostic scalar" key "every")
 	unsigned int scalar_every;
+
+	//! map output every map_every (namelist group "diagnostic map" key "every")
 	unsigned int map_every;
 	
 };

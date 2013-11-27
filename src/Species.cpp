@@ -34,7 +34,10 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 	// Variable definition
 	// -------------------
     
+	name_str=params->species_param[ispec].species_type;
     
+	DEBUG(name_str);
+	
     electron_species = NULL;
     
     // species index
@@ -269,11 +272,10 @@ Species::~Species()
 	for (int iPart=0 ; iPart<nParticles; iPart++ ) {
 		delete particles[iPart];
 	}
-	DEBUG(10,"Species deleted ");
-
 	delete Push;
 	if (Ionize) delete Ionize;
 	if (partBoundCond) delete partBoundCond;
+	DEBUG(10,"Species deleted ");
 }
 
 

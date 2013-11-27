@@ -20,11 +20,15 @@ class ElectroMagn;
 class Species;
 
 
+//! class holder of the two type of diagnostics scalars and map
 class Diagnostic {
 
 public:
+	//! creator called from main
 	Diagnostic(PicParams* params,  DiagParams* diagparams, SmileiMPI* smpi);
+	//! destructor (empty)
 	~Diagnostic(){};
+	//! check if at timestep diagnostics must be called
 	void runAllDiags (int timestep, ElectroMagn* EMfields, std::vector<Species*>&);
 
 

@@ -244,3 +244,12 @@ int main (int argc, char* argv[])
 	return 0;
     
 }//END MAIN 
+
+void startingMessage(std::string inputfile) {
+	MESSAGE("------------------------------------------");
+	MESSAGE(" Version : " << __VERSION DEBUGEXEC(<< " DEBUG") << " Compiled : " << __DATE__ << " " << __TIME__);
+	MESSAGE("------------------------------------------");
+	MESSAGE(" Namelist  : " << inputfile);
+	MESSAGE("------------------------------------------");
+}
+
