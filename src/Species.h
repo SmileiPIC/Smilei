@@ -61,12 +61,12 @@ public:
 	
 	//! Method used to save all Particles properties for the considered Species
 	void dump(std::ofstream&);
-
-        //! Method used to sort particles
-        void sort_part(double);
-
-        //! Method used to swap particles
-        void swap_part(unsigned int, unsigned int);
+	
+	//! Method used to sort particles
+	void sort_part();
+	void swap_part(Particle* part1, Particle* part2);
+	//! Temporary buffer used to swap 2 particles
+	Particle* swapPart;
 	
 	//! Vector containing all Particles of the considered Species
 	std::vector<Particle*> particles;
