@@ -17,7 +17,6 @@ public:
     	SmileiIO* sio = NULL;
     	if ( params.geometry == "1d3v" ) {
     		sio = new  SmileiIO_Cart1D(&params, smpi);
-    		WARNING( "HDF5 IO not implemented for " << params.geometry << ". fields, ASCII only." );
     	}
     	else if ( params.geometry == "2d3v" ) {
     		sio = new  SmileiIO_Cart2D(&params, smpi);

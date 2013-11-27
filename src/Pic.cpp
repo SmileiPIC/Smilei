@@ -153,7 +153,7 @@ int main (int argc, char* argv[])
 	double t0, t1;
 	t0 = MPI_Wtime();
     
-	for (unsigned int itime=1 ; itime <= params.n_time ; itime++) {		
+	for (unsigned int itime=1 ; itime <= params.n_time ; itime++) {
 		// calculate new times
 		// -------------------
 		time_prim += params.timestep;
@@ -216,6 +216,7 @@ int main (int argc, char* argv[])
 	if (params.nDim_field == 1) { // If 1D
 			//! \todo{Not //, processes write sequentially to validate. OK in 1D}
 		smpi->writeFields( EMfields );
+		sio->writeFields( EMfields );
 	}
 	else { // If 2D
 		sio->writeFields( EMfields );

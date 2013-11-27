@@ -11,6 +11,9 @@ class Species;
 
 class SmileiMPI_Cart1D : public SmileiMPI {
 public:
+	friend class SmileiIO_Cart1D;
+
+
 	SmileiMPI_Cart1D( int* argc, char*** argv );
 	SmileiMPI_Cart1D(SmileiMPI *smpi);
 	virtual ~SmileiMPI_Cart1D();

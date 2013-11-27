@@ -22,7 +22,7 @@ public:
 		    Ionize = new IonizationTunnel( params, ispec );
             
 	    } else if ( model != "none" ) {
-		    ERROR( "Unknown Ionization Model : " << model );
+		    WARNING( "Unknown Ionization Model : " << model );
 		}
 		return Ionize;
 	}

@@ -279,7 +279,7 @@ Species::~Species()
 	if (Ionize) delete Ionize;
 	if (partBoundCond) delete partBoundCond;
 	DEBUG(10,"Species deleted ");
-	delete swapPart;
+	//delete swapPart;
 }
 
 
