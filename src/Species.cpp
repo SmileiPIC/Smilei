@@ -449,7 +449,7 @@ void Species::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Inter
 			}
 
 			// Push the particle
-			//(*Push)(particles[iPart], Epart, Bpart, gf);
+			(*Push)(particles[iPart], Epart, Bpart, gf);
 
 			// Apply boundary condition on the particles
 			// Boundary Condition may be physical or due to domain decomposition
@@ -525,9 +525,9 @@ void Species::sort_part(double dbin)
 {
     //dbin is the width of one bin. dbin= dx in 1D, dy in 2D and dz in 3D.
    
-    int p1,p2; 
+    int p1,p2,bmin_init; 
     double limit;
-    
+
     //Backward pass
     for (unsigned int bin=0;bin<bmin.size()-1;bin++) { //Loop on the bins. To be parallelized with openMP.
         limit = (bin+1)*dbin;
@@ -548,10 +548,11 @@ void Species::sort_part(double dbin)
             }
         }
     }
-    //Forward pass
+    //Forward pass + Rebracketting
     for (unsigned int bin=1;bin<bmin.size();bin++) { //Loop on the bins. To be parallelized with openMP.
         limit = (bin)*dbin;
         p1 = bmin[bin];
+        bmin_init = bmin[bin];
         while (p1 == bmin[bin] ){
             if (particles[p1]->position(ndim-1) < limit ) {
                 bmin[bin]++;
@@ -565,6 +566,17 @@ void Species::sort_part(double dbin)
                 bmin[bin]++;
             }
         }
+    
+        //Rebracketting
+            //Number of particles from bin going down is: bmin[bin]-bmin_init.
+            //Number of particles from bin-1 going up is: bmin_init-bmax[bin-1]-1.
+            //Total number of particles we need to swap is the min of both.
+        p2 = min(bmin[bin]-bmin_init,bmin_init-bmax[bin-1]-1);
+        for ( p1 = 0 ; p1 < p2; p1++ ) {
+            swap_part(particles[ bmax[bin-1] + 1 + p1],particles[ bmin[bin] - 1 - p1 ]);
+        } 
+        bmax[bin-1] += bmin[bin] - bmin_init;
+        bmin[bin] = bmax[bin-1] + 1;
     }
 }
 
