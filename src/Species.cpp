@@ -525,41 +525,47 @@ void Species::sort_part(double dbin)
 {
     //dbin is the width of one bin. dbin= dx in 1D, dy in 2D and dz in 3D.
    
-    int p; 
+    int p1,p2; 
     double limit;
     
     //Backward pass
-    for (unsigned int bin=0;bin<bmin.size()-1;bin++) { //Loop on the bins (cluster of particles). To be parallelized with openMP.
+    for (unsigned int bin=0;bin<bmin.size()-1;bin++) { //Loop on the bins. To be parallelized with openMP.
         limit = (bin+1)*dbin;
-        for( p = bmax[bin] ; p >= bmin[bin] ; p-- ) { //Loop on the bin's particles.
-            if (particles[p]->position(ndim-1) > limit ) {
+        p1 = bmax[bin];
+        //If first particles change bin, they do not need to be swapped.
+        while (p1 == bmax[bin] ){
+            if (particles[p1]->position(ndim-1) > limit ) {
+                bmax[bin]--;
+            }
+            p1--;
+        }
+        // Now particles have to be swapped
+        for( p2 = p1 ; p2 >= bmin[bin] ; p2-- ) { //Loop on the bin's particles.
+            if (particles[p2]->position(ndim-1) > limit ) {
                 //This particle goes up one bin.
-                swap_part(p,bmax[bin]);
+                swap_part(particles[p2],particles[bmax[bin]]);
                 bmax[bin]--;
             }
         }
     }
     //Forward pass
-    for (unsigned int bin=1;bin<bmin.size();bin++) { //Loop on the bins (cluster of particles). To be parallelized with openMP.
+    for (unsigned int bin=1;bin<bmin.size();bin++) { //Loop on the bins. To be parallelized with openMP.
         limit = (bin)*dbin;
-        for( p = bmin[bin] ; p <= bmax[bin] ; p++ ) { //Loop on the bin's particles.
-            if (particles[p]->position(ndim-1) < limit ) {
+        p1 = bmin[bin];
+        while (p1 == bmin[bin] ){
+            if (particles[p1]->position(ndim-1) < limit ) {
+                bmin[bin]++;
+            }
+            p1++;
+        }
+        for( p2 = p1 ; p2 <= bmax[bin] ; p2++ ) { //Loop on the bin's particles.
+            if (particles[p2]->position(ndim-1) < limit ) {
                 //This particle goes down one bin.
-                swap_part(p,bmin[bin]);
+                swap_part(particles[p2],particles[bmin[bin]]);
                 bmin[bin]++;
             }
         }
     }
-   
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Swap particles
-// ---------------------------------------------------------------------------------------------------------------------
-
-void Species::swap_part(unsigned int p1, unsigned int p2)
-{
-	swap_part(particles[0], particles[1]);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
