@@ -25,11 +25,10 @@ Field2D::Field2D(vector<unsigned int> dims) : Field(dims)
 }
 
 // with the dimensions and output (dump) file name as input argument
-Field2D::Field2D(vector<unsigned int> dims, string name) : Field(dims)
+Field2D::Field2D(vector<unsigned int> dims, string name) : Field(dims, name)
 {
 	data_2D=NULL;
 	allocateDims(dims);
-	fdata_.open(name.c_str(), ios::out);
 }
 
 // with the dimensions as input argument
@@ -40,11 +39,10 @@ Field2D::Field2D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal)
 }
 
 // with the dimensions and output (dump) file name as input argument
-Field2D::Field2D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, string name) : Field(dims, mainDim, isPrimal)
+Field2D::Field2D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, string name) : Field(dims, mainDim, isPrimal, name)
 {
 	data_2D=NULL;
 	allocateDims(dims, mainDim, isPrimal);
-	fdata_.open(name.c_str(), ios::out | ios::binary);
 }
 
 
@@ -58,7 +56,6 @@ Field2D::~Field2D()
 	if (data_2D!=NULL) {
 		delete [] data_2D;
 	}
-	if (fdata_.is_open()) fdata_.close();
 }
 
 
@@ -127,8 +124,6 @@ void Field2D::allocateDims(std::vector<unsigned int> dims, unsigned int mainDim,
 // ---------------------------------------------------------------------------------------------------------------------
 void Field2D::dump(vector<unsigned int> dims)
 {
-	for (unsigned int i=0 ; i<dims[0] ; i++)    fdata_ << data_[i] << " ";
-	fdata_ << endl;
     
 }
 

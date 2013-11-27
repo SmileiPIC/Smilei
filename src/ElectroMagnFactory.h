@@ -24,7 +24,6 @@ public:
     	else {
     		ERROR( "Unknwon geometry : " << params.geometry );
     	}
-
     	return EMfields;
     }
 

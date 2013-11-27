@@ -22,10 +22,9 @@ Field1D::Field1D(vector<unsigned int> dims) : Field(dims)
 }
 
 // with the dimensions and output (dump) file name as input argument
-Field1D::Field1D(vector<unsigned int> dims, string name) : Field(dims)
+Field1D::Field1D(vector<unsigned int> dims, string name) : Field(dims, name)
 {
 	allocateDims(dims);
-	fdata_.open(name.c_str(), ios::out);
 }
 
 // with the dimensions as input argument
@@ -35,10 +34,9 @@ Field1D::Field1D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal)
 }
 
 // with the dimensions and output (dump) file name as input argument
-Field1D::Field1D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, string name) : Field(dims, mainDim, isPrimal)
+Field1D::Field1D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, string name) : Field(dims, mainDim, isPrimal, name)
 {
 	allocateDims(dims, mainDim, isPrimal);
-	fdata_.open(name.c_str(), ios::out);
 }
 
 
@@ -50,7 +48,6 @@ Field1D::~Field1D()
 	if (data_!=NULL) {
 		delete [] data_;
 	}
-	if (fdata_.is_open()) fdata_.close();
 }
 
 
@@ -107,8 +104,4 @@ void Field1D::allocateDims(std::vector<unsigned int> dims, unsigned int mainDim,
 // ---------------------------------------------------------------------------------------------------------------------
 void Field1D::dump(vector<unsigned int> dims)
 {
-  fdata_.precision( 20 ); // floatfield set to fixed
-  //cout << "print " << dims[0] << " elements " << endl;
-	for (unsigned int i=0 ; i<dims[0] ; i++)  fdata_ << data_[i] << endl;
-	fdata_ << endl;
 }

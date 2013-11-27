@@ -25,8 +25,9 @@ class Field
 {
     
  public:
-	//! link to file for dump
-	std::ofstream fdata_;
+	
+	//! name of the field
+	std::string name;
 	
 	//! Constructor for Field: with no input argument
 	Field() {;};
@@ -36,8 +37,8 @@ class Field
 	Field( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal ) {;};
 
 	//! Constructor for Field: with the Field dimensions and dump file name as input argument
-	Field( std::vector<unsigned int> dims, std::string name ) {;} ;
-	Field( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name ) {;} ;
+	Field( std::vector<unsigned int> dims, std::string name_in ) : name(name_in) {;} ;
+	Field( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name_in ) : name(name_in) {;} ;
 
 	//! Destructor for Field
 	virtual ~Field() {;} ;
@@ -57,6 +58,9 @@ class Field
 	//! \todo{for debbugging, to remove (JD)}
 	virtual void setData_(int i, double val) {};
 
+	virtual double& operator () (unsigned int i) =0;
+	virtual double operator () (unsigned int i) const =0;
+	
  protected:
 
  private:

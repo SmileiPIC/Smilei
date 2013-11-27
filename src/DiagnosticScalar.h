@@ -45,6 +45,10 @@ private:
 	SmileiMPI* smpi_;
 	//! mpi_spec_scalars [iCpu][iSpec]
 	std::vector<std::vector<std::map<std::string, double> > > mpi_spec_scalars;
+
+	//! mpi_EM_scalars [iCpu]["Field name"]["key"]<values>
+	std::vector<std::map<std::string,std::map<std::string,std::vector<double> > > > mpi_EM_scalars;
+
 	//! this is a list to keep variable name and value
 	std::vector<std::pair<std::string,double> > out_list;
 };

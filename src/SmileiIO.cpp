@@ -124,7 +124,7 @@ void SmileiIO::writeFieldsPP( ElectroMagn* EMfields, double time, int rank )
 
 void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI* smpi )
 {
-	MESSSAGE("write species disabled");
+	MESSAGE("write species disabled");
 	return;
 	int n_species = vecSpecies.size();
 	for (int ispec=0 ; ispec<n_species ; ispec++) {

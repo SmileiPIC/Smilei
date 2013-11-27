@@ -18,6 +18,21 @@ using namespace std;
 ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi)
 {
 
+	// take useful things from params
+	cell_volume=params->cell_volume;
+	n_space=params->n_space;
+	
+	oversize.resize(3,0);
+	for (unsigned int i=0; i<params->oversize.size(); i++) {
+		oversize[i]=params->oversize[i];
+	}
+
+	for (unsigned int i=0; i<3; i++) {
+		DEBUG("____________________ OVERSIZE: " <<i << " " << oversize[i]);
+	}
+	
+	if (n_space.size() != 3) ERROR("this should not happend");
+		
 	// check for laser conditions
 	laser_.resize(params->n_laser);
     
@@ -26,6 +41,20 @@ ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi)
 		laser_[i] = new Laser(params->laser_param[i]);
 	}
 
+	Ex_=NULL;
+	Ey_=NULL;
+	Ez_=NULL;
+	Bx_=NULL;
+	By_=NULL;
+	Bz_=NULL;
+	Bx_m=NULL;
+	By_m=NULL;
+	Bz_m=NULL;
+	Jx_=NULL;
+	Jy_=NULL;
+	Jz_=NULL;
+	rho_=NULL;
+	rho_o=NULL;		
 }
 
 
@@ -54,7 +83,6 @@ ElectroMagn::~ElectroMagn()
     }
 	
 }//END Destructer
-
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Maxwell solver using the FDTD scheme
@@ -120,4 +148,116 @@ void ElectroMagn::initRho(vector<Species*> vecSpecies, Projector* Proj)
 	}//iSpec
 
 }
+
+void ElectroMagn::computeScalars()
+{
+	
+	std::vector<Field*> fields;
+
+	fields.push_back(Ex_);
+	fields.push_back(Ey_);
+	fields.push_back(Ez_);
+	fields.push_back(Bx_m);
+	fields.push_back(By_m);
+	fields.push_back(Bz_m);
+
+	for (vector<Field*>::iterator field=fields.begin(); field!=fields.end(); field++) {
+
+		map<string,vector<double> > scalars_map;
+		
+		vector<double> Etot(1);
+		
+		for (unsigned int k=oversize[2]; k<n_space[2]-oversize[2]; k++) {
+			for (unsigned int j=oversize[1]; j<n_space[1]-oversize[1]; j++) {
+				for (unsigned int i=oversize[0]; i<n_space[0]-oversize[0]; i++) {
+					unsigned int ii=i+j*n_space[0]+k*n_space[0]*n_space[1];
+					Etot[0]+=pow((**field)(ii),2);
+				}
+			}
+		}
+		Etot[0]*=0.5*cell_volume;
+		scalars_map["Etot"]=Etot;
+		
+		scalars[(*field)->name+"_U"]=scalars_map;
+	}
+	
+	fields.push_back(Jx_);
+	fields.push_back(Jy_);
+	fields.push_back(Jz_);
+	fields.push_back(rho_);	
+	
+	
+
+	for (vector<Field*>::iterator field=fields.begin(); field!=fields.end(); field++) {
+		
+		map<string,vector<double> > scalars_map;
+	
+		
+// this does not work!		
+		vector<double> minVec(4);
+		vector<double> maxVec(4);
+		
+		minVec[0]=(**field)(0);
+		maxVec[0]=(**field)(0);
+		minVec[1]=maxVec[1]=0;
+		minVec[2]=maxVec[2]=0;
+		minVec[3]=maxVec[3]=0;
+		
+		for (unsigned int k=oversize[2]; k<n_space[2]-oversize[2]; k++) {
+			for (unsigned int j=oversize[1]; j<n_space[1]-oversize[1]; j++) {
+				for (unsigned int i=oversize[0]; i<n_space[0]-oversize[0]; i++) {
+					unsigned int ii=i+j*n_space[0]+k*n_space[0]*n_space[1];
+					if (minVec[0]>(**field)(ii)) {
+						minVec[0]=(**field)(ii);
+						minVec[1]=i;
+						minVec[2]=j;
+						minVec[3]=k;
+					}
+					if (maxVec[0]<(**field)(ii)) {
+						maxVec[0]=(**field)(ii);
+						maxVec[1]=i;
+						maxVec[2]=j;
+						maxVec[3]=k;
+					}
+				}
+			}
+		}
+		minVec.resize(1+(*field)->dims_.size());
+		maxVec.resize(1+(*field)->dims_.size());
+
+		
+//		unsigned int tot_size_field=1;
+//		for (unsigned int i =0; i<(*field)->dims_.size(); i++) {
+//			tot_size_field*=(*field)->dims_[i];
+//		}
+//		vector<double> minVec(1+(*field)->dims_.size());
+//		vector<double> maxVec(1+(*field)->dims_.size());
+//		
+//		minVec[0]=(**field)(0);
+//		maxVec[0]=(**field)(0);
+//		for (unsigned int ii =0; ii<tot_size_field; ii++){
+//			
+//			if (minVec[0]>(**field)(ii)) {
+//				minVec[0]=(**field)(ii);
+//				for (unsigned int i =0; i<(*field)->dims_.size(); i++) {
+//					minVec[1+i]=ii;
+//				}
+//			}
+//			if (maxVec[0]<(**field)(ii)) {
+//				maxVec[0]=(**field)(ii);
+//				for (unsigned int i =0; i<(*field)->dims_.size(); i++) {
+//					maxVec[1+i]=ii;
+//				}
+//			}
+//			
+//			
+//		}
+					
+		// we just store the values that change
+		scalars_map["min"]=minVec;
+		scalars_map["max"]=maxVec;
+		scalars[(*field)->name]=scalars_map;
+	}
+}
+
 

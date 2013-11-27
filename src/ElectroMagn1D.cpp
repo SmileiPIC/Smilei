@@ -55,35 +55,23 @@ ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
     MESSAGE( "dimPrim[0]  " <<  dimPrim[0] );
 
     // Allocation of the EM fields
-	ostringstream name;
-	name.str(""); name << "fex." << process_coord_x;
-	Ex_ = new Field1D( dimPrim, 0, false );//, name.str() );
-	name.str(""); name << "fey." << process_coord_x;
-	Ey_ = new Field1D( dimPrim, 1, false);//, name.str() );
-	name.str(""); name << "fez." << process_coord_x;
-	Ez_ = new Field1D( dimPrim, 2, false);//, name.str() );
-	name.str(""); name << "fbx." << process_coord_x;
-	Bx_ = new Field1D( dimPrim, 0, true);//, name.str() );
-	name.str(""); name << "fby." << process_coord_x;
-	By_ = new Field1D( dimPrim, 1, true);//, name.str() );
-	name.str(""); name << "fbz." << process_coord_x;
-	Bz_ = new Field1D( dimPrim, 2, true);//, name.str() );
-	Bx_m = new Field1D(dimPrim, 0, true);
-	By_m = new Field1D(dimPrim, 1, true);
-	Bz_m = new Field1D(dimPrim, 2, true);
+	Ex_ = new Field1D( dimPrim, 0, false, "Ex" );
+	Ey_ = new Field1D( dimPrim, 1, false, "Ey");
+	Ez_ = new Field1D( dimPrim, 2, false, "Ez");
+	Bx_ = new Field1D( dimPrim, 0, true, "Bx");
+	By_ = new Field1D( dimPrim, 1, true, "By");
+	Bz_ = new Field1D( dimPrim, 2, true, "Bz");
+	Bx_m = new Field1D(dimPrim, 0, true, "Bx_m");
+	By_m = new Field1D(dimPrim, 1, true, "By_m");
+	Bz_m = new Field1D(dimPrim, 2, true, "Bz_m");
 	
 	// Total charge currents and densities
-	name.str(""); name << "fjx." << process_coord_x;
-	Jx_ = new Field1D(dimPrim, 0, false);//, name.str() );
-	name.str(""); name << "fjy." << process_coord_x;
-	Jy_ = new Field1D(dimPrim, 1, false);//, name.str() );
-	name.str(""); name << "fjz." << process_coord_x;
-	Jz_ = new Field1D(dimPrim, 2, false);//, name.str() );
-	name.str(""); name << "rho." << process_coord_x;
-	rho_ = new Field1D(dimPrim);//, name.str() );
-	name.str(""); name << "rho_old." << process_coord_x;
-	rho_o = new Field1D(dimPrim );
-
+	Jx_ = new Field1D(dimPrim, 0, false, "Jx");
+	Jy_ = new Field1D(dimPrim, 1, false, "Jy");
+	Jz_ = new Field1D(dimPrim, 2, false, "Jz");
+	rho_ = new Field1D(dimPrim, "Rho" );
+	rho_o = new Field1D(dimPrim, "Rho_old" );
+	
     // ----------------------------------------------------------------
     // Definition of the min and max index according to chosen oversize
     // ----------------------------------------------------------------

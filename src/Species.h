@@ -73,7 +73,7 @@ public:
 	Ionization* Ionize;
     	
 	//! method used to fill a a struct spec_scalar_data variable type
-	void computeScalar();
+	void computeScalars();
 	
 	//! map structure for the scalar diagnostics
 	std::map<std::string, double> scalars;
