@@ -253,7 +253,7 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 	  
 	// assign the Ionization model (if needed) to Ionize
 	Ionize = IonizationFactory::create( params, ispec );
-    if (Ionize) DEBUG("------------------------------------------------------------ " <<ispec);
+    if (Ionize) DEBUG("----------- IONIZE CREATED ----------- " <<ispec);
     
     // define limits for BC and functions applied and for domain decomposition
     partBoundCond = new PartBoundCond( params, ispec, smpi);
@@ -514,8 +514,7 @@ void Species::computeScalars(){
 	}
 	scalars["charge_tot"]=charge_tot;
 	scalars["part_number"]=getNbrOfParticles();
-	
-//	scalars["toto"]=max(0.0,charge_tot);
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -562,7 +561,7 @@ void Species::sort_part(double dbin)
         for( p2 = p1 ; p2 < bmax[bin] ; p2++ ) { //Loop on the bin's particles.
             if (particles[p2]->position(ndim-1) < limit ) {
                 //This particle goes down one bin.
-                    swap_part(particles[p2],particles[bmin[bin]]);
+                swap_part(particles[p2],particles[bmin[bin]]);
                 bmin[bin]++;
             }
         }
