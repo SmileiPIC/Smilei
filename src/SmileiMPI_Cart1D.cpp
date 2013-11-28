@@ -158,6 +158,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
 	int iPart;
 	for (int i=0 ; i<n_part_send ; i++) {
 		iPart = indexes_of_particles_to_exchange[i];
+		DEBUG(getRank() << " Here A  " << species->name_str << " " << iPart  <<  " " << species->getNbrOfParticles() <<  " " << n_part_send );
 		if      ( (*cuParticles)[iPart]->position(0) < min_local[0])
 			buff_index_send[0][0].push_back( indexes_of_particles_to_exchange[i] );
 		else if ( (*cuParticles)[iPart]->position(0) >= max_local[0])
@@ -240,7 +241,6 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
 
 	} // END for iNeighbor
 
-
 	/********************************************************************************/
 	// Wait for end of communications over Particles
 	/********************************************************************************/
@@ -252,18 +252,23 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
 		}
 
 		n_part_recv = buff_index_recv_sz[0][(iNeighbor+1)%2];
+		
 		if ( (neighbor_[0][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
-			MPI_Wait( &(request[(iNeighbor+1)%2]), &(stat[(iNeighbor+1)%2]) );
+			DEBUG(getRank() << " Here A  " << species->name_str << " " << (iNeighbor+1)%2 <<  " " << n_part_recv);
+			MPI_Wait( &(request[(iNeighbor+1)%2]), &(stat[(iNeighbor+1)%2]));
+//			DEBUG(getRank() << " Here B  " << " " << iNeighbor <<  " " << n_part_recv);
+			
 			int n_particles = species->getNbrOfParticles();
 			cuParticles->resize( n_particles + n_part_recv );
 			for (int iPart=0 ; iPart<n_part_recv; iPart++ ) {
 				(*cuParticles)[n_particles+iPart] = ParticleFactory::create(params, ispec);
 				memcpy( &( ((*cuParticles)[n_particles+iPart])->position(0) ), &(partBufRecv[(iNeighbor+1)%2][iPart*part_mem_size]), part_mem_size );
 			}
+
 		}
+		
 
 	}
-
 	/********************************************************************************/
 	// Clean lists of indexes of particle to exchange per neighbor
 	/********************************************************************************/
@@ -280,7 +285,6 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
 	} // END for iPart = f(i)
 
 	//DEBUG( 2, "\tProcess " << smilei_rk << " : " << species->getNbrOfParticles() << " Particles of species " << ispec );
-
 } // END exchangeParticles
 
 void SmileiMPI_Cart1D::sumField( Field* field )

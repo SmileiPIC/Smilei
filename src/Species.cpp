@@ -36,8 +36,6 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
     
 	name_str=params->species_param[ispec].species_type;
     
-	DEBUG(name_str);
-	
     electron_species = NULL;
     
     // species index
@@ -253,7 +251,7 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 	  
 	// assign the Ionization model (if needed) to Ionize
 	Ionize = IonizationFactory::create( params, ispec );
-    if (Ionize) DEBUG("------------------------------------------------------------ " <<ispec);
+    if (Ionize) DEBUG("----------- IONIZE CREATED ----------- " <<ispec);
     
     // define limits for BC and functions applied and for domain decomposition
     partBoundCond = new PartBoundCond( params, ispec, smpi);
@@ -514,8 +512,7 @@ void Species::computeScalars(){
 	}
 	scalars["charge_tot"]=charge_tot;
 	scalars["part_number"]=getNbrOfParticles();
-	
-//	scalars["toto"]=max(0.0,charge_tot);
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -534,7 +531,6 @@ void Species::sort_part(double dbin)
         p1 = bmax[bin];
         //If first particles change bin, they do not need to be swapped.
         while (p1 == bmax[bin] ){
-			DEBUG(p1 << " " << bmax[bin]);
             if (particles[p1]->position(ndim-1) > limit ) {
                 bmax[bin]--;
             }
@@ -579,7 +575,6 @@ void Species::sort_part(double dbin)
         bmax[bin-1] += bmin[bin] - bmin_init;
         bmin[bin] = bmax[bin-1] + 1;
     }
-	DEBUG("out of here!");
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

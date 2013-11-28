@@ -136,8 +136,7 @@ void DiagnosticScalar::compute(){
 					out_list.push_back(make_pair(nameEm+"_"+nameType,val));
 					out_list.push_back(make_pair(nameEm+"_"+nameType+"_i",ival));
 					out_list.push_back(make_pair(nameEm+"_"+nameType+"_cpu",iCPUval));
-				}
-				if (nameType=="max") {
+				} else if (nameType=="max") {
 					double val=mpi_EM_scalars[iCPUval][nameEm][nameType][0];
 					unsigned int ival=mpi_EM_scalars[iCPUval][nameEm][nameType][1];
 					for(int iCPU=0;iCPU<smpi_->getSize();iCPU++){
@@ -150,13 +149,14 @@ void DiagnosticScalar::compute(){
 					out_list.push_back(make_pair(nameEm+"_"+nameType,val));
 					out_list.push_back(make_pair(nameEm+"_"+nameType+"_i",ival));
 					out_list.push_back(make_pair(nameEm+"_"+nameType+"_cpu",iCPUval));
-				}
-				if (nameType=="Etot") {
+				} else if (nameType=="Etot") {
 					double val=0;
 					for(int iCPU=0;iCPU<smpi_->getSize();iCPU++){
 						val+=mpi_EM_scalars[iCPUval][nameEm][nameType][0];
 					}
 					out_list.push_back(make_pair(nameEm+"_"+nameType,val));
+				} else {
+					DEBUG("Don't know what to do with " << nameType);
 				}
 			}
 			
