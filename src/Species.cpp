@@ -69,29 +69,7 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
         // Arrays of the min and max indices of the particle bins
         bmin.resize(params->n_space[ndim-1]);
         bmax.resize(params->n_space[ndim-1]);
-    
-        //number of cell per bin
-        int ncell_per_bin;
-
-        switch (ndim){
-            case 1:
-                ncell_per_bin = 1;
-            break;
-            case 2:
-                ncell_per_bin = params->n_space[0];
-            break;
-            case 3:
-                ncell_per_bin = params->n_space[0]*params->n_space[1];
-            break;
-        } 
-        
-        //initialisation of the indices
-        for (unsigned int i=0;i<bmin.size();i++) {
-
-            bmin[i]=i*ncell_per_bin*params->species_param[ispec].n_part_per_cell;
-            bmax[i]=(i+1)*ncell_per_bin*params->species_param[ispec].n_part_per_cell-1;
-        } 
-	
+                	
     // ---------------------------------------------------------
 	// Calculate density and number of particles for the species
 	// ---------------------------------------------------------
@@ -205,13 +183,26 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
     // start a loop on all cells
 
     // Rappel :
-    // int cell_index[0] = process_coord_x*(params->n_space[0]);
-    // int cell_index[1] = process_coord_y*(params->n_space[1]);
-    // int cell_index[2] = process_coord_z*(params->n_space[2]);
-
+        // int cell_index[0] = process_coord_x*(params->n_space[0]);
+        // int cell_index[1] = process_coord_y*(params->n_space[1]);
+        // int cell_index[2] = process_coord_z*(params->n_space[2]);
+        //
+        //bmin[bin] point to begining of bin (first particle)
+        //bmax[bin] point to end of bin (= bmin[bin+1])
+        //if bmax = bmin, bin is empty of particle.
+    
     for (unsigned int k=0; k<params->n_space[2]; k++) {
+            if (ndim == 3){
+                bmin[k] = iPart;
+            }
 	    for (unsigned int j=0; j<params->n_space[1]; j++) {
+                    if (ndim == 2){
+                        bmin[j] = iPart;
+                    }
 		    for (unsigned int i=0; i<params->n_space[0]; i++) {
+                            if (ndim == 1){
+                                bmin[i] = iPart;
+                            }
 			    // initialize particles in meshes where the density is non-zero
 				if (density(i,j,k)>0) {
 				  //DEBUG(0,i);
@@ -240,8 +231,17 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 					iPart+=params->species_param[ispec].n_part_per_cell;
                     
 				}//END if density > 0
+                                if (ndim == 1){
+                                    bmax[i] = iPart;
+                                }
 		    }//i
+                    if (ndim == 2){
+                        bmax[j] = iPart;
+                    }
 	    }//j
+            if (ndim == 3){
+                bmax[k] = iPart;
+            }
     }//k end the loop on all cells
     
     delete indexes;
@@ -527,24 +527,23 @@ void Species::sort_part(double dbin)
    
     int p1,p2,bmin_init; 
     double limit;
-
+     
     //Backward pass
     for (unsigned int bin=0;bin<bmin.size()-1;bin++) { //Loop on the bins. To be parallelized with openMP.
         limit = (bin+1)*dbin;
-        p1 = bmax[bin];
+        p1 = bmax[bin]-1;
         //If first particles change bin, they do not need to be swapped.
-        while (p1 == bmax[bin] ){
-			DEBUG(p1 << " " << bmax[bin]);
+        while (p1 == bmax[bin]-1 && p1 >= bmin[bin]){
             if (particles[p1]->position(ndim-1) > limit ) {
                 bmax[bin]--;
             }
             p1--;
         }
-        // Now particles have to be swapped
+//         Now particles have to be swapped
         for( p2 = p1 ; p2 >= bmin[bin] ; p2-- ) { //Loop on the bin's particles.
             if (particles[p2]->position(ndim-1) > limit ) {
                 //This particle goes up one bin.
-                swap_part(particles[p2],particles[bmax[bin]]);
+                    swap_part(particles[p2],particles[bmax[bin]-1]);
                 bmax[bin]--;
             }
         }
@@ -552,34 +551,33 @@ void Species::sort_part(double dbin)
     //Forward pass + Rebracketting
     for (unsigned int bin=1;bin<bmin.size();bin++) { //Loop on the bins. To be parallelized with openMP.
         limit = (bin)*dbin;
-        p1 = bmin[bin];
         bmin_init = bmin[bin];
-        while (p1 == bmin[bin] ){
+        p1 = bmin[bin];
+        while (p1 == bmin[bin] && p1 < bmax[bin]){
             if (particles[p1]->position(ndim-1) < limit ) {
                 bmin[bin]++;
             }
             p1++;
         }
-        for( p2 = p1 ; p2 <= bmax[bin] ; p2++ ) { //Loop on the bin's particles.
+        for( p2 = p1 ; p2 < bmax[bin] ; p2++ ) { //Loop on the bin's particles.
             if (particles[p2]->position(ndim-1) < limit ) {
                 //This particle goes down one bin.
-                swap_part(particles[p2],particles[bmin[bin]]);
+                    swap_part(particles[p2],particles[bmin[bin]]);
                 bmin[bin]++;
             }
         }
     
         //Rebracketting
             //Number of particles from bin going down is: bmin[bin]-bmin_init.
-            //Number of particles from bin-1 going up is: bmin_init-bmax[bin-1]-1.
+            //Number of particles from bin-1 going up is: bmin_init-bmax[bin-1].
             //Total number of particles we need to swap is the min of both.
-        p2 = min(bmin[bin]-bmin_init,bmin_init-bmax[bin-1]-1);
+        p2 = min(bmin[bin]-bmin_init,bmin_init-bmax[bin-1]);
         for ( p1 = 0 ; p1 < p2; p1++ ) {
-            swap_part(particles[ bmax[bin-1] + 1 + p1],particles[ bmin[bin] - 1 - p1 ]);
+            swap_part(particles[ bmax[bin-1] + p1],particles[ bmin[bin] - 1 - p1 ]);
         } 
         bmax[bin-1] += bmin[bin] - bmin_init;
-        bmin[bin] = bmax[bin-1] + 1;
+        bmin[bin] = bmax[bin-1];
     }
-	DEBUG("out of here!");
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
