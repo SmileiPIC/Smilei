@@ -40,12 +40,25 @@ class Field2D : public Field
 		return data_[i][j];
 	};
 
+	inline double& operator () (unsigned int i) {
+		DEBUGEXEC(if (i>=dims_[0]*dims_[1]) ERROR("Out of limits & "<< i));
+		DEBUGEXEC(if (!std::isfinite(data_2D[i])) ERROR("Not finite "<< i));
+		return data_2D[i];
+	};
+	
 	//! Overloading of the () operator allowing to get the value of the (i,j) element of a Field2D
 	inline double operator () (unsigned int i,unsigned int j) const { 
 		DEBUGEXEC(if (i>=dims_[0] || j>=dims_[1]) ERROR("Out of limits "<< i << " " << j));
 		DEBUGEXEC(if (!std::isfinite(data_[i][j])) ERROR("Not finite "<< i << "," << j << " = " << data_[i][j]));
 		return data_[i][j];
 	};
+
+	inline double operator () (unsigned int i) const { 
+		DEBUGEXEC(if (i>=dims_[0]*dims_[1]) ERROR("Out of limits & "<< i));
+		DEBUGEXEC(if (!std::isfinite(data_2D[i])) ERROR("Not finite "<< i));
+		return data_2D[i];
+	};
+	
 	double** data_;
 	//! \todo{for debbugging, to remove (JD)}
 	inline void setData_(int i, double val) {data_2D[i] = val;}

@@ -97,36 +97,24 @@ ElectroMagn2D::ElectroMagn2D(PicParams* params, SmileiMPI* smpi)
     // number of nodes of the primal and dual grid in the y-direction
     ny_p = params->n_space[1]+1+2*params->oversize[1];
     ny_d = params->n_space[1]+2+2*params->oversize[1];
+
+	// Allocation of the EM fields
+    Ex_ = new Field2D( dimPrim, 0, false, "Ex" );
+	Ey_ = new Field2D( dimPrim, 1, false, "Ey");
+	Ez_ = new Field2D( dimPrim, 2, false, "Ez");
+	Bx_ = new Field2D( dimPrim, 0, true, "Bx");
+	By_ = new Field2D( dimPrim, 1, true, "By");
+	Bz_ = new Field2D( dimPrim, 2, true, "Bz");
+	Bx_m = new Field2D(dimPrim, 0, true, "Bx_m");
+	By_m = new Field2D(dimPrim, 1, true, "By_m");
+	Bz_m = new Field2D(dimPrim, 2, true, "Bz_m");
 	
-    // Allocation of the EM fields
-    ostringstream name;
-    name.str(""); name << "fex." << process_coord_x;
-    Ex_  = new Field2D( dimPrim, 0, false);//, name.str() );
-    name.str(""); name << "fey." << process_coord_x;
-    Ey_  = new Field2D( dimPrim, 1, false);//, name.str() );
-    name.str(""); name << "fez." << process_coord_x;
-    Ez_  = new Field2D( dimPrim, 2, false);//, name.str() );
-    name.str(""); name << "fbx." << process_coord_x;
-    Bx_  = new Field2D( dimPrim, 0, true);//, name.str() );
-    name.str(""); name << "fby." << process_coord_x;
-    By_  = new Field2D( dimPrim, 1, true);//, name.str() );
-    name.str(""); name << "fbz." << process_coord_x;
-    Bz_  = new Field2D( dimPrim, 2, true);//, name.str() );
-    Bx_m = new Field2D(dimPrim, 0, true);
-    By_m = new Field2D(dimPrim, 1, true);
-    Bz_m = new Field2D(dimPrim, 2, true);
-	
-    // Allocation of the total charge and currents
-    name.str(""); name << "fjx." << process_coord_x;
-    Jx_ = new Field2D( dimPrim, 0, false);//, name.str() );
-    name.str(""); name << "fjy." << process_coord_x;
-    Jy_ = new Field2D( dimPrim, 1, false);//, name.str() );
-    name.str(""); name << "fjz." << process_coord_x;
-    Jz_ = new Field2D( dimPrim, 2, false);//, name.str() );
-    name.str(""); name << "rho." << process_coord_x;
-    rho_ = new Field2D( dimPrim);//, name.str() );
-    name.str(""); name << "rho_old." << process_coord_x;
-    rho_o = new Field2D( dimPrim );
+	// Total charge currents and densities
+	Jx_ = new Field2D(dimPrim, 0, false, "Jx");
+	Jy_ = new Field2D(dimPrim, 1, false, "Jy");
+	Jz_ = new Field2D(dimPrim, 2, false, "Jz");
+	rho_ = new Field2D(dimPrim, "Rho" );
+	rho_o = new Field2D(dimPrim, "Rho_old" );
 
     // ----------------------------------------------------------------
     // Definition of the min and max index according to chosen oversize

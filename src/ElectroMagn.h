@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <string>
+#include <map>
 
 
 class PicParams;
@@ -78,9 +79,19 @@ public:
     
 	//! Total charge density at previous time-step
 	Field* rho_o;
-	
+		
 	//! Vector for the various lasers
 	std::vector<Laser*> laser_;
+	
+	//! Volume of the single cell
+	double cell_volume;
+	
+	//! n_space (from params) always 3D
+	std::vector<unsigned int> n_space;
+
+	//!\todo should this be just an integer???
+	//! Oversize domain to exchange less particles
+	std::vector<unsigned int> oversize;
 	
 	//! Constructor for Electromagn
 	ElectroMagn( PicParams* params, SmileiMPI* smpi );
@@ -109,8 +120,12 @@ public:
 	//virtual void boundaryConditions(double time_dual, SmileiMPI* smpi) = 0;
     virtual void applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi) = 0;
 	
+	//! compute scalars filling var scalars
+	void computeScalars();
+	
+	//! vector(on Fields) of map (of keys like min max) of vector of double values
+	std::map<std::string,std::map<std::string,std::vector<double> > > scalars;
 private:
-    
 };
 
 #endif

@@ -25,10 +25,9 @@ Field3D::Field3D(vector<unsigned int> dims) : Field(dims)
 }
 
 // with the dimensions and output (dump) file name as input argument
-Field3D::Field3D(vector<unsigned int> dims, string name) : Field(dims)
+Field3D::Field3D(vector<unsigned int> dims, string name) : Field(dims, name)
 {
 	allocateDims(dims);
-	fdata_.open(name.c_str(), ios::out);
 }
 
 // with the dimensions as input argument
@@ -39,10 +38,9 @@ Field3D::Field3D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal)
 }
 
 // with the dimensions and output (dump) file name as input argument
-Field3D::Field3D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, string name) : Field(dims, mainDim, isPrimal)
+Field3D::Field3D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, string name) : Field(dims, mainDim, isPrimal, name)
 {
 	allocateDims(dims, mainDim, isPrimal);
-	fdata_.open(name.c_str(), ios::out | ios::binary);
 }
 
 
@@ -55,8 +53,6 @@ Field3D::~Field3D()
 	for (unsigned int i=0; i<dims_[0]; i++) delete data_[i];
 	delete data_;
 	
-	fdata_.close();
-	//DEBUG(10,"Field 3D deleted");
 }
 
 
@@ -132,7 +128,5 @@ void Field3D::allocateDims(std::vector<unsigned int> dims, unsigned int mainDim,
 // ---------------------------------------------------------------------------------------------------------------------
 void Field3D::dump(vector<unsigned int> dims)
 {
-	for (unsigned int i=0 ; i<dims[0] ; i++)    fdata_ << data_[i] << " ";
-	fdata_ << endl;
     
 }
