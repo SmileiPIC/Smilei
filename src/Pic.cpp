@@ -163,7 +163,7 @@ int main (int argc, char* argv[])
 		// --------------------------------
 		//!\todo{Introduce a control parameter in PicParams (MG)}
 		if ( (itime % 100 == 0) &&  ( smpi->isMaster() ) )
-			MESSAGE(1,"Time: " << time_dual << " " << itime);
+			MESSAGE(1,"Time (dual)= " << time_dual << " it = " << itime);
 		
 		// put density and currents to 0
 		// -----------------------------
