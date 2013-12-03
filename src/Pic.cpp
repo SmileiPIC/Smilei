@@ -227,7 +227,8 @@ int main (int argc, char* argv[])
 		sio->writeFields( EMfields );
 		//sio->writeFieldsPP( EMfields, time_dual, smpi->getRank() );
 	}
-	sio->writeAllFieldsSingleFileTime( EMfields, params.n_time );
+	if  ( params.n_time % 500 != 0)
+		sio->writeAllFieldsSingleFileTime( EMfields, params.n_time );
 	
 	
 	// ------------------------------
