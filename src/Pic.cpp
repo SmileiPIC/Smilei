@@ -153,8 +153,7 @@ int main (int argc, char* argv[])
 	double t0, t1;
 	t0 = MPI_Wtime();
     
-	//for (unsigned int itime=1 ; itime <= params.n_time ; itime++) {
-	for (unsigned int itime=1 ; itime <= 50 ; itime++) {
+	for (unsigned int itime=1 ; itime <= params.n_time ; itime++) {
 
 		// calculate new times
 		// -------------------
