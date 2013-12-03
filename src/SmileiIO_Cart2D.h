@@ -10,6 +10,7 @@
 
 #include "SmileiIO.h"
 
+
 #include <string>
 #include <vector>
 
@@ -18,12 +19,17 @@ public:
 	SmileiIO_Cart2D( PicParams* params, SmileiMPI* smpi );
 	~SmileiIO_Cart2D();
 
+	void open (  );
+	void close(  );
 	void createPattern( PicParams* params, SmileiMPI* smpi );
+
+	void writeFieldsSingleFile( Field* field, hid_t file_id, int itime );
+	void writeFieldsSingleFileTime( Field* field, hid_t group_id );
+
 	void write( Field* field, std::string name );
 	void write( Field* field, std::string name, double time );
 	void writePerProcess( Field* field, std::string name, double time, int rank );
-	void open (  );
-	void close(  );
+
 
 private:
 	std::vector<unsigned int> istart;
