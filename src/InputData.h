@@ -127,7 +127,7 @@ public:
 
 	//! return the list of groups found
 	std::vector<std::string> getGroups();
-
+	
 private:
 	//! this is a function that removes triling spaces and tabs from the beginning and the end of a string
 	std::string cleanString(std::string);
@@ -135,6 +135,7 @@ private:
 	//! this is a vector of pairs string,map 
 	//! the string is the name of the group and the map key contains the name of the veriable and the string is it's value
 	std::vector<std::pair<std::string , std::map <std::string,std::string> > > map_;
+
 };
 
 #endif
