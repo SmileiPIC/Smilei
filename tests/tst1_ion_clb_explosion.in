@@ -32,12 +32,10 @@ sim_length=11.0
 # PLASMA GEOMETRY
 # plasma_geometry: string defining the plasma geometry
 # ***_length: characteristic length for a given geometry
-# n_species: number of species 
 #
 plasma_geometry = constant
 vacuum_length   = 5.0
 plasma_length   = 1.0
-n_species=1
 
 # DEFINE ALL SPECIES
 # species_type: ion, electron, positron, test ...
@@ -53,7 +51,7 @@ n_species=1
 # time_frozen: time during which the particles are frozen in units of the normalization time
 # radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
 #
-species 0
+species
 	species_type = ion
 	initialization_type = cold
 	n_part_per_cell=100
@@ -68,7 +66,7 @@ species 0
 	radiating = false
 end
 
-species 1
+species
 	species_type = electron
 	initialization_type = maxwell-juettner
 	n_part_per_cell=100
@@ -84,7 +82,6 @@ species 1
 end
 
 # LASER PROPERTIES
-# n_laser: number of incoming laser
 #
 # for each laser define:
 # a0: maximum amplitude of the laser electric field (in units of the normalization field)
@@ -92,9 +89,8 @@ end
 # delta: polarization parameter, (0:y) (1:z) (0.707106781:circ)
 # time_profile: string defining the time profile
 # double_params: vector of real parameters used by the different time-profiles
-n_laser=0
 
-laser 0
+laser
 	a0=5.0
 	angle=0
 	delta=0.707106781                 
