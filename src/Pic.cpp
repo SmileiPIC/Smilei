@@ -107,7 +107,8 @@ int main (int argc, char* argv[])
 	// ----------------------------------------------------------------------------
 	Diagnostic diags(&params,&diag_params, smpi);
 	
-	
+    DEBUG("--------------------- END --------------------------------------------------------------------------");
+
 	// ----------------------------------------------------------------------------
 	// Initialize the electromagnetic fields and interpolation-projection operators
 	// according to the simulation geometry
@@ -135,7 +136,7 @@ int main (int argc, char* argv[])
 	smpi->solvePoissonPara( EMfields );		//champs->initMaxwell();
 	
     smpi->barrier();
-    
+
     
 	// ------------------------------------------------------------------------
 	// Initialize the simulation times time_prim at n=0 and time_dual at n=-1/2
@@ -191,7 +192,7 @@ int main (int argc, char* argv[])
         // call the various diagnostics
 		// ----------------------------
 		
-		diags.runAllDiags(itime, EMfields, vecSpecies);
+		diags.runAllDiags(itime, EMfields, vecSpecies, Interp);
 		if  (itime % 500 == 0)
 			sio->writeAllFieldsSingleFileTime( EMfields, itime );
 

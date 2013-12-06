@@ -12,6 +12,8 @@
 #include <fstream>
 #include <hdf5.h>
 #include "DiagnosticScalar.h"
+#include "Interpolator.h"
+#include "Probe0D.h"
 
 class PicParams;
 class SmileiMPI;
@@ -29,13 +31,18 @@ public:
 	//! destructor (empty)
 	~Diagnostic(){};
 	//! check if at timestep diagnostics must be called
-	void runAllDiags (int timestep, ElectroMagn* EMfields, std::vector<Species*>&);
+	void runAllDiags (int timestep, ElectroMagn* EMfields, std::vector<Species*>&, Interpolator* interp);
 
 
 private:
-	unsigned int everyScalar;
 	int num_CPUs;
-	DiagnosticScalar DiagScal;
+	DiagnosticScalar diagScal;
+    unsigned int everyScalar;
+	
+    Probe0D probe0d;
+	unsigned int everyProbe0D;
+    
+    unsigned int everyMap;
 	
 };
 

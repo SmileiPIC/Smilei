@@ -1,5 +1,5 @@
-#ifndef PROB0D_H
-#define PROB0D_H
+#ifndef Probe0D_H
+#define Probe0D_H
 
 #include "Tools.h"
 
@@ -19,11 +19,11 @@ class DiagParams;
 class ElectroMagn;
 
 
-class prob0D{
+class Probe0D{
     
 public:
     
-	prob0D(PicParams* params, SmileiMPI* smpi, unsigned int num_prob);
+	Probe0D(PicParams* params, SmileiMPI* smpi,std::vector<std::vector<double> > ps_coord);
 	
 	inline void set_p_coor(unsigned int i, std::vector<double> values){ps_coor[i]=values;}//write it in a smarter way
 	inline std::vector<std::vector<double> > get_ps_coor(){return ps_coor;}
@@ -33,7 +33,7 @@ public:
 	
 	void set_weights(); 
     
-	
+    void run(int timestep, ElectroMagn* EMfields, Interpolator* interp);
     
     
 private:
