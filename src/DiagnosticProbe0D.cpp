@@ -1,4 +1,4 @@
-#include "Probe0D.h"
+#include "DiagnosticProbe0D.h"
 
 #include "PicParams.h"
 #include "DiagParams.h"
@@ -10,7 +10,7 @@
 
 using namespace std;
 
-Probe0D::Probe0D(PicParams* params, SmileiMPI* smpi, vector<vector<double> > ps_coord)
+DiagnosticProbe0D::DiagnosticProbe0D(PicParams* params, SmileiMPI* smpi, vector<vector<double> > ps_coord)
 {
     n_probe=ps_coord[0].size();
     n_probe_loc=0;
@@ -27,7 +27,7 @@ Probe0D::Probe0D(PicParams* params, SmileiMPI* smpi, vector<vector<double> > ps_
 
 
 
-void Probe0D::set_proc(){
+void DiagnosticProbe0D::set_proc(){
     
     for(unsigned int p=0;p!=n_probe;++p){
         bool inside=true;
@@ -43,7 +43,7 @@ void Probe0D::set_proc(){
     
 }
 
-void Probe0D::run(int timestep, ElectroMagn* EMfields, Interpolator* interp){
+void DiagnosticProbe0D::run(int timestep, ElectroMagn* EMfields, Interpolator* interp){
     unsigned int count=0;
     for(unsigned int p=0;p!=n_probe;++p){
         if(here[p]==true){

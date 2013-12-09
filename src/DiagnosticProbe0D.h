@@ -1,5 +1,5 @@
-#ifndef Probe0D_H
-#define Probe0D_H
+#ifndef DiagnosticProbe0D_H
+#define DiagnosticProbe0D_H
 
 #include "Tools.h"
 
@@ -20,11 +20,11 @@ class DiagParams;
 class ElectroMagn;
 
 
-class Probe0D{
+class DiagnosticProbe0D{
     
 public:
     
-	Probe0D(PicParams* params, SmileiMPI* smpi,std::vector<std::vector<double> > ps_coord);
+	DiagnosticProbe0D(PicParams* params, SmileiMPI* smpi,std::vector<std::vector<double> > ps_coord);
 
 	inline void set_p_coor(unsigned int i, std::vector<double> values){ps_coor[i]=values;}//write it in a smarter way
 	inline std::vector<std::vector<double> > get_ps_coor(){return ps_coor;}

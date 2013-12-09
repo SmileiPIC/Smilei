@@ -13,7 +13,7 @@
 #include <hdf5.h>
 #include "DiagnosticScalar.h"
 #include "Interpolator.h"
-#include "Probe0D.h"
+#include "DiagnosticProbe0D.h"
 
 class PicParams;
 class SmileiMPI;
@@ -39,7 +39,7 @@ private:
 	DiagnosticScalar diagScal;
     unsigned int everyScalar;
 	
-    Probe0D probe0d;
+    DiagnosticProbe0D probe0d;
 	unsigned int everyProbe0D;
     Interpolator* interp_;
     

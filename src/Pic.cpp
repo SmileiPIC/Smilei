@@ -32,7 +32,7 @@
 #include <iostream>
 
 #include "Diagnostic.h"
-#include "Probe0D.h"
+#include "DiagnosticProbe0D.h"
 
 using namespace std;
 
