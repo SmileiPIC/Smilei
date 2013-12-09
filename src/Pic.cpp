@@ -32,7 +32,7 @@
 #include <iostream>
 
 #include "Diagnostic.h"
-#include "prob0D.h"
+#include "Probe0D.h"
 
 using namespace std;
 
@@ -102,18 +102,9 @@ int main (int argc, char* argv[])
 	// dump species at time 0
 	sio->writePlasma( vecSpecies, 0., smpi );
 	
-	
-	// ----------------------------------------------------------------------------
-<<<<<<< HEAD
-=======
-	// Create diagnostics
-	// ----------------------------------------------------------------------------
-	Diagnostic diags(&params,&diag_params, smpi);
-	
     DEBUG("--------------------- END --------------------------------------------------------------------------");
 
 	// ----------------------------------------------------------------------------
->>>>>>> d9430c98fb22fc65390629334be5bfeebc514228
 	// Initialize the electromagnetic fields and interpolation-projection operators
 	// according to the simulation geometry
 	// ----------------------------------------------------------------------------
@@ -129,7 +120,7 @@ int main (int argc, char* argv[])
     // ----------------------------------------------------------------------------
 	// Create diagnostics
 	// ----------------------------------------------------------------------------
-	Diagnostic diags(&params,&diag_params, smpi);	
+	Diagnostic diags(&params,&diag_params, smpi, Interp);	
 
 	// -----------------------------------
 	// Initialize the electromagnetic fields
@@ -201,7 +192,7 @@ int main (int argc, char* argv[])
         // call the various diagnostics
 		// ----------------------------
 		
-		diags.runAllDiags(itime, EMfields, vecSpecies, Interp);
+		diags.runAllDiags(itime, EMfields, vecSpecies);
 		if  (itime % 500 == 0)
 			sio->writeAllFieldsSingleFileTime( EMfields, itime );
 
