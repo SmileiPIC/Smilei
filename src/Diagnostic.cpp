@@ -24,8 +24,8 @@ void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Specie
 	if (everyScalar && timestep % everyScalar == 0) {
 		diagScal.run(timestep, EMfields, vecSpecies);
 	}	
-//	if (everyProbe0D && timestep % everyProbe0D == 0) {
-//		probe0d.run(timestep, EMfields, interp);
-//	}	
+	if (everyProbe0D && timestep % everyProbe0D == 0) {
+		probe0d.run(timestep, EMfields, interp);
+	}	
 }
 
