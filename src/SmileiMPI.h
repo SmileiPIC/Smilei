@@ -86,6 +86,7 @@ private:
 	void bcast( std::vector<unsigned int>& val );
 	void bcast( std::vector<int>& val );
 	void bcast( std::vector<double>& val );
+	void bcast( std::vector<std::vector<double> > & val );
 	void bcast( SpeciesStructure& speciesStructure );
 	void bcast( std::vector<SpeciesStructure>& vecSpeciesStructure );
 	void bcast( LaserStructure& laserStructure );

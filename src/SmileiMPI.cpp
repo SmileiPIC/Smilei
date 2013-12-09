@@ -115,6 +115,11 @@ void SmileiMPI::bcast( DiagParams& params )
 	bcast(params.scalar_every);
 	bcast(params.map_every);
 	bcast(params.probe0d_every);
+<<<<<<< HEAD
+=======
+	bcast(params.ps_coor);
+    
+>>>>>>> d9430c98fb22fc65390629334be5bfeebc514228
 }
 
 void SmileiMPI::bcast( string& val )
@@ -179,6 +184,19 @@ void SmileiMPI::bcast( vector<double>& val )
 	if (!isMaster()) val.resize( vecSize ); 
 
 	MPI_Bcast( &(val[0]), vecSize, MPI_DOUBLE, 0, SMILEI_COMM_WORLD);
+}
+
+void SmileiMPI::bcast( vector<vector<double> >& val )
+{
+    int vecSize=0;
+    if (isMaster()) vecSize = val.size();
+    MPI_Bcast( &vecSize, 1, MPI_INT, 0, SMILEI_COMM_WORLD);
+    if (!isMaster()) val.resize( vecSize ); 
+    
+    for(unsigned int k=0;k<vecSize; k++) {
+        bcast(val[k]);
+    }
+
 }
 
 void SmileiMPI::bcast( SpeciesStructure& speciesStructure )

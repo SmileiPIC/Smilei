@@ -9,11 +9,10 @@ PicParams::PicParams() {
 
 void PicParams::parseInputData(InputData &ifile) {
 	//open and parse the input data file
-	
+
 	DEBUGEXEC(ifile.extract("debug",debug_level));
 	
-	RELEASEEXEC(int debug_level=-1; ifile.extract("debug",debug_level));
-	RELEASEEXEC(if (debug_level!=-1) WARNING("This is a release compilation, debug keyword is ignored"));
+	RELEASEEXEC(if (ifile.existKey("debug")) WARNING("This is a release compilation, debug keyword is ignored"));
 
 	ifile.extract("res_time", res_time);
 	ifile.extract("sim_time", sim_time);
@@ -62,97 +61,169 @@ void PicParams::parseInputData(InputData &ifile) {
 		ERROR("unknown plasma_geometry "<< plasma_geometry);
 	}
 	
-    ifile.extract("n_species", n_species);
-	species_param.resize(n_species);
 	
-	for (unsigned int i=0; i<n_species; i++) {
-		ostringstream ss;
-		ss << "species " << i;
-		string group=ss.str();
-		
-		bool found=false;
-		vector<string> groups=ifile.getGroups();
-		for (size_t j=0; j<groups.size(); j++) {
-			if (groups[j]==group) found=true;
-		}
-		if (found) {			
-			ifile.extract("species_type",species_param[i].species_type,group);
-            ifile.extract("initialization_type",species_param[i].initialization_type ,group);
-            ifile.extract("n_part_per_cell",species_param[i].n_part_per_cell,group);
-            ifile.extract("c_part_max",species_param[i].c_part_max,group);
-			ifile.extract("mass",species_param[i].mass ,group);
-			ifile.extract("charge",species_param[i].charge ,group);
-			ifile.extract("density",species_param[i].density ,group);
-			ifile.extract("mean_velocity",species_param[i].mean_velocity ,group);
-			if (species_param[i].mean_velocity.size()!=nDim_particle) {
-				WARNING("mean_velocity size : should be " << nDim_particle);
-			}
-			ifile.extract("temperature",species_param[i].temperature ,group);
-			if (species_param[i].temperature.size()==1) {
-				species_param[i].temperature.resize(3);
-				species_param[i].temperature[1]=species_param[i].temperature[2]=species_param[i].temperature[0];
-				WARNING("isotropic temperature T="<< species_param[i].temperature[0]);
-			}
-			ifile.extract("dynamics_type",species_param[i].dynamics_type ,group);
-			ifile.extract("time_frozen",species_param[i].time_frozen ,group);
-			if (species_param[i].time_frozen > 0 && \
-				species_param[i].initialization_type=="maxwell-juettner") {
-				WARNING("For species "<<i<< " possible conflict in maxwell-juettner initialization");
-			}
-			ifile.extract("radiating",species_param[i].radiating ,group);
-			if (species_param[i].dynamics_type=="rrll" && (!species_param[i].radiating)) {
-				WARNING("dynamics_type rrll forcing radiating true");
-				species_param[i].radiating=true;
-			}
-			ifile.extract("bc_part_type",species_param[i].bc_part_type ,group);
-			
-			ifile.extract("ionization_model", species_param[i].ionization_model, group);
-			ifile.extract("atomic_number", species_param[i].atomic_number, group);
-			
-		} else {
-			ERROR("species " << i << " not defined");
-		}
-	}	
+//    ifile.extract("n_species", n_species);
+//	species_param.resize(n_species);
+//	
+//	for (unsigned int i=0; i<n_species; i++) {
+//		ostringstream ss;
+//		ss << "species " << i;
+//		string group=ss.str();
+//		
+//		bool found=false;
+//		vector<string> groups=ifile.getGroups();
+//		for (size_t j=0; j<groups.size(); j++) {
+//			if (groups[j]==group) found=true;
+//		}
+//		if (found) {			
+//			ifile.extract("species_type",species_param[i].species_type,group);
+//            ifile.extract("initialization_type",species_param[i].initialization_type ,group);
+//            ifile.extract("n_part_per_cell",species_param[i].n_part_per_cell,group);
+//            ifile.extract("c_part_max",species_param[i].c_part_max,group);
+//			ifile.extract("mass",species_param[i].mass ,group);
+//			ifile.extract("charge",species_param[i].charge ,group);
+//			ifile.extract("density",species_param[i].density ,group);
+//			ifile.extract("mean_velocity",species_param[i].mean_velocity ,group);
+//			if (species_param[i].mean_velocity.size()!=nDim_particle) {
+//				WARNING("mean_velocity size : should be " << nDim_particle);
+//			}
+//			ifile.extract("temperature",species_param[i].temperature ,group);
+//			if (species_param[i].temperature.size()==1) {
+//				species_param[i].temperature.resize(3);
+//				species_param[i].temperature[1]=species_param[i].temperature[2]=species_param[i].temperature[0];
+//				WARNING("isotropic temperature T="<< species_param[i].temperature[0]);
+//			}
+//			ifile.extract("dynamics_type",species_param[i].dynamics_type ,group);
+//			ifile.extract("time_frozen",species_param[i].time_frozen ,group);
+//			if (species_param[i].time_frozen > 0 && \
+//				species_param[i].initialization_type=="maxwell-juettner") {
+//				WARNING("For species "<<i<< " possible conflict in maxwell-juettner initialization");
+//			}
+//			ifile.extract("radiating",species_param[i].radiating ,group);
+//			if (species_param[i].dynamics_type=="rrll" && (!species_param[i].radiating)) {
+//				WARNING("dynamics_type rrll forcing radiating true");
+//				species_param[i].radiating=true;
+//			}
+//			ifile.extract("bc_part_type",species_param[i].bc_part_type ,group);
+//			
+//			ifile.extract("ionization_model", species_param[i].ionization_model, group);
+//			ifile.extract("atomic_number", species_param[i].atomic_number, group);
+//			
+//		} else {
+//			ERROR("species " << i << " not defined");
+//		}
+//	}	
+	n_species=0;
 
-	n_laser=0;
-	ifile.extract("n_laser", n_laser);
-	laser_param.resize(n_laser);
-	
-	for (unsigned int i=0; i<n_laser; i++) {
-		ostringstream ss;
-		ss << "laser " << i;
-		string group=ss.str();
+	while (ifile.existGroup("species",n_species)) {
+		SpeciesStructure tmpSpec;
 		
-		bool found=false;
-		vector<string> groups=ifile.getGroups();
-		for (size_t j=0; j<groups.size(); j++) {
-			if (groups[j]==group) found=true;
+		ifile.extract("species_type",tmpSpec.species_type,"species",n_species);
+		ifile.extract("initialization_type",tmpSpec.initialization_type ,"species",n_species);
+		ifile.extract("n_part_per_cell",tmpSpec.n_part_per_cell,"species",n_species);
+		ifile.extract("c_part_max",tmpSpec.c_part_max,"species",n_species);
+		ifile.extract("mass",tmpSpec.mass ,"species",n_species);
+		ifile.extract("charge",tmpSpec.charge ,"species",n_species);
+		ifile.extract("density",tmpSpec.density ,"species",n_species);
+		ifile.extract("mean_velocity",tmpSpec.mean_velocity ,"species",n_species);
+		if (tmpSpec.mean_velocity.size()!=nDim_particle) {
+			WARNING("mean_velocity size : should be " << nDim_particle);
 		}
-		if (found) {
-			ifile.extract("a0",laser_param[i].a0 ,group);
-			ifile.extract("angle",laser_param[i].angle ,group);
-			ifile.extract("delta",laser_param[i].delta ,group);
-			ifile.extract("time_profile",laser_param[i].time_profile ,group);
-			ifile.extract("int_params",laser_param[i].int_params ,group);
-			ifile.extract("double_params",laser_param[i].double_params ,group);
+		ifile.extract("temperature",tmpSpec.temperature ,"species",n_species);
+		if (tmpSpec.temperature.size()==1) {
+			tmpSpec.temperature.resize(3);
+			tmpSpec.temperature[1]=tmpSpec.temperature[2]=tmpSpec.temperature[0];
+			WARNING("isotropic temperature T="<< tmpSpec.temperature[0]);
 		}
+		ifile.extract("dynamics_type",tmpSpec.dynamics_type ,"species",n_species);
+		ifile.extract("time_frozen",tmpSpec.time_frozen ,"species",n_species);
+		if (tmpSpec.time_frozen > 0 && \
+			tmpSpec.initialization_type=="maxwell-juettner") {
+			WARNING("For species "<< n_species << " possible conflict in maxwell-juettner initialization");
+		}
+		ifile.extract("radiating",tmpSpec.radiating ,"species",n_species);
+		if (tmpSpec.dynamics_type=="rrll" && (!tmpSpec.radiating)) {
+			WARNING("dynamics_type rrll forcing radiating true");
+			tmpSpec.radiating=true;
+		}
+		ifile.extract("bc_part_type",tmpSpec.bc_part_type ,"species",n_species);
 		
-		if (laser_param[i].time_profile=="constant") {
-			if (laser_param[i].double_params.size()<1) {
-				WARNING("Laser always on");
-				laser_param[i].double_params.resize(1);
-				laser_param[i].double_params[0]=sim_time;
-			}
-			if (laser_param[i].double_params.size()>1) {
-				WARNING("Too much parameters for laser "<< i <<" time_profile ");
-			}
-			laser_param[i].double_params.resize(1);
-			laser_param[i].double_params[0]*= 2.0*M_PI;
-		} else {
-			ERROR("Laser time_profile " << laser_param[i].time_profile << " not defined");
-		}// endif laser
+		ifile.extract("ionization_model", tmpSpec.ionization_model, "species",n_species);
+		ifile.extract("atomic_number", tmpSpec.atomic_number, "species",n_species);
+		
+		species_param.push_back(tmpSpec);
+		n_species++;
 	}
 	
+	
+//	n_laser=0;
+//	ifile.extract("n_laser", n_laser);
+//	laser_param.resize(n_laser);
+//	
+//	for (unsigned int i=0; i<n_laser; i++) {
+//		ostringstream ss;
+//		ss << "laser " << i;
+//		string group=ss.str();
+//		
+//		bool found=false;
+//		vector<string> groups=ifile.getGroups();
+//		for (size_t j=0; j<groups.size(); j++) {
+//			if (groups[j]==group) found=true;
+//		}
+//		if (found) {
+//			ifile.extract("a0",laser_param[i].a0 ,group);
+//			ifile.extract("angle",laser_param[i].angle ,group);
+//			ifile.extract("delta",laser_param[i].delta ,group);
+//			ifile.extract("time_profile",laser_param[i].time_profile ,group);
+//			ifile.extract("int_params",laser_param[i].int_params ,group);
+//			ifile.extract("double_params",laser_param[i].double_params ,group);
+//		}
+//		
+//		if (laser_param[i].time_profile=="constant") {
+//			if (laser_param[i].double_params.size()<1) {
+//				WARNING("Laser always on");
+//				laser_param[i].double_params.resize(1);
+//				laser_param[i].double_params[0]=sim_time;
+//			}
+//			if (laser_param[i].double_params.size()>1) {
+//				WARNING("Too much parameters for laser "<< i <<" time_profile ");
+//			}
+//			laser_param[i].double_params.resize(1);
+//			laser_param[i].double_params[0]*= 2.0*M_PI;
+//		} else {
+//			ERROR("Laser time_profile " << laser_param[i].time_profile << " not defined");
+//		}// endif laser
+//	}
+	n_laser=0;
+	
+	while (ifile.existGroup("laser",n_laser)) {
+		LaserStructure tmpLaser;
+		ifile.extract("a0",tmpLaser.a0 ,"laser",n_laser);
+		ifile.extract("angle",tmpLaser.angle ,"laser",n_laser);
+		ifile.extract("delta",tmpLaser.delta ,"laser",n_laser);
+		ifile.extract("time_profile",tmpLaser.time_profile ,"laser",n_laser);
+		ifile.extract("int_params",tmpLaser.int_params ,"laser",n_laser);
+		ifile.extract("double_params",tmpLaser.double_params ,"laser",n_laser);
+
+		if (tmpLaser.time_profile=="constant") {
+			if (tmpLaser.double_params.size()<1) {
+				WARNING("Laser always on");
+				tmpLaser.double_params.resize(1);
+				tmpLaser.double_params[0]=sim_time;
+			}
+			if (tmpLaser.double_params.size()>1) {
+				WARNING("Too much parameters for laser "<< n_laser <<" time_profile ");
+			}
+			tmpLaser.double_params.resize(1);
+			tmpLaser.double_params[0]*= 2.0*M_PI;
+		} else {
+			ERROR("Laser time_profile " << tmpLaser.time_profile << " not defined");
+		}// endif laser
+		
+		
+		laser_param.push_back(tmpLaser);
+		n_laser++;
+	}
 }
 
 	/*******************************************************************************************************************
@@ -220,56 +291,53 @@ void PicParams::setDimensions()
 void PicParams::print()
 {
 	//! \todo{Display parameters at runtime}
-	cout << "\tGeometry : " << geometry
-		<< "\t\t-> (nDim_particle, nDim_field) : (" << nDim_particle << ", "  << nDim_field << ")" << endl;
-	cout << "\t(res_time, sim_time) : (" << res_time << ", " << sim_time << ")"
-		<< "\t\t-> (n_time, timestep) : (" << n_time << ", " << timestep << ")" << endl;
+	MESSAGE(1,"Geometry : " << geometry << "\t\t-> (nDim_particle, nDim_field) : (" << nDim_particle << ", "  << nDim_field << ")");
+	MESSAGE(1,"(res_time, sim_time) : (" << res_time << ", " << sim_time << ")"
+		<< "\t\t-> (n_time, timestep) : (" << n_time << ", " << timestep << ")");
 	
 	//! \ sim_length[i]*=2.0*M_PI;
 	//! \ cell_length[i]=2.0*M_PI/res_space[i];
 	for ( unsigned int i=0 ; i<sim_length.size() ; i++ )
-		cout << "\tdim " << i << " - (res_space, sim_length) : (" << res_space[i] << ", " << sim_length[i] << ")"
-			<< "\t\t-> (n_space, cell_length) : " << "(" << n_space[i] << ", " << cell_length[i] << ")" << endl;
-	cout << "\t\tcell_volume : " << cell_volume << endl;
+		MESSAGE(1,"dim " << i << " - (res_space, sim_length) : (" << res_space[i] << ", " << sim_length[i] << ")"
+			<< "\t\t-> (n_space, cell_length) : " << "(" << n_space[i] << ", " << cell_length[i] << ")");
+	MESSAGE(2,"cell_volume : " << cell_volume);
 
 	//! \ vacuum_length[i]*=2.0*M_PI;
 	//! \ plasma_length[i]*=2.0*M_PI;
-	cout << "\tplasma_geometry : " << plasma_geometry << endl;
+	MESSAGE(1,"plasma_geometry : " << plasma_geometry);
 	for ( unsigned int i=0 ; i<plasma_length.size() ; i++ )
-		cout << "\t(plasma_length, vacuum_length) : (" << plasma_length[i] << ", " << vacuum_length[i] << ")" << endl;
-	cout << "\tn_species : " << n_species << endl;
+		MESSAGE(1,"(plasma_length, vacuum_length) : (" << plasma_length[i] << ", " << vacuum_length[i] << ")");
+	MESSAGE(1,"n_species : " << n_species);
 
-	cout << "\twavelength, sim_units, n_particles : parameters not used for now" << endl;
+	MESSAGE(1,"wavelength, sim_units, n_particles : parameters not used for now");
 	//! \ n_part_max : Initialised in Species::Species()
 	for ( unsigned int i=0 ; i<n_species ; i++ ) {
-		cout << "\t(species_type, initialization_type, n_part_per_cell, c_part_max) : ("
+		MESSAGE(1,"(species_type, initialization_type, n_part_per_cell, c_part_max) : ("
 			<< species_param[i].species_type << ", " << species_param[i].initialization_type << ", " << species_param[i].n_part_per_cell << ", " << species_param[i].c_part_max << ") - "  
-			<< "(mass, charge, density) : (" << species_param[i].mass << ", " <<  species_param[i].charge << ", " << species_param[i].density << ")" << endl;
+			<< "(mass, charge, density) : (" << species_param[i].mass << ", " <<  species_param[i].charge << ", " << species_param[i].density << ")");
 			for ( unsigned int j=0 ; j<species_param[i].mean_velocity.size() ; j++ )
-				cout << "\t\tdim " << j << " - (mean_velocity, temperature) : (" << species_param[i].mean_velocity[j] << ", " << species_param[i].temperature[j] << ")" << endl;
-		cout << "\t\t (dynamics_type, bc_part_type, time_frozen, radiating) : (" << species_param[i].dynamics_type <<  ", " << species_param[i].bc_part_type <<  ", " << species_param[i].time_frozen <<  ", " << species_param[i].radiating << ")" << endl;
+				MESSAGE(2,"dim " << j << " - (mean_velocity, temperature) : (" << species_param[i].mean_velocity[j] << ", " << species_param[i].temperature[j] << ")");
+		MESSAGE(2," (dynamics_type, bc_part_type, time_frozen, radiating) : (" << species_param[i].dynamics_type <<  ", " << species_param[i].bc_part_type <<  ", " << species_param[i].time_frozen <<  ", " << species_param[i].radiating << ")");
 	}
 
-	cout << "\tn_laser : " << n_laser << endl;
+	MESSAGE(1,"n_laser : " << n_laser);
 	for ( unsigned int i=0 ; i<n_laser ; i++ ) {
-		cout << "\t\t(a0, angle, delta, time_profile) : (" << laser_param[i].a0 <<  ", " << laser_param[i].angle <<  ", " << laser_param[i].delta <<  ", " << laser_param[i].time_profile << ")" << endl;
+		MESSAGE(2,"(a0, angle, delta, time_profile) : (" << laser_param[i].a0 <<  ", " << laser_param[i].angle <<  ", " << laser_param[i].delta <<  ", " << laser_param[i].time_profile << ")");
 
 		if (!laser_param[i].int_params.empty()) {
-			cout << "\t\tint_params : ";
-			for ( unsigned int j=0 ; j<laser_param[i].int_params.size()-1 ; j++ )
-				cout << laser_param[i].int_params[j] << ", ";
-			cout << laser_param[i].int_params[laser_param[i].int_params.size()-1] << endl;
+			MESSAGE(2,"int_params : ");
+			for ( unsigned int j=0 ; j<laser_param[i].int_params.size() ; j++ )
+				MESSAGE(3, laser_param[i].int_params[j]);
 		}
 		if (!laser_param[i].double_params.empty()) {
 			//! \ laser_param[i].double_params[0]*= 2.0*M_PI;
-			cout << "\t\tdouble_params : ";
-			for ( unsigned int j=0 ; j<laser_param[i].double_params.size()-1 ; j++ )
-				cout << laser_param[i].double_params[j] << ", ";
-			cout << laser_param[i].double_params[laser_param[i].double_params.size()-1] << endl;
+			MESSAGE(2,"double_params : ");
+			for ( unsigned int j=0 ; j<laser_param[i].double_params.size() ; j++ )
+				MESSAGE(3,laser_param[i].double_params[j]);
 		}
 	}
 
-	cout << "\tInterpolation_order : " <<  interpolation_order << endl;
+	MESSAGE(1,"Interpolation_order : " <<  interpolation_order);
 
 }
 

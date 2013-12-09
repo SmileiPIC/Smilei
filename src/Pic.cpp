@@ -104,6 +104,16 @@ int main (int argc, char* argv[])
 	
 	
 	// ----------------------------------------------------------------------------
+<<<<<<< HEAD
+=======
+	// Create diagnostics
+	// ----------------------------------------------------------------------------
+	Diagnostic diags(&params,&diag_params, smpi);
+	
+    DEBUG("--------------------- END --------------------------------------------------------------------------");
+
+	// ----------------------------------------------------------------------------
+>>>>>>> d9430c98fb22fc65390629334be5bfeebc514228
 	// Initialize the electromagnetic fields and interpolation-projection operators
 	// according to the simulation geometry
 	// ----------------------------------------------------------------------------
@@ -135,7 +145,7 @@ int main (int argc, char* argv[])
 	smpi->solvePoissonPara( EMfields );		//champs->initMaxwell();
 	
     smpi->barrier();
-    
+
     
 	// ------------------------------------------------------------------------
 	// Initialize the simulation times time_prim at n=0 and time_dual at n=-1/2
@@ -154,6 +164,7 @@ int main (int argc, char* argv[])
 	t0 = MPI_Wtime();
     
 	for (unsigned int itime=1 ; itime <= params.n_time ; itime++) {
+
 		// calculate new times
 		// -------------------
 		time_prim += params.timestep;
@@ -190,7 +201,10 @@ int main (int argc, char* argv[])
         // call the various diagnostics
 		// ----------------------------
 		
-		diags.runAllDiags(itime, EMfields, vecSpecies);
+		diags.runAllDiags(itime, EMfields, vecSpecies, Interp);
+		if  (itime % 500 == 0)
+			sio->writeAllFieldsSingleFileTime( EMfields, itime );
+
 	}//END of the time loop	
 	
 	smpi->barrier();
@@ -216,12 +230,15 @@ int main (int argc, char* argv[])
 	if (params.nDim_field == 1) { // If 1D
 		//! \todo{Not //, processes write sequentially to validate. OK in 1D}
 		smpi->writeFields( EMfields );
+		// Using HDF5, both (sio, smpi) while python tools not updated
 		sio->writeFields( EMfields );
 	}
 	else { // If 2D
 		sio->writeFields( EMfields );
-		sio->writeFieldsPP( EMfields, time_dual, smpi->getRank() );
+		//sio->writeFieldsPP( EMfields, time_dual, smpi->getRank() );
 	}
+	if  ( params.n_time % 500 != 0)
+		sio->writeAllFieldsSingleFileTime( EMfields, params.n_time );
 	
 	
 	// ------------------------------

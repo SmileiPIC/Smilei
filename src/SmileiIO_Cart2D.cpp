@@ -205,33 +205,60 @@ void SmileiIO_Cart2D::createPattern( PicParams* params, SmileiMPI* smpi )
 
 }
 
-void SmileiIO_Cart2D::write( Field* field, string name, double time )
+// ---------------------------------------------------------------------------------------------------------------------
+// For time iteration "itime", write current field in the time step file
+// Version to keep
+// ---------------------------------------------------------------------------------------------------------------------
+void SmileiIO_Cart2D::writeFieldsSingleFile( Field* field, hid_t file_id, int itime )
 {
-	MPI_Info info  = MPI_INFO_NULL;
-	hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, info);
-	ostringstream name_t;
-	name_t.str(""); name_t << name << "_" << time << ".h5";
-	hid_t file_t = H5Fcreate( name_t.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
-	H5Pclose(plist_id);
-
 	std::vector<unsigned int> isPrimal = field->isPrimal_;
 	Field2D* f2D =  static_cast<Field2D*>(field);
 
 	hid_t memspace  = memspace_ [ isPrimal[0] ][ isPrimal[1] ];
 	hid_t filespace = filespace_[ isPrimal[0] ][ isPrimal[1] ];
 
-	plist_id = H5Pcreate(H5P_DATASET_CREATE);
-	hid_t dset_id = H5Dcreate(file_t, "Field", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+	hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
+	//chunk_dims[0] = ???;
+	//H5Pset_chunk(plist_id, 2, chunk_dims); // Problem different dims for each process
+	hid_t dset_id = H5Dcreate(file_id, (field->name).c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
 	H5Pclose(plist_id);
+
 	H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &(f2D->data_[0][0]) );
-	H5Dclose( dset_id );
+	H5Dclose(dset_id);
 
-
-	H5Fclose( file_t );
 
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// For time iteration "itime", write current field in the time step dataset of the global file
+// Version to keep
+// ---------------------------------------------------------------------------------------------------------------------
+void SmileiIO_Cart2D::writeFieldsSingleFileTime( Field* field, hid_t group_id )
+{
+	std::vector<unsigned int> isPrimal = field->isPrimal_;
+	Field2D* f2D =  static_cast<Field2D*>(field);
+
+	hid_t memspace  = memspace_ [ isPrimal[0] ][ isPrimal[1] ];
+	hid_t filespace = filespace_[ isPrimal[0] ][ isPrimal[1] ];
+
+	hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
+	//chunk_dims[0] = ???;
+	//H5Pset_chunk(plist_id, 2, chunk_dims); // Problem different dims for each process
+	//hid_t dset_id = H5Dcreate(file_id, (field->name).c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+	hid_t dset_id = H5Dcreate2(group_id, (field->name).c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+
+	H5Pclose(plist_id);
+
+	H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &(f2D->data_[0][0]) );
+	H5Dclose(dset_id);
+
+
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Write current field in its own files, data are overwritten at each call ( field.h5 )
+// Kept while python tools not updated
+// ---------------------------------------------------------------------------------------------------------------------
 void SmileiIO_Cart2D::write( Field* field, string name )
 {
 	std::vector<unsigned int> isPrimal = field->isPrimal_;
@@ -273,7 +300,43 @@ void SmileiIO_Cart2D::write( Field* field, string name )
 
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// For time iteration "itime", write current field in its own time step file
+// Kept while python tools not updated
+// ---------------------------------------------------------------------------------------------------------------------
+void SmileiIO_Cart2D::write( Field* field, string name, double time )
+{
+	MPI_Info info  = MPI_INFO_NULL;
+	hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
+	H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, info);
+	ostringstream name_t;
+	name_t.str(""); name_t << name << "_" << time << ".h5";
+	hid_t file_t = H5Fcreate( name_t.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+	H5Pclose(plist_id);
 
+	std::vector<unsigned int> isPrimal = field->isPrimal_;
+	Field2D* f2D =  static_cast<Field2D*>(field);
+
+	hid_t memspace  = memspace_ [ isPrimal[0] ][ isPrimal[1] ];
+	hid_t filespace = filespace_[ isPrimal[0] ][ isPrimal[1] ];
+
+	plist_id = H5Pcreate(H5P_DATASET_CREATE);
+	hid_t dset_id = H5Dcreate(file_t, "Field", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+	H5Pclose(plist_id);
+	H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &(f2D->data_[0][0]) );
+	H5Dclose( dset_id );
+
+
+	H5Fclose( file_t );
+
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Debug tools
+// Each MPI process write its data (including ghost cells) in separated files ( field_MPI_Rank.h5 ), data are overwritten at each call
+// Kept while python tools not updated
+// Only in 2D
+// ---------------------------------------------------------------------------------------------------------------------
 void SmileiIO_Cart2D::writePerProcess( Field* field, string name, double time, int rank )
 {
 	ostringstream iname;
@@ -301,3 +364,4 @@ void SmileiIO_Cart2D::writePerProcess( Field* field, string name, double time, i
 	status = H5Fclose(file_id);
 
 }
+

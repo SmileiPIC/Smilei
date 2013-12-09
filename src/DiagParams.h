@@ -12,6 +12,7 @@
 #include <vector>
 #include <string>
 #include "InputData.h"
+#include "PicParams.h"
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! DiagParams class: holds all the properties of the simulation that are read from the input file
@@ -31,8 +32,14 @@ public:
 	//! map output every map_every (namelist group "diagnostic map" key "every")
 	unsigned int map_every;
 
+<<<<<<< HEAD
     //! scalar output every probe0d_every (namelist group "diagnostic probe0d" key "every")
 	unsigned int probe0d_every;
+=======
+	//! scalar output every probe_every (namelist group "diagnostic probe0d" key "every")
+	unsigned int probe0d_every;
+    std::vector<std::vector<double> > ps_coor;
+>>>>>>> d9430c98fb22fc65390629334be5bfeebc514228
 
 };
 

@@ -2,7 +2,7 @@
 
 using namespace std;
 
-InputData::InputData(std::string fname) {
+InputData::InputData(string fname) {
 	parseFile(fname);
 }
 
@@ -23,7 +23,7 @@ void InputData::write(string filename, string comment) {
 
 void InputData::write(ostream &ostr, string comment) {
 	if (!comment.empty()) ostr << "# " << comment << endl << endl;
-	map<string, map<string, string> >::iterator it_type;
+	vector<pair<string , map <string,string> > >::iterator  it_type;
 	for(it_type = map_.begin(); it_type != map_.end(); it_type++) {
 		if (!it_type->first.empty()) ostr << it_type->first << endl;
 		map<string, string>::iterator it_type2;
@@ -39,6 +39,9 @@ void InputData::write(ostream &ostr, string comment) {
 void InputData::parseFile(string filename) {
 	ifstream istr(filename.c_str());
 	map_.clear();
+	map <string,string> defaultmap;
+	map <string,string> groupmap;
+	
 	if (istr.is_open()) {
 		string strLine ="";
 		string group("");
@@ -47,8 +50,13 @@ void InputData::parseFile(string filename) {
 			strLine=cleanString(strLine);
 			if (!strLine.empty()) {
 				if (strLine.find('=') == string::npos) {
-					group=strLine;
-					if (group == "end") group ="";
+					if (strLine == "end") {
+						map_.push_back(make_pair(group,groupmap));
+						group="";
+						groupmap.clear();
+					} else {
+						group=strLine;
+					}
 				} else {
                     stringstream ss(strLine);
                     string item;
@@ -57,11 +65,17 @@ void InputData::parseFile(string filename) {
                         size_t posEqual=item.find('=');
                         string left=cleanString(item.substr(0,posEqual));
                         string right=cleanString(item.substr(posEqual+1));
-                        map_[group][left]=right;
+						if (group.empty()) {
+							defaultmap[left]=right;
+						} else {
+							groupmap[left]=right;
+						}
                     }	
 				}
 			}
 		}
+		if (!group.empty()) ERROR("Final group "<< group << " not closed. Check the namelist");
+		map_.push_back(make_pair("",defaultmap));
 		istr.close();
 	} else {
 		ERROR("File " << filename << "does not exists");
@@ -70,11 +84,40 @@ void InputData::parseFile(string filename) {
 
 vector<string> InputData::getGroups() {
 	vector<string> vecOut;
-	map<string, map<string, string> >::iterator it_type;
-	for(it_type = map_.begin(); it_type != map_.end(); it_type++) {
+	for(vector<pair<string , map <string,string> > >::iterator  it_type = map_.begin(); it_type != map_.end(); it_type++) {
 		vecOut.push_back(it_type->first);
 	}
 	return vecOut;
 }
 
+bool InputData::existKey(string key, string group, unsigned int occurrence) {
+	unsigned int n_occur=0;
+	for (vector<pair<string , map <string,string> > >::iterator  it_type = map_.begin(); it_type != map_.end(); it_type++) {
+		if (group == it_type->first) {
+			if (occurrence==n_occur) {
+				for (map <string,string>::iterator  it_type2 = it_type->second.begin(); it_type2 != it_type->second.end(); it_type2++) {
+					if (it_type2->first==key) {
+						DEBUG("FOUND KEY");
+						return true;
+					}
+				}
+			}
+			n_occur++;
+		}		
+	}
+	return true;
+}
+
+bool InputData::existGroup(string group, unsigned int occurrence) {
+	unsigned int n_occur=0;
+	for (vector<pair<string , map <string,string> > >::iterator  it_type = map_.begin(); it_type != map_.end(); it_type++) {
+		if (group == it_type->first) {
+			if (occurrence==n_occur) {
+				return true;
+			}
+			n_occur++;
+		}		
+	}
+	return false;
+}
 
