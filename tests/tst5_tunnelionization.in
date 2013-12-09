@@ -116,3 +116,10 @@ diagnostic map
 	every = 10
 end
 
+diagnostic probe0d
+	every = 10
+	x = 3 4 5
+	y = 1 2 4
+	z = 5 6 7
+end
+

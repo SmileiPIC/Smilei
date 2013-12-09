@@ -12,6 +12,7 @@
 #include <fstream>
 #include <hdf5.h>
 #include "DiagnosticScalar.h"
+#include "Probe0D.h"
 
 class PicParams;
 class SmileiMPI;
@@ -33,10 +34,17 @@ public:
 
 
 private:
-	unsigned int everyScalar;
 	int num_CPUs;
-	DiagnosticScalar DiagScal;
+	DiagnosticScalar diagScal;
+    unsigned int everyScalar;
 	
+    Probe0D probe0d;
+	unsigned int everyProbe0D;
+    
+    Interpolator* interp_;
+
+    unsigned int everyMap;
+
 };
 
 #endif

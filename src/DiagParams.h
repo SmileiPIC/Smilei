@@ -30,7 +30,10 @@ public:
 
 	//! map output every map_every (namelist group "diagnostic map" key "every")
 	unsigned int map_every;
-	
+
+    //! scalar output every probe0d_every (namelist group "diagnostic probe0d" key "every")
+	unsigned int probe0d_every;
+
 };
 
 #endif

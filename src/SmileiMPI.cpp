@@ -113,6 +113,8 @@ void SmileiMPI::bcast( PicParams& params )
 void SmileiMPI::bcast( DiagParams& params )
 {
 	bcast(params.scalar_every);
+	bcast(params.map_every);
+	bcast(params.probe0d_every);
 }
 
 void SmileiMPI::bcast( string& val )
