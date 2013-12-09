@@ -34,16 +34,14 @@ void Probe0D::set_proc(){
         for(unsigned int iDim=0; iDim!=ps_coor.size();++iDim){
             if(smpi_->getDomainLocalMin(iDim)>ps_coor[iDim][p] || smpi_->getDomainLocalMax(iDim)<ps_coor[iDim][p]) {
                 inside=false;    
+            } else { 
+                n_probe_loc+=1;
             }
-            else  n_probe_loc+=1;
-            
         }
         here[p]=inside;
     }
     
 }
-
-
 
 void Probe0D::run(int timestep, ElectroMagn* EMfields, Interpolator* interp){
     unsigned int count=0;
@@ -60,5 +58,3 @@ void Probe0D::run(int timestep, ElectroMagn* EMfields, Interpolator* interp){
     
     
 }
-
-

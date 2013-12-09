@@ -115,8 +115,11 @@ void SmileiMPI::bcast( DiagParams& params )
 	bcast(params.scalar_every);
 	bcast(params.map_every);
 	bcast(params.probe0d_every);
+<<<<<<< HEAD
+=======
 	bcast(params.ps_coor);
     
+>>>>>>> d9430c98fb22fc65390629334be5bfeebc514228
 }
 
 void SmileiMPI::bcast( string& val )

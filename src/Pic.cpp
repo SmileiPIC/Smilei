@@ -32,6 +32,7 @@
 #include <iostream>
 
 #include "Diagnostic.h"
+#include "prob0D.h"
 
 using namespace std;
 
@@ -103,6 +104,8 @@ int main (int argc, char* argv[])
 	
 	
 	// ----------------------------------------------------------------------------
+<<<<<<< HEAD
+=======
 	// Create diagnostics
 	// ----------------------------------------------------------------------------
 	Diagnostic diags(&params,&diag_params, smpi);
@@ -110,6 +113,7 @@ int main (int argc, char* argv[])
     DEBUG("--------------------- END --------------------------------------------------------------------------");
 
 	// ----------------------------------------------------------------------------
+>>>>>>> d9430c98fb22fc65390629334be5bfeebc514228
 	// Initialize the electromagnetic fields and interpolation-projection operators
 	// according to the simulation geometry
 	// ----------------------------------------------------------------------------
@@ -121,7 +125,12 @@ int main (int argc, char* argv[])
     
 	// projection operator (virtual)
 	Projector* Proj = ProjectorFactory::create(params, smpi);
-    
+
+    // ----------------------------------------------------------------------------
+	// Create diagnostics
+	// ----------------------------------------------------------------------------
+	Diagnostic diags(&params,&diag_params, smpi);	
+
 	// -----------------------------------
 	// Initialize the electromagnetic fields
 	// -----------------------------------   
