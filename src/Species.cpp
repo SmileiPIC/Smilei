@@ -586,8 +586,8 @@ void Species::swap_part(Particle* part1, Particle* part2)
 {
 	//!\todo hard compute of part_mem_size must be replaced
 	int part_mem_size=(2*ndim+3+1)*sizeof(double)+sizeof(short);
-	memcpy( &(swapPart->buf), &(part1->buf), part_mem_size);
-	memcpy( &(part1->buf), &(part2->buf), part_mem_size);
-	memcpy( &(part2->buf), &(swapPart->buf), part_mem_size);
+	memcpy( (&(swapPart->buf)[0]), (&(part1->buf)[0]), part_mem_size);
+	memcpy( (&(part1->buf)[0]), (&(part2->buf)[0]), part_mem_size);
+	memcpy( (&(part2->buf)[0]), (&(swapPart->buf)[0]), part_mem_size);
 
 }

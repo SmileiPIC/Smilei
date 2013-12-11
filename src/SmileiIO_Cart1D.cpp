@@ -105,7 +105,6 @@ void SmileiIO_Cart1D::createPattern( PicParams* params, SmileiMPI* smpi )
 	}
 
 	int nx0 = bufsize[0];
-	int ny0 = bufsize[1] ;
 
 	// memspace [primDual]
 	// fimespace[primDual]
