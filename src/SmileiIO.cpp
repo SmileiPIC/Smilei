@@ -18,8 +18,8 @@ using namespace std;
 
 SmileiIO::SmileiIO( PicParams* params, SmileiMPI* smpi )
 {
-	ostringstream name;
-	name.str(""); name << "particles-" << smpi->getRank() << ".h5" ;
+	ostringstream name("");
+	name << "particles-" << smpi->getRank() << ".h5" ;
 
 	hid_t attribute_id;
 
@@ -39,8 +39,8 @@ SmileiIO::SmileiIO( PicParams* params, SmileiMPI* smpi )
 	nDatasetSpecies = params->n_species;
 	partDataset_id = new hid_t[nDatasetSpecies];
 	for (unsigned int ispec=0 ; ispec<nDatasetSpecies ; ispec++) {
-		ostringstream speciesName;
-		speciesName.str(""); speciesName << params->species_param[ispec].species_type;
+		ostringstream speciesName("");
+		speciesName << params->species_param[ispec].species_type;
 		partDataset_id[ispec] = H5Dcreate(partFile_id, speciesName.str().c_str(), H5T_NATIVE_FLOAT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
 
 		hsize_t scalaire = 1;
@@ -83,7 +83,7 @@ SmileiIO::~SmileiIO()
 	H5Sclose(partMemSpace);
 	for ( unsigned int s=0 ; s<nDatasetSpecies ; s++ )
 		H5Dclose(partDataset_id[s]);
-	delete partDataset_id;
+	delete [] partDataset_id;
 	H5Fclose(partFile_id);
 
 }

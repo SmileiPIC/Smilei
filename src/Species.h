@@ -87,6 +87,8 @@ public:
 	//! string for the species
 	std::string name_str;
 	
+	//! first and last index of each particle bin
+	std::vector<int> bmin, bmax;
 private:
 	//! Effective number of particles (different than the maximum number of particles)
 	unsigned int npart_effective;
@@ -115,8 +117,6 @@ private:
     
     unsigned int atomic_number;
     	
-	//! first and last index of each particle bin
-	std::vector<int> bmin, bmax;
 };
 
 #endif

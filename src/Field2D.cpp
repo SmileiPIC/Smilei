@@ -55,6 +55,7 @@ Field2D::~Field2D()
 
 	if (data_2D!=NULL) {
 		delete [] data_2D;
+		delete [] data_;
 	}
 }
 
