@@ -11,6 +11,7 @@ void DiagParams::parseInputData(InputData &ifile, PicParams& params) {
 	ifile.extract("every",scalar_every,"diagnostic scalar");
 	ifile.extract("every",map_every,"diagnostic map");
 	ifile.extract("every",probe0d_every,"diagnostic probe0d");
+    
 
     ps_coor.resize(params.nDim_field);
 	ifile.extract("x",ps_coor[0],"diagnostic probe0d");
@@ -29,6 +30,7 @@ void DiagParams::parseInputData(InputData &ifile, PicParams& params) {
 	
     for (unsigned int k=0; k<ps_coor.size(); k++) {
         for (unsigned int i=0; i<ps_coor[k].size(); i++) {
+            if (ps_coor[k][i]<0||ps_coor[k][i]>params.sim_length[k]) ERROR("diagnostic probe0d: probe outside the domain");
 			ps_coor[k][i]*=2*M_PI;
             DEBUG("new coordinates" << k << " " << i << " " << ps_coor[k][i]);
 		}

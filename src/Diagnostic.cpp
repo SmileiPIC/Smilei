@@ -21,6 +21,10 @@ interp_(interp)
     everyProbe0D = diagparams->probe0d_every;
 }
 
+void Diagnostic::closeAll (){
+    probe0d.close();
+}
+
 void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Species*>& vecSpecies){	
 	if (everyScalar && timestep % everyScalar == 0) {
 		diagScal.run(timestep, EMfields, vecSpecies);

@@ -113,8 +113,8 @@ diagnostic map
 end
 
 diagnostic probe0d
-	every = 50
-	x = 3 4 10
+	every = 10
+	x = 0.5 0.8
 # 	y = 1 2 4
 # 	z = 5 6 7
 end

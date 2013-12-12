@@ -238,6 +238,8 @@ int main (int argc, char* argv[])
 	delete Proj;
 	delete Interp;
 	delete EMfields;
+    diags.closeAll();
+    
 	for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
 	vecSpecies.clear();
 	
