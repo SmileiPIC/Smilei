@@ -31,6 +31,7 @@ void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Specie
 	}	
 	if (everyProbe0D && timestep % everyProbe0D == 0) {
 		probe0d.run(timestep, EMfields, interp_);
+		probe0d.run2(timestep, EMfields, interp_);
 	}	
 }
 

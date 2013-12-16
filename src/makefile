@@ -4,7 +4,7 @@ SMILEICXX      ?= mpic++
 HDF5_ROOT_DIR ?=
 
 CFLAGS  = -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include  #-Wstrict-aliasing
-LDFLAGS = -lz -lm -L${HDF5_ROOT_DIR}/lib -lhdf5
+LDFLAGS = -lm -L${HDF5_ROOT_DIR}/lib -lhdf5
 
 all: release install
 

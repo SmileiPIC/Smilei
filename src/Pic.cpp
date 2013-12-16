@@ -222,7 +222,7 @@ int main (int argc, char* argv[])
 	//EMfields->dump(&params);  	// Sequential results, 1 file per process
 	if (params.nDim_field == 1) { // If 1D
 		//! \todo{Not //, processes write sequentially to validate. OK in 1D}
-		smpi->writeFields( EMfields );
+		//smpi->writeFields( EMfields );
 		// Using HDF5, both (sio, smpi) while python tools not updated
 		sio->writeFields( EMfields );
 	}
