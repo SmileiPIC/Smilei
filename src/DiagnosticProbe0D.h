@@ -43,6 +43,8 @@ private:
 	MPI_Comm comm;
     MPI_Info info;
 	std::vector<Particle*> probeParticles;
+	std::vector<Particle*> probeParticles2;
+	std::vector<int> probeId;
     std::vector<LocalFields> Eloc_fields;
     std::vector<LocalFields> Bloc_fields;
     std::vector<hid_t> hidGroup;

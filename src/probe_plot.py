@@ -4,7 +4,7 @@ import tables
 import numpy as np
 import matplotlib.pyplot as plt
 
-num_probe = 2
+num_probe = 3
 fields = ['Ex','Ey','Ez','Bx','By','Bz']
 
 
