@@ -89,6 +89,10 @@ public:
 	
 	//! first and last index of each particle bin
 	std::vector<int> bmin, bmax;
+
+        //! Oversize
+        std::vector<unsigned int> oversize;	
+
 private:
 	//! Effective number of particles (different than the maximum number of particles)
 	unsigned int npart_effective;
@@ -106,6 +110,18 @@ private:
 	//! Number of spatial dimension for the particles
 	unsigned int ndim;
 	
+        //! Local minimum of MPI domain
+        double min_loc;
+
+        //! Size of the projection buffer
+        unsigned int size_proj_buffer;
+	
+        //! buffers for currents
+        double *b_Jx,*b_Jy,*b_Jz;
+      
+        //! sub dimensions of buffers for dim > 1
+        unsigned int b_dim0, b_dim1;
+
 	//! Time over which Particles of the considered Species remain frozen
 	double time_frozen;
 	

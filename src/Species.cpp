@@ -45,6 +45,9 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
     
 	// number of spatial dimensions for the particles
 	ndim = params->nDim_particle;
+
+        // Local minimum for definition of bin clusters
+        min_loc = smpi->getDomainLocalMin(ndim-1);
 	
 	// time over which particles remain frozen
 	time_frozen = params->species_param[ispec].time_frozen;
@@ -66,10 +69,32 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 		temperature[i].allocateDims(params->n_space);
 	}
 
+        oversize.resize(params->nDim_field, 0);
+        for (unsigned int i=0 ; i<params->nDim_field ; i++) {
+            oversize[i] = params->oversize[i];
+        }
         // Arrays of the min and max indices of the particle bins
         bmin.resize(params->n_space[ndim-1]);
         bmax.resize(params->n_space[ndim-1]);
                 	
+        //Size of the buffer on which each bin are projected        	
+        //In 1D the particles of a same bin can be projected on 6 different nodes at the second order (oversize = 2)
+        size_proj_buffer = 2 + 2 * oversize[0];
+        for (unsigned int i=1; i< ndim; i++){
+            size_proj_buffer *= params->n_space[i-1] + 2 * oversize[i-1];
+        }
+        cout << "size_proj_buffer = " << size_proj_buffer << endl;
+        //Allocate buffer *********************************************
+        b_Jx = (double *) calloc(3 * size_proj_buffer, sizeof(double));
+        b_Jy = b_Jx + size_proj_buffer ; 
+        b_Jz = b_Jy + size_proj_buffer ;
+        if (ndim > 1){
+            b_dim0 =  2 + 2 * oversize[0];
+                if (ndim > 2){
+                    b_dim1 = params->n_space[1] + 2 * oversize[1] ;
+                }
+        } 
+
     // ---------------------------------------------------------
 	// Calculate density and number of particles for the species
 	// ---------------------------------------------------------
@@ -424,6 +449,7 @@ void Species::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Inter
 	LocalFields Epart;
 	// magnetic field at the particle position
 	LocalFields Bpart;
+        int iloc;
 	
 	// number of particles for this Species
 	int unsigned nParticles = getNbrOfParticles();
@@ -439,28 +465,48 @@ void Species::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Inter
 
 		// for all particles of the Species
 		//#pragma omp parallel for shared (Champs)
-		for (unsigned int iPart=0 ; iPart<nParticles; iPart++ ) {
-			// Interpolate the fields at the particle position
-			(*Interp)(Champs, particles[iPart], &Epart, &Bpart);
-			
-			// Do the ionization
-			if (Ionize && particles[iPart]->charge() < (int) atomic_number) { //AND
-				(*Ionize)(particles[iPart], Epart);
-			}
+                for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++){
 
-			// Push the particle
-			(*Push)(particles[iPart], Epart, Bpart, gf);
+                    //reset buffers 
+                    for (iloc = 0; iloc < 3 * size_proj_buffer; iloc++) b_Jx[iloc] = 0.;
 
-			// Apply boundary condition on the particles
-			// Boundary Condition may be physical or due to domain decomposition
-			// apply returns 0 if iPart is no more in the domain local
-			//	if omp then critical on smpi->addPartInExchList, may be applied after // loop
-			//partBoundCond->apply( particles[iPart] );
-			if ( !partBoundCond->apply( particles[iPart] ) ) smpi->addPartInExchList( iPart );
+                    for (unsigned int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
+		    	// Interpolate the fields at the particle position
+		    	(*Interp)(Champs, particles[iPart], &Epart, &Bpart);
+		    	
+		    	// Do the ionization
+		    	if (Ionize && particles[iPart]->charge() < (int) atomic_number) { //AND
+		    		(*Ionize)(particles[iPart], Epart);
+		    	}
 
-			(*Proj)(Champs, particles[iPart], gf);
+		    	// Push the particle
+		    	(*Push)(particles[iPart], Epart, Bpart, gf);
 
-		}// iPart
+		    	// Apply boundary condition on the particles
+		    	// Boundary Condition may be physical or due to domain decomposition
+		    	// apply returns 0 if iPart is no more in the domain local
+		    	//	if omp then critical on smpi->addPartInExchList, may be applied after // loop
+		    	//partBoundCond->apply( particles[iPart] );
+		    	if ( !partBoundCond->apply( particles[iPart] ) ) smpi->addPartInExchList( iPart );
+
+                            if (ndim == 1) {
+		    	        (*Proj)(b_Jx, b_Jy, b_Jz, particles[iPart], gf, ibin, b_dim0);
+                            } else {
+		    	        (*Proj)(Champs, particles[iPart], gf);
+		    	    }                                                      
+
+		    }// iPart
+                    //Copy buffer back to the global array and free buffer**************** 
+                    //This part is dimension dependant !! this is for dim = 1
+                    if (ndim == 1) {
+                        for (unsigned int i = 0; i < size_proj_buffer ; i++){
+                            iloc = ibin + i ;
+                            (*Champs->Jx_)(iloc) += b_Jx[i]; 
+                            (*Champs->Jy_)(iloc) += b_Jy[i]; 
+                            (*Champs->Jz_)(iloc) += b_Jz[i]; 
+                        }
+                    }
+                }// ibin
 //		for (unsigned int iPart=0 ; iPart<nParticles; iPart++ ) {
 //			if ( !partBoundCond->apply( particles[iPart] ) ) smpi->addPartInExchList( iPart );
 //		}
@@ -529,7 +575,7 @@ void Species::sort_part(double dbin)
      
     //Backward pass
     for (unsigned int bin=0;bin<bmin.size()-1;bin++) { //Loop on the bins. To be parallelized with openMP.
-        limit = (bin+1)*dbin;
+        limit = min_loc + (bin+1)*dbin;
         p1 = bmax[bin]-1;
         //If first particles change bin, they do not need to be swapped.
         while (p1 == bmax[bin]-1 && p1 >= bmin[bin]){
@@ -549,7 +595,7 @@ void Species::sort_part(double dbin)
     }
     //Forward pass + Rebracketting
     for (unsigned int bin=1;bin<bmin.size();bin++) { //Loop on the bins. To be parallelized with openMP.
-        limit = (bin)*dbin;
+        limit = min_loc + (bin)*dbin;
         bmin_init = bmin[bin];
         p1 = bmin[bin];
         while (p1 == bmin[bin] && p1 < bmax[bin]){

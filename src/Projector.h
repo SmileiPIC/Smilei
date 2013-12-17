@@ -24,7 +24,8 @@ public:
 	//! \todo Comment more on this overloading of the () operator
 	//! overloading of the () operator
 	virtual void operator() (Field* rho, Particle* part) = 0;
-    
+	//! overloading of the () operator
+	virtual void operator() (double* Jx, double* Jy, double* Jz, Particle* part, double gf, unsigned int bin, unsigned int b_dim0) = 0;
 private:
 };
 

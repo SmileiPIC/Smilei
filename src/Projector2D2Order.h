@@ -10,6 +10,7 @@ public:
 	~Projector2D2Order();
 
 	void operator() (ElectroMagn* champs, Particle* part, double gf);
+	void operator() (double* Jx, double* Jy, double* Jz, Particle* part, double gf, unsigned int bin, unsigned int b_dim0);
 	void operator() (Field* rho, Particle* part);
 private:
     double one_third;
