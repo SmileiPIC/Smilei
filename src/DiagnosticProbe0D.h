@@ -31,24 +31,23 @@ public:
     void set_file_name();
     
     void run(int timestep, ElectroMagn* EMfields, Interpolator* interp);
-    void run2(int timestep, ElectroMagn* EMfields, Interpolator* interp);
+	
+	std::string probeName(int p);
     void open_file();
     void close();
  
 private:
 	SmileiMPI* smpi_;
 
-    std::vector<hid_t> probeFile_id;
     hid_t probeFileGlobal_id;
 	MPI_Comm comm;
     MPI_Info info;
-	std::vector<Particle*> probeParticles;
 	std::vector<Particle*> probeParticles2;
-	std::vector<int> probeId;
+	std::vector<bool> probeId;
     std::vector<LocalFields> Eloc_fields;
     std::vector<LocalFields> Bloc_fields;
     std::vector<hid_t> hidGroup;
-    double data [7];
+	int probeSize;
     
     hsize_t dims[1];
     
