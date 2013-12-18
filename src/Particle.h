@@ -20,6 +20,9 @@ class Particle {
 	//! Destructor for Particle
 	virtual ~Particle();
 
+	//! Method used to get the Particle position pointer
+	inline double* position() const {return Position;}
+
 	//! Method used to get the Particle position
 	inline double  position( int i ) const {return Position[i];}
 	//! Method used to set a new value to the Particle former position

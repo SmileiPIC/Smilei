@@ -42,14 +42,12 @@ private:
     hid_t probeFileGlobal_id;
 	MPI_Comm comm;
     MPI_Info info;
-	std::vector<Particle*> probeParticles2;
+	std::vector<Particle*> probeParticles;
 	std::vector<bool> probeId;
     std::vector<LocalFields> Eloc_fields;
     std::vector<LocalFields> Bloc_fields;
     std::vector<hid_t> hidGroup;
 	int probeSize;
-    
-    hsize_t dims[1];
-    
+        
 };
 #endif 
