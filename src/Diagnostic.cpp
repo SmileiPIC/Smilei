@@ -13,7 +13,7 @@ using namespace std;
 
 Diagnostic::Diagnostic( PicParams* params,  DiagParams* diagparams, SmileiMPI* smpi, Interpolator *interp) : 
 diagScal(params, smpi),
-probe0d(params, smpi, diagparams->ps_coor),
+probe0d(params, diagparams, smpi),
 interp_(interp)
 {
 	everyScalar = diagparams->scalar_every;

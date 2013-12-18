@@ -18,72 +18,36 @@ DiagnosticProbe0D::~DiagnosticProbe0D() {
 }
 
 void DiagnosticProbe0D::close() {
-    H5Fclose(probeFileGlobal_id);
+	H5Fclose(fileId);
 }
 
 
-DiagnosticProbe0D::DiagnosticProbe0D(PicParams* params, SmileiMPI* smpi, vector<vector<double> > ps_coord) :
+DiagnosticProbe0D::DiagnosticProbe0D(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi) :
 smpi_(smpi)
 {
 	// Management of global IO file
 	// All probe in a single file, a dataset per probe
-	ostringstream file_name(""); file_name<<"probe_global.h5";
+	ostringstream file_name(""); file_name<<"Probes0D.h5";
 	
-	MPI_Info info  = MPI_INFO_NULL;
 	hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, info);
-	probeFileGlobal_id = H5Fcreate( file_name.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+	H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, MPI_INFO_NULL);
+	fileId = H5Fcreate( file_name.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
 	H5Pclose(plist_id);
-
-	//>>>>>>>>>>>
-	hid_t group_id = H5Gcreate2(probeFileGlobal_id, "Positions", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	//<<<<<<<<<<<
-
 	
-	for(unsigned int count=0;count!=ps_coord[0].size();++count){
-		bool found=true;
-		for(unsigned int iDim=0; iDim!=ps_coord.size();++iDim){
-			DEBUG(smpi_->getRank() << " " << iDim << " " <<  count << " " << smpi_->getDomainLocalMin(iDim) << " " << ps_coord[iDim][count]  << " " << smpi_->getDomainLocalMax(iDim));
-			if(smpi_->getDomainLocalMin(iDim)>ps_coord[iDim][count] || smpi_->getDomainLocalMax(iDim)<=ps_coord[iDim][count]) {
-				found=false;
-			}
-		}	
-		
-		
-		probeId.push_back(found);
-		
-		Particle *part=new Particle(params->nDim_field);
-		for(unsigned int iDim=0;iDim!=ps_coord.size();++iDim){
-			part->position(iDim)=ps_coord[iDim][count];
-		}
-		probeParticles.push_back(part);
-		
-		
-		hsize_t dims[1] = {ps_coord.size()};
-		hid_t file_space = H5Screate_simple(1, dims, NULL);
-		hid_t plist = H5Pcreate(H5P_DATASET_CREATE);
-		
-		hid_t probeDataset_id = H5Dcreate(group_id, ("/Positions/"+probeName(count)).c_str(), H5T_NATIVE_FLOAT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
-		H5Dwrite(probeDataset_id, H5T_NATIVE_DOUBLE, H5P_DEFAULT, file_space, H5P_DEFAULT,part->position());
-
-		H5Dclose(probeDataset_id);
-		H5Pclose(plist);
-		H5Sclose(file_space);
-		
-
-	}
-	H5Gclose(group_id);
-
-	//    DEBUG("--------------------------------------------------------------");
+	string ver(__VERSION);
 	
-	Eloc_fields.resize(probeParticles.size());
-	Bloc_fields.resize(probeParticles.size());
+	// write version
+	hid_t aid3  = H5Screate(H5S_SCALAR);
+	hid_t atype = H5Tcopy(H5T_C_S1);
+	H5Tset_size(atype, ver.size());
+	H5Tset_strpad(atype,H5T_STR_NULLTERM);
+	hid_t attr3 = H5Acreate2(fileId, "Version", atype, aid3, H5P_DEFAULT, H5P_DEFAULT);
 	
+	H5Awrite(attr3, atype, ver.c_str());
 	
-	//    DEBUG("--------------------------------------------------------------");
-	
-	
-	
+	H5Aclose(attr3);
+	H5Sclose(aid3);
+	H5Tclose(atype);
 
 	
 	// 7 = timestep + Exyz + Bxyz
@@ -97,19 +61,44 @@ smpi_(smpi)
 	H5Pset_layout(plist, H5D_CHUNKED);
 	hsize_t chunk_dims[2] = {1, probeSize};
 	H5Pset_chunk(plist, 2, chunk_dims);
-	// Create 1 dataset per probe
-	for(unsigned int count=0;count!=ps_coord[0].size();++count){
-		hid_t probeDataset_id = H5Dcreate(probeFileGlobal_id, probeName(count).c_str(), H5T_NATIVE_FLOAT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
+
+	hsize_t dimsPos = diagParams->ps_coord.size();
+	hid_t dataspace_id = H5Screate_simple(1, &dimsPos, NULL);
+
+	
+	for(unsigned int count=0;count!=diagParams->ps_coord[0].size();++count){
+		int found=smpi_->getRank();
+		for(unsigned int iDim=0; iDim!=diagParams->ps_coord.size();++iDim){
+			if(smpi_->getDomainLocalMin(iDim)>diagParams->ps_coord[iDim][count] || smpi_->getDomainLocalMax(iDim)<=diagParams->ps_coord[iDim][count]) {
+				found=-1;
+			}
+		}			
+		probeId.push_back(found);
+		
+		Particle *part=new Particle(params->nDim_field);
+		for(unsigned int iDim=0;iDim!=diagParams->ps_coord.size();++iDim){
+			part->position(iDim)=diagParams->ps_coord[iDim][count];
+		}
+		probeParticles.push_back(part);
+		hid_t probeDataset_id = H5Dcreate(fileId, probeName(count).c_str(), H5T_NATIVE_FLOAT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
+		hid_t attribute_id = H5Acreate2 (probeDataset_id, "Position", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT);
+		H5Awrite(attribute_id, H5T_NATIVE_DOUBLE, part->position());
+		H5Aclose(attribute_id);
 		H5Dclose(probeDataset_id);
 	}
+	H5Sclose(dataspace_id);
+	
+	Eloc_fields.resize(probeParticles.size());
+	Bloc_fields.resize(probeParticles.size());
+	
+	// Create 1 dataset per probe
 	
 	H5Pclose(plist);
 	H5Sclose(file_space);
-	
 }
 
 string DiagnosticProbe0D::probeName(int p) {
-	ostringstream prob_name(""); prob_name<<"/probe_"<< setfill('0') << setw(4) << p;
+	ostringstream prob_name(""); prob_name << "p"<< setfill('0') << setw(4) << p;
 	return prob_name.str();
 }
 
@@ -123,12 +112,14 @@ void DiagnosticProbe0D::run(int timestep, ElectroMagn* EMfields, Interpolator* i
 	nulldims[1] = 0;
 	hid_t  partMemSpaceNull = H5Screate_simple(2, nulldims, NULL);
 	
+	vector<double> data(probeSize);
+
 	for (unsigned int count=0; count <probeParticles.size(); count++) {
-		if (probeId[count])
+		if (probeId[count]==smpi_->getRank())
 			(*interp)(EMfields,probeParticles[count],&Eloc_fields[count],&Bloc_fields[count]);
 		
 		// All rank open all probes dataset
-		hid_t dataset_id = H5Dopen2(probeFileGlobal_id, probeName(count).c_str(), H5P_DEFAULT);
+		hid_t dataset_id = H5Dopen2(fileId, probeName(count).c_str(), H5P_DEFAULT);
 		hid_t file_space = H5Dget_space(dataset_id);
 		
 		// Get dataset existing dims
@@ -145,7 +136,7 @@ void DiagnosticProbe0D::run(int timestep, ElectroMagn* EMfields, Interpolator* i
         file_space = H5Dget_space(dataset_id);
         hsize_t start[2];
         hsize_t count2[2];
-		if  (probeId[count]) {
+		if  (probeId[count]==smpi_->getRank()) {
 			count2[0] = 1;
 			count2[1] = probeSize;
 		} else {
@@ -156,7 +147,7 @@ void DiagnosticProbe0D::run(int timestep, ElectroMagn* EMfields, Interpolator* i
         start[1] = 0;
         H5Sselect_hyperslab(file_space, H5S_SELECT_SET, start, NULL, count2, NULL);
 		
-		vector<double> data(probeSize);
+		//! here we fill the probe data!!!
         data[0]=timestep;
         data[1]=Eloc_fields[count].x;
         data[2]=Eloc_fields[count].y;
@@ -168,7 +159,7 @@ void DiagnosticProbe0D::run(int timestep, ElectroMagn* EMfields, Interpolator* i
 		hid_t write_plist = H5Pcreate(H5P_DATASET_XFER);
         H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);
 		
-		if  (probeId[count]) {
+		if  (probeId[count]==smpi_->getRank()) {
 			H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, partMemSpace, file_space, write_plist,&data[0]);
 		} else {
 			// Write 0 data
@@ -181,7 +172,7 @@ void DiagnosticProbe0D::run(int timestep, ElectroMagn* EMfields, Interpolator* i
 		
 		H5Dclose(dataset_id);
     }
-    H5Fflush( probeFileGlobal_id, H5F_SCOPE_GLOBAL );
+    H5Fflush(fileId, H5F_SCOPE_GLOBAL );
     
     H5Sclose(partMemSpaceNull);
     H5Sclose(partMemSpace);

@@ -24,7 +24,7 @@ class DiagnosticProbe0D{
     
 public:
     
-	DiagnosticProbe0D(PicParams* params, SmileiMPI* smpi,std::vector<std::vector<double> > ps_coord);
+	DiagnosticProbe0D(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi);
 	~DiagnosticProbe0D();
 	
 	void set_proc();
@@ -39,14 +39,11 @@ public:
 private:
 	SmileiMPI* smpi_;
 
-    hid_t probeFileGlobal_id;
-	MPI_Comm comm;
-    MPI_Info info;
+    hid_t fileId;
 	std::vector<Particle*> probeParticles;
-	std::vector<bool> probeId;
+	std::vector<int> probeId;
     std::vector<LocalFields> Eloc_fields;
     std::vector<LocalFields> Bloc_fields;
-    std::vector<hid_t> hidGroup;
 	int probeSize;
         
 };

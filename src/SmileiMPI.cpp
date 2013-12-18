@@ -116,7 +116,7 @@ void SmileiMPI::bcast( DiagParams& params )
 	bcast(params.map_every);
 	bcast(params.probe0d_every);
 
-	bcast(params.ps_coor);
+	bcast(params.ps_coord);
 }
 
 void SmileiMPI::bcast( string& val )

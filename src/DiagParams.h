@@ -34,7 +34,7 @@ public:
 
 	//! scalar output every probe_every (namelist group "diagnostic probe0d" key "every")
 	unsigned int probe0d_every;
-    std::vector<std::vector<double> > ps_coor;
+    std::vector<std::vector<double> > ps_coord;
 
 };
 

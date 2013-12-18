@@ -38,7 +38,6 @@ void DiagnosticScalar::compute_proc_gather (ElectroMagn* EMfields, vector<Specie
 	for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
 		vecSpecies[ispec]->computeScalars();		
 	}
-	
 	// definition of the memory allocation vector
 	vector<double> oneProc;
 	for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
@@ -111,7 +110,6 @@ void DiagnosticScalar::compute(){
  				part_tot+=mpi_spec_scalars[iCPU][ispec]["part_number"];
 			}
 			if (part_tot) charge_tot/=part_tot;
-			
 			out_list.push_back(make_pair("charge_tot",charge_tot));
 			out_list.push_back(make_pair("part_tot",part_tot));
 		}

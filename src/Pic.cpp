@@ -186,6 +186,10 @@ int main (int argc, char* argv[])
 			if (params.nDim_field == 1)
 				vecSpecies[ispec]->sort_part(params.cell_length[params.nDim_particle-1]);
 		}
+//		for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
+//			DEBUG(ispec << " " << vecSpecies[ispec]->getNbrOfParticles());
+//		}
+
 		smpi->sumDensities( EMfields );
 		
 		// solve Maxwell's equations
