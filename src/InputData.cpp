@@ -33,7 +33,6 @@ void InputData::write(ostream &ostr, string comment) {
 		if (!it_type->first.empty()) ostr << "end" << endl;
 		ostr << endl;
 	}
-	DEBUG("here");
 }
 
 void InputData::parseStream() {
@@ -48,7 +47,6 @@ void InputData::parseStream() {
 	string group("");
 
 	while (getline(my_stream, strLine)) {
-		DEBUG(strLine);
 		strLine=strLine.substr(0, strLine.find('#'));				
 		strLine=cleanString(strLine);
 		if (!strLine.empty()) {

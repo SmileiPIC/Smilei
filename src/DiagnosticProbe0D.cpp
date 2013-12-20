@@ -21,7 +21,6 @@ void DiagnosticProbe0D::close() {
 	H5Fclose(fileId);
 }
 
-
 DiagnosticProbe0D::DiagnosticProbe0D(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi) :
 smpi_(smpi)
 {

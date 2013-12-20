@@ -83,18 +83,15 @@ int main (int argc, char* argv[])
 		smpiData->barrier();
 	}
 
-	DEBUG("----------------------------------------");
-	
 	// Geometry known, MPI environment specified
 	SmileiMPI* smpi = SmileiMPIFactory::create(params, smpiData);
-	DEBUG("----------------------------------------");
 
 	SmileiIO*  sio  = SmileiIOFactory::create(params, smpi);
 	
 	// Randomize the seed for simulations running in release mode
 	//! \todo{Save the seed in case one wants to re-run the exact same simulation (MG)}
 	RELEASEEXEC(srand (time(NULL)));
-	DEBUG("----------------------------------------");
+	
 	
 	// -------------------------------------------
 	// Declaration of the main objects & operators
@@ -108,8 +105,6 @@ int main (int argc, char* argv[])
 	// dump species at time 0
 	sio->writePlasma( vecSpecies, 0., smpi );
 	
-    DEBUG("--------------------- END --------------------------------------------------------------------------");
-
 	// ----------------------------------------------------------------------------
 	// Initialize the electromagnetic fields and interpolation-projection operators
 	// according to the simulation geometry
