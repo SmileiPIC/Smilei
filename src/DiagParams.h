@@ -21,10 +21,7 @@ class DiagParams {
 	
 public:
 	//! Creator for DiagParams
-	DiagParams();
-
-	//! parse input data for diagnostics
-	void parseInputData(InputData &, PicParams&);
+	DiagParams(InputData &, PicParams&);
 
 	//! scalar output every scalar_every (namelist group "diagnostic scalar" key "every")
 	unsigned int scalar_every;

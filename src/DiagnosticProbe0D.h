@@ -42,8 +42,8 @@ private:
     hid_t fileId;
 	std::vector<Particle*> probeParticles;
 	std::vector<int> probeId;
-    std::vector<LocalFields> Eloc_fields;
-    std::vector<LocalFields> Bloc_fields;
+    LocalFields Eloc_fields;
+    LocalFields Bloc_fields;
 	int probeSize;
         
 };

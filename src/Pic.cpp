@@ -62,33 +62,39 @@ int main (int argc, char* argv[])
 	if ( smpiData->isMaster() ) startingMessage(namelist);
 	
 	// Parse the namelist file (no check!)
-	InputData input_data(namelist);
+	InputData input_data;
+	if ( smpiData->isMaster() ) input_data.parseFile(namelist);
+	
+	smpiData->bcast( input_data );
+	input_data.parseStream();
+	
+
 	DEBUGEXEC(input_data.write(namelist+".debug","parsed namelist"));
 	
 	// Read simulation parameters
-	PicParams params;
-	DiagParams diag_params;
+	PicParams params(input_data);
+	smpiData->init(params);
+	DiagParams diag_params(input_data,params);
 	
-	// Process 0 read namelist, then broadcast to all process
-	if ( smpiData->isMaster() ) {
-		params.parseInputData(input_data); // this variable will hold the input parameters from file
-		diag_params.parseInputData(input_data, params); // this variable will hold the diagnostics parameters from file
+	for (unsigned int i=0;i<smpiData->getSize(); i++) {
+		if (i==smpiData->getRank()) {
+			params.print();
+		}
+		smpiData->barrier();
 	}
-	
-	// Brodcast importa parameters to all nodes
-	smpiData->bcast( params );
-	if ( smpiData->isMaster() ) params.print();
-	
-	smpiData->bcast( diag_params );
-	
+
+	DEBUG("----------------------------------------");
 	
 	// Geometry known, MPI environment specified
 	SmileiMPI* smpi = SmileiMPIFactory::create(params, smpiData);
+	DEBUG("----------------------------------------");
+
 	SmileiIO*  sio  = SmileiIOFactory::create(params, smpi);
 	
 	// Randomize the seed for simulations running in release mode
 	//! \todo{Save the seed in case one wants to re-run the exact same simulation (MG)}
 	RELEASEEXEC(srand (time(NULL)));
+	DEBUG("----------------------------------------");
 	
 	// -------------------------------------------
 	// Declaration of the main objects & operators

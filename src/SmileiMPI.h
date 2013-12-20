@@ -29,8 +29,8 @@ public:
 	inline bool isMaster() { return (smilei_rk==0); }
 	inline void barrier() { MPI_Barrier( SMILEI_COMM_WORLD );}
 
-	void bcast( PicParams& params );
-	void bcast( DiagParams& params );
+	void init( PicParams& params );
+	void bcast( InputData& idata );
 
 	virtual void createTopology( PicParams& params ) {};
 	virtual void createType( PicParams& params ) {};

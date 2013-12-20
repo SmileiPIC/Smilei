@@ -100,10 +100,7 @@ class PicParams {
 	
  public:
 	//! Creator for PicParams
-	PicParams();
-
-	//! \todo Comment these 3 stuffs
-	void parseInputData(InputData &);
+	PicParams(InputData &);
 	void compute();
 	void print();
 	void setDimensions();

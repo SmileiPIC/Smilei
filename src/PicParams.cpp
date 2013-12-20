@@ -4,10 +4,7 @@
 
 using namespace std;
 
-PicParams::PicParams() {
-}
-
-void PicParams::parseInputData(InputData &ifile) {
+PicParams::PicParams(InputData &ifile) {
 	//open and parse the input data file
 
 	DEBUGEXEC(ifile.extract("debug",debug_level));
@@ -95,7 +92,7 @@ void PicParams::parseInputData(InputData &ifile) {
 //			}
 //			ifile.extract("dynamics_type",species_param[i].dynamics_type ,group);
 //			ifile.extract("time_frozen",species_param[i].time_frozen ,group);
-//			if (species_param[i].time_frozen > 0 && \
+//			if (species_param[i].time_frozen > 0 && 
 //				species_param[i].initialization_type=="maxwell-juettner") {
 //				WARNING("For species "<<i<< " possible conflict in maxwell-juettner initialization");
 //			}
@@ -224,6 +221,9 @@ void PicParams::parseInputData(InputData &ifile) {
 		laser_param.push_back(tmpLaser);
 		n_laser++;
 	}
+	
+	compute();
+
 }
 
 	/*******************************************************************************************************************
@@ -265,6 +265,12 @@ void PicParams::compute()
 		ERROR("This should never happen!!!");
 	}
 	
+	n_space_global.resize(3, 1);	//! \todo{3 but not real size !!! Pbs in Species::Species}
+	n_space.resize(3, 1);
+	cell_length.resize(3, 0.);	//! \todo{3 but not real size !!! Pbs in Species::Species}
+	cell_volume = 1;
+	
+	oversize.resize(3, 0);
 	
 	
 }

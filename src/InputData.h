@@ -29,9 +29,12 @@ class PicParams;
 class InputData {
 	
 public:	
-	InputData(std::string);
+	InputData();
 	//! parse file
 	void parseFile(std::string=std::string());
+	
+	//! parse stringstream
+	void parseStream();
 	
 	//! read input data parameters in PicParams
 	void InputDataParam(PicParams&);
@@ -128,6 +131,9 @@ public:
 	//! return the list of groups found
 	std::vector<std::string> getGroups();
 	
+	//! string containing the whole clean namelist
+	std::string namelist;
+
 private:
 	//! this is a function that removes triling spaces and tabs from the beginning and the end of a string
 	std::string cleanString(std::string);

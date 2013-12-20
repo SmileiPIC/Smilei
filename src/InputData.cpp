@@ -2,8 +2,7 @@
 
 using namespace std;
 
-InputData::InputData(string fname) {
-	parseFile(fname);
+InputData::InputData():namelist("") {
 }
 
 string InputData::cleanString(string str) {
@@ -34,52 +33,75 @@ void InputData::write(ostream &ostr, string comment) {
 		if (!it_type->first.empty()) ostr << "end" << endl;
 		ostr << endl;
 	}
+	DEBUG("here");
 }
 
+void InputData::parseStream() {
+	if (namelist.empty()) ERROR("namelist is empty");
+	
+	stringstream my_stream(namelist);
+	map_.clear();
+	map <string,string> defaultmap;
+	map <string,string> groupmap;
+	
+	string strLine ="";
+	string group("");
+
+	while (getline(my_stream, strLine)) {
+		DEBUG(strLine);
+		strLine=strLine.substr(0, strLine.find('#'));				
+		strLine=cleanString(strLine);
+		if (!strLine.empty()) {
+			if (strLine.find('=') == string::npos) {
+				if (strLine == "end") {
+					map_.push_back(make_pair(group,groupmap));
+					group="";
+					groupmap.clear();
+				} else {
+					group=strLine;
+				}
+			} else {
+				stringstream ss(strLine);
+				string item;
+				while(getline(ss, item, ',')) {
+					item=cleanString(item);
+					size_t posEqual=item.find('=');
+					string left=cleanString(item.substr(0,posEqual));
+					string right=cleanString(item.substr(posEqual+1));
+					if (group.empty()) {
+						defaultmap[left]=right;
+					} else {
+						groupmap[left]=right;
+					}
+				}	
+			}
+		}
+	}
+	if (!group.empty()) ERROR("Final group "<< group << " not closed. Check the namelist");
+	map_.push_back(make_pair("",defaultmap));
+}
+
+
 void InputData::parseFile(string filename) {
+	
 	ifstream istr(filename.c_str());
 	map_.clear();
 	map <string,string> defaultmap;
 	map <string,string> groupmap;
 	
+	string strLine ="";
+	namelist.clear();
+	
 	if (istr.is_open()) {
-		string strLine ="";
-		string group("");
 		while (getline(istr, strLine)) {
 			strLine=strLine.substr(0, strLine.find('#'));				
 			strLine=cleanString(strLine);
-			if (!strLine.empty()) {
-				if (strLine.find('=') == string::npos) {
-					if (strLine == "end") {
-						map_.push_back(make_pair(group,groupmap));
-						group="";
-						groupmap.clear();
-					} else {
-						group=strLine;
-					}
-				} else {
-                    stringstream ss(strLine);
-                    string item;
-                    while(getline(ss, item, ',')) {
-                        item=cleanString(item);
-                        size_t posEqual=item.find('=');
-                        string left=cleanString(item.substr(0,posEqual));
-                        string right=cleanString(item.substr(posEqual+1));
-						if (group.empty()) {
-							defaultmap[left]=right;
-						} else {
-							groupmap[left]=right;
-						}
-                    }	
-				}
-			}
+			if (!strLine.empty()) namelist += strLine + "\n";
 		}
-		if (!group.empty()) ERROR("Final group "<< group << " not closed. Check the namelist");
-		map_.push_back(make_pair("",defaultmap));
-		istr.close();
 	} else {
 		ERROR("File " << filename << "does not exists");
 	}
+	
 }
 
 vector<string> InputData::getGroups() {

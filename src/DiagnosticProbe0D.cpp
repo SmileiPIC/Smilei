@@ -88,9 +88,6 @@ smpi_(smpi)
 	}
 	H5Sclose(dataspace_id);
 	
-	Eloc_fields.resize(probeParticles.size());
-	Bloc_fields.resize(probeParticles.size());
-	
 	// Create 1 dataset per probe
 	
 	H5Pclose(plist);
@@ -116,7 +113,7 @@ void DiagnosticProbe0D::run(int timestep, ElectroMagn* EMfields, Interpolator* i
 
 	for (unsigned int count=0; count <probeParticles.size(); count++) {
 		if (probeId[count]==smpi_->getRank())
-			(*interp)(EMfields,probeParticles[count],&Eloc_fields[count],&Bloc_fields[count]);
+			(*interp)(EMfields,probeParticles[count],&Eloc_fields,&Bloc_fields);
 		
 		// All rank open all probes dataset
 		hid_t dataset_id = H5Dopen2(fileId, probeName(count).c_str(), H5P_DEFAULT);
@@ -149,12 +146,12 @@ void DiagnosticProbe0D::run(int timestep, ElectroMagn* EMfields, Interpolator* i
 		
 		//! here we fill the probe data!!!
         data[0]=timestep;
-        data[1]=Eloc_fields[count].x;
-        data[2]=Eloc_fields[count].y;
-        data[3]=Eloc_fields[count].z;
-        data[4]=Bloc_fields[count].x;
-        data[5]=Bloc_fields[count].y;
-        data[6]=Bloc_fields[count].z;		
+        data[1]=Eloc_fields.x;
+        data[2]=Eloc_fields.y;
+        data[3]=Eloc_fields.z;
+        data[4]=Bloc_fields.x;
+        data[5]=Bloc_fields.y;
+        data[6]=Bloc_fields.z;		
 		
 		hid_t write_plist = H5Pcreate(H5P_DATASET_XFER);
         H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);

@@ -46,77 +46,10 @@ SmileiMPI::~SmileiMPI()
 
 }
 
-void SmileiMPI::bcast( PicParams& params )
+void SmileiMPI::bcast( InputData& idata )
 {
-	bcast( params.geometry );
-	bcast(params.wavelength_SI);
-	params.setDimensions();
-
-	bcast( params.res_time );
-	bcast( params.sim_time );
-//	params.n_time=params.res_time*(params.sim_time/(2.0*M_PI));
-//	params.timestep = 2.0*M_PI/params.res_time;
-
-	//! \ sim_length[i]*=2.0*M_PI;
-	//! \ cell_length[i]=2.0*M_PI/res_space[i];
-	bcast( params.res_space );
-	bcast( params.sim_length );
-	params.n_space_global.resize(3, 1);	//! \todo{3 but not real size !!! Pbs in Species::Species}
-	params.n_space.resize(3, 1);
-	params.cell_length.resize(3, 0.);	//! \todo{3 but not real size !!! Pbs in Species::Species}
-	params.cell_volume = 1;
-
-	params.oversize.resize(3, 0);
-	oversize.resize(params.nDim_field, 0);
-	cell_starting_global_index.resize(params.nDim_field, 0);
-	min_local.resize(params.nDim_field, 0.);
-	max_local.resize(params.nDim_field, 0.);
-	n_space_global.resize(params.nDim_field, 0);
-
-
-//	number_of_procs.resize(params.nDim_field, 1);
-//	number_of_procs[0] = smilei_sz;
-//	if (params.nDim_field == 2) {
-//		double tmp = params.res_space[0]*params.sim_length[0] / ( params.res_space[1]*params.sim_length[1] );
-//		number_of_procs[0] = min( smilei_sz, max(1, (int)sqrt ( (double)smilei_sz*tmp*tmp) ) );
-//		number_of_procs[1] = (int)(smilei_sz / number_of_procs[0]);
-//	}
-
-//	for (unsigned int i=0 ; i<params.nDim_field ; i++) {
-//		//sim_length[i]*=2.0*M_PI;
-//		params.cell_length[i]=2.0*M_PI/params.res_space[i];
-//		params.cell_volume *= params.cell_length[i];
-//
-//		params.n_space_global[i] = params.res_space[i]*params.sim_length[i]/(2.0*M_PI);
-//
-//		params.n_space[i] = params.n_space_global[i];
-//	}
-	// Before splitting
-	// MESSAGE( "n_space_global = " << params.n_space[0] << " " << params.n_space[1] );
-
-	bcast( params.plasma_geometry );
-	bcast( params.plasma_length );	//! \todo{vacuum_length[i]*=2.0*M_PI};
-	bcast( params.vacuum_length );	//! \todo{plasma_length[i]*=2.0*M_PI};
-
-	bcast( params.n_species );
-	bcast( params.species_param );
-
-	bcast( params.n_laser );
-	bcast( params.laser_param );
-
-	bcast( params.interpolation_order );
-
-	params.compute();
-
-}
-
-void SmileiMPI::bcast( DiagParams& params )
-{
-	bcast(params.scalar_every);
-	bcast(params.map_every);
-	bcast(params.probe0d_every);
-
-	bcast(params.ps_coord);
+	DEBUG("broadcast namelist");
+	bcast(idata.namelist);
 }
 
 void SmileiMPI::bcast( string& val )
@@ -124,14 +57,29 @@ void SmileiMPI::bcast( string& val )
 	int charSize=0;
 	if (isMaster()) charSize = val.size()+1;
 	MPI_Bcast(&charSize, 1, MPI_INT, 0, SMILEI_COMM_WORLD);
+	
+	DEBUG(charSize);
 
 	char tmp[charSize];
 	strcpy(tmp, val.c_str());
 	MPI_Bcast(&tmp, charSize, MPI_CHAR, 0, SMILEI_COMM_WORLD);
-	stringstream sstream;
-	sstream << tmp;
-	sstream >> val;
+//	stringstream sstream;
+//	sstream << tmp;
+//	sstream >> val;
+	
+	if (!isMaster()) val=tmp;
+	
 }
+
+void SmileiMPI::init( PicParams& params )
+{
+	oversize.resize(params.nDim_field, 0);
+	cell_starting_global_index.resize(params.nDim_field, 0);
+	min_local.resize(params.nDim_field, 0.);
+	max_local.resize(params.nDim_field, 0.);
+	n_space_global.resize(params.nDim_field, 0);
+}
+
 
 void SmileiMPI::bcast( short& val )
 {
