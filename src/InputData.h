@@ -40,10 +40,10 @@ public:
 	void InputDataParam(PicParams&);
 
 	//! write namelist onto file
-	void write(std::string, std::string=std::string());
+	void write(std::string);
 
 	//! print the namelist on stream
-	void write(std::ostream& = std::cerr, std::string=std::string());
+	void write(std::ostream& = std::cerr);
 		
 	//! generic template to InputData a single value
 	template <class T> bool extract(std::string data, T &val, std::string group=std::string(""), unsigned int occurrence=0) {

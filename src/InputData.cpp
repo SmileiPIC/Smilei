@@ -5,6 +5,11 @@ using namespace std;
 InputData::InputData():namelist("") {
 }
 
+
+bool BothAreSpaces(char lhs, char rhs) { 
+	return (lhs == rhs) && (lhs == ' '); 
+}
+
 string InputData::cleanString(string str) {
 	transform(str.begin(), str.end(), str.begin(), ::tolower);
 	const string whiteSpaces( " \f\n\r\t\v" );
@@ -12,16 +17,20 @@ string InputData::cleanString(string str) {
 	str.erase( pos + 1 );    
 	pos = str.find_first_not_of( whiteSpaces );
 	str.erase( 0, pos );
+	
+	std::string::iterator new_end = std::unique(str.begin(), str.end(), BothAreSpaces);
+	str.erase(new_end, str.end());   
+
 	return str;
 }
 
-void InputData::write(string filename, string comment) {
+void InputData::write(string filename) {
 	ofstream ostr(filename.c_str());
-	write(ostr, comment);
+	write(ostr);
 }
 
-void InputData::write(ostream &ostr, string comment) {
-	if (!comment.empty()) ostr << "# " << comment << endl << endl;
+void InputData::write(ostream &ostr) {
+	if (ostr!=cerr) ostr << "# smilei " << __VERSION << endl << endl;
 	vector<pair<string , map <string,string> > >::iterator  it_type;
 	for(it_type = map_.begin(); it_type != map_.end(); it_type++) {
 		if (!it_type->first.empty()) ostr << it_type->first << endl;

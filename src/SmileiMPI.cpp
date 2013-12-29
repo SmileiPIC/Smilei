@@ -48,7 +48,7 @@ SmileiMPI::~SmileiMPI()
 
 void SmileiMPI::bcast( InputData& idata )
 {
-	DEBUG("broadcast namelist");
+	DEBUG(10,"broadcast namelist");
 	bcast(idata.namelist);
 }
 
@@ -58,8 +58,6 @@ void SmileiMPI::bcast( string& val )
 	if (isMaster()) charSize = val.size()+1;
 	MPI_Bcast(&charSize, 1, MPI_INT, 0, SMILEI_COMM_WORLD);
 	
-	DEBUG(charSize);
-
 	char tmp[charSize];
 	strcpy(tmp, val.c_str());
 	MPI_Bcast(&tmp, charSize, MPI_CHAR, 0, SMILEI_COMM_WORLD);

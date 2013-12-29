@@ -42,13 +42,13 @@
 #define PMESSAGE(...) PMESSAGE4(__VA_ARGS__)(__VA_ARGS__)
 
 #ifdef  __DEBUG
-extern unsigned int debug_level;
+extern int debug_level;
 
 #define __header(__msg,__txt) std::cerr << "\t[" << __msg << "] " << __FILE__ << ":" << __LINE__ << " (" \
 << __FUNCTION__ << ") " << __txt << std::endl
 
-#define DEBUG1(__txt) __header("DEBUG", __txt)
-#define DEBUG2(__val,__txt) if(__val<=debug_level) __header("DEBUG "<<__val, __txt)
+#define DEBUG1(__txt) {if(debug_level>=0) __header("DEBUG", __txt);}
+#define DEBUG2(__val,__txt) if(((debug_level<0) && __val==-debug_level) || ((debug_level>=0) && __val<=debug_level)) __header("DEBUG "<<__val, __txt)
 #define DEBUG3(arg1,arg2,arg3,...) arg3
 #define DEBUG4(...) DEBUG3(__VA_ARGS__,DEBUG2,DEBUG1,)
 #define DEBUG(...) DEBUG4(__VA_ARGS__)(__VA_ARGS__)

@@ -7,9 +7,8 @@ using namespace std;
 PicParams::PicParams(InputData &ifile) {
 	//open and parse the input data file
 
-	DEBUGEXEC(ifile.extract("debug",debug_level));
-	
-	RELEASEEXEC(if (ifile.existKey("debug")) WARNING("This is a release compilation, debug keyword is ignored"));
+//	DEBUGEXEC(ifile.extract("debug",debug_level));	
+//	RELEASEEXEC(if (ifile.existKey("debug")) WARNING("This is a release compilation, debug keyword is ignored"));
 
 	ifile.extract("res_time", res_time);
 	ifile.extract("sim_time", sim_time);

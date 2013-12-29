@@ -17,7 +17,7 @@ using namespace std;
 // Constructor for Electromagn2D
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn2D::ElectroMagn2D(PicParams* params, SmileiMPI* smpi)
-    : ElectroMagn(params, smpi)
+: ElectroMagn(params, smpi)
 {
     // local dt to store
     SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
@@ -84,12 +84,12 @@ ElectroMagn2D::ElectroMagn2D(PicParams* params, SmileiMPI* smpi)
     
     // Dimension of the primal and dual grids
     for (size_t i=0 ; i<params->nDim_field ; i++) {
-	// Standard scheme
-	dimPrim[i] = params->n_space[i]+1;
-	dimDual[i] = params->n_space[i]+2;
-	// + Ghost domain
-	dimPrim[i] += 2*params->oversize[i];
-	dimDual[i] += 2*params->oversize[i];
+		// Standard scheme
+		dimPrim[i] = params->n_space[i]+1;
+		dimDual[i] = params->n_space[i]+2;
+		// + Ghost domain
+		dimPrim[i] += 2*params->oversize[i];
+		dimDual[i] += 2*params->oversize[i];
     }
     // number of nodes of the primal and dual grid in the x-direction
     nx_p = params->n_space[0]+1+2*params->oversize[0];
@@ -97,7 +97,7 @@ ElectroMagn2D::ElectroMagn2D(PicParams* params, SmileiMPI* smpi)
     // number of nodes of the primal and dual grid in the y-direction
     ny_p = params->n_space[1]+1+2*params->oversize[1];
     ny_d = params->n_space[1]+2+2*params->oversize[1];
-
+	
 	// Allocation of the EM fields
     Ex_ = new Field2D( dimPrim, 0, false, "Ex" );
 	Ey_ = new Field2D( dimPrim, 1, false, "Ey");
@@ -115,7 +115,7 @@ ElectroMagn2D::ElectroMagn2D(PicParams* params, SmileiMPI* smpi)
 	Jz_ = new Field2D(dimPrim, 2, false, "Jz");
 	rho_ = new Field2D(dimPrim, "Rho" );
 	rho_o = new Field2D(dimPrim, "Rho_old" );
-
+	
     // ----------------------------------------------------------------
     // Definition of the min and max index according to chosen oversize
     // ----------------------------------------------------------------
@@ -126,7 +126,7 @@ ElectroMagn2D::ElectroMagn2D(PicParams* params, SmileiMPI* smpi)
         index_bc_max[i] = dimDual[i]-params->oversize[i]-1;
     }
     MESSAGE("index_bc_min / index_bc_max / nx_p / nx_d" << index_bc_min[0] << " " << index_bc_max[0] << " " << nx_p<< " " << nx_d);
-
+	
 }//END constructor Electromagn2D
 
 
@@ -136,7 +136,7 @@ ElectroMagn2D::ElectroMagn2D(PicParams* params, SmileiMPI* smpi)
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn2D::~ElectroMagn2D()
 {
-
+	
 }//END ElectroMagn2D
 
 
@@ -155,35 +155,35 @@ void ElectroMagn2D::solvePoisson(SmileiMPI* smpi)
     
     // AT THE MOMENT PUT ALL FIELDS TO 0 WHEN THEY ARE CREATED !!! (useful to test the Maxwell Solver)
     for (unsigned int i=0 ; i<nx_d ; i++) {
-	for (unsigned int j=0 ; j<ny_p ; j++) {
-	    (*Ex2D)(i,j) = 0.0;
-	}
+		for (unsigned int j=0 ; j<ny_p ; j++) {
+			(*Ex2D)(i,j) = 0.0;
+		}
     }
     for (unsigned int i=0 ; i<nx_p ; i++) {
-	for (unsigned int j=0 ; j<ny_d ; j++) {
-	    (*Ey2D)(i,j) = 0.0;
-	}
+		for (unsigned int j=0 ; j<ny_d ; j++) {
+			(*Ey2D)(i,j) = 0.0;
+		}
     }
     for (unsigned int i=0 ; i<nx_p ; i++) {
-	for (unsigned int j=0 ; j<ny_p ; j++) {
-	    (*Ez2D)(i,j) = 0.0;
-	}
+		for (unsigned int j=0 ; j<ny_p ; j++) {
+			(*Ez2D)(i,j) = 0.0;
+		}
     }
     
     for (unsigned int i=0 ; i<nx_p ; i++) {
-	for (unsigned int j=0 ; j<ny_d ; j++) {
-	    (*Bx2D)(i,j) = 0.0;
-	}
+		for (unsigned int j=0 ; j<ny_d ; j++) {
+			(*Bx2D)(i,j) = 0.0;
+		}
     }
     for (unsigned int i=0 ; i<nx_d ; i++) {
-	for (unsigned int j=0 ; j<ny_p ; j++) {
-	    (*By2D)(i,j) = 0.0;
-	}
+		for (unsigned int j=0 ; j<ny_p ; j++) {
+			(*By2D)(i,j) = 0.0;
+		}
     }
     for (unsigned int i=0 ; i<nx_d ; i++) {
-	for (unsigned int j=0 ; j<ny_d ; j++) {
-	    (*Bz2D)(i,j) = 0.0;
-	}
+		for (unsigned int j=0 ; j<ny_d ; j++) {
+			(*Bz2D)(i,j) = 0.0;
+		}
     }
     
 }//END solvePoisson
@@ -221,23 +221,23 @@ void ElectroMagn2D::saveMagneticFields()
     
     // Magnetic field Bx^(p,d)
     for (unsigned int i=0 ; i<nx_p ; i++) {
-	for (unsigned int j=0 ; j<ny_d ; j++) {
-	    (*Bx2D_m)(i,j)=(*Bx2D)(i,j);
-	}
+		for (unsigned int j=0 ; j<ny_d ; j++) {
+			(*Bx2D_m)(i,j)=(*Bx2D)(i,j);
+		}
     }
     
     // Magnetic field By^(d,p)
     for (unsigned int i=0 ; i<nx_d ; i++) {
-	for (unsigned int j=0 ; j<ny_p ; j++) {
-	    (*By2D_m)(i,j)=(*By2D)(i,j);
-	}
+		for (unsigned int j=0 ; j<ny_p ; j++) {
+			(*By2D_m)(i,j)=(*By2D)(i,j);
+		}
     }
 	
     // Magnetic field Bz^(d,d)
     for (unsigned int i=0 ; i<nx_d ; i++) {
-	for (unsigned int j=0 ; j<ny_d ; j++) {
-	    (*Bz2D_m)(i,j)=(*Bz2D)(i,j);
-	}
+		for (unsigned int j=0 ; j<ny_d ; j++) {
+			(*Bz2D_m)(i,j)=(*Bz2D)(i,j);
+		}
     }
     
 }//END saveMagneticFields
@@ -262,25 +262,25 @@ void ElectroMagn2D::solveMaxwellAmpere()
     
     // Electric field Ex^(d,p)
     for (unsigned int i=0 ; i<nx_d ; i++) {
-	for (unsigned int j=0 ; j<ny_p ; j++) {
-	    (*Ex2D)(i,j) += -dt*(*Jx2D)(i,j) + dt_ov_dy * ( (*Bz2D)(i,j+1) - (*Bz2D)(i,j) );
-	}
+		for (unsigned int j=0 ; j<ny_p ; j++) {
+			(*Ex2D)(i,j) += -dt*(*Jx2D)(i,j) + dt_ov_dy * ( (*Bz2D)(i,j+1) - (*Bz2D)(i,j) );
+		}
     }
     
     // Electric field Ey^(p,d)
     for (unsigned int i=0 ; i<nx_p ; i++) {
-	for (unsigned int j=0 ; j<ny_d ; j++) {
-	    (*Ey2D)(i,j) += -dt*(*Jy2D)(i,j) - dt_ov_dx * ( (*Bz2D)(i+1,j) - (*Bz2D)(i,j) );
-	}
+		for (unsigned int j=0 ; j<ny_d ; j++) {
+			(*Ey2D)(i,j) += -dt*(*Jy2D)(i,j) - dt_ov_dx * ( (*Bz2D)(i+1,j) - (*Bz2D)(i,j) );
+		}
     }
     
     // Electric field Ez^(p,p)
     for (unsigned int i=0 ;  i<nx_p ; i++) {
-	for (unsigned int j=0 ; j<ny_p ; j++) {
-	    (*Ez2D)(i,j) += -dt*(*Jz2D)(i,j)
-		+               dt_ov_dx * ( (*By2D)(i+1,j) - (*By2D)(i,j) )
-		-               dt_ov_dy * ( (*Bx2D)(i,j+1) - (*Bx2D)(i,j) );
-	}
+		for (unsigned int j=0 ; j<ny_p ; j++) {
+			(*Ez2D)(i,j) += -dt*(*Jz2D)(i,j)
+			+               dt_ov_dx * ( (*By2D)(i+1,j) - (*By2D)(i,j) )
+			-               dt_ov_dy * ( (*Bx2D)(i,j+1) - (*Bx2D)(i,j) );
+		}
     }
     
 }//END solveMaxwellAmpere
@@ -292,7 +292,7 @@ void ElectroMagn2D::solveMaxwellAmpere()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn2D::solveMaxwellFaraday()
 {
-        
+	
     // Static-cast of the fields
     Field2D* Ex2D = static_cast<Field2D*>(Ex_);
     Field2D* Ey2D = static_cast<Field2D*>(Ey_);
@@ -303,24 +303,24 @@ void ElectroMagn2D::solveMaxwellFaraday()
     
     // Magnetic field Bx^(p,d)
     for (unsigned int i=0 ; i<nx_p;  i++) {
-	for (unsigned int j=1 ; j<ny_d-1 ; j++) {
-	    (*Bx2D)(i,j) -= dt_ov_dy * ( (*Ez2D)(i,j) - (*Ez2D)(i,j-1) );
-	}
+		for (unsigned int j=1 ; j<ny_d-1 ; j++) {
+			(*Bx2D)(i,j) -= dt_ov_dy * ( (*Ez2D)(i,j) - (*Ez2D)(i,j-1) );
+		}
     }
-
+	
     // Magnetic field By^(d,p)
     for (unsigned int i=1 ; i<nx_d-1 ; i++) {
-	for (unsigned int j=0 ; j<ny_p ; j++) {
-	    (*By2D)(i,j) += dt_ov_dx * ( (*Ez2D)(i,j) - (*Ez2D)(i-1,j) );
-	}
+		for (unsigned int j=0 ; j<ny_p ; j++) {
+			(*By2D)(i,j) += dt_ov_dx * ( (*Ez2D)(i,j) - (*Ez2D)(i-1,j) );
+		}
     }
     
     // Magnetic field Bz^(d,d)
     for (unsigned int i=1 ; i<nx_d-1 ; i++) {
-	for (unsigned int j=1 ; j<ny_d-1 ; j++) {
-	    (*Bz2D)(i,j) += dt_ov_dy * ( (*Ex2D)(i,j) - (*Ex2D)(i,j-1) )
-		-               dt_ov_dx * ( (*Ey2D)(i,j) - (*Ey2D)(i-1,j) );
-	}
+		for (unsigned int j=1 ; j<ny_d-1 ; j++) {
+			(*Bz2D)(i,j) += dt_ov_dy * ( (*Ex2D)(i,j) - (*Ex2D)(i,j-1) )
+			-               dt_ov_dx * ( (*Ey2D)(i,j) - (*Ey2D)(i-1,j) );
+		}
     }
     
 }//END solveMaxwellFaraday
@@ -350,38 +350,38 @@ void ElectroMagn2D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
     double byW=0.0, bzW=0.0, byE=0.0, bzE=0.0;
     
     for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
-	// testing the time-profile
-	// ------------------------
+		// testing the time-profile
+		// ------------------------
         
-	if (laser_[ilaser]->laser_struct.time_profile == "constant") {
-	    if (laser_[ilaser]->laser_struct.angle == 0){
-		// Incident field (west boundary)
-		byW += laser_[ilaser]->a0_delta_y_ * sin(time_dual) ;//* laser_[ilaser]->time_profile(time_dual);
-		bzW += laser_[ilaser]->a0_delta_z_ * cos(time_dual) ;//* laser_[ilaser]->time_profile(time_dual);
-	    } else if (laser_[ilaser]->laser_struct.angle == 180){
-		// Incident field (east boundary)
-		byE += laser_[ilaser]->a0_delta_y_ * sin(time_dual) ;//* laser_[ilaser]->time_profile(time_dual);
-		bzE += laser_[ilaser]->a0_delta_z_ * cos(time_dual) ;//* laser_[ilaser]->time_profile(time_dual);
-	    } else {
-		ERROR("Angle not yet implemented for laser " << ilaser);
-	    }
-	} else {
-	    ERROR("Laser profile "<< ilaser <<" not allowed");
-	}//ENDif time_profile
+		if (laser_[ilaser]->laser_struct.time_profile == "constant") {
+			if (laser_[ilaser]->laser_struct.angle == 0){
+				// Incident field (west boundary)
+				byW += laser_[ilaser]->a0_delta_y_ * sin(time_dual) ;//* laser_[ilaser]->time_profile(time_dual);
+				bzW += laser_[ilaser]->a0_delta_z_ * cos(time_dual) ;//* laser_[ilaser]->time_profile(time_dual);
+			} else if (laser_[ilaser]->laser_struct.angle == 180){
+				// Incident field (east boundary)
+				byE += laser_[ilaser]->a0_delta_y_ * sin(time_dual) ;//* laser_[ilaser]->time_profile(time_dual);
+				bzE += laser_[ilaser]->a0_delta_z_ * cos(time_dual) ;//* laser_[ilaser]->time_profile(time_dual);
+			} else {
+				ERROR("Angle not yet implemented for laser " << ilaser);
+			}
+		} else {
+			ERROR("Laser profile "<< ilaser <<" not allowed");
+		}//ENDif time_profile
     }//ilaser
     
-
+	
     // If !periodic
     //   BC : Bx(i=0...nx_p, 0) & Bx(i=0...nx_p, ny_d-1)
     //   BC : Bz(i=0...nx_d-1, 0) & Bz(i=0...nx_d-1, ny_d-1)
     // else
     //   Ez(i,-1)/Ez(i,ny_d-1) defined -> OK
     //   Ex(i,-1)/Ex(i,ny_d-1) defined -> OK
-
+	
     // BC : By(0, j=0...ny_p  ) & By(nx_d-1, j=0...ny_p  )	    -> TO DO
     // BC : Bz(O, j=0...ny_d-1) & Bz(nx_d-1, j=0...ny_d-1)		-> TO DO
-
-
+	
+	
     // -----------------------------------------
     // Silver-Mueller boundary conditions (West)
     // -----------------------------------------
@@ -402,24 +402,24 @@ void ElectroMagn2D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
 			+                             Gamma_SM_W * bzW;
 		}
 		
-/*		// Correction on unused extreme ghost cells : put the fields to 0
-		// --------------------------------------------------------------
-		//! \todo{Alloc Fields only if necessary to not doing this correction}
-		for (unsigned int i=0 ; i<index_bc_min[0] ; i++) {
-			// for Ey^(p,d), Bx^(p,d), Bz^(d,d)
-			for (unsigned int j=0 ; j<ny_d ; j++) {
-			(*Ey2D)(i,j)=0.0;
-			(*Bx2D)(i,j)=0.0;
-			(*Bz2D)(i,j)=0.0;
-			}
-			// for Ex^(d,p), Ez^(p,p), By^(d,p)
-			for (unsigned int j=0 ; j<ny_p ; j++) {
-			(*Ex2D)(i,j)=0.0;
-			(*Ez2D)(i,j)=0.0;
-			(*By2D)(i,j)=0.0;
-			}
-		}
-*/        
+		/*		// Correction on unused extreme ghost cells : put the fields to 0
+		 // --------------------------------------------------------------
+		 //! \todo{Alloc Fields only if necessary to not doing this correction}
+		 for (unsigned int i=0 ; i<index_bc_min[0] ; i++) {
+		 // for Ey^(p,d), Bx^(p,d), Bz^(d,d)
+		 for (unsigned int j=0 ; j<ny_d ; j++) {
+		 (*Ey2D)(i,j)=0.0;
+		 (*Bx2D)(i,j)=0.0;
+		 (*Bz2D)(i,j)=0.0;
+		 }
+		 // for Ex^(d,p), Ez^(p,p), By^(d,p)
+		 for (unsigned int j=0 ; j<ny_p ; j++) {
+		 (*Ex2D)(i,j)=0.0;
+		 (*Ez2D)(i,j)=0.0;
+		 (*By2D)(i,j)=0.0;
+		 }
+		 }
+		 */        
         //MESSAGE( "WEST BC ==> By_inc, By " << byW << " " << (*By2D)(index_bc_min[0],250) );
         
     }//if West
@@ -444,35 +444,35 @@ void ElectroMagn2D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
 			+                             Beta_SM_E  * (*Bz2D)(index_bc_max[0]-1,j)
 			+                             Gamma_SM_E * bzE;
 		}
-
-/*		// Correction on unused extreme ghost cells : put the fields to 0
-		// --------------------------------------------------------------
-		// for Ex^(d,p), By^(d,p), Bz^(d,d)
-		for (unsigned int i=index_bc_max[0]+1 ; i<nx_d ; i++) {
-			for (unsigned int j=0 ; j<ny_p ; j++) {
-			(*Ex2D)(i,j) = 0.0;
-			(*By2D)(i,j) = 0.0;
-			}
-			for (unsigned int j=0 ; j<ny_d ; j++) {
-			(*Bz2D)(i,j) = 0.0;
-			}
-		}
-		// for Ey^(p,d), Ez^(p,p), Bx^(p,d)
-		for (unsigned int i=index_bc_max[0] ; i<nx_p ; i++) {
-			for (unsigned int j=0 ; j<ny_d ; j++) {
-			(*Ey2D)(i,j)=0.0;
-			(*Bx2D)(i,j)=0.0;
-			}
-		}
-		// for Ez^(p,p)
-		for (unsigned int i=index_bc_max[0] ; i<nx_p ; i++) {
-			for (unsigned int j=0 ; j<ny_p ; j++) {
-			(*Ez2D)(i,j)=0.0;
-			}
-		}
-*/
+		
+		/*		// Correction on unused extreme ghost cells : put the fields to 0
+		 // --------------------------------------------------------------
+		 // for Ex^(d,p), By^(d,p), Bz^(d,d)
+		 for (unsigned int i=index_bc_max[0]+1 ; i<nx_d ; i++) {
+		 for (unsigned int j=0 ; j<ny_p ; j++) {
+		 (*Ex2D)(i,j) = 0.0;
+		 (*By2D)(i,j) = 0.0;
+		 }
+		 for (unsigned int j=0 ; j<ny_d ; j++) {
+		 (*Bz2D)(i,j) = 0.0;
+		 }
+		 }
+		 // for Ey^(p,d), Ez^(p,p), Bx^(p,d)
+		 for (unsigned int i=index_bc_max[0] ; i<nx_p ; i++) {
+		 for (unsigned int j=0 ; j<ny_d ; j++) {
+		 (*Ey2D)(i,j)=0.0;
+		 (*Bx2D)(i,j)=0.0;
+		 }
+		 }
+		 // for Ez^(p,p)
+		 for (unsigned int i=index_bc_max[0] ; i<nx_p ; i++) {
+		 for (unsigned int j=0 ; j<ny_p ; j++) {
+		 (*Ez2D)(i,j)=0.0;
+		 }
+		 }
+		 */
         //MESSAGE( "EAST BC ==> By_inc, By " << byE << " " << (*By2D)(index_bc_max[0],250) );
-
+		
     }//if East
     
 }// END applyEMBoundaryConditions
@@ -494,23 +494,23 @@ void ElectroMagn2D::centerMagneticFields()
     
     // Magnetic field Bx^(p,d)
     for (unsigned int i=0 ; i<nx_p ; i++) {
-	for (unsigned int j=0 ; j<ny_d ; j++) {
-	    (*Bx2D_m)(i,j) = ( (*Bx2D)(i,j) + (*Bx2D_m)(i,j) )*0.5;
-	}
+		for (unsigned int j=0 ; j<ny_d ; j++) {
+			(*Bx2D_m)(i,j) = ( (*Bx2D)(i,j) + (*Bx2D_m)(i,j) )*0.5;
+		}
     }
     
     // Magnetic field By^(d,p)
     for (unsigned int i=0 ; i<nx_d ; i++) {
-	for (unsigned int j=0 ; j<ny_p ; j++) {
-	    (*By2D_m)(i,j) = ( (*By2D)(i,j) + (*By2D_m)(i,j) )*0.5;
-	}
+		for (unsigned int j=0 ; j<ny_p ; j++) {
+			(*By2D_m)(i,j) = ( (*By2D)(i,j) + (*By2D_m)(i,j) )*0.5;
+		}
     }
 	
     // Magnetic field Bz^(d,d)
     for (unsigned int i=0 ; i<nx_d ; i++) {
-	for (unsigned int j=0 ; j<ny_d ; j++) {
-	    (*Bz2D_m)(i,j) = ( (*Bz2D)(i,j) + (*Bz2D_m)(i,j) )*0.5;
-	}
+		for (unsigned int j=0 ; j<ny_d ; j++) {
+			(*Bz2D_m)(i,j) = ( (*Bz2D)(i,j) + (*Bz2D_m)(i,j) )*0.5;
+		}
     }
     
 }//END centerMagneticFields
@@ -534,37 +534,37 @@ void ElectroMagn2D::initRhoJ()
 	
     // Save current charge density as old charge density
     for (unsigned int i=0 ; i<nx_p ; i++) {
-	for (unsigned int j=0 ; j<ny_p ; j++) {
-	    (*rho2D_o)(i,j) = (*rho2D)(i,j);
-	}
+		for (unsigned int j=0 ; j<ny_p ; j++) {
+			(*rho2D_o)(i,j) = (*rho2D)(i,j);
+		}
     }
     
     // Charge density rho^(p,p) to 0
     for (unsigned int i=0 ; i<nx_p ; i++) {
-	for (unsigned int j=0 ; j<ny_p ; j++) {
-	    (*rho2D)(i,j) = 0.0;
-	}
+		for (unsigned int j=0 ; j<ny_p ; j++) {
+			(*rho2D)(i,j) = 0.0;
+		}
     }
     
     // Current Jx^(d,p) to 0
     for (unsigned int i=0 ; i<nx_d ; i++) {
-	for (unsigned int j=0 ; j<ny_p ; j++) {
-	    (*Jx2D)(i,j) = 0.0;
-	}
+		for (unsigned int j=0 ; j<ny_p ; j++) {
+			(*Jx2D)(i,j) = 0.0;
+		}
     }
     
     // Current Jy^(p,d) to 0
     for (unsigned int i=0 ; i<nx_p ; i++) {
-	for (unsigned int j=0 ; j<ny_d ; j++) {
-	    (*Jy2D)(i,j) = 0.0;
-	}
+		for (unsigned int j=0 ; j<ny_d ; j++) {
+			(*Jy2D)(i,j) = 0.0;
+		}
     }
     
     // Current Jz^(p,p) to 0
     for (unsigned int i=0 ; i<nx_p ; i++) {
-	for (unsigned int j=0 ; j<ny_p ; j++) {
-	    (*Jz2D)(i,j) = 0.0;
-	}
+		for (unsigned int j=0 ; j<ny_p ; j++) {
+			(*Jz2D)(i,j) = 0.0;
+		}
     }
     
 }//END initRhoJ

@@ -44,7 +44,7 @@
 
 //! verbosity level use verbose keyword in data parameter
 #ifdef  __DEBUG
-unsigned int debug_level = 10;
+int debug_level = 10;
 #endif
 
 //! main function

@@ -34,6 +34,8 @@
 #include "Diagnostic.h"
 #include "DiagnosticProbe0D.h"
 
+#include <unistd.h>
+
 using namespace std;
 
 
@@ -53,10 +55,23 @@ int main (int argc, char* argv[])
 	// Simulation Initialization
 	// -------------------------
 	
+	// Check for run flags
+	
+	char ch;
+	debug_level=0;
+	while ((ch = getopt(argc, argv, "d:")) != -1) {
+		if (ch=='d') {
+			RELEASEEXEC("In release mode debug option has no meaning, please recompile in debug mode");
+			std::stringstream iss(optarg);
+			iss >> std::boolalpha >> debug_level;
+		}
+	}
+	argc -= optind;
+	argv += optind;
+	
 	// Check for namelist (input file)
-	string namelist;
-	if (argc<2) ERROR("No namelists given!");
-	namelist=argv[1];
+	if (argc<1) ERROR("No namelists given!");
+	string namelist=argv[0];
 	
 	// Send information on current simulation
 	if ( smpiData->isMaster() ) startingMessage(namelist);
@@ -68,15 +83,17 @@ int main (int argc, char* argv[])
 	smpiData->bcast( input_data );
 	input_data.parseStream();
 	
+	DEBUG(smpiData->getRank() << " debug: " << debug_level );
 
-	DEBUGEXEC(input_data.write(namelist+".debug","parsed namelist"));
+
+	DEBUGEXEC(input_data.write(namelist+".debug"));
 	
 	// Read simulation parameters
 	PicParams params(input_data);
 	smpiData->init(params);
 	DiagParams diag_params(input_data,params);
 	
-	for (unsigned int i=0;i<smpiData->getSize(); i++) {
+	for (int i=0;i<smpiData->getSize(); i++) {
 		if (i==smpiData->getRank()) {
 			params.print();
 		}

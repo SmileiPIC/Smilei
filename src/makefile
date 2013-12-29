@@ -22,7 +22,7 @@ debug: $(EXEC)
 
 .depend: $(SRCS)
 	rm -rf .depend
-	$(SMILEICXX) $(CFLAGS) -MM $^ >> .depend;
+	$(SMILEICXX) -MM $^ >> .depend;
 
 include .depend 
 

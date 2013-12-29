@@ -29,7 +29,7 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
         for (unsigned int i=0; i<ps_coord[k].size(); i++) {
             if (ps_coord[k][i]<0||ps_coord[k][i]>params.sim_length[k]) ERROR("diagnostic probe0d: probe outside the domain");
 			ps_coord[k][i]*=2*M_PI;
-            DEBUG("new coordinates" << k << " " << i << " " << ps_coord[k][i]);
+            DEBUG(10, "new coordinates " << k << " " << i << " " << ps_coord[k][i]);
 		}
 	}
 }

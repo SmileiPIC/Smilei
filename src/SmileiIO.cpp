@@ -125,9 +125,9 @@ void SmileiIO::writeAllFields( ElectroMagn* EMfields, int time )
 void SmileiIO::writeAllFieldsSingleFileTime( ElectroMagn* EMfields, int time )
 {
 	ostringstream name_t;
-	name_t.str(""); name_t << "/T =" << setfill('0') << setw(10) << time;
+	name_t.str(""); name_t << "/" << setfill('0') << setw(10) << time;
 
-	DEBUG("GROUP _________________________________ " << name_t.str());
+	DEBUG(10,"[hdf] GROUP _________________________________ " << name_t.str());
 	hid_t group_id = H5Gcreate2(global_file_id_, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
 	writeFieldsSingleFileTime( EMfields->Ex_, group_id );
