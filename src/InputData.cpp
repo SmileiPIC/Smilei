@@ -24,15 +24,18 @@ string InputData::cleanString(string str) {
 	return str;
 }
 
-void InputData::write(string filename) {
+void InputData::write(string filename=string()) {
 	ofstream ostr(filename.c_str());
-	write(ostr);
+	if (ostr.is_open()) {
+		ostr << "# smilei " << __VERSION << endl << endl;
+		write(ostr);
+	} else {
+		write(cerr);
+	}
 }
 
 void InputData::write(ostream &ostr) {
-	if (ostr!=cerr) ostr << "# smilei " << __VERSION << endl << endl;
-	vector<pair<string , map <string,string> > >::iterator  it_type;
-	for(it_type = map_.begin(); it_type != map_.end(); it_type++) {
+	for(vector<pair<string , map <string,string> > >::iterator it_type = map_.begin(); it_type != map_.end(); it_type++) {
 		if (!it_type->first.empty()) ostr << it_type->first << endl;
 		map<string, string>::iterator it_type2;
 		for(it_type2 = it_type->second.begin(); it_type2 != it_type->second.end(); it_type2++) {

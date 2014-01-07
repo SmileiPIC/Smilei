@@ -49,7 +49,7 @@ int main (int argc, char* argv[])
 	// Define 2 MPI environment :
 	//  - smpiData : to broadcast input data, unknown geometry
 	//  - smpi (defined later) : to compute/exchange data, specific to a geometry
- 	SmileiMPI* smpiData = new SmileiMPI( &argc, &argv );
+ 	SmileiMPI smpiData(&argc, &argv );
 	
 	// -------------------------
 	// Simulation Initialization
@@ -74,34 +74,31 @@ int main (int argc, char* argv[])
 	string namelist=argv[0];
 	
 	// Send information on current simulation
-	if ( smpiData->isMaster() ) startingMessage(namelist);
+	if ( smpiData.isMaster() ) startingMessage(namelist);
 	
 	// Parse the namelist file (no check!)
 	InputData input_data;
-	if ( smpiData->isMaster() ) input_data.parseFile(namelist);
+	if ( smpiData.isMaster() ) input_data.parseFile(namelist);
 	
-	smpiData->bcast( input_data );
+	smpiData.bcast( input_data );
 	input_data.parseStream();
-	
-	DEBUG(smpiData->getRank() << " debug: " << debug_level );
-
 
 	DEBUGEXEC(input_data.write(namelist+".debug"));
 	
 	// Read simulation parameters
 	PicParams params(input_data);
-	smpiData->init(params);
+	smpiData.init(params);
 	DiagParams diag_params(input_data,params);
 	
-	for (int i=0;i<smpiData->getSize(); i++) {
-		if (i==smpiData->getRank()) {
+	for (int i=0;i<smpiData.getSize(); i++) {
+		if (i==smpiData.getRank()) {
 			params.print();
 		}
-		smpiData->barrier();
+		smpiData.barrier();
 	}
 
 	// Geometry known, MPI environment specified
-	SmileiMPI* smpi = SmileiMPIFactory::create(params, smpiData);
+	SmileiMPI* smpi = SmileiMPIFactory::create(params, &smpiData);
 
 	SmileiIO*  sio  = SmileiIOFactory::create(params, smpi);
 	
@@ -269,22 +266,20 @@ int main (int argc, char* argv[])
 	
 	delete sio;
 	if ( smpi->isMaster() ) {
-		MESSAGE("------------------------------------------");
+		MESSAGE("--------------------------------------------------------------------------------");
 		MESSAGE("END " << namelist);
-		MESSAGE("------------------------------------------");
+		MESSAGE("--------------------------------------------------------------------------------");
 	}
 	delete smpi;
-	delete smpiData;
-	
 	return 0;
     
 }//END MAIN 
 
 void startingMessage(std::string inputfile) {
-	MESSAGE("------------------------------------------");
-	MESSAGE(" Version : " << __VERSION DEBUGEXEC(<< " DEBUG") << " Compiled : " << __DATE__ << " " << __TIME__);
-	MESSAGE("------------------------------------------");
-	MESSAGE(" Namelist  : " << inputfile);
-	MESSAGE("------------------------------------------");
+	MESSAGE("--------------------------------------------------------------------------------");
+	MESSAGE(" Version  : " << __VERSION DEBUGEXEC(<< " DEBUG") << " Compiled : " << __DATE__ << " " << __TIME__);
+	MESSAGE("--------------------------------------------------------------------------------");
+	MESSAGE(" Namelist : " << inputfile);
+	MESSAGE("--------------------------------------------------------------------------------");
 }
 

@@ -39,12 +39,12 @@ public:
 	//! read input data parameters in PicParams
 	void InputDataParam(PicParams&);
 
-	//! write namelist onto file
+	//! write namelist onto file (or cerr if unable)
 	void write(std::string);
-
-	//! print the namelist on stream
-	void write(std::ostream& = std::cerr);
-		
+	
+	//! write namelist onto cerr
+	void write(){write(std::cerr);};
+	
 	//! generic template to InputData a single value
 	template <class T> bool extract(std::string data, T &val, std::string group=std::string(""), unsigned int occurrence=0) {
 		//		transform(data.begin(), data.end(), data.begin(), ::tolower);
@@ -135,6 +135,9 @@ public:
 	std::string namelist;
 
 private:
+	//! print the namelist on stream
+	void write(std::ostream&);
+		
 	//! this is a function that removes triling spaces and tabs from the beginning and the end of a string
 	std::string cleanString(std::string);
 	
