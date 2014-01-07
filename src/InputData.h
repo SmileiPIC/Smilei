@@ -118,7 +118,6 @@ public:
 				n_occur++;
 			}
 		}
-		
 		return found;
 	}
 	
@@ -136,13 +135,14 @@ public:
 
 private:
 	//! print the namelist on stream
-	void write(std::ostream&);
+	void write(std::ostream&); 
 		
 	//! this is a function that removes triling spaces and tabs from the beginning and the end of a string
 	std::string cleanString(std::string);
 	
 	//! this is a vector of pairs string,map 
 	//! the string is the name of the group and the map key contains the name of the veriable and the string is it's value
+	//test new branch
 	std::vector<std::pair<std::string , std::map <std::string,std::string> > > map_;
 
 };
