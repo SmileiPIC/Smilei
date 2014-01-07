@@ -11,6 +11,7 @@ bool BothAreSpaces(char lhs, char rhs) {
 }
 
 string InputData::cleanString(string str) {
+	str=str.substr(0, str.find('#'));				
 	transform(str.begin(), str.end(), str.begin(), ::tolower);
 	const string whiteSpaces( " \f\n\r\t\v" );
 	size_t pos = str.find_last_not_of( whiteSpaces );
@@ -35,10 +36,9 @@ void InputData::write(string filename=string()) {
 }
 
 void InputData::write(ostream &ostr) {
-	for(vector<pair<string , map <string,string> > >::iterator it_type = map_.begin(); it_type != map_.end(); it_type++) {
+	for(vector<pair<string , vector<pair<string,string> > > >::iterator it_type = allData.begin(); it_type != allData.end(); it_type++) {
 		if (!it_type->first.empty()) ostr << it_type->first << endl;
-		map<string, string>::iterator it_type2;
-		for(it_type2 = it_type->second.begin(); it_type2 != it_type->second.end(); it_type2++) {
+		for(vector<pair<string, string> >::iterator it_type2 = it_type->second.begin(); it_type2 != it_type->second.end(); it_type2++) {
 			if (!it_type->first.empty()) ostr << "\t";
 			ostr << it_type2->first << " = " << it_type2->second << endl;
 		}
@@ -51,22 +51,21 @@ void InputData::parseStream() {
 	if (namelist.empty()) ERROR("namelist is empty");
 	
 	stringstream my_stream(namelist);
-	map_.clear();
-	map <string,string> defaultmap;
-	map <string,string> groupmap;
+	allData.clear();
 	
-	string strLine ="";
+	vector<pair <string,string> > defaultGroupVec;
+	vector<pair <string,string> > thisGroup;
+	
 	string group("");
-
+	string strLine("");
 	while (getline(my_stream, strLine)) {
-		strLine=strLine.substr(0, strLine.find('#'));				
 		strLine=cleanString(strLine);
 		if (!strLine.empty()) {
 			if (strLine.find('=') == string::npos) {
 				if (strLine == "end") {
-					map_.push_back(make_pair(group,groupmap));
+					allData.push_back(make_pair(group,thisGroup));
 					group="";
-					groupmap.clear();
+					thisGroup.clear();
 				} else {
 					group=strLine;
 				}
@@ -79,32 +78,28 @@ void InputData::parseStream() {
 					string left=cleanString(item.substr(0,posEqual));
 					string right=cleanString(item.substr(posEqual+1));
 					if (group.empty()) {
-						defaultmap[left]=right;
+						defaultGroupVec.push_back(make_pair(left,right));
 					} else {
-						groupmap[left]=right;
+						thisGroup.push_back(make_pair(left,right));
 					}
 				}	
 			}
 		}
 	}
 	if (!group.empty()) ERROR("Final group "<< group << " not closed. Check the namelist");
-	map_.push_back(make_pair("",defaultmap));
+	allData.push_back(make_pair("",defaultGroupVec));
 }
 
 
 void InputData::parseFile(string filename) {
 	
 	ifstream istr(filename.c_str());
-	map_.clear();
-	map <string,string> defaultmap;
-	map <string,string> groupmap;
 	
 	string strLine ="";
 	namelist.clear();
 	
 	if (istr.is_open()) {
 		while (getline(istr, strLine)) {
-			strLine=strLine.substr(0, strLine.find('#'));				
 			strLine=cleanString(strLine);
 			if (!strLine.empty()) namelist += strLine + "\n";
 		}
@@ -114,37 +109,43 @@ void InputData::parseFile(string filename) {
 	
 }
 
-vector<string> InputData::getGroups() {
-	vector<string> vecOut;
-	for(vector<pair<string , map <string,string> > >::iterator  it_type = map_.begin(); it_type != map_.end(); it_type++) {
-		vecOut.push_back(it_type->first);
-	}
-	return vecOut;
-}
+//vector<string> InputData::getGroups() {
+//	vector<string> vecOut;
+//	for(vector<pair<string , vector<pair <string,string> > > >::iterator  it_type = allData.begin(); it_type != allData.end(); it_type++) {
+//		vecOut.push_back(it_type->first);
+//	}
+//	return vecOut;
+//}
+//
 
-bool InputData::existKey(string key, string group, unsigned int occurrence) {
-	unsigned int n_occur=0;
-	for (vector<pair<string , map <string,string> > >::iterator  it_type = map_.begin(); it_type != map_.end(); it_type++) {
+bool InputData::existKey(string key, string group, unsigned int occurrenceItem, unsigned int occurrenceGroup) {
+	unsigned int n_occur_group=0;
+	for (vector<pair<string , vector<pair<string,string> > > >::iterator  it_type = allData.begin(); it_type != allData.end(); it_type++) {
 		if (group == it_type->first) {
-			if (occurrence==n_occur) {
-				for (map <string,string>::iterator  it_type2 = it_type->second.begin(); it_type2 != it_type->second.end(); it_type2++) {
+			if (occurrenceGroup==n_occur_group) {
+				unsigned int n_occur_item=0;
+				for (vector<pair<string,string> >::iterator  it_type2 = it_type->second.begin(); it_type2 != it_type->second.end(); it_type2++) {
 					if (it_type2->first==key) {
-						DEBUG("FOUND KEY");
-						return true;
+						if (occurrenceItem==n_occur_item){
+							DEBUG("FOUND KEY");
+							return true;
+						} else {
+							n_occur_item++;
+						}
 					}
 				}
 			}
-			n_occur++;
+			n_occur_group++;
 		}		
 	}
 	return true;
 }
 
-bool InputData::existGroup(string group, unsigned int occurrence) {
+bool InputData::existGroup(std::string groupName, unsigned int occurrenceGroup){
 	unsigned int n_occur=0;
-	for (vector<pair<string , map <string,string> > >::iterator  it_type = map_.begin(); it_type != map_.end(); it_type++) {
-		if (group == it_type->first) {
-			if (occurrence==n_occur) {
+	for (vector<pair<string , vector<pair<string,string> > > >::iterator  it_type = allData.begin(); it_type != allData.end(); it_type++) {
+		if (groupName == it_type->first) {
+			if (occurrenceGroup==n_occur) {
 				return true;
 			}
 			n_occur++;
@@ -152,4 +153,3 @@ bool InputData::existGroup(string group, unsigned int occurrence) {
 	}
 	return false;
 }
-

@@ -24,7 +24,7 @@
 
 class PicParams;
 
-/*! \brief This is the text parser (similar to namelists). It reads once the datafile (at constructor time or later with parsefile) and stores the read values in a double map dictionary (map_)
+/*! \brief This is the text parser (similar to namelists). It reads once the datafile (at constructor time or later with parsefile) and stores the read values in a double map dictionary (allData)
 */
 class InputData {
 	
@@ -46,89 +46,76 @@ public:
 	void write(){write(std::cerr);};
 	
 	//! generic template to InputData a single value
-	template <class T> bool extract(std::string data, T &val, std::string group=std::string(""), unsigned int occurrence=0) {
-		//		transform(data.begin(), data.end(), data.begin(), ::tolower);
-		//		DEBUGEXEC(if(map_[group].find(data)==map_[group].end()) WARNING("Namelist: not found [" << group << "] "<< data));		
-		//		std::stringstream iss(map_[group][data]);
-		//		iss >> std::boolalpha >> val;
+	template <class T> bool extract(std::string data, T &val, std::string group=std::string(""), unsigned int occurrenceItem=0, unsigned int occurrenceGroup=0) {
 		transform(data.begin(), data.end(), data.begin(), ::tolower);
-		bool found=false;
-		unsigned int n_occur=0;
-		for (unsigned int i=0; i<map_.size(); i++) {
-			if (group == map_[i].first) {
-				if (occurrence==n_occur) {
-					std::stringstream iss(map_[i].second[data]);					
-					iss >> std::boolalpha >> val;
-					found=true;
+		transform(group.begin(), group.end(), group.begin(), ::tolower);
+		unsigned int n_occur_group=0;
+		for (unsigned int i=0; i<allData.size(); i++) {
+			if (group == allData[i].first) {
+				if (occurrenceGroup==n_occur_group) {
+					unsigned int n_occur_item=0;
+					for (unsigned int j=0; j<allData[i].second.size(); j++) {
+						if (data == allData[i].second[j].first) {
+							if (occurrenceItem==n_occur_item) {
+								std::stringstream iss(allData[i].second[j].second);					
+								iss >> std::boolalpha >> val;
+								return true;
+							}
+							n_occur_item++;
+						}
+					}
 				}
-				n_occur++;
+				n_occur_group++;
 			}
 		}
-		return found;
+		DEBUG(11," in namelist NOT FOUND! searching for \"" << data << "\" [" << occurrenceItem << "] in group \"" << group << "\" [" << occurrenceGroup << "]");
+		return false;
 	}
 
 	
-	// REMOVED BECAUSE UNSAFE!!!!
-	//! generic class to InputData a pointer (pay attention that T will be allocated and it's up to you to delete it!) return value is the number of values InputData
-//	template <class T> size_t extract(std::string data, T*&val, std::string group=std::string("")) {
-//		transform(data.begin(), data.end(), data.begin(), ::tolower);
-//		DEBUGEXEC(if(map_[group].find(data)==map_[group].end()) WARNING("Namelist: not found [" << group << "] "<< data));		
-//		std::stringstream iss(map_[group][data]);	
-//		std::vector<std::string> strVec;
-//		copy(std::istream_iterator<std::string>(iss), std::istream_iterator<std::string>(), 
-//			 std::back_inserter<std::vector<std::string> >(strVec));
-//		size_t nums=strVec.size();
-//		val= new T[nums];
-//		for (size_t i=0;i<nums;i++) {
-//			std::stringstream(strVec[i]) >> val[i];
-//		}	
-//		return nums;
-//	}
-	
 	//! generic class to InputData a vector (pay attention that T will be allocated and it's up to you to delete it!) return value is the number of values InputData
-	template <class T> bool extract(std::string data, std::vector<T>&val, std::string group=std::string(""), unsigned int occurrence=0) {
-//		transform(data.begin(), data.end(), data.begin(), ::tolower);
-//		DEBUGEXEC(if(map_[group].find(data)==map_[group].end()) WARNING("Namelist: not found [" << group << "] "<< data));		
-//		std::stringstream iss(map_[group][data]);
-//		std::vector<std::string> strVec;
-//		copy(std::istream_iterator<std::string>(iss), std::istream_iterator<std::string>(), 
-//			 std::back_inserter<std::vector<std::string> >(strVec));
-//		size_t nums=strVec.size();
-//		val.resize(nums);
-//		for (size_t i=0;i<nums;i++) {
-//			std::stringstream(strVec[i]) >> val[i];
-//		}
+	template <class T> bool extract(std::string data, std::vector<T>&val, std::string group=std::string(""), unsigned int occurrenceItem=0, unsigned int occurrenceGroup=0) {
 		transform(data.begin(), data.end(), data.begin(), ::tolower);
+		transform(group.begin(), group.end(), group.begin(), ::tolower);
 		bool found=false;
-		unsigned int n_occur=0;
-		for (unsigned int i=0; i<map_.size(); i++) {
-			if (group == map_[i].first) {
-				if (occurrence==n_occur) {
-					std::stringstream iss(map_[i].second[data]);					
-					std::vector<std::string> strVec;
-					copy(std::istream_iterator<std::string>(iss), std::istream_iterator<std::string>(), 
-						 std::back_inserter<std::vector<std::string> >(strVec));
-					size_t nums=strVec.size();
-					val.resize(nums);
-					for (size_t i=0;i<nums;i++) {
-						std::stringstream(strVec[i]) >> val[i];
-					}	
-					found=true;
+		unsigned int n_occur_group=0;
+		for (unsigned int i=0; i<allData.size(); i++) {
+			if (group == allData[i].first) {
+				if (occurrenceGroup==n_occur_group) {
+					unsigned int n_occur_item=0;
+					for (unsigned int j=0; j<allData[i].second.size(); j++) {
+						if (data == allData[i].second[j].first) {
+							if (occurrenceItem==n_occur_item) {
+								std::stringstream iss(allData[i].second[j].second);					
+								std::vector<std::string> strVec;
+								copy(std::istream_iterator<std::string>(iss), std::istream_iterator<std::string>(), 
+									 std::back_inserter<std::vector<std::string> >(strVec));
+								size_t nums=strVec.size();
+								val.resize(nums);
+								for (size_t i=0;i<nums;i++) {
+									std::stringstream(strVec[i]) >> val[i];
+								}	
+								found=true;
+							}
+							n_occur_item++;
+						}
+					}
 				}
-				n_occur++;
+				n_occur_group++;
 			}
 		}
 		return found;
+
 	}
 	
 	//! return true if the nth group exists
-	bool existGroup(std::string groupName, unsigned int occurrence=0);
+	bool existGroup(std::string groupName, unsigned int occurrenceGroup=0);
 
 	//! return true if the key exists in the nth group
-	bool existKey(std::string key, std::string groupName="", unsigned int occurrence=0);
+	bool existKey(std::string key, std::string groupName="", unsigned int occurrenceItem=0, unsigned int occurrenceGroup=0);
 
-	//! return the list of groups found
-	std::vector<std::string> getGroups();
+//	//! return the list of groups found
+//	std::vector<std::string> getGroups();
 	
 	//! string containing the whole clean namelist
 	std::string namelist;
@@ -143,7 +130,7 @@ private:
 	//! this is a vector of pairs string,map 
 	//! the string is the name of the group and the map key contains the name of the veriable and the string is it's value
 	//test new branch
-	std::vector<std::pair<std::string , std::map <std::string,std::string> > > map_;
+	std::vector<std::pair<std::string , std::vector< std::pair <std::string,std::string> > > > allData;
 
 };
 

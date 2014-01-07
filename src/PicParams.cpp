@@ -6,10 +6,7 @@ using namespace std;
 
 PicParams::PicParams(InputData &ifile) {
 	//open and parse the input data file
-
-//	DEBUGEXEC(ifile.extract("debug",debug_level));	
-//	RELEASEEXEC(if (ifile.existKey("debug")) WARNING("This is a release compilation, debug keyword is ignored"));
-
+	
 	ifile.extract("res_time", res_time);
 	ifile.extract("sim_time", sim_time);
 	
@@ -151,47 +148,7 @@ PicParams::PicParams(InputData &ifile) {
 		n_species++;
 	}
 	
-	
-//	n_laser=0;
-//	ifile.extract("n_laser", n_laser);
-//	laser_param.resize(n_laser);
-//	
-//	for (unsigned int i=0; i<n_laser; i++) {
-//		ostringstream ss;
-//		ss << "laser " << i;
-//		string group=ss.str();
-//		
-//		bool found=false;
-//		vector<string> groups=ifile.getGroups();
-//		for (size_t j=0; j<groups.size(); j++) {
-//			if (groups[j]==group) found=true;
-//		}
-//		if (found) {
-//			ifile.extract("a0",laser_param[i].a0 ,group);
-//			ifile.extract("angle",laser_param[i].angle ,group);
-//			ifile.extract("delta",laser_param[i].delta ,group);
-//			ifile.extract("time_profile",laser_param[i].time_profile ,group);
-//			ifile.extract("int_params",laser_param[i].int_params ,group);
-//			ifile.extract("double_params",laser_param[i].double_params ,group);
-//		}
-//		
-//		if (laser_param[i].time_profile=="constant") {
-//			if (laser_param[i].double_params.size()<1) {
-//				WARNING("Laser always on");
-//				laser_param[i].double_params.resize(1);
-//				laser_param[i].double_params[0]=sim_time;
-//			}
-//			if (laser_param[i].double_params.size()>1) {
-//				WARNING("Too much parameters for laser "<< i <<" time_profile ");
-//			}
-//			laser_param[i].double_params.resize(1);
-//			laser_param[i].double_params[0]*= 2.0*M_PI;
-//		} else {
-//			ERROR("Laser time_profile " << laser_param[i].time_profile << " not defined");
-//		}// endif laser
-//	}
 	n_laser=0;
-	
 	while (ifile.existGroup("laser",n_laser)) {
 		LaserStructure tmpLaser;
 		ifile.extract("a0",tmpLaser.a0 ,"laser",n_laser);
