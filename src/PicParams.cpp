@@ -55,94 +55,43 @@ PicParams::PicParams(InputData &ifile) {
 	}
 	
 	
-//    ifile.extract("n_species", n_species);
-//	species_param.resize(n_species);
-//	
-//	for (unsigned int i=0; i<n_species; i++) {
-//		ostringstream ss;
-//		ss << "species " << i;
-//		string group=ss.str();
-//		
-//		bool found=false;
-//		vector<string> groups=ifile.getGroups();
-//		for (size_t j=0; j<groups.size(); j++) {
-//			if (groups[j]==group) found=true;
-//		}
-//		if (found) {			
-//			ifile.extract("species_type",species_param[i].species_type,group);
-//            ifile.extract("initialization_type",species_param[i].initialization_type ,group);
-//            ifile.extract("n_part_per_cell",species_param[i].n_part_per_cell,group);
-//            ifile.extract("c_part_max",species_param[i].c_part_max,group);
-//			ifile.extract("mass",species_param[i].mass ,group);
-//			ifile.extract("charge",species_param[i].charge ,group);
-//			ifile.extract("density",species_param[i].density ,group);
-//			ifile.extract("mean_velocity",species_param[i].mean_velocity ,group);
-//			if (species_param[i].mean_velocity.size()!=nDim_particle) {
-//				WARNING("mean_velocity size : should be " << nDim_particle);
-//			}
-//			ifile.extract("temperature",species_param[i].temperature ,group);
-//			if (species_param[i].temperature.size()==1) {
-//				species_param[i].temperature.resize(3);
-//				species_param[i].temperature[1]=species_param[i].temperature[2]=species_param[i].temperature[0];
-//				WARNING("isotropic temperature T="<< species_param[i].temperature[0]);
-//			}
-//			ifile.extract("dynamics_type",species_param[i].dynamics_type ,group);
-//			ifile.extract("time_frozen",species_param[i].time_frozen ,group);
-//			if (species_param[i].time_frozen > 0 && 
-//				species_param[i].initialization_type=="maxwell-juettner") {
-//				WARNING("For species "<<i<< " possible conflict in maxwell-juettner initialization");
-//			}
-//			ifile.extract("radiating",species_param[i].radiating ,group);
-//			if (species_param[i].dynamics_type=="rrll" && (!species_param[i].radiating)) {
-//				WARNING("dynamics_type rrll forcing radiating true");
-//				species_param[i].radiating=true;
-//			}
-//			ifile.extract("bc_part_type",species_param[i].bc_part_type ,group);
-//			
-//			ifile.extract("ionization_model", species_param[i].ionization_model, group);
-//			ifile.extract("atomic_number", species_param[i].atomic_number, group);
-//			
-//		} else {
-//			ERROR("species " << i << " not defined");
-//		}
-//	}	
 	n_species=0;
 
 	while (ifile.existGroup("species",n_species)) {
 		SpeciesStructure tmpSpec;
 		
-		ifile.extract("species_type",tmpSpec.species_type,"species",n_species);
-		ifile.extract("initialization_type",tmpSpec.initialization_type ,"species",n_species);
-		ifile.extract("n_part_per_cell",tmpSpec.n_part_per_cell,"species",n_species);
-		ifile.extract("c_part_max",tmpSpec.c_part_max,"species",n_species);
-		ifile.extract("mass",tmpSpec.mass ,"species",n_species);
-		ifile.extract("charge",tmpSpec.charge ,"species",n_species);
-		ifile.extract("density",tmpSpec.density ,"species",n_species);
-		ifile.extract("mean_velocity",tmpSpec.mean_velocity ,"species",n_species);
+		ifile.extract("species_type",tmpSpec.species_type,"species",0,n_species);
+		ifile.extract("initialization_type",tmpSpec.initialization_type ,"species",0,n_species);
+		ifile.extract("n_part_per_cell",tmpSpec.n_part_per_cell,"species",0,n_species);
+		ifile.extract("c_part_max",tmpSpec.c_part_max,"species",0,n_species);
+		ifile.extract("mass",tmpSpec.mass ,"species",0,n_species);
+		ifile.extract("charge",tmpSpec.charge ,"species",0,n_species);
+		ifile.extract("density",tmpSpec.density ,"species",0,n_species);
+		ifile.extract("mean_velocity",tmpSpec.mean_velocity ,"species",0,n_species);
 		if (tmpSpec.mean_velocity.size()!=nDim_particle) {
 			WARNING("mean_velocity size : should be " << nDim_particle);
 		}
-		ifile.extract("temperature",tmpSpec.temperature ,"species",n_species);
+		ifile.extract("temperature",tmpSpec.temperature ,"species",0,n_species);
 		if (tmpSpec.temperature.size()==1) {
 			tmpSpec.temperature.resize(3);
 			tmpSpec.temperature[1]=tmpSpec.temperature[2]=tmpSpec.temperature[0];
 			WARNING("isotropic temperature T="<< tmpSpec.temperature[0]);
 		}
-		ifile.extract("dynamics_type",tmpSpec.dynamics_type ,"species",n_species);
-		ifile.extract("time_frozen",tmpSpec.time_frozen ,"species",n_species);
+		ifile.extract("dynamics_type",tmpSpec.dynamics_type ,"species",0,n_species);
+		ifile.extract("time_frozen",tmpSpec.time_frozen ,"species",0,n_species);
 		if (tmpSpec.time_frozen > 0 && \
 			tmpSpec.initialization_type=="maxwell-juettner") {
 			WARNING("For species "<< n_species << " possible conflict in maxwell-juettner initialization");
 		}
-		ifile.extract("radiating",tmpSpec.radiating ,"species",n_species);
+		ifile.extract("radiating",tmpSpec.radiating ,"species",0,n_species);
 		if (tmpSpec.dynamics_type=="rrll" && (!tmpSpec.radiating)) {
 			WARNING("dynamics_type rrll forcing radiating true");
 			tmpSpec.radiating=true;
 		}
-		ifile.extract("bc_part_type",tmpSpec.bc_part_type ,"species",n_species);
+		ifile.extract("bc_part_type",tmpSpec.bc_part_type ,"species",0,n_species);
 		
-		ifile.extract("ionization_model", tmpSpec.ionization_model, "species",n_species);
-		ifile.extract("atomic_number", tmpSpec.atomic_number, "species",n_species);
+		ifile.extract("ionization_model", tmpSpec.ionization_model, "species",0,n_species);
+		ifile.extract("atomic_number", tmpSpec.atomic_number, "species",0,n_species);
 		
 		species_param.push_back(tmpSpec);
 		n_species++;
@@ -151,12 +100,12 @@ PicParams::PicParams(InputData &ifile) {
 	n_laser=0;
 	while (ifile.existGroup("laser",n_laser)) {
 		LaserStructure tmpLaser;
-		ifile.extract("a0",tmpLaser.a0 ,"laser",n_laser);
-		ifile.extract("angle",tmpLaser.angle ,"laser",n_laser);
-		ifile.extract("delta",tmpLaser.delta ,"laser",n_laser);
-		ifile.extract("time_profile",tmpLaser.time_profile ,"laser",n_laser);
-		ifile.extract("int_params",tmpLaser.int_params ,"laser",n_laser);
-		ifile.extract("double_params",tmpLaser.double_params ,"laser",n_laser);
+		ifile.extract("a0",tmpLaser.a0 ,"laser",0,n_laser);
+		ifile.extract("angle",tmpLaser.angle ,"laser",0,n_laser);
+		ifile.extract("delta",tmpLaser.delta ,"laser",0,n_laser);
+		ifile.extract("time_profile",tmpLaser.time_profile ,"laser",0,n_laser);
+		ifile.extract("int_params",tmpLaser.int_params ,"laser",0,n_laser);
+		ifile.extract("double_params",tmpLaser.double_params ,"laser",0,n_laser);
 
 		if (tmpLaser.time_profile=="constant") {
 			if (tmpLaser.double_params.size()<1) {

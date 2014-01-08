@@ -59,6 +59,7 @@ public:
 							if (occurrenceItem==n_occur_item) {
 								std::stringstream iss(allData[i].second[j].second);					
 								iss >> std::boolalpha >> val;
+								DEBUG(100,"scalar " << data << "[" << occurrenceItem << "] g:" << group << " [" << occurrenceGroup << "] = " << val );
 								return true;
 							}
 							n_occur_item++;
@@ -68,7 +69,7 @@ public:
 				n_occur_group++;
 			}
 		}
-		DEBUG(11," in namelist NOT FOUND! searching for \"" << data << "\" [" << occurrenceItem << "] in group \"" << group << "\" [" << occurrenceGroup << "]");
+		DEBUG(10,"============================== NOT FOUND! searching for scalar \"" << data << "\" [" << occurrenceItem << "] in group \"" << group << "\" [" << occurrenceGroup << "]");
 		return false;
 	}
 
@@ -94,8 +95,9 @@ public:
 								val.resize(nums);
 								for (size_t i=0;i<nums;i++) {
 									std::stringstream(strVec[i]) >> val[i];
+									DEBUG(100,"vector " << data << "[" << occurrenceItem << "] g:" << group << " [" << occurrenceGroup << "]" << val[i]);
 								}	
-								found=true;
+								return true;
 							}
 							n_occur_item++;
 						}
@@ -104,6 +106,7 @@ public:
 				n_occur_group++;
 			}
 		}
+		DEBUG(10,"============================== NOT FOUND! searching for vector \"" << data << "\" [" << occurrenceItem << "] in group \"" << group << "\" [" << occurrenceGroup << "]");
 		return found;
 
 	}
