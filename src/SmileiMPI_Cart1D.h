@@ -30,6 +30,8 @@ public:
 
 	void createType( PicParams& params ) {};
 
+	int extrem_ranks[1][2];
+
 protected:
 	MPI_Comm SMILEI_COMM_1D;
 

@@ -33,6 +33,9 @@ public:
 	virtual void sumField      ( Field* field );
 	virtual void writeField    ( Field* field, std::string name ) {};
 
+        int extrem_ranks[2][2];
+
+
 protected:
 	MPI_Comm SMILEI_COMM_2D;
 

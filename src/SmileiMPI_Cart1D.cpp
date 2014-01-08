@@ -101,7 +101,21 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
     
     
 	MESSAGE( "n_space / rank " << smilei_rk << " = " << params.n_space[0]  );
-    
+
+	extrem_ranks[0][0] = 0;
+	int rank_min =  0;
+   	if (coords_[0] == 0) {
+		rank_min = smilei_rk;
+	} 
+	MPI_Allreduce(&rank_min, &extrem_ranks[0][0], 1, MPI_INT, MPI_SUM, SMILEI_COMM_1D);
+	extrem_ranks[0][1] = 0;
+	int rank_max = 0;
+	if (coords_[0]==number_of_procs[0]-1) {
+		rank_max = smilei_rk;
+	}
+	MPI_Allreduce(&rank_max, &extrem_ranks[0][1], 1, MPI_INT, MPI_SUM, SMILEI_COMM_1D);
+
+	//cout << extrem_ranks[0][0] << " " << extrem_ranks[0][1] << endl;
     
     
 /*	number_of_procs[0] = smilei_sz;
