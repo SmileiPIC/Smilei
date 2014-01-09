@@ -6,7 +6,7 @@ using namespace std;
 
 PicParams::PicParams(InputData &ifile) {
 	//open and parse the input data file
-	
+				 
 	ifile.extract("res_time", res_time);
 	ifile.extract("sim_time", sim_time);
 	

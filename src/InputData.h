@@ -24,7 +24,11 @@
 
 class PicParams;
 
-/*! \brief This is the text parser (similar to namelists). It reads once the datafile (at constructor time or later with parsefile) and stores the read values in a double map dictionary (allData)
+/*! \brief This is the text parser (similar to namelists). 
+ It reads once the datafile (at constructor time or later with parsefile) and stores the whole read text 
+ (after being cleaned) in a string variable (namelist) then this variable is passed to all nodes and parsed by filling the structure (allData)
+ then you can extract the values with the extract methos (2 templates: one for single variables and one for vectors).
+ You can also query the structure vithe the existGroup and existKey
 */
 class InputData {
 	
@@ -47,16 +51,14 @@ public:
 	
 	//! generic template to InputData a single value
 	template <class T> bool extract(std::string data, T &val, std::string group=std::string(""), unsigned int occurrenceItem=0, unsigned int occurrenceGroup=0) {
-		transform(data.begin(), data.end(), data.begin(), ::tolower);
-		transform(group.begin(), group.end(), group.begin(), ::tolower);
 		unsigned int n_occur_group=0;
 		for (unsigned int i=0; i<allData.size(); i++) {
 			if (group == allData[i].first) {
-				if (occurrenceGroup==n_occur_group) {
+				if (occurrenceGroup==n_occur_group || occurrenceGroup < 0) {
 					unsigned int n_occur_item=0;
 					for (unsigned int j=0; j<allData[i].second.size(); j++) {
 						if (data == allData[i].second[j].first) {
-							if (occurrenceItem==n_occur_item) {
+							if (occurrenceItem==n_occur_item || occurrenceItem < 0) {
 								std::stringstream iss(allData[i].second[j].second);					
 								iss >> std::boolalpha >> val;
 								DEBUG(100,"scalar " << data << "[" << occurrenceItem << "] g:" << group << " [" << occurrenceGroup << "] = " << val );
@@ -69,24 +71,22 @@ public:
 				n_occur_group++;
 			}
 		}
-		DEBUG(10,"============================== NOT FOUND! searching for scalar \"" << data << "\" [" << occurrenceItem << "] in group \"" << group << "\" [" << occurrenceGroup << "]");
+		DEBUG(10,"NOT FOUND! searching for scalar \"" << data << "\" [" << occurrenceItem << "] in group \"" << group << "\" [" << occurrenceGroup << "]");
 		return false;
 	}
 
 	
 	//! generic class to InputData a vector (pay attention that T will be allocated and it's up to you to delete it!) return value is the number of values InputData
 	template <class T> bool extract(std::string data, std::vector<T>&val, std::string group=std::string(""), unsigned int occurrenceItem=0, unsigned int occurrenceGroup=0) {
-		transform(data.begin(), data.end(), data.begin(), ::tolower);
-		transform(group.begin(), group.end(), group.begin(), ::tolower);
 		bool found=false;
 		unsigned int n_occur_group=0;
 		for (unsigned int i=0; i<allData.size(); i++) {
 			if (group == allData[i].first) {
-				if (occurrenceGroup==n_occur_group) {
+				if (occurrenceGroup==n_occur_group || occurrenceGroup < 0) {
 					unsigned int n_occur_item=0;
 					for (unsigned int j=0; j<allData[i].second.size(); j++) {
 						if (data == allData[i].second[j].first) {
-							if (occurrenceItem==n_occur_item) {
+							if (occurrenceItem==n_occur_item || occurrenceItem < 0) {
 								std::stringstream iss(allData[i].second[j].second);					
 								std::vector<std::string> strVec;
 								copy(std::istream_iterator<std::string>(iss), std::istream_iterator<std::string>(), 
@@ -106,7 +106,7 @@ public:
 				n_occur_group++;
 			}
 		}
-		DEBUG(10,"============================== NOT FOUND! searching for vector \"" << data << "\" [" << occurrenceItem << "] in group \"" << group << "\" [" << occurrenceGroup << "]");
+		DEBUG(10,"NOT FOUND! searching for vector \"" << data << "\" [" << occurrenceItem << "] in group \"" << group << "\" [" << occurrenceGroup << "]");
 		return found;
 
 	}
@@ -117,22 +117,26 @@ public:
 	//! return true if the key exists in the nth group
 	bool existKey(std::string key, std::string groupName="", unsigned int occurrenceItem=0, unsigned int occurrenceGroup=0);
 
-//	//! return the list of groups found
-//	std::vector<std::string> getGroups();
-	
 	//! string containing the whole clean namelist
 	std::string namelist;
 
+	template <class T> bool addVar(std::string nameVar, T &valVar,std::string nameGroup=""){
+		std::vector< std::pair <std::string,std::string> > myvec;
+		std::ostringstream s;
+		s << valVar;		
+		myvec.push_back(make_pair(nameVar,s.str()));
+		allData.push_back(make_pair(nameGroup,myvec));
+	};
+	
 private:
-	//! print the namelist on stream
+	//! print the namelist on stream 
 	void write(std::ostream&); 
 		
-	//! this is a function that removes triling spaces and tabs from the beginning and the end of a string
+	//! this is a function that removes trailing spaces and tabs from the beginning and the end of a string (and transforms in lowercase)
 	std::string cleanString(std::string);
 	
-	//! this is a vector of pairs string,map 
-	//! the string is the name of the group and the map key contains the name of the veriable and the string is it's value
-	//test new branch
+	//! this is a vector of pairs string, vector of pairs string,string....
+	//! the first string is the name of the group and the second vector of pairs contains the variable name and it's value (as string)
 	std::vector<std::pair<std::string , std::vector< std::pair <std::string,std::string> > > > allData;
 
 };

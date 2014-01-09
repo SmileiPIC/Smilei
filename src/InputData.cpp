@@ -18,10 +18,8 @@ string InputData::cleanString(string str) {
 	str.erase( pos + 1 );    
 	pos = str.find_first_not_of( whiteSpaces );
 	str.erase( 0, pos );
-	
 	std::string::iterator new_end = std::unique(str.begin(), str.end(), BothAreSpaces);
-	str.erase(new_end, str.end());   
-
+	str.erase(new_end, str.end());
 	return str;
 }
 
@@ -87,7 +85,21 @@ void InputData::parseStream() {
 		}
 	}
 	if (!group.empty()) ERROR("Final group "<< group << " not closed. Check the namelist");
+	std::reverse( allData.begin(), allData.end() );
 	allData.push_back(make_pair("",defaultGroupVec));
+	std::reverse( allData.begin(), allData.end() );
+	
+	
+	unsigned long seedTime=time(NULL);
+	
+	if (existKey("random_seed")) {
+		extract("random_seed",seedTime);
+		DEBUGEXEC(WARNING("Unused random_seed in debug mode");)
+	} else {
+		RELEASEEXEC(addVar("random_seed",seedTime);)
+	}
+	RELEASEEXEC(srand(seedTime);)
+	
 }
 
 
@@ -127,11 +139,9 @@ bool InputData::existKey(string key, string group, unsigned int occurrenceItem, 
 				for (vector<pair<string,string> >::iterator  it_type2 = it_type->second.begin(); it_type2 != it_type->second.end(); it_type2++) {
 					if (it_type2->first==key) {
 						if (occurrenceItem==n_occur_item){
-							DEBUG("FOUND KEY");
 							return true;
-						} else {
-							n_occur_item++;
 						}
+						n_occur_item++;
 					}
 				}
 			}
@@ -142,13 +152,13 @@ bool InputData::existKey(string key, string group, unsigned int occurrenceItem, 
 }
 
 bool InputData::existGroup(std::string groupName, unsigned int occurrenceGroup){
-	unsigned int n_occur=0;
+	unsigned int n_occur_group=0;
 	for (vector<pair<string , vector<pair<string,string> > > >::iterator  it_type = allData.begin(); it_type != allData.end(); it_type++) {
 		if (groupName == it_type->first) {
-			if (occurrenceGroup==n_occur) {
+			if (occurrenceGroup==n_occur_group) {
 				return true;
 			}
-			n_occur++;
+			n_occur_group++;
 		}		
 	}
 	return false;
