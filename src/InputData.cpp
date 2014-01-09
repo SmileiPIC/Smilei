@@ -93,6 +93,16 @@ void InputData::parseStream() {
 	allData.push_back(make_pair("",defaultGroupVec));
 	std::reverse( allData.begin(), allData.end() );
 	
+	// this will do the randomization
+	unsigned long seedTime=time(NULL);
+	if (existKey("random_seed")) {
+		extract("random_seed",seedTime);
+		DEBUGEXEC(WARNING("Unused random_seed in debug mode");)
+	} else {
+		addVar("random_seed",seedTime);
+	}
+	RELEASEEXEC(srand(seedTime);)
+	
 }
 
 
