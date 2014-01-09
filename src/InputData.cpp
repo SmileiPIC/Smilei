@@ -84,14 +84,19 @@ void InputData::parseStream() {
 			}
 		}
 	}
+	
+	
 	if (!group.empty()) ERROR("Final group "<< group << " not closed. Check the namelist");
+	
+	// this wil put the default empty group "" in front of others 
 	std::reverse( allData.begin(), allData.end() );
 	allData.push_back(make_pair("",defaultGroupVec));
 	std::reverse( allData.begin(), allData.end() );
 	
+	// this will do the randomization
+	//! \todo{we should do this by cpu...}
 	
 	unsigned long seedTime=time(NULL);
-	
 	if (existKey("random_seed")) {
 		extract("random_seed",seedTime);
 		DEBUGEXEC(WARNING("Unused random_seed in debug mode");)
@@ -99,7 +104,6 @@ void InputData::parseStream() {
 		RELEASEEXEC(addVar("random_seed",seedTime);)
 	}
 	RELEASEEXEC(srand(seedTime);)
-	
 }
 
 
@@ -148,7 +152,7 @@ bool InputData::existKey(string key, string group, unsigned int occurrenceItem, 
 			n_occur_group++;
 		}		
 	}
-	return true;
+	return false;
 }
 
 bool InputData::existGroup(std::string groupName, unsigned int occurrenceGroup){
