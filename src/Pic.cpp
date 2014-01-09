@@ -148,7 +148,8 @@ int main (int argc, char* argv[])
     smpi->sumDensities( EMfields );
     
 	//! \todo{FalseNot //, current algorithm is instrinsicaly sequential}
-	smpi->solvePoissonPara( EMfields );		//champs->initMaxwell();
+	//smpi->solvePoissonPara( EMfields );		//champs->initMaxwell();
+    EMfields->solvePoisson(smpi);
 	
     smpi->barrier();
 

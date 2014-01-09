@@ -41,14 +41,8 @@ ElectroMagn2D::ElectroMagn2D(PicParams* params, SmileiMPI* smpi)
     dt_ov_dy = dt/dy;
     dy_ov_dt = 1.0/dt_ov_dy;
     
-    // number of nodes of the primal and dual grid in the x-direction
-    nx_p = params->n_space[0]+1;
-    nx_d = params->n_space[0]+2;
-    
-    // number of nodes of the primal and dual grid in the y-direction
-    ny_p = params->n_space[1]+1;
-    ny_d = params->n_space[1]+2;
-    
+    //!\todo Check if oversize really needs to be a vector
+    oversize_ = params->oversize[0];
     
     // -----------------------------------------------------
     // Parameters for the Silver-Mueller boundary conditions
@@ -125,7 +119,8 @@ ElectroMagn2D::ElectroMagn2D(PicParams* params, SmileiMPI* smpi)
         index_bc_min[i] = params->oversize[i];
         index_bc_max[i] = dimDual[i]-params->oversize[i]-1;
     }
-    MESSAGE("index_bc_min / index_bc_max / nx_p / nx_d" << index_bc_min[0] << " " << index_bc_max[0] << " " << nx_p<< " " << nx_d);
+    MESSAGE("index_bc_min / index_bc_max / nx_p / nx_d" << index_bc_min[0]
+            << " " << index_bc_max[0] << " " << nx_p<< " " << nx_d);
 	
 }//END constructor Electromagn2D
 
@@ -146,44 +141,293 @@ ElectroMagn2D::~ElectroMagn2D()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn2D::solvePoisson(SmileiMPI* smpi)
 {
-    Field2D* Ex2D = static_cast<Field2D*>(Ex_);
-    Field2D* Ey2D = static_cast<Field2D*>(Ey_);
-    Field2D* Ez2D = static_cast<Field2D*>(Ez_);
-    Field2D* Bx2D = static_cast<Field2D*>(Bx_);
-    Field2D* By2D = static_cast<Field2D*>(By_);
-    Field2D* Bz2D = static_cast<Field2D*>(Bz_);
+    DEBUG("Entering Poisson Solver");
     
-    // AT THE MOMENT PUT ALL FIELDS TO 0 WHEN THEY ARE CREATED !!! (useful to test the Maxwell Solver)
-    for (unsigned int i=0 ; i<nx_d ; i++) {
-		for (unsigned int j=0 ; j<ny_p ; j++) {
-			(*Ex2D)(i,j) = 0.0;
-		}
+    SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
+    
+    unsigned int iteration_max = 50000;
+    double       error_max     = 1.e-14;
+    
+    Field2D* Ex2D  = static_cast<Field2D*>(Ex_);
+    Field2D* Ey2D  = static_cast<Field2D*>(Ey_);
+    Field2D* rho2D = static_cast<Field2D*>(rho_);
+    
+    double one_ov_dx_sq       = 1.0/(dx*dx);
+    double one_ov_dy_sq       = 1.0/(dy*dy);
+    double two_ov_dx2dy2      = 2.0*(1.0/(dx*dx)+1.0/(dy*dy));
+    
+    unsigned int nx_p2_global = (smpi2D->n_space_global[0]+1) * (smpi2D->n_space_global[1]+1);
+    unsigned int smilei_sz    = smpi2D->smilei_sz;
+    unsigned int smilei_rk    = smpi2D->smilei_rk;
+    
+    
+    // Boundary condition for the direction vector (all put to 0)
+    vector<double> pSouth(nx_p); for (unsigned int i=0; i<nx_p; i++) pSouth[i]=0.0;
+    vector<double> pNorth(nx_p); for (unsigned int i=0; i<nx_p; i++) pNorth[i]=0.0;
+    vector<double> pWest(ny_p);  for (unsigned int j=0; j<ny_p; j++) pWest[j]=0.0;
+    vector<double> pEast(ny_p);  for (unsigned int j=0; j<ny_p; j++) pEast[j]=0.0;
+    
+    
+    // Min and max indices for calculation of the scalar product (for primal & dual grid)
+    //     scalar products are computed accounting only on real nodes
+    //     ghost cells are used only for the (non-periodic) boundaries
+    // ----------------------------------------------------------------------------------
+    vector<unsigned int> index_min_p(2);
+    vector<unsigned int> index_min_d(2);
+    vector<unsigned int> index_max_p(2);
+    vector<unsigned int> index_max_d(2);
+    index_min_p[0] = oversize_;
+    index_min_p[1] = oversize_;
+    index_min_d[0] = oversize_;
+    index_min_d[1] = oversize_;
+    index_max_p[0] = nx_p - 2 - oversize_;
+    index_max_p[1] = ny_p - 2 - oversize_;
+    index_max_d[0] = nx_d - 2 - oversize_;
+    index_max_d[1] = ny_d - 2 - oversize_;
+    if (smpi2D->isWester()) {
+        index_min_p[0] = 0;
+        index_min_d[0] = 0;
     }
-    for (unsigned int i=0 ; i<nx_p ; i++) {
-		for (unsigned int j=0 ; j<ny_d ; j++) {
-			(*Ey2D)(i,j) = 0.0;
-		}
-    }
-    for (unsigned int i=0 ; i<nx_p ; i++) {
-		for (unsigned int j=0 ; j<ny_p ; j++) {
-			(*Ez2D)(i,j) = 0.0;
-		}
+    if (smpi2D->isEaster()) {
+        index_max_p[0] = nx_p-1;
+        index_max_d[0] = nx_d-1;
     }
     
-    for (unsigned int i=0 ; i<nx_p ; i++) {
-		for (unsigned int j=0 ; j<ny_d ; j++) {
-			(*Bx2D)(i,j) = 0.0;
-		}
+    
+    // Initialization of the variables
+    // -------------------------------
+    DEBUG(1,"Initialisation for the iterative CG method started");
+    unsigned int iteration=0;
+    
+    Field2D phi(dimPrim);    // scalar potential
+    Field2D r(dimPrim);      // residual vector
+    Field2D p(dimPrim);      // direction vector
+    Field2D Ap(dimPrim);     // A*p vector
+    
+    for (unsigned int i=0; i<nx_p; i++){
+        for (unsigned int j=0; j<ny_p; j++){
+            phi(i,j)   = 0.0;
+            r(i,j)     = -(*rho2D)(i,j);
+            p(i,j)     = r(i,j);
+        }//j
+    }//i
+    
+    // norm of the residual
+    double rnew_dot_rnew       = 0.0;
+    double rnew_dot_rnew_local = 0.0;
+    for (unsigned int i=index_min_p[0]; i<=index_max_p[0]; i++){
+        for (unsigned int j=index_min_p[1]; j<=index_max_p[1]; j++){
+            rnew_dot_rnew_local += r(i,j)*r(i,j);
+        }
     }
-    for (unsigned int i=0 ; i<nx_d ; i++) {
-		for (unsigned int j=0 ; j<ny_p ; j++) {
-			(*By2D)(i,j) = 0.0;
-		}
+    MPI_Allreduce(&rnew_dot_rnew_local, &rnew_dot_rnew, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    
+    // compute control parameter
+    double ctrl = rnew_dot_rnew / (double)(nx_p2_global);
+    
+    DEBUG(1,"Initialisation for the iterative CG method done");
+    
+    
+    // ---------------------------------------------------------
+    // Starting iterative loop for the conjugate gradient method
+    // ---------------------------------------------------------
+    DEBUG(1,"Starting iterative loop for CG method");
+    while ( (ctrl > error_max) && (iteration<iteration_max) ) {
+        
+        iteration++;
+        DEBUG(5,"iteration " << iteration << " started with control parameter ctrl = " << ctrl*1.e14 << " x 1e-14");
+        
+        // scalar product of the residual
+        double r_dot_r = rnew_dot_rnew;
+        
+        
+        // vector product Ap = A*p
+        for (unsigned int i=1; i<nx_p-1; i++){
+            for (unsigned int j=1; j<ny_p-1; j++){
+                Ap(i,j) = one_ov_dx_sq*(p(i-1,j)+p(i+1,j)) + one_ov_dy_sq*(p(i,j-1)+p(i,j+1)) - two_ov_dx2dy2*p(i,j);
+            }//j
+        }//i
+        
+        
+        // Western BC
+        if ( smpi2D->isWester() ) {
+            for (unsigned int j=1; j<ny_p-1; j++){
+                Ap(0,j)      = one_ov_dx_sq*(pWest[j]+p(1,j))
+                +              one_ov_dy_sq*(p(0,j-1)+p(0,j+1))
+                -              two_ov_dx2dy2*p(0,j);
+            }
+            // at corners
+            Ap(0,0)           = one_ov_dx_sq*(pWest[0]+p(1,0))               // West/South
+            +                   one_ov_dy_sq*(pSouth[0]+p(0,1))
+            -                   two_ov_dx2dy2*p(0,0);
+            Ap(0,ny_p-1)      = one_ov_dx_sq*(pWest[ny_p-1]+p(1,ny_p-1))     // West/North
+            +                   one_ov_dy_sq*(p(0,ny_p-2)+pNorth[0])
+            -                   two_ov_dx2dy2*p(0,ny_p-1);
+        }
+        
+        // Eastern BC
+        if ( smpi2D->isEaster() ) {
+            
+            for (unsigned int j=1; j<ny_p-1; j++){
+                Ap(nx_p-1,j) = one_ov_dx_sq*(p(nx_p-2,j)+pEast[j])
+                +              one_ov_dy_sq*(p(nx_p-1,j-1)+p(nx_p-1,j+1))
+                -              two_ov_dx2dy2*p(nx_p-1,j);
+            }
+            // at corners
+            Ap(nx_p-1,0)      = one_ov_dx_sq*(p(nx_p-2,0)+pEast[0])                 // East/South
+            +                   one_ov_dy_sq*(pSouth[nx_p-1]+p(nx_p-1,1))
+            -                   two_ov_dx2dy2*p(nx_p-1,0);
+            Ap(nx_p-1,ny_p-1) = one_ov_dx_sq*(p(nx_p-2,ny_p-1)+pEast[ny_p-1])       // East/North
+            +                   one_ov_dy_sq*(p(nx_p-1,ny_p-2)+pNorth[nx_p-1])
+            -                   two_ov_dx2dy2*p(nx_p-1,ny_p-1);
+        }
+        
+        // Periodic BC on the y-direction
+        smpi2D->exchangeField(&Ap);
+                
+        // scalar product p.Ap
+        double p_dot_Ap       = 0.0;
+        double p_dot_Ap_local = 0.0;
+        for (unsigned int i=index_min_p[0]; i<=index_max_p[0]; i++){
+            for (unsigned int j=index_min_p[1]; j<=index_max_p[1]; j++){
+                p_dot_Ap_local += p(i,j)*Ap(i,j);
+            }
+        }
+        MPI_Allreduce(&p_dot_Ap_local, &p_dot_Ap, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        
+        // compute new potential and residual
+        double alpha_k = r_dot_r/p_dot_Ap;
+        for(unsigned int i=0; i<nx_p; i++){
+            for(unsigned int j=0; j<ny_p; j++){
+                phi(i,j) += alpha_k * p(i,j);
+                r(i,j)   -= alpha_k * Ap(i,j);
+            }
+        }
+        
+        // compute new residual norm
+        rnew_dot_rnew       = 0.0;
+        rnew_dot_rnew_local = 0.0;
+        for (unsigned int i=index_min_p[0]; i<=index_max_p[0]; i++){
+            for (unsigned int j=index_min_p[1]; j<=index_max_p[1]; j++){
+                rnew_dot_rnew_local += r(i,j)*r(i,j);
+            }
+        }
+        MPI_Allreduce(&rnew_dot_rnew_local, &rnew_dot_rnew, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        DEBUG(10,"new residual norm: rnew_dot_rnew = " << rnew_dot_rnew);
+        
+        // compute new direction
+        double beta_k = rnew_dot_rnew/r_dot_r;
+        for (unsigned int i=0; i<nx_p; i++){
+            for(unsigned int j=0; j<ny_p; j++){
+                p(i,j) = r(i,j) + beta_k * p(i,j);
+            }
+        }
+        
+        // compute control parameter
+        ctrl = rnew_dot_rnew / (double)(nx_p2_global);
+        DEBUG(10,"iteration " << iteration << " done, exiting with control parameter ctrl = " << ctrl);
+        
+    }//End of the iterative loop
+    
+    
+    // --------------------------------
+    // Status of the solver convergence
+    // --------------------------------
+    if (iteration == iteration_max){
+        WARNING("Poisson solver did not converge: reached maximum iteration number: " << iteration
+                << ", relative error is ctrl = " << 1.0e14*ctrl << " x 1e-14");
     }
-    for (unsigned int i=0 ; i<nx_d ; i++) {
-		for (unsigned int j=0 ; j<ny_d ; j++) {
-			(*Bz2D)(i,j) = 0.0;
-		}
+    else{
+        MESSAGE("Poisson solver converged at iteration: " << iteration
+                << ", relative error is ctrl = " << 1.0e14*ctrl << " x 1e-14");
+    }
+    
+    
+    // ------------------------------------------
+    // Compute the electrostatic fields Ex and Ey
+    // ------------------------------------------
+    
+    // Ex
+    DEBUG(2, "Computing Ex from scalar potential");
+    for (unsigned int i=1; i<nx_d-1; i++){
+        for (unsigned int j=0; j<ny_p; j++){
+            (*Ex2D)(i,j) = (phi(i-1,j)-phi(i,j))/dx;
+        }
+    }
+    // Ey
+    DEBUG(2, "Computing Ey from scalar potential");
+    for (unsigned int i=0; i<nx_p; i++){
+        for (unsigned int j=1; j<ny_d-1; j++){
+            (*Ey2D)(i,j) = (phi(i,j-1)-phi(i,j))/dy;
+        }
+    }
+    
+    
+    // Apply BC on Ex and Ey
+    // ---------------------
+    // Ex / West
+    if (smpi2D->isWester()){
+        DEBUG(2, "Computing Western BC on Ex");
+        for (unsigned int j=0; j<ny_p; j++){
+            (*Ex2D)(0,j) = (*Ex2D)(1,j) + ((*Ey2D)(0,j+1)-(*Ey2D)(0,j))*dx/dy  - dx*(*rho2D)(0,j);
+        }
+    }
+    // Ex / East
+    if (smpi2D->isEaster()){
+        DEBUG(2, "Computing Eastern BC on Ex");
+        for (unsigned int j=0; j<ny_p; j++){
+            (*Ex2D)(nx_d-1,j) = (*Ex2D)(nx_d-2,j) - ((*Ey2D)(nx_p-1,j+1)-(*Ey2D)(nx_p-1,j))*dx/dy + dx*(*rho2D)(nx_p-1,j);
+        }
+    }
+    
+    smpi2D->exchangeField(Ex2D);
+    smpi2D->exchangeField(Ey2D);
+    
+    
+    // Centering of the electrostatic fields
+    // -------------------------------------
+    
+    double Ex_WestNorth = 0.0;
+    double Ey_WestNorth = 0.0;
+    double Ex_EastSouth = 0.0;
+    double Ey_EastSouth = 0.0;
+    
+    // West-North corner
+    int rank_WestNorth = smpi2D->extrem_ranks[0][1];
+    if ( (smpi2D->isWester()) && (smpi2D->isNorthern())) {
+        if (smpi2D->smilei_rk != smpi2D->extrem_ranks[0][1]) ERROR("west-north process rank not well defined");
+        Ex_WestNorth = (*Ex2D)(0,ny_p-1);
+        Ey_WestNorth = (*Ey2D)(0,ny_d-1);
+    }
+    MPI_Bcast(&Ex_WestNorth, 1, MPI_DOUBLE, rank_WestNorth, MPI_COMM_WORLD);
+    MPI_Bcast(&Ey_WestNorth, 1, MPI_DOUBLE, rank_WestNorth, MPI_COMM_WORLD);
+    
+    // East-South corner
+    int rank_EastSouth = smpi2D->extrem_ranks[1][0];
+    if ((smpi2D->isEaster()) && (smpi2D->isSouthern())) {
+        if (smpi2D->smilei_rk != smpi2D->extrem_ranks[1][0]) ERROR("east-south process rank not well defined");
+        Ex_EastSouth = (*Ex2D)(nx_d-1,0);
+        Ey_EastSouth = (*Ey2D)(nx_p-1,0);
+    }
+    MPI_Bcast(&Ex_EastSouth, 1, MPI_DOUBLE, rank_EastSouth, MPI_COMM_WORLD);
+    MPI_Bcast(&Ey_EastSouth, 1, MPI_DOUBLE, rank_EastSouth, MPI_COMM_WORLD);
+    
+    cerr << "Ex_WestNorth = " << Ex_WestNorth << "  -  Ey_WestNorth = " << Ey_WestNorth << endl;
+    cerr << "Ex_EastSouth = " << Ex_EastSouth << "  -  Ey_EastSouth = " << Ey_EastSouth << endl;
+    
+    // Centering electrostatic fields
+    double Ex_Add = -0.5*(Ex_WestNorth+Ex_EastSouth);
+    double Ey_Add = -0.5*(Ey_WestNorth+Ey_EastSouth);
+    
+    for (unsigned int i=0; i<nx_d; i++){
+        for (unsigned int j=0; j<ny_p; j++) {
+            (*Ex2D)(i,j) += Ex_Add;
+        }
+    }
+    for (unsigned int i=0; i<nx_p; i++){
+        for (unsigned int j=0; j<ny_d; j++) {
+            (*Ey2D)(i,j) += Ey_Add;
+        }
     }
     
 }//END solvePoisson

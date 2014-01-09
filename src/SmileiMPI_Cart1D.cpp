@@ -99,9 +99,14 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
 	}
     
     
-    
 	MESSAGE( "n_space / rank " << smilei_rk << " = " << params.n_space[0]  );
 
+    
+    // -------------------------------------------------------
+    // Compute & store the ranks of processes dealing with the
+    // corner of the simulation box
+    // -------------------------------------------------------
+    
 	extrem_ranks[0][0] = 0;
 	int rank_min =  0;
    	if (coords_[0] == 0) {

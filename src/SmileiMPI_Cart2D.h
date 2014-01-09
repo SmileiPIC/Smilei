@@ -26,14 +26,16 @@ public:
 
 	inline bool isWester() {return (coords_[0]==0);}
 	inline bool isEaster() {return (coords_[0]==number_of_procs[0]-1);}
-
+    inline bool isSouthern() {return (coords_[1]==0);}
+	inline bool isNorthern() {return (coords_[1]==number_of_procs[1]-1);}
+    
 	void createType( PicParams& params );
 
 	virtual void exchangeField ( Field* field );
 	virtual void sumField      ( Field* field );
 	virtual void writeField    ( Field* field, std::string name ) {};
 
-        int extrem_ranks[2][2];
+    int extrem_ranks[2][2];
 
 
 protected:

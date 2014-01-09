@@ -22,7 +22,8 @@ public:
 
 	virtual void createTopology(PicParams& params);
 	virtual void exchangeParticles(Species* species, int ispec, PicParams* params);
-
+    virtual void exchangeField ( Field* field );
+    
 	inline int getProcCoord(int i) {return coords_[i];}
 
 	inline bool isWester() {return (coords_[0]==0);}
@@ -47,7 +48,6 @@ protected:
 	int neighbor_[3][2];	// 
 
 	virtual void sumField      ( Field* field );
-	virtual void exchangeField ( Field* field );
 	virtual void writeField    ( Field* field, std::string name );
 
 };
