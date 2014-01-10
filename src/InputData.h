@@ -28,7 +28,7 @@ class PicParams;
  It reads once the datafile (at constructor time or later with parsefile) and stores the whole read text 
  (after being cleaned) in a string variable (namelist) then this variable is passed to all nodes and parsed by filling the structure (allData)
  then you can extract the values with the extract methos (2 templates: one for single variables and one for vectors).
- You can also query the structure vithe the existGroup and existKey
+ You can also query the structure with existGroup
 */
 class InputData {
 	
@@ -114,13 +114,10 @@ public:
 	//! return true if the nth group exists
 	bool existGroup(std::string groupName, unsigned int occurrenceGroup=0);
 
-	//! return true if the key exists in the nth group
-	bool existKey(std::string key, std::string groupName="", unsigned int occurrenceItem=0, unsigned int occurrenceGroup=0);
-
 	//! string containing the whole clean namelist
 	std::string namelist;
 
-	template <class T> bool addVar(std::string nameVar, T &valVar,std::string nameGroup=""){
+	template <class T> void addVar(std::string nameVar, T &valVar,std::string nameGroup=""){
 		std::vector< std::pair <std::string,std::string> > myvec;
 		std::ostringstream s;
 		s << valVar;		

@@ -94,15 +94,12 @@ void InputData::parseStream() {
 	std::reverse( allData.begin(), allData.end() );
 	
 	// this will do the randomization
-	unsigned long seedTime=time(NULL);
-	if (existKey("random_seed")) {
-		extract("random_seed",seedTime);
-		DEBUGEXEC(WARNING("Unused random_seed in debug mode");)
-	} else {
+	unsigned long seedTime=0;
+	if (!extract("random_seed",seedTime)) {
+		RELEASEEXEC(seedTime=time(NULL));
 		addVar("random_seed",seedTime);
 	}
-	RELEASEEXEC(srand(seedTime);)
-	
+	srand(seedTime);
 }
 
 
@@ -122,36 +119,6 @@ void InputData::parseFile(string filename) {
 		ERROR("File " << filename << "does not exists");
 	}
 	
-}
-
-//vector<string> InputData::getGroups() {
-//	vector<string> vecOut;
-//	for(vector<pair<string , vector<pair <string,string> > > >::iterator  it_type = allData.begin(); it_type != allData.end(); it_type++) {
-//		vecOut.push_back(it_type->first);
-//	}
-//	return vecOut;
-//}
-//
-
-bool InputData::existKey(string key, string group, unsigned int occurrenceItem, unsigned int occurrenceGroup) {
-	unsigned int n_occur_group=0;
-	for (vector<pair<string , vector<pair<string,string> > > >::iterator  it_type = allData.begin(); it_type != allData.end(); it_type++) {
-		if (group == it_type->first) {
-			if (occurrenceGroup==n_occur_group) {
-				unsigned int n_occur_item=0;
-				for (vector<pair<string,string> >::iterator  it_type2 = it_type->second.begin(); it_type2 != it_type->second.end(); it_type2++) {
-					if (it_type2->first==key) {
-						if (occurrenceItem==n_occur_item){
-							return true;
-						}
-						n_occur_item++;
-					}
-				}
-			}
-			n_occur_group++;
-		}		
-	}
-	return false;
 }
 
 bool InputData::existGroup(std::string groupName, unsigned int occurrenceGroup){
