@@ -54,3 +54,6 @@ int main (int argc, char* argv[]);
 
 //! header of the standard message
 void startingMessage(std::string inputfile);
+
+//! remove the externsion of a file
+std::string getFileWithoutExt(const std::string&);

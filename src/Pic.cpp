@@ -49,23 +49,24 @@ int main (int argc, char* argv[])
 	// Define 2 MPI environment :
 	//  - smpiData : to broadcast input data, unknown geometry
 	//  - smpi (defined later) : to compute/exchange data, specific to a geometry
- 	SmileiMPI smpiData(&argc, &argv );
+ 	SmileiMPI *smpiData= new SmileiMPI(&argc, &argv );
 	
 	// -------------------------
 	// Simulation Initialization
 	// -------------------------
 	
+
 	// Check for run flags
 	
 	char ch;
-	debug_level=0;
+	DEBUGEXEC(debug_level=0);
 	while ((ch = getopt(argc, argv, "d:")) != -1) {
 		if (ch=='d') {
-			RELEASEEXEC("In release mode debug option has no meaning, please recompile in debug mode");
-			std::stringstream iss(optarg);
-			iss >> std::boolalpha >> debug_level;
+			RELEASEEXEC(WARNING("In release mode debug option has no meaning, please recompile in debug mode"));
+			DEBUGEXEC(std::stringstream iss(optarg);iss >> std::boolalpha >> debug_level;)
 		}
 	}
+	
 	argc -= optind;
 	argv += optind;
 	
@@ -74,38 +75,42 @@ int main (int argc, char* argv[])
 	string namelist=argv[0];
 	
 	// Send information on current simulation
-	if ( smpiData.isMaster() ) startingMessage(namelist);
+	if ( smpiData->isMaster() ) startingMessage(namelist);
 	
 	// Parse the namelist file (no check!)
 	InputData input_data;
-	if ( smpiData.isMaster() ) input_data.parseFile(namelist);
-	
-	smpiData.bcast( input_data );
-	input_data.parseStream();
+	if ( smpiData->isMaster() ) input_data.parseFile(namelist);
 
-	DEBUGEXEC(input_data.write(namelist+".debug"));
+	smpiData->bcast( input_data );
+	input_data.parseStream();
+		
+	// this will do the randomization
+	unsigned long seedTime=0;
+	if (!input_data.extract("random_seed",seedTime)) {
+		RELEASEEXEC(seedTime=time(NULL));
+		input_data.addVar("random_seed",seedTime);
+	}
+	srand(seedTime);
+	
+	input_data.write(getFileWithoutExt(namelist)+".parsed");
 	
 	// Read simulation parameters
 	PicParams params(input_data);
-	smpiData.init(params);
+	smpiData->init(params);
 	DiagParams diag_params(input_data,params);
 	
-	for (int i=0;i<smpiData.getSize(); i++) {
-		if (i==smpiData.getRank()) {
+	for (int i=0;i<smpiData->getSize(); i++) {
+		if (i==smpiData->getRank()) {
 			params.print();
 		}
-		smpiData.barrier();
+		smpiData->barrier();
 	}
 
 	// Geometry known, MPI environment specified
-	SmileiMPI* smpi = SmileiMPIFactory::create(params, &smpiData);
+	SmileiMPI* smpi = SmileiMPIFactory::create(params, smpiData);
 
 	SmileiIO*  sio  = SmileiIOFactory::create(params, smpi);
-	
-	// Randomize the seed for simulations running in release mode
-	//! \todo{Save the seed in case one wants to re-run the exact same simulation (MG)}
-	RELEASEEXEC(srand (time(NULL)));
-	
+
 	
 	// -------------------------------------------
 	// Declaration of the main objects & operators
@@ -148,7 +153,8 @@ int main (int argc, char* argv[])
     smpi->sumDensities( EMfields );
     
 	//! \todo{FalseNot //, current algorithm is instrinsicaly sequential}
-	smpi->solvePoissonPara( EMfields );		//champs->initMaxwell();
+	//smpi->solvePoissonPara( EMfields );		//champs->initMaxwell();
+    EMfields->solvePoisson(smpi);
 	
     smpi->barrier();
 
@@ -271,6 +277,7 @@ int main (int argc, char* argv[])
 		MESSAGE("--------------------------------------------------------------------------------");
 	}
 	delete smpi;
+	delete smpiData;
 	return 0;
     
 }//END MAIN 
@@ -281,5 +288,14 @@ void startingMessage(std::string inputfile) {
 	MESSAGE("--------------------------------------------------------------------------------");
 	MESSAGE(" Namelist : " << inputfile);
 	MESSAGE("--------------------------------------------------------------------------------");
+}
+
+
+string getFileWithoutExt(const string& s) {
+	size_t i = s.rfind('.', s.length( ));
+	if (i != string::npos) {
+		return(s.substr(0, i));
+	}	
+	return("");
 }
 

@@ -22,6 +22,8 @@ ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
 	// local dt to store
 	SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
 	int process_coord_x = smpi1D->getProcCoord(0);
+    
+    oversize_ = params->oversize[0];
 
 	// spatial-step and ratios time-step by spatial-step & spatial-step by time-step
 	dx       = params->cell_length[0];
@@ -37,9 +39,9 @@ ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
 	// Electromagnetic fields
 	// ----------------------
 	// number of nodes of the primal-grid
-	nx_p = params->n_space[0]+1;
+	nx_p = params->n_space[0]+1 + 2*params->oversize[0];
 	// number of nodes of the dual-grid
-	nx_d = params->n_space[0]+2;
+	nx_d = params->n_space[0]+2 + 2*params->oversize[0];
 
 	dimPrim.resize( params->nDim_field );
 	dimDual.resize( params->nDim_field );
@@ -99,28 +101,192 @@ ElectroMagn1D::~ElectroMagn1D()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
 {
-	//SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
+    MESSAGE("Entering Poisson Solver");
+    
+	SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
 	//int process_coord_x = smpi1D->getProcCoord(0);
-
-    DEBUG("Entering Poisson Solver");
+    
+    unsigned int iteration_max  = 100000;
+    double       error_max      = 1.e-14; //!\todo Check what should be used to relate to machine precision
+    
+    double       dx_sq          = dx*dx;
+    unsigned int nx_p_global    = smpi1D->n_space_global[0] + 1;
+    unsigned int smilei_sz      = smpi1D->smilei_sz;
+    unsigned int smilei_rk      = smpi1D->smilei_rk;
+    
+    // Min and max indices for calculation of the scalar product (for primal & dual grid)
+    //     scalar products are computed accounting only on real nodes
+    //     ghost cells are used only for the (non-periodic) boundaries
+    // ----------------------------------------------------------------------------------
+    vector<unsigned int> index_min_p(1);
+    vector<unsigned int> index_min_d(1);
+    vector<unsigned int> index_max_p(1);
+    vector<unsigned int> index_max_d(1);
+    index_min_p[0] = oversize_;
+    index_min_d[0] = oversize_;
+    index_max_p[0] = nx_p - 2 - oversize_;
+    index_max_d[0] = nx_d - 2 - oversize_;
+    if (smpi1D->isWester()) {
+        index_min_p[0] = 0;
+        index_min_d[0] = 0;
+    }
+    if (smpi1D->isEaster()) {
+        index_max_p[0] = nx_p-1;
+        index_max_d[0] = nx_d-1;
+    }
     
 	Field1D* Ex1D  = static_cast<Field1D*>(Ex_);
 	Field1D* rho1D = static_cast<Field1D*>(rho_);
-
-	// Initialize the electrostatic field by solving Poisson at t = 0
-	// \todo Generalise this so one minimises the electrostatic energy (MG)
-
-	/*if (process_coord_x == 0) {
-    	for ( unsigned int ix = 0 ; ix < smpi->oversize[0]+1 ; ix++ )
-    		(*Ex1D)(ix) = 0.0;
-    } // else Recv from ...
-    */
-
-	//for (unsigned int i=1 ; i<nx_d ; i++) {
-	for ( unsigned int ix = 1 ; ix < dimDual[0] ; ix++ )
-	    (*Ex1D)(ix) = (*Ex1D)(ix-1) + dx* (*rho1D)(ix-1);
     
-    DEBUG("Poisson Solved");
+    double pW=0.0;
+    double pE=0.0;
+    
+    Field1D phi(dimPrim);    // scalar potential
+    Field1D r(dimPrim);      // residual vector
+    Field1D p(dimPrim);      // direction vector
+    Field1D Ap(dimPrim);     // A*p vector
+    
+    
+    // -------------------------------
+    // Initialization of the variables
+    // -------------------------------
+    DEBUG(1,"Initialize variables");
+    
+    unsigned int iteration = 0;
+    
+    // phi: scalar potential, r: residual and p: direction
+    for (unsigned int i=0 ; i<dimPrim[0] ; i++) {
+        phi(i)   = 0.0;
+        r(i)     = -dx_sq * (*rho1D)(i);
+        p(i)     = r(i);
+    }
+    
+    // scalar product of the residual (first local then reduction over all procs)
+    //!\todo Generalize parallel computation of scalar product as a method for FieldND
+    double rnew_dot_rnew       = 0.0;
+    double rnew_dot_rnew_local = 0.0;
+    //for (unsigned int i=index_bc_min[0] ; i<index_bc_max[0]-1 ; i++) rnew_dot_rnew_local += r(i)*r(i);
+    for (unsigned int i=index_min_p[0] ; i<=index_max_p[0] ; i++) rnew_dot_rnew_local += r(i)*r(i);
+    MPI_Allreduce(&rnew_dot_rnew_local, &rnew_dot_rnew, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    
+    // control parameter
+    //!\todo Check control parameter for // case
+    double ctrl = rnew_dot_rnew/(double)(nx_p_global);
+    
+    
+    // ---------------------------------------------------------
+    // Starting iterative loop for the conjugate gradient method
+    // ---------------------------------------------------------
+    DEBUG(1,"Starting iterative loop");
+    while ( (ctrl > error_max) && (iteration<iteration_max) ) {
+        
+        iteration++;
+        DEBUG(5,"iteration " << iteration << " started with control parameter ctrl = " << ctrl*1.e14 << " x 1e-14");
+        
+        double r_dot_r = rnew_dot_rnew;
+        
+        // vector product Ap = A*p
+        for (unsigned int i=1 ; i<dimPrim[0]-1 ; i++) Ap(i) = p(i-1) - 2.0*p(i) + p(i+1);
+        
+        // apply BC on Ap
+        if (smpi1D->isWester()) pW        - 2.0*p(0)      + p(1);
+        if (smpi1D->isEaster()) p(nx_p-2) - 2.0*p(nx_p-1) + pE;
+        smpi1D->exchangeField(&Ap);
+        
+        // scalar product p.Ap
+        double p_dot_Ap = 0.0;
+        double p_dot_Ap_local = 0.0;
+        //for (unsigned int i=index_bc_min[0] ; i<index_bc_max[0]-1 ; i++) p_dot_Ap_local += p(i)*Ap(i);
+        for (unsigned int i=index_min_p[0] ; i<=index_max_p[0] ; i++) p_dot_Ap_local += p(i)*Ap(i);
+        MPI_Allreduce(&p_dot_Ap_local, &p_dot_Ap, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        
+        // compute new potential and residual
+        double alpha_k = r_dot_r/p_dot_Ap;
+        for (unsigned int i=0 ; i<dimPrim[0] ; i++) {
+            phi(i) += alpha_k * p(i);
+            r(i)   -= alpha_k * Ap(i);
+        }
+        
+        // compute new residual norm
+        rnew_dot_rnew       = 0.0;
+        rnew_dot_rnew_local = 0.0;
+        //for (unsigned int i=index_bc_min[0] ; i<index_bc_max[0]-1 ; i++) rnew_dot_rnew_local += r(i)*r(i);
+        for (unsigned int i=index_min_p[0] ; i<=index_max_p[0] ; i++) rnew_dot_rnew_local += r(i)*r(i);
+        MPI_Allreduce(&rnew_dot_rnew_local, &rnew_dot_rnew, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        
+        // compute new direction
+        double beta_k = rnew_dot_rnew/r_dot_r;
+      	for (unsigned int i=0 ; i<dimPrim[0] ; i++)  p(i) = r(i) + beta_k * p(i);
+        
+        // compute control parameter
+        ctrl = rnew_dot_rnew/(double)(nx_p_global);
+        
+    }//End of the iterative loop
+    
+    
+    // Status of the solver convergence
+    if (iteration == iteration_max){
+        WARNING("Poisson solver did not converge: reached maximum iteration number: " << iteration
+                << ", relative error is ctrl = " << 1.0e14*ctrl << " x 1e-14");
+    }
+    else{
+        MESSAGE("Poisson solver converged at iteration: " << iteration
+                << ", relative error is ctrl = " << 1.0e14*ctrl << " x 1e-14");
+    }
+    
+    // ----------------------------------
+    // Compute the electrostatic field Ex
+    // ----------------------------------
+    
+    for (unsigned int i=1; i<nx_d-1; i++) (*Ex1D)(i) = (phi(i-1)-phi(i))/dx;
+    
+    
+    // BC on Ex
+    smpi1D->exchangeField(Ex1D);
+    if (smpi1D->isWester()) (*Ex1D)(0)      = (*Ex1D)(1)      - dx*(*rho1D)(0);
+    if (smpi1D->isEaster()) (*Ex1D)(nx_d-1) = (*Ex1D)(nx_d-2) + dx*(*rho1D)(nx_p-1);
+    
+    
+    // Find field to be added to ensure BC: Ex_West = -Ex_East
+    
+    double Ex_West = 0.0;
+    double Ex_East = 0.0;
+    
+    unsigned int rankWest = smpi1D->extrem_ranks[0][0];
+    if (smpi1D->isWester()) {
+        if (smilei_rk != smpi1D->extrem_ranks[0][0]) ERROR("western process not well defined");
+        Ex_West = (*Ex1D)(index_bc_min[0]);
+    }
+    MPI_Bcast(&Ex_West, 1, MPI_DOUBLE, rankWest, MPI_COMM_WORLD);
+    
+    unsigned int rankEast = smpi1D->extrem_ranks[0][1];
+    if (smpi1D->isEaster()) {
+        if (smilei_rk != smpi1D->extrem_ranks[0][1]) ERROR("eastern process not well defined");
+        Ex_East = (*Ex1D)(index_bc_max[0]);
+    }
+    MPI_Bcast(&Ex_East, 1, MPI_DOUBLE, rankEast, MPI_COMM_WORLD);
+    
+    
+    
+    cerr << "Ex_West = " << Ex_West << "  -  " << "Ex_East = " << Ex_East << endl;
+    double Ex_Add = -0.5*(Ex_West+Ex_East);
+    
+    // Center the electrostatic field
+    for (unsigned int i=0; i<nx_d; i++) (*Ex1D)(i) += Ex_Add;
+    
+    
+    // Compute error on the Poisson equation
+    double deltaPoisson_max = 0.0;
+    int i_deltaPoisson_max  = -1;
+    for (unsigned int i=0; i<nx_p; i++) {
+        double deltaPoisson = abs( ((*Ex1D)(i+1)-(*Ex1D)(i))/dx - (*rho1D)(i) );
+        if (deltaPoisson > deltaPoisson_max){
+            deltaPoisson_max   = deltaPoisson;
+            i_deltaPoisson_max = i;
+        }
+    }
+    
+    MESSAGE(1,"Poisson equation solved. Maximum error = " << deltaPoisson_max << " at i= " << i_deltaPoisson_max);
 	
 }//END solvePoisson
 
@@ -130,11 +296,12 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn1D::solveMaxwell(double time_dual, SmileiMPI* smpi)
 {
+    
     saveMagneticFields();
     solveMaxwellAmpere();
     solveMaxwellFaraday();
-    smpi->exchangeB( this );
     applyEMBoundaryConditions(time_dual, smpi);
+    smpi->exchangeB( this );
     centerMagneticFields();
 
 }

@@ -1,8 +1,3 @@
-# DEBUG PARAMETERS
-# debug: debug level (integer from 0 to 10 used only if the code is compiled in debug mode)
-# 
-debug = 0
-
 # SIMULATION PARAMETERS
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
@@ -37,6 +32,10 @@ plasma_geometry = constant
 vacuum_length   = 1.0
 plasma_length   = 1.0
 
+# RANDOM seed 
+# this is used to randomize the random number generator
+random_seed = 0
+
 # LASER PROPERTIES
 #
 # for each laser define:
@@ -65,5 +64,7 @@ diagnostic probe0d
 	
 end
 
+
+# random_seed = 13121977
 
 
