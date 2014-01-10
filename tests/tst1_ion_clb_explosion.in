@@ -65,5 +65,3 @@ species
 	time_frozen = 0.0
 	radiating = false
 end
-
-random_seed=13121977

@@ -15,6 +15,9 @@ public:
 	//! Destructor for ElectroMagn1D
 	~ElectroMagn1D();
 
+    //! Oversize
+    unsigned int oversize_;
+    
 	//! Constant used for the Silver-Mueller boundary conditions
 	double Alpha_SM;
     

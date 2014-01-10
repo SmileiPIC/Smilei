@@ -40,6 +40,7 @@ public:
 
 	void sumRho( ElectroMagn* champs );
 	void sumDensities( ElectroMagn* champs );
+    virtual void exchangeField ( Field* field ) {};
 	void exchangeE( ElectroMagn* champs );
 	void exchangeB( ElectroMagn* champs );
 	void writeFields( ElectroMagn* champs );
@@ -55,12 +56,12 @@ public:
 	inline void clearExchList() {indexes_of_particles_to_exchange.clear();};
 	inline void addPartInExchList(int iPart) {indexes_of_particles_to_exchange.push_back(iPart);}
 
-
+    std::vector<int> n_space_global;
+    int smilei_sz;
+	int smilei_rk;
+    
 protected:
 	MPI_Comm SMILEI_COMM_WORLD;
-
-	int smilei_sz;
-	int smilei_rk;
 
 	std::vector<int> indexes_of_particles_to_exchange;
 	std::vector<int> buff_index_send[3][2];
@@ -70,11 +71,8 @@ protected:
 	std::vector<int> cell_starting_global_index;
 	std::vector<double> min_local;
 	std::vector<double> max_local;
-	std::vector<int> n_space_global;
-
 	virtual void sumField      ( Field* field ) {};
-	virtual void exchangeField ( Field* field ) {};
-	virtual void writeField    ( Field* field, std::string name ) {};
+    virtual void writeField    ( Field* field, std::string name ) {};
 
 
 private:

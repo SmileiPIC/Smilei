@@ -92,7 +92,7 @@ int main (int argc, char* argv[])
 	}
 	srand(seedTime);
 	
-	input_data.write(namelist+".debug");
+	input_data.write(getFileWithoutExt(namelist)+".parsed");
 	
 	// Read simulation parameters
 	PicParams params(input_data);
@@ -153,7 +153,8 @@ int main (int argc, char* argv[])
     smpi->sumDensities( EMfields );
     
 	//! \todo{FalseNot //, current algorithm is instrinsicaly sequential}
-	smpi->solvePoissonPara( EMfields );		//champs->initMaxwell();
+	//smpi->solvePoissonPara( EMfields );		//champs->initMaxwell();
+    EMfields->solvePoisson(smpi);
 	
     smpi->barrier();
 
@@ -287,5 +288,14 @@ void startingMessage(std::string inputfile) {
 	MESSAGE("--------------------------------------------------------------------------------");
 	MESSAGE(" Namelist : " << inputfile);
 	MESSAGE("--------------------------------------------------------------------------------");
+}
+
+
+string getFileWithoutExt(const string& s) {
+	size_t i = s.rfind('.', s.length( ));
+	if (i != string::npos) {
+		return(s.substr(0, i));
+	}	
+	return("");
 }
 

@@ -126,3 +126,5 @@ bool InputData::existGroup(std::string groupName, unsigned int occurrenceGroup){
 	}
 	return false;
 }
+
+
