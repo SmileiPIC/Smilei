@@ -51,6 +51,8 @@ public:
 	
 	//! generic template to InputData a single value
 	template <class T> bool extract(std::string data, T &val, std::string group=std::string(""), unsigned int occurrenceItem=0, unsigned int occurrenceGroup=0) {
+		data=cleanString(data);
+		group=cleanString(group);
 		unsigned int n_occur_group=0;
 		for (unsigned int i=0; i<allData.size(); i++) {
 			if (group == allData[i].first) {
@@ -78,6 +80,8 @@ public:
 	
 	//! generic class to InputData a vector (pay attention that T will be allocated and it's up to you to delete it!) return value is the number of values InputData
 	template <class T> bool extract(std::string data, std::vector<T>&val, std::string group=std::string(""), unsigned int occurrenceItem=0, unsigned int occurrenceGroup=0) {
+		data=cleanString(data);
+		group=cleanString(group);
 		bool found=false;
 		unsigned int n_occur_group=0;
 		for (unsigned int i=0; i<allData.size(); i++) {

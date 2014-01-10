@@ -30,7 +30,6 @@ IonizationTunnel::IonizationTunnel(PicParams *params, int ispec) : Ionization(pa
 
 
 void IonizationTunnel::operator() (Particle* part, LocalFields Epart) {
-    
     // Charge state of the ion (particle)
     unsigned int Z = (unsigned int)(part->charge());
     
@@ -42,17 +41,17 @@ void IonizationTunnel::operator() (Particle* part, LocalFields Epart) {
     
 	// Absolute value of the electric field normalized in atomic units
     double E = EC_to_au * sqrt( Epart.x*Epart.x + Epart.y*Epart.y + Epart.z*Epart.z );
-    
+	 
     // Ionization rate in normalized (SMILEI) units
     double delta     = gamma_tunnel[Z] / E;
     vector<double> IonizRate_tunnel(atomic_number_);
     IonizRate_tunnel[Z] = beta_tunnel[Z] * pow(delta,alpha_tunnel[Z]) * exp(-delta*one_third);
-    
+
     // --------------------------------
 	// Start of the Monte-Carlo routine
 	// --------------------------------
     if (E!=0 && Z!=atomic_number_) {
-        
+
 		// if ionization of the last electron: single ionization
 		// -----------------------------------------------------
         if ( Z == atomic_number_-1){

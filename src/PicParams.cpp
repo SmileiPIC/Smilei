@@ -34,6 +34,7 @@ PicParams::PicParams(InputData &ifile) {
 	}
 	
 	ifile.extract("wavelength_SI",wavelength_SI);
+	
 	ifile.extract("sim_units",sim_units);
 	if (sim_units == "physicist") {
 		//! \todo{change units to code units}
