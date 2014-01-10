@@ -84,6 +84,14 @@ int main (int argc, char* argv[])
 	smpiData->bcast( input_data );
 	input_data.parseStream();
 		
+	// this will do the randomization
+	unsigned long seedTime=0;
+	if (!input_data.extract("random_seed",seedTime)) {
+		RELEASEEXEC(seedTime=time(NULL));
+		input_data.addVar("random_seed",seedTime);
+	}
+	srand(seedTime);
+	
 	input_data.write(namelist+".debug");
 	
 	// Read simulation parameters
