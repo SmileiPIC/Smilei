@@ -108,6 +108,8 @@ PicParams::PicParams(InputData &ifile) {
 		ifile.extract("int_params",tmpLaser.int_params ,"laser",0,n_laser);
 		ifile.extract("double_params",tmpLaser.double_params ,"laser",0,n_laser);
 
+        for (unsigned int i=0; i<tmpLaser.double_params.size(); i++) tmpLaser.double_params[i] *= 2.0*M_PI;
+/* DEFINITION OF THE PARAMETERS MOVED TO LASER.CPP (MG)
 		if (tmpLaser.time_profile=="constant") {
 			if (tmpLaser.double_params.size()<1) {
 				WARNING("Laser always on");
@@ -122,7 +124,7 @@ PicParams::PicParams(InputData &ifile) {
 		} else {
 			ERROR("Laser time_profile " << tmpLaser.time_profile << " not defined");
 		}// endif laser
-		
+*/
 		
 		laser_param.push_back(tmpLaser);
 		n_laser++;

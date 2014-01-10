@@ -415,21 +415,25 @@ void ElectroMagn1D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
 		// testing the time-profile
 		// ------------------------
 
-		if (laser_[ilaser]->laser_struct.time_profile == "constant") {
-			if (laser_[ilaser]->laser_struct.angle == 0){
-				// Incident field (left boundary)
-				byL += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
-				bzL += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
-			} else if (laser_[ilaser]->laser_struct.angle == 180){
-				// Incident field (right boundary)
-				byR += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
-				bzR += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
-			} else {
-				ERROR("Angle not allowed for 1D laser pulse " << ilaser);
-			}
-		} else {
-			ERROR("Laser profile "<< ilaser <<" not allowed");
-		}//ENDif time_profile
+//		if (laser_[ilaser]->laser_struct.time_profile == "constant" ||
+//            laser_[ilaser]->laser_struct.time_profile == "sin2") {
+            
+        if (laser_[ilaser]->laser_struct.angle == 0){
+            // Incident field (left boundary)
+            byL += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
+            bzL += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
+        } else if (laser_[ilaser]->laser_struct.angle == 180){
+            // Incident field (right boundary)
+            byR += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
+            bzR += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
+        } else {
+            ERROR("Angle not allowed for 1D laser pulse " << ilaser);
+        }
+
+        
+//		} else {
+//			ERROR("Laser profile "<< ilaser <<" not allowed");
+//		}//ENDif time_profile
 	}//ilaser
 
 	// ----------------------------
@@ -438,9 +442,11 @@ void ElectroMagn1D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
     
 	//!\todo Take care that there is a difference between primal and dual grid when putting the fields to 0 on the ghost cells (MG to JD)
     if ( smpi1D->isWester() ) {
+        
 		// Silver-Mueller boundary conditions (left)
-		//(*By1D)(0) = A_*byL + B_* (*By1D)(1) + C_* (*Ez1D)(0) ;
-		//(*Bz1D)(0) = A_*bzL + B_* (*Bz1D)(1) - C_* (*Ey1D)(0) ;
+		(*By1D)(0) =  Alpha_SM*(*Ez1D)(0) + Beta_SM*(*By1D)(1) + Gamma_SM*byL;
+		(*Bz1D)(0) = -Alpha_SM*(*Ey1D)(0) + Beta_SM*(*Bz1D)(1) + Gamma_SM*bzL;
+/*
 		// Silver-Mueller boundary conditions (left)
 		(*By1D)(index_bc_min[0])= Alpha_SM*(*Ez1D)(index_bc_min[0]) + Beta_SM*(*By1D)(index_bc_min[0]+1) + Gamma_SM*byL;
 		(*Bz1D)(index_bc_min[0])=-Alpha_SM*(*Ey1D)(index_bc_min[0]) + Beta_SM*(*Bz1D)(index_bc_min[0]+1) + Gamma_SM*bzL;
@@ -452,12 +458,16 @@ void ElectroMagn1D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
 			(*Ez1D)(ix)=0;
 			(*Ex1D)(ix)=0;
 		}
-	}//if West
+ */
+	}//if Western
     
 	if ( smpi1D->isEaster() ) {
+        
 		// Silver-Mueller boundary conditions (right)
-		//(*By1D)(nx_d-1) = A_*byR + B_* (*By1D)(nx_d-2) - C_* (*Ez1D)(nx_p-1) ;
-		//(*Bz1D)(nx_d-1) = A_*bzR + B_* (*Bz1D)(nx_d-2) + C_* (*Ey1D)(nx_p-1) ;
+		(*By1D)(nx_d-1) = -Alpha_SM*(*Ez1D)(nx_d-2) + Beta_SM*(*By1D)(nx_d-2) + Gamma_SM*byR;
+		(*Bz1D)(nx_d-1) =  Alpha_SM*(*Ey1D)(nx_d-2) + Beta_SM*(*Bz1D)(nx_d-2) + Gamma_SM*bzR;
+
+/*
 		// Silver-Mueller boundary conditions (right)
 		(*By1D)(index_bc_max[0])=-Alpha_SM*(*Ez1D)(index_bc_max[0]) + Beta_SM*(*By1D)(index_bc_max[0]-1) + Gamma_SM*byR;
 		(*Bz1D)(index_bc_max[0])= Alpha_SM*(*Ey1D)(index_bc_max[0]) + Beta_SM*(*Bz1D)(index_bc_max[0]-1) + Gamma_SM*bzR;
@@ -471,7 +481,8 @@ void ElectroMagn1D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
 			(*Ey1D)(ix)=0;
 			(*Ez1D)(ix)=0;
 		}
-	}//if East
+ */
+	}//if Eastern
 
 }
 
