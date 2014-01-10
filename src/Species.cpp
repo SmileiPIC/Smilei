@@ -73,6 +73,9 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
         for (unsigned int i=0 ; i<params->nDim_field ; i++) {
             oversize[i] = params->oversize[i];
         }
+	cell_length = params->cell_length;
+	
+
         // Arrays of the min and max indices of the particle bins
         bmin.resize(params->n_space[ndim-1]);
         bmax.resize(params->n_space[ndim-1]);
@@ -442,10 +445,15 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Interp, Projector* Proj, SmileiMPI* smpi)
 {
- 	//! \todo{benefit from locate to create list of particles to send (JD)}
-  	// SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
+ 
+	if (ndim>1) { 
+		bmin.resize(1);
+		bmin[0] = 0;
+		bmax.resize(1);
+		bmax[0] = particles.size()-1;
+	}
 
-	// electric field at the particle position
+	// Electric field at the particle position
 	LocalFields Epart;
 	// magnetic field at the particle position
 	LocalFields Bpart;
@@ -489,11 +497,11 @@ void Species::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Inter
 		    	//partBoundCond->apply( particles[iPart] );
 		    	if ( !partBoundCond->apply( particles[iPart] ) ) smpi->addPartInExchList( iPart );
 
-                            if (ndim == 1) {
-		    	        (*Proj)(b_Jx, b_Jy, b_Jz, particles[iPart], gf, ibin, b_dim0);
-                            } else {
+                            //if (ndim == 1) {
+		    	    //    (*Proj)(b_Jx, b_Jy, b_Jz, particles[iPart], gf, ibin, b_dim0);
+                            //} else {
 		    	        (*Proj)(Champs, particles[iPart], gf);
-		    	    }                                                      
+		    	    //}
 
 		    }// iPart
                     //Copy buffer back to the global array and free buffer**************** 
@@ -512,7 +520,15 @@ void Species::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Inter
 //		}
         if (Ionize && electron_species) {
             for (unsigned int i=0; i < Ionize->new_electrons.size(); i++) {
-                electron_species->particles.push_back(Ionize->new_electrons[i]);
+                //electron_species->particles.push_back(Ionize->new_electrons[i]);
+		int ibin = (int) ((Ionize->new_electrons[i])->position(0) / cell_length[0]) - smpi->getCellStartingGlobalIndex(0) + oversize[0];
+		electron_species->particles.insert( (electron_species->particles).begin()+electron_species->bmin[ibin], Ionize->new_electrons[i] );
+		//Update bins status (ugly update, memory is allocated anywhere, OK with vectors per particles parameters)
+		electron_species->bmax[ibin]++;
+		for (int i=ibin+1;i<bmin.size();i++) {
+	                electron_species->bmin[i]++;
+			electron_species->bmax[i]++;
+		}
             }
 			
 //            if (Ionize->new_electrons.size()) DEBUG("number of electrons " << electron_species->particles.size() << " " << );

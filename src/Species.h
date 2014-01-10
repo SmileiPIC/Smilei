@@ -93,6 +93,9 @@ public:
         //! Oversize
         std::vector<unsigned int> oversize;	
 
+        //! Cell_length
+        std::vector<double> cell_length;
+
 private:
 	//! Effective number of particles (different than the maximum number of particles)
 	unsigned int npart_effective;

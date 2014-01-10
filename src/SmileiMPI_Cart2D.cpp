@@ -225,7 +225,8 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
 	std::vector<unsigned int> partSize(2,0);
 	partSize[0] = 0; // Number of particle exchanged per direction
 	//! \todo{6 replaced by number of properties by particle}
-	partSize[1] = 6;
+	partSize[1] = 9;
+        int part_mem_size=(2*params->nDim_particle+3+1)*sizeof(double)+sizeof(short);
 
 	/********************************************************************************/
 	// Exchange particles
@@ -292,15 +293,15 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
 					else if ( ( iNeighbor==1 ) &&  (coords_[1] == number_of_procs[1]-1 ) && ( (*cuParticles)[ buff_index_send[iDim][iNeighbor][iPart] ]->position(1) >= y_max ) ) {
 						(*cuParticles)[ buff_index_send[iDim][iNeighbor][iPart] ]->position(1)     -= y_max;
 					}
-					memcpy(&(partArraySend[iDim][iNeighbor](iPart,0)), &((*cuParticles)[ buff_index_send[iDim][iNeighbor][iPart] ]->position(0)), 6*sizeof(double) );
+					memcpy(&(partArraySend[iDim][iNeighbor](iPart,0)), &((*cuParticles)[ buff_index_send[iDim][iNeighbor][iPart] ]->position(0)), 9*sizeof(double) );
 				}
-				MPI_Isend( &(partArraySend[iDim][iNeighbor](0,0)), (int)6*n_part_send, MPI_DOUBLE, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D, &(srequest[iDim][iNeighbor]) );
+				MPI_Isend( &(partArraySend[iDim][iNeighbor](0,0)), (int)9*n_part_send, MPI_DOUBLE, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D, &(srequest[iDim][iNeighbor]) );
 
 			} // END of Send
 
 			n_part_recv = buff_index_recv_sz[iDim][(iNeighbor+1)%2];
 			if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
-				MPI_Irecv( &(partArrayRecv[iDim][(iNeighbor+1)%2](0,0)), (int)6*n_part_recv, MPI_DOUBLE,  neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &(rrequest[iDim][(iNeighbor+1)%2]) );
+				MPI_Irecv( &(partArrayRecv[iDim][(iNeighbor+1)%2](0,0)), (int)9*n_part_recv, MPI_DOUBLE,  neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &(rrequest[iDim][(iNeighbor+1)%2]) );
 			} // END of Recv
 
 		} // END for iNeighbor
@@ -323,7 +324,8 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
 				cuParticles->resize( n_particles + n_part_recv );
 				for (int iPart=0 ; iPart<n_part_recv; iPart++ ) {
 					(*cuParticles)[n_particles+iPart] = ParticleFactory::create(params, ispec);
-					memcpy( &( ((*cuParticles)[n_particles+iPart])->position(0) ), &(partArrayRecv[iDim][(iNeighbor+1)%2](iPart,0)),6*sizeof(double) );
+					//memcpy( &( ((*cuParticles)[n_particles+iPart])->position(0) ), &(partArrayRecv[iDim][(iNeighbor+1)%2](iPart,0)),9*sizeof(double) );
+					memcpy( &( ((*cuParticles)[n_particles+iPart])->position(0) ), &(partArrayRecv[iDim][(iNeighbor+1)%2](iPart,0)),part_mem_size );
 				}
 			}
 

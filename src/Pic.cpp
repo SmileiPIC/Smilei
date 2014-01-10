@@ -261,8 +261,8 @@ int main (int argc, char* argv[])
 	delete EMfields;
     diags.closeAll();
     
-	for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
-	vecSpecies.clear();
+	//for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
+	//vecSpecies.clear();
 	
 	delete sio;
 	if ( smpi->isMaster() ) {
