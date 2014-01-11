@@ -464,8 +464,8 @@ void ElectroMagn1D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
 	if ( smpi1D->isEaster() ) {
         
 		// Silver-Mueller boundary conditions (right)
-		(*By1D)(nx_d-1) = -Alpha_SM*(*Ez1D)(nx_d-2) + Beta_SM*(*By1D)(nx_d-2) + Gamma_SM*byR;
-		(*Bz1D)(nx_d-1) =  Alpha_SM*(*Ey1D)(nx_d-2) + Beta_SM*(*Bz1D)(nx_d-2) + Gamma_SM*bzR;
+		(*By1D)(nx_d-1) = -Alpha_SM*(*Ez1D)(nx_p-1) + Beta_SM*(*By1D)(nx_d-2) + Gamma_SM*byR;
+		(*Bz1D)(nx_d-1) =  Alpha_SM*(*Ey1D)(nx_p-1) + Beta_SM*(*Bz1D)(nx_d-2) + Gamma_SM*bzR;
 
 /*
 		// Silver-Mueller boundary conditions (right)

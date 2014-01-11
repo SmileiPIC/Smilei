@@ -284,7 +284,7 @@ void ElectroMagn2D::solvePoisson(SmileiMPI* smpi)
         
         // Periodic BC on the y-direction
         smpi2D->exchangeField(&Ap);
-                
+        
         // scalar product p.Ap
         double p_dot_Ap       = 0.0;
         double p_dot_Ap_local = 0.0;
@@ -594,24 +594,19 @@ void ElectroMagn2D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
     double byW=0.0, bzW=0.0, byE=0.0, bzE=0.0;
     
     for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
-		// testing the time-profile
-		// ------------------------
         
-		if (laser_[ilaser]->laser_struct.time_profile == "constant") {
-			if (laser_[ilaser]->laser_struct.angle == 0){
-				// Incident field (west boundary)
-				byW += laser_[ilaser]->a0_delta_y_ * sin(time_dual) ;//* laser_[ilaser]->time_profile(time_dual);
-				bzW += laser_[ilaser]->a0_delta_z_ * cos(time_dual) ;//* laser_[ilaser]->time_profile(time_dual);
-			} else if (laser_[ilaser]->laser_struct.angle == 180){
-				// Incident field (east boundary)
-				byE += laser_[ilaser]->a0_delta_y_ * sin(time_dual) ;//* laser_[ilaser]->time_profile(time_dual);
-				bzE += laser_[ilaser]->a0_delta_z_ * cos(time_dual) ;//* laser_[ilaser]->time_profile(time_dual);
-			} else {
-				ERROR("Angle not yet implemented for laser " << ilaser);
-			}
-		} else {
-			ERROR("Laser profile "<< ilaser <<" not allowed");
-		}//ENDif time_profile
+		if (laser_[ilaser]->laser_struct.angle == 0){
+            // Incident field (west boundary)
+            byW += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
+            bzW += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
+        } else if (laser_[ilaser]->laser_struct.angle == 180){
+            // Incident field (east boundary)
+            byE += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
+            bzE += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
+        } else {
+            ERROR("Angle not yet implemented for laser " << ilaser);
+        }
+
     }//ilaser
     
 	
@@ -633,17 +628,17 @@ void ElectroMagn2D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
 		//MESSAGE( smpi->getRank() << " is wester" );
 		// for By^(d,p)
 		for (unsigned int j=0 ; j<ny_p ; j++) {
-			(*By2D)(index_bc_min[0],j) = Alpha_SM_W   * (*Ez2D)(index_bc_min[0],j)
-			+                            Beta_SM_W    * (*By2D)(index_bc_min[0]+1,j)
-			+                            Gamma_SM_W   * byW
-			+                            Delta_SM_W   * (*Bx2D)(index_bc_min[0],j+1)
-			+                            Epsilon_SM_W * (*Bx2D)(index_bc_min[0],j);
+			(*By2D)(0,j) = Alpha_SM_W   * (*Ez2D)(0,j)
+			+              Beta_SM_W    * (*By2D)(1,j)
+			+              Gamma_SM_W   * byW
+			+              Delta_SM_W   * (*Bx2D)(0,j+1)
+			+              Epsilon_SM_W * (*Bx2D)(0,j);
 		}
 		// for Bz^(d,d)
 		for (unsigned int j=0 ; j<ny_d ; j++) {
-			(*Bz2D)(index_bc_min[0],j) = -Alpha_SM_W * (*Ey2D)(index_bc_min[0],j)
-			+                             Beta_SM_W  * (*Bz2D)(index_bc_min[0]+1,j)
-			+                             Gamma_SM_W * bzW;
+			(*Bz2D)(0,j) = -Alpha_SM_W * (*Ey2D)(0,j)
+			+               Beta_SM_W  * (*Bz2D)(1,j)
+			+               Gamma_SM_W * bzW;
 		}
 		
 		/*		// Correction on unused extreme ghost cells : put the fields to 0
@@ -676,17 +671,17 @@ void ElectroMagn2D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
         //MESSAGE("Here once");
 		// for By^(d,p)
 		for (unsigned int j=0 ; j<ny_p ; j++) {
-			(*By2D)(index_bc_max[0],j) = Alpha_SM_E   * (*Ez2D)(index_bc_max[0]-1,j)
-			+                            Beta_SM_E    * (*By2D)(index_bc_max[0]-1,j)
-			+                            Gamma_SM_E   * byE
-			+                            Delta_SM_E   * (*Bx2D)(index_bc_max[0],j+1) // Check x-index
-			+                            Epsilon_SM_E * (*Bx2D)(index_bc_max[0],j);
+			(*By2D)(nx_d-1,j) = Alpha_SM_E   * (*Ez2D)(nx_p-1,j)
+			+                   Beta_SM_E    * (*By2D)(nx_d-2,j)
+			+                   Gamma_SM_E   * byE
+			+                   Delta_SM_E   * (*Bx2D)(nx_p-1,j+1) // Check x-index
+			+                   Epsilon_SM_E * (*Bx2D)(nx_p-1,j);
 		}
 		// for Bz^(d,d)
 		for (unsigned int j=0 ; j<ny_d ; j++) {
-			(*Bz2D)(index_bc_max[0],j) = -Alpha_SM_E * (*Ey2D)(index_bc_max[0]-1,j)
-			+                             Beta_SM_E  * (*Bz2D)(index_bc_max[0]-1,j)
-			+                             Gamma_SM_E * bzE;
+			(*Bz2D)(nx_d-1,j) = -Alpha_SM_E * (*Ey2D)(nx_p-1,j)
+			+                    Beta_SM_E  * (*Bz2D)(nx_d-2,j)
+			+                    Gamma_SM_E * bzE;
 		}
 		
 		/*		// Correction on unused extreme ghost cells : put the fields to 0
