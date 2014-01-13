@@ -153,6 +153,9 @@ class PicParams {
 
 	//! number of total timesteps to perform in the simulation
 	unsigned int n_time;
+    
+    //! number of time-steps after which a message in sent during the PIC time-loop
+    unsigned int n_time_out;
 	
 	//! dt for the simulation (CFL)
 	double timestep;

@@ -203,7 +203,7 @@ void SmileiMPI::sumRho( ElectroMagn* champs )
 
 }
 
-void SmileiMPI::sumDensities( ElectroMagn* champs )
+void SmileiMPI::sumRhoJ( ElectroMagn* champs )
 {
   sumField( champs->rho_ );
   sumField( champs->Jx_ );

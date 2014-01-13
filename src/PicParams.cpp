@@ -135,15 +135,14 @@ PicParams::PicParams(InputData &ifile) {
 }
 
 	/*******************************************************************************************************************
-	 caclulate useful parameters
+	 calculate useful parameters
 	 ******************************************************************************************************************/
 void PicParams::compute()
 {
-	n_time=res_time*sim_time;
-	//! \todo{clean this Mickael!!}
-	sim_time*=2.0*M_PI;
-
-	timestep = 2.0*M_PI/res_time;
+	n_time     = res_time*sim_time;
+    n_time_out = n_time/20;
+	sim_time  *= 2.0*M_PI;
+	timestep   = 2.0*M_PI/res_time;
 
 	
 	for (unsigned int i=0; i<n_species; i++) {

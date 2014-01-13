@@ -11,8 +11,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for Species_rrLL
 // ---------------------------------------------------------------------------------------------------------------------
-Species_rrll::Species_rrll( PicParams* params, int ispec, SmileiMPI* smpi)
-  : Species( params, ispec, smpi )
+Species_rrll::Species_rrll( PicParams* params, int ispec, ElectroMagn* EMfields, SmileiMPI* smpi)
+  : Species( params, ispec, EMfields, smpi )
 {
   DEBUG(20,"Species " << ispec << "created as rrLL");
 }

@@ -39,7 +39,7 @@ public:
 	void writePlasma( std::vector<Species*> vecSpecies, std::string name );
 
 	void sumRho( ElectroMagn* champs );
-	void sumDensities( ElectroMagn* champs );
+	void sumRhoJ( ElectroMagn* champs );
     virtual void exchangeField ( Field* field ) {};
 	void exchangeE( ElectroMagn* champs );
 	void exchangeB( ElectroMagn* champs );

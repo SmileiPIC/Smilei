@@ -761,7 +761,7 @@ void ElectroMagn2D::centerMagneticFields()
 // - save current density as old density (charge conserving scheme)
 // - put the new density and currents to 0
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn2D::initRhoJ()
+void ElectroMagn2D::restartRhoJ()
 {
     
     // static cast of the total currents and densities
@@ -806,4 +806,4 @@ void ElectroMagn2D::initRhoJ()
 		}
     }
     
-}//END initRhoJ
+}//END restartRhoJ

@@ -106,8 +106,8 @@ void ElectroMagn::dump(PicParams* params)
 {
     //!\todo Check for none-cartesian grid & for generic grid (neither all dual or all primal) (MG & JD)
     
-    std::vector<unsigned int> dimPrim; dimPrim.resize(1); dimPrim[0] = params->n_space[0]+2*params->oversize[0]+1;
-    std::vector<unsigned int> dimDual; dimDual.resize(1); dimDual[0] = params->n_space[0]+2*params->oversize[0]+2;
+    vector<unsigned int> dimPrim; dimPrim.resize(1); dimPrim[0] = params->n_space[0]+2*params->oversize[0]+1;
+    vector<unsigned int> dimDual; dimDual.resize(1); dimDual[0] = params->n_space[0]+2*params->oversize[0]+2;
     
     // dump of the electromagnetic fields
 	Ex_->dump(dimDual);
@@ -128,7 +128,7 @@ void ElectroMagn::dump(PicParams* params)
 // ---------------------------------------------------------------------------------------------------------------------
 // Method used to initialize the total charge density
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn::initRho(vector<Species*> vecSpecies, Projector* Proj)
+void ElectroMagn::initRhoJ(vector<Species*> vecSpecies, Projector* Proj)
 {
     //! \todo Check that one uses only none-test particles
     // number of (none-test) used in the simulation
@@ -137,14 +137,17 @@ void ElectroMagn::initRho(vector<Species*> vecSpecies, Projector* Proj)
     //loop on all (none-test) Species
 	for (unsigned int iSpec=0 ; iSpec<n_species; iSpec++ )
     {
-		std::vector<Particle*> cuParticles = vecSpecies[iSpec]->getParticlesList();
+		vector<Particle*> cuParticles = vecSpecies[iSpec]->getParticlesList();
 		unsigned int n_particles = vecSpecies[iSpec]->getNbrOfParticles();
         DEBUG(n_particles<<" species "<<iSpec);
 		for (unsigned int iPart=0 ; iPart<n_particles; iPart++ )
         {
+            // project charge density
 			(*Proj)( rho_ , cuParticles[iPart] );
+            // project current densities
+            (*Proj)(this, cuParticles[iPart], cuParticles[iPart]->lor_fac());
 		}
-        DEBUG("projection done for initRho");
+        DEBUG("projection done for initRhoJ");
 	}//iSpec
 
 }
@@ -152,7 +155,7 @@ void ElectroMagn::initRho(vector<Species*> vecSpecies, Projector* Proj)
 void ElectroMagn::computeScalars()
 {
 	
-	std::vector<Field*> fields;
+	vector<Field*> fields;
 
 	fields.push_back(Ex_);
 	fields.push_back(Ey_);
