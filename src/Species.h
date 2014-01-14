@@ -10,8 +10,9 @@
 #include <string>
 #include "PicParams.h"
 #include "SmileiMPI.h"
-#include "Pusher.h" 
-#include "Ionization.h" 
+#include "Pusher.h"
+#include "Ionization.h"
+#include "ElectroMagn.h"
 
 
 class ElectroMagn;
@@ -26,7 +27,7 @@ class Species
 {
 public:
 	//! Species creator
-	Species(PicParams*, int, SmileiMPI*);
+	Species(PicParams*, int, ElectroMagn*, SmileiMPI*);
     
 	//! Species destructor
 	virtual ~Species();
@@ -74,13 +75,13 @@ public:
     
 	//! Ionization method
 	Ionization* Ionize;
-    	
+    
 	//! method used to fill a a struct spec_scalar_data variable type
 	void computeScalars();
 	
 	//! map structure for the scalar diagnostics
 	std::map<std::string, double> scalars;
-
+    
     //! to keep rack of ionized electrons
     Species *electron_species;
 	
@@ -89,13 +90,20 @@ public:
 	
 	//! first and last index of each particle bin
 	std::vector<int> bmin, bmax;
-
-        //! Oversize
-        std::vector<unsigned int> oversize;	
-
-        //! Cell_length
-        std::vector<double> cell_length;
-
+    
+    //! Oversize
+    std::vector<unsigned int> oversize;
+    
+    //! Cell_length
+    std::vector<double> cell_length;
+    
+    //! Species charge current and density
+	Field* Jx_s;
+	Field* Jy_s;
+	Field* Jz_s;
+	Field* rho_s;
+    
+    
 private:
 	//! Effective number of particles (different than the maximum number of particles)
 	unsigned int npart_effective;
@@ -113,18 +121,18 @@ private:
 	//! Number of spatial dimension for the particles
 	unsigned int ndim;
 	
-        //! Local minimum of MPI domain
-        double min_loc;
-
-        //! Size of the projection buffer
-        unsigned int size_proj_buffer;
+    //! Local minimum of MPI domain
+    double min_loc;
+    
+    //! Size of the projection buffer
+    unsigned int size_proj_buffer;
 	
-        //! buffers for currents
-        double *b_Jx,*b_Jy,*b_Jz;
-      
-        //! sub dimensions of buffers for dim > 1
-        unsigned int b_dim0, b_dim1;
-
+    //! buffers for currents
+    double *b_Jx,*b_Jy,*b_Jz;
+    
+    //! sub dimensions of buffers for dim > 1
+    unsigned int b_dim0, b_dim1;
+    
 	//! Time over which Particles of the considered Species remain frozen
 	double time_frozen;
 	
@@ -135,7 +143,7 @@ private:
 	Pusher* Push;
     
     unsigned int atomic_number;
-    	
+    
 };
 
 #endif

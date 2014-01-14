@@ -48,9 +48,6 @@ public:
 	//! Method used for initializing Maxwell solver
 	void solvePoisson(SmileiMPI* smpi);
     
-	//! Method used to initialize the total charge densities and currents
-	void initRhoJ();
-    
 	//! Method used to solve Maxwell's equations
 	void solveMaxwell(double time_dual, SmileiMPI* smpi);
     
@@ -68,6 +65,9 @@ public:
     
     //! Method used to center the Magnetic fields (used to push the particles)
     void centerMagneticFields();
+    
+    //! Method used to initialize the total charge densities and currents
+	void restartRhoJ();
     
 	//! \todo Create properties the laser time-profile (MG & TV)
     

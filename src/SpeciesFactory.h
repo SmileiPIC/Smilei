@@ -13,20 +13,20 @@
 
 class SpeciesFactory {
 public:
-	static Species* create(PicParams& params, int ispec, SmileiMPI* smpi) {
+	static Species* create(PicParams& params, int ispec, ElectroMagn* EMfields, SmileiMPI* smpi) {
 		Species* sp = NULL;
 		if (params.species_param[ispec].dynamics_type=="norm") {
 			// Species with Boris dynamics
-			sp = new Species_norm(&params, ispec, smpi);
+			sp = new Species_norm(&params, ispec, EMfields, smpi);
 		} else if (params.species_param[ispec].dynamics_type=="rrll") {
 			// Species with Boris dynamics + Radiation Back-Reaction (using the Landau-Lifshitz formula)
-			sp = new Species_rrll(&params, ispec, smpi);
+			sp = new Species_rrll(&params, ispec, EMfields, smpi);
 		} // END if
 
 		return sp;
 	}
 
-	static std::vector<Species*> createVector(PicParams& params, SmileiMPI* smpi) {
+	static std::vector<Species*> createVector(PicParams& params, ElectroMagn* EMfields, SmileiMPI* smpi) {
 		std::vector<Species*> vecSpecies;
 		vecSpecies.resize(params.n_species);
         
@@ -35,7 +35,7 @@ public:
 		// create species
 		for (unsigned int ispec=0 ; ispec<params.n_species ; ispec++) {
 			PMESSAGE( 0, smpi->getRank(), "Initializing Species " << ispec);
-			vecSpecies[ispec] = SpeciesFactory::create(params, ispec, smpi);
+			vecSpecies[ispec] = SpeciesFactory::create(params, ispec, EMfields, smpi);
             if (params.species_param[ispec].species_type=="electron") {
                 electron_species=vecSpecies[ispec];
             }

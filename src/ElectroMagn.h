@@ -103,10 +103,10 @@ public:
 	void dump(PicParams* params);
 	
 	//! Method used to initialize the total charge currents and densities
-	virtual void initRhoJ() = 0;
+	virtual void restartRhoJ() = 0;
 	
 	//! Method used to initialize the total charge density
-	void initRho(std::vector<Species*> vecSpecies, Projector* Proj);
+	void initRhoJ(std::vector<Species*> vecSpecies, Projector* Proj);
 	
 	//! Method used to initialize the Maxwell solver
 	virtual void solvePoisson(SmileiMPI* smpi) = 0;

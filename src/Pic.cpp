@@ -116,14 +116,7 @@ int main (int argc, char* argv[])
 	// Declaration of the main objects & operators
 	// -------------------------------------------
 	
-	// ------------------------------------------------------------------------------------
-	// Initialize the vecSpecies object containing all information of the different Species
-	// ------------------------------------------------------------------------------------
-	// vector of Species (virtual)
-	vector<Species*> vecSpecies = SpeciesFactory::createVector(params, smpi);
-	// dump species at time 0
-	sio->writePlasma( vecSpecies, 0., smpi );
-	
+    
 	// ----------------------------------------------------------------------------
 	// Initialize the electromagnetic fields and interpolation-projection operators
 	// according to the simulation geometry
@@ -137,6 +130,16 @@ int main (int argc, char* argv[])
 	// projection operator (virtual)
 	Projector* Proj = ProjectorFactory::create(params, smpi);
 
+    
+    // ------------------------------------------------------------------------------------
+	// Initialize the vecSpecies object containing all information of the different Species
+	// ------------------------------------------------------------------------------------
+	// vector of Species (virtual)
+	vector<Species*> vecSpecies = SpeciesFactory::createVector(params, EMfields, smpi);
+	// dump species at time 0
+	sio->writePlasma( vecSpecies, 0., smpi );
+    
+
     // ----------------------------------------------------------------------------
 	// Create diagnostics
 	// ----------------------------------------------------------------------------
@@ -147,10 +150,10 @@ int main (int argc, char* argv[])
 	// -----------------------------------   
 	//!\todo{Check & describe what is done here (MG)}
 	// Init rho by pro all particles of subdomain -> local stuff
-	EMfields->initRho(vecSpecies, Proj);
+	EMfields->initRhoJ(vecSpecies, Proj);
     
-	//smpi->sumRho( EMfields );
-    smpi->sumDensities( EMfields );
+    // Initializing the total charge & current densities
+    smpi->sumRhoJ( EMfields );
     
 	//! \todo{FalseNot //, current algorithm is instrinsicaly sequential}
 	//smpi->solvePoissonPara( EMfields );		//champs->initMaxwell();
@@ -165,7 +168,7 @@ int main (int argc, char* argv[])
 	// time at integer time-steps (primal grid)
 	double time_prim = 0.;
 	// time at half-integer time-steps (dual grid)
-	double time_dual = -0.5 * params.timestep;
+	double time_dual = 0.5 * params.timestep;
 	
 	// ------------------------------------------------------------------
 	//                     HERE STARTS THE PIC LOOP
@@ -176,7 +179,6 @@ int main (int argc, char* argv[])
 	t0 = MPI_Wtime();
     
 	for (unsigned int itime=1 ; itime <= params.n_time ; itime++) {
-//	for (unsigned int itime=1 ; itime <= 50; itime++) {
 
 		// calculate new times
 		// -------------------
@@ -185,13 +187,14 @@ int main (int argc, char* argv[])
 		
 		// send message at given time-steps
 		// --------------------------------
-		//!\todo{Introduce a control parameter in PicParams (MG)}
+
 		if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) )
 			MESSAGE(1,"Time (dual)= " << time_dual << " it = " << itime);
 		
-		// put density and currents to 0
-		// -----------------------------
-		EMfields->initRhoJ();
+        
+		// put density and currents to 0 + save former density
+		// ---------------------------------------------------
+		EMfields->restartRhoJ();
         
 		
 		// apply the PIC method
@@ -211,7 +214,7 @@ int main (int argc, char* argv[])
 //			DEBUG(ispec << " " << vecSpecies[ispec]->getNbrOfParticles());
 //		}
 
-		smpi->sumDensities( EMfields );
+		smpi->sumRhoJ( EMfields );
 		
 		// solve Maxwell's equations
 		EMfields->solveMaxwell(time_dual, smpi);

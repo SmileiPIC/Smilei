@@ -31,9 +31,15 @@ public:
 
 	//! scalar output every probe_every (namelist group "diagnostic probe0d" key "every")
 	unsigned int probe0d_every;
+    
+    unsigned int n_probe1d;
+    
     std::vector<std::vector<double> > ps_coord;
+    std::vector<std::vector<std::vector<double> > > ps_1d_coord;
+    std::vector<unsigned int> ps_1d_every;
+    std::vector<unsigned int> ps_1d_res;
 
-	//! this every is for the output
+	//! every for the standard pic timeloop output
 	unsigned int print_every;
 };
 

@@ -522,7 +522,7 @@ void ElectroMagn1D::centerMagneticFields()
 // - save current density as old density (charge conserving scheme)
 // - put the new density and currents to 0
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn1D::initRhoJ()
+void ElectroMagn1D::restartRhoJ()
 {
 	Field1D* Jx1D    = static_cast<Field1D*>(Jx_);
 	Field1D* Jy1D    = static_cast<Field1D*>(Jy_);

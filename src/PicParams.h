@@ -153,7 +153,7 @@ class PicParams {
 
 	//! number of total timesteps to perform in the simulation
 	unsigned int n_time;
-	
+    
 	//! dt for the simulation (CFL)
 	double timestep;
 

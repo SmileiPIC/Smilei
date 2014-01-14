@@ -68,6 +68,20 @@ diagnostic probe0d
 	
 end
 
+diagnostic probe1d
+	every = 1;
+	x = 0.0 10.0
+	space_res = 10
+	
+end
+
+diagnostic probe1d
+	every = 1;
+	x = 0.0 10.0
+	space_res = 5
+	
+end
+
 
 # random_seed = 13121977
 

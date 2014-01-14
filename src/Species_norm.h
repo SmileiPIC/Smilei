@@ -17,7 +17,7 @@ class Species_norm : public Species
     
  public:
 	//! Creator for Species_norm
-	Species_norm(PicParams*, int, SmileiMPI*);
+	Species_norm(PicParams*, int, ElectroMagn*, SmileiMPI*);
 	//! Destructor for Species_norm
 	~Species_norm();
     
