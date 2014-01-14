@@ -187,10 +187,11 @@ int main (int argc, char* argv[])
 		time_prim += params.timestep;
 		time_dual += params.timestep; 
 		
-		// send message at given time-steps (20 messages per simulation)
-		// -------------------------------------------------------------
-		if ( (itime % params.n_time_out == 0) &&  ( smpi->isMaster() ) )
-			MESSAGE(1,"Time (dual)= " << time_dual << " it = " << itime << "/" << params.n_time);
+		// send message at given time-steps
+		// --------------------------------
+
+		if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) )
+			MESSAGE(1,"Time (dual)= " << time_dual << " it = " << itime);
 		
         
 		// put density and currents to 0 + save former density

@@ -140,7 +140,7 @@ PicParams::PicParams(InputData &ifile) {
 void PicParams::compute()
 {
 	n_time     = res_time*sim_time;
-    n_time_out = n_time/20;
+
 	sim_time  *= 2.0*M_PI;
 	timestep   = 2.0*M_PI/res_time;
 
