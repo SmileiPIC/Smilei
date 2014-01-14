@@ -186,7 +186,7 @@ int main (int argc, char* argv[])
 		// send message at given time-steps
 		// --------------------------------
 		//!\todo{Introduce a control parameter in PicParams (MG)}
-		if ( (itime % 100 == 0) &&  ( smpi->isMaster() ) )
+		if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) )
 			MESSAGE(1,"Time (dual)= " << time_dual << " it = " << itime);
 		
 		// put density and currents to 0

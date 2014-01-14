@@ -33,6 +33,8 @@ public:
 	unsigned int probe0d_every;
     std::vector<std::vector<double> > ps_coord;
 
+	//! this every is for the output
+	unsigned int print_every;
 };
 
 #endif

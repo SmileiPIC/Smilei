@@ -185,7 +185,6 @@ class PicParams {
 	//! Oversize domain to exchange less particles
 	std::vector<unsigned int> oversize;
 	
-	
 };
 
 #endif

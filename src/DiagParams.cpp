@@ -4,7 +4,10 @@
 
 using namespace std;
 
-DiagParams::DiagParams(InputData &ifile, PicParams& params) {
+DiagParams::DiagParams(InputData &ifile, PicParams& params) : print_every(1) {
+	
+	ifile.extract("print_every", print_every);
+		
 	ifile.extract("every",scalar_every,"diagnostic scalar");
 	ifile.extract("every",map_every,"diagnostic map");
 	ifile.extract("every",probe0d_every,"diagnostic probe0d");
