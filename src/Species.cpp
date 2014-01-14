@@ -30,7 +30,7 @@ using namespace std;
 // Creator for Species
 // input: simulation parameters & Species index
 // ---------------------------------------------------------------------------------------------------------------------
-Species::Species(PicParams* params, int ispec, ElectroMagn* EMfields, SmileiMPI* smpi) {
+Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
     
     // -------------------
 	// Variable definition
@@ -284,7 +284,7 @@ Species::Species(PicParams* params, int ispec, ElectroMagn* EMfields, SmileiMPI*
     for (unsigned int iPart=0; iPart<npart_effective; iPart++){
         for (unsigned int i=0; i<ndim; i++){
             particles[iPart]->position_old(i) -= particles[iPart]->momentum(i)/params->species_param[ispec].mass
-            /                                    particles[iPart]->lor_fac();
+            /                                    particles[iPart]->lor_fac() * params->timestep;
         }
     }
     
@@ -303,27 +303,6 @@ Species::Species(PicParams* params, int ispec, ElectroMagn* EMfields, SmileiMPI*
     // define a template particle for particles sorting
     swapPart = ParticleFactory::create(params, ispec);
     
-    
-    // ---------------------------------------
-    // Initialize species currents and density
-    // Species charge currents and densities
-    // ---------------------------------------
-    
-    if (ndim == 1) {
-        Jx_s  = new Field1D(EMfields->dimPrim, 0, false);
-        Jy_s  = new Field1D(EMfields->dimPrim, 1, false);
-        Jz_s  = new Field1D(EMfields->dimPrim, 2, false);
-        rho_s = new Field1D(EMfields->dimPrim);
-    }
-    else if (ndim == 2) {
-        Jx_s  = new Field2D(EMfields->dimPrim, 0, false);
-        Jy_s  = new Field2D(EMfields->dimPrim, 1, false);
-        Jz_s  = new Field2D(EMfields->dimPrim, 2, false);
-        rho_s = new Field2D(EMfields->dimPrim);
-    }
-    else {
-        ERROR("nDim_particle = " << ndim << " not defined");
-    }
     
 }//END Species creator
 
@@ -477,7 +456,7 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
 //   - apply the boundary conditions
 //   - increment the currents (projection)
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Interp, Projector* Proj, SmileiMPI* smpi)
+void Species::dynamic(double time_dual, ElectroMagn* EMfields, Interpolator* Interp, Projector* Proj, SmileiMPI* smpi)
 {
     
 	if (ndim>1) {
@@ -506,7 +485,7 @@ void Species::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Inter
 		double gf = 1.0;
         
 		// for all particles of the Species
-		//#pragma omp parallel for shared (Champs)
+		//#pragma omp parallel for shared (EMfields)
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++){
             
             //reset buffers
@@ -514,7 +493,7 @@ void Species::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Inter
             
             for (unsigned int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
 		    	// Interpolate the fields at the particle position
-		    	(*Interp)(Champs, particles[iPart], &Epart, &Bpart);
+		    	(*Interp)(EMfields, particles[iPart], &Epart, &Bpart);
 		    	
 		    	// Do the ionization
 		    	if (Ionize && particles[iPart]->charge() < (int) atomic_number) { //AND
@@ -534,7 +513,7 @@ void Species::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Inter
                 //if (ndim == 1) {
                 //    (*Proj)(b_Jx, b_Jy, b_Jz, particles[iPart], gf, ibin, b_dim0);
                 //} else {
-                (*Proj)(Champs, particles[iPart], gf);
+                (*Proj)(EMfields, particles[iPart], gf);
                 //}
                 
 		    }// iPart
@@ -543,9 +522,9 @@ void Species::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Inter
             if (ndim == 1) {
                 for (unsigned int i = 0; i < size_proj_buffer ; i++){
                     iloc = ibin + i ;
-                    (*Champs->Jx_)(iloc) += b_Jx[i];
-                    (*Champs->Jy_)(iloc) += b_Jy[i];
-                    (*Champs->Jz_)(iloc) += b_Jz[i];
+                    (*EMfields->Jx_)(iloc) += b_Jx[i];
+                    (*EMfields->Jy_)(iloc) += b_Jy[i];
+                    (*EMfields->Jz_)(iloc) += b_Jz[i];
                 }
             }
         }// ibin
@@ -573,10 +552,9 @@ void Species::dynamic(double time_dual, ElectroMagn* Champs, Interpolator* Inter
 	else {
 		// immobile particle (at the moment only project density)
         
-		//! \todo{Implement Esirkepov method for the longitudinal currents (MG)}
-		//#pragma omp parallel for shared (Champs)
+		//#pragma omp parallel for shared (EMfields)
 		for (unsigned int iPart=0 ; iPart<nParticles; iPart++ ) {
-			(*Proj)(Champs->rho_, particles[iPart]);
+			(*Proj)(EMfields->rho_, particles[iPart]);
 		}
 	}//END if time vs. time_frozen
 	

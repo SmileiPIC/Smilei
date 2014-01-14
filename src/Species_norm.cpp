@@ -11,8 +11,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for Species_norm
 // ---------------------------------------------------------------------------------------------------------------------
-Species_norm::Species_norm( PicParams* params, int ispec, ElectroMagn* EMfields, SmileiMPI* smpi)
- : Species( params, ispec, EMfields, smpi )
+Species_norm::Species_norm( PicParams* params, int ispec, SmileiMPI* smpi)
+ : Species( params, ispec, smpi )
 {
 	DEBUG(20,"Species " << ispec << "created as norm");
 }

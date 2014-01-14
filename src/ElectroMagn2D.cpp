@@ -109,6 +109,14 @@ ElectroMagn2D::ElectroMagn2D(PicParams* params, SmileiMPI* smpi)
 	Jz_ = new Field2D(dimPrim, 2, false, "Jz");
 	rho_ = new Field2D(dimPrim, "Rho" );
 	rho_o = new Field2D(dimPrim, "Rho_old" );
+    
+    // Charge currents currents and density for each species
+    for (unsigned int ispec=0; ispec<n_species; ispec++){
+        Jx_s[ispec]  = new Field2D(dimPrim, 0, false);
+        Jy_s[ispec]  = new Field2D(dimPrim, 1, false);
+        Jz_s[ispec]  = new Field2D(dimPrim, 2, false);
+        rho_s[ispec] = new Field2D(dimPrim);
+    }
 	
     // ----------------------------------------------------------------
     // Definition of the min and max index according to chosen oversize
@@ -763,6 +771,9 @@ void ElectroMagn2D::centerMagneticFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn2D::restartRhoJ()
 {
+    // --------------------------
+    // Total currents and density
+    // --------------------------
     
     // static cast of the total currents and densities
     Field2D* Jx2D    = static_cast<Field2D*>(Jx_);
@@ -805,5 +816,45 @@ void ElectroMagn2D::restartRhoJ()
 			(*Jz2D)(i,j) = 0.0;
 		}
     }
+    
+    
+    // -----------------------------------
+    // Species currents and charge density
+    // -----------------------------------
+    for (unsigned int ispec=0; ispec<n_species; ispec++){
+        Field2D* Jx2D_s  = static_cast<Field2D*>(Jx_s[ispec]);
+        Field2D* Jy2D_s  = static_cast<Field2D*>(Jy_s[ispec]);
+        Field2D* Jz2D_s  = static_cast<Field2D*>(Jz_s[ispec]);
+        Field2D* rho2D_s = static_cast<Field2D*>(rho_s[ispec]);
+        
+        // Charge density rho^(p,p) to 0
+        for (unsigned int i=0 ; i<nx_p ; i++) {
+            for (unsigned int j=0 ; j<ny_p ; j++) {
+                (*rho2D_s)(i,j) = 0.0;
+            }
+        }
+        
+        // Current Jx^(d,p) to 0
+        for (unsigned int i=0 ; i<nx_d ; i++) {
+            for (unsigned int j=0 ; j<ny_p ; j++) {
+                (*Jx2D_s)(i,j) = 0.0;
+            }
+        }
+        
+        // Current Jy^(p,d) to 0
+        for (unsigned int i=0 ; i<nx_p ; i++) {
+            for (unsigned int j=0 ; j<ny_d ; j++) {
+                (*Jy2D_s)(i,j) = 0.0;
+            }
+        }
+        
+        // Current Jz^(p,p) to 0
+        for (unsigned int i=0 ; i<nx_p ; i++) {
+            for (unsigned int j=0 ; j<ny_p ; j++) {
+                (*Jz2D_s)(i,j) = 0.0;
+            }
+        }
+        
+    }//END loop on species ispec
     
 }//END restartRhoJ

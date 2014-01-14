@@ -79,6 +79,13 @@ public:
     
 	//! Total charge density at previous time-step
 	Field* rho_o;
+    
+    //! Vector of charge density and currents for each species
+    unsigned int n_species;
+    std::vector<Field*> Jx_s;
+    std::vector<Field*> Jy_s;
+    std::vector<Field*> Jz_s;
+    std::vector<Field*> rho_s;
 		
 	//! Vector for the various lasers
 	std::vector<Laser*> laser_;

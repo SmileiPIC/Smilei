@@ -27,7 +27,7 @@ class Species
 {
 public:
 	//! Species creator
-	Species(PicParams*, int, ElectroMagn*, SmileiMPI*);
+	Species(PicParams*, int, SmileiMPI*);
     
 	//! Species destructor
 	virtual ~Species();
@@ -96,13 +96,6 @@ public:
     
     //! Cell_length
     std::vector<double> cell_length;
-    
-    //! Species charge current and density
-	Field* Jx_s;
-	Field* Jy_s;
-	Field* Jz_s;
-	Field* rho_s;
-    
     
 private:
 	//! Effective number of particles (different than the maximum number of particles)

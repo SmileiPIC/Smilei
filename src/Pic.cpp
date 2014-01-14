@@ -135,7 +135,7 @@ int main (int argc, char* argv[])
 	// Initialize the vecSpecies object containing all information of the different Species
 	// ------------------------------------------------------------------------------------
 	// vector of Species (virtual)
-	vector<Species*> vecSpecies = SpeciesFactory::createVector(params, EMfields, smpi);
+	vector<Species*> vecSpecies = SpeciesFactory::createVector(params, smpi);
 	// dump species at time 0
 	sio->writePlasma( vecSpecies, 0., smpi );
     
@@ -169,6 +169,8 @@ int main (int argc, char* argv[])
 	double time_prim = 0.;
 	// time at half-integer time-steps (dual grid)
 	double time_dual = 0.5 * params.timestep;
+    // run diagnostics at time-step 0
+    diags.runAllDiags(0, EMfields, vecSpecies);
 	
 	// ------------------------------------------------------------------
 	//                     HERE STARTS THE PIC LOOP

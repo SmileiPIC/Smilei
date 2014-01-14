@@ -68,12 +68,20 @@ ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
 	Bz_m = new Field1D(dimPrim, 2, true, "Bz_m");
 	
 	// Total charge currents and densities
-	Jx_ = new Field1D(dimPrim, 0, false, "Jx");
-	Jy_ = new Field1D(dimPrim, 1, false, "Jy");
-	Jz_ = new Field1D(dimPrim, 2, false, "Jz");
-	rho_ = new Field1D(dimPrim, "Rho" );
+	Jx_   = new Field1D(dimPrim, 0, false, "Jx");
+	Jy_   = new Field1D(dimPrim, 1, false, "Jy");
+	Jz_   = new Field1D(dimPrim, 2, false, "Jz");
+	rho_  = new Field1D(dimPrim, "Rho" );
 	rho_o = new Field1D(dimPrim, "Rho_old" );
 	
+    // Charge currents currents and density for each species
+    for (unsigned int ispec=0; ispec<n_species; ispec++){
+        Jx_s[ispec]  = new Field1D(dimPrim, 0, false);
+        Jy_s[ispec]  = new Field1D(dimPrim, 1, false);
+        Jz_s[ispec]  = new Field1D(dimPrim, 2, false);
+        rho_s[ispec] = new Field1D(dimPrim);
+    }
+    
     // ----------------------------------------------------------------
     // Definition of the min and max index according to chosen oversize
     // ----------------------------------------------------------------
@@ -530,14 +538,16 @@ void ElectroMagn1D::restartRhoJ()
 	Field1D* rho1D   = static_cast<Field1D*>(rho_);
 	Field1D* rho1D_o = static_cast<Field1D*>(rho_o);
 	
+    // --------------------------
+    // Total currents and density
+    // --------------------------
+    
 	// put longitudinal current to zero on the dual grid
-	//for (unsigned int i=0 ; i<nx_d ; i++){
-        for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
+    for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
 		(*Jx1D)(ix)    = 0.0;
 	}
     
 	// all fields are defined on the primal grid
-	//for (unsigned int i=0 ; i<nx_p ; i++) {
         for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
 		(*rho1D_o)(ix) = (*rho1D)(ix);
 		(*rho1D)(ix)   = 0.0;
@@ -545,6 +555,27 @@ void ElectroMagn1D::restartRhoJ()
 		(*Jz1D)(ix)    = 0.0;
 	}
     
+    // -----------------------------------
+    // Species currents and charge density
+    // -----------------------------------
+    for (unsigned int ispec=0; ispec<n_species; ispec++){
+        Field1D* Jx1D_s  = static_cast<Field1D*>(Jx_s[ispec]);
+        Field1D* Jy1D_s  = static_cast<Field1D*>(Jy_s[ispec]);
+        Field1D* Jz1D_s  = static_cast<Field1D*>(Jz_s[ispec]);
+        Field1D* rho1D_s = static_cast<Field1D*>(rho_s[ispec]);
+        
+        // put longitudinal current to zero on the dual grid
+        for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
+            (*Jx1D_s)(ix)  = 0.0;
+        }
+        
+        // all fields are defined on the primal grid
+        for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
+            (*rho1D_s)(ix) = 0.0;
+            (*Jy1D_s)(ix)  = 0.0;
+            (*Jz1D_s)(ix)  = 0.0;
+        }
+    }//END loop on species ispec
 }
 
 

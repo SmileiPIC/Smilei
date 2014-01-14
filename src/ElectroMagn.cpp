@@ -54,7 +54,20 @@ ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi)
 	Jy_=NULL;
 	Jz_=NULL;
 	rho_=NULL;
-	rho_o=NULL;		
+	rho_o=NULL;
+	
+    // Species charge currents and density
+    n_species = params->n_species;
+    Jx_s.resize(n_species);
+    Jy_s.resize(n_species);
+    Jz_s.resize(n_species);
+    rho_s.resize(n_species);
+    for (unsigned int ispec=0; ispec<n_species; ispec++){
+        Jx_s[ispec]  = NULL;
+        Jy_s[ispec]  = NULL;
+        Jz_s[ispec]  = NULL;
+        rho_s[ispec] = NULL;
+    }
 }
 
 
