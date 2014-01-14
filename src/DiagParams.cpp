@@ -34,6 +34,8 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
     
     n_probe1d=0;
     while (ifile.existGroup("diagnostic probe1d",n_probe1d)) {
+        unsigned int probe1d_every;
+        unsigned int probe1d_res;
         vector<vector<double> > ps_1d_c;
         ifile.extract("every",probe1d_every,"diagnostic probe1d",0,n_probe1d);
         ifile.extract("space_res",probe1d_res,"diagnostic probe1d",0,n_probe1d);
@@ -73,6 +75,7 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
         }
         ps_1d_coord.push_back(ps_1d_c);
         ps_1d_every.push_back(probe1d_every);
+        ps_1d_res.push_back(probe1d_res);
         n_probe1d++; 
     }
 }
