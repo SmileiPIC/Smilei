@@ -113,6 +113,14 @@ void SmileiIO::writeAllFields( ElectroMagn* EMfields, int time )
 	writeFieldsSingleFile( EMfields->Jy_, file_id, time );
 	writeFieldsSingleFile( EMfields->Jz_, file_id, time );
 	writeFieldsSingleFile( EMfields->rho_, file_id, time );
+    
+    // for all species related quantities
+    for (unsigned int ispec=0; ispec<EMfields->n_species; ispec++){
+        writeFieldsSingleFile( EMfields->rho_s[ispec], file_id, time );
+        writeFieldsSingleFile( EMfields->Jx_s[ispec],  file_id, time );
+        writeFieldsSingleFile( EMfields->Jy_s[ispec],  file_id, time );
+        writeFieldsSingleFile( EMfields->Jz_s[ispec],  file_id, time );
+    }
 
 	H5Fclose( file_id );
 
@@ -140,6 +148,15 @@ void SmileiIO::writeAllFieldsSingleFileTime( ElectroMagn* EMfields, int time )
 	writeFieldsSingleFileTime( EMfields->Jy_, group_id );
 	writeFieldsSingleFileTime( EMfields->Jz_, group_id );
 	writeFieldsSingleFileTime( EMfields->rho_, group_id );
+    
+    // for all species related quantities
+    for (unsigned int ispec=0; ispec<EMfields->n_species; ispec++){
+        writeFieldsSingleFileTime( EMfields->rho_s[ispec], group_id );
+        writeFieldsSingleFileTime( EMfields->Jx_s[ispec], group_id );
+        writeFieldsSingleFileTime( EMfields->Jy_s[ispec], group_id );
+        writeFieldsSingleFileTime( EMfields->Jz_s[ispec], group_id );
+    }
+    
 
 	H5Gclose(group_id);
 

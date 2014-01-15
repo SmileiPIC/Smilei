@@ -114,6 +114,9 @@ public:
 	
 	//! Method used to initialize the total charge density
 	void initRhoJ(std::vector<Species*> vecSpecies, Projector* Proj);
+    
+    //! Method used to sum all species densities and currents to compute the total charge density and currents
+	virtual void computeTotalRhoJ() = 0;
 	
 	//! Method used to initialize the Maxwell solver
 	virtual void solvePoisson(SmileiMPI* smpi) = 0;

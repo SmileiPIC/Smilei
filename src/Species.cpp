@@ -456,14 +456,16 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
 //   - apply the boundary conditions
 //   - increment the currents (projection)
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::dynamic(double time_dual, ElectroMagn* EMfields, Interpolator* Interp, Projector* Proj, SmileiMPI* smpi)
+void Species::dynamic(double time_dual, unsigned int ispec, ElectroMagn* EMfields, Interpolator* Interp,
+                      Projector* Proj, SmileiMPI* smpi)
 {
     
 	if (ndim>1) {
 		bmin.resize(1);
 		bmin[0] = 0;
 		bmax.resize(1);
-		bmax[0] = particles.size()-1;
+//		bmax[0] = particles.size()-1;
+        bmax[0] = max((int)particles.size()-1,0);
 	}
     
 	// Electric field at the particle position
@@ -488,10 +490,13 @@ void Species::dynamic(double time_dual, ElectroMagn* EMfields, Interpolator* Int
 		//#pragma omp parallel for shared (EMfields)
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++){
             
-            //reset buffers
-            for (iloc = 0; iloc < 3 * size_proj_buffer; iloc++) b_Jx[iloc] = 0.;
+            // reset all current-buffers
+            // *3 allows to also reset Jy & Jz which are contiguous in memory
+            for (iloc = 0; iloc < 3*size_proj_buffer; iloc++) b_Jx[iloc] = 0.0;
             
             for (unsigned int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
+
+//                if (smpi->smilei_rk==0) cerr << "interp: x y " << particles[iPart]->position(0) << " " << particles[iPart]->position(1) << endl;
 		    	// Interpolate the fields at the particle position
 		    	(*Interp)(EMfields, particles[iPart], &Epart, &Bpart);
 		    	
@@ -499,7 +504,8 @@ void Species::dynamic(double time_dual, ElectroMagn* EMfields, Interpolator* Int
 		    	if (Ionize && particles[iPart]->charge() < (int) atomic_number) { //AND
 		    		(*Ionize)(particles[iPart], Epart);
 		    	}
-                
+
+//                cerr << "push" << endl;
 		    	// Push the particle
 		    	(*Push)(particles[iPart], Epart, Bpart, gf);
                 
@@ -509,22 +515,30 @@ void Species::dynamic(double time_dual, ElectroMagn* EMfields, Interpolator* Int
 		    	//	if omp then critical on smpi->addPartInExchList, may be applied after // loop
 		    	//partBoundCond->apply( particles[iPart] );
 		    	if ( !partBoundCond->apply( particles[iPart] ) ) smpi->addPartInExchList( iPart );
-                
-                //if (ndim == 1) {
-                //    (*Proj)(b_Jx, b_Jy, b_Jz, particles[iPart], gf, ibin, b_dim0);
-                //} else {
-                (*Proj)(EMfields, particles[iPart], gf);
-                //}
+
+//                cerr << "proj"<< endl;
+//                if (ndim == 1) {
+//                    (*Proj)(b_Jx, b_Jy, b_Jz, particles[iPart], gf, ibin, b_dim0);
+//                } else {
+                    (*Proj)(EMfields->Jx_s[ispec], EMfields->Jy_s[ispec], EMfields->Jz_s[ispec], EMfields->rho_s[ispec],
+                            particles[iPart], gf);
+//                }
                 
 		    }// iPart
-            //Copy buffer back to the global array and free buffer****************
-            //This part is dimension dependant !! this is for dim = 1
+            
+            // Copy buffer back to the global array and free buffer****************
+            // this part is dimension dependant !! this is for dim = 1
             if (ndim == 1) {
                 for (unsigned int i = 0; i < size_proj_buffer ; i++){
                     iloc = ibin + i ;
+                    // adding contribution to the total currents
                     (*EMfields->Jx_)(iloc) += b_Jx[i];
                     (*EMfields->Jy_)(iloc) += b_Jy[i];
                     (*EMfields->Jz_)(iloc) += b_Jz[i];
+//                    // adding contribution to current species currents and density
+//                    (*EMfields->Jx_s[ispec])(iloc) += b_Jx[i];
+//                    (*EMfields->Jy_s[ispec])(iloc) += b_Jy[i];
+//                    (*EMfields->Jz_s[ispec])(iloc) += b_Jz[i];
                 }
             }
         }// ibin

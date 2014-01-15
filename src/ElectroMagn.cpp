@@ -155,16 +155,25 @@ void ElectroMagn::initRhoJ(vector<Species*> vecSpecies, Projector* Proj)
         DEBUG(n_particles<<" species "<<iSpec);
 		for (unsigned int iPart=0 ; iPart<n_particles; iPart++ )
         {
-            // project charge density
-			(*Proj)( rho_ , cuParticles[iPart] );
-            // project current densities
-            (*Proj)(this, cuParticles[iPart], cuParticles[iPart]->lor_fac());
+//            // project charge density
+//			(*Proj)(rho_, cuParticles[iPart]);
+//            // project current densities
+//            (*Proj)(this, cuParticles[iPart], cuParticles[iPart]->lor_fac());
+            (*Proj)(Jx_s[iSpec], Jy_s[iSpec], Jz_s[iSpec], rho_s[iSpec], cuParticles[iPart],
+                    cuParticles[iPart]->lor_fac());
 		}
-        DEBUG("projection done for initRhoJ");
 	}//iSpec
+    
+    computeTotalRhoJ();
+    DEBUG("projection done for initRhoJ");
 
 }
 
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Method used to compute EM fields related scalar quantities used in diagnostics
+// ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn::computeScalars()
 {
 	

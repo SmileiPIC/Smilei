@@ -46,7 +46,8 @@ public:
 	inline unsigned int getParticlesCapacity() const {return particles.capacity();}
 	
 	//! Method calculating the Particle dynamics (interpolation, pusher, projection)
-	virtual void dynamic(double time, ElectroMagn* champs, Interpolator* interp, Projector* proj, SmileiMPI* smpi);
+	virtual void dynamic(double time, unsigned int ispec, ElectroMagn* champs, Interpolator* interp,
+                         Projector* proj, SmileiMPI* smpi);
 	
 	//! Method used to initialize the Particle position in a given cell
 	void initPosition(unsigned int, unsigned int, unsigned int *, unsigned int, std::vector<double>, std::string);

@@ -9,6 +9,7 @@
 #include <iostream>
 #include <math.h>
 #include <sstream>
+#include <string>
 
 using namespace std;
 
@@ -57,15 +58,15 @@ ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
     MESSAGE( "dimPrim[0]  " <<  dimPrim[0] );
 
     // Allocation of the EM fields
-	Ex_ = new Field1D( dimPrim, 0, false, "Ex" );
-	Ey_ = new Field1D( dimPrim, 1, false, "Ey");
-	Ez_ = new Field1D( dimPrim, 2, false, "Ez");
-	Bx_ = new Field1D( dimPrim, 0, true, "Bx");
-	By_ = new Field1D( dimPrim, 1, true, "By");
-	Bz_ = new Field1D( dimPrim, 2, true, "Bz");
-	Bx_m = new Field1D(dimPrim, 0, true, "Bx_m");
-	By_m = new Field1D(dimPrim, 1, true, "By_m");
-	Bz_m = new Field1D(dimPrim, 2, true, "Bz_m");
+	Ex_  = new Field1D(dimPrim, 0, false, "Ex");
+	Ey_  = new Field1D(dimPrim, 1, false, "Ey");
+	Ez_  = new Field1D(dimPrim, 2, false, "Ez");
+	Bx_  = new Field1D(dimPrim, 0, true,  "Bx");
+	By_  = new Field1D(dimPrim, 1, true,  "By");
+	Bz_  = new Field1D(dimPrim, 2, true,  "Bz");
+	Bx_m = new Field1D(dimPrim, 0, true,  "Bx_m");
+	By_m = new Field1D(dimPrim, 1, true,  "By_m");
+	Bz_m = new Field1D(dimPrim, 2, true,  "Bz_m");
 	
 	// Total charge currents and densities
 	Jx_   = new Field1D(dimPrim, 0, false, "Jx");
@@ -76,10 +77,15 @@ ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
 	
     // Charge currents currents and density for each species
     for (unsigned int ispec=0; ispec<n_species; ispec++){
-        Jx_s[ispec]  = new Field1D(dimPrim, 0, false);
-        Jy_s[ispec]  = new Field1D(dimPrim, 1, false);
-        Jz_s[ispec]  = new Field1D(dimPrim, 2, false);
-        rho_s[ispec] = new Field1D(dimPrim);
+        string  file_name;
+        file_name = "Jx_s";
+        Jx_s[ispec]  = new Field1D(dimPrim, 0, false, file_name);
+        file_name = "Jy_s";
+        Jy_s[ispec]  = new Field1D(dimPrim, 1, false, file_name);
+        file_name = "Jz_s";
+        Jz_s[ispec]  = new Field1D(dimPrim, 2, false, file_name);
+        file_name = "rho_s";
+        rho_s[ispec] = new Field1D(dimPrim, file_name);
     }
     
     // ----------------------------------------------------------------
@@ -524,7 +530,6 @@ void ElectroMagn1D::centerMagneticFields()
 
 
 
-
 // ---------------------------------------------------------------------------------------------------------------------
 // Reinitialize the total charge density and transverse currents
 // - save current density as old density (charge conserving scheme)
@@ -579,6 +584,38 @@ void ElectroMagn1D::restartRhoJ()
 }
 
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Reinitialize the total charge density and transverse currents
+// - save current density as old density (charge conserving scheme)
+// - put the new density and currents to 0
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn1D::computeTotalRhoJ()
+{
+	Field1D* Jx1D    = static_cast<Field1D*>(Jx_);
+	Field1D* Jy1D    = static_cast<Field1D*>(Jy_);
+	Field1D* Jz1D    = static_cast<Field1D*>(Jz_);
+	Field1D* rho1D   = static_cast<Field1D*>(rho_);
+
+    for (unsigned int ispec=0; ispec<n_species; ispec++){
+        Field1D* Jx1D_s  = static_cast<Field1D*>(Jx_s[ispec]);
+        Field1D* Jy1D_s  = static_cast<Field1D*>(Jy_s[ispec]);
+        Field1D* Jz1D_s  = static_cast<Field1D*>(Jz_s[ispec]);
+        Field1D* rho1D_s = static_cast<Field1D*>(rho_s[ispec]);
+        
+        // put longitudinal current to zero on the dual grid
+        for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
+            (*Jx1D)(ix)  += (*Jx1D_s)(ix);
+        }
+        
+        // all fields are defined on the primal grid
+        for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
+            (*Jy1D)(ix)  += (*Jy1D_s)(ix);
+            (*Jz1D)(ix)  += (*Jz1D_s)(ix);
+            (*rho1D)(ix) += (*rho1D_s)(ix);
+        }
+    }//END loop on species ispec
+}
 
 /*
 // ---------------------------------------------------------------------------------------------------------------------

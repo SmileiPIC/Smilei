@@ -191,7 +191,7 @@ int main (int argc, char* argv[])
 		// --------------------------------
 
 		if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) )
-			MESSAGE(1,"Time (dual)= " << time_dual << " it = " << itime);
+			MESSAGE(1,"Time (dual)= " << time_dual << " it = " << itime  << " / " << params.n_time);
 		
         
 		// put density and currents to 0 + save former density
@@ -206,17 +206,13 @@ int main (int argc, char* argv[])
 		// (2) move the particle
 		// (3) calculate the currents (charge conserving method)
 		for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-			// 			if ( smpi->isMaster() ) DEBUG(2, "Dynamic Species " << ispec );
-			vecSpecies[ispec]->dynamic(time_dual, EMfields, Interp, Proj, smpi);
+			vecSpecies[ispec]->dynamic(time_dual, ispec, EMfields, Interp, Proj, smpi);
 			smpi->exchangeParticles(vecSpecies[ispec], ispec, &params);
 			if (params.nDim_field == 1)
 				vecSpecies[ispec]->sort_part(params.cell_length[params.nDim_particle-1]);
 		}
-//		for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-//			DEBUG(ispec << " " << vecSpecies[ispec]->getNbrOfParticles());
-//		}
-
 		smpi->sumRhoJ( EMfields );
+        EMfields->computeTotalRhoJ();
 		
 		// solve Maxwell's equations
 		EMfields->solveMaxwell(time_dual, smpi);

@@ -31,10 +31,6 @@ public:
 	//! Method used for initializing Maxwell solver
 	void solvePoisson(SmileiMPI* smpi);
     
-	//! Method used to initialize the total charge densities and currents
-	void initRho();
-
-    
 	//! Method used to solve Maxwell's equations
 	void solveMaxwell(double time_dual, SmileiMPI* smpi);
 	
@@ -55,6 +51,9 @@ public:
     
     //! Method used to restart the total charge densities and currents
 	void restartRhoJ();
+    
+    //! Method used to compute the total charge density and currents by summing over all species
+	void computeTotalRhoJ();
     
 	//! \todo Create properties the laser time-profile (MG & TV)
 

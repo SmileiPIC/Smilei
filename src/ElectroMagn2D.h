@@ -69,6 +69,9 @@ public:
     //! Method used to initialize the total charge densities and currents
 	void restartRhoJ();
     
+    //! Method used to compute the total charge density and currents by summing over all species
+	void computeTotalRhoJ();
+    
 	//! \todo Create properties the laser time-profile (MG & TV)
     
 	//! Number of nodes on the primal grid in the x-direction
