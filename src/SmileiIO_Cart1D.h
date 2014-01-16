@@ -27,6 +27,7 @@ public:
 	void writeFieldsSingleFileTime( Field* field, hid_t group_id );
 
 	void write( Field* field, std::string name );
+	void write( Field* field );
 	void write( Field* field, std::string name, double time ) {MESSAGE("not implemented");}
 	void writePerProcess( Field* field, std::string name, double time, int rank ){MESSAGE("not implemented");}
 

@@ -76,16 +76,20 @@ ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
 	rho_o = new Field1D(dimPrim, "Rho_old" );
 	
     // Charge currents currents and density for each species
+    ostringstream file_name("");
     for (unsigned int ispec=0; ispec<n_species; ispec++){
-        string  file_name;
-        file_name = "Jx_s";
-        Jx_s[ispec]  = new Field1D(dimPrim, 0, false, file_name);
-        file_name = "Jy_s";
-        Jy_s[ispec]  = new Field1D(dimPrim, 1, false, file_name);
-        file_name = "Jz_s";
-        Jz_s[ispec]  = new Field1D(dimPrim, 2, false, file_name);
-        file_name = "rho_s";
-        rho_s[ispec] = new Field1D(dimPrim, file_name);
+ 	file_name.str("");
+	file_name << "Jx_s" << ispec;
+        Jx_s[ispec]  = new Field1D(dimPrim, 0, false, file_name.str().c_str());
+ 	file_name.str("");
+	file_name << "Jy_s" << ispec;
+        Jy_s[ispec]  = new Field1D(dimPrim, 1, false, file_name.str().c_str());
+ 	file_name.str("");
+	file_name << "Jz_s" << ispec;
+        Jz_s[ispec]  = new Field1D(dimPrim, 2, false, file_name.str().c_str());
+ 	file_name.str("");
+	file_name << "rho_s" << ispec;
+        rho_s[ispec] = new Field1D(dimPrim, file_name.str().c_str());
     }
     
     // ----------------------------------------------------------------

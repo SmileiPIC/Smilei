@@ -35,6 +35,7 @@ public:
 	// Kept while python tools not updated
 	void writeFields( ElectroMagn* EMfields );
 	virtual void write( Field* field, std::string name ) = 0;
+	virtual void write( Field* field ) = 0;
 
 	// Kept while python tools not updated
 	void writeFields( ElectroMagn* EMfields, double time );

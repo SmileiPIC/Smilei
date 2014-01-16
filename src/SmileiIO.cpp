@@ -148,7 +148,7 @@ void SmileiIO::writeAllFieldsSingleFileTime( ElectroMagn* EMfields, int time )
 	writeFieldsSingleFileTime( EMfields->Jy_, group_id );
 	writeFieldsSingleFileTime( EMfields->Jz_, group_id );
 	writeFieldsSingleFileTime( EMfields->rho_, group_id );
-    
+
     // for all species related quantities
     for (unsigned int ispec=0; ispec<EMfields->n_species; ispec++){
         writeFieldsSingleFileTime( EMfields->rho_s[ispec], group_id );
@@ -181,6 +181,15 @@ void SmileiIO::writeFields( ElectroMagn* EMfields )
 	write( EMfields->Jy_, "jy.h5" );
 	write( EMfields->Jz_, "jz.h5" );
 	write( EMfields->rho_, "rho.h5" );
+
+    // for all species related quantities
+    for (unsigned int ispec=0; ispec<EMfields->n_species; ispec++){
+        write( EMfields->rho_s[ispec] );
+        write( EMfields->Jx_s[ispec] );
+        write( EMfields->Jy_s[ispec] );
+        write( EMfields->Jz_s[ispec] );
+    }
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -201,6 +210,8 @@ void SmileiIO::writeFields( ElectroMagn* EMfields, double time )
 	write( EMfields->Jy_, "jy", time );
 	write( EMfields->Jz_, "jz", time );
 	write( EMfields->rho_, "rho", time );
+
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

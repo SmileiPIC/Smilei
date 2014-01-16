@@ -365,3 +365,31 @@ void SmileiIO_Cart2D::writePerProcess( Field* field, string name, double time, i
 
 }
 
+void SmileiIO_Cart2D::write( Field* field )
+{
+        std::vector<unsigned int> isPrimal = field->isPrimal_;
+        Field2D* f2D =  static_cast<Field2D*>(field);
+        string name = f2D->name+".h5";
+
+        hid_t memspace  = memspace_ [ isPrimal[0] ][ isPrimal[1] ];
+        hid_t filespace = filespace_[ isPrimal[0] ][ isPrimal[1] ];
+
+        MPI_Info info  = MPI_INFO_NULL;
+        hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
+        H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, info);
+        hid_t file_id = H5Fcreate( name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+        H5Pclose(plist_id);
+
+        plist_id = H5Pcreate(H5P_DATASET_CREATE);
+//      chunk_dims[0] = bufsize[0];
+//      H5Pset_chunk(plist_id, 2, chunk_dims); // Problem different dims for each process, may be the same for all ...
+        hid_t dset_id = H5Dcreate(file_id, "Field", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+        H5Pclose(plist_id);
+
+        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &(f2D->data_[0][0]) );
+        H5Dclose(dset_id);
+
+        H5Fclose( file_id );
+
+}
+
