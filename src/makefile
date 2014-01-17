@@ -4,7 +4,7 @@ SMILEICXX     ?= mpic++
 HDF5_ROOT_DIR ?=
 
 CFLAGS  = -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include  #-Wstrict-aliasing
-LDFLAGS = -lm -L${HDF5_ROOT_DIR}/lib -lhdf5
+LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5 -lz
 
 all: release install
 
@@ -21,8 +21,7 @@ debug: CFLAGS += -g -pg -Wall -D__DEBUG
 debug: $(EXEC)
 
 .depend: $(SRCS)
-	rm -rf .depend
-	$(SMILEICXX) -MM $^ >> .depend;
+	$(SMILEICXX) $(CFLAGS) -MM $^ > .depend
 
 include .depend 
 
@@ -36,6 +35,6 @@ install: $(EXEC)
 	install $(EXEC) $(INSTALLDIR)
 	
 clean:
-	rm -f $(EXEC) $(OBJS) .depend
+	rm -f $(EXEC) $(OBJS)
 
 

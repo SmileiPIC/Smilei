@@ -212,7 +212,7 @@ void SmileiMPI::sumRhoJ( ElectroMagn* champs )
     sumField( champs->Jz_ );
     
     // sum density and currents for all species
-    for (unsigned int ispec; ispec<champs->n_species; ispec++){
+    for (unsigned int ispec=0; ispec<champs->n_species; ispec++){
         sumField( champs->rho_s[ispec] );
         sumField( champs->Jx_s[ispec] );
         sumField( champs->Jy_s[ispec] );
