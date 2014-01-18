@@ -50,7 +50,7 @@ public:
 	void write(){write(std::cerr);};
 	
 	//! generic template to InputData a single value
-	template <class T> bool extract(std::string data, T &val, std::string group=std::string(""), unsigned int occurrenceItem=0, unsigned int occurrenceGroup=0) {
+	template <class T> bool extract(std::string data, T &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0) {
 		data=cleanString(data);
 		group=cleanString(group);
 		unsigned int n_occur_group=0;
@@ -79,7 +79,7 @@ public:
 
 	
 	//! generic class to InputData a vector (pay attention that T will be allocated and it's up to you to delete it!) return value is the number of values InputData
-	template <class T> bool extract(std::string data, std::vector<T>&val, std::string group=std::string(""), unsigned int occurrenceItem=0, unsigned int occurrenceGroup=0) {
+	template <class T> bool extract(std::string data, std::vector<T>&val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0) {
 		data=cleanString(data);
 		group=cleanString(group);
 		bool found=false;
