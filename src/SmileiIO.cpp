@@ -141,9 +141,9 @@ void SmileiIO::writeAllFieldsSingleFileTime( ElectroMagn* EMfields, int time )
 	writeFieldsSingleFileTime( EMfields->Ex_, group_id );
 	writeFieldsSingleFileTime( EMfields->Ey_, group_id );
 	writeFieldsSingleFileTime( EMfields->Ez_, group_id );
-	writeFieldsSingleFileTime( EMfields->Bx_, group_id );
-	writeFieldsSingleFileTime( EMfields->By_, group_id );
-	writeFieldsSingleFileTime( EMfields->Bz_, group_id );
+	writeFieldsSingleFileTime( EMfields->Bx_m, group_id );
+	writeFieldsSingleFileTime( EMfields->By_m, group_id );
+	writeFieldsSingleFileTime( EMfields->Bz_m, group_id );
 	writeFieldsSingleFileTime( EMfields->Jx_, group_id );
 	writeFieldsSingleFileTime( EMfields->Jy_, group_id );
 	writeFieldsSingleFileTime( EMfields->Jz_, group_id );
@@ -152,9 +152,9 @@ void SmileiIO::writeAllFieldsSingleFileTime( ElectroMagn* EMfields, int time )
     // for all species related quantities
     for (unsigned int ispec=0; ispec<EMfields->n_species; ispec++){
         writeFieldsSingleFileTime( EMfields->rho_s[ispec], group_id );
-        writeFieldsSingleFileTime( EMfields->Jx_s[ispec], group_id );
-        writeFieldsSingleFileTime( EMfields->Jy_s[ispec], group_id );
-        writeFieldsSingleFileTime( EMfields->Jz_s[ispec], group_id );
+        writeFieldsSingleFileTime( EMfields->Jx_s[ispec],  group_id );
+        writeFieldsSingleFileTime( EMfields->Jy_s[ispec],  group_id );
+        writeFieldsSingleFileTime( EMfields->Jz_s[ispec],  group_id );
     }
     
 

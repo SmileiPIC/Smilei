@@ -423,6 +423,7 @@ void ElectroMagn1D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
 	Field1D* Ez1D   = static_cast<Field1D*>(Ez_);
 	Field1D* By1D   = static_cast<Field1D*>(By_);
 	Field1D* Bz1D   = static_cast<Field1D*>(Bz_);
+
     
 	// --------------------------------------------------
 	// Laser temporal profile
@@ -430,12 +431,7 @@ void ElectroMagn1D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
 	double byL=0, bzL=0, byR=0, bzR=0;
 
 	for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
-		// testing the time-profile
-		// ------------------------
-
-//		if (laser_[ilaser]->laser_struct.time_profile == "constant" ||
-//            laser_[ilaser]->laser_struct.time_profile == "sin2") {
-            
+        
         if (laser_[ilaser]->laser_struct.angle == 0){
             // Incident field (left boundary)
             byL += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
@@ -447,12 +443,40 @@ void ElectroMagn1D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
         } else {
             ERROR("Angle not allowed for 1D laser pulse " << ilaser);
         }
-
         
-//		} else {
-//			ERROR("Laser profile "<< ilaser <<" not allowed");
-//		}//ENDif time_profile
 	}//ilaser
+    
+
+//    // ---------------------------------------------------
+//    // Laser temporal profile from defined from potential
+//    // ---------------------------------------------------
+//    double byL=0, bzL=0, byR=0, bzR=0;
+//    double ayL=0, azL=0, ayL_o=0, azL_o=0, ayR=0, azR=0, ayR_o=0, azR_o=0;
+//        
+//    for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
+//        
+//        if (laser_[ilaser]->laser_struct.angle == 0){
+//            // Incident field (left boundary)
+//            ayL_o += laser_[ilaser]->a0_delta_y_ * sin(time_dual-dt) * laser_[ilaser]->time_profile(time_dual-dt);
+//            azL_o += laser_[ilaser]->a0_delta_z_ * cos(time_dual-dt) * laser_[ilaser]->time_profile(time_dual-dt);
+//            ayL   += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
+//            azL   += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
+//            byL    = - (azL - azL_o)/dt;
+//            bzL    =   (ayL - ayL_o)/dt;
+//        } else if (laser_[ilaser]->laser_struct.angle == 180){
+//            // Incident field (right boundary)
+//            ayR_o += laser_[ilaser]->a0_delta_y_ * sin(time_dual-dt) * laser_[ilaser]->time_profile(time_dual-dt);
+//            azR_o += laser_[ilaser]->a0_delta_z_ * cos(time_dual-dt) * laser_[ilaser]->time_profile(time_dual-dt);
+//            ayR   += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
+//            azR   += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
+//            byR    =   (azR - azR_o)/dt;
+//            bzR    = - (ayR - ayR_o)/dt;
+//        } else {
+//            ERROR("Angle not allowed for 1D laser pulse " << ilaser);
+//        }
+//        
+//    }//ilaser
+    
 
 	// ----------------------------
 	// Apply EM boundary conditions
