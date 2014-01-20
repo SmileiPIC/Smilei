@@ -165,12 +165,14 @@ int main (int argc, char* argv[])
 	// ------------------------------------------------------------------------
 	// Initialize the simulation times time_prim at n=0 and time_dual at n=-1/2
 	// ------------------------------------------------------------------------
+
 	// time at integer time-steps (primal grid)
 	double time_prim = 0.;
 	// time at half-integer time-steps (dual grid)
 	double time_dual = 0.5 * params.timestep;
     // run diagnostics at time-step 0
     diags.runAllDiags(0, EMfields, vecSpecies);
+    sio->writeAllFieldsSingleFileTime( EMfields, 0 );
 	
 	// ------------------------------------------------------------------
 	//                     HERE STARTS THE PIC LOOP
@@ -221,7 +223,7 @@ int main (int argc, char* argv[])
 		// ----------------------------
 		
 		diags.runAllDiags(itime, EMfields, vecSpecies);
-		if  (itime % 500 == 0)
+		if  (itime % 1250 == 0)
 			sio->writeAllFieldsSingleFileTime( EMfields, itime );
 
 	}//END of the time loop	
@@ -256,7 +258,7 @@ int main (int argc, char* argv[])
 		sio->writeFields( EMfields );
 		//sio->writeFieldsPP( EMfields, time_dual, smpi->getRank() );
 	}
-	if  ( params.n_time % 500 != 0)
+	if  ( params.n_time % 1250 != 0)
 		sio->writeAllFieldsSingleFileTime( EMfields, params.n_time );
 	
 	

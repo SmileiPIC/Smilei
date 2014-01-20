@@ -60,6 +60,9 @@ public:
     
 	//! Method used to initialize the Particle charge
 	void initCharge(PicParams*, unsigned int, unsigned int, double);
+    
+    //! Method returning the density profile
+    double density_profile(PicParams*, std::vector<double>);
 	
 	//! Method used to save all Particles properties for the considered Species
 	void dump(std::ofstream&);

@@ -46,6 +46,9 @@ struct SpeciesStructure {
 	//! kind of species possible values: "ion" "electron" "test"
 	std::string species_type;
     
+    //! density profile
+    std::string density_profile;
+    
 	//! initialization type. Possible values: "regular" "cold" "Maxwell-Juettner"
 	std::string initialization_type;
 	
@@ -136,11 +139,17 @@ class PicParams {
 	//! plasma geometry
 	std::string plasma_geometry;
 
+    //!
+    std::vector<double> density_double_params;
+    
 	//! plasma lengths 
 	std::vector<double> plasma_length;
 
 	//! vacuum lengths 
 	std::vector<double> vacuum_length;
+    
+    //! vacuum lengths
+	std::vector<double> slope_length;
 	
 	//! initial number of species
 	unsigned int n_species;

@@ -51,6 +51,19 @@ PicParams::PicParams(InputData &ifile) {
 			if (vacuum_length[i]+plasma_length[i] > sim_length[i])
 				WARNING("plasma + vacuum  dimension " << i << " > " << sim_length[i]);
 		}
+
+    } else if (plasma_geometry=="trap") {
+        ifile.extract("plasma_length", plasma_length);
+		ifile.extract("vacuum_length", vacuum_length);
+        ifile.extract("slope_length",  slope_length);
+        if (plasma_length.size()!=nDim_field || vacuum_length.size()!=nDim_field || slope_length.size()!=nDim_field) {
+			ERROR("plasma_length, vacuum_length and slope_length dimension should be " << nDim_field);
+		}
+		for (unsigned int i=0; i<nDim_field; i++) {
+			if (vacuum_length[i]+plasma_length[i]+2.0*slope_length[i] > sim_length[i])
+				WARNING("plasma + vacuum + 2*slope dimension " << i << " > " << sim_length[i]);
+		}
+
 	} else {
 		ERROR("unknown plasma_geometry "<< plasma_geometry);
 	}
@@ -161,8 +174,9 @@ void PicParams::compute()
 			cell_length[i]=2.0*M_PI/res_space[i];
 			cell_volume *= cell_length[i];
 			
-			vacuum_length[i]*=2.0*M_PI;
-			plasma_length[i]*=2.0*M_PI;
+			vacuum_length[i] *= 2.0*M_PI;
+			plasma_length[i] *= 2.0*M_PI;
+            slope_length[i]  *= 2.0*M_PI;
 		}
 		for (unsigned int i=nDim_field; i<3;i++) {
 			n_space[i]=1;
