@@ -4,7 +4,7 @@
 
 using namespace std;
 
-DiagParams::DiagParams(InputData &ifile, PicParams& params) : print_every(params.n_time/20) {
+DiagParams::DiagParams(InputData &ifile, PicParams& params) : print_every(params.n_time/20), scalar_every(0), map_every(0), probe0d_every(0) {
 	
 	ifile.extract("print_every", print_every);
 		
