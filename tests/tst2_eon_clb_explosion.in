@@ -35,6 +35,7 @@ sim_length=11.0
 plasma_geometry = constant
 vacuum_length   = 5.0
 plasma_length   = 1.0
+slope_length    = 0.0
 
 # RANDOM seed 
 # this is used to randomize the random number generator
@@ -65,8 +66,9 @@ species
 	mean_velocity = 0.0
 	temperature = 0.0
 	dynamics_type = norm
-	time_frozen = 10.0
+	time_frozen = 0.0
 	radiating = false
+	bc_part_type = refl
 end
 
 species
@@ -82,6 +84,7 @@ species
 	dynamics_type = norm	
 	time_frozen = 0.0
 	radiating = false
+	bc_part_type = refl
 end
 
 # LASER PROPERTIES
@@ -93,12 +96,31 @@ end
 # time_profile: string defining the time profile
 # double_params: vector of real parameters used by the different time-profiles
 
-laser
-	a0=5.0
-	angle=0
-	delta=0.707106781                 
-	time_profile = constant
-	double_params = 4.0
-end	
+#laser
+#	a0=5.0
+#	angle=0
+#	delta=0.707106781                 
+#	time_profile = constant
+#	double_params = 4.0
+#end	
 
+# ---------------------
+# DIAGNOSTIC PARAMETERS
+# ---------------------
+
+# DIAG ON SCALARS
+# every = number of time-steps between each output
+#
+diagnostic scalar
+        every = 1
+end
+
+# PROB 0D
+# every = number of time-steps between each output
+# x     = position of the different probes
+#
+diagnostic probe0d
+        every = 1
+        x = 0.0 5.5 11.0
+end
 

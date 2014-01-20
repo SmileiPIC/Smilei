@@ -169,14 +169,14 @@ void PicParams::compute()
 	if (nDim_field==res_space.size() && nDim_field==sim_length.size()) {
 		for (unsigned int i=0; i<nDim_field;i++) {
 			n_space[i]=res_space[i]*sim_length[i];
-			//! \todo{clean this Mickael!!}
+
 			sim_length[i]*=2.0*M_PI;
 			cell_length[i]=2.0*M_PI/res_space[i];
 			cell_volume *= cell_length[i];
 			
 			vacuum_length[i] *= 2.0*M_PI;
 			plasma_length[i] *= 2.0*M_PI;
-            slope_length[i]  *= 2.0*M_PI;
+            if (plasma_geometry=="trap") slope_length[i]  *= 2.0*M_PI;
 		}
 		for (unsigned int i=nDim_field; i<3;i++) {
 			n_space[i]=1;
