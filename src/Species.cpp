@@ -635,7 +635,7 @@ double Species::density_profile(PicParams* params, vector<double> x_cell){
 //   - apply the boundary conditions
 //   - increment the currents (projection)
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::dynamic(double time_dual, unsigned int ispec, ElectroMagn* EMfields, Interpolator* Interp,
+void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfields, Interpolator* Interp,
                       Projector* Proj, SmileiMPI* smpi)
 {
     
@@ -747,7 +747,7 @@ void Species::dynamic(double time_dual, unsigned int ispec, ElectroMagn* EMfield
         
 		//#pragma omp parallel for shared (EMfields)
 		for (unsigned int iPart=0 ; iPart<nParticles; iPart++ ) {
-			(*Proj)(EMfields->rho_, particles[iPart]);
+			(*Proj)(EMfields->rho_s[ispec], particles[iPart]);
 		}
 	}//END if time vs. time_frozen
 	

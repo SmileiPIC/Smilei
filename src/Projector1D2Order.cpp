@@ -200,22 +200,6 @@ void Projector1D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Field* rho,
 	Field1D* Jy1D  = static_cast<Field1D*>(Jy);
 	Field1D* Jz1D  = static_cast<Field1D*>(Jz);
     Field1D* rho1D = static_cast<Field1D*>(rho);
-  
-//    //--------------------------
-//    //Locate particle on the grid
-//	xjn    = part->position(0) * dx_inv_;  // normalized distance to the first node
-//	i      = round(xjn);                   // index of the central node
-//	xjmxi  = xjn - (double)i;              // normalized distance to the nearest grid point
-//	xjmxi2 = xjmxi*xjmxi;                  // square of the normalized distance to the nearest grid point
-//	i -= index_domain_begin;
-//	// 2nd order projection for the total density
-//	//#pragma omp atomic
-//	(*rho1D)( i-1)  += 0.5 * (xjmxi2-xjmxi+0.25) * rho_j;
-//	//#pragma omp atomic
-//	(*rho1D)( i  )  += (0.75-xjmxi2)             * rho_j ;
-//	//#pragma omp atomic
-//	(*rho1D)( i+1)  += 0.5 * (xjmxi2+xjmxi+0.25) * rho_j;
-//    //--------------------------
     
 	// Declare local variables
     int unsigned ipo, ip, iloc;
@@ -295,8 +279,8 @@ void Projector1D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Field* rho,
 void Projector1D2Order::operator() (Field* rho, Particle* part)
 {
 	Field1D* rho1D  = static_cast<Field1D*>(rho);
-
 	
+    
 	//Declaration of local variables
 	int i;
 	double xjn,xjmxi,xjmxi2;

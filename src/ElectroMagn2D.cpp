@@ -872,9 +872,7 @@ void ElectroMagn2D::restartRhoJ()
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Reinitialize the total charge densities and currents
-// - save current density as old density (charge conserving scheme)
-// - put the new density and currents to 0
+// Compute the total density and currents from species density and currents
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn2D::computeTotalRhoJ()
 {
@@ -884,7 +882,6 @@ void ElectroMagn2D::computeTotalRhoJ()
     Field2D* Jy2D    = static_cast<Field2D*>(Jy_);
     Field2D* Jz2D    = static_cast<Field2D*>(Jz_);
     Field2D* rho2D   = static_cast<Field2D*>(rho_);
-    Field2D* rho2D_o = static_cast<Field2D*>(rho_o);
     
     
     // -----------------------------------
@@ -927,3 +924,34 @@ void ElectroMagn2D::computeTotalRhoJ()
     }//END loop on species ispec
     
 }//END computeTotalRhoJ
+
+
+
+//// ---------------------------------------------------------------------------------------------------------------------
+//// Compute the total density from species density (used for frozen particles)
+//// ---------------------------------------------------------------------------------------------------------------------
+//void ElectroMagn2D::computeTotalRho()
+//{
+//    
+//    // static cast of the total currents and densities
+//    Field2D* rho2D   = static_cast<Field2D*>(rho_);
+//    Field2D* rho2D_o = static_cast<Field2D*>(rho_o);
+//    
+//    
+//    // -----------------------------------
+//    // Species currents and charge density
+//    // -----------------------------------
+//    for (unsigned int ispec=0; ispec<n_species; ispec++){
+//        
+//        Field2D* rho2D_s = static_cast<Field2D*>(rho_s[ispec]);
+//        
+//        // Charge density rho^(p,p) to 0
+//        for (unsigned int i=0 ; i<nx_p ; i++) {
+//            for (unsigned int j=0 ; j<ny_p ; j++) {
+//                (*rho2D)(i,j) += (*rho2D_s)(i,j);
+//            }
+//        }
+//        
+//    }//END loop on species ispec
+//    
+//}//END computeTotalRho

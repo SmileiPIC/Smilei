@@ -23,6 +23,12 @@ public:
 	//! Creator for DiagParams
 	DiagParams(InputData &, PicParams&);
 
+    //! field dump output
+	unsigned int fieldDump_every;
+    
+    //! particle dump output
+	unsigned int particleDump_every;
+    
 	//! scalar output every scalar_every (namelist group "diagnostic scalar" key "every")
 	unsigned int scalar_every;
 
