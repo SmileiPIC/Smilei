@@ -14,8 +14,11 @@ PicParams::PicParams(InputData &ifile) {
 	setDimensions();
 
 	ifile.extract("interpolation_order", interpolation_order);
-	if (interpolation_order!=2) {
+	if (interpolation_order!=2 && interpolation_order!=4) {
 		ERROR("unacceptable order!");
+	}
+    if (geometry=="2d3v" && interpolation_order==4) {
+		ERROR("unacceptable order for 2D simulation! (not yet implemented)");
 	}
 
 	ifile.extract("res_space",res_space);

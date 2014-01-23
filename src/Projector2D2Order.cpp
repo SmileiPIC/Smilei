@@ -43,6 +43,7 @@ Projector2D2Order::~Projector2D2Order()
 
 void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle* part, double gf, unsigned int bin, unsigned int b_dim0)
 {
+
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
@@ -172,7 +173,7 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
         
 	}//i
 
- }
+}
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -180,6 +181,7 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
 // ---------------------------------------------------------------------------------------------------------------------
 void Projector2D2Order::operator() (ElectroMagn* EMfields, Particle* part, double gf)
 {
+
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
@@ -326,6 +328,7 @@ void Projector2D2Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
 
 void Projector2D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Field* rho, Particle* part, double gf)
 {
+
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
@@ -475,7 +478,7 @@ void Projector2D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Field* rho,
 
 void Projector2D2Order::operator() (Field* rho, Particle* part)
 {
-    
+
     //Static cast of the total charge density
     Field2D* rho2D  = static_cast<Field2D*>(rho);
 	
@@ -512,6 +515,6 @@ void Projector2D2Order::operator() (Field* rho, Particle* part)
             (*rho2D)(i+iloc,j+jloc) += Sx[iloc]*Sy[jloc]*rho_p;
         }
     }
-    
+ 
 }//END TotalChargeDensityProjection
 

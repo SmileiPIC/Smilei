@@ -12,14 +12,14 @@ print_every = 100
 dim = 1d3v
 
 # order of interpolation
-interpolation_order =2 
+interpolation_order = 4 
 
 # SIMULATION TIME
 # res_time: temporal resolution (integer = number of time−steps within one normalization period)
 # sim_time: duration of the simulation in units of the normalization period 
 #
 res_time = 1000
-sim_time = 10.0
+sim_time = 5.0
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
