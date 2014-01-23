@@ -69,7 +69,7 @@ void Interpolator1D4Order::operator() (ElectroMagn* champs, Particle* part, Loca
 	xjmxi  = xjn -(double)i;  // normalized distance to the central node
 	xjmxi2 = xjmxi*xjmxi;     // square of the normalized distance to the central node
     xjmxi3 = xjmxi2*xjmxi;    // cube of the normalized distance to the central node
-    xjmxi4 = xjmxi4*xjmxi;    // 4th power of the normalized distance to the central node
+    xjmxi4 = xjmxi3*xjmxi;    // 4th power of the normalized distance to the central node
 
 	// coefficients for the 4th order interpolation on 5 nodes
 	cim2 = dble_1_ov_384   - dble_1_ov_48  * xjmxi  + dble_1_ov_16 * xjmxi2 - dble_1_ov_12 * xjmxi3 + dble_1_ov_12 * xjmxi4;
@@ -96,7 +96,7 @@ void Interpolator1D4Order::operator() (ElectroMagn* champs, Particle* part, Loca
 	xjmxi  = xjn -(double)i;  // normalized distance to the central node
 	xjmxi2 = xjmxi*xjmxi;     // square of the normalized distance to the central node
     xjmxi3 = xjmxi2*xjmxi;    // cube of the normalized distance to the central node
-    xjmxi4 = xjmxi4*xjmxi;    // 4th power of the normalized distance to the central node
+    xjmxi4 = xjmxi3*xjmxi;    // 4th power of the normalized distance to the central node
     
 	// coefficients for the 4th order interpolation on 5 nodes
 	cim2 = dble_1_ov_384   - dble_1_ov_48  * xjmxi  + dble_1_ov_16 * xjmxi2 - dble_1_ov_12 * xjmxi3 + dble_1_ov_12 * xjmxi4;
