@@ -87,7 +87,6 @@ void Interpolator2D4Order::operator() (ElectroMagn* champs, Particle* part, Loca
     std::vector<double> Cx_d(5);
     delta   = xpn - (double)ic_d + 0.5;
     delta2  = delta*delta;
-    delta2  = delta*delta;
     delta3  = delta2*delta;
     delta4  = delta3*delta;
     Cx_d[0] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;

@@ -613,15 +613,16 @@ double Species::density_profile(PicParams* params, vector<double> x_cell){
         // ---------------------------
         else {
             ERROR("Density profile " << params->plasma_geometry <<" not yet defined in 2D");
+            return 0.0;
         }
         
     }
     // ------------------
     // 3D density profile
     // ------------------
-    else if (params->nDim_field==3) {
+    else {//if (params->nDim_field==3) {
         ERROR("Density profile not yet defined in 3D");
-        
+        return 0.0;
     }//ENDif ndim
     
 }

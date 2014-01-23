@@ -29,7 +29,6 @@ Projector1D4Order::Projector1D4Order (PicParams* params, SmileiMPI* smpi) : Proj
     dble_1_ov_24 = 1.0/24.0;
     dble_19_ov_96 = 19.0/96.0;
     dble_11_ov_24 = 11.0/24.0;
-    dble_1_ov_384 = 1.0/384.0;
     dble_1_ov_4 = 1.0/4.0;
     dble_1_ov_6 = 1.0/6.0;
     dble_115_ov_192 = 115.0/192.0;
@@ -208,7 +207,7 @@ void Projector1D4Order::operator() (ElectroMagn* EMfields, Particle* part, doubl
 }//END Projector1D4Order
 
 // ---------------------------------------------------------------------------------------------------------------------
-// 2nd order projection in 1d3v simulations
+// 4th order projection in 1d3v simulations
 // ---------------------------------------------------------------------------------------------------------------------
 void Projector1D4Order::operator() (Field* Jx, Field* Jy, Field* Jz, Field* rho, Particle* part, double gf)
 {
@@ -225,8 +224,7 @@ void Projector1D4Order::operator() (Field* Jx, Field* Jy, Field* Jz, Field* rho,
     double crx_p = charge_weight*dx_ov_dt;                // current density for particle moving in the x-direction
     double cry_p = charge_weight*part->momentum(1)/gf;    // current density in the y-direction of the macroparticle
     double crz_p = charge_weight*part->momentum(2)/gf;    // current density allow the y-direction of the macroparticle
-    //double rho_p = part->weight();                         // charge density for the macroparticle
-    double S0[7], S1[7], Wl[7], Wt[7], Jx_p[7];            // arrays used for the Esirkepov projection method
+    double S0[7], S1[7], Wl[7], Wt[7], Jx_p[7];           // arrays used for the Esirkepov projection method
     
     // Initialize variables
     for (unsigned int i=0; i<7; i++){
@@ -253,20 +251,20 @@ void Projector1D4Order::operator() (Field* Jx, Field* Jy, Field* Jz, Field* rho,
     
 	// coefficients 4th order interpolation on 5 nodes
 	   
-    S0[1] = dble_1_ov_384   - dble_1_ov_48  * xj_m_xipo  + dble_1_ov_16 * xj_m_xipo2 - dble_1_ov_12 * xj_m_xipo3 + dble_1_ov_12 * xj_m_xipo4;
+    S0[1] = dble_1_ov_384   - dble_1_ov_48  * xj_m_xipo  + dble_1_ov_16 * xj_m_xipo2 - dble_1_ov_12 * xj_m_xipo3 + dble_1_ov_24 * xj_m_xipo4;
 	S0[2] = dble_19_ov_96   - dble_11_ov_24 * xj_m_xipo  + dble_1_ov_4 * xj_m_xipo2  + dble_1_ov_6  * xj_m_xipo3 - dble_1_ov_6  * xj_m_xipo4;
 	S0[3] = dble_115_ov_192 - dble_5_ov_8   * xj_m_xipo2 + dble_1_ov_4 * xj_m_xipo4;
     S0[4] = dble_19_ov_96   + dble_11_ov_24 * xj_m_xipo  + dble_1_ov_4 * xj_m_xipo2  - dble_1_ov_6  * xj_m_xipo3 - dble_1_ov_6  * xj_m_xipo4;
-    S0[5] = dble_1_ov_384   + dble_1_ov_48  * xj_m_xipo  + dble_1_ov_16 * xj_m_xipo2 + dble_1_ov_12 * xj_m_xipo3 + dble_1_ov_12 * xj_m_xipo4;
+    S0[5] = dble_1_ov_384   + dble_1_ov_48  * xj_m_xipo  + dble_1_ov_16 * xj_m_xipo2 + dble_1_ov_12 * xj_m_xipo3 + dble_1_ov_24 * xj_m_xipo4;
     
 	// coefficients 2nd order interpolation on 5 nodes
 	ip_m_ipo = ip-ipo;
     
-    S1[ip_m_ipo+1] = dble_1_ov_384   - dble_1_ov_48  * xj_m_xip  + dble_1_ov_16 * xj_m_xip2 - dble_1_ov_12 * xj_m_xip3 + dble_1_ov_12 * xj_m_xip4;
+    S1[ip_m_ipo+1] = dble_1_ov_384   - dble_1_ov_48  * xj_m_xip  + dble_1_ov_16 * xj_m_xip2 - dble_1_ov_12 * xj_m_xip3 + dble_1_ov_24 * xj_m_xip4;
 	S1[ip_m_ipo+2] = dble_19_ov_96   - dble_11_ov_24 * xj_m_xip  + dble_1_ov_4 * xj_m_xip2  + dble_1_ov_6  * xj_m_xip3 - dble_1_ov_6  * xj_m_xip4;
 	S1[ip_m_ipo+3] = dble_115_ov_192 - dble_5_ov_8   * xj_m_xip2 + dble_1_ov_4 * xj_m_xip4;
     S1[ip_m_ipo+4] = dble_19_ov_96   + dble_11_ov_24 * xj_m_xip  + dble_1_ov_4 * xj_m_xip2  - dble_1_ov_6  * xj_m_xip3 - dble_1_ov_6  * xj_m_xip4;
-    S1[ip_m_ipo+5] = dble_1_ov_384   + dble_1_ov_48  * xj_m_xip  + dble_1_ov_16 * xj_m_xip2 + dble_1_ov_12 * xj_m_xip3 + dble_1_ov_12 * xj_m_xip4;
+    S1[ip_m_ipo+5] = dble_1_ov_384   + dble_1_ov_48  * xj_m_xip  + dble_1_ov_16 * xj_m_xip2 + dble_1_ov_12 * xj_m_xip3 + dble_1_ov_24 * xj_m_xip4;
 
     // coefficients used in the Esirkepov method
     for (unsigned int i=0; i<7; i++){
