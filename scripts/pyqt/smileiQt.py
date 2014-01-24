@@ -23,6 +23,9 @@ class smileiQt(QtGui.QMainWindow):
         super(smileiQt, self).__init__()
             
         self.ui=uic.loadUi(os.path.dirname(os.path.realpath(__file__))+'/smileiQt.ui',self)
+        
+        self.ui.actionQuit.triggered.connect(QtGui.qApp.quit)
+        
         self.ui.timeStep.currentIndexChanged.connect(self.on_draw)
         self.ui.field1.currentIndexChanged.connect(self.on_draw)
         self.ui.field2.currentIndexChanged.connect(self.on_draw)
@@ -54,6 +57,7 @@ class smileiQt(QtGui.QMainWindow):
         self.load_settings()
         self.update_files()
         self.show()
+        self.raise_()
 
     def load_settings(self):
         settings=QtCore.QSettings("smilePy","");
@@ -104,8 +108,11 @@ class smileiQt(QtGui.QMainWindow):
                 if first:
                     first=False
                     for field in time :
-                        self.field1.addItem(str(field._v_name))
-                        self.field2.addItem(str(field._v_name))
+                        if len(field.shape)==2 and np.prod(np.absolute(np.array(field.shape)-1)) > 0 : 
+                            self.field1.addItem(str(field._v_name))
+                            self.field2.addItem(str(field._v_name))
+                        else :
+                            print "rejected", time._v_name
                 
             h5file.close()
         
@@ -118,41 +125,48 @@ class smileiQt(QtGui.QMainWindow):
     def on_draw(self):
         """display dir
         """        
+        name1=""
+        name2=""
         h5file=tables.open_file(self.filename, mode = "r")
-        
-        name1=str("/"+self.timeStep.currentText()+"/"+self.field1.currentText())
-        name2=str("/"+self.timeStep.currentText()+"/"+self.field2.currentText())
-        self.h5data1 = h5file.getNode(name1).read()
-        self.h5data2 = h5file.getNode(name2).read()
+        if not (self.timeStep.currentText().isEmpty()) : 
+            if not (self.field1.currentText().isEmpty()) : 
+                name1=str("/"+self.timeStep.currentText()+"/"+self.field1.currentText())
+                self.h5data1 = h5file.getNode(name1).read().T
+             
+            if not (self.field2.currentText().isEmpty()) : 
+                name2=str("/"+self.timeStep.currentText()+"/"+self.field2.currentText())
+                self.h5data2 = h5file.getNode(name2).read().T
 
-        h5file.close()
         
-        print name1,self.h5data1.shape
-        print name2,self.h5data2.shape
+        if name1 != "" and name2 != "" :
+            h5file.close()
         
-        self.fig1.clear()
-        self.fig2.clear()
-        self.axes1 = self.fig1.add_subplot(111)
-        self.axes2 = self.fig2.add_subplot(111)
+            print name1,self.h5data1.shape
+            print name2,self.h5data2.shape
         
-        mini=self.mini.text().toDouble()
-        maxi=self.maxi.text().toDouble()
-        if mini[1] and maxi[1] :
-            if self.ui.logBox.isChecked() and mini[0]>0 and maxi[0]>0:
-                self.img1 = self.axes1.imshow(self.h5data1,norm=LogNorm(vmin=mini[0],vmax=maxi[0]))
-                self.img2 = self.axes2.imshow(self.h5data2,norm=LogNorm(vmin=mini[0],vmax=maxi[0]))
-            else:
-                self.img1 = self.axes1.imshow(self.h5data1,vmin=mini[0],vmax=maxi[0])
-                self.img2 = self.axes2.imshow(self.h5data2,vmin=mini[0],vmax=maxi[0])
-        else :
-            self.img1 = self.axes1.imshow(self.h5data1)    
-            self.img2 = self.axes2.imshow(self.h5data2)    
+            self.fig1.clear()
+            self.fig2.clear()
+            self.axes1 = self.fig1.add_subplot(111)
+            self.axes2 = self.fig2.add_subplot(111)
+        
+            mini=self.mini.text().toDouble()
+            maxi=self.maxi.text().toDouble()
+            if mini[1] and maxi[1] :
+                if self.ui.logBox.isChecked() and mini[0]>0 and maxi[0]>0:
+                    self.img1 = self.axes1.imshow(self.h5data1,norm=LogNorm(vmin=mini[0],vmax=maxi[0]))
+                    self.img2 = self.axes2.imshow(self.h5data2,norm=LogNorm(vmin=mini[0],vmax=maxi[0]))
+                else:
+                    self.img1 = self.axes1.imshow(self.h5data1,vmin=mini[0],vmax=maxi[0])
+                    self.img2 = self.axes2.imshow(self.h5data2,vmin=mini[0],vmax=maxi[0])
+            else :
+                self.img1 = self.axes1.imshow(self.h5data1)    
+                self.img2 = self.axes2.imshow(self.h5data2)    
 
-        self.fig1.colorbar(self.img1)
-        self.fig2.colorbar(self.img2)
+            self.fig1.colorbar(self.img1)
+            self.fig2.colorbar(self.img2)
 
-        self.canvas1.draw()
-        self.canvas2.draw()
+            self.canvas1.draw()
+            self.canvas2.draw()
 
         
 def main():

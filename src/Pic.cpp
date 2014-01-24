@@ -60,10 +60,14 @@ int main (int argc, char* argv[])
 	
 	char ch;
 	DEBUGEXEC(debug_level=0);
-	while ((ch = getopt(argc, argv, "d:")) != -1) {
+	
+	string dirname("");
+	while ((ch = getopt(argc, argv, "d:D:")) != -1) {
 		if (ch=='d') {
 			RELEASEEXEC(WARNING("In release mode debug option has no meaning, please recompile in debug mode"));
 			DEBUGEXEC(std::stringstream iss(optarg);iss >> std::boolalpha >> debug_level;)
+		} else if (ch=='D') {
+			dirname=string(optarg);
 		}
 	}
 	
@@ -80,6 +84,12 @@ int main (int argc, char* argv[])
 	// Parse the namelist file (no check!)
 	InputData input_data;
 	if ( smpiData->isMaster() ) input_data.parseFile(namelist);
+	
+	if (! dirname.empty()) {
+		if (chdir(dirname.c_str())!=0) {
+			ERROR("Directory " << dirname << " not found");
+		}
+	}
 
 	smpiData->bcast( input_data );
 	input_data.parseStream();
@@ -90,7 +100,7 @@ int main (int argc, char* argv[])
 		RELEASEEXEC(seedTime=time(NULL));
 		input_data.addVar("random_seed",seedTime);
 	}
-	srand(seedTime);
+	srand(seedTime+smpiData->getRank());
 	
 	input_data.write(getFileWithoutExt(namelist)+".parsed");
 	
