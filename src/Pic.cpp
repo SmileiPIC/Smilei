@@ -94,7 +94,7 @@ int main (int argc, char* argv[])
 	smpiData->bcast( input_data );
 	input_data.parseStream();
 		
-	// this will do the randomization
+	// this will do the randomization (changing the seed for all processes)
 	unsigned long seedTime=0;
 	if (!input_data.extract("random_seed",seedTime)) {
 		RELEASEEXEC(seedTime=time(NULL));
@@ -146,8 +146,7 @@ int main (int argc, char* argv[])
 	// ------------------------------------------------------------------------------------
 	// vector of Species (virtual)
 	vector<Species*> vecSpecies = SpeciesFactory::createVector(params, smpi);
-	// dump species at time 0
-	sio->writePlasma( vecSpecies, 0., smpi );
+	
     
 
     // ----------------------------------------------------------------------------
@@ -180,10 +179,15 @@ int main (int argc, char* argv[])
 	double time_prim = 0.;
 	// time at half-integer time-steps (dual grid)
 	double time_dual = 0.5 * params.timestep;
+    
     // run diagnostics at time-step 0
     diags.runAllDiags(0, EMfields, vecSpecies);
+    // temporary EM fields dump in Fields.h5
     sio->writeAllFieldsSingleFileTime( EMfields, 0 );
+    // temporary particle dump at time 0
+	sio->writePlasma( vecSpecies, 0., smpi );
 	
+    
 	// ------------------------------------------------------------------
 	//                     HERE STARTS THE PIC LOOP
 	// ------------------------------------------------------------------
@@ -218,7 +222,7 @@ int main (int argc, char* argv[])
 		// (2) move the particle
 		// (3) calculate the currents (charge conserving method)
 		for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-			vecSpecies[ispec]->dynamic(time_dual, ispec, EMfields, Interp, Proj, smpi);
+			vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi);
 			smpi->exchangeParticles(vecSpecies[ispec], ispec, &params);
 			if (params.nDim_field == 1)
 				vecSpecies[ispec]->sort_part(params.cell_length[params.nDim_particle-1]);
@@ -232,9 +236,16 @@ int main (int argc, char* argv[])
         // call the various diagnostics
 		// ----------------------------
 		
+        // run all diagnostics
 		diags.runAllDiags(itime, EMfields, vecSpecies);
-		if  (itime % 1250 == 0)
+        
+        // temporary EM fields dump in Fields.h5
+		if  ((diag_params.fieldDump_every != 0) && (itime % diag_params.fieldDump_every == 0))
 			sio->writeAllFieldsSingleFileTime( EMfields, itime );
+        
+        // temporary particles dump (1 HDF5 file per process)
+		if  ((diag_params.particleDump_every != 0) && (itime % diag_params.particleDump_every == 0))
+            sio->writePlasma( vecSpecies, time_dual, smpi );
 
 	}//END of the time loop	
 	
@@ -251,10 +262,15 @@ int main (int argc, char* argv[])
 	//                      Temporary validation diagnostics
 	// ------------------------------------------------------------------
 	
-	// 1 HDF5 file per process
-	sio->writePlasma( vecSpecies, time_dual, smpi );
+     // temporary EM fields dump in Fields.h5
+    if  ( (diag_params.fieldDump_every != 0) && (params.n_time % diag_params.fieldDump_every != 0) )
+		sio->writeAllFieldsSingleFileTime( EMfields, params.n_time );
+    
+	// temporary particles dump (1 HDF5 file per process)
+    if  ( (diag_params.particleDump_every != 0) && (params.n_time % diag_params.particleDump_every != 0) )
+        sio->writePlasma( vecSpecies, time_dual, smpi );
 	
-	//EMfields->initRho(vecSpecies, Proj);
+/*	//EMfields->initRho(vecSpecies, Proj);
 	//smpi->sumRho( EMfields );
 	
 	//EMfields->dump(&params);  	// Sequential results, 1 file per process
@@ -268,8 +284,7 @@ int main (int argc, char* argv[])
 		sio->writeFields( EMfields );
 		//sio->writeFieldsPP( EMfields, time_dual, smpi->getRank() );
 	}
-	if  ( params.n_time % 1250 != 0)
-		sio->writeAllFieldsSingleFileTime( EMfields, params.n_time );
+*/
 	
 	
 	// ------------------------------

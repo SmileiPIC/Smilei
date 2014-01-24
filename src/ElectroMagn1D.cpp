@@ -207,8 +207,8 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
         for (unsigned int i=1 ; i<dimPrim[0]-1 ; i++) Ap(i) = p(i-1) - 2.0*p(i) + p(i+1);
         
         // apply BC on Ap
-        if (smpi1D->isWester()) pW        - 2.0*p(0)      + p(1);
-        if (smpi1D->isEaster()) p(nx_p-2) - 2.0*p(nx_p-1) + pE;
+        if (smpi1D->isWester()) Ap(0)      = pW        - 2.0*p(0)      + p(1);
+        if (smpi1D->isEaster()) Ap(nx_p-1) = p(nx_p-2) - 2.0*p(nx_p-1) + pE;
         smpi1D->exchangeField(&Ap);
         
         // scalar product p.Ap
@@ -614,9 +614,7 @@ void ElectroMagn1D::restartRhoJ()
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Reinitialize the total charge density and transverse currents
-// - save current density as old density (charge conserving scheme)
-// - put the new density and currents to 0
+// Compute the total density and currents from species density and currents
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn1D::computeTotalRhoJ()
 {
@@ -644,6 +642,23 @@ void ElectroMagn1D::computeTotalRhoJ()
         }
     }//END loop on species ispec
 }
+
+//// ---------------------------------------------------------------------------------------------------------------------
+//// Compute the total density from species density (used for frozen particles)
+//// ---------------------------------------------------------------------------------------------------------------------
+//void ElectroMagn1D::computeTotalRho()
+//{
+//
+//	Field1D* rho1D   = static_cast<Field1D*>(rho_);
+//    
+//    for (unsigned int ispec=0; ispec<n_species; ispec++){
+//        Field1D* rho1D_s = static_cast<Field1D*>(rho_s[ispec]);
+//        
+//        // rho defined on the primal grid
+//        for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++)  (*rho1D)(ix) += (*rho1D_s)(ix);
+//        
+//    }//END loop on species ispec
+//}
 
 /*
 // ---------------------------------------------------------------------------------------------------------------------

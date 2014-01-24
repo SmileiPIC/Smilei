@@ -55,6 +55,9 @@ public:
     //! Method used to compute the total charge density and currents by summing over all species
 	void computeTotalRhoJ();
     
+//    //! Method used to compute the total charge density by summing over all species (for frozen species)
+//	void computeTotalRho();
+    
 	//! \todo Create properties the laser time-profile (MG & TV)
 
 	//! Number of nodes on the primal grid

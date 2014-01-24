@@ -15,8 +15,10 @@ Interpolator1D3Order::Interpolator1D3Order(PicParams *params, SmileiMPI* smpi) :
 	SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
 
 	dx_inv_   = 1.0/params->cell_length[0];
+    
 	dble_1ov6 = 1.0/6.0;
 	dble_2ov3 = 2.0/3.0;
+    
 
 	index_domain_begin = smpi1D->getCellStartingGlobalIndex(0);
 }

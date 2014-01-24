@@ -4,9 +4,13 @@
 
 using namespace std;
 
-DiagParams::DiagParams(InputData &ifile, PicParams& params) : print_every(params.n_time/20), scalar_every(0), map_every(0), probe0d_every(0) {
+DiagParams::DiagParams(InputData &ifile, PicParams& params) : print_every(params.n_time/10),
+fieldDump_every(params.n_time/10), particleDump_every(params.n_time/10), scalar_every(0), map_every(0), probe0d_every(0)
+{
 	
 	ifile.extract("print_every", print_every);
+    ifile.extract("fieldDump_every", fieldDump_every);
+    ifile.extract("particleDump_every", particleDump_every);
 		
 	ifile.extract("every",scalar_every,"diagnostic scalar");
 	ifile.extract("every",map_every,"diagnostic map");
