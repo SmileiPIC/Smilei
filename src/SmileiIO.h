@@ -32,19 +32,6 @@ public:
 	virtual void writeFieldsSingleFileTime( Field* field, hid_t group_id ) = 0;
 	hid_t global_file_id_;
 
-	// Kept while python tools not updated
-	void writeFields( ElectroMagn* EMfields );
-	virtual void write( Field* field, std::string name ) = 0;
-	virtual void write( Field* field ) = 0;
-
-	// Kept while python tools not updated
-	void writeFields( ElectroMagn* EMfields, double time );
-	virtual void write( Field* field, std::string name, double time ) = 0;
-
-	// For debug
-	void writeFieldsPP( ElectroMagn* EMfields, double time, int rank );
-	virtual void writePerProcess( Field* field, std::string name, double time, int rank ) = 0;
-
 	void writePlasma( std::vector<Species*> vecSpecies, double time, SmileiMPI* smpi );
 
 
@@ -59,6 +46,9 @@ public:
 	hid_t* partDataset_id;  /* identifiers */
 	hid_t partMemSpace;
 	int particleSize;
+
+	//! for debugging 
+	virtual void write( Field* field ) = 0;
 
 private:
 };

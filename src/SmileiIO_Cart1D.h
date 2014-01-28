@@ -19,18 +19,13 @@ public:
 	SmileiIO_Cart1D( PicParams* params, SmileiMPI* smpi );
 	~SmileiIO_Cart1D();
 
-	void open (  );
-	void close(  );
 	void createPattern( PicParams* params, SmileiMPI* smpi );
 
 	void writeFieldsSingleFile( Field* field, hid_t file_id, int itime );
 	void writeFieldsSingleFileTime( Field* field, hid_t group_id );
 
-	void write( Field* field, std::string name );
+	//! for debugging
 	void write( Field* field );
-	void write( Field* field, std::string name, double time ) {MESSAGE("not implemented");}
-	void writePerProcess( Field* field, std::string name, double time, int rank ){MESSAGE("not implemented");}
-
 
 private:
 	std::vector<unsigned int> istart;

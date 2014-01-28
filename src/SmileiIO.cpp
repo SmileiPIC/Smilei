@@ -90,43 +90,6 @@ SmileiIO::~SmileiIO()
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// For time iteration "time", write all fields in the same file
-// Version to keep
-// ---------------------------------------------------------------------------------------------------------------------
-void SmileiIO::writeAllFields( ElectroMagn* EMfields, int time )
-{
-	MPI_Info info  = MPI_INFO_NULL;
-	hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, info);
-	ostringstream name_t;
-	name_t.str(""); name_t << "fields_" << time << ".h5";
-	hid_t file_id = H5Fcreate( name_t.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
-	H5Pclose(plist_id);
-
-	writeFieldsSingleFile( EMfields->Ex_, file_id, time );
-	writeFieldsSingleFile( EMfields->Ey_, file_id, time );
-	writeFieldsSingleFile( EMfields->Ez_, file_id, time );
-	writeFieldsSingleFile( EMfields->Bx_, file_id, time );
-	writeFieldsSingleFile( EMfields->By_, file_id, time );
-	writeFieldsSingleFile( EMfields->Bz_, file_id, time );
-	writeFieldsSingleFile( EMfields->Jx_, file_id, time );
-	writeFieldsSingleFile( EMfields->Jy_, file_id, time );
-	writeFieldsSingleFile( EMfields->Jz_, file_id, time );
-	writeFieldsSingleFile( EMfields->rho_, file_id, time );
-    
-    // for all species related quantities
-    for (unsigned int ispec=0; ispec<EMfields->n_species; ispec++){
-        writeFieldsSingleFile( EMfields->rho_s[ispec], file_id, time );
-        writeFieldsSingleFile( EMfields->Jx_s[ispec],  file_id, time );
-        writeFieldsSingleFile( EMfields->Jy_s[ispec],  file_id, time );
-        writeFieldsSingleFile( EMfields->Jz_s[ispec],  file_id, time );
-    }
-
-	H5Fclose( file_id );
-
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
 // Write all fields of all time step in the same file
 // In progress ...
 // ---------------------------------------------------------------------------------------------------------------------
@@ -164,76 +127,6 @@ void SmileiIO::writeAllFieldsSingleFileTime( ElectroMagn* EMfields, int time )
 
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
-// Write fields in separated files, data are overwritten at each call ( field.h5 )
-// Kept while python tools not updated
-// ---------------------------------------------------------------------------------------------------------------------
-void SmileiIO::writeFields( ElectroMagn* EMfields )
-{
-	// File opened in constructor
-	write( EMfields->Ex_, "ex.h5" );
-	write( EMfields->Ey_, "ey.h5" );
-	write( EMfields->Ez_, "ez.h5" );
-	write( EMfields->Bx_, "bx.h5" );
-	write( EMfields->By_, "by.h5" );
-	write( EMfields->Bz_, "bz.h5" );
-	write( EMfields->Jx_, "jx.h5" );
-	write( EMfields->Jy_, "jy.h5" );
-	write( EMfields->Jz_, "jz.h5" );
-	write( EMfields->rho_, "rho.h5" );
-
-    // for all species related quantities
-    for (unsigned int ispec=0; ispec<EMfields->n_species; ispec++){
-        write( EMfields->rho_s[ispec] );
-        write( EMfields->Jx_s[ispec] );
-        write( EMfields->Jy_s[ispec] );
-        write( EMfields->Jz_s[ispec] );
-    }
-
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-// For time iteration it, write fields in separated files ( field_time.h5 )
-// Kept while python tools not updated
-// Only in 2D
-// ---------------------------------------------------------------------------------------------------------------------
-void SmileiIO::writeFields( ElectroMagn* EMfields, double time )
-{
-	// File opened in constructor
-	write( EMfields->Ex_, "ex", time );
-	write( EMfields->Ey_, "ey", time );
-	write( EMfields->Ez_, "ez", time );
-	write( EMfields->Bx_, "bx", time );
-	write( EMfields->By_, "by", time );
-	write( EMfields->Bz_, "bz", time );
-	write( EMfields->Jx_, "jx", time );
-	write( EMfields->Jy_, "jy", time );
-	write( EMfields->Jz_, "jz", time );
-	write( EMfields->rho_, "rho", time );
-
-
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Debug tools
-// Each MPI process write its data (including ghost cells) in separated files ( field_MPI_Rank.h5 ), data are overwritten at each call
-// Kept while python tools not updated
-// Only in 2D
-// ---------------------------------------------------------------------------------------------------------------------
-void SmileiIO::writeFieldsPP( ElectroMagn* EMfields, double time, int rank )
-{
-	// Each process write is own "name_mpirank.h5" 
-	writePerProcess( EMfields->rho_, "rho", time, rank );
-	writePerProcess( EMfields->Ex_,  "Ex",  time, rank );
-	writePerProcess( EMfields->Ey_,  "Ey",  time, rank );
-	writePerProcess( EMfields->Ez_,  "Ez",  time, rank );
-	writePerProcess( EMfields->Bx_,  "Bx",  time, rank );
-	writePerProcess( EMfields->By_,  "By",  time, rank );
-	writePerProcess( EMfields->Bz_,  "Bz",  time, rank );
-	writePerProcess( EMfields->Jx_,  "Jx",  time, rank );
-	writePerProcess( EMfields->Jy_,  "Jy",  time, rank );
-	writePerProcess( EMfields->Jz_,  "Jz",  time, rank );
-}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Each MPI process writes is particles in its own file, data are overwritten at each call ( particles-MPI_Rank.h5 )
