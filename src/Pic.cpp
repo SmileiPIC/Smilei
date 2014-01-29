@@ -165,8 +165,8 @@ int main (int argc, char* argv[])
     smpi->sumRhoJ( EMfields );
     
 	//! \todo{FalseNot //, current algorithm is instrinsicaly sequential}
-	//smpi->solvePoissonPara( EMfields );		//champs->initMaxwell();
-    EMfields->solvePoisson(smpi);
+	
+    EMfields->solvePoisson(smpi);//champs->initMaxwell();$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 	
     smpi->barrier();
 
@@ -224,14 +224,14 @@ int main (int argc, char* argv[])
 		for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 			vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi);
 			smpi->exchangeParticles(vecSpecies[ispec], ispec, &params);
-			if (params.nDim_field == 1)
-				vecSpecies[ispec]->sort_part(params.cell_length[params.nDim_particle-1]);
+			if (params.nDim_field == 1)//$$$$$$$$$$$$$$$$$$$$$$$$
+				vecSpecies[ispec]->sort_part(params.cell_length[params.nDim_particle-1]);//$$$$$$$$$$$$$$$$$$$$$
 		}
 		smpi->sumRhoJ( EMfields );
         EMfields->computeTotalRhoJ();
 		
 		// solve Maxwell's equations
-		EMfields->solveMaxwell(time_dual, smpi);
+		EMfields->solveMaxwell(time_dual, smpi); //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 		
         // call the various diagnostics
 		// ----------------------------

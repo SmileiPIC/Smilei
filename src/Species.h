@@ -141,6 +141,8 @@ private:
     
     unsigned int atomic_number;
     
+    double part_mass;
+    
 };
 
 #endif

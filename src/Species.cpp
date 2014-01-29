@@ -57,6 +57,9 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
     // atomic number
     atomic_number = params->species_param[ispec].atomic_number;
     
+    //particle mass
+    part_mass = params->species_param[ispec].mass;
+    
 	// field containing the density distribution (always 3d)
 	Field3D density(params->n_space);
     
@@ -308,11 +311,13 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
     // (necessary to calculate currents at time t=0 using the Esirkepov projection scheme)
     for (unsigned int iPart=0; iPart<npart_effective; iPart++){
         for (unsigned int i=0; i<ndim; i++){
-            particles[iPart]->position_old(i) -= particles[iPart]->momentum(i)/params->species_param[ispec].mass
+            particles[iPart]->position_old(i) -= particles[iPart]->momentum(i)
             /                                    particles[iPart]->lor_fac() * params->timestep;
+            
         }
     }
-    
+//    cout<<"position_old-> " <<particles[0]->position_old(0)/(2*M_PI)<<endl;
+//    cout<<"momentum-> " <<particles[0]->momentum(0)<<endl;
     // assign the correct Pusher to Push
     Push = PusherFactory::create( params, ispec );
     
@@ -396,6 +401,7 @@ void Species::initPosition(unsigned int np, unsigned int iPart, unsigned int *in
 				particles[p]->position(i)=(indexes[i]+((double)rand() / RAND_MAX))*cell_length[i];
 			}
 			particles[p]->position_old(i) = particles[p]->position(i);
+//            cout<<"position new-> "<<particles[p]->position(i)/(2*M_PI)<<endl;
 		}// i
 	}// p
 }
@@ -422,6 +428,8 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
 			for (unsigned int i=0; i<3 ; i++) {
 				particles[p]->momentum(i) = 0.0;
 			}
+          
+            
 		}
         
 	} else if (initialization_type == "maxwell-juettner")
@@ -773,16 +781,20 @@ void Species::dump(std::ofstream& ofile)
 	}
 	ofile << endl;
 }
-// It computes the method on the singole specie. You can add here your parameter for a new diagnostic.
+// It computes the method on the single specie. You can add here your parameter for a new diagnostic.
 void Species::computeScalars(){
 	double charge_tot=0.0;
+    double ener_tot=0.0;
 	if (getNbrOfParticles()>0) {
 		for (unsigned int iPart=0 ; iPart<getNbrOfParticles(); iPart++ ) {
 			charge_tot+=(double)particles[iPart]->charge();
+            ener_tot+=(particles[iPart]->lor_fac()-1.0);
 		}
+        ener_tot*=part_mass;
 	}
 	scalars["charge_tot"]=charge_tot;
 	scalars["part_number"]=getNbrOfParticles();
+    scalars["energy_tot"]=ener_tot;
     
 }
 

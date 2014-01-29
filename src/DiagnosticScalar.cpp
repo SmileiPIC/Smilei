@@ -105,13 +105,17 @@ void DiagnosticScalar::compute(){
 		for(unsigned int ispec=0; ispec<mpi_spec_scalars[0].size();++ispec){
 			double charge_tot=0;
 			unsigned int part_tot=0;
+            double ener_tot=0;
 			for(int iCPU=0;iCPU<smpi_->getSize();iCPU++){
 				charge_tot+=mpi_spec_scalars[iCPU][ispec]["charge_tot"];
  				part_tot+=mpi_spec_scalars[iCPU][ispec]["part_number"];
+                ener_tot+=mpi_spec_scalars[iCPU][ispec]["energy_tot"];
+
 			}
 			if (part_tot) charge_tot/=part_tot;
 			out_list.push_back(make_pair("charge_tot",charge_tot));
 			out_list.push_back(make_pair("part_tot",part_tot));
+            out_list.push_back(make_pair("energy_tot",ener_tot));
 		}
 
 		for (map<string,map<string,vector<double> > >::iterator iterEM=mpi_EM_scalars[0].begin(); iterEM!=mpi_EM_scalars[0].end(); iterEM++) {
