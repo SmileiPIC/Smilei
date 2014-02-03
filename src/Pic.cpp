@@ -167,7 +167,8 @@ int main (int argc, char* argv[])
 	//! \todo{FalseNot //, current algorithm is instrinsicaly sequential}
 	
     EMfields->solvePoisson(smpi);//champs->initMaxwell();$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-	
+
+    
     smpi->barrier();
 
     

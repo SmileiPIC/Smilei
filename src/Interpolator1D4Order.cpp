@@ -24,7 +24,6 @@ Interpolator1D4Order::Interpolator1D4Order(PicParams *params, SmileiMPI* smpi) :
     dble_1_ov_24 = 1.0/24.0;
     dble_19_ov_96 = 19.0/96.0;
     dble_11_ov_24 = 11.0/24.0;
-    dble_1_ov_384 = 1.0/384.0;
     dble_1_ov_4 = 1.0/4.0;
     dble_1_ov_6 = 1.0/6.0;
     dble_115_ov_192 = 115.0/192.0;
@@ -87,13 +86,14 @@ void Interpolator1D4Order::operator() (ElectroMagn* champs, Particle* part, Loca
 	(*ELoc).y = cim2*(*Ey1D)(im2)   + cim1*(*Ey1D)(im1)   + ci*(*Ey1D)(i)   + cip1*(*Ey1D)(ip1)   + cip2*(*Ey1D)(ip2);
 	(*ELoc).z = cim2*(*Ez1D)(im2)   + cim1*(*Ez1D)(im1)   + ci*(*Ez1D)(i)   + cip1*(*Ez1D)(ip1)   + cip2*(*Ez1D)(ip2);
 	(*BLoc).x = cim2*(*Bx1D_m)(im2) + cim1*(*Bx1D_m)(im1) + ci*(*Bx1D_m)(i) + cip1*(*Bx1D_m)(ip1) + cip2*(*Bx1D_m)(ip2);
-	
+
+
     
     // --------------------------------------------------------
 	// Interpolate the fields from the Dual grid : Ex, By, Bz
     // --------------------------------------------------------
 	i      = round(xjn+0.5);  // index of the central point
-	xjmxi  = xjn -(double)i;  // normalized distance to the central node
+	xjmxi  = xjn -(double)i+0.5;  // normalized distance to the central node
 	xjmxi2 = xjmxi*xjmxi;     // square of the normalized distance to the central node
     xjmxi3 = xjmxi2*xjmxi;    // cube of the normalized distance to the central node
     xjmxi4 = xjmxi3*xjmxi;    // 4th power of the normalized distance to the central node
@@ -115,5 +115,7 @@ void Interpolator1D4Order::operator() (ElectroMagn* champs, Particle* part, Loca
 	(*ELoc).x = cim2*(*Ex1D)(im2)   + cim1*(*Ex1D)(im1)   + ci*(*Ex1D)(i)   + cip1*(*Ex1D)(ip1)   + cip2*(*Ex1D)(ip2);
 	(*BLoc).y = cim2*(*By1D_m)(im2) + cim1*(*By1D_m)(im1) + ci*(*By1D_m)(i) + cip1*(*By1D_m)(ip1) + cip2*(*By1D_m)(ip2);
 	(*BLoc).z = cim2*(*Bz1D_m)(im2) + cim1*(*Bz1D_m)(im1) + ci*(*Bz1D_m)(i) + cip1*(*Bz1D_m)(ip1) + cip2*(*Bz1D_m)(ip2);
+    
+
 	
 }//END Interpolator1D4Order

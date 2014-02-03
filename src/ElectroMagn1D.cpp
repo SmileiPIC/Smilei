@@ -119,6 +119,7 @@ ElectroMagn1D::~ElectroMagn1D()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
 {
+    
     MESSAGE("Entering Poisson Solver");
     
 	SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
@@ -291,7 +292,14 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
     
     // Center the electrostatic field
     for (unsigned int i=0; i<nx_d; i++) (*Ex1D)(i) += Ex_Add;
+ 
     
+//    Field1D* Ex1D  = static_cast<Field1D*>(Ex_);
+//	Field1D* rho1D = static_cast<Field1D*>(rho_);
+//    
+//    for (unsigned int i=1;i<nx_d;++i){
+//        (*Ex1D)(i)=(*Ex1D)(i-1)+dx*(*rho1D)(i-1);
+//    }
     
     // Compute error on the Poisson equation
     double deltaPoisson_max = 0.0;
@@ -306,6 +314,8 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
     
     MESSAGE(1,"Poisson equation solved. Maximum error = " << deltaPoisson_max << " at i= " << i_deltaPoisson_max);
 	
+    
+    
 }//END solvePoisson
 
 

@@ -80,6 +80,7 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
 		n_space_global[i] = params.n_space_global[i];
         
 		oversize[i] = params.oversize[i] = params.interpolation_order;
+        
 		cell_starting_global_index[i] = coords_[i]*(params.n_space_global[i] / number_of_procs[i]);
         
         
