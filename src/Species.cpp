@@ -14,6 +14,7 @@
 
 #include "SmileiMPI.h"
 
+// #include "Field.h"
 #include "Field1D.h"
 #include "Field2D.h"
 #include "Field3D.h"
@@ -689,9 +690,14 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 		    	(*Interp)(EMfields, particles[iPart], &Epart, &Bpart);
 		    	
 		    	// Do the ionization
-		    	if (Ionize && particles[iPart]->charge() < (int) atomic_number) { //AND
-		    		(*Ionize)(particles[iPart], Epart);
+		    	if (Ionize && particles[iPart]->charge() < (int) atomic_number) {
+                    LocalFields Jion;
+                    //!\todo Check if it is necessary to put to 0 or if LocalFields ensures it
+                    Jion.x=0.0; Jion.y=0.0; Jion.z=0;
+		    		(*Ionize)(particles[iPart], Epart, Jion);
+                    (*Proj)(EMfields->Jx_, EMfields->Jy_, EMfields->Jz_, particles[iPart], Jion);
 		    	}
+                
 
 //                cerr << "push" << endl;
 		    	// Push the particle

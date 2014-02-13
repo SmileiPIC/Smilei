@@ -19,6 +19,9 @@ public:
     
     //! Overloading of () operator
 	virtual void operator() (Particle* part, LocalFields Epart) = 0;
+    
+    //! Overloading of () operator
+	virtual void operator() (Particle* part, LocalFields Epart, LocalFields Jion) = 0;
 	
     std::vector<Particle*> new_electrons;
 	

@@ -518,3 +518,8 @@ void Projector2D2Order::operator() (Field* rho, Particle* part)
  
 }//END TotalChargeDensityProjection
 
+void Projector2D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particle* part, LocalFields Jion)
+{
+        ERROR("Projection of ionization current not yet defined for 2D 2nd order");
+}
+

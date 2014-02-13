@@ -26,9 +26,13 @@ class Projector1D : public Projector
     
     //!\todo comment this overloading of () operator (MG for JD)
 	virtual void operator() (Field* Jx, Field* Jy, Field* Jz, Field* rho, Particle* part, double gf) = 0;
+    
+    //!\todo comment this overloading of () operator (MG for JD)
+	virtual void operator() (Field* Jx, Field* Jy, Field* Jz, Particle* part, LocalFields Jion) = 0;
 	
 	//! \todo comment this overloading of () operator (MG for JD)
 	virtual void operator() (double* Jx, double* Jy, double* Jz, Particle* part, double gf, unsigned int bin, unsigned int b_dim0) = 0;
+    
  protected:
 	//! Inverse of the spatial step 1/dx
 	double dx_inv_;

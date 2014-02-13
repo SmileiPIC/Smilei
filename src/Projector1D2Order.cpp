@@ -307,3 +307,73 @@ void Projector1D2Order::operator() (Field* rho, Particle* part)
 
 }
 
+void Projector1D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particle* part, LocalFields Jion)
+{
+	Field1D* Jx1D  = static_cast<Field1D*>(Jx);
+    Field1D* Jy1D  = static_cast<Field1D*>(Jy);
+    Field1D* Jz1D  = static_cast<Field1D*>(Jz);
+	
+    
+	//Declaration of local variables
+	int i, im1, ip1;
+	double xjn, xjmxi, xjmxi2;
+    double cim1,ci,cip1;
+    
+    // weighted currents
+    double Jx_ion = Jion.x * part->weight();
+    double Jy_ion = Jion.y * part->weight();
+    double Jz_ion = Jion.z * part->weight();
+    
+    //Locate particle on the grid
+	xjn    = part->position(0) * dx_inv_;  // normalized distance to the first node
+    
+    
+    // Compute Jx_ion on the dual grid
+    // -------------------------------
+    
+    i      = round(xjn+0.5);               // index of the central node
+	xjmxi  = xjn - (double)i + 0.5;        // normalized distance to the nearest grid point
+	xjmxi2 = xjmxi*xjmxi;                  // square of the normalized distance to the nearest grid point
+    
+	i  -= index_domain_begin;
+    im1 = i-1;
+    ip1 = i+1;
+    
+    cim1 = 0.5 * (xjmxi2-xjmxi+0.25);
+    ci   = (0.75-xjmxi2);
+    cip1 = 0.5 * (xjmxi2+xjmxi+0.25);
+	
+    // Jy
+	(*Jx1D)(im1)  += cim1 * Jx_ion;
+	(*Jx1D)( i )  += ci   * Jx_ion;
+	(*Jx1D)(ip1)  += cip1 * Jx_ion;
+    
+    
+    // Compute Jy_ion & Jz_ion on the primal grid
+    // ------------------------------------------
+    
+	i      = round(xjn);                   // index of the central node
+	xjmxi  = xjn - (double)i;              // normalized distance to the nearest grid point
+	xjmxi2 = xjmxi*xjmxi;                  // square of the normalized distance to the nearest grid point
+    
+	i  -= index_domain_begin;
+    im1 = i-1;
+    ip1 = i+1;
+    
+    cim1 = 0.5 * (xjmxi2-xjmxi+0.25);
+    ci   = (0.75-xjmxi2);
+    cip1 = 0.5 * (xjmxi2+xjmxi+0.25);
+	
+    // Jy
+	(*Jy1D)(im1)  += cim1 * Jy_ion;
+	(*Jy1D)( i )  += ci   * Jy_ion;
+	(*Jy1D)(ip1)  += cip1 * Jy_ion;
+    
+    // Jz
+	(*Jz1D)(im1)  += cim1 * Jz_ion;
+	(*Jz1D)( i )  += ci   * Jz_ion;
+	(*Jz1D)(ip1)  += cip1 * Jz_ion;
+    
+}
+
+

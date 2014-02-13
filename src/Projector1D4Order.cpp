@@ -331,3 +331,8 @@ void Projector1D4Order::operator() (Field* rho, Particle* part)
 */
 }
 
+void Projector1D4Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particle* part, LocalFields Jion)
+{
+    ERROR("Projection of ionization current not yet defined for 1D 4th order");
+}
+
