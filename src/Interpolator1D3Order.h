@@ -6,10 +6,10 @@
 
 class Interpolator1D3Order : public Interpolator1D {
 public:
-	Interpolator1D3Order(PicParams *, SmileiMPI*);
-	~Interpolator1D3Order();
+    Interpolator1D3Order(PicParams *, SmileiMPI*);
+    ~Interpolator1D3Order();
 
-	void operator() (ElectroMagn* champs, Particle* part, LocalFields* ELoc, LocalFields* BLoc);
+    void operator() (ElectroMagn* champs, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc);
 protected:
     double dble_1ov6;
     double dble_2ov3;

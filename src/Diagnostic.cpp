@@ -11,26 +11,26 @@
 
 using namespace std;
 
-Diagnostic::Diagnostic( PicParams* params,  DiagParams* diagparams, SmileiMPI* smpi, Interpolator *interp) : 
-diagScal(params, smpi),
-probe0d(params, diagparams, smpi),
-interp_(interp)
+Diagnostic::Diagnostic( PicParams* params,  DiagParams* diagparams, SmileiMPI* smpi, Interpolator *interp) :
+    diagScal(params, smpi),
+    probe0d(params, diagparams, smpi),
+    interp_(interp)
 {
-	everyScalar = diagparams->scalar_every;
-	everyMap = diagparams->map_every;
+    everyScalar = diagparams->scalar_every;
+    everyMap = diagparams->map_every;
     everyProbe0D = diagparams->probe0d_every;
 }
 
-void Diagnostic::closeAll (){
+void Diagnostic::closeAll () {
     probe0d.close();
 }
 
-void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Species*>& vecSpecies){	
-	if (everyScalar && timestep % everyScalar == 0) {
-		diagScal.run(timestep, EMfields, vecSpecies);
-	}	
-	if (everyProbe0D && timestep % everyProbe0D == 0) {
-		probe0d.run(timestep, EMfields, interp_);
-	}	
+void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Species*>& vecSpecies) {
+    if (everyScalar && timestep % everyScalar == 0) {
+        diagScal.run(timestep, EMfields, vecSpecies);
+    }
+    if (everyProbe0D && timestep % everyProbe0D == 0) {
+        probe0d.run(timestep, EMfields, interp_);
+    }
 }
 

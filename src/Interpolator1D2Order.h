@@ -10,15 +10,15 @@
 //  --------------------------------------------------------------------------------------------------------------------
 class Interpolator1D2Order : public Interpolator1D
 {
-    
-public:
-	Interpolator1D2Order(PicParams*, SmileiMPI*);
-	~Interpolator1D2Order();
 
-	void operator() (ElectroMagn* champs, Particle* part, LocalFields* ELoc, LocalFields* BLoc);
-    
+public:
+    Interpolator1D2Order(PicParams*, SmileiMPI*);
+    ~Interpolator1D2Order();
+
+    void operator() (ElectroMagn* champs, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc);
+
 private:
-    
+
 };//END class
 
 #endif

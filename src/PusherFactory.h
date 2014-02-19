@@ -11,17 +11,17 @@
 
 class PusherFactory {
 public:
-	static Pusher* create(PicParams* params, int ispec) {
-		Pusher* Push = NULL;
+    static Pusher* create(PicParams* params, int ispec) {
+        Pusher* Push = NULL;
 
-		// assign the correct Pusher to Push
-	    if ( params->species_param[ispec].dynamics_type == "norm" )
-		    Push = new PusherBoris( params, ispec );
-	    else
-		    ERROR( "Unknown dynamics : " << params->species_param[ispec].dynamics_type );
+        // assign the correct Pusher to Push
+        if ( params->species_param[ispec].dynamics_type == "norm" )
+            Push = new PusherBoris( params, ispec );
+        else
+            ERROR( "Unknown dynamics : " << params->species_param[ispec].dynamics_type );
 
-		return Push;
-	}
+        return Push;
+    }
 
 };
 

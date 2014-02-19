@@ -14,17 +14,17 @@
 class ElectroMagnFactory {
 public:
     static ElectroMagn* create(PicParams& params, SmileiMPI* smpi) {
-    	ElectroMagn* EMfields = NULL;
-    	if ( params.geometry == "1d3v" ) {
-    		EMfields = new ElectroMagn1D(&params, smpi);
-    	}
-    	else if ( params.geometry == "2d3v" ) {
-    		EMfields = new ElectroMagn2D(&params, smpi);
-    	}
-    	else {
-    		ERROR( "Unknwon geometry : " << params.geometry );
-    	}
-    	return EMfields;
+        ElectroMagn* EMfields = NULL;
+        if ( params.geometry == "1d3v" ) {
+            EMfields = new ElectroMagn1D(&params, smpi);
+        }
+        else if ( params.geometry == "2d3v" ) {
+            EMfields = new ElectroMagn2D(&params, smpi);
+        }
+        else {
+            ERROR( "Unknwon geometry : " << params.geometry );
+        }
+        return EMfields;
     }
 
 };

@@ -16,24 +16,24 @@
 
 class SmileiIO_Cart1D : public SmileiIO {
 public:
-	SmileiIO_Cart1D( PicParams* params, SmileiMPI* smpi );
-	~SmileiIO_Cart1D();
+    SmileiIO_Cart1D( PicParams* params, SmileiMPI* smpi );
+    ~SmileiIO_Cart1D();
 
-	void createPattern( PicParams* params, SmileiMPI* smpi );
+    void createPattern( PicParams* params, SmileiMPI* smpi );
 
-	void writeFieldsSingleFile( Field* field, hid_t file_id, int itime );
-	void writeFieldsSingleFileTime( Field* field, hid_t group_id );
+    void writeFieldsSingleFile( Field* field, hid_t file_id, int itime );
+    void writeFieldsSingleFileTime( Field* field, hid_t group_id );
 
-	//! for debugging
-	void write( Field* field );
+    //! for debugging
+    void write( Field* field );
 
 private:
-	std::vector<unsigned int> istart;
-	std::vector<unsigned int> bufsize;
+    std::vector<unsigned int> istart;
+    std::vector<unsigned int> bufsize;
 
-	// [primDual][primDual]
-	hid_t memspace_ [2];
-	hid_t filespace_[2];
+    // [primDual][primDual]
+    hid_t memspace_ [2];
+    hid_t filespace_[2];
 
 };
 

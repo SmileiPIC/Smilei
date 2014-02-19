@@ -17,13 +17,13 @@ class PicParams;
 class Species_rrll : public Species
 {
 public:
-	//! Creator for Species_rrLL
-	Species_rrll(PicParams*, int, SmileiMPI*);
-	//! Destructor for Species_rrLL
-	~Species_rrll();
+    //! Creator for Species_rrLL
+    Species_rrll(PicParams*, int, SmileiMPI*);
+    //! Destructor for Species_rrLL
+    ~Species_rrll();
 
 private:
-    
+
 };
 
 #endif

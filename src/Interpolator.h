@@ -7,7 +7,7 @@
 
 
 class ElectroMagn;
-class Particle;
+class Particles;
 
 
 
@@ -17,13 +17,13 @@ class Particle;
 class Interpolator
 {
 public:
-	Interpolator(PicParams*, SmileiMPI*) {};
-	virtual ~Interpolator() {};
+    Interpolator(PicParams*, SmileiMPI*) {};
+    virtual ~Interpolator() {};
 
-	virtual void operator() (ElectroMagn* champs, Particle* part, LocalFields* ELoc, LocalFields* BLoc) = 0;
+    virtual void operator() (ElectroMagn* champs, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc) = 0;
 
 private:
-    
+
 };//END class
 
 #endif

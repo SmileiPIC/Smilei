@@ -10,13 +10,13 @@
 //  --------------------------------------------------------------------------------------------------------------------
 class Interpolator2D4Order : public Interpolator2D
 {
-    
-public:
-	Interpolator2D4Order(PicParams*, SmileiMPI*);
-	~Interpolator2D4Order();
 
-	void operator() (ElectroMagn* champs, Particle* part, LocalFields* ELoc, LocalFields* BLoc);
-    
+public:
+    Interpolator2D4Order(PicParams*, SmileiMPI*);
+    ~Interpolator2D4Order();
+
+    void operator() (ElectroMagn* champs, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc);
+
 private:
     double dble_1_ov_384 ;
     double dble_1_ov_48 ;
@@ -29,7 +29,7 @@ private:
     double dble_1_ov_6 ;
     double dble_115_ov_192 ;
     double dble_5_ov_8 ;
-    
+
 };//END class
 
 #endif

@@ -1,7 +1,7 @@
 /*! @file Pusher.h
- 
+
  @brief Pusher.h  generic class for the particle pusher
- 
+
  @author tommaso vinci
  @date 2013-02-15
  */
@@ -15,8 +15,8 @@ class PusherBoris : public Pusher {
 public:
     PusherBoris(PicParams *params, int ispec);
     ~PusherBoris();
-	virtual void operator() (Particle* part, LocalFields Epart, LocalFields Bpart, double& gf);
-    
+    virtual void operator() (Particles &particles, int ipart, LocalFields Epart, LocalFields Bpart, double& gf);
+
 };
 
 #endif

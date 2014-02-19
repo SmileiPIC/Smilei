@@ -1,4 +1,4 @@
-/*! @file DiagParams.h 
+/*! @file DiagParams.h
 
   @brief DiagParams.h is the class that hold the simulation parameters and can read from a file the namelist
 
@@ -18,35 +18,35 @@
 //! DiagParams class: holds all the properties of the simulation that are read from the input file
 // ---------------------------------------------------------------------------------------------------------------------
 class DiagParams {
-	
+
 public:
-	//! Creator for DiagParams
-	DiagParams(InputData &, PicParams&);
+    //! Creator for DiagParams
+    DiagParams(InputData &, PicParams&);
 
     //! field dump output
-	unsigned int fieldDump_every;
-    
+    unsigned int fieldDump_every;
+
     //! particle dump output
-	unsigned int particleDump_every;
-    
-	//! scalar output every scalar_every (namelist group "diagnostic scalar" key "every")
-	unsigned int scalar_every;
+    unsigned int particleDump_every;
 
-	//! map output every map_every (namelist group "diagnostic map" key "every")
-	unsigned int map_every;
+    //! scalar output every scalar_every (namelist group "diagnostic scalar" key "every")
+    unsigned int scalar_every;
 
-	//! scalar output every probe_every (namelist group "diagnostic probe0d" key "every")
-	unsigned int probe0d_every;
-    
+    //! map output every map_every (namelist group "diagnostic map" key "every")
+    unsigned int map_every;
+
+    //! scalar output every probe_every (namelist group "diagnostic probe0d" key "every")
+    unsigned int probe0d_every;
+
     unsigned int n_probe1d;
-    
+
     std::vector<std::vector<double> > ps_coord;
     std::vector<std::vector<std::vector<double> > > ps_1d_coord;
     std::vector<unsigned int> ps_1d_every;
     std::vector<unsigned int> ps_1d_res;
 
-	//! every for the standard pic timeloop output
-	unsigned int print_every;
+    //! every for the standard pic timeloop output
+    unsigned int print_every;
 };
 
 #endif

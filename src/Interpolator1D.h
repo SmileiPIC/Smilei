@@ -10,15 +10,17 @@
 class Interpolator1D : public Interpolator
 {
 public:
-	Interpolator1D(PicParams* params, SmileiMPI* smpi): Interpolator(params, smpi){;};
-	virtual ~Interpolator1D() {};
+    Interpolator1D(PicParams* params, SmileiMPI* smpi): Interpolator(params, smpi) {
+        ;
+    };
+    virtual ~Interpolator1D() {};
 
-	virtual void operator() (ElectroMagn* champs, Particle* part, LocalFields* ELoc, LocalFields* BLoc) = 0;
-    
+    virtual void operator() (ElectroMagn* champs, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc) = 0;
+
 protected:
     //! Inverse of the spatial-step
-	double dx_inv_;
-	unsigned int index_domain_begin;
+    double dx_inv_;
+    unsigned int index_domain_begin;
 };
 
 #endif

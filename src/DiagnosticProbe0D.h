@@ -12,7 +12,7 @@
 #include <math.h>
 #include "Species.h"
 #include "Interpolator.h"
-#include "Particle.h"
+#include "Particles.h"
 
 class PicParams;
 class SmileiMPI;
@@ -20,31 +20,31 @@ class DiagParams;
 class ElectroMagn;
 
 
-class DiagnosticProbe0D{
-    
+class DiagnosticProbe0D {
+
 public:
-    
-	DiagnosticProbe0D(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi);
-	~DiagnosticProbe0D();
-	
-	void set_proc();
+
+    DiagnosticProbe0D(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi);
+    ~DiagnosticProbe0D();
+
+    void set_proc();
     void set_file_name();
-    
+
     void run(int timestep, ElectroMagn* EMfields, Interpolator* interp);
-	
-	std::string probeName(int p);
+
+    std::string probeName(int p);
     void open_file();
     void close();
- 
+
 private:
-	SmileiMPI* smpi_;
+    SmileiMPI* smpi_;
 
     hid_t fileId;
-	std::vector<Particle*> probeParticles;
-	std::vector<int> probeId;
+    Particles probeParticles;
+    std::vector<int> probeId;
     LocalFields Eloc_fields;
     LocalFields Bloc_fields;
-	int probeSize;
-        
+    int probeSize;
+
 };
-#endif 
+#endif

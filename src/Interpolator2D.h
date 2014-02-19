@@ -10,16 +10,16 @@
 class Interpolator2D : public Interpolator
 {
 public:
-	Interpolator2D(PicParams* params, SmileiMPI* smpi): Interpolator(params, smpi) {};
-	virtual ~Interpolator2D() {};
+    Interpolator2D(PicParams* params, SmileiMPI* smpi): Interpolator(params, smpi) {};
+    virtual ~Interpolator2D() {};
 
-	virtual void operator() (ElectroMagn* champs, Particle* part, LocalFields* ELoc, LocalFields* BLoc) = 0;
-    
+    virtual void operator() (ElectroMagn* champs, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc) = 0;
+
 protected:
     //! Inverse of the spatial-step
-	double dx_inv_;
-	double dy_inv_;
-	int i_domain_begin;
+    double dx_inv_;
+    double dy_inv_;
+    int i_domain_begin;
     int j_domain_begin;
 };
 

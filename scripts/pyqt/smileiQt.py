@@ -88,9 +88,9 @@ class smileiQt(QtGui.QMainWindow):
     def update_files (self):
         print self.filename
 
-        self.ui.timeStep.currentIndexChanged.disconnect(self.on_draw)
-        self.ui.field1.currentIndexChanged.disconnect(self.on_draw)
-        self.ui.field2.currentIndexChanged.disconnect(self.on_draw)
+        #self.ui.timeStep.currentIndexChanged.disconnect(self.on_draw)
+        #self.ui.field1.currentIndexChanged.disconnect(self.on_draw)
+        #self.ui.field2.currentIndexChanged.disconnect(self.on_draw)
 
         if os.path.isfile(self.filename) : 
             self.setWindowTitle("Smilei "+self.filename);
@@ -100,7 +100,9 @@ class smileiQt(QtGui.QMainWindow):
             self.timeStep.clear()
             
             fieldlist = []
-            h5file=tables.open_file(self.filename, mode = "r")
+            #h5file=tables.open_file(self.filename, mode = "r")
+            h5file=tables.openFile(self.filename, mode = "r")
+
             
             first=True
             for time in h5file.root:
@@ -127,7 +129,8 @@ class smileiQt(QtGui.QMainWindow):
         """        
         name1=""
         name2=""
-        h5file=tables.open_file(self.filename, mode = "r")
+        #h5file=tables.open_file(self.filename, mode = "r")
+        h5file=tables.openFile(self.filename, mode = "r")
         if not (self.timeStep.currentText().isEmpty()) : 
             if not (self.field1.currentText().isEmpty()) : 
                 name1=str("/"+self.timeStep.currentText()+"/"+self.field1.currentText())
