@@ -63,12 +63,9 @@ public:
     virtual void dump(std::vector<unsigned int> dims) = 0;
 
     //! vector containing the dimensions of the Field
-    //! \todo{private/friend/modify SmileiMPI* (JD)}
+    //! \todo private/friend/modify SmileiMPI* (JD)
     std::vector<unsigned int> dims_;
-    std::vector<unsigned int> isPrimal_;
-
-    //! \todo{for debbugging, to remove (JD)}
-    virtual void setData_(int i, double val) {};
+    std::vector<unsigned int> isDual_;
 
     virtual double& operator () (unsigned int i) =0;
     virtual double operator () (unsigned int i) const =0;

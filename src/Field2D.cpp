@@ -70,7 +70,7 @@ void Field2D::allocateDims(std::vector<unsigned int> dims )
     if (dims_.size()!=2) ERROR("Alloc error must be 2 : " << dims.size());
     if (data_2D!=NULL) delete [] data_2D;
 
-    isPrimal_.resize( dims.size(), 0 );
+    isDual_.resize( dims.size(), 0 );
 
     data_2D = new double[dims_[0]*dims_[1]];
     //! \todo{check row major order!!! (JD)}
@@ -95,17 +95,16 @@ void Field2D::allocateDims(std::vector<unsigned int> dims, unsigned int mainDim,
     if (data_2D) delete [] data_2D;
 
     // isPrimal define if mainDim is Primal or Dual
-    // isPrimal_ = 0 if Prim  = 1 if Dual
-    isPrimal_.resize( dims.size(), 0 );
+    isDual_.resize( dims.size(), 0 );
     for ( unsigned int j=0 ; j<dims.size() ; j++ ) {
         if ( (j==mainDim) && (!isPrimal) )
-            isPrimal_[j] = 1;
+            isDual_[j] = 1;
         else if ( (j!=mainDim) && (isPrimal) )
-            isPrimal_[j] = 1;
+            isDual_[j] = 1;
     }
 
     for ( unsigned int j=0 ; j<dims.size() ; j++ )
-        dims_[j] += isPrimal_[j];
+        dims_[j] += isDual_[j];
 
     data_2D = new double[dims_[0]*dims_[1]];
     //! \todo{check row major order!!! (JD)}

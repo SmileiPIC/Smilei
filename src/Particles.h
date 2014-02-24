@@ -26,38 +26,38 @@ public:
     //! Set capacity of Particles vectors
     void reserve( unsigned int n_part_max, int nDim );
 
-    // Reset Particles vectors
+    //! Reset Particles vectors
     void clear();
 
-    // Get number of particules
+    //! Get number of particules
     inline int size() const {
         return Weight.size();
     }
-    // Get dimension of particules
+    //! Get dimension of particules
     inline int dimension() const {
         return Position.size();
     }
 
-    // Copy particle iPart at the end of dest_parts
+    //! Copy particle iPart at the end of dest_parts
     void cp_particle(int iPart, Particles &dest_parts );
-    // Copy particle iPart at dest_id in dest_parts
+    //! Copy particle iPart at dest_id in dest_parts
     void cp_particle(int ipart, Particles &dest_parts, int dest_id );
 
-    // Suppress particle iPart
+    //! Suppress particle iPart
     void erase_particle(int iPart );
 
-    // Print parameters of particle iPart
+    //! Print parameters of particle iPart
     void print(int iPart);
 
-    // Exchange particles part1 & part2 memory location
+    //! Exchange particles part1 & part2 memory location
     void swap_part(int part1,int part2);
 
-    // Move iPart at the end of vectors
+    //! Move iPart at the end of vectors
     void push_to_end(int iPart );
 
-    // Create new particle
+    //! Create new particle
     void create_particle();
-    // Create nParticles new particles
+    //! Create nParticles new particles
     void create_particles(int nParticles);
 
     //! Method used to get the Particle position

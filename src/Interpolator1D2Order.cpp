@@ -27,7 +27,7 @@ Interpolator1D2Order::~Interpolator1D2Order()
 // ---------------------------------------------------------------------------------------------------------------------
 // 2nd Order Interpolation of the fields at a the particle position (3 nodes are used)
 // ---------------------------------------------------------------------------------------------------------------------
-void Interpolator1D2Order::operator() (ElectroMagn* champs, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc)
+void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc)
 {
 
     // Variable declaration
@@ -36,12 +36,12 @@ void Interpolator1D2Order::operator() (ElectroMagn* champs, Particles &particles
     double coeffInf, coeffCur, coeffSup;
 
     // Static cast of the electromagnetic fields
-    Field1D* Ex1D     = static_cast<Field1D*>(champs->Ex_);
-    Field1D* Ey1D     = static_cast<Field1D*>(champs->Ey_);
-    Field1D* Ez1D     = static_cast<Field1D*>(champs->Ez_);
-    Field1D* Bx1D_m   = static_cast<Field1D*>(champs->Bx_m);
-    Field1D* By1D_m   = static_cast<Field1D*>(champs->By_m);
-    Field1D* Bz1D_m   = static_cast<Field1D*>(champs->Bz_m);
+    Field1D* Ex1D     = static_cast<Field1D*>(EMfields->Ex_);
+    Field1D* Ey1D     = static_cast<Field1D*>(EMfields->Ey_);
+    Field1D* Ez1D     = static_cast<Field1D*>(EMfields->Ez_);
+    Field1D* Bx1D_m   = static_cast<Field1D*>(EMfields->Bx_m);
+    Field1D* By1D_m   = static_cast<Field1D*>(EMfields->By_m);
+    Field1D* Bz1D_m   = static_cast<Field1D*>(EMfields->Bz_m);
 
 
     // Particle position (in units of the spatial-step)

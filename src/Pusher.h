@@ -23,15 +23,10 @@ public:
     //! Overloading of () operator
     virtual void operator() (Particles &particles, int ipart, LocalFields Epart, LocalFields Bpart, double& gf) = 0;
 
-    //! Method used to get the particle mass
-    //inline double getMass()   {return mass_  ;};
-
-    //! Method used to get the particle charge
-    //inline double getCharge() {return charge_;};
-
 protected:
     double dt, dts2;
-    // mass_ and charge_ relative to Species but used in the particle pusher
+    //! \todo Move mass_ in Particles_
+    // mass_ relative to Species but used in the particle pusher
     double mass_;
     double one_over_mass_;
 

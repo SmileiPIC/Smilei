@@ -22,11 +22,20 @@ public:
         std::cout << "SmileiMPI_Cart1D" << std::endl;
     }
 
+    //! Create MPI communicator
     virtual void createTopology(PicParams& params);
+    //! Echanges particles of Species, list of particles comes frome Species::dynamics
+    //! exchangeParticles implements particles sorting
     virtual void exchangeParticles(Species* species, int ispec, PicParams* params);
+    //! Non-blocking exchange of particles
     virtual void IexchangeParticles(Species* species, int ispec, PicParams* params);
 
+    //! Create MPI_Datatype to exchange/sum fields on ghost data
+    //! Useless if 1D
+    void createType( PicParams& params ) {};
+
     virtual void exchangeField ( Field* field );
+    virtual void sumField      ( Field* field );
 
     inline int getProcCoord(int i) {
         return coords_[i];
@@ -38,8 +47,6 @@ public:
     inline bool isEaster() {
         return (coords_[0]==number_of_procs[0]-1);
     }
-
-    void createType( PicParams& params ) {};
 
     int extrem_ranks[1][2];
 
@@ -54,47 +61,11 @@ protected:
     int* periods_;
     int reorder_;
 
-    int nbNeighbors_;
+    int nbNeighbors_;     // Per direction, ie = 2
     int neighbor_[3][2];	// 
 
-    virtual void sumField      ( Field* field );
-    virtual void writeField    ( Field* field, std::string name );
 
 };
-
-
-/*
-	if (n_particles!=0) {
-		cout << "Size of particle : " << sizeof(*buff_send[0]) << endl;
-		cout << "Diff between pointers" << endl;
-		cout << &buff_send[0]->position(0)-(double*)(buff_send[0]) << endl;
-		cout << &buff_send[0]->moments(0)-&buff_send[0]->position(0) << endl;
-		//cout << &buff_send[0]->moments(0)-(double*)(buff_send[0]) << endl;
-		cout << &buff_send[0]->moments(2)-&buff_send[0]->moments(0) << endl;
-		cout << &buff_send[0]->chargeDensity()-&buff_send[0]->moments(2) << endl;
-		//cout << &buff_send[0]->position(0)-&buff_send[0]->chargeDensity() << endl;
-
-		cout << &buff_send[1]->position(0)-(double*)(buff_send[0]) << endl;
-		cout << &buff_send[1]->position(0)-&buff_send[0]->position(0) << endl;
-		cout << &buff_send[1]->moments(0)-&buff_send[1]->position(0) << endl;
-		cout << &buff_send[1]->moments(2)-&buff_send[1]->moments(0) << endl;
-		cout << &buff_send[1]->chargeDensity()-&buff_send[1]->moments(2) << endl;
-
-		cout << "Diff between values" << endl;
-
-		cout << buff_send[0]->moments(0) << " " << (double)(*((double*)(buff_send[0])+7)) << endl;
-		cout << buff_send[0]->moments(1) << " " << (double)(*((double*)(buff_send[0])+8)) << endl;
-		cout << buff_send[0]->moments(2) << " " << (double)(*((double*)(buff_send[0])+9)) << endl;
-		cout << buff_send[0]->chargeDensity() << " " << (double)(*((double*)(buff_send[0])+10)) << endl;
-
-		cout << buff_send[0]->position(0) << " " << (double)(*((double*)(buff_send[0])+6)) << endl;
-		//cout << buff_send[0]->position(0) << " " << (double)(*((double*)(buff_send[0])+7)) << endl;
-		//cout << buff_send[0]->position(0) << " " << (double)(*((double*)(buff_send[0])+8)) << endl;
-	}
-*/
-
-
-
 
 #endif
 

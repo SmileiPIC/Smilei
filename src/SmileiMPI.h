@@ -28,32 +28,38 @@ public:
         std::cout << "SmileiMPI" << std::endl;
     }
 
+    void init( PicParams& params );
+    void bcast( InputData& idata );
+
+    //! Create MPI communicator
+    virtual void createTopology( PicParams& params ) {};
+    //! Echanges particles of Species, list of particles comes frome Species::dynamics
+    //! See child classes
+    virtual void exchangeParticles(Species* species, int ispec, PicParams* params) {};
+    //! Non-blocking exchange of particles
+    virtual void IexchangeParticles(Species* species, int ispec, PicParams* params) {};
+
+    //! Create MPI_Datatype to exchange/sum fields on ghost data
+    //! See child classes
+    virtual void createType( PicParams& params ) {};
+
+    void exchangeE( ElectroMagn* EMfields );
+    void exchangeB( ElectroMagn* EMfields );
+
+    //! Sum rho and densities on 2 x oversize[]
+    void sumRho( ElectroMagn* EMfields );
+    void sumRhoJ( ElectroMagn* EMfields );
+
+    //! Exchanges to define fields on borders
+    virtual void exchangeField ( Field* field ) {};
+    virtual void sumField      ( Field* field ) {};
+
     inline bool isMaster() {
         return (smilei_rk==0);
     }
     inline void barrier() {
         MPI_Barrier( SMILEI_COMM_WORLD );
     }
-
-    void init( PicParams& params );
-    void bcast( InputData& idata );
-
-    virtual void createTopology( PicParams& params ) {};
-    virtual void createType( PicParams& params ) {};
-
-    virtual void exchangeParticles(Species* species, int ispec, PicParams* params) {};
-    virtual void IexchangeParticles(Species* species, int ispec, PicParams* params) {};
-    void writePlasma( std::vector<Species*> vecSpecies, std::string name );
-
-    void sumRho( ElectroMagn* champs );
-    void sumRhoJ( ElectroMagn* champs );
-    virtual void exchangeField ( Field* field ) {};
-    void exchangeE( ElectroMagn* champs );
-    void exchangeB( ElectroMagn* champs );
-    void writeFields( ElectroMagn* champs );
-
-    void solvePoissonPara( ElectroMagn* champs );
-
     inline int getRank() {
         return smilei_rk;
     }
@@ -84,16 +90,24 @@ public:
 protected:
     MPI_Comm SMILEI_COMM_WORLD;
 
+    //! indexes_of_particles_to_exchange built in Species::dynamics
     std::vector<int> indexes_of_particles_to_exchange;
+    //! Sort particles to exchange per direction, contains indexes
     std::vector<int> buff_index_send[3][2];
+    //! buff_index_recv_sz : number of particles to recv per direction
     int buff_index_recv_sz[3][2];
 
+    //! Size of ghost data (= 2 x oversize + 1 + 1 if dual direction), depend on :
+    //!    - projection/interpolation order
+    //!    - rate of particles exchange (to implement)
     std::vector<unsigned int> oversize;
+    //! cell_starting_global_index : index of 1st cell of local subdomain in the global domain
+    //!     - concerns ghost data
+    //!     - "- oversize" on rank 0
     std::vector<int> cell_starting_global_index;
+    //! "Real" limits of local domain (ghost data not concerned)
     std::vector<double> min_local;
     std::vector<double> max_local;
-    virtual void sumField      ( Field* field ) {};
-    virtual void writeField    ( Field* field, std::string name ) {};
 
 
 private:
@@ -110,7 +124,6 @@ private:
     void bcast( std::vector<SpeciesStructure>& vecSpeciesStructure );
     void bcast( LaserStructure& laserStructure );
     void bcast( std::vector<LaserStructure>& vecLaserStructure );
-    void bcast_type_der( PicParams& params );
 
 };
 

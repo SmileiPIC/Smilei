@@ -99,7 +99,6 @@ SmileiIO::~SmileiIO()
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Write all fields of all time step in the same file
-// In progress ...
 // ---------------------------------------------------------------------------------------------------------------------
 void SmileiIO::writeAllFieldsSingleFileTime( ElectroMagn* EMfields, int time )
 {
@@ -139,7 +138,7 @@ void SmileiIO::writeAllFieldsSingleFileTime( ElectroMagn* EMfields, int time )
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Each MPI process writes is particles in its own file, data are overwritten at each call ( particles-MPI_Rank.h5 )
-// Kept while python tools not updated
+// In progress ...
 // ---------------------------------------------------------------------------------------------------------------------
 void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI* smpi )
 {

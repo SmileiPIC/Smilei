@@ -50,8 +50,8 @@ public:
         return data_[i];
     };
 
-    //! \todo{What is this? (MG)}
-    //! \todo{private/friend/modify SmileiMPI* (JD)}
+    //! \todo What is this? (MG)
+    //! \todo private/friend/modify SmileiMPI* (JD)
     double* data_;
 
 private:

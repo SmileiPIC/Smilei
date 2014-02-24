@@ -43,10 +43,9 @@ ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
     nx_p = params->n_space[0]+1 + 2*params->oversize[0];
     // number of nodes of the dual-grid
     nx_d = params->n_space[0]+2 + 2*params->oversize[0];
-
+    // dimPrim/dimDual = nx_p/nx_d
     dimPrim.resize( params->nDim_field );
     dimDual.resize( params->nDim_field );
-
     for (size_t i=0 ; i<params->nDim_field ; i++) {
         // Standard scheme
         dimPrim[i] = params->n_space[i]+1;
@@ -245,12 +244,14 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
 
     // Status of the solver convergence
     if (iteration == iteration_max) {
-        WARNING("Poisson solver did not converge: reached maximum iteration number: " << iteration
-                << ", relative error is ctrl = " << 1.0e14*ctrl << " x 1e-14");
+        if (smpi1D->isMaster())
+	    WARNING("Poisson solver did not converge: reached maximum iteration number: " << iteration
+		    << ", relative error is ctrl = " << 1.0e14*ctrl << " x 1e-14");
     }
     else {
-        MESSAGE("Poisson solver converged at iteration: " << iteration
-                << ", relative error is ctrl = " << 1.0e14*ctrl << " x 1e-14");
+        if (smpi1D->isMaster())
+	    MESSAGE("Poisson solver converged at iteration: " << iteration
+		    << ", relative error is ctrl = " << 1.0e14*ctrl << " x 1e-14");
     }
 
     // ----------------------------------
@@ -287,19 +288,13 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
 
 
 
-    cerr << "Ex_West = " << Ex_West << "  -  " << "Ex_East = " << Ex_East << endl;
+    if (smpi1D->isMaster())
+	cerr << "Ex_West = " << Ex_West << "  -  " << "Ex_East = " << Ex_East << endl;
     double Ex_Add = -0.5*(Ex_West+Ex_East);
 
     // Center the electrostatic field
     for (unsigned int i=0; i<nx_d; i++) (*Ex1D)(i) += Ex_Add;
 
-
-//    Field1D* Ex1D  = static_cast<Field1D*>(Ex_);
-//	Field1D* rho1D = static_cast<Field1D*>(rho_);
-//
-//    for (unsigned int i=1;i<nx_d;++i){
-//        (*Ex1D)(i)=(*Ex1D)(i-1)+dx*(*rho1D)(i-1);
-//    }
 
     // Compute error on the Poisson equation
     double deltaPoisson_max = 0.0;
@@ -312,7 +307,9 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
         }
     }
 
-    MESSAGE(1,"Poisson equation solved. Maximum error = " << deltaPoisson_max << " at i= " << i_deltaPoisson_max);
+    //!\todo Reduce to find global max
+    if (smpi1D->isMaster())
+	MESSAGE(1,"Poisson equation solved. Maximum error = " << deltaPoisson_max << " at i= " << i_deltaPoisson_max);
 
 
 
@@ -327,6 +324,7 @@ void ElectroMagn1D::solveMaxwell(double time_dual, SmileiMPI* smpi)
 
     saveMagneticFields();
     solveMaxwellAmpere();
+    //smpi->exchangeE( this ); // Useless by construction
     solveMaxwellFaraday();
     applyEMBoundaryConditions(time_dual, smpi);
     smpi->exchangeB( this );
@@ -392,8 +390,6 @@ void ElectroMagn1D::solveMaxwellAmpere()
         (*Ey1D)(ix)= (*Ey1D)(ix) - dt_ov_dx * ( (*Bz1D)(ix+1) - (*Bz1D)(ix)) - dt * (*Jy1D)(ix) ;
         (*Ez1D)(ix)= (*Ez1D)(ix) + dt_ov_dx * ( (*By1D)(ix+1) - (*By1D)(ix)) - dt * (*Jz1D)(ix) ;
     }
-
-    //smpi->exchangeE( this ); 			// Useless by construction
 
 }
 
@@ -491,49 +487,15 @@ void ElectroMagn1D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
     // ----------------------------
     // Apply EM boundary conditions
     // ----------------------------
-
-    //!\todo Take care that there is a difference between primal and dual grid when putting the fields to 0 on the ghost cells (MG to JD)
     if ( smpi1D->isWester() ) {
-
         // Silver-Mueller boundary conditions (left)
         (*By1D)(0) =  Alpha_SM*(*Ez1D)(0) + Beta_SM*(*By1D)(1) + Gamma_SM*byL;
         (*Bz1D)(0) = -Alpha_SM*(*Ey1D)(0) + Beta_SM*(*Bz1D)(1) + Gamma_SM*bzL;
-        /*
-        		// Silver-Mueller boundary conditions (left)
-        		(*By1D)(index_bc_min[0])= Alpha_SM*(*Ez1D)(index_bc_min[0]) + Beta_SM*(*By1D)(index_bc_min[0]+1) + Gamma_SM*byL;
-        		(*Bz1D)(index_bc_min[0])=-Alpha_SM*(*Ey1D)(index_bc_min[0]) + Beta_SM*(*Bz1D)(index_bc_min[0]+1) + Gamma_SM*bzL;
-        		// Correction on unused extreme ghost
-        		for (unsigned int ix=0 ; ix<index_bc_min[0] ; ix++) {
-        			(*By1D)(ix)=0;
-        			(*Bz1D)(ix)=0;
-        			(*Ey1D)(ix)=0;
-        			(*Ez1D)(ix)=0;
-        			(*Ex1D)(ix)=0;
-        		}
-         */
     }//if Western
-
     if ( smpi1D->isEaster() ) {
-
         // Silver-Mueller boundary conditions (right)
         (*By1D)(nx_d-1) = -Alpha_SM*(*Ez1D)(nx_p-1) + Beta_SM*(*By1D)(nx_d-2) + Gamma_SM*byR;
         (*Bz1D)(nx_d-1) =  Alpha_SM*(*Ey1D)(nx_p-1) + Beta_SM*(*Bz1D)(nx_d-2) + Gamma_SM*bzR;
-
-        /*
-        		// Silver-Mueller boundary conditions (right)
-        		(*By1D)(index_bc_max[0])=-Alpha_SM*(*Ez1D)(index_bc_max[0]) + Beta_SM*(*By1D)(index_bc_max[0]-1) + Gamma_SM*byR;
-        		(*Bz1D)(index_bc_max[0])= Alpha_SM*(*Ey1D)(index_bc_max[0]) + Beta_SM*(*Bz1D)(index_bc_max[0]-1) + Gamma_SM*bzR;
-        		// Correction on unused extreme ghost
-        		for (unsigned int ix=index_bc_max[0]+1 ; ix<dimDual[0] ; ix++) {
-        			(*By1D)(ix  )=0;
-        			(*Bz1D)(ix  )=0;
-        			(*Ex1D)(ix  )=0;
-        		}
-        		for (unsigned int ix=index_bc_max[0] ; ix<dimPrim[0] ; ix++) {
-        			(*Ey1D)(ix)=0;
-        			(*Ez1D)(ix)=0;
-        		}
-         */
     }//if Eastern
 
 }
@@ -652,42 +614,3 @@ void ElectroMagn1D::computeTotalRhoJ()
         }
     }//END loop on species ispec
 }
-
-//// ---------------------------------------------------------------------------------------------------------------------
-//// Compute the total density from species density (used for frozen particles)
-//// ---------------------------------------------------------------------------------------------------------------------
-//void ElectroMagn1D::computeTotalRho()
-//{
-//
-//	Field1D* rho1D   = static_cast<Field1D*>(rho_);
-//
-//    for (unsigned int ispec=0; ispec<n_species; ispec++){
-//        Field1D* rho1D_s = static_cast<Field1D*>(rho_s[ispec]);
-//
-//        // rho defined on the primal grid
-//        for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++)  (*rho1D)(ix) += (*rho1D_s)(ix);
-//
-//    }//END loop on species ispec
-//}
-
-/*
-// ---------------------------------------------------------------------------------------------------------------------
-// Reinitialize the total charge density and transverse currents
-// - save current density as old density (charge conserving scheme)
-// - put the new density and currents to 0
-// ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn1D::initRho()
-{
-    MESSAGE(" >>> DIMPRIM >>> DIMDUAL >>>" << dimPrim[0] << " " << dimDual[0]);
-	Field1D* rho1D_o    = static_cast<Field1D*>(rho1D_o);
-    Field1D* rho1D      = static_cast<Field1D*>(rho1D);
-
-	// all fields are defined on the primal grid
-	//for (unsigned int i=0 ; i<nx_p ; i++) {
-    for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
-		(*rho1D_o)(ix) = 0.0;
-		(*rho1D)(ix)   = 0.0;
-	}
-
-}
-*/

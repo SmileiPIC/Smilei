@@ -19,23 +19,24 @@ public:
     SmileiIO_Cart2D( PicParams* params, SmileiMPI* smpi );
     ~SmileiIO_Cart2D();
 
+    //! Build memory and file space for HDF5 write/read
     void createPattern( PicParams* params, SmileiMPI* smpi );
 
-    void writeFieldsSingleFile( Field* field, hid_t file_id, int itime );
+    //! Write current field in specified group of the global file
     void writeFieldsSingleFileTime( Field* field, hid_t group_id );
 
-    void writePerProcess( Field* field, std::string name, double time, int rank );
-
-    //! for debugging
+    //! Write field on its own file (debug)
     void write( Field* field );
 
 private:
-    std::vector<unsigned int> istart;
-    std::vector<unsigned int> bufsize;
-
-    // [primDual][primDual]
+    //! memory space for HDF5 write/read
+    //! [primDual][primDual]
     hid_t memspace_ [2][2];
+    //! file space for HDF5 write/read
     hid_t filespace_[2][2];
+
+    //! \todo Define chunk size of output for interpolated output
+    //hsize_t chunk_dims[2];
 
 };
 

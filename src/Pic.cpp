@@ -109,12 +109,8 @@ int main (int argc, char* argv[])
     smpiData->init(params);
     DiagParams diag_params(input_data,params);
 
-    for (int i=0; i<smpiData->getSize(); i++) {
-        if (i==smpiData->getRank()) {
-            params.print();
-        }
-        smpiData->barrier();
-    }
+    if (smpiData->isMaster())
+	params.print();
 
     // Geometry known, MPI environment specified
     SmileiMPI* smpi = SmileiMPIFactory::create(params, smpiData);
@@ -157,19 +153,12 @@ int main (int argc, char* argv[])
     // -----------------------------------
     // Initialize the electromagnetic fields
     // -----------------------------------
-    //!\todo{Check & describe what is done here (MG)}
-    // Init rho by pro all particles of subdomain -> local stuff
+    // Init rho and J by projecting all particles of subdomain
     EMfields->initRhoJ(vecSpecies, Proj);
-
-    // Initializing the total charge & current densities
+    // Sum rho and J on ghost domains
     smpi->sumRhoJ( EMfields );
-
-    //! \todo{FalseNot //, current algorithm is instrinsicaly sequential}
-
-    EMfields->solvePoisson(smpi);//champs->initMaxwell();$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-
-    smpi->barrier();
+    // Init electric field (Ex/1D, + Ey/2D)
+    EMfields->solvePoisson(smpi);
 
 
     // ------------------------------------------------------------------------
@@ -225,14 +214,15 @@ int main (int argc, char* argv[])
         for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
             vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi);
             smpi->exchangeParticles(vecSpecies[ispec], ispec, &params);
-            if (params.nDim_field == 1)//$$$$$$$$$$$$$$$$$$$$$$$$
-                vecSpecies[ispec]->sort_part(params.cell_length[params.nDim_particle-1]);//$$$$$$$$$$$$$$$$$$$$$
+            if (params.nDim_field == 1) // sort not implemented in 2D
+                vecSpecies[ispec]->sort_part(params.cell_length[params.nDim_particle-1]);
         }
+	//!\todo To simplify : sum global and per species densities
         smpi->sumRhoJ( EMfields );
         EMfields->computeTotalRhoJ();
 
         // solve Maxwell's equations
-        EMfields->solveMaxwell(time_dual, smpi); //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+        EMfields->solveMaxwell(time_dual, smpi);
 
         // call the various diagnostics
         // ----------------------------
@@ -270,23 +260,6 @@ int main (int argc, char* argv[])
     // temporary particles dump (1 HDF5 file per process)
     if  ( (diag_params.particleDump_every != 0) && (params.n_time % diag_params.particleDump_every != 0) )
         sio->writePlasma( vecSpecies, time_dual, smpi );
-
-    /*	//EMfields->initRho(vecSpecies, Proj);
-    	//smpi->sumRho( EMfields );
-
-    	//EMfields->dump(&params);  	// Sequential results, 1 file per process
-    	if (params.nDim_field == 1) { // If 1D
-    		//! \todo{Not //, processes write sequentially to validate. OK in 1D}
-    		//smpi->writeFields( EMfields );
-    		// Using HDF5, both (sio, smpi) while python tools not updated
-    		sio->writeFields( EMfields );
-    	}
-    	else { // If 2D
-    		sio->writeFields( EMfields );
-    		//sio->writeFieldsPP( EMfields, time_dual, smpi->getRank() );
-    	}
-    */
-
 
     // ------------------------------
     //  Cleanup & End the simulation

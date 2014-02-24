@@ -101,33 +101,7 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
     MPI_Cart_create( SMILEI_COMM_WORLD, ndims_, number_of_procs, periods_, reorder_, &SMILEI_COMM_2D );
     MPI_Cart_coords( SMILEI_COMM_2D, smilei_rk, ndims_, coords_ );
 
-    //                  |                   |                  //
-    //                  |  neighbor_[2][1]  |                  //
-    //                  |                   |                  //
-
-    //                  |  neighbor_[1][1]  |                  //
-    // neighbor_[0][0]  |  Current process  |  neighbor_[0][1] //
-    //                  |  neighbor_[1][0]  |                  //
-
-    //                  |                   |                  //
-    //                  |  neighbor_[2][0]  |                  //
-    //                  |                   |                  //
-
-    // ==========================================================
-    // ==========================================================
-    // ==========================================================
-
-    // crossNei_[x][x]  | crossNei_[x][x]   | crossNei_[x][x]  //
-    // crossNei_[x][x]  |                   | crossNei_[x][x]  //
-    // crossNei_[x][x]  | crossNei_[x][x]   | crossNei_[x][x]  //
-
-    // crossNei_[x][x]  |                   | crossNei_[x][x]  //
-    //                  |  Current process  |                  //		-> Manage working direction per direction
-    // crossNei_[x][x]  |                   | crossNei_[x][x]  //
-
-    // crossNei_[x][x]  | crossNei_[x][x]   | crossNei_[x][x]  //
-    // crossNei_[x][x]  |                   | crossNei_[x][x]  //
-    // crossNei_[x][x]  | crossNei_[x][x]   | crossNei_[x][x]  //
+ 
 
 
     for (int iDim=0 ; iDim<ndims_ ; iDim++) {
@@ -359,10 +333,11 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
 
 } // END exchangeParticles
 
+
 void SmileiMPI_Cart2D::IexchangeParticles(Species* species, int ispec, PicParams* params)
 {
     exchangeParticles(species, ispec, params);
-}
+}  // END IexchangeParticles
 
 
 void SmileiMPI_Cart2D::createType( PicParams& params )
@@ -396,13 +371,13 @@ void SmileiMPI_Cart2D::createType( PicParams& params )
         }
     }
 
-}
+} //END createType
 
 
 void SmileiMPI_Cart2D::sumField( Field* field )
 {
     std::vector<unsigned int> n_elem = field->dims_;
-    std::vector<unsigned int> isPrimal = field->isPrimal_;
+    std::vector<unsigned int> isDual = field->isDual_;
     Field2D* f2D =  static_cast<Field2D*>(field);
 
 
@@ -411,9 +386,9 @@ void SmileiMPI_Cart2D::sumField( Field* field )
     // Size buffer is 2 oversize (1 inside & 1 outside of the current subdomain)
     std::vector<unsigned int> oversize2 = oversize;
     oversize2[0] *= 2;
-    oversize2[0] += 1 + f2D->isPrimal_[0];
+    oversize2[0] += 1 + f2D->isDual_[0];
     oversize2[1] *= 2;
-    oversize2[1] += 1 + f2D->isPrimal_[1];
+    oversize2[1] += 1 + f2D->isDual_[1];
 
     for (int iDim=0 ; iDim<ndims_ ; iDim++) {
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
@@ -431,7 +406,7 @@ void SmileiMPI_Cart2D::sumField( Field* field )
     /********************************************************************************/
     for (int iDim=0 ; iDim<ndims_ ; iDim++) {
 
-        MPI_Datatype ntype = ntypeSum_[iDim][isPrimal[0]][isPrimal[1]];
+        MPI_Datatype ntype = ntypeSum_[iDim][isDual[0]][isDual[1]];
 //		MPI_Status stat[2];
 //		MPI_Request request[2];
         MPI_Status sstat    [ndims_][2];
@@ -496,7 +471,7 @@ void SmileiMPI_Cart2D::sumField( Field* field )
 void SmileiMPI_Cart2D::exchangeField( Field* field )
 {
     std::vector<unsigned int> n_elem   = field->dims_;
-    std::vector<unsigned int> isPrimal = field->isPrimal_;
+    std::vector<unsigned int> isDual = field->isDual_;
     Field2D* f2D =  static_cast<Field2D*>(field);
 
     int istart, ix, iy;
@@ -504,7 +479,7 @@ void SmileiMPI_Cart2D::exchangeField( Field* field )
     // Loop over dimField
     for (int iDim=0 ; iDim<ndims_ ; iDim++) {
 
-        MPI_Datatype ntype = ntype_[iDim][isPrimal[0]][isPrimal[1]];
+        MPI_Datatype ntype = ntype_[iDim][isDual[0]][isDual[1]];
 //		MPI_Status stat[2];
 //		MPI_Request request[2];
         MPI_Status sstat    [ndims_][2];
@@ -517,7 +492,7 @@ void SmileiMPI_Cart2D::exchangeField( Field* field )
 
             if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
 
-                istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isPrimal[iDim]) ) + (1-iNeighbor) * ( 2*oversize[iDim]+1-(1-isPrimal[iDim]) );
+                istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( 2*oversize[iDim]+1-(1-isDual[iDim]) );
                 ix = (1-iDim)*istart;
                 iy =    iDim *istart;
                 MPI_Isend( &(f2D->data_[ix][iy]), 1, ntype, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D, &(srequest[iDim][iNeighbor]) );

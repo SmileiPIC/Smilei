@@ -19,19 +19,27 @@ public:
     //! Creator for the Projector
     Projector(PicParams*, SmileiMPI*) {};
     virtual ~Projector() {};
-    //! \todo Comment more on this overloading of the () operator
-    //! overloading of the () operator
-    virtual void operator() (ElectroMagn* champs, Particles &particles, int ipart, double gf) = 0;
-    //! \todo Comment more on this overloading of the () operator
-    //! overloading of the () operator
-    virtual void operator() (Field* rho, Particles &particles, int ipart) = 0;
-    //! overloading of the () operator
+
+    //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
+    //! Not used for now
+    virtual void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, double gf) = 0;
+
+    // Projection by species, in Species::dynamics, ElectroMagn::initRhoJ
     virtual void operator() (Field* Jx, Field* Jy, Field* Jz, Field* rho, Particles &particles, int ipart, double gf) = 0;
-    //! overloading of the () operator
-    virtual void operator() (Field* Jx, Field* Jy, Field* Jz, Particles &particles, int ipart, LocalFields Jion) = 0;
-    //! overloading of the () operator
+
+    //! Project global current charge (EMfields->rho_)
+    //! Used in Species::dynamics if time_frozen
+    virtual void operator() (Field* rho, Particles &particles, int ipart) = 0;
+
+
+    //! Project local current densities if particles sorting activated in Species::dynamics
     virtual void operator() (double* Jx, double* Jy, double* Jz, Particles &particles, int ipart, double gf, unsigned int bin, unsigned int b_dim0) = 0;
+
+    //! Project global current densities if Ionization in Species::dynamics,
+    virtual void operator() (Field* Jx, Field* Jy, Field* Jz, Particles &particles, int ipart, LocalFields Jion) = 0;
+
 private:
+
 };
 
 #endif

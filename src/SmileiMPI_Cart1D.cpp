@@ -351,6 +351,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
     //DEBUG( 2, "\tProcess " << smilei_rk << " : " << species->getNbrOfParticles() << " Particles of species " << ispec );
 } // END exchangeParticles
 
+
 void SmileiMPI_Cart1D::IexchangeParticles(Species* species, int ispec, PicParams* params)
 {
     Particles &cuParticles = species->particles;
@@ -490,7 +491,7 @@ void SmileiMPI_Cart1D::IexchangeParticles(Species* species, int ispec, PicParams
         cuParticles.erase_particle(iPart);
     } // END for iPart = f(i)
 
-}
+} // END IexchangeParticles
 
 void SmileiMPI_Cart1D::sumField( Field* field )
 {
@@ -502,7 +503,7 @@ void SmileiMPI_Cart1D::sumField( Field* field )
     // Size buffer is 2 oversize (1 inside & 1 outside of the current subdomain)
     std::vector<unsigned int> oversize2 = oversize;
     oversize2[0] *= 2;
-    oversize2[0] += 1 + f1D->isPrimal_[0];
+    oversize2[0] += 1 + f1D->isDual_[0];
     for (int i=0; i<nbNeighbors_ ; i++)  buf[i].allocateDims( oversize2 );
 
     // istart store in the first part starting index of data to send, then the starting index of data to write in
@@ -577,7 +578,7 @@ void SmileiMPI_Cart1D::sumField( Field* field )
 void SmileiMPI_Cart1D::exchangeField( Field* field )
 {
     std::vector<unsigned int> n_elem   = field->dims_;
-    std::vector<unsigned int> isPrimal = field->isPrimal_;
+    std::vector<unsigned int> isDual = field->isDual_;
     Field1D* f1D =  static_cast<Field1D*>(field);
 
     // Loop over dimField
@@ -593,7 +594,7 @@ void SmileiMPI_Cart1D::exchangeField( Field* field )
     for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
 
         if (neighbor_[0][iNeighbor]!=MPI_PROC_NULL) {
-            istart = iNeighbor * ( n_elem[0]- (2*oversize[0]+1+isPrimal[0]) ) + (1-iNeighbor) * ( 2*oversize[0]+1-(1-isPrimal[0]) );
+            istart = iNeighbor * ( n_elem[0]- (2*oversize[0]+1+isDual[0]) ) + (1-iNeighbor) * ( 2*oversize[0]+1-(1-isDual[0]) );
             MPI_Isend( &(f1D->data_[istart]), 1, MPI_DOUBLE, neighbor_[0][iNeighbor], 0, SMILEI_COMM_1D, &(srequest[iNeighbor]) );
             //cout << "EXCH : " << smilei_rk << " send " << oversize[0] << " data to " << neighbor_[0][iNeighbor] << " starting at " << istart << endl;
         } // END of Send
@@ -620,38 +621,3 @@ void SmileiMPI_Cart1D::exchangeField( Field* field )
 
 
 } // END exchangeField
-
-
-void SmileiMPI_Cart1D::writeField( Field* field, string name )
-{
-    Field1D* f1D =  static_cast<Field1D*>(field);
-    std::vector<unsigned int> n_elem = field->dims_;
-    int istart = oversize[0];
-    if (smilei_rk!=0) istart+=1;  // f1D_current[n_elem[0]-2*oversize[0]+1] = f1D_west[oversize[0]]
-    int bufsize = n_elem[0]- 2*oversize[0] - f1D->isPrimal_[0];
-
-    if (smilei_rk!=0) {
-        if (f1D->isPrimal_[0] == 0) bufsize-=1;
-        else if (smilei_rk!=smilei_sz-1) bufsize-=1;
-    }
-
-
-    std::ofstream ff;
-
-    for ( int i_rk = 0 ; i_rk < smilei_sz ; i_rk++ ) {
-        if (i_rk==smilei_rk) {
-            if (smilei_rk==0) ff.open(name.c_str(), ios::out);
-            else ff.open(name.c_str(), ios::app);
-            //cout << i_rk << " write " << bufsize-1 << " elements from " << istart << " to " << istart+bufsize-1 <<  endl;
-            for (int i=istart ; i<istart+bufsize ; i++)
-                ff << f1D->data_[i] << endl;
-            if (smilei_rk==smilei_sz-1)ff << endl;
-            //if (smilei_rk==smilei_sz-1)ff << endl;
-            ff.close();
-        }
-        barrier();
-    }
-
-
-} // END writeField
-

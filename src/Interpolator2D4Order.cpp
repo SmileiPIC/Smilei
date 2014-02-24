@@ -47,15 +47,15 @@ Interpolator2D4Order::~Interpolator2D4Order()
 // ---------------------------------------------------------------------------------------------------------------------
 // 2nd Order Interpolation of the fields at a the particle position (3 nodes are used)
 // ---------------------------------------------------------------------------------------------------------------------
-void Interpolator2D4Order::operator() (ElectroMagn* champs, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc)
+void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc)
 {
     // Static cast of the electromagnetic fields
-    Field2D* Ex2D = static_cast<Field2D*>(champs->Ex_);
-    Field2D* Ey2D = static_cast<Field2D*>(champs->Ey_);
-    Field2D* Ez2D = static_cast<Field2D*>(champs->Ez_);
-    Field2D* Bx2D = static_cast<Field2D*>(champs->Bx_m);
-    Field2D* By2D = static_cast<Field2D*>(champs->By_m);
-    Field2D* Bz2D = static_cast<Field2D*>(champs->Bz_m);
+    Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
+    Field2D* Ey2D = static_cast<Field2D*>(EMfields->Ey_);
+    Field2D* Ez2D = static_cast<Field2D*>(EMfields->Ez_);
+    Field2D* Bx2D = static_cast<Field2D*>(EMfields->Bx_m);
+    Field2D* By2D = static_cast<Field2D*>(EMfields->By_m);
+    Field2D* Bz2D = static_cast<Field2D*>(EMfields->Bz_m);
 
 
     // Normalized particle position

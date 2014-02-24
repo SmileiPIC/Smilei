@@ -60,7 +60,7 @@ void Field1D::allocateDims(std::vector<unsigned int> dims)
     dims_ = dims;
     if (dims.size()!=1) ERROR("Alloc error must be 1 : " << dims.size());
 
-    isPrimal_.resize( dims.size(), 0 );
+    isDual_.resize( dims.size(), 0 );
 
     data_ = new double[ dims_[0] ];
     //! \todo{change to memset (JD)}
@@ -79,17 +79,16 @@ void Field1D::allocateDims(std::vector<unsigned int> dims, unsigned int mainDim,
     if (dims.size()!=1) ERROR("Alloc error must be 1 : " << dims.size());
 
     // isPrimal define if mainDim is Primal or Dual
-    // isPrimal_ = 0 if Prim  = 1 if Dual
-    isPrimal_.resize( dims.size(), 0 );
+    isDual_.resize( dims.size(), 0 );
     for ( unsigned int j=0 ; j<dims.size() ; j++ ) {
         if ( (j==mainDim) && (!isPrimal) )
-            isPrimal_[j] = 1;
+            isDual_[j] = 1;
         else if ( (j!=mainDim) && (isPrimal) )
-            isPrimal_[j] = 1;
+            isDual_[j] = 1;
     }
 
     for ( unsigned int j=0 ; j<dims.size() ; j++ )
-        dims_[j] += isPrimal_[j];
+        dims_[j] += isDual_[j];
 
     data_ = new double[ dims_[0] ];
     //! \todo{change to memset (JD)}

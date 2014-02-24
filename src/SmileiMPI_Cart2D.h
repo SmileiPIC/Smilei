@@ -21,9 +21,19 @@ public:
         std::cout << "SmileiMPI_Cart2D" << std::endl;
     }
 
+    //! Create MPI communicator
     virtual void createTopology(PicParams& params);
+    //! Echanges particles of Species, list of particles comes frome Species::dynamics
+    //! exchangeParticles = IexchangeParticles
     virtual void exchangeParticles(Species* species, int ispec, PicParams* params);
+    //! Non-blocking exchange of particles
     virtual void IexchangeParticles(Species* species, int ispec, PicParams* params);
+
+    //! Create MPI_Datatype to exchange/sum fields on ghost data
+    void createType( PicParams& params );
+
+    virtual void exchangeField ( Field* field );
+    virtual void sumField      ( Field* field );
 
     inline int getProcCoord(int i) {
         return coords_[i];
@@ -42,12 +52,6 @@ public:
         return (coords_[1]==number_of_procs[1]-1);
     }
 
-    void createType( PicParams& params );
-
-    virtual void exchangeField ( Field* field );
-    virtual void sumField      ( Field* field );
-    virtual void writeField    ( Field* field, std::string name ) {};
-
     int extrem_ranks[2][2];
 
 
@@ -62,7 +66,7 @@ protected:
     int* periods_;
     int reorder_;
 
-    int nbNeighbors_;
+    int nbNeighbors_;     // Per direction, ie = 2
     int neighbor_[3][2];	// 
 
     // MPI_Datatype [ndims_][iDim=0 prim/dial][iDim=1 prim/dial]

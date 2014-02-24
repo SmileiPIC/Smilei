@@ -29,7 +29,9 @@ void SmileiIO_Cart2D::createPattern( PicParams* params, SmileiMPI* smpi )
 {
     SmileiMPI_Cart2D* smpi2D =  static_cast<SmileiMPI_Cart2D*>(smpi);
 
+    std::vector<unsigned int> istart;
     istart = smpi2D->oversize;
+    std::vector<unsigned int> bufsize;
     bufsize.resize(params->nDim_field, 0);
 
     for (unsigned int i=0 ; i<params->nDim_field ; i++) {
@@ -106,10 +108,10 @@ void SmileiIO_Cart2D::createPattern( PicParams* params, SmileiMPI* smpi )
             memspace_ [ ix_isPrim ][ iy_isPrim ] = memspace;
 
 
-//			if ( ( iy_isPrim == 0 ) && ( ix_isPrim == 1 ) ) {
-//				cout << smpi->getRank() << " " << offset[0] << " " << offset[1] << " " << stride[0] << " " << stride[1] << " " << count[0] << " " << count[1] << endl;
-//			}
-            //
+	    //if ( ( iy_isPrim == 0 ) && ( ix_isPrim == 1 ) ) {
+	    //    cout << smpi->getRank() << " " << offset[0] << " " << offset[1] << " " << stride[0] << " " << stride[1] << " " << count[0] << " " << count[1] << endl;
+	    //}
+
             // Each process defines dataset in memory and writes it to the hyperslab
             // in the file.
             //
@@ -136,46 +138,21 @@ void SmileiIO_Cart2D::createPattern( PicParams* params, SmileiMPI* smpi )
         }
     }
 
-}
+} // END createPattern
 
-// ---------------------------------------------------------------------------------------------------------------------
-// For time iteration "itime", write current field in the time step file
-// Version to keep
-// ---------------------------------------------------------------------------------------------------------------------
-void SmileiIO_Cart2D::writeFieldsSingleFile( Field* field, hid_t file_id, int itime )
-{
-    std::vector<unsigned int> isPrimal = field->isPrimal_;
-    Field2D* f2D =  static_cast<Field2D*>(field);
-
-    hid_t memspace  = memspace_ [ isPrimal[0] ][ isPrimal[1] ];
-    hid_t filespace = filespace_[ isPrimal[0] ][ isPrimal[1] ];
-
-    hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
-    //chunk_dims[0] = ???;
-    //H5Pset_chunk(plist_id, 2, chunk_dims); // Problem different dims for each process
-    hid_t dset_id = H5Dcreate(file_id, (field->name).c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
-    H5Pclose(plist_id);
-
-    H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &(f2D->data_[0][0]) );
-    H5Dclose(dset_id);
-
-
-}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For time iteration "itime", write current field in the time step dataset of the global file
-// Version to keep
 // ---------------------------------------------------------------------------------------------------------------------
 void SmileiIO_Cart2D::writeFieldsSingleFileTime( Field* field, hid_t group_id )
 {
-    std::vector<unsigned int> isPrimal = field->isPrimal_;
+    std::vector<unsigned int> isDual = field->isDual_;
     Field2D* f2D =  static_cast<Field2D*>(field);
 
-    hid_t memspace  = memspace_ [ isPrimal[0] ][ isPrimal[1] ];
-    hid_t filespace = filespace_[ isPrimal[0] ][ isPrimal[1] ];
+    hid_t memspace  = memspace_ [ isDual[0] ][ isDual[1] ];
+    hid_t filespace = filespace_[ isDual[0] ][ isDual[1] ];
 
     hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
-    //chunk_dims[0] = ???;
     //H5Pset_chunk(plist_id, 2, chunk_dims); // Problem different dims for each process
     //hid_t dset_id = H5Dcreate(file_id, (field->name).c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
     hid_t dset_id = H5Dcreate2(group_id, (field->name).c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
@@ -186,17 +163,18 @@ void SmileiIO_Cart2D::writeFieldsSingleFileTime( Field* field, hid_t group_id )
     H5Dclose(dset_id);
 
 
-}
+} // END writeFieldsSingleFileTime
+
 
 //! this method writes a fild on an hdf5 file should be used just for debug
 void SmileiIO_Cart2D::write( Field* field )
 {
-    std::vector<unsigned int> isPrimal = field->isPrimal_;
+    std::vector<unsigned int> isDual = field->isDual_;
     Field2D* f2D =  static_cast<Field2D*>(field);
     string name = f2D->name+".h5";
 
-    hid_t memspace  = memspace_ [ isPrimal[0] ][ isPrimal[1] ];
-    hid_t filespace = filespace_[ isPrimal[0] ][ isPrimal[1] ];
+    hid_t memspace  = memspace_ [ isDual[0] ][ isDual[1] ];
+    hid_t filespace = filespace_[ isDual[0] ][ isDual[1] ];
 
     MPI_Info info  = MPI_INFO_NULL;
     hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
@@ -205,8 +183,7 @@ void SmileiIO_Cart2D::write( Field* field )
     H5Pclose(plist_id);
 
     plist_id = H5Pcreate(H5P_DATASET_CREATE);
-    //      chunk_dims[0] = bufsize[0];
-    //      H5Pset_chunk(plist_id, 2, chunk_dims); // Problem different dims for each process, may be the same for all ...
+    // H5Pset_chunk(plist_id, 2, chunk_dims); // Problem different dims for each process, may be the same for all ...
     hid_t dset_id = H5Dcreate(file_id, "Field", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
     H5Pclose(plist_id);
 
@@ -215,5 +192,5 @@ void SmileiIO_Cart2D::write( Field* field )
 
     H5Fclose( file_id );
 
-}
+} // END write
 

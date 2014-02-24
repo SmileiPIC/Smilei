@@ -17,13 +17,7 @@ public:
     Projector2D(PicParams* params, SmileiMPI* smpi) : Projector(params, smpi) {};
     virtual ~Projector2D() {};
 
-    //! \todo comment this overloading of () operator (MG for JD)
-    virtual void operator() (ElectroMagn* champs, Particles &particles, int ipart, double gf) = 0;
 
-    //!\todo comment this overloading of () operator (MG for JD)
-    virtual void operator() (Field* rho, Particles &particles, int ipart) = 0;
-
-    virtual void operator() (double* Jx, double* Jy, double* Jz, Particles &particles, int ipart, double gf, unsigned int bin, unsigned int b_dim0) = 0;
 protected:
     //! Inverse of the spatial step 1/dx
     double dx_inv_;

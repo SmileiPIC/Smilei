@@ -645,26 +645,25 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
         bmin.resize(1);
         bmin[0] = 0;
         bmax.resize(1);
-//		bmax[0] = particles.size()-1;
         bmax[0] = max((int)particles.size()-1,0);
     }
 
     // Electric field at the particle position
     LocalFields Epart;
-    // magnetic field at the particle position
+    // Magnetic field at the particle position
     LocalFields Bpart;
+
     int iloc;
 
     // number of particles for this Species
     int unsigned nParticles = getNbrOfParticles();
+    // Reset list of particles to exchange
     smpi->clearExchList();
 
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
-    if (time_dual>time_frozen) {
-        // moving particle
-        //int locate;
+    if (time_dual>time_frozen) { // moving particle
         double gf = 1.0;
 
         // for all particles of the Species
@@ -677,40 +676,37 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 
             for (unsigned int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
 
-//                if (smpi->smilei_rk==0) cerr << "interp: x y " << particles, iPart->position(0) << " " << particles, iPart->position(1) << endl;
                 // Interpolate the fields at the particle position
                 (*Interp)(EMfields, particles, iPart, &Epart, &Bpart);
 
                 // Do the ionization
                 if (Ionize && particles.charge(iPart) < (int) atomic_number) {
-                    LocalFields Jion;
                     //!\todo Check if it is necessary to put to 0 or if LocalFields ensures it
-                    Jion.x=0.0;
+		    LocalFields Jion;
+		    Jion.x=0.0;
                     Jion.y=0.0;
-                    Jion.z=0;
+                    Jion.z=0.0;
                     (*Ionize)(particles, iPart, Epart, Jion);
                     (*Proj)(EMfields->Jx_, EMfields->Jy_, EMfields->Jz_, particles, iPart, Jion);
                 }
 
 
-//                cerr << "push" << endl;
                 // Push the particle
                 (*Push)(particles, iPart, Epart, Bpart, gf);
 
                 // Apply boundary condition on the particles
                 // Boundary Condition may be physical or due to domain decomposition
                 // apply returns 0 if iPart is no more in the domain local
-                //	if omp then critical on smpi->addPartInExchList, may be applied after // loop
-                //partBoundCond->apply( particles, iPart );
+                //	if omp, create a list per thread
                 if ( !partBoundCond->apply( particles, iPart ) ) smpi->addPartInExchList( iPart );
 
-//                cerr << "proj"<< endl;
-//                if (ndim == 1) {
-//                    (*Proj)(b_Jx, b_Jy, b_Jz, particles, iPart, gf, ibin, b_dim0);
-//                } else {
-                (*Proj)(EMfields->Jx_s[ispec], EMfields->Jy_s[ispec], EMfields->Jz_s[ispec], EMfields->rho_s[ispec],
-                        particles, iPart, gf);
-//                }
+                //if (ndim == 1) {
+		//    //! \todo Sort projection : to be validaed
+                //    (*Proj)(b_Jx, b_Jy, b_Jz, particles, iPart, gf, ibin, b_dim0);
+                //} else {
+		    (*Proj)(EMfields->Jx_s[ispec], EMfields->Jy_s[ispec], EMfields->Jz_s[ispec], EMfields->rho_s[ispec],
+			    particles, iPart, gf);
+		//}
 
             }// iPart
 
@@ -720,22 +716,21 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 for (unsigned int i = 0; i < size_proj_buffer ; i++) {
                     iloc = ibin + i ;
                     // adding contribution to the total currents
-                    (*EMfields->Jx_)(iloc) += b_Jx[i];
-                    (*EMfields->Jy_)(iloc) += b_Jy[i];
-                    (*EMfields->Jz_)(iloc) += b_Jz[i];
-//                    // adding contribution to current species currents and density
-//                    (*EMfields->Jx_s[ispec])(iloc) += b_Jx[i];
-//                    (*EMfields->Jy_s[ispec])(iloc) += b_Jy[i];
-//                    (*EMfields->Jz_s[ispec])(iloc) += b_Jz[i];
+                    //(*EMfields->Jx_)(iloc) += b_Jx[i];
+                    //(*EMfields->Jy_)(iloc) += b_Jy[i];
+                    //(*EMfields->Jz_)(iloc) += b_Jz[i];
+                    // adding contribution to current species currents and density
+                    //! \todo Below, operator(int) is virtual, to change
+                    (*EMfields->Jx_s[ispec])(iloc) += b_Jx[i];
+                    (*EMfields->Jy_s[ispec])(iloc) += b_Jy[i];
+                    (*EMfields->Jz_s[ispec])(iloc) += b_Jz[i];
                 }
             }
         }// ibin
-        //		for (unsigned int iPart=0 ; iPart<nParticles; iPart++ ) {
-        //			if ( !partBoundCond->apply( particles, iPart ) ) smpi->addPartInExchList( iPart );
-        //		}
+
         if (Ionize && electron_species) {
             for (unsigned int i=0; i < Ionize->new_electrons.size(); i++) {
-                //electron_species->particles.push_back(Ionize->new_electrons[i]);
+                // electron_species->particles.push_back(Ionize->new_electrons[i]);
 
                 int ibin = (int) ((Ionize->new_electrons).position(0,i) / cell_length[0]) - smpi->getCellStartingGlobalIndex(0) + oversize[0];
                 // Copy Ionize->new_electrons(i) in electron_species->particles at position electron_species->bmin[ibin]
@@ -749,18 +744,18 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 }
             }
 
-            //            if (Ionize->new_electrons.size()) DEBUG("number of electrons " << electron_species->particles.size() << " " << );
-            //			cerr << "****************** " << speciesNumber << " " << Ionize->new_electrons.size() << " " << electron_species->particles.size() << endl;
+            //if (Ionize->new_electrons.size()) DEBUG("number of electrons " << electron_species->particles.size() << " " << );
+            //cerr << "****************** " << speciesNumber << " " << Ionize->new_electrons.size() << " " << electron_species->particles.size() << endl;
             Ionize->new_electrons.clear();
         }
     }
-    else {
-        // immobile particle (at the moment only project density)
+    else { // immobile particle (at the moment only project density)
 
         //#pragma omp parallel for shared (EMfields)
         for (unsigned int iPart=0 ; iPart<nParticles; iPart++ ) {
             (*Proj)(EMfields->rho_s[ispec], particles, iPart);
         }
+
     }//END if time vs. time_frozen
 
 

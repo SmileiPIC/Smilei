@@ -23,31 +23,30 @@ public:
     SmileiIO( PicParams* params, SmileiMPI* smpi );
     virtual ~SmileiIO();
 
-    // To be used when python tools updated
-    void writeAllFields( ElectroMagn* EMfields, int itime );
-    virtual void writeFieldsSingleFile( Field* field, hid_t file_id, int itime ) = 0;
-
-    // To be used when python tools updated
+    //! Write all fields of all time step in the same file
     void writeAllFieldsSingleFileTime( ElectroMagn* EMfields, int itime );
+    //! Write current field in specified group of the global file
     virtual void writeFieldsSingleFileTime( Field* field, hid_t group_id ) = 0;
-    hid_t global_file_id_;
 
+    //! Each MPI process writes is particles in its own file
     void writePlasma( std::vector<Species*> vecSpecies, double time, SmileiMPI* smpi );
 
+    //! Id of "Fields.h5", contains all fields per timestep
+    hid_t global_file_id_;
 
-    // [2][3] : [2] -> 0 = E, 1 = B
-    // [2][3] : [3] -> x, y, z
-    hid_t file_id_  [4][3];
-
+    //! Property list for collective dataset write.
     hid_t write_plist;
 
+    //! Id of "particles-mpirank.h5", contains particles of current mpirank
     hid_t  partFile_id;
+
+    //! Particles output in progress
     unsigned int nDatasetSpecies;
     hid_t* partDataset_id;  /* identifiers */
     hid_t partMemSpace;
     int particleSize;
 
-    //! for debugging
+    //! Write field on its own file (debug)
     virtual void write( Field* field ) = 0;
 
 private:

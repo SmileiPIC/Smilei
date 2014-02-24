@@ -71,7 +71,7 @@ ElectroMagn2D::ElectroMagn2D(PicParams* params, SmileiMPI* smpi)
     // ----------------------
     // Electromagnetic fields
     // ----------------------
-    //! \todo{Homogenize 1D/2D dimPrim/dimDual or nx_p/nx_d/ny_p/ny_d}
+    //! \todo Homogenize 1D/2D dimPrim/dimDual or nx_p/nx_d/ny_p/ny_d
 
     dimPrim.resize( params->nDim_field );
     dimDual.resize( params->nDim_field );
@@ -647,7 +647,6 @@ void ElectroMagn2D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
     // Silver-Mueller boundary conditions (West)
     // -----------------------------------------
     if ( smpi2D->isWester() ) {
-        //MESSAGE( smpi->getRank() << " is wester" );
         // for By^(d,p)
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*By2D)(0,j) = Alpha_SM_W   * (*Ez2D)(0,j)
@@ -662,35 +661,12 @@ void ElectroMagn2D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
                            +               Beta_SM_W  * (*Bz2D)(1,j)
                            +               Gamma_SM_W * bzW;
         }
-
-        /*		// Correction on unused extreme ghost cells : put the fields to 0
-         // --------------------------------------------------------------
-         //! \todo{Alloc Fields only if necessary to not doing this correction}
-         for (unsigned int i=0 ; i<index_bc_min[0] ; i++) {
-         // for Ey^(p,d), Bx^(p,d), Bz^(d,d)
-         for (unsigned int j=0 ; j<ny_d ; j++) {
-         (*Ey2D)(i,j)=0.0;
-         (*Bx2D)(i,j)=0.0;
-         (*Bz2D)(i,j)=0.0;
-         }
-         // for Ex^(d,p), Ez^(p,p), By^(d,p)
-         for (unsigned int j=0 ; j<ny_p ; j++) {
-         (*Ex2D)(i,j)=0.0;
-         (*Ez2D)(i,j)=0.0;
-         (*By2D)(i,j)=0.0;
-         }
-         }
-         */
-        //MESSAGE( "WEST BC ==> By_inc, By " << byW << " " << (*By2D)(index_bc_min[0],250) );
-
     }//if West
 
     // -----------------------------------------
     // Silver-Mueller boundary conditions (East)
     // -----------------------------------------
     if ( smpi2D->isEaster() ) {
-        //MESSAGE( smpi->getRank() << " is easter" );
-        //MESSAGE("Here once");
         // for By^(d,p)
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*By2D)(nx_d-1,j) = Alpha_SM_E   * (*Ez2D)(nx_p-1,j)
@@ -705,35 +681,6 @@ void ElectroMagn2D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
                                 +                    Beta_SM_E  * (*Bz2D)(nx_d-2,j)
                                 +                    Gamma_SM_E * bzE;
         }
-
-        /*		// Correction on unused extreme ghost cells : put the fields to 0
-         // --------------------------------------------------------------
-         // for Ex^(d,p), By^(d,p), Bz^(d,d)
-         for (unsigned int i=index_bc_max[0]+1 ; i<nx_d ; i++) {
-         for (unsigned int j=0 ; j<ny_p ; j++) {
-         (*Ex2D)(i,j) = 0.0;
-         (*By2D)(i,j) = 0.0;
-         }
-         for (unsigned int j=0 ; j<ny_d ; j++) {
-         (*Bz2D)(i,j) = 0.0;
-         }
-         }
-         // for Ey^(p,d), Ez^(p,p), Bx^(p,d)
-         for (unsigned int i=index_bc_max[0] ; i<nx_p ; i++) {
-         for (unsigned int j=0 ; j<ny_d ; j++) {
-         (*Ey2D)(i,j)=0.0;
-         (*Bx2D)(i,j)=0.0;
-         }
-         }
-         // for Ez^(p,p)
-         for (unsigned int i=index_bc_max[0] ; i<nx_p ; i++) {
-         for (unsigned int j=0 ; j<ny_p ; j++) {
-         (*Ez2D)(i,j)=0.0;
-         }
-         }
-         */
-        //MESSAGE( "EAST BC ==> By_inc, By " << byE << " " << (*By2D)(index_bc_max[0],250) );
-
     }//if East
 
 }// END applyEMBoundaryConditions
@@ -929,33 +876,3 @@ void ElectroMagn2D::computeTotalRhoJ()
 
 }//END computeTotalRhoJ
 
-
-
-//// ---------------------------------------------------------------------------------------------------------------------
-//// Compute the total density from species density (used for frozen particles)
-//// ---------------------------------------------------------------------------------------------------------------------
-//void ElectroMagn2D::computeTotalRho()
-//{
-//
-//    // static cast of the total currents and densities
-//    Field2D* rho2D   = static_cast<Field2D*>(rho_);
-//    Field2D* rho2D_o = static_cast<Field2D*>(rho_o);
-//
-//
-//    // -----------------------------------
-//    // Species currents and charge density
-//    // -----------------------------------
-//    for (unsigned int ispec=0; ispec<n_species; ispec++){
-//
-//        Field2D* rho2D_s = static_cast<Field2D*>(rho_s[ispec]);
-//
-//        // Charge density rho^(p,p) to 0
-//        for (unsigned int i=0 ; i<nx_p ; i++) {
-//            for (unsigned int j=0 ; j<ny_p ; j++) {
-//                (*rho2D)(i,j) += (*rho2D_s)(i,j);
-//            }
-//        }
-//
-//    }//END loop on species ispec
-//
-//}//END computeTotalRho

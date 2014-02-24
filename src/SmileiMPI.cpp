@@ -192,99 +192,42 @@ void SmileiMPI::bcast( vector<LaserStructure>& val )
     for (int i=0 ; i<vecSize ; i++) bcast( val[i] );
 }
 
-void SmileiMPI::bcast_type_der( PicParams& params )
+void SmileiMPI::sumRho( ElectroMagn* EMfields )
 {
-    //! \todo{Using data structures}
-}
-
-void SmileiMPI::sumRho( ElectroMagn* champs )
-{
-    sumField( champs->rho_ );
+    sumField( EMfields->rho_ );
 
 }
 
-void SmileiMPI::sumRhoJ( ElectroMagn* champs )
+void SmileiMPI::sumRhoJ( ElectroMagn* EMfields )
 {
     // sum total charge density and currents
-    sumField( champs->rho_ );
-    sumField( champs->Jx_ );
-    sumField( champs->Jy_ );
-    sumField( champs->Jz_ );
+    sumField( EMfields->rho_ );
+    sumField( EMfields->Jx_ );
+    sumField( EMfields->Jy_ );
+    sumField( EMfields->Jz_ );
 
     // sum density and currents for all species
-    for (unsigned int ispec=0; ispec<champs->n_species; ispec++) {
-        sumField( champs->rho_s[ispec] );
-        sumField( champs->Jx_s[ispec] );
-        sumField( champs->Jy_s[ispec] );
-        sumField( champs->Jz_s[ispec] );
+    for (unsigned int ispec=0; ispec<EMfields->n_species; ispec++) {
+        sumField( EMfields->rho_s[ispec] );
+        sumField( EMfields->Jx_s[ispec] );
+        sumField( EMfields->Jy_s[ispec] );
+        sumField( EMfields->Jz_s[ispec] );
     }
 
 }
 
-void SmileiMPI::exchangeE( ElectroMagn* champs )
+void SmileiMPI::exchangeE( ElectroMagn* EMfields )
 {
-    exchangeField( champs->Ex_ );
-    exchangeField( champs->Ey_ );
-    exchangeField( champs->Ez_ );
+    exchangeField( EMfields->Ex_ );
+    exchangeField( EMfields->Ey_ );
+    exchangeField( EMfields->Ez_ );
 
 }
 
-void SmileiMPI::exchangeB( ElectroMagn* champs )
+void SmileiMPI::exchangeB( ElectroMagn* EMfields )
 {
-    exchangeField( champs->Bx_ );
-    exchangeField( champs->By_ );
-    exchangeField( champs->Bz_ );
+    exchangeField( EMfields->Bx_ );
+    exchangeField( EMfields->By_ );
+    exchangeField( EMfields->Bz_ );
 
 }
-
-void SmileiMPI::solvePoissonPara( ElectroMagn* champs )
-{
-    for ( int i_rk = 0 ; i_rk < smilei_sz ; i_rk++ ) {
-        if (i_rk==smilei_rk)
-            champs->solvePoisson(this);
-
-        barrier();
-        exchangeField( champs->Ex_ );
-    }
-
-} // END solvePoissonPara
-
-
-void SmileiMPI::writeFields( ElectroMagn* champs )
-{
-    writeField( champs->Ex_, "fex" );
-    writeField( champs->Ey_, "fey" );
-    writeField( champs->Ez_, "fez" );
-    writeField( champs->Bx_, "fbx" );
-    writeField( champs->By_, "fby" );
-    writeField( champs->Bz_, "fbz" );
-    writeField( champs->Jx_, "fjx" );
-    writeField( champs->Jy_, "fjy" );
-    writeField( champs->Jz_, "fjz" );
-    writeField( champs->rho_, "rho" );
-
-} // END writeFields
-
-void SmileiMPI::writePlasma( vector<Species*> vecSpecies, string name )
-{
-    ofstream ofile;
-    int n_species = vecSpecies.size();
-
-    for (int ispec=0 ; ispec<n_species ; ispec++) {
-
-        for ( int i_rk = 0 ; i_rk < smilei_sz ; i_rk++ ) {
-            if (i_rk==smilei_rk) {
-                if ((smilei_rk==0)&&(ispec==0)) ofile.open(name.c_str(), ios::out);
-                else                            ofile.open(name.c_str(), ios::app);
-
-                vecSpecies[ispec]->dump(ofile);
-                ofile.close();
-            }
-            barrier();
-        }
-
-        ofile << endl;
-    }
-
-} // END writePlasma
-

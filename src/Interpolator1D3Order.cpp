@@ -33,19 +33,19 @@ Interpolator1D3Order::~Interpolator1D3Order()
 	with size nstp_x and space step stp_x_inv at the position
 	xj and return the value fxj
 ***********************************************************************/
-void Interpolator1D3Order::operator() (ElectroMagn* champs, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc)
+void Interpolator1D3Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc)
 {
     int i, im1, ip1, ip2;
     double xjn, xi, xi2, xi3;
     double c1, c2, c3, c4;
 
     //!\todo Julien, can you check that this is indeed the centered B-field which is passed to the pusher?
-    Field1D* Ex1D     = static_cast<Field1D*>(champs->Ex_);
-    Field1D* Ey1D     = static_cast<Field1D*>(champs->Ey_);
-    Field1D* Ez1D     = static_cast<Field1D*>(champs->Ez_);
-    Field1D* Bx1D_m   = static_cast<Field1D*>(champs->Bx_m);
-    Field1D* By1D_m   = static_cast<Field1D*>(champs->By_m);
-    Field1D* Bz1D_m   = static_cast<Field1D*>(champs->Bz_m);
+    Field1D* Ex1D     = static_cast<Field1D*>(EMfields->Ex_);
+    Field1D* Ey1D     = static_cast<Field1D*>(EMfields->Ey_);
+    Field1D* Ez1D     = static_cast<Field1D*>(EMfields->Ez_);
+    Field1D* Bx1D_m   = static_cast<Field1D*>(EMfields->Bx_m);
+    Field1D* By1D_m   = static_cast<Field1D*>(EMfields->By_m);
+    Field1D* Bz1D_m   = static_cast<Field1D*>(EMfields->Bz_m);
 
 
     // Calculate the normalized positions

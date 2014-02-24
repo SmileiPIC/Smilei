@@ -20,7 +20,7 @@ public:
     Interpolator(PicParams*, SmileiMPI*) {};
     virtual ~Interpolator() {};
 
-    virtual void operator() (ElectroMagn* champs, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc) = 0;
+    virtual void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc) = 0;
 
 private:
 
