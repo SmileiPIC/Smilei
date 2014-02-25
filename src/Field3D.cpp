@@ -14,13 +14,13 @@ using namespace std;
 // with no input argument
 Field3D::Field3D() : Field()
 {
-    data_3D=NULL;
+    data_=NULL;
 }
 
 // with the dimensions as input argument
 Field3D::Field3D(vector<unsigned int> dims) : Field(dims)
 {
-    data_3D=NULL;
+    data_=NULL;
     allocateDims(dims);
 }
 
@@ -33,7 +33,7 @@ Field3D::Field3D(vector<unsigned int> dims, string name) : Field(dims, name)
 // with the dimensions as input argument
 Field3D::Field3D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal) : Field(dims, mainDim, isPrimal)
 {
-    data_3D=NULL;
+    data_=NULL;
     allocateDims(dims, mainDim, isPrimal);
 }
 
@@ -49,9 +49,9 @@ Field3D::Field3D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal,
 // ---------------------------------------------------------------------------------------------------------------------
 Field3D::~Field3D()
 {
-    delete [] data_3D;
-    for (unsigned int i=0; i<dims_[0]; i++) delete [] data_[i];
     delete [] data_;
+    for (unsigned int i=0; i<dims_[0]; i++) delete [] data_3D[i];
+    delete [] data_3D;
 
 }
 
@@ -62,23 +62,24 @@ Field3D::~Field3D()
 void Field3D::allocateDims(std::vector<unsigned int> dims ) {
     dims_=dims;
     if (dims_.size()!=3) ERROR("Alloc error must be 3 : " << dims.size());
-    if (data_3D) delete [] data_3D;
+    if (data_) delete [] data_;
 
     isDual_.resize( dims.size(), 0 );
 
-    data_3D = new double[dims_[0]*dims_[1]*dims_[2]];
+    data_ = new double[dims_[0]*dims_[1]*dims_[2]];
     //! \todo{check row major order!!!}
-    data_= new double**[dims_[0]*dims_[1]];
+    data_3D= new double**[dims_[0]*dims_[1]];
     for (unsigned int i=0; i<dims_[0]; i++)
     {
-        data_[i]= new double*[dims_[1]];
+        data_3D[i]= new double*[dims_[1]];
         for (unsigned int j=0; j<dims_[1]; j++)
         {
-            data_[i][j] = data_3D + i*dims_[1]*dims_[2] + j*dims_[2];
+            data_3D[i][j] = data_ + i*dims_[1]*dims_[2] + j*dims_[2];
         }
     }//i
 
     //DEBUG(10,"Fields 3D created: " << dims_[0] << "x" << dims_[1] << "x" << dims_[2]);
+    globalDims_ = dims_[0]*dims_[1]*dims_[2];
 
 }
 
@@ -89,7 +90,7 @@ void Field3D::allocateDims(std::vector<unsigned int> dims ) {
 void Field3D::allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal ) {
     dims_=dims;
     if (dims_.size()!=3) ERROR("Alloc error must be 3 : " << dims.size());
-    if (data_3D) delete [] data_3D;
+    if (data_) delete [] data_;
 
     // isPrimal define if mainDim is Primal or Dual
     isDual_.resize( dims.size(), 0 );
@@ -103,19 +104,20 @@ void Field3D::allocateDims(std::vector<unsigned int> dims, unsigned int mainDim,
     for ( unsigned int j=0 ; j<dims.size() ; j++ )
         dims_[j] += isDual_[j];
 
-    data_3D = new double[dims_[0]*dims_[1]*dims_[2]];
+    data_ = new double[dims_[0]*dims_[1]*dims_[2]];
     //! \todo{check row major order!!!}
-    data_= new double**[dims_[0]*dims_[1]];
+    data_3D= new double**[dims_[0]*dims_[1]];
     for (unsigned int i=0; i<dims_[0]; i++)
     {
-        data_[i]= new double*[dims_[1]];
+        data_3D[i]= new double*[dims_[1]];
         for (unsigned int j=0; j<dims_[1]; j++)
         {
-            data_[i][j] = data_3D + i*dims_[1]*dims_[2] + j*dims_[2];
+            data_3D[i][j] = data_ + i*dims_[1]*dims_[2] + j*dims_[2];
         }
     }//i
 
     //DEBUG(10,"Fields 3D created: " << dims_[0] << "x" << dims_[1] << "x" << dims_[2]);
+    globalDims_ = dims_[0]*dims_[1]*dims_[2];
 
     //isDual_ = isPrimal;
 }

@@ -36,34 +36,35 @@ public:
     //! Overloading of the () operator allowing to set a new value for the (i,j) element of a Field2D
     inline double& operator () (unsigned int i,unsigned int j) {
         DEBUGEXEC(if (i>=dims_[0] || j>=dims_[1]) ERROR("Out of limits & "<< i << " " << j));
-        DEBUGEXEC(if (!std::isfinite(data_[i][j])) ERROR("Not finite "<< i << "," << j << " = " << data_[i][j]));
-        return data_[i][j];
+        DEBUGEXEC(if (!std::isfinite(data_2D[i][j])) ERROR("Not finite "<< i << "," << j << " = " << data_2D[i][j]));
+        return data_2D[i][j];
     };
 
-    inline double& operator () (unsigned int i) {
+    /*inline double& operator () (unsigned int i) {
         DEBUGEXEC(if (i>=dims_[0]*dims_[1]) ERROR("Out of limits & "<< i));
         DEBUGEXEC(if (!std::isfinite(data_2D[i])) ERROR("Not finite "<< i));
         return data_2D[i];
-    };
+    };*/
 
     //! Overloading of the () operator allowing to get the value of the (i,j) element of a Field2D
     inline double operator () (unsigned int i,unsigned int j) const {
         DEBUGEXEC(if (i>=dims_[0] || j>=dims_[1]) ERROR("Out of limits "<< i << " " << j));
-        DEBUGEXEC(if (!std::isfinite(data_[i][j])) ERROR("Not finite "<< i << "," << j << " = " << data_[i][j]));
-        return data_[i][j];
+        DEBUGEXEC(if (!std::isfinite(data_2D[i][j])) ERROR("Not finite "<< i << "," << j << " = " << data_2D[i][j]));
+        return data_2D[i][j];
     };
 
-    inline double operator () (unsigned int i) const {
+    /*inline double operator () (unsigned int i) const {
         DEBUGEXEC(if (i>=dims_[0]*dims_[1]) ERROR("Out of limits & "<< i));
         DEBUGEXEC(if (!std::isfinite(data_2D[i])) ERROR("Not finite "<< i));
         return data_2D[i];
-    };
+    };*/
 
-    double** data_;
+    //double** data_;
+    double **data_2D;
 
 private:
     //!\todo{Comment what are these stuffs (MG for JD)}
-    double *data_2D;
+    //double *data_2D;
 };
 
 #endif

@@ -37,32 +37,33 @@ public:
     inline double& operator () (unsigned int i,unsigned int j,unsigned int k)
     {
         DEBUGEXEC(if (i>=dims_[0] || j>=dims_[1] || k >= dims_[2]) ERROR("Out of limits & "<< i << " " << j << " " << k));
-        return data_[i][j][k];
+        return data_3D[i][j][k];
     };
 
-    inline double& operator () (unsigned int i)
+    /*inline double& operator () (unsigned int i)
     {
         DEBUGEXEC(if (i>=dims_[0]*dims_[1]*dims_[2]) ERROR("Out of limits & "<< i));
         DEBUGEXEC(if (!std::isfinite(data_3D[i])) ERROR("Not finite "<< i));
         return data_3D[i];
-    };
+    };*/
 
     //! Overloading of the () operator allowing to get the value for the (i,j,k) element of a Field3D
     inline double operator () (unsigned int i,unsigned int j,unsigned int k) const {
         DEBUGEXEC(if (i>=dims_[0] || j>=dims_[1] || k >= dims_[2]) ERROR("Out of limits "<< i << " " << j << " " << k));
-        return data_[i][j][k];
+        return data_3D[i][j][k];
     };
 
-    inline double operator () (unsigned int i) const {
+    /*inline double operator () (unsigned int i) const {
         DEBUGEXEC(if (i>=dims_[0]*dims_[1]*dims_[2]) ERROR("Out of limits & "<< i));
         DEBUGEXEC(if (!std::isfinite(data_3D[i])) ERROR("Not finite "<< i));
         return data_3D[i];
-    };
+    };*/
 
 private:
     //!\todo{Comment what are these stuffs (MG for JD)}
-    double*** data_;
-    double *data_3D;
+    //double*** data_;
+    //double *data_3D;
+    double ***data_3D;
 };
 
 #endif

@@ -14,34 +14,34 @@ using namespace std;
 // with no input argument
 Field2D::Field2D() : Field()
 {
-    data_2D=NULL;
+    data_=NULL;
 }
 
 // with the dimensions as input argument
 Field2D::Field2D(vector<unsigned int> dims) : Field(dims)
 {
-    data_2D=NULL;
+    data_=NULL;
     allocateDims(dims);
 }
 
 // with the dimensions and output (dump) file name as input argument
 Field2D::Field2D(vector<unsigned int> dims, string name) : Field(dims, name)
 {
-    data_2D=NULL;
+    data_=NULL;
     allocateDims(dims);
 }
 
 // with the dimensions as input argument
 Field2D::Field2D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal) : Field(dims, mainDim, isPrimal)
 {
-    data_2D=NULL;
+    data_=NULL;
     allocateDims(dims, mainDim, isPrimal);
 }
 
 // with the dimensions and output (dump) file name as input argument
 Field2D::Field2D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, string name) : Field(dims, mainDim, isPrimal, name)
 {
-    data_2D=NULL;
+    data_=NULL;
     allocateDims(dims, mainDim, isPrimal);
 }
 
@@ -53,9 +53,9 @@ Field2D::Field2D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal,
 Field2D::~Field2D()
 {
 
-    if (data_2D!=NULL) {
-        delete [] data_2D;
+    if (data_!=NULL) {
         delete [] data_;
+        delete [] data_2D;
     }
 }
 
@@ -68,18 +68,20 @@ void Field2D::allocateDims(std::vector<unsigned int> dims )
     //! \todo{Comment on what you are doing here (MG for JD)}
     dims_=dims;
     if (dims_.size()!=2) ERROR("Alloc error must be 2 : " << dims.size());
-    if (data_2D!=NULL) delete [] data_2D;
+    if (data_!=NULL) delete [] data_;
 
     isDual_.resize( dims.size(), 0 );
 
-    data_2D = new double[dims_[0]*dims_[1]];
+    data_ = new double[dims_[0]*dims_[1]];
     //! \todo{check row major order!!! (JD)}
 
-    data_= new double*[dims_[0]];
+    data_2D= new double*[dims_[0]];
     for (unsigned int i=0; i<dims_[0]; i++) {
-        data_[i] = data_2D + i*dims_[1];
-        for (unsigned int j=0; j<dims_[1]; j++) data_[i][j] = 0.0;
+        data_2D[i] = data_ + i*dims_[1];
+        for (unsigned int j=0; j<dims_[1]; j++) data_2D[i][j] = 0.0;
     }
+
+    globalDims_ = dims_[0]*dims_[1];
 
 }
 
@@ -92,7 +94,7 @@ void Field2D::allocateDims(std::vector<unsigned int> dims, unsigned int mainDim,
     //! \todo{Comment on what you are doing here (MG for JD)}
     dims_=dims;
     if (dims_.size()!=2) ERROR("Alloc error must be 2 : " << dims.size());
-    if (data_2D) delete [] data_2D;
+    if (data_) delete [] data_;
 
     // isPrimal define if mainDim is Primal or Dual
     isDual_.resize( dims.size(), 0 );
@@ -106,14 +108,16 @@ void Field2D::allocateDims(std::vector<unsigned int> dims, unsigned int mainDim,
     for ( unsigned int j=0 ; j<dims.size() ; j++ )
         dims_[j] += isDual_[j];
 
-    data_2D = new double[dims_[0]*dims_[1]];
+    data_ = new double[dims_[0]*dims_[1]];
     //! \todo{check row major order!!! (JD)}
 
-    data_= new double*[dims_[0]];
+    data_2D= new double*[dims_[0]];
     for (unsigned int i=0; i<dims_[0]; i++)  {
-        data_[i] = data_2D + i*dims_[1];
-        for (unsigned int j=0; j<dims_[1]; j++) data_[i][j] = 0.0;
+        data_2D[i] = data_ + i*dims_[1];
+        for (unsigned int j=0; j<dims_[1]; j++) data_2D[i][j] = 0.0;
     }
+
+    globalDims_ = dims_[0]*dims_[1];
 
 }
 

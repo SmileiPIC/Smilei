@@ -52,7 +52,9 @@ public:
 
     //! \todo What is this? (MG)
     //! \todo private/friend/modify SmileiMPI* (JD)
-    double* data_;
+    // 
+    //! Now in Field, all arrays may be viewed as a 1D array
+    //double* data_;
 
 private:
 };

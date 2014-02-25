@@ -66,6 +66,8 @@ void Field1D::allocateDims(std::vector<unsigned int> dims)
     //! \todo{change to memset (JD)}
     for (unsigned int i=0; i<dims_[0]; i++) data_[i]=0.0;
 
+    globalDims_ = dims_[0];
+
 }
 
 
@@ -93,6 +95,8 @@ void Field1D::allocateDims(std::vector<unsigned int> dims, unsigned int mainDim,
     data_ = new double[ dims_[0] ];
     //! \todo{change to memset (JD)}
     for (unsigned int i=0; i<dims_[0]; i++) data_[i]=0.0;
+
+    globalDims_ = dims_[0];
 
 }
 

@@ -420,12 +420,12 @@ void SmileiMPI_Cart2D::sumField( Field* field )
                 istart = iNeighbor * ( n_elem[iDim]- oversize2[iDim] ) + (1-iNeighbor) * ( 0 );
                 ix = (1-iDim)*istart;
                 iy =    iDim *istart;
-                MPI_Isend( &(f2D->data_[ix][iy]), 1, ntype, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D, &(srequest[iDim][iNeighbor]) );
+                MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D, &(srequest[iDim][iNeighbor]) );
             } // END of Send
 
             if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
                 int tmp_elem = (buf[iDim][(iNeighbor+1)%2]).dims_[0]*(buf[iDim][(iNeighbor+1)%2]).dims_[1];
-                MPI_Irecv( &( (buf[iDim][(iNeighbor+1)%2]).data_[0][0] ), tmp_elem, MPI_DOUBLE, neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &(rrequest[iDim][(iNeighbor+1)%2]) );
+                MPI_Irecv( &( (buf[iDim][(iNeighbor+1)%2]).data_2D[0][0] ), tmp_elem, MPI_DOUBLE, neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &(rrequest[iDim][(iNeighbor+1)%2]) );
             } // END of Recv
 
         } // END for iNeighbor
@@ -455,7 +455,7 @@ void SmileiMPI_Cart2D::sumField( Field* field )
             if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
                 for (unsigned int ix=0 ; ix< (buf[iDim][(iNeighbor+1)%2]).dims_[0] ; ix++) {
                     for (unsigned int iy=0 ; iy< (buf[iDim][(iNeighbor+1)%2]).dims_[1] ; iy++)
-                        f2D->data_[ix0+ix][iy0+iy] += (buf[iDim][(iNeighbor+1)%2])(ix,iy);
+                        f2D->data_2D[ix0+ix][iy0+iy] += (buf[iDim][(iNeighbor+1)%2])(ix,iy);
                 }
             } // END if
 
@@ -495,7 +495,7 @@ void SmileiMPI_Cart2D::exchangeField( Field* field )
                 istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( 2*oversize[iDim]+1-(1-isDual[iDim]) );
                 ix = (1-iDim)*istart;
                 iy =    iDim *istart;
-                MPI_Isend( &(f2D->data_[ix][iy]), 1, ntype, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D, &(srequest[iDim][iNeighbor]) );
+                MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D, &(srequest[iDim][iNeighbor]) );
 
             } // END of Send
 
@@ -504,7 +504,7 @@ void SmileiMPI_Cart2D::exchangeField( Field* field )
                 istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - 1 ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
                 ix = (1-iDim)*istart;
                 iy =    iDim *istart;
-                MPI_Irecv( &(f2D->data_[ix][iy]), 1, ntype, neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &(rrequest[iDim][(iNeighbor+1)%2]));
+                MPI_Irecv( &(f2D->data_2D[ix][iy]), 1, ntype, neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &(rrequest[iDim][(iNeighbor+1)%2]));
 
             } // END of Recv
 

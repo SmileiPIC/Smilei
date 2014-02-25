@@ -67,8 +67,23 @@ public:
     std::vector<unsigned int> dims_;
     std::vector<unsigned int> isDual_;
 
-    virtual double& operator () (unsigned int i) =0;
-    virtual double operator () (unsigned int i) const =0;
+
+    //! All arrays may be viewed as a 1D array
+    //! Linearized diags
+    int globalDims_;
+    double* data_;
+    inline double& operator () (unsigned int i)
+    {
+        DEBUGEXEC(if (i>=globalDims_) ERROR("Out of limits & "<< i));
+        DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR("Not finite "<< i << " = " << data_[i]));
+        return data_[i];
+    };
+    inline double operator () (unsigned int i) const
+    {
+        DEBUGEXEC(if (i>=glbalDims_) ERROR("Out of limits "<< i));
+        DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR("Not finite "<< i << " = " << data_[i]));
+        return data_[i];
+    };
 
 protected:
 
