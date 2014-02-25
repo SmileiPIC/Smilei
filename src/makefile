@@ -6,6 +6,12 @@ HDF5_ROOT_DIR ?=
 CFLAGS  = -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include  #-Wstrict-aliasing
 LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5
 
+ifeq "$(HOSTNAME)" "poincareint01"
+    LDFLAGS += -lgpfs -lz
+endif
+
+
+
 all: release
 
 EXEC = smilei
