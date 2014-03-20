@@ -12,20 +12,20 @@ dim = 1d3v
 
 # order of interpolation
 #
-interpolation_order = 2 
+interpolation_order = 4 
 
 # SIMULATION TIME
 # res_time: temporal resolution (integer = number of time−steps within one normalization period)
 # sim_time: duration of the simulation in units of the normalization period 
 #
-res_time = 125
+res_time = 10
 sim_time = 300.0
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
 # sim_length: length of the simulation in units of the normalization wavelength 
 #
-res_space  = 100
+res_space  = 5
 sim_length = 120.0
 
 
@@ -65,7 +65,7 @@ species
         species_type = ion
         initialization_type = maxwell-juettner
         ionization_model = none
-        n_part_per_cell = 2500
+        n_part_per_cell = 2
         c_part_max = 1.0
         mass = 1836.0
         charge = 1.0
@@ -82,7 +82,7 @@ species
         species_type = eon
         initialization_type = maxwell-juettner
         ionization_model = none
-        n_part_per_cell = 2500
+        n_part_per_cell = 2
         c_part_max = 1.0
         mass = 1.0
         charge = -1.0

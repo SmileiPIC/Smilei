@@ -212,7 +212,7 @@ int main (int argc, char* argv[])
         // (2) move the particle
         // (3) calculate the currents (charge conserving method)
         for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-            vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi);
+//            vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi);
             smpi->exchangeParticles(vecSpecies[ispec], ispec, &params);
             if (params.nDim_field == 1) // sort not implemented in 2D
                 vecSpecies[ispec]->sort_part(params.cell_length[params.nDim_particle-1]);
