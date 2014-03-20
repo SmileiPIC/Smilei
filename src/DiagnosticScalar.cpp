@@ -171,7 +171,7 @@ void DiagnosticScalar::compute() {
 
 void DiagnosticScalar::write(int itime) {
     if(smpi_->isMaster()) {
-        if (fout.tellp()==0) {
+        if (fout.tellp()==ifstream::pos_type(0)) {
             fout << "# " << 1 << " time" << endl;
             unsigned int i=2;
             for(vector<pair<string,double> >::iterator iter = out_list.begin(); iter !=out_list.end(); iter++) {
