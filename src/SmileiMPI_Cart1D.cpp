@@ -69,7 +69,7 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
 
     for (int iDim=0 ; iDim<ndims_ ; iDim++) {
         MPI_Cart_shift( SMILEI_COMM_1D, iDim, 1, &(neighbor_[iDim][0]), &(neighbor_[iDim][1]) );
-        //PMESSAGE ( 0, smilei_rk, "Neighbors of process in direction " << iDim << " : " << neighbor_[iDim][0] << " - " << neighbor_[iDim][1]  );
+        PMESSAGE ( 0, smilei_rk, "Neighbors of process in direction " << iDim << " : " << neighbor_[iDim][0] << " ; " << neighbor_[iDim][1] << " Null :" << MPI_PROC_NULL );
     }
 
 
@@ -182,7 +182,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
         if ( (neighbor_[0][0]!=MPI_PROC_NULL) && (neighbor_[0][1]!=MPI_PROC_NULL) ) {
             //Send-receive
             MPI_Sendrecv( &n_part_send, 1, MPI_INT, neighbor_[0][iNeighbor], 0, &buff_index_recv_sz[0][(iNeighbor+1)%2], 1, MPI_INT, neighbor_[0][(iNeighbor+1)%2], 0, SMILEI_COMM_1D,&Stat);
-        } else if (neighbor_[0][iNeighbor]!=MPI_PROC_NULL) {
+		} else if (neighbor_[0][iNeighbor]!=MPI_PROC_NULL) {
             //Send
             MPI_Send( &n_part_send, 1, MPI_INT, neighbor_[0][iNeighbor], 0, SMILEI_COMM_1D);
         } else if (neighbor_[0][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
@@ -208,21 +208,20 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
             for (int iPart=0 ; iPart<n_part_send ; iPart++) {
                 cuParticles.cp_particle(buff_index_send[0][iNeighbor][iPart], partVectorSend[0][iNeighbor]);
             }
-            partVectorRecv[0][(iNeighbor+1)%2].initialize( buff_index_recv_sz[0][(iNeighbor+1)%2], cuParticles.dimension());
-
-            MPI_Sendrecv( &((partVectorSend[0][iNeighbor]).position(0,0)), n_part_send, MPI_DOUBLE, neighbor_[0][iNeighbor], 0,
-                          &((partVectorRecv[0][(iNeighbor+1)%2]).position(0,0)), n_part_recv, MPI_DOUBLE,  neighbor_[0][(iNeighbor+1)%2], 0, SMILEI_COMM_1D, &Stat);
-            MPI_Sendrecv( &((partVectorSend[0][iNeighbor]).momentum(0,0)), n_part_send, MPI_DOUBLE, neighbor_[0][iNeighbor], 0,
-                          &((partVectorRecv[0][(iNeighbor+1)%2]).momentum(0,0)), n_part_recv, MPI_DOUBLE,  neighbor_[0][(iNeighbor+1)%2], 0, SMILEI_COMM_1D, &Stat);
-            MPI_Sendrecv( &((partVectorSend[0][iNeighbor]).momentum(1,0)), n_part_send, MPI_DOUBLE, neighbor_[0][iNeighbor], 0,
-                          &((partVectorRecv[0][(iNeighbor+1)%2]).momentum(1,0)), n_part_recv, MPI_DOUBLE,  neighbor_[0][(iNeighbor+1)%2], 0, SMILEI_COMM_1D, &Stat);
-            MPI_Sendrecv( &((partVectorSend[0][iNeighbor]).momentum(2,0)), n_part_send, MPI_DOUBLE, neighbor_[0][iNeighbor], 0,
-                          &((partVectorRecv[0][(iNeighbor+1)%2]).momentum(2,0)), n_part_recv, MPI_DOUBLE,  neighbor_[0][(iNeighbor+1)%2], 0, SMILEI_COMM_1D, &Stat);
-            MPI_Sendrecv( &((partVectorSend[0][iNeighbor]).weight(0)), n_part_send, MPI_DOUBLE, neighbor_[0][iNeighbor], 0,
-                          &((partVectorRecv[0][(iNeighbor+1)%2]).weight(0)), n_part_recv, MPI_DOUBLE,  neighbor_[0][(iNeighbor+1)%2], 0, SMILEI_COMM_1D, &Stat);
-            MPI_Sendrecv( &((partVectorSend[0][iNeighbor]).charge(0)), n_part_send, MPI_SHORT, neighbor_[0][iNeighbor], 0,
-                          &((partVectorRecv[0][(iNeighbor+1)%2]).charge(0)), n_part_recv, MPI_SHORT,  neighbor_[0][(iNeighbor+1)%2], 0, SMILEI_COMM_1D, &Stat);
-
+            partVectorRecv[0][(iNeighbor+1)%2].initialize( n_part_recv, cuParticles.dimension());
+			MPI_Sendrecv(&((partVectorSend[0][iNeighbor      ]).position(0,0)),	n_part_send, MPI_DOUBLE, neighbor_[0][iNeighbor      ], 0,
+						 &((partVectorRecv[0][(iNeighbor+1)%2]).position(0,0)),	n_part_recv, MPI_DOUBLE, neighbor_[0][(iNeighbor+1)%2], 0, SMILEI_COMM_1D, &Stat);
+			MPI_Sendrecv(&((partVectorSend[0][iNeighbor      ]).momentum(0,0)),	n_part_send, MPI_DOUBLE, neighbor_[0][iNeighbor      ], 1,
+						 &((partVectorRecv[0][(iNeighbor+1)%2]).momentum(0,0)),	n_part_recv, MPI_DOUBLE, neighbor_[0][(iNeighbor+1)%2], 1, SMILEI_COMM_1D, &Stat);
+			MPI_Sendrecv(&((partVectorSend[0][iNeighbor      ]).momentum(1,0)),	n_part_send, MPI_DOUBLE, neighbor_[0][iNeighbor      ], 2,
+						 &((partVectorRecv[0][(iNeighbor+1)%2]).momentum(1,0)),	n_part_recv, MPI_DOUBLE, neighbor_[0][(iNeighbor+1)%2], 2, SMILEI_COMM_1D, &Stat);
+			MPI_Sendrecv(&((partVectorSend[0][iNeighbor      ]).momentum(2,0)),	n_part_send, MPI_DOUBLE, neighbor_[0][iNeighbor      ], 3,
+						 &((partVectorRecv[0][(iNeighbor+1)%2]).momentum(2,0)),	n_part_recv, MPI_DOUBLE, neighbor_[0][(iNeighbor+1)%2], 3, SMILEI_COMM_1D, &Stat);
+			MPI_Sendrecv(&((partVectorSend[0][iNeighbor      ]).weight(0)),		n_part_send, MPI_DOUBLE, neighbor_[0][iNeighbor      ], 4,
+						 &((partVectorRecv[0][(iNeighbor+1)%2]).weight(0)),		n_part_recv, MPI_DOUBLE, neighbor_[0][(iNeighbor+1)%2], 4, SMILEI_COMM_1D, &Stat);
+			MPI_Sendrecv(&((partVectorSend[0][iNeighbor      ]).charge(0)),		n_part_send, MPI_SHORT,  neighbor_[0][iNeighbor      ], 5,
+						 &((partVectorRecv[0][(iNeighbor+1)%2]).charge(0)),		n_part_recv, MPI_SHORT,  neighbor_[0][(iNeighbor+1)%2], 5, SMILEI_COMM_1D, &Stat);
+			
         } else if ( (neighbor_[0][iNeighbor]!=MPI_PROC_NULL) && (n_part_send!=0) ) {
             //Send
             for (int iPart=0 ; iPart<n_part_send ; iPart++) {

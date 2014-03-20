@@ -7,6 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include "Tools.h"
+#include <cmath>
 
 //! Structure containing the fields at a given position (e.g. at a Particle position)
 struct LocalFields
@@ -70,7 +71,7 @@ public:
 
     //! All arrays may be viewed as a 1D array
     //! Linearized diags
-    int globalDims_;
+    unsigned int globalDims_;
     double* data_;
     inline double& operator () (unsigned int i)
     {
@@ -80,7 +81,7 @@ public:
     };
     inline double operator () (unsigned int i) const
     {
-        DEBUGEXEC(if (i>=glbalDims_) ERROR("Out of limits "<< i));
+        DEBUGEXEC(if (i>=globalDims_) ERROR("Out of limits "<< i));
         DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR("Not finite "<< i << " = " << data_[i]));
         return data_[i];
     };

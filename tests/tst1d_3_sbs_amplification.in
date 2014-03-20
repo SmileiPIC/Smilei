@@ -12,7 +12,7 @@ dim = 1d3v
 
 # order of interpolation
 #
-interpolation_order = 4 
+interpolation_order = 2
 
 # SIMULATION TIME
 # res_time: temporal resolution (integer = number of time−steps within one normalization period)
