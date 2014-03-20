@@ -161,7 +161,7 @@ void Projector1D4Order::operator() (Field* Jx, Field* Jy, Field* Jz, Field* rho,
 // ---------------------------------------------------------------------------------------------------------------------
 void Projector1D4Order::operator() (Field* rho, Particles &particles, int ipart)
 {
-    ERROR("Not yet defined for 1D 4th order");
+    //WARNING("Not yet defined for 1D 4th order");
 
 } // END Project global current charge
 
@@ -181,7 +181,7 @@ void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
 // ---------------------------------------------------------------------------------------------------------------------
 void Projector1D4Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particles &particles, int ipart, LocalFields Jion)
 {
-    ERROR("Projection of ionization current not yet defined for 1D 4th order");
+    WARNING("Projection of ionization current not yet defined for 1D 4th order");
 
 } // END Project global current densities (ionize)
 
