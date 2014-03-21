@@ -193,7 +193,15 @@ public:
 
     //! Oversize domain to exchange less particles
     std::vector<unsigned int> oversize;
+	
+	//! Timestep to dump everything
+	unsigned int dump_step;
 
+	//! Human minutes to dump everything
+	unsigned int dump_minutes;
+
+	//! restart namelist
+	bool restart;
 };
 
 #endif

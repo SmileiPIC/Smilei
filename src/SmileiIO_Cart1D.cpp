@@ -134,7 +134,6 @@ void SmileiIO_Cart1D::writeFieldsSingleFileTime( Field* field, hid_t group_id )
 
 } // END writeFieldsSingleFileTime
 
-
 //! this method writes a fild on an hdf5 file should be used just for debug
 void SmileiIO_Cart1D::write( Field* field )
 {

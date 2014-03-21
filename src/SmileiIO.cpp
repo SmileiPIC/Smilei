@@ -81,6 +81,16 @@ SmileiIO::SmileiIO( PicParams* params, SmileiMPI* smpi )
     H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);
 
 
+	if(params->restart) {		
+		ostringstream nameDump("");
+		nameDump << "dump-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
+		dump_id = H5Fopen( nameDump.str().c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+	} else if(params->dump_step!=0 || params->dump_minutes!=0.0) {
+		ostringstream nameDump("");
+		nameDump << "dump-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
+		dump_id = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+	}
+		
 }
 
 SmileiIO::~SmileiIO()
@@ -178,3 +188,87 @@ void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI*
     } // End for ispec
 
 }
+
+void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi  ) { 
+	DEBUG("here " << dump_id << " " << smpi->getRank());
+		
+	hsize_t dims[] = {1};
+	hid_t sid = H5Screate_simple(1, dims, NULL);
+	
+	hid_t aid = H5Acreate(dump_id, "dump_step", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
+	H5Awrite(aid, H5T_NATIVE_UINT, &itime);	
+	H5Aclose(aid);
+
+	dumpFieldsPerProc( EMfields->Ex_);
+    dumpFieldsPerProc( EMfields->Ey_);
+    dumpFieldsPerProc( EMfields->Ez_);
+    dumpFieldsPerProc( EMfields->Bx_);
+    dumpFieldsPerProc( EMfields->By_);
+    dumpFieldsPerProc( EMfields->Bz_);
+    dumpFieldsPerProc( EMfields->Bx_m);
+    dumpFieldsPerProc( EMfields->By_m);
+    dumpFieldsPerProc( EMfields->Bz_m);
+	
+    H5Fflush( dump_id, H5F_SCOPE_GLOBAL );
+	
+	H5Fclose( dump_id );
+	
+};
+
+void SmileiIO::dumpFieldsPerProc(Field* field)
+{
+	hsize_t dims[1]={field->globalDims_};
+	hid_t space_id = H5Screate_simple (1, dims, NULL);
+	
+	hid_t dset_id = H5Dcreate (dump_id, field->name.c_str(), H5T_NATIVE_DOUBLE, space_id, H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
+	
+	H5Dwrite(dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &field->data_[0]);
+	H5Dclose (dset_id);
+	
+	int smilei_rk;
+	MPI_Comm_rank( MPI_COMM_WORLD, &smilei_rk );
+	
+	H5Sclose(space_id);
+	DEBUG(smilei_rk);
+}
+
+
+void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi  ) { 
+	
+	DEBUG("here " << dump_id << " " << smpi->getRank());
+	
+	hid_t aid = H5Aopen(dump_id, "dump_step", H5T_NATIVE_UINT);
+	H5Aread(aid, H5T_NATIVE_UINT, &itime);	
+	H5Aclose(aid);
+	
+	restartFieldsPerProc( EMfields->Ex_);
+    restartFieldsPerProc( EMfields->Ey_);
+    restartFieldsPerProc( EMfields->Ez_);
+    restartFieldsPerProc( EMfields->Bx_);
+    restartFieldsPerProc( EMfields->By_);
+    restartFieldsPerProc( EMfields->Bz_);
+    restartFieldsPerProc( EMfields->Bx_m);
+    restartFieldsPerProc( EMfields->By_m);
+    restartFieldsPerProc( EMfields->Bz_m);
+
+	H5Fclose( dump_id );
+};
+
+void SmileiIO::restartFieldsPerProc(Field* field)
+{
+	hsize_t dims[1]={field->globalDims_};
+	hid_t space_id = H5Screate_simple (1, dims, NULL);
+	
+	hid_t dset_id = H5Dopen (dump_id, field->name.c_str(),H5P_DEFAULT);
+	
+	H5Dread(dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &field->data_[0]);
+	H5Dclose (dset_id);
+	
+	int smilei_rk;
+	MPI_Comm_rank( MPI_COMM_WORLD, &smilei_rk );
+	
+	H5Sclose(space_id);
+	DEBUG(smilei_rk);
+}
+
+

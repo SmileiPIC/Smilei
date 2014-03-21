@@ -36,6 +36,8 @@
 
 #include <unistd.h>
 
+#include <sys/stat.h>
+
 using namespace std;
 
 
@@ -161,17 +163,11 @@ int main (int argc, char* argv[])
     EMfields->solvePoisson(smpi);
 
 
-    // ------------------------------------------------------------------------
-    // Initialize the simulation times time_prim at n=0 and time_dual at n=-1/2
-    // ------------------------------------------------------------------------
-
-    // time at integer time-steps (primal grid)
-    double time_prim = 0.;
-    // time at half-integer time-steps (dual grid)
-    double time_dual = 0.5 * params.timestep;
 
     // run diagnostics at time-step 0
-    diags.runAllDiags(0, EMfields, vecSpecies);
+	if (!params.restart) {
+		diags.runAllDiags(0, EMfields, vecSpecies);
+	}
     // temporary EM fields dump in Fields.h5
     sio->writeAllFieldsSingleFileTime( EMfields, 0 );
     // temporary particle dump at time 0
@@ -183,10 +179,26 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     if ( smpi->isMaster() ) MESSAGE(0,"Time-Loop is started: number of time-steps n_time =" << params.n_time);
     // t1-t0  = elapsed time in simulation time loop
-    double t0, t1;
-    t0 = MPI_Wtime();
 
-    for (unsigned int itime=1 ; itime <= params.n_time ; itime++) {
+	
+	unsigned int stepStart=0, stepStop=params.n_time;
+	
+	// reading from dumped file the restart values
+	if (params.restart) {
+		sio->restartAll( EMfields,  stepStart, vecSpecies, smpi);
+	}
+
+    // ------------------------------------------------------------------------
+    // Initialize the simulation times time_prim at n=0 and time_dual at n=-1/2
+    // ------------------------------------------------------------------------
+	
+    // time at integer time-steps (primal grid)
+    double time_prim = stepStart * params.timestep;
+    // time at half-integer time-steps (dual grid)
+    double time_dual = (stepStart +0.5) * params.timestep;
+	
+	
+    for (unsigned int itime=stepStart+1 ; itime <= stepStop ; itime++) {
 
         // calculate new times
         // -------------------
@@ -195,10 +207,9 @@ int main (int argc, char* argv[])
 
         // send message at given time-steps
         // --------------------------------
-
-        if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) )
-            MESSAGE(1,"Time (dual)= " << time_dual << " it = " << itime  << " / " << params.n_time);
-
+		double timElapsed=smpiData->time_seconds();
+		if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) )
+            MESSAGE(1,"Time (dual)= " << time_dual << " it = " << itime  << "/" << params.n_time << " sec: " << timElapsed );
 
         // put density and currents to 0 + save former density
         // ---------------------------------------------------
@@ -227,6 +238,7 @@ int main (int argc, char* argv[])
         // call the various diagnostics
         // ----------------------------
 
+		
         // run all diagnostics
         diags.runAllDiags(itime, EMfields, vecSpecies);
 
@@ -238,12 +250,24 @@ int main (int argc, char* argv[])
         if  ((diag_params.particleDump_every != 0) && (itime % diag_params.particleDump_every == 0))
             sio->writePlasma( vecSpecies, time_dual, smpi );
 
+		if  ( (params.dump_step != 0 && itime == params.dump_step ) || 
+			  (params.dump_minutes != 0.0 && timElapsed/60.0 > params.dump_minutes) || 
+				smpiData->fileStopCreated()
+			 ) {
+            sio->dumpAll( EMfields, itime,  vecSpecies, smpi );
+			params.dump_step = 0;
+			params.dump_minutes=0.0;
+			if ( smpi->isMaster() ) MESSAGE(0, "End time loop, time dual = " << time_dual);
+			break;
+		}
+		
     }//END of the time loop
 
     smpi->barrier();
-    t1 = MPI_Wtime();
+
     if ( smpi->isMaster() ) MESSAGE(0, "End time loop, time dual = " << time_dual);
-    if ( smpi->isMaster() ) MESSAGE(0, "Time in time loop : " << t1-t0 );
+	double timElapsed=smpiData->time_seconds();
+    if ( smpi->isMaster() ) MESSAGE(0, "Time in time loop : " << timElapsed );
     // ------------------------------------------------------------------
     //                      HERE ENDS THE PIC LOOP
     // ------------------------------------------------------------------

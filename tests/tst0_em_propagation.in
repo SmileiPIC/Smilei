@@ -12,14 +12,14 @@ print_every = 100
 dim = 1d3v
 
 # order of interpolation
-interpolation_order =2 
+interpolation_order = 2 
 
 # SIMULATION TIME
 # res_time: temporal resolution (integer = number of time−steps within one normalization period)
 # sim_time: duration of the simulation in units of the normalization period 
 #
-res_time = 20
-sim_time = 10.0
+res_time = 1000
+sim_time = 5.0
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
@@ -64,8 +64,7 @@ end
 
 diagnostic probe0d
 	every = 1
-	x = 0.0 0.1 3.0 6.0 9.0 10.0
-	
+	x = 0.0 0.1 1.0 6.0 9.0 10.0	
 end
 
 diagnostic probe1d
@@ -82,6 +81,9 @@ diagnostic probe1d
 	
 end
 
+dump_step = 2500
+
+# dump_minutes = 1
 
 # random_seed = 13121977
 

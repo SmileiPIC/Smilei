@@ -49,6 +49,21 @@ public:
     //! Write field on its own file (debug)
     virtual void write( Field* field ) = 0;
 
+	//! Id of "dump.h5", contains everything
+    hid_t  dump_id;
+
+	//! dump everything to file per processor
+    void dumpAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi  );
+	
+	//! dump field per proc
+	void dumpFieldsPerProc( Field* field);
+
+	//! restart everything to file per processor
+    void restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi  );
+
+	//! restart field per proc
+	void restartFieldsPerProc( Field* field);
+	
 private:
 };
 

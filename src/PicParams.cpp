@@ -4,10 +4,16 @@
 
 using namespace std;
 
-PicParams::PicParams(InputData &ifile) {
+PicParams::PicParams(InputData &ifile) : restart(false) {
     //open and parse the input data file
 
-    ifile.extract("res_time", res_time);
+	ifile.extract("dump_step", dump_step);
+	
+	ifile.extract("dump_minutes", dump_minutes);
+	
+	ifile.extract("restart", restart);
+	
+	ifile.extract("res_time", res_time);
     ifile.extract("sim_time", sim_time);
 
     ifile.extract("dim", geometry);

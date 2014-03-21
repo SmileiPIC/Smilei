@@ -87,6 +87,12 @@ public:
     int smilei_sz;
     int smilei_rk;
 
+	//! function that returns elapsed time from creator (uses private var time_reference)
+	double time_seconds();
+	
+	//! function that checks if file named "stop" exists;
+	bool fileStopCreated();
+	
 protected:
     MPI_Comm SMILEI_COMM_WORLD;
 
@@ -109,8 +115,15 @@ protected:
     std::vector<double> min_local;
     std::vector<double> max_local;
 
-
 private:
+	
+	//! time of the constructor
+	double time_reference;
+	
+	void initDumpCases();
+	
+	bool stop_file_seen_since_last_check;
+	
     void bcast( std::string& val );
     void bcast( short &val );
     void bcast( unsigned int &val );
