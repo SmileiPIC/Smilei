@@ -189,14 +189,14 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector
 	nameDump << "dump-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
 	fid = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 	
-	hid_t aid  = H5Screate(H5S_SCALAR);
-    hid_t tid = H5Tcopy(H5T_C_S1);
+	sid  = H5Screate(H5S_SCALAR);
+    tid = H5Tcopy(H5T_C_S1);
     H5Tset_size(tid, input_data.namelist.size());
     H5Tset_strpad(tid,H5T_STR_NULLTERM);
-    hid_t attr3 = H5Acreate(fid, "Namelist", tid, aid3, H5P_DEFAULT, H5P_DEFAULT);
-    H5Awrite(attr3, tid, input_data.namelist.c_str());	
-    H5Aclose(attr3);
-    H5Sclose(aid3);
+    aid = H5Acreate(fid, "Namelist", tid, sid, H5P_DEFAULT, H5P_DEFAULT);
+    H5Awrite(aid, tid, input_data.namelist.c_str());	
+    H5Aclose(aid);
+    H5Sclose(sid);
     H5Tclose(tid);
 	
 	hsize_t dims[1] = {1};
