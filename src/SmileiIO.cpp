@@ -199,8 +199,8 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector
     H5Sclose(sid);
     H5Tclose(tid);
 	
-	hsize_t dims[1] = {1};
-	sid = H5Screate_simple(1, dims, NULL);	
+	hsize_t dims1D[1] = {1};
+	sid = H5Screate_simple(1, dims1D, NULL);	
 	aid = H5Acreate(fid, "dump_step", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
 	H5Awrite(aid, H5T_NATIVE_UINT, &itime);
 	H5Sclose(sid);
@@ -219,12 +219,12 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector
 	
     H5Fflush( fid, H5F_SCOPE_GLOBAL );
 	
-	sid = H5Screate_simple(1, dims, NULL);
+	sid = H5Screate_simple(1, dims1D, NULL);
 	aid = H5Acreate(fid, "species", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
 	unsigned int vecSpeciesSize=vecSpecies.size();
 	H5Awrite(aid, H5T_NATIVE_UINT, &vecSpeciesSize);
-	H5Sclose(sid);
 	H5Aclose(aid);
+	H5Sclose(sid);
 	
 	
     for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
@@ -232,44 +232,74 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector
 		name << setfill('0') << setw(2) << ispec;
 		string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->name_str;
 		gid = H5Gcreate(fid, groupName.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-		
-		hsize_t dimsPart[1] = {vecSpecies[ispec]->getNbrOfParticles()};
-		
-		for (unsigned int i=0; i<vecSpecies[ispec]->particles.Position.size(); i++) {
-			ostringstream namePos("");
-			namePos << "Position-" << i;
-			sid = H5Screate_simple(1, dimsPart, NULL);
-			did = H5Dcreate(gid, namePos.str().c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-			H5Dwrite(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Position[i][0]);
-			H5Dclose(did);
-			H5Sclose(sid);
-		}
-		
-		for (unsigned int i=0; i<vecSpecies[ispec]->particles.Momentum.size(); i++) {
-			ostringstream namePos("");
-			namePos << "Momentum-" << i;
-			sid = H5Screate_simple(1, dimsPart, NULL);
-			did = H5Dcreate(gid, namePos.str().c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-			H5Dwrite(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Momentum[i][0]);
-			H5Dclose(did);
-			H5Sclose(sid);
-		}
-		
-		sid = H5Screate_simple(1, dimsPart, NULL);
-		did = H5Dcreate(gid, "Weight", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-		H5Dwrite(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Weight[0]);
-		H5Dclose(did);
+				
+		sid = H5Screate_simple(1, dims1D, NULL);
+		aid = H5Acreate(gid, "partCapacity", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
+		unsigned int partCapacity=vecSpecies[ispec]->particles.capacity();
+		H5Awrite(aid, H5T_NATIVE_UINT, &partCapacity);
+		H5Aclose(aid);
+		H5Sclose(sid);
+
+		sid = H5Screate_simple(1, dims1D, NULL);
+		aid = H5Acreate(gid, "partSize", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
+		unsigned int partSize=vecSpecies[ispec]->particles.size();
+		H5Awrite(aid, H5T_NATIVE_UINT, &partSize);
+		H5Aclose(aid);
 		H5Sclose(sid);
 		
-		sid = H5Screate_simple(1, dimsPart, NULL);
-		did = H5Dcreate(gid, "Charge", H5T_NATIVE_SHORT, sid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-		H5Dwrite(did, H5T_NATIVE_SHORT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Charge[0]);
-		H5Dclose(did);
-		H5Sclose(sid);
+		if (partSize>0) {
+			hsize_t dimsPart[1] = {vecSpecies[ispec]->getNbrOfParticles()};
+			
+			for (unsigned int i=0; i<vecSpecies[ispec]->particles.Position.size(); i++) {
+				ostringstream namePos("");
+				namePos << "Position-" << i;
+				sid = H5Screate_simple(1, dimsPart, NULL);
+				did = H5Dcreate(gid, namePos.str().c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+				H5Dwrite(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Position[i][0]);
+				H5Dclose(did);
+				H5Sclose(sid);
+			}
+			
+			for (unsigned int i=0; i<vecSpecies[ispec]->particles.Momentum.size(); i++) {
+				ostringstream namePos("");
+				namePos << "Momentum-" << i;
+				sid = H5Screate_simple(1, dimsPart, NULL);
+				did = H5Dcreate(gid, namePos.str().c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+				H5Dwrite(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Momentum[i][0]);
+				H5Dclose(did);
+				H5Sclose(sid);
+			}
+			
+			sid = H5Screate_simple(1, dimsPart, NULL);
+			did = H5Dcreate(gid, "Weight", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			H5Dwrite(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Weight[0]);
+			H5Dclose(did);
+			H5Sclose(sid);
+			
+			sid = H5Screate_simple(1, dimsPart, NULL);
+			did = H5Dcreate(gid, "Charge", H5T_NATIVE_SHORT, sid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			H5Dwrite(did, H5T_NATIVE_SHORT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Charge[0]);
+			H5Dclose(did);
+			H5Sclose(sid);
+
+
+			hsize_t dimsbmin[1] = {vecSpecies[ispec]->bmin.size()};
+			sid = H5Screate_simple(1, dimsbmin, NULL);
+			did = H5Dcreate(gid, "bmin", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			H5Dwrite(did, H5T_NATIVE_UINT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->bmin[0]);
+			H5Dclose(did);
+			H5Sclose(sid);
+
+			hsize_t dimsbmax[1] = {vecSpecies[ispec]->bmax.size()};
+			sid = H5Screate_simple(1, dimsbmax, NULL);
+			did = H5Dcreate(gid, "bmax", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			H5Dwrite(did, H5T_NATIVE_UINT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->bmax[0]);
+			H5Dclose(did);
+			H5Sclose(sid);
 		
+		}
 		H5Gclose(gid);
     }
-	
 	H5Fclose( fid );
 	
 };
@@ -323,45 +353,68 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
 		string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->name_str;
 		gid = H5Gopen(fid, groupName.c_str(),H5P_DEFAULT);
 		
-		for (unsigned int i=0; i<nDim_particle; i++) {
-			ostringstream namePos("");
-			namePos << "Position-" << i;
-			did = H5Dopen(gid, namePos.str().c_str(), H5P_DEFAULT);
-			sid = H5Dget_space(did);
-			H5Sget_simple_extent_dims(sid,&npart_effective,NULL);
-			vecSpecies[ispec]->particles.initialize(npart_effective, nDim_particle);
-			H5Dread(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Position[i][0]);
-			H5Sclose(sid);
+		aid = H5Aopen(gid, "partCapacity", H5T_NATIVE_UINT);
+		unsigned int partCapacity=0;
+		H5Aread(aid, H5T_NATIVE_UINT, &partCapacity);
+		H5Aclose(aid);
+		vecSpecies[ispec]->particles.reserve(partCapacity,nDim_particle);		
+
+		aid = H5Aopen(gid, "partSize", H5T_NATIVE_UINT);
+		unsigned int partSize=0;
+		H5Aread(aid, H5T_NATIVE_UINT, &partSize);
+		H5Aclose(aid);	
+		vecSpecies[ispec]->particles.initialize(partSize,nDim_particle);		
+		
+		
+		DEBUG("----------->>" << nameDump.str() << " " << ispec << " " << nameDump.str() << " " << partSize << " " << partCapacity);
+		
+		if (partSize>0) {
+			for (unsigned int i=0; i<nDim_particle; i++) {
+				ostringstream namePos("");
+				namePos << "Position-" << i;
+				did = H5Dopen(gid, namePos.str().c_str(), H5P_DEFAULT);
+				H5Dread(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Position[i][0]);
+				H5Dclose(did);
+			}
+			
+			for (unsigned int i=0; i<nDim_particle; i++) {
+				ostringstream namePos("");
+				namePos << "Momentum-" << i;
+				did = H5Dopen(gid, namePos.str().c_str(), H5P_DEFAULT);
+				H5Dread(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Momentum[i][0]);
+				H5Dclose(did);
+			}
+			
+			did = H5Dopen(gid, "Weight", H5P_DEFAULT);
+			H5Dread(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Weight[0]);
 			H5Dclose(did);
+			
+			did = H5Dopen(gid, "Charge", H5P_DEFAULT);
+			H5Dread(did, H5T_NATIVE_SHORT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Charge[0]);
+			H5Dclose(did);
+
+			did = H5Dopen(gid, "bmin", H5P_DEFAULT);
+			sid = H5Dget_space(did);
+			
+			int ndims=H5Sget_simple_extent_ndims(sid);
+			vector<hsize_t> dims(ndims);
+			H5Sget_simple_extent_dims(sid,&dims[0],NULL);
+			
+			vecSpecies[ispec]->bmin.resize(dims[0]);
+			H5Dread(did, H5T_NATIVE_UINT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->bmin[0]);
+			H5Dclose(did);
+			H5Sclose(sid);
+			
+			did = H5Dopen(gid, "bmax", H5P_DEFAULT);
+			sid = H5Dget_space(did);
+			H5Sget_simple_extent_dims(sid,&dims[0],NULL);
+			
+			vecSpecies[ispec]->bmin.resize(dims[0]);
+			H5Dread(did, H5T_NATIVE_UINT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->bmax[0]);
+			H5Dclose(did);
+			H5Sclose(sid);
 		}
 		
-		for (unsigned int i=0; i<nDim_particle; i++) {
-			ostringstream namePos("");
-			namePos << "Momentum-" << i;
-			did = H5Dopen(gid, namePos.str().c_str(), H5P_DEFAULT);
-			sid = H5Dget_space(did);
-			H5Sget_simple_extent_dims(sid,&npart_effective,NULL);
-			vecSpecies[ispec]->particles.initialize(npart_effective, nDim_particle);
-			H5Dread(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Momentum[i][0]);
-			H5Sclose(sid);
-			H5Dclose(did);
-		}
-		
-		did = H5Dopen(gid, "Weight", H5P_DEFAULT);
-		sid = H5Dget_space(did);
-		H5Sget_simple_extent_dims(sid,&npart_effective,NULL);
-		vecSpecies[ispec]->particles.initialize(npart_effective, nDim_particle);
-		H5Dread(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Weight[0]);
-		H5Sclose(sid);
-		H5Dclose(did);
-		
-		did = H5Dopen(gid, "Charge", H5P_DEFAULT);
-		sid = H5Dget_space(did);
-		H5Sget_simple_extent_dims(sid,&npart_effective,NULL);
-		vecSpecies[ispec]->particles.initialize(npart_effective, nDim_particle);
-		H5Dread(did, H5T_NATIVE_SHORT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Charge[0]);
-		H5Sclose(sid);
-		H5Dclose(did);
 		
 		H5Gclose(gid);
     }

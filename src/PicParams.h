@@ -58,9 +58,6 @@ struct SpeciesStructure {
     //! coefficient on the maximum number of particles for the species
     double c_part_max;
 
-    //! maximum number of particles for the species
-    unsigned int n_part_max;
-
     //! mass [electron mass]
     double mass;
 

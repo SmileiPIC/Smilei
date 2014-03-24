@@ -36,8 +36,6 @@
 
 #include <unistd.h>
 
-#include <sys/stat.h>
-
 using namespace std;
 
 
@@ -148,6 +146,8 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------------------------
     // vector of Species (virtual)
     vector<Species*> vecSpecies = SpeciesFactory::createVector(params, smpi);
+	
+	smpi->barrier();
 
 	unsigned int stepStart=0, stepStop=params.n_time;
 	
@@ -156,7 +156,6 @@ int main (int argc, char* argv[])
 		MESSAGE(2, "READING fields and particles");
 		DEBUG(vecSpecies.size());
 		sio->restartAll( EMfields,  stepStart, vecSpecies, smpi, params, input_data);
-		DEBUG(vecSpecies.size());
 	} else {
 		// -----------------------------------
 		// Initialize the electromagnetic fields
@@ -164,6 +163,7 @@ int main (int argc, char* argv[])
 		// Init rho and J by projecting all particles of subdomain
 		EMfields->initRhoJ(vecSpecies, Proj);
 		// Sum rho and J on ghost domains
+		
 		smpi->sumRhoJ( EMfields );
 		// Init electric field (Ex/1D, + Ey/2D)
 		EMfields->solvePoisson(smpi);
@@ -175,7 +175,6 @@ int main (int argc, char* argv[])
 		// temporary particle dump at time 0
 		sio->writePlasma( vecSpecies, 0., smpi );
 	}
-
     // ------------------------------------------------------------------------
     // Initialize the simulation times time_prim at n=0 and time_dual at n=-1/2
     // ------------------------------------------------------------------------
@@ -221,7 +220,8 @@ int main (int argc, char* argv[])
             if (params.nDim_field == 1) // sort not implemented in 2D
                 vecSpecies[ispec]->sort_part(params.cell_length[params.nDim_particle-1]);
         }
-	//!\todo To simplify : sum global and per species densities
+
+		//!\todo To simplify : sum global and per species densities
         smpi->sumRhoJ( EMfields );
         EMfields->computeTotalRhoJ();
 
@@ -255,6 +255,7 @@ int main (int argc, char* argv[])
 			if (params.exit_after_dump) break;
 		}
 		
+
     }//END of the time loop
 
     smpi->barrier();

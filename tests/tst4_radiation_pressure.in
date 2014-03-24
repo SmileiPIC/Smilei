@@ -1,8 +1,5 @@
 # SIMULATION PARAMETERS
 
-# print_every 
-print_every = 100
-
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
 #      2d3v = cartesian grid with 2d in space + 3d in velocity
@@ -67,6 +64,8 @@ species
 	dynamics_type = norm
 	time_frozen = 0.0
 	radiating = false
+	bc_part_type = refl
+	ionization_model = none
 end
 
 species
@@ -82,6 +81,8 @@ species
 	dynamics_type = norm	
 	time_frozen = 0.0
 	radiating = false
+	bc_part_type = refl
+	ionization_model = none
 end
 
 # LASER PROPERTIES
@@ -100,5 +101,15 @@ laser
 	time_profile = constant
 	#double_params = 10.0
 end	
+
+# print_every 
+print_every = 100
+
+diagnostic scalar
+	every = 1
+end
+
+dump_step = 1000
+exit_after_dump = false
 
 

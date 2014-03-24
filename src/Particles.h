@@ -33,7 +33,13 @@ public:
     inline int size() const {
         return Weight.size();
     }
-    //! Get dimension of particules
+
+    //! Get number of particules
+    inline int capacity() const {
+        return Weight.capacity();
+    }
+    
+	//! Get dimension of particules
     inline int dimension() const {
         return Position.size();
     }

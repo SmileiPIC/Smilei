@@ -78,7 +78,7 @@ public:
 
     inline void clearExchList() {
         indexes_of_particles_to_exchange.clear();
-    };
+    }
     inline void addPartInExchList(int iPart) {
         indexes_of_particles_to_exchange.push_back(iPart);
     }
@@ -120,8 +120,11 @@ private:
 	//! time of the constructor
 	double time_reference;
 	
+	//! initialize the time zero of the simulation 
 	void initDumpCases();
 	
+	//! to sto and dump a simulation you might just check if a file named stop has been created this variable
+	//! is true if since last time a file named stop appeared
 	bool stop_file_seen_since_last_check;
 	
     void bcast( std::string& val );

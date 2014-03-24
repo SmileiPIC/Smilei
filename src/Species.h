@@ -44,14 +44,13 @@ public:
     }
 
     //! Method returning the effective number of Particles for the considered Species
-    // size() = npart_effective
     inline unsigned int getNbrOfParticles() const {
         return particles.size();
     }
     // capacity() = vect ever oversize
     // TO do defince particles.capacity = min.capacity
     inline unsigned int getParticlesCapacity() const {
-        return particles.size();
+        return particles.capacity();
     }
 
     //! Method calculating the Particle dynamics (interpolation, pusher, projection)
@@ -59,10 +58,10 @@ public:
                           Projector* proj, SmileiMPI* smpi);
 
     //! Method used to initialize the Particle position in a given cell
-    void initPosition(unsigned int, unsigned int, std::vector<unsigned int>, unsigned int, std::vector<double>, std::string);
+    void initPosition(unsigned int, unsigned int, unsigned int *, unsigned int, std::vector<double>, std::string);
 
     //! Method used to initialize the Particle 3d momentum in a given cell
-    void initMomentum(unsigned int, unsigned int, std::vector<double>, std::vector<double>, std::string, std::vector<double>&);
+    void initMomentum(unsigned int, unsigned int, double *, double *, std::string, std::vector<double>&);
 
     //! Method used to initialize the Particle weight (equivalent to a charge density) in a given cell
     void initWeight(PicParams*, unsigned int, unsigned int, double);
@@ -108,9 +107,6 @@ public:
     std::vector<double> cell_length;
 
 private:
-    //! Effective number of particles (different than the maximum number of particles)
-    unsigned int npart_effective;
-
     //! Number of steps for Maxwell-Juettner cumulative function integration
     //! \todo{Put in a code constant class}
     unsigned int nE;
