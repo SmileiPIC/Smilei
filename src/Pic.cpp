@@ -156,7 +156,6 @@ int main (int argc, char* argv[])
 		MESSAGE(2, "READING fields and particles");
 		DEBUG(vecSpecies.size());
 		sio->restartAll( EMfields,  stepStart, vecSpecies, smpi, params, input_data);
-		DEBUG(vecSpecies.size());
 	} else {
 		// -----------------------------------
 		// Initialize the electromagnetic fields
@@ -165,7 +164,6 @@ int main (int argc, char* argv[])
 		EMfields->initRhoJ(vecSpecies, Proj);
 		// Sum rho and J on ghost domains
 		
-		HEREIAM(10);
 		smpi->sumRhoJ( EMfields );
 		// Init electric field (Ex/1D, + Ey/2D)
 		EMfields->solvePoisson(smpi);
@@ -222,7 +220,8 @@ int main (int argc, char* argv[])
             if (params.nDim_field == 1) // sort not implemented in 2D
                 vecSpecies[ispec]->sort_part(params.cell_length[params.nDim_particle-1]);
         }
-	//!\todo To simplify : sum global and per species densities
+
+		//!\todo To simplify : sum global and per species densities
         smpi->sumRhoJ( EMfields );
         EMfields->computeTotalRhoJ();
 
@@ -256,6 +255,7 @@ int main (int argc, char* argv[])
 			if (params.exit_after_dump) break;
 		}
 		
+
     }//END of the time loop
 
     smpi->barrier();

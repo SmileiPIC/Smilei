@@ -158,11 +158,9 @@ void ElectroMagn::initRhoJ(vector<Species*> vecSpecies, Projector* Proj)
 
         DEBUG(n_particles<<" species "<<iSpec);
         for (unsigned int iPart=0 ; iPart<n_particles; iPart++ ) {
-			HEREIAM(iSpec <<"/" << n_species << " " << iPart << "/" << n_particles);
             // project charge & current densities
             (*Proj)(Jx_s[iSpec], Jy_s[iSpec], Jz_s[iSpec], rho_s[iSpec], cuParticles, iPart,
                     cuParticles.lor_fac(iPart));
-			HEREIAM(iSpec <<"/" << n_species << " " << iPart << "/" << n_particles);
         }
 
     }//iSpec

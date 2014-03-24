@@ -127,6 +127,7 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
 
 void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams* params)
 {
+
     Particles &cuParticles = species->particles;
     std::vector<int>* cubmin = &species->bmin;
     std::vector<int>* cubmax = &species->bmax;
@@ -142,6 +143,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
     int n_part_send = indexes_of_particles_to_exchange.size();
     int n_part_recv;
 
+	
     int ii, iPart;
     for (int i=0 ; i<n_part_send ; i++) {
         iPart = indexes_of_particles_to_exchange[i];
@@ -253,7 +255,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
     // Push lost particles at the end of bins
     //! \todo For loop on bins, can use openMP here.
     for (unsigned int ibin = 0 ; ibin < (*cubmax).size() ; ibin++ ) {
-        //cout << "bounds " << (*cubmin)[ibin] << " " << (*cubmax)[ibin] << endl;
+//        DEBUG(ibin << " bounds " << (*cubmin)[ibin] << " " << (*cubmax)[ibin]);
         ii = indexes_of_particles_to_exchange.size()-1;
         if (ii >= 0) { // Push lost particles to the end of the bin
             iPart = indexes_of_particles_to_exchange[ii];
@@ -299,7 +301,8 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
         (*cubmax)[ibin] -= ii;
         (*cubmin)[ibin] = (*cubmax)[ibin-1];
     }
-
+	
+	
     // Delete useless Particles
     //contiguous version:------------------------------------------------------------
     //Not even necessary to do anything as long you use bmax as the end of your iterator on particles.
@@ -314,7 +317,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
     }
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-
+	
     /********************************************************************************/
     // Clean lists of indexes of particle to exchange per neighbor
     /********************************************************************************/
@@ -347,6 +350,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
         }
     }
 
+	
     //DEBUG( 2, "\tProcess " << smilei_rk << " : " << species->getNbrOfParticles() << " Particles of species " << ispec );
 } // END exchangeParticles
 

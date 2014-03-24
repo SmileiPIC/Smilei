@@ -29,10 +29,6 @@ Particles::~Particles()
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::initialize( int nParticles, int nDim )
 {
-	if (nParticles > Weight.capacity()) {
-		WARNING("You should increase c_part_max in specie namelist");
-	}
-
 	Position.resize(nDim);
     Position_old.resize(nDim);
     for (int i=0 ; i< nDim ; i++) {

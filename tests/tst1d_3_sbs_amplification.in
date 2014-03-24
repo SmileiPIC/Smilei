@@ -62,36 +62,36 @@ random_seed = 0
 # radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
 #
 species
-        species_type = ion
-        initialization_type = maxwell-juettner
-        ionization_model = none
-        n_part_per_cell = 2
-        c_part_max = 1.0
-        mass = 1836.0
-        charge = 1.0
-        density = 0.3e0
-        mean_velocity = 0.0
-        temperature = 2.0e-5
-        dynamics_type = norm
-        time_frozen = 300.0
-        radiating = false
+	species_type = ion
+	initialization_type = maxwell-juettner
+	ionization_model = none
+	n_part_per_cell = 2
+	c_part_max = 1.0
+	mass = 1836.0
+	charge = 1.0
+	density = 0.3e0
+	mean_velocity = 0.0
+	temperature = 2.0e-5
+	dynamics_type = norm
+	time_frozen = 300.0
+	radiating = false
 	bc_part_type = refl
 end
 
 species
-        species_type = eon
-        initialization_type = maxwell-juettner
-        ionization_model = none
-        n_part_per_cell = 2
-        c_part_max = 1.0
-        mass = 1.0
-        charge = -1.0
-        density = 0.3e0
-        mean_velocity = 0.0
-        temperature = 1.0e-3
-        dynamics_type = norm
-        time_frozen = 0.0
-        radiating = false
+	species_type = eon
+	initialization_type = maxwell-juettner
+	ionization_model = none
+	n_part_per_cell = 2
+	c_part_max = 1.0
+	mass = 1.0
+	charge = -1.0
+	density = 0.3e0
+	mean_velocity = 0.0
+	temperature = 1.0e-3
+	dynamics_type = norm
+	time_frozen = 0.0
+	radiating = false
 	bc_part_type = refl
 end
 
@@ -115,11 +115,11 @@ laser
 end
 
 laser
-        a0=8.5e-3
-        angle=180
-        delta=1.0        
-        time_profile = sin2
-        double_params = 30.0 0.0 110.0
+	a0=8.5e-3
+	angle=180
+	delta=1.0        
+	time_profile = sin2
+	double_params = 30.0 0.0 110.0
 end
 
 # ---------------------

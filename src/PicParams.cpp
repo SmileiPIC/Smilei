@@ -247,7 +247,6 @@ void PicParams::print()
     MESSAGE(1,"n_species : " << n_species);
 
     MESSAGE(1,"wavelength, sim_units, n_particles : parameters not used for now");
-    //! \ n_part_max : Initialised in Species::Species()
     for ( unsigned int i=0 ; i<n_species ; i++ ) {
         MESSAGE(1,"(species_type, initialization_type, n_part_per_cell, c_part_max) : ("
                 << species_param[i].species_type << ", " << species_param[i].initialization_type << ", " << species_param[i].n_part_per_cell << ", " << species_param[i].c_part_max << ") - "

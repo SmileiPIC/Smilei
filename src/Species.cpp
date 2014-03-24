@@ -32,60 +32,60 @@ using namespace std;
 // input: simulation parameters & Species index
 // ---------------------------------------------------------------------------------------------------------------------
 Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
-
+	
     // -------------------
     // Variable definition
     // -------------------
-
+	
     name_str=params->species_param[ispec].species_type;
-
+	
     DEBUG(name_str);
-
+	
     electron_species = NULL;
-
+	
     // species index
     speciesNumber = ispec;
-
+	
     // number of spatial dimensions for the particles
     ndim = params->nDim_particle;
-
+	
     // Local minimum for definition of bin clusters
     min_loc = smpi->getDomainLocalMin(ndim-1);
-
+	
     // time over which particles remain frozen
     time_frozen = params->species_param[ispec].time_frozen;
-
+	
     // atomic number
     atomic_number = params->species_param[ispec].atomic_number;
-
+	
     //particle mass
     part_mass = params->species_param[ispec].mass;
-
+	
     // field containing the density distribution (always 3d)
     Field3D density(params->n_space);
-
+	
     // field containing the temperature distribution along all 3 momentum coordinates (always 3d * 3)
     Field3D temperature[3];
-
+	
     // field containing the temperature distribution along all 3 momentum coordinates (always 3d * 3)
     Field3D velocity[3];
-
+	
     for (unsigned int i=0; i<3; i++) {
         velocity[i].allocateDims(params->n_space);
         temperature[i].allocateDims(params->n_space);
     }
-
+	
     oversize.resize(params->nDim_field, 0);
     for (unsigned int i=0 ; i<params->nDim_field ; i++) {
         oversize[i] = params->oversize[i];
     }
     cell_length = params->cell_length;
-
-
+	
+	
     // Arrays of the min and max indices of the particle bins
     bmin.resize(params->n_space[ndim-1]);
     bmax.resize(params->n_space[ndim-1]);
-
+	
     //Size of the buffer on which each bin are projected
     //In 1D the particles of a same bin can be projected on 6 different nodes at the second order (oversize = 2)
     size_proj_buffer = 2 + 2 * oversize[0];
@@ -103,13 +103,13 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
             b_dim1 = params->n_space[1] + 2 * oversize[1] ;
         }
     }
-
+	
 	if (!params->restart) {
-		
 		// ---------------------------------------------------------
 		// Calculate density and number of particles for the species
 		// ---------------------------------------------------------
 		
+		unsigned int npart_effective=0;
 		
 		// does a loop over all cells in the simulation
 		// considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
@@ -149,60 +149,58 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 						
 					}//ENDif non-zero density
 					
-					//				// ------------------------
-					//				// Constant density profile
-					//				// ------------------------
-					//				if (params->plasma_geometry=="constant") {
-					//
-					//					if (((params->cell_length[0]==0.0) || (
-					//                                                           (cell_index[0]+i+0.5)*params->cell_length[0] > params->vacuum_length[0] &&
-					//                                                           (cell_index[0]+i+0.5)*params->cell_length[0] < params->vacuum_length[0]+params->plasma_length[0]
-					//                                                           )) &&
-					//						((params->cell_length[1]==0.0) || (
-					//                                                           (cell_index[1]+j+0.5)*params->cell_length[1] > params->vacuum_length[1] &&
-					//                                                           (cell_index[1]+j+0.5)*params->cell_length[1] < params->vacuum_length[1]+params->plasma_length[1]
-					//                                                           )) &&
-					//						((params->cell_length[2]==0.0) || (
-					//                                                           (cell_index[2]+k+0.5)*params->cell_length[2] > params->vacuum_length[2] &&
-					//                                                           (cell_index[2]+k+0.5)*params->cell_length[2] < params->vacuum_length[2]+params->plasma_length[2])
-					//                         )) {
-					//
-					//                            // assign density its correct value in the cell
-					//                            density(i,j,k) = params->species_param[ispec].density;
-					//
-					//
-					//                            // assign the temperature & mean-velocity their correct value in the cell
-					//                            for (unsigned int m=0; m<3;m++)	{
-					//                                temperature[m](i,j,k) = params->species_param[ispec].temperature[m];
-					//                                velocity[m](i,j,k) = params->species_param[ispec].mean_velocity[m];
-					//                            }
-					//
-					//                            // increment the effective number of particle by n_part_per_cell
-					//                            // for each cell with as non-zero density
-					//                            npart_effective += params->species_param[ispec].n_part_per_cell;
-					//                            //DEBUG(10,"Specie "<< ispec <<" # part "<<npart_effective<<" "<<i<<" "<<j<<" "<<k);
-					//
-					//                        } else {
-					//                            density(i,j,k)=0.0;
-					//                        }
-					//
-					//				} else { // plasma_geometry
-					//
-					//					// ---------------------------
-					//					// Not defined density profile
-					//					// ---------------------------
-					//					ERROR("geometry not implemented");
-					//
-					//				}//END if plasma_geometry
+//				// ------------------------
+//				// Constant density profile
+//				// ------------------------
+//				if (params->plasma_geometry=="constant") {
+//
+//					if (((params->cell_length[0]==0.0) || (
+//                                                           (cell_index[0]+i+0.5)*params->cell_length[0] > params->vacuum_length[0] &&
+//                                                           (cell_index[0]+i+0.5)*params->cell_length[0] < params->vacuum_length[0]+params->plasma_length[0]
+//                                                           )) &&
+//						((params->cell_length[1]==0.0) || (
+//                                                           (cell_index[1]+j+0.5)*params->cell_length[1] > params->vacuum_length[1] &&
+//                                                           (cell_index[1]+j+0.5)*params->cell_length[1] < params->vacuum_length[1]+params->plasma_length[1]
+//                                                           )) &&
+//						((params->cell_length[2]==0.0) || (
+//                                                           (cell_index[2]+k+0.5)*params->cell_length[2] > params->vacuum_length[2] &&
+//                                                           (cell_index[2]+k+0.5)*params->cell_length[2] < params->vacuum_length[2]+params->plasma_length[2])
+//                         )) {
+//
+//                            // assign density its correct value in the cell
+//                            density(i,j,k) = params->species_param[ispec].density;
+//
+//
+//                            // assign the temperature & mean-velocity their correct value in the cell
+//                            for (unsigned int m=0; m<3;m++)	{
+//                                temperature[m](i,j,k) = params->species_param[ispec].temperature[m];
+//                                velocity[m](i,j,k) = params->species_param[ispec].mean_velocity[m];
+//                            }
+//
+//                            // increment the effective number of particle by n_part_per_cell
+//                            // for each cell with as non-zero density
+//                            npart_effective += params->species_param[ispec].n_part_per_cell;
+//                            //DEBUG(10,"Specie "<< ispec <<" # part "<<npart_effective<<" "<<i<<" "<<j<<" "<<k);
+//
+//                        } else {
+//                            density(i,j,k)=0.0;
+//                        }
+//
+//				} else { // plasma_geometry
+//
+//					// ---------------------------
+//					// Not defined density profile
+//					// ---------------------------
+//					ERROR("geometry not implemented");
+//
+//				}//END if plasma_geometry
 				}//i
 			}//j
 		}//k end the loop on all cells
 		
 		// defines npart_effective for the Species & create the corresponding particles
 		// -----------------------------------------------------------------------
-		params->species_param[ispec].n_part_max = round( params->species_param[ispec].c_part_max * npart_effective );
-		particles.reserve(params->species_param[ispec].n_part_max, ndim);
-		
+		particles.reserve(round( params->species_param[ispec].c_part_max * npart_effective ), ndim);
 		particles.initialize(npart_effective, ndim);
 		
 		// define Maxwell-Juettner related quantities
@@ -237,10 +235,9 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 		// Initialization of the particles properties
 		// ------------------------------------------
 		unsigned int iPart=0;
-		//! todo: replace these by vectors
-		vector<unsigned int> indexes(ndim);
-		vector<double> temp(ndim);
-		vector<double> vel(ndim);
+		unsigned int *indexes=new unsigned int[ndim];
+		double *temp=new double[ndim];
+		double *vel=new double[ndim];
 		
 		// start a loop on all cells
 		
@@ -291,7 +288,6 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 						
 						//calculate new iPart (jump to next cell)
 						iPart+=params->species_param[ispec].n_part_per_cell;
-						
 					}//END if density > 0
 					if (ndim == 1) {
 						bmax[i] = iPart;
@@ -305,7 +301,12 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 				bmax[k] = iPart;
 			}
 		}//k end the loop on all cells
-				
+		
+		delete [] indexes;
+		delete [] temp;
+		delete [] vel;
+		
+		
 		// Recalculate former position using the particle velocity
 		// (necessary to calculate currents at time t=0 using the Esirkepov projection scheme)
 		for (unsigned int iPart=0; iPart<npart_effective; iPart++) {
@@ -313,22 +314,22 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 				particles.position_old(i,iPart) -= particles.momentum(i,iPart)/particles.lor_fac(iPart) * params->timestep;
 			}
 		}
-
 		PMESSAGE( 1, smpi->getRank(),"Species "<< ispec <<" # part "<< npart_effective );
 	}
-	
 	//    cout<<"position_old-> " <<particles[0]->position_old(0)/(2*M_PI)<<endl;
-//    cout<<"momentum-> " <<particles[0]->momentum(0)<<endl;
+	//    cout<<"momentum-> " <<particles[0]->momentum(0)<<endl;
     // assign the correct Pusher to Push
     Push = PusherFactory::create( params, ispec );
-
+	
     // assign the Ionization model (if needed) to Ionize
     Ionize = IonizationFactory::create( params, ispec );
     if (Ionize) DEBUG("----------- IONIZE CREATED ----------- " <<ispec);
-
+	
     // define limits for BC and functions applied and for domain decomposition
     partBoundCond = new PartBoundCond( params, ispec, smpi);
-
+	
+	
+	
 }//END Species creator
 
 
@@ -378,7 +379,7 @@ void Species::initCharge(PicParams* params, unsigned int ispec, unsigned int iPa
 //   - either using regular distribution in the mesh (regular)
 //   - or using uniform random distribution (for cold and maxwell-juettner distribution)
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::initPosition(unsigned int np, unsigned int iPart, vector<unsigned int> indexes, unsigned int ndim,
+void Species::initPosition(unsigned int np, unsigned int iPart, unsigned int *indexes, unsigned int ndim,
                            std::vector<double> cell_length, string initialization_type)
 {
     for (unsigned  p= iPart; p<iPart+np; p++)
@@ -391,7 +392,7 @@ void Species::initPosition(unsigned int np, unsigned int iPart, vector<unsigned 
                 particles.position(i,p)=(indexes[i]+((double)rand() / RAND_MAX))*cell_length[i];
             }
             particles.position_old(i,p) = particles.position(i,p);
-//            cout<<"position new-> "<<particles.position(i,p)/(2*M_PI)<<endl;
+			//            cout<<"position new-> "<<particles.position(i,p)/(2*M_PI)<<endl;
         }// i
     }// p
 }
@@ -403,14 +404,14 @@ void Species::initPosition(unsigned int np, unsigned int iPart, vector<unsigned 
 //   - at zero if regular or cold
 //   - using random distribution if maxwell-juettner
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::initMomentum(unsigned int np, unsigned int iPart, vector<double> temp, vector<double> vel, string initialization_type,
+void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, double *vel, string initialization_type,
                            vector<double>& max_jutt_cumul)
 {
-
+	
     // average mean-momentum (used to center the distribution)
     double pMean[3]= {0.0,0.0,0.0};
-
-
+	
+	
     if (initialization_type == "regular" || initialization_type == "cold")
     {
         // initialize momentum at 0 for regular or cold initialization type
@@ -418,10 +419,10 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, vector<double> t
             for (unsigned int i=0; i<3 ; i++) {
                 particles.momentum(i,p) = 0.0;
             }
-
-
+			
+			
         }
-
+		
     } else if (initialization_type == "maxwell-juettner")
     {
         // initialize using the Maxwell-Juettner distribution function
@@ -431,7 +432,7 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, vector<double> t
             double Renergy=(double)rand() / RAND_MAX;
             double phi=acos(1.0-2.0*(double)rand() / RAND_MAX);
             double theta=2.0*M_PI*(double)rand() / RAND_MAX;
-
+			
             int il=0;
             int ir=max_jutt_cumul.size();
             while (ir > il+1)  {
@@ -444,10 +445,10 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, vector<double> t
             }
             double right_w=(Renergy-max_jutt_cumul[il])/(max_jutt_cumul[il+1]);
             double left_w=1-right_w;
-
+			
             double Ener=left_w*il*dE +right_w*(il+1)*dE;
             double psm = sqrt(pow(1.0+Ener,2)-1.0);
-
+			
             particles.momentum(0,p) = psm*cos(theta)*sin(phi);
             particles.momentum(1,p) = psm*sin(theta)*sin(phi);
             particles.momentum(2,p) = psm*cos(phi);
@@ -456,7 +457,7 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, vector<double> t
                 pMean[i] += particles.momentum(i,p);
             }
         }//p
-
+		
         // center the distribution function around pMean
         // \todo{Allow for non-zero mean-velocity (MG)}
         for (unsigned int p= iPart; p<iPart+np; p++)
@@ -465,34 +466,34 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, vector<double> t
                 particles.momentum(i,p) -= pMean[i]/np;
             }
         }
-
+		
     }//END if initialization_type
-
+	
 }//END initMomentum
 
 
 double Species::density_profile(PicParams* params, vector<double> x_cell) {
-
+	
     // ------------------
     // 1D density profile
     // ------------------
     if (params->nDim_field==1) {
-
+		
         // Constant density profile
         // ------------------------
         if (params->plasma_geometry=="constant") {
             if (   (x_cell[0]>params->vacuum_length[0])
-                    && (x_cell[0]<params->vacuum_length[0]+params->plasma_length[0]) ) {
+				&& (x_cell[0]<params->vacuum_length[0]+params->plasma_length[0]) ) {
                 return 1.0;
             } else {
                 return 0.0;
             }
         }
-
+		
         // Trapezoidal density profile
         // ---------------------------
         else if (params->plasma_geometry=="trap") {
-
+			
             // vacuum region
             if ( x_cell[0] < params->vacuum_length[0] ) {
                 return 0.0;
@@ -508,41 +509,41 @@ double Species::density_profile(PicParams* params, vector<double> x_cell) {
             // linearly decreasing density
             else if ( x_cell[0] < params->vacuum_length[0]+params->plasma_length[0] ) {
                 return 1.0 - ( x_cell[0] - (params->vacuum_length[0]+params->plasma_length[0]-params->slope_length[0]) )
-                       /            params->slope_length[0];
+				/            params->slope_length[0];
             }
             // beyond the plasma
             else {
                 return 0.0;
             }
         }
-
+		
         // Other density profile
         // ---------------------
         else {
             ERROR("Density profile " << params->plasma_geometry << " not yet defined in 1D");
         }
-
+		
     }
     // ------------------
     // 2D density profile
     // ------------------
     else if (params->nDim_field==2) {
-
+		
         double fx, fy;
-
+		
         // Constant density profile
         // ------------------------
         if (params->plasma_geometry=="constant") {
             // x-direction
             if (   (x_cell[0]>params->vacuum_length[0])
-                    && (x_cell[0]<params->vacuum_length[0]+params->plasma_length[0]) ) {
+				&& (x_cell[0]<params->vacuum_length[0]+params->plasma_length[0]) ) {
                 fx = 1.0;
             } else {
                 fx = 0.0;
             }
             // y-direction
             if (   (x_cell[1]>params->vacuum_length[1])
-                    && (x_cell[1]<params->vacuum_length[1]+params->plasma_length[1]) ) {
+				&& (x_cell[1]<params->vacuum_length[1]+params->plasma_length[1]) ) {
                 fy = 1.0;
             } else {
                 fy = 0.0;
@@ -550,13 +551,13 @@ double Species::density_profile(PicParams* params, vector<double> x_cell) {
             // x-y direction
             return fx*fy;
         }
-
+		
         // Trapezoidal density profile
         // ---------------------------
         else if (params->plasma_geometry=="trap") {
-
+			
             // x-direction
-
+			
             // vacuum region
             if ( x_cell[0] < params->vacuum_length[0] ) {
                 fx = 0.0;
@@ -572,15 +573,15 @@ double Species::density_profile(PicParams* params, vector<double> x_cell) {
             // linearly decreasing density
             else if ( x_cell[0] < params->vacuum_length[0]+params->plasma_length[0] ) {
                 fx = 1.0 - ( x_cell[0] - (params->vacuum_length[0]+params->plasma_length[0]-params->slope_length[0]) )
-                     /            params->slope_length[0];
+				/            params->slope_length[0];
             }
             // beyond the plasma
             else {
                 fx = 0.0;
             }
-
+			
             // y-direction
-
+			
             // vacuum region
             if ( x_cell[1] < params->vacuum_length[1] ) {
                 fy = 0.0;
@@ -596,24 +597,24 @@ double Species::density_profile(PicParams* params, vector<double> x_cell) {
             // linearly decreasing density
             else if ( x_cell[1] < params->vacuum_length[1]+params->plasma_length[1] ) {
                 fy = 1.0 - ( x_cell[1] - (params->vacuum_length[1]+params->plasma_length[1]-params->slope_length[1]) )
-                     /            params->slope_length[1];
+				/            params->slope_length[1];
             }
             // beyond the plasma
             else {
                 fy = 0.0;
             }
-
+			
             // x-y directions
             return fx*fy;
         }
-
+		
         // Other profiles: not defined
         // ---------------------------
         else {
             ERROR("Density profile " << params->plasma_geometry <<" not yet defined in 2D");
             return 0.0;
         }
-
+		
     }
     // ------------------
     // 3D density profile
@@ -622,7 +623,7 @@ double Species::density_profile(PicParams* params, vector<double> x_cell) {
         ERROR("Density profile not yet defined in 3D");
         return 0.0;
     }//ENDif ndim
-
+	
 }
 
 
@@ -637,76 +638,76 @@ double Species::density_profile(PicParams* params, vector<double> x_cell) {
 void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfields, Interpolator* Interp,
                        Projector* Proj, SmileiMPI* smpi)
 {
-
+	
     if (ndim>1) {
         bmin.resize(1);
         bmin[0] = 0;
         bmax.resize(1);
         bmax[0] = max((int)particles.size()-1,0);
     }
-
+	
     // Electric field at the particle position
     LocalFields Epart;
     // Magnetic field at the particle position
     LocalFields Bpart;
-
+	
     int iloc;
-
+	
     // number of particles for this Species
     int unsigned nParticles = getNbrOfParticles();
     // Reset list of particles to exchange
     smpi->clearExchList();
-
+	
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
     if (time_dual>time_frozen) { // moving particle
         double gf = 1.0;
-
+		
         // for all particles of the Species
         //#pragma omp parallel for shared (EMfields)
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
-
+			
             // reset all current-buffers
             // *3 allows to also reset Jy & Jz which are contiguous in memory
             for (iloc = 0; iloc < 3*size_proj_buffer; iloc++) b_Jx[iloc] = 0.0;
-
+			
             for (unsigned int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
-
+				
                 // Interpolate the fields at the particle position
                 (*Interp)(EMfields, particles, iPart, &Epart, &Bpart);
-
+				
                 // Do the ionization
                 if (Ionize && particles.charge(iPart) < (int) atomic_number) {
                     //!\todo Check if it is necessary to put to 0 or if LocalFields ensures it
-		    LocalFields Jion;
-		    Jion.x=0.0;
+					LocalFields Jion;
+					Jion.x=0.0;
                     Jion.y=0.0;
                     Jion.z=0.0;
                     (*Ionize)(particles, iPart, Epart, Jion);
                     (*Proj)(EMfields->Jx_, EMfields->Jy_, EMfields->Jz_, particles, iPart, Jion);
                 }
-
-
+				
+				
                 // Push the particle
                 (*Push)(particles, iPart, Epart, Bpart, gf);
-
+				
                 // Apply boundary condition on the particles
                 // Boundary Condition may be physical or due to domain decomposition
                 // apply returns 0 if iPart is no more in the domain local
                 //	if omp, create a list per thread
                 if ( !partBoundCond->apply( particles, iPart ) ) smpi->addPartInExchList( iPart );
-
+				
                 //if (ndim == 1) {
-		//    //! \todo Sort projection : to be validaed
+				//    //! \todo Sort projection : to be validaed
                 //    (*Proj)(b_Jx, b_Jy, b_Jz, particles, iPart, gf, ibin, b_dim0);
                 //} else {
-		    (*Proj)(EMfields->Jx_s[ispec], EMfields->Jy_s[ispec], EMfields->Jz_s[ispec], EMfields->rho_s[ispec],
-			    particles, iPart, gf);
-		//}
-
+				(*Proj)(EMfields->Jx_s[ispec], EMfields->Jy_s[ispec], EMfields->Jz_s[ispec], EMfields->rho_s[ispec],
+						particles, iPart, gf);
+				//}
+				
             }// iPart
-
+			
             // Copy buffer back to the global array and free buffer****************
             // this part is dimension dependant !! this is for dim = 1
             if (ndim == 1) {
@@ -724,15 +725,15 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 }
             }
         }// ibin
-
+		
         if (Ionize && electron_species) {
             for (unsigned int i=0; i < Ionize->new_electrons.size(); i++) {
                 // electron_species->particles.push_back(Ionize->new_electrons[i]);
-
+				
                 int ibin = (int) ((Ionize->new_electrons).position(0,i) / cell_length[0]) - smpi->getCellStartingGlobalIndex(0) + oversize[0];
                 // Copy Ionize->new_electrons(i) in electron_species->particles at position electron_species->bmin[ibin]
                 Ionize->new_electrons.cp_particle(i, electron_species->particles, electron_species->bmin[ibin] );
-
+				
                 //Update bins status (ugly update, memory is allocated anywhere, OK with vectors per particles parameters)
                 electron_species->bmax[ibin]++;
                 for (int i=ibin+1; i<bmin.size(); i++) {
@@ -740,22 +741,22 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                     electron_species->bmax[i]++;
                 }
             }
-
+			
             //if (Ionize->new_electrons.size()) DEBUG("number of electrons " << electron_species->particles.size() << " " << );
             //cerr << "****************** " << speciesNumber << " " << Ionize->new_electrons.size() << " " << electron_species->particles.size() << endl;
             Ionize->new_electrons.clear();
         }
     }
     else { // immobile particle (at the moment only project density)
-
+		
         //#pragma omp parallel for shared (EMfields)
         for (unsigned int iPart=0 ; iPart<nParticles; iPart++ ) {
             (*Proj)(EMfields->rho_s[ispec], particles, iPart);
         }
-
+		
     }//END if time vs. time_frozen
-
-
+	
+	
 }//END dynamic
 
 
@@ -766,7 +767,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::dump(std::ofstream& ofile)
 {
-    for (unsigned int i=0; i<npart_effective; i++ )
+    for (unsigned int i=0; i<particles.size(); i++ )
     {
         ofile << i ;
         for (unsigned int m=0; m<ndim; m++) ofile << "\t" << particles.position(m,i);
@@ -790,7 +791,7 @@ void Species::computeScalars() {
     scalars["charge_tot"]=charge_tot;
     scalars["part_number"]=getNbrOfParticles();
     scalars["energy_tot"]=ener_tot;
-
+	
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -799,10 +800,10 @@ void Species::computeScalars() {
 void Species::sort_part(double dbin)
 {
     //dbin is the width of one bin. dbin= dx in 1D, dy in 2D and dz in 3D.
-
+	
     int p1,p2,bmin_init;
     double limit;
-
+	
     //Backward pass
     for (unsigned int bin=0; bin<bmin.size()-1; bin++) { //Loop on the bins. To be parallelized with openMP.
         limit = min_loc + (bin+1)*dbin;
@@ -841,7 +842,7 @@ void Species::sort_part(double dbin)
                 bmin[bin]++;
             }
         }
-
+		
         //Rebracketting
         //Number of particles from bin going down is: bmin[bin]-bmin_init.
         //Number of particles from bin-1 going up is: bmin_init-bmax[bin-1].
