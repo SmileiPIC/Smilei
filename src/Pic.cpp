@@ -36,8 +36,6 @@
 
 #include <unistd.h>
 
-#include <sys/stat.h>
-
 using namespace std;
 
 
@@ -148,6 +146,8 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------------------------
     // vector of Species (virtual)
     vector<Species*> vecSpecies = SpeciesFactory::createVector(params, smpi);
+	
+	smpi->barrier();
 
 	unsigned int stepStart=0, stepStop=params.n_time;
 	
@@ -164,6 +164,8 @@ int main (int argc, char* argv[])
 		// Init rho and J by projecting all particles of subdomain
 		EMfields->initRhoJ(vecSpecies, Proj);
 		// Sum rho and J on ghost domains
+		
+		HEREIAM(10);
 		smpi->sumRhoJ( EMfields );
 		// Init electric field (Ex/1D, + Ey/2D)
 		EMfields->solvePoisson(smpi);
@@ -175,7 +177,6 @@ int main (int argc, char* argv[])
 		// temporary particle dump at time 0
 		sio->writePlasma( vecSpecies, 0., smpi );
 	}
-
     // ------------------------------------------------------------------------
     // Initialize the simulation times time_prim at n=0 and time_dual at n=-1/2
     // ------------------------------------------------------------------------

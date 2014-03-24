@@ -30,6 +30,11 @@
 #include <iostream>
 
 
+#define __header(__msg,__txt) std::cerr << "\t[" << __msg << "] " << __FILE__ << ":" << __LINE__ << " (" \
+<< __FUNCTION__ << ") " << __txt << std::endl
+
+#define HEREIAM(__txt) {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); for(int __i=0;__i<20;__i++) {std::cerr << "-";}; std::cerr << "> " << __rk << "\t" << __FILE__ << ":" << __LINE__ << " (" << __FUNCTION__ << ") " << __txt << std::endl; }
+
 
 #define MESSAGE1(__txt)  {std::cout << __txt << std::endl;}
 #define MESSAGE2(__val,__txt) {for (int __i=0;__i<__val;__i++) std::cout << "\t"; std::cout << "[" << __val << "] " << __txt << std::endl;}
@@ -46,9 +51,6 @@
 #ifdef  __DEBUG
 extern int debug_level;
 
-#define __header(__msg,__txt) std::cerr << "\t[" << __msg << "] " << __FILE__ << ":" << __LINE__ << " (" \
-<< __FUNCTION__ << ") " << __txt << std::endl
-
 #define DEBUG1(__txt) {if(debug_level>=0) __header("DEBUG", __txt);}
 #define DEBUG2(__val,__txt) if(((debug_level<0) && __val==-debug_level) || ((debug_level>=0) && __val<=debug_level)) __header("DEBUG "<<__val, __txt)
 #define DEBUG3(arg1,arg2,arg3,...) arg3
@@ -61,9 +63,6 @@ extern int debug_level;
 #define RELEASEEXEC(...)
 
 #else
-#define __header(__msg,__txt) std::cout << "\t[" << __msg << "] " << __FILE__ << ":" << __LINE__ << " (" \
-<< __FUNCTION__ << ") " << __txt << std::endl
-
 #define DEBUG(...)
 #define DEBUGEXEC(...)
 #define RELEASEEXEC(...) __VA_ARGS__

@@ -135,10 +135,6 @@ fieldDump_every = 125
 # every for particle dump
 particleDump_every = 2500
 
-# dump everything for restart
-dump_restart = 2500
-
-
 # DIAG ON SCALARS
 # every = number of time-steps between each output
 #

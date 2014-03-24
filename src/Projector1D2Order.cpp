@@ -45,6 +45,7 @@ Projector1D2Order::~Projector1D2Order()
 // ---------------------------------------------------------------------------------------------------------------------
 void Projector1D2Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, double gf)
 {
+		
     Field1D* Jx1D  = static_cast<Field1D*>(EMfields->Jx_);
     Field1D* Jy1D  = static_cast<Field1D*>(EMfields->Jy_);
     Field1D* Jz1D  = static_cast<Field1D*>(EMfields->Jz_);
@@ -133,13 +134,14 @@ void Projector1D2Order::operator() (ElectroMagn* EMfields, Particles &particles,
 // ---------------------------------------------------------------------------------------------------------------------
 void Projector1D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Field* rho, Particles &particles, int ipart, double gf)
 {
+	HEREIAM("");
     Field1D* Jx1D  = static_cast<Field1D*>(Jx);
     Field1D* Jy1D  = static_cast<Field1D*>(Jy);
     Field1D* Jz1D  = static_cast<Field1D*>(Jz);
     Field1D* rho1D = static_cast<Field1D*>(rho);
 
     // Declare local variables
-    int unsigned ipo, ip, iloc;
+	unsigned int ipo, ip, iloc;
     int ip_m_ipo;
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;
@@ -196,6 +198,8 @@ void Projector1D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Field* rho,
         Jx_p[i] = Jx_p[i-1] + crx_p * Wl[i-1];
     }
 
+	HEREIAM(ipart << "ipo " << ipo << " index_domain_begin " << index_domain_begin);
+
     ipo -= index_domain_begin;
     //cout << "\tcoords = " << particles.position(0, ipart) << "\tglobal index = " << ip;
     ip  -= index_domain_begin;
@@ -205,6 +209,7 @@ void Projector1D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Field* rho,
     for (unsigned int i=0; i<5; i++) {
         iloc = i+ipo-2;
         //#pragma omp atomic
+		HEREIAM(iloc << " " << i << " " << ipo);
         (*Jx1D)(iloc) += Jx_p[i];
         //#pragma omp atomic
         (*Jy1D)(iloc) += cry_p * Wt[i];
@@ -212,7 +217,10 @@ void Projector1D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Field* rho,
         (*Jz1D)(iloc) += crz_p * Wt[i];
         //#pragma omp atomic
         (*rho1D)(iloc)  += charge_weight * S1[i];
+		HEREIAM(iloc);	
     }//i
+
+	HEREIAM("");
 
 } // END Projection by species
 
