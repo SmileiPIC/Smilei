@@ -4,12 +4,13 @@
 
 using namespace std;
 
-PicParams::PicParams(InputData &ifile) : restart(false) {
+PicParams::PicParams(InputData &ifile) : restart(false), exit_after_dump(true) {
     //open and parse the input data file
 
 	ifile.extract("dump_step", dump_step);
-	
 	ifile.extract("dump_minutes", dump_minutes);
+
+	ifile.extract("exit_after_dump", exit_after_dump);
 	
 	ifile.extract("restart", restart);
 	

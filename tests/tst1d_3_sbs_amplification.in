@@ -151,7 +151,11 @@ end
 # x     = position of the different probes
 #
 diagnostic probe0d
-	every = 125
+	every = 1
 	x = 0.0 30.0 60.0 90.0 120.0	
 end
+
+
+dump_step = 1000
+exit_after_dump = false
 

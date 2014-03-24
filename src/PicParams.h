@@ -200,8 +200,12 @@ public:
 	//! Human minutes to dump everything
 	unsigned int dump_minutes;
 
+	//! exit once dump done
+	bool exit_after_dump;
+	
 	//! restart namelist
 	bool restart;
+	
 };
 
 #endif

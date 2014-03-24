@@ -111,7 +111,6 @@ public:
         return sqrt(1+pow(momentum(0,ipart),2)+pow(momentum(1,ipart),2)+pow(momentum(2,ipart),2));
     }
 
-private:
     //! array containing the particle position
     std::vector< std::vector<double> > Position;
 
@@ -126,6 +125,8 @@ private:
 
     //! charge state of the particle (multiples of e>0)
     std::vector<short> Charge;
+
+private:
 
 };
 

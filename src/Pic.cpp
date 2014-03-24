@@ -93,7 +93,7 @@ int main (int argc, char* argv[])
         }
     }
 
-    smpiData->bcast( input_data );
+    smpiData->bcast(input_data);
     input_data.parseStream();
 
     // this will do the randomization (changing the seed for all processes)
@@ -138,6 +138,10 @@ int main (int argc, char* argv[])
     // projection operator (virtual)
     Projector* Proj = ProjectorFactory::create(params, smpi);
 
+	// ----------------------------------------------------------------------------
+    // Create diagnostics
+    // ----------------------------------------------------------------------------
+    Diagnostic diags(&params,&diag_params, smpi, Interp);
 
     // ------------------------------------------------------------------------------------
     // Initialize the vecSpecies object containing all information of the different Species
@@ -145,47 +149,31 @@ int main (int argc, char* argv[])
     // vector of Species (virtual)
     vector<Species*> vecSpecies = SpeciesFactory::createVector(params, smpi);
 
-
-
-    // ----------------------------------------------------------------------------
-    // Create diagnostics
-    // ----------------------------------------------------------------------------
-    Diagnostic diags(&params,&diag_params, smpi, Interp);
-
-    // -----------------------------------
-    // Initialize the electromagnetic fields
-    // -----------------------------------
-    // Init rho and J by projecting all particles of subdomain
-    EMfields->initRhoJ(vecSpecies, Proj);
-    // Sum rho and J on ghost domains
-    smpi->sumRhoJ( EMfields );
-    // Init electric field (Ex/1D, + Ey/2D)
-    EMfields->solvePoisson(smpi);
-
-
-
-    // run diagnostics at time-step 0
-	if (!params.restart) {
-		diags.runAllDiags(0, EMfields, vecSpecies);
-	}
-    // temporary EM fields dump in Fields.h5
-    sio->writeAllFieldsSingleFileTime( EMfields, 0 );
-    // temporary particle dump at time 0
-    sio->writePlasma( vecSpecies, 0., smpi );
-
-
-    // ------------------------------------------------------------------
-    //                     HERE STARTS THE PIC LOOP
-    // ------------------------------------------------------------------
-    if ( smpi->isMaster() ) MESSAGE(0,"Time-Loop is started: number of time-steps n_time =" << params.n_time);
-    // t1-t0  = elapsed time in simulation time loop
-
-	
 	unsigned int stepStart=0, stepStop=params.n_time;
 	
 	// reading from dumped file the restart values
 	if (params.restart) {
-		sio->restartAll( EMfields,  stepStart, vecSpecies, smpi);
+		MESSAGE(2, "READING fields and particles");
+		DEBUG(vecSpecies.size());
+		sio->restartAll( EMfields,  stepStart, vecSpecies, smpi, params, input_data);
+		DEBUG(vecSpecies.size());
+	} else {
+		// -----------------------------------
+		// Initialize the electromagnetic fields
+		// -----------------------------------
+		// Init rho and J by projecting all particles of subdomain
+		EMfields->initRhoJ(vecSpecies, Proj);
+		// Sum rho and J on ghost domains
+		smpi->sumRhoJ( EMfields );
+		// Init electric field (Ex/1D, + Ey/2D)
+		EMfields->solvePoisson(smpi);
+
+		// run diagnostics at time-step 0
+		diags.runAllDiags(0, EMfields, vecSpecies);
+		// temporary EM fields dump in Fields.h5
+		sio->writeAllFieldsSingleFileTime( EMfields, 0 );
+		// temporary particle dump at time 0
+		sio->writePlasma( vecSpecies, 0., smpi );
 	}
 
     // ------------------------------------------------------------------------
@@ -196,6 +184,11 @@ int main (int argc, char* argv[])
     double time_prim = stepStart * params.timestep;
     // time at half-integer time-steps (dual grid)
     double time_dual = (stepStart +0.5) * params.timestep;
+	
+	// ------------------------------------------------------------------
+    //                     HERE STARTS THE PIC LOOP
+    // ------------------------------------------------------------------
+    if ( smpi->isMaster() ) MESSAGE(0,"Time-Loop is started: number of time-steps n_time =" << params.n_time);
 	
 	
     for (unsigned int itime=stepStart+1 ; itime <= stepStop ; itime++) {
@@ -250,15 +243,16 @@ int main (int argc, char* argv[])
         if  ((diag_params.particleDump_every != 0) && (itime % diag_params.particleDump_every == 0))
             sio->writePlasma( vecSpecies, time_dual, smpi );
 
+		// Threee cases of dump: dump_step reached, real time greater than dump_minutes or file named stop created 
 		if  ( (params.dump_step != 0 && itime == params.dump_step ) || 
 			  (params.dump_minutes != 0.0 && timElapsed/60.0 > params.dump_minutes) || 
 				smpiData->fileStopCreated()
 			 ) {
-            sio->dumpAll( EMfields, itime,  vecSpecies, smpi );
+			MESSAGE(2, "DUMPING fields and particles");
+            sio->dumpAll( EMfields, itime,  vecSpecies, smpi, params, input_data);
 			params.dump_step = 0;
 			params.dump_minutes=0.0;
-			if ( smpi->isMaster() ) MESSAGE(0, "End time loop, time dual = " << time_dual);
-			break;
+			if (params.exit_after_dump) break;
 		}
 		
     }//END of the time loop

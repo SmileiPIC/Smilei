@@ -13,6 +13,7 @@
 #include <hdf5.h>
 
 class PicParams;
+class InputData;
 class SmileiMPI;
 class ElectroMagn;
 class Field;
@@ -45,24 +46,23 @@ public:
     hid_t* partDataset_id;  /* identifiers */
     hid_t partMemSpace;
     int particleSize;
+	
+	unsigned int nDim_particle;
 
     //! Write field on its own file (debug)
     virtual void write( Field* field ) = 0;
 
-	//! Id of "dump.h5", contains everything
-    hid_t  dump_id;
-
 	//! dump everything to file per processor
-    void dumpAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi  );
+    void dumpAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi,  PicParams &params, InputData& input_data);
 	
 	//! dump field per proc
-	void dumpFieldsPerProc( Field* field);
+	void dumpFieldsPerProc(hid_t fid, Field* field);
 
 	//! restart everything to file per processor
-    void restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi  );
+    void restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> &vecSpecies, SmileiMPI* smpi, PicParams &params, InputData& input_data);
 
 	//! restart field per proc
-	void restartFieldsPerProc( Field* field);
+	void restartFieldsPerProc(hid_t fid, Field* field);
 	
 private:
 };

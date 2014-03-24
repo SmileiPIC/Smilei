@@ -59,10 +59,10 @@ public:
                           Projector* proj, SmileiMPI* smpi);
 
     //! Method used to initialize the Particle position in a given cell
-    void initPosition(unsigned int, unsigned int, unsigned int *, unsigned int, std::vector<double>, std::string);
+    void initPosition(unsigned int, unsigned int, std::vector<unsigned int>, unsigned int, std::vector<double>, std::string);
 
     //! Method used to initialize the Particle 3d momentum in a given cell
-    void initMomentum(unsigned int, unsigned int, double *, double *, std::string, std::vector<double>&);
+    void initMomentum(unsigned int, unsigned int, std::vector<double>, std::vector<double>, std::string, std::vector<double>&);
 
     //! Method used to initialize the Particle weight (equivalent to a charge density) in a given cell
     void initWeight(PicParams*, unsigned int, unsigned int, double);
