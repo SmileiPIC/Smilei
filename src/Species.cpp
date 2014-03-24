@@ -120,6 +120,7 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 				cell_index[i] = round (smpi->getDomainLocalMin(i)/params->cell_length[i]);
 		}
 		
+                npart_effective = 0;
 		for (unsigned int k=0; k<params->n_space[2]; k++) {
 			for (unsigned int j=0; j<params->n_space[1]; j++) {
 				for (unsigned int i=0; i<params->n_space[0]; i++) {
