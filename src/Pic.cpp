@@ -30,9 +30,12 @@
 #include <ctime>
 #include <cstdlib>
 #include <iostream>
+#include <iomanip>
 
 #include "Diagnostic.h"
 #include "DiagnosticProbe0D.h"
+
+#include "Timer.h"
 
 #include <unistd.h>
 
@@ -184,6 +187,15 @@ int main (int argc, char* argv[])
     // time at half-integer time-steps (dual grid)
     double time_dual = (stepStart +0.5) * params.timestep;
 	
+    // Count timer
+    int ntimer(5);
+    Timer timer[ntimer];
+    timer[0].init(smpi, "global");
+    timer[1].init(smpi, "particles");
+    timer[2].init(smpi, "maxwell");
+    timer[3].init(smpi, "diagnostics");
+    timer[4].init(smpi, "densities");
+
 	// ------------------------------------------------------------------
     //                     HERE STARTS THE PIC LOOP
     // ------------------------------------------------------------------
@@ -199,9 +211,13 @@ int main (int argc, char* argv[])
 
         // send message at given time-steps
         // --------------------------------
-		double timElapsed=smpiData->time_seconds();
-		if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) )
-            MESSAGE(1,"Time (dual)= " << time_dual << " it = " << itime  << "/" << params.n_time << " sec: " << timElapsed );
+        timer[0].update();
+        
+        //double timElapsed=smpiData->time_seconds();
+	if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) )
+            MESSAGE(1,"Time (dual)= " << time_dual << " it = " << itime  << "/" << params.n_time << " sec: " << timer[0].getTime() );
+            //MESSAGE(1,"Time (dual)= " << time_dual << " it = " << itime  << "/" << params.n_time << " sec: " << timElapsed  );
+
 
         // put density and currents to 0 + save former density
         // ---------------------------------------------------
@@ -214,25 +230,32 @@ int main (int argc, char* argv[])
         // (1) interpolate the fields at the particle position
         // (2) move the particle
         // (3) calculate the currents (charge conserving method)
+        timer[1].restart();
         for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
             vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi);
             smpi->exchangeParticles(vecSpecies[ispec], ispec, &params);
             if (params.nDim_field == 1) // sort not implemented in 2D
                 vecSpecies[ispec]->sort_part(params.cell_length[params.nDim_particle-1]);
         }
+        timer[1].update();
 
 		//!\todo To simplify : sum global and per species densities
+        timer[4].restart();
         smpi->sumRhoJ( EMfields );
         EMfields->computeTotalRhoJ();
+        timer[4].update();
 
         // solve Maxwell's equations
+        timer[2].restart();
         EMfields->solveMaxwell(time_dual, smpi);
+        timer[2].update();
 
         // call the various diagnostics
         // ----------------------------
 
 		
         // run all diagnostics
+        timer[3].restart();
         diags.runAllDiags(itime, EMfields, vecSpecies);
 
         // temporary EM fields dump in Fields.h5
@@ -244,6 +267,7 @@ int main (int argc, char* argv[])
             sio->writePlasma( vecSpecies, time_dual, smpi );
 
 		// Threee cases of dump: dump_step reached, real time greater than dump_minutes or file named stop created 
+                double timElapsed=timer[0].getTime();
 		if  ( (params.dump_step != 0 && itime == params.dump_step ) || 
 			  (params.dump_minutes != 0.0 && timElapsed/60.0 > params.dump_minutes) || 
 				smpiData->fileStopCreated()
@@ -254,18 +278,27 @@ int main (int argc, char* argv[])
 			params.dump_minutes=0.0;
 			if (params.exit_after_dump) break;
 		}
+        timer[3].update();
 		
 
     }//END of the time loop
 
     smpi->barrier();
 
-    if ( smpi->isMaster() ) MESSAGE(0, "End time loop, time dual = " << time_dual);
-	double timElapsed=smpiData->time_seconds();
-    if ( smpi->isMaster() ) MESSAGE(0, "Time in time loop : " << timElapsed );
     // ------------------------------------------------------------------
     //                      HERE ENDS THE PIC LOOP
     // ------------------------------------------------------------------
+    if ( smpi->isMaster() ) MESSAGE(0, "End time loop, time dual = " << time_dual);
+    //double timElapsed=smpiData->time_seconds();
+    //if ( smpi->isMaster() ) MESSAGE(0, "Time in time loop : " << timElapsed );
+    timer[0].update();
+    if ( smpi->isMaster() ) MESSAGE(0, "Time in time loop : " << timer[0].getTime() );
+    if ( smpi->isMaster() )
+        for (int i=1 ; i<ntimer ; i++) timer[i].print();
+
+    double coverage(0.);
+    for (int i=1 ; i<ntimer ; i++) coverage += timer[i].getTime();
+    if ( smpi->isMaster() ) MESSAGE(0, "\t" << setw(12) << "Coverage\t" << coverage/timer[0].getTime()*100. << " %" );
 
 
     // ------------------------------------------------------------------
