@@ -658,7 +658,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
         double gf = 1.0;
 		
         // for all particles of the Species
-        //#pragma omp parallel for shared (EMfields)
+//#pragma omp parallel for shared (EMfields)
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
 			
             // reset all current-buffers
