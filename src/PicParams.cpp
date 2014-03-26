@@ -66,12 +66,28 @@ PicParams::PicParams(InputData &ifile) : restart(false), exit_after_dump(true), 
         ifile.extract("plasma_length", plasma_length);
         ifile.extract("vacuum_length", vacuum_length);
         ifile.extract("slope_length",  slope_length);
-        if (plasma_length.size()!=nDim_field || vacuum_length.size()!=nDim_field || slope_length.size()!=nDim_field) {
-            ERROR("plasma_length, vacuum_length and slope_length dimension should be " << nDim_field);
-        }
+        
         for (unsigned int i=0; i<nDim_field; i++) {
-            if (vacuum_length[i]+plasma_length[i]+2.0*slope_length[i] > sim_length[i])
-                WARNING("plasma + vacuum + 2*slope dimension " << i << " > " << sim_length[i]);
+            if (vacuum_length[i]+plasma_length[i] > sim_length[i])
+                WARNING("plasma + vacuum " << i << " > " << sim_length[i]);
+        }
+
+        
+        //symmetric density profile
+        if (slope_length.size()!=0){
+            if (plasma_length.size()!=nDim_field || vacuum_length.size()!=nDim_field || slope_length.size()!=nDim_field) {
+                ERROR("plasma_length, vacuum_length and slope_length dimension should be " << nDim_field);
+            }
+           
+        }
+        
+        //not symmetric density profile
+        else{
+            ifile.extract("left_slope_length",left_slope_length);
+            ifile.extract("right_slope_length",right_slope_length);
+            if (plasma_length.size()!=nDim_field || vacuum_length.size()!=nDim_field || left_slope_length.size()!=nDim_field|| right_slope_length.size()!=nDim_field) {
+                ERROR("plasma_length, vacuum_length and slope_length dimension should be " << nDim_field);
+            }
         }
 
     } else {
@@ -186,7 +202,13 @@ void PicParams::compute()
 
             vacuum_length[i] *= 2.0*M_PI;
             plasma_length[i] *= 2.0*M_PI;
-            if (plasma_geometry=="trap") slope_length[i]  *= 2.0*M_PI;
+            if (plasma_geometry=="trap") {
+                if(slope_length.size()!=0) slope_length[i]  *= 2.0*M_PI;
+                else{
+                    left_slope_length[i]*= 2.0*M_PI;
+                    right_slope_length[i]*= 2.0*M_PI;
+                }
+            }
         }
         for (unsigned int i=nDim_field; i<3; i++) {
             n_space[i]=1;

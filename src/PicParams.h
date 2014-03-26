@@ -145,8 +145,14 @@ public:
     //! vacuum lengths
     std::vector<double> vacuum_length;
 
-    //! vacuum lengths
+    //! slope lengths (symmetric for trapezoidal geometry, general for triangular geometry)
     std::vector<double> slope_length;
+    
+    //! left slope lengths(not symmetric for trapezoidal case)
+    std::vector<double> left_slope_length;
+    
+    //! right slope lengths(not symmetric for trapezoidal case)
+    std::vector<double> right_slope_length;
 
     //! initial number of species
     unsigned int n_species;
