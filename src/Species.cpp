@@ -637,7 +637,7 @@ double Species::density_profile(PicParams* params, vector<double> x_cell) {
 //   - increment the currents (projection)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfields, Interpolator* Interp,
-                       Projector* Proj, SmileiMPI* smpi, PicParams* params)
+                       Projector* Proj, SmileiMPI* smpi)
 {
     // Electric field at the particle position
     LocalFields Epart;

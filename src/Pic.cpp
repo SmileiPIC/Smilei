@@ -232,7 +232,7 @@ int main (int argc, char* argv[])
         // (3) calculate the currents (charge conserving method)
         timer[1].restart();
         for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-            vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, &params);
+            vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi);
             smpi->exchangeParticles(vecSpecies[ispec], ispec, &params);
             vecSpecies[ispec]->sort_part(params.cell_length[params.nDim_particle-1]);
         }
