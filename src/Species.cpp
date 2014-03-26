@@ -32,7 +32,7 @@ using namespace std;
 // input: simulation parameters & Species index
 // ---------------------------------------------------------------------------------------------------------------------
 Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
-	
+
     // -------------------
     // Variable definition
     // -------------------
@@ -637,16 +637,8 @@ double Species::density_profile(PicParams* params, vector<double> x_cell) {
 //   - increment the currents (projection)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfields, Interpolator* Interp,
-                       Projector* Proj, SmileiMPI* smpi)
+                       Projector* Proj, SmileiMPI* smpi, PicParams* params)
 {
-	
-    if (ndim>1) {
-        bmin.resize(1);
-        bmin[0] = 0;
-        bmax.resize(1);
-        bmax[0] = max((int)particles.size()-1,0);
-    }
-	
     // Electric field at the particle position
     LocalFields Epart;
     // Magnetic field at the particle position
@@ -849,9 +841,7 @@ void Species::sort_part(double dbin)
         //Number of particles from bin-1 going up is: bmin_init-bmax[bin-1].
         //Total number of particles we need to swap is the min of both.
         p2 = min(bmin[bin]-bmin_init,bmin_init-bmax[bin-1]);
-        for ( p1 = 0 ; p1 < p2; p1++ ) {
-            particles.swap_part(bmax[bin-1] + p1, bmin[bin] - 1 - p1 );
-        }
+        if (p2 >0) particles.swap_part(bmax[bin-1],bmin[bin]-p2,p2);
         bmax[bin-1] += bmin[bin] - bmin_init;
         bmin[bin] = bmax[bin-1];
     }

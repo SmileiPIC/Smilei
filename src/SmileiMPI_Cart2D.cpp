@@ -169,6 +169,8 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
 void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams* params)
 {
     Particles &cuParticles = species->particles;
+    std::vector<int>* cubmin = &species->bmin;
+    std::vector<int>* cubmax = &species->bmax;
 
     /********************************************************************************/
     // Build lists of indexes of particle to exchange per neighbor
@@ -177,7 +179,16 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
     int n_part_send = indexes_of_particles_to_exchange.size();
     int n_part_recv;
 
-    int iPart;
+    int ii,iPart;
+    int n_particles,nmove,lmove;
+    int shift[(*cubmax).size()+1];//how much we need to shift each bin in order to leave room for the new particles
+    double dbin;
+
+    dbin = params->cell_length[ndims_-1]; //width of a bin.
+    for (unsigned int j=0; j<(*cubmax).size()+1 ;j++){
+        shift[j]=0;
+    }
+
     for (int i=0 ; i<n_part_send ; i++) {
         iPart = indexes_of_particles_to_exchange[i];
         // Y direction managed firstly to force considering periodic modification
@@ -320,16 +331,122 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
         for (int i=0 ; i<nbNeighbors_ ; i++)
             buff_index_send[iDim][i].clear();
 
-    }
+    } //End of iDim loop
 
     /********************************************************************************/
     // Delete Particles included in buff_send/buff_recv
     /********************************************************************************/
-    n_part_send = indexes_of_particles_to_exchange.size();
-    for (int i=n_part_send-1 ; i>=0 ; i--) {
-        iPart = indexes_of_particles_to_exchange[i];
-        cuParticles.erase_particle(iPart);
-    } // END for iPart = f(i)
+    //n_part_send = indexes_of_particles_to_exchange.size();
+    //for (int i=n_part_send-1 ; i>=0 ; i--) {
+    //    iPart = indexes_of_particles_to_exchange[i];
+    //    ii = int((cuParticles.position(ndims_-1,iPart)-min_local[1])/dbin);//bin de la particule
+    //    cuParticles.erase_particle(iPart);
+    //    (*cubmax)[ii]--;
+    //    for (unsigned int j = ii+1; j < (*cubmax).size();j++){
+    //        (*cubmax)[j]--;
+    //        (*cubmin)[j]--;
+    //    }
+    //} // END for iPart = f(i)
+
+    // Push lost particles at the end of bins
+    //! \todo For loop on bins, can use openMP here.
+    for (unsigned int ibin = 0 ; ibin < (*cubmax).size() ; ibin++ ) {
+        //cout << "bounds " << (*cubmin)[ibin] << " " << (*cubmax)[ibin] << endl;
+        ii = indexes_of_particles_to_exchange.size()-1;
+        if (ii >= 0) { // Push lost particles to the end of the bin
+            iPart = indexes_of_particles_to_exchange[ii];
+            while (iPart >= (*cubmax)[ibin] && ii > 0) {
+                ii--;
+                iPart = indexes_of_particles_to_exchange[ii];
+            }
+            while (iPart == (*cubmax)[ibin]-1 && ii > 0) {
+                (*cubmax)[ibin]--;
+                ii--;
+                iPart = indexes_of_particles_to_exchange[ii];
+            }
+            while (iPart >= (*cubmin)[ibin] && ii > 0) {
+                cuParticles.overwrite_part2D((*cubmax)[ibin]-1, iPart );
+                (*cubmax)[ibin]--;
+                ii--;
+                iPart = indexes_of_particles_to_exchange[ii];
+            }
+            if (iPart >= (*cubmin)[ibin] && iPart < (*cubmax)[ibin]) { //On traite la dernière particule (qui peut aussi etre la premiere)
+                cuParticles.overwrite_part2D((*cubmax)[ibin]-1, iPart );
+                (*cubmax)[ibin]--;
+            }
+        }
+    }
+    //Shift the bins in memory
+    //Warning: this loop must be executed sequentially. Do not use openMP here.
+    for (int unsigned ibin = 1 ; ibin < (*cubmax).size() ; ibin++ ) { //First bin don't need to be shifted
+        ii = (*cubmin)[ibin]-(*cubmax)[ibin-1]; // Shift the bin in memory by ii slots.
+        iPart = min(ii,(*cubmax)[ibin]-(*cubmin)[ibin]); // Number of particles we have to shift = min (Nshift, Nparticle in the bin)
+        if(iPart > 0) cuParticles.overwrite_part2D((*cubmax)[ibin]-iPart,(*cubmax)[ibin-1],iPart);
+        (*cubmax)[ibin] -= ii;
+        (*cubmin)[ibin] = (*cubmax)[ibin-1];
+    }
+
+    // Delete useless Particles
+    //Theoretically, not even necessary to do anything as long you use bmax as the end of your iterator on particles.
+    //Nevertheless, you might want to free memory and have the actual number of particles
+    //really equal to the size of the vector. So we do:
+    cuParticles.erase_particle_trail((*cubmax).back());
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    //********************************************************************************/
+    // Copy newly arrived particles back to the vector
+    // WARNING: very different behaviour depending on which dimension particles are coming from.
+    /********************************************************************************/
+    //We first evaluate how many particles arrive in each bin. 
+    for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+        n_part_recv = buff_index_recv_sz[0][iNeighbor];
+        for (unsigned int j=0; j<n_part_recv ;j++){
+            ii = int((partVectorRecv[0][iNeighbor].position(1,j)-min_local[1])/dbin);//bin in which the particle goes.
+            shift[ii+1]++; // It makes the next bins shift.
+        }
+    }
+    shift[1] += buff_index_recv_sz[1][0];//Particles coming from south all go to bin 0 and shift all the other bins.
+    shift[(*cubmax).size()] += buff_index_recv_sz[1][1];//Used only to count the total number of particles arrived.
+
+    //Evaluation of the necessary shift of all bins.
+    //Must be done sequentially
+    for (unsigned int j=1; j<(*cubmax).size()+1;j++){ //bin 0 is not shifted.Last element of shift stores total number of arriving particles.
+        shift[j]+=shift[j-1];
+    }
+    //Make room for new particles
+    cuParticles.create_particles(shift[(*cubmax).size()]);
+
+    //Shift bins, must be done sequentially
+    for (unsigned int j=(*cubmax).size()-1; j>=1; j--){
+            n_particles = (*cubmax)[j]-(*cubmin)[j]; //Nbr of particle in this bin
+            nmove = min(n_particles,shift[j]); //Nbr of particles to move
+            lmove = max(n_particles,shift[j]); //How far particles must be shifted
+            if (nmove>0) cuParticles.overwrite_part2D((*cubmin)[j], (*cubmin)[j]+lmove, nmove);
+            (*cubmin)[j] += shift[j];
+            (*cubmax)[j] += shift[j];
+    }
+
+    //Space has been made now to write the arriving particles into the correct bins
+    //iDim == ndims_-1 = 1 (in 2D) is the easy case, when particles arrive either in first or last bin.
+    for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+        n_part_recv = buff_index_recv_sz[1][iNeighbor];
+        if ( (neighbor_[1][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
+            ii = iNeighbor*((*cubmax).size()-1);//0 if iNeighbor=0(particles coming from the left) and (*cubmax).size()-1 otherwise.
+            partVectorRecv[1][iNeighbor].overwrite_part2D(0, cuParticles,(*cubmax)[ii],n_part_recv);
+            (*cubmax)[ii] += n_part_recv ;
+        }
+    }
+    //iDim == 0) is the difficult case, when particles arrive either in first or last bin.
+    for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+        n_part_recv = buff_index_recv_sz[0][iNeighbor];
+        if ( (neighbor_[0][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
+            for(unsigned int j=0; j<n_part_recv; j++){
+                ii = int((partVectorRecv[0][iNeighbor].position(1,j)-min_local[1])/dbin);//bin in which the particle goes.
+                partVectorRecv[0][iNeighbor].overwrite_part2D(j, cuParticles,(*cubmax)[ii]);
+                (*cubmax)[ii] ++ ;
+            }
+        }
+    }
 
 } // END exchangeParticles
 

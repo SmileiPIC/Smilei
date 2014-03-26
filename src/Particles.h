@@ -46,17 +46,47 @@ public:
 
     //! Copy particle iPart at the end of dest_parts
     void cp_particle(int iPart, Particles &dest_parts );
-    //! Copy particle iPart at dest_id in dest_parts
+    //! Insert particle iPart at dest_id in dest_parts
     void cp_particle(int ipart, Particles &dest_parts, int dest_id );
+
+    //! Insert first iPart particles at position dest_id in dest_parts
+    void cp_particles(int nPart, Particles &dest_parts, int dest_id );
 
     //! Suppress particle iPart
     void erase_particle(int iPart );
+
+    //! Suppress all particles from iPart to the end of particle array 
+    void erase_particle_trail(int iPart );
 
     //! Print parameters of particle iPart
     void print(int iPart);
 
     //! Exchange particles part1 & part2 memory location
     void swap_part(int part1,int part2);
+
+    //! Exchange particles part1 & part2 memory location
+    void swap_part(int part1,int part2, int N);
+
+    //! Overwrite particle part1 into part2 memory location. Erasing part2
+    void overwrite_part1D(int part1,int part2);
+
+    //! Overwrite particle part1->part1+N into part2->part2+N memory location. Erasing part2->part2+N
+    void overwrite_part1D(int part1,int part2,int N);
+
+    //! Overwrite particle part1->part1+N into part2->part2+N of dest_parts memory location. Erasing part2->part2+N
+    void overwrite_part1D(int part1, Particles &dest_parts, int part2,int N);
+
+    //! Overwrite particle part1 into part2 memory location. Erasing part2
+    void overwrite_part2D(int part1,int part2);
+
+    //! Overwrite particle part1->part1+N into part2->part2+N memory location. Erasing part2->part2+N
+    void overwrite_part2D(int part1,int part2,int N);
+
+    //! Overwrite particle part1 into part2 of dest_parts memory location. Erasing part2
+    void overwrite_part2D(int part1, Particles &dest_parts, int part2);
+
+    //! Overwrite particle part1->part1+N into part2->part2+N of dest_parts memory location. Erasing part2->part2+N
+    void overwrite_part2D(int part1, Particles &dest_parts, int part2,int N);
 
     //! Move iPart at the end of vectors
     void push_to_end(int iPart );

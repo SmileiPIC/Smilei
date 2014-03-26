@@ -134,7 +134,6 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
 
     MPI_Status Stat;
     int n_particles;
-    double dbin;
 
     /********************************************************************************/
     // Build lists of indexes of particle to exchange per neighbor
@@ -184,7 +183,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
         if ( (neighbor_[0][0]!=MPI_PROC_NULL) && (neighbor_[0][1]!=MPI_PROC_NULL) ) {
             //Send-receive
             MPI_Sendrecv( &n_part_send, 1, MPI_INT, neighbor_[0][iNeighbor], 0, &buff_index_recv_sz[0][(iNeighbor+1)%2], 1, MPI_INT, neighbor_[0][(iNeighbor+1)%2], 0, SMILEI_COMM_1D,&Stat);
-		} else if (neighbor_[0][iNeighbor]!=MPI_PROC_NULL) {
+        } else if (neighbor_[0][iNeighbor]!=MPI_PROC_NULL) {
             //Send
             MPI_Send( &n_part_send, 1, MPI_INT, neighbor_[0][iNeighbor], 0, SMILEI_COMM_1D);
         } else if (neighbor_[0][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
@@ -269,52 +268,33 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
                 iPart = indexes_of_particles_to_exchange[ii];
             }
             while (iPart >= (*cubmin)[ibin] && ii > 0) {
-                //!\todo swap can be switched to a simple overwrite with a single memcpy
-                cuParticles.swap_part( iPart, (*cubmax)[ibin]-1 );
+                cuParticles.overwrite_part1D((*cubmax)[ibin]-1, iPart );
                 (*cubmax)[ibin]--;
                 ii--;
                 iPart = indexes_of_particles_to_exchange[ii];
             }
             if (iPart >= (*cubmin)[ibin] && iPart < (*cubmax)[ibin]) { //On traite la dernière particule (qui peut aussi etre la premiere)
-                //!\todo swap can be switched to a simple overwrite with a single memcpy
-                cuParticles.swap_part( iPart , (*cubmax)[ibin]-1 );
+                cuParticles.overwrite_part1D((*cubmax)[ibin]-1, iPart );
                 (*cubmax)[ibin]--;
             }
         }
     }
     //Shift the bins in memory
     //Warning: this loop must be executed sequentially. Do not use openMP here.
-    //Here we can assume all particles are contiguous in memory and shift a full block of particle in only 1 memcpy.
-    //If they are not, it must be decomposed into iPart memcpy.
     for (int unsigned ibin = 1 ; ibin < (*cubmax).size() ; ibin++ ) { //First bin don't need to be shifted
         ii = (*cubmin)[ibin]-(*cubmax)[ibin-1]; // Shift the bin in memory by ii slots.
         iPart = min(ii,(*cubmax)[ibin]-(*cubmin)[ibin]); // Number of particles we have to shift = min (Nshift, Nparticle in the bin)
-        //coniguous version:----------------------------------------------------------------------------------------------------------------------------
-        //memcpy( &( ((*cuParticles)[(*cubmax)[ibin-1]])->position(0) ), &( ((*cuParticles)[(*cubmax)[ibin]-iPart])->position(0) ) , iPart*part_mem_size );
-        //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        //non contiguous version:----------------------------------------------------------------------------------------------------------------------
-        for (int i =0; i < iPart ; i++) {
-            //memcpy( &( ((*cuParticles)[(*cubmax)[ibin-1]+i])->position(0) ), &( ((*cuParticles)[(*cubmax)[ibin]-i-1])->position(0) ) , part_mem_size );
-            cuParticles.swap_part( (*cubmax)[ibin-1]+i , (*cubmax)[ibin]-i-1 );
-        }
-        //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        if(iPart > 0) cuParticles.overwrite_part1D((*cubmax)[ibin]-iPart,(*cubmax)[ibin-1],iPart);
         (*cubmax)[ibin] -= ii;
         (*cubmin)[ibin] = (*cubmax)[ibin-1];
     }
 	
 	
     // Delete useless Particles
-    //contiguous version:------------------------------------------------------------
-    //Not even necessary to do anything as long you use bmax as the end of your iterator on particles.
-    //Nevertheless, you might want to free memory with something like:
-    //cuParticles->erase( (*cuParticles)[(*cubmax).back()], cuParticles->end()-1 );
-    //You need to erase all particles from cubmax.back() and beyond.
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    //non contiguous version:erase one by one ----------------------------------------
-    n_particles = species->getNbrOfParticles();
-    for (int i= n_particles-1; i >= (*cubmax).back() ; i--) {
-        cuParticles.erase_particle(i);
-    }
+    //Theoretically, not even necessary to do anything as long you use bmax as the end of your iterator on particles.
+    //Nevertheless, you might want to free memory and have the actual number of particles
+    //really equal to the size of the vector. So we do:
+    cuParticles.erase_particle_trail((*cubmax).back());
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 	
@@ -332,15 +312,11 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
         if ( (neighbor_[0][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
             if (iNeighbor == 0) { // Copy particles coming from the right at the end of Particles Array
                 n_particles = species->getNbrOfParticles();
-                for (int iPart=0 ; iPart<n_part_recv; iPart++ ) {
-                    partVectorRecv[0][(iNeighbor+1)%2].cp_particle(iPart, cuParticles);
-                }
+                partVectorRecv[0][(iNeighbor+1)%2].cp_particles(n_part_recv, cuParticles,n_particles);
                 (*cubmax)[(*cubmax).size()-1] += n_part_recv ;
             } else {// Copy particles coming from the left at the beginning of Particles Array
-                // This is extremely ugly and WILL have to be changed once all particles are contiguous in memory.
-                for (int iPart=0 ; iPart<n_part_recv; iPart++ ) {
-                    partVectorRecv[0][(iNeighbor+1)%2].cp_particle(iPart, cuParticles, 0);
-                }
+                //New particles are inserted at the end of bin 0 instead of begining to minimize data movement.
+                partVectorRecv[0][(iNeighbor+1)%2].cp_particles(n_part_recv, cuParticles,(*cubmax)[0]);
                 (*cubmax)[0] += n_part_recv ;
                 for (unsigned int ibin=1 ; ibin < (*cubmax).size() ; ibin++ ) {
                     (*cubmax)[ibin] += n_part_recv ;
