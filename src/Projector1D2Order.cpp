@@ -45,13 +45,12 @@ Projector1D2Order::~Projector1D2Order()
 // ---------------------------------------------------------------------------------------------------------------------
 void Projector1D2Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, double gf)
 {
-		
     Field1D* Jx1D  = static_cast<Field1D*>(EMfields->Jx_);
     Field1D* Jy1D  = static_cast<Field1D*>(EMfields->Jy_);
     Field1D* Jz1D  = static_cast<Field1D*>(EMfields->Jz_);
 
     // Declare local variables
-    int unsigned ipo, ip, iloc;
+    unsigned int ipo, ip, iloc;
     int ip_m_ipo;
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;
@@ -140,7 +139,7 @@ void Projector1D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Field* rho,
     Field1D* rho1D = static_cast<Field1D*>(rho);
 
     // Declare local variables
-	unsigned int ipo, ip, iloc;
+    unsigned int ipo, ip, iloc;
     int ip_m_ipo;
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;
@@ -196,7 +195,7 @@ void Projector1D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Field* rho,
     for (unsigned int i=1; i<5; i++) {
         Jx_p[i] = Jx_p[i-1] + crx_p * Wl[i-1];
     }
-	
+
     ipo -= index_domain_begin;
     //cout << "\tcoords = " << particles.position(0, ipart) << "\tglobal index = " << ip;
     ip  -= index_domain_begin;
@@ -255,7 +254,7 @@ void Projector1D2Order::operator() (Field* rho, Particles &particles, int ipart)
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local current densities (sort)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, int ipart, double gf, unsigned int bin, unsigned int b_dim0)
+void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, int ipart, double gf, unsigned int bin, unsigned int b_dim0)
 {
     // Declare local variables
     unsigned int ipo, ip, iloc;
@@ -323,11 +322,11 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     // 2nd order projection for the total currents & charge density
     // At the 2nd order, oversize = 2.
     for (unsigned int i=0; i<5; i++) {
-        iloc = i + ipo - 2;
-        Jx[iloc] += Jx_p[i];
-        Jy[iloc] += cry_p * Wt[i];
-        Jz[iloc] += crz_p * Wt[i];
-        //(*rho)(iloc)  += rho_p * S1[i];
+        iloc = i  + ipo - 2;
+        Jx[iloc]  += Jx_p[i];
+        Jy[iloc]  += cry_p * Wt[i];
+        Jz[iloc]  += crz_p * Wt[i];
+        rho[iloc] += charge_weight * S1[i];
     }//i
 
 

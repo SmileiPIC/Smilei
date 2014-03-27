@@ -87,16 +87,18 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
     bmax.resize(params->n_space[ndim-1]);
 	
     //Size of the buffer on which each bin are projected
-    //In 1D the particles of a same bin can be projected on 6 different nodes at the second order (oversize = 2)
+    //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
+    //Sorting done before mover
     size_proj_buffer = 2 + 2 * oversize[0];
     for (unsigned int i=1; i< ndim; i++) {
         size_proj_buffer *= params->n_space[i-1] + 2 * oversize[i-1];
     }
     cout << "size_proj_buffer = " << size_proj_buffer << endl;
     //Allocate buffer *********************************************
-    b_Jx = (double *) calloc(3 * size_proj_buffer, sizeof(double));
+    b_Jx = (double *) calloc(4 * size_proj_buffer, sizeof(double));
     b_Jy = b_Jx + size_proj_buffer ;
     b_Jz = b_Jy + size_proj_buffer ;
+    b_rho = b_Jz + size_proj_buffer ;
     if (ndim > 1) {
         b_dim0 =  2 + 2 * oversize[0];
         if (ndim > 2) {
@@ -662,9 +664,9 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
 			
             // reset all current-buffers
-            // *3 allows to also reset Jy & Jz which are contiguous in memory
-            for (iloc = 0; iloc < 3*size_proj_buffer; iloc++) b_Jx[iloc] = 0.0;
-			
+            // *4 allows to also reset Jy, Jz and rho which are contiguous in memory
+            for (iloc = 0; iloc < 4*size_proj_buffer; iloc++) b_Jx[iloc] = 0.0;
+
             for (unsigned int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
 				
                 // Interpolate the fields at the particle position
@@ -673,8 +675,8 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 // Do the ionization
                 if (Ionize && particles.charge(iPart) < (int) atomic_number) {
                     //!\todo Check if it is necessary to put to 0 or if LocalFields ensures it
-					LocalFields Jion;
-					Jion.x=0.0;
+		    LocalFields Jion;
+		    Jion.x=0.0;
                     Jion.y=0.0;
                     Jion.z=0.0;
                     (*Ionize)(particles, iPart, Epart, Jion);
@@ -692,31 +694,32 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 if ( !partBoundCond->apply( particles, iPart ) ) smpi->addPartInExchList( iPart );
 				
                 //if (ndim == 1) {
-				//    //! \todo Sort projection : to be validaed
-                //    (*Proj)(b_Jx, b_Jy, b_Jz, particles, iPart, gf, ibin, b_dim0);
+		//    //! \todo Sort projection : to be validaed
+                //    (*Proj)(b_Jx, b_Jy, b_Jz, b_rho, particles, iPart, gf, ibin, b_dim0);
                 //} else {
-				(*Proj)(EMfields->Jx_s[ispec], EMfields->Jy_s[ispec], EMfields->Jz_s[ispec], EMfields->rho_s[ispec],
-						particles, iPart, gf);
-				//}
-				
-            }// iPart
-			
-            // Copy buffer back to the global array and free buffer****************
-            // this part is dimension dependant !! this is for dim = 1
-            if (ndim == 1) {
-                for (unsigned int i = 0; i < size_proj_buffer ; i++) {
-                    iloc = ibin + i ;
-                    // adding contribution to the total currents
-                    //(*EMfields->Jx_)(iloc) += b_Jx[i];
-                    //(*EMfields->Jy_)(iloc) += b_Jy[i];
-                    //(*EMfields->Jz_)(iloc) += b_Jz[i];
-                    // adding contribution to current species currents and density
-                    //! \todo Below, operator(int) is virtual, to change
-                    (*EMfields->Jx_s[ispec])(iloc) += b_Jx[i];
-                    (*EMfields->Jy_s[ispec])(iloc) += b_Jy[i];
-                    (*EMfields->Jz_s[ispec])(iloc) += b_Jz[i];
-                }
-            }
+		    (*Proj)(EMfields->Jx_s[ispec], EMfields->Jy_s[ispec], EMfields->Jz_s[ispec], EMfields->rho_s[ispec],
+			    particles, iPart, gf);
+		//}
+            }//iPart
+
+
+           // Copy buffer back to the global array and free buffer****************
+           // this part is dimension dependant !! this is for dim = 1
+           if (ndim == 1) {
+               for (unsigned int i = 0; i < size_proj_buffer ; i++) {
+                   iloc = ibin + i ;
+           //        // adding contribution to the total currents
+           //        //(*EMfields->Jx_)(iloc) += b_Jx[i];
+           //        //(*EMfields->Jy_)(iloc) += b_Jy[i];
+           //        //(*EMfields->Jz_)(iloc) += b_Jz[i];
+           //        // adding contribution to current species currents and density
+           //        //! \todo Below, operator(int) is virtual, to change
+           //        (*EMfields->Jx_s[ispec])(iloc) += b_Jx[i];
+           //        (*EMfields->Jy_s[ispec])(iloc) += b_Jy[i];
+           //        (*EMfields->Jz_s[ispec])(iloc) += b_Jz[i];
+           //        (*EMfields->rho_s[ispec])(iloc) += b_rho[i];
+               }
+           }
         }// ibin
 		
         if (Ionize && electron_species) {

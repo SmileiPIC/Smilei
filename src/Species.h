@@ -126,8 +126,8 @@ private:
     //! Size of the projection buffer
     unsigned int size_proj_buffer;
 
-    //! buffers for currents
-    double *b_Jx,*b_Jy,*b_Jz;
+    //! buffers for currents and charge
+    double *b_Jx,*b_Jy,*b_Jz,*b_rho;
 
     //! sub dimensions of buffers for dim > 1
     unsigned int b_dim0, b_dim1;

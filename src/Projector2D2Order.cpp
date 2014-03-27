@@ -397,7 +397,7 @@ void Projector2D2Order::operator() (Field* rho, Particles &particles, int ipart)
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local current densities (sort)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, int ipart, double gf, unsigned int bin, unsigned int b_dim0)
+void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, int ipart, double gf, unsigned int bin, unsigned int b_dim0)
 {
 
     // -------------------------------------
