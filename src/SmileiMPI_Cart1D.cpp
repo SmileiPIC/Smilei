@@ -262,7 +262,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
                 ii--;
                 iPart = indexes_of_particles_to_exchange[ii];
             }
-            while (iPart == (*cubmax)[ibin]-1 && ii > 0) {
+            while (iPart == (*cubmax)[ibin]-1 && iPart >= (*cubmin)[ibin] &&  ii > 0) {
                 (*cubmax)[ibin]--;
                 ii--;
                 iPart = indexes_of_particles_to_exchange[ii];
