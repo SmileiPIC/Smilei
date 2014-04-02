@@ -537,7 +537,7 @@ double Species::density_profile(PicParams* params, vector<double> x_cell) {
                     return 1.0 - ( x_cell[0] - (params->vacuum_length[0]+params->plasma_length[0]-params->right_slope_length[0]) )
                     /            params->right_slope_length[0];
                 }
-                
+
                 else{
                     return 0.0;
                 }
@@ -545,31 +545,7 @@ double Species::density_profile(PicParams* params, vector<double> x_cell) {
             
             
         }
-        
-        // Triangular density profile
-        // ---------------------------
-		else if (params->plasma_geometry=="triangular") {
-            
-            // vacuum region
-            if ( x_cell[0] < params->vacuum_length[0] ) {
-                return 0.0;
-            }
-            // linearly increasing density
-            else if ( x_cell[0] < params->vacuum_length[0]+params->left_slope_length[0] ) {
-                return (x_cell[0]-params->vacuum_length[0]) / params->left_slope_length[0];
-            }
-            // linearly decreasing density
-            else if ( x_cell[0] < params->vacuum_length[0]+params->plasma_length[0] ) {
-                return 1.0 - ( x_cell[0] - (params->vacuum_length[0]+params->plasma_length[0]-params->right_slope_length[0]) )
-                /            params->right_slope_length[0];
-            }
-            
-            
-            else{
-                return 0.0;
-            }
-            
-        }
+		
         // Other density profile
         // ---------------------
         else {
@@ -608,112 +584,59 @@ double Species::density_profile(PicParams* params, vector<double> x_cell) {
         // Trapezoidal density profile
         // ---------------------------
         else if (params->plasma_geometry=="trap") {
-            
-			if(params->slope_length.size()!=0){
-                // x-direction
-                
-                // vacuum region
-                if ( x_cell[0] < params->vacuum_length[0] ) {
-                    fx = 0.0;
-                }
-                // linearly increasing density
-                else if ( x_cell[0] < params->vacuum_length[0]+params->slope_length[0] ) {
-                    fx = (x_cell[0]-params->vacuum_length[0]) / params->slope_length[0];
-                }
-                // density plateau
-                else if ( x_cell[0] < params->vacuum_length[0]+params->plasma_length[0]-params->slope_length[0] ) {
-                    fx = 1.0;
-                }
-                // linearly decreasing density
-                else if ( x_cell[0] < params->vacuum_length[0]+params->plasma_length[0] ) {
-                    fx = 1.0 - ( x_cell[0] - (params->vacuum_length[0]+params->plasma_length[0]-params->slope_length[0]) )
-                    /            params->slope_length[0];
-                }
-                // beyond the plasma
-                else {
-                    fx = 0.0;
-                }
-                
-                // y-direction
-                
-                // vacuum region
-                if ( x_cell[1] < params->vacuum_length[1] ) {
-                    fy = 0.0;
-                }
-                // linearly increasing density
-                else if ( x_cell[1] < params->vacuum_length[1]+params->slope_length[1] ) {
-                    fy = (x_cell[1]-params->vacuum_length[1]) / params->slope_length[1];
-                }
-                // density plateau
-                else if ( x_cell[1] < params->vacuum_length[1]+params->plasma_length[1]-params->slope_length[1] ) {
-                    fy = 1.0;
-                }
-                // linearly decreasing density
-                else if ( x_cell[1] < params->vacuum_length[1]+params->plasma_length[1] ) {
-                    fy = 1.0 - ( x_cell[1] - (params->vacuum_length[1]+params->plasma_length[1]-params->slope_length[1]) )
-                    /            params->slope_length[1];
-                }
-                // beyond the plasma
-                else {
-                    fy = 0.0;
-                }
-                
-                // x-y directions
-                return fx*fy;
+			
+            // x-direction
+			
+            // vacuum region
+            if ( x_cell[0] < params->vacuum_length[0] ) {
+                fx = 0.0;
             }
-            else{
-                // x direction
-                //vacuum region
-                if ( x_cell[0] < params->vacuum_length[0] ) {
-                    fx = 0.0;
-                }
-                // linearly increasing density
-                else if ( x_cell[0] < params->vacuum_length[0]+params->left_slope_length[0] ) {
-                    fx = (x_cell[0]-params->vacuum_length[0]) / params->left_slope_length[0];
-                }
-                // density plateau
-                else if ( x_cell[0] < params->vacuum_length[0]+params->plasma_length[0]-params->right_slope_length[0] ) {
-                    fx = 1.0;
-                }
-                // linearly decreasing density
-                else if ( x_cell[0] < params->vacuum_length[0]+params->plasma_length[0] ) {
-                    fx = 1.0 - ( x_cell[0] - (params->vacuum_length[0]+params->plasma_length[0]-params->right_slope_length[0]) )
-                    /            params->right_slope_length[0];
-                }
-                // beyond the plasma
-                else {
-                    fx = 0.0;
-                }
-                // y-direction
-                
-                // vacuum region
-                if ( x_cell[1] < params->vacuum_length[1] ) {
-                    fy = 0.0;
-                }
-                // linearly increasing density
-                else if ( x_cell[1] < params->vacuum_length[1]+params->left_slope_length[1] ) {
-                    fy = (x_cell[1]-params->vacuum_length[1]) / params->left_slope_length[1];
-                }
-                // density plateau
-                else if ( x_cell[1] < params->vacuum_length[1]+params->plasma_length[1]-params->right_slope_length[1] ) {
-                    fy = 1.0;
-                }
-                // linearly decreasing density
-                else if ( x_cell[1] < params->vacuum_length[1]+params->plasma_length[1] ) {
-                    fy = 1.0 - ( x_cell[1] - (params->vacuum_length[1]+params->plasma_length[1]-params->right_slope_length[1]) )
-                    /            params->right_slope_length[1];
-                }
-                // beyond the plasma
-                else {
-                    fy = 0.0;
-                }
-                
-                // x-y directions
-                return fx*fy;
-
-                
+            // linearly increasing density
+            else if ( x_cell[0] < params->vacuum_length[0]+params->slope_length[0] ) {
+                fx = (x_cell[0]-params->vacuum_length[0]) / params->slope_length[0];
             }
-		}
+            // density plateau
+            else if ( x_cell[0] < params->vacuum_length[0]+params->plasma_length[0]-params->slope_length[0] ) {
+                fx = 1.0;
+            }
+            // linearly decreasing density
+            else if ( x_cell[0] < params->vacuum_length[0]+params->plasma_length[0] ) {
+                fx = 1.0 - ( x_cell[0] - (params->vacuum_length[0]+params->plasma_length[0]-params->slope_length[0]) )
+				/            params->slope_length[0];
+            }
+            // beyond the plasma
+            else {
+                fx = 0.0;
+            }
+			
+            // y-direction
+			
+            // vacuum region
+            if ( x_cell[1] < params->vacuum_length[1] ) {
+                fy = 0.0;
+            }
+            // linearly increasing density
+            else if ( x_cell[1] < params->vacuum_length[1]+params->slope_length[1] ) {
+                fy = (x_cell[1]-params->vacuum_length[1]) / params->slope_length[1];
+            }
+            // density plateau
+            else if ( x_cell[1] < params->vacuum_length[1]+params->plasma_length[1]-params->slope_length[1] ) {
+                fy = 1.0;
+            }
+            // linearly decreasing density
+            else if ( x_cell[1] < params->vacuum_length[1]+params->plasma_length[1] ) {
+                fy = 1.0 - ( x_cell[1] - (params->vacuum_length[1]+params->plasma_length[1]-params->slope_length[1]) )
+				/            params->slope_length[1];
+            }
+            // beyond the plasma
+            else {
+                fy = 0.0;
+            }
+			
+            // x-y directions
+            return fx*fy;
+        }
+		
         // Other profiles: not defined
         // ---------------------------
         else {
