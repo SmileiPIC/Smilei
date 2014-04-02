@@ -264,7 +264,6 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     double crx_p = charge_weight*dx_ov_dt;                // current density for particle moving in the x-direction
     double cry_p = charge_weight*particles.momentum(1, ipart)/gf;    // current density in the y-direction of the macroparticle
     double crz_p = charge_weight*particles.momentum(2, ipart)/gf;    // current density allow the y-direction of the macroparticle
-    //double rho_p = particles.weight(ipart);                         // charge density for the macroparticle
     double S0[5], S1[5], Wl[5], Wt[5], Jx_p[5];            // arrays used for the Esirkepov projection method
 
     // Initialize variables
@@ -282,7 +281,6 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     ipo        = round(xjn);                          // index of the central node
     xj_m_xipo  = xjn - (double)ipo;                   // normalized distance to the nearest grid point
     xj_m_xipo2 = xj_m_xipo*xj_m_xipo;                 // square of the normalized distance to the nearest grid point
-    //cout << "old coords = " << particles.position_old(0, ipart);
 
     // Locate particle new position on the primal grid
     xjn       = particles.position(0, ipart) * dx_inv_;

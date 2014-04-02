@@ -693,13 +693,13 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 //	if omp, create a list per thread
                 if ( !partBoundCond->apply( particles, iPart ) ) smpi->addPartInExchList( iPart );
 				
-                //if (ndim == 1) {
-		//    //! \todo Sort projection : to be validaed
-                //    (*Proj)(b_Jx, b_Jy, b_Jz, b_rho, particles, iPart, gf, ibin, b_dim0);
-                //} else {
+                if (ndim == 1) {
+		    //! \todo Sort projection : to be validaed
+                    (*Proj)(b_Jx, b_Jy, b_Jz, b_rho, particles, iPart, gf, ibin, b_dim0);
+                } else {
 		    (*Proj)(EMfields->Jx_s[ispec], EMfields->Jy_s[ispec], EMfields->Jz_s[ispec], EMfields->rho_s[ispec],
 			    particles, iPart, gf);
-		//}
+		}
             }//iPart
 
 
@@ -708,16 +708,12 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
            if (ndim == 1) {
                for (unsigned int i = 0; i < size_proj_buffer ; i++) {
                    iloc = ibin + i ;
-           //        // adding contribution to the total currents
-           //        //(*EMfields->Jx_)(iloc) += b_Jx[i];
-           //        //(*EMfields->Jy_)(iloc) += b_Jy[i];
-           //        //(*EMfields->Jz_)(iloc) += b_Jz[i];
-           //        // adding contribution to current species currents and density
-           //        //! \todo Below, operator(int) is virtual, to change
-           //        (*EMfields->Jx_s[ispec])(iloc) += b_Jx[i];
-           //        (*EMfields->Jy_s[ispec])(iloc) += b_Jy[i];
-           //        (*EMfields->Jz_s[ispec])(iloc) += b_Jz[i];
-           //        (*EMfields->rho_s[ispec])(iloc) += b_rho[i];
+                   // adding contribution to current species currents and density
+                   //! \todo Below, operator(int) is virtual, to change
+                   (*EMfields->Jx_s[ispec])(iloc) += b_Jx[i];
+                   (*EMfields->Jy_s[ispec])(iloc) += b_Jy[i];
+                   (*EMfields->Jz_s[ispec])(iloc) += b_Jz[i];
+                   (*EMfields->rho_s[ispec])(iloc) += b_rho[i];
                }
            }
         }// ibin

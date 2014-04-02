@@ -119,7 +119,7 @@ ElectroMagn1D::~ElectroMagn1D()
 void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
 {
 
-    MESSAGE("Entering Poisson Solver");
+    //MESSAGE("Entering Poisson Solver");
 
     SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
     //int process_coord_x = smpi1D->getProcCoord(0);
