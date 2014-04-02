@@ -86,19 +86,11 @@ PicParams::PicParams(InputData &ifile) : restart(false), exit_after_dump(true), 
             ifile.extract("left_slope_length",left_slope_length);
             ifile.extract("right_slope_length",right_slope_length);
             if (plasma_length.size()!=nDim_field || vacuum_length.size()!=nDim_field || left_slope_length.size()!=nDim_field|| right_slope_length.size()!=nDim_field) {
-                ERROR("plasma_length, vacuum_length, left_slope_length and right_slope_length dimension should be " << nDim_field);
+                ERROR("plasma_length, vacuum_length and slope_length dimension should be " << nDim_field);
             }
         }
-        
-    }else if(plasma_geometry=="triangular"){
-        ifile.extract("plasma_length", plasma_length);
-        ifile.extract("vacuum_length", vacuum_length);
-        ifile.extract("slope_length", left_slope_length);
-        right_slope_length.resize(left_slope_length.size());
-        for(unsigned int i=0;i<nDim_field;i++) {
-            right_slope_length[i]=plasma_length[i]-left_slope_length[i];
-        }
-    }else {
+
+    } else {
         ERROR("unknown plasma_geometry "<< plasma_geometry);
     }
 
@@ -216,10 +208,6 @@ void PicParams::compute()
                     left_slope_length[i]*= 2.0*M_PI;
                     right_slope_length[i]*= 2.0*M_PI;
                 }
-            }
-            else if(plasma_geometry=="triangular"){
-                left_slope_length[i]*= 2.0*M_PI;
-                right_slope_length[i]*= 2.0*M_PI;
             }
         }
         for (unsigned int i=nDim_field; i<3; i++) {
