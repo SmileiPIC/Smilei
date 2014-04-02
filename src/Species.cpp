@@ -475,7 +475,7 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
 
 double Species::density_profile(PicParams* params, vector<double> x_cell) {
 	
-    // ------------------
+    // ------------------//
     // 1D density profile
     // ------------------
     if (params->nDim_field==1) {
