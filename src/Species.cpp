@@ -545,7 +545,7 @@ double Species::density_profile(PicParams* params, vector<double> x_cell) {
             
             
         }
-        
+        //
         // Triangular density profile
         // ---------------------------
 		else if (params->plasma_geometry=="triangular") {
