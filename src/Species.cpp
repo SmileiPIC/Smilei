@@ -545,7 +545,35 @@ double Species::density_profile(PicParams* params, vector<double> x_cell) {
             
             
         }
+<<<<<<< HEAD
 		
+=======
+        
+//        // Triangular density profile
+//        // ---------------------------
+//		else if (params->plasma_geometry=="triangular") {
+//            
+//            // vacuum region
+//            if ( x_cell[0] < params->vacuum_length[0] ) {
+//                return 0.0;
+//            }
+//            // linearly increasing density
+//            else if ( x_cell[0] < params->vacuum_length[0]+params->left_slope_length[0] ) {
+//                return (x_cell[0]-params->vacuum_length[0]) / params->left_slope_length[0];
+//            }
+//            // linearly decreasing density
+//            else if ( x_cell[0] < params->vacuum_length[0]+params->plasma_length[0] ) {
+//                return 1.0 - ( x_cell[0] - (params->vacuum_length[0]+params->plasma_length[0]-params->right_slope_length[0]) )
+//                /            params->right_slope_length[0];
+//            }
+//            
+//            
+//            else{
+//                return 0.0;
+//            }
+//            
+//        }
+>>>>>>> new
         // Other density profile
         // ---------------------
         else {
