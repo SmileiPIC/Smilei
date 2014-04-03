@@ -145,6 +145,8 @@ private:
 
     double part_mass;
 
+    PicParams* params_;
+
 };
 
 #endif

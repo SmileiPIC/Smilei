@@ -201,7 +201,6 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     if ( smpi->isMaster() ) MESSAGE(0,"Time-Loop is started: number of time-steps n_time =" << params.n_time);
 	
-	
     for (unsigned int itime=stepStart+1 ; itime <= stepStop ; itime++) {
 
         // calculate new times
@@ -233,8 +232,13 @@ int main (int argc, char* argv[])
         timer[1].restart();
         for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
             vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi);
-            smpi->exchangeParticles(vecSpecies[ispec], ispec, &params);
-            vecSpecies[ispec]->sort_part(params.cell_length[params.nDim_particle-1]);
+            if ( (params.use_sort_particles) && (itime%params.exchange_particles_each==0) ) {
+                smpi->exchangeParticles(vecSpecies[ispec], ispec, &params);
+                vecSpecies[ispec]->sort_part(params.cell_length[params.nDim_particle-1]);
+            }
+            else if  ( (!params.use_sort_particles) && (itime%params.exchange_particles_each==0) ) {
+                smpi->IexchangeParticles(vecSpecies[ispec], ispec, &params);
+            }
         }
         timer[1].update();
 

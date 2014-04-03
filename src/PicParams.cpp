@@ -176,6 +176,11 @@ PicParams::PicParams(InputData &ifile) : restart(false), exit_after_dump(true), 
         laser_param.push_back(tmpLaser);
         n_laser++;
     }
+
+    if ( !ifile.extract("use_sort_particles", use_sort_particles) )
+        use_sort_particles = true;
+    if ( !ifile.extract("exchange_particles_each", exchange_particles_each) )
+        exchange_particles_each = 1;
     
     compute();
     

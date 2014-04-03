@@ -18,8 +18,10 @@ import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 class smileiQt(QtGui.QMainWindow):
+    print "main"
     
     def __init__(self):
+        print "__init__"
         super(smileiQt, self).__init__()
             
         self.ui=uic.loadUi(os.path.dirname(os.path.realpath(__file__))+'/smileiQt.ui',self)
@@ -60,6 +62,7 @@ class smileiQt(QtGui.QMainWindow):
         self.raise_()
 
     def load_settings(self):
+        print "load"
         settings=QtCore.QSettings("smilePy","");
         settings.beginGroup("Preferences");
         self.filename=str(settings.value("filename","").toString());
@@ -67,12 +70,14 @@ class smileiQt(QtGui.QMainWindow):
         self.update_files()
 
     def save_settings(self):
+        print "save"
         settings=QtCore.QSettings("smilePy","");
         settings.beginGroup("Preferences");
         settings.setValue("filename",self.filename);
         settings.endGroup();
 
     def on_movement(self, event):
+        print "on_mv"
         if not (event.inaxes is None) :
             zval1=self.h5data1[int(event.ydata),int(event.xdata)]
             zval2=self.h5data2[int(event.ydata),int(event.xdata)]
@@ -80,12 +85,14 @@ class smileiQt(QtGui.QMainWindow):
             self.statusBar().showMessage(msg)
 
     def on_file_change(self):
+        print "on_file_change"
         filename = QtGui.QFileDialog.getOpenFileName(self,"Open File", self.filename, "HDF5 Files (*.h5)")
         if os.path.isfile(filename) :
             self.filename=str(filename)
             self.update_files()
     
     def update_files (self):
+        print "update_change"
         print self.filename
 
         #self.ui.timeStep.currentIndexChanged.disconnect(self.on_draw)
@@ -125,6 +132,7 @@ class smileiQt(QtGui.QMainWindow):
             self.on_draw()
 
     def on_draw(self):
+        print "draw"
         """display dir
         """        
         name1=""

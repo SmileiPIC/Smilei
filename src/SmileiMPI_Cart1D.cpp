@@ -79,7 +79,7 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
 
         n_space_global[i] = params.n_space_global[i];
 
-        oversize[i] = params.oversize[i] = params.interpolation_order;
+        oversize[i] = params.oversize[i] = params.interpolation_order + (params.exchange_particles_each-1);
 	cout << "params.interpolation_order = " << params.interpolation_order << endl;
 
         cell_starting_global_index[i] = coords_[i]*(params.n_space_global[i] / number_of_procs[i]);
@@ -346,11 +346,9 @@ void SmileiMPI_Cart1D::IexchangeParticles(Species* species, int ispec, PicParams
         iPart = indexes_of_particles_to_exchange[i];
         if ( cuParticles.position(0,iPart) < min_local[0]) {
             buff_index_send[0][0].push_back( indexes_of_particles_to_exchange[i] );
-            break;
         }
-        if ( cuParticles.position(0,iPart) >= max_local[0]) {
+        else if ( cuParticles.position(0,iPart) >= max_local[0]) {
             buff_index_send[0][1].push_back( indexes_of_particles_to_exchange[i] );
-            break;
         }
     } // END for iPart = f(i)
 

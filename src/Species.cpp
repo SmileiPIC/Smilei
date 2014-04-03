@@ -328,8 +328,8 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 	
     // define limits for BC and functions applied and for domain decomposition
     partBoundCond = new PartBoundCond( params, ispec, smpi);
-	
-	
+
+    params_  = params;
 	
 }//END Species creator
 
@@ -744,6 +744,14 @@ double Species::density_profile(PicParams* params, vector<double> x_cell) {
 void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfields, Interpolator* Interp,
                        Projector* Proj, SmileiMPI* smpi)
 {
+    // disable sort
+    if (!params_->use_sort_particles) {
+        bmin.resize(1);
+        bmin[0] = 0;
+        bmax.resize(1);
+        bmax[0] = max((int)particles.size()-1,0);
+    }
+
     // Electric field at the particle position
     LocalFields Epart;
     // Magnetic field at the particle position
