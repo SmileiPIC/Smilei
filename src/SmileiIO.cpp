@@ -182,9 +182,14 @@ void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI*
 	
 }
 
-void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, PicParams &params, InputData& input_data) { 
+void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, PicParams &params, InputData& input_data) { 
 	hid_t fid, gid, sid, aid, did, tid;
 	
+	MESSAGE(2, "DUMPING fields and particles");
+	
+	params.dump_step = 0;
+	params.dump_minutes=0.0;
+
 	ostringstream nameDump("");
 	nameDump << "dump-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
 	fid = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
@@ -337,6 +342,9 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
     restartFieldsPerProc(fid, EMfields->Bx_m);
     restartFieldsPerProc(fid, EMfields->By_m);
     restartFieldsPerProc(fid, EMfields->Bz_m);
+//    restartFieldsPerProc(fid, EMfields->Jx_);
+//    restartFieldsPerProc(fid, EMfields->Jy_);
+//    restartFieldsPerProc(fid, EMfields->Jz_);
 	
 	aid = H5Aopen(fid, "species", H5T_NATIVE_UINT);
 	unsigned int vecSpeciesSize=0;
@@ -369,7 +377,7 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
 		DEBUG("----------->>" << nameDump.str() << " " << ispec << " " << nameDump.str() << " " << partSize << " " << partCapacity);
 		
 		if (partSize>0) {
-			for (unsigned int i=0; i<nDim_particle; i++) {
+			for (unsigned int i=0; i<vecSpecies[ispec]->particles.Position.size(); i++) {
 				ostringstream namePos("");
 				namePos << "Position-" << i;
 				did = H5Dopen(gid, namePos.str().c_str(), H5P_DEFAULT);
@@ -377,7 +385,7 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
 				H5Dclose(did);
 			}
 			
-			for (unsigned int i=0; i<nDim_particle; i++) {
+			for (unsigned int i=0; i<vecSpecies[ispec]->particles.Momentum.size(); i++) {
 				ostringstream namePos("");
 				namePos << "Momentum-" << i;
 				did = H5Dopen(gid, namePos.str().c_str(), H5P_DEFAULT);

@@ -53,7 +53,7 @@ public:
     virtual void write( Field* field ) = 0;
 
 	//! dump everything to file per processor
-    void dumpAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi,  PicParams &params, InputData& input_data);
+    void dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi,  PicParams &params, InputData& input_data);
 	
 	//! dump field per proc
 	void dumpFieldsPerProc(hid_t fid, Field* field);

@@ -272,13 +272,10 @@ int main (int argc, char* argv[])
 		// Threee cases of dump: dump_step reached, real time greater than dump_minutes or file named stop created 
                 double timElapsed=timer[0].getTime();
 		if  ( (params.dump_step != 0 && itime == params.dump_step ) || 
-			  (params.dump_minutes != 0.0 && timElapsed/60.0 > params.dump_minutes) || 
+			  (params.dump_minutes != 0.0 && smpi->time_seconds()/60.0 > params.dump_minutes) || 
 				smpiData->fileStopCreated()
 			 ) {
-			MESSAGE(2, "DUMPING fields and particles");
             sio->dumpAll( EMfields, itime,  vecSpecies, smpi, params, input_data);
-			params.dump_step = 0;
-			params.dump_minutes=0.0;
 			if (params.exit_after_dump) break;
 		}
         timer[3].update();
