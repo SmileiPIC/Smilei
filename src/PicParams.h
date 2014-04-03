@@ -209,6 +209,12 @@ public:
 	//! restart namelist
 	bool restart;
 	
+	//! enable sort particles (default = yes) 
+	bool use_sort_particles;
+
+	//! frequency of exchange particles (default = 1) 
+	int exchange_particles_each;
+
 };
 
 #endif
