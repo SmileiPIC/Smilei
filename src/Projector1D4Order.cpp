@@ -171,7 +171,7 @@ void Projector1D4Order::operator() (Field* rho, Particles &particles, int ipart)
 void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, int ipart, double gf, unsigned int bin, unsigned int b_dim0)
 {
     // Declare local variables
-    unsigned int ipo, ip, iloc;
+    int unsigned ipo, ip, iloc;
     int ip_m_ipo;
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xipo3, xj_m_xipo4, xj_m_xip, xj_m_xip2, xj_m_xip3, xj_m_xip4;
@@ -193,7 +193,7 @@ void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     xjn        = particles.position_old(0, ipart) * dx_inv_;
     ipo        = round(xjn);                          // index of the central node
     xj_m_xipo  = xjn - (double)ipo;                   // normalized distance to the nearest grid point
-    xj_m_xipo2 = xj_m_xipo*xj_m_xipo;                 // square of the normalized distance to the nearest grid point
+    xj_m_xipo2 = xj_m_xipo  * xj_m_xipo;                 // square of the normalized distance to the nearest grid point
     xj_m_xipo3 = xj_m_xipo2 * xj_m_xipo;              // cube of the normalized distance to the nearest grid point
     xj_m_xipo4 = xj_m_xipo3 * xj_m_xipo;              // 4th power of the normalized distance to the nearest grid point
 
@@ -201,24 +201,25 @@ void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     xjn       = particles.position(0, ipart) * dx_inv_;
     ip        = round(xjn);                           // index of the central node
     xj_m_xip  = xjn - (double)ip;                     // normalized distance to the nearest grid point
-    xj_m_xip2 = xj_m_xip*xj_m_xip;                    // square of the normalized distance to the nearest grid point
+    xj_m_xip2 = xj_m_xip  * xj_m_xip;                    // square of the normalized distance to the nearest grid point
     xj_m_xip3 = xj_m_xip2 * xj_m_xip;                 // cube of the normalized distance to the nearest grid point
     xj_m_xip4 = xj_m_xip3 * xj_m_xip;                 // 4th power of the normalized distance to the nearest grid point
 
 
-    // coefficients 2nd order interpolation on 3 nodes
-    S0[1] = 0.5 * (xj_m_xipo2-xj_m_xipo+0.25);
-    S0[2] = (0.75-xj_m_xipo2);
-    S0[3] = 0.5 * (xj_m_xipo2+xj_m_xipo+0.25);
+    // coefficients 4th order interpolation on 5 nodes
+
+    S0[1] = dble_1_ov_384   - dble_1_ov_48  * xj_m_xipo  + dble_1_ov_16 * xj_m_xipo2 - dble_1_ov_12 * xj_m_xipo3 + dble_1_ov_24 * xj_m_xipo4;
+    S0[2] = dble_19_ov_96   - dble_11_ov_24 * xj_m_xipo  + dble_1_ov_4 * xj_m_xipo2  + dble_1_ov_6  * xj_m_xipo3 - dble_1_ov_6  * xj_m_xipo4;
+    S0[3] = dble_115_ov_192 - dble_5_ov_8   * xj_m_xipo2 + dble_1_ov_4 * xj_m_xipo4;
     S0[4] = dble_19_ov_96   + dble_11_ov_24 * xj_m_xipo  + dble_1_ov_4 * xj_m_xipo2  - dble_1_ov_6  * xj_m_xipo3 - dble_1_ov_6  * xj_m_xipo4;
     S0[5] = dble_1_ov_384   + dble_1_ov_48  * xj_m_xipo  + dble_1_ov_16 * xj_m_xipo2 + dble_1_ov_12 * xj_m_xipo3 + dble_1_ov_24 * xj_m_xipo4;
 
-    // coefficients 2nd order interpolation on 3 nodes
+    // coefficients 2nd order interpolation on 5 nodes
     ip_m_ipo = ip-ipo;
 
-    S1[ip_m_ipo+1] = 0.5 * (xj_m_xip2-xj_m_xip+0.25);
-    S1[ip_m_ipo+2] = (0.75-xj_m_xip2);
-    S1[ip_m_ipo+3] = 0.5 * (xj_m_xip2+xj_m_xip+0.25);
+    S1[ip_m_ipo+1] = dble_1_ov_384   - dble_1_ov_48  * xj_m_xip  + dble_1_ov_16 * xj_m_xip2 - dble_1_ov_12 * xj_m_xip3 + dble_1_ov_24 * xj_m_xip4;
+    S1[ip_m_ipo+2] = dble_19_ov_96   - dble_11_ov_24 * xj_m_xip  + dble_1_ov_4 * xj_m_xip2  + dble_1_ov_6  * xj_m_xip3 - dble_1_ov_6  * xj_m_xip4;
+    S1[ip_m_ipo+3] = dble_115_ov_192 - dble_5_ov_8   * xj_m_xip2 + dble_1_ov_4 * xj_m_xip4;
     S1[ip_m_ipo+4] = dble_19_ov_96   + dble_11_ov_24 * xj_m_xip  + dble_1_ov_4 * xj_m_xip2  - dble_1_ov_6  * xj_m_xip3 - dble_1_ov_6  * xj_m_xip4;
     S1[ip_m_ipo+5] = dble_1_ov_384   + dble_1_ov_48  * xj_m_xip  + dble_1_ov_16 * xj_m_xip2 + dble_1_ov_12 * xj_m_xip3 + dble_1_ov_24 * xj_m_xip4;
 

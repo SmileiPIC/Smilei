@@ -257,7 +257,7 @@ void Projector1D2Order::operator() (Field* rho, Particles &particles, int ipart)
 void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, int ipart, double gf, unsigned int bin, unsigned int b_dim0)
 {
     // Declare local variables
-    unsigned int ipo, ip, iloc;
+    int unsigned ipo, ip, iloc;
     int ip_m_ipo;
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;
