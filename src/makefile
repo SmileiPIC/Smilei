@@ -37,6 +37,4 @@ $(EXEC): $(OBJS)
 	$(SMILEICXX) $(CFLAGS) -o $(EXEC) $(OBJS) $(LDFLAGS)
 
 clean:
-	rm -f $(EXEC) $(OBJS)
-
-
+	rm -f $(EXEC) $(OBJS) .depend
