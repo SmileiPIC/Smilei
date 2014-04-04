@@ -1,0 +1,151 @@
+# SIMULATION PARAMETERS
+# dim: Geometry of the simulation
+#      1d3v = cartesian grid with 1d in space + 3d in velocity
+#      2d3v = cartesian grid with 2d in space + 3d in velocity
+#      3d3v = cartesian grid with 3d in space + 3d in velocity
+#      2drz = cylindrical (r,z) grid with 3d3v particles
+#
+dim = 2d3v
+
+# order of interpolation
+interpolation_order = 2 
+
+# SIMULATION TIME
+# res_time: temporal resolution (integer = number of time−steps within one normalization period)
+# sim_time: duration of the simulation in units of the normalization period 
+#
+res_time = 200
+sim_time = 5.0
+
+# SIMULATION BOX : for all space directions (use vector)
+# res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
+# sim_length: length of the simulation in units of the normalization wavelength 
+#
+res_space  = 100   100  
+sim_length = 12.0   5.0  
+
+# PLASMA GEOMETRY
+# plasma_geometry: string defining the plasma geometry
+# ***_length: characteristic length for a given geometry
+#
+plasma_geometry = crossx
+vacuum_length   = 1.0  0.0 
+plasma_length   = 5.0  5.0
+
+# RANDOM seed 
+# this is used to randomize the random number generator
+random_seed = 0
+
+# DEFINE ALL SPECIES
+
+
+# species_type: ion, electron, positron, test ...
+# initialization_type: regular, cold or (isotrop) Maxwell−Juettner distribution# n_part_per_cell: number of particle−per−cell
+# c_part_max: factor on the memory reserved for the total number of particles
+# mass: particle mass in units of the electron mass
+# charge: particle charge in units of e (−e is the electron charge)
+# density: species density in units of the normalization density
+# mean_velocity: mean velocity of the species (3D vector) in units of the light velocity
+# temperature: temperature of the species in units of m_e c^2
+# dynamics_type: species type of dynamics = norm or rrLL
+# time_frozen: time during which the particles are frozen in units of the normalization time
+# radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
+#
+species
+	species_type = positron1
+	initialization_type = Maxwell-Juettner
+	ionization_model = none
+	n_part_per_cell = 5
+	c_part_max = 1.0
+	mass = 1.0
+	charge = 1.0
+	density = 1.0
+	mean_velocity = 0.5 0.0 0.0
+	temperature = 0.0001
+	dynamics_type = norm
+	time_frozen = 0.0
+	radiating = false
+end
+
+species 
+	species_type = electron1
+	initialization_type = Maxwell-Juettner
+	n_part_per_cell = 5
+	c_part_max = 1.0
+	mass = 1.0
+	charge = -1.0
+	density = 1.0
+	mean_velocity = 0.5 0.0 0.0
+	temperature = 0.01
+	dynamics_type = norm	
+	time_frozen = 0.0
+	radiating = false
+end
+
+species
+        species_type = positron2
+        initialization_type = Maxwell-Juettner
+        ionization_model = none
+        n_part_per_cell = 5
+        c_part_max = 1.0
+        mass = 1.0
+        charge = 1.0
+        density = 1.0
+        mean_velocity = -0.5 0.0 0.0
+        temperature = 0.0001
+        dynamics_type = norm
+        time_frozen = 0.0
+        radiating = false
+end
+
+species
+        species_type = electron2
+        initialization_type = Maxwell-Juettner
+        n_part_per_cell = 5
+        c_part_max = 1.0
+        mass = 1.0
+        charge = -1.0
+        density = 1.0
+        mean_velocity = -0.5 0.0 0.0
+        temperature = 0.01
+        dynamics_type = norm
+        time_frozen = 0.0
+        radiating = false
+end
+
+# ---------------------
+# DIAGNOSTIC PARAMETERS
+# ---------------------
+
+# print_every (on screen text output) 
+print_every = 20
+
+# every for field dump
+fieldDump_every = 100
+
+# every for particle dump
+particleDump_every = 1000
+
+# DIAG ON SCALARS
+# every = number of time-steps between each output
+#
+diagnostic scalar
+	every = 20
+end
+
+# PROB 0D
+# every = number of time-steps between each output
+# x     = position of the different probes
+#
+diagnostic probe0d
+	every = 1
+	x = 0.0  6.0   12.0	
+	y = 2.5  2.5   2.5
+end
+
+
+dump_step = 1000
+exit_after_dump = false
+	
+
+
