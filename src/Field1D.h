@@ -1,12 +1,11 @@
 #ifndef FIELD1D_H
 #define FIELD1D_H
 
+#include <cmath>
+#include <vector>
+
 #include "Field.h"
 #include "Tools.h"
-
-#include <vector>
-#include <cmath>
-
 
 //! class Field1D used to defined a 1d vector
 class Field1D : public Field

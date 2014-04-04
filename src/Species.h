@@ -1,19 +1,18 @@
 #ifndef SPECIES_H
 #define SPECIES_H
 
+#include <vector>
+#include <string>
+
 #include "Particles.h"
 #include "PicParams.h"
 #include "Pusher.h"
 //#include "PartBoundCond.h"
-
-#include <vector>
-#include <string>
 #include "PicParams.h"
 #include "SmileiMPI.h"
 #include "Pusher.h"
 #include "Ionization.h"
 #include "ElectroMagn.h"
-
 
 class ElectroMagn;
 class Pusher;

@@ -6,11 +6,12 @@
   @date 2013-02-15
 */
 
-#ifndef DIAGPARAMS_h
-#define DIAGPARAMS_h
+#ifndef DIAGPARAMS_H
+#define DIAGPARAMS_H
 
 #include <vector>
 #include <string>
+
 #include "InputData.h"
 #include "PicParams.h"
 

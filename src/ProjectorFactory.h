@@ -1,4 +1,3 @@
-
 #ifndef PROJECTORFACTORY_H
 #define PROJECTORFACTORY_H
 

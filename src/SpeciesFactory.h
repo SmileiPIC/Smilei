@@ -1,4 +1,3 @@
-
 #ifndef SPECIESFACTORY_H
 #define SPECIESFACTORY_H
 

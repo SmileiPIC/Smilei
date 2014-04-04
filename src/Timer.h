@@ -20,7 +20,6 @@ private:
     double time_acc_;
     std::string name_;
     SmileiMPI* smpi_;
-
 };
 
 #endif

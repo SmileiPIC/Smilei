@@ -8,11 +8,11 @@
 #ifndef SMILEIO_CART1D_H
 #define SMILEIO_CART1D_H
 
-#include "SmileiIO.h"
-#include "Tools.h"
-
 #include <string>
 #include <vector>
+
+#include "SmileiIO.h"
+#include "Tools.h"
 
 class SmileiIO_Cart1D : public SmileiIO {
 public:
@@ -39,8 +39,4 @@ private:
     //hsize_t chunk_dims[1];
 };
 
-
-
-
-
-#endif /* SMILEIO_CART1D_H_ */
+#endif /* SMILEIO_CART1D_H */

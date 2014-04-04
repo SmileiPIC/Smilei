@@ -1,11 +1,11 @@
-#ifndef Field3D_H
-#define Field3D_H
+#ifndef FIELD3D_H
+#define FIELD3D_H
 
-#include "Field.h"
-#include <vector>
 #include <cmath>
 
+#include <vector>
 
+#include "Field.h"
 
 //! class Field3D used to defined a 3d vector
 class Field3D : public Field

@@ -1,6 +1,8 @@
 #include "PicParams.h"
-#include "Tools.h"
+
 #include <cmath>
+
+#include "Tools.h"
 
 using namespace std;
 

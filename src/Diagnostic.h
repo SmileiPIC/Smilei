@@ -10,7 +10,7 @@
 
 #include <vector>
 #include <fstream>
-#include <hdf5.h>
+
 #include "DiagnosticScalar.h"
 #include "Interpolator.h"
 #include "DiagnosticProbe0D.h"
@@ -45,8 +45,6 @@ private:
     Interpolator* interp_;
 
     unsigned int everyMap;
-
-
 };
 
 #endif

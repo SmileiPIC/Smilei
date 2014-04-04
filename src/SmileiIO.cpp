@@ -7,13 +7,15 @@
 
 #include "SmileiIO.h"
 
+#include <sstream>
+#include <iomanip>
+
+#include <mpi.h>
+
 #include "PicParams.h"
 #include "SmileiMPI.h"
 #include "ElectroMagn.h"
 #include "Species.h"
-
-#include <sstream>
-#include <iomanip>
 
 using namespace std;
 

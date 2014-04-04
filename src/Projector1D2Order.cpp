@@ -1,12 +1,13 @@
 #include "Projector1D2Order.h"
+
+#include <cmath>
+#include <iostream>
+
 #include "ElectroMagn.h"
 #include "Field1D.h"
 #include "Particles.h"
 #include "Tools.h"
 #include "SmileiMPI_Cart1D.h"
-
-#include <iostream>
-#include <cmath>
 
 using namespace std;
 

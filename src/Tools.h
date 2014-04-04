@@ -8,7 +8,7 @@
  as well as the name of the function calling the macro. The arguments contained in the parenthesis will then be
  appended. Arguments can be chained together in c++ stream style (using <tt><<</tt> operator)
 
- The macro <tt>WARNING("text")</tt> is the most basic and is itended for waringns that should always be present in the code.
+ The macro <tt>WARNING("text")</tt> is the most basic and is itended for warnings that should always be present in the code.
 
  The macro <tt>ERROR("text")</tt> is used to print an error and close the program.
 
@@ -17,24 +17,22 @@
  represents the debug level starting at which the dubug must be displayed.
  The debug level can be changed int the namelist vie the key <tt>debug</tt>.
 
+*/
 
- */
+#ifndef TOOLS_H
+#define TOOLS_H
 
-#ifndef Tools_h
-#define Tools_h
+#include <csignal>
+#include <cstdlib>
 
-#include <mpi.h>
-
-#include "signal.h"
-#include "stdlib.h"
 #include <iostream>
 
+#include <mpi.h>
 
 #define __header(__msg,__txt) std::cerr << "\t[" << __msg << "] " << __FILE__ << ":" << __LINE__ << " (" \
 << __FUNCTION__ << ") " << __txt << std::endl
 
 //#define HEREIAM(__txt) {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); for(int __i=0;__i<20;__i++) {std::cerr << "-";}; std::cerr << "> " << __rk << "\t" << __FILE__ << ":" << __LINE__ << " (" << __FUNCTION__ << ") " << __txt << std::endl; }
-
 
 #define MESSAGE1(__txt)  {std::cout << __txt << std::endl;}
 #define MESSAGE2(__val,__txt) {for (int __i=0;__i<__val;__i++) std::cout << "\t"; std::cout << "[" << __val << "] " << __txt << std::endl;}
@@ -73,7 +71,5 @@ extern int debug_level;
 
 
 #define WARNING(__txt) __header("WARNING", __txt);
-
-
 
 #endif

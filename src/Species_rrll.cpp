@@ -1,10 +1,11 @@
 #include "Species_rrll.h"
+
+#include <iostream>
+
 #include "Particles.h"
 #include "Interpolator.h"
 #include "Projector.h"
 #include "Pusher.h"
-
-#include <iostream>
 
 using namespace std;
 

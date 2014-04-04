@@ -10,7 +10,6 @@
 #define PARTBOUNDCOND_H
 
 #include "PicParams.h"
-
 #include "Particles.h"
 
 class SmileiMPI;
