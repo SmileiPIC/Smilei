@@ -1,11 +1,11 @@
 #include "DiagnosticScalar.h"
 
+#include <string>
+
 #include "PicParams.h"
 #include "DiagParams.h"
 #include "SmileiMPI.h"
 #include "ElectroMagn.h"
-
-#include <string>
 
 using namespace std;
 

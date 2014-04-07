@@ -1,11 +1,12 @@
 #ifndef IONIZATIONTUNNEL_H
 #define IONIZATIONTUNNEL_H
 
-#include "Ionization.h"
-#include "Tools.h"
+#include <cmath>
 
 #include <vector>
-#include <cmath>
+
+#include "Ionization.h"
+#include "Tools.h"
 
 class Particles;
 

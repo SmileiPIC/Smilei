@@ -1,10 +1,8 @@
 #ifndef PUSHER_H
 #define PUSHER_H
 
-
 #include "PicParams.h"
 #include "Field.h"
-
 
 class Particles;
 

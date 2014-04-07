@@ -6,8 +6,8 @@
   @date 2013-02-15
 */
 
-#ifndef PICPARAMS_h
-#define PICPARAMS_h
+#ifndef PICPARAMS_H
+#define PICPARAMS_H
 
 #include <vector>
 #include <string>

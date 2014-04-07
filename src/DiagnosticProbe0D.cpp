@@ -1,18 +1,17 @@
 #include "DiagnosticProbe0D.h"
 
+#include <iomanip>
+#include <string>
+#include <iomanip>
+
 #include "PicParams.h"
 #include "DiagParams.h"
 #include "SmileiMPI.h"
 #include "ElectroMagn.h"
 #include "Field1D.h"
 #include "Field.h"
-#include "hdf5.h"
-#include <iomanip>
-#include <string>
-#include <iomanip>
 
 using namespace std;
-
 
 DiagnosticProbe0D::~DiagnosticProbe0D() {
 }

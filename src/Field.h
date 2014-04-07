@@ -1,13 +1,15 @@
 #ifndef FIELD_H
 #define FIELD_H
 
+#include <cmath>
+
 #include <vector>
 #include <cstdlib>
 #include <string>
 #include <iostream>
 #include <fstream>
+
 #include "Tools.h"
-#include <cmath>
 
 //! Structure containing the fields at a given position (e.g. at a Particle position)
 struct LocalFields

@@ -18,4 +18,3 @@ inline void refl_particle( Particles &particles, int ipart, int direction, doubl
 }
 
 #endif
-

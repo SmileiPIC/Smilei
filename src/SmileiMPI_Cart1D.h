@@ -1,11 +1,12 @@
-
 #ifndef SMILEIMPI_CART1D_H
 #define SMILEIMPI_CART1D_H
 
-#include "SmileiMPI.h"
-
 #include <vector>
 #include <string>
+
+#include <mpi.h>
+
+#include "SmileiMPI.h"
 
 class Species;
 
@@ -63,7 +64,6 @@ protected:
 
     int nbNeighbors_;     // Per direction, ie = 2
     int neighbor_[3][2];	// 
-
 
 };
 

@@ -1,8 +1,9 @@
 #include "Particles.h"
-#include "PicParams.h"
 
-#include <iostream>
 #include <cstring>
+#include <iostream>
+
+#include "PicParams.h"
 
 using namespace std;
 

@@ -1,11 +1,12 @@
-
 #ifndef SMILEIMPI_CART2D_H
 #define SMILEIMPI_CART2D_H
 
-#include "SmileiMPI.h"
-
 #include <vector>
 #include <string>
+
+#include <mpi.h>
+
+#include "SmileiMPI.h"
 
 class Species;
 
@@ -76,7 +77,4 @@ protected:
 
 };
 
-
-
 #endif
-
