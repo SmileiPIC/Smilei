@@ -113,9 +113,12 @@ void DiagnosticScalar::compute() {
 
             }
             if (part_tot) charge_tot/=part_tot;
-            out_list.push_back(make_pair("charge_tot",charge_tot));
-            out_list.push_back(make_pair("part_tot",part_tot));
-            out_list.push_back(make_pair("energy_tot",ener_tot));
+			ostringstream name(""); 
+			name << ispec;
+			
+            out_list.push_back(make_pair("charge_tot-"+name.str(),charge_tot));
+            out_list.push_back(make_pair("part_tot-"+name.str(),part_tot));
+            out_list.push_back(make_pair("energy_tot-"+name.str(),ener_tot));
         }
 
         for (map<string,map<string,vector<double> > >::iterator iterEM=mpi_EM_scalars[0].begin(); iterEM!=mpi_EM_scalars[0].end(); iterEM++) {
