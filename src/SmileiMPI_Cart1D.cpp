@@ -91,6 +91,11 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
                 params.n_space[i] = params.n_space_global[i] - params.n_space[i]*(number_of_procs[i]-1);
             }
         }
+
+        if ( params.n_space[i] <= 2*oversize[i] ) {
+            WARNING ( "Increase space resolution or reduce number of MPI process in direction " << i );
+        }
+
         // min/max_local : describe local domain in which particles cat be moved
         //                 different from domain on which E, B, J are defined
         min_local[i] = (cell_starting_global_index[i]                  )*params.cell_length[i];
