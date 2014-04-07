@@ -73,7 +73,7 @@ species
 	mean_velocity = 0.0
 	temperature = 2.0e-5
 	dynamics_type = norm
-	time_frozen = 300.0
+	time_frozen = 100.0
 	radiating = false
 	bc_part_type = refl
 end
@@ -152,7 +152,7 @@ diagnostic probe0d
 end
 
 diagnostic phase1D
-	every = 1
+	every = 10
 	x = 0.0 1.0 10
 	px = 1000
 	py = 1000

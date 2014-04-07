@@ -1,4 +1,4 @@
-VERSION:="v$(shell git describe 2>/dev/null || echo '??')"
+VERSION:="$(shell git describe 2>/dev/null || echo '??')"
 
 .PHONY: doc src
 

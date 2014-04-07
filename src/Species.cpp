@@ -30,8 +30,7 @@ using namespace std;
 // Creator for Species
 // input: simulation parameters & Species index
 // ---------------------------------------------------------------------------------------------------------------------
-Species::Species(PicParams* params, int ispec, SmileiMPI* smpi):
-momentum_min(3), momentum_max(3) {
+Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
     
     // -------------------
     // Variable definition
@@ -311,18 +310,10 @@ momentum_min(3), momentum_max(3) {
 		
 		// Recalculate former position using the particle velocity
 		// (necessary to calculate currents at time t=0 using the Esirkepov projection scheme)
-		if (particles.size()>0) {
-			for (unsigned int i=0; i<3; i++)
-				momentum_min[i] = momentum_max[i] = particles.momentum(i,0);
-		}
 
 		for (unsigned int iPart=0; iPart<npart_effective; iPart++) {
 			for (unsigned int i=0; i<ndim; i++) {
 				particles.position_old(i,iPart) -= particles.momentum(i,iPart)/particles.lor_fac(iPart) * params->timestep;
-			}
-			for (unsigned int i=0; i<3; i++) {
-				if (particles.momentum(i,iPart) < momentum_min[i]) momentum_min[i] = particles.momentum(i,iPart);
-				if (particles.momentum(i,iPart) > momentum_max[i]) momentum_max[i] = particles.momentum(i,iPart);
 			}
 		}
 		PMESSAGE( 1, smpi->getRank(),"Species "<< ispec <<" # part "<< npart_effective );

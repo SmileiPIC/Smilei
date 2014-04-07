@@ -1,5 +1,5 @@
-#ifndef DiagnosticProbe0D_H
-#define DiagnosticProbe0D_H
+#ifndef DiagnosticPhase1D_H
+#define DiagnosticPhase1D_H
 
 #include <cmath>
 
@@ -21,19 +21,18 @@ class SmileiMPI;
 class DiagParams;
 class ElectroMagn;
 
-class DiagnosticProbe0D {
+class DiagnosticPhase1D {
 
 public:
 
-    DiagnosticProbe0D(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi);
-    ~DiagnosticProbe0D();
+    DiagnosticPhase1D(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi);
+    ~DiagnosticPhase1D();
 
     void set_proc();
     void set_file_name();
 
-    void run(int timestep, ElectroMagn* EMfields, Interpolator* interp);
+    void run(int timestep, std::vector<Species*>&);
 
-    std::string probeName(int p);
     void open_file();
     void close();
 
@@ -41,11 +40,19 @@ private:
     SmileiMPI* smpi_;
 
     hid_t fileId;
-    Particles probeParticles;
-    std::vector<int> probeId;
-    LocalFields Eloc_fields;
-    LocalFields Bloc_fields;
-    int probeSize;
+	
+	
+	//! momentum min
+	std::vector< std::vector<double> > momentum_min;
+	
+	//! momentum max
+	std::vector< std::vector<double> > momentum_max;
+	
+	//! gamma min
+	std::vector<double> lorentz_factor_min;
+	
+	//! gamma max
+	std::vector<double> lorentz_factor_max;
 
 };
 #endif

@@ -38,7 +38,10 @@ public:
 
     //! scalar output every probe_every (namelist group "diagnostic probe0d" key "every")
     unsigned int probe0d_every;
-
+	
+    //! phase 1D output every probe_every (namelist group "diagnostic phase1d" key "every")
+    unsigned int phase1d_every;
+	
     unsigned int n_probe1d;
 
     std::vector<std::vector<double> > ps_coord;

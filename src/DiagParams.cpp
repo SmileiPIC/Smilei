@@ -19,11 +19,16 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
 	
 	scalar_every=0;
 	ifile.extract("every",scalar_every,"diagnostic scalar");
+	
 	map_every=0;
     ifile.extract("every",map_every,"diagnostic map");
+
 	probe0d_every=0;
     ifile.extract("every",probe0d_every,"diagnostic probe0d");
-	
+
+	phase1d_every=0;
+	ifile.extract("every",phase1d_every,"diagnostic phase1d");
+
     ps_coord.resize(params.nDim_field);
     ifile.extract("x",ps_coord[0],"diagnostic probe0d");
     if (params.nDim_field>1) {
