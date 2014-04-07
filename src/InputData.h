@@ -56,11 +56,11 @@ public:
     template <class T> bool extract(std::string data, T &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0) {
         data=cleanString(data);
         group=cleanString(group);
-        unsigned int n_occur_group=0;
+        int n_occur_group=0;
         for (unsigned int i=0; i<allData.size(); i++) {
             if (group == allData[i].first) {
                 if (occurrenceGroup==n_occur_group || occurrenceGroup < 0) {
-                    unsigned int n_occur_item=0;
+                    int n_occur_item=0;
                     for (unsigned int j=0; j<allData[i].second.size(); j++) {
                         if (data == allData[i].second[j].first) {
                             if (occurrenceItem==n_occur_item || occurrenceItem < 0) {
@@ -86,11 +86,11 @@ public:
         data=cleanString(data);
         group=cleanString(group);
         bool found=false;
-        unsigned int n_occur_group=0;
+        int n_occur_group=0;
         for (unsigned int i=0; i<allData.size(); i++) {
             if (group == allData[i].first) {
                 if (occurrenceGroup==n_occur_group || occurrenceGroup < 0) {
-                    unsigned int n_occur_item=0;
+                    int n_occur_item=0;
                     for (unsigned int j=0; j<allData[i].second.size(); j++) {
                         if (data == allData[i].second[j].first) {
                             if (occurrenceItem==n_occur_item || occurrenceItem < 0) {

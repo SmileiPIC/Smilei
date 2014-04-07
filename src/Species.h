@@ -104,6 +104,20 @@ public:
 
     //! Cell_length
     std::vector<double> cell_length;
+	
+	//! momentum min
+	std::vector<double> momentum_min;
+
+	//! momentum max
+	std::vector<double> momentum_max;
+	
+	//! gamma min
+	double lorentz_factor_min;
+	
+	//! gamma max
+	double lorentz_factor_max;
+	
+	
 
 private:
     //! Number of steps for Maxwell-Juettner cumulative function integration
