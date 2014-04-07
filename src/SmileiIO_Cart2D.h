@@ -4,15 +4,13 @@
  *  Created on: 3 juil. 2013
  *      Author: jderouil
  */
-
 #ifndef SMILEIO_CART2D_H
 #define SMILEIO_CART2D_H
 
-#include "SmileiIO.h"
-
-
 #include <string>
 #include <vector>
+
+#include "SmileiIO.h"
 
 class SmileiIO_Cart2D : public SmileiIO {
 public:
@@ -39,9 +37,5 @@ private:
     //hsize_t chunk_dims[2];
 
 };
-
-
-
-
 
 #endif /* SMILEIO_CART2D_H_ */

@@ -1,11 +1,11 @@
-#ifndef Field2D_H
-#define Field2D_H
+#ifndef FIELD2D_H
+#define FIELD2D_H
 
-#include "Field.h"
-#include <vector>
 #include <cmath>
 
+#include <vector>
 
+#include "Field.h"
 
 //! class Field2D used to defined a 2d vector
 class Field2D : public Field

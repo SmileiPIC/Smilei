@@ -1,4 +1,9 @@
 #include "Diagnostic.h"
+
+#include <string>
+
+#include <hdf5.h>
+
 #include "PicParams.h"
 #include "DiagParams.h"
 #include "SmileiMPI.h"
@@ -6,8 +11,6 @@
 #include "Species.h"
 #include "Interpolator.h"
 #include "DiagnosticScalar.h"
-
-#include <string>
 
 using namespace std;
 

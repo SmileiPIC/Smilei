@@ -2,8 +2,6 @@
 #define SPECIESNORM_H
 
 #include "Species.h"
-#include <string>
-
 
 class ElectroMagn;
 class Pusher;

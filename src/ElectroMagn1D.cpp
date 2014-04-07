@@ -1,15 +1,17 @@
 #include "ElectroMagn1D.h"
+
+#include <cmath>
+
+#include <sstream>
+#include <string>
+#include <iostream>
+
 #include "PicParams.h"
 #include "Field1D.h"
 #include "Laser.h"
 
 #include "SmileiMPI.h"
 #include "SmileiMPI_Cart1D.h"
-
-#include <iostream>
-#include <math.h>
-#include <sstream>
-#include <string>
 
 using namespace std;
 

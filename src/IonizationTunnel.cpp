@@ -1,6 +1,8 @@
 #include "IonizationTunnel.h"
-#include "Particles.h"
+
 #include <cmath>
+
+#include "Particles.h"
 
 using namespace std;
 

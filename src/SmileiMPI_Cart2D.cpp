@@ -1,16 +1,16 @@
 #include "SmileiMPI_Cart2D.h"
 
-#include "Species.h"
+#include <cmath>
+#include <string>
 
+#include <mpi.h>
+
+#include "Species.h"
 
 #include "ElectroMagn.h"
 #include "Field2D.h"
 
 #include "Tools.h"
-
-#include <string>
-#include <mpi.h>
-#include <cmath>
 
 using namespace std;
 

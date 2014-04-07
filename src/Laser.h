@@ -1,8 +1,7 @@
-
 #ifndef LASER_H
 #define LASER_H
 
-#include "math.h"
+#include <cmath>
 
 #include "PicParams.h"
 

@@ -7,11 +7,11 @@
 
 #include "SmileiIO_Cart2D.h"
 
+#include <sstream>
+
 #include "PicParams.h"
 #include "SmileiMPI_Cart2D.h"
 #include "Field2D.h"
-
-#include <sstream>
 
 using namespace std;
 
@@ -166,7 +166,7 @@ void SmileiIO_Cart2D::writeFieldsSingleFileTime( Field* field, hid_t group_id )
 } // END writeFieldsSingleFileTime
 
 
-//! this method writes a fild on an hdf5 file should be used just for debug
+//! this method writes a field on an hdf5 file should be used just for debug
 void SmileiIO_Cart2D::write( Field* field )
 {
     std::vector<unsigned int> isDual = field->isDual_;

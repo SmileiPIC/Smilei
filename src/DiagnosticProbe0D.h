@@ -1,15 +1,17 @@
 #ifndef DiagnosticProbe0D_H
 #define DiagnosticProbe0D_H
 
-#include "Tools.h"
-
+#include <cmath>
 
 #include <vector>
 #include <string>
 #include <iostream>
 #include <fstream>
+
 #include <hdf5.h>
-#include <math.h>
+
+#include "Tools.h"
+
 #include "Species.h"
 #include "Interpolator.h"
 #include "Particles.h"
@@ -18,7 +20,6 @@ class PicParams;
 class SmileiMPI;
 class DiagParams;
 class ElectroMagn;
-
 
 class DiagnosticProbe0D {
 

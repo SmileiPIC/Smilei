@@ -1,4 +1,3 @@
-
 #ifndef SMILEIIOFACTORY_H
 #define SMILEIIOFACTORY_H
 

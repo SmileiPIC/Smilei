@@ -1,4 +1,4 @@
-VERSION:="v$(shell git rev-list HEAD --count 2>/dev/null || echo '??'):$(shell git log -1 --pretty=format:%h 2>/dev/null || echo '??')"
+VERSION:="v$(shell git describe 2>/dev/null || echo '??')"
 
 SMILEICXX     ?= mpic++
 HDF5_ROOT_DIR ?=

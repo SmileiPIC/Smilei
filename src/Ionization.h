@@ -1,11 +1,12 @@
 #ifndef IONIZATION_H
 #define IONIZATION_H
 
+#include <map>
+
 #include "Tools.h"
 #include "PicParams.h"
 #include "Field.h"
 #include "Particles.h"
-#include <map>
 
 //! Class Ionization: generic class allowing to define Ionization physics
 class Ionization

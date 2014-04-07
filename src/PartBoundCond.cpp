@@ -1,14 +1,15 @@
-
 #include "PartBoundCond.h"
+
+#include <cstdlib>
+
+#include <iostream>
+#include <string>
 
 #include "Particles.h"
 #include "BoundaryConditionType.h"
 #include "SmileiMPI.h"
 #include "Tools.h"
 
-#include <iostream>
-#include <string>
-#include <cstdlib>
 using namespace std;
 
 PartBoundCond::PartBoundCond( PicParams *params, int ispec, SmileiMPI* smpi )

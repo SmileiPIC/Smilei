@@ -39,8 +39,9 @@
  @date 2013-02-15
  */
 
-#include "Tools.h"
 #include <string>
+
+#include "Tools.h"
 
 //! verbosity level use verbose keyword in data parameter
 #ifdef  __DEBUG
