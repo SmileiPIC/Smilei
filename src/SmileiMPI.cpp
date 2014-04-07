@@ -12,6 +12,8 @@
 #include <iostream>
 #include <sstream>
 #include <cmath>
+#include <cstring>
+
 using namespace std;
 
 SmileiMPI::SmileiMPI( int* argc, char*** argv )

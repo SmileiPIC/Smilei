@@ -1,3 +1,4 @@
+#!/usr/bin/env python 
 """
 Plot fields of smilei simulaition
 """
@@ -18,10 +19,10 @@ import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 class smileiQt(QtGui.QMainWindow):
-    print "main"
+    global field_dims
+    field_dims = 0
     
     def __init__(self):
-        print "__init__"
         super(smileiQt, self).__init__()
             
         self.ui=uic.loadUi(os.path.dirname(os.path.realpath(__file__))+'/smileiQt.ui',self)
@@ -48,12 +49,14 @@ class smileiQt(QtGui.QMainWindow):
         
         self.fig1 = Figure()
         self.canvas1 = FigureCanvas(self.fig1)
-        self.canvas1.mpl_connect('motion_notify_event', self.on_movement)
+	if field_dims == 2 :
+	       self.canvas1.mpl_connect('motion_notify_event', self.on_movement)
         self.ui.grid1.addWidget(self.canvas1,0,0)
 
         self.fig2 = Figure()
         self.canvas2 = FigureCanvas(self.fig2)
-        self.canvas2.mpl_connect('motion_notify_event', self.on_movement)
+	if field_dims == 2 :
+	       self.canvas2.mpl_connect('motion_notify_event', self.on_movement)
         self.ui.grid2.addWidget(self.canvas2,0,0)
 
         self.load_settings()
@@ -62,22 +65,20 @@ class smileiQt(QtGui.QMainWindow):
         self.raise_()
 
     def load_settings(self):
-        print "load"
         settings=QtCore.QSettings("smilePy","");
         settings.beginGroup("Preferences");
-        self.filename=str(settings.value("filename","").toString());
+        #self.filename=str(settings.value("filename","").toString());
+        self.filename=str("");
         settings.endGroup();
         self.update_files()
 
     def save_settings(self):
-        print "save"
         settings=QtCore.QSettings("smilePy","");
         settings.beginGroup("Preferences");
         settings.setValue("filename",self.filename);
         settings.endGroup();
 
     def on_movement(self, event):
-        print "on_mv"
         if not (event.inaxes is None) :
             zval1=self.h5data1[int(event.ydata),int(event.xdata)]
             zval2=self.h5data2[int(event.ydata),int(event.xdata)]
@@ -85,15 +86,14 @@ class smileiQt(QtGui.QMainWindow):
             self.statusBar().showMessage(msg)
 
     def on_file_change(self):
-        print "on_file_change"
         filename = QtGui.QFileDialog.getOpenFileName(self,"Open File", self.filename, "HDF5 Files (*.h5)")
         if os.path.isfile(filename) :
             self.filename=str(filename)
             self.update_files()
     
     def update_files (self):
-        print "update_change"
-        print self.filename
+	global field_dims
+	print self.filename
 
         #self.ui.timeStep.currentIndexChanged.disconnect(self.on_draw)
         #self.ui.field1.currentIndexChanged.disconnect(self.on_draw)
@@ -120,8 +120,14 @@ class smileiQt(QtGui.QMainWindow):
                         if len(field.shape)==2 and np.prod(np.absolute(np.array(field.shape)-1)) > 0 : 
                             self.field1.addItem(str(field._v_name))
                             self.field2.addItem(str(field._v_name))
-                        else :
-                            print "rejected", time._v_name
+			    field_dims=2
+			else :
+			    if len(field.shape)==1:
+		            	self.field1.addItem(str(field._v_name))
+        		    	self.field2.addItem(str(field._v_name))
+				field_dims=1
+	                    else :
+        	        	print "rejected", time._v_name
                 
             h5file.close()
         
@@ -132,7 +138,7 @@ class smileiQt(QtGui.QMainWindow):
             self.on_draw()
 
     def on_draw(self):
-        print "draw"
+	global field_dims
         """display dir
         """        
         name1=""
@@ -162,19 +168,25 @@ class smileiQt(QtGui.QMainWindow):
         
             mini=self.mini.text().toDouble()
             maxi=self.maxi.text().toDouble()
-            if mini[1] and maxi[1] :
-                if self.ui.logBox.isChecked() and mini[0]>0 and maxi[0]>0:
-                    self.img1 = self.axes1.imshow(self.h5data1,norm=LogNorm(vmin=mini[0],vmax=maxi[0]))
-                    self.img2 = self.axes2.imshow(self.h5data2,norm=LogNorm(vmin=mini[0],vmax=maxi[0]))
-                else:
-                    self.img1 = self.axes1.imshow(self.h5data1,vmin=mini[0],vmax=maxi[0])
-                    self.img2 = self.axes2.imshow(self.h5data2,vmin=mini[0],vmax=maxi[0])
-            else :
-                self.img1 = self.axes1.imshow(self.h5data1)    
-                self.img2 = self.axes2.imshow(self.h5data2)    
+	    if field_dims == 2 :
+	            if mini[1] and maxi[1] :
+        	        if self.ui.logBox.isChecked() and mini[0]>0 and maxi[0]>0:
+                	    self.img1 = self.axes1.imshow(self.h5data1,norm=LogNorm(vmin=mini[0],vmax=maxi[0]))
+	                    self.img2 = self.axes2.imshow(self.h5data2,norm=LogNorm(vmin=mini[0],vmax=maxi[0]))
+        	        else:
+                	    self.img1 = self.axes1.imshow(self.h5data1,vmin=mini[0],vmax=maxi[0])
+	                    self.img2 = self.axes2.imshow(self.h5data2,vmin=mini[0],vmax=maxi[0])
+        	    else :
+                	self.img1 = self.axes1.imshow(self.h5data1)    
+	                self.img2 = self.axes2.imshow(self.h5data2)    
+	
+        	    self.fig1.colorbar(self.img1)
+	            self.fig2.colorbar(self.img2)
 
-            self.fig1.colorbar(self.img1)
-            self.fig2.colorbar(self.img2)
+	    if field_dims == 1 :
+            	self.img1 = self.axes1.plot(self.h5data1)    
+                self.img2 = self.axes2.plot(self.h5data2)    
+
 
             self.canvas1.draw()
             self.canvas2.draw()

@@ -51,7 +51,7 @@ PicParams::PicParams(InputData &ifile) : restart(false), exit_after_dump(true), 
     }
     
     ifile.extract("plasma_geometry", plasma_geometry);
-    if (plasma_geometry=="constant") {
+    if ( (plasma_geometry=="constant") || (plasma_geometry=="crossx") || (plasma_geometry=="crossy") ) {
         ifile.extract("plasma_length", plasma_length);
         ifile.extract("vacuum_length", vacuum_length);
         if (plasma_length.size()!=nDim_field || vacuum_length.size()!=nDim_field) {
@@ -86,7 +86,7 @@ PicParams::PicParams(InputData &ifile) : restart(false), exit_after_dump(true), 
             ifile.extract("left_slope_length",left_slope_length);
             ifile.extract("right_slope_length",right_slope_length);
             if (plasma_length.size()!=nDim_field || vacuum_length.size()!=nDim_field || left_slope_length.size()!=nDim_field|| right_slope_length.size()!=nDim_field) {
-                ERROR("plasma_length, vacuum_length, left_slope_length and right_slope_length dimension should be " << nDim_field);
+                ERROR("plasma_length, vacuum_length and slope_length dimension should be " << nDim_field);
             }
         }
         
@@ -116,8 +116,10 @@ PicParams::PicParams(InputData &ifile) : restart(false), exit_after_dump(true), 
         ifile.extract("charge",tmpSpec.charge ,"species",0,n_species);
         ifile.extract("density",tmpSpec.density ,"species",0,n_species);
         ifile.extract("mean_velocity",tmpSpec.mean_velocity ,"species",0,n_species);
-        if (tmpSpec.mean_velocity.size()!=nDim_particle) {
-            WARNING("mean_velocity size : should be " << nDim_particle);
+        if (tmpSpec.mean_velocity.size()!=3) {
+            WARNING("mean_velocity should be of size 3 : it is put to zero");
+            tmpSpec.mean_velocity.resize(3);
+            tmpSpec.mean_velocity[0]=tmpSpec.mean_velocity[1]=tmpSpec.mean_velocity[2]=0.0;
         }
         ifile.extract("temperature",tmpSpec.temperature ,"species",0,n_species);
         if (tmpSpec.temperature.size()==1) {

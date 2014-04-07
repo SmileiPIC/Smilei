@@ -1,9 +1,9 @@
-VERSION:="v$(shell git rev-list HEAD --count):$(shell git log -1 --pretty=format:%h)"
+VERSION:="v$(shell git rev-list HEAD --count 2>/dev/null || echo '??'):$(shell git log -1 --pretty=format:%h 2>/dev/null || echo '??')"
 
 SMILEICXX     ?= mpic++
 HDF5_ROOT_DIR ?=
 
-CFLAGS  = -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include  #-Wstrict-aliasing
+CFLAGS  += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include #-Wstrict-aliasing
 LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5
 
 ifneq (,$(findstring poincare,$(HOSTNAME)))
@@ -37,6 +37,4 @@ $(EXEC): $(OBJS)
 	$(SMILEICXX) $(CFLAGS) -o $(EXEC) $(OBJS) $(LDFLAGS)
 
 clean:
-	rm -f $(EXEC) $(OBJS)
-
-
+	rm -f $(EXEC) $(OBJS) .depend

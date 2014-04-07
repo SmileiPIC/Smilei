@@ -70,7 +70,7 @@ public:
     void initCharge(PicParams*, unsigned int, unsigned int, double);
 
     //! Method returning the density profile
-    double density_profile(PicParams*, std::vector<double>);
+    double density_profile(PicParams*, std::vector<double>, unsigned int);
 
     //! Method used to save all Particles properties for the considered Species
     void dump(std::ofstream&);
