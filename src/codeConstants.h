@@ -1,5 +1,5 @@
-#ifdef codeConstant_h
-#define codeConstant_h
+#ifdef CODECONSTANT_H
+#define CODECONSTANT_H
 
 //! \todo{define PI and other constants here}
 

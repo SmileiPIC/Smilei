@@ -1,14 +1,14 @@
-
 #include "Interpolator1D4Order.h"
 
-#include <iostream>
 #include <cmath>
-using namespace std;
+#include <iostream>
 
 #include "ElectroMagn.h"
 #include "Field1D.h"
 #include "Particles.h"
 #include "SmileiMPI_Cart1D.h"
+
+using namespace std;
 
 Interpolator1D4Order::Interpolator1D4Order(PicParams *params, SmileiMPI* smpi) : Interpolator1D(params, smpi)
 {

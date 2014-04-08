@@ -1,10 +1,12 @@
 #ifndef PARTICLES_H
 #define PARTICLES_H
 
+#include <cmath>
+
 #include <iostream>
 #include <fstream>
-#include <math.h>
 #include <vector>
+
 #include "Tools.h"
 
 class PicParams;

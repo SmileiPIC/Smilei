@@ -1,6 +1,10 @@
-
 #include "Species.h"
 
+#include <cmath>
+#include <ctime>
+#include <cstdlib>
+
+#include <iostream>
 
 #include "PusherFactory.h"
 #include "IonizationFactory.h"
@@ -19,11 +23,6 @@
 #include "Field2D.h"
 #include "Field3D.h"
 #include "Tools.h"
-
-#include <iostream>
-#include <cmath>
-#include <ctime>
-#include <cstdlib>
 
 using namespace std;
 

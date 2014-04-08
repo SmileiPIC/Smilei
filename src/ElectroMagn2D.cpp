@@ -1,4 +1,10 @@
 #include "ElectroMagn2D.h"
+
+#include <cmath>
+
+#include <iostream>
+#include <sstream>
+
 #include "PicParams.h"
 #include "Field2D.h"
 #include "Laser.h"
@@ -6,12 +12,7 @@
 #include "SmileiMPI.h"
 #include "SmileiMPI_Cart2D.h"
 
-#include <iostream>
-#include <math.h>
-#include <sstream>
-
 using namespace std;
-
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn2D

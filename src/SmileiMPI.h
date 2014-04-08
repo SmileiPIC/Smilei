@@ -1,13 +1,13 @@
-
 #ifndef SMILEIMPI_H
 #define SMILEIMPI_H
+
+#include <string>
+#include <vector>
 
 #include <mpi.h>
 
 #include "PicParams.h"
 #include "Tools.h"
-#include <string>
-#include <vector>
 
 class PicParams;
 class DiagParams;

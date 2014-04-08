@@ -1,9 +1,9 @@
-
 #include "PusherBoris.h"
-#include "Particles.h"
 
 #include <iostream>
 #include <cmath>
+
+#include "Particles.h"
 
 using namespace std;
 

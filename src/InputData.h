@@ -6,8 +6,10 @@
  @date 2013-02-15
  */
 
-#ifndef InputData_H
-#define InputData_H
+#ifndef INPUTDATA_H
+#define INPUTDATA_H
+
+#include <cstdlib>
 
 #include <fstream>
 #include <string>
@@ -17,10 +19,9 @@
 #include <ostream>
 #include <algorithm>
 #include <iterator>
-#include <stdlib.h>
-#include "Tools.h"
-
 #include <vector>
+
+#include "Tools.h"
 
 class PicParams;
 

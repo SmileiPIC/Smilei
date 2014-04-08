@@ -1,12 +1,11 @@
 #ifndef ELECTROMAGN_H
 #define ELECTROMAGN_H
 
-#include "Tools.h"
-
 #include <vector>
 #include <string>
 #include <map>
 
+#include "Tools.h"
 
 class PicParams;
 class Species;

@@ -1,21 +1,19 @@
 #ifndef DIAGNOSTICSCALAR_H
 #define DIAGNOSTICSCALAR_H
 
-#include "Tools.h"
-//#include "Diagnostic.h"
-
 #include <vector>
 #include <string>
 #include <iostream>
 #include <fstream>
-#include <hdf5.h>
+
+#include "Tools.h"
+//#include "Diagnostic.h"
 #include "Species.h"
 
 class PicParams;
 class SmileiMPI;
 class DiagParams;
 class ElectroMagn;
-
 
 //! class that calculates scalars and writes them on a file
 

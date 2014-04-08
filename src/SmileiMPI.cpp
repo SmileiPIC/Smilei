@@ -1,5 +1,11 @@
 #include "SmileiMPI.h"
 
+#include <cmath>
+#include <cstring>
+
+#include <iostream>
+#include <sstream>
+
 #include "PicParams.h"
 #include "DiagParams.h"
 #include "Tools.h"
@@ -8,11 +14,6 @@
 #include "Field.h"
 
 #include "Species.h"
-
-#include <iostream>
-#include <sstream>
-#include <cmath>
-#include <cstring>
 
 using namespace std;
 

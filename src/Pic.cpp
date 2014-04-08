@@ -15,6 +15,14 @@
 
 
 #include "Pic.h"
+
+#include <ctime>
+#include <cstdlib>
+#include <unistd.h>
+
+#include <iostream>
+#include <iomanip>
+
 #include "PicParams.h"
 #include "InputData.h"
 #include "DiagParams.h"
@@ -27,17 +35,10 @@
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
 
-#include <ctime>
-#include <cstdlib>
-#include <iostream>
-#include <iomanip>
-
 #include "Diagnostic.h"
 #include "DiagnosticProbe0D.h"
 
 #include "Timer.h"
-
-#include <unistd.h>
 
 using namespace std;
 
