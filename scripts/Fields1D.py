@@ -154,7 +154,7 @@ for n in range(my_iter,my_iter+n_plot_pp):
 	my_groups.append(groups_name[n])
 	
 for n in range(0,len(my_groups)):
-	for g in f.walk_groups("/"+my_groups[n]):
+	for g in f.walkGroups("/"+my_groups[n]):
 		time.append(g._v_name)
 		Ez.append(g.Ez)
 		By.append(g.By_m)
