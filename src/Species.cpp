@@ -86,25 +86,41 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
     bmin.resize(params->n_space[ndim-1]);
     bmax.resize(params->n_space[ndim-1]);
 	
-    //Size of the buffer on which each bin are projected
+    //Size in each dimension of the buffers on which each bin are projected
     //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
-    //Sorting done before mover
-    size_proj_buffer = 2 + 2 * oversize[0];
-    for (unsigned int i=1; i< ndim; i++) {
-        size_proj_buffer *= params->n_space[i-1] + 2 * oversize[i-1];
+
+    //Dual dimension of fields. Assumes largest possible size to allocate buffer.
+    f_dim0 =  params->n_space[0] + 2 * oversize[0] +2;
+    f_dim1 =  params->n_space[1] + 2 * oversize[1] +2;
+    f_dim2 =  params->n_space[2] + 2 * oversize[2] +2;
+
+    if (ndim == 1){
+        b_dim0 =  2 + 2 * oversize[0];
+        b_dim1 =  1;
+        b_dim2 =  1;
+        b_lastdim = b_dim0;
     }
-    cout << "size_proj_buffer = " << size_proj_buffer << endl;
+    if (ndim == 2){
+        b_dim0 =  f_dim0 ;
+        b_dim1 =  2 + 2 * oversize[1];
+        b_dim2 =  1;
+        b_lastdim = b_dim1;
+    }
+    if (ndim == 3){
+        b_dim0 = f_dim0;
+        b_dim1 = f_dim1;
+        b_dim2 =  2 + 2 * oversize[2];
+        b_lastdim = b_dim2;
+    }
+
+
+    size_proj_buffer = b_dim0*b_dim1*b_dim2;
+    cout << "size_proj_buffer = " << size_proj_buffer << " b_dim0 = " << b_dim0<< " b_dim1 = " << b_dim1<< " b_dim2 = " << b_dim2<<endl;
     //Allocate buffer *********************************************
     b_Jx = (double *) calloc(4 * size_proj_buffer, sizeof(double));
     b_Jy = b_Jx + size_proj_buffer ;
     b_Jz = b_Jy + size_proj_buffer ;
     b_rho = b_Jz + size_proj_buffer ;
-    if (ndim > 1) {
-        b_dim0 =  2 + 2 * oversize[0];
-        if (ndim > 2) {
-            b_dim1 = params->n_space[1] + 2 * oversize[1] ;
-        }
-    }
 	
 	if (!params->restart) {
 		// ---------------------------------------------------------
@@ -646,7 +662,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     // Magnetic field at the particle position
     LocalFields Bpart;
 	
-    int iloc;
+    int iloc,jloc;
 	
     // number of particles for this Species
     int unsigned nParticles = getNbrOfParticles();
@@ -693,9 +709,9 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 //	if omp, create a list per thread
                 if ( !partBoundCond->apply( particles, iPart ) ) smpi->addPartInExchList( iPart );
 				
-                if (ndim == 1) {
+                if (ndim <= 2) {
 		    //! \todo Sort projection : to be validaed
-                    (*Proj)(b_Jx, b_Jy, b_Jz, b_rho, particles, iPart, gf, ibin, b_dim0);
+                    (*Proj)(b_Jx, b_Jy, b_Jz, b_rho, particles, iPart, gf, ibin, b_lastdim);
                 } else {
 		    (*Proj)(EMfields->Jx_s[ispec], EMfields->Jy_s[ispec], EMfields->Jz_s[ispec], EMfields->rho_s[ispec],
 			    particles, iPart, gf);
@@ -706,7 +722,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
            // Copy buffer back to the global array and free buffer****************
            // this part is dimension dependant !! this is for dim = 1
            if (ndim == 1) {
-               for (unsigned int i = 0; i < size_proj_buffer ; i++) {
+               for (unsigned int i = 0; i < b_dim0 ; i++) {
                    iloc = ibin + i ;
                    // adding contribution to current species currents and density
                    //! \todo Below, operator(int) is virtual, to change
@@ -716,6 +732,18 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                    (*EMfields->rho_s[ispec])(iloc) += b_rho[i];
                }
            }
+           if (ndim == 2) {
+               for (unsigned int i = 0; i < b_dim0 ; i++) {
+                   for (unsigned int j = 0; i < b_dim1 ; i++) {
+                       jloc = ibin + j ;
+                       (*EMfields->Jx_s[ispec])(i*f_dim1+jloc) += b_Jx[i];
+                       (*EMfields->Jy_s[ispec])(i*(f_dim1-1)+jloc) += b_Jy[i];   //-1 because primal along x
+                       (*EMfields->Jz_s[ispec])(i*(f_dim1-1)+jloc) += b_Jz[i];   //-1 because primal along x
+                       (*EMfields->rho_s[ispec])(i*(f_dim1-1)+jloc) += b_rho[i]; //-1 because primal along x
+                   }
+               }
+           }
+
         }// ibin
 		
         if (Ionize && electron_species) {

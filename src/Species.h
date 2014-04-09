@@ -129,8 +129,10 @@ private:
     //! buffers for currents and charge
     double *b_Jx,*b_Jy,*b_Jz,*b_rho;
 
-    //! sub dimensions of buffers for dim > 1
-    unsigned int b_dim0, b_dim1;
+    //! sub dimensions of buffers
+    unsigned int b_dim0, b_dim1, b_dim2, b_lastdim;
+    //! sub dimensions of fields
+    unsigned int f_dim0, f_dim1, f_dim2;
 
     //! Time over which Particles of the considered Species remain frozen
     double time_frozen;
