@@ -45,13 +45,10 @@ private:
     unsigned int everyProbe0D;
     Interpolator* interp_;
 
+	DiagnosticPhase1D phase1D;
+	unsigned int everyPhase1D;
+	
     unsigned int everyMap;
-	
-	std::vector<DiagnosticPhase1D*> phase1DVec;
-	
-	hid_t fileId;
-	
-
 };
 
 #endif

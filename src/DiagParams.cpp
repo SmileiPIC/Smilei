@@ -49,30 +49,13 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
         }
     }
 
-	unsigned int n_phase1d=0;
-	while (ifile.existGroup("diagnostic phase1d",n_phase1d)) {
-		phase1DStructure phase1DTmpStruct;
-		ifile.extract("kind",phase1DTmpStruct.kind,"diagnostic phase1d");
-		ifile.extract("every",phase1DTmpStruct.every,"diagnostic phase1d");
-		ifile.extract("species",phase1DTmpStruct.speciePhase1DName,"diagnostic phase1d");
-		ifile.extract("momentum_min",phase1DTmpStruct.momentum_min,"diagnostic phase1d");
-		ifile.extract("momentum_max",phase1DTmpStruct.momentum_max,"diagnostic phase1d");
-		ifile.extract("momentum_bins",phase1DTmpStruct.momentum_bins,"diagnostic phase1d");
-
-//		if (phase1DTmpStruct.momentum_bins==0) {
-//            ERROR("diagnostic phase1d: momentum_bins must be positive");			
-//		}
-//		bool found = false;
-//		for (unsigned int i=0 ; i<params.species_param.size(); i++){
-//			if (params.species_param[i].species_type==phase1DTmpStruct.speciePhase1DName) found=true;
-//		}
-//		if (!found) {
-//            ERROR("diagnostic phase1d: speciesNameTmp is not a species defined");			
-//		}
-		
-		phase1D.push_back(phase1DTmpStruct);
-		n_phase1d++;
-	}
+	ifile.extract("kinds",phase1D.kinds,"diagnostic phase1d");
+	ifile.extract("every",phase1D.every,"diagnostic phase1d");
+	ifile.extract("species",phase1D.speciePhase1DName,"diagnostic phase1d");
+	ifile.extract("momentum_min",phase1D.momentum_min,"diagnostic phase1d");
+	ifile.extract("momentum_max",phase1D.momentum_max,"diagnostic phase1d");
+	ifile.extract("momentum_bins",phase1D.momentum_bins,"diagnostic phase1d");
+	
 	
 	
 	//    n_probe1d=0;

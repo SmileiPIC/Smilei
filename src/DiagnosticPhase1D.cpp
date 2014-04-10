@@ -19,11 +19,9 @@ DiagnosticPhase1D::~DiagnosticPhase1D() {
 void DiagnosticPhase1D::close() {
 }
 
-DiagnosticPhase1D::DiagnosticPhase1D(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi, unsigned int n) :
-    smpi_(smpi) 
-{
+DiagnosticPhase1D::DiagnosticPhase1D(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi) :
+    smpi_(smpi) {
 
-	every=diagParams->phase1D[n].every;
 }
 
 void DiagnosticPhase1D::run(int timestep, std::vector<Species*>& vecSpecies) {

@@ -25,7 +25,7 @@ class DiagnosticPhase1D {
 
 public:
 
-    DiagnosticPhase1D(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi, unsigned int);
+    DiagnosticPhase1D(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi);
     ~DiagnosticPhase1D();
 
     void set_proc();
@@ -35,8 +35,6 @@ public:
 
     void open_file();
     void close();
-
-	unsigned int every;
 	
 private:
     SmileiMPI* smpi_;

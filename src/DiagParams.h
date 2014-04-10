@@ -21,7 +21,7 @@
 
 struct phase1DStructure {
 	//!string defining the kind oh phase
-	std::string kind;
+	std::string kinds;
 	
 	//! minumum momentum for phase space
 	double momentum_min;
@@ -69,7 +69,7 @@ public:
     unsigned int print_every;
 	
 	//! vector containing phase1D structures
-	std::vector<phase1DStructure> phase1D;
+	phase1DStructure phase1D;
 };
 
 #endif
