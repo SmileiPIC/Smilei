@@ -26,9 +26,6 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
 	probe0d_every=0;
     ifile.extract("every",probe0d_every,"diagnostic probe0d");
 
-	phase1d_every=0;
-	ifile.extract("every",phase1d_every,"diagnostic phase1d");
-
     ps_coord.resize(params.nDim_field);
     ifile.extract("x",ps_coord[0],"diagnostic probe0d");
     if (params.nDim_field>1) {
@@ -51,6 +48,32 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
             DEBUG(10, "new coordinates " << k << " " << i << " " << ps_coord[k][i]);
         }
     }
+
+	unsigned int n_phase1d=0;
+	while (ifile.existGroup("diagnostic phase1d",n_phase1d)) {
+		phase1DStructure phase1DTmpStruct;
+		ifile.extract("kind",phase1DTmpStruct.kind,"diagnostic phase1d");
+		ifile.extract("every",phase1DTmpStruct.every,"diagnostic phase1d");
+		ifile.extract("species",phase1DTmpStruct.speciePhase1DName,"diagnostic phase1d");
+		ifile.extract("momentum_min",phase1DTmpStruct.momentum_min,"diagnostic phase1d");
+		ifile.extract("momentum_max",phase1DTmpStruct.momentum_max,"diagnostic phase1d");
+		ifile.extract("momentum_bins",phase1DTmpStruct.momentum_bins,"diagnostic phase1d");
+
+//		if (phase1DTmpStruct.momentum_bins==0) {
+//            ERROR("diagnostic phase1d: momentum_bins must be positive");			
+//		}
+//		bool found = false;
+//		for (unsigned int i=0 ; i<params.species_param.size(); i++){
+//			if (params.species_param[i].species_type==phase1DTmpStruct.speciePhase1DName) found=true;
+//		}
+//		if (!found) {
+//            ERROR("diagnostic phase1d: speciesNameTmp is not a species defined");			
+//		}
+		
+		phase1D.push_back(phase1DTmpStruct);
+		n_phase1d++;
+	}
+	
 	
 	//    n_probe1d=0;
 	//    while (ifile.existGroup("diagnostic probe1d",n_probe1d)) {

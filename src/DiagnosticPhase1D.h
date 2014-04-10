@@ -25,7 +25,7 @@ class DiagnosticPhase1D {
 
 public:
 
-    DiagnosticPhase1D(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi);
+    DiagnosticPhase1D(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi, unsigned int);
     ~DiagnosticPhase1D();
 
     void set_proc();
@@ -36,23 +36,13 @@ public:
     void open_file();
     void close();
 
+	unsigned int every;
+	
 private:
     SmileiMPI* smpi_;
-
-    hid_t fileId;
 	
-	
-	//! momentum min
-	std::vector< std::vector<double> > momentum_min;
-	
-	//! momentum max
-	std::vector< std::vector<double> > momentum_max;
-	
-	//! gamma min
-	std::vector<double> lorentz_factor_min;
-	
-	//! gamma max
-	std::vector<double> lorentz_factor_max;
+	double momentum_min;
+	std::vector<double> momentumDistr;
 
 };
 #endif

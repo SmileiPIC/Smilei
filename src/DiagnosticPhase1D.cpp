@@ -17,52 +17,44 @@ DiagnosticPhase1D::~DiagnosticPhase1D() {
 }
 
 void DiagnosticPhase1D::close() {
-    H5Fclose(fileId);
 }
 
-DiagnosticPhase1D::DiagnosticPhase1D(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi) :
-    smpi_(smpi)
+DiagnosticPhase1D::DiagnosticPhase1D(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi, unsigned int n) :
+    smpi_(smpi) 
 {
-    ostringstream file_name("");
-    file_name<<"Phase1D.h5";
 
-    hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
-    H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, MPI_INFO_NULL);
-    fileId = H5Fcreate( file_name.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
-    H5Pclose(plist_id);
+	every=diagParams->phase1D[n].every;
+}
 
-    string ver(__VERSION);
-
-    // write version
-    hid_t aid3  = H5Screate(H5S_SCALAR);
-    hid_t atype = H5Tcopy(H5T_C_S1);
-    H5Tset_size(atype, ver.size());
-    H5Tset_strpad(atype,H5T_STR_NULLTERM);
-    hid_t attr3 = H5Acreate2(fileId, "Version", atype, aid3, H5P_DEFAULT, H5P_DEFAULT);
-
-    H5Awrite(attr3, atype, ver.c_str());
-
-    H5Aclose(attr3);
-    H5Sclose(aid3);
-    H5Tclose(atype);
+void DiagnosticPhase1D::run(int timestep, std::vector<Species*>& vecSpecies) {
+	
+	
+	//! momentum min
+	std::vector< std::vector<double> > momentum_min;
+	
+	//! momentum max
+	std::vector< std::vector<double> > momentum_max;
+	
+	//! gamma min
+	std::vector<double> lorentz_factor_min;
+	
+	//! gamma max
+	std::vector<double> lorentz_factor_max;
 
 	//! momentum min
-	momentum_min.resize(params->n_species);
-	momentum_max.resize(params->n_species);
+	momentum_min.resize(vecSpecies.size());
+	momentum_max.resize(vecSpecies.size());
 	
 	
-	for (unsigned int i=0; i<params->n_species; i++) {
+	for (unsigned int i=0; i<vecSpecies.size(); i++) {
 		momentum_min[i].resize(3);
 		momentum_max[i].resize(3);
 	}
 	
 	
-	lorentz_factor_min.resize(params->n_species);
-	lorentz_factor_max.resize(params->n_species);
+	lorentz_factor_min.resize(vecSpecies.size());
+	lorentz_factor_max.resize(vecSpecies.size());
 	
-}
-
-void DiagnosticPhase1D::run(int timestep, std::vector<Species*>& vecSpecies) {
 	
 	for (unsigned int j=0; j < vecSpecies.size(); j++) {
 		
