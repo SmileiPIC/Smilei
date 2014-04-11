@@ -526,7 +526,6 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
             Jy[iloc+jloc]  += Jy_p[i][j];
             Jz[iloc+jloc]  += crz_p * Wz[i][j];
             rho[iloc+jloc] += charge_weight * Sx1[i]*Sy1[j];
-
         }
 
     }//i

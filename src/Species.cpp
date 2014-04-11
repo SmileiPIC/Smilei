@@ -734,12 +734,13 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
            }
            if (ndim == 2) {
                for (unsigned int i = 0; i < b_dim0 ; i++) {
-                   for (unsigned int j = 0; i < b_dim1 ; i++) {
+                   for (unsigned int j = 0; j < b_dim1 ; j++) {
                        jloc = ibin + j ;
-                       (*EMfields->Jx_s[ispec])(i*f_dim1+jloc) += b_Jx[i];
-                       (*EMfields->Jy_s[ispec])(i*(f_dim1-1)+jloc) += b_Jy[i];   //-1 because primal along x
-                       (*EMfields->Jz_s[ispec])(i*(f_dim1-1)+jloc) += b_Jz[i];   //-1 because primal along x
-                       (*EMfields->rho_s[ispec])(i*(f_dim1-1)+jloc) += b_rho[i]; //-1 because primal along x
+                       //cout << b_rho[i*b_dim1+j] <<b_Jx[i*b_dim1+j]<<b_Jy[i*b_dim1+j]<<b_Jz[i*b_dim1+j]<< endl;
+                       (*EMfields->Jx_s[ispec])(i*(f_dim1-1)+jloc) += b_Jx[i*b_dim1+j];   // Don't understand the -1 here ...
+                       (*EMfields->Jy_s[ispec])(i*(f_dim1-1)+jloc) += b_Jy[i*b_dim1+j];   //-1 because primal along x
+                       (*EMfields->Jz_s[ispec])(i*(f_dim1-1)+jloc) += b_Jz[i*b_dim1+j];   //-1 because primal along x
+                       (*EMfields->rho_s[ispec])(i*(f_dim1-1)+jloc) += b_rho[i*b_dim1+j]; //-1 because primal along x
                    }
                }
            }
