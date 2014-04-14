@@ -11,7 +11,7 @@ import sys
 from mpi4py import MPI
 from pylab import *
 import argparse
-import time
+
 # # ---------------------------------------------
 # # Initialize MPI environment 
 # # ---------------------------------------------
@@ -31,6 +31,7 @@ parser.add_argument('-D',action='store',default='plot_scalars',dest='dir_plot', 
 parser.add_argument('-c',action='store',default='rgbcmykw',dest='colors', nargs='+',help='color for each plot')
 parser.add_argument('-o',action='store',default='',dest='lim',nargs='+',help='xmin xmax ymin ymax')
 parser.add_argument('-s', action='store_false', default=True,dest='same_plot',help='plot on same plot (default:True)')
+parser.add_argument('-n',action='store_false',default=True,dest='clean_folder',help='clean the folder (default:False)') 
 parser.add_argument('-f', action='store', default='.png',dest='format',help='plot format (default:True)')
 what=parser.parse_args()
 args=what.args
@@ -38,6 +39,7 @@ dir=what.dir
 colors=what.colors
 lim=what.lim
 same=what.same_plot
+clean_folder=what.clean_folder
 file_format=what.format
 n_plots=len(args)/2
 
@@ -56,12 +58,13 @@ if (my_rank==0):
 path=str(what.dir_plot)
 
 #creation of the directory 
-if(my_rank==0):
-    if (os.path.exists(path)==False):
-	    os.makedirs(path)
-    else:
-		shutil.rmtree(path)
-		os.makedirs(path)
+if(clean_folder==True):
+    if(my_rank==0):
+        if (os.path.exists(path)==False):
+	        os.makedirs(path)
+        else:
+		    shutil.rmtree(path)
+		    os.makedirs(path)
 # # ---------------------------------------------
 # # Reading from scalars.txt
 # # ---------------------------------------------
@@ -154,14 +157,19 @@ if(my_rank==0):
         if(len(lim)!=0):
             plt.xlim([int(lim[0]),int(lim[1])])
             plt.ylim([int(lim[2]),int(lim[3])])
+        plt.xlabel(args[0])
         plt.savefig(path+title+file_format)
     else:
         for p_iter in range(0,n_plots):
+            clf()
             figure()
-            plt.plot(gl_x[p_iter],gl_y[p_iter],colors[p_iter])
+            plot(gl_x[p_iter],gl_y[p_iter],colors[p_iter])
             legend([my_legend[p_iter]],loc=2)
+            plt.xlabel(args[p_iter*2])
+            plt.ylabel(args[p_iter*2+1])
             if(len(lim)!=0):
-                plt.xlim([int(lim[0]),int(lim[1])])
+                xlim([int(lim[0]),int(lim[1])])
                 plt.ylim([int(lim[2]),int(lim[3])])
-            plt.savefig(path+title[p_iter]+file_format)
+            savefig(path+title[p_iter]+file_format)
+            clf()
             
