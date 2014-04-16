@@ -89,10 +89,10 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
     //Size in each dimension of the buffers on which each bin are projected
     //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
 
-    //Dual dimension of fields. Assumes largest possible size to allocate buffer.
-    f_dim0 =  params->n_space[0] + 2 * oversize[0] +2;
-    f_dim1 =  params->n_space[1] + 2 * oversize[1] +2;
-    f_dim2 =  params->n_space[2] + 2 * oversize[2] +2;
+    //Primal dimension of fields. 
+    f_dim0 =  params->n_space[0] + 2 * oversize[0] +1;
+    f_dim1 =  params->n_space[1] + 2 * oversize[1] +1;
+    f_dim2 =  params->n_space[2] + 2 * oversize[2] +1;
 
     if (ndim == 1){
         b_dim0 =  2 + 2 * oversize[0];
@@ -101,7 +101,7 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
         b_lastdim = b_dim0;
     }
     if (ndim == 2){
-        b_dim0 =  f_dim0 ;
+        b_dim0 =  f_dim0 ; // There is a primal number of bins.
         b_dim1 =  2 + 2 * oversize[1];
         b_dim2 =  1;
         b_lastdim = b_dim1;
@@ -669,7 +669,6 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     int unsigned nParticles = getNbrOfParticles();
     // Reset list of particles to exchange
     smpi->clearExchList();
-
 	
     // -------------------------------
     // calculate the particle dynamics
@@ -678,7 +677,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
         double gf = 1.0;
 		
         // for all particles of the Species
-        #pragma omp parallel shared (EMfields, gf) private(Epart, Bpart, Jion,i,j, ibin,iPart, iloc,jloc,b_Jx, b_Jy, b_Jz, b_rho)
+        #pragma omp parallel shared (gf) private(Epart, Bpart, Jion,i,j, ibin,iPart, iloc,jloc,b_Jx, b_Jy, b_Jz, b_rho)
         {
         //Allocate buffer *********************************************
         // *4 allows to also reset Jy, Jz and rho which are contiguous in memory
@@ -687,7 +686,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
         b_Jz = b_Jy + size_proj_buffer ;
         b_rho = b_Jz + size_proj_buffer ;
 
-        #pragma omp for schedule(dynamic)
+        #pragma omp for schedule(static)
         for (ibin = 0 ; ibin < bmin.size() ; ibin++) {
             // reset all current-buffers
             for (iloc = 0; iloc < 4*size_proj_buffer; iloc++) b_Jx[iloc] = 0.0;
@@ -732,13 +731,13 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                for (i = 0; i < b_dim0 ; i++) {
                    //! \todo Should we care about primal - dual sizes here ?
                    iloc = ibin + i ;
-                   #pragma omp atomic
+                   //#pragma omp atomic
                    (*EMfields->Jx_s[ispec]) (iloc) +=  b_Jx[i];
-                   #pragma omp atomic
+                   //#pragma omp atomic
                    (*EMfields->Jy_s[ispec]) (iloc) +=  b_Jy[i];
-                   #pragma omp atomic
+                   //#pragma omp atomic
                    (*EMfields->Jz_s[ispec]) (iloc) +=  b_Jz[i];
-                   #pragma omp atomic
+                   //#pragma omp atomic
                    (*EMfields->rho_s[ispec])(iloc) += b_rho[i];
                }
            }
@@ -748,13 +747,13 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                    for (j = 0; j < b_dim1 ; j++) {
                        jloc = ibin + j ;
                        #pragma omp atomic
-                       (*EMfields->Jx_s[ispec]) (i*(f_dim1-1)+jloc) +=  b_Jx[i*b_dim1+j];   // -1 because primal along y
+                       (*EMfields->Jx_s[ispec]) (i*(f_dim1  )+jloc) +=  b_Jx[i*b_dim1+j];   // -1 because primal along y
                        #pragma omp atomic
-                       (*EMfields->Jy_s[ispec]) (i* f_dim1   +jloc) +=  b_Jy[i*b_dim1+j];     // dual along y
+                       (*EMfields->Jy_s[ispec]) (i* f_dim1+1 +jloc) +=  b_Jy[i*b_dim1+j];     // dual along y
                        #pragma omp atomic
-                       (*EMfields->Jz_s[ispec]) (i*(f_dim1-1)+jloc) +=  b_Jz[i*b_dim1+j];   //-1 because primal along y
+                       (*EMfields->Jz_s[ispec]) (i*(f_dim1  )+jloc) +=  b_Jz[i*b_dim1+j];   //-1 because primal along y
                        #pragma omp atomic
-                       (*EMfields->rho_s[ispec])(i*(f_dim1-1)+jloc) += b_rho[i*b_dim1+j]; //-1 because primal along y
+                       (*EMfields->rho_s[ispec])(i*(f_dim1  )+jloc) += b_rho[i*b_dim1+j]; //-1 because primal along y
                    }
                }
            }

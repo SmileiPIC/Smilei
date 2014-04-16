@@ -128,7 +128,7 @@ private:
 
     //! sub dimensions of buffers
     unsigned int b_dim0, b_dim1, b_dim2, b_lastdim;
-    //! sub dimensions of fields
+    //! sub primal dimensions of fields
     unsigned int f_dim0, f_dim1, f_dim2;
 
     //! Time over which Particles of the considered Species remain frozen
