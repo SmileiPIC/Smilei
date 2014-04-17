@@ -25,7 +25,7 @@ size=comm.Get_size()
 # Parsing of the arguments from the command line
 # ---------------------------------------------
 parser = argparse.ArgumentParser(description=' this is a parallel python code to plot the information from the file scalars.txt. You need to install py27-mpi4py @1.3_3 or other version. To run the code :  openmpirun -np ncpus python scalars.py -a VariableToBePlot -c Colors -s SamePlot   . ' )
-parser.add_argument('-a',dest='args', nargs='+',help='(arg1 arg2) (arg3 arg4) ..')
+parser.add_argument('-a',action='store',default='none',dest='args', nargs='+',help='(arg1 arg2) (arg3 arg4) ..')
 parser.add_argument('-d',action='store',default='scalars.txt',dest='dir', nargs='+',help='directory where scalars.txt is located, for ex. ../../scalars.txt default=scalars.txt')
 parser.add_argument('-D',action='store',default='plot_scalars',dest='dir_plot', nargs='+',help='directory where plots will be located, for ex. ../../toto default=plot_scalars')
 parser.add_argument('-c',action='store',default='rgbcmykw',dest='colors', nargs='+',help='color for each plot')
@@ -45,6 +45,8 @@ n_plots=len(args)/2
 
 if (len(args)%2!=0):
     sys.exit('arguments to be plotted not well defined')
+elif(args=='none'):
+    sys.exit('You must specify at least two arguments in the option -a')
 if (my_rank==0):
     if (colors=='rgbcmykw'):
         print 'warning, default colors are used (rgbcmykw)'
