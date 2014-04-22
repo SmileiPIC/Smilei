@@ -109,8 +109,12 @@ for line in data:
                         col_y[p_iter]=int(words[l-1])-1                      
                         found_y[p_iter]=True
         
-       
-            
+for p_iter in range(0,n_plots):       
+    if(found_x[p_iter]==False):
+        sys.exit('the arguments '+ args[p_iter*2]+ ' does not exist')
+    elif(found_y[p_iter]==False):
+        sys.exit('the arguments '+ args[p_iter*2+1]+ ' does not exist')
+                    
 n_data_lines=n_lines-first_line
 n_lines_pp*=(n_data_lines/size)
 residual=n_data_lines%size
@@ -157,8 +161,8 @@ if(my_rank==0):
             plt.plot(gl_x[p_iter],gl_y[p_iter],colors[p_iter],label=my_legend[p_iter])
             plt.legend(loc=2)
         if(len(lim)!=0):
-            plt.xlim([int(lim[0]),int(lim[1])])
-            plt.ylim([int(lim[2]),int(lim[3])])
+            plt.xlim([float(lim[0]),float(lim[1])])
+            plt.ylim([float(lim[2]),float(lim[3])])
         plt.xlabel(args[0])
         plt.savefig(path+title+file_format)
     else:
@@ -170,8 +174,8 @@ if(my_rank==0):
             plt.xlabel(args[p_iter*2])
             plt.ylabel(args[p_iter*2+1])
             if(len(lim)!=0):
-                xlim([int(lim[0]),int(lim[1])])
-                plt.ylim([int(lim[2]),int(lim[3])])
+                xlim([float(lim[0]),float(lim[1])])
+                plt.ylim([float(lim[2]),float(lim[3])])
             savefig(path+title[p_iter]+file_format)
             clf()
             
