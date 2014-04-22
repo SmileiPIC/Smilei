@@ -66,6 +66,8 @@ public:
 	void restartFieldsPerProc(hid_t fid, Field* field);
 	
 private:
+	//! incremental number of times we've done a dump
+	unsigned int dump_times;
 };
 
 #endif /* SMILEI_OUTPUT_H_ */

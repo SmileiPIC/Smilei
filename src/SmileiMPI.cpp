@@ -268,8 +268,9 @@ double SmileiMPI::time_seconds() {
 	double time_temp = MPI_Wtime();	
 	double time_sec=0;
 	MPI_Allreduce(&time_temp,&time_sec,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-	
-	return (time_sec-time_reference)/getSize();
+	double time_to_return=(time_sec-time_reference)/getSize();
+	time_reference=time_sec;
+	return time_to_return;
 }
 
 

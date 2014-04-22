@@ -271,8 +271,8 @@ int main (int argc, char* argv[])
             sio->writePlasma( vecSpecies, time_dual, smpi );
 
 		// Threee cases of dump: dump_step reached, real time greater than dump_minutes or file named stop created 
-                double timElapsed=timer[0].getTime();
-		if  ( (params.dump_step != 0 && itime == params.dump_step ) || 
+//		double timElapsed=timer[0].getTime();
+		if  ( (params.dump_step != 0 && (itime % params.dump_step == 0)) || 
 			  (params.dump_minutes != 0.0 && smpi->time_seconds()/60.0 > params.dump_minutes) || 
 				smpiData->fileStopCreated()
 			 ) {

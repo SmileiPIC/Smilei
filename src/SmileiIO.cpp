@@ -19,8 +19,9 @@
 
 using namespace std;
 
-SmileiIO::SmileiIO( PicParams* params, SmileiMPI* smpi )
+SmileiIO::SmileiIO( PicParams* params, SmileiMPI* smpi ) : dump_times(0)
 {
+		
     ostringstream name("");
     name << "particles-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
 	
@@ -186,15 +187,14 @@ void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI*
 
 void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, PicParams &params, InputData& input_data) { 
 	hid_t fid, gid, sid, aid, did, tid;
-	
-	MESSAGE(2, "DUMPING fields and particles");
-	
-	params.dump_step = 0;
-	params.dump_minutes=0.0;
-
+		
 	ostringstream nameDump("");
-	nameDump << "dump-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
+	nameDump << "dump-" << (dump_times%2==0?"A":"B") << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
 	fid = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+	dump_times++;
+	
+	MESSAGE(2, "DUMPING fields and particles " << nameDump.str());
+
 	
 	sid  = H5Screate(H5S_SCALAR);
     tid = H5Tcopy(H5T_C_S1);
@@ -324,9 +324,33 @@ void SmileiIO::dumpFieldsPerProc(hid_t fid, Field* field)
 
 void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> &vecSpecies, SmileiMPI* smpi, PicParams &params, InputData& input_data) { 
 	
-	ostringstream nameDump("");
-	nameDump << "dump-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
-	hid_t fid = H5Fopen( nameDump.str().c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+	string nameDump("");
+	
+	// This will open both dumps and pick the last one
+	for (unsigned int i=0;i<2; i++) {
+		ostringstream nameDumpTmp("");
+		nameDumpTmp << "dump-" << (i%2==0?"A":"B") << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
+		ifstream f(nameDumpTmp.str().c_str());
+		bool exists=f.good();
+		f.close();
+		if (exists) {
+			hid_t fid = H5Fopen( nameDumpTmp.str().c_str(), H5F_ACC_RDWR, H5P_DEFAULT);			
+			hid_t aid = H5Aopen(fid, "dump_step", H5T_NATIVE_UINT);
+			unsigned int itimeTmp=0;
+			H5Aread(aid, H5T_NATIVE_UINT, &itimeTmp);	
+			H5Aclose(aid);
+			H5Fclose(fid);
+			if (itimeTmp>itime) {
+				itime=itimeTmp;
+				nameDump=nameDumpTmp.str();
+				dump_times=i;
+			}
+		}
+	}
+	
+	MESSAGE(2, "RESTARTING fields and particles " << nameDump);
+
+	hid_t fid = H5Fopen( nameDump.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
 	
 	hid_t aid, gid, did, sid;
 	hsize_t npart_effective;
@@ -376,7 +400,7 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
 		vecSpecies[ispec]->particles.initialize(partSize,nDim_particle);		
 		
 		
-		DEBUG("----------->>" << nameDump.str() << " " << ispec << " " << nameDump.str() << " " << partSize << " " << partCapacity);
+		DEBUG("----------->>" << nameDump << " " << ispec << " " << nameDump << " " << partSize << " " << partCapacity);
 		
 		if (partSize>0) {
 			for (unsigned int i=0; i<vecSpecies[ispec]->particles.Position.size(); i++) {

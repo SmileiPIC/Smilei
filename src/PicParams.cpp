@@ -6,7 +6,7 @@
 
 using namespace std;
 
-PicParams::PicParams(InputData &ifile) : restart(false), exit_after_dump(true), dump_minutes(0.0)  {
+PicParams::PicParams(InputData &ifile) : restart(false), exit_after_dump(true), dump_minutes(0.0), dump_step(0) {
     //open and parse the input data file
     
 	ifile.extract("dump_step", dump_step);
