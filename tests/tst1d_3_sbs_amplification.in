@@ -160,6 +160,7 @@ diagnostic phase1D
 end
 
 
-dump_step = 1000
+dump_minutes = 0.1
+# dump_step = 1000
 exit_after_dump = false
-
+dump_file_sequence = 3

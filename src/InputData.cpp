@@ -109,7 +109,7 @@ void InputData::parseFile(string filename) {
             if (!strLine.empty()) namelist += strLine + "\n";
         }
     } else {
-        ERROR("File " << filename << "does not exists");
+        ERROR("File " << filename << " does not exists");
     }
 
 }

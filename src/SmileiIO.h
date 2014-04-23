@@ -53,19 +53,42 @@ public:
     //! Write field on its own file (debug)
     virtual void write( Field* field ) = 0;
 
-	//! dump everything to file per processor
-    void dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi,  PicParams &params, InputData& input_data);
-	
-	//! dump field per proc
-	void dumpFieldsPerProc(hid_t fid, Field* field);
-
 	//! restart everything to file per processor
     void restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> &vecSpecies, SmileiMPI* smpi, PicParams &params, InputData& input_data);
 
 	//! restart field per proc
 	void restartFieldsPerProc(hid_t fid, Field* field);
 	
+	bool dump(ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi,  PicParams &params, InputData& input_data);
+	
 private:
+	//! incremental number of times we've done a dump
+	unsigned int dump_times;
+	
+	//! initialize the time zero of the simulation 
+	void initDumpCases();
+	
+	
+	//! dump everything to file per processor
+    void dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi,  PicParams &params, InputData& input_data);
+	
+	//! dump field per proc
+	void dumpFieldsPerProc(hid_t fid, Field* field);
+	
+	//! time of the constructor
+	double time_reference;
+	
+	//! function that returns elapsed time from creator (uses private var time_reference)
+	double time_seconds();
+	
+	//! to dump and stop a simulation you might just check if a file named stop has been created this variable
+	//! is true if since last time a file named stop appeared
+	bool stop_file_seen_since_last_check;
+
+	//! function that checks if file named "stop" exists;
+	bool fileStopCreated();
+	
+	
 };
 
 #endif /* SMILEI_OUTPUT_H_ */

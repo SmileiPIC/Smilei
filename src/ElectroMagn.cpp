@@ -286,5 +286,5 @@ void ElectroMagn::computeScalars()
         scalars[(*field)->name]=scalars_map;
     }
 }
-
+///ciao
 

@@ -270,17 +270,9 @@ int main (int argc, char* argv[])
         if  ((diag_params.particleDump_every != 0) && (itime % diag_params.particleDump_every == 0))
             sio->writePlasma( vecSpecies, time_dual, smpi );
 
-		// Threee cases of dump: dump_step reached, real time greater than dump_minutes or file named stop created 
-                double timElapsed=timer[0].getTime();
-		if  ( (params.dump_step != 0 && itime == params.dump_step ) || 
-			  (params.dump_minutes != 0.0 && smpi->time_seconds()/60.0 > params.dump_minutes) || 
-				smpiData->fileStopCreated()
-			 ) {
-            sio->dumpAll( EMfields, itime,  vecSpecies, smpi, params, input_data);
-			if (params.exit_after_dump) break;
-		}
-        timer[3].update();
+		if (sio->dump(EMfields, itime,  vecSpecies, smpi, params, input_data)) break;
 		
+        timer[3].update();
 
     }//END of the time loop
 
