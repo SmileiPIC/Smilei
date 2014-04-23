@@ -15,20 +15,19 @@
 using namespace std;
 
 Diagnostic::Diagnostic( PicParams* params,  DiagParams* diagparams, SmileiMPI* smpi, Interpolator *interp) :
-    diagScal(params, smpi),
-	probe0D(params, diagparams, smpi),
-	interp_(interp),
-	phase1D(params, diagparams, smpi)
+diagScal(params, smpi),
+probe0D(params, diagparams, smpi),
+interp_(interp),
+diagPhase(params, diagparams, smpi)
 {
     everyScalar = diagparams->scalar_every;
     everyMap = diagparams->map_every;
     everyProbe0D = diagparams->probe0d_every;
-	everyPhase1D = diagparams->phase1D.every;
 }
 
 void Diagnostic::closeAll () {
     probe0D.close();
-    phase1D.close();
+	diagPhase.close();
 }
 
 void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Species*>& vecSpecies) {
@@ -38,8 +37,6 @@ void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Specie
     if (everyProbe0D && timestep % everyProbe0D == 0) {
         probe0D.run(timestep, EMfields, interp_);
     }
-    if (everyPhase1D && timestep % everyPhase1D == 0) {
-        phase1D.run(timestep, vecSpecies);
-    }
+	diagPhase.run(timestep, vecSpecies);
 }
 

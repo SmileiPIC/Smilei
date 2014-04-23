@@ -19,21 +19,16 @@
 //! DiagParams class: holds all the properties of the simulation that are read from the input file
 // ---------------------------------------------------------------------------------------------------------------------
 
-struct phase1DStructure {
+struct phaseStructure {
 	//!string defining the kind oh phase
-	std::string kinds;
-	
-	//! minumum momentum for phase space
-	double momentum_min;
-	//! maximum momentum for phase space
-	double momentum_max;
-	//! number of momentum to bin
-	unsigned int momentum_bins;
+	std::string kind;
 
     //! phase 1D output every probe_every (namelist group "diagnostic phase1d" key "every")
     unsigned int every;
 	
-	std::string speciePhase1DName;	
+	//! vector of pointer to species on which the phase diag will be applied
+	std::vector<std::string> species;
+	
 };
 
 class DiagParams {
@@ -69,7 +64,7 @@ public:
     unsigned int print_every;
 	
 	//! vector containing phase1D structures
-	phase1DStructure phase1D;
+	std::vector<phaseStructure> vecPhase;
 };
 
 #endif

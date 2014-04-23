@@ -118,6 +118,39 @@ public:
 
     }
 
+	bool extract(std::string data, std::vector<std::string>&val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0) {
+        data=cleanString(data);
+        group=cleanString(group);
+        bool found=false;
+        int n_occur_group=0;
+        for (unsigned int i=0; i<allData.size(); i++) {
+            if (group == allData[i].first) {
+                if (occurrenceGroup==n_occur_group || occurrenceGroup < 0) {
+                    int n_occur_item=0;
+                    for (unsigned int j=0; j<allData[i].second.size(); j++) {
+                        if (data == allData[i].second[j].first) {
+                            if (occurrenceItem==n_occur_item || occurrenceItem < 0) {
+                                std::stringstream iss(allData[i].second[j].second);
+								do {
+									std::string sub;
+									iss >> sub;
+									sub = cleanString(sub);
+									if (!sub.empty()) val.push_back(sub);
+								} while (iss);								
+                                return true;
+                            }
+                            n_occur_item++;
+                        }
+                    }
+                }
+                n_occur_group++;
+            }
+        }
+        DEBUG(10,"NOT FOUND! searching for vector \"" << data << "\" [" << occurrenceItem << "] in group \"" << group << "\" [" << occurrenceGroup << "]");
+        return found;
+		
+    }
+	
     //! return true if the nth group exists
     bool existGroup(std::string groupName, unsigned int occurrenceGroup=0);
 

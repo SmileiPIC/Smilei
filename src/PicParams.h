@@ -43,7 +43,7 @@ struct LaserStructure {
 //! This structure contains the properties of each species
 // ---------------------------------------------------------------------------------------------------------------------
 struct SpeciesStructure {
-    //! kind of species possible values: "ion" "electron" "test"
+    //! kind of species possible values: "ion" "eon" "test"
     std::string species_type;
 
     //! density profile

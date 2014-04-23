@@ -48,14 +48,25 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
             DEBUG(10, "new coordinates " << k << " " << i << " " << ps_coord[k][i]);
         }
     }
-
-	ifile.extract("kinds",phase1D.kinds,"diagnostic phase1d");
-	ifile.extract("every",phase1D.every,"diagnostic phase1d");
-	ifile.extract("species",phase1D.speciePhase1DName,"diagnostic phase1d");
-	ifile.extract("momentum_min",phase1D.momentum_min,"diagnostic phase1d");
-	ifile.extract("momentum_max",phase1D.momentum_max,"diagnostic phase1d");
-	ifile.extract("momentum_bins",phase1D.momentum_bins,"diagnostic phase1d");
-	
+    
+	int n_probephase=0;
+	while (ifile.existGroup("diagnostic phase",n_probephase)) {
+		phaseStructure tmpPhase;
+		ifile.extract("kind",tmpPhase.kind,"diagnostic phase",0,n_probephase);
+		ifile.extract("every",tmpPhase.every,"diagnostic phase",0,n_probephase);
+		ifile.extract("species",tmpPhase.species,"diagnostic phase",0,n_probephase);
+//		DEBUG(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> " << tmpPhase.species.size());
+//		for (unsigned int i=0;i<tmpPhase.species.size(); i++) {
+//			DEBUG(i << " " << tmpPhase.species[i]);
+//		}		
+		if (tmpPhase.species.size()==0) {
+			for (unsigned int i=0;i<params.n_species; i++) {
+				tmpPhase.species.push_back(params.species_param[i].species_type);
+			}			
+		}
+		vecPhase.push_back(tmpPhase);
+		n_probephase++;
+	}
 	
 	
 	//    n_probe1d=0;

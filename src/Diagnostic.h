@@ -14,7 +14,7 @@
 #include "DiagnosticScalar.h"
 #include "Interpolator.h"
 #include "DiagnosticProbe0D.h"
-#include "DiagnosticPhase1D.h"
+#include "DiagnosticPhaseSpace.h"
 
 class PicParams;
 class SmileiMPI;
@@ -45,8 +45,7 @@ private:
     unsigned int everyProbe0D;
     Interpolator* interp_;
 
-	DiagnosticPhase1D phase1D;
-	unsigned int everyPhase1D;
+	DiagnosticPhaseSpace diagPhase;
 	
     unsigned int everyMap;
 };

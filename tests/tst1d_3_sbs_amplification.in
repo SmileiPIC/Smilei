@@ -19,7 +19,7 @@ interpolation_order = 2
 # sim_time: duration of the simulation in units of the normalization period 
 #
 res_time = 10
-sim_time = 300.0
+sim_time = 100.0
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
@@ -151,8 +151,18 @@ diagnostic probe0d
 	x = 0.0 30.0 60.0 90.0 120.0	
 end
 
-diagnostic phase1D
+diagnostic phase
+	kind = xPx
     species = eon
+	every = 10
+	momentum_min=0
+	momentum_max=1
+	momentum_bins=10
+end
+
+diagnostic phase
+	kind = xPx
+    species = ion eon
 	every = 10
 	momentum_min=0
 	momentum_max=1
