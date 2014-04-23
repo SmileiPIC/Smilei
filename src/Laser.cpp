@@ -49,6 +49,21 @@ Laser::Laser(double sim_time, LaserStructure laser_param) {
             double_params.resize(3);
         }
     }
+    //GAUSSIAN time-profile
+    //double_params[0]: tau FWHM
+    //double_params[1]: delay
+    //double_params[2]: gaussian cut-off
+    else if(type_of_time_profile=="gaussian"){
+        if(double_params.size()<1){
+            double_params.resize(3);
+            double_params[0]=sim_time/2.0;
+            double_params[1]=0.0;
+            double_params[2]=3.0;
+        }
+        else{
+            double_params.resize(3);
+        }
+    }
 
     else {
         ERROR("Laser profile " << type_of_time_profile <<  " not defined");
@@ -93,6 +108,7 @@ double Laser::time_profile(double time_dual) {
         }
         // sin2 rise
         else if (time_dual<=double_params[2]+double_params[0]) {
+            DEBUG(pow( sin( pi_ov_2 * (time_dual-double_params[2]) / double_params[0] ) , 2 ))
             return pow( sin( pi_ov_2 * (time_dual-double_params[2]) / double_params[0] ) , 2 );
         }
         // plateau
@@ -101,6 +117,8 @@ double Laser::time_profile(double time_dual) {
         }
         // sin2 fall
         else if (time_dual<=double_params[2]+double_params[0]+double_params[1]+double_params[0]) {
+            DEBUG(pow( cos(pi_ov_2 * (time_dual-(double_params[2]+double_params[0]+double_params[1]))
+                           / double_params[0] ) , 2 ))
             return pow( cos(pi_ov_2 * (time_dual-(double_params[2]+double_params[0]+double_params[1]))
                             / double_params[0] ) , 2 );
         }
@@ -109,8 +127,11 @@ double Laser::time_profile(double time_dual) {
             return 0.0;
         }
     }
-
-
+    //GAUSSIAN time-profile
+    //double_params[0]: tau FWHM
+    //double_params[1]: delay
+    //double_params[2]: gaussian cut-off
+    
     else
         return 0.0;
 }
