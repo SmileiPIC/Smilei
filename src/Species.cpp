@@ -677,7 +677,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
         double gf = 1.0;
 		
         // for all particles of the Species
-        #pragma omp parallel shared (gf) private(Epart, Bpart, Jion,i,j, ibin,iPart, iloc,jloc,b_Jx, b_Jy, b_Jz, b_rho)
+        #pragma omp parallel shared (EMfields) private(gf,Epart, Bpart, Jion,i,j, ibin,iPart, iloc,jloc,b_Jx, b_Jy, b_Jz, b_rho)
         {
         //Allocate buffer *********************************************
         // *4 allows to also reset Jy, Jz and rho which are contiguous in memory
