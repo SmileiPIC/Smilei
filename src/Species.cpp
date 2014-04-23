@@ -731,13 +731,13 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                for (i = 0; i < b_dim0 ; i++) {
                    //! \todo Should we care about primal - dual sizes here ?
                    iloc = ibin + i ;
-                   //#pragma omp atomic
+                   #pragma omp atomic
                    (*EMfields->Jx_s[ispec]) (iloc) +=  b_Jx[i];
-                   //#pragma omp atomic
+                   #pragma omp atomic
                    (*EMfields->Jy_s[ispec]) (iloc) +=  b_Jy[i];
-                   //#pragma omp atomic
+                   #pragma omp atomic
                    (*EMfields->Jz_s[ispec]) (iloc) +=  b_Jz[i];
-                   //#pragma omp atomic
+                   #pragma omp atomic
                    (*EMfields->rho_s[ispec])(iloc) += b_rho[i];
                }
            }
@@ -747,13 +747,13 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                    for (j = 0; j < b_dim1 ; j++) {
                        jloc = ibin + j ;
                        #pragma omp atomic
-                       (*EMfields->Jx_s[ispec]) (i*(f_dim1  )+jloc) +=  b_Jx[i*b_dim1+j];   // -1 because primal along y
+                       (*EMfields->Jx_s[ispec]) (i*(f_dim1  )+jloc) +=  b_Jx[i*b_dim1+j];   //  primal along y
                        #pragma omp atomic
-                       (*EMfields->Jy_s[ispec]) (i* f_dim1+1 +jloc) +=  b_Jy[i*b_dim1+j];     // dual along y
+                       (*EMfields->Jy_s[ispec]) (i* f_dim1+1 +jloc) +=  b_Jy[i*b_dim1+j];   //+1 because dual along y
                        #pragma omp atomic
-                       (*EMfields->Jz_s[ispec]) (i*(f_dim1  )+jloc) +=  b_Jz[i*b_dim1+j];   //-1 because primal along y
+                       (*EMfields->Jz_s[ispec]) (i*(f_dim1  )+jloc) +=  b_Jz[i*b_dim1+j];   // primal along y
                        #pragma omp atomic
-                       (*EMfields->rho_s[ispec])(i*(f_dim1  )+jloc) += b_rho[i*b_dim1+j]; //-1 because primal along y
+                       (*EMfields->rho_s[ispec])(i*(f_dim1  )+jloc) += b_rho[i*b_dim1+j];   // primal along y
                    }
                }
            }
