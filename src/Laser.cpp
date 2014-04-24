@@ -51,16 +51,17 @@ Laser::Laser(double sim_time, LaserStructure laser_param) {
     }
     //GAUSSIAN time-profile
     //double_params[0]: tau FWHM
-    //double_params[1]: delay
+    //double_params[1]: plateau
+    //double_params[2]: delay
     //int_params[0]: gaussian cut-off
     else if(type_of_time_profile=="gaussian"){
         if(double_params.size()<1){
-            double_params.resize(2);
+            double_params.resize(3);
             double_params[0]=sim_time/2.0;
-            double_params[1]=0.0;
+            
         }
         else{
-            double_params.resize(2);
+            double_params.resize(3);
         }
         if(int_params.size()<1){
             int_params.resize(1);
@@ -136,23 +137,35 @@ double Laser::time_profile(double time_dual) {
     }
     //GAUSSIAN time-profile
     //double_params[0]: tau FWHM
-    //double_params[1]: delay
+    //double_params[1]: plateau
+    //double_params[2]: delay
     //int_params[0]: gaussian cut-off
     else if(type_of_time_profile=="gaussian"){
         double fwhm=2*double_params[0];
         double sigma=fwhm/(2*sqrt(2*log(2)));
         double lt=int_params[0]*sigma;
         //delay before pulse
-        if(time_dual<=double_params[1]){
+        if(time_dual<=double_params[2]){
             return 0.0;
         }
-        //gaussian
-        else if (time_dual<=double_params[1]+2*lt){
+        //gaussian rise
+        else if (time_dual<=double_params[2]+lt){
            
-            double sol= exp(-(time_dual-double_params[1]-lt)*(time_dual-double_params[1]-lt)/(2*sigma*sigma));
-//            DEBUG(sol)
-            return sol;
+            return exp(-(time_dual-double_params[2]-lt)*(time_dual-double_params[2]-lt)/(2*sigma*sigma));
+
         }
+        //plateau
+        else if(time_dual<=double_params[2]+lt+double_params[1]){
+            return 1.0;
+        }
+        //gaussian fall
+        else if (time_dual<=double_params[2]+2*lt+double_params[1]){
+            
+            return exp(-(time_dual-double_params[2]-double_params[1]-lt)*(time_dual-double_params[2]-double_params[1]-lt)/(2*sigma*sigma));
+            
+
+        }
+
         //after pulse
         else{
             return 0.0;
