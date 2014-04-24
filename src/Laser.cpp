@@ -52,17 +52,24 @@ Laser::Laser(double sim_time, LaserStructure laser_param) {
     //GAUSSIAN time-profile
     //double_params[0]: tau FWHM
     //double_params[1]: delay
-    //double_params[2]: gaussian cut-off
+    //int_params[0]: gaussian cut-off
     else if(type_of_time_profile=="gaussian"){
         if(double_params.size()<1){
-            double_params.resize(3);
+            double_params.resize(2);
             double_params[0]=sim_time/2.0;
             double_params[1]=0.0;
-            double_params[2]=3.0;
         }
         else{
-            double_params.resize(3);
+            double_params.resize(2);
         }
+        if(int_params.size()<1){
+            int_params.resize(1);
+            int_params[0]=3.0;
+        }
+        else{
+            int_params.resize(1);
+        }
+        
     }
 
     else {
@@ -108,7 +115,7 @@ double Laser::time_profile(double time_dual) {
         }
         // sin2 rise
         else if (time_dual<=double_params[2]+double_params[0]) {
-            DEBUG(pow( sin( pi_ov_2 * (time_dual-double_params[2]) / double_params[0] ) , 2 ))
+            
             return pow( sin( pi_ov_2 * (time_dual-double_params[2]) / double_params[0] ) , 2 );
         }
         // plateau
@@ -130,7 +137,27 @@ double Laser::time_profile(double time_dual) {
     //GAUSSIAN time-profile
     //double_params[0]: tau FWHM
     //double_params[1]: delay
-    //double_params[2]: gaussian cut-off
+    //int_params[0]: gaussian cut-off
+    else if(type_of_time_profile=="gaussian"){
+        double fwhm=2*double_params[0];
+        double sigma=fwhm/(2*sqrt(2*log(2)));
+        double lt=int_params[0]*sigma;
+        //delay before pulse
+        if(time_dual<=double_params[1]){
+            return 0.0;
+        }
+        //gaussian
+        else if (time_dual<=double_params[1]+2*lt){
+           
+            double sol= exp(-(time_dual-double_params[1]-lt)*(time_dual-double_params[1]-lt)/(2*sigma*sigma));
+//            DEBUG(sol)
+            return sol;
+        }
+        //after pulse
+        else{
+            return 0.0;
+        }
+    }
     
     else
         return 0.0;
