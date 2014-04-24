@@ -176,6 +176,22 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
     // Build lists of indexes of particle to exchange per neighbor
     // Computed from indexes_of_particles_to_exchange computed during particles' BC
     /********************************************************************************/
+    indexes_of_particles_to_exchange.clear();
+
+    int tmp = 0;
+    for (int tid=0 ; tid < indexes_of_particles_to_exchange_per_thd.size() ; tid++)
+	tmp += indexes_of_particles_to_exchange_per_thd[tid].size();
+    indexes_of_particles_to_exchange.resize( tmp );
+
+    int k=0;
+    for (int tid=0 ; tid < indexes_of_particles_to_exchange_per_thd.size() ; tid++) {
+	for (int ipart = 0 ; ipart < indexes_of_particles_to_exchange_per_thd[tid].size() ; ipart++ ) {
+	    indexes_of_particles_to_exchange[k] =  indexes_of_particles_to_exchange_per_thd[tid][ipart] ;
+	    k++;
+	}
+    }
+    sort( indexes_of_particles_to_exchange.begin(), indexes_of_particles_to_exchange.end() );
+
     int n_part_send = indexes_of_particles_to_exchange.size();
     int n_part_recv;
 

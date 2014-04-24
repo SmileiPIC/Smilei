@@ -25,6 +25,8 @@
 #include <ctime>
 #include <cstdlib>
 
+#include <omp.h>
+
 using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -668,6 +670,12 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     // number of particles for this Species
     int unsigned nParticles = getNbrOfParticles();
     // Reset list of particles to exchange
+    int nthds= 1;
+#pragma omp parallel shared(nthds)
+    {
+      nthds = omp_get_num_threads();	  
+    }
+    smpi->setExchListSize(nthds);
     smpi->clearExchList();
 	
     // -------------------------------
@@ -679,6 +687,8 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
         // for all particles of the Species
         #pragma omp parallel shared (EMfields) private(gf,Epart, Bpart, Jion,i,j, ibin,iPart, iloc,jloc,b_Jx, b_Jy, b_Jz, b_rho)
         {
+	int tid = omp_get_thread_num();	  
+
         //Allocate buffer *********************************************
         // *4 allows to also reset Jy, Jz and rho which are contiguous in memory
         b_Jx = (double *) calloc(4 * size_proj_buffer, sizeof(double));
@@ -714,7 +724,9 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 // Boundary Condition may be physical or due to domain decomposition
                 // apply returns 0 if iPart is no more in the domain local
                 //	if omp, create a list per thread
-                if ( !partBoundCond->apply( particles, iPart ) ) smpi->addPartInExchList( iPart );
+                if ( !partBoundCond->apply( particles, iPart ) ) {
+		  smpi->addPartInExchList( tid, iPart );
+		}
 				
                 if (ndim <= 2) {
                     (*Proj)(b_Jx, b_Jy, b_Jz, b_rho, particles, iPart, gf, ibin, b_lastdim);
