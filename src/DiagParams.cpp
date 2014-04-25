@@ -51,20 +51,25 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
     
 	int n_probephase=0;
 	while (ifile.existGroup("diagnostic phase",n_probephase)) {
-		phaseStructure tmpPhase;
-		ifile.extract("kind",tmpPhase.kind,"diagnostic phase",0,n_probephase);
-		ifile.extract("every",tmpPhase.every,"diagnostic phase",0,n_probephase);
-		ifile.extract("species",tmpPhase.species,"diagnostic phase",0,n_probephase);
-//		DEBUG(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> " << tmpPhase.species.size());
-//		for (unsigned int i=0;i<tmpPhase.species.size(); i++) {
-//			DEBUG(i << " " << tmpPhase.species[i]);
-//		}		
-		if (tmpPhase.species.size()==0) {
+		phaseStructure tmpPhaseStruct;
+		ifile.extract("kind",tmpPhaseStruct.kind,"diagnostic phase",0,n_probephase);
+		ifile.extract("every",tmpPhaseStruct.every,"diagnostic phase",0,n_probephase);
+		ifile.extract("species",tmpPhaseStruct.species,"diagnostic phase",0,n_probephase);
+		if (tmpPhaseStruct.species.size()==0) {
 			for (unsigned int i=0;i<params.n_species; i++) {
-				tmpPhase.species.push_back(params.species_param[i].species_type);
+				tmpPhaseStruct.species.push_back(params.species_param[i].species_type);
 			}			
 		}
-		vecPhase.push_back(tmpPhase);
+		ifile.extract("pos_min",tmpPhaseStruct.pos_min,"diagnostic phase",0,n_probephase);
+		ifile.extract("pos_max",tmpPhaseStruct.pos_max,"diagnostic phase",0,n_probephase);
+		ifile.extract("pos_num",tmpPhaseStruct.pos_num,"diagnostic phase",0,n_probephase);
+		
+		ifile.extract("mom_min",tmpPhaseStruct.mom_min,"diagnostic phase",0,n_probephase);
+		ifile.extract("mom_max",tmpPhaseStruct.mom_max,"diagnostic phase",0,n_probephase);
+		ifile.extract("mom_num",tmpPhaseStruct.mom_num,"diagnostic phase",0,n_probephase);
+		
+		DEBUG(tmpPhaseStruct.mom_num.size() << " " << tmpPhaseStruct.pos_num.size());
+		vecPhase.push_back(tmpPhaseStruct);
 		n_probephase++;
 	}
 	

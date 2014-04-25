@@ -153,20 +153,15 @@ end
 
 diagnostic phase
 	kind = xPx
-    species = eon
-	every = 10
-	momentum_min=0
-	momentum_max=1
-	momentum_bins=10
-end
-
-diagnostic phase
-	kind = xPx
     species = ion eon
 	every = 10
-	momentum_min=0
-	momentum_max=1
-	momentum_bins=10
+	pos_min = 0
+	pos_max = 1
+	pos_num = 10
+	
+	mom_min = 0
+	mom_max = 1
+	mom_num = 10
 end
 
 

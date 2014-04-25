@@ -26,8 +26,16 @@ struct phaseStructure {
     //! phase 1D output every probe_every (namelist group "diagnostic phase1d" key "every")
     unsigned int every;
 	
-	//! vector of pointer to species on which the phase diag will be applied
+	//! vector of pointer to species on which the phase diag will be applied (if omitted, it will be for all)
 	std::vector<std::string> species;
+	
+	std::vector<double> pos_min;
+	std::vector<double> pos_max;
+	std::vector <unsigned int> pos_num;
+
+	std::vector<double> mom_min;
+	std::vector<double> mom_max;
+	std::vector <unsigned int> mom_num;
 	
 };
 

@@ -10,7 +10,7 @@
 #include "ElectroMagn.h"
 #include "Field1D.h"
 #include "Field.h"
-#include "DiagnosticPhase1DxPx.h"
+#include "DiagnosticPhase2DxPx.h"
 
 using namespace std;
 
@@ -30,7 +30,6 @@ void DiagnosticPhaseSpace::close() {
 
 DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi) : smpi_(smpi), fileId(0) {
 	
-	DEBUG("here>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 	if (diagParams->vecPhase.size()>0) {
 		ostringstream file_name("");
 		file_name<<"PhaseSpace.h5";
@@ -50,8 +49,9 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagPa
 		
 		if (params->geometry == "1d3v") {
 			if (diagParams->vecPhase[i].kind == "xpx") {
-				DEBUG("here>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-				diagPhase =  new DiagnosticPhase1DxPx(diagParams->vecPhase[i],gid);
+				diagPhase =  new DiagnosticPhase2DxPx(diagParams->vecPhase[i],gid);
+				
+				DEBUG(diagParams->vecPhase[i].pos_num.size() << " " << diagParams->vecPhase[i].mom_num.size())
 			}
 		} else {
 			ERROR("DiagnosticPhase not implemented " << params->geometry);
@@ -84,6 +84,20 @@ void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) 
 			}
 			
 			if (vecDiagPhaseToRun2.size()>0) {
+				
+				for (unsigned int ibin = 0 ; ibin < vecSpecies[j]->bmin.size() ; ibin++) {
+					for (int iPart=vecSpecies[j]->bmin[ibin] ; iPart<vecSpecies[j]->bmax[ibin]; iPart++ ) {
+						for (unsigned int i =0 ; i < vecDiagPhaseToRun2.size(); i++) {
+							vecDiagPhaseToRun2[i]->doSomething(vecSpecies[j]->particles.charge(iPart),
+															   vecSpecies[j]->particles.weight(iPart),
+															   vecSpecies[j]->particles.momentum(0,iPart),
+															   vecSpecies[j]->particles.momentum(1,iPart),
+															   vecSpecies[j]->particles.momentum(2,iPart),
+															   vecSpecies[j]->particles.position(0,iPart));
+						}						
+					}
+				}
+				
 				DEBUG("here we have to do something " << vecDiagPhaseToRun2.size());
 			}
 			

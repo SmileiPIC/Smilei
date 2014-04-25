@@ -28,7 +28,8 @@ public:
 
     //! Method used to allocate a Field3D
     void allocateDims(std::vector<unsigned int> dims );
-    void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal );
+	void allocateDims(unsigned int dims1,unsigned int dims2,unsigned int dims3);
+	void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal );
 
     //! Method used to dump the data contained in a Field3D
     void dump(std::vector<unsigned int> dims);

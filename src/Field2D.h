@@ -28,6 +28,7 @@ public:
 
     //! Method used to allocate a Field2D
     void allocateDims(std::vector<unsigned int> dims );
+    void allocateDims(unsigned int dims1,unsigned int dims2);
     void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal );
 
     //! Method used to dump the data contained in a Field2D
