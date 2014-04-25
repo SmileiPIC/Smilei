@@ -670,13 +670,13 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     // number of particles for this Species
     int unsigned nParticles = getNbrOfParticles();
     // Reset list of particles to exchange
-    int nthds= 1;
-#pragma omp parallel shared(nthds)
+    int tid = omp_get_thread_num();	  
+    int nthds = omp_get_num_threads();	  
+    #pragma omp single
     {
-      nthds = omp_get_num_threads();	  
+        smpi->setExchListSize(nthds);
+        smpi->clearExchList();
     }
-    smpi->setExchListSize(nthds);
-    smpi->clearExchList();
 	
     // -------------------------------
     // calculate the particle dynamics
@@ -684,11 +684,6 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     if (time_dual>time_frozen) { // moving particle
         double gf = 1.0;
 		
-        // for all particles of the Species
-        #pragma omp parallel shared (EMfields) private(gf,Epart, Bpart, Jion,i,j, ibin,iPart, iloc,jloc,b_Jx, b_Jy, b_Jz, b_rho)
-        {
-	int tid = omp_get_thread_num();	  
-
         //Allocate buffer *********************************************
         // *4 allows to also reset Jy, Jz and rho which are contiguous in memory
         b_Jx = (double *) calloc(4 * size_proj_buffer, sizeof(double));
@@ -772,7 +767,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 
         }// ibin
         free(b_Jx);	
-        }
+
         if (Ionize && electron_species) {
             for (unsigned int i=0; i < Ionize->new_electrons.size(); i++) {
                 // electron_species->particles.push_back(Ionize->new_electrons[i]);
