@@ -35,13 +35,22 @@ parser.add_argument('-n',action='store_false',default=True,dest='clean_folder',h
 parser.add_argument('-f', action='store', default='.png',dest='format',help='plot format (default:True)')
 what=parser.parse_args()
 args=what.args
-dir=what.dir
 colors=what.colors
 lim=what.lim
 same=what.same_plot
 clean_folder=what.clean_folder
 file_format=what.format
 n_plots=len(args)/2
+
+if(what.dir!='scalars.txt'):
+    dir=str(what.dir)[2:-2]
+else:
+    dir=str(what.dir)
+if(what.dir_plot!='plot_scalars'):
+    path=str(what.dir_plot)[2:-2]
+else:
+    path=str(what.dir_plot)
+    
 
 if (len(args)%2!=0):
     sys.exit('arguments to be plotted not well defined')
@@ -56,8 +65,8 @@ if (my_rank==0):
         if(len(lim)!=4):
             sys.exit('axis limits missing in one direction, there must be 4 numbers (xmin, xmax,ymin,ymax)')
     
-#new directory where to save the plots
-path=str(what.dir_plot)
+
+
 
 #creation of the directory 
 if(clean_folder==True):

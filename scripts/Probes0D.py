@@ -25,7 +25,7 @@ size=comm.Get_size()
 # ---------------------------------------------
 parser = argparse.ArgumentParser(description=' ' )
 
-parser.add_argument('-a',action='store',default='all',dest='args',nargs='+',help='arg1 arg2..they will plot in function of time. default=it plots all the variables')
+parser.add_argument('-a',action='store',default='all',dest='args',nargs='+',help='arg1 arg2..they will be plotted in function of time. default=it plots all the variables')
 parser.add_argument('-p',action='store',default='all',dest='probes',nargs='+',help='it plots the data of a probe. default= it plots all the probes')
 parser.add_argument('-d',action='store',default='Probes0D.h5',dest='dir', nargs='+',help='directory where Probes0D.h5 is located, for ex. ../../Probes0D.h5 default=Probes0D.h5')
 parser.add_argument('-D',action='store',default='plot_probes0D',dest='dir_plot', nargs='+',help='directory where plots will be located, for ex. ../../toto default=plot_probes0D')
@@ -36,6 +36,16 @@ parser.add_argument('-n',action='store_false',default=True,dest='clean_folder',h
 parser.add_argument('-f', action='store', default='.png',dest='format',help='plot format (default:True)')
 parser.add_argument('-fft',action='store',default='None',dest='fft_args',nargs='+',help='it is implementing the FFT on the args indicated')
 what=parser.parse_args()
+
+if(what.dir!='Probe0D.h5'):
+    dir=str(what.dir)[2:-2]
+else:
+    dir=str(what.dir)
+if(what.dir_plot!='plot_probes0D'):
+    path=str(what.dir_plot)[2:-2]
+    print path
+else:
+    path=str(what.dir_plot)
 
 data_list=['time','Ex','Ey','Ez','Bx','By','Bz']
 mapping=[0,1,2,3,4,5,6]
@@ -54,15 +64,16 @@ else:
 
 if(what.clean_folder==True):
      if(my_rank==0):
-        if (os.path.exists(what.dir_plot)==False):
-	        os.makedirs(what.dir_plot)
+        if (os.path.exists(path)==False):
+	        os.makedirs(path)
         else:
-		    shutil.rmtree(what.dir_plot)
-		    os.makedirs(what.dir_plot)
+		    shutil.rmtree(path)
+		    os.makedirs(path)
 
 
 
-f=tbl.openFile(str(what.dir))
+
+f=tbl.openFile(dir)
 data_h=[]
 for n in f.root:
     data_h.append(n.read())
@@ -96,7 +107,7 @@ if(what.same_plot==True):
     if(size!=1):
         for p in range(0,len(mapping)):
             if(my_rank==mapping[p]):
-                title=what.dir_plot+'/p'+str(id_probes[p])+'$time$'
+                title=path+'/p'+str(id_probes[p])+'$time$'
                 for a in range(0,len(args)):
                     plot(data[id_probes[p]][:,args[a]],label=data_list[args[a]],color=what.colors[a])
                     title+='$'+data_list[args[a]]
@@ -109,7 +120,7 @@ if(what.same_plot==True):
                 clf()
     else:  
         for p in range(0,n_probes):           
-            title=what.dir_plot+'/p'+str(id_probes[p])+'$time$'
+            title=path+'/p'+str(id_probes[p])+'$time$'
             for a in range(0,len(args)):
                 plot(data[id_probes[p]][:,args[a]],label=data_list[args[a]],color=what.colors[a])
                 title+='$'+data_list[args[a]]
@@ -141,7 +152,7 @@ else:
                 mapping.append(r)
         for m in range(0,len(mapping)):
             if(my_rank==mapping[m]):
-                title=what.dir_plot+'/p'+str(mapping_pr[m])+'$time$'+data_list[mapping_var[m]]
+                title=path+'/p'+str(mapping_pr[m])+'$time$'+data_list[mapping_var[m]]
                 plot(data[mapping_pr[m]][:,mapping_var[m]],label=data_list[mapping_var[m]])
                 legend(loc=1)
                 xlabel('Time')
@@ -153,7 +164,7 @@ else:
     else:
         for p in range(0, n_probes):
             for a in range(0,len(args)):
-                title=what.dir_plot+'/p'+str(id_probes[p])+'$time$'+data_list[args[a]]
+                title=path+'/p'+str(id_probes[p])+'$time$'+data_list[args[a]]
                 plot(data[id_probes[p]][:,args[a]],label=data_list[args[a]])
                 legend(loc=1)
                 xlabel('Time')
