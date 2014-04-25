@@ -80,10 +80,8 @@ public:
 	indexes_of_particles_to_exchange_per_thd.resize(nthds);
     }
     inline void clearExchList() {
-	for (int tid=0 ; tid < indexes_of_particles_to_exchange.size() ; tid++) {
+	for (int tid=0 ; tid < indexes_of_particles_to_exchange_per_thd.size() ; tid++) {
 	    indexes_of_particles_to_exchange_per_thd[tid].clear();
-	    indexes_of_particles_to_exchange_per_thd[tid].reserve(1000);
-	    
 	}
 	
     }
