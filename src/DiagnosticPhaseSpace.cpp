@@ -63,6 +63,8 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagPa
 			H5Gclose(gid);
 		}
 	}
+	// number of spatial dimensions for the particles
+    ndim = params->nDim_particle;
 	DEBUG("here>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 }
 
@@ -83,17 +85,22 @@ void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) 
 				}
 			}
 			
+			partStruct my_part;
+			my_part.pos.resize(ndim);
+			my_part.mom.resize(3);
+			
 			if (vecDiagPhaseToRun2.size()>0) {
 				
 				for (unsigned int ibin = 0 ; ibin < vecSpecies[j]->bmin.size() ; ibin++) {
 					for (int iPart=vecSpecies[j]->bmin[ibin] ; iPart<vecSpecies[j]->bmax[ibin]; iPart++ ) {
 						for (unsigned int i =0 ; i < vecDiagPhaseToRun2.size(); i++) {
-							vecDiagPhaseToRun2[i]->doSomething(vecSpecies[j]->particles.charge(iPart),
-															   vecSpecies[j]->particles.weight(iPart),
-															   vecSpecies[j]->particles.momentum(0,iPart),
-															   vecSpecies[j]->particles.momentum(1,iPart),
-															   vecSpecies[j]->particles.momentum(2,iPart),
-															   vecSpecies[j]->particles.position(0,iPart));
+							for(unsigned int k=0;k<ndim;k++) {
+								my_part.pos[k]=vecSpecies[j]->particles.position(k,iPart);
+							}
+							for(unsigned int k=0;k<3;k++) {
+								my_part.mom[k]=vecSpecies[j]->particles.momentum(k,iPart);
+							}
+							vecDiagPhaseToRun2[i]->doSomething(my_part);
 						}						
 					}
 				}

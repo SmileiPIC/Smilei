@@ -39,5 +39,6 @@ private:
 	
 	hid_t fileId;
 
+	unsigned int ndim;
 };
 #endif

@@ -10,6 +10,13 @@ class SmileiMPI;
 class DiagParams;
 class ElectroMagn;
 
+struct partStruct {
+	std::vector<double> pos;
+	std::vector<double> mom;
+	double weight;
+	short charge;
+};
+
 class DiagnosticPhase {
 
 public:
@@ -22,6 +29,6 @@ public:
 	hid_t groupID;
 	std::vector<std::string> my_species;
 	
-	virtual void doSomething(short charge, double weight, double mom_x, double mom_y, double mom_z, double pos_x, double pos_y = 0, double pos_z=0){};
+	virtual void doSomething(partStruct& my_part){};
 };
 #endif

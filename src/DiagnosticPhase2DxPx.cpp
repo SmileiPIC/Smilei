@@ -16,6 +16,7 @@ DiagnosticPhase2DxPx::DiagnosticPhase2DxPx(phaseStructure phaseStruct, hid_t gid
 
 }
 
-void DiagnosticPhase2DxPx::doSomething(short charge, double weight, double mom_x, double mom_y, double mom_z, double pos_x, double pos_y, double pos_z) {
+void DiagnosticPhase2DxPx::doSomething(partStruct) {
+	
 	DEBUG("here");
 }

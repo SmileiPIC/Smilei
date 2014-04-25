@@ -10,7 +10,7 @@ public:
     DiagnosticPhase2DxPx(phaseStructure phaseStruct, hid_t gid);
     ~DiagnosticPhase2DxPx();
 	
-	void doSomething(short charge, double weight, double mom_x, double mom_y, double mom_z, double pos_x, double pos_y = 0, double pos_z=0);
+	void doSomething(partStruct);
 
 };
 #endif
