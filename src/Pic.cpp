@@ -257,17 +257,24 @@ int main (int argc, char* argv[])
         // call the various diagnostics
         // ----------------------------
 
-		
+	if ((params.res_space_win_x)) {
+	    for (unsigned int ispec=0 ; ispec<params.n_species; ispec++)
+		vecSpecies[ispec]->movingWindow_x(1, smpi);
+	    Interp->mv_win(1);
+	    Proj->mv_win(1);
+	    EMfields->movingWindow_x(1, smpi);
+	}
+
         // run all diagnostics
         timer[3].restart();
-        diags.runAllDiags(itime, EMfields, vecSpecies);
+        //diags.runAllDiags(itime, EMfields, vecSpecies);
 
         // temporary EM fields dump in Fields.h5
         if  ((diag_params.fieldDump_every != 0) && (itime % diag_params.fieldDump_every == 0))
             sio->writeAllFieldsSingleFileTime( EMfields, itime );
 
         // temporary particles dump (1 HDF5 file per process)
-        if  ((diag_params.particleDump_every != 0) && (itime % diag_params.particleDump_every == 0))
+        /*if  ((diag_params.particleDump_every != 0) && (itime % diag_params.particleDump_every == 0))
             sio->writePlasma( vecSpecies, time_dual, smpi );
 
 		// Threee cases of dump: dump_step reached, real time greater than dump_minutes or file named stop created 
@@ -278,7 +285,7 @@ int main (int argc, char* argv[])
 			 ) {
             sio->dumpAll( EMfields, itime,  vecSpecies, smpi, params, input_data);
 			if (params.exit_after_dump) break;
-		}
+		}*/
         timer[3].update();
 		
 

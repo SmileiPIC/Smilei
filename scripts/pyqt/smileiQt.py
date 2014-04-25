@@ -68,6 +68,7 @@ class smileiQt(QtGui.QMainWindow):
         settings=QtCore.QSettings("smilePy","");
         settings.beginGroup("Preferences");
         #self.filename=str(settings.value("filename","").toString());
+        self.filename=str("Fields.h5");
         self.filename=str("");
         settings.endGroup();
         self.update_files()
@@ -184,9 +185,14 @@ class smileiQt(QtGui.QMainWindow):
 	            self.fig2.colorbar(self.img2)
 
 	    if field_dims == 1 :
-            	self.img1 = self.axes1.plot(self.h5data1)    
-                self.img2 = self.axes2.plot(self.h5data2)    
-
+                if mini[1] and maxi[1] :
+                    self.axes1.set_ylim(mini[0],maxi[0])
+                    self.img1 = self.axes1.plot(self.h5data1)
+                    self.axes2.set_ylim(mini[0],maxi[0])
+                    self.img2 = self.axes2.plot(self.h5data2)   
+                else:
+                    self.img1 = self.axes1.plot(self.h5data1)    
+                    self.img2 = self.axes2.plot(self.h5data2)    
 
             self.canvas1.draw()
             self.canvas2.draw()

@@ -18,6 +18,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi)
 {
+    params_ = params;
 
     // take useful things from params
     cell_volume=params->cell_volume;
@@ -287,4 +288,27 @@ void ElectroMagn::computeScalars()
     }
 }
 
+
+void ElectroMagn::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
+{
+    Ex_->shift_x(shift);
+    Ey_->shift_x(shift);
+    Ez_->shift_x(shift);
+    //! \ Comms to optimize, only in x, east to west 
+    //! \ Implement SmileiMPI::exchangeE( EMFields*, int nDim, int nbNeighbors );
+    smpi->exchangeE( this );
+    Bx_->shift_x(shift);
+    By_->shift_x(shift);
+    Bz_->shift_x(shift);
+    smpi->exchangeB( this );
+
+    applyEMBoundaryConditions(time_dual, smpi);
+
+    // Update x (idx = 0) limits :
+    smpi->getCellStartingGlobalIndex(0) += shift;
+    smpi->getDomainLocalMin(0) += shift*params_->cell_length[0];
+    smpi->getDomainLocalMax(0) += shift*params_->cell_length[0];
+
+   
+}
 

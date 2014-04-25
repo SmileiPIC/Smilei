@@ -77,6 +77,9 @@ public:
     //! Method used to sort particles
     void sort_part(double);
 
+    void movingWindow_x(unsigned int shift, SmileiMPI *smpi);
+    void createParticles(unsigned int shift, SmileiMPI *smpi);
+
     //! Vector containing all Particles of the considered Species
     Particles particles;
     //std::vector<int> index_of_particles_to_exchange;

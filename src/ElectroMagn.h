@@ -127,12 +127,15 @@ public:
     virtual void solveMaxwellFaraday() = 0;
     virtual void applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi) = 0;
 
+    void movingWindow_x(unsigned int shift, SmileiMPI *smpi);
+
     //! compute scalars filling var scalars
     void computeScalars();
 
     //! vector(on Fields) of map (of keys like min max) of vector of double values
     std::map<std::string,std::map<std::string,std::vector<double> > > scalars;
 private:
+    PicParams *params_;
 };
 
 #endif

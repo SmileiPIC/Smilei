@@ -31,10 +31,6 @@ SmileiMPI_Cart2D::SmileiMPI_Cart2D( SmileiMPI* smpi)
     nbNeighbors_ = 2; // per direction
 
     for (int i=0 ; i<ndims_ ; i++) periods_[i] = 0;
-    // Geometry periodic in y
-    periods_[1] = 1;
-    if (periods_[1] == 1)
-        PMESSAGE( 0, smilei_rk, "Periodic geometry / y");
     for (int i=0 ; i<ndims_ ; i++) coords_[i] = 0;
     for (int i=0 ; i<ndims_ ; i++) number_of_procs[i] = 1;
 
@@ -76,7 +72,17 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
     for (unsigned int i=0 ; i<params.nDim_field ; i++)
         params.n_space_global[i] = round(params.res_space[i]*params.sim_length[i]/(2.0*M_PI));
 
-    if (params.nDim_field == 2) {
+    if (params.number_of_procs[0]!=0) {
+        for (unsigned int i=0 ; i<params.nDim_field ; i++)
+            number_of_procs[i] = params.number_of_procs[i];
+        if (number_of_procs[0]*number_of_procs[1]!=smilei_sz) {
+            PMESSAGE(0,"Domain decomposition specified in the namelist don't match with the number of MPI process");
+            PMESSAGE(0,"\tit will be computed to be as square as possible");
+            for (unsigned int i=0 ; i<params.nDim_field ; i++)
+                params.number_of_procs[i] = 0;
+        }
+    }
+    if (params.number_of_procs[0]==0) {
         double tmp = params.res_space[0]*params.sim_length[0] / ( params.res_space[1]*params.sim_length[1] );
         number_of_procs[0] = min( smilei_sz, max(1, (int)sqrt ( (double)smilei_sz*tmp*tmp) ) );
         number_of_procs[1] = (int)(smilei_sz / number_of_procs[0]);
@@ -98,6 +104,11 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
     //number_of_procs[1] = 2;
     cout << "Split : " << smilei_sz << " : " << number_of_procs[0] << " - " << number_of_procs[1] << endl;
 
+    // Geometry periodic in y
+    if (params.use_transverse_periodic) {
+        periods_[1] = 1;
+        PMESSAGE( 0, smilei_rk, "Periodic geometry / y");
+    }
     MPI_Cart_create( SMILEI_COMM_WORLD, ndims_, number_of_procs, periods_, reorder_, &SMILEI_COMM_2D );
     MPI_Cart_coords( SMILEI_COMM_2D, smilei_rk, ndims_, coords_ );
 
@@ -112,20 +123,34 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
 
     for (unsigned int i=0 ; i<params.nDim_field ; i++) {
 
-        params.n_space[i] = params.n_space_global[i] / number_of_procs[i];
-
         n_space_global[i] = params.n_space_global[i];
+
+	if ((!params.res_space_win_x)||(i!=0)) {
+
+	    params.n_space[i] = params.n_space_global[i] / number_of_procs[i];
+	    cell_starting_global_index[i] = coords_[i]*(params.n_space_global[i] / number_of_procs[i]);
+
+	    if ( number_of_procs[i]*params.n_space[i] != params.n_space_global[i] ) {
+		// Correction on the last MPI process of the direction to use the wished number of cells
+		if (coords_[i]==number_of_procs[i]-1) {
+		    params.n_space[i] = params.n_space_global[i] - params.n_space[i]*(number_of_procs[i]-1);
+		}
+	    }
+	}
+	else {  // if use_moving_window
+	    // Number of space in window (not split)
+	    params.n_space[i] =  params.res_space_win_x / number_of_procs[i];
+	    cell_starting_global_index[i] = coords_[i]*(params.res_space_win_x / number_of_procs[i]);
+
+	    if ( number_of_procs[i]*params.n_space[i] != params.res_space_win_x ) {
+		// Correction on the last MPI process of the direction to use the wished number of cells
+		if (coords_[i]==number_of_procs[i]-1) {
+		    params.n_space[i] = params.res_space_win_x - params.n_space[i]*(number_of_procs[i]-1);
+		}
+	    }
+	}
+
         oversize[i] = params.oversize[i] = params.interpolation_order + (params.exchange_particles_each-1);
-        cell_starting_global_index[i] = coords_[i]*(params.n_space_global[i] / number_of_procs[i]);
-
-
-        if ( number_of_procs[i]*params.n_space[i] != params.n_space_global[i] ) {
-            // Correction on the last MPI process of the direction to use the wished number of cells
-            if (coords_[i]==number_of_procs[i]-1) {
-                params.n_space[i] = params.n_space_global[i] - params.n_space[i]*(number_of_procs[i]-1);
-            }
-        }
-
         if ( params.n_space[i] <= 2*oversize[i] ) {
             WARNING ( "Increase space resolution or reduce number of MPI process in direction " << i ); 
         }

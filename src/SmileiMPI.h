@@ -66,13 +66,22 @@ public:
     inline int getSize() {
         return smilei_sz;
     }
-    inline int    getCellStartingGlobalIndex(int i) {
+    inline int    getCellStartingGlobalIndex(int i) const {
         return cell_starting_global_index[i];
     }
-    inline double getDomainLocalMin(int i) {
+    inline double getDomainLocalMin(int i) const {
         return min_local[i];
     }
-    inline double getDomainLocalMax(int i) {
+    inline double getDomainLocalMax(int i) const {
+        return max_local[i];
+    }
+    inline int&    getCellStartingGlobalIndex(int i)  {
+        return cell_starting_global_index[i];
+    }
+    inline double& getDomainLocalMin(int i)  {
+        return min_local[i];
+    }
+    inline double& getDomainLocalMax(int i)  {
         return max_local[i];
     }
 
@@ -82,6 +91,10 @@ public:
     inline void addPartInExchList(int iPart) {
         indexes_of_particles_to_exchange.push_back(iPart);
     }
+
+    //! \ Should be pure virtual
+    virtual bool isEaster ( ){WARNING("Problem");return false;}
+    virtual bool isWester ( ){WARNING("Problem");return false;}
 
     std::vector<int> n_space_global;
     int smilei_sz;

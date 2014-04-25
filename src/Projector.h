@@ -19,6 +19,7 @@ public:
     //! Creator for the Projector
     Projector(PicParams*, SmileiMPI*) {};
     virtual ~Projector() {};
+    virtual void mv_win(unsigned int shift) = 0;
 
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
     //! Not used for now

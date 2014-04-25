@@ -1040,3 +1040,230 @@ void Species::sort_part(double dbin)
     }
 }
 
+void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
+{
+    partBoundCond->moveWindow_x( shift*params_->cell_length[0] );
+
+    //! \Check mv bin[0] to bin[shift-1]
+    for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++)
+	 for (unsigned int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ )
+	     if ( ( particles.position(0, iPart) < smpi->getDomainLocalMin(0) ) 
+		  || ( particles.position(0, iPart) >= smpi->getDomainLocalMax(0) ) )
+		 smpi->addPartInExchList( iPart );
+
+    smpi->exchangeParticles( this, speciesNumber, params_ );
+
+    if (smpi->isEaster() ) {
+	for (unsigned int i=0 ; i<shift ; i++) {
+	    if ( ( bmin[0]!=0 ) || ( bmax[0]!=0 ) )
+		WARNING( bmin[0] << " " << bmax[0] );
+
+	    // ! Not in 2D
+	    bmin.erase( bmin.begin() );
+	    bmin.push_back( 0 );
+	    bmax.erase( bmax.begin() );
+	    bmax.push_back( 0 );
+	}
+    
+	// attention à bmin/bmax dans create !! -> OK using new_bin_index below
+	createParticles(shift, smpi);
+    }
+
+    sort_part(params_->cell_length[params_->nDim_particle-1]);
+
+}
+
+void Species::createParticles(unsigned int shift, SmileiMPI *smpi)
+{
+    // ---------------------------------------------------------
+    // Calculate density and number of particles for the species
+    // ---------------------------------------------------------
+    int n_particles_before_mv = particles.size();
+		
+    unsigned int npart_effective=0;
+		
+    // does a loop over all cells in the simulation
+    // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
+		
+    vector<int> cell_index(3,0);
+    for (unsigned int i=0 ; i<params_->nDim_field ; i++) {
+	if (params_->cell_length[i]!=0) {
+	    // smpi->getDomainLocalMin(0) updated during shift over of fields
+	    cell_index[i] = round (smpi->getDomainLocalMin(i)/params_->cell_length[i]);
+	}
+    }
+    cell_index[0] += params_->n_space[0] - shift;
+    // Next bin to create
+    int new_bin_idx = bmin.size() - shift;
+
+    vector<unsigned int> n_space_created(3,0);
+    n_space_created[0] = shift;
+    n_space_created[1] = params_->n_space[1];
+    n_space_created[2] = params_->n_space[2];
+
+    // field containing the density distribution (always 3d)
+    Field3D density(n_space_created);
+	
+    // field containing the temperature distribution along all 3 momentum coordinates (always 3d * 3)
+    Field3D temperature[3];
+	
+    // field containing the temperature distribution along all 3 momentum coordinates (always 3d * 3)
+    Field3D velocity[3];
+	
+    for (unsigned int i=0; i<3; i++) {
+        velocity[i].allocateDims(n_space_created);
+        temperature[i].allocateDims(n_space_created);
+    }
+		
+    npart_effective = 0;
+    for (unsigned int k=0; k<n_space_created[2]; k++) {
+	for (unsigned int j=0; j<n_space_created[1]; j++) {
+	    for (unsigned int i=0; i<n_space_created[0]; i++) {
+					
+		vector<double> x_cell(3,0);
+		x_cell[0] = (cell_index[0]+i+0.5)*params_->cell_length[0];
+		x_cell[1] = (cell_index[1]+j+0.5)*params_->cell_length[1];
+		x_cell[2] = (cell_index[2]+k+0.5)*params_->cell_length[2];
+					
+		// assign density its correct value in the cell
+		density(i,j,k) = params_->species_param[speciesNumber].density
+		    *                density_profile(params_, x_cell, speciesNumber);
+					
+		// for non-zero density define temperature & mean-velocity and increment the nb of particles
+		if (density(i,j,k)!=0.0) {
+						
+		    // assign the temperature & mean-velocity their correct value in the cell
+		    for (unsigned int m=0; m<3; m++)	{
+			temperature[m](i,j,k) = params_->species_param[speciesNumber].temperature[m];
+			velocity[m](i,j,k) = params_->species_param[speciesNumber].mean_velocity[m];
+		    }
+						
+		    // increment the effective number of particle by n_part_per_cell
+		    // for each cell with as non-zero density
+		    npart_effective += params_->species_param[speciesNumber].n_part_per_cell;
+						
+		}//ENDif non-zero density
+					
+	    }//i
+	}//j
+    }//k end the loop on all cells
+	
+    // defines npart_effective for the Species & create the corresponding particles
+    // -----------------------------------------------------------------------
+    particles.create_particles(npart_effective);
+		
+    // define Maxwell-Juettner related quantities
+    // ------------------------------------------
+		
+    // Maxwell-Juettner cumulative function (array)
+    std::vector<double> max_jutt_cumul;
+		
+    if (params_->species_param[speciesNumber].initialization_type=="maxwell-juettner") {
+	//! \todo{Pass this parameters in a code constants class (MG)}
+	nE     = 20000;
+	muEmax = 20.0;
+			
+	max_jutt_cumul.resize(nE);
+	double mu=params_->species_param[speciesNumber].mass/params_->species_param[speciesNumber].temperature[0];
+	double Emax=muEmax/mu;
+	dE=Emax/nE;
+			
+	double fl=0;
+	double fr=0;
+	max_jutt_cumul[0]=0.0;
+	for (unsigned  i=1; i<nE; i++ ) {
+	    //! \todo{this is just the isotropic case, generalise to non-isotropic (MG)}
+	    fr=(1+i*dE)*sqrt(pow(1.0+i*dE,2)-1.0) * exp(-mu*i*dE);
+	    max_jutt_cumul[i]=max_jutt_cumul[i-1] + 0.5*dE*(fr+fl);
+	    fl=fr;
+	}
+	for (unsigned int i=0; i<nE; i++) max_jutt_cumul[i]/=max_jutt_cumul[nE-1];
+			
+    }
+		
+    // Initialization of the particles properties
+    // ------------------------------------------
+    unsigned int iPart= n_particles_before_mv;
+    unsigned int *indexes=new unsigned int[ndim];
+    double *temp=new double[3];
+    double *vel=new double[3];
+		
+    // start a loop on all cells
+		
+    // Rappel :
+    // int cell_index[0] = process_coord_x*(params->n_space[0]);
+    // int cell_index[1] = process_coord_y*(params->n_space[1]);
+    // int cell_index[2] = process_coord_z*(params->n_space[2]);
+    //
+    //bmin[bin] point to begining of bin (first particle)
+    //bmax[bin] point to end of bin (= bmin[bin+1])
+    //if bmax = bmin, bin is empty of particle.
+		
+    for (unsigned int k=0; k<n_space_created[2]; k++) {
+	if (ndim == 3) {
+	    bmin[new_bin_idx+k] = iPart;
+	}
+	for (unsigned int j=0; j<n_space_created[1]; j++) {
+	    if (ndim == 2) {
+		bmin[new_bin_idx+j] = iPart;
+	    }
+	    for (unsigned int i=0; i<n_space_created[0]; i++) {
+		if (ndim == 1) {
+		    bmin[new_bin_idx+i] = iPart;
+		}
+		// initialize particles in meshes where the density is non-zero
+		if (density(i,j,k)>0) {
+
+		    temp[0] = temperature[0](i,j,k);
+		    vel[0]  = velocity[0](i,j,k);
+		    temp[1] = temperature[1](i,j,k);
+		    vel[1]  = velocity[1](i,j,k);
+		    temp[2] = temperature[2](i,j,k);
+		    vel[2]  = velocity[2](i,j,k);
+                        
+		    indexes[0]=i+cell_index[0];
+		    if (ndim > 1) {
+			indexes[1]=j+cell_index[1];
+			if (ndim > 2) {
+			    indexes[2]=k+cell_index[2];
+			}//ndim > 2
+		    }//ndim > 1
+						
+		    initPosition(params_->species_param[speciesNumber].n_part_per_cell,iPart, indexes, ndim,
+				 params_->cell_length, params_->species_param[speciesNumber].initialization_type);
+		    initMomentum(params_->species_param[speciesNumber].n_part_per_cell,iPart, temp, vel,
+				 params_->species_param[speciesNumber].initialization_type, max_jutt_cumul);
+		    initWeight(params_, speciesNumber, iPart, density(i,j,k));
+		    initCharge(params_, speciesNumber, iPart, density(i,j,k));
+						
+		    //calculate new iPart (jump to next cell)
+		    iPart+=params_->species_param[speciesNumber].n_part_per_cell;
+		}//END if density > 0
+		if (ndim == 1) {
+		    bmax[new_bin_idx+i] = iPart;
+		}
+	    }//i
+	    if (ndim == 2) {
+		bmax[new_bin_idx+j] = iPart;
+	    }
+	}//j
+	if (ndim == 3) {
+	    bmax[new_bin_idx+k] = iPart;
+	}
+    }//k end the loop on all cells
+		
+    delete [] indexes;
+    delete [] temp;
+    delete [] vel;
+		
+		
+    // Recalculate former position using the particle velocity
+    // (necessary to calculate currents at time t=0 using the Esirkepov projection scheme)
+    for (unsigned int iPart=n_particles_before_mv; iPart<n_particles_before_mv+npart_effective; iPart++) {
+	for (unsigned int i=0; i<ndim; i++) {
+	    particles.position_old(i,iPart) -= particles.momentum(i,iPart)/particles.lor_fac(iPart) * params_->timestep;
+	}
+    }
+    //PMESSAGE( 1, smpi->getRank(),"Species "<< speciesNumber <<" # part "<< npart_effective );
+
+}

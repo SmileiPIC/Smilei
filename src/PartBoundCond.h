@@ -19,27 +19,25 @@ public:
     PartBoundCond( PicParams *params, int ispec, SmileiMPI* smpi );
     ~PartBoundCond();
 
-    void (*bc_west)  ( Particles &particles, int ipart, int direction, double limit_pos );
-    void (*bc_east)  ( Particles &particles, int ipart, int direction, double limit_pos );
-    void (*bc_south) ( Particles &particles, int ipart, int direction, double limit_pos );
-    void (*bc_north) ( Particles &particles, int ipart, int direction, double limit_pos );
-    void (*bc_bottom)( Particles &particles, int ipart, int direction, double limit_pos );
-    void (*bc_up)    ( Particles &particles, int ipart, int direction, double limit_pos );
+    int (*bc_west)  ( Particles &particles, int ipart, int direction, double limit_pos );
+    int (*bc_east)  ( Particles &particles, int ipart, int direction, double limit_pos );
+    int (*bc_south) ( Particles &particles, int ipart, int direction, double limit_pos );
+    int (*bc_north) ( Particles &particles, int ipart, int direction, double limit_pos );
+    int (*bc_bottom)( Particles &particles, int ipart, int direction, double limit_pos );
+    int (*bc_up)    ( Particles &particles, int ipart, int direction, double limit_pos );
 
     inline int apply( Particles &particles, int ipart ) {
 
         if ( particles.position(0, ipart) <  x_min ) {
             if (bc_west==NULL) return 0;
             else {
-                (*bc_west)( particles, ipart, 0, 2.*x_min );
-                return 1;
+                return (*bc_west)( particles, ipart, 0, 2.*x_min );
             }
         }
         else if ( particles.position(0, ipart) >= x_max ) {
             if (bc_east==NULL) return 0;
             else {
-                (*bc_east)( particles, ipart, 0, 2.*x_max );
-                return 1;
+                return (*bc_east)( particles, ipart, 0, 2.*x_max );
             }
         }
         else if (nDim_particle == 2) {
@@ -47,15 +45,13 @@ public:
             if ( particles.position(1, ipart) <  y_min ) {
                 if (bc_south==NULL) return 0;
                 else {
-                    (*bc_south)( particles, ipart, 1, 2.*y_min );
-                    return 1;
+                    return (*bc_south)( particles, ipart, 1, 2.*y_min );
                 }
             }
             else if ( particles.position(1, ipart) >= y_max ) {
                 if (bc_north==NULL) return 0;
                 else {
-                    (*bc_north)( particles, ipart, 1, 2.*y_max );
-                    return 1;
+                    return (*bc_north)( particles, ipart, 1, 2.*y_max );
                 }
             }
 
@@ -64,15 +60,13 @@ public:
                 if ( particles.position(2, ipart) <  z_min ) {
                     if (bc_bottom==NULL) return 0;
                     else {
-                        (*bc_bottom)( particles, ipart, 2, 2.*z_min );
-                        return 1;
+                        return (*bc_bottom)( particles, ipart, 2, 2.*z_min );
                     }
                 }
                 else if ( particles.position(2, ipart) >= z_max ) {
                     if (bc_up==NULL) return 0;
                     else {
-                        (*bc_up)( particles, ipart, 2, 2.*z_max );
-                        return 1;
+                        return (*bc_up)( particles, ipart, 2, 2.*z_max );
                     }
                 }
             } // end if (nDim_particle == 2)
@@ -80,6 +74,8 @@ public:
 
         return 1;
     };
+
+    void moveWindow_x(double shift);
 
 private:
     double x_min;

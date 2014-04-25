@@ -131,3 +131,13 @@ void Field2D::dump(vector<unsigned int> dims)
 
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Method to shift field in space
+// ---------------------------------------------------------------------------------------------------------------------
+void Field2D::shift_x(unsigned int delta)
+{
+    memcpy( &(data_2D[0][0]), &(data_2D[delta][0]), (dims_[1]*dims_[0]-delta*dims_[1])*sizeof(double) );
+    memset( &(data_2D[dims_[0]-delta][0]), 0, delta*dims_[1]*sizeof(double));
+
+}
+

@@ -108,3 +108,16 @@ void Field1D::allocateDims(std::vector<unsigned int> dims, unsigned int mainDim,
 void Field1D::dump(vector<unsigned int> dims)
 {
 }
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Method to shift field in space
+// ---------------------------------------------------------------------------------------------------------------------
+void Field1D::shift_x(unsigned int delta)
+{
+    memmove( &(data_[0]), &(data_[delta]), (dims_[0]-delta)*sizeof(double) );
+    //memset ( &(data_[dims_[0]-delta]), 0, delta*sizeof(double));
+    for (int i=dims_[0]-delta;i<dims_[0];i++) data_[i] = 0.;
+
+}
+

@@ -132,6 +132,8 @@ public:
 
     //! local simulation box size in \f$2\pi/k_N \f$
     std::vector<double> sim_length;
+    //! window simulation box size in \f$2\pi/k_N \f$
+    int res_space_win_x;
 
     //! plasma geometry
     std::string plasma_geometry;
@@ -209,11 +211,17 @@ public:
 	//! restart namelist
 	bool restart;
 	
-	//! enable sort particles (default = yes) 
+	//! enable sort particles (default = true) 
 	bool use_sort_particles;
 
 	//! frequency of exchange particles (default = 1) 
 	int exchange_particles_each;
+
+        //! Number of MPI process per direction (default : as square as possible)
+        std::vector<int> number_of_procs;
+
+        //! Enabled transversal periodic condition, fields & particles (default = true)
+        bool use_transverse_periodic;
 
 };
 

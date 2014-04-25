@@ -131,3 +131,14 @@ void Field3D::dump(vector<unsigned int> dims)
 {
 
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Method to shift field in space
+// ---------------------------------------------------------------------------------------------------------------------
+void Field3D::shift_x(unsigned int delta)
+{
+    memmove( &(data_3D[0][0][0]), &(data_3D[delta][0][0]), (dims_[2]*dims_[1]*dims_[0]-delta*dims_[2]*dims_[1])*sizeof(double) );
+    memset( &(data_3D[dims_[0]-delta][0][0]), 0, delta*dims_[1]*dims_[2]*sizeof(double));
+
+}
+
