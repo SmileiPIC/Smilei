@@ -12,7 +12,7 @@ class DiagnosticPhase1D : public DiagnosticPhase {
 
 public:
 
-    DiagnosticPhase1D(phaseStructure phaseStruct, hid_t gid): DiagnosticPhase(phaseStruct, gid){};
+    DiagnosticPhase1D(phaseStructure phaseStruct): DiagnosticPhase(phaseStruct){};
     ~DiagnosticPhase1D(){};
 
 };

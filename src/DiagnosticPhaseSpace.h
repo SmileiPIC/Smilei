@@ -40,5 +40,7 @@ private:
 	hid_t fileId;
 
 	unsigned int ndim;
+	
+	std::map<std::string,hid_t> mapGroupId; 
 };
 #endif

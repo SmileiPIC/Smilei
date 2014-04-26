@@ -18,10 +18,9 @@ DiagnosticPhaseSpace::~DiagnosticPhaseSpace() {
 }
 
 void DiagnosticPhaseSpace::close() {
-	if (fileId != 0) {
-		for (unsigned int i =0 ; i < vecDiagPhase.size(); i++) {
-			vecDiagPhase[i]->close(smpi_);
-			DEBUG("here");
+	if (fileId != 0) {		
+		for (map<string, hid_t>::iterator iter = mapGroupId.begin(); iter != mapGroupId.end(); iter++) {
+			H5Gclose(iter->second);
 		}
 		H5Fclose(fileId);
 	}
@@ -33,7 +32,6 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagPa
 	for (unsigned int i =0 ; i < diagParams->vecPhase.size(); i++) {
 		DiagnosticPhase *diagPhase=NULL;
 		
-		hid_t gid=0;
 		if (smpi_->isMaster()) {
 			if (i==0) {
 				ostringstream file_name("");
@@ -42,11 +40,18 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagPa
 			}
 			ostringstream groupName("");
 			groupName << "ps_" << i << "_" << diagParams->vecPhase[i].kind;
-			gid = H5Gcreate(fileId, groupName.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			hid_t gidParent = H5Gcreate(fileId, groupName.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			
+			for (unsigned int k=0; k<diagParams->vecPhase[i].species.size(); k++) {
+				hid_t gid = H5Gcreate(gidParent, diagParams->vecPhase[i].species[k].c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+				mapGroupId[diagParams->vecPhase[i].species[k]]=gid;
+			}
+			
+			
 		}
 		if (params->geometry == "1d3v") {
 			if (diagParams->vecPhase[i].kind == "xpx") {
-				diagPhase =  new DiagnosticPhase2DxPx(diagParams->vecPhase[i],gid);
+				diagPhase =  new DiagnosticPhase2DxPx(diagParams->vecPhase[i]);
 			}
 		} else {
 			ERROR("DiagnosticPhase not implemented for geometry " << params->geometry);
@@ -59,7 +64,7 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagPa
 }
 
 void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) {
-	
+	//! check which diagnosticPhase to run at this timestep
 	vector<DiagnosticPhase*> vecDiagPhaseToRun;	
 	for (unsigned int i =0 ; i < vecDiagPhase.size(); i++) {
 		if (timestep%vecDiagPhase[i]->every==0) vecDiagPhaseToRun.push_back(vecDiagPhase[i]);
@@ -68,13 +73,14 @@ void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) 
 	if (vecDiagPhaseToRun.size()>0) {
 		for (unsigned int j=0; j < vecSpecies.size(); j++) {
 			
+			//! check which diagnosticPhase to run for the species 
 			vector<DiagnosticPhase*> vecDiagPhaseToRun2;	
 			for (unsigned int i =0 ; i < vecDiagPhaseToRun.size(); i++) {
 				if(find(vecDiagPhaseToRun[i]->my_species.begin(), vecDiagPhaseToRun[i]->my_species.end(), vecSpecies[j]->name_str) != vecDiagPhaseToRun[i]->my_species.end()) { 
 					vecDiagPhaseToRun2.push_back(vecDiagPhaseToRun[i]);
 				}
 			}
-
+			
 			partStruct my_part;
 			my_part.pos.resize(ndim);
 			my_part.mom.resize(3);
@@ -97,8 +103,7 @@ void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) 
 					}
 				}
 				for (unsigned int i =0 ; i < vecDiagPhaseToRun2.size(); i++) {
-					DEBUG(vecSpecies[j]->name_str << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-					vecDiagPhaseToRun2[i]->writeData(timestep, vecSpecies[j]->name_str, smpi_);
+					vecDiagPhaseToRun2[i]->writeData(timestep, smpi_, mapGroupId[vecSpecies[j]->name_str]);
 				}				
 			}
 			
@@ -109,7 +114,6 @@ void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) 
 		}
 	}
 	
-
 //	//! momentum min
 //	std::vector< std::vector<double> > momentum_min;
 //	

@@ -13,10 +13,10 @@ class DiagnosticPhase2D : public DiagnosticPhase {
 
 public:
 
-    DiagnosticPhase2D(phaseStructure phaseStruct, hid_t gid): DiagnosticPhase(phaseStruct, gid) {};
+    DiagnosticPhase2D(phaseStructure phaseStruct): DiagnosticPhase(phaseStruct) {};
     ~DiagnosticPhase2D(){};
 
-	void writeData(unsigned int timestep, std::string species_name, SmileiMPI* smpi_);
+	void writeData(unsigned int timestep, SmileiMPI* smpi_, hid_t gid);
 	Field2D my_data;
 	
 	

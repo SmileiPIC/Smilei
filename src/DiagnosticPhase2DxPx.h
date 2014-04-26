@@ -9,7 +9,7 @@ class DiagnosticPhase2DxPx : public DiagnosticPhase2D {
 
 public:
 
-    DiagnosticPhase2DxPx(phaseStructure phaseStruct, hid_t gid);
+    DiagnosticPhase2DxPx(phaseStructure phaseStruct);
     ~DiagnosticPhase2DxPx();
 	
 	void doSomething(partStruct&);
