@@ -143,7 +143,7 @@ int main (int argc, char* argv[])
 	// ----------------------------------------------------------------------------
     // Create diagnostics
     // ----------------------------------------------------------------------------
-    Diagnostic diags(&params,&diag_params, smpi, Interp);
+    Diagnostic *Diags = new Diagnostic (&params,&diag_params, smpi, Interp);
     
     // ------------------------------------------------------------------------------------
     // Initialize the vecSpecies object containing all information of the different Species
@@ -173,7 +173,7 @@ int main (int argc, char* argv[])
 		EMfields->solvePoisson(smpi);
         
 		// run diagnostics at time-step 0
-		diags.runAllDiags(0, EMfields, vecSpecies);
+		Diags->runAllDiags(0, EMfields, vecSpecies);
 		// temporary EM fields dump in Fields.h5
 		sio->writeAllFieldsSingleFileTime( EMfields, 0 );
 		// temporary particle dump at time 0
@@ -260,7 +260,7 @@ int main (int argc, char* argv[])
 		
         // run all diagnostics
         timer[3].restart();
-        diags.runAllDiags(itime, EMfields, vecSpecies);
+        Diags->runAllDiags(itime, EMfields, vecSpecies);
         
         // temporary EM fields dump in Fields.h5
         if  ((diag_params.fieldDump_every != 0) && (itime % diag_params.fieldDump_every == 0))
@@ -312,7 +312,7 @@ int main (int argc, char* argv[])
     delete Proj;
     delete Interp;
     delete EMfields;
-    diags.closeAll();
+    delete Diags;
     
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
     vecSpecies.clear();

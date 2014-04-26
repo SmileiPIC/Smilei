@@ -25,7 +25,7 @@ class DiagnosticPhase {
 public:
 
     DiagnosticPhase(phaseStructure);
-    ~DiagnosticPhase();
+    ~DiagnosticPhase(){};
 	
     //! all diags should have this every parameter
 	unsigned int every;

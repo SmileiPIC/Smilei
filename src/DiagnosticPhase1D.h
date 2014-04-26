@@ -12,9 +12,7 @@ class ElectroMagn;
 class DiagnosticPhase1D : public DiagnosticPhase {
 
 public:
-
     DiagnosticPhase1D(phaseStructure phaseStruct): DiagnosticPhase(phaseStruct){};
-    ~DiagnosticPhase1D(){};
 
 };
 #endif

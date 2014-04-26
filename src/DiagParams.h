@@ -55,6 +55,7 @@ public:
     unsigned int scalar_every;
 
     //! map output every map_every (namelist group "diagnostic map" key "every")
+    //! \todo this is unused but ready to serve!
     unsigned int map_every;
 
     //! scalar output every probe_every (namelist group "diagnostic probe0d" key "every")

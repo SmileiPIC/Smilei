@@ -9,11 +9,7 @@ class SmileiMPI;
 class DiagnosticPhase2DxPx : public DiagnosticPhase2D {
 
 public:
-
-    DiagnosticPhase2DxPx(phaseStructure phaseStruct);
-    ~DiagnosticPhase2DxPx();
-	
+    DiagnosticPhase2DxPx(phaseStructure phaseStruct);	
 	void doSomething(partStruct&);
-	
 };
 #endif

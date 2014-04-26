@@ -2,9 +2,6 @@
 
 using namespace std;
 
-DiagnosticPhase::~DiagnosticPhase() {
-}
-
 DiagnosticPhase::DiagnosticPhase(phaseStructure phaseStruct) :
 my_species(phaseStruct.species)
 {

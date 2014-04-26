@@ -18,16 +18,15 @@ Diagnostic::Diagnostic( PicParams* params,  DiagParams* diagparams, SmileiMPI* s
 diagScal(params, smpi),
 probe0D(params, diagparams, smpi),
 interp_(interp),
-diagPhase(params, diagparams, smpi)
+diagPhaseSpace(params, diagparams, smpi)
 {
     everyScalar = diagparams->scalar_every;
-    everyMap = diagparams->map_every;
     everyProbe0D = diagparams->probe0d_every;
 }
 
-void Diagnostic::closeAll () {
+Diagnostic::~Diagnostic () {
     probe0D.close();
-	diagPhase.close();
+	diagPhaseSpace.close();
 }
 
 void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Species*>& vecSpecies) {
@@ -37,6 +36,6 @@ void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Specie
     if (everyProbe0D && timestep % everyProbe0D == 0) {
         probe0D.run(timestep, EMfields, interp_);
     }
-	diagPhase.run(timestep, vecSpecies);
+	diagPhaseSpace.run(timestep, vecSpecies);
 }
 

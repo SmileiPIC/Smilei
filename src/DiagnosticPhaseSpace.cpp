@@ -45,6 +45,20 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagPa
 				ostringstream file_name("");
 				file_name<<"PhaseSpace.h5";
 				fileId = H5Fcreate( file_name.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+                string ver(__VERSION);
+                
+                // write version
+                hid_t aid3  = H5Screate(H5S_SCALAR);
+                hid_t atype = H5Tcopy(H5T_C_S1);
+                H5Tset_size(atype, ver.size());
+                H5Tset_strpad(atype,H5T_STR_NULLTERM);
+                hid_t attr3 = H5Acreate2(fileId, "Version", atype, aid3, H5P_DEFAULT, H5P_DEFAULT);
+                
+                H5Awrite(attr3, atype, ver.c_str());
+                
+                H5Aclose(attr3);
+                H5Sclose(aid3);
+                H5Tclose(atype);
 			}
 			ostringstream groupName("");
 			groupName << "ps_" << i << "_" << diagParams->vecPhase[i].kind;
@@ -121,7 +135,8 @@ void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) 
                 //! and finally write the data (reduce data on 1 proc, write it and clear memory for future usage)
 				for (unsigned int i =0 ; i < vecDiagPhaseToRun2.size(); i++) {
 					vecDiagPhaseToRun2[i]->writeData(timestep, mapGroupId[vecDiagPhaseToRun2[i]][vecSpecies[j]->name_str]);
-				}				
+				}
+                if(fileId>0) H5Fflush(fileId, H5F_SCOPE_GLOBAL);
 			}
 			
 		}

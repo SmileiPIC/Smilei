@@ -12,9 +12,7 @@ class ElectroMagn;
 class DiagnosticPhase2D : public DiagnosticPhase {
 
 public:
-
     DiagnosticPhase2D(phaseStructure phaseStruct): DiagnosticPhase(phaseStruct) {};
-    ~DiagnosticPhase2D(){};
 
 	// specialized method to write a field 2d
 	void writeData(unsigned int timestep, hid_t gid);

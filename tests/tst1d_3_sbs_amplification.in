@@ -65,7 +65,7 @@ species
 	species_type = ion
 	initialization_type = maxwell-juettner
 	ionization_model = none
-	n_part_per_cell = 10
+	n_part_per_cell = 100
 	c_part_max = 1.0
 	mass = 1836.0
 	charge = 1.0
@@ -82,7 +82,7 @@ species
 	species_type = eon
 	initialization_type = maxwell-juettner
 	ionization_model = none
-	n_part_per_cell = 10
+	n_part_per_cell = 100
 	c_part_max = 1.0
 	mass = 1.0
 	charge = -1.0
@@ -156,21 +156,8 @@ diagnostic phase
     species = eon
 	every = 100
 	pos_min = 0
-	pos_max = 1000
-	pos_num = 100
-	
-	mom_min = -0.3
-	mom_max = 0.3
-	mom_num = 200
-end
-
-diagnostic phase
-	kind = xPx
-    species = eon
-	every = 100
-	pos_min = 0
 	pos_max = 800
-	pos_num = 100
+	pos_num = 500
 	
 	mom_min = -0.3
 	mom_max = 0.3
@@ -178,7 +165,6 @@ diagnostic phase
 end
 
 
-dump_minutes = 0.1
-# dump_step = 1000
+#dump_minutes = 0.1
+dump_step = 1000
 exit_after_dump = false
-dump_file_sequence = 3
