@@ -8,16 +8,16 @@
 using namespace std;
 
 
-void DiagnosticPhase2D::writeData(unsigned int timestep, SmileiMPI* smpi_, hid_t gid) {
+void DiagnosticPhase2D::writeData(unsigned int timestep, hid_t gid) {
 	
 	Field2D my_data_sum;
 	
 	my_data_sum.allocateDims(my_data.dims());
 	MPI_Reduce(my_data.data_,my_data_sum.data_,my_data.globalDims_,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
 	
-	if (smpi_->isMaster()) {
+	if (gid>0) {
 		ostringstream name("");
-		name << setfill('0') << setw(8) << timestep;
+		name << "t" << setfill('0') << setw(8) << timestep;
 		
 		hsize_t dims[2]={my_data.dims()[0],my_data.dims()[1]};
 		hid_t sid = H5Screate_simple (2, dims, NULL);	
@@ -26,6 +26,7 @@ void DiagnosticPhase2D::writeData(unsigned int timestep, SmileiMPI* smpi_, hid_t
 		H5Dclose (did);	
 		H5Sclose(sid);
 	}
+    
 	//! we want to clean the Field back after ending for the next time
 	for (unsigned int i=0; i<my_data.globalDims_; i++) {
 		my_data.data_[i]=0.0;

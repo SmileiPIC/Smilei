@@ -49,22 +49,22 @@ using namespace std;
 int main (int argc, char* argv[])
 {
     std::cout.setf( std::ios::fixed, std:: ios::floatfield ); // floatfield set to fixed
-
+    
     // Define 2 MPI environment :
     //  - smpiData : to broadcast input data, unknown geometry
     //  - smpi (defined later) : to compute/exchange data, specific to a geometry
     SmileiMPI *smpiData= new SmileiMPI(&argc, &argv );
-
+    
     // -------------------------
     // Simulation Initialization
     // -------------------------
-
-
+    
+    
     // Check for run flags
-
+    
     char ch;
     DEBUGEXEC(debug_level=0);
-
+    
     string dirname("");
     while ((ch = getopt(argc, argv, "d:D:")) != -1) {
         if (ch=='d') {
@@ -74,30 +74,30 @@ int main (int argc, char* argv[])
             dirname=string(optarg);
         }
     }
-
+    
     argc -= optind;
     argv += optind;
-
+    
     // Check for namelist (input file)
     if (argc<1) ERROR("No namelists given!");
     string namelist=argv[0];
-
+    
     // Send information on current simulation
     if ( smpiData->isMaster() ) startingMessage(namelist);
-
+    
     // Parse the namelist file (no check!)
     InputData input_data;
     if ( smpiData->isMaster() ) input_data.parseFile(namelist);
-
+    
     if (! dirname.empty()) {
         if (chdir(dirname.c_str())!=0) {
             ERROR("Directory " << dirname << " not found");
         }
     }
-
+    
     smpiData->bcast(input_data);
     input_data.parseStream();
-
+    
     // this will do the randomization (changing the seed for all processes)
     unsigned long seedTime=0;
     if (!input_data.extract("random_seed",seedTime)) {
@@ -105,46 +105,46 @@ int main (int argc, char* argv[])
         input_data.addVar("random_seed",seedTime);
     }
     srand(seedTime+smpiData->getRank());
-
+    
     input_data.write(getFileWithoutExt(namelist)+".parsed");
-
+    
     // Read simulation parameters
     PicParams params(input_data);
     smpiData->init(params);
     DiagParams diag_params(input_data,params);
-
+    
     if (smpiData->isMaster())
-	params.print();
-
+        params.print();
+    
     // Geometry known, MPI environment specified
     SmileiMPI* smpi = SmileiMPIFactory::create(params, smpiData);
-
+    
     SmileiIO*  sio  = SmileiIOFactory::create(params, smpi);
-
-
+    
+    
     // -------------------------------------------
     // Declaration of the main objects & operators
     // -------------------------------------------
-
-
+    
+    
     // ----------------------------------------------------------------------------
     // Initialize the electromagnetic fields and interpolation-projection operators
     // according to the simulation geometry
     // ----------------------------------------------------------------------------
     // object containing the electromagnetic fields (virtual)
     ElectroMagn* EMfields = ElectroMagnFactory::create(params, smpi);
-
+    
     // interpolation operator (virtual)
     Interpolator* Interp = InterpolatorFactory::create(params, smpi);
-
+    
     // projection operator (virtual)
     Projector* Proj = ProjectorFactory::create(params, smpi);
-
+    
 	// ----------------------------------------------------------------------------
     // Create diagnostics
     // ----------------------------------------------------------------------------
     Diagnostic diags(&params,&diag_params, smpi, Interp);
-
+    
     // ------------------------------------------------------------------------------------
     // Initialize the vecSpecies object containing all information of the different Species
     // ------------------------------------------------------------------------------------
@@ -152,7 +152,7 @@ int main (int argc, char* argv[])
     vector<Species*> vecSpecies = SpeciesFactory::createVector(params, smpi);
 	
 	smpi->barrier();
-
+    
 	unsigned int stepStart=0, stepStop=params.n_time;
 	
 	// reading from dumped file the restart values
@@ -171,7 +171,7 @@ int main (int argc, char* argv[])
 		smpi->sumRhoJ( EMfields );
 		// Init electric field (Ex/1D, + Ey/2D)
 		EMfields->solvePoisson(smpi);
-
+        
 		// run diagnostics at time-step 0
 		diags.runAllDiags(0, EMfields, vecSpecies);
 		// temporary EM fields dump in Fields.h5
@@ -196,34 +196,34 @@ int main (int argc, char* argv[])
     timer[2].init(smpi, "maxwell");
     timer[3].init(smpi, "diagnostics");
     timer[4].init(smpi, "densities");
-
+    
 	// ------------------------------------------------------------------
     //                     HERE STARTS THE PIC LOOP
     // ------------------------------------------------------------------
     if ( smpi->isMaster() ) MESSAGE(0,"Time-Loop is started: number of time-steps n_time =" << params.n_time);
 	
     for (unsigned int itime=stepStart+1 ; itime <= stepStop ; itime++) {
-
+        
         // calculate new times
         // -------------------
         time_prim += params.timestep;
         time_dual += params.timestep;
-
+        
         // send message at given time-steps
         // --------------------------------
         timer[0].update();
         
         //double timElapsed=smpiData->time_seconds();
-	if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) )
+		if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) )
             MESSAGE(1,"Time (dual)= " << time_dual << " it = " << itime  << "/" << params.n_time << " sec: " << timer[0].getTime() );
-            //MESSAGE(1,"Time (dual)= " << time_dual << " it = " << itime  << "/" << params.n_time << " sec: " << timElapsed  );
-
-
+        //MESSAGE(1,"Time (dual)= " << time_dual << " it = " << itime  << "/" << params.n_time << " sec: " << timElapsed  );
+        
+        
         // put density and currents to 0 + save former density
         // ---------------------------------------------------
         EMfields->restartRhoJ();
-
-
+        
+        
         // apply the PIC method
         // --------------------
         // for all particles of all species (see dunamic in Species.cpp)
@@ -242,42 +242,42 @@ int main (int argc, char* argv[])
             }
         }
         timer[1].update();
-
+        
 		//!\todo To simplify : sum global and per species densities
         timer[4].restart();
         smpi->sumRhoJ( EMfields );
         EMfields->computeTotalRhoJ();
         timer[4].update();
-
+        
         // solve Maxwell's equations
         timer[2].restart();
         EMfields->solveMaxwell(time_dual, smpi);
         timer[2].update();
-
+        
         // call the various diagnostics
         // ----------------------------
-
+        
 		
         // run all diagnostics
         timer[3].restart();
         diags.runAllDiags(itime, EMfields, vecSpecies);
-
+        
         // temporary EM fields dump in Fields.h5
         if  ((diag_params.fieldDump_every != 0) && (itime % diag_params.fieldDump_every == 0))
             sio->writeAllFieldsSingleFileTime( EMfields, itime );
-
+        
         // temporary particles dump (1 HDF5 file per process)
         if  ((diag_params.particleDump_every != 0) && (itime % diag_params.particleDump_every == 0))
             sio->writePlasma( vecSpecies, time_dual, smpi );
-
+        
 		if (sio->dump(EMfields, itime,  vecSpecies, smpi, params, input_data)) break;
 		
         timer[3].update();
-
+        
     }//END of the time loop
-
+    
     smpi->barrier();
-
+    
     // ------------------------------------------------------------------
     //                      HERE ENDS THE PIC LOOP
     // ------------------------------------------------------------------
@@ -288,24 +288,24 @@ int main (int argc, char* argv[])
     if ( smpi->isMaster() ) MESSAGE(0, "Time in time loop : " << timer[0].getTime() );
     if ( smpi->isMaster() )
         for (int i=1 ; i<ntimer ; i++) timer[i].print();
-
+    
     double coverage(0.);
     for (int i=1 ; i<ntimer ; i++) coverage += timer[i].getTime();
     if ( smpi->isMaster() ) MESSAGE(0, "\t" << setw(12) << "Coverage\t" << coverage/timer[0].getTime()*100. << " %" );
-
-
+    
+    
     // ------------------------------------------------------------------
     //                      Temporary validation diagnostics
     // ------------------------------------------------------------------
-
+    
     // temporary EM fields dump in Fields.h5
     if  ( (diag_params.fieldDump_every != 0) && (params.n_time % diag_params.fieldDump_every != 0) )
         sio->writeAllFieldsSingleFileTime( EMfields, params.n_time );
-
+    
     // temporary particles dump (1 HDF5 file per process)
     if  ( (diag_params.particleDump_every != 0) && (params.n_time % diag_params.particleDump_every != 0) )
         sio->writePlasma( vecSpecies, time_dual, smpi );
-
+    
     // ------------------------------
     //  Cleanup & End the simulation
     // ------------------------------
@@ -313,10 +313,10 @@ int main (int argc, char* argv[])
     delete Interp;
     delete EMfields;
     diags.closeAll();
-
+    
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
     vecSpecies.clear();
-
+    
     delete sio;
     if ( smpi->isMaster() ) {
         MESSAGE("--------------------------------------------------------------------------------");
@@ -326,7 +326,7 @@ int main (int argc, char* argv[])
     delete smpi;
     delete smpiData;
     return 0;
-
+    
 }//END MAIN
 
 void startingMessage(std::string inputfile) {

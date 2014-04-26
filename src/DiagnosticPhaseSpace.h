@@ -34,13 +34,17 @@ public:
 	
 	void close();
 private:
-	SmileiMPI *smpi_;
+    
+    //! this vector will hold all the diagnostics created
 	std::vector<DiagnosticPhase*> vecDiagPhase;
 	
+    //! this is the hdf5 file id (we need to keep it to close at the right time)
 	hid_t fileId;
 
+    //! this is always handy to know (number of particle dimension)
 	unsigned int ndim;
 	
-	std::map<std::string,hid_t> mapGroupId; 
+    //! this holds in which hdf5 groupID will the data of each species of each DiagnosticPhase are written
+    std::map<DiagnosticPhase*, std::map<std::string,hid_t> >mapGroupId; 
 };
 #endif

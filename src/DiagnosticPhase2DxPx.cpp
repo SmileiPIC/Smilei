@@ -12,23 +12,22 @@ DiagnosticPhase2DxPx::DiagnosticPhase2DxPx(phaseStructure phaseStruct) : Diagnos
 	} else {
 		ERROR("must define pos_ and mom_ stuff");
 	}
-
-	xmin = phaseStruct.pos_min[0];
-	xmax = phaseStruct.pos_max[0];
-	xnum = phaseStruct.pos_num[0];
-	pxmin = phaseStruct.mom_min[0];
-	pxmax = phaseStruct.mom_max[0];
-	pxnum = phaseStruct.mom_num[0];
+	//!\todo add more checks here (TV MC MG)
+	firstmin = phaseStruct.pos_min[0];
+	firstmax = phaseStruct.pos_max[0];
+	firstnum = phaseStruct.pos_num[0];
+	secondmin = phaseStruct.mom_min[0];
+	secondmax = phaseStruct.mom_max[0];
+	secondnum = phaseStruct.mom_num[0];
 		
 }
 
 void DiagnosticPhase2DxPx::doSomething(partStruct& my_part) {
-	if (my_part.pos[0] > xmin && my_part.pos[0] < xmax && my_part.mom[0] > pxmin && my_part.mom[0] < pxmax) {
-		int i = xnum*(my_part.pos[0]-xmin)/(xmax-xmin);
-		int j = pxnum*(my_part.mom[0]-pxmin)/(pxmax-pxmin);
+	if (my_part.pos[0] > firstmin && my_part.pos[0] < firstmax && my_part.mom[0] > secondmin && my_part.mom[0] < secondmax) {
+		//!\todo check if useful to have projector here
+		int i = firstnum*(my_part.pos[0]-firstmin)/(firstmax-firstmin);
+		int j = secondnum*(my_part.mom[0]-secondmin)/(secondmax-secondmin);
 		my_data(i,j)+=my_part.weight;		
-//	} else {
-//		DEBUG(my_part.pos[0] << " " << my_part.mom[0]);
 	}
 }
 

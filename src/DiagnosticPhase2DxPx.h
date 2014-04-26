@@ -5,6 +5,7 @@
 
 class SmileiMPI;
 
+//! class projection on the plane x-Px
 class DiagnosticPhase2DxPx : public DiagnosticPhase2D {
 
 public:
@@ -14,10 +15,5 @@ public:
 	
 	void doSomething(partStruct&);
 	
-
-private:
-	double xmin,xmax;
-	double pxmin,pxmax;
-	unsigned int xnum,pxnum;
 };
 #endif

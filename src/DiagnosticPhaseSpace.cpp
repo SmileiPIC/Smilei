@@ -18,21 +18,29 @@ DiagnosticPhaseSpace::~DiagnosticPhaseSpace() {
 }
 
 void DiagnosticPhaseSpace::close() {
-	if (fileId != 0) {		
-		for (map<string, hid_t>::iterator iter = mapGroupId.begin(); iter != mapGroupId.end(); iter++) {
-			H5Gclose(iter->second);
-		}
-		H5Fclose(fileId);
+    //! check if we're on the master (the only one that opened the file)
+	if (fileId != 0) {
+        //!close all hdf5  groups (in principle this is done also with H5Fclose below...)
+        for (std::map<DiagnosticPhase*, std::map<std::string,hid_t> >::iterator iterMap=mapGroupId.begin(); iterMap!= mapGroupId.end(); iterMap++) {
+            for (map<string, hid_t>::iterator iter = iterMap->second.begin(); iter != iterMap->second.end(); iter++) {
+                H5Gclose(iter->second);
+            }
+        }
+        //! close the hdf5 file
+        H5Fclose(fileId);
 	}
 }
 
 
 
-DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi) : smpi_(smpi), fileId(0), ndim(params->nDim_particle) {
+DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi) : fileId(0), ndim(params->nDim_particle) {
 	for (unsigned int i =0 ; i < diagParams->vecPhase.size(); i++) {
 		DiagnosticPhase *diagPhase=NULL;
 		
-		if (smpi_->isMaster()) {
+        hid_t gidParent=0;
+        
+		if (smpi->isMaster()) {
+            //!open hdf5 file
 			if (i==0) {
 				ostringstream file_name("");
 				file_name<<"PhaseSpace.h5";
@@ -40,24 +48,30 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagPa
 			}
 			ostringstream groupName("");
 			groupName << "ps_" << i << "_" << diagParams->vecPhase[i].kind;
-			hid_t gidParent = H5Gcreate(fileId, groupName.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-			
-			for (unsigned int k=0; k<diagParams->vecPhase[i].species.size(); k++) {
-				hid_t gid = H5Gcreate(gidParent, diagParams->vecPhase[i].species[k].c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-				mapGroupId[diagParams->vecPhase[i].species[k]]=gid;
-			}
-			
-			
+            gidParent = H5Gcreate(fileId, groupName.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);			
 		}
+        
+        // create DiagnosticPhase
 		if (params->geometry == "1d3v") {
 			if (diagParams->vecPhase[i].kind == "xpx") {
 				diagPhase =  new DiagnosticPhase2DxPx(diagParams->vecPhase[i]);
-			}
+            } else {
+                ERROR("kind " << diagParams->vecPhase[i].kind << " not implemented for geometry " << params->geometry);
+            }
 		} else {
 			ERROR("DiagnosticPhase not implemented for geometry " << params->geometry);
 		}
 		
 		if (diagPhase) {
+            if (smpi->isMaster()) {
+                //! create a group for each species of this diag and keep track of its ID.
+                map<string,hid_t> localmap;
+                for (unsigned int k=0; k<diagParams->vecPhase[i].species.size(); k++) {
+                    hid_t gid = H5Gcreate(gidParent, diagParams->vecPhase[i].species[k].c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+                    localmap[diagParams->vecPhase[i].species[k]]=gid;
+                }
+                mapGroupId[diagPhase]=localmap;
+            }
 			vecDiagPhase.push_back(diagPhase);	
 		}
 	}
@@ -86,10 +100,11 @@ void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) 
 			my_part.mom.resize(3);
 			
 			if (vecDiagPhaseToRun2.size()>0) {
-				
+				//! cycle over all the particles
 				for (unsigned int ibin = 0 ; ibin < vecSpecies[j]->bmin.size() ; ibin++) {
 					for (int iPart=vecSpecies[j]->bmin[ibin] ; iPart<vecSpecies[j]->bmax[ibin]; iPart++ ) {
 						for (unsigned int i =0 ; i < vecDiagPhaseToRun2.size(); i++) {
+                            //! fill the my_part structure
 							for(unsigned int k=0;k<ndim;k++) {
 								my_part.pos[k]=vecSpecies[j]->particles.position(k,iPart);
 							}
@@ -98,89 +113,17 @@ void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) 
 							}
 							my_part.weight=vecSpecies[j]->particles.weight(iPart);
 							my_part.charge=vecSpecies[j]->particles.charge(iPart);
+                            //! do something with each partcle
 							vecDiagPhaseToRun2[i]->doSomething(my_part);
 						}						
 					}
 				}
+                //! and finally write the data (reduce data on 1 proc, write it and clear memory for future usage)
 				for (unsigned int i =0 ; i < vecDiagPhaseToRun2.size(); i++) {
-					vecDiagPhaseToRun2[i]->writeData(timestep, smpi_, mapGroupId[vecSpecies[j]->name_str]);
+					vecDiagPhaseToRun2[i]->writeData(timestep, mapGroupId[vecDiagPhaseToRun2[i]][vecSpecies[j]->name_str]);
 				}				
 			}
 			
-			
-//			for (unsigned int i=0; i < vecDiagPhase.size(); i++) {
-//				DEBUG("here we have to do something " << vecDiagPhaseToRun.size());
-//			}
 		}
 	}
-	
-//	//! momentum min
-//	std::vector< std::vector<double> > momentum_min;
-//	
-//	//! momentum max
-//	std::vector< std::vector<double> > momentum_max;
-//	
-//	//! gamma min
-//	std::vector<double> lorentz_factor_min;
-//	
-//	//! gamma max
-//	std::vector<double> lorentz_factor_max;
-//
-//	//! momentum min
-//	momentum_min.resize(vecSpecies.size());
-//	momentum_max.resize(vecSpecies.size());
-//	
-//	
-//	for (unsigned int i=0; i<vecSpecies.size(); i++) {
-//		momentum_min[i].resize(3);
-//		momentum_max[i].resize(3);
-//	}
-//	
-//	lorentz_factor_min.resize(vecSpecies.size());
-//	lorentz_factor_max.resize(vecSpecies.size());
-//	
-//	for (unsigned int j=0; j < vecSpecies.size(); j++) {
-//		
-//		// initialize momentum min/max for phase space diags
-//		if (vecSpecies[j]->particles.size()>0) {
-//			for (unsigned int i=0; i<3; i++) {
-//				momentum_min[j][i] = momentum_max[j][i] = vecSpecies[j]->particles.momentum(i,0);
-//			}
-//			lorentz_factor_min[j]=lorentz_factor_max[j]=vecSpecies[j]->particles.lor_fac(0);
-//		}
-//		
-//		for (unsigned int ibin = 0 ; ibin < vecSpecies[j]->bmin.size() ; ibin++) {
-//			for (int iPart=vecSpecies[j]->bmin[ibin] ; iPart<vecSpecies[j]->bmax[ibin]; iPart++ ) {
-//				
-//				for (unsigned int i=0; i<3; i++) {
-//					if (vecSpecies[j]->particles.momentum(i,iPart) < momentum_min[j][i]) momentum_min[j][i] = vecSpecies[j]->particles.momentum(i,iPart);
-//					if (vecSpecies[j]->particles.momentum(i,iPart) > momentum_max[j][i]) momentum_max[j][i] = vecSpecies[j]->particles.momentum(i,iPart);					
-//				}
-//				if (vecSpecies[j]->particles.lor_fac(iPart) < lorentz_factor_min[j]) lorentz_factor_min[j] = vecSpecies[j]->particles.lor_fac(iPart);
-//				if (vecSpecies[j]->particles.lor_fac(iPart) > lorentz_factor_max[j]) lorentz_factor_max[j] = vecSpecies[j]->particles.lor_fac(iPart);
-//				
-//			}
-//		}
-//	}
-//	
-//	for (unsigned int j=0; j < vecSpecies.size(); j++) {
-//		for (unsigned int i=0; i<3; i++) {
-//			double tempmin=momentum_min[j][i];
-//			MPI_Allreduce(&tempmin,&momentum_min[j][i],1,MPI_DOUBLE,MPI_MIN,MPI_COMM_WORLD);
-//			double tempmax=momentum_max[j][i];
-//			MPI_Allreduce(&tempmax,&momentum_max[j][i],1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
-//		}
-//		double gammamin=lorentz_factor_min[j];
-//		MPI_Allreduce(&gammamin,&lorentz_factor_min[j],1,MPI_DOUBLE,MPI_MIN,MPI_COMM_WORLD);
-//		double gammamax=lorentz_factor_max[j];
-//		MPI_Allreduce(&gammamax,&lorentz_factor_max[j],1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
-//
-//		if (smpi_->isMaster()) {
-//			for (unsigned int k=0; k <momentum_min[j].size(); k++) {				
-//				DEBUG(timestep << " spec. " << j << " min: " << momentum_min[j][k] << " max: "<< momentum_max[j][k]);
-//			}
-//			DEBUG(timestep << " spec. " << j << " Lmin: " << lorentz_factor_min[j] << " Lmax: "<< lorentz_factor_max[j]);
-//		}
-//	}
-
 }

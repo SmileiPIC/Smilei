@@ -2,8 +2,6 @@
 
 using namespace std;
 
-#include "SmileiMPI.h"
-
 DiagnosticPhase::~DiagnosticPhase() {
 }
 

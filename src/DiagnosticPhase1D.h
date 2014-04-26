@@ -8,6 +8,7 @@ class SmileiMPI;
 class DiagParams;
 class ElectroMagn;
 
+//! this class holds all the phase projections that can be represented as 1d matrix (aka vector)
 class DiagnosticPhase1D : public DiagnosticPhase {
 
 public:
