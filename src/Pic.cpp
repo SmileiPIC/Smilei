@@ -36,6 +36,7 @@
 #include "DiagnosticProbe0D.h"
 
 #include "Timer.h"
+#include <omp.h>
 
 #include <unistd.h>
 
@@ -152,7 +153,7 @@ int main (int argc, char* argv[])
 	
 	smpi->barrier();
 
-	unsigned int stepStart=0, stepStop=params.n_time;
+	unsigned int stepStart=0, stepStop=params.n_time, nthds;
 	
 	// reading from dumped file the restart values
 	if (params.restart) {
@@ -178,6 +179,11 @@ int main (int argc, char* argv[])
 		// temporary particle dump at time 0
 		sio->writePlasma( vecSpecies, 0., smpi );
 	}
+        #pragma omp parallel shared(smpi,nthds)
+        {
+            nthds = omp_get_num_threads();	  
+        }
+        smpi->setExchListSize(nthds);
     // ------------------------------------------------------------------------
     // Initialize the simulation times time_prim at n=0 and time_dual at n=-1/2
     // ------------------------------------------------------------------------

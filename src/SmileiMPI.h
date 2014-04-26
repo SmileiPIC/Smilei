@@ -76,14 +76,11 @@ public:
         return max_local[i];
     }
 
-    inline void setExchListSize(int nthds) {
+    inline void setExchListSize(unsigned int nthds) {
 	indexes_of_particles_to_exchange_per_thd.resize(nthds);
     }
-    inline void clearExchList() {
-	for (int tid=0 ; tid < indexes_of_particles_to_exchange_per_thd.size() ; tid++) {
+        inline void clearExchList(int tid) {
 	    indexes_of_particles_to_exchange_per_thd[tid].clear();
-	}
-	
     }
     inline void addPartInExchList(int tid, int iPart) {
         indexes_of_particles_to_exchange_per_thd[tid].push_back(iPart);

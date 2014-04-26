@@ -668,15 +668,10 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     double *b_Jx,*b_Jy,*b_Jz,*b_rho;
 
     // number of particles for this Species
-    int unsigned nParticles = getNbrOfParticles();
+    unsigned int nParticles = getNbrOfParticles();
     // Reset list of particles to exchange
     int tid = omp_get_thread_num();	  
-    int nthds = omp_get_num_threads();	  
-    #pragma omp single
-    {
-        smpi->setExchListSize(nthds);
-        smpi->clearExchList();
-    }
+    smpi->clearExchList(tid);
 	
     // -------------------------------
     // calculate the particle dynamics
