@@ -34,7 +34,7 @@ public:
 	
 	void close();
 private:
-	SmileiMPI smpi_;
+	SmileiMPI *smpi_;
 	std::vector<DiagnosticPhase*> vecDiagPhase;
 	
 	hid_t fileId;

@@ -3,6 +3,8 @@
 
 #include "DiagnosticPhase2D.h"
 
+class SmileiMPI;
+
 class DiagnosticPhase2DxPx : public DiagnosticPhase2D {
 
 public:
@@ -10,7 +12,12 @@ public:
     DiagnosticPhase2DxPx(phaseStructure phaseStruct, hid_t gid);
     ~DiagnosticPhase2DxPx();
 	
-	void doSomething(partStruct);
+	void doSomething(partStruct&);
+	
 
+private:
+	double xmin,xmax;
+	double pxmin,pxmax;
+	unsigned int xnum,pxnum;
 };
 #endif

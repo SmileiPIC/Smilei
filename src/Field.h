@@ -70,7 +70,7 @@ public:
     std::vector<unsigned int> dims_;
     std::vector<unsigned int> isDual_;
 
-
+	inline std::vector<unsigned int> dims () {return dims_;}
     //! All arrays may be viewed as a 1D array
     //! Linearized diags
     unsigned int globalDims_;

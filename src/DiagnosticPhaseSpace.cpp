@@ -20,7 +20,8 @@ DiagnosticPhaseSpace::~DiagnosticPhaseSpace() {
 void DiagnosticPhaseSpace::close() {
 	if (fileId != 0) {
 		for (unsigned int i =0 ; i < vecDiagPhase.size(); i++) {
-			vecDiagPhase[i]->close();
+			vecDiagPhase[i]->close(smpi_);
+			DEBUG("here");
 		}
 		H5Fclose(fileId);
 	}
@@ -28,44 +29,33 @@ void DiagnosticPhaseSpace::close() {
 
 
 
-DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi) : smpi_(smpi), fileId(0) {
-	
-	if (diagParams->vecPhase.size()>0) {
-		ostringstream file_name("");
-		file_name<<"PhaseSpace.h5";
-		hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
-		H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, MPI_INFO_NULL);
-		fileId = H5Fcreate( file_name.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
-		H5Pclose(plist_id);
-		
-	}
-	
+DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi) : smpi_(smpi), fileId(0), ndim(params->nDim_particle) {
 	for (unsigned int i =0 ; i < diagParams->vecPhase.size(); i++) {
 		DiagnosticPhase *diagPhase=NULL;
 		
-		ostringstream groupName("");
-		groupName << i << "-" << diagParams->vecPhase[i].kind;
-		hid_t gid = H5Gcreate(fileId, groupName.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-		
+		hid_t gid=0;
+		if (smpi_->isMaster()) {
+			if (i==0) {
+				ostringstream file_name("");
+				file_name<<"PhaseSpace.h5";
+				fileId = H5Fcreate( file_name.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+			}
+			ostringstream groupName("");
+			groupName << "ps_" << i << "_" << diagParams->vecPhase[i].kind;
+			gid = H5Gcreate(fileId, groupName.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		}
 		if (params->geometry == "1d3v") {
 			if (diagParams->vecPhase[i].kind == "xpx") {
 				diagPhase =  new DiagnosticPhase2DxPx(diagParams->vecPhase[i],gid);
-				
-				DEBUG(diagParams->vecPhase[i].pos_num.size() << " " << diagParams->vecPhase[i].mom_num.size())
 			}
 		} else {
-			ERROR("DiagnosticPhase not implemented " << params->geometry);
+			ERROR("DiagnosticPhase not implemented for geometry " << params->geometry);
 		}
 		
 		if (diagPhase) {
 			vecDiagPhase.push_back(diagPhase);	
-		} else {
-			H5Gclose(gid);
 		}
 	}
-	// number of spatial dimensions for the particles
-    ndim = params->nDim_particle;
-	DEBUG("here>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 }
 
 void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) {
@@ -84,7 +74,7 @@ void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) 
 					vecDiagPhaseToRun2.push_back(vecDiagPhaseToRun[i]);
 				}
 			}
-			
+
 			partStruct my_part;
 			my_part.pos.resize(ndim);
 			my_part.mom.resize(3);
@@ -100,12 +90,16 @@ void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) 
 							for(unsigned int k=0;k<3;k++) {
 								my_part.mom[k]=vecSpecies[j]->particles.momentum(k,iPart);
 							}
+							my_part.weight=vecSpecies[j]->particles.weight(iPart);
+							my_part.charge=vecSpecies[j]->particles.charge(iPart);
 							vecDiagPhaseToRun2[i]->doSomething(my_part);
 						}						
 					}
 				}
-				
-				DEBUG("here we have to do something " << vecDiagPhaseToRun2.size());
+				for (unsigned int i =0 ; i < vecDiagPhaseToRun2.size(); i++) {
+					DEBUG(vecSpecies[j]->name_str << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+					vecDiagPhaseToRun2[i]->writeData(timestep, vecSpecies[j]->name_str, smpi_);
+				}				
 			}
 			
 			

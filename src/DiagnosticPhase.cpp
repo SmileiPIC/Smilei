@@ -2,6 +2,8 @@
 
 using namespace std;
 
+#include "SmileiMPI.h"
+
 DiagnosticPhase::~DiagnosticPhase() {
 }
 
@@ -13,7 +15,10 @@ my_species(phaseStruct.species)
 	if (every==0) ERROR("every cannot be zero");
 }
 
-void DiagnosticPhase::close() {
-	H5Gclose(groupID);
+void DiagnosticPhase::close(SmileiMPI* smpi) {
+	if (smpi->isMaster()) {
+		DEBUG("here");
+		H5Gclose(groupID);
+	}
 }
 

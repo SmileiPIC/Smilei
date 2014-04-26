@@ -154,14 +154,14 @@ end
 diagnostic phase
 	kind = xPx
     species = ion eon
-	every = 10
+	every = 100
 	pos_min = 0
-	pos_max = 1
-	pos_num = 10
+	pos_max = 1000
+	pos_num = 100
 	
-	mom_min = 0
-	mom_max = 1
-	mom_num = 10
+	mom_min = -0.3
+	mom_max = 0.3
+	mom_num = 500
 end
 
 

@@ -24,11 +24,14 @@ public:
     DiagnosticPhase(phaseStructure, hid_t gid);
     ~DiagnosticPhase();
 	
-	void close();
+	void close(SmileiMPI* smpi);
 	unsigned int every;
 	hid_t groupID;
 	std::vector<std::string> my_species;
 	
-	virtual void doSomething(partStruct& my_part){};
+	virtual void doSomething(partStruct& my_part)=0;
+	
+	virtual void writeData(unsigned int timestep, std::string species_name, SmileiMPI* smpi)=0;
+
 };
 #endif
