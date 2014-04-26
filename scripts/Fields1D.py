@@ -36,13 +36,41 @@ what=parser.parse_args()
 #-----------------------------------------------
 if(what.args=='none'):
     sys.exit('you must specify name and directory where the imput SMILEI file is located')
+else:
+    input=str(what.args)[2:-2]
 if(what.dir=='Fields.h5'):
     dir=str(what.dir)
 else:
     dir=str(what.dir)[2:-2]
+print dir
 if(what.dir_plot=='plot_fields'):
     dir_plot=str(what.dir_plot)
 else:
     dir_plot=str(what.dir_plot)[2:-2]
 #-----------------------------------------------
-# 
+# creation of the directory
+#-----------------------------------------------
+if(my_rank==0):
+	if os.path.exists(dir_plot)==False:
+		os.makedirs(dir_plot)
+	else:
+		shutil.rmtree(dir_plot)
+		os.makedirs(dir_plot)
+#--------------------------------------------
+#read the input file
+#---------------------------------------
+with open(input) as file:
+    input_data=file.readlines()
+
+for line in input_data:
+    words=line.split()
+    if(len(words)!=0):
+        if(words[0]!='#'):
+            if(words[0]=='res_time'):
+                res_time=float(words[2])
+            elif(words[0]=='sim_time'):
+                sim_time=float(words[2])
+            elif(words[0]=='res_space'):
+                res_space=float(words[2])
+            elif(words[0]=='sim_length'):
+                sim_length=float(words[2])
