@@ -6,10 +6,13 @@
 class SmileiMPI;
 
 //! class projection on the plane x-Px
-class DiagnosticPhase2DxPx : public DiagnosticPhase2D {
-
+class DiagnosticPhase2DxP : public DiagnosticPhase2D {
+    
 public:
-    DiagnosticPhase2DxPx(phaseStructure phaseStruct);	
+    DiagnosticPhase2DxP(phaseStructure phaseStruct, const unsigned int direction);	
 	void doSomething(partStruct&);
+private:
+    const unsigned int my_dir;
 };
+
 #endif

@@ -1,9 +1,9 @@
-#include "DiagnosticPhase2DxPx.h"
+#include "DiagnosticPhase2DxP.h"
 
 using namespace std;
 
-DiagnosticPhase2DxPx::DiagnosticPhase2DxPx(phaseStructure phaseStruct) : DiagnosticPhase2D(phaseStruct) {
-
+DiagnosticPhase2DxP::DiagnosticPhase2DxP(phaseStructure phaseStruct, unsigned int direction) : DiagnosticPhase2D(phaseStruct), my_dir(direction) {
+    
 	if (phaseStruct.pos_num.size() >0 && phaseStruct.mom_num.size() >0) {
 		my_data.allocateDims(phaseStruct.pos_num[0],phaseStruct.mom_num[0]);
 	} else {
@@ -16,15 +16,14 @@ DiagnosticPhase2DxPx::DiagnosticPhase2DxPx(phaseStructure phaseStruct) : Diagnos
 	secondmin = phaseStruct.mom_min[0];
 	secondmax = phaseStruct.mom_max[0];
 	secondnum = phaseStruct.mom_num[0];
-		
+    
 }
 
-void DiagnosticPhase2DxPx::doSomething(partStruct& my_part) {
-	if (my_part.pos[0] > firstmin && my_part.pos[0] < firstmax && my_part.mom[0] > secondmin && my_part.mom[0] < secondmax) {
+void DiagnosticPhase2DxP::doSomething(partStruct& my_part) {
+	if (my_part.pos[0] > firstmin && my_part.pos[0] < firstmax && my_part.mom[my_dir] > secondmin && my_part.mom[my_dir] < secondmax) {
 		//!\todo check if useful to have projector here
 		int i = firstnum*(my_part.pos[0]-firstmin)/(firstmax-firstmin);
-		int j = secondnum*(my_part.mom[0]-secondmin)/(secondmax-secondmin);
+		int j = secondnum*(my_part.mom[my_dir]-secondmin)/(secondmax-secondmin);
 		my_data(i,j)+=my_part.weight;		
 	}
 }
-

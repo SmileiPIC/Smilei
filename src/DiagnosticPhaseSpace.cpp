@@ -10,7 +10,7 @@
 #include "ElectroMagn.h"
 #include "Field1D.h"
 #include "Field.h"
-#include "DiagnosticPhase2DxPx.h"
+#include "DiagnosticPhase2DxP.h"
 
 using namespace std;
 
@@ -68,7 +68,11 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagPa
         // create DiagnosticPhase
 		if (params->geometry == "1d3v") {
 			if (diagParams->vecPhase[i].kind == "xpx") {
-				diagPhase =  new DiagnosticPhase2DxPx(diagParams->vecPhase[i]);
+				diagPhase =  new DiagnosticPhase2DxP(diagParams->vecPhase[i],0);
+            } else if (diagParams->vecPhase[i].kind == "xpy") {
+				diagPhase =  new DiagnosticPhase2DxP(diagParams->vecPhase[i],1);
+            } else if (diagParams->vecPhase[i].kind == "xpz") {
+				diagPhase =  new DiagnosticPhase2DxP(diagParams->vecPhase[i],2);
             } else {
                 ERROR("kind " << diagParams->vecPhase[i].kind << " not implemented for geometry " << params->geometry);
             }
@@ -93,31 +97,31 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagPa
 
 void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) {
 	//! check which diagnosticPhase to run at this timestep
-	vector<DiagnosticPhase*> vecDiagPhaseToRun;	
+	vector<DiagnosticPhase*> vecDiagPhaseActiveTimestep;	
 	for (unsigned int i =0 ; i < vecDiagPhase.size(); i++) {
-		if (timestep%vecDiagPhase[i]->every==0) vecDiagPhaseToRun.push_back(vecDiagPhase[i]);
+		if (timestep%vecDiagPhase[i]->every==0) vecDiagPhaseActiveTimestep.push_back(vecDiagPhase[i]);
 	}
 	
-	if (vecDiagPhaseToRun.size()>0) {
+	if (vecDiagPhaseActiveTimestep.size()>0) {
 		for (unsigned int j=0; j < vecSpecies.size(); j++) {
 			
 			//! check which diagnosticPhase to run for the species 
-			vector<DiagnosticPhase*> vecDiagPhaseToRun2;	
-			for (unsigned int i =0 ; i < vecDiagPhaseToRun.size(); i++) {
-				if(find(vecDiagPhaseToRun[i]->my_species.begin(), vecDiagPhaseToRun[i]->my_species.end(), vecSpecies[j]->name_str) != vecDiagPhaseToRun[i]->my_species.end()) { 
-					vecDiagPhaseToRun2.push_back(vecDiagPhaseToRun[i]);
+			vector<DiagnosticPhase*> vecDiagPhaseToRun;
+			for (unsigned int i =0 ; i < vecDiagPhaseActiveTimestep.size(); i++) {
+				if(find(vecDiagPhaseActiveTimestep[i]->my_species.begin(), vecDiagPhaseActiveTimestep[i]->my_species.end(), vecSpecies[j]->name_str) != vecDiagPhaseActiveTimestep[i]->my_species.end()) { 
+					vecDiagPhaseToRun.push_back(vecDiagPhaseActiveTimestep[i]);
 				}
 			}
 			
-			partStruct my_part;
-			my_part.pos.resize(ndim);
-			my_part.mom.resize(3);
-			
-			if (vecDiagPhaseToRun2.size()>0) {
+			if (vecDiagPhaseToRun.size()>0) {
+                partStruct my_part;
+                my_part.pos.resize(ndim);
+                my_part.mom.resize(3);
+                
 				//! cycle over all the particles
 				for (unsigned int ibin = 0 ; ibin < vecSpecies[j]->bmin.size() ; ibin++) {
 					for (int iPart=vecSpecies[j]->bmin[ibin] ; iPart<vecSpecies[j]->bmax[ibin]; iPart++ ) {
-						for (unsigned int i =0 ; i < vecDiagPhaseToRun2.size(); i++) {
+						for (unsigned int i =0 ; i < vecDiagPhaseToRun.size(); i++) {
                             //! fill the my_part structure
 							for(unsigned int k=0;k<ndim;k++) {
 								my_part.pos[k]=vecSpecies[j]->particles.position(k,iPart);
@@ -128,13 +132,13 @@ void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) 
 							my_part.weight=vecSpecies[j]->particles.weight(iPart);
 							my_part.charge=vecSpecies[j]->particles.charge(iPart);
                             //! do something with each partcle
-							vecDiagPhaseToRun2[i]->doSomething(my_part);
+							vecDiagPhaseToRun[i]->doSomething(my_part);
 						}						
 					}
 				}
                 //! and finally write the data (reduce data on 1 proc, write it and clear memory for future usage)
-				for (unsigned int i =0 ; i < vecDiagPhaseToRun2.size(); i++) {
-					vecDiagPhaseToRun2[i]->writeData(timestep, mapGroupId[vecDiagPhaseToRun2[i]][vecSpecies[j]->name_str]);
+				for (unsigned int i =0 ; i < vecDiagPhaseToRun.size(); i++) {
+					vecDiagPhaseToRun[i]->writeData(timestep, mapGroupId[vecDiagPhaseToRun[i]][vecSpecies[j]->name_str]);
 				}
                 if(fileId>0) H5Fflush(fileId, H5F_SCOPE_GLOBAL);
 			}
