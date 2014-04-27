@@ -152,33 +152,7 @@ diagnostic probe0d
 end
 
 diagnostic phase
-	kind = xPx
-    species = eon
-	every = 100
-	pos_min = 0
-	pos_max = 120
-	pos_num = 2000
-	
-	mom_min = -0.3
-	mom_max = 0.3
-	mom_num = 200
-end
-
-diagnostic phase
-	kind = xPy
-    species = eon
-	every = 100
-	pos_min = 0
-	pos_max = 120
-	pos_num = 2000
-	
-	mom_min = -0.3
-	mom_max = 0.3
-	mom_num = 200
-end
-
-diagnostic phase
-	kind = xPz
+	kind = xPx xPy xPz
     species = eon
 	every = 100
 	pos_min = 0

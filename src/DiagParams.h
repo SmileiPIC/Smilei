@@ -21,8 +21,8 @@
 
 //! this structure holds all the possible paraeters for phase diagnostics. Then every DiagnosticPhaseXXXXX will pick the ones that fit
 struct phaseStructure {
-	//!string defining the kind oh phase
-	std::string kind;
+	//!string defining the kind oh phase projections
+    std::vector<std::string> kind;
 
     //! phase output every (every phase diagnostic must have this)
     unsigned int every;
