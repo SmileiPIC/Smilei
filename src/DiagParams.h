@@ -19,23 +19,37 @@
 //! DiagParams class: holds all the properties of the simulation that are read from the input file
 // ---------------------------------------------------------------------------------------------------------------------
 
+//! this structure holds all the possible paraeters for phase diagnostics. Then every DiagnosticPhaseXXXXX will pick the ones that fit
 struct phaseStructure {
 	//!string defining the kind oh phase
 	std::string kind;
 
-    //! phase 1D output every probe_every (namelist group "diagnostic phase1d" key "every")
+    //! phase output every (every phase diagnostic must have this)
     unsigned int every;
 	
 	//! vector of pointer to species on which the phase diag will be applied (if omitted, it will be for all)
 	std::vector<std::string> species;
 	
+    //! minimum position
 	std::vector<double> pos_min;
+    //! max position
 	std::vector<double> pos_max;
+    //! number of positions
 	std::vector <unsigned int> pos_num;
 
+    //! minimum momentum
 	std::vector<double> mom_min;
+    //! max momentum
 	std::vector<double> mom_max;
+    //! number of momenta
 	std::vector <unsigned int> mom_num;
+	
+    //! minimum Lorentz factor
+	std::vector<double> lor_min;
+    //! max Lorentz factor
+	std::vector<double> lor_max;
+    //! number of Lorentz factors
+	std::vector <unsigned int> lor_num;
 	
 };
 

@@ -11,6 +11,7 @@
 #include "Field1D.h"
 #include "Field.h"
 #include "DiagnosticPhase2DPosMom.h"
+#include "DiagnosticPhase2DPosLor.h"
 
 using namespace std;
 
@@ -73,6 +74,8 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagPa
 				diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],0,1);
             } else if (diagParams->vecPhase[i].kind == "xpz") {
 				diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],0,2);
+            } else if (diagParams->vecPhase[i].kind == "xlor") {
+				diagPhase =  new DiagnosticPhase2DPosLor(diagParams->vecPhase[i],0);
             } else {
                 ERROR("kind " << diagParams->vecPhase[i].kind << " not implemented for geometry " << params->geometry);
             }
@@ -89,6 +92,10 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagPa
 				diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],1,1);
             } else if (diagParams->vecPhase[i].kind == "ypz") {
 				diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],1,2);
+            } else if (diagParams->vecPhase[i].kind == "xlor") {
+				diagPhase =  new DiagnosticPhase2DPosLor(diagParams->vecPhase[i],0);
+            } else if (diagParams->vecPhase[i].kind == "ylor") {
+				diagPhase =  new DiagnosticPhase2DPosLor(diagParams->vecPhase[i],1);
             } else {
                 ERROR("kind " << diagParams->vecPhase[i].kind << " not implemented for geometry " << params->geometry);
             }

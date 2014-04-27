@@ -156,8 +156,8 @@ diagnostic phase
     species = eon
 	every = 100
 	pos_min = 0
-	pos_max = 754
-	pos_num = 1000
+	pos_max = 120
+	pos_num = 2000
 	
 	mom_min = -0.3
 	mom_max = 0.3
@@ -169,8 +169,8 @@ diagnostic phase
     species = eon
 	every = 100
 	pos_min = 0
-	pos_max = 754
-	pos_num = 1000
+	pos_max = 120
+	pos_num = 2000
 	
 	mom_min = -0.3
 	mom_max = 0.3
@@ -182,12 +182,25 @@ diagnostic phase
     species = eon
 	every = 100
 	pos_min = 0
-	pos_max = 754
-	pos_num = 1000
+	pos_max = 120
+	pos_num = 2000
 	
 	mom_min = -0.3
 	mom_max = 0.3
 	mom_num = 200
+end
+
+diagnostic phase
+	kind = xLor
+    species = eon
+	every = 100
+	pos_min = 0
+	pos_max = 120
+	pos_num = 2000
+	
+	lor_min = 0.95
+	lor_max = 1
+	lor_num = 200
 end
 
 
