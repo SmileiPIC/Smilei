@@ -10,7 +10,7 @@
 #include "ElectroMagn.h"
 #include "Field1D.h"
 #include "Field.h"
-#include "DiagnosticPhase2DxP.h"
+#include "DiagnosticPhase2DPosMom.h"
 
 using namespace std;
 
@@ -68,15 +68,31 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagPa
         // create DiagnosticPhase
 		if (params->geometry == "1d3v") {
 			if (diagParams->vecPhase[i].kind == "xpx") {
-				diagPhase =  new DiagnosticPhase2DxP(diagParams->vecPhase[i],0);
+				diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],0,0);
             } else if (diagParams->vecPhase[i].kind == "xpy") {
-				diagPhase =  new DiagnosticPhase2DxP(diagParams->vecPhase[i],1);
+				diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],0,1);
             } else if (diagParams->vecPhase[i].kind == "xpz") {
-				diagPhase =  new DiagnosticPhase2DxP(diagParams->vecPhase[i],2);
+				diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],0,2);
             } else {
                 ERROR("kind " << diagParams->vecPhase[i].kind << " not implemented for geometry " << params->geometry);
             }
-		} else {
+		} else if (params->geometry == "2d3v") {
+			if (diagParams->vecPhase[i].kind == "xpx") {
+				diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],0,0);
+            } else if (diagParams->vecPhase[i].kind == "xpy") {
+				diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],0,1);
+            } else if (diagParams->vecPhase[i].kind == "xpz") {
+				diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],0,2);
+            } else if (diagParams->vecPhase[i].kind == "ypx") {
+				diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],1,0);
+            } else if (diagParams->vecPhase[i].kind == "ypy") {
+				diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],1,1);
+            } else if (diagParams->vecPhase[i].kind == "ypz") {
+				diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],1,2);
+            } else {
+                ERROR("kind " << diagParams->vecPhase[i].kind << " not implemented for geometry " << params->geometry);
+            }
+        } else {
 			ERROR("DiagnosticPhase not implemented for geometry " << params->geometry);
 		}
 		
