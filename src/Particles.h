@@ -146,7 +146,6 @@ public:
 
     //! Method used to get the Particle Lorentz factor
     inline double lor_fac(int ipart) {
-        //! \todo check this: shouldnt it be sqrt(1-pow.... ??
         return sqrt(1+pow(momentum(0,ipart),2)+pow(momentum(1,ipart),2)+pow(momentum(2,ipart),2));
     }
 
