@@ -19,7 +19,7 @@ interpolation_order = 2
 # sim_time: duration of the simulation in units of the normalization period 
 #
 res_time = 10
-sim_time = 1000.0
+sim_time = 100.0
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
@@ -152,9 +152,14 @@ diagnostic probe0d
 end
 
 diagnostic phase
+# kind of projection: 1D) xPx xPy xPz xLor PxPy PxPz PyPz
+# kind of projection: 2D) xPx xPy xPz xLor yPx yPy yPz yLor PxPy PxPz PyPz
 	kind = xPx xPy xPz xLor
+
     species = eon
+
 	every = 100
+
 	pos_min = 0
 	pos_max = 120
 	pos_num = 2000
@@ -166,6 +171,17 @@ diagnostic phase
 	lor_min = 0.95
 	lor_max = 1
 	lor_num = 200
+end
+
+diagnostic phase
+	kind = PxPy PxPz PyPz
+    species = eon
+	every = 100
+
+	mom_min = -0.3 -0.3
+	mom_max = 0.3 0.3
+	mom_num = 200 200
+
 end
 
 

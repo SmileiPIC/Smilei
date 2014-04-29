@@ -36,7 +36,10 @@ public:
 	//! this will update internal Field with the particle
 	virtual void doSomething(partStruct& my_part)=0;
 	
-	//! this will write the internal Field to the file
+	//! this will white the diagnostic header to the hdf5 file
+	virtual void writeAttributes(hid_t gid)=0;
+	
+    //! this will write the internal Field to the file
 	virtual void writeData(unsigned int timestep, hid_t gid)=0;
 
 };

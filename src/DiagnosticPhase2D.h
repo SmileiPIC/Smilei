@@ -14,9 +14,12 @@ class DiagnosticPhase2D : public DiagnosticPhase {
 public:
     DiagnosticPhase2D(phaseStructure phaseStruct);
 
-	// specialized method to write a field 2d
+	//! specialized method to write a field 2d
 	void writeData(unsigned int timestep, hid_t gid);
 	
+    //! write attributes for HDF5
+    void writeAttributes(hid_t gid);
+
 	//! by now this is the easiest way 2d classes holds field2d and they know how to write it
 	Field2D my_data;
 	

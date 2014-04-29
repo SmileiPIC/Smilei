@@ -12,6 +12,7 @@
 #include "Field.h"
 #include "DiagnosticPhase2DPosMom.h"
 #include "DiagnosticPhase2DPosLor.h"
+#include "DiagnosticPhase2DMomMom.h"
 
 using namespace std;
 
@@ -69,7 +70,7 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagPa
             
             if (smpi->isMaster()) {
                 ostringstream groupName("");
-                groupName << "ps_" << ii << "_" << diagParams->vecPhase[i].kind[ii];
+                groupName << "ps_" << diagParams->vecPhase[i].kind[ii];
                 gidParent = H5Gcreate(gidParentParent, groupName.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);			
             }
             
@@ -83,6 +84,12 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagPa
                     diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],0,2);
                 } else if (diagParams->vecPhase[i].kind[ii] == "xlor") {
                     diagPhase =  new DiagnosticPhase2DPosLor(diagParams->vecPhase[i],0);
+                } else if (diagParams->vecPhase[i].kind[ii] == "pxpy") {
+                    diagPhase =  new DiagnosticPhase2DMomMom(diagParams->vecPhase[i],0,1);
+                } else if (diagParams->vecPhase[i].kind[ii] == "pxpz") {
+                    diagPhase =  new DiagnosticPhase2DMomMom(diagParams->vecPhase[i],0,2);
+                } else if (diagParams->vecPhase[i].kind[ii] == "pypz") {
+                    diagPhase =  new DiagnosticPhase2DMomMom(diagParams->vecPhase[i],1,2);
                 } else {
                     ERROR("kind " << diagParams->vecPhase[i].kind[ii] << " not implemented for geometry " << params->geometry);
                 }
@@ -99,6 +106,12 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagPa
                     diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],1,1);
                 } else if (diagParams->vecPhase[i].kind[ii] == "ypz") {
                     diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],1,2);
+                } else if (diagParams->vecPhase[i].kind[ii] == "pxpy") {
+                    diagPhase =  new DiagnosticPhase2DMomMom(diagParams->vecPhase[i],0,1);
+                } else if (diagParams->vecPhase[i].kind[ii] == "pxpz") {
+                    diagPhase =  new DiagnosticPhase2DMomMom(diagParams->vecPhase[i],0,2);
+                } else if (diagParams->vecPhase[i].kind[ii] == "pypz") {
+                    diagPhase =  new DiagnosticPhase2DMomMom(diagParams->vecPhase[i],1,2);                    
                 } else if (diagParams->vecPhase[i].kind[ii] == "xlor") {
                     diagPhase =  new DiagnosticPhase2DPosLor(diagParams->vecPhase[i],0);
                 } else if (diagParams->vecPhase[i].kind[ii] == "ylor") {
@@ -117,6 +130,7 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagPa
                     for (unsigned int k=0; k<diagParams->vecPhase[i].species.size(); k++) {
                         hid_t gid = H5Gcreate(gidParent, diagParams->vecPhase[i].species[k].c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
                         localmap[diagParams->vecPhase[i].species[k]]=gid;
+                        diagPhase->writeAttributes(gid);
                     }
                     mapGroupId[diagPhase]=localmap;
                 }
