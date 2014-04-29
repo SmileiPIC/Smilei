@@ -119,6 +119,40 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagPa
                 } else {
                     ERROR("kind " << diagParams->vecPhase[i].kind[ii] << " not implemented for geometry " << params->geometry);
                 }
+            } else if (params->geometry == "3d3v") {
+                if (diagParams->vecPhase[i].kind[ii] == "xpx") {
+                    diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],0,0);
+                } else if (diagParams->vecPhase[i].kind[ii] == "xpy") {
+                    diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],0,1);
+                } else if (diagParams->vecPhase[i].kind[ii] == "xpz") {
+                    diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],0,2);
+                } else if (diagParams->vecPhase[i].kind[ii] == "ypx") {
+                    diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],1,0);
+                } else if (diagParams->vecPhase[i].kind[ii] == "ypy") {
+                    diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],1,1);
+                } else if (diagParams->vecPhase[i].kind[ii] == "ypz") {
+                    diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],1,2);
+                } else if (diagParams->vecPhase[i].kind[ii] == "zpx") {
+                    diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],2,0);
+                } else if (diagParams->vecPhase[i].kind[ii] == "zpy") {
+                    diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],2,1);
+                } else if (diagParams->vecPhase[i].kind[ii] == "zpz") {
+                    diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],2,2);
+                } else if (diagParams->vecPhase[i].kind[ii] == "pxpy") {
+                    diagPhase =  new DiagnosticPhase2DMomMom(diagParams->vecPhase[i],0,1);
+                } else if (diagParams->vecPhase[i].kind[ii] == "pxpz") {
+                    diagPhase =  new DiagnosticPhase2DMomMom(diagParams->vecPhase[i],0,2);
+                } else if (diagParams->vecPhase[i].kind[ii] == "pypz") {
+                    diagPhase =  new DiagnosticPhase2DMomMom(diagParams->vecPhase[i],1,2);                    
+                } else if (diagParams->vecPhase[i].kind[ii] == "xlor") {
+                    diagPhase =  new DiagnosticPhase2DPosLor(diagParams->vecPhase[i],0);
+                } else if (diagParams->vecPhase[i].kind[ii] == "ylor") {
+                    diagPhase =  new DiagnosticPhase2DPosLor(diagParams->vecPhase[i],1);
+                } else if (diagParams->vecPhase[i].kind[ii] == "zlor") {
+                    diagPhase =  new DiagnosticPhase2DPosLor(diagParams->vecPhase[i],2);
+                } else {
+                    ERROR("kind " << diagParams->vecPhase[i].kind[ii] << " not implemented for geometry " << params->geometry);
+                }                
             } else {
                 ERROR("DiagnosticPhase not implemented for geometry " << params->geometry);
             }

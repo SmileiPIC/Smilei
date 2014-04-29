@@ -21,9 +21,9 @@ class ElectroMagn;
 class DiagnosticScalar {
 
 public:
-    // creator (called from Diagnostic)
+    //! creator (called from Diagnostic)
     DiagnosticScalar(PicParams* params, SmileiMPI* smpi);
-    //destructor
+    //! destructor
     ~DiagnosticScalar();
 
     //! calls the compute_proc_gather, compute and write

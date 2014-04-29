@@ -12,6 +12,7 @@ class ElectroMagn;
 class DiagnosticPhase2D : public DiagnosticPhase {
 
 public:
+    //! creator
     DiagnosticPhase2D(phaseStructure phaseStruct);
 
 	//! specialized method to write a field 2d
@@ -24,12 +25,18 @@ public:
 	Field2D my_data;
 	
 protected:
-	//! first component of the phasespace min and max
-	double firstmin,firstmax;
-	//! second component of the phasespace min and max
-	double secondmin,secondmax;
-	//! number of bins for the first and second component of the 2d phasespace
-	unsigned int firstnum,secondnum;
+	//! first component of the phasespace min
+	double firstmin;
+	//! first component of the phasespace max
+    double firstmax;
+	//! number of bins for the first component of the 2d phasespace
+	unsigned int firstnum;
+	//! second component of the phasespace min
+	double secondmin;
+	//! second component of the phasespace max
+    double secondmax;
+	//! number of bins for the second component of the 2d phasespace
+	unsigned int secondnum;
 	
 };
 #endif

@@ -15,10 +15,6 @@
 #include "InputData.h"
 #include "PicParams.h"
 
-// ---------------------------------------------------------------------------------------------------------------------
-//! DiagParams class: holds all the properties of the simulation that are read from the input file
-// ---------------------------------------------------------------------------------------------------------------------
-
 //! this structure holds all the possible paraeters for phase diagnostics. Then every DiagnosticPhaseXXXXX will pick the ones that fit
 struct phaseStructure {
 	//!string defining the kind oh phase projections
@@ -53,6 +49,10 @@ struct phaseStructure {
 	
 };
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! DiagParams class: holds all the properties of the simulation that are read from the input file
+// ---------------------------------------------------------------------------------------------------------------------
 class DiagParams {
 
 public:
@@ -75,14 +75,23 @@ public:
     //! scalar output every probe_every (namelist group "diagnostic probe0d" key "every")
     unsigned int probe0d_every;
 		
+    //! rearranged positions for the probes 0d
+    std::vector<std::vector<double> > ps_0d_coord;
+
+    
 	//! number of 1D probes
     unsigned int n_probe1d;
-
-    std::vector<std::vector<double> > ps_coord;
+    
+    //! positions for every probe1 1d
     std::vector<std::vector<std::vector<double> > > ps_1d_coord;
-    std::vector<unsigned int> ps_1d_every;
+    
+    //! "every" for every probe1D
+    std::vector<unsigned int> probe1d_every;
+    
+    //! "resolution" for every probe1D
     std::vector<unsigned int> ps_1d_res;
 
+    
     //! every for the standard pic timeloop output
     unsigned int print_every;
 	

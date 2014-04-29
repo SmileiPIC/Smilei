@@ -118,6 +118,7 @@ public:
 
     }
 
+    //! specialized method to extract a vector of strings
 	bool extract(std::string data, std::vector<std::string>&val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0) {
         data=cleanString(data);
         group=cleanString(group);
@@ -157,6 +158,7 @@ public:
     //! string containing the whole clean namelist
     std::string namelist;
 
+    //! to add a varible to a group
     template <class T> void addVar(std::string nameVar, T &valVar,std::string nameGroup="") {
         std::vector< std::pair <std::string,std::string> > myvec;
         std::ostringstream s;

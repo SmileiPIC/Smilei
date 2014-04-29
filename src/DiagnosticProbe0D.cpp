@@ -21,7 +21,8 @@ void DiagnosticProbe0D::close() {
 }
 
 DiagnosticProbe0D::DiagnosticProbe0D(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi) :
-    smpi_(smpi)
+    smpi_(smpi),
+    probeSize(7)
 {
     // Management of global IO file
     // All probe in a single file, a dataset per probe
@@ -48,10 +49,6 @@ DiagnosticProbe0D::DiagnosticProbe0D(PicParams* params, DiagParams* diagParams, 
     H5Sclose(aid3);
     H5Tclose(atype);
 
-
-    // 7 = timestep + Exyz + Bxyz
-    probeSize = 7;
-
     hsize_t dims[2] = {0, probeSize};
     hsize_t max_dims[2] = {H5S_UNLIMITED, probeSize};
     hid_t file_space = H5Screate_simple(2, dims, max_dims);
@@ -61,27 +58,27 @@ DiagnosticProbe0D::DiagnosticProbe0D(PicParams* params, DiagParams* diagParams, 
     hsize_t chunk_dims[2] = {1, probeSize};
     H5Pset_chunk(plist, 2, chunk_dims);
 
-    hsize_t dimsPos = diagParams->ps_coord.size();
+    hsize_t dimsPos = diagParams->ps_0d_coord.size();
     hid_t dataspace_id = H5Screate_simple(1, &dimsPos, NULL);
 
-    probeParticles.initialize(diagParams->ps_coord[0].size(), diagParams->ps_coord.size());
-    double* tmp = new double[diagParams->ps_coord.size()];
-    for(unsigned int count=0; count!=diagParams->ps_coord[0].size(); ++count) {
+    probeParticles.initialize(diagParams->ps_0d_coord[0].size(), diagParams->ps_0d_coord.size());
+    double* tmp = new double[diagParams->ps_0d_coord.size()];
+    for(unsigned int count=0; count!=diagParams->ps_0d_coord[0].size(); ++count) {
         int found=smpi_->getRank();
-        for(unsigned int iDim=0; iDim!=diagParams->ps_coord.size(); ++iDim) {
-            if(smpi_->getDomainLocalMin(iDim)>diagParams->ps_coord[iDim][count] || smpi_->getDomainLocalMax(iDim)<=diagParams->ps_coord[iDim][count]) {
+        for(unsigned int iDim=0; iDim!=diagParams->ps_0d_coord.size(); ++iDim) {
+            if(smpi_->getDomainLocalMin(iDim)>diagParams->ps_0d_coord[iDim][count] || smpi_->getDomainLocalMax(iDim)<=diagParams->ps_0d_coord[iDim][count]) {
                 found=-1;
             }
         }
         probeId.push_back(found);
 
-        for(unsigned int iDim=0; iDim!=diagParams->ps_coord.size(); ++iDim) {
-            probeParticles.position(iDim,count)=diagParams->ps_coord[iDim][count];
+        for(unsigned int iDim=0; iDim!=diagParams->ps_0d_coord.size(); ++iDim) {
+            probeParticles.position(iDim,count)=diagParams->ps_0d_coord[iDim][count];
         }
 
         hid_t probeDataset_id = H5Dcreate(fileId, probeName(count).c_str(), H5T_NATIVE_FLOAT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
         hid_t attribute_id = H5Acreate2 (probeDataset_id, "Position", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT);
-        for (unsigned int iDim=0; iDim!=diagParams->ps_coord.size(); ++iDim)
+        for (unsigned int iDim=0; iDim!=diagParams->ps_0d_coord.size(); ++iDim)
             tmp[iDim] = probeParticles.position(iDim,count);
         H5Awrite(attribute_id, H5T_NATIVE_DOUBLE, tmp);
         H5Aclose(attribute_id);

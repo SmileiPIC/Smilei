@@ -17,10 +17,13 @@ public:
 
     //! Constructor for Field1D: with the vector dimension as input argument
     Field1D( std::vector<unsigned int> dims );
+    
+    //! Constructor, isPrimal define if mainDim is Primal or Dual
     Field1D( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal );
 
     //! Constructor for Field1D: with the vector dimension and filename for the dump as input argument
     Field1D( std::vector<unsigned int> dims, std::string name );
+    //! Constructor, isPrimal define if mainDim is Primal or Dual and a name
     Field1D( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name );
 
     //! Destructor for Field1D
@@ -28,7 +31,9 @@ public:
 
     //! Method used to allocate a Field1D
     void allocateDims(std::vector<unsigned int> dims);
+    //! a Field1D can also be initialized win an unsigned int 
 	void allocateDims(unsigned int dims1);
+    //! 1D method used to allocate Field, isPrimal define if mainDim is Primal or Dual
 	void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal);
 
     //! Method used to dump the data contained in a Field1D

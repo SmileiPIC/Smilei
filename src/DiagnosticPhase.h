@@ -13,9 +13,13 @@ class ElectroMagn;
 //! this strucs holds the basics of a particle
 //!\todo check if this is slow (TV to JR)
 struct partStruct {
+    //! position of the particle
 	std::vector<double> pos;
+    //! momentum of the particle
 	std::vector<double> mom;
+    //! weight of the particle
 	double weight;
+    //! charge of the particle
 	short charge;
 };
 
@@ -24,6 +28,7 @@ class DiagnosticPhase {
 
 public:
 
+    //! creator, each subclass will pick from phaseStructure what it needs
     DiagnosticPhase(phaseStructure);
     ~DiagnosticPhase(){};
 	

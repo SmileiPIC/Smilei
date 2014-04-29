@@ -101,8 +101,11 @@ class PicParams {
 public:
     //! Creator for PicParams
     PicParams(InputData &);
+    //! calculate useful parameters
     void compute();
+    //! print a summary of the values in txt
     void print();
+    //! sets nDim_particle and nDim_field based on the geometry
     void setDimensions();
 
     //! defines the geometry of the simulation
@@ -135,9 +138,6 @@ public:
 
     //! plasma geometry
     std::string plasma_geometry;
-
-    //!
-    std::vector<double> density_double_params;
 
     //! plasma lengths
     std::vector<double> plasma_length;
