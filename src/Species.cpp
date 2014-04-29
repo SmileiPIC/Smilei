@@ -52,7 +52,7 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
     ndim = params->nDim_particle;
 	
     // Local minimum for definition of bin clusters
-    min_loc = smpi->getDomainLocalMin(ndim-1);
+    min_loc = smpi->getDomainLocalMin(0);
 	
     // time over which particles remain frozen
     time_frozen = params->species_param[ispec].time_frozen;
@@ -85,8 +85,12 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 	
 	
     // Arrays of the min and max indices of the particle bins
-    bmin.resize(params->n_space[ndim-1]);
-    bmax.resize(params->n_space[ndim-1]);
+    bmin.resize(params->n_space[0]);
+    bmax.resize(params->n_space[0]);
+    if (ndim == 3){
+        bmin.resize(params->n_space[0]*params->n_space[1]);
+        bmax.resize(params->n_space[0]);
+    }
 	
     //Size in each dimension of the buffers on which each bin are projected
     //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
@@ -103,18 +107,17 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
         b_lastdim = b_dim0;
     }
     if (ndim == 2){
-        b_dim0 =  f_dim0 ; // There is a primal number of bins.
-        b_dim1 =  2 + 2 * oversize[1];
+        b_dim0 =  2 + 2 * oversize[0]; // There is a primal number of bins.
+        b_dim1 =  f_dim1;
         b_dim2 =  1;
         b_lastdim = b_dim1;
     }
     if (ndim == 3){
-        b_dim0 = f_dim0;
+        b_dim0 =  2 + 2 * oversize[0]; // There is a primal number of bins.
         b_dim1 = f_dim1;
-        b_dim2 =  2 + 2 * oversize[2];
+        b_dim2 = f_dim2;
         b_lastdim = b_dim2;
     }
-
 
     size_proj_buffer = b_dim0*b_dim1*b_dim2;
     cout << "size_proj_buffer = " << size_proj_buffer << " b_dim0 = " << b_dim0<< " b_dim1 = " << b_dim1<< " b_dim2 = " << b_dim2<<endl;
@@ -266,18 +269,10 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 		//bmax[bin] point to end of bin (= bmin[bin+1])
 		//if bmax = bmin, bin is empty of particle.
 		
-		for (unsigned int k=0; k<params->n_space[2]; k++) {
-			if (ndim == 3) {
-				bmin[k] = iPart;
-			}
+		for (unsigned int i=0; i<params->n_space[0]; i++) {
+			bmin[i] = iPart;
 			for (unsigned int j=0; j<params->n_space[1]; j++) {
-				if (ndim == 2) {
-					bmin[j] = iPart;
-				}
-				for (unsigned int i=0; i<params->n_space[0]; i++) {
-					if (ndim == 1) {
-						bmin[i] = iPart;
-					}
+		                for (unsigned int k=0; k<params->n_space[2]; k++) {
 					// initialize particles in meshes where the density is non-zero
 					if (density(i,j,k)>0) {
 						//DEBUG(0,i);
@@ -305,18 +300,10 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 						//calculate new iPart (jump to next cell)
 						iPart+=params->species_param[ispec].n_part_per_cell;
 					}//END if density > 0
-					if (ndim == 1) {
-						bmax[i] = iPart;
-					}
-				}//i
-				if (ndim == 2) {
-					bmax[j] = iPart;
-				}
+				}//k
 			}//j
-			if (ndim == 3) {
-				bmax[k] = iPart;
-			}
-		}//k end the loop on all cells
+			bmax[i] = iPart;
+		}//i end the loop on all cells
 		
 		delete [] indexes;
 		delete [] temp;
@@ -745,17 +732,17 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
            }
            if (ndim == 2) {
                for (i = 0; i < b_dim0 ; i++) {
+                   iloc = ibin + i ;
                //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
                    for (j = 0; j < b_dim1 ; j++) {
-                       jloc = ibin + j ;
                        #pragma omp atomic
-                       (*EMfields->Jx_s[ispec]) (i*(f_dim1  )+jloc) +=  b_Jx[i*b_dim1+j];   //  primal along y
+                       (*EMfields->Jx_s[ispec]) (iloc*(f_dim1  )+j) +=  b_Jx[i*b_dim1+j];   //  primal along y
                        #pragma omp atomic
-                       (*EMfields->Jy_s[ispec]) (i* f_dim1+1 +jloc) +=  b_Jy[i*b_dim1+j];   //+1 because dual along y
+                       (*EMfields->Jy_s[ispec]) (iloc*(f_dim1+1)+j) +=  b_Jy[i*b_dim1+j];   //+1 because dual along y
                        #pragma omp atomic
-                       (*EMfields->Jz_s[ispec]) (i*(f_dim1  )+jloc) +=  b_Jz[i*b_dim1+j];   // primal along y
+                       (*EMfields->Jz_s[ispec]) (iloc*(f_dim1  )+j) +=  b_Jz[i*b_dim1+j];   // primal along y
                        #pragma omp atomic
-                       (*EMfields->rho_s[ispec])(i*(f_dim1  )+jloc) += b_rho[i*b_dim1+j];   // primal along y
+                       (*EMfields->rho_s[ispec])(iloc*(f_dim1  )+j) += b_rho[i*b_dim1+j];   // primal along y
                    }
                }
            }
@@ -835,7 +822,7 @@ void Species::computeScalars() {
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::sort_part(double dbin)
 {
-    //dbin is the width of one bin. dbin= dx in 1D, dy in 2D and dz in 3D.
+    //dbin is the width of one bin. dbin= dx.
 	
     int p1,p2,bmin_init;
     double limit;
@@ -846,14 +833,14 @@ void Species::sort_part(double dbin)
         p1 = bmax[bin]-1;
         //If first particles change bin, they do not need to be swapped.
         while (p1 == bmax[bin]-1 && p1 >= bmin[bin]) {
-            if (particles.position(ndim-1,p1) > limit ) {
+            if (particles.position(0,p1) > limit ) {
                 bmax[bin]--;
             }
             p1--;
         }
         //         Now particles have to be swapped
         for( p2 = p1 ; p2 >= bmin[bin] ; p2-- ) { //Loop on the bin's particles.
-            if (particles.position(ndim-1,p2) > limit ) {
+            if (particles.position(0,p2) > limit ) {
                 //This particle goes up one bin.
                 particles.swap_part(p2,bmax[bin]-1);
                 bmax[bin]--;
@@ -866,13 +853,13 @@ void Species::sort_part(double dbin)
         bmin_init = bmin[bin];
         p1 = bmin[bin];
         while (p1 == bmin[bin] && p1 < bmax[bin]) {
-            if (particles.position(ndim-1,p1) < limit ) {
+            if (particles.position(0,p1) < limit ) {
                 bmin[bin]++;
             }
             p1++;
         }
         for( p2 = p1 ; p2 < bmax[bin] ; p2++ ) { //Loop on the bin's particles.
-            if (particles.position(ndim-1,p2) < limit ) {
+            if (particles.position(0,p2) < limit ) {
                 //This particle goes down one bin.
                 particles.swap_part(p2,bmin[bin]);
                 bmin[bin]++;

@@ -244,7 +244,7 @@ int main (int argc, char* argv[])
                 #pragma omp master
                 {
                     smpi->exchangeParticles(vecSpecies[ispec], ispec, &params);
-                    vecSpecies[ispec]->sort_part(params.cell_length[params.nDim_particle-1]);
+                    vecSpecies[ispec]->sort_part(params.cell_length[0]);
                 }
             }
         }

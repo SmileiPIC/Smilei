@@ -515,8 +515,8 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     // ---------------------------
     // Calculate the total current
     // ---------------------------
-    ipo -= i_domain_begin;
-    jpo -= j_domain_begin + bin;
+    ipo -= i_domain_begin + bin;
+    jpo -= j_domain_begin;
 
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = (i+ipo-2)*b_dim1;
