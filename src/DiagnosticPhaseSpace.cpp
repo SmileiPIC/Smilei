@@ -134,6 +134,11 @@ void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) 
 	}
 	
 	if (vecDiagPhaseActiveTimestep.size()>0) {
+        //! create the particle structure
+        partStruct my_part;
+        my_part.pos.resize(ndim);
+        my_part.mom.resize(3);
+
 		for (unsigned int j=0; j < vecSpecies.size(); j++) {
 			
 			//! check which diagnosticPhase to run for the species 
@@ -145,10 +150,6 @@ void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) 
 			}
 			
 			if (vecDiagPhaseToRun.size()>0) {
-                //! create the particle structure
-                partStruct my_part;
-                my_part.pos.resize(ndim);
-                my_part.mom.resize(3);
                 
 				//! cycle over all the particles
 				for (unsigned int ibin = 0 ; ibin < vecSpecies[j]->bmin.size() ; ibin++) {

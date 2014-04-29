@@ -7,6 +7,9 @@
 
 using namespace std;
 
+DiagnosticPhase2D::DiagnosticPhase2D(phaseStructure phaseStruct): DiagnosticPhase(phaseStruct) {
+    
+}
 
 void DiagnosticPhase2D::writeData(unsigned int timestep, hid_t gid) {
 	
