@@ -43,7 +43,7 @@ struct LaserStructure {
 //! This structure contains the properties of each species
 // ---------------------------------------------------------------------------------------------------------------------
 struct SpeciesStructure {
-    //! kind of species possible values: "ion" "electron" "test"
+    //! kind of species possible values: "ion" "eon" "test"
     std::string species_type;
 
     //! density profile
@@ -101,8 +101,11 @@ class PicParams {
 public:
     //! Creator for PicParams
     PicParams(InputData &);
+    //! calculate useful parameters
     void compute();
+    //! print a summary of the values in txt
     void print();
+    //! sets nDim_particle and nDim_field based on the geometry
     void setDimensions();
 
     //! defines the geometry of the simulation
@@ -135,9 +138,6 @@ public:
 
     //! plasma geometry
     std::string plasma_geometry;
-
-    //!
-    std::vector<double> density_double_params;
 
     //! plasma lengths
     std::vector<double> plasma_length;
@@ -201,10 +201,16 @@ public:
 	unsigned int dump_step;
 
 	//! Human minutes to dump everything
-	unsigned int dump_minutes;
+	double dump_minutes;
 
 	//! exit once dump done
 	bool exit_after_dump;
+	
+	//! check for file named "stop"
+	bool check_stop_file;
+	
+	//! keep the last dump_file_sequence dump files
+	unsigned int dump_file_sequence;
 	
 	//! restart namelist
 	bool restart;

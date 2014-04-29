@@ -69,22 +69,29 @@ void Field2D::allocateDims(std::vector<unsigned int> dims )
     dims_=dims;
     if (dims_.size()!=2) ERROR("Alloc error must be 2 : " << dims.size());
     if (data_!=NULL) delete [] data_;
-
+	
     isDual_.resize( dims.size(), 0 );
-
+	
     data_ = new double[dims_[0]*dims_[1]];
     //! \todo{check row major order!!! (JD)}
-
+	
     data_2D= new double*[dims_[0]];
     for (unsigned int i=0; i<dims_[0]; i++) {
         data_2D[i] = data_ + i*dims_[1];
         for (unsigned int j=0; j<dims_[1]; j++) data_2D[i][j] = 0.0;
     }
-
+	
     globalDims_ = dims_[0]*dims_[1];
-
+	
 }
 
+void Field2D::allocateDims(unsigned int dims1, unsigned int dims2)
+{
+	vector<unsigned int> dims(2);
+	dims[0]=dims1;
+	dims[1]=dims2;
+	allocateDims(dims);
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Method used for allocating the dimension of a Field2D

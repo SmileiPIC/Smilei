@@ -17,10 +17,12 @@ public:
 
     //! Constructor for Field2D: with the vector dimension as input argument
     Field3D( std::vector<unsigned int> dims );
+    //! Constructor, isPrimal define if mainDim is Primal or Dual
     Field3D( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal );
 
     //! Constructor for Field2D: with the vector dimension and filename for the dump as input argument
     Field3D( std::vector<unsigned int> dims, std::string name );
+    //! Constructor, isPrimal define if mainDim is Primal or Dual and a name
     Field3D( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name );
 
     //! Destructor for Field3D
@@ -28,7 +30,10 @@ public:
 
     //! Method used to allocate a Field3D
     void allocateDims(std::vector<unsigned int> dims );
-    void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal );
+    //! a Field3D can also be initialized win three unsigned int 
+	void allocateDims(unsigned int dims1,unsigned int dims2,unsigned int dims3);
+    //! allocate dimensions for field3D isPrimal define if mainDim is Primal or Dual
+	void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal );
 
     //! Method used to dump the data contained in a Field3D
     void dump(std::vector<unsigned int> dims);
@@ -63,6 +68,8 @@ private:
     //!\todo{Comment what are these stuffs (MG for JD)}
     //double*** data_;
     //double *data_3D;
+    
+    //! this will present the data as a 3d matrix
     double ***data_3D;
 };
 

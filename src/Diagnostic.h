@@ -14,6 +14,7 @@
 #include "DiagnosticScalar.h"
 #include "Interpolator.h"
 #include "DiagnosticProbe0D.h"
+#include "DiagnosticPhaseSpace.h"
 
 class PicParams;
 class SmileiMPI;
@@ -28,23 +29,22 @@ class Diagnostic {
 public:
     //! creator called from main
     Diagnostic(PicParams* params,  DiagParams* diagparams, SmileiMPI* smpi, Interpolator* interp);
-    //! destructor (empty)
-    ~Diagnostic() {};
+    //! destructor
+    ~Diagnostic();
     //! check if at timestep diagnostics must be called
     void runAllDiags (int timestep, ElectroMagn* EMfields, std::vector<Species*>&);
-    void closeAll();
-
-
+ 
 private:
     int num_CPUs;
     DiagnosticScalar diagScal;
     unsigned int everyScalar;
 
-    DiagnosticProbe0D probe0d;
+    DiagnosticProbe0D probe0D;
     unsigned int everyProbe0D;
     Interpolator* interp_;
 
-    unsigned int everyMap;
+	DiagnosticPhaseSpace diagPhaseSpace;
+	
 };
 
 #endif

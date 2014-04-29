@@ -41,6 +41,7 @@ public:
     Field( std::vector<unsigned int> dims ) {
         ;
     };
+    //! Constructor, isPrimal define if mainDim is Primal or Dual
     Field( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal ) {
         ;
     };
@@ -49,6 +50,7 @@ public:
     Field( std::vector<unsigned int> dims, std::string name_in ) : name(name_in) {
         ;
     } ;
+    //! Constructor for Field: isPrimal define if mainDim is Primal or Dual
     Field( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name_in ) : name(name_in) {
         ;
     } ;
@@ -60,6 +62,8 @@ public:
 
     //! Virtual method used to allocate Field
     virtual void allocateDims(std::vector<unsigned int> dims) = 0;
+    
+    //! Virtual method used to allocate Field, isPrimal define if mainDim is Primal or Dual
     virtual void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal) = 0;
 
     //! Virtual method used to make a dump of the Field data
@@ -68,19 +72,24 @@ public:
     //! vector containing the dimensions of the Field
     //! \todo private/friend/modify SmileiMPI* (JD)
     std::vector<unsigned int> dims_;
+    //! keep track ofwich direction of the Field is dual
     std::vector<unsigned int> isDual_;
 
-
+    //! returns the dimension of the Field
+	inline std::vector<unsigned int> dims () {return dims_;}
     //! All arrays may be viewed as a 1D array
     //! Linearized diags
     unsigned int globalDims_;
+    //! pointer to the linearized array
     double* data_;
+    //! reference access to the linearized array (with check in DEBUG mode)
     inline double& operator () (unsigned int i)
     {
         DEBUGEXEC(if (i>=globalDims_) ERROR("Out of limits & "<< i));
         DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR("Not finite "<< i << " = " << data_[i]));
         return data_[i];
     };
+    //! access to the linearized array (with check in DEBUG mode)
     inline double operator () (unsigned int i) const
     {
         DEBUGEXEC(if (i>=globalDims_) ERROR("Out of limits "<< i));
