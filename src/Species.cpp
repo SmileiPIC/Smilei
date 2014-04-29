@@ -773,8 +773,8 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     }
     else { // immobile particle (at the moment only project density)
 		
-        //#pragma omp parallel for shared (EMfields)
-        for (unsigned int iPart=0 ; iPart<nParticles; iPart++ ) {
+        #pragma omp parallel for schedule (static) 
+        for (iPart=0 ; iPart<nParticles; iPart++ ) {
             (*Proj)(EMfields->rho_s[ispec], particles, iPart);
         }
 		
@@ -825,10 +825,12 @@ void Species::sort_part(double dbin)
     //dbin is the width of one bin. dbin= dx.
 	
     int p1,p2,bmin_init;
+    unsigned int bin;
     double limit;
 	
     //Backward pass
-    for (unsigned int bin=0; bin<bmin.size()-1; bin++) { //Loop on the bins. To be parallelized with openMP.
+    #pragma omp for schedule(static) 
+    for (bin=0; bin<bmin.size()-1; bin++) { //Loop on the bins. To be parallelized with openMP.
         limit = min_loc + (bin+1)*dbin;
         p1 = bmax[bin]-1;
         //If first particles change bin, they do not need to be swapped.
@@ -848,7 +850,8 @@ void Species::sort_part(double dbin)
         }
     }
     //Forward pass + Rebracketting
-    for (unsigned int bin=1; bin<bmin.size(); bin++) { //Loop on the bins. To be parallelized with openMP.
+    #pragma omp for schedule(static)
+    for (bin=1; bin<bmin.size(); bin++) { //Loop on the bins. To be parallelized with openMP.
         limit = min_loc + (bin)*dbin;
         bmin_init = bmin[bin];
         p1 = bmin[bin];
