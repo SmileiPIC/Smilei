@@ -26,10 +26,12 @@ void DiagnosticProbe1D::close() {
 }
 
 DiagnosticProbe1D::DiagnosticProbe1D(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi) :
-    smpi_(smpi),
-    probeSize(7),
-    fileId(0),
-    probeParticles(diagParams->probe1DStruc.size())
+smpi_(smpi),
+probeSize(7),
+fileId(0),
+probeParticles(diagParams->probe1DStruc.size()),
+every(diagParams->probe1DStruc.size()),
+groupId(diagParams->probe1DStruc.size())
 {
     if (diagParams->probe1DStruc.size() == 0) return;
     // Management of global IO file
@@ -57,13 +59,12 @@ DiagnosticProbe1D::DiagnosticProbe1D(PicParams* params, DiagParams* diagParams, 
     H5Sclose(aid3);
     H5Tclose(atype);
 
-    every.resize(diagParams->probe1DStruc.size());
     for (unsigned int np=0; np<diagParams->probe1DStruc.size(); np++) {
         
         every[np]=diagParams->probe1DStruc[np].every;
         
         hid_t gid = H5Gcreate(fileId, probeName(np).c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        groupId.push_back(gid);
+        groupId[np] = gid;
     
         
         hsize_t dims[2] = {0, probeSize};
@@ -155,7 +156,7 @@ void DiagnosticProbe1D::run(int timestep, unsigned int numDiag, ElectroMagn* EMf
         dims[0] = dimsO[0]+1;
         dims[1] = dimsO[1];
         H5Dset_extent(dataset_id, dims);
-        //
+        
         file_space = H5Dget_space(dataset_id);
         hsize_t start[2];
         hsize_t count2[2];
