@@ -237,14 +237,14 @@ int main (int argc, char* argv[])
         // (2) move the particle
         // (3) calculate the currents (charge conserving method)
         timer[1].restart();
-        #pragma omp parallel shared (EMfields,time_dual,vecSpecies)
+        #pragma omp parallel shared (EMfields,time_dual,vecSpecies,smpi)
         {
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
                 vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi);
-                #pragma omp master
-                {
-                    smpi->exchangeParticles(vecSpecies[ispec], ispec, &params);
-                }
+                //#pragma omp master
+                //{
+                    smpi->exchangeParticles(vecSpecies[ispec], ispec, &params, omp_get_thread_num());
+                //}
                 #pragma omp barrier
                 vecSpecies[ispec]->sort_part(params.cell_length[0]);
             }

@@ -166,7 +166,7 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
 
 }
 
-void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams* params)
+void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams* params, int tnum)
 {
     Particles &cuParticles = species->particles;
     std::vector<int>* cubmin = &species->bmin;
@@ -469,9 +469,9 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
 } // END exchangeParticles
 
 
-void SmileiMPI_Cart2D::IexchangeParticles(Species* species, int ispec, PicParams* params)
+void SmileiMPI_Cart2D::IexchangeParticles(Species* species, int ispec, PicParams* params, int tnum)
 {
-    exchangeParticles(species, ispec, params);
+    exchangeParticles(species, ispec, params, tnum);
 }  // END IexchangeParticles
 
 

@@ -125,7 +125,7 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
 
 }
 
-void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams* params)
+void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams* params,int tnum)
 {
 
     Particles &cuParticles = species->particles;
@@ -134,33 +134,53 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
 
     MPI_Status Stat;
     int n_particles;
-
+    int tid;
+    int tmp = 0;
+    int k=0;
+    int i,ii, iPart;
+    int n_part_recv, n_part_send;
     /********************************************************************************/
     // Build lists of indexes of particle to exchange per neighbor
     // Computed from indexes_of_particles_to_exchange computed during particles' BC
     /********************************************************************************/
+    #pragma omp single
     indexes_of_particles_to_exchange.clear();
+    #pragma omp barrier 
 
-    int tmp = 0;
-    for (int tid=0 ; tid < indexes_of_particles_to_exchange_per_thd.size() ; tid++)
-	tmp += indexes_of_particles_to_exchange_per_thd[tid].size();
-    indexes_of_particles_to_exchange.resize( tmp );
-
-    int k=0;
-    for (int tid=0 ; tid < indexes_of_particles_to_exchange_per_thd.size() ; tid++) {
-	for (int ipart = 0 ; ipart < indexes_of_particles_to_exchange_per_thd[tid].size() ; ipart++ ) {
-	    indexes_of_particles_to_exchange[k] =  indexes_of_particles_to_exchange_per_thd[tid][ipart] ;
-	    k++;
-	}
+    for (tid=0 ; tid < tnum ; tid++){
+	tmp += indexes_of_particles_to_exchange_per_thd[tid].size(); //Compute the position where to start copying
     }
+    //cout << "tmp = "<<tmp << endl;
+    //cout << "tnum = "<< tnum << endl;
+    if (tnum == indexes_of_particles_to_exchange_per_thd.size()-1){ //If last thread
+        indexes_of_particles_to_exchange.resize( tmp + indexes_of_particles_to_exchange_per_thd[tnum].size());
+    }
+    #pragma omp barrier 
+    #pragma omp master
+    {
+    for (tid=0 ; tid < indexes_of_particles_to_exchange_per_thd.size() ; tid++) {
+        //for (iPart = 0 ; iPart < indexes_of_particles_to_exchange_per_thd[tid].size() ; iPart++ ) {
+        //    indexes_of_particles_to_exchange[k] =  indexes_of_particles_to_exchange_per_thd[tid][iPart] ;
+        //    k++;
+        //}
+        memcpy(&indexes_of_particles_to_exchange[k], &indexes_of_particles_to_exchange_per_thd[tid],indexes_of_particles_to_exchange_per_thd[tid].size()*sizeof(int));
+        k += indexes_of_particles_to_exchange_per_thd[tid].size();   
+    }
+    //cout << "size = "<< indexes_of_particles_to_exchange.size() << endl;
+    //Copy the list per_thread to the global list
+    //if (indexes_of_particles_to_exchange_per_thd[tnum].size() > 0){
+    //    //cout <<"copying" <<endl;
+    //    //memcpy(&indexes_of_particles_to_exchange[tmp], &indexes_of_particles_to_exchange_per_thd[tnum],indexes_of_particles_to_exchange_per_thd[tnum].size()*sizeof(int));
+    //    for (iPart = 0 ; iPart < indexes_of_particles_to_exchange_per_thd[tnum].size() ; iPart++ ) {
+    //        indexes_of_particles_to_exchange[tmp+iPart] =  indexes_of_particles_to_exchange_per_thd[tnum][iPart] ;   
+    //    }
+    //}
     sort( indexes_of_particles_to_exchange.begin(), indexes_of_particles_to_exchange.end() );
 
-    int n_part_send = indexes_of_particles_to_exchange.size();
-    int n_part_recv;
+    n_part_send = indexes_of_particles_to_exchange.size();
 
 	
-    int ii, iPart;
-    for (int i=0 ; i<n_part_send ; i++) {
+    for (i=0 ; i<n_part_send ; i++) {
         iPart = indexes_of_particles_to_exchange[i];
         if      ( cuParticles.position(0,iPart) < min_local[0]) {
             buff_index_send[0][0].push_back( indexes_of_particles_to_exchange[i] );
@@ -342,12 +362,12 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
         }
     }
 
-	
+    } // END omp master	
     //DEBUG( 2, "\tProcess " << smilei_rk << " : " << species->getNbrOfParticles() << " Particles of species " << ispec );
 } // END exchangeParticles
 
 
-void SmileiMPI_Cart1D::IexchangeParticles(Species* species, int ispec, PicParams* params)
+void SmileiMPI_Cart1D::IexchangeParticles(Species* species, int ispec, PicParams* params, int tnum)
 {
     Particles &cuParticles = species->particles;
 
