@@ -113,8 +113,6 @@ groupId(diagParams->probe1DStruc.size())
 
         H5Sclose(dataspace_id);
         
-        // Create 1 dataset per probe
-        
         H5Pclose(plist);
         H5Sclose(file_space);
     }
