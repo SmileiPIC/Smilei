@@ -14,6 +14,7 @@
 #include "DiagnosticScalar.h"
 #include "Interpolator.h"
 #include "DiagnosticProbe0D.h"
+#include "DiagnosticProbe1D.h"
 #include "DiagnosticPhaseSpace.h"
 
 class PicParams;
@@ -41,6 +42,10 @@ private:
 
     DiagnosticProbe0D probe0D;
     unsigned int everyProbe0D;
+
+    DiagnosticProbe1D probe1D;
+    unsigned int everyProbe1D;
+    
     Interpolator* interp_;
 
 	DiagnosticPhaseSpace diagPhaseSpace;

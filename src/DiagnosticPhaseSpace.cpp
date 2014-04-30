@@ -171,6 +171,9 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagPa
                 vecDiagPhase.push_back(diagPhase);	
             }
         }
+        if (smpi->isMaster() ) {
+            H5Gclose(gidParentParent);
+        }
 	}
 }
 

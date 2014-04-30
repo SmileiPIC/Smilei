@@ -65,7 +65,7 @@ species
 	species_type = ion
 	initialization_type = maxwell-juettner
 	ionization_model = none
-	n_part_per_cell = 1000
+	n_part_per_cell = 10
 	c_part_max = 1.0
 	mass = 1836.0
 	charge = 1.0
@@ -82,7 +82,7 @@ species
 	species_type = eon
 	initialization_type = maxwell-juettner
 	ionization_model = none
-	n_part_per_cell = 1000
+	n_part_per_cell = 10
 	c_part_max = 1.0
 	mass = 1.0
 	charge = -1.0
@@ -127,7 +127,7 @@ end
 # ---------------------
 
 # print_every (on screen text output) 
-print_every = 10
+print_every = 100
 
 # every for field dump
 fieldDump_every = 125
@@ -140,15 +140,6 @@ particleDump_every = 2500
 #
 diagnostic scalar
 	every = 125
-end
-
-# PROB 0D
-# every = number of time-steps between each output
-# x     = position of the different probes
-#
-diagnostic probe0d
-	every = 1
-	x = 0.0 30.0 60.0 90.0 120.0	
 end
 
 diagnostic phase
@@ -181,9 +172,30 @@ diagnostic phase
 	mom_min = -0.3 -0.3
 	mom_max = 0.3 0.3
 	mom_num = 200 200
-
 end
 
+# PROBEs 0D
+# every = number of time-steps between each output
+# x     = position of the different probes
+#
+diagnostic probe0d
+	every = 1
+	x = 0.0 30.0 60.0 90.0 120.0	
+end
+
+diagnostic probe1d
+    every = 100
+    pos_start = 0
+    pos_end = 120
+    number = 2
+end
+
+diagnostic probe1d
+    every = 100
+    pos_start = 0
+    pos_end = 120
+    number = 100
+end
 
 #dump_minutes = 0.1
 dump_step = 1000

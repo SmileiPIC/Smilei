@@ -59,9 +59,12 @@ DiagnosticProbe0D::DiagnosticProbe0D(PicParams* params, DiagParams* diagParams, 
     H5Pset_chunk(plist, 2, chunk_dims);
 
     hsize_t dimsPos = diagParams->ps_0d_coord.size();
+    DEBUG("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << dimsPos);
     hid_t dataspace_id = H5Screate_simple(1, &dimsPos, NULL);
 
     probeParticles.initialize(diagParams->ps_0d_coord[0].size(), diagParams->ps_0d_coord.size());
+    DEBUG("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << diagParams->ps_0d_coord[0].size());
+    
     double* tmp = new double[diagParams->ps_0d_coord.size()];
     for(unsigned int count=0; count!=diagParams->ps_0d_coord[0].size(); ++count) {
         int found=smpi_->getRank();
@@ -79,7 +82,7 @@ DiagnosticProbe0D::DiagnosticProbe0D(PicParams* params, DiagParams* diagParams, 
         hid_t probeDataset_id = H5Dcreate(fileId, probeName(count).c_str(), H5T_NATIVE_FLOAT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
         hid_t attribute_id = H5Acreate2 (probeDataset_id, "Position", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT);
         for (unsigned int iDim=0; iDim!=diagParams->ps_0d_coord.size(); ++iDim)
-            tmp[iDim] = probeParticles.position(iDim,count);
+            tmp[iDim] = probeParticles.position(iDim,count)/(2.0*M_PI);
         H5Awrite(attribute_id, H5T_NATIVE_DOUBLE, tmp);
         H5Aclose(attribute_id);
         H5Dclose(probeDataset_id);

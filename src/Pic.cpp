@@ -36,7 +36,6 @@
 #include "ProjectorFactory.h"
 
 #include "Diagnostic.h"
-#include "DiagnosticProbe0D.h"
 
 #include "Timer.h"
 
