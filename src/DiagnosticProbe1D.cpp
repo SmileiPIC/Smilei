@@ -82,7 +82,6 @@ DiagnosticProbe1D::DiagnosticProbe1D(PicParams* params, DiagParams* diagParams, 
         hid_t dataspace_id = H5Screate_simple(1, &dimsPos, NULL);
         
         probeParticles[np].initialize(diagParams->probe1DStruc[np].number, ndim);
-        double* tmp = new double[ndim];
         for(unsigned int count=0; count!=diagParams->probe1DStruc[np].number; ++count) {
             int found=smpi_->getRank();
             vector<double> partPos(ndim);
@@ -93,8 +92,7 @@ DiagnosticProbe1D::DiagnosticProbe1D(PicParams* params, DiagParams* diagParams, 
                     partPos[iDim]=0.5*(diagParams->probe1DStruc[np].posStart[iDim]+diagParams->probe1DStruc[np].posEnd[iDim]);
                 }
                 
-                if(smpi_->getDomainLocalMin(iDim) >  diagParams->ps_0d_coord[iDim][count] || 
-                   smpi_->getDomainLocalMax(iDim) <= diagParams->ps_0d_coord[iDim][count]) {
+                if(smpi_->getDomainLocalMin(iDim) >  partPos[iDim] || smpi_->getDomainLocalMax(iDim) <= partPos[iDim]) {
                     found=-1;
                 }
             }
@@ -111,7 +109,7 @@ DiagnosticProbe1D::DiagnosticProbe1D(PicParams* params, DiagParams* diagParams, 
             H5Aclose(attribute_id);
             H5Dclose(probeDataset_id);
         }
-        delete [] tmp;
+
         H5Sclose(dataspace_id);
         
         // Create 1 dataset per probe
