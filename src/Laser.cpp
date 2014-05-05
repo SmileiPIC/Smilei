@@ -7,14 +7,17 @@ using namespace std;
 Laser::Laser(double sim_time, LaserStructure laser_param) {
 
     pi_ov_2 = 0.5 * M_PI;
-
+    
     laser_struct = laser_param;
     a0_delta_y_  = laser_struct.a0 * laser_struct.delta;
     a0_delta_z_  = laser_struct.a0 * sqrt(1.0-pow(laser_struct.delta,2));
 
-    type_of_time_profile  = laser_struct.time_profile;
-    int_params            = laser_struct.int_params;
-    double_params         = laser_struct.double_params;
+    type_of_time_profile   = laser_struct.time_profile;
+    int_params             = laser_struct.int_params;
+    double_params          = laser_struct.double_params;
+    type_of_transv_profile = laser_struct.transv_profile;
+    int_params_transv      = laser_struct.int_params_transv;
+    double_params_transv   = laser_struct.double_params_transv;
 
     // -------------------------------------------------------
     // Reconstruction of the vector int_params & double_params
@@ -174,4 +177,30 @@ double Laser::time_profile(double time_dual) {
     
     else
         return 0.0;
-}
+}//END laser::time_profile
+
+
+
+double Laser::transverse_profile2D(double time_dual, double y) {
+    
+    
+    // PLANE-WAVE
+    if (type_of_transv_profile=="plane-wave") {
+        return 1.0;
+    }
+    
+    
+    // GAUSSIAN or HYPER-GAUSSIAN PROFILE
+    // double_params_transv[0] : position in y of the center of the profile
+    // double_params_transv[1] : FWHM in intensity
+    // int_params_transv[0]    : order of the hyper-Gaussian profile
+    else if (type_of_transv_profile=="gaussian") {
+        
+        double sigma_N = pow(double_params_transv[1],int_params_transv[0]) / pow(2.0,int_params_transv[0]-1) / log(2.0);
+
+        return exp( - pow(y-double_params_transv[0],int_params_transv[0]) / sigma_N);
+    }
+    
+    else
+        return 0.0;
+}//END laser::transverse_profile2D

@@ -22,7 +22,7 @@ sim_time = 4.0
 # sim_length: length of the simulation in units of the normalization wavelength 
 #
 res_space  = 250 250  
-sim_length = 3.0 3.0  
+sim_length = 6.0 6.0  
 
 # PLASMA GEOMETRY
 # plasma_geometry: string defining the plasma geometry
@@ -30,7 +30,7 @@ sim_length = 3.0 3.0
 #
 plasma_geometry = constant
 vacuum_length   = 1.0 0.0 
-plasma_length   = 1.0 3.0
+plasma_length   = 1.0 6.0
 
 # RANDOM seed 
 # this is used to randomize the random number generator
@@ -55,7 +55,7 @@ species
 	species_type = ion
 	initialization_type = cold
 	ionization_model = none
-	n_part_per_cell = 5
+	n_part_per_cell = 2
 	c_part_max = 1.0
 	mass = 1836.0
 	charge = 1.0
@@ -70,7 +70,7 @@ end
 species 
 	species_type = electron
 	initialization_type = maxwell-juettner
-	n_part_per_cell=5
+	n_part_per_cell=2
 	c_part_max=1.0
 	mass = 1.0
 	charge = -1.0
@@ -87,5 +87,29 @@ laser
 	angle=0
 	delta=0.707106781                
 	time_profile = constant
-	#double_params = 11.0
-end	
+	double_params = 11.0
+	transv_profile = gaussian
+	double_params_transv = 3.0 3.0
+	int_params_transv = 6
+end
+
+# ---------------------
+# DIAGNOSTIC PARAMETERS
+# ---------------------
+
+# print_every (on screen text output) 
+print_every = 100
+
+# every for field dump
+fieldDump_every = 250
+
+# every for particle dump
+particleDump_every = 5000
+
+# DIAG ON SCALARS
+# every = number of time-steps between each output
+#
+diagnostic scalar
+        every = 100
+end
+	

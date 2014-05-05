@@ -169,8 +169,14 @@ PicParams::PicParams(InputData &ifile) {
         ifile.extract("time_profile",tmpLaser.time_profile ,"laser",0,n_laser);
         ifile.extract("int_params",tmpLaser.int_params ,"laser",0,n_laser);
         ifile.extract("double_params",tmpLaser.double_params ,"laser",0,n_laser);
+        ifile.extract("transv_profile",tmpLaser.transv_profile ,"laser",0,n_laser);
+        ifile.extract("int_params_transv",tmpLaser.int_params_transv ,"laser",0,n_laser);
+        ifile.extract("double_params_transv",tmpLaser.double_params_transv ,"laser",0,n_laser);
         
-        for (unsigned int i=0; i<tmpLaser.double_params.size(); i++) tmpLaser.double_params[i] *= 2.0*M_PI;
+        for (unsigned int i=0; i<tmpLaser.double_params.size(); i++)
+            tmpLaser.double_params[i] *= 2.0*M_PI;
+        for (unsigned int i=0; i<tmpLaser.double_params_transv.size(); i++)
+            tmpLaser.double_params_transv[i] *= 2.0*M_PI;
         /* DEFINITION OF THE PARAMETERS MOVED TO LASER.CPP (MG)
          if (tmpLaser.time_profile=="constant") {
          if (tmpLaser.double_params.size()<1) {
