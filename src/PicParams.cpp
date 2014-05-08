@@ -114,6 +114,13 @@ PicParams::PicParams(InputData &ifile) {
         
     } else if (plasma_geometry=="fukuda"){
         WARNING("plasma geometry: fukuda vacuum & plasma length are not used");
+        ifile.extract("plasma_length", plasma_length);
+        ifile.extract("vacuum_length", vacuum_length);
+        vacuum_length[0] = 2.0;
+        vacuum_length[1] = 0.0;
+        plasma_length[0] = 112.0;
+        plasma_length[1] = 40.0;
+        
     } else {
         ERROR("unknown plasma_geometry "<< plasma_geometry);
     }
@@ -237,10 +244,8 @@ void PicParams::compute()
             cell_length[i]=2.0*M_PI/res_space[i];
             cell_volume *= cell_length[i];
             
-            if (plasma_geometry!="fukuda"){
-                vacuum_length[i] *= 2.0*M_PI;
-                plasma_length[i] *= 2.0*M_PI;
-            }
+            vacuum_length[i] *= 2.0*M_PI;
+            plasma_length[i] *= 2.0*M_PI;
             
             if (plasma_geometry=="trap") {
                 if(slope_length.size()!=0) slope_length[i]  *= 2.0*M_PI;
