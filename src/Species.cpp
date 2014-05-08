@@ -818,7 +818,7 @@ double Species::density_profile(PicParams* params, vector<double> x_cell, unsign
                 fx = 1.0;
             }
             else if (x_cell[0]<PI2*82.0) {
-                fx = 1.0 - 0.8*(x_cell[0]-PI2*82.0)/(PI2*17.0);
+                fx = 1.0 - 0.8*(x_cell[0]-PI2*65.0)/(PI2*17.0);
             }
             else if (x_cell[0]<PI2*112.0) {
                 fx = 0.2;
