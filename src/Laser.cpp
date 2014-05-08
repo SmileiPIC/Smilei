@@ -4,7 +4,7 @@ using namespace std;
 
 
 
-Laser::Laser(double sim_time, LaserStructure laser_param) {
+Laser::Laser(double sim_time, double sim_length_y, LaserStructure laser_param) {
 
     pi_ov_2 = 0.5 * M_PI;
     
@@ -20,8 +20,9 @@ Laser::Laser(double sim_time, LaserStructure laser_param) {
     double_params_transv   = laser_struct.double_params_transv;
 
     // -------------------------------------------------------
+    // LASER TIME PROFILE INFOS
     // Reconstruction of the vector int_params & double_params
-    // and definition of the parameters
+    // and definition of the laser time-profile parameters
     // -------------------------------------------------------
 
     // CONSTANT time-profile
@@ -68,7 +69,7 @@ Laser::Laser(double sim_time, LaserStructure laser_param) {
         }
         if(int_params.size()<1){
             int_params.resize(1);
-            int_params[0]=3.0;
+            int_params[0]=3;
         }
         else{
             int_params.resize(1);
@@ -80,6 +81,40 @@ Laser::Laser(double sim_time, LaserStructure laser_param) {
         ERROR("Laser profile " << type_of_time_profile <<  " not defined");
     }// ENDIF type_of_time_profile
 
+    
+    // ---------------------------------------------------------------------
+    // LASER TRANSVERSE PROFILE INFOS
+    // Reconstruction of the vector int_params_transv & double_params_transv
+    // and definition of the laser time-profile parameters
+    // ---------------------------------------------------------------------
+    
+    // Plane-wave (default): no need of double_params_transv & int_params_transv
+    if (type_of_transv_profile=="plane-wave") {
+        MESSAGE(1,"Laser is a plane-wave");
+    }
+    
+    // Gaussian or hyper-Gaussian transverse-profile
+    // double_params_transv[0] : position in y of the center of the profile (default = length_sim[1]/2, middle of the box)
+    // double_params_transv[1] : FWHM in intensity (default = length_sim[1]/4)
+    // int_params_transv[0]    : order of the hyper-Gaussian profile  (default=2)
+    else if (type_of_transv_profile=="gaussian") {
+        MESSAGE(1,"Laser has a Gaussian or hyper-Gaussian transverse profile");
+        if (double_params_transv.size()<2) {
+            double_params_transv.resize(2);
+            double_params_transv[0] = sim_length_y/2.0;
+            double_params_transv[1] = sim_length_y/4.0;
+        }
+        if (int_params_transv.size()<1) {
+            int_params_transv.resize(1);
+            int_params_transv[0] = 2;
+        }
+    }
+    
+    // If transverse profile is not defined use the plane-wave as default
+    else {
+        type_of_transv_profile = "plane-wave";
+        WARNING("Laser had no transverse profile defined: use plane-wave as default");
+    }
 
 }
 
