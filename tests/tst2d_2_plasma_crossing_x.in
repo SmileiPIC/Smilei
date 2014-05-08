@@ -15,14 +15,14 @@ interpolation_order = 2
 # sim_time: duration of the simulation in units of the normalization period 
 #
 res_time = 200
-sim_time = 5.0
+sim_time = 10.0
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
 # sim_length: length of the simulation in units of the normalization wavelength 
 #
 res_space  = 100   100  
-sim_length = 12.0   5.0  
+sim_length = 22.0   5.0  
 
 # PLASMA GEOMETRY
 # plasma_geometry: string defining the plasma geometry
@@ -30,7 +30,7 @@ sim_length = 12.0   5.0
 #
 plasma_geometry = crossx
 vacuum_length   = 1.0  0.0 
-plasma_length   = 5.0  5.0
+plasma_length   = 10.0 5.0
 
 # RANDOM seed 
 # this is used to randomize the random number generator
@@ -55,13 +55,13 @@ species
 	species_type = positron1
 	initialization_type = Maxwell-Juettner
 	ionization_model = none
-	n_part_per_cell = 5
+	n_part_per_cell = 10
 	c_part_max = 1.0
 	mass = 1.0
 	charge = 1.0
 	density = 1.0
 	mean_velocity = 0.5 0.0 0.0
-	temperature = 0.0001
+	temperature = 0.001
 	dynamics_type = norm
 	time_frozen = 0.0
 	radiating = false
@@ -70,13 +70,13 @@ end
 species 
 	species_type = electron1
 	initialization_type = Maxwell-Juettner
-	n_part_per_cell = 5
+	n_part_per_cell = 10
 	c_part_max = 1.0
 	mass = 1.0
 	charge = -1.0
 	density = 1.0
 	mean_velocity = 0.5 0.0 0.0
-	temperature = 0.01
+	temperature = 0.001
 	dynamics_type = norm	
 	time_frozen = 0.0
 	radiating = false
@@ -86,13 +86,13 @@ species
         species_type = positron2
         initialization_type = Maxwell-Juettner
         ionization_model = none
-        n_part_per_cell = 5
+        n_part_per_cell = 10
         c_part_max = 1.0
         mass = 1.0
         charge = 1.0
         density = 1.0
         mean_velocity = -0.5 0.0 0.0
-        temperature = 0.0001
+        temperature = 0.001
         dynamics_type = norm
         time_frozen = 0.0
         radiating = false
@@ -101,13 +101,13 @@ end
 species
         species_type = electron2
         initialization_type = Maxwell-Juettner
-        n_part_per_cell = 5
+        n_part_per_cell = 10
         c_part_max = 1.0
         mass = 1.0
         charge = -1.0
         density = 1.0
         mean_velocity = -0.5 0.0 0.0
-        temperature = 0.01
+        temperature = 0.001
         dynamics_type = norm
         time_frozen = 0.0
         radiating = false
@@ -121,10 +121,10 @@ end
 print_every = 20
 
 # every for field dump
-fieldDump_every = 100
+fieldDump_every = 20
 
 # every for particle dump
-particleDump_every = 1000
+particleDump_every = 1000000
 
 # DIAG ON SCALARS
 # every = number of time-steps between each output
@@ -139,7 +139,7 @@ end
 #
 diagnostic probe0d
 	every = 1
-	x = 0.0  6.0   12.0	
+	x = 0.0  11.0  22.0	
 	y = 2.5  2.5   2.5
 end
 
