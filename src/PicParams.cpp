@@ -112,8 +112,8 @@ PicParams::PicParams(InputData &ifile) {
             right_slope_length[i]=plasma_length[i]-left_slope_length[i];
         }
     } else if (plasma_geometry=="fukuda"){
-        MESSAGE("plasma geometry = fukuda - no free parameters")
-    }else {
+        WARNING("plasma geometry = fukuda - no free parameters");
+    } else {
         ERROR("unknown plasma_geometry "<< plasma_geometry);
     }
     
