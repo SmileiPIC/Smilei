@@ -49,7 +49,7 @@ private:
     std::vector<Particles> probeParticles;
     
     //! each probe will be associated with a proc
-    std::vector<int> probeId;
+    std::vector<std::vector<int> >probeId;
     
     //! E local fields for the projector
     LocalFields Eloc_fields;

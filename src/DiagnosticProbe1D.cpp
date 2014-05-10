@@ -30,6 +30,7 @@ smpi_(smpi),
 probeSize(7),
 fileId(0),
 probeParticles(diagParams->probe1DStruc.size()),
+probeId(diagParams->probe1DStruc.size()),
 every(diagParams->probe1DStruc.size()),
 groupId(diagParams->probe1DStruc.size())
 {
@@ -83,6 +84,7 @@ groupId(diagParams->probe1DStruc.size())
         hid_t dataspace_id = H5Screate_simple(1, &dimsPos, NULL);
         
         probeParticles[np].initialize(diagParams->probe1DStruc[np].number, ndim);
+        probeId[np].resize(diagParams->probe1DStruc[np].number);
         for(unsigned int count=0; count!=diagParams->probe1DStruc[np].number; ++count) {
             int found=smpi_->getRank();
             vector<double> partPos(ndim);
@@ -97,7 +99,7 @@ groupId(diagParams->probe1DStruc.size())
                     found=-1;
                 }
             }
-            probeId.push_back(found);
+            probeId[np][count] =found;
             
             for(unsigned int iDim=0; iDim!=ndim; ++iDim) {
                 probeParticles[np].position(iDim,count)=partPos[iDim];
@@ -139,7 +141,7 @@ void DiagnosticProbe1D::run(int timestep, unsigned int numDiag, ElectroMagn* EMf
     vector<double> data(probeSize);
 
     for (int count=0; count <probeParticles[numDiag].size(); count++) {
-        if (probeId[count]==smpi_->getRank())
+        if (probeId[numDiag][count]==smpi_->getRank())
             (*interp)(EMfields,probeParticles[numDiag],count,&Eloc_fields,&Bloc_fields);
 
         // All rank open all probes dataset
@@ -160,7 +162,7 @@ void DiagnosticProbe1D::run(int timestep, unsigned int numDiag, ElectroMagn* EMf
         file_space = H5Dget_space(dataset_id);
         hsize_t start[2];
         hsize_t count2[2];
-        if  (probeId[count]==smpi_->getRank()) {
+        if  (probeId[numDiag][count]==smpi_->getRank()) {
             count2[0] = 1;
             count2[1] = probeSize;
         } else {
@@ -183,7 +185,7 @@ void DiagnosticProbe1D::run(int timestep, unsigned int numDiag, ElectroMagn* EMf
         hid_t write_plist = H5Pcreate(H5P_DATASET_XFER);
         H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);
 
-        if  (probeId[count]==smpi_->getRank()) {
+        if  (probeId[numDiag][count]==smpi_->getRank()) {
             H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, partMemSpace, file_space, write_plist,&data[0]);
         } else {
             // Write 0 data
