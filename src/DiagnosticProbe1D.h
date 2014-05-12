@@ -62,8 +62,5 @@ private:
     //! hdf5 file ID
     hid_t fileId;
     
-    //! hdf5 group ID of each probe
-    std::vector<hid_t> groupId;
-
 };
 #endif

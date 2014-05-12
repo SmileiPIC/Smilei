@@ -12,6 +12,7 @@ bool BothAreSpaces(char lhs, char rhs) {
 
 string InputData::cleanString(string str) {
     str=str.substr(0, str.find('#'));
+    str=str.substr(0, str.find('!'));
     transform(str.begin(), str.end(), str.begin(), ::tolower);
     const string whiteSpaces( " \f\n\r\t\v" );
     size_t pos = str.find_last_not_of( whiteSpaces );
