@@ -130,7 +130,7 @@ string DiagnosticProbe1D::probeName(int p) {
     return prob_name.str();
 }
 
-void DiagnosticProbe1D::run(int timestep, unsigned int np, ElectroMagn* EMfields, Interpolator* interp) {
+void DiagnosticProbe1D::run(unsigned int np, ElectroMagn* EMfields, Interpolator* interp) {
     
     hsize_t dims[3] = {1, probeSize, 1};
     hid_t  partMemSpace = H5Screate_simple(3, dims, NULL);

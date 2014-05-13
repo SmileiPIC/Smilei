@@ -22,7 +22,7 @@ void DiagnosticProbe0D::close() {
 
 DiagnosticProbe0D::DiagnosticProbe0D(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi) :
     smpi_(smpi),
-    probeSize(7)
+    probeSize(6)
 {
     // Management of global IO file
     // All probe in a single file, a dataset per probe
@@ -59,13 +59,11 @@ DiagnosticProbe0D::DiagnosticProbe0D(PicParams* params, DiagParams* diagParams, 
     H5Pset_chunk(plist, 2, chunk_dims);
 
     hsize_t dimsPos = diagParams->ps_0d_coord.size();
-    DEBUG("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << dimsPos);
     hid_t dataspace_id = H5Screate_simple(1, &dimsPos, NULL);
 
     probeParticles.initialize(diagParams->ps_0d_coord[0].size(), diagParams->ps_0d_coord.size());
-    DEBUG("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << diagParams->ps_0d_coord[0].size());
     
-    double* tmp = new double[diagParams->ps_0d_coord.size()];
+    vector<double> tmpPositions(diagParams->ps_0d_coord.size());
     for(unsigned int count=0; count!=diagParams->ps_0d_coord[0].size(); ++count) {
         int found=smpi_->getRank();
         for(unsigned int iDim=0; iDim!=diagParams->ps_0d_coord.size(); ++iDim) {
@@ -80,14 +78,22 @@ DiagnosticProbe0D::DiagnosticProbe0D(PicParams* params, DiagParams* diagParams, 
         }
 
         hid_t probeDataset_id = H5Dcreate(fileId, probeName(count).c_str(), H5T_NATIVE_FLOAT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
-        hid_t attribute_id = H5Acreate2 (probeDataset_id, "Position", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT);
+        hid_t attribute_id = H5Acreate2 (probeDataset_id, "position", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT);
         for (unsigned int iDim=0; iDim!=diagParams->ps_0d_coord.size(); ++iDim)
-            tmp[iDim] = probeParticles.position(iDim,count)/(2.0*M_PI);
-        H5Awrite(attribute_id, H5T_NATIVE_DOUBLE, tmp);
+            tmpPositions[iDim] = probeParticles.position(iDim,count)/(2.0*M_PI);
+        H5Awrite(attribute_id, H5T_NATIVE_DOUBLE, &tmpPositions[0]);
         H5Aclose(attribute_id);
+        
+        hsize_t dims1D[1] = {1};
+        hid_t sid = H5Screate_simple(1, dims1D, NULL);	
+        hid_t aid = H5Acreate(probeDataset_id, "every", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
+        H5Awrite(aid, H5T_NATIVE_UINT, &diagParams->probe0d_every);
+        H5Sclose(sid);
+        H5Aclose(aid);
+
         H5Dclose(probeDataset_id);
+
     }
-    delete [] tmp;
     H5Sclose(dataspace_id);
 
     // Create 1 dataset per probe
@@ -102,7 +108,7 @@ string DiagnosticProbe0D::probeName(int p) {
     return prob_name.str();
 }
 
-void DiagnosticProbe0D::run(int timestep, ElectroMagn* EMfields, Interpolator* interp) {
+void DiagnosticProbe0D::run(ElectroMagn* EMfields, Interpolator* interp) {
     hsize_t dims[2];
     dims[0] = 1;
     dims[1] = probeSize;
@@ -148,13 +154,12 @@ void DiagnosticProbe0D::run(int timestep, ElectroMagn* EMfields, Interpolator* i
         H5Sselect_hyperslab(file_space, H5S_SELECT_SET, start, NULL, count2, NULL);
 
         //! here we fill the probe data!!!
-        data[0]=timestep;
-        data[1]=Eloc_fields.x;
-        data[2]=Eloc_fields.y;
-        data[3]=Eloc_fields.z;
-        data[4]=Bloc_fields.x;
-        data[5]=Bloc_fields.y;
-        data[6]=Bloc_fields.z;
+        data[0]=Eloc_fields.x;
+        data[1]=Eloc_fields.y;
+        data[2]=Eloc_fields.z;
+        data[3]=Bloc_fields.x;
+        data[4]=Bloc_fields.y;
+        data[5]=Bloc_fields.z;
 
         hid_t write_plist = H5Pcreate(H5P_DATASET_XFER);
         H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);

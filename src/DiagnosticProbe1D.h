@@ -30,7 +30,7 @@ public:
     DiagnosticProbe1D(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi);
     ~DiagnosticProbe1D();
 
-    void run(int timestep, unsigned int numDiag, ElectroMagn* EMfields, Interpolator* interp);
+    void run(unsigned int numDiag, ElectroMagn* EMfields, Interpolator* interp);
 
     //! return name of the probe based on its number
     std::string probeName(int p);

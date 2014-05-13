@@ -36,11 +36,11 @@ void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Specie
         diagScal.run(timestep, EMfields, vecSpecies);
     }
     if (everyProbe0D && timestep % everyProbe0D == 0) {
-        probe0D.run(timestep, EMfields, interp_);
+        probe0D.run(EMfields, interp_);
     }
     for (unsigned int i=0; i<probe1D.every.size(); i++) {
         if (probe1D.every[i] && timestep % probe1D.every[i] == 0) {
-            probe1D.run(timestep, i, EMfields, interp_);
+            probe1D.run(i, EMfields, interp_);
         }
     }
 	diagPhaseSpace.run(timestep, vecSpecies);
