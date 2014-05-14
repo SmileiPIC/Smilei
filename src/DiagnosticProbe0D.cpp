@@ -26,13 +26,13 @@ DiagnosticProbe0D::DiagnosticProbe0D(PicParams* params, DiagParams* diagParams, 
         
         every[np]=diagParams->probe0DStruc[np].every;
 
-        hsize_t dims[3] = {0, probeSize, 1};
-        hsize_t max_dims[3] = {H5S_UNLIMITED, probeSize, 1};
+        hsize_t dims[3] = {0, 1, probeSize};
+        hsize_t max_dims[3] = {H5S_UNLIMITED, 1, probeSize};
         hid_t file_space = H5Screate_simple(3, dims, max_dims);
         
         hid_t plist = H5Pcreate(H5P_DATASET_CREATE);
         H5Pset_layout(plist, H5D_CHUNKED);
-        hsize_t chunk_dims[3] = {1, probeSize, 1};
+        hsize_t chunk_dims[3] = {1, 1, probeSize};
         H5Pset_chunk(plist, 3, chunk_dims);
         
         

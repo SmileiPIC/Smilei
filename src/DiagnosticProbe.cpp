@@ -83,14 +83,14 @@ void DiagnosticProbe::run(unsigned int np, ElectroMagn* EMfields, Interpolator* 
         hsize_t count2[3];
         if  (probeId[np][count]==smpi_->getRank()) {
             count2[0] = 1;
-            count2[1] = probeSize;
-            count2[2] = 1;
+            count2[1] = 1;
+            count2[2] = probeSize;
         } else {
             count2[0] = 0;
             count2[1] = 0;
             count2[2] = 0;
         }
-        hsize_t start[3] = { dimsO[0], 0, count};
+        hsize_t start[3] = { dimsO[0], count, 0};
         H5Sselect_hyperslab(file_space, H5S_SELECT_SET, start, NULL, count2, NULL);
         
         //! here we fill the probe data!!!

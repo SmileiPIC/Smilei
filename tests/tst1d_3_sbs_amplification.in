@@ -191,7 +191,7 @@ diagnostic probe1d
 end
 
 diagnostic probe1d
-    every = 100
+    every = 10
     pos_start = 0
     pos_end = 120
     number = 121
