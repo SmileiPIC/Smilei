@@ -23,12 +23,12 @@ void DiagnosticProbe1D::close() {
 }
 
 DiagnosticProbe1D::DiagnosticProbe1D(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi) :
+every(diagParams->probe1DStruc.size()),
 smpi_(smpi),
 probeSize(6),
 fileId(0),
 probeParticles(diagParams->probe1DStruc.size()),
-probeId(diagParams->probe1DStruc.size()),
-every(diagParams->probe1DStruc.size())
+probeId(diagParams->probe1DStruc.size())
 {
     if (diagParams->probe1DStruc.size() == 0) return;
     // Management of global IO file
@@ -80,14 +80,14 @@ every(diagParams->probe1DStruc.size())
         vector<double> partPos(ndim*nprob);
 
         for(unsigned int count=0; count!=nprob; ++count) {
-            int found=smpi_->getRank();
+            int found=smpi->getRank();
             for(unsigned int iDim=0; iDim!=ndim; ++iDim) {
                 if (diagParams->probe1DStruc[np].number>1) {
                     partPos[iDim+count*ndim]=diagParams->probe1DStruc[np].posStart[iDim]+count*(diagParams->probe1DStruc[np].posEnd[iDim]-diagParams->probe1DStruc[np].posStart[iDim])/(diagParams->probe1DStruc[np].number-1);
                 } else {
                     partPos[iDim+count*ndim]=0.5*(diagParams->probe1DStruc[np].posStart[iDim]+diagParams->probe1DStruc[np].posEnd[iDim]);
                 }
-                if(smpi_->getDomainLocalMin(iDim) >  partPos[iDim+count*ndim] || smpi_->getDomainLocalMax(iDim) <= partPos[iDim+count*ndim]) {
+                if(smpi->getDomainLocalMin(iDim) >  partPos[iDim+count*ndim] || smpi->getDomainLocalMax(iDim) <= partPos[iDim+count*ndim]) {
                     found=-1;
                 }
                 probeParticles[np].position(iDim,count)=partPos[iDim+count*ndim];
@@ -156,23 +156,6 @@ void DiagnosticProbe1D::run(unsigned int np, ElectroMagn* EMfields, Interpolator
     
     file_space = H5Dget_space(dataset_id);
     
-    
-    
-    
-//    hid_t attribute_idTime = H5Aopen(dataset_id, "Timesteps", H5P_DEFAULT);
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     for (int count=0; count <nprob; count++) {
         if (probeId[np][count]==smpi_->getRank())
             (*interp)(EMfields,probeParticles[np],count,&Eloc_fields,&Bloc_fields);
@@ -218,8 +201,5 @@ void DiagnosticProbe1D::run(unsigned int np, ElectroMagn* EMfields, Interpolator
 
     H5Sclose(partMemSpaceNull);
     H5Sclose(partMemSpace);
-    
-    
-    
     
 }

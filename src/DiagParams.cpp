@@ -20,34 +20,60 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
 	scalar_every=0;
 	ifile.extract("every",scalar_every,"diagnostic scalar");
 	
-	map_every=0;
-    ifile.extract("every",map_every,"diagnostic map");
 
-	probe0d_every=0;
-    ifile.extract("every",probe0d_every,"diagnostic probe0d");
+    unsigned int n_probe0d=0;
+    while (ifile.existGroup("diagnostic probe0d",n_probe0d)) {
+        probe0DStructure tmpStruct;
+        
+        ifile.extract("every",tmpStruct.every,"diagnostic probe0d",0,n_probe0d);
 
-    ps_0d_coord.resize(params.nDim_field);
-    ifile.extract("x",ps_0d_coord[0],"diagnostic probe0d");
-    if (params.nDim_field>1) {
-        ifile.extract("y",ps_0d_coord[1],"diagnostic probe0d");
-        if (ps_0d_coord[0].size() != ps_0d_coord[1].size()) {
-            ERROR("diagnostic probe0d: different dimension of x and y");
+        tmpStruct.pos.resize(params.nDim_field);
+        ifile.extract("x",tmpStruct.pos[0],"diagnostic probe0d");
+        if (params.nDim_field>1) {
+            ifile.extract("y",tmpStruct.pos[1],"diagnostic probe0d");
+            if (tmpStruct.pos[0].size() != tmpStruct.pos[1].size()) {
+                ERROR("diagnostic probe0d: different dimension of x and y");
+            }
         }
+        if (params.nDim_field>2) {
+            ifile.extract("z",tmpStruct.pos[2],"diagnostic probe0d");
+            if (tmpStruct.pos[0].size() != tmpStruct.pos[2].size()) {
+                ERROR("diagnostic probe0d: different dimension of x and z");
+            }
+        }
+        
+        for (unsigned int k=0; k<tmpStruct.pos.size(); k++) {
+            for (unsigned int i=0; i<tmpStruct.pos[k].size(); i++) {
+                if (tmpStruct.pos[k][i]<0||tmpStruct.pos[k][i]>params.sim_length[k]) ERROR("diagnostic probe0d: probe outside the domain");
+                tmpStruct.pos[k][i]*=2*M_PI;
+                DEBUG(10, "new coordinates " << k << " " << i << " " << tmpStruct.pos[k][i]);
+            }
+        }
+
+        probe0DStruc.push_back(tmpStruct);
+        
+        
+        n_probe0d++;
     }
-    if (params.nDim_field>2) {
-        ifile.extract("z",ps_0d_coord[2],"diagnostic probe0d");
-        if (ps_0d_coord[0].size() != ps_0d_coord[2].size()) {
-            ERROR("diagnostic probe0d: different dimension of x and z");
-        }
+    
+    unsigned int n_probe1d=0;
+    while (ifile.existGroup("diagnostic probe1d",n_probe1d)) {
+        probe1DStructure tmpStruct;
+        
+        ifile.extract("every",tmpStruct.every,"diagnostic probe1d",0,n_probe1d);
+        ifile.extract("number",tmpStruct.number,"diagnostic probe1d",0,n_probe1d);
+        
+        ifile.extract("pos_start",tmpStruct.posStart,"diagnostic probe1d",0,n_probe1d);
+		transform(tmpStruct.posStart.begin(),tmpStruct.posStart.end(), 
+                  tmpStruct.posStart.begin(),bind1st(multiplies<double>(),2*M_PI));
+        ifile.extract("pos_end",tmpStruct.posEnd,"diagnostic probe1d",0,n_probe1d);
+		transform(tmpStruct.posEnd.begin(),tmpStruct.posEnd.end(), 
+                  tmpStruct.posEnd.begin(),bind1st(multiplies<double>(),2*M_PI));
+        
+        probe1DStruc.push_back(tmpStruct);
+        n_probe1d++;
     }
 	
-    for (unsigned int k=0; k<ps_0d_coord.size(); k++) {
-        for (unsigned int i=0; i<ps_0d_coord[k].size(); i++) {
-            if (ps_0d_coord[k][i]<0||ps_0d_coord[k][i]>params.sim_length[k]) ERROR("diagnostic probe0d: probe outside the domain");
-            ps_0d_coord[k][i]*=2*M_PI;
-            DEBUG(10, "new coordinates " << k << " " << i << " " << ps_0d_coord[k][i]);
-        }
-    }
     
 	int n_probephase=0;
 	while (ifile.existGroup("diagnostic phase",n_probephase)) {
@@ -81,24 +107,6 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
 		n_probephase++;
 	}
 	
-	
-    unsigned int n_probe1d=0;
-    while (ifile.existGroup("diagnostic probe1d",n_probe1d)) {
-        probe1DStructure tmpProbe1DStruct;
-        
-        ifile.extract("every",tmpProbe1DStruct.every,"diagnostic probe1d",0,n_probe1d);
-        ifile.extract("number",tmpProbe1DStruct.number,"diagnostic probe1d",0,n_probe1d);
-        
-        ifile.extract("pos_start",tmpProbe1DStruct.posStart,"diagnostic probe1d",0,n_probe1d);
-		transform(tmpProbe1DStruct.posStart.begin(),tmpProbe1DStruct.posStart.end(), 
-                  tmpProbe1DStruct.posStart.begin(),bind1st(multiplies<double>(),2*M_PI));
-        ifile.extract("pos_end",tmpProbe1DStruct.posEnd,"diagnostic probe1d",0,n_probe1d);
-		transform(tmpProbe1DStruct.posEnd.begin(),tmpProbe1DStruct.posEnd.end(), 
-                  tmpProbe1DStruct.posEnd.begin(),bind1st(multiplies<double>(),2*M_PI));
-
-        probe1DStruc.push_back(tmpProbe1DStruct);
-        n_probe1d++;
-    }
 	
 	
 }

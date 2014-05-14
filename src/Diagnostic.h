@@ -41,10 +41,8 @@ private:
     unsigned int everyScalar;
 
     DiagnosticProbe0D probe0D;
-    unsigned int everyProbe0D;
 
     DiagnosticProbe1D probe1D;
-    unsigned int everyProbe1D;
     
     Interpolator* interp_;
 

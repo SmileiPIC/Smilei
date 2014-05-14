@@ -49,12 +49,25 @@ struct phaseStructure {
 	
 };
 
+//! this structure contains the definition of a probe0D
+struct probe0DStructure {
+    //! probe0D output every (every probe1D diagnostic must have this)
+    unsigned int every;
+    
+    //! rearranged positions for the probes 0d
+    std::vector<std::vector<double> > pos;
+
+};
+
 //! this structure contains the definition of a probe1D
 struct probe1DStructure {
     //! probe1D output every (every probe1D diagnostic must have this)
     unsigned int every;
+    //! start position of the 1D probe
     std::vector<double> posStart;
+    //! end position of the 1D probe
     std::vector<double> posEnd;
+    //! number of probes between posStart and posEnd
     unsigned int number;
 };
 
@@ -76,17 +89,13 @@ public:
     //! scalar output every scalar_every (namelist group "diagnostic scalar" key "every")
     unsigned int scalar_every;
 
-    //! map output every map_every (namelist group "diagnostic map" key "every")
-    //! \todo this is unused but ready to serve!
-    unsigned int map_every;
+    //! vector of 0D probes
+    std::vector<probe0DStructure> probe0DStruc;
 
-    //! scalar output every probe_every (namelist group "diagnostic probe0d" key "every")
-    unsigned int probe0d_every;
-		
     //! rearranged positions for the probes 0d
     std::vector<std::vector<double> > ps_0d_coord;
 
-    //! positions of start and end of every probe1 1d
+    //! vector of 1D probes
     std::vector<probe1DStructure> probe1DStruc;
     
     //! every for the standard pic timeloop output
