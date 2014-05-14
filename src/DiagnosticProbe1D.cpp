@@ -51,11 +51,11 @@ DiagnosticProbe1D::DiagnosticProbe1D(PicParams* params, DiagParams* diagParams, 
                 } else {
                     partPos[iDim+count*ndim]=0.5*(diagParams->probe1DStruc[np].posStart[iDim]+diagParams->probe1DStruc[np].posEnd[iDim]);
                 }
-                if(smpi->getDomainLocalMin(iDim) >  partPos[iDim+count*ndim] || smpi->getDomainLocalMax(iDim) <= partPos[iDim+count*ndim]) {
+                probeParticles[np].position(iDim,count) = 2*M_PI*partPos[iDim+count*ndim];
+
+                if(smpi->getDomainLocalMin(iDim) >  probeParticles[np].position(iDim,count) || smpi->getDomainLocalMax(iDim) <= probeParticles[np].position(iDim,count)) {
                     found=-1;
                 }
-                probeParticles[np].position(iDim,count)=partPos[iDim+count*ndim];
-                partPos[iDim+count*ndim]/=2*M_PI;
             }
             probeId[np][count] = found;
         }

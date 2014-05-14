@@ -25,10 +25,9 @@ DiagnosticProbe0D::DiagnosticProbe0D(PicParams* params, DiagParams* diagParams, 
     for (unsigned int np=0; np<diagParams->probe0DStruc.size(); np++) {
         
         every[np]=diagParams->probe0DStruc[np].every;
-        unsigned int nprob=diagParams->probe0DStruc[np].pos[0].size();
-        
-        hsize_t dims[3] = {0, probeSize, nprob};
-        hsize_t max_dims[3] = {H5S_UNLIMITED, probeSize, nprob};
+
+        hsize_t dims[3] = {0, probeSize, 1};
+        hsize_t max_dims[3] = {H5S_UNLIMITED, probeSize, 1};
         hid_t file_space = H5Screate_simple(3, dims, max_dims);
         
         hid_t plist = H5Pcreate(H5P_DATASET_CREATE);
@@ -39,26 +38,20 @@ DiagnosticProbe0D::DiagnosticProbe0D(PicParams* params, DiagParams* diagParams, 
         
         unsigned int ndim=params->nDim_particle;
         
+        probeParticles[np].initialize(1, ndim);
+        probeId[np].resize(1);
         
-        probeParticles[np].initialize(nprob, ndim);
-        probeId[np].resize(nprob);
+        vector<double> partPos(ndim);
         
-        vector<double> partPos(ndim*nprob);
-        
-        for(unsigned int count=0; count!=nprob; ++count) {
-            int found=smpi->getRank();
-            for(unsigned int iDim=0; iDim!=ndim; ++iDim) {
-                unsigned int k = iDim+count*ndim;
-                partPos[k]=diagParams->probe0DStruc[np].pos[iDim][count];
-
-                if(smpi->getDomainLocalMin(iDim) >  partPos[k] || smpi->getDomainLocalMax(iDim) <= partPos[k]) {
-                    found=-1;
-                }
-                probeParticles[np].position(iDim,count)=partPos[k];
-                partPos[k]/=2*M_PI;
+        int found=smpi->getRank();
+        for(unsigned int iDim=0; iDim!=ndim; ++iDim) {
+            partPos[iDim]=diagParams->probe0DStruc[np].pos[iDim];
+            probeParticles[np].position(iDim,0) = 2*M_PI*partPos[iDim];
+            if(smpi->getDomainLocalMin(iDim) >  probeParticles[np].position(iDim,0) || smpi->getDomainLocalMax(iDim) <= probeParticles[np].position(iDim,0)) {
+                found=-1;
             }
-            probeId[np][count] = found;
         }
+        probeId[np][0] = found;
         
         //! write probe positions \todo check with 2D the row major order
         
@@ -66,7 +59,7 @@ DiagnosticProbe0D::DiagnosticProbe0D(PicParams* params, DiagParams* diagParams, 
         H5Pclose(plist);
         H5Sclose(file_space);
         
-        hsize_t dimsPos[2] = {ndim, nprob};
+        hsize_t dimsPos[2] = {ndim, 1};
         
         hid_t dataspace_id = H5Screate_simple(2, dimsPos, NULL);
         

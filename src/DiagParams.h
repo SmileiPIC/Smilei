@@ -55,7 +55,7 @@ struct probe0DStructure {
     unsigned int every;
     
     //! rearranged positions for the probes 0d
-    std::vector<std::vector<double> > pos;
+    std::vector<double> pos;
 
 };
 

@@ -45,7 +45,6 @@ public:
     
     //! vector containing the timesteps at which calculate each probe
     std::vector<unsigned int> every;
-        
 
 protected:
     //! copy of the smpi pointer

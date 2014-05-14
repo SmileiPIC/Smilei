@@ -24,35 +24,13 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
     unsigned int n_probe0d=0;
     while (ifile.existGroup("diagnostic probe0d",n_probe0d)) {
         probe0DStructure tmpStruct;
-        
         ifile.extract("every",tmpStruct.every,"diagnostic probe0d",0,n_probe0d);
-
         tmpStruct.pos.resize(params.nDim_field);
-        ifile.extract("x",tmpStruct.pos[0],"diagnostic probe0d");
-        if (params.nDim_field>1) {
-            ifile.extract("y",tmpStruct.pos[1],"diagnostic probe0d");
-            if (tmpStruct.pos[0].size() != tmpStruct.pos[1].size()) {
-                ERROR("diagnostic probe0d: different dimension of x and y");
-            }
+        ifile.extract("pos",tmpStruct.pos,"diagnostic probe0d",0,n_probe0d);
+        if (params.nDim_field != tmpStruct.pos.size()) {
+            ERROR("diagnostic probe0d: different dimension of nDim and pos");
         }
-        if (params.nDim_field>2) {
-            ifile.extract("z",tmpStruct.pos[2],"diagnostic probe0d");
-            if (tmpStruct.pos[0].size() != tmpStruct.pos[2].size()) {
-                ERROR("diagnostic probe0d: different dimension of x and z");
-            }
-        }
-        
-        for (unsigned int k=0; k<tmpStruct.pos.size(); k++) {
-            for (unsigned int i=0; i<tmpStruct.pos[k].size(); i++) {
-                if (tmpStruct.pos[k][i]<0||tmpStruct.pos[k][i]>params.sim_length[k]) ERROR("diagnostic probe0d: probe outside the domain");
-                tmpStruct.pos[k][i]*=2*M_PI;
-                DEBUG(10, "new coordinates " << k << " " << i << " " << tmpStruct.pos[k][i]);
-            }
-        }
-
         probe0DStruc.push_back(tmpStruct);
-        
-        
         n_probe0d++;
     }
     
@@ -64,11 +42,7 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
         ifile.extract("number",tmpStruct.number,"diagnostic probe1d",0,n_probe1d);
         
         ifile.extract("pos_start",tmpStruct.posStart,"diagnostic probe1d",0,n_probe1d);
-		transform(tmpStruct.posStart.begin(),tmpStruct.posStart.end(), 
-                  tmpStruct.posStart.begin(),bind1st(multiplies<double>(),2*M_PI));
         ifile.extract("pos_end",tmpStruct.posEnd,"diagnostic probe1d",0,n_probe1d);
-		transform(tmpStruct.posEnd.begin(),tmpStruct.posEnd.end(), 
-                  tmpStruct.posEnd.begin(),bind1st(multiplies<double>(),2*M_PI));
         
         probe1DStruc.push_back(tmpStruct);
         n_probe1d++;
