@@ -67,31 +67,43 @@ void DiagnosticProbe::run(unsigned int np, ElectroMagn* EMfields, Interpolator* 
     hid_t file_space = H5Dget_space(dataset_id);
     
     // Get dataset existing dims
-    hsize_t dimsO[3];
-    H5Sget_simple_extent_dims(file_space, dimsO, NULL);
+    
+    vector<hsize_t> dimsO(dimProbe);
+    
+    H5Sget_simple_extent_dims(file_space, &dimsO[0], NULL);
     
     // Increment dataset size
-    hsize_t newDims[3] = { dimsO[0]+1, dimsO[1], dimsO[2]};
-    H5Dset_extent(dataset_id, newDims);
+    vector<hsize_t>  newDims=dimsO;
+    newDims[0]++;
+
+    H5Dset_extent(dataset_id, &newDims[0]);
     
     file_space = H5Dget_space(dataset_id);
     
-    for (int count=0; count <nprob; count++) {
+    for (unsigned int count=0; count <nprob; count++) {
         if (probeId[np][count]==smpi_->getRank())
             (*interp)(EMfields,probeParticles[np],count,&Eloc_fields,&Bloc_fields);
         
-        hsize_t count2[3];
+        vector<hsize_t>  count2(dimProbe);
         if  (probeId[np][count]==smpi_->getRank()) {
-            count2[0] = 1;
-            count2[1] = 1;
-            count2[2] = probeSize;
+            for (unsigned int i=0; i< dimProbe-1; i++) {
+                count2[i]=1;
+            }
+            count2[dimProbe-1]=probeSize;
         } else {
-            count2[0] = 0;
-            count2[1] = 0;
-            count2[2] = 0;
+            for (unsigned int i=0; i< dimProbe; i++) {
+                count2[i]=0;
+            }
         }
-        hsize_t start[3] = { dimsO[0], count, 0};
-        H5Sselect_hyperslab(file_space, H5S_SELECT_SET, start, NULL, count2, NULL);
+        
+        vector<hsize_t> start(dimProbe);
+        start[0]=dimsO[0];
+        start[1]=count;
+        for (unsigned int i=2; i<dimProbe; i++) {
+            start[i]=0;
+        }
+        
+        H5Sselect_hyperslab(file_space, H5S_SELECT_SET, &start[0], NULL, &count2[0], NULL);
         
         //! here we fill the probe data!!!
         data[0]=Eloc_fields.x;

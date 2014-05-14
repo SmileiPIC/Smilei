@@ -13,7 +13,7 @@
 
 using namespace std;
 
-DiagnosticProbe1D::DiagnosticProbe1D(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi) : DiagnosticProbe(params,diagParams,smpi) {
+DiagnosticProbe1D::DiagnosticProbe1D(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi) : DiagnosticProbe(params,diagParams,smpi,1) {
     every.resize(diagParams->probe1DStruc.size());
     probeParticles.resize(diagParams->probe1DStruc.size());
     probeId.resize(diagParams->probe1DStruc.size());

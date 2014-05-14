@@ -13,7 +13,7 @@
 
 using namespace std;
 
-DiagnosticProbe0D::DiagnosticProbe0D(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi) : DiagnosticProbe(params,diagParams,smpi) {
+DiagnosticProbe0D::DiagnosticProbe0D(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi) : DiagnosticProbe(params,diagParams,smpi,0) {
     every.resize(diagParams->probe0DStruc.size());
     probeParticles.resize(diagParams->probe0DStruc.size());
     probeId.resize(diagParams->probe0DStruc.size());
@@ -26,14 +26,14 @@ DiagnosticProbe0D::DiagnosticProbe0D(PicParams* params, DiagParams* diagParams, 
         
         every[np]=diagParams->probe0DStruc[np].every;
 
-        hsize_t dims[3] = {0, 1, probeSize};
-        hsize_t max_dims[3] = {H5S_UNLIMITED, 1, probeSize};
-        hid_t file_space = H5Screate_simple(3, dims, max_dims);
+        hsize_t dims[2] = {0, probeSize};
+        hsize_t max_dims[2] = {H5S_UNLIMITED, probeSize};
+        hid_t file_space = H5Screate_simple(2, dims, max_dims);
         
         hid_t plist = H5Pcreate(H5P_DATASET_CREATE);
         H5Pset_layout(plist, H5D_CHUNKED);
-        hsize_t chunk_dims[3] = {1, 1, probeSize};
-        H5Pset_chunk(plist, 3, chunk_dims);
+        hsize_t chunk_dims[2] = {1, probeSize};
+        H5Pset_chunk(plist, 2, chunk_dims);
         
         
         unsigned int ndim=params->nDim_particle;

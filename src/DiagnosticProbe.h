@@ -27,8 +27,8 @@ class DiagnosticProbe {
 public:
     
     //! the creator need both sim parameters params and the diagnostic parameter diagParams
-    DiagnosticProbe(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi):
-    smpi_(smpi),probeSize(6),fileId(0){};
+    DiagnosticProbe(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi, unsigned int dim_probe):
+    dimProbe(dim_probe+2), smpi_(smpi), probeSize(6), fileId(0){};
     
     ~DiagnosticProbe();
     
@@ -45,7 +45,10 @@ public:
     
     //! vector containing the timesteps at which calculate each probe
     std::vector<unsigned int> every;
-
+private:
+    //!dimension of the probe in the hdf5file (probe0D -> 2(time,fields), probe1D-> 3(time,fields,probe) etc...)
+    unsigned int dimProbe;
+    
 protected:
     //! copy of the smpi pointer
     SmileiMPI* smpi_;
