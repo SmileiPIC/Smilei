@@ -47,7 +47,27 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
         probe1DStruc.push_back(tmpStruct);
         n_probe1d++;
     }
-	
+
+    unsigned int n_probe2d=0;
+    while (ifile.existGroup("diagnostic probe2d",n_probe2d)) {
+        if (params.nDim_particle == 1 ) {
+            WARNING ("diagnostic probe2d DISABLED in 1D");
+            break;
+        }
+        probe2DStructure tmpStruct;
+        
+        ifile.extract("every",tmpStruct.every,"diagnostic probe2d",0,n_probe2d);
+        ifile.extract("number_first",tmpStruct.numberFirst,"diagnostic probe2d",0,n_probe2d);
+        ifile.extract("number_second",tmpStruct.numberSecond,"diagnostic probe2d",0,n_probe2d);
+        
+        ifile.extract("pos_center",tmpStruct.posCenter,"diagnostic probe2d",0,n_probe2d);
+        ifile.extract("pos_first_end",tmpStruct.posEndFirst,"diagnostic probe2d",0,n_probe2d);
+        ifile.extract("pos_second_end",tmpStruct.posEndSecond,"diagnostic probe2d",0,n_probe2d);
+        
+        probe2DStruc.push_back(tmpStruct);
+        n_probe2d++;
+    }
+    
     
 	int n_probephase=0;
 	while (ifile.existGroup("diagnostic phase",n_probephase)) {

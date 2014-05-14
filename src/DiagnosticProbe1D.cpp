@@ -18,8 +18,6 @@ DiagnosticProbe1D::DiagnosticProbe1D(PicParams* params, DiagParams* diagParams, 
     probeParticles.resize(diagParams->probe1DStruc.size());
     probeId.resize(diagParams->probe1DStruc.size());
 
-    open("Probes1D.h5");
-
     for (unsigned int np=0; np<diagParams->probe1DStruc.size(); np++) {
         
         every[np]=diagParams->probe1DStruc[np].every;
@@ -29,18 +27,19 @@ DiagnosticProbe1D::DiagnosticProbe1D(PicParams* params, DiagParams* diagParams, 
         vecNumber[0]=diagParams->probe1DStruc[np].number;
         
         probeParticles[np].initialize(vecNumber[0], ndim);
-        probeId[np].resize(diagParams->probe1DStruc[np].number);
+        probeId[np].resize(vecNumber[0]);
 
         vector<double> partPos(ndim*vecNumber[0]);
         for(unsigned int count=0; count!=vecNumber[0]; ++count) {
             int found=smpi->getRank();
             for(unsigned int iDim=0; iDim!=ndim; ++iDim) {
-                if (diagParams->probe1DStruc[np].number>1) {
-                    partPos[iDim+count*ndim]=diagParams->probe1DStruc[np].posStart[iDim]+count*(diagParams->probe1DStruc[np].posEnd[iDim]-diagParams->probe1DStruc[np].posStart[iDim])/(diagParams->probe1DStruc[np].number-1);
+                unsigned int k=iDim+count*ndim;
+                if (vecNumber[0]>1) {
+                    partPos[k]=diagParams->probe1DStruc[np].posStart[iDim]+count*(diagParams->probe1DStruc[np].posEnd[iDim]-diagParams->probe1DStruc[np].posStart[iDim])/(vecNumber[0]-1);
                 } else {
-                    partPos[iDim+count*ndim]=0.5*(diagParams->probe1DStruc[np].posStart[iDim]+diagParams->probe1DStruc[np].posEnd[iDim]);
+                    partPos[k]=0.5*(diagParams->probe1DStruc[np].posStart[iDim]+diagParams->probe1DStruc[np].posEnd[iDim]);
                 }
-                probeParticles[np].position(iDim,count) = 2*M_PI*partPos[iDim+count*ndim];
+                probeParticles[np].position(iDim,count) = 2*M_PI*partPos[k];
 
                 if(smpi->getDomainLocalMin(iDim) >  probeParticles[np].position(iDim,count) || smpi->getDomainLocalMax(iDim) <= probeParticles[np].position(iDim,count)) {
                     found=-1;

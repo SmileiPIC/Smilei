@@ -71,6 +71,22 @@ struct probe1DStructure {
     unsigned int number;
 };
 
+//! this structure contains the definition of a probe1D
+struct probe2DStructure {
+    //! probe2D output every (every probe1D diagnostic must have this)
+    unsigned int every;
+    //! center position of the 2D probe
+    std::vector<double> posCenter;
+    //! end position of the first axec of the 2D probe
+    std::vector<double> posEndFirst;
+    //! end position of the second axec of the 2D probe
+    std::vector<double> posEndSecond;
+    //! number of probes between posCenter and posEndFirst
+    unsigned int numberFirst;
+    //! number of probes between posCenter and posEndSecond
+    unsigned int numberSecond;
+};
+
 // ---------------------------------------------------------------------------------------------------------------------
 //! DiagParams class: holds all the properties of the simulation that are read from the input file
 // ---------------------------------------------------------------------------------------------------------------------
@@ -97,6 +113,9 @@ public:
 
     //! vector of 1D probes
     std::vector<probe1DStructure> probe1DStruc;
+    
+    //! vector of 2D probes
+    std::vector<probe2DStructure> probe2DStruc;
     
     //! every for the standard pic timeloop output
     unsigned int print_every;

@@ -28,17 +28,21 @@ public:
     
     //! the creator need both sim parameters params and the diagnostic parameter diagParams
     DiagnosticProbe(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi, unsigned int dim_probe):
-    dimProbe(dim_probe+2), smpi_(smpi), probeSize(6), fileId(0){};
+    dimProbe(dim_probe+2), smpi_(smpi), probeSize(6), fileId(0) {open();};
     
     ~DiagnosticProbe();
     
+    //! run all probes
+    void runAll(unsigned int timestep, ElectroMagn* EMfields, Interpolator* interp);
+    
+    //! run a single probe
     void run(unsigned int numDiag, ElectroMagn* EMfields, Interpolator* interp);
     
     //! return name of the probe based on its number
     std::string probeName(int p);
 
     //! function to open the file
-    void open(std::string file_name);
+    void open();
 
     //! prpare the hdf5 dataset and attributes
     void addProbe(unsigned int np, std::vector<double> partPos, std::vector<unsigned int> vecNumber);

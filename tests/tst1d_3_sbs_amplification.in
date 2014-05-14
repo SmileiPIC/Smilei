@@ -202,6 +202,16 @@ diagnostic probe1d
     number = 121
 end
 
+diagnostic probe2d
+	every = 1
+	pos_center = 90.0
+	pos_first_end = 90.0
+	pos_second_end = 90.0
+	number_first = 100
+	number_second = 200
+end
+
+
 #dump_minutes = 0.1
 dump_step = 1000
 exit_after_dump = false

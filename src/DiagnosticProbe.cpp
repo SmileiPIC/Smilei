@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <string>
 #include <iomanip>
+#include <sstream>
 
 #include "PicParams.h"
 #include "DiagParams.h"
@@ -22,10 +23,13 @@ void DiagnosticProbe::close() {
     }
 }
 
-void DiagnosticProbe::open(string file_name) {
+void DiagnosticProbe::open() {
+    ostringstream file_name("");
+    file_name << "Probes" << dimProbe-2 << "D.h5";
+    
     hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
     H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, MPI_INFO_NULL);
-    fileId = H5Fcreate( file_name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+    fileId = H5Fcreate( file_name.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
     H5Pclose(plist_id);
     
     string ver(__VERSION);
@@ -106,6 +110,14 @@ void DiagnosticProbe::addProbe(unsigned int np, vector<double> partPos, vector<u
     
     H5Dclose(probeDataset_id);
     
+}
+
+void DiagnosticProbe::runAll(unsigned int timestep, ElectroMagn* EMfields, Interpolator* interp) {
+    for (unsigned int i=0; i<every.size(); i++) {
+        if (every[i] && timestep % every[i] == 0) {
+            run(i, EMfields, interp);
+        }
+    }
 }
 
 void DiagnosticProbe::run(unsigned int np, ElectroMagn* EMfields, Interpolator* interp) {

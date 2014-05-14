@@ -17,11 +17,7 @@ DiagnosticProbe0D::DiagnosticProbe0D(PicParams* params, DiagParams* diagParams, 
     every.resize(diagParams->probe0DStruc.size());
     probeParticles.resize(diagParams->probe0DStruc.size());
     probeId.resize(diagParams->probe0DStruc.size());
-    
-    if (diagParams->probe0DStruc.size() == 0) return;
-    
-    open("Probes0D.h5");
-    
+        
     for (unsigned int np=0; np<diagParams->probe0DStruc.size(); np++) {
         
         every[np]=diagParams->probe0DStruc[np].every;

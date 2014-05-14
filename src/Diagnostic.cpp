@@ -19,6 +19,7 @@ diagScal(params, smpi),
 everyScalar (diagparams->scalar_every),
 probe0D(params, diagparams, smpi),
 probe1D(params, diagparams, smpi),
+probe2D(params, diagparams, smpi),
 interp_(interp),
 diagPhaseSpace(params, diagparams, smpi)
 {
@@ -27,6 +28,7 @@ diagPhaseSpace(params, diagparams, smpi)
 Diagnostic::~Diagnostic () {
     probe0D.close();
     probe1D.close();
+    probe2D.close();
 	diagPhaseSpace.close();
 }
 
@@ -35,17 +37,10 @@ void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Specie
         diagScal.run(timestep, EMfields, vecSpecies);
     }
 
-    for (unsigned int i=0; i<probe0D.every.size(); i++) {
-        if (probe0D.every[i] && timestep % probe0D.every[i] == 0) {
-            probe0D.run(i, EMfields, interp_);
-        }
-    }
-    
-    for (unsigned int i=0; i<probe1D.every.size(); i++) {
-        if (probe1D.every[i] && timestep % probe1D.every[i] == 0) {
-            probe1D.run(i, EMfields, interp_);
-        }
-    }
+    probe0D.runAll(timestep, EMfields, interp_);
+    probe1D.runAll(timestep, EMfields, interp_);
+    probe2D.runAll(timestep, EMfields, interp_);
+        
 	diagPhaseSpace.run(timestep, vecSpecies);
 }
 
