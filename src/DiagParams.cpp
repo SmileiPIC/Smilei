@@ -13,7 +13,13 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
 	
 	fieldDump_every=params.n_time/10;
     ifile.extract("fieldDump_every", fieldDump_every);
-	
+    
+    avgfieldDump_every=params.res_time*10;
+    ifile.extract("avgfieldDump_every", avgfieldDump_every);
+    
+    ntime_step_avg=params.res_time;
+	ifile.extract("ntime_step_avg", ntime_step_avg);
+    
 	particleDump_every=params.n_time/10;
 	ifile.extract("particleDump_every", particleDump_every);
 	

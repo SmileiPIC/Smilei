@@ -14,15 +14,15 @@ interpolation_order = 2
 # res_time: temporal resolution (integer = number of time−steps within one normalization period)
 # sim_time: duration of the simulation in units of the normalization period 
 #
-res_time = 500
+res_time = 250
 sim_time = 4.0
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
 # sim_length: length of the simulation in units of the normalization wavelength 
 #
-res_space  = 250 250  
-sim_length = 6.0 6.0  
+res_space  = 125 125  
+sim_length = 6.0 4.0  
 
 # PLASMA GEOMETRY
 # plasma_geometry: string defining the plasma geometry
@@ -30,7 +30,7 @@ sim_length = 6.0 6.0
 #
 plasma_geometry = constant
 vacuum_length   = 1.0 0.0 
-plasma_length   = 1.0 6.0
+plasma_length   = 1.0 4.0
 
 # RANDOM seed 
 # this is used to randomize the random number generator
@@ -88,9 +88,7 @@ laser
 	delta=0.707106781                
 	time_profile = constant
 	double_params = 11.0
-	transv_profile = gaussian
-	double_params_transv = 3.0 3.0
-	int_params_transv = 6
+	transv_profile = plane-wave
 end
 
 # ---------------------
@@ -101,7 +99,9 @@ end
 print_every = 100
 
 # every for field dump
-fieldDump_every = 250
+fieldDump_every = 500
+avgfieldDump_every = 500
+ntime_step_avg     = 500
 
 # every for particle dump
 particleDump_every = 5000

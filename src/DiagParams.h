@@ -69,6 +69,12 @@ public:
 
     //! field dump output
     unsigned int fieldDump_every;
+    
+    //! time-averaged field dump output
+    unsigned int avgfieldDump_every;
+    
+    //! number of time-steps for time-averaging of fields
+    unsigned int ntime_step_avg;
 
     //! particle dump output
     unsigned int particleDump_every;

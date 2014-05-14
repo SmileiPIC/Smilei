@@ -56,6 +56,13 @@ ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi)
     Jz_=NULL;
     rho_=NULL;
     rho_o=NULL;
+    
+    Ex_avg=NULL;
+    Ey_avg=NULL;
+    Ez_avg=NULL;
+    Bx_avg=NULL;
+    By_avg=NULL;
+    Bz_avg=NULL;
 
     // Species charge currents and density
     n_species = params->n_species;

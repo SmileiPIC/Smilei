@@ -77,7 +77,8 @@ SmileiIO::SmileiIO( PicParams* params, SmileiMPI* smpi ) : dump_times(0), stop_f
     MPI_Info info  = MPI_INFO_NULL;
     hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
     H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, info);
-    global_file_id_ = H5Fcreate( "Fields.h5", H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+    global_file_id_    = H5Fcreate( "Fields.h5",     H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+    global_file_id_avg = H5Fcreate( "Fields_avg.h5", H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
     H5Pclose(plist_id);
 	
     //
@@ -94,6 +95,9 @@ SmileiIO::~SmileiIO()
 {
     // Management of global IO file
     H5Fclose( global_file_id_ );
+    
+    // Management of global IO file
+    H5Fclose( global_file_id_avg );
 	
     H5Sclose(partMemSpace);
     for ( unsigned int s=0 ; s<nDatasetSpecies ; s++ )
@@ -141,6 +145,36 @@ void SmileiIO::writeAllFieldsSingleFileTime( ElectroMagn* EMfields, int time )
     H5Fflush( global_file_id_, H5F_SCOPE_GLOBAL );
 	
 }
+
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Write all fields of all time step in the same file
+// ---------------------------------------------------------------------------------------------------------------------
+void SmileiIO::writeAvgFieldsSingleFileTime( ElectroMagn* EMfields, int time )
+{
+    ostringstream name_t;
+    name_t.str("");
+    name_t << "/" << setfill('0') << setw(10) << time;
+	
+    DEBUG(10,"[hdf] GROUP _________________________________ " << name_t.str());
+    hid_t group_id = H5Gcreate(global_file_id_avg, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	
+    writeFieldsSingleFileTime( EMfields->Ex_avg, group_id );
+    writeFieldsSingleFileTime( EMfields->Ey_avg, group_id );
+    writeFieldsSingleFileTime( EMfields->Ez_avg, group_id );
+    writeFieldsSingleFileTime( EMfields->Bx_avg, group_id );
+    writeFieldsSingleFileTime( EMfields->By_avg, group_id );
+    writeFieldsSingleFileTime( EMfields->Bz_avg, group_id );
+	
+	
+    H5Gclose(group_id);
+	
+    H5Fflush( global_file_id_avg, H5F_SCOPE_GLOBAL );
+	
+}
+
+
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -232,9 +266,15 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
     dumpFieldsPerProc(fid, EMfields->Bx_);
     dumpFieldsPerProc(fid, EMfields->By_);
     dumpFieldsPerProc(fid, EMfields->Bz_);
-    dumpFieldsPerProc(fid, EMfields->Bx_m);
-    dumpFieldsPerProc(fid, EMfields->By_m);
-    dumpFieldsPerProc(fid, EMfields->Bz_m);
+    //dumpFieldsPerProc(fid, EMfields->Bx_m);
+    //dumpFieldsPerProc(fid, EMfields->By_m);
+    //dumpFieldsPerProc(fid, EMfields->Bz_m);
+    dumpFieldsPerProc(fid, EMfields->Ex_avg);
+    dumpFieldsPerProc(fid, EMfields->Ey_avg);
+    dumpFieldsPerProc(fid, EMfields->Ez_avg);
+    dumpFieldsPerProc(fid, EMfields->Bx_avg);
+    dumpFieldsPerProc(fid, EMfields->By_avg);
+    dumpFieldsPerProc(fid, EMfields->Bz_avg);
 	
     H5Fflush( fid, H5F_SCOPE_GLOBAL );
 	

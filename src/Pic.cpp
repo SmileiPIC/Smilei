@@ -175,6 +175,8 @@ int main (int argc, char* argv[])
 		Diags->runAllDiags(0, EMfields, vecSpecies);
 		// temporary EM fields dump in Fields.h5
 		sio->writeAllFieldsSingleFileTime( EMfields, 0 );
+        // temporary EM fields dump in Fields_avg.h5
+		sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
 		// temporary particle dump at time 0
 		sio->writePlasma( vecSpecies, 0., smpi );
 	}
@@ -253,9 +255,11 @@ int main (int argc, char* argv[])
         EMfields->solveMaxwell(time_dual, smpi);
         timer[2].update();
         
+        // incrementing averaged electromagnetic fields
+        EMfields->incrementAvgFields(itime, diag_params.ntime_step_avg);
+        
         // call the various diagnostics
         // ----------------------------
-        
 		
         // run all diagnostics
         timer[3].restart();
@@ -264,6 +268,10 @@ int main (int argc, char* argv[])
         // temporary EM fields dump in Fields.h5
         if  ((diag_params.fieldDump_every != 0) && (itime % diag_params.fieldDump_every == 0))
             sio->writeAllFieldsSingleFileTime( EMfields, itime );
+        
+        // temporary EM fields dump in Fields.h5
+        if  ((diag_params.avgfieldDump_every != 0) && (itime % diag_params.avgfieldDump_every == 0))
+            sio->writeAvgFieldsSingleFileTime( EMfields, itime );
         
         // temporary particles dump (1 HDF5 file per process)
         if  ((diag_params.particleDump_every != 0) && (itime % diag_params.particleDump_every == 0))
@@ -300,6 +308,10 @@ int main (int argc, char* argv[])
     // temporary EM fields dump in Fields.h5
     if  ( (diag_params.fieldDump_every != 0) && (params.n_time % diag_params.fieldDump_every != 0) )
         sio->writeAllFieldsSingleFileTime( EMfields, params.n_time );
+    
+    // temporary time-averaged EM fields dump in Fields_avg.h5
+    if  ( (diag_params.avgfieldDump_every != 0) && (params.n_time % diag_params.avgfieldDump_every != 0) )
+        sio->writeAvgFieldsSingleFileTime( EMfields, params.n_time );
     
     // temporary particles dump (1 HDF5 file per process)
     if  ( (diag_params.particleDump_every != 0) && (params.n_time % diag_params.particleDump_every != 0) )

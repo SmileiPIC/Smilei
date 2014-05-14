@@ -78,6 +78,25 @@ public:
 
     //! Total charge density at previous time-step
     Field* rho_o;
+    
+    //! time-average x-component of the electric field
+    Field* Ex_avg;
+    
+    //! time-average y-component of the electric field
+    Field* Ey_avg;
+    
+    //! time-average z-component of the electric field
+    Field* Ez_avg;
+    
+    //! time-average x-component of the magnetic field
+    Field* Bx_avg;
+    
+    //! time-average y-component of the magnetic field
+    Field* By_avg;
+    
+    //! time-average z-component of the magnetic field
+    Field* Bz_avg;
+
 
     //! Vector of charge density and currents for each species
     unsigned int n_species;
@@ -126,6 +145,8 @@ public:
     virtual void solveMaxwellAmpere() = 0;
     virtual void solveMaxwellFaraday() = 0;
     virtual void applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi) = 0;
+    
+    virtual void incrementAvgFields(unsigned int time_step, unsigned int ntime_step_avg) = 0;
 
     //! compute scalars filling var scalars
     void computeScalars();
