@@ -176,7 +176,7 @@ end
 
 # PROBEs 0D
 # every = number of time-steps between each output
-# x     = position of the different probes
+# pos   = position of the different probes
 #
 diagnostic probe0d
 	every = 1
@@ -194,7 +194,7 @@ diagnostic probe1d
     every = 100
     pos_start = 0
     pos_end = 120
-    number = 100
+    number = 121
 end
 
 #dump_minutes = 0.1

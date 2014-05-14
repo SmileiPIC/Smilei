@@ -52,10 +52,10 @@ string DiagnosticProbe::probeName(int p) {
 
 void DiagnosticProbe::run(unsigned int np, ElectroMagn* EMfields, Interpolator* interp) {
     
-    hsize_t dims[3] = {1, probeSize, 1};
-    hid_t  partMemSpace = H5Screate_simple(3, dims, NULL);
-    hsize_t nulldims[3] = {0, 0, 0};
-    hid_t  partMemSpaceNull = H5Screate_simple(3, nulldims, NULL);
+    hsize_t dims = probeSize;
+    hid_t  partMemSpace = H5Screate_simple(1, &dims, NULL);
+    hsize_t nulldims = 0;
+    hid_t  partMemSpaceNull = H5Screate_simple(1, &nulldims, NULL);
     
     vector<double> data(probeSize);
     
