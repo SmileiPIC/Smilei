@@ -40,16 +40,19 @@ public:
     //! function to open the file
     void open(std::string file_name);
 
+    //! prpare the hdf5 dataset and attributes
+    void addProbe(unsigned int np, std::vector<double> partPos, std::vector<unsigned int> vecNumber);
+
     //! function to close the file
     void close();
-    
+
     //! vector containing the timesteps at which calculate each probe
     std::vector<unsigned int> every;
-private:
-    //!dimension of the probe in the hdf5file (probe0D -> 2(time,fields), probe1D-> 3(time,fields,probe) etc...)
+
+protected:
+    //!dimension of the probe in the hdf5file (probe0D -> 2(time,fields), probe1D -> 3(time,fields,number_probes_1st_direction) etc...)
     unsigned int dimProbe;
     
-protected:
     //! copy of the smpi pointer
     SmileiMPI* smpi_;
     

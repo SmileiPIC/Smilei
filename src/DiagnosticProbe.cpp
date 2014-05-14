@@ -46,8 +46,66 @@ void DiagnosticProbe::open(string file_name) {
 
 string DiagnosticProbe::probeName(int p) {
     ostringstream prob_name("");
-    prob_name << "p"<< setfill('0') << setw(4) << p;
+    prob_name << "p" << dimProbe-2 << "_" << setfill('0') << setw(4) << p;
     return prob_name.str();
+}
+
+void DiagnosticProbe::addProbe(unsigned int np, vector<double> partPos, vector<unsigned int> vecNumber) {
+    
+    vector<hsize_t> dims(dimProbe);
+    vector<hsize_t> max_dims(dimProbe);
+    vector<hsize_t> chunk_dims(dimProbe);
+    
+    dims[0]=0;
+    max_dims[0]=H5S_UNLIMITED;
+    chunk_dims[0]=1;
+    
+    for (unsigned int i=0; i<vecNumber.size(); i++) {
+        dims[i+1]=vecNumber[i];
+        max_dims[i+1]=vecNumber[i];
+        chunk_dims[i+1]=1;
+    }
+    dims.back()=probeSize;
+    max_dims.back()=probeSize;
+    chunk_dims.back()=probeSize;
+    
+    hid_t file_space = H5Screate_simple(dimProbe, &dims[0], &max_dims[0]);
+    hid_t plist = H5Pcreate(H5P_DATASET_CREATE);
+    H5Pset_layout(plist, H5D_CHUNKED);
+    H5Pset_chunk(plist, dimProbe, &chunk_dims[0]);
+    
+    hid_t probeDataset_id = H5Dcreate(fileId, probeName(np).c_str(), H5T_NATIVE_FLOAT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
+    H5Pclose(plist);
+    H5Sclose(file_space);
+    
+    unsigned int vecNumberProd=1;
+    for (unsigned int i=0; i<vecNumber.size(); i++) {
+        vecNumberProd*=vecNumber[i];
+    }    
+    unsigned int ndim=partPos.size()/vecNumberProd;
+    
+    vector<hsize_t> dimsPos(1+vecNumber.size());
+    dimsPos[0]=ndim;
+    for (unsigned int i=0; i<vecNumber.size(); i++) {
+        dimsPos[i+1]=vecNumber[i];
+    }
+    
+    hid_t dataspace_id = H5Screate_simple(dimsPos.size(), &dimsPos[0], NULL);
+    
+    hid_t attribute_id = H5Acreate2 (probeDataset_id, "position", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT);
+    H5Awrite(attribute_id, H5T_NATIVE_DOUBLE, &partPos[0]);
+    H5Aclose(attribute_id);
+    H5Sclose(dataspace_id);
+    
+    hsize_t dims0D = 1;
+    hid_t sid = H5Screate_simple(1, &dims0D, NULL);	
+    hid_t aid = H5Acreate(probeDataset_id, "every", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
+    H5Awrite(aid, H5T_NATIVE_UINT, &every[np]);
+    H5Sclose(sid);
+    H5Aclose(aid);
+    
+    H5Dclose(probeDataset_id);
+    
 }
 
 void DiagnosticProbe::run(unsigned int np, ElectroMagn* EMfields, Interpolator* interp) {

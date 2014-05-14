@@ -183,6 +183,11 @@ diagnostic probe0d
 	pos = 30.0
 end
 
+diagnostic probe0d
+	every = 1
+	pos = 90.0
+end
+
 diagnostic probe1d
     every = 100
     pos_start = 0
