@@ -13,6 +13,7 @@
 
 #include "DiagnosticScalar.h"
 #include "Interpolator.h"
+#include "DiagnosticProbe.h"
 #include "DiagnosticProbe0D.h"
 #include "DiagnosticProbe1D.h"
 #include "DiagnosticPhaseSpace.h"
