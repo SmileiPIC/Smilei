@@ -158,20 +158,20 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
     #pragma omp barrier 
     //Copy the list per_thread to the global list
           //One thread at a time (works)
-    //#pragma omp master
-    //{
-    //for (tid=0 ; tid < indexes_of_particles_to_exchange_per_thd.size() ; tid++) {
-    //        memcpy(&indexes_of_particles_to_exchange[k], &indexes_of_particles_to_exchange_per_thd[tid][0],indexes_of_particles_to_exchange_per_thd[tid].size()*sizeof(int));
-    //        k += indexes_of_particles_to_exchange_per_thd[tid].size();   
-    //}
+    #pragma omp master
+    {
+    for (tid=0 ; tid < indexes_of_particles_to_exchange_per_thd.size() ; tid++) {
+            memcpy(&indexes_of_particles_to_exchange[k], &indexes_of_particles_to_exchange_per_thd[tid][0],indexes_of_particles_to_exchange_per_thd[tid].size()*sizeof(int));
+            k += indexes_of_particles_to_exchange_per_thd[tid].size();   
+    }
           // All threads together (doesn't work)
-    if (indexes_of_particles_to_exchange_per_thd[tnum].size() > 0){
+    /*if (indexes_of_particles_to_exchange_per_thd[tnum].size() > 0){
         //cout << "tmp = "<<tmp << endl;
         //cout << "tnum = "<< tnum << endl;
         memcpy(&indexes_of_particles_to_exchange[tmp], &indexes_of_particles_to_exchange_per_thd[tnum][0],indexes_of_particles_to_exchange_per_thd[tnum].size()*sizeof(int));
-    }
-    #pragma omp master
-    {
+    }*/
+    //#pragma omp master
+    //{
     sort( indexes_of_particles_to_exchange.begin(), indexes_of_particles_to_exchange.end() );
 
     n_part_send = indexes_of_particles_to_exchange.size();

@@ -850,7 +850,7 @@ void Species::sort_part(double dbin)
         }
     }
     //Forward pass + Rebracketting
-    #pragma omp for schedule(static)
+    #pragma omp for schedule(runtime)
     for (bin=1; bin<bmin.size(); bin++) { //Loop on the bins. To be parallelized with openMP.
         limit = min_loc + (bin)*dbin;
         bmin_init = bmin[bin];
