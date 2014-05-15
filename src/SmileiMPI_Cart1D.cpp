@@ -156,25 +156,18 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
         indexes_of_particles_to_exchange.resize( tmp + indexes_of_particles_to_exchange_per_thd[tnum].size());
     }
     #pragma omp barrier 
+    //Copy the list per_thread to the global list
+          //One thread at a time (works)
     #pragma omp master
     {
     for (tid=0 ; tid < indexes_of_particles_to_exchange_per_thd.size() ; tid++) {
-        //for (iPart = 0 ; iPart < indexes_of_particles_to_exchange_per_thd[tid].size() ; iPart++ ) {
-        //    indexes_of_particles_to_exchange[k] =  indexes_of_particles_to_exchange_per_thd[tid][iPart] ;
-        //    k++;
-        //}
-        memcpy(&indexes_of_particles_to_exchange[k], &indexes_of_particles_to_exchange_per_thd[tid],indexes_of_particles_to_exchange_per_thd[tid].size()*sizeof(int));
-        k += indexes_of_particles_to_exchange_per_thd[tid].size();   
+            memcpy(&indexes_of_particles_to_exchange[k], &indexes_of_particles_to_exchange_per_thd[tid][0],indexes_of_particles_to_exchange_per_thd[tid].size()*sizeof(int));
+            k += indexes_of_particles_to_exchange_per_thd[tid].size();   
     }
-    //cout << "size = "<< indexes_of_particles_to_exchange.size() << endl;
-    //Copy the list per_thread to the global list
-    //if (indexes_of_particles_to_exchange_per_thd[tnum].size() > 0){
-    //    //cout <<"copying" <<endl;
-    //    //memcpy(&indexes_of_particles_to_exchange[tmp], &indexes_of_particles_to_exchange_per_thd[tnum],indexes_of_particles_to_exchange_per_thd[tnum].size()*sizeof(int));
-    //    for (iPart = 0 ; iPart < indexes_of_particles_to_exchange_per_thd[tnum].size() ; iPart++ ) {
-    //        indexes_of_particles_to_exchange[tmp+iPart] =  indexes_of_particles_to_exchange_per_thd[tnum][iPart] ;   
-    //    }
-    //}
+          // All threads together (don't work)
+    //memcpy(&indexes_of_particles_to_exchange[tmp], &indexes_of_particles_to_exchange_per_thd[tnum][0],indexes_of_particles_to_exchange_per_thd[tnum].size()*sizeof(int));
+    //#pragma omp master
+    //{
     sort( indexes_of_particles_to_exchange.begin(), indexes_of_particles_to_exchange.end() );
 
     n_part_send = indexes_of_particles_to_exchange.size();
