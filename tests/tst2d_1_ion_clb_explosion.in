@@ -66,3 +66,12 @@ species
 	radiating = false
 end
 
+diagnostic probe2d
+	every = 1
+	pos_center = 0.0 0.0
+	pos_first_end = 10.0 0.0 
+	pos_second_end = 0.0 1.0
+	number_first = 11
+	number_second = 11
+end
+

@@ -37,17 +37,18 @@ DiagnosticProbe2D::DiagnosticProbe2D(PicParams* params, DiagParams* diagParams, 
                 int found=smpi->getRank();
                 for(unsigned int iDim=0; iDim!=ndim; ++iDim) {
                     unsigned int k=iDim+count*ndim;
-//                    if (diagParams->probe2DStruc[np].number>1) {
-//                        partPos[k]=diagParams->probe2DStruc[np].posStart[iDim]+count1*(diagParams->probe2DStruc[np].posEnd[iDim]-diagParams->probe2DStruc[np].posStart[iDim])/(diagParams->probe2DStruc[np].number-1);
-//                    } else {
-//                        partPos[k]=0.5*(diagParams->probe2DStruc[np].posStart[iDim]+diagParams->probe2DStruc[np].posEnd[iDim]);
-//                    }
+                    
+                    partPos[k] = diagParams->probe2DStruc[np].posCenter[iDim]+count1*(diagParams->probe2DStruc[np].posEndFirst[iDim]-diagParams->probe2DStruc[np].posCenter[iDim])/(diagParams->probe2DStruc[np].numberFirst-1) +
+                                 diagParams->probe2DStruc[np].posCenter[iDim]+count2*(diagParams->probe2DStruc[np].posEndSecond[iDim]-diagParams->probe2DStruc[np].posCenter[iDim])/(diagParams->probe2DStruc[np].numberSecond-1);
+                                        
                     probeParticles[np].position(iDim,count1) = 2*M_PI*partPos[k];
                     
                     if(smpi->getDomainLocalMin(iDim) >  probeParticles[np].position(iDim,count1) || smpi->getDomainLocalMax(iDim) <= probeParticles[np].position(iDim,count1)) {
                         found=-1;
                     }
+                    cerr << smpi->getRank() << " " << iDim  << " " << count1 << " " << count2 << " " << count << " " << k << " " << partPos[k] << " --- ";
                 }
+                cerr << found << endl;
                 probeId[np][count1] = found;
             }
         }
