@@ -49,39 +49,25 @@ struct phaseStructure {
 	
 };
 
-//! this structure contains the definition of a probe0D
-struct probe0DStructure {
-    //! probe0D output every (every probe1D diagnostic must have this)
-    unsigned int every;
-    
-    //! rearranged positions for the probes 0d
-    std::vector<double> pos;
 
-};
-
-//! this structure contains the definition of a probe1D
-struct probe1DStructure {
+//! this structure contains the definition of a probe (0D 1D 2D and 3D)
+struct probeStructure {
     //! probe1D output every (every probe1D diagnostic must have this)
     unsigned int every;
     //! start position of the 1D probe
-    std::vector<double> posStart;
-    //! end position of the 1D probe
-    std::vector<double> posEnd;
-    //! number of probes between posStart and posEnd
-    unsigned int number;
-};
-
-//! this structure contains the definition of a probe1D
-struct probe2DStructure {
-    //! probe2D output every (every probe1D diagnostic must have this)
-    unsigned int every;
-    //! center position of the 2D probe
-    std::vector<double> posCenter;
-    //! end position of the first axec of the 2D probe
-    std::vector<double> posEndFirst;
-    //! end position of the second axec of the 2D probe
-    std::vector<double> posEndSecond;
-    //! number of probes between posCenter and posEndFirst and between posCenter and posEndSecond
+    std::vector<double> pos;
+    
+    //! end position of the probe along the first axe (only for 1Dprobe or 2Dprobe or 3D probe)
+    std::vector<double> posFirst;
+    
+    //! end position of the probe along the second axe (only for 2Dprobe or 3D probe)
+    std::vector<double> posSecond;
+    
+    //! end position of the probe along the second axe (only for 3D probe)
+    std::vector<double> posThird;
+    
+    //! number of probes between pos and all the end positions (only for 1Dprobe or 2Dprobe or 3D probe)
+    //! this will be one value for 1D probe, two values for 2D probe and three values for 3D probe
     std::vector<unsigned int> number;
 };
 
@@ -110,16 +96,13 @@ public:
     unsigned int scalar_every;
 
     //! vector of 0D probes
-    std::vector<probe0DStructure> probe0DStruc;
-
-    //! rearranged positions for the probes 0d
-    std::vector<std::vector<double> > ps_0d_coord;
+    std::vector<probeStructure> probe0DStruc;
 
     //! vector of 1D probes
-    std::vector<probe1DStructure> probe1DStruc;
+    std::vector<probeStructure> probe1DStruc;
     
     //! vector of 2D probes
-    std::vector<probe2DStructure> probe2DStruc;
+    std::vector<probeStructure> probe2DStruc;
     
     //! every for the standard pic timeloop output
     unsigned int print_every;

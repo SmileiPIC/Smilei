@@ -190,8 +190,8 @@ end
 
 diagnostic probe1d
     every = 10
-    pos_start = 0
-    pos_end = 12
+    pos = 0
+    pos_first = 12
     number = 13
 end
 

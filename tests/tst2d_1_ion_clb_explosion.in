@@ -66,35 +66,35 @@ species
 	radiating = false
 end
 
-# diagnostic probe0d
-# 	every = 1
-# 	pos = 1.0 1.0
-# end
-# 
-# diagnostic probe0d
-# 	every = 1
-# 	pos = 0.5 0.5
-# end
-# 
-# diagnostic probe1d
-#     every = 100
-#     pos_start = 0 0
-#     pos_end = 0 1
-#     number = 11
-# end
-# 
-# diagnostic probe1d
-#     every = 10
-#     pos_start = 0 0
-#     pos_end = 1 0
-#     number = 11
-# end
+diagnostic probe0d
+	every = 1
+	pos = 1.0 1.0
+end
+
+diagnostic probe0d
+	every = 1
+	pos = 0.5 0.5
+end
+
+diagnostic probe1d
+    every = 100
+    pos = 0 0
+    pos_first = 0 1
+    number = 11
+end
+
+diagnostic probe1d
+    every = 10
+    pos = 0 0
+    pos_first = 1 0
+    number = 11
+end
 
 diagnostic probe2d
 	every = 10
-	pos_center = 0.0 0.0
-	pos_first_end  = 1.0 0.0 
-	pos_second_end = 0.0 1.0
+	pos = 0.0 0.0
+	pos_first = 1.0 0.0 
+	pos_second = 0.0 1.0
 	number = 3 11
 end
 

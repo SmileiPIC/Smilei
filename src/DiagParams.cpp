@@ -27,50 +27,50 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
 	ifile.extract("every",scalar_every,"diagnostic scalar");
 	
 
-    unsigned int n_probe0d=0;
-    while (ifile.existGroup("diagnostic probe0d",n_probe0d)) {
-        probe0DStructure tmpStruct;
-        ifile.extract("every",tmpStruct.every,"diagnostic probe0d",0,n_probe0d);
+    unsigned int n_probe=0;
+    while (ifile.existGroup("diagnostic probe0d",n_probe)) {
+        probeStructure tmpStruct;
+        ifile.extract("every",tmpStruct.every,"diagnostic probe0d",0,n_probe);
         tmpStruct.pos.resize(params.nDim_field);
-        ifile.extract("pos",tmpStruct.pos,"diagnostic probe0d",0,n_probe0d);
+        ifile.extract("pos",tmpStruct.pos,"diagnostic probe0d",0,n_probe);
         if (params.nDim_field != tmpStruct.pos.size()) {
             ERROR("diagnostic probe0d: different dimension of nDim and pos");
         }
         probe0DStruc.push_back(tmpStruct);
-        n_probe0d++;
+        n_probe++;
     }
     
-    unsigned int n_probe1d=0;
-    while (ifile.existGroup("diagnostic probe1d",n_probe1d)) {
-        probe1DStructure tmpStruct;
+    n_probe=0;
+    while (ifile.existGroup("diagnostic probe1d",n_probe)) {
+        probeStructure tmpStruct;
         
-        ifile.extract("every",tmpStruct.every,"diagnostic probe1d",0,n_probe1d);
-        ifile.extract("number",tmpStruct.number,"diagnostic probe1d",0,n_probe1d);
+        ifile.extract("every",tmpStruct.every,"diagnostic probe1d",0,n_probe);
+        ifile.extract("number",tmpStruct.number,"diagnostic probe1d",0,n_probe);
         
-        ifile.extract("pos_start",tmpStruct.posStart,"diagnostic probe1d",0,n_probe1d);
-        ifile.extract("pos_end",tmpStruct.posEnd,"diagnostic probe1d",0,n_probe1d);
+        ifile.extract("pos",tmpStruct.pos,"diagnostic probe1d",0,n_probe);
+        ifile.extract("pos_first",tmpStruct.posFirst,"diagnostic probe1d",0,n_probe);
         
         probe1DStruc.push_back(tmpStruct);
-        n_probe1d++;
+        n_probe++;
     }
 
-    unsigned int n_probe2d=0;
-    while (ifile.existGroup("diagnostic probe2d",n_probe2d)) {
+    n_probe=0;
+    while (ifile.existGroup("diagnostic probe2d",n_probe)) {
         if (params.nDim_particle == 1 ) {
             WARNING ("diagnostic probe2d DISABLED in 1D");
             break;
         }
-        probe2DStructure tmpStruct;
+        probeStructure tmpStruct;
         
-        ifile.extract("every",tmpStruct.every,"diagnostic probe2d",0,n_probe2d);
-        ifile.extract("number",tmpStruct.number,"diagnostic probe2d",0,n_probe2d);
+        ifile.extract("every",tmpStruct.every,"diagnostic probe2d",0,n_probe);
+        ifile.extract("number",tmpStruct.number,"diagnostic probe2d",0,n_probe);
         
-        ifile.extract("pos_center",tmpStruct.posCenter,"diagnostic probe2d",0,n_probe2d);
-        ifile.extract("pos_first_end",tmpStruct.posEndFirst,"diagnostic probe2d",0,n_probe2d);
-        ifile.extract("pos_second_end",tmpStruct.posEndSecond,"diagnostic probe2d",0,n_probe2d);
+        ifile.extract("pos",tmpStruct.pos,"diagnostic probe1d",0,n_probe);
+        ifile.extract("pos_first",tmpStruct.posFirst,"diagnostic probe1d",0,n_probe);
+        ifile.extract("pos_second",tmpStruct.posSecond,"diagnostic probe2d",0,n_probe);
         
         probe2DStruc.push_back(tmpStruct);
-        n_probe2d++;
+        n_probe++;
     }
     
     

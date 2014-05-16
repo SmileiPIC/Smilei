@@ -23,8 +23,7 @@ DiagnosticProbe1D::DiagnosticProbe1D(PicParams* params, DiagParams* diagParams, 
         every[np]=diagParams->probe1DStruc[np].every;
         unsigned int ndim=params->nDim_particle;
 
-        vector<unsigned int> vecNumber(1);
-        vecNumber[0]=diagParams->probe1DStruc[np].number;
+        vector<unsigned int> vecNumber=diagParams->probe1DStruc[np].number;
         
         probeParticles[np].initialize(vecNumber[0], ndim);
         probeId[np].resize(vecNumber[0]);
@@ -34,13 +33,10 @@ DiagnosticProbe1D::DiagnosticProbe1D(PicParams* params, DiagParams* diagParams, 
             int found=smpi->getRank();
             for(unsigned int iDim=0; iDim!=ndim; ++iDim) {
                 unsigned int k=iDim+count*ndim;
-                if (vecNumber[0]>1) {
-                    partPos[k]=diagParams->probe1DStruc[np].posStart[iDim]+count*(diagParams->probe1DStruc[np].posEnd[iDim]-diagParams->probe1DStruc[np].posStart[iDim])/(vecNumber[0]-1);
-                } else {
-                    partPos[k]=0.5*(diagParams->probe1DStruc[np].posStart[iDim]+diagParams->probe1DStruc[np].posEnd[iDim]);
-                }
+                partPos[k]=diagParams->probe1DStruc[np].pos[iDim]+count*(diagParams->probe1DStruc[np].posFirst[iDim]-diagParams->probe1DStruc[np].pos[iDim])/(vecNumber[0]-1);
+                
                 probeParticles[np].position(iDim,count) = 2*M_PI*partPos[k];
-
+                
                 if(smpi->getDomainLocalMin(iDim) >  probeParticles[np].position(iDim,count) || smpi->getDomainLocalMax(iDim) <= probeParticles[np].position(iDim,count)) {
                     found=-1;
                 }
