@@ -122,9 +122,7 @@ void DiagnosticProbe::runAll(unsigned int timestep, ElectroMagn* EMfields, Inter
 }
 
 void DiagnosticProbe::run(unsigned int np, ElectroMagn* EMfields, Interpolator* interp) {
-    
-    DEBUG(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-    
+        
     vector<hsize_t> dims(dimProbe);
     vector<hsize_t> nulldims(dimProbe);
     for (unsigned int i=0; i<dimProbe-1; i++) {
@@ -175,29 +173,20 @@ void DiagnosticProbe::run(unsigned int np, ElectroMagn* EMfields, Interpolator* 
                 count2[i]=0;
             }
         }
-        vector<hsize_t> coeff(dimProbe);
-        hsize_t mult=1;
-        coeff[0]=0;
-        for (unsigned int i=1; i<dimProbe; i++) {
-            mult *= dimsO[i];
-            coeff[i] = mult;
-        }
-
         
         vector<hsize_t> start(dimProbe);
         start[0]=dimsO[0];
-        
-        start[1]=iprob % dimsO[1];
-        if (dimProbe>2) start[2]=iprob / dimsO[1];
-        for (unsigned int i=2; i<dimProbe; i++) {
-            start[i]=0;
+    
+        for (unsigned int i=1; i<dimProbe-1; i++) {
+            start[i]=iprob % dimsO[i];
         }
+        start.back()=0;
         
         
-        DEBUG("<><><><><><><><><><><><><><><>");
-        for (unsigned int i=0; i<dimProbe; i++) {
-            DEBUG(dimProbe-2 << "D iprob " << setw(4) << iprob << " coeff " << setw(4) << coeff[i] << " dimsO " << setw(4) << dimsO[i] << ": start " << setw(4)  << start[i]);
-        }
+//        DEBUG("<><><><><><><><><><><><><><><> " << setw(4) << iprob);
+//        for (unsigned int i=0; i<dimProbe; i++) {
+//            DEBUG(dimProbe-2 << "D dimsO " << setw(4) << dimsO[i] << ": start " << setw(4)  << start[i]);
+//        }
         
         H5Sselect_hyperslab(file_space, H5S_SELECT_SET, &start[0], NULL, &count2[0], NULL);
         
