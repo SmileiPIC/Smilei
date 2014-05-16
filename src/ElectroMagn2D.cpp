@@ -110,6 +110,14 @@ ElectroMagn2D::ElectroMagn2D(PicParams* params, SmileiMPI* smpi)
     Jz_   = new Field2D(dimPrim, 2, false, "Jz");
     rho_  = new Field2D(dimPrim, "Rho" );
     rho_o = new Field2D(dimPrim, "Rho_old" );
+    
+    // Allocation of the time-averaged EM fields
+    Ex_avg  = new Field2D(dimPrim, 0, false, "Ex_avg");
+    Ey_avg  = new Field2D(dimPrim, 1, false, "Ey_avg");
+    Ez_avg  = new Field2D(dimPrim, 2, false, "Ez_avg");
+    Bx_avg  = new Field2D(dimPrim, 0, true,  "Bx_avg");
+    By_avg  = new Field2D(dimPrim, 1, true,  "By_avg");
+    Bz_avg  = new Field2D(dimPrim, 2, true,  "Bz_avg");
 
     // Charge currents currents and density for each species
     ostringstream file_name("");
@@ -614,23 +622,61 @@ void ElectroMagn2D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
     // -----------------------------------------
     // Laser temporal profile
     // -----------------------------------------
-    double byW=0.0, bzW=0.0, byE=0.0, bzE=0.0;
-
-    for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
-
-        if (laser_[ilaser]->laser_struct.angle == 0) {
-            // Incident field (west boundary)
-            byW += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
-            bzW += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
-        } else if (laser_[ilaser]->laser_struct.angle == 180) {
-            // Incident field (east boundary)
-            byE += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
-            bzE += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
-        } else {
-            ERROR("Angle not yet implemented for laser " << ilaser);
-        }
-
-    }//ilaser
+//    double byW=0.0, bzW=0.0, byE=0.0, bzE=0.0;
+//
+//    for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
+//
+//        if (laser_[ilaser]->laser_struct.angle == 0) {
+//            // Incident field (west boundary)
+//            byW += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
+//            bzW += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
+//        } else if (laser_[ilaser]->laser_struct.angle == 180) {
+//            // Incident field (east boundary)
+//            byE += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
+//            bzE += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
+//        } else {
+//            ERROR("Angle not yet implemented for laser " << ilaser);
+//        }
+//
+//    }//ilaser
+    
+    double byW[ny_d], bzW[ny_d], byE[ny_d], bzE[ny_d];
+    
+    for (unsigned int j=0; j<ny_d; j++) {
+        
+        byW[j] = 0.0;
+        bzW[j] = 0.0;
+        byE[j] = 0.0;
+        bzE[j] = 0.0;
+    
+        for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
+            
+            // TIME PROFILE
+            if (laser_[ilaser]->laser_struct.angle == 0) {
+                // Incident field (west boundary)
+                byW[j] += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
+                bzW[j] += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
+            } else if (laser_[ilaser]->laser_struct.angle == 180) {
+                // Incident field (east boundary)
+                byE[j] += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
+                bzE[j] += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
+            } else {
+                ERROR("Angle not yet implemented for laser " << ilaser);
+            }
+            
+            // TRANSVERSE PROFILE
+            double yp     = smpi2D->getDomainLocalMin(1) + ((double)j)     * dy;
+            double yd     = smpi2D->getDomainLocalMin(1) + ((double)j-0.5) * dy;
+            double fct_yp = laser_[ilaser]->transverse_profile2D(time_dual,yp);
+            double fct_yd = laser_[ilaser]->transverse_profile2D(time_dual,yd);
+            byW[j]       *= fct_yp;
+            bzW[j]       *= fct_yd;
+            byE[j]       *= fct_yp;
+            bzE[j]       *= fct_yd;
+            
+        }//ilaser
+        
+    }// loop on j
 
 
     // If !periodic
@@ -652,7 +698,7 @@ void ElectroMagn2D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*By2D)(0,j) = Alpha_SM_W   * (*Ez2D)(0,j)
                            +              Beta_SM_W    * (*By2D)(1,j)
-                           +              Gamma_SM_W   * byW
+                           +              Gamma_SM_W   * byW[j]
                            +              Delta_SM_W   * (*Bx2D)(0,j+1)
                            +              Epsilon_SM_W * (*Bx2D)(0,j);
         }
@@ -660,7 +706,7 @@ void ElectroMagn2D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
         for (unsigned int j=0 ; j<ny_d ; j++) {
             (*Bz2D)(0,j) = -Alpha_SM_W * (*Ey2D)(0,j)
                            +               Beta_SM_W  * (*Bz2D)(1,j)
-                           +               Gamma_SM_W * bzW;
+                           +               Gamma_SM_W * bzW[j];
         }
     }//if West
 
@@ -672,7 +718,7 @@ void ElectroMagn2D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*By2D)(nx_d-1,j) = Alpha_SM_E   * (*Ez2D)(nx_p-1,j)
                                 +                   Beta_SM_E    * (*By2D)(nx_d-2,j)
-                                +                   Gamma_SM_E   * byE
+                                +                   Gamma_SM_E   * byE[j]
                                 +                   Delta_SM_E   * (*Bx2D)(nx_p-1,j+1) // Check x-index
                                 +                   Epsilon_SM_E * (*Bx2D)(nx_p-1,j);
         }
@@ -680,7 +726,7 @@ void ElectroMagn2D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
         for (unsigned int j=0 ; j<ny_d ; j++) {
             (*Bz2D)(nx_d-1,j) = -Alpha_SM_E * (*Ey2D)(nx_p-1,j)
                                 +                    Beta_SM_E  * (*Bz2D)(nx_d-2,j)
-                                +                    Gamma_SM_E * bzE;
+                                +                    Gamma_SM_E * bzE[j];
         }
     }//if East
 
@@ -723,6 +769,84 @@ void ElectroMagn2D::centerMagneticFields()
     }
 
 }//END centerMagneticFields
+
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Reset/Increment the averaged fields
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn2D::incrementAvgFields(unsigned int time_step, unsigned int ntime_step_avg)
+{
+    // Static cast of the fields
+    Field2D* Ex2D     = static_cast<Field2D*>(Ex_);
+    Field2D* Ey2D     = static_cast<Field2D*>(Ey_);
+    Field2D* Ez2D     = static_cast<Field2D*>(Ez_);
+    Field2D* Bx2D_m   = static_cast<Field2D*>(Bx_m);
+    Field2D* By2D_m   = static_cast<Field2D*>(By_m);
+    Field2D* Bz2D_m   = static_cast<Field2D*>(Bz_m);
+    Field2D* Ex2D_avg = static_cast<Field2D*>(Ex_avg);
+    Field2D* Ey2D_avg = static_cast<Field2D*>(Ey_avg);
+    Field2D* Ez2D_avg = static_cast<Field2D*>(Ez_avg);
+    Field2D* Bx2D_avg = static_cast<Field2D*>(Bx_avg);
+    Field2D* By2D_avg = static_cast<Field2D*>(By_avg);
+    Field2D* Bz2D_avg = static_cast<Field2D*>(Bz_avg);
+    
+    // reset the averaged fields for (time_step-1)%ntime_step_avg == 0
+    if ( (time_step-1)%ntime_step_avg==0 ){
+        Ex2D_avg->put_to(0.0);
+        Ey2D_avg->put_to(0.0);
+        Ez2D_avg->put_to(0.0);
+        Bx2D_avg->put_to(0.0);
+        By2D_avg->put_to(0.0);
+        Bz2D_avg->put_to(0.0);
+    }
+    
+    // increment the time-averaged fields
+    
+    // Electric field Ex^(d,p)
+    for (unsigned int i=0 ; i<nx_d ; i++) {
+        for (unsigned int j=0 ; j<ny_p ; j++) {
+            (*Ex2D_avg)(i,j) += (*Ex2D)(i,j);
+        }
+    }
+    
+    // Electric field Ey^(p,d)
+    for (unsigned int i=0 ; i<nx_p ; i++) {
+        for (unsigned int j=0 ; j<ny_d ; j++) {
+            (*Ey2D_avg)(i,j) += (*Ey2D)(i,j);
+        }
+    }
+    
+    // Electric field Ez^(p,p)
+    for (unsigned int i=0 ;  i<nx_p ; i++) {
+        for (unsigned int j=0 ; j<ny_p ; j++) {
+            (*Ez2D_avg)(i,j) += (*Ez2D)(i,j);
+        }
+    }
+    
+    // Magnetic field Bx^(p,d)
+    for (unsigned int i=0 ; i<nx_p ; i++) {
+        for (unsigned int j=0 ; j<ny_d ; j++) {
+            (*Bx2D_avg)(i,j) += (*Bx2D_m)(i,j);
+        }
+    }
+    
+    // Magnetic field By^(d,p)
+    for (unsigned int i=0 ; i<nx_d ; i++) {
+        for (unsigned int j=0 ; j<ny_p ; j++) {
+            (*By2D_avg)(i,j) += (*By2D_m)(i,j);
+        }
+    }
+    
+    // Magnetic field Bz^(d,d)
+    for (unsigned int i=0 ; i<nx_d ; i++) {
+        for (unsigned int j=0 ; j<ny_d ; j++) {
+            (*Bz2D_avg)(i,j) += (*Bz2D_m)(i,j);
+        }
+    }
+
+    
+}//END incrementAvgFields
 
 
 

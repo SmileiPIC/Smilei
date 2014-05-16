@@ -22,9 +22,7 @@ DiagnosticProbe2D::DiagnosticProbe2D(PicParams* params, DiagParams* diagParams, 
         every[np]=diagParams->probe2DStruc[np].every;
         unsigned int ndim=params->nDim_particle;
 
-        vector<unsigned int> vecNumber(2);
-        vecNumber[0]=diagParams->probe2DStruc[np].numberFirst;
-        vecNumber[1]=diagParams->probe2DStruc[np].numberSecond;
+        vector<unsigned int> vecNumber=diagParams->probe2DStruc[np].number;
         
         probeParticles[np].initialize(vecNumber[0]*vecNumber[1], ndim);
         probeId[np].resize(vecNumber[0]*vecNumber[1]);
@@ -38,8 +36,8 @@ DiagnosticProbe2D::DiagnosticProbe2D(PicParams* params, DiagParams* diagParams, 
                 for(unsigned int iDim=0; iDim!=ndim; ++iDim) {
                     unsigned int k=iDim+count*ndim;
                     
-                    partPos[k] = diagParams->probe2DStruc[np].posCenter[iDim]+count1*(diagParams->probe2DStruc[np].posEndFirst[iDim]-diagParams->probe2DStruc[np].posCenter[iDim])/(diagParams->probe2DStruc[np].numberFirst-1) +
-                                 diagParams->probe2DStruc[np].posCenter[iDim]+count2*(diagParams->probe2DStruc[np].posEndSecond[iDim]-diagParams->probe2DStruc[np].posCenter[iDim])/(diagParams->probe2DStruc[np].numberSecond-1);
+                    partPos[k] = diagParams->probe2DStruc[np].posCenter[iDim]+count1*(diagParams->probe2DStruc[np].posEndFirst[iDim]-diagParams->probe2DStruc[np].posCenter[iDim])/(vecNumber[0]-1) +
+                                 diagParams->probe2DStruc[np].posCenter[iDim]+count2*(diagParams->probe2DStruc[np].posEndSecond[iDim]-diagParams->probe2DStruc[np].posCenter[iDim])/(vecNumber[1]-1);
                                         
                     probeParticles[np].position(iDim,count1) = 2*M_PI*partPos[k];
                     

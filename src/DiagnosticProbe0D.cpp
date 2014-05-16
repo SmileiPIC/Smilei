@@ -24,8 +24,7 @@ DiagnosticProbe0D::DiagnosticProbe0D(PicParams* params, DiagParams* diagParams, 
 
         unsigned int ndim=params->nDim_particle;
  
-        vector<unsigned int> vecNumber(1);
-        vecNumber[0]=1; // just one probe per group
+        vector<unsigned int> vecNumber(1,1);
 
         probeParticles[np].initialize(vecNumber[0], ndim);
         probeId[np].resize(vecNumber[0]);

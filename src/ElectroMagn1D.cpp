@@ -68,6 +68,14 @@ ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
     Bx_m = new Field1D(dimPrim, 0, true,  "Bx_m");
     By_m = new Field1D(dimPrim, 1, true,  "By_m");
     Bz_m = new Field1D(dimPrim, 2, true,  "Bz_m");
+    
+    // Allocation of time-averaged EM fields
+    Ex_avg  = new Field1D(dimPrim, 0, false, "Ex_avg");
+    Ey_avg  = new Field1D(dimPrim, 1, false, "Ey_avg");
+    Ez_avg  = new Field1D(dimPrim, 2, false, "Ez_avg");
+    Bx_avg  = new Field1D(dimPrim, 0, true,  "Bx_avg");
+    By_avg  = new Field1D(dimPrim, 1, true,  "By_avg");
+    Bz_avg  = new Field1D(dimPrim, 2, true,  "Bz_avg");
 
     // Total charge currents and densities
     Jx_   = new Field1D(dimPrim, 0, false, "Jx");
@@ -331,7 +339,7 @@ void ElectroMagn1D::solveMaxwell(double time_dual, SmileiMPI* smpi)
     applyEMBoundaryConditions(time_dual, smpi);
     smpi->exchangeB( this );
     centerMagneticFields();
-
+    
 }
 
 
@@ -529,6 +537,53 @@ void ElectroMagn1D::centerMagneticFields()
     }
 
 }//END centerMagneticFields
+
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Reset/Increment the averaged fields
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn1D::incrementAvgFields(unsigned int time_step, unsigned int ntime_step_avg)
+{
+    // Static cast of the fields
+    Field1D* Ex1D     = static_cast<Field1D*>(Ex_);
+    Field1D* Ey1D     = static_cast<Field1D*>(Ey_);
+    Field1D* Ez1D     = static_cast<Field1D*>(Ez_);
+    Field1D* Bx1D_m   = static_cast<Field1D*>(Bx_m);
+    Field1D* By1D_m   = static_cast<Field1D*>(By_m);
+    Field1D* Bz1D_m   = static_cast<Field1D*>(Bz_m);
+    Field1D* Ex1D_avg = static_cast<Field1D*>(Ex_avg);
+    Field1D* Ey1D_avg = static_cast<Field1D*>(Ey_avg);
+    Field1D* Ez1D_avg = static_cast<Field1D*>(Ez_avg);
+    Field1D* Bx1D_avg = static_cast<Field1D*>(Bx_avg);
+    Field1D* By1D_avg = static_cast<Field1D*>(By_avg);
+    Field1D* Bz1D_avg = static_cast<Field1D*>(Bz_avg);
+    
+    // reset the averaged fields for (time_step-1)%ntime_step_avg == 0
+    if ( (time_step-1)%ntime_step_avg==0 ){
+        Ex1D_avg->put_to(0.0);
+        Ey1D_avg->put_to(0.0);
+        Ez1D_avg->put_to(0.0);
+        Bx1D_avg->put_to(0.0);
+        By1D_avg->put_to(0.0);
+        Bz1D_avg->put_to(0.0);
+     }
+    
+    // for Ey^(p), Ez^(p) & Bx^(p)
+    for (unsigned int i=0 ; i<dimPrim[0] ; i++) {
+        (*Ey1D_avg)(i) += (*Ey1D)(i);
+        (*Ez1D_avg)(i) += (*Ez1D)(i);
+        (*Bx1D_avg)(i) += (*Bx1D_m)(i);
+    }
+    
+    // for Ex^(d), By^(d) & Bz^(d)
+    for (unsigned int i=0 ; i<dimDual[0] ; i++) {
+        (*Ex1D_avg)(i) += (*Ex1D)(i);
+        (*By1D_avg)(i) += (*By1D_m)(i);
+        (*Bz1D_avg)(i) += (*Bz1D_m)(i);
+    }
+    
+}//END incrementAvgFields
 
 
 

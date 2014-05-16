@@ -27,6 +27,10 @@ public:
 
     //! Write all fields of all time step in the same file
     void writeAllFieldsSingleFileTime( ElectroMagn* EMfields, int itime );
+    
+    //! Write time-averaged fields of all time step in the same file
+    void writeAvgFieldsSingleFileTime( ElectroMagn* EMfields, int itime );
+    
     //! Write current field in specified group of the global file
     virtual void writeFieldsSingleFileTime( Field* field, hid_t group_id ) = 0;
 
@@ -35,6 +39,9 @@ public:
 
     //! Id of "Fields.h5", contains all fields per timestep
     hid_t global_file_id_;
+    
+    //! Id of "Fields_avg.h5", contains time-averaged fields per timestep
+    hid_t global_file_id_avg;
 
     //! Property list for collective dataset write.
     hid_t write_plist;

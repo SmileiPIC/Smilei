@@ -95,8 +95,7 @@ diagnostic probe2d
 	pos_center = 0.0 0.0
 	pos_first_end  = 1.0 0.0 
 	pos_second_end = 0.0 1.0
-	number_first = 3
-	number_second = 11
+	number = 3 11
 end
 
 

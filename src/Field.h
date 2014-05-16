@@ -96,6 +96,13 @@ public:
         DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR("Not finite "<< i << " = " << data_[i]));
         return data_[i];
     };
+    //! method used to put all entry of a field at a given value val
+    inline void put_to(double val)
+    {
+        if (data_)
+            for (unsigned int i=0; i<globalDims_; i++) data_[i] = val;
+    }
+    
 
 protected:
 

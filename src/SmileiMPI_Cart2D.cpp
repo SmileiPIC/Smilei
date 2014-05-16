@@ -95,7 +95,7 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
     }
     // Force configuration of MPI domain decomposition
     //number_of_procs[0] = 1;
-    //number_of_procs[1] = 2;
+    //number_of_procs[1] = 16;
     cout << "Split : " << smilei_sz << " : " << number_of_procs[0] << " - " << number_of_procs[1] << endl;
 
     MPI_Cart_create( SMILEI_COMM_WORLD, ndims_, number_of_procs, periods_, reorder_, &SMILEI_COMM_2D );

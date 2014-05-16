@@ -81,10 +81,8 @@ struct probe2DStructure {
     std::vector<double> posEndFirst;
     //! end position of the second axec of the 2D probe
     std::vector<double> posEndSecond;
-    //! number of probes between posCenter and posEndFirst
-    unsigned int numberFirst;
-    //! number of probes between posCenter and posEndSecond
-    unsigned int numberSecond;
+    //! number of probes between posCenter and posEndFirst and between posCenter and posEndSecond
+    std::vector<unsigned int> number;
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -98,6 +96,12 @@ public:
 
     //! field dump output
     unsigned int fieldDump_every;
+    
+    //! time-averaged field dump output
+    unsigned int avgfieldDump_every;
+    
+    //! number of time-steps for time-averaging of fields
+    unsigned int ntime_step_avg;
 
     //! particle dump output
     unsigned int particleDump_every;

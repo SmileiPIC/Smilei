@@ -103,7 +103,7 @@ PicParams::PicParams(InputData &ifile) {
             }
         }
         
-    }else if(plasma_geometry=="triangular"){
+    } else if(plasma_geometry=="triangular"){
         ifile.extract("plasma_length", plasma_length);
         ifile.extract("vacuum_length", vacuum_length);
         ifile.extract("slope_length", left_slope_length);
@@ -111,7 +111,17 @@ PicParams::PicParams(InputData &ifile) {
         for(unsigned int i=0;i<nDim_field;i++) {
             right_slope_length[i]=plasma_length[i]-left_slope_length[i];
         }
-    }else {
+        
+    } else if (plasma_geometry=="fukuda"){
+        WARNING("plasma geometry: fukuda vacuum & plasma length are not used");
+        ifile.extract("plasma_length", plasma_length);
+        ifile.extract("vacuum_length", vacuum_length);
+        vacuum_length[0] = 2.0;
+        vacuum_length[1] = 0.0;
+        plasma_length[0] = 112.0;
+        plasma_length[1] = 40.0;
+        
+    } else {
         ERROR("unknown plasma_geometry "<< plasma_geometry);
     }
     
@@ -169,8 +179,14 @@ PicParams::PicParams(InputData &ifile) {
         ifile.extract("time_profile",tmpLaser.time_profile ,"laser",0,n_laser);
         ifile.extract("int_params",tmpLaser.int_params ,"laser",0,n_laser);
         ifile.extract("double_params",tmpLaser.double_params ,"laser",0,n_laser);
+        ifile.extract("transv_profile",tmpLaser.transv_profile ,"laser",0,n_laser);
+        ifile.extract("int_params_transv",tmpLaser.int_params_transv ,"laser",0,n_laser);
+        ifile.extract("double_params_transv",tmpLaser.double_params_transv ,"laser",0,n_laser);
         
-        for (unsigned int i=0; i<tmpLaser.double_params.size(); i++) tmpLaser.double_params[i] *= 2.0*M_PI;
+        for (unsigned int i=0; i<tmpLaser.double_params.size(); i++)
+            tmpLaser.double_params[i] *= 2.0*M_PI;
+        for (unsigned int i=0; i<tmpLaser.double_params_transv.size(); i++)
+            tmpLaser.double_params_transv[i] *= 2.0*M_PI;
         /* DEFINITION OF THE PARAMETERS MOVED TO LASER.CPP (MG)
          if (tmpLaser.time_profile=="constant") {
          if (tmpLaser.double_params.size()<1) {
@@ -230,6 +246,7 @@ void PicParams::compute()
             
             vacuum_length[i] *= 2.0*M_PI;
             plasma_length[i] *= 2.0*M_PI;
+            
             if (plasma_geometry=="trap") {
                 if(slope_length.size()!=0) slope_length[i]  *= 2.0*M_PI;
                 else{

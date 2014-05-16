@@ -10,7 +10,7 @@ const double PI2 = 8.*atan(1.);
 class Laser {
 public:
 
-    Laser(double, LaserStructure);
+    Laser(double, double, LaserStructure);
 
     LaserStructure laser_struct;
 
@@ -23,7 +23,12 @@ public:
     std::vector<int>    int_params;
     std::vector<double> double_params;
 
+    std::string         type_of_transv_profile;
+    std::vector<int>    int_params_transv;
+    std::vector<double> double_params_transv;
+    
     double time_profile(double);
+    double transverse_profile2D(double, double);
 
 
 };

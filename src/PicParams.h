@@ -35,6 +35,15 @@ struct LaserStructure {
 
     //! double vector for laser parameters
     std::vector<double> double_params;
+    
+    //! Laser transverse profile
+    std::string transv_profile;
+    
+    //! int vector for laser parameters
+    std::vector<int> int_params_transv;
+    
+    //! double vector for laser parameters
+    std::vector<double> double_params_transv;
 };
 
 
