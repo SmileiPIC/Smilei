@@ -62,22 +62,16 @@ diagnostic scalar
 end
 
 
-diagnostic probe0d
+diagnostic probe
 	every = 1
-	x = 0.0 0.1 1.0 6.0 9.0 10.0	
+	pos = 0.0	
 end
 
-diagnostic probe1d
+diagnostic probe
 	every = 1;
-	x = 0.0 10.0
-	space_res = 10
-	
-end
-
-diagnostic probe1d
-	every = 1;
-	x = 0.0 10.0
-	space_res = 5
+	pos = 0.0
+	pos_first = 10.0
+	number = 5
 	
 end
 

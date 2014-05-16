@@ -137,12 +137,20 @@ end
 # every = number of time-steps between each output
 # x     = position of the different probes
 #
-diagnostic probe0d
+diagnostic probe
 	every = 1
-	x = 0.0  11.0  22.0	
-	y = 2.5  2.5   2.5
+	pos = 0.0  2.5
 end
 
+diagnostic probe
+	every = 1
+	pos = 11.0  2.5
+end
+
+diagnostic probe
+	every = 1
+	pos = 22.0  2.5
+end
 
 dump_step = 1000
 exit_after_dump = false

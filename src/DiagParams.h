@@ -52,8 +52,12 @@ struct phaseStructure {
 
 //! this structure contains the definition of a probe (0D 1D 2D and 3D)
 struct probeStructure {
+    //! this is the dimension of the probe, it is automatically calculated by looking at the size of the number
+    unsigned int dim;
+
     //! probe1D output every (every probe1D diagnostic must have this)
     unsigned int every;
+    
     //! start position of the 1D probe
     std::vector<double> pos;
     

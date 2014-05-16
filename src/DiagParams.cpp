@@ -26,39 +26,40 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
 	scalar_every=0;
 	ifile.extract("every",scalar_every,"diagnostic scalar");
 	
-    for (unsigned int i=0; i<3; i++) {
-        stringstream ss;
-        ss << "diagnostic probe" << i << "d";
-        string groupName = ss.str();
-        unsigned int n_probe=0;
-        while (ifile.existGroup(groupName,n_probe)) {
-            if (params.nDim_particle == 1 ) {
-                WARNING ("diagnostic probe2d DISABLED in 1D");
-                break;
-            }
-            probeStructure tmpStruct;
-            
-            ifile.extract("every",tmpStruct.every,groupName,0,n_probe);
-            ifile.extract("number",tmpStruct.number,groupName,0,n_probe);
-            
-            ifile.extract("pos",tmpStruct.pos,groupName,0,n_probe);
-            ifile.extract("pos_first",tmpStruct.posFirst,groupName,0,n_probe);
-            ifile.extract("pos_second",tmpStruct.posSecond,groupName,0,n_probe);
-            
-            DEBUG("<>.<>.<>.<>.<>.<>.<>.<>.<>.<>.<>.<>.<>.<>. " << tmpStruct.number.size() );
-            switch (tmpStruct.number.size()) {
-                case 0:
-                    probe0DStruc.push_back(tmpStruct);
-                    break;
-                case 1:
-                    probe1DStruc.push_back(tmpStruct);
-                    break;
-                case 2:
-                    probe2DStruc.push_back(tmpStruct);
-                    break;
-            }
-            n_probe++;
+    string groupName = "diagnostic probe";
+    unsigned int n_probe=0;
+    while (ifile.existGroup(groupName,n_probe)) {
+        if (params.nDim_particle == 1 ) {
+            WARNING ("diagnostic probe2d DISABLED in 1D");
+            break;
         }
+        probeStructure tmpStruct;
+        
+        ifile.extract("every",tmpStruct.every,groupName,0,n_probe);
+        ifile.extract("number",tmpStruct.number,groupName,0,n_probe);
+        tmpStruct.dim=tmpStruct.number.size();
+        if (tmpStruct.dim == 0) {
+            tmpStruct.number.resize(1);
+            tmpStruct.number[0]=1;
+        }
+        
+        ifile.extract("pos",tmpStruct.pos,groupName,0,n_probe);
+        ifile.extract("pos_first",tmpStruct.posFirst,groupName,0,n_probe);
+        ifile.extract("pos_second",tmpStruct.posSecond,groupName,0,n_probe);
+        
+        DEBUG("<>.<>.<>.<>.<>.<>.<>.<>.<>.<>.<>.<>.<>.<>. " << tmpStruct.number.size() );
+        switch (tmpStruct.dim) {
+            case 0:
+                probe0DStruc.push_back(tmpStruct);
+                break;
+            case 1:
+                probe1DStruc.push_back(tmpStruct);
+                break;
+            case 2:
+                probe2DStruc.push_back(tmpStruct);
+                break;
+        }
+        n_probe++;
     }
 
     
