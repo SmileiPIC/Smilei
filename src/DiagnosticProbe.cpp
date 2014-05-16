@@ -56,6 +56,7 @@ string DiagnosticProbe::probeName(int p) {
 
 void DiagnosticProbe::addProbe(unsigned int np, vector<double> partPos, vector<unsigned int> vecNumber) {
     
+    DEBUG(dimProbe << " " << vecNumber.size());
     vector<hsize_t> dims(dimProbe);
     vector<hsize_t> max_dims(dimProbe);
     vector<hsize_t> chunk_dims(dimProbe);
@@ -89,10 +90,10 @@ void DiagnosticProbe::addProbe(unsigned int np, vector<double> partPos, vector<u
     unsigned int ndim=partPos.size()/vecNumberProd;
     
     vector<hsize_t> dimsPos(1+vecNumber.size());
-    dimsPos[0]=ndim;
     for (unsigned int i=0; i<vecNumber.size(); i++) {
-        dimsPos[i+1]=vecNumber[i];
+        dimsPos[i]=vecNumber[i];
     }
+    dimsPos[vecNumber.size()]=ndim;
     
     hid_t dataspace_id = H5Screate_simple(dimsPos.size(), &dimsPos[0], NULL);
     
@@ -122,10 +123,19 @@ void DiagnosticProbe::runAll(unsigned int timestep, ElectroMagn* EMfields, Inter
 
 void DiagnosticProbe::run(unsigned int np, ElectroMagn* EMfields, Interpolator* interp) {
     
-    hsize_t dims = probeSize;
-    hid_t  partMemSpace = H5Screate_simple(1, &dims, NULL);
-    hsize_t nulldims = 0;
-    hid_t  partMemSpaceNull = H5Screate_simple(1, &nulldims, NULL);
+    DEBUG(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    
+    vector<hsize_t> dims(dimProbe);
+    vector<hsize_t> nulldims(dimProbe);
+    for (unsigned int i=0; i<dimProbe-1; i++) {
+        dims[i]=1;
+        nulldims[i]=0;
+    }
+    dims.back()=probeSize;
+    nulldims.back()=0;
+    
+    hid_t  partMemSpace = H5Screate_simple(dimProbe, &dims[0], NULL);
+    hid_t  partMemSpaceNull = H5Screate_simple(dimProbe, &nulldims[0], NULL);
     
     vector<double> data(probeSize);
     
@@ -150,27 +160,43 @@ void DiagnosticProbe::run(unsigned int np, ElectroMagn* EMfields, Interpolator* 
     
     file_space = H5Dget_space(dataset_id);
     
-    for (unsigned int count=0; count <nprob; count++) {
-        if (probeId[np][count]==smpi_->getRank())
-            (*interp)(EMfields,probeParticles[np],count,&Eloc_fields,&Bloc_fields);
+    for (unsigned int iprob=0; iprob <nprob; iprob++) {
+        if (probeId[np][iprob]==smpi_->getRank())
+            (*interp)(EMfields,probeParticles[np],iprob,&Eloc_fields,&Bloc_fields);
         
         vector<hsize_t>  count2(dimProbe);
-        if  (probeId[np][count]==smpi_->getRank()) {
+        if  (probeId[np][iprob]==smpi_->getRank()) {
             for (unsigned int i=0; i< dimProbe-1; i++) {
                 count2[i]=1;
             }
-            count2[dimProbe-1]=probeSize;
+            count2.back()=probeSize;
         } else {
             for (unsigned int i=0; i< dimProbe; i++) {
                 count2[i]=0;
             }
         }
+        vector<hsize_t> coeff(dimProbe);
+        hsize_t mult=1;
+        coeff[0]=0;
+        for (unsigned int i=1; i<dimProbe; i++) {
+            mult *= dimsO[i];
+            coeff[i] = mult;
+        }
+
         
         vector<hsize_t> start(dimProbe);
         start[0]=dimsO[0];
-        start[1]=count;
+        
+        start[1]=iprob % dimsO[1];
+        if (dimProbe>2) start[2]=iprob / dimsO[1];
         for (unsigned int i=2; i<dimProbe; i++) {
             start[i]=0;
+        }
+        
+        
+        DEBUG("<><><><><><><><><><><><><><><>");
+        for (unsigned int i=0; i<dimProbe; i++) {
+            DEBUG(dimProbe-2 << "D iprob " << setw(4) << iprob << " coeff " << setw(4) << coeff[i] << " dimsO " << setw(4) << dimsO[i] << ": start " << setw(4)  << start[i]);
         }
         
         H5Sselect_hyperslab(file_space, H5S_SELECT_SET, &start[0], NULL, &count2[0], NULL);
@@ -186,7 +212,7 @@ void DiagnosticProbe::run(unsigned int np, ElectroMagn* EMfields, Interpolator* 
         hid_t write_plist = H5Pcreate(H5P_DATASET_XFER);
         H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);
         
-        if  (probeId[np][count]==smpi_->getRank()) {
+        if  (probeId[np][iprob]==smpi_->getRank()) {
             H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, partMemSpace, file_space, write_plist,&data[0]);
         } else {
             H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, partMemSpaceNull, file_space, write_plist,&data[0]);

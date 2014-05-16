@@ -14,15 +14,15 @@ interpolation_order = 2
 # res_time: temporal resolution (integer = number of time−steps within one normalization period)
 # sim_time: duration of the simulation in units of the normalization period 
 #
-res_time = 200
-sim_time = 4.0
+res_time = 100
+sim_time = 2.0
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
 # sim_length: length of the simulation in units of the normalization wavelength 
 #
-res_space  = 100 100   
-sim_length = 11.0 2.0  
+res_space  = 10 10   
+sim_length = 2.0 2.0  
 
 # PLASMA GEOMETRY
 # plasma_geometry: string defining the plasma geometry
@@ -54,7 +54,7 @@ species
 	species_type = ion
 	initialization_type = cold
 	ionization_model = none
-	n_part_per_cell = 10
+	n_part_per_cell = 2
 	c_part_max = 1.0
 	mass = 1836.0
 	charge = 1.0
@@ -66,12 +66,40 @@ species
 	radiating = false
 end
 
+# diagnostic probe0d
+# 	every = 1
+# 	pos = 1.0 1.0
+# end
+# 
+# diagnostic probe0d
+# 	every = 1
+# 	pos = 0.5 0.5
+# end
+# 
+# diagnostic probe1d
+#     every = 100
+#     pos_start = 0 0
+#     pos_end = 0 1
+#     number = 11
+# end
+# 
+# diagnostic probe1d
+#     every = 10
+#     pos_start = 0 0
+#     pos_end = 1 0
+#     number = 11
+# end
+
 diagnostic probe2d
-	every = 1
+	every = 10
 	pos_center = 0.0 0.0
-	pos_first_end = 10.0 0.0 
+	pos_first_end  = 1.0 0.0 
 	pos_second_end = 0.0 1.0
-	number_first = 11
+	number_first = 3
 	number_second = 11
 end
+
+
+# print_every (on screen text output) 
+print_every = 10
 

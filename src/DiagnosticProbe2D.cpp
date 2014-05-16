@@ -12,7 +12,7 @@
 
 using namespace std;
 
-DiagnosticProbe2D::DiagnosticProbe2D(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi) : DiagnosticProbe(params,diagParams,smpi,1) {
+DiagnosticProbe2D::DiagnosticProbe2D(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi) : DiagnosticProbe(params,diagParams,smpi,2) {
     every.resize(diagParams->probe2DStruc.size());
     probeParticles.resize(diagParams->probe2DStruc.size());
     probeId.resize(diagParams->probe2DStruc.size());
@@ -22,7 +22,7 @@ DiagnosticProbe2D::DiagnosticProbe2D(PicParams* params, DiagParams* diagParams, 
         every[np]=diagParams->probe2DStruc[np].every;
         unsigned int ndim=params->nDim_particle;
 
-        vector<unsigned int> vecNumber(1);
+        vector<unsigned int> vecNumber(2);
         vecNumber[0]=diagParams->probe2DStruc[np].numberFirst;
         vecNumber[1]=diagParams->probe2DStruc[np].numberSecond;
         

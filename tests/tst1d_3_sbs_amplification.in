@@ -189,28 +189,11 @@ diagnostic probe0d
 end
 
 diagnostic probe1d
-    every = 100
-    pos_start = 0
-    pos_end = 120
-    number = 2
-end
-
-diagnostic probe1d
     every = 10
     pos_start = 0
-    pos_end = 120
-    number = 121
+    pos_end = 12
+    number = 13
 end
-
-diagnostic probe2d
-	every = 1
-	pos_center = 90.0
-	pos_first_end = 90.0
-	pos_second_end = 90.0
-	number_first = 100
-	number_second = 200
-end
-
 
 #dump_minutes = 0.1
 dump_step = 1000
