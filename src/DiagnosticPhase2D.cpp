@@ -17,7 +17,7 @@ void DiagnosticPhase2D::writeAttributes(hid_t gid) {
 
     vector<double> tmp(dimsPos[0]*dimsPos[1]);
 
-    hid_t aid = H5Acreate2 (gid, "extents", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT);
+    hid_t aid = H5Acreate (gid, "extents", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT);
     
     tmp[0]=firstmin;
     tmp[1]=secondmin;

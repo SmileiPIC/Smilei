@@ -50,8 +50,7 @@ SmileiIO::SmileiIO( PicParams* params, SmileiMPI* smpi ) : dump_times(0), stop_f
         speciesName << params->species_param[ispec].species_type;
         partDataset_id[ispec] = H5Dcreate(partFile_id, speciesName.str().c_str(), H5T_NATIVE_FLOAT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
 		
-        hsize_t scalaire = 1;
-        hid_t tmp_space = H5Screate_simple(1, &scalaire, NULL);
+        hid_t tmp_space = H5Screate(H5S_SCALAR);
 		
         attribute_id = H5Acreate (partDataset_id[ispec], "Mass", H5T_IEEE_F64BE, tmp_space,
 								  H5P_DEFAULT, H5P_DEFAULT);
@@ -252,8 +251,7 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
     H5Sclose(sid);
     H5Tclose(tid);
 	
-	hsize_t dims1D[1] = {1};
-	sid = H5Screate_simple(1, dims1D, NULL);	
+	sid = H5Screate(H5S_SCALAR);	
 	aid = H5Acreate(fid, "dump_step", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
 	H5Awrite(aid, H5T_NATIVE_UINT, &itime);
 	H5Sclose(sid);
@@ -278,7 +276,7 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
 	
     H5Fflush( fid, H5F_SCOPE_GLOBAL );
 	
-	sid = H5Screate_simple(1, dims1D, NULL);
+	sid = H5Screate(H5S_SCALAR);
 	aid = H5Acreate(fid, "species", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
 	unsigned int vecSpeciesSize=vecSpecies.size();
 	H5Awrite(aid, H5T_NATIVE_UINT, &vecSpeciesSize);
@@ -292,14 +290,14 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
 		string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->name_str;
 		gid = H5Gcreate(fid, groupName.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 				
-		sid = H5Screate_simple(1, dims1D, NULL);
+		sid = H5Screate(H5S_SCALAR);
 		aid = H5Acreate(gid, "partCapacity", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
 		unsigned int partCapacity=vecSpecies[ispec]->particles.capacity();
 		H5Awrite(aid, H5T_NATIVE_UINT, &partCapacity);
 		H5Aclose(aid);
 		H5Sclose(sid);
 
-		sid = H5Screate_simple(1, dims1D, NULL);
+		sid = H5Screate(H5S_SCALAR);
 		aid = H5Acreate(gid, "partSize", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
 		unsigned int partSize=vecSpecies[ispec]->particles.size();
 		H5Awrite(aid, H5T_NATIVE_UINT, &partSize);

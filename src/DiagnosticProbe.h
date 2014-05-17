@@ -29,19 +29,13 @@ public:
     //! the creator need both sim parameters params and the diagnostic parameter diagParams
     DiagnosticProbe(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi);
     
-    ~DiagnosticProbe();
+    ~DiagnosticProbe(){};
     
     //! run all probes
-    void runAll(unsigned int timestep, ElectroMagn* EMfields, Interpolator* interp);
-    
-    //! run a single probe
-    void run(unsigned int numDiag, ElectroMagn* EMfields, Interpolator* interp);
+    void run(unsigned int timestep, ElectroMagn* EMfields, Interpolator* interp);
     
     //! return name of the probe based on its number
     std::string probeName(int p);
-
-    //! prpare the hdf5 dataset and attributes
-    void addProbe(unsigned int np, std::vector<double> partPos, std::vector<unsigned int> vecNumber);
 
     //! function to close the file
     void close();
@@ -50,9 +44,6 @@ public:
     std::vector<unsigned int> every;
 
 protected:
-    //!dimension of the probe in the hdf5file (probe0D -> 2(time,fields), probe1D -> 3(time,fields,number_probes_1st_direction) etc...)
-    std::vector<unsigned int> dimProbe;
-    
     //! copy of the smpi pointer
     SmileiMPI* smpi_;
     

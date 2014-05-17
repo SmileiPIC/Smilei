@@ -33,7 +33,7 @@ void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Specie
         diagScal.run(timestep, EMfields, vecSpecies);
     }
 
-    probes.runAll(timestep, EMfields, interp_);
+    probes.run(timestep, EMfields, interp_);
 
 	diagPhaseSpace.run(timestep, vecSpecies);
 }

@@ -50,7 +50,7 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagPa
                 hid_t atype = H5Tcopy(H5T_C_S1);
                 H5Tset_size(atype, ver.size());
                 H5Tset_strpad(atype,H5T_STR_NULLTERM);
-                hid_t attr3 = H5Acreate2(fileId, "Version", atype, aid3, H5P_DEFAULT, H5P_DEFAULT);
+                hid_t attr3 = H5Acreate(fileId, "Version", atype, aid3, H5P_DEFAULT, H5P_DEFAULT);
                 
                 H5Awrite(attr3, atype, ver.c_str());
                 
