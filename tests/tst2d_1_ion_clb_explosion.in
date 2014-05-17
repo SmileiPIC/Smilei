@@ -68,7 +68,7 @@ end
 
 diagnostic probe
 	every = 1
-	pos = 1.0
+	pos = 1.1 1.1
 end
 
 diagnostic probe
@@ -78,8 +78,8 @@ end
 
 diagnostic probe
     every = 100
-    pos = 0 0
-    pos_first = 0 1
+    pos = 0.1 0.2
+    pos_first = 0.3 0.4
     number = 11
 end
 
@@ -95,10 +95,10 @@ diagnostic probe
 	pos = 0.0 0.0
 	pos_first = 1.0 0.0 
 	pos_second = 0.0 1.0
-	number = 3 11
+	number = 3 10
 end
 
 
 # print_every (on screen text output) 
-print_every = 10
+print_every = 1
 

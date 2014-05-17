@@ -180,7 +180,7 @@ end
 #
 diagnostic probe
 	every = 1
-	pos = 30.0
+	pos = 3.0
 end
 
 diagnostic probe

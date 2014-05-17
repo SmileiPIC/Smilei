@@ -58,18 +58,9 @@ struct probeStructure {
     //! probe1D output every (every probe1D diagnostic must have this)
     unsigned int every;
     
-    //! start position of the 1D probe
-    std::vector<double> pos;
-    
-    //! end position of the probe along the first axe (only for 1Dprobe or 2Dprobe or 3D probe)
-    std::vector<double> posFirst;
-    
-    //! end position of the probe along the second axe (only for 2Dprobe or 3D probe)
-    std::vector<double> posSecond;
-    
-    //! end position of the probe along the second axe (only for 3D probe)
-    std::vector<double> posThird;
-    
+    //! points defining the probe
+    std::vector< std::vector<double> > pos;
+        
     //! number of probes between pos and all the end positions (only for 1Dprobe or 2Dprobe or 3D probe)
     //! this will be one value for 1D probe, two values for 2D probe and three values for 3D probe
     std::vector<unsigned int> number;
@@ -99,14 +90,8 @@ public:
     //! scalar output every scalar_every (namelist group "diagnostic scalar" key "every")
     unsigned int scalar_every;
 
-    //! vector of 0D probes
-    std::vector<probeStructure> probe0DStruc;
-
-    //! vector of 1D probes
-    std::vector<probeStructure> probe1DStruc;
-    
-    //! vector of 2D probes
-    std::vector<probeStructure> probe2DStruc;
+    //! vector of probes
+    std::vector<probeStructure> probeStruc;
     
     //! every for the standard pic timeloop output
     unsigned int print_every;

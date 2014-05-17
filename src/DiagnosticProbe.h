@@ -27,8 +27,7 @@ class DiagnosticProbe {
 public:
     
     //! the creator need both sim parameters params and the diagnostic parameter diagParams
-    DiagnosticProbe(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi, unsigned int dim_probe):
-    dimProbe(dim_probe+2), smpi_(smpi), probeSize(6), fileId(0) {open();};
+    DiagnosticProbe(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi);
     
     ~DiagnosticProbe();
     
@@ -41,9 +40,6 @@ public:
     //! return name of the probe based on its number
     std::string probeName(int p);
 
-    //! function to open the file
-    void open();
-
     //! prpare the hdf5 dataset and attributes
     void addProbe(unsigned int np, std::vector<double> partPos, std::vector<unsigned int> vecNumber);
 
@@ -55,7 +51,7 @@ public:
 
 protected:
     //!dimension of the probe in the hdf5file (probe0D -> 2(time,fields), probe1D -> 3(time,fields,number_probes_1st_direction) etc...)
-    unsigned int dimProbe;
+    std::vector<unsigned int> dimProbe;
     
     //! copy of the smpi pointer
     SmileiMPI* smpi_;

@@ -26,39 +26,31 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
 	scalar_every=0;
 	ifile.extract("every",scalar_every,"diagnostic scalar");
 	
-    string groupName = "diagnostic probe";
     unsigned int n_probe=0;
-    while (ifile.existGroup(groupName,n_probe)) {
-        if (params.nDim_particle == 1 ) {
-            WARNING ("diagnostic probe2d DISABLED in 1D");
-            break;
-        }
+    while (ifile.existGroup("diagnostic probe",n_probe)) {
         probeStructure tmpStruct;
         
-        ifile.extract("every",tmpStruct.every,groupName,0,n_probe);
-        ifile.extract("number",tmpStruct.number,groupName,0,n_probe);
+        ifile.extract("every",tmpStruct.every,"diagnostic probe",0,n_probe);
+        ifile.extract("number",tmpStruct.number,"diagnostic probe",0,n_probe);
         tmpStruct.dim=tmpStruct.number.size();
         if (tmpStruct.dim == 0) {
             tmpStruct.number.resize(1);
             tmpStruct.number[0]=1;
         }
-        
-        ifile.extract("pos",tmpStruct.pos,groupName,0,n_probe);
-        ifile.extract("pos_first",tmpStruct.posFirst,groupName,0,n_probe);
-        ifile.extract("pos_second",tmpStruct.posSecond,groupName,0,n_probe);
-        
+        vector<double> pos;
+        ifile.extract("pos",pos,"diagnostic probe",0,n_probe);
+        if (pos.size()>0) tmpStruct.pos.push_back(pos);
+        ifile.extract("pos_first",pos,"diagnostic probe",0,n_probe);
+        if (pos.size()>0) tmpStruct.pos.push_back(pos);
+        ifile.extract("pos_second",pos,"diagnostic probe",0,n_probe);
+        if (pos.size()>0) tmpStruct.pos.push_back(pos);
+        ifile.extract("pos_third",pos,"diagnostic probe",0,n_probe);
+        if (pos.size()>0) tmpStruct.pos.push_back(pos);
+
         DEBUG("<>.<>.<>.<>.<>.<>.<>.<>.<>.<>.<>.<>.<>.<>. " << tmpStruct.number.size() );
-        switch (tmpStruct.dim) {
-            case 0:
-                probe0DStruc.push_back(tmpStruct);
-                break;
-            case 1:
-                probe1DStruc.push_back(tmpStruct);
-                break;
-            case 2:
-                probe2DStruc.push_back(tmpStruct);
-                break;
-        }
+        
+        probeStruc.push_back(tmpStruct);
+
         n_probe++;
     }
 
@@ -90,7 +82,6 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
 		ifile.extract("lor_max",tmpPhaseStruct.lor_max,"diagnostic phase",0,n_probephase);
 		ifile.extract("lor_num",tmpPhaseStruct.lor_num,"diagnostic phase",0,n_probephase);
 		
-		DEBUG(tmpPhaseStruct.mom_num.size() << " " << tmpPhaseStruct.pos_num.size());
 		vecPhase.push_back(tmpPhaseStruct);
 		n_probephase++;
 	}
