@@ -47,13 +47,10 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
         ifile.extract("pos_third",pos,"diagnostic probe",0,n_probe);
         if (pos.size()>0) tmpStruct.pos.push_back(pos);
 
-        DEBUG("<>.<>.<>.<>.<>.<>.<>.<>.<>.<>.<>.<>.<>.<>. " << tmpStruct.number.size() );
-        
         probeStruc.push_back(tmpStruct);
 
         n_probe++;
     }
-
     
 	int n_probephase=0;
 	while (ifile.existGroup("diagnostic phase",n_probephase)) {

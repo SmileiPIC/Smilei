@@ -28,20 +28,17 @@ class Diagnostic {
 
 public:
     //! creator called from main
-    Diagnostic(PicParams* params,  DiagParams* diagparams, SmileiMPI* smpi, Interpolator* interp);
+    Diagnostic(PicParams* params,  DiagParams* diagparams, SmileiMPI* smpi);
     //! destructor
     ~Diagnostic();
     //! check if at timestep diagnostics must be called
-    void runAllDiags (int timestep, ElectroMagn* EMfields, std::vector<Species*>&);
+    void runAllDiags (int timestep, ElectroMagn* EMfields, std::vector<Species*>&, Interpolator *interp);
  
 private:
-    int num_CPUs;
-    DiagnosticScalar diagScal;
-    unsigned int everyScalar;
+
+    DiagnosticScalar scalars;
 
     DiagnosticProbe probes;
-
-    Interpolator* interp_;
 
 	DiagnosticPhaseSpace diagPhaseSpace;
 	

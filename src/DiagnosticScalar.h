@@ -22,9 +22,12 @@ class DiagnosticScalar {
 
 public:
     //! creator (called from Diagnostic)
-    DiagnosticScalar(PicParams* params, SmileiMPI* smpi);
+    DiagnosticScalar(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi);
     //! destructor
-    ~DiagnosticScalar();
+    ~DiagnosticScalar(){};
+    
+    //! close the file
+    void close();
 
     //! calls the compute_proc_gather, compute and write
     void run(int timestep, ElectroMagn* EMfields, std::vector<Species*>&);
@@ -39,7 +42,12 @@ public:
     void write(int timestep);
 
 private:
+    //! every step to calculate scalars
+    unsigned int every;
+    
+    //! output stream
     std::ofstream fout;
+    
     SmileiMPI* smpi_;
     //! mpi_spec_scalars [iCpu][iSpec]
     std::vector<std::vector<std::map<std::string, double> > > mpi_spec_scalars;

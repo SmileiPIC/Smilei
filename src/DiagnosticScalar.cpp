@@ -10,7 +10,10 @@
 using namespace std;
 
 // constructor
-DiagnosticScalar::DiagnosticScalar(PicParams* params, SmileiMPI* smpi) {
+DiagnosticScalar::DiagnosticScalar(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi) :
+every(diagParams->scalar_every),
+smpi_(smpi)
+{
     smpi_=smpi;
     if (smpi_->isMaster()) {
         fout.open("scalars.txt");
@@ -18,7 +21,7 @@ DiagnosticScalar::DiagnosticScalar(PicParams* params, SmileiMPI* smpi) {
     }
 }
 
-DiagnosticScalar::~DiagnosticScalar() {
+void DiagnosticScalar::close() {
     if (smpi_->isMaster()) {
         fout.close();
     }
@@ -26,9 +29,11 @@ DiagnosticScalar::~DiagnosticScalar() {
 
 // wrapper of the methods
 void DiagnosticScalar::run(int timestep, ElectroMagn* EMfields, vector<Species*>& vecSpecies) {
-    compute_proc_gather(EMfields,vecSpecies);
-    compute();
-    write(timestep);
+    if (every && timestep % every == 0) {
+        compute_proc_gather(EMfields,vecSpecies);
+        compute();
+        write(timestep);
+    }
 }
 
 

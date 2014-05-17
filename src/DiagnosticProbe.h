@@ -59,7 +59,7 @@ protected:
     LocalFields Bloc_fields;
     
     //! memory size of a probe should be 6 = Exyz + Bxyz
-    int probeSize;
+    const int probeSize;
     
     //! hdf5 file ID
     hid_t fileId;

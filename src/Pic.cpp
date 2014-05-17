@@ -142,7 +142,7 @@ int main (int argc, char* argv[])
 	// ----------------------------------------------------------------------------
     // Create diagnostics
     // ----------------------------------------------------------------------------
-    Diagnostic *Diags = new Diagnostic (&params,&diag_params, smpi, Interp);
+    Diagnostic *Diags = new Diagnostic (&params,&diag_params, smpi);
     
     // ------------------------------------------------------------------------------------
     // Initialize the vecSpecies object containing all information of the different Species
@@ -172,7 +172,7 @@ int main (int argc, char* argv[])
 		EMfields->solvePoisson(smpi);
         
 		// run diagnostics at time-step 0
-		Diags->runAllDiags(0, EMfields, vecSpecies);
+		Diags->runAllDiags(0, EMfields, vecSpecies, Interp);
 		// temporary EM fields dump in Fields.h5
 		sio->writeAllFieldsSingleFileTime( EMfields, 0 );
         // temporary EM fields dump in Fields_avg.h5
@@ -263,7 +263,7 @@ int main (int argc, char* argv[])
 		
         // run all diagnostics
         timer[3].restart();
-        Diags->runAllDiags(itime, EMfields, vecSpecies);
+        Diags->runAllDiags(itime, EMfields, vecSpecies, Interp);
         
         // temporary EM fields dump in Fields.h5
         if  ((diag_params.fieldDump_every != 0) && (itime % diag_params.fieldDump_every == 0))

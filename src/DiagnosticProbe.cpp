@@ -187,7 +187,7 @@ void DiagnosticProbe::run(unsigned int timestep, ElectroMagn* EMfields, Interpol
             
             sid = H5Dget_space(did);
             
-            for (unsigned int iprob=0; iprob <probeParticles[np].size(); iprob++) {
+            for (int iprob=0; iprob <probeParticles[np].size(); iprob++) {
                 
                 vector<hsize_t>  count(dimProbe);
                 if  (probeId[np][iprob]==smpi_->getRank()) {
