@@ -13,7 +13,7 @@ public:
     //! the component of the position (0,1,2) is passed by directionPosition
     DiagnosticPhase2DPosLor(phaseStructure phaseStruct, const unsigned int directionPosition);	
 
-	void doSomething(partStruct&);
+	void run(partStruct&);
 private:
     //! component of the position for the first axe
     const unsigned int my_dirPos;

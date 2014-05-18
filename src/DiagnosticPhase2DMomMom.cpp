@@ -21,7 +21,7 @@ my_dirMom2(directionMomentum2) {
 	secondnum = phaseStruct.mom_num[1];    
 }
 
-void DiagnosticPhase2DMomMom::doSomething(partStruct& my_part) {
+void DiagnosticPhase2DMomMom::run(partStruct& my_part) {
 	if (my_part.mom[my_dirMom1] > firstmin && my_part.mom[my_dirMom1] < firstmax && my_part.mom[my_dirMom2] > secondmin && my_part.mom[my_dirMom2] < secondmax) {
 		//!\todo check if useful to have projector here
 		int i = firstnum*(my_part.mom[my_dirMom1]-firstmin)/(firstmax-firstmin);

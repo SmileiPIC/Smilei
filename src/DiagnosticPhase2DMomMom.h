@@ -12,7 +12,7 @@ public:
     //! the component of the 1st momentum (0,1,2) and the component of the 2nd momentum (0,1,2) are chosen at construction
     DiagnosticPhase2DMomMom(phaseStructure phaseStruct, const unsigned int directionMomentum1, const unsigned int directionMomentum2);	
 
-	void doSomething(partStruct&);
+	void run(partStruct&);
 private:
     //! component of the momentum for the first axe
     const unsigned int my_dirMom1;

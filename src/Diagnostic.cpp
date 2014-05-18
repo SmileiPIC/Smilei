@@ -15,19 +15,19 @@ using namespace std;
 Diagnostic::Diagnostic( PicParams* params,  DiagParams* diagparams, SmileiMPI* smpi) :
 scalars(params, diagparams, smpi),
 probes(params, diagparams, smpi),
-diagPhaseSpace(params, diagparams, smpi)
+phases(params, diagparams, smpi)
 {
 }
 
 Diagnostic::~Diagnostic () {
     scalars.close();
     probes.close();
-	diagPhaseSpace.close();
+	phases.close();
 }
 
 void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Species*>& vecSpecies, Interpolator *interp) {
     scalars.run(timestep, EMfields, vecSpecies);
     probes.run(timestep, EMfields, interp);
-	diagPhaseSpace.run(timestep, vecSpecies);
+	phases.run(timestep, vecSpecies);
 }
 

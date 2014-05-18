@@ -8,6 +8,8 @@
 using namespace std;
 
 DiagnosticPhase2D::DiagnosticPhase2D(phaseStructure phaseStruct): DiagnosticPhase(phaseStruct) {
+	every=phaseStruct.every;
+	if (every==0) ERROR("every cannot be zero");
 }
 
 void DiagnosticPhase2D::writeAttributes(hid_t gid) {

@@ -23,6 +23,7 @@ class SmileiMPI;
 class DiagParams;
 class ElectroMagn;
 
+//! mother class of all the DiagnosticPhase* it creates all the sub-diagnostics and creates and fills the hdf5 file
 class DiagnosticPhaseSpace {
 
 public:
@@ -44,7 +45,7 @@ private:
     //! this is always handy to know (number of particle dimension)
 	unsigned int ndim;
 	
-    //! this holds in which hdf5 groupID (hid_t) will the data for each species (string) of DiagnosticPhase is written
+    //! this holds in which hdf5 groupID (hid_t) will the data for each species (string) of DiagnosticPhase written
     std::map<DiagnosticPhase*, std::map<std::string,hid_t> >mapGroupId; 
 };
 #endif

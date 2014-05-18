@@ -20,7 +20,7 @@ my_dirPos(directionPosition) {
 	secondnum = phaseStruct.lor_num[0];    
 }
 
-void DiagnosticPhase2DPosLor::doSomething(partStruct& my_part) {
+void DiagnosticPhase2DPosLor::run(partStruct& my_part) {
     double lor_fact=sqrt(1.0+pow(my_part.mom[0],2)+pow(my_part.mom[1],2)+pow(my_part.mom[2],2));
  	if (my_part.pos[my_dirPos] > firstmin && my_part.pos[my_dirPos] < firstmax && lor_fact > secondmin && lor_fact < secondmax) {
 		//!\todo check if useful to have projector here

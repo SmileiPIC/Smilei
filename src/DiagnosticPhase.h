@@ -39,7 +39,7 @@ public:
 	std::vector<std::string> my_species;
 	
 	//! this will update internal Field with the particle
-	virtual void doSomething(partStruct& my_part)=0;
+	virtual void run(partStruct& my_part)=0;
 	
 	//! this will white the diagnostic header to the hdf5 file
 	virtual void writeAttributes(hid_t gid)=0;

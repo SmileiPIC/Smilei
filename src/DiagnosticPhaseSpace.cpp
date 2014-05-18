@@ -216,7 +216,7 @@ void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) 
 							my_part.weight=vecSpecies[j]->particles.weight(iPart);
 							my_part.charge=vecSpecies[j]->particles.charge(iPart);
                             //! do something with each partcle
-							vecDiagPhaseToRun[i]->doSomething(my_part);
+							vecDiagPhaseToRun[i]->run(my_part);
 						}						
 					}
 				}

@@ -12,7 +12,7 @@ public:
     //! the component of the position (0,1,2) and the component of the momentum (0,1,2) are chosen at construction
     DiagnosticPhase2DPosMom(phaseStructure phaseStruct, const unsigned int directionPosition, const unsigned int directionMomentum);	
 
-	void doSomething(partStruct&);
+	void run(partStruct&);
 private:
     //! component of the position for the first axe
     const unsigned int my_dirPos;
