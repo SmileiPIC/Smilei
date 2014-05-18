@@ -23,7 +23,7 @@ void DiagnosticPhaseSpace::close() {
     //! check if we're on the master (the only one that opened the file)
 	if (fileId != 0) {
         //!close all hdf5  groups (in principle this is done also with H5Fclose below...)
-        for (std::map<DiagnosticPhase*, std::map<std::string,hid_t> >::iterator iterMap=mapGroupId.begin(); iterMap!= mapGroupId.end(); iterMap++) {
+        for (std::map<DiagnosticPhase2D*, std::map<std::string,hid_t> >::iterator iterMap=mapGroupId.begin(); iterMap!= mapGroupId.end(); iterMap++) {
             for (map<string, hid_t>::iterator iter = iterMap->second.begin(); iter != iterMap->second.end(); iter++) {
                 H5Gclose(iter->second);
             }
@@ -64,7 +64,7 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagPa
         }
         
         for (unsigned int ii=0 ; ii < diagParams->vecPhase[i].kind.size(); ii++) {
-            DiagnosticPhase *diagPhase=NULL;
+            DiagnosticPhase2D *diagPhase=NULL;
             
             hid_t gidParent=0;
             
@@ -179,7 +179,7 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagPa
 
 void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) {
 	//! check which diagnosticPhase to run at this timestep
-	vector<DiagnosticPhase*> vecDiagPhaseActiveTimestep;	
+	vector<DiagnosticPhase2D*> vecDiagPhaseActiveTimestep;	
 	for (unsigned int i =0 ; i < vecDiagPhase.size(); i++) {
 		if (timestep%vecDiagPhase[i]->every==0) vecDiagPhaseActiveTimestep.push_back(vecDiagPhase[i]);
 	}
@@ -193,7 +193,7 @@ void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) 
 		for (unsigned int j=0; j < vecSpecies.size(); j++) {
 			
 			//! check which diagnosticPhase to run for the species 
-			vector<DiagnosticPhase*> vecDiagPhaseToRun;
+			vector<DiagnosticPhase2D*> vecDiagPhaseToRun;
 			for (unsigned int i =0 ; i < vecDiagPhaseActiveTimestep.size(); i++) {
 				if(find(vecDiagPhaseActiveTimestep[i]->my_species.begin(), vecDiagPhaseActiveTimestep[i]->my_species.end(), vecSpecies[j]->name_str) != vecDiagPhaseActiveTimestep[i]->my_species.end()) { 
 					vecDiagPhaseToRun.push_back(vecDiagPhaseActiveTimestep[i]);
