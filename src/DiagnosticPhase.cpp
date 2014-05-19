@@ -1,4 +1,4 @@
-#include "DiagnosticPhase2D.h"
+#include "DiagnosticPhase.h"
 
 #include <sstream>
 #include <iomanip>
@@ -7,14 +7,14 @@
 
 using namespace std;
 
-DiagnosticPhase2D::DiagnosticPhase2D(phaseStructure phaseStruct) :
+DiagnosticPhase::DiagnosticPhase(phaseStructure phaseStruct) :
 my_species(phaseStruct.species)
 {
 	every=phaseStruct.every;
 	if (every==0) ERROR("every cannot be zero");
 }
 
-void DiagnosticPhase2D::writeAttributes(hid_t gid) {
+void DiagnosticPhase::writeAttributes(hid_t gid) {
 
     const vector<hsize_t> dimsPos(2,2);
     hid_t sid = H5Screate_simple(2, &dimsPos[0], NULL);
@@ -34,7 +34,7 @@ void DiagnosticPhase2D::writeAttributes(hid_t gid) {
     
 }
 
-void DiagnosticPhase2D::writeData(unsigned int timestep, hid_t gid) {
+void DiagnosticPhase::writeData(unsigned int timestep, hid_t gid) {
 	
 	Field2D my_data_sum;
 	

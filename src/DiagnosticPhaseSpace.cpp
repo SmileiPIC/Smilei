@@ -10,9 +10,9 @@
 #include "ElectroMagn.h"
 #include "Field1D.h"
 #include "Field.h"
-#include "DiagnosticPhase2DPosMom.h"
-#include "DiagnosticPhase2DPosLor.h"
-#include "DiagnosticPhase2DMomMom.h"
+#include "DiagnosticPhasePosMom.h"
+#include "DiagnosticPhasePosLor.h"
+#include "DiagnosticPhaseMomMom.h"
 
 using namespace std;
 
@@ -23,7 +23,7 @@ void DiagnosticPhaseSpace::close() {
     //! check if we're on the master (the only one that opened the file)
 	if (fileId != 0) {
         //!close all hdf5  groups (in principle this is done also with H5Fclose below...)
-        for (std::map<DiagnosticPhase2D*, std::map<std::string,hid_t> >::iterator iterMap=mapGroupId.begin(); iterMap!= mapGroupId.end(); iterMap++) {
+        for (std::map<DiagnosticPhase*, std::map<std::string,hid_t> >::iterator iterMap=mapGroupId.begin(); iterMap!= mapGroupId.end(); iterMap++) {
             for (map<string, hid_t>::iterator iter = iterMap->second.begin(); iter != iterMap->second.end(); iter++) {
                 H5Gclose(iter->second);
             }
@@ -59,97 +59,104 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagPa
                 H5Tclose(atype);
             }
             ostringstream groupName("");
-            groupName << "g_" << i;
-            gidParentParent = H5Gcreate(fileId, groupName.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);            
+            groupName << "g" << setw(4) << setfill('0') << i;
+            gidParentParent = H5Gcreate(fileId, groupName.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT); 
+
+            hid_t sid = H5Screate(H5S_SCALAR);	
+            hid_t aid = H5Acreate(gidParentParent, "every", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
+            H5Awrite(aid, H5T_NATIVE_UINT, &diagParams->vecPhase[i].every);
+            H5Sclose(sid);
+            H5Aclose(aid);
+            
         }
         
         for (unsigned int ii=0 ; ii < diagParams->vecPhase[i].kind.size(); ii++) {
-            DiagnosticPhase2D *diagPhase=NULL;
+            DiagnosticPhase *diagPhase=NULL;
             
             hid_t gidParent=0;
             
             if (smpi->isMaster()) {
                 ostringstream groupName("");
-                groupName << "ps_" << diagParams->vecPhase[i].kind[ii];
+                groupName << diagParams->vecPhase[i].kind[ii];
                 gidParent = H5Gcreate(gidParentParent, groupName.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);			
             }
             
             // create DiagnosticPhase
             if (params->geometry == "1d3v") {
                 if (diagParams->vecPhase[i].kind[ii] == "xpx") {
-                    diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],0,0);
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams->vecPhase[i],0,0);
                 } else if (diagParams->vecPhase[i].kind[ii] == "xpy") {
-                    diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],0,1);
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams->vecPhase[i],0,1);
                 } else if (diagParams->vecPhase[i].kind[ii] == "xpz") {
-                    diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],0,2);
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams->vecPhase[i],0,2);
                 } else if (diagParams->vecPhase[i].kind[ii] == "xlor") {
-                    diagPhase =  new DiagnosticPhase2DPosLor(diagParams->vecPhase[i],0);
+                    diagPhase =  new DiagnosticPhasePosLor(diagParams->vecPhase[i],0);
                 } else if (diagParams->vecPhase[i].kind[ii] == "pxpy") {
-                    diagPhase =  new DiagnosticPhase2DMomMom(diagParams->vecPhase[i],0,1);
+                    diagPhase =  new DiagnosticPhaseMomMom(diagParams->vecPhase[i],0,1);
                 } else if (diagParams->vecPhase[i].kind[ii] == "pxpz") {
-                    diagPhase =  new DiagnosticPhase2DMomMom(diagParams->vecPhase[i],0,2);
+                    diagPhase =  new DiagnosticPhaseMomMom(diagParams->vecPhase[i],0,2);
                 } else if (diagParams->vecPhase[i].kind[ii] == "pypz") {
-                    diagPhase =  new DiagnosticPhase2DMomMom(diagParams->vecPhase[i],1,2);
+                    diagPhase =  new DiagnosticPhaseMomMom(diagParams->vecPhase[i],1,2);
                 } else {
                     ERROR("kind " << diagParams->vecPhase[i].kind[ii] << " not implemented for geometry " << params->geometry);
                 }
             } else if (params->geometry == "2d3v") {
                 if (diagParams->vecPhase[i].kind[ii] == "xpx") {
-                    diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],0,0);
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams->vecPhase[i],0,0);
                 } else if (diagParams->vecPhase[i].kind[ii] == "xpy") {
-                    diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],0,1);
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams->vecPhase[i],0,1);
                 } else if (diagParams->vecPhase[i].kind[ii] == "xpz") {
-                    diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],0,2);
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams->vecPhase[i],0,2);
                 } else if (diagParams->vecPhase[i].kind[ii] == "ypx") {
-                    diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],1,0);
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams->vecPhase[i],1,0);
                 } else if (diagParams->vecPhase[i].kind[ii] == "ypy") {
-                    diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],1,1);
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams->vecPhase[i],1,1);
                 } else if (diagParams->vecPhase[i].kind[ii] == "ypz") {
-                    diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],1,2);
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams->vecPhase[i],1,2);
                 } else if (diagParams->vecPhase[i].kind[ii] == "pxpy") {
-                    diagPhase =  new DiagnosticPhase2DMomMom(diagParams->vecPhase[i],0,1);
+                    diagPhase =  new DiagnosticPhaseMomMom(diagParams->vecPhase[i],0,1);
                 } else if (diagParams->vecPhase[i].kind[ii] == "pxpz") {
-                    diagPhase =  new DiagnosticPhase2DMomMom(diagParams->vecPhase[i],0,2);
+                    diagPhase =  new DiagnosticPhaseMomMom(diagParams->vecPhase[i],0,2);
                 } else if (diagParams->vecPhase[i].kind[ii] == "pypz") {
-                    diagPhase =  new DiagnosticPhase2DMomMom(diagParams->vecPhase[i],1,2);                    
+                    diagPhase =  new DiagnosticPhaseMomMom(diagParams->vecPhase[i],1,2);                    
                 } else if (diagParams->vecPhase[i].kind[ii] == "xlor") {
-                    diagPhase =  new DiagnosticPhase2DPosLor(diagParams->vecPhase[i],0);
+                    diagPhase =  new DiagnosticPhasePosLor(diagParams->vecPhase[i],0);
                 } else if (diagParams->vecPhase[i].kind[ii] == "ylor") {
-                    diagPhase =  new DiagnosticPhase2DPosLor(diagParams->vecPhase[i],1);
+                    diagPhase =  new DiagnosticPhasePosLor(diagParams->vecPhase[i],1);
                 } else {
                     ERROR("kind " << diagParams->vecPhase[i].kind[ii] << " not implemented for geometry " << params->geometry);
                 }
             } else if (params->geometry == "3d3v") {
                 if (diagParams->vecPhase[i].kind[ii] == "xpx") {
-                    diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],0,0);
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams->vecPhase[i],0,0);
                 } else if (diagParams->vecPhase[i].kind[ii] == "xpy") {
-                    diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],0,1);
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams->vecPhase[i],0,1);
                 } else if (diagParams->vecPhase[i].kind[ii] == "xpz") {
-                    diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],0,2);
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams->vecPhase[i],0,2);
                 } else if (diagParams->vecPhase[i].kind[ii] == "ypx") {
-                    diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],1,0);
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams->vecPhase[i],1,0);
                 } else if (diagParams->vecPhase[i].kind[ii] == "ypy") {
-                    diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],1,1);
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams->vecPhase[i],1,1);
                 } else if (diagParams->vecPhase[i].kind[ii] == "ypz") {
-                    diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],1,2);
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams->vecPhase[i],1,2);
                 } else if (diagParams->vecPhase[i].kind[ii] == "zpx") {
-                    diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],2,0);
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams->vecPhase[i],2,0);
                 } else if (diagParams->vecPhase[i].kind[ii] == "zpy") {
-                    diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],2,1);
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams->vecPhase[i],2,1);
                 } else if (diagParams->vecPhase[i].kind[ii] == "zpz") {
-                    diagPhase =  new DiagnosticPhase2DPosMom(diagParams->vecPhase[i],2,2);
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams->vecPhase[i],2,2);
                 } else if (diagParams->vecPhase[i].kind[ii] == "pxpy") {
-                    diagPhase =  new DiagnosticPhase2DMomMom(diagParams->vecPhase[i],0,1);
+                    diagPhase =  new DiagnosticPhaseMomMom(diagParams->vecPhase[i],0,1);
                 } else if (diagParams->vecPhase[i].kind[ii] == "pxpz") {
-                    diagPhase =  new DiagnosticPhase2DMomMom(diagParams->vecPhase[i],0,2);
+                    diagPhase =  new DiagnosticPhaseMomMom(diagParams->vecPhase[i],0,2);
                 } else if (diagParams->vecPhase[i].kind[ii] == "pypz") {
-                    diagPhase =  new DiagnosticPhase2DMomMom(diagParams->vecPhase[i],1,2);                    
+                    diagPhase =  new DiagnosticPhaseMomMom(diagParams->vecPhase[i],1,2);                    
                 } else if (diagParams->vecPhase[i].kind[ii] == "xlor") {
-                    diagPhase =  new DiagnosticPhase2DPosLor(diagParams->vecPhase[i],0);
+                    diagPhase =  new DiagnosticPhasePosLor(diagParams->vecPhase[i],0);
                 } else if (diagParams->vecPhase[i].kind[ii] == "ylor") {
-                    diagPhase =  new DiagnosticPhase2DPosLor(diagParams->vecPhase[i],1);
+                    diagPhase =  new DiagnosticPhasePosLor(diagParams->vecPhase[i],1);
                 } else if (diagParams->vecPhase[i].kind[ii] == "zlor") {
-                    diagPhase =  new DiagnosticPhase2DPosLor(diagParams->vecPhase[i],2);
+                    diagPhase =  new DiagnosticPhasePosLor(diagParams->vecPhase[i],2);
                 } else {
                     ERROR("kind " << diagParams->vecPhase[i].kind[ii] << " not implemented for geometry " << params->geometry);
                 }                
@@ -179,7 +186,7 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagPa
 
 void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) {
 	//! check which diagnosticPhase to run at this timestep
-	vector<DiagnosticPhase2D*> vecDiagPhaseActiveTimestep;	
+	vector<DiagnosticPhase*> vecDiagPhaseActiveTimestep;	
 	for (unsigned int i =0 ; i < vecDiagPhase.size(); i++) {
 		if (timestep%vecDiagPhase[i]->every==0) vecDiagPhaseActiveTimestep.push_back(vecDiagPhase[i]);
 	}
@@ -193,7 +200,7 @@ void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) 
 		for (unsigned int j=0; j < vecSpecies.size(); j++) {
 			
 			//! check which diagnosticPhase to run for the species 
-			vector<DiagnosticPhase2D*> vecDiagPhaseToRun;
+			vector<DiagnosticPhase*> vecDiagPhaseToRun;
 			for (unsigned int i =0 ; i < vecDiagPhaseActiveTimestep.size(); i++) {
 				if(find(vecDiagPhaseActiveTimestep[i]->my_species.begin(), vecDiagPhaseActiveTimestep[i]->my_species.end(), vecSpecies[j]->name_str) != vecDiagPhaseActiveTimestep[i]->my_species.end()) { 
 					vecDiagPhaseToRun.push_back(vecDiagPhaseActiveTimestep[i]);

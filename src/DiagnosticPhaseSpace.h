@@ -16,7 +16,7 @@
 #include "Interpolator.h"
 #include "Particles.h"
 
-#include "DiagnosticPhase2D.h"
+#include "DiagnosticPhase.h"
 
 class PicParams;
 class SmileiMPI;
@@ -37,7 +37,7 @@ public:
 private:
     
     //! this vector will hold all the diagnostics created
-	std::vector<DiagnosticPhase2D*> vecDiagPhase;
+	std::vector<DiagnosticPhase*> vecDiagPhase;
 	
     //! this is the hdf5 file id (we need to keep it to close at the right time)
 	hid_t fileId;
@@ -46,6 +46,6 @@ private:
 	unsigned int ndim;
 	
     //! this holds in which hdf5 groupID (hid_t) will the data for each species (string) of DiagnosticPhase written
-    std::map<DiagnosticPhase2D*, std::map<std::string,hid_t> >mapGroupId; 
+    std::map<DiagnosticPhase*, std::map<std::string,hid_t> >mapGroupId; 
 };
 #endif

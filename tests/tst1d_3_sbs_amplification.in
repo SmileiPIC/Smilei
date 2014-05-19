@@ -165,7 +165,7 @@ diagnostic phase
 end
 
 diagnostic phase
-	kind = PxPy PxPz PyPz
+	kind = PxPy PxPz PyPz PxPy
     species = eon
 	every = 100
 
