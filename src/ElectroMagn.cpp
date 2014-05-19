@@ -9,6 +9,8 @@
 #include "Projector.h"
 #include "Laser.h"
 #include "Field.h"
+#include "FieldsBC.h"
+#include "FieldsBC_Factory.h"
 
 using namespace std;
 
@@ -34,14 +36,6 @@ ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi)
     }
 
     if (n_space.size() != 3) ERROR("this should not happend");
-
-    // check for laser conditions
-    laser_.resize(params->n_laser);
-
-    for (unsigned int i=0; i<laser_.size(); i++) {
-        DEBUG(5,"Initializing Laser "<<i);
-        laser_[i] = new Laser(params->sim_time, params->laser_param[i]);
-    }
 
     Ex_=NULL;
     Ey_=NULL;
@@ -70,6 +64,9 @@ ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi)
         Jz_s[ispec]  = NULL;
         rho_s[ispec] = NULL;
     }
+
+    fieldsBoundCond = FieldsBC_Factory::create(*params);
+
 }
 
 
@@ -93,25 +90,25 @@ ElectroMagn::~ElectroMagn()
     delete Jz_;
     delete rho_;
     delete rho_o;
-    for (unsigned int i=0; i< laser_.size(); i++) {
-        delete laser_[i];
-    }
+    
+    delete fieldsBoundCond;
 
 }//END Destructer
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Maxwell solver using the FDTD scheme
 // ---------------------------------------------------------------------------------------------------------------------
-/*void ElectroMagn::solveMaxwell(double time_dual, SmileiMPI* smpi)
+void ElectroMagn::solveMaxwell(double time_dual, SmileiMPI* smpi)
 {
-	//solve Maxwell's equations
-	solveMaxwellAmpere();
-	//smpi->exchangeE( EMfields );
-	solveMaxwellFaraday();
-	smpi->exchangeB( this );
-	boundaryConditions(time_dual, smpi);
+    saveMagneticFields();
+    solveMaxwellAmpere();
+    smpi->exchangeE( this );
+    solveMaxwellFaraday();
+    fieldsBoundCond->apply(this, time_dual, smpi);
+    smpi->exchangeB( this );
+    centerMagneticFields();
 
-}*/
+}
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -302,7 +299,7 @@ void ElectroMagn::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
     Bz_->shift_x(shift);
     smpi->exchangeB( this );
 
-    applyEMBoundaryConditions(time_dual, smpi);
+    fieldsBoundCond->apply(this, time_dual, smpi);
 
     // Update x (idx = 0) limits :
     smpi->getCellStartingGlobalIndex(0) += shift;

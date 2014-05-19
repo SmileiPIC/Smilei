@@ -197,8 +197,13 @@ PicParams::PicParams(InputData &ifile) : restart(false), exit_after_dump(true), 
     if ( !ifile.extract("exchange_particles_each", exchange_particles_each) )
 	exchange_particles_each = 1;
 
-    if ( !ifile.extract("use_transverse_periodic", use_transverse_periodic) )
-	use_transverse_periodic = true;
+    if ( !ifile.extract("use_transverse_periodic", use_transverse_periodic) ) {
+      use_transverse_periodic = true;
+    }
+    else if (!use_transverse_periodic) {
+      for (unsigned int i=0; i<n_species; i++)
+	  species_param[i].bc_part_type = "stop";
+    }
 
     if ( !ifile.extract("number_of_procs", number_of_procs) )
 	number_of_procs.resize(nDim_field, 0);

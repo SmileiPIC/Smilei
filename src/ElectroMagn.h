@@ -13,6 +13,7 @@ class Projector;
 class Field;
 class Laser;
 class SmileiMPI;
+class FieldsBC;
 
 //! class ElectroMagn: generic class containing all information on the electromagnetic fields and currents
 class ElectroMagn
@@ -86,9 +87,6 @@ public:
     std::vector<Field*> Jz_s;
     std::vector<Field*> rho_s;
 
-    //! Vector for the various lasers
-    std::vector<Laser*> laser_;
-
     //! Volume of the single cell
     double cell_volume;
 
@@ -122,10 +120,11 @@ public:
 
     //! \todo check time_dual or time_prim (MG)
     //! method used to solve Maxwell's equation (takes current time and time-step as input parameter)
-    virtual void solveMaxwell(double time_dual, SmileiMPI* smpi) = 0;
+    virtual void solveMaxwell(double time_dual, SmileiMPI* smpi);
     virtual void solveMaxwellAmpere() = 0;
     virtual void solveMaxwellFaraday() = 0;
-    virtual void applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi) = 0;
+    virtual void saveMagneticFields() = 0;
+    virtual void centerMagneticFields() = 0;
 
     void movingWindow_x(unsigned int shift, SmileiMPI *smpi);
 
@@ -136,6 +135,9 @@ public:
     std::map<std::string,std::map<std::string,std::vector<double> > > scalars;
 private:
     PicParams *params_;
+
+    //! Object used to apply boundary-condition for the fields
+    FieldsBC* fieldsBoundCond;
 };
 
 #endif

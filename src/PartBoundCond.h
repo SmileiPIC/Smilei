@@ -43,13 +43,13 @@ public:
         else if (nDim_particle == 2) {
 
             if ( particles.position(1, ipart) <  y_min ) {
-                if (bc_south==NULL) return 0;
+		if (bc_south==NULL) return 0;
                 else {
                     return (*bc_south)( particles, ipart, 1, 2.*y_min );
                 }
             }
             else if ( particles.position(1, ipart) >= y_max ) {
-                if (bc_north==NULL) return 0;
+		if (bc_north==NULL) return 0;
                 else {
                     return (*bc_north)( particles, ipart, 1, 2.*y_max );
                 }

@@ -19,7 +19,6 @@ class Pusher;
 class Interpolator;
 class Projector;
 class PartBoundCond;
-class PartBoundCondMix;
 
 //! class Species
 class Species

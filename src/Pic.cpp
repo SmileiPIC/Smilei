@@ -329,7 +329,10 @@ int main (int argc, char* argv[])
     delete EMfields;
     diags.closeAll();
 
-    for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
+    for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
+	PMESSAGE( 0, smpi->getRank(), vecSpecies[ispec]->getNbrOfParticles() << " Particles of species " << ispec );
+	delete vecSpecies[ispec];
+    }
     vecSpecies.clear();
 
     delete sio;

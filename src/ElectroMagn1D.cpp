@@ -34,12 +34,7 @@ ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
     dt_ov_dx = params->timestep/params->cell_length[0];
     dx_ov_dt = 1.0/dt_ov_dx;
 
-    // Parameters for the Silver-Mueller boundary conditions
-    Alpha_SM = 2./(1.+dt_ov_dx);
-    Beta_SM  = (dt_ov_dx-1.)/(1.+dt_ov_dx);
-    Gamma_SM = 4./(1.+dt_ov_dx);
-
-    // Electromagnetic fields
+   // Electromagnetic fields
     // ----------------------
     // number of nodes of the primal-grid
     nx_p = params->n_space[0]+1 + 2*params->oversize[0];
@@ -318,24 +313,6 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Maxwell solver using the FDTD scheme
-// ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn1D::solveMaxwell(double time_dual, SmileiMPI* smpi)
-{
-
-    saveMagneticFields();
-    solveMaxwellAmpere();
-    //smpi->exchangeE( this ); // Useless by construction
-    solveMaxwellFaraday();
-    applyEMBoundaryConditions(time_dual, smpi);
-    smpi->exchangeB( this );
-    centerMagneticFields();
-
-}
-
-
-
-// ---------------------------------------------------------------------------------------------------------------------
 // Save the former Magnetic-Fields (used to center them)
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn1D::saveMagneticFields()
@@ -417,90 +394,6 @@ void ElectroMagn1D::solveMaxwellFaraday()
     }
 
 }
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Maxwell solver using the FDTD scheme
-// ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn1D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
-{
-    SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
-
-    Field1D* Ex1D   = static_cast<Field1D*>(Ex_);
-    Field1D* Ey1D   = static_cast<Field1D*>(Ey_);
-    Field1D* Ez1D   = static_cast<Field1D*>(Ez_);
-    Field1D* By1D   = static_cast<Field1D*>(By_);
-    Field1D* Bz1D   = static_cast<Field1D*>(Bz_);
-
-
-    // --------------------------------------------------
-    // Laser temporal profile
-    // --------------------------------------------------
-    double byL=0, bzL=0, byR=0, bzR=0;
-
-    for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
-
-        if (laser_[ilaser]->laser_struct.angle == 0) {
-            // Incident field (left boundary)
-            byL += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
-            bzL += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
-        } else if (laser_[ilaser]->laser_struct.angle == 180) {
-            // Incident field (right boundary)
-            byR += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
-            bzR += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
-        } else {
-            ERROR("Angle not allowed for 1D laser pulse " << ilaser);
-        }
-
-    }//ilaser
-
-
-//    // ---------------------------------------------------
-//    // Laser temporal profile from defined from potential
-//    // ---------------------------------------------------
-//    double byL=0, bzL=0, byR=0, bzR=0;
-//    double ayL=0, azL=0, ayL_o=0, azL_o=0, ayR=0, azR=0, ayR_o=0, azR_o=0;
-//
-//    for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
-//
-//        if (laser_[ilaser]->laser_struct.angle == 0){
-//            // Incident field (left boundary)
-//            ayL_o += laser_[ilaser]->a0_delta_y_ * sin(time_dual-dt) * laser_[ilaser]->time_profile(time_dual-dt);
-//            azL_o += laser_[ilaser]->a0_delta_z_ * cos(time_dual-dt) * laser_[ilaser]->time_profile(time_dual-dt);
-//            ayL   += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
-//            azL   += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
-//            byL    = - (azL - azL_o)/dt;
-//            bzL    =   (ayL - ayL_o)/dt;
-//        } else if (laser_[ilaser]->laser_struct.angle == 180){
-//            // Incident field (right boundary)
-//            ayR_o += laser_[ilaser]->a0_delta_y_ * sin(time_dual-dt) * laser_[ilaser]->time_profile(time_dual-dt);
-//            azR_o += laser_[ilaser]->a0_delta_z_ * cos(time_dual-dt) * laser_[ilaser]->time_profile(time_dual-dt);
-//            ayR   += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
-//            azR   += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
-//            byR    =   (azR - azR_o)/dt;
-//            bzR    = - (ayR - ayR_o)/dt;
-//        } else {
-//            ERROR("Angle not allowed for 1D laser pulse " << ilaser);
-//        }
-//
-//    }//ilaser
-
-
-    // ----------------------------
-    // Apply EM boundary conditions
-    // ----------------------------
-    if ( smpi1D->isWester() ) {
-        // Silver-Mueller boundary conditions (left)
-        (*By1D)(0) =  Alpha_SM*(*Ez1D)(0) + Beta_SM*(*By1D)(1) + Gamma_SM*byL;
-        (*Bz1D)(0) = -Alpha_SM*(*Ey1D)(0) + Beta_SM*(*Bz1D)(1) + Gamma_SM*bzL;
-    }//if Western
-    if ( smpi1D->isEaster() ) {
-        // Silver-Mueller boundary conditions (right)
-        (*By1D)(nx_d-1) = -Alpha_SM*(*Ez1D)(nx_p-1) + Beta_SM*(*By1D)(nx_d-2) + Gamma_SM*byR;
-        (*Bz1D)(nx_d-1) =  Alpha_SM*(*Ey1D)(nx_p-1) + Beta_SM*(*Bz1D)(nx_d-2) + Gamma_SM*bzR;
-    }//if Eastern
-
-}
-
 
 
 // ---------------------------------------------------------------------------------------------------------------------
