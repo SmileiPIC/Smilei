@@ -1,5 +1,5 @@
-#ifndef DiagnosticPhase2D_H
-#define DiagnosticPhase2D_H
+#ifndef DiagnosticPhase_H
+#define DiagnosticPhase_H
 
 #include <hdf5.h>
 #include "Tools.h"
@@ -25,12 +25,12 @@ struct partStruct {
 };
 
 //! this class holds all the phase projections that can be represented as 2d matrix
-class DiagnosticPhase2D {
+class DiagnosticPhase {
 
 public:
     //! creator
-    DiagnosticPhase2D(phaseStructure phaseStruct);
-    ~DiagnosticPhase2D(){};
+    DiagnosticPhase(phaseStructure phaseStruct);
+    ~DiagnosticPhase(){};
 
     //! this will write the internal Field to the file
 	void writeData(unsigned int timestep, hid_t gid);

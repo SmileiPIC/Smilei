@@ -55,14 +55,26 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
 	int n_probephase=0;
 	while (ifile.existGroup("diagnostic phase",n_probephase)) {
 		phaseStructure tmpPhaseStruct;
-		ifile.extract("kind",tmpPhaseStruct.kind,"diagnostic phase",0,n_probephase);
+        vector<string> kind;
+		ifile.extract("kind",kind,"diagnostic phase",0,n_probephase);        
+        for (vector<string>::iterator it=kind.begin(); it!=kind.end();it++) {
+            if (std::find(kind.begin(), it, *it) == it) {
+                tmpPhaseStruct.kind.push_back(*it); 
+            } else {
+                WARNING("removed duplicate " << *it << " in \"diagnostic phase\" " << n_probephase);
+            }
+        }
+
 		ifile.extract("every",tmpPhaseStruct.every,"diagnostic phase",0,n_probephase);
 		ifile.extract("species",tmpPhaseStruct.species,"diagnostic phase",0,n_probephase);
+                
 		if (tmpPhaseStruct.species.size()==0) {
+            WARNING("adding all species to the \"diagnostic phase\" " << n_probephase);
 			for (unsigned int i=0;i<params.n_species; i++) {
 				tmpPhaseStruct.species.push_back(params.species_param[i].species_type);
 			}			
 		}
+        
 		ifile.extract("pos_min",tmpPhaseStruct.pos_min,"diagnostic phase",0,n_probephase);
 		transform(tmpPhaseStruct.pos_min.begin(),tmpPhaseStruct.pos_min.end(), 
                   tmpPhaseStruct.pos_min.begin(),bind1st(multiplies<double>(),2*M_PI));
