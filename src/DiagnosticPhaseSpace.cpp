@@ -180,7 +180,15 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagPa
                         
                         localmap[diagParams->vecPhase[i].species[k]]=did;
                     }
-                    diagPhase->writeAttributes(gid);
+                    
+                    hsize_t dimsPos[2] = {2,2};
+                    hid_t sid = H5Screate_simple(2, dimsPos, NULL);
+                    hid_t aid = H5Acreate (gid, "extents", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT);
+                    double tmp[4] = {diagPhase->firstmin, diagPhase->firstmax, diagPhase->secondmin, diagPhase->secondmax};
+                    H5Awrite(aid, H5T_NATIVE_DOUBLE, tmp);
+                    H5Aclose(aid);
+                    H5Sclose(sid);
+                    
                     H5Gclose(gid);
                     mapDataId[diagPhase]=localmap;
                 }
@@ -238,7 +246,7 @@ void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) 
 				}
                 //! and finally write the data (reduce data on 1 proc, write it and clear memory for future usage)
 				for (unsigned int i =0 ; i < vecDiagPhaseToRun.size(); i++) {
-					vecDiagPhaseToRun[i]->writeData(timestep, mapDataId[vecDiagPhaseToRun[i]][vecSpecies[j]->name_str]);
+					vecDiagPhaseToRun[i]->writeData(mapDataId[vecDiagPhaseToRun[i]][vecSpecies[j]->name_str]);
 				}
 			}
 		}

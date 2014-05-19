@@ -33,7 +33,7 @@ public:
     ~DiagnosticPhase(){};
 
     //! this will write the internal Field to the file
-	void writeData(unsigned int timestep, hid_t gid);
+	void writeData(hid_t gid);
 	
     //! all diags should have this every parameter
 	unsigned int every;
@@ -44,13 +44,9 @@ public:
 	//! this will update internal Field with the particle
 	virtual void run(partStruct& my_part)=0;
 	
-	//! this will white the diagnostic header to the hdf5 file
-    void writeAttributes(hid_t did);
-
 	//! by now this is the easiest way 2d classes holds field2d and they know how to write it
 	Field2D my_data;
 	
-protected:
 	//! first component of the phasespace min
 	double firstmin;
 	//! first component of the phasespace max

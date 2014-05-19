@@ -48,8 +48,8 @@ smpi_(smpi), probeSize(6), fileId(0) {
             vector<unsigned int> vecNumber=diagParams->probeStruc[np].number;
             
             unsigned int totPart=1;
-            for (unsigned int iDimProb=0; iDimProb<diagParams->probeStruc[np].dim; iDimProb++) {
-                totPart *= vecNumber[iDimProb];
+            for (unsigned int iDimProbe=0; iDimProbe<diagParams->probeStruc[np].dim; iDimProbe++) {
+                totPart *= vecNumber[iDimProbe];
             }
             
             probeParticles[np].initialize(totPart, ndim);
@@ -62,8 +62,8 @@ smpi_(smpi), probeSize(6), fileId(0) {
                 for(unsigned int iDim=0; iDim!=ndim; ++iDim) {
                     partPos[iDim+ipart*ndim]=diagParams->probeStruc[np].pos[0][iDim];
                     // the particle position is a linear combiantion of the point pos with posFirst or posSecond or posThird
-                    for (unsigned int iDimProb=0; iDimProb<diagParams->probeStruc[np].dim; iDimProb++) {
-                        partPos[iDim+ipart*ndim] += (ipart%vecNumber[iDimProb])*(diagParams->probeStruc[np].pos[iDimProb+1][iDim]-diagParams->probeStruc[np].pos[0][iDim])/(vecNumber[iDimProb]-1);
+                    for (unsigned int iDimProbe=0; iDimProbe<diagParams->probeStruc[np].dim; iDimProbe++) {
+                        partPos[iDim+ipart*ndim] += (ipart%vecNumber[iDimProbe])*(diagParams->probeStruc[np].pos[iDimProbe+1][iDim]-diagParams->probeStruc[np].pos[0][iDim])/(vecNumber[iDimProbe]-1);
                     }
                     probeParticles[np].position(iDim,ipart) = 2*M_PI*partPos[iDim+ipart*ndim];
                     if(smpi->getDomainLocalMin(iDim) > probeParticles[np].position(iDim,ipart) || smpi->getDomainLocalMax(iDim) <= probeParticles[np].position(iDim,ipart)) {
@@ -80,10 +80,10 @@ smpi_(smpi), probeSize(6), fileId(0) {
             max_dims[0]=H5S_UNLIMITED;
             chunk_dims[0]=1;
             
-            for (unsigned int iDimProb=0; iDimProb<vecNumber.size(); iDimProb++) {
-                dims[iDimProb+1]=vecNumber[iDimProb];
-                max_dims[iDimProb+1]=vecNumber[iDimProb];
-                chunk_dims[iDimProb+1]=1;
+            for (unsigned int iDimProbe=1; iDimProbe<dimProbe-1; iDimProbe++) {
+                dims[iDimProbe]=vecNumber[iDimProbe-1];
+                max_dims[iDimProbe]=vecNumber[iDimProbe-1];
+                chunk_dims[iDimProbe]=1;
             }
             dims.back()=probeSize;
             max_dims.back()=probeSize;
@@ -99,13 +99,13 @@ smpi_(smpi), probeSize(6), fileId(0) {
             H5Sclose(sid);
             
             unsigned int vecNumberProd=1;
-            for (unsigned int iDimProb=0; iDimProb<vecNumber.size(); iDimProb++) {
-                vecNumberProd*=vecNumber[iDimProb];
+            for (unsigned int iDimProbe=0; iDimProbe<vecNumber.size(); iDimProbe++) {
+                vecNumberProd*=vecNumber[iDimProbe];
             }  
             
             vector<hsize_t> dimsPos(1+vecNumber.size());
-            for (unsigned int iDimProb=0; iDimProb<vecNumber.size(); iDimProb++) {
-                dimsPos[iDimProb]=vecNumber[iDimProb];
+            for (unsigned int iDimProbe=0; iDimProbe<vecNumber.size(); iDimProbe++) {
+                dimsPos[iDimProbe]=vecNumber[iDimProbe];
             }
             dimsPos[vecNumber.size()]=ndim;
             
@@ -186,18 +186,14 @@ void DiagnosticProbe::run(unsigned int timestep, ElectroMagn* EMfields, Interpol
                 
                 vector<hsize_t> count(dimProbe);
                 if (probeId[np][iprob]==smpi_->getRank()) {
-                    for (unsigned int iDimProb=0; iDimProb< dimProbe-1; iDimProb++) {
-                        count[iDimProb]=1;
-                    }
+                    fill(count.begin(),count.end()-1,1);
                     count.back()=probeSize;
                 } else {
-                    for (unsigned int iDimProb=0; iDimProb< dimProbe; iDimProb++) {
-                        count[iDimProb]=0;
-                    }
+                    fill(count.begin(),count.end(),0);
                 }
                 
                 vector<hsize_t> start(dimProbe);
-                start[0]=dimsO[0]-1;
+                start.front()=dimsO[0]-1;                
                 for (unsigned int iDimProb=1; iDimProb<dimProbe-1; iDimProb++) {
                     start[iDimProb]=iprob % dimsO[iDimProb];
                 }

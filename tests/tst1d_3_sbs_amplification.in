@@ -149,7 +149,7 @@ diagnostic phase
 
     species = eon
     
-    deflate=2
+    deflate=0
 
 	every = 100
 
@@ -171,7 +171,7 @@ diagnostic phase
     species = eon
 	every = 100
 
-    deflate=2
+    deflate=0
 
 	mom_min = -0.3 -0.3
 	mom_max = 0.3 0.3

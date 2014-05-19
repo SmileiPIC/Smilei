@@ -33,7 +33,7 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
         ifile.extract("every",tmpStruct.every,"diagnostic probe",0,n_probe);
         ifile.extract("number",tmpStruct.number,"diagnostic probe",0,n_probe);
         tmpStruct.dim=tmpStruct.number.size();
-        if (tmpStruct.dim == 0) {
+        if (tmpStruct.dim == 0) { // in 1D case you have one probe, forcing it
             tmpStruct.number.resize(1);
             tmpStruct.number[0]=1;
         }
@@ -80,11 +80,7 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
 		}
         
 		ifile.extract("pos_min",tmpPhaseStruct.pos_min,"diagnostic phase",0,n_probephase);
-		transform(tmpPhaseStruct.pos_min.begin(),tmpPhaseStruct.pos_min.end(), 
-                  tmpPhaseStruct.pos_min.begin(),bind1st(multiplies<double>(),2*M_PI));
 		ifile.extract("pos_max",tmpPhaseStruct.pos_max,"diagnostic phase",0,n_probephase);
-		transform(tmpPhaseStruct.pos_max.begin(),tmpPhaseStruct.pos_max.end(), 
-                  tmpPhaseStruct.pos_max.begin(),bind1st(multiplies<double>(),2*M_PI));
 		ifile.extract("pos_num",tmpPhaseStruct.pos_num,"diagnostic phase",0,n_probephase);
 
 		ifile.extract("mom_min",tmpPhaseStruct.mom_min,"diagnostic phase",0,n_probephase);

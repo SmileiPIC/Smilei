@@ -14,17 +14,7 @@ my_species(phaseStruct.species)
 	if (every==0) ERROR("every cannot be zero");
 }
 
-void DiagnosticPhase::writeAttributes(hid_t did) {
-    hsize_t dimsPos[2] = {2,2};
-    hid_t sid = H5Screate_simple(2, dimsPos, NULL);
-    hid_t aid = H5Acreate (did, "extents", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT);
-    double tmp[4] = {firstmin, firstmax, secondmin, secondmax};
-    H5Awrite(aid, H5T_NATIVE_DOUBLE, tmp);
-    H5Aclose(aid);
-    H5Sclose(sid);
-}
-
-void DiagnosticPhase::writeData(unsigned int timestep, hid_t did) {
+void DiagnosticPhase::writeData(hid_t did) {
 	
 	Field2D my_data_sum;
 	my_data_sum.allocateDims(my_data.dims());
