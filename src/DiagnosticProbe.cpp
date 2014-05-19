@@ -238,5 +238,5 @@ void DiagnosticProbe::run(unsigned int timestep, ElectroMagn* EMfields, Interpol
             H5Sclose(partMemSpace);
         }
     }
-    H5Fflush(fileId, H5F_SCOPE_GLOBAL );
+    if (fileId) H5Fflush(fileId, H5F_SCOPE_GLOBAL );
 }
