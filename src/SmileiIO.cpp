@@ -264,9 +264,6 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
     dumpFieldsPerProc(fid, EMfields->Bx_);
     dumpFieldsPerProc(fid, EMfields->By_);
     dumpFieldsPerProc(fid, EMfields->Bz_);
-    //dumpFieldsPerProc(fid, EMfields->Bx_m);
-    //dumpFieldsPerProc(fid, EMfields->By_m);
-    //dumpFieldsPerProc(fid, EMfields->Bz_m);
     dumpFieldsPerProc(fid, EMfields->Ex_avg);
     dumpFieldsPerProc(fid, EMfields->Ey_avg);
     dumpFieldsPerProc(fid, EMfields->Ez_avg);
@@ -415,9 +412,12 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
     restartFieldsPerProc(fid, EMfields->Bx_);
     restartFieldsPerProc(fid, EMfields->By_);
     restartFieldsPerProc(fid, EMfields->Bz_);
-    restartFieldsPerProc(fid, EMfields->Bx_m);
-    restartFieldsPerProc(fid, EMfields->By_m);
-    restartFieldsPerProc(fid, EMfields->Bz_m);
+    restartFieldsPerProc(fid, EMfields->Ex_avg);
+    restartFieldsPerProc(fid, EMfields->Ey_avg);
+    restartFieldsPerProc(fid, EMfields->Ez_avg);
+    restartFieldsPerProc(fid, EMfields->Bx_avg);
+    restartFieldsPerProc(fid, EMfields->By_avg);
+    restartFieldsPerProc(fid, EMfields->Bz_avg);
 	
 	aid = H5Aopen(fid, "species", H5T_NATIVE_UINT);
 	unsigned int vecSpeciesSize=0;

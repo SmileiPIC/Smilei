@@ -23,9 +23,9 @@ void DiagnosticPhaseSpace::close() {
     //! check if we're on the master (the only one that opened the file)
 	if (fileId != 0) {
         //!close all hdf5  groups (in principle this is done also with H5Fclose below...)
-        for (std::map<DiagnosticPhase*, std::map<std::string,hid_t> >::iterator iterMap=mapGroupId.begin(); iterMap!= mapGroupId.end(); iterMap++) {
+        for (std::map<DiagnosticPhase*, std::map<std::string,hid_t> >::iterator iterMap=mapDataId.begin(); iterMap!= mapDataId.end(); iterMap++) {
             for (map<string, hid_t>::iterator iter = iterMap->second.begin(); iter != iterMap->second.end(); iter++) {
-                H5Gclose(iter->second);
+                H5Dclose(iter->second);
             }
         }
         //! close the hdf5 file
@@ -37,7 +37,7 @@ void DiagnosticPhaseSpace::close() {
 
 DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi) : fileId(0), ndim(params->nDim_particle) {
 	for (unsigned int i = 0 ; i < diagParams->vecPhase.size(); i++) {
-        hid_t gidParentParent=0;
+        hid_t gidParent=0;
         if (smpi->isMaster() ) {
             if (i==0) {
                 ostringstream file_name("");
@@ -59,11 +59,11 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagPa
                 H5Tclose(atype);
             }
             ostringstream groupName("");
-            groupName << "g" << setw(4) << setfill('0') << i;
-            gidParentParent = H5Gcreate(fileId, groupName.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT); 
+            groupName << "ps" << setw(4) << setfill('0') << i;
+            gidParent = H5Gcreate(fileId, groupName.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT); 
 
             hid_t sid = H5Screate(H5S_SCALAR);	
-            hid_t aid = H5Acreate(gidParentParent, "every", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
+            hid_t aid = H5Acreate(gidParent, "every", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
             H5Awrite(aid, H5T_NATIVE_UINT, &diagParams->vecPhase[i].every);
             H5Sclose(sid);
             H5Aclose(aid);
@@ -72,15 +72,7 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagPa
         
         for (unsigned int ii=0 ; ii < diagParams->vecPhase[i].kind.size(); ii++) {
             DiagnosticPhase *diagPhase=NULL;
-            
-            hid_t gidParent=0;
-            
-            if (smpi->isMaster()) {
-                ostringstream groupName("");
-                groupName << diagParams->vecPhase[i].kind[ii];
-                gidParent = H5Gcreate(gidParentParent, groupName.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);			
-            }
-            
+                        
             // create DiagnosticPhase
             if (params->geometry == "1d3v") {
                 if (diagParams->vecPhase[i].kind[ii] == "xpx") {
@@ -168,18 +160,35 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams* params, DiagParams* diagPa
                 if (smpi->isMaster()) {
                     //! create a group for each species of this diag and keep track of its ID.
                     map<string,hid_t> localmap;
+                    hid_t gid = H5Gcreate(gidParent, diagParams->vecPhase[i].kind[ii].c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);			
                     for (unsigned int k=0; k<diagParams->vecPhase[i].species.size(); k++) {
-                        hid_t gid = H5Gcreate(gidParent, diagParams->vecPhase[i].species[k].c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-                        localmap[diagParams->vecPhase[i].species[k]]=gid;
-                        diagPhase->writeAttributes(gid);
+                        
+                        hsize_t dims[3] = {0,diagPhase->my_data.dims()[0],diagPhase->my_data.dims()[1]};
+                        hsize_t max_dims[3] = {H5S_UNLIMITED,diagPhase->my_data.dims()[0],diagPhase->my_data.dims()[1]};
+                        hsize_t chunk_dims[3] = {1,diagPhase->my_data.dims()[0],diagPhase->my_data.dims()[1]};
+                        
+                        hid_t sid = H5Screate_simple (3, dims, max_dims);	
+                        hid_t pid = H5Pcreate(H5P_DATASET_CREATE);
+                        H5Pset_layout(pid, H5D_CHUNKED);
+                        H5Pset_chunk(pid, 3, chunk_dims);
+
+                        H5Pset_deflate (pid, std::min((unsigned int)9,diagParams->vecPhase[i].deflate));
+                        
+                        hid_t did = H5Dcreate (gid, diagParams->vecPhase[i].species[k].c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, pid,H5P_DEFAULT);
+                        H5Pclose (pid);	
+                        H5Sclose (sid);
+                        
+                        localmap[diagParams->vecPhase[i].species[k]]=did;
                     }
-                    mapGroupId[diagPhase]=localmap;
+                    diagPhase->writeAttributes(gid);
+                    H5Gclose(gid);
+                    mapDataId[diagPhase]=localmap;
                 }
                 vecDiagPhase.push_back(diagPhase);	
             }
         }
         if (smpi->isMaster() ) {
-            H5Gclose(gidParentParent);
+            H5Gclose(gidParent);
         }
 	}
 }
@@ -229,11 +238,10 @@ void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) 
 				}
                 //! and finally write the data (reduce data on 1 proc, write it and clear memory for future usage)
 				for (unsigned int i =0 ; i < vecDiagPhaseToRun.size(); i++) {
-					vecDiagPhaseToRun[i]->writeData(timestep, mapGroupId[vecDiagPhaseToRun[i]][vecSpecies[j]->name_str]);
+					vecDiagPhaseToRun[i]->writeData(timestep, mapDataId[vecDiagPhaseToRun[i]][vecSpecies[j]->name_str]);
 				}
-                if(fileId>0) H5Fflush(fileId, H5F_SCOPE_GLOBAL);
 			}
-			
 		}
+        if(fileId>0) H5Fflush(fileId, H5F_SCOPE_GLOBAL);
 	}
 }

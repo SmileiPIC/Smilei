@@ -45,7 +45,7 @@ public:
 	virtual void run(partStruct& my_part)=0;
 	
 	//! this will white the diagnostic header to the hdf5 file
-    void writeAttributes(hid_t gid);
+    void writeAttributes(hid_t did);
 
 	//! by now this is the easiest way 2d classes holds field2d and they know how to write it
 	Field2D my_data;

@@ -167,8 +167,8 @@ void DiagnosticProbe::run(unsigned int timestep, ElectroMagn* EMfields, Interpol
             dims.back()=probeSize;
             nulldims.back()=0;
             
-            hid_t sidNull = H5Screate_simple(dimProbe, &dims[0], NULL);
-            hid_t sidPart = H5Screate_simple(dimProbe, &nulldims[0], NULL);
+            hid_t sidPart = H5Screate_simple(dimProbe, &dims[0], NULL);
+            hid_t sidNull = H5Screate_simple(dimProbe, &nulldims[0], NULL);
             
             // Get dataset existing dims
             vector<hsize_t> dimsO(dimProbe);
@@ -219,19 +219,19 @@ void DiagnosticProbe::run(unsigned int timestep, ElectroMagn* EMfields, Interpol
                     data[4]=Bloc_fields.y;
                     data[5]=Bloc_fields.z;
                     
-                    H5Dwrite(did, H5T_NATIVE_DOUBLE, sidNull, sid, pid, &data[0]);
-                } else {
                     H5Dwrite(did, H5T_NATIVE_DOUBLE, sidPart, sid, pid, &data[0]);
+                } else {
+                    H5Dwrite(did, H5T_NATIVE_DOUBLE, sidNull, sid, pid, &data[0]);
                 }
                 
                 H5Pclose( pid );
                 
             }
-            H5Sclose(sidPart);
             H5Sclose(sidNull);
+            H5Sclose(sidPart);
             H5Sclose(sid);
             H5Dclose(did);
         }
     }
-    H5Fflush(fileId, H5F_SCOPE_GLOBAL );
+    if (fileId) H5Fflush(fileId, H5F_SCOPE_GLOBAL );
 }

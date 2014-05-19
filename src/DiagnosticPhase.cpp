@@ -14,49 +14,49 @@ my_species(phaseStruct.species)
 	if (every==0) ERROR("every cannot be zero");
 }
 
-void DiagnosticPhase::writeAttributes(hid_t gid) {
-
-    const vector<hsize_t> dimsPos(2,2);
-    hid_t sid = H5Screate_simple(2, &dimsPos[0], NULL);
-
-    vector<double> tmp(dimsPos[0]*dimsPos[1]);
-
-    hid_t aid = H5Acreate (gid, "extents", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT);
-    
-    tmp[0]=firstmin;
-    tmp[1]=secondmin;
-    tmp[2]=firstmax;
-    tmp[3]=secondmax;
-
-    H5Awrite(aid, H5T_NATIVE_DOUBLE, &tmp[0]);
+void DiagnosticPhase::writeAttributes(hid_t did) {
+    hsize_t dimsPos[2] = {2,2};
+    hid_t sid = H5Screate_simple(2, dimsPos, NULL);
+    hid_t aid = H5Acreate (did, "extents", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT);
+    double tmp[4] = {firstmin, firstmax, secondmin, secondmax};
+    H5Awrite(aid, H5T_NATIVE_DOUBLE, tmp);
     H5Aclose(aid);
     H5Sclose(sid);
-    
 }
 
-void DiagnosticPhase::writeData(unsigned int timestep, hid_t gid) {
+void DiagnosticPhase::writeData(unsigned int timestep, hid_t did) {
 	
 	Field2D my_data_sum;
-	
 	my_data_sum.allocateDims(my_data.dims());
+
 	MPI_Reduce(my_data.data_,my_data_sum.data_,my_data.globalDims_,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
-	
-	if (gid>0) {
-		ostringstream name("");
-		name << "t" << setfill('0') << setw(8) << timestep;
-		
-		hsize_t dims[2]={my_data.dims()[0],my_data.dims()[1]};
-		hid_t sid = H5Screate_simple (2, dims, NULL);	
-		hid_t did = H5Dcreate (gid, name.str().c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
-		H5Dwrite(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, my_data_sum.data_);
-		H5Dclose (did);	
+	    
+    if (did>0) {
+        hid_t sid = H5Dget_space(did);
+        hsize_t dims[3];
+        H5Sget_simple_extent_dims(sid, dims, NULL);
+        H5Sclose(sid);
+        
+        hsize_t start[3]={dims[0],0,0};
+        hsize_t count[3]={1,dims[1],dims[2]};
+
+        // Increment dataset size
+        dims[0]++;
+        H5Dset_extent(did, dims);
+        sid = H5Dget_space(did);
+        
+        hid_t sidChunk = H5Screate_simple(3,count,NULL);
+        
+        H5Sselect_hyperslab(sid, H5S_SELECT_SET, start, NULL, count, NULL);
+        
+        H5Dwrite(did, H5T_NATIVE_DOUBLE, sidChunk, sid, H5P_DEFAULT, my_data_sum.data_);
+        
+		H5Sclose(sidChunk);
 		H5Sclose(sid);
 	}
     
-	//! we want to clean the Field back after ending for the next time
-	for (unsigned int i=0; i<my_data.globalDims_; i++) {
-		my_data.data_[i]=0.0;
-	}
+	//! we want to clean the Field back after ending for the next time    
+    my_data.put_to(0.0);
 	
 }
 

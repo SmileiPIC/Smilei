@@ -65,9 +65,13 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
             }
         }
 
+        tmpPhaseStruct.every=1;
 		ifile.extract("every",tmpPhaseStruct.every,"diagnostic phase",0,n_probephase);
 		ifile.extract("species",tmpPhaseStruct.species,"diagnostic phase",0,n_probephase);
-                
+
+        tmpPhaseStruct.deflate=0;
+        ifile.extract("deflate",tmpPhaseStruct.deflate,"diagnostic phase",0,n_probephase);
+
 		if (tmpPhaseStruct.species.size()==0) {
             WARNING("adding all species to the \"diagnostic phase\" " << n_probephase);
 			for (unsigned int i=0;i<params.n_species; i++) {
