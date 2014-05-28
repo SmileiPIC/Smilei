@@ -300,12 +300,6 @@ void ElectroMagn::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
     smpi->exchangeB( this );
 
     fieldsBoundCond->apply(this, time_dual, smpi);
-
-    // Update x (idx = 0) limits :
-    smpi->getCellStartingGlobalIndex(0) += shift;
-    smpi->getDomainLocalMin(0) += shift*params_->cell_length[0];
-    smpi->getDomainLocalMax(0) += shift*params_->cell_length[0];
-
    
 }
 

@@ -128,10 +128,12 @@ private:
     unsigned int size_proj_buffer;
 
     //! buffers for currents
-    double *b_Jx,*b_Jy,*b_Jz;
+    //double *b_Jx,*b_Jy,*b_Jz;
 
     //! sub dimensions of buffers for dim > 1
-    unsigned int b_dim0, b_dim1;
+    unsigned int b_dim0, b_dim1, b_dim2, b_lastdim;
+    //! sub primal dimensions of fields
+    unsigned int f_dim0, f_dim1, f_dim2;
 
     //! Time over which Particles of the considered Species remain frozen
     double time_frozen;

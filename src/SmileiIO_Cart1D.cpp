@@ -17,8 +17,6 @@ SmileiIO_Cart1D::SmileiIO_Cart1D( PicParams* params, SmileiMPI* smpi )
     : SmileiIO( params, smpi )
 {
     createPattern(params,smpi);
-    params_ = params;
-    smpi_ = smpi;
 }
 
 SmileiIO_Cart1D::~SmileiIO_Cart1D()
@@ -90,7 +88,10 @@ void SmileiIO_Cart1D::createPattern( PicParams* params, SmileiMPI* smpi )
         // in the file.
         //
         hsize_t     dimsf[1];
-        dimsf[0] = params->n_space_global[0]+1+ix_isPrim;
+	if (!params->res_space_win_x)
+	    dimsf[0] = params->n_space_global[0]+1+ix_isPrim;
+	else
+	    dimsf[0] = params->res_space_win_x+1+ix_isPrim;
 
         hid_t filespace = H5Screate_simple(params->nDim_field, dimsf, NULL);
         //
@@ -109,62 +110,6 @@ void SmileiIO_Cart1D::createPattern( PicParams* params, SmileiMPI* smpi )
 } // END createPattern
 
 
-hid_t SmileiIO_Cart1D::createFileSpace( int ix_isPrim )
-{
-    hid_t filespace;
-
-    SmileiMPI_Cart1D* smpi1D =  static_cast<SmileiMPI_Cart1D*>(smpi_);
-
-    std::vector<unsigned int> istart;
-    istart = smpi1D->oversize;
-    std::vector<unsigned int> bufsize;
-    bufsize.resize(params_->nDim_field, 0);
-
-    for (unsigned int i=0 ; i<params_->nDim_field ; i++) {
-	if (smpi1D->getProcCoord(i)!=0) istart[i]+=1;
-	bufsize[i] = params_->n_space[i] + 1;
-    }
-    bufsize[0] += ix_isPrim;
-
-    hsize_t     offset[1];
-    hsize_t     stride[1];
-    hsize_t     count[1];
-    hsize_t     block[1];
-
-    if (smpi1D->number_of_procs[0] != 1) {
-	if ( ix_isPrim == 0 ) {
-	    if (smpi1D->getProcCoord(0)!=0)
-		bufsize[0]--;
-	}
-	else {
-	    if ( (smpi1D->coords_[0]!=0) && (smpi1D->coords_[0]!=smpi1D->number_of_procs[0]-1) )
-		bufsize[0] -= 2;
-	    else
-		bufsize[0] -= 1;
-	}
-    }
-
-    // Each process defines dataset in memory and writes it to the hyperslab
-    // in the file.
-    //
-    hsize_t     dimsf[1];
-    dimsf[0] = params_->n_space_global[0]+1+ix_isPrim;
-
-    filespace = H5Screate_simple(params_->nDim_field, dimsf, NULL);
-    //
-    // Select hyperslab in the file.
-    //
-    offset[0] = smpi_->getCellStartingGlobalIndex(0)+istart[0];
-    stride[0] = 1;
-    count[0] = 1;
-    block[0] = bufsize[0];
-    H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, stride, count, block);
-
-    return filespace;
-
-} // END createFileSpace
-
-
 // ---------------------------------------------------------------------------------------------------------------------
 // For time iteration "itime", write current field in the time step dataset of the global file
 // ---------------------------------------------------------------------------------------------------------------------
@@ -177,8 +122,8 @@ void SmileiIO_Cart1D::writeFieldsSingleFileTime( Field* field, hid_t group_id )
     //-----------------------------------------------------------
     //-----------------------------------------------------------
     //-----------------------------------------------------------
-    //hid_t filespace = filespace_[ isDual[0] ];
-    hid_t filespace = createFileSpace( isDual[0] );
+    hid_t filespace;
+    filespace = filespace_[ isDual[0] ];
 
     //-----------------------------------------------------------
     //-----------------------------------------------------------

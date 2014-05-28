@@ -235,7 +235,7 @@ int main (int argc, char* argv[])
             vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi);
             if ( (params.use_sort_particles) && (itime%params.exchange_particles_each==0) ) {
                 smpi->exchangeParticles(vecSpecies[ispec], ispec, &params);
-                vecSpecies[ispec]->sort_part(params.cell_length[params.nDim_particle-1]);
+		vecSpecies[ispec]->sort_part(params.cell_length[0]);
             }
             else if  ( (!params.use_sort_particles) && (itime%params.exchange_particles_each==0) ) {
                 smpi->IexchangeParticles(vecSpecies[ispec], ispec, &params);
@@ -257,9 +257,16 @@ int main (int argc, char* argv[])
         // call the various diagnostics
         // ----------------------------
 
-	if ((params.res_space_win_x)) {
-	    for (unsigned int ispec=0 ; ispec<params.n_species; ispec++)
+	if ((params.res_space_win_x)&&(itime>params.res_space_win_x/2)&&(itime%4==0)) {
+
+	    smpi->getCellStartingGlobalIndex(0)+= 1;
+	    smpi->getDomainLocalMin(0)+= params.cell_length[0];
+	    smpi->getDomainLocalMax(0)+= params.cell_length[0];
+
+	    for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 		vecSpecies[ispec]->movingWindow_x(1, smpi);
+	    }
+
 	    Interp->mv_win(1);
 	    Proj->mv_win(1);
 	    EMfields->movingWindow_x(1, smpi);

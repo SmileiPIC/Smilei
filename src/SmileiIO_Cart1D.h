@@ -21,7 +21,6 @@ public:
 
     //! Build memory and file space for HDF5 write/read
     void createPattern( PicParams* params, SmileiMPI* smpi );
-    hid_t createFileSpace( int ix_isPrim );
 
     //! Write current field in specified group of the global file
     void writeFieldsSingleFileTime( Field* field, hid_t group_id );
@@ -38,8 +37,6 @@ private:
 
     //! \todo Define chunk size of output for interpolated output
     //hsize_t chunk_dims[1];
-    PicParams* params_;
-    SmileiMPI* smpi_;
 
 };
 

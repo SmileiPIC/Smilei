@@ -256,7 +256,7 @@ void Projector1D2Order::operator() (Field* rho, Particles &particles, int ipart)
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local current densities (sort)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, int ipart, double gf, unsigned int bin, unsigned int b_dim0)
+void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, int ipart, double gf, unsigned int bin, unsigned int b_dim0)
 {
     // Declare local variables
     unsigned int ipo, ip, iloc;
@@ -328,7 +328,7 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
         Jx[iloc] += Jx_p[i];
         Jy[iloc] += cry_p * Wt[i];
         Jz[iloc] += crz_p * Wt[i];
-        //(*rho)(iloc)  += rho_p * S1[i];
+        rho[iloc] += charge_weight * S1[i];
     }//i
 
 
