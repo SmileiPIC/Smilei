@@ -950,14 +950,14 @@ void Species::defineNewCells(unsigned int shift, SmileiMPI *smpi)
 }
 
 
-int Species::createParticles(vector<unsigned int> local_n_space, vector<int> cell_index, int new_bin_idx  )
+int Species::createParticles(vector<unsigned int> n_space_to_create, vector<int> cell_index, int new_bin_idx  )
 {
     // ---------------------------------------------------------
     // Calculate density and number of particles for the species
     // ---------------------------------------------------------
 
     // field containing the density distribution (always 3d)
-    Field3D density(local_n_space);
+    Field3D density(n_space_to_create);
 	
     // field containing the temperature distribution along all 3 momentum coordinates (always 3d * 3)
     Field3D temperature[3];
@@ -966,14 +966,14 @@ int Species::createParticles(vector<unsigned int> local_n_space, vector<int> cel
     Field3D velocity[3];
 	
     for (unsigned int i=0; i<3; i++) {
-	velocity[i].allocateDims(local_n_space);
-	temperature[i].allocateDims(local_n_space);
+	velocity[i].allocateDims(n_space_to_create);
+	temperature[i].allocateDims(n_space_to_create);
     }
 
     int npart_effective = 0;
-    for (unsigned int i=0; i<local_n_space[0]; i++) {
-	for (unsigned int j=0; j<local_n_space[1]; j++) {
-	    for (unsigned int k=0; k<local_n_space[2]; k++) {
+    for (unsigned int i=0; i<n_space_to_create[0]; i++) {
+	for (unsigned int j=0; j<n_space_to_create[1]; j++) {
+	    for (unsigned int k=0; k<n_space_to_create[2]; k++) {
 		
 		vector<double> x_cell(3,0);
 		x_cell[0] = (cell_index[0]+i+0.5)*params_->cell_length[0];
@@ -1059,18 +1059,18 @@ int Species::createParticles(vector<unsigned int> local_n_space, vector<int> cel
     // start a loop on all cells
 		
     // Rappel :
-    // int cell_index[0] = process_coord_x*(local_n_space[0]);
-    // int cell_index[1] = process_coord_y*(local_n_space[1]);
-    // int cell_index[2] = process_coord_z*(local_n_space[2]);
+    // int cell_index[0] = process_coord_x*(n_space_to_create[0]);
+    // int cell_index[1] = process_coord_y*(n_space_to_create[1]);
+    // int cell_index[2] = process_coord_z*(n_space_to_create[2]);
     //
     //bmin[bin] point to begining of bin (first particle)
     //bmax[bin] point to end of bin (= bmin[bin+1])
     //if bmax = bmin, bin is empty of particle.
 
-    for (unsigned int i=0; i<local_n_space[0]; i++) {
+    for (unsigned int i=0; i<n_space_to_create[0]; i++) {
 	bmin[new_bin_idx+i] = iPart;
-	for (unsigned int j=0; j<local_n_space[1]; j++) {
-	    for (unsigned int k=0; k<local_n_space[2]; k++) {
+	for (unsigned int j=0; j<n_space_to_create[1]; j++) {
+	    for (unsigned int k=0; k<n_space_to_created[2]; k++) {
 		// initialize particles in meshes where the density is non-zero
 		if (density(i,j,k)>0) {
 
