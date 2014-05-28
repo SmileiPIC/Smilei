@@ -35,6 +35,12 @@ void Particles::initialize( int nParticles, int nDim )
 	//	WARNING("You should increase c_part_max in specie namelist");
 	//}
 
+    if (Weight.size()==0) {
+	float c_part_max = 1.0;
+	//reserve( round( params->species_param[speciesNumber].c_part_max * nParticles ), nDim );
+	reserve( round( c_part_max * nParticles ), nDim );
+    }
+
 	Position.resize(nDim);
     Position_old.resize(nDim);
     for (int i=0 ; i< nDim ; i++) {

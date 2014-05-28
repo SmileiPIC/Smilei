@@ -445,7 +445,9 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
 	    shift[j]+=shift[j-1];
 	}
 	//Make room for new particles
-	cuParticles.create_particles(shift[(*cubmax).size()]);
+	//cuParticles.create_particles(shift[(*cubmax).size()]);
+        cuParticles.initialize( cuParticles.size()+shift[(*cubmax).size()], cuParticles.dimension() );
+
 
 	//Shift bins, must be done sequentially
 	for (unsigned int j=(*cubmax).size()-1; j>=1; j--){

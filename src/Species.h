@@ -19,6 +19,7 @@ class Pusher;
 class Interpolator;
 class Projector;
 class PartBoundCond;
+class Field3D;
 
 //! class Species
 class Species
@@ -77,7 +78,7 @@ public:
     void sort_part(double);
 
     void movingWindow_x(unsigned int shift, SmileiMPI *smpi);
-    void createParticles(unsigned int shift, SmileiMPI *smpi);
+    void defineNewCells(unsigned int shift, SmileiMPI *smpi);
 
     //! Vector containing all Particles of the considered Species
     Particles particles;
@@ -149,6 +150,8 @@ private:
     double part_mass;
 
     PicParams* params_;
+
+    int  createParticles(std::vector<unsigned int> n_space_to_create, std::vector<int> cell_index, int new_bin_idx );
 
 };
 
