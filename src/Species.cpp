@@ -1070,7 +1070,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<int>
     for (unsigned int i=0; i<n_space_to_create[0]; i++) {
 	bmin[new_bin_idx+i] = iPart;
 	for (unsigned int j=0; j<n_space_to_create[1]; j++) {
-	    for (unsigned int k=0; k<n_space_to_created[2]; k++) {
+	    for (unsigned int k=0; k<n_space_to_create[2]; k++) {
 		// initialize particles in meshes where the density is non-zero
 		if (density(i,j,k)>0) {
 

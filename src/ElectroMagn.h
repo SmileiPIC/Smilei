@@ -120,7 +120,7 @@ public:
 
     //! \todo check time_dual or time_prim (MG)
     //! method used to solve Maxwell's equation (takes current time and time-step as input parameter)
-    virtual void solveMaxwell(double time_dual, SmileiMPI* smpi);
+    virtual void solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, PicParams &params);
     virtual void solveMaxwellAmpere() = 0;
     virtual void solveMaxwellFaraday() = 0;
     virtual void saveMagneticFields() = 0;

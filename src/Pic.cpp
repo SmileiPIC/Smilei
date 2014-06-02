@@ -251,26 +251,11 @@ int main (int argc, char* argv[])
 
         // solve Maxwell's equations
         timer[2].restart();
-        EMfields->solveMaxwell(time_dual, smpi);
+        EMfields->solveMaxwell(itime, time_dual, smpi, params);
         timer[2].update();
 
         // call the various diagnostics
         // ----------------------------
-
-	if ((params.res_space_win_x)&&(itime>params.res_space_win_x/2)&&(itime%4==0)) {
-
-	    smpi->getCellStartingGlobalIndex(0)+= 1;
-	    smpi->getDomainLocalMin(0)+= params.cell_length[0];
-	    smpi->getDomainLocalMax(0)+= params.cell_length[0];
-
-	    for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-		vecSpecies[ispec]->movingWindow_x(1, smpi);
-	    }
-
-	    Interp->mv_win(1);
-	    Proj->mv_win(1);
-	    EMfields->movingWindow_x(1, smpi);
-	}
 
         // run all diagnostics
         timer[3].restart();
@@ -295,6 +280,22 @@ int main (int argc, char* argv[])
 		}*/
         timer[3].update();
 		
+	if ((params.res_space_win_x)&&(itime>params.res_space_win_x/2)&&(itime%1==0)) {
+
+	    smpi->getCellStartingGlobalIndex(0)+= 1;
+	    smpi->getDomainLocalMin(0)+= params.cell_length[0];
+	    smpi->getDomainLocalMax(0)+= params.cell_length[0];
+
+	    for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
+		vecSpecies[ispec]->movingWindow_x(1, smpi);
+	    }
+
+	    Interp->mv_win(1);
+	    Proj->mv_win(1);
+	    EMfields->movingWindow_x(1, smpi);
+	}
+
+
 
     }//END of the time loop
 

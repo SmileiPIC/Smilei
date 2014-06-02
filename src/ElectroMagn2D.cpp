@@ -333,12 +333,14 @@ void ElectroMagn2D::solvePoisson(SmileiMPI* smpi)
     // Status of the solver convergence
     // --------------------------------
     if (iteration == iteration_max) {
-        WARNING("Poisson solver did not converge: reached maximum iteration number: " << iteration
-                << ", relative error is ctrl = " << 1.0e14*ctrl << " x 1e-14");
+        if (smpi->isMaster())
+            WARNING("Poisson solver did not converge: reached maximum iteration number: " << iteration
+                 << ", relative error is ctrl = " << 1.0e14*ctrl << " x 1e-14");
     }
     else {
-        MESSAGE("Poisson solver converged at iteration: " << iteration
-                << ", relative error is ctrl = " << 1.0e14*ctrl << " x 1e-14");
+        if (smpi->isMaster()) 
+            MESSAGE("Poisson solver converged at iteration: " << iteration
+                 << ", relative error is ctrl = " << 1.0e14*ctrl << " x 1e-14");
     }
 
 
@@ -411,8 +413,10 @@ void ElectroMagn2D::solvePoisson(SmileiMPI* smpi)
     MPI_Bcast(&Ex_EastSouth, 1, MPI_DOUBLE, rank_EastSouth, MPI_COMM_WORLD);
     MPI_Bcast(&Ey_EastSouth, 1, MPI_DOUBLE, rank_EastSouth, MPI_COMM_WORLD);
 
-    cerr << "Ex_WestNorth = " << Ex_WestNorth << "  -  Ey_WestNorth = " << Ey_WestNorth << endl;
-    cerr << "Ex_EastSouth = " << Ex_EastSouth << "  -  Ey_EastSouth = " << Ey_EastSouth << endl;
+    if (smpi->isMaster()) {
+        cerr << "Ex_WestNorth = " << Ex_WestNorth << "  -  Ey_WestNorth = " << Ey_WestNorth << endl;
+        cerr << "Ex_EastSouth = " << Ex_EastSouth << "  -  Ey_EastSouth = " << Ey_EastSouth << endl;
+    }
 
     // Centering electrostatic fields
     double Ex_Add = -0.5*(Ex_WestNorth+Ex_EastSouth);

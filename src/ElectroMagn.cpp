@@ -98,13 +98,14 @@ ElectroMagn::~ElectroMagn()
 // ---------------------------------------------------------------------------------------------------------------------
 // Maxwell solver using the FDTD scheme
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn::solveMaxwell(double time_dual, SmileiMPI* smpi)
+void ElectroMagn::solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, PicParams &params)
 {
     saveMagneticFields();
     solveMaxwellAmpere();
     smpi->exchangeE( this );
     solveMaxwellFaraday();
-    fieldsBoundCond->apply(this, time_dual, smpi);
+    if ((!params.res_space_win_x)||(itime<params.res_space_win_x/2))
+	fieldsBoundCond->apply(this, time_dual, smpi);
     smpi->exchangeB( this );
     centerMagneticFields();
 
@@ -294,12 +295,14 @@ void ElectroMagn::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
     //! \ Comms to optimize, only in x, east to west 
     //! \ Implement SmileiMPI::exchangeE( EMFields*, int nDim, int nbNeighbors );
     smpi->exchangeE( this );
+
     Bx_->shift_x(shift);
     By_->shift_x(shift);
     Bz_->shift_x(shift);
     smpi->exchangeB( this );
 
-    fieldsBoundCond->apply(this, time_dual, smpi);
+    // ! necessary in x (memmove), in y (yet applied)
+    //fieldsBoundCond->apply(this, time_dual, smpi);
    
 }
 
