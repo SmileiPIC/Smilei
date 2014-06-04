@@ -280,7 +280,7 @@ int main (int argc, char* argv[])
 		}*/
         timer[3].update();
 		
-	if ((params.res_space_win_x)&&(itime>params.res_space_win_x/2)&&(itime%1==0)) {
+	if ((params.res_space_win_x)&&(itime>params.res_space_win_x/2)&&(itime%2==0)) {
 
 	    smpi->getCellStartingGlobalIndex(0)+= 1;
 	    smpi->getDomainLocalMin(0)+= params.cell_length[0];

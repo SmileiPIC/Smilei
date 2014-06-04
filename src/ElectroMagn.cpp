@@ -90,8 +90,10 @@ ElectroMagn::~ElectroMagn()
     delete Jz_;
     delete rho_;
     delete rho_o;
-    
-    delete fieldsBoundCond;
+
+    int nBC = fieldsBoundCond.size();
+    for ( int i=0 ; i<nBC ;i++ )
+      delete fieldsBoundCond[i];
 
 }//END Destructer
 
@@ -101,12 +103,25 @@ ElectroMagn::~ElectroMagn()
 void ElectroMagn::solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, PicParams &params)
 {
     saveMagneticFields();
+
+    // Compute Ex_, Ey_, Ez_
     solveMaxwellAmpere();
+    // Exchange Ex_, Ey_, Ez_
     smpi->exchangeE( this );
+
+    // Compute Bx_, By_, Bz_
     solveMaxwellFaraday();
-    if ((!params.res_space_win_x)||(itime<params.res_space_win_x/2))
-	fieldsBoundCond->apply(this, time_dual, smpi);
+
+    // Update Bx_, By_, Bz_
+    if ( (!params.res_space_win_x) || (itime<params.res_space_win_x/2) )
+	fieldsBoundCond[0]->apply(this, time_dual, smpi);
+    if ( (!params.use_transverse_periodic) && (fieldsBoundCond.size()>1) )
+	fieldsBoundCond[1]->apply(this, time_dual, smpi);
+ 
+    // Exchange Bx_, By_, Bz_
     smpi->exchangeB( this );
+
+    // Compute Bx_m, By_m, Bz_m
     centerMagneticFields();
 
 }
@@ -301,8 +316,7 @@ void ElectroMagn::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
     Bz_->shift_x(shift);
     smpi->exchangeB( this );
 
-    // ! necessary in x (memmove), in y (yet applied)
-    //fieldsBoundCond->apply(this, time_dual, smpi);
+    fieldsBoundCond[0]->apply(this, time_dual, smpi);
    
 }
 

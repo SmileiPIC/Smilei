@@ -136,8 +136,8 @@ public:
 private:
     PicParams *params_;
 
-    //! Object used to apply boundary-condition for the fields
-    FieldsBC* fieldsBoundCond;
+    //! Vector of boundary-condition per side for the fields
+    std::vector<FieldsBC*> fieldsBoundCond;
 };
 
 #endif

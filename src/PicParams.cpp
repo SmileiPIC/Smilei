@@ -153,7 +153,9 @@ PicParams::PicParams(InputData &ifile) : restart(false), exit_after_dump(true), 
 	    tmpSpec.bc_part_type = "stop";
 	}
         
-	ifile.extract("ionization_model", tmpSpec.ionization_model, "species",0,n_species);
+	if ( !ifile.extract("ionization_model", tmpSpec.ionization_model, "species",0,n_species) )
+	     tmpSpec.ionization_model = "none";
+
 	ifile.extract("atomic_number", tmpSpec.atomic_number, "species",0,n_species);
         
 	species_param.push_back(tmpSpec);
