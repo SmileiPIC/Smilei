@@ -919,6 +919,7 @@ void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
 	}   
 	defineNewCells(shift, smpi);
     }
+    sort_part(params_->cell_length[0]);
 
 }
 
