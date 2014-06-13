@@ -26,14 +26,14 @@ FieldsBC2D_Damping::FieldsBC2D_Damping( PicParams *params )
 
 
     // number of dumping layers
-    ny_l = (int)((double)ny_d*0.1);// To be read in file.in
+    ny_l = 50;// To be read in file.in
     cdamp = 1.l;// To be read in file.in
 
     coeff = new double[ny_l];
     coeff[0] = 0.;
 
     for (unsigned int j=1 ; j<ny_l ; j++)
-	coeff[j] = cdamp*(1.-(double)(ny_l-j)/(double)ny_l)*(1.-(double)(ny_l-j)/(double)ny_l);
+	coeff[j] = 1.-cdamp*((double)(ny_l-j)/(double)ny_l)*((double)(ny_l-j)/(double)ny_l);
 }
 
 FieldsBC2D_Damping::~FieldsBC2D_Damping()
@@ -69,6 +69,14 @@ void FieldsBC2D_Damping::apply(ElectroMagn* EMfields, double time_dual, SmileiMP
 
 	}
 	
+        // for By^(d,p)
+        /*for (unsigned int i=0 ; i<nx_d ; i++) {
+	    for (unsigned int j=0 ; j<ny_l ; j++)
+		(*By2D)(i,j) *= coeff[j];
+
+	}*/
+	
+	
         // for Ex^(d,p)
         for (unsigned int i=0 ; i<nx_d ; i++) {
 	    for (unsigned int j=0 ; j<ny_l ; j++)
@@ -79,6 +87,13 @@ void FieldsBC2D_Damping::apply(ElectroMagn* EMfields, double time_dual, SmileiMP
 	    for (unsigned int j=0 ; j<ny_l ; j++)
 		(*Ez2D)(i,j) *= coeff[j];
 	}
+	
+        // for Ey^(p,d)
+        /*for (unsigned int i=0 ; i<nx_p ; i++) {
+	    for (unsigned int j=0 ; j<ny_l ; j++)
+		(*Ey2D)(i,j) *= coeff[j];
+	}*/
+	
 
     }
 
@@ -95,6 +110,13 @@ void FieldsBC2D_Damping::apply(ElectroMagn* EMfields, double time_dual, SmileiMP
 	      (*Bz2D)(i,ny_d-1-j) *= coeff[j];
         }
 	
+        // for By^(d,p)
+        /*for (unsigned int i=0 ; i<nx_d ; i++) {
+	    for (unsigned int j=0 ; j<ny_l ; j++)
+	      (*By2D)(i,ny_p-1-j) *= coeff[j];
+        }*/
+	
+	
 	// for Ex^(d,p)
         for (unsigned int i=0 ; i<nx_d ; i++) {
 	    for (unsigned int j=0 ; j<ny_l ; j++)
@@ -105,6 +127,14 @@ void FieldsBC2D_Damping::apply(ElectroMagn* EMfields, double time_dual, SmileiMP
 	    for (unsigned int j=0 ; j<ny_l ; j++)
 	      (*Ez2D)(i,ny_p-1-j) *= coeff[j];
 	}
+
+	
+        // for Ey^(p,d)
+        /*for (unsigned int i=0 ; i<nx_p ; i++) {
+	    for (unsigned int j=0 ; j<ny_l ; j++)
+	      (*Ey2D)(i,ny_d-1-j) *= coeff[j];
+	}*/
+	
     }
 
 

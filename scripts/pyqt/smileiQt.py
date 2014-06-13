@@ -69,7 +69,7 @@ class smileiQt(QtGui.QMainWindow):
         settings.beginGroup("Preferences");
         #self.filename=str(settings.value("filename","").toString());
         self.filename=str("Fields.h5");
-        self.filename=str("");
+        #self.filename=str("");
         settings.endGroup();
         self.update_files()
 

@@ -22,7 +22,7 @@ FieldsBC::FieldsBC( PicParams *params )
         laser_[i] = new Laser(params->sim_time, params->laser_param[i]);
     }
 
-    double dt = params->timestep;
+    dt = params->timestep;
 
 }
 
