@@ -316,7 +316,6 @@ void ElectroMagn::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
     Bz_->shift_x(shift);
     smpi->exchangeB( this );
 
-    fieldsBoundCond[0]->apply(this, time_dual, smpi);
-   
+    //Here you might want to apply some new boundary conditions on the +x boundary. For the moment, all fields are set to 0. 
 }
 

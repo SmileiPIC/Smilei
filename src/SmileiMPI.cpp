@@ -183,8 +183,10 @@ void SmileiMPI::bcast( LaserStructure& laserStructure )
     bcast( laserStructure.angle );
     bcast( laserStructure.delta );
     bcast( laserStructure.time_profile );
+    bcast( laserStructure.y_profile );
     bcast( laserStructure.int_params );
     bcast( laserStructure.double_params );
+    bcast( laserStructure.y_params );
 }
 
 void SmileiMPI::bcast( vector<LaserStructure>& val )

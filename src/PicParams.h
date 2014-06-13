@@ -28,13 +28,15 @@ struct LaserStructure {
     double delta;
 
     //! Laser profile
-    std::string time_profile;
+    std::string time_profile; //Longitudinal profile
+    std::string y_profile;    //Profile along y
 
     //! int vector for laser parameters
     std::vector<int> int_params;
 
     //! double vector for laser parameters
-    std::vector<double> double_params;
+    std::vector<double> double_params; //Params for longitudinal profile
+    std::vector<double> y_params;      //PArams for y profil
 };
 
 

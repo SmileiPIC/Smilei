@@ -19,7 +19,7 @@ FieldsBC::FieldsBC( PicParams *params )
 
     for (unsigned int i=0; i<laser_.size(); i++) {
         DEBUG(5,"Initializing Laser "<<i);
-        laser_[i] = new Laser(params->sim_time, params->laser_param[i]);
+        laser_[i] = new Laser(params->sim_time, params->sim_length, params->laser_param[i]);
     }
 
     dt = params->timestep;

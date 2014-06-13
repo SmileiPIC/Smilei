@@ -4,7 +4,7 @@ using namespace std;
 
 
 
-Laser::Laser(double sim_time, LaserStructure laser_param) {
+Laser::Laser(double sim_time, std::vector<double> sim_length, LaserStructure laser_param) {
 
     pi_ov_2 = 0.5 * M_PI;
 
@@ -13,8 +13,10 @@ Laser::Laser(double sim_time, LaserStructure laser_param) {
     a0_delta_z_  = laser_struct.a0 * sqrt(1.0-pow(laser_struct.delta,2));
 
     type_of_time_profile  = laser_struct.time_profile;
+    type_of_y_profile  = laser_struct.y_profile;
     int_params            = laser_struct.int_params;
     double_params         = laser_struct.double_params;
+    y_params         = laser_struct.y_params;
 
     // -------------------------------------------------------
     // Reconstruction of the vector int_params & double_params
@@ -49,12 +51,42 @@ Laser::Laser(double sim_time, LaserStructure laser_param) {
             double_params.resize(3);
         }
     }
+// gauss time-profile
+// double_params[0]: Time at which maximum intensity is reached at the x=0 boundary.
+// double_params[1]: Longitudinal FWHM of the pulse intensity.
+    else if (type_of_time_profile=="gauss" ) {
+
+        if (double_params.size()<1) {
+            double_params.resize(2);
+            double_params[0] = sim_time/2.0;
+        }
+        else {
+            double_params.resize(2);
+        }
+    }
 
     else {
         ERROR("Laser profile " << type_of_time_profile <<  " not defined");
     }// ENDIF type_of_time_profile
 
+//Constant transverse profile
+   if (type_of_y_profile=="constant") {
 
+        if (y_params.size()>0) {
+            double_params.resize(0);
+        }
+    }
+    else if (type_of_y_profile=="gauss"){
+
+        if (double_params.size()<1) {
+            double_params.resize(1);
+            double_params[0] = sim_length[1]/4.0;
+        }
+        else {
+            double_params.resize(1);
+        }
+
+    }
 }
 
 
@@ -81,10 +113,10 @@ double Laser::time_profile(double time_dual) {
     }
 
 
-    // SIN2 time-profile
-    // double_params[0]: rise/fall-time of the sine-square profile (default = sim_time/2)
-    // double_params[1]: duration of constant plateau at maximum (default = 0)
-    // double_params[2]: delay before the pulse is turned on (default = 0)
+// SIN2 time-profile
+// double_params[0]: rise/fall-time of the sine-square profile (default = sim_time/2)
+// double_params[1]: duration of constant plateau at maximum (default = 0)
+// double_params[2]: delay before the pulse is turned on (default = 0)
     else if (type_of_time_profile=="sin2") {
 
         // delay before pulse
@@ -105,7 +137,16 @@ double Laser::time_profile(double time_dual) {
                             / double_params[0] ) , 2 );
         }
         // after the pulse
-        else {
+// gauss time-profile
+// double_params[0]: Time at which maximum intensity is reached at the x=0 boundary.
+// double_params[1]: Longitudinal FWHM of the pulse intensity.
+    else if (type_of_time_profile=="gauss") {
+        //exp(-2*log(2)*pow((time_dual-double_params[0]) / double_params[1] , 2)); //Gaussian longitudinal profil of the intensity
+        //FWHM(Intensity) = FWHM(Field^2) = FWHM(Field)/sqrt(2) ==>
+        return exp(log(2)*pow((time_dual-double_params[0]) / double_params[1] , 2)); //Gaussian longitudinal profil of the field as required
+         
+    } 
+    else {
             return 0.0;
         }
     }
@@ -113,4 +154,16 @@ double Laser::time_profile(double time_dual) {
 
     else
         return 0.0;
+}
+
+double Laser::y_profile(double dfa) {
+
+    if (type_of_y_profile=="constant") {
+        return 1.0;
+    }
+    else if (type_of_y_profile=="gauss"){
+        return exp(- pow(dfa / y_params[0] , 2));
+    }
+    else
+        return 1.0;
 }
