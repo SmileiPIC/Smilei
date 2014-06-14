@@ -106,7 +106,7 @@ void FieldsBC2D::apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
         // for By^(d,p)
         for (unsigned int j=0 ; j<ny_p ; j++) {
 
-            //dfa = smpi->getDomainLocalMin(1)+j*params.cell_length[1]-params.sim_length[1]/2. ; //dfa is algebric.
+            dfa = smpi->getDomainLocalMin(1)+j*params_->cell_length[1]-params_->sim_length[1]/2. ; //dfa is algebric.
             for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
                 if (laser_[ilaser]->laser_struct.angle == 0) {
                     // Incident field (west boundary)
@@ -123,7 +123,7 @@ void FieldsBC2D::apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
         // for Bz^(d,d)
         for (unsigned int j=0 ; j<ny_d ; j++) {
 
-            //dfa = smpi->getDomainLocalMin(1)+j*params.cell_length[1]-params->sim_length[1]/2. ; //dfa is algebric.
+            dfa = smpi->getDomainLocalMin(1)+j*params_->cell_length[1]-params_->sim_length[1]/2. ; //dfa is algebric.
             for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
                 if (laser_[ilaser]->laser_struct.angle == 0) {
                     // Incident field (west boundary)
@@ -144,7 +144,7 @@ void FieldsBC2D::apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
         // for By^(d,p)
         for (unsigned int j=0 ; j<ny_p ; j++) {
             
-            //dfa = smpi->getDomainLocalMin(1)+j*params.cell_length[1]-params->sim_length[1]/2. ; //dfa is algebric.
+            dfa = smpi->getDomainLocalMin(1)+j*params_->cell_length[1]-params_->sim_length[1]/2. ; //dfa is algebric.
             for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
                     // Incident field (west boundary)
                 if (laser_[ilaser]->laser_struct.angle == 180) {
@@ -161,7 +161,7 @@ void FieldsBC2D::apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
         // for Bz^(d,d)
         for (unsigned int j=0 ; j<ny_d ; j++) {
 
-            //dfa = smpi->getDomainLocalMin(1)+j*params.cell_length[1]-params->sim_length[1]/2. ; //dfa is algebric.
+            dfa = smpi->getDomainLocalMin(1)+j*params_->cell_length[1]-params_->sim_length[1]/2. ; //dfa is algebric.
             for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
                 if (laser_[ilaser]->laser_struct.angle == 180) {
                     // Incident field (east boundary)

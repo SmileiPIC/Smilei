@@ -13,6 +13,7 @@ using namespace std;
 
 FieldsBC::FieldsBC( PicParams *params )
 {
+    params_ = params;
 
     // check for laser conditions
     laser_.resize(params->n_laser);

@@ -22,6 +22,8 @@ public:
     std::vector<Laser*> laser_;
     //! time-step
     double dt;
+
+    PicParams* params_;
     
 };
 
