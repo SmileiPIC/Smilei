@@ -22,7 +22,10 @@ struct phaseStructure {
 
     //! phase output every (every phase diagnostic must have this)
     unsigned int every;
-	
+
+    //! compression level using zlib [0-9] (0 deactvate compression)
+    unsigned int deflate;
+
 	//! vector of pointer to species on which the phase diag will be applied (if omitted, it will be for all)
 	std::vector<std::string> species;
 	

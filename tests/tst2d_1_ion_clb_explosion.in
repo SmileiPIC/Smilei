@@ -95,7 +95,7 @@ diagnostic probe
 	pos = 0.0 0.0
 	pos_first = 1.0 0.0 
 	pos_second = 0.0 1.0
-	number = 3 10
+	number = 3 6
 end
 
 

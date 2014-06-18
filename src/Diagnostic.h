@@ -23,7 +23,7 @@ class ElectroMagn;
 class Species;
 
 
-//! class holder of the two type of diagnostics scalars and map
+//! class holder for all the diagnostics: scalars, probes(0D, 1D, 2D and 3D) and phase-space
 class Diagnostic {
 
 public:
@@ -40,7 +40,7 @@ private:
 
     DiagnosticProbe probes;
 
-	DiagnosticPhaseSpace diagPhaseSpace;
+	DiagnosticPhaseSpace phases;
 	
 };
 

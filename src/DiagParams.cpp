@@ -33,7 +33,7 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
         ifile.extract("every",tmpStruct.every,"diagnostic probe",0,n_probe);
         ifile.extract("number",tmpStruct.number,"diagnostic probe",0,n_probe);
         tmpStruct.dim=tmpStruct.number.size();
-        if (tmpStruct.dim == 0) {
+        if (tmpStruct.dim == 0) { // in 1D case you have one probe, forcing it
             tmpStruct.number.resize(1);
             tmpStruct.number[0]=1;
         }
@@ -55,20 +55,32 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
 	int n_probephase=0;
 	while (ifile.existGroup("diagnostic phase",n_probephase)) {
 		phaseStructure tmpPhaseStruct;
-		ifile.extract("kind",tmpPhaseStruct.kind,"diagnostic phase",0,n_probephase);
+        vector<string> kind;
+		ifile.extract("kind",kind,"diagnostic phase",0,n_probephase);        
+        for (vector<string>::iterator it=kind.begin(); it!=kind.end();it++) {
+            if (std::find(kind.begin(), it, *it) == it) {
+                tmpPhaseStruct.kind.push_back(*it); 
+            } else {
+                WARNING("removed duplicate " << *it << " in \"diagnostic phase\" " << n_probephase);
+            }
+        }
+
+        tmpPhaseStruct.every=1;
 		ifile.extract("every",tmpPhaseStruct.every,"diagnostic phase",0,n_probephase);
 		ifile.extract("species",tmpPhaseStruct.species,"diagnostic phase",0,n_probephase);
+
+        tmpPhaseStruct.deflate=0;
+        ifile.extract("deflate",tmpPhaseStruct.deflate,"diagnostic phase",0,n_probephase);
+
 		if (tmpPhaseStruct.species.size()==0) {
+            WARNING("adding all species to the \"diagnostic phase\" " << n_probephase);
 			for (unsigned int i=0;i<params.n_species; i++) {
 				tmpPhaseStruct.species.push_back(params.species_param[i].species_type);
 			}			
 		}
+        
 		ifile.extract("pos_min",tmpPhaseStruct.pos_min,"diagnostic phase",0,n_probephase);
-		transform(tmpPhaseStruct.pos_min.begin(),tmpPhaseStruct.pos_min.end(), 
-                  tmpPhaseStruct.pos_min.begin(),bind1st(multiplies<double>(),2*M_PI));
 		ifile.extract("pos_max",tmpPhaseStruct.pos_max,"diagnostic phase",0,n_probephase);
-		transform(tmpPhaseStruct.pos_max.begin(),tmpPhaseStruct.pos_max.end(), 
-                  tmpPhaseStruct.pos_max.begin(),bind1st(multiplies<double>(),2*M_PI));
 		ifile.extract("pos_num",tmpPhaseStruct.pos_num,"diagnostic phase",0,n_probephase);
 
 		ifile.extract("mom_min",tmpPhaseStruct.mom_min,"diagnostic phase",0,n_probephase);

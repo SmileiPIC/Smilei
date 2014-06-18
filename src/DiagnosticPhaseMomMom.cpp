@@ -1,9 +1,9 @@
-#include "DiagnosticPhase2DMomMom.h"
+#include "DiagnosticPhaseMomMom.h"
 
 using namespace std;
 
-DiagnosticPhase2DMomMom::DiagnosticPhase2DMomMom(phaseStructure phaseStruct, const unsigned int directionMomentum1, const unsigned int directionMomentum2) : 
-DiagnosticPhase2D(phaseStruct), 
+DiagnosticPhaseMomMom::DiagnosticPhaseMomMom(phaseStructure phaseStruct, const unsigned int directionMomentum1, const unsigned int directionMomentum2) : 
+DiagnosticPhase(phaseStruct), 
 my_dirMom1(directionMomentum1), 
 my_dirMom2(directionMomentum2) {
     
@@ -21,7 +21,7 @@ my_dirMom2(directionMomentum2) {
 	secondnum = phaseStruct.mom_num[1];    
 }
 
-void DiagnosticPhase2DMomMom::doSomething(partStruct& my_part) {
+void DiagnosticPhaseMomMom::run(partStruct& my_part) {
 	if (my_part.mom[my_dirMom1] > firstmin && my_part.mom[my_dirMom1] < firstmax && my_part.mom[my_dirMom2] > secondmin && my_part.mom[my_dirMom2] < secondmax) {
 		//!\todo check if useful to have projector here
 		int i = firstnum*(my_part.mom[my_dirMom1]-firstmin)/(firstmax-firstmin);

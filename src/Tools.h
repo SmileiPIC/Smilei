@@ -47,6 +47,7 @@
 #define PMESSAGE(...) PMESSAGE4(__VA_ARGS__)(__VA_ARGS__)
 
 #ifdef  __DEBUG
+#warning "DEBUG MODE "
 extern int debug_level;
 
 #define DEBUG1(__txt) {if(debug_level>=0) __header("DEBUG", __txt);}

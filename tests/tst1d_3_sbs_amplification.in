@@ -148,6 +148,8 @@ diagnostic phase
 	kind = xPx xPy xPz xLor
 
     species = eon
+    
+    deflate=0
 
 	every = 100
 
@@ -168,6 +170,8 @@ diagnostic phase
 	kind = PxPy PxPz PyPz
     species = eon
 	every = 100
+
+    deflate=0
 
 	mom_min = -0.3 -0.3
 	mom_max = 0.3 0.3
