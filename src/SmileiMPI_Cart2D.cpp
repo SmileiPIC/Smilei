@@ -152,7 +152,7 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
 
         oversize[i] = params.oversize[i] = params.interpolation_order + 1 + (params.exchange_particles_each-1);
         if ( params.n_space[i] <= 2*oversize[i] ) {
-            WARNING ( "Increase space resolution or reduce number of MPI process in direction " << i ); 
+            WARNING ( "Increase space resolution or reduce number of MPI process in direction " << i << " "<< params.n_space[i]); 
         }
 
         // min/max_local : describe local domain in which particles cat be moved

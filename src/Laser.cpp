@@ -137,23 +137,20 @@ double Laser::time_profile(double time_dual) {
                             / double_params[0] ) , 2 );
         }
         // after the pulse
+    }
 // gauss time-profile
 // double_params[0]: Time at which maximum intensity is reached at the x=0 boundary.
 // double_params[1]: Longitudinal FWHM of the pulse intensity.
     else if (type_of_time_profile=="gauss") {
         //exp(-2*log(2)*pow((time_dual-double_params[0]) / double_params[1] , 2)); //Gaussian longitudinal profil of the intensity
         //FWHM(Intensity) = FWHM(Field^2) = FWHM(Field)/sqrt(2) ==>
-        return exp(log(2)*pow((time_dual-double_params[0]) / double_params[1] , 2)); //Gaussian longitudinal profil of the field as required
+        //cout << time_dual << " " << double_params[0] << " "<<double_params[1]<<endl;
+        return exp(-log(2)*pow((time_dual-double_params[0]) / double_params[1] , 2)); //Gaussian longitudinal profil of the field as required
          
     } 
     else {
             return 0.0;
         }
-    }
-
-
-    else
-        return 0.0;
 }
 
 double Laser::y_profile(double dfa) {
@@ -164,6 +161,7 @@ double Laser::y_profile(double dfa) {
     else if (type_of_y_profile=="gauss"){
         return exp(- pow(dfa / y_params[0] , 2));
     }
-    else
-        return 1.0;
+    else {
+          return 1.0;
+         }
 }
