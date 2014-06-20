@@ -172,6 +172,8 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
     std::vector<int>* cubmin = &species->bmin;
     std::vector<int>* cubmax = &species->bmax;
 
+    #pragma omp master
+    {
     /********************************************************************************/
     // Build lists of indexes of particle to exchange per neighbor
     // Computed from indexes_of_particles_to_exchange computed during particles' BC
@@ -465,7 +467,7 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
             }
         }
     }
-
+    }//end of omp master
 } // END exchangeParticles
 
 
