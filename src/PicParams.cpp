@@ -147,11 +147,15 @@ PicParams::PicParams(InputData &ifile) : restart(false), exit_after_dump(true), 
 	    WARNING("dynamics_type rrll forcing radiating true");
 	    tmpSpec.radiating=true;
 	}
-	ifile.extract("bc_part_type",tmpSpec.bc_part_type ,"species",0,n_species);
-	if ( (res_space_win_x) && (tmpSpec.bc_part_type!="stop") ) {
+	if (!ifile.extract("bc_part_type_long",tmpSpec.bc_part_type_long,"species",0,n_species) )
+	    ERROR("bc_part_type_long not defined for species " << n_species );
+	if (nDim_particle>1)
+	    if (!ifile.extract("bc_part_type_trans ",tmpSpec.bc_part_type_trans,"species",0,n_species) )
+		ERROR("bc_part_type_trans not defined for species " << n_species );
+	/*if ( (res_space_win_x) && (tmpSpec.bc_part_type!="supp") ) {
 	    WARNING( "Boundary conditions on particles don't match with moving window, modified" );
-	    tmpSpec.bc_part_type = "stop";
-	}
+	    tmpSpec.bc_part_type = "supp";
+	}*/
         
 	if ( !ifile.extract("ionization_model", tmpSpec.ionization_model, "species",0,n_species) )
 	     tmpSpec.ionization_model = "none";
@@ -204,10 +208,10 @@ PicParams::PicParams(InputData &ifile) : restart(false), exit_after_dump(true), 
     if ( !ifile.extract("use_transverse_periodic", use_transverse_periodic) ) {
       use_transverse_periodic = true;
     }
-    else if (!use_transverse_periodic) {
+    /*else if (!use_transverse_periodic) {
       for (unsigned int i=0; i<n_species; i++)
 	  species_param[i].bc_part_type = "stop";
-    }
+    }*/
 
     if ( !ifile.extract("number_of_procs", number_of_procs) )
 	number_of_procs.resize(nDim_field, 0);
@@ -322,7 +326,8 @@ void PicParams::print()
 		<< "(mass, charge, density) : (" << species_param[i].mass << ", " <<  species_param[i].charge << ", " << species_param[i].density << ")");
 	for ( unsigned int j=0 ; j<species_param[i].mean_velocity.size() ; j++ )
 	    MESSAGE(2,"dim " << j << " - (mean_velocity, temperature) : (" << species_param[i].mean_velocity[j] << ", " << species_param[i].temperature[j] << ")");
-	MESSAGE(2," (dynamics_type, bc_part_type, time_frozen, radiating) : (" << species_param[i].dynamics_type <<  ", " << species_param[i].bc_part_type <<  ", " << species_param[i].time_frozen <<  ", " << species_param[i].radiating << ")");
+	MESSAGE(2," (dynamics_type, time_frozen, radiating) : (" << species_param[i].dynamics_type <<  ", " <<  ", " << species_param[i].time_frozen <<  ", " << species_param[i].radiating << ")");
+	MESSAGE(2," (bc_part_type_long, bc_part_type_trans) : (" << species_param[i].bc_part_type_long <<  ", " << species_param[i].bc_part_type_trans << ")");
     }
     
     MESSAGE(1,"n_laser : " << n_laser);

@@ -33,7 +33,10 @@ inline int supp_particle( Particles &particles, int ipart, int direction, double
 
 inline int stop_particle( Particles &particles, int ipart, int direction, double limit_pos ) {
     particles.position(direction, ipart) = particles.position_old(direction, ipart);
-    return 0;
+    particles.momentum(direction, 0) = 0.;
+    particles.momentum(direction, 1) = 0.;
+    particles.momentum(direction, 2) = 0.;
+    return 1;
 
 }
 

@@ -68,6 +68,8 @@ species
 	dynamics_type = norm
 	time_frozen = 10000
 	radiating = false
+	bc_part_type_long  = none
+	bc_part_type_trans = stop
 end
 
 species 
@@ -83,6 +85,8 @@ species
 	dynamics_type = norm	
 	time_frozen = 0.0
 	radiating = false
+	bc_part_type_long = none
+	bc_part_type_trans = stop
 end
 
 # ----------------
