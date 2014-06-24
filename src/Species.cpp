@@ -6,6 +6,8 @@
 
 #include <iostream>
 
+#include <omp.h>
+
 #include "PusherFactory.h"
 #include "IonizationFactory.h"
 
@@ -71,25 +73,13 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
     // Arrays of the min and max indices of the particle bins
     bmin.resize(params->n_space[0]);
     bmax.resize(params->n_space[0]);
-    /*	
-    //Size of the buffer on which each bin are projected
-    //In 1D the particles of a same bin can be projected on 6 different nodes at the second order (oversize = 2)
-    size_proj_buffer = 2 + 2 * oversize[0];
-    //for (unsigned int i=1; i< ndim; i++) {
-    for (unsigned int i=ndim-1; i>0; i--) {
-    size_proj_buffer *= params->n_space[i] + 2 * oversize[i];
+    if (ndim == 3){
+        bmin.resize(params->n_space[0]*params->n_space[1]);
+        bmax.resize(params->n_space[0]*params->n_space[1]);
     }
-    cout << "size_proj_buffer = " << size_proj_buffer << endl;
-    //Allocate buffer *********************************************
-    b_Jx = (double *) calloc(3 * size_proj_buffer, sizeof(double));
-    b_Jy = b_Jx + size_proj_buffer ;
-    b_Jz = b_Jy + size_proj_buffer ;
-    if (ndim > 1) {
-    b_dim0 =  2 + 2 * oversize[0];
-    if (ndim > 2) {
-    b_dim1 = params->n_space[1] + 2 * oversize[1] ;
-    }
-    }*/
+	
+    //Size in each dimension of the buffers on which each bin are projected
+    //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
 
     //Primal dimension of fields. 
     f_dim0 =  params->n_space[0] + 2 * oversize[0] +1;
@@ -127,6 +117,7 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 	for (unsigned int i=0 ; i<params->nDim_field ; i++) {
 	    if (params->cell_length[i]!=0)
 		cell_index[i] = round (smpi->getDomainLocalMin(i)/params->cell_length[i]);
+
 	}
 
 	int starting_bin_idx = 0;
@@ -653,6 +644,8 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     LocalFields Epart;
     // Magnetic field at the particle position
     LocalFields Bpart;
+    // Ionization current
+    LocalFields Jion;
 	
     int iloc,jloc;
     unsigned int i,j,ibin,iPart;
@@ -660,31 +653,34 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     //! buffers for currents and charge
     double *b_Jx,*b_Jy,*b_Jz,*b_rho;
 
-	
     // number of particles for this Species
-    int unsigned nParticles = getNbrOfParticles();
+    unsigned int nParticles = getNbrOfParticles();
     // Reset list of particles to exchange
-    smpi->clearExchList();
+    int tid(0);
+#ifdef _OMP
+    tid = omp_get_thread_num();
+#endif
+    smpi->clearExchList(tid);
 	
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
     if (time_dual>time_frozen) { // moving particle
         double gf = 1.0;
+	//Allocate buffer *********************************************
+	// *4 allows to also reset Jy, Jz and rho which are contiguous in memory
         b_Jx = (double *) calloc(4 * size_proj_buffer, sizeof(double));
         b_Jy = b_Jx + size_proj_buffer ;
         b_Jz = b_Jy + size_proj_buffer ;
         b_rho = b_Jz + size_proj_buffer ;
 
-		
-        // for all particles of the Species
-        //#pragma omp parallel for shared (EMfields)
+        #pragma omp for schedule(static)
         for (ibin = 0 ; ibin < bmin.size() ; ibin++) {
-			
+
             // reset all current-buffers
-            // *3 allows to also reset Jy & Jz which are contiguous in memory
+            // *4 allows to also reset Jy, Jz & rho which are contiguous in memory
             for (iloc = 0; iloc < 4*size_proj_buffer; iloc++) b_Jx[iloc] = 0.0;
-			
+
             for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
 				
                 // Interpolate the fields at the particle position
@@ -693,7 +689,6 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 // Do the ionization
                 if (Ionize && particles.charge(iPart) < (int) atomic_number) {
                     //!\todo Check if it is necessary to put to 0 or if LocalFields ensures it
-		    LocalFields Jion;
 		    Jion.x=0.0;
                     Jion.y=0.0;
                     Jion.z=0.0;
@@ -709,61 +704,55 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 // Boundary Condition may be physical or due to domain decomposition
                 // apply returns 0 if iPart is no more in the domain local
                 //	if omp, create a list per thread
-                if ( !partBoundCond->apply( particles, iPart ) ) smpi->addPartInExchList( iPart );
-				
-                //if (ndim == 1) {
-		//    //! \todo Sort projection : to be validaed
-                //    (*Proj)(b_Jx, b_Jy, b_Jz, particles, iPart, gf, ibin, b_dim0);
-                //} else {
-		/*		(*Proj)(EMfields->Jx_s[ispec], EMfields->Jy_s[ispec], EMfields->Jz_s[ispec], EMfields->rho_s[ispec],
-				particles, iPart, gf);*/
-		//}
+                if ( !partBoundCond->apply( particles, iPart ) ) {
+		  smpi->addPartInExchList( tid, iPart );
+		}
+
                 if (ndim <= 2) {
                     (*Proj)(b_Jx, b_Jy, b_Jz, b_rho, particles, iPart, gf, ibin, b_lastdim);
                 } else {
-                    (*Proj)(EMfields->Jx_s[ispec], EMfields->Jy_s[ispec], EMfields->Jz_s[ispec], EMfields->rho_s[ispec],
-                            particles, iPart, gf);
-                }
-
-				
-            }// iPart
-			
-            // Copy buffer back to the global array and free buffer****************
-            // this part is dimension dependant !! this is for dim = 1
-            if (ndim == 1) {
-                for (unsigned int i = 0; i < size_proj_buffer ; i++) {
-                    iloc = ibin + i ;
-                    // adding contribution to the total currents
-                    //(*EMfields->Jx_)(iloc) += b_Jx[i];
-                    //(*EMfields->Jy_)(iloc) += b_Jy[i];
-                    //(*EMfields->Jz_)(iloc) += b_Jz[i];
-                    // adding contribution to current species currents and density
-                    //! \todo Below, operator(int) is virtual, to change
-                    (*EMfields->Jx_s[ispec])(iloc) += b_Jx[i];
-                    (*EMfields->Jy_s[ispec])(iloc) += b_Jy[i];
-                    (*EMfields->Jz_s[ispec])(iloc) += b_Jz[i];
-                }
-            }
-	    if (ndim == 2) {
-		for (i = 0; i < b_dim0 ; i++) {
-		    iloc = ibin + i ;
-		    for (j = 0; j < b_dim1 ; j++) {
-#pragma omp atomic
-			(*EMfields->Jx_s[ispec]) (iloc*(f_dim1  )+j) +=  b_Jx[i*b_dim1+j];   //  primal along y
-#pragma omp atomic
-			(*EMfields->Jy_s[ispec]) (iloc*(f_dim1+1)+j) +=  b_Jy[i*b_dim1+j];   //+1 because dual along y
-#pragma omp atomic
-			(*EMfields->Jz_s[ispec]) (iloc*(f_dim1  )+j) +=  b_Jz[i*b_dim1+j];   // primal along y
-#pragma omp atomic
-			(*EMfields->rho_s[ispec])(iloc*(f_dim1  )+j) += b_rho[i*b_dim1+j];   // primal along y
-		    }
+		    (*Proj)(EMfields->Jx_s[ispec], EMfields->Jy_s[ispec], EMfields->Jz_s[ispec], EMfields->rho_s[ispec],
+			    particles, iPart, gf);
 		}
-	    }
+            }//iPart
+
+           // Copy buffer back to the global array and free buffer****************
+           // this part is dimension dependant !! this is for dim = 1
+           if (ndim == 1) {
+               for (i = 0; i < b_dim0 ; i++) {
+                   //! \todo Should we care about primal - dual sizes here ?
+                   iloc = ibin + i ;
+                   #pragma omp atomic
+                   (*EMfields->Jx_s[ispec]) (iloc) +=  b_Jx[i];
+                   #pragma omp atomic
+                   (*EMfields->Jy_s[ispec]) (iloc) +=  b_Jy[i];
+                   #pragma omp atomic
+                   (*EMfields->Jz_s[ispec]) (iloc) +=  b_Jz[i];
+                   #pragma omp atomic
+                   (*EMfields->rho_s[ispec])(iloc) += b_rho[i];
+               }
+           }
+           if (ndim == 2) {
+               for (i = 0; i < b_dim0 ; i++) {
+                   iloc = ibin + i ;
+               //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
+                   for (j = 0; j < b_dim1 ; j++) {
+                       #pragma omp atomic
+                       (*EMfields->Jx_s[ispec]) (iloc*(f_dim1  )+j) +=  b_Jx[i*b_dim1+j];   //  primal along y
+                       #pragma omp atomic
+                       (*EMfields->Jy_s[ispec]) (iloc*(f_dim1+1)+j) +=  b_Jy[i*b_dim1+j];   //+1 because dual along y
+                       #pragma omp atomic
+                       (*EMfields->Jz_s[ispec]) (iloc*(f_dim1  )+j) +=  b_Jz[i*b_dim1+j];   // primal along y
+                       #pragma omp atomic
+                       (*EMfields->rho_s[ispec])(iloc*(f_dim1  )+j) += b_rho[i*b_dim1+j];   // primal along y
+                   }
+               }
+           }
 
         }// ibin
         free(b_Jx);
 
-		
+
         if (Ionize && electron_species) {
             for (unsigned int i=0; i < Ionize->new_electrons.size(); i++) {
                 // electron_species->particles.push_back(Ionize->new_electrons[i]);
@@ -787,13 +776,12 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     }
     else { // immobile particle (at the moment only project density)
 		
-        //#pragma omp parallel for shared (EMfields)
-        for (unsigned int iPart=0 ; iPart<nParticles; iPart++ ) {
+        #pragma omp parallel for schedule (static) 
+        for (iPart=0 ; iPart<nParticles; iPart++ ) {
             (*Proj)(EMfields->rho_s[ispec], particles, iPart);
         }
 		
     }//END if time vs. time_frozen
-	
 	
 }//END dynamic
 
@@ -837,13 +825,15 @@ void Species::computeScalars() {
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::sort_part(double dbin)
 {
-    //dbin is the width of one bin. dbin= dx in 1D, dy in 2D and dz in 3D.
+    //dbin is the width of one bin. dbin= dx.
 	
     int p1,p2,bmin_init;
+    unsigned int bin;
     double limit;
 	
     //Backward pass
-    for (unsigned int bin=0; bin<bmin.size()-1; bin++) { //Loop on the bins. To be parallelized with openMP.
+    #pragma omp for schedule(static) 
+    for (bin=0; bin<bmin.size()-1; bin++) { //Loop on the bins. To be parallelized with openMP.
         limit = min_loc + (bin+1)*dbin;
         p1 = bmax[bin]-1;
         //If first particles change bin, they do not need to be swapped.
@@ -863,7 +853,8 @@ void Species::sort_part(double dbin)
         }
     }
     //Forward pass + Rebracketting
-    for (unsigned int bin=1; bin<bmin.size(); bin++) { //Loop on the bins. To be parallelized with openMP.
+    #pragma omp for schedule(runtime)
+    for (bin=1; bin<bmin.size(); bin++) { //Loop on the bins. To be parallelized with openMP.
         limit = min_loc + (bin)*dbin;
         bmin_init = bmin[bin];
         p1 = bmin[bin];
@@ -901,11 +892,11 @@ void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
 
     // Send particles of first bin on process rank-1
     // If no rank-1 -> particles deleted
-    smpi->clearExchList();
+    smpi->clearExchList(0);
     for (unsigned int ibin = 0 ; ibin < 1 ; ibin++)
 	for (unsigned int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ )
-	    smpi->addPartInExchList( iPart );
-    smpi->exchangeParticles( this, speciesNumber, params_ );
+	  smpi->addPartInExchList( 0, iPart );
+    smpi->exchangeParticles( this, speciesNumber, params_, 0 );
 
     // Create new particles
     if (smpi->isEaster() ) {

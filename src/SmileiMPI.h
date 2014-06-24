@@ -35,9 +35,9 @@ public:
     virtual void createTopology( PicParams& params ) {};
     //! Echanges particles of Species, list of particles comes frome Species::dynamics
     //! See child classes
-    virtual void exchangeParticles(Species* species, int ispec, PicParams* params) {};
+    virtual void exchangeParticles(Species* species, int ispec, PicParams* params, int tnum) {};
     //! Non-blocking exchange of particles
-    virtual void IexchangeParticles(Species* species, int ispec, PicParams* params) {};
+    virtual void IexchangeParticles(Species* species, int ispec, PicParams* params, int tnum) {};
 
     //! Create MPI_Datatype to exchange/sum fields on ghost data
     //! See child classes
@@ -85,11 +85,14 @@ public:
         return max_local[i];
     }
 
-    inline void clearExchList() {
-        indexes_of_particles_to_exchange.clear();
+    inline void setExchListSize(unsigned int nthds) {
+	indexes_of_particles_to_exchange_per_thd.resize(nthds);
     }
-    inline void addPartInExchList(int iPart) {
-        indexes_of_particles_to_exchange.push_back(iPart);
+        inline void clearExchList(int tid) {
+	    indexes_of_particles_to_exchange_per_thd[tid].clear();
+    }
+    inline void addPartInExchList(int tid, int iPart) {
+        indexes_of_particles_to_exchange_per_thd[tid].push_back(iPart);
     }
 
     //! \ Should be pure virtual
@@ -112,7 +115,8 @@ protected:
     MPI_Comm SMILEI_COMM_WORLD;
 
     //! indexes_of_particles_to_exchange built in Species::dynamics
-    std::vector<int> indexes_of_particles_to_exchange;
+    std::vector< std::vector<int> > indexes_of_particles_to_exchange_per_thd;
+    std::vector<int>                indexes_of_particles_to_exchange;
     //! Sort particles to exchange per direction, contains indexes
     std::vector<int> buff_index_send[3][2];
     //! buff_index_recv_sz : number of particles to recv per direction

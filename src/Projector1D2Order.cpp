@@ -46,13 +46,12 @@ Projector1D2Order::~Projector1D2Order()
 // ---------------------------------------------------------------------------------------------------------------------
 void Projector1D2Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, double gf)
 {
-		
     Field1D* Jx1D  = static_cast<Field1D*>(EMfields->Jx_);
     Field1D* Jy1D  = static_cast<Field1D*>(EMfields->Jy_);
     Field1D* Jz1D  = static_cast<Field1D*>(EMfields->Jz_);
 
     // Declare local variables
-    int unsigned ipo, ip, iloc;
+    unsigned int ipo, ip, iloc;
     int ip_m_ipo;
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;
@@ -141,7 +140,7 @@ void Projector1D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Field* rho,
     Field1D* rho1D = static_cast<Field1D*>(rho);
 
     // Declare local variables
-	unsigned int ipo, ip, iloc;
+    unsigned int ipo, ip, iloc;
     int ip_m_ipo;
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;
@@ -197,7 +196,7 @@ void Projector1D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Field* rho,
     for (unsigned int i=1; i<5; i++) {
         Jx_p[i] = Jx_p[i-1] + crx_p * Wl[i-1];
     }
-	
+
     ipo -= index_domain_begin;
     //cout << "\tcoords = " << particles.position(0, ipart) << "\tglobal index = " << ip;
     ip  -= index_domain_begin;
@@ -259,14 +258,13 @@ void Projector1D2Order::operator() (Field* rho, Particles &particles, int ipart)
 void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, int ipart, double gf, unsigned int bin, unsigned int b_dim0)
 {
     // Declare local variables
-    unsigned int ipo, ip, iloc;
+    int unsigned ipo, ip, iloc;
     int ip_m_ipo;
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;
     double crx_p = charge_weight*dx_ov_dt;                // current density for particle moving in the x-direction
     double cry_p = charge_weight*particles.momentum(1, ipart)/gf;    // current density in the y-direction of the macroparticle
     double crz_p = charge_weight*particles.momentum(2, ipart)/gf;    // current density allow the y-direction of the macroparticle
-    //double rho_p = particles.weight(ipart);                         // charge density for the macroparticle
     double S0[5], S1[5], Wl[5], Wt[5], Jx_p[5];            // arrays used for the Esirkepov projection method
 
     // Initialize variables
@@ -284,7 +282,6 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     ipo        = round(xjn);                          // index of the central node
     xj_m_xipo  = xjn - (double)ipo;                   // normalized distance to the nearest grid point
     xj_m_xipo2 = xj_m_xipo*xj_m_xipo;                 // square of the normalized distance to the nearest grid point
-    //cout << "old coords = " << particles.position_old(0, ipart);
 
     // Locate particle new position on the primal grid
     xjn       = particles.position(0, ipart) * dx_inv_;
@@ -325,9 +322,9 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     // At the 2nd order, oversize = 2.
     for (unsigned int i=0; i<5; i++) {
         iloc = i + ipo - 2;
-        Jx[iloc] += Jx_p[i];
-        Jy[iloc] += cry_p * Wt[i];
-        Jz[iloc] += crz_p * Wt[i];
+        Jx[iloc]  += Jx_p[i];
+        Jy[iloc]  += cry_p * Wt[i];
+        Jz[iloc]  += crz_p * Wt[i];
         rho[iloc] += charge_weight * S1[i];
     }//i
 

@@ -128,9 +128,6 @@ private:
     //! Size of the projection buffer
     unsigned int size_proj_buffer;
 
-    //! buffers for currents
-    //double *b_Jx,*b_Jy,*b_Jz;
-
     //! sub dimensions of buffers for dim > 1
     unsigned int b_dim0, b_dim1, b_dim2, b_lastdim;
     //! sub primal dimensions of fields

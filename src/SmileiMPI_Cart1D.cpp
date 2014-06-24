@@ -143,7 +143,7 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
 
 }
 
-void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams* params)
+void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams* params,int tnum)
 {
 
     Particles &cuParticles = species->particles;
@@ -152,17 +152,50 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
 
     MPI_Status Stat;
     int n_particles;
-
+    int tid;
+    int tmp = 0;
+    int k=0;
+    int i,ii, iPart;
+    int n_part_recv, n_part_send;
     /********************************************************************************/
     // Build lists of indexes of particle to exchange per neighbor
     // Computed from indexes_of_particles_to_exchange computed during particles' BC
     /********************************************************************************/
-    int n_part_send = indexes_of_particles_to_exchange.size();
-    int n_part_recv;
+    #pragma omp single
+    {
+    indexes_of_particles_to_exchange.clear();
+    }
+    #pragma omp barrier 
+
+    for (tid=0 ; tid < tnum ; tid++){
+	tmp += indexes_of_particles_to_exchange_per_thd[tid].size(); //Compute the position where to start copying
+    }
+    if (tnum == indexes_of_particles_to_exchange_per_thd.size()-1){ //If last thread
+        indexes_of_particles_to_exchange.resize( tmp + indexes_of_particles_to_exchange_per_thd[tnum].size());
+    }
+    #pragma omp barrier 
+    //Copy the list per_thread to the global list
+          //One thread at a time (works)
+    #pragma omp master
+    {
+    for (tid=0 ; tid < indexes_of_particles_to_exchange_per_thd.size() ; tid++) {
+            memcpy(&indexes_of_particles_to_exchange[k], &indexes_of_particles_to_exchange_per_thd[tid][0],indexes_of_particles_to_exchange_per_thd[tid].size()*sizeof(int));
+            k += indexes_of_particles_to_exchange_per_thd[tid].size();   
+    }
+          // All threads together (doesn't work)
+    /*if (indexes_of_particles_to_exchange_per_thd[tnum].size() > 0){
+        //cout << "tmp = "<<tmp << endl;
+        //cout << "tnum = "<< tnum << endl;
+        memcpy(&indexes_of_particles_to_exchange[tmp], &indexes_of_particles_to_exchange_per_thd[tnum][0],indexes_of_particles_to_exchange_per_thd[tnum].size()*sizeof(int));
+    }*/
+    //#pragma omp master
+    //{
+    sort( indexes_of_particles_to_exchange.begin(), indexes_of_particles_to_exchange.end() );
+
+    n_part_send = indexes_of_particles_to_exchange.size();
 
 	
-    int ii, iPart;
-    for (int i=0 ; i<n_part_send ; i++) {
+    for (i=0 ; i<n_part_send ; i++) {
         iPart = indexes_of_particles_to_exchange[i];
         if      ( cuParticles.position(0,iPart) < min_local[0]) {
             buff_index_send[0][0].push_back( indexes_of_particles_to_exchange[i] );
@@ -344,12 +377,12 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
         }
     }
 
-	
+    } // END omp master	
     //DEBUG( 2, "\tProcess " << smilei_rk << " : " << species->getNbrOfParticles() << " Particles of species " << ispec );
 } // END exchangeParticles
 
 
-void SmileiMPI_Cart1D::IexchangeParticles(Species* species, int ispec, PicParams* params)
+void SmileiMPI_Cart1D::IexchangeParticles(Species* species, int ispec, PicParams* params, int tnum)
 {
     Particles &cuParticles = species->particles;
 

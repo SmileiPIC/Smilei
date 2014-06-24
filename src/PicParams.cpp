@@ -147,7 +147,11 @@ PicParams::PicParams(InputData &ifile) : restart(false), exit_after_dump(true), 
 	    WARNING("dynamics_type rrll forcing radiating true");
 	    tmpSpec.radiating=true;
 	}
-	ifile.extract("bc_part_type",tmpSpec.bc_part_type ,"species",0,n_species);
+	if ( !ifile.extract("bc_part_type",tmpSpec.bc_part_type ,"species",0,n_species) ) {
+            WARNING("No boundary conditions specified, so forced to reflective x periodic" );
+            tmpSpec.bc_part_type = "refl";
+        }
+
 	if ( (res_space_win_x) && (tmpSpec.bc_part_type!="stop") ) {
 	    WARNING( "Boundary conditions on particles don't match with moving window, modified" );
 	    tmpSpec.bc_part_type = "stop";

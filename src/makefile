@@ -22,6 +22,12 @@ OBJS := $(patsubst %.cpp,%.o,$(SRCS))
 release: CFLAGS += -O3
 release: $(EXEC)
 
+openmpgnu: CFLAGS += -O3 -fopenmp
+openmpgnu: $(EXEC)
+
+openmpintel: CFLAGS += -O3 -openmp
+openmpintel: $(EXEC)
+
 debug: CFLAGS += -g -pg -Wall -D__DEBUG
 debug: $(EXEC)
 

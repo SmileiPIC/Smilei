@@ -19,7 +19,13 @@ using namespace std;
 
 SmileiMPI::SmileiMPI( int* argc, char*** argv )
 {
-    MPI_Init( argc, argv );
+    int mpi_provided;
+
+    MPI_Init_thread( argc, argv, MPI_THREAD_FUNNELED, &mpi_provided );
+    if (mpi_provided == MPI_THREAD_SINGLE){
+        cout << "openMP not supported" << endl;
+    }
+
     SMILEI_COMM_WORLD = MPI_COMM_WORLD;
     MPI_Comm_size( SMILEI_COMM_WORLD, &smilei_sz );
     MPI_Comm_rank( SMILEI_COMM_WORLD, &smilei_rk );

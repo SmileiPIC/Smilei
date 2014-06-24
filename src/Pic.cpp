@@ -39,6 +39,7 @@
 #include "DiagnosticProbe0D.h"
 
 #include "Timer.h"
+#include <omp.h>
 
 using namespace std;
 
@@ -153,7 +154,7 @@ int main (int argc, char* argv[])
 	
 	smpi->barrier();
 
-	unsigned int stepStart=0, stepStop=params.n_time;
+	unsigned int stepStart=0, stepStop=params.n_time, nthds;
 	
 	// reading from dumped file the restart values
 	if (params.restart) {
@@ -179,6 +180,15 @@ int main (int argc, char* argv[])
 		// temporary particle dump at time 0
 		sio->writePlasma( vecSpecies, 0., smpi );
 	}
+        #pragma omp parallel shared(smpi,nthds)
+        {
+#ifdef _OMP
+            nthds = omp_get_num_threads();	  
+#else
+            nthds = 1;
+#endif
+        }
+        smpi->setExchListSize(nthds);
     // ------------------------------------------------------------------------
     // Initialize the simulation times time_prim at n=0 and time_dual at n=-1/2
     // ------------------------------------------------------------------------
@@ -231,14 +241,23 @@ int main (int argc, char* argv[])
         // (2) move the particle
         // (3) calculate the currents (charge conserving method)
         timer[1].restart();
-        for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-            vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi);
-            if ( (params.use_sort_particles) && (itime%params.exchange_particles_each==0) ) {
-                smpi->exchangeParticles(vecSpecies[ispec], ispec, &params);
-		vecSpecies[ispec]->sort_part(params.cell_length[0]);
-            }
-            else if  ( (!params.use_sort_particles) && (itime%params.exchange_particles_each==0) ) {
-                smpi->IexchangeParticles(vecSpecies[ispec], ispec, &params);
+        #pragma omp parallel shared (EMfields,time_dual,vecSpecies,smpi)
+        {
+            int tid(0);
+#ifdef _OMP
+            tid = omp_get_thread_num();
+#endif
+            for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
+                vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi);
+		if ( (params.use_sort_particles) && (itime%params.exchange_particles_each==0) ) {
+                    #pragma omp barrier
+		    //#pragma omp master
+		    {
+			smpi->exchangeParticles(vecSpecies[ispec], ispec, &params, tid);
+		    }
+                    #pragma omp barrier
+		    vecSpecies[ispec]->sort_part(params.cell_length[0]);
+		}
             }
         }
         timer[1].update();

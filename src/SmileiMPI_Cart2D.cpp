@@ -196,7 +196,7 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
 
 }
 
-void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams* params)
+void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams* params, int tnum)
 {
     Particles &cuParticles = species->particles;
     std::vector<int>* cubmin = &species->bmin;
@@ -206,6 +206,22 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
     // Build lists of indexes of particle to exchange per neighbor
     // Computed from indexes_of_particles_to_exchange computed during particles' BC
     /********************************************************************************/
+    indexes_of_particles_to_exchange.clear();
+
+    int tmp = 0;
+    for (int tid=0 ; tid < indexes_of_particles_to_exchange_per_thd.size() ; tid++)
+	tmp += indexes_of_particles_to_exchange_per_thd[tid].size();
+    indexes_of_particles_to_exchange.resize( tmp );
+
+    int k=0;
+    for (int tid=0 ; tid < indexes_of_particles_to_exchange_per_thd.size() ; tid++) {
+	for (int ipart = 0 ; ipart < indexes_of_particles_to_exchange_per_thd[tid].size() ; ipart++ ) {
+	    indexes_of_particles_to_exchange[k] =  indexes_of_particles_to_exchange_per_thd[tid][ipart] ;
+	    k++;
+	}
+    }
+    sort( indexes_of_particles_to_exchange.begin(), indexes_of_particles_to_exchange.end() );
+
     int n_part_send = indexes_of_particles_to_exchange.size();
     int n_part_recv;
 
@@ -379,6 +395,7 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
     }
     else { // if Sort particles
 
+
 	// Push lost particles at the end of bins
 	//! \todo For loop on bins, can use openMP here.
 	for (unsigned int ibin = 0 ; ibin < (*cubmax).size() ; ibin++ ) {
@@ -416,7 +433,6 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
 	    (*cubmax)[ibin] -= ii;
 	    (*cubmin)[ibin] = (*cubmax)[ibin-1];
 	}
-
 	// Delete useless Particles
 	//Theoretically, not even necessary to do anything as long you use bmax as the end of your iterator on particles.
 	//Nevertheless, you might want to free memory and have the actual number of particles
@@ -429,6 +445,7 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
 	// WARNING: very different behaviour depending on which dimension particles are coming from.
 	/********************************************************************************/
 	//We first evaluate how many particles arrive in each bin. 
+	//1) Count particles coming from south and north
 	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
 	    n_part_recv = buff_index_recv_sz[1][iNeighbor];
 	    for (unsigned int j=0; j<n_part_recv ;j++){
@@ -436,6 +453,7 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
 		shift[ii+1]++; // It makes the next bins shift.
 	    }
 	}
+	//2) Add particles coming from west and east
 	shift[1] += buff_index_recv_sz[0][0];//Particles coming from south all go to bin 0 and shift all the other bins.
 	shift[(*cubmax).size()] += buff_index_recv_sz[0][1];//Used only to count the total number of particles arrived.
 
@@ -448,7 +466,6 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
 	//cuParticles.create_particles(shift[(*cubmax).size()]);
         cuParticles.initialize( cuParticles.size()+shift[(*cubmax).size()], cuParticles.dimension() );
 
-
 	//Shift bins, must be done sequentially
 	for (unsigned int j=(*cubmax).size()-1; j>=1; j--){
             n_particles = (*cubmax)[j]-(*cubmin)[j]; //Nbr of particle in this bin
@@ -460,7 +477,7 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
 	}
 
 	//Space has been made now to write the arriving particles into the correct bins
-	//iDim == 0 (in 2D) is the easy case, when particles arrive either in first or last bin.
+	//iDim == 0  is the easy case, when particles arrive either in first or last bin.
 	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
 	    n_part_recv = buff_index_recv_sz[0][iNeighbor];
 	    if ( (neighbor_[0][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
@@ -475,6 +492,9 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
 	    if ( (neighbor_[1][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
 		for(unsigned int j=0; j<n_part_recv; j++){
 		    ii = int((partVectorRecv[1][iNeighbor].position(0,j)-min_local[0])/dbin);//bin in which the particle goes.
+                    //! \todo Workaround for exchange particles in diagonal
+                    if (ii>(*cubmax).size()-1) ii = (*cubmax).size()-1;
+                    else if (ii<0) ii =0;
 		    partVectorRecv[1][iNeighbor].overwrite_part2D(j, cuParticles,(*cubmax)[ii]);
 		    (*cubmax)[ii] ++ ;
 		}
@@ -486,9 +506,9 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
 } // END exchangeParticles
 
 
-void SmileiMPI_Cart2D::IexchangeParticles(Species* species, int ispec, PicParams* params)
+void SmileiMPI_Cart2D::IexchangeParticles(Species* species, int ispec, PicParams* params, int tnum)
 {
-    exchangeParticles(species, ispec, params);
+    exchangeParticles(species, ispec, params, tnum);
 }  // END IexchangeParticles
 
 
