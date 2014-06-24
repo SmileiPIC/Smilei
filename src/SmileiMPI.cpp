@@ -166,7 +166,8 @@ void SmileiMPI::bcast( SpeciesStructure& speciesStructure )
     bcast( speciesStructure.mean_velocity ); // must be params.nDim_field
     bcast( speciesStructure.temperature );
     bcast( speciesStructure.dynamics_type );
-    bcast( speciesStructure.bc_part_type );
+    bcast( speciesStructure.bc_part_type_long );
+    bcast( speciesStructure.bc_part_type_trans );
     bcast( speciesStructure.time_frozen );
     bcast( speciesStructure.radiating );
     bcast( speciesStructure.ionization_model );

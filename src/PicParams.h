@@ -86,7 +86,8 @@ struct SpeciesStructure {
     bool radiating;
 
     //! Boundary conditions for particules
-    std::string bc_part_type;
+    std::string bc_part_type_long;
+    std::string bc_part_type_trans;
 
     //! Ionization model per Specie (tunnel)
     std::string ionization_model;

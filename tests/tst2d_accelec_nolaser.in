@@ -15,14 +15,15 @@ interpolation_order = 2
 # sim_time: duration of the simulation in units of the normalization period 
 #
 res_time = 52
-sim_time = 2.0
+sim_time = 0.8
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
 # sim_length: length of the simulation in units of the normalization wavelength 
 #
 res_space  = 51  5  
-sim_length = 500  250  
+#sim_length = 500  250  
+sim_length = 22  250  
 
 # PLASMA GEOMETRY
 # plasma_geometry: string defining the plasma geometry
@@ -33,14 +34,14 @@ vacuum_length   = 0.0  0.0
 plasma_length   = 1095.0  305.0
 slope_length = 5.0 0.0
 
-res_space_win_x = 1100
+#res_space_win_x = 1100
 
 # RANDOM seed 
 # this is used to randomize the random number generator
 random_seed = 0
 
 # DEFINE ALL SPECIES
-use_transverse_periodic = false
+use_transverse_periodic = true
 
 # species_type: ion, electron, positron, test ...
 # initialization_type: regular, cold or (isotrop) Maxwell−Juettner distribution# n_part_per_cell: number of particle−per−cell
@@ -63,13 +64,12 @@ species
 	mass = 1.0
 	charge = 1.0
 	density = 1.0
-	mean_velocity = 0.5 0.0 0.0
-	temperature = 0.0001
+	mean_velocity = 0.0 0.0 0.0
+	temperature = 0.00000001
 	dynamics_type = norm
 	time_frozen = 10000
 	radiating = false
-	bc_part_type_long  = none
-	bc_part_type_trans = stop
+        bc_part_type = refl
 end
 
 species 
@@ -80,13 +80,12 @@ species
 	mass = 1.0
 	charge = -1.0
 	density = 1.0
-	mean_velocity = 0.5 0.0 0.0
+	mean_velocity = 0.0 0.0 0.0
 	temperature = 0.000000001
 	dynamics_type = norm	
 	time_frozen = 0.0
 	radiating = false
-	bc_part_type_long = none
-	bc_part_type_trans = stop
+        bc_part_type = refl
 end
 
 # ----------------
@@ -100,15 +99,15 @@ end
 # time_profile: string defining the time profile
 # double_params: vector of real parameters used by the different time-profiles
 #
-laser
-	a0=8.
-	angle=0
-	delta=0.0              
-	time_profile = gauss
-        y_profile = gauss
-	double_params = 8.0 4.0 0.0
-        y_params = 80.
-end
+#laser
+#	a0=0.
+#	angle=0
+#	delta=0.0              
+#	time_profile = gauss
+#        y_profile = gauss
+#	double_params = 8.0 4.0 0.0
+#        y_params = 80.
+#end
 
 # ---------------------
 # DIAGNOSTIC PARAMETERS
