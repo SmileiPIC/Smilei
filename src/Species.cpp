@@ -69,13 +69,16 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
     }
     cell_length = params->cell_length;
 	
-	
+    // Width of clusters:
+    clrw = 1;	
+    if (params->n_space[0]%clrw != 0) cout << "WRONG !! clrw should divide n_space[0]" << endl;
+ 
     // Arrays of the min and max indices of the particle bins
-    bmin.resize(params->n_space[0]);
-    bmax.resize(params->n_space[0]);
+    bmin.resize(params->n_space[0]/clrw);
+    bmax.resize(params->n_space[0]/clrw);
     if (ndim == 3){
-        bmin.resize(params->n_space[0]*params->n_space[1]);
-        bmax.resize(params->n_space[0]*params->n_space[1]);
+        bmin.resize(params->n_space[0]/clrw*params->n_space[1]);
+        bmax.resize(params->n_space[0]/clrw*params->n_space[1]);
     }
 	
     //Size in each dimension of the buffers on which each bin are projected
@@ -87,19 +90,22 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
     f_dim2 =  params->n_space[2] + 2 * oversize[2] +1;
 
     if (ndim == 1){
-        b_dim0 =  2 + 2 * oversize[0];
+        //b_dim0 =  2 + 2 * oversize[0]; <== If clrw == 1.
+        b_dim0 =  (1 + clrw) + 2 * oversize[0];
         b_dim1 =  1;
         b_dim2 =  1;
         b_lastdim = b_dim0;
     }
     if (ndim == 2){
-        b_dim0 =  2 + 2 * oversize[0]; // There is a primal number of bins.
+        //b_dim0 =  2 + 2 * oversize[0]; // There is a primal number of bins. <== If clrw == 1.
+        b_dim0 =  (1 + clrw) + 2 * oversize[0]; // There is a primal number of bins.
         b_dim1 =  f_dim1;
         b_dim2 =  1;
         b_lastdim = b_dim1;
     }
     if (ndim == 3){
-        b_dim0 =  2 + 2 * oversize[0]; // There is a primal number of bins.
+        //b_dim0 =  2 + 2 * oversize[0]; // There is a primal number of bins.
+        b_dim0 =  (1 + clrw) + 2 * oversize[0]; // There is a primal number of bins.
         b_dim1 = f_dim1;
         b_dim2 = f_dim2;
         b_lastdim = b_dim2;
@@ -117,7 +123,6 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 	for (unsigned int i=0 ; i<params->nDim_field ; i++) {
 	    if (params->cell_length[i]!=0)
 		cell_index[i] = round (smpi->getDomainLocalMin(i)/params->cell_length[i]);
-
 	}
 
 	int starting_bin_idx = 0;
@@ -674,7 +679,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
         b_Jz = b_Jy + size_proj_buffer ;
         b_rho = b_Jz + size_proj_buffer ;
 
-        #pragma omp for schedule(static)
+        #pragma omp for schedule(dynamic)
         for (ibin = 0 ; ibin < bmin.size() ; ibin++) {
 
             // reset all current-buffers
@@ -709,7 +714,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 		}
 
                 if (ndim <= 2) {
-                    (*Proj)(b_Jx, b_Jy, b_Jz, b_rho, particles, iPart, gf, ibin, b_lastdim);
+                    (*Proj)(b_Jx, b_Jy, b_Jz, b_rho, particles, iPart, gf, ibin*clrw, b_lastdim);
                 } else {
 		    (*Proj)(EMfields->Jx_s[ispec], EMfields->Jy_s[ispec], EMfields->Jz_s[ispec], EMfields->rho_s[ispec],
 			    particles, iPart, gf);
@@ -834,7 +839,7 @@ void Species::sort_part(double dbin)
     //Backward pass
     #pragma omp for schedule(static) 
     for (bin=0; bin<bmin.size()-1; bin++) { //Loop on the bins. To be parallelized with openMP.
-        limit = min_loc + (bin+1)*dbin;
+        limit = min_loc + (bin+1)*dbin*clrw;
         p1 = bmax[bin]-1;
         //If first particles change bin, they do not need to be swapped.
         while (p1 == bmax[bin]-1 && p1 >= bmin[bin]) {
@@ -855,7 +860,7 @@ void Species::sort_part(double dbin)
     //Forward pass + Rebracketting
     #pragma omp for schedule(runtime)
     for (bin=1; bin<bmin.size(); bin++) { //Loop on the bins. To be parallelized with openMP.
-        limit = min_loc + (bin)*dbin;
+        limit = min_loc + (bin)*dbin*clrw;
         bmin_init = bmin[bin];
         p1 = bmin[bin];
         while (p1 == bmin[bin] && p1 < bmax[bin]) {
@@ -1060,7 +1065,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<int>
     //if bmax = bmin, bin is empty of particle.
 
     for (unsigned int i=0; i<n_space_to_create[0]; i++) {
-	bmin[new_bin_idx+i] = iPart;
+	if (i%clrw == 0) bmin[new_bin_idx+i/clrw] = iPart;
 	for (unsigned int j=0; j<n_space_to_create[1]; j++) {
 	    for (unsigned int k=0; k<n_space_to_create[2]; k++) {
 		// initialize particles in meshes where the density is non-zero
@@ -1093,7 +1098,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<int>
 		}//END if density > 0
 	    }//k end the loop on all cells
 	}//j
-	bmax[new_bin_idx+i] = iPart;
+	if (i%clrw == clrw -1) bmax[new_bin_idx+i/clrw] = iPart;
     }//i
 
     delete [] indexes;

@@ -99,6 +99,8 @@ public:
     //! string for the species
     std::string name_str;
 
+    //! Cluster width in number of cells
+    unsigned int clrw; //Should divide the number of cells in X of a single MPI domain. Should default to 1.
     //! first and last index of each particle bin
     std::vector<int> bmin, bmax;
 

@@ -202,6 +202,8 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
     std::vector<int>* cubmin = &species->bmin;
     std::vector<int>* cubmax = &species->bmax;
 
+    #pragma omp master
+    {
     /********************************************************************************/
     // Build lists of indexes of particle to exchange per neighbor
     // Computed from indexes_of_particles_to_exchange computed during particles' BC
@@ -386,7 +388,7 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
     /********************************************************************************/
     // Delete Particles included in buff_send/buff_recv
     /********************************************************************************/
-    if (!params->use_sort_particles) {
+    /*if (!params->use_sort_particles) {
         n_part_send = indexes_of_particles_to_exchange.size();
         for (int i=n_part_send-1 ; i>=0 ; i--) {
             iPart = indexes_of_particles_to_exchange[i];
@@ -394,7 +396,7 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
         } // END for iPart = f(i)
     }
     else { // if Sort particles
-
+        */
 
 	// Push lost particles at the end of bins
 	//! \todo For loop on bins, can use openMP here.
@@ -476,33 +478,31 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
             (*cubmax)[j] += shift[j];
 	}
 
-	//Space has been made now to write the arriving particles into the correct bins
-	//iDim == 0  is the easy case, when particles arrive either in first or last bin.
-	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-	    n_part_recv = buff_index_recv_sz[0][iNeighbor];
-	    if ( (neighbor_[0][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
-		ii = iNeighbor*((*cubmax).size()-1);//0 if iNeighbor=0(particles coming from the left) and (*cubmax).size()-1 otherwise.
-		partVectorRecv[0][iNeighbor].overwrite_part2D(0, cuParticles,(*cubmax)[ii],n_part_recv);
-		(*cubmax)[ii] += n_part_recv ;
-	    }
-	}
-	//iDim == 1) is the difficult case, when particles can arrive in any bin.
-	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-	    n_part_recv = buff_index_recv_sz[1][iNeighbor];
-	    if ( (neighbor_[1][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
-		for(unsigned int j=0; j<n_part_recv; j++){
-		    ii = int((partVectorRecv[1][iNeighbor].position(0,j)-min_local[0])/dbin);//bin in which the particle goes.
-                    //! \todo Workaround for exchange particles in diagonal
-                    if (ii>(*cubmax).size()-1) ii = (*cubmax).size()-1;
-                    else if (ii<0) ii =0;
-		    partVectorRecv[1][iNeighbor].overwrite_part2D(j, cuParticles,(*cubmax)[ii]);
-		    (*cubmax)[ii] ++ ;
-		}
-	    }
-	}
-
-    } // end use sort particles
-
+    //Space has been made now to write the arriving particles into the correct bins
+    //iDim == 0  is the easy case, when particles arrive either in first or last bin.
+    for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+        n_part_recv = buff_index_recv_sz[0][iNeighbor];
+        if ( (neighbor_[0][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
+            ii = iNeighbor*((*cubmax).size()-1);//0 if iNeighbor=0(particles coming from West) and (*cubmax).size()-1 otherwise.
+            partVectorRecv[0][iNeighbor].overwrite_part2D(0, cuParticles,(*cubmax)[ii],n_part_recv);
+            (*cubmax)[ii] += n_part_recv ;
+        }
+    }
+    //iDim == 1) is the difficult case, when particles can arrive in any bin.
+    for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+        n_part_recv = buff_index_recv_sz[1][iNeighbor];
+        if ( (neighbor_[1][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
+            for(unsigned int j=0; j<n_part_recv; j++){
+                ii = int((partVectorRecv[1][iNeighbor].position(0,j)-min_local[0])/dbin);//bin in which the particle goes.
+                //! \todo Workaround for exchange particles in diagonal
+                if (ii>(*cubmax).size()-1) ii = (*cubmax).size()-1;
+                else if (ii<0) ii =0;
+                partVectorRecv[1][iNeighbor].overwrite_part2D(j, cuParticles,(*cubmax)[ii]);
+                (*cubmax)[ii] ++ ;
+            }
+        }
+    }
+    }//end of omp master
 } // END exchangeParticles
 
 
