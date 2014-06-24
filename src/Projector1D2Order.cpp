@@ -256,6 +256,7 @@ void Projector1D2Order::operator() (Field* rho, Particles &particles, int ipart)
 // ---------------------------------------------------------------------------------------------------------------------
 void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, int ipart, double gf, unsigned int bin, unsigned int b_dim0)
 {
+    // The variable bin received is  number of bin * cluster width.
     // Declare local variables
     int unsigned ipo, ip, iloc;
     int ip_m_ipo;
