@@ -781,7 +781,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     }
     else { // immobile particle (at the moment only project density)
 		
-        #pragma omp parallel for schedule (static) 
+        #pragma omp for schedule (static) 
         for (iPart=0 ; iPart<nParticles; iPart++ ) {
             (*Proj)(EMfields->rho_s[ispec], particles, iPart);
         }
@@ -907,6 +907,7 @@ void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
     if (smpi->isEaster() ) {
 	for (unsigned int i=0 ; i<shift ; i++) {
 	    // bin 0 empty
+	    // Shifts all the bins by 1. This works only if shift = clrw !!
 	    bmin.erase( bmin.begin() );
 	    bmax.erase( bmax.begin() );
 	    // Create new bin at the end

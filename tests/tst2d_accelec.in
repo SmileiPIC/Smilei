@@ -63,7 +63,7 @@ species
 	mass = 1.0
 	charge = 1.0
 	density = 1.0
-	mean_velocity = 0.5 0.0 0.0
+	mean_velocity = 0.0 0.0 0.0
 	temperature = 0.0001
 	dynamics_type = norm
 	time_frozen = 10000
@@ -80,7 +80,7 @@ species
 	mass = 1.0
 	charge = -1.0
 	density = 1.0
-	mean_velocity = 0.5 0.0 0.0
+	mean_velocity = 0.0 0.0 0.0
 	temperature = 0.000000001
 	dynamics_type = norm	
 	time_frozen = 0.0
