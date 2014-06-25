@@ -648,31 +648,32 @@ void ElectroMagn2D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
         bzW[j] = 0.0;
         byE[j] = 0.0;
         bzE[j] = 0.0;
+        
+        // position in y of the nodes (used for transverse profile)
+        double yp     = smpi2D->getDomainLocalMin(1) + ((double)j)     * dy;
+        double yd     = smpi2D->getDomainLocalMin(1) + ((double)j-0.5) * dy;
     
         for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
             
             // TIME PROFILE
             if (laser_[ilaser]->laser_struct.angle == 0) {
+                // for transverse profile
+                double fct_yp = laser_[ilaser]->transverse_profile2D(time_dual,yp);
+                double fct_yd = laser_[ilaser]->transverse_profile2D(time_dual,yd);
                 // Incident field (west boundary)
-                byW[j] += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
-                bzW[j] += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
+                byW[j] += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual) * fct_yp;
+                bzW[j] += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual) * fct_yd;
+                
             } else if (laser_[ilaser]->laser_struct.angle == 180) {
+                // for transverse profile
+                double fct_yp = laser_[ilaser]->transverse_profile2D(time_dual,yp);
+                double fct_yd = laser_[ilaser]->transverse_profile2D(time_dual,yd);
                 // Incident field (east boundary)
-                byE[j] += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
-                bzE[j] += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
+                byE[j] += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual) * fct_yp;
+                bzE[j] += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual) * fct_yd;
             } else {
                 ERROR("Angle not yet implemented for laser " << ilaser);
             }
-            
-            // TRANSVERSE PROFILE
-            double yp     = smpi2D->getDomainLocalMin(1) + ((double)j)     * dy;
-            double yd     = smpi2D->getDomainLocalMin(1) + ((double)j-0.5) * dy;
-            double fct_yp = laser_[ilaser]->transverse_profile2D(time_dual,yp);
-            double fct_yd = laser_[ilaser]->transverse_profile2D(time_dual,yd);
-            byW[j]       *= fct_yp;
-            bzW[j]       *= fct_yd;
-            byE[j]       *= fct_yp;
-            bzE[j]       *= fct_yd;
             
         }//ilaser
         
