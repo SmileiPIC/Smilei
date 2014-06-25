@@ -65,7 +65,7 @@ species
 	dynamics_type = norm
 	time_frozen = 0.0
 	radiating = false
-	bc_part_type = refl
+	bc_part_type_long = refl
 end
 
 species
@@ -82,7 +82,7 @@ species
 	dynamics_type = norm	
 	time_frozen = 0.0
 	radiating = false
-	bc_part_type = refl
+	bc_part_type_long = refl
 end
 
 # LASER PROPERTIES
