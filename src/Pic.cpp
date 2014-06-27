@@ -105,7 +105,7 @@ int main (int argc, char* argv[])
     }
     srand(seedTime+smpiData->getRank());
     
-    input_data.write(getFileWithoutExt(namelist)+".parsed");
+    if ( smpiData->isMaster() ) input_data.write(getFileWithoutExt(namelist)+".parsed");
     
     // Read simulation parameters
     PicParams params(input_data);
