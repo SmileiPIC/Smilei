@@ -1,52 +1,48 @@
 # SIMULATION PARAMETERS
-
-# print_every 
-print_every = 100
-
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
 #      2d3v = cartesian grid with 2d in space + 3d in velocity
 #      3d3v = cartesian grid with 3d in space + 3d in velocity
 #      2drz = cylindrical (r,z) grid with 3d3v particles
 #
-dim = 1d3v
-
-# wavelength_SI
-wavelength_SI = 1e-6
+dim = 2d3v
 
 # order of interpolation
-interpolation_order =2 
+interpolation_order = 2 
 
 # SIMULATION TIME
 # res_time: temporal resolution (integer = number of time−steps within one normalization period)
 # sim_time: duration of the simulation in units of the normalization period 
 #
-res_time = 200
-sim_time = 10.0
+res_time = 500
+sim_time = 4.0
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
 # sim_length: length of the simulation in units of the normalization wavelength 
 #
-res_space  = 100
-sim_length = 2.0
+res_space  = 250 250  
+sim_length = 3.0 3.0  
+
+res_space_win_x=200
 
 # PLASMA GEOMETRY
 # plasma_geometry: string defining the plasma geometry
 # ***_length: characteristic length for a given geometry
 #
 plasma_geometry = constant
-vacuum_length   = 0.99
-plasma_length   = 0.02
+vacuum_length   = 1.0 0.0 
+plasma_length   = 1.0 3.0
 
 # RANDOM seed 
 # this is used to randomize the random number generator
 random_seed = 0
 
 # DEFINE ALL SPECIES
+
+
 # species_type: ion, electron, positron, test ...
-# initialization_type: regular, cold or (isotrop) Maxwell−Juettner distribution
-# n_part_per_cell: number of particle−per−cell
+# initialization_type: regular, cold or (isotrop) Maxwell−Juettner distribution# n_part_per_cell: number of particle−per−cell
 # c_part_max: factor on the memory reserved for the total number of particles
 # mass: particle mass in units of the electron mass
 # charge: particle charge in units of e (−e is the electron charge)
@@ -58,68 +54,47 @@ random_seed = 0
 # radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
 #
 species
-	species_type = helium
-	atomic_number = 2
+	species_type = ion
 	initialization_type = cold
-	n_part_per_cell=1000
-	c_part_max=1.0
+	ionization_model = none
+	n_part_per_cell = 5
+	c_part_max = 1.0
 	mass = 1836.0
-	charge = 0.0
-	density = 1.0e0
+	charge = 1.0
+	density = 10.0
 	mean_velocity = 0.0
 	temperature = 0.0
 	dynamics_type = norm
-	ionization_model = tunnel
-	time_frozen = 0.0
+	time_frozen = 10.0
 	radiating = false
-	bc_part_type_long = none
+	bc_part_type_long = refl
+	bc_part_type_trans = none
 end
 
-species
+species 
 	species_type = electron
-	initialization_type = cold
-	n_part_per_cell=0
+	initialization_type = maxwell-juettner
+	n_part_per_cell=5
 	c_part_max=1.0
 	mass = 1.0
 	charge = -1.0
-	density = 0.0e0
+	density = 10.0
 	mean_velocity = 0.0
-	temperature = 0.1
+	temperature = 0.01
 	dynamics_type = norm	
-	ionization_model = none
 	time_frozen = 0.0
 	radiating = false
-	bc_part_type_long = none
+	bc_part_type_long = refl
+	bc_part_type_trans = none
 end
 
-# LASER PROPERTIES
-#
-# for each laser define:
-# a0: maximum amplitude of the laser electric field (in units of the normalization field)
-# angle: angle (in degree) at which the laser enters the simulation box
-# delta: polarization parameter, (0:y) (1:z) (0.707106781:circ)
-# time_profile: string defining the time profile
-# double_params: vector of real parameters used by the different time-profiles
-
-laser
-	a0=.1
+laser 
+	a0=1.0
 	angle=0
-	delta=1.0               
+	delta=0.707106781                
 	time_profile = constant
-	#double_params = 10.0
+	#double_params = 11.0
 end	
 
-diagnostic scalar
-	every = 1
-end
+fieldDump_every = 20
 
-diagnostic map
-	every = 10
-end
-
-diagnostic probe0d
-	every = 10
-	x = 0.5 0.8
-# 	y = 1 2 4
-# 	z = 5 6 7
-end
