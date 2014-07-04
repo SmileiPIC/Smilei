@@ -113,7 +113,8 @@ void ElectroMagn::solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, Pic
     solveMaxwellFaraday();
 
     // Update Bx_, By_, Bz_
-    if ( (!params.res_space_win_x) || (itime<params.res_space_win_x/2) )
+    //!\todo This checks if the window is moving or not. Has to be improved.
+    if ( (!params.res_space_win_x) || (itime<params.res_space_win_x*0.75) )
 	fieldsBoundCond[0]->apply(this, time_dual, smpi);
     if ( (!params.use_transverse_periodic) && (fieldsBoundCond.size()>1) )
 	fieldsBoundCond[1]->apply(this, time_dual, smpi);

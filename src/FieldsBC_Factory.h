@@ -20,10 +20,11 @@ public:
         else if ( params.geometry == "2d3v" ) {
 	    fieldsBoundCond.resize(1, NULL);
 
-	    fieldsBoundCond[0] = new FieldsBC2D(&params);
+	    fieldsBoundCond[0] = new FieldsBC2D(&params); //Boundary in the X direction is set to Silver-Muller.
 	    if (!params.use_transverse_periodic) {
 		fieldsBoundCond.resize(2, NULL);
-		fieldsBoundCond[1] = new FieldsBC2D_Damping(&params);
+                // Boundary in the Y direction is set to damping if they are not periodic. 
+		fieldsBoundCond[1] = new FieldsBC2D_Damping(&params); 
 	    }
         }
         else {
