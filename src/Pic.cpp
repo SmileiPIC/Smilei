@@ -38,6 +38,8 @@
 #include "Diagnostic.h"
 #include "DiagnosticProbe0D.h"
 
+#include "SimWindow.h"
+
 #include "Timer.h"
 #include <omp.h>
 
@@ -180,6 +182,14 @@ int main (int argc, char* argv[])
 		// temporary particle dump at time 0
 		sio->writePlasma( vecSpecies, 0., smpi );
 	}
+
+	// ----------------------------------------------------------------------------
+        // Define Moving Window
+	// ----------------------------------------------------------------------------
+	SimWindow* simWindow = NULL;
+        if (params.res_space_win_x)
+            simWindow = new SimWindow(params);
+
         #pragma omp parallel shared(smpi,nthds)
         {
 #ifdef _OMP
@@ -270,7 +280,7 @@ int main (int argc, char* argv[])
 
         // solve Maxwell's equations
         timer[2].restart();
-        EMfields->solveMaxwell(itime, time_dual, smpi, params);
+        EMfields->solveMaxwell(itime, time_dual, smpi, params, simWindow);
         timer[2].update();
 
         // call the various diagnostics
@@ -299,22 +309,9 @@ int main (int argc, char* argv[])
 		}*/
         timer[3].update();
 		
-	if ((params.res_space_win_x)&&(itime>params.res_space_win_x*0.75)) {
-
-	    smpi->getCellStartingGlobalIndex(0)+= 1;
-	    smpi->getDomainLocalMin(0)+= params.cell_length[0];
-	    smpi->getDomainLocalMax(0)+= params.cell_length[0];
-
-	    for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-		vecSpecies[ispec]->movingWindow_x(1, smpi);
-	    }
-
-	    Interp->mv_win(1);
-	    Proj->mv_win(1);
-	    EMfields->movingWindow_x(1, smpi);
-	}
-
-
+        if ( simWindow && simWindow->isMoving(itime) ) {
+            simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi );
+        }
 
     }//END of the time loop
 

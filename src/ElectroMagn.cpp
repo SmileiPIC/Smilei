@@ -11,6 +11,7 @@
 #include "Field.h"
 #include "FieldsBC.h"
 #include "FieldsBC_Factory.h"
+#include "SimWindow.h"
 
 using namespace std;
 
@@ -100,7 +101,7 @@ ElectroMagn::~ElectroMagn()
 // ---------------------------------------------------------------------------------------------------------------------
 // Maxwell solver using the FDTD scheme
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn::solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, PicParams &params)
+void ElectroMagn::solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, PicParams &params, SimWindow* simWindow)
 {
     saveMagneticFields();
 
@@ -113,8 +114,7 @@ void ElectroMagn::solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, Pic
     solveMaxwellFaraday();
 
     // Update Bx_, By_, Bz_
-    //!\todo This checks if the window is moving or not. Has to be improved.
-    if ( (!params.res_space_win_x) || (itime<params.res_space_win_x*0.75) )
+    if ((!simWindow) || (!simWindow->isMoving(itime)) )
 	fieldsBoundCond[0]->apply(this, time_dual, smpi);
     if ( (!params.use_transverse_periodic) && (fieldsBoundCond.size()>1) )
 	fieldsBoundCond[1]->apply(this, time_dual, smpi);

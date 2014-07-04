@@ -14,6 +14,7 @@ class Field;
 class Laser;
 class SmileiMPI;
 class FieldsBC;
+class SimWindow;
 
 //! class ElectroMagn: generic class containing all information on the electromagnetic fields and currents
 class ElectroMagn
@@ -120,7 +121,7 @@ public:
 
     //! \todo check time_dual or time_prim (MG)
     //! method used to solve Maxwell's equation (takes current time and time-step as input parameter)
-    virtual void solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, PicParams &params);
+    void solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, PicParams &params, SimWindow* simWindow);
     virtual void solveMaxwellAmpere() = 0;
     virtual void solveMaxwellFaraday() = 0;
     virtual void saveMagneticFields() = 0;
