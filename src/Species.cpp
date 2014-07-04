@@ -679,7 +679,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
         b_Jz = b_Jy + size_proj_buffer ;
         b_rho = b_Jz + size_proj_buffer ;
 
-        #pragma omp for schedule(dynamic)
+        #pragma omp for schedule(runtime)
         for (ibin = 0 ; ibin < bmin.size() ; ibin++) {
 
             // reset all current-buffers
@@ -781,7 +781,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     }
     else { // immobile particle (at the moment only project density)
 		
-        #pragma omp for schedule (static) 
+        #pragma omp for schedule (runtime) 
         for (iPart=0 ; iPart<nParticles; iPart++ ) {
             (*Proj)(EMfields->rho_s[ispec], particles, iPart);
         }
@@ -837,7 +837,7 @@ void Species::sort_part(double dbin)
     double limit;
 	
     //Backward pass
-    #pragma omp for schedule(static) 
+    #pragma omp for schedule(runtime) 
     for (bin=0; bin<bmin.size()-1; bin++) { //Loop on the bins. To be parallelized with openMP.
         limit = min_loc + (bin+1)*dbin*clrw;
         p1 = bmax[bin]-1;
