@@ -110,6 +110,9 @@ public:
     //! Oversize
     unsigned int oversize_;
 
+    //! compute Poynting on borders
+    void computePoynting(SmileiMPI* smpi);
+        
 private:
 };
 

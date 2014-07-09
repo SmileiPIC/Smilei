@@ -1002,3 +1002,7 @@ void ElectroMagn2D::computeTotalRhoJ()
 
 }//END computeTotalRhoJ
 
+
+void ElectroMagn2D::computePoynting(SmileiMPI* smpi) {
+    DEBUG("To be done");
+}

@@ -75,6 +75,9 @@ public:
     //! Ratio of the spatial-step by the time-step dx/dt for 1d3v cartesian simulations
     double dx_ov_dt;
 
+    //! compute Poynting on borders
+    void computePoynting(SmileiMPI* smpi);
+
 private:
 };
 

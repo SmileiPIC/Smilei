@@ -153,7 +153,12 @@ public:
 
     //! vector(on Fields) of map (of keys like min max) of vector of double values
     std::map<std::string,std::map<std::string,std::vector<double> > > scalars;
-private:
+
+    //! compute Poynting on borders
+    virtual void computePoynting(SmileiMPI* smpi) = 0;
+    
+    //! pointing vector on borders
+    std::vector<double> poynting[2];
 };
 
 #endif

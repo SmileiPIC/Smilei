@@ -29,6 +29,7 @@ void DiagnosticScalar::close() {
 
 // wrapper of the methods
 void DiagnosticScalar::run(int timestep, ElectroMagn* EMfields, vector<Species*>& vecSpecies) {
+    EMfields->computePoynting(smpi_);
     if (every && timestep % every == 0) {
         compute_proc_gather(EMfields,vecSpecies);
         compute();
@@ -53,6 +54,7 @@ void DiagnosticScalar::compute_proc_gather (ElectroMagn* EMfields, vector<Specie
 
 
     EMfields->computeScalars();
+    
     for (map<string,map<string,vector<double> > >::iterator iterEM=EMfields->scalars.begin(); iterEM!=EMfields->scalars.end(); iterEM++) {
         for (map<string,vector<double> >::iterator iterMap=iterEM->second.begin(); iterMap!=iterEM->second.end(); iterMap++ ) {
 
@@ -62,6 +64,12 @@ void DiagnosticScalar::compute_proc_gather (ElectroMagn* EMfields, vector<Specie
             }
         }
     }
+
+    // poynting stuff
+    map<string,vector<double> > poynting;
+    poynting["inf"]=EMfields->poynting[0];
+    poynting["sup"]=EMfields->poynting[0];
+//    oneProc.push_back(poynting);
 
 
     // 	it constructs the receiving structure on the master processor
