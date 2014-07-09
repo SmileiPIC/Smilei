@@ -70,7 +70,7 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
     cell_length = params->cell_length;
 	
     // Width of clusters:
-    clrw = 1;	
+    clrw = 1; //Should be read from input file and should be the same for all species because of moving window.
     if (params->n_space[0]%clrw != 0) cout << "WRONG !! clrw should divide n_space[0]" << endl;
  
     // Arrays of the min and max indices of the particle bins
@@ -830,7 +830,8 @@ void Species::computeScalars() {
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::sort_part(double dbin)
 {
-    //dbin is the width of one bin. dbin= dx.
+    //dbin is the width of one cell. dbin= dx.
+    //The width of one bin is dbin * clrw.
 	
     int p1,p2,bmin_init;
     unsigned int bin;
