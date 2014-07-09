@@ -135,8 +135,17 @@ public:
 
     //! local simulation box size in \f$2\pi/k_N \f$
     std::vector<double> sim_length;
-    //! window simulation box size in \f$2\pi/k_N \f$
+    //! window simulation box size in number of cells
     int res_space_win_x;
+
+    //! Time at which the moving window starts.
+    double t_move_win;
+
+    //! Velocity of the moving window along x in c.
+    double vx_win;
+
+    //! Clusters width
+    int clrw;
 
     //! plasma geometry
     std::string plasma_geometry;

@@ -13,8 +13,8 @@ SimWindow::SimWindow(PicParams& params)
     res_space_win_x_ = params.res_space_win_x;
     cell_length_x_   = params.cell_length[0];
     x_moved = 0.;      //The window has not moved at t=0. Warning: not true anymore for restarts.
-    vx_win  = 0.99987; //Should be read from input file.
-    t_move = 0.0;      //Should be read from input file.
+    vx_win_ = params.vx_win; 
+    t_move_win_ = params.t_move_win;      
 }
 
 SimWindow::~SimWindow()
@@ -51,5 +51,5 @@ bool SimWindow::isMoving(int itime)
 //isMoving is called once in Electromagn. Since this is BEFORE operate, it is correct. Take care not to
 //call isMoving AFTER operate because the returned result might not be the expected one.
 
-    return ( (res_space_win_x_) && ((itime - t_move)*vx_win > x_moved) );
+    return ( (res_space_win_x_) && ((itime - t_move_win_)*vx_win_ > x_moved) );
 }

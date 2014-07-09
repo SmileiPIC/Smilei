@@ -51,6 +51,15 @@ PicParams::PicParams(InputData &ifile) : restart(false), exit_after_dump(true), 
     if (!ifile.extract("res_space_win_x",res_space_win_x)) {
 	res_space_win_x = 0;
     }
+    if (!ifile.extract("t_move_win",t_move_win)) {
+	t_move_win = 0.0;
+    }
+    if (!ifile.extract("vx_win",vx_win)) {
+	vx_win = 1.;
+    }
+    if (!ifile.extract("clrw",clrw)) {
+	clrw = 1;
+    }
     
     ifile.extract("wavelength_SI",wavelength_SI);
     

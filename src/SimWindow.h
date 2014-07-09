@@ -24,8 +24,8 @@ class SimWindow {
     int res_space_win_x_;
     double cell_length_x_;
     double x_moved;    //Total length the window has moved along x up to now.
-    double vx_win;     //Velocity of the moving window along x expressed in c.
-    double t_move;     //Time at which the window starts moving.
+    double vx_win_;     //Velocity of the moving window along x expressed in c.
+    double t_move_win_;     //Time at which the window starts moving.
 
 };
 
