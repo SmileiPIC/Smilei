@@ -8,6 +8,8 @@
 #include "PicParams.h"
 #include "DiagParams.h"
 #include "SmileiMPI.h"
+#include "SmileiMPI_Cart1D.h"
+#include "SmileiMPI_Cart2D.h"
 #include "ElectroMagn.h"
 #include "Field1D.h"
 #include "Field.h"
@@ -66,7 +68,24 @@ smpi_(smpi), probeSize(6), fileId(0) {
                         partPos[iDim+ipart*ndim] += (ipart%vecNumber[iDimProbe])*(diagParams->probeStruc[np].pos[iDimProbe+1][iDim]-diagParams->probeStruc[np].pos[0][iDim])/(vecNumber[iDimProbe]-1);
                     }
                     probeParticles[np].position(iDim,ipart) = 2*M_PI*partPos[iDim+ipart*ndim];
-                    if(smpi->getDomainLocalMin(iDim) > probeParticles[np].position(iDim,ipart) || smpi->getDomainLocalMax(iDim) <= probeParticles[np].position(iDim,ipart)) {
+                    
+                    //!fixme this is awful: we add one cell if we're on the upper border
+                    double maxToCheck=smpi->getDomainLocalMax(iDim);                    
+                    if (ndim==1) {
+                        if ((static_cast<SmileiMPI_Cart1D*>(smpi))->isEaster()) {
+                            maxToCheck+=params->cell_length[iDim];
+                        }
+                    } else if (ndim==2) {
+                        if ((iDim == 0 && (static_cast<SmileiMPI_Cart2D*>(smpi))->isEaster()) ||
+                            (iDim == 1 && (static_cast<SmileiMPI_Cart2D*>(smpi))->isNorthern())) {
+                            maxToCheck+=params->cell_length[iDim];
+                        }                        
+                    } else {
+                        ERROR("implement here");
+                    }
+
+                    if (probeParticles[np].position(iDim,ipart) < smpi->getDomainLocalMin(iDim) ||
+                        probeParticles[np].position(iDim,ipart) >= maxToCheck) {
                         found=-1;
                     }
                 }

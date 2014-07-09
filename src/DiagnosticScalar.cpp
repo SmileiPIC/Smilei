@@ -53,6 +53,7 @@ void DiagnosticScalar::compute_proc_gather (ElectroMagn* EMfields, vector<Specie
 
 
     EMfields->computeScalars();
+    
     for (map<string,map<string,vector<double> > >::iterator iterEM=EMfields->scalars.begin(); iterEM!=EMfields->scalars.end(); iterEM++) {
         for (map<string,vector<double> >::iterator iterMap=iterEM->second.begin(); iterMap!=iterEM->second.end(); iterMap++ ) {
 
@@ -62,7 +63,6 @@ void DiagnosticScalar::compute_proc_gather (ElectroMagn* EMfields, vector<Specie
             }
         }
     }
-
 
     // 	it constructs the receiving structure on the master processor
     vector<double> allProcs;

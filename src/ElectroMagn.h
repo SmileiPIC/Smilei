@@ -153,7 +153,7 @@ public:
 
     //! vector(on Fields) of map (of keys like min max) of vector of double values
     std::map<std::string,std::map<std::string,std::vector<double> > > scalars;
-private:
+
 };
 
 #endif
