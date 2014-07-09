@@ -676,14 +676,14 @@ void ElectroMagn1D::computePoynting(SmileiMPI* smpi) {
     SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
 
     if ( smpi1D->isWester() ) {
-        poynting[0][0]+= 0.5*( (*Ey_)(0) * ((*Bz_m)(0) + (*Bz_m)(1)) - (*Ez_)(1) * ((*By_m)(0) + (*By_m)(1)));
+        poynting[0][0]+= 0.5*((*Ey_)(0) * ((*Bz_m)(0) + (*Bz_m)(1)) - 
+                              (*Ez_)(0) * ((*By_m)(0) + (*By_m)(1)));
     }//if Western
     if ( smpi1D->isEaster() ) {
-        poynting[1][0]+=-0.5*( (*Ey_)(nx_p-1) * ((*Bz_m)(nx_p-2) + (*Bz_m)(nx_p-1)) - (*Ez_)(nx_p-1) * ((*By_m)(nx_p-2) + (*By_m)(nx_p-1)));
+        poynting[1][0]+=-0.5*((*Ey_)(nx_p-1) * ((*Bz_m)(nx_d-2) + (*Bz_m)(nx_d-1)) - 
+                              (*Ez_)(nx_p-1) * ((*By_m)(nx_d-2) + (*By_m)(nx_d-1)));
     }//if Eastern
-    
-    
-    
+        
 //    if ( smpi1D->isWester() ) {
 //        // Silver-Mueller boundary conditions (left)
 //        (*By1D)(0) =  Alpha_SM*(*Ez1D)(0) + Beta_SM*(*By1D)(1) + Gamma_SM*byL;

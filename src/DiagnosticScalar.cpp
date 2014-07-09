@@ -1,6 +1,7 @@
 #include "DiagnosticScalar.h"
 
 #include <string>
+#include <iomanip>
 
 #include "PicParams.h"
 #include "DiagParams.h"
@@ -64,13 +65,6 @@ void DiagnosticScalar::compute_proc_gather (ElectroMagn* EMfields, vector<Specie
             }
         }
     }
-
-    // poynting stuff
-    map<string,vector<double> > poynting;
-    poynting["inf"]=EMfields->poynting[0];
-    poynting["sup"]=EMfields->poynting[0];
-//    oneProc.push_back(poynting);
-
 
     // 	it constructs the receiving structure on the master processor
     vector<double> allProcs;
@@ -136,7 +130,6 @@ void DiagnosticScalar::compute() {
 
         for (map<string,map<string,vector<double> > >::iterator iterEM=mpi_EM_scalars[0].begin(); iterEM!=mpi_EM_scalars[0].end(); iterEM++) {
             string nameEm=iterEM->first;
-
             for (map<string,vector<double> >::iterator iterMap=iterEM->second.begin(); iterMap!=iterEM->second.end(); iterMap++ ) {
                 string nameType=iterMap->first;
 
@@ -152,8 +145,8 @@ void DiagnosticScalar::compute() {
                         }
                     }
                     out_list.push_back(make_pair(nameEm+"_"+nameType,val));
-                    out_list.push_back(make_pair(nameEm+"_"+nameType+"_i",ival));
-                    out_list.push_back(make_pair(nameEm+"_"+nameType+"_cpu",iCPUval));
+//                    out_list.push_back(make_pair(nameEm+"_"+nameType+"_i",ival));
+//                    out_list.push_back(make_pair(nameEm+"_"+nameType+"_cpu",iCPUval));
                 } else if (nameType=="max") {
                     double val=mpi_EM_scalars[iCPUval][nameEm][nameType][0];
                     unsigned int ival=mpi_EM_scalars[iCPUval][nameEm][nameType][1];
@@ -165,12 +158,12 @@ void DiagnosticScalar::compute() {
                         }
                     }
                     out_list.push_back(make_pair(nameEm+"_"+nameType,val));
-                    out_list.push_back(make_pair(nameEm+"_"+nameType+"_i",ival));
-                    out_list.push_back(make_pair(nameEm+"_"+nameType+"_cpu",iCPUval));
-                } else if (nameType=="Etot") {
+//                    out_list.push_back(make_pair(nameEm+"_"+nameType+"_i",ival));
+//                    out_list.push_back(make_pair(nameEm+"_"+nameType+"_cpu",iCPUval));
+                } else if (nameType=="sum") {
                     double val=0;
                     for(int iCPU=0; iCPU<smpi_->getSize(); iCPU++) {
-                        val+=mpi_EM_scalars[iCPUval][nameEm][nameType][0];
+                        val+=mpi_EM_scalars[iCPU][nameEm][nameType][0];
                     }
                     out_list.push_back(make_pair(nameEm+"_"+nameType,val));
                 } else {
@@ -186,6 +179,7 @@ void DiagnosticScalar::compute() {
 }
 
 void DiagnosticScalar::write(int itime) {
+    const unsigned int width=16;
     if(smpi_->isMaster()) {
         if (fout.tellp()==ifstream::pos_type(0)) {
             fout << "# " << 1 << " time" << endl;
@@ -195,15 +189,15 @@ void DiagnosticScalar::write(int itime) {
                 i++;
             }
 
-            fout << "#\n# time";
+            fout << "#\n#" << setw(width) << "time";
             for(vector<pair<string,double> >::iterator iter = out_list.begin(); iter !=out_list.end(); iter++) {
-                fout << "\t" << (*iter).first;
+                fout << setw(width) << (*iter).first;
             }
             fout << endl;
         }
-        fout << itime;
+        fout << setw(width) << itime;
         for(vector<pair<string,double> >::iterator iter = out_list.begin(); iter !=out_list.end(); iter++) {
-            fout << "\t" << (*iter).second;
+            fout << setw(width) << (*iter).second;
         }
         fout << endl;
     }

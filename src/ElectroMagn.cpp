@@ -210,7 +210,7 @@ void ElectroMagn::computeScalars()
             }
         }
         Etot[0]*=0.5*cell_volume;
-        scalars_map["Etot"]=Etot;
+        scalars_map["sum"]=Etot;
 
         scalars[(*field)->name+"_U"]=scalars_map;
     }
@@ -263,4 +263,15 @@ void ElectroMagn::computeScalars()
         scalars_map["max"]=maxVec;
         scalars[(*field)->name]=scalars_map;
     }
+    
+    // poynting stuff
+    map<string,vector<double> > poynting_map_inf;
+    poynting_map_inf["sum"]=poynting[0];
+    scalars["Poy_inf"]=poynting_map_inf;
+
+    map<string,vector<double> > poynting_map_sup;
+    poynting_map_sup["sum"]=poynting[1];
+    scalars["Poy_sup"]=poynting_map_sup;
+    
+    
 }

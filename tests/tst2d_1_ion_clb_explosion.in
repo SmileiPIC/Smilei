@@ -22,15 +22,15 @@ sim_time = 2.0
 # sim_length: length of the simulation in units of the normalization wavelength 
 #
 res_space  = 10 10   
-sim_length = 2.0 2.0  
+sim_length = 3.0 3.0  
 
 # PLASMA GEOMETRY
 # plasma_geometry: string defining the plasma geometry
 # ***_length: characteristic length for a given geometry
 #
 plasma_geometry = constant
-vacuum_length   = 1.0 0.0 
-plasma_length   = 1.0 2.0
+vacuum_length   = 1.0 1.0 
+plasma_length   = 1.0 1.0
 
 # RANDOM seed 
 # this is used to randomize the random number generator
@@ -96,6 +96,10 @@ diagnostic probe
 	pos_first = 1.0 0.0 
 	pos_second = 0.0 1.0
 	number = 3 6
+end
+
+diagnostic scalar
+    every = 1
 end
 
 
