@@ -24,19 +24,21 @@ SimWindow::~SimWindow()
 void SimWindow::operate(vector<Species*> vecSpecies, ElectroMagn* EMfields, Interpolator* Interp, Projector* Proj, SmileiMPI* smpi)
 {
 
-    smpi->getCellStartingGlobalIndex(0)+= 1;
-    smpi->getDomainLocalMin(0)+= cell_length_x_;
-    smpi->getDomainLocalMax(0)+= cell_length_x_;
+    unsigned int clrw = vecSpecies[0]->clrw; //clrw must be the same for all species
+
+    smpi->getCellStartingGlobalIndex(0)+= clrw;
+    smpi->getDomainLocalMin(0)+= cell_length_x_*clrw;
+    smpi->getDomainLocalMax(0)+= cell_length_x_*clrw;
 
     
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
-	vecSpecies[ispec]->movingWindow_x(1, smpi);
+	vecSpecies[ispec]->movingWindow_x(clrw,smpi);
     }
 
-    Interp->mv_win(1);
-    Proj->mv_win(1);
-    EMfields->movingWindow_x(1, smpi);
-    x_moved += cell_length_x_;
+    Interp->mv_win(clrw);
+    Proj->mv_win(clrw);
+    EMfields->movingWindow_x(clrw, smpi);
+    x_moved += cell_length_x_*clrw;
 
 
 }
