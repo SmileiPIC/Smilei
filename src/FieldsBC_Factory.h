@@ -24,7 +24,9 @@ public:
 	    if (!params.use_transverse_periodic) {
 		fieldsBoundCond.resize(2, NULL);
                 // Boundary in the Y direction is set to damping if they are not periodic. 
-		fieldsBoundCond[1] = new FieldsBC2D_Damping(&params); 
+		//fieldsBoundCond[1] = new FieldsBC2D_Damping(&params); 
+                // Boundary in the Y direction is set to SM if they are not periodic.
+	        fieldsBoundCond[1] = new FieldsBC2D(&params); //Boundary in the X direction is set to Silver-Muller.
 	    }
         }
         else {

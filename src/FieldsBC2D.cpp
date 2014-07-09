@@ -57,6 +57,22 @@ FieldsBC2D::FieldsBC2D( PicParams *params )
     Delta_SM_E    = - (sin(theta)+dt_ov_dy)  * factor;
     Epsilon_SM_E  = - (sin(theta)-dt_ov_dy)  * factor;
     MESSAGE("EAST : " << Alpha_SM_E << Beta_SM_E << Gamma_SM_E);
+
+    // South boundary
+    theta  = 0.0; 
+    factor = 1.0 / (cos(theta) + dt_ov_dy );
+    Alpha_SM_S    = 2.0                     * factor;
+    Beta_SM_S     = - (cos(theta)-dt_ov_dy) * factor;
+    Delta_SM_S    = - (sin(theta)+dt_ov_dx) * factor;
+    Epsilon_SM_S  = - (sin(theta)-dt_ov_dx) * factor;
+    // North boundary
+    theta  = M_PI; 
+    factor = 1.0 / (cos(theta) - dt_ov_dy);
+    Alpha_SM_N    = 2.0                     * factor;
+    Beta_SM_N     = - (cos(theta)+dt_ov_dy) * factor;
+    Delta_SM_N    = - (sin(theta)+dt_ov_dx) * factor;
+    Epsilon_SM_N  = - (sin(theta)-dt_ov_dx) * factor;
+
 }
 
 FieldsBC2D::~FieldsBC2D()
@@ -179,6 +195,45 @@ void FieldsBC2D::apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
                                 +                    Gamma_SM_E * bzE;
         }
     }//if East
+
+    // -----------------------------------------
+    // Silver-Mueller boundary conditions (South)
+    // -----------------------------------------
+    if ( smpi->isSouthern() ) {
+        // for Bx^(p,d)
+        for (unsigned int j=0 ; j<nx_p ; j++) {
+
+            (*Bx2D)(j,0) = -Alpha_SM_S   * (*Ez2D)(j,0)
+                           +              Beta_SM_S    * (*Bx2D)(j,1)
+                           +              Delta_SM_S   * (*By2D)(j+1,0)
+                           +              Epsilon_SM_S * (*By2D)(j,0);
+        }
+        // for Bz^(d,d)
+        for (unsigned int j=0 ; j<nx_d ; j++) {
+
+            (*Bz2D)(j,0) = Alpha_SM_S * (*Ex2D)(j,0)
+                           +               Beta_SM_S  * (*Bz2D)(j,1);
+        }
+    }//if South
+
+    // -----------------------------------------
+    // Silver-Mueller boundary conditions (North)
+    // -----------------------------------------
+    if ( smpi->isNorthern() ) {
+        // for Bx^(p,d)
+        for (unsigned int j=0 ; j<nx_p ; j++) {
+            (*Bx2D)(j,ny_d-1) = -Alpha_SM_N   * (*Ez2D)(j,ny_p-1)
+                                +                   Beta_SM_N    * (*Bx2D)(j,ny_d-2)
+                                +                   Delta_SM_N   * (*By2D)(j+1,ny_p-1)
+                                +                   Epsilon_SM_N * (*By2D)(j,ny_p-1);
+        }
+        // for Bz^(d,d)
+        for (unsigned int j=0 ; j<nx_d ; j++) {
+
+            (*Bz2D)(j,ny_d-1) = Alpha_SM_N * (*Ex2D)(j,ny_p-1)
+                                +                    Beta_SM_N  * (*Bz2D)(j,ny_d-2);
+        }
+    }//if North
 
 }// END apply
 

@@ -74,7 +74,31 @@ public:
 
     //! Constant used for the Silver-Mueller boundary conditions (East)
     double Epsilon_SM_E;
-    
+
+   //! Constant used for the Silver-Mueller boundary conditions (Transverse)
+    double Alpha_SM_S;
+
+    //! Constant used for the Silver-Mueller boundary conditions (Transverse)
+    double Beta_SM_S;
+
+    //! Constant used for the Silver-Mueller boundary conditions (Transverse)
+    double Delta_SM_S;
+
+    //! Constant used for the Silver-Mueller boundary conditions (Transverse)
+    double Epsilon_SM_S;
+
+   //! Constant used for the Silver-Mueller boundary conditions (Transverse)
+    double Alpha_SM_N;
+
+    //! Constant used for the Silver-Mueller boundary conditions (Transverse)
+    double Beta_SM_N;
+
+    //! Constant used for the Silver-Mueller boundary conditions (Transverse)
+    double Delta_SM_N;
+
+    //! Constant used for the Silver-Mueller boundary conditions (Transverse)
+    double Epsilon_SM_N;
+ 
 };
 
 #endif

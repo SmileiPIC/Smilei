@@ -14,7 +14,7 @@
 //!
 //! int function( Particles &particles, int ipart, int direction, double limit_pos )
 //!     returns :
-//!         0 if particle ipart have ti be deleted from current process (MPI or BC)
+//!         0 if particle ipart have to be deleted from current process (MPI or BC)
 //!         1 otherwise
 //!
 
@@ -33,9 +33,9 @@ inline int supp_particle( Particles &particles, int ipart, int direction, double
 
 inline int stop_particle( Particles &particles, int ipart, int direction, double limit_pos ) {
     particles.position(direction, ipart) = particles.position_old(direction, ipart);
-    particles.momentum(direction, 0) = 0.;
-    particles.momentum(direction, 1) = 0.;
-    particles.momentum(direction, 2) = 0.;
+    particles.momentum(0, ipart) = 0.;
+    particles.momentum(1, ipart) = 0.;
+    particles.momentum(2, ipart) = 0.;
     return 1;
 
 }
