@@ -49,5 +49,5 @@ bool SimWindow::isMoving(int itime)
 //isMoving is called once in Electromagn. Since this is BEFORE operate, it is correct. Take care not to
 //call isMoving AFTER operate because the returned result might not be the expected one.
 
-    return ( (res_space_win_x_) && ((itime - t_move)*v_move > x_moved) );
+    return ( (res_space_win_x_) && ((itime - t_move)*vx_win > x_moved) );
 }
