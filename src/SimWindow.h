@@ -22,7 +22,7 @@ class SimWindow {
 
  private:
     int res_space_win_x_;
-    int cell_length_x_;
+    double cell_length_x_;
 
 };
 
