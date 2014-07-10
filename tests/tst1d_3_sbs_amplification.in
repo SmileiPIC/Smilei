@@ -139,7 +139,7 @@ particleDump_every = 2500
 # every = number of time-steps between each output
 #
 diagnostic scalar
-	every = 125
+	every = 1
 end
 
 diagnostic phase

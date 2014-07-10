@@ -19,7 +19,7 @@ interpolation_order = 2
 # sim_time: duration of the simulation in units of the normalization period 
 #
 res_time = 100
-sim_time = 0.01
+sim_time = 1
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
@@ -69,3 +69,9 @@ species
 	time_frozen = 0.0
 	radiating = false
 end
+
+diagnostic scalar
+	every = 1
+end
+
+

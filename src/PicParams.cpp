@@ -133,6 +133,9 @@ PicParams::PicParams(InputData &ifile) {
         
         ifile.extract("species_type",tmpSpec.species_type,"species",0,n_species);
         ifile.extract("initialization_type",tmpSpec.initialization_type ,"species",0,n_species);
+        if (tmpSpec.initialization_type=="mj" || tmpSpec.initialization_type=="m-j") {
+            tmpSpec.initialization_type="maxwell-juettner";
+        }
         ifile.extract("n_part_per_cell",tmpSpec.n_part_per_cell,"species",0,n_species);
         ifile.extract("c_part_max",tmpSpec.c_part_max,"species",0,n_species);
         ifile.extract("mass",tmpSpec.mass ,"species",0,n_species);
@@ -153,7 +156,7 @@ PicParams::PicParams(InputData &ifile) {
         ifile.extract("dynamics_type",tmpSpec.dynamics_type ,"species",0,n_species);
         ifile.extract("time_frozen",tmpSpec.time_frozen ,"species",0,n_species);
         if (tmpSpec.time_frozen > 0 && \
-            tmpSpec.initialization_type=="maxwell-juettner") {
+            tmpSpec.initialization_type=="maxwell-juettner" ) {
             WARNING("For species "<< n_species << " possible conflict in maxwell-juettner initialization");
         }
         ifile.extract("radiating",tmpSpec.radiating ,"species",0,n_species);

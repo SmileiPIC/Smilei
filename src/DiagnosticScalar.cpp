@@ -145,8 +145,8 @@ void DiagnosticScalar::compute() {
                         }
                     }
                     out_list.push_back(make_pair(nameEm+"_"+nameType,val));
-//                    out_list.push_back(make_pair(nameEm+"_"+nameType+"_i",ival));
-//                    out_list.push_back(make_pair(nameEm+"_"+nameType+"_cpu",iCPUval));
+                    out_list.push_back(make_pair(nameEm+"_"+nameType+"_i",ival));
+                    out_list.push_back(make_pair(nameEm+"_"+nameType+"_cpu",iCPUval));
                 } else if (nameType=="max") {
                     double val=mpi_EM_scalars[iCPUval][nameEm][nameType][0];
                     unsigned int ival=mpi_EM_scalars[iCPUval][nameEm][nameType][1];
@@ -158,8 +158,8 @@ void DiagnosticScalar::compute() {
                         }
                     }
                     out_list.push_back(make_pair(nameEm+"_"+nameType,val));
-//                    out_list.push_back(make_pair(nameEm+"_"+nameType+"_i",ival));
-//                    out_list.push_back(make_pair(nameEm+"_"+nameType+"_cpu",iCPUval));
+                    out_list.push_back(make_pair(nameEm+"_"+nameType+"_i",ival));
+                    out_list.push_back(make_pair(nameEm+"_"+nameType+"_cpu",iCPUval));
                 } else if (nameType=="sum") {
                     double val=0;
                     for(int iCPU=0; iCPU<smpi_->getSize(); iCPU++) {

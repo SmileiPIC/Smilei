@@ -201,9 +201,9 @@ void ElectroMagn::computeScalars()
 
         vector<double> Etot(1);
 
-        for (unsigned int k=oversize[2]; k<n_space[2]-oversize[2]; k++) {
-            for (unsigned int j=oversize[1]; j<n_space[1]-oversize[1]; j++) {
-                for (unsigned int i=oversize[0]; i<n_space[0]-oversize[0]; i++) {
+        for (unsigned int k=oversize[2]; k<n_space[2]; k++) {
+            for (unsigned int j=oversize[1]; j<n_space[1]; j++) {
+                for (unsigned int i=oversize[0]; i<n_space[0]; i++) {
                     unsigned int ii=i+j*n_space[0]+k*n_space[0]*n_space[1];
                     Etot[0]+=pow((**field)(ii),2);
                 }
@@ -235,9 +235,9 @@ void ElectroMagn::computeScalars()
         minVec[2]=maxVec[2]=0;
         minVec[3]=maxVec[3]=0;
 
-        for (unsigned int k=oversize[2]; k<n_space[2]-oversize[2]; k++) {
-            for (unsigned int j=oversize[1]; j<n_space[1]-oversize[1]; j++) {
-                for (unsigned int i=oversize[0]; i<n_space[0]-oversize[0]; i++) {
+        for (unsigned int k=oversize[2]; k<n_space[2]; k++) {
+            for (unsigned int j=oversize[1]; j<n_space[1]; j++) {
+                for (unsigned int i=oversize[0]; i<n_space[0]; i++) {
                     unsigned int ii=i+j*n_space[0]+k*n_space[0]*n_space[1];
                     if (minVec[0]>(**field)(ii)) {
                         minVec[0]=(**field)(ii);
