@@ -19,7 +19,7 @@ interpolation_order = 2
 # sim_time: duration of the simulation in units of the normalization period 
 #
 res_time = 10
-sim_time = 100.0
+sim_time = 1000.0
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
@@ -63,7 +63,7 @@ random_seed = 0
 #
 species
 	species_type = ion
-	initialization_type = maxwell-juettner
+	initialization_type = regular
 	ionization_model = none
 	n_part_per_cell = 10
 	c_part_max = 1.0
@@ -80,7 +80,7 @@ end
 
 species
 	species_type = eon
-	initialization_type = maxwell-juettner
+	initialization_type = regular
 	ionization_model = none
 	n_part_per_cell = 10
 	c_part_max = 1.0

@@ -1,8 +1,5 @@
 # SIMULATION PARAMETERS
 
-# print_every 
-print_every = 100
-
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
 #      2d3v = cartesian grid with 2d in space + 3d in velocity
@@ -19,7 +16,7 @@ interpolation_order = 2
 # sim_time: duration of the simulation in units of the normalization period 
 #
 res_time = 1000
-sim_time = 5.0
+sim_time = 10.0
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
@@ -58,7 +55,7 @@ laser
 end
 
 diagnostic scalar
-	every = 10
+	every = 1
 end
 
 
@@ -75,7 +72,12 @@ diagnostic probe
 	
 end
 
-dump_step = 2500
+print_every = 100
+
+
+fieldDump_every = 125
+
+# dump_step = 2500
 
 # dump_minutes = 1
 
