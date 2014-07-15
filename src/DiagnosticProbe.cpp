@@ -17,7 +17,7 @@
 using namespace std;
 
 DiagnosticProbe::DiagnosticProbe(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi):
-smpi_(smpi), probeSize(6), fileId(0) {
+smpi_(smpi), probeSize(10), fileId(0) {
     
     if (diagParams->probeStruc.size() >0) {
         hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
@@ -166,6 +166,7 @@ string DiagnosticProbe::probeName(int p) {
 }
 
 void DiagnosticProbe::run(unsigned int timestep, ElectroMagn* EMfields, Interpolator* interp) {
+
     for (unsigned int np=0; np<every.size(); np++) {
         if (every[np] && timestep % every[np] == 0) {
             vector<double> data(probeSize);
@@ -224,7 +225,7 @@ void DiagnosticProbe::run(unsigned int timestep, ElectroMagn* EMfields, Interpol
                 H5Pset_dxpl_mpio(pid, H5FD_MPIO_INDEPENDENT);
                 
                 if (probeId[np][iprob]==smpi_->getRank()) {
-                    (*interp)(EMfields,probeParticles[np],iprob,&Eloc_fields,&Bloc_fields);
+                    (*interp)(EMfields,probeParticles[np],iprob,&Eloc_fields,&Bloc_fields,&Jloc_fields,&data[9]);
                     
                     //! here we fill the probe data!!!
                     data[0]=Eloc_fields.x;
@@ -233,6 +234,9 @@ void DiagnosticProbe::run(unsigned int timestep, ElectroMagn* EMfields, Interpol
                     data[3]=Bloc_fields.x;
                     data[4]=Bloc_fields.y;
                     data[5]=Bloc_fields.z;
+                    data[6]=Jloc_fields.x;
+                    data[7]=Jloc_fields.y;
+                    data[8]=Jloc_fields.z;
                     
                     H5Dwrite(did, H5T_NATIVE_DOUBLE, sidPart, sid, pid, &data[0]);
                 } else {

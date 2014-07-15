@@ -58,6 +58,9 @@ protected:
     //! B local fields for the projector
     LocalFields Bloc_fields;
     
+    //! J local fields for the projector
+    LocalFields Jloc_fields;
+    
     //! memory size of a probe should be 6 = Exyz + Bxyz
     const int probeSize;
     

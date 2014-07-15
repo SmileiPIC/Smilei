@@ -19,7 +19,7 @@ interpolation_order = 2
 # sim_time: duration of the simulation in units of the normalization period 
 #
 res_time = 10
-sim_time = 1000.0
+sim_time = 100.0
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
@@ -149,7 +149,7 @@ diagnostic phase
 
     species = eon
     
-    deflate=0
+    deflate=5
 
 	every = 100
 
@@ -171,7 +171,7 @@ diagnostic phase
     species = eon
 	every = 100
 
-    deflate=0
+    deflate=5
 
 	mom_min = -0.3 -0.3
 	mom_max = 0.3 0.3
@@ -195,8 +195,8 @@ end
 diagnostic probe
     every = 10
     pos = 0
-    pos_first = 12
-    number = 13
+    pos_first = 120
+    number = 200
 end
 
 #dump_minutes = 0.1

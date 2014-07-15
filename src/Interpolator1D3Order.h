@@ -9,6 +9,7 @@ public:
     ~Interpolator1D3Order();
 
     void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc);
+    void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc);
 protected:
     double dble_1ov6;
     double dble_2ov3;

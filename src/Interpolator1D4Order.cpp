@@ -119,3 +119,77 @@ void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particl
 
 
 }//END Interpolator1D4Order
+
+void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc){
+    (*this)(EMfields, particles, ipart, ELoc, BLoc);
+    // Variable declaration
+    int im2, im1, i, ip1, ip2;
+    double xjn, xjmxi, xjmxi2, xjmxi3, xjmxi4;
+    double cim2, cim1, ci, cip1, cip2;
+    
+    // Static cast of the electromagnetic fields
+    Field1D* Jx1D     = static_cast<Field1D*>(EMfields->Jx_);
+    Field1D* Jy1D     = static_cast<Field1D*>(EMfields->Jy_);
+    Field1D* Jz1D     = static_cast<Field1D*>(EMfields->Jz_);
+    Field1D* Rho1D     = static_cast<Field1D*>(EMfields->rho_);
+   
+    
+    // Particle position (in units of the spatial-step)
+    xjn    = particles.position(0, ipart)*dx_inv_;
+    
+    
+    // --------------------------------------------------------
+    // Interpolate the fields from the Primal grid : Ey, Ez, Bx
+    // --------------------------------------------------------
+    i      = round(xjn);      // index of the central point
+    xjmxi  = xjn -(double)i;  // normalized distance to the central node
+    xjmxi2 = xjmxi*xjmxi;     // square of the normalized distance to the central node
+    xjmxi3 = xjmxi2*xjmxi;    // cube of the normalized distance to the central node
+    xjmxi4 = xjmxi3*xjmxi;    // 4th power of the normalized distance to the central node
+    
+    // coefficients for the 4th order interpolation on 5 nodes
+    cim2 = dble_1_ov_384   - dble_1_ov_48  * xjmxi  + dble_1_ov_16 * xjmxi2 - dble_1_ov_12 * xjmxi3 + dble_1_ov_24 * xjmxi4;
+    cim1 = dble_19_ov_96   - dble_11_ov_24 * xjmxi  + dble_1_ov_4 * xjmxi2  + dble_1_ov_6  * xjmxi3 - dble_1_ov_6  * xjmxi4;
+    ci   = dble_115_ov_192 - dble_5_ov_8   * xjmxi2 + dble_1_ov_4 * xjmxi4;
+    cip1 = dble_19_ov_96   + dble_11_ov_24 * xjmxi  + dble_1_ov_4 * xjmxi2  - dble_1_ov_6  * xjmxi3 - dble_1_ov_6  * xjmxi4;
+    cip2 = dble_1_ov_384   + dble_1_ov_48  * xjmxi  + dble_1_ov_16 * xjmxi2 + dble_1_ov_12 * xjmxi3 + dble_1_ov_24 * xjmxi4;
+    
+    i -= index_domain_begin;
+    im2    = i-2;
+    im1    = i-1;
+    ip1    = i+1;
+    ip2    = i+2;
+    
+    (*JLoc).y = cim2*(*Jy1D)(im2)   + cim1*(*Jy1D)(im1)   + ci*(*Jy1D)(i)   + cip1*(*Jy1D)(ip1)   + cip2*(*Jy1D)(ip2);
+    (*JLoc).z = cim2*(*Jz1D)(im2)   + cim1*(*Jz1D)(im1)   + ci*(*Jz1D)(i)   + cip1*(*Jz1D)(ip1)   + cip2*(*Jz1D)(ip2);
+    
+    
+    
+    // --------------------------------------------------------
+    // Interpolate the fields from the Dual grid : Ex, By, Bz
+    // --------------------------------------------------------
+    i      = round(xjn+0.5);  // index of the central point
+    xjmxi  = xjn -(double)i+0.5;  // normalized distance to the central node
+    xjmxi2 = xjmxi*xjmxi;     // square of the normalized distance to the central node
+    xjmxi3 = xjmxi2*xjmxi;    // cube of the normalized distance to the central node
+    xjmxi4 = xjmxi3*xjmxi;    // 4th power of the normalized distance to the central node
+    
+    // coefficients for the 4th order interpolation on 5 nodes
+    cim2 = dble_1_ov_384   - dble_1_ov_48  * xjmxi  + dble_1_ov_16 * xjmxi2 - dble_1_ov_12 * xjmxi3 + dble_1_ov_24 * xjmxi4;
+    cim1 = dble_19_ov_96   - dble_11_ov_24 * xjmxi  + dble_1_ov_4 * xjmxi2  + dble_1_ov_6  * xjmxi3 - dble_1_ov_6  * xjmxi4;
+    ci   = dble_115_ov_192 - dble_5_ov_8   * xjmxi2 + dble_1_ov_4 * xjmxi4;
+    cip1 = dble_19_ov_96   + dble_11_ov_24 * xjmxi  + dble_1_ov_4 * xjmxi2  - dble_1_ov_6  * xjmxi3 - dble_1_ov_6  * xjmxi4;
+    cip2 = dble_1_ov_384   + dble_1_ov_48  * xjmxi  + dble_1_ov_16 * xjmxi2 + dble_1_ov_12 * xjmxi3 + dble_1_ov_24 * xjmxi4;
+    
+    
+    i -= index_domain_begin;
+    im2    = i-2;
+    im1    = i-1;
+    ip1    = i+1;
+    ip2    = i+2;
+    
+    (*JLoc).x = cim2*(*Jx1D)(im2)   + cim1*(*Jx1D)(im1)   + ci*(*Jx1D)(i)   + cip1*(*Jx1D)(ip1)   + cip2*(*Jx1D)(ip2);
+    (*RhoLoc) = cim2*(*Rho1D)(im2) + cim1*(*Rho1D)(im1) + ci*(*Rho1D)(i) + cip1*(*Rho1D)(ip1) + cip2*(*Rho1D)(ip2);
+    
+    
+}
