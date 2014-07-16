@@ -107,7 +107,7 @@ void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particl
     
     
     // --------------------------------------------------------
-    // Interpolate the fields from the Primal grid : Ey, Ez, Bx
+    // Interpolate the fields from the Primal grid : Jy, Jz, Rho
     // --------------------------------------------------------
     i      = round(xjn);      // index of the central point
     xjmxi  = xjn -(double)i;  // normalized distance to the central node
@@ -122,10 +122,11 @@ void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particl
 
     (*JLoc).y =  coeffInf * (*Jy1D)(i-1)   + coeffCur * (*Jy1D)(i)   + coeffSup * (*Jy1D)(i+1);
     (*JLoc).z =  coeffInf * (*Jz1D)(i-1)   + coeffCur * (*Jz1D)(i)   + coeffSup * (*Jz1D)(i+1);
+    (*RhoLoc) =  coeffInf * (*Rho1D)(i-1)  + coeffCur * (*Rho1D)(i)  + coeffSup * (*Rho1D)(i+1);
 
     
     // --------------------------------------------------------
-    // Interpolate the fields from the Dual grid : Ex, By, Bz
+    // Interpolate the fields from the Dual grid : Jx
     // --------------------------------------------------------
     i      = round(xjn+0.5);        // index of the central point
     xjmxi  = xjn - (double)i +0.5;  // normalized distance to the central node
@@ -139,6 +140,5 @@ void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particl
     i -= index_domain_begin;
         
     (*JLoc).x =  coeffInf * (*Jx1D)(i-1)   + coeffCur * (*Jx1D)(i)   + coeffSup * (*Jx1D)(i+1);
-    (*RhoLoc) =  coeffInf * (*Rho1D)(i-1)   + coeffCur * (*Rho1D)(i)   + coeffSup * (*Rho1D)(i+1);
     
 }

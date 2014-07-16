@@ -120,7 +120,7 @@ void Interpolator1D3Order::operator() (ElectroMagn* EMfields, Particles &particl
     xjn    = particles.position(0, ipart)*dx_inv_;
     
     
-    // Primal Grid : Ey, Ez, Bx
+    // Primal Grid : Jy, Jz, Rho
     // ------------------------
     i = (int)xjn;            // index of the 2nd node
     im1 = i-1;
@@ -140,9 +140,10 @@ void Interpolator1D3Order::operator() (ElectroMagn* EMfields, Particles &particl
     
     (*JLoc).y = c1 * (*Jy1D)(im1)   + c2 * (*Jy1D)(i)   + c3 * (*Jy1D)(ip1)   + c4 * (*Jy1D)(ip2);
     (*JLoc).z = c1 * (*Jz1D)(im1)   + c2 * (*Jz1D)(i)   + c3 * (*Jz1D)(ip1)   + c4 * (*Jz1D)(ip2);
+    (*RhoLoc) = c1 * (*Rho1D)(im1)  + c2 * (*Rho1D)(i)  + c3 * (*Rho1D)(ip1)  + c4 * (*Rho1D)(ip2);
     
     
-    // Dual Grid : Ex, By, Bz
+    // Dual Grid : Jx
     // ----------------------
     i   = (int)(xjn+0.50);        // position of the 2nd node
     im1 = i-1;
@@ -161,7 +162,6 @@ void Interpolator1D3Order::operator() (ElectroMagn* EMfields, Particles &particl
     i -= index_domain_begin;
     
     (*JLoc).x = c1 * (*Jx1D)(im1)   + c2 * (*Jx1D)(i)   + c3 * (*Jx1D)(ip1)   + c4 * (*Jx1D)(ip2);
-    (*RhoLoc) = c1 * (*Rho1D)(im1)   + c2 * (*Rho1D)(i)   + c3 * (*Rho1D)(ip1)   + c4 * (*Rho1D)(ip2);
     
     
 }

@@ -249,12 +249,12 @@ void Interpolator2D2Order::operator() (ElectroMagn* EMfields, Particles &particl
     }
     
     // -------------------------
-    // Interpolation of By^(d,p)
+    // Interpolation of Rho^(p,p)
     // -------------------------
     (*RhoLoc) = 0.0;
     for (int iloc=0 ; iloc<3 ; iloc++) {
         for (int jloc=0 ; jloc<3 ; jloc++) {
-            (*RhoLoc) += Cx_d[iloc] * Cy_p[jloc] * (*Rho2D)(id+iloc,jp+jloc);
+            (*RhoLoc) += Cx_p[iloc] * Cy_p[jloc] * (*Rho2D)(ip+iloc,jp+jloc);
         }
     }    
 }

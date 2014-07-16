@@ -139,7 +139,7 @@ void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     
     
     // --------------------------------------------------------
-    // Interpolate the fields from the Primal grid : Ey, Ez, Bx
+    // Interpolate the fields from the Primal grid : Jy, Jz, Rho
     // --------------------------------------------------------
     i      = round(xjn);      // index of the central point
     xjmxi  = xjn -(double)i;  // normalized distance to the central node
@@ -162,11 +162,12 @@ void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     
     (*JLoc).y = cim2*(*Jy1D)(im2)   + cim1*(*Jy1D)(im1)   + ci*(*Jy1D)(i)   + cip1*(*Jy1D)(ip1)   + cip2*(*Jy1D)(ip2);
     (*JLoc).z = cim2*(*Jz1D)(im2)   + cim1*(*Jz1D)(im1)   + ci*(*Jz1D)(i)   + cip1*(*Jz1D)(ip1)   + cip2*(*Jz1D)(ip2);
+    (*RhoLoc) = cim2*(*Rho1D)(im2)  + cim1*(*Rho1D)(im1)  + ci*(*Rho1D)(i)  + cip1*(*Rho1D)(ip1)  + cip2*(*Rho1D)(ip2);
     
     
     
     // --------------------------------------------------------
-    // Interpolate the fields from the Dual grid : Ex, By, Bz
+    // Interpolate the fields from the Dual grid : Jx
     // --------------------------------------------------------
     i      = round(xjn+0.5);  // index of the central point
     xjmxi  = xjn -(double)i+0.5;  // normalized distance to the central node
@@ -189,7 +190,6 @@ void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     ip2    = i+2;
     
     (*JLoc).x = cim2*(*Jx1D)(im2)   + cim1*(*Jx1D)(im1)   + ci*(*Jx1D)(i)   + cip1*(*Jx1D)(ip1)   + cip2*(*Jx1D)(ip2);
-    (*RhoLoc) = cim2*(*Rho1D)(im2) + cim1*(*Rho1D)(im1) + ci*(*Rho1D)(i) + cip1*(*Rho1D)(ip1) + cip2*(*Rho1D)(ip2);
     
     
 }
