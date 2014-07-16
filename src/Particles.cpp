@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "PicParams.h"
+#include "SmileiMPI.h"
 
 using namespace std;
 
@@ -412,4 +413,17 @@ void Particles::create_particles(int nAdditionalParticles )
     Charge.resize(nParticles+nAdditionalParticles,0);
 
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Test if ipart is in the local MPI subdomain
+//---------------------------------------------------------------------------------------------------------------------
+bool Particles::is_part_in_domain(int ipart, SmileiMPI* smpi)
+{
+    for (unsigned int i=0; i<Position.size(); i++) {
+        if (Position[i][ipart] < smpi->getDomainLocalMin(i) ) return false;
+        if (Position[i][ipart] > smpi->getDomainLocalMax(i) ) return false;
+    }
+    return true;
+}
+
 

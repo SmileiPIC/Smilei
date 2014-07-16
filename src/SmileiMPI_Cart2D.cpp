@@ -150,7 +150,7 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
 	    }
 	}
 
-        oversize[i] = params.oversize[i] = params.interpolation_order + 1 + (params.exchange_particles_each-1);
+        oversize[i] = params.oversize[i] = params.interpolation_order + (params.exchange_particles_each-1);
         if ( params.n_space[i] <= 2*oversize[i] ) {
             WARNING ( "Increase space resolution or reduce number of MPI process in direction " << i << " "<< params.n_space[i]); 
         }
@@ -221,6 +221,7 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
 	    indexes_of_particles_to_exchange[k] =  indexes_of_particles_to_exchange_per_thd[tid][ipart] ;
 	    k++;
 	}
+        indexes_of_particles_to_exchange_per_thd[tid].clear();
     }
     sort( indexes_of_particles_to_exchange.begin(), indexes_of_particles_to_exchange.end() );
 
@@ -263,6 +264,8 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
     partVectorRecv[1][0].initialize(0,cuParticles.dimension());
     partVectorRecv[1][1].initialize(0,cuParticles.dimension());
 
+    Particles diagonalParticles;
+    diagonalParticles.initialize(0,cuParticles.dimension());
 
     /********************************************************************************/
     // Exchange particles
@@ -370,9 +373,19 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
 
             if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
                 MPI_Waitall( 9, rrequest[iDim][(iNeighbor+1)%2], rstat[iDim][(iNeighbor+1)%2] );
+
+		// Extract corner particles, not managed in the following process 
+		// but reinjected at the end in the main list
+                for (int iPart=0 ; iPart<n_part_recv; iPart++ )
+		    if ( !(partVectorRecv[iDim][(iNeighbor+1)%2]).is_part_in_domain(iPart, this) )
+                        (partVectorRecv[iDim][(iNeighbor+1)%2]).cp_particle(iPart, diagonalParticles);
                 for (int iPart=0 ; iPart<n_part_recv; iPart++ ) {
-                    (partVectorRecv[iDim][(iNeighbor+1)%2]).cp_particle(iPart, cuParticles);
+		    if ( !(partVectorRecv[iDim][(iNeighbor+1)%2]).is_part_in_domain(iPart, this) ) {
+			(partVectorRecv[iDim][(iNeighbor+1)%2]).erase_particle(iPart);
+			buff_index_recv_sz[iDim][(iNeighbor+1)%2]--;
+		    }
                 }
+
             }
 
         }
@@ -494,14 +507,19 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
         if ( (neighbor_[1][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
             for(unsigned int j=0; j<n_part_recv; j++){
                 ii = int((partVectorRecv[1][iNeighbor].position(0,j)-min_local[0])/dbin);//bin in which the particle goes.
-                //! \todo Workaround for exchange particles in diagonal
-                if (ii>(*cubmax).size()-1) ii = (*cubmax).size()-1;
-                else if (ii<0) ii =0;
                 partVectorRecv[1][iNeighbor].overwrite_part2D(j, cuParticles,(*cubmax)[ii]);
                 (*cubmax)[ii] ++ ;
             }
         }
     }
+
+    // Inject corner particles at the end of the list, update bmax
+    for (int iPart = 0 ; iPart<diagonalParticles.size() ; iPart++) {
+       diagonalParticles.cp_particle(iPart, cuParticles);
+       indexes_of_particles_to_exchange_per_thd[0].push_back(cuParticles.size()-1);
+       (*cubmax)[(*cubmax).size()-1]++;
+    }
+
     }//end of omp master
 } // END exchangeParticles
 

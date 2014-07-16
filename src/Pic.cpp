@@ -263,7 +263,10 @@ int main (int argc, char* argv[])
                     #pragma omp barrier
 		    //#pragma omp master
 		    {
-			smpi->exchangeParticles(vecSpecies[ispec], ispec, &params, tid);
+			// Loop on dims to manage exchange in corners
+			for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
+			    smpi->exchangeParticles(vecSpecies[ispec], ispec, &params, tid);
+
 		    }
                     #pragma omp barrier
 		    vecSpecies[ispec]->sort_part(params.cell_length[0]);
