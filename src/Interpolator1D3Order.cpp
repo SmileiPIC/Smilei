@@ -35,9 +35,7 @@ Interpolator1D3Order::~Interpolator1D3Order()
 ***********************************************************************/
 void Interpolator1D3Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc)
 {
-    int i, im1, ip1, ip2;
     double xjn, xi, xi2, xi3;
-    double c1, c2, c3, c4;
 
     //!\todo Julien, can you check that this is indeed the centered B-field which is passed to the pusher?
     Field1D* Ex1D     = static_cast<Field1D*>(EMfields->Ex_);
@@ -55,113 +53,64 @@ void Interpolator1D3Order::operator() (ElectroMagn* EMfields, Particles &particl
 
     // Primal Grid : Ey, Ez, Bx
     // ------------------------
-    i = (int)xjn;            // index of the 2nd node
-    im1 = i-1;
-    ip1 = i+1;
-    ip2 = i+2;
-    xi  = xjn - (double)i;   //normalized distance to the 2nd node
+    ip_ = (int)xjn;            // index of the 2nd node
+    xi  = xjn - (double)ip_;   //normalized distance to the 2nd node
     xi2 = xi*xi;
     xi3 = xi*xi*xi;
 
     // 3rd order interpolation on 4 nodes
-    c1  = (1.0-xi3)*dble_1ov6 - 0.5*(xi-xi2);
-    c2  = dble_2ov3 - xi2 + 0.5*xi3;
-    c3  = dble_1ov6 + 0.5*(xi+xi2-xi3);
-    c4  = xi3*dble_1ov6;
+    coeffp_[0]  = (1.0-xi3)*dble_1ov6 - 0.5*(xi-xi2);
+    coeffp_[1]  = dble_2ov3 - xi2 + 0.5*xi3;
+    coeffp_[2]  = dble_1ov6 + 0.5*(xi+xi2-xi3);
+    coeffp_[3]  = xi3*dble_1ov6;
 
-    i -= index_domain_begin;
+    ip_ -= index_domain_begin;
 
-    (*ELoc).y = c1 * (*Ey1D)(im1)   + c2 * (*Ey1D)(i)   + c3 * (*Ey1D)(ip1)   + c4 * (*Ey1D)(ip2);
-    (*ELoc).z = c1 * (*Ez1D)(im1)   + c2 * (*Ez1D)(i)   + c3 * (*Ez1D)(ip1)   + c4 * (*Ez1D)(ip2);
-    (*BLoc).x = c1 * (*Bx1D_m)(im1) + c2 * (*Bx1D_m)(i) + c3 * (*Bx1D_m)(ip1) + c4 * (*Bx1D_m)(ip2);
-
+    (*ELoc).y = compute(coeffp_, Ey1D,   ip_);  
+    (*ELoc).z = compute(coeffp_, Ez1D,   ip_);  
+    (*BLoc).x = compute(coeffp_, Bx1D_m, ip_);
 
     // Dual Grid : Ex, By, Bz
     // ----------------------
-    i   = (int)(xjn+0.50);        // position of the 2nd node
-    im1 = i-1;
-    ip1 = i+1;
-    ip2 = i+2;
-    xi  = xjn - (double)i + 0.5;   // normalized distance to the central node
+    id_   = (int)(xjn+0.50);        // position of the 2nd node
+    xi  = xjn - (double)id_ + 0.5;    // normalized distance to the central node
     xi2 = xi*xi;
     xi3 = xi*xi3;
 
     // 3rd order interpolation on 4 nodes
-    c1  = (1.0-xi3)*dble_1ov6 - 0.5*(xi-xi2);
-    c2  = dble_2ov3 - xi2 + 0.5*xi3;
-    c3  = dble_1ov6 + 0.5*(xi+xi2-xi3);
-    c4  = xi3*dble_1ov6;
+    coeffd_[0] = (1.0-xi3)*dble_1ov6 - 0.5*(xi-xi2);
+    coeffd_[1]  = dble_2ov3 - xi2 + 0.5*xi3;
+    coeffd_[2]  = dble_1ov6 + 0.5*(xi+xi2-xi3);
+    coeffd_[3]  = xi3*dble_1ov6;
 
-    i -= index_domain_begin;
+    id_ -= index_domain_begin;
 
-    (*ELoc).x = c1 * (*Ex1D)(im1)   + c2 * (*Ex1D)(i)   + c3 * (*Ex1D)(ip1)   + c4 * (*Ex1D)(ip2);
-    (*BLoc).y = c1 * (*By1D_m)(im1) + c2 * (*By1D_m)(i) + c3 * (*By1D_m)(ip1) + c4 * (*By1D_m)(ip2);
-    (*BLoc).z = c1 * (*Bz1D_m)(im1) + c2 * (*Bz1D_m)(i) + c3 * (*Bz1D_m)(ip1) + c4 * (*Bz1D_m)(ip2);
+    (*ELoc).x = compute(coeffd_, Ex1D,   id_);  
+    (*BLoc).y = compute(coeffd_, By1D_m, id_);  
+    (*BLoc).z = compute(coeffd_, Bz1D_m, id_);  
 
 }//END Interpolator1D3Order
 
 
 void Interpolator1D3Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc){
-    (*this)(EMfields, particles, ipart, ELoc, BLoc);
 
-    int i, im1, ip1, ip2;
-    double xjn, xi, xi2, xi3;
-    double c1, c2, c3, c4;
-    
+    // Interpolate E, B
+    // Compute coefficient for ipart position    (*this)(EMfields, particles, ipart, ELoc, BLoc);
+
     //!\todo Julien, can you check that this is indeed the centered B-field which is passed to the pusher?
     Field1D* Jx1D     = static_cast<Field1D*>(EMfields->Jx_);
     Field1D* Jy1D     = static_cast<Field1D*>(EMfields->Jy_);
     Field1D* Jz1D     = static_cast<Field1D*>(EMfields->Jz_);
-    Field1D* Rho1D     = static_cast<Field1D*>(EMfields->rho_);
-    
-    
-    // Calculate the normalized positions
-    // ----------------------------------
-    xjn    = particles.position(0, ipart)*dx_inv_;
-    
+    Field1D* Rho1D    = static_cast<Field1D*>(EMfields->rho_);
     
     // Primal Grid : Jy, Jz, Rho
     // ------------------------
-    i = (int)xjn;            // index of the 2nd node
-    im1 = i-1;
-    ip1 = i+1;
-    ip2 = i+2;
-    xi  = xjn - (double)i;   //normalized distance to the 2nd node
-    xi2 = xi*xi;
-    xi3 = xi*xi*xi;
-    
-    // 3rd order interpolation on 4 nodes
-    c1  = (1.0-xi3)*dble_1ov6 - 0.5*(xi-xi2);
-    c2  = dble_2ov3 - xi2 + 0.5*xi3;
-    c3  = dble_1ov6 + 0.5*(xi+xi2-xi3);
-    c4  = xi3*dble_1ov6;
-    
-    i -= index_domain_begin;
-    
-    (*JLoc).y = c1 * (*Jy1D)(im1)   + c2 * (*Jy1D)(i)   + c3 * (*Jy1D)(ip1)   + c4 * (*Jy1D)(ip2);
-    (*JLoc).z = c1 * (*Jz1D)(im1)   + c2 * (*Jz1D)(i)   + c3 * (*Jz1D)(ip1)   + c4 * (*Jz1D)(ip2);
-    (*RhoLoc) = c1 * (*Rho1D)(im1)  + c2 * (*Rho1D)(i)  + c3 * (*Rho1D)(ip1)  + c4 * (*Rho1D)(ip2);
-    
+    (*JLoc).y = compute(coeffp_, Jy1D,  ip_);  
+    (*JLoc).z = compute(coeffp_, Jz1D,  ip_);  
+    (*RhoLoc) = compute(coeffp_, Rho1D, ip_);    
     
     // Dual Grid : Jx
     // ----------------------
-    i   = (int)(xjn+0.50);        // position of the 2nd node
-    im1 = i-1;
-    ip1 = i+1;
-    ip2 = i+2;
-    xi  = xjn - (double)i + 0.5;   // normalized distance to the central node
-    xi2 = xi*xi;
-    xi3 = xi*xi3;
-    
-    // 3rd order interpolation on 4 nodes
-    c1  = (1.0-xi3)*dble_1ov6 - 0.5*(xi-xi2);
-    c2  = dble_2ov3 - xi2 + 0.5*xi3;
-    c3  = dble_1ov6 + 0.5*(xi+xi2-xi3);
-    c4  = xi3*dble_1ov6;
-    
-    i -= index_domain_begin;
-    
-    (*JLoc).x = c1 * (*Jx1D)(im1)   + c2 * (*Jx1D)(i)   + c3 * (*Jx1D)(ip1)   + c4 * (*Jx1D)(ip2);
-    
+    (*JLoc).x = compute(coeffd_, Jx1D,  id_);  
     
 }

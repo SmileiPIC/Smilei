@@ -65,134 +65,104 @@ void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particl
 
 
     // Indexes of the central nodes
-    int ic_p = round(xpn);
-    int ic_d = round(xpn+0.5);
-    int jc_p = round(ypn);
-    int jc_d = round(ypn+0.5);
+    ip_ = round(xpn);
+    id_ = round(xpn+0.5);
+    jp_ = round(ypn);
+    jd_ = round(ypn+0.5);
 
 
     // Declaration and calculation of the coefficient for interpolation
     double delta, delta2, delta3, delta4;
 
-    std::vector<double> Cx_p(5);
-    delta   = xpn - (double)ic_p;
+    delta   = xpn - (double)ip_;
     delta2  = delta*delta;
     delta3  = delta2*delta;
     delta4  = delta3*delta;
-    Cx_p[0] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
-    Cx_p[1] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    Cx_p[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-    Cx_p[3] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    Cx_p[4] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
+    coeffxp_[0] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
+    coeffxp_[1] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    coeffxp_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
+    coeffxp_[3] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    coeffxp_[4] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
 
-    std::vector<double> Cx_d(5);
-    delta   = xpn - (double)ic_d + 0.5;
+    delta   = xpn - (double)id_ + 0.5;
     delta2  = delta*delta;
     delta3  = delta2*delta;
     delta4  = delta3*delta;
-    Cx_d[0] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
-    Cx_d[1] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    Cx_d[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-    Cx_d[3] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    Cx_d[4] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
+    coeffxd_[0] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
+    coeffxd_[1] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    coeffxd_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
+    coeffxd_[3] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    coeffxd_[4] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
 
-    std::vector<double> Cy_p(5);
-    delta   = ypn - (double)jc_p;
+    delta   = ypn - (double)jp_;
     delta2  = delta*delta;
     delta3  = delta2*delta;
     delta4  = delta3*delta;
-    Cy_p[0] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
-    Cy_p[1] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    Cy_p[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-    Cy_p[3] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    Cy_p[4] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
+    coeffyp_[0] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
+    coeffyp_[1] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    coeffyp_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
+    coeffyp_[3] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    coeffyp_[4] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
 
 
-    std::vector<double> Cy_d(5);
-    delta   = ypn - (double)jc_d + 0.5;
+    delta   = ypn - (double)jd_ + 0.5;
     delta2  = delta*delta;
     delta2  = delta*delta;
     delta2  = delta*delta;
     delta3  = delta2*delta;
     delta4  = delta3*delta;
-    Cy_d[0] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
-    Cy_d[1] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    Cy_d[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-    Cy_d[3] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    Cy_d[4] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
+    coeffyd_[0] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
+    coeffyd_[1] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    coeffyd_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
+    coeffyd_[3] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    coeffyd_[4] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
 
     //!\todo CHECK if this is correct for both primal & dual grids !!!
     // First index for summation
-    int ip = ic_p - 2 - i_domain_begin;
-    int id = ic_d - 2 - i_domain_begin;
-    int jp = jc_p - 2 - j_domain_begin;
-    int jd = jc_d - 2 - j_domain_begin;
+    ip_ = ip_ - 2 - i_domain_begin;
+    id_ = id_ - 2 - i_domain_begin;
+    jp_ = jp_ - 2 - j_domain_begin;
+    jd_ = jd_ - 2 - j_domain_begin;
 
 
     // -------------------------
     // Interpolation of Ex^(d,p)
     // -------------------------
-    (*ELoc).x = 0.0;
-    for (int iloc=0 ; iloc<5 ; iloc++) {
-        for (int jloc=0 ; jloc<5 ; jloc++) {
-            (*ELoc).x += Cx_d[iloc] * Cy_p[jloc] * (*Ex2D)(id+iloc,jp+jloc);
-        }
-    }
+    (*ELoc).x =  compute( coeffxd_, coeffyp_, Ex2D, id_, jp_);
 
     // -------------------------
     // Interpolation of Ey^(p,d)
     // -------------------------
-    (*ELoc).y = 0.0;
-    for (int iloc=0 ; iloc<5 ; iloc++) {
-        for (int jloc=0 ; jloc<5 ; jloc++) {
-            (*ELoc).y += Cx_p[iloc] * Cy_d[jloc] * (*Ey2D)(ip+iloc,jd+jloc);
-        }
-    }
+    (*ELoc).y = compute( coeffxp_, coeffyd_, Ey2D, ip_, jd_);
 
     // -------------------------
     // Interpolation of Ez^(p,p)
     // -------------------------
-    (*ELoc).z = 0.0;
-    for (int iloc=0 ; iloc<5 ; iloc++) {
-        for (int jloc=0 ; jloc<5 ; jloc++) {
-            (*ELoc).z += Cx_p[iloc] * Cy_p[jloc] * (*Ez2D)(ip+iloc,jp+jloc);
-        }
-    }
+    (*ELoc).z = compute( coeffxp_, coeffyp_, Ez2D, ip_, jp_);
 
     // -------------------------
     // Interpolation of Bx^(p,d)
     // -------------------------
-    (*BLoc).x = 0.0;
-    for (int iloc=0 ; iloc<5 ; iloc++) {
-        for (int jloc=0 ; jloc<5 ; jloc++) {
-            (*BLoc).x += Cx_p[iloc] * Cy_d[jloc] * (*Bx2D)(ip+iloc,jd+jloc);
-        }
-    }
+    (*BLoc).x = compute( coeffxp_, coeffyd_, Bx2D, ip_, jd_);
 
     // -------------------------
     // Interpolation of By^(d,p)
     // -------------------------
-    (*BLoc).y = 0.0;
-    for (int iloc=0 ; iloc<5 ; iloc++) {
-        for (int jloc=0 ; jloc<5 ; jloc++) {
-            (*BLoc).y += Cx_d[iloc] * Cy_p[jloc] * (*By2D)(id+iloc,jp+jloc);
-        }
-    }
+    (*BLoc).y = compute( coeffxd_, coeffyp_, By2D, id_, jp_);
 
     // -------------------------
     // Interpolation of Bz^(d,d)
     // -------------------------
-    (*BLoc).z = 0.0;
-    for (int iloc=0 ; iloc<5 ; iloc++) {
-        for (int jloc=0 ; jloc<5 ; jloc++) {
-            (*BLoc).z += Cx_d[iloc] * Cy_d[jloc] * (*Bz2D)(id+iloc,jd+jloc);
-        }
-    }
+    (*BLoc).z = compute( coeffxd_, coeffyd_, Bz2D, id_, jd_);
 
 } // END Interpolator2D4Order
 
-void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc){
+void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc)
+{
+    // Interpolate E, B
+    // Compute coefficient for ipart position
     (*this)(EMfields, particles, ipart, ELoc, BLoc);
+
     // Static cast of the electromagnetic fields
     Field2D* Jx2D = static_cast<Field2D*>(EMfields->Jx_);
     Field2D* Jy2D = static_cast<Field2D*>(EMfields->Jy_);
@@ -201,115 +171,24 @@ void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     Field2D* Rho2D= static_cast<Field2D*>(EMfields->rho_);
 
     
-    // Normalized particle position
-    double xpn = particles.position(0, ipart)*dx_inv_;
-    double ypn = particles.position(1, ipart)*dy_inv_;
-    
-    
-    // Indexes of the central nodes
-    int ic_p = round(xpn);
-    int ic_d = round(xpn+0.5);
-    int jc_p = round(ypn);
-    int jc_d = round(ypn+0.5);
-    
-    
-    // Declaration and calculation of the coefficient for interpolation
-    double delta, delta2, delta3, delta4;
-    
-    std::vector<double> Cx_p(5);
-    delta   = xpn - (double)ic_p;
-    delta2  = delta*delta;
-    delta3  = delta2*delta;
-    delta4  = delta3*delta;
-    Cx_p[0] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
-    Cx_p[1] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    Cx_p[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-    Cx_p[3] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    Cx_p[4] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
-    
-    std::vector<double> Cx_d(5);
-    delta   = xpn - (double)ic_d + 0.5;
-    delta2  = delta*delta;
-    delta3  = delta2*delta;
-    delta4  = delta3*delta;
-    Cx_d[0] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
-    Cx_d[1] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    Cx_d[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-    Cx_d[3] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    Cx_d[4] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
-    
-    std::vector<double> Cy_p(5);
-    delta   = ypn - (double)jc_p;
-    delta2  = delta*delta;
-    delta3  = delta2*delta;
-    delta4  = delta3*delta;
-    Cy_p[0] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
-    Cy_p[1] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    Cy_p[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-    Cy_p[3] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    Cy_p[4] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
-    
-    
-    std::vector<double> Cy_d(5);
-    delta   = ypn - (double)jc_d + 0.5;
-    delta2  = delta*delta;
-    delta2  = delta*delta;
-    delta2  = delta*delta;
-    delta3  = delta2*delta;
-    delta4  = delta3*delta;
-    Cy_d[0] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
-    Cy_d[1] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    Cy_d[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-    Cy_d[3] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    Cy_d[4] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
-    
-    //!\todo CHECK if this is correct for both primal & dual grids !!!
-    // First index for summation
-    int ip = ic_p - 2 - i_domain_begin;
-    int id = ic_d - 2 - i_domain_begin;
-    int jp = jc_p - 2 - j_domain_begin;
-    int jd = jc_d - 2 - j_domain_begin;
-    
-    
     // -------------------------
-    // Interpolation of Ex^(d,p)
+    // Interpolation of Jx^(d,p)
     // -------------------------
-    (*JLoc).x = 0.0;
-    for (int iloc=0 ; iloc<5 ; iloc++) {
-        for (int jloc=0 ; jloc<5 ; jloc++) {
-            (*JLoc).x += Cx_d[iloc] * Cy_p[jloc] * (*Jx2D)(id+iloc,jp+jloc);
-        }
-    }
+    (*JLoc).x = compute( coeffxd_, coeffyp_, Jx2D, id_, jp_);
     
     // -------------------------
     // Interpolation of Ey^(p,d)
     // -------------------------
-    (*JLoc).y = 0.0;
-    for (int iloc=0 ; iloc<5 ; iloc++) {
-        for (int jloc=0 ; jloc<5 ; jloc++) {
-            (*JLoc).y += Cx_p[iloc] * Cy_d[jloc] * (*Jy2D)(ip+iloc,jd+jloc);
-        }
-    }
+    (*JLoc).y = compute( coeffxp_, coeffyd_, Jx2D, ip_, jd_);
     
     // -------------------------
     // Interpolation of Ez^(p,p)
     // -------------------------
-    (*JLoc).z = 0.0;
-    for (int iloc=0 ; iloc<5 ; iloc++) {
-        for (int jloc=0 ; jloc<5 ; jloc++) {
-            (*JLoc).z += Cx_p[iloc] * Cy_p[jloc] * (*Jz2D)(ip+iloc,jp+jloc);
-        }
-    }
+    (*JLoc).z = compute( coeffxp_, coeffyp_, Jz2D, ip_, jp_);
     
     // -------------------------
     // Interpolation of Rho^(p,p)
     // -------------------------
-    (*RhoLoc) = 0.0;
-    for (int iloc=0 ; iloc<5 ; iloc++) {
-        for (int jloc=0 ; jloc<5 ; jloc++) {
-            (*RhoLoc) += Cx_p[iloc] * Cy_p[jloc] * (*Rho2D)(ip+iloc,jp+jloc);
-        }
-    }
-    
+    (*RhoLoc) = compute( coeffxp_, coeffyp_, Rho2D, ip_, jp_);
     
 }

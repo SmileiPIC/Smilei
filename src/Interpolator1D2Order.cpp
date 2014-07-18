@@ -31,9 +31,7 @@ void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particl
 {
 
     // Variable declaration
-    int i;
     double xjn, xjmxi, xjmxi2;
-    double coeffInf, coeffCur, coeffSup;
 
     // Static cast of the electromagnetic fields
     Field1D* Ex1D     = static_cast<Field1D*>(EMfields->Ex_);
@@ -51,94 +49,63 @@ void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particl
     // --------------------------------------------------------
     // Interpolate the fields from the Primal grid : Ey, Ez, Bx
     // --------------------------------------------------------
-    i      = round(xjn);      // index of the central point
-    xjmxi  = xjn -(double)i;  // normalized distance to the central node
-    xjmxi2 = pow(xjmxi,2);    // square of the normalized distance to the central node
+    ip_      = round(xjn);      // index of the central point
+    xjmxi  = xjn -(double)ip_;  // normalized distance to the central node
+    xjmxi2 = pow(xjmxi,2);      // square of the normalized distance to the central node
 
     // 2nd order interpolation on 3 nodes
-    coeffInf = 0.5 * (xjmxi2-xjmxi+0.25);
-    coeffCur = (0.75-xjmxi2);
-    coeffSup = 0.5 * (xjmxi2+xjmxi+0.25);
+    coeffp_[0] = 0.5 * (xjmxi2-xjmxi+0.25);
+    coeffp_[1] = (0.75-xjmxi2);
+    coeffp_[2] = 0.5 * (xjmxi2+xjmxi+0.25);
 
-    i -= index_domain_begin;
+    ip_ -= index_domain_begin;
 
-    (*ELoc).y =  coeffInf * (*Ey1D)(i-1)   + coeffCur * (*Ey1D)(i)   + coeffSup * (*Ey1D)(i+1);
-    (*ELoc).z =  coeffInf * (*Ez1D)(i-1)   + coeffCur * (*Ez1D)(i)   + coeffSup * (*Ez1D)(i+1);
-    (*BLoc).x =  coeffInf * (*Bx1D_m)(i-1) + coeffCur * (*Bx1D_m)(i) + coeffSup * (*Bx1D_m)(i+1);
-
+    (*ELoc).y = compute(coeffp_, Ey1D,   ip_);  
+    (*ELoc).z = compute(coeffp_, Ez1D,   ip_);  
+    (*BLoc).x = compute(coeffp_, Bx1D_m, ip_);  
 
     // --------------------------------------------------------
     // Interpolate the fields from the Dual grid : Ex, By, Bz
     // --------------------------------------------------------
-    i      = round(xjn+0.5);        // index of the central point
-    xjmxi  = xjn - (double)i +0.5;  // normalized distance to the central node
-    xjmxi2 = pow(xjmxi,2);          // square of the normalized distance to the central node
+    id_      = round(xjn+0.5);        // index of the central point
+    xjmxi  = xjn - (double)id_ +0.5;  // normalized distance to the central node
+    xjmxi2 = pow(xjmxi,2);            // square of the normalized distance to the central node
 
     // 2nd order interpolation on 3 nodes
-    coeffInf = 0.5 * (xjmxi2-xjmxi+0.25);
-    coeffCur = (0.75-xjmxi2);
-    coeffSup = 0.5 * (xjmxi2+xjmxi+0.25);
+    coeffd_[0] = 0.5 * (xjmxi2-xjmxi+0.25);
+    coeffd_[1] = (0.75-xjmxi2);
+    coeffd_[2] = 0.5 * (xjmxi2+xjmxi+0.25);
 
-    i -= index_domain_begin;
+    id_ -= index_domain_begin;
 
-    (*ELoc).x =  coeffInf * (*Ex1D)(i-1)   + coeffCur * (*Ex1D)(i)   + coeffSup * (*Ex1D)(i+1);
-    (*BLoc).y =  coeffInf * (*By1D_m)(i-1) + coeffCur * (*By1D_m)(i) + coeffSup * (*By1D_m)(i+1);
-    (*BLoc).z =  coeffInf * (*Bz1D_m)(i-1) + coeffCur * (*Bz1D_m)(i) + coeffSup * (*Bz1D_m)(i+1);
+    (*ELoc).x = compute(coeffd_, Ex1D,   id_);  
+    (*BLoc).y = compute(coeffd_, By1D_m, id_);  
+    (*BLoc).z = compute(coeffd_, Bz1D_m, id_);  
 
 }//END Interpolator1D2Order
 
-void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc){
+void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc)
+{
+    // Interpolate E, B
+    // Compute coefficient for ipart position
     (*this)(EMfields, particles, ipart, ELoc, BLoc);
-    
-    // Variable declaration
-    int i;
-    double xjn, xjmxi, xjmxi2;
-    double coeffInf, coeffCur, coeffSup;
-    
+
     // Static cast of the electromagnetic fields
     Field1D* Jx1D     = static_cast<Field1D*>(EMfields->Jx_);
     Field1D* Jy1D     = static_cast<Field1D*>(EMfields->Jy_);
     Field1D* Jz1D     = static_cast<Field1D*>(EMfields->Jz_);
-    Field1D* Rho1D     = static_cast<Field1D*>(EMfields->rho_);
-    
-    
-    // Particle position (in units of the spatial-step)
-    xjn    = particles.position(0, ipart)*dx_inv_;
-    
+    Field1D* Rho1D    = static_cast<Field1D*>(EMfields->rho_);
     
     // --------------------------------------------------------
     // Interpolate the fields from the Primal grid : Jy, Jz, Rho
     // --------------------------------------------------------
-    i      = round(xjn);      // index of the central point
-    xjmxi  = xjn -(double)i;  // normalized distance to the central node
-    xjmxi2 = pow(xjmxi,2);    // square of the normalized distance to the central node
-    
-    // 2nd order interpolation on 3 nodes
-    coeffInf = 0.5 * (xjmxi2-xjmxi+0.25);
-    coeffCur = (0.75-xjmxi2);
-    coeffSup = 0.5 * (xjmxi2+xjmxi+0.25);
-    
-    i -= index_domain_begin;
+    (*JLoc).y = compute(coeffp_, Jy1D,  ip_);  
+    (*JLoc).z = compute(coeffp_, Jz1D,  ip_);  
+    (*RhoLoc) = compute(coeffp_, Rho1D, ip_);    
 
-    (*JLoc).y =  coeffInf * (*Jy1D)(i-1)   + coeffCur * (*Jy1D)(i)   + coeffSup * (*Jy1D)(i+1);
-    (*JLoc).z =  coeffInf * (*Jz1D)(i-1)   + coeffCur * (*Jz1D)(i)   + coeffSup * (*Jz1D)(i+1);
-    (*RhoLoc) =  coeffInf * (*Rho1D)(i-1)  + coeffCur * (*Rho1D)(i)  + coeffSup * (*Rho1D)(i+1);
-
-    
     // --------------------------------------------------------
     // Interpolate the fields from the Dual grid : Jx
     // --------------------------------------------------------
-    i      = round(xjn+0.5);        // index of the central point
-    xjmxi  = xjn - (double)i +0.5;  // normalized distance to the central node
-    xjmxi2 = pow(xjmxi,2);          // square of the normalized distance to the central node
-    
-    // 2nd order interpolation on 3 nodes
-    coeffInf = 0.5 * (xjmxi2-xjmxi+0.25);
-    coeffCur = (0.75-xjmxi2);
-    coeffSup = 0.5 * (xjmxi2+xjmxi+0.25);
-    
-    i -= index_domain_begin;
-        
-    (*JLoc).x =  coeffInf * (*Jx1D)(i-1)   + coeffCur * (*Jx1D)(i)   + coeffSup * (*Jx1D)(i+1);
+    (*JLoc).x = compute(coeffd_, Jx1D,  id_);  
     
 }
