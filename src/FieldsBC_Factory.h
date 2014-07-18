@@ -27,7 +27,7 @@ public:
                 // Boundary in the Y direction is set to damping if they are not periodic. 
 		//fieldsBoundCond[1] = new FieldsBC2D_Trans_Damping(&params); 
                 // Boundary in the Y direction is set to SM if they are not periodic.
-	        fieldsBoundCond[1] = new FieldsBC2D_Trans_SM(&params); //Boundary in the X direction is set to Silver-Muller.
+	        fieldsBoundCond[1] = new FieldsBC2D_Trans_SM(&params); //Boundary in the Y direction is set to Silver-Muller.
 	    }
         }
         else {
