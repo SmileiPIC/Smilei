@@ -6,15 +6,26 @@
 
 using namespace std;
 
-PicParams::PicParams(InputData &ifile) : restart(false), exit_after_dump(true), dump_minutes(0.0), dump_step(0)  {
+PicParams::PicParams(InputData &ifile) {
     //open and parse the input data file
     
+    dump_step=0;
     ifile.extract("dump_step", dump_step);
+    dump_minutes=0.0;
     ifile.extract("dump_minutes", dump_minutes);
     
+    exit_after_dump=true;
     ifile.extract("exit_after_dump", exit_after_dump);
 	
+    restart=false;
     ifile.extract("restart", restart);
+	
+    check_stop_file=false;
+    ifile.extract("check_stop_file", check_stop_file);
+	
+    dump_file_sequence=2;
+    ifile.extract("dump_file_sequence", dump_file_sequence);
+    dump_file_sequence=std::max((unsigned int)1,dump_file_sequence);
 	
     ifile.extract("res_time", res_time);
     ifile.extract("sim_time", sim_time);
@@ -116,8 +127,18 @@ PicParams::PicParams(InputData &ifile) : restart(false), exit_after_dump(true), 
 	for(unsigned int i=0;i<nDim_field;i++) {
 	    right_slope_length[i]=plasma_length[i]-left_slope_length[i];
 	}
-    }else {
-	ERROR("unknown plasma_geometry "<< plasma_geometry);
+
+    } else if (plasma_geometry=="fukuda"){
+        WARNING("plasma geometry: fukuda vacuum & plasma length are not used");
+        ifile.extract("plasma_length", plasma_length);
+        ifile.extract("vacuum_length", vacuum_length);
+        vacuum_length[0] = 2.0;
+        vacuum_length[1] = 0.0;
+        plasma_length[0] = 112.0;
+        plasma_length[1] = 40.0;
+        
+    } else {
+        ERROR("unknown plasma_geometry "<< plasma_geometry);
     }
     
     
@@ -182,12 +203,19 @@ PicParams::PicParams(InputData &ifile) : restart(false), exit_after_dump(true), 
 	ifile.extract("angle",tmpLaser.angle ,"laser",0,n_laser);
 	ifile.extract("delta",tmpLaser.delta ,"laser",0,n_laser);
 	ifile.extract("time_profile",tmpLaser.time_profile ,"laser",0,n_laser);
-	ifile.extract("y_profile",tmpLaser.y_profile ,"laser",0,n_laser);
 	ifile.extract("int_params",tmpLaser.int_params ,"laser",0,n_laser);
 	ifile.extract("double_params",tmpLaser.double_params ,"laser",0,n_laser);
-	ifile.extract("y_params",tmpLaser.y_params ,"laser",0,n_laser);
+        ifile.extract("transv_profile",tmpLaser.transv_profile ,"laser",0,n_laser);
+        ifile.extract("int_params_transv",tmpLaser.int_params_transv ,"laser",0,n_laser);
+        ifile.extract("double_params_transv",tmpLaser.double_params_transv ,"laser",0,n_laser);
+	//ifile.extract("y_profile",tmpLaser.y_profile ,"laser",0,n_laser);
+	//ifile.extract("y_params",tmpLaser.y_params ,"laser",0,n_laser);
+
+        for (unsigned int i=0; i<tmpLaser.double_params.size(); i++)
+            tmpLaser.double_params[i] *= 2.0*M_PI;
+        for (unsigned int i=0; i<tmpLaser.double_params_transv.size(); i++)
+            tmpLaser.double_params_transv[i] *= 2.0*M_PI;
         
-	for (unsigned int i=0; i<tmpLaser.double_params.size(); i++) tmpLaser.double_params[i] *= 2.0*M_PI;
 	/* DEFINITION OF THE PARAMETERS MOVED TO LASER.CPP (MG)
 	   if (tmpLaser.time_profile=="constant") {
 	   if (tmpLaser.double_params.size()<1) {

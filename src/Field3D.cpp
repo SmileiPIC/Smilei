@@ -84,6 +84,16 @@ void Field3D::allocateDims(std::vector<unsigned int> dims ) {
 }
 
 
+void Field3D::allocateDims(unsigned int dims1, unsigned int dims2, unsigned int dims3)
+{
+	vector<unsigned int> dims(3);
+	dims[0]=dims1;
+	dims[1]=dims2;
+	dims[2]=dims3;
+	allocateDims(dims);
+}
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Method used for allocating the dimension of a Field3D
 // ---------------------------------------------------------------------------------------------------------------------

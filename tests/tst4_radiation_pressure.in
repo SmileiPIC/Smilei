@@ -15,15 +15,15 @@ interpolation_order =2
 # res_time: temporal resolution (integer = number of time−steps within one normalization period)
 # sim_time: duration of the simulation in units of the normalization period 
 #
-res_time = 1000
+res_time = 500
 sim_time = 10.0
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
 # sim_length: length of the simulation in units of the normalization wavelength 
 #
-res_space=500
-sim_length=10.0
+res_space  = 400
+sim_length = 10.0
 
 # PLASMA GEOMETRY
 # plasma_geometry: string defining the plasma geometry
@@ -54,7 +54,7 @@ random_seed = 0
 species
 	species_type = ion
 	initialization_type = cold
-	n_part_per_cell=100
+	n_part_per_cell=10
 	c_part_max=1.0
 	mass = 1836.0
 	charge = 1.0
@@ -62,7 +62,7 @@ species
 	mean_velocity = 0.0
 	temperature = 0.0
 	dynamics_type = norm
-	time_frozen = 0.0
+	time_frozen = 10.0
 	radiating = false
 	bc_part_type_long = refl
 	ionization_model = none
@@ -71,7 +71,7 @@ end
 species
 	species_type = electron
 	initialization_type = cold
-	n_part_per_cell=100
+	n_part_per_cell=10
 	c_part_max=1.0
 	mass = 1.0
 	charge = -1.0
@@ -95,7 +95,7 @@ end
 # double_params: vector of real parameters used by the different time-profiles
 
 laser
-	a0=5.0
+	a0=1.0
 	angle=0
 	delta=0.707106781                 
 	time_profile = constant
@@ -104,6 +104,10 @@ end
 
 # print_every 
 print_every = 100
+
+fieldDump_every    = 1000
+avgfieldDump_every = 1000
+ntime_step_avg     = 500
 
 diagnostic scalar
 	every = 1

@@ -19,8 +19,9 @@
 
 using namespace std;
 
-SmileiIO::SmileiIO( PicParams* params, SmileiMPI* smpi )
+SmileiIO::SmileiIO( PicParams* params, SmileiMPI* smpi ) : dump_times(0), stop_file_seen_since_last_check(false)
 {
+		
     ostringstream name("");
     name << "particles-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
 	
@@ -49,8 +50,7 @@ SmileiIO::SmileiIO( PicParams* params, SmileiMPI* smpi )
         speciesName << params->species_param[ispec].species_type;
         partDataset_id[ispec] = H5Dcreate(partFile_id, speciesName.str().c_str(), H5T_NATIVE_FLOAT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
 		
-        hsize_t scalaire = 1;
-        hid_t tmp_space = H5Screate_simple(1, &scalaire, NULL);
+        hid_t tmp_space = H5Screate(H5S_SCALAR);
 		
         attribute_id = H5Acreate (partDataset_id[ispec], "Mass", H5T_IEEE_F64BE, tmp_space,
 								  H5P_DEFAULT, H5P_DEFAULT);
@@ -76,7 +76,8 @@ SmileiIO::SmileiIO( PicParams* params, SmileiMPI* smpi )
     MPI_Info info  = MPI_INFO_NULL;
     hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
     H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, info);
-    global_file_id_ = H5Fcreate( "Fields.h5", H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+    global_file_id_    = H5Fcreate( "Fields.h5",     H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+    global_file_id_avg = H5Fcreate( "Fields_avg.h5", H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
     H5Pclose(plist_id);
 	
     //
@@ -85,12 +86,17 @@ SmileiIO::SmileiIO( PicParams* params, SmileiMPI* smpi )
     write_plist = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);
 	
+	// 
+	initDumpCases();
 }
 
 SmileiIO::~SmileiIO()
 {
     // Management of global IO file
     H5Fclose( global_file_id_ );
+    
+    // Management of global IO file
+    H5Fclose( global_file_id_avg );
 	
     H5Sclose(partMemSpace);
     for ( unsigned int s=0 ; s<nDatasetSpecies ; s++ )
@@ -140,6 +146,36 @@ void SmileiIO::writeAllFieldsSingleFileTime( ElectroMagn* EMfields, int time )
 }
 
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Write all fields of all time step in the same file
+// ---------------------------------------------------------------------------------------------------------------------
+void SmileiIO::writeAvgFieldsSingleFileTime( ElectroMagn* EMfields, int time )
+{
+    ostringstream name_t;
+    name_t.str("");
+    name_t << "/" << setfill('0') << setw(10) << time;
+	
+    DEBUG(10,"[hdf] GROUP _________________________________ " << name_t.str());
+    hid_t group_id = H5Gcreate(global_file_id_avg, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	
+    writeFieldsSingleFileTime( EMfields->Ex_avg, group_id );
+    writeFieldsSingleFileTime( EMfields->Ey_avg, group_id );
+    writeFieldsSingleFileTime( EMfields->Ez_avg, group_id );
+    writeFieldsSingleFileTime( EMfields->Bx_avg, group_id );
+    writeFieldsSingleFileTime( EMfields->By_avg, group_id );
+    writeFieldsSingleFileTime( EMfields->Bz_avg, group_id );
+	
+	
+    H5Gclose(group_id);
+	
+    H5Fflush( global_file_id_avg, H5F_SCOPE_GLOBAL );
+	
+}
+
+
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Each MPI process writes is particles in its own file, data are overwritten at each call ( particles-MPI_Rank.h5 )
 // In progress ...
@@ -184,17 +220,26 @@ void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI*
 	
 }
 
+bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, PicParams &params, InputData& input_data) { 
+	if  ((params.dump_step != 0 && (itime % params.dump_step == 0)) ||
+		 (params.dump_minutes != 0.0 && time_seconds()/60.0 > smpi->getSize()*(params.dump_minutes*(dump_times+1))) || 
+		 (params.check_stop_file && fileStopCreated())) {
+		dumpAll( EMfields, itime,  vecSpecies, smpi, params, input_data);
+		if (params.exit_after_dump)	return true;
+	}	
+	return false;
+}
+
 void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, PicParams &params, InputData& input_data) { 
 	hid_t fid, gid, sid, aid, did, tid;
-	
-	MESSAGE(2, "DUMPING fields and particles");
-	
-	params.dump_step = 0;
-	params.dump_minutes=0.0;
-
+		
 	ostringstream nameDump("");
-	nameDump << "dump-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
+	nameDump << "dump-" << setfill('0') << setw(4) << dump_times%params.dump_file_sequence << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
 	fid = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+	dump_times++;
+	
+	MESSAGE(2, "DUMPING fields and particles " << nameDump.str());
+
 	
 	sid  = H5Screate(H5S_SCALAR);
     tid = H5Tcopy(H5T_C_S1);
@@ -206,8 +251,7 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
     H5Sclose(sid);
     H5Tclose(tid);
 	
-	hsize_t dims1D[1] = {1};
-	sid = H5Screate_simple(1, dims1D, NULL);	
+	sid = H5Screate(H5S_SCALAR);	
 	aid = H5Acreate(fid, "dump_step", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
 	H5Awrite(aid, H5T_NATIVE_UINT, &itime);
 	H5Sclose(sid);
@@ -220,13 +264,16 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
     dumpFieldsPerProc(fid, EMfields->Bx_);
     dumpFieldsPerProc(fid, EMfields->By_);
     dumpFieldsPerProc(fid, EMfields->Bz_);
-    dumpFieldsPerProc(fid, EMfields->Bx_m);
-    dumpFieldsPerProc(fid, EMfields->By_m);
-    dumpFieldsPerProc(fid, EMfields->Bz_m);
+    dumpFieldsPerProc(fid, EMfields->Ex_avg);
+    dumpFieldsPerProc(fid, EMfields->Ey_avg);
+    dumpFieldsPerProc(fid, EMfields->Ez_avg);
+    dumpFieldsPerProc(fid, EMfields->Bx_avg);
+    dumpFieldsPerProc(fid, EMfields->By_avg);
+    dumpFieldsPerProc(fid, EMfields->Bz_avg);
 	
     H5Fflush( fid, H5F_SCOPE_GLOBAL );
 	
-	sid = H5Screate_simple(1, dims1D, NULL);
+	sid = H5Screate(H5S_SCALAR);
 	aid = H5Acreate(fid, "species", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
 	unsigned int vecSpeciesSize=vecSpecies.size();
 	H5Awrite(aid, H5T_NATIVE_UINT, &vecSpeciesSize);
@@ -240,14 +287,14 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
 		string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->name_str;
 		gid = H5Gcreate(fid, groupName.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 				
-		sid = H5Screate_simple(1, dims1D, NULL);
+		sid = H5Screate(H5S_SCALAR);
 		aid = H5Acreate(gid, "partCapacity", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
 		unsigned int partCapacity=vecSpecies[ispec]->particles.capacity();
 		H5Awrite(aid, H5T_NATIVE_UINT, &partCapacity);
 		H5Aclose(aid);
 		H5Sclose(sid);
 
-		sid = H5Screate_simple(1, dims1D, NULL);
+		sid = H5Screate(H5S_SCALAR);
 		aid = H5Acreate(gid, "partSize", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
 		unsigned int partSize=vecSpecies[ispec]->particles.size();
 		H5Awrite(aid, H5T_NATIVE_UINT, &partSize);
@@ -324,12 +371,36 @@ void SmileiIO::dumpFieldsPerProc(hid_t fid, Field* field)
 
 void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> &vecSpecies, SmileiMPI* smpi, PicParams &params, InputData& input_data) { 
 	
-	ostringstream nameDump("");
-	nameDump << "dump-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
-	hid_t fid = H5Fopen( nameDump.str().c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+	string nameDump("");
+	
+	// This will open both dumps and pick the last one
+	for (unsigned int i=0;i<params.dump_file_sequence; i++) {
+		ostringstream nameDumpTmp("");
+		nameDumpTmp << "dump-" << setfill('0') << setw(4) << i << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
+		ifstream f(nameDumpTmp.str().c_str());
+		if (f.good()) {
+			hid_t fid = H5Fopen( nameDumpTmp.str().c_str(), H5F_ACC_RDWR, H5P_DEFAULT);			
+			hid_t aid = H5Aopen(fid, "dump_step", H5T_NATIVE_UINT);
+			unsigned int itimeTmp=0;
+			H5Aread(aid, H5T_NATIVE_UINT, &itimeTmp);	
+			H5Aclose(aid);
+			H5Fclose(fid);
+			if (itimeTmp>itime) {
+				itime=itimeTmp;
+				nameDump=nameDumpTmp.str();
+				dump_times=i;
+			}
+		}
+		f.close();
+	}
+	
+	if (nameDump.empty()) ERROR("Cannot find a valid restart file");
+	
+	MESSAGE(2, "RESTARTING fields and particles " << nameDump);
+
+	hid_t fid = H5Fopen( nameDump.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
 	
 	hid_t aid, gid, did, sid;
-	hsize_t npart_effective;
 	
 	aid = H5Aopen(fid, "dump_step", H5T_NATIVE_UINT);
 	H5Aread(aid, H5T_NATIVE_UINT, &itime);	
@@ -341,12 +412,12 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
     restartFieldsPerProc(fid, EMfields->Bx_);
     restartFieldsPerProc(fid, EMfields->By_);
     restartFieldsPerProc(fid, EMfields->Bz_);
-    restartFieldsPerProc(fid, EMfields->Bx_m);
-    restartFieldsPerProc(fid, EMfields->By_m);
-    restartFieldsPerProc(fid, EMfields->Bz_m);
-//    restartFieldsPerProc(fid, EMfields->Jx_);
-//    restartFieldsPerProc(fid, EMfields->Jy_);
-//    restartFieldsPerProc(fid, EMfields->Jz_);
+    restartFieldsPerProc(fid, EMfields->Ex_avg);
+    restartFieldsPerProc(fid, EMfields->Ey_avg);
+    restartFieldsPerProc(fid, EMfields->Ez_avg);
+    restartFieldsPerProc(fid, EMfields->Bx_avg);
+    restartFieldsPerProc(fid, EMfields->By_avg);
+    restartFieldsPerProc(fid, EMfields->Bz_avg);
 	
 	aid = H5Aopen(fid, "species", H5T_NATIVE_UINT);
 	unsigned int vecSpeciesSize=0;
@@ -375,8 +446,6 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
 		H5Aclose(aid);	
 		vecSpecies[ispec]->particles.initialize(partSize,nDim_particle);		
 		
-		
-		DEBUG("----------->>" << nameDump.str() << " " << ispec << " " << nameDump.str() << " " << partSize << " " << partCapacity);
 		
 		if (partSize>0) {
 			for (unsigned int i=0; i<vecSpecies[ispec]->particles.Position.size(); i++) {
@@ -425,7 +494,6 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
 			H5Sclose(sid);
 		}
 		
-		
 		H5Gclose(gid);
     }
 	
@@ -441,6 +509,45 @@ void SmileiIO::restartFieldsPerProc(hid_t fid, Field* field)
 	H5Dclose (did);
 	H5Sclose(sid);
 }
+
+
+
+void SmileiIO::initDumpCases() {
+	double time_temp = MPI_Wtime();	
+	time_reference=0;
+	MPI_Allreduce(&time_temp,&time_reference,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+	
+	stop_file_seen_since_last_check=fileStopCreated();
+	if (stop_file_seen_since_last_check) ERROR("File stop exists, remove it and rerun");
+}
+
+bool SmileiIO::fileStopCreated() {
+	if (stop_file_seen_since_last_check) return false;
+	
+	int foundStopFile=0;
+	ifstream f("stop");
+	if (f.good()) foundStopFile=1;
+	f.close();
+	int foundStopFileAll = 0;	
+	MPI_Allreduce(&foundStopFile,&foundStopFileAll,1,MPI_INT,MPI_SUM,MPI_COMM_WORLD);
+	
+	if (foundStopFileAll>0) {
+		stop_file_seen_since_last_check=true;
+		return true;
+	} else {
+		return false;
+	}
+}
+
+
+double SmileiIO::time_seconds() {
+	double time_temp = MPI_Wtime();	
+	double time_sec=0;
+	MPI_Allreduce(&time_temp,&time_sec,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+	return (time_sec-time_reference);
+}
+
+
 
 
 

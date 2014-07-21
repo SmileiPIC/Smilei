@@ -30,7 +30,6 @@ SmileiMPI::SmileiMPI( int* argc, char*** argv )
     MPI_Comm_size( SMILEI_COMM_WORLD, &smilei_sz );
     MPI_Comm_rank( SMILEI_COMM_WORLD, &smilei_rk );
 
-	initDumpCases();
 }
 
 SmileiMPI::SmileiMPI( SmileiMPI *smpi )
@@ -46,7 +45,6 @@ SmileiMPI::SmileiMPI( SmileiMPI *smpi )
 
     n_space_global = smpi->n_space_global;
 
-	initDumpCases();
 }
 
 SmileiMPI::~SmileiMPI()
@@ -147,7 +145,7 @@ void SmileiMPI::bcast( vector<vector<double> >& val )
     MPI_Bcast( &vecSize, 1, MPI_INT, 0, SMILEI_COMM_WORLD);
     if (!isMaster()) val.resize( vecSize );
 
-    for(unsigned int k=0; k<vecSize; k++) {
+    for(int k=0; k<vecSize; k++) {
         bcast(val[k]);
     }
 
@@ -193,7 +191,6 @@ void SmileiMPI::bcast( LaserStructure& laserStructure )
     bcast( laserStructure.y_profile );
     bcast( laserStructure.int_params );
     bcast( laserStructure.double_params );
-    bcast( laserStructure.y_params );
 }
 
 void SmileiMPI::bcast( vector<LaserStructure>& val )
@@ -245,40 +242,3 @@ void SmileiMPI::exchangeB( ElectroMagn* EMfields )
     exchangeField( EMfields->Bz_ );
 
 }
-
-void SmileiMPI::initDumpCases() {
-	double time_temp = MPI_Wtime();	
-	time_reference=0;
-	MPI_Allreduce(&time_temp,&time_reference,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-	
-	stop_file_seen_since_last_check=false;
-}
-
-bool SmileiMPI::fileStopCreated() {
-	if (stop_file_seen_since_last_check) return false;
-	
-	int foundStopFile=0;
-	ifstream f("stop");
-	if (f.good()) foundStopFile=1;
-	f.close();
-	int foundStopFileAll = 0;	
-	MPI_Allreduce(&foundStopFile,&foundStopFileAll,1,MPI_INT,MPI_SUM,MPI_COMM_WORLD);
-	
-	if (foundStopFileAll>0) {
-		stop_file_seen_since_last_check=true;
-		return true;
-	} else {
-		return false;
-	}
-}
-
-
-double SmileiMPI::time_seconds() {
-	double time_temp = MPI_Wtime();	
-	double time_sec=0;
-	MPI_Allreduce(&time_temp,&time_sec,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-	
-	return (time_sec-time_reference)/getSize();
-}
-
-

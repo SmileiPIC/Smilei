@@ -19,7 +19,7 @@ interpolation_order = 2
 # sim_time: duration of the simulation in units of the normalization period 
 #
 res_time = 10
-sim_time = 300.0
+sim_time = 100.0
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
@@ -65,7 +65,7 @@ species
 	species_type = ion
 	initialization_type = maxwell-juettner
 	ionization_model = none
-	n_part_per_cell = 2
+	n_part_per_cell = 10
 	c_part_max = 1.0
 	mass = 1836.0
 	charge = 1.0
@@ -73,7 +73,7 @@ species
 	mean_velocity = 0.0
 	temperature = 2.0e-5
 	dynamics_type = norm
-	time_frozen = 300.0
+	time_frozen = 100.0
 	radiating = false
 	bc_part_type_long = refl
 end
@@ -82,7 +82,7 @@ species
 	species_type = eon
 	initialization_type = maxwell-juettner
 	ionization_model = none
-	n_part_per_cell = 2
+	n_part_per_cell = 10
 	c_part_max = 1.0
 	mass = 1.0
 	charge = -1.0
@@ -111,7 +111,7 @@ laser
 	angle=0
 	delta=1.0              
 	time_profile = sin2
-	double_params = 1.0 240.0
+	double_params = 1.0 1000.0
 end
 
 laser
@@ -119,7 +119,7 @@ laser
 	angle=180
 	delta=1.0        
 	time_profile = sin2
-	double_params = 30.0 0.0 110.0
+	double_params = 30.0 0.0 150.0
 end
 
 # ---------------------
@@ -142,16 +142,63 @@ diagnostic scalar
 	every = 125
 end
 
-# PROB 0D
-# every = number of time-steps between each output
-# x     = position of the different probes
-#
-diagnostic probe0d
-	every = 1
-	x = 0.0 30.0 60.0 90.0 120.0	
+diagnostic phase
+# kind of projection: 1D) xPx xPy xPz xLor PxPy PxPz PyPz
+# kind of projection: 2D) xPx xPy xPz xLor yPx yPy yPz yLor PxPy PxPz PyPz
+	kind = xPx xPy xPz xLor
+
+    species = eon
+    
+    deflate=0
+
+	every = 100
+
+	pos_min = 0
+	pos_max = 120
+	pos_num = 2000
+	
+	mom_min = -0.3
+	mom_max = 0.3
+	mom_num = 200
+
+	lor_min = 0.95
+	lor_max = 1
+	lor_num = 200
 end
 
+diagnostic phase
+	kind = PxPy PxPz PyPz
+    species = eon
+	every = 100
 
+    deflate=0
+
+	mom_min = -0.3 -0.3
+	mom_max = 0.3 0.3
+	mom_num = 200 200
+end
+
+# PROBEs 0D
+# every = number of time-steps between each output
+# pos   = position of the different probes
+#
+diagnostic probe
+	every = 1
+	pos = 3.0
+end
+
+diagnostic probe
+	every = 1
+	pos = 120.0
+end
+
+diagnostic probe
+    every = 10
+    pos = 0
+    pos_first = 120
+    number = 13
+end
+
+#dump_minutes = 0.1
 dump_step = 1000
 exit_after_dump = false
-

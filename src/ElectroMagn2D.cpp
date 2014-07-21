@@ -86,6 +86,14 @@ ElectroMagn2D::ElectroMagn2D(PicParams* params, SmileiMPI* smpi)
     Jz_   = new Field2D(dimPrim, 2, false, "Jz");
     rho_  = new Field2D(dimPrim, "Rho" );
     rho_o = new Field2D(dimPrim, "Rho_old" );
+    
+    // Allocation of the time-averaged EM fields
+    Ex_avg  = new Field2D(dimPrim, 0, false, "Ex_avg");
+    Ey_avg  = new Field2D(dimPrim, 1, false, "Ey_avg");
+    Ez_avg  = new Field2D(dimPrim, 2, false, "Ez_avg");
+    Bx_avg  = new Field2D(dimPrim, 0, true,  "Bx_avg");
+    By_avg  = new Field2D(dimPrim, 1, true,  "By_avg");
+    Bz_avg  = new Field2D(dimPrim, 2, true,  "Bz_avg");
 
     // Charge currents currents and density for each species
     ostringstream file_name("");
@@ -591,6 +599,84 @@ void ElectroMagn2D::centerMagneticFields()
     }
 
 }//END centerMagneticFields
+
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Reset/Increment the averaged fields
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn2D::incrementAvgFields(unsigned int time_step, unsigned int ntime_step_avg)
+{
+    // Static cast of the fields
+    Field2D* Ex2D     = static_cast<Field2D*>(Ex_);
+    Field2D* Ey2D     = static_cast<Field2D*>(Ey_);
+    Field2D* Ez2D     = static_cast<Field2D*>(Ez_);
+    Field2D* Bx2D_m   = static_cast<Field2D*>(Bx_m);
+    Field2D* By2D_m   = static_cast<Field2D*>(By_m);
+    Field2D* Bz2D_m   = static_cast<Field2D*>(Bz_m);
+    Field2D* Ex2D_avg = static_cast<Field2D*>(Ex_avg);
+    Field2D* Ey2D_avg = static_cast<Field2D*>(Ey_avg);
+    Field2D* Ez2D_avg = static_cast<Field2D*>(Ez_avg);
+    Field2D* Bx2D_avg = static_cast<Field2D*>(Bx_avg);
+    Field2D* By2D_avg = static_cast<Field2D*>(By_avg);
+    Field2D* Bz2D_avg = static_cast<Field2D*>(Bz_avg);
+    
+    // reset the averaged fields for (time_step-1)%ntime_step_avg == 0
+    if ( (time_step-1)%ntime_step_avg==0 ){
+        Ex2D_avg->put_to(0.0);
+        Ey2D_avg->put_to(0.0);
+        Ez2D_avg->put_to(0.0);
+        Bx2D_avg->put_to(0.0);
+        By2D_avg->put_to(0.0);
+        Bz2D_avg->put_to(0.0);
+    }
+    
+    // increment the time-averaged fields
+    
+    // Electric field Ex^(d,p)
+    for (unsigned int i=0 ; i<nx_d ; i++) {
+        for (unsigned int j=0 ; j<ny_p ; j++) {
+            (*Ex2D_avg)(i,j) += (*Ex2D)(i,j);
+        }
+    }
+    
+    // Electric field Ey^(p,d)
+    for (unsigned int i=0 ; i<nx_p ; i++) {
+        for (unsigned int j=0 ; j<ny_d ; j++) {
+            (*Ey2D_avg)(i,j) += (*Ey2D)(i,j);
+        }
+    }
+    
+    // Electric field Ez^(p,p)
+    for (unsigned int i=0 ;  i<nx_p ; i++) {
+        for (unsigned int j=0 ; j<ny_p ; j++) {
+            (*Ez2D_avg)(i,j) += (*Ez2D)(i,j);
+        }
+    }
+    
+    // Magnetic field Bx^(p,d)
+    for (unsigned int i=0 ; i<nx_p ; i++) {
+        for (unsigned int j=0 ; j<ny_d ; j++) {
+            (*Bx2D_avg)(i,j) += (*Bx2D_m)(i,j);
+        }
+    }
+    
+    // Magnetic field By^(d,p)
+    for (unsigned int i=0 ; i<nx_d ; i++) {
+        for (unsigned int j=0 ; j<ny_p ; j++) {
+            (*By2D_avg)(i,j) += (*By2D_m)(i,j);
+        }
+    }
+    
+    // Magnetic field Bz^(d,d)
+    for (unsigned int i=0 ; i<nx_d ; i++) {
+        for (unsigned int j=0 ; j<ny_d ; j++) {
+            (*Bz2D_avg)(i,j) += (*Bz2D_m)(i,j);
+        }
+    }
+
+    
+}//END incrementAvgFields
 
 
 

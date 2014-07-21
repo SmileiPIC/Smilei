@@ -111,6 +111,10 @@ public:
     std::vector<double> cell_length;
 
 private:
+    
+    //! 2 times pi
+    double PI2;
+    
     //! Number of steps for Maxwell-Juettner cumulative function integration
     //! \todo{Put in a code constant class}
     unsigned int nE;

@@ -13,7 +13,8 @@
 
 #include "DiagnosticScalar.h"
 #include "Interpolator.h"
-#include "DiagnosticProbe0D.h"
+#include "DiagnosticProbe.h"
+#include "DiagnosticPhaseSpace.h"
 
 class PicParams;
 class SmileiMPI;
@@ -22,29 +23,25 @@ class ElectroMagn;
 class Species;
 
 
-//! class holder of the two type of diagnostics scalars and map
+//! class holder for all the diagnostics: scalars, probes(0D, 1D, 2D and 3D) and phase-space
 class Diagnostic {
 
 public:
     //! creator called from main
-    Diagnostic(PicParams* params,  DiagParams* diagparams, SmileiMPI* smpi, Interpolator* interp);
-    //! destructor (empty)
-    ~Diagnostic() {};
+    Diagnostic(PicParams* params,  DiagParams* diagparams, SmileiMPI* smpi);
+    //! destructor
+    ~Diagnostic();
     //! check if at timestep diagnostics must be called
-    void runAllDiags (int timestep, ElectroMagn* EMfields, std::vector<Species*>&);
-    void closeAll();
-
-
+    void runAllDiags (int timestep, ElectroMagn* EMfields, std::vector<Species*>&, Interpolator *interp);
+ 
 private:
-    int num_CPUs;
-    DiagnosticScalar diagScal;
-    unsigned int everyScalar;
 
-    DiagnosticProbe0D probe0d;
-    unsigned int everyProbe0D;
-    Interpolator* interp_;
+    DiagnosticScalar scalars;
 
-    unsigned int everyMap;
+    DiagnosticProbe probes;
+
+	DiagnosticPhaseSpace phases;
+	
 };
 
 #endif

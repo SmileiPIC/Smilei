@@ -108,11 +108,13 @@ void FieldsBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, SmileiMP
         for (unsigned int j=0 ; j<ny_p ; j++) {
 
             byW = 0.;
-            dfa = smpi->getDomainLocalMin(1)+j*params_->cell_length[1]-params_->sim_length[1]/2. ; //dfa is algebric.
+            //dfa = smpi->getDomainLocalMin(1)+j*params_->cell_length[1]-params_->sim_length[1]/2. ; //dfa is algebric.
+            double yp     = smpi->getDomainLocalMin(1) + ((double)j)     * dy;
             for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
                 if (laser_[ilaser]->laser_struct.angle == 0) {
                     // Incident field (west boundary)
-                    byW = laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual) * laser_[ilaser]->y_profile(dfa);
+                    //byW = laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual) * laser_[ilaser]->y_profile(dfa);
+                    byW += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual) * laser_[ilaser]->transverse_profile2D(time_dual,yp);
                 }
             }//ilaser
 
@@ -126,11 +128,13 @@ void FieldsBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, SmileiMP
         for (unsigned int j=0 ; j<ny_d ; j++) {
 
             bzW = 0.;
-            dfa = smpi->getDomainLocalMin(1)+(j-0.5)*params_->cell_length[1]-params_->sim_length[1]/2. ; //dfa is algebric.
+            //dfa = smpi->getDomainLocalMin(1)+(j-0.5)*params_->cell_length[1]-params_->sim_length[1]/2. ; //dfa is algebric.
+            double yd     = smpi->getDomainLocalMin(1) + ((double)j-0.5) * dy;
             for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
                 if (laser_[ilaser]->laser_struct.angle == 0) {
                     // Incident field (west boundary)
-                    bzW = laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual) * laser_[ilaser]->y_profile(dfa);
+                    //bzW = laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual) * laser_[ilaser]->y_profile(dfa);
+                    bzW += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual) * laser_[ilaser]->transverse_profile2D(time_dual,yd);
                 }
             }//ilaser
 
@@ -148,11 +152,13 @@ void FieldsBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, SmileiMP
         for (unsigned int j=0 ; j<ny_p ; j++) {
             
             byE = 0.;
-            dfa = smpi->getDomainLocalMin(1)+j*params_->cell_length[1]-params_->sim_length[1]/2. ; //dfa is algebric.
+            //dfa = smpi->getDomainLocalMin(1)+j*params_->cell_length[1]-params_->sim_length[1]/2. ; //dfa is algebric.
+            double yp     = smpi->getDomainLocalMin(1) + ((double)j)     * dy;
             for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
                     // Incident field (west boundary)
                 if (laser_[ilaser]->laser_struct.angle == 180) {
-                    byE = laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual) * laser_[ilaser]->y_profile(dfa);
+                    //byE = laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual) * laser_[ilaser]->y_profile(dfa);
+                    byE += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual) * laser_[ilaser]->transverse_profile2D(time_dual,yp);
                 }
             }//ilaser
 
@@ -166,11 +172,13 @@ void FieldsBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, SmileiMP
         for (unsigned int j=0 ; j<ny_d ; j++) {
 
             bzE = 0.;
-            dfa = smpi->getDomainLocalMin(1)+(j-0.5)*params_->cell_length[1]-params_->sim_length[1]/2. ; //dfa is algebric.
+            //dfa = smpi->getDomainLocalMin(1)+(j-0.5)*params_->cell_length[1]-params_->sim_length[1]/2. ; //dfa is algebric.
+            double yd     = smpi->getDomainLocalMin(1) + ((double)j-0.5) * dy;
             for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
                 if (laser_[ilaser]->laser_struct.angle == 180) {
                     // Incident field (east boundary)
-                    bzE = laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual) * laser_[ilaser]->y_profile(dfa);
+                    //bzE = laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual) * laser_[ilaser]->y_profile(dfa);
+                    bzE += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual) * laser_[ilaser]->transverse_profile2D(time_dual,yd);
                 }
             }//ilaser
 

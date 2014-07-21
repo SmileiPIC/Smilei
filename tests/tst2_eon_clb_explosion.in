@@ -119,8 +119,11 @@ end
 # every = number of time-steps between each output
 # x     = position of the different probes
 #
-diagnostic probe0d
+diagnostic probe
         every = 1
-        x = 0.0 5.5 11.0
+        pos = 0.0
+        pos_first = 11.0
+        number = 3
 end
+
 

@@ -27,10 +27,7 @@ ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi)
     cell_volume=params->cell_volume;
     n_space=params->n_space;
 
-    oversize.resize(3,0);
-    for (unsigned int i=0; i<params->oversize.size(); i++) {
-        oversize[i]=params->oversize[i];
-    }
+    oversize=params->oversize;
 
     for (unsigned int i=0; i<3; i++) {
         DEBUG("____________________ OVERSIZE: " <<i << " " << oversize[i]);
@@ -52,6 +49,13 @@ ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi)
     Jz_=NULL;
     rho_=NULL;
     rho_o=NULL;
+    
+    Ex_avg=NULL;
+    Ey_avg=NULL;
+    Ez_avg=NULL;
+    Bx_avg=NULL;
+    By_avg=NULL;
+    Bz_avg=NULL;
 
     // Species charge currents and density
     n_species = params->n_species;
@@ -234,8 +238,6 @@ void ElectroMagn::computeScalars()
 
         map<string,vector<double> > scalars_map;
 
-
-// this does not work!
         vector<double> minVec(4);
         vector<double> maxVec(4);
 
@@ -267,33 +269,6 @@ void ElectroMagn::computeScalars()
         minVec.resize(1+(*field)->dims_.size());
         maxVec.resize(1+(*field)->dims_.size());
 
-
-//		unsigned int tot_size_field=1;
-//		for (unsigned int i =0; i<(*field)->dims_.size(); i++) {
-//			tot_size_field*=(*field)->dims_[i];
-//		}
-//		vector<double> minVec(1+(*field)->dims_.size());
-//		vector<double> maxVec(1+(*field)->dims_.size());
-//
-//		minVec[0]=(**field)(0);
-//		maxVec[0]=(**field)(0);
-//		for (unsigned int ii =0; ii<tot_size_field; ii++){
-//
-//			if (minVec[0]>(**field)(ii)) {
-//				minVec[0]=(**field)(ii);
-//				for (unsigned int i =0; i<(*field)->dims_.size(); i++) {
-//					minVec[1+i]=ii;
-//				}
-//			}
-//			if (maxVec[0]<(**field)(ii)) {
-//				maxVec[0]=(**field)(ii);
-//				for (unsigned int i =0; i<(*field)->dims_.size(); i++) {
-//					maxVec[1+i]=ii;
-//				}
-//			}
-//
-//
-//		}
 
         // we just store the values that change
         scalars_map["min"]=minVec;

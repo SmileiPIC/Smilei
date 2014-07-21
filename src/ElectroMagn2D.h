@@ -30,6 +30,9 @@ public:
     //! Method used to center the Magnetic fields (used to push the particles)
     void centerMagneticFields();
 
+    //! Method used to reset/increment the averaged fields
+    void incrementAvgFields(unsigned int time_step, unsigned int ntime_step_avg);
+    
     //! Method used to initialize the total charge densities and currents
     void restartRhoJ();
 

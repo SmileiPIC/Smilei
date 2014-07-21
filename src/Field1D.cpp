@@ -70,6 +70,14 @@ void Field1D::allocateDims(std::vector<unsigned int> dims)
 
 }
 
+void Field1D::allocateDims(unsigned int dims1)
+{
+	vector<unsigned int> dims(1);
+	dims[0]=dims1;
+	allocateDims(dims);
+}
+
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Method used for allocating the dimension of a Field1D
@@ -99,7 +107,6 @@ void Field1D::allocateDims(std::vector<unsigned int> dims, unsigned int mainDim,
     globalDims_ = dims_[0];
 
 }
-
 
 
 // ---------------------------------------------------------------------------------------------------------------------

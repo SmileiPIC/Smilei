@@ -23,10 +23,15 @@ public:
     std::string         type_of_y_profile;
     std::vector<int>    int_params;
     std::vector<double> double_params;
-    std::vector<double> y_params;
 
+    std::string         type_of_transv_profile;
+    std::vector<int>    int_params_transv;
+    std::vector<double> double_params_transv;
+    //std::vector<double> y_params;
+    
     double time_profile(double);
-    double y_profile(double);
+    double transverse_profile2D(double, double);
+    //double y_profile(double);
 
 
 };
