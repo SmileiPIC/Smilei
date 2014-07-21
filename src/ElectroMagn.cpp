@@ -217,7 +217,8 @@ void ElectroMagn::computeScalars()
         for (unsigned int k=iFieldStart[2]; k<=iFieldSize[2]; k++) {
             for (unsigned int j=iFieldStart[1]; j<=iFieldSize[1]; j++) {
                 for (unsigned int i=iFieldStart[0]; i<=iFieldSize[0]; i++) {
-                    unsigned int ii=i+j*n_space[0]+k*n_space[0]*n_space[1];
+                    //unsigned int ii=i+j*n_space[0]+k*n_space[0]*n_space[1];
+                    unsigned int ii=i+j*(*field)->dims_[0]+k*(*field)->dims_[0]*(*field)->dims_[1];
                     Etot[0]+=pow((**field)(ii),2);
                 }
             }
@@ -257,7 +258,8 @@ void ElectroMagn::computeScalars()
         for (unsigned int k=iFieldStart[2]; k<=iFieldSize[2]; k++) {
             for (unsigned int j=iFieldStart[1]; j<=iFieldSize[1]; j++) {
                 for (unsigned int i=iFieldStart[0]; i<=iFieldSize[0]; i++) {
-                    unsigned int ii=i+j*n_space[0]+k*n_space[0]*n_space[1];
+                    //unsigned int ii=i+j*n_space[0]+k*n_space[0]*n_space[1];
+                    unsigned int ii=i+j*(*field)->dims_[0]+k*(*field)->dims_[0]*(*field)->dims_[1];
                     if (minVec[0]>(**field)(ii)) {
                         minVec[0]=(**field)(ii);
                         minVec[1]=i;
