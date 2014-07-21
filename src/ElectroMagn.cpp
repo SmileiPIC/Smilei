@@ -213,7 +213,7 @@ void ElectroMagn::computeScalars()
             iFieldStart[i] = istart [i][(*field)->isDual(i)];
             iFieldEnd [i] = iFieldStart[i] + bufsize[i][(*field)->isDual(i)];
         }
-        DEBUG((*field)->name << " " << iFieldStart[0] << " " << iFieldEnd[0]);
+        DEBUG((*field)->name << " " << iFieldStart[0] << " " << iFieldEnd[0] << " = " << iFieldEnd[0] - iFieldStart[0]);
         for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
             for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
                 for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
@@ -254,7 +254,6 @@ void ElectroMagn::computeScalars()
             iFieldStart[i] = istart [i][(*field)->isDual(i)];
             iFieldEnd [i] = iFieldStart[i] + bufsize[i][(*field)->isDual(i)];
         }
-        DEBUG((*field)->name << " " << iFieldStart[0] << " " << iFieldEnd[0]);
         for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
             for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
                 for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
