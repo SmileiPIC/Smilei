@@ -208,15 +208,15 @@ void ElectroMagn::computeScalars()
         
         vector<double> Etot(1);
         
-        vector<unsigned int> iFieldStart(3,0), iFieldSize(3,0);
+        vector<unsigned int> iFieldStart(3,0), iFieldEnd(3,1);
         for ( int i=0 ; i<(*field)->isDual_.size() ; i++ ) {
             iFieldStart[i] = istart [i][(*field)->isDual(i)];
-            iFieldSize [i] = bufsize[i][(*field)->isDual(i)];
+            iFieldEnd [i] = iFieldStart[i] + bufsize[i][(*field)->isDual(i)];
         }
-        DEBUG((*field)->name << " " << iFieldStart[0] << " " << iFieldSize[0]);
-        for (unsigned int k=iFieldStart[2]; k<=iFieldSize[2]; k++) {
-            for (unsigned int j=iFieldStart[1]; j<=iFieldSize[1]; j++) {
-                for (unsigned int i=iFieldStart[0]; i<=iFieldSize[0]; i++) {
+        DEBUG((*field)->name << " " << iFieldStart[0] << " " << iFieldEnd[0]);
+        for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
+            for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
+                for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
                     //unsigned int ii=i+j*n_space[0]+k*n_space[0]*n_space[1];
                     unsigned int ii=i+j*(*field)->dims_[0]+k*(*field)->dims_[0]*(*field)->dims_[1];
                     Etot[0]+=pow((**field)(ii),2);
@@ -249,15 +249,15 @@ void ElectroMagn::computeScalars()
         minVec[2]=maxVec[2]=0;
         minVec[3]=maxVec[3]=0;
         
-        vector<unsigned int> iFieldStart(3,0), iFieldSize(3,0);
+        vector<unsigned int> iFieldStart(3,0), iFieldEnd(3,1);
         for ( int i=0 ; i<(*field)->isDual_.size() ; i++ ) {
             iFieldStart[i] = istart [i][(*field)->isDual(i)];
-            iFieldSize [i] = bufsize[i][(*field)->isDual(i)];
+            iFieldEnd [i] = iFieldStart[i] + bufsize[i][(*field)->isDual(i)];
         }
-
-        for (unsigned int k=iFieldStart[2]; k<=iFieldSize[2]; k++) {
-            for (unsigned int j=iFieldStart[1]; j<=iFieldSize[1]; j++) {
-                for (unsigned int i=iFieldStart[0]; i<=iFieldSize[0]; i++) {
+        DEBUG((*field)->name << " " << iFieldStart[0] << " " << iFieldEnd[0]);
+        for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
+            for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
+                for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
                     //unsigned int ii=i+j*n_space[0]+k*n_space[0]*n_space[1];
                     unsigned int ii=i+j*(*field)->dims_[0]+k*(*field)->dims_[0]*(*field)->dims_[1];
                     if (minVec[0]>(**field)(ii)) {
