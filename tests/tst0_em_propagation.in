@@ -75,7 +75,7 @@ end
 print_every = 100
 
 
-fieldDump_every = 125
+fieldDump_every = 111
 
 # dump_step = 2500
 
