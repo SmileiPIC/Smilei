@@ -149,6 +149,47 @@ ElectroMagn2D::ElectroMagn2D(PicParams* params, SmileiMPI* smpi)
     MESSAGE("index_bc_min / index_bc_max / nx_p / nx_d" << index_bc_min[0]
             << " " << index_bc_max[0] << " " << nx_p<< " " << nx_d);
 
+
+
+    // Define limits of non duplicated elements
+    // (by construction 1 (prim) or 2 (dual) elements shared between per MPI process)
+    // istart 
+    for (unsigned int i=0 ; i<3 ; i++)
+	for (unsigned int isDual=0 ; isDual<2 ; isDual++)
+	    istart[i][isDual] = 0;
+    for (unsigned int i=0 ; i<params->nDim_field ; i++) {
+	for (unsigned int isDual=0 ; isDual<2 ; isDual++) {
+	    istart[i][isDual] = oversize[i];
+	    if (smpi2D->getProcCoord(i)!=0) istart[i][isDual]+=1;
+	}
+    }
+
+    // bufsize = nelements
+    for (unsigned int i=0 ; i<3 ; i++) 
+ 	for (unsigned int isDual=0 ; isDual<2 ; isDual++)
+	    bufsize[i][isDual] = 1;
+
+   for (unsigned int i=0 ; i<params->nDim_field ; i++) {
+	for (int isDual=0 ; isDual<2 ; isDual++)
+	    bufsize[i][isDual] = params->n_space[i] + 1;
+
+	for (int isDual=0 ; isDual<2 ; isDual++) {
+	    bufsize[i][isDual] += isDual; 
+	    if ( smpi2D->getNbrOfProcs(i)!=1 ) {
+
+		if ( ( !isDual ) && (smpi2D->getProcCoord(i)!=0) )
+		    bufsize[i][isDual]--;
+		else if  (isDual) {
+		    bufsize[i][isDual]--;
+		    if ( (smpi2D->getProcCoord(i)!=0) && (smpi2D->getProcCoord(i)!=smpi2D->getNbrOfProcs(i)-1) ) 
+			 bufsize[i][isDual]--;
+		}
+
+	    } // if ( smpi2D->getNbrOfProcs(i)!=1 )
+	} // for (int isDual=0 ; isDual
+    } // for (unsigned int i=0 ; i<params->nDim_field 
+
+
 }//END constructor Electromagn2D
 
 

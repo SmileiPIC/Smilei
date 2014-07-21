@@ -75,6 +75,13 @@ public:
     //! keep track ofwich direction of the Field is dual
     std::vector<unsigned int> isDual_;
 
+    inline unsigned int isDual(unsigned int i) {
+        if (i<dims_.size())
+            return isDual_[i];
+        else
+            return 0;
+    }
+
     //! returns the dimension of the Field
 	inline std::vector<unsigned int> dims () {return dims_;}
     //! All arrays may be viewed as a 1D array

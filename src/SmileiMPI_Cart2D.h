@@ -39,6 +39,9 @@ public:
     inline int getProcCoord(int i) {
         return coords_[i];
     }
+    inline int getNbrOfProcs(int i) {
+        return number_of_procs[i];
+    }
 
     inline bool isWester() {
         return (coords_[0]==0);

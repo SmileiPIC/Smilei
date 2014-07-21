@@ -114,6 +114,14 @@ public:
     //! n_space (from params) always 3D
     std::vector<unsigned int> n_space;
 
+    //! Index of starting elements in arrays without duplicated borders
+    //! By constuction 1 element is shared in primal field, 2 in dual
+    //! 3 : Number of direction (=1, if dim not defined)
+    //! 2 : isPrim/isDual
+    unsigned int istart[3][2];
+    //! Number of elements in arrays without duplicated borders
+    unsigned int bufsize[3][2];
+
     //!\todo should this be just an integer???
     //! Oversize domain to exchange less particles
     std::vector<unsigned int> oversize;

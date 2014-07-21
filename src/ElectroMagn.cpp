@@ -76,6 +76,8 @@ ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi)
         Jz_s[ispec]  = NULL;
         rho_s[ispec] = NULL;
     }
+
+
 }
 
 
@@ -200,16 +202,20 @@ void ElectroMagn::computeScalars()
         map<string,vector<double> > scalars_map;
 
         vector<double> Etot(1);
-        
-        
 
-        for (unsigned int k=oversize[2]; k<n_space[2]+oversize[2]; k++) {
-            for (unsigned int j=oversize[1]; j<n_space[1]+oversize[1]; j++) {
-                for (unsigned int i=oversize[0]; i<n_space[0]+oversize[0]; i++) {
-                    unsigned int ii=i+j*n_space[0]+k*n_space[0]*n_space[1];
-                    Etot[0]+=pow((**field)(ii),2);
-                }
-            }
+	unsigned int iFieldStart[3], iFieldSize[3];
+	for ( int i=0 ; i<(*field)->isDual_.size() ; i++ ) {
+	    iFieldStart[i] = istart [i][(*field)->isDual(i)];
+	    iFieldSize [i] = bufsize[i][(*field)->isDual(i)];
+	}
+
+	for (unsigned int k=iFieldStart[2]; k<iFieldSize[2]; k++) {
+	    for (unsigned int j=iFieldStart[1]; j<iFieldSize[1]; j++) {
+		for (unsigned int i=iFieldStart[0]; i<iFieldSize[0]; i++) {
+		    unsigned int ii=i+j*n_space[0]+k*n_space[0]*n_space[1];
+		    Etot[0]+=pow((**field)(ii),2);
+		}
+	    }
         }
         Etot[0]*=0.5*cell_volume;
         scalars_map["sum"]=Etot;
@@ -237,11 +243,17 @@ void ElectroMagn::computeScalars()
         minVec[2]=maxVec[2]=0;
         minVec[3]=maxVec[3]=0;
 
-        for (unsigned int k=oversize[2]; k<n_space[2]+oversize[2]; k++) {
-            for (unsigned int j=oversize[1]; j<n_space[1]+oversize[1]; j++) {
-                for (unsigned int i=oversize[0]; i<n_space[0]+oversize[0]; i++) {
-                    unsigned int ii=i+j*n_space[0]+k*n_space[0]*n_space[1];
-                    if (minVec[0]>(**field)(ii)) {
+	unsigned int iFieldStart[3], iFieldSize[3];
+	for ( int i=0 ; i<(*field)->isDual_.size() ; i++ ) {
+	    iFieldStart[i] = istart [i][(*field)->isDual(i)];
+	    iFieldSize [i] = bufsize[i][(*field)->isDual(i)];
+	}
+
+	for (unsigned int k=iFieldStart[2]; k<iFieldSize[2]; k++) {
+	    for (unsigned int j=iFieldStart[1]; j<iFieldSize[1]; j++) {
+		for (unsigned int i=iFieldStart[0]; i<iFieldSize[0]; i++) {
+		    unsigned int ii=i+j*n_space[0]+k*n_space[0]*n_space[1];
+                   if (minVec[0]>(**field)(ii)) {
                         minVec[0]=(**field)(ii);
                         minVec[1]=i;
                         minVec[2]=j;
@@ -253,8 +265,8 @@ void ElectroMagn::computeScalars()
                         maxVec[2]=j;
                         maxVec[3]=k;
                     }
-                }
-            }
+		}
+	    }
         }
         minVec.resize(1+(*field)->dims_.size());
         maxVec.resize(1+(*field)->dims_.size());

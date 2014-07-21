@@ -111,6 +111,46 @@ ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
         index_bc_max[i] = dimDual[i]-params->oversize[i]-1;
     }
 
+
+    // Define limits of non duplicated elements
+    // (by construction 1 (prim) or 2 (dual) elements shared between per MPI process)
+    // istart 
+    for (unsigned int i=0 ; i<3 ; i++)
+	for (unsigned int isDual=0 ; isDual<2 ; isDual++)
+	    istart[i][isDual] = 0;
+    for (unsigned int i=0 ; i<params->nDim_field ; i++) {
+	for (unsigned int isDual=0 ; isDual<2 ; isDual++) {
+	    istart[i][isDual] = oversize[i];
+	    if (smpi1D->getProcCoord(i)!=0) istart[i][isDual]+=1;
+	}
+    }
+
+    // bufsize = nelements
+    for (unsigned int i=0 ; i<3 ; i++) 
+ 	for (unsigned int isDual=0 ; isDual<2 ; isDual++)
+	    bufsize[i][isDual] = 1;
+
+   for (unsigned int i=0 ; i<params->nDim_field ; i++) {
+	for (int isDual=0 ; isDual<2 ; isDual++)
+	    bufsize[i][isDual] = params->n_space[i] + 1;
+
+	for (int isDual=0 ; isDual<2 ; isDual++) {
+	    bufsize[i][isDual] += isDual; 
+	    if ( smpi1D->getNbrOfProcs(i)!=1 ) {
+
+		if ( ( !isDual ) && (smpi1D->getProcCoord(i)!=0) )
+		    bufsize[i][isDual]--;
+		else if  (isDual) {
+		    bufsize[i][isDual]--;
+		    if ( (smpi1D->getProcCoord(i)!=0) && (smpi1D->getProcCoord(i)!=smpi1D->getNbrOfProcs(i)-1) ) 
+			 bufsize[i][isDual]--;
+		}
+
+	    } // if ( smpi1D->getNbrOfProcs(i)!=1 )
+	} // for (int isDual=0 ; isDual
+    } // for (unsigned int i=0 ; i<params->nDim_field 
+
+
 }//END constructor Electromagn1D
 
 
