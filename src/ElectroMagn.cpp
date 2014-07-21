@@ -18,30 +18,30 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi)
 {
-
+    
     poynting[0].resize(params->nDim_field,0.0);
     poynting[1].resize(params->nDim_field,0.0);
-
+    
     // take useful things from params
     cell_volume=params->cell_volume;
     n_space=params->n_space;
-
+    
     oversize=params->oversize;
-
+    
     for (unsigned int i=0; i<3; i++) {
         DEBUG("____________________ OVERSIZE: " <<i << " " << oversize[i]);
     }
-
+    
     if (n_space.size() != 3) ERROR("this should not happend");
-
+    
     // check for laser conditions
     laser_.resize(params->n_laser);
-
+    
     for (unsigned int i=0; i<laser_.size(); i++) {
         DEBUG(5,"Initializing Laser "<<i);
         laser_[i] = new Laser(params->sim_time, params->sim_length[1], params->laser_param[i]);
     }
-
+    
     Ex_=NULL;
     Ey_=NULL;
     Ez_=NULL;
@@ -63,7 +63,7 @@ ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi)
     Bx_avg=NULL;
     By_avg=NULL;
     Bz_avg=NULL;
-
+    
     // Species charge currents and density
     n_species = params->n_species;
     Jx_s.resize(n_species);
@@ -76,8 +76,13 @@ ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi)
         Jz_s[ispec]  = NULL;
         rho_s[ispec] = NULL;
     }
-
-
+    
+    for (unsigned int i=0; i<3; i++) {
+        for (unsigned int j=0; j<2; j++) {
+            istart[i][j]=0;
+            bufsize[i][j]=0;
+        }
+    }    
 }
 
 
@@ -104,22 +109,22 @@ ElectroMagn::~ElectroMagn()
     for (unsigned int i=0; i< laser_.size(); i++) {
         delete laser_[i];
     }
-
+    
 }//END Destructer
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Maxwell solver using the FDTD scheme
 // ---------------------------------------------------------------------------------------------------------------------
 /*void ElectroMagn::solveMaxwell(double time_dual, SmileiMPI* smpi)
-{
-	//solve Maxwell's equations
-	solveMaxwellAmpere();
-	//smpi->exchangeE( EMfields );
-	solveMaxwellFaraday();
-	smpi->exchangeB( this );
-	boundaryConditions(time_dual, smpi);
-
-}*/
+ {
+ //solve Maxwell's equations
+ solveMaxwellAmpere();
+ //smpi->exchangeE( EMfields );
+ solveMaxwellFaraday();
+ smpi->exchangeB( this );
+ boundaryConditions(time_dual, smpi);
+ 
+ }*/
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -128,14 +133,14 @@ ElectroMagn::~ElectroMagn()
 void ElectroMagn::dump(PicParams* params)
 {
     //!\todo Check for none-cartesian grid & for generic grid (neither all dual or all primal) (MG & JD)
-
+    
     vector<unsigned int> dimPrim;
     dimPrim.resize(1);
     dimPrim[0] = params->n_space[0]+2*params->oversize[0]+1;
     vector<unsigned int> dimDual;
     dimDual.resize(1);
     dimDual[0] = params->n_space[0]+2*params->oversize[0]+2;
-
+    
     // dump of the electromagnetic fields
     Ex_->dump(dimDual);
     Ey_->dump(dimPrim);
@@ -160,24 +165,24 @@ void ElectroMagn::initRhoJ(vector<Species*> vecSpecies, Projector* Proj)
     //! \todo Check that one uses only none-test particles
     // number of (none-test) used in the simulation
     unsigned int n_species = vecSpecies.size();
-
+    
     //loop on all (none-test) Species
     for (unsigned int iSpec=0 ; iSpec<n_species; iSpec++ ) {
         Particles cuParticles = vecSpecies[iSpec]->getParticlesList();
         unsigned int n_particles = vecSpecies[iSpec]->getNbrOfParticles();
-
+        
         DEBUG(n_particles<<" species "<<iSpec);
         for (unsigned int iPart=0 ; iPart<n_particles; iPart++ ) {
             // project charge & current densities
             (*Proj)(Jx_s[iSpec], Jy_s[iSpec], Jz_s[iSpec], rho_s[iSpec], cuParticles, iPart,
                     cuParticles.lor_fac(iPart));
         }
-
+        
     }//iSpec
-
+    
     computeTotalRhoJ();
     DEBUG("projection done for initRhoJ");
-
+    
 }
 
 
@@ -187,73 +192,73 @@ void ElectroMagn::initRhoJ(vector<Species*> vecSpecies, Projector* Proj)
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn::computeScalars()
 {
-
+    
     vector<Field*> fields;
-
+    
     fields.push_back(Ex_);
     fields.push_back(Ey_);
     fields.push_back(Ez_);
     fields.push_back(Bx_m);
     fields.push_back(By_m);
     fields.push_back(Bz_m);
-
+    
     for (vector<Field*>::iterator field=fields.begin(); field!=fields.end(); field++) {
-
+        
         map<string,vector<double> > scalars_map;
-
+        
         vector<double> Etot(1);
-
-	unsigned int iFieldStart[3], iFieldSize[3];
-	for ( int i=0 ; i<(*field)->isDual_.size() ; i++ ) {
-	    iFieldStart[i] = istart [i][(*field)->isDual(i)];
-	    iFieldSize [i] = bufsize[i][(*field)->isDual(i)];
-	}
-
-	for (unsigned int k=iFieldStart[2]; k<iFieldSize[2]; k++) {
-	    for (unsigned int j=iFieldStart[1]; j<iFieldSize[1]; j++) {
-		for (unsigned int i=iFieldStart[0]; i<iFieldSize[0]; i++) {
-		    unsigned int ii=i+j*n_space[0]+k*n_space[0]*n_space[1];
-		    Etot[0]+=pow((**field)(ii),2);
-		}
-	    }
+        
+        vector<unsigned int> iFieldStart(3,0), iFieldSize(3,0);
+        for ( int i=0 ; i<(*field)->isDual_.size() ; i++ ) {
+            iFieldStart[i] = istart [i][(*field)->isDual(i)];
+            iFieldSize [i] = bufsize[i][(*field)->isDual(i)];
+        }
+        
+        for (unsigned int k=iFieldStart[2]; k<iFieldSize[2]; k++) {
+            for (unsigned int j=iFieldStart[1]; j<iFieldSize[1]; j++) {
+                for (unsigned int i=iFieldStart[0]; i<iFieldSize[0]; i++) {
+                    unsigned int ii=i+j*n_space[0]+k*n_space[0]*n_space[1];
+                    Etot[0]+=pow((**field)(ii),2);
+                }
+            }
         }
         Etot[0]*=0.5*cell_volume;
         scalars_map["sum"]=Etot;
-
+        
         scalars[(*field)->name+"_U"]=scalars_map;
     }
-
+    
     fields.push_back(Jx_);
     fields.push_back(Jy_);
     fields.push_back(Jz_);
     fields.push_back(rho_);
-
-
-
+    
+    
+    
     for (vector<Field*>::iterator field=fields.begin(); field!=fields.end(); field++) {
-
+        
         map<string,vector<double> > scalars_map;
-
+        
         vector<double> minVec(4);
         vector<double> maxVec(4);
-
+        
         minVec[0]=(**field)(0);
         maxVec[0]=(**field)(0);
         minVec[1]=maxVec[1]=0;
         minVec[2]=maxVec[2]=0;
         minVec[3]=maxVec[3]=0;
-
-	unsigned int iFieldStart[3], iFieldSize[3];
-	for ( int i=0 ; i<(*field)->isDual_.size() ; i++ ) {
-	    iFieldStart[i] = istart [i][(*field)->isDual(i)];
-	    iFieldSize [i] = bufsize[i][(*field)->isDual(i)];
-	}
-
-	for (unsigned int k=iFieldStart[2]; k<iFieldSize[2]; k++) {
-	    for (unsigned int j=iFieldStart[1]; j<iFieldSize[1]; j++) {
-		for (unsigned int i=iFieldStart[0]; i<iFieldSize[0]; i++) {
-		    unsigned int ii=i+j*n_space[0]+k*n_space[0]*n_space[1];
-                   if (minVec[0]>(**field)(ii)) {
+        
+        vector<unsigned int> iFieldStart(3,0), iFieldSize(3,0);
+        for ( int i=0 ; i<(*field)->isDual_.size() ; i++ ) {
+            iFieldStart[i] = istart [i][(*field)->isDual(i)];
+            iFieldSize [i] = bufsize[i][(*field)->isDual(i)];
+        }
+        
+        for (unsigned int k=iFieldStart[2]; k<iFieldSize[2]; k++) {
+            for (unsigned int j=iFieldStart[1]; j<iFieldSize[1]; j++) {
+                for (unsigned int i=iFieldStart[0]; i<iFieldSize[0]; i++) {
+                    unsigned int ii=i+j*n_space[0]+k*n_space[0]*n_space[1];
+                    if (minVec[0]>(**field)(ii)) {
                         minVec[0]=(**field)(ii);
                         minVec[1]=i;
                         minVec[2]=j;
@@ -265,13 +270,13 @@ void ElectroMagn::computeScalars()
                         maxVec[2]=j;
                         maxVec[3]=k;
                     }
-		}
-	    }
+                }
+            }
         }
         minVec.resize(1+(*field)->dims_.size());
         maxVec.resize(1+(*field)->dims_.size());
-
-
+        
+        
         // we just store the values that change
         scalars_map["min"]=minVec;
         scalars_map["max"]=maxVec;
@@ -282,7 +287,7 @@ void ElectroMagn::computeScalars()
     map<string,vector<double> > poynting_map_inf;
     poynting_map_inf["sum"]=poynting[0];
     scalars["Poy_inf"]=poynting_map_inf;
-
+    
     map<string,vector<double> > poynting_map_sup;
     poynting_map_sup["sum"]=poynting[1];
     scalars["Poy_sup"]=poynting_map_sup;
