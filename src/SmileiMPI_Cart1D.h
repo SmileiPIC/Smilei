@@ -35,6 +35,10 @@ public:
     //! Useless if 1D
     void createType( PicParams& params ) {};
 
+    //! Create MPI_Datatype to exchange all properties of particle in 1 communication
+    MPI_Datatype createMPIparticles( Particles* particles, int nbrOfProp );
+
+
     virtual void exchangeField ( Field* field );
     virtual void sumField      ( Field* field );
 

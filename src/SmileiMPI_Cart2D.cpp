@@ -221,10 +221,10 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
     /********************************************************************************/
     for (int iDim=0 ; iDim<ndims_ ; iDim++) {
 
-        MPI_Status sstat    [ndims_][2][7];
-        MPI_Status rstat    [ndims_][2][7];
-        MPI_Request srequest[ndims_][2][7];
-        MPI_Request rrequest[ndims_][2][7];
+        MPI_Status sstat    [ndims_][2];
+        MPI_Status rstat    [ndims_][2];
+        MPI_Request srequest[ndims_][2];
+        MPI_Request rrequest[ndims_][2];
 
         /********************************************************************************/
         // Exchange number of particles to exchange to establish or not a communication
@@ -232,10 +232,10 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
             if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
                 n_part_send = (buff_index_send[iDim][iNeighbor]).size();
-                MPI_Isend( &n_part_send, 1, MPI_INT, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D, &(srequest[iDim][iNeighbor][0]) );
+                MPI_Isend( &n_part_send, 1, MPI_INT, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D, &(srequest[iDim][iNeighbor]) );
             } // END of Send
             if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
-                MPI_Irecv( &(buff_index_recv_sz[iDim][(iNeighbor+1)%2]), 1, MPI_INT, neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &(rrequest[iDim][(iNeighbor+1)%2][0]) );
+                MPI_Irecv( &(buff_index_recv_sz[iDim][(iNeighbor+1)%2]), 1, MPI_INT, neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &(rrequest[iDim][(iNeighbor+1)%2]) );
             }
         }
         barrier();
@@ -245,10 +245,10 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
         /********************************************************************************/
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
             if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
-                MPI_Wait( &(srequest[iDim][iNeighbor][0]), &(sstat[iDim][iNeighbor][0]) );
+                MPI_Wait( &(srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
             }
             if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
-                MPI_Wait( &(rrequest[iDim][(iNeighbor+1)%2][0]), &(rstat[iDim][(iNeighbor+1)%2][0]) );
+                MPI_Wait( &(rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
                 if (buff_index_recv_sz[iDim][(iNeighbor+1)%2]!=0) {
                     partVectorRecv[iDim][(iNeighbor+1)%2].initialize( buff_index_recv_sz[iDim][(iNeighbor+1)%2], cuParticles.dimension());
                 }
@@ -264,6 +264,11 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
         /********************************************************************************/
         // Proceed to effective Particles' communications
         /********************************************************************************/
+
+	// Number of properties per particles = nDim_Particles + 3 + 1 + 1
+	int nbrOfProp( 7 );
+	MPI_Datatype typePartSend, typePartRecv;
+
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
 
             // n_part_send : number of particles to send to current neighbor
@@ -279,25 +284,17 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
                     }
                     cuParticles.cp_particle(buff_index_send[iDim][iNeighbor][iPart], partVectorSend[iDim][iNeighbor]);
                 }
-                MPI_Isend( &((partVectorSend[iDim][iNeighbor]).position(0,0)), n_part_send, MPI_DOUBLE, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D, &(srequest[iDim][iNeighbor][0]) );
-                MPI_Isend( &((partVectorSend[iDim][iNeighbor]).momentum(0,0)), n_part_send, MPI_DOUBLE, neighbor_[iDim][iNeighbor], 2, SMILEI_COMM_2D, &(srequest[iDim][iNeighbor][1]) );
-                MPI_Isend( &((partVectorSend[iDim][iNeighbor]).momentum(1,0)), n_part_send, MPI_DOUBLE, neighbor_[iDim][iNeighbor], 3, SMILEI_COMM_2D, &(srequest[iDim][iNeighbor][2]) );
-                MPI_Isend( &((partVectorSend[iDim][iNeighbor]).momentum(2,0)), n_part_send, MPI_DOUBLE, neighbor_[iDim][iNeighbor], 4, SMILEI_COMM_2D, &(srequest[iDim][iNeighbor][3]) );
-                MPI_Isend( &((partVectorSend[iDim][iNeighbor]).weight(0)), n_part_send, MPI_DOUBLE, neighbor_[iDim][iNeighbor], 5, SMILEI_COMM_2D, &(srequest[iDim][iNeighbor][4]) );
-                MPI_Isend( &((partVectorSend[iDim][iNeighbor]).charge(0)), n_part_send, MPI_SHORT, neighbor_[iDim][iNeighbor], 6, SMILEI_COMM_2D, &(srequest[iDim][iNeighbor][5]) );
-                MPI_Isend( &((partVectorSend[iDim][iNeighbor]).position(1,0)), n_part_send, MPI_DOUBLE, neighbor_[iDim][iNeighbor], 7, SMILEI_COMM_2D, &(srequest[iDim][iNeighbor][6]) );
+		typePartSend = createMPIparticles( &(partVectorSend[iDim][iNeighbor]), nbrOfProp );
+		MPI_Isend( &((partVectorSend[iDim][iNeighbor]).position(0,0)), 1, typePartSend, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D, &(srequest[iDim][iNeighbor]) );
+		MPI_Type_free( &typePartSend );
 
             } // END of Send
 
             n_part_recv = buff_index_recv_sz[iDim][(iNeighbor+1)%2];
             if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
-                MPI_Irecv( &((partVectorRecv[iDim][(iNeighbor+1)%2]).position(0,0)), n_part_recv, MPI_DOUBLE,  neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &(rrequest[iDim][(iNeighbor+1)%2][0]) );
-                MPI_Irecv( &((partVectorRecv[iDim][(iNeighbor+1)%2]).momentum(0,0)), n_part_recv, MPI_DOUBLE,  neighbor_[iDim][(iNeighbor+1)%2], 2, SMILEI_COMM_2D, &(rrequest[iDim][(iNeighbor+1)%2][1]) );
-                MPI_Irecv( &((partVectorRecv[iDim][(iNeighbor+1)%2]).momentum(1,0)), n_part_recv, MPI_DOUBLE,  neighbor_[iDim][(iNeighbor+1)%2], 3, SMILEI_COMM_2D, &(rrequest[iDim][(iNeighbor+1)%2][2]) );
-                MPI_Irecv( &((partVectorRecv[iDim][(iNeighbor+1)%2]).momentum(2,0)), n_part_recv, MPI_DOUBLE,  neighbor_[iDim][(iNeighbor+1)%2], 4, SMILEI_COMM_2D, &(rrequest[iDim][(iNeighbor+1)%2][3]) );
-                MPI_Irecv( &((partVectorRecv[iDim][(iNeighbor+1)%2]).weight(0)), n_part_recv, MPI_DOUBLE,  neighbor_[iDim][(iNeighbor+1)%2], 5, SMILEI_COMM_2D, &(rrequest[iDim][(iNeighbor+1)%2][4]) );
-                MPI_Irecv( &((partVectorRecv[iDim][(iNeighbor+1)%2]).charge(0)), n_part_recv, MPI_SHORT,  neighbor_[iDim][(iNeighbor+1)%2], 6, SMILEI_COMM_2D, &(rrequest[iDim][(iNeighbor+1)%2][5]) );
-                MPI_Irecv( &((partVectorRecv[iDim][(iNeighbor+1)%2]).position(1,0)), n_part_recv, MPI_DOUBLE,  neighbor_[iDim][(iNeighbor+1)%2], 7, SMILEI_COMM_2D, &(rrequest[iDim][(iNeighbor+1)%2][6]) );
+		typePartRecv = createMPIparticles( &(partVectorRecv[iDim][(iNeighbor+1)%2]), nbrOfProp );
+		MPI_Irecv( &((partVectorRecv[iDim][(iNeighbor+1)%2]).position(0,0)), 1, typePartRecv,  neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &(rrequest[iDim][(iNeighbor+1)%2]) );
+		MPI_Type_free( &typePartRecv );
 
             } // END of Recv
 
@@ -313,11 +310,11 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
             n_part_recv = buff_index_recv_sz[iDim][(iNeighbor+1)%2];
 
             if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (n_part_send!=0) ) {
-                MPI_Waitall( 7, srequest[iDim][iNeighbor], sstat[iDim][iNeighbor] );
+                MPI_Wait( &(srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
             }
 
             if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
-                MPI_Waitall( 7, rrequest[iDim][(iNeighbor+1)%2], rstat[iDim][(iNeighbor+1)%2] );
+                MPI_Wait( &(rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
                 for (int iPart=0 ; iPart<n_part_recv; iPart++ ) {
                     (partVectorRecv[iDim][(iNeighbor+1)%2]).cp_particle(iPart, cuParticles);
                 }
@@ -448,6 +445,39 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
     } // end use sort particles
 
 } // END exchangeParticles
+
+MPI_Datatype SmileiMPI_Cart2D::createMPIparticles( Particles* particles, int nbrOfProp )
+{
+    MPI_Datatype typeParticlesMPI;
+
+    MPI_Aint address[nbrOfProp];
+    MPI_Get_address( &(particles->position(0,0)), &(address[0]) );
+    MPI_Get_address( &(particles->position(1,0)), &(address[1]) );
+    MPI_Get_address( &(particles->momentum(0,0)), &(address[2]) );
+    MPI_Get_address( &(particles->momentum(1,0)), &(address[3]) );
+    MPI_Get_address( &(particles->momentum(2,0)), &(address[4]) );
+    MPI_Get_address( &(particles->weight(0)),     &(address[5]) );
+    MPI_Get_address( &(particles->charge(0)),     &(address[6]) );
+    //MPI_Get_address( &(particles.position_old(0,0)), &address[6] );
+
+    int nbr_parts[nbrOfProp];
+    MPI_Aint disp[nbrOfProp];
+    MPI_Datatype partDataType[nbrOfProp];
+
+    for (int i=0 ; i<nbrOfProp ; i++)
+	nbr_parts[i] = particles->size();
+    disp[0] = 0;
+    for (int i=1 ; i<nbrOfProp ; i++)
+	disp[i] = address[i] - address[0];
+    for (int i=0 ; i<nbrOfProp ; i++)
+	partDataType[i] = MPI_DOUBLE;
+    partDataType[nbrOfProp-1] = MPI_SHORT;
+
+    MPI_Type_struct( nbrOfProp, &(nbr_parts[0]), &(disp[0]), &(partDataType[0]), &typeParticlesMPI);
+    MPI_Type_commit( &typeParticlesMPI );
+
+    return typeParticlesMPI;
+}
 
 
 void SmileiMPI_Cart2D::IexchangeParticles(Species* species, int ispec, PicParams* params)
