@@ -15,7 +15,7 @@ interpolation_order = 2
 # sim_time: duration of the simulation in units of the normalization period 
 #
 res_time = 52
-sim_time = 2.0
+sim_time = 100.0
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
@@ -23,6 +23,7 @@ sim_time = 2.0
 #
 res_space  = 51  5  
 sim_length = 500  250  
+#sim_length = 22  250  
 
 # PLASMA GEOMETRY
 # plasma_geometry: string defining the plasma geometry
@@ -31,9 +32,12 @@ sim_length = 500  250
 plasma_geometry = trap
 vacuum_length   = 0.0  0.0 
 plasma_length   = 1095.0  305.0
-slope_length = 5.0 0.0
+slope_length = 0.0 0.0
 
 res_space_win_x = 1100
+t_move_win = 2.
+vx_win = 0.9997
+clrw = 1
 
 # RANDOM seed 
 # this is used to randomize the random number generator
@@ -58,17 +62,17 @@ species
 	species_type = positron1
 	initialization_type = Maxwell-Juettner
 	ionization_model = none
-	n_part_per_cell = 1
+	n_part_per_cell = 10
 	c_part_max = 1.0
 	mass = 1.0
 	charge = 1.0
-	density = 1.0
+	density = 0.000494
 	mean_velocity = 0.0 0.0 0.0
-	temperature = 0.0001
+	temperature = 0.001
 	dynamics_type = norm
-	time_frozen = 10000
+	time_frozen = 0.0
 	radiating = false
-	bc_part_type_long  = none
+	bc_part_type_long  = supp
 	bc_part_type_trans = stop
 end
 
@@ -79,13 +83,13 @@ species
 	c_part_max = 1.0
 	mass = 1.0
 	charge = -1.0
-	density = 1.0
+	density = 0.000494
 	mean_velocity = 0.0 0.0 0.0
-	temperature = 0.000000001
+	temperature = 0.001
 	dynamics_type = norm	
 	time_frozen = 0.0
 	radiating = false
-	bc_part_type_long = none
+	bc_part_type_long = supp
 	bc_part_type_trans = stop
 end
 
@@ -101,13 +105,15 @@ end
 # double_params: vector of real parameters used by the different time-profiles
 #
 laser
-	a0=8.
+	a0=8.3
 	angle=0
 	delta=0.0              
-	time_profile = gauss
-        y_profile = gauss
-	double_params = 8.0 4.0 0.0
-        y_params = 80.
+	time_profile = gaussian
+        y_profile = gaussian
+	double_params = 4.0 0.0 0.0 # FWHM in intensity, plateau length, delay
+        int_params = 3 # Cut-off of the longitudinal gaussian in number of sigma
+        double_params_transv = 0.0 80.0 # distance from axis, transverse FWHM in intensity
+        int_params_transv= 2 # order of the hyper gaussian
 end
 
 # ---------------------
@@ -115,10 +121,10 @@ end
 # ---------------------
 
 # print_every (on screen text output) 
-print_every = 1
+print_every = 10
 
 # every for field dump
-fieldDump_every = 10
+fieldDump_every = 50
 
 # every for particle dump
 particleDump_every = 1000
@@ -143,6 +149,4 @@ end
 
 dump_step = 10000
 exit_after_dump = false
-	
-
 

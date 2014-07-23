@@ -213,10 +213,10 @@ double Laser::time_profile(double time_dual) {
     }
 
     //GAUSSIAN time-profile
-    //double_params[0]: tau FWHM
-    //double_params[1]: plateau
-    //double_params[2]: delay
-    //int_params[0]: gaussian cut-off
+    //double_params[0]: tau FWHM : Field or intensity ? I guess intensity ?
+    //double_params[1]: plateau : 
+    //double_params[2]: delay : Time before the head of the laser pulse enters the box.
+    //int_params[0]: gaussian cut-off : How far ahead from the center the pulse starts being non zero in number of sigma.
     else if(type_of_time_profile=="gaussian"){
         double fwhm=2*double_params[0];
         double sigma=fwhm/(2*sqrt(2*log(2)));
