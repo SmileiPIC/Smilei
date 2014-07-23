@@ -382,7 +382,7 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
                 for (int iPart=0 ; iPart<n_part_recv; iPart++ )
 		    if ( !(partVectorRecv[iDim][(iNeighbor+1)%2]).is_part_in_domain(iPart, this) )
                         (partVectorRecv[iDim][(iNeighbor+1)%2]).cp_particle(iPart, diagonalParticles);
-                for (int iPart=0 ; iPart<n_part_recv; iPart++ ) {
+                for (int iPart=n_part_recv-1 ; iPart>=0; iPart-- ) {
 		    if ( !(partVectorRecv[iDim][(iNeighbor+1)%2]).is_part_in_domain(iPart, this) ) {
 			(partVectorRecv[iDim][(iNeighbor+1)%2]).erase_particle(iPart);
 			buff_index_recv_sz[iDim][(iNeighbor+1)%2]--;
