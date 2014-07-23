@@ -110,6 +110,14 @@ public:
     //! Cell_length
     std::vector<double> cell_length;
 
+    inline void clearExchList(int tid) {
+	    indexes_of_particles_to_exchange_per_thd[tid].clear();
+    }
+    inline void addPartInExchList(int tid, int iPart) {
+        indexes_of_particles_to_exchange_per_thd[tid].push_back(iPart);
+    }
+    std::vector< std::vector<int> > indexes_of_particles_to_exchange_per_thd;
+
 private:
     
     //! 2 times pi

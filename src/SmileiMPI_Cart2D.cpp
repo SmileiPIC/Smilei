@@ -202,6 +202,9 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
     std::vector<int>* cubmin = &species->bmin;
     std::vector<int>* cubmax = &species->bmax;
 
+    std::vector< std::vector<int> >* indexes_of_particles_to_exchange_per_thd = &species->indexes_of_particles_to_exchange_per_thd;
+    std::vector<int>                 indexes_of_particles_to_exchange;
+
     #pragma omp master
     {
     /********************************************************************************/
@@ -211,17 +214,17 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
     indexes_of_particles_to_exchange.clear();
 
     int tmp = 0;
-    for (int tid=0 ; tid < indexes_of_particles_to_exchange_per_thd.size() ; tid++)
-	tmp += indexes_of_particles_to_exchange_per_thd[tid].size();
+    for (int tid=0 ; tid < indexes_of_particles_to_exchange_per_thd->size() ; tid++)
+        tmp += ((*indexes_of_particles_to_exchange_per_thd)[tid]).size();
     indexes_of_particles_to_exchange.resize( tmp );
 
     int k=0;
-    for (int tid=0 ; tid < indexes_of_particles_to_exchange_per_thd.size() ; tid++) {
-	for (int ipart = 0 ; ipart < indexes_of_particles_to_exchange_per_thd[tid].size() ; ipart++ ) {
-	    indexes_of_particles_to_exchange[k] =  indexes_of_particles_to_exchange_per_thd[tid][ipart] ;
+    for (int tid=0 ; tid < indexes_of_particles_to_exchange_per_thd->size() ; tid++) {
+	for (int ipart = 0 ; ipart < ((*indexes_of_particles_to_exchange_per_thd)[tid]).size() ; ipart++ ) {
+	  indexes_of_particles_to_exchange[k] =  (*indexes_of_particles_to_exchange_per_thd)[tid][ipart] ;
 	    k++;
 	}
-        indexes_of_particles_to_exchange_per_thd[tid].clear();
+        ((*indexes_of_particles_to_exchange_per_thd))[tid].clear();
     }
     sort( indexes_of_particles_to_exchange.begin(), indexes_of_particles_to_exchange.end() );
 
@@ -516,18 +519,12 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
     // Inject corner particles at the end of the list, update bmax
     for (int iPart = 0 ; iPart<diagonalParticles.size() ; iPart++) {
        diagonalParticles.cp_particle(iPart, cuParticles);
-       indexes_of_particles_to_exchange_per_thd[0].push_back(cuParticles.size()-1);
+       (*indexes_of_particles_to_exchange_per_thd)[0].push_back(cuParticles.size()-1);
        (*cubmax)[(*cubmax).size()-1]++;
     }
 
     }//end of omp master
 } // END exchangeParticles
-
-
-void SmileiMPI_Cart2D::IexchangeParticles(Species* species, int ispec, PicParams* params, int tnum)
-{
-    exchangeParticles(species, ispec, params, tnum);
-}  // END IexchangeParticles
 
 
 void SmileiMPI_Cart2D::createType( PicParams& params )

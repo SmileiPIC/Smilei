@@ -87,7 +87,7 @@ void SmileiMPI::init( PicParams& params )
     n_space_global.resize(params.nDim_field, 0);
 }
 
-
+/*
 void SmileiMPI::bcast( short& val )
 {
     MPI_Bcast( &val, 1, MPI_SHORT, 0, SMILEI_COMM_WORLD);
@@ -202,7 +202,7 @@ void SmileiMPI::bcast( vector<LaserStructure>& val )
 
     for (int i=0 ; i<vecSize ; i++) bcast( val[i] );
 }
-
+*/
 void SmileiMPI::sumRho( ElectroMagn* EMfields )
 {
     sumField( EMfields->rho_ );

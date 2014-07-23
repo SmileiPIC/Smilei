@@ -147,6 +147,16 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 	
     // define limits for BC and functions applied and for domain decomposition
     partBoundCond = new PartBoundCond( params, ispec, smpi);
+
+    unsigned int nthds(1);
+#pragma omp parallel shared(nthds)
+    {
+#ifdef _OMP
+	nthds = omp_get_num_threads();	  
+#endif
+    }
+    indexes_of_particles_to_exchange_per_thd.resize(nthds);
+	
     
 }//END Species creator
 
@@ -711,7 +721,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 #ifdef _OMP
     tid = omp_get_thread_num();
 #endif
-    smpi->clearExchList(tid);
+    clearExchList(tid);
 	
     // -------------------------------
     // calculate the particle dynamics
@@ -756,7 +766,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 // apply returns 0 if iPart is no more in the domain local
                 //	if omp, create a list per thread
                 if ( !partBoundCond->apply( particles, iPart ) ) {
-		  smpi->addPartInExchList( tid, iPart );
+		  addPartInExchList( tid, iPart );
 		}
 
                 if (ndim <= 2) {
@@ -945,10 +955,10 @@ void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
 
     // Send particles of first bin on process rank-1
     // If no rank-1 -> particles deleted
-    smpi->clearExchList(0);
+    clearExchList(0);
     for (unsigned int ibin = 0 ; ibin < 1 ; ibin++)
 	for (unsigned int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ )
-	  smpi->addPartInExchList( 0, iPart );
+	  addPartInExchList( 0, iPart );
 
     for (unsigned int i=0 ; i<shift ; i++) {
 	// bin 0 empty

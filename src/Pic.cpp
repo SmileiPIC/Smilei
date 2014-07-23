@@ -155,7 +155,7 @@ int main (int argc, char* argv[])
 	
     smpi->barrier();
 
-    unsigned int stepStart=0, stepStop=params.n_time, nthds;
+    unsigned int stepStart=0, stepStop=params.n_time;
     
     // reading from dumped file the restart values
     if (params.restart) {
@@ -191,15 +191,6 @@ int main (int argc, char* argv[])
     if (params.res_space_win_x)
 	simWindow = new SimWindow(params);
 
-#pragma omp parallel shared(smpi,nthds)
-    {
-#ifdef _OMP
-	nthds = omp_get_num_threads();	  
-#else
-	nthds = 1;
-#endif
-    }
-    smpi->setExchListSize(nthds);
     // ------------------------------------------------------------------------
     // Initialize the simulation times time_prim at n=0 and time_dual at n=-1/2
     // ------------------------------------------------------------------------
@@ -260,6 +251,8 @@ int main (int argc, char* argv[])
 #endif
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
                 vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi);
+            }
+            for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 		if ( (params.use_sort_particles) && (itime%params.exchange_particles_each==0) ) {
                     #pragma omp barrier
 		    //#pragma omp master

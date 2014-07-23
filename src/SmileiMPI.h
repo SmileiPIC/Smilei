@@ -36,8 +36,6 @@ public:
     //! Echanges particles of Species, list of particles comes frome Species::dynamics
     //! See child classes
     virtual void exchangeParticles(Species* species, int ispec, PicParams* params, int tnum) {};
-    //! Non-blocking exchange of particles
-    virtual void IexchangeParticles(Species* species, int ispec, PicParams* params, int tnum) {};
 
     //! Create MPI_Datatype to exchange/sum fields on ghost data
     //! See child classes
@@ -85,16 +83,6 @@ public:
         return max_local[i];
     }
 
-    inline void setExchListSize(unsigned int nthds) {
-	indexes_of_particles_to_exchange_per_thd.resize(nthds);
-    }
-        inline void clearExchList(int tid) {
-	    indexes_of_particles_to_exchange_per_thd[tid].clear();
-    }
-    inline void addPartInExchList(int tid, int iPart) {
-        indexes_of_particles_to_exchange_per_thd[tid].push_back(iPart);
-    }
-
     //! \ Should be pure virtual
     virtual bool isEaster ( ){WARNING("Problem");return false;}
     virtual bool isWester ( ){WARNING("Problem");return false;}
@@ -108,9 +96,6 @@ public:
 protected:
     MPI_Comm SMILEI_COMM_WORLD;
 
-    //! indexes_of_particles_to_exchange built in Species::dynamics
-    std::vector< std::vector<int> > indexes_of_particles_to_exchange_per_thd;
-    std::vector<int>                indexes_of_particles_to_exchange;
     //! Sort particles to exchange per direction, contains indexes
     std::vector<int> buff_index_send[3][2];
     //! buff_index_recv_sz : number of particles to recv per direction
@@ -131,7 +116,7 @@ protected:
 private:
 
     void bcast( std::string& val );
-    void bcast( short &val );
+    /*void bcast( short &val );
     void bcast( unsigned int &val );
     void bcast( double& val );
     void bcast( bool& val );
@@ -142,7 +127,7 @@ private:
     void bcast( SpeciesStructure& speciesStructure );
     void bcast( std::vector<SpeciesStructure>& vecSpeciesStructure );
     void bcast( LaserStructure& laserStructure );
-    void bcast( std::vector<LaserStructure>& vecLaserStructure );
+    void bcast( std::vector<LaserStructure>& vecLaserStructure );*/
 
 };
 
