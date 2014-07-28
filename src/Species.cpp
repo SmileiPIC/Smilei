@@ -608,6 +608,30 @@ double Species::density_profile(PicParams* params, vector<double> x_cell, unsign
             }
             
         }
+        
+        // Gaussin density profile
+        // ---------------------------
+        else if (params->plasma_geometry=="gaussian") {
+            
+            double lt=params->cut[0]*params->sigma[0];
+            // vacuum region
+            if ( x_cell[0] < params->vacuum_length[0] ) {
+                return 0.0;
+            }
+            //gaussian
+            else if(x_cell[0] < params->vacuum_length[0]+lt ) {
+                return exp(-(x_cell[0]-params->vacuum_length[0]-lt)*(x_cell[0]-params->vacuum_length[0]-lt)/(2*params->sigma[0]*params->sigma[0]));
+                
+            }
+            else if(x_cell[0] < params->vacuum_length[0]+ 2*lt) {
+                return exp(-(x_cell[0]-params->vacuum_length[0]-lt)*(x_cell[0]-params->vacuum_length[0]-lt)/(2*params->sigma[0]*params->sigma[0]));
+            }
+
+            else{
+                return 0.0;
+            }
+        }
+        
         // Other density profile
         // ---------------------
         else {

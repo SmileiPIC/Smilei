@@ -111,8 +111,22 @@ PicParams::PicParams(InputData &ifile) {
         for(unsigned int i=0;i<nDim_field;i++) {
             right_slope_length[i]=plasma_length[i]-left_slope_length[i];
         }
+    }
+        else if(plasma_geometry=="gaussian"){
+            ifile.extract("plasma_length", plasma_length);
+            ifile.extract("vacuum_length", vacuum_length);
+            ifile.extract("cut",cut);
+            sigma.resize(nDim_field);
+            if(cut.size()==0){
+                cut.resize(nDim_field);
+                for(unsigned int i=0;i<nDim_field;i++) cut[i]=3.0;
+            }
+            if(plasma_length.size()!=0){
+                for(unsigned int i=0;i<nDim_field;i++) sigma[i]=plasma_length[i]/(2*cut[i]);
+            }
+        }
         
-    } else if (plasma_geometry=="fukuda"){
+     else if (plasma_geometry=="fukuda"){
         WARNING("plasma geometry: fukuda vacuum & plasma length are not used");
         ifile.extract("plasma_length", plasma_length);
         ifile.extract("vacuum_length", vacuum_length);
@@ -258,6 +272,11 @@ void PicParams::compute()
                 left_slope_length[i]*= 2.0*M_PI;
                 right_slope_length[i]*= 2.0*M_PI;
             }
+            else if(plasma_geometry=="gaussian"){
+                sigma[i]*= 2.0*M_PI;
+                
+            }
+
         }
         for (unsigned int i=nDim_field; i<3; i++) {
             n_space[i]=1;

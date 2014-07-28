@@ -162,6 +162,12 @@ public:
     
     //! right slope lengths(not symmetric for trapezoidal case)
     std::vector<double> right_slope_length;
+    
+    //! cut parameter for a gaussian profile
+    std::vector<double> cut;
+    
+    //! sigma parameter for a gaussian profile
+    std::vector<double> sigma;
 
     //! initial number of species
     unsigned int n_species;
