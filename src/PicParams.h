@@ -168,6 +168,9 @@ public:
     
     //! sigma parameter for a gaussian profile
     std::vector<double> sigma;
+    
+    //! plateau for a gaussian profile
+    std::vector<double> plateau;
 
     //! initial number of species
     unsigned int n_species;

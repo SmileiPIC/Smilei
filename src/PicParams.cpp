@@ -116,13 +116,18 @@ PicParams::PicParams(InputData &ifile) {
             ifile.extract("plasma_length", plasma_length);
             ifile.extract("vacuum_length", vacuum_length);
             ifile.extract("cut",cut);
+            ifile.extract("plateau",plateau);
             sigma.resize(nDim_field);
             if(cut.size()==0){
                 cut.resize(nDim_field);
                 for(unsigned int i=0;i<nDim_field;i++) cut[i]=3.0;
             }
+            if(plateau.size()==0){
+                plateau.resize(nDim_field);
+                for(unsigned int i=0;i<nDim_field;i++) plateau[i]=0.0;
+            }
             if(plasma_length.size()!=0){
-                for(unsigned int i=0;i<nDim_field;i++) sigma[i]=plasma_length[i]/(2*cut[i]);
+                for(unsigned int i=0;i<nDim_field;i++) sigma[i]=(plasma_length[i]-plateau[i])/(2*cut[i]);
             }
         }
         
@@ -274,7 +279,7 @@ void PicParams::compute()
             }
             else if(plasma_geometry=="gaussian"){
                 sigma[i]*= 2.0*M_PI;
-                
+                plateau[i]*= 2.0*M_PI;
             }
 
         }

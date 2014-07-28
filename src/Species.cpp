@@ -623,10 +623,13 @@ double Species::density_profile(PicParams* params, vector<double> x_cell, unsign
                 return exp(-(x_cell[0]-params->vacuum_length[0]-lt)*(x_cell[0]-params->vacuum_length[0]-lt)/(2*params->sigma[0]*params->sigma[0]));
                 
             }
-            else if(x_cell[0] < params->vacuum_length[0]+ 2*lt) {
-                return exp(-(x_cell[0]-params->vacuum_length[0]-lt)*(x_cell[0]-params->vacuum_length[0]-lt)/(2*params->sigma[0]*params->sigma[0]));
+            else if(x_cell[0] < params->vacuum_length[0]+lt+params->plateau[0]) {
+                return 1.0;
             }
-
+            else if(x_cell[0] < params->vacuum_length[0]+ 2*lt+params->plateau[0]) {
+                return exp(-(x_cell[0]-params->vacuum_length[0]-lt-params->plateau[0])*(x_cell[0]-params->vacuum_length[0]-lt-params->plateau[0])/(2*params->sigma[0]*params->sigma[0]));
+            }
+            
             else{
                 return 0.0;
             }
