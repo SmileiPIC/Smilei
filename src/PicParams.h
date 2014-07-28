@@ -171,6 +171,12 @@ public:
     
     //! plateau for a gaussian profile
     std::vector<double> plateau;
+    
+    //! polygonal density profile in x direction
+    std::vector<double> x_density_coor;
+    
+    //! polygonal density profile relative values in x direction
+    std::vector<double> density_rel_values_x;
 
     //! initial number of species
     unsigned int n_species;

@@ -634,7 +634,28 @@ double Species::density_profile(PicParams* params, vector<double> x_cell, unsign
                 return 0.0;
             }
         }
-        
+        // Polygonal density profile
+        // ---------------------------
+        else if (params->plasma_geometry=="polygonal") {
+            // vacuum region
+            if ( x_cell[0] < params->vacuum_length[0] ) {
+                return 0.0;
+            }
+            else if(x_cell[0] < params->vacuum_length[0]+params->plasma_length[0]){
+                for(unsigned int i=1;i<params->x_density_coor.size();++i){
+                    if (x_cell[0]<params->x_density_coor[i]&&x_cell[0]>=params->x_density_coor[i-1]){
+                        double m = (params->density_rel_values_x[i]-params->density_rel_values_x[i-1])/
+                        (params->x_density_coor[i]-params->x_density_coor[i-1]);
+                        
+                        return params->density_rel_values_x[i-1]+m*(x_cell[0]-params->x_density_coor[i-1]);
+                    }
+                }
+                
+            }
+            else{
+                return 0.0;
+            }
+        }
         // Other density profile
         // ---------------------
         else {
