@@ -179,8 +179,10 @@ void DiagnosticScalar::compute() {
 }
 
 void DiagnosticScalar::write(int itime) {
-    const unsigned int width=16;
+    const unsigned int precision=12;
     if(smpi_->isMaster()) {
+        fout << std::scientific;
+        fout.precision(precision);
         if (fout.tellp()==ifstream::pos_type(0)) {
             fout << "# " << 1 << " time" << endl;
             unsigned int i=2;
@@ -189,15 +191,15 @@ void DiagnosticScalar::write(int itime) {
                 i++;
             }
 
-            fout << "#\n#" << setw(width) << "time";
+            fout << "#\n#" << setw(precision+8) << "time";
             for(vector<pair<string,double> >::iterator iter = out_list.begin(); iter !=out_list.end(); iter++) {
-                fout << setw(width) << (*iter).first;
+                fout << setw(precision+8) << (*iter).first;
             }
             fout << endl;
         }
-        fout << setw(width) << itime;
+        fout << setw(precision+8) << itime;
         for(vector<pair<string,double> >::iterator iter = out_list.begin(); iter !=out_list.end(); iter++) {
-            fout << setw(width) << (*iter).second;
+            fout << setw(precision+8) << (*iter).second;
         }
         fout << endl;
     }

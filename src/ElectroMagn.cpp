@@ -9,6 +9,7 @@
 #include "Projector.h"
 #include "Laser.h"
 #include "Field.h"
+#include <iomanip>
 
 using namespace std;
 
@@ -25,9 +26,7 @@ ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi)
     // take useful things from params
     cell_volume=params->cell_volume;
     n_space=params->n_space;
-    
     oversize=params->oversize;
-    
     for (unsigned int i=0; i<3; i++) {
         DEBUG("____________________ OVERSIZE: " <<i << " " << oversize[i]);
     }
@@ -206,19 +205,31 @@ void ElectroMagn::computeScalars()
         
         map<string,vector<double> > scalars_map;
         
-        vector<double> Etot(1);
-        
-        vector<unsigned int> iFieldStart(3,0), iFieldEnd(3,1);
+        vector<double> Etot(1,0);
+
+        vector<unsigned int> iFieldStart(3,0), iFieldEnd(3,1), iFieldGlobalSize(3,1);
         for ( int i=0 ; i<(*field)->isDual_.size() ; i++ ) {
-            iFieldStart[i] = istart [i][(*field)->isDual(i)];
+            iFieldStart[i] = istart[i][(*field)->isDual(i)];
             iFieldEnd [i] = iFieldStart[i] + bufsize[i][(*field)->isDual(i)];
+            iFieldGlobalSize [i] = (*field)->dims_[i];
         }
-        DEBUG((*field)->name << " " << iFieldStart[0] << " " << iFieldEnd[0] << " = " << iFieldEnd[0] - iFieldStart[0]);
+        
+//        unsigned int my_incr=0;
         for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
             for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
                 for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
-                    //unsigned int ii=i+j*n_space[0]+k*n_space[0]*n_space[1];
-                    unsigned int ii=i+j*(*field)->dims_[0]+k*(*field)->dims_[0]*(*field)->dims_[1];
+// was:             unsigned int ii=i+j*(*field)->dims_[0]+k*(*field)->dims_[0]*(*field)->dims_[1];
+                    unsigned int ii=k+ j*iFieldGlobalSize[2] +i*iFieldGlobalSize[1]*iFieldGlobalSize[2];
+
+                    //!debug stuff
+//                    int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk );
+//                    if ((*field)->name == "Ex" && __rk==1) {
+//                        DEBUG(__rk << " ------------------- "<< (*field)->name << "  -> " << ii << " " << ++my_incr << " " << std::scientific << setprecision(12) << setw(20) << (**field)(ii));
+//                        DEBUG( i << " " << j);
+//                        DEBUG(iFieldStart[0] << " " <<  iFieldStart[1] << " " << iFieldEnd[0] << " " <<  iFieldEnd[1]);
+//                        DEBUG((*field)->dims_[0] << " " <<  (*field)->dims_[1] << " " <<  (*field)->dims_[2] << " : " << (*field)->globalDims_);
+//                    }
+
                     Etot[0]+=pow((**field)(ii),2);
                 }
             }
@@ -239,26 +250,22 @@ void ElectroMagn::computeScalars()
     for (vector<Field*>::iterator field=fields.begin(); field!=fields.end(); field++) {
         
         map<string,vector<double> > scalars_map;
+        vector<double> minVec(4,0);
+        vector<double> maxVec(4,0);
         
-        vector<double> minVec(4);
-        vector<double> maxVec(4);
+        minVec[0]=maxVec[0]=(**field)(0);
         
-        minVec[0]=(**field)(0);
-        maxVec[0]=(**field)(0);
-        minVec[1]=maxVec[1]=0;
-        minVec[2]=maxVec[2]=0;
-        minVec[3]=maxVec[3]=0;
-        
-        vector<unsigned int> iFieldStart(3,0), iFieldEnd(3,1);
+        vector<unsigned int> iFieldStart(3,0), iFieldEnd(3,1), iFieldGlobalSize(3,1);
         for ( int i=0 ; i<(*field)->isDual_.size() ; i++ ) {
             iFieldStart[i] = istart [i][(*field)->isDual(i)];
             iFieldEnd [i] = iFieldStart[i] + bufsize[i][(*field)->isDual(i)];
+            iFieldGlobalSize [i] = (*field)->dims_[i];
         }
         for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
             for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
                 for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
-                    //unsigned int ii=i+j*n_space[0]+k*n_space[0]*n_space[1];
-                    unsigned int ii=i+j*(*field)->dims_[0]+k*(*field)->dims_[0]*(*field)->dims_[1];
+// was:             unsigned int ii=i+j*(*field)->dims_[0]+k*(*field)->dims_[0]*(*field)->dims_[1];
+                    unsigned int ii=k+ j*iFieldGlobalSize[2] +i*iFieldGlobalSize[1]*iFieldGlobalSize[2];
                     if (minVec[0]>(**field)(ii)) {
                         minVec[0]=(**field)(ii);
                         minVec[1]=i;
@@ -276,8 +283,7 @@ void ElectroMagn::computeScalars()
         }
         minVec.resize(1+(*field)->dims_.size());
         maxVec.resize(1+(*field)->dims_.size());
-        
-        
+
         // we just store the values that change
         scalars_map["min"]=minVec;
         scalars_map["max"]=maxVec;

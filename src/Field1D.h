@@ -42,16 +42,16 @@ public:
     //! Overloading of the () operator allowing to set a new value for the ith element of a Field1D
     inline double& operator () (unsigned int i)
     {
-        DEBUGEXEC(if (i>=dims_[0]) ERROR("Out of limits & "<< i));
-        DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR("Not finite "<< i << " = " << data_[i]));
+        DEBUGEXEC(if (i>=dims_[0]) ERROR(name << "Out of limits & "<< i));
+        DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR(name << "Not finite "<< i << " = " << data_[i]));
         return data_[i];
     };
 
     //! Overloading of the () operator allowing to get the value of the ith element of a Field1D
     inline double operator () (unsigned int i) const
     {
-        DEBUGEXEC(if (i>=dims_[0]) ERROR("Out of limits "<< i));
-        DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR("Not finite "<< i << " = " << data_[i]));
+        DEBUGEXEC(if (i>=dims_[0]) ERROR(name << "Out of limits "<< i));
+        DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR(name << "Not finite "<< i << " = " << data_[i]));
         return data_[i];
     };
 

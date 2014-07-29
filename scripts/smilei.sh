@@ -13,21 +13,23 @@ DIRSMILEI="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 smilei=$DIRSMILEI/../src/smilei
 
-if [ "$#" -ne 3 ]; then
+if [ "$#" -le 1 ]; then
     echo "Illegal number of parameters"
-    echo "$0 <namelist> <stub> <proc number>"
+    echo "$0 <namelist> <proc number>"
     exit 1
 fi
 
-dir="$2-$3"
-rm -rf $dir
-mkdir $dir
-cp $1 $dir
-cd $dir
-nml=`basename $1`
 
-$MPIEXEC -np $3 $smilei $nml
+base=`basename $1 .in`
 
-#  a=1
-#  bind "[" 'a=a-1; set title system(sprintf("sed \"%dq;d\" pippo-1/scalars.txt",a)); repl'
-#  bind "]" 'a=a+1; set title system(sprintf("sed \"%dq;d\" pippo-1/scalars.txt",a)); repl'
+
+for i in ${@:2}
+do 
+    dir="$base-$i"
+    rm -rf $dir
+    mkdir -p $dir
+    cp $1 $dir
+    cd $dir
+    $MPIEXEC -np $i $smilei $1
+    cd ..
+done
