@@ -166,7 +166,6 @@ string DiagnosticProbe::probeName(int p) {
 }
 
 void DiagnosticProbe::run(unsigned int timestep, ElectroMagn* EMfields, Interpolator* interp) {
-
     for (unsigned int np=0; np<every.size(); np++) {
         if (every[np] && timestep % every[np] == 0) {
             vector<double> data(probeSize);
@@ -200,9 +199,11 @@ void DiagnosticProbe::run(unsigned int timestep, ElectroMagn* EMfields, Interpol
             
             H5Dset_extent(did, &dimsO[0]);
             
+            H5Sclose(sid);
+            
             sid = H5Dget_space(did);
             
-            for (int iprob=0; iprob <probeParticles[np].size(); iprob++) {
+            for (unsigned int iprob=0; iprob <probeParticles[np].size(); iprob++) {
                 
                 vector<hsize_t> count(dimProbe);
                 if (probeId[np][iprob]==smpi_->getRank()) {
@@ -225,7 +226,7 @@ void DiagnosticProbe::run(unsigned int timestep, ElectroMagn* EMfields, Interpol
                 H5Pset_dxpl_mpio(pid, H5FD_MPIO_INDEPENDENT);
                 
                 if (probeId[np][iprob]==smpi_->getRank()) {
-                    (*interp)(EMfields,probeParticles[np],iprob,&Eloc_fields,&Bloc_fields,&Jloc_fields,&data[9]);
+                    (*interp)(EMfields,probeParticles[np],iprob,&Eloc_fields,&Bloc_fields,&Jloc_fields,&data[probeSize-1]);
                     
                     //! here we fill the probe data!!!
                     data[0]=Eloc_fields.x;

@@ -51,7 +51,7 @@ public:
 
     //! Particles output in progress
     unsigned int nDatasetSpecies;
-    hid_t* partDataset_id;  /* identifiers */
+    std::vector<hid_t> partDataset_id;  /* identifiers */
     hid_t partMemSpace;
     int particleSize;
 	

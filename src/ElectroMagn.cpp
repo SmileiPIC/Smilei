@@ -208,7 +208,7 @@ void ElectroMagn::computeScalars()
         vector<double> Etot(1,0);
 
         vector<unsigned int> iFieldStart(3,0), iFieldEnd(3,1), iFieldGlobalSize(3,1);
-        for ( int i=0 ; i<(*field)->isDual_.size() ; i++ ) {
+        for (unsigned int i=0 ; i<(*field)->isDual_.size() ; i++ ) {
             iFieldStart[i] = istart[i][(*field)->isDual(i)];
             iFieldEnd [i] = iFieldStart[i] + bufsize[i][(*field)->isDual(i)];
             iFieldGlobalSize [i] = (*field)->dims_[i];
@@ -256,7 +256,7 @@ void ElectroMagn::computeScalars()
         minVec[0]=maxVec[0]=(**field)(0);
         
         vector<unsigned int> iFieldStart(3,0), iFieldEnd(3,1), iFieldGlobalSize(3,1);
-        for ( int i=0 ; i<(*field)->isDual_.size() ; i++ ) {
+        for (unsigned int i=0 ; i<(*field)->isDual_.size() ; i++ ) {
             iFieldStart[i] = istart [i][(*field)->isDual(i)];
             iFieldEnd [i] = iFieldStart[i] + bufsize[i][(*field)->isDual(i)];
             iFieldGlobalSize [i] = (*field)->dims_[i];

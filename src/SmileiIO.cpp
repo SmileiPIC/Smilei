@@ -43,22 +43,29 @@ SmileiIO::SmileiIO( PicParams* params, SmileiMPI* smpi ) : dump_times(0), stop_f
     hsize_t chunk_dims[2] = {1, particleSize};
     H5Pset_chunk(plist, 2, chunk_dims);
 	
-    nDatasetSpecies = params->n_species;
-    partDataset_id = new hid_t[nDatasetSpecies];
-    for (unsigned int ispec=0 ; ispec<nDatasetSpecies ; ispec++) {
+    for (unsigned int ispec=0 ; ispec<params->species_param.size() ; ispec++) {
         ostringstream speciesName("");
         speciesName << params->species_param[ispec].species_type;
-        partDataset_id[ispec] = H5Dcreate(partFile_id, speciesName.str().c_str(), H5T_NATIVE_FLOAT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
-		
+
+        //here we check for the presence of multiple ccurence of the same particle name... Souldn't we add a tag for each species?
+        unsigned int occurrence=0;
+        for (unsigned int iocc=0 ; iocc<ispec ; iocc++) {
+            if (params->species_param[ispec].species_type == params->species_param[iocc].species_type)
+                occurrence++;
+        }
+        if (occurrence>0) 
+            speciesName << "_" << occurrence;
+        
+        hid_t did = H5Dcreate(partFile_id, speciesName.str().c_str(), H5T_NATIVE_FLOAT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
+        partDataset_id.push_back(did);
+        
         hid_t tmp_space = H5Screate(H5S_SCALAR);
 		
-        attribute_id = H5Acreate (partDataset_id[ispec], "Mass", H5T_IEEE_F64BE, tmp_space,
-								  H5P_DEFAULT, H5P_DEFAULT);
+        attribute_id = H5Acreate (partDataset_id[ispec], "Mass", H5T_IEEE_F64BE, tmp_space,H5P_DEFAULT, H5P_DEFAULT);
         H5Awrite(attribute_id, H5T_NATIVE_DOUBLE, &params->species_param[ispec].mass);
         H5Aclose(attribute_id);
 		
-        attribute_id = H5Acreate (partDataset_id[ispec], "Charge", H5T_IEEE_F64BE, tmp_space,
-								  H5P_DEFAULT, H5P_DEFAULT);
+        attribute_id = H5Acreate (partDataset_id[ispec], "Charge", H5T_IEEE_F64BE, tmp_space,H5P_DEFAULT, H5P_DEFAULT);
         H5Awrite(attribute_id, H5T_NATIVE_DOUBLE, &params->species_param[ispec].charge);
         H5Aclose(attribute_id);
 		
@@ -99,9 +106,8 @@ SmileiIO::~SmileiIO()
     H5Fclose( global_file_id_avg );
 	
     H5Sclose(partMemSpace);
-    for ( unsigned int s=0 ; s<nDatasetSpecies ; s++ )
+    for ( unsigned int s=0 ; s<partDataset_id.size() ; s++ )
         H5Dclose(partDataset_id[s]);
-    delete [] partDataset_id;
     H5Fclose(partFile_id);
 	
     H5Pclose( write_plist );

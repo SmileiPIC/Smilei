@@ -64,7 +64,7 @@ PicParams::PicParams(InputData &ifile) {
     }
     
     ifile.extract("plasma_geometry", plasma_geometry);
-    if ( (plasma_geometry=="constant") || (plasma_geometry=="crossx") || (plasma_geometry=="crossy") ) {
+    if ( (plasma_geometry=="constant") || (plasma_geometry=="crossx") || (plasma_geometry=="crossy")) {
         ifile.extract("plasma_length", plasma_length);
         ifile.extract("vacuum_length", vacuum_length);
         if (plasma_length.size()!=nDim_field || vacuum_length.size()!=nDim_field) {
@@ -120,7 +120,9 @@ PicParams::PicParams(InputData &ifile) {
         vacuum_length[1] = 0.0;
         plasma_length[0] = 112.0;
         plasma_length[1] = 40.0;
-        
+    } else if (plasma_geometry=="separated") {
+        ifile.extract("plasma_length", plasma_length);
+        ifile.extract("vacuum_length", vacuum_length);
     } else {
         ERROR("unknown plasma_geometry "<< plasma_geometry);
     }

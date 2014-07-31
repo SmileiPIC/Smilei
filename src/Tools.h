@@ -47,7 +47,8 @@
 #define PMESSAGE(...) PMESSAGE4(__VA_ARGS__)(__VA_ARGS__)
 
 #ifdef  __DEBUG
-#warning "DEBUG MODE "
+
+//#warning "DEBUG MODE "
 extern int debug_level;
 
 #define DEBUG1(__txt) {if(debug_level>=0) __header("DEBUG", __txt);}
@@ -61,12 +62,16 @@ extern int debug_level;
 #define DEBUGEXEC(...) __VA_ARGS__
 #define RELEASEEXEC(...)
 
+#define HEREIAM(__txt) {const int __num_minus=40; int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); for(int __i=0;__i<__num_minus;__i++) {std::cerr << "-";}; std::cerr << "> " << __rk << " " << __FILE__ << ":" << __LINE__ << " (" << __FUNCTION__ << ") " << __txt << " <" ; for(int __i=0;__i<__num_minus;__i++) {std::cerr << "-";}; std::cerr << std::endl; }
+
 #else
 #define DEBUG(...)
 #define DEBUGEXEC(...)
 #define RELEASEEXEC(...) __VA_ARGS__
 
 #define ERROR(__txt) {__header("ERROR", __txt); MPI_Finalize(); exit(EXIT_FAILURE);}
+
+#define HEREIAM(...) 
 
 #endif
 

@@ -2,6 +2,10 @@
 
 MPIEXEC=mpiexec
 
+
+isnumber() { test "$1" && printf '%d' "$1" >/dev/null 2>&1; }
+
+
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
   DIRSMILEI="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
@@ -23,13 +27,16 @@ fi
 base=`basename $1 .in`
 
 
-for i in ${@:2}
+for proc in ${@:2}
 do 
-    dir="$base-$i"
-    rm -rf $dir
-    mkdir -p $dir
-    cp $1 $dir
-    cd $dir
-    $MPIEXEC -np $i $smilei $1
-    cd ..
+    if [[ $proc = *[[:digit:]]* ]]
+    then
+        dir="$base-$proc"
+        rm -rf $dir
+        mkdir -p $dir
+        cp $1 $dir
+        cd $dir
+        $MPIEXEC -np $proc $smilei $1
+        cd ..
+    fi
 done

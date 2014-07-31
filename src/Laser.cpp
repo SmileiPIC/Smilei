@@ -163,8 +163,6 @@ double Laser::time_profile(double time_dual) {
         }
         // sin2 fall
         else if (time_dual<=double_params[2]+double_params[0]+double_params[1]+double_params[0]) {
-            DEBUG(pow( cos(pi_ov_2 * (time_dual-(double_params[2]+double_params[0]+double_params[1]))
-                           / double_params[0] ) , 2 ))
             return pow( cos(pi_ov_2 * (time_dual-(double_params[2]+double_params[0]+double_params[1]))
                             / double_params[0] ) , 2 );
         }

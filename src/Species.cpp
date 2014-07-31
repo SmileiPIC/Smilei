@@ -608,6 +608,22 @@ double Species::density_profile(PicParams* params, vector<double> x_cell, unsign
             }
             
         }
+        // odd  species plasma is plasma_length[0] thick and starts at vacuum_length[0]
+        // even species plasma is plasma_length[0] thick and starts at vacuum_length[0] + plasma_length[0] + vacuum_length[1]
+        else if (params->plasma_geometry=="separated") {
+            if ((ispec%2)==0) {                
+                if (x_cell[0] > params->vacuum_length[0] && x_cell[0] < params->vacuum_length[0]+ params->plasma_length[0]) {
+                    return 1.0;
+                }
+            } else {                
+                if (x_cell[0] > params->vacuum_length[0]+ params->plasma_length[0]+params->vacuum_length[1] && x_cell[0] < params->vacuum_length[0]+ 2*params->plasma_length[0] + params->vacuum_length[1]) {
+                    return 1.0;
+                }
+            }
+            return 0.0;
+        }
+        
+        
         // Other density profile
         // ---------------------
         else {
