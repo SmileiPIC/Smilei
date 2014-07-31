@@ -172,7 +172,7 @@ int main (int argc, char* argv[])
 		
 	smpi->sumRhoJ( EMfields );
 	// Init electric field (Ex/1D, + Ey/2D)
-	EMfields->solvePoisson(smpi);
+//	EMfields->solvePoisson(smpi);
         
 	// run diagnostics at time-step 0
 	Diags->runAllDiags(0, EMfields, vecSpecies, Interp);

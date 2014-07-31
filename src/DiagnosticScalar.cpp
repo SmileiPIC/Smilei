@@ -13,7 +13,8 @@ using namespace std;
 // constructor
 DiagnosticScalar::DiagnosticScalar(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi) :
 every(diagParams->scalar_every),
-smpi_(smpi)
+smpi_(smpi),
+res_time(params->res_time)
 {
     smpi_=smpi;
     if (smpi_->isMaster()) {
@@ -107,75 +108,80 @@ void DiagnosticScalar::compute_proc_gather (ElectroMagn* EMfields, vector<Specie
 
 // Each scalar diagnostic should be calculated here
 void DiagnosticScalar::compute() {
-    if(smpi_->isMaster()) {
-        out_list.clear();
-        for(unsigned int ispec=0; ispec<mpi_spec_scalars[0].size(); ++ispec) {
-            double charge_tot=0;
-            unsigned int part_tot=0;
-            double ener_tot=0;
-            for(int iCPU=0; iCPU<smpi_->getSize(); iCPU++) {
-                charge_tot+=mpi_spec_scalars[iCPU][ispec]["charge_tot"];
-                part_tot+=mpi_spec_scalars[iCPU][ispec]["part_number"];
-                ener_tot+=mpi_spec_scalars[iCPU][ispec]["energy_tot"];
-
-            }
-            if (part_tot) charge_tot/=part_tot;
-			ostringstream name(""); 
-			name << ispec;
-			
-            out_list.push_back(make_pair("charge_tot-"+name.str(),charge_tot));
-            out_list.push_back(make_pair("part_tot-"+name.str(),part_tot));
-            out_list.push_back(make_pair("energy_tot-"+name.str(),ener_tot));
+    if(!smpi_->isMaster()) return;
+    out_list.clear();
+    double E_tot_particles=0.0;
+    for(unsigned int ispec=0; ispec<mpi_spec_scalars[0].size(); ++ispec) {
+        double charge_tot=0;
+        unsigned int part_tot=0;
+        double ener_tot=0;
+        for(int iCPU=0; iCPU<smpi_->getSize(); iCPU++) {
+            charge_tot+=mpi_spec_scalars[iCPU][ispec]["charge_tot"];
+            part_tot+=mpi_spec_scalars[iCPU][ispec]["part_number"];
+            ener_tot+=mpi_spec_scalars[iCPU][ispec]["energy_tot"];
+            
         }
-
-        for (map<string,map<string,vector<double> > >::iterator iterEM=mpi_EM_scalars[0].begin(); iterEM!=mpi_EM_scalars[0].end(); iterEM++) {
-            string nameEm=iterEM->first;
-            for (map<string,vector<double> >::iterator iterMap=iterEM->second.begin(); iterMap!=iterEM->second.end(); iterMap++ ) {
-                string nameType=iterMap->first;
-
-                unsigned iCPUval=0;
-                if (nameType=="min") {
-                    double val=mpi_EM_scalars[iCPUval][nameEm][nameType][0];
-                    unsigned int ival=mpi_EM_scalars[iCPUval][nameEm][nameType][1];
-                    for(int iCPU=0; iCPU<smpi_->getSize(); iCPU++) {
-                        if (mpi_EM_scalars[iCPU][nameEm][nameType][0]<val) {
-                            iCPUval=iCPU;
-                            val=mpi_EM_scalars[iCPUval][nameEm][nameType][0];
-                            ival=mpi_EM_scalars[iCPUval][nameEm][nameType][1];
-                        }
-                    }
-                    out_list.push_back(make_pair(nameEm+"_"+nameType,val));
-//                    out_list.push_back(make_pair(nameEm+"_"+nameType+"_i",ival));
-//                    out_list.push_back(make_pair(nameEm+"_"+nameType+"_cpu",iCPUval));
-                } else if (nameType=="max") {
-                    double val=mpi_EM_scalars[iCPUval][nameEm][nameType][0];
-                    unsigned int ival=mpi_EM_scalars[iCPUval][nameEm][nameType][1];
-                    for(int iCPU=0; iCPU<smpi_->getSize(); iCPU++) {
-                        if (mpi_EM_scalars[iCPU][nameEm][nameType][0]>val) {
-                            iCPUval=iCPU;
-                            val=mpi_EM_scalars[iCPUval][nameEm][nameType][0];
-                            ival=mpi_EM_scalars[iCPUval][nameEm][nameType][1];
-                        }
-                    }
-                    out_list.push_back(make_pair(nameEm+"_"+nameType,val));
-//                    out_list.push_back(make_pair(nameEm+"_"+nameType+"_i",ival));
-//                    out_list.push_back(make_pair(nameEm+"_"+nameType+"_cpu",iCPUval));
-                } else if (nameType=="sum") {
-                    double val=0;
-                    for(int iCPU=0; iCPU<smpi_->getSize(); iCPU++) {
-                        val+=mpi_EM_scalars[iCPU][nameEm][nameType][0];
-                    }
-                    out_list.push_back(make_pair(nameEm+"_"+nameType,val));
-                } else {
-                    DEBUG("Don't know what to do with " << nameType);
-                }
-            }
-
-        }
-
-
-
+        if (part_tot) charge_tot/=part_tot;
+        ostringstream name(""); 
+        name << ispec;
+        
+        out_list.push_back(make_pair("charge_tot-"+name.str(),charge_tot));
+        out_list.push_back(make_pair("part_tot-"+name.str(),part_tot));
+        out_list.push_back(make_pair("energy_tot-"+name.str(),ener_tot));
+        E_tot_particles+=ener_tot;
     }
+    out_list.push_back(make_pair("E_part_tot",E_tot_particles));
+    
+    for (map<string,map<string,vector<double> > >::iterator iterEM=mpi_EM_scalars[0].begin(); iterEM!=mpi_EM_scalars[0].end(); iterEM++) {
+        string nameEm=iterEM->first;
+        for (map<string,vector<double> >::iterator iterMap=iterEM->second.begin(); iterMap!=iterEM->second.end(); iterMap++ ) {
+            string nameType=iterMap->first;
+            
+            unsigned iCPUval=0;
+            if (nameType=="min") {
+                double val=mpi_EM_scalars[iCPUval][nameEm][nameType][0];
+                unsigned int ival=mpi_EM_scalars[iCPUval][nameEm][nameType][1];
+                for(int iCPU=0; iCPU<smpi_->getSize(); iCPU++) {
+                    if (mpi_EM_scalars[iCPU][nameEm][nameType][0]<val) {
+                        iCPUval=iCPU;
+                        val=mpi_EM_scalars[iCPUval][nameEm][nameType][0];
+                        ival=mpi_EM_scalars[iCPUval][nameEm][nameType][1];
+                    }
+                }
+                out_list.push_back(make_pair(nameEm+"_"+nameType,val));
+                //                    out_list.push_back(make_pair(nameEm+"_"+nameType+"_i",ival));
+                //                    out_list.push_back(make_pair(nameEm+"_"+nameType+"_cpu",iCPUval));
+            } else if (nameType=="max") {
+                double val=mpi_EM_scalars[iCPUval][nameEm][nameType][0];
+                unsigned int ival=mpi_EM_scalars[iCPUval][nameEm][nameType][1];
+                for(int iCPU=0; iCPU<smpi_->getSize(); iCPU++) {
+                    if (mpi_EM_scalars[iCPU][nameEm][nameType][0]>val) {
+                        iCPUval=iCPU;
+                        val=mpi_EM_scalars[iCPUval][nameEm][nameType][0];
+                        ival=mpi_EM_scalars[iCPUval][nameEm][nameType][1];
+                    }
+                }
+                out_list.push_back(make_pair(nameEm+"_"+nameType,val));
+                //                    out_list.push_back(make_pair(nameEm+"_"+nameType+"_i",ival));
+                //                    out_list.push_back(make_pair(nameEm+"_"+nameType+"_cpu",iCPUval));
+            } else if (nameType=="sum") {
+                double val=0;
+                for(int iCPU=0; iCPU<smpi_->getSize(); iCPU++) {
+                    val+=mpi_EM_scalars[iCPU][nameEm][nameType][0];
+                }
+                out_list.push_back(make_pair(nameEm+"_"+nameType,val));
+            } else {
+                DEBUG("Don't know what to do with " << nameType);
+            }
+        }
+        
+    }
+    for (unsigned int i=0; i< out_list.size(); i++) {
+        if (out_list[i].first=="E_EMfields_sum") {
+            out_list.push_back(make_pair("Total_Energy",E_tot_particles+out_list[i].second));
+        }
+    }
+    
 }
 
 void DiagnosticScalar::write(int itime) {
@@ -197,7 +203,7 @@ void DiagnosticScalar::write(int itime) {
             }
             fout << endl;
         }
-        fout << setw(precision+8) << itime;
+        fout << setw(precision+8) << itime/res_time;
         for(vector<pair<string,double> >::iterator iter = out_list.begin(); iter !=out_list.end(); iter++) {
             fout << setw(precision+8) << (*iter).second;
         }

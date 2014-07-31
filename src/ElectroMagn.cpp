@@ -225,6 +225,8 @@ void ElectroMagn::computeScalars()
     fields.push_back(By_m);
     fields.push_back(Bz_m);
     
+    vector<double> E_tot_fields(1,0);
+    
     for (vector<Field*>::iterator field=fields.begin(); field!=fields.end(); field++) {
         
         map<string,vector<double> > scalars_map;
@@ -260,9 +262,18 @@ void ElectroMagn::computeScalars()
         }
         Etot[0]*=0.5*cell_volume;
         scalars_map["sum"]=Etot;
-        
+        E_tot_fields[0]+=Etot[0];
         scalars[(*field)->name+"_U"]=scalars_map;
     }
+    
+    //Field energy stuff
+    map<string,vector<double> > E_tot_fields_map;
+    E_tot_fields_map["sum"]=E_tot_fields;
+    scalars["E_EMfields"]=E_tot_fields_map;
+    
+    
+    
+    // now we add currents and density
     
     fields.push_back(Jx_);
     fields.push_back(Jy_);
@@ -322,7 +333,6 @@ void ElectroMagn::computeScalars()
     map<string,vector<double> > poynting_map_sup;
     poynting_map_sup["sum"]=poynting[1];
     scalars["Poy_sup"]=poynting_map_sup;
-    
     
 }
 

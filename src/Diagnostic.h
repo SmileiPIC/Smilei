@@ -35,7 +35,7 @@ public:
     void runAllDiags (int timestep, ElectroMagn* EMfields, std::vector<Species*>&, Interpolator *interp);
  
 private:
-
+    
     DiagnosticScalar scalars;
 
     DiagnosticProbe probes;

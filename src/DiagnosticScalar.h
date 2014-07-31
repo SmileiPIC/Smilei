@@ -42,6 +42,9 @@ public:
     void write(int timestep);
 
 private:
+    //! this is copied from params
+    double res_time;
+    
     //! every step to calculate scalars
     unsigned int every;
     
