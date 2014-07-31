@@ -19,7 +19,7 @@ interpolation_order = 4
 # sim_time: duration of the simulation in units of the normalization period 
 #
 res_time = 100
-sim_time = 200
+sim_time = 1000
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
@@ -58,7 +58,7 @@ species
 	species_type = electron
 	initialization_type = regular
 	ionization_model = none
-	n_part_per_cell=1
+	n_part_per_cell=1000
 	c_part_max=1.0
 	mass = 1.0
 	charge = -1.0
@@ -75,7 +75,7 @@ species
 	species_type = positron
 	initialization_type = regular
 	ionization_model = none
-	n_part_per_cell=1
+	n_part_per_cell=1000
 	c_part_max=1.0
 	mass = 1.0
 	charge = 1.0
