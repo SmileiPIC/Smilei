@@ -18,30 +18,14 @@ public:
     //! Oversize
     unsigned int oversize_;
 
-    //! Constant used for the Silver-Mueller boundary conditions
-    double Alpha_SM;
-
-    //! Constant used for the Silver-Mueller boundary conditions
-    double Beta_SM;
-
-    //! Constant used for the Silver-Mueller boundary conditions
-    double Gamma_SM;
-
-
     //! Method used for initializing Maxwell solver
     void solvePoisson(SmileiMPI* smpi);
-
-    //! Method used to solve Maxwell's equations
-    void solveMaxwell(double time_dual, SmileiMPI* smpi);
 
     //! Method used to solve Maxwell-Ampere equation
     void solveMaxwellAmpere();
 
     //! Method used to solve Maxwell-Faraday equation
     void solveMaxwellFaraday();
-
-    //! Method used to apply EM boundary conditions
-    void applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi);
 
     //! Method used to save the Magnetic fields (used to center them)
     void saveMagneticFields();
@@ -59,11 +43,11 @@ public:
     void computeTotalRhoJ();
 
     //! \todo Create properties the laser time-profile (MG & TV)
-
+ 
     //! Number of nodes on the primal grid
     unsigned int nx_p;
 
-    //! Number of nodes on the dual grid
+     //! Number of nodes on the dual grid
     unsigned int nx_d;
 
     //! Spatial step dx for 1d3v cartesian simulations

@@ -72,6 +72,7 @@ species
 	ionization_model = tunnel
 	time_frozen = 0.0
 	radiating = false
+	bc_part_type_long = none
 end
 
 species
@@ -88,6 +89,7 @@ species
 	ionization_model = none
 	time_frozen = 0.0
 	radiating = false
+	bc_part_type_long = none
 end
 
 # LASER PROPERTIES

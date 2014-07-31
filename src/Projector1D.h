@@ -16,6 +16,7 @@ public:
     //! Constructor for Projector1D
     Projector1D(PicParams* params, SmileiMPI* smpi) : Projector(params, smpi) {};
     virtual ~Projector1D() {};
+    virtual void mv_win(unsigned int shift) { index_domain_begin+=shift; }
 
 protected:
     //! Inverse of the spatial step 1/dx

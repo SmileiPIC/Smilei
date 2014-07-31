@@ -45,30 +45,6 @@ ElectroMagn2D::ElectroMagn2D(PicParams* params, SmileiMPI* smpi)
     //!\todo Check if oversize really needs to be a vector
     oversize_ = params->oversize[0];
 
-    // -----------------------------------------------------
-    // Parameters for the Silver-Mueller boundary conditions
-    // -----------------------------------------------------
-
-    // West boundary
-    double theta  = 0.0; //! \todo Introduce in parameters for Boundary cond., e.g., params->EMBoundary->theta_W
-    double factor = 1.0 / (cos(theta) + dt_ov_dx);
-    Alpha_SM_W    = 2.0                     * factor;
-    Beta_SM_W     = - (cos(theta)-dt_ov_dx) * factor;
-    Gamma_SM_W    = 4.0 * cos(theta)        * factor;
-    Delta_SM_W    = - (sin(theta)+dt_ov_dy) * factor;
-    Epsilon_SM_W  = - (sin(theta)-dt_ov_dy) * factor;
-    MESSAGE("WEST : " << Alpha_SM_W << Beta_SM_W << Gamma_SM_W);
-
-    // East boundary
-    theta         = M_PI;
-    factor        = 1.0 / (cos(theta) - dt_ov_dx);
-    Alpha_SM_E    = 2.0                      * factor;
-    Beta_SM_E     = - (cos(theta)+dt_ov_dx)  * factor;
-    Gamma_SM_E    = 4.0 * cos(theta)         * factor;
-    Delta_SM_E    = - (sin(theta)+dt_ov_dy)  * factor;
-    Epsilon_SM_E  = - (sin(theta)-dt_ov_dy)  * factor;
-    MESSAGE("EAST : " << Alpha_SM_E << Beta_SM_E << Gamma_SM_E);
-
     // ----------------------
     // Electromagnetic fields
     // ----------------------
@@ -406,12 +382,14 @@ void ElectroMagn2D::solvePoisson(SmileiMPI* smpi)
     // Status of the solver convergence
     // --------------------------------
     if (iteration == iteration_max) {
-        WARNING("Poisson solver did not converge: reached maximum iteration number: " << iteration
-                << ", relative error is ctrl = " << 1.0e14*ctrl << " x 1e-14");
+        if (smpi->isMaster())
+            WARNING("Poisson solver did not converge: reached maximum iteration number: " << iteration
+                 << ", relative error is ctrl = " << 1.0e14*ctrl << " x 1e-14");
     }
     else {
-        MESSAGE("Poisson solver converged at iteration: " << iteration
-                << ", relative error is ctrl = " << 1.0e14*ctrl << " x 1e-14");
+        if (smpi->isMaster()) 
+            MESSAGE("Poisson solver converged at iteration: " << iteration
+                 << ", relative error is ctrl = " << 1.0e14*ctrl << " x 1e-14");
     }
 
 
@@ -484,8 +462,10 @@ void ElectroMagn2D::solvePoisson(SmileiMPI* smpi)
     MPI_Bcast(&Ex_EastSouth, 1, MPI_DOUBLE, rank_EastSouth, MPI_COMM_WORLD);
     MPI_Bcast(&Ey_EastSouth, 1, MPI_DOUBLE, rank_EastSouth, MPI_COMM_WORLD);
 
-    cerr << "Ex_WestNorth = " << Ex_WestNorth << "  -  Ey_WestNorth = " << Ey_WestNorth << endl;
-    cerr << "Ex_EastSouth = " << Ex_EastSouth << "  -  Ey_EastSouth = " << Ey_EastSouth << endl;
+    if (smpi->isMaster()) {
+        cerr << "Ex_WestNorth = " << Ex_WestNorth << "  -  Ey_WestNorth = " << Ey_WestNorth << endl;
+        cerr << "Ex_EastSouth = " << Ex_EastSouth << "  -  Ey_EastSouth = " << Ey_EastSouth << endl;
+    }
 
     // Centering electrostatic fields
     double Ex_Add = -0.5*(Ex_WestNorth+Ex_EastSouth);
@@ -503,23 +483,6 @@ void ElectroMagn2D::solvePoisson(SmileiMPI* smpi)
     }
 
 }//END solvePoisson
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Maxwell solver using the FDTD scheme
-// ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn2D::solveMaxwell(double time_dual, SmileiMPI* smpi)
-{
-    //! \todo All this is generic (does not depend on geometry) move to ElectroMagn.cpp ??? (MG to JD)
-    saveMagneticFields();
-    solveMaxwellAmpere();
-    solveMaxwellFaraday();
-    smpi->exchangeB( this );
-    applyEMBoundaryConditions(time_dual, smpi);
-    centerMagneticFields();
-
-}//END ElectroMagn2D
-
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -640,140 +603,6 @@ void ElectroMagn2D::solveMaxwellFaraday()
     }
 
 }//END solveMaxwellFaraday
-
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Apply Boundary Conditions
-// ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn2D::applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi)
-{
-    SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
-
-    // Static cast of the fields
-    Field2D* Ex2D = static_cast<Field2D*>(Ex_);
-    Field2D* Ey2D = static_cast<Field2D*>(Ey_);
-    Field2D* Ez2D = static_cast<Field2D*>(Ez_);
-    Field2D* Bx2D = static_cast<Field2D*>(Bx_);
-    Field2D* By2D = static_cast<Field2D*>(By_);
-    Field2D* Bz2D = static_cast<Field2D*>(Bz_);
-
-
-    // ! \todo Transverse profile & incidence angle is not yet introduced (MG)
-    // -----------------------------------------
-    // Laser temporal profile
-    // -----------------------------------------
-//    double byW=0.0, bzW=0.0, byE=0.0, bzE=0.0;
-//
-//    for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
-//
-//        if (laser_[ilaser]->laser_struct.angle == 0) {
-//            // Incident field (west boundary)
-//            byW += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
-//            bzW += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
-//        } else if (laser_[ilaser]->laser_struct.angle == 180) {
-//            // Incident field (east boundary)
-//            byE += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
-//            bzE += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
-//        } else {
-//            ERROR("Angle not yet implemented for laser " << ilaser);
-//        }
-//
-//    }//ilaser
-    
-    double byW[ny_d], bzW[ny_d], byE[ny_d], bzE[ny_d];
-    
-    for (unsigned int j=0; j<ny_d; j++) {
-        
-        byW[j] = 0.0;
-        bzW[j] = 0.0;
-        byE[j] = 0.0;
-        bzE[j] = 0.0;
-        
-        // position in y of the nodes (used for transverse profile)
-        double yp     = smpi2D->getDomainLocalMin(1) + ((double)j)     * dy;
-        double yd     = smpi2D->getDomainLocalMin(1) + ((double)j-0.5) * dy;
-    
-        for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
-            
-            // TIME PROFILE
-            if (laser_[ilaser]->laser_struct.angle == 0) {
-                // for transverse profile
-                double fct_yp = laser_[ilaser]->transverse_profile2D(time_dual,yp);
-                double fct_yd = laser_[ilaser]->transverse_profile2D(time_dual,yd);
-                // Incident field (west boundary)
-                byW[j] += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual) * fct_yp;
-                bzW[j] += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual) * fct_yd;
-                
-            } else if (laser_[ilaser]->laser_struct.angle == 180) {
-                // for transverse profile
-                double fct_yp = laser_[ilaser]->transverse_profile2D(time_dual,yp);
-                double fct_yd = laser_[ilaser]->transverse_profile2D(time_dual,yd);
-                // Incident field (east boundary)
-                byE[j] += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual) * fct_yp;
-                bzE[j] += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual) * fct_yd;
-            } else {
-                ERROR("Angle not yet implemented for laser " << ilaser);
-            }
-            
-        }//ilaser
-        
-    }// loop on j
-
-
-    // If !periodic
-    //   BC : Bx(i=0...nx_p, 0) & Bx(i=0...nx_p, ny_d-1)
-    //   BC : Bz(i=0...nx_d-1, 0) & Bz(i=0...nx_d-1, ny_d-1)
-    // else
-    //   Ez(i,-1)/Ez(i,ny_d-1) defined -> OK
-    //   Ex(i,-1)/Ex(i,ny_d-1) defined -> OK
-
-    // BC : By(0, j=0...ny_p  ) & By(nx_d-1, j=0...ny_p  )	    -> TO DO
-    // BC : Bz(O, j=0...ny_d-1) & Bz(nx_d-1, j=0...ny_d-1)		-> TO DO
-
-
-    // -----------------------------------------
-    // Silver-Mueller boundary conditions (West)
-    // -----------------------------------------
-    if ( smpi2D->isWester() ) {
-        // for By^(d,p)
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            (*By2D)(0,j) = Alpha_SM_W   * (*Ez2D)(0,j)
-                           +              Beta_SM_W    * (*By2D)(1,j)
-                           +              Gamma_SM_W   * byW[j]
-                           +              Delta_SM_W   * (*Bx2D)(0,j+1)
-                           +              Epsilon_SM_W * (*Bx2D)(0,j);
-        }
-        // for Bz^(d,d)
-        for (unsigned int j=0 ; j<ny_d ; j++) {
-            (*Bz2D)(0,j) = -Alpha_SM_W * (*Ey2D)(0,j)
-                           +               Beta_SM_W  * (*Bz2D)(1,j)
-                           +               Gamma_SM_W * bzW[j];
-        }
-    }//if West
-
-    // -----------------------------------------
-    // Silver-Mueller boundary conditions (East)
-    // -----------------------------------------
-    if ( smpi2D->isEaster() ) {
-        // for By^(d,p)
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            (*By2D)(nx_d-1,j) = Alpha_SM_E   * (*Ez2D)(nx_p-1,j)
-                                +                   Beta_SM_E    * (*By2D)(nx_d-2,j)
-                                +                   Gamma_SM_E   * byE[j]
-                                +                   Delta_SM_E   * (*Bx2D)(nx_p-1,j+1) // Check x-index
-                                +                   Epsilon_SM_E * (*Bx2D)(nx_p-1,j);
-        }
-        // for Bz^(d,d)
-        for (unsigned int j=0 ; j<ny_d ; j++) {
-            (*Bz2D)(nx_d-1,j) = -Alpha_SM_E * (*Ey2D)(nx_p-1,j)
-                                +                    Beta_SM_E  * (*Bz2D)(nx_d-2,j)
-                                +                    Gamma_SM_E * bzE[j];
-        }
-    }//if East
-
-}// END applyEMBoundaryConditions
-
 
 
 // ---------------------------------------------------------------------------------------------------------------------

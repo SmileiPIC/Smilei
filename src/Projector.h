@@ -19,6 +19,7 @@ public:
     //! Creator for the Projector
     Projector(PicParams*, SmileiMPI*) {};
     virtual ~Projector() {};
+    virtual void mv_win(unsigned int shift) = 0;
 
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
     //! Not used for now
@@ -33,7 +34,7 @@ public:
 
 
     //! Project local current densities if particles sorting activated in Species::dynamics
-    virtual void operator() (double* Jx, double* Jy, double* Jz, Particles &particles, int ipart, double gf, unsigned int bin, unsigned int b_dim0) = 0;
+    virtual void operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, int ipart, double gf, unsigned int bin, unsigned int b_dim0) = 0;
 
     //! Project global current densities if Ionization in Species::dynamics,
     virtual void operator() (Field* Jx, Field* Jy, Field* Jz, Particles &particles, int ipart, LocalFields Jion) = 0;

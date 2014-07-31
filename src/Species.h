@@ -19,7 +19,7 @@ class Pusher;
 class Interpolator;
 class Projector;
 class PartBoundCond;
-class PartBoundCondMix;
+class Field3D;
 
 //! class Species
 class Species
@@ -77,6 +77,9 @@ public:
     //! Method used to sort particles
     void sort_part(double);
 
+    void movingWindow_x(unsigned int shift, SmileiMPI *smpi);
+    void defineNewCells(unsigned int shift, SmileiMPI *smpi);
+
     //! Vector containing all Particles of the considered Species
     Particles particles;
     //std::vector<int> index_of_particles_to_exchange;
@@ -96,6 +99,8 @@ public:
     //! string for the species
     std::string name_str;
 
+    //! Cluster width in number of cells
+    unsigned int clrw; //Should divide the number of cells in X of a single MPI domain. Should default to 1.
     //! first and last index of each particle bin
     std::vector<int> bmin, bmax;
 
@@ -104,6 +109,14 @@ public:
 
     //! Cell_length
     std::vector<double> cell_length;
+
+    inline void clearExchList(int tid) {
+	    indexes_of_particles_to_exchange_per_thd[tid].clear();
+    }
+    inline void addPartInExchList(int tid, int iPart) {
+        indexes_of_particles_to_exchange_per_thd[tid].push_back(iPart);
+    }
+    std::vector< std::vector<int> > indexes_of_particles_to_exchange_per_thd;
 
 private:
     
@@ -129,11 +142,10 @@ private:
     //! Size of the projection buffer
     unsigned int size_proj_buffer;
 
-    //! buffers for currents
-    double *b_Jx,*b_Jy,*b_Jz;
-
     //! sub dimensions of buffers for dim > 1
-    unsigned int b_dim0, b_dim1;
+    unsigned int b_dim0, b_dim1, b_dim2, b_lastdim;
+    //! sub primal dimensions of fields
+    unsigned int f_dim0, f_dim1, f_dim2;
 
     //! Time over which Particles of the considered Species remain frozen
     double time_frozen;
@@ -149,6 +161,8 @@ private:
     double part_mass;
 
     PicParams* params_;
+
+    int  createParticles(std::vector<unsigned int> n_space_to_create, std::vector<int> cell_index, int new_bin_idx );
 
 };
 

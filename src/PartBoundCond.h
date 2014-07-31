@@ -3,8 +3,14 @@
   @brief Pusher.h  generic class for the particle pusher
 
   @author tommaso vinci
+  @author Arnaud Beck
   @date 2013-02-15
 */
+
+//Here particles boundary conditions are applied. Conditions along X are applied first, then Y, then Z.
+//The decision whether the particle is added or not on the Exchange Particle List is defined by the final
+//value of keep_part. 
+//Be careful, once an a BC along a given dimension set keep_part to 0, it will remain to 0. 
 
 #ifndef PARTBOUNDCOND_H
 #define PARTBOUNDCOND_H
@@ -19,67 +25,65 @@ public:
     PartBoundCond( PicParams *params, int ispec, SmileiMPI* smpi );
     ~PartBoundCond();
 
-    void (*bc_west)  ( Particles &particles, int ipart, int direction, double limit_pos );
-    void (*bc_east)  ( Particles &particles, int ipart, int direction, double limit_pos );
-    void (*bc_south) ( Particles &particles, int ipart, int direction, double limit_pos );
-    void (*bc_north) ( Particles &particles, int ipart, int direction, double limit_pos );
-    void (*bc_bottom)( Particles &particles, int ipart, int direction, double limit_pos );
-    void (*bc_up)    ( Particles &particles, int ipart, int direction, double limit_pos );
+    int (*bc_west)  ( Particles &particles, int ipart, int direction, double limit_pos );
+    int (*bc_east)  ( Particles &particles, int ipart, int direction, double limit_pos );
+    int (*bc_south) ( Particles &particles, int ipart, int direction, double limit_pos );
+    int (*bc_north) ( Particles &particles, int ipart, int direction, double limit_pos );
+    int (*bc_bottom)( Particles &particles, int ipart, int direction, double limit_pos );
+    int (*bc_up)    ( Particles &particles, int ipart, int direction, double limit_pos );
+    int keep_part; // 0 if particle leave the proc, 1 if particle is kept.
 
     inline int apply( Particles &particles, int ipart ) {
 
+        keep_part = 1;
         if ( particles.position(0, ipart) <  x_min ) {
-            if (bc_west==NULL) return 0;
+            if (bc_west==NULL) keep_part = 0;
             else {
-                (*bc_west)( particles, ipart, 0, 2.*x_min );
-                return 1;
+                keep_part = (*bc_west)( particles, ipart, 0, 2.*x_min );
             }
         }
         else if ( particles.position(0, ipart) >= x_max ) {
-            if (bc_east==NULL) return 0;
+            if (bc_east==NULL) keep_part = 0;
             else {
-                (*bc_east)( particles, ipart, 0, 2.*x_max );
-                return 1;
+                keep_part = (*bc_east)( particles, ipart, 0, 2.*x_max );
             }
         }
-        else if (nDim_particle == 2) {
+        if (nDim_particle >= 2) {
 
             if ( particles.position(1, ipart) <  y_min ) {
-                if (bc_south==NULL) return 0;
+		if (bc_south==NULL) keep_part = 0;
                 else {
-                    (*bc_south)( particles, ipart, 1, 2.*y_min );
-                    return 1;
+                    keep_part *= (*bc_south)( particles, ipart, 1, 2.*y_min );
                 }
             }
             else if ( particles.position(1, ipart) >= y_max ) {
-                if (bc_north==NULL) return 0;
+		if (bc_north==NULL) keep_part = 0;
                 else {
-                    (*bc_north)( particles, ipart, 1, 2.*y_max );
-                    return 1;
+                    keep_part *= (*bc_north)( particles, ipart, 1, 2.*y_max );
                 }
             }
 
-            else if (nDim_particle == 3) {
+            if (nDim_particle == 3) {
 
                 if ( particles.position(2, ipart) <  z_min ) {
-                    if (bc_bottom==NULL) return 0;
+                    if (bc_bottom==NULL) keep_part = 0;
                     else {
-                        (*bc_bottom)( particles, ipart, 2, 2.*z_min );
-                        return 1;
+                        keep_part *= (*bc_bottom)( particles, ipart, 2, 2.*z_min );
                     }
                 }
                 else if ( particles.position(2, ipart) >= z_max ) {
-                    if (bc_up==NULL) return 0;
+                    if (bc_up==NULL) keep_part = 0;
                     else {
-                        (*bc_up)( particles, ipart, 2, 2.*z_max );
-                        return 1;
+                        keep_part *= (*bc_up)( particles, ipart, 2, 2.*z_max );
                     }
                 }
-            } // end if (nDim_particle == 2)
-        } // end if (nDim_particle == 3)
+            } // end if (nDim_particle == 3)
+        } // end if (nDim_particle >= 2)
 
-        return 1;
+        return keep_part;
     };
+
+    void moveWindow_x(double shift);
 
 private:
     double x_min;

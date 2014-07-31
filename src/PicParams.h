@@ -28,13 +28,16 @@ struct LaserStructure {
     double delta;
 
     //! Laser profile
-    std::string time_profile;
+    std::string time_profile; //Longitudinal profile
+    std::string y_profile;    //Profile along y
 
     //! int vector for laser parameters
     std::vector<int> int_params;
 
     //! double vector for laser parameters
-    std::vector<double> double_params;
+    std::vector<double> double_params; //Params for longitudinal profile
+
+    //std::vector<double> y_params;      //PArams for y profil
     
     //! Laser transverse profile
     std::string transv_profile;
@@ -93,7 +96,8 @@ struct SpeciesStructure {
     bool radiating;
 
     //! Boundary conditions for particules
-    std::string bc_part_type;
+    std::string bc_part_type_long;
+    std::string bc_part_type_trans;
 
     //! Ionization model per Specie (tunnel)
     std::string ionization_model;
@@ -144,6 +148,17 @@ public:
 
     //! local simulation box size in \f$2\pi/k_N \f$
     std::vector<double> sim_length;
+    //! window simulation box size in number of cells
+    int res_space_win_x;
+
+    //! Time at which the moving window starts.
+    double t_move_win;
+
+    //! Velocity of the moving window along x in c.
+    double vx_win;
+
+    //! Clusters width
+    int clrw;
 
     //! plasma geometry
     std::string plasma_geometry;
@@ -239,11 +254,17 @@ public:
 	//! restart namelist
 	bool restart;
 	
-	//! enable sort particles (default = yes) 
+	//! enable sort particles (default = true) 
 	bool use_sort_particles;
 
 	//! frequency of exchange particles (default = 1) 
 	int exchange_particles_each;
+
+        //! Number of MPI process per direction (default : as square as possible)
+        std::vector<int> number_of_procs;
+
+        //! Enabled transversal periodic condition, fields & particles (default = true)
+        bool use_transverse_periodic;
 
 };
 

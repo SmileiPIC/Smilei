@@ -6,7 +6,10 @@ default: release
 
 release:
 	make -C src release
-
+openmpgnu:
+	make -C src openmpgnu
+openmpintel:
+	make -C src openmpintel
 debug:
 	make -C src debug
 

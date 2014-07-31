@@ -19,7 +19,13 @@ using namespace std;
 
 SmileiMPI::SmileiMPI( int* argc, char*** argv )
 {
-    MPI_Init( argc, argv );
+    int mpi_provided;
+
+    MPI_Init_thread( argc, argv, MPI_THREAD_FUNNELED, &mpi_provided );
+    if (mpi_provided == MPI_THREAD_SINGLE){
+        cout << "openMP not supported" << endl;
+    }
+
     SMILEI_COMM_WORLD = MPI_COMM_WORLD;
     MPI_Comm_size( SMILEI_COMM_WORLD, &smilei_sz );
     MPI_Comm_rank( SMILEI_COMM_WORLD, &smilei_rk );
@@ -81,7 +87,7 @@ void SmileiMPI::init( PicParams& params )
     n_space_global.resize(params.nDim_field, 0);
 }
 
-
+/*
 void SmileiMPI::bcast( short& val )
 {
     MPI_Bcast( &val, 1, MPI_SHORT, 0, SMILEI_COMM_WORLD);
@@ -158,7 +164,8 @@ void SmileiMPI::bcast( SpeciesStructure& speciesStructure )
     bcast( speciesStructure.mean_velocity ); // must be params.nDim_field
     bcast( speciesStructure.temperature );
     bcast( speciesStructure.dynamics_type );
-    bcast( speciesStructure.bc_part_type );
+    bcast( speciesStructure.bc_part_type_long );
+    bcast( speciesStructure.bc_part_type_trans );
     bcast( speciesStructure.time_frozen );
     bcast( speciesStructure.radiating );
     bcast( speciesStructure.ionization_model );
@@ -181,6 +188,7 @@ void SmileiMPI::bcast( LaserStructure& laserStructure )
     bcast( laserStructure.angle );
     bcast( laserStructure.delta );
     bcast( laserStructure.time_profile );
+    bcast( laserStructure.y_profile );
     bcast( laserStructure.int_params );
     bcast( laserStructure.double_params );
 }
@@ -194,7 +202,7 @@ void SmileiMPI::bcast( vector<LaserStructure>& val )
 
     for (int i=0 ; i<vecSize ; i++) bcast( val[i] );
 }
-
+*/
 void SmileiMPI::sumRho( ElectroMagn* EMfields )
 {
     sumField( EMfields->rho_ );

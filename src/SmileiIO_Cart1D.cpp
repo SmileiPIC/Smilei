@@ -88,7 +88,10 @@ void SmileiIO_Cart1D::createPattern( PicParams* params, SmileiMPI* smpi )
         // in the file.
         //
         hsize_t     dimsf[1];
-        dimsf[0] = params->n_space_global[0]+1+ix_isPrim;
+	if (!params->res_space_win_x)
+	    dimsf[0] = params->n_space_global[0]+1+ix_isPrim;
+	else
+	    dimsf[0] = params->res_space_win_x+1+ix_isPrim;
 
         hid_t filespace = H5Screate_simple(params->nDim_field, dimsf, NULL);
         //
@@ -116,7 +119,15 @@ void SmileiIO_Cart1D::writeFieldsSingleFileTime( Field* field, hid_t group_id )
     Field1D* f1D =  static_cast<Field1D*>(field);
 
     hid_t memspace  = memspace_ [ isDual[0] ];
-    hid_t filespace = filespace_[ isDual[0] ];
+    //-----------------------------------------------------------
+    //-----------------------------------------------------------
+    //-----------------------------------------------------------
+    hid_t filespace;
+    filespace = filespace_[ isDual[0] ];
+
+    //-----------------------------------------------------------
+    //-----------------------------------------------------------
+    //-----------------------------------------------------------
 
     hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
     //chunk_dims[0] = ???;

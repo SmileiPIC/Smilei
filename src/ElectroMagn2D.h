@@ -15,50 +15,14 @@ public:
     //! Destructor for ElectroMagn2D
     ~ElectroMagn2D();
 
-    //! Constant used for the Silver-Mueller boundary conditions (West)
-    double Alpha_SM_W;
-
-    //! Constant used for the Silver-Mueller boundary conditions (West)
-    double Beta_SM_W;
-
-    //! Constant used for the Silver-Mueller boundary conditions (West)
-    double Gamma_SM_W;
-
-    //! Constant used for the Silver-Mueller boundary conditions (West)
-    double Delta_SM_W;
-
-    //! Constant used for the Silver-Mueller boundary conditions (West)
-    double Epsilon_SM_W;
-
-    //! Constant used for the Silver-Mueller boundary conditions (East)
-    double Alpha_SM_E;
-
-    //! Constant used for the Silver-Mueller boundary conditions (East)
-    double Beta_SM_E;
-
-    //! Constant used for the Silver-Mueller boundary conditions (East)
-    double Gamma_SM_E;
-
-    //! Constant used for the Silver-Mueller boundary conditions (East)
-    double Delta_SM_E;
-
-    //! Constant used for the Silver-Mueller boundary conditions (East)
-    double Epsilon_SM_E;
-
-    //! Method used for initializing Maxwell solver
+   //! Method used for initializing Maxwell solver
     void solvePoisson(SmileiMPI* smpi);
-
-    //! Method used to solve Maxwell's equations
-    void solveMaxwell(double time_dual, SmileiMPI* smpi);
 
     //! Method used to solve Maxwell-Ampere equation
     void solveMaxwellAmpere();
 
     //! Method used to solve Maxwell-Faraday equation
     void solveMaxwellFaraday();
-
-    //! Method used to apply boundary conditions on the EM fields
-    void applyEMBoundaryConditions(double time_dual, SmileiMPI* smpi);
 
     //! Method used to save the Magnetic fields (used to center them)
     void saveMagneticFields();

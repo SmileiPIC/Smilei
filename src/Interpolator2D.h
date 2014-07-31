@@ -12,6 +12,7 @@ class Interpolator2D : public Interpolator
 public:
     Interpolator2D(PicParams* params, SmileiMPI* smpi): Interpolator(params, smpi) {};
     virtual ~Interpolator2D() {};
+    virtual void mv_win(unsigned int shift) {i_domain_begin += shift;}
 
     virtual void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc) = 0;
 

@@ -10,6 +10,7 @@
 #include "Tools.h"
 
 class PicParams;
+class SmileiMPI;
 
 //----------------------------------------------------------------------------------------------------------------------
 //! Particle class: holds the basic properties of a particle
@@ -97,6 +98,9 @@ public:
     void create_particle();
     //! Create nParticles new particles
     void create_particles(int nParticles);
+
+    //! Test if ipart is in the local MPI subdomain
+    bool is_part_in_domain(int ipart, SmileiMPI* smpi);
 
     //! Method used to get the Particle position
     inline double  position( int idim, int ipart ) const {

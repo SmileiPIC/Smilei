@@ -69,6 +69,9 @@ public:
     //! Virtual method used to make a dump of the Field data
     virtual void dump(std::vector<unsigned int> dims) = 0;
 
+    //! Virtual method to shift field in space
+    virtual void shift_x(unsigned int delta) = 0;
+
     //! vector containing the dimensions of the Field
     //! \todo private/friend/modify SmileiMPI* (JD)
     std::vector<unsigned int> dims_;
@@ -110,6 +113,22 @@ public:
             for (unsigned int i=0; i<globalDims_; i++) data_[i] = val;
     }
     
+
+    inline double& operator () (unsigned int i,unsigned int j)
+    {
+	int idx = i*dims_[1]+j;
+        DEBUGEXEC(if (idx>=globalDims_) ERROR("Out of limits & "<< i << " " << j));
+        DEBUGEXEC(if (!std::isfinite(data_[idx])) ERROR("Not finite "<< i << " " << j << " = " << data_[idx]));
+        return data_[idx];
+    };
+    inline double operator () (unsigned int i, unsigned int j) const
+    {
+        int idx = i*dims_[1]+j;
+        DEBUGEXEC(if (idx>=globalDims_) ERROR("Out of limits "<< i << " " << j));
+        DEBUGEXEC(if (!std::isfinite(data_[idx])) ERROR("Not finite "<< i << " " << j << " = " << data_[idx]));
+        return data_[idx];
+    };
+
 
 protected:
 

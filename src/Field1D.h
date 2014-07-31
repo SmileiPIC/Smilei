@@ -39,6 +39,9 @@ public:
     //! Method used to dump the data contained in a Field1D
     void dump(std::vector<unsigned int> dims);
 
+    //! Method to shift field in space
+    void shift_x(unsigned int delta);
+
     //! Overloading of the () operator allowing to set a new value for the ith element of a Field1D
     inline double& operator () (unsigned int i)
     {

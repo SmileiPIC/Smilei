@@ -17,6 +17,7 @@ public:
     Projector2D(PicParams* params, SmileiMPI* smpi) : Projector(params, smpi) {};
     virtual ~Projector2D() {};
 
+    virtual void mv_win(unsigned int shift) { i_domain_begin+=shift; }
 
 protected:
     //! Inverse of the spatial step 1/dx

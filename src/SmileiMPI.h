@@ -35,9 +35,7 @@ public:
     virtual void createTopology( PicParams& params ) {};
     //! Echanges particles of Species, list of particles comes frome Species::dynamics
     //! See child classes
-    virtual void exchangeParticles(Species* species, int ispec, PicParams* params) {};
-    //! Non-blocking exchange of particles
-    virtual void IexchangeParticles(Species* species, int ispec, PicParams* params) {};
+    virtual void exchangeParticles(Species* species, int ispec, PicParams* params, int tnum) {};
 
     //! Create MPI_Datatype to exchange/sum fields on ghost data
     //! See child classes
@@ -66,22 +64,30 @@ public:
     inline int getSize() {
         return smilei_sz;
     }
-    inline int    getCellStartingGlobalIndex(int i) {
+    inline int    getCellStartingGlobalIndex(int i) const {
         return cell_starting_global_index[i];
     }
-    inline double getDomainLocalMin(int i) {
+    inline double getDomainLocalMin(int i) const {
         return min_local[i];
     }
-    inline double getDomainLocalMax(int i) {
+    inline double getDomainLocalMax(int i) const {
+        return max_local[i];
+    }
+    inline int&    getCellStartingGlobalIndex(int i)  {
+        return cell_starting_global_index[i];
+    }
+    inline double& getDomainLocalMin(int i)  {
+        return min_local[i];
+    }
+    inline double& getDomainLocalMax(int i)  {
         return max_local[i];
     }
 
-    inline void clearExchList() {
-        indexes_of_particles_to_exchange.clear();
-    }
-    inline void addPartInExchList(int iPart) {
-        indexes_of_particles_to_exchange.push_back(iPart);
-    }
+    //! \ Should be pure virtual
+    virtual bool isEaster ( ){WARNING("Problem");return false;}
+    virtual bool isWester ( ){WARNING("Problem");return false;}
+    virtual bool isSouthern ( ){WARNING("Problem");return false;}
+    virtual bool isNorthern ( ){WARNING("Problem");return false;}
 
     std::vector<int> n_space_global;
     int smilei_sz;
@@ -90,8 +96,6 @@ public:
 protected:
     MPI_Comm SMILEI_COMM_WORLD;
 
-    //! indexes_of_particles_to_exchange built in Species::dynamics
-    std::vector<int> indexes_of_particles_to_exchange;
     //! Sort particles to exchange per direction, contains indexes
     std::vector<int> buff_index_send[3][2];
     //! buff_index_recv_sz : number of particles to recv per direction
@@ -112,7 +116,7 @@ protected:
 private:
 
     void bcast( std::string& val );
-    void bcast( short &val );
+    /*void bcast( short &val );
     void bcast( unsigned int &val );
     void bcast( double& val );
     void bcast( bool& val );
@@ -123,7 +127,7 @@ private:
     void bcast( SpeciesStructure& speciesStructure );
     void bcast( std::vector<SpeciesStructure>& vecSpeciesStructure );
     void bcast( LaserStructure& laserStructure );
-    void bcast( std::vector<LaserStructure>& vecLaserStructure );
+    void bcast( std::vector<LaserStructure>& vecLaserStructure );*/
 
 };
 

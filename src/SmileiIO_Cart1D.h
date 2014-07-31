@@ -37,6 +37,7 @@ private:
 
     //! \todo Define chunk size of output for interpolated output
     //hsize_t chunk_dims[1];
+
 };
 
 #endif /* SMILEIO_CART1D_H */

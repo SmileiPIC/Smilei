@@ -9,7 +9,9 @@
 #include "Projector.h"
 #include "Laser.h"
 #include "Field.h"
-#include <iomanip>
+#include "FieldsBC.h"
+#include "FieldsBC_Factory.h"
+#include "SimWindow.h"
 
 using namespace std;
 
@@ -32,15 +34,7 @@ ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi)
     }
     
     if (n_space.size() != 3) ERROR("this should not happend");
-    
-    // check for laser conditions
-    laser_.resize(params->n_laser);
-    
-    for (unsigned int i=0; i<laser_.size(); i++) {
-        DEBUG(5,"Initializing Laser "<<i);
-        laser_[i] = new Laser(params->sim_time, params->sim_length[1], params->laser_param[i]);
-    }
-    
+
     Ex_=NULL;
     Ey_=NULL;
     Ez_=NULL;
@@ -75,6 +69,7 @@ ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi)
         Jz_s[ispec]  = NULL;
         rho_s[ispec] = NULL;
     }
+
     
     for (unsigned int i=0; i<3; i++) {
         for (unsigned int j=0; j<2; j++) {
@@ -82,6 +77,9 @@ ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi)
             bufsize[i][j]=0;
         }
     }    
+
+    fieldsBoundCond = FieldsBC_Factory::create(*params);
+
 }
 
 
@@ -105,10 +103,11 @@ ElectroMagn::~ElectroMagn()
     delete Jz_;
     delete rho_;
     delete rho_o;
-    for (unsigned int i=0; i< laser_.size(); i++) {
-        delete laser_[i];
-    }
-    
+
+    int nBC = fieldsBoundCond.size();
+    for ( int i=0 ; i<nBC ;i++ )
+      delete fieldsBoundCond[i];
+
 }//END Destructer
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -124,6 +123,31 @@ ElectroMagn::~ElectroMagn()
  boundaryConditions(time_dual, smpi);
  
  }*/
+void ElectroMagn::solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, PicParams &params, SimWindow* simWindow)
+{
+    saveMagneticFields();
+
+    // Compute Ex_, Ey_, Ez_
+    solveMaxwellAmpere();
+    // Exchange Ex_, Ey_, Ez_
+    smpi->exchangeE( this );
+
+    // Compute Bx_, By_, Bz_
+    solveMaxwellFaraday();
+
+    // Update Bx_, By_, Bz_
+    if ((!simWindow) || (!simWindow->isMoving(itime)) )
+	fieldsBoundCond[0]->apply(this, time_dual, smpi);
+    if ( (!params.use_transverse_periodic) && (fieldsBoundCond.size()>1) )
+	fieldsBoundCond[1]->apply(this, time_dual, smpi);
+ 
+    // Exchange Bx_, By_, Bz_
+    smpi->exchangeB( this );
+
+    // Compute Bx_m, By_m, Bz_m
+    centerMagneticFields();
+
+}
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -301,3 +325,22 @@ void ElectroMagn::computeScalars()
     
     
 }
+
+
+void ElectroMagn::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
+{
+    Ex_->shift_x(shift);
+    Ey_->shift_x(shift);
+    Ez_->shift_x(shift);
+    //! \ Comms to optimize, only in x, east to west 
+    //! \ Implement SmileiMPI::exchangeE( EMFields*, int nDim, int nbNeighbors );
+    smpi->exchangeE( this );
+
+    Bx_->shift_x(shift);
+    By_->shift_x(shift);
+    Bz_->shift_x(shift);
+    smpi->exchangeB( this );
+
+    //Here you might want to apply some new boundary conditions on the +x boundary. For the moment, all fields are set to 0. 
+}
+

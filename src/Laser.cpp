@@ -4,7 +4,7 @@ using namespace std;
 
 
 
-Laser::Laser(double sim_time, double sim_length_y, LaserStructure laser_param) {
+Laser::Laser(double sim_time, std::vector<double> sim_length, LaserStructure laser_param) {
 
     pi_ov_2 = 0.5 * M_PI;
     
@@ -15,9 +15,12 @@ Laser::Laser(double sim_time, double sim_length_y, LaserStructure laser_param) {
     type_of_time_profile   = laser_struct.time_profile;
     int_params             = laser_struct.int_params;
     double_params          = laser_struct.double_params;
+
     type_of_transv_profile = laser_struct.transv_profile;
     int_params_transv      = laser_struct.int_params_transv;
     double_params_transv   = laser_struct.double_params_transv;
+    // Arnaud implementation (Merge)
+    //y_params         = laser_struct.y_params; 
 
     // -------------------------------------------------------
     // LASER TIME PROFILE INFOS
@@ -53,6 +56,7 @@ Laser::Laser(double sim_time, double sim_length_y, LaserStructure laser_param) {
             double_params.resize(3);
         }
     }
+
     //GAUSSIAN time-profile
     //double_params[0]: tau FWHM
     //double_params[1]: plateau
@@ -74,8 +78,24 @@ Laser::Laser(double sim_time, double sim_length_y, LaserStructure laser_param) {
         else{
             int_params.resize(1);
         }
-        
+
     }
+
+    /* Arnaud implementation (Merge)
+    // gauss time-profile
+    // double_params[0]: Time at which maximum intensity is reached at the x=0 boundary.
+    // double_params[1]: Longitudinal FWHM of the pulse intensity.
+    else if (type_of_time_profile=="gauss" ) {
+
+        if (double_params.size()<1) {
+            double_params.resize(2);
+            double_params[0] = sim_time/2.0;
+        }
+        else {
+            double_params.resize(2);
+        }
+    }*/
+
 
     else {
         ERROR("Laser profile " << type_of_time_profile <<  " not defined");
@@ -101,8 +121,8 @@ Laser::Laser(double sim_time, double sim_length_y, LaserStructure laser_param) {
         MESSAGE(1,"Laser has a Gaussian or hyper-Gaussian transverse profile");
         if (double_params_transv.size()<2) {
             double_params_transv.resize(2);
-            double_params_transv[0] = sim_length_y/2.0;
-            double_params_transv[1] = sim_length_y/4.0;
+            double_params_transv[0] = sim_length[1]/2.0;
+            double_params_transv[1] = sim_length[1]/4.0;
         }
         if (int_params_transv.size()<1) {
             int_params_transv.resize(1);
@@ -115,6 +135,26 @@ Laser::Laser(double sim_time, double sim_length_y, LaserStructure laser_param) {
         type_of_transv_profile = "plane-wave";
         WARNING("Laser had no transverse profile defined: use plane-wave as default");
     }
+
+   /* Arnaud implementation (Merge)
+   //Constant transverse profile
+   if (type_of_transv_profile=="constant") {
+
+        if (y_params.size()>0) {
+            double_params.resize(0);
+        }
+    }
+    else if (type_of_transv_profile=="gauss"){
+
+        if (double_params.size()<1) {
+            double_params.resize(1);
+            double_params[0] = sim_length[1]/4.0;
+        }
+        else {
+            double_params.resize(1);
+        }
+    }
+   */
 
 }
 
@@ -171,11 +211,12 @@ double Laser::time_profile(double time_dual) {
             return 0.0;
         }
     }
+
     //GAUSSIAN time-profile
-    //double_params[0]: tau FWHM
-    //double_params[1]: plateau
-    //double_params[2]: delay
-    //int_params[0]: gaussian cut-off
+    //double_params[0]: tau FWHM : Field or intensity ? I guess intensity ?
+    //double_params[1]: plateau : 
+    //double_params[2]: delay : Time before the head of the laser pulse enters the box.
+    //int_params[0]: gaussian cut-off : How far ahead from the center the pulse starts being non zero in number of sigma.
     else if(type_of_time_profile=="gaussian"){
         double fwhm=2*double_params[0];
         double sigma=fwhm/(2*sqrt(2*log(2)));
@@ -207,21 +248,31 @@ double Laser::time_profile(double time_dual) {
             return 0.0;
         }
     }
+    /* Arnaud implementation (Merge)
+    // gauss time-profile
+    // double_params[0]: Time at which maximum intensity is reached at the x=0 boundary.
+    // double_params[1]: Longitudinal FWHM of the pulse intensity.
+    else if (type_of_time_profile=="gauss") {
+        //exp(-2*log(2)*pow((time_dual-double_params[0]) / double_params[1] , 2)); //Gaussian longitudinal profil of the intensity
+        //FWHM(Intensity) = FWHM(Field^2) = FWHM(Field)/sqrt(2) ==>
+        //cout << time_dual << " " << double_params[0] << " "<<double_params[1]<<endl;
+        return exp(-log(2)*pow((time_dual-double_params[0]) / double_params[1] , 2)); //Gaussian longitudinal profil of the field as required
+         
+    */
     
-    else
+    else {
         return 0.0;
+    }
+
 }//END laser::time_profile
 
 
-
 double Laser::transverse_profile2D(double time_dual, double y) {
-    
     
     // PLANE-WAVE
     if (type_of_transv_profile=="plane-wave") {
         return 1.0;
     }
-    
     
     // GAUSSIAN or HYPER-GAUSSIAN PROFILE
     // double_params_transv[0] : position in y of the center of the profile
@@ -237,3 +288,16 @@ double Laser::transverse_profile2D(double time_dual, double y) {
     else
         return 0.0;
 }//END laser::transverse_profile2D
+
+/* Arnaud implementation (Merge)
+double Laser::y_profile(double dfa) {
+    if (type_of_transv_profile=="constant") {
+        return 1.0;
+    }
+    else if (type_of_transv_profile=="gauss"){
+        return exp(- pow(dfa / y_params[0] , 2));
+    }
+    else {
+        return 1.0;
+    }
+}*/

@@ -398,7 +398,7 @@ void Projector2D2Order::operator() (Field* rho, Particles &particles, int ipart)
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local current densities (sort)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, int ipart, double gf, unsigned int bin, unsigned int b_dim0)
+void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, int ipart, double gf, unsigned int bin, unsigned int b_dim1)
 {
 
     // -------------------------------------
@@ -516,16 +516,17 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     // ---------------------------
     // Calculate the total current
     // ---------------------------
-    ipo -= i_domain_begin;
-    jpo -= j_domain_begin + bin;
+    ipo -= i_domain_begin + bin;
+    jpo -= j_domain_begin;
 
     for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = i+ipo-2;
+        iloc = (i+ipo-2)*b_dim1;
         for (unsigned int j=0 ; j<5 ; j++) {
-            jloc = j+jpo-2;
-            Jx[iloc*b_dim0+jloc] += Jx_p[i][j];
-            Jy[iloc*b_dim0+jloc] += Jy_p[i][j];
-            Jz[iloc*b_dim0+jloc] += crz_p * Wz[i][j];
+            jloc = iloc+j+jpo-2; //jloc is supposed to go either from 0 to 4 or from 1 to 5
+            Jx[jloc]  += Jx_p[i][j];
+            Jy[jloc]  += Jy_p[i][j];
+            Jz[jloc]  += crz_p * Wz[i][j];
+            rho[jloc] += charge_weight * Sx1[i]*Sy1[j];
         }
 
     }//i
