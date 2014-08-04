@@ -937,7 +937,7 @@ void Species::computeScalars() {
     if (getNbrOfParticles()>0) {
         for (unsigned int iPart=0 ; iPart<getNbrOfParticles(); iPart++ ) {
             charge_tot+=(double)particles.charge(iPart);
-            ener_tot+=cell_volume*particles.weight(iPart)*part_mass*(particles.lor_fac(iPart)-1.0);
+            ener_tot+=cell_volume*particles.weight(iPart)*(particles.lor_fac(iPart)-1.0);
         }
         ener_tot*=part_mass;
     }

@@ -322,7 +322,7 @@ void PicParams::compute()
     n_space_global.resize(3, 1);	//! \todo{3 but not real size !!! Pbs in Species::Species}
     n_space.resize(3, 1);
     cell_length.resize(3, 0.);	//! \todo{3 but not real size !!! Pbs in Species::Species}
-    cell_volume = 1;
+//    cell_volume = 1;
     
     oversize.resize(3, 0);
     
