@@ -606,15 +606,26 @@ void ElectroMagn1D::computeTotalRhoJ()
 
 void ElectroMagn1D::computePoynting(SmileiMPI* smpi) {
     SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
-
+    
     if ( smpi1D->isWester() ) {
-        poynting[0][0]+= 0.5*timestep*((*Ey_)(0) * ((*Bz_m)(0) + (*Bz_m)(1)) - 
-                              (*Ez_)(0) * ((*By_m)(0) + (*By_m)(1)));
-    }//if Western
+        unsigned int iEy=istart[0][Ey_->isDual(0)];
+        unsigned int iBz=istart[0][Bz_m->isDual(0)];
+        unsigned int iEz=istart[0][Ez_->isDual(0)];
+        unsigned int iBy=istart[0][By_m->isDual(0)];
+        
+        poynting[0][0] += 0.5*dt*((*Ey_)(iEy) * ((*Bz_m)(iBz) + (*Bz_m)(iBz+1)) - 
+                                        (*Ez_)(iEz) * ((*By_m)(iBy) + (*By_m)(iBy+1)));
+    } 
     if ( smpi1D->isEaster() ) {
-        poynting[1][0]+=-0.5*timestep*((*Ey_)(nx_p-1) * ((*Bz_m)(nx_d-2) + (*Bz_m)(nx_d-1)) - 
-                              (*Ez_)(nx_p-1) * ((*By_m)(nx_d-2) + (*By_m)(nx_d-1)));
-    }//if Eastern
+        unsigned int iEy=istart[0][Ey_->isDual(0)]  + bufsize[0][Ey_->isDual(0)]-1;
+        unsigned int iBz=istart[0][Bz_m->isDual(0)] + bufsize[0][Bz_m->isDual(0)]-1;
+        unsigned int iEz=istart[0][Ez_->isDual(0)]  + bufsize[0][Ez_->isDual(0)]-1;
+        unsigned int iBy=istart[0][By_m->isDual(0)] + bufsize[0][By_m->isDual(0)]-1;
+
+        poynting[1][0] -= 0.5*dt*((*Ey_)(iEy) * ((*Bz_m)(iBz-1) + (*Bz_m)(iBz)) - 
+                                  (*Ez_)(iEz) * ((*By_m)(iBy-1) + (*By_m)(iBy)));
+
+    }
         
 //    if ( smpi1D->isWester() ) {
 //        // Silver-Mueller boundary conditions (left)

@@ -19,8 +19,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for the virtual class ElectroMagn
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi) :
-timestep(params->timestep)
+ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi)
 {
     // initialize poynting vector
     poynting[0].resize(params->nDim_field,0.0);
@@ -333,7 +332,7 @@ void ElectroMagn::computeScalars()
             map<string,vector<double> > dummy_poynting_map;
             dummy_poynting_map["sum"]=dummy_poy;
             stringstream s;
-            s << "Poy_" << (j==0?"inf":"sup") << "_" << i;
+            s << "Poy_" << (j==0?"inf":"sup") << "_" << (i==0?"x":(i==1?"y":"z"));
             scalars[s.str()]=dummy_poynting_map;
         }
     }

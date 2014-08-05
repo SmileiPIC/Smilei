@@ -44,7 +44,13 @@ public:
     //! this is a list to keep variable name and value
     std::vector<std::pair<std::string,double> > out_list;
     
+    //! get a particular scalar
+    double getScalar(std::string name);
+
 private:
+    //! initial energy (kinetic + EM)
+    double Energy_time_zero;
+    
     //! this is copied from params
     double res_time;
     

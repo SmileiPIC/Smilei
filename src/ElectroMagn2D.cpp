@@ -17,8 +17,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn2D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn2D::ElectroMagn2D(PicParams* params, SmileiMPI* smpi)
-    : ElectroMagn(params, smpi)
+ElectroMagn2D::ElectroMagn2D(PicParams* params, SmileiMPI* smpi) : 
+ElectroMagn(params, smpi)
 {
     // local dt to store
     SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
@@ -874,24 +874,107 @@ void ElectroMagn2D::computeTotalRhoJ()
 
 
 void ElectroMagn2D::computePoynting(SmileiMPI* smpi) {
-    
+        
     SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
-    WARNING("!!!! test Poynting !!!!");
-    
+        
     if ( smpi2D->isWester() ) {
-        poynting[0][0] += +1.0;
-    }//if Western
-    if ( smpi2D->isEaster() ) {
-        poynting[1][0] += -1.0;
-    }//if Eastern
+        unsigned int iEy=istart[0][Ey_->isDual(0)];
+        unsigned int iBz=istart[0][Bz_m->isDual(0)];
+        unsigned int iEz=istart[0][Ez_->isDual(0)];
+        unsigned int iBy=istart[0][By_m->isDual(0)];
+        
+        unsigned int jEy=istart[1][Ey_->isDual(1)];
+        unsigned int jBz=istart[1][Bz_m->isDual(1)];
+        unsigned int jEz=istart[1][Ez_->isDual(1)];
+        unsigned int jBy=istart[1][By_m->isDual(1)];
 
-    if ( smpi2D->isSouthern() ) {
-        poynting[0][1] += +2.0;
+        unsigned int j_sta=istart[1][Ez_->isDual(1)];
+        unsigned int j_end=j_sta + bufsize[1][Ez_->isDual(1)];
+        
+        for (unsigned int j=j_sta; j<j_end; j++) {
+
+            double Ey__ = 0.5*((*Ey_)(iEy,jEy+j) + (*Ey_)(iEy, jEy+j+1));
+            double Bz__ = 0.25*((*Bz_m)(iBz,jBz+j)+(*Bz_m)(iBz+1,jBz+j)+(*Bz_m)(iBz,jBz+j+1)+(*Bz_m)(iBz+1,jBz+j+1));
+            double Ez__ = (*Ez_)(iEz,jEz+j);
+            double By__ = 0.5*((*By_m)(iBy,jBy+j) + (*By_m)(iBy+1, jBy+j));
+            
+            poynting[0][0]+= dy*dt*(Ey__*Bz__ - Ez__*By__);
+        }
     }//if Western
     
-    if ( smpi2D->isNorthern() ) {
-        poynting[1][1] += -2.0;
-    }//if Eastern
+
+    if ( smpi2D->isEaster() ) {
+        unsigned int iEy=istart[0][Ey_->isDual(0)]  + bufsize[0][Ey_->isDual(0)] -1;
+        unsigned int iBz=istart[0][Bz_m->isDual(0)] + bufsize[0][Bz_m->isDual(0)]-1;
+        unsigned int iEz=istart[0][Ez_->isDual(0)]  + bufsize[0][Ez_->isDual(0)] -1;
+        unsigned int iBy=istart[0][By_m->isDual(0)] + bufsize[0][By_m->isDual(0)]-1;
+                
+        unsigned int jEy=istart[1][Ey_->isDual(1)];
+        unsigned int jBz=istart[1][Bz_m->isDual(1)];
+        unsigned int jEz=istart[1][Ez_->isDual(1)];
+        unsigned int jBy=istart[1][By_m->isDual(1)];
+        
+        unsigned int j_sta=istart[1][Ez_->isDual(1)];
+        unsigned int j_end=j_sta + bufsize[1][Ez_->isDual(1)];
+        
+        for (unsigned int j=j_sta; j<j_end; j++) {
+
+            double Ey__ = 0.5*((*Ey_)(iEy,jEy+j) + (*Ey_)(iEy, jEy+j+1));
+            double Bz__ = 0.25*((*Bz_m)(iBz,jBz+j)+(*Bz_m)(iBz+1,jBz+j)+(*Bz_m)(iBz,jBz+j+1)+(*Bz_m)(iBz+1,jBz+j+1));
+            double Ez__ = (*Ez_)(iEz,jEz+j);
+            double By__ = 0.5*((*By_m)(iBy,jBy+j) + (*By_m)(iBy+1, jBy+j));
+            
+            poynting[1][0] -= dy*dt*(Ey__*Bz__ - Ez__*By__);
+        }
+    }//if Easter
     
-//    DEBUG("To be done");
+    if ( smpi2D->isSouthern() ) {
+
+        unsigned int iEz=istart[0][Ez_->isDual(0)];
+        unsigned int iBx=istart[0][Bx_m->isDual(0)]; 
+        unsigned int iEx=istart[0][Ex_->isDual(0)];
+        unsigned int iBz=istart[0][Bz_m->isDual(0)]; 
+        
+        unsigned int jEz=istart[1][Ez_->isDual(1)];
+        unsigned int jBx=istart[1][Bx_m->isDual(1)];
+        unsigned int jEx=istart[1][Ex_->isDual(1)];
+        unsigned int jBz=istart[1][Bz_m->isDual(1)];
+        
+        unsigned int i_sta=istart[0][Ez_->isDual(0)];
+        unsigned int i_end=i_sta + bufsize[0][Ez_->isDual(0)];
+        
+        for (unsigned int i=i_sta; i<i_end; i++) {
+            double Ez__ = (*Ez_)(iEz+i,jEz);
+            double Bx__ = 0.5*((*Bx_m)(iBx+i,jBx) + (*Bx_m)(iBx+i, jBx+1));
+            double Ex__ = 0.5*((*Ex_)(iEx+i,jEx) + (*Ex_)(iEx+i+1, jEx));
+            double Bz__ = 0.25*((*Bz_m)(iBz+i,jBz)+(*Bz_m)(iBz+i+1,jBz)+(*Bz_m)(iBz+i,jBz+1)+(*Bz_m)(iBz+i+1,jBz+1));
+            
+            poynting[0][1] += dx*dt*(Ez__*Bx__ - Ex__*Bz__);
+        }
+    }// if South
+
+    if ( smpi2D->isNorthern() ) {
+        unsigned int iEz=istart[0][Ez_->isDual(0)];
+        unsigned int iBx=istart[0][Bx_m->isDual(0)]; 
+        unsigned int iEx=istart[0][Ex_->isDual(0)];
+        unsigned int iBz=istart[0][Bz_m->isDual(0)];
+        
+        unsigned int jEz=istart[1][Ez_->isDual(1)]  + bufsize[1][Ez_->isDual(1)] -1;
+        unsigned int jBx=istart[1][Bx_m->isDual(1)] + bufsize[1][Bx_m->isDual(1)]-1;
+        unsigned int jEx=istart[1][Ex_->isDual(1)]  + bufsize[1][Ex_->isDual(1)] -1;
+        unsigned int jBz=istart[1][Bz_m->isDual(1)] + bufsize[1][Bz_m->isDual(1)]-1;
+        
+        unsigned int i_sta=istart[0][Ez_->isDual(0)];
+        unsigned int i_end=i_sta + bufsize[0][Ez_->isDual(0)];
+        
+        for (unsigned int i=i_sta; i<i_end; i++) {
+            double Ez__ = (*Ez_)(iEz+i,jEz);
+            double Bx__ = 0.5*((*Bx_m)(iBx+i,jBx) + (*Bx_m)(iBx+i, jBx+1));
+            double Ex__ = 0.5*((*Ex_)(iEx+i,jEx) + (*Ex_)(iEx+i+1, jEx));
+            double Bz__ = 0.25*((*Bz_m)(iBz+i,jBz)+(*Bz_m)(iBz+i+1,jBz)+(*Bz_m)(iBz+i,jBz+1)+(*Bz_m)(iBz+i+1,jBz+1));
+            
+            poynting[1][1] -= dx*dt*(Ez__*Bx__ - Ex__*Bz__);
+        }
+    }//if North
+    
 }

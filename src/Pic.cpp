@@ -154,43 +154,43 @@ int main (int argc, char* argv[])
     vector<Species*> vecSpecies = SpeciesFactory::createVector(params, smpi);
 	
     smpi->barrier();
-
+    
     unsigned int stepStart=0, stepStop=params.n_time;
     
     // reading from dumped file the restart values
     if (params.restart) {
-	MESSAGE(2, "READING fields and particles");
-	DEBUG(vecSpecies.size());
-	sio->restartAll( EMfields,  stepStart, vecSpecies, smpi, params, input_data);
+        MESSAGE(2, "READING fields and particles");
+        DEBUG(vecSpecies.size());
+        sio->restartAll( EMfields,  stepStart, vecSpecies, smpi, params, input_data);
     } else {
-	// -----------------------------------
-	// Initialize the electromagnetic fields
-	// -----------------------------------
-	// Init rho and J by projecting all particles of subdomain
-	EMfields->initRhoJ(vecSpecies, Proj);
-	// Sum rho and J on ghost domains
+        // -----------------------------------
+        // Initialize the electromagnetic fields
+        // -----------------------------------
+        // Init rho and J by projecting all particles of subdomain
+        EMfields->initRhoJ(vecSpecies, Proj);
+        // Sum rho and J on ghost domains
 		
-	smpi->sumRhoJ( EMfields );
-	// Init electric field (Ex/1D, + Ey/2D)
-	EMfields->solvePoisson(smpi);
+        smpi->sumRhoJ( EMfields );
+        // Init electric field (Ex/1D, + Ey/2D)
+        EMfields->solvePoisson(smpi);
         
-	// run diagnostics at time-step 0
-	Diags->runAllDiags(0, EMfields, vecSpecies, Interp);
-	// temporary EM fields dump in Fields.h5
-	sio->writeAllFieldsSingleFileTime( EMfields, 0 );
+        // run diagnostics at time-step 0
+        Diags->runAllDiags(0, EMfields, vecSpecies, Interp);
+        // temporary EM fields dump in Fields.h5
+        sio->writeAllFieldsSingleFileTime( EMfields, 0 );
         // temporary EM fields dump in Fields_avg.h5
-	sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
-	// temporary particle dump at time 0
-	sio->writePlasma( vecSpecies, 0., smpi );
+        sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
+        // temporary particle dump at time 0
+        sio->writePlasma( vecSpecies, 0., smpi );
     }
-
+    
     // ----------------------------------------------------------------------------
     // Define Moving Window
     // ----------------------------------------------------------------------------
     SimWindow* simWindow = NULL;
     if (params.res_space_win_x)
-	simWindow = new SimWindow(params);
-
+        simWindow = new SimWindow(params);
+    
     // ------------------------------------------------------------------------
     // Initialize the simulation times time_prim at n=0 and time_dual at n=-1/2
     // ------------------------------------------------------------------------
@@ -227,7 +227,7 @@ int main (int argc, char* argv[])
         
         //double timElapsed=smpiData->time_seconds();
 		if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) )
-            MESSAGE(1,"Time (dual)= " << time_dual << " it = " << itime  << "/" << params.n_time << " sec: " << timer[0].getTime() << " E_tot: " << Diags->getScalar("Total_Energy") );
+            MESSAGE(1,"Time (dual)= " << time_dual << " it = " << itime  << "/" << params.n_time << " sec: " << timer[0].getTime() << " E_bal: " << Diags->getScalar("Energy_Balance") << " E_bal(%): " << 100.0*Diags->getScalar("Energy_Bal_norm") );
         //MESSAGE(1,"Time (dual)= " << time_dual << " it = " << itime  << "/" << params.n_time << " sec: " << timElapsed  );
         
         
@@ -243,7 +243,7 @@ int main (int argc, char* argv[])
         // (2) move the particle
         // (3) calculate the currents (charge conserving method)
         timer[1].restart();
-        #pragma omp parallel shared (EMfields,time_dual,vecSpecies,smpi)
+#pragma omp parallel shared (EMfields,time_dual,vecSpecies,smpi)
         {
             int tid(0);
 #ifdef _OMP
@@ -253,18 +253,18 @@ int main (int argc, char* argv[])
                 vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi);
             }
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-		if ( (params.use_sort_particles) && (itime%params.exchange_particles_each==0) ) {
-                    #pragma omp barrier
-		    //#pragma omp master
-		    {
-			// Loop on dims to manage exchange in corners
-			for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
-			    smpi->exchangeParticles(vecSpecies[ispec], ispec, &params, tid);
-
-		    }
-                    #pragma omp barrier
-		    vecSpecies[ispec]->sort_part(params.cell_length[0]);
-		}
+                if ( (params.use_sort_particles) && (itime%params.exchange_particles_each==0) ) {
+#pragma omp barrier
+                    //#pragma omp master
+                    {
+                        // Loop on dims to manage exchange in corners
+                        for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
+                            smpi->exchangeParticles(vecSpecies[ispec], ispec, &params, tid);
+                        
+                    }
+#pragma omp barrier
+                    vecSpecies[ispec]->sort_part(params.cell_length[0]);
+                }
             }
         }
         timer[1].update();
@@ -301,15 +301,15 @@ int main (int argc, char* argv[])
         // temporary particles dump (1 HDF5 file per process)
         if  ((diag_params.particleDump_every != 0) && (itime % diag_params.particleDump_every == 0))
             sio->writePlasma( vecSpecies, time_dual, smpi );
-	
+        
         if (sio->dump(EMfields, itime,  vecSpecies, smpi, params, input_data)) break;
-
+        
         timer[3].update();
 		
         if ( simWindow && simWindow->isMoving(itime) ) {
             simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi );
         }
-
+        
     }//END of the time loop
     
     smpi->barrier();
@@ -353,7 +353,7 @@ int main (int argc, char* argv[])
     delete Interp;
     delete EMfields;
     delete Diags;
-
+    
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
     vecSpecies.clear();
     

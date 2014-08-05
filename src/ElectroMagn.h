@@ -173,10 +173,6 @@ public:
     //!     poynting[1][0]=south, poynting[1][0]=north
     std::vector<double> poynting[2];
 
-protected:
-    //! copy of the res_time from picparams
-    double timestep;
-
 private:
     
     //! Vector of boundary-condition per side for the fields

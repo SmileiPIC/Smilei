@@ -31,7 +31,12 @@ void DiagnosticScalar::close() {
 
 // wrapper of the methods
 void DiagnosticScalar::run(int timestep, ElectroMagn* EMfields, vector<Species*>& vecSpecies) {
-    EMfields->computePoynting(smpi_);
+    EMfields->computePoynting(smpi_); // This must be called at each timestep
+    if (timestep==0) {
+        compute_proc_gather(EMfields,vecSpecies);
+        compute();
+        Energy_time_zero=getScalar("Total_Energy");
+    }
     if (every && timestep % every == 0) {
         compute_proc_gather(EMfields,vecSpecies);
         compute();
@@ -178,11 +183,18 @@ void DiagnosticScalar::compute() {
         }
         
     }
-    for (unsigned int i=0; i< out_list.size(); i++) {
-        if (out_list[i].first=="E_EMfields_sum") {
-            out_list.push_back(make_pair("Total_Energy",E_tot_particles+out_list[i].second));
-        }
-    }
+    
+    
+    double E_EM_sum=getScalar("E_EMfields_sum");
+    double Total_Energy=E_tot_particles+E_EM_sum;
+    double Poy_sum=getScalar("Poy_sum");
+    double Energy_Balance=Total_Energy-(Energy_time_zero+Poy_sum);
+    double Energy_Bal_norm=(Total_Energy-(Energy_time_zero+Poy_sum))/Total_Energy;
+    
+    
+    out_list.push_back(make_pair("Total_Energy",Total_Energy));
+    out_list.push_back(make_pair("Energy_Balance",Energy_Balance));
+    out_list.push_back(make_pair("Energy_Bal_norm",Energy_Bal_norm));
     
 }
 
@@ -199,16 +211,26 @@ void DiagnosticScalar::write(int itime) {
                 i++;
             }
 
-            fout << "#\n#" << setw(precision+8) << "time";
+            fout << "#\n#" << setw(precision+9) << "time";
             for(vector<pair<string,double> >::iterator iter = out_list.begin(); iter !=out_list.end(); iter++) {
-                fout << setw(precision+8) << (*iter).first;
+                fout << setw(precision+9) << (*iter).first;
             }
             fout << endl;
         }
-        fout << setw(precision+8) << itime/res_time;
+        fout << setw(precision+9) << itime/res_time;
         for(vector<pair<string,double> >::iterator iter = out_list.begin(); iter !=out_list.end(); iter++) {
-            fout << setw(precision+8) << (*iter).second;
+            fout << setw(precision+9) << (*iter).second;
         }
         fout << endl;
     }
 }
+
+double DiagnosticScalar::getScalar(string name){
+    for (unsigned int i=0; i< out_list.size(); i++) {
+        if (out_list[i].first==name) {
+            return out_list[i].second;
+        }
+    }    
+    return 0.0;
+}
+

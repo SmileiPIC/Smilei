@@ -189,7 +189,7 @@ void SmileiIO::writeAvgFieldsSingleFileTime( ElectroMagn* EMfields, int time )
 void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI* smpi )
 {
 	
-    if (smpi->isMaster()) MESSAGE("write species disabled");
+    if (smpi->isMaster()) DEBUG("write species disabled");
     return;
 	
     int n_species = vecSpecies.size();
