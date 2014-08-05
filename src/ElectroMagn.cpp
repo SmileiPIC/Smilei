@@ -19,9 +19,10 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for the virtual class ElectroMagn
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi)
+ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi) :
+res_time(params->res_time)
 {
-    
+    // initialize poynting vector
     poynting[0].resize(params->nDim_field,0.0);
     poynting[1].resize(params->nDim_field,0.0);
     
@@ -326,13 +327,23 @@ void ElectroMagn::computeScalars()
     }
     
     // poynting stuff
-    map<string,vector<double> > poynting_map_inf;
-    poynting_map_inf["sum"]=poynting[0];
-    scalars["Poy_inf"]=poynting_map_inf;
+    for (unsigned int j=0; j<2;j++) {    
+        for (unsigned int i=0; i<poynting[j].size();i++) {
+            vector<double> dummy_poy(1,poynting[j][i]);
+            map<string,vector<double> > dummy_poynting_map;
+            dummy_poynting_map["sum"]=dummy_poy;
+            stringstream s;
+            s << "Poy_" << (j==0?"inf":"sup") << "_" << i;
+            scalars[s.str()]=dummy_poynting_map;
+        }
+    }
+    vector<double> poynting_tot;
+    poynting_tot.insert(poynting_tot.end(),poynting[0].begin(),poynting[0].end());
+    poynting_tot.insert(poynting_tot.end(),poynting[1].begin(),poynting[1].end());
     
-    map<string,vector<double> > poynting_map_sup;
-    poynting_map_sup["sum"]=poynting[1];
-    scalars["Poy_sup"]=poynting_map_sup;
+    map<string,vector<double> > poynting_map;
+    poynting_map["sum"]=poynting_tot;
+    scalars["Poy"]=poynting_map;
     
 }
 

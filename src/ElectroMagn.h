@@ -167,10 +167,18 @@ public:
     //! compute Poynting on borders
     virtual void computePoynting(SmileiMPI* smpi) = 0;
     
-    //! pointing vector on borders
+    //! pointing vector on borders 
+    //! 1D: poynting[0][0]=left , poynting[1][0]=right
+    //! 2D: poynting[0][0]=west , poynting[1][0]=east
+    //!     poynting[1][0]=south, poynting[1][0]=north
     std::vector<double> poynting[2];
-    
+
+protected:
+    //! copy of the res_time from picparams
+    unsigned int res_time;
+
 private:
+    
     //! Vector of boundary-condition per side for the fields
     std::vector<FieldsBC*> fieldsBoundCond;
 };

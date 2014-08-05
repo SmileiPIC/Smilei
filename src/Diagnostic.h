@@ -29,11 +29,16 @@ class Diagnostic {
 public:
     //! creator called from main
     Diagnostic(PicParams* params,  DiagParams* diagparams, SmileiMPI* smpi);
+    
     //! destructor
     ~Diagnostic();
+    
     //! check if at timestep diagnostics must be called
     void runAllDiags (int timestep, ElectroMagn* EMfields, std::vector<Species*>&, Interpolator *interp);
  
+    //! get a particular scalar
+    double getScalar(std::string name);
+        
 private:
     
     DiagnosticScalar scalars;

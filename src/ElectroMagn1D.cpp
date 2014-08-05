@@ -609,11 +609,11 @@ void ElectroMagn1D::computePoynting(SmileiMPI* smpi) {
 
     if ( smpi1D->isWester() ) {
         poynting[0][0]+= 0.5*((*Ey_)(0) * ((*Bz_m)(0) + (*Bz_m)(1)) - 
-                              (*Ez_)(0) * ((*By_m)(0) + (*By_m)(1)));
+                              (*Ez_)(0) * ((*By_m)(0) + (*By_m)(1))) / ((double)res_time);
     }//if Western
     if ( smpi1D->isEaster() ) {
         poynting[1][0]+=-0.5*((*Ey_)(nx_p-1) * ((*Bz_m)(nx_d-2) + (*Bz_m)(nx_d-1)) - 
-                              (*Ez_)(nx_p-1) * ((*By_m)(nx_d-2) + (*By_m)(nx_d-1)));
+                              (*Ez_)(nx_p-1) * ((*By_m)(nx_d-2) + (*By_m)(nx_d-1))) / ((double)res_time);
     }//if Eastern
         
 //    if ( smpi1D->isWester() ) {

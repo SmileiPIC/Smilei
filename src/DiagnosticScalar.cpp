@@ -167,7 +167,9 @@ void DiagnosticScalar::compute() {
             } else if (nameType=="sum") {
                 double val=0;
                 for(int iCPU=0; iCPU<smpi_->getSize(); iCPU++) {
-                    val+=mpi_EM_scalars[iCPU][nameEm][nameType][0];
+                    for(unsigned int ival=0;ival<mpi_EM_scalars[iCPU][nameEm][nameType].size(); ival++) {
+                        val+=mpi_EM_scalars[iCPU][nameEm][nameType][ival];
+                    }
                 }
                 out_list.push_back(make_pair(nameEm+"_"+nameType,val));
             } else {

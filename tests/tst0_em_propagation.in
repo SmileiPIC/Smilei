@@ -15,15 +15,15 @@ interpolation_order = 2
 # res_time: temporal resolution (integer = number of time−steps within one normalization period)
 # sim_time: duration of the simulation in units of the normalization period 
 #
-res_time = 1000
+res_time = 80.1
 sim_time = 10.0
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
 # sim_length: length of the simulation in units of the normalization wavelength 
 #
-res_space=200
-sim_length=10.0
+res_space=50
+sim_length=5.0
 
 # PLASMA GEOMETRY
 # plasma_geometry: string defining the plasma geometry

@@ -874,5 +874,24 @@ void ElectroMagn2D::computeTotalRhoJ()
 
 
 void ElectroMagn2D::computePoynting(SmileiMPI* smpi) {
-    DEBUG("To be done");
+    
+    SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
+    WARNING("!!!! test Poynting !!!!");
+    
+    if ( smpi2D->isWester() ) {
+        poynting[0][0] += +1.0;
+    }//if Western
+    if ( smpi2D->isEaster() ) {
+        poynting[1][0] += -1.0;
+    }//if Eastern
+
+    if ( smpi2D->isSouthern() ) {
+        poynting[0][1] += +2.0;
+    }//if Western
+    
+    if ( smpi2D->isNorthern() ) {
+        poynting[1][1] += -2.0;
+    }//if Eastern
+    
+//    DEBUG("To be done");
 }

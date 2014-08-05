@@ -116,14 +116,14 @@ public:
 
     inline double& operator () (unsigned int i,unsigned int j)
     {
-	int idx = i*dims_[1]+j;
+	int unsigned idx = i*dims_[1]+j;
         DEBUGEXEC(if (idx>=globalDims_) ERROR("Out of limits & "<< i << " " << j));
         DEBUGEXEC(if (!std::isfinite(data_[idx])) ERROR("Not finite "<< i << " " << j << " = " << data_[idx]));
         return data_[idx];
     };
     inline double operator () (unsigned int i, unsigned int j) const
     {
-        int idx = i*dims_[1]+j;
+        unsigned int idx = i*dims_[1]+j;
         DEBUGEXEC(if (idx>=globalDims_) ERROR("Out of limits "<< i << " " << j));
         DEBUGEXEC(if (!std::isfinite(data_[idx])) ERROR("Not finite "<< i << " " << j << " = " << data_[idx]));
         return data_[idx];

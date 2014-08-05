@@ -227,7 +227,7 @@ int main (int argc, char* argv[])
         
         //double timElapsed=smpiData->time_seconds();
 		if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) )
-            MESSAGE(1,"Time (dual)= " << time_dual << " it = " << itime  << "/" << params.n_time << " sec: " << timer[0].getTime() );
+            MESSAGE(1,"Time (dual)= " << time_dual << " it = " << itime  << "/" << params.n_time << " sec: " << timer[0].getTime() << " E_tot: " << Diags->getScalar("Total_Energy") );
         //MESSAGE(1,"Time (dual)= " << time_dual << " it = " << itime  << "/" << params.n_time << " sec: " << timElapsed  );
         
         
@@ -302,7 +302,7 @@ int main (int argc, char* argv[])
         if  ((diag_params.particleDump_every != 0) && (itime % diag_params.particleDump_every == 0))
             sio->writePlasma( vecSpecies, time_dual, smpi );
 	
-	if (sio->dump(EMfields, itime,  vecSpecies, smpi, params, input_data)) break;
+        if (sio->dump(EMfields, itime,  vecSpecies, smpi, params, input_data)) break;
 
         timer[3].update();
 		

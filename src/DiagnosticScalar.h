@@ -41,6 +41,9 @@ public:
     //! write the out_list data onto a file
     void write(int timestep);
 
+    //! this is a list to keep variable name and value
+    std::vector<std::pair<std::string,double> > out_list;
+    
 private:
     //! this is copied from params
     double res_time;
@@ -57,9 +60,6 @@ private:
 
     //! mpi_EM_scalars [iCpu]["Field name"]["key"]<values>
     std::vector<std::map<std::string,std::map<std::string,std::vector<double> > > > mpi_EM_scalars;
-
-    //! this is a list to keep variable name and value
-    std::vector<std::pair<std::string,double> > out_list;
 };
 
 #endif
