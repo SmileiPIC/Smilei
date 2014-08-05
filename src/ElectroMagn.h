@@ -175,7 +175,7 @@ public:
 
 protected:
     //! copy of the res_time from picparams
-    unsigned int res_time;
+    double timestep;
 
 private:
     

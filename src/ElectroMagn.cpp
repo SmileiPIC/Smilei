@@ -20,7 +20,7 @@ using namespace std;
 // Constructor for the virtual class ElectroMagn
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi) :
-res_time(params->res_time)
+timestep(params->timestep)
 {
     // initialize poynting vector
     poynting[0].resize(params->nDim_field,0.0);
