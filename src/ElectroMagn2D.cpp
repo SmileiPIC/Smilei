@@ -29,17 +29,14 @@ ElectroMagn(params, smpi)
     // Calculate quantities related to the simulation box
     // --------------------------------------------------
 
-    // time-step
-    dt       = params->timestep;
-
     // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the x-direction)
     dx       = params->cell_length[0];
-    dt_ov_dx = dt/dx;
+    dt_ov_dx = timestep/dx;
     dx_ov_dt = 1.0/dt_ov_dx;
 
     // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the y-direction)
     dy       = params->cell_length[1];
-    dt_ov_dy = dt/dy;
+    dt_ov_dy = timestep/dy;
     dy_ov_dt = 1.0/dt_ov_dy;
 
     //!\todo Check if oversize really needs to be a vector
@@ -542,21 +539,21 @@ void ElectroMagn2D::solveMaxwellAmpere()
     // Electric field Ex^(d,p)
     for (unsigned int i=0 ; i<nx_d ; i++) {
         for (unsigned int j=0 ; j<ny_p ; j++) {
-            (*Ex2D)(i,j) += -dt*(*Jx2D)(i,j) + dt_ov_dy * ( (*Bz2D)(i,j+1) - (*Bz2D)(i,j) );
+            (*Ex2D)(i,j) += -timestep*(*Jx2D)(i,j) + dt_ov_dy * ( (*Bz2D)(i,j+1) - (*Bz2D)(i,j) );
         }
     }
 
     // Electric field Ey^(p,d)
     for (unsigned int i=0 ; i<nx_p ; i++) {
         for (unsigned int j=0 ; j<ny_d ; j++) {
-            (*Ey2D)(i,j) += -dt*(*Jy2D)(i,j) - dt_ov_dx * ( (*Bz2D)(i+1,j) - (*Bz2D)(i,j) );
+            (*Ey2D)(i,j) += -timestep*(*Jy2D)(i,j) - dt_ov_dx * ( (*Bz2D)(i+1,j) - (*Bz2D)(i,j) );
         }
     }
 
     // Electric field Ez^(p,p)
     for (unsigned int i=0 ;  i<nx_p ; i++) {
         for (unsigned int j=0 ; j<ny_p ; j++) {
-            (*Ez2D)(i,j) += -dt*(*Jz2D)(i,j)
+            (*Ez2D)(i,j) += -timestep*(*Jz2D)(i,j)
                             +               dt_ov_dx * ( (*By2D)(i+1,j) - (*By2D)(i,j) )
                             -               dt_ov_dy * ( (*Bx2D)(i,j+1) - (*Bx2D)(i,j) );
         }
@@ -898,7 +895,7 @@ void ElectroMagn2D::computePoynting(SmileiMPI* smpi) {
             double Ez__ = (*Ez_)(iEz,jEz+j);
             double By__ = 0.5*((*By_m)(iBy,jBy+j) + (*By_m)(iBy+1, jBy+j));
             
-            poynting[0][0]+= dy*dt*(Ey__*Bz__ - Ez__*By__);
+            poynting[0][0]+= dy*timestep*(Ey__*Bz__ - Ez__*By__);
         }
     }//if Western
     
@@ -924,7 +921,7 @@ void ElectroMagn2D::computePoynting(SmileiMPI* smpi) {
             double Ez__ = (*Ez_)(iEz,jEz+j);
             double By__ = 0.5*((*By_m)(iBy,jBy+j) + (*By_m)(iBy+1, jBy+j));
             
-            poynting[1][0] -= dy*dt*(Ey__*Bz__ - Ez__*By__);
+            poynting[1][0] -= dy*timestep*(Ey__*Bz__ - Ez__*By__);
         }
     }//if Easter
     
@@ -949,7 +946,7 @@ void ElectroMagn2D::computePoynting(SmileiMPI* smpi) {
             double Ex__ = 0.5*((*Ex_)(iEx+i,jEx) + (*Ex_)(iEx+i+1, jEx));
             double Bz__ = 0.25*((*Bz_m)(iBz+i,jBz)+(*Bz_m)(iBz+i+1,jBz)+(*Bz_m)(iBz+i,jBz+1)+(*Bz_m)(iBz+i+1,jBz+1));
             
-            poynting[0][1] += dx*dt*(Ez__*Bx__ - Ex__*Bz__);
+            poynting[0][1] += dx*timestep*(Ez__*Bx__ - Ex__*Bz__);
         }
     }// if South
 
@@ -973,7 +970,7 @@ void ElectroMagn2D::computePoynting(SmileiMPI* smpi) {
             double Ex__ = 0.5*((*Ex_)(iEx+i,jEx) + (*Ex_)(iEx+i+1, jEx));
             double Bz__ = 0.25*((*Bz_m)(iBz+i,jBz)+(*Bz_m)(iBz+i+1,jBz)+(*Bz_m)(iBz+i,jBz+1)+(*Bz_m)(iBz+i+1,jBz+1));
             
-            poynting[1][1] -= dx*dt*(Ez__*Bx__ - Ex__*Bz__);
+            poynting[1][1] -= dx*timestep*(Ez__*Bx__ - Ex__*Bz__);
         }
     }//if North
     

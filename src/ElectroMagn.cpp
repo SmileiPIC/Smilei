@@ -29,6 +29,7 @@ ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi)
     cell_volume=params->cell_volume;
     n_space=params->n_space;
     oversize=params->oversize;
+    timestep=params->timestep;
     for (unsigned int i=0; i<3; i++) {
         DEBUG("____________________ OVERSIZE: " <<i << " " << oversize[i]);
     }

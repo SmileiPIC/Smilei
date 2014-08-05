@@ -22,7 +22,7 @@ sim_time = 10.0
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
 # sim_length: length of the simulation in units of the normalization wavelength 
 #
-res_space=900
+res_space=950
 sim_length=5.0
  
 # PLASMA GEOMETRY

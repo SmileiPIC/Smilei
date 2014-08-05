@@ -29,7 +29,7 @@ public:
     std::vector<unsigned int> index_bc_max;
 
     //! time-step
-    double dt;
+    double timestep;
 
     //! time at n steps for which electric fields are defined
     double time_prim;

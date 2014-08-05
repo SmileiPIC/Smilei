@@ -30,7 +30,6 @@ ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
 
     // spatial-step and ratios time-step by spatial-step & spatial-step by time-step
     dx       = params->cell_length[0];
-    dt       = params->timestep;
     dt_ov_dx = params->timestep/params->cell_length[0];
     dx_ov_dt = 1.0/dt_ov_dx;
 
@@ -408,13 +407,13 @@ void ElectroMagn1D::solveMaxwellAmpere()
     // Calculate the electrostatic field ex on the dual grid
     //for (unsigned int ix=0 ; ix<nx_d ; ix++){
     for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
-        (*Ex1D)(ix)= (*Ex1D)(ix) - dt* (*Jx1D)(ix) ;
+        (*Ex1D)(ix)= (*Ex1D)(ix) - timestep* (*Jx1D)(ix) ;
     }
     // Transverse fields ey, ez  are defined on the primal grid
     //for (unsigned int ix=0 ; ix<nx_p ; ix++) {
     for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
-        (*Ey1D)(ix)= (*Ey1D)(ix) - dt_ov_dx * ( (*Bz1D)(ix+1) - (*Bz1D)(ix)) - dt * (*Jy1D)(ix) ;
-        (*Ez1D)(ix)= (*Ez1D)(ix) + dt_ov_dx * ( (*By1D)(ix+1) - (*By1D)(ix)) - dt * (*Jz1D)(ix) ;
+        (*Ey1D)(ix)= (*Ey1D)(ix) - dt_ov_dx * ( (*Bz1D)(ix+1) - (*Bz1D)(ix)) - timestep * (*Jy1D)(ix) ;
+        (*Ez1D)(ix)= (*Ez1D)(ix) + dt_ov_dx * ( (*By1D)(ix+1) - (*By1D)(ix)) - timestep * (*Jz1D)(ix) ;
     }
 
 }
@@ -613,7 +612,7 @@ void ElectroMagn1D::computePoynting(SmileiMPI* smpi) {
         unsigned int iEz=istart[0][Ez_->isDual(0)];
         unsigned int iBy=istart[0][By_m->isDual(0)];
         
-        poynting[0][0] += 0.5*dt*((*Ey_)(iEy) * ((*Bz_m)(iBz) + (*Bz_m)(iBz+1)) - 
+        poynting[0][0] += 0.5*timestep*((*Ey_)(iEy) * ((*Bz_m)(iBz) + (*Bz_m)(iBz+1)) - 
                                         (*Ez_)(iEz) * ((*By_m)(iBy) + (*By_m)(iBy+1)));
     } 
     if ( smpi1D->isEaster() ) {
@@ -622,7 +621,7 @@ void ElectroMagn1D::computePoynting(SmileiMPI* smpi) {
         unsigned int iEz=istart[0][Ez_->isDual(0)]  + bufsize[0][Ez_->isDual(0)]-1;
         unsigned int iBy=istart[0][By_m->isDual(0)] + bufsize[0][By_m->isDual(0)]-1;
 
-        poynting[1][0] -= 0.5*dt*((*Ey_)(iEy) * ((*Bz_m)(iBz-1) + (*Bz_m)(iBz)) - 
+        poynting[1][0] -= 0.5*timestep*((*Ey_)(iEy) * ((*Bz_m)(iBz-1) + (*Bz_m)(iBz)) - 
                                   (*Ez_)(iEz) * ((*By_m)(iBy-1) + (*By_m)(iBy)));
 
     }
