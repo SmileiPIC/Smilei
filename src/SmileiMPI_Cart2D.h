@@ -44,10 +44,10 @@ public:
         return number_of_procs[i];
     }
 
-    inline bool isWester() {
+    inline bool isWestern() {
         return (coords_[0]==0);
     }
-    inline bool isEaster() {
+    inline bool isEastern() {
         return (coords_[0]==number_of_procs[0]-1);
     }
     inline bool isSouthern() {

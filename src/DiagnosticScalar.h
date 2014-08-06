@@ -48,19 +48,24 @@ public:
     double getScalar(std::string name);
 
 private:
+    //! check if proc is master (from smpi)
+    const bool isMaster;
+    
+    //! tot number of cpus (from smpi)
+    const unsigned int cpuSize;
+
     //! initial energy (kinetic + EM)
     double Energy_time_zero;
     
     //! this is copied from params
-    double res_time;
+    const double res_time;
     
     //! every step to calculate scalars
-    unsigned int every;
+    const unsigned int every;
     
     //! output stream
     std::ofstream fout;
     
-    SmileiMPI* smpi_;
     //! mpi_spec_scalars [iCpu][iSpec]
     std::vector<std::vector<std::map<std::string, double> > > mpi_spec_scalars;
 

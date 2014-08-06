@@ -71,13 +71,22 @@ public:
     //! Ratio of the spatial-step by the time-step dy/dt for 2D3V cartesian simulations
     double dy_ov_dt;
 
-    //! Oversize
-    unsigned int oversize_;
-
     //! compute Poynting on borders
-    void computePoynting(SmileiMPI* smpi);
+    void computePoynting();
         
 private:
+    
+    //! from smpi is west
+    const bool isWestern;
+    
+    //! from smpi is east
+    const bool isEastern;
+    
+    //! from smpi is north
+    const bool isSouthern;
+    
+    //! from smpi is south
+    const bool isNorthern;
 };
 
 #endif

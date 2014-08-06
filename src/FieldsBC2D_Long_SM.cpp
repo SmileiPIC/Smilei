@@ -103,7 +103,7 @@ void FieldsBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, SmileiMP
     // -----------------------------------------
     // Silver-Mueller boundary conditions (West)
     // -----------------------------------------
-    if ( smpi->isWester() ) {
+    if ( smpi->isWestern() ) {
         // for By^(d,p)
         for (unsigned int j=0 ; j<ny_p ; j++) {
 
@@ -147,7 +147,7 @@ void FieldsBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, SmileiMP
     // -----------------------------------------
     // Silver-Mueller boundary conditions (East)
     // -----------------------------------------
-    if ( smpi->isEaster() ) {
+    if ( smpi->isEastern() ) {
         // for By^(d,p)
         for (unsigned int j=0 ; j<ny_p ; j++) {
             

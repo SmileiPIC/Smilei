@@ -19,17 +19,20 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for the virtual class ElectroMagn
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi)
+ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi) :
+timestep(params->timestep),
+cell_length(params->cell_length),
+nDim_field(params->nDim_field),
+cell_volume(params->cell_volume),
+n_species(params->n_species),
+n_space(params->n_space),
+oversize(params->oversize)
 {
     // initialize poynting vector
-    poynting[0].resize(params->nDim_field,0.0);
-    poynting[1].resize(params->nDim_field,0.0);
+    poynting[0].resize(nDim_field,0.0);
+    poynting[1].resize(nDim_field,0.0);
     
     // take useful things from params
-    cell_volume=params->cell_volume;
-    n_space=params->n_space;
-    oversize=params->oversize;
-    timestep=params->timestep;
     for (unsigned int i=0; i<3; i++) {
         DEBUG("____________________ OVERSIZE: " <<i << " " << oversize[i]);
     }
@@ -59,7 +62,6 @@ ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi)
     Bz_avg=NULL;
     
     // Species charge currents and density
-    n_species = params->n_species;
     Jx_s.resize(n_species);
     Jy_s.resize(n_species);
     Jz_s.resize(n_species);
@@ -160,10 +162,10 @@ void ElectroMagn::dump(PicParams* params)
     
     vector<unsigned int> dimPrim;
     dimPrim.resize(1);
-    dimPrim[0] = params->n_space[0]+2*params->oversize[0]+1;
+    dimPrim[0] = n_space[0]+2*oversize[0]+1;
     vector<unsigned int> dimDual;
     dimDual.resize(1);
-    dimDual[0] = params->n_space[0]+2*params->oversize[0]+2;
+    dimDual[0] = n_space[0]+2*oversize[0]+2;
     
     // dump of the electromagnetic fields
     Ex_->dump(dimDual);
@@ -188,6 +190,7 @@ void ElectroMagn::initRhoJ(vector<Species*> vecSpecies, Projector* Proj)
 {
     //! \todo Check that one uses only none-test particles
     // number of (none-test) used in the simulation
+    //! \todo fix this: n_species is already a member of electromagn, is it this confusing? what happens if n_species grows (i.e. with ionization)?
     unsigned int n_species = vecSpecies.size();
     
     //loop on all (none-test) Species
@@ -241,22 +244,10 @@ void ElectroMagn::computeScalars()
             iFieldGlobalSize [i] = (*field)->dims_[i];
         }
         
-//        unsigned int my_incr=0;
         for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
             for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
                 for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
-// was:             unsigned int ii=i+j*(*field)->dims_[0]+k*(*field)->dims_[0]*(*field)->dims_[1];
                     unsigned int ii=k+ j*iFieldGlobalSize[2] +i*iFieldGlobalSize[1]*iFieldGlobalSize[2];
-
-                    //!debug stuff
-//                    int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk );
-//                    if ((*field)->name == "Ex" && __rk==1) {
-//                        DEBUG(__rk << " ------------------- "<< (*field)->name << "  -> " << ii << " " << ++my_incr << " " << std::scientific << setprecision(12) << setw(20) << (**field)(ii));
-//                        DEBUG( i << " " << j);
-//                        DEBUG(iFieldStart[0] << " " <<  iFieldStart[1] << " " << iFieldEnd[0] << " " <<  iFieldEnd[1]);
-//                        DEBUG((*field)->dims_[0] << " " <<  (*field)->dims_[1] << " " <<  (*field)->dims_[2] << " : " << (*field)->globalDims_);
-//                    }
-
                     Etot[0]+=pow((**field)(ii),2);
                 }
             }
@@ -286,8 +277,8 @@ void ElectroMagn::computeScalars()
     for (vector<Field*>::iterator field=fields.begin(); field!=fields.end(); field++) {
         
         map<string,vector<double> > scalars_map;
-        vector<double> minVec(4,0);
-        vector<double> maxVec(4,0);
+        vector<double> minVec(2,0);
+        vector<double> maxVec(2,0);
         
         minVec[0]=maxVec[0]=(**field)(0);
         
@@ -300,29 +291,20 @@ void ElectroMagn::computeScalars()
         for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
             for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
                 for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
-// was:             unsigned int ii=i+j*(*field)->dims_[0]+k*(*field)->dims_[0]*(*field)->dims_[1];
                     unsigned int ii=k+ j*iFieldGlobalSize[2] +i*iFieldGlobalSize[1]*iFieldGlobalSize[2];
                     if (minVec[0]>(**field)(ii)) {
                         minVec[0]=(**field)(ii);
-                        minVec[1]=i;
-                        minVec[2]=j;
-                        minVec[3]=k;
+                        minVec[1]=ii;
                     }
                     if (maxVec[0]<(**field)(ii)) {
                         maxVec[0]=(**field)(ii);
-                        maxVec[1]=i;
-                        maxVec[2]=j;
-                        maxVec[3]=k;
+                        maxVec[1]=ii;
                     }
                 }
             }
         }
-        minVec.resize(1+(*field)->dims_.size());
-        maxVec.resize(1+(*field)->dims_.size());
-
-        // we just store the values that change
-        scalars_map["min"]=minVec;
-        scalars_map["max"]=maxVec;
+        scalars_map["min_ii"]=minVec;
+        scalars_map["max_ii"]=maxVec;
         scalars[(*field)->name]=scalars_map;
     }
     

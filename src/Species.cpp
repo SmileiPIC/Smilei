@@ -1040,7 +1040,7 @@ void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
     smpi->exchangeParticles( this, speciesNumber, params_, 0 );
     
     // Create new particles
-    if (smpi->isEaster() ) {
+    if (smpi->isEastern() ) {
         defineNewCells(shift, smpi);
     }
     

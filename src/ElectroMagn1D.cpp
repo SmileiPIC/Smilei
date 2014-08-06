@@ -20,35 +20,37 @@ using namespace std;
 // Constructor for Electromagn1D
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
-    : ElectroMagn(params, smpi)
+    : ElectroMagn(params, smpi),
+isWestern(smpi->isWestern()),
+isEastern(smpi->isEastern())
 {
     // local dt to store
     SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
     int process_coord_x = smpi1D->getProcCoord(0);
 
-    oversize_ = params->oversize[0];
+    oversize_ = oversize[0];
 
     // spatial-step and ratios time-step by spatial-step & spatial-step by time-step
-    dx       = params->cell_length[0];
-    dt_ov_dx = params->timestep/params->cell_length[0];
+    dx       = cell_length[0];
+    dt_ov_dx = timestep/cell_length[0];
     dx_ov_dt = 1.0/dt_ov_dx;
 
    // Electromagnetic fields
     // ----------------------
     // number of nodes of the primal-grid
-    nx_p = params->n_space[0]+1 + 2*params->oversize[0];
+    nx_p = n_space[0]+1 + 2*oversize[0];
     // number of nodes of the dual-grid
-    nx_d = params->n_space[0]+2 + 2*params->oversize[0];
+    nx_d = n_space[0]+2 + 2*oversize[0];
     // dimPrim/dimDual = nx_p/nx_d
-    dimPrim.resize( params->nDim_field );
-    dimDual.resize( params->nDim_field );
-    for (size_t i=0 ; i<params->nDim_field ; i++) {
+    dimPrim.resize( nDim_field );
+    dimDual.resize( nDim_field );
+    for (size_t i=0 ; i<nDim_field ; i++) {
         // Standard scheme
-        dimPrim[i] = params->n_space[i]+1;
-        dimDual[i] = params->n_space[i]+2;
+        dimPrim[i] = n_space[i]+1;
+        dimDual[i] = n_space[i]+2;
         // + Ghost domain
-        dimPrim[i] += 2*params->oversize[i];
-        dimDual[i] += 2*params->oversize[i];
+        dimPrim[i] += 2*oversize[i];
+        dimDual[i] += 2*oversize[i];
     }
     MESSAGE( "dimPrim[0]  " <<  dimPrim[0] );
 
@@ -98,11 +100,11 @@ ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
     // ----------------------------------------------------------------
     // Definition of the min and max index according to chosen oversize
     // ----------------------------------------------------------------
-    index_bc_min.resize( params->nDim_field, 0 );
-    index_bc_max.resize( params->nDim_field, 0 );
-    for (size_t i=0 ; i<params->nDim_field ; i++) {
-        index_bc_min[i] = params->oversize[i];
-        index_bc_max[i] = dimDual[i]-params->oversize[i]-1;
+    index_bc_min.resize( nDim_field, 0 );
+    index_bc_max.resize( nDim_field, 0 );
+    for (size_t i=0 ; i<nDim_field ; i++) {
+        index_bc_min[i] = oversize[i];
+        index_bc_max[i] = dimDual[i]-oversize[i]-1;
     }
 
 
@@ -112,7 +114,7 @@ ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
     for (unsigned int i=0 ; i<3 ; i++)
 	for (unsigned int isDual=0 ; isDual<2 ; isDual++)
 	    istart[i][isDual] = 0;
-    for (unsigned int i=0 ; i<params->nDim_field ; i++) {
+    for (unsigned int i=0 ; i<nDim_field ; i++) {
 	for (unsigned int isDual=0 ; isDual<2 ; isDual++) {
 	    istart[i][isDual] = oversize[i];
 	    if (smpi1D->getProcCoord(i)!=0) istart[i][isDual]+=1;
@@ -124,9 +126,9 @@ ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
  	for (unsigned int isDual=0 ; isDual<2 ; isDual++)
 	    bufsize[i][isDual] = 1;
 
-   for (unsigned int i=0 ; i<params->nDim_field ; i++) {
+   for (unsigned int i=0 ; i<nDim_field ; i++) {
 	for (int isDual=0 ; isDual<2 ; isDual++)
-	    bufsize[i][isDual] = params->n_space[i] + 1;
+	    bufsize[i][isDual] = n_space[i] + 1;
 
 	for (int isDual=0 ; isDual<2 ; isDual++) {
 	    bufsize[i][isDual] += isDual; 
@@ -142,7 +144,7 @@ ElectroMagn1D::ElectroMagn1D(PicParams* params, SmileiMPI* smpi)
 
 	    } // if ( smpi1D->getNbrOfProcs(i)!=1 )
 	} // for (int isDual=0 ; isDual
-    } // for (unsigned int i=0 ; i<params->nDim_field 
+    } // for (unsigned int i=0 ; i<nDim_field 
 
 
 }//END constructor Electromagn1D
@@ -187,11 +189,11 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
     index_min_d[0] = oversize_;
     index_max_p[0] = nx_p - 2 - oversize_;
     index_max_d[0] = nx_d - 2 - oversize_;
-    if (smpi1D->isWester()) {
+    if (smpi1D->isWestern()) {
         index_min_p[0] = 0;
         index_min_d[0] = 0;
     }
-    if (smpi1D->isEaster()) {
+    if (smpi1D->isEastern()) {
         index_max_p[0] = nx_p-1;
         index_max_d[0] = nx_d-1;
     }
@@ -250,8 +252,8 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
         for (unsigned int i=1 ; i<dimPrim[0]-1 ; i++) Ap(i) = p(i-1) - 2.0*p(i) + p(i+1);
 
         // apply BC on Ap
-        if (smpi1D->isWester()) Ap(0)      = pW        - 2.0*p(0)      + p(1);
-        if (smpi1D->isEaster()) Ap(nx_p-1) = p(nx_p-2) - 2.0*p(nx_p-1) + pE;
+        if (smpi1D->isWestern()) Ap(0)      = pW        - 2.0*p(0)      + p(1);
+        if (smpi1D->isEastern()) Ap(nx_p-1) = p(nx_p-2) - 2.0*p(nx_p-1) + pE;
         smpi1D->exchangeField(&Ap);
 
         // scalar product p.Ap
@@ -306,8 +308,8 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
 
     // BC on Ex
     smpi1D->exchangeField(Ex1D);
-    if (smpi1D->isWester()) (*Ex1D)(0)      = (*Ex1D)(1)      - dx*(*rho1D)(0);
-    if (smpi1D->isEaster()) (*Ex1D)(nx_d-1) = (*Ex1D)(nx_d-2) + dx*(*rho1D)(nx_p-1);
+    if (smpi1D->isWestern()) (*Ex1D)(0)      = (*Ex1D)(1)      - dx*(*rho1D)(0);
+    if (smpi1D->isEastern()) (*Ex1D)(nx_d-1) = (*Ex1D)(nx_d-2) + dx*(*rho1D)(nx_p-1);
 
 
     // Find field to be added to ensure BC: Ex_West = -Ex_East
@@ -316,14 +318,14 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
     double Ex_East = 0.0;
 
     unsigned int rankWest = smpi1D->extrem_ranks[0][0];
-    if (smpi1D->isWester()) {
+    if (smpi1D->isWestern()) {
         if (smilei_rk != smpi1D->extrem_ranks[0][0]) ERROR("western process not well defined");
         Ex_West = (*Ex1D)(index_bc_min[0]);
     }
     MPI_Bcast(&Ex_West, 1, MPI_DOUBLE, rankWest, MPI_COMM_WORLD);
 
     unsigned int rankEast = smpi1D->extrem_ranks[0][1];
-    if (smpi1D->isEaster()) {
+    if (smpi1D->isEastern()) {
         if (smilei_rk != smpi1D->extrem_ranks[0][1]) ERROR("eastern process not well defined");
         Ex_East = (*Ex1D)(index_bc_max[0]);
     }
@@ -603,10 +605,8 @@ void ElectroMagn1D::computeTotalRhoJ()
     }//END loop on species ispec
 }
 
-void ElectroMagn1D::computePoynting(SmileiMPI* smpi) {
-    SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
-    
-    if ( smpi1D->isWester() ) {
+void ElectroMagn1D::computePoynting() {
+    if (isWestern) {
         unsigned int iEy=istart[0][Ey_->isDual(0)];
         unsigned int iBz=istart[0][Bz_m->isDual(0)];
         unsigned int iEz=istart[0][Ez_->isDual(0)];
@@ -615,7 +615,7 @@ void ElectroMagn1D::computePoynting(SmileiMPI* smpi) {
         poynting[0][0] += 0.5*timestep*((*Ey_)(iEy) * ((*Bz_m)(iBz) + (*Bz_m)(iBz+1)) - 
                                         (*Ez_)(iEz) * ((*By_m)(iBy) + (*By_m)(iBy+1)));
     } 
-    if ( smpi1D->isEaster() ) {
+    if (isEastern) {
         unsigned int iEy=istart[0][Ey_->isDual(0)]  + bufsize[0][Ey_->isDual(0)]-1;
         unsigned int iBz=istart[0][Bz_m->isDual(0)] + bufsize[0][Bz_m->isDual(0)]-1;
         unsigned int iEz=istart[0][Ez_->isDual(0)]  + bufsize[0][Ez_->isDual(0)]-1;
@@ -624,19 +624,5 @@ void ElectroMagn1D::computePoynting(SmileiMPI* smpi) {
         poynting[1][0] -= 0.5*timestep*((*Ey_)(iEy) * ((*Bz_m)(iBz-1) + (*Bz_m)(iBz)) - 
                                   (*Ez_)(iEz) * ((*By_m)(iBy-1) + (*By_m)(iBy)));
 
-    }
-        
-//    if ( smpi1D->isWester() ) {
-//        // Silver-Mueller boundary conditions (left)
-//        (*By1D)(0) =  Alpha_SM*(*Ez1D)(0) + Beta_SM*(*By1D)(1) + Gamma_SM*byL;
-//        (*Bz1D)(0) = -Alpha_SM*(*Ey1D)(0) + Beta_SM*(*Bz1D)(1) + Gamma_SM*bzL;
-//    }//if Western
-//    if ( smpi1D->isEaster() ) {
-//        // Silver-Mueller boundary conditions (right)
-//        (*By1D)(nx_d-1) = -Alpha_SM*(*Ez1D)(nx_p-1) + Beta_SM*(*By1D)(nx_d-2) + Gamma_SM*byR;
-//        (*Bz1D)(nx_d-1) =  Alpha_SM*(*Ey1D)(nx_p-1) + Beta_SM*(*Bz1D)(nx_d-2) + Gamma_SM*bzR;
-//    }//if Eastern
-    
-    
-    
+    }    
 }

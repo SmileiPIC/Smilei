@@ -28,14 +28,11 @@ public:
     std::vector<unsigned int> index_bc_min;
     std::vector<unsigned int> index_bc_max;
 
-    //! time-step
-    double timestep;
-
-    //! time at n steps for which electric fields are defined
-    double time_prim;
-
-    //! time at n+1/2 steps for which magnetic fields are defined
-    double time_dual;
+    //! time-step (from picparams)
+    const double timestep;
+    
+    //! cell length (from picparams)
+    const std::vector<double> cell_length;
 
     //! \todo Generalise this to none-cartersian geometry (e.g rz, MG & JD)
 
@@ -101,17 +98,20 @@ public:
 
 
     //! Vector of charge density and currents for each species
-    unsigned int n_species;
+    const unsigned int n_species;
     std::vector<Field*> Jx_s;
     std::vector<Field*> Jy_s;
     std::vector<Field*> Jz_s;
     std::vector<Field*> rho_s;
 
-    //! Volume of the single cell
-    double cell_volume;
+    //! nDim_field (from params)
+    const unsigned int nDim_field;
+
+    //! Volume of the single cell (from params)
+    const double cell_volume;
 
     //! n_space (from params) always 3D
-    std::vector<unsigned int> n_space;
+    const std::vector<unsigned int> n_space;
 
     //! Index of starting elements in arrays without duplicated borders
     //! By constuction 1 element is shared in primal field, 2 in dual
@@ -122,8 +122,8 @@ public:
     unsigned int bufsize[3][2];
 
     //!\todo should this be just an integer???
-    //! Oversize domain to exchange less particles
-    std::vector<unsigned int> oversize;
+    //! Oversize domain to exchange less particles (from params)
+    const std::vector<unsigned int> oversize;
 
     //! Constructor for Electromagn
     ElectroMagn( PicParams* params, SmileiMPI* smpi );
@@ -165,7 +165,7 @@ public:
     std::map<std::string,std::map<std::string,std::vector<double> > > scalars;
 
     //! compute Poynting on borders
-    virtual void computePoynting(SmileiMPI* smpi) = 0;
+    virtual void computePoynting() = 0;
     
     //! pointing vector on borders 
     //! 1D: poynting[0][0]=left , poynting[1][0]=right

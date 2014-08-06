@@ -60,9 +60,14 @@ public:
     double dx_ov_dt;
 
     //! compute Poynting on borders
-    void computePoynting(SmileiMPI* smpi);
+    void computePoynting();
 
 private:
+    //! from smpi is west
+    const bool isWestern;
+    
+    //! from smpi is east
+    const bool isEastern;
 };
 
 #endif

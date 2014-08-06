@@ -72,11 +72,11 @@ smpi_(smpi), probeSize(10), fileId(0) {
                     //!fixme this is awful: we add one cell if we're on the upper border
                     double maxToCheck=smpi->getDomainLocalMax(iDim);                    
                     if (ndim==1) {
-                        if ((static_cast<SmileiMPI_Cart1D*>(smpi))->isEaster()) {
+                        if ((static_cast<SmileiMPI_Cart1D*>(smpi))->isEastern()) {
                             maxToCheck+=params->cell_length[iDim];
                         }
                     } else if (ndim==2) {
-                        if ((iDim == 0 && (static_cast<SmileiMPI_Cart2D*>(smpi))->isEaster()) ||
+                        if ((iDim == 0 && (static_cast<SmileiMPI_Cart2D*>(smpi))->isEastern()) ||
                             (iDim == 1 && (static_cast<SmileiMPI_Cart2D*>(smpi))->isNorthern())) {
                             maxToCheck+=params->cell_length[iDim];
                         }                        

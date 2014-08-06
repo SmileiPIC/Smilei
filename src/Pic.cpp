@@ -227,7 +227,7 @@ int main (int argc, char* argv[])
         
         //double timElapsed=smpiData->time_seconds();
 		if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) )
-            MESSAGE(1,"Time (dual)= " << time_dual << " it = " << itime  << "/" << params.n_time << " sec: " << timer[0].getTime() << " E_bal: " << Diags->getScalar("Energy_Balance") << " E_bal(%): " << 100.0*Diags->getScalar("Energy_Bal_norm") );
+            MESSAGE(1,"t= " << time_dual/(2*M_PI) << " it= " << setw(log10(params.n_time)) << itime  << "/" << params.n_time << " sec: " << timer[0].getTime() << " E= " << Diags->getScalar("Total_energy") << " E_bal(%)= " << 100.0*Diags->getScalar("Energy_bal_norm") );
         //MESSAGE(1,"Time (dual)= " << time_dual << " it = " << itime  << "/" << params.n_time << " sec: " << timElapsed  );
         
         

@@ -84,10 +84,10 @@ public:
     }
 
     //! \ Should be pure virtual
-    virtual bool isEaster ( ){WARNING("Problem");return false;}
-    virtual bool isWester ( ){WARNING("Problem");return false;}
-    virtual bool isSouthern ( ){WARNING("Problem");return false;}
-    virtual bool isNorthern ( ){WARNING("Problem");return false;}
+    virtual bool isEastern(){WARNING("Problem");return false;}
+    virtual bool isWestern(){WARNING("Problem");return false;}
+    virtual bool isSouthern(){WARNING("Problem");return false;}
+    virtual bool isNorthern(){WARNING("Problem");return false;}
 
     std::vector<int> n_space_global;
     int smilei_sz;
