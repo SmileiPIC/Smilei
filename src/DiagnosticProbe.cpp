@@ -17,7 +17,9 @@
 using namespace std;
 
 DiagnosticProbe::DiagnosticProbe(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi):
-smpi_(smpi), probeSize(10), fileId(0) {
+cpuRank(smpi->getRank()),
+probeSize(10), 
+fileId(0) {
     
     if (diagParams->probeStruc.size() >0) {
         hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
@@ -60,7 +62,7 @@ smpi_(smpi), probeSize(10), fileId(0) {
             vector<double> partPos(ndim*totPart,0.0);
             
             for(unsigned int ipart=0; ipart!=totPart; ++ipart) {
-                int found=smpi_->getRank();
+                int found=cpuRank;
                 for(unsigned int iDim=0; iDim!=ndim; ++iDim) {
                     partPos[iDim+ipart*ndim]=diagParams->probeStruc[np].pos[0][iDim];
                     // the particle position is a linear combiantion of the point pos with posFirst or posSecond or posThird
@@ -206,7 +208,7 @@ void DiagnosticProbe::run(unsigned int timestep, ElectroMagn* EMfields, Interpol
             for (unsigned int iprob=0; iprob <probeParticles[np].size(); iprob++) {
                 
                 vector<hsize_t> count(dimProbe);
-                if (probeId[np][iprob]==smpi_->getRank()) {
+                if (probeId[np][iprob]==cpuRank) {
                     fill(count.begin(),count.end()-1,1);
                     count.back()=probeSize;
                 } else {
@@ -225,7 +227,7 @@ void DiagnosticProbe::run(unsigned int timestep, ElectroMagn* EMfields, Interpol
                 hid_t pid = H5Pcreate(H5P_DATASET_XFER);
                 H5Pset_dxpl_mpio(pid, H5FD_MPIO_INDEPENDENT);
                 
-                if (probeId[np][iprob]==smpi_->getRank()) {
+                if (probeId[np][iprob]==cpuRank) {
                     (*interp)(EMfields,probeParticles[np],iprob,&Eloc_fields,&Bloc_fields,&Jloc_fields,&data[probeSize-1]);
                     
                     //! here we fill the probe data!!!

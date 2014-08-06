@@ -44,8 +44,9 @@ public:
     std::vector<unsigned int> every;
 
 protected:
-    //! copy of the smpi pointer
-    SmileiMPI* smpi_;
+    
+    // rank of the cpu (from smpi)
+    const unsigned int cpuRank;
     
     //! fake particles acting as probes
     std::vector<Particles> probeParticles;
