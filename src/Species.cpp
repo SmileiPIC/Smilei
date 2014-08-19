@@ -585,6 +585,56 @@ double Species::density_profile(PicParams* params, vector<double> x_cell, unsign
             return fx*fy;
         }
         
+        //2D gaussian profile
+        else if (params->plasma_geometry=="gaussian") {
+            vector<double> lt(2);
+            lt[0]=params->cut[0]*params->sigma[0];
+            lt[1]=params->cut[1]*params->sigma[1];
+            //x direction
+            // vacuum region
+            if ( x_cell[0] < params->vacuum_length[0] ) {
+                fx=0.0;
+            }
+            //gaussian
+            else if(x_cell[0] < params->vacuum_length[0]+lt[0] ) {
+                fx= exp(-(x_cell[0]-params->vacuum_length[0]-lt[0])*(x_cell[0]-params->vacuum_length[0]-lt[0])/(2*params->sigma[0]*params->sigma[0]));
+                
+            }
+            else if(x_cell[0] < params->vacuum_length[0]+lt[0]+params->plateau[0]) {
+                fx= 1.0;
+            }
+            else if(x_cell[0] < params->vacuum_length[0]+ 2*lt[0]+params->plateau[0]) {
+                fx = exp(-(x_cell[0]-params->vacuum_length[0]-lt[0]-params->plateau[0])*(x_cell[0]-params->vacuum_length[0]-lt[0]-params->plateau[0])/(2*params->sigma[0]*params->sigma[0]));
+            }
+            
+            else{
+                fx= 0.0;
+            }
+            
+            
+            //y direction
+            // vacuum region
+            if ( x_cell[1] < params->vacuum_length[1] ) {
+                fy=0.0;
+            }
+            //gaussian
+            else if(x_cell[1] < params->vacuum_length[1]+lt[1] ) {
+                fy= exp(-(x_cell[1]-params->vacuum_length[1]-lt[1])*(x_cell[1]-params->vacuum_length[1]-lt[1])/(2*params->sigma[1]*params->sigma[1]));
+                
+            }
+            else if(x_cell[1] < params->vacuum_length[1]+lt[1]+params->plateau[1]) {
+                fy= 1.0;
+            }
+            else if(x_cell[1] < params->vacuum_length[1]+ 2*lt[1]+params->plateau[1]) {
+                fy= exp(-(x_cell[1]-params->vacuum_length[1]-lt[1]-params->plateau[1])*(x_cell[1]-params->vacuum_length[1]-lt[1]-params->plateau[1])/(2*params->sigma[1]*params->sigma[1]));
+            }
+            
+            else{
+                fy= 0.0;
+            }
+            return fx*fy;
+
+        }
         
         // Plasma crossing along x direction density profiles
         // --------------------------------------------------

@@ -126,7 +126,27 @@ PicParams::PicParams(InputData &ifile) {
             right_slope_length[i]=plasma_length[i]-left_slope_length[i];
         }
         
-    }else if(plasma_geometry=="polygonal"){
+    }
+    else if(plasma_geometry=="gaussian"){
+        ifile.extract("plasma_length", plasma_length);
+        ifile.extract("vacuum_length", vacuum_length);
+        ifile.extract("cut",cut);
+        ifile.extract("plateau",plateau);
+        sigma.resize(nDim_field);
+        if(cut.size()==0){
+            cut.resize(nDim_field);
+            for(unsigned int i=0;i<nDim_field;i++) cut[i]=3.0;
+        }
+        if(plateau.size()==0){
+            plateau.resize(nDim_field);
+            for(unsigned int i=0;i<nDim_field;i++) plateau[i]=0.0;
+        }
+        if(plasma_length.size()!=0){
+            for(unsigned int i=0;i<nDim_field;i++) sigma[i]=(plasma_length[i]-plateau[i])/(2*cut[i]);
+        }
+    }
+
+    else if(plasma_geometry=="polygonal"){
             ifile.extract("plasma_length", plasma_length);
             ifile.extract("vacuum_length", vacuum_length);
             ifile.extract("x_density_coor",x_density_coor);
