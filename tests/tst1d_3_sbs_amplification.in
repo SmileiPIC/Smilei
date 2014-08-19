@@ -36,10 +36,11 @@ sim_length = 120.0
 # plasma_geometry: string defining the plasma geometry
 # ***_length: characteristic length for a given geometry
 #
-plasma_geometry = trap
+plasma_geometry = polygonal
 vacuum_length   = 10.0
 plasma_length   = 100.0
-slope_length    = 5.0
+x_density_coor = 10.0 80.0 110.0
+density_rel_values_x = 0.3 1.0 0.5
 
 
 # RANDOM seed 

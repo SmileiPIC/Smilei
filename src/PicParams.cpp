@@ -126,7 +126,16 @@ PicParams::PicParams(InputData &ifile) {
             right_slope_length[i]=plasma_length[i]-left_slope_length[i];
         }
         
-    } else if (plasma_geometry=="fukuda"){
+    }else if(plasma_geometry=="polygonal"){
+            ifile.extract("plasma_length", plasma_length);
+            ifile.extract("vacuum_length", vacuum_length);
+            ifile.extract("x_density_coor",x_density_coor);
+            ifile.extract("density_rel_values_x",density_rel_values_x);
+            if(x_density_coor.size()==0) ERROR("polygonal density profile not well defined");
+            
+        }
+
+     else if (plasma_geometry=="fukuda"){
         WARNING("plasma geometry: fukuda vacuum & plasma length are not used");
         ifile.extract("plasma_length", plasma_length);
         ifile.extract("vacuum_length", vacuum_length);
