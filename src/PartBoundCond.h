@@ -7,11 +7,6 @@
   @date 2013-02-15
 */
 
-//Here particles boundary conditions are applied. Conditions along X are applied first, then Y, then Z.
-//The decision whether the particle is added or not on the Exchange Particle List is defined by the final
-//value of keep_part. 
-//Be careful, once an a BC along a given dimension set keep_part to 0, it will remain to 0. 
-
 #ifndef PARTBOUNDCOND_H
 #define PARTBOUNDCOND_H
 
@@ -31,11 +26,15 @@ public:
     int (*bc_north) ( Particles &particles, int ipart, int direction, double limit_pos );
     int (*bc_bottom)( Particles &particles, int ipart, int direction, double limit_pos );
     int (*bc_up)    ( Particles &particles, int ipart, int direction, double limit_pos );
-    int keep_part; // 0 if particle leave the proc, 1 if particle is kept.
 
+    //Here particles boundary conditions are applied. Conditions along X are applied first, then Y, then Z.
+    //The decision whether the particle is added or not on the Exchange Particle List is defined by the final
+    //value of keep_part. 
+    //Be careful, once an a BC along a given dimension set keep_part to 0, it will remain to 0. 
+    //int keep_part; // 0 if particle leave the proc, 1 if particle is kept.
     inline int apply( Particles &particles, int ipart ) {
 
-        keep_part = 1;
+        int keep_part = 1;
         if ( particles.position(0, ipart) <  x_min ) {
             if (bc_west==NULL) keep_part = 0;
             else {
