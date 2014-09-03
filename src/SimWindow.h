@@ -17,7 +17,7 @@ class SimWindow {
     SimWindow(PicParams& params);
     ~SimWindow();
     void operate(std::vector<Species*> vecSpecies, ElectroMagn* EMfields, Interpolator* Interp, Projector* Proj, SmileiMPI* smpi);
-    bool isMoving(int itime);
+    bool isMoving(double time_dual);
     
 
  private:
