@@ -83,7 +83,13 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
         }
     }
     if (params.number_of_procs[0]==0) {
-        double tmp = params.res_space[0]*params.sim_length[0] / ( params.res_space[1]*params.sim_length[1] );
+	double tmp(0.);
+        // if !win
+        if (!params.res_space_win_x)
+            tmp  = params.res_space[0]*params.sim_length[0] / ( params.res_space[1]*params.sim_length[1] );
+        else // if 
+            tmp = params.res_space_win_x * 2.0 * M_PI / ( params.res_space[1]*params.sim_length[1] );
+
         number_of_procs[0] = min( smilei_sz, max(1, (int)sqrt ( (double)smilei_sz*tmp*tmp) ) );
         number_of_procs[1] = (int)(smilei_sz / number_of_procs[0]);
         

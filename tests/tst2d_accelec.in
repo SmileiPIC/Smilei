@@ -25,6 +25,8 @@ res_space  = 51  5
 sim_length = 500  250  
 #sim_length = 22  250  
 
+#number_of_procs = 10 10 #In case you want to specify the exact MPI topology.
+
 # PLASMA GEOMETRY
 # plasma_geometry: string defining the plasma geometry
 # ***_length: characteristic length for a given geometry
@@ -35,7 +37,7 @@ plasma_length   = 1095.0  305.0
 slope_length = 0.0 0.0
 
 res_space_win_x = 1100
-t_move_win = 2.
+t_move_win = 103.
 vx_win = 0.9997
 clrw = 1
 
@@ -59,12 +61,12 @@ use_transverse_periodic = false
 # radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
 #
 species
-	species_type = positron1
+	species_type = proton
 	initialization_type = Maxwell-Juettner
 	ionization_model = none
-	n_part_per_cell = 10
+	n_part_per_cell = 1
 	c_part_max = 1.0
-	mass = 1.0
+	mass = 1836.0
 	charge = 1.0
 	density = 0.000494
 	mean_velocity = 0.0 0.0 0.0
@@ -109,10 +111,10 @@ laser
 	angle=0
 	delta=0.0              
 	time_profile = gaussian
-        y_profile = gaussian
+        transv_profile = gaussian
 	double_params = 4.0 0.0 0.0 # FWHM in intensity, plateau length, delay
         int_params = 3 # Cut-off of the longitudinal gaussian in number of sigma
-        double_params_transv = 0.0 80.0 # distance from axis, transverse FWHM in intensity
+        double_params_transv = 125. 80.0 # distance from axis, transverse FWHM in intensity
         int_params_transv= 2 # order of the hyper gaussian
 end
 

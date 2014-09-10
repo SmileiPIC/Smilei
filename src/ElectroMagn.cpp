@@ -139,7 +139,7 @@ void ElectroMagn::solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, Pic
     solveMaxwellFaraday();
 
     // Update Bx_, By_, Bz_
-    if ((!simWindow) || (!simWindow->isMoving(itime)) )
+    if ((!simWindow) || (!simWindow->isMoving(time_dual)) )
 	fieldsBoundCond[0]->apply(this, time_dual, smpi);
     if ( (!params.use_transverse_periodic) && (fieldsBoundCond.size()>1) )
 	fieldsBoundCond[1]->apply(this, time_dual, smpi);

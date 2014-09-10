@@ -306,7 +306,7 @@ int main (int argc, char* argv[])
         
         timer[3].update();
 		
-        if ( simWindow && simWindow->isMoving(itime) ) {
+        if ( simWindow && simWindow->isMoving(time_dual) ) {
             simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi );
         }
         
