@@ -3,7 +3,7 @@ VERSION:="$(shell git describe 2>/dev/null || echo '??')"
 SMILEICXX     ?= mpic++
 HDF5_ROOT_DIR ?=
 
-CFLAGS  += -D_OMP -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include #-Wstrict-aliasing
+CFLAGS  += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include #-Wstrict-aliasing
 LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5
 
 ifneq (,$(findstring poincare,$(HOSTNAME)))
@@ -22,10 +22,10 @@ OBJS := $(patsubst %.cpp,%.o,$(SRCS))
 release: CFLAGS += -O3
 release: $(EXEC)
 
-openmpgnu: CFLAGS += -O3 -fopenmp
+openmpgnu: CFLAGS += -O3 -fopenmp -D_OMP
 openmpgnu: $(EXEC)
 
-openmpintel: CFLAGS += -O3 -openmp
+openmpintel: CFLAGS += -O3 -openmp -D_OMP
 openmpintel: $(EXEC)
 
 debug: CFLAGS += -g -pg -Wall -D__DEBUG
