@@ -9,8 +9,8 @@ VALIDIR=${PWD}/Validation
 
 mkdir -p ${VALIDIR}/data
 
-cp tests/tst?_*.in                    ${VALIDIR}/data
-cp tests/tst2d_0_refl_imm_ions*.in    ${VALIDIR}/data
+#cp tests/tst?_*.in                    ${VALIDIR}/data
+#cp tests/tst2d_0_refl_imm_ions*.in    ${VALIDIR}/data
 cp tests/tst2d_1_ion_clb_explosion.in ${VALIDIR}/data
 
 cd ${VALIDIR}
