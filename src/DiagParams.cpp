@@ -11,16 +11,20 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
 	print_every=params.n_time/10;
     ifile.extract("print_every", print_every);
 	
-	fieldDump_every=params.n_time/10;
+//	fieldDump_every=params.n_time/10;
+    fieldDump_every=0.0;
     ifile.extract("fieldDump_every", fieldDump_every);
     
-    avgfieldDump_every=params.res_time*10;
+    //avgfieldDump_every=params.res_time*10;
+    avgfieldDump_every= 0.0;
     ifile.extract("avgfieldDump_every", avgfieldDump_every);
     
-    ntime_step_avg=params.res_time;
+//    ntime_step_avg=params.res_time;
+    ntime_step_avg=0.0;
 	ifile.extract("ntime_step_avg", ntime_step_avg);
     
-	particleDump_every=params.n_time/10;
+//	particleDump_every=params.n_time/10;
+    particleDump_every=0.0;
 	ifile.extract("particleDump_every", particleDump_every);
 	
 	scalar_every=0;
