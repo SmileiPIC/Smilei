@@ -83,6 +83,8 @@ public:
         return max_local[i];
     }
 
+    std::vector<int>                 indexes_of_particles_to_exchange;
+
     //! \ Should be pure virtual
     virtual bool isEastern(){WARNING("Problem");return false;}
     virtual bool isWestern(){WARNING("Problem");return false;}

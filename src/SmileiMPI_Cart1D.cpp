@@ -6,7 +6,6 @@
 #include <string>
 
 #include <mpi.h>
-
 #include "Species.h"
 
 #include "ElectroMagn.h"
@@ -163,7 +162,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
     /********************************************************************************/
     
     std::vector< std::vector<int> >* indexes_of_particles_to_exchange_per_thd = &species->indexes_of_particles_to_exchange_per_thd;
-    std::vector<int>                 indexes_of_particles_to_exchange;
+    //std::vector<int>                 indexes_of_particles_to_exchange;
     
 #pragma omp single
     {
@@ -174,6 +173,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
     for (tid=0 ; tid < tnum ; tid++){
         tmp += ((*indexes_of_particles_to_exchange_per_thd)[tid]).size(); //Compute the position where to start copying
     }
+
     if (tnum == indexes_of_particles_to_exchange_per_thd->size()-1){ //If last thread
         indexes_of_particles_to_exchange.resize( tmp + ((*indexes_of_particles_to_exchange_per_thd)[tnum]).size());
     }
@@ -186,7 +186,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
             memcpy(&indexes_of_particles_to_exchange[k], &((*indexes_of_particles_to_exchange_per_thd)[tid])[0],((*indexes_of_particles_to_exchange_per_thd)[tid]).size()*sizeof(int));
             k += ((*indexes_of_particles_to_exchange_per_thd)[tid]).size();   
         }
-        // All threads together (doesn't work)
+       // All threads together (doesn't work)
         /*if (((*indexes_of_particles_to_exchange_per_thd)[tnum]).size() > 0){
          //cout << "tmp = "<<tmp << endl;
          //cout << "tnum = "<< tnum << endl;
@@ -376,7 +376,6 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
                 }
             }
         }
-        
     } // END omp master 
     //DEBUG( 2, "\tProcess " << smilei_rk << " : " << species->getNbrOfParticles() << " Particles of species " << ispec );
 } // END exchangeParticles
