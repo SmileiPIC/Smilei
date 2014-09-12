@@ -16,6 +16,8 @@
 
 #include "ElectroMagn.h"
 #include "Interpolator.h"
+#include "InterpolatorFactory.h"
+
 #include "Projector.h"
 
 #include "SmileiMPI.h"
@@ -802,15 +804,9 @@ double Species::density_profile(PicParams* params, vector<double> x_cell, unsign
 //   - increment the currents (projection)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfields, Interpolator* Interp,
-                       Projector* Proj, SmileiMPI* smpi)
+                       Projector* Proj, SmileiMPI* smpi, PicParams* params)
 {
-    // disable sort
-    if (!params_->use_sort_particles) {
-        bmin.resize(1);
-        bmin[0] = 0;
-        bmax.resize(1);
-        bmax[0] = max((int)particles.size()-1,0);
-    }
+    Interpolator* LocInterp = InterpolatorFactory::create(*params, smpi);
     
     // Electric field at the particle position
     LocalFields Epart;
@@ -856,7 +852,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
 				
                 // Interpolate the fields at the particle position
-                (*Interp)(EMfields, particles, iPart, &Epart, &Bpart);
+                (*LocInterp)(EMfields, particles, iPart, &Epart, &Bpart);
 				
                 // Do the ionization
                 if (Ionize && particles.charge(iPart) < (int) atomic_number) {
@@ -955,6 +951,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
         }
 		
     }//END if time vs. time_frozen
+    delete LocInterp;
 	
 }//END dynamic
 
@@ -1059,6 +1056,7 @@ void Species::sort_part(double dbin)
         bmax[bin-1] += bmin[bin] - bmin_init;
         bmin[bin] = bmax[bin-1];
     }
+
 }
 
 void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi)

@@ -191,17 +191,6 @@ int main (int argc, char* argv[])
     if (params.res_space_win_x)
         simWindow = new SimWindow(params);
 
-#pragma omp parallel shared(smpi,nthds)
-        {
-#ifdef _OMP
-            nthds = omp_get_num_threads();
-#else
-            nthds = 1;
-#endif
-        }
-    smpi->setExchListSize(nthds);
-
-    
     // ------------------------------------------------------------------------
     // Initialize the simulation times time_prim at n=0 and time_dual at n=-1/2
     // ------------------------------------------------------------------------
@@ -261,7 +250,7 @@ int main (int argc, char* argv[])
             tid = omp_get_thread_num();
 #endif
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-                vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi);
+		vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, &params);
             }
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
                 if ( (params.use_sort_particles) && (itime%params.exchange_particles_each==0) ) {
@@ -299,7 +288,7 @@ int main (int argc, char* argv[])
 		
         // run all diagnostics
         timer[3].restart();
-        //Diags->runAllDiags(itime, EMfields, vecSpecies, Interp);
+        Diags->runAllDiags(itime, EMfields, vecSpecies, Interp);
         
         // temporary EM fields dump in Fields.h5
         if  ((diag_params.fieldDump_every != 0) && (itime % diag_params.fieldDump_every == 0))
