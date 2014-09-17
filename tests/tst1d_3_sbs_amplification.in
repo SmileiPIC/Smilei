@@ -26,7 +26,7 @@ sim_time = 300.0
 # sim_length: length of the simulation in units of the normalization wavelength 
 #
 res_space  = 50
-sim_length = 120.0
+sim_length = 100.0
 
 
 # ---------------
@@ -36,12 +36,9 @@ sim_length = 120.0
 # plasma_geometry: string defining the plasma geometry
 # ***_length: characteristic length for a given geometry
 #
-plasma_geometry = polygonal
-vacuum_length   = 10.0
+plasma_geometry = constant
+vacuum_length   = 0.0
 plasma_length   = 100.0
-x_density_coor = 10.0 80.0 110.0
-density_rel_values_x = 0.3 1.0 0.5
-
 
 # RANDOM seed 
 # this is used to randomize the random number generator
@@ -76,7 +73,7 @@ species
 	dynamics_type = norm
 	time_frozen = 600.0
 	radiating = false
-	bc_part_type_long = refl
+	bc_part_type_long = none
 end
 
 species
@@ -93,7 +90,7 @@ species
 	dynamics_type = norm
 	time_frozen = 0.0
 	radiating = false
-	bc_part_type_long = refl
+	bc_part_type_long = none
 end
 
 # ----------------

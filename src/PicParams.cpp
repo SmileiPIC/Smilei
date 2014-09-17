@@ -154,6 +154,15 @@ PicParams::PicParams(InputData &ifile) {
             if(x_density_coor.size()==0) ERROR("polygonal density profile not well defined");
             
         }
+    
+    else if(plasma_geometry=="cosine"){
+        ifile.extract("plasma_length", plasma_length);
+        ifile.extract("vacuum_length", vacuum_length);
+        ifile.extract("mode", mode);
+        ifile.extract("thetax", thetax);
+        ifile.extract("ampl", ampl);
+    }
+
 
      else if (plasma_geometry=="fukuda"){
         WARNING("plasma geometry: fukuda vacuum & plasma length are not used");
