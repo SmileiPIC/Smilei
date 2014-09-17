@@ -92,7 +92,10 @@ public:
 
     //! scalar output every scalar_every (namelist group "diagnostic scalar" key "every")
     unsigned int scalar_every;
-
+    
+    //! scalar output precision
+    unsigned int scalar_precision;
+    
     //! vector of probes
     std::vector<probeStructure> probeStruc;
     

@@ -15,6 +15,14 @@ class SmileiMPI;
 class DiagParams;
 class ElectroMagn;
 
+
+struct val_index
+{
+    double val;
+    int index;
+};
+
+
 //! class that calculates scalars and writes them on a file
 
 //! the user who wants to implement a scalar diagnostic, can fill the scalars map in species::computeScalar
@@ -30,13 +38,10 @@ public:
     void close();
 
     //! calls the compute_proc_gather, compute and write
-    void run(int timestep, ElectroMagn* EMfields, std::vector<Species*>&);
+    void run(int timestep, ElectroMagn* EMfields, std::vector<Species*>&, SmileiMPI *smpi);
 
     //! ask to each processor to compute the scalars and gather them in the map mpi_spec_scalars[cpu][species]
-    void compute_proc_gather(ElectroMagn* EMfields, std::vector<Species*>&);
-
-    //! fill the out_list based on mpi_spec_scalars[cpu][species] (user should just change this)
-    void compute();
+    void compute(ElectroMagn* EMfields, std::vector<Species*>&, SmileiMPI *smpi);
 
     //! write the out_list data onto a file
     void write(int timestep);
@@ -71,6 +76,12 @@ private:
 
     //! mpi_EM_scalars [iCpu]["Field name"]["key"]<values>
     std::vector<std::map<std::string,std::map<std::string,std::vector<double> > > > mpi_EM_scalars;
+    
+    //! copied from params
+    double cell_volume;
+    
+    //! write precision
+    unsigned int precision;
 };
 
 #endif

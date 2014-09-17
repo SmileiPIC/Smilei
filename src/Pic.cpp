@@ -175,7 +175,7 @@ int main (int argc, char* argv[])
         EMfields->solvePoisson(smpi);
         
         // run diagnostics at time-step 0
-        Diags->runAllDiags(0, EMfields, vecSpecies, Interp);
+        Diags->runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
         // temporary EM fields dump in Fields.h5
         sio->writeAllFieldsSingleFileTime( EMfields, 0 );
         // temporary EM fields dump in Fields_avg.h5
@@ -227,7 +227,7 @@ int main (int argc, char* argv[])
         
         //double timElapsed=smpiData->time_seconds();
 		if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) )
-            MESSAGE(1,"t= " << time_dual/(2*M_PI) << " it= " << setw(log10(params.n_time)) << itime  << "/" << params.n_time << " sec: " << timer[0].getTime() << " E= " << Diags->getScalar("Total_energy") << " E_bal(%)= " << 100.0*Diags->getScalar("Energy_bal_norm") );
+            MESSAGE(1,"t= " << time_dual/(2*M_PI) << " it= " << setw(log10(params.n_time)) << itime  << "/" << params.n_time << " sec: " << timer[0].getTime() << " E= " << Diags->getScalar("Etot") << " E_bal(%)= " << 100.0*Diags->getScalar("Ebal_norm") );
         //MESSAGE(1,"Time (dual)= " << time_dual << " it = " << itime  << "/" << params.n_time << " sec: " << timElapsed  );
         
         
@@ -288,7 +288,7 @@ int main (int argc, char* argv[])
 		
         // run all diagnostics
         timer[3].restart();
-        Diags->runAllDiags(itime, EMfields, vecSpecies, Interp);
+        Diags->runAllDiags(itime, EMfields, vecSpecies, Interp, smpi);
         
         // temporary EM fields dump in Fields.h5
         if  ((diag_params.fieldDump_every != 0) && (itime % diag_params.fieldDump_every == 0))

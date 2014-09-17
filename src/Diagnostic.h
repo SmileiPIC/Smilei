@@ -34,7 +34,7 @@ public:
     ~Diagnostic();
     
     //! check if at timestep diagnostics must be called
-    void runAllDiags (int timestep, ElectroMagn* EMfields, std::vector<Species*>&, Interpolator *interp);
+    void runAllDiags (int timestep, ElectroMagn* EMfields, std::vector<Species*>&, Interpolator *interp, SmileiMPI *smpi);
  
     //! get a particular scalar
     double getScalar(std::string name);

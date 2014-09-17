@@ -1,7 +1,7 @@
 # SIMULATION PARAMETERS
 
 # print_every 
-print_every = 1000
+print_every = 100
 
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
@@ -89,7 +89,8 @@ species
 end
 
 diagnostic scalar
-	every = 1
+	every = 100
+	precision = 3
 end
 
 
