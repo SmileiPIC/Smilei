@@ -89,8 +89,9 @@ species
 end
 
 diagnostic scalar
-	every = 100
+	every = 1
 	precision = 3
+	vars = Ebalance Etot Eparticles EFields Poynting Z_ion E_ion N_ion Z_eon E_eon N_eon Ex_U Ey_U Ez_U
 end
 
 

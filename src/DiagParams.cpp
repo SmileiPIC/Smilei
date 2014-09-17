@@ -28,6 +28,7 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
 	
     scalar_precision=10;
     ifile.extract("precision",scalar_precision,"diagnostic scalar");
+    ifile.extract("vars",scalar_vars,"diagnostic scalar");
 	
     unsigned int n_probe=0;
     while (ifile.existGroup("diagnostic probe",n_probe)) {

@@ -46,9 +46,6 @@ public:
     //! write the out_list data onto a file
     void write(int timestep);
 
-    //! this is a list to keep variable name and value
-    std::vector<std::pair<std::string,double> > out_list;
-    
     //! get a particular scalar
     double getScalar(std::string name);
 
@@ -71,17 +68,27 @@ private:
     //! output stream
     std::ofstream fout;
     
-    //! mpi_spec_scalars [iCpu][iSpec]
-    std::vector<std::vector<std::map<std::string, double> > > mpi_spec_scalars;
-
-    //! mpi_EM_scalars [iCpu]["Field name"]["key"]<values>
-    std::vector<std::map<std::string,std::map<std::string,std::vector<double> > > > mpi_EM_scalars;
-    
     //! copied from params
     double cell_volume;
     
     //! write precision
     unsigned int precision;
+    
+    //! this is a list to keep variable name and value
+    std::vector<std::pair<std::string,double> > out_list;
+        
+    //! append to outlist
+    void append(std::string, double);
+
+    //! prepend to outlist
+    void prepend(std::string, double);
+
+    //! list of keys for scalars to be written
+    std::vector<std::string> vars;
+
+    //! check if key is allowed
+    bool allowedKey(std::string);
+
 };
 
 #endif
