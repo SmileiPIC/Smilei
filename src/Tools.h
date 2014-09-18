@@ -35,7 +35,7 @@
 //#define HEREIAM(__txt) {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); for(int __i=0;__i<20;__i++) {std::cerr << "-";}; std::cerr << "> " << __rk << "\t" << __FILE__ << ":" << __LINE__ << " (" << __FUNCTION__ << ") " << __txt << std::endl; }
 
 #define MESSAGE1(__txt)  {std::cout << __txt << std::endl;}
-#define MESSAGE2(__val,__txt) {for (int __i=0;__i<__val;__i++) std::cout << "\t"; std::cout << "[" << __val << "] " << __txt << std::endl;}
+#define MESSAGE2(__val,__txt) {for (int __i=0;__i<__val;__i++) std::cout << "\t"; std::cout << __txt << std::endl;}
 #define MESSAGE3(arg1,arg2,arg3,...) arg3
 #define MESSAGE4(...) MESSAGE3(__VA_ARGS__,MESSAGE2,MESSAGE1,)
 #define MESSAGE(...) MESSAGE4(__VA_ARGS__)(__VA_ARGS__)

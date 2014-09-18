@@ -22,8 +22,11 @@ PartBoundCond::PartBoundCond( PicParams *params, int ispec, SmileiMPI* smpi )
     if (params->interpolation_order==3) n_ord_proj_max = 5;
 
     // Absolute global values
-    double x_min_global = params->cell_length[0]*n_ord_proj_max;
-    double x_max_global = params->cell_length[0]*( params->n_space_global[0]-1-n_ord_proj_max );
+//    double x_min_global = params->cell_length[0]*n_ord_proj_max;
+//    double x_max_global = params->cell_length[0]*( params->n_space_global[0]-1-n_ord_proj_max );
+    double x_min_global = 0;
+    double x_max_global = params->cell_length[0]*( params->n_space_global[0] );
+
     double y_min_global = params->cell_length[1]*n_ord_proj_max;
     double y_max_global = params->cell_length[1]*( params->n_space_global[1]-1-n_ord_proj_max );
     double z_min_global = params->cell_length[2]*n_ord_proj_max;
@@ -38,12 +41,12 @@ PartBoundCond::PartBoundCond( PicParams *params, int ispec, SmileiMPI* smpi )
 
     // Define limits of local domain
     if (!params->res_space_win_x) {
-	x_min = max( x_min_global, smpi->getDomainLocalMin(0) );
-	x_max = min( x_max_global, smpi->getDomainLocalMax(0) );
+        x_min = max( x_min_global, smpi->getDomainLocalMin(0) );
+        x_max = min( x_max_global, smpi->getDomainLocalMax(0) );
     }
     else {
-	x_min = smpi->getDomainLocalMin(0);
-	x_max = smpi->getDomainLocalMax(0);
+        x_min = smpi->getDomainLocalMin(0);
+        x_max = smpi->getDomainLocalMax(0);
     }
 
     if ( nDim_particle > 1 ) {

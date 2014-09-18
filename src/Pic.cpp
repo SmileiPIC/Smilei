@@ -214,6 +214,8 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     if ( smpi->isMaster() ) MESSAGE(0,"Time-Loop is started: number of time-steps n_time =" << params.n_time);
 	
+    DEBUGEXEC(sio->dump(EMfields, 1,  vecSpecies, smpi, params, input_data));
+
     for (unsigned int itime=stepStart+1 ; itime <= stepStop ; itime++) {
         
         // calculate new times

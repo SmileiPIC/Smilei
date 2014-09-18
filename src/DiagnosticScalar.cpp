@@ -34,14 +34,16 @@ void DiagnosticScalar::close() {
 
 // wrapper of the methods
 void DiagnosticScalar::run(int timestep, ElectroMagn* EMfields, vector<Species*>& vecSpecies, SmileiMPI *smpi) {
-    EMfields->computePoynting(); // This must be called at each timestep
     if (timestep==0) {
         compute(EMfields,vecSpecies,smpi);
         Energy_time_zero=getScalar("Etot");
     }
-    if (every && timestep % every == 0) {
-        compute(EMfields,vecSpecies,smpi);
-        write(timestep);
+    if (every) {
+        EMfields->computePoynting(); // This must be called everytime        
+        if (timestep % every == 0) {
+            compute(EMfields,vecSpecies,smpi);
+            write(timestep);
+        }
     }
 }
 
