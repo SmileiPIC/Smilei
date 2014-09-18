@@ -31,7 +31,7 @@ for proc in ${@:2}
 do 
     if [[ $proc = *[[:digit:]]* ]]
     then
-        dir="$base-$proc"
+        dir="${base}_${proc}"
         rm -rf $dir
         mkdir -p $dir
         cp $1 $dir

@@ -29,8 +29,8 @@ double Diagnostic::getScalar(string name){
     return scalars.getScalar(name);
 }
 
-void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Species*>& vecSpecies, Interpolator *interp) {
-    scalars.run(timestep, EMfields, vecSpecies);
+void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Species*>& vecSpecies, Interpolator *interp, SmileiMPI *smpi) {
+    scalars.run(timestep, EMfields, vecSpecies, smpi);
     probes.run(timestep, EMfields, interp);
 	phases.run(timestep, vecSpecies);
 }

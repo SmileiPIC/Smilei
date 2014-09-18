@@ -15,6 +15,14 @@ class SmileiMPI;
 class DiagParams;
 class ElectroMagn;
 
+
+struct val_index
+{
+    double val;
+    int index;
+};
+
+
 //! class that calculates scalars and writes them on a file
 
 //! the user who wants to implement a scalar diagnostic, can fill the scalars map in species::computeScalar
@@ -30,20 +38,14 @@ public:
     void close();
 
     //! calls the compute_proc_gather, compute and write
-    void run(int timestep, ElectroMagn* EMfields, std::vector<Species*>&);
+    void run(int timestep, ElectroMagn* EMfields, std::vector<Species*>&, SmileiMPI *smpi);
 
     //! ask to each processor to compute the scalars and gather them in the map mpi_spec_scalars[cpu][species]
-    void compute_proc_gather(ElectroMagn* EMfields, std::vector<Species*>&);
-
-    //! fill the out_list based on mpi_spec_scalars[cpu][species] (user should just change this)
-    void compute();
+    void compute(ElectroMagn* EMfields, std::vector<Species*>&, SmileiMPI *smpi);
 
     //! write the out_list data onto a file
     void write(int timestep);
 
-    //! this is a list to keep variable name and value
-    std::vector<std::pair<std::string,double> > out_list;
-    
     //! get a particular scalar
     double getScalar(std::string name);
 
@@ -66,11 +68,27 @@ private:
     //! output stream
     std::ofstream fout;
     
-    //! mpi_spec_scalars [iCpu][iSpec]
-    std::vector<std::vector<std::map<std::string, double> > > mpi_spec_scalars;
+    //! copied from params
+    double cell_volume;
+    
+    //! write precision
+    unsigned int precision;
+    
+    //! this is a list to keep variable name and value
+    std::vector<std::pair<std::string,double> > out_list;
+        
+    //! append to outlist
+    void append(std::string, double);
 
-    //! mpi_EM_scalars [iCpu]["Field name"]["key"]<values>
-    std::vector<std::map<std::string,std::map<std::string,std::vector<double> > > > mpi_EM_scalars;
+    //! prepend to outlist
+    void prepend(std::string, double);
+
+    //! list of keys for scalars to be written
+    std::vector<std::string> vars;
+
+    //! check if key is allowed
+    bool allowedKey(std::string);
+
 };
 
 #endif

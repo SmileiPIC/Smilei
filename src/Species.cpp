@@ -994,26 +994,6 @@ void Species::dump(std::ofstream& ofile)
 	}
     ofile << endl;
 }
-// It computes the method on the single specie. You can add here your parameter for a new diagnostic.
-void Species::computeScalars() {
-    double charge_tot=0.0;
-    double ener_tot=0.0;
-    double cell_volume=1.0;
-    for (unsigned int i=0;i<cell_length.size();i++) {
-        if(cell_length[i]!=0.0) cell_volume*=cell_length[i];
-    }    
-    if (getNbrOfParticles()>0) {
-        for (unsigned int iPart=0 ; iPart<getNbrOfParticles(); iPart++ ) {
-            charge_tot+=(double)particles.charge(iPart);
-            ener_tot+=cell_volume*particles.weight(iPart)*(particles.lor_fac(iPart)-1.0);
-        }
-        ener_tot*=part_mass;
-    }
-    scalars["charge_tot"]=charge_tot;
-    scalars["part_number"]=getNbrOfParticles();
-    scalars["energy_tot"]=ener_tot;
-	
-}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort particles

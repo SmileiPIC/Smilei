@@ -17,6 +17,7 @@ class FieldsBC;
 class SimWindow;
 
 //! class ElectroMagn: generic class containing all information on the electromagnetic fields and currents
+
 class ElectroMagn
 {
 
@@ -157,13 +158,7 @@ public:
     void movingWindow_x(unsigned int shift, SmileiMPI *smpi);
     
     virtual void incrementAvgFields(unsigned int time_step, unsigned int ntime_step_avg) = 0;
-
-    //! compute scalars filling var scalars
-    void computeScalars();
-
-    //! vector(on Fields) of map (of keys like min max) of vector of double values
-    std::map<std::string,std::map<std::string,std::vector<double> > > scalars;
-
+        
     //! compute Poynting on borders
     virtual void computePoynting() = 0;
     

@@ -138,6 +138,8 @@ particleDump_every = 2500
 #
 diagnostic scalar
 	every = 10
+	precision=3
+	vars = Ebalance Etot Eparticles EFields Poynting E_ion N_ion E_eon N_eon Ex_U Ey_U Ez_U
 end
 
 diagnostic phase

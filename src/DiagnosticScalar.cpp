@@ -15,7 +15,10 @@ DiagnosticScalar::DiagnosticScalar(PicParams* params, DiagParams* diagParams, Sm
 isMaster(smpi->isMaster()),
 cpuSize(smpi->getSize()),
 res_time(params->res_time),
-every(diagParams->scalar_every)
+every(diagParams->scalar_every),
+cell_volume(params->cell_volume),
+precision(diagParams->scalar_precision),
+vars(diagParams->scalar_vars)
 {
     if (isMaster) {
         fout.open("scalars.txt");
@@ -30,176 +33,224 @@ void DiagnosticScalar::close() {
 }
 
 // wrapper of the methods
-void DiagnosticScalar::run(int timestep, ElectroMagn* EMfields, vector<Species*>& vecSpecies) {
+void DiagnosticScalar::run(int timestep, ElectroMagn* EMfields, vector<Species*>& vecSpecies, SmileiMPI *smpi) {
     EMfields->computePoynting(); // This must be called at each timestep
     if (timestep==0) {
-        compute_proc_gather(EMfields,vecSpecies);
-        compute();
-        Energy_time_zero=getScalar("Total_Energy");
+        compute(EMfields,vecSpecies,smpi);
+        Energy_time_zero=getScalar("Etot");
     }
     if (every && timestep % every == 0) {
-        compute_proc_gather(EMfields,vecSpecies);
-        compute();
+        compute(EMfields,vecSpecies,smpi);
         write(timestep);
     }
 }
 
 
 // it contains all to manage the communication of data. It is "transparent" to the user.
-void DiagnosticScalar::compute_proc_gather (ElectroMagn* EMfields, vector<Species*>& vecSpecies) {
-    // 	it fills the map on each specie
+void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpecies, SmileiMPI *smpi) {
+    out_list.clear();
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // SPECIES STUFF
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    double Etot_part=0;
     for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
-        vecSpecies[ispec]->computeScalars();
-    }
-    // definition of the memory allocation vector
-    vector<double> oneProc;
-    for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
-        for (map<string, double>::iterator iter = vecSpecies[ispec]->scalars.begin(); iter != vecSpecies[ispec]->scalars.end(); iter++) {
-            oneProc.push_back(iter->second);
-        }
-    }
+        double charge_tot=0.0;
+        double ener_tot=0.0;
+        unsigned int nPart=vecSpecies[ispec]->getNbrOfParticles();
 
-
-    EMfields->computeScalars();
-    
-    for (map<string,map<string,vector<double> > >::iterator iterEM=EMfields->scalars.begin(); iterEM!=EMfields->scalars.end(); iterEM++) {
-        for (map<string,vector<double> >::iterator iterMap=iterEM->second.begin(); iterMap!=iterEM->second.end(); iterMap++ ) {
-
-            for (unsigned int i=0; i<iterMap->second.size(); i++) {
-//				DEBUG(iterEM->first << " " << iterMap->first << " " << iterMap->second[i]);
-                oneProc.push_back(iterMap->second[i]);
+        if (nPart>0) {
+            for (unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
+                charge_tot+=(double)vecSpecies[ispec]->particles.charge(iPart);
+                ener_tot+=cell_volume*vecSpecies[ispec]->particles.weight(iPart)*(vecSpecies[ispec]->particles.lor_fac(iPart)-1.0);
             }
+            ener_tot*=vecSpecies[ispec]->part_mass;
+        }
+
+        MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&charge_tot, &charge_tot, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&ener_tot, &ener_tot, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&nPart, &nPart, 1, MPI_UNSIGNED, MPI_SUM, 0, MPI_COMM_WORLD);
+
+        if (isMaster) {
+            if (nPart!=0) charge_tot /= nPart;
+            append("Z_"+vecSpecies[ispec]->name_str,charge_tot);
+            append("E_"+vecSpecies[ispec]->name_str,ener_tot);
+            append("N_"+vecSpecies[ispec]->name_str,nPart);
+            Etot_part+=ener_tot;
         }
     }
 
-    // 	it constructs the receiving structure on the master processor
-    vector<double> allProcs;
-    if(isMaster) {
-        allProcs.resize(cpuSize*oneProc.size());
-    }
-    // gathering chars of the master processor
-    MPI_Gather(&oneProc[0],oneProc.size(),MPI_DOUBLE,&allProcs[0],oneProc.size(),MPI_DOUBLE,0,MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
-    
-    // 	method to reconstruct the information on the master processor
-    if(isMaster) {
-        unsigned int count=0;
-        mpi_spec_scalars.resize(cpuSize);
-        mpi_EM_scalars.resize(cpuSize);
-        for(int iCPU=0; iCPU<cpuSize; iCPU++) {
-            mpi_spec_scalars[iCPU].resize(vecSpecies.size());
-            for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
-                for (map<string, double>::iterator iter = vecSpecies[ispec]->scalars.begin(); iter != vecSpecies[ispec]->scalars.end(); ++iter) {
-                    mpi_spec_scalars[iCPU][ispec][iter->first] = allProcs[count];
-                    count++;
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // ELECTROMAGN STUFF
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+
+    vector<Field*> fields;
+
+    fields.push_back(EMfields->Ex_);
+    fields.push_back(EMfields->Ey_);
+    fields.push_back(EMfields->Ez_);
+    fields.push_back(EMfields->Bx_m);
+    fields.push_back(EMfields->By_m);
+    fields.push_back(EMfields->Bz_m);
+
+    double Etot_fields=0.0;
+
+    for (vector<Field*>::iterator field=fields.begin(); field!=fields.end(); field++) {
+
+        map<string,val_index> scalars_map;
+
+        double Etot=0.0;
+
+        vector<unsigned int> iFieldStart(3,0), iFieldEnd(3,1), iFieldGlobalSize(3,1);
+        for (unsigned int i=0 ; i<(*field)->isDual_.size() ; i++ ) {
+            iFieldStart[i] = EMfields->istart[i][(*field)->isDual(i)];
+            iFieldEnd [i] = iFieldStart[i] + EMfields->bufsize[i][(*field)->isDual(i)];
+            iFieldGlobalSize [i] = (*field)->dims_[i];
+        }
+
+        for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
+            for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
+                for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
+                    unsigned int ii=k+ j*iFieldGlobalSize[2] +i*iFieldGlobalSize[1]*iFieldGlobalSize[2];
+                    Etot+=pow((**field)(ii),2);
                 }
             }
+        }
+        Etot*=0.5*cell_volume;
+        MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&Etot, &Etot, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        if (isMaster) {
+            append((*field)->name+"_U",Etot);
+            Etot_fields+=Etot;
+        }
+    }
 
-            for (map<string,map<string,vector<double> > >::iterator iterEM=EMfields->scalars.begin(); iterEM!=EMfields->scalars.end(); iterEM++) {
-                for (map<string,vector<double> >::iterator iterMap=iterEM->second.begin(); iterMap!=iterEM->second.end(); iterMap++ ) {
-                    mpi_EM_scalars[iCPU][iterEM->first][iterMap->first].resize(iterMap->second.size());
+    // now we add currents and density
 
-                    for (unsigned int i=0; i<iterMap->second.size(); i++) {
-                        mpi_EM_scalars[iCPU][iterEM->first][iterMap->first][i]=allProcs[count];
-                        count++;
+    fields.push_back(EMfields->Jx_);
+    fields.push_back(EMfields->Jy_);
+    fields.push_back(EMfields->Jz_);
+    fields.push_back(EMfields->rho_);
+
+
+    vector<val_index> minis, maxis;
+
+    for (vector<Field*>::iterator field=fields.begin(); field!=fields.end(); field++) {
+
+        val_index minVal, maxVal;
+
+        minVal.val=maxVal.val=(**field)(0);
+        minVal.index=maxVal.index=0;
+
+        vector<unsigned int> iFieldStart(3,0), iFieldEnd(3,1), iFieldGlobalSize(3,1);
+        for (unsigned int i=0 ; i<(*field)->isDual_.size() ; i++ ) {
+            iFieldStart[i] = EMfields->istart[i][(*field)->isDual(i)];
+            iFieldEnd [i] = iFieldStart[i] + EMfields->bufsize[i][(*field)->isDual(i)];
+            iFieldGlobalSize [i] = (*field)->dims_[i];
+        }
+        for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
+            for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
+                for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
+                    unsigned int ii=k+ j*iFieldGlobalSize[2] +i*iFieldGlobalSize[1]*iFieldGlobalSize[2];
+                    if (minVal.val>(**field)(ii)) {
+                        minVal.val=(**field)(ii);
+                        minVal.index=ii; // rank encoded
+                    }
+                    if (maxVal.val<(**field)(ii)) {
+                        maxVal.val=(**field)(ii);
+                        minVal.index=ii; // rank encoded
                     }
                 }
             }
         }
-        if (count!=allProcs.size()) ERROR("problem here " << count << " != " << allProcs.size());
+        minis.push_back(minVal);
+        maxis.push_back(maxVal);
     }
+
+    MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&minis[0], &minis[0], minis.size(), MPI_DOUBLE_INT, MPI_MINLOC, 0, MPI_COMM_WORLD);
+    MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&maxis[0], &maxis[0], maxis.size(), MPI_DOUBLE_INT, MPI_MAXLOC, 0, MPI_COMM_WORLD);
+
+    if (isMaster) {
+        if (minis.size() == maxis.size() && minis.size() == fields.size()) {
+            unsigned int i=0;
+            for (vector<Field*>::iterator field=fields.begin(); field!=fields.end() && i<minis.size(); field++, i++) {
+
+                append((*field)->name+"Min",minis[i].val);
+                append((*field)->name+"MinCell",minis[i].index);
+
+                append((*field)->name+"Max",maxis[i].val);
+                append((*field)->name+"MaxCell",maxis[i].index);
+
+            }
+        }
+
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // POYNTING STUFF
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    double poyTot=0.0;
+    for (unsigned int j=0; j<2;j++) {
+        for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {
+
+            double poy=EMfields->poynting[j][i];
+
+            MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&poy, &poy, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+            if (isMaster) {
+                stringstream s;
+                s << "Poy_" << (j==0?"inf":"sup") << "_" << (i==0?"x":(i==1?"y":"z"));
+                append(s.str(),poy);
+                poyTot+=poy;
+
+            }
+
+        }
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // FINAL STUFF
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    if (isMaster) {
+
+        double Total_Energy=Etot_part+Etot_fields;
+
+        double Energy_Balance=Total_Energy-(Energy_time_zero+poyTot);
+        double Energy_Bal_norm=Energy_Balance/Total_Energy;
+
+        prepend("Poynting",poyTot);
+        prepend("EFields",Etot_fields);
+        prepend("Eparticles",Etot_part);
+        prepend("Etot",Total_Energy);
+        prepend("Ebalance",Energy_Balance);
+        prepend("Ebal_norm",Energy_Bal_norm);
+    }
+
+
 }
 
-// Each scalar diagnostic should be calculated here
-void DiagnosticScalar::compute() {
-    if(!isMaster) return;
-    out_list.clear();
-    double E_tot_particles=0.0;
-    for(unsigned int ispec=0; ispec<mpi_spec_scalars[0].size(); ++ispec) {
-        double charge_tot=0;
-        unsigned int part_tot=0;
-        double ener_tot=0;
-        for (int iCPU=0; iCPU<cpuSize; iCPU++) {
-            charge_tot+=mpi_spec_scalars[iCPU][ispec]["charge_tot"];
-            part_tot+=mpi_spec_scalars[iCPU][ispec]["part_number"];
-            ener_tot+=mpi_spec_scalars[iCPU][ispec]["energy_tot"];
-            
-        }
-        if (part_tot) charge_tot/=part_tot;
-        ostringstream name(""); 
-        name << ispec;
-        
-        out_list.push_back(make_pair("charge_tot-"+name.str(),charge_tot));
-        out_list.push_back(make_pair("part_tot-"+name.str(),part_tot));
-        out_list.push_back(make_pair("energy_tot-"+name.str(),ener_tot));
-        E_tot_particles+=ener_tot;
-    }
+bool DiagnosticScalar::allowedKey(string my_var) {
+    bool retval=true;
+    if (vars.size()) {
+        transform(my_var.begin(), my_var.end(), my_var.begin(), ::tolower);
+        vector<string>::const_iterator it = find(vars.begin(), vars.end(),my_var);
+        retval=(it != vars.end());
+    }    
+    return retval;
+}
+
+void DiagnosticScalar::prepend(std::string my_var, double val) {
+    out_list.insert(out_list.begin(),make_pair(my_var,val));
     
-    for (map<string,map<string,vector<double> > >::iterator iterEM=mpi_EM_scalars[0].begin(); iterEM!=mpi_EM_scalars[0].end(); iterEM++) {
-        string nameEm=iterEM->first;
-        for (map<string,vector<double> >::iterator iterMap=iterEM->second.begin(); iterMap!=iterEM->second.end(); iterMap++ ) {
-            string nameType=iterMap->first;
-            
-            // when {min,max}_ii we will receive a vector with a value(double) and an array position (int, converted to double)
-            if (nameType=="min_ii") {
-                unsigned iCPUval=0;
-                double val=mpi_EM_scalars[iCPUval][nameEm][nameType][0];
-                unsigned int ival=mpi_EM_scalars[iCPUval][nameEm][nameType][1];
-                for(int iCPU=0; iCPU<cpuSize; iCPU++) {
-                    if (mpi_EM_scalars[iCPU][nameEm][nameType][0]<val) {
-                        iCPUval=iCPU;
-                        val=mpi_EM_scalars[iCPUval][nameEm][nameType][0];
-                        ival=mpi_EM_scalars[iCPUval][nameEm][nameType][1];
-                    }
-                }
-                out_list.push_back(make_pair(nameEm+"_min",val));
-                out_list.push_back(make_pair(nameEm+"_min_ii",ival));
-                out_list.push_back(make_pair(nameEm+"_min_cpu",iCPUval));
-            } else if (nameType=="max_ii") {
-                unsigned iCPUval=0;
-                double val=mpi_EM_scalars[iCPUval][nameEm][nameType][0];
-                unsigned int ival=mpi_EM_scalars[iCPUval][nameEm][nameType][1];
-                for(int iCPU=0; iCPU<cpuSize; iCPU++) {
-                    if (mpi_EM_scalars[iCPU][nameEm][nameType][0]>val) {
-                        iCPUval=iCPU;
-                        val=mpi_EM_scalars[iCPUval][nameEm][nameType][0];
-                        ival=mpi_EM_scalars[iCPUval][nameEm][nameType][1];
-                    }
-                }
-                out_list.push_back(make_pair(nameEm+"_max",val));
-                out_list.push_back(make_pair(nameEm+"_max_ii",ival));
-                out_list.push_back(make_pair(nameEm+"_max_cpu",iCPUval));
-            } else if (nameType=="sum") {
-                double val=0;
-                for(int iCPU=0; iCPU<cpuSize; iCPU++) {
-                    for(unsigned int ival=0;ival<mpi_EM_scalars[iCPU][nameEm][nameType].size(); ival++) {
-                        val+=mpi_EM_scalars[iCPU][nameEm][nameType][ival];
-                    }
-                }
-                out_list.push_back(make_pair(nameEm+"_"+nameType,val));
-            } else {
-                DEBUG("Don't know what to do with " << nameType);
-            }
-        }
-        
-    }
-    
-    
-    double E_EM_sum=getScalar("E_EMfields_sum");
-    double Total_Energy=E_tot_particles+E_EM_sum;
-    double Poy_sum=getScalar("Poy_sum");
-    double Energy_Balance=Total_Energy-(Energy_time_zero+Poy_sum);
-    double Energy_Bal_norm=Energy_Balance/Total_Energy;
-        
-    out_list.insert(out_list.begin(),make_pair("Particles_energy",E_tot_particles));
-    out_list.insert(out_list.begin(),make_pair("Total_energy",Total_Energy));
-    out_list.insert(out_list.begin(),make_pair("Energy_balance",Energy_Balance));
-    out_list.insert(out_list.begin(),make_pair("Energy_bal_norm",Energy_Bal_norm));
-    
+}
+
+void DiagnosticScalar::append(std::string my_var, double val) {
+    out_list.push_back(make_pair(my_var,val));
 }
 
 void DiagnosticScalar::write(int itime) {
-    const unsigned int precision=10;
     if(isMaster) {
         fout << std::scientific;
         fout.precision(precision);
@@ -207,31 +258,37 @@ void DiagnosticScalar::write(int itime) {
             fout << "# " << 1 << " time" << endl;
             unsigned int i=2;
             for(vector<pair<string,double> >::iterator iter = out_list.begin(); iter !=out_list.end(); iter++) {
-                fout << "# " << i << " " << (*iter).first << endl;
-                i++;
+                if (allowedKey((*iter).first) == true) {
+                    fout << "# " << i << " " << (*iter).first << endl;
+                    i++;
+                }
             }
 
             fout << "#\n#" << setw(precision+9) << "time";
             for(vector<pair<string,double> >::iterator iter = out_list.begin(); iter !=out_list.end(); iter++) {
-                fout << setw(precision+9) << (*iter).first;
+                if (allowedKey((*iter).first) == true) {
+                    fout << setw(precision+9) << (*iter).first;
+                }
             }
             fout << endl;
         }
         fout << setw(precision+9) << itime/res_time;
         for(vector<pair<string,double> >::iterator iter = out_list.begin(); iter !=out_list.end(); iter++) {
-            fout << setw(precision+9) << (*iter).second;
+            if (allowedKey((*iter).first) == true) {
+                fout << setw(precision+9) << (*iter).second;
+            }
         }
         fout << endl;
     }
 }
 
-double DiagnosticScalar::getScalar(string name){
+double DiagnosticScalar::getScalar(string my_var){
     for (unsigned int i=0; i< out_list.size(); i++) {
-        if (out_list[i].first==name) {
+        if (out_list[i].first==my_var) {
             return out_list[i].second;
         }
-    }    
-    DEBUG("key not found " << name);
+    }
+    DEBUG("key not found " << my_var);
     return 0.0;
 }
 

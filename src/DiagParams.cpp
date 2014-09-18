@@ -26,6 +26,10 @@ DiagParams::DiagParams(InputData &ifile, PicParams& params) {
 	scalar_every=0;
 	ifile.extract("every",scalar_every,"diagnostic scalar");
 	
+    scalar_precision=10;
+    ifile.extract("precision",scalar_precision,"diagnostic scalar");
+    ifile.extract("vars",scalar_vars,"diagnostic scalar");
+	
     unsigned int n_probe=0;
     while (ifile.existGroup("diagnostic probe",n_probe)) {
         probeStructure tmpStruct;
