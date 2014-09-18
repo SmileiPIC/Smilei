@@ -1290,3 +1290,9 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<int>
     return npart_effective;
     
 }
+
+
+void Species::updateMvWinLimits(double x_moved) {
+    partBoundCond->updateMvWinLimits(x_moved);
+    min_loc += x_moved;
+}

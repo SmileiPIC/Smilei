@@ -73,6 +73,13 @@ public:
     inline double getDomainLocalMax(int i) const {
         return max_local[i];
     }
+
+    inline void updateMvWinLimits(double x_moved, int idx_moved) {
+	min_local[0] += x_moved;
+	max_local[0] += x_moved;
+	cell_starting_global_index[0] = (idx_moved-oversize[0]);
+    }
+
     inline int&    getCellStartingGlobalIndex(int i)  {
         return cell_starting_global_index[i];
     }

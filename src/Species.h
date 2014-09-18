@@ -79,6 +79,7 @@ public:
 
     void movingWindow_x(unsigned int shift, SmileiMPI *smpi);
     void defineNewCells(unsigned int shift, SmileiMPI *smpi);
+    void updateMvWinLimits(double x_moved);
 
     //! Vector containing all Particles of the considered Species
     Particles particles;
