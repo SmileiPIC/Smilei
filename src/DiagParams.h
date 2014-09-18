@@ -93,6 +93,12 @@ public:
     //! scalar output every scalar_every (namelist group "diagnostic scalar" key "every")
     unsigned int scalar_every;
 
+    //! list of vars for scalars to be written (empty means all)
+    std::vector<std::string> scalar_vars;
+
+    //! scalar output precision
+    unsigned int scalar_precision;
+    
     //! vector of probes
     std::vector<probeStructure> probeStruc;
     

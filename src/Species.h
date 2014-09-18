@@ -88,12 +88,6 @@ public:
     //! Ionization method
     Ionization* Ionize;
 
-    //! method used to fill a a struct spec_scalar_data variable type
-    void computeScalars();
-
-    //! map structure for the scalar diagnostics
-    std::map<std::string, double> scalars;
-
     //! to keep rack of ionized electrons
     Species *electron_species;
 
@@ -119,6 +113,8 @@ public:
     }
     std::vector< std::vector<int> > indexes_of_particles_to_exchange_per_thd;
 
+    double part_mass;
+    
 private:
     
     //! 2 times pi
@@ -158,8 +154,6 @@ private:
     Pusher* Push;
 
     unsigned int atomic_number;
-
-    double part_mass;
 
     PicParams* params_;
 

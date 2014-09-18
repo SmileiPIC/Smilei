@@ -1,7 +1,7 @@
 # SIMULATION PARAMETERS
 
 # print_every 
-print_every = 1000
+print_every = 100
 
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
@@ -90,6 +90,8 @@ end
 
 diagnostic scalar
 	every = 1
+	precision = 3
+	vars = Ebalance Etot Eparticles EFields Poynting Z_ion E_ion N_ion Z_eon E_eon N_eon Ex_U Ey_U Ez_U
 end
 
 
