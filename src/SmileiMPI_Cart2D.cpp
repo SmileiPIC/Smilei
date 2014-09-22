@@ -242,7 +242,7 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
         int shift[(*cubmax).size()+1];//how much we need to shift each bin in order to leave room for the new particles
         double dbin;
         
-        dbin = params->cell_length[0]; //width of a bin.
+        dbin = params->cell_length[0]*params->clrw; //width of a bin.
         for (unsigned int j=0; j<(*cubmax).size()+1 ;j++){
             shift[j]=0;
         }
