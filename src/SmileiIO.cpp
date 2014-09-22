@@ -522,7 +522,8 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
     }
 	
     // load window status
-    restartMovingWindow(fid, simWin);
+    if (simWin!=NULL)
+        restartMovingWindow(fid, simWin);
 
 	H5Fclose( fid );
 };

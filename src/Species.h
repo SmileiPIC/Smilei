@@ -13,6 +13,7 @@
 #include "Pusher.h"
 #include "Ionization.h"
 #include "ElectroMagn.h"
+#include "DensityProfile.h"
 
 class ElectroMagn;
 class Pusher;
@@ -68,9 +69,6 @@ public:
     //! Method used to initialize the Particle charge
     void initCharge(PicParams*, unsigned int, unsigned int, double);
 
-    //! Method returning the density profile
-    double density_profile(PicParams*, std::vector<double>, unsigned int);
-
     //! Method used to save all Particles properties for the considered Species
     void dump(std::ofstream&);
 
@@ -116,6 +114,9 @@ public:
     double part_mass;
     
 private:
+    
+    //! vector of density (one per species)
+    DensityProfile *densityProfile;
     
     //! 2 times pi
     double PI2;
