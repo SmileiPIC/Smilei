@@ -120,8 +120,10 @@ isSouthern(smpi->isSouthern())
         index_bc_min[i] = oversize[i];
         index_bc_max[i] = dimDual[i]-oversize[i]-1;
     }
-    MESSAGE("index_bc_min / index_bc_max / nx_p / nx_d" << index_bc_min[0]
+    /*
+     MESSAGE("index_bc_min / index_bc_max / nx_p / nx_d" << index_bc_min[0]
             << " " << index_bc_max[0] << " " << nx_p<< " " << nx_d);
+     */
     
     
     // Define limits of non duplicated elements
@@ -182,7 +184,6 @@ ElectroMagn2D::~ElectroMagn2D()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn2D::solvePoisson(SmileiMPI* smpi)
 {
-    DEBUG("Entering Poisson Solver");
     
     SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
     
@@ -385,7 +386,7 @@ void ElectroMagn2D::solvePoisson(SmileiMPI* smpi)
     }
     else {
         if (smpi->isMaster()) 
-            MESSAGE("Poisson solver converged at iteration: " << iteration
+            MESSAGE(1,"Poisson solver converged at iteration: " << iteration
                     << ", relative error is ctrl = " << 1.0e14*ctrl << " x 1e-14");
     }
     
@@ -459,10 +460,6 @@ void ElectroMagn2D::solvePoisson(SmileiMPI* smpi)
     MPI_Bcast(&Ex_EastSouth, 1, MPI_DOUBLE, rank_EastSouth, MPI_COMM_WORLD);
     MPI_Bcast(&Ey_EastSouth, 1, MPI_DOUBLE, rank_EastSouth, MPI_COMM_WORLD);
     
-    if (smpi->isMaster()) {
-        cerr << "Ex_WestNorth = " << Ex_WestNorth << "  -  Ey_WestNorth = " << Ey_WestNorth << endl;
-        cerr << "Ex_EastSouth = " << Ex_EastSouth << "  -  Ey_EastSouth = " << Ey_EastSouth << endl;
-    }
     
     // Centering electrostatic fields
     double Ex_Add = -0.5*(Ex_WestNorth+Ex_EastSouth);
