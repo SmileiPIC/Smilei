@@ -108,7 +108,7 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
     // Force configuration of MPI domain decomposition
     //number_of_procs[0] = 1;
     //number_of_procs[1] = 16;
-    cout << "Split : " << smilei_sz << " : " << number_of_procs[0] << " - " << number_of_procs[1] << endl;
+    MESSAGE("Split : " << smilei_sz << " : " << number_of_procs[0] << " - " << number_of_procs[1]);
     
     // Geometry periodic in y
     if (params.use_transverse_periodic) {

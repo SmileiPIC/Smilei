@@ -76,10 +76,9 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 	
     // Width of clusters:
     clrw = params->clrw ; 
-    if (params->n_space[0]%clrw != 0){
-        cout << "WRONG !! clrw should divide n_space[0]" << endl;
-        MPI_Abort(MPI_COMM_WORLD, err);
-    }
+    if (params->n_space[0]%clrw != 0)
+        ERROR("clrw should divide n_space[0]");
+    
     // Arrays of the min and max indices of the particle bins
     bmin.resize(params->n_space[0]/clrw);
     bmax.resize(params->n_space[0]/clrw);
@@ -119,7 +118,7 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
     }
     
     size_proj_buffer = b_dim0*b_dim1*b_dim2;
-    cout << "size_proj_buffer = " << size_proj_buffer << " b_dim0 = " << b_dim0<< " b_dim1 = " << b_dim1<< " b_dim2 = " << b_dim2<<endl;
+    //cout << "size_proj_buffer = " << size_proj_buffer << " b_dim0 = " << b_dim0<< " b_dim1 = " << b_dim1<< " b_dim2 = " << b_dim2<<endl;
     
 	
     if (!params->restart) {
@@ -137,7 +136,7 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
         // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
         npart_effective = createParticles(params->n_space, cell_index, starting_bin_idx );
         
-        PMESSAGE( 1, smpi->getRank(),"Species "<< speciesNumber <<" # part "<< npart_effective );
+        //PMESSAGE( 1, smpi->getRank(),"Species "<< speciesNumber <<" # part "<< npart_effective );
     }
     
     // assign the correct Pusher to Push
@@ -145,7 +144,7 @@ Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) {
 	
     // assign the Ionization model (if needed) to Ionize
     Ionize = IonizationFactory::create( params, speciesNumber );
-    if (Ionize) DEBUG("----------- IONIZE CREATED ----------- " <<speciesNumber);
+    if (Ionize) DEBUG("Species " << speciesNumber << " can be ionized!");
 	
     // define limits for BC and functions applied and for domain decomposition
     partBoundCond = new PartBoundCond( params, ispec, smpi);
@@ -183,10 +182,6 @@ void Species::initWeight(PicParams* params, unsigned int ispec, unsigned int iPa
 {
     for (unsigned  p= iPart; p<iPart+params->species_param[ispec].n_part_per_cell; p++) {
         particles.weight(p) = density / params->species_param[ispec].n_part_per_cell;
-        /*
-         particles.weight(p) = density * params->species_param[ispec].charge
-         /                        params->species_param[ispec].n_part_per_cell;
-         */
     }
 }
 
@@ -222,7 +217,6 @@ void Species::initPosition(unsigned int np, unsigned int iPart, unsigned int *in
                 particles.position(i,p)=(indexes[i]+((double)rand() / RAND_MAX))*cell_length[i];
 		    }
 		    particles.position_old(i,p) = particles.position(i,p);
-		    //            cout<<"position new-> "<<particles.position(i,p)/(2*M_PI)<<endl;
 		}// i
 	}// p
 }
@@ -1096,9 +1090,6 @@ void Species::defineNewCells(unsigned int shift, SmileiMPI *smpi)
     n_space_created[2] = params_->n_space[2];
     
     unsigned int npart_effective = createParticles(n_space_created, cell_index, new_bin_idx );
-    
-    //PMESSAGE( 1, smpi->getRank(),"Species "<< speciesNumber <<" # part "<< npart_effective );
-    
 }
 
 

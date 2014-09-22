@@ -3,7 +3,9 @@
 using namespace std;
 
 
-
+// ---------------------------------------------------------------------------------------------------------------------
+// LASER CONSTRUCTOR
+// ---------------------------------------------------------------------------------------------------------------------
 Laser::Laser(double sim_time, std::vector<double> sim_length, LaserStructure laser_param) {
 
     pi_ov_2 = 0.5 * M_PI;
@@ -19,8 +21,8 @@ Laser::Laser(double sim_time, std::vector<double> sim_length, LaserStructure las
     type_of_transv_profile = laser_struct.transv_profile;
     int_params_transv      = laser_struct.int_params_transv;
     double_params_transv   = laser_struct.double_params_transv;
-    // Arnaud implementation (Merge)
-    //y_params         = laser_struct.y_params; 
+    
+
 
     // -------------------------------------------------------
     // LASER TIME PROFILE INFOS
@@ -159,6 +161,10 @@ Laser::Laser(double sim_time, std::vector<double> sim_length, LaserStructure las
 }
 
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+// DEFINITION OF THE TIME_PROFILE
+// ---------------------------------------------------------------------------------------------------------------------
 double Laser::time_profile(double time_dual) {
 
 
@@ -267,6 +273,10 @@ double Laser::time_profile(double time_dual) {
 }//END laser::time_profile
 
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+// DEFINITION OF THE TRANSVERSE PROFILE IN 2D
+// ---------------------------------------------------------------------------------------------------------------------
 double Laser::transverse_profile2D(double time_dual, double y) {
     
     // PLANE-WAVE
@@ -282,6 +292,17 @@ double Laser::transverse_profile2D(double time_dual, double y) {
         
         double sigma_N = pow(double_params_transv[1],int_params_transv[0]) / pow(2.0,int_params_transv[0]-1) / log(2.0);
 
+        return exp( - pow(y-double_params_transv[0],int_params_transv[0]) / sigma_N);
+    }
+    
+    // GAUSSIAN PROFILE with ARBITRARY INCIDENCE ANGLE & FOCUSING
+    // double_params_transv[0] : x-position of best focus
+    // double_params_transv[0] : y-position of best focus
+    // double_params_transv[1] : FWHM in intensity
+    else if (type_of_transv_profile=="gaussian_general") {
+        
+        double sigma_N = pow(double_params_transv[1],int_params_transv[0]) / pow(2.0,int_params_transv[0]-1) / log(2.0);
+        
         return exp( - pow(y-double_params_transv[0],int_params_transv[0]) / sigma_N);
     }
     
