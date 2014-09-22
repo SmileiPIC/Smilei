@@ -32,13 +32,15 @@ public:
         Species *electron_species=NULL;
 
         // create species
+        unsigned int nPart;
         for (unsigned int ispec=0 ; ispec<params.n_species ; ispec++) {
-            PMESSAGE( 0, smpi->getRank(), "Initializing Species " << ispec);
             vecSpecies[ispec] = SpeciesFactory::create(params, ispec, smpi);
             if (params.species_param[ispec].species_type=="electron") {
                 electron_species=vecSpecies[ispec];
             }
-            PMESSAGE( 0, smpi->getRank(), vecSpecies[ispec]->getNbrOfParticles() << " Particles of species " << ispec );
+            nPart = vecSpecies[ispec]->getNbrOfParticles();
+            MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&nPart, &nPart, 1, MPI_UNSIGNED, MPI_SUM, 0, MPI_COMM_WORLD);
+            MESSAGE(1,"Species " << ispec << " (" << params.species_param[ispec].species_type << ") created with " << vecSpecies[ispec]->getNbrOfParticles() << " particles" );
         } // END for ispec
 
         // add the found electron species to the ionizable species

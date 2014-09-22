@@ -59,6 +59,7 @@ SmileiMPI_Cart1D::~SmileiMPI_Cart1D()
 
 void SmileiMPI_Cart1D::createTopology(PicParams& params)
 {
+
     for (unsigned int i=0 ; i<params.nDim_field ; i++)
         params.n_space_global[i] = round(params.res_space[i]*params.sim_length[i]/(2.0*M_PI));
     
@@ -102,7 +103,6 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
             }
         }
         
-        cout << "params.interpolation_order = " << params.interpolation_order << endl;
         oversize[i] = params.oversize[i] = params.interpolation_order + (params.exchange_particles_each-1);
         if ( params.n_space[i] <= 2*oversize[i] ) {
             WARNING ( "Increase space resolution or reduce number of MPI process in direction " << i );
@@ -118,8 +118,7 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
         
     }
     
-    
-    MESSAGE( "n_space / rank " << smilei_rk << " = " << params.n_space[0]  );
+    PMESSAGE ( 0, smilei_rk, "n_space = " << params.n_space[0]  );
     
     
     // -------------------------------------------------------

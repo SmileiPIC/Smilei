@@ -45,14 +45,14 @@
 using namespace std;
 
 
-// ------------------------------------------------------------------------------------------------------------------ //
+// ---------------------------------------------------------------------------------------------------------------------
 //                                                   MAIN CODE
-// ------------------------------------------------------------------------------------------------------------------ //
+// ---------------------------------------------------------------------------------------------------------------------
 int main (int argc, char* argv[])
 {
     std::cout.setf( std::ios::fixed, std:: ios::floatfield ); // floatfield set to fixed
     
-    // Define 2 MPI environment :
+    // Define 2 MPI environments :
     //  - smpiData : to broadcast input data, unknown geometry
     //  - smpi (defined later) : to compute/exchange data, specific to a geometry
     SmileiMPI *smpiData= new SmileiMPI(&argc, &argv );
@@ -61,9 +61,7 @@ int main (int argc, char* argv[])
     // Simulation Initialization
     // -------------------------
     
-    
     // Check for run flags
-    
     char ch;
     DEBUGEXEC(debug_level=0);
     
@@ -110,26 +108,35 @@ int main (int argc, char* argv[])
     
     if ( smpiData->isMaster() ) input_data.write(getFileWithoutExt(namelist)+".parsed");
     
-    // Read simulation parameters
+    // Read simulation & diagnostics parameters
     PicParams params(input_data);
     smpiData->init(params);
     DiagParams diag_params(input_data,params);
+    smpiData->barrier();
     
-    if (smpiData->isMaster())
-        params.print();
+    // Print out the data parameters
+    MESSAGE("----------------------------------------------");
+    MESSAGE("Input data info");
+    MESSAGE("----------------------------------------------");
+    if ( smpiData->isMaster() ) params.print();
+    
     
     // Geometry known, MPI environment specified
-    SmileiMPI* smpi = SmileiMPIFactory::create(params, smpiData);
+    MESSAGE("----------------------------------------------");
+    MESSAGE("Creating MPI & IO environments");
+    MESSAGE("----------------------------------------------");
     
+    SmileiMPI* smpi = SmileiMPIFactory::create(params, smpiData);
     SmileiIO*  sio  = SmileiIOFactory::create(params, smpi);
     
     
     // -------------------------------------------
     // Declaration of the main objects & operators
     // -------------------------------------------
+    MESSAGE("----------------------------------------------");
+    MESSAGE("Creating EMfields/Interp/Proj/Diags");
+    MESSAGE("----------------------------------------------");
     
-    
-    // ----------------------------------------------------------------------------
     // Initialize the electromagnetic fields and interpolation-projection operators
     // according to the simulation geometry
     // ----------------------------------------------------------------------------
@@ -142,31 +149,37 @@ int main (int argc, char* argv[])
     // projection operator (virtual)
     Projector* Proj = ProjectorFactory::create(params, smpi);
     
-	// ----------------------------------------------------------------------------
     // Create diagnostics
-    // ----------------------------------------------------------------------------
     Diagnostic *Diags = new Diagnostic (&params,&diag_params, smpi);
     
-    // ------------------------------------------------------------------------------------
+    
+    // ---------------------------
+    // Initialize Species & Fields
+    // ---------------------------
+    MESSAGE("----------------------------------------------");
+    MESSAGE("Initializing particles, fields & moving-window");
+    MESSAGE("----------------------------------------------");
+    
     // Initialize the vecSpecies object containing all information of the different Species
     // ------------------------------------------------------------------------------------
+    
     // vector of Species (virtual)
     vector<Species*> vecSpecies = SpeciesFactory::createVector(params, smpi);
 
     // ----------------------------------------------------------------------------
-    // Define Moving Window
+    // Define Moving Window & restart
     // ----------------------------------------------------------------------------
+    
     SimWindow* simWindow = NULL;
     if (params.res_space_win_x)
         simWindow = new SimWindow(params);
-	
     smpi->barrier();
     
     unsigned int stepStart=0, stepStop=params.n_time;
     
     // reading from dumped file the restart values
     if (params.restart) {
-        MESSAGE(2, "READING fields and particles");
+        MESSAGE(1, "READING fields and particles for restart");
         DEBUG(vecSpecies.size());
         sio->restartAll( EMfields,  stepStart, vecSpecies, smpi, simWindow, params, input_data);
 
@@ -176,17 +189,26 @@ int main (int argc, char* argv[])
 	}
 	    
     } else {
-        // -----------------------------------
         // Initialize the electromagnetic fields
         // -----------------------------------
         // Init rho and J by projecting all particles of subdomain
         EMfields->initRhoJ(vecSpecies, Proj);
+        
         // Sum rho and J on ghost domains
-		
         smpi->sumRhoJ( EMfields );
+        
         // Init electric field (Ex/1D, + Ey/2D)
+        if (smpiData->isMaster()) {
+            MESSAGE("----------------------------------------------");
+            MESSAGE("Solving Poisson at time t = 0");
+            MESSAGE("----------------------------------------------");
+        }
         EMfields->solvePoisson(smpi);
         
+        
+        MESSAGE("----------------------------------------------");
+        MESSAGE("Running diags at time t = 0");
+        MESSAGE("----------------------------------------------");
         // run diagnostics at time-step 0
         Diags->runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
         // temporary EM fields dump in Fields.h5
@@ -197,8 +219,10 @@ int main (int argc, char* argv[])
         sio->writePlasma( vecSpecies, 0., smpi );
     }
     
+    
+
     // ------------------------------------------------------------------------
-    // Initialize the simulation times time_prim at n=0 and time_dual at n=-1/2
+    // Initialize the simulation times time_prim at n=0 and time_dual at n=+1/2
     // ------------------------------------------------------------------------
 	
     // time at integer time-steps (primal grid)
@@ -215,10 +239,13 @@ int main (int argc, char* argv[])
     timer[3].init(smpi, "diagnostics");
     timer[4].init(smpi, "densities");
     
+    
 	// ------------------------------------------------------------------
     //                     HERE STARTS THE PIC LOOP
     // ------------------------------------------------------------------
-    if ( smpi->isMaster() ) MESSAGE(0,"Time-Loop is started: number of time-steps n_time =" << params.n_time);
+    MESSAGE("-----------------------------------------------------------------------------------------------------");
+    MESSAGE("Time-Loop is started: number of time-steps n_time = " << params.n_time);
+    MESSAGE("-----------------------------------------------------------------------------------------------------");
 	
     DEBUGEXEC(sio->dump(EMfields, 1,  vecSpecies, smpi, params, input_data));
 
@@ -235,8 +262,16 @@ int main (int argc, char* argv[])
         
         //double timElapsed=smpiData->time_seconds();
 		if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) )
-            MESSAGE(1,"t= " << time_dual/(2*M_PI) << " it= " << setw(log10(params.n_time)) << itime  << "/" << params.n_time << " sec: " << timer[0].getTime() << " E= " << Diags->getScalar("Etot") << " E_bal(%)= " << 100.0*Diags->getScalar("Ebal_norm") );
-        //MESSAGE(1,"Time (dual)= " << time_dual << " it = " << itime  << "/" << params.n_time << " sec: " << timElapsed  );
+//<<<<<<< Updated upstream
+//            MESSAGE(1,"t= " << time_dual/(2*M_PI) << " it= " << setw(log10(params.n_time)) << itime  << "/" << params.n_time << " sec: " << timer[0].getTime() << " E= " << Diags->getScalar("Etot") << " E_bal(%)= " << 100.0*Diags->getScalar("Ebal_norm") );
+//        //MESSAGE(1,"Time (dual)= " << time_dual << " it = " << itime  << "/" << params.n_time << " sec: " << timElapsed  );
+//=======
+            MESSAGE(1, "t= "         << setw(11)                     << time_dual/(2*M_PI)
+                    << " it= "       << setw(log10(params.n_time)+1) << itime  << "/" << params.n_time
+                    << " sec: "      << setw(9)                      << timer[0].getTime()
+                    << " E= "        << setw(9)                      << Diags->getScalar("Total_energy")
+                    << " E_bal(%)= " << 100.0*Diags->getScalar("Energy_bal_norm") );
+
         
         
         // put density and currents to 0 + save former density
@@ -325,7 +360,11 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     //                      HERE ENDS THE PIC LOOP
     // ------------------------------------------------------------------
-    if ( smpi->isMaster() ) MESSAGE(0, "End time loop, time dual = " << time_dual);
+    if ( smpi->isMaster() ) {
+        MESSAGE("End time loop, time dual = " << time_dual);
+        MESSAGE("-----------------------------------------------------------------------------------------------------");
+    }
+    
     //double timElapsed=smpiData->time_seconds();
     //if ( smpi->isMaster() ) MESSAGE(0, "Time in time loop : " << timElapsed );
     timer[0].update();
@@ -367,9 +406,9 @@ int main (int argc, char* argv[])
     
     delete sio;
     if ( smpi->isMaster() ) {
-        MESSAGE("--------------------------------------------------------------------------------");
+        MESSAGE("-----------------------------------------------------------------------------------------------------");
         MESSAGE("END " << namelist);
-        MESSAGE("--------------------------------------------------------------------------------");
+        MESSAGE("-----------------------------------------------------------------------------------------------------");
     }
     delete smpi;
     delete smpiData;
@@ -377,15 +416,18 @@ int main (int argc, char* argv[])
     
 }//END MAIN
 
+
+// Printing starting message
 void startingMessage(std::string inputfile) {
-    MESSAGE("--------------------------------------------------------------------------------");
+    MESSAGE("-----------------------------------------------------------------------------------------------------");
     MESSAGE(" Version  : " << __VERSION DEBUGEXEC(<< " DEBUG") << " Compiled : " << __DATE__ << " " << __TIME__);
-    MESSAGE("--------------------------------------------------------------------------------");
+    MESSAGE("-----------------------------------------------------------------------------------------------------");
     MESSAGE(" Namelist : " << inputfile);
-    MESSAGE("--------------------------------------------------------------------------------");
+    MESSAGE("-----------------------------------------------------------------------------------------------------");
 }
 
 
+// Get file without extension
 string getFileWithoutExt(const string& s) {
     size_t i = s.rfind('.', s.length( ));
     if (i != string::npos) {
