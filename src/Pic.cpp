@@ -152,6 +152,13 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------------------------
     // vector of Species (virtual)
     vector<Species*> vecSpecies = SpeciesFactory::createVector(params, smpi);
+
+    // ----------------------------------------------------------------------------
+    // Define Moving Window
+    // ----------------------------------------------------------------------------
+    SimWindow* simWindow = NULL;
+    if (params.res_space_win_x)
+        simWindow = new SimWindow(params);
 	
     smpi->barrier();
     
@@ -161,7 +168,13 @@ int main (int argc, char* argv[])
     if (params.restart) {
         MESSAGE(2, "READING fields and particles");
         DEBUG(vecSpecies.size());
-        sio->restartAll( EMfields,  stepStart, vecSpecies, smpi, params, input_data);
+        sio->restartAll( EMfields,  stepStart, vecSpecies, smpi, simWindow, params, input_data);
+
+	if (simWindow) {
+	    simWindow->setOperators(vecSpecies, Interp, Proj, smpi);
+	    simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi );
+	}
+	    
     } else {
         // -----------------------------------
         // Initialize the electromagnetic fields
@@ -184,13 +197,6 @@ int main (int argc, char* argv[])
         sio->writePlasma( vecSpecies, 0., smpi );
     }
     
-    // ----------------------------------------------------------------------------
-    // Define Moving Window
-    // ----------------------------------------------------------------------------
-    SimWindow* simWindow = NULL;
-    if (params.res_space_win_x)
-        simWindow = new SimWindow(params);
-
     // ------------------------------------------------------------------------
     // Initialize the simulation times time_prim at n=0 and time_dual at n=-1/2
     // ------------------------------------------------------------------------
@@ -304,7 +310,7 @@ int main (int argc, char* argv[])
         if  ((diag_params.particleDump_every != 0) && (itime % diag_params.particleDump_every == 0))
             sio->writePlasma( vecSpecies, time_dual, smpi );
         
-        if (sio->dump(EMfields, itime,  vecSpecies, smpi, params, input_data)) break;
+        if (sio->dump(EMfields, itime,  vecSpecies, smpi, simWindow, params, input_data)) break;
         
         timer[3].update();
 		

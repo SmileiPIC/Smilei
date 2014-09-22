@@ -84,6 +84,11 @@ public:
 
     void moveWindow_x(double shift);
 
+    inline void updateMvWinLimits( double x_moved ) {
+	x_min += x_moved;
+	x_max += x_moved;
+    }
+
 private:
     double x_min;
     double x_max;

@@ -16,6 +16,7 @@
 class PicParams;
 class InputData;
 class SmileiMPI;
+class SimWindow;
 class ElectroMagn;
 class Field;
 class Species;
@@ -61,12 +62,15 @@ public:
     virtual void write( Field* field ) = 0;
 
 	//! restart everything to file per processor
-    void restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> &vecSpecies, SmileiMPI* smpi, PicParams &params, InputData& input_data);
+    void restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> &vecSpecies, SmileiMPI* smpi, SimWindow* simWin, PicParams &params, InputData& input_data);
 
 	//! restart field per proc
 	void restartFieldsPerProc(hid_t fid, Field* field);
+
+	//! load moving window parameters
+	void restartMovingWindow(hid_t fid, SimWindow* simWindow);
 	
-	bool dump(ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi,  PicParams &params, InputData& input_data);
+	bool dump(ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  PicParams &params, InputData& input_data);
 	
 private:
 	//! incremental number of times we've done a dump
@@ -77,11 +81,14 @@ private:
 	
 	
 	//! dump everything to file per processor
-    void dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi,  PicParams &params, InputData& input_data);
+    void dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  PicParams &params, InputData& input_data);
 	
 	//! dump field per proc
 	void dumpFieldsPerProc(hid_t fid, Field* field);
-	
+
+	//! dump moving window parameters
+	void dumpMovingWindow(hid_t fid, SimWindow* simWindow);
+
 	//! time of the constructor
 	double time_reference;
 	
