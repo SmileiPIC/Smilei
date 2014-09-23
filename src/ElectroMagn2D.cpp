@@ -869,22 +869,12 @@ void ElectroMagn2D::computeTotalRhoJ()
 
 void ElectroMagn2D::computePoynting() {
 
-    if (isWestern || isEastern) {
+    if (isWestern) {
         unsigned int iEy=istart[0][Ey_->isDual(0)];
         unsigned int iBz=istart[0][Bz_m->isDual(0)];
         unsigned int iEz=istart[0][Ez_->isDual(0)];
         unsigned int iBy=istart[0][By_m->isDual(0)];
-
-        unsigned int dir=0;
         
-        if (isEastern) {
-            iEy+=bufsize[0][Ey_->isDual(0)] -1;
-            iBz+=bufsize[0][Bz_m->isDual(0)]-1;
-            iEz+=bufsize[0][Ez_->isDual(0)] -1;
-            iBy+=bufsize[0][By_m->isDual(0)]-1;
-            dir=1;
-        }
-
         unsigned int jEy=istart[1][Ey_->isDual(1)];
         unsigned int jBz=istart[1][Bz_m->isDual(1)];
         unsigned int jEz=istart[1][Ez_->isDual(1)];
@@ -897,30 +887,46 @@ void ElectroMagn2D::computePoynting() {
             double Ez__ = (*Ez_)(iEz,jEz+j);
             double By__ = 0.5*((*By_m)(iBy,jBy+j) + (*By_m)(iBy+1, jBy+j));
             
-            poynting[dir][0]+= dy*timestep*(Ey__*Bz__ - Ez__*By__);
+            poynting_inst[0][0] = dy*timestep*(Ey__*Bz__ - Ez__*By__);
+            poynting[0][0]+= poynting_inst[0][0];
         }
-    }
+    }//if Western
     
-    if (isSouthern || isNorthern) {
+    
+    if (isEastern) {
+        unsigned int iEy=istart[0][Ey_->isDual(0)]  + bufsize[0][Ey_->isDual(0)] -1;
+        unsigned int iBz=istart[0][Bz_m->isDual(0)] + bufsize[0][Bz_m->isDual(0)]-1;
+        unsigned int iEz=istart[0][Ez_->isDual(0)]  + bufsize[0][Ez_->isDual(0)] -1;
+        unsigned int iBy=istart[0][By_m->isDual(0)] + bufsize[0][By_m->isDual(0)]-1;
+        
+        unsigned int jEy=istart[1][Ey_->isDual(1)];
+        unsigned int jBz=istart[1][Bz_m->isDual(1)];
+        unsigned int jEz=istart[1][Ez_->isDual(1)];
+        unsigned int jBy=istart[1][By_m->isDual(1)];
+        
+        for (unsigned int j=0; j<=bufsize[1][Ez_->isDual(1)]; j++) {
+            
+            double Ey__ = 0.5*((*Ey_)(iEy,jEy+j) + (*Ey_)(iEy, jEy+j+1));
+            double Bz__ = 0.25*((*Bz_m)(iBz,jBz+j)+(*Bz_m)(iBz+1,jBz+j)+(*Bz_m)(iBz,jBz+j+1)+(*Bz_m)(iBz+1,jBz+j+1));
+            double Ez__ = (*Ez_)(iEz,jEz+j);
+            double By__ = 0.5*((*By_m)(iBy,jBy+j) + (*By_m)(iBy+1, jBy+j));
+            
+            poynting_inst[1][0] = dy*timestep*(Ey__*Bz__ - Ez__*By__);
+            poynting[1][0] -= poynting_inst[1][0];
+        }
+    }//if Easter
+    
+    if (isSouthern) {
         
         unsigned int iEz=istart[0][Ez_->isDual(0)];
         unsigned int iBx=istart[0][Bx_m->isDual(0)]; 
         unsigned int iEx=istart[0][Ex_->isDual(0)];
-        unsigned int iBz=istart[0][Bz_m->isDual(0)];
+        unsigned int iBz=istart[0][Bz_m->isDual(0)]; 
         
         unsigned int jEz=istart[1][Ez_->isDual(1)];
         unsigned int jBx=istart[1][Bx_m->isDual(1)];
         unsigned int jEx=istart[1][Ex_->isDual(1)];
         unsigned int jBz=istart[1][Bz_m->isDual(1)];
-                
-        unsigned int dir=0;
-        if (isNorthern) {
-            jEz+=bufsize[1][Ez_->isDual(1)] -1;
-            jBx+=bufsize[1][Bx_m->isDual(1)]-1;
-            jEx+=bufsize[1][Ex_->isDual(1)] -1;
-            jBz+=bufsize[1][Bz_m->isDual(1)]-1;
-            dir=1;
-        }
         
         for (unsigned int i=0; i<=bufsize[0][Ez_->isDual(0)]; i++) {
             double Ez__ = (*Ez_)(iEz+i,jEz);
@@ -928,104 +934,31 @@ void ElectroMagn2D::computePoynting() {
             double Ex__ = 0.5*((*Ex_)(iEx+i,jEx) + (*Ex_)(iEx+i+1, jEx));
             double Bz__ = 0.25*((*Bz_m)(iBz+i,jBz)+(*Bz_m)(iBz+i+1,jBz)+(*Bz_m)(iBz+i,jBz+1)+(*Bz_m)(iBz+i+1,jBz+1));
             
-            poynting[dir][1] += dx*timestep*(Ez__*Bx__ - Ex__*Bz__);
+            poynting_inst[0][1] = dx*timestep*(Ez__*Bx__ - Ex__*Bz__);
+            poynting[0][1] += poynting_inst[0][1];
         }
     }// if South
     
-//    if (isWestern) {
-//        unsigned int iEy=istart[0][Ey_->isDual(0)];
-//        unsigned int iBz=istart[0][Bz_m->isDual(0)];
-//        unsigned int iEz=istart[0][Ez_->isDual(0)];
-//        unsigned int iBy=istart[0][By_m->isDual(0)];
-//        
-//        unsigned int jEy=istart[1][Ey_->isDual(1)];
-//        unsigned int jBz=istart[1][Bz_m->isDual(1)];
-//        unsigned int jEz=istart[1][Ez_->isDual(1)];
-//        unsigned int jBy=istart[1][By_m->isDual(1)];
-//                
-//        DEBUG("West  " << jEz << " " <<  bufsize[1][Ez_->isDual(1)]);
-//        
-//        for (unsigned int j=0; j<=bufsize[1][Ez_->isDual(1)]; j++) {
-//            
-//            double Ey__ = 0.5*((*Ey_)(iEy,jEy+j) + (*Ey_)(iEy, jEy+j+1));
-//            double Bz__ = 0.25*((*Bz_m)(iBz,jBz+j)+(*Bz_m)(iBz+1,jBz+j)+(*Bz_m)(iBz,jBz+j+1)+(*Bz_m)(iBz+1,jBz+j+1));
-//            double Ez__ = (*Ez_)(iEz,jEz+j);
-//            double By__ = 0.5*((*By_m)(iBy,jBy+j) + (*By_m)(iBy+1, jBy+j));
-//            
-//            poynting[0][0]+= dy*timestep*(Ey__*Bz__ - Ez__*By__);
-//        }
-//    }//if Western
-//    
-//    
-//    if (isEastern) {
-//        unsigned int iEy=istart[0][Ey_->isDual(0)]  + bufsize[0][Ey_->isDual(0)] -1;
-//        unsigned int iBz=istart[0][Bz_m->isDual(0)] + bufsize[0][Bz_m->isDual(0)]-1;
-//        unsigned int iEz=istart[0][Ez_->isDual(0)]  + bufsize[0][Ez_->isDual(0)] -1;
-//        unsigned int iBy=istart[0][By_m->isDual(0)] + bufsize[0][By_m->isDual(0)]-1;
-//        
-//        unsigned int jEy=istart[1][Ey_->isDual(1)];
-//        unsigned int jBz=istart[1][Bz_m->isDual(1)];
-//        unsigned int jEz=istart[1][Ez_->isDual(1)];
-//        unsigned int jBy=istart[1][By_m->isDual(1)];
-//        
-//        DEBUG("East  " << jEz << " " <<  bufsize[1][Ez_->isDual(1)]);
-//
-//        for (unsigned int j=0; j<=bufsize[1][Ez_->isDual(1)]; j++) {
-//            
-//            double Ey__ = 0.5*((*Ey_)(iEy,jEy+j) + (*Ey_)(iEy, jEy+j+1));
-//            double Bz__ = 0.25*((*Bz_m)(iBz,jBz+j)+(*Bz_m)(iBz+1,jBz+j)+(*Bz_m)(iBz,jBz+j+1)+(*Bz_m)(iBz+1,jBz+j+1));
-//            double Ez__ = (*Ez_)(iEz,jEz+j);
-//            double By__ = 0.5*((*By_m)(iBy,jBy+j) + (*By_m)(iBy+1, jBy+j));
-//            
-//            poynting[1][0] -= dy*timestep*(Ey__*Bz__ - Ez__*By__);
-//        }
-//    }//if Easter
-    
-//    if (isSouthern) {
-//        
-//        unsigned int iEz=istart[0][Ez_->isDual(0)];
-//        unsigned int iBx=istart[0][Bx_m->isDual(0)]; 
-//        unsigned int iEx=istart[0][Ex_->isDual(0)];
-//        unsigned int iBz=istart[0][Bz_m->isDual(0)]; 
-//        
-//        unsigned int jEz=istart[1][Ez_->isDual(1)];
-//        unsigned int jBx=istart[1][Bx_m->isDual(1)];
-//        unsigned int jEx=istart[1][Ex_->isDual(1)];
-//        unsigned int jBz=istart[1][Bz_m->isDual(1)];
-//        
-//        DEBUG("South " << iEz << " " << bufsize[0][Ez_->isDual(0)]);
-//
-//        for (unsigned int i=0; i<=bufsize[0][Ez_->isDual(0)]; i++) {
-//            double Ez__ = (*Ez_)(iEz+i,jEz);
-//            double Bx__ = 0.5*((*Bx_m)(iBx+i,jBx) + (*Bx_m)(iBx+i, jBx+1));
-//            double Ex__ = 0.5*((*Ex_)(iEx+i,jEx) + (*Ex_)(iEx+i+1, jEx));
-//            double Bz__ = 0.25*((*Bz_m)(iBz+i,jBz)+(*Bz_m)(iBz+i+1,jBz)+(*Bz_m)(iBz+i,jBz+1)+(*Bz_m)(iBz+i+1,jBz+1));
-//            
-//            poynting[0][1] += dx*timestep*(Ez__*Bx__ - Ex__*Bz__);
-//        }
-//    }// if South
-//    
-//    if (isNorthern) {
-//        unsigned int iEz=istart[0][Ez_->isDual(0)];
-//        unsigned int iBx=istart[0][Bx_m->isDual(0)]; 
-//        unsigned int iEx=istart[0][Ex_->isDual(0)];
-//        unsigned int iBz=istart[0][Bz_m->isDual(0)];
-//        
-//        unsigned int jEz=istart[1][Ez_->isDual(1)]  + bufsize[1][Ez_->isDual(1)] -1;
-//        unsigned int jBx=istart[1][Bx_m->isDual(1)] + bufsize[1][Bx_m->isDual(1)]-1;
-//        unsigned int jEx=istart[1][Ex_->isDual(1)]  + bufsize[1][Ex_->isDual(1)] -1;
-//        unsigned int jBz=istart[1][Bz_m->isDual(1)] + bufsize[1][Bz_m->isDual(1)]-1;
-//        
-//        DEBUG("North " << iEz << " " <<  bufsize[0][Ez_->isDual(0)]);
-//
-//        for (unsigned int i=0; i<=bufsize[0][Ez_->isDual(0)]; i++) {
-//            double Ez__ = (*Ez_)(iEz+i,jEz);
-//            double Bx__ = 0.5*((*Bx_m)(iBx+i,jBx) + (*Bx_m)(iBx+i, jBx+1));
-//            double Ex__ = 0.5*((*Ex_)(iEx+i,jEx) + (*Ex_)(iEx+i+1, jEx));
-//            double Bz__ = 0.25*((*Bz_m)(iBz+i,jBz)+(*Bz_m)(iBz+i+1,jBz)+(*Bz_m)(iBz+i,jBz+1)+(*Bz_m)(iBz+i+1,jBz+1));
-//            
-//            poynting[1][1] -= dx*timestep*(Ez__*Bx__ - Ex__*Bz__);
-//        }
-//    }//if North
-    
+    if (isNorthern) {
+        unsigned int iEz=istart[0][Ez_->isDual(0)];
+        unsigned int iBx=istart[0][Bx_m->isDual(0)]; 
+        unsigned int iEx=istart[0][Ex_->isDual(0)];
+        unsigned int iBz=istart[0][Bz_m->isDual(0)];
+        
+        unsigned int jEz=istart[1][Ez_->isDual(1)]  + bufsize[1][Ez_->isDual(1)] -1;
+        unsigned int jBx=istart[1][Bx_m->isDual(1)] + bufsize[1][Bx_m->isDual(1)]-1;
+        unsigned int jEx=istart[1][Ex_->isDual(1)]  + bufsize[1][Ex_->isDual(1)] -1;
+        unsigned int jBz=istart[1][Bz_m->isDual(1)] + bufsize[1][Bz_m->isDual(1)]-1;
+        
+        for (unsigned int i=0; i<=bufsize[0][Ez_->isDual(0)]; i++) {
+            double Ez__ = (*Ez_)(iEz+i,jEz);
+            double Bx__ = 0.5*((*Bx_m)(iBx+i,jBx) + (*Bx_m)(iBx+i, jBx+1));
+            double Ex__ = 0.5*((*Ex_)(iEx+i,jEx) + (*Ex_)(iEx+i+1, jEx));
+            double Bz__ = 0.25*((*Bz_m)(iBz+i,jBz)+(*Bz_m)(iBz+i+1,jBz)+(*Bz_m)(iBz+i,jBz+1)+(*Bz_m)(iBz+i+1,jBz+1));
+            
+            poynting_inst[1][1] = dx*timestep*(Ez__*Bx__ - Ex__*Bz__);
+            poynting[1][1] -= poynting_inst[1][1];
+        }
+    }//if North
+
 }

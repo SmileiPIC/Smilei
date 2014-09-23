@@ -168,6 +168,9 @@ public:
     //!     poynting[1][0]=south, poynting[1][0]=north
     std::vector<double> poynting[2];
 
+    //same as above but instantaneous
+    std::vector<double> poynting_inst[2];
+
 private:
     
     //! Vector of boundary-condition per side for the fields
