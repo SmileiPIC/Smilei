@@ -195,18 +195,33 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
     for (unsigned int j=0; j<2;j++) {
         for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {
 
-            double poy=EMfields->poynting[j][i];
+            double poy[2]={EMfields->poynting[j][i],EMfields->poynting_inst[j][i]};
 
-            MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&poy, &poy, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+            MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:poy, poy, 2, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
             if (isMaster) {
-                stringstream s;
-                s << "Poy_" << (j==0?"inf":"sup") << "_" << (i==0?"x":(i==1?"y":"z"));
-                append(s.str(),poy);
-                poyTot+=poy;
+                string name("Poy");
+                switch (i) { // dimension
+                    case 0:
+                        name+=(j==0?"East":"West");
+                        break;
+                    case 1:
+                        name+=(j==0?"South":"North");
+                        break;
+                    case 2:
+                        name+=(j==0?"Bottom":"Top");
+                        break;
+                    default:
+                        break;
+                }
+                append(name,poy[0]);
+                append(name+"Inst",poy[1]);
+
+                poyTot+=poy[0];
 
             }
 
+            
         }
     }
 

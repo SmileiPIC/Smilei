@@ -607,8 +607,9 @@ void ElectroMagn1D::computePoynting() {
         unsigned int iEz=istart[0][Ez_->isDual(0)];
         unsigned int iBy=istart[0][By_m->isDual(0)];
         
-        poynting[0][0] += 0.5*timestep*((*Ey_)(iEy) * ((*Bz_m)(iBz) + (*Bz_m)(iBz+1)) -
-                                        (*Ez_)(iEz) * ((*By_m)(iBy) + (*By_m)(iBy+1)));
+        poynting_inst[0][0]=0.5*timestep*((*Ey_)(iEy) * ((*Bz_m)(iBz) + (*Bz_m)(iBz+1)) -
+                                          (*Ez_)(iEz) * ((*By_m)(iBy) + (*By_m)(iBy+1)));
+        poynting[0][0] += poynting_inst[0][0];
     } 
     if (isEastern) {
         unsigned int iEy=istart[0][Ey_->isDual(0)]  + bufsize[0][Ey_->isDual(0)]-1;
@@ -616,8 +617,9 @@ void ElectroMagn1D::computePoynting() {
         unsigned int iEz=istart[0][Ez_->isDual(0)]  + bufsize[0][Ez_->isDual(0)]-1;
         unsigned int iBy=istart[0][By_m->isDual(0)] + bufsize[0][By_m->isDual(0)]-1;
         
-        poynting[1][0] -= 0.5*timestep*((*Ey_)(iEy) * ((*Bz_m)(iBz-1) + (*Bz_m)(iBz)) - 
-                                        (*Ez_)(iEz) * ((*By_m)(iBy-1) + (*By_m)(iBy)));
+        poynting_inst[1][0]=0.5*timestep*((*Ey_)(iEy) * ((*Bz_m)(iBz-1) + (*Bz_m)(iBz)) - 
+                                          (*Ez_)(iEz) * ((*By_m)(iBy-1) + (*By_m)(iBy)));
+        poynting[1][0] -= poynting_inst[1][0];
         
     }    
 }
