@@ -38,7 +38,7 @@ class smileiQt(QtGui.QMainWindow):
 
         self.show()
         
-        self.doPlots()
+        self.readData()
 
     def on_playStop_released(self):
         if self.playStop.isChecked() :
@@ -78,12 +78,15 @@ class smileiQt(QtGui.QMainWindow):
         self.canvas.draw()
         print "Here"
     
+    def readData(self):
+        print "here"
+        self.doPlots()
+        
     def on_changeDir(self):
         dirName=QtGui.QFileDialog.getExistingDirectory(self,self.dirName, options=QFileDialog.ShowDirsOnly)
         if not dirName.isEmpty():
             self.dirName=dirName
-            self.doPlots()
-        
+            self.readData()
 
 def main():
 
