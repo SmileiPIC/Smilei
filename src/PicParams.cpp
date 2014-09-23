@@ -75,13 +75,27 @@ PicParams::PicParams(InputData &ifile) {
      }*/
     
     ifile.extract("res_time", res_time);
-    
-    ifile.extract("sim_time", sim_time);
-    
     ifile.extract("res_space",res_space);
-    if (res_space.size()!=nDim_field) {
+    
+    if ((res_space.size()!=0)&&(res_space.size()!=nDim_field)) {
         ERROR("Dimension of res_space ("<< res_space.size() << ") != " << nDim_field << " for geometry " << geometry);
     }
+    if(ifile.extract("res_time", res_time)==false||(res_space.size()==0)){
+        ifile.extract("timestep", timestep);
+        res_time=(1.0/timestep);
+        ifile.extract("cell_length",cell_length);
+        if (cell_length.size()!=nDim_field) {
+            ERROR("Dimension of cell_length ("<< cell_length.size() << ") != " << nDim_field << " for geometry " << geometry);
+        }
+        res_space.resize(nDim_field);
+        for (unsigned int i=0;i<nDim_field;i++){
+            res_space[i]=1.0/cell_length[i];
+        }
+    }
+
+    ifile.extract("sim_time", sim_time);
+    
+    
     double Dx2 = 0.0;
     for (short int i=0; i<res_space.size(); i++) {
         Dx2 += 1.0/pow(res_space[i],2);
