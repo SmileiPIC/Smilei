@@ -28,7 +28,7 @@ public:
             densityProfile = new DensityProfile2D();
         }
         else {
-            ERROR( "Unknwon geometry : " << params->geometry);
+            ERROR( "Unsupported geometry : " << params->geometry);
         }
         return densityProfile;        
     }
