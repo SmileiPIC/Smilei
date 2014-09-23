@@ -879,11 +879,8 @@ void ElectroMagn2D::computePoynting() {
         unsigned int jBz=istart[1][Bz_m->isDual(1)];
         unsigned int jEz=istart[1][Ez_->isDual(1)];
         unsigned int jBy=istart[1][By_m->isDual(1)];
-        
-        unsigned int j_sta=istart[1][Ez_->isDual(1)];
-        unsigned int j_end=j_sta + bufsize[1][Ez_->isDual(1)];
-        
-        for (unsigned int j=j_sta; j<j_end; j++) {
+                
+        for (unsigned int j=0; j<bufsize[1][Ez_->isDual(1)]; j++) {
             
             double Ey__ = 0.5*((*Ey_)(iEy,jEy+j) + (*Ey_)(iEy, jEy+j+1));
             double Bz__ = 0.25*((*Bz_m)(iBz,jBz+j)+(*Bz_m)(iBz+1,jBz+j)+(*Bz_m)(iBz,jBz+j+1)+(*Bz_m)(iBz+1,jBz+j+1));
@@ -905,11 +902,8 @@ void ElectroMagn2D::computePoynting() {
         unsigned int jBz=istart[1][Bz_m->isDual(1)];
         unsigned int jEz=istart[1][Ez_->isDual(1)];
         unsigned int jBy=istart[1][By_m->isDual(1)];
-        
-        unsigned int j_sta=istart[1][Ez_->isDual(1)];
-        unsigned int j_end=j_sta + bufsize[1][Ez_->isDual(1)];
-        
-        for (unsigned int j=j_sta; j<j_end; j++) {
+                
+        for (unsigned int j=0; j<bufsize[1][Ez_->isDual(1)]; j++) {
             
             double Ey__ = 0.5*((*Ey_)(iEy,jEy+j) + (*Ey_)(iEy, jEy+j+1));
             double Bz__ = 0.25*((*Bz_m)(iBz,jBz+j)+(*Bz_m)(iBz+1,jBz+j)+(*Bz_m)(iBz,jBz+j+1)+(*Bz_m)(iBz+1,jBz+j+1));
@@ -932,10 +926,7 @@ void ElectroMagn2D::computePoynting() {
         unsigned int jEx=istart[1][Ex_->isDual(1)];
         unsigned int jBz=istart[1][Bz_m->isDual(1)];
         
-        unsigned int i_sta=istart[0][Ez_->isDual(0)];
-        unsigned int i_end=i_sta + bufsize[0][Ez_->isDual(0)];
-        
-        for (unsigned int i=i_sta; i<i_end; i++) {
+        for (unsigned int i=0; i<bufsize[0][Ez_->isDual(0)]; i++) {
             double Ez__ = (*Ez_)(iEz+i,jEz);
             double Bx__ = 0.5*((*Bx_m)(iBx+i,jBx) + (*Bx_m)(iBx+i, jBx+1));
             double Ex__ = 0.5*((*Ex_)(iEx+i,jEx) + (*Ex_)(iEx+i+1, jEx));
@@ -956,10 +947,7 @@ void ElectroMagn2D::computePoynting() {
         unsigned int jEx=istart[1][Ex_->isDual(1)]  + bufsize[1][Ex_->isDual(1)] -1;
         unsigned int jBz=istart[1][Bz_m->isDual(1)] + bufsize[1][Bz_m->isDual(1)]-1;
         
-        unsigned int i_sta=istart[0][Ez_->isDual(0)];
-        unsigned int i_end=i_sta + bufsize[0][Ez_->isDual(0)];
-        
-        for (unsigned int i=i_sta; i<i_end; i++) {
+        for (unsigned int i=0; i<bufsize[0][Ez_->isDual(0)]; i++) {
             double Ez__ = (*Ez_)(iEz+i,jEz);
             double Bx__ = 0.5*((*Bx_m)(iBx+i,jBx) + (*Bx_m)(iBx+i, jBx+1));
             double Ex__ = 0.5*((*Ex_)(iEx+i,jEx) + (*Ex_)(iEx+i+1, jEx));
