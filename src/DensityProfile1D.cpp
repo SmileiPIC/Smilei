@@ -139,6 +139,25 @@ double DensityProfile1D::operator() (PicParams* params, unsigned int ispec, std:
             return 0.0;
         }
     }
+    // cosine density profile
+    // ---------------------------
+    else if (params->plasma_geometry=="cosine") {
+        // vacuum region
+        if ( x_cell[0] < params->vacuum_length[0] ) {
+            return 0.0;
+        }
+        else if(x_cell[0] < params->vacuum_length[0]+params->plasma_length[0]){
+            if(ispec==1){
+                return 1.0+params->ampl*cos(params->mode*(x_cell[0]-params->vacuum_length[0])+params->thetax);
+            }
+            else {
+                return 1.0;
+            }
+        }
+        else{
+            return 0.0;
+        }
+    }
     // odd  species plasma is plasma_length[0] thick and starts at vacuum_length[0]
     // even species plasma is plasma_length[0] thick and starts at vacuum_length[0] + plasma_length[0] + vacuum_length[1]
     else if (params->plasma_geometry=="separated") {

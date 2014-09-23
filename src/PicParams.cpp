@@ -84,7 +84,7 @@ PicParams::PicParams(InputData &ifile) {
     }
     double Dx2 = 0.0;
     for (short int i=0; i<res_space.size(); i++) {
-        Dx2 += 1.0/pow(res_space[i],2);
+        Dx2 += 1.0/(res_space[i]*res_space[i]);
     }
     if (sqrt(Dx2) < 1.0/res_time) {
         WARNING("Possible CFL problem: time step = " << 1.0/res_time << " > Dx = " << sqrt(Dx2) );
@@ -307,8 +307,8 @@ PicParams::PicParams(InputData &ifile) {
         
         ifile.extract("boxSide",tmpLaser.boxSide,"laser",0,n_laser);
         if ( (tmpLaser.boxSide!="west") && (tmpLaser.boxSide!="east") ) {
-            ERROR("At the moment laser can enter only from West/East sides: boxSide "
-                  << tmpLaser.boxSide << " not defined");
+            ERROR("At the moment laser can enter only from West/East sides: boxSide \""
+                  << tmpLaser.boxSide << "\" not defined");
         }
         
         ifile.extract("angle",tmpLaser.angle ,"laser",0,n_laser);

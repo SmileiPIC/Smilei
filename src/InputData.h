@@ -26,7 +26,7 @@
 class PicParams;
 
 /*! \brief This is the text parser (similar to namelists).
- It reads once the datafile (at constructor time or later with parsefile) and stores the whole read text
+ It reads once the datafile (at constructor time or later with readFile) and stores the whole read text
  (after being cleaned) in a string variable (namelist) then this variable is passed to all nodes and parsed by filling the structure (allData)
  then you can extract the values with the extract methos (2 templates: one for single variables and one for vectors).
  You can also query the structure with existGroup
@@ -36,7 +36,7 @@ class InputData {
 public:
     InputData();
     //! parse file
-    void parseFile(std::string=std::string());
+    void readFile(std::string=std::string());
 
     //! parse stringstream
     void parseStream();

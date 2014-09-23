@@ -120,31 +120,30 @@ fieldDump_every = 1
 	vars = Ebalance Etot Eparticles EFields Poynting E_ion N_ion E_eon N_eon Ex_U Ey_U Ez_U
  end
 # 
-# diagnostic phase
+
 # kind of projection: 1D) xPx xPy xPz xLor PxPy PxPz PyPz
 # kind of projection: 2D) xPx xPy xPz xLor yPx yPy yPz yLor PxPy PxPz PyPz
- 	kind = xPx xPy xPz xLor
+diagnostic phase
+ 	kind = xLor
  	species = eon
  	every = 1
  
  	pos_min = 0
  	pos_max = 1
- 	pos_num = 128
+ 	pos_num = 100
  	
- 	mom_min = -0.3
- 	mom_max = 0.3
- 	mom_num = 200
- 
  	lor_min = 0.95
  	lor_max = 1
- 	lor_num = 128
+ 	lor_num = 100
  end
 
 # PROBEs 0D
 # every = number of time-steps between each output
 # pos   = position of the different probes
 # #
- diagnostic probe
- 	every = 1
- 	pos = 0.0
- end
+
+#  diagnostic probe
+#  	every = 1
+#  	pos = 0.0
+#  end
+

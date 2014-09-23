@@ -30,12 +30,8 @@ public:
         else {
             ERROR( "Unknwon geometry : " << params->geometry);
         }
-        
-        HEREIAM("");
-        return densityProfile;
-        
+        return densityProfile;        
     }
-    
 };
 
 #endif
