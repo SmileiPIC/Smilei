@@ -33,15 +33,6 @@ sim_length = 1.0
 # PLASMA GEOMETRY
 # ---------------
 
-# plasma_geometry: string defining the plasma geometry
-# ***_length: characteristic length for a given geometry
-#
-plasma_geometry = cosine
-vacuum_length   = 0.0
-plasma_length   = 1.0
-thetax=0.0
-ampl=0.001
-mode=1.0
 
 # RANDOM seed 
 # this is used to randomize the random number generator
@@ -64,6 +55,10 @@ random_seed = 0
 #
 species
 	species_type = ion
+    plasma_geometry = constant
+    vacuum_length   = 0.0
+    plasma_length   = 1.0
+
 	initialization_type = regular
 	ionization_model = none
 	n_part_per_cell = 2
@@ -81,6 +76,12 @@ end
 
 species
 	species_type = eon
+    plasma_geometry = cosine
+    vacuum_length   = 0.0
+    plasma_length   = 1.0
+    thetax=0.0
+    ampl=0.001
+    mode=1.0
 	initialization_type = regular
 	ionization_model = none
 	n_part_per_cell = 2
