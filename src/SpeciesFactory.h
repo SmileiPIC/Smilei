@@ -50,7 +50,7 @@ public:
                     vecSpecies[ispec]->electron_species=electron_species;
                     PMESSAGE(2,smpi->getRank(),"Added electron species to species " << vecSpecies[ispec]->name_str);
                 } else {
-                    ERROR("Ionization needs a species of electrons to be defined");
+                    ERROR("Ionization needs a species called \"electron\" to be defined");
                 }
             }
         } // END for ispec
