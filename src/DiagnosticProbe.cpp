@@ -16,12 +16,12 @@
 
 using namespace std;
 
-DiagnosticProbe::DiagnosticProbe(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi):
+DiagnosticProbe::DiagnosticProbe(PicParams &params, DiagParams &diagParams, SmileiMPI* smpi):
 cpuRank(smpi->getRank()),
 probeSize(10), 
 fileId(0) {
     
-    if (diagParams->probeStruc.size() >0) {
+    if (diagParams.probeStruc.size() >0) {
         hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
         H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
         fileId = H5Fcreate( "Probes.h5", H5F_ACC_TRUNC, H5P_DEFAULT, pid);
@@ -40,19 +40,19 @@ fileId(0) {
         H5Sclose(sid);
         H5Tclose(tid);
         
-        every.resize(diagParams->probeStruc.size());
-        probeParticles.resize(diagParams->probeStruc.size());
-        probeId.resize(diagParams->probeStruc.size());
+        every.resize(diagParams.probeStruc.size());
+        probeParticles.resize(diagParams.probeStruc.size());
+        probeId.resize(diagParams.probeStruc.size());
         
-        for (unsigned int np=0; np<diagParams->probeStruc.size(); np++) {
-            every[np]=diagParams->probeStruc[np].every;
-            unsigned int dimProbe=diagParams->probeStruc[np].dim+2;
-            unsigned int ndim=params->nDim_particle;
+        for (unsigned int np=0; np<diagParams.probeStruc.size(); np++) {
+            every[np]=diagParams.probeStruc[np].every;
+            unsigned int dimProbe=diagParams.probeStruc[np].dim+2;
+            unsigned int ndim=params.nDim_particle;
             
-            vector<unsigned int> vecNumber=diagParams->probeStruc[np].number;
+            vector<unsigned int> vecNumber=diagParams.probeStruc[np].number;
             
             unsigned int totPart=1;
-            for (unsigned int iDimProbe=0; iDimProbe<diagParams->probeStruc[np].dim; iDimProbe++) {
+            for (unsigned int iDimProbe=0; iDimProbe<diagParams.probeStruc[np].dim; iDimProbe++) {
                 totPart *= vecNumber[iDimProbe];
             }
             
@@ -64,10 +64,10 @@ fileId(0) {
             for(unsigned int ipart=0; ipart!=totPart; ++ipart) {
                 int found=cpuRank;
                 for(unsigned int iDim=0; iDim!=ndim; ++iDim) {
-                    partPos[iDim+ipart*ndim]=diagParams->probeStruc[np].pos[0][iDim];
+                    partPos[iDim+ipart*ndim]=diagParams.probeStruc[np].pos[0][iDim];
                     // the particle position is a linear combiantion of the point pos with posFirst or posSecond or posThird
-                    for (unsigned int iDimProbe=0; iDimProbe<diagParams->probeStruc[np].dim; iDimProbe++) {
-                        partPos[iDim+ipart*ndim] += (ipart%vecNumber[iDimProbe])*(diagParams->probeStruc[np].pos[iDimProbe+1][iDim]-diagParams->probeStruc[np].pos[0][iDim])/(vecNumber[iDimProbe]-1);
+                    for (unsigned int iDimProbe=0; iDimProbe<diagParams.probeStruc[np].dim; iDimProbe++) {
+                        partPos[iDim+ipart*ndim] += (ipart%vecNumber[iDimProbe])*(diagParams.probeStruc[np].pos[iDimProbe+1][iDim]-diagParams.probeStruc[np].pos[0][iDim])/(vecNumber[iDimProbe]-1);
                     }
                     probeParticles[np].position(iDim,ipart) = 2*M_PI*partPos[iDim+ipart*ndim];
                     
@@ -75,12 +75,12 @@ fileId(0) {
                     double maxToCheck=smpi->getDomainLocalMax(iDim);                    
                     if (ndim==1) {
                         if ((static_cast<SmileiMPI_Cart1D*>(smpi))->isEastern()) {
-                            maxToCheck+=params->cell_length[iDim];
+                            maxToCheck+=params.cell_length[iDim];
                         }
                     } else if (ndim==2) {
                         if ((iDim == 0 && (static_cast<SmileiMPI_Cart2D*>(smpi))->isEastern()) ||
                             (iDim == 1 && (static_cast<SmileiMPI_Cart2D*>(smpi))->isNorthern())) {
-                            maxToCheck+=params->cell_length[iDim];
+                            maxToCheck+=params.cell_length[iDim];
                         }                        
                     } else {
                         ERROR("implement here");
@@ -145,7 +145,7 @@ fileId(0) {
             
             sid = H5Screate(H5S_SCALAR);	
             aid = H5Acreate(did, "dimension", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
-            H5Awrite(aid, H5T_NATIVE_UINT, &diagParams->probeStruc[np].dim);
+            H5Awrite(aid, H5T_NATIVE_UINT, &diagParams.probeStruc[np].dim);
             H5Sclose(sid);
             H5Aclose(aid);
             

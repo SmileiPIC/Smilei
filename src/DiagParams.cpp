@@ -6,7 +6,7 @@
 
 using namespace std;
 
-DiagParams::DiagParams(InputData &ifile, PicParams& params) {
+DiagParams::DiagParams(PicParams& params, InputData &ifile) {
 	
 	print_every=params.n_time/10;
     ifile.extract("print_every", print_every);

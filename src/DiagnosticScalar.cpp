@@ -11,14 +11,14 @@
 using namespace std;
 
 // constructor
-DiagnosticScalar::DiagnosticScalar(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi) :
+DiagnosticScalar::DiagnosticScalar(PicParams &params, DiagParams &diagParams, SmileiMPI* smpi) :
 isMaster(smpi->isMaster()),
 cpuSize(smpi->getSize()),
-res_time(params->res_time),
-every(diagParams->scalar_every),
-cell_volume(params->cell_volume),
-precision(diagParams->scalar_precision),
-vars(diagParams->scalar_vars)
+res_time(params.res_time),
+every(diagParams.scalar_every),
+cell_volume(params.cell_volume),
+precision(diagParams.scalar_precision),
+vars(diagParams.scalar_vars)
 {
     if (isMaster) {
         fout.open("scalars.txt");
