@@ -108,7 +108,7 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
     // Force configuration of MPI domain decomposition
     //number_of_procs[0] = 1;
     //number_of_procs[1] = 16;
-    cout << "Split : " << smilei_sz << " : " << number_of_procs[0] << " - " << number_of_procs[1] << endl;
+    MESSAGE("Split : " << smilei_sz << " : " << number_of_procs[0] << " - " << number_of_procs[1]);
     
     // Geometry periodic in y
     if (params.use_transverse_periodic) {
@@ -242,7 +242,7 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
         int shift[(*cubmax).size()+1];//how much we need to shift each bin in order to leave room for the new particles
         double dbin;
         
-        dbin = params->cell_length[0]; //width of a bin.
+        dbin = params->cell_length[0]*params->clrw; //width of a bin.
         for (unsigned int j=0; j<(*cubmax).size()+1 ;j++){
             shift[j]=0;
         }

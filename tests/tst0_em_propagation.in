@@ -48,6 +48,7 @@ random_seed = 0
  
 laser
     a0=1.0
+    boxSide = west 
     angle=0
     delta=1.0              
     time_profile = constant

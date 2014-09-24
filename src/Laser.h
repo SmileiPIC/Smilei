@@ -19,6 +19,8 @@ public:
     double a0_delta_y_;
     double a0_delta_z_;
 
+    std::string         boxSide;
+    double              angle;
     std::string         type_of_time_profile;
     std::string         type_of_y_profile;
     std::vector<int>    int_params;
@@ -27,12 +29,9 @@ public:
     std::string         type_of_transv_profile;
     std::vector<int>    int_params_transv;
     std::vector<double> double_params_transv;
-    //std::vector<double> y_params;
     
     double time_profile(double);
     double transverse_profile2D(double, double);
-    //double y_profile(double);
-
 
 };
 

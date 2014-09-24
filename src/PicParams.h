@@ -20,6 +20,9 @@ struct LaserStructure {
 
     //! Laser field amplitude
     double a0;
+    
+    //! Side (west/east) from which the laser enters the box
+    std::string boxSide;
 
     //! Laser angle
     double angle;
@@ -36,8 +39,6 @@ struct LaserStructure {
 
     //! double vector for laser parameters
     std::vector<double> double_params; //Params for longitudinal profile
-
-    //std::vector<double> y_params;      //PArams for y profil
     
     //! Laser transverse profile
     std::string transv_profile;
@@ -136,7 +137,7 @@ public:
     /*! \brief Time resolution.
       Number of timesteps in \f$ 2\pi/\omega_N \f$ where \f$ \omega_N \f$ is the normalization (plasma or laser) frequency
     */
-    unsigned int res_time;
+    double res_time;
 
     //! simulation exit time in units of \f$ 2\pi/\omega_N \f$
     double sim_time;
@@ -144,7 +145,7 @@ public:
     /*! \brief Space resolution.
       Number of cells in every direction in \f$ 2\pi/k_N \f$ where \f$ k_N=\omega_N/c \f$ is the normalization wavenumber
     */
-    std::vector<unsigned int> res_space;
+    std::vector<double> res_space;
 
     //! local simulation box size in \f$2\pi/k_N \f$
     std::vector<double> sim_length;
