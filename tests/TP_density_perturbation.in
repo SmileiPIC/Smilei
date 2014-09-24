@@ -144,7 +144,9 @@ fieldDump_every = 1
 # every = number of time-steps between each output
 # pos   = position of the different probes
 # #
- diagnostic probe
- 	every = 1
- 	pos = 0.0
- end
+diagnostic probe
+   every = 1
+   pos = 0.0
+end
+ 
+use_sort_particles = true
