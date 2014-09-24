@@ -137,7 +137,7 @@ public:
     /*! \brief Time resolution.
       Number of timesteps in \f$ 2\pi/\omega_N \f$ where \f$ \omega_N \f$ is the normalization (plasma or laser) frequency
     */
-    double res_time;
+    unsigned int res_time;
 
     //! simulation exit time in units of \f$ 2\pi/\omega_N \f$
     double sim_time;
@@ -145,7 +145,7 @@ public:
     /*! \brief Space resolution.
       Number of cells in every direction in \f$ 2\pi/k_N \f$ where \f$ k_N=\omega_N/c \f$ is the normalization wavenumber
     */
-    std::vector<double> res_space;
+    std::vector<unsigned int> res_space;
 
     //! local simulation box size in \f$2\pi/k_N \f$
     std::vector<double> sim_length;
@@ -193,6 +193,15 @@ public:
     
     //! polygonal density profile relative values in x direction
     std::vector<double> density_rel_values_x;
+    
+    //! mode for 1D cos density profile
+    double mode;
+    
+    //! fase  for 1D cos density profile
+    double thetax;
+    
+    //! amplitude  for 1D cos density profile
+    double ampl;
 
     //! initial number of species
     unsigned int n_species;
