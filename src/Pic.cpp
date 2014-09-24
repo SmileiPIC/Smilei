@@ -59,21 +59,7 @@ int main (int argc, char* argv[])
     
     // -------------------------
     // Simulation Initialization
-    // -------------------------
-    
-    // Check for run flags
-    char ch;
-    DEBUGEXEC(debug_level=0);
-    
-    string dirname("");
-    while ((ch = getopt(argc, argv, "d:D:")) != -1) {
-        if (ch=='d') {
-            RELEASEEXEC(WARNING("In release mode debug option has no meaning, please recompile in debug mode"));
-            DEBUGEXEC(std::stringstream iss(optarg); iss >> std::boolalpha >> debug_level;)
-        } else if (ch=='D') {
-            dirname=string(optarg);
-        }
-    }
+    // ------------------------- 
     
     argc -= optind;
     argv += optind;
@@ -87,31 +73,14 @@ int main (int argc, char* argv[])
     
     // Parse the namelist file (no check!)
     InputData input_data;
-    if ( smpiData->isMaster() ) input_data.parseFile(namelist);
-    
-    if (! dirname.empty()) {
-        if (chdir(dirname.c_str())!=0) {
-            ERROR("Directory " << dirname << " not found");
-        }
-    }
-    
-    smpiData->bcast(input_data);
-    input_data.parseStream();
-    
-    // this will do the randomization (changing the seed for all processes)
-    unsigned long seedTime=0;
-    if (!input_data.extract("random_seed",seedTime)) {
-        RELEASEEXEC(seedTime=time(NULL));
-        input_data.addVar("random_seed",seedTime);
-    }
-    srand(seedTime+smpiData->getRank());
-    
-    if ( smpiData->isMaster() ) input_data.write(getFileWithoutExt(namelist)+".parsed");
+    if ( smpiData->isMaster() ) input_data.readFile(namelist);    
+
+    // broadcast file and parse it and randomize
+    smpiData->bcast(input_data);    
     
     // Read simulation & diagnostics parameters
     PicParams params(input_data);
     smpiData->init(params);
-    DiagParams diag_params(input_data,params);
     smpiData->barrier();
     
     // Print out the data parameters
@@ -150,7 +119,7 @@ int main (int argc, char* argv[])
     Projector* Proj = ProjectorFactory::create(params, smpi);
     
     // Create diagnostics
-    Diagnostic *Diags = new Diagnostic (&params,&diag_params, smpi);
+    Diagnostic diags(params,input_data, smpi);
     
     
     // ---------------------------
@@ -210,7 +179,7 @@ int main (int argc, char* argv[])
         MESSAGE("Running diags at time t = 0");
         MESSAGE("----------------------------------------------");
         // run diagnostics at time-step 0
-        Diags->runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
+        diags.runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
         // temporary EM fields dump in Fields.h5
         sio->writeAllFieldsSingleFileTime( EMfields, 0 );
         // temporary EM fields dump in Fields_avg.h5
@@ -259,16 +228,12 @@ int main (int argc, char* argv[])
         timer[0].update();
         
         //double timElapsed=smpiData->time_seconds();
-		if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) )
-//<<<<<<< Updated upstream
-//            MESSAGE(1,"t= " << time_dual/(2*M_PI) << " it= " << setw(log10(params.n_time)) << itime  << "/" << params.n_time << " sec: " << timer[0].getTime() << " E= " << Diags->getScalar("Etot") << " E_bal(%)= " << 100.0*Diags->getScalar("Ebal_norm") );
-//        //MESSAGE(1,"Time (dual)= " << time_dual << " it = " << itime  << "/" << params.n_time << " sec: " << timElapsed  );
-//=======
+		if ( (itime % diags.params.print_every == 0) &&  ( smpi->isMaster() ) )
             MESSAGE(1, "t= "         << setw(11)                     << time_dual/(2*M_PI)
                     << " it= "       << setw(log10(params.n_time)+1) << itime  << "/" << params.n_time
                     << " sec: "      << setw(9)                      << timer[0].getTime()
-                    << " E= "        << setw(9)                      << Diags->getScalar("Total_energy")
-                    << " E_bal(%)= " << 100.0*Diags->getScalar("Energy_bal_norm") );
+                    << " E= "        << setw(9)                      << diags.getScalar("Etot")
+                    << " E_bal(%)= " << 100.0*diags.getScalar("Ebal_norm") );
 
         
         
@@ -322,25 +287,25 @@ int main (int argc, char* argv[])
         timer[2].update();
         
         // incrementing averaged electromagnetic fields
-        EMfields->incrementAvgFields(itime, diag_params.ntime_step_avg);
+        EMfields->incrementAvgFields(itime, diags.params.ntime_step_avg);
         
         // call the various diagnostics
         // ----------------------------
 		
         // run all diagnostics
         timer[3].restart();
-        Diags->runAllDiags(itime, EMfields, vecSpecies, Interp, smpi);
+        diags.runAllDiags(itime, EMfields, vecSpecies, Interp, smpi);
         
         // temporary EM fields dump in Fields.h5
-        if  ((diag_params.fieldDump_every != 0) && (itime % diag_params.fieldDump_every == 0))
+        if  ((diags.params.fieldDump_every != 0) && (itime % diags.params.fieldDump_every == 0))
             sio->writeAllFieldsSingleFileTime( EMfields, itime );
         
         // temporary EM fields dump in Fields.h5
-        if  ((diag_params.avgfieldDump_every != 0) && (itime % diag_params.avgfieldDump_every == 0))
+        if  ((diags.params.avgfieldDump_every != 0) && (itime % diags.params.avgfieldDump_every == 0))
             sio->writeAvgFieldsSingleFileTime( EMfields, itime );
         
         // temporary particles dump (1 HDF5 file per process)
-        if  ((diag_params.particleDump_every != 0) && (itime % diag_params.particleDump_every == 0))
+        if  ((diags.params.particleDump_every != 0) && (itime % diags.params.particleDump_every == 0))
             sio->writePlasma( vecSpecies, time_dual, smpi );
         
         if (sio->dump(EMfields, itime,  vecSpecies, smpi, simWindow, params, input_data)) break;
@@ -366,7 +331,7 @@ int main (int argc, char* argv[])
     //double timElapsed=smpiData->time_seconds();
     //if ( smpi->isMaster() ) MESSAGE(0, "Time in time loop : " << timElapsed );
     timer[0].update();
-    if ( smpi->isMaster() ) MESSAGE(0, "Time in time loop : " << timer[0].getTime() );
+    MESSAGE(0, "Time in time loop : " << timer[0].getTime() );
     if ( smpi->isMaster() )
         for (int i=1 ; i<ntimer ; i++) timer[i].print();
     
@@ -380,15 +345,15 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     
     // temporary EM fields dump in Fields.h5
-    if  ( (diag_params.fieldDump_every != 0) && (params.n_time % diag_params.fieldDump_every != 0) )
+    if  ( (diags.params.fieldDump_every != 0) && (params.n_time % diags.params.fieldDump_every != 0) )
         sio->writeAllFieldsSingleFileTime( EMfields, params.n_time );
     
     // temporary time-averaged EM fields dump in Fields_avg.h5
-    if  ( (diag_params.avgfieldDump_every != 0) && (params.n_time % diag_params.avgfieldDump_every != 0) )
+    if  ( (diags.params.avgfieldDump_every != 0) && (params.n_time % diags.params.avgfieldDump_every != 0) )
         sio->writeAvgFieldsSingleFileTime( EMfields, params.n_time );
     
     // temporary particles dump (1 HDF5 file per process)
-    if  ( (diag_params.particleDump_every != 0) && (params.n_time % diag_params.particleDump_every != 0) )
+    if  ( (diags.params.particleDump_every != 0) && (params.n_time % diags.params.particleDump_every != 0) )
         sio->writePlasma( vecSpecies, time_dual, smpi );
     
     // ------------------------------
@@ -397,7 +362,6 @@ int main (int argc, char* argv[])
     delete Proj;
     delete Interp;
     delete EMfields;
-    delete Diags;
     
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
     vecSpecies.clear();
@@ -424,13 +388,4 @@ void startingMessage(std::string inputfile) {
     MESSAGE("-----------------------------------------------------------------------------------------------------");
 }
 
-
-// Get file without extension
-string getFileWithoutExt(const string& s) {
-    size_t i = s.rfind('.', s.length( ));
-    if (i != string::npos) {
-        return(s.substr(0, i));
-    }
-    return("");
-}
 

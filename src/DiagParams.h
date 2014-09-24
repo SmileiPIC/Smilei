@@ -76,7 +76,7 @@ class DiagParams {
 
 public:
     //! Creator for DiagParams
-    DiagParams(InputData &, PicParams&);
+    DiagParams(PicParams&, InputData &);
 
     //! field dump output
     unsigned int fieldDump_every;

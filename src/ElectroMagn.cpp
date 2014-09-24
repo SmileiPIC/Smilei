@@ -31,6 +31,8 @@ oversize(params->oversize)
     // initialize poynting vector
     poynting[0].resize(nDim_field,0.0);
     poynting[1].resize(nDim_field,0.0);
+    poynting_inst[0].resize(nDim_field,0.0);
+    poynting_inst[1].resize(nDim_field,0.0);
     
     // take useful things from params
     for (unsigned int i=0; i<3; i++) {

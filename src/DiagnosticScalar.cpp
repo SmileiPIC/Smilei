@@ -11,14 +11,14 @@
 using namespace std;
 
 // constructor
-DiagnosticScalar::DiagnosticScalar(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi) :
+DiagnosticScalar::DiagnosticScalar(PicParams &params, DiagParams &diagParams, SmileiMPI* smpi) :
 isMaster(smpi->isMaster()),
 cpuSize(smpi->getSize()),
-res_time(params->res_time),
-every(diagParams->scalar_every),
-cell_volume(params->cell_volume),
-precision(diagParams->scalar_precision),
-vars(diagParams->scalar_vars)
+res_time(params.res_time),
+every(diagParams.scalar_every),
+cell_volume(params.cell_volume),
+precision(diagParams.scalar_precision),
+vars(diagParams.scalar_vars)
 {
     if (isMaster) {
         fout.open("scalars.txt");
@@ -34,14 +34,16 @@ void DiagnosticScalar::close() {
 
 // wrapper of the methods
 void DiagnosticScalar::run(int timestep, ElectroMagn* EMfields, vector<Species*>& vecSpecies, SmileiMPI *smpi) {
-    EMfields->computePoynting(); // This must be called at each timestep
     if (timestep==0) {
         compute(EMfields,vecSpecies,smpi);
         Energy_time_zero=getScalar("Etot");
     }
-    if (every && timestep % every == 0) {
-        compute(EMfields,vecSpecies,smpi);
-        write(timestep);
+    if (every) {
+        EMfields->computePoynting(); // This must be called everytime        
+        if (timestep % every == 0) {
+            compute(EMfields,vecSpecies,smpi);
+            write(timestep);
+        }
     }
 }
 
@@ -193,18 +195,33 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
     for (unsigned int j=0; j<2;j++) {
         for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {
 
-            double poy=EMfields->poynting[j][i];
+            double poy[2]={EMfields->poynting[j][i],EMfields->poynting_inst[j][i]};
 
-            MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&poy, &poy, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+            MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:poy, poy, 2, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
             if (isMaster) {
-                stringstream s;
-                s << "Poy_" << (j==0?"inf":"sup") << "_" << (i==0?"x":(i==1?"y":"z"));
-                append(s.str(),poy);
-                poyTot+=poy;
+                string name("Poy");
+                switch (i) { // dimension
+                    case 0:
+                        name+=(j==0?"East":"West");
+                        break;
+                    case 1:
+                        name+=(j==0?"South":"North");
+                        break;
+                    case 2:
+                        name+=(j==0?"Bottom":"Top");
+                        break;
+                    default:
+                        break;
+                }
+                append(name,poy[0]);
+                append(name+"Inst",poy[1]);
+
+                poyTot+=poy[0];
 
             }
 
+            
         }
     }
 

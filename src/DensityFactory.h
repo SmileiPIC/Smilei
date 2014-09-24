@@ -30,12 +30,8 @@ public:
         else {
             ERROR( "Unsupported geometry : " << params->geometry);
         }
-        
-        HEREIAM("");
-        return densityProfile;
-        
+        return densityProfile;        
     }
-    
 };
 
 #endif

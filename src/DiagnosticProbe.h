@@ -27,7 +27,7 @@ class DiagnosticProbe {
 public:
     
     //! the creator need both sim parameters params and the diagnostic parameter diagParams
-    DiagnosticProbe(PicParams* params, DiagParams* diagParams, SmileiMPI* smpi);
+    DiagnosticProbe(PicParams &params, DiagParams &diagParams, SmileiMPI* smpi);
     
     ~DiagnosticProbe(){};
     

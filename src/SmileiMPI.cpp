@@ -55,10 +55,18 @@ SmileiMPI::~SmileiMPI()
 
 }
 
-void SmileiMPI::bcast( InputData& idata )
+void SmileiMPI::bcast( InputData& input_data )
 {
     DEBUG(10,"broadcast namelist");
-    bcast(idata.namelist);
+    bcast(input_data.namelist);    
+
+    input_data.parseStream();
+    
+    // Randomization
+    unsigned long seedTime=0;
+    input_data.extract("random_seed",seedTime);
+    srand(seedTime+getRank());
+    
 }
 
 void SmileiMPI::bcast( string& val )

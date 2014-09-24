@@ -5,17 +5,17 @@
 #include <hdf5.h>
 
 #include "PicParams.h"
-#include "DiagParams.h"
 #include "SmileiMPI.h"
 #include "ElectroMagn.h"
 #include "Species.h"
 
 using namespace std;
 
-Diagnostic::Diagnostic( PicParams* params,  DiagParams* diagparams, SmileiMPI* smpi) :
-scalars(params, diagparams, smpi),
-probes(params, diagparams, smpi),
-phases(params, diagparams, smpi)
+Diagnostic::Diagnostic( PicParams &picParams, InputData &ifile , SmileiMPI* smpi) :
+params(picParams,ifile),
+scalars(picParams, params, smpi),
+probes(picParams, params, smpi),
+phases(picParams, params, smpi)
 {
 }
 

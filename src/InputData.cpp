@@ -1,4 +1,5 @@
 #include "InputData.h"
+#include <sstream>
 
 using namespace std;
 
@@ -48,7 +49,7 @@ void InputData::write(ostream &ostr) {
 
 void InputData::parseStream() {
     if (namelist.empty()) ERROR("namelist is empty");
-
+    
     stringstream my_stream(namelist);
     allData.clear();
 
@@ -63,7 +64,7 @@ void InputData::parseStream() {
             if (strLine.find('=') == string::npos) {
                 if (strLine == "end") {
                     allData.push_back(make_pair(group,thisGroup));
-                    group="";
+                    group.clear();
                     thisGroup.clear();
                 } else {
                     group=strLine;
@@ -85,19 +86,18 @@ void InputData::parseStream() {
             }
         }
     }
-
-
+    
     if (!group.empty()) ERROR("Final group "<< group << " not closed. Check the namelist");
 
     // this wil put the default empty group "" in front of others
     std::reverse( allData.begin(), allData.end() );
     allData.push_back(make_pair("",defaultGroupVec));
     std::reverse( allData.begin(), allData.end() );
-
+    
 }
 
 
-void InputData::parseFile(string filename) {
+void InputData::readFile(string filename) {
 
     ifstream istr(filename.c_str());
 
@@ -112,7 +112,23 @@ void InputData::parseFile(string filename) {
     } else {
         ERROR("File " << filename << " does not exists");
     }
-
+    namelist +="\n";
+    
+    
+    unsigned long seedTime=0;
+    if (!extract("random_seed",seedTime)) {
+        RELEASEEXEC(seedTime=time(NULL));
+        stringstream ss;
+        ss << "random_seed = " << seedTime << endl;
+        namelist+=ss.str();
+    }
+        
+    size_t i = namelist.rfind('.', namelist.length( ));
+    if (i != string::npos) {
+        filename=filename.substr(0, i);
+    }    
+    write(filename+".parsed");
+    
 }
 
 bool InputData::existGroup(std::string groupName, unsigned int occurrenceGroup) {
