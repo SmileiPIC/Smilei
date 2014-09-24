@@ -28,14 +28,6 @@ sim_time = 50
 res_space  = 100
 sim_length = 22  
 
-# PLASMA GEOMETRY
-# plasma_geometry: string defining the plasma geometry
-# ***_length: characteristic length for a given geometry
-#
-plasma_geometry = separated
-vacuum_length   = 1.0 15.0
-plasma_length   = 0.01
-
 # RANDOM seed 
 # this is used to randomize the random number generator
 random_seed = 0
@@ -55,6 +47,10 @@ random_seed = 0
 # radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
 #
 species
+     plasma_geometry = constant
+     vacuum_length   = 1.0
+     plasma_length   = 0.01
+
 	species_type = electron
 	initialization_type = regular
 	ionization_model = none
@@ -72,6 +68,10 @@ species
 end
 
 species
+     plasma_geometry = constant
+     vacuum_length   = 21.0
+     plasma_length   = 0.01
+
 	species_type = positron
 	initialization_type = regular
 	ionization_model = none

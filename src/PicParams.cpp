@@ -289,7 +289,7 @@ PicParams::PicParams(InputData &ifile) {
             ifile.extract("plasma_length", tmpSpec.plasma_length,"species",0,n_species);
             ifile.extract("vacuum_length", tmpSpec.vacuum_length,"species",0,n_species);
         } else {
-            ERROR("Unknown plasma_geometry " << tmpSpec.plasma_geometry);
+            ERROR("Unknown plasma_geometry " << n_species << " : " << tmpSpec.plasma_geometry);
         }
         
         

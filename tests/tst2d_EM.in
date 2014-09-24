@@ -24,15 +24,6 @@ sim_time = 10
 res_space  = 50  50  
 sim_length = 5  5  
 
-# PLASMA GEOMETRY
-# plasma_geometry: string defining the plasma geometry
-# ***_length: characteristic length for a given geometry
-#
-plasma_geometry = trap
-vacuum_length   = 0.0  0.0 
-plasma_length   = 0.0  0.0
-slope_length = 0.0 0.0
-
 # RANDOM seed 
 # this is used to randomize the random number generator
 random_seed = 0

@@ -108,7 +108,7 @@ PartBoundCond::PartBoundCond( PicParams *params, int ispec, SmileiMPI* smpi )
 	    WARNING( "No Boundary Condition applied for species in transverse direction " << ispec );
 	}
 	else {
-	    ERROR( "Transverse boundary condition undefined" << params->species_param[ispec].bc_part_type_trans  );
+	    ERROR( "Transverse boundary condition undefined : " << params->species_param[ispec].bc_part_type_trans  );
 	}
 	//} // else NULL
 	if ( nDim_particle > 2 ) {
