@@ -9,7 +9,7 @@ class ElectroMagn;
 
 class FieldsBC2D_Trans_Damping : public FieldsBC {
 public:
-    FieldsBC2D_Trans_Damping( PicParams *params );
+    FieldsBC2D_Trans_Damping( PicParams &params );
     ~FieldsBC2D_Trans_Damping();
 
     virtual void apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi);

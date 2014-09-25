@@ -14,23 +14,23 @@
 
 using namespace std;
 
-FieldsBC2D_Long_SM::FieldsBC2D_Long_SM( PicParams *params )
+FieldsBC2D_Long_SM::FieldsBC2D_Long_SM( PicParams &params )
     : FieldsBC( params )
 {
     // number of nodes of the primal and dual grid in the x-direction
-    nx_p = params->n_space[0]+1+2*params->oversize[0];
-    nx_d = params->n_space[0]+2+2*params->oversize[0];
+    nx_p = params.n_space[0]+1+2*params.oversize[0];
+    nx_d = params.n_space[0]+2+2*params.oversize[0];
     // number of nodes of the primal and dual grid in the y-direction
-    ny_p = params->n_space[1]+1+2*params->oversize[1];
-    ny_d = params->n_space[1]+2+2*params->oversize[1];
+    ny_p = params.n_space[1]+1+2*params.oversize[1];
+    ny_d = params.n_space[1]+2+2*params.oversize[1];
 
     // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the x-direction)
-    dx       = params->cell_length[0];
+    dx       = params.cell_length[0];
     dt_ov_dx = dt/dx;
     dx_ov_dt = 1.0/dt_ov_dx;
 
     // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the y-direction)
-    dy       = params->cell_length[1];
+    dy       = params.cell_length[1];
     dt_ov_dy = dt/dy;
     dy_ov_dt = 1.0/dt_ov_dy;
 
@@ -39,7 +39,7 @@ FieldsBC2D_Long_SM::FieldsBC2D_Long_SM( PicParams *params )
     // -----------------------------------------------------
 
     // West boundary
-    double theta  = 0.0; //! \todo Introduce in parameters for Boundary cond., e.g., params->EMBoundary->theta_W
+    double theta  = 0.0; //! \todo Introduce in parameters for Boundary cond., e.g., params.EMBoundary->theta_W
     double factor = 1.0 / (cos(theta) + dt_ov_dx);
     Alpha_SM_W    = 2.0                     * factor;
     Beta_SM_W     = - (cos(theta)-dt_ov_dx) * factor;

@@ -11,7 +11,7 @@ class Laser;
 
 class FieldsBC {
 public:
-    FieldsBC( PicParams *params );
+    FieldsBC( PicParams &params );
     ~FieldsBC();
 
     virtual void apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi) = 0;
@@ -23,8 +23,6 @@ public:
     //! time-step
     double dt;
 
-    PicParams* params_;
-    
 };
 
 #endif
