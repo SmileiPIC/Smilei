@@ -15,6 +15,44 @@
 #include "InputData.h"
 #include "PicParams.h"
 
+// ---------------------------------------------------------------------------------------------------------------------
+//! This structure contains the properties of each Laser
+// ---------------------------------------------------------------------------------------------------------------------
+struct LaserStructure {
+    
+    //! Laser field amplitude
+    double a0;
+    
+    //! Side (west/east) from which the laser enters the box
+    std::string boxSide;
+    
+    //! Laser angle
+    double angle;
+    
+    //! Laser delta (ellipticity parameter)
+    double delta;
+    
+    //! Laser profile
+    std::string time_profile; //Longitudinal profile
+    std::string y_profile;    //Profile along y
+    
+    //! int vector for laser parameters
+    std::vector<int> int_params;
+    
+    //! double vector for laser parameters
+    std::vector<double> double_params; //Params for longitudinal profile
+    
+    //! Laser transverse profile
+    std::string transv_profile;
+    
+    //! int vector for laser parameters
+    std::vector<int> int_params_transv;
+    
+    //! double vector for laser parameters
+    std::vector<double> double_params_transv;
+};
+
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! LaserParams class: holds all the properties of the lasers that are read from the input file
@@ -25,6 +63,13 @@ public:
     //! Creator for LaserParams
     LaserParams(PicParams&, InputData &);
 
+    //! initial number of laser pulses
+    unsigned int n_laser;
+    
+    //! laser parameters
+    std::vector<LaserStructure> laser_param;
+    
+    
 };
 
 #endif

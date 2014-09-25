@@ -6,12 +6,12 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // LASER CONSTRUCTOR
 // ---------------------------------------------------------------------------------------------------------------------
-Laser::Laser( PicParams &params, unsigned int n_laser) {
+Laser::Laser( PicParams &params, LaserParams &laser_params, unsigned int n_laser) {
              
     double sim_time= params.sim_time;
     vector<double> sim_length= params.sim_length;
     
-    laser_struct = params.laser_param[n_laser];
+    laser_struct = laser_params.laser_param[n_laser];
     
     pi_ov_2 = 0.5 * M_PI;
     

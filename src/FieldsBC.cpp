@@ -15,11 +15,11 @@ using namespace std;
 FieldsBC::FieldsBC( PicParams &params, LaserParams &laser_params )
 {
     // check for laser conditions
-    laser_.resize(params.n_laser);
+    laser_.resize(laser_params.n_laser);
 
     for (unsigned int i=0; i<laser_.size(); i++) {
         DEBUG(5,"Initializing Laser "<<i);        
-        laser_[i] = new Laser(params,i);
+        laser_[i] = new Laser(params,laser_params, i);
     }
 
     dt = params.timestep;

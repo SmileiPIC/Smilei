@@ -189,7 +189,6 @@ PicParams::PicParams(InputData &ifile) {
             for(unsigned int i=0;i<nDim_field;i++) sigma[i]=(plasma_length[i]-plateau[i])/(2*cut[i]);
         }
     }
-
     else if(plasma_geometry=="polygonal"){
             ifile.extract("plasma_length", plasma_length);
             ifile.extract("vacuum_length", vacuum_length);
@@ -198,7 +197,6 @@ PicParams::PicParams(InputData &ifile) {
             if(x_density_coor.size()==0) ERROR("polygonal density profile not well defined");
             
         }
-    
     else if(plasma_geometry=="cosine"){
         ifile.extract("plasma_length", plasma_length);
         ifile.extract("vacuum_length", vacuum_length);
@@ -206,8 +204,6 @@ PicParams::PicParams(InputData &ifile) {
         ifile.extract("thetax", thetax);
         ifile.extract("ampl", ampl);
     }
-
-
      else if (plasma_geometry=="fukuda"){
         WARNING("plasma geometry: fukuda vacuum & plasma length are not used");
         ifile.extract("plasma_length", plasma_length);
@@ -295,40 +291,7 @@ PicParams::PicParams(InputData &ifile) {
         n_species++;
     }
     
-    
-    // -----------------
-    // Lasers properties
-    // -----------------
-    n_laser=0;
-    while (ifile.existGroup("laser",n_laser)) {
         
-        LaserStructure tmpLaser;
-        ifile.extract("a0",tmpLaser.a0 ,"laser",0,n_laser);
-        
-        ifile.extract("boxSide",tmpLaser.boxSide,"laser",0,n_laser);
-        if ( (tmpLaser.boxSide!="west") && (tmpLaser.boxSide!="east") ) {
-            ERROR("At the moment laser can enter only from West/East sides: boxSide \""
-                  << tmpLaser.boxSide << "\" not defined");
-        }
-        
-        ifile.extract("angle",tmpLaser.angle ,"laser",0,n_laser);
-        ifile.extract("delta",tmpLaser.delta ,"laser",0,n_laser);
-        ifile.extract("time_profile",tmpLaser.time_profile ,"laser",0,n_laser);
-        ifile.extract("int_params",tmpLaser.int_params ,"laser",0,n_laser);
-        ifile.extract("double_params",tmpLaser.double_params ,"laser",0,n_laser);
-        ifile.extract("transv_profile",tmpLaser.transv_profile ,"laser",0,n_laser);
-        ifile.extract("int_params_transv",tmpLaser.int_params_transv ,"laser",0,n_laser);
-        ifile.extract("double_params_transv",tmpLaser.double_params_transv ,"laser",0,n_laser);
-        
-        for (unsigned int i=0; i<tmpLaser.double_params.size(); i++)
-            tmpLaser.double_params[i] *= 2.0*M_PI;
-        for (unsigned int i=0; i<tmpLaser.double_params_transv.size(); i++)
-            tmpLaser.double_params_transv[i] *= 2.0*M_PI;
-        
-        laser_param.push_back(tmpLaser);
-        n_laser++;
-    }
-    
     // --------------------
     // Number of processors
     // --------------------
@@ -465,13 +428,6 @@ void PicParams::print()
                 << ", " << species_param[i].n_part_per_cell << ") - ");
     }
     
-    // Laser related parameters
-    // ------------------------
-    MESSAGE("Laser related parameters");
-    MESSAGE(1,"n_laser        : " << n_laser);
-    for ( unsigned int i=0 ; i<n_laser ; i++ ) {
-        MESSAGE(2,"laser " << i << ": (boxSide, a0) : (" << laser_param[i].boxSide <<  ", " << laser_param[i].a0 <<  ")");
-    }
 
 }
 
