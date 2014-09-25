@@ -16,11 +16,12 @@ public:
 
     double pi_ov_2;
 
+    std::string         boxSide;
+    double              angle;
+    
     double a0_delta_y_;
     double a0_delta_z_;
 
-    std::string         boxSide;
-    double              angle;
     std::string         type_of_time_profile;
     std::string         type_of_y_profile;
     std::vector<int>    int_params;

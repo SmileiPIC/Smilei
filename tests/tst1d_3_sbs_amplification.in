@@ -18,16 +18,14 @@ interpolation_order = 2
 # res_time: temporal resolution (integer = number of time−steps within one normalization period)
 # sim_time: duration of the simulation in units of the normalization period 
 #
-timestep=0.01
-#res_time = 100
+res_time = 100
 sim_time = 300.0
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
 # sim_length: length of the simulation in units of the normalization wavelength 
 #
-cell_length=0.02
-#res_space  = 50
+res_space  = 50
 sim_length = 120.0
 
 
@@ -109,21 +107,23 @@ end
 # time_profile: string defining the time profile
 # double_params: vector of real parameters used by the different time-profiles
 #
-#laser
-#	a0=8.5e-2
-#	angle=0
-#	delta=1.0              
-#	time_profile = sin2
-#	double_params = 1.0 1000.0
-#end
+laser
+	a0=8.5e-2
+	boxSide=west
+	angle=0
+	delta=1.0              
+	time_profile = sin2
+	double_params = 1.0 1000.0
+end
 
-#laser
-#	a0=8.5e-3
-#	angle=180
-#	delta=1.0        
-#	time_profile = sin2
-#	double_params = 30.0 0.0 150.0
-#end
+laser
+	a0=8.5e-3
+	boxSide=east
+	angle=180
+	delta=1.0        
+	time_profile = sin2
+	double_params = 30.0 0.0 150.0
+end
 
 # ---------------------
 # DIAGNOSTIC PARAMETERS

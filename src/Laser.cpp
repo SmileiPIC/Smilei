@@ -11,6 +11,10 @@ Laser::Laser(double sim_time, std::vector<double> sim_length, LaserStructure las
     pi_ov_2 = 0.5 * M_PI;
     
     laser_struct = laser_param;
+    
+    boxSide      = laser_struct.boxSide;
+    angle        = laser_struct.angle;
+    
     a0_delta_y_  = laser_struct.a0 * laser_struct.delta;
     a0_delta_z_  = laser_struct.a0 * sqrt(1.0-pow(laser_struct.delta,2));
 

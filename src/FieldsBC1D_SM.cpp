@@ -56,11 +56,11 @@ void FieldsBC1D_SM::apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* sm
 
     for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
 
-        if (laser_[ilaser]->laser_struct.angle == 0) {
+        if (laser_[ilaser]->laser_struct.boxSide == "west") {
             // Incident field (left boundary)
             byL += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
             bzL += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
-        } else if (laser_[ilaser]->laser_struct.angle == 180) {
+        } else if (laser_[ilaser]->laser_struct.boxSide == "east") {
             // Incident field (right boundary)
             byR += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
             bzR += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
