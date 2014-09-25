@@ -59,12 +59,8 @@ PicParams::PicParams(InputData &ifile) {
         ERROR("Interpolation/projection order " << interpolation_order << " not yet defined in 2D");
     }
     
-    if ( !ifile.extract("use_sort_particles", use_sort_particles) ) {
-        use_sort_particles = true;
-        WARNING("Particle sorting turned on");
-    }
-    if ( !ifile.extract("exchange_particles_each", exchange_particles_each) )
-        exchange_particles_each = 1;
+    //if ( !ifile.extract("exchange_particles_each", exchange_particles_each) )
+    exchange_particles_each = 1;
     
     if ( !ifile.extract("use_transverse_periodic", use_transverse_periodic) ) {
         use_transverse_periodic = true;

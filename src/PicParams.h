@@ -264,10 +264,7 @@ public:
 	//! restart namelist
 	bool restart;
 	
-	//! enable sort particles (default = true) 
-	bool use_sort_particles;
-
-	//! frequency of exchange particles (default = 1) 
+	//! frequency of exchange particles (default = 1, disabled for now, incompatible with sort) 
 	int exchange_particles_each;
 
         //! Number of MPI process per direction (default : as square as possible)

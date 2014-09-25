@@ -404,15 +404,6 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
         /********************************************************************************/
         // Delete Particles included in buff_send/buff_recv
         /********************************************************************************/
-        /*if (!params->use_sort_particles) {
-         n_part_send = indexes_of_particles_to_exchange.size();
-         for (int i=n_part_send-1 ; i>=0 ; i--) {
-         iPart = indexes_of_particles_to_exchange[i];
-         cuParticles.erase_particle(iPart);
-         } // END for iPart = f(i)
-         }
-         else { // if Sort particles
-         */
         
         // Push lost particles at the end of bins
         //! \todo For loop on bins, can use openMP here.

@@ -259,18 +259,15 @@ int main (int argc, char* argv[])
 		vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, &params);
             }
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-                if ( (params.use_sort_particles) && (itime%params.exchange_particles_each==0) ) {
 #pragma omp barrier
-                    //#pragma omp master
-                    {
-                        // Loop on dims to manage exchange in corners
-                        for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
-                            smpi->exchangeParticles(vecSpecies[ispec], ispec, &params, tid);
-                        
-                    }
+                //#pragma omp master
+                {
+                    // Loop on dims to manage exchange in corners
+                    for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
+                        smpi->exchangeParticles(vecSpecies[ispec], ispec, &params, tid);
+                }
 #pragma omp barrier
                     vecSpecies[ispec]->sort_part(params.cell_length[0]);
-                }
             }
         }
         timer[1].update();
