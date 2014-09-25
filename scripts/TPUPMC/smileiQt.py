@@ -79,6 +79,10 @@ class smileiQt(QtGui.QMainWindow):
         print "Here"
     
     def readData(self):
+        pippo= QtGui.QAction("pppp",self)
+        pippo.setCheckable(True)
+        self.ui.menuScalars.addAction(pippo)
+
         print "here"
         self.doPlots()
         

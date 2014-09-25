@@ -20,6 +20,7 @@ public:
 
     //! Vector for the various lasers
     std::vector<Laser*> laser_;
+    
     //! time-step
     double dt;
 

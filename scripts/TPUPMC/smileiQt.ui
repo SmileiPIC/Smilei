@@ -151,9 +151,27 @@
     <property name="title">
      <string>Diagnostics</string>
     </property>
-    <addaction name="actionFirst"/>
-    <addaction name="actionSecond"/>
-    <addaction name="actionThird"/>
+    <widget class="QMenu" name="menuScalars">
+     <property name="title">
+      <string>Scalars</string>
+     </property>
+     <addaction name="separator"/>
+    </widget>
+    <widget class="QMenu" name="menuFileds">
+     <property name="title">
+      <string>Fileds</string>
+     </property>
+     <addaction name="separator"/>
+    </widget>
+    <widget class="QMenu" name="menuPhase_spaces">
+     <property name="title">
+      <string>Phase spaces</string>
+     </property>
+     <addaction name="separator"/>
+    </widget>
+    <addaction name="menuScalars"/>
+    <addaction name="menuFileds"/>
+    <addaction name="menuPhase_spaces"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuDiagnostics"/>
