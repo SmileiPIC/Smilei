@@ -155,23 +155,26 @@
      <property name="title">
       <string>Scalars</string>
      </property>
-     <addaction name="separator"/>
     </widget>
-    <widget class="QMenu" name="menuFileds">
+    <widget class="QMenu" name="menuFields">
      <property name="title">
-      <string>Fileds</string>
+      <string>Fields</string>
      </property>
-     <addaction name="separator"/>
     </widget>
     <widget class="QMenu" name="menuPhase_spaces">
      <property name="title">
       <string>Phase spaces</string>
      </property>
-     <addaction name="separator"/>
+    </widget>
+    <widget class="QMenu" name="menuProbes">
+     <property name="title">
+      <string>Probes</string>
+     </property>
     </widget>
     <addaction name="menuScalars"/>
-    <addaction name="menuFileds"/>
+    <addaction name="menuFields"/>
     <addaction name="menuPhase_spaces"/>
+    <addaction name="menuProbes"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuDiagnostics"/>
@@ -193,68 +196,9 @@
     <string>Ctrl+O</string>
    </property>
   </action>
-  <action name="actionFirst">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
+  <action name="actionPipo">
    <property name="text">
-    <string>first</string>
-   </property>
-  </action>
-  <action name="actionSecond">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>second</string>
-   </property>
-  </action>
-  <action name="actionThird">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>third</string>
-   </property>
-  </action>
-  <action name="actionPlay">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Play</string>
-   </property>
-  </action>
-  <action name="actionBack">
-   <property name="text">
-    <string>&lt;</string>
-   </property>
-   <property name="toolTip">
-    <string>back</string>
-   </property>
-  </action>
-  <action name="actionForward">
-   <property name="text">
-    <string>&gt;</string>
-   </property>
-   <property name="toolTip">
-    <string>Forward</string>
-   </property>
-  </action>
-  <action name="actionFirst_2">
-   <property name="text">
-    <string>&lt;&lt;</string>
-   </property>
-   <property name="toolTip">
-    <string>go to first timestep</string>
-   </property>
-  </action>
-  <action name="actionLast">
-   <property name="text">
-    <string>&gt;&gt;</string>
-   </property>
-   <property name="toolTip">
-    <string>Go to last timestep</string>
+    <string>pipo</string>
    </property>
   </action>
  </widget>

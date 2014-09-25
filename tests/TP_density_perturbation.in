@@ -136,6 +136,28 @@ diagnostic phase
  	lor_min = 0.95
  	lor_max = 1
  	lor_num = 100
+ 	
+ 	deflate=5
+ end
+
+diagnostic phase
+ 	kind = xLor xPx
+ 	species = eon
+ 	every = 1
+ 
+ 	pos_min = 0
+ 	pos_max = 1
+ 	pos_num = 100
+ 	
+ 	lor_min = 0.95
+ 	lor_max = 1
+ 	lor_num = 100
+ 	
+ 	mom_min = 0.95
+ 	mom_max = 1
+ 	mom_num = 100
+ 	
+ 	deflate=5
  end
 
 # PROBEs 0D
@@ -143,8 +165,17 @@ diagnostic phase
 # pos   = position of the different probes
 # #
 
-#  diagnostic probe
-#  	every = 1
-#  	pos = 0.0
-#  end
+diagnostic probe
+  every = 1
+  pos = 0.0
+end
+
+diagnostic probe
+    every = 1;
+    pos = 0.0
+    pos_first = 10.0
+    number = 5
+     
+end
+
 
