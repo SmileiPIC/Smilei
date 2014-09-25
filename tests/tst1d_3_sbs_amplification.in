@@ -52,6 +52,9 @@ plasma_length   = 8.0
 # radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
 #
 species
+    plasma_geometry = constant
+    vacuum_length   = 1.0
+    plasma_length   = 8.0
 
 	species_type = ion
 	initialization_type = mj
@@ -70,6 +73,9 @@ species
 end
 
 species
+    plasma_geometry = constant
+    vacuum_length   = 1.0
+    plasma_length   = 8.0
 
 	species_type = eon
 	initialization_type = mj

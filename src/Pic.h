@@ -52,6 +52,3 @@ int debug_level = 0;
 
 //! main function
 int main (int argc, char* argv[]);
-
-//! header of the standard message
-void startingMessage(std::string inputfile);

@@ -15,7 +15,7 @@ interpolation_order = 2
 # sim_time: duration of the simulation in units of the normalization period 
 #
 res_time = 110
-sim_time = 10.0
+sim_time = 2.0
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
@@ -24,14 +24,6 @@ sim_time = 10.0
 res_space  = 80 80   
 sim_length = 3.0 3.0  
 
-# PLASMA GEOMETRY
-# plasma_geometry: string defining the plasma geometry
-# ***_length: characteristic length for a given geometry
-#
-plasma_geometry = gaussian
-vacuum_length   = 1.0 1.0 
-plasma_length   = 1.0 1.0
-cut = 1 3
 # RANDOM seed 
 # this is used to randomize the random number generator
 random_seed = 0
@@ -51,10 +43,14 @@ random_seed = 0
 # radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
 #
 species
+    plasma_geometry = constant
+    vacuum_length   = 1.0 0.0 
+    plasma_length   = 1.0 3.0
+
 	species_type = ion
-	initialization_type = cold
+	initialization_type = regular
 	ionization_model = none
-	n_part_per_cell = 2
+	n_part_per_cell = 10
 	c_part_max = 1.0
 	mass = 1836.0
 	charge = 1.0
@@ -68,42 +64,43 @@ species
 	bc_part_type_trans = none
 end
 
-diagnostic probe
-	every = 1
-	pos = 1.1 1.1
-end
-
-diagnostic probe
-	every = 1
-	pos = 0.5
-end
-
-diagnostic probe
-    every = 100
-    pos = 0.1 0.2
-    pos_first = 0.3 0.4
-    number = 11
-end
-
-diagnostic probe
-    every = 10
-    pos = 0 0
-    pos_first = 1 0
-    number = 11
-end
-
-diagnostic probe
-	every = 10
-	pos = 0.0 0.0
-	pos_first = 1.0 0.0 
-	pos_second = 0.0 1.0
-	number = 3 6
-end
+# diagnostic probe
+# 	every = 1
+# 	pos = 1.1 1.1
+# end
+# 
+# diagnostic probe
+# 	every = 1
+# 	pos = 0.5
+# end
+# 
+# diagnostic probe
+#     every = 100
+#     pos = 0.1 0.2
+#     pos_first = 0.3 0.4
+#     number = 11
+# end
+# 
+# diagnostic probe
+#     every = 10
+#     pos = 0 0
+#     pos_first = 1 0
+#     number = 11
+# end
+# 
+# diagnostic probe
+# 	every = 10
+# 	pos = 0.0 0.0
+# 	pos_first = 1.0 0.0 
+# 	pos_second = 0.0 1.0
+# 	number = 3 6
+# end
 
 diagnostic scalar
     every = 1
 end
 
+fieldDump_every = 5
 
 # print_every (on screen text output) 
 print_every = 1

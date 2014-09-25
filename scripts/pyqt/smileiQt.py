@@ -4,6 +4,7 @@ Plot fields of smilei simulaition
 """
 import sys, os, random
 from PyQt4 import QtCore, QtGui, uic
+from PyQt4.QtGui import QFileDialog
 
 import matplotlib
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
