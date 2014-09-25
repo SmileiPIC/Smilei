@@ -19,14 +19,14 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for the virtual class ElectroMagn
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn::ElectroMagn(PicParams* params, SmileiMPI* smpi) :
-timestep(params->timestep),
-cell_length(params->cell_length),
-nDim_field(params->nDim_field),
-cell_volume(params->cell_volume),
-n_species(params->n_species),
-n_space(params->n_space),
-oversize(params->oversize)
+ElectroMagn::ElectroMagn(PicParams &params, LaserParams &laser_params, SmileiMPI* smpi) :
+timestep(params.timestep),
+cell_length(params.cell_length),
+nDim_field(params.nDim_field),
+cell_volume(params.cell_volume),
+n_species(params.n_species),
+n_space(params.n_space),
+oversize(params.oversize)
 {
     // initialize poynting vector
     poynting[0].resize(nDim_field,0.0);
@@ -83,7 +83,7 @@ oversize(params->oversize)
         }
     }    
 
-    fieldsBoundCond = FieldsBC_Factory::create(*params);
+    fieldsBoundCond = FieldsBC_Factory::create(params, laser_params);
 
 }
 

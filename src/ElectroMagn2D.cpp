@@ -17,8 +17,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn2D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn2D::ElectroMagn2D(PicParams* params, SmileiMPI* smpi) : 
-ElectroMagn(params, smpi),
+ElectroMagn2D::ElectroMagn2D(PicParams &params, LaserParams &laser_params, SmileiMPI* smpi) : 
+ElectroMagn(params, laser_params, smpi),
 isWestern(smpi->isWestern()),
 isEastern(smpi->isEastern()),
 isNorthern(smpi->isNorthern()),

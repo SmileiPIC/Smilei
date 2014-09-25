@@ -10,7 +10,7 @@ const double PI2 = 8.*atan(1.);
 class Laser {
 public:
 
-    Laser(double, std::vector<double>, LaserStructure);
+    Laser( PicParams &params, unsigned int );
 
     LaserStructure laser_struct;
 

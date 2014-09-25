@@ -14,7 +14,7 @@
 #include "InputData.h"
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! This structure contains the properties of each species
+//! This structure contains the properties of each Laser
 // ---------------------------------------------------------------------------------------------------------------------
 struct LaserStructure {
 
