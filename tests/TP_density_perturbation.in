@@ -33,15 +33,6 @@ bc_em_type_long = silver-muller
 # PLASMA GEOMETRY
 # ---------------
 
-# plasma_geometry: string defining the plasma geometry
-# ***_length: characteristic length for a given geometry
-#
-plasma_geometry = cosine
-vacuum_length   = 0.0
-plasma_length   = 1.0
-thetax=0.0
-ampl=0.001
-mode=1.0
 
 # RANDOM seed 
 # this is used to randomize the random number generator
@@ -64,6 +55,10 @@ random_seed = 0
 #
 species
 	species_type = ion
+    plasma_geometry = constant
+    vacuum_length   = 0.0
+    plasma_length   = 1.0
+
 	initialization_type = regular
 	ionization_model = none
 	n_part_per_cell = 2
@@ -81,6 +76,12 @@ end
 
 species
 	species_type = eon
+    plasma_geometry = cosine
+    vacuum_length   = 0.0
+    plasma_length   = 1.0
+    thetax=0.0
+    ampl=0.001
+    mode=1.0
 	initialization_type = regular
 	ionization_model = none
 	n_part_per_cell = 2
@@ -120,33 +121,62 @@ fieldDump_every = 1
 	vars = Ebalance Etot Eparticles EFields Poynting E_ion N_ion E_eon N_eon Ex_U Ey_U Ez_U
  end
 # 
-# diagnostic phase
+
 # kind of projection: 1D) xPx xPy xPz xLor PxPy PxPz PyPz
 # kind of projection: 2D) xPx xPy xPz xLor yPx yPy yPz yLor PxPy PxPz PyPz
- 	kind = xPx xPy xPz xLor
+diagnostic phase
+ 	kind = xLor
  	species = eon
  	every = 1
  
  	pos_min = 0
  	pos_max = 1
- 	pos_num = 128
+ 	pos_num = 100
  	
- 	mom_min = -0.3
- 	mom_max = 0.3
- 	mom_num = 200
- 
  	lor_min = 0.95
  	lor_max = 1
- 	lor_num = 128
+ 	lor_num = 100
+ 	
+ 	deflate=5
+ end
+
+diagnostic phase
+ 	kind = xLor xPx
+ 	species = eon
+ 	every = 1
+ 
+ 	pos_min = 0
+ 	pos_max = 1
+ 	pos_num = 100
+ 	
+ 	lor_min = 0.95
+ 	lor_max = 1
+ 	lor_num = 100
+ 	
+ 	mom_min = 0.95
+ 	mom_max = 1
+ 	mom_num = 100
+ 	
+ 	deflate=5
  end
 
 # PROBEs 0D
 # every = number of time-steps between each output
 # pos   = position of the different probes
 # #
+
 diagnostic probe
-   every = 1
-   pos = 0.0
+  every = 1
+  pos = 0.0
 end
- 
-use_sort_particles = true
+
+diagnostic probe
+    every = 1;
+    pos = 0.0
+    pos_first = 10.0
+    number = 5
+     
+end
+
+
+>>>>>>> TP_UPMC

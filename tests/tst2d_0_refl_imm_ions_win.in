@@ -29,14 +29,6 @@ bc_em_type_trans = periodic
 
 res_space_win_x=200
 
-# PLASMA GEOMETRY
-# plasma_geometry: string defining the plasma geometry
-# ***_length: characteristic length for a given geometry
-#
-plasma_geometry = constant
-vacuum_length   = 1.0 0.0 
-plasma_length   = 1.0 3.0
-
 # RANDOM seed 
 # this is used to randomize the random number generator
 random_seed = 0
@@ -57,6 +49,11 @@ random_seed = 0
 # radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
 #
 species
+
+    plasma_geometry = constant
+    vacuum_length   = 1.0 0.0 
+    plasma_length   = 1.0 3.0
+
 	species_type = ion
 	initialization_type = cold
 	ionization_model = none
@@ -75,6 +72,11 @@ species
 end
 
 species 
+
+    plasma_geometry = constant
+    vacuum_length   = 1.0 0.0 
+    plasma_length   = 1.0 3.0
+
 	species_type = electron
 	initialization_type = maxwell-juettner
 	n_part_per_cell=5
@@ -97,7 +99,13 @@ laser
 	delta=0.707106781                
 	time_profile = constant
 	#double_params = 11.0
+	boxSide = west
 end	
 
+diagnostic scalar
+        every = 1
+end
+
+print_every = 10
 fieldDump_every = 20
 

@@ -12,13 +12,13 @@
 
 class ElectroMagnFactory {
 public:
-    static ElectroMagn* create(PicParams& params, SmileiMPI* smpi) {
+    static ElectroMagn* create(PicParams& params,  LaserParams &laser_params, SmileiMPI* smpi) {
         ElectroMagn* EMfields = NULL;
         if ( params.geometry == "1d3v" ) {
-            EMfields = new ElectroMagn1D(&params, smpi);
+            EMfields = new ElectroMagn1D(params, laser_params, smpi);
         }
         else if ( params.geometry == "2d3v" ) {
-            EMfields = new ElectroMagn2D(&params, smpi);
+            EMfields = new ElectroMagn2D(params, laser_params, smpi);
         }
         else {
             ERROR( "Unknwon geometry : " << params.geometry );

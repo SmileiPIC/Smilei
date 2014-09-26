@@ -27,15 +27,6 @@ sim_length=21.0
 
 bc_em_type_long = silver-muller
 
-
-# PLASMA GEOMETRY
-# plasma_geometry: string defining the plasma geometry
-# ***_length: characteristic length for a given geometry
-#
-plasma_geometry = constant
-vacuum_length   = 10.0
-plasma_length   = 1.0
-
 # RANDOM seed 
 # this is used to randomize the random number generator
 random_seed = 0
@@ -55,6 +46,10 @@ random_seed = 0
 # radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
 #
 species
+    plasma_geometry = constant
+    vacuum_length   = 10.0
+    plasma_length   = 1.0
+
 	species_type = ion
 	initialization_type = maxwell-juettner
 	ionization_model = none
@@ -72,6 +67,10 @@ species
 end
 
 species
+    plasma_geometry = constant
+    vacuum_length   = 10.0
+    plasma_length   = 1.0
+
 	species_type = eon
 	initialization_type = Maxwell-Juettner
 	ionization_model = none

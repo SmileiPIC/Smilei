@@ -11,11 +11,10 @@
 
 using namespace std;
 
-Diagnostic::Diagnostic( PicParams &picParams, InputData &ifile , SmileiMPI* smpi) :
-params(picParams,ifile),
-scalars(picParams, params, smpi),
-probes(picParams, params, smpi),
-phases(picParams, params, smpi)
+Diagnostic::Diagnostic( PicParams &picParams, DiagParams &dParams , SmileiMPI* smpi) :
+scalars(picParams, dParams, smpi),
+probes(picParams, dParams, smpi),
+phases(picParams, dParams, smpi)
 {
 }
 

@@ -5,13 +5,14 @@
 #include <vector>
 
 class PicParams;
+class LaserParams;
 class SmileiMPI;
 class ElectroMagn;
 class Laser;
 
 class FieldsBC {
 public:
-    FieldsBC( PicParams *params );
+    FieldsBC( PicParams &params,  LaserParams &laser_params );
     ~FieldsBC();
 
     virtual void apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi) = 0;
@@ -20,11 +21,10 @@ public:
 
     //! Vector for the various lasers
     std::vector<Laser*> laser_;
+    
     //! time-step
     double dt;
 
-    PicParams* params_;
-    
 };
 
 #endif

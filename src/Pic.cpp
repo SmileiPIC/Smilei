@@ -23,9 +23,10 @@
 #include <iostream>
 #include <iomanip>
 
-#include "PicParams.h"
 #include "InputData.h"
+#include "PicParams.h"
 #include "DiagParams.h"
+#include "LaserParams.h"
 
 #include "SmileiMPIFactory.h"
 #include "SmileiIOFactory.h"
@@ -60,16 +61,16 @@ int main (int argc, char* argv[])
     // -------------------------
     // Simulation Initialization
     // ------------------------- 
-    
-    argc -= optind;
-    argv += optind;
-    
+
     // Check for namelist (input file)
-    if (argc<1) ERROR("No namelists given!");
-    string namelist=argv[0];
+    if (argc<2) ERROR("No namelists given!");
+    string namelist=argv[1];
     
     // Send information on current simulation
-    if ( smpiData->isMaster() ) startingMessage(namelist);
+    MESSAGE(" ___           _   _         _   ");
+    MESSAGE("/ __|  _ __   (_) | |  ___  (_)  Version  :  " << __VERSION);
+    MESSAGE("\\__ \\ | '  \\  | | | | / -_) | |  Compiled :  " << __DATE__ << " " << __TIME__);
+    MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  Namelist :  " << namelist << endl);    
     
     // Parse the namelist file (no check!)
     InputData input_data;
@@ -78,15 +79,13 @@ int main (int argc, char* argv[])
     // broadcast file and parse it and randomize
     smpiData->bcast(input_data);    
     
+    MESSAGE("----------------------------------------------");
+    MESSAGE("Input data info");
+    MESSAGE("----------------------------------------------");
     // Read simulation & diagnostics parameters
     PicParams params(input_data);
     smpiData->init(params);
     smpiData->barrier();
-    
-    // Print out the data parameters
-    MESSAGE("----------------------------------------------");
-    MESSAGE("Input data info");
-    MESSAGE("----------------------------------------------");
     if ( smpiData->isMaster() ) params.print();
     
     
@@ -94,7 +93,6 @@ int main (int argc, char* argv[])
     MESSAGE("----------------------------------------------");
     MESSAGE("Creating MPI & IO environments");
     MESSAGE("----------------------------------------------");
-    
     SmileiMPI* smpi = SmileiMPIFactory::create(params, smpiData);
     SmileiIO*  sio  = SmileiIOFactory::create(params, smpi);
     
@@ -110,7 +108,9 @@ int main (int argc, char* argv[])
     // according to the simulation geometry
     // ----------------------------------------------------------------------------
     // object containing the electromagnetic fields (virtual)
-    ElectroMagn* EMfields = ElectroMagnFactory::create(params, smpi);
+    LaserParams laser_params(params, input_data);
+
+    ElectroMagn* EMfields = ElectroMagnFactory::create(params, laser_params, smpi);
     
     // interpolation operator (virtual)
     Interpolator* Interp = InterpolatorFactory::create(params, smpi);
@@ -119,8 +119,8 @@ int main (int argc, char* argv[])
     Projector* Proj = ProjectorFactory::create(params, smpi);
     
     // Create diagnostics
-    Diagnostic diags(params,input_data, smpi);
-    
+    DiagParams diag_params(params, input_data);
+    Diagnostic *Diags =new Diagnostic(params,diag_params, smpi);    
     
     // ---------------------------
     // Initialize Species & Fields
@@ -167,11 +167,9 @@ int main (int argc, char* argv[])
         smpi->sumRhoJ( EMfields );
         
         // Init electric field (Ex/1D, + Ey/2D)
-        if (smpiData->isMaster()) {
-            MESSAGE("----------------------------------------------");
-            MESSAGE("Solving Poisson at time t = 0");
-            MESSAGE("----------------------------------------------");
-        }
+        MESSAGE("----------------------------------------------");
+        MESSAGE("Solving Poisson at time t = 0");
+        MESSAGE("----------------------------------------------");
         EMfields->solvePoisson(smpi);
         
         
@@ -179,7 +177,7 @@ int main (int argc, char* argv[])
         MESSAGE("Running diags at time t = 0");
         MESSAGE("----------------------------------------------");
         // run diagnostics at time-step 0
-        diags.runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
+        Diags->runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
         // temporary EM fields dump in Fields.h5
         sio->writeAllFieldsSingleFileTime( EMfields, 0 );
         // temporary EM fields dump in Fields_avg.h5
@@ -228,14 +226,14 @@ int main (int argc, char* argv[])
         timer[0].update();
         
         //double timElapsed=smpiData->time_seconds();
-		if ( (itime % diags.params.print_every == 0) &&  ( smpi->isMaster() ) )
+		if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) )
             MESSAGE(1, "t= "         << setw(11)                     << time_dual/(2*M_PI)
                     << " it= "       << setw(log10(params.n_time)+1) << itime  << "/" << params.n_time
                     << " sec: "      << setw(9)                      << timer[0].getTime()
-                    << " E= "        << setw(9)                      << diags.getScalar("Etot")
+                    << " E= "        << setw(9)                      << Diags->getScalar("Etot")
                     //<< " Epart=  "   << setw(9)                      << diags.getScalar("Eparticles")
                     //<< " Efield= "   << setw(9)                      << diags.getScalar("EFields")
-                    << " E_bal(%)= " << 100.0*diags.getScalar("Ebal_norm") );
+                    << " E_bal(%)= " << 100.0*Diags->getScalar("Ebal_norm") );
 
         
         
@@ -286,25 +284,25 @@ int main (int argc, char* argv[])
         timer[2].update();
         
         // incrementing averaged electromagnetic fields
-        EMfields->incrementAvgFields(itime, diags.params.ntime_step_avg);
+        EMfields->incrementAvgFields(itime, diag_params.ntime_step_avg);
         
         // call the various diagnostics
         // ----------------------------
 		
         // run all diagnostics
         timer[3].restart();
-        diags.runAllDiags(itime, EMfields, vecSpecies, Interp, smpi);
+        Diags->runAllDiags(itime, EMfields, vecSpecies, Interp, smpi);
         
         // temporary EM fields dump in Fields.h5
-        if  ((diags.params.fieldDump_every != 0) && (itime % diags.params.fieldDump_every == 0))
+        if  ((diag_params.fieldDump_every != 0) && (itime % diag_params.fieldDump_every == 0))
             sio->writeAllFieldsSingleFileTime( EMfields, itime );
         
         // temporary EM fields dump in Fields.h5
-        if  ((diags.params.avgfieldDump_every != 0) && (itime % diags.params.avgfieldDump_every == 0))
+        if  ((diag_params.avgfieldDump_every != 0) && (itime % diag_params.avgfieldDump_every == 0))
             sio->writeAvgFieldsSingleFileTime( EMfields, itime );
         
         // temporary particles dump (1 HDF5 file per process)
-        if  ((diags.params.particleDump_every != 0) && (itime % diags.params.particleDump_every == 0))
+        if  ((diag_params.particleDump_every != 0) && (itime % diag_params.particleDump_every == 0))
             sio->writePlasma( vecSpecies, time_dual, smpi );
         
         if (sio->dump(EMfields, itime,  vecSpecies, smpi, simWindow, params, input_data)) break;
@@ -322,10 +320,8 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     //                      HERE ENDS THE PIC LOOP
     // ------------------------------------------------------------------
-    if ( smpi->isMaster() ) {
-        MESSAGE("End time loop, time dual = " << time_dual);
-        MESSAGE("-----------------------------------------------------------------------------------------------------");
-    }
+    MESSAGE("End time loop, time dual = " << time_dual);
+    MESSAGE("-----------------------------------------------------------------------------------------------------");
     
     //double timElapsed=smpiData->time_seconds();
     //if ( smpi->isMaster() ) MESSAGE(0, "Time in time loop : " << timElapsed );
@@ -336,7 +332,7 @@ int main (int argc, char* argv[])
     
     double coverage(0.);
     for (int i=1 ; i<ntimer ; i++) coverage += timer[i].getTime();
-    if ( smpi->isMaster() ) MESSAGE(0, "\t" << setw(12) << "Coverage\t" << coverage/timer[0].getTime()*100. << " %" );
+    MESSAGE(0, "\t" << setw(12) << "Coverage\t" << coverage/timer[0].getTime()*100. << " %" );
     
     
     // ------------------------------------------------------------------
@@ -344,15 +340,15 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     
     // temporary EM fields dump in Fields.h5
-    if  ( (diags.params.fieldDump_every != 0) && (params.n_time % diags.params.fieldDump_every != 0) )
+    if  ( (diag_params.fieldDump_every != 0) && (params.n_time % diag_params.fieldDump_every != 0) )
         sio->writeAllFieldsSingleFileTime( EMfields, params.n_time );
     
     // temporary time-averaged EM fields dump in Fields_avg.h5
-    if  ( (diags.params.avgfieldDump_every != 0) && (params.n_time % diags.params.avgfieldDump_every != 0) )
+    if  ( (diag_params.avgfieldDump_every != 0) && (params.n_time % diag_params.avgfieldDump_every != 0) )
         sio->writeAvgFieldsSingleFileTime( EMfields, params.n_time );
     
     // temporary particles dump (1 HDF5 file per process)
-    if  ( (diags.params.particleDump_every != 0) && (params.n_time % diags.params.particleDump_every != 0) )
+    if  ( (diag_params.particleDump_every != 0) && (params.n_time % diag_params.particleDump_every != 0) )
         sio->writePlasma( vecSpecies, time_dual, smpi );
     
     // ------------------------------
@@ -361,30 +357,21 @@ int main (int argc, char* argv[])
     delete Proj;
     delete Interp;
     delete EMfields;
+    delete Diags;
     
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
     vecSpecies.clear();
     
     delete sio;
-    if ( smpi->isMaster() ) {
-        MESSAGE("-----------------------------------------------------------------------------------------------------");
-        MESSAGE("END " << namelist);
-        MESSAGE("-----------------------------------------------------------------------------------------------------");
-    }
+    MESSAGE("-----------------------------------------------------------------------------------------------------");
+    MESSAGE("END " << namelist);
+    MESSAGE("-----------------------------------------------------------------------------------------------------");
+
     delete smpi;
     delete smpiData;
     return 0;
     
 }//END MAIN
 
-
-// Printing starting message
-void startingMessage(std::string inputfile) {
-    MESSAGE("-----------------------------------------------------------------------------------------------------");
-    MESSAGE(" Version  : " << __VERSION DEBUGEXEC(<< " DEBUG") << " Compiled : " << __DATE__ << " " << __TIME__);
-    MESSAGE("-----------------------------------------------------------------------------------------------------");
-    MESSAGE(" Namelist : " << inputfile);
-    MESSAGE("-----------------------------------------------------------------------------------------------------");
-}
 
 

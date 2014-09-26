@@ -15,7 +15,7 @@ interpolation_order = 2
 # res_time: temporal resolution (integer = number of time−steps within one normalization period)
 # sim_time: duration of the simulation in units of the normalization period 
 #
-res_time = 1000
+res_time = 100
 sim_time = 10.0
  
 # SIMULATION BOX : for all space directions (use vector)
@@ -25,14 +25,6 @@ sim_time = 10.0
 res_space=950
 sim_length=5.0
 bc_em_type_long = silver-muller
- 
-# PLASMA GEOMETRY
-# plasma_geometry: string defining the plasma geometry
-# ***_length: characteristic length for a given geometry
-#
-plasma_geometry = constant
-vacuum_length   = 1.0
-plasma_length   = 1.0
  
 # RANDOM seed 
 # this is used to randomize the random number generator

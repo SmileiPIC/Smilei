@@ -6,24 +6,23 @@
 #include <string>
 
 #include "PicParams.h"
+#include "LaserParams.h"
 #include "Laser.h"
 #include "Tools.h"
 
 using namespace std;
 
-FieldsBC::FieldsBC( PicParams *params )
+FieldsBC::FieldsBC( PicParams &params, LaserParams &laser_params )
 {
-    params_ = params;
-
     // check for laser conditions
-    laser_.resize(params->n_laser);
+    laser_.resize(laser_params.n_laser);
 
     for (unsigned int i=0; i<laser_.size(); i++) {
-        DEBUG(5,"Initializing Laser "<<i);
-        laser_[i] = new Laser(params->sim_time, params->sim_length, params->laser_param[i]);
+        DEBUG(5,"Initializing Laser "<<i);        
+        laser_[i] = new Laser(params,laser_params, i);
     }
 
-    dt = params->timestep;
+    dt = params.timestep;
 
 }
 

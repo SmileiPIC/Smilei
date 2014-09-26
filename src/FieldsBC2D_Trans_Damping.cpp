@@ -14,15 +14,15 @@
 
 using namespace std;
 
-FieldsBC2D_Trans_Damping::FieldsBC2D_Trans_Damping( PicParams *params )
-    : FieldsBC( params )
+FieldsBC2D_Trans_Damping::FieldsBC2D_Trans_Damping( PicParams &params, LaserParams &laser_params )
+    : FieldsBC( params, laser_params )
 {
     // number of nodes of the primal and dual grid in the x-direction
-    nx_p = params->n_space[0]+1+2*params->oversize[0];
-    nx_d = params->n_space[0]+2+2*params->oversize[0];
+    nx_p = params.n_space[0]+1+2*params.oversize[0];
+    nx_d = params.n_space[0]+2+2*params.oversize[0];
     // number of nodes of the primal and dual grid in the y-direction
-    ny_p = params->n_space[1]+1+2*params->oversize[1];
-    ny_d = params->n_space[1]+2+2*params->oversize[1];
+    ny_p = params.n_space[1]+1+2*params.oversize[1];
+    ny_d = params.n_space[1]+2+2*params.oversize[1];
 
 
     // number of dumping layers

@@ -28,7 +28,7 @@ class Diagnostic {
 
 public:
     //! creator called from main
-    Diagnostic(PicParams &params,  InputData &ifile, SmileiMPI* smpi);
+    Diagnostic(PicParams &params,  DiagParams &dParams, SmileiMPI* smpi);
     
     //! destructor
     ~Diagnostic();
@@ -39,7 +39,6 @@ public:
     //! get a particular scalar
     double getScalar(std::string name);
         
-    DiagParams params;
 private:
     
     DiagnosticScalar scalars;

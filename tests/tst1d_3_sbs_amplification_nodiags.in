@@ -18,30 +18,16 @@ interpolation_order = 2
 # res_time: temporal resolution (integer = number of time−steps within one normalization period)
 # sim_time: duration of the simulation in units of the normalization period 
 #
-res_time = 10
+res_time = 20
 sim_time = 300.0
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
 # sim_length: length of the simulation in units of the normalization wavelength 
 #
-res_space  = 5
-sim_length = 120.0
+res_space  = 10
+sim_length = 10.0
 bc_em_type_long = silver-muller
-
-
-# ---------------
-# PLASMA GEOMETRY
-# ---------------
-
-# plasma_geometry: string defining the plasma geometry
-# ***_length: characteristic length for a given geometry
-#
-plasma_geometry = trap
-vacuum_length   = 10.0
-plasma_length   = 100.0
-slope_length    = 5.0
-
 
 # RANDOM seed 
 # this is used to randomize the random number generator
@@ -63,10 +49,14 @@ random_seed = 0
 # radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
 #
 species
+    plasma_geometry = constant
+    vacuum_length   = 1.0
+    plasma_length   = 8.0
+
 	species_type = ion
-	initialization_type = maxwell-juettner
+	initialization_type = mj
 	ionization_model = none
-	n_part_per_cell = 250
+	n_part_per_cell = 100
 	c_part_max = 1.0
 	mass = 1836.0
 	charge = 1.0
@@ -80,10 +70,14 @@ species
 end
 
 species
+    plasma_geometry = constant
+    vacuum_length   = 1.0
+    plasma_length   = 8.0
+
 	species_type = eon
-	initialization_type = maxwell-juettner
+	initialization_type = mj
 	ionization_model = none
-	n_part_per_cell = 250
+	n_part_per_cell = 100
 	c_part_max = 1.0
 	mass = 1.0
 	charge = -1.0
@@ -113,6 +107,7 @@ laser
 	delta=1.0              
 	time_profile = sin2
 	double_params = 1.0 240.0
+	boxSide = West
 end
 
 laser
@@ -121,6 +116,7 @@ laser
 	delta=1.0        
 	time_profile = sin2
 	double_params = 30.0 0.0 110.0
+	boxSide = east
 end
 
 # ---------------------
@@ -128,20 +124,20 @@ end
 # ---------------------
 
 # print_every (on screen text output) 
-print_every = 300
+print_every = 1
 
 # every for field dump
 #fieldDump_every = 125
 
 # every for particle dump
-#particleDump_every = 2500
+particleDump_every = 1
 
 # DIAG ON SCALARS
 # every = number of time-steps between each output
 #
-#diagnostic scalar
-#	every = 125
-#end
+diagnostic scalar
+	every = 1
+end
 
 # PROB 0D
 # every = number of time-steps between each output
@@ -152,7 +148,10 @@ print_every = 300
 #	x = 0.0 30.0 60.0 90.0 120.0	
 #end
 
+use_sort_particles = true
 
-#dump_step = 1000
-#exit_after_dump = false
+# dump_step = 1
+# dump_file_sequence =999
+
+exit_after_dump = false
 

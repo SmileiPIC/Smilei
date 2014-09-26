@@ -27,15 +27,6 @@ sim_length = 10.0
 
 bc_em_type_long = silver-muller
 
-
-# PLASMA GEOMETRY
-# plasma_geometry: string defining the plasma geometry
-# ***_length: characteristic length for a given geometry
-#
-plasma_geometry = constant
-vacuum_length   = 1.0
-plasma_length   = 1.0
-
 # RANDOM seed 
 # this is used to randomize the random number generator
 random_seed = 0
@@ -56,6 +47,11 @@ random_seed = 0
 #
 species
 	species_type = ion
+
+    plasma_geometry = constant
+    vacuum_length   = 1.0
+    plasma_length   = 1.0
+
 	initialization_type = cold
 	n_part_per_cell=10
 	c_part_max=1.0
@@ -73,6 +69,11 @@ end
 
 species
 	species_type = electron
+
+    plasma_geometry = constant
+    vacuum_length   = 1.0
+    plasma_length   = 1.0
+
 	initialization_type = cold
 	n_part_per_cell=10
 	c_part_max=1.0
@@ -103,6 +104,7 @@ laser
 	delta=0.707106781                 
 	time_profile = constant
 	#double_params = 10.0
+	boxside = west
 end	
 
 # print_every 

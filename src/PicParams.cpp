@@ -112,114 +112,6 @@ PicParams::PicParams(InputData &ifile) {
     }
     
     
-    // ---------------
-    // Plasma geometry
-    // ---------------
-    //!  \todo Move plasma geometry properties to species-related properties & clean all this
-    
-    ifile.extract("plasma_geometry", plasma_geometry);
-    if ( (plasma_geometry=="constant") || (plasma_geometry=="crossx") || (plasma_geometry=="crossy")) {
-        ifile.extract("plasma_length", plasma_length);
-        ifile.extract("vacuum_length", vacuum_length);
-        if (plasma_length.size()!=nDim_field || vacuum_length.size()!=nDim_field) {
-            ERROR("plasma_length and vacuum_length dimension should be " << nDim_field);
-        }
-        for (unsigned int i=0; i<nDim_field; i++) {
-            if (vacuum_length[i]+plasma_length[i] > sim_length[i])
-                WARNING("plasma + vacuum  dimension " << i << " > " << sim_length[i]);
-        }       
-    } else if (plasma_geometry=="trap") {
-        ifile.extract("plasma_length", plasma_length);
-        ifile.extract("vacuum_length", vacuum_length);
-        ifile.extract("slope_length",  slope_length);
-        
-        for (unsigned int i=0; i<nDim_field; i++) {
-            if (vacuum_length[i]+plasma_length[i] > sim_length[i])
-                WARNING("plasma + vacuum " << i << " > " << sim_length[i]);
-        }
-        
-        
-        //symmetric density profile
-        if (slope_length.size()!=0){
-            if (plasma_length.size()!=nDim_field || vacuum_length.size()!=nDim_field
-                || slope_length.size()!=nDim_field) {
-                ERROR("plasma_length, vacuum_length and slope_length dimension should be " << nDim_field);
-            }
-            
-        }
-        //not symmetric density profile
-        else{
-            ifile.extract("left_slope_length",left_slope_length);
-            ifile.extract("right_slope_length",right_slope_length);
-            if (plasma_length.size()!=nDim_field || vacuum_length.size()!=nDim_field
-                || left_slope_length.size()!=nDim_field|| right_slope_length.size()!=nDim_field) {
-                ERROR("plasma_length, vacuum_length and slope_length dimension should be " << nDim_field);
-            }
-        }
-        
-    }else if(plasma_geometry=="triangular"){
-        ifile.extract("plasma_length", plasma_length);
-        ifile.extract("vacuum_length", vacuum_length);
-        ifile.extract("slope_length", left_slope_length);
-        right_slope_length.resize(left_slope_length.size());
-        for(unsigned int i=0;i<nDim_field;i++) {
-            right_slope_length[i]=plasma_length[i]-left_slope_length[i];
-        }
-        
-    }
-    else if(plasma_geometry=="gaussian"){
-        ifile.extract("plasma_length", plasma_length);
-        ifile.extract("vacuum_length", vacuum_length);
-        ifile.extract("cut",cut);
-        ifile.extract("plateau",plateau);
-        sigma.resize(nDim_field);
-        if(cut.size()==0){
-            cut.resize(nDim_field);
-            for(unsigned int i=0;i<nDim_field;i++) cut[i]=3.0;
-        }
-        if(plateau.size()==0){
-            plateau.resize(nDim_field);
-            for(unsigned int i=0;i<nDim_field;i++) plateau[i]=0.0;
-        }
-        if(plasma_length.size()!=0){
-            for(unsigned int i=0;i<nDim_field;i++) sigma[i]=(plasma_length[i]-plateau[i])/(2*cut[i]);
-        }
-    }
-
-    else if(plasma_geometry=="polygonal"){
-            ifile.extract("plasma_length", plasma_length);
-            ifile.extract("vacuum_length", vacuum_length);
-            ifile.extract("x_density_coor",x_density_coor);
-            ifile.extract("density_rel_values_x",density_rel_values_x);
-            if(x_density_coor.size()==0) ERROR("polygonal density profile not well defined");
-            
-        }
-    
-    else if(plasma_geometry=="cosine"){
-        ifile.extract("plasma_length", plasma_length);
-        ifile.extract("vacuum_length", vacuum_length);
-        ifile.extract("mode", mode);
-        ifile.extract("thetax", thetax);
-        ifile.extract("ampl", ampl);
-    }
-
-
-     else if (plasma_geometry=="fukuda"){
-        WARNING("plasma geometry: fukuda vacuum & plasma length are not used");
-        ifile.extract("plasma_length", plasma_length);
-        ifile.extract("vacuum_length", vacuum_length);
-        vacuum_length[0] = 2.0;
-        vacuum_length[1] = 0.0;
-        plasma_length[0] = 112.0;
-        plasma_length[1] = 40.0;
-    } else if (plasma_geometry=="separated") {
-        ifile.extract("plasma_length", plasma_length);
-        ifile.extract("vacuum_length", vacuum_length);
-    } else {
-        ERROR("Unknown plasma_geometry " << plasma_geometry);
-    }
-    
-    
     // ------------------
     // Species properties
     // ------------------
@@ -287,44 +179,123 @@ PicParams::PicParams(InputData &ifile) {
         
         ifile.extract("atomic_number", tmpSpec.atomic_number, "species",0,n_species);
         
+
+        
+        
+        // ---------------
+        // Plasma geometry
+        // ---------------
+        //!  \todo Move plasma geometry properties to species-related properties & clean all this
+        
+        ifile.extract("plasma_geometry", tmpSpec.plasma_geometry,"species",0,n_species);
+        if ( (tmpSpec.plasma_geometry=="constant") || (tmpSpec.plasma_geometry=="crossx") || (tmpSpec.plasma_geometry=="crossy")) {
+            ifile.extract("plasma_length", tmpSpec.plasma_length,"species",0,n_species);
+            ifile.extract("vacuum_length", tmpSpec.vacuum_length,"species",0,n_species);
+            if (tmpSpec.plasma_length.size()!=nDim_field || tmpSpec.vacuum_length.size()!=nDim_field) {
+                ERROR("plasma_length and vacuum_length dimension should be " << nDim_field);
+            }
+            for (unsigned int i=0; i<nDim_field; i++) {
+                if (tmpSpec.vacuum_length[i]+tmpSpec.plasma_length[i] > sim_length[i])
+                    WARNING("plasma + vacuum  dimension " << i << " > " << sim_length[i]);
+            }       
+        } 
+        else if (tmpSpec.plasma_geometry=="trap") {
+            ifile.extract("plasma_length", tmpSpec.plasma_length,"species",0,n_species);
+            ifile.extract("vacuum_length", tmpSpec.vacuum_length,"species",0,n_species);
+            ifile.extract("slope_length",  tmpSpec.slope_length,"species",0,n_species);
+            
+            for (unsigned int i=0; i<nDim_field; i++) {
+                if (tmpSpec.vacuum_length[i]+tmpSpec.plasma_length[i] > sim_length[i])
+                    WARNING("plasma + vacuum " << i << " > " << sim_length[i]);
+            }
+            
+            
+            //symmetric density profile
+            if (tmpSpec.slope_length.size()!=0){
+                if (tmpSpec.plasma_length.size()!=nDim_field || tmpSpec.vacuum_length.size()!=nDim_field
+                    || tmpSpec.slope_length.size()!=nDim_field) {
+                    ERROR("plasma_length, vacuum_length and slope_length dimension should be " << nDim_field);
+                }
+                
+            }
+            //not symmetric density profile
+            else{
+                ifile.extract("left_slope_length",tmpSpec.left_slope_length,"species",0,n_species);
+                ifile.extract("right_slope_length",tmpSpec.right_slope_length,"species",0,n_species);
+                if (tmpSpec.plasma_length.size()!=nDim_field || tmpSpec.vacuum_length.size()!=nDim_field
+                    || tmpSpec.left_slope_length.size()!=nDim_field|| tmpSpec.right_slope_length.size()!=nDim_field) {
+                    ERROR("plasma_length, vacuum_length and slope_length dimension should be " << nDim_field);
+                }
+            }
+            
+        } 
+        else if(tmpSpec.plasma_geometry=="triangular"){
+            ifile.extract("plasma_length", tmpSpec.plasma_length,"species",0,n_species);
+            ifile.extract("vacuum_length", tmpSpec.vacuum_length,"species",0,n_species);
+            ifile.extract("slope_length", tmpSpec.left_slope_length,"species",0,n_species);
+            tmpSpec.right_slope_length.resize(tmpSpec.left_slope_length.size());
+            for(unsigned int i=0;i<nDim_field;i++) {
+                tmpSpec.right_slope_length[i]=tmpSpec.plasma_length[i]-tmpSpec.left_slope_length[i];
+            }
+            
+        }
+        else if(tmpSpec.plasma_geometry=="gaussian"){
+            ifile.extract("plasma_length", tmpSpec.plasma_length,"species",0,n_species);
+            ifile.extract("vacuum_length", tmpSpec.vacuum_length,"species",0,n_species);
+            ifile.extract("cut",tmpSpec.cut,"species",0,n_species);
+            ifile.extract("plateau",tmpSpec.plateau,"species",0,n_species);
+            tmpSpec.sigma.resize(nDim_field);
+            if(tmpSpec.cut.size()==0){
+                tmpSpec.cut.resize(nDim_field);
+                for(unsigned int i=0;i<nDim_field;i++) tmpSpec.cut[i]=3.0;
+            }
+            if(tmpSpec.plateau.size()==0){
+                tmpSpec.plateau.resize(nDim_field);
+                for(unsigned int i=0;i<nDim_field;i++) tmpSpec.plateau[i]=0.0;
+            }
+            if(tmpSpec.plasma_length.size()!=0){
+                for(unsigned int i=0;i<nDim_field;i++) 
+                    tmpSpec.sigma[i]=(tmpSpec.plasma_length[i]-tmpSpec.plateau[i])/(2*tmpSpec.cut[i]);
+            }
+        }
+        else if(tmpSpec.plasma_geometry=="polygonal"){
+            ifile.extract("plasma_length", tmpSpec.plasma_length,"species",0,n_species);
+            ifile.extract("vacuum_length", tmpSpec.vacuum_length,"species",0,n_species);
+            ifile.extract("x_density_coor",tmpSpec.x_density_coor,"species",0,n_species);
+            ifile.extract("density_rel_values_x",tmpSpec.density_rel_values_x,"species",0,n_species);
+            if(tmpSpec.x_density_coor.size()==0) ERROR("polygonal density profile not well defined");
+            
+        }
+        else if(tmpSpec.plasma_geometry=="cosine"){
+            ifile.extract("plasma_length", tmpSpec.plasma_length,"species",0,n_species);
+            ifile.extract("vacuum_length", tmpSpec.vacuum_length,"species",0,n_species);
+            ifile.extract("mode", tmpSpec.mode,"species",0,n_species);
+            ifile.extract("thetax", tmpSpec.thetax,"species",0,n_species);
+            ifile.extract("ampl", tmpSpec.ampl,"species",0,n_species);
+        }
+        else if (tmpSpec.plasma_geometry=="fukuda"){
+            WARNING("plasma geometry: fukuda vacuum & plasma length are not used");
+            ifile.extract("plasma_length", tmpSpec.plasma_length,"species",0,n_species);
+            ifile.extract("vacuum_length", tmpSpec.vacuum_length,"species",0,n_species);
+            tmpSpec.vacuum_length[0] = 2.0;
+            tmpSpec.vacuum_length[1] = 0.0;
+            tmpSpec.plasma_length[0] = 112.0;
+            tmpSpec.plasma_length[1] = 40.0;
+        } else if (tmpSpec.plasma_geometry=="separated") {
+            ifile.extract("plasma_length", tmpSpec.plasma_length,"species",0,n_species);
+            ifile.extract("vacuum_length", tmpSpec.vacuum_length,"species",0,n_species);
+        } else {
+            ERROR("Unknown plasma_geometry " << n_species << " : " << tmpSpec.plasma_geometry);
+        }
+        
+        
+        
         species_param.push_back(tmpSpec);
+ 
         n_species++;
     }
     
-    
-    // -----------------
-    // Lasers properties
-    // -----------------
-    n_laser=0;
-    while (ifile.existGroup("laser",n_laser)) {
         
-        LaserStructure tmpLaser;
-        ifile.extract("a0",tmpLaser.a0 ,"laser",0,n_laser);
-        
-        ifile.extract("boxSide",tmpLaser.boxSide,"laser",0,n_laser);
-        if ( (tmpLaser.boxSide!="west") && (tmpLaser.boxSide!="east") ) {
-            ERROR("At the moment laser can enter only from West/East sides: boxSide \""
-                  << tmpLaser.boxSide << "\" not defined");
-        }
-        
-        ifile.extract("angle",tmpLaser.angle ,"laser",0,n_laser);
-        ifile.extract("delta",tmpLaser.delta ,"laser",0,n_laser);
-        ifile.extract("time_profile",tmpLaser.time_profile ,"laser",0,n_laser);
-        ifile.extract("int_params",tmpLaser.int_params ,"laser",0,n_laser);
-        ifile.extract("double_params",tmpLaser.double_params ,"laser",0,n_laser);
-        ifile.extract("transv_profile",tmpLaser.transv_profile ,"laser",0,n_laser);
-        ifile.extract("int_params_transv",tmpLaser.int_params_transv ,"laser",0,n_laser);
-        ifile.extract("double_params_transv",tmpLaser.double_params_transv ,"laser",0,n_laser);
-        
-        for (unsigned int i=0; i<tmpLaser.double_params.size(); i++)
-            tmpLaser.double_params[i] *= 2.0*M_PI;
-        for (unsigned int i=0; i<tmpLaser.double_params_transv.size(); i++)
-            tmpLaser.double_params_transv[i] *= 2.0*M_PI;
-        
-        laser_param.push_back(tmpLaser);
-        n_laser++;
-    }
-    
     // --------------------
     // Number of processors
     // --------------------
@@ -365,29 +336,33 @@ void PicParams::compute()
             sim_length[i]*=2.0*M_PI;
             cell_length[i]=2.0*M_PI/res_space[i];
             cell_volume *= cell_length[i];
-            vacuum_length[i] *= 2.0*M_PI;
-            plasma_length[i] *= 2.0*M_PI;
             
-            if (plasma_geometry=="trap") {
-                if(slope_length.size()!=0) slope_length[i]  *= 2.0*M_PI;
-                else{
-                    left_slope_length[i]*= 2.0*M_PI;
-                    right_slope_length[i]*= 2.0*M_PI;
+            for (unsigned int ispec=0; ispec< species_param.size(); ispec++) {
+                species_param[ispec].vacuum_length[i] *= 2.0*M_PI;
+                species_param[ispec].plasma_length[i] *= 2.0*M_PI;
+                
+                if (species_param[ispec].plasma_geometry=="trap") {
+                    if(species_param[ispec].slope_length.size()!=0) species_param[ispec].slope_length[i]  *= 2.0*M_PI;
+                    else{
+                        species_param[ispec].left_slope_length[i]*= 2.0*M_PI;
+                        species_param[ispec].right_slope_length[i]*= 2.0*M_PI;
+                    }
+                }
+                else if(species_param[ispec].plasma_geometry=="triangular"){
+                    species_param[ispec].left_slope_length[i]*= 2.0*M_PI;
+                    species_param[ispec].right_slope_length[i]*= 2.0*M_PI;
+                }
+                else if(species_param[ispec].plasma_geometry=="gaussian"){
+                    species_param[ispec].sigma[i]*= 2.0*M_PI;
+                    species_param[ispec].plateau[i]*= 2.0*M_PI;
+                }
+                else if(species_param[ispec].plasma_geometry=="polygonal"){
+                    for (i=0; i<species_param[ispec].x_density_coor.size(); i++) {
+                        species_param[ispec].x_density_coor[i]*= 2.0*M_PI;
+                    }
                 }
             }
-            else if(plasma_geometry=="triangular"){
-                left_slope_length[i]*= 2.0*M_PI;
-                right_slope_length[i]*= 2.0*M_PI;
-            }
-            else if(plasma_geometry=="gaussian"){
-                sigma[i]*= 2.0*M_PI;
-                plateau[i]*= 2.0*M_PI;
-            }
-            else if(plasma_geometry=="polygonal"){
-                for (i=0; i<x_density_coor.size(); i++) {
-                    x_density_coor[i]*= 2.0*M_PI;
-                }
-            }
+        
         }
         for (unsigned int i=nDim_field; i<3; i++) {
             n_space[i]=1;
@@ -454,20 +429,13 @@ void PicParams::print()
     // Plasma related parameters
     // -------------------------
     MESSAGE("Plasma related parameters");
-    MESSAGE(1,"plasma_geometry : " << plasma_geometry);
     MESSAGE(1,"n_species       : " << n_species);
     for ( unsigned int i=0 ; i<n_species ; i++ ) {
+        MESSAGE(1,"plasma_geometry : " << species_param[i].plasma_geometry);
         MESSAGE(1,"            (species_type, number of particles/cell) : ("<< species_param[i].species_type
                 << ", " << species_param[i].n_part_per_cell << ") - ");
     }
     
-    // Laser related parameters
-    // ------------------------
-    MESSAGE("Laser related parameters");
-    MESSAGE(1,"n_laser        : " << n_laser);
-    for ( unsigned int i=0 ; i<n_laser ; i++ ) {
-        MESSAGE(2,"laser " << i << ": (boxSide, a0) : (" << laser_param[i].boxSide <<  ", " << laser_param[i].a0 <<  ")");
-    }
 
 }
 
