@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>330</width>
-    <height>524</height>
+    <width>465</width>
+    <height>575</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,15 +19,11 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout" stretch="1,0">
     <item>
-     <layout class="QGridLayout" name="plotGrid">
-      <item row="0" column="0">
-       <widget class="QWidget" name="plot" native="true"/>
-      </item>
-     </layout>
+     <widget class="QWidget" name="plot" native="true"/>
     </item>
     <item>
      <widget class="QWidget" name="widget" native="true">
-      <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,0,0">
+      <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,0,0,0">
        <property name="margin">
         <number>0</number>
        </property>
@@ -79,9 +75,12 @@
           </sizepolicy>
          </property>
          <property name="text">
-          <string>Play</string>
+          <string>Stop</string>
          </property>
          <property name="checkable">
+          <bool>true</bool>
+         </property>
+         <property name="checked">
           <bool>true</bool>
          </property>
         </widget>
@@ -125,6 +124,16 @@
          </property>
         </spacer>
        </item>
+       <item>
+        <widget class="QCheckBox" name="autoScale">
+         <property name="text">
+          <string>Auto</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
     </item>
@@ -135,7 +144,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>330</width>
+     <width>465</width>
      <height>22</height>
     </rect>
    </property>
@@ -194,11 +203,6 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
-   </property>
-  </action>
-  <action name="actionPipo">
-   <property name="text">
-    <string>pipo</string>
    </property>
   </action>
  </widget>

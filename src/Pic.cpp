@@ -68,10 +68,12 @@ int main (int argc, char* argv[])
     
     // Send information on current simulation
     
-    welcome();
-    MESSAGE("Version  :  " << __VERSION);
-    MESSAGE("Compiled :  " << __DATE__ << " " << __TIME__);
-    MESSAGE("Namelist :  " << namelist << endl);    
+    MESSAGE("                   _            __     ");
+    MESSAGE(" ___           _  | |        _  \\ \\    ");
+    MESSAGE("/ __|  _ __   (_) | |  ___  (_)  | |   Version  :  " << __VERSION);
+    MESSAGE("\\__ \\ | '  \\   _  | | / -_)  _   | |   Compiled :  " << __DATE__ << " " << __TIME__);
+    MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  | |   Namelist :  " << namelist);
+    MESSAGE("                                /_/    ");
     
     // Parse the namelist file (no check!)
     InputData input_data;

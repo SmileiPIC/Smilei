@@ -23,6 +23,8 @@ import numpy as np
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
+
+
 class smileiQt(QtGui.QMainWindow):
 
     def __init__(self):
@@ -36,18 +38,42 @@ class smileiQt(QtGui.QMainWindow):
         self.ui.actionQuit.triggered.connect(QtGui.qApp.quit)
         self.ui.actionDir.triggered.connect(self.on_changeDir)
 
-        self.show()
+
+        l = QtGui.QVBoxLayout()
+        self.plot.setLayout(l)
+
+        self.step=0
+        
+        self.timer=QtCore.QTimer()
+        self.timer.timeout.connect(self.do_timer)
         
         self.readData()
+
+        self.show()
+
+    def on_back_released(self):
+        self.step-=1
+        self.doPlots()
+
+    def on_forward_released(self):
+        self.step+=1
+        self.doPlots()
+
+    def on_allBack_released(self):
+        self.step=0
+        self.doPlots()
+
+    def on_allForward_released(self):
+        self.step=len(self.fieldSteps)
+        self.doPlots()
 
     def on_playStop_released(self):
         if self.playStop.isChecked() :
             self.playStop.setText("Stop")
+            self.timer.stop()
         else:
             self.playStop.setText("Play")
-        print self.playStop.text()
-
-        self.doPlots()
+            self.timer.start(100)
         
     def load_settings(self):
         settings=QtCore.QSettings("smileiQt","");
@@ -66,55 +92,61 @@ class smileiQt(QtGui.QMainWindow):
     
     def doPlots(self):
 
+        self.step=max(0,min(self.step,len(self.fieldSteps)))
+
         plt.close('all')
-        
+        if hasattr(self, 'figure') :
+            figure.clf()
+        plt.clf()
         nplots=self.numPlots()
         if nplots > 0: 
-            figure, axarr = plt.subplots(nplots,1, sharex=True, squeeze=False)
-            canvas = FigureCanvas(figure)
-            toolbar = NavigationToolbar(canvas, self)
-
-            self.plotGrid.addWidget(toolbar,0,0)
-            self.plotGrid.addWidget(canvas,1,0)
-        
             nplot=0
         
             fname="scalars.txt"
             if os.path.isfile(fname) :
                 file=np.loadtxt(fname)
-                print file.shape
                 for j in self.ui.menuScalars.actions():
                     if j.isChecked() :
                         col=j.data().toInt()[0]
                         x=file[:,0]
                         y=file[:,col]
-                    
-                        print x, y
-                        
-                        axarr[nplot][0].plot(x,y)
-                        axarr[nplot][0].set_title(j.text())
+                        self.axarr[nplot][0].plot(x,y)
+                        self.axarr[nplot][0].set_title(j.text())
                         nplot+=1
 
+            fname="Fields.h5"
 
-            canvas.draw()
+            if os.path.isfile(fname) :
+                f=tb.openFile(os.path.join(self.dirName, fname))
+                nameGroup="/%010d" % self.step
+                for i in self.ui.menuFields.actions() :
+                    if i.isChecked() :
+                        nameData=nameGroup+"/"+i.text()
+                    
+                        data=f.getNode(str(nameData)).read()
+                        x=np.array(range(len(data)))/f.root._v_attrs.res_space[0]
+                        y=data
+                        if not self.autoScale.isChecked() :
+                            oldRange=self.axarr[nplot][0].get_ylim()
+                        
+                        self.axarr[nplot][0].plot(x,y)
+                        self.axarr[nplot][0].set_title(i.text() + " %.3f" % (self.step/f.root._v_attrs.res_time) )
+                        if not self.autoScale.isChecked() :
+                            self.axarr[nplot][0].set_ylim(oldRange)
 
+                        nplot+=1
+                    
+                f.close()
+                
+            self.canvas.draw()
 
-#         self.axarr[0].plot(x, y)
-#         self.axarr[0].set_title(self.dirName)
-#         self.axarr[1].scatter(x, y)
-#         self.axarr[1].set_title('pippo')
-#         self.axarr[2].scatter(x, y)
-#         self.axarr[2].set_title('pappa')
-#         self.axarr[3].scatter(x, y)
-#         self.axarr[3].set_title('pippa')
-#         print "Here"
-    
+    def do_timer(self):        
+        self.step+=1
+
+        self.doPlots()
+        
+
     def readData(self):
-#         pippo= QtGui.QAction("pppp",self)
-#         pippo.setCheckable(True)
-#         self.ui.menuScalars.addAction(pippo)
-
-
         fname="scalars.txt"
         if os.path.isfile(fname) :
 
@@ -135,7 +167,11 @@ class smileiQt(QtGui.QMainWindow):
         
         fname="Fields.h5"
         if os.path.isfile(fname) :
+            self.fieldSteps=[]
             f=tb.openFile(os.path.join(self.dirName, fname))
+            for group in f.list_nodes("/", classname='Group'):
+                self.fieldSteps.append(group._v_name)
+
             for array in f.list_nodes("/0000000000", classname='Array'):
                 name=array._v_name
                 my_act= QtGui.QAction(name,self)
@@ -173,8 +209,31 @@ class smileiQt(QtGui.QMainWindow):
 #             f.close()
         
         self.doPlots()
+        
+    def rescalePlots(self):
+        nplots=self.numPlots()
+        
+        if nplots > 0: 
+        
+            figure, self.axarr = plt.subplots(nplots,1, squeeze=False)
+            
+            for i in self.axarr:
+                i[0].hold(False)
+
+
+            for i in reversed(range(self.plot.layout().count())): 
+                self.plot.layout().itemAt(i).widget().setParent(None)
+
+            self.canvas = FigureCanvas(figure)
+            toolbar = NavigationToolbar(self.canvas, self)
+            toolbar.setFixedHeight(18)
+            self.plot.layout().addWidget(toolbar)
+            self.plot.layout().addWidget(self.canvas)
+
+
 
     def action_clicked(self):
+        self.rescalePlots()
         self.doPlots()
 #         print self.sender().data().toInt()
         
