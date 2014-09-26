@@ -95,24 +95,18 @@ SmileiIO::SmileiIO( PicParams* params, SmileiMPI* smpi ) : dump_times(0), stop_f
     H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);
 	
 
-    if (smpi->isMaster()) {
-        hid_t sid  = H5Screate(H5S_SCALAR);
-        hid_t aid = H5Acreate (global_file_id_, "res_time", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT);
-        H5Awrite(aid, H5T_NATIVE_DOUBLE, &(params->res_time));
-        H5Sclose(sid);
-        H5Aclose(aid);
-
-        
-        
-        hsize_t dimsPos = params->res_space.size();
-        sid = H5Screate_simple(1, &dimsPos, NULL);
-        aid = H5Acreate (global_file_id_, "res_space", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT);
-        H5Awrite(aid, H5T_NATIVE_DOUBLE, &(params->res_space[0]));
-        H5Aclose(aid);
-        H5Sclose(sid);
-
-        
-    }
+    hid_t sid  = H5Screate(H5S_SCALAR);
+    hid_t aid = H5Acreate (global_file_id_, "res_time", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT);
+    H5Awrite(aid, H5T_NATIVE_DOUBLE, &(params->res_time));
+    H5Sclose(sid);
+    H5Aclose(aid);
+    
+    hsize_t dimsPos = params->res_space.size();
+    sid = H5Screate_simple(1, &dimsPos, NULL);
+    aid = H5Acreate (global_file_id_, "res_space", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT);
+    H5Awrite(aid, H5T_NATIVE_DOUBLE, &(params->res_space[0]));
+    H5Aclose(aid);
+    H5Sclose(sid);
     
 	// 
 	initDumpCases();
