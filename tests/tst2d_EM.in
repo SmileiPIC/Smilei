@@ -24,6 +24,9 @@ sim_time = 10
 res_space  = 50  50  
 sim_length = 5  5  
 
+bc_em_type_long = silver-muller
+bc_em_type_trans = periodic
+
 # RANDOM seed 
 # this is used to randomize the random number generator
 random_seed = 0

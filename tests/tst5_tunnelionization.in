@@ -31,6 +31,8 @@ sim_time = 10.0
 res_space  = 100
 sim_length = 2.0
 
+bc_em_type_long = silver-muller
+
 # RANDOM seed 
 # this is used to randomize the random number generator
 random_seed = 0
