@@ -66,6 +66,48 @@ struct SpeciesStructure {
     //! Ionization model per Specie (tunnel)
     std::string ionization_model;
 
+    //! plasma geometry
+    std::string plasma_geometry;
+    
+    //! plasma lengths
+    std::vector<double> plasma_length;
+    
+    //! vacuum lengths
+    std::vector<double> vacuum_length;
+    
+    //! slope lengths (symmetric for trapezoidal geometry, general for triangular geometry)
+    std::vector<double> slope_length;
+    
+    //! left slope lengths(not symmetric for trapezoidal case)
+    std::vector<double> left_slope_length;
+    
+    //! right slope lengths(not symmetric for trapezoidal case)
+    std::vector<double> right_slope_length;
+    
+    //! cut parameter for a gaussian profile
+    std::vector<double> cut;
+    
+    //! sigma parameter for a gaussian profile
+    std::vector<double> sigma;
+    
+    //! plateau for a gaussian profile
+    std::vector<double> plateau;
+    
+    //! polygonal density profile in x direction
+    std::vector<double> x_density_coor;
+    
+    //! polygonal density profile relative values in x direction
+    std::vector<double> density_rel_values_x;
+    
+    //! mode for 1D cos density profile
+    double mode;
+    
+    //! fase  for 1D cos density profile
+    double thetax;
+    
+    //! amplitude  for 1D cos density profile
+    double ampl;
+    
 };
 
 
@@ -123,48 +165,6 @@ public:
 
     //! Clusters width
     int clrw;
-
-    //! plasma geometry
-    std::string plasma_geometry;
-
-    //! plasma lengths
-    std::vector<double> plasma_length;
-
-    //! vacuum lengths
-    std::vector<double> vacuum_length;
-
-    //! slope lengths (symmetric for trapezoidal geometry, general for triangular geometry)
-    std::vector<double> slope_length;
-    
-    //! left slope lengths(not symmetric for trapezoidal case)
-    std::vector<double> left_slope_length;
-    
-    //! right slope lengths(not symmetric for trapezoidal case)
-    std::vector<double> right_slope_length;
-    
-    //! cut parameter for a gaussian profile
-    std::vector<double> cut;
-    
-    //! sigma parameter for a gaussian profile
-    std::vector<double> sigma;
-    
-    //! plateau for a gaussian profile
-    std::vector<double> plateau;
-    
-    //! polygonal density profile in x direction
-    std::vector<double> x_density_coor;
-    
-    //! polygonal density profile relative values in x direction
-    std::vector<double> density_rel_values_x;
-    
-    //! mode for 1D cos density profile
-    double mode;
-    
-    //! fase  for 1D cos density profile
-    double thetax;
-    
-    //! amplitude  for 1D cos density profile
-    double ampl;
 
     //! initial number of species
     unsigned int n_species;
@@ -226,12 +226,12 @@ public:
 	//! frequency of exchange particles (default = 1) 
 	int exchange_particles_each;
 
-        //! Number of MPI process per direction (default : as square as possible)
-        std::vector<int> number_of_procs;
-
-        //! Enabled transversal periodic condition, fields & particles (default = true)
-        bool use_transverse_periodic;
-
+    //! Number of MPI process per direction (default : as square as possible)
+    std::vector<int> number_of_procs;
+    
+    //! Enabled transversal periodic condition, fields & particles (default = true)
+    bool use_transverse_periodic;
+    
 };
 
 #endif

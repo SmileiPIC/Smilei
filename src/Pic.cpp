@@ -61,16 +61,16 @@ int main (int argc, char* argv[])
     // -------------------------
     // Simulation Initialization
     // ------------------------- 
-    
-    argc -= optind;
-    argv += optind;
-    
+
     // Check for namelist (input file)
-    if (argc<1) ERROR("No namelists given!");
-    string namelist=argv[0];
+    if (argc<2) ERROR("No namelists given!");
+    string namelist=argv[1];
     
     // Send information on current simulation
-    if ( smpiData->isMaster() ) startingMessage(namelist);
+    MESSAGE(" ___           _   _         _   ");
+    MESSAGE("/ __|  _ __   (_) | |  ___  (_)  Version  :  " << __VERSION);
+    MESSAGE("\\__ \\ | '  \\  | | | | / -_) | |  Compiled :  " << __DATE__ << " " << __TIME__);
+    MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  Namelist :  " << namelist << endl);    
     
     // Parse the namelist file (no check!)
     InputData input_data;
@@ -79,15 +79,13 @@ int main (int argc, char* argv[])
     // broadcast file and parse it and randomize
     smpiData->bcast(input_data);    
     
+    MESSAGE("----------------------------------------------");
+    MESSAGE("Input data info");
+    MESSAGE("----------------------------------------------");
     // Read simulation & diagnostics parameters
     PicParams params(input_data);
     smpiData->init(params);
     smpiData->barrier();
-    
-    // Print out the data parameters
-    MESSAGE("----------------------------------------------");
-    MESSAGE("Input data info");
-    MESSAGE("----------------------------------------------");
     if ( smpiData->isMaster() ) params.print();
     
     
@@ -95,7 +93,6 @@ int main (int argc, char* argv[])
     MESSAGE("----------------------------------------------");
     MESSAGE("Creating MPI & IO environments");
     MESSAGE("----------------------------------------------");
-    
     SmileiMPI* smpi = SmileiMPIFactory::create(params, smpiData);
     SmileiIO*  sio  = SmileiIOFactory::create(params, smpi);
     
@@ -123,8 +120,7 @@ int main (int argc, char* argv[])
     
     // Create diagnostics
     DiagParams diag_params(params, input_data);
-    Diagnostic diags(params,diag_params, smpi);
-    
+    Diagnostic *Diags =new Diagnostic(params,diag_params, smpi);    
     
     // ---------------------------
     // Initialize Species & Fields
@@ -171,11 +167,9 @@ int main (int argc, char* argv[])
         smpi->sumRhoJ( EMfields );
         
         // Init electric field (Ex/1D, + Ey/2D)
-        if (smpiData->isMaster()) {
-            MESSAGE("----------------------------------------------");
-            MESSAGE("Solving Poisson at time t = 0");
-            MESSAGE("----------------------------------------------");
-        }
+        MESSAGE("----------------------------------------------");
+        MESSAGE("Solving Poisson at time t = 0");
+        MESSAGE("----------------------------------------------");
         EMfields->solvePoisson(smpi);
         
         
@@ -183,7 +177,7 @@ int main (int argc, char* argv[])
         MESSAGE("Running diags at time t = 0");
         MESSAGE("----------------------------------------------");
         // run diagnostics at time-step 0
-        diags.runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
+        Diags->runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
         // temporary EM fields dump in Fields.h5
         sio->writeAllFieldsSingleFileTime( EMfields, 0 );
         // temporary EM fields dump in Fields_avg.h5
@@ -236,8 +230,8 @@ int main (int argc, char* argv[])
             MESSAGE(1, "t= "         << setw(11)                     << time_dual/(2*M_PI)
                     << " it= "       << setw(log10(params.n_time)+1) << itime  << "/" << params.n_time
                     << " sec: "      << setw(9)                      << timer[0].getTime()
-                    << " E= "        << setw(9)                      << diags.getScalar("Etot")
-                    << " E_bal(%)= " << 100.0*diags.getScalar("Ebal_norm") );
+                    << " E= "        << setw(9)                      << Diags->getScalar("Etot")
+                    << " E_bal(%)= " << 100.0*Diags->getScalar("Ebal_norm") );
 
         
         
@@ -298,7 +292,7 @@ int main (int argc, char* argv[])
 		
         // run all diagnostics
         timer[3].restart();
-        diags.runAllDiags(itime, EMfields, vecSpecies, Interp, smpi);
+        Diags->runAllDiags(itime, EMfields, vecSpecies, Interp, smpi);
         
         // temporary EM fields dump in Fields.h5
         if  ((diag_params.fieldDump_every != 0) && (itime % diag_params.fieldDump_every == 0))
@@ -327,10 +321,8 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     //                      HERE ENDS THE PIC LOOP
     // ------------------------------------------------------------------
-    if ( smpi->isMaster() ) {
-        MESSAGE("End time loop, time dual = " << time_dual);
-        MESSAGE("-----------------------------------------------------------------------------------------------------");
-    }
+    MESSAGE("End time loop, time dual = " << time_dual);
+    MESSAGE("-----------------------------------------------------------------------------------------------------");
     
     //double timElapsed=smpiData->time_seconds();
     //if ( smpi->isMaster() ) MESSAGE(0, "Time in time loop : " << timElapsed );
@@ -341,7 +333,7 @@ int main (int argc, char* argv[])
     
     double coverage(0.);
     for (int i=1 ; i<ntimer ; i++) coverage += timer[i].getTime();
-    if ( smpi->isMaster() ) MESSAGE(0, "\t" << setw(12) << "Coverage\t" << coverage/timer[0].getTime()*100. << " %" );
+    MESSAGE(0, "\t" << setw(12) << "Coverage\t" << coverage/timer[0].getTime()*100. << " %" );
     
     
     // ------------------------------------------------------------------
@@ -366,30 +358,21 @@ int main (int argc, char* argv[])
     delete Proj;
     delete Interp;
     delete EMfields;
+    delete Diags;
     
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
     vecSpecies.clear();
     
     delete sio;
-    if ( smpi->isMaster() ) {
-        MESSAGE("-----------------------------------------------------------------------------------------------------");
-        MESSAGE("END " << namelist);
-        MESSAGE("-----------------------------------------------------------------------------------------------------");
-    }
+    MESSAGE("-----------------------------------------------------------------------------------------------------");
+    MESSAGE("END " << namelist);
+    MESSAGE("-----------------------------------------------------------------------------------------------------");
+
     delete smpi;
     delete smpiData;
     return 0;
     
 }//END MAIN
 
-
-// Printing starting message
-void startingMessage(std::string inputfile) {
-    MESSAGE("-----------------------------------------------------------------------------------------------------");
-    MESSAGE(" Version  : " << __VERSION DEBUGEXEC(<< " DEBUG") << " Compiled : " << __DATE__ << " " << __TIME__);
-    MESSAGE("-----------------------------------------------------------------------------------------------------");
-    MESSAGE(" Namelist : " << inputfile);
-    MESSAGE("-----------------------------------------------------------------------------------------------------");
-}
 
 
