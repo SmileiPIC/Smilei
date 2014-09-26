@@ -63,7 +63,7 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
         // -----------------------------------------------------------------
         // at the moment, only Gaussian beam can be used when laser is focused or with a not-normal incidence
         // note that there is also no choice about polarization (for along Bz)
-        if ( (tmpLaser.angle!=0) || (tmpLaser.isFocused) ){
+        if ( (tmpLaser.boxSide=="west") && ((tmpLaser.angle!=0) || (tmpLaser.isFocused)) ){
             
             if ( (tmpLaser.int_params_transv.size()==0) ) {
                 WARNING("A default cut-off (3 sigma) is applied on laser " << n_laser << " transverse profile");
