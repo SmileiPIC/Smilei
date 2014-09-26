@@ -67,10 +67,13 @@ int main (int argc, char* argv[])
     string namelist=argv[1];
     
     // Send information on current simulation
-    MESSAGE(" ___           _   _         _   ");
-    MESSAGE("/ __|  _ __   (_) | |  ___  (_)  Version  :  " << __VERSION);
-    MESSAGE("\\__ \\ | '  \\  | | | | / -_) | |  Compiled :  " << __DATE__ << " " << __TIME__);
-    MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  Namelist :  " << namelist << endl);    
+    
+    MESSAGE("                   _            __     ");
+    MESSAGE(" ___           _  | |        _  \\ \\    ");
+    MESSAGE("/ __|  _ __   (_) | |  ___  (_)  | |   Version  :  " << __VERSION);
+    MESSAGE("\\__ \\ | '  \\   _  | | / -_)  _   | |   Compiled :  " << __DATE__ << " " << __TIME__);
+    MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  | |   Namelist :  " << namelist);
+    MESSAGE("                                /_/    ");
     
     // Parse the namelist file (no check!)
     InputData input_data;
@@ -231,6 +234,8 @@ int main (int argc, char* argv[])
                     << " it= "       << setw(log10(params.n_time)+1) << itime  << "/" << params.n_time
                     << " sec: "      << setw(9)                      << timer[0].getTime()
                     << " E= "        << setw(9)                      << Diags->getScalar("Etot")
+                    //<< " Epart=  "   << setw(9)                      << diags.getScalar("Eparticles")
+                    //<< " Efield= "   << setw(9)                      << diags.getScalar("EFields")
                     << " E_bal(%)= " << 100.0*Diags->getScalar("Ebal_norm") );
 
         
@@ -257,18 +262,15 @@ int main (int argc, char* argv[])
 		vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, &params);
             }
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-                if ( (params.use_sort_particles) && (itime%params.exchange_particles_each==0) ) {
 #pragma omp barrier
-                    //#pragma omp master
-                    {
-                        // Loop on dims to manage exchange in corners
-                        for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
-                            smpi->exchangeParticles(vecSpecies[ispec], ispec, &params, tid);
-                        
-                    }
+                //#pragma omp master
+                {
+                    // Loop on dims to manage exchange in corners
+                    for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
+                        smpi->exchangeParticles(vecSpecies[ispec], ispec, &params, tid);
+                }
 #pragma omp barrier
                     vecSpecies[ispec]->sort_part(params.cell_length[0]);
-                }
             }
         }
         timer[1].update();

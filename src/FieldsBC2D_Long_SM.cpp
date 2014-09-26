@@ -49,7 +49,7 @@ FieldsBC2D_Long_SM::FieldsBC2D_Long_SM( PicParams &params, LaserParams &laser_pa
     Gamma_SM_W    = 4.0 * cos(theta)        * factor;
     Delta_SM_W    = - (sin(theta)+dt_ov_dy) * factor;
     Epsilon_SM_W  = - (sin(theta)-dt_ov_dy) * factor;
-    MESSAGE("WEST : " << Alpha_SM_W << Beta_SM_W << Gamma_SM_W);
+    MESSAGE("WEST : " << Alpha_SM_W << " " << Beta_SM_W << " " << Gamma_SM_W);
 
     // East boundary
     theta         = M_PI;
@@ -59,7 +59,7 @@ FieldsBC2D_Long_SM::FieldsBC2D_Long_SM( PicParams &params, LaserParams &laser_pa
     Gamma_SM_E    = 4.0 * cos(theta)         * factor;
     Delta_SM_E    = - (sin(theta)+dt_ov_dy)  * factor;
     Epsilon_SM_E  = - (sin(theta)-dt_ov_dy)  * factor;
-    MESSAGE("EAST : " << Alpha_SM_E << Beta_SM_E << Gamma_SM_E);
+    MESSAGE("EAST : " << Alpha_SM_E << " " << Beta_SM_E << " " << Gamma_SM_E);
 
 }
 

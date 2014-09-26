@@ -27,7 +27,7 @@ sim_time = 10.0
 #
 res_space  = 128
 sim_length = 1.0
-
+bc_em_type_long = silver-muller
 
 # ---------------
 # PLASMA GEOMETRY
@@ -165,18 +165,15 @@ diagnostic phase
 # pos   = position of the different probes
 # #
 
-diagnostic probe
-  every = 1
-  pos = 0.0
-end
-
-diagnostic probe
-    every = 1;
-    pos = 0.0
-    pos_first = 10.0
-    number = 5
-     
-end
-
-
->>>>>>> TP_UPMC
+# diagnostic probe
+#   every = 1
+#   pos = 0.0
+# end
+# 
+# diagnostic probe
+#     every = 1;
+#     pos = 0.0
+#     pos_first = 10.0
+#     number = 5
+#      
+# end

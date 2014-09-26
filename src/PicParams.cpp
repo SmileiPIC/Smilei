@@ -59,26 +59,34 @@ PicParams::PicParams(InputData &ifile) {
         ERROR("Interpolation/projection order " << interpolation_order << " not yet defined in 2D");
     }
     
-    if ( !ifile.extract("use_sort_particles", use_sort_particles) ) {
-        use_sort_particles = true;
-        WARNING("Particle sorting turned on");
-    }
-    if ( !ifile.extract("exchange_particles_each", exchange_particles_each) )
-        exchange_particles_each = 1;
-    
-    if ( !ifile.extract("use_transverse_periodic", use_transverse_periodic) ) {
-        use_transverse_periodic = true;
-    }
-    /*else if (!use_transverse_periodic) {
-     for (unsigned int i=0; i<n_species; i++)
-     species_param[i].bc_part_type = "stop";
-     }*/
+    // Disabled, not compatible for now with particles sort
+    //if ( !ifile.extract("exchange_particles_each", exchange_particles_each) )
+    exchange_particles_each = 1;
     
     ifile.extract("res_time", res_time);
+    ifile.extract("res_space",res_space);
+    
+    if ((res_space.size()!=0)&&(res_space.size()!=nDim_field)) {
+        ERROR("Dimension of res_space ("<< res_space.size() << ") != " << nDim_field << " for geometry " << geometry);
+    }
+
+    if(ifile.extract("res_time", res_time)==false||(res_space.size()==0)){
+        ifile.extract("timestep", timestep);
+        res_time=(1.0/timestep);
+        ifile.extract("cell_length",cell_length);
+        if (cell_length.size()!=nDim_field) {
+            ERROR("Dimension of cell_length ("<< cell_length.size() << ") != " << nDim_field << " for geometry " << geometry);
+        }
+        res_space.resize(nDim_field);
+        for (unsigned int i=0;i<nDim_field;i++){
+            res_space[i]=1.0/cell_length[i];
+        }
+    }
     
     ifile.extract("sim_time", sim_time);
     
-    ifile.extract("res_space",res_space);
+    
+    
     if (res_space.size()!=nDim_field) {
         ERROR("Dimension of res_space ("<< res_space.size() << ") != " << nDim_field << " for geometry " << geometry);
     }
@@ -95,6 +103,13 @@ PicParams::PicParams(InputData &ifile) {
         ERROR("Dimension of sim_length ("<< sim_length.size() << ") != " << nDim_field << " for geometry " << geometry);
     }
     
+    //! Boundary conditions for ElectroMagnetic Fields
+    if ( !ifile.extract("bc_em_type_long", bc_em_type_long)  )
+        ERROR("bc_em_type_long not defined" );
+    if ( geometry == "2d3v" ) 
+        if ( !ifile.extract("bc_em_type_trans", bc_em_type_trans) )
+            ERROR("bc_em_type_trans not defined" );
+
     
     // ------------------------
     // Moving window parameters

@@ -24,6 +24,10 @@ sim_time = 5.0
 res_space  = 100   100  
 sim_length = 6.0   12.0  
 
+bc_em_type_long = silver-muller
+bc_em_type_trans = periodic
+
+
 # PLASMA GEOMETRY
 # plasma_geometry: string defining the plasma geometry
 # ***_length: characteristic length for a given geometry

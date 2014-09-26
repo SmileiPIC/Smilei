@@ -109,11 +109,16 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
     //number_of_procs[0] = 1;
     //number_of_procs[1] = 16;
     MESSAGE("Split : " << smilei_sz << " : " << number_of_procs[0] << " - " << number_of_procs[1]);
-    
+    cout << params.bc_em_type_long << " " << params.bc_em_type_trans << endl; 
+    // Geometry periodic in x
+    if (params.bc_em_type_long=="periodic") {
+        periods_[0] = 1;
+        MESSAGE( "Periodic geometry / x");
+    }
     // Geometry periodic in y
-    if (params.use_transverse_periodic) {
+    if (params.bc_em_type_trans=="periodic") {
         periods_[1] = 1;
-        PMESSAGE( 0, smilei_rk, "Periodic geometry / y");
+        MESSAGE( "Periodic geometry / y");
     }
     MPI_Cart_create( SMILEI_COMM_WORLD, ndims_, number_of_procs, periods_, reorder_, &SMILEI_COMM_2D );
     MPI_Cart_coords( SMILEI_COMM_2D, smilei_rk, ndims_, coords_ );
@@ -334,14 +339,26 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
                 // n_part_send : number of particles to send to current neighbor
                 n_part_send = (buff_index_send[iDim][iNeighbor]).size();
                 if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (n_part_send!=0) ) {
+                    double x_max = params->cell_length[0]*( params->n_space_global[0] );
                     double y_max = params->cell_length[1]*( params->n_space_global[1] );
                     for (int iPart=0 ; iPart<n_part_send ; iPart++) {
+
+			// Enabled periodicity in X
+			if ( ( iNeighbor==0 ) &&  (coords_[0] == 0 ) &&( cuParticles.position(0,buff_index_send[iDim][iNeighbor][iPart]) < 0. ) ) {
+                            cuParticles.position(0,buff_index_send[iDim][iNeighbor][iPart])     += x_max;
+                        }
+                        else if ( ( iNeighbor==1 ) &&  (coords_[0] == number_of_procs[0]-1 ) && ( cuParticles.position(0,buff_index_send[iDim][iNeighbor][iPart]) >= x_max ) ) {
+                            cuParticles.position(0,buff_index_send[iDim][iNeighbor][iPart])     -= x_max;
+                        }
+
+			// Enabled periodicity in Y
                         if ( ( iNeighbor==0 ) &&  (coords_[1] == 0 ) &&( cuParticles.position(1,buff_index_send[iDim][iNeighbor][iPart]) < 0. ) ) {
                             cuParticles.position(1,buff_index_send[iDim][iNeighbor][iPart])     += y_max;
                         }
                         else if ( ( iNeighbor==1 ) &&  (coords_[1] == number_of_procs[1]-1 ) && ( cuParticles.position(1,buff_index_send[iDim][iNeighbor][iPart]) >= y_max ) ) {
                             cuParticles.position(1,buff_index_send[iDim][iNeighbor][iPart])     -= y_max;
                         }
+
                         cuParticles.cp_particle(buff_index_send[iDim][iNeighbor][iPart], partVectorSend[iDim][iNeighbor]);
                     }
 
@@ -404,15 +421,6 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
         /********************************************************************************/
         // Delete Particles included in buff_send/buff_recv
         /********************************************************************************/
-        /*if (!params->use_sort_particles) {
-         n_part_send = indexes_of_particles_to_exchange.size();
-         for (int i=n_part_send-1 ; i>=0 ; i--) {
-         iPart = indexes_of_particles_to_exchange[i];
-         cuParticles.erase_particle(iPart);
-         } // END for iPart = f(i)
-         }
-         else { // if Sort particles
-         */
         
         // Push lost particles at the end of bins
         //! \todo For loop on bins, can use openMP here.

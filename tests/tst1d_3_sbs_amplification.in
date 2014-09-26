@@ -25,6 +25,7 @@ sim_time = 300.0
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
 # sim_length: length of the simulation in units of the normalization wavelength 
 #
+<<<<<<< HEAD
 res_space  = 50
 sim_length = 120.0
 
@@ -43,6 +44,11 @@ x_density_coor = 10.0 80.0 110.0
 density_rel_values_x = 0.3 1.0 0.5
 
 
+=======
+res_space  = 10
+sim_length = 10.0
+bc_em_type_long = silver-muller
+>>>>>>> b35d6569ee4b21d577290a337727c9388bc3dd44
 
 # RANDOM seed 
 # this is used to randomize the random number generator
