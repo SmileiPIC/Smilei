@@ -109,16 +109,16 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
     //number_of_procs[0] = 1;
     //number_of_procs[1] = 16;
     MESSAGE("Split : " << smilei_sz << " : " << number_of_procs[0] << " - " << number_of_procs[1]);
-    
+    cout << params.bc_em_type_long << " " << params.bc_em_type_trans << endl; 
     // Geometry periodic in x
     if (params.bc_em_type_long=="periodic") {
         periods_[0] = 1;
-        PMESSAGE( 0, smilei_rk, "Periodic geometry / x");
+        MESSAGE( "Periodic geometry / x");
     }
     // Geometry periodic in y
     if (params.bc_em_type_trans=="periodic") {
         periods_[1] = 1;
-        PMESSAGE( 0, smilei_rk, "Periodic geometry / y");
+        MESSAGE( "Periodic geometry / y");
     }
     MPI_Cart_create( SMILEI_COMM_WORLD, ndims_, number_of_procs, periods_, reorder_, &SMILEI_COMM_2D );
     MPI_Cart_coords( SMILEI_COMM_2D, smilei_rk, ndims_, coords_ );
