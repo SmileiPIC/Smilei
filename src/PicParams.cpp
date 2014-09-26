@@ -88,7 +88,7 @@ PicParams::PicParams(InputData &ifile) {
     if ( !ifile.extract("bc_em_type_long", bc_em_type_long)  )
         ERROR("bc_em_type_long not defined" );
     if ( geometry == "2d3v" ) 
-        if ( !ifile.extract("bc_em_type_long", bc_em_type_trans) )
+        if ( !ifile.extract("bc_em_type_trans", bc_em_type_trans) )
             ERROR("bc_em_type_trans not defined" );
 
     
