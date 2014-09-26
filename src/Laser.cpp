@@ -14,6 +14,7 @@ Laser::Laser( PicParams &params, LaserParams &laser_params, unsigned int n_laser
     laser_struct = laser_params.laser_param[n_laser];
     
     pi_ov_2 = 0.5 * M_PI;
+    PI2     = 2.0 * M_PI;
 
     /*
 <<<<<<< HEAD
@@ -25,8 +26,8 @@ Laser::Laser( PicParams &params, LaserParams &laser_params, unsigned int n_laser
 =======
 >>>>>>> 7c6c522ae18050ee10db51319d1b2aa54f5e695d
      */
-    a0_delta_y_  = laser_struct.a0 * laser_struct.delta;
-    a0_delta_z_  = laser_struct.a0 * sqrt(1.0-pow(laser_struct.delta,2));
+    a0_delta_y_            = laser_struct.a0 * laser_struct.delta;
+    a0_delta_z_            = laser_struct.a0 * sqrt(1.0-pow(laser_struct.delta,2));
 
     type_of_time_profile   = laser_struct.time_profile;
     int_params             = laser_struct.int_params;
@@ -146,6 +147,17 @@ Laser::Laser( PicParams &params, LaserParams &laser_params, unsigned int n_laser
         }
     }
     
+    // focused: laser beam with either an arbitrary incident angle or focus
+    else if (type_of_transv_profile=="focused") {
+        MESSAGE(1,"Laser has a Gaussian transverse profile with arbitrary focus or incidence");
+        if (double_params_transv.size()<1) {
+            double_params_transv.resize(1);
+            double_params_transv[0] = sim_length[1]/4.0;
+            WARNING("Laser waist redefined to sim_length[1]/4 = " << double_params_transv[0]);
+        }
+    }
+
+    
     // If transverse profile is not defined use the plane-wave as default
     else {
         type_of_transv_profile = "plane-wave";
@@ -262,24 +274,12 @@ double Laser::time_profile(double time_dual) {
             
 
         }
-
         //after pulse
         else{
             return 0.0;
         }
+        
     }
-    /* Arnaud implementation (Merge)
-    // gauss time-profile
-    // double_params[0]: Time at which maximum intensity is reached at the x=0 boundary.
-    // double_params[1]: Longitudinal FWHM of the pulse intensity.
-    else if (type_of_time_profile=="gauss") {
-        //exp(-2*log(2)*pow((time_dual-double_params[0]) / double_params[1] , 2)); //Gaussian longitudinal profil of the intensity
-        //FWHM(Intensity) = FWHM(Field^2) = FWHM(Field)/sqrt(2) ==>
-        //cout << time_dual << " " << double_params[0] << " "<<double_params[1]<<endl;
-        return exp(-log(2)*pow((time_dual-double_params[0]) / double_params[1] , 2)); //Gaussian longitudinal profil of the field as required
-         
-    */
-    
     else {
         return 0.0;
     }
@@ -303,36 +303,24 @@ double Laser::transverse_profile2D(double time_dual, double y) {
     // double_params_transv[1] : FWHM in intensity
     // int_params_transv[0]    : order of the hyper-Gaussian profile
     else if (type_of_transv_profile=="gaussian") {
-        
         double sigma_N = pow(double_params_transv[1],int_params_transv[0]) / pow(2.0,int_params_transv[0]-1) / log(2.0);
-
         return exp( - pow(y-double_params_transv[0],int_params_transv[0]) / sigma_N);
     }
     
     // GAUSSIAN PROFILE with ARBITRARY INCIDENCE ANGLE & FOCUSING
-    // double_params_transv[0] : x-position of best focus
-    // double_params_transv[0] : y-position of best focus
-    // double_params_transv[1] : FWHM in intensity
-    else if (type_of_transv_profile=="gaussian_general") {
-        
-        double sigma_N = pow(double_params_transv[1],int_params_transv[0]) / pow(2.0,int_params_transv[0]-1) / log(2.0);
-        
-        return exp( - pow(y-double_params_transv[0],int_params_transv[0]) / sigma_N);
+    // a cut is defined here according to the integer parameter int_params_transv[0] (which is by default equal to 4)
+    else if (type_of_transv_profile=="focused") {
+        double cut=int_params_transv[0];
+        if ( (y>=-cut)&&(y<=cut) ) {
+            return exp( -0.5*pow(y,2) );
+        }
+        else {
+            return 0.0;
+        }
     }
     
     else
         return 0.0;
 }//END laser::transverse_profile2D
 
-/* Arnaud implementation (Merge)
-double Laser::y_profile(double dfa) {
-    if (type_of_transv_profile=="constant") {
-        return 1.0;
-    }
-    else if (type_of_transv_profile=="gauss"){
-        return exp(- pow(dfa / y_params[0] , 2));
-    }
-    else {
-        return 1.0;
-    }
-}*/
+

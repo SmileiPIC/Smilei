@@ -6,7 +6,6 @@
 #include "PicParams.h"
 #include "LaserParams.h"
 
-const double PI2 = 8.*atan(1.);
 
 class Laser {
 public:
@@ -16,6 +15,7 @@ public:
     LaserStructure laser_struct;
 
     double pi_ov_2;
+    double PI2;
     
     double a0_delta_y_;
     double a0_delta_z_;

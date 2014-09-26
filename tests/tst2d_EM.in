@@ -14,15 +14,15 @@ interpolation_order = 2
 # res_time: temporal resolution (integer = number of time−steps within one normalization period)
 # sim_time: duration of the simulation in units of the normalization period 
 #
-res_time = 55
-sim_time = 10
+res_time = 30
+sim_time = 30
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
 # sim_length: length of the simulation in units of the normalization wavelength 
 #
-res_space  = 50  50  
-sim_length = 5  5  
+res_space  = 20  20  
+sim_length = 20  50  
 
 # RANDOM seed 
 # this is used to randomize the random number generator
@@ -40,14 +40,15 @@ random_seed = 0
 # double_params: vector of real parameters used by the different time-profiles
 #
 laser
+	boxSide = west
 	a0=1.0
-	angle=0
-	boxSide = west 
+	focus=0.0 25.0
+	angle=20.0 
 	delta=0.0              
-	time_profile = gaussian
-    y_profile = gaussian
-    double_params = 1.0 0.0 0.0 # FWHM in intensity, plateau length, delay
-    int_params = 2 # Cut-off of the longitudinal gaussian in number of sigma
+	time_profile = sin2
+	double_params = 5
+	transv_profile = focused
+	double_params_transv = 5.0 
 end
 
 # ---------------------
@@ -55,16 +56,15 @@ end
 # ---------------------
 
 # print_every (on screen text output) 
-print_every = 1
+print_every = 60
 
 
 # DIAG ON SCALARS
 # every = number of time-steps between each output
 #
 diagnostic scalar
-	every = 1
+	every = 30
 end
 
-dump_step = 10000
-exit_after_dump = false
+fieldDump_every = 60
 

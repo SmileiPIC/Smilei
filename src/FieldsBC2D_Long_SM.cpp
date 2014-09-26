@@ -17,6 +17,9 @@ using namespace std;
 FieldsBC2D_Long_SM::FieldsBC2D_Long_SM( PicParams &params, LaserParams &laser_params )
     : FieldsBC( params, laser_params )
 {
+    // conversion factor from degree to radian
+    conv_deg2rad = M_PI/180.0;
+    
     // number of nodes of the primal and dual grid in the x-direction
     nx_p = params.n_space[0]+1+2*params.oversize[0];
     nx_d = params.n_space[0]+2+2*params.oversize[0];
@@ -112,13 +115,15 @@ void FieldsBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, SmileiMP
             double yp     = smpi->getDomainLocalMin(1) + ((double)j)     * dy;
             for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
                 if (laser_[ilaser]->laser_struct.boxSide == "west") {
-/*                    if (laser_[ilaser]->laser_struct.focus) {
+                    
+                    if ( (laser_[ilaser]->laser_struct.isFocused)||(laser_[ilaser]->laser_struct.angle!=0) ) {
                         byW += 0.0;
                     }
                     else {
- */
-                        byW += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual) * laser_[ilaser]->transverse_profile2D(time_dual,yp);
- //                   }//focus
+                        byW += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual)
+                            *  laser_[ilaser]->transverse_profile2D(time_dual,yp);
+                    }//isFocused or angle!=0
+                    
                 }
             }//ilaser
 
@@ -134,16 +139,33 @@ void FieldsBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, SmileiMP
 
             bzW = 0.;
             double yd     = smpi->getDomainLocalMin(1) + ((double)j-0.5) * dy;
+            
             for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
                 if (laser_[ilaser]->laser_struct.boxSide == "west") {
-/*                    if (laser_[ilaser]->laser_struct.focus) {
-                        double tau = time_dual - focus[]
-                        bzW += laser_[ilaser]->a0 * ;
+                    
+                    if ( (laser_[ilaser]->laser_struct.isFocused) || (laser_[ilaser]->laser_struct.angle!=0) ) {
+                        double delay   = laser_[ilaser]->laser_struct.delay;
+                        double xfoc    = laser_[ilaser]->laser_struct.focus[0];
+                        double yfoc    = laser_[ilaser]->laser_struct.focus[1];
+                        double theta   = laser_[ilaser]->laser_struct.angle * conv_deg2rad;
+                        double zeta    = -xfoc*cos(theta) + (yd-yfoc)*sin(theta);
+                        double rho     =  xfoc*sin(theta) + (yd-yfoc)*cos(theta);
+                        double tau     = time_dual - (yd-yfoc)*sin(theta);
+                        double bwaist  = 0.5/sqrt(log(2.0)) * laser_[ilaser]->laser_struct.double_params_transv[0];
+                        double z2ovLr2 = pow(zeta,2)/pow(bwaist,4);
+                        double waist   = bwaist * sqrt( 1.0 + z2ovLr2 );
+                        double curvRad = 1000.0 * laser_[ilaser]->laser_struct.double_params_transv[0];
+                        if (zeta!=0)
+                               curvRad = zeta* ( 1.0 + 1.0/z2ovLr2 );
+                        double gouyPhs = 0.5 * atan( sqrt(z2ovLr2) );
+                        double phi     = 0.5 * pow(rho,2)/curvRad - gouyPhs;
+                        bzW += laser_[ilaser]->laser_struct.a0 * cos(tau+phi) * laser_[ilaser]->time_profile(tau-delay)
+                            *  laser_[ilaser]->transverse_profile2D(time_dual,rho/waist);
                     }
                     else {
- */
-                        bzW += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual) * laser_[ilaser]->transverse_profile2D(time_dual,yd);
-//                    }//focus
+                        bzW += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual)
+                            *  laser_[ilaser]->transverse_profile2D(time_dual,yd);
+                    }//isFocused or angle!=0
                 }
             }//ilaser
 

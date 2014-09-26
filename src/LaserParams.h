@@ -32,6 +32,9 @@ struct LaserStructure {
     //! focus
     std::vector<double> focus;
     
+    //! control parameter if laser is focused
+    bool isFocused;
+    
     //! Laser delta (ellipticity/polarization parameter)
     double delta;
     
@@ -42,7 +45,7 @@ struct LaserStructure {
     std::vector<int> int_params;
     
     //! double vector for laser parameters
-    std::vector<double> double_params; //Params for longitudinal profile
+    std::vector<double> double_params;
     
     //! Laser transverse profile
     std::string transv_profile;
@@ -52,6 +55,9 @@ struct LaserStructure {
     
     //! double vector for laser parameters
     std::vector<double> double_params_transv;
+    
+    //! time-delay used when the laser as non-normal incidence
+    double delay;
 };
 
 
