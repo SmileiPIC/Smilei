@@ -14,17 +14,17 @@
 
 using namespace std;
 
-FieldsBC1D_SM::FieldsBC1D_SM( PicParams *params )
-    : FieldsBC( params )
+FieldsBC1D_SM::FieldsBC1D_SM( PicParams &params, LaserParams &laser_params )
+    : FieldsBC( params, laser_params )
 {
     // number of nodes of the primal-grid
-    nx_p = params->n_space[0]+1 + 2*params->oversize[0];
+    nx_p = params.n_space[0]+1 + 2*params.oversize[0];
     // number of nodes of the dual-grid
-    nx_d = params->n_space[0]+2 + 2*params->oversize[0];
+    nx_d = params.n_space[0]+2 + 2*params.oversize[0];
 
     // spatial-step and ratios time-step by spatial-step & spatial-step by time-step
-    dx       = params->cell_length[0];
-    dt_ov_dx = params->timestep/params->cell_length[0];
+    dx       = params.cell_length[0];
+    dt_ov_dx = params.timestep/params.cell_length[0];
     dx_ov_dt = 1.0/dt_ov_dx;
 
     // Parameters for the Silver-Mueller boundary conditions

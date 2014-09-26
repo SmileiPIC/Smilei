@@ -10,7 +10,7 @@ class ElectroMagn2D : public ElectroMagn
 {
 public:
     //! Constructor for ElectroMagn2D
-    ElectroMagn2D(PicParams* params, SmileiMPI* smpi);
+    ElectroMagn2D(PicParams &params, LaserParams &laser_params, SmileiMPI* smpi);
 
     //! Destructor for ElectroMagn2D
     ~ElectroMagn2D();

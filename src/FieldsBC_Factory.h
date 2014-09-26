@@ -12,22 +12,22 @@
 
 class FieldsBC_Factory {
 public:
-    static std::vector<FieldsBC*> create(PicParams& params) {
+    static std::vector<FieldsBC*> create(PicParams& params, LaserParams &laser_params) {
         std::vector<FieldsBC*> fieldsBoundCond;
         if ( params.geometry == "1d3v" ) {
 	    fieldsBoundCond.resize(1, NULL);
-            fieldsBoundCond[0] = new FieldsBC1D_SM(&params);
+            fieldsBoundCond[0] = new FieldsBC1D_SM(params, laser_params);
         }
         else if ( params.geometry == "2d3v" ) {
 	    fieldsBoundCond.resize(1, NULL);
 
-	    fieldsBoundCond[0] = new FieldsBC2D_Long_SM(&params); //Boundary in the X direction is set to Silver-Muller.
+	    fieldsBoundCond[0] = new FieldsBC2D_Long_SM(params, laser_params); //Boundary in the X direction is set to Silver-Muller.
 	    if (!params.use_transverse_periodic) {
 		fieldsBoundCond.resize(2, NULL);
                 // Boundary in the Y direction is set to damping if they are not periodic. 
 		//fieldsBoundCond[1] = new FieldsBC2D_Trans_Damping(&params); 
                 // Boundary in the Y direction is set to SM if they are not periodic.
-	        fieldsBoundCond[1] = new FieldsBC2D_Trans_SM(&params); //Boundary in the Y direction is set to Silver-Muller.
+	        fieldsBoundCond[1] = new FieldsBC2D_Trans_SM(params, laser_params); //Boundary in the Y direction is set to Silver-Muller.
 	    }
         }
         else {

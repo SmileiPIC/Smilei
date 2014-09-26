@@ -6,15 +6,25 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // LASER CONSTRUCTOR
 // ---------------------------------------------------------------------------------------------------------------------
-Laser::Laser(double sim_time, std::vector<double> sim_length, LaserStructure laser_param) {
-
-    pi_ov_2 = 0.5 * M_PI;
+Laser::Laser( PicParams &params, LaserParams &laser_params, unsigned int n_laser) {
+             
+    double sim_time= params.sim_time;
+    vector<double> sim_length= params.sim_length;
     
+    laser_struct = laser_params.laser_param[n_laser];
+    
+    pi_ov_2 = 0.5 * M_PI;
+
+    /*
+<<<<<<< HEAD
     laser_struct = laser_param;
     
     boxSide      = laser_struct.boxSide;
     angle        = laser_struct.angle;
     
+=======
+>>>>>>> 7c6c522ae18050ee10db51319d1b2aa54f5e695d
+     */
     a0_delta_y_  = laser_struct.a0 * laser_struct.delta;
     a0_delta_z_  = laser_struct.a0 * sqrt(1.0-pow(laser_struct.delta,2));
 

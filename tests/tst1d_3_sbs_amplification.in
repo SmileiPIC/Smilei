@@ -43,9 +43,14 @@ x_density_coor = 10.0 80.0 110.0
 density_rel_values_x = 0.3 1.0 0.5
 
 
+
 # RANDOM seed 
 # this is used to randomize the random number generator
 random_seed = 0
+
+plasma_geometry = constant
+vacuum_length   = 1.0
+plasma_length   = 8.0
 
 
 # DEFINE ALL SPECIES
@@ -63,10 +68,11 @@ random_seed = 0
 # radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
 #
 species
+
 	species_type = ion
-	initialization_type = regular
+	initialization_type = mj
 	ionization_model = none
-	n_part_per_cell = 1
+	n_part_per_cell = 100
 	c_part_max = 1.0
 	mass = 1836.0
 	charge = 1.0
@@ -74,16 +80,17 @@ species
 	mean_velocity = 0.0
 	temperature = 2.0e-5
 	dynamics_type = norm
-	time_frozen = 600.0
+	time_frozen = 300.0
 	radiating = false
 	bc_part_type_long = refl
 end
 
 species
+
 	species_type = eon
-	initialization_type = regular
+	initialization_type = mj
 	ionization_model = none
-	n_part_per_cell = 1
+	n_part_per_cell = 100
 	c_part_max = 1.0
 	mass = 1.0
 	charge = -1.0
@@ -109,20 +116,36 @@ end
 #
 laser
 	a0=8.5e-2
+<<<<<<< HEAD
 	boxSide=west
 	angle=0
 	delta=1.0              
 	time_profile = sin2
 	double_params = 1.0 1000.0
+=======
+	angle=0
+	delta=1.0              
+	time_profile = sin2
+	double_params = 1.0 240.0
+	boxSide = West
+>>>>>>> 7c6c522ae18050ee10db51319d1b2aa54f5e695d
 end
 
 laser
 	a0=8.5e-3
+<<<<<<< HEAD
 	boxSide=east
 	angle=180
 	delta=1.0        
 	time_profile = sin2
 	double_params = 30.0 0.0 150.0
+=======
+	angle=180
+	delta=1.0        
+	time_profile = sin2
+	double_params = 30.0 0.0 110.0
+	boxSide = east
+>>>>>>> 7c6c522ae18050ee10db51319d1b2aa54f5e695d
 end
 
 # ---------------------

@@ -6,6 +6,7 @@
 #include <map>
 
 #include "Tools.h"
+#include "LaserParams.h"
 
 class PicParams;
 class Species;
@@ -127,7 +128,7 @@ public:
     const std::vector<unsigned int> oversize;
 
     //! Constructor for Electromagn
-    ElectroMagn( PicParams* params, SmileiMPI* smpi );
+    ElectroMagn( PicParams &params, LaserParams &laser_params, SmileiMPI* smpi );
 
     //! Destructor for Electromagn
     virtual ~ElectroMagn();

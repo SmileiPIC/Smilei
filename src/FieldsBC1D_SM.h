@@ -9,7 +9,7 @@ class ElectroMagn;
 
 class FieldsBC1D_SM : public FieldsBC {
 public:
-    FieldsBC1D_SM( PicParams *param );
+    FieldsBC1D_SM( PicParams &param, LaserParams &laser_params);
     ~FieldsBC1D_SM();
 
     virtual void apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi);
