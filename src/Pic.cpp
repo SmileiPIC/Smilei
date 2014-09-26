@@ -233,6 +233,8 @@ int main (int argc, char* argv[])
                     << " it= "       << setw(log10(params.n_time)+1) << itime  << "/" << params.n_time
                     << " sec: "      << setw(9)                      << timer[0].getTime()
                     << " E= "        << setw(9)                      << diags.getScalar("Etot")
+                    //<< " Epart=  "   << setw(9)                      << diags.getScalar("Eparticles")
+                    //<< " Efield= "   << setw(9)                      << diags.getScalar("EFields")
                     << " E_bal(%)= " << 100.0*diags.getScalar("Ebal_norm") );
 
         

@@ -29,6 +29,7 @@ sim_time = 300.0
 cell_length=0.02
 #res_space  = 50
 sim_length = 120.0
+bc_em_type_long = silver-muller
 
 
 # ---------------

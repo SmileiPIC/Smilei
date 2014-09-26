@@ -50,7 +50,7 @@ PartBoundCond::PartBoundCond( PicParams *params, int ispec, SmileiMPI* smpi )
     }
 
     if ( nDim_particle > 1 ) {
-	if (params->use_transverse_periodic) {
+	if (params->bc_em_type_trans=="periodic") {
 	    y_min = smpi->getDomainLocalMin(1);
 	    y_max = smpi->getDomainLocalMax(1);
 	}
@@ -59,7 +59,7 @@ PartBoundCond::PartBoundCond( PicParams *params, int ispec, SmileiMPI* smpi )
 	    y_max = min( y_max_global, smpi->getDomainLocalMax(1) );
 	}
         if ( nDim_particle > 2 ) {
-	    if (params->use_transverse_periodic) {
+	    if (params->bc_em_type_trans=="periodic") {
 		z_min = smpi->getDomainLocalMin(2);
 		z_max = smpi->getDomainLocalMax(2);
 	    }
@@ -91,7 +91,7 @@ PartBoundCond::PartBoundCond( PicParams *params, int ispec, SmileiMPI* smpi )
     }
 
     if ( nDim_particle > 1 ) {
-	//if  (!params->use_transverse_periodic) {
+	//if  (params->bc_em_type_trans!="periodic") {
 	if ( params->species_param[ispec].bc_part_type_trans == "refl" ) {
 	    if (y_min==y_min_global) bc_south = &refl_particle;
 	    if (y_max==y_max_global) bc_north = &refl_particle;
@@ -112,7 +112,7 @@ PartBoundCond::PartBoundCond( PicParams *params, int ispec, SmileiMPI* smpi )
 	}
 	//} // else NULL
 	if ( nDim_particle > 2 ) {
-	    //if (!params->use_transverse_periodic) {
+	    //if  (params->bc_em_type_trans!="periodic") {
 	    if ( params->species_param[ispec].bc_part_type_trans == "refl" ) {
 		if (z_min==z_min_global) bc_bottom = &refl_particle;
 		if (z_max==z_max_global) bc_up     = &refl_particle;

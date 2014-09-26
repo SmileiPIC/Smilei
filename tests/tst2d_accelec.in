@@ -25,6 +25,10 @@ res_space  = 51  5
 sim_length = 500  250  
 #sim_length = 22  250  
 
+bc_em_type_long = silver-muller
+bc_em_type_trans = silver-muller
+
+
 #number_of_procs = 10 10 #In case you want to specify the exact MPI topology.
 
 # PLASMA GEOMETRY
@@ -46,7 +50,6 @@ clrw = 1
 random_seed = 0
 
 # DEFINE ALL SPECIES
-use_transverse_periodic = false
 
 # species_type: ion, electron, positron, test ...
 # initialization_type: regular, cold or (isotrop) Maxwell−Juettner distribution# n_part_per_cell: number of particle−per−cell

@@ -149,12 +149,16 @@ public:
 
     //! local simulation box size in \f$2\pi/k_N \f$
     std::vector<double> sim_length;
+
+    //! Boundary conditions for ElectroMagnetic Fields
+    std::string bc_em_type_long;
+    std::string bc_em_type_trans;
+
+
     //! window simulation box size in number of cells
     int res_space_win_x;
-
     //! Time at which the moving window starts.
     double t_move_win;
-
     //! Velocity of the moving window along x in c.
     double vx_win;
 
@@ -269,9 +273,6 @@ public:
 
         //! Number of MPI process per direction (default : as square as possible)
         std::vector<int> number_of_procs;
-
-        //! Enabled transversal periodic condition, fields & particles (default = true)
-        bool use_transverse_periodic;
 
 };
 

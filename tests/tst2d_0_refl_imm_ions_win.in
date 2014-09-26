@@ -23,6 +23,9 @@ sim_time = 4.0
 #
 res_space  = 250 250  
 sim_length = 3.0 3.0  
+bc_em_type_long = silver-muller
+bc_em_type_trans = periodic
+
 
 res_space_win_x=200
 

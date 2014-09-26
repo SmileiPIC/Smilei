@@ -24,6 +24,7 @@ sim_time = 10.0
 #
 res_space=950
 sim_length=5.0
+bc_em_type_long = silver-muller
  
 # PLASMA GEOMETRY
 # plasma_geometry: string defining the plasma geometry

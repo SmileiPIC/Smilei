@@ -25,6 +25,10 @@ res_space  = 51  5
 #sim_length = 500  250  
 sim_length = 22  250  
 
+bc_em_type_long = silver-muller
+bc_em_type_trans = silver-muller
+
+
 # PLASMA GEOMETRY
 # plasma_geometry: string defining the plasma geometry
 # ***_length: characteristic length for a given geometry
@@ -41,7 +45,6 @@ slope_length = 5.0 0.0
 random_seed = 0
 
 # DEFINE ALL SPECIES
-use_transverse_periodic = true
 
 # species_type: ion, electron, positron, test ...
 # initialization_type: regular, cold or (isotrop) Maxwell−Juettner distribution# n_part_per_cell: number of particle−per−cell

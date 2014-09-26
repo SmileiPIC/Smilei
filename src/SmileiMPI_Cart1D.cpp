@@ -64,7 +64,13 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
         params.n_space_global[i] = round(params.res_space[i]*params.sim_length[i]/(2.0*M_PI));
     
     number_of_procs[0] = smilei_sz;
-    
+
+    // Geometry periodic in x
+    if (params.bc_em_type_long=="periodic") {
+        periods_[0] = 1;
+        PMESSAGE( 0, smilei_rk, "Periodic geometry / x");
+    }  
+
     MPI_Cart_create( SMILEI_COMM_WORLD, ndims_, number_of_procs, periods_, reorder_, &SMILEI_COMM_1D );
     MPI_Cart_coords( SMILEI_COMM_1D, smilei_rk, ndims_, coords_ );
     
@@ -264,7 +270,16 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
             n_part_recv = buff_index_recv_sz[0][(iNeighbor+1)%2];
             if ( (neighbor_[0][0]!=MPI_PROC_NULL) && (neighbor_[0][1]!=MPI_PROC_NULL) && (n_part_send!=0) && (n_part_recv!=0) ) {
                 //Send-receive
+		double x_max = params->cell_length[0]*( params->n_space_global[0] );
+		int iDim = 0; // Cp from 2D
                 for (int iPart=0 ; iPart<n_part_send ; iPart++) {
+		    // Enabled periodicity in X
+		    if ( ( iNeighbor==0 ) &&  (coords_[0] == 0 ) &&( cuParticles.position(0,buff_index_send[iDim][iNeighbor][iPart]) < 0. ) ) {
+			cuParticles.position(0,buff_index_send[iDim][iNeighbor][iPart])     += x_max;
+		    }
+		    else if ( ( iNeighbor==1 ) &&  (coords_[0] == number_of_procs[0]-1 ) && ( cuParticles.position(0,buff_index_send[iDim][iNeighbor][iPart]) >= x_max ) ) {
+			cuParticles.position(0,buff_index_send[iDim][iNeighbor][iPart])     -= x_max;
+		    }
                     cuParticles.cp_particle(buff_index_send[0][iNeighbor][iPart], partVectorSend[0][iNeighbor]);
                 }
 
@@ -281,7 +296,16 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
             } else if ( (neighbor_[0][iNeighbor]!=MPI_PROC_NULL) && (n_part_send!=0) ) {
                 //Send
                 partVectorSend[0][iNeighbor].reserve(n_part_send, 1);
+		double x_max = params->cell_length[0]*( params->n_space_global[0] );
+		int iDim = 0; // Cp from 2D
                 for (int iPart=0 ; iPart<n_part_send ; iPart++) {
+		    // Enabled periodicity in X
+		    if ( ( iNeighbor==0 ) &&  (coords_[0] == 0 ) &&( cuParticles.position(0,buff_index_send[iDim][iNeighbor][iPart]) < 0. ) ) {
+			cuParticles.position(0,buff_index_send[iDim][iNeighbor][iPart])     += x_max;
+		    }
+		    else if ( ( iNeighbor==1 ) &&  (coords_[0] == number_of_procs[0]-1 ) && ( cuParticles.position(0,buff_index_send[iDim][iNeighbor][iPart]) >= x_max ) ) {
+			cuParticles.position(0,buff_index_send[iDim][iNeighbor][iPart])     -= x_max;
+		    }
                     cuParticles.cp_particle(buff_index_send[0][iNeighbor][iPart], partVectorSend[0][iNeighbor]);
                 }
 	        typePartSend = createMPIparticles( &(partVectorSend[0][iNeighbor]), nbrOfProp );

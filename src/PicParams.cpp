@@ -59,16 +59,9 @@ PicParams::PicParams(InputData &ifile) {
         ERROR("Interpolation/projection order " << interpolation_order << " not yet defined in 2D");
     }
     
+    // Disabled, not compatible for now with particles sort
     //if ( !ifile.extract("exchange_particles_each", exchange_particles_each) )
     exchange_particles_each = 1;
-    
-    if ( !ifile.extract("use_transverse_periodic", use_transverse_periodic) ) {
-        use_transverse_periodic = true;
-    }
-    /*else if (!use_transverse_periodic) {
-     for (unsigned int i=0; i<n_species; i++)
-     species_param[i].bc_part_type = "stop";
-     }*/
     
     ifile.extract("res_time", res_time);
     
@@ -91,6 +84,13 @@ PicParams::PicParams(InputData &ifile) {
         ERROR("Dimension of sim_length ("<< sim_length.size() << ") != " << nDim_field << " for geometry " << geometry);
     }
     
+    //! Boundary conditions for ElectroMagnetic Fields
+    if ( !ifile.extract("bc_em_type_long", bc_em_type_long)  )
+        ERROR("bc_em_type_long not defined" );
+    if ( geometry == "2d3v" ) 
+        if ( !ifile.extract("bc_em_type_long", bc_em_type_trans) )
+            ERROR("bc_em_type_trans not defined" );
+
     
     // ------------------------
     // Moving window parameters

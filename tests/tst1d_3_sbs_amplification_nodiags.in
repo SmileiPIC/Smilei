@@ -27,6 +27,7 @@ sim_time = 300.0
 #
 res_space  = 5
 sim_length = 120.0
+bc_em_type_long = silver-muller
 
 
 # ---------------
