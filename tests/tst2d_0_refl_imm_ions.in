@@ -89,15 +89,15 @@ species
 	bc_part_type_trans = none
 end
 
-laser 
-	a0=1.0
-	angle=0
-	delta=0.707106781                
-	time_profile = constant
-	double_params = 11.0
-	transv_profile = plane-wave
-	boxSide = west
-end
+#laser 
+#	a0=1.0
+#	angle=0
+#	delta=0.707106781                
+#	time_profile = constant
+#	double_params = 11.0
+#	transv_profile = plane-wave
+#	boxSide = west
+#end
 
 # ---------------------
 # DIAGNOSTIC PARAMETERS

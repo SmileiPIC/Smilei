@@ -24,8 +24,8 @@ sim_time = 30
 res_space  = 20  20  
 sim_length = 20  50  
 
-bc_em_type_long = silver-muller
-bc_em_type_trans = periodic
+bc_em_type_long  = silver-muller
+bc_em_type_trans = silver-muller
 
 # RANDOM seed 
 # this is used to randomize the random number generator
@@ -46,7 +46,7 @@ laser
 	boxSide = west
 	a0=1.0
 	focus=0.0 25.0
-	angle=20.0 
+	angle=0.0 
 	delta=0.0              
 	time_profile = sin2
 	double_params = 5

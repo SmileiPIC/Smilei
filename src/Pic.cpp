@@ -90,6 +90,10 @@ int main (int argc, char* argv[])
     smpiData->init(params);
     smpiData->barrier();
     if ( smpiData->isMaster() ) params.print();
+    smpiData->barrier();
+    LaserParams laser_params(params, input_data);
+    smpiData->barrier();
+    DiagParams diag_params(params, input_data);
     
     
     // Geometry known, MPI environment specified
@@ -110,9 +114,8 @@ int main (int argc, char* argv[])
     // Initialize the electromagnetic fields and interpolation-projection operators
     // according to the simulation geometry
     // ----------------------------------------------------------------------------
-    // object containing the electromagnetic fields (virtual)
-    LaserParams laser_params(params, input_data);
 
+    // object containing the electromagnetic fields (virtual)
     ElectroMagn* EMfields = ElectroMagnFactory::create(params, laser_params, smpi);
     
     // interpolation operator (virtual)
@@ -122,7 +125,6 @@ int main (int argc, char* argv[])
     Projector* Proj = ProjectorFactory::create(params, smpi);
     
     // Create diagnostics
-    DiagParams diag_params(params, input_data);
     Diagnostic *Diags =new Diagnostic(params,diag_params, smpi);    
     
     // ---------------------------
@@ -230,13 +232,11 @@ int main (int argc, char* argv[])
         
         //double timElapsed=smpiData->time_seconds();
 		if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) )
-            MESSAGE(1, "t= "         << setw(11)                     << time_dual/(2*M_PI)
-                    << " it= "       << setw(log10(params.n_time)+1) << itime  << "/" << params.n_time
-                    << " sec: "      << setw(9)                      << timer[0].getTime()
-                    << " E= "        << setw(9)                      << Diags->getScalar("Etot")
-                    //<< " Epart=  "   << setw(9)                      << diags.getScalar("Eparticles")
-                    //<< " Efield= "   << setw(9)                      << diags.getScalar("EFields")
-                    << " E_bal(%)= " << 100.0*Diags->getScalar("Ebal_norm") );
+            MESSAGE(1,"t = "          << setw(7) << setprecision(2)   << time_dual/(2*M_PI)
+                    << "   it = "       << setw(log10(params.n_time)+1) << itime  << "/" << params.n_time
+                    << "   sec = "      << setw(7) << setprecision(2)   << timer[0].getTime()
+                    << "   E = "        << setw(7) << setprecision(2)   << Diags->getScalar("Etot")
+                    << "   E_bal(%) = " << setw(6) << setprecision(2)   << 100.0*Diags->getScalar("Ebal_norm") );
 
         
         
@@ -323,7 +323,7 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     //                      HERE ENDS THE PIC LOOP
     // ------------------------------------------------------------------
-    MESSAGE("End time loop, time dual = " << time_dual);
+    MESSAGE("End time loop, time dual = " << time_dual/(2*M_PI));
     MESSAGE("-----------------------------------------------------------------------------------------------------");
     
     //double timElapsed=smpiData->time_seconds();
@@ -365,13 +365,14 @@ int main (int argc, char* argv[])
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
     vecSpecies.clear();
     
-    delete sio;
     MESSAGE("-----------------------------------------------------------------------------------------------------");
     MESSAGE("END " << namelist);
     MESSAGE("-----------------------------------------------------------------------------------------------------");
 
+    delete sio;
     delete smpi;
     delete smpiData;
+    
     return 0;
     
 }//END MAIN

@@ -14,11 +14,18 @@
 
 using namespace std;
 
+// ---------------------------------------------------------------------------------------------------------------------
+// SmileiMPI_Cart2D: creator for Smilei MPI environment in 2D cartesian geometry
+// ---------------------------------------------------------------------------------------------------------------------
 SmileiMPI_Cart2D::SmileiMPI_Cart2D( int* argc, char*** argv )
 : SmileiMPI( argc, argv )
 {
 }
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+// SmileiMPI_Cart2D: creator for Smilei MPI environment in 2D cartesian geometry
+// ---------------------------------------------------------------------------------------------------------------------
 SmileiMPI_Cart2D::SmileiMPI_Cart2D( SmileiMPI* smpi)
 : SmileiMPI( smpi )
 {
@@ -28,7 +35,7 @@ SmileiMPI_Cart2D::SmileiMPI_Cart2D( SmileiMPI* smpi)
     periods_  = new int(ndims_);
     reorder_ = 0;
     
-    nbNeighbors_ = 2; // per direction
+    nbNeighbors_ = 2; // number of neighbor processes per direction
     
     for (int i=0 ; i<ndims_ ; i++) periods_[i] = 0;
     for (int i=0 ; i<ndims_ ; i++) coords_[i] = 0;
@@ -47,6 +54,10 @@ SmileiMPI_Cart2D::SmileiMPI_Cart2D( SmileiMPI* smpi)
     
 }
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+// SmileiMPI_Cart2D: creator for Smilei MPI environment in 2D cartesian geometry
+// ---------------------------------------------------------------------------------------------------------------------
 SmileiMPI_Cart2D::~SmileiMPI_Cart2D()
 {
     for (int ix_isPrim=0 ; ix_isPrim<1 ; ix_isPrim++) {
@@ -67,6 +78,10 @@ SmileiMPI_Cart2D::~SmileiMPI_Cart2D()
     
 }
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+// SmileiMPI_Cart2D: create the topology for Smilei MPI environment in 2D cartesian geometry
+// ---------------------------------------------------------------------------------------------------------------------
 void SmileiMPI_Cart2D::createTopology(PicParams& params)
 {
     for (unsigned int i=0 ; i<params.nDim_field ; i++)
@@ -76,18 +91,18 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
         for (unsigned int i=0 ; i<params.nDim_field ; i++)
             number_of_procs[i] = params.number_of_procs[i];
         if (number_of_procs[0]*number_of_procs[1]!=smilei_sz) {
-            PMESSAGE(0,"Domain decomposition specified in the namelist don't match with the number of MPI process");
-            PMESSAGE(0,"\tit will be computed to be as square as possible");
+            DEBUG(3,"Domain decomposition specified in the namelist don't match with the number of MPI process");
+            DEBUG(3,"\tit will be computed to be as square as possible");
             for (unsigned int i=0 ; i<params.nDim_field ; i++)
                 params.number_of_procs[i] = 0;
         }
     }
     if (params.number_of_procs[0]==0) {
 	double tmp(0.);
-        // if !win
+        //      without moving-window
         if (!params.res_space_win_x)
             tmp  = params.res_space[0]*params.sim_length[0] / ( params.res_space[1]*params.sim_length[1] );
-        else // if 
+        else // with moving-window
             tmp = params.res_space_win_x * 2.0 * M_PI / ( params.res_space[1]*params.sim_length[1] );
 
         number_of_procs[0] = min( smilei_sz, max(1, (int)sqrt ( (double)smilei_sz*tmp*tmp) ) );
@@ -108,17 +123,18 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
     // Force configuration of MPI domain decomposition
     //number_of_procs[0] = 1;
     //number_of_procs[1] = 16;
-    MESSAGE("Split : " << smilei_sz << " : " << number_of_procs[0] << " - " << number_of_procs[1]);
-    cout << params.bc_em_type_long << " " << params.bc_em_type_trans << endl; 
+    MESSAGE("Domain decomposition : " << smilei_sz << " = " << number_of_procs[0] << " x " << number_of_procs[1]);
+    MESSAGE("Boundary conditions in x- & y-directions: "<< params.bc_em_type_long << ", " << params.bc_em_type_trans);
+            
     // Geometry periodic in x
     if (params.bc_em_type_long=="periodic") {
         periods_[0] = 1;
-        MESSAGE( "Periodic geometry / x");
+        MESSAGE(1,"applied topology for periodic BCs in x-direction");
     }
     // Geometry periodic in y
     if (params.bc_em_type_trans=="periodic") {
         periods_[1] = 1;
-        MESSAGE( "Periodic geometry / y");
+        MESSAGE(2,"applied topology for periodic BCs in y-direction");
     }
     MPI_Cart_create( SMILEI_COMM_WORLD, ndims_, number_of_procs, periods_, reorder_, &SMILEI_COMM_2D );
     MPI_Cart_coords( SMILEI_COMM_2D, smilei_rk, ndims_, coords_ );
@@ -128,7 +144,7 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
     
     for (int iDim=0 ; iDim<ndims_ ; iDim++) {
         MPI_Cart_shift( SMILEI_COMM_2D, iDim, 1, &(neighbor_[iDim][0]), &(neighbor_[iDim][1]) );
-        PMESSAGE ( 0, smilei_rk, "Neighbors of process in direction " << iDim << " : " << neighbor_[iDim][0] << " - " << neighbor_[iDim][1]  );
+        DEBUG(3,smilei_rk,"Neighbors of process in direction " << iDim << " : " << neighbor_[iDim][0] << " - " << neighbor_[iDim][1]  );
     }
     
     
@@ -170,15 +186,13 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
         //                 different from domain on which E, B, J are defined
         min_local[i] = (cell_starting_global_index[i]                  )*params.cell_length[i];
         max_local[i] = (cell_starting_global_index[i]+params.n_space[i])*params.cell_length[i];
-        PMESSAGE( 0, smilei_rk, "min_local / mac_local on " << smilei_rk << " = " << min_local[i] << " / " << max_local[i] << " selon la direction " << i );
+        //PMESSAGE( 0, smilei_rk, "min_local / mac_local on " << smilei_rk << " = " << min_local[i] << " / " << max_local[i] << " selon la direction " << i );
         
         cell_starting_global_index[i] -= params.oversize[i];
         
     }
     
-    
-    
-    MESSAGE( "n_space / rank " << smilei_rk << " = " << params.n_space[0] << " " << params.n_space[1] );
+    DEBUG(10,"n_space / rank " << smilei_rk << " = " << params.n_space[0] << " " << params.n_space[1] );
     
     extrem_ranks[0][0] = 0;
     int rank_min =  0;

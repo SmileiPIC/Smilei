@@ -45,6 +45,17 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
         ifile.extract("double_params_transv",tmpLaser.double_params_transv ,"laser",0,n_laser);
         bool delayExists = ifile.extract("delay",tmpLaser.delay ,"laser",0,n_laser);
         
+        
+        // -------------------------------------
+        // Printing out laser related parameters
+        // -------------------------------------
+        MESSAGE("Laser related parameters");
+        MESSAGE(1,"n_laser        : " << n_laser);
+        for ( unsigned int i=0 ; i<n_laser ; i++ ) {
+            MESSAGE(2,"laser " << i << ": (boxSide, a0) : (" << laser_param[i].boxSide <<  ", " << laser_param[i].a0 <<  ")");
+        }
+        
+        
         // -----------------------------------------------------------------
         // normalization (from wavelength-related units to normalized units)
         // -----------------------------------------------------------------
@@ -73,7 +84,8 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
             if ( !delayExists ) {
                 tmpLaser.delay = tmpLaser.int_params_transv[0]*tmpLaser.double_params_transv[0]
                 * sin(tmpLaser.angle*M_PI/180.0);
-                WARNING("Introduction of a time-delay of " << tmpLaser.delay << " on laser " << n_laser);
+                if (tmpLaser.delay!=0)
+                    WARNING("Introduction of a time-delay of " << tmpLaser.delay << " on laser " << n_laser);
             }
             if ( ((tmpLaser.angle!=0) || (tmpLaser.isFocused)) && (tmpLaser.transv_profile!="focused") ) {
                 WARNING("Laser "<<n_laser<<" transv_profile redefined as focused (Gaussian) and delta = "<<tmpLaser.delta<< " ignored");
@@ -83,15 +95,6 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
         
         laser_param.push_back(tmpLaser);
         n_laser++;
-    }
-    
-    
-    // Laser related parameters
-    // ------------------------
-    MESSAGE("Laser related parameters");
-    MESSAGE(1,"n_laser        : " << n_laser);
-    for ( unsigned int i=0 ; i<n_laser ; i++ ) {
-        MESSAGE(2,"laser " << i << ": (boxSide, a0) : (" << laser_param[i].boxSide <<  ", " << laser_param[i].a0 <<  ")");
     }
     
 	

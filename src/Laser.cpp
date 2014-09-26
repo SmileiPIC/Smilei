@@ -7,6 +7,8 @@ using namespace std;
 // LASER CONSTRUCTOR
 // ---------------------------------------------------------------------------------------------------------------------
 Laser::Laser( PicParams &params, LaserParams &laser_params, unsigned int n_laser) {
+    
+    MESSAGE(1,"Creating laser " << n_laser);
              
     double sim_time= params.sim_time;
     vector<double> sim_length= params.sim_length;
@@ -16,16 +18,6 @@ Laser::Laser( PicParams &params, LaserParams &laser_params, unsigned int n_laser
     pi_ov_2 = 0.5 * M_PI;
     PI2     = 2.0 * M_PI;
 
-    /*
-<<<<<<< HEAD
-    laser_struct = laser_param;
-    
-    boxSide      = laser_struct.boxSide;
-    angle        = laser_struct.angle;
-    
-=======
->>>>>>> 7c6c522ae18050ee10db51319d1b2aa54f5e695d
-     */
     a0_delta_y_            = laser_struct.a0 * laser_struct.delta;
     a0_delta_z_            = laser_struct.a0 * sqrt(1.0-pow(laser_struct.delta,2));
 
@@ -98,22 +90,6 @@ Laser::Laser( PicParams &params, LaserParams &laser_params, unsigned int n_laser
 
     }
 
-    /* Arnaud implementation (Merge)
-    // gauss time-profile
-    // double_params[0]: Time at which maximum intensity is reached at the x=0 boundary.
-    // double_params[1]: Longitudinal FWHM of the pulse intensity.
-    else if (type_of_time_profile=="gauss" ) {
-
-        if (double_params.size()<1) {
-            double_params.resize(2);
-            double_params[0] = sim_time/2.0;
-        }
-        else {
-            double_params.resize(2);
-        }
-    }*/
-
-
     else {
         ERROR("Laser profile " << type_of_time_profile <<  " not defined");
     }// ENDIF type_of_time_profile
@@ -127,7 +103,7 @@ Laser::Laser( PicParams &params, LaserParams &laser_params, unsigned int n_laser
     
     // Plane-wave (default): no need of double_params_transv & int_params_transv
     if (type_of_transv_profile=="plane-wave") {
-        MESSAGE(1,"Laser is a plane-wave");
+        MESSAGE(2,"Laser is a plane-wave");
     }
     
     // Gaussian or hyper-Gaussian transverse-profile
@@ -135,7 +111,7 @@ Laser::Laser( PicParams &params, LaserParams &laser_params, unsigned int n_laser
     // double_params_transv[1] : FWHM in intensity (default = length_sim[1]/4)
     // int_params_transv[0]    : order of the hyper-Gaussian profile  (default=2)
     else if (type_of_transv_profile=="gaussian") {
-        MESSAGE(1,"Laser has a Gaussian or hyper-Gaussian transverse profile");
+        MESSAGE(2,"Laser has a Gaussian or hyper-Gaussian transverse profile");
         if (double_params_transv.size()<2) {
             double_params_transv.resize(2);
             double_params_transv[0] = sim_length[1]/2.0;
@@ -149,7 +125,7 @@ Laser::Laser( PicParams &params, LaserParams &laser_params, unsigned int n_laser
     
     // focused: laser beam with either an arbitrary incident angle or focus
     else if (type_of_transv_profile=="focused") {
-        MESSAGE(1,"Laser has a Gaussian transverse profile with arbitrary focus or incidence");
+        MESSAGE(2,"Laser has a Gaussian transverse profile with arbitrary focus or incidence");
         if (double_params_transv.size()<1) {
             double_params_transv.resize(1);
             double_params_transv[0] = sim_length[1]/4.0;
@@ -163,26 +139,6 @@ Laser::Laser( PicParams &params, LaserParams &laser_params, unsigned int n_laser
         type_of_transv_profile = "plane-wave";
         WARNING("Laser had no transverse profile defined: use plane-wave as default");
     }
-
-   /* Arnaud implementation (Merge)
-   //Constant transverse profile
-   if (type_of_transv_profile=="constant") {
-
-        if (y_params.size()>0) {
-            double_params.resize(0);
-        }
-    }
-    else if (type_of_transv_profile=="gauss"){
-
-        if (double_params.size()<1) {
-            double_params.resize(1);
-            double_params[0] = sim_length[1]/4.0;
-        }
-        else {
-            double_params.resize(1);
-        }
-    }
-   */
 
 }
 

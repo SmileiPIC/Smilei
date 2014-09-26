@@ -17,11 +17,18 @@
 
 using namespace std;
 
+// ---------------------------------------------------------------------------------------------------------------------
+// SmileiMPI_Cart1D: creator for Smilei MPI environment in 1D cartesian
+// ---------------------------------------------------------------------------------------------------------------------
 SmileiMPI_Cart1D::SmileiMPI_Cart1D( int* argc, char*** argv )
 : SmileiMPI( argc, argv )
 {
 }
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+// SmileiMPI_Cart1D: creator for Smilei MPI environment in 1D cartesian
+// ---------------------------------------------------------------------------------------------------------------------
 SmileiMPI_Cart1D::SmileiMPI_Cart1D( SmileiMPI* smpi)
 : SmileiMPI( smpi )
 {
@@ -47,6 +54,10 @@ SmileiMPI_Cart1D::SmileiMPI_Cart1D( SmileiMPI* smpi)
     
 }
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+// SmileiMPI_Cart1D: creator for Smilei MPI environment in 1D cartesian
+// ---------------------------------------------------------------------------------------------------------------------
 SmileiMPI_Cart1D::~SmileiMPI_Cart1D()
 {
     delete [] number_of_procs;
@@ -57,6 +68,10 @@ SmileiMPI_Cart1D::~SmileiMPI_Cart1D()
     
 }
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+// SmileiMPI_Cart1D: create the topology for Smilei MPI environment in 1D cartesian
+// ---------------------------------------------------------------------------------------------------------------------
 void SmileiMPI_Cart1D::createTopology(PicParams& params)
 {
 
@@ -68,7 +83,7 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
     // Geometry periodic in x
     if (params.bc_em_type_long=="periodic") {
         periods_[0] = 1;
-        PMESSAGE( 0, smilei_rk, "Periodic geometry / x");
+        MESSAGE("Periodic geometry in x-direction");
     }  
 
     MPI_Cart_create( SMILEI_COMM_WORLD, ndims_, number_of_procs, periods_, reorder_, &SMILEI_COMM_1D );
@@ -77,7 +92,7 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
     
     for (int iDim=0 ; iDim<ndims_ ; iDim++) {
         MPI_Cart_shift( SMILEI_COMM_1D, iDim, 1, &(neighbor_[iDim][0]), &(neighbor_[iDim][1]) );
-        PMESSAGE ( 0, smilei_rk, "Neighbors of process in direction " << iDim << " : " << neighbor_[iDim][0] << " ; " << neighbor_[iDim][1] << " Null :" << MPI_PROC_NULL );
+        DEBUG(3, smilei_rk, "Neighbors of process in direction " << iDim << " : " << neighbor_[iDim][0] << " ; " << neighbor_[iDim][1] << " Null :" << MPI_PROC_NULL );
     }
     
     
@@ -118,13 +133,12 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
         //                 different from domain on which E, B, J are defined
         min_local[i] = (cell_starting_global_index[i]                  )*params.cell_length[i];
         max_local[i] = (cell_starting_global_index[i]+params.n_space[i])*params.cell_length[i];
-        //PMESSAGE( 0, smilei_rk, "min_local / mac_local on " << smilei_rk << " = " << min_local[i] << " / " << max_local[i] << " selon la direction " << i );
         
         cell_starting_global_index[i] -= params.oversize[i];
         
     }
     
-    PMESSAGE ( 0, smilei_rk, "n_space = " << params.n_space[0]  );
+    DEBUG(3, smilei_rk, "n_space = " << params.n_space[0] );
     
     
     // -------------------------------------------------------
@@ -161,10 +175,11 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
     int k=0;
     int i,ii, iPart;
     int n_part_recv, n_part_send;
-    /********************************************************************************/
+    
+    // ------------------------------------------------------------------------------
     // Build lists of indexes of particle to exchange per neighbor
     // Computed from indexes_of_particles_to_exchange computed during particles' BC
-    /********************************************************************************/
+    // ------------------------------------------------------------------------------
     
     std::vector< std::vector<int> >* indexes_of_particles_to_exchange_per_thd = &species->indexes_of_particles_to_exchange_per_thd;
     //std::vector<int>                 indexes_of_particles_to_exchange;
