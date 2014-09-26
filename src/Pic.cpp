@@ -63,8 +63,8 @@ int main (int argc, char* argv[])
     // ------------------------- 
 
     // Check for namelist (input file)
-    if (argc<1) ERROR("No namelists given!");
-    string namelist=argv[0];
+    if (argc<2) ERROR("No namelists given!");
+    string namelist=argv[1];
     
     // Send information on current simulation
     MESSAGE(" ___           _   _         _   ");
