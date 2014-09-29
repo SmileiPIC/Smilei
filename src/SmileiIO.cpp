@@ -96,15 +96,25 @@ SmileiIO::SmileiIO( PicParams* params, SmileiMPI* smpi ) : dump_times(0), stop_f
 	
 
     hid_t sid  = H5Screate(H5S_SCALAR);
-    hid_t aid = H5Acreate (global_file_id_, "res_time", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT);
+    hid_t aid = H5Acreate (global_file_id_, "res_time", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, write_plist);
     H5Awrite(aid, H5T_NATIVE_DOUBLE, &(params->res_time));
     H5Sclose(sid);
     H5Aclose(aid);
     
     hsize_t dimsPos = params->res_space.size();
     sid = H5Screate_simple(1, &dimsPos, NULL);
-    aid = H5Acreate (global_file_id_, "res_space", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT);
+    aid = H5Acreate (global_file_id_, "res_space", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, write_plist);
     H5Awrite(aid, H5T_NATIVE_DOUBLE, &(params->res_space[0]));
+    H5Aclose(aid);
+    H5Sclose(sid);
+
+    dimsPos = params->sim_length.size();
+    sid = H5Screate_simple(1, &dimsPos, NULL);
+    vector<double> sim_length_norm=params->sim_length;
+    std::transform(sim_length_norm.begin(), sim_length_norm.end(), sim_length_norm.begin(),std::bind1st(std::multiplies<double>(),1.0/(2.0*M_PI)));
+
+    aid = H5Acreate (global_file_id_, "sim_length", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, write_plist);
+    H5Awrite(aid, H5T_NATIVE_DOUBLE, &(sim_length_norm[0]));
     H5Aclose(aid);
     H5Sclose(sid);
     

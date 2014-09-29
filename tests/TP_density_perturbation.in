@@ -27,7 +27,7 @@ sim_time = 10.0
 #
 res_space  = 128
 sim_length = 1.0
-bc_em_type_long = silver-muller
+bc_em_type_long = periodic
 
 # ---------------
 # PLASMA GEOMETRY
@@ -124,38 +124,19 @@ fieldDump_every = 1
 
 # kind of projection: 1D) xPx xPy xPz xLor PxPy PxPz PyPz
 # kind of projection: 2D) xPx xPy xPz xLor yPx yPy yPz yLor PxPy PxPz PyPz
-diagnostic phase
- 	kind = xLor
- 	species = eon
- 	every = 1
- 
- 	pos_min = 0
- 	pos_max = 1
- 	pos_num = 100
- 	
- 	lor_min = 0.95
- 	lor_max = 1
- 	lor_num = 100
- 	
- 	deflate=5
- end
 
 diagnostic phase
- 	kind = xLor xPx
+ 	kind = xPx
  	species = eon
  	every = 1
  
  	pos_min = 0
  	pos_max = 1
- 	pos_num = 100
+ 	pos_num = 200
  	
- 	lor_min = 0.95
- 	lor_max = 1
- 	lor_num = 100
- 	
- 	mom_min = 0.95
- 	mom_max = 1
- 	mom_num = 100
+ 	mom_min = 0
+ 	mom_max = 1.1
+ 	mom_num = 200
  	
  	deflate=5
  end

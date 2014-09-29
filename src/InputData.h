@@ -41,9 +41,6 @@ public:
     //! parse stringstream
     void parseStream();
 
-    //! read input data parameters in PicParams
-    void InputDataParam(PicParams&);
-
     //! write namelist onto file (or cerr if unable)
     void write(std::string);
 

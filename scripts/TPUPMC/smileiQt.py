@@ -6,7 +6,7 @@ import sys, os, random
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtGui import QFileDialog
 
-import matplotlib
+import matplotlib as mpl
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as NavigationToolbar
 
@@ -19,6 +19,7 @@ from matplotlib.widgets import Cursor
 import os
 import tables as tb
 import numpy as np
+import re
 
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
@@ -45,113 +46,128 @@ class smileiQt(QtGui.QMainWindow):
         self.step=0
         
         self.timer=QtCore.QTimer()
+        self.timer.setInterval(50)
         self.timer.timeout.connect(self.do_timer)
         
         self.readData()
 
         self.show()
-
+    
+    def on_slider_valueChanged(self,step):
+        self.step=step
+        self.doPlots()
+    
     def on_back_released(self):
-        self.step-=1
-        self.doPlots()
+        self.ui.slider.setValue(self.step-1)
 
-    def on_forward_released(self):
-        self.step+=1
-        self.doPlots()
+    def on_forward_pressed(self):
+        self.ui.slider.setValue(self.step+1)
 
     def on_allBack_released(self):
-        self.step=0
-        self.doPlots()
+        self.ui.slider.setValue(0)
 
     def on_allForward_released(self):
-        self.step=len(self.fieldSteps)
-        self.doPlots()
+        self.ui.slider.setValue(len(self.fieldSteps))
 
     def on_playStop_released(self):
         if self.playStop.isChecked() :
             self.playStop.setText("Stop")
-            self.timer.stop()
+            self.timer.start()
         else:
             self.playStop.setText("Play")
-            self.timer.start(100)
+            self.timer.stop()
         
     def load_settings(self):
         settings=QtCore.QSettings("smileiQt","");
         settings.beginGroup("Preferences");
         self.dirName=str(settings.value("dirName",".").toString());
         settings.endGroup();
-
-    def numPlots(self):
-        num=0;
-        menus=[self.ui.menuScalars,self.ui.menuFields,self.ui.menuPhase_spaces,self.ui.menuProbes]
-        for j in menus :
-            for i in j.actions():
-                if i.isChecked() :
-                    num+=1
-        return num
     
     def doPlots(self):
-
-        self.step=max(0,min(self.step,len(self.fieldSteps)))
-
-        plt.close('all')
-        if hasattr(self, 'figure') :
-            figure.clf()
-        plt.clf()
-        nplots=self.numPlots()
-        if nplots > 0: 
-            nplot=0
+        print "doPlots"
+        self.step=max(0,min(self.step,len(self.fieldSteps)-1))
+        self.slider.setValue(self.step)
         
-            fname="scalars.txt"
-            if os.path.isfile(fname) :
-                file=np.loadtxt(fname)
-                for j in self.ui.menuScalars.actions():
-                    if j.isChecked() :
-                        col=j.data().toInt()[0]
-                        x=file[:,0]
-                        y=file[:,col]
-                        self.axarr[nplot][0].plot(x,y)
-                        self.axarr[nplot][0].set_title(j.text())
-                        nplot+=1
-
-            fname="Fields.h5"
-
-            if os.path.isfile(fname) :
-                f=tb.openFile(os.path.join(self.dirName, fname))
-                nameGroup="/%010d" % self.step
-                for i in self.ui.menuFields.actions() :
-                    if i.isChecked() :
-                        nameData=nameGroup+"/"+i.text()
+        if not hasattr(self,'figure'): return
+        
+        nplot=0
+    
+        fname=os.path.join(self.dirName, "scalars.txt")
+        if os.path.isfile(fname) :
+            file=np.loadtxt(fname)
+            for j in self.ui.menuScalars.actions():
+                if j.isChecked() :
+                    col=j.data().toInt()[0]
+                    x=file[:,0]
+                    y=file[:,col]
+                    self.axarr[nplot][0].plot(x,y)
+                    self.axarr[nplot][0].set_title(j.text())
                     
-                        data=f.getNode(str(nameData)).read()
-                        x=np.array(range(len(data)))/f.root._v_attrs.res_space[0]
-                        y=data
-                        if not self.autoScale.isChecked() :
-                            oldRange=self.axarr[nplot][0].get_ylim()
-                        
-                        self.axarr[nplot][0].plot(x,y)
-                        self.axarr[nplot][0].set_title(i.text() + " %.3f" % (self.step/f.root._v_attrs.res_time) )
-                        if not self.autoScale.isChecked() :
-                            self.axarr[nplot][0].set_ylim(oldRange)
+                    self.axarr[nplot][0].axvline(x=self.step/self.res_time,c="red",linewidth=2,zorder=0, clip_on=False)
+                    nplot+=1
 
-                        nplot+=1
-                    
-                f.close()
+        fname=os.path.join(self.dirName, "Fields.h5")
+        if os.path.isfile(fname) :
+            f=tb.openFile(fname)
+            nameGroup="/%010d" % self.step
+            for i in self.ui.menuFields.actions() :
+                if i.isChecked() :
+                    nameData=nameGroup+"/"+i.text()
                 
+                    data=f.getNode(str(nameData)).read()
+                    x=np.array(range(len(data)))/f.root._v_attrs.res_space[0]
+                    y=data
+                    if not self.autoScale.isChecked() :
+                        oldRange=self.axarr[nplot][0].get_ylim()
+                    
+                    self.axarr[nplot][0].plot(x,y)
+                    self.axarr[nplot][0].set_title(i.text() + " %.3f" % (self.step/self.res_time) )
+                    if not self.autoScale.isChecked() :
+                        self.axarr[nplot][0].set_ylim(oldRange)
+                        
+                    self.axarr[nplot][0].set_xlim(0,self.sim_length)
+
+                    nplot+=1
+                
+            f.close()
+
+        
+        fname=os.path.join(self.dirName, "PhaseSpace.h5")
+        if os.path.isfile(fname) :
+            f=tb.openFile(fname)
+
+            for i in self.ui.menuPhase_spaces.actions() :
+                if i.isChecked() :
+                    nameData=str(i.data().toString())
+                    node=f.getNode(str(nameData))
+                    print "----->"
+                    data=node.read()[self.step,:,:].T
+                    print "<-----"
+                    print data.shape
+                    print data.min(), data.max()
+                    extents=node._v_parent._v_attrs.extents.reshape(4).tolist()
+                    self.axarr[nplot][0].imshow(data,extent=extents, aspect='auto')
+#                     cb=plt.colorbar(im)
+                    nplot+=1
+                
+                
+            f.close()
+
+        if nplot>0 : 
             self.canvas.draw()
 
-    def do_timer(self):        
-        self.step+=1
-
-        self.doPlots()
+    def do_timer(self):
+        self.ui.slider.setValue(self.step+1)
         
 
     def readData(self):
-        fname="scalars.txt"
+    
+        allOk=True
+        
+        fname=os.path.join(self.dirName, "scalars.txt")
         if os.path.isfile(fname) :
-
             names=[]
-            for line in open(os.path.join(self.dirName, "scalars.txt")):
+            for line in open(fname):
                 li=line.strip()
                 if li.startswith("#"):
                     list=line.split()
@@ -164,11 +180,17 @@ class smileiQt(QtGui.QMainWindow):
                 my_act.setCheckable(True)
                 self.ui.menuScalars.addAction(my_act)
                 my_act.triggered.connect(self.action_clicked)
+        else:
+            allOk=False
         
-        fname="Fields.h5"
+        fname=os.path.join(self.dirName, "Fields.h5")
         if os.path.isfile(fname) :
             self.fieldSteps=[]
             f=tb.openFile(os.path.join(self.dirName, fname))
+            
+            self.res_time=f.root._v_attrs.res_time
+            self.sim_length=f.root._v_attrs.sim_length
+            
             for group in f.list_nodes("/", classname='Group'):
                 self.fieldSteps.append(group._v_name)
 
@@ -180,42 +202,45 @@ class smileiQt(QtGui.QMainWindow):
                 self.ui.menuFields.addAction(my_act)
                 my_act.triggered.connect(self.action_clicked)
             f.close()
+            self.slider.setRange(0,len(self.fieldSteps)-1)
+        else:
+            allOk=False
 
-#         fname="PhaseSpace.h5"
-#         if os.path.isfile(fname) :
-#             f=tb.openFile(os.path.join(self.dirName, fname))
-#             for i in f.root:
-#                 for j in i:
-#                     name=j._v_name
-#                     my_act= QtGui.QAction(i._v_name+" "+name,self)
-#                     my_act.setData(i._v_name+"/"+name)
-#                     my_act.setCheckable(True)
-#                     self.ui.menuPhase_spaces.addAction(my_act)
-#                     my_act.triggered.connect(self.action_clicked)
-#             f.close()
-        
-#         fname="Probes.h5"
-#         if os.path.isfile(fname) :
-#             f=tb.openFile(os.path.join(self.dirName, fname))
-#             for i in f.root:
-#                 my_menu = self.ui.menuProbes.addMenu(i._v_name)
-#                 
-#                 my_act= QtGui.QAction(i._v_name,self)
-#                 my_act.setData(i._v_name)
-#                 my_act.setCheckable(True)
-#                 my_menu.addAction(my_act)
-#                 
-#                 my_act.triggered.connect(self.action_clicked)
-#             f.close()
-        
-        self.doPlots()
+        fname=os.path.join(self.dirName, "PhaseSpace.h5")
+        if os.path.isfile(fname) :
+            f=tb.openFile(os.path.join(self.dirName, fname))
+            for phaseGroup in f.walkNodes("/", classname='Array'):
+                my_act= QtGui.QAction(re.sub('/',' ',phaseGroup._v_pathname),self)
+                my_act.setData(phaseGroup._v_pathname)
+                my_act.setCheckable(True)
+                self.ui.menuPhase_spaces.addAction(my_act)
+                my_act.triggered.connect(self.action_clicked)
+            f.close()
+        else:
+            allOk=False
+
+        if allOk:
+            self.doPlots()
         
     def rescalePlots(self):
-        nplots=self.numPlots()
+        self.nplots=0;
+        menus=[self.ui.menuScalars,self.ui.menuFields,self.ui.menuPhase_spaces]
+        for j in menus :
+            for i in j.actions():
+                if i.isChecked() :
+                    self.nplots+=1
+                    
+        menus=[self.ui.menuPhase_spaces]
+
+#         self.cbs=[]
+#         for i in self.ui.menuPhase_spaces.actions():
+#             self.cbs.append(i.isChecked())
+                    
         
-        if nplots > 0: 
         
-            figure, self.axarr = plt.subplots(nplots,1, squeeze=False)
+        if self.nplots > 0: 
+        
+            self.figure, self.axarr = plt.subplots(self.nplots,1, squeeze=False)
             
             for i in self.axarr:
                 i[0].hold(False)
@@ -224,7 +249,7 @@ class smileiQt(QtGui.QMainWindow):
             for i in reversed(range(self.plot.layout().count())): 
                 self.plot.layout().itemAt(i).widget().setParent(None)
 
-            self.canvas = FigureCanvas(figure)
+            self.canvas = FigureCanvas(self.figure)
             toolbar = NavigationToolbar(self.canvas, self)
             toolbar.setFixedHeight(18)
             self.plot.layout().addWidget(toolbar)
@@ -233,6 +258,7 @@ class smileiQt(QtGui.QMainWindow):
 
 
     def action_clicked(self):
+        print "action_clicked"
         self.rescalePlots()
         self.doPlots()
 #         print self.sender().data().toInt()
@@ -240,7 +266,7 @@ class smileiQt(QtGui.QMainWindow):
     def on_changeDir(self):
         dirName=QtGui.QFileDialog.getExistingDirectory(self,self.dirName, options=QFileDialog.ShowDirsOnly)
         if not dirName.isEmpty():
-            self.dirName=dirName
+            self.dirName=str(dirName)
             self.readData()
 
 def main():

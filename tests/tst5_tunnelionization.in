@@ -1,7 +1,7 @@
 # SIMULATION PARAMETERS
 
 # print_every 
-print_every = 100
+print_every = 1
 
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
@@ -69,7 +69,7 @@ species
 	temperature = 0.0
 	dynamics_type = norm
 	ionization_model = tunnel
-	time_frozen = 100.0
+	time_frozen = 0.0
 	radiating = false
 	bc_part_type_long = none
 end
@@ -91,7 +91,7 @@ species
 	temperature = 0.1
 	dynamics_type = norm	
 	ionization_model = none
-	time_frozen = 100.0
+	time_frozen = 0.0
 	radiating = false
 	bc_part_type_long = none
 end

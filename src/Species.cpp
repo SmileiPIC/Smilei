@@ -46,7 +46,7 @@ densityProfile(DensityFactory::create(params))
     // -------------------
     params_ = params;
     
-    PI2 = 8.0*atan(1.0);
+    PI2 = 2.0 * M_PI;
 	
     name_str=params->species_param[ispec].species_type;
 	
@@ -471,6 +471,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 // electron_species->particles.push_back(Ionize->new_electrons[i]);
 				
                 int ibin = (int) ((Ionize->new_electrons).position(0,i) / cell_length[0]) - smpi->getCellStartingGlobalIndex(0) + oversize[0];
+                DEBUG("here " << ibin << " " << (Ionize->new_electrons).position(0,i)/(2*M_PI));
                 // Copy Ionize->new_electrons(i) in electron_species->particles at position electron_species->bmin[ibin]
                 Ionize->new_electrons.cp_particle(i, electron_species->particles, electron_species->bmin[ibin] );
 				
@@ -481,6 +482,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                     electron_species->bmin[i]++;
                     electron_species->bmax[i]++;
                 }
+                DEBUG("here");
             }
 			
             // if (Ionize->new_electrons.size())

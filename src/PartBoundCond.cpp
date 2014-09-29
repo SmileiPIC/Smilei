@@ -25,12 +25,12 @@ PartBoundCond::PartBoundCond( PicParams *params, int ispec, SmileiMPI* smpi )
 //    double x_min_global = params->cell_length[0]*n_ord_proj_max;
 //    double x_max_global = params->cell_length[0]*( params->n_space_global[0]-1-n_ord_proj_max );
     double x_min_global = 0;
-    double x_max_global = params->cell_length[0]*( params->n_space_global[0] );
+    double x_max_global = params->cell_length[0]*(params->n_space_global[0]);
 
-    double y_min_global = params->cell_length[1]*n_ord_proj_max;
-    double y_max_global = params->cell_length[1]*( params->n_space_global[1]-1-n_ord_proj_max );
-    double z_min_global = params->cell_length[2]*n_ord_proj_max;
-    double z_max_global = params->cell_length[2]*( params->n_space_global[2]-1-n_ord_proj_max );
+    double y_min_global = 0;
+    double y_max_global = params->cell_length[1]*(params->n_space_global[1]);
+    double z_min_global = 0;
+    double z_max_global = params->cell_length[2]*(params->n_space_global[2]);
 
     bc_west  = NULL;
     bc_east  = NULL;
