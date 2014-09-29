@@ -22,10 +22,10 @@ PartBoundCond::PartBoundCond( PicParams *params, int ispec, SmileiMPI* smpi )
     if (params->interpolation_order==3) n_ord_proj_max = 5;
 
     // Absolute global values
-    double x_min_global = params->cell_length[0]*n_ord_proj_max;
-    double x_max_global = params->cell_length[0]*( params->n_space_global[0]-1-n_ord_proj_max );
-//    double x_min_global = 0;
-//    double x_max_global = params->cell_length[0]*( params->n_space_global[0] );
+//    double x_min_global = params->cell_length[0]*n_ord_proj_max;
+//    double x_max_global = params->cell_length[0]*( params->n_space_global[0]-1-n_ord_proj_max );
+    double x_min_global = 0;
+    double x_max_global = params->cell_length[0]*( params->n_space_global[0] );
 
     double y_min_global = params->cell_length[1]*n_ord_proj_max;
     double y_max_global = params->cell_length[1]*( params->n_space_global[1]-1-n_ord_proj_max );
