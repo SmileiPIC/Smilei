@@ -90,12 +90,12 @@ PicParams::PicParams(InputData &ifile) {
     if (res_space.size()!=nDim_field) {
         ERROR("Dimension of res_space ("<< res_space.size() << ") != " << nDim_field << " for geometry " << geometry);
     }
-    double Dx2 = 0.0;
+    double res_space2 = 0.0;
     for (short int i=0; i<res_space.size(); i++) {
-        Dx2 += 1.0/(res_space[i]*res_space[i]);
+        res_space2 += (res_space[i]*res_space[i]);
     }
-    if (sqrt(Dx2) < 1.0/res_time) {
-        WARNING("Possible CFL problem: time step = " << 1.0/res_time << " > Dx = " << sqrt(Dx2) );
+    if (sqrt(res_space2) > res_time) {
+        WARNING("Possible CFL problem: time step = " << 1.0/res_time << " > Dx = " << sqrt(res_space2) );
     }
     
     ifile.extract("sim_length",sim_length);
