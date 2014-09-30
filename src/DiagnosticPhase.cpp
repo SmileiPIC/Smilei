@@ -16,11 +16,8 @@ my_species(phaseStruct.species)
 
 void DiagnosticPhase::writeData(hid_t did) {
 	
-	Field2D my_data_sum;
-	my_data_sum.allocateDims(my_data.dims());
+    MPI_Reduce(did>0?MPI_IN_PLACE:my_data.data_, my_data.data_,my_data.globalDims_,MPI_DOUBLE,  MPI_SUM, 0, MPI_COMM_WORLD);
 
-	MPI_Reduce(my_data.data_,my_data_sum.data_,my_data.globalDims_,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
-	    
     if (did>0) {
         hid_t sid = H5Dget_space(did);
         hsize_t dims[3];
@@ -39,7 +36,7 @@ void DiagnosticPhase::writeData(hid_t did) {
         
         H5Sselect_hyperslab(sid, H5S_SELECT_SET, start, NULL, count, NULL);
         
-        H5Dwrite(did, H5T_NATIVE_DOUBLE, sidChunk, sid, H5P_DEFAULT, my_data_sum.data_);
+        H5Dwrite(did, H5T_NATIVE_DOUBLE, sidChunk, sid, H5P_DEFAULT, my_data.data_);
         
 		H5Sclose(sidChunk);
 		H5Sclose(sid);

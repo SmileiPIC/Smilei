@@ -94,21 +94,29 @@ isSouthern(smpi->isSouthern())
     Bz_avg  = new Field2D(dimPrim, 2, true,  "Bz_avg");
     
     // Charge currents currents and density for each species
-    ostringstream file_name("");
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
-        file_name.str("");
-        file_name << "Jx_s" << ispec;
-        Jx_s[ispec]  = new Field2D(dimPrim, 0, false, file_name.str().c_str());
-        file_name.str("");
-        file_name << "Jy_s" << ispec;
-        Jy_s[ispec]  = new Field2D(dimPrim, 1, false, file_name.str().c_str());
-        file_name.str("");
-        file_name << "Jz_s" << ispec;
-        Jz_s[ispec]  = new Field2D(dimPrim, 2, false, file_name.str().c_str());
-        file_name.str("");
-        file_name << "rho_s" << ispec;
-        rho_s[ispec] = new Field2D(dimPrim, file_name.str().c_str());
+        Jx_s[ispec]  = new Field2D(dimPrim, 0, false, ("Jx_"+params.species_param[ispec].species_type).c_str());
+        Jy_s[ispec]  = new Field2D(dimPrim, 1, false, ("Jy_"+params.species_param[ispec].species_type).c_str());
+        Jz_s[ispec]  = new Field2D(dimPrim, 2, false, ("Jz_"+params.species_param[ispec].species_type).c_str());
+        rho_s[ispec] = new Field2D(dimPrim, ("Rho_"+params.species_param[ispec].species_type).c_str());
     }
+
+    
+//    ostringstream file_name("");
+//    for (unsigned int ispec=0; ispec<n_species; ispec++) {
+//        file_name.str("");
+//        file_name << "Jx_s" << ispec;
+//        Jx_s[ispec]  = new Field2D(dimPrim, 0, false, file_name.str().c_str());
+//        file_name.str("");
+//        file_name << "Jy_s" << ispec;
+//        Jy_s[ispec]  = new Field2D(dimPrim, 1, false, file_name.str().c_str());
+//        file_name.str("");
+//        file_name << "Jz_s" << ispec;
+//        Jz_s[ispec]  = new Field2D(dimPrim, 2, false, file_name.str().c_str());
+//        file_name.str("");
+//        file_name << "rho_s" << ispec;
+//        rho_s[ispec] = new Field2D(dimPrim, file_name.str().c_str());
+//    }
     
     
     // ----------------------------------------------------------------
