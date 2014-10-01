@@ -72,16 +72,16 @@ PartBoundCond::PartBoundCond( PicParams *params, int ispec, SmileiMPI* smpi )
 
     // Define kind of boundary conditions
     if ( params->species_param[ispec].bc_part_type_long == "refl" ) {
-        if (x_min==x_min_global) bc_west = &refl_particle;
-        if (x_max==x_max_global) bc_east = &refl_particle;
+        if (smpi->isWestern()) bc_west = &refl_particle;
+        if (smpi->isEastern()) bc_east = &refl_particle;
     }
     else if ( params->species_param[ispec].bc_part_type_long == "supp" ) {
-        if (x_min==x_min_global) bc_west = &supp_particle;
-        if (x_max==x_max_global) bc_east = &supp_particle;
+        if (smpi->isWestern()) bc_west = &supp_particle;
+        if (smpi->isEastern()) bc_east = &supp_particle;
     }
     else if ( params->species_param[ispec].bc_part_type_long == "stop" ) {
-        if (x_min==x_min_global) bc_west = &stop_particle;
-        if (x_max==x_max_global) bc_east = &stop_particle;
+        if (smpi->isWestern()) bc_west = &stop_particle;
+        if (smpi->isEastern()) bc_east = &stop_particle;
     }
     else if ( params->species_param[ispec].bc_part_type_long == "none" ) {
         WARNING( "No Boundary Condition applied for species in longitudinal direction " << ispec );
@@ -93,16 +93,16 @@ PartBoundCond::PartBoundCond( PicParams *params, int ispec, SmileiMPI* smpi )
     if ( nDim_particle > 1 ) {
 	//if  (params->bc_em_type_trans!="periodic") {
 	if ( params->species_param[ispec].bc_part_type_trans == "refl" ) {
-	    if (y_min==y_min_global) bc_south = &refl_particle;
-	    if (y_max==y_max_global) bc_north = &refl_particle;
+	    if (smpi->isSouthern()) bc_south = &refl_particle;
+	    if (smpi->isNorthern()) bc_north = &refl_particle;
 	}
 	else if ( params->species_param[ispec].bc_part_type_trans == "supp" ) {
-	    if (y_min==y_min_global) bc_south = &supp_particle;
-	    if (y_max==y_max_global) bc_north = &supp_particle;
+	    if (smpi->isSouthern()) bc_south = &supp_particle;
+	    if (smpi->isNorthern()) bc_north = &supp_particle;
 	}
 	else if ( params->species_param[ispec].bc_part_type_trans == "stop" ) {
-	    if (y_min==y_min_global) bc_south = &stop_particle;
-	    if (y_max==y_max_global) bc_north = &stop_particle;
+	    if (smpi->isSouthern()) bc_south = &stop_particle;
+	    if (smpi->isNorthern()) bc_north = &stop_particle;
 	}
 	else if ( params->species_param[ispec].bc_part_type_trans == "none" ) {
 	    WARNING( "No Boundary Condition applied for species in transverse direction " << ispec );
