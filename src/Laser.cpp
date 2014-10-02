@@ -280,3 +280,10 @@ double Laser::transverse_profile2D(double time_dual, double y) {
 }//END laser::transverse_profile2D
 
 
+void Laser::disabled()
+{
+    a0_delta_y_ = 0.;
+    a0_delta_z_ = 0.;
+}
+
+

@@ -32,6 +32,8 @@ public:
     double time_profile(double);
     double transverse_profile2D(double, double);
 
+    void disabled();
+
 };
 
 #endif
