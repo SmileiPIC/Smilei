@@ -159,7 +159,7 @@ int main (int argc, char* argv[])
 
 	if (simWindow) {
 	    simWindow->setOperators(vecSpecies, Interp, Proj, smpi);
-	    simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi );
+	    simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi , laser_params);
 	}
 	    
     } else {
@@ -313,7 +313,7 @@ int main (int argc, char* argv[])
         timer[3].update();
 		
         if ( simWindow && simWindow->isMoving(time_dual) ) {
-            simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi );
+            simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi, laser_params );
         }
         
     }//END of the time loop
