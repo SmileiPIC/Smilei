@@ -6,8 +6,6 @@
 #include "Interpolator.h"
 #include "Projector.h"
 #include "SmileiMPI.h"
-#include "Laser.h"
-#include "LaserParams.h"
 using namespace std;
 
 SimWindow::SimWindow(PicParams& params)
@@ -23,11 +21,9 @@ SimWindow::~SimWindow()
 {
 }
 
-void SimWindow::operate(vector<Species*> vecSpecies, ElectroMagn* EMfields, Interpolator* Interp, Projector* Proj, SmileiMPI* smpi, LaserParams laser_params)
+void SimWindow::operate(vector<Species*> vecSpecies, ElectroMagn* EMfields, Interpolator* Interp, Projector* Proj, SmileiMPI* smpi)
 {
 
-    laser_params.laser_param.resize(0);
-    laser_params.n_laser=0;
     unsigned int clrw = vecSpecies[0]->clrw; //clrw must be the same for all species
 
     smpi->getCellStartingGlobalIndex(0)+= clrw;
