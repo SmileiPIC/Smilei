@@ -145,6 +145,7 @@ int main (int argc, char* argv[])
     // ----------------------------------------------------------------------------
     
     SimWindow* simWindow = NULL;
+    int start_moving(0);
     if (params.res_space_win_x)
         simWindow = new SimWindow(params);
     smpi->barrier();
@@ -315,6 +316,12 @@ int main (int argc, char* argv[])
         timer[3].update();
 		
         if ( simWindow && simWindow->isMoving(time_dual) ) {
+            start_moving++;
+            if ((start_moving==1) && (smpi->isMaster()) ) {
+                MESSAGE("\n\t\t---------------------------------------------")
+                MESSAGE("\t\tWindow start to move");
+                MESSAGE("\t\t---------------------------------------------\n");
+            }
             simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi );
         }
         

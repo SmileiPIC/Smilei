@@ -35,13 +35,9 @@ bc_em_type_trans = silver-muller
 # plasma_geometry: string defining the plasma geometry
 # ***_length: characteristic length for a given geometry
 #
-plasma_geometry = trap
-vacuum_length   = 0.0  0.0 
-plasma_length   = 1095.0  305.0
-slope_length = 0.0 0.0
 
 res_space_win_x = 1100
-t_move_win = 103.
+t_move_win = 16.233804195373324
 vx_win = 0.9997
 clrw = 1
 
@@ -64,6 +60,10 @@ random_seed = 0
 # radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
 #
 species
+        plasma_geometry = trap
+        vacuum_length   = 0.0  0.0 
+        plasma_length   = 1095.0  305.0
+        slope_length = 0.0 0.0
 	species_type = proton
 	initialization_type = Maxwell-Juettner
 	ionization_model = none
@@ -82,6 +82,10 @@ species
 end
 
 species 
+        plasma_geometry = trap
+        vacuum_length   = 0.0  0.0 
+        plasma_length   = 1095.0  305.0
+        slope_length = 0.0 0.0
 	species_type = electron1
 	initialization_type = Maxwell-Juettner
 	n_part_per_cell = 10
@@ -112,6 +116,7 @@ end
 laser
 	a0=8.3
 	angle=0
+        boxSide = West
 	delta=0.0              
 	time_profile = gaussian
         transv_profile = gaussian
