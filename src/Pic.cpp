@@ -304,9 +304,11 @@ int main (int argc, char* argv[])
         if  ((diag_params.avgfieldDump_every != 0) && (itime % diag_params.avgfieldDump_every == 0))
             sio->writeAvgFieldsSingleFileTime( EMfields, itime );
         
+#ifdef _IO_PARTICLE
         // temporary particles dump (1 HDF5 file per process)
         if  ((diag_params.particleDump_every != 0) && (itime % diag_params.particleDump_every == 0))
             sio->writePlasma( vecSpecies, time_dual, smpi );
+#endif
         
         if (sio->dump(EMfields, itime,  vecSpecies, smpi, simWindow, params, input_data)) break;
         
@@ -350,10 +352,12 @@ int main (int argc, char* argv[])
     if  ( (diag_params.avgfieldDump_every != 0) && (params.n_time % diag_params.avgfieldDump_every != 0) )
         sio->writeAvgFieldsSingleFileTime( EMfields, params.n_time );
     
+#ifdef _IO_PARTICLE
     // temporary particles dump (1 HDF5 file per process)
     if  ( (diag_params.particleDump_every != 0) && (params.n_time % diag_params.particleDump_every != 0) )
         sio->writePlasma( vecSpecies, time_dual, smpi );
-    
+#endif    
+
     // ------------------------------
     //  Cleanup & End the simulation
     // ------------------------------

@@ -21,7 +21,8 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
 	ifile.extract("ntime_step_avg", ntime_step_avg);
     
 	particleDump_every=params.n_time/10;
-	ifile.extract("particleDump_every", particleDump_every);
+	if (ifile.extract("particleDump_every", particleDump_every))
+            WARNING("Option particleDump_every disabled");
 	
 	scalar_every=0;
 	ifile.extract("every",scalar_every,"diagnostic scalar");
