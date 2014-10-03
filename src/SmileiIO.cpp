@@ -23,6 +23,7 @@ using namespace std;
 SmileiIO::SmileiIO( PicParams* params, SmileiMPI* smpi ) : dump_times(0), stop_file_seen_since_last_check(false)
 {
 		
+#ifdef _IO_PARTICLE
     ostringstream name("");
     name << "particles-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
 	
@@ -79,6 +80,7 @@ SmileiIO::SmileiIO( PicParams* params, SmileiMPI* smpi ) : dump_times(0), stop_f
     dims[0] = 1;
     dims[1] = particleSize;
     partMemSpace = H5Screate_simple(2, dims, NULL);
+#endif
 	
     // Management of global IO file
     MPI_Info info  = MPI_INFO_NULL;
@@ -130,11 +132,12 @@ SmileiIO::~SmileiIO()
     // Management of global IO file
     H5Fclose( global_file_id_avg );
 	
+#ifdef _IO_PARTICLE
     H5Sclose(partMemSpace);
     for ( unsigned int s=0 ; s<partDataset_id.size() ; s++ )
         H5Dclose(partDataset_id[s]);
     H5Fclose(partFile_id);
-	
+#endif	
     H5Pclose( write_plist );
 }
 
@@ -214,6 +217,7 @@ void SmileiIO::writeAvgFieldsSingleFileTime( ElectroMagn* EMfields, int time )
 void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI* smpi )
 {
 	
+#ifdef _IO_PARTICLE
     if (smpi->isMaster()) DEBUG("write species disabled");
     return;
 	
@@ -239,9 +243,7 @@ void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI*
             start[0] = dimsO[0];
             start[1] = 0;
             H5Sselect_hyperslab(file_space, H5S_SELECT_SET, start, NULL, count, NULL);
-#ifdef _PARTICLE
             H5Dwrite(partDataset_id[ispec], H5T_NATIVE_DOUBLE, partMemSpace, file_space, H5P_DEFAULT, &((*cuParticles)[ p ]->position(0)));
-#endif
             H5Sclose(file_space);
 			
 			
@@ -249,6 +251,7 @@ void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI*
 		
     } // End for ispec
 	
+#endif
 }
 
 bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin, PicParams &params, InputData& input_data) { 

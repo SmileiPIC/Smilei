@@ -221,6 +221,9 @@ void ElectroMagn::initRhoJ(vector<Species*> vecSpecies, Projector* Proj)
 
 void ElectroMagn::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
 {
+    if (fieldsBoundCond[0]!=NULL)
+        fieldsBoundCond[0]->laserDisabled();
+
     Ex_->shift_x(shift);
     Ey_->shift_x(shift);
     Ez_->shift_x(shift);

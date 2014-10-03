@@ -145,6 +145,7 @@ int main (int argc, char* argv[])
     // ----------------------------------------------------------------------------
     
     SimWindow* simWindow = NULL;
+    int start_moving(0);
     if (params.res_space_win_x)
         simWindow = new SimWindow(params);
     smpi->barrier();
@@ -235,7 +236,7 @@ int main (int argc, char* argv[])
             MESSAGE(1,"t = "          << setw(7) << setprecision(2)   << time_dual/(2*M_PI)
                     << "   it = "       << setw(log10(params.n_time)+1) << itime  << "/" << params.n_time
                     << "   sec = "      << setw(7) << setprecision(2)   << timer[0].getTime()
-                    << "   E = "        << setw(7) << setprecision(2)   << Diags->getScalar("Etot")
+                    << "   E = "        << setw(7) << setprecision(6)   << Diags->getScalar("Etot")
                     << "   E_bal(%) = " << setw(6) << setprecision(2)   << 100.0*Diags->getScalar("Ebal_norm") );
 
         
@@ -304,15 +305,23 @@ int main (int argc, char* argv[])
         if  ((diag_params.avgfieldDump_every != 0) && (itime % diag_params.avgfieldDump_every == 0))
             sio->writeAvgFieldsSingleFileTime( EMfields, itime );
         
+#ifdef _IO_PARTICLE
         // temporary particles dump (1 HDF5 file per process)
         if  ((diag_params.particleDump_every != 0) && (itime % diag_params.particleDump_every == 0))
             sio->writePlasma( vecSpecies, time_dual, smpi );
+#endif
         
         if (sio->dump(EMfields, itime,  vecSpecies, smpi, simWindow, params, input_data)) break;
         
         timer[3].update();
 		
         if ( simWindow && simWindow->isMoving(time_dual) ) {
+            start_moving++;
+            if ((start_moving==1) && (smpi->isMaster()) ) {
+                MESSAGE("\n\t\t---------------------------------------------")
+                MESSAGE("\t\tWindow start to move");
+                MESSAGE("\t\t---------------------------------------------\n");
+            }
             simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi );
         }
         
@@ -350,10 +359,12 @@ int main (int argc, char* argv[])
     if  ( (diag_params.avgfieldDump_every != 0) && (params.n_time % diag_params.avgfieldDump_every != 0) )
         sio->writeAvgFieldsSingleFileTime( EMfields, params.n_time );
     
+#ifdef _IO_PARTICLE
     // temporary particles dump (1 HDF5 file per process)
     if  ( (diag_params.particleDump_every != 0) && (params.n_time % diag_params.particleDump_every != 0) )
         sio->writePlasma( vecSpecies, time_dual, smpi );
-    
+#endif    
+
     // ------------------------------
     //  Cleanup & End the simulation
     // ------------------------------

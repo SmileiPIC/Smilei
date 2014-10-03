@@ -339,6 +339,8 @@ void PicParams::compute()
     sim_time  *= 2.0*M_PI;
     timestep   = 2.0*M_PI/res_time;
     
+    t_move_win *= 2.0*M_PI;
+
     // frozen time
     for (unsigned int i=0; i<n_species; i++) {
         species_param[i].time_frozen *= 2.0*M_PI;
