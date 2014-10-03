@@ -14,8 +14,6 @@ from matplotlib import gridspec
 
 import matplotlib.pyplot as plt
 
-from matplotlib.widgets import Cursor
-
 import os
 import tables as tb
 import numpy as np
@@ -53,6 +51,9 @@ class smileiQt(QtGui.QMainWindow):
         
         self.fig = plt.figure()
         self.canvas = FigureCanvas(self.fig)
+        
+        self.canvas.mpl_connect('motion_notify_event', self.on_movement)
+        
         toolbar = NavigationToolbar(self.canvas, self)
         toolbar.setFixedHeight(18)
         self.plot.layout().addWidget(toolbar)
@@ -64,8 +65,18 @@ class smileiQt(QtGui.QMainWindow):
 
         self.createActions()
 
-        self.show()
+        self.show()        
+    
+    def on_movement(self, event):
+        if not (event.inaxes is None) :
+            msg = "%.3f %.3f" % (event.xdata, event.ydata)
+            self.ui.mouse.setText(msg)
         
+    def closeEvent(self,event):
+        if not self.fieldFile is None :
+            self.fieldFile.close()
+        if not self.phaseFile is None :
+            self.phaseFile.close()
     
     def on_slider_valueChanged(self,step):
         self.step=step
@@ -103,8 +114,8 @@ class smileiQt(QtGui.QMainWindow):
         self.slider.setValue(self.step)
         
         if not hasattr(self,'fig'): return
-        
-        self.ui.time.setText("Time: %.3f" % (self.step/self.res_time)    )
+        self.ui.stepText.setText("Step: %d/%d" % (self.step, len(self.fieldSteps)-1))
+        self.fig.suptitle("Time: %.3f" % (self.step/self.res_time))
         nplot=0
     
         if not self.scalarData is None :
@@ -115,7 +126,7 @@ class smileiQt(QtGui.QMainWindow):
                     y=self.scalarData[:,col]
                     ax=plt.subplot2grid((self.nplots,10),(nplot, 0),colspan=10)
                     ax.plot(x,y)
-                    ax.set_title(j.text())
+                    ax.set_ylabel(j.text())
                     ax.axvline(x=self.step/self.res_time,c="red",linewidth=2,zorder=0, clip_on=False)
                     nplot+=1
 
@@ -134,7 +145,7 @@ class smileiQt(QtGui.QMainWindow):
                     if self.autoScale.isChecked() or self.lims[nplot]==None :
                         self.lims[nplot]=ax.get_ylim()
 
-                    ax.set_title(i.text())
+                    ax.set_ylabel(i.text())
                     ax.set_ylim(self.lims[nplot])
                     ax.set_xlim(0,self.sim_length)
 
@@ -150,14 +161,14 @@ class smileiQt(QtGui.QMainWindow):
                     ax=plt.subplot2grid((self.nplots,10),(nplot, 0),colspan=9)
 
                     
-                    im=ax.imshow(data,extent=node._v_parent._v_attrs.extents.reshape(4).tolist(), aspect='auto')
+                    im=ax.imshow(data,extent=node._v_parent._v_attrs.extents.reshape(4).tolist(), aspect='auto',origin='lower')
 
                     if self.autoScale.isChecked() or self.lims[nplot]==None :
                         self.lims[nplot]=(data.min(),data.max())
                         
                     im.set_clim(self.lims[nplot])
 
-                    ax.set_title(i.text())
+                    ax.set_ylabel(i.text())
                     axcb=plt.subplot2grid((self.nplots,10),(nplot, 9))
                     
                     cb=plt.colorbar(im, cax=axcb)
@@ -166,8 +177,9 @@ class smileiQt(QtGui.QMainWindow):
                     nplot+=1
                 
                 
-        if nplot>0 : 
-            self.canvas.draw()
+        self.canvas.draw()
+        if self.ui.actionSave_images.isChecked():
+            plt.savefig('smilei-%06d.png' % self.step)
 
     def do_timer(self):
         self.ui.slider.setValue(self.step+1)

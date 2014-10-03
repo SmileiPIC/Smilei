@@ -44,7 +44,7 @@
         <bold>false</bold>
        </font>
       </property>
-      <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,0">
+      <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,0,0">
        <property name="margin">
         <number>0</number>
        </property>
@@ -155,9 +155,25 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="time">
+        <widget class="QLineEdit" name="stepText">
          <property name="frame">
           <bool>false</bool>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="mouse">
+         <property name="frame">
+          <bool>false</bool>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
          <property name="readOnly">
           <bool>true</bool>
@@ -232,6 +248,8 @@
     <addaction name="actionDir"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
+    <addaction name="separator"/>
+    <addaction name="actionSave_images"/>
    </widget>
    <widget class="QMenu" name="menuDiagnostics">
     <property name="title">
@@ -273,6 +291,14 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="actionSave_images">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Save images</string>
    </property>
   </action>
  </widget>

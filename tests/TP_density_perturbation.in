@@ -145,3 +145,24 @@ diagnostic phase
  	deflate=5
  end
 
+
+diagnostic phase
+ 	kind = xPx 
+ 	species = eon
+ 	every = 1
+ 
+ 	pos_min = 0.4
+ 	pos_max = 0.6
+ 	pos_num = 200
+ 	
+ 	mom_min = -0.05
+ 	mom_max = 0.05
+ 	mom_num = 200
+ 	
+ 	lor_min = -3.5
+ 	lor_max = 1.5
+ 	lor_num = 200
+ 	
+ 	deflate=5
+ end
+

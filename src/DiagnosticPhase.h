@@ -22,6 +22,10 @@ struct partStruct {
 	double weight;
     //! charge of the particle
 	short charge;
+    
+    inline double lor_fact() { 
+        return sqrt(1.0+pow(mom[0],2)+pow(mom[1],2)+pow(mom[2],2));
+    }
 };
 
 //! this class holds all the phase projections that can be represented as 2d matrix
