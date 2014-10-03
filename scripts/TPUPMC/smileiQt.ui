@@ -155,15 +155,9 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="stepText">
-         <property name="frame">
-          <bool>false</bool>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-         <property name="readOnly">
-          <bool>true</bool>
+        <widget class="QSpinBox" name="spinStep">
+         <property name="prefix">
+          <string>step </string>
          </property>
         </widget>
        </item>

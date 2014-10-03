@@ -44,8 +44,9 @@ private:
 
     //! this is always handy to know (number of particle dimension)
 	unsigned int ndim;
+    
+    partStruct my_part;
+
 	
-    //! this holds in which hdf5 groupID (hid_t) will the data for each species (string) of DiagnosticPhase written
-    std::map<DiagnosticPhase*, std::map<std::string,hid_t> >mapDataId; 
 };
 #endif

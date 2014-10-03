@@ -75,20 +75,43 @@ species
 end
 
 species
-	species_type = eon
+	species_type = eon1
     plasma_geometry = cosine
     vacuum_length   = 0.0
     plasma_length   = 1.0
     thetax=0.0
-    ampl=0.3
+    ampl=0.5
     mode=1
 	initialization_type = regular
 	ionization_model = none
-	n_part_per_cell = 100
+	n_part_per_cell = 50
 	c_part_max = 1.0
 	mass = 1.0
 	charge = -1.0
-	density = 1.0e0
+	density = 0.5
+	mean_velocity = 0.0
+	temperature = 5.0e-4
+	dynamics_type = norm
+	time_frozen = 0.0
+	radiating = false
+	bc_part_type_long = refl
+end
+
+species
+	species_type = eon2
+    plasma_geometry = cosine
+    vacuum_length   = 0.0
+    plasma_length   = 1.0
+    thetax=0.0
+    ampl=0.5
+    mode=1
+	initialization_type = regular
+	ionization_model = none
+	n_part_per_cell = 50
+	c_part_max = 1.0
+	mass = 1.0
+	charge = -1.0
+	density = 0.5
 	mean_velocity = 0.0
 	temperature = 5.0e-4
 	dynamics_type = norm
@@ -127,7 +150,7 @@ fieldDump_every = 1
 
 diagnostic phase
  	kind = xPx 
- 	species = eon
+ 	species = eon1
  	every = 1
  
  	pos_min = 0
@@ -145,18 +168,17 @@ diagnostic phase
  	deflate=5
  end
 
-
 diagnostic phase
  	kind = xPx 
- 	species = eon
+ 	species = eon2
  	every = 1
  
- 	pos_min = 0.4
- 	pos_max = 0.6
+ 	pos_min = 0
+ 	pos_max = 1
  	pos_num = 200
  	
- 	mom_min = -0.05
- 	mom_max = 0.05
+ 	mom_min = -0.35
+ 	mom_max = 0.35
  	mom_num = 200
  	
  	lor_min = -3.5
@@ -165,4 +187,44 @@ diagnostic phase
  	
  	deflate=5
  end
+
+diagnostic phase
+ 	kind = xPx 
+ 	species = eon1 eon2
+ 	every = 1
+ 
+ 	pos_min = 0
+ 	pos_max = 1
+ 	pos_num = 200
+ 	
+ 	mom_min = -0.35
+ 	mom_max = 0.35
+ 	mom_num = 200
+ 	
+ 	lor_min = -3.5
+ 	lor_max = 1.5
+ 	lor_num = 200
+ 	
+ 	deflate=5
+ end
+
+# diagnostic phase
+#  	kind = xPx 
+#  	species = eon
+#  	every = 1
+#  
+#  	pos_min = 0.4
+#  	pos_max = 0.6
+#  	pos_num = 200
+#  	
+#  	mom_min = -0.05
+#  	mom_max = 0.05
+#  	mom_num = 200
+#  	
+#  	lor_min = -3.5
+#  	lor_max = 1.5
+#  	lor_num = 200
+#  	
+#  	deflate=5
+#  end
 

@@ -22,13 +22,6 @@ DiagnosticPhaseSpace::~DiagnosticPhaseSpace() {
 void DiagnosticPhaseSpace::close() {
     //! check if we're on the master (the only one that opened the file)
 	if (fileId != 0) {
-        //!close all hdf5  groups (in principle this is done also with H5Fclose below...)
-        for (std::map<DiagnosticPhase*, std::map<std::string,hid_t> >::iterator iterMap=mapDataId.begin(); iterMap!= mapDataId.end(); iterMap++) {
-            for (map<string, hid_t>::iterator iter = iterMap->second.begin(); iter != iterMap->second.end(); iter++) {
-                H5Dclose(iter->second);
-            }
-        }
-        //! close the hdf5 file
         H5Fclose(fileId);
 	}
 }
@@ -36,6 +29,10 @@ void DiagnosticPhaseSpace::close() {
 
 
 DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams &params, DiagParams &diagParams, SmileiMPI* smpi) : fileId(0), ndim(params.nDim_particle) {
+    //! create the particle structure
+    my_part.pos.resize(ndim);
+    my_part.mom.resize(3);
+
 	for (unsigned int i = 0 ; i < diagParams.vecPhase.size(); i++) {
         hid_t gidParent=0;
         if (smpi->isMaster() ) {
@@ -159,38 +156,47 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams &params, DiagParams &diagPa
             if (diagPhase) {
                 if (smpi->isMaster()) {
                     //! create a group for each species of this diag and keep track of its ID.
-                    map<string,hid_t> localmap;
-                    hid_t gid = H5Gcreate(gidParent, diagParams.vecPhase[i].kind[ii].c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);			
-                    for (unsigned int k=0; k<diagParams.vecPhase[i].species.size(); k++) {
-                        
-                        hsize_t dims[3] = {0,diagPhase->my_data.dims()[0],diagPhase->my_data.dims()[1]};
-                        hsize_t max_dims[3] = {H5S_UNLIMITED,diagPhase->my_data.dims()[0],diagPhase->my_data.dims()[1]};
-                        hsize_t chunk_dims[3] = {1,diagPhase->my_data.dims()[0],diagPhase->my_data.dims()[1]};
-                        
-                        hid_t sid = H5Screate_simple (3, dims, max_dims);	
-                        hid_t pid = H5Pcreate(H5P_DATASET_CREATE);
-                        H5Pset_layout(pid, H5D_CHUNKED);
-                        H5Pset_chunk(pid, 3, chunk_dims);
-
-                        H5Pset_deflate (pid, std::min((unsigned int)9,diagParams.vecPhase[i].deflate));
-                        
-                        hid_t did = H5Dcreate (gid, diagParams.vecPhase[i].species[k].c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, pid,H5P_DEFAULT);
-                        H5Pclose (pid);	
-                        H5Sclose (sid);
-                        
-                        localmap[diagParams.vecPhase[i].species[k]]=did;
-                    }
                     
+                    hsize_t dims[3] = {0,diagPhase->my_data.dims()[0],diagPhase->my_data.dims()[1]};
+                    hsize_t max_dims[3] = {H5S_UNLIMITED,diagPhase->my_data.dims()[0],diagPhase->my_data.dims()[1]};
+                    hsize_t chunk_dims[3] = {1,diagPhase->my_data.dims()[0],diagPhase->my_data.dims()[1]};
+                    
+                    hid_t sid = H5Screate_simple (3, dims, max_dims);	
+                    hid_t pid = H5Pcreate(H5P_DATASET_CREATE);
+                    H5Pset_layout(pid, H5D_CHUNKED);
+                    H5Pset_chunk(pid, 3, chunk_dims);
+                    
+                    H5Pset_deflate (pid, std::min((unsigned int)9,diagParams.vecPhase[i].deflate));
+                    
+                    hid_t did = H5Dcreate (gidParent, diagParams.vecPhase[i].kind[ii].c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, pid,H5P_DEFAULT);
+                    H5Pclose (pid);	
+                    H5Sclose (sid);
+                    
+                    // write attribute of species present in the phaseSpace
+                    string namediag;
+                    for (unsigned int k=0; k<diagParams.vecPhase[i].species.size(); k++) {
+                        namediag+=diagParams.vecPhase[i].species[k]+" ";
+                    }
+                    namediag=namediag.substr(0, namediag.size()-1);
+                    sid = H5Screate(H5S_SCALAR);
+                    hid_t tid = H5Tcopy(H5T_C_S1);
+                    H5Tset_size(tid, namediag.size());
+                    H5Tset_strpad(tid,H5T_STR_NULLTERM);
+                    hid_t aid = H5Acreate(gidParent, "species", tid, sid, H5P_DEFAULT, H5P_DEFAULT);
+                    H5Awrite(aid, tid, namediag.c_str());
+                    
+                    
+                    // write attribute extent of the phaseSpace
                     hsize_t dimsPos[2] = {2,2};
-                    hid_t sid = H5Screate_simple(2, dimsPos, NULL);
-                    hid_t aid = H5Acreate (gid, "extents", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT);
+                    sid = H5Screate_simple(2, dimsPos, NULL);
+                    aid = H5Acreate (gidParent, "extents", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT);
                     double tmp[4] = {diagPhase->firstmin, diagPhase->firstmax, diagPhase->secondmin, diagPhase->secondmax};
                     H5Awrite(aid, H5T_NATIVE_DOUBLE, tmp);
                     H5Aclose(aid);
                     H5Sclose(sid);
                     
-                    H5Gclose(gid);
-                    mapDataId[diagPhase]=localmap;
+                    diagPhase->dataId=did;
+                    
                 }
                 vecDiagPhase.push_back(diagPhase);	
             }
@@ -204,52 +210,45 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams &params, DiagParams &diagPa
 void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) {
 	//! check which diagnosticPhase to run at this timestep
 	vector<DiagnosticPhase*> vecDiagPhaseActiveTimestep;	
-	for (unsigned int i =0 ; i < vecDiagPhase.size(); i++) {
-		if (timestep%vecDiagPhase[i]->every==0) vecDiagPhaseActiveTimestep.push_back(vecDiagPhase[i]);
+	for (vector<DiagnosticPhase*>::const_iterator diag=vecDiagPhase.begin() ; diag != vecDiagPhase.end(); diag++) {
+		if (timestep % (*diag)->every==0) vecDiagPhaseActiveTimestep.push_back(*diag);
 	}
 	
 	if (vecDiagPhaseActiveTimestep.size()>0) {
-        //! create the particle structure
-        partStruct my_part;
-        my_part.pos.resize(ndim);
-        my_part.mom.resize(3);
-
-		for (unsigned int j=0; j < vecSpecies.size(); j++) {
+        for (vector<Species*>::const_iterator mySpec=vecSpecies.begin(); mySpec!= vecSpecies.end(); mySpec++) {
 			
 			//! check which diagnosticPhase to run for the species 
 			vector<DiagnosticPhase*> vecDiagPhaseToRun;
-			for (unsigned int i =0 ; i < vecDiagPhaseActiveTimestep.size(); i++) {
-				if(find(vecDiagPhaseActiveTimestep[i]->my_species.begin(), vecDiagPhaseActiveTimestep[i]->my_species.end(), vecSpecies[j]->name_str) != vecDiagPhaseActiveTimestep[i]->my_species.end()) { 
-					vecDiagPhaseToRun.push_back(vecDiagPhaseActiveTimestep[i]);
+            for (vector<DiagnosticPhase*>::const_iterator diag=vecDiagPhaseActiveTimestep.begin() ; diag != vecDiagPhaseActiveTimestep.end(); diag++) {
+				if(find((*diag)->my_species.begin(), (*diag)->my_species.end(), (*mySpec)->name_str) != (*diag)->my_species.end()) { 
+					vecDiagPhaseToRun.push_back(*diag);
 				}
 			}
-			
 			if (vecDiagPhaseToRun.size()>0) {
                 
 				//! cycle over all the particles
-				for (unsigned int ibin = 0 ; ibin < vecSpecies[j]->bmin.size() ; ibin++) {
-					for (int iPart=vecSpecies[j]->bmin[ibin] ; iPart<vecSpecies[j]->bmax[ibin]; iPart++ ) {
+				for (unsigned int ibin = 0 ; ibin < (*mySpec)->bmin.size() ; ibin++) {
+					for (int iPart=(*mySpec)->bmin[ibin] ; iPart<(*mySpec)->bmax[ibin]; iPart++ ) {
                         //! fill the my_part structure
                         for(unsigned int k=0;k<ndim;k++) {
-                            my_part.pos[k]=vecSpecies[j]->particles.position(k,iPart);
+                            my_part.pos[k]=(*mySpec)->particles.position(k,iPart);
                         }
                         for(unsigned int k=0;k<3;k++) {
-                            my_part.mom[k]=vecSpecies[j]->particles.momentum(k,iPart);
+                            my_part.mom[k]=(*mySpec)->particles.momentum(k,iPart);
                         }
-						for (unsigned int i =0 ; i < vecDiagPhaseToRun.size(); i++) {
-							my_part.weight=vecSpecies[j]->particles.weight(iPart);
-							my_part.charge=vecSpecies[j]->particles.charge(iPart);
-                            //! do something with each partcle
-							vecDiagPhaseToRun[i]->run(my_part);
+                        my_part.weight=(*mySpec)->particles.weight(iPart);
+                        my_part.charge=(*mySpec)->particles.charge(iPart);
+                        for (vector<DiagnosticPhase*>::const_iterator diag=vecDiagPhaseToRun.begin() ; diag != vecDiagPhaseToRun.end(); diag++) {
+                            //! do something with each particle
+							(*diag)->run(my_part);
 						}						
 					}
 				}
-                //! and finally write the data (reduce data on 1 proc, write it and clear memory for future usage)
-				for (unsigned int i =0 ; i < vecDiagPhaseToRun.size(); i++) {
-					vecDiagPhaseToRun[i]->writeData(mapDataId[vecDiagPhaseToRun[i]][vecSpecies[j]->name_str]);
-				}
 			}
 		}
-        if(fileId>0) H5Fflush(fileId, H5F_SCOPE_GLOBAL);
+        //! and finally write the data (reduce data on 1 proc, write it and clear memory for future usage)
+        for (vector<DiagnosticPhase*>::const_iterator diag=vecDiagPhaseActiveTimestep.begin() ; diag != vecDiagPhaseActiveTimestep.end(); diag++) {
+            (*diag)->writeData();
+        }
 	}
 }

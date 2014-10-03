@@ -44,7 +44,7 @@ class smileiQt(QtGui.QMainWindow):
         self.step=0
         
         self.timer=QtCore.QTimer()
-        self.timer.setInterval(100)
+        self.timer.setInterval(500)
         self.timer.timeout.connect(self.do_timer)
         
         self.ui.autoScale.toggled.connect(self.doPlots)
@@ -114,7 +114,8 @@ class smileiQt(QtGui.QMainWindow):
         self.slider.setValue(self.step)
         
         if not hasattr(self,'fig'): return
-        self.ui.stepText.setText("Step: %d/%d" % (self.step, len(self.fieldSteps)-1))
+        
+        self.ui.spinStep.setValue(self.step)
         self.fig.suptitle("Time: %.3f" % (self.step/self.res_time))
         nplot=0
     
@@ -224,12 +225,16 @@ class smileiQt(QtGui.QMainWindow):
             f.close()
             self.ui.slider.setRange(0,len(self.fieldSteps)-1)
 
+        self.ui.spinStep.setSuffix("/"+str(len(self.fieldSteps)-1))
+        self.ui.spinStep.setMaximum(len(self.fieldSteps)-1)
+        
         fname=os.path.join(self.dirName, "PhaseSpace.h5")
         if os.path.isfile(fname) :
             f=tb.openFile(os.path.join(self.dirName, fname))
-            for phaseGroup in f.walkNodes("/", classname='Array'):
-                my_act= QtGui.QAction(re.sub('/',' ',phaseGroup._v_pathname),self)
-                my_act.setData(phaseGroup._v_pathname)
+            for phaseData in f.walkNodes("/", classname='Array'):
+                namephase= phaseData._v_pathname + " " + phaseData._v_parent._v_attrs.species
+                my_act= QtGui.QAction(namephase,self)
+                my_act.setData(phaseData._v_pathname)
                 my_act.setCheckable(True)                
                 self.ui.menuPhase_spaces.addAction(my_act)
                 my_act.triggered.connect(self.action_clicked)

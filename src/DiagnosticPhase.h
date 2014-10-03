@@ -34,10 +34,10 @@ class DiagnosticPhase {
 public:
     //! creator
     DiagnosticPhase(phaseStructure phaseStruct);
-    ~DiagnosticPhase(){};
+    ~DiagnosticPhase();
 
     //! this will write the internal Field to the file
-	void writeData(hid_t gid);
+	void writeData();
 	
     //! all diags should have this every parameter
 	unsigned int every;
@@ -64,5 +64,6 @@ public:
 	//! number of bins for the second component of the 2d phasespace
 	unsigned int secondnum;
 	
+    hid_t dataId;
 };
 #endif
