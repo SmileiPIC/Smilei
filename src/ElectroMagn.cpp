@@ -130,6 +130,7 @@ ElectroMagn::~ElectroMagn()
  }*/
 void ElectroMagn::solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, PicParams &params, SimWindow* simWindow)
 {
+    // saving magnetic fields (to compute centered fields used in the particle pusher)
     saveMagneticFields();
 
     // Compute Ex_, Ey_, Ez_
@@ -235,7 +236,12 @@ void ElectroMagn::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
     By_->shift_x(shift);
     Bz_->shift_x(shift);
     smpi->exchangeB( this );
+    
+    Bx_m->shift_x(shift);
+    By_m->shift_x(shift);
+    Bz_m->shift_x(shift);
+    smpi->exchangeB( this );
 
-    //Here you might want to apply some new boundary conditions on the +x boundary. For the moment, all fields are set to 0. 
+    //Here you might want to apply some new boundary conditions on the +x boundary. For the moment, all fields are set to 0.
 }
 
