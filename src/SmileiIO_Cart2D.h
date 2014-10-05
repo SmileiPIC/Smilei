@@ -14,11 +14,11 @@
 
 class SmileiIO_Cart2D : public SmileiIO {
 public:
-    SmileiIO_Cart2D( PicParams* params, SmileiMPI* smpi );
+    SmileiIO_Cart2D( PicParams& params, SmileiMPI* smpi );
     ~SmileiIO_Cart2D();
 
     //! Build memory and file space for HDF5 write/read
-    void createPattern( PicParams* params, SmileiMPI* smpi );
+    void createPattern( PicParams& params, SmileiMPI* smpi );
 
     //! Write current field in specified group of the global file
     void writeFieldsSingleFileTime( Field* field, hid_t group_id );

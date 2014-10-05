@@ -23,7 +23,7 @@ class Species;
 
 class SmileiIO {
 public:
-    SmileiIO( PicParams* params, SmileiMPI* smpi );
+    SmileiIO( PicParams& params, SmileiMPI* smpi );
     virtual ~SmileiIO();
 
     //! Write all fields of all time step in the same file

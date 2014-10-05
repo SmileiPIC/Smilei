@@ -14,7 +14,7 @@ class Ionization
 
 public:
     //! Constructor for Ionization
-    Ionization(PicParams *params, int ispec);
+    Ionization(PicParams& params, int ispec);
     virtual ~Ionization();
 
     //! Overloading of () operator

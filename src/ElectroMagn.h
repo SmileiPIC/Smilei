@@ -134,7 +134,7 @@ public:
     virtual ~ElectroMagn();
 
     //! Method used to dump data contained in ElectroMagn
-    void dump(PicParams* params);
+    void dump();
 
     //! Method used to initialize the total charge currents and densities
     virtual void restartRhoJ() = 0;

@@ -16,10 +16,10 @@ public:
         Species* sp = NULL;
         if (params.species_param[ispec].dynamics_type=="norm") {
             // Species with Boris dynamics
-            sp = new Species_norm(&params, ispec, smpi);
+            sp = new Species_norm(params, ispec, smpi);
         } else if (params.species_param[ispec].dynamics_type=="rrll") {
             // Species with Boris dynamics + Radiation Back-Reaction (using the Landau-Lifshitz formula)
-            sp = new Species_rrll(&params, ispec, smpi);
+            sp = new Species_rrll(params, ispec, smpi);
         } // END if
 
         return sp;

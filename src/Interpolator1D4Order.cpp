@@ -10,11 +10,9 @@
 
 using namespace std;
 
-Interpolator1D4Order::Interpolator1D4Order(PicParams *params, SmileiMPI* smpi) : Interpolator1D(params, smpi)
+Interpolator1D4Order::Interpolator1D4Order(PicParams &params, SmileiMPI *smpi) : Interpolator1D(params, smpi)
 {
-    SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
-
-    dx_inv_ = 1.0/params->cell_length[0];
+    dx_inv_ = 1.0/params.cell_length[0];
 
     //double defined for use in coefficients
     dble_1_ov_384 = 1.0/384.0;
@@ -29,12 +27,6 @@ Interpolator1D4Order::Interpolator1D4Order(PicParams *params, SmileiMPI* smpi) :
     dble_115_ov_192 = 115.0/192.0;
     dble_5_ov_8 = 5.0/8.0;
 
-    index_domain_begin = smpi1D->getCellStartingGlobalIndex(0);
-
-}
-
-Interpolator1D4Order::~Interpolator1D4Order()
-{
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

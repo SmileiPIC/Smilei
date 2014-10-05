@@ -36,7 +36,7 @@ using namespace std;
 // Creator for Species
 // input: simulation parameters & Species index
 // ---------------------------------------------------------------------------------------------------------------------
-Species::Species(PicParams* params, int ispec, SmileiMPI* smpi) :
+Species::Species(PicParams& params, int ispec, SmileiMPI* smpi) :
 densityProfile(DensityFactory::create(params))
 {
 
@@ -44,11 +44,11 @@ densityProfile(DensityFactory::create(params))
     // -------------------
     // Variable definition
     // -------------------
-    params_ = params;
+    params_ = &params;
     
     PI2 = 2.0 * M_PI;
 	
-    name_str=params->species_param[ispec].species_type;
+    name_str=params.species_param[ispec].species_type;
 	
     DEBUG(name_str);
 	
@@ -58,46 +58,46 @@ densityProfile(DensityFactory::create(params))
     speciesNumber = ispec;
 	
     // number of spatial dimensions for the particles
-    ndim = params->nDim_particle;
+    ndim = params.nDim_particle;
 	
     // Local minimum for definition of bin clusters
     min_loc = smpi->getDomainLocalMin(0);
 	
     // time over which particles remain frozen
-    time_frozen = params->species_param[speciesNumber].time_frozen;
+    time_frozen = params.species_param[speciesNumber].time_frozen;
 	
     // atomic number
-    atomic_number = params->species_param[speciesNumber].atomic_number;
+    atomic_number = params.species_param[speciesNumber].atomic_number;
 	
     //particle mass
-    part_mass = params->species_param[speciesNumber].mass;
+    part_mass = params.species_param[speciesNumber].mass;
 	
-    oversize.resize(params->nDim_field, 0);
-    for (unsigned int i=0 ; i<params->nDim_field ; i++) {
-        oversize[i] = params->oversize[i];
+    oversize.resize(params.nDim_field, 0);
+    for (unsigned int i=0 ; i<params.nDim_field ; i++) {
+        oversize[i] = params.oversize[i];
     }
-    cell_length = params->cell_length;
+    cell_length = params.cell_length;
 	
     // Width of clusters:
-    clrw = params->clrw ; 
-    if (params->n_space[0]%clrw != 0)
+    clrw = params.clrw ; 
+    if (params.n_space[0]%clrw != 0)
         ERROR("clrw should divide n_space[0]");
     
     // Arrays of the min and max indices of the particle bins
-    bmin.resize(params->n_space[0]/clrw);
-    bmax.resize(params->n_space[0]/clrw);
+    bmin.resize(params.n_space[0]/clrw);
+    bmax.resize(params.n_space[0]/clrw);
     if (ndim == 3){
-        bmin.resize(params->n_space[0]/clrw*params->n_space[1]);
-        bmax.resize(params->n_space[0]/clrw*params->n_space[1]);
+        bmin.resize(params.n_space[0]/clrw*params.n_space[1]);
+        bmax.resize(params.n_space[0]/clrw*params.n_space[1]);
     }
 	
     //Size in each dimension of the buffers on which each bin are projected
     //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
     
     //Primal dimension of fields. 
-    f_dim0 =  params->n_space[0] + 2 * oversize[0] +1;
-    f_dim1 =  params->n_space[1] + 2 * oversize[1] +1;
-    f_dim2 =  params->n_space[2] + 2 * oversize[2] +1;
+    f_dim0 =  params.n_space[0] + 2 * oversize[0] +1;
+    f_dim1 =  params.n_space[1] + 2 * oversize[1] +1;
+    f_dim2 =  params.n_space[2] + 2 * oversize[2] +1;
     
     if (ndim == 1){
         //b_dim0 =  2 + 2 * oversize[0]; <== If clrw == 1.
@@ -125,20 +125,20 @@ densityProfile(DensityFactory::create(params))
     //cout << "size_proj_buffer = " << size_proj_buffer << " b_dim0 = " << b_dim0<< " b_dim1 = " << b_dim1<< " b_dim2 = " << b_dim2<<endl;
     
 	
-    if (!params->restart) {
+    if (!params.restart) {
         unsigned int npart_effective=0;
         
         // Create particles in a space starting at cell_index
         vector<int> cell_index(3,0);
-        for (unsigned int i=0 ; i<params->nDim_field ; i++) {
-            if (params->cell_length[i]!=0)
-                cell_index[i] = round (smpi->getDomainLocalMin(i)/params->cell_length[i]);
+        for (unsigned int i=0 ; i<params.nDim_field ; i++) {
+            if (params.cell_length[i]!=0)
+                cell_index[i] = round (smpi->getDomainLocalMin(i)/params.cell_length[i]);
         }
         
         int starting_bin_idx = 0;
         // does a loop over all cells in the simulation
         // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
-        npart_effective = createParticles(params->n_space, cell_index, starting_bin_idx );
+        npart_effective = createParticles(params.n_space, cell_index, starting_bin_idx );
         
         //PMESSAGE( 1, smpi->getRank(),"Species "<< speciesNumber <<" # part "<< npart_effective );
     }
@@ -349,9 +349,9 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
 //   - increment the currents (projection)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfields, Interpolator* Interp,
-                       Projector* Proj, SmileiMPI* smpi, PicParams* params)
+                       Projector* Proj, SmileiMPI *smpi, PicParams &params)
 {
-    Interpolator* LocInterp = InterpolatorFactory::create(*params, smpi);
+    Interpolator* LocInterp = InterpolatorFactory::create(params, smpi);
     
     // Electric field at the particle position
     LocalFields Epart;

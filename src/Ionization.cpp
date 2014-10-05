@@ -1,14 +1,14 @@
 #include "Ionization.h"
 
-Ionization::Ionization(PicParams *params, int ispec) {
+Ionization::Ionization(PicParams& params, int ispec) {
 
-    wavelength_SI        = params->wavelength_SI;
+    wavelength_SI        = params.wavelength_SI;
 
-    dt                   = params->timestep;
-    nDim_field           = params->nDim_field;
-    nDim_particle        = params->nDim_particle;
-    atomic_number_       = params->species_param[ispec].atomic_number;
-    ionized_species_mass = params->species_param[ispec].mass;
+    dt                   = params.timestep;
+    nDim_field           = params.nDim_field;
+    nDim_particle        = params.nDim_particle;
+    atomic_number_       = params.species_param[ispec].atomic_number;
+    ionized_species_mass = params.species_param[ispec].mass;
 
     // Normalization constant from Smilei normalization to/from atomic units
     eV_to_au = 1.0 / 27.2116;

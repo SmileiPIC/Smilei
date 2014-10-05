@@ -17,7 +17,7 @@ class Projector {
 
 public:
     //! Creator for the Projector
-    Projector(PicParams*, SmileiMPI*) {};
+    Projector(PicParams&, SmileiMPI*) {};
     virtual ~Projector() {};
     virtual void mv_win(unsigned int shift) = 0;
     virtual void setMvWinLimits(unsigned int shift) = 0;

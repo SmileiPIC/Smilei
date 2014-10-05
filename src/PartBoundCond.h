@@ -17,7 +17,7 @@ class SmileiMPI;
 
 class PartBoundCond {
 public:
-    PartBoundCond( PicParams *params, int ispec, SmileiMPI* smpi );
+    PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi );
     ~PartBoundCond();
 
     int (*bc_west)  ( Particles &particles, int ipart, int direction, double limit_pos );

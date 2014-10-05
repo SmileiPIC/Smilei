@@ -161,7 +161,7 @@ void ElectroMagn::solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, Pic
 // ---------------------------------------------------------------------------------------------------------------------
 // Method used to create a dump of the data contained in ElectroMagn
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn::dump(PicParams* params)
+void ElectroMagn::dump()
 {
     //!\todo Check for none-cartesian grid & for generic grid (neither all dual or all primal) (MG & JD)
     

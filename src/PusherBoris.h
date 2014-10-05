@@ -13,7 +13,7 @@
 
 class PusherBoris : public Pusher {
 public:
-    PusherBoris(PicParams *params, int ispec);
+    PusherBoris(PicParams& params, int ispec);
     ~PusherBoris();
     virtual void operator() (Particles &particles, int ipart, LocalFields Epart, LocalFields Bpart, double& gf);
 

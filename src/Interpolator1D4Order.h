@@ -13,8 +13,8 @@ class Interpolator1D4Order : public Interpolator1D
 {
 
 public:
-    Interpolator1D4Order(PicParams*, SmileiMPI*);
-    ~Interpolator1D4Order();
+    Interpolator1D4Order(PicParams&, SmileiMPI*);
+    ~Interpolator1D4Order(){};
 
     void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc);
     void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc);

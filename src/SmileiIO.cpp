@@ -20,7 +20,7 @@
 
 using namespace std;
 
-SmileiIO::SmileiIO( PicParams* params, SmileiMPI* smpi ) : dump_times(0), stop_file_seen_since_last_check(false)
+SmileiIO::SmileiIO( PicParams& params, SmileiMPI* smpi ) : dump_times(0), stop_file_seen_since_last_check(false)
 {
 		
 #ifdef _IO_PARTICLE
@@ -33,7 +33,7 @@ SmileiIO::SmileiIO( PicParams* params, SmileiMPI* smpi ) : dump_times(0), stop_f
     partFile_id = H5Fcreate( name.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 	
 	
-	nDim_particle=params->nDim_particle;
+	nDim_particle=params.nDim_particle;
     particleSize = nDim_particle + 3 + 1;
 	
     hsize_t dims[2] = {0, particleSize};
@@ -45,14 +45,14 @@ SmileiIO::SmileiIO( PicParams* params, SmileiMPI* smpi ) : dump_times(0), stop_f
     hsize_t chunk_dims[2] = {1, particleSize};
     H5Pset_chunk(plist, 2, chunk_dims);
 	
-    for (unsigned int ispec=0 ; ispec<params->species_param.size() ; ispec++) {
+    for (unsigned int ispec=0 ; ispec<params.species_param.size() ; ispec++) {
         ostringstream speciesName("");
-        speciesName << params->species_param[ispec].species_type;
+        speciesName << params.species_param[ispec].species_type;
 
         //here we check for the presence of multiple ccurence of the same particle name... Souldn't we add a tag for each species?
         unsigned int occurrence=0;
         for (unsigned int iocc=0 ; iocc<ispec ; iocc++) {
-            if (params->species_param[ispec].species_type == params->species_param[iocc].species_type)
+            if (params.species_param[ispec].species_type == params.species_param[iocc].species_type)
                 occurrence++;
         }
         if (occurrence>0) 
@@ -64,11 +64,11 @@ SmileiIO::SmileiIO( PicParams* params, SmileiMPI* smpi ) : dump_times(0), stop_f
         hid_t tmp_space = H5Screate(H5S_SCALAR);
 		
         attribute_id = H5Acreate (partDataset_id[ispec], "Mass", H5T_IEEE_F64BE, tmp_space,H5P_DEFAULT, H5P_DEFAULT);
-        H5Awrite(attribute_id, H5T_NATIVE_DOUBLE, &params->species_param[ispec].mass);
+        H5Awrite(attribute_id, H5T_NATIVE_DOUBLE, &params.species_param[ispec].mass);
         H5Aclose(attribute_id);
 		
         attribute_id = H5Acreate (partDataset_id[ispec], "Charge", H5T_IEEE_F64BE, tmp_space,H5P_DEFAULT, H5P_DEFAULT);
-        H5Awrite(attribute_id, H5T_NATIVE_DOUBLE, &params->species_param[ispec].charge);
+        H5Awrite(attribute_id, H5T_NATIVE_DOUBLE, &params.species_param[ispec].charge);
         H5Aclose(attribute_id);
 		
         H5Sclose(tmp_space);
@@ -99,20 +99,20 @@ SmileiIO::SmileiIO( PicParams* params, SmileiMPI* smpi ) : dump_times(0), stop_f
 
     hid_t sid  = H5Screate(H5S_SCALAR);
     hid_t aid = H5Acreate (global_file_id_, "res_time", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, write_plist);
-    H5Awrite(aid, H5T_NATIVE_DOUBLE, &(params->res_time));
+    H5Awrite(aid, H5T_NATIVE_DOUBLE, &(params.res_time));
     H5Sclose(sid);
     H5Aclose(aid);
     
-    hsize_t dimsPos = params->res_space.size();
+    hsize_t dimsPos = params.res_space.size();
     sid = H5Screate_simple(1, &dimsPos, NULL);
     aid = H5Acreate (global_file_id_, "res_space", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, write_plist);
-    H5Awrite(aid, H5T_NATIVE_DOUBLE, &(params->res_space[0]));
+    H5Awrite(aid, H5T_NATIVE_DOUBLE, &(params.res_space[0]));
     H5Aclose(aid);
     H5Sclose(sid);
 
-    dimsPos = params->sim_length.size();
+    dimsPos = params.sim_length.size();
     sid = H5Screate_simple(1, &dimsPos, NULL);
-    vector<double> sim_length_norm=params->sim_length;
+    vector<double> sim_length_norm=params.sim_length;
     std::transform(sim_length_norm.begin(), sim_length_norm.end(), sim_length_norm.begin(),std::bind1st(std::multiplies<double>(),1.0/(2.0*M_PI)));
 
     aid = H5Acreate (global_file_id_, "sim_length", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, write_plist);

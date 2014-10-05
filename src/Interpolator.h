@@ -17,7 +17,7 @@ class Particles;
 class Interpolator
 {
 public:
-    Interpolator(PicParams*, SmileiMPI*) {};
+    Interpolator(PicParams&, SmileiMPI*) {};
     virtual ~Interpolator() {};
     virtual void mv_win(unsigned int shift) = 0;
     virtual void setMvWinLimits(unsigned int shift) = 0;

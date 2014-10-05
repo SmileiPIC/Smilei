@@ -6,22 +6,11 @@
 #include "ElectroMagn.h"
 #include "Field1D.h"
 #include "Particles.h"
-#include "SmileiMPI_Cart1D.h"
 
 using namespace std;
 
-Interpolator1D2Order::Interpolator1D2Order(PicParams *params, SmileiMPI* smpi) : Interpolator1D(params, smpi)
-{
-    SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
-
-    dx_inv_ = 1.0/params->cell_length[0];
-
-    index_domain_begin = smpi1D->getCellStartingGlobalIndex(0);
-
-}
-
-Interpolator1D2Order::~Interpolator1D2Order()
-{
+Interpolator1D2Order::Interpolator1D2Order(PicParams &params, SmileiMPI *smpi) : Interpolator1D(params, smpi) {
+    dx_inv_ = 1.0/params.cell_length[0];
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

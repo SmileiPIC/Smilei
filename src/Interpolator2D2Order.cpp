@@ -6,7 +6,6 @@
 #include "ElectroMagn.h"
 #include "Field2D.h"
 #include "Particles.h"
-#include "SmileiMPI_Cart2D.h"
 
 using namespace std;
 
@@ -14,20 +13,12 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for Interpolator2D2Order
 // ---------------------------------------------------------------------------------------------------------------------
-Interpolator2D2Order::Interpolator2D2Order(PicParams *params, SmileiMPI* smpi) : Interpolator2D(params, smpi)
+Interpolator2D2Order::Interpolator2D2Order(PicParams &params, SmileiMPI *smpi) : Interpolator2D(params, smpi)
 {
-    SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
 
-    dx_inv_ = 1.0/params->cell_length[0];
-    dy_inv_ = 1.0/params->cell_length[1];
+    dx_inv_ = 1.0/params.cell_length[0];
+    dy_inv_ = 1.0/params.cell_length[1];
 
-    i_domain_begin = smpi2D->getCellStartingGlobalIndex(0);
-    j_domain_begin = smpi2D->getCellStartingGlobalIndex(1);
-
-}
-
-Interpolator2D2Order::~Interpolator2D2Order()
-{
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

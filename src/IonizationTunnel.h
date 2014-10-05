@@ -16,7 +16,7 @@ class IonizationTunnel : public Ionization
 
 public:
     //! Constructor for IonizationTunnel: with no input argument
-    IonizationTunnel(PicParams *params, int ispec);
+    IonizationTunnel(PicParams& params, int ispec);
 
     //! apply the Tunnel Ionization model to the species (without ionization current)
     virtual void operator() (Particles &particles, int ipart, LocalFields Epart);

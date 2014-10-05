@@ -27,7 +27,7 @@ class Species
 {
 public:
     //! Species creator
-    Species(PicParams*, int, SmileiMPI*);
+    Species(PicParams&, int, SmileiMPI*);
 
     //! Species destructor
     virtual ~Species();
@@ -55,7 +55,7 @@ public:
 
     //! Method calculating the Particle dynamics (interpolation, pusher, projection)
     virtual void dynamics(double time, unsigned int ispec, ElectroMagn* EMfields, Interpolator* interp,
-                          Projector* proj, SmileiMPI* smpi, PicParams* params);
+                          Projector* proj, SmileiMPI *smpi, PicParams &params);
 
     //! Method used to initialize the Particle position in a given cell
     void initPosition(unsigned int, unsigned int, unsigned int *, unsigned int, std::vector<double>, std::string);

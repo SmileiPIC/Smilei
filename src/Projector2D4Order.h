@@ -6,7 +6,7 @@
 
 class Projector2D4Order : public Projector2D {
 public:
-    Projector2D4Order(PicParams*, SmileiMPI* smpi);
+    Projector2D4Order(PicParams&, SmileiMPI* smpi);
     ~Projector2D4Order();
 
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_)

@@ -14,16 +14,12 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for Interpolator2D4Order
 // ---------------------------------------------------------------------------------------------------------------------
-Interpolator2D4Order::Interpolator2D4Order(PicParams *params, SmileiMPI* smpi) : Interpolator2D(params, smpi)
+Interpolator2D4Order::Interpolator2D4Order(PicParams &params, SmileiMPI *smpi) : Interpolator2D(params, smpi)
 {
-    SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
 
-    dx_inv_ = 1.0/params->cell_length[0];
-    dy_inv_ = 1.0/params->cell_length[1];
+    dx_inv_ = 1.0/params.cell_length[0];
+    dy_inv_ = 1.0/params.cell_length[1];
 
-
-    i_domain_begin = smpi2D->getCellStartingGlobalIndex(0);
-    j_domain_begin = smpi2D->getCellStartingGlobalIndex(1);
 
     //double defined for use in coefficients
     dble_1_ov_384 = 1.0/384.0;
@@ -41,9 +37,6 @@ Interpolator2D4Order::Interpolator2D4Order(PicParams *params, SmileiMPI* smpi) :
 
 }
 
-Interpolator2D4Order::~Interpolator2D4Order()
-{
-}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // 2nd Order Interpolation of the fields at a the particle position (3 nodes are used)
