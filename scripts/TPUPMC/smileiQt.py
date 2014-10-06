@@ -73,6 +73,7 @@ class smileiQt(QtGui.QMainWindow):
             self.ui.mouse.setText(msg)
         
     def closeEvent(self,event):
+        print "Close"
         if not self.fieldFile is None :
             self.fieldFile.close()
         if not self.phaseFile is None :
@@ -116,7 +117,8 @@ class smileiQt(QtGui.QMainWindow):
         if not hasattr(self,'fig'): return
         
         self.ui.spinStep.setValue(self.step)
-        self.fig.suptitle("Time: %.3f" % (self.step/self.res_time))
+        time=self.step/self.res_time*self.fieldEvery
+        self.fig.suptitle("Time: %.3f" % time)
         nplot=0
     
         if not self.scalarData is None :
@@ -128,11 +130,11 @@ class smileiQt(QtGui.QMainWindow):
                     ax=plt.subplot2grid((self.nplots,10),(nplot, 0),colspan=10)
                     ax.plot(x,y)
                     ax.set_ylabel(j.text())
-                    ax.axvline(x=self.step/self.res_time,c="red",linewidth=2,zorder=0, clip_on=False)
+                    ax.axvline(x=time,c="red",linewidth=2,zorder=0, clip_on=False)
                     nplot+=1
 
         if not self.fieldFile is None :
-            nameGroup="/%010d" % self.step
+            nameGroup="/%010d" % (self.step*self.fieldEvery)
             for i in self.ui.menuFields.actions() :
                 if i.isChecked() :
                     nameData=nameGroup+"/"+i.text()
@@ -211,6 +213,7 @@ class smileiQt(QtGui.QMainWindow):
             
             self.res_time=f.root._v_attrs.res_time
             self.sim_length=f.root._v_attrs.sim_length
+            self.fieldEvery=f.root._v_attrs.every
             
             for group in f.list_nodes("/", classname='Group'):
                 self.fieldSteps.append(group._v_name)

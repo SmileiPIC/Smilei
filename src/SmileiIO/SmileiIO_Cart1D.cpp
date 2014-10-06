@@ -13,8 +13,8 @@
 
 using namespace std;
 
-SmileiIO_Cart1D::SmileiIO_Cart1D( PicParams& params, SmileiMPI* smpi )
-    : SmileiIO( params, smpi )
+SmileiIO_Cart1D::SmileiIO_Cart1D( PicParams& params, DiagParams &diagParams, SmileiMPI* smpi )
+    : SmileiIO( params, diagParams, smpi )
 {
     createPattern(params,smpi);
 }

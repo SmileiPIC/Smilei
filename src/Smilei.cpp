@@ -101,7 +101,7 @@ int main (int argc, char* argv[])
     MESSAGE("Creating MPI & IO environments");
     MESSAGE("----------------------------------------------");
     SmileiMPI* smpi = SmileiMPIFactory::create(params, smpiData);
-    SmileiIO*  sio  = SmileiIOFactory::create(params, smpi);
+    SmileiIO*  sio  = SmileiIOFactory::create(params, diag_params, smpi);
     
     
     // -------------------------------------------

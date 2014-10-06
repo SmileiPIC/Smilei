@@ -13,6 +13,7 @@
 #include <mpi.h>
 
 #include "PicParams.h"
+#include "DiagParams.h"
 #include "SmileiMPI.h"
 #include "SimWindow.h"
 #include "ElectroMagn.h"
@@ -20,7 +21,9 @@
 
 using namespace std;
 
-SmileiIO::SmileiIO( PicParams& params, SmileiMPI* smpi ) : dump_times(0), stop_file_seen_since_last_check(false)
+SmileiIO::SmileiIO( PicParams& params, DiagParams& diagParams, SmileiMPI* smpi ) : 
+dump_times(0), 
+stop_file_seen_since_last_check(false)
 {
 		
 #ifdef _IO_PARTICLE
@@ -100,6 +103,12 @@ SmileiIO::SmileiIO( PicParams& params, SmileiMPI* smpi ) : dump_times(0), stop_f
     hid_t sid  = H5Screate(H5S_SCALAR);
     hid_t aid = H5Acreate (global_file_id_, "res_time", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, write_plist);
     H5Awrite(aid, H5T_NATIVE_DOUBLE, &(params.res_time));
+    H5Sclose(sid);
+    H5Aclose(aid);
+
+    sid  = H5Screate(H5S_SCALAR);
+    aid = H5Acreate (global_file_id_, "every", H5T_NATIVE_UINT, sid, H5P_DEFAULT, write_plist);
+    H5Awrite(aid, H5T_NATIVE_UINT, &(diagParams.fieldDump_every));
     H5Sclose(sid);
     H5Aclose(aid);
     

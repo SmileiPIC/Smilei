@@ -211,7 +211,7 @@ void ElectroMagn::initRhoJ(vector<Species*> vecSpecies, Projector* Proj)
         }
         
     }//iSpec
-    
+    DEBUG("before computeTotalRhoJ");    
     computeTotalRhoJ();
     DEBUG("projection done for initRhoJ");
     

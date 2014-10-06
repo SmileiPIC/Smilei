@@ -14,6 +14,7 @@
 #include <hdf5.h>
 
 class PicParams;
+class DiagParams;
 class InputData;
 class SmileiMPI;
 class SimWindow;
@@ -23,7 +24,7 @@ class Species;
 
 class SmileiIO {
 public:
-    SmileiIO( PicParams& params, SmileiMPI* smpi );
+    SmileiIO( PicParams& params, DiagParams &diagParams, SmileiMPI* smpi );
     virtual ~SmileiIO();
 
     //! Write all fields of all time step in the same file

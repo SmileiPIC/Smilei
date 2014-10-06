@@ -12,13 +12,13 @@
 
 class SmileiIOFactory {
 public:
-    static SmileiIO* create(PicParams& params, SmileiMPI* smpi) {
+    static SmileiIO* create(PicParams& params, DiagParams& diagParams, SmileiMPI* smpi) {
         SmileiIO* sio = NULL;
         if ( params.geometry == "1d3v" ) {
-            sio = new  SmileiIO_Cart1D(params, smpi);
+            sio = new  SmileiIO_Cart1D(params, diagParams, smpi);
         }
         else if ( params.geometry == "2d3v" ) {
-            sio = new  SmileiIO_Cart2D(params, smpi);
+            sio = new  SmileiIO_Cart2D(params, diagParams, smpi);
         }
         else {
             ERROR( "Geometry " << params.geometry << " not implemented" );

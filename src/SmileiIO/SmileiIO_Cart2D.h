@@ -14,7 +14,7 @@
 
 class SmileiIO_Cart2D : public SmileiIO {
 public:
-    SmileiIO_Cart2D( PicParams& params, SmileiMPI* smpi );
+    SmileiIO_Cart2D( PicParams& params, DiagParams &diagParams, SmileiMPI* smpi );
     ~SmileiIO_Cart2D();
 
     //! Build memory and file space for HDF5 write/read
