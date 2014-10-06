@@ -10,11 +10,11 @@
 
 #include <hdf5.h>
 
-#include "Tools.h"
+#include "../Tools.h"
 
-#include "Species.h"
-#include "Interpolator.h"
-#include "Particles.h"
+#include "../Species.h"
+#include "../Interpolator.h"
+#include "../Particles.h"
 
 class PicParams;
 class SmileiMPI;

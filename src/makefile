@@ -3,7 +3,7 @@ VERSION:="$(shell git describe 2>/dev/null || echo '??')"
 SMILEICXX     ?= mpic++
 HDF5_ROOT_DIR ?=
 
-CFLAGS  += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include #-Wstrict-aliasing
+override CFLAGS  += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include #-Wstrict-aliasing
 LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5
 
 ifneq (,$(findstring poincare,$(HOSTNAME)))
@@ -16,7 +16,7 @@ all: release
 
 EXEC = smilei
 
-SRCS = $(wildcard *.cpp)
+SRCS = $(wildcard *.cpp) $(wildcard Diagnostic/*.cpp)
 OBJS := $(patsubst %.cpp,%.o,$(SRCS))
 
 release: CFLAGS += -O3

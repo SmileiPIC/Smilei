@@ -89,18 +89,15 @@ public:
     //! to keep rack of ionized electrons
     Species *electron_species;
 
-    //! string for the species
-    std::string name_str;
-
     //! Cluster width in number of cells
     unsigned int clrw; //Should divide the number of cells in X of a single MPI domain. Should default to 1.
     //! first and last index of each particle bin
     std::vector<int> bmin, bmax;
 
-    //! Oversize
+    //! Oversize (copy from picparams)
     std::vector<unsigned int> oversize;
 
-    //! Cell_length
+    //! Cell_length (copy from picparams)
     std::vector<double> cell_length;
 
     inline void clearExchList(int tid) {
@@ -111,7 +108,8 @@ public:
     }
     std::vector< std::vector<int> > indexes_of_particles_to_exchange_per_thd;
 
-    double part_mass;
+    //Copy of the species parameters from picparams
+    SpeciesStructure species_param;
     
 private:
     
@@ -145,16 +143,11 @@ private:
     //! sub primal dimensions of fields
     unsigned int f_dim0, f_dim1, f_dim2;
 
-    //! Time over which Particles of the considered Species remain frozen
-    double time_frozen;
-
     //! Method used to apply boundary-condition for the Particles of the considered Species
     PartBoundCond* partBoundCond;
 
     //! Method used to Push the particles (change momentum & change position)
     Pusher* Push;
-
-    unsigned int atomic_number;
 
     PicParams* params_;
 

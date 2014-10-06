@@ -3,7 +3,7 @@
 #include <sstream>
 #include <iomanip>
 
-#include "SmileiMPI.h"
+#include "../SmileiMPI.h"
 
 using namespace std;
 
@@ -13,8 +13,8 @@ DiagnosticPhase::~DiagnosticPhase(){
 };
 
 DiagnosticPhase::DiagnosticPhase(phaseStructure phaseStruct) :
-my_species(phaseStruct.species),
 every(phaseStruct.every),
+my_species(phaseStruct.species),
 dataId(0)
 {
 	if (every==0) ERROR("every cannot be zero");

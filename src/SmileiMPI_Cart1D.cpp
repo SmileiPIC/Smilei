@@ -161,7 +161,7 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
     
 }
 
-void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams* params,int tnum)
+void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams& params,int tnum)
 {
     
     Particles &cuParticles = species->particles;
@@ -285,7 +285,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
             n_part_recv = buff_index_recv_sz[0][(iNeighbor+1)%2];
             if ( (neighbor_[0][0]!=MPI_PROC_NULL) && (neighbor_[0][1]!=MPI_PROC_NULL) && (n_part_send!=0) && (n_part_recv!=0) ) {
                 //Send-receive
-		double x_max = params->cell_length[0]*( params->n_space_global[0] );
+		double x_max = params.cell_length[0]*( params.n_space_global[0] );
 		int iDim = 0; // Cp from 2D
                 for (int iPart=0 ; iPart<n_part_send ; iPart++) {
 		    // Enabled periodicity in X
@@ -311,7 +311,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams*
             } else if ( (neighbor_[0][iNeighbor]!=MPI_PROC_NULL) && (n_part_send!=0) ) {
                 //Send
                 partVectorSend[0][iNeighbor].reserve(n_part_send, 1);
-		double x_max = params->cell_length[0]*( params->n_space_global[0] );
+		double x_max = params.cell_length[0]*( params.n_space_global[0] );
 		int iDim = 0; // Cp from 2D
                 for (int iPart=0 ; iPart<n_part_send ; iPart++) {
 		    // Enabled periodicity in X

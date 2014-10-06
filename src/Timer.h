@@ -14,7 +14,7 @@ public:
     void update();
     void restart();
     double getTime(){return time_acc_;}
-    void print();
+    void print(double tot);
 private:
     double last_start_;
     double time_acc_;

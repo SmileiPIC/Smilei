@@ -4,10 +4,10 @@
 
 #include <hdf5.h>
 
-#include "PicParams.h"
-#include "SmileiMPI.h"
-#include "ElectroMagn.h"
-#include "Species.h"
+#include "../PicParams.h"
+#include "../SmileiMPI.h"
+#include "../ElectroMagn.h"
+#include "../Species.h"
 
 using namespace std;
 

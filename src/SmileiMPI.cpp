@@ -7,7 +7,7 @@
 #include <sstream>
 
 #include "PicParams.h"
-#include "DiagParams.h"
+#include "Diagnostic/DiagParams.h"
 #include "Tools.h"
 
 #include "ElectroMagn.h"

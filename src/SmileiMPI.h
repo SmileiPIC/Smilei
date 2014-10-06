@@ -35,7 +35,7 @@ public:
     virtual void createTopology( PicParams& params ) {};
     //! Echanges particles of Species, list of particles comes frome Species::dynamics
     //! See child classes
-    virtual void exchangeParticles(Species* species, int ispec, PicParams* params, int tnum) {};
+    virtual void exchangeParticles(Species* species, int ispec, PicParams& params, int tnum) {};
 
     //! Create MPI_Datatype to exchange/sum fields on ghost data
     //! See child classes

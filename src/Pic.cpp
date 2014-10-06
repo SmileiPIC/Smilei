@@ -25,7 +25,6 @@
 
 #include "InputData.h"
 #include "PicParams.h"
-#include "DiagParams.h"
 #include "LaserParams.h"
 
 #include "SmileiMPIFactory.h"
@@ -36,7 +35,8 @@
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
 
-#include "Diagnostic.h"
+#include "Diagnostic/DiagParams.h"
+#include "Diagnostic/Diagnostic.h"
 
 #include "SimWindow.h"
 
@@ -268,7 +268,7 @@ int main (int argc, char* argv[])
                 {
                     // Loop on dims to manage exchange in corners
                     for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
-                        smpi->exchangeParticles(vecSpecies[ispec], ispec, &params, tid);
+                        smpi->exchangeParticles(vecSpecies[ispec], ispec, params, tid);
                 }
 #pragma omp barrier
                     vecSpecies[ispec]->sort_part(params.cell_length[0]);
@@ -340,7 +340,7 @@ int main (int argc, char* argv[])
     timer[0].update();
     MESSAGE(0, "Time in time loop : " << timer[0].getTime() );
     if ( smpi->isMaster() )
-        for (int i=1 ; i<ntimer ; i++) timer[i].print();
+        for (int i=1 ; i<ntimer ; i++) timer[i].print(timer[0].getTime());
     
     double coverage(0.);
     for (int i=1 ; i<ntimer ; i++) coverage += timer[i].getTime();

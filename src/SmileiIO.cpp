@@ -318,7 +318,7 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
     for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
 		ostringstream name("");
 		name << setfill('0') << setw(2) << ispec;
-		string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->name_str;
+		string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->species_param.species_type;
 		gid = H5Gcreate(fid, groupName.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 				
 		sid = H5Screate(H5S_SCALAR);
@@ -482,7 +482,7 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
 	for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
 		ostringstream name("");
 		name << setfill('0') << setw(2) << ispec;
-		string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->name_str;
+		string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->species_param.species_type;
 		gid = H5Gopen(fid, groupName.c_str(),H5P_DEFAULT);
 		
 		aid = H5Aopen(gid, "partCapacity", H5T_NATIVE_UINT);

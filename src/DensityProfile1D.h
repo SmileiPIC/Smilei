@@ -5,15 +5,15 @@
 #include "DensityProfile.h"
 
 //  --------------------------------------------------------------------------------------------------------------------
-//! lkjskljaslkdjaskl
+//! 1D density profile class
 //  --------------------------------------------------------------------------------------------------------------------
 class DensityProfile1D : public DensityProfile
 {
     
 public:
-    DensityProfile1D(){};
+    DensityProfile1D(SpeciesStructure &params) : DensityProfile(params) {};
     ~DensityProfile1D() {};
-    double operator() (PicParams*, unsigned int, std::vector<double>);
+    double operator() (std::vector<double>);
     
 private:
     

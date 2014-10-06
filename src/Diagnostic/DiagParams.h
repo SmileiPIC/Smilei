@@ -12,8 +12,8 @@
 #include <vector>
 #include <string>
 
-#include "InputData.h"
-#include "PicParams.h"
+#include "../InputData.h"
+#include "../PicParams.h"
 
 //! this structure holds all the possible paraeters for phase diagnostics. Then every DiagnosticPhaseXXXXX will pick the ones that fit
 struct phaseStructure {

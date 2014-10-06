@@ -11,11 +11,11 @@
 #include <vector>
 #include <fstream>
 
+#include "../Interpolator.h"
+#include "DiagParams.h"
 #include "DiagnosticScalar.h"
-#include "Interpolator.h"
 #include "DiagnosticProbe.h"
 #include "DiagnosticPhaseSpace.h"
-#include "DiagParams.h"
 
 class PicParams;
 class SmileiMPI;

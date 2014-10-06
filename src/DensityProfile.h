@@ -12,12 +12,13 @@
 class DensityProfile
 {
 public:
-    DensityProfile() {};
+    DensityProfile(SpeciesStructure &params) : species_param(params) {};
     virtual ~DensityProfile() {};
-    virtual double operator() (PicParams*, unsigned int, std::vector<double>)=0;
+    virtual double operator() (std::vector<double>)=0;
     
     
-private:
+protected:
+    SpeciesStructure species_param;
     
 };//END class
 

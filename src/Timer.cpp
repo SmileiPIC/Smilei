@@ -42,9 +42,9 @@ void Timer::restart()
     last_start_ = MPI_Wtime();
 }
 
-void Timer::print()
+void Timer::print(double tot)
 {
     if ((time_acc_>0.) && (name_!=""))
-        MESSAGE(0, "\t" << setw(12) << name_ << "\t" << time_acc_ );
+        MESSAGE(0, "\t" << setw(12) << name_ << "\t" << time_acc_  << "\t(" << 100.0*time_acc_/tot << "%)");
 }
 

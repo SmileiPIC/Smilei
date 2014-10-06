@@ -5,19 +5,19 @@
 #include <iomanip>
 #include <sstream>
 
-#include "PicParams.h"
+#include "../PicParams.h"
+#include "../SmileiMPI.h"
+#include "../SmileiMPI_Cart1D.h"
+#include "../SmileiMPI_Cart2D.h"
+#include "../ElectroMagn.h"
+#include "../Field1D.h"
+#include "../Field.h"
 #include "DiagParams.h"
-#include "SmileiMPI.h"
-#include "SmileiMPI_Cart1D.h"
-#include "SmileiMPI_Cart2D.h"
-#include "ElectroMagn.h"
-#include "Field1D.h"
-#include "Field.h"
 
 using namespace std;
 
 DiagnosticProbe::DiagnosticProbe(PicParams &params, DiagParams &diagParams, SmileiMPI* smpi):
-cpuRank(smpi->getRank()),
+cpuRank((int)smpi->getRank()),
 probeSize(10), 
 fileId(0) {
     
@@ -205,7 +205,7 @@ void DiagnosticProbe::run(unsigned int timestep, ElectroMagn* EMfields, Interpol
             
             sid = H5Dget_space(did);
             
-            for (unsigned int iprob=0; iprob <probeParticles[np].size(); iprob++) {
+            for (int iprob=0; iprob <probeParticles[np].size(); iprob++) {
                 
                 vector<hsize_t> count(dimProbe);
                 if (probeId[np][iprob]==cpuRank) {

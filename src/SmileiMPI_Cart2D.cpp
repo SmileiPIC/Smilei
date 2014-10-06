@@ -221,7 +221,7 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
     
 }
 
-void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams* params, int tnum)
+void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams& params, int tnum)
 {
     Particles &cuParticles = species->particles;
     std::vector<int>* cubmin = &species->bmin;
@@ -261,7 +261,7 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
         int shift[(*cubmax).size()+1];//how much we need to shift each bin in order to leave room for the new particles
         double dbin;
         
-        dbin = params->cell_length[0]*params->clrw; //width of a bin.
+        dbin = params.cell_length[0]*params.clrw; //width of a bin.
         for (unsigned int j=0; j<(*cubmax).size()+1 ;j++){
             shift[j]=0;
         }
@@ -353,8 +353,8 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams*
                 // n_part_send : number of particles to send to current neighbor
                 n_part_send = (buff_index_send[iDim][iNeighbor]).size();
                 if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (n_part_send!=0) ) {
-                    double x_max = params->cell_length[0]*( params->n_space_global[0] );
-                    double y_max = params->cell_length[1]*( params->n_space_global[1] );
+                    double x_max = params.cell_length[0]*( params.n_space_global[0] );
+                    double y_max = params.cell_length[1]*( params.n_space_global[1] );
                     for (int iPart=0 ; iPart<n_part_send ; iPart++) {
 
 			// Enabled periodicity in X

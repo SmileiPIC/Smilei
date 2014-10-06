@@ -12,20 +12,20 @@
 
 class DensityFactory {
 public:
-    static DensityProfile* create(PicParams& params) {
+    static DensityProfile* create(PicParams& params, unsigned int speciesNumber) {
        
         DensityProfile* densityProfile = NULL;
         // ---------------
         // 1d3v simulation
         // ---------------
         if (params.geometry == "1d3v") {
-            densityProfile = new DensityProfile1D();
+            densityProfile = new DensityProfile1D(params.species_param[speciesNumber]);
         }
         // ---------------
         // 2d3v simulation
         // ---------------
         else if (params.geometry == "2d3v") {
-            densityProfile = new DensityProfile2D();
+            densityProfile = new DensityProfile2D(params.species_param[speciesNumber]);
         }
         else {
             ERROR( "Unsupported geometry : " << params.geometry);

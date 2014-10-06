@@ -48,7 +48,7 @@ public:
             if (vecSpecies[ispec]->Ionize)  {
                 if (electron_species) {
                     vecSpecies[ispec]->electron_species=electron_species;
-                    PMESSAGE(2,smpi->getRank(),"Added electron species to species " << vecSpecies[ispec]->name_str);
+                    PMESSAGE(2,smpi->getRank(),"Added electron species to species " << vecSpecies[ispec]->species_param.species_type);
                 } else {
                     ERROR("Ionization needs a species called \"electron\" to be defined");
                 }

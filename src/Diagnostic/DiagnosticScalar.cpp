@@ -3,10 +3,10 @@
 #include <string>
 #include <iomanip>
 
-#include "PicParams.h"
+#include "../PicParams.h"
+#include "../SmileiMPI.h"
+#include "../ElectroMagn.h"
 #include "DiagParams.h"
-#include "SmileiMPI.h"
-#include "ElectroMagn.h"
 
 using namespace std;
 
@@ -66,7 +66,7 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
                 charge_tot+=(double)vecSpecies[ispec]->particles.charge(iPart);
                 ener_tot+=cell_volume*vecSpecies[ispec]->particles.weight(iPart)*(vecSpecies[ispec]->particles.lor_fac(iPart)-1.0);
             }
-            ener_tot*=vecSpecies[ispec]->part_mass;
+            ener_tot*=vecSpecies[ispec]->species_param.mass;
         }
 
         MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&charge_tot, &charge_tot, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -75,9 +75,10 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
 
         if (isMaster) {
             if (nPart!=0) charge_tot /= nPart;
-            append("Z_"+vecSpecies[ispec]->name_str,charge_tot);
-            append("E_"+vecSpecies[ispec]->name_str,ener_tot);
-            append("N_"+vecSpecies[ispec]->name_str,nPart);
+            string nameSpec=vecSpecies[ispec]->species_param.species_type;
+            append("Z_"+nameSpec,charge_tot);
+            append("E_"+nameSpec,ener_tot);
+            append("N_"+nameSpec,nPart);
             Etot_part+=ener_tot;
         }
     }

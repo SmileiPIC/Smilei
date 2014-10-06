@@ -11,9 +11,9 @@ class DensityProfile2D : public DensityProfile
 {
     
 public:
-    DensityProfile2D(){};
+    DensityProfile2D(SpeciesStructure &params) : DensityProfile(params) {};
     ~DensityProfile2D() {};
-    double operator() (PicParams*, unsigned int, std::vector<double>);
+    double operator() (std::vector<double>);
     
     
 private:
