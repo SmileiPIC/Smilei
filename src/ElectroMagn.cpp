@@ -240,7 +240,7 @@ void ElectroMagn::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
     Bx_m->shift_x(shift);
     By_m->shift_x(shift);
     Bz_m->shift_x(shift);
-    smpi->exchangeB( this );
+    smpi->exchangeBm( this );
 
     //Here you might want to apply some new boundary conditions on the +x boundary. For the moment, all fields are set to 0.
 }

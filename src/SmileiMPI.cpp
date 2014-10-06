@@ -247,3 +247,12 @@ void SmileiMPI::exchangeB( ElectroMagn* EMfields )
     exchangeField( EMfields->Bz_ );
 
 }
+
+void SmileiMPI::exchangeBm( ElectroMagn* EMfields )
+{
+    exchangeField( EMfields->Bx_m );
+    exchangeField( EMfields->By_m );
+    exchangeField( EMfields->Bz_m );
+
+}
+
