@@ -15,9 +15,12 @@ class DiagParams;
 class ElectroMagn;
 
 
+//! double-int structure to communicate min/max and location trough MPI 
 struct val_index
 {
+    //! min/max 
     double val;
+    //! cell location index
     int index;
 };
 

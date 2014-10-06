@@ -5,6 +5,7 @@
 
 class SmileiMPI;
 
+//! timer
 class Timer {
 public:
     Timer();

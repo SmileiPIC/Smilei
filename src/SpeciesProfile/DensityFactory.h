@@ -10,6 +10,7 @@
 
 #include "Tools.h"
 
+//! staic creator of plasma density profiles (one per species)
 class DensityFactory {
 public:
     static DensityProfile* create(PicParams& params, unsigned int speciesNumber) {
