@@ -35,8 +35,8 @@
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
 
-#include "Diagnostic/DiagParams.h"
-#include "Diagnostic/Diagnostic.h"
+#include "DiagParams.h"
+#include "Diagnostic.h"
 
 #include "SimWindow.h"
 

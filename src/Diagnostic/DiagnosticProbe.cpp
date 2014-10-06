@@ -5,13 +5,13 @@
 #include <iomanip>
 #include <sstream>
 
-#include "../PicParams.h"
-#include "../SmileiMPI.h"
-#include "../SmileiMPI_Cart1D.h"
-#include "../SmileiMPI_Cart2D.h"
-#include "../ElectroMagn.h"
-#include "../Field1D.h"
-#include "../Field.h"
+#include "PicParams.h"
+#include "SmileiMPI.h"
+#include "SmileiMPI_Cart1D.h"
+#include "SmileiMPI_Cart2D.h"
+#include "ElectroMagn.h"
+#include "Field1D.h"
+#include "Field.h"
 #include "DiagParams.h"
 
 using namespace std;

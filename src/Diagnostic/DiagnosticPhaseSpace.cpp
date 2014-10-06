@@ -4,11 +4,11 @@
 #include <string>
 #include <iomanip>
 
-#include "../PicParams.h"
-#include "../SmileiMPI.h"
-#include "../ElectroMagn.h"
-#include "../Field1D.h"
-#include "../Field.h"
+#include "PicParams.h"
+#include "SmileiMPI.h"
+#include "ElectroMagn.h"
+#include "Field1D.h"
+#include "Field.h"
 #include "DiagParams.h"
 #include "DiagnosticPhasePosMom.h"
 #include "DiagnosticPhasePosLor.h"

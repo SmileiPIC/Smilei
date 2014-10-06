@@ -2,9 +2,9 @@
 #define DiagnosticPhase_H
 
 #include <hdf5.h>
-#include "../Tools.h"
+#include "Tools.h"
 #include "DiagParams.h"
-#include "../Field2D.h"
+#include "Field2D.h"
 
 class PicParams;
 class SmileiMPI;

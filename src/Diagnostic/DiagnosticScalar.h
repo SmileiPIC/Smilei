@@ -6,8 +6,8 @@
 #include <iostream>
 #include <fstream>
 
-#include "../Tools.h"
-#include "../Species.h"
+#include "Tools.h"
+#include "Species.h"
 
 class PicParams;
 class SmileiMPI;

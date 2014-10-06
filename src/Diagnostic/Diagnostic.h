@@ -11,7 +11,7 @@
 #include <vector>
 #include <fstream>
 
-#include "../Interpolator.h"
+#include "Interpolator.h"
 #include "DiagParams.h"
 #include "DiagnosticScalar.h"
 #include "DiagnosticProbe.h"
