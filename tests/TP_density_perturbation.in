@@ -126,7 +126,7 @@ end
 # ---------------------
 
 # print_every (on screen text output) 
-print_every = 100
+print_every = 1000
 
 # every for field dump
 fieldDump_every = 100

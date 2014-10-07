@@ -8,24 +8,29 @@ using namespace std;
 
 DiagParams::DiagParams(PicParams& params, InputData &ifile) {
 	
+    bool ok=false;
+    
 	print_every=params.n_time/10;
     ifile.extract("print_every", print_every);
-	
-	fieldDump_every=params.n_time/10;
-    ifile.extract("fieldDump_every", fieldDump_every);
     
+	fieldDump_every=0;
+    ok=ifile.extract("fieldDump_every", fieldDump_every);
+    if (!ok) fieldDump_every=params.global_every;
+        
     avgfieldDump_every=params.res_time*10;
-    ifile.extract("avgfieldDump_every", avgfieldDump_every);
+    ok=ifile.extract("avgfieldDump_every", avgfieldDump_every);
+    if (!ok) avgfieldDump_every=params.global_every;
     
     ntime_step_avg=params.res_time;
 	ifile.extract("ntime_step_avg", ntime_step_avg);
     
-	particleDump_every=params.n_time/10;
+	particleDump_every=0;
 	if (ifile.extract("particleDump_every", particleDump_every))
             WARNING("Option particleDump_every disabled");
 	
 	scalar_every=0;
-	ifile.extract("every",scalar_every,"diagnostic scalar");
+	ok=ifile.extract("every",scalar_every,"diagnostic scalar");
+    if (!ok) scalar_every=params.global_every;
 	
     scalar_precision=10;
     ifile.extract("precision",scalar_precision,"diagnostic scalar");
@@ -35,7 +40,10 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
     while (ifile.existGroup("diagnostic probe",n_probe)) {
         probeStructure tmpStruct;
         
-        ifile.extract("every",tmpStruct.every,"diagnostic probe",0,n_probe);
+        tmpStruct.every=0;
+        ok=ifile.extract("every",tmpStruct.every,"diagnostic probe",0,n_probe);        
+        if (!ok) tmpStruct.every=params.global_every;
+
         ifile.extract("number",tmpStruct.number,"diagnostic probe",0,n_probe);
         tmpStruct.dim=tmpStruct.number.size();
         if (tmpStruct.dim == 0) { // in 1D case you have one probe, forcing it
@@ -70,9 +78,16 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
             }
         }
 
-        tmpPhaseStruct.every=1;
-		ifile.extract("every",tmpPhaseStruct.every,"diagnostic phase",0,n_probephase);
-		ifile.extract("species",tmpPhaseStruct.species,"diagnostic phase",0,n_probephase);
+        tmpPhaseStruct.every=0;
+		ok=ifile.extract("every",tmpPhaseStruct.every,"diagnostic phase",0,n_probephase);
+        if (!ok) {
+            if (n_probephase>0) {
+                tmpPhaseStruct.every=vecPhase.end()->every;
+            } else {
+                tmpPhaseStruct.every=params.global_every;
+            }
+        }
+        ifile.extract("species",tmpPhaseStruct.species,"diagnostic phase",0,n_probephase);
 
         tmpPhaseStruct.deflate=0;
         ifile.extract("deflate",tmpPhaseStruct.deflate,"diagnostic phase",0,n_probephase);

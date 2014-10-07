@@ -176,8 +176,6 @@ class smileiQt(QtGui.QMainWindow):
                     self.img1 = self.axes1.plot(self.h5data1)    
                     self.img2 = self.axes2.plot(self.h5data2)    
 
-            self.canvas1.draw()
-            self.canvas2.draw()
 
         if self.field_dims == 2 :
             print self.sim_length
@@ -195,11 +193,14 @@ class smileiQt(QtGui.QMainWindow):
             self.fig1.colorbar(self.img1)
             self.fig2.colorbar(self.img2)
 	            
+
         
         title="%.3f" % (self.timeStep.currentText().toInt()[0]/self.res_time)
         self.fig1.suptitle(title)
         self.fig2.suptitle(title)
 
+        self.canvas1.draw()
+        self.canvas2.draw()
         
 def main():
     

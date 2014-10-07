@@ -91,7 +91,7 @@ PicParams::PicParams(InputData &ifile) {
         ERROR("Dimension of res_space ("<< res_space.size() << ") != " << nDim_field << " for geometry " << geometry);
     }
     double res_space2 = 0.0;
-    for (short int i=0; i<res_space.size(); i++) {
+    for (unsigned int i=0; i<res_space.size(); i++) {
         res_space2 += (res_space[i]*res_space[i]);
     }
     if (sqrt(res_space2) > res_time) {
@@ -314,6 +314,9 @@ PicParams::PicParams(InputData &ifile) {
         n_species++;
     }
     
+    global_every=0;
+    
+    ifile.extract("every",global_every);
         
     // --------------------
     // Number of processors
@@ -398,6 +401,8 @@ void PicParams::compute()
     n_space.resize(3, 1);
     cell_length.resize(3, 0.);	    //! \todo{3 but not real size !!! Pbs in Species::Species}
     oversize.resize(3, 0);
+    
+    
     
 }
 

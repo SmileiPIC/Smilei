@@ -140,17 +140,21 @@ class smileiQt(QtGui.QMainWindow):
                     nameData=nameGroup+"/"+i.text()
                 
                     data=self.fieldFile.getNode(str(nameData))
-                    x=np.array(range(data.shape[0]))/self.res_space
-                    y=data
-                    ax=plt.subplot2grid((self.nplots,10),(nplot, 0),colspan=9)
-                    ax.plot(x,y)
+                    
+                    if len(data.shape) == 1 :
+                        x=np.array(range(data.shape[0]))/self.res_space
+                        y=data
+                        ax=plt.subplot2grid((self.nplots,10),(nplot, 0),colspan=9)
+                        ax.plot(x,y)
 
-                    if self.autoScale.isChecked() or self.lims[nplot]==None :
-                        self.lims[nplot]=ax.get_ylim()
+                        if self.autoScale.isChecked() or self.lims[nplot]==None :
+                            self.lims[nplot]=ax.get_ylim()
 
-                    ax.set_ylabel(i.text())
-                    ax.set_ylim(self.lims[nplot])
-                    ax.set_xlim(0,self.sim_length)
+                        ax.set_ylabel(i.text())
+                        ax.set_ylim(self.lims[nplot])
+                        ax.set_xlim(0,self.sim_length)
+                    elif len(data.shape) == 2 :
+                        print "still something to do with 2d fields"
 
                     nplot+=1
                 

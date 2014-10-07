@@ -20,6 +20,7 @@ EXEC = smilei
 
 SRCS := $(foreach dir,$(DIRS),$(wildcard $(dir)*.cpp))
 OBJS := $(patsubst %.cpp,%.o,$(SRCS))
+DEPS := $(patsubst %.cpp,%.d,$(SRCS))
 
 release: CFLAGS += -O3
 release: $(EXEC)
@@ -33,10 +34,11 @@ openmpintel: $(EXEC)
 debug: CFLAGS += -g -pg -Wall -D__DEBUG
 debug: $(EXEC)
 
-.depend: $(SRCS)
-	$(SMILEICXX) $(CFLAGS) -MM $^ > .depend
+-include $(OBJS:.o=.d)
 
-include .depend 
+%.d: %.cpp
+	@ echo "Checking dependencies for $<"
+	@../scripts/depend.sh $(shell dirname $<) $(SMILEICXX) -MM -MG $(CFLAGS) $*.cpp > $@ 2>/dev/null
 
 %.o : %.cpp
 	$(SMILEICXX) $(CFLAGS) -c $< -o $@
@@ -45,4 +47,6 @@ $(EXEC): $(OBJS)
 	$(SMILEICXX) $(CFLAGS) -o $(EXEC) $(OBJS) $(LDFLAGS)
 
 clean:
-	rm -f $(EXEC) $(OBJS) .depend
+	rm -f $(EXEC) $(OBJS) $(DEPS) .depend
+	
+# DO NOT DELETE
