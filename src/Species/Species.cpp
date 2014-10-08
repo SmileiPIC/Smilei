@@ -51,8 +51,6 @@ species_param(params.species_param[ispec])
     // -------------------
     // Variable definition
     // -------------------
-    params_ = &params;
-    
     PI2 = 2.0 * M_PI;
 	
     DEBUG(species_param.species_type);
@@ -120,7 +118,7 @@ species_param(params.species_param[ispec])
         int starting_bin_idx = 0;
         // does a loop over all cells in the simulation
         // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
-        npart_effective = createParticles(params.n_space, cell_index, starting_bin_idx );
+        npart_effective = createParticles(params.n_space, cell_index, starting_bin_idx, params );
         
         //PMESSAGE( 1, smpi->getRank(),"Species "<< speciesNumber <<" # part "<< npart_effective );
     }
@@ -568,7 +566,7 @@ void Species::sort_part(double dbin)
 
 }
 
-void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
+void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi, PicParams& params)
 {
     // Update BC positions
     partBoundCond->moveWindow_x( shift*cell_length[0] );
@@ -594,41 +592,41 @@ void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
     } 
     bmin[0] = 0;
     
-    smpi->exchangeParticles( this, speciesNumber, *params_, 0 );
+    smpi->exchangeParticles( this, speciesNumber,params, 0 );
     
     // Create new particles
     if (smpi->isEastern() ) {
-        defineNewCells(shift, smpi);
+        defineNewCells(shift, smpi, params);
     }
     
 }
 
-void Species::defineNewCells(unsigned int shift, SmileiMPI *smpi)
+void Species::defineNewCells(unsigned int shift, SmileiMPI *smpi, PicParams& params)
 {
     // does a loop over all cells in the simulation
     // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
     vector<int> cell_index(3,0);
-    for (unsigned int i=0 ; i<params_->nDim_field ; i++) {
+    for (unsigned int i=0 ; i<params.nDim_field ; i++) {
         if (cell_length[i]!=0) {
             cell_index[i] = round (smpi->getDomainLocalMin(i)/cell_length[i]);
         }
     }
     // cell_index[0] goes to end of the domain minus cell to create
-    cell_index[0] += params_->n_space[0] - shift;
+    cell_index[0] += params.n_space[0] - shift;
     
     // Next bin to create
     int new_bin_idx = bmin.size() - shift;
     
     vector<unsigned int> n_space_created(3,0);
     n_space_created[0] = shift;
-    n_space_created[1] = params_->n_space[1];
-    n_space_created[2] = params_->n_space[2];
+    n_space_created[1] = params.n_space[1];
+    n_space_created[2] = params.n_space[2];
     
-    unsigned int npart_effective = createParticles(n_space_created, cell_index, new_bin_idx );
+    unsigned int npart_effective = createParticles(n_space_created, cell_index, new_bin_idx, params );
 }
 
 
-int Species::createParticles(vector<unsigned int> n_space_to_create, vector<int> cell_index, int new_bin_idx  )
+int Species::createParticles(vector<unsigned int> n_space_to_create, vector<int> cell_index, int new_bin_idx, PicParams& params  )
 {
     // ---------------------------------------------------------
     // Calculate density and number of particles for the species
@@ -694,7 +692,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<int>
     // }
     
     int n_existing_particles = particles.size();
-    particles.initialize(n_existing_particles+npart_effective, params_->nDim_particle);
+    particles.initialize(n_existing_particles+npart_effective, params.nDim_particle);
     
     
     // define Maxwell-Juettner related quantities
@@ -730,7 +728,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<int>
     // Initialization of the particles properties
     // ------------------------------------------
     unsigned int iPart=n_existing_particles;
-    unsigned int *indexes=new unsigned int[params_->nDim_particle];
+    unsigned int *indexes=new unsigned int[params.nDim_particle];
     double *temp=new double[3];
     double *vel=new double[3];
     
@@ -767,12 +765,12 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<int>
                         }//ndim > 2
                     }//ndim > 1
                     
-                    initPosition(species_param.n_part_per_cell,iPart, indexes, params_->nDim_particle,
+                    initPosition(species_param.n_part_per_cell,iPart, indexes, params.nDim_particle,
                                  cell_length, species_param.initialization_type);
                     initMomentum(species_param.n_part_per_cell,iPart, temp, vel,
                                  species_param.initialization_type, max_jutt_cumul);
-                    initWeight(params_, speciesNumber, iPart, density(i,j,k));
-                    initCharge(params_, speciesNumber, iPart, density(i,j,k));
+                    initWeight(&params, speciesNumber, iPart, density(i,j,k));
+                    initCharge(&params, speciesNumber, iPart, density(i,j,k));
                     
                     //calculate new iPart (jump to next cell)
                     iPart+=species_param.n_part_per_cell;
@@ -790,7 +788,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<int>
     // (necessary to calculate currents at time t=0 using the Esirkepov projection scheme)
     for (unsigned int iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++) {
         for (unsigned int i=0; i<ndim; i++) {
-            particles.position_old(i,iPart) -= particles.momentum(i,iPart)/particles.lor_fac(iPart) * params_->timestep;
+            particles.position_old(i,iPart) -= particles.momentum(i,iPart)/particles.lor_fac(iPart) * params.timestep;
         }
     }
     return npart_effective;

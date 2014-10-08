@@ -21,7 +21,7 @@ SimWindow::~SimWindow()
 {
 }
 
-void SimWindow::operate(vector<Species*> vecSpecies, ElectroMagn* EMfields, Interpolator* Interp, Projector* Proj, SmileiMPI* smpi)
+void SimWindow::operate(vector<Species*> vecSpecies, ElectroMagn* EMfields, Interpolator* Interp, Projector* Proj, SmileiMPI* smpi, PicParams& params)
 {
 
     unsigned int clrw;
@@ -38,7 +38,7 @@ void SimWindow::operate(vector<Species*> vecSpecies, ElectroMagn* EMfields, Inte
 
     if (vecSpecies.size() > 0) {
         for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
-            vecSpecies[ispec]->movingWindow_x(clrw,smpi);
+            vecSpecies[ispec]->movingWindow_x(clrw,smpi,params);
         }
         Interp->mv_win(clrw);
         Proj->mv_win(clrw);

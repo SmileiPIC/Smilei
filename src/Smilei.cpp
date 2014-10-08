@@ -160,7 +160,7 @@ int main (int argc, char* argv[])
 
 	if (simWindow) {
 	    simWindow->setOperators(vecSpecies, Interp, Proj, smpi);
-	    simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi );
+	    simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi , params);
 	}
 	    
     } else {
@@ -322,7 +322,7 @@ int main (int argc, char* argv[])
                 MESSAGE("\t\tWindow start to move");
                 MESSAGE("\t\t---------------------------------------------\n");
             }
-            simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi );
+            simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi, params);
         }
         
     }//END of the time loop

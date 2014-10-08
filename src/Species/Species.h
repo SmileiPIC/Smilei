@@ -75,8 +75,8 @@ public:
     //! Method used to sort particles
     void sort_part(double);
 
-    void movingWindow_x(unsigned int shift, SmileiMPI *smpi);
-    void defineNewCells(unsigned int shift, SmileiMPI *smpi);
+    void movingWindow_x(unsigned int shift, SmileiMPI *smpi, PicParams& param);
+    void defineNewCells(unsigned int shift, SmileiMPI *smpi, PicParams& param);
     void updateMvWinLimits(double x_moved);
 
     //! Vector containing all Particles of the considered Species
@@ -149,9 +149,7 @@ private:
     //! Method used to Push the particles (change momentum & change position)
     Pusher* Push;
 
-    PicParams* params_;
-
-    int  createParticles(std::vector<unsigned int> n_space_to_create, std::vector<int> cell_index, int new_bin_idx );
+    int  createParticles(std::vector<unsigned int> n_space_to_create, std::vector<int> cell_index, int new_bin_idx,  PicParams& param);
 
 };
 
