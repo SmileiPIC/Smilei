@@ -1,4 +1,4 @@
-#include "FieldsBC.h"
+#include "ElectroMagnBC.h"
 
 #include <cstdlib>
 
@@ -12,7 +12,7 @@
 
 using namespace std;
 
-FieldsBC::FieldsBC( PicParams &params, LaserParams &laser_params )
+ElectroMagnBC::ElectroMagnBC( PicParams &params, LaserParams &laser_params )
 {
     // check for laser conditions
     laser_.resize(laser_params.n_laser);
@@ -26,14 +26,14 @@ FieldsBC::FieldsBC( PicParams &params, LaserParams &laser_params )
 
 }
 
-FieldsBC::~FieldsBC()
+ElectroMagnBC::~ElectroMagnBC()
 {
     for (unsigned int i=0; i< laser_.size(); i++) {
         delete laser_[i];
     }
 }
 
-void FieldsBC::laserDisabled()
+void ElectroMagnBC::laserDisabled()
 {
     for (unsigned int i=0; i< laser_.size(); i++) {
         laser_[i]->disabled();

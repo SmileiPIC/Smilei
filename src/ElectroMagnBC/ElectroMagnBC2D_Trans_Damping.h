@@ -1,16 +1,16 @@
 
-#ifndef FIELDSBC2D_Trans_DAMPING_H
-#define FIELDSBC2D_Trans_DAMPING_H
+#ifndef ELECTROMAGNBC2D_Trans_DAMPING_H
+#define ELECTROMAGNBC2D_Trans_DAMPING_H
 
-#include "FieldsBC.h" 
+#include "ElectroMagnBC.h" 
 
 class PicParams;
 class ElectroMagn;
 
-class FieldsBC2D_Trans_Damping : public FieldsBC {
+class ElectroMagnBC2D_Trans_Damping : public ElectroMagnBC {
 public:
-    FieldsBC2D_Trans_Damping( PicParams &params, LaserParams &laser_params );
-    ~FieldsBC2D_Trans_Damping();
+    ElectroMagnBC2D_Trans_Damping( PicParams &params, LaserParams &laser_params );
+    ~ElectroMagnBC2D_Trans_Damping();
 
     virtual void apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi);
 

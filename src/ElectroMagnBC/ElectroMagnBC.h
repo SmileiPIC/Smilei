@@ -1,6 +1,6 @@
 
-#ifndef FIELDSBC_H
-#define FIELDSBC_H
+#ifndef ELECTROMAGNBC_H
+#define ELECTROMAGNBC_H
 
 #include <vector>
 
@@ -10,10 +10,10 @@ class SmileiMPI;
 class ElectroMagn;
 class Laser;
 
-class FieldsBC {
+class ElectroMagnBC {
 public:
-    FieldsBC( PicParams &params,  LaserParams &laser_params );
-    ~FieldsBC();
+    ElectroMagnBC( PicParams &params,  LaserParams &laser_params );
+    ~ElectroMagnBC();
 
     virtual void apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi) = 0;
     void laserDisabled();

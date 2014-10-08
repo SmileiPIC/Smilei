@@ -1,25 +1,25 @@
 
-#ifndef FIELDSBC_FACTORY_H
-#define FIELDSBC_FACTORY_H
+#ifndef ELECTROMAGNBC_FACTORY_H
+#define ELECTROMAGNBC_FACTORY_H
 
-#include "FieldsBC.h"
-#include "FieldsBC1D_SM.h"
-#include "FieldsBC2D_Long_SM.h"
-#include "FieldsBC2D_Trans_SM.h"
-#include "FieldsBC2D_Trans_Damping.h"
+#include "ElectroMagnBC.h"
+#include "ElectroMagnBC1D_SM.h"
+#include "ElectroMagnBC2D_Long_SM.h"
+#include "ElectroMagnBC2D_Trans_SM.h"
+#include "ElectroMagnBC2D_Trans_Damping.h"
 
 #include "PicParams.h"
 
 
-class FieldsBC_Factory {
+class ElectroMagnBC_Factory {
 public:
-    static std::vector<FieldsBC*> create(PicParams& params, LaserParams &laser_params) {
-        std::vector<FieldsBC*> fieldsBoundCond;
+    static std::vector<ElectroMagnBC*> create(PicParams& params, LaserParams &laser_params) {
+        std::vector<ElectroMagnBC*> emBoundCond;
 
         if ( params.geometry == "1d3v" ) {
-            fieldsBoundCond.resize(1, NULL);
+            emBoundCond.resize(1, NULL);
             if ( params.bc_em_type_long == "silver-muller" )
-		fieldsBoundCond[0] = new FieldsBC1D_SM(params, laser_params);
+		emBoundCond[0] = new ElectroMagnBC1D_SM(params, laser_params);
             else if ( params.bc_em_type_long != "periodic" ) {
                 // If periodic : !applied -> NULL
                 ERROR( "Unknwon boundary condition : " << params.bc_em_type_long );
@@ -27,11 +27,11 @@ public:
         }
 
         else if ( params.geometry == "2d3v" ) {
-            fieldsBoundCond.resize(2, NULL);
+            emBoundCond.resize(2, NULL);
 
             if ( params.bc_em_type_long == "silver-muller" ) {
                 //Boundary in the X direction is set to Silver-Muller
-                fieldsBoundCond[0] = new FieldsBC2D_Long_SM(params, laser_params);
+                emBoundCond[0] = new ElectroMagnBC2D_Long_SM(params, laser_params);
             }
             else if ( params.bc_em_type_long != "periodic" ) {
                 // If periodic : !applied -> NULL
@@ -41,11 +41,11 @@ public:
 
             if ( params.bc_em_type_trans == "silver-muller" ) {
                 //Boundary in the Y direction is set to Silver-Muller.
-                fieldsBoundCond[1] = new FieldsBC2D_Trans_SM(params, laser_params);
+                emBoundCond[1] = new ElectroMagnBC2D_Trans_SM(params, laser_params);
             }
             else if ( params.bc_em_type_trans == "damping" ) {
                 // Boundary in the Y direction is set to damping if they are not periodic. 
-		fieldsBoundCond[1] = new FieldsBC2D_Trans_Damping(params, laser_params); 
+		emBoundCond[1] = new ElectroMagnBC2D_Trans_Damping(params, laser_params); 
             }
             else if ( params.bc_em_type_trans != "periodic" ) {
                 // If periodic : !applied -> NULL
@@ -55,7 +55,7 @@ public:
         else {
             ERROR( "Unknwon geometry : " << params.geometry );
         }
-        return fieldsBoundCond;
+        return emBoundCond;
     }
 
 };

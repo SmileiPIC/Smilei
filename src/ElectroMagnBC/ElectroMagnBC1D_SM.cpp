@@ -1,4 +1,4 @@
-#include "FieldsBC1D_SM.h"
+#include "ElectroMagnBC1D_SM.h"
 
 #include <cstdlib>
 
@@ -14,8 +14,8 @@
 
 using namespace std;
 
-FieldsBC1D_SM::FieldsBC1D_SM( PicParams &params, LaserParams &laser_params )
-    : FieldsBC( params, laser_params )
+ElectroMagnBC1D_SM::ElectroMagnBC1D_SM( PicParams &params, LaserParams &laser_params )
+    : ElectroMagnBC( params, laser_params )
 {
     // number of nodes of the primal-grid
     nx_p = params.n_space[0]+1 + 2*params.oversize[0];
@@ -34,14 +34,14 @@ FieldsBC1D_SM::FieldsBC1D_SM( PicParams &params, LaserParams &laser_params )
 
 }
 
-FieldsBC1D_SM::~FieldsBC1D_SM()
+ElectroMagnBC1D_SM::~ElectroMagnBC1D_SM()
 {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void FieldsBC1D_SM::apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
+void ElectroMagnBC1D_SM::apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
 {
     Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
     Field1D* Ey1D   = static_cast<Field1D*>(EMfields->Ey_);

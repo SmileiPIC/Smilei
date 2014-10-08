@@ -1,4 +1,4 @@
-#include "FieldsBC2D_Trans_SM.h"
+#include "ElectroMagnBC2D_Trans_SM.h"
 
 #include <cstdlib>
 
@@ -14,8 +14,8 @@
 
 using namespace std;
 
-FieldsBC2D_Trans_SM::FieldsBC2D_Trans_SM( PicParams &params, LaserParams &laser_params )
-    : FieldsBC( params, laser_params )
+ElectroMagnBC2D_Trans_SM::ElectroMagnBC2D_Trans_SM( PicParams &params, LaserParams &laser_params )
+    : ElectroMagnBC( params, laser_params )
 {
     // number of nodes of the primal and dual grid in the x-direction
     nx_p = params.n_space[0]+1+2*params.oversize[0];
@@ -55,7 +55,7 @@ FieldsBC2D_Trans_SM::FieldsBC2D_Trans_SM( PicParams &params, LaserParams &laser_
 
 }
 
-FieldsBC2D_Trans_SM::~FieldsBC2D_Trans_SM()
+ElectroMagnBC2D_Trans_SM::~ElectroMagnBC2D_Trans_SM()
 {
 
 }
@@ -63,7 +63,7 @@ FieldsBC2D_Trans_SM::~FieldsBC2D_Trans_SM()
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void FieldsBC2D_Trans_SM::apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
+void ElectroMagnBC2D_Trans_SM::apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
 {
     // Static cast of the fields
     Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
