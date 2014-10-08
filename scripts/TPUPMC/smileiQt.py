@@ -33,11 +33,9 @@ class smileiQt(QtGui.QMainWindow):
 
         uiFile=os.path.dirname(os.path.realpath(__file__))+'/smileiQt.ui'
         self.ui=uic.loadUi(uiFile,self)
-        print uiFile
         self.ui.actionQuit.triggered.connect(QtGui.qApp.quit)
-        self.ui.actionDir.triggered.connect(self.on_changeDir)
-
-
+        
+        
         l = QtGui.QVBoxLayout()
         self.plot.setLayout(l)
 
@@ -73,7 +71,6 @@ class smileiQt(QtGui.QMainWindow):
             self.ui.mouse.setText(msg)
         
     def closeEvent(self,event):
-        print "Close"
         if not self.fieldFile is None :
             self.fieldFile.close()
         if not self.phaseFile is None :
@@ -83,6 +80,10 @@ class smileiQt(QtGui.QMainWindow):
         self.step=step
         self.doPlots()
     
+    @QtCore.pyqtSignature("int")
+    def on_spinStep_valueChanged(self,my_step):
+        self.ui.slider.setValue(my_step)
+        
     def on_back_released(self):
         self.ui.slider.setValue(self.step-1)
 
@@ -110,7 +111,6 @@ class smileiQt(QtGui.QMainWindow):
         settings.endGroup()
     
     def doPlots(self):
-        
         self.step %= len(self.fieldSteps)
         self.slider.setValue(self.step)
         
@@ -141,20 +141,28 @@ class smileiQt(QtGui.QMainWindow):
                 
                     data=self.fieldFile.getNode(str(nameData))
                     
+                    ax=plt.subplot2grid((self.nplots,10),(nplot, 0),colspan=9)
+                    ax.set_ylabel(i.text())
+
                     if len(data.shape) == 1 :
                         x=np.array(range(data.shape[0]))/self.res_space
                         y=data
-                        ax=plt.subplot2grid((self.nplots,10),(nplot, 0),colspan=9)
                         ax.plot(x,y)
 
                         if self.autoScale.isChecked() or self.lims[nplot]==None :
                             self.lims[nplot]=ax.get_ylim()
 
-                        ax.set_ylabel(i.text())
                         ax.set_ylim(self.lims[nplot])
                         ax.set_xlim(0,self.sim_length)
                     elif len(data.shape) == 2 :
-                        print "still something to do with 2d fields"
+                        data=np.array(data)
+                        im=ax.imshow(data.T,extent=(0,self.sim_length[0],0,self.sim_length[1]), aspect='auto',origin='lower')
+                        if self.autoScale.isChecked() or self.lims[nplot]==None :
+                            self.lims[nplot]=(data.min(),data.max())
+                        
+                        im.set_clim(self.lims[nplot])
+                        axcb=plt.subplot2grid((self.nplots,10),(nplot, 9)) 
+                        cb=plt.colorbar(im, cax=axcb)
 
                     nplot+=1
                 
@@ -289,7 +297,8 @@ class smileiQt(QtGui.QMainWindow):
 
 
         
-    def on_changeDir(self):
+    def on_actionDir_triggered(self):
+        print "on_actionDir_triggered", self.sender()
         dirName=QtGui.QFileDialog.getExistingDirectory(self,self.dirName, options=QFileDialog.ShowDirsOnly)
         if not dirName.isEmpty():
             self.dirName=str(dirName)
