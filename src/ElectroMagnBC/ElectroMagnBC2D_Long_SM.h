@@ -1,16 +1,16 @@
 
-#ifndef FIELDSBC2D_Long_SM_H
-#define FIELDSBC2D_Long_SM_H
+#ifndef ELECTROMAGNBC2D_Long_SM_H
+#define ELECTROMAGNBC2D_Long_SM_H
 
-#include "FieldsBC.h" 
+#include "ElectroMagnBC.h" 
 
 class PicParams;
 class ElectroMagn;
 
-class FieldsBC2D_Long_SM : public FieldsBC {
+class ElectroMagnBC2D_Long_SM : public ElectroMagnBC {
 public:
-    FieldsBC2D_Long_SM( PicParams &params, LaserParams &laser_params );
-    ~FieldsBC2D_Long_SM();
+    ElectroMagnBC2D_Long_SM( PicParams &params, LaserParams &laser_params );
+    ~ElectroMagnBC2D_Long_SM();
 
     virtual void apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi);
 

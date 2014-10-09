@@ -14,7 +14,7 @@ class Projector;
 class Field;
 class Laser;
 class SmileiMPI;
-class FieldsBC;
+class ElectroMagnBC;
 class SimWindow;
 
 //! class ElectroMagn: generic class containing all information on the electromagnetic fields and currents
@@ -175,7 +175,7 @@ public:
 private:
     
     //! Vector of boundary-condition per side for the fields
-    std::vector<FieldsBC*> fieldsBoundCond;
+    std::vector<ElectroMagnBC*> emBoundCond;
 };
 
 #endif

@@ -1,4 +1,4 @@
-#include "FieldsBC2D_Long_SM.h"
+#include "ElectroMagnBC2D_Long_SM.h"
 
 #include <cstdlib>
 
@@ -14,8 +14,8 @@
 
 using namespace std;
 
-FieldsBC2D_Long_SM::FieldsBC2D_Long_SM( PicParams &params, LaserParams &laser_params )
-    : FieldsBC( params, laser_params )
+ElectroMagnBC2D_Long_SM::ElectroMagnBC2D_Long_SM( PicParams &params, LaserParams &laser_params )
+    : ElectroMagnBC( params, laser_params )
 {
     // conversion factor from degree to radian
     conv_deg2rad = M_PI/180.0;
@@ -61,7 +61,7 @@ FieldsBC2D_Long_SM::FieldsBC2D_Long_SM( PicParams &params, LaserParams &laser_pa
 
 }
 
-FieldsBC2D_Long_SM::~FieldsBC2D_Long_SM()
+ElectroMagnBC2D_Long_SM::~ElectroMagnBC2D_Long_SM()
 {
 
 }
@@ -69,7 +69,7 @@ FieldsBC2D_Long_SM::~FieldsBC2D_Long_SM()
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void FieldsBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
+void ElectroMagnBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
 {
     // Static cast of the fields
     Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);

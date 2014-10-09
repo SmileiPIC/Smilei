@@ -9,8 +9,8 @@
 #include "Projector.h"
 #include "Laser.h"
 #include "Field.h"
-#include "FieldsBC.h"
-#include "FieldsBC_Factory.h"
+#include "ElectroMagnBC.h"
+#include "ElectroMagnBC_Factory.h"
 #include "SimWindow.h"
 
 using namespace std;
@@ -83,7 +83,7 @@ oversize(params.oversize)
         }
     }    
 
-    fieldsBoundCond = FieldsBC_Factory::create(params, laser_params);
+    emBoundCond = ElectroMagnBC_Factory::create(params, laser_params);
 
 }
 
@@ -109,9 +109,9 @@ ElectroMagn::~ElectroMagn()
     delete rho_;
     delete rho_o;
 
-    int nBC = fieldsBoundCond.size();
+    int nBC = emBoundCond.size();
     for ( int i=0 ; i<nBC ;i++ )
-      if (fieldsBoundCond[i]!=NULL) delete fieldsBoundCond[i];
+      if (emBoundCond[i]!=NULL) delete emBoundCond[i];
 
 }//END Destructer
 
@@ -143,11 +143,11 @@ void ElectroMagn::solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, Pic
 
     // Update Bx_, By_, Bz_
     if ((!simWindow) || (!simWindow->isMoving(time_dual)) )
-        if (fieldsBoundCond[0]!=NULL) // <=> if !periodic
-	    fieldsBoundCond[0]->apply(this, time_dual, smpi);
-    if ( (fieldsBoundCond.size()>1) )
-        if (fieldsBoundCond[1]!=NULL) // <=> if !periodic
-	    fieldsBoundCond[1]->apply(this, time_dual, smpi);
+        if (emBoundCond[0]!=NULL) // <=> if !periodic
+	    emBoundCond[0]->apply(this, time_dual, smpi);
+    if ( (emBoundCond.size()>1) )
+        if (emBoundCond[1]!=NULL) // <=> if !periodic
+	    emBoundCond[1]->apply(this, time_dual, smpi);
  
     // Exchange Bx_, By_, Bz_
     smpi->exchangeB( this );
@@ -222,8 +222,8 @@ void ElectroMagn::initRhoJ(vector<Species*> vecSpecies, Projector* Proj)
 
 void ElectroMagn::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
 {
-    if (fieldsBoundCond[0]!=NULL)
-        fieldsBoundCond[0]->laserDisabled();
+    if (emBoundCond[0]!=NULL)
+        emBoundCond[0]->laserDisabled();
 
     Ex_->shift_x(shift);
     Ey_->shift_x(shift);

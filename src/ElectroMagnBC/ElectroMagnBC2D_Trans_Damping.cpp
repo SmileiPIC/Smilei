@@ -1,4 +1,4 @@
-#include "FieldsBC2D_Trans_Damping.h"
+#include "ElectroMagnBC2D_Trans_Damping.h"
 
 #include <cstdlib>
 
@@ -14,8 +14,8 @@
 
 using namespace std;
 
-FieldsBC2D_Trans_Damping::FieldsBC2D_Trans_Damping( PicParams &params, LaserParams &laser_params )
-    : FieldsBC( params, laser_params )
+ElectroMagnBC2D_Trans_Damping::ElectroMagnBC2D_Trans_Damping( PicParams &params, LaserParams &laser_params )
+    : ElectroMagnBC( params, laser_params )
 {
     // number of nodes of the primal and dual grid in the x-direction
     nx_p = params.n_space[0]+1+2*params.oversize[0];
@@ -36,7 +36,7 @@ FieldsBC2D_Trans_Damping::FieldsBC2D_Trans_Damping( PicParams &params, LaserPara
 	coeff[j] = 1.-cdamp*((double)(ny_l-j)/(double)ny_l)*((double)(ny_l-j)/(double)ny_l);
 }
 
-FieldsBC2D_Trans_Damping::~FieldsBC2D_Trans_Damping()
+ElectroMagnBC2D_Trans_Damping::~ElectroMagnBC2D_Trans_Damping()
 {
     delete [] coeff;
 }
@@ -44,7 +44,7 @@ FieldsBC2D_Trans_Damping::~FieldsBC2D_Trans_Damping()
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void FieldsBC2D_Trans_Damping::apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
+void ElectroMagnBC2D_Trans_Damping::apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
 {
     // Static cast of the fields
     Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);

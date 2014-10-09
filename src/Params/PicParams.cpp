@@ -111,7 +111,7 @@ PicParams::PicParams(InputData &ifile) {
     
     // testing the CFL condition
     double res_space2 = 0.0;
-    for (short int i=0; i<res_space.size(); i++) {
+    for (unsigned int i=0; i<res_space.size(); i++) {
         res_space2 += (res_space[i]*res_space[i]);
     }
     if ( (sqrt(res_space2) > res_time) || (res_time < *min_element(res_space.begin(),res_space.end())) ) {
@@ -287,6 +287,9 @@ PicParams::PicParams(InputData &ifile) {
         n_species++;
     }
     
+    global_every=0;
+    
+    ifile.extract("every",global_every);
         
     // --------------------
     // Number of processors
@@ -373,6 +376,8 @@ void PicParams::compute()
         }
         
     }
+    
+    
     
 }
 

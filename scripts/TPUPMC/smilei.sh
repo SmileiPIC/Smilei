@@ -30,7 +30,8 @@ mkdir -p $base
 cp $1 $base
 cd $base
 $smilei $1
+cd ..
 
-python $DIRSMILEI/smileiQt.py
+$DIRSMILEI/smileiQt.py $base
 
 cd $oldDir

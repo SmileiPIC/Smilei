@@ -1,2 +1,3 @@
 *.o
 src/.depend
+src/*/*.d

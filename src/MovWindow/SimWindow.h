@@ -16,7 +16,7 @@ class SimWindow {
  public:
     SimWindow(PicParams& params);
     ~SimWindow();
-    void operate(std::vector<Species*> vecSpecies, ElectroMagn* EMfields, Interpolator* Interp, Projector* Proj, SmileiMPI* smpi);
+    void operate(std::vector<Species*> vecSpecies, ElectroMagn* EMfields, Interpolator* Interp, Projector* Proj, SmileiMPI* smpi, PicParams& param);
     bool isMoving(double time_dual);
     double getXmoved() {return x_moved;}
     void   setXmoved(double new_val) {x_moved = new_val;}

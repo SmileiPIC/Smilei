@@ -1,42 +1,73 @@
-VERSION:="$(shell git describe 2>/dev/null || echo '??')"
-CFLAGS += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include
-LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5
-
 SMILEICXX     ?= mpic++
 HDF5_ROOT_DIR ?=
+
+##################################################
+
+VERSION:="$(shell git describe 2>/dev/null || echo '??')"
+
+CFLAGS += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include
+LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5
 
 ifneq (,$(findstring poincare,$(HOSTNAME)))
     LDFLAGS += -lgpfs -lz
 endif
 
-DIRS = ./ $(wildcard */)
-CFLAGS +=  $(DIRS:%=-I%) # add includes flags for each dir
-
-##################################################
-
-all: release
+#add subdirs
+DIRS = $(shell find * -type d)
+#add include directives for subdirs
+CFLAGS += $(DIRS:%=-I%)
 
 EXEC = smilei
 
-SRCS := $(foreach dir,$(DIRS),$(wildcard $(dir)*.cpp))
-OBJS := $(patsubst %.cpp,%.o,$(SRCS))
+default: smilei
 
-release: CFLAGS += -O3
-release: $(EXEC)
+help: 
+	@echo 'Usage                 : make {$(EXEC)|clean} [openmp={gnu|intel}] [config=debug]'
+	@echo 'Environment variables : SMILEICXX (c++ compiler) HDF5_ROOT_DIR (HDF5 dir with /include and /lib)'
 
-openmpgnu: CFLAGS += -O3 -fopenmp -D_OMP
-openmpgnu: $(EXEC)
 
-openmpintel: CFLAGS += -O3 -openmp -D_OMP
-openmpintel: $(EXEC)
+# these are kept for backward compatibility and might be removed (see make help)
+release:
+	make
 
-debug: CFLAGS += -g -pg -Wall -D__DEBUG
-debug: $(EXEC)
+openmpgnu:
+	make openmp=gnu
 
-.depend: $(SRCS)
-	$(SMILEICXX) $(CFLAGS) -MM $^ > .depend
+openmpintel:
+	make openmp=intel
 
-include .depend 
+debug:
+	make config=debug
+
+
+
+#collect all cpp files
+SRCS := $(shell find . -name \*.cpp)
+OBJS := $(SRCS:.cpp=.o)
+DEPS := $(OBJS:.o=.d)
+
+ifeq ($(config),debug)
+	CFLAGS += -g -pg -Wall -D__DEBUG
+else
+	CFLAGS += -O3
+endif
+
+ifeq ($(openmp),gnu)
+	CFLAGS += -fopenmp
+else ifeq ($(openmp),intel)
+	CFLAGS += -openmp
+endif
+
+clean:
+	rm -f $(EXEC) $(OBJS) $(DEPS)
+	
+-include $(DEPS)
+
+%.d: %.cpp
+	@ echo "Checking dependencies for $<"
+	$(eval DIR := $(shell  dirname $<))
+# create and modify dependecy file .d to take into account the location subdir	
+	@ $(SMILEICXX) -MM $(CFLAGS) $*.cpp 2>/dev/null | sed -e "s@\(^.*\)\.o:@$(DIR)/\1.d $(DIR)/\1.o:@" > $@  
 
 %.o : %.cpp
 	$(SMILEICXX) $(CFLAGS) -c $< -o $@
@@ -44,5 +75,4 @@ include .depend
 $(EXEC): $(OBJS)
 	$(SMILEICXX) $(CFLAGS) -o $(EXEC) $(OBJS) $(LDFLAGS)
 
-clean:
-	rm -f $(EXEC) $(OBJS) .depend
+# DO NOT DELETE

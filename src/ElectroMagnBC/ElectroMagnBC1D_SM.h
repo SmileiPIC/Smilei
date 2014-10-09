@@ -1,16 +1,16 @@
 
-#ifndef FIELDSBC1D_SM_H
-#define FIELDSBC1D_SM_H
+#ifndef ELECTROMAGNBC1D_SM_H
+#define ELECTROMAGNBC1D_SM_H
 
-#include "FieldsBC.h" 
+#include "ElectroMagnBC.h" 
 
 class PicParams;
 class ElectroMagn;
 
-class FieldsBC1D_SM : public FieldsBC {
+class ElectroMagnBC1D_SM : public ElectroMagnBC {
 public:
-    FieldsBC1D_SM( PicParams &param, LaserParams &laser_params);
-    ~FieldsBC1D_SM();
+    ElectroMagnBC1D_SM( PicParams &param, LaserParams &laser_params);
+    ~ElectroMagnBC1D_SM();
 
     virtual void apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi);
 
