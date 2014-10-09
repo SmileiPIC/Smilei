@@ -1,9 +1,7 @@
-/*! @file Pusher.h
+/*! @file BoundaryConditionType.h
+ 
+ @brief BoundaryConditionType.h for particle boundary conditions
 
- @brief Pusher.h  generic class for the particle pusher
-
- @author tommaso vinci
- @date 2013-02-15
  */
 
 #ifndef BOUNDARYCONDITIONTYPE_H
