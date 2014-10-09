@@ -10,6 +10,7 @@ print_every = 1
 #      2drz = cylindrical (r,z) grid with 3d3v particles
 #
 dim = 1d3v
+sim_units = wavelength
 
 # wavelength_SI
 wavelength_SI = 1e-6
@@ -54,9 +55,9 @@ random_seed = 0
 species
 	species_type = helium
 
-    plasma_geometry = constant
+    species_geometry = constant
     vacuum_length   = 0.99
-    plasma_length   = 0.02
+    dens_length_x   = 0.02
 
 	atomic_number = 2
 	initialization_type = cold
@@ -77,9 +78,9 @@ end
 species
 	species_type = electron
 
-    plasma_geometry = constant
+    species_geometry = constant
     vacuum_length   = 0.99
-    plasma_length   = 0.02
+    dens_length_x   = 0.02
 
 	initialization_type = cold
 	n_part_per_cell=0

@@ -66,14 +66,26 @@ struct SpeciesStructure {
     //! Ionization model per Specie (tunnel)
     std::string ionization_model;
 
-    //! plasma geometry
-    std::string plasma_geometry;
-    
-    //! plasma lengths
-    std::vector<double> plasma_length;
+    //! species geometry
+    std::string species_geometry;
     
     //! vacuum lengths
     std::vector<double> vacuum_length;
+    
+    //! lengths related to the density profile definition
+    std::vector<double> dens_length_x;
+    
+    //! lengths related to the density profile definition
+    std::vector<double> dens_length_y;
+    
+    //! lengths related to the density profile definition
+    std::vector<double> dens_length_z;
+    
+    //! doubles related to the density profile definition
+    std::vector<double> dens_dbl_params;
+    
+    //! integer related to the density profile definition
+    std::vector<short int> dens_int_params;
     
     //! slope lengths (symmetric for trapezoidal geometry, general for triangular geometry)
     std::vector<double> slope_length;
@@ -139,6 +151,12 @@ public:
     //! number of space dimensions for the fields
     unsigned int nDim_field;
 
+    //! normalization (used in the input files only)
+    std::string sim_units;
+    
+    //! conversion factor (=1 when normalized units, 2\pi when wavelength-related normalisations)
+    double conv_fac;
+    
     /*! \brief Time resolution.
       Number of timesteps in \f$ 2\pi/\omega_N \f$ where \f$ \omega_N \f$ is the normalization (plasma or laser) frequency
     */
@@ -199,9 +217,6 @@ public:
 
     //! wavelength (in SI units)
     double wavelength_SI;
-
-    //! physicist (cgs with temperatures in eV) theorist
-    std::string sim_units;
 
     //! Oversize domain to exchange less particles
     std::vector<unsigned int> oversize;

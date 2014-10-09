@@ -8,6 +8,8 @@
 #
 dim = 1d3v
 
+sim_units = wavelength
+
 # order of interpolation
 interpolation_order = 2
 
@@ -46,9 +48,9 @@ random_seed = 0
 # radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
 #
 species
-    plasma_geometry = constant
+    species_geometry = constant
     vacuum_length   = 10.0
-    plasma_length   = 1.0
+    dens_length_x   = 1.0
 
 	species_type = ion
 	initialization_type = maxwell-juettner
@@ -67,9 +69,9 @@ species
 end
 
 species
-    plasma_geometry = constant
+    species_geometry = constant
     vacuum_length   = 10.0
-    plasma_length   = 1.0
+    dens_length_x   = 1.0
 
 	species_type = eon
 	initialization_type = Maxwell-Juettner

@@ -9,7 +9,7 @@
 #      2drz = cylindrical (r,z) grid with 3d3v particles
 #
 dim = 1d3v
-
+sim_units = wavelength
 # order of interpolation
 #
 interpolation_order = 2
@@ -46,14 +46,14 @@ bc_em_type_long = silver-muller
 # radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
 #
 species
-    plasma_geometry = constant
-    vacuum_length   = 1.0
-    plasma_length   = 8.0
+    species_geometry = trapezoidal
+    vacuum_length   = 10.0
+    dens_length_x   = 80.0 10.0 10.0
 
 	species_type = ion
 	initialization_type = mj
 	ionization_model = none
-	n_part_per_cell = 100
+	n_part_per_cell = 10
 	c_part_max = 1.0
 	mass = 1836.0
 	charge = 1.0
@@ -67,14 +67,14 @@ species
 end
 
 species
-    plasma_geometry = constant
-    vacuum_length   = 1.0
-    plasma_length   = 8.0
+    species_geometry = trapezoidal
+    vacuum_length   = 10.0
+    dens_length_x   = 80.0 10.0 10.0
 
 	species_type = eon
 	initialization_type = mj
 	ionization_model = none
-	n_part_per_cell = 100
+	n_part_per_cell = 10
 	c_part_max = 1.0
 	mass = 1.0
 	charge = -1.0

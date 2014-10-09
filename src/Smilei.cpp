@@ -233,7 +233,7 @@ int main (int argc, char* argv[])
         
         //double timElapsed=smpiData->time_seconds();
 		if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) )
-            MESSAGE(1,"t = "          << setw(7) << setprecision(2)   << time_dual/(2*M_PI)
+            MESSAGE(1,"t = "          << setw(7) << setprecision(2)   << time_dual/params.conv_fac
                     << "   it = "       << setw(log10(params.n_time)+1) << itime  << "/" << params.n_time
                     << "   sec = "      << setw(7) << setprecision(2)   << timer[0].getTime()
                     << "   E = "        << setw(7) << setprecision(6)   << Diags->getScalar("Etot")
@@ -318,9 +318,7 @@ int main (int argc, char* argv[])
         if ( simWindow && simWindow->isMoving(time_dual) ) {
             start_moving++;
             if ((start_moving==1) && (smpi->isMaster()) ) {
-                MESSAGE("\n\t\t---------------------------------------------")
-                MESSAGE("\t\tWindow start to move");
-                MESSAGE("\t\t---------------------------------------------\n");
+                MESSAGE(">>> Window starts moving");
             }
             simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi );
         }
@@ -332,7 +330,7 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     //                      HERE ENDS THE PIC LOOP
     // ------------------------------------------------------------------
-    MESSAGE("End time loop, time dual = " << time_dual/(2*M_PI));
+    MESSAGE("End time loop, time dual = " << time_dual/params.conv_fac);
     MESSAGE("-----------------------------------------------------------------------------------------------------");
     
     //double timElapsed=smpiData->time_seconds();

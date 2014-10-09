@@ -11,6 +11,9 @@ print_every = 100
 #
 dim = 1d3v
 
+# sim_units
+sim_units = wavelength
+
 # order of interpolation
 interpolation_order =2 
 
@@ -49,34 +52,11 @@ random_seed = 0
 # radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
 #
 species
-	species_type = ion
+	species_type = eon
 	
-	plasma_geometry = constant
+	species_geometry = constant
     vacuum_length   = 5.0
-    plasma_length   = 1.0
-    slope_length    = 0.0
-
-	initialization_type = cold
-	n_part_per_cell=100
-	c_part_max=1.0
-	mass = 1836.0
-	charge = 1.0
-	density = 1.0e0
-	mean_velocity = 0.0
-	temperature = 0.0
-	dynamics_type = norm
-	time_frozen = 0.0
-	radiating = false
-	bc_part_type_long = refl
-end
-
-species
-	species_type = electron
-
-	plasma_geometry = constant
-    vacuum_length   = 5.0
-    plasma_length   = 1.0
-    slope_length    = 0.0
+    dens_length_x   = 1.0
 
 	initialization_type = cold
 	n_part_per_cell=100
@@ -86,11 +66,12 @@ species
 	density = 1.0e0
 	mean_velocity = 0.0
 	temperature = 0.0
-	dynamics_type = norm	
+	dynamics_type = norm
 	time_frozen = 0.0
 	radiating = false
 	bc_part_type_long = refl
 end
+
 
 # LASER PROPERTIES
 #

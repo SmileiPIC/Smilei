@@ -7,6 +7,7 @@
 #      2drz = cylindrical (r,z) grid with 3d3v particles
 #
 dim = 1d3v
+sim_units = wavelength
 
 # order of interpolation
 interpolation_order =2 
@@ -48,9 +49,9 @@ random_seed = 0
 species
 	species_type = ion
 
-    plasma_geometry = constant
+    species_geometry = constant
     vacuum_length   = 1.0
-    plasma_length   = 1.0
+    dens_length_x   = 1.0
 
 	initialization_type = cold
 	n_part_per_cell=10
@@ -61,7 +62,7 @@ species
 	mean_velocity = 0.0
 	temperature = 0.0
 	dynamics_type = norm
-	time_frozen = 10.0
+	time_frozen = 0.0
 	radiating = false
 	bc_part_type_long = refl
 	ionization_model = none
@@ -70,9 +71,9 @@ end
 species
 	species_type = electron
 
-    plasma_geometry = constant
+    species_geometry = constant
     vacuum_length   = 1.0
-    plasma_length   = 1.0
+    dens_length_x   = 1.0
 
 	initialization_type = cold
 	n_part_per_cell=10
@@ -99,7 +100,7 @@ end
 # double_params: vector of real parameters used by the different time-profiles
 
 laser
-	a0=1.0
+	a0=10.0
 	angle=0
 	delta=0.707106781                 
 	time_profile = constant

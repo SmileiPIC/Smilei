@@ -11,7 +11,7 @@ class DensityProfile1D : public DensityProfile
 {
     
 public:
-    DensityProfile1D(SpeciesStructure &params) : DensityProfile(params) {};
+    DensityProfile1D(SpeciesStructure &params);
     ~DensityProfile1D() {};
     double operator() (std::vector<double>);
     
