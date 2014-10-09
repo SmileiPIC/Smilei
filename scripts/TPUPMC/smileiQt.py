@@ -23,14 +23,18 @@ import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 
+class smileiApp(QtGui.QApplication):
+	def __init__(self, argv):
+		print "ceppa"
+
 
 class smileiQt(QtGui.QMainWindow):
 
-    def __init__(self):
+    def __init__(self, name):
         super(smileiQt, self).__init__()
-
-        self.load_settings()
-
+        
+        self.dirName = name
+        
         uiFile=os.path.dirname(os.path.realpath(__file__))+'/smileiQt.ui'
         self.ui=uic.loadUi(uiFile,self)
         self.ui.actionQuit.triggered.connect(QtGui.qApp.quit)
@@ -103,14 +107,10 @@ class smileiQt(QtGui.QMainWindow):
         else:
             self.playStop.setText("Play")
             self.timer.stop()
-        
-    def load_settings(self):
-        settings=QtCore.QSettings("smileiQt","")
-        settings.beginGroup("Preferences")
-        self.dirName=str(settings.value("dirName",".").toString())
-        settings.endGroup()
-    
+            
     def doPlots(self):
+        if len(self.fieldSteps) == 0 : return
+        
         self.step %= len(self.fieldSteps)
         self.slider.setValue(self.step)
         
@@ -201,6 +201,7 @@ class smileiQt(QtGui.QMainWindow):
     
 
     def createActions(self):
+        print self.dirName
         fname=os.path.join(self.dirName, "scalars.txt")
         if os.path.isfile(fname) :
             names=[]
@@ -218,10 +219,10 @@ class smileiQt(QtGui.QMainWindow):
                 self.ui.menuScalars.addAction(my_act)
                 my_act.triggered.connect(self.action_clicked)
 
+        self.fieldSteps=[]
         fname=os.path.join(self.dirName, "Fields.h5")
         if os.path.isfile(fname) :
-            self.fieldSteps=[]
-            f=tb.openFile(os.path.join(self.dirName, fname))
+            f=tb.openFile(fname)
             
             self.res_time=f.root._v_attrs.res_time
             self.sim_length=f.root._v_attrs.sim_length
@@ -245,7 +246,7 @@ class smileiQt(QtGui.QMainWindow):
         
         fname=os.path.join(self.dirName, "PhaseSpace.h5")
         if os.path.isfile(fname) :
-            f=tb.openFile(os.path.join(self.dirName, fname))
+            f=tb.openFile(fname)
             for phaseData in f.walkNodes("/", classname='Array'):
                 namephase= phaseData._v_pathname + " " + phaseData._v_parent._v_attrs.species
                 my_act= QtGui.QAction(namephase,self)
@@ -274,31 +275,26 @@ class smileiQt(QtGui.QMainWindow):
             if os.path.isfile(fname) :
                 self.scalarData = np.loadtxt(fname)
 
-            fname=os.path.join(self.dirName, "Fields.h5")
             if self.fieldFile != None:
                 self.fieldFile.close()
-                
             self.fieldFile = None
+                
+            fname=os.path.join(self.dirName, "Fields.h5")
             if os.path.isfile(fname) :
-                self.fieldFile=tb.openFile(os.path.join(self.dirName, fname))
+                self.fieldFile=tb.openFile(fname)
                 self.res_space=self.fieldFile.root._v_attrs.res_space[0]
 
-            fname=os.path.join(self.dirName, "PhaseSpace.h5")
             if self.phaseFile != None:
                 self.phaseFile.close()
-                
             self.phaseFile = None
+                
+            fname=os.path.join(self.dirName, "PhaseSpace.h5")
             if os.path.isfile(fname) :
-                self.phaseFile=tb.openFile(os.path.join(self.dirName, fname))
-            
+                self.phaseFile=tb.openFile(fname)
             
             self.doPlots()
-
-
-
         
     def on_actionDir_triggered(self):
-        print "on_actionDir_triggered", self.sender()
         dirName=QtGui.QFileDialog.getExistingDirectory(self,self.dirName, options=QFileDialog.ShowDirsOnly)
         if not dirName.isEmpty():
             self.dirName=str(dirName)
@@ -306,11 +302,17 @@ class smileiQt(QtGui.QMainWindow):
 
 def main():
 
-    app = QtGui.QApplication(sys.argv)
-    ex = smileiQt()
+    app = smileiApp(sys.argv)
+
+    args=sys.argv[1:]
+    ex=[]
+    if len(args) == 0 : args=["."]
+
+    for i in args : 
+        ex.append(smileiQt(i))
+        if sys.platform == "darwin":
+            ex[-1].raise_()
     
-    if sys.platform == "darwin":
-        ex.raise_()
     sys.exit(app.exec_())
 
 

@@ -157,6 +157,15 @@ void SmileiIO_Cart2D::writeFieldsSingleFileTime( Field* field, hid_t group_id )
     hid_t filespace = filespace_[ isDual[0] ][ isDual[1] ];
 
     hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
+//    H5Pset_layout(plist_id, H5D_CHUNKED);
+//    vector<unsigned int> dimsInt(field->dims());
+//    hsize_t mydims[dimsInt.size()];
+//    for (unsigned int i=0;i< dimsInt.size();i++) {
+//        mydims[i]=dimsInt[i];
+//    }
+//    H5Pset_chunk(plist_id, dimsInt.size(), mydims);
+//    H5Pset_deflate (plist_id, 5);
+
     //H5Pset_chunk(plist_id, 2, chunk_dims); // Problem different dims for each process
     //hid_t dset_id = H5Dcreate(file_id, (field->name).c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
     hid_t dset_id = H5Dcreate(group_id, (field->name).c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);

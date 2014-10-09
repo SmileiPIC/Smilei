@@ -75,6 +75,7 @@ public:
     //! vector containing the dimensions of the Field
     //! \todo private/friend/modify SmileiMPI* (JD)
     std::vector<unsigned int> dims_;
+    
     //! keep track ofwich direction of the Field is dual
     std::vector<unsigned int> isDual_;
 
