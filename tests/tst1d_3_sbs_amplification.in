@@ -19,7 +19,7 @@ interpolation_order = 2
 # sim_time: duration of the simulation in units of the normalization period 
 #
 res_time = 100
-sim_time = 300.0
+sim_time = 0.0
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
@@ -46,9 +46,9 @@ bc_em_type_long = silver-muller
 # radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
 #
 species
-    species_geometry = trapezoidal
+    species_geometry = gaussian
     vacuum_length   = 10.0
-    dens_length_x   = 80.0 10.0 10.0
+    dens_length_x   = 80.0 
 
 	species_type = ion
 	initialization_type = mj
@@ -67,9 +67,9 @@ species
 end
 
 species
-    species_geometry = trapezoidal
+    species_geometry = gaussian
     vacuum_length   = 10.0
-    dens_length_x   = 80.0 10.0 10.0
+    dens_length_x   = 80.0 
 
 	species_type = eon
 	initialization_type = mj

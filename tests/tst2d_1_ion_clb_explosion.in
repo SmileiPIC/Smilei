@@ -6,6 +6,7 @@
 #      2drz = cylindrical (r,z) grid with 3d3v particles
 #
 dim = 2d3v
+sim_units = wavelength
 
 # order of interpolation
 interpolation_order = 2 
@@ -15,13 +16,14 @@ interpolation_order = 2
 # sim_time: duration of the simulation in units of the normalization period 
 #
 res_time = 100
-sim_time = 2.0
+sim_time = 10.0
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
 # sim_length: length of the simulation in units of the normalization wavelength 
 #
 res_space  = 50 50   
+
 sim_length = 3.0 3.0  
 
 bc_em_type_long = silver-muller
@@ -46,9 +48,10 @@ random_seed = 0
 # radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
 #
 species
-    plasma_geometry = constant
+    species_geometry = constant
     vacuum_length   = 1.0 0.0 
-    plasma_length   = 1.0 3.0
+    dens_length_x   = 1.0 
+    dens_length_y   = 3.0
 
 	species_type = ion
 	initialization_type = regular

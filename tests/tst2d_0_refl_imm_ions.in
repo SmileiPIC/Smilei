@@ -6,6 +6,7 @@
 #      2drz = cylindrical (r,z) grid with 3d3v particles
 #
 dim = 2d3v
+sim_units = wavelength
 
 # order of interpolation
 interpolation_order = 2 
@@ -47,9 +48,10 @@ random_seed = 0
 # radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
 #
 species
-    plasma_geometry = constant
+    species_geometry = constant
     vacuum_length   = 1.0 0.0 
-    plasma_length   = 1.0 4.0
+    dens_length_x   = 1.0 
+    dens_length_y   = 4.0
 
 	species_type = ion
 	initialization_type = cold
@@ -69,9 +71,10 @@ species
 end
 
 species 
-    plasma_geometry = constant
+    species_geometry = constant
     vacuum_length   = 1.0 0.0 
-    plasma_length   = 1.0 4.0
+    dens_length_x   = 1.0 
+    dens_length_y   = 4.0
 
 	species_type = electron
 	initialization_type = maxwell-juettner
@@ -89,15 +92,15 @@ species
 	bc_part_type_trans = none
 end
 
-#laser 
-#	a0=1.0
-#	angle=0
-#	delta=0.707106781                
-#	time_profile = constant
-#	double_params = 11.0
-#	transv_profile = plane-wave
-#	boxSide = west
-#end
+laser 
+	a0=1.0
+	angle=0
+	delta=0.707106781                
+	time_profile = constant
+	double_params = 11.0
+	transv_profile = plane-wave
+	boxSide = west
+end
 
 # ---------------------
 # DIAGNOSTIC PARAMETERS
@@ -107,7 +110,7 @@ end
 print_every = 100
 
 # every for field dump
-fieldDump_every = 500
+fieldDump_every = 50
 avgfieldDump_every = 500
 ntime_step_avg     = 500
 

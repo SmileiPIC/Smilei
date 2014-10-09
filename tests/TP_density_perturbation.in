@@ -9,6 +9,7 @@
 #      2drz = cylindrical (r,z) grid with 3d3v particles
 #
 dim = 1d3v
+sim_units = wavelength
 
 # order of interpolation
 #
@@ -55,9 +56,9 @@ random_seed = 0
 #
 species
 	species_type = ion
-    plasma_geometry = constant
+    species_geometry = constant
     vacuum_length   = 0.0
-    plasma_length   = 0.01
+    dens_length_x   = 0.01
 
 	initialization_type = regular
 	ionization_model = none
@@ -76,12 +77,10 @@ end
 
 species
 	species_type = eon1
-    plasma_geometry = cosine
+    species_geometry = sine
     vacuum_length   = 0.0
-    plasma_length   = 0.01
-    thetax=0.0
-    ampl=0.01
-    mode=100
+    dens_length_x   = 0.01
+	dens_dbl_params = 0.01 1.0
 	initialization_type = regular
 	ionization_model = none
 	n_part_per_cell = 5
@@ -99,12 +98,10 @@ end
 
 species
 	species_type = eon2
-    plasma_geometry = cosine
+    species_geometry = sine
     vacuum_length   = 0.0
-    plasma_length   = 0.01
-    thetax=0.0
-    ampl=0.01
-    mode=100
+    dens_length_x   = 0.01
+	dens_dbl_params = 0.01 1.0
 	initialization_type = regular
 	ionization_model = none
 	n_part_per_cell = 5
@@ -126,7 +123,7 @@ end
 # ---------------------
 
 # print_every (on screen text output) 
-print_every = 100
+print_every = 1400
 
 # every for field dump
 fieldDump_every = 100

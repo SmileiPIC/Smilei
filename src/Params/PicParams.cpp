@@ -225,7 +225,7 @@ PicParams::PicParams(InputData &ifile) {
         // ----------------
         ifile.extract("species_geometry", tmpSpec.species_geometry,"species",0,n_species);
         if( (tmpSpec.species_geometry!="constant") && (tmpSpec.species_geometry!="trapezoidal")
-           && (tmpSpec.species_geometry!="gaussian") ) {
+           && (tmpSpec.species_geometry!="gaussian") && (tmpSpec.species_geometry!="sine") ) {
             ERROR("Species_geometry: " << tmpSpec.species_geometry << " not defined for species " << n_species);
         }
         
@@ -312,11 +312,11 @@ void PicParams::compute()
     n_time     = res_time*sim_time;
     
     // simulation time & time-step value
-    sim_time  *= conv_fac*M_PI;
+    sim_time  *= conv_fac;
     timestep   = conv_fac/res_time;
     
     // time after which the moving-window is turned on
-    t_move_win *= conv_fac*M_PI;
+    t_move_win *= conv_fac;
 
     // time during which particles are frozen
     for (unsigned int i=0; i<n_species; i++) {
