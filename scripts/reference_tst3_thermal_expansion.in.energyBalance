@@ -1,0 +1,68 @@
+                    _            __     
+  ___           _  | |        _  \ \    
+ / __|  _ __   (_) | |  ___  (_)  | |   Version  :  v1.2rc-132-g2bb70ba
+ \__ \ | '  \   _  | | / -_)  _   | |   Compiled :  Oct  3 2014 16:25:33
+ |___/ |_|_|_| |_| |_| \___| |_|  | |   Namelist :  /gpfshome/mds/staff/mfle/SMILEI/smilei/tests/tst3_thermal_expansion.in
+                                 /_/    
+ ----------------------------------------------
+ Input data info
+ ----------------------------------------------
+ Numerical parameters
+	 Geometry : 1d3v
+	 (nDim_particle, nDim_field) : (1, 1)
+	 Interpolation_order : 2
+	 (res_time, sim_time) : (1000.000000, 6.283185)
+	 (n_time,   timestep) : (1000, 0.006283)
+	 dimension 0 - (res_space, sim_length) : (500.000000, 131.946891)
+	             - (n_space,  cell_length) : (10500, 0.012566)
+ Plasma related parameters
+	 n_species       : 2
+	 plasma_geometry : constant
+	             (species_type, number of particles/cell) : (ion, 200) - 
+	 plasma_geometry : constant
+	             (species_type, number of particles/cell) : (eon, 200) - 
+ ----------------------------------------------
+ Creating MPI & IO environments
+ ----------------------------------------------
+			[Process 0], [3] Neighbors of process in direction 0 : -2 ; -2 Null :-2
+			[Process 0], [3] n_space = 10500
+ ----------------------------------------------
+ Creating EMfields/Interp/Proj/Diags
+ ----------------------------------------------
+ ----------------------------------------------
+ Initializing particles, fields & moving-window
+ ----------------------------------------------
+	 Species 0 (ion) created with 100000 particles
+	 Species 1 (eon) created with 100000 particles
+ ----------------------------------------------
+ Solving Poisson at time t = 0
+ ----------------------------------------------
+	 Poisson solver converged at iteration: 7, relative error is ctrl = 0.968413 x 1e-14
+	 Poisson equation solved. Maximum error = 0.008463 at i= 5126
+ ----------------------------------------------
+ Running diags at time t = 0
+ ----------------------------------------------
+ -----------------------------------------------------------------------------------------------------
+ Time-Loop is started: number of time-steps n_time = 1000
+ -----------------------------------------------------------------------------------------------------
+	 t =    0.10   it =  100/1000   sec =    3.32   E = 1.044328   E_bal(%) =   0.00
+	 t =    0.20   it =  200/1000   sec =    6.65   E = 1.044351   E_bal(%) =   0.00
+	 t =    0.30   it =  300/1000   sec =   10.01   E = 1.044374   E_bal(%) =   0.01
+	 t =    0.40   it =  400/1000   sec =   13.35   E = 1.044384   E_bal(%) =   0.01
+	 t =    0.50   it =  500/1000   sec =   16.71   E = 1.044373   E_bal(%) =   0.01
+	 t =    0.60   it =  600/1000   sec =   20.10   E = 1.044348   E_bal(%) =   0.00
+	 t =    0.70   it =  700/1000   sec =   23.44   E = 1.044323   E_bal(%) =   0.00
+	 t =    0.80   it =  800/1000   sec =   26.77   E = 1.044312   E_bal(%) =  -0.00
+	 t =    0.90   it =  900/1000   sec =   30.10   E = 1.044315   E_bal(%) =  -0.00
+	 t =    1.00   it = 1000/1000   sec =   33.42   E = 1.044322   E_bal(%) =   0.00
+ End time loop, time dual = 1.00
+ -----------------------------------------------------------------------------------------------------
+ Time in time loop : 33.47
+ 	   particles	31.03
+ 	     maxwell	0.18
+ 	 diagnostics	1.97
+ 	   densities	0.11
+ 	   Coverage	99.43 %
+ -----------------------------------------------------------------------------------------------------
+ END /gpfshome/mds/staff/mfle/SMILEI/smilei/tests/tst3_thermal_expansion.in
+ -----------------------------------------------------------------------------------------------------
