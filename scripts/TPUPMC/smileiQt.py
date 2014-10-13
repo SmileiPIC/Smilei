@@ -22,12 +22,6 @@ import re
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-
-class smileiApp(QtGui.QApplication):
-	def __init__(self, argv):
-		print "ceppa"
-
-
 class smileiQt(QtGui.QMainWindow):
 
     def __init__(self, name):
@@ -302,7 +296,7 @@ class smileiQt(QtGui.QMainWindow):
 
 def main():
 
-    app = smileiApp(sys.argv)
+    app = QtGui.QApplication(sys.argv)
 
     args=sys.argv[1:]
     ex=[]
