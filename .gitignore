@@ -1,5 +1,10 @@
 *.o
+.*.swp
+\#*\#
+*~
 src/.depend
 src/*/*.d
 run*
-
+Run*
+RUN*
+Validation*

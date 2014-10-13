@@ -160,7 +160,8 @@ int main (int argc, char* argv[])
 
 	if (simWindow) {
 	    simWindow->setOperators(vecSpecies, Interp, Proj, smpi);
-	    simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi , params);
+	    if ( simWindow->isMoving(time_dual) )
+	        simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi , params);
 	}
 	    
     } else {
