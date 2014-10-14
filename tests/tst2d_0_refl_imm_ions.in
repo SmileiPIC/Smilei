@@ -1,4 +1,15 @@
-# SIMULATION PARAMETERS
+# ---------------------------------------------
+# SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
+# ---------------------------------------------
+
+# sim_units: normalisation units for the input data
+#            it is used only in the input data & log file
+#            codes outputs are always in "normalised" units
+#            wavelength = input data are in wavelength-related units
+#            normalized = input data are put in code (relativistic) units
+#
+sim_units = wavelength
+
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
 #      2d3v = cartesian grid with 2d in space + 3d in velocity
@@ -6,35 +17,48 @@
 #      2drz = cylindrical (r,z) grid with 3d3v particles
 #
 dim = 2d3v
-sim_units = wavelength
 
 # order of interpolation
+#
 interpolation_order = 2 
 
-# SIMULATION TIME
-# res_time: temporal resolution (integer = number of time−steps within one normalization period)
-# sim_time: duration of the simulation in units of the normalization period 
+# SIMULATION TIME 
+# either use the resolution (res_time) or time-step (timestep)
+#
+# res_time  : temporal resolution 
+# time step : time step
+# sim_time  : duration of the simulation 
 #
 res_time = 250
-sim_time = 4.0
+sim_time = 10.0
 
-# SIMULATION BOX : for all space directions (use vector)
-# res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
-# sim_length: length of the simulation in units of the normalization wavelength 
+# SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
+# either use the resolution (res_space) or cell-length (cell_length)
+#
+# res_space   : spatial resolution 
+# sim_length  : length of the simulation 
+# cell_length : cell-length 
 #
 res_space  = 125 125  
 sim_length = 6.0 4.0  
-bc_em_type_long = silver-muller
+
+# ELECTROMAGNETIC BOUNDARY CONDITIONS
+# bc_em_type_long/trans : boundary conditions used for EM fields 
+#                         in the longitudinal or transverse directions
+#                         periodic      = periodic BC (using MPI topology)
+#                         silver-muller = injecting/absorbing
+#
+bc_em_type_long  = silver-muller
 bc_em_type_trans = periodic
 
 
 # RANDOM seed 
 # this is used to randomize the random number generator
+#
 random_seed = 0
 
 # DEFINE ALL SPECIES
-
-
+#
 # species_type: ion, electron, positron, test ...
 # initialization_type: regular, cold or (isotrop) Maxwell−Juettner distribution# n_part_per_cell: number of particle−per−cell
 # c_part_max: factor on the memory reserved for the total number of particles
@@ -48,12 +72,11 @@ random_seed = 0
 # radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
 #
 species
-    species_geometry = constant
-    vacuum_length   = 1.0 0.0 
-    dens_length_x   = 1.0 
-    dens_length_y   = 4.0
-
 	species_type = ion
+	species_geometry = constant
+	vacuum_length   = 1.0 0.0 
+	dens_length_x   = 1.0 
+	dens_length_y   = 4.0
 	initialization_type = cold
 	ionization_model = none
 	n_part_per_cell = 2
@@ -71,12 +94,11 @@ species
 end
 
 species 
-    species_geometry = constant
-    vacuum_length   = 1.0 0.0 
-    dens_length_x   = 1.0 
-    dens_length_y   = 4.0
-
 	species_type = electron
+	species_geometry = constant
+	vacuum_length   = 1.0 0.0 
+	dens_length_x   = 1.0 
+	dens_length_y   = 4.0
 	initialization_type = maxwell-juettner
 	n_part_per_cell=2
 	c_part_max=1.0
@@ -92,6 +114,10 @@ species
 	bc_part_type_trans = none
 end
 
+
+# ----------------
+# LASER DEFINITION
+# ----------------
 laser 
 	a0=1.0
 	angle=0
@@ -107,20 +133,18 @@ end
 # ---------------------
 
 # print_every (on screen text output) 
-print_every = 100
+print_every = 250
 
 # every for field dump
-fieldDump_every = 50
-avgfieldDump_every = 500
-ntime_step_avg     = 500
+fieldDump_every = 250
+avgfieldDump_every = 250
+ntime_step_avg     = 250
 
-# every for particle dump
-particleDump_every = 5000
 
 # DIAG ON SCALARS
 # every = number of time-steps between each output
 #
 diagnostic scalar
-        every = 100
+        every = 125
 end
 	

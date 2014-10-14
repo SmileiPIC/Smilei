@@ -69,7 +69,7 @@ fileId(0) {
                     for (unsigned int iDimProbe=0; iDimProbe<diagParams.probeStruc[np].dim; iDimProbe++) {
                         partPos[iDim+ipart*ndim] += (ipart%vecNumber[iDimProbe])*(diagParams.probeStruc[np].pos[iDimProbe+1][iDim]-diagParams.probeStruc[np].pos[0][iDim])/(vecNumber[iDimProbe]-1);
                     }
-                    probeParticles[np].position(iDim,ipart) = 2*M_PI*partPos[iDim+ipart*ndim];
+                    probeParticles[np].position(iDim,ipart) = partPos[iDim+ipart*ndim];
                     
                     //!fixme this is awful: we add one cell if we're on the upper border
                     double maxToCheck=smpi->getDomainLocalMax(iDim);                    

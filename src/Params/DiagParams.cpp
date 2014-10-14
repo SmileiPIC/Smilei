@@ -7,9 +7,13 @@
 using namespace std;
 
 DiagParams::DiagParams(PicParams& params, InputData &ifile) {
+    
+    double conv_fac = params.conv_fac; // conversion factor (see sim_units in PicParams.cpp for more details)
 	
     bool ok=false;
     
+    // defining default values & reading diagnostic every-parameter
+    // ------------------------------------------------------------
 	print_every=params.n_time/10;
     ifile.extract("print_every", print_every);
     
@@ -50,15 +54,28 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
             tmpStruct.number.resize(1);
             tmpStruct.number[0]=1;
         }
+
         vector<double> pos;
         ifile.extract("pos",pos,"diagnostic probe",0,n_probe);
+        for (unsigned int i=0; i<pos.size(); i++)
+            pos[i] *= conv_fac;
         if (pos.size()>0) tmpStruct.pos.push_back(pos);
+        
         ifile.extract("pos_first",pos,"diagnostic probe",0,n_probe);
+        for (unsigned int i=0; i<pos.size(); i++)
+            pos[i] *= conv_fac;
         if (pos.size()>0) tmpStruct.pos.push_back(pos);
+        
         ifile.extract("pos_second",pos,"diagnostic probe",0,n_probe);
+        for (unsigned int i=0; i<pos.size(); i++)
+            pos[i] *= conv_fac;
         if (pos.size()>0) tmpStruct.pos.push_back(pos);
+        
         ifile.extract("pos_third",pos,"diagnostic probe",0,n_probe);
+        for (unsigned int i=0; i<pos.size(); i++)
+            pos[i] *= conv_fac;
         if (pos.size()>0) tmpStruct.pos.push_back(pos);
+        
 
         probeStruc.push_back(tmpStruct);
 
@@ -102,6 +119,10 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
 		ifile.extract("pos_min",tmpPhaseStruct.pos_min,"diagnostic phase",0,n_probephase);
 		ifile.extract("pos_max",tmpPhaseStruct.pos_max,"diagnostic phase",0,n_probephase);
 		ifile.extract("pos_num",tmpPhaseStruct.pos_num,"diagnostic phase",0,n_probephase);
+        for (unsigned int i=0; i<tmpPhaseStruct.pos_min.size(); i++) {
+            tmpPhaseStruct.pos_min[i] *= conv_fac;
+            tmpPhaseStruct.pos_max[i] *= conv_fac;
+        }
 
 		ifile.extract("mom_min",tmpPhaseStruct.mom_min,"diagnostic phase",0,n_probephase);
 		ifile.extract("mom_max",tmpPhaseStruct.mom_max,"diagnostic phase",0,n_probephase);

@@ -60,12 +60,12 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
         // normalization (from wavelength-related units to normalized units)
         // -----------------------------------------------------------------
         for (unsigned int i=0; i<tmpLaser.double_params.size(); i++)
-            tmpLaser.double_params[i] *= 2.0*M_PI;
+            tmpLaser.double_params[i] *= params.conv_fac;
         for (unsigned int i=0; i<tmpLaser.double_params_transv.size(); i++)
-            tmpLaser.double_params_transv[i] *= 2.0*M_PI;
+            tmpLaser.double_params_transv[i] *= params.conv_fac;
         if ( (tmpLaser.angle!=0) || (tmpLaser.isFocused) ) {
             for (unsigned int i=0; i<tmpLaser.focus.size(); i++)
-                tmpLaser.focus[i] *= 2.0*M_PI;
+                tmpLaser.focus[i] *= params.conv_fac;
         }
 
         

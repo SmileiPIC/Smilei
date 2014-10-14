@@ -1,15 +1,25 @@
-# SIMULATION PARAMETERS
- 
+# ---------------------------------------------
+# SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
+# ---------------------------------------------
+
+# sim_units: normalisation units for the input data
+#            it is used only in the input data & log file
+#            codes outputs are always in "normalised" units
+#            wavelength = input data are in wavelength-related units
+#            normalized = input data are put in code (relativistic) units
+#
+sim_units = wavelength
+
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
 #      2d3v = cartesian grid with 2d in space + 3d in velocity
 #      3d3v = cartesian grid with 3d in space + 3d in velocity
 #      2drz = cylindrical (r,z) grid with 3d3v particles
 #
-sim_units = wavelength
 dim = 1d3v
  
 # order of interpolation
+#
 interpolation_order = 2
  
 # SIMULATION TIME
@@ -25,10 +35,18 @@ sim_time = 10.0
 #
 res_space=100
 sim_length=5.0
+
+# ELECTROMAGNETIC BOUNDARY CONDITIONS
+# bc_em_type_long/trans : boundary conditions used for EM fields 
+#                         in the longitudinal or transverse directions
+#                         periodic      = periodic BC (using MPI topology)
+#                         silver-muller = injecting/absorbing
+#
 bc_em_type_long = silver-muller
  
 # RANDOM seed 
 # this is used to randomize the random number generator
+#
 random_seed = 0
  
 # LASER PROPERTIES
@@ -49,6 +67,12 @@ laser
     double_params = 2.0
 end
  
+# ---------------------
+# DIAGNOSTIC PARAMETERS
+# ---------------------
+
+print_every = 101
+
 diagnostic scalar
     every = 1
 end
@@ -67,10 +91,8 @@ diagnostic probe
      
 end
  
-print_every = 100
  
- 
-fieldDump_every = 111
+fieldDump_every = 101
  
 # dump_step = 2500
  

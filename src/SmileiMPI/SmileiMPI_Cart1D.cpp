@@ -76,7 +76,7 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
 {
 
     for (unsigned int i=0 ; i<params.nDim_field ; i++)
-        params.n_space_global[i] = round(params.res_space[i]*params.sim_length[i]/(2.0*M_PI));
+        params.n_space_global[i] = round(params.res_space[i]*params.sim_length[i]/params.conv_fac);
     
     number_of_procs[0] = smilei_sz;
 

@@ -132,10 +132,13 @@ class PicParams {
 public:
     //! Creator for PicParams
     PicParams(InputData &);
+    
     //! calculate useful parameters
     void compute();
+    
     //! print a summary of the values in txt
     void print();
+    
     //! sets nDim_particle and nDim_field based on the geometry
     void setDimensions();
     

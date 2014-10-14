@@ -1,6 +1,15 @@
-# ---------------------
-# SIMULATION PARAMETERS
-# ---------------------
+# ---------------------------------------------
+# SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
+# ---------------------------------------------
+
+# sim_units: normalisation units for the input data
+#            it is used only in the input data & log file
+#            codes outputs are always in "normalised" units
+#            wavelength = input data are in wavelength-related units
+#            normalized = input data are put in code (relativistic) units
+#
+sim_units = normalized
+
 
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
@@ -9,34 +18,45 @@
 #      2drz = cylindrical (r,z) grid with 3d3v particles
 #
 dim = 1d3v
-sim_units = wavelength
+
 
 # order of interpolation
 #
 interpolation_order = 2
 
-# SIMULATION TIME
-# res_time: temporal resolution (integer = number of time−steps within one normalization period)
-# sim_time: duration of the simulation in units of the normalization period 
+# SIMULATION TIME 
+# either use the resolution (res_time) or time-step (timestep)
 #
-res_time = 14000
-sim_time = 10.0
+# res_time  : temporal resolution 
+# time step : time step
+# sim_time  : duration of the simulation 
+#
+timestep = 0.000565
+sim_time = 62.831790
 
-# SIMULATION BOX : for all space directions (use vector)
-# res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
-# sim_length: length of the simulation in units of the normalization wavelength 
+# SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
+# either use the resolution (res_space) or cell-length (cell_length)
 #
-res_space  = 10000
-sim_length = 0.01
+# res_space   : spatial resolution 
+# sim_length  : length of the simulation 
+# cell_length : cell-length 
+#
+cell_length = 0.000628
+sim_length  = 0.0628
+
+
+# ELECTROMAGNETIC BOUNDARY CONDITIONS
+# bc_em_type_long/trans : boundary conditions used for EM fields 
+#                         in the longitudinal or transverse directions
+#                         periodic      = periodic BC (using MPI topology)
+#                         silver-muller = injecting/absorbing
+#
 bc_em_type_long = periodic
-
-# ---------------
-# PLASMA GEOMETRY
-# ---------------
 
 
 # RANDOM seed 
 # this is used to randomize the random number generator
+#
 random_seed = 0
 
 
@@ -56,10 +76,8 @@ random_seed = 0
 #
 species
 	species_type = ion
-    species_geometry = constant
-    vacuum_length   = 0.0
-    dens_length_x   = 0.01
-
+   	species_geometry = constant
+   	vacuum_length   = 0.0
 	initialization_type = regular
 	ionization_model = none
 	n_part_per_cell = 10
@@ -77,9 +95,8 @@ end
 
 species
 	species_type = eon1
-    species_geometry = sine
-    vacuum_length   = 0.0
-    dens_length_x   = 0.01
+    	species_geometry = sine
+    	vacuum_length   = 0.0
 	dens_dbl_params = 0.01 1.0
 	initialization_type = regular
 	ionization_model = none
@@ -98,9 +115,8 @@ end
 
 species
 	species_type = eon2
-    species_geometry = sine
-    vacuum_length   = 0.0
-    dens_length_x   = 0.01
+    	species_geometry = sine
+    	vacuum_length   = 0.0
 	dens_dbl_params = 0.01 1.0
 	initialization_type = regular
 	ionization_model = none
@@ -122,36 +138,34 @@ end
 # DIAGNOSTIC PARAMETERS
 # ---------------------
 
-# print_every (on screen text output) 
-print_every = 1400
-
-
+# DUMP DIAGS
+#
 # every for field dump
 fieldDump_every = 100
-
 # every for particle dump
- particleDump_every = 0
+particleDump_every = 0
  
-# DIAG ON SCALARS
-# every = number of time-steps between each output
-# #
- diagnostic scalar
- 	every = 100
+
+# DIAG ON SCALARS 
+#
+diagnostic scalar
+	every = 100
  	precision=3
 	vars = Ebalance Etot Eparticles EFields Poynting E_ion N_ion E_eon N_eon Ex_U
- end
-# 
+end
+ 
 
+# PHASE-SPACE DIAGNOSTICS
 # kind of projection: 1D) xPx xPy xPz xLor PxPy PxPz PyPz
 # kind of projection: 2D) xPx xPy xPz xLor yPx yPy yPz yLor PxPy PxPz PyPz
-
+#
 diagnostic phase
  	kind = xPx 
  	species = eon1 eon2
  	every = 100
  
  	pos_min = 0
- 	pos_max = 0.01
+ 	pos_max = 0.0628
  	pos_num = 200
  	
  	mom_min = -0.01
@@ -163,25 +177,6 @@ diagnostic phase
  	lor_num = 200
  	
  	deflate=5
- end
+end
 
-# diagnostic phase
-#  	kind = xPx 
-#  	species = eon
-#  	every = 1
-#  
-#  	pos_min = 0.44
-#  	pos_max = 0.56
-#  	pos_num = 200
-#  	
-#  	mom_min = -0.05
-#  	mom_max = 0.05
-#  	mom_num = 200
-#  	
-#  	lor_min = -3.5
-#  	lor_max = 1.5
-#  	lor_num = 200
-#  	
-#  	deflate=5
-#  end
-# 
+

@@ -38,6 +38,7 @@ public:
  
     //! get a particular scalar
     double getScalar(std::string name);
+    
         
 private:
     

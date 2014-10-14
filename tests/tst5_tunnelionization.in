@@ -1,7 +1,14 @@
-# SIMULATION PARAMETERS
+# ---------------------------------------------
+# SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
+# ---------------------------------------------
 
-# print_every 
-print_every = 1
+# sim_units: normalisation units for the input data
+#            it is used only in the input data & log file
+#            codes outputs are always in "normalised" units
+#            wavelength = input data are in wavelength-related units
+#            normalized = input data are put in code (relativistic) units
+#
+sim_units = wavelength
 
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
@@ -10,28 +17,42 @@ print_every = 1
 #      2drz = cylindrical (r,z) grid with 3d3v particles
 #
 dim = 1d3v
-sim_units = wavelength
 
-# wavelength_SI
+# wavelength_SI (normalization wavelength in SI units)
+# necessary to compute additional physics (e.g. ionisation or QED effects)
+#
 wavelength_SI = 1e-6
 
 # order of interpolation
+#
 interpolation_order =2 
 
-# SIMULATION TIME
-# res_time: temporal resolution (integer = number of time−steps within one normalization period)
-# sim_time: duration of the simulation in units of the normalization period 
+# SIMULATION TIME 
+# either use the resolution (res_time) or time-step (timestep)
+#
+# res_time  : temporal resolution 
+# time step : time step
+# sim_time  : duration of the simulation 
 #
 res_time = 200
 sim_time = 10.0
 
-# SIMULATION BOX : for all space directions (use vector)
-# res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
-# sim_length: length of the simulation in units of the normalization wavelength 
+# SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
+# either use the resolution (res_space) or cell-length (cell_length)
+#
+# res_space   : spatial resolution 
+# sim_length  : length of the simulation 
+# cell_length : cell-length 
 #
 res_space  = 100
 sim_length = 2.0
 
+# ELECTROMAGNETIC BOUNDARY CONDITIONS
+# bc_em_type_long/trans : boundary conditions used for EM fields 
+#                         in the longitudinal or transverse directions
+#                         periodic      = periodic BC (using MPI topology)
+#                         silver-muller = injecting/absorbing
+#
 bc_em_type_long = silver-muller
 
 # RANDOM seed 
@@ -54,11 +75,9 @@ random_seed = 0
 #
 species
 	species_type = helium
-
-    species_geometry = constant
-    vacuum_length   = 0.99
-    dens_length_x   = 0.02
-
+	species_geometry = constant
+	vacuum_length   = 0.99
+	dens_length_x   = 0.02
 	atomic_number = 2
 	initialization_type = cold
 	n_part_per_cell=1000
@@ -77,11 +96,9 @@ end
 
 species
 	species_type = electron
-
-    species_geometry = constant
-    vacuum_length   = 0.99
-    dens_length_x   = 0.02
-
+	species_geometry = constant
+	vacuum_length   = 0.99
+	dens_length_x   = 0.02
 	initialization_type = cold
 	n_part_per_cell=0
 	c_part_max=1.0
@@ -115,20 +132,11 @@ laser
 	boxSide = west
 end	
 
+# ---------------------
+# DIAGNOSTIC PARAMETERS
+# ---------------------
+
 diagnostic scalar
 	every = 1
 end
 
-diagnostic map
-	every = 10
-end
-
-diagnostic probe
-	every = 10
-	pos = 0.5
-end
-
-diagnostic probe
-	every = 10
-	pos = 0.8
-end

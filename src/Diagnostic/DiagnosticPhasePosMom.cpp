@@ -22,9 +22,9 @@ my_dirMom(directionMomentum) {
 }
 
 void DiagnosticPhasePosMom::run(partStruct& my_part) {
-	if (my_part.pos[my_dirPos] > (2*M_PI)*firstmin && my_part.pos[my_dirPos] < (2*M_PI)*firstmax && my_part.mom[my_dirMom] > secondmin && my_part.mom[my_dirMom] < secondmax) {
+	if (my_part.pos[my_dirPos] > firstmin && my_part.pos[my_dirPos] < firstmax && my_part.mom[my_dirMom] > secondmin && my_part.mom[my_dirMom] < secondmax) {
 		//!\todo check if useful to have projector here
-		int i = firstnum*(my_part.pos[my_dirPos]-(2*M_PI)*firstmin)/((2*M_PI)*(firstmax-firstmin));
+		int i = firstnum*(my_part.pos[my_dirPos]-firstmin)/(firstmax-firstmin);
 		int j = secondnum*(my_part.mom[my_dirMom]-secondmin)/(secondmax-secondmin);
 		my_data(i,j)+=my_part.weight;		
 	}

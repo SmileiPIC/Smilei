@@ -1,4 +1,15 @@
-# SIMULATION PARAMETERS
+# ---------------------------------------------
+# SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
+# ---------------------------------------------
+
+# sim_units: normalisation units for the input data
+#            it is used only in the input data & log file
+#            codes outputs are always in "normalised" units
+#            wavelength = input data are in wavelength-related units
+#            normalized = input data are put in code (relativistic) units
+#
+sim_units = wavelength
+
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
 #      2d3v = cartesian grid with 2d in space + 3d in velocity
@@ -8,22 +19,35 @@
 dim = 2d3v
 
 # order of interpolation
+#
 interpolation_order = 2 
 
-# SIMULATION TIME
-# res_time: temporal resolution (integer = number of time−steps within one normalization period)
-# sim_time: duration of the simulation in units of the normalization period 
+# SIMULATION TIME 
+# either use the resolution (res_time) or time-step (timestep)
+#
+# res_time  : temporal resolution 
+# time step : time step
+# sim_time  : duration of the simulation 
 #
 res_time = 30
-sim_time = 30
+sim_time = 50
 
-# SIMULATION BOX : for all space directions (use vector)
-# res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
-# sim_length: length of the simulation in units of the normalization wavelength 
+# SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
+# either use the resolution (res_space) or cell-length (cell_length)
+#
+# res_space   : spatial resolution 
+# sim_length  : length of the simulation 
+# cell_length : cell-length 
 #
 res_space  = 20  20  
 sim_length = 20  50  
 
+# ELECTROMAGNETIC BOUNDARY CONDITIONS
+# bc_em_type_long/trans : boundary conditions used for EM fields 
+#                         in the longitudinal or transverse directions
+#                         periodic      = periodic BC (using MPI topology)
+#                         silver-muller = injecting/absorbing
+#
 bc_em_type_long  = silver-muller
 bc_em_type_trans = silver-muller
 
@@ -46,7 +70,7 @@ laser
 	boxSide = west
 	a0=1.0
 	focus=0.0 25.0
-	angle=0.0 
+	angle=20.0 
 	delta=0.0              
 	time_profile = sin2
 	double_params = 5

@@ -77,29 +77,29 @@ PicParams::PicParams(InputData &ifile) {
     
     
     // Disabled, not compatible for now with particles sort
-    //if ( !ifile.extract("exchange_particles_each", exchange_particles_each) )
-    //! \todo (MG to JD) Please check if this parameter should still appear here
+    // if ( !ifile.extract("exchange_particles_each", exchange_particles_each) )
+    //!\todo (MG to JD) Please check if this parameter should still appear here
     exchange_particles_each = 1;
     
     
     // definition or res_time & res_space
-    ifile.extract("res_time", res_time);
+    bool defbyRes = ifile.extract("res_time", res_time);
     ifile.extract("res_space",res_space);
     if ((res_space.size()!=0)&&(res_space.size()!=nDim_field)) {
         ERROR("Dimension of res_space ("<< res_space.size() << ") != " << nDim_field << " for geometry " << geometry);
     }
 
     // definition of time_step & cell_length (if res_time & res_space are not defined)
-    if(ifile.extract("res_time", res_time)==false||(res_space.size()==0)){
+    if (!defbyRes) {
         ifile.extract("timestep", timestep);
-        res_time = 2.0*M_PI/conv_fac/timestep;
+        res_time = 1.0/timestep;
         ifile.extract("cell_length",cell_length);
         if (cell_length.size()!=nDim_field) {
             ERROR("Dimension of cell_length ("<< cell_length.size() << ") != " << nDim_field << " for geometry " << geometry);
         }
         res_space.resize(nDim_field);
         for (unsigned int i=0;i<nDim_field;i++){
-            res_space[i]=2.0*M_PI/conv_fac/cell_length[i];
+            res_space[i] = 1.0/cell_length[i];
         }
     }
     
@@ -189,7 +189,7 @@ PicParams::PicParams(InputData &ifile) {
         if (tmpSpec.temperature.size()==1) {
             tmpSpec.temperature.resize(3);
             tmpSpec.temperature[1]=tmpSpec.temperature[2]=tmpSpec.temperature[0];
-            WARNING("Isotropic temperature T="<< tmpSpec.temperature[0]);
+            WARNING("Isotropic temperature T="<< tmpSpec.temperature[0] << " for species " << n_species);
         }
         
         ifile.extract("dynamics_type",tmpSpec.dynamics_type ,"species",0,n_species);
@@ -312,11 +312,11 @@ void PicParams::compute()
     // -----------------------
     
     // number of time-steps
-    n_time     = res_time*sim_time;
+    n_time   = (int)(res_time*sim_time);
     
     // simulation time & time-step value
-    sim_time  *= conv_fac;
-    timestep   = conv_fac/res_time;
+    timestep = conv_fac/res_time;
+    sim_time = (double)(n_time) * timestep;
     
     // time after which the moving-window is turned on
     t_move_win *= conv_fac;
@@ -333,23 +333,29 @@ void PicParams::compute()
     cell_length.resize(3);
     cell_volume=1.0;
     if (nDim_field==res_space.size() && nDim_field==sim_length.size()) {
+        
+        // compute number of cells & normalized lengths
         for (unsigned int i=0; i<nDim_field; i++) {
-            n_space[i]     = res_space[i]*sim_length[i];
-            sim_length[i] *= conv_fac;
             cell_length[i] = conv_fac/res_space[i];
+            sim_length[i] *= conv_fac;//(double)(n_space[i]) * cell_length[i];
+            n_space[i]     = (int)(sim_length[i]/cell_length[i]);//(int)(res_space[i]*sim_length[i]);
             cell_volume   *= cell_length[i];
         }
+        // create a 3d equivalent of n_space & cell_length
         for (unsigned int i=nDim_field; i<3; i++) {
             n_space[i]=1;
             cell_length[i]=0.0;
         }
+        
     } else {
-        ERROR("This should never happen: problem with the definition of nDim_field");
+        ERROR("Problem with the definition of nDim_field");
     }
     
-    n_space_global.resize(3, 1);	//! \todo{3 but not real size !!! Pbs in Species::Species}
+    //!\todo (MG to JD) Are these 2 lines really necessary ? It seems to me it has just been done before
     n_space.resize(3, 1);
     cell_length.resize(3, 0.);	    //! \todo{3 but not real size !!! Pbs in Species::Species}
+    
+    n_space_global.resize(3, 1);	//! \todo{3 but not real size !!! Pbs in Species::Species}
     oversize.resize(3, 0);
 
     
@@ -376,8 +382,6 @@ void PicParams::compute()
         }
         
     }
-    
-    
     
 }
 
