@@ -128,17 +128,12 @@ end
 # print_every (on screen text output) 
 print_every = 1000
 
-# every for field dump
-fieldDump_every = 100
+every = 100
 
-# every for particle dump
- particleDump_every = 0
- 
 # DIAG ON SCALARS
 # every = number of time-steps between each output
 # #
  diagnostic scalar
- 	every = 100
  	precision=3
 	vars = Ebalance Etot Eparticles EFields Poynting E_ion N_ion E_eon N_eon Ex_U
  end
@@ -150,15 +145,14 @@ fieldDump_every = 100
 diagnostic phase
  	kind = xPx 
  	species = eon1 eon2
- 	every = 100
  
  	pos_min = 0
  	pos_max = 0.01
- 	pos_num = 200
+ 	pos_num = 500
  	
  	mom_min = -0.01
  	mom_max = 0.01
- 	mom_num = 200
+ 	mom_num = 500
  	
  	lor_min = -3.5
  	lor_max = 1.5
@@ -167,23 +161,3 @@ diagnostic phase
  	deflate=5
  end
 
-# diagnostic phase
-#  	kind = xPx 
-#  	species = eon
-#  	every = 1
-#  
-#  	pos_min = 0.44
-#  	pos_max = 0.56
-#  	pos_num = 200
-#  	
-#  	mom_min = -0.05
-#  	mom_max = 0.05
-#  	mom_num = 200
-#  	
-#  	lor_min = -3.5
-#  	lor_max = 1.5
-#  	lor_num = 200
-#  	
-#  	deflate=5
-#  end
-# 

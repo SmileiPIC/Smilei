@@ -22,7 +22,7 @@ EXEC = smilei
 default: smilei
 
 help: 
-	@echo 'Usage                 : make {$(EXEC)|clean} [openmp={gnu|intel}] [config=debug]'
+	@echo 'Usage                 : make [clean] [openmp={gnu|intel}] [config=debug]'
 	@echo 'Environment variables : SMILEICXX (c++ compiler) HDF5_ROOT_DIR (HDF5 dir with /include and /lib)'
 
 
@@ -59,9 +59,18 @@ else ifeq ($(openmp),intel)
 endif
 
 clean:
-	rm -f $(EXEC) $(OBJS) $(DEPS)
+	rm -f $(OBJS) $(DEPS)
 	
--include $(DEPS)
+distclean: clean
+	rm -f $(EXEC)
+	
+NODEPS:=clean	
+ifeq (0, $(words $(findstring $(MAKECMDGOALS), $(NODEPS))))
+    #Chances are, these files don't exist.  GMake will create them and
+    #clean up automatically afterwards
+	-include $(DEPS)
+endif
+
 
 %.d: %.cpp
 	@ echo "Checking dependencies for $<"
