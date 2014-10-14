@@ -2,9 +2,10 @@
 .*.swp
 \#*\#
 *~
-src/.depend
-src/*/*.d
+.depend
+*.d
 run*
 Run*
 RUN*
 Validation*
+src/smilei
