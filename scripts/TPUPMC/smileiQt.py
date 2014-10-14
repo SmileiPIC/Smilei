@@ -78,7 +78,8 @@ class smileiQtPlot(QWidget):
                 
             self.ui.layoutScalars.addStretch()
         else :
-            self.deleteLater()
+            print "Problem reading ",fname
+#             self.deleteLater()
 
         self.fieldSteps=[]
         fname=os.path.join(dirName, "Fields.h5")
@@ -102,7 +103,8 @@ class smileiQtPlot(QWidget):
             self.ui.layoutFields.addStretch()
             self.ui.slider.setRange(0,len(self.fieldSteps)-1)
         else :
-            self.deleteLater()
+            print "Problem reading ",fname
+#             self.deleteLater()
 
         self.ui.spinStep.setSuffix("/"+str(len(self.fieldSteps)-1))
         self.ui.spinStep.setMaximum(len(self.fieldSteps)-1)
@@ -115,7 +117,8 @@ class smileiQtPlot(QWidget):
                 self.ui.layoutPhase.addWidget(my_button)
             self.ui.layoutPhase.addStretch()
         else :
-            self.deleteLater()
+            print "Problem reading ",fname
+#             self.deleteLater()
 
         if sys.platform == "darwin":
             self.raise_()
