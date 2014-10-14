@@ -227,7 +227,6 @@ class smileiQtPlot(QWidget):
                 divider = make_axes_locatable(ax)
                 cax = divider.new_horizontal(size="2%", pad=0.05)
                 self.fig.add_axes(cax)
-
                 
                 cb=plt.colorbar(im, cax=cax)
 
