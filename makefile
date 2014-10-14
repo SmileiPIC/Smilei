@@ -5,13 +5,16 @@ VERSION:="$(shell git describe 2>/dev/null || echo '??')"
 default: release
 
 release:
-	make -C src release
+	make -C src
+
 openmpgnu:
-	make -C src openmpgnu
+	make -C src openmp=gnu
+
 openmpintel:
-	make -C src openmpintel
+	make -C src openmp=intel
+
 debug:
-	make -C src debug
+	make -C src config=debug
 
 clean:
 	make -C src clean
@@ -21,6 +24,7 @@ clean:
 doc: htmldoc pdfdoc
 
 htmldoc:
+#	convert -resize 100x100 doc/smileiLogo/smileiLogo.png doc/logo.png
 	cd doc; (cat smilei.dox; echo "PROJECT_NUMBER=${VERSION}") | doxygen -
 
 pdfdoc:

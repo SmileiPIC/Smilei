@@ -1,5 +1,5 @@
-PROJECT_NAME           = "smilei"
-PROJECT_BRIEF          = "Pic code in c++"
+PROJECT_NAME           = "SMILEI"
+PROJECT_BRIEF          = "Simulation of Matter Irradiated by Light at Extreme Intensities"
 INPUT                  = ../src
 CITE_BIB_FILES         = smilei.bib
 TOC_EXPAND             = YES
@@ -21,3 +21,6 @@ WARN_IF_UNDOCUMENTED   = YES
 WARN_IF_DOC_ERROR      = YES
 WARN_LOGFILE           = smilei_warn.log
 RECURSIVE              = YES
+PROJECT_LOGO           = logo.png
+
+# leave an empty line after this
