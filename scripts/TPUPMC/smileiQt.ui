@@ -168,30 +168,6 @@
     </item>
    </layout>
   </widget>
-  <action name="actionQuit">
-   <property name="text">
-    <string>Quit</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Q</string>
-   </property>
-  </action>
-  <action name="actionDir">
-   <property name="text">
-    <string>&amp;Choose directory</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+O</string>
-   </property>
-  </action>
-  <action name="actionSave_images">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Save images</string>
-   </property>
-  </action>
  </widget>
  <resources/>
  <connections/>
