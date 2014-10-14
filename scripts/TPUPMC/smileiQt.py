@@ -174,7 +174,7 @@ class smileiQtPlot(QWidget):
                 if i.isChecked() :          
                     x=self.scalarData[:,0]
                     y=self.scalarData[:,col]
-                    ax=plt.subplot2grid((self.nplots,10),(nplot, 0),colspan=10)
+                    ax=self.fig.add_subplot(nplot,1)
                     ax.plot(x,y)
                     ax.set_ylabel(i.text())
                     ax.axvline(x=time,c="red",linewidth=2,zorder=0, clip_on=False)
@@ -188,7 +188,7 @@ class smileiQtPlot(QWidget):
                 
                     data=self.fieldFile.getNode(str(nameData))
                     
-                    ax=plt.subplot2grid((self.nplots,10),(nplot, 0),colspan=9)
+                    ax=self.fig.add_subplot(nplot,1)
                     ax.set_ylabel(i.text())
 
                     if len(data.shape) == 1 :
@@ -208,7 +208,7 @@ class smileiQtPlot(QWidget):
                             self.lims[nplot]=(data.min(),data.max())
                         
                         im.set_clim(self.lims[nplot])
-                        axcb=plt.subplot2grid((self.nplots,10),(nplot, 9)) 
+                        axcb= self.fig.add_subplot(nplot,2)
                         cb=plt.colorbar(im, cax=axcb)
 
                     nplot+=1
