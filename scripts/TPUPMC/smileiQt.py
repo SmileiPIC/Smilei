@@ -25,7 +25,6 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-import matplotlib.gridspec as gridspec
 
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
@@ -59,8 +58,8 @@ class smileiQtPlot(QWidget):
         
         self.toolbar = NavigationToolbar(self.canvas, self)
         self.toolbar.setFixedHeight(18)
-        self.ui.plotLayout.addWidget(self.toolbar)
         self.ui.plotLayout.addWidget(self.canvas)
+        self.ui.plotLayout.addWidget(self.toolbar)
 
         fname=os.path.join(dirName, "scalars.txt")
         if os.path.isfile(fname) :
@@ -205,7 +204,7 @@ class smileiQtPlot(QWidget):
                     if self.autoScale.isChecked() or self.lims[nplot]==None :
                         self.lims[nplot]=(data.min(),data.max())
                     im.set_clim(self.lims[nplot])
-                    divider = make_axes_locatable(plt.gca())
+                    divider = make_axes_locatable(ax)
                     cax=divider.append_axes("right", "5%", pad="3%")
                     cb=plt.colorbar(im, cax=cax)
 
@@ -218,20 +217,18 @@ class smileiQtPlot(QWidget):
                 data=node[self.step].T
                 
                 ax=self.fig.add_subplot(self.nplots,1,nplot+1)
-
-                
                 im=ax.imshow(data,extent=node._v_parent._v_attrs.extents.reshape(4).tolist(), aspect='auto',origin='lower')
-
                 if self.autoScale.isChecked() or self.lims[nplot]==None :
-                    self.lims[nplot]=(data.min(),data.max())
-                    
+                    self.lims[nplot]=(data.min(),data.max())                    
                 im.set_clim(self.lims[nplot])
-
                 ax.set_ylabel(i.text())
                 
-                divider = make_axes_locatable(plt.gca())
-                cax=divider.append_axes("right", "5%", pad="3%")
 
+                divider = make_axes_locatable(ax)
+                cax = divider.new_horizontal(size="2%", pad=0.05)
+                self.fig.add_axes(cax)
+
+                
                 cb=plt.colorbar(im, cax=cax)
 
 
