@@ -158,7 +158,8 @@ int main (int argc, char* argv[])
         DEBUG(vecSpecies.size());
         sio->restartAll( EMfields,  stepStart, vecSpecies, smpi, simWindow, params, input_data);
 
-	if (simWindow) {
+        double restart_time_dual = (stepStart +0.5) * params.timestep;
+	if ( simWindow && ( simWindow->isMoving(restart_time_dual) ) ) {
 	    simWindow->setOperators(vecSpecies, Interp, Proj, smpi);
 	    simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi , params);
 	}

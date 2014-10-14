@@ -29,7 +29,7 @@ void SimWindow::operate(vector<Species*> vecSpecies, ElectroMagn* EMfields, Inte
     if (vecSpecies.size() > 0) {
         clrw = vecSpecies[0]->clrw; //clrw must be the same for all species
     } else {
-        clrw = 1; //This is not correct, just an ugly patch. clrw should take the correct global value even when there are no particles.
+        clrw = params.clrw; //This is not correct, just an ugly patch. clrw should take the correct global value even when there are no particles.
     }
 
     smpi->getCellStartingGlobalIndex(0)+= clrw;
