@@ -27,6 +27,20 @@ import matplotlib.pyplot as plt
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
+class MyMplCanvas(FigureCanvas):
+    """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
+    def __init__(self, parent=None, width=5, height=4, dpi=100):
+        fig = Figure(figsize=(width, height), dpi=dpi)
+        self.axes = fig.add_subplot(111)
+        # We want the axes cleared every time plot() is called
+        self.axes.hold(False)
+
+        FigureCanvas.__init__(self, fig)
+        self.setParent(parent)
+
+        FigureCanvas.setSizePolicy(self,QSizePolicy.Expanding,QSizePolicy.Expanding)
+        FigureCanvas.updateGeometry(self)
+
 class smileiQtPlot(QWidget):
 
     def __init__(self,dirName):
@@ -44,12 +58,12 @@ class smileiQtPlot(QWidget):
         self.ui.autoScale.toggled.connect(self.doPlots)
         self.ui.tabWidget.currentChanged.connect(self.doPlots)
         
-        self.fig = plt.figure()
+        self.fig = plt.figure(dirName)
         self.canvas = FigureCanvas(self.fig)
         
-        toolbar = NavigationToolbar(self.canvas, self)
-        toolbar.setFixedHeight(18)
-        self.ui.plotLayout.addWidget(toolbar)
+        self.toolbar = NavigationToolbar(self.canvas, self)
+        self.toolbar.setFixedHeight(18)
+        self.ui.plotLayout.addWidget(self.toolbar)
         self.ui.plotLayout.addWidget(self.canvas)
 
         self.scalarData = None
@@ -140,6 +154,8 @@ class smileiQtPlot(QWidget):
         self.ui.slider.setValue(my_step)
                     
     def doPlots(self):
+        if  self.ui.tabWidget.currentIndex()==1: return
+
         print "doPlots", self
         if len(self.fieldSteps) == 0 : return
         
