@@ -45,16 +45,16 @@ public:
     }
 
     inline bool isWestern() {
-        return (coords_[0]==0);
+        return ((coords_[0]==0)&&(periods_[0]==0));
     }
     inline bool isEastern() {
-        return (coords_[0]==number_of_procs[0]-1);
+        return ((coords_[0]==number_of_procs[0]-1)&&(periods_[0]==0));
     }
     inline bool isSouthern() {
-        return (coords_[1]==0);
+        return ((coords_[1]==0)&&(periods_[1]==0));
     }
     inline bool isNorthern() {
-        return (coords_[1]==number_of_procs[1]-1);
+        return ((coords_[1]==number_of_procs[1]-1)&&(periods_[1]==0));
     }
 
     int extrem_ranks[2][2];
