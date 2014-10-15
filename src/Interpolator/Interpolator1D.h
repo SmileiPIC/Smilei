@@ -12,7 +12,6 @@ class Interpolator1D : public Interpolator
 {
 public:
     Interpolator1D(PicParams &params, SmileiMPI *smpi): Interpolator(params, smpi) {
-        DEBUG("REMOVE ME REMOVE ME REMOVE ME REMOVE ME REMOVE ME REMOVE ME REMOVE ME REMOVE ME REMOVE ME REMOVE ME REMOVE ME REMOVE ME ");
         SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
         index_domain_begin = smpi1D->getCellStartingGlobalIndex(0);
     };

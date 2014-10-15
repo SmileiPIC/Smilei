@@ -64,6 +64,7 @@ public:
 	//! number of bins for the second component of the 2d phasespace
 	unsigned int secondnum;
 	
+    //! HDF identifier of data
     hid_t dataId;
 };
 #endif
