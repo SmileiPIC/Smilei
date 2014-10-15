@@ -30,7 +30,11 @@ import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 class smileiQtPlot(QWidget):
-
+    scalarDict=dict()
+    fieldDict=dict()
+    phaseDict=dict()
+    nplots=0
+    
     def __init__(self,parent,dirName):
         super(smileiQtPlot, self).__init__()    
         self.setParent(parent)
@@ -150,7 +154,6 @@ class smileiQtPlot(QWidget):
 
         self.nplots=0
               
-        self.scalarDict=dict()
         col=0
         for i in self.ui.scalars.findChildren(QCheckBox):
             col+=1
@@ -158,7 +161,6 @@ class smileiQtPlot(QWidget):
                 self.scalarDict[i.text()]=col
                 self.nplots+=1
 
-        self.fieldDict=dict()
         for i in self.ui.fields.findChildren(QCheckBox):
             if i.isChecked() :
                 data=[]
@@ -168,7 +170,6 @@ class smileiQtPlot(QWidget):
                 self.fieldDict[name]=data
                 self.nplots+=1
 
-        self.phaseDict=dict()
         for i in self.ui.phase.findChildren(QCheckBox):
             if i.isChecked() :
                 data=dict()
@@ -186,6 +187,7 @@ class smileiQtPlot(QWidget):
     
     def doPlots(self):
 
+        print "--------",self.nplots
         if len(self.fieldSteps) == 0 : return
         
         self.step %= len(self.fieldSteps)
