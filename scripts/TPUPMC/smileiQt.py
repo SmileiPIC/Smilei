@@ -33,6 +33,8 @@ class smileiQtPlot(QWidget):
     scalarDict=dict()
     fieldDict=dict()
     phaseDict=dict()
+    fieldFile=None
+    phaseFile=None
     nplots=0
     
     def __init__(self,parent,dirName):
@@ -152,6 +154,10 @@ class smileiQtPlot(QWidget):
     def changeTab(self, tabNum):
         if  self.ui.tabWidget.currentIndex()!=0: return 
 
+        self.scalarDict=dict()
+        self.fieldDict=dict()
+        self.phaseDict=dict()
+
         self.nplots=0
               
         col=0
@@ -187,7 +193,6 @@ class smileiQtPlot(QWidget):
     
     def doPlots(self):
 
-        print "--------",self.nplots
         if len(self.fieldSteps) == 0 : return
         
         self.step %= len(self.fieldSteps)
@@ -197,6 +202,7 @@ class smileiQtPlot(QWidget):
         time=self.step/self.res_time*self.fieldEvery
         nplot=0
         self.fig.clear()
+        
         for i in self.scalarDict:
             x=self.scalarData[:,0]
             y=self.scalarData[:,self.scalarDict[i]]
@@ -205,7 +211,7 @@ class smileiQtPlot(QWidget):
             ax.set_ylabel(i)
             ax.axvline(x=time,c="red",linewidth=2,zorder=0, clip_on=False)
             nplot+=1
-
+           
         for myname in self.fieldDict:
             data=self.fieldDict[myname][self.step]
                 
@@ -256,7 +262,6 @@ class smileiQtPlot(QWidget):
 
             cb=plt.colorbar(im, cax=cax)
 
-
             nplot+=1
                 
                 
@@ -266,8 +271,8 @@ class smileiQtPlot(QWidget):
             plt.savefig('smilei-%06d.png' % self.step)
                
     def closeEvent(self,event):
-        self.fieldFile.close()
-        self.phaseFile.close()
+        if self.fieldFile is not None : self.fieldFile.close()
+        if self.phaseFile is not None : self.phaseFile.close()
         self.parent.plots.remove(self)
         self.deleteLater()
 
