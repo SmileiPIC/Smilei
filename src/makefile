@@ -1,34 +1,73 @@
-VERSION:="$(shell git describe 2>/dev/null || echo '??')"
-
 SMILEICXX     ?= mpic++
 HDF5_ROOT_DIR ?=
 
-CFLAGS  += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include #-Wstrict-aliasing
+##################################################
+
+VERSION:="$(shell git describe 2>/dev/null || echo '??')"
+
+CFLAGS += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include
 LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5
 
 ifneq (,$(findstring poincare,$(HOSTNAME)))
     LDFLAGS += -lgpfs -lz
 endif
 
-
-
-all: release
+#add subdirs
+DIRS = $(shell find * -type d)
+#add include directives for subdirs
+CFLAGS += $(DIRS:%=-I%)
 
 EXEC = smilei
 
-SRCS = $(wildcard *.cpp)
-OBJS := $(patsubst %.cpp,%.o,$(SRCS))
+default: smilei
 
-release: CFLAGS += -O3
-release: $(EXEC)
+help: 
+	@echo 'Usage                 : make {$(EXEC)|clean} [openmp={gnu|intel}] [config=debug]'
+	@echo 'Environment variables : SMILEICXX (c++ compiler) HDF5_ROOT_DIR (HDF5 dir with /include and /lib)'
 
-debug: CFLAGS += -g -pg -Wall -D__DEBUG
-debug: $(EXEC)
 
-.depend: $(SRCS)
-	$(SMILEICXX) $(CFLAGS) -MM $^ > .depend
+# these are kept for backward compatibility and might be removed (see make help)
+release:
+	make
 
-include .depend 
+openmpgnu:
+	make openmp=gnu
+
+openmpintel:
+	make openmp=intel
+
+debug:
+	make config=debug
+
+
+
+#collect all cpp files
+SRCS := $(shell find . -name \*.cpp)
+OBJS := $(SRCS:.cpp=.o)
+DEPS := $(OBJS:.o=.d)
+
+ifeq ($(config),debug)
+	CFLAGS += -g -pg -Wall -D__DEBUG
+else
+	CFLAGS += -O3
+endif
+
+ifeq ($(openmp),gnu)
+	CFLAGS += -fopenmp
+else ifeq ($(openmp),intel)
+	CFLAGS += -openmp
+endif
+
+clean:
+	rm -f $(EXEC) $(OBJS) $(DEPS)
+	
+-include $(DEPS)
+
+%.d: %.cpp
+	@ echo "Checking dependencies for $<"
+	$(eval DIR := $(shell  dirname $<))
+# create and modify dependecy file .d to take into account the location subdir	
+	@ $(SMILEICXX) -MM $(CFLAGS) $*.cpp 2>/dev/null | sed -e "s@\(^.*\)\.o:@$(DIR)/\1.d $(DIR)/\1.o:@" > $@  
 
 %.o : %.cpp
 	$(SMILEICXX) $(CFLAGS) -c $< -o $@
@@ -36,5 +75,4 @@ include .depend
 $(EXEC): $(OBJS)
 	$(SMILEICXX) $(CFLAGS) -o $(EXEC) $(OBJS) $(LDFLAGS)
 
-clean:
-	rm -f $(EXEC) $(OBJS) .depend
+# DO NOT DELETE

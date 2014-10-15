@@ -1,8 +1,5 @@
 # SIMULATION PARAMETERS
-
-# print_every 
-print_every = 100
-
+ 
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
 #      2d3v = cartesian grid with 2d in space + 3d in velocity
@@ -10,36 +7,29 @@ print_every = 100
 #      2drz = cylindrical (r,z) grid with 3d3v particles
 #
 dim = 1d3v
-
+ 
 # order of interpolation
-interpolation_order = 2 
-
+interpolation_order = 2
+ 
 # SIMULATION TIME
 # res_time: temporal resolution (integer = number of time−steps within one normalization period)
 # sim_time: duration of the simulation in units of the normalization period 
 #
-res_time = 1000
-sim_time = 5.0
-
+res_time = 100
+sim_time = 10.0
+ 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
 # sim_length: length of the simulation in units of the normalization wavelength 
 #
-res_space=200
-sim_length=10.0
-
-# PLASMA GEOMETRY
-# plasma_geometry: string defining the plasma geometry
-# ***_length: characteristic length for a given geometry
-#
-plasma_geometry = constant
-vacuum_length   = 1.0
-plasma_length   = 1.0
-
+res_space=950
+sim_length=5.0
+bc_em_type_long = silver-muller
+ 
 # RANDOM seed 
 # this is used to randomize the random number generator
 random_seed = 0
-
+ 
 # LASER PROPERTIES
 #
 # for each laser define:
@@ -48,37 +38,41 @@ random_seed = 0
 # delta: polarization parameter, (0:y) (1:z) (0.707106781:circ)
 # time_profile: string defining the time profile
 # double_params: vector of real parameters used by the different time-profiles
-
+ 
 laser
-	a0=1.0
-	angle=0
-	delta=1.0              
-	time_profile = constant
-	double_params = 2.0
+    a0=1.0
+    boxSide = west 
+    angle=0
+    delta=1.0              
+    time_profile = constant
+    double_params = 2.0
 end
-
+ 
 diagnostic scalar
-	every = 10
+    every = 1
 end
-
-
+ 
+ 
 diagnostic probe
-	every = 1
-	pos = 0.0	
+    every = 1
+    pos = 0.0   
 end
-
+ 
 diagnostic probe
-	every = 1;
-	pos = 0.0
-	pos_first = 10.0
-	number = 5
-	
+    every = 1;
+    pos = 0.0
+    pos_first = 10.0
+    number = 5
+     
 end
-
-dump_step = 2500
-
+ 
+print_every = 100
+ 
+ 
+fieldDump_every = 111
+ 
+# dump_step = 2500
+ 
 # dump_minutes = 1
-
+ 
 # random_seed = 13121977
-
-

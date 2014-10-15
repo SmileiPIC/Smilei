@@ -1,8 +1,5 @@
 # SIMULATION PARAMETERS
 
-# print_every 
-print_every = 100
-
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
 #      2d3v = cartesian grid with 2d in space + 3d in velocity
@@ -12,14 +9,14 @@ print_every = 100
 dim = 1d3v
 
 # order of interpolation
-interpolation_order = 4 
+interpolation_order = 2
 
 # SIMULATION TIME
 # res_time: temporal resolution (integer = number of time−steps within one normalization period)
 # sim_time: duration of the simulation in units of the normalization period 
 #
 res_time = 1000
-sim_time = 5.0
+sim_time = 1
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
@@ -28,13 +25,7 @@ sim_time = 5.0
 res_space=500
 sim_length=21.0
 
-# PLASMA GEOMETRY
-# plasma_geometry: string defining the plasma geometry
-# ***_length: characteristic length for a given geometry
-#
-plasma_geometry = constant
-vacuum_length   = 10.0
-plasma_length   = 1.0
+bc_em_type_long = silver-muller
 
 # RANDOM seed 
 # this is used to randomize the random number generator
@@ -55,24 +46,35 @@ random_seed = 0
 # radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
 #
 species
+    plasma_geometry = constant
+    vacuum_length   = 10.0
+    plasma_length   = 1.0
+
 	species_type = ion
-	initialization_type = cold
-	n_part_per_cell=100
+	initialization_type = maxwell-juettner
+	ionization_model = none
+	n_part_per_cell=200
 	c_part_max=1.0
 	mass = 1836.0
 	charge = 1.0
 	density = 1.0e0
 	mean_velocity = 0.0
-	temperature = 0.0
+	temperature = 2.0e-5
 	dynamics_type = norm
 	time_frozen = 0.0
 	radiating = false
+	bc_part_type_long = refl
 end
 
 species
-	species_type = electron
+    plasma_geometry = constant
+    vacuum_length   = 10.0
+    plasma_length   = 1.0
+
+	species_type = eon
 	initialization_type = Maxwell-Juettner
-	n_part_per_cell=100
+	ionization_model = none
+	n_part_per_cell=200
 	c_part_max=1.0
 	mass = 1.0
 	charge = -1.0
@@ -82,6 +84,7 @@ species
 	dynamics_type = norm	
 	time_frozen = 0.0
 	radiating = false
+	bc_part_type_long = refl
 end
 
 # LASER PROPERTIES
@@ -93,12 +96,46 @@ end
 # time_profile: string defining the time profile
 # double_params: vector of real parameters used by the different time-profiles
 
-laser
-	a0=5.0
-	angle=0
-	delta=0.707106781                 
-	time_profile = constant
-	double_params = 4.0
-end	
+# laser
+# 	a0=5.0
+# 	angle=0
+# 	delta=0.707106781                 
+# 	time_profile = constant
+# 	double_params = 4.0
+# end	
 
+exit_after_dump = false
+
+# ---------------------
+# DIAGNOSTIC PARAMETERS
+# ---------------------
+
+# print_every (on screen text output) 
+print_every = 100
+
+# every for field dump
+fieldDump_every = 500
+
+# every for particle dump
+particleDump_every = 0
+
+# DIAG ON SCALARS
+# every = number of time-steps between each output
+
+diagnostic scalar
+	every = 1
+end
+
+# PROB 0D
+# every = number of time-steps between each output
+# x     = position of the different probes
+#
+diagnostic probe0d
+	every = 0
+	x = 0.0 30.0 60.0 90.0 120.0	
+end
+
+
+dump_step = 0
+exit_after_dump = false
 

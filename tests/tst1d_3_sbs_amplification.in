@@ -18,34 +18,18 @@ interpolation_order = 2
 # res_time: temporal resolution (integer = number of time−steps within one normalization period)
 # sim_time: duration of the simulation in units of the normalization period 
 #
-res_time = 10
-sim_time = 100.0
+res_time = 100
+sim_time = 300.0
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
 # sim_length: length of the simulation in units of the normalization wavelength 
 #
-res_space  = 5
+res_space  = 50
 sim_length = 120.0
 
-
-# ---------------
-# PLASMA GEOMETRY
-# ---------------
-
-# plasma_geometry: string defining the plasma geometry
-# ***_length: characteristic length for a given geometry
-#
-plasma_geometry = trap
-vacuum_length   = 10.0
-plasma_length   = 100.0
-slope_length    = 5.0
-
-
-# RANDOM seed 
-# this is used to randomize the random number generator
-random_seed = 0
-
+# BOUNDARY CONDITIONS
+bc_em_type_long = silver-muller
 
 # DEFINE ALL SPECIES
 # species_type: ion, electron, positron, test ...
@@ -62,10 +46,14 @@ random_seed = 0
 # radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
 #
 species
+    plasma_geometry = constant
+    vacuum_length   = 1.0
+    plasma_length   = 8.0
+
 	species_type = ion
-	initialization_type = maxwell-juettner
+	initialization_type = mj
 	ionization_model = none
-	n_part_per_cell = 10
+	n_part_per_cell = 100
 	c_part_max = 1.0
 	mass = 1836.0
 	charge = 1.0
@@ -73,16 +61,20 @@ species
 	mean_velocity = 0.0
 	temperature = 2.0e-5
 	dynamics_type = norm
-	time_frozen = 100.0
+	time_frozen = 300.0
 	radiating = false
-	bc_part_type = refl
+	bc_part_type_long = refl
 end
 
 species
+    plasma_geometry = constant
+    vacuum_length   = 1.0
+    plasma_length   = 8.0
+
 	species_type = eon
-	initialization_type = maxwell-juettner
+	initialization_type = mj
 	ionization_model = none
-	n_part_per_cell = 10
+	n_part_per_cell = 100
 	c_part_max = 1.0
 	mass = 1.0
 	charge = -1.0
@@ -92,7 +84,7 @@ species
 	dynamics_type = norm
 	time_frozen = 0.0
 	radiating = false
-	bc_part_type = refl
+	bc_part_type_long = refl
 end
 
 # ----------------
@@ -108,6 +100,7 @@ end
 #
 laser
 	a0=8.5e-2
+	boxSide=west
 	angle=0
 	delta=1.0              
 	time_profile = sin2
@@ -116,6 +109,7 @@ end
 
 laser
 	a0=8.5e-3
+	boxSide=east
 	angle=180
 	delta=1.0        
 	time_profile = sin2
@@ -132,73 +126,3 @@ print_every = 100
 # every for field dump
 fieldDump_every = 125
 
-# every for particle dump
-particleDump_every = 2500
-
-# DIAG ON SCALARS
-# every = number of time-steps between each output
-#
-diagnostic scalar
-	every = 125
-end
-
-diagnostic phase
-# kind of projection: 1D) xPx xPy xPz xLor PxPy PxPz PyPz
-# kind of projection: 2D) xPx xPy xPz xLor yPx yPy yPz yLor PxPy PxPz PyPz
-	kind = xPx xPy xPz xLor
-
-    species = eon
-    
-    deflate=0
-
-	every = 100
-
-	pos_min = 0
-	pos_max = 120
-	pos_num = 2000
-	
-	mom_min = -0.3
-	mom_max = 0.3
-	mom_num = 200
-
-	lor_min = 0.95
-	lor_max = 1
-	lor_num = 200
-end
-
-diagnostic phase
-	kind = PxPy PxPz PyPz
-    species = eon
-	every = 100
-
-    deflate=0
-
-	mom_min = -0.3 -0.3
-	mom_max = 0.3 0.3
-	mom_num = 200 200
-end
-
-# PROBEs 0D
-# every = number of time-steps between each output
-# pos   = position of the different probes
-#
-diagnostic probe
-	every = 1
-	pos = 3.0
-end
-
-diagnostic probe
-	every = 1
-	pos = 120.0
-end
-
-diagnostic probe
-    every = 10
-    pos = 0
-    pos_first = 120
-    number = 13
-end
-
-#dump_minutes = 0.1
-dump_step = 1000
-exit_after_dump = false

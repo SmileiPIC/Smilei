@@ -24,6 +24,10 @@ sim_time = 5.0
 res_space  = 100   100  
 sim_length = 6.0   12.0  
 
+bc_em_type_long = silver-muller
+bc_em_type_trans = periodic
+
+
 # PLASMA GEOMETRY
 # plasma_geometry: string defining the plasma geometry
 # ***_length: characteristic length for a given geometry
@@ -65,6 +69,8 @@ species
 	dynamics_type = norm
 	time_frozen = 0.0
 	radiating = false
+        bc_part_type_long = none
+        bc_part_type_trans = none
 end
 
 species 
@@ -80,6 +86,8 @@ species
 	dynamics_type = norm	
 	time_frozen = 0.0
 	radiating = false
+        bc_part_type_long = none
+        bc_part_type_trans = none
 end
 
 species
@@ -96,6 +104,8 @@ species
         dynamics_type = norm
         time_frozen = 0.0
         radiating = false
+        bc_part_type_long = none
+        bc_part_type_trans = none
 end
 
 species
@@ -111,6 +121,8 @@ species
         dynamics_type = norm
         time_frozen = 0.0
         radiating = false
+        bc_part_type_long = none
+        bc_part_type_trans = none
 end
 
 # ---------------------

@@ -1,7 +1,7 @@
 # SIMULATION PARAMETERS
 
 # print_every 
-print_every = 100
+print_every = 1
 
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
@@ -31,13 +31,7 @@ sim_time = 10.0
 res_space  = 100
 sim_length = 2.0
 
-# PLASMA GEOMETRY
-# plasma_geometry: string defining the plasma geometry
-# ***_length: characteristic length for a given geometry
-#
-plasma_geometry = constant
-vacuum_length   = 0.99
-plasma_length   = 0.02
+bc_em_type_long = silver-muller
 
 # RANDOM seed 
 # this is used to randomize the random number generator
@@ -59,6 +53,11 @@ random_seed = 0
 #
 species
 	species_type = helium
+
+    plasma_geometry = constant
+    vacuum_length   = 0.99
+    plasma_length   = 0.02
+
 	atomic_number = 2
 	initialization_type = cold
 	n_part_per_cell=1000
@@ -72,10 +71,16 @@ species
 	ionization_model = tunnel
 	time_frozen = 0.0
 	radiating = false
+	bc_part_type_long = none
 end
 
 species
 	species_type = electron
+
+    plasma_geometry = constant
+    vacuum_length   = 0.99
+    plasma_length   = 0.02
+
 	initialization_type = cold
 	n_part_per_cell=0
 	c_part_max=1.0
@@ -88,6 +93,7 @@ species
 	ionization_model = none
 	time_frozen = 0.0
 	radiating = false
+	bc_part_type_long = none
 end
 
 # LASER PROPERTIES
@@ -105,6 +111,7 @@ laser
 	delta=1.0               
 	time_profile = constant
 	#double_params = 10.0
+	boxSide = west
 end	
 
 diagnostic scalar
