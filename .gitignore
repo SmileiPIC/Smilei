@@ -1,3 +1,11 @@
 *.o
-src/.depend
-src/*/*.d
+.*.swp
+\#*\#
+*~
+.depend
+*.d
+run*
+Run*
+RUN*
+Validation*
+src/smilei

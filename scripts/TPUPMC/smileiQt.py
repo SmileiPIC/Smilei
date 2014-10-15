@@ -3,201 +3,67 @@
 Plot fields of smilei simulaition
 """
 import sys, os, random
-from PyQt4 import QtCore, QtGui, uic
-from PyQt4.QtGui import QFileDialog
 
-import matplotlib as mpl
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
+from matplotlib.figure import Figure
+from matplotlib.backend_bases import key_press_handler
+from matplotlib.backends.backend_qt4agg import (
+    FigureCanvasQTAgg as FigureCanvas,
+    NavigationToolbar2QT as NavigationToolbar)
+from matplotlib.backends import qt_compat
 
-from matplotlib import gridspec
+if qt_compat.QT_API == qt_compat.QT_API_PYSIDE:
+    from PySide.QtCore import *
+    from PySide.QtGui import *
+    from PyQt4 import uic
+else:
+    from PyQt4.QtCore import *
+    from PyQt4.QtGui import *
+    from PyQt4 import uic
 
-import matplotlib.pyplot as plt
-
-import os
 import tables as tb
 import numpy as np
-import re
+
+import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-class smileiQt(QtGui.QMainWindow):
+class smileiQtPlot(QWidget):
 
-    def __init__(self, name):
-        super(smileiQt, self).__init__()
-        
-        self.dirName = name
-        
-        uiFile=os.path.dirname(os.path.realpath(__file__))+'/smileiQt.ui'
+    def __init__(self,parent,dirName):
+        super(smileiQtPlot, self).__init__()    
+        self.setParent(parent)
+        uiFile=os.path.dirname(os.path.realpath(__file__))+'/smileiQtPlot.ui'
         self.ui=uic.loadUi(uiFile,self)
-        self.ui.actionQuit.triggered.connect(QtGui.qApp.quit)
         
-        
-        l = QtGui.QVBoxLayout()
-        self.plot.setLayout(l)
+        self.parent=parent
+
+        self.parent.timer.timeout.connect(self.next)
+        self.parent.ui.next.released.connect(self.next)
+        self.parent.ui.previous.released.connect(self.previous)
+        self.parent.ui.first.released.connect(self.first)
+        self.parent.ui.last.released.connect(self.last)
+
+        self.setWindowFlags(Qt.Window)
+        self.setWindowTitle(dirName)
 
         self.step=0
         
-        self.timer=QtCore.QTimer()
-        self.timer.setInterval(500)
-        self.timer.timeout.connect(self.do_timer)
-        
         self.ui.autoScale.toggled.connect(self.doPlots)
+        self.ui.tabWidget.currentChanged.connect(self.changeTab)
         
-        self.fig = plt.figure()
+        self.fig = Figure()
         self.canvas = FigureCanvas(self.fig)
         
-        self.canvas.mpl_connect('motion_notify_event', self.on_movement)
-        
-        toolbar = NavigationToolbar(self.canvas, self)
-        toolbar.setFixedHeight(18)
-        self.plot.layout().addWidget(toolbar)
-        self.plot.layout().addWidget(self.canvas)
+        self.toolbar = NavigationToolbar(self.canvas, self)
+        self.toolbar.setFixedHeight(18)
+        self.ui.plotLayout.addWidget(self.canvas)
+        self.ui.plotLayout.addWidget(self.toolbar)
 
-        self.scalarData = None
-        self.fieldFile = None
-        self.phaseFile = None
-
-        self.createActions()
-
-        self.show()        
-    
-    def on_movement(self, event):
-        if not (event.inaxes is None) :
-            msg = "%.3f %.3f" % (event.xdata, event.ydata)
-            self.ui.mouse.setText(msg)
-        
-    def closeEvent(self,event):
-        if not self.fieldFile is None :
-            self.fieldFile.close()
-        if not self.phaseFile is None :
-            self.phaseFile.close()
-    
-    def on_slider_valueChanged(self,step):
-        self.step=step
-        self.doPlots()
-    
-    @QtCore.pyqtSignature("int")
-    def on_spinStep_valueChanged(self,my_step):
-        self.ui.slider.setValue(my_step)
-        
-    def on_back_released(self):
-        self.ui.slider.setValue(self.step-1)
-
-    def on_forward_pressed(self):
-        self.ui.slider.setValue(self.step+1)
-
-    def on_allBack_released(self):
-        self.ui.slider.setValue(0)
-
-    def on_allForward_released(self):
-        self.ui.slider.setValue(len(self.fieldSteps)-1)
-
-    def on_playStop_toggled(self):
-        if self.playStop.isChecked() :
-            self.playStop.setText("Stop")
-            self.timer.start()
-        else:
-            self.playStop.setText("Play")
-            self.timer.stop()
-            
-    def doPlots(self):
-        if len(self.fieldSteps) == 0 : return
-        
-        self.step %= len(self.fieldSteps)
-        self.slider.setValue(self.step)
-        
-        if not hasattr(self,'fig'): return
-        
-        self.ui.spinStep.setValue(self.step)
-        time=self.step/self.res_time*self.fieldEvery
-        self.fig.suptitle("Time: %.3f" % time)
-        nplot=0
-    
-        if not self.scalarData is None :
-            for j in self.ui.menuScalars.actions():
-                if j.isChecked() :
-                    col=j.data().toInt()[0]
-                    x=self.scalarData[:,0]
-                    y=self.scalarData[:,col]
-                    ax=plt.subplot2grid((self.nplots,10),(nplot, 0),colspan=10)
-                    ax.plot(x,y)
-                    ax.set_ylabel(j.text())
-                    ax.axvline(x=time,c="red",linewidth=2,zorder=0, clip_on=False)
-                    nplot+=1
-
-        if not self.fieldFile is None :
-            nameGroup="/%010d" % (self.step*self.fieldEvery)
-            for i in self.ui.menuFields.actions() :
-                if i.isChecked() :
-                    nameData=nameGroup+"/"+i.text()
-                
-                    data=self.fieldFile.getNode(str(nameData))
-                    
-                    ax=plt.subplot2grid((self.nplots,10),(nplot, 0),colspan=9)
-                    ax.set_ylabel(i.text())
-
-                    if len(data.shape) == 1 :
-                        x=np.array(range(data.shape[0]))/self.res_space
-                        y=data
-                        ax.plot(x,y)
-
-                        if self.autoScale.isChecked() or self.lims[nplot]==None :
-                            self.lims[nplot]=ax.get_ylim()
-
-                        ax.set_ylim(self.lims[nplot])
-                        ax.set_xlim(0,self.sim_length)
-                    elif len(data.shape) == 2 :
-                        data=np.array(data)
-                        im=ax.imshow(data.T,extent=(0,self.sim_length[0],0,self.sim_length[1]), aspect='auto',origin='lower')
-                        if self.autoScale.isChecked() or self.lims[nplot]==None :
-                            self.lims[nplot]=(data.min(),data.max())
-                        
-                        im.set_clim(self.lims[nplot])
-                        axcb=plt.subplot2grid((self.nplots,10),(nplot, 9)) 
-                        cb=plt.colorbar(im, cax=axcb)
-
-                    nplot+=1
-                
-        if not self.phaseFile is None :
-            for i in self.ui.menuPhase_spaces.actions() :
-                if i.isChecked() :
-                    nameData=str(i.data().toString())
-                    node=self.phaseFile.getNode(str(nameData))
-                    data=node[self.step].T
-                    
-                    ax=plt.subplot2grid((self.nplots,10),(nplot, 0),colspan=9)
-
-                    
-                    im=ax.imshow(data,extent=node._v_parent._v_attrs.extents.reshape(4).tolist(), aspect='auto',origin='lower')
-
-                    if self.autoScale.isChecked() or self.lims[nplot]==None :
-                        self.lims[nplot]=(data.min(),data.max())
-                        
-                    im.set_clim(self.lims[nplot])
-
-                    ax.set_ylabel(i.text())
-                    axcb=plt.subplot2grid((self.nplots,10),(nplot, 9))
-                    
-                    cb=plt.colorbar(im, cax=axcb)
-
-
-                    nplot+=1
-                
-                
-        self.canvas.draw()
-        if self.ui.actionSave_images.isChecked():
-            plt.savefig('smilei-%06d.png' % self.step)
-
-    def do_timer(self):
-        self.ui.slider.setValue(self.step+1)
-    
-
-    def createActions(self):
-        print self.dirName
-        fname=os.path.join(self.dirName, "scalars.txt")
+        fname=os.path.join(dirName, "scalars.txt")
         if os.path.isfile(fname) :
+            self.scalarData = np.loadtxt(fname)
             names=[]
             for line in open(fname):
                 li=line.strip()
@@ -207,108 +73,263 @@ class smileiQt(QtGui.QMainWindow):
        
             scalars_names=names[1:-2]
             for i in range(len(scalars_names)):
-                my_act= QtGui.QAction(scalars_names[i],self)
-                my_act.setData(i+1)
-                my_act.setCheckable(True)
-                self.ui.menuScalars.addAction(my_act)
-                my_act.triggered.connect(self.action_clicked)
+                my_button= QCheckBox(scalars_names[i])
+                self.ui.layoutScalars.addWidget(my_button)
+                
+            self.ui.layoutScalars.addStretch()
+        else :
+            self.deleteLater()
 
         self.fieldSteps=[]
-        fname=os.path.join(self.dirName, "Fields.h5")
+        fname=os.path.join(dirName, "Fields.h5")
         if os.path.isfile(fname) :
-            f=tb.openFile(fname)
-            
-            self.res_time=f.root._v_attrs.res_time
-            self.sim_length=f.root._v_attrs.sim_length
-            self.fieldEvery=f.root._v_attrs.every
-            
-            for group in f.list_nodes("/", classname='Group'):
-                self.fieldSteps.append(group._v_name)
 
-            for array in f.list_nodes("/0000000000", classname='Array'):
-                name=array._v_name
-                my_act= QtGui.QAction(name,self)
-                my_act.setData(name)
-                my_act.setCheckable(True)
-                self.ui.menuFields.addAction(my_act)
-                my_act.triggered.connect(self.action_clicked)
-            f.close()
+            self.fieldFile=tb.openFile(fname)
+            self.res_space=self.fieldFile.root._v_attrs.res_space[0]
+            self.res_time=self.fieldFile.root._v_attrs.res_time
+            self.sim_length=self.fieldFile.root._v_attrs.sim_length
+            self.fieldEvery=self.fieldFile.root._v_attrs.every
+            
+            first=True
+            for group in self.fieldFile.list_nodes("/", classname='Group'):
+                self.fieldSteps.append(group._v_name)
+                if first:
+                    first=False
+                    for array in group:
+                        my_button= QCheckBox(array._v_name)
+                        self.ui.layoutFields.addWidget(my_button)
+
+            self.ui.layoutFields.addStretch()
             self.ui.slider.setRange(0,len(self.fieldSteps)-1)
+        else :
+            self.deleteLater()
 
         self.ui.spinStep.setSuffix("/"+str(len(self.fieldSteps)-1))
         self.ui.spinStep.setMaximum(len(self.fieldSteps)-1)
         
-        fname=os.path.join(self.dirName, "PhaseSpace.h5")
+        fname=os.path.join(dirName, "PhaseSpace.h5")
         if os.path.isfile(fname) :
-            f=tb.openFile(fname)
-            for phaseData in f.walkNodes("/", classname='Array'):
-                namephase= phaseData._v_pathname + " " + phaseData._v_parent._v_attrs.species
-                my_act= QtGui.QAction(namephase,self)
-                my_act.setData(phaseData._v_pathname)
-                my_act.setCheckable(True)                
-                self.ui.menuPhase_spaces.addAction(my_act)
-                my_act.triggered.connect(self.action_clicked)
-            f.close()
+            self.phaseFile=tb.openFile(fname)
+            for phaseData in self.phaseFile.walkNodes("/", classname='Array'):
+                my_button= QCheckBox(phaseData._v_pathname)
+                self.ui.layoutPhase.addWidget(my_button)
+            self.ui.layoutPhase.addStretch()
+        else :
+            self.deleteLater()
 
+        if sys.platform == "darwin":
+            self.raise_()
+        self.show()
+
+    def next(self):
+        self.ui.slider.setValue(self.step+1)
+    
+    def previous(self):
+        self.ui.slider.setValue(self.step-1)
+    
+    def first(self):
+        self.ui.slider.setValue(0)
+    
+    def last(self):
+        self.ui.slider.setValue(len(self.fieldSteps)-1)
+               
+    def on_slider_valueChanged(self,step):
+        self.step=step
         self.doPlots()
-        
-    def action_clicked(self):
+    
+    @pyqtSignature("int")
+    def on_spinStep_valueChanged(self,my_step):
+        self.ui.slider.setValue(my_step)
+
+    @pyqtSignature("int")
+    def changeTab(self, tabNum):
+        if  self.ui.tabWidget.currentIndex()!=0: return 
+
         self.nplots=0
-        menus=[self.ui.menuScalars,self.ui.menuFields,self.ui.menuPhase_spaces]
-        for j in menus :
-            for i in j.actions():
-                if i.isChecked() :
-                    self.nplots+=1
-                    
-                
+              
+        self.scalarDict=dict()
+        col=0
+        for i in self.ui.scalars.findChildren(QCheckBox):
+            col+=1
+            if i.isChecked() :
+                self.scalarDict[i.text()]=col
+                self.nplots+=1
+
+        self.fieldDict=dict()
+        for i in self.ui.fields.findChildren(QCheckBox):
+            if i.isChecked() :
+                data=[]
+                name=str(i.text())
+                for d in self.fieldFile.root:
+                    data.append(d._f_getChild(name))
+                self.fieldDict[name]=data
+                self.nplots+=1
+
+        self.phaseDict=dict()
+        for i in self.ui.phase.findChildren(QCheckBox):
+            if i.isChecked() :
+                data=dict()
+                name=str(i.text())
+                node=self.phaseFile.getNode(name)
+                data['extent']=node._v_parent._v_attrs.extents.reshape(4).tolist()
+                data['data']=node
+                self.phaseDict[name]=data
+                self.nplots+=1
+
+
         if self.nplots > 0:
-            self.lims = [None] * self.nplots
-            
-            self.scalarData = None
-            fname=os.path.join(self.dirName, "scalars.txt")
-            if os.path.isfile(fname) :
-                self.scalarData = np.loadtxt(fname)
-
-            if self.fieldFile != None:
-                self.fieldFile.close()
-            self.fieldFile = None
-                
-            fname=os.path.join(self.dirName, "Fields.h5")
-            if os.path.isfile(fname) :
-                self.fieldFile=tb.openFile(fname)
-                self.res_space=self.fieldFile.root._v_attrs.res_space[0]
-
-            if self.phaseFile != None:
-                self.phaseFile.close()
-            self.phaseFile = None
-                
-            fname=os.path.join(self.dirName, "PhaseSpace.h5")
-            if os.path.isfile(fname) :
-                self.phaseFile=tb.openFile(fname)
-            
+            self.lims = [None] * self.nplots            
             self.doPlots()
+    
+    def doPlots(self):
+
+        if len(self.fieldSteps) == 0 : return
         
-    def on_actionDir_triggered(self):
-        dirName=QtGui.QFileDialog.getExistingDirectory(self,self.dirName, options=QFileDialog.ShowDirsOnly)
+        self.step %= len(self.fieldSteps)
+        self.slider.setValue(self.step)
+        
+        self.ui.spinStep.setValue(self.step)
+        time=self.step/self.res_time*self.fieldEvery
+        nplot=0
+        self.fig.clear()
+        for i in self.scalarDict:
+            x=self.scalarData[:,0]
+            y=self.scalarData[:,self.scalarDict[i]]
+            ax=self.fig.add_subplot(self.nplots,1,nplot+1)
+            ax.plot(x,y)
+            ax.set_ylabel(i)
+            ax.axvline(x=time,c="red",linewidth=2,zorder=0, clip_on=False)
+            nplot+=1
+
+        for myname in self.fieldDict:
+            data=self.fieldDict[myname][self.step]
+                
+            ax=self.fig.add_subplot(self.nplots,1,nplot+1)
+            ax.set_ylabel(myname)
+
+            if len(data.shape) == 1 :
+                x=np.array(range(data.shape[0]))/self.res_space
+                y=data
+                ax.plot(x,y)
+
+                if self.autoScale.isChecked() or self.lims[nplot]==None :
+                    self.lims[nplot]=ax.get_ylim()
+
+                ax.set_ylim(self.lims[nplot])
+                ax.set_xlim(0,self.sim_length)
+            elif len(data.shape) == 2 :
+                data=np.array(data)
+                im=ax.imshow(data.T,extent=(0,self.sim_length[0],0,self.sim_length[1]), aspect='auto',origin='lower')
+                if self.autoScale.isChecked() or self.lims[nplot]==None :
+                    self.lims[nplot]=(data.min(),data.max())
+                im.set_clim(self.lims[nplot])
+                
+                divider = make_axes_locatable(ax)
+                cax = divider.new_horizontal(size="2%", pad=0.05)
+                self.fig.add_axes(cax)
+                cb=plt.colorbar(im, cax=cax)
+
+            nplot+=1
+                    
+        for myname in self.phaseDict:
+            data=self.phaseDict[myname]['data'][self.step].T
+                
+            ax=self.fig.add_subplot(self.nplots,1,nplot+1)
+ 
+            im=ax.imshow(data,extent=self.phaseDict[myname]['extent'],aspect='auto',origin='lower')
+
+            if self.autoScale.isChecked() or self.lims[nplot]==None :
+                self.lims[nplot]=(data.min(),data.max())
+                
+            im.set_clim(self.lims[nplot])
+
+            ax.set_ylabel(myname)
+            
+            divider = make_axes_locatable(ax)
+            cax = divider.new_horizontal(size="2%", pad=0.05)
+            self.fig.add_axes(cax)
+
+            cb=plt.colorbar(im, cax=cax)
+
+
+            nplot+=1
+                
+                
+        self.fig.suptitle("Time: %.3f" % time)       
+        self.canvas.draw()
+        if self.ui.saveImages.isChecked():
+            plt.savefig('smilei-%06d.png' % self.step)
+               
+    def closeEvent(self,event):
+        self.fieldFile.close()
+        self.phaseFile.close()
+        self.parent.plots.remove(self)
+        self.deleteLater()
+
+
+class smileiQt(QMainWindow):        
+
+    next = pyqtSignal()
+    previous = pyqtSignal()
+    first = pyqtSignal()
+    last = pyqtSignal()
+    timer=QTimer()
+    
+    plots=[]
+    def __init__(self, args):
+        super(smileiQt, self).__init__()
+                
+        self.setWindowFlags(self.windowFlags() | Qt.Tool | Qt.Dialog)
+
+        uiFile=os.path.dirname(os.path.realpath(__file__))+'/smileiQt.ui'
+        self.ui=uic.loadUi(uiFile,self)
+
+        self.ui.dir.setIcon(self.ui.style().standardIcon(QStyle.SP_DirOpenIcon))
+        self.ui.playStop.setIcon(self.ui.style().standardIcon(QStyle.SP_MediaPlay))
+        self.ui.previous.setIcon(self.ui.style().standardIcon(QStyle.SP_MediaSeekBackward))
+        self.ui.next.setIcon(self.ui.style().standardIcon(QStyle.SP_MediaSeekForward))
+        self.ui.first.setIcon(self.ui.style().standardIcon(QStyle.SP_MediaSkipBackward))
+        self.ui.last.setIcon(self.ui.style().standardIcon(QStyle.SP_MediaSkipForward))        
+        
+        for i in args : 
+            self.addDir(i)
+
+        self.timer.setInterval(100)
+        self.timer.timeout.connect(self.timeout)
+
+        if sys.platform == "darwin":
+            self.raise_()
+        self.show()
+        
+    def timeout(self):
+        if len(self.plots) == 0:
+            self.ui.playStop.setChecked(False)
+            
+    def addDir(self,name):
+        self.plots.append(smileiQtPlot(self,name))
+             
+    def on_playStop_toggled(self):
+        if self.playStop.isChecked() :
+            self.ui.playStop.setIcon(self.ui.style().standardIcon(QStyle.SP_MediaStop))
+            self.timer.start()
+        else:
+            self.ui.playStop.setIcon(self.ui.style().standardIcon(QStyle.SP_MediaPlay))
+            self.timer.stop()
+
+    def on_dir_released(self):
+        dirName=QFileDialog.getExistingDirectory(self,options=QFileDialog.ShowDirsOnly)
         if not dirName.isEmpty():
-            self.dirName=str(dirName)
-            self.createActions()
+            self.addDir(str(dirName))
+        
 
 def main():
 
-    app = QtGui.QApplication(sys.argv)
+    app = QApplication(sys.argv)
+    args = ["."] if len(sys.argv) == 1 else sys.argv[1:]
 
-    args=sys.argv[1:]
-    ex=[]
-    if len(args) == 0 : args=["."]
+    smilei=smileiQt(args)
 
-    for i in args : 
-        ex.append(smileiQt(i))
-        if sys.platform == "darwin":
-            ex[-1].raise_()
-    
     sys.exit(app.exec_())
-
 
 if __name__ == '__main__':
     main()  

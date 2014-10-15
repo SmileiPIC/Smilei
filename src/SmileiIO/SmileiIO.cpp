@@ -26,6 +26,10 @@ dump_times(0),
 stop_file_seen_since_last_check(false)
 {
 		
+    nDim_particle=params.nDim_particle;
+    particleSize = nDim_particle + 3 + 1;
+
+
 #ifdef _IO_PARTICLE
     ostringstream name("");
     name << "particles-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
@@ -36,8 +40,6 @@ stop_file_seen_since_last_check(false)
     partFile_id = H5Fcreate( name.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 	
 	
-	nDim_particle=params.nDim_particle;
-    particleSize = nDim_particle + 3 + 1;
 	
     hsize_t dims[2] = {0, particleSize};
     hsize_t max_dims[2] = {H5S_UNLIMITED, particleSize};
