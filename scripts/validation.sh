@@ -19,6 +19,7 @@
 # Marie Fle IDRIS
 #
 # environnement
+set -x
 module load intel openmpi ddt hdf5/1.8.10_intel_openmpi
 #ROOT="/gpfshome/mds/staff/mfle/SMILEI/smilei"
 ROOT=`cd ..; pwd `
@@ -39,8 +40,8 @@ OUTPUT_VALIDATION=/tmp/output_validation
 BRANCH=`git status | head -1 |grep -i branch|awk '{print $4}'`
 REFERENCEFILE=${REFERENCEFILE:-${ROOT}/scripts/reference_${INPUT}.${BRANCH}}
 #
-# Search number of iterations in input file
-NB_IT=`grep "res_time =" ${INPUT_PATH}| awk '{print $3}'`
+# Search number of iterations in reference file
+NB_IT=`grep "n_time =" ${REFERENCEFILE}| awk '{print $9}'`
 # 
 # Inside the reference file, find the energy which corresponds to the number of iterations
 REFERENCE=`grep "it = ${NB_IT}" ${REFERENCEFILE}| awk '{ print $12 }'`
