@@ -20,9 +20,10 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
     avgfieldDump_every=params.res_time*10;
     ok=ifile.extract("avgfieldDump_every", avgfieldDump_every);
     if (!ok) avgfieldDump_every=params.global_every;
-    
-//    ntime_step_avg=params.res_time;
-    ntime_step_avg=0.0;
+
+    //!\todo Define default behaviour : 0 or params.res_time
+    ntime_step_avg=params.res_time;
+    //ntime_step_avg=0.0;
 	ifile.extract("ntime_step_avg", ntime_step_avg);
     
 	particleDump_every=0;
