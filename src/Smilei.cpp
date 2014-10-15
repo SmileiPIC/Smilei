@@ -205,13 +205,14 @@ int main (int argc, char* argv[])
     double time_dual = (stepStart +0.5) * params.timestep;
 	
     // Count timer
-    int ntimer(5);
+    int ntimer(6);
     Timer timer[ntimer];
     timer[0].init(smpi, "global");
     timer[1].init(smpi, "particles");
     timer[2].init(smpi, "maxwell");
     timer[3].init(smpi, "diagnostics");
     timer[4].init(smpi, "densities");
+    timer[5].init(smpi, "Mov window");
     
     
 	// ------------------------------------------------------------------
@@ -316,6 +317,7 @@ int main (int argc, char* argv[])
         
         timer[3].update();
 		
+        timer[5].restart();
         if ( simWindow && simWindow->isMoving(time_dual) ) {
             start_moving++;
             if ((start_moving==1) && (smpi->isMaster()) ) {
@@ -325,6 +327,7 @@ int main (int argc, char* argv[])
             }
             simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi, params);
         }
+        timer[5].update();
         
     }//END of the time loop
     
