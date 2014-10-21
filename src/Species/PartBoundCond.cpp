@@ -139,5 +139,6 @@ void PartBoundCond::moveWindow_x(double shift)
 {
     x_min += shift;
     x_max += shift;
-
+    bc_west = &supp_particle;
+    bc_east = &supp_particle;
 }
