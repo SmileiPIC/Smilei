@@ -580,16 +580,14 @@ void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi, PicParams& par
         for (unsigned int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ )
             addPartInExchList( 0, iPart );
     
-    for (unsigned int i=0 ; i<shift ; i++) {
-        // bin 0 empty
-        // Shifts all the bins by 1. This works only if shift = clrw !!
-        bmin.erase( bmin.begin() );
-        bmax.erase( bmax.begin() );
-        // Create new bin at the end
-        // Update last values of bmin and bmax to handle correctly received particles
-        bmin.push_back( bmax[bmax.size()-1] );
-        bmax.push_back( bmax[bmax.size()-1] );
-    } 
+    // bin 0 empty
+    // Shifts all the bins by 1. 
+    bmin.erase( bmin.begin() );
+    bmax.erase( bmax.begin() );
+    // Create new bin at the end
+    // Update last values of bmin and bmax to handle correctly received particles
+    bmin.push_back( bmax[bmax.size()-1] );
+    bmax.push_back( bmax[bmax.size()-1] );
     bmin[0] = 0;
     
     smpi->exchangeParticles( this, speciesNumber,params, 0 );
@@ -615,7 +613,7 @@ void Species::defineNewCells(unsigned int shift, SmileiMPI *smpi, PicParams& par
     cell_index[0] += params.n_space[0] - shift;
     
     // Next bin to create
-    int new_bin_idx = bmin.size() - shift;
+    int new_bin_idx = bmin.size() - 1;
     
     vector<unsigned int> n_space_created(3,0);
     n_space_created[0] = shift;
