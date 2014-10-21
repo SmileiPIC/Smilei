@@ -102,6 +102,17 @@ int main (int argc, char* argv[])
     MESSAGE("----------------------------------------------");
     SmileiMPI* smpi = SmileiMPIFactory::create(params, smpiData);
     SmileiIO*  sio  = SmileiIOFactory::create(params, diag_params, smpi);
+#ifdef _OMP
+    int nthds(0);
+#pragma omp parallel shared(nthds)
+    {
+        nthds = omp_get_num_threads();
+    }
+    if (smpi->isMaster())
+        MESSAGE("\tOpenMP : Number of thread per MPI process : " << nthds );
+#else
+    if (smpi->isMaster()) MESSAGE("\tOpenMP : Disabled");
+#endif
     
     
     // -------------------------------------------
