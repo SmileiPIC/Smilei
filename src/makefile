@@ -56,13 +56,13 @@ else
 endif
 
 ifeq ($(openmp),gnu)
-	CFLAGS += -fopenmp -D _OMP
+	CFLAGS += -fopenmp -D_OMP
 else ifeq ($(openmp),intel)
-	CFLAGS += -openmp -D _OMP
+	CFLAGS += -openmp -D_OMP
 endif
 
 ifeq ($(config),scalasca)
-	CFLAGS += -openmp -D _OMP
+	CFLAGS += -openmp -D_OMP
         SMILEICXX = scalasca -instrument mpic++
 endif
 clean:
