@@ -188,7 +188,8 @@ int main (int argc, char* argv[])
         // temporary EM fields dump in Fields.h5
         sio->writeAllFieldsSingleFileTime( EMfields, 0 );
         // temporary EM fields dump in Fields_avg.h5
-        sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
+        if (diag_params.ntime_step_avg!=0)
+            sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
         // temporary particle dump at time 0
         sio->writePlasma( vecSpecies, 0., smpi );
     }
@@ -290,7 +291,8 @@ int main (int argc, char* argv[])
         timer[2].update();
         
         // incrementing averaged electromagnetic fields
-        EMfields->incrementAvgFields(itime, diag_params.ntime_step_avg);
+        if (diag_params.ntime_step_avg!=0)
+            EMfields->incrementAvgFields(itime, diag_params.ntime_step_avg);
         
         // call the various diagnostics
         // ----------------------------
@@ -304,8 +306,9 @@ int main (int argc, char* argv[])
             sio->writeAllFieldsSingleFileTime( EMfields, itime );
         
         // temporary EM fields dump in Fields.h5
-        if  ((diag_params.avgfieldDump_every != 0) && (itime % diag_params.avgfieldDump_every == 0))
-            sio->writeAvgFieldsSingleFileTime( EMfields, itime );
+        if  (diag_params.ntime_step_avg!=0)
+            if ((diag_params.avgfieldDump_every != 0) && (itime % diag_params.avgfieldDump_every == 0))
+                sio->writeAvgFieldsSingleFileTime( EMfields, itime );
         
 #ifdef _IO_PARTICLE
         // temporary particles dump (1 HDF5 file per process)
@@ -360,8 +363,9 @@ int main (int argc, char* argv[])
         sio->writeAllFieldsSingleFileTime( EMfields, params.n_time );
     
     // temporary time-averaged EM fields dump in Fields_avg.h5
-    if  ( (diag_params.avgfieldDump_every != 0) && (params.n_time % diag_params.avgfieldDump_every != 0) )
-        sio->writeAvgFieldsSingleFileTime( EMfields, params.n_time );
+    if  (diag_params.ntime_step_avg!=0)
+        if  ( (diag_params.avgfieldDump_every != 0) && (params.n_time % diag_params.avgfieldDump_every != 0) )
+            sio->writeAvgFieldsSingleFileTime( EMfields, params.n_time );
     
 #ifdef _IO_PARTICLE
     // temporary particles dump (1 HDF5 file per process)
