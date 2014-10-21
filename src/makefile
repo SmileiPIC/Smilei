@@ -53,9 +53,9 @@ else
 endif
 
 ifeq ($(openmp),gnu)
-	CFLAGS += -fopenmp
+	CFLAGS += -fopenmp -D_OMP
 else ifeq ($(openmp),intel)
-	CFLAGS += -openmp
+	CFLAGS += -openmp -D_OMP
 endif
 
 clean:
