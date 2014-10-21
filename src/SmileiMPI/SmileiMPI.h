@@ -44,6 +44,7 @@ public:
     void exchangeE( ElectroMagn* EMfields );
     void exchangeB( ElectroMagn* EMfields );
     void exchangeBm( ElectroMagn* EMfields );
+    void exchangeAvg( ElectroMagn* EMfields );
 
     //! Sum rho and densities on 2 x oversize[]
     void sumRho( ElectroMagn* EMfields );
