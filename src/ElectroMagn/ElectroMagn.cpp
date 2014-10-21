@@ -109,6 +109,20 @@ ElectroMagn::~ElectroMagn()
     delete rho_;
     delete rho_o;
 
+    delete Ex_avg;
+    delete Ey_avg;
+    delete Ez_avg;
+    delete Bx_avg;
+    delete By_avg;
+    delete Bz_avg;
+
+    for (unsigned int ispec=0; ispec<n_species; ispec++) {
+      delete Jx_s[ispec];
+      delete Jy_s[ispec];
+      delete Jz_s[ispec];
+      delete rho_s[ispec];
+    }
+  
     int nBC = emBoundCond.size();
     for ( int i=0 ; i<nBC ;i++ )
       if (emBoundCond[i]!=NULL) delete emBoundCond[i];
