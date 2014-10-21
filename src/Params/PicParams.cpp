@@ -129,6 +129,10 @@ PicParams::PicParams(InputData &ifile) {
     if (!ifile.extract("clrw",clrw)) {
         clrw = 1;
     }
+    else if (res_space_win_x!=0) {
+        clrw = 1;
+        WARNING("Moving window is incompatible for now with a cluster width > 1, cluster forced to " << clrw );
+    }
     
     
     // ------------------
