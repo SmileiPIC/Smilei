@@ -39,6 +39,9 @@ openmpintel:
 debug:
 	make config=debug
 
+scalasca: 
+	make config=scalasca
+
 
 
 #collect all cpp files
@@ -53,11 +56,15 @@ else
 endif
 
 ifeq ($(openmp),gnu)
-	CFLAGS += -fopenmp
+	CFLAGS += -fopenmp -D _OMP
 else ifeq ($(openmp),intel)
-	CFLAGS += -openmp
+	CFLAGS += -openmp -D _OMP
 endif
 
+ifeq ($(config),scalasca)
+	CFLAGS += -openmp -D _OMP
+        SMILEICXX = scalasca -instrument mpic++
+endif
 clean:
 	rm -f $(OBJS) $(DEPS)
 	

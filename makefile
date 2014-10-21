@@ -16,6 +16,9 @@ openmpintel:
 debug:
 	make -C src config=debug
 
+scalasca:
+	make -C src config=scalasca
+
 clean:
 	make -C src clean
 	rm -rf doc/latex doc/html
