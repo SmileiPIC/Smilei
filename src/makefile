@@ -63,7 +63,7 @@ endif
 
 ifeq ($(config),scalasca)
 	CFLAGS += -openmp -D_OMP
-        SMILEICXX = scalasca -instrument mpic++
+    SMILEICXX = scalasca -instrument mpic++
 endif
 clean:
 	rm -f $(OBJS) $(DEPS)

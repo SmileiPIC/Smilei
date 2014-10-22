@@ -1,12 +1,13 @@
 INPUT = $(wildcard *.in)
-OUTPUT = $(patsubst %.in,%.out,$(INPUT))
 
-.PHONY : all
+PROCS ?= ''
 
-all: $(OUTPUT)
+all: $(INPUT)
 
-%.out : %.in
-	../smilei $< > $@ 2>&1
+FORCE :
+
+%.in : FORCE
+	../scripts/smilei.sh $(PROCS) $@
 	
 clean:
 	rm -f $(OUTPUT)
