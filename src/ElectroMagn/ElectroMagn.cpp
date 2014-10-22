@@ -222,6 +222,7 @@ void ElectroMagn::initRhoJ(vector<Species*> vecSpecies, Projector* Proj)
 
 void ElectroMagn::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
 {
+    //! \todo{ Why the if test ? Remove it ? (AB for JD)}
     if (emBoundCond[0]!=NULL)
         emBoundCond[0]->laserDisabled();
 

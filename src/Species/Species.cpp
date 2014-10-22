@@ -569,7 +569,7 @@ void Species::sort_part(double dbin)
 void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi, PicParams& params)
 {
     // Update BC positions
-    partBoundCond->moveWindow_x( shift*cell_length[0] );
+    partBoundCond->moveWindow_x( shift*cell_length[0], smpi );
     // Set for bin managment
     min_loc += shift*cell_length[0];
     
