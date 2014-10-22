@@ -196,7 +196,6 @@ class smileiQtPlot(QWidget):
                     self.nplots+=1
 
         if self.nplots > 0:
-            print "nplot", self.nplots
             self.fig.clear()
             self.ax={}
               
@@ -282,7 +281,6 @@ class smileiQtPlot(QWidget):
            
         for name in self.fieldDict:
             data=self.fieldDict[name][self.step]
-            print name, len(data.shape)
             if len(data.shape) == 1 :
                 self.ax[name].lines[-1].set_ydata(data)
             elif len(data.shape) == 2 :
@@ -299,7 +297,6 @@ class smileiQtPlot(QWidget):
             data=self.phaseDict[name]['data'][self.step].T
             self.ax[name][0].cla()
             self.ax[name][1].cla()
-            print data.shape
             im=self.ax[name][0].imshow(data,extent=self.phaseDict[name]['extent'],aspect='auto',origin='lower')
             im.set_clim(data.min(),data.max())
             cb=plt.colorbar(im, cax=self.ax[name][1])
@@ -310,7 +307,7 @@ class smileiQtPlot(QWidget):
         self.fig.suptitle("Time: %.3f" % time)       
         self.canvas.draw()
         if self.ui.saveImages.isChecked():
-            plt.savefig('smilei-%06d.png' % self.step)
+            self.fig.savefig(self.dirName+'-%06d.png' % self.step)
                
     def closeEvent(self,event):
         print "closing",self.windowTitle()

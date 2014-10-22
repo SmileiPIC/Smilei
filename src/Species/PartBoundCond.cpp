@@ -135,9 +135,10 @@ PartBoundCond::~PartBoundCond()
 {
 }
 
-void PartBoundCond::moveWindow_x(double shift)
+void PartBoundCond::moveWindow_x(double shift, SmileiMPI* smpi)
 {
     x_min += shift;
     x_max += shift;
-
+    if (smpi->isWestern()) bc_west = &supp_particle;
+    if (smpi->isEastern()) bc_east = &supp_particle;
 }

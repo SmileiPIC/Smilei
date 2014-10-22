@@ -82,7 +82,7 @@ public:
         return keep_part;
     };
 
-    void moveWindow_x(double shift);
+    void moveWindow_x(double shift, SmileiMPI* smpi );
 
     inline void updateMvWinLimits( double x_moved ) {
 	x_min += x_moved;

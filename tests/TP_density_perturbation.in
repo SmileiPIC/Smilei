@@ -166,13 +166,9 @@ diagnostic phase
  	pos_max = 0.0628
  	pos_num = 250
  	
- 	mom_min = -0.01
- 	mom_max = 0.01
+ 	mom_min = -0.003
+ 	mom_max = 0.003
  	mom_num = 250
- 	
- 	lor_min = -3.5
- 	lor_max = 1.5
- 	lor_num = 200
  	
  	deflate=5
 end
