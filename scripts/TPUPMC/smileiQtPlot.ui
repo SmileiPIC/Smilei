@@ -239,7 +239,7 @@
        <item row="0" column="0">
         <widget class="QLabel" name="label">
          <property name="text">
-          <string>Right click on the plot to append a point here</string>
+          <string>Hit &quot;l&quot; on the plot to append a point here</string>
          </property>
         </widget>
        </item>
