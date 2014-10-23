@@ -37,8 +37,8 @@ class smileiQtPlot(QWidget):
     phaseFile=None
     nplots=0
     ax={}
-    lims={}
     dirName=None
+    someCheckBoxChanged=False
     
     def __init__(self,parent,dirName):
         super(smileiQtPlot, self).__init__()   
@@ -60,13 +60,16 @@ class smileiQtPlot(QWidget):
 
         self.step=0
         
-        self.ui.autoScale.toggled.connect(self.doPlots)
         self.ui.tabWidget.currentChanged.connect(self.changeTab)
         
         self.fig = Figure()
         self.canvas = FigureCanvas(self.fig)
+        self.canvas.setFocusPolicy(Qt.StrongFocus)
+        self.canvas.setFocus()
         self.canvas.mpl_connect('motion_notify_event', self.on_movement)
-        
+        self.canvas.mpl_connect('button_press_event', self.on_click)
+        self.canvas.mpl_connect('key_press_event', self.on_key_press)
+
         self.toolbar = NavigationToolbar(self.canvas, self)
         self.toolbar.setFixedHeight(18)
         self.ui.plotLayout.addWidget(self.canvas)
@@ -85,6 +88,8 @@ class smileiQtPlot(QWidget):
             scalars_names=names[1:-2]
             for i in range(len(scalars_names)):
                 my_button= QCheckBox(scalars_names[i])
+                my_button.stateChanged.connect(self.checkBoxChanged)
+
                 self.ui.layoutScalars.addWidget(my_button)
                 
             self.ui.layoutScalars.addStretch()
@@ -109,6 +114,7 @@ class smileiQtPlot(QWidget):
                     first=False
                     for array in group:
                         my_button= QCheckBox(array._v_name)
+                        my_button.stateChanged.connect(self.checkBoxChanged)
                         self.ui.layoutFields.addWidget(my_button)
 
             self.ui.layoutFields.addStretch()
@@ -125,6 +131,7 @@ class smileiQtPlot(QWidget):
             self.phaseFile=tb.openFile(fname)
             for phaseData in self.phaseFile.walkNodes("/", classname='Array'):
                 my_button= QCheckBox(phaseData._v_pathname)
+                my_button.stateChanged.connect(self.checkBoxChanged)
                 self.ui.layoutPhase.addWidget(my_button)
             self.ui.layoutPhase.addStretch()
         else :
@@ -136,6 +143,9 @@ class smileiQtPlot(QWidget):
         if sys.platform == "darwin":
             self.raise_()
         self.show()
+
+    def checkBoxChanged(self):
+        self.someCheckBoxChanged=True
 
     def load_settings(self):
         settings=QSettings(QFileInfo(__file__).fileName(),"")
@@ -182,8 +192,13 @@ class smileiQtPlot(QWidget):
 
     @pyqtSignature("int")
     def changeTab(self, tabNum):
-        if  self.ui.tabWidget.currentIndex()!=0: return 
+        if self.ui.tabWidget.currentIndex()==0:
+            self.doPlots()
 
+
+    def preparePlots(self):
+        self.someCheckBoxChanged=False
+        
         self.scalarDict=dict()
         self.fieldDict=dict()
         self.phaseDict=dict()
@@ -208,10 +223,15 @@ class smileiQtPlot(QWidget):
                     x=self.scalarData[:,0]
                     y=self.scalarData[:,col]
                     self.scalarDict[name]=(x,y)
-                    self.ax[name]=self.fig.add_subplot(self.nplots,1,plot+1)
-                    self.ax[name].plot(x,y)
-                    self.ax[name].set_ylabel(name)
-                    self.ax[name].axvline(x=0,c="red",linewidth=2,zorder=0, clip_on=False)
+                    ax=self.fig.add_subplot(self.nplots,1,plot+1)
+                    ax.xaxis.grid(True)
+                    ax.yaxis.grid(True)
+                    ax.plot(x,y)
+                    ax.set_xlim(x.min(),x.max())
+
+                    ax.set_ylabel(name)
+                    ax.axvline(x=0,c="red",linewidth=2,zorder=0, clip_on=False)
+                    self.ax[name]=ax
                     plot+=1
 
             for i in self.ui.fields.findChildren(QCheckBox):
@@ -223,6 +243,8 @@ class smileiQtPlot(QWidget):
                     data=np.array(data)
                     self.fieldDict[name]=data
                     ax=self.fig.add_subplot(self.nplots,1,plot+1)
+                    ax.xaxis.grid(True)
+                    ax.yaxis.grid(True)
                     
                     if len(data.shape) == 2 :
                         ax.set_xlim(0,self.sim_length)
@@ -236,7 +258,12 @@ class smileiQtPlot(QWidget):
                         divider = make_axes_locatable(ax)
                         cax = divider.new_horizontal(size="2%", pad=0.05)
                         self.fig.add_axes(cax)
-                        self.ax[name]=(ax,cax)
+                        ax.set_ylabel(name)
+
+                        im=ax.imshow([[0]],extent=(0,self.sim_length[0],0,self.sim_length[1]), aspect='auto',origin='lower')
+                        im.set_clim(data.min(),data.max())
+                        cb=plt.colorbar(im, cax=cax)
+                        self.ax[name]=ax
 
                     plot+=1
 
@@ -250,11 +277,18 @@ class smileiQtPlot(QWidget):
 
                     self.phaseDict[name]=data
                     ax=self.fig.add_subplot(self.nplots,1,plot+1)
+                    ax.xaxis.grid(True)
+                    ax.yaxis.grid(True)
                     ax.set_ylabel(name)
                     divider = make_axes_locatable(ax)
                     cax = divider.new_horizontal(size="2%", pad=0.05)
                     self.fig.add_axes(cax)
-                    self.ax[name]=(ax,cax)
+
+                    im=ax.imshow([[0]],extent=self.phaseDict[name]['extent'],aspect='auto',origin='lower')
+                    cb=plt.colorbar(im, cax=cax)
+
+
+                    self.ax[name]=ax
                     plot+=1
                 
             self.doPlots()
@@ -264,44 +298,49 @@ class smileiQtPlot(QWidget):
             msg = "%G %G" % (event.xdata, event.ydata)
             self.ui.pos.setText(msg)
 
-    def doPlots(self):
+    def on_click(self,event):
+        if event.button==3 :
+            self.ui.logger.moveCursor (QTextCursor.End);
+            self.ui.logger.insertPlainText('\n%g %g'%(event.xdata, event.ydata));
+            self.ui.logger.moveCursor (QTextCursor.End);
+
+    def on_key_press(self,event):
+        if event.key == 'a':
+            self.doPlots(True)
+        
+    def doPlots(self, autoscale=False):
+            
         if len(self.fieldSteps) == 0 : return
 
+        if self.someCheckBoxChanged==True:
+            self.preparePlots()
         
         self.step %= len(self.fieldSteps)
         self.slider.setValue(self.step)
         
         self.ui.spinStep.setValue(self.step)
         time=self.step/self.res_time*self.fieldEvery
-        nplot=0
         
         for name in self.scalarDict:
             self.ax[name].lines[-1].set_xdata(time)
-            nplot+=1
            
         for name in self.fieldDict:
             data=self.fieldDict[name][self.step]
             if len(data.shape) == 1 :
                 self.ax[name].lines[-1].set_ydata(data)
+                if autoscale:
+                    self.ax[name].set_ylim(data.min(),data.max())
             elif len(data.shape) == 2 :
-                self.ax[name][0].cla()
-                self.ax[name][1].cla()
-                im=self.ax[name][0].imshow(data.T,extent=(0,self.sim_length[0],0,self.sim_length[1]), aspect='auto',origin='lower')
-                self.ax[name][0].set_ylabel(name)
+                im=self.ax[name].images[-1]
+                im.set_data(data.T)
                 im.set_clim(data.min(),data.max())
-                cb=plt.colorbar(im, cax=self.ax[name][1])
 
-            nplot+=1
                     
         for name in self.phaseDict:
             data=self.phaseDict[name]['data'][self.step].T
-            self.ax[name][0].cla()
-            self.ax[name][1].cla()
-            im=self.ax[name][0].imshow(data,extent=self.phaseDict[name]['extent'],aspect='auto',origin='lower')
+            im=self.ax[name].images[-1]
+            im.set_data(data)
             im.set_clim(data.min(),data.max())
-            cb=plt.colorbar(im, cax=self.ax[name][1])
-
-            nplot+=1
                 
                 
         self.fig.suptitle("Time: %.3f" % time)       
@@ -310,7 +349,7 @@ class smileiQtPlot(QWidget):
             self.fig.savefig(self.dirName+'-%06d.png' % self.step)
                
     def closeEvent(self,event):
-        print "closing",self.windowTitle()
+        print "Closing window ",self.windowTitle()
         self.save_settings()
         if self.fieldFile is not None : self.fieldFile.close()
         if self.phaseFile is not None : self.phaseFile.close()
