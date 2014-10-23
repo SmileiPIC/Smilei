@@ -174,34 +174,51 @@ PicParams::PicParams(InputData &ifile) {
         }
         
         ifile.extract("n_part_per_cell",tmpSpec.n_part_per_cell,"species",0,n_species);
+
+        tmpSpec.c_part_max = 1.0;// default value
         ifile.extract("c_part_max",tmpSpec.c_part_max,"species",0,n_species);
+        
         ifile.extract("mass",tmpSpec.mass ,"species",0,n_species);
+        
         ifile.extract("charge",tmpSpec.charge ,"species",0,n_species);
+        
         ifile.extract("density",tmpSpec.density ,"species",0,n_species);
         
         ifile.extract("mean_velocity",tmpSpec.mean_velocity ,"species",0,n_species);
         if (tmpSpec.mean_velocity.size()!=3) {
-            WARNING("mean_velocity should be of size 3 : it is put to zero");
+            WARNING("mean_velocity for species " << n_species << ": put to 0 by default (either not defined or with incorrect dimension)");
             tmpSpec.mean_velocity.resize(3);
             tmpSpec.mean_velocity[0]=tmpSpec.mean_velocity[1]=tmpSpec.mean_velocity[2]=0.0;
         }
+        
         ifile.extract("temperature",tmpSpec.temperature ,"species",0,n_species);
-        if (tmpSpec.temperature.size()==1) {
+        if (tmpSpec.temperature.size()==0) {
+            tmpSpec.temperature.resize(3);
+            tmpSpec.temperature[0]=tmpSpec.temperature[1]=tmpSpec.temperature[2]=0.0;
+            WARNING("Temperature not defined for species " << n_species << ": put to 0 by default");
+        }
+        else if (tmpSpec.temperature.size()==1) {
             tmpSpec.temperature.resize(3);
             tmpSpec.temperature[1]=tmpSpec.temperature[2]=tmpSpec.temperature[0];
-            WARNING("Isotropic temperature T="<< tmpSpec.temperature[0] << " for species " << n_species);
+            WARNING("Isotropic temperature T ="<< tmpSpec.temperature[0] << " for species " << n_species);
         }
         
-        ifile.extract("dynamics_type",tmpSpec.dynamics_type ,"species",0,n_species);
+        tmpSpec.dynamics_type = "norm"; // default value
+        bool dynTypeisDefined = ifile.extract("dynamics_type",tmpSpec.dynamics_type ,"species",0,n_species);
+        if (!dynTypeisDefined)
+            WARNING("dynamics_type not defined for species "<<n_species<<" put to norm by default");
         if (tmpSpec.dynamics_type!="norm"){
             ERROR("dynamics_type different than norm not yet implemented");
         }
         
+        tmpSpec.time_frozen = 0.0; // default value
         ifile.extract("time_frozen",tmpSpec.time_frozen ,"species",0,n_species);
         if (tmpSpec.time_frozen > 0 && \
             tmpSpec.initialization_type=="maxwell-juettner") {
             WARNING("For species " << n_species << " possible conflict in Maxwell-Juettner initialization");
         }
+        
+        tmpSpec.radiating = false; // default value
         ifile.extract("radiating",tmpSpec.radiating ,"species",0,n_species);
         if (tmpSpec.dynamics_type=="rrll" && (!tmpSpec.radiating)) {
             WARNING("dynamics_type rrll forcing radiating true");
@@ -215,8 +232,8 @@ PicParams::PicParams(InputData &ifile) {
             if (!ifile.extract("bc_part_type_trans ",tmpSpec.bc_part_type_trans,"species",0,n_species) )
                 ERROR("bc_part_type_trans not defined for species " << n_species );
         
-        if ( !ifile.extract("ionization_model", tmpSpec.ionization_model, "species",0,n_species) )
-            tmpSpec.ionization_model = "none";
+        tmpSpec.ionization_model = "none"; // default value
+        ifile.extract("ionization_model", tmpSpec.ionization_model, "species",0,n_species);
         
         ifile.extract("atomic_number", tmpSpec.atomic_number, "species",0,n_species);
         
@@ -224,10 +241,6 @@ PicParams::PicParams(InputData &ifile) {
         // Species geometry
         // ----------------
         ifile.extract("species_geometry", tmpSpec.species_geometry,"species",0,n_species);
-        if( (tmpSpec.species_geometry!="constant") && (tmpSpec.species_geometry!="trapezoidal")
-           && (tmpSpec.species_geometry!="gaussian") && (tmpSpec.species_geometry!="sine") ) {
-            ERROR("Species_geometry: " << tmpSpec.species_geometry << " not defined for species " << n_species);
-        }
         
         // getting vacuum_length & defining default values
         bool vacuum_length_isDefined = ifile.extract("vacuum_length", tmpSpec.vacuum_length,"species",0,n_species);

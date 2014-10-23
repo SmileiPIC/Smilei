@@ -71,11 +71,11 @@ DensityProfile1D::DensityProfile1D(SpeciesStructure &params) : DensityProfile(pa
     
     // cosine density profile
     // ----------------------
-    // vacuum_length[0] : length of the vacuum region before the plasma (default is 0)
+    // vacuum_length[0]   : length of the vacuum region before the plasma (default is 0)
     // dens_length_x[0]   : length of the plasma
-    // dens_dbl_params[0]   : amplitude of the cosine perturbation (has to be <= 1, default = 0.01)
-    // dens_dbl_params[1]   : number of modes over the plasma length (dens_length_x[0]) (default = 1.0)
-    else if (species_param.species_geometry=="sine") {
+    // dens_dbl_params[0] : amplitude of the cosine perturbation (has to be <= 1, default = 0.01)
+    // dens_dbl_params[1] : number of modes over the plasma length (dens_length_x[0]) (default = 1.0)
+    else if (species_param.species_geometry=="cosine") {
         if (species_param.dens_dbl_params.size()<1) {
             species_param.dens_dbl_params.resize(1);
             species_param.dens_dbl_params[0] = 0.01;
@@ -85,7 +85,7 @@ DensityProfile1D::DensityProfile1D(SpeciesStructure &params) : DensityProfile(pa
             species_param.dens_dbl_params[1] = 1.0;
         }
         if (species_param.dens_dbl_params[0]>1.0)
-            ERROR("Incorrect definition of the sine density profile, dens_dbl_params[0] should be <= 1");
+            ERROR("Incorrect definition of the cosine density profile, dens_dbl_params[0] should be <= 1");
     }
     
     
@@ -224,7 +224,7 @@ double DensityProfile1D::operator() (std::vector<double> x_cell) {
     // dens_length_x[0]   : length of the plasma
     // dens_dbl_params[0]   : amplitude of the cosine perturbation (has to be <= 1)
     // dens_dbl_params[1]   : number of modes over the plasma length (dens_length_x[0])
-    else if (species_param.species_geometry=="sine") {
+    else if (species_param.species_geometry=="cosine") {
         
         // vacuum region
         if ( x_cell[0] < species_param.vacuum_length[0] ) {
@@ -234,7 +234,7 @@ double DensityProfile1D::operator() (std::vector<double> x_cell) {
         else if (x_cell[0] < species_param.vacuum_length[0]+species_param.dens_length_x[0]) {
             double x = x_cell[0]-species_param.vacuum_length[0];
             double k = 2.0*M_PI * species_param.dens_dbl_params[1] / species_param.dens_length_x[0];
-            return 1.0 + species_param.dens_dbl_params[0] * sin(k*x);
+            return 1.0 + species_param.dens_dbl_params[0] * cos(k*x);
         }
         // beyond the plasma
         else {
