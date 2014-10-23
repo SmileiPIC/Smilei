@@ -9,16 +9,21 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt4agg import (
     FigureCanvasQTAgg as FigureCanvas,
     NavigationToolbar2QT as NavigationToolbar)
-from matplotlib.backends import qt_compat
 
-if qt_compat.QT_API == qt_compat.QT_API_PYSIDE:
-    from PySide.QtCore import *
-    from PySide.QtGui import *
-    from PyQt4 import uic
-else:
-    from PyQt4.QtCore import *
-    from PyQt4.QtGui import *
-    from PyQt4 import uic
+# from matplotlib.backends import qt_compat
+# 
+# if qt_compat.QT_API == qt_compat.QT_API_PYSIDE:
+#     from PySide.QtCore import *
+#     from PySide.QtGui import *
+#     from PyQt4 import uic
+# else:
+#     from PyQt4.QtCore import *
+#     from PyQt4.QtGui import *
+#     from PyQt4 import uic
+
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+from PyQt4 import uic
 
 import tables as tb
 import numpy as np
