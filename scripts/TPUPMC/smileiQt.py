@@ -5,7 +5,7 @@ Plot fields of smilei simulaition
 import sys, os, random
 
 from matplotlib.figure import Figure
-from matplotlib.backend_bases import key_press_handler
+# from matplotlib.backend_bases import key_press_handler
 from matplotlib.backends.backend_qt4agg import (
     FigureCanvasQTAgg as FigureCanvas,
     NavigationToolbar2QT as NavigationToolbar)
@@ -29,6 +29,30 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
+
+class Cursor:
+    def __init__(self, ax):
+        self.ax = ax
+        self.lx = ax.axhline(color='k')  # the horiz line
+        self.ly = ax.axvline(color='k')  # the vert line
+
+        # text location in axes coords
+        self.txt = ax.text( 0.7, 0.9, '', transform=ax.transAxes)
+
+    def mouse_move(self, event):
+        if not event.inaxes: return
+
+        x, y = event.xdata, event.ydata
+        # update the line positions
+        self.lx.set_ydata(y )
+        self.ly.set_xdata(x )
+
+        self.txt.set_text( 'x=%1.2g, y=%1.2g'%(x,y) )
+
+    def mouse_dump(self):
+        return (self.lx.data(),self.ly.data())
+        
+        
 class smileiQtPlot(QWidget):
     scalarDict=dict()
     fieldDict=dict()
@@ -36,13 +60,19 @@ class smileiQtPlot(QWidget):
     fieldFile=None
     phaseFile=None
     nplots=0
+    ax={}
+    dirName=None
+    someCheckBoxChanged=False
+    pauseSignal=pyqtSignal()
+    cursor={}
     
     def __init__(self,parent,dirName):
-        super(smileiQtPlot, self).__init__()    
+        super(smileiQtPlot, self).__init__()   
         self.setParent(parent)
         uiFile=os.path.dirname(os.path.realpath(__file__))+'/smileiQtPlot.ui'
         self.ui=uic.loadUi(uiFile,self)
         
+        self.dirName=dirName
         self.parent=parent
 
         self.parent.timer.timeout.connect(self.next)
@@ -50,20 +80,29 @@ class smileiQtPlot(QWidget):
         self.parent.ui.previous.released.connect(self.previous)
         self.parent.ui.first.released.connect(self.first)
         self.parent.ui.last.released.connect(self.last)
+        
+        self.pauseSignal.connect(self.parent.pause)
 
         self.setWindowFlags(Qt.Window)
         self.setWindowTitle(dirName)
 
         self.step=0
         
-        self.ui.autoScale.toggled.connect(self.doPlots)
         self.ui.tabWidget.currentChanged.connect(self.changeTab)
         
         self.fig = Figure()
         self.canvas = FigureCanvas(self.fig)
+        self.canvas.setFocusPolicy(Qt.StrongFocus)
+        self.canvas.setFocus()
+        self.canvas.mpl_connect('motion_notify_event', self.on_movement)
         
+#         self.canvas.mpl_connect('button_press_event', self.on_click)
+        self.canvas.mpl_connect('key_press_event', self.on_key_press)
+
         self.toolbar = NavigationToolbar(self.canvas, self)
         self.toolbar.setFixedHeight(18)
+        self.canvas.setCursor(Qt.CrossCursor)
+
         self.ui.plotLayout.addWidget(self.canvas)
         self.ui.plotLayout.addWidget(self.toolbar)
 
@@ -80,6 +119,8 @@ class smileiQtPlot(QWidget):
             scalars_names=names[1:-2]
             for i in range(len(scalars_names)):
                 my_button= QCheckBox(scalars_names[i])
+                my_button.stateChanged.connect(self.checkBoxChanged)
+
                 self.ui.layoutScalars.addWidget(my_button)
                 
             self.ui.layoutScalars.addStretch()
@@ -98,12 +139,13 @@ class smileiQtPlot(QWidget):
             self.fieldEvery=self.fieldFile.root._v_attrs.every
             
             first=True
-            for group in self.fieldFile.list_nodes("/", classname='Group'):
+            for group in self.fieldFile.listNodes("/", classname='Group'):
                 self.fieldSteps.append(group._v_name)
                 if first:
                     first=False
                     for array in group:
                         my_button= QCheckBox(array._v_name)
+                        my_button.stateChanged.connect(self.checkBoxChanged)
                         self.ui.layoutFields.addWidget(my_button)
 
             self.ui.layoutFields.addStretch()
@@ -120,15 +162,44 @@ class smileiQtPlot(QWidget):
             self.phaseFile=tb.openFile(fname)
             for phaseData in self.phaseFile.walkNodes("/", classname='Array'):
                 my_button= QCheckBox(phaseData._v_pathname)
+                my_button.stateChanged.connect(self.checkBoxChanged)
                 self.ui.layoutPhase.addWidget(my_button)
             self.ui.layoutPhase.addStretch()
         else :
             print "Problem reading ",fname
 #             self.deleteLater()
 
+        self.load_settings()
+
         if sys.platform == "darwin":
             self.raise_()
         self.show()
+
+    def checkBoxChanged(self):
+        self.someCheckBoxChanged=True
+
+    def load_settings(self):
+        settings=QSettings(QFileInfo(__file__).fileName(),"")
+        settings.beginGroup(QDir(self.dirName).dirName())
+        frames=[self.ui.scalars, self.ui.fields, self.ui.phase]
+        for frame in [self.ui.scalars, self.ui.fields, self.ui.phase] :
+            settings.beginGroup(frame.objectName())            
+            for chkbox in frame.findChildren(QCheckBox):
+                chkbox.setChecked(settings.value(chkbox.text()).toBool())
+            settings.endGroup()
+        settings.endGroup()
+        self.ui.tabWidget.setCurrentIndex(0)
+
+    def save_settings(self):
+        settings=QSettings(QFileInfo(__file__).fileName(),"")
+        settings.beginGroup(QDir(self.dirName).dirName())
+        frames=[self.ui.scalars, self.ui.fields, self.ui.phase]
+        for frame in [self.ui.scalars, self.ui.fields, self.ui.phase] :
+            settings.beginGroup(frame.objectName())            
+            for chkbox in frame.findChildren(QCheckBox):
+                settings.setValue(chkbox.text(),chkbox.isChecked())
+            settings.endGroup()
+        settings.endGroup()
 
     def next(self):
         self.ui.slider.setValue(self.step+1)
@@ -152,125 +223,181 @@ class smileiQtPlot(QWidget):
 
     @pyqtSignature("int")
     def changeTab(self, tabNum):
-        if  self.ui.tabWidget.currentIndex()!=0: return 
+        if self.ui.tabWidget.currentIndex()==0:
+            self.doPlots()
+        else:
+            self.pauseSignal.emit()
 
+    def preparePlots(self):
+        self.someCheckBoxChanged=False
+        
         self.scalarDict=dict()
-        self.fieldDict=dict()
+#        self.fieldDict=dict()
         self.phaseDict=dict()
 
         self.nplots=0
-              
-        col=0
-        for i in self.ui.scalars.findChildren(QCheckBox):
-            col+=1
-            if i.isChecked() :
-                self.scalarDict[i.text()]=col
-                self.nplots+=1
-
-        for i in self.ui.fields.findChildren(QCheckBox):
-            if i.isChecked() :
-                data=[]
-                name=str(i.text())
-                for d in self.fieldFile.root:
-                    data.append(d._f_getChild(name))
-                self.fieldDict[name]=data
-                self.nplots+=1
-
-        for i in self.ui.phase.findChildren(QCheckBox):
-            if i.isChecked() :
-                data=dict()
-                name=str(i.text())
-                node=self.phaseFile.getNode(name)
-                data['extent']=node._v_parent._v_attrs.extents.reshape(4).tolist()
-                data['data']=node
-                self.phaseDict[name]=data
-                self.nplots+=1
-
+        frames=[self.ui.scalars, self.ui.fields, self.ui.phase]
+        for frame in [self.ui.scalars, self.ui.fields, self.ui.phase] :
+            for chkbox in frame.findChildren(QCheckBox):
+                if chkbox.isChecked() :
+                    self.nplots+=1
 
         if self.nplots > 0:
-            self.lims = [None] * self.nplots            
+            self.fig.clear()
+            self.ax={}
+              
+            plot=0
+            col=0
+            print "preparing scalars"
+            for i in self.ui.scalars.findChildren(QCheckBox):
+                col+=1
+                if i.isChecked() :
+                    name=str(i.text())
+                    if not (name in self.fieldDict):
+                        x=self.scalarData[:,0]
+                        y=self.scalarData[:,col]
+                        self.scalarDict[name]=(x,y)
+                        ax=self.fig.add_subplot(self.nplots,1,plot+1)
+                        ax.xaxis.grid(True)
+                        ax.yaxis.grid(True)
+                        ax.plot(x,y)
+                        ax.set_xlim(x.min(),x.max())
+                        
+                        self.cursor[ax]=Cursor(ax)
+                        
+                        ax.set_ylabel(name)
+                        ax.axvline(x=0,c="red",linewidth=2,zorder=0, clip_on=False)
+                        self.ax[name]=ax
+                    plot+=1
+                
+
+            print "preparing fields"
+            for i in self.ui.fields.findChildren(QCheckBox):
+                if i.isChecked() :
+                    data=[]
+                    name=str(i.text())
+                    for d in self.fieldFile.root:
+                        data.append(d._f_getChild(name))
+                    data=np.array(data)
+
+                    self.fieldDict[name]=data
+                    ax=self.fig.add_subplot(self.nplots,1,plot+1)
+                    ax.xaxis.grid(True)
+                    ax.yaxis.grid(True)
+                    
+                    if len(data.shape) == 2 :
+                        ax.set_xlim(0,self.sim_length)
+                        ax.set_ylim(data.min(), data.max())
+                        ax.set_ylabel(name)
+                        x=np.array(range(data.shape[1]))/self.res_space
+                        y=data[0]
+                        ax.plot(x,y)
+                        self.ax[name]=ax
+                    elif len(data.shape) == 3 :
+                        divider = make_axes_locatable(ax)
+                        cax = divider.new_horizontal(size="2%", pad=0.05)
+                        self.fig.add_axes(cax)
+                        ax.set_ylabel(name)
+
+                        im=ax.imshow([[0]],extent=(0,self.sim_length[0],0,self.sim_length[1]), aspect='auto',origin='lower')
+                        im.set_clim(data.min(),data.max())
+                        cb=plt.colorbar(im, cax=cax)
+                        self.ax[name]=ax
+
+                    plot+=1
+
+            print "preparing phase"
+            for i in self.ui.phase.findChildren(QCheckBox):
+                if i.isChecked() :
+                    name=str(i.text())
+                    node=self.phaseFile.getNode(name)
+                    self.phaseDict[name]=node
+                    ax=self.fig.add_subplot(self.nplots,1,plot+1)
+                    ax.xaxis.grid(True)
+                    ax.yaxis.grid(True)
+                    ax.set_ylabel(name)
+                    divider = make_axes_locatable(ax)
+                    cax = divider.new_horizontal(size="2%", pad=0.05)
+                    self.fig.add_axes(cax)
+
+                    im=ax.imshow([[0]],extent=node._v_parent._v_attrs.extents.reshape(4).tolist(),aspect='auto',origin='lower')
+                    cb=plt.colorbar(im, cax=cax)
+
+
+                    self.ax[name]=ax
+                    plot+=1
+                
+            print "done"
             self.doPlots()
     
-    def doPlots(self):
+    def on_movement(self, event):
+        if not (event.inaxes is None) :
+            msg = "%G %G" % (event.xdata, event.ydata)
+            self.ui.pos.setText(msg)
 
+    def on_click(self,event):
+        print event.button
+
+    def on_key_press(self,event):
+        if event.key == 'a':
+            self.doPlots(True)
+        elif event.key == 'l':
+            self.ui.logger.moveCursor (QTextCursor.End);
+            self.ui.logger.insertPlainText('\n%g %g'%(event.xdata, event.ydata));
+            self.ui.logger.moveCursor (QTextCursor.End);
+
+
+            self.cursor[event.inaxes].mouse_move(event)
+            
+            print self.cursor[event.inaxes].mouse_dump()[0]
+
+            self.canvas.draw()
+
+            
+        
+    def doPlots(self, autoscale=False):
+            
         if len(self.fieldSteps) == 0 : return
+
+        if self.someCheckBoxChanged==True:
+            self.preparePlots()
         
         self.step %= len(self.fieldSteps)
         self.slider.setValue(self.step)
         
         self.ui.spinStep.setValue(self.step)
         time=self.step/self.res_time*self.fieldEvery
-        nplot=0
-        self.fig.clear()
         
-        for i in self.scalarDict:
-            x=self.scalarData[:,0]
-            y=self.scalarData[:,self.scalarDict[i]]
-            ax=self.fig.add_subplot(self.nplots,1,nplot+1)
-            ax.plot(x,y)
-            ax.set_ylabel(i)
-            ax.axvline(x=time,c="red",linewidth=2,zorder=0, clip_on=False)
-            nplot+=1
+        for name in self.scalarDict:
+            self.ax[name].lines[-1].set_xdata(time)
            
-        for myname in self.fieldDict:
-            data=self.fieldDict[myname][self.step]
-                
-            ax=self.fig.add_subplot(self.nplots,1,nplot+1)
-            ax.set_ylabel(myname)
-
+        for name in self.fieldDict:
+            data=self.fieldDict[name][self.step]
             if len(data.shape) == 1 :
-                x=np.array(range(data.shape[0]))/self.res_space
-                y=data
-                ax.plot(x,y)
-
-                if self.autoScale.isChecked() or self.lims[nplot]==None :
-                    self.lims[nplot]=ax.get_ylim()
-
-                ax.set_ylim(self.lims[nplot])
-                ax.set_xlim(0,self.sim_length)
+                self.ax[name].lines[-1].set_ydata(data)
+                if autoscale:
+                    self.ax[name].set_ylim(data.min(),data.max())
             elif len(data.shape) == 2 :
-                data=np.array(data)
-                im=ax.imshow(data.T,extent=(0,self.sim_length[0],0,self.sim_length[1]), aspect='auto',origin='lower')
-                if self.autoScale.isChecked() or self.lims[nplot]==None :
-                    self.lims[nplot]=(data.min(),data.max())
-                im.set_clim(self.lims[nplot])
-                
-                divider = make_axes_locatable(ax)
-                cax = divider.new_horizontal(size="2%", pad=0.05)
-                self.fig.add_axes(cax)
-                cb=plt.colorbar(im, cax=cax)
+                im=self.ax[name].images[-1]
+                im.set_data(data.T)
+                im.set_clim(data.min(),data.max())
 
-            nplot+=1
                     
-        for myname in self.phaseDict:
-            data=self.phaseDict[myname]['data'][self.step].T
-                
-            ax=self.fig.add_subplot(self.nplots,1,nplot+1)
- 
-            im=ax.imshow(data,extent=self.phaseDict[myname]['extent'],aspect='auto',origin='lower')
-
-            if self.autoScale.isChecked() or self.lims[nplot]==None :
-                self.lims[nplot]=(data.min(),data.max())
-                
-            im.set_clim(self.lims[nplot])
-
-            ax.set_ylabel(myname)
-            
-            divider = make_axes_locatable(ax)
-            cax = divider.new_horizontal(size="2%", pad=0.05)
-            self.fig.add_axes(cax)
-
-            cb=plt.colorbar(im, cax=cax)
-
-            nplot+=1
+        for name in self.phaseDict:
+            data=self.phaseDict[name][self.step].T
+            im=self.ax[name].images[-1]
+            im.set_data(data)
+            im.set_clim(data.min(),data.max())
                 
                 
         self.fig.suptitle("Time: %.3f" % time)       
         self.canvas.draw()
         if self.ui.saveImages.isChecked():
-            plt.savefig('smilei-%06d.png' % self.step)
+            self.fig.savefig(self.dirName+'-%06d.png' % self.step)
                
     def closeEvent(self,event):
+        print "Closing window ",self.windowTitle()
+        self.save_settings()
         if self.fieldFile is not None : self.fieldFile.close()
         if self.phaseFile is not None : self.phaseFile.close()
         self.parent.plots.remove(self)
@@ -304,7 +431,7 @@ class smileiQt(QMainWindow):
         for i in args : 
             self.addDir(i)
 
-        self.timer.setInterval(100)
+        self.timer.setInterval(1)
         self.timer.timeout.connect(self.timeout)
 
         if sys.platform == "darwin":
@@ -325,12 +452,21 @@ class smileiQt(QMainWindow):
         else:
             self.ui.playStop.setIcon(self.ui.style().standardIcon(QStyle.SP_MediaPlay))
             self.timer.stop()
-
+    
+    def pause(self):
+        self.playStop.setChecked(False)
+        
     def on_dir_released(self):
         dirName=QFileDialog.getExistingDirectory(self,options=QFileDialog.ShowDirsOnly)
         if not dirName.isEmpty():
             self.addDir(str(dirName))
-        
+    
+    
+    def closeEvent(self,event):
+        for plot in self.plots:
+            plot.deleteLater()
+        self.deleteLater()
+
 
 def main():
 

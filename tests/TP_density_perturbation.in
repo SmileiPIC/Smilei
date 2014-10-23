@@ -141,7 +141,7 @@ end
 # DUMP DIAGS
 #
 # every for field dump
-fieldDump_every = 100
+every = 100
 # every for particle dump
 particleDump_every = 0
  
@@ -149,7 +149,6 @@ particleDump_every = 0
 # DIAG ON SCALARS 
 #
 diagnostic scalar
-	every = 100
  	precision=3
 	vars = Ebalance Etot Eparticles EFields Poynting E_ion N_ion E_eon N_eon Ex_U
 end
@@ -160,7 +159,6 @@ end
 # kind of projection: 2D) xPx xPy xPz xLor yPx yPy yPz yLor PxPy PxPz PyPz
 #
 diagnostic phase
-	every = 1000
  	kind = xPx 
  	species = eon1 eon2
  
@@ -168,13 +166,9 @@ diagnostic phase
  	pos_max = 0.0628
  	pos_num = 250
  	
- 	mom_min = -0.01
- 	mom_max = 0.01
+ 	mom_min = -0.003
+ 	mom_max = 0.003
  	mom_num = 250
- 	
- 	lor_min = -3.5
- 	lor_max = 1.5
- 	lor_num = 200
  	
  	deflate=5
 end

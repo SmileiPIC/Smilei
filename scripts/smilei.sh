@@ -3,9 +3,6 @@
 MPIEXEC=mpiexec
 
 
-isnumber() { test "$1" && printf '%d' "$1" >/dev/null 2>&1; }
-
-
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
   DIRSMILEI="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
@@ -17,26 +14,34 @@ DIRSMILEI="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 smilei=$DIRSMILEI/../src/smilei
 
-if [ "$#" -le 1 ]; then
-    echo "Illegal number of parameters"
-    echo "$0 <namelist> <proc number>"
+if [ "$#" -lt 1 ]; then
+    echo "usage: $0 [proc numbers] namelist [namelist] ..."
     exit 1
 fi
 
+if [[ $1 = [[:digit:]] ]]; then
+    proc=$1
+    suffix="_$proc"
+    shift
+else
+    suffix=""
+    proc=1
+fi
 
-base=`basename $1 .in`
+outDirs=""
 
-
-for proc in ${@:2}
-do 
-    if [[ $proc = *[[:digit:]]* ]]
-    then
-        dir="${base}_${proc}"
-        rm -rf $dir
-        mkdir -p $dir
-        cp $1 $dir
-        cd $dir
-        $MPIEXEC -np $proc $smilei $1
-        cd ..
-    fi
+for nml in $@
+do
+    base="`basename $nml .in`"    
+    dir="${base}${suffix}" 
+    outDirs="${outDirs} ${dir}"
+    
+    rm -rf $dir
+    mkdir -p $dir
+    cp $nml $dir
+    cd $dir
+    $MPIEXEC -np $proc $smilei `basename $nml`
+    cd ..
 done
+
+$DIRSMILEI/../scripts/TPUPMC/smileiQt.py ${outDirs}
