@@ -84,8 +84,10 @@ SmileiMPI_Cart2D::~SmileiMPI_Cart2D()
 // ---------------------------------------------------------------------------------------------------------------------
 void SmileiMPI_Cart2D::createTopology(PicParams& params)
 {
-    for (unsigned int i=0 ; i<params.nDim_field ; i++)
-        params.n_space_global[i] = round(params.res_space[i]*params.sim_length[i]/params.conv_fac);
+    for (unsigned int i=0 ; i<params.nDim_field ; i++) {
+        params.n_space_global[i] = round(params.sim_length[i]/params.cell_length[i]);
+        MESSAGE("Total number of cells in direction " << i << ": " << params.n_space_global[i]);
+    }
     
     if (params.number_of_procs[0]!=0) {
         for (unsigned int i=0 ; i<params.nDim_field ; i++)

@@ -350,8 +350,9 @@ void PicParams::compute()
         // compute number of cells & normalized lengths
         for (unsigned int i=0; i<nDim_field; i++) {
             cell_length[i] = conv_fac/res_space[i];
-            sim_length[i] *= conv_fac;//(double)(n_space[i]) * cell_length[i];
-            n_space[i]     = (int)(sim_length[i]/cell_length[i]);//(int)(res_space[i]*sim_length[i]);
+            sim_length[i] *= conv_fac;
+            n_space[i]     = round(sim_length[i]/cell_length[i]);
+            sim_length[i]  = (double)(n_space[i])*cell_length[i]; // ensure that nspace = sim_length/cell_length
             cell_volume   *= cell_length[i];
         }
         // create a 3d equivalent of n_space & cell_length
