@@ -79,6 +79,7 @@ public:
     //! keep track ofwich direction of the Field is dual
     std::vector<unsigned int> isDual_;
 
+    //! Return 0 if direction i is primal, 1 if dual
     inline unsigned int isDual(unsigned int i) {
         if (i<dims_.size())
             return isDual_[i];
@@ -115,6 +116,7 @@ public:
     }
     
 
+    //! 2D reference access to the linearized array (with check in DEBUG mode)
     inline double& operator () (unsigned int i,unsigned int j)
     {
 	int unsigned idx = i*dims_[1]+j;
@@ -122,6 +124,7 @@ public:
         DEBUGEXEC(if (!std::isfinite(data_[idx])) ERROR("Not finite "<< i << " " << j << " = " << data_[idx]));
         return data_[idx];
     };
+    //! 2D access to the linearized array (with check in DEBUG mode)
     inline double operator () (unsigned int i, unsigned int j) const
     {
         unsigned int idx = i*dims_[1]+j;

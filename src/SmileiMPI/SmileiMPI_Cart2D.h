@@ -91,7 +91,7 @@ protected:
     //! Number of neighbors per directions (=2)
     int nbNeighbors_;
     //! Id of neighbors, per direction (up to 3), per side (2)
-    int neighbor_[3][2];k	// 
+    int neighbor_[3][2];
 
     //! MPI_Datatype to exchange [ndims_][iDim=0 prim/dial][iDim=1 prim/dial]
     MPI_Datatype ntype_   [2][2][2];
