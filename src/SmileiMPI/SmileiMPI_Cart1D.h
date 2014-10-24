@@ -10,65 +10,80 @@
 
 class Species;
 
+//  --------------------------------------------------------------------------------------------------------------------
+//! Class SmileiMPI_Cart1D
+//  --------------------------------------------------------------------------------------------------------------------
 class SmileiMPI_Cart1D : public SmileiMPI {
 public:
     friend class SmileiIO_Cart1D;
 
 
+    //! Create intial MPI environment
     SmileiMPI_Cart1D( int* argc, char*** argv );
+    //! Create MPI environment for the data geometry from 
+    //! \param smpi the initil MPI environment
     SmileiMPI_Cart1D(SmileiMPI *smpi);
+    //! Destructor for SmileiMPI
     virtual ~SmileiMPI_Cart1D();
-
-    virtual void whoami() {
-        std::cout << "SmileiMPI_Cart1D" << std::endl;
-    }
 
     //! Create MPI communicator
     virtual void createTopology(PicParams& params);
     //! Echanges particles of Species, list of particles comes frome Species::dynamics
-    //! exchangeParticles implements particles sorting
     virtual void exchangeParticles(Species* species, int ispec, PicParams& params, int tnum);
 
     //! Create MPI_Datatype to exchange/sum fields on ghost data
-    //! Useless if 1D
+    //! Useless if 1D, data are contigous
     void createType( PicParams& params ) {};
 
     //! Create MPI_Datatype to exchange all properties of particle in 1 communication
     MPI_Datatype createMPIparticles( Particles* particles, int nbrOfProp );
 
 
+    //! Basic method to exchange a field,
     virtual void exchangeField ( Field* field );
+    //! Basic method to sum a field
     virtual void sumField      ( Field* field );
 
+    //! Return coordinates in the cartesian MPI communicator
+    //! \param i direction
     inline int getProcCoord(int i) {
         return coords_[i];
     }
+    //! Return number of MPI process in the cartesian MPI communicator
+    //! \param i direction
     inline int getNbrOfProcs(int i) {
         return number_of_procs[i];
     }
 
+    //! Identify western MPI process, for boundary condition
     inline bool isWestern() {
         return (coords_[0]==0);
     }
+    //! Identify eastern MPI process, for boundary condition
     inline bool isEastern() {
         return (coords_[0]==number_of_procs[0]-1);
     }
-
+    //! Identify corner MPI ranks (1D, 2 sides) 
     int extrem_ranks[1][2];
 
 protected:
+    //! 1D Cartesian communicator
     MPI_Comm SMILEI_COMM_1D;
-
+    //! Number of dimensions
     int ndims_;
+    //! Number of MPI process per direction in the cartesian topology
     int* number_of_procs;
 
-    // Cartesian ...
+    //! Array of coordinates in the cartesian topology
     int* coords_;
+    //! Periodicity of the geometry
     int* periods_;
+    //! Reorder MPI rank (not)
     int reorder_;
-
-    int nbNeighbors_;     // Per direction, ie = 2
-    int neighbor_[3][2];	// 
+    //! Number of neighbors per directions (=2)
+    int nbNeighbors_;
+    //! Id of neighbors, per direction (up to 3), per side (2)
+    int neighbor_[3][2];
 
 };
 
