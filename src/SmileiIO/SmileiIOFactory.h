@@ -10,8 +10,17 @@
 
 #include "Tools.h"
 
+//  --------------------------------------------------------------------------------------------------------------------
+//! Class SmileiIOFactory
+//  --------------------------------------------------------------------------------------------------------------------
 class SmileiIOFactory {
 public:
+    //  --------------------------------------------------------------------------------------------------------------------
+    //! Create appropriate IO environment for the geometry 
+    //! \param params : Parameters
+    //! \param diagParams : Diagnostic parameters
+    //! \param smpi : MPI environment
+    //  --------------------------------------------------------------------------------------------------------------------
     static SmileiIO* create(PicParams& params, DiagParams& diagParams, SmileiMPI* smpi) {
         SmileiIO* sio = NULL;
         if ( params.geometry == "1d3v" ) {
@@ -23,12 +32,6 @@ public:
         else {
             ERROR( "Geometry " << params.geometry << " not implemented" );
         }
-
-//    	// Creation of a cartesian topology
-//    	smpi->createTopology(params);
-//
-//
-//    	if ( params.geometry == "2d3v" ) smpi->createType(params);
 
         return sio;
     }
