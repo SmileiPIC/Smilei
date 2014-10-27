@@ -27,10 +27,12 @@ stop_file_seen_since_last_check(false)
 {
 		
     nDim_particle=params.nDim_particle;
-    particleSize = nDim_particle + 3 + 1;
+    //particleSize = nDim_particle + 3 + 1;
 
 
 #ifdef _IO_PARTICLE
+    particleSize = nDim_particle + 3 + 1;
+
     ostringstream name("");
     name << "particles-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
 	

@@ -51,12 +51,6 @@ void SimWindow::operate(vector<Species*> vecSpecies, ElectroMagn* EMfields, Inte
 
 bool SimWindow::isMoving(double time_dual)
 {
-//Warning: isMoving function returns a boolean. True if the window should be moved, False if it should not.
-//Actually moving the window (function operate) changes the value of x_moved so the returned value of isMoving changes
-//directly after moving the window.
-//isMoving is called once in Electromagn. Since this is BEFORE operate, it is correct. Take care not to
-//call isMoving AFTER operate because the returned result might not be the expected one.
-
     return ( (res_space_win_x_) && ((time_dual - t_move_win_)*vx_win_ > x_moved) );
 }
 

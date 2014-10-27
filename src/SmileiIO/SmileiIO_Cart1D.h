@@ -14,25 +14,31 @@
 #include "SmileiIO.h"
 #include "Tools.h"
 
+//  --------------------------------------------------------------------------------------------------------------------
+//! Class SmileiIO_Cart1D
+//  --------------------------------------------------------------------------------------------------------------------
 class SmileiIO_Cart1D : public SmileiIO {
 public:
+    //! Create // HDF5 environment
     SmileiIO_Cart1D( PicParams& params, DiagParams &diagParams, SmileiMPI* smpi );
+    //! Destructor for SmileiIO
     ~SmileiIO_Cart1D();
 
-    //! Build memory and file space for HDF5 write/read
+    //! Build memory and file space for // HDF5 write/read
     void createPattern( PicParams& params, SmileiMPI* smpi );
 
-    //! Write current field in specified group of the global file
+    //! Basic write current field in specified group of the global file
     void writeFieldsSingleFileTime( Field* field, hid_t group_id );
 
-    //! Write field on its own file (debug)
+    //! Basic write field on its own file (debug)
     void write( Field* field );
 
 private:
-    //! memory space for HDF5 write/read
-    // [primDual][primDual]
+    //! memory space for // HDF5 write/read
+    //! Size = 2 : 0 if prim, 1 if dual
     hid_t memspace_ [2];
-    //! file space for HDF5 write/read
+    //! file space for // HDF5 write/read
+    //! Size = 2 : 0 if prim, 1 if dual
     hid_t filespace_[2];
 
     //! \todo Define chunk size of output for interpolated output
