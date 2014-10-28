@@ -290,7 +290,7 @@ int main (int argc, char* argv[])
         timer[2].update();
         
         // incrementing averaged electromagnetic fields
-        EMfields->incrementAvgFields(itime, diag_params.ntime_step_avg);
+        if (diag_params.ntime_step_avg) EMfields->incrementAvgFields(itime, diag_params.ntime_step_avg);
         
         // call the various diagnostics
         // ----------------------------
