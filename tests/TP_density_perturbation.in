@@ -32,7 +32,7 @@ interpolation_order = 2
 # sim_time  : duration of the simulation 
 #
 timestep = 0.000565
-sim_time = 62.831790
+sim_time = 31.415
 
 # SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
 # either use the resolution (res_space) or cell-length (cell_length)
@@ -95,9 +95,9 @@ end
 
 species
 	species_type = eon1
-    	species_geometry = sine
+    	species_geometry = cosine
     	vacuum_length   = 0.0
-	dens_dbl_params = 0.01 1.0
+	dens_dbl_params = 0.01 2.0
 	initialization_type = regular
 	ionization_model = none
 	n_part_per_cell = 5
@@ -115,9 +115,9 @@ end
 
 species
 	species_type = eon2
-    	species_geometry = sine
+    	species_geometry = cosine
     	vacuum_length   = 0.0
-	dens_dbl_params = 0.01 1.0
+	dens_dbl_params = 0.01 2.0
 	initialization_type = regular
 	ionization_model = none
 	n_part_per_cell = 5

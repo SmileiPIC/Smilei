@@ -4,7 +4,10 @@ Plot fields of smilei simulaition
 """
 import sys, os, random
 
+from pprint import pprint
+
 from matplotlib.figure import Figure
+from matplotlib.colors import LogNorm
 # from matplotlib.backend_bases import key_press_handler
 from matplotlib.backends.backend_qt4agg import (
     FigureCanvasQTAgg as FigureCanvas,
@@ -70,7 +73,11 @@ class smileiQtPlot(QWidget):
 
         self.step=0
         
+        self.ui.savePoints.setIcon(self.ui.style().standardIcon(QStyle.SP_DialogSaveButton))
+        self.ui.savePoints.released.connect(self.doSavePoints)
+                
         self.ui.tabWidget.currentChanged.connect(self.changeTab)
+        self.ui.autoScale.stateChanged.connect(self.doPlots)
         
         self.fig = Figure()
         self.canvas = FigureCanvas(self.fig)
@@ -156,6 +163,13 @@ class smileiQtPlot(QWidget):
         if sys.platform == "darwin":
             self.raise_()
         self.show()
+    def doSavePoints(self):
+        fname=QFileDialog.getSaveFileName(self, 'Save Point logger', self.dirName, selectedFilter='*.txt')
+        if fname:
+            f = open(fname, 'w')
+            f.write(self.ui.logger.toPlainText())
+            f.close()
+
 
     def checkBoxChanged(self):
         self.someCheckBoxChanged=True
@@ -262,16 +276,13 @@ class smileiQtPlot(QWidget):
                     name=str(i.text())
                     for d in self.fieldFile.root:
                         data.append(d._f_getChild(name))
-                    
-                    data=np.array(data)
-                    
+                        
                     self.fieldDict[name]=data
                     
                     if len(self.sim_length) == 1 :
                         ax.set_xlim(0,self.sim_length)
-                        ax.set_ylim(data.min(), data.max())
                         ax.set_ylabel(name)
-                        x=np.array(range(data.shape[1]))/self.res_space
+                        x=np.array(range(len(data[0])))/self.res_space
                         y=data[0]
                         ax.plot(x,y)
                         self.ax[name]=ax
@@ -282,7 +293,6 @@ class smileiQtPlot(QWidget):
                         ax.set_ylabel(name)
 
                         im=ax.imshow([[0]],extent=(0,self.sim_length[0],0,self.sim_length[1]), aspect='auto',origin='lower')
-                        im.set_clim(data.min(),data.max())
                         cb=plt.colorbar(im, cax=cax)
                         self.ax[name]=ax
 
@@ -319,9 +329,42 @@ class smileiQtPlot(QWidget):
     def on_key_press(self,event):
         if not event.inaxes: return
         if event.key == 'a':
-            self.doPlots(True)
+            for line in event.inaxes.lines :
+                if line.get_xdata().size > 1:
+                    data=line.get_ydata()
+                    nonzero=data[np.nonzero(data)]
+                    if len(nonzero) :
+                        mini=np.min(nonzero)
+                        maxi=np.max(nonzero)
+                        if mini != maxi :
+                            event.inaxes.set_ylim(mini,maxi)
+            for image in event.inaxes.images :
+                data=np.array(image.get_array()) 
+                nonzero=data[np.nonzero(data)]
+                if len(nonzero) :
+                    mini=np.min(nonzero)
+                    maxi=np.max(nonzero)
+                    if mini != maxi :
+                        image.set_clim(mini,maxi)
+            self.canvas.draw()
+
         elif event.key == 'l':
-            print "set log ", event.inaxes
+            if event.inaxes.lines :
+                scale='log' if event.inaxes.get_yaxis().get_scale()== 'linear' else 'linear'
+                try:
+                    event.inaxes.set_yscale(scale)
+                    self.canvas.draw()
+                except ValueError:
+                    scale='log' if scale == 'linear' else 'linear'
+                    event.inaxes.set_yscale(scale)
+                    self.canvas.draw()
+            elif event.inaxes.images :
+                pprint (vars(event.inaxes.images[0]))
+                try:
+#                     event.inaxes.images[0].set_norm(LogNorm())
+                    self.canvas.draw()
+                except ValueError:
+                    self.canvas.draw()
         elif event.key == 'shift':
             self.shiftPressed=True
 
@@ -335,13 +378,15 @@ class smileiQtPlot(QWidget):
         if not event.inaxes: return
         if self.shiftPressed == True :
             self.ui.logger.moveCursor (QTextCursor.End);
-            txt = "%G %G %G\n" % (self.step/self.res_time*self.fieldEvery, event.xdata, event.ydata)
-            QApplication.clipboard().setText(txt)
-            self.ui.logger.insertPlainText(txt);
-            self.ui.logger.moveCursor (QTextCursor.End);
+            for i in range(len(self.fig.axes)) :
+                if self.fig.axes[i] == event.inaxes:                    
+                    txt = "%d %G %G %G\n" % (i, self.step/self.res_time*self.fieldEvery, event.xdata, event.ydata)
+                    QApplication.clipboard().setText(txt)
+                    self.ui.logger.insertPlainText(txt);
+                    self.ui.logger.moveCursor (QTextCursor.End);
             
         
-    def doPlots(self, autoscale=False):
+    def doPlots(self):
             
         if len(self.fieldSteps) == 0 : return
 
@@ -361,19 +406,22 @@ class smileiQtPlot(QWidget):
             data=self.fieldDict[name][self.step]
             if len(self.sim_length) == 1 :
                 self.ax[name].lines[-1].set_ydata(data)
-                if autoscale:
-                    self.ax[name].set_ylim(data.min(),data.max())
+                if self.ui.autoScale.isChecked():
+                    self.ax[name].set_ylim(min(data),max(data))
             elif len(self.sim_length) == 2 :
                 im=self.ax[name].images[-1]
-                im.set_data(data.T)
-                im.set_clim(data.min(),data.max())
+                npData=np.array(data)
+                im.set_data(npData.T)
+                if self.ui.autoScale.isChecked():
+                    im.set_clim(npData.min(),npData.max())
 
                     
         for name in self.phaseDict:
             data=self.phaseDict[name][self.step].T
             im=self.ax[name].images[-1]
             im.set_data(data)
-            im.set_clim(data.min(),data.max())
+            if self.ui.autoScale.isChecked():
+                im.set_clim(data.min(),data.max())
                 
                 
         self.fig.suptitle("Time: %.3f" % time)       
@@ -411,7 +459,6 @@ class smileiQt(QMainWindow):
         for i in args : 
             self.addDir(i)
 
-        self.timer.setInterval(1)
         self.timer.timeout.connect(self.timeout)
 
         if sys.platform == "darwin":
@@ -428,7 +475,7 @@ class smileiQt(QMainWindow):
     def on_playStop_toggled(self):
         if self.playStop.isChecked() :
             self.ui.playStop.setIcon(self.ui.style().standardIcon(QStyle.SP_MediaStop))
-            self.timer.start()
+            self.timer.start(100)
         else:
             self.ui.playStop.setIcon(self.ui.style().standardIcon(QStyle.SP_MediaPlay))
             self.timer.stop()
