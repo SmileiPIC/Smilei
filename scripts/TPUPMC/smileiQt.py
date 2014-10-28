@@ -9,16 +9,21 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt4agg import (
     FigureCanvasQTAgg as FigureCanvas,
     NavigationToolbar2QT as NavigationToolbar)
-from matplotlib.backends import qt_compat
 
-if qt_compat.QT_API == qt_compat.QT_API_PYSIDE:
-    from PySide.QtCore import *
-    from PySide.QtGui import *
-    from PyQt4 import uic
-else:
-    from PyQt4.QtCore import *
-    from PyQt4.QtGui import *
-    from PyQt4 import uic
+# from matplotlib.backends import qt_compat
+# 
+# if qt_compat.QT_API == qt_compat.QT_API_PYSIDE:
+#     from PySide.QtCore import *
+#     from PySide.QtGui import *
+#     from PyQt4 import uic
+# else:
+#     from PyQt4.QtCore import *
+#     from PyQt4.QtGui import *
+#     from PyQt4 import uic
+
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+from PyQt4 import uic
 
 import tables as tb
 import numpy as np
@@ -28,29 +33,6 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
-
-
-class Cursor:
-    def __init__(self, ax):
-        self.ax = ax
-        self.lx = ax.axhline(color='k')  # the horiz line
-        self.ly = ax.axvline(color='k')  # the vert line
-
-        # text location in axes coords
-        self.txt = ax.text( 0.7, 0.9, '', transform=ax.transAxes)
-
-    def mouse_move(self, event):
-        if not event.inaxes: return
-
-        x, y = event.xdata, event.ydata
-        # update the line positions
-        self.lx.set_ydata(y )
-        self.ly.set_xdata(x )
-
-        self.txt.set_text( 'x=%1.2g, y=%1.2g'%(x,y) )
-
-    def mouse_dump(self):
-        return (self.lx.data(),self.ly.data())
         
         
 class smileiQtPlot(QWidget):
@@ -64,7 +46,7 @@ class smileiQtPlot(QWidget):
     dirName=None
     someCheckBoxChanged=False
     pauseSignal=pyqtSignal()
-    cursor={}
+    shiftPressed=False
     
     def __init__(self,parent,dirName):
         super(smileiQtPlot, self).__init__()   
@@ -95,9 +77,9 @@ class smileiQtPlot(QWidget):
         self.canvas.setFocusPolicy(Qt.StrongFocus)
         self.canvas.setFocus()
         self.canvas.mpl_connect('motion_notify_event', self.on_movement)
-        
-#         self.canvas.mpl_connect('button_press_event', self.on_click)
         self.canvas.mpl_connect('key_press_event', self.on_key_press)
+        self.canvas.mpl_connect('key_release_event', self.on_key_release)
+        self.canvas.mpl_connect('button_press_event', self.on_button_press)
 
         self.toolbar = NavigationToolbar(self.canvas, self)
         self.toolbar.setFixedHeight(18)
@@ -177,7 +159,7 @@ class smileiQtPlot(QWidget):
 
     def checkBoxChanged(self):
         self.someCheckBoxChanged=True
-
+      
     def load_settings(self):
         settings=QSettings(QFileInfo(__file__).fileName(),"")
         settings.beginGroup(QDir(self.dirName).dirName())
@@ -232,7 +214,7 @@ class smileiQtPlot(QWidget):
         self.someCheckBoxChanged=False
         
         self.scalarDict=dict()
-#        self.fieldDict=dict()
+        self.fieldDict=dict()
         self.phaseDict=dict()
 
         self.nplots=0
@@ -263,8 +245,6 @@ class smileiQtPlot(QWidget):
                         ax.plot(x,y)
                         ax.set_xlim(x.min(),x.max())
                         
-                        self.cursor[ax]=Cursor(ax)
-                        
                         ax.set_ylabel(name)
                         ax.axvline(x=0,c="red",linewidth=2,zorder=0, clip_on=False)
                         self.ax[name]=ax
@@ -274,18 +254,20 @@ class smileiQtPlot(QWidget):
             print "preparing fields"
             for i in self.ui.fields.findChildren(QCheckBox):
                 if i.isChecked() :
+                    ax=self.fig.add_subplot(self.nplots,1,plot+1)
+                    ax.xaxis.grid(True)
+                    ax.yaxis.grid(True)
+
                     data=[]
                     name=str(i.text())
                     for d in self.fieldFile.root:
                         data.append(d._f_getChild(name))
-                    data=np.array(data)
-
-                    self.fieldDict[name]=data
-                    ax=self.fig.add_subplot(self.nplots,1,plot+1)
-                    ax.xaxis.grid(True)
-                    ax.yaxis.grid(True)
                     
-                    if len(data.shape) == 2 :
+                    data=np.array(data)
+                    
+                    self.fieldDict[name]=data
+                    
+                    if len(self.sim_length) == 1 :
                         ax.set_xlim(0,self.sim_length)
                         ax.set_ylim(data.min(), data.max())
                         ax.set_ylabel(name)
@@ -293,7 +275,7 @@ class smileiQtPlot(QWidget):
                         y=data[0]
                         ax.plot(x,y)
                         self.ax[name]=ax
-                    elif len(data.shape) == 3 :
+                    elif len(self.sim_length) == 2 :
                         divider = make_axes_locatable(ax)
                         cax = divider.new_horizontal(size="2%", pad=0.05)
                         self.fig.add_axes(cax)
@@ -323,7 +305,6 @@ class smileiQtPlot(QWidget):
                     im=ax.imshow([[0]],extent=node._v_parent._v_attrs.extents.reshape(4).tolist(),aspect='auto',origin='lower')
                     cb=plt.colorbar(im, cax=cax)
 
-
                     self.ax[name]=ax
                     plot+=1
                 
@@ -331,28 +312,33 @@ class smileiQtPlot(QWidget):
             self.doPlots()
     
     def on_movement(self, event):
-        if not (event.inaxes is None) :
-            msg = "%G %G" % (event.xdata, event.ydata)
-            self.ui.pos.setText(msg)
-
-    def on_click(self,event):
-        print event.button
+        if not event.inaxes: return
+        msg = "%G %G" % (event.xdata, event.ydata)
+        self.ui.pos.setText(msg)
 
     def on_key_press(self,event):
+        if not event.inaxes: return
         if event.key == 'a':
             self.doPlots(True)
         elif event.key == 'l':
-            self.ui.logger.moveCursor (QTextCursor.End);
-            self.ui.logger.insertPlainText('\n%g %g'%(event.xdata, event.ydata));
-            self.ui.logger.moveCursor (QTextCursor.End);
+            print "set log ", event.inaxes
+        elif event.key == 'shift':
+            self.shiftPressed=True
 
-
-            self.cursor[event.inaxes].mouse_move(event)
+    def on_key_release(self,event):
+        if not event.inaxes: return
+        if event.key == 'shift':
+            self.shiftPressed=False
             
-            print self.cursor[event.inaxes].mouse_dump()[0]
 
-            self.canvas.draw()
-
+    def on_button_press(self,event):
+        if not event.inaxes: return
+        if self.shiftPressed == True :
+            self.ui.logger.moveCursor (QTextCursor.End);
+            txt = "%G %G %G\n" % (self.step/self.res_time*self.fieldEvery, event.xdata, event.ydata)
+            QApplication.clipboard().setText(txt)
+            self.ui.logger.insertPlainText(txt);
+            self.ui.logger.moveCursor (QTextCursor.End);
             
         
     def doPlots(self, autoscale=False):
@@ -373,11 +359,11 @@ class smileiQtPlot(QWidget):
            
         for name in self.fieldDict:
             data=self.fieldDict[name][self.step]
-            if len(data.shape) == 1 :
+            if len(self.sim_length) == 1 :
                 self.ax[name].lines[-1].set_ydata(data)
                 if autoscale:
                     self.ax[name].set_ylim(data.min(),data.max())
-            elif len(data.shape) == 2 :
+            elif len(self.sim_length) == 2 :
                 im=self.ax[name].images[-1]
                 im.set_data(data.T)
                 im.set_clim(data.min(),data.max())
@@ -405,13 +391,7 @@ class smileiQtPlot(QWidget):
 
 
 class smileiQt(QMainWindow):        
-
-    next = pyqtSignal()
-    previous = pyqtSignal()
-    first = pyqtSignal()
-    last = pyqtSignal()
     timer=QTimer()
-    
     plots=[]
     def __init__(self, args):
         super(smileiQt, self).__init__()
@@ -460,7 +440,6 @@ class smileiQt(QMainWindow):
         dirName=QFileDialog.getExistingDirectory(self,options=QFileDialog.ShowDirsOnly)
         if not dirName.isEmpty():
             self.addDir(str(dirName))
-    
     
     def closeEvent(self,event):
         for plot in self.plots:
