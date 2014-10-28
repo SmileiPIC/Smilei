@@ -414,7 +414,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             if (ndim == 1) {
                 for (i = 0; i < b_dim0 ; i++) {
                     //! \todo Should we care about primal - dual sizes here ?
-                    iloc = ibin + i ;
+                    iloc = ibin*clrw + i ;
 #pragma omp atomic
                     (*EMfields->Jx_s[ispec]) (iloc) +=  b_Jx[i];
 #pragma omp atomic
@@ -427,7 +427,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             }
             if (ndim == 2) {
                 for (i = 0; i < b_dim0 ; i++) {
-                    iloc = ibin + i ;
+                    iloc = ibin*clrw + i ;
                     //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
                     for (j = 0; j < b_dim1 ; j++) {
 #pragma omp atomic
