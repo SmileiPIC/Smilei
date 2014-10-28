@@ -50,6 +50,7 @@ class smileiQtPlot(QWidget):
     someCheckBoxChanged=False
     pauseSignal=pyqtSignal()
     shiftPressed=False
+    title=''
     
     def __init__(self,parent,dirName):
         super(smileiQtPlot, self).__init__()   
@@ -80,6 +81,8 @@ class smileiQtPlot(QWidget):
         self.ui.autoScale.stateChanged.connect(self.doPlots)
         
         self.fig = Figure()
+        
+        
         self.canvas = FigureCanvas(self.fig)
         self.canvas.setFocusPolicy(Qt.StrongFocus)
         self.canvas.setFocus()
@@ -240,6 +243,8 @@ class smileiQtPlot(QWidget):
 
         if self.nplots > 0:
             self.fig.clear()
+            self.title=self.fig.suptitle('')       
+
             self.ax={}
               
             plot=0
@@ -359,12 +364,17 @@ class smileiQtPlot(QWidget):
                     event.inaxes.set_yscale(scale)
                     self.canvas.draw()
             elif event.inaxes.images :
-                pprint (vars(event.inaxes.images[0]))
-                try:
-#                     event.inaxes.images[0].set_norm(LogNorm())
-                    self.canvas.draw()
-                except ValueError:
-                    self.canvas.draw()
+                for image in event.inaxes.images :
+                    mini = np.array(image.get_array()).clip(0).min()
+                    if mini >0:
+                        maxi = np.array(image.get_array()).clip(0).max()
+                        print ">>>>>>>>",mini,maxi
+                        pprint (vars(event.inaxes.images[0].norm))
+                        try:
+                            event.inaxes.images[0].set_norm(LogNorm(mini,maxi))
+                            self.canvas.draw()
+                        except ValueError:
+                            self.canvas.draw()
         elif event.key == 'shift':
             self.shiftPressed=True
 
@@ -397,7 +407,7 @@ class smileiQtPlot(QWidget):
         self.slider.setValue(self.step)
         
         self.ui.spinStep.setValue(self.step)
-        time=self.step/self.res_time*self.fieldEvery
+        time=float(self.step)/self.res_time*self.fieldEvery
         
         for name in self.scalarDict:
             self.ax[name].lines[-1].set_xdata(time)
@@ -424,23 +434,21 @@ class smileiQtPlot(QWidget):
                 im.set_clim(data.min(),data.max())
                 
                 
-        self.fig.suptitle("Time: %.3f" % time)       
+        self.title.set_text('Time: %.3f'%time)
         self.canvas.draw()
         if self.ui.saveImages.isChecked():
             self.fig.savefig(self.dirName+'-%06d.png' % self.step)
                
     def closeEvent(self,event):
-        print "Closing window ",self.windowTitle()
         self.save_settings()
         if self.fieldFile is not None : self.fieldFile.close()
         if self.phaseFile is not None : self.phaseFile.close()
         self.parent.plots.remove(self)
+        QApplication.processEvents()
         self.deleteLater()
 
 
-class smileiQt(QMainWindow):        
-    timer=QTimer()
-    plots=[]
+class smileiQt(QMainWindow):
     def __init__(self, args):
         super(smileiQt, self).__init__()
                 
@@ -456,6 +464,8 @@ class smileiQt(QMainWindow):
         self.ui.first.setIcon(self.ui.style().standardIcon(QStyle.SP_MediaSkipBackward))
         self.ui.last.setIcon(self.ui.style().standardIcon(QStyle.SP_MediaSkipForward))        
         
+        self.timer=QTimer()
+        self.plots=[]
         for i in args : 
             self.addDir(i)
 
@@ -489,19 +499,20 @@ class smileiQt(QMainWindow):
             self.addDir(str(dirName))
     
     def closeEvent(self,event):
-        for plot in self.plots:
-            plot.deleteLater()
-        self.deleteLater()
+        if len(self.plots)>0:
+            result = QMessageBox.question(self,"Confirm Exit...","Are you sure you want to exit ?", QMessageBox.Yes| QMessageBox.No)
+            if result == QMessageBox.No:
+                event.ignore()
+                return
+            for plot in self.plots:
+                plot.deleteLater()
+        event.accept()
+        QApplication.exit()
 
-
-def main():
-
+if __name__ == '__main__':
     app = QApplication(sys.argv)
     args = ["."] if len(sys.argv) == 1 else sys.argv[1:]
 
-    smilei=smileiQt(args)
-
+    smileiQt(args)
     sys.exit(app.exec_())
-
-if __name__ == '__main__':
-    main()  
+    
