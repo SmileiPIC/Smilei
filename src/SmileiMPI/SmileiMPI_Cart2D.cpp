@@ -64,6 +64,7 @@ SmileiMPI_Cart2D::~SmileiMPI_Cart2D()
         for (int iy_isPrim=0 ; iy_isPrim<1 ; iy_isPrim++) {
             MPI_Type_free( &ntype_[0][ix_isPrim][iy_isPrim]); //line
             MPI_Type_free( &ntype_[1][ix_isPrim][iy_isPrim]); // column
+            MPI_Type_free( &ntype_[2][ix_isPrim][iy_isPrim]); // several lines
             
             MPI_Type_free( &ntypeSum_[0][ix_isPrim][iy_isPrim]); //line
             MPI_Type_free( &ntypeSum_[1][ix_isPrim][iy_isPrim]); // column
@@ -588,6 +589,7 @@ void SmileiMPI_Cart2D::createType( PicParams& params )
 {
     int nx0 = params.n_space[0] + 1 + 2*params.oversize[0];
     int ny0 = params.n_space[1] + 1 + 2*params.oversize[1];
+    int clrw = params.clrw;
     
     // MPI_Datatype ntype_[nDim][primDual][primDual]
     int nx, ny;
@@ -602,6 +604,9 @@ void SmileiMPI_Cart2D::createType( PicParams& params )
             ntype_[1][ix_isPrim][iy_isPrim] = NULL;
             MPI_Type_vector(nx, 1, ny, MPI_DOUBLE, &(ntype_[1][ix_isPrim][iy_isPrim])); // column
             MPI_Type_commit( &(ntype_[1][ix_isPrim][iy_isPrim]) );
+            ntype_[2][ix_isPrim][iy_isPrim] = NULL;
+            MPI_Type_contiguous(ny*clrw, MPI_DOUBLE, &(ntype_[2][ix_isPrim][iy_isPrim]));   //clrw lines
+            MPI_Type_commit( &(ntype_[2][ix_isPrim][iy_isPrim]) );
             
             ntypeSum_[0][ix_isPrim][iy_isPrim] = NULL;
             nline = 1 + 2*params.oversize[0] + ix_isPrim;
@@ -764,6 +769,63 @@ void SmileiMPI_Cart2D::exchangeField( Field* field )
         }
         
     } // END for iDim
+    
+    
+} // END exchangeField
+
+void SmileiMPI_Cart2D::exchangeField_movewin( Field* field, int clrw )
+{
+    std::vector<unsigned int> n_elem   = field->dims_;
+    std::vector<unsigned int> isDual = field->isDual_;
+    Field2D* f2D =  static_cast<Field2D*>(field);
+    void *b; //Buffer for mpi exchange.
+    
+    int istart, ix, iy, iDim, iNeighbor, bufsize;
+    
+    iDim = 0; // We exchange only in the X direction for movewin.
+    iNeighbor = 0; // We send only towards the West and receive from the East.
+    bufsize = clrw*n_elem[1]*sizeof(double)+ 2 * MPI_BSEND_OVERHEAD; //Max number of doubles in the buffer. Careful, there might be MPI overhead to take into account.
+
+    MPI_Datatype ntype = ntype_[2][isDual[0]][isDual[1]]; //ntype_[2] is clrw columns.
+    //      MPI_Status stat[2];
+    //      MPI_Request request[2];
+    MPI_Status sstat    [ndims_][2];
+    MPI_Status rstat    [ndims_][2];
+    MPI_Request srequest[ndims_][2];
+    MPI_Request rrequest[ndims_][2];
+    
+    
+    b=(void *)malloc(bufsize);
+    MPI_Buffer_attach( b, bufsize);        
+    if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
+        
+        istart =  2*oversize[iDim]+1-(1-isDual[iDim]) ;
+        ix = (1-iDim)*istart;
+        iy =    iDim *istart;
+        MPI_Ibsend( &(f2D->data_2D[ix][iy]), 1, ntype, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D, &(srequest[iDim][iNeighbor]) );
+    } // END of Send
+  
+    //Once the message is in the buffer we can safely shift the field in memory. 
+    field->shift_x(clrw);
+    // and then receive the complementary field from the East.
+
+    if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+        
+        istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - clrw ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
+        ix = (1-iDim)*istart;
+        iy =    iDim *istart;
+        MPI_Irecv( &(f2D->data_2D[ix][iy]), 1, ntype, neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &(rrequest[iDim][(iNeighbor+1)%2]));
+    } // END of Recv
+        
+    
+    if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
+        MPI_Wait( &(srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
+    }
+    if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+        MPI_Wait( &(rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
+    }
+    MPI_Buffer_detach( &b, &bufsize);        
+    free(b);
     
     
 } // END exchangeField

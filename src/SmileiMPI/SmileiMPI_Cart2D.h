@@ -38,6 +38,8 @@ public:
 
     //! Basic method to exchange a field,
     virtual void exchangeField ( Field* field );
+    //! Exchange and shift a field along direction X for moving window,
+    virtual void exchangeField_movewin ( Field* field, int clrw );
     //! Basic method to sum a field
     virtual void sumField      ( Field* field );
 
@@ -94,7 +96,7 @@ protected:
     int neighbor_[3][2];
 
     //! MPI_Datatype to exchange [ndims_][iDim=0 prim/dial][iDim=1 prim/dial]
-    MPI_Datatype ntype_   [2][2][2];
+    MPI_Datatype ntype_   [3][2][2];
     //! MPI_Datatype to sum [ndims_][iDim=0 prim/dial][iDim=1 prim/dial]
     MPI_Datatype ntypeSum_[2][2][2];
 

@@ -226,22 +226,13 @@ void ElectroMagn::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
     if (emBoundCond[0]!=NULL)
         emBoundCond[0]->laserDisabled();
 
-    Ex_->shift_x(shift);
-    Ey_->shift_x(shift);
-    Ez_->shift_x(shift);
     //! \ Comms to optimize, only in x, east to west 
     //! \ Implement SmileiMPI::exchangeE( EMFields*, int nDim, int nbNeighbors );
-    smpi->exchangeE( this );
+    smpi->exchangeE( this, shift );
 
-    Bx_->shift_x(shift);
-    By_->shift_x(shift);
-    Bz_->shift_x(shift);
-    smpi->exchangeB( this );
+    smpi->exchangeB( this, shift );
     
-    Bx_m->shift_x(shift);
-    By_m->shift_x(shift);
-    Bz_m->shift_x(shift);
-    smpi->exchangeBm( this );
+    smpi->exchangeBm( this, shift );
 
     //Here you might want to apply some new boundary conditions on the +x boundary. For the moment, all fields are set to 0.
 }

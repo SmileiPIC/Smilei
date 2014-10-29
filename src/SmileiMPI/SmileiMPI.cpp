@@ -124,6 +124,13 @@ void SmileiMPI::exchangeE( ElectroMagn* EMfields )
     exchangeField( EMfields->Ez_ );
 
 }
+void SmileiMPI::exchangeE( ElectroMagn* EMfields, int clrw )
+{
+    exchangeField_movewin( EMfields->Ex_, clrw );
+    exchangeField_movewin( EMfields->Ey_, clrw );
+    exchangeField_movewin( EMfields->Ez_, clrw );
+
+}
 
 void SmileiMPI::exchangeB( ElectroMagn* EMfields )
 {
@@ -132,12 +139,26 @@ void SmileiMPI::exchangeB( ElectroMagn* EMfields )
     exchangeField( EMfields->Bz_ );
 
 }
+void SmileiMPI::exchangeB( ElectroMagn* EMfields, int clrw )
+{
+    exchangeField_movewin( EMfields->Bx_, clrw );
+    exchangeField_movewin( EMfields->By_, clrw);
+    exchangeField_movewin( EMfields->Bz_, clrw );
+
+}
 
 void SmileiMPI::exchangeBm( ElectroMagn* EMfields )
 {
     exchangeField( EMfields->Bx_m );
     exchangeField( EMfields->By_m );
     exchangeField( EMfields->Bz_m );
+
+}
+void SmileiMPI::exchangeBm( ElectroMagn* EMfields, int clrw )
+{
+    exchangeField_movewin( EMfields->Bx_m, clrw );
+    exchangeField_movewin( EMfields->By_m, clrw );
+    exchangeField_movewin( EMfields->Bz_m, clrw );
 
 }
 

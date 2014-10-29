@@ -60,6 +60,12 @@ public:
     void exchangeB( ElectroMagn* EMfields );
     //! Exchange all centered magnectic fields on borders
     void exchangeBm( ElectroMagn* EMfields );
+    //! Exchange clrw columns of electric fields towards the west
+    void exchangeE( ElectroMagn* EMfields, int clrw );
+    //! Exchange clrw columns of magnetic field towards the west
+    void exchangeB( ElectroMagn* EMfields, int clrw);
+    //! Exchange clrw columns of centered magnetic field towards the west
+    void exchangeBm( ElectroMagn* EMfields, int clrw );
 
     //! Sum rho on the shared domain between processors
     //! 2 x oversize + 1 ( + 1 if direction is dual )
@@ -70,6 +76,8 @@ public:
 
     //! Basic method to exchange a field, defined in child class
     virtual void exchangeField ( Field* field ) {};
+    //! Basic method to exchange a field towards the west, defined in child class
+    virtual void exchangeField_movewin ( Field* field, int clrw ) {};
     //! Basic method to sum a field, defined in child class
     virtual void sumField      ( Field* field ) {};
 
