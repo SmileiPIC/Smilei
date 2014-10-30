@@ -811,7 +811,7 @@ void SmileiMPI_Cart2D::exchangeField_movewin( Field* field, int clrw )
 
     if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
         
-        istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - clrw ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
+        istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - clrw -1 ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
         ix = (1-iDim)*istart;
         iy =    iDim *istart;
         MPI_Irecv( &(f2D->data_2D[ix][iy]), 1, ntype, neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &(rrequest[iDim][(iNeighbor+1)%2]));
@@ -828,4 +828,4 @@ void SmileiMPI_Cart2D::exchangeField_movewin( Field* field, int clrw )
     free(b);
     
     
-} // END exchangeField
+} // END exchangeField_movewin
