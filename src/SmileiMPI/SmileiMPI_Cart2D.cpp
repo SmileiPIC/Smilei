@@ -741,7 +741,7 @@ void SmileiMPI_Cart2D::exchangeField( Field* field )
             
             if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
                 
-                istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( 2*oversize[iDim]+1-(1-isDual[iDim]) );
+                istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( 2*oversize[iDim] + isDual[iDim] );
                 ix = (1-iDim)*istart;
                 iy =    iDim *istart;
                 MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D, &(srequest[iDim][iNeighbor]) );
@@ -799,10 +799,10 @@ void SmileiMPI_Cart2D::exchangeField_movewin( Field* field, int clrw )
     MPI_Buffer_attach( b, bufsize);        
     if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
         
-        istart =  2*oversize[iDim]+1-(1-isDual[iDim]) ;
+        istart =  2*oversize[iDim] + 1 + isDual[iDim] ;
         ix = (1-iDim)*istart;
         iy =    iDim *istart;
-        MPI_Ibsend( &(f2D->data_2D[ix][iy]), 1, ntype, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D, &(srequest[iDim][iNeighbor]) );
+        MPI_Bsend( &(f2D->data_2D[ix][iy]), 1, ntype, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D);
     } // END of Send
   
     //Once the message is in the buffer we can safely shift the field in memory. 
@@ -811,16 +811,13 @@ void SmileiMPI_Cart2D::exchangeField_movewin( Field* field, int clrw )
 
     if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
         
-        istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - clrw -1 ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
+        istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - clrw ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
         ix = (1-iDim)*istart;
         iy =    iDim *istart;
         MPI_Irecv( &(f2D->data_2D[ix][iy]), 1, ntype, neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &(rrequest[iDim][(iNeighbor+1)%2]));
     } // END of Recv
         
     
-    if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
-        MPI_Wait( &(srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
-    }
     if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
         MPI_Wait( &(rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
     }
