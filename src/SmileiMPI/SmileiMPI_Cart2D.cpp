@@ -779,7 +779,6 @@ void SmileiMPI_Cart2D::exchangeField_movewin( Field* field, int clrw )
     std::vector<unsigned int> isDual = field->isDual_;
     Field2D* f2D =  static_cast<Field2D*>(field);
     void *b; //Buffer for mpi exchange.
-    
     int istart, ix, iy, iDim, iNeighbor, bufsize;
     
     iDim = 0; // We exchange only in the X direction for movewin.
