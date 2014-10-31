@@ -786,12 +786,8 @@ void SmileiMPI_Cart2D::exchangeField_movewin( Field* field, int clrw )
     bufsize = clrw*n_elem[1]*sizeof(double)+ 2 * MPI_BSEND_OVERHEAD; //Max number of doubles in the buffer. Careful, there might be MPI overhead to take into account.
 
     MPI_Datatype ntype = ntype_[2][isDual[0]][isDual[1]]; //ntype_[2] is clrw columns.
-    //      MPI_Status stat[2];
-    //      MPI_Request request[2];
-    MPI_Status sstat    [ndims_][2];
-    MPI_Status rstat    [ndims_][2];
-    MPI_Request srequest[ndims_][2];
-    MPI_Request rrequest[ndims_][2];
+    MPI_Status rstat    ;
+    MPI_Request rrequest;
     
     
     b=(void *)malloc(bufsize);
@@ -813,12 +809,12 @@ void SmileiMPI_Cart2D::exchangeField_movewin( Field* field, int clrw )
         istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - clrw ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
         ix = (1-iDim)*istart;
         iy =    iDim *istart;
-        MPI_Irecv( &(f2D->data_2D[ix][iy]), 1, ntype, neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &(rrequest[iDim][(iNeighbor+1)%2]));
+        MPI_Irecv( &(f2D->data_2D[ix][iy]), 1, ntype, neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &rrequest);
     } // END of Recv
         
     
     if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
-        MPI_Wait( &(rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
+        MPI_Wait( &rrequest, &rstat);
     }
     MPI_Buffer_detach( &b, &bufsize);        
     free(b);

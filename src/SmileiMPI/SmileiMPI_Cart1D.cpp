@@ -598,10 +598,8 @@ void SmileiMPI_Cart1D::exchangeField_movewin( Field* field, int clrw )
     
     // Loop over dimField
     // See sumField for details
-    MPI_Status sstat[2];
-    MPI_Status rstat[2];
-    MPI_Request srequest[2];
-    MPI_Request rrequest[2];
+    MPI_Status rstat;
+    MPI_Request rrequest;
         
     b=(void *)malloc(bufsize);
     MPI_Buffer_attach( b, bufsize);        
@@ -615,12 +613,12 @@ void SmileiMPI_Cart1D::exchangeField_movewin( Field* field, int clrw )
         
     if (neighbor_[0][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
         istart = ( (iNeighbor+1)%2 ) * ( n_elem[0] - clrw ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
-        MPI_Irecv( &(f1D->data_[istart]), clrw, MPI_DOUBLE, neighbor_[0][(iNeighbor+1)%2], 0, SMILEI_COMM_1D, &(rrequest[(iNeighbor+1)%2]) );
+        MPI_Irecv( &(f1D->data_[istart]), clrw, MPI_DOUBLE, neighbor_[0][(iNeighbor+1)%2], 0, SMILEI_COMM_1D, &rrequest );
     } // END of Recv
     
     
     if (neighbor_[0][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
-        MPI_Wait( &(rrequest[(iNeighbor+1)%2]), &(rstat[(iNeighbor+1)%2]) );
+        MPI_Wait( &rrequest, &rstat );
     }
     MPI_Buffer_detach( &b, &bufsize);        
     free(b);
