@@ -64,11 +64,12 @@ SmileiMPI_Cart1D::~SmileiMPI_Cart1D()
     delete [] periods_;
     delete [] coords_;
     
+    MPI_Buffer_detach( &b, &bufsize);        
+    free(b);
+
     if ( SMILEI_COMM_1D != MPI_COMM_NULL) MPI_Comm_free(&SMILEI_COMM_1D);
     
 }
-
-
 // ---------------------------------------------------------------------------------------------------------------------
 // SmileiMPI_Cart1D: create the topology for Smilei MPI environment in 1D cartesian
 // ---------------------------------------------------------------------------------------------------------------------
@@ -160,6 +161,12 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
         rank_max = smilei_rk;
     }
     MPI_Allreduce(&rank_max, &extrem_ranks[0][1], 1, MPI_INT, MPI_SUM, SMILEI_COMM_1D);
+
+    //Allocate and attach MPI buffer.
+    bufsize = params.clrw*sizeof(double)+ 2 * MPI_BSEND_OVERHEAD;
+    b=(void *)malloc(bufsize);
+    MPI_Buffer_attach( b, bufsize);        
+
     
 }
 
@@ -588,12 +595,10 @@ void SmileiMPI_Cart1D::exchangeField_movewin( Field* field, int clrw )
     std::vector<unsigned int> n_elem   = field->dims_;
     std::vector<unsigned int> isDual = field->isDual_;
     Field1D* f1D =  static_cast<Field1D*>(field);
-    void *b; //Buffer for mpi exchange.
-    int istart, ix, iy, iDim, iNeighbor, bufsize;
+    int istart, iDim, iNeighbor;
     
     iDim = 0; // We exchange only in the X direction for movewin.
     iNeighbor = 0; // We send only towards the West and receive from the East.
-    bufsize = clrw*sizeof(double)+ 2 * MPI_BSEND_OVERHEAD; //Max number of doubles in the buffer. Careful, there might be MPI overhead to take into account.
 
     
     // Loop over dimField
@@ -601,8 +606,6 @@ void SmileiMPI_Cart1D::exchangeField_movewin( Field* field, int clrw )
     MPI_Status rstat;
     MPI_Request rrequest;
         
-    b=(void *)malloc(bufsize);
-    MPI_Buffer_attach( b, bufsize);        
 
     if (neighbor_[0][iNeighbor]!=MPI_PROC_NULL) {
         istart = 2*oversize[0] + 1 + isDual[0]  ;
@@ -620,8 +623,6 @@ void SmileiMPI_Cart1D::exchangeField_movewin( Field* field, int clrw )
     if (neighbor_[0][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
         MPI_Wait( &rrequest, &rstat );
     }
-    MPI_Buffer_detach( &b, &bufsize);        
-    free(b);
     
     
     

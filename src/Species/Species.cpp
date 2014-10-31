@@ -102,7 +102,6 @@ species_param(params.species_param[ispec])
     }
     
     size_proj_buffer = b_dim0*b_dim1*b_dim2;
-    //cout << "size_proj_buffer = " << size_proj_buffer << " b_dim0 = " << b_dim0<< " b_dim1 = " << b_dim1<< " b_dim2 = " << b_dim2<<endl;
     
 	
     if (!params.restart) {
@@ -134,13 +133,16 @@ species_param(params.species_param[ispec])
     partBoundCond = new PartBoundCond( params, ispec, smpi);
     
     unsigned int nthds(1);
-#pragma omp parallel shared(nthds)
+#pragma omp parallel shared(nthds) 
     {
 #ifdef _OMP
         nthds = omp_get_num_threads();	  
 #endif
     }
     indexes_of_particles_to_exchange_per_thd.resize(nthds);
+    //Allocate buffer for projection  *****************************
+    // *4 accounts for Jy, Jz and rho. * nthds accounts for each thread.
+    b_proj = (double *) malloc(nthds * 4 * size_proj_buffer * sizeof(double));
 	
     
     
@@ -152,6 +154,7 @@ species_param(params.species_param[ispec])
 // ---------------------------------------------------------------------------------------------------------------------
 Species::~Species()
 {
+    free(b_proj);
     delete Push;
     if (Ionize) delete Ionize;
     if (partBoundCond) delete partBoundCond;
@@ -345,7 +348,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     
     //! buffers for currents and charge
     double *b_Jx,*b_Jy,*b_Jz,*b_rho;
-    
+   
     // number of particles for this Species
     unsigned int nParticles = getNbrOfParticles();
     // Reset list of particles to exchange
@@ -354,26 +357,24 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     tid = omp_get_thread_num();
 #endif
     clearExchList(tid);
+    //Point buffers of each thread to the correct position
+    b_Jx = b_proj + size_proj_buffer * 4 * tid;
+    b_Jy = b_Jx + size_proj_buffer ;
+    b_Jz = b_Jy + size_proj_buffer ;
+    b_rho = b_Jz + size_proj_buffer ;
 	
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
     if (time_dual>species_param.time_frozen) { // moving particle
         double gf = 1.0;
-        //Allocate buffer *********************************************
-        // *4 allows to also reset Jy, Jz and rho which are contiguous in memory
-        b_Jx = (double *) calloc(4 * size_proj_buffer, sizeof(double));
-        b_Jy = b_Jx + size_proj_buffer ;
-        b_Jz = b_Jy + size_proj_buffer ;
-        b_rho = b_Jz + size_proj_buffer ;
         
 #pragma omp for schedule(runtime)
         for (ibin = 0 ; ibin < bmin.size() ; ibin++) {
             
             // reset all current-buffers
-            // *4 allows to also reset Jy, Jz & rho which are contiguous in memory
-            for (iloc = 0; iloc < 4*size_proj_buffer; iloc++) b_Jx[iloc] = 0.0;
-            
+            memset( &(b_Jx[0]), 0, 4*size_proj_buffer*sizeof(double)); 
+
             for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
 				
                 // Interpolate the fields at the particle position
@@ -443,8 +444,6 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             }
             
         }// ibin
-        free(b_Jx);
-        
         
         if (Ionize && electron_species) {
             for (unsigned int i=0; i < Ionize->new_electrons.size(); i++) {

@@ -99,6 +99,9 @@ protected:
     MPI_Datatype ntype_   [3][2][2];
     //! MPI_Datatype to sum [ndims_][iDim=0 prim/dial][iDim=1 prim/dial]
     MPI_Datatype ntypeSum_[2][2][2];
+    //! Buffer for buffered communication
+    int bufsize;
+    void *b; 
 
 
 };
