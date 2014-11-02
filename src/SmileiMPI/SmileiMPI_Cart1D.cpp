@@ -64,9 +64,6 @@ SmileiMPI_Cart1D::~SmileiMPI_Cart1D()
     delete [] periods_;
     delete [] coords_;
     
-    MPI_Buffer_detach( &b, &bufsize);        
-    free(b);
-
     if ( SMILEI_COMM_1D != MPI_COMM_NULL) MPI_Comm_free(&SMILEI_COMM_1D);
     
 }
@@ -595,11 +592,15 @@ void SmileiMPI_Cart1D::exchangeField_movewin( Field* field, int clrw )
     std::vector<unsigned int> n_elem   = field->dims_;
     std::vector<unsigned int> isDual = field->isDual_;
     Field1D* f1D =  static_cast<Field1D*>(field);
-    int istart, iDim, iNeighbor;
+    int istart, iDim, iNeighbor, bufsize;
+    void* b;
     
     iDim = 0; // We exchange only in the X direction for movewin.
     iNeighbor = 0; // We send only towards the West and receive from the East.
 
+    bufsize = clrw * sizeof(double) + 2 * MPI_BSEND_OVERHEAD; //Max number of doubles in the buffer. Careful, there might be MPI overhead to take into account.
+    b=(void *)malloc(bufsize);
+    MPI_Buffer_attach( b, bufsize);        
     
     // Loop over dimField
     // See sumField for details
@@ -624,6 +625,8 @@ void SmileiMPI_Cart1D::exchangeField_movewin( Field* field, int clrw )
         MPI_Wait( &rrequest, &rstat );
     }
     
+    MPI_Buffer_detach( &b, &bufsize);        
+    free(b);
     
     
 } // END exchangeField

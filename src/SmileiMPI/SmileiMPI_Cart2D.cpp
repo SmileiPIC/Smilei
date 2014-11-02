@@ -75,8 +75,6 @@ SmileiMPI_Cart2D::~SmileiMPI_Cart2D()
     delete periods_;
     delete coords_;
     
-    MPI_Buffer_detach( &b, &bufsize);        
-    free(b);
 
     if ( SMILEI_COMM_2D != MPI_COMM_NULL) MPI_Comm_free(&SMILEI_COMM_2D);
 }
@@ -221,9 +219,6 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
         rank_max = smilei_rk;
     MPI_Allreduce(&rank_max, &extrem_ranks[1][1], 1, MPI_INT, MPI_SUM, SMILEI_COMM_2D);
     
-    bufsize = params.clrw*(params.n_space[1]+2*oversize[1]+2)*sizeof(double)+ 2 * MPI_BSEND_OVERHEAD; //Max number of doubles in the buffer. Careful, there might be MPI overhead to take into account.
-    b=(void *)malloc(bufsize);
-    MPI_Buffer_attach( b, bufsize);        
     
 }
 
@@ -781,8 +776,12 @@ void SmileiMPI_Cart2D::exchangeField_movewin( Field* field, int clrw )
     std::vector<unsigned int> n_elem   = field->dims_;
     std::vector<unsigned int> isDual = field->isDual_;
     Field2D* f2D =  static_cast<Field2D*>(field);
-    int istart, ix, iy, iDim, iNeighbor;
+    int istart, ix, iy, iDim, iNeighbor,bufsize;
+    void* b;
     
+    bufsize = clrw*n_elem[1]*sizeof(double)+ 2 * MPI_BSEND_OVERHEAD; //Max number of doubles in the buffer. Careful, there might be MPI overhead to take into account.
+    b=(void *)malloc(bufsize);
+    MPI_Buffer_attach( b, bufsize);        
     iDim = 0; // We exchange only in the X direction for movewin.
     iNeighbor = 0; // We send only towards the West and receive from the East.
 
@@ -815,6 +814,8 @@ void SmileiMPI_Cart2D::exchangeField_movewin( Field* field, int clrw )
     if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
         MPI_Wait( &rrequest, &rstat);
     }
+    MPI_Buffer_detach( &b, &bufsize);        
+    free(b);
     
     
 } // END exchangeField_movewin

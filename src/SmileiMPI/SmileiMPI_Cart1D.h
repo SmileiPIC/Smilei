@@ -86,9 +86,6 @@ protected:
     int nbNeighbors_;
     //! Id of neighbors, per direction (up to 3), per side (2)
     int neighbor_[3][2];
-    //! Buffer for buffered communication
-    int bufsize;
-    void *b; 
 
 };
 

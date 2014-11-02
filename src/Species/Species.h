@@ -137,8 +137,6 @@ private:
 
     //! Size of the projection buffer
     unsigned int size_proj_buffer;
-    //! Projection buffer
-    double* b_proj; 
 
     //! sub dimensions of buffers for dim > 1
     unsigned int b_dim0, b_dim1, b_dim2, b_lastdim;

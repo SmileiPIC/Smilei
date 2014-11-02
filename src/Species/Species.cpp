@@ -140,9 +140,6 @@ species_param(params.species_param[ispec])
 #endif
     }
     indexes_of_particles_to_exchange_per_thd.resize(nthds);
-    //Allocate buffer for projection  *****************************
-    // *4 accounts for Jy, Jz and rho. * nthds accounts for each thread.
-    b_proj = (double *) malloc(nthds * 4 * size_proj_buffer * sizeof(double));
 	
     
     
@@ -154,7 +151,6 @@ species_param(params.species_param[ispec])
 // ---------------------------------------------------------------------------------------------------------------------
 Species::~Species()
 {
-    free(b_proj);
     delete Push;
     if (Ionize) delete Ionize;
     if (partBoundCond) delete partBoundCond;
@@ -357,8 +353,10 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     tid = omp_get_thread_num();
 #endif
     clearExchList(tid);
+    //Allocate buffer for projection  *****************************
+    // *4 accounts for Jy, Jz and rho. * nthds accounts for each thread.
+    b_Jx = (double *) malloc(4 * size_proj_buffer * sizeof(double));
     //Point buffers of each thread to the correct position
-    b_Jx = b_proj + size_proj_buffer * 4 * tid;
     b_Jy = b_Jx + size_proj_buffer ;
     b_Jz = b_Jy + size_proj_buffer ;
     b_rho = b_Jz + size_proj_buffer ;
@@ -444,6 +442,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             }
             
         }// ibin
+        free(b_Jx);
         
         if (Ionize && electron_species) {
             for (unsigned int i=0; i < Ionize->new_electrons.size(); i++) {
