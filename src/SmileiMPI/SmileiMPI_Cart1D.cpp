@@ -159,11 +159,6 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
     }
     MPI_Allreduce(&rank_max, &extrem_ranks[0][1], 1, MPI_INT, MPI_SUM, SMILEI_COMM_1D);
 
-    //Allocate and attach MPI buffer.
-    bufsize = params.clrw*sizeof(double)+ 2 * MPI_BSEND_OVERHEAD;
-    b=(void *)malloc(bufsize);
-    MPI_Buffer_attach( b, bufsize);        
-
     
 }
 
