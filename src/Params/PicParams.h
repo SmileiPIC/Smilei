@@ -133,8 +133,11 @@ public:
     //! Creator for PicParams
     PicParams(InputData &);
     
-    //! calculate useful parameters
+    //! compute grid-related parameters & apply normalization
     void compute();
+    
+    //! compute species-related parameters & apply normalization
+    void computeSpecies();
     
     //! print a summary of the values in txt
     void print();

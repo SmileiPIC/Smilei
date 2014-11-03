@@ -241,55 +241,13 @@ PicParams::PicParams(InputData &ifile) {
         // Species geometry
         // ----------------
         ifile.extract("species_geometry", tmpSpec.species_geometry,"species",0,n_species);
-        
-        // getting vacuum_length & defining default values
-        bool vacuum_length_isDefined = ifile.extract("vacuum_length", tmpSpec.vacuum_length,"species",0,n_species);
-        if (!vacuum_length_isDefined) {
-            tmpSpec.vacuum_length.resize(1);
-            tmpSpec.vacuum_length[0] = 0.0;
-            WARNING("No vacuum length defined in x-direction, automatically put to 0 for species " << n_species);
-        }
-        if ( (geometry=="2d3v") || (geometry=="3d3v") ) {
-            if (tmpSpec.vacuum_length.size()<2) {
-                tmpSpec.vacuum_length.resize(2);
-                tmpSpec.vacuum_length[1] = 0.0;
-                WARNING("No vacuum length defined in y-direction, automatically put to 0 for species " << n_species);
-            }
-        }
-        if (geometry=="3d3v") {
-            if (tmpSpec.vacuum_length.size()<3) {
-                tmpSpec.vacuum_length.resize(3);
-                tmpSpec.vacuum_length[2] = 0.0;
-                WARNING("No vacuum length defined in z-direction, automatically put to 0 for species " << n_species);
-            }
-        }
-
-        // getting dens_length_{x,y,z} & defining default values
-        bool dens_length_x_isDefined = ifile.extract("dens_length_x", tmpSpec.dens_length_x,"species",0,n_species);
-        if (!dens_length_x_isDefined) {
-            tmpSpec.dens_length_x.resize(1);
-            tmpSpec.dens_length_x[0] = sim_length[0] - tmpSpec.vacuum_length[0];
-            WARNING("No dens_length_x defined, automatically put to " << tmpSpec.dens_length_x[0] << " for species " << n_species);
-        }
-        
-        if ( (geometry=="2d3v") || (geometry=="3d3v") ) {
-            bool dens_length_y_isDefined = ifile.extract("dens_length_y", tmpSpec.dens_length_y,"species",0,n_species);
-            if (!dens_length_y_isDefined) {
-                tmpSpec.dens_length_y.resize(1);
-                tmpSpec.dens_length_y[0] = sim_length[1] - tmpSpec.vacuum_length[1];
-                WARNING("No dens_length_y defined, automatically put to " << tmpSpec.dens_length_y[0] << " for species " << n_species);
-            }
-        }
-        
-        if ( geometry=="3d3v" ) {
-            bool dens_length_z_isDefined = ifile.extract("dens_length_z", tmpSpec.dens_length_z,"species",0,n_species);
-            if (!dens_length_z_isDefined) {
-                tmpSpec.dens_length_z.resize(1);
-                tmpSpec.dens_length_z[0] = sim_length[2] - tmpSpec.vacuum_length[2];
-                WARNING("No dens_length_z defined, automatically put to " << tmpSpec.dens_length_z[0] << " for species " << n_species);
-            }
-        }
-        
+        // species length
+        ifile.extract("vacuum_length", tmpSpec.vacuum_length,"species",0,n_species);
+        ifile.extract("dens_length_x", tmpSpec.dens_length_x,"species",0,n_species);
+        if ( (geometry=="2d3v") || (geometry=="3d3v") )
+            ifile.extract("dens_length_y", tmpSpec.dens_length_x,"species",0,n_species);
+        if (geometry=="3d3v")
+            ifile.extract("dens_length_z", tmpSpec.dens_length_x,"species",0,n_species);
         // getting additional parameters for the density profile (check DensityProfile for definitions)
         ifile.extract("dens_dbl_params", tmpSpec.dens_dbl_params,"species",0,n_species);
         ifile.extract("dens_int_params", tmpSpec.dens_int_params,"species",0,n_species);
@@ -310,7 +268,12 @@ PicParams::PicParams(InputData &ifile) {
     if ( !ifile.extract("number_of_procs", number_of_procs) )
         number_of_procs.resize(nDim_field, 0);
     
+    // -------------------------------------------------------
+    // Compute usefull quantities and introduce normalizations
+    // also defines defaults values for the species lengths
+    // -------------------------------------------------------
     compute();
+    computeSpecies();
     
 }
 
@@ -333,11 +296,6 @@ void PicParams::compute()
     
     // time after which the moving-window is turned on
     t_move_win *= conv_fac;
-
-    // time during which particles are frozen
-    for (unsigned int i=0; i<n_species; i++) {
-        species_param[i].time_frozen *= conv_fac;
-    }
     
     
     // grid/cell-related parameters
@@ -371,11 +329,25 @@ void PicParams::compute()
     
     n_space_global.resize(3, 1);	//! \todo{3 but not real size !!! Pbs in Species::Species}
     oversize.resize(3, 0);
-
     
-    // species-related length normalization
-    // ------------------------------------
+}
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Compute useful values for Species-related quantities
+// ---------------------------------------------------------------------------------------------------------------------
+void PicParams::computeSpecies()
+{
+
+    // Loop on all species
     for (unsigned int ispec=0; ispec< species_param.size(); ispec++) {
+        
+        // --------------------------------------
+        // Normalizing Species-related quantities
+        // --------------------------------------
+        
+        // time during which particles are frozen
+        species_param[ispec].time_frozen *= conv_fac;
         
         // normalizing the vacuum lengths
         for (unsigned int i=0; i<species_param[ispec].vacuum_length.size(); i++)
@@ -395,10 +367,56 @@ void PicParams::compute()
                 species_param[ispec].dens_length_z[i]   *= conv_fac;
         }
         
-    }
+        
+        // -------------------------------------------
+        // Defining default values for species-lengths
+        // -------------------------------------------
+        
+        // defining default values for vacuum_length
+        if (species_param[ispec].vacuum_length.size()==0) {
+            species_param[ispec].vacuum_length.resize(1);
+            species_param[ispec].vacuum_length[0] = 0.0;
+            WARNING("No vacuum length defined in x-direction, automatically put to 0 for species " << ispec);
+        }
+        if ( (geometry=="2d3v") || (geometry=="3d3v") ) {
+            if (species_param[ispec].vacuum_length.size()<2) {
+                species_param[ispec].vacuum_length.resize(2);
+                species_param[ispec].vacuum_length[1] = 0.0;
+                WARNING("No vacuum length defined in y-direction, automatically put to 0 for species " << ispec);
+            }
+        }
+        if (geometry=="3d3v") {
+            if (species_param[ispec].vacuum_length.size()<3) {
+                species_param[ispec].vacuum_length.resize(3);
+                species_param[ispec].vacuum_length[2] = 0.0;
+                WARNING("No vacuum length defined in z-direction, automatically put to 0 for species " << ispec);
+            }
+        }
+        
+        // defining default values for dens_length_{x,y,z}
+        if (species_param[ispec].dens_length_x.size()==0) {
+            species_param[ispec].dens_length_x.resize(1);
+            species_param[ispec].dens_length_x[0] = sim_length[0] - species_param[ispec].vacuum_length[0];
+            WARNING("No dens_length_x defined, automatically put to " << species_param[ispec].dens_length_x[0] << " for species " << ispec);
+        }
+        if ( (geometry=="2d3v") || (geometry=="3d3v") ) {
+            if (species_param[ispec].dens_length_y.size()==0) {
+                species_param[ispec].dens_length_y.resize(1);
+                species_param[ispec].dens_length_y[0] = sim_length[1] - species_param[ispec].vacuum_length[1];
+                WARNING("No dens_length_y defined, automatically put to " << species_param[ispec].dens_length_y[0] << " for species " << ispec);
+            }
+        }
+        if ( geometry=="3d3v" ) {
+            if (species_param[ispec].dens_length_z.size()==0) {
+                species_param[ispec].dens_length_z.resize(1);
+                species_param[ispec].dens_length_z[0] = sim_length[2] - species_param[ispec].vacuum_length[2];
+                WARNING("No dens_length_z defined, automatically put to " << species_param[ispec].dens_length_z[0] << " for species " << ispec);
+            }
+        }
+
+    }//end loop on all species (ispec)
     
 }
-
 
 
 // ---------------------------------------------------------------------------------------------------------------------
