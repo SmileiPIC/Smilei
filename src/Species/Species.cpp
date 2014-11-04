@@ -442,7 +442,6 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             }
             
         }// ibin
-        free(b_Jx);
         
         if (Ionize && electron_species) {
             for (unsigned int i=0; i < Ionize->new_electrons.size(); i++) {
@@ -476,6 +475,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
         }
 		
     }//END if time vs. time_frozen
+    free(b_Jx);
     delete LocInterp;
 	
 }//END dynamic
