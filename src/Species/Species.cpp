@@ -23,6 +23,7 @@
 #include "Projector.h"
 
 #include "SmileiMPI.h"
+#include "SimWindow.h"
 
 // #include "Field.h"
 #include "Field1D.h"
@@ -328,7 +329,7 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
 //   - increment the currents (projection)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfields, Interpolator* Interp,
-                       Projector* Proj, SmileiMPI *smpi, PicParams &params)
+                       Projector* Proj, SmileiMPI *smpi, PicParams &params, SimWindow* simWindow)
 {
     Interpolator* LocInterp = InterpolatorFactory::create(params, smpi);
     
@@ -468,13 +469,28 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             Ionize->new_electrons.clear();
         }
     }
-    else { // immobile particle (at the moment only project density)
-		
+    //Do not recompute frozen particles density except if
+    //1) First iteration of the run
+    //OR
+    //2) Moving window is activated, actually moving at this time step, and we are not in a density plateau.
+    else if(time_dual < 2*params.timestep ||    //Do not take restart into account yet.
+               (simWindow && simWindow->isMoving(time_dual) &&
+                   (species_param.species_geometry == "gaussian" ||
+                       (species_param.species_geometry == "trapezoidal" &&
+                           //Before end of density ramp up.
+                           (min_loc < species_param.vacuum_length[0] + species_param.dens_length_x[1] || 
+                           //After begining of density ramp down. 
+                            smpi->getDomainLocalMax(0) > species_param.vacuum_length[0] + species_param.dens_length_x[1]+ species_param.dens_length_x[0]
+                           )
+                       )
+                   ) 
+               )
+           )
+     { // immobile particle (at the moment only project density)
 #pragma omp for schedule (runtime) 
         for (iPart=0 ; iPart<nParticles; iPart++ ) {
             (*Proj)(EMfields->rho_s[ispec], particles, iPart);
         }
-		
     }//END if time vs. time_frozen
     delete LocInterp;
 	

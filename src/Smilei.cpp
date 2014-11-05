@@ -262,7 +262,7 @@ int main (int argc, char* argv[])
             tid = omp_get_thread_num();
 #endif
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-                vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params);
+                vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow);
             }
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 #pragma omp barrier
