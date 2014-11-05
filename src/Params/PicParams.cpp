@@ -245,9 +245,9 @@ PicParams::PicParams(InputData &ifile) {
         ifile.extract("vacuum_length", tmpSpec.vacuum_length,"species",0,n_species);
         ifile.extract("dens_length_x", tmpSpec.dens_length_x,"species",0,n_species);
         if ( (geometry=="2d3v") || (geometry=="3d3v") )
-            ifile.extract("dens_length_y", tmpSpec.dens_length_x,"species",0,n_species);
+            ifile.extract("dens_length_y", tmpSpec.dens_length_y,"species",0,n_species);
         if (geometry=="3d3v")
-            ifile.extract("dens_length_z", tmpSpec.dens_length_x,"species",0,n_species);
+            ifile.extract("dens_length_z", tmpSpec.dens_length_z,"species",0,n_species);
         // getting additional parameters for the density profile (check DensityProfile for definitions)
         ifile.extract("dens_dbl_params", tmpSpec.dens_dbl_params,"species",0,n_species);
         ifile.extract("dens_int_params", tmpSpec.dens_int_params,"species",0,n_species);
@@ -355,22 +355,23 @@ void PicParams::computeSpecies()
         
         // normalizing the density-related lengths
         for (unsigned int i=0; i<species_param[ispec].dens_length_x.size(); i++)
-            species_param[ispec].dens_length_x[i]   *= conv_fac;
+            species_param[ispec].dens_length_x[i] *= conv_fac;
         
         if ( (geometry=="2d3v") || (geometry=="3d3v") ) {
             for (unsigned int i=0; i<species_param[ispec].dens_length_y.size(); i++)
-                species_param[ispec].dens_length_y[i]   *= conv_fac;
+                species_param[ispec].dens_length_y[i] *= conv_fac;
         }
         
         if ( geometry=="3d3v" ) {
             for (unsigned int i=0; i<species_param[ispec].dens_length_z.size(); i++)
-                species_param[ispec].dens_length_z[i]   *= conv_fac;
+                species_param[ispec].dens_length_z[i] *= conv_fac;
         }
         
         
-        // -------------------------------------------
+        // -----------------------------------------------------
         // Defining default values for species-lengths
-        // -------------------------------------------
+        // (NB: here sim_length is already correctly normalized)
+        // -----------------------------------------------------
         
         // defining default values for vacuum_length
         if (species_param[ispec].vacuum_length.size()==0) {
