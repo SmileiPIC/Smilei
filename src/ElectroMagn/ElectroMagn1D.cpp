@@ -552,28 +552,28 @@ void ElectroMagn1D::restartRhoJ()
         (*Jy1D)(ix)    = 0.0;
         (*Jz1D)(ix)    = 0.0;
     }
-    
+}    
+void ElectroMagn1D::restartRhoJs(int ispec)
+{
     // -----------------------------------
     // Species currents and charge density
     // -----------------------------------
-    for (unsigned int ispec=0; ispec<n_species; ispec++) {
-        Field1D* Jx1D_s  = static_cast<Field1D*>(Jx_s[ispec]);
-        Field1D* Jy1D_s  = static_cast<Field1D*>(Jy_s[ispec]);
-        Field1D* Jz1D_s  = static_cast<Field1D*>(Jz_s[ispec]);
-        Field1D* rho1D_s = static_cast<Field1D*>(rho_s[ispec]);
-        
-        // put longitudinal current to zero on the dual grid
-        for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
-            (*Jx1D_s)(ix)  = 0.0;
-        }
-        
-        // all fields are defined on the primal grid
-        for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
-            (*rho1D_s)(ix) = 0.0;
-            (*Jy1D_s)(ix)  = 0.0;
-            (*Jz1D_s)(ix)  = 0.0;
-        }
-    }//END loop on species ispec
+    Field1D* Jx1D_s  = static_cast<Field1D*>(Jx_s[ispec]);
+    Field1D* Jy1D_s  = static_cast<Field1D*>(Jy_s[ispec]);
+    Field1D* Jz1D_s  = static_cast<Field1D*>(Jz_s[ispec]);
+    Field1D* rho1D_s = static_cast<Field1D*>(rho_s[ispec]);
+    
+    // put longitudinal current to zero on the dual grid
+    for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
+        (*Jx1D_s)(ix)  = 0.0;
+    }
+    
+    // all fields are defined on the primal grid
+    for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
+        (*rho1D_s)(ix) = 0.0;
+        (*Jy1D_s)(ix)  = 0.0;
+        (*Jz1D_s)(ix)  = 0.0;
+    }
 }
 
 
