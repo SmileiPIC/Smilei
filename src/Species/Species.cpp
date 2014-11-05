@@ -353,20 +353,20 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     tid = omp_get_thread_num();
 #endif
     clearExchList(tid);
-    //Allocate buffer for projection  *****************************
-    // *4 accounts for Jy, Jz and rho. * nthds accounts for each thread.
-    b_Jx = (double *) malloc(4 * size_proj_buffer * sizeof(double));
-    //Point buffers of each thread to the correct position
-    b_Jy = b_Jx + size_proj_buffer ;
-    b_Jz = b_Jy + size_proj_buffer ;
-    b_rho = b_Jz + size_proj_buffer ;
-	
+    	
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
     if (time_dual>species_param.time_frozen) { // moving particle
         double gf = 1.0;
-        
+       //Allocate buffer for projection  *****************************
+       // *4 accounts for Jy, Jz and rho. * nthds accounts for each thread.
+       b_Jx = (double *) malloc(4 * size_proj_buffer * sizeof(double));
+       //Point buffers of each thread to the correct position
+       b_Jy = b_Jx + size_proj_buffer ;
+       b_Jz = b_Jy + size_proj_buffer ;
+       b_rho = b_Jz + size_proj_buffer ;
+ 
 #pragma omp for schedule(runtime)
         for (ibin = 0 ; ibin < bmin.size() ; ibin++) {
             
@@ -442,6 +442,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             }
             
         }// ibin
+        free(b_Jx);
         
         if (Ionize && electron_species) {
             for (unsigned int i=0; i < Ionize->new_electrons.size(); i++) {
@@ -475,7 +476,6 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
         }
 		
     }//END if time vs. time_frozen
-    free(b_Jx);
     delete LocInterp;
 	
 }//END dynamic
