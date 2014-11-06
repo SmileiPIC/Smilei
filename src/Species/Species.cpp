@@ -810,7 +810,7 @@ void Species::updateMvWinLimits(double x_moved) {
                      (species_param.species_geometry == "gaussian" ||
                          (species_param.species_geometry == "trapezoidal" &&
                             //Before end of density ramp up.
-                            (simWindow->getXmoved() < species_param.vacuum_length[0] + species_param.dens_length_x[1] || 
+                            (simWindow->getXmoved() < species_param.vacuum_length[0] + species_param.dens_length_x[1] + clrw*cell_length[0] || 
                             //After begining of density ramp down. 
                             simWindow->getXmoved() +  simWindow->getRes_space_win_x()*cell_length[0] > species_param.vacuum_length[0] + species_param.dens_length_x[1]+ species_param.dens_length_x[0]
                             )

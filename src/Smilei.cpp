@@ -253,7 +253,7 @@ int main (int argc, char* argv[])
         
         // apply the PIC method
         // --------------------
-        // for all particles of all species (see dunamic in Species.cpp)
+        // for all particles of all species (see dynamic in Species.cpp)
         // (1) interpolate the fields at the particle position
         // (2) move the particle
         // (3) calculate the currents (charge conserving method)
@@ -269,6 +269,7 @@ int main (int argc, char* argv[])
                 {
                 if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ) EMfields->restartRhoJs(ispec);
                 }
+#pragma omp barrier
                 vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow);
             }
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
