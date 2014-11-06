@@ -23,6 +23,7 @@
 #include "Projector.h"
 
 #include "SmileiMPI.h"
+#include "SimWindow.h"
 
 // #include "Field.h"
 #include "Field1D.h"
@@ -43,6 +44,7 @@ cell_length(params.cell_length),
 oversize(params.oversize),
 ndim(params.nDim_particle),
 min_loc(smpi->getDomainLocalMin(0)),
+max_loc(smpi->getDomainLocalMax(0)),
 clrw(params.clrw),
 species_param(params.species_param[ispec])
 {
@@ -328,7 +330,7 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
 //   - increment the currents (projection)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfields, Interpolator* Interp,
-                       Projector* Proj, SmileiMPI *smpi, PicParams &params)
+                       Projector* Proj, SmileiMPI *smpi, PicParams &params, SimWindow* simWindow)
 {
     Interpolator* LocInterp = InterpolatorFactory::create(params, smpi);
     
@@ -353,20 +355,20 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     tid = omp_get_thread_num();
 #endif
     clearExchList(tid);
-    //Allocate buffer for projection  *****************************
-    // *4 accounts for Jy, Jz and rho. * nthds accounts for each thread.
-    b_Jx = (double *) malloc(4 * size_proj_buffer * sizeof(double));
-    //Point buffers of each thread to the correct position
-    b_Jy = b_Jx + size_proj_buffer ;
-    b_Jz = b_Jy + size_proj_buffer ;
-    b_rho = b_Jz + size_proj_buffer ;
-	
+    	
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
     if (time_dual>species_param.time_frozen) { // moving particle
         double gf = 1.0;
-        
+       //Allocate buffer for projection  *****************************
+       // *4 accounts for Jy, Jz and rho. * nthds accounts for each thread.
+       b_Jx = (double *) malloc(4 * size_proj_buffer * sizeof(double));
+       //Point buffers of each thread to the correct position
+       b_Jy = b_Jx + size_proj_buffer ;
+       b_Jz = b_Jy + size_proj_buffer ;
+       b_rho = b_Jz + size_proj_buffer ;
+ 
 #pragma omp for schedule(runtime)
         for (ibin = 0 ; ibin < bmin.size() ; ibin++) {
             
@@ -468,13 +470,17 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             Ionize->new_electrons.clear();
         }
     }
-    else { // immobile particle (at the moment only project density)
-		
+    //Do not recompute frozen particles density except if
+    //1) First iteration of the run
+    //OR
+    //2) Moving window is activated, actually moving at this time step, and we are not in a density plateau.
+//    else if (isProj(time_dual, simWindow))    //Do not take restart into account yet.
+     else
+     { // immobile particle (at the moment only project density)
 #pragma omp for schedule (runtime) 
         for (iPart=0 ; iPart<nParticles; iPart++ ) {
             (*Proj)(EMfields->rho_s[ispec], particles, iPart);
         }
-		
     }//END if time vs. time_frozen
     delete LocInterp;
 	
@@ -570,6 +576,7 @@ void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi, PicParams& par
     partBoundCond->moveWindow_x( shift*cell_length[0], smpi );
     // Set for bin managment
     min_loc += shift*cell_length[0];
+    max_loc += shift*cell_length[0];
     
     // Send particles of first bin on process rank-1
     // If no rank-1 -> particles deleted
@@ -795,4 +802,24 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<int>
 void Species::updateMvWinLimits(double x_moved) {
     partBoundCond->updateMvWinLimits(x_moved);
     min_loc += x_moved;
+    max_loc += x_moved;
+}
+//Do we have to project this species ?
+ bool Species::isProj(double time_dual, SimWindow* simWindow) {
+    bool isproj;
+    
+    isproj =(time_dual > species_param.time_frozen  ||
+                 (simWindow && simWindow->isMoving(time_dual) &&
+                     (species_param.species_geometry == "gaussian" ||
+                         (species_param.species_geometry == "trapezoidal" &&
+                            //Before end of density ramp up.
+                            (min_loc < species_param.vacuum_length[0] + species_param.dens_length_x[1] || 
+                            //After begining of density ramp down. 
+                             max_loc > species_param.vacuum_length[0] + species_param.dens_length_x[1]+ species_param.dens_length_x[0]
+                            )
+                        )
+                    ) 
+                )
+            );
+    return isproj;
 }

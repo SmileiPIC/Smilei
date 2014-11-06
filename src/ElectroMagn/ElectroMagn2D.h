@@ -35,6 +35,8 @@ public:
     
     //! Method used to initialize the total charge densities and currents
     void restartRhoJ();
+    //! Method used to initialize the total charge densities and currents of species
+    void restartRhoJs(int ispec);
 
     //! Method used to compute the total charge density and currents by summing over all species
     void computeTotalRhoJ();

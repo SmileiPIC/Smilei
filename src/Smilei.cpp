@@ -262,7 +262,12 @@ int main (int argc, char* argv[])
             tid = omp_get_thread_num();
 #endif
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-                vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params);
+                #pragma omp master
+                {
+                //if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ) EMfields->restartRhoJs(ispec);
+                EMfields->restartRhoJs(ispec);
+                }
+                vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow);
             }
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 #pragma omp barrier
@@ -353,19 +358,19 @@ int main (int argc, char* argv[])
     //                      Temporary validation diagnostics
     // ------------------------------------------------------------------
     
-    // temporary EM fields dump in Fields.h5
-    if  ( (diag_params.fieldDump_every != 0) && (params.n_time % diag_params.fieldDump_every != 0) )
-        sio->writeAllFieldsSingleFileTime( EMfields, params.n_time );
-    
-    // temporary time-averaged EM fields dump in Fields_avg.h5
-    if  ( (diag_params.avgfieldDump_every != 0) && (params.n_time % diag_params.avgfieldDump_every != 0) )
-        sio->writeAvgFieldsSingleFileTime( EMfields, params.n_time );
-    
-#ifdef _IO_PARTICLE
-    // temporary particles dump (1 HDF5 file per process)
-    if  ( (diag_params.particleDump_every != 0) && (params.n_time % diag_params.particleDump_every != 0) )
-        sio->writePlasma( vecSpecies, time_dual, smpi );
-#endif    
+//    // temporary EM fields dump in Fields.h5
+//    if  ( (diag_params.fieldDump_every != 0) && (params.n_time % diag_params.fieldDump_every != 0) )
+//        sio->writeAllFieldsSingleFileTime( EMfields, params.n_time );
+//    
+//    // temporary time-averaged EM fields dump in Fields_avg.h5
+//    if  ( (diag_params.avgfieldDump_every != 0) && (params.n_time % diag_params.avgfieldDump_every != 0) )
+//        sio->writeAvgFieldsSingleFileTime( EMfields, params.n_time );
+//    
+//#ifdef _IO_PARTICLE
+//    // temporary particles dump (1 HDF5 file per process)
+//    if  ( (diag_params.particleDump_every != 0) && (params.n_time % diag_params.particleDump_every != 0) )
+//        sio->writePlasma( vecSpecies, time_dual, smpi );
+//#endif    
 
     // ------------------------------
     //  Cleanup & End the simulation

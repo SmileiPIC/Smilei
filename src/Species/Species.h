@@ -55,7 +55,7 @@ public:
 
     //! Method calculating the Particle dynamics (interpolation, pusher, projection)
     virtual void dynamics(double time, unsigned int ispec, ElectroMagn* EMfields, Interpolator* interp,
-                          Projector* proj, SmileiMPI *smpi, PicParams &params);
+                          Projector* proj, SmileiMPI *smpi, PicParams &params, SimWindow* simWindow);
 
     //! Method used to initialize the Particle position in a given cell
     void initPosition(unsigned int, unsigned int, unsigned int *, unsigned int, std::vector<double>, std::string);
@@ -110,6 +110,9 @@ public:
 
     //Copy of the species parameters from picparams
     SpeciesStructure species_param;
+
+    //! Method to know if we have to project this species or not.
+    bool  isProj(double time_dual, SimWindow* simWindow);
     
 private:
     
@@ -134,6 +137,8 @@ private:
 
     //! Local minimum of MPI domain
     double min_loc;
+    //! Local maximum of MPI domain
+    double max_loc;
 
     //! Size of the projection buffer
     unsigned int size_proj_buffer;
@@ -149,6 +154,7 @@ private:
     //! Method used to Push the particles (change momentum & change position)
     Pusher* Push;
 
+    //! Method to create new particles.
     int  createParticles(std::vector<unsigned int> n_space_to_create, std::vector<int> cell_index, int new_bin_idx,  PicParams& param);
 
 };
