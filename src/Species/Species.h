@@ -73,7 +73,7 @@ public:
     void dump(std::ofstream&);
 
     //! Method used to sort particles
-    void sort_part(double);
+    void sort_part();
 
     void movingWindow_x(unsigned int shift, SmileiMPI *smpi, PicParams& param);
     void defineNewCells(unsigned int shift, SmileiMPI *smpi, PicParams& param);

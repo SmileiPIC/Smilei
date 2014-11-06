@@ -506,10 +506,9 @@ void Species::dump(std::ofstream& ofile)
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::sort_part(double dbin)
+void Species::sort_part()
 {
-    //dbin is the width of one cell. dbin= dx.
-    //The width of one bin is dbin * clrw.
+    //The width of one bin is cell_length[0] * clrw.
 	
     int p1,p2,bmin_init;
     unsigned int bin;
@@ -518,7 +517,7 @@ void Species::sort_part(double dbin)
     //Backward pass
 #pragma omp for schedule(runtime) 
     for (bin=0; bin<bmin.size()-1; bin++) { //Loop on the bins. To be parallelized with openMP.
-        limit = min_loc + (bin+1)*dbin*clrw;
+        limit = min_loc + (bin+1)*cell_length[0]*clrw;
         p1 = bmax[bin]-1;
         //If first particles change bin, they do not need to be swapped.
         while (p1 == bmax[bin]-1 && p1 >= bmin[bin]) {
@@ -539,7 +538,7 @@ void Species::sort_part(double dbin)
     //Forward pass + Rebracketting
 #pragma omp for schedule(runtime)
     for (bin=1; bin<bmin.size(); bin++) { //Loop on the bins. To be parallelized with openMP.
-        limit = min_loc + (bin)*dbin*clrw;
+        limit = min_loc + bin*cell_length[0]*clrw;
         bmin_init = bmin[bin];
         p1 = bmin[bin];
         while (p1 == bmin[bin] && p1 < bmax[bin]) {

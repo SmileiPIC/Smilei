@@ -281,7 +281,7 @@ int main (int argc, char* argv[])
                         smpi->exchangeParticles(vecSpecies[ispec], ispec, params, tid);
                 }
 #pragma omp barrier
-                    vecSpecies[ispec]->sort_part(params.cell_length[0]);
+                    vecSpecies[ispec]->sort_part();
             }
         }
         timer[1].update();
