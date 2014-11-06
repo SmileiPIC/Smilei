@@ -36,7 +36,8 @@ void DiagnosticScalar::close() {
 void DiagnosticScalar::run(int timestep, ElectroMagn* EMfields, vector<Species*>& vecSpecies, SmileiMPI *smpi) {
     if (timestep==0) {
         compute(EMfields,vecSpecies,smpi);
-        Energy_time_zero=getScalar("Etot");
+        Energy_time_zero  = getScalar("Etot");
+        EnergyUsedForNorm = Energy_time_zero;
     }
     if (every) {
         EMfields->computePoynting(); // This must be called everytime        
@@ -236,7 +237,9 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
         double Total_Energy=Etot_part+Etot_fields;
 
         double Energy_Balance=Total_Energy-(Energy_time_zero+poyTot);
-        double Energy_Bal_norm=Energy_Balance/Total_Energy;
+//        double Energy_Bal_norm=Energy_Balance/Total_Energy;
+        double Energy_Bal_norm=Energy_Balance/EnergyUsedForNorm;
+        EnergyUsedForNorm = Total_Energy;
 
         prepend("Poynting",poyTot);
         prepend("EFields",Etot_fields);

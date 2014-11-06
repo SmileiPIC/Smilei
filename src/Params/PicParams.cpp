@@ -241,7 +241,7 @@ PicParams::PicParams(InputData &ifile) {
         // Species geometry
         // ----------------
         ifile.extract("species_geometry", tmpSpec.species_geometry,"species",0,n_species);
-        // species length
+        // species length (check DensityProfile for definitions)
         ifile.extract("vacuum_length", tmpSpec.vacuum_length,"species",0,n_species);
         ifile.extract("dens_length_x", tmpSpec.dens_length_x,"species",0,n_species);
         if ( (geometry=="2d3v") || (geometry=="3d3v") )

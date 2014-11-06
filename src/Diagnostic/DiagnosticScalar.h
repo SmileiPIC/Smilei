@@ -61,6 +61,9 @@ private:
     //! initial energy (kinetic + EM)
     double Energy_time_zero;
     
+    //! energy used for the normalization of energy balance (former total energy)
+    double EnergyUsedForNorm;
+    
     //! this is copied from params
     const double res_time;
     

@@ -80,7 +80,7 @@ species
 	charge = 1.0
 	density = 10.0e0
 	mean_velocity = 0.0
-	temperature = 0.0
+	temperature = 0.001
 	dynamics_type = norm
 	time_frozen = 0.0
 	radiating = false
@@ -100,7 +100,7 @@ species
 	charge = -1.0
 	density = 10.0e0
 	mean_velocity = 0.0
-	temperature = 0.1
+	temperature = 0.01
 	dynamics_type = norm	
 	time_frozen = 0.0
 	radiating = false
@@ -131,7 +131,7 @@ end
 # ---------------------
 
 # print_every 
-print_every = 500
+# print_every = 500
 
 fieldDump_every    = 250
 avgfieldDump_every = 500
