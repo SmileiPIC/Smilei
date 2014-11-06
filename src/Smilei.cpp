@@ -173,7 +173,7 @@ int main (int argc, char* argv[])
         // Sum rho and J on ghost domains
         smpi->sumRhoJ( EMfields );
         for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-            smpi->sumRhoJs(EMfields, ispec);
+            smpi->sumRhoJs(EMfields, ispec, true);
         }
         
         // Init electric field (Ex/1D, + Ey/2D)
@@ -258,7 +258,7 @@ int main (int argc, char* argv[])
         // (2) move the particle
         // (3) calculate the currents (charge conserving method)
         timer[1].restart();
-#pragma omp parallel shared (EMfields,time_dual,vecSpecies,smpi)
+#pragma omp parallel shared (EMfields,time_dual,vecSpecies,smpi,params)
         {
             int tid(0);
 #ifdef _OMP
@@ -269,7 +269,6 @@ int main (int argc, char* argv[])
                     EMfields->restartRhoJs(ispec, time_dual > params.species_param[ispec].time_frozen);
                     vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow);
                 }
-#pragma omp barrier
             }
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 #pragma omp barrier
@@ -288,7 +287,7 @@ int main (int argc, char* argv[])
         timer[4].restart();
         smpi->sumRhoJ( EMfields );
         for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-            if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ) smpi->sumRhoJs(EMfields, ispec);
+            if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ) smpi->sumRhoJs(EMfields, ispec, time_dual > params.species_param[ispec].time_frozen);
         }
         EMfields->computeTotalRhoJ();
         timer[4].update();

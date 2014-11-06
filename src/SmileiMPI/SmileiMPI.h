@@ -74,7 +74,7 @@ public:
     //! 2 x oversize + 1 ( + 1 if direction is dual )
     void sumRhoJ( ElectroMagn* EMfields );
     //! Sum rho_s and all J_s on the shared domain between processors
-    void sumRhoJs( ElectroMagn* EMfields, int ispec );
+    void sumRhoJs( ElectroMagn* EMfields, int ispec, bool currents );
 
     //! Basic method to exchange a field, defined in child class
     virtual void exchangeField ( Field* field ) {};
