@@ -172,6 +172,9 @@ int main (int argc, char* argv[])
         
         // Sum rho and J on ghost domains
         smpi->sumRhoJ( EMfields );
+        for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
+            smpi->sumRhoJs(EMfields, ispec);
+        }
         
         // Init electric field (Ex/1D, + Ey/2D)
         MESSAGE("----------------------------------------------");
@@ -264,8 +267,7 @@ int main (int argc, char* argv[])
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
                 #pragma omp master
                 {
-                //if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ) EMfields->restartRhoJs(ispec);
-                EMfields->restartRhoJs(ispec);
+                if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ) EMfields->restartRhoJs(ispec);
                 }
                 vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow);
             }
@@ -286,6 +288,9 @@ int main (int argc, char* argv[])
 		//!\todo To simplify : sum global and per species densities
         timer[4].restart();
         smpi->sumRhoJ( EMfields );
+        for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
+            if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ) smpi->sumRhoJs(EMfields, ispec);
+        }
         EMfields->computeTotalRhoJ();
         timer[4].update();
         

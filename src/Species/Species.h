@@ -137,8 +137,6 @@ private:
 
     //! Local minimum of MPI domain
     double min_loc;
-    //! Local maximum of MPI domain
-    double max_loc;
 
     //! Size of the projection buffer
     unsigned int size_proj_buffer;

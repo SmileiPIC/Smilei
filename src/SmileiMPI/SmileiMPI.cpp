@@ -106,15 +106,15 @@ void SmileiMPI::sumRhoJ( ElectroMagn* EMfields )
     sumField( EMfields->Jx_ );
     sumField( EMfields->Jy_ );
     sumField( EMfields->Jz_ );
-
-    // sum density and currents for all species
-    for (unsigned int ispec=0; ispec<EMfields->n_species; ispec++) {
-        sumField( EMfields->rho_s[ispec] );
-        sumField( EMfields->Jx_s[ispec] );
-        sumField( EMfields->Jy_s[ispec] );
-        sumField( EMfields->Jz_s[ispec] );
-    }
-
+   
+}
+void SmileiMPI::sumRhoJs( ElectroMagn* EMfields, int ispec )
+{
+   // sum density and currents for all species
+   sumField( EMfields->rho_s[ispec] );
+   sumField( EMfields->Jx_s[ispec] );
+   sumField( EMfields->Jy_s[ispec] );
+   sumField( EMfields->Jz_s[ispec] );
 }
 
 void SmileiMPI::exchangeE( ElectroMagn* EMfields )
