@@ -553,7 +553,7 @@ void ElectroMagn1D::restartRhoJ()
         (*Jz1D)(ix)    = 0.0;
     }
 }    
-void ElectroMagn1D::restartRhoJs(int ispec)
+void ElectroMagn1D::restartRhoJs(int ispec, bool currents)
 {
     // -----------------------------------
     // Species currents and charge density
@@ -562,17 +562,23 @@ void ElectroMagn1D::restartRhoJs(int ispec)
     Field1D* Jy1D_s  = static_cast<Field1D*>(Jy_s[ispec]);
     Field1D* Jz1D_s  = static_cast<Field1D*>(Jz_s[ispec]);
     Field1D* rho1D_s = static_cast<Field1D*>(rho_s[ispec]);
-    
-    // put longitudinal current to zero on the dual grid
-    for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
-        (*Jx1D_s)(ix)  = 0.0;
-    }
-    
-    // all fields are defined on the primal grid
+
+    #pragma omp for schedule(static) 
     for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
         (*rho1D_s)(ix) = 0.0;
-        (*Jy1D_s)(ix)  = 0.0;
-        (*Jz1D_s)(ix)  = 0.0;
+    }
+    if (currents){
+        // put longitudinal current to zero on the dual grid
+        #pragma omp for schedule(static) 
+        for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
+            (*Jx1D_s)(ix)  = 0.0;
+        }
+        #pragma omp for schedule(static) 
+        for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
+        // all fields are defined on the primal grid
+            (*Jy1D_s)(ix)  = 0.0;
+            (*Jz1D_s)(ix)  = 0.0;
+        }
     }
 }
 

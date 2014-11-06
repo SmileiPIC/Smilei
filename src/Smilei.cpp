@@ -265,12 +265,11 @@ int main (int argc, char* argv[])
             tid = omp_get_thread_num();
 #endif
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-                #pragma omp master
-                {
-                if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ) EMfields->restartRhoJs(ispec);
+                if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
+                    EMfields->restartRhoJs(ispec, time_dual > params.species_param[ispec].time_frozen);
+                    vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow);
                 }
 #pragma omp barrier
-                vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow);
             }
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 #pragma omp barrier

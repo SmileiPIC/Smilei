@@ -469,8 +469,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             Ionize->new_electrons.clear();
         }
     }
-    else if (isProj(time_dual, simWindow))    //Do not take restart into account yet.
-     { // immobile particle (at the moment only project density)
+    else { // immobile particle (at the moment only project density)
 //#pragma omp for schedule (runtime) 
 #pragma omp master
 {
