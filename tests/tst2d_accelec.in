@@ -5,41 +5,43 @@
 #      3d3v = cartesian grid with 3d in space + 3d in velocity
 #      2drz = cylindrical (r,z) grid with 3d3v particles
 #
+
+sim_units = wavelength
 dim = 2d3v
 
 # order of interpolation
-interpolation_order = 2 
+interpolation_order = 2
 
 # SIMULATION TIME
 # res_time: temporal resolution (integer = number of time−steps within one normalization period)
-# timestep: alternative to res_time. Specify the time step in units of the normalization period)
 # sim_time: duration of the simulation in units of the normalization period 
 #
+#res_time = 52
 timestep = 0.0197352129
-sim_time = 1600.0
+sim_time = 80
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
-# cell_length: alternative to res_space. Specify the cell size in units of the normalization wavelength.
 # sim_length: length of the simulation in units of the normalization wavelength 
 #
-cell_length  = 0.019894367 0.2387324  
-sim_length = 6000.  183.  
-
-#Field Boundary conditions
+#res_space  = 51  4  
+cell_length  = 0.019894367 0.5 #0.2387324  
+sim_length = 6000.  30.  
+#sim_length = 135  183.  
 bc_em_type_long = silver-muller
 bc_em_type_trans = silver-muller
 
-#MPI paralellization
-number_of_procs = 24 6
- 
-#Moving window parameter
-nspace_win_x = 6912 #Activate moving window and specify its number of cells
-t_move_win = 125.      #Time at which the window starts moving (in units of the normalization period)
-vx_win = 0.9997        #Velocity of the window in c.
+number_of_procs = 2 2 
 
-#Cluster width (please stick to 1 for smilei.0)
-clrw = 1
+# PLASMA GEOMETRY
+# plasma_geometry: string defining the plasma geometry
+# ***_length: characteristic length for a given geometry
+#
+
+nspace_win_x = 864
+t_move_win = 11.0
+vx_win = 0.9997
+clrw = 6
 
 # RANDOM seed 
 # this is used to randomize the random number generator
@@ -63,11 +65,13 @@ species
 	species_type = proton
 	initialization_type = regular
 	ionization_model = none
-        plasma_geometry = trap
+        species_geometry = trapezoidal
         vacuum_length   = 0.0  0.0 
-        plasma_length   = 6000.  305.0
-        slope_length = 0.0 0.0
-	n_part_per_cell = 1 
+        #dens_length_x: Length of the plateau - Length of left slope - Length of right slope
+        dens_length_x = 6000 20  
+        #dens_length_y: Length of the plateau - Length of left slope - Length of right slope
+        dens_length_y = 2000 0 
+	n_part_per_cell = 5 
 	c_part_max = 1.0
 	mass = 1836.0
 	charge = 1.0
@@ -84,11 +88,13 @@ end
 species 
 	species_type = electron1
 	initialization_type = regular
-        plasma_geometry = trap
+        species_geometry = trapezoidal
         vacuum_length   = 0.0  0.0 
-        plasma_length   = 6000.  305.0
-        slope_length = 0.0 0.0
-	n_part_per_cell = 20
+        #dens_length_x: Length of the plateau - Length of left slope - Length of right slope
+        dens_length_x = 2000 20 
+        #dens_length_y: Length of the plateau - Length of left slope - Length of right slope
+        dens_length_y = 2000 0 
+	n_part_per_cell = 5
 	c_part_max = 1.0
 	mass = 1.0
 	charge = -1.0
@@ -114,15 +120,16 @@ end
 # double_params: vector of real parameters used by the different time-profiles
 #
 laser
-	a0=8.0
+	a0=2.0
         boxSide = west
 	angle=0
 	delta=0.0              
 	time_profile =  gaussian
         transv_profile = gaussian
-	double_params = 9.36 0.0 0.0 # gaussian:FWHM in intensity, plateau length, delay (same unit as sim_length)
+	double_params = 1.0 0.0 0.0 # gaussian:FWHM in intensity, plateau length, delay (same unit as sim_length)
+	#double_params = 50.0 0.0 # constant: Duration of the pulse, delay before pulse start.
         int_params = 3 # Cut-off of the longitudinal gaussian in number of sigma
-        double_params_transv = 91.5 26.4 # distance from axis, transverse FWHM in intensity (same unit as sim_length)
+        double_params_transv = 15. 5. # distance from axis, transverse FWHM in intensity (same unit as sim_length)
         int_params_transv= 2 # order of the hyper gaussian
 end
 
@@ -131,25 +138,36 @@ end
 # ---------------------
 
 # print_every (on screen text output) 
-print_every = 10
+print_every = 1
 
 # every for field dump
-fieldDump_every = 1200
+fieldDump_every = 1000
 
 # every for particle dump
-particleDump_every = 10000
+particleDump_every = 10000000
 
 # every for averagefield Dump
-avgfieldDump_every = 10000
+avgfieldDump_every = 10000000
 
 
 # DIAG ON SCALARS
 # every = number of time-steps between each output
 #
 diagnostic scalar
-	every = 600
+	every = 6000000
 end
 
-dump_step = 10000
+# PROB 0D
+# every = number of time-steps between each output
+# x     = position of the different probes
+#
+#diagnostic probe0d
+#	every = 1
+#	x = 0.0  6.0   12.0	
+#	y = 2.5  2.5   2.5
+#end
+
+
+dump_step = 10000000
 exit_after_dump = false
 

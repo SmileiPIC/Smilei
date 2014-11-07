@@ -77,9 +77,6 @@ public:
     //! Total charge density
     Field* rho_;
 
-    //! Total charge density at previous time-step
-    Field* rho_o;
-    
     //! time-average x-component of the electric field
     Field* Ex_avg;
     
@@ -139,7 +136,7 @@ public:
     //! Method used to initialize the total charge currents and densities
     virtual void restartRhoJ() = 0;
     //! Method used to initialize the total charge currents and densities of species
-    virtual void restartRhoJs(int ispec) = 0;
+    virtual void restartRhoJs(int ispec, bool currents) = 0;
 
     //! Method used to initialize the total charge density
     void initRhoJ(std::vector<Species*> vecSpecies, Projector* Proj);

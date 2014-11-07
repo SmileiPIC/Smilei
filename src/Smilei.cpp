@@ -172,6 +172,9 @@ int main (int argc, char* argv[])
         
         // Sum rho and J on ghost domains
         smpi->sumRhoJ( EMfields );
+        for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
+            smpi->sumRhoJs(EMfields, ispec, true);
+        }
         
         // Init electric field (Ex/1D, + Ey/2D)
         MESSAGE("----------------------------------------------");
@@ -250,35 +253,32 @@ int main (int argc, char* argv[])
         
         // apply the PIC method
         // --------------------
-        // for all particles of all species (see dunamic in Species.cpp)
+        // for all particles of all species (see dynamic in Species.cpp)
         // (1) interpolate the fields at the particle position
         // (2) move the particle
         // (3) calculate the currents (charge conserving method)
         timer[1].restart();
-#pragma omp parallel shared (EMfields,time_dual,vecSpecies,smpi)
+#pragma omp parallel shared (EMfields,time_dual,vecSpecies,smpi,params)
         {
             int tid(0);
 #ifdef _OMP
             tid = omp_get_thread_num();
 #endif
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-                #pragma omp master
-                {
-                //if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ) EMfields->restartRhoJs(ispec);
-                EMfields->restartRhoJs(ispec);
+                if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
+                    EMfields->restartRhoJs(ispec, time_dual > params.species_param[ispec].time_frozen);
+                    vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow);
                 }
-                vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow);
             }
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 #pragma omp barrier
-                //#pragma omp master
-                {
-                    // Loop on dims to manage exchange in corners
-                    for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
-                        smpi->exchangeParticles(vecSpecies[ispec], ispec, params, tid);
-                }
+                if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
+                        // Loop on dims to manage exchange in corners
+                        for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
+                            smpi->exchangeParticles(vecSpecies[ispec], ispec, params, tid);
 #pragma omp barrier
-                    vecSpecies[ispec]->sort_part(params.cell_length[0]);
+                        vecSpecies[ispec]->sort_part();
+                }
             }
         }
         timer[1].update();
@@ -286,6 +286,9 @@ int main (int argc, char* argv[])
 		//!\todo To simplify : sum global and per species densities
         timer[4].restart();
         smpi->sumRhoJ( EMfields );
+        for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
+            if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ) smpi->sumRhoJs(EMfields, ispec, time_dual > params.species_param[ispec].time_frozen);
+        }
         EMfields->computeTotalRhoJ();
         timer[4].update();
         
