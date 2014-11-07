@@ -2,7 +2,6 @@
  
  @brief PicParams.h is the class that hold the simulation parameters and can read from a file the namelist
  
- @author tommaso vinci
  @date 2013-02-15
  */
 
@@ -186,7 +185,7 @@ public:
     
     
     //! window simulation box size in number of cells
-    int res_space_win_x;
+    int nspace_win_x;
     //! Time at which the moving window starts.
     double t_move_win;
     //! Velocity of the moving window along x in c.

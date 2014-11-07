@@ -2,7 +2,6 @@
  * SmileiIO_Cart1D.cpp
  *
  *  Created on: 3 juil. 2013
- *      Author: jderouil
  */
 
 #include "SmileiIO_Cart1D.h"
@@ -88,10 +87,10 @@ void SmileiIO_Cart1D::createPattern( PicParams& params, SmileiMPI* smpi )
         // in the file.
         //
         hsize_t     dimsf[1];
-	if (!params.res_space_win_x)
+	if (!params.nspace_win_x)
 	    dimsf[0] = params.n_space_global[0]+1+ix_isPrim;
 	else
-	    dimsf[0] = params.res_space_win_x+1+ix_isPrim;
+	    dimsf[0] = params.nspace_win_x+1+ix_isPrim;
 
         hid_t filespace = H5Screate_simple(params.nDim_field, dimsf, NULL);
         //

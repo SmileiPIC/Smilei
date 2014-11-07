@@ -99,7 +99,7 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
     for (unsigned int i=0 ; i<params.nDim_field ; i++) {
         
         n_space_global[i] = params.n_space_global[i];
-        if ( (!params.res_space_win_x)||(i!=0) ) {
+        if ( (!params.nspace_win_x)||(i!=0) ) {
             
             params.n_space[i] = params.n_space_global[i] / number_of_procs[i];
             cell_starting_global_index[i] = coords_[i]*(params.n_space_global[i] / number_of_procs[i]);
@@ -113,13 +113,13 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
         }
         else { // if use_moving_window
             // Number of space in window (not split)
-            params.n_space[i] = params.res_space_win_x / number_of_procs[i];
-            cell_starting_global_index[i] = coords_[i]*(params.res_space_win_x / number_of_procs[i]);
+            params.n_space[i] = params.nspace_win_x / number_of_procs[i];
+            cell_starting_global_index[i] = coords_[i]*(params.nspace_win_x / number_of_procs[i]);
             
-            if ( number_of_procs[i]*params.n_space[i] != params.res_space_win_x ) {
+            if ( number_of_procs[i]*params.n_space[i] != params.nspace_win_x ) {
                 // Correction on the last MPI process of the direction to use the wished number of cells
                 if (coords_[i]==number_of_procs[i]-1) {
-                    params.n_space[i] = params.res_space_win_x - params.n_space[i]*(number_of_procs[i]-1);
+                    params.n_space[i] = params.nspace_win_x - params.n_space[i]*(number_of_procs[i]-1);
                 }
             }
         }

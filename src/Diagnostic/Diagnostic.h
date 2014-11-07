@@ -2,7 +2,6 @@
  * Diagnostic.h
  *
  *  Created on: 3 juil. 2013
- *      Author: jderouil
  */
 
 #ifndef Diagnostic_H

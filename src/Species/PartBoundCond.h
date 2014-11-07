@@ -2,8 +2,6 @@
 
   @brief Pusher.h  generic class for the particle pusher
 
-  @author tommaso vinci
-  @author Arnaud Beck
   @date 2013-02-15
 */
 

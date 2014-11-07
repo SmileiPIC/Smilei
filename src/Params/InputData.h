@@ -2,7 +2,6 @@
 
  @brief InputData.h is the definition of the class InputData which interpretates a namelist-like structure
 
- @author tommaso vinci
  @date 2013-02-15
  */
 

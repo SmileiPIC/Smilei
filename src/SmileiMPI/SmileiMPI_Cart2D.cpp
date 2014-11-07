@@ -101,10 +101,10 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
     if (params.number_of_procs[0]==0) {
 	double tmp(0.);
         //      without moving-window
-        if (!params.res_space_win_x)
+        if (!params.nspace_win_x)
             tmp  = params.res_space[0]*params.sim_length[0] / ( params.res_space[1]*params.sim_length[1] );
         else // with moving-window
-            tmp = params.res_space_win_x * 2.0 * M_PI / ( params.res_space[1]*params.sim_length[1] );
+            tmp = params.nspace_win_x * 2.0 * M_PI / ( params.res_space[1]*params.sim_length[1] );
 
         number_of_procs[0] = min( smilei_sz, max(1, (int)sqrt ( (double)smilei_sz*tmp*tmp) ) );
         number_of_procs[1] = (int)(smilei_sz / number_of_procs[0]);
@@ -153,7 +153,7 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
         
         n_space_global[i] = params.n_space_global[i];
         
-        if ((!params.res_space_win_x)||(i!=0)) {
+        if ((!params.nspace_win_x)||(i!=0)) {
             
             params.n_space[i] = params.n_space_global[i] / number_of_procs[i];
             cell_starting_global_index[i] = coords_[i]*(params.n_space_global[i] / number_of_procs[i]);
@@ -167,13 +167,13 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
         }
         else {  // if use_moving_window
             // Number of space in window (not split)
-            params.n_space[i] =  params.res_space_win_x / number_of_procs[i];
-            cell_starting_global_index[i] = coords_[i]*(params.res_space_win_x / number_of_procs[i]);
+            params.n_space[i] =  params.nspace_win_x / number_of_procs[i];
+            cell_starting_global_index[i] = coords_[i]*(params.nspace_win_x / number_of_procs[i]);
             
-            if ( number_of_procs[i]*params.n_space[i] != params.res_space_win_x ) {
+            if ( number_of_procs[i]*params.n_space[i] != params.nspace_win_x ) {
                 // Correction on the last MPI process of the direction to use the wished number of cells
                 if (coords_[i]==number_of_procs[i]-1) {
-                    params.n_space[i] = params.res_space_win_x - params.n_space[i]*(number_of_procs[i]-1);
+                    params.n_space[i] = params.nspace_win_x - params.n_space[i]*(number_of_procs[i]-1);
                 }
             }
         }

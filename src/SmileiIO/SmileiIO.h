@@ -2,7 +2,6 @@
  * SmileiIO.h
  *
  *  Created on: 3 juil. 2013
- *      Author: jderouil
  */
 
 #ifndef SMILEIIO_H

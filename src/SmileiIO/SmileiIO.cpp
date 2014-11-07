@@ -2,7 +2,6 @@
  * SmileiIO.cpp
  *
  *  Created on: 3 juil. 2013
- *      Author: jderouil
  */
 
 #include "SmileiIO.h"

@@ -79,7 +79,6 @@
 
  @brief Pic.h
 
- @author tommaso vinci
  @date 2013-02-15
  */
 

@@ -146,7 +146,7 @@ int main (int argc, char* argv[])
     
     SimWindow* simWindow = NULL;
     int start_moving(0);
-    if (params.res_space_win_x)
+    if (params.nspace_win_x)
         simWindow = new SimWindow(params);
     smpi->barrier();
     

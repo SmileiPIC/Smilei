@@ -42,7 +42,7 @@ class SimWindow {
 
  private:
     //! Number of points of the window
-    int res_space_win_x_;
+    int nspace_win_x_;
     //! Store locally params.cell_length[0], window slides only in x
     double cell_length_x_;
     //! Total length the window has moved along x up to now.

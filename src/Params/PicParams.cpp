@@ -141,8 +141,8 @@ PicParams::PicParams(InputData &ifile) {
     // ------------------------
     // Moving window parameters
     // ------------------------
-    if (!ifile.extract("res_space_win_x",res_space_win_x)) {
-        res_space_win_x = 0;
+    if (!ifile.extract("nspace_win_x",nspace_win_x)) {
+        nspace_win_x = 0;
     }
     
     if (!ifile.extract("t_move_win",t_move_win)) {

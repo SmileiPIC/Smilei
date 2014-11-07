@@ -34,7 +34,7 @@ bc_em_type_trans = silver-muller
 number_of_procs = 24 6
  
 #Moving window parameter
-res_space_win_x = 6912 #Activate moving window and specify its number of cells
+nspace_win_x = 6912 #Activate moving window and specify its number of cells
 t_move_win = 125.      #Time at which the window starts moving (in units of the normalization period)
 vx_win = 0.9997        #Velocity of the window in c.
 
