@@ -54,7 +54,6 @@ oversize(params.oversize)
     Jy_=NULL;
     Jz_=NULL;
     rho_=NULL;
-    rho_o=NULL;
     
     Ex_avg=NULL;
     Ey_avg=NULL;
@@ -107,7 +106,6 @@ ElectroMagn::~ElectroMagn()
     delete Jy_;
     delete Jz_;
     delete rho_;
-    delete rho_o;
 
     int nBC = emBoundCond.size();
     for ( int i=0 ; i<nBC ;i++ )

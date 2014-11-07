@@ -77,9 +77,6 @@ public:
     //! Total charge density
     Field* rho_;
 
-    //! Total charge density at previous time-step
-    Field* rho_o;
-    
     //! time-average x-component of the electric field
     Field* Ex_avg;
     

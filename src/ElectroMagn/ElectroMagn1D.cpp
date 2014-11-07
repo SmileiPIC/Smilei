@@ -77,7 +77,6 @@ isEastern(smpi->isEastern())
     Jy_   = new Field1D(dimPrim, 1, false, "Jy");
     Jz_   = new Field1D(dimPrim, 2, false, "Jz");
     rho_  = new Field1D(dimPrim, "Rho" );
-    rho_o = new Field1D(dimPrim, "Rho_old" );
     
     // Charge currents currents and density for each species
 
@@ -534,7 +533,6 @@ void ElectroMagn1D::restartRhoJ()
     Field1D* Jy1D    = static_cast<Field1D*>(Jy_);
     Field1D* Jz1D    = static_cast<Field1D*>(Jz_);
     Field1D* rho1D   = static_cast<Field1D*>(rho_);
-    Field1D* rho1D_o = static_cast<Field1D*>(rho_o);
     
     // --------------------------
     // Total currents and density
@@ -547,7 +545,6 @@ void ElectroMagn1D::restartRhoJ()
     
     // all fields are defined on the primal grid
     for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
-        (*rho1D_o)(ix) = (*rho1D)(ix);
         (*rho1D)(ix)   = 0.0;
         (*Jy1D)(ix)    = 0.0;
         (*Jz1D)(ix)    = 0.0;
