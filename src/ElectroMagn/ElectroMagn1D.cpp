@@ -247,7 +247,8 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
     // Starting iterative loop for the conjugate gradient method
     // ---------------------------------------------------------
     DEBUG(1,"Starting iterative loop");
-    while ( (ctrl > error_max) && (iteration<iteration_max) ) {
+    while ( (iteration<5) || ((ctrl > error_max) && (iteration<iteration_max)) ) {
+        //  NB: forced at least 5 iterations to avoid problem when initial fields are small
         
         iteration++;
         DEBUG(5,"iteration " << iteration << " started with control parameter ctrl = " << ctrl*1.e14 << " x 1e-14");

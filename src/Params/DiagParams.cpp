@@ -122,7 +122,12 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
         for (unsigned int i=0; i<tmpPhaseStruct.pos_min.size(); i++) {
             tmpPhaseStruct.pos_min[i] *= conv_fac;
             tmpPhaseStruct.pos_max[i] *= conv_fac;
+            if (tmpPhaseStruct.pos_min[i]==tmpPhaseStruct.pos_max[i]) {
+                tmpPhaseStruct.pos_min[i] = 0.0;
+                tmpPhaseStruct.pos_max[i] = params.sim_length[i];
+            }
         }
+        
 
 		ifile.extract("mom_min",tmpPhaseStruct.mom_min,"diagnostic phase",0,n_probephase);
 		ifile.extract("mom_max",tmpPhaseStruct.mom_max,"diagnostic phase",0,n_probephase);
