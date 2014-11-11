@@ -40,7 +40,7 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi )
     bc_up     = NULL;
 
     // Define limits of local domain
-    //if (!params.res_space_win_x) {
+    //if (!params.nspace_win_x) {
         x_min = max( x_min_global, smpi->getDomainLocalMin(0) );
         x_max = min( x_max_global, smpi->getDomainLocalMax(0) );
     //}

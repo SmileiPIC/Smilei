@@ -44,7 +44,6 @@ cell_length(params.cell_length),
 oversize(params.oversize),
 ndim(params.nDim_particle),
 min_loc(smpi->getDomainLocalMin(0)),
-max_loc(smpi->getDomainLocalMax(0)),
 clrw(params.clrw),
 species_param(params.species_param[ispec])
 {
@@ -470,18 +469,16 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             Ionize->new_electrons.clear();
         }
     }
-    //Do not recompute frozen particles density except if
-    //1) First iteration of the run
-    //OR
-    //2) Moving window is activated, actually moving at this time step, and we are not in a density plateau.
-//    else if (isProj(time_dual, simWindow))    //Do not take restart into account yet.
-     else
-     { // immobile particle (at the moment only project density)
-#pragma omp for schedule (runtime) 
+    else { // immobile particle (at the moment only project density)
+//#pragma omp for schedule (runtime) 
+#pragma omp master
+{
         for (iPart=0 ; iPart<nParticles; iPart++ ) {
             (*Proj)(EMfields->rho_s[ispec], particles, iPart);
         }
+}
     }//END if time vs. time_frozen
+#pragma omp barrier
     delete LocInterp;
 	
 }//END dynamic
@@ -508,10 +505,9 @@ void Species::dump(std::ofstream& ofile)
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::sort_part(double dbin)
+void Species::sort_part()
 {
-    //dbin is the width of one cell. dbin= dx.
-    //The width of one bin is dbin * clrw.
+    //The width of one bin is cell_length[0] * clrw.
 	
     int p1,p2,bmin_init;
     unsigned int bin;
@@ -520,7 +516,7 @@ void Species::sort_part(double dbin)
     //Backward pass
 #pragma omp for schedule(runtime) 
     for (bin=0; bin<bmin.size()-1; bin++) { //Loop on the bins. To be parallelized with openMP.
-        limit = min_loc + (bin+1)*dbin*clrw;
+        limit = min_loc + (bin+1)*cell_length[0]*clrw;
         p1 = bmax[bin]-1;
         //If first particles change bin, they do not need to be swapped.
         while (p1 == bmax[bin]-1 && p1 >= bmin[bin]) {
@@ -541,7 +537,7 @@ void Species::sort_part(double dbin)
     //Forward pass + Rebracketting
 #pragma omp for schedule(runtime)
     for (bin=1; bin<bmin.size(); bin++) { //Loop on the bins. To be parallelized with openMP.
-        limit = min_loc + (bin)*dbin*clrw;
+        limit = min_loc + bin*cell_length[0]*clrw;
         bmin_init = bmin[bin];
         p1 = bmin[bin];
         while (p1 == bmin[bin] && p1 < bmax[bin]) {
@@ -576,7 +572,6 @@ void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi, PicParams& par
     partBoundCond->moveWindow_x( shift*cell_length[0], smpi );
     // Set for bin managment
     min_loc += shift*cell_length[0];
-    max_loc += shift*cell_length[0];
     
     // Send particles of first bin on process rank-1
     // If no rank-1 -> particles deleted
@@ -802,20 +797,20 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<int>
 void Species::updateMvWinLimits(double x_moved) {
     partBoundCond->updateMvWinLimits(x_moved);
     min_loc += x_moved;
-    max_loc += x_moved;
 }
 //Do we have to project this species ?
  bool Species::isProj(double time_dual, SimWindow* simWindow) {
     bool isproj;
-    
+    //Recompute frozen particles density if
+    //moving window is activated, actually moving at this time step, and we are not in a density slope.
     isproj =(time_dual > species_param.time_frozen  ||
                  (simWindow && simWindow->isMoving(time_dual) &&
                      (species_param.species_geometry == "gaussian" ||
                          (species_param.species_geometry == "trapezoidal" &&
                             //Before end of density ramp up.
-                            (min_loc < species_param.vacuum_length[0] + species_param.dens_length_x[1] || 
+                            (simWindow->getXmoved() < species_param.vacuum_length[0] + species_param.dens_length_x[1] + clrw*cell_length[0] || 
                             //After begining of density ramp down. 
-                             max_loc > species_param.vacuum_length[0] + species_param.dens_length_x[1]+ species_param.dens_length_x[0]
+                            simWindow->getXmoved() +  simWindow->getRes_space_win_x()*cell_length[0] > species_param.vacuum_length[0] + species_param.dens_length_x[1]+ species_param.dens_length_x[0]
                             )
                         )
                     ) 

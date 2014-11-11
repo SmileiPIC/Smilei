@@ -83,7 +83,6 @@ isSouthern(smpi->isSouthern())
     Jy_   = new Field2D(dimPrim, 1, false, "Jy");
     Jz_   = new Field2D(dimPrim, 2, false, "Jz");
     rho_  = new Field2D(dimPrim, "Rho" );
-    rho_o = new Field2D(dimPrim, "Rho_old" );
     
     // Allocation of the time-averaged EM fields
     Ex_avg  = new Field2D(dimPrim, 0, false, "Ex_avg");
@@ -739,14 +738,6 @@ void ElectroMagn2D::restartRhoJ()
     Field2D* Jy2D    = static_cast<Field2D*>(Jy_);
     Field2D* Jz2D    = static_cast<Field2D*>(Jz_);
     Field2D* rho2D   = static_cast<Field2D*>(rho_);
-    Field2D* rho2D_o = static_cast<Field2D*>(rho_o);
-    
-    // Save current charge density as old charge density
-    for (unsigned int i=0 ; i<nx_p ; i++) {
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            (*rho2D_o)(i,j) = (*rho2D)(i,j);
-        }
-    }
     
     // Charge density rho^(p,p) to 0
     for (unsigned int i=0 ; i<nx_p ; i++) {
@@ -778,7 +769,7 @@ void ElectroMagn2D::restartRhoJ()
 }//END restartRhoJ
     
     
-void ElectroMagn2D::restartRhoJs(int ispec)
+void ElectroMagn2D::restartRhoJs(int ispec, bool currents)
 {
     // -----------------------------------
     // Species currents and charge density
@@ -789,30 +780,35 @@ void ElectroMagn2D::restartRhoJs(int ispec)
     Field2D* rho2D_s = static_cast<Field2D*>(rho_s[ispec]);
     
     // Charge density rho^(p,p) to 0
+    #pragma omp for schedule(static)
     for (unsigned int i=0 ; i<nx_p ; i++) {
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*rho2D_s)(i,j) = 0.0;
         }
     }
-    
-    // Current Jx^(d,p) to 0
-    for (unsigned int i=0 ; i<nx_d ; i++) {
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            (*Jx2D_s)(i,j) = 0.0;
+    if (currents){ 
+        // Current Jx^(d,p) to 0
+        #pragma omp for schedule(static)
+        for (unsigned int i=0 ; i<nx_d ; i++) {
+            for (unsigned int j=0 ; j<ny_p ; j++) {
+                (*Jx2D_s)(i,j) = 0.0;
+            }
         }
-    }
-    
-    // Current Jy^(p,d) to 0
-    for (unsigned int i=0 ; i<nx_p ; i++) {
-        for (unsigned int j=0 ; j<ny_d ; j++) {
-            (*Jy2D_s)(i,j) = 0.0;
+        
+        // Current Jy^(p,d) to 0
+        #pragma omp for schedule(static)
+        for (unsigned int i=0 ; i<nx_p ; i++) {
+            for (unsigned int j=0 ; j<ny_d ; j++) {
+                (*Jy2D_s)(i,j) = 0.0;
+            }
         }
-    }
-    
-    // Current Jz^(p,p) to 0
-    for (unsigned int i=0 ; i<nx_p ; i++) {
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            (*Jz2D_s)(i,j) = 0.0;
+        
+        // Current Jz^(p,p) to 0
+        #pragma omp for schedule(static)
+        for (unsigned int i=0 ; i<nx_p ; i++) {
+            for (unsigned int j=0 ; j<ny_p ; j++) {
+                (*Jz2D_s)(i,j) = 0.0;
+            }
         }
     }
 }//END restartRhoJs

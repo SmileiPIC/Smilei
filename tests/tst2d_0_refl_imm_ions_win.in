@@ -27,7 +27,7 @@ bc_em_type_long = silver-muller
 bc_em_type_trans = periodic
 
 
-res_space_win_x=200
+nspace_win_x=200
 
 # RANDOM seed 
 # this is used to randomize the random number generator

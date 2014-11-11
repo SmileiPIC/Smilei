@@ -33,6 +33,8 @@ class SimWindow {
 
     //! Return total length the window has moved
     double getXmoved() {return x_moved;}
+    //! Return total number of cell of the window
+    double getRes_space_win_x() {return res_space_win_x_;}
     //! Set total length the window has moved (restart case)
     void   setXmoved(double new_val) {x_moved = new_val;}
 
@@ -42,7 +44,7 @@ class SimWindow {
 
  private:
     //! Number of points of the window
-    int res_space_win_x_;
+    int nspace_win_x_;
     //! Store locally params.cell_length[0], window slides only in x
     double cell_length_x_;
     //! Total length the window has moved along x up to now.

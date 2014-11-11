@@ -2,7 +2,6 @@
 
   @brief LaserParams.h is the class that hold the laser parameters and can read from a file the namelist
 
-  @author tommaso vinci
   @date 2013-02-15
 */
 

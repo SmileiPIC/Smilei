@@ -10,7 +10,7 @@ using namespace std;
 
 SimWindow::SimWindow(PicParams& params)
 {
-    res_space_win_x_ = params.res_space_win_x;
+    nspace_win_x_ = params.nspace_win_x;
     cell_length_x_   = params.cell_length[0];
     x_moved = 0.;      //The window has not moved at t=0. Warning: not true anymore for restarts.
     vx_win_ = params.vx_win; 
@@ -51,7 +51,7 @@ void SimWindow::operate(vector<Species*> vecSpecies, ElectroMagn* EMfields, Inte
 
 bool SimWindow::isMoving(double time_dual)
 {
-    return ( (res_space_win_x_) && ((time_dual - t_move_win_)*vx_win_ > x_moved) );
+    return ( (nspace_win_x_) && ((time_dual - t_move_win_)*vx_win_ > x_moved) );
 }
 
 void SimWindow::setOperators(vector<Species*> vecSpecies, Interpolator* Interp, Projector* Proj, SmileiMPI* smpi)

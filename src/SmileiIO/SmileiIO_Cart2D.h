@@ -2,7 +2,6 @@
  * SmileIO_Cart2D.h
  *
  *  Created on: 3 juil. 2013
- *      Author: jderouil
  */
 #ifndef SMILEIO_CART2D_H
 #define SMILEIO_CART2D_H
