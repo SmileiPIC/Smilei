@@ -92,7 +92,7 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
     
     for (int iDim=0 ; iDim<ndims_ ; iDim++) {
         MPI_Cart_shift( SMILEI_COMM_1D, iDim, 1, &(neighbor_[iDim][0]), &(neighbor_[iDim][1]) );
-        PMESSAGE(3, smilei_rk, "Neighbors of process in direction " << iDim << " : " << neighbor_[iDim][0] << " ; " << neighbor_[iDim][1] << " Null :" << MPI_PROC_NULL );
+        DEBUG(3, smilei_rk, "Neighbors of process in direction " << iDim << " : " << neighbor_[iDim][0] << " ; " << neighbor_[iDim][1] << " Null :" << MPI_PROC_NULL );
     }
     
     
@@ -138,7 +138,7 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
         
     }
     
-    PMESSAGE(3, smilei_rk, "n_space = " << params.n_space[0] );
+    DEBUG(3, smilei_rk, "n_space = " << params.n_space[0] );
     
     
     // -------------------------------------------------------

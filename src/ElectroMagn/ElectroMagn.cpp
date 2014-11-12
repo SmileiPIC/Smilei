@@ -107,6 +107,22 @@ ElectroMagn::~ElectroMagn()
     delete Jz_;
     delete rho_;
 
+    if (Ex_avg!=NULL) {
+        delete Ex_avg;
+        delete Ey_avg;
+        delete Ez_avg;
+        delete Bx_avg;
+        delete By_avg;
+        delete Bz_avg;
+    }
+
+    for (unsigned int ispec=0; ispec<n_species; ispec++) {
+      delete Jx_s[ispec];
+      delete Jy_s[ispec];
+      delete Jz_s[ispec];
+      delete rho_s[ispec];
+    }
+  
     int nBC = emBoundCond.size();
     for ( int i=0 ; i<nBC ;i++ )
       if (emBoundCond[i]!=NULL) delete emBoundCond[i];
@@ -232,6 +248,17 @@ void ElectroMagn::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
     
     smpi->exchangeBm( this, shift );
 
+    if (Ex_avg!=NULL) {
+        Ex_avg->shift_x(shift);
+        Ey_avg->shift_x(shift);
+        Ez_avg->shift_x(shift);
+        Bx_avg->shift_x(shift);
+        By_avg->shift_x(shift);
+        Bz_avg->shift_x(shift);
+        smpi->exchangeAvg( this );
+    }
+
+    
     //Here you might want to apply some new boundary conditions on the +x boundary. For the moment, all fields are set to 0.
 }
 

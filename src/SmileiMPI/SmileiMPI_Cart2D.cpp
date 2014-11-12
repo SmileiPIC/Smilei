@@ -124,7 +124,7 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
     // Force configuration of MPI domain decomposition
     //number_of_procs[0] = 1;
     //number_of_procs[1] = 16;
-    MESSAGE("Domain decomposition : " << smilei_sz << " = " << number_of_procs[0] << " x " << number_of_procs[1]);
+    MESSAGE("MPI Domain decomposition : " << smilei_sz << " = " << number_of_procs[0] << " x " << number_of_procs[1]);
     MESSAGE("Boundary conditions in x- & y-directions: "<< params.bc_em_type_long << ", " << params.bc_em_type_trans);
             
     // Geometry periodic in x
@@ -145,7 +145,7 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
     
     for (int iDim=0 ; iDim<ndims_ ; iDim++) {
         MPI_Cart_shift( SMILEI_COMM_2D, iDim, 1, &(neighbor_[iDim][0]), &(neighbor_[iDim][1]) );
-        PMESSAGE(3,smilei_rk,"Neighbors of process in direction " << iDim << " : " << neighbor_[iDim][0] << " - " << neighbor_[iDim][1]  );
+        DEBUG(3,smilei_rk,"Neighbors of process in direction " << iDim << " : " << neighbor_[iDim][0] << " - " << neighbor_[iDim][1]  );
     }
     
     

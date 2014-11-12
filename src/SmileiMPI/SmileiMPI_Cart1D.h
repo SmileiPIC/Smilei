@@ -59,11 +59,12 @@ public:
 
     //! Identify western MPI process, for boundary condition
     inline bool isWestern() {
-        return (coords_[0]==0);
+        return ((coords_[0]==0)&&(periods_[0]==0));
+
     }
     //! Identify eastern MPI process, for boundary condition
     inline bool isEastern() {
-        return (coords_[0]==number_of_procs[0]-1);
+        return ((coords_[0]==number_of_procs[0]-1)&&(periods_[0]==0));
     }
     //! Identify corner MPI ranks (1D, 2 sides) 
     int extrem_ranks[1][2];

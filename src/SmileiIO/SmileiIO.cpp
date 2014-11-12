@@ -93,7 +93,9 @@ stop_file_seen_since_last_check(false)
     hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
     H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, info);
     global_file_id_    = H5Fcreate( "Fields.h5",     H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
-    global_file_id_avg = H5Fcreate( "Fields_avg.h5", H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+    global_file_id_avg = 0;
+    if  (diagParams.ntime_step_avg!=0)
+        global_file_id_avg = H5Fcreate( "Fields_avg.h5", H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
     H5Pclose(plist_id);
 	
     //
@@ -142,7 +144,8 @@ SmileiIO::~SmileiIO()
     H5Fclose( global_file_id_ );
     
     // Management of global IO file
-    H5Fclose( global_file_id_avg );
+    if (global_file_id_avg != 0)
+        H5Fclose( global_file_id_avg );
 	
 #ifdef _IO_PARTICLE
     H5Sclose(partMemSpace);
@@ -310,12 +313,14 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
     dumpFieldsPerProc(fid, EMfields->Bx_);
     dumpFieldsPerProc(fid, EMfields->By_);
     dumpFieldsPerProc(fid, EMfields->Bz_);
-    dumpFieldsPerProc(fid, EMfields->Ex_avg);
-    dumpFieldsPerProc(fid, EMfields->Ey_avg);
-    dumpFieldsPerProc(fid, EMfields->Ez_avg);
-    dumpFieldsPerProc(fid, EMfields->Bx_avg);
-    dumpFieldsPerProc(fid, EMfields->By_avg);
-    dumpFieldsPerProc(fid, EMfields->Bz_avg);
+    if (EMfields->Ex_avg!=NULL) {
+        dumpFieldsPerProc(fid, EMfields->Ex_avg);
+        dumpFieldsPerProc(fid, EMfields->Ey_avg);
+        dumpFieldsPerProc(fid, EMfields->Ez_avg);
+        dumpFieldsPerProc(fid, EMfields->Bx_avg);
+        dumpFieldsPerProc(fid, EMfields->By_avg);
+        dumpFieldsPerProc(fid, EMfields->Bz_avg);
+    }
 	
     H5Fflush( fid, H5F_SCOPE_GLOBAL );
 	
@@ -475,12 +480,14 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
     restartFieldsPerProc(fid, EMfields->Bx_);
     restartFieldsPerProc(fid, EMfields->By_);
     restartFieldsPerProc(fid, EMfields->Bz_);
-    restartFieldsPerProc(fid, EMfields->Ex_avg);
-    restartFieldsPerProc(fid, EMfields->Ey_avg);
-    restartFieldsPerProc(fid, EMfields->Ez_avg);
-    restartFieldsPerProc(fid, EMfields->Bx_avg);
-    restartFieldsPerProc(fid, EMfields->By_avg);
-    restartFieldsPerProc(fid, EMfields->Bz_avg);
+    if (EMfields->Ex_avg!=NULL) {
+        restartFieldsPerProc(fid, EMfields->Ex_avg);
+        restartFieldsPerProc(fid, EMfields->Ey_avg);
+        restartFieldsPerProc(fid, EMfields->Ez_avg);
+        restartFieldsPerProc(fid, EMfields->Bx_avg);
+        restartFieldsPerProc(fid, EMfields->By_avg);
+        restartFieldsPerProc(fid, EMfields->Bz_avg);
+    }
 	
 	aid = H5Aopen(fid, "species", H5T_NATIVE_UINT);
 	unsigned int vecSpeciesSize=0;

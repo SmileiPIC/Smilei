@@ -102,6 +102,17 @@ int main (int argc, char* argv[])
     MESSAGE("----------------------------------------------");
     SmileiMPI* smpi = SmileiMPIFactory::create(params, smpiData);
     SmileiIO*  sio  = SmileiIOFactory::create(params, diag_params, smpi);
+#ifdef _OMP
+    int nthds(0);
+#pragma omp parallel shared(nthds)
+    {
+        nthds = omp_get_num_threads();
+    }
+    if (smpi->isMaster())
+        MESSAGE("\tOpenMP : Number of thread per MPI process : " << nthds );
+#else
+    if (smpi->isMaster()) MESSAGE("\tOpenMP : Disabled");
+#endif
     
     
     // -------------------------------------------
@@ -191,7 +202,8 @@ int main (int argc, char* argv[])
         // temporary EM fields dump in Fields.h5
         sio->writeAllFieldsSingleFileTime( EMfields, 0 );
         // temporary EM fields dump in Fields_avg.h5
-        sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
+        if (diag_params.ntime_step_avg!=0)
+            sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
         // temporary particle dump at time 0
         sio->writePlasma( vecSpecies, 0., smpi );
     }
@@ -312,8 +324,9 @@ int main (int argc, char* argv[])
             sio->writeAllFieldsSingleFileTime( EMfields, itime );
         
         // temporary EM fields dump in Fields.h5
-        if  ((diag_params.avgfieldDump_every != 0) && (itime % diag_params.avgfieldDump_every == 0))
-            sio->writeAvgFieldsSingleFileTime( EMfields, itime );
+        if  (diag_params.ntime_step_avg!=0)
+            if ((diag_params.avgfieldDump_every != 0) && (itime % diag_params.avgfieldDump_every == 0))
+                sio->writeAvgFieldsSingleFileTime( EMfields, itime );
         
 #ifdef _IO_PARTICLE
         // temporary particles dump (1 HDF5 file per process)
@@ -361,19 +374,18 @@ int main (int argc, char* argv[])
     //                      Temporary validation diagnostics
     // ------------------------------------------------------------------
     
-//    // temporary EM fields dump in Fields.h5
-//    if  ( (diag_params.fieldDump_every != 0) && (params.n_time % diag_params.fieldDump_every != 0) )
-//        sio->writeAllFieldsSingleFileTime( EMfields, params.n_time );
-//    
-//    // temporary time-averaged EM fields dump in Fields_avg.h5
-//    if  ( (diag_params.avgfieldDump_every != 0) && (params.n_time % diag_params.avgfieldDump_every != 0) )
-//        sio->writeAvgFieldsSingleFileTime( EMfields, params.n_time );
-//    
-//#ifdef _IO_PARTICLE
-//    // temporary particles dump (1 HDF5 file per process)
-//    if  ( (diag_params.particleDump_every != 0) && (params.n_time % diag_params.particleDump_every != 0) )
-//        sio->writePlasma( vecSpecies, time_dual, smpi );
-//#endif    
+    // temporary EM fields dump in Fields.h5
+    if  ( (diag_params.fieldDump_every != 0) && (params.n_time % diag_params.fieldDump_every != 0) )
+        sio->writeAllFieldsSingleFileTime( EMfields, params.n_time );
+    // temporary time-averaged EM fields dump in Fields_avg.h5
+    if  (diag_params.ntime_step_avg!=0)
+        if  ( (diag_params.avgfieldDump_every != 0) && (params.n_time % diag_params.avgfieldDump_every != 0) )
+            sio->writeAvgFieldsSingleFileTime( EMfields, params.n_time );
+#ifdef _IO_PARTICLE
+    // temporary particles dump (1 HDF5 file per process)
+    if  ( (diag_params.particleDump_every != 0) && (params.n_time % diag_params.particleDump_every != 0) )
+        sio->writePlasma( vecSpecies, time_dual, smpi );
+#endif    
 
     // ------------------------------
     //  Cleanup & End the simulation

@@ -60,6 +60,9 @@ public:
     void exchangeB( ElectroMagn* EMfields );
     //! Exchange all centered magnectic fields on borders
     void exchangeBm( ElectroMagn* EMfields );
+
+    void exchangeAvg( ElectroMagn* EMfields );
+
     //! Exchange clrw columns of electric fields towards the west
     void exchangeE( ElectroMagn* EMfields, int clrw );
     //! Exchange clrw columns of magnetic field towards the west
@@ -67,8 +70,7 @@ public:
     //! Exchange clrw columns of centered magnetic field towards the west
     void exchangeBm( ElectroMagn* EMfields, int clrw );
 
-    //! Sum rho on the shared domain between processors
-    //! 2 x oversize + 1 ( + 1 if direction is dual )
+    //! Sum rho and densities on 2 x oversize[]
     void sumRho( ElectroMagn* EMfields );
     //! Sum rho and all J on the shared domain between processors
     //! 2 x oversize + 1 ( + 1 if direction is dual )

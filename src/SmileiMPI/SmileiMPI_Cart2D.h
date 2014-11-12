@@ -56,19 +56,19 @@ public:
 
     //! Identify western MPI process, for boundary condition
     inline bool isWestern() {
-        return (coords_[0]==0);
+        return ((coords_[0]==0)&&(periods_[0]==0));
     }
     //! Identify eastern MPI process, for boundary condition
     inline bool isEastern() {
-        return (coords_[0]==number_of_procs[0]-1);
+        return ((coords_[0]==number_of_procs[0]-1)&&(periods_[0]==0));
     }
     //! Identify southern MPI process, for boundary condition
     inline bool isSouthern() {
-        return (coords_[1]==0);
+        return ((coords_[1]==0)&&(periods_[1]==0));
     }
     //! Identify northern MPI process, for boundary condition
     inline bool isNorthern() {
-        return (coords_[1]==number_of_procs[1]-1);
+        return ((coords_[1]==number_of_procs[1]-1)&&(periods_[1]==0));
     }
 
     //! Identify corner MPI ranks (2D, 2 sides) 

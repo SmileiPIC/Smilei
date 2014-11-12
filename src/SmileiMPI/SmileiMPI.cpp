@@ -164,3 +164,12 @@ void SmileiMPI::exchangeBm( ElectroMagn* EMfields, int clrw )
 
 }
 
+void SmileiMPI::exchangeAvg( ElectroMagn* EMfields )
+{
+    exchangeField( EMfields->Ex_avg );
+    exchangeField( EMfields->Ey_avg );
+    exchangeField( EMfields->Ez_avg );
+    exchangeField( EMfields->Bx_avg );
+    exchangeField( EMfields->By_avg );
+    exchangeField( EMfields->Bz_avg );
+}
