@@ -199,7 +199,7 @@ void Species::initPosition(unsigned int np, unsigned int iPart, unsigned int *in
 	    for (unsigned  i=0; i<ndim ; i++)
 		{
 		    if (initialization_type == "regular") {
-                particles.position(i,p)=indexes[i]*cell_length[i]+(p-iPart)*cell_length[i]/np;
+                particles.position(i,p)=indexes[i]*cell_length[i]+(p-iPart+0.5)*cell_length[i]/np;
 		    } else if (initialization_type == "cold" || initialization_type == "maxwell-juettner") {
                 particles.position(i,p)=(indexes[i]+((double)rand() / RAND_MAX))*cell_length[i];
 		    }
@@ -520,14 +520,14 @@ void Species::sort_part()
         p1 = bmax[bin]-1;
         //If first particles change bin, they do not need to be swapped.
         while (p1 == bmax[bin]-1 && p1 >= bmin[bin]) {
-            if (particles.position(0,p1) > limit ) {
+            if (particles.position(0,p1) >= limit ) {
                 bmax[bin]--;
             }
             p1--;
         }
         //         Now particles have to be swapped
         for( p2 = p1 ; p2 >= bmin[bin] ; p2-- ) { //Loop on the bin's particles.
-            if (particles.position(0,p2) > limit ) {
+            if (particles.position(0,p2) >= limit ) {
                 //This particle goes up one bin.
                 particles.swap_part(p2,bmax[bin]-1);
                 bmax[bin]--;

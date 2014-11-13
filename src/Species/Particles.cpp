@@ -421,7 +421,7 @@ bool Particles::is_part_in_domain(int ipart, SmileiMPI* smpi)
 {
     for (unsigned int i=0; i<Position.size(); i++) {
         if (Position[i][ipart] < smpi->getDomainLocalMin(i) ) return false;
-        if (Position[i][ipart] > smpi->getDomainLocalMax(i) ) return false;
+        if (Position[i][ipart] >= smpi->getDomainLocalMax(i) ) return false;
     }
     return true;
 }
