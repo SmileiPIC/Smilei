@@ -199,7 +199,7 @@ void Species::initPosition(unsigned int np, unsigned int iPart, unsigned int *in
 	    for (unsigned  i=0; i<ndim ; i++)
 		{
 		    if (initialization_type == "regular") {
-                particles.position(i,p)=indexes[i]*cell_length[i]+(p-iPart)*cell_length[i]/np;
+                particles.position(i,p)=indexes[i]*cell_length[i]+(p-iPart+0.5)*cell_length[i]/np;
 		    } else if (initialization_type == "cold" || initialization_type == "maxwell-juettner") {
                 particles.position(i,p)=(indexes[i]+((double)rand() / RAND_MAX))*cell_length[i];
 		    }
