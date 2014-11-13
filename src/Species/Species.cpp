@@ -520,14 +520,14 @@ void Species::sort_part()
         p1 = bmax[bin]-1;
         //If first particles change bin, they do not need to be swapped.
         while (p1 == bmax[bin]-1 && p1 >= bmin[bin]) {
-            if (particles.position(0,p1) > limit ) {
+            if (particles.position(0,p1) >= limit ) {
                 bmax[bin]--;
             }
             p1--;
         }
         //         Now particles have to be swapped
         for( p2 = p1 ; p2 >= bmin[bin] ; p2-- ) { //Loop on the bin's particles.
-            if (particles.position(0,p2) > limit ) {
+            if (particles.position(0,p2) >= limit ) {
                 //This particle goes up one bin.
                 particles.swap_part(p2,bmax[bin]-1);
                 bmax[bin]--;
