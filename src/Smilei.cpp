@@ -254,8 +254,8 @@ int main (int argc, char* argv[])
             MESSAGE(1,"t = "          << setw(7) << setprecision(2)   << time_dual/params.conv_fac
                     << "   it = "       << setw(log10(params.n_time)+1) << itime  << "/" << params.n_time
                     << "   sec = "      << setw(7) << setprecision(2)   << timer[0].getTime()
-                    << "   E = "        << setw(7) << setprecision(6)   << Diags->getScalar("Etot")
-                    << "   E_bal(%) = " << setw(6) << setprecision(2)   << 100.0*Diags->getScalar("Ebal_norm") );
+                    << "   E = "        << std::scientific << setprecision(4)<< Diags->getScalar("Etot")
+                    << "   E_bal(%) = " << setw(6) << std::fixed << setprecision(2)   << 100.0*Diags->getScalar("Ebal_norm") );
 
         
         
