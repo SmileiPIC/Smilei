@@ -1,83 +1,87 @@
 # SIMULATION PARAMETERS
-# dim: Geometry of the simulation
-#      1d3v = cartesian grid with 1d in space + 3d in velocity
-#      2d3v = cartesian grid with 2d in space + 3d in velocity
-#      3d3v = cartesian grid with 3d in space + 3d in velocity
-#      2drz = cylindrical (r,z) grid with 3d3v particles
+# dim: Geometry of the simulation.
+#      1d3v = cartesian grid with 1d in space + 3d in velocity.
+#      2d3v = cartesian grid with 2d in space + 3d in velocity.
+#      3d3v = cartesian grid with 3d in space + 3d in velocity.
+#      2drz = cylindrical (r,z) grid with 3d3v particles.
 #
 
-sim_units = wavelength
+sim_units = normalized
 dim = 2d3v
 
 # order of interpolation
 interpolation_order = 2
 
 # SIMULATION TIME
-# res_time: temporal resolution (integer = number of time−steps within one normalization period)
-# sim_time: duration of the simulation in units of the normalization period 
-#
-#res_time = 52
-timestep = 0.0197352129
-sim_time = 80
+# timestep: time step of a single iteration in 1/w0.
+# sim_time: duration of the simulation in 1/w0 .
+
+timestep = 0.124
+sim_time = 1000
 
 # SIMULATION BOX : for all space directions (use vector)
-# res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
-# sim_length: length of the simulation in units of the normalization wavelength 
-#
-#res_space  = 51  4  
-cell_length  = 0.019894367 0.5 #0.2387324  
-sim_length = 6000.  30.  
-#sim_length = 135  183.  
+# cell_length: length of one cell in c/w0.
+# sim_length: Total length of the simulation in c/w0 .
+
+cell_length  = 0.125 3. 
+sim_length = 600000.  189.  
 bc_em_type_long = silver-muller
 bc_em_type_trans = silver-muller
 
+#Topology:
+#number_of_procs: Number of MPI processes in each direction.
+#clrw: width of a cluster in number of cell. Warning: clrw must divide nspace_win_x.
 number_of_procs = 2 2 
-
-# PLASMA GEOMETRY
-# plasma_geometry: string defining the plasma geometry
-# ***_length: characteristic length for a given geometry
-#
-
-nspace_win_x = 864
-t_move_win = 11.0
-vx_win = 0.9997
 clrw = 6
 
+# PLASMA GEOMETRY
+# plasma_geometry: string defining the plasma geometry.
+# ***_length: characteristic length for a given geometry.
+#
+
+#Moving window
+#n_space_win_x: Number of cell in the total computation domain.
+#t_move_win: Starting time of the moving window in 1/w0.
+#vx_win: Velocity of the moving window in c.
+nspace_win_x = 864
+t_move_win = 100.
+vx_win = 0.9997
+
 # RANDOM seed 
-# this is used to randomize the random number generator
+# this is used to randomize the random number generator.
 random_seed = 0
 
 # DEFINE ALL SPECIES
 
 # species_type: ion, electron, positron, test ...
 # initialization_type: regular, cold or (isotrop) Maxwell−Juettner distribution# n_part_per_cell: number of particle−per−cell
-# c_part_max: factor on the memory reserved for the total number of particles
-# mass: particle mass in units of the electron mass
-# charge: particle charge in units of e (−e is the electron charge)
-# density: species density in units of the normalization density
-# mean_velocity: mean velocity of the species (3D vector) in units of the light velocity
-# temperature: temperature of the species in units of m_e c^2
-# dynamics_type: species type of dynamics = norm or rrLL
-# time_frozen: time during which the particles are frozen in units of the normalization time
-# radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
-#
+# c_part_max: factor on the memory reserved for the total number of particles.
+# mass: particle mass in units of the electron mass.
+# charge: particle charge in units of e (−e is the electron charge).
+# density: species density in units of the normalization density.
+# mean_velocity: mean velocity of the species (3D vector) in units of the light velocity.
+# temperature: temperature of the species in units of m_e c^2.
+# dynamics_type: species type of dynamics = norm or rrLL.
+# time_frozen: time during which the particles are frozen in units of the normalization time.
+# radiating: boolean, if true incoherent radiation are calculated using the Larmor formula .
+#dens_length_x: Length of the plateau - Length of left slope - Length of right slope.
+#dens_length_y: Length of the plateau - Length of left slope - Length of right slope.
+
 species
 	species_type = proton
 	initialization_type = regular
 	ionization_model = none
         species_geometry = trapezoidal
         vacuum_length   = 0.0  0.0 
-        #dens_length_x: Length of the plateau - Length of left slope - Length of right slope
         dens_length_x = 6000 20  
-        #dens_length_y: Length of the plateau - Length of left slope - Length of right slope
         dens_length_y = 2000 0 
-	n_part_per_cell = 5 
+	n_part_per_cell = 10 
 	c_part_max = 1.0
 	mass = 1836.0
 	charge = 1.0
 	density = 0.000494
 	mean_velocity = 0.0 0.0 0.0
-	temperature = 0.001
+	temperature = 0.0
 	dynamics_type = norm
 	time_frozen = 100000.
 	radiating = false
@@ -86,21 +90,19 @@ species
 end
 
 species 
-	species_type = electron1
+	species_type = electron
 	initialization_type = regular
         species_geometry = trapezoidal
         vacuum_length   = 0.0  0.0 
-        #dens_length_x: Length of the plateau - Length of left slope - Length of right slope
         dens_length_x = 2000 20 
-        #dens_length_y: Length of the plateau - Length of left slope - Length of right slope
         dens_length_y = 2000 0 
-	n_part_per_cell = 5
+	n_part_per_cell = 10
 	c_part_max = 1.0
 	mass = 1.0
 	charge = -1.0
 	density = 0.000494
 	mean_velocity = 0.0 0.0 0.0
-	temperature = 0.001
+	temperature = 0.0
 	dynamics_type = norm	
 	time_frozen = 0.0
 	radiating = false
@@ -113,11 +115,11 @@ end
 # ----------------
 #
 # for each laser define:
-# a0: maximum amplitude of the laser electric field (in units of the normalization field)
-# angle: angle (in degree) at which the laser enters the simulation box
-# delta: polarization parameter, (0:y) (1:z) (0.707106781:circ)
-# time_profile: string defining the time profile
-# double_params: vector of real parameters used by the different time-profiles
+# a0: maximum amplitude of the laser electric field (in units of the normalization field).
+# angle: angle (in degree) at which the laser enters the simulation box.
+# delta: polarization parameter, (0:y) (1:z) (0.707106781:circ).
+# time_profile: string defining the time profile.
+# double_params: vector of real parameters used by the different time-profiles.
 #
 laser
 	a0=2.0
@@ -126,10 +128,9 @@ laser
 	delta=0.0              
 	time_profile =  gaussian
         transv_profile = gaussian
-	double_params = 1.0 0.0 0.0 # gaussian:FWHM in intensity, plateau length, delay (same unit as sim_length)
-	#double_params = 50.0 0.0 # constant: Duration of the pulse, delay before pulse start.
-        int_params = 3 # Cut-off of the longitudinal gaussian in number of sigma
-        double_params_transv = 15. 5. # distance from axis, transverse FWHM in intensity (same unit as sim_length)
+	double_params = 7.0 0.0 0.0 # gaussian:FWHM in intensity, plateau length, delay (in c/w0 and w0)
+        int_params = 3 # Cut-off of the longitudinal gaussian in number of sigma.
+        double_params_transv = 94.5 30.8 # distance from axis, transverse FWHM in intensity (in c/w0)
         int_params_transv= 2 # order of the hyper gaussian
 end
 
@@ -138,10 +139,10 @@ end
 # ---------------------
 
 # print_every (on screen text output) 
-print_every = 1
+print_every = 10
 
 # every for field dump
-fieldDump_every = 1000
+fieldDump_every = 500
 
 # every for particle dump
 particleDump_every = 10000000
@@ -154,18 +155,8 @@ avgfieldDump_every = 10000000
 # every = number of time-steps between each output
 #
 diagnostic scalar
-	every = 6000000
+	every = 100
 end
-
-# PROB 0D
-# every = number of time-steps between each output
-# x     = position of the different probes
-#
-#diagnostic probe0d
-#	every = 1
-#	x = 0.0  6.0   12.0	
-#	y = 2.5  2.5   2.5
-#end
 
 
 dump_step = 10000000
