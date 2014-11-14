@@ -262,3 +262,33 @@ void ElectroMagn::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
     //Here you might want to apply some new boundary conditions on the +x boundary. For the moment, all fields are set to 0.
 }
 
+bool ElectroMagn::isRhoNull(SmileiMPI* smpi)
+{
+    double norm2(0.);
+    double locnorm2(0.);
+
+    // rho_->isDual(i) = 0 for all i
+    // istart[i][0] & bufsize[i][0]
+
+    vector<unsigned int> iFieldStart(3,0), iFieldEnd(3,1), iFieldGlobalSize(3,1);
+    for (unsigned int i=0 ; i<rho_->isDual_.size() ; i++ ) {
+	iFieldStart[i] = istart[i][0];
+	iFieldEnd [i] = iFieldStart[i] + bufsize[i][0];
+	iFieldGlobalSize [i] = rho_->dims_[i];
+    }
+
+    for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
+	for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
+	    for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
+		unsigned int ii=k+ j*iFieldGlobalSize[2] +i*iFieldGlobalSize[1]*iFieldGlobalSize[2];
+		locnorm2 += (*rho_)(ii)*(*rho_)(ii);
+	    }
+	}
+    }
+
+    MPI_Reduce(&locnorm2, &norm2, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+    return (norm2<=0.);
+
+}
+

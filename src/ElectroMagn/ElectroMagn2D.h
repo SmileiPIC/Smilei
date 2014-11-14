@@ -75,7 +75,7 @@ public:
 
     //! compute Poynting on borders
     void computePoynting();
-        
+
 private:
     
     //! from smpi is west

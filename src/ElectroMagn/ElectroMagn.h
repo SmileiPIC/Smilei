@@ -171,6 +171,9 @@ public:
     //same as above but instantaneous
     std::vector<double> poynting_inst[2];
 
+    //! Check if norm of charge denisty is not null
+    bool isRhoNull(SmileiMPI* smpi);
+
 private:
     
     //! Vector of boundary-condition per side for the fields

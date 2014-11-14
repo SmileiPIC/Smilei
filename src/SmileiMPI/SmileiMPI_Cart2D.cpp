@@ -145,7 +145,7 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
     
     for (int iDim=0 ; iDim<ndims_ ; iDim++) {
         MPI_Cart_shift( SMILEI_COMM_2D, iDim, 1, &(neighbor_[iDim][0]), &(neighbor_[iDim][1]) );
-        DEBUG(3,smilei_rk,"Neighbors of process in direction " << iDim << " : " << neighbor_[iDim][0] << " - " << neighbor_[iDim][1]  );
+        //DEBUG(3,smilei_rk,"Neighbors of process in direction " << iDim << " : " << neighbor_[iDim][0] << " - " << neighbor_[iDim][1]  );
     }
     
     
@@ -193,7 +193,7 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
         
     }
     
-    DEBUG(10,"n_space / rank " << smilei_rk << " = " << params.n_space[0] << " " << params.n_space[1] );
+    //DEBUG(10,"n_space / rank " << smilei_rk << " = " << params.n_space[0] << " " << params.n_space[1] );
     
     extrem_ranks[0][0] = 0;
     int rank_min =  0;
