@@ -286,7 +286,7 @@ bool ElectroMagn::isRhoNull(SmileiMPI* smpi)
 	}
     }
 
-    MPI_Reduce(&locnorm2, &norm2, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Allreduce(&locnorm2, &norm2, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
     return (norm2<=0.);
 
