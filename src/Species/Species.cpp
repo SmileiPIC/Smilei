@@ -81,21 +81,18 @@ species_param(params.species_param[ispec])
     f_dim2 =  params.n_space[2] + 2 * oversize[2] +1;
     
     if (ndim == 1){
-        //b_dim0 =  2 + 2 * oversize[0]; <== If clrw == 1.
         b_dim0 =  (1 + clrw) + 2 * oversize[0];
         b_dim1 =  1;
         b_dim2 =  1;
         b_lastdim = b_dim0;
     }
     if (ndim == 2){
-        //b_dim0 =  2 + 2 * oversize[0]; // There is a primal number of bins. <== If clrw == 1.
         b_dim0 =  (1 + clrw) + 2 * oversize[0]; // There is a primal number of bins.
         b_dim1 =  f_dim1;
         b_dim2 =  1;
         b_lastdim = b_dim1;
     }
     if (ndim == 3){
-        //b_dim0 =  2 + 2 * oversize[0]; // There is a primal number of bins.
         b_dim0 =  (1 + clrw) + 2 * oversize[0]; // There is a primal number of bins.
         b_dim1 = f_dim1;
         b_dim2 = f_dim2;
@@ -109,10 +106,10 @@ species_param(params.species_param[ispec])
         unsigned int npart_effective=0;
         
         // Create particles in a space starting at cell_index
-        vector<int> cell_index(3,0);
+        vector<double> cell_index(3,0);
         for (unsigned int i=0 ; i<params.nDim_field ; i++) {
             if (cell_length[i]!=0)
-                cell_index[i] = round (smpi->getDomainLocalMin(i)/cell_length[i]);
+                cell_index[i] = smpi->getDomainLocalMin(i);
         }
         
         int starting_bin_idx = 0;
@@ -191,7 +188,7 @@ void Species::initCharge(PicParams* params, unsigned int ispec, unsigned int iPa
 //   - either using regular distribution in the mesh (regular)
 //   - or using uniform random distribution (for cold and maxwell-juettner distribution)
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::initPosition(unsigned int np, unsigned int iPart, unsigned int *indexes, unsigned int ndim,
+void Species::initPosition(unsigned int np, unsigned int iPart, double *indexes, unsigned int ndim,
                            std::vector<double> cell_length, string initialization_type)
 {
     for (unsigned  p= iPart; p<iPart+np; p++)
@@ -199,9 +196,9 @@ void Species::initPosition(unsigned int np, unsigned int iPart, unsigned int *in
 	    for (unsigned  i=0; i<ndim ; i++)
 		{
 		    if (initialization_type == "regular") {
-                particles.position(i,p)=indexes[i]*cell_length[i]+(p-iPart+0.5)*cell_length[i]/np;
+                            particles.position(i,p)=indexes[i]+(p-iPart+0.5)*cell_length[i]/np;
 		    } else if (initialization_type == "cold" || initialization_type == "maxwell-juettner") {
-                particles.position(i,p)=(indexes[i]+((double)rand() / RAND_MAX))*cell_length[i];
+                        particles.position(i,p)=indexes[i]+(((double)rand() / RAND_MAX))*cell_length[i];
 		    }
 		    particles.position_old(i,p) = particles.position(i,p);
 		}// i
@@ -512,10 +509,11 @@ void Species::sort_part()
     int p1,p2,bmin_init;
     unsigned int bin;
     double limit;
+
 	
     //Backward pass
 #pragma omp for schedule(runtime) 
-    for (bin=0; bin<bmin.size()-1; bin++) { //Loop on the bins. To be parallelized with openMP.
+    for (bin=0; bin<bmin.size()-1; bin++) { //Loop on the bins. 
         limit = min_loc + (bin+1)*cell_length[0]*clrw;
         p1 = bmax[bin]-1;
         //If first particles change bin, they do not need to be swapped.
@@ -536,7 +534,7 @@ void Species::sort_part()
     }
     //Forward pass + Rebracketting
 #pragma omp for schedule(runtime)
-    for (bin=1; bin<bmin.size(); bin++) { //Loop on the bins. To be parallelized with openMP.
+    for (bin=1; bin<bmin.size(); bin++) { //Loop on the bins. 
         limit = min_loc + bin*cell_length[0]*clrw;
         bmin_init = bmin[bin];
         p1 = bmin[bin];
@@ -563,7 +561,6 @@ void Species::sort_part()
         bmax[bin-1] += bmin[bin] - bmin_init;
         bmin[bin] = bmax[bin-1];
     }
-
 }
 
 void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi, PicParams& params)
@@ -603,14 +600,14 @@ void Species::defineNewCells(unsigned int shift, SmileiMPI *smpi, PicParams& par
 {
     // does a loop over all cells in the simulation
     // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
-    vector<int> cell_index(3,0);
+    vector<double> cell_index(3,0);
     for (unsigned int i=0 ; i<params.nDim_field ; i++) {
         if (cell_length[i]!=0) {
-            cell_index[i] = round (smpi->getDomainLocalMin(i)/cell_length[i]);
+            cell_index[i] = smpi->getDomainLocalMin(i);
         }
     }
     // cell_index[0] goes to end of the domain minus cell to create
-    cell_index[0] += params.n_space[0] - shift;
+    cell_index[0] = smpi->getDomainLocalMax(0) - shift*cell_length[0];
     
     // Next bin to create
     int new_bin_idx = bmin.size() - 1;
@@ -624,7 +621,7 @@ void Species::defineNewCells(unsigned int shift, SmileiMPI *smpi, PicParams& par
 }
 
 
-int Species::createParticles(vector<unsigned int> n_space_to_create, vector<int> cell_index, int new_bin_idx, PicParams& params  )
+int Species::createParticles(vector<unsigned int> n_space_to_create, vector<double> cell_index, int new_bin_idx, PicParams& params  )
 {
     // ---------------------------------------------------------
     // Calculate density and number of particles for the species
@@ -650,9 +647,9 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<int>
             for (unsigned int k=0; k<n_space_to_create[2]; k++) {
                 
                 vector<double> x_cell(3,0);
-                x_cell[0] = (cell_index[0]+i+0.5)*cell_length[0];
-                x_cell[1] = (cell_index[1]+j+0.5)*cell_length[1];
-                x_cell[2] = (cell_index[2]+k+0.5)*cell_length[2];
+                x_cell[0] = cell_index[0] + (i+0.5)*cell_length[0];
+                x_cell[1] = cell_index[1] + (j+0.5)*cell_length[1];
+                x_cell[2] = cell_index[2] + (k+0.5)*cell_length[2];
                 
                 // assign density its correct value in the cell
                 density(i,j,k) = species_param.density
@@ -726,17 +723,12 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<int>
     // Initialization of the particles properties
     // ------------------------------------------
     unsigned int iPart=n_existing_particles;
-    unsigned int *indexes=new unsigned int[params.nDim_particle];
+    double *indexes=new double[params.nDim_particle];
     double *temp=new double[3];
     double *vel=new double[3];
     
     // start a loop on all cells
     
-    // Rappel :
-    // int cell_index[0] = process_coord_x*(n_space_to_create[0]);
-    // int cell_index[1] = process_coord_y*(n_space_to_create[1]);
-    // int cell_index[2] = process_coord_z*(n_space_to_create[2]);
-    //
     //bmin[bin] point to begining of bin (first particle)
     //bmax[bin] point to end of bin (= bmin[bin+1])
     //if bmax = bmin, bin is empty of particle.
@@ -755,11 +747,11 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<int>
                     temp[2] = temperature[2](i,j,k);
                     vel[2]  = velocity[2](i,j,k);
                     
-                    indexes[0]=i+cell_index[0];
+                    indexes[0]=i*cell_length[0]+cell_index[0];
                     if (ndim > 1) {
-                        indexes[1]=j+cell_index[1];
+                        indexes[1]=j*cell_length[1]+cell_index[1];
                         if (ndim > 2) {
-                            indexes[2]=k+cell_index[2];
+                            indexes[2]=k*cell_length[2]+cell_index[2];
                         }//ndim > 2
                     }//ndim > 1
                     

@@ -58,7 +58,7 @@ public:
                           Projector* proj, SmileiMPI *smpi, PicParams &params, SimWindow* simWindow);
 
     //! Method used to initialize the Particle position in a given cell
-    void initPosition(unsigned int, unsigned int, unsigned int *, unsigned int, std::vector<double>, std::string);
+    void initPosition(unsigned int, unsigned int, double *, unsigned int, std::vector<double>, std::string);
 
     //! Method used to initialize the Particle 3d momentum in a given cell
     void initMomentum(unsigned int, unsigned int, double *, double *, std::string, std::vector<double>&);
@@ -153,7 +153,7 @@ private:
     Pusher* Push;
 
     //! Method to create new particles.
-    int  createParticles(std::vector<unsigned int> n_space_to_create, std::vector<int> cell_index, int new_bin_idx,  PicParams& param);
+    int  createParticles(std::vector<unsigned int> n_space_to_create, std::vector<double> cell_index, int new_bin_idx,  PicParams& param);
 
 };
 
