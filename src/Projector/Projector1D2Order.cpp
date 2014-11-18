@@ -51,7 +51,7 @@ void Projector1D2Order::operator() (ElectroMagn* EMfields, Particles &particles,
     Field1D* Jz1D  = static_cast<Field1D*>(EMfields->Jz_);
 
     // Declare local variables
-    unsigned int ipo, ip, iloc;
+    int ipo, ip, iloc;
     int ip_m_ipo;
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;
@@ -140,7 +140,7 @@ void Projector1D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Field* rho,
     Field1D* rho1D = static_cast<Field1D*>(rho);
 
     // Declare local variables
-    unsigned int ipo, ip, iloc;
+    int ipo, ip, iloc;
     int ip_m_ipo;
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;
@@ -259,7 +259,7 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
 {
     // The variable bin received is  number of bin * cluster width.
     // Declare local variables
-    int unsigned ipo, ip, iloc;
+    int ipo, ip, iloc;
     int ip_m_ipo;
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;

@@ -109,7 +109,7 @@ void Projector2D2Order::operator() (ElectroMagn* EMfields, Particles &particles,
 
     // locate the particle on the primal grid at former time-step & calculate coeff. S0
     xpn = particles.position_old(0, ipart) * dx_inv_;
-    unsigned int ipo = round(xpn);
+    int ipo = round(xpn);
     delta  = xpn - (double)ipo;
     delta2 = delta*delta;
     Sx0[1] = 0.5 * (delta2-delta+0.25);
@@ -117,7 +117,7 @@ void Projector2D2Order::operator() (ElectroMagn* EMfields, Particles &particles,
     Sx0[3] = 0.5 * (delta2+delta+0.25);
 
     ypn = particles.position_old(1, ipart) * dy_inv_;
-    unsigned int jpo = round(ypn);
+    int jpo = round(ypn);
     delta  = ypn - (double)jpo;
     delta2 = delta*delta;
     Sy0[1] = 0.5 * (delta2-delta+0.25);
@@ -127,8 +127,8 @@ void Projector2D2Order::operator() (ElectroMagn* EMfields, Particles &particles,
 
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
     xpn = particles.position(0, ipart) * dx_inv_;
-    unsigned int ip = round(xpn);
-    unsigned int ip_m_ipo = ip-ipo;
+    int ip = round(xpn);
+    int ip_m_ipo = ip-ipo;
     delta  = xpn - (double)ip;
     delta2 = delta*delta;
     Sx1[ip_m_ipo+1] = 0.5 * (delta2-delta+0.25);
@@ -136,8 +136,8 @@ void Projector2D2Order::operator() (ElectroMagn* EMfields, Particles &particles,
     Sx1[ip_m_ipo+3] = 0.5 * (delta2+delta+0.25);
 
     ypn = particles.position(1, ipart) * dy_inv_;
-    unsigned int jp = round(ypn);
-    unsigned int jp_m_jpo = jp-jpo;
+    int jp = round(ypn);
+    int jp_m_jpo = jp-jpo;
     delta  = ypn - (double)jp;
     delta2 = delta*delta;
     Sy1[jp_m_jpo+1] = 0.5 * (delta2-delta+0.25);
@@ -258,7 +258,7 @@ void Projector2D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Field* rho,
 
     // locate the particle on the primal grid at former time-step & calculate coeff. S0
     xpn = particles.position_old(0, ipart) * dx_inv_;
-    unsigned int ipo = round(xpn);
+    int ipo = round(xpn);
     delta  = xpn - (double)ipo;
     delta2 = delta*delta;
     Sx0[1] = 0.5 * (delta2-delta+0.25);
@@ -266,7 +266,7 @@ void Projector2D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Field* rho,
     Sx0[3] = 0.5 * (delta2+delta+0.25);
 
     ypn = particles.position_old(1, ipart) * dy_inv_;
-    unsigned int jpo = round(ypn);
+    int jpo = round(ypn);
     delta  = ypn - (double)jpo;
     delta2 = delta*delta;
     Sy0[1] = 0.5 * (delta2-delta+0.25);
@@ -276,8 +276,8 @@ void Projector2D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Field* rho,
 
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
     xpn = particles.position(0, ipart) * dx_inv_;
-    unsigned int ip = round(xpn);
-    unsigned int ip_m_ipo = ip-ipo;
+    int ip = round(xpn);
+    int ip_m_ipo = ip-ipo;
     delta  = xpn - (double)ip;
     delta2 = delta*delta;
     Sx1[ip_m_ipo+1] = 0.5 * (delta2-delta+0.25);
@@ -285,8 +285,8 @@ void Projector2D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Field* rho,
     Sx1[ip_m_ipo+3] = 0.5 * (delta2+delta+0.25);
 
     ypn = particles.position(1, ipart) * dy_inv_;
-    unsigned int jp = round(ypn);
-    unsigned int jp_m_jpo = jp-jpo;
+    int jp = round(ypn);
+    int jp_m_jpo = jp-jpo;
     delta  = ypn - (double)jp;
     delta2 = delta*delta;
     Sy1[jp_m_jpo+1] = 0.5 * (delta2-delta+0.25);
@@ -365,7 +365,7 @@ void Projector2D2Order::operator() (Field* rho, Particles &particles, int ipart)
 
     //Locate particle on the primal grid & calculate the projection coefficients
     double       xpn = particles.position(0, ipart) * dx_inv_;  // normalized distance to the first node
-    unsigned int ic  = round(xpn);                   // index of the central node
+    int ic  = round(xpn);                   // index of the central node
     delta  = xpn - (double)ic;                       // normalized distance to the nearest grid point
     delta2 = delta*delta;                            // square of the normalized distance to the nearest grid point
     Sx[0]  = 0.5 * (delta2-delta+0.25);
@@ -373,7 +373,7 @@ void Projector2D2Order::operator() (Field* rho, Particles &particles, int ipart)
     Sx[2]  = 0.5 * (delta2+delta+0.25);
 
     double       ypn = particles.position(1, ipart) * dy_inv_;  // normalized distance to the first node
-    unsigned int jc   = round(ypn);                  // index of the central node
+    int jc   = round(ypn);                  // index of the central node
     delta  = ypn - (double)jc;                       // normalized distance to the nearest grid point
     delta2 = delta*delta;                            // square of the normalized distance to the nearest grid point
     Sy[0]  = 0.5 * (delta2-delta+0.25);
@@ -382,8 +382,8 @@ void Projector2D2Order::operator() (Field* rho, Particles &particles, int ipart)
 
     //cout << "Pos = " << particles.position(0, ipart) << " - i global = " << i << " - i local = " << i-index_domain_begin <<endl;
 
-    unsigned int i = ic-i_domain_begin-1; // index of first point for projection in x
-    unsigned int j = jc-j_domain_begin-1; // index of first point for projection in y
+    int i = ic-i_domain_begin-1; // index of first point for projection in x
+    int j = jc-j_domain_begin-1; // index of first point for projection in y
 
     // 2nd order projection for the total charge density
     for (unsigned int iloc=0 ; iloc<3 ; iloc++) {
@@ -405,7 +405,7 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     // Variable declaration & initialization
     // -------------------------------------
 
-    unsigned int iloc, jloc;
+    int iloc, jloc;
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double crx_p = charge_weight*dx_ov_dt;
@@ -446,7 +446,7 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
 
     // locate the particle on the primal grid at former time-step & calculate coeff. S0
     xpn = particles.position_old(0, ipart) * dx_inv_;
-    unsigned int ipo = round(xpn);
+    int ipo = round(xpn);
     delta  = xpn - (double)ipo;
     delta2 = delta*delta;
     Sx0[1] = 0.5 * (delta2-delta+0.25);
@@ -454,7 +454,7 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     Sx0[3] = 0.5 * (delta2+delta+0.25);
 
     ypn = particles.position_old(1, ipart) * dy_inv_;
-    unsigned int jpo = round(ypn);
+    int jpo = round(ypn);
     delta  = ypn - (double)jpo;
     delta2 = delta*delta;
     Sy0[1] = 0.5 * (delta2-delta+0.25);
@@ -464,8 +464,8 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
 
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
     xpn = particles.position(0, ipart) * dx_inv_;
-    unsigned int ip = round(xpn);
-    unsigned int ip_m_ipo = ip-ipo;
+    int ip = round(xpn);
+    int ip_m_ipo = ip-ipo;
     delta  = xpn - (double)ip;
     delta2 = delta*delta;
     Sx1[ip_m_ipo+1] = 0.5 * (delta2-delta+0.25);
@@ -473,8 +473,8 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     Sx1[ip_m_ipo+3] = 0.5 * (delta2+delta+0.25);
 
     ypn = particles.position(1, ipart) * dy_inv_;
-    unsigned int jp = round(ypn);
-    unsigned int jp_m_jpo = jp-jpo;
+    int jp = round(ypn);
+    int jp_m_jpo = jp-jpo;
     delta  = ypn - (double)jp;
     delta2 = delta*delta;
     Sy1[jp_m_jpo+1] = 0.5 * (delta2-delta+0.25);

@@ -75,7 +75,7 @@ void Projector1D4Order::operator() (Field* Jx, Field* Jy, Field* Jz, Field* rho,
     Field1D* rho1D = static_cast<Field1D*>(rho);
 
     // Declare local variables
-    int unsigned ipo, ip, iloc;
+    int ipo, ip, iloc;
     int ip_m_ipo;
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xipo3, xj_m_xipo4, xj_m_xip, xj_m_xip2, xj_m_xip3, xj_m_xip4;
@@ -172,7 +172,7 @@ void Projector1D4Order::operator() (Field* rho, Particles &particles, int ipart)
 void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, int ipart, double gf, unsigned int bin, unsigned int b_dim0)
 {
     // Declare local variables
-    int unsigned ipo, ip, iloc;
+    int ipo, ip, iloc;
     int ip_m_ipo;
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xipo3, xj_m_xipo4, xj_m_xip, xj_m_xip2, xj_m_xip3, xj_m_xip4;
