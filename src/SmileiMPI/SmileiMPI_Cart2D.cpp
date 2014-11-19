@@ -358,22 +358,24 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams&
                     double y_max = params.cell_length[1]*( params.n_space_global[1] );
                     for (int iPart=0 ; iPart<n_part_send ; iPart++) {
 
-			// Enabled periodicity in X
-			if ( ( iNeighbor==0 ) &&  (coords_[0] == 0 ) &&( cuParticles.position(0,buff_index_send[iDim][iNeighbor][iPart]) < 0. ) ) {
-                            cuParticles.position(0,buff_index_send[iDim][iNeighbor][iPart])     += x_max;
-                        }
-                        else if ( ( iNeighbor==1 ) &&  (coords_[0] == number_of_procs[0]-1 ) && ( cuParticles.position(0,buff_index_send[iDim][iNeighbor][iPart]) >= x_max ) ) {
-                            cuParticles.position(0,buff_index_send[iDim][iNeighbor][iPart])     -= x_max;
-                        }
-
-			// Enabled periodicity in Y
-                        if ( ( iNeighbor==0 ) &&  (coords_[1] == 0 ) &&( cuParticles.position(1,buff_index_send[iDim][iNeighbor][iPart]) < 0. ) ) {
-                            cuParticles.position(1,buff_index_send[iDim][iNeighbor][iPart])     += y_max;
-                        }
-                        else if ( ( iNeighbor==1 ) &&  (coords_[1] == number_of_procs[1]-1 ) && ( cuParticles.position(1,buff_index_send[iDim][iNeighbor][iPart]) >= y_max ) ) {
-                            cuParticles.position(1,buff_index_send[iDim][iNeighbor][iPart])     -= y_max;
-                        }
-
+			if (iDim==0) {
+			    // Enabled periodicity in X
+			    if ( ( iNeighbor==0 ) &&  (coords_[0] == 0 ) &&( cuParticles.position(0,buff_index_send[iDim][iNeighbor][iPart]) < 0. ) ) {
+                                cuParticles.position(0,buff_index_send[iDim][iNeighbor][iPart])     += x_max;
+                            }
+                            else if ( ( iNeighbor==1 ) &&  (coords_[0] == number_of_procs[0]-1 ) && ( cuParticles.position(0,buff_index_send[iDim][iNeighbor][iPart]) >= x_max ) ) {
+                                cuParticles.position(0,buff_index_send[iDim][iNeighbor][iPart])     -= x_max;
+                            }
+			}
+			else if (iDim==1) {
+			    // Enabled periodicity in Y
+                            if ( ( iNeighbor==0 ) &&  (coords_[1] == 0 ) &&( cuParticles.position(1,buff_index_send[iDim][iNeighbor][iPart]) < 0. ) ) {
+                                cuParticles.position(1,buff_index_send[iDim][iNeighbor][iPart])     += y_max;
+                            }
+                            else if ( ( iNeighbor==1 ) &&  (coords_[1] == number_of_procs[1]-1 ) && ( cuParticles.position(1,buff_index_send[iDim][iNeighbor][iPart]) >= y_max ) ) {
+                                cuParticles.position(1,buff_index_send[iDim][iNeighbor][iPart])     -= y_max;
+                            }
+			}
                         cuParticles.cp_particle(buff_index_send[iDim][iNeighbor][iPart], partVectorSend[iDim][iNeighbor]);
                     }
 
@@ -557,12 +559,13 @@ MPI_Datatype SmileiMPI_Cart2D::createMPIparticles( Particles* particles, int nbr
     MPI_Aint address[nbrOfProp];
     MPI_Get_address( &(particles->position(0,0)), &(address[0]) );
     MPI_Get_address( &(particles->position(1,0)), &(address[1]) );
+    //MPI_Get_address( &(particles->position_old(0,0)), &(address[2]) );
+    //MPI_Get_address( &(particles->position_old(1,0)), &(address[3]) );
     MPI_Get_address( &(particles->momentum(0,0)), &(address[2]) );
     MPI_Get_address( &(particles->momentum(1,0)), &(address[3]) );
     MPI_Get_address( &(particles->momentum(2,0)), &(address[4]) );
     MPI_Get_address( &(particles->weight(0)),     &(address[5]) );
     MPI_Get_address( &(particles->charge(0)),     &(address[6]) );
-    //MPI_Get_address( &(particles.position_old(0,0)), &address[6] );
 
     int nbr_parts[nbrOfProp];
     MPI_Aint disp[nbrOfProp];
