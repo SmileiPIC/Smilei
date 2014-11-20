@@ -522,7 +522,7 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = (i+ipo-2)*b_dim1;
         for (unsigned int j=0 ; j<5 ; j++) {
-            jloc = iloc+j+jpo-2; //jloc is supposed to go either from 0 to 4 or from 1 to 5
+            jloc = iloc+j+jpo-2; 
             Jx[jloc]  += Jx_p[i][j];
             Jy[jloc]  += Jy_p[i][j];
             Jz[jloc]  += crz_p * Wz[i][j];
