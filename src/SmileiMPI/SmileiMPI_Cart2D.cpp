@@ -30,9 +30,9 @@ SmileiMPI_Cart2D::SmileiMPI_Cart2D( SmileiMPI* smpi)
 : SmileiMPI( smpi )
 {
     ndims_ = 2;
-    number_of_procs = new int(ndims_);
-    coords_  = new int(ndims_);
-    periods_  = new int(ndims_);
+    number_of_procs = new int[ndims_];
+    coords_  = new int[ndims_];
+    periods_  = new int[ndims_];
     reorder_ = 0;
     
     nbNeighbors_ = 2; // number of neighbor processes per direction
@@ -71,9 +71,9 @@ SmileiMPI_Cart2D::~SmileiMPI_Cart2D()
         }
     }
     
-    delete number_of_procs;
-    delete periods_;
-    delete coords_;
+    delete[] number_of_procs;
+    delete[]periods_;
+    delete[] coords_;
     
 
     if ( SMILEI_COMM_2D != MPI_COMM_NULL) MPI_Comm_free(&SMILEI_COMM_2D);
