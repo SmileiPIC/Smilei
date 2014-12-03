@@ -405,7 +405,8 @@ int main (int argc, char* argv[])
     delete sio;
     delete smpi;
     delete smpiData;
-    
+    if (params.nspace_win_x) delete simWindow;
+ 
     return 0;
     
 }//END MAIN
