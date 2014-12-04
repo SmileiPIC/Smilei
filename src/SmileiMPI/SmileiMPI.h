@@ -159,9 +159,9 @@ public:
 
     //! Real (exclunding oversize) global number of cells (res_space x sim_length)
     std::vector<int> n_space_global;
-    //! MPI process Id in the current communicator
-    int smilei_sz;
     //! Number of MPI process in the current communicator
+    int smilei_sz;
+    //! MPI process Id in the current communicator
     int smilei_rk;
 
 protected:

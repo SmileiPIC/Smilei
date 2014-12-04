@@ -194,18 +194,18 @@ int main (int argc, char* argv[])
 	    EMfields->solvePoisson(smpi);
         
         
-        MESSAGE("----------------------------------------------");
-        MESSAGE("Running diags at time t = 0");
-        MESSAGE("----------------------------------------------");
-        // run diagnostics at time-step 0
-        Diags->runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
-        // temporary EM fields dump in Fields.h5
-        sio->writeAllFieldsSingleFileTime( EMfields, 0 );
-        // temporary EM fields dump in Fields_avg.h5
-        if (diag_params.ntime_step_avg!=0)
-            sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
-        // temporary particle dump at time 0
-        sio->writePlasma( vecSpecies, 0., smpi );
+        //MESSAGE("----------------------------------------------");
+        //MESSAGE("Running diags at time t = 0");
+        //MESSAGE("----------------------------------------------");
+        //// run diagnostics at time-step 0
+        //Diags->runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
+        //// temporary EM fields dump in Fields.h5
+        //sio->writeAllFieldsSingleFileTime( EMfields, 0 );
+        //// temporary EM fields dump in Fields_avg.h5
+        //if (diag_params.ntime_step_avg!=0)
+        //    sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
+        //// temporary particle dump at time 0
+        //sio->writePlasma( vecSpecies, 0., smpi );
     }
     
     
@@ -228,7 +228,14 @@ int main (int argc, char* argv[])
     timer[3].init(smpi, "diagnostics");
     timer[4].init(smpi, "densities");
     timer[5].init(smpi, "Mov window");
-    
+   
+    // Action to send to other MPI procs when an action is required
+    int action(1),flag(0),mpisize,itime2dump; 
+    bool todump(false);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpisize);
+    MPI_Request action_srequests[mpisize];
+    MPI_Request action_rrequests;
+    MPI_Status action_status[mpisize];
     
 	// ------------------------------------------------------------------
     //                     HERE STARTS THE PIC LOOP
@@ -333,8 +340,29 @@ int main (int argc, char* argv[])
         if  ((diag_params.particleDump_every != 0) && (itime % diag_params.particleDump_every == 0))
             sio->writePlasma( vecSpecies, time_dual, smpi );
 #endif
-        
-        if (sio->dump(EMfields, itime,  vecSpecies, smpi, simWindow, params, input_data)) break;
+        if  (smpi->isMaster()){
+            if (sio->dump(EMfields, itime,  vecSpecies, smpi, simWindow, params, input_data)){
+                // Send the action to perform
+                for (unsigned int islave=0; islave < mpisize; islave++) 
+                    MPI_Isend(&action,1,MPI_INT,islave,0,MPI_COMM_WORLD,&action_srequests[islave]);
+                MPI_Waitall(mpisize,action_srequests, action_status);
+                todump = true;
+                MPI_Allreduce(&itime,&itime2dump,1,MPI_INT,MPI_MAX,MPI_COMM_WORLD);
+            }
+        } else {
+            MPI_Iprobe(0,0,MPI_COMM_WORLD,&flag,&action_status[0]); // waiting for a control message from master (rank=0)
+          //Receive action
+            if( flag ){
+                MPI_Recv(&action,1,MPI_INT,0,0,MPI_COMM_WORLD,&action_status[1]);
+                todump = true;
+                MPI_Allreduce(&itime,&itime2dump,1,MPI_INT,MPI_MAX,MPI_COMM_WORLD);
+            }
+        }
+
+        if(todump && itime==itime2dump){
+            sio->dumpAll( EMfields, itime,  vecSpecies, smpi, simWindow, params, input_data);
+            todump = false;
+        }
         
         timer[3].update();
 		
@@ -375,17 +403,17 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     
     // temporary EM fields dump in Fields.h5
-    if  ( (diag_params.fieldDump_every != 0) && (params.n_time % diag_params.fieldDump_every != 0) )
-        sio->writeAllFieldsSingleFileTime( EMfields, params.n_time );
-    // temporary time-averaged EM fields dump in Fields_avg.h5
-    if  (diag_params.ntime_step_avg!=0)
-        if  ( (diag_params.avgfieldDump_every != 0) && (params.n_time % diag_params.avgfieldDump_every != 0) )
-            sio->writeAvgFieldsSingleFileTime( EMfields, params.n_time );
-#ifdef _IO_PARTICLE
-    // temporary particles dump (1 HDF5 file per process)
-    if  ( (diag_params.particleDump_every != 0) && (params.n_time % diag_params.particleDump_every != 0) )
-        sio->writePlasma( vecSpecies, time_dual, smpi );
-#endif    
+//    if  ( (diag_params.fieldDump_every != 0) && (params.n_time % diag_params.fieldDump_every != 0) )
+//        sio->writeAllFieldsSingleFileTime( EMfields, params.n_time );
+//    // temporary time-averaged EM fields dump in Fields_avg.h5
+//    if  (diag_params.ntime_step_avg!=0)
+//        if  ( (diag_params.avgfieldDump_every != 0) && (params.n_time % diag_params.avgfieldDump_every != 0) )
+//            sio->writeAvgFieldsSingleFileTime( EMfields, params.n_time );
+//#ifdef _IO_PARTICLE
+//    // temporary particles dump (1 HDF5 file per process)
+//    if  ( (diag_params.particleDump_every != 0) && (params.n_time % diag_params.particleDump_every != 0) )
+//        sio->writePlasma( vecSpecies, time_dual, smpi );
+//#endif    
 
     // ------------------------------
     //  Cleanup & End the simulation

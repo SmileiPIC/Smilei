@@ -21,7 +21,7 @@ PicParams::PicParams(InputData &ifile) {
     dump_minutes=0.0;
     ifile.extract("dump_minutes", dump_minutes);
     
-    exit_after_dump=true;
+    exit_after_dump=false;
     ifile.extract("exit_after_dump", exit_after_dump);
 	
     restart=false;

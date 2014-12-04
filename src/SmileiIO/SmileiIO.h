@@ -86,16 +86,15 @@ public:
     //! test before writing everything to file per processor
     bool dump(ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  PicParams &params, InputData& input_data);
 	
+    //! dump everything to file per processor
+    void dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  PicParams &params, InputData& input_data);
+
 private:
     //! incremental number of times we've done a dump
     unsigned int dump_times;
     
     //! initialize the time zero of the simulation 
     void initDumpCases();
-	
-	
-    //! dump everything to file per processor
-    void dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  PicParams &params, InputData& input_data);
 	
     //! dump field per proc
     void dumpFieldsPerProc(hid_t fid, Field* field);

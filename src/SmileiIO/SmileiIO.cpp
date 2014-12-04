@@ -273,8 +273,7 @@ bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime,  std::vector<Spe
     if  ((params.dump_step != 0 && (itime % params.dump_step == 0)) ||
 	 (params.dump_minutes != 0.0 && time_seconds()/60.0 > smpi->getSize()*(params.dump_minutes*(dump_times+1))) || 
 	 (params.check_stop_file && fileStopCreated())) {
-	dumpAll( EMfields, itime,  vecSpecies, smpi, simWin, params, input_data);
-	if (params.exit_after_dump)	return true;
+    return true;
     }	
     return false;
 }
