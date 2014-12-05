@@ -271,18 +271,17 @@ void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI*
 }
 
 bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, double time, std::vector<Species*> vecSpecies, SimWindow* simWin, PicParams &params, InputData& input_data) { 
-    cout << params.dump_step << " " << (itime + 1) % params.dump_step << endl;
     if  ((params.dump_step != 0 && ((itime + 1) % params.dump_step == 0)) ||  //+1 because itime2dump receives itime + 1.
+         (params.dump_minutes != 0.0 && time/60.0 > params.dump_minutes*(dump_minutes_times+1)) ||
          (params.check_stop_file && fileStopCreated())) {
-        cout << "Dump other" << endl;
+        cout << "Dump global" << endl;
+        if (params.dump_minutes != 0.0 && time/60.0 > params.dump_minutes*(dump_minutes_times+1) ) {
+            cout << "Dump minutes" << endl;
+            dump_minutes_times++;
+        }	
         dump_times++;
         return true;
-    } else if (params.dump_minutes != 0.0 && time/60.0 > params.dump_minutes*(dump_minutes_times+1) ) {
-        cout << "Dump minutes" << endl;
-        dump_times++;
-        dump_minutes_times++;
-        return true;
-    }	
+    }
     return false;
 }
 

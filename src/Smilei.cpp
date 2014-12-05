@@ -341,7 +341,7 @@ int main (int argc, char* argv[])
             sio->writePlasma( vecSpecies, time_dual, smpi );
 #endif
         if  (smpi->isMaster()){
-            if (sio->dump(EMfields, itime, MPI_Wtime() - starttime, vecSpecies, simWindow, params, input_data) && !todump){
+            if (!todump && sio->dump(EMfields, itime, MPI_Wtime() - starttime, vecSpecies, simWindow, params, input_data) ){
                 cout << "dump becomes true" << endl;
                 // Send the action to perform at next iteration
                 itime2dump = itime + 1; 
