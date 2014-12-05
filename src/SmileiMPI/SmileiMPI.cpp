@@ -1,3 +1,21 @@
+// CLOBAL COORDINATES: 
+//                             MPI_minGlobal                                                                        MPI_maxGlobal
+//                      --------<===================================== gs ===================================>------------
+//     GLOBAL INDICES:          0                                  .                                        nspace_global
+//                           ix+oversize                                                                  ix+oversize
+//                      ------------------------------------       .              ------------------------------------
+//                      |   |   |     ...          |   |   |       .              |   |   |   |   ...    |   |   |   |
+//                      |   |   |     ...          |   |   |       .              |   |   |   |   ...    |   |   |   |
+//                      ------------------------------------       .              ------------------------------------
+//                            MPI_minLocal      MPI_maxLocal       .               MPI_minLocal          MPI_maxLocal
+//                                                 ----------------------------------------                 
+//                                                 |   |   |       .              |   |   |
+//                                                 |   |   |       .              |   |   |
+//                                                 ----------------------------------------
+// LOCAL COORDINATES:                             x(0) rlb        x(ix)             rub  x(nspace)
+//                                                 ----<============= length =========>----
+//     LOCAL INDICES:                              0   lb                            ub   nspace
+
 #include "SmileiMPI.h"
 
 #include <cmath>
