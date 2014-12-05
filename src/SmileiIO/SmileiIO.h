@@ -84,14 +84,15 @@ public:
     void restartMovingWindow(hid_t fid, SimWindow* simWindow);
 	
     //! test before writing everything to file per processor
-    bool dump(ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  PicParams &params, InputData& input_data);
+    bool dump(ElectroMagn* EMfields, unsigned int itime, double time,  std::vector<Species*> vecSpecies, SimWindow* simWin,  PicParams &params, InputData& input_data);
 	
     //! dump everything to file per processor
     void dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  PicParams &params, InputData& input_data);
 
-private:
     //! incremental number of times we've done a dump
     unsigned int dump_times;
+
+private:
     
     //! initialize the time zero of the simulation 
     void initDumpCases();
@@ -103,10 +104,10 @@ private:
     void dumpMovingWindow(hid_t fid, SimWindow* simWindow);
 
     //! time of the constructor
-    double time_reference;
+    //double time_reference;
 	
     //! function that returns elapsed time from creator (uses private var time_reference)
-    double time_seconds();
+    //double time_seconds();
 	
     //! to dump and stop a simulation you might just check if a file named stop has been created this variable
     //! is true if since last time a file named stop appeared

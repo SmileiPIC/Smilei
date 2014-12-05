@@ -269,11 +269,13 @@ void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI*
 #endif
 }
 
-bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin, PicParams &params, InputData& input_data) { 
+bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, double time, std::vector<Species*> vecSpecies, SimWindow* simWin, PicParams &params, InputData& input_data) { 
     if  ((params.dump_step != 0 && (itime % params.dump_step == 0)) ||
-	 (params.dump_minutes != 0.0 && time_seconds()/60.0 > smpi->getSize()*(params.dump_minutes*(dump_times+1))) || 
-	 (params.check_stop_file && fileStopCreated())) {
-    return true;
+         (params.dump_minutes != 0.0 && time/60.0 > params.dump_minutes*(dump_times+1)  ) || 
+         (params.check_stop_file && fileStopCreated())
+         ){
+        dump_times++;
+        return true;
     }	
     return false;
 }
@@ -282,9 +284,8 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
 	hid_t fid, gid, sid, aid, did, tid;
 		
 	ostringstream nameDump("");
-	nameDump << "dump-" << setfill('0') << setw(4) << dump_times%params.dump_file_sequence << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
+	nameDump << "dump-" << setfill('0') << setw(4) << (dump_times-1)%params.dump_file_sequence << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
 	fid = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-	dump_times++;
 	
 	MESSAGE(2, "DUMPING fields and particles " << nameDump.str());
 
@@ -595,9 +596,9 @@ void SmileiIO::restartMovingWindow(hid_t fid, SimWindow* simWin)
 }
 
 void SmileiIO::initDumpCases() {
-	double time_temp = MPI_Wtime();	
-	time_reference=0;
-	MPI_Allreduce(&time_temp,&time_reference,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+	//double time_temp = MPI_Wtime();	
+	//time_reference=0;
+	//MPI_Allreduce(&time_temp,&time_reference,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
 	
 	stop_file_seen_since_last_check=fileStopCreated();
 	if (stop_file_seen_since_last_check) ERROR("File stop exists, remove it and rerun");
@@ -610,10 +611,11 @@ bool SmileiIO::fileStopCreated() {
 	ifstream f("stop");
 	if (f.good()) foundStopFile=1;
 	f.close();
-	int foundStopFileAll = 0;	
-	MPI_Allreduce(&foundStopFile,&foundStopFileAll,1,MPI_INT,MPI_SUM,MPI_COMM_WORLD);
+	//int foundStopFileAll = 0;	
+	//MPI_Allreduce(&foundStopFile,&foundStopFileAll,1,MPI_INT,MPI_SUM,MPI_COMM_WORLD);
 	
-	if (foundStopFileAll>0) {
+	//if (foundStopFileAll>0) {
+	if (foundStopFile>0) {
 		stop_file_seen_since_last_check=true;
 		return true;
 	} else {
@@ -622,12 +624,12 @@ bool SmileiIO::fileStopCreated() {
 }
 
 
-double SmileiIO::time_seconds() {
-	double time_temp = MPI_Wtime();	
-	double time_sec=0;
-	MPI_Allreduce(&time_temp,&time_sec,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-	return (time_sec-time_reference);
-}
+//double SmileiIO::time_seconds() {
+//	double time_temp = MPI_Wtime();	
+//	double time_sec=0;
+//	MPI_Allreduce(&time_temp,&time_sec,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+//	return (time_sec-time_reference);
+//}
 
 
 

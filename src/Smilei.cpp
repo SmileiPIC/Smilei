@@ -230,12 +230,12 @@ int main (int argc, char* argv[])
     timer[5].init(smpi, "Mov window");
    
     // Action to send to other MPI procs when an action is required
-    int action(1),flag(0),mpisize,itime2dump; 
-    bool todump(false);
+    int mpisize,itime2dump(-1),todump(0); 
+    double starttime = MPI_Wtime();
     MPI_Comm_size(MPI_COMM_WORLD, &mpisize);
     MPI_Request action_srequests[mpisize];
     MPI_Request action_rrequests;
-    MPI_Status action_status[mpisize];
+    MPI_Status action_status[2];
     
 	// ------------------------------------------------------------------
     //                     HERE STARTS THE PIC LOOP
@@ -341,27 +341,29 @@ int main (int argc, char* argv[])
             sio->writePlasma( vecSpecies, time_dual, smpi );
 #endif
         if  (smpi->isMaster()){
-            if (sio->dump(EMfields, itime,  vecSpecies, smpi, simWindow, params, input_data)){
-                // Send the action to perform
+            if (sio->dump(EMfields, itime, MPI_Wtime() - starttime, vecSpecies, simWindow, params, input_data) && !todump){
+                cout << "dump becomes true" << endl;
+                // Send the action to perform at next iteration
+                itime2dump = itime + 1; 
                 for (unsigned int islave=0; islave < mpisize; islave++) 
-                    MPI_Isend(&action,1,MPI_INT,islave,0,MPI_COMM_WORLD,&action_srequests[islave]);
-                MPI_Waitall(mpisize,action_srequests, action_status);
-                todump = true;
-                MPI_Allreduce(&itime,&itime2dump,1,MPI_INT,MPI_MAX,MPI_COMM_WORLD);
+                    MPI_Isend(&itime2dump,1,MPI_INT,islave,0,MPI_COMM_WORLD,&action_srequests[islave]);
+                todump = 1;
             }
         } else {
-            MPI_Iprobe(0,0,MPI_COMM_WORLD,&flag,&action_status[0]); // waiting for a control message from master (rank=0)
-          //Receive action
-            if( flag ){
-                MPI_Recv(&action,1,MPI_INT,0,0,MPI_COMM_WORLD,&action_status[1]);
-                todump = true;
-                MPI_Allreduce(&itime,&itime2dump,1,MPI_INT,MPI_MAX,MPI_COMM_WORLD);
+            MPI_Iprobe(0,0,MPI_COMM_WORLD,&todump,&action_status[0]); // waiting for a control message from master (rank=0)
+            //Receive action
+            if( todump ){
+                cout << "action received"<<endl;
+                MPI_Recv(&itime2dump,1,MPI_INT,0,0,MPI_COMM_WORLD,&action_status[1]);
+                todump = 0;
             }
         }
 
-        if(todump && itime==itime2dump){
+        if(itime==itime2dump){
+            cout << "dumping" << endl;
             sio->dumpAll( EMfields, itime,  vecSpecies, smpi, simWindow, params, input_data);
-            todump = false;
+            todump = 0;
+            if (params.exit_after_dump ) break;
         }
         
         timer[3].update();
