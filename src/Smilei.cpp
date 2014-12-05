@@ -353,14 +353,12 @@ int main (int argc, char* argv[])
             MPI_Iprobe(0,0,MPI_COMM_WORLD,&todump,&action_status[0]); // waiting for a control message from master (rank=0)
             //Receive action
             if( todump ){
-                cout << "action received"<<endl;
                 MPI_Recv(&itime2dump,1,MPI_INT,0,0,MPI_COMM_WORLD,&action_status[1]);
                 todump = 0;
             }
         }
 
         if(itime==itime2dump){
-            cout << "dumping" << endl;
             sio->dumpAll( EMfields, itime,  vecSpecies, smpi, simWindow, params, input_data);
             todump = 0;
             if (params.exit_after_dump ) break;

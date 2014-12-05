@@ -92,6 +92,9 @@ public:
     //! incremental number of times we've done a dump
     unsigned int dump_times;
 
+    //! incremental number of times we've done a dump_minutes
+    unsigned int dump_minutes_times;
+
 private:
     
     //! initialize the time zero of the simulation 
