@@ -93,4 +93,6 @@ extern int debug_level;
 
 #endif
 
+void printMemFootPrint(std::string tag);
+
 #endif
