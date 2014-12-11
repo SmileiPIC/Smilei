@@ -99,9 +99,8 @@ species_param(params.species_param[ispec])
         b_lastdim = b_dim2;
     }
     
-    size_proj_buffer = b_dim0*b_dim1*b_dim2;
+    size_proj_buffer = b_dim0*b_dim1*b_dim2; //primal size of a single bufefr.
     
-	
     if (!params.restart) {
         unsigned int npart_effective=0;
         
@@ -361,8 +360,8 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
        // *4 accounts for Jy, Jz and rho. * nthds accounts for each thread.
        b_Jx = (double *) malloc(4 * size_proj_buffer * sizeof(double));
        //Point buffers of each thread to the correct position
-       b_Jy = b_Jx + size_proj_buffer ;
-       b_Jz = b_Jy + size_proj_buffer ;
+       b_Jy =  b_Jx + size_proj_buffer ;
+       b_Jz =  b_Jy + size_proj_buffer ; 
        b_rho = b_Jz + size_proj_buffer ;
  
 #pragma omp for schedule(runtime)
@@ -437,15 +436,25 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                         (*EMfields->rho_s[ispec])(iloc*(f_dim1  )+j) += b_rho[i*b_dim1+j];   // primal along y
                     }
                 }
+
+                //i =  oversize[0]+1;
+                //memcpy( &((*EMfields->Jx_s[ispec]) ((ibin*clrw+i)*(f_dim1))),&(b_Jx[i*b_dim1]),(clrw-1)*b_dim1*sizeof(double)  );
+                //memcpy( &((*EMfields->Jy_s[ispec]) ((ibin*clrw+i)*(f_dim1+1))),&(b_Jy[i*(b_dim1+1)]),(clrw-1)*(b_dim1+1)*sizeof(double)  );
+                //memcpy( &((*EMfields->Jz_s[ispec]) ((ibin*clrw+i)*(f_dim1))),&(b_Jz[i*b_dim1]),(clrw-1)*b_dim1*sizeof(double)  );
+                //memcpy( &((*EMfields->rho_s[ispec]) ((ibin*clrw+i)*(f_dim1))),&(b_rho[i*b_dim1]),(clrw-1)*b_dim1*sizeof(double)  );
                 for (i = oversize[0]+1; i < oversize[0]+clrw ; i++) {
                     iloc = ibin*clrw + i ;
                     //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
-                    for (j = 0; j < b_dim1 ; j++) {
-                        (*EMfields->Jx_s[ispec]) (iloc*(f_dim1  )+j) +=  b_Jx[i*b_dim1+j];   //  primal along y
-                        (*EMfields->Jy_s[ispec]) (iloc*(f_dim1+1)+j) +=  b_Jy[i*b_dim1+j];   //+1 because dual along y
-                        (*EMfields->Jz_s[ispec]) (iloc*(f_dim1  )+j) +=  b_Jz[i*b_dim1+j];   // primal along y
-                        (*EMfields->rho_s[ispec])(iloc*(f_dim1  )+j) += b_rho[i*b_dim1+j];   // primal along y
-                    }
+                    memcpy( &((*EMfields->Jx_s[ispec]) (iloc*(f_dim1))),&(b_Jx[i*b_dim1]),b_dim1*sizeof(double)  );
+                    memcpy( &((*EMfields->Jy_s[ispec]) (iloc*(f_dim1+1))),&(b_Jy[i*b_dim1]),b_dim1*sizeof(double)  );
+                    memcpy( &((*EMfields->Jz_s[ispec]) (iloc*(f_dim1))),&(b_Jz[i*b_dim1]),b_dim1*sizeof(double)  );
+                    memcpy( &((*EMfields->rho_s[ispec]) (iloc*(f_dim1))),&(b_rho[i*b_dim1]),b_dim1*sizeof(double)  );
+                //    //for (j = 0; j < b_dim1 ; j++) {
+                //    //    (*EMfields->Jx_s[ispec]) (iloc*(f_dim1  )+j) +=  b_Jx[i*b_dim1+j];   //  primal along y
+                //    //    (*EMfields->Jy_s[ispec]) (iloc*(f_dim1+1)+j) +=  b_Jy[i*b_dim1+j];   //+1 because dual along y
+                //    //    (*EMfields->Jz_s[ispec]) (iloc*(f_dim1  )+j) +=  b_Jz[i*b_dim1+j];   // primal along y
+                //    //    (*EMfields->rho_s[ispec])(iloc*(f_dim1  )+j) += b_rho[i*b_dim1+j];   // primal along y
+                //    //}
                 }
                 for (i = oversize[0]+clrw; i < b_dim0 ; i++) {
                     iloc = ibin*clrw + i ;
