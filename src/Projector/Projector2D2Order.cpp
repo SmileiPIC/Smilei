@@ -416,9 +416,28 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     // variable declaration
     double xpn, ypn;
     double delta, delta2;
-    double Sx0[5]={}, Sx1[5]={}, Sy0[5]={}, Sy1[5]={}, DSx[5]={}, DSy[5]={}; // arrays used for the Esirkepov projection method
-    double Wx[4][5]={}, Wy[5][4]={}, Wz[5][5]={};                   // idem
-    double Jx_p[5][5]={}, Jy_p[5][5]={};                         // idem
+    double Sx0[5], Sx1[5], Sy0[5], Sy1[5], DSx[5], DSy[5]; // arrays used for the Esirkepov projection method
+    double Wx[5][5], Wy[5][5], Wz[5][5];                   // idem
+    double Jx_p[5][5], Jy_p[5][5];                         // idem
+
+// Initialize all current-related arrays to zero
+    for (unsigned int i=0; i<5; i++) {
+        Sx0[i] = 0.;
+        Sx1[i] = 0.;
+        Sy0[i] = 0.;
+        Sy1[i] = 0.;
+        DSx[i] = 0.;
+        DSy[i] = 0.;
+    }
+    for (unsigned int i=0; i<5; i++) {
+        for (unsigned int j=0; j<5; j++) {
+            Wx[i][j]   = 0.;
+            Wy[i][j]   = 0.;
+            Wz[i][j]   = 0.;
+            Jx_p[i][j] = 0.;
+            Jy_p[i][j] = 0.;
+        }
+    }//i
 
     // --------------------------------------------------------
     // Locate particles & Calculate Esirkepov coef. S, DS and W
@@ -469,20 +488,13 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     }
 
     //Do not compute useless weights.
-    for (unsigned int i=0 ; i<4 ; i++) {
-        for (unsigned int j=0 ; j<4 ; j++) {
+    for (unsigned int i=0 ; i<5 ; i++) {
+        for (unsigned int j=0 ; j<5 ; j++) {
             Wx[i][j] = DSx[i] * (Sy0[j] + 0.5*DSy[j]);
             Wy[i][j] = DSy[j] * (Sx0[i] + 0.5*DSx[i]);
             Wz[i][j] = one_third * ( Sx1[i] * (0.5*Sy0[j]+Sy1[j]) + Sx0[i] * (Sy0[j]+0.5*Sy1[j]) );
         }
-        Wx[i][4] = DSx[i] * (Sy0[4] + 0.5*DSy[4]);
-        Wz[i][4] = one_third * ( Sx1[i] * (0.5*Sy0[4]+Sy1[4]) + Sx0[i] * (Sy0[4]+0.5*Sy1[4]) );
     }
-    for (unsigned int j=0 ; j<4 ; j++) {
-        Wy[4][j] = DSy[j] * (Sx0[4] + 0.5*DSx[4]);
-        Wz[4][j] = one_third * ( Sx1[4] * (0.5*Sy0[j]+Sy1[j]) + Sx0[4] * (Sy0[j]+0.5*Sy1[j]) );
-    }
-
 
     // ------------------------------------------------
     // Local current created by the particle
@@ -517,7 +529,6 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
         }
 
     }//i
-
 } // END Project local current densities (sort)
 
 
