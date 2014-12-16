@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>B0FFBB51-06D4-451A-8E5C-1E429B41E8DE</string>
+	<key>IDESourceControlProjectName</key>
+	<string>smilei_xcode</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>9C6B5316-5F51-4484-8FE8-7F388CEB321C</key>
+		<string>ssh://llrgit.in2p3.fr/smilei/smilei.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>smilei_xcode/smilei_xcode.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>9C6B5316-5F51-4484-8FE8-7F388CEB321C</key>
+		<string>../../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>ssh://llrgit.in2p3.fr/smilei/smilei.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>9C6B5316-5F51-4484-8FE8-7F388CEB321C</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>9C6B5316-5F51-4484-8FE8-7F388CEB321C</string>
+			<key>IDESourceControlWCCName</key>
+			<string>smilei</string>
+		</dict>
+	</array>
+</dict>
+</plist>
