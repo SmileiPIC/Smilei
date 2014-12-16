@@ -64,12 +64,12 @@ isEastern(smpi->isEastern())
     By_m = new Field1D(dimPrim, 1, true,  "By_m");
     Bz_m = new Field1D(dimPrim, 2, true,  "Bz_m");
     
-    for (unsigned int i=0 ; i<nx_d ; i++) {
+    for (int i=0 ; i<nx_d ; i++) {
         double x = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i-0.5) )*params.cell_length[0];
         (*By_)(i) = 0.001 * sin(x * 2.0*M_PI/params.sim_length[0] * 4.0);
     }
     smpi1D->exchangeField(By_);
-    for (unsigned int i=0 ; i<nx_d ; i++) {
+    for (int i=0 ; i<nx_d ; i++) {
         double x = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i-0.5) )*params.cell_length[0];
         (*By_m)(i) = (*By_)(i);
     }
