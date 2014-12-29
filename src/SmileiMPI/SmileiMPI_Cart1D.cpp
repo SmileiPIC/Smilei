@@ -535,7 +535,6 @@ void SmileiMPI_Cart1D::sumField( Field* field )
     
 } // END sumField
 
-
 void SmileiMPI_Cart1D::exchangeField( Field* field )
 {
     std::vector<unsigned int> n_elem   = field->dims_;

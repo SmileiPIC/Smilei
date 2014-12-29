@@ -63,11 +63,11 @@ oversize(params.oversize)
     Bz_avg=NULL;
     
     // Species charge currents and density
-    Jx_s.resize(n_species);
-    Jy_s.resize(n_species);
-    Jz_s.resize(n_species);
-    rho_s.resize(n_species);
-    for (unsigned int ispec=0; ispec<n_species; ispec++) {
+    Jx_s.resize(n_species*2);
+    Jy_s.resize(n_species*2);
+    Jz_s.resize(n_species*2);
+    rho_s.resize(n_species*2);
+    for (unsigned int ispec=0; ispec<n_species*2; ispec++) {
         Jx_s[ispec]  = NULL;
         Jy_s[ispec]  = NULL;
         Jz_s[ispec]  = NULL;
@@ -116,7 +116,7 @@ ElectroMagn::~ElectroMagn()
         delete Bz_avg;
     }
 
-    for (unsigned int ispec=0; ispec<n_species; ispec++) {
+    for (unsigned int ispec=0; ispec<n_species*2; ispec++) {
       delete Jx_s[ispec];
       delete Jy_s[ispec];
       delete Jz_s[ispec];
@@ -144,11 +144,13 @@ ElectroMagn::~ElectroMagn()
  }*/
 void ElectroMagn::solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, PicParams &params, SimWindow* simWindow)
 {
+    //#pragma omp parallel
+    //{
     // saving magnetic fields (to compute centered fields used in the particle pusher)
     saveMagneticFields();
-
     // Compute Ex_, Ey_, Ez_
     solveMaxwellAmpere();
+    //}
     // Exchange Ex_, Ey_, Ez_
     smpi->exchangeE( this );
 
@@ -211,7 +213,7 @@ void ElectroMagn::initRhoJ(vector<Species*> vecSpecies, Projector* Proj)
     // number of (none-test) used in the simulation
     //! \todo fix this: n_species is already a member of electromagn, is it this confusing? what happens if n_species grows (i.e. with ionization)?
     unsigned int n_species = vecSpecies.size();
-    
+
     //loop on all (none-test) Species
     for (unsigned int iSpec=0 ; iSpec<n_species; iSpec++ ) {
         Particles cuParticles = vecSpecies[iSpec]->getParticlesList();

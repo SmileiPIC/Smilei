@@ -40,6 +40,8 @@ public:
 
     //! Method used to compute the total charge density and currents by summing over all species
     void computeTotalRhoJ();
+    //! Method used to gather species densities and currents on a single array
+    void sumtwins();
 
     //! \todo Create properties the laser time-profile (MG & TV)
 

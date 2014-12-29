@@ -93,6 +93,11 @@ public:
     unsigned int clrw; //Should divide the number of cells in X of a single MPI domain. Should default to 1.
     //! first and last index of each particle bin
     std::vector<int> bmin, bmax;
+    //! sub dimensions of buffers for dim > 1
+    unsigned int b_dim0, b_dim1, b_dim2, b_lastdim;
+
+    //! Size of the projection buffer
+    unsigned int size_proj_buffer;
 
     //! Oversize (copy from picparams)
     std::vector<unsigned int> oversize;
@@ -138,11 +143,7 @@ private:
     //! Local minimum of MPI domain
     double min_loc;
 
-    //! Size of the projection buffer
-    unsigned int size_proj_buffer;
 
-    //! sub dimensions of buffers for dim > 1
-    unsigned int b_dim0, b_dim1, b_dim2, b_lastdim;
     //! sub primal dimensions of fields
     unsigned int f_dim0, f_dim1, f_dim2;
 

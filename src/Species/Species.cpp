@@ -364,7 +364,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
        b_Jz =  b_Jy + size_proj_buffer ; 
        b_rho = b_Jz + size_proj_buffer ;
  
-#pragma omp for schedule(runtime)
+#pragma omp for schedule(runtime) nowait
         for (ibin = 0 ; ibin < bmin.size() ; ibin++) {
             
             // reset all current-buffers
@@ -397,84 +397,37 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                     addPartInExchList( tid, iPart );
                 }
                 
-                if (ndim <= 2) {
-                    (*Proj)(b_Jx, b_Jy, b_Jz, b_rho, particles, iPart, gf, ibin*clrw, b_lastdim);
-                } else {
-                    (*Proj)(EMfields->Jx_s[ispec], EMfields->Jy_s[ispec], EMfields->Jz_s[ispec], EMfields->rho_s[ispec],
-                            particles, iPart, gf);
-                }
+                (*Proj)(b_Jx, b_Jy, b_Jz, b_rho, particles, iPart, gf, ibin*clrw, b_lastdim);
             }//iPart
             
             // Copy buffer back to the global array and free buffer****************
             // this part is dimension dependant !! this is for dim = 1
-            if (ndim == 1) {
+//            if (ndim == 1) {
+//                for (i = 0; i < b_dim0 ; i++) {
+//                    //! \todo Should we care about primal - dual sizes here ?
+//                    iloc = ibin*clrw + i ;
+//#pragma omp atomic
+//                    (*EMfields->Jx_s[ispec]) (iloc) +=  b_Jx[i];
+//#pragma omp atomic
+//                    (*EMfields->Jy_s[ispec]) (iloc) +=  b_Jy[i];
+//#pragma omp atomic
+//                    (*EMfields->Jz_s[ispec]) (iloc) +=  b_Jz[i];
+//#pragma omp atomic
+//                    (*EMfields->rho_s[ispec])(iloc) += b_rho[i];
+//                }
+//            }
+//            if (ndim == 2) {               
                 for (i = 0; i < b_dim0 ; i++) {
-                    //! \todo Should we care about primal - dual sizes here ?
-                    iloc = ibin*clrw + i ;
-#pragma omp atomic
-                    (*EMfields->Jx_s[ispec]) (iloc) +=  b_Jx[i];
-#pragma omp atomic
-                    (*EMfields->Jy_s[ispec]) (iloc) +=  b_Jy[i];
-#pragma omp atomic
-                    (*EMfields->Jz_s[ispec]) (iloc) +=  b_Jz[i];
-#pragma omp atomic
-                    (*EMfields->rho_s[ispec])(iloc) += b_rho[i];
-                }
-            }
-            if (ndim == 2) {
-                for (i = 0; i < oversize[0]+1 ; i++) {
                     iloc = ibin*clrw + i ;
                     //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
-                    for (j = 0; j < b_dim1 ; j++) {
-#pragma omp atomic
-                        (*EMfields->Jx_s[ispec]) (iloc*(f_dim1  )+j) +=  b_Jx[i*b_dim1+j];   //  primal along y
-#pragma omp atomic
-                        (*EMfields->Jy_s[ispec]) (iloc*(f_dim1+1)+j) +=  b_Jy[i*b_dim1+j];   //+1 because dual along y
-#pragma omp atomic
-                        (*EMfields->Jz_s[ispec]) (iloc*(f_dim1  )+j) +=  b_Jz[i*b_dim1+j];   // primal along y
-#pragma omp atomic
-                        (*EMfields->rho_s[ispec])(iloc*(f_dim1  )+j) += b_rho[i*b_dim1+j];   // primal along y
-                    }
+                    memcpy( &((*EMfields->Jx_s[ispec+params.n_species*(ibin%2)]) (iloc*(f_dim1))),&(b_Jx[i*b_dim1]),b_dim1*sizeof(double)  );
+                    memcpy( &((*EMfields->Jy_s[ispec+params.n_species*(ibin%2)]) (iloc*(f_dim1+1))),&(b_Jy[i*b_dim1]),b_dim1*sizeof(double)  );
+                    memcpy( &((*EMfields->Jz_s[ispec+params.n_species*(ibin%2)]) (iloc*(f_dim1))),&(b_Jz[i*b_dim1]),b_dim1*sizeof(double)  );
+                    memcpy( &((*EMfields->rho_s[ispec+params.n_species*(ibin%2)]) (iloc*(f_dim1))),&(b_rho[i*b_dim1]),b_dim1*sizeof(double)  );
                 }
-
-                //i =  oversize[0]+1;
-                //memcpy( &((*EMfields->Jx_s[ispec]) ((ibin*clrw+i)*(f_dim1))),&(b_Jx[i*b_dim1]),(clrw-1)*b_dim1*sizeof(double)  );
-                //memcpy( &((*EMfields->Jy_s[ispec]) ((ibin*clrw+i)*(f_dim1+1))),&(b_Jy[i*(b_dim1+1)]),(clrw-1)*(b_dim1+1)*sizeof(double)  );
-                //memcpy( &((*EMfields->Jz_s[ispec]) ((ibin*clrw+i)*(f_dim1))),&(b_Jz[i*b_dim1]),(clrw-1)*b_dim1*sizeof(double)  );
-                //memcpy( &((*EMfields->rho_s[ispec]) ((ibin*clrw+i)*(f_dim1))),&(b_rho[i*b_dim1]),(clrw-1)*b_dim1*sizeof(double)  );
-                for (i = oversize[0]+1; i < oversize[0]+clrw ; i++) {
-                    iloc = ibin*clrw + i ;
-                    //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
-                    memcpy( &((*EMfields->Jx_s[ispec]) (iloc*(f_dim1))),&(b_Jx[i*b_dim1]),b_dim1*sizeof(double)  );
-                    memcpy( &((*EMfields->Jy_s[ispec]) (iloc*(f_dim1+1))),&(b_Jy[i*b_dim1]),b_dim1*sizeof(double)  );
-                    memcpy( &((*EMfields->Jz_s[ispec]) (iloc*(f_dim1))),&(b_Jz[i*b_dim1]),b_dim1*sizeof(double)  );
-                    memcpy( &((*EMfields->rho_s[ispec]) (iloc*(f_dim1))),&(b_rho[i*b_dim1]),b_dim1*sizeof(double)  );
-                //    //for (j = 0; j < b_dim1 ; j++) {
-                //    //    (*EMfields->Jx_s[ispec]) (iloc*(f_dim1  )+j) +=  b_Jx[i*b_dim1+j];   //  primal along y
-                //    //    (*EMfields->Jy_s[ispec]) (iloc*(f_dim1+1)+j) +=  b_Jy[i*b_dim1+j];   //+1 because dual along y
-                //    //    (*EMfields->Jz_s[ispec]) (iloc*(f_dim1  )+j) +=  b_Jz[i*b_dim1+j];   // primal along y
-                //    //    (*EMfields->rho_s[ispec])(iloc*(f_dim1  )+j) += b_rho[i*b_dim1+j];   // primal along y
-                //    //}
-                }
-                for (i = oversize[0]+clrw; i < b_dim0 ; i++) {
-                    iloc = ibin*clrw + i ;
-                    //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
-                    for (j = 0; j < b_dim1 ; j++) {
-#pragma omp atomic
-                        (*EMfields->Jx_s[ispec]) (iloc*(f_dim1  )+j) +=  b_Jx[i*b_dim1+j];   //  primal along y
-#pragma omp atomic
-                        (*EMfields->Jy_s[ispec]) (iloc*(f_dim1+1)+j) +=  b_Jy[i*b_dim1+j];   //+1 because dual along y
-#pragma omp atomic
-                        (*EMfields->Jz_s[ispec]) (iloc*(f_dim1  )+j) +=  b_Jz[i*b_dim1+j];   // primal along y
-#pragma omp atomic
-                        (*EMfields->rho_s[ispec])(iloc*(f_dim1  )+j) += b_rho[i*b_dim1+j];   // primal along y
-                    }
-                }
-
-            }
+//            }
             
         }// ibin
-        free(b_Jx);
         
         if (Ionize && electron_species) {
             for (unsigned int i=0; i < Ionize->new_electrons.size(); i++) {
@@ -501,20 +454,62 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
         }
     }
     else { // immobile particle (at the moment only project density)
-//#pragma omp for schedule (runtime) 
-#pragma omp master
-{
-        for (iPart=0 ; iPart<nParticles; iPart++ ) {
-            (*Proj)(EMfields->rho_s[ispec], particles, iPart);
-        }
-}
+       double gf = 1.0;
+        b_Jx = (double *) malloc(size_proj_buffer * sizeof(double));
+       //b_Jx = (double *) malloc(4 * size_proj_buffer * sizeof(double));
+       ////Point buffers of each thread to the correct position
+       //b_Jy =  b_Jx + size_proj_buffer ;
+       //b_Jz =  b_Jy + size_proj_buffer ; 
+       //b_rho = b_Jz + size_proj_buffer ;
+        #pragma omp for schedule(static) nowait
+        for (ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
+            // reset all current-buffers
+            memset( &(b_Jx[0]), 0, size_proj_buffer*sizeof(double)); 
+            //memset( &(b_Jx[0]), 0, 4*size_proj_buffer*sizeof(double)); 
+
+            for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
+
+                // Interpolate the fields at the particle position
+                //(*LocInterp)(EMfields, particles, iPart, &Epart, &Bpart);
+                //(*Push)(particles, iPart, Epart, Bpart, gf);
+                for ( int i = 0 ; i<ndim ; i++ ) {
+                    particles.position_old(i, iPart)  = particles.position(i, iPart);
+                }
+
+                //(*Proj)(EMfields->rho_s[ispec], particles, iPart);
+                (*Proj)(b_Jx, particles, iPart, ibin*clrw, b_lastdim);
+                //if ( !partBoundCond->apply( particles, iPart ) ) {
+                //    addPartInExchList( tid, iPart );
+                //}
+                //(*Proj)(b_Jx, b_Jy, b_Jz, b_rho, particles, iPart, gf, ibin*clrw, b_lastdim);
+            }
+            if (ndim == 1) {
+                for (i = 0; i < b_dim0 ; i++) {
+                    //! \todo Should we care about primal - dual sizes here ?
+                    iloc = ibin*clrw + i ;
+                    (*EMfields->rho_s[ispec+params.n_species*(ibin%2)])(iloc) = b_Jx[i];
+                }
+            }
+            if (ndim == 2) {
+                for (i = 0 ; i < b_dim0 ; i++) {
+                    iloc = ibin*clrw + i ;
+                    //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
+                    memcpy( &((*EMfields->rho_s[ispec+params.n_species*(ibin%2)])(iloc*(f_dim1  ))),&(b_Jx[i*b_dim1]),b_dim1*sizeof(double)  );
+                    //memcpy( &((*EMfields->Jx_s[ispec+params.n_species*(ibin%2)]) (iloc*(f_dim1))),&(b_Jx[i*b_dim1]),b_dim1*sizeof(double)  );
+                    //memcpy( &((*EMfields->Jy_s[ispec+params.n_species*(ibin%2)]) (iloc*(f_dim1+1))),&(b_Jy[i*b_dim1]),b_dim1*sizeof(double)  );
+                    //memcpy( &((*EMfields->Jz_s[ispec+params.n_species*(ibin%2)]) (iloc*(f_dim1))),&(b_Jz[i*b_dim1]),b_dim1*sizeof(double)  );
+                    //memcpy( &((*EMfields->rho_s[ispec+params.n_species*(ibin%2)])(iloc*(f_dim1))),&(b_rho[i*b_dim1]),b_dim1*sizeof(double)  );
+                                    }
+            }//if ndim==2 
+
+         }
+
     }//END if time vs. time_frozen
+    free(b_Jx);               
 #pragma omp barrier
     delete LocInterp;
 	
 }//END dynamic
-
-
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Dump for the Species
@@ -567,7 +562,7 @@ void Species::sort_part()
         }
     }
     //Forward pass + Rebracketting
-#pragma omp for schedule(runtime)
+#pragma omp for schedule(runtime) nowait
     for (bin=1; bin<bmin.size(); bin++) { //Loop on the bins. 
         limit = min_loc + bin*cell_length[0]*clrw;
         bmin_init = bmin[bin];

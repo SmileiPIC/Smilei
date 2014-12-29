@@ -623,8 +623,7 @@ void SmileiMPI_Cart2D::sumField( Field* field )
     std::vector<unsigned int> n_elem = field->dims_;
     std::vector<unsigned int> isDual = field->isDual_;
     Field2D* f2D =  static_cast<Field2D*>(field);
-    
-    
+   
     // Use a buffer per direction to exchange data before summing
     Field2D buf[ndims_][ nbNeighbors_ ];
     // Size buffer is 2 oversize (1 inside & 1 outside of the current subdomain)
@@ -710,7 +709,6 @@ void SmileiMPI_Cart2D::sumField( Field* field )
     } // END for iDim
     
 } // END sumField
-
 
 void SmileiMPI_Cart2D::exchangeField( Field* field )
 {

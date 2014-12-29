@@ -398,7 +398,7 @@ void Projector2D2Order::operator() (Field* rho, Particles &particles, int ipart)
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local current densities (sort)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, int ipart, double gf, unsigned int bin, unsigned int b_dim1)
+void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_dim1)
 {
 
     // -------------------------------------
@@ -531,6 +531,74 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     }//i
 } // END Project local current densities (sort)
 
+// ---------------------------------------------------------------------------------------------------------------------
+//! Project local densities only (sort)
+// ---------------------------------------------------------------------------------------------------------------------
+void Projector2D2Order::operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, unsigned int b_dim1)
+{
+
+    // -------------------------------------
+    // Variable declaration & initialization
+    // -------------------------------------
+
+    int iloc, jloc;
+    // (x,y,z) components of the current density for the macro-particle
+    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+
+    // variable declaration
+    double xpn, ypn;
+    double delta, delta2;
+    double Sx1[5], Sy1[5]; // arrays used for the Esirkepov projection method
+
+// Initialize all current-related arrays to zero
+    for (unsigned int i=0; i<5; i++) {
+        Sx1[i] = 0.;
+        Sy1[i] = 0.;
+    }
+
+    // --------------------------------------------------------
+    // Locate particles & Calculate Esirkepov coef. S, DS and W
+    // --------------------------------------------------------
+
+    xpn = particles.position_old(0, ipart) * dx_inv_;
+    int ipo = round(xpn);
+    ypn = particles.position_old(1, ipart) * dy_inv_;
+    int jpo = round(ypn);
+    // locate the particle on the primal grid at current time-step & calculate coeff. S1
+    xpn = particles.position(0, ipart) * dx_inv_;
+    int ip = round(xpn);
+    int ip_m_ipo = ip-ipo;
+    delta  = xpn - (double)ip;
+    delta2 = delta*delta;
+    Sx1[ip_m_ipo+1] = 0.5 * (delta2-delta+0.25);
+    Sx1[ip_m_ipo+2] = 0.75-delta2;
+    Sx1[ip_m_ipo+3] = 0.5 * (delta2+delta+0.25);
+
+    ypn = particles.position(1, ipart) * dy_inv_;
+    int jp = round(ypn);
+    int jp_m_jpo = jp-jpo;
+    delta  = ypn - (double)jp;
+    delta2 = delta*delta;
+    Sy1[jp_m_jpo+1] = 0.5 * (delta2-delta+0.25);
+    Sy1[jp_m_jpo+2] = 0.75-delta2;
+    Sy1[jp_m_jpo+3] = 0.5 * (delta2+delta+0.25);
+
+
+    // ---------------------------
+    // Calculate the total current
+    // ---------------------------
+    ipo -= i_domain_begin + bin;
+    jpo -= j_domain_begin;
+
+    for (unsigned int i=0 ; i<5 ; i++) {
+        iloc = (i+ipo-2)*b_dim1;
+        for (unsigned int j=0 ; j<5 ; j++) {
+            jloc = iloc+j+jpo-2; 
+            rho[jloc] += charge_weight * Sx1[i]*Sy1[j];
+        }
+
+    }//i
+} // END Project local current densities (sort)
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project global current densities (ionize)

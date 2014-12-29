@@ -255,7 +255,7 @@ void Projector1D2Order::operator() (Field* rho, Particles &particles, int ipart)
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local current densities (sort)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, int ipart, double gf, unsigned int bin, unsigned int b_dim0)
+void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_dim0)
 {
     // The variable bin received is  number of bin * cluster width.
     // Declare local variables
@@ -332,6 +332,14 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
 
 
 } // END Project local current densities (sort)
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! Project local densities only (sort)
+// ---------------------------------------------------------------------------------------------------------------------
+void Projector1D2Order::operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, unsigned int b_dim0)
+{
+    WARNING("Projection of densities only not yet defined for 1D 2nd order");
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project global current densities (ionize)

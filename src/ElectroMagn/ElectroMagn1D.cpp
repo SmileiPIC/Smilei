@@ -85,6 +85,10 @@ isEastern(smpi->isEastern())
         Jy_s[ispec]  = new Field1D(dimPrim, 1, false, ("Jy_"+params.species_param[ispec].species_type).c_str());
         Jz_s[ispec]  = new Field1D(dimPrim, 2, false, ("Jz_"+params.species_param[ispec].species_type).c_str());
         rho_s[ispec] = new Field1D(dimPrim, ("Rho_"+params.species_param[ispec].species_type).c_str());
+        Jx_s[n_species+ispec]  = new Field1D(dimPrim, 0, false, ("Jx_"+params.species_param[ispec].species_type).c_str());
+        Jy_s[n_species+ispec]  = new Field1D(dimPrim, 1, false, ("Jy_"+params.species_param[ispec].species_type).c_str());
+        Jz_s[n_species+ispec]  = new Field1D(dimPrim, 2, false, ("Jz_"+params.species_param[ispec].species_type).c_str());
+        rho_s[n_species+ispec] = new Field1D(dimPrim, ("Rho_"+params.species_param[ispec].species_type).c_str());
     }
     
 //    ostringstream file_name("");
@@ -560,22 +564,30 @@ void ElectroMagn1D::restartRhoJs(int ispec, bool currents)
     Field1D* Jy1D_s  = static_cast<Field1D*>(Jy_s[ispec]);
     Field1D* Jz1D_s  = static_cast<Field1D*>(Jz_s[ispec]);
     Field1D* rho1D_s = static_cast<Field1D*>(rho_s[ispec]);
+    Field1D* Jx1D_s2  = static_cast<Field1D*>(Jx_s[n_species+ispec]);
+    Field1D* Jy1D_s2  = static_cast<Field1D*>(Jy_s[n_species+ispec]);
+    Field1D* Jz1D_s2  = static_cast<Field1D*>(Jz_s[n_species+ispec]);
+    Field1D* rho1D_s2 = static_cast<Field1D*>(rho_s[n_species+ispec]);
 
     #pragma omp for schedule(static) 
     for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
         (*rho1D_s)(ix) = 0.0;
+        (*rho1D_s2)(ix) = 0.0;
     }
     if (currents){
         // put longitudinal current to zero on the dual grid
         #pragma omp for schedule(static) 
         for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
             (*Jx1D_s)(ix)  = 0.0;
+            (*Jx1D_s2)(ix)  = 0.0;
         }
         #pragma omp for schedule(static) 
         for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
         // all fields are defined on the primal grid
             (*Jy1D_s)(ix)  = 0.0;
             (*Jz1D_s)(ix)  = 0.0;
+            (*Jy1D_s2)(ix)  = 0.0;
+            (*Jz1D_s2)(ix)  = 0.0;
         }
     }
 }
@@ -592,7 +604,7 @@ void ElectroMagn1D::computeTotalRhoJ()
     Field1D* Jz1D    = static_cast<Field1D*>(Jz_);
     Field1D* rho1D   = static_cast<Field1D*>(rho_);
     
-    for (unsigned int ispec=0; ispec<n_species; ispec++) {
+    for (unsigned int ispec=0; ispec<n_species*2; ispec++) {
         Field1D* Jx1D_s  = static_cast<Field1D*>(Jx_s[ispec]);
         Field1D* Jy1D_s  = static_cast<Field1D*>(Jy_s[ispec]);
         Field1D* Jz1D_s  = static_cast<Field1D*>(Jz_s[ispec]);
@@ -611,6 +623,40 @@ void ElectroMagn1D::computeTotalRhoJ()
         }
     }//END loop on species ispec
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Gather the total density and currents for species on a single array instead of twin arrays.
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn1D::sumtwins()
+{
+    // -----------------------------------
+    // Species currents and charge density
+    // -----------------------------------
+    for (unsigned int ispec=0; ispec<n_species; ispec++) {
+        Field1D* Jx1D_s  = static_cast<Field1D*>(Jx_s[ispec]);
+        Field1D* Jy1D_s  = static_cast<Field1D*>(Jy_s[ispec]);
+        Field1D* Jz1D_s  = static_cast<Field1D*>(Jz_s[ispec]);
+        Field1D* rho1D_s = static_cast<Field1D*>(rho_s[ispec]);
+        Field1D* Jx1D_s2  = static_cast<Field1D*>(Jx_s[n_species+ispec]);
+        Field1D* Jy1D_s2  = static_cast<Field1D*>(Jy_s[n_species+ispec]);
+        Field1D* Jz1D_s2  = static_cast<Field1D*>(Jz_s[n_species+ispec]);
+        Field1D* rho1D_s2 = static_cast<Field1D*>(rho_s[n_species+ispec]);
+        
+        // Charge density rho^(p) 
+        for (unsigned int i=0 ; i<dimPrim[0] ; i++) {
+            (*rho1D_s)(i) += (*rho1D_s2)(i);
+            (*Jy1D_s)(i) += (*Jy1D_s2)(i);
+            (*Jz1D_s)(i) += (*Jz1D_s2)(i);
+        }
+        
+        // Current Jx^(d)
+        for (unsigned int i=0 ; i<dimDual[0] ; i++) {
+            (*Jx1D_s)(i) += (*Jx1D_s2)(i);
+        }
+        
+    }//END loop on species ispec
+    
+}//END sumtwins
 
 void ElectroMagn1D::computePoynting() {
     if (isWestern) {
