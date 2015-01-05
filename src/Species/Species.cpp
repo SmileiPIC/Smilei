@@ -61,8 +61,13 @@ species_param(params.species_param[ispec])
     // atomic number
 	
     // Width of clusters:
+    // Clusters must all have the same size:
     if (params.n_space[0]%clrw != 0)
-        ERROR("clrw should divide n_space[0]");
+        ERROR("Cluster width (clrw) = " << clrw << "should divide n_space[0] = " << params.n_space[0] );
+    //Testing if clusters width (clrw) is large enough for the spliting technique:
+    if (clrw < 2*oversize[0]+2){
+        ERROR("Cluster width (clrw) = "<< clrw << " must be greater than 2*oversize[0]+1 = " << 2*oversize[0]+1 );
+    }
     
     // Arrays of the min and max indices of the particle bins
     bmin.resize(params.n_space[0]/clrw);
