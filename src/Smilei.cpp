@@ -318,13 +318,6 @@ int main (int argc, char* argv[])
             EMfields->computeTotalRhoJ();
         } //End omp parallel region
         smpi->sumRhoJ( EMfields );
-        // For tests **************************************************
-        //EMfields->sumtwins();
-        //for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-        //    smpi->sumRhoJs(EMfields, ispec, true);
-        //}
-        //flag = 1;
-        // For tests **************************************************
         timer[4].update();
         
         // solve Maxwell's equations

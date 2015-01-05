@@ -610,16 +610,17 @@ void ElectroMagn1D::computeTotalRhoJ()
         Field1D* Jz1D_s  = static_cast<Field1D*>(Jz_s[ispec]);
         Field1D* rho1D_s = static_cast<Field1D*>(rho_s[ispec]);
         
-        // put longitudinal current to zero on the dual grid
-        for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
-            (*Jx1D)(ix)  += (*Jx1D_s)(ix);
-        }
-        
-        // all fields are defined on the primal grid
+        #pragma omp for schedule(static) nowait
         for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
+            (*Jx1D)(ix)  += (*Jx1D_s)(ix);
             (*Jy1D)(ix)  += (*Jy1D_s)(ix);
             (*Jz1D)(ix)  += (*Jz1D_s)(ix);
             (*rho1D)(ix) += (*rho1D_s)(ix);
+        }
+
+        #pragma omp single
+        {
+            (*Jx1D)(dimPrim[0])  += (*Jx1D_s)(dimPrim[0]);
         }
     }//END loop on species ispec
 }
