@@ -450,7 +450,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     }
     else { // immobile particle (at the moment only project density)
         b_Jx = (double *) malloc(size_proj_buffer * sizeof(double));
-               #pragma omp for schedule(static) nowait
+        #pragma omp for schedule(static) nowait
         for (ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
             // reset all current-buffers
             memset( &(b_Jx[0]), 0, size_proj_buffer*sizeof(double)); 

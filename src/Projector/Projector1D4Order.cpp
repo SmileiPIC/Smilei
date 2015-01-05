@@ -258,7 +258,52 @@ void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
 // ---------------------------------------------------------------------------------------------------------------------
 void Projector1D4Order::operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, unsigned int b_dim0)
 {
-    WARNING("Projection of densities only not yet defined for 1D 4th order");
+    // Declare local variables
+    int ipo, ip, iloc;
+    int ip_m_ipo;
+    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xipo3, xj_m_xipo4, xj_m_xip, xj_m_xip2, xj_m_xip3, xj_m_xip4;
+    double S1[7];            // arrays used for the Esirkepov projection method
+    // Initialize variables
+    for (unsigned int i=0; i<7; i++) {
+        S1[i]=0.;
+    }//i
+
+
+    // Locate particle old position on the primal grid
+    xjn        = particles.position_old(0, ipart) * dx_inv_;
+    ipo        = round(xjn);                          // index of the central node
+    xj_m_xipo  = xjn - (double)ipo;                   // normalized distance to the nearest grid point
+    xj_m_xipo2 = xj_m_xipo  * xj_m_xipo;                 // square of the normalized distance to the nearest grid point
+    xj_m_xipo3 = xj_m_xipo2 * xj_m_xipo;              // cube of the normalized distance to the nearest grid point
+    xj_m_xipo4 = xj_m_xipo3 * xj_m_xipo;              // 4th power of the normalized distance to the nearest grid point
+
+    // Locate particle new position on the primal grid
+    xjn       = particles.position(0, ipart) * dx_inv_;
+    ip        = round(xjn);                           // index of the central node
+    xj_m_xip  = xjn - (double)ip;                     // normalized distance to the nearest grid point
+    xj_m_xip2 = xj_m_xip  * xj_m_xip;                    // square of the normalized distance to the nearest grid point
+    xj_m_xip3 = xj_m_xip2 * xj_m_xip;                 // cube of the normalized distance to the nearest grid point
+    xj_m_xip4 = xj_m_xip3 * xj_m_xip;                 // 4th power of the normalized distance to the nearest grid point
+
+    // coefficients 2nd order interpolation on 5 nodes
+    ip_m_ipo = ip-ipo;
+
+    S1[ip_m_ipo+1] = dble_1_ov_384   - dble_1_ov_48  * xj_m_xip  + dble_1_ov_16 * xj_m_xip2 - dble_1_ov_12 * xj_m_xip3 + dble_1_ov_24 * xj_m_xip4;
+    S1[ip_m_ipo+2] = dble_19_ov_96   - dble_11_ov_24 * xj_m_xip  + dble_1_ov_4 * xj_m_xip2  + dble_1_ov_6  * xj_m_xip3 - dble_1_ov_6  * xj_m_xip4;
+    S1[ip_m_ipo+3] = dble_115_ov_192 - dble_5_ov_8   * xj_m_xip2 + dble_1_ov_4 * xj_m_xip4;
+    S1[ip_m_ipo+4] = dble_19_ov_96   + dble_11_ov_24 * xj_m_xip  + dble_1_ov_4 * xj_m_xip2  - dble_1_ov_6  * xj_m_xip3 - dble_1_ov_6  * xj_m_xip4;
+    S1[ip_m_ipo+5] = dble_1_ov_384   + dble_1_ov_48  * xj_m_xip  + dble_1_ov_16 * xj_m_xip2 + dble_1_ov_12 * xj_m_xip3 + dble_1_ov_24 * xj_m_xip4;
+
+    ipo -= index_domain_begin + bin ;
+
+    // 4th order projection for the charge density
+    // At the 4th order, oversize = 3.
+    for (unsigned int i=0; i<7; i++) {
+        iloc = i  + ipo - 3;
+        rho[iloc] += charge_weight * S1[i];
+    }//i
+
 }
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project global current densities (ionize)

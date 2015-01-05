@@ -338,7 +338,47 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
 // ---------------------------------------------------------------------------------------------------------------------
 void Projector1D2Order::operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, unsigned int b_dim0)
 {
-    WARNING("Projection of densities only not yet defined for 1D 2nd order");
+    // The variable bin received is  number of bin * cluster width.
+    // Declare local variables
+    int ipo, ip, iloc;
+    int ip_m_ipo;
+    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;
+    double S1[5];            // arrays used for the Esirkepov projection method
+
+    // Initialize variables
+    for (unsigned int i=0; i<5; i++) {
+        S1[i]=0.;
+    }//i
+
+
+    // Locate particle old position on the primal grid
+    xjn        = particles.position_old(0, ipart) * dx_inv_;
+    ipo        = round(xjn);                          // index of the central node
+    xj_m_xipo  = xjn - (double)ipo;                   // normalized distance to the nearest grid point
+    xj_m_xipo2 = xj_m_xipo*xj_m_xipo;                 // square of the normalized distance to the nearest grid point
+
+    // Locate particle new position on the primal grid
+    xjn       = particles.position(0, ipart) * dx_inv_;
+    ip        = round(xjn);                           // index of the central node
+    xj_m_xip  = xjn - (double)ip;                     // normalized distance to the nearest grid point
+    xj_m_xip2 = xj_m_xip*xj_m_xip;                    // square of the normalized distance to the nearest grid point
+
+    // coefficients 2nd order interpolation on 3 nodes
+    ip_m_ipo = ip-ipo;
+    S1[ip_m_ipo+1] = 0.5 * (xj_m_xip2-xj_m_xip+0.25);
+    S1[ip_m_ipo+2] = (0.75-xj_m_xip2);
+    S1[ip_m_ipo+3] = 0.5 * (xj_m_xip2+xj_m_xip+0.25);
+
+    ipo -= index_domain_begin + bin ;
+
+    // 2nd order projection for charge density
+    // At the 2nd order, oversize = 2.
+    for (unsigned int i=0; i<5; i++) {
+        iloc = i + ipo - 2;
+        rho[iloc] += charge_weight * S1[i];
+    }//i
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
