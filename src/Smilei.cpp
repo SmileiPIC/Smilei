@@ -117,26 +117,7 @@ int main (int argc, char* argv[])
     // -------------------------------------------
     // Declaration of the main objects & operators
     // -------------------------------------------
-    MESSAGE("----------------------------------------------");
-    MESSAGE("Creating EMfields/Interp/Proj/Diags");
-    MESSAGE("----------------------------------------------");
-    
-    // Initialize the electromagnetic fields and interpolation-projection operators
-    // according to the simulation geometry
-    // ----------------------------------------------------------------------------
 
-    // object containing the electromagnetic fields (virtual)
-    ElectroMagn* EMfields = ElectroMagnFactory::create(params, laser_params, smpi);
-    
-    // interpolation operator (virtual)
-    Interpolator* Interp = InterpolatorFactory::create(params, smpi);
-    
-    // projection operator (virtual)
-    Projector* Proj = ProjectorFactory::create(params, smpi);
-    
-    // Create diagnostics
-    Diagnostic *Diags =new Diagnostic(params,diag_params, smpi);    
-    
     // ---------------------------
     // Initialize Species & Fields
     // ---------------------------
@@ -158,6 +139,27 @@ int main (int argc, char* argv[])
     int start_moving(0);
     if (params.nspace_win_x)
         simWindow = new SimWindow(params);
+
+    MESSAGE("----------------------------------------------");
+    MESSAGE("Creating EMfields/Interp/Proj/Diags");
+    MESSAGE("----------------------------------------------");
+    
+    // Initialize the electromagnetic fields and interpolation-projection operators
+    // according to the simulation geometry
+    // ----------------------------------------------------------------------------
+
+    // object containing the electromagnetic fields (virtual)
+    ElectroMagn* EMfields = ElectroMagnFactory::create(params, laser_params, smpi);
+    
+    // interpolation operator (virtual)
+    Interpolator* Interp = InterpolatorFactory::create(params, smpi);
+    
+    // projection operator (virtual)
+    Projector* Proj = ProjectorFactory::create(params, smpi);
+    
+    // Create diagnostics
+    Diagnostic *Diags =new Diagnostic(params,diag_params, smpi);    
+    
     smpi->barrier();
     
     unsigned int stepStart=0, stepStop=params.n_time;
