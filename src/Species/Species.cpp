@@ -62,7 +62,7 @@ species_param(params.species_param[ispec])
 	
     // Width of clusters:
     if (params.n_space[0]%clrw != 0)
-        ERROR("clrw should divide n_space[0]");
+        ERROR("clrw should divide n_space[0] = " << params.n_space[0] );
     
     // Arrays of the min and max indices of the particle bins
     bmin.resize(params.n_space[0]/clrw);
@@ -611,8 +611,9 @@ void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi, PicParams& par
     bmin.push_back( bmax[bmax.size()-1] );
     bmax.push_back( bmax[bmax.size()-1] );
     bmin[0] = 0;
-    
-    smpi->exchangeParticles( this, speciesNumber,params, 0 );
+
+    int iDim(0);    
+    smpi->exchangeParticles( this, speciesNumber,params, 0, iDim );
     
     // Create new particles
     if (smpi->isEastern() ) {
