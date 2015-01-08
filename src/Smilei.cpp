@@ -297,7 +297,7 @@ int main (int argc, char* argv[])
         }
         timer[1].update();
         
-		//!\todo To simplify : sum global and per species densities
+	//!\todo To simplify : sum global and per species densities
         timer[4].restart();
         smpi->sumRhoJ( EMfields );
         for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
@@ -344,7 +344,7 @@ int main (int argc, char* argv[])
         if ( simWindow && simWindow->isMoving(time_dual) ) {
             start_moving++;
             if ((start_moving==1) && (smpi->isMaster()) ) {
-                MESSAGE(">>> Window starts moving");
+		MESSAGE(">>> Window starts moving");
             }
             simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi, params);
         }

@@ -277,10 +277,12 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams&
 	    else if ( cuParticles.position(iDim,iPart) >= max_local[iDim]) {
 		buff_index_send[1].push_back( indexes_of_particles_to_exchange[i] );
 	    }
-	    else {	    
+	    else if ( !(cuParticles.is_part_in_domain(iPart, this) ) ) {
 		// at the end of exchangeParticles, diagonalParticles will be reinjected 
 		// at the end of cuParticles & indexes_of_particles_to_exchange_per_thd[0] for next iDim
 		cuParticles.cp_particle(indexes_of_particles_to_exchange[i], diagonalParticles);
+	    }
+	    else { // particle will be deleted, if supp_particle particles still in the domain
 	    }
         } // END for iPart = f(i)
         
@@ -309,13 +311,13 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams&
 		MPI_Isend( &n_part_send, 1, MPI_INT, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D, &(srequest[iNeighbor]) );
 	    } // END of Send
 	    else
-		n_part_send = 0;
+	        n_part_send = 0;
 	    if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
 		buff_index_recv_sz[(iNeighbor+1)%2] = 0;
 		MPI_Irecv( &(buff_index_recv_sz[(iNeighbor+1)%2]), 1, MPI_INT, neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &(rrequest[(iNeighbor+1)%2]) );
 	    }
 	    else 
-		buff_index_recv_sz[(iNeighbor+1)%2] = 0;
+	        buff_index_recv_sz[(iNeighbor+1)%2] = 0;
 	}
 	barrier();
             
@@ -537,7 +539,7 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams&
 	}
         
         // Inject corner particles at the end of the list, update bmax
-	//cout << "Number of diag particles " << diagonalParticles.size() << endl;
+	//if (iDim==cuParticles.dimension()-1) cout << "Number of diag particles " << diagonalParticles.size() << endl;
         for (int iPart = 0 ; iPart<diagonalParticles.size() ; iPart++) {
             diagonalParticles.cp_particle(iPart, cuParticles);
             (*indexes_of_particles_to_exchange_per_thd)[0].push_back(cuParticles.size()-1);
