@@ -308,9 +308,14 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams&
 		n_part_send = (buff_index_send[iNeighbor]).size();
 		MPI_Isend( &n_part_send, 1, MPI_INT, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D, &(srequest[iNeighbor]) );
 	    } // END of Send
+	    else
+		n_part_send = 0;
 	    if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+		buff_index_recv_sz[(iNeighbor+1)%2] = 0;
 		MPI_Irecv( &(buff_index_recv_sz[(iNeighbor+1)%2]), 1, MPI_INT, neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &(rrequest[(iNeighbor+1)%2]) );
 	    }
+	    else 
+		buff_index_recv_sz[(iNeighbor+1)%2] = 0;
 	}
 	barrier();
             
@@ -350,12 +355,14 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams&
 	    if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (n_part_send!=0) ) {
 		double x_max = params.cell_length[iDim]*( params.n_space_global[iDim] );
 		for (int iPart=0 ; iPart<n_part_send ; iPart++) {
-		    // Enabled periodicity
-		    if ( ( iNeighbor==0 ) &&  (coords_[iDim] == 0 ) &&( cuParticles.position(iDim,buff_index_send[iNeighbor][iPart]) < 0. ) ) {
-			cuParticles.position(iDim,buff_index_send[iNeighbor][iPart])     += x_max;
-		    }
-		    else if ( ( iNeighbor==1 ) &&  (coords_[iDim] == number_of_procs[iDim]-1 ) && ( cuParticles.position(iDim,buff_index_send[iNeighbor][iPart]) >= x_max ) ) {
-			cuParticles.position(iDim,buff_index_send[iNeighbor][iPart])     -= x_max;
+		    if (periods_[iDim]==1) {
+			// Enabled periodicity
+			if ( ( iNeighbor==0 ) &&  (coords_[iDim] == 0 ) &&( cuParticles.position(iDim,buff_index_send[iNeighbor][iPart]) < 0. ) ) {
+			    cuParticles.position(iDim,buff_index_send[iNeighbor][iPart])     += x_max;
+			}
+			else if ( ( iNeighbor==1 ) &&  (coords_[iDim] == number_of_procs[iDim]-1 ) && ( cuParticles.position(iDim,buff_index_send[iNeighbor][iPart]) >= x_max ) ) {
+			    cuParticles.position(iDim,buff_index_send[iNeighbor][iPart])     -= x_max;
+			}
 		    }
 		    cuParticles.cp_particle(buff_index_send[iNeighbor][iPart], partVectorSend[iNeighbor]);
 		}
