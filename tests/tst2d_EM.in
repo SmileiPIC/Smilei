@@ -22,25 +22,19 @@ dim = 2d3v
 #
 interpolation_order = 2 
 
-# SIMULATION TIME 
-# either use the resolution (res_time) or time-step (timestep)
+# SIMULATION TIME
+# res_time: temporal resolution (integer = number of time?~H~Rsteps within one normalization period)
+# sim_time: duration of the simulation in units of the normalization period 
 #
-# res_time  : temporal resolution 
-# time step : time step
-# sim_time  : duration of the simulation 
-#
-res_time = 30
-sim_time = 50
+res_time = 15
+sim_time = 100
 
-# SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
-# either use the resolution (res_space) or cell-length (cell_length)
+# SIMULATION BOX : for all space directions (use vector)
+# res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
+# sim_length: length of the simulation in units of the normalization wavelength 
 #
-# res_space   : spatial resolution 
-# sim_length  : length of the simulation 
-# cell_length : cell-length 
-#
-res_space  = 20  20  
-sim_length = 20  50  
+res_space  = 10    10  
+sim_length = 100   100  
 
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
 # bc_em_type_long/trans : boundary conditions used for EM fields 
@@ -68,12 +62,12 @@ random_seed = 0
 #
 laser
 	boxSide = west
-	a0=1.0
-	focus=0.0 25.0
-	angle=20.0 
-	delta=0.0              
-	time_profile = sin2
-	double_params = 5
+	a0      =  1.0
+	focus   = 25.0 50.0
+	angle   = 10.0 
+	delta   = 0.0              
+	time_profile = constant
+#	double_params = 5.0
 	transv_profile = focused
 	double_params_transv = 5.0 
 end
