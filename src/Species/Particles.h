@@ -168,6 +168,9 @@ public:
     //! charge state of the particle (multiples of e>0)
     std::vector<short> Charge;
 
+    //! charge state of the particle (multiples of e>0)
+    std::vector<short> Id;
+
 private:
 
 };
