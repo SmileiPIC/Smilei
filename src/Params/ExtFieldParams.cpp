@@ -15,11 +15,9 @@ geometry(params.geometry)
     // -----------------
     int n_extfield=0;
     while (ifile.existGroup("extfield",n_extfield)) {
-        //! field name
-        vector<string> FieldNames;
-        ifile.extract("field",FieldNames,"extfield",0,n_extfield);
-
+        
         ExtFieldStructure tmpExtField;
+        ifile.extract("field",tmpExtField.fields,"extfield",0,n_extfield);
         ifile.extract("profile",tmpExtField.profile,"extfield",0,n_extfield);
         ifile.extract("int_params",tmpExtField.int_params,"extfield",0,n_extfield);
         ifile.extract("double_params",tmpExtField.double_params,"extfield",0,n_extfield);
@@ -28,9 +26,7 @@ geometry(params.geometry)
         transform(tmpExtField.length_params.begin(), tmpExtField.length_params.end(), tmpExtField.length_params.begin(),
                   bind1st(multiplies<double>(),params.conv_fac));
         
-        for (vector<string>::iterator field=FieldNames.begin(); field!=FieldNames.end(); field++) {
-            structs[*field].push_back(tmpExtField);
-        }
+        structs.push_back(tmpExtField);
 
         n_extfield++;
     }

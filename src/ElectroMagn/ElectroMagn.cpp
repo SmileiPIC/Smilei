@@ -296,8 +296,6 @@ bool ElectroMagn::isRhoNull(SmileiMPI* smpi)
 
 void ElectroMagn::applyExternalFields(ExtFieldParams&extfield_params, SmileiMPI* smpi) {
     
-    std::map<Field*, std::vector<ExtFieldProfile*> > external_fields;
-
     vector<Field*> my_fields;
     my_fields.push_back(Ex_);
     my_fields.push_back(Ey_);
@@ -306,33 +304,26 @@ void ElectroMagn::applyExternalFields(ExtFieldParams&extfield_params, SmileiMPI*
     my_fields.push_back(By_);
     my_fields.push_back(Bz_);
     
-    
     for (vector<Field*>::iterator field=my_fields.begin(); field!=my_fields.end(); field++) {
         if (*field) {
-            for (map<string, vector<ExtFieldStructure> >::iterator extfield=extfield_params.structs.begin(); extfield!=extfield_params.structs.end(); extfield++ ) {
-                string lowCaseField=(*field)->name;
-                std::transform(lowCaseField.begin(), lowCaseField.end(), lowCaseField.begin(), ::tolower);
-                if (lowCaseField==extfield->first) {                    
-                    for (vector<ExtFieldStructure>::iterator profile=extfield->second.begin(); profile!=extfield->second.end(); profile++) {
-                        ExtFieldProfile *my_ExtFieldProfile=NULL;
-                        if (extfield_params.geometry == "1d3v") {
-                            my_ExtFieldProfile = (ExtFieldProfile*) (new ExtFieldProfile1D(*profile));
-                        }
-                        else if (extfield_params.geometry == "2d3v") {
-                            my_ExtFieldProfile = (ExtFieldProfile*) (new ExtFieldProfile2D(*profile));
-                        }
-                        if (my_ExtFieldProfile) 
-                            external_fields[*field].push_back(my_ExtFieldProfile);
-                    }
+            string lowCaseField=(*field)->name;
+            std::transform(lowCaseField.begin(), lowCaseField.end(), lowCaseField.begin(), ::tolower);
+            for (vector<ExtFieldStructure>::iterator extfield=extfield_params.structs.begin(); extfield!=extfield_params.structs.end(); extfield++ ) {
+                ExtFieldProfile *my_ExtFieldProfile=NULL;
+                if (extfield_params.geometry == "1d3v") {
+                    my_ExtFieldProfile = (ExtFieldProfile*) (new ExtFieldProfile1D(*extfield));
+                } else if (extfield_params.geometry == "2d3v") {
+                    my_ExtFieldProfile = (ExtFieldProfile*) (new ExtFieldProfile2D(*extfield));
                 }
+                if (my_ExtFieldProfile) {
+                    for (vector<string>::iterator fieldName=(*extfield).fields.begin();fieldName!=(*extfield).fields.end();fieldName++) {
+                        if (lowCaseField==(*fieldName)) {
+                            applyExternalField(*field,my_ExtFieldProfile, smpi);
+                        }
+                    }
+                }                    
             }
         }
     }
-    
-    for(map<Field*, vector<ExtFieldProfile*> >::iterator iter_field=external_fields.begin(); iter_field!=external_fields.end(); iter_field++) {
-        for (vector<ExtFieldProfile*>::iterator iter_profile=iter_field->second.begin(); iter_profile!=iter_field->second.end(); iter_profile++) {            
-            applyExternalField(iter_field->first,*iter_profile, smpi);
-        }
-    }
-    
+        
 }    

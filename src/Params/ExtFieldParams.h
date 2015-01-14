@@ -20,6 +20,9 @@ class ExtFieldProfile;
 //! This structure contains the properties of each ExtField
 // ---------------------------------------------------------------------------------------------------------------------
 struct ExtFieldStructure {
+
+    //! fields to which apply the exeternal field
+    std::vector<std::string> fields;     
     
     //! ExtField profile
     std::string profile; 
@@ -48,8 +51,8 @@ public:
 
     std::string geometry;
     
-    //! external fields parameters string is the name of the field and
-    std::map<std::string, std::vector<ExtFieldStructure> > structs;
+    //! external fields parameters the key string is the name of the field and the value is a vector of ExtFieldStructure
+    std::vector<ExtFieldStructure> structs;
     
 };
 
