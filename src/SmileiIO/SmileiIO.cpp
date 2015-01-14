@@ -127,7 +127,7 @@ stop_file_seen_since_last_check(false)
     dimsPos = params.sim_length.size();
     sid = H5Screate_simple(1, &dimsPos, NULL);
     vector<double> sim_length_norm=params.sim_length;
-    std::transform(sim_length_norm.begin(), sim_length_norm.end(), sim_length_norm.begin(),std::bind1st(std::multiplies<double>(),1.0/params.conv_fac));
+    transform(sim_length_norm.begin(), sim_length_norm.end(), sim_length_norm.begin(),bind1st(multiplies<double>(),1.0/params.conv_fac));
 
     aid = H5Acreate (global_file_id_, "sim_length", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, write_plist);
     H5Awrite(aid, H5T_NATIVE_DOUBLE, &(sim_length_norm[0]));

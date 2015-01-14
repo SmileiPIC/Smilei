@@ -13,6 +13,8 @@
 #include "SmileiMPI.h"
 #include "SmileiMPI_Cart1D.h"
 
+#include "ExtFieldProfile1D.h"
+
 using namespace std;
 
 
@@ -645,3 +647,15 @@ void ElectroMagn1D::computePoynting() {
         
     }    
 }
+
+void ElectroMagn1D::applyExternalField(Field* my_field,  ExtFieldProfile *my_profile) {
+    
+    Field1D* field=static_cast<Field1D*>(my_field);
+    ExtFieldProfile1D* profile=static_cast<ExtFieldProfile1D*> (my_profile);
+    
+    // <<<<<<<<<<<<<<<<<<<<<<<<  ADD HERE THE for >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    DEBUG("here " << field->name );
+}
+
+    
+

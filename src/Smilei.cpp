@@ -25,6 +25,7 @@
 #include "InputData.h"
 #include "PicParams.h"
 #include "LaserParams.h"
+#include "ExtFieldParams.h"
 
 #include "SmileiMPIFactory.h"
 #include "SmileiIOFactory.h"
@@ -91,6 +92,8 @@ int main (int argc, char* argv[])
     if ( smpiData->isMaster() ) params.print();
     smpiData->barrier();
     LaserParams laser_params(params, input_data);
+    ExtFieldParams extfield_params(params, input_data);
+    
     smpiData->barrier();
     DiagParams diag_params(params, input_data);
     
@@ -167,12 +170,12 @@ int main (int argc, char* argv[])
         MESSAGE(1, "READING fields and particles for restart");
         DEBUG(vecSpecies.size());
         sio->restartAll( EMfields,  stepStart, vecSpecies, smpi, simWindow, params, input_data);
-
+        
         double restart_time_dual = (stepStart +0.5) * params.timestep;
-	if ( simWindow && ( simWindow->isMoving(restart_time_dual) ) ) {
-	    simWindow->setOperators(vecSpecies, Interp, Proj, smpi);
-	    simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi , params);
-	}
+        if ( simWindow && ( simWindow->isMoving(restart_time_dual) ) ) {
+            simWindow->setOperators(vecSpecies, Interp, Proj, smpi);
+            simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi , params);
+        }
 	    
     } else {
         // Initialize the electromagnetic fields
@@ -190,9 +193,10 @@ int main (int argc, char* argv[])
         MESSAGE("----------------------------------------------");
         MESSAGE("Solving Poisson at time t = 0");
         MESSAGE("----------------------------------------------");
-	if (!EMfields->isRhoNull(smpi)) 
-	    EMfields->solvePoisson(smpi);
+        if (!EMfields->isRhoNull(smpi)) 
+            EMfields->solvePoisson(smpi);
         
+        EMfields->applyExternalFields(extfield_params);
         
         MESSAGE("----------------------------------------------");
         MESSAGE("Running diags at time t = 0");

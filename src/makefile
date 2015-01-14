@@ -6,7 +6,7 @@ HDF5_ROOT_DIR ?=
 VERSION:="$(shell git describe 2>/dev/null || echo '??')"
 
 CFLAGS += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include
-LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5
+LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5 -lz
 
 ifneq (,$(findstring poincare,$(HOSTNAME)))
     LDFLAGS += -lgpfs -lz
@@ -47,10 +47,10 @@ scalasca:
 #collect all cpp files
 SRCS := $(shell find . -name \*.cpp)
 OBJS := $(SRCS:.cpp=.o)
-DEPS := $(OBJS:.o=.d)
+DEPS := $(SRCS:.cpp=.d)
 
 ifeq ($(config),debug)
-	CFLAGS += -g -pg -Wall -D__DEBUG -O0 -shared-intel 
+	CFLAGS += -g -pg -Wall -D__DEBUG -O0# -shared-intel 
 
 else
 	CFLAGS += -O3

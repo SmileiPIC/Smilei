@@ -76,6 +76,9 @@ public:
     //! compute Poynting on borders
     void computePoynting();
 
+    //! Method used to impose external fields
+    void applyExternalField(Field*, ExtFieldProfile*);
+        
 private:
     
     //! from smpi is west

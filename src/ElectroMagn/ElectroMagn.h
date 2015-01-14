@@ -7,6 +7,7 @@
 
 #include "Tools.h"
 #include "LaserParams.h"
+#include "ExtFieldParams.h"
 
 class PicParams;
 class Species;
@@ -16,6 +17,7 @@ class Laser;
 class SmileiMPI;
 class ElectroMagnBC;
 class SimWindow;
+class ExtFieldProfile;
 
 //! class ElectroMagn: generic class containing all information on the electromagnetic fields and currents
 
@@ -23,7 +25,12 @@ class ElectroMagn
 {
 
 public:
-
+    //! Constructor for Electromagn
+    ElectroMagn( PicParams &params, LaserParams &laser_params, SmileiMPI* smpi );
+    
+    //! Destructor for Electromagn
+    virtual ~ElectroMagn();
+        
     std::vector<unsigned int> dimPrim;
     std::vector<unsigned int> dimDual;
 
@@ -124,12 +131,6 @@ public:
     //! Oversize domain to exchange less particles (from params)
     const std::vector<unsigned int> oversize;
 
-    //! Constructor for Electromagn
-    ElectroMagn( PicParams &params, LaserParams &laser_params, SmileiMPI* smpi );
-
-    //! Destructor for Electromagn
-    virtual ~ElectroMagn();
-
     //! Method used to dump data contained in ElectroMagn
     void dump();
 
@@ -146,7 +147,7 @@ public:
 
     //! Method used to initialize the Maxwell solver
     virtual void solvePoisson(SmileiMPI* smpi) = 0;
-
+    
     //! \todo check time_dual or time_prim (MG)
     //! method used to solve Maxwell's equation (takes current time and time-step as input parameter)
     void solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, PicParams &params, SimWindow* simWindow);
@@ -174,10 +175,19 @@ public:
     //! Check if norm of charge denisty is not null
     bool isRhoNull(SmileiMPI* smpi);
 
+    //! initialization of the external fields;
+    void initExtFields(ExtFieldParams&);
+    
+    //! Method used to impose external fields
+    void applyExternalFields(ExtFieldParams&);
+    
+    virtual void applyExternalField(Field*, ExtFieldProfile*) = 0 ;
+    
 private:
     
     //! Vector of boundary-condition per side for the fields
     std::vector<ElectroMagnBC*> emBoundCond;
+
 };
 
 #endif
