@@ -18,6 +18,7 @@ Particles::Particles()
     Position.resize(0);
     Position_old.resize(0);
     Momentum.resize(0);
+    isTestParticles = false;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -42,7 +43,7 @@ void Particles::initialize( int nParticles, int nDim )
 	reserve( round( c_part_max * nParticles ), nDim );
     }
 
-	Position.resize(nDim);
+    Position.resize(nDim);
     Position_old.resize(nDim);
     for (int i=0 ; i< nDim ; i++) {
         Position[i].resize(nParticles, 0.);
@@ -54,6 +55,9 @@ void Particles::initialize( int nParticles, int nDim )
     }
     Weight.resize(nParticles, 0.);
     Charge.resize(nParticles, 0);
+
+    if (isTestParticles)
+	Id.resize(nParticles, 0);
 
 }
 
@@ -76,6 +80,9 @@ void Particles::reserve( unsigned int n_part_max, int nDim )
     Weight.reserve(n_part_max);
     Charge.reserve(n_part_max);
 
+    if (isTestParticles)
+	Id.reserve(n_part_max);
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -93,6 +100,8 @@ void Particles::clear()
     Weight.clear();
     Charge.clear();
 
+    if (isTestParticles)
+	Id.clear();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -110,6 +119,9 @@ void Particles::cp_particle(int ipart, Particles &dest_parts )
     }
     dest_parts.Weight.push_back( Weight[ipart] );
     dest_parts.Charge.push_back( Charge[ipart] );
+
+    if (isTestParticles)
+	dest_parts.Id.push_back( Id[ipart] );
 
 }
 
@@ -129,6 +141,9 @@ void Particles::cp_particle(int ipart, Particles &dest_parts, int dest_id )
     dest_parts.Weight.insert( dest_parts.Weight.begin() + dest_id, Weight[ipart] );
     dest_parts.Charge.insert( dest_parts.Charge.begin() + dest_id, Charge[ipart] );
 
+    if (isTestParticles)
+	dest_parts.Id.insert( dest_parts.Id.begin() + dest_id, Id[ipart] );
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -146,6 +161,9 @@ void Particles::cp_particles(int nPart, Particles &dest_parts, int dest_id )
     }
     dest_parts.Weight.insert( dest_parts.Weight.begin() + dest_id, Weight.begin(), Weight.begin()+nPart );
     dest_parts.Charge.insert( dest_parts.Charge.begin() + dest_id, Charge.begin(), Charge.begin()+nPart );
+
+    if (isTestParticles)
+	dest_parts.Id.insert( dest_parts.Id.begin() + dest_id, Id.begin(), Id.begin()+nPart );
 
 }
 
@@ -165,6 +183,10 @@ void Particles::erase_particle(int ipart )
     }
     Weight.erase( Weight.begin()+ipart );
     Charge.erase( Charge.begin()+ipart );
+
+    if (isTestParticles)
+	Id.erase( Charge.begin()+ipart );
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -182,6 +204,10 @@ void Particles::erase_particle_trail(int ipart)
     }
     Weight.erase( Weight.begin()+ipart,Weight.end() );
     Charge.erase( Charge.begin()+ipart,Charge.end() );
+
+    if (isTestParticles)
+	Id.erase( Id.begin()+ipart,Id.end() );
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -196,6 +222,9 @@ void Particles::print(int iPart) {
         cout << Momentum[i][iPart] << " ";
     cout << Weight[iPart] << " ";
     cout << Charge[iPart] << endl;;
+
+    if (isTestParticles)
+	cout << Id[iPart] << endl;;
 }
 
 
@@ -213,6 +242,9 @@ void Particles::swap_part(int part1, int part2)
     std::swap( Charge[part1], Charge[part2] );
     std::swap( Weight[part1], Weight[part2] );
 
+    if (isTestParticles)
+	std::swap( Id[part1], Id[part2] );
+    
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -226,7 +258,11 @@ void Particles::overwrite_part1D(int part1, int part2)
             Momentum[1][part2] =     Momentum[1][part1];
             Momentum[2][part2] =     Momentum[2][part1];
               Charge[part2]      =        Charge[part1];
-              Weight[part2]      =        Weight[part1];      
+              Weight[part2]      =        Weight[part1];
+      
+    if (isTestParticles)
+	          Id[part2]      =        Id[part1];
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -243,6 +279,10 @@ void Particles::overwrite_part2D(int part1, int part2)
             Momentum[2][part2] =     Momentum[2][part1];
               Charge[part2]      =        Charge[part1];
               Weight[part2]      =        Weight[part1];      
+
+    if (isTestParticles)
+	          Id[part2]      =        Id[part1];
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -262,7 +302,11 @@ void Particles::overwrite_part2D(int part1, int part2, int N)
     memcpy(&Momentum[1][part2]     ,  &Momentum[1][part1]     , sizepart)    ;
     memcpy(&Momentum[2][part2]     ,  &Momentum[2][part1]     , sizepart)    ;
     memcpy(&Charge[part2]          ,  &Charge[part1]          , sizecharge)    ;
-    memcpy(&Weight[part2]          ,  &Weight[part1]          , sizepart)    ;      
+    memcpy(&Weight[part2]          ,  &Weight[part1]          , sizepart)    ;
+      
+    if (isTestParticles)
+	memcpy(&Id[part2]          ,  &Id[part1]              , sizecharge)    ;
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -271,16 +315,20 @@ void Particles::overwrite_part2D(int part1, int part2, int N)
 void Particles::overwrite_part2D(int part1, Particles &dest_parts, int part2)
 {
 
-            dest_parts.Position[0][part2]     = Position[0][part1];
-            dest_parts.Position[1][part2]     = Position[1][part1];
-            dest_parts.Position_old[0][part2] = Position_old[0][part1];
-            dest_parts.Position_old[1][part2] = Position_old[1][part1];
-            dest_parts.Momentum[0][part2] =     Momentum[0][part1];
-            dest_parts.Momentum[1][part2] =     Momentum[1][part1];
-            dest_parts.Momentum[2][part2] =     Momentum[2][part1];
-            dest_parts.Charge[part2]      =     Charge[part1];
-            dest_parts.Weight[part2]      =     Weight[part1];      
-    }
+    dest_parts.Position[0][part2]     = Position[0][part1];
+    dest_parts.Position[1][part2]     = Position[1][part1];
+    dest_parts.Position_old[0][part2] = Position_old[0][part1];
+    dest_parts.Position_old[1][part2] = Position_old[1][part1];
+    dest_parts.Momentum[0][part2] =     Momentum[0][part1];
+    dest_parts.Momentum[1][part2] =     Momentum[1][part1];
+    dest_parts.Momentum[2][part2] =     Momentum[2][part1];
+    dest_parts.Charge[part2]      =     Charge[part1];
+    dest_parts.Weight[part2]      =     Weight[part1];      
+
+    if (isTestParticles)
+	dest_parts.Id[part2]      =     Id[part1];      
+
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Move particle part1->part1+N into part2->part2+N memory location of dest vector, erasing part2->part2+N.
@@ -300,6 +348,9 @@ void Particles::overwrite_part2D(int part1, Particles &dest_parts, int part2, in
     memcpy(&dest_parts.Momentum[2][part2]     ,  &Momentum[2][part1]     , sizepart)    ;
     memcpy(&dest_parts.Charge[part2]          ,  &Charge[part1]         , sizecharge)    ;
     memcpy(&dest_parts.Weight[part2]          ,  &Weight[part1]         , sizepart)    ;      
+
+    if (isTestParticles)
+	memcpy(&dest_parts.Id[part2]          ,  &Id[part1]             , sizecharge)    ;      
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -316,6 +367,12 @@ void Particles::overwrite_part1D(int part1, int part2, int N)
                      Charge[part2+j]          =  Charge[part1+j];
                      Weight[part2+j]          =  Weight[part1+j];      
         }
+
+    if (isTestParticles)
+        for (unsigned int j=0; j< N; j++)
+	    Id[part2+j]          =  Id[part1+j];      
+  
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -332,6 +389,11 @@ void Particles::overwrite_part1D(int part1, Particles &dest_parts, int part2, in
                      dest_parts.Charge[part2+j]      =     Charge[part1+j];
                      dest_parts.Weight[part2+j]      =     Weight[part1+j];      
         }
+
+    if (isTestParticles)
+        for (unsigned int j=0; j< N; j++)
+	    dest_parts.Id[part2+j]          =  Id[part1+j];      
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -367,6 +429,11 @@ void Particles::swap_part(int part1, int part2, int N)
         memcpy(&Weight[part1],&Weight[part2], sizepart);
         memcpy(&Weight[part2],buffer, sizepart);
     
+    if (isTestParticles) {
+        memcpy(buffer,&Id[part1], sizecharge);
+        memcpy(&Id[part1],&Id[part2], sizecharge);
+        memcpy(&Id[part2],buffer, sizecharge);
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -393,6 +460,8 @@ void Particles::create_particle()
     Weight.push_back(0.);
     Charge.push_back(0);
 
+    if (isTestParticles)
+	Id.push_back(0);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -411,6 +480,9 @@ void Particles::create_particles(int nAdditionalParticles )
     }
     Weight.resize(nParticles+nAdditionalParticles,0.);
     Charge.resize(nParticles+nAdditionalParticles,0);
+
+    if (isTestParticles)
+	Id.resize(nParticles+nAdditionalParticles,0);
 
 }
 

@@ -807,6 +807,9 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
             particles.position_old(i,iPart) -= particles.momentum(i,iPart)/particles.lor_fac(iPart) * params.timestep;
         }
     }
+    if (particles.isTestParticles)
+	particles.setIds();
+
     return npart_effective;
     
 }

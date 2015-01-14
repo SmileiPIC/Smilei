@@ -168,8 +168,26 @@ public:
     //! charge state of the particle (multiples of e>0)
     std::vector<short> Charge;
 
-    //! charge state of the particle (multiples of e>0)
+    // Test particle parameters
+    bool isTestParticles;
+    void setIds() {
+	for (int iPart=0;iPart<Id.size();iPart++) Id[iPart] = iPart;
+    }
+    void setIds(int startingId) {
+	for (int iPart=0;iPart<Id.size();iPart++) Id[iPart] += startingId;
+    }
+    //! Id of the particle
     std::vector<short> Id;
+
+    //! Method used to get the Particle Id
+    inline short  id(int ipart) const {
+        return Id[ipart];
+    }
+    //! Method used to set the Particle Id
+    inline short&  id(int ipart) {
+        return Id[ipart];
+    }
+
 
 private:
 
