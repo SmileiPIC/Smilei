@@ -8,7 +8,7 @@ class PicParams;
 class LaserParams;
 class SmileiMPI;
 class ElectroMagn;
-class Laser;
+class LaserProfile;
 
 class ElectroMagnBC {
 public:
@@ -21,7 +21,7 @@ public:
  protected:
 
     //! Vector for the various lasers
-    std::vector<Laser*> laser_;
+    std::vector<LaserProfile*> laser_;
     
     //! time-step
     double dt;

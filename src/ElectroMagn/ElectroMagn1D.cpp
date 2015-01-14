@@ -8,7 +8,6 @@
 
 #include "PicParams.h"
 #include "Field1D.h"
-#include "Laser.h"
 
 #include "SmileiMPI.h"
 #include "SmileiMPI_Cart1D.h"

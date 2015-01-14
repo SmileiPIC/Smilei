@@ -1,4 +1,4 @@
-#include "Laser.h"
+#include "LaserProfile.h"
 
 using namespace std;
 
@@ -6,7 +6,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // LASER CONSTRUCTOR
 // ---------------------------------------------------------------------------------------------------------------------
-Laser::Laser( PicParams &params, LaserParams &laser_params, unsigned int n_laser) {
+LaserProfile::LaserProfile( PicParams &params, LaserParams &laser_params, unsigned int n_laser) {
     
     MESSAGE(1,"Creating laser " << n_laser);
              
@@ -147,7 +147,7 @@ Laser::Laser( PicParams &params, LaserParams &laser_params, unsigned int n_laser
 // ---------------------------------------------------------------------------------------------------------------------
 // DEFINITION OF THE TIME_PROFILE
 // ---------------------------------------------------------------------------------------------------------------------
-double Laser::time_profile(double time_dual) {
+double LaserProfile::time_profile(double time_dual) {
 
 
     // CONSTANT time-profile
@@ -247,7 +247,7 @@ double Laser::time_profile(double time_dual) {
 // ---------------------------------------------------------------------------------------------------------------------
 // DEFINITION OF THE TRANSVERSE PROFILE IN 2D
 // ---------------------------------------------------------------------------------------------------------------------
-double Laser::transverse_profile2D(double time_dual, double y) {
+double LaserProfile::transverse_profile2D(double time_dual, double y) {
     
     // PLANE-WAVE
     if (type_of_transv_profile=="plane-wave") {
@@ -277,10 +277,10 @@ double Laser::transverse_profile2D(double time_dual, double y) {
     
     else
         return 0.0;
-}//END laser::transverse_profile2D
+}//END LaserProfile::transverse_profile2D
 
 
-void Laser::disabled()
+void LaserProfile::disabled()
 {
     a0_delta_y_ = 0.;
     a0_delta_z_ = 0.;

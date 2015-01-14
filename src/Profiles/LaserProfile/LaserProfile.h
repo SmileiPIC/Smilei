@@ -1,5 +1,5 @@
-#ifndef LASER_H
-#define LASER_H
+#ifndef LaserProfile_H
+#define LaserProfile_H
 
 #include <cmath>
 
@@ -7,10 +7,10 @@
 #include "LaserParams.h"
 
 
-class Laser {
+class LaserProfile {
 public:
 
-    Laser( PicParams &params, LaserParams &laser_params, unsigned int );
+    LaserProfile( PicParams &params, LaserParams &laser_params, unsigned int );
 
     LaserStructure laser_struct;
 

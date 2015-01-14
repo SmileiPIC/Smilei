@@ -6,6 +6,7 @@
 #include <map>
 
 #include "Tools.h"
+#include "LaserProfile.h"
 #include "LaserParams.h"
 #include "ExtFieldParams.h"
 

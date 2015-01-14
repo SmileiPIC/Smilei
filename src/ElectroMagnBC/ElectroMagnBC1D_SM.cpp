@@ -9,7 +9,6 @@
 #include "SmileiMPI.h"
 #include "ElectroMagn.h"
 #include "Field1D.h"
-#include "Laser.h"
 #include "Tools.h"
 
 using namespace std;
