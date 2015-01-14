@@ -77,7 +77,7 @@ public:
     void computePoynting();
 
     //! Method used to impose external fields
-    void applyExternalField(Field*, ExtFieldProfile*);
+    void applyExternalField(Field*, ExtFieldProfile*, SmileiMPI*);
         
 private:
     

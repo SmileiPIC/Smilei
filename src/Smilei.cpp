@@ -196,7 +196,7 @@ int main (int argc, char* argv[])
         if (!EMfields->isRhoNull(smpi)) 
             EMfields->solvePoisson(smpi);
         
-        EMfields->applyExternalFields(extfield_params);
+        EMfields->applyExternalFields(extfield_params, smpi);
         
         MESSAGE("----------------------------------------------");
         MESSAGE("Running diags at time t = 0");

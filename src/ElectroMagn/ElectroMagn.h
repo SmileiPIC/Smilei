@@ -179,9 +179,9 @@ public:
     void initExtFields(ExtFieldParams&);
     
     //! Method used to impose external fields
-    void applyExternalFields(ExtFieldParams&);
+    void applyExternalFields(ExtFieldParams&, SmileiMPI*);
     
-    virtual void applyExternalField(Field*, ExtFieldProfile*) = 0 ;
+    virtual void applyExternalField(Field*, ExtFieldProfile*, SmileiMPI*) = 0 ;
     
 private:
     

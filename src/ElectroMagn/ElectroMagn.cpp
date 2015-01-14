@@ -296,7 +296,7 @@ bool ElectroMagn::isRhoNull(SmileiMPI* smpi)
 
 }
 
-void ElectroMagn::applyExternalFields(ExtFieldParams&extfield_params) {
+void ElectroMagn::applyExternalFields(ExtFieldParams&extfield_params, SmileiMPI* smpi) {
     
     std::map<Field*, std::vector<ExtFieldProfile*> > external_fields;
 
@@ -333,7 +333,7 @@ void ElectroMagn::applyExternalFields(ExtFieldParams&extfield_params) {
     
     for(map<Field*, vector<ExtFieldProfile*> >::iterator iter_field=external_fields.begin(); iter_field!=external_fields.end(); iter_field++) {
         for (vector<ExtFieldProfile*>::iterator iter_profile=iter_field->second.begin(); iter_profile!=iter_field->second.end(); iter_profile++) {            
-            applyExternalField(iter_field->first,*iter_profile);
+            applyExternalField(iter_field->first,*iter_profile, smpi);
         }
     }
     
