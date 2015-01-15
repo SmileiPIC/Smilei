@@ -388,6 +388,14 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
 			H5Sclose(sid);
 
 
+			if (vecSpecies[ispec]->particles.isTestParticles) {
+			    sid = H5Screate_simple(1, dimsPart, NULL);
+			    did = H5Dcreate(gid, "Id", H5T_NATIVE_SHORT, sid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			    H5Dwrite(did, H5T_NATIVE_SHORT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Id[0]);
+			    H5Dclose(did);
+			    H5Sclose(sid);
+			}
+
 			hsize_t dimsbmin[1] = {vecSpecies[ispec]->bmin.size()};
 			sid = H5Screate_simple(1, dimsbmin, NULL);
 			did = H5Dcreate(gid, "bmin", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
@@ -541,6 +549,12 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
 			did = H5Dopen(gid, "Charge", H5P_DEFAULT);
 			H5Dread(did, H5T_NATIVE_SHORT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Charge[0]);
 			H5Dclose(did);
+
+			if (vecSpecies[ispec]->particles.isTestParticles) {
+			    did = H5Dopen(gid, "Id", H5P_DEFAULT);
+			    H5Dread(did, H5T_NATIVE_SHORT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Id[0]);
+			    H5Dclose(did);
+			}
 
 			did = H5Dopen(gid, "bmin", H5P_DEFAULT);
 			sid = H5Dget_space(did);

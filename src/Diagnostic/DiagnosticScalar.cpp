@@ -62,7 +62,7 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
         double ener_tot=0.0;
         unsigned int nPart=vecSpecies[ispec]->getNbrOfParticles();
 
-	if (vecSpecies[ispec]->particles.isTestParticles) {
+	if (!vecSpecies[ispec]->particles.isTestParticles) {
 
 	  if (nPart>0) {
             for (unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
