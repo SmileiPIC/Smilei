@@ -31,7 +31,7 @@ Particles::~Particles()
 // ---------------------------------------------------------------------------------------------------------------------
 // Create nParticles null particles of nDim size
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::initialize( int nParticles, int nDim )
+void Particles::initialize( int nParticles, PicParams &params)
 {
 	//if (nParticles > Weight.capacity()) {
 	//	WARNING("You should increase c_part_max in specie namelist");
@@ -39,13 +39,13 @@ void Particles::initialize( int nParticles, int nDim )
 
     if (Weight.size()==0) {
 	float c_part_max = 1.0;
-	//reserve( round( params->species_param[speciesNumber].c_part_max * nParticles ), nDim );
-	reserve( round( c_part_max * nParticles ), nDim );
+	//reserve( round( params->species_param[speciesNumber].c_part_max * nParticles ), params.nDim );
+	reserve( round( c_part_max * nParticles ), params.nDim_particle );
     }
 
-    Position.resize(nDim);
-    Position_old.resize(nDim);
-    for (int i=0 ; i< nDim ; i++) {
+    Position.resize(params.nDim_particle);
+    Position_old.resize(params.nDim_particle);
+    for (int i=0 ; i< params.nDim_particle ; i++) {
         Position[i].resize(nParticles, 0.);
         Position_old[i].resize(nParticles, 0.);
     }
@@ -56,8 +56,20 @@ void Particles::initialize( int nParticles, int nDim )
     Weight.resize(nParticles, 0.);
     Charge.resize(nParticles, 0);
 
-    if (isTestParticles)
+}
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Create nParticles null particles of nDim size
+// ---------------------------------------------------------------------------------------------------------------------
+void Particles::initialize( int nParticles, PicParams &params, int speciesNumber)
+{
+    initialize( nParticles, params );
+
+    if (params.species_param[speciesNumber].isTest) {
+	isTestParticles = true;//params.species_param[speciesNumber].isTest;
 	Id.resize(nParticles, 0);
+    }
 
 }
 

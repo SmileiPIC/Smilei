@@ -514,7 +514,7 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
 		unsigned int partSize=0;
 		H5Aread(aid, H5T_NATIVE_UINT, &partSize);
 		H5Aclose(aid);	
-		vecSpecies[ispec]->particles.initialize(partSize,nDim_particle);		
+		vecSpecies[ispec]->particles.initialize(partSize,params,ispec);		
 		
 		
 		if (partSize>0) {

@@ -185,7 +185,7 @@ int main (int argc, char* argv[])
         // Sum rho and J on ghost domains
         smpi->sumRhoJ( EMfields );
         for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-            smpi->sumRhoJs(EMfields, ispec, true);
+	    smpi->sumRhoJs(EMfields, ispec, true); // only if !isTestParticles
         }
         
         // Init electric field (Ex/1D, + Ey/2D)
@@ -280,7 +280,7 @@ int main (int argc, char* argv[])
 #endif
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
                 if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
-                    EMfields->restartRhoJs(ispec, time_dual > params.species_param[ispec].time_frozen);
+                    EMfields->restartRhoJs(ispec, time_dual > params.species_param[ispec].time_frozen); // if (!isTestParticles)
                     vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow);
                 }
             }
@@ -291,7 +291,7 @@ int main (int argc, char* argv[])
 		    for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
 			smpi->exchangeParticles(vecSpecies[ispec], ispec, params, tid, iDim);
 #pragma omp barrier
-                        vecSpecies[ispec]->sort_part();
+		    vecSpecies[ispec]->sort_part(); // Faut il trier les particules test ???
                 }
             }
         }
@@ -300,10 +300,10 @@ int main (int argc, char* argv[])
 	//!\todo To simplify : sum global and per species densities
         timer[4].restart();
         smpi->sumRhoJ( EMfields );
-        for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
+        for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) { // if (!isTestParticles)
             if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ) smpi->sumRhoJs(EMfields, ispec, time_dual > params.species_param[ispec].time_frozen);
         }
-        EMfields->computeTotalRhoJ();
+        EMfields->computeTotalRhoJ(); // if (!isTestParticles)
         timer[4].update();
         
         // solve Maxwell's equations
@@ -319,7 +319,7 @@ int main (int argc, char* argv[])
 		
         // run all diagnostics
         timer[3].restart();
-        Diags->runAllDiags(itime, EMfields, vecSpecies, Interp, smpi);
+        Diags->runAllDiags(itime, EMfields, vecSpecies, Interp, smpi); // if (!isTestParticles)
         
         // temporary EM fields dump in Fields.h5
         if  ((diag_params.fieldDump_every != 0) && (itime % diag_params.fieldDump_every == 0))

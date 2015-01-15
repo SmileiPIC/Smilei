@@ -56,7 +56,7 @@ fileId(0) {
                 totPart *= vecNumber[iDimProbe];
             }
             
-            probeParticles[np].initialize(totPart, ndim);
+            probeParticles[np].initialize(totPart, params);
             probeId[np].resize(totPart);
             
             vector<double> partPos(ndim*totPart,0.0);

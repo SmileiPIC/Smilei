@@ -237,7 +237,12 @@ PicParams::PicParams(InputData &ifile) {
         
         ifile.extract("atomic_number", tmpSpec.atomic_number, "species",0,n_species);
         
-        
+        tmpSpec.isTest = false; // default value
+        ifile.extract("isTest",tmpSpec.isTest ,"species",0,n_species);
+        if (tmpSpec.ionization_model!="none" && (!tmpSpec.isTest)) {
+            ERROR("Disabled for now : test & ionized");
+        }
+                
         // Species geometry
         // ----------------
         ifile.extract("species_geometry", tmpSpec.species_geometry,"species",0,n_species);

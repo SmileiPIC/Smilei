@@ -218,11 +218,13 @@ void ElectroMagn::initRhoJ(vector<Species*> vecSpecies, Projector* Proj)
         unsigned int n_particles = vecSpecies[iSpec]->getNbrOfParticles();
         
         DEBUG(n_particles<<" species "<<iSpec);
-        for (unsigned int iPart=0 ; iPart<n_particles; iPart++ ) {
-            // project charge & current densities
-            (*Proj)(Jx_s[iSpec], Jy_s[iSpec], Jz_s[iSpec], rho_s[iSpec], cuParticles, iPart,
-                    cuParticles.lor_fac(iPart));
-        }
+	if (!cuParticles.isTestParticles) {
+	    for (unsigned int iPart=0 ; iPart<n_particles; iPart++ ) {
+		// project charge & current densities
+		(*Proj)(Jx_s[iSpec], Jy_s[iSpec], Jz_s[iSpec], rho_s[iSpec], cuParticles, iPart,
+			cuParticles.lor_fac(iPart));
+	    }
+	}
         
     }//iSpec
     DEBUG("before computeTotalRhoJ");    
