@@ -102,6 +102,10 @@ public:
     std::vector<Field*> Jy_s;
     std::vector<Field*> Jz_s;
     std::vector<Field*> rho_s;
+    //std::vector<double**> nJx_s, nJy_s, nJz_s, nrho_s;
+    double ***nJx_s, ***nJy_s, ***nJz_s, ***nrho_s;
+    //! Number of bins
+    int nbin;
 
     //! nDim_field (from params)
     const unsigned int nDim_field;
@@ -136,13 +140,16 @@ public:
     //! Method used to initialize the total charge currents and densities
     virtual void restartRhoJ() = 0;
     //! Method used to initialize the total charge currents and densities of species
-    virtual void restartRhoJs(int ispec, bool currents) = 0;
+    virtual void restartRhoJs(unsigned int ispec, bool currents) = 0;
+    void restartRhoJs(unsigned int ispec, unsigned int clrw);
 
     //! Method used to initialize the total charge density
     void initRhoJ(std::vector<Species*> vecSpecies, Projector* Proj);
 
     //! Method used to sum all species densities and currents to compute the total charge density and currents
     virtual void computeTotalRhoJ() = 0;
+    virtual void addToGlobalRho(int ispec, int clrw) = 0;
+    virtual void computeTotalRhoJs(int clrw) = 0;
     //! Method used to gather species densities and currents on a single array
     virtual void sumtwins() = 0;
 

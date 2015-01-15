@@ -179,19 +179,8 @@ int main (int argc, char* argv[])
         // -----------------------------------
         // Init rho and J by projecting all particles of subdomain
         EMfields->initRhoJ(vecSpecies, Proj);
-        //Project particles on twin arrays
-        //for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-        //   EMfields->restartRhoJs(ispec, true);
-        //   vecSpecies[ispec]->dynamics_init(ispec, EMfields, Proj, smpi, params, simWindow);
-        //}
-        //Compute local total Rho J
-        //EMfields->computeTotalRhoJ();
-        // Add neighbour contribution to Rho-J
         smpi->sumRhoJ( EMfields );
-        //Add neighbour contribution to Rho_s - J_s
-        for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-            smpi->sumRhoJs(EMfields, ispec, true);
-        }
+        for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) smpi->sumRhoJs(EMfields, ispec, true);
 
         // Init electric field (Ex/1D, + Ey/2D)
         MESSAGE("----------------------------------------------");
@@ -201,18 +190,18 @@ int main (int argc, char* argv[])
 	    EMfields->solvePoisson(smpi);
         
         
-        //MESSAGE("----------------------------------------------");
-        //MESSAGE("Running diags at time t = 0");
-        //MESSAGE("----------------------------------------------");
-        //// run diagnostics at time-step 0
-        //Diags->runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
-        //// temporary EM fields dump in Fields.h5
-        //sio->writeAllFieldsSingleFileTime( EMfields, 0 );
-        //// temporary EM fields dump in Fields_avg.h5
-        //if (diag_params.ntime_step_avg!=0)
-        //    sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
-        //// temporary particle dump at time 0
-        //sio->writePlasma( vecSpecies, 0., smpi );
+        MESSAGE("----------------------------------------------");
+        MESSAGE("Running diags at time t = 0");
+        MESSAGE("----------------------------------------------");
+        // run diagnostics at time-step 0
+        Diags->runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
+        // temporary EM fields dump in Fields.h5
+        sio->writeAllFieldsSingleFileTime( EMfields, 0 );
+        // temporary EM fields dump in Fields_avg.h5
+        if (diag_params.ntime_step_avg!=0)
+            sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
+        // temporary particle dump at time 0
+        sio->writePlasma( vecSpecies, 0., smpi );
     }
 
     // ------------------------------------------------------------------------
@@ -223,7 +212,6 @@ int main (int argc, char* argv[])
     double time_prim = stepStart * params.timestep;
     // time at half-integer time-steps (dual grid)
     double time_dual = (stepStart +0.5) * params.timestep;
-    int flag(1);
 	
     // Count timer
     int ntimer(6);
@@ -283,40 +271,32 @@ int main (int argc, char* argv[])
         // (2) move the particle
         // (3) calculate the currents (charge conserving method)
         timer[1].restart();
-#pragma omp parallel shared (EMfields,time_dual,vecSpecies,smpi,params,flag)
+#pragma omp parallel shared (EMfields,time_dual,vecSpecies,smpi,params)
         {
             int tid(0);
 #ifdef _OMP
             tid = omp_get_thread_num();
 #endif
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-                if(flag){
-                    // If flag--> reset all species (typically at first iteration or after diags)
-                    EMfields->restartRhoJs(ispec, true);
-                    vecSpecies[ispec]->dynamics(time_dual,ispec, EMfields, Interp, Proj, smpi, params, simWindow);
-                } else { //... else no reset required.
                     if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
                         vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow);
+                    } else {
+                        //Add density only
+                        EMfields->addToGlobalRho(ispec, params.clrw);
                     }
-                }
             }
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
                 if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
                         // Loop on dims to manage exchange in corners
                         for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
                             smpi->exchangeParticles(vecSpecies[ispec], ispec, params, tid);
-#pragma omp barrier
+                        #pragma omp barrier
                         vecSpecies[ispec]->sort_part();
                 }
             }
-            #pragma omp single nowait
-            {
-                flag = 0;
-                timer[1].update();
-                timer[4].restart();
-            }
-            EMfields->computeTotalRhoJ();
         } //End omp parallel region
+        timer[1].update();
+        timer[4].restart();
         smpi->sumRhoJ( EMfields );
         timer[4].update();
         
@@ -337,14 +317,10 @@ int main (int argc, char* argv[])
         
         // temporary EM fields dump in Fields.h5
         if  ((diag_params.fieldDump_every != 0) && (itime % diag_params.fieldDump_every == 0)){
-            EMfields->sumtwins();
-            for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-                smpi->sumRhoJs(EMfields, ispec, true);
-            }
+            for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) EMfields->restartRhoJs(ispec, true);
+            EMfields->computeTotalRhoJs(params.clrw);
+            for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) smpi->sumRhoJs(EMfields, ispec, true);
             sio->writeAllFieldsSingleFileTime( EMfields, itime );
-            //Recompute split densities
-            flag = 1;
-            //cout << "flag =1" << endl;
         }
         // temporary EM fields dump in Fields.h5
         if  (diag_params.ntime_step_avg!=0)
@@ -356,29 +332,29 @@ int main (int argc, char* argv[])
         if  ((diag_params.particleDump_every != 0) && (itime % diag_params.particleDump_every == 0))
             sio->writePlasma( vecSpecies, time_dual, smpi );
 #endif
-        //if  (smpi->isMaster()){
-        //    if (!todump && sio->dump(EMfields, itime, MPI_Wtime() - starttime, vecSpecies, simWindow, params, input_data) ){
-        //        cout << "dump becomes true" << endl;
-        //        // Send the action to perform at next iteration
-        //        itime2dump = itime + 1; 
-        //        for (unsigned int islave=0; islave < mpisize; islave++) 
-        //            MPI_Isend(&itime2dump,1,MPI_INT,islave,0,MPI_COMM_WORLD,&action_srequests[islave]);
-        //        todump = 1;
-        //    }
-        //} else {
-        //    MPI_Iprobe(0,0,MPI_COMM_WORLD,&todump,&action_status[0]); // waiting for a control message from master (rank=0)
-        //    //Receive action
-        //    if( todump ){
-        //        MPI_Recv(&itime2dump,1,MPI_INT,0,0,MPI_COMM_WORLD,&action_status[1]);
-        //        todump = 0;
-        //    }
-        //}
+        if  (smpi->isMaster()){
+            if (!todump && sio->dump(EMfields, itime, MPI_Wtime() - starttime, vecSpecies, simWindow, params, input_data) ){
+                cout << "dump becomes true" << endl;
+                // Send the action to perform at next iteration
+                itime2dump = itime + 1; 
+                for (unsigned int islave=0; islave < mpisize; islave++) 
+                    MPI_Isend(&itime2dump,1,MPI_INT,islave,0,MPI_COMM_WORLD,&action_srequests[islave]);
+                todump = 1;
+            }
+        } else {
+            MPI_Iprobe(0,0,MPI_COMM_WORLD,&todump,&action_status[0]); // waiting for a control message from master (rank=0)
+            //Receive action
+            if( todump ){
+                MPI_Recv(&itime2dump,1,MPI_INT,0,0,MPI_COMM_WORLD,&action_status[1]);
+                todump = 0;
+            }
+        }
 
-        //if(itime==itime2dump){
-        //    sio->dumpAll( EMfields, itime,  vecSpecies, smpi, simWindow, params, input_data);
-        //    todump = 0;
-        //    if (params.exit_after_dump ) break;
-        //}
+        if(itime==itime2dump){
+            sio->dumpAll( EMfields, itime,  vecSpecies, smpi, simWindow, params, input_data);
+            todump = 0;
+            if (params.exit_after_dump ) break;
+        }
         
         timer[3].update();
 		

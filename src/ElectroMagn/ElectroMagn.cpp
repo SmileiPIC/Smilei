@@ -63,17 +63,20 @@ oversize(params.oversize)
     Bz_avg=NULL;
     
     // Species charge currents and density
-    Jx_s.resize(n_species*2);
-    Jy_s.resize(n_species*2);
-    Jz_s.resize(n_species*2);
-    rho_s.resize(n_species*2);
-    for (unsigned int ispec=0; ispec<n_species*2; ispec++) {
+    Jx_s.resize(n_species);
+    Jy_s.resize(n_species);
+    Jz_s.resize(n_species);
+    rho_s.resize(n_species);
+    nJx_s  = (double***)malloc(n_species*sizeof(double**));
+    nJy_s  = (double***)malloc(n_species*sizeof(double**));
+    nJz_s  = (double***)malloc(n_species*sizeof(double**));
+    nrho_s = (double***)malloc(n_species*sizeof(double**));
+    for (unsigned int ispec=0; ispec<n_species; ispec++) {
         Jx_s[ispec]  = NULL;
         Jy_s[ispec]  = NULL;
         Jz_s[ispec]  = NULL;
         rho_s[ispec] = NULL;
     }
-
     
     for (unsigned int i=0; i<3; i++) {
         for (unsigned int j=0; j<2; j++) {
@@ -84,6 +87,7 @@ oversize(params.oversize)
 
     emBoundCond = ElectroMagnBC_Factory::create(params, laser_params);
 
+    nbin = n_space[0]/params.clrw;
 }
 
 
@@ -116,12 +120,16 @@ ElectroMagn::~ElectroMagn()
         delete Bz_avg;
     }
 
-    for (unsigned int ispec=0; ispec<n_species*2; ispec++) {
+    for (unsigned int ispec=0; ispec<n_species; ispec++) {
       delete Jx_s[ispec];
       delete Jy_s[ispec];
       delete Jz_s[ispec];
       delete rho_s[ispec];
     }
+    free (nJx_s);
+    free (nJy_s);
+    free (nJz_s);
+    free (nrho_s);
   
     int nBC = emBoundCond.size();
     for ( int i=0 ; i<nBC ;i++ )
@@ -220,15 +228,24 @@ void ElectroMagn::initRhoJ(vector<Species*> vecSpecies, Projector* Proj)
         unsigned int n_particles = vecSpecies[iSpec]->getNbrOfParticles();
         
         DEBUG(n_particles<<" species "<<iSpec);
-        for (unsigned int iPart=0 ; iPart<n_particles; iPart++ ) {
-            // project charge & current densities
-            (*Proj)(Jx_s[iSpec], Jy_s[iSpec], Jz_s[iSpec], rho_s[iSpec], cuParticles, iPart,
-                    cuParticles.lor_fac(iPart));
+        for(unsigned int ibin=0; ibin < nbin ; ibin++){
+            //for (unsigned int iPart=0 ; iPart<n_particles; iPart++ ) {
+            for (unsigned int iPart=vecSpecies[iSpec]->bmin[ibin]; iPart<vecSpecies[iSpec]->bmax[ibin]; iPart++ ) {
+                // project charge & current densities
+                (*Proj)(nJx_s[iSpec][ibin], nJy_s[iSpec][ibin], nJz_s[iSpec][ibin], nrho_s[iSpec][ibin], cuParticles, iPart, 1.0, ibin*vecSpecies[iSpec]->clrw, vecSpecies[iSpec]->b_lastdim);
+            }
         }
         
     }//iSpec
+
+
     DEBUG("before computeTotalRhoJ");    
-    computeTotalRhoJ();
+    if(n_species > 0){
+        //Compute correct rho_s,J_s from nrho_s, nJ_s.
+        computeTotalRhoJs(vecSpecies[0]->clrw);
+        //Compute correct rho and J from rho_s and J_s.
+        computeTotalRhoJ();
+    }
     DEBUG("projection done for initRhoJ");
     
 }
@@ -291,6 +308,14 @@ bool ElectroMagn::isRhoNull(SmileiMPI* smpi)
     MPI_Allreduce(&locnorm2, &norm2, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
     return (norm2<=0.);
+
+}
+void ElectroMagn::restartRhoJs(unsigned int ispec, unsigned int clrw)
+{
+    #pragma omp for schedule(static) nowait
+    for (unsigned int i=0 ; i < n_space[0]/clrw ; i++){
+        free(nrho_s[ispec][i]);
+    }
 
 }
 

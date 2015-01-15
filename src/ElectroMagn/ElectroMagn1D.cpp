@@ -555,7 +555,7 @@ void ElectroMagn1D::restartRhoJ()
         (*Jz1D)(ix)    = 0.0;
     }
 }    
-void ElectroMagn1D::restartRhoJs(int ispec, bool currents)
+void ElectroMagn1D::restartRhoJs(unsigned int ispec, bool currents)
 {
     // -----------------------------------
     // Species currents and charge density
@@ -624,6 +624,12 @@ void ElectroMagn1D::computeTotalRhoJ()
         }
     }//END loop on species ispec
 }
+void ElectroMagn1D::addToGlobalRho(int ispec, int clrw)
+{
+ }
+void ElectroMagn1D::computeTotalRhoJs(int clrw)
+{
+ }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Gather the total density and currents for species on a single array instead of twin arrays.

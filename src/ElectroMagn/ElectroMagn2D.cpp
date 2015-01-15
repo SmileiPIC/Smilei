@@ -27,6 +27,8 @@ isSouthern(smpi->isSouthern())
     // local dt to store
     SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
     int process_coord_x = smpi2D->getProcCoord(0);
+    //int nbin = n_space[0]/params.clrw;
+    int sizeprojbuffer ;
     
     
     // --------------------------------------------------
@@ -98,10 +100,19 @@ isSouthern(smpi->isSouthern())
         Jy_s[ispec]  = new Field2D(dimPrim, 1, false, ("Jy_"+params.species_param[ispec].species_type).c_str());
         Jz_s[ispec]  = new Field2D(dimPrim, 2, false, ("Jz_"+params.species_param[ispec].species_type).c_str());
         rho_s[ispec] = new Field2D(dimPrim, ("Rho_"+params.species_param[ispec].species_type).c_str());
-        Jx_s[ispec+n_species]  = new Field2D(dimPrim, 0, false, ("Jx_"+params.species_param[ispec].species_type).c_str());
-        Jy_s[ispec+n_species]  = new Field2D(dimPrim, 1, false, ("Jy_"+params.species_param[ispec].species_type).c_str());
-        Jz_s[ispec+n_species]  = new Field2D(dimPrim, 2, false, ("Jz_"+params.species_param[ispec].species_type).c_str());
-        rho_s[ispec+n_species] = new Field2D(dimPrim, ("Rho_"+params.species_param[ispec].species_type).c_str());
+        nJx_s[ispec]  = (double**)malloc(nbin*sizeof(double*));
+        nJy_s[ispec]  = (double**)malloc(nbin*sizeof(double*));
+        nJz_s[ispec]  = (double**)malloc(nbin*sizeof(double*));
+        nrho_s[ispec]  = (double**)malloc(nbin*sizeof(double*));
+    }
+    sizeprojbuffer = (2*oversize[0]+params.clrw + 1)*ny_p ;
+    for (unsigned int ispec=0; ispec<n_species; ispec++) {
+        for (unsigned int ibin=0; ibin<nbin; ibin++) {
+            nrho_s[ispec][ibin] = (double*)calloc(4*sizeprojbuffer, sizeof(double));
+            nJx_s[ispec][ibin] = nrho_s[ispec][ibin]+sizeprojbuffer;
+            nJy_s[ispec][ibin] = nJx_s[ispec][ibin]+sizeprojbuffer;
+            nJz_s[ispec][ibin] = nJy_s[ispec][ibin]+sizeprojbuffer;
+        }
     }
 
     
@@ -185,6 +196,17 @@ isSouthern(smpi->isSouthern())
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn2D::~ElectroMagn2D()
 {
+    for (unsigned int ispec=0; ispec<n_species; ispec++) {
+        for (unsigned int ibin=0; ibin<nbin; ibin++) {
+            free(nrho_s[ispec][ibin] );
+        }
+    }
+    for (unsigned int ispec=0; ispec<n_species; ispec++) {
+        free(nrho_s[ispec] );
+        free(nJx_s[ispec] );
+        free(nJy_s[ispec] );
+        free(nJz_s[ispec] );
+    }
     
 }//END ElectroMagn2D
 
@@ -782,7 +804,7 @@ void ElectroMagn2D::restartRhoJ()
 }//END restartRhoJ
     
     
-void ElectroMagn2D::restartRhoJs(int ispec, bool currents)
+void ElectroMagn2D::restartRhoJs(unsigned int ispec, bool currents)
 {
     // -----------------------------------
     // Species currents and charge density
@@ -791,17 +813,12 @@ void ElectroMagn2D::restartRhoJs(int ispec, bool currents)
     Field2D* Jy2D_s  = static_cast<Field2D*>(Jy_s[ispec]);
     Field2D* Jz2D_s  = static_cast<Field2D*>(Jz_s[ispec]);
     Field2D* rho2D_s = static_cast<Field2D*>(rho_s[ispec]);
-    Field2D* Jx2D_s2  = static_cast<Field2D*>(Jx_s[n_species+ispec]);
-    Field2D* Jy2D_s2  = static_cast<Field2D*>(Jy_s[n_species+ispec]);
-    Field2D* Jz2D_s2  = static_cast<Field2D*>(Jz_s[n_species+ispec]);
-    Field2D* rho2D_s2 = static_cast<Field2D*>(rho_s[n_species+ispec]);
     
     // Charge density rho^(p,p) to 0
     #pragma omp for schedule(static) nowait
     for (unsigned int i=0 ; i<nx_p ; i++) {
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*rho2D_s)(i,j) = 0.0;
-            (*rho2D_s2)(i,j) = 0.0;
         }
     }
     if (currents){ 
@@ -810,7 +827,6 @@ void ElectroMagn2D::restartRhoJs(int ispec, bool currents)
         for (unsigned int i=0 ; i<nx_d ; i++) {
             for (unsigned int j=0 ; j<ny_p ; j++) {
                 (*Jx2D_s)(i,j) = 0.0;
-                (*Jx2D_s2)(i,j) = 0.0;
             }
         }
         
@@ -819,7 +835,6 @@ void ElectroMagn2D::restartRhoJs(int ispec, bool currents)
         for (unsigned int i=0 ; i<nx_p ; i++) {
             for (unsigned int j=0 ; j<ny_d ; j++) {
                 (*Jy2D_s)(i,j) = 0.0;
-                (*Jy2D_s2)(i,j) = 0.0;
             }
         }
         
@@ -828,10 +843,10 @@ void ElectroMagn2D::restartRhoJs(int ispec, bool currents)
         for (unsigned int i=0 ; i<nx_p ; i++) {
             for (unsigned int j=0 ; j<ny_p ; j++) {
                 (*Jz2D_s)(i,j) = 0.0;
-                (*Jz2D_s2)(i,j) = 0.0;
             }
         }
     }
+
 }//END restartRhoJs
     
 
@@ -842,7 +857,6 @@ void ElectroMagn2D::restartRhoJs(int ispec, bool currents)
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn2D::computeTotalRhoJ()
 {
-    
     // static cast of the total currents and densities
     Field2D* Jx2D    = static_cast<Field2D*>(Jx_);
     Field2D* Jy2D    = static_cast<Field2D*>(Jy_);
@@ -853,7 +867,7 @@ void ElectroMagn2D::computeTotalRhoJ()
     // -----------------------------------
     // Species currents and charge density
     // -----------------------------------
-    for (unsigned int ispec=0; ispec<n_species*2; ispec++) {
+    for (unsigned int ispec=0; ispec<n_species; ispec++) {
         Field2D* Jx2D_s  = static_cast<Field2D*>(Jx_s[ispec]);
         Field2D* Jy2D_s  = static_cast<Field2D*>(Jy_s[ispec]);
         Field2D* Jz2D_s  = static_cast<Field2D*>(Jz_s[ispec]);
@@ -871,33 +885,73 @@ void ElectroMagn2D::computeTotalRhoJ()
             (*Jy2D)(i,ny_p) += (*Jy2D_s)(i,ny_p);
         }
         
-        // Current Jx^(d,p) to 0
-        //for (unsigned int i=0 ; i<nx_d ; i++) {
         #pragma omp single
         {
             for (unsigned int j=0 ; j<ny_p ; j++) {
                 (*Jx2D)(nx_p,j) += (*Jx2D_s)(nx_p,j);
             }
         }
-        //}
-        
-        // Current Jy^(p,d) to 0
-        //for (unsigned int i=0 ; i<nx_p ; i++) {
-            //for (unsigned int j=0 ; j<ny_d ; j++) {
-                //(*Jy2D)(i,ny_p) += (*Jy2D_s)(i,ny_p);
-            //}
-        //}
-        
-        // Current Jz^(p,p) to 0
-        //for (unsigned int i=0 ; i<nx_p ; i++) {
-        //    for (unsigned int j=0 ; j<ny_p ; j++) {
-        //        (*Jz2D)(i,j) += (*Jz2D_s)(i,j);
-        //    }
-        //}
         
     }//END loop on species ispec
-    
-}//END computeTotalRhoJ
+//END computeTotalRhoJ
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Compute the total density and currents from local buffers computed for each cluster.
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn2D::addToGlobalRho(int ispec, int clrw)
+{
+    int iloc,nbin,b_dim0;
+    nbin = n_space[0]/clrw;
+    b_dim0 = clrw+2*oversize[0]+1; 
+        #pragma unroll
+        for (unsigned istart=0; istart<2; istart++){; 
+            #pragma omp for schedule(static)
+            for (unsigned int ibin=istart ; ibin < nbin ; ibin+=2){
+            //Copy the corresponding bin buffer at the correct place in global array
+               for (unsigned int i = 0; i < b_dim0*ny_p ; i++) {
+                   (*rho_)(ibin*clrw*ny_p + i) += *(nrho_s[ispec][ibin]+ i);
+               } 
+            }
+        }
+}//END addToGlobalRhoJ
+// ---------------------------------------------------------------------------------------------------------------------
+// Compute the total density and currents per species from local buffers computed for each cluster. Mostly for diags.
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn2D::computeTotalRhoJs( int clrw)
+{
+    int iloc,nbin,b_dim0;
+    Field2D* Jx2D  ;
+    Field2D* Jy2D  ;
+    Field2D* Jz2D  ;
+    Field2D* rho2D ;
+    nbin = n_space[0]/clrw;
+    b_dim0 = clrw+2*oversize[0]+1; 
+    for (unsigned int ispec=0 ; ispec < n_species; ispec++) {  
+        // static cast of the total currents and densities
+        Jx2D    = static_cast<Field2D*>(Jx_s[ispec]);
+        Jy2D    = static_cast<Field2D*>(Jy_s[ispec]);
+        Jz2D    = static_cast<Field2D*>(Jz_s[ispec]);
+        rho2D   = static_cast<Field2D*>(rho_s[ispec]);
+        #pragma unroll
+        for (unsigned int istart=0; istart <2; istart++) {
+            #pragma omp for schedule(static)
+            for (unsigned int ibin=istart ; ibin < nbin ; ibin+=2){
+            //Copy the corresponding bin buffer at the correct place in global array
+               for (unsigned int i = 0; i < b_dim0 ; i++) {
+                   iloc = ibin*clrw + i ;
+                   for (unsigned int j = 0; j < ny_p ; j++) {
+                   //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
+                   (*rho2D)(iloc,j) += *(nrho_s[ispec][ibin]+ i*ny_p+j);
+                   (*Jx2D)(iloc,j) += *(nJx_s[ispec][ibin]+ i*ny_p+j);
+                   (*Jy2D)(iloc,j) += *(nJy_s[ispec][ibin]+ i*ny_p+j);
+                   (*Jz2D)(iloc,j) += *(nJz_s[ispec][ibin]+ i*ny_p+j);
+                   }
+               } 
+            }
+        }
+    }
+}//END computeTotalRhoJs
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Gather the total density and currents for species on a single array instead of twin arrays.
