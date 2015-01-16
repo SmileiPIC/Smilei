@@ -216,7 +216,7 @@ public:
     inline std::vector<short>  id() const {
         return Id;
     }
-
+    void sortById();
 
 private:
 

@@ -534,3 +534,26 @@ bool Particles::is_part_in_domain(int ipart, SmileiMPI* smpi)
 }
 
 
+void Particles::sortById() {
+    if (!isTestParticles) {
+	ERROR("Impossible");
+	return;
+    }
+
+
+    int nParticles(Weight.size());
+
+    bool stop;
+    int jPart(0);
+    do {
+	stop = true;
+	for ( int iPart = nParticles-1 ; iPart > jPart ; --iPart ) {
+	    if ( Id[iPart] < Id[iPart-1] ) {
+		swap_part(iPart,jPart);
+		stop = false;
+	    }	
+	}
+	jPart++;
+    } while(!stop);
+
+}

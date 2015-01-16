@@ -22,6 +22,28 @@ public:
             sp = new Species_rrll(params, ispec, smpi);
         } // END if
 
+	if (params.species_param[ispec].isTest) {
+	    int locNbrParticles = sp->getNbrOfParticles();
+	    int* allNbrParticles = new int[smpi->smilei_sz];
+	    MPI_Gather( &locNbrParticles, 1, MPI_INTEGER, allNbrParticles, 1, MPI_INTEGER, 0, smpi->SMILEI_COMM_WORLD );
+	    int nParticles(0);
+	    if (smpi->isMaster()) {
+		nParticles =  allNbrParticles[0];
+		for (int irk=1 ; irk<smpi->getSize() ; irk++){
+		    allNbrParticles[irk] += nParticles;
+		    nParticles += allNbrParticles[irk];
+		}
+		for (int irk=smpi->getSize()-1 ; irk>0 ; irk--){
+		    allNbrParticles[irk] = allNbrParticles[irk-1];
+		}
+		allNbrParticles[0] = 0;
+
+	    }
+	    int offset(0);
+	    MPI_Scatter(allNbrParticles, 1 , MPI_INTEGER, &offset, 1, MPI_INTEGER, 0, smpi->SMILEI_COMM_WORLD );
+	    sp->particles.setIds(offset);
+	}
+
         return sp;
     }
 

@@ -749,12 +749,12 @@ void SmileiIO::writeTestParticles(Species* species, int ispec, int time, PicPara
 	MPI_Type_free( &typePartSend );
 		  
     }
+    delete [] allNbrParticles;
 
     // Sort test particles before dump
-    
-
-
-
+    if ( smpi->isMaster()  ) {
+	testParticles.sortById();
+    }
 
 
     if ( smpi->isMaster() && true ) {
@@ -782,6 +782,7 @@ void SmileiIO::writeTestParticles(Species* species, int ispec, int time, PicPara
 	H5Fclose( fid );
 
     }
+    smpi->barrier();
 
 }
 
