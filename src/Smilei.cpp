@@ -92,7 +92,7 @@ int main (int argc, char* argv[])
     if ( smpiData->isMaster() ) params.print();
     smpiData->barrier();
     LaserParams laser_params(params, input_data);
-    ExtFieldParams extfield_params(params, input_data);
+    ExtFieldParams extfield_params(params, input_data, "extfield");
     
     smpiData->barrier();
     DiagParams diag_params(params, input_data);

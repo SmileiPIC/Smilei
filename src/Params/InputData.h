@@ -21,8 +21,8 @@
 #include <vector>
 
 #include "Tools.h"
+#include "PicParams.h"
 
-class PicParams;
 
 /*! \brief This is the text parser (similar to namelists).
  It reads once the datafile (at constructor time or later with readFile) and stores the whole read text

@@ -14,6 +14,7 @@
 #include "Ionization.h"
 #include "ElectroMagn.h"
 #include "DensityProfile.h"
+#include "VelocityProfile.h"
 
 class ElectroMagn;
 class Pusher;
@@ -118,6 +119,9 @@ private:
     
     //! vector of density (one per species)
     DensityProfile *densityProfile;
+    
+    //! vector of density (one per species)
+    std::vector<VelocityProfile *> velocityProfile;
     
     //! 2 times pi
     double PI2;

@@ -1,15 +1,16 @@
-#include "DensityProfile2D.h"
+#include "VelocityProfile2D.h"
+#include "Tools.h"
 
 using namespace std;
 
-DensityProfile2D::DensityProfile2D(SpeciesStructure &params) : DensityProfile(params) {
+VelocityProfile2D::VelocityProfile2D(ProfileSpecies &my_prof_params) : VelocityProfile(my_prof_params) {
     
     // Constant density profile
     // ------------------------
     // vacuum_length[0,1] : length of the vacuum region before the plasma in x & y directions, respectively
     // species_length_x[0]: length of the plasma in the x-direction
     // species_length_y[0]: length of the plasma in the y-direction
-    if (species_param.species_geometry=="constant") {
+    if (prof_params.profile=="constant") {
         // nothing to be done here, all default parameters are computed directly in PicParams.cpp
     }
     
@@ -20,25 +21,25 @@ DensityProfile2D::DensityProfile2D(SpeciesStructure &params) : DensityProfile(pa
     // dens_length_x[1]   : length of the left slope (default value is zero)
     // dens_length_x[2]   : length of the right slope (default value is the rising slope value species_length[1])
     // same definition of dens_length_y (but in y-direction)
-    else if (species_param.species_geometry=="trapezoidal") {
+    else if (prof_params.profile=="trapezoidal") {
         
         // x-direction
-        if (species_param.dens_length_x.size()<2) {
-            species_param.dens_length_x.resize(2);
-            species_param.dens_length_x[1] = 0.0;
+        if (prof_params.length_params_x.size()<2) {
+            prof_params.length_params_x.resize(2);
+            prof_params.length_params_x[1] = 0.0;
         }
-        if (species_param.dens_length_x.size()<3) {
-            species_param.dens_length_x.resize(3);
-            species_param.dens_length_x[2] = species_param.dens_length_y[1];
+        if (prof_params.length_params_x.size()<3) {
+            prof_params.length_params_x.resize(3);
+            prof_params.length_params_x[2] = prof_params.length_params_y[1];
         }
         //y-direction
-        if (species_param.dens_length_y.size()<2) {
-            species_param.dens_length_y.resize(2);
-            species_param.dens_length_y[1] = 0.0;
+        if (prof_params.length_params_y.size()<2) {
+            prof_params.length_params_y.resize(2);
+            prof_params.length_params_y[1] = 0.0;
         }
-        if (species_param.dens_length_y.size()<3) {
-            species_param.dens_length_y.resize(3);
-            species_param.dens_length_y[2] = species_param.dens_length_y[1];
+        if (prof_params.length_params_y.size()<3) {
+            prof_params.length_params_y.resize(3);
+            prof_params.length_params_y[2] = prof_params.length_params_y[1];
         }
         
     }
@@ -53,41 +54,41 @@ DensityProfile2D::DensityProfile2D(SpeciesStructure &params) : DensityProfile(pa
     // dens_int_params[0]: order of the gaussian density distribution (default is 2)
     // same definitions hold for the y-direction with dens_int_params[1] the order of the Gaussian
     // note that if dens_int_params[1]=0 (default value) then the profile is constant in the y-direction
-    else if (species_param.species_geometry=="gaussian") {
+    else if (prof_params.profile=="gaussian") {
         
         // x-direction
-        if (species_param.dens_int_params.size()<1) {
-            species_param.dens_int_params.resize(1);
-            species_param.dens_int_params[0] = 2;
+        if (prof_params.int_params.size()<1) {
+            prof_params.int_params.resize(1);
+            prof_params.int_params[0] = 2;
         }
-        if (species_param.dens_length_x.size()<2) {
-            species_param.dens_length_x.resize(2);
-            species_param.dens_length_x[1] = species_param.dens_length_x[0]/3.0;
+        if (prof_params.length_params_x.size()<2) {
+            prof_params.length_params_x.resize(2);
+            prof_params.length_params_x[1] = prof_params.length_params_x[0]/3.0;
         }
-        if (species_param.dens_length_x.size()<3) {
-            species_param.dens_length_x.resize(3);
-            species_param.dens_length_x[2] = species_param.vacuum_length[0]+0.5*species_param.dens_length_x[0];
+        if (prof_params.length_params_x.size()<3) {
+            prof_params.length_params_x.resize(3);
+            prof_params.length_params_x[2] = prof_params.vacuum_length[0]+0.5*prof_params.length_params_x[0];
         }
         
         // y-direction
-        if (species_param.dens_int_params.size()<2) {
-            species_param.dens_int_params.resize(2);
-            species_param.dens_int_params[0] = 0;
+        if (prof_params.int_params.size()<2) {
+            prof_params.int_params.resize(2);
+            prof_params.int_params[0] = 0;
         }
-        if (species_param.dens_length_y.size()<2) {
-            species_param.dens_length_y.resize(2);
-            species_param.dens_length_y[1] = species_param.dens_length_y[0]/3.0;
+        if (prof_params.length_params_y.size()<2) {
+            prof_params.length_params_y.resize(2);
+            prof_params.length_params_y[1] = prof_params.length_params_y[0]/3.0;
         }
-        if (species_param.dens_length_y.size()<3) {
-            species_param.dens_length_y.resize(3);
-            species_param.dens_length_y[2] = species_param.vacuum_length[1]+0.5*species_param.dens_length_y[0];
+        if (prof_params.length_params_y.size()<3) {
+            prof_params.length_params_y.resize(3);
+            prof_params.length_params_y[2] = prof_params.vacuum_length[1]+0.5*prof_params.length_params_y[0];
         }
         
     }//if species_geometry
     
 }
 
-double DensityProfile2D::operator() (vector<double> x_cell) {
+double VelocityProfile2D::operator() (vector<double> x_cell) {
     double fx, fy;
     
     // Constant density profile
@@ -95,19 +96,19 @@ double DensityProfile2D::operator() (vector<double> x_cell) {
     // vacuum_length[0,1] : length of the vacuum region before the plasma in x & y directions, respectively
     // species_length_x[0]: length of the plasma in the x-direction
     // species_length_y[0]: length of the plasma in the y-direction
-    if (species_param.species_geometry=="constant") {
+    if (prof_params.profile=="constant") {
         
         // x-direction
-        if (   (x_cell[0]>species_param.vacuum_length[0])
-            && (x_cell[0]<species_param.vacuum_length[0]+species_param.dens_length_x[0]) ) {
+        if (   (x_cell[0]>prof_params.vacuum_length[0])
+            && (x_cell[0]<prof_params.vacuum_length[0]+prof_params.length_params_x[0]) ) {
             fx = 1.0;
         } else {
             fx = 0.0;
         }
         
         // y-direction
-        if (   (x_cell[1]>species_param.vacuum_length[1])
-            && (x_cell[1]<species_param.vacuum_length[1]+species_param.dens_length_y[0]) ) {
+        if (   (x_cell[1]>prof_params.vacuum_length[1])
+            && (x_cell[1]<prof_params.vacuum_length[1]+prof_params.length_params_y[0]) ) {
             fy = 1.0;
         } else {
             fy = 0.0;
@@ -126,13 +127,13 @@ double DensityProfile2D::operator() (vector<double> x_cell) {
     // dens_length_x[1]   : length of the left slope (default value is zero)
     // dens_length_x[2]   : length of the right slope (default value is the rising slope value species_length[1])
     // same definition of dens_length_y (but in y-direction)
-    else if (species_param.species_geometry=="trapezoidal") {
+    else if (prof_params.profile=="trapezoidal") {
         
         // x-direction
-        double vacuum      = species_param.vacuum_length[0];
-        double plateau     = species_param.dens_length_x[0];
-        double left_slope  = species_param.dens_length_x[1];
-        double right_slope = species_param.dens_length_x[2];
+        double vacuum      = prof_params.vacuum_length[0];
+        double plateau     = prof_params.length_params_x[0];
+        double left_slope  = prof_params.length_params_x[1];
+        double right_slope = prof_params.length_params_x[2];
         
         // vacuum region
         if ( x_cell[0] < vacuum ) {
@@ -156,10 +157,10 @@ double DensityProfile2D::operator() (vector<double> x_cell) {
         }
         
         // x-direction
-        vacuum      = species_param.vacuum_length[1];
-        plateau     = species_param.dens_length_y[0];
-        left_slope  = species_param.dens_length_y[1];
-        right_slope = species_param.dens_length_y[2];
+        vacuum      = prof_params.vacuum_length[1];
+        plateau     = prof_params.length_params_y[0];
+        left_slope  = prof_params.length_params_y[1];
+        right_slope = prof_params.length_params_y[2];
         
         // vacuum region
         if ( x_cell[1] < vacuum ) {
@@ -198,14 +199,14 @@ double DensityProfile2D::operator() (vector<double> x_cell) {
     // dens_int_params[0]: order of the gaussian density distribution (default is 2)
     // same definitions hold for the y-direction with dens_int_params[1] the order of the Gaussian
     // note that if dens_int_params[1]=0 (default value) then the profile is constant in the y-direction
-    else if (species_param.species_geometry=="gaussian") {
+    else if (prof_params.profile=="gaussian") {
         
         // x-direction
-        short int N        = species_param.dens_int_params[0];
-        double vacuum      = species_param.vacuum_length[0];
-        double full_length = species_param.dens_length_x[0];
-        double fwhm        = species_param.dens_length_x[1];
-        double center      = species_param.dens_length_x[2];
+        short int N        = prof_params.int_params[0];
+        double vacuum      = prof_params.vacuum_length[0];
+        double full_length = prof_params.length_params_x[0];
+        double fwhm        = prof_params.length_params_x[1];
+        double center      = prof_params.length_params_x[2];
         double sigmaN      = pow(0.5*fwhm,N)/log(2.0);
         
         // vacuum region
@@ -222,14 +223,14 @@ double DensityProfile2D::operator() (vector<double> x_cell) {
         }
         
         // y-direction
-        N  = species_param.dens_int_params[1];
+        N  = prof_params.int_params[1];
         fy = 1.0;
         
         if (N>0) { // if N=0, then returns constant profile in the y-direction (fy=1.0)
-            vacuum      = species_param.vacuum_length[1];
-            full_length = species_param.dens_length_y[0];
-            fwhm        = species_param.dens_length_y[1];
-            center      = species_param.dens_length_y[2];
+            vacuum      = prof_params.vacuum_length[1];
+            full_length = prof_params.length_params_y[0];
+            fwhm        = prof_params.length_params_y[1];
+            center      = prof_params.length_params_y[2];
             sigmaN      = pow(0.5*fwhm,N)/log(2.0);
         
             // vacuum region
@@ -255,7 +256,7 @@ double DensityProfile2D::operator() (vector<double> x_cell) {
     // Plasma density profile corresponding to Fukuda et al., Phys. Rev. Lett. 103, 165002 (2012)
     // used in simulations for Anna Levy
     // ------------------------------------------------------------------------------------------
-    else if (species_param.species_geometry=="fukuda") {
+    else if (prof_params.profile=="fukuda") {
         
         // x-direction
         if (x_cell[0]<2.0*M_PI*2.0) {
@@ -292,7 +293,7 @@ double DensityProfile2D::operator() (vector<double> x_cell) {
     // Other profiles: not defined
     // ---------------------------
     else {
-        ERROR("Density profile " << species_param.species_geometry <<" not yet defined in 2D");
+        ERROR("Density profile " << prof_params.profile <<" not yet defined in 2D");
         return 0.0;
     }
 

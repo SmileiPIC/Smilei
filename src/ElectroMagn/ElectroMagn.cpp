@@ -321,6 +321,8 @@ void ElectroMagn::applyExternalFields(ExtFieldParams&extfield_params, SmileiMPI*
                             applyExternalField(*field,my_ExtFieldProfile, smpi);
                         }
                     }
+                    delete my_ExtFieldProfile;
+                    my_ExtFieldProfile=NULL;
                 }                    
             }
         }

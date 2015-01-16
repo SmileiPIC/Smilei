@@ -21,13 +21,13 @@ LaserProfile::LaserProfile( PicParams &params, LaserParams &laser_params, unsign
     a0_delta_y_            = laser_struct.a0 * laser_struct.delta;
     a0_delta_z_            = laser_struct.a0 * sqrt(1.0-pow(laser_struct.delta,2));
 
-    type_of_time_profile   = laser_struct.time_profile;
-    int_params             = laser_struct.int_params;
-    double_params          = laser_struct.double_params;
+    type_of_time_profile   = laser_struct.profile_time.profile;
+    int_params             = laser_struct.profile_time.int_params;
+    double_params          = laser_struct.profile_time.double_params;
 
-    type_of_transv_profile = laser_struct.transv_profile;
-    int_params_transv      = laser_struct.int_params_transv;
-    double_params_transv   = laser_struct.double_params_transv;
+    type_of_transv_profile = laser_struct.profile_transv.profile;
+    int_params_transv      = laser_struct.profile_transv.int_params;
+    double_params_transv   = laser_struct.profile_transv.double_params;
     
 
 

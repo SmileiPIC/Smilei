@@ -19,6 +19,7 @@
 #include "InterpolatorFactory.h"
 
 #include "DensityFactory.h"
+#include "VelocityFactory.h"
 
 #include "Projector.h"
 
@@ -39,6 +40,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 Species::Species(PicParams& params, int ispec, SmileiMPI* smpi) :
 densityProfile(DensityFactory::create(params, ispec)),
+velocityProfile(3,NULL),
 speciesNumber(ispec),
 cell_length(params.cell_length),
 oversize(params.oversize),
@@ -48,6 +50,10 @@ clrw(params.clrw),
 species_param(params.species_param[ispec])
 {
 
+    velocityProfile[0]=VelocityFactory::create(params, ispec, 0);
+    velocityProfile[1]=VelocityFactory::create(params, ispec, 1);
+    velocityProfile[2]=VelocityFactory::create(params, ispec, 2);
+    
     int err; 
     // -------------------
     // Variable definition
@@ -153,6 +159,8 @@ Species::~Species()
     if (Ionize) delete Ionize;
     if (partBoundCond) delete partBoundCond;
     if (densityProfile) delete densityProfile;
+    for (unsigned int i=0; i<velocityProfile.size(); i++)
+        delete velocityProfile[i]
     
     DEBUG(10,"Species deleted ");
 }
@@ -686,7 +694,8 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
                     // assign the temperature & mean-velocity their correct value in the cell
                     for (unsigned int m=0; m<3; m++)	{
                         temperature[m](i,j,k) = species_param.temperature[m];
-                        velocity[m](i,j,k) = species_param.mean_velocity[m];
+                        double vel_profile=(*velocityProfile[m])(x_cell);
+                        velocity[m](i,j,k) = species_param.mean_velocity[m]*vel_profile;
                     }
                     
                     // increment the effective number of particle by n_part_per_cell
@@ -822,12 +831,12 @@ void Species::updateMvWinLimits(double x_moved) {
     //moving window is activated, actually moving at this time step, and we are not in a density slope.
     isproj =(time_dual > species_param.time_frozen  ||
                  (simWindow && simWindow->isMoving(time_dual) &&
-                     (species_param.species_geometry == "gaussian" ||
-                         (species_param.species_geometry == "trapezoidal" &&
+                     (species_param.dens_profile.profile == "gaussian" ||
+                         (species_param.dens_profile.profile == "trapezoidal" &&
                             //Before end of density ramp up.
-                            (simWindow->getXmoved() < species_param.vacuum_length[0] + species_param.dens_length_x[1] + clrw*cell_length[0] || 
+                            (simWindow->getXmoved() < species_param.dens_profile.vacuum_length[0] + species_param.dens_profile.length_params_x[1] + clrw*cell_length[0] || 
                             //After begining of density ramp down. 
-                            simWindow->getXmoved() +  simWindow->getNspace_win_x()*cell_length[0] > species_param.vacuum_length[0] + species_param.dens_length_x[1]+ species_param.dens_length_x[0]
+                            simWindow->getXmoved() +  simWindow->getNspace_win_x()*cell_length[0] > species_param.dens_profile.vacuum_length[0] + species_param.dens_profile.length_params_x[1]+ species_param.dens_profile.length_params_x[0]
                             )
                         )
                     ) 

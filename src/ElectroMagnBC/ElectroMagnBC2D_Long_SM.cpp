@@ -148,10 +148,10 @@ void ElectroMagnBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, Smi
                         double zeta    = -xfoc*cos(theta) + (yd-yfoc)*sin(theta);
                         double rho     =  xfoc*sin(theta) + (yd-yfoc)*cos(theta);
                         double tau     = time_dual - (yd-yfoc)*sin(theta);
-                        double bwaist  = 0.5/sqrt(log(2.0)) * laser_[ilaser]->laser_struct.double_params_transv[0];
+                        double bwaist  = 0.5/sqrt(log(2.0)) * laser_[ilaser]->laser_struct.profile_transv.double_params[0];
                         double z2ovLr2 = pow(zeta,2)/pow(bwaist,4);
                         double waist   = bwaist * sqrt( 1.0 + z2ovLr2 );
-                        double curvRad = 1000.0 * laser_[ilaser]->laser_struct.double_params_transv[0];
+                        double curvRad = 1000.0 * laser_[ilaser]->laser_struct.profile_transv.double_params[0];
                         if (zeta!=0)
                                curvRad = zeta* ( 1.0 + 1.0/z2ovLr2 );
                         double gouyPhs = -0.5 * atan( sqrt(z2ovLr2) );
