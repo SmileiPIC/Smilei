@@ -50,6 +50,9 @@ public:
     //! See child classes
     virtual void exchangeParticles(Species* species, int ispec, PicParams& params, int tnum, int iDim) {};
 
+    //virtual MPI_Datatype createMPIparticles( Particles* particles, int nbrOfProp ) {MPI_Datatype type ; return type; }
+    virtual MPI_Datatype createMPIparticles( Particles* particles, int nbrOfProp ) {return NULL;}
+
     //! Create MPI_Datatype to exchange/sum fields on ghost data
     //! See child classes
     virtual void createType( PicParams& params ) {};
@@ -164,9 +167,16 @@ public:
     //! Number of MPI process in the current communicator
     int smilei_rk;
 
-protected:
+
+    inline int globalNbrParticles(Species* species, int locNbrParticles) {
+	int nParticles(0);
+	MPI_Reduce( &locNbrParticles, &nParticles, 1, MPI_INT, MPI_SUM, 0, SMILEI_COMM_WORLD );
+	return nParticles;
+    }
+
     //! Global MPI Communicator
     MPI_Comm SMILEI_COMM_WORLD;
+protected:
 
     //! Sort particles to exchange per side (2), contains indexes
     //! Reinitialized per direction
