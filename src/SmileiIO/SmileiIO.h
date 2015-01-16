@@ -85,6 +85,12 @@ public:
 	
     //! test before writing everything to file per processor
     bool dump(ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  PicParams &params, InputData& input_data);
+
+    void initWriteTestParticles(Species* species, int ispec, int itime, PicParams& params, SmileiMPI* smpi);
+    void writeTestParticles(Species* species, int ispec, int itime, PicParams& params, SmileiMPI* smpi);
+
+    template <class T> void appendTestParticles(hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type );
+
 	
 private:
     //! incremental number of times we've done a dump

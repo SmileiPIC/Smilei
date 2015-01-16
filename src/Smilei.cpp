@@ -208,6 +208,14 @@ int main (int argc, char* argv[])
             sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
         // temporary particle dump at time 0
         sio->writePlasma( vecSpecies, 0., smpi );
+
+
+	for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
+	    if ( (vecSpecies[ispec]->particles.isTestParticles) && (smpi->isMaster()) )
+		sio->initWriteTestParticles(vecSpecies[ispec], ispec, 0, params, smpi);
+	}
+
+
     }
     
     
@@ -319,6 +327,14 @@ int main (int argc, char* argv[])
 		
         // run all diagnostics
         timer[3].restart();
+
+
+	for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
+	    if ( (vecSpecies[ispec]->particles.isTestParticles) && (smpi->isMaster()) )
+		sio->writeTestParticles(vecSpecies[ispec], ispec, itime, params, smpi);
+	}
+
+
         Diags->runAllDiags(itime, EMfields, vecSpecies, Interp, smpi); // if (!isTestParticles)
         
         // temporary EM fields dump in Fields.h5

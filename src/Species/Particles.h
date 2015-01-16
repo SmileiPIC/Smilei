@@ -65,6 +65,8 @@ public:
     //! Print parameters of particle iPart
     void print(int iPart);
 
+    friend std::ostream& operator << (std::ostream&, const Particles& particle);
+
     //! Exchange particles part1 & part2 memory location
     void swap_part(int part1,int part2);
 
@@ -121,6 +123,10 @@ public:
         return Position_old[idim][ipart];
     }
 
+    //! Method used to get the list of Particle position
+    inline std::vector<double>  position(int idim) const {
+        return Position[idim];
+    }
 
     //! Method used to get the Particle momentum
     inline double  momentum( int idim, int ipart ) const {
@@ -130,6 +136,10 @@ public:
     inline double& momentum( int idim, int ipart )       {
         return Momentum[idim][ipart];
     }
+      //! Method used to get the Particle momentum
+    inline std::vector<double>  momentum( int idim ) const {
+        return Momentum[idim];
+    }  
 
     //! Method used to get the Particle weight
     inline double  weight(int ipart) const {
@@ -138,6 +148,10 @@ public:
     //! Method used to set a new value to the Particle weight
     inline double& weight(int ipart)       {
         return Weight[ipart];
+    }
+    //! Method used to get the Particle weight
+    inline std::vector<double>  weight() const {
+        return Weight;
     }
 
     //! Method used to get the Particle charge
@@ -148,11 +162,19 @@ public:
     inline short& charge(int ipart)       {
         return Charge[ipart];
     }
+    //! Method used to get the list of Particle charge
+    inline std::vector<short>  charge() const {
+        return Charge;
+    }
+
+
 
     //! Method used to get the Particle Lorentz factor
     inline double lor_fac(int ipart) {
         return sqrt(1+pow(momentum(0,ipart),2)+pow(momentum(1,ipart),2)+pow(momentum(2,ipart),2));
     }
+
+
 
     //! array containing the particle position
     std::vector< std::vector<double> > Position;
@@ -168,6 +190,8 @@ public:
 
     //! charge state of the particle (multiples of e>0)
     std::vector<short> Charge;
+
+
 
     // Test particle parameters
     bool isTestParticles;
@@ -187,6 +211,10 @@ public:
     //! Method used to set the Particle Id
     inline short&  id(int ipart) {
         return Id[ipart];
+    }
+    //! Method used to get the Particle Id
+    inline std::vector<short>  id() const {
+        return Id;
     }
 
 

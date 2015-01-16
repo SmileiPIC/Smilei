@@ -644,7 +644,118 @@ double SmileiIO::time_seconds() {
 	return (time_sec-time_reference);
 }
 
+void SmileiIO::initWriteTestParticles(Species* species, int ispec, int time, PicParams& params, SmileiMPI* smpi) {
+
+    hid_t fid, gid, sid, aid, did, tid;
 
 
+    ostringstream nameDump("");
+    nameDump << species->species_param.species_type  << ".h5" ;
+    fid = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
 
+    hsize_t dimsPart[2] = {0, species->getNbrOfParticles()};
+    hsize_t maxDimsPart[2] = {H5S_UNLIMITED, species->getNbrOfParticles()};
+
+    hid_t file_space = H5Screate_simple(2, dimsPart, maxDimsPart);
+
+
+    hid_t plist = H5Pcreate(H5P_DATASET_CREATE);
+    H5Pset_layout(plist, H5D_CHUNKED);
+    hsize_t chunk_dims[2] = {1, species->getNbrOfParticles()};
+    H5Pset_chunk(plist, 2, chunk_dims);
+
+
+    for (unsigned int i=0; i<species->particles.Position.size(); i++) {
+	ostringstream namePos("");
+	namePos << "Position-" << i;
+	did = H5Dcreate(fid, namePos.str().c_str(), H5T_NATIVE_DOUBLE, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
+	H5Dclose(did);
+    }
+
+    for (unsigned int i=0; i<species->particles.Momentum.size(); i++) {
+	ostringstream namePos("");
+	namePos << "Momentum-" << i;
+	did = H5Dcreate(fid, namePos.str().c_str(), H5T_NATIVE_DOUBLE, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
+	H5Dclose(did);
+    }
+
+    did = H5Dcreate(fid, "Weight", H5T_NATIVE_DOUBLE, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
+    H5Dclose(did);
+
+    did = H5Dcreate(fid, "Charge", H5T_NATIVE_SHORT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
+    H5Dclose(did);
+
+
+    if (species->particles.isTestParticles) {
+	did = H5Dcreate(fid, "Id", H5T_NATIVE_SHORT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
+	H5Dclose(did);
+    }
+
+    H5Pclose(plist);
+    H5Sclose(file_space);
+
+
+    H5Fclose( fid );
+
+
+}
+
+void SmileiIO::writeTestParticles(Species* species, int ispec, int time, PicParams& params, SmileiMPI* smpi) {
+
+    hid_t fid, gid, sid, aid, did, tid;
+
+    ostringstream nameDump("");
+    nameDump << species->species_param.species_type  << ".h5" ;
+    fid = H5Fopen( nameDump.str().c_str(), H5F_ACC_RDWR, H5P_DEFAULT);			
+
+    ostringstream attr("");
+    for (int idim=0 ; idim<params.nDim_particle ; idim++) {
+	attr.str("");
+	attr << "Position-" << idim;
+	appendTestParticles( fid, attr.str(), species->particles.position(idim), species->getNbrOfParticles(), H5T_NATIVE_DOUBLE );
+    }
+    for (int idim=0 ; idim<3 ; idim++) {
+	attr.str("");
+	attr << "Momentum-" << idim;
+	appendTestParticles( fid, attr.str(), species->particles.momentum(idim), species->getNbrOfParticles(), H5T_NATIVE_DOUBLE );
+    }
+    appendTestParticles( fid, "Charge", species->particles.charge(), species->getNbrOfParticles(), H5T_NATIVE_SHORT );
+    appendTestParticles( fid, "Weight", species->particles.weight(), species->getNbrOfParticles(), H5T_NATIVE_DOUBLE );
+    if (species->particles.isTestParticles)
+	appendTestParticles( fid, "Id", species->particles.id(), species->getNbrOfParticles(), H5T_NATIVE_SHORT );
+
+    H5Fclose( fid );
+
+}
+
+
+template <class T>
+void SmileiIO::appendTestParticles( hid_t fid, string name, std::vector<T> property, int nParticles, hid_t type) {
+
+    hsize_t count[2] = {1, nParticles};
+    hid_t partMemSpace = H5Screate_simple(2, count, NULL);
+
+    hid_t did = H5Dopen( fid, name.c_str(), H5P_DEFAULT );
+
+    hid_t file_space = H5Dget_space(did);
+    hsize_t dimsO[2];
+    H5Sget_simple_extent_dims(file_space, dimsO, NULL);
+    H5Sclose(file_space);
+    hsize_t dims[2];
+    dims[0] = dimsO[0]+1;
+    dims[1] = dimsO[1];
+    H5Dset_extent(did, dims);
+    file_space = H5Dget_space(did);
+    hsize_t start[2];
+    start[0] = dimsO[0];
+    start[1] = 0;
+    H5Sselect_hyperslab(file_space, H5S_SELECT_SET, start, NULL, count, NULL);
+    H5Dwrite( did, type, partMemSpace, file_space, H5P_DEFAULT, &(property[0]) );
+    H5Sclose(file_space);
+
+
+    H5Sclose(partMemSpace);
+    H5Dclose(did);
+
+}

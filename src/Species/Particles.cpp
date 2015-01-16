@@ -236,7 +236,30 @@ void Particles::print(int iPart) {
     cout << Charge[iPart] << endl;;
 
     if (isTestParticles)
-	cout << Id[iPart] << endl;;
+	cout << Id[iPart] << endl;
+}
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Print parameters of particle iPart
+// ---------------------------------------------------------------------------------------------------------------------
+ostream& operator << (ostream& out, const Particles& particles) {
+    for (int iPart=0;iPart<particles.Weight.size();iPart++) {
+
+	for (unsigned int i=0; i<particles.Position.size(); i++) {
+	    out << particles.Position[i][iPart] << " ";
+	    out << particles.Position_old[i][iPart] << " ";
+	}
+	for (unsigned int i=0; i<3; i++)
+	    out << particles.Momentum[i][iPart] << " ";
+	out << particles.Weight[iPart] << " ";
+	out << particles.Charge[iPart] << endl;;
+
+	if (particles.isTestParticles)
+	    out << particles.Id[iPart] << endl;
+    }
+
+    return (out);
 }
 
 
