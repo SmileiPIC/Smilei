@@ -65,7 +65,7 @@ extfield
     field = Bz
     profile = harris
     double_params   = 1.0
-    length_params_x = 1.0 10.0 
+    length_params_y = 1.0 10.0 
 end
 
 
