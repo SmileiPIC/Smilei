@@ -5,8 +5,11 @@ using namespace std;
 
 VelocityProfile2D::VelocityProfile2D(ProfileSpecies &my_prof_params) : VelocityProfile(my_prof_params) {
     
-    // Constant density profile
-    // ------------------------
+    
+    
+    
+    // Constant velocity profile
+    // -------------------------
     // vacuum_length[0,1] : length of the vacuum region before the plasma in x & y directions, respectively
     // species_length_x[0]: length of the plasma in the x-direction
     // species_length_y[0]: length of the plasma in the y-direction
@@ -14,76 +17,25 @@ VelocityProfile2D::VelocityProfile2D(ProfileSpecies &my_prof_params) : VelocityP
         // nothing to be done here, all default parameters are computed directly in PicParams.cpp
     }
     
-    // Trapezoidal density profile
-    // ---------------------------
-    // vacuum_length[0] : length of the vacuum region before the plasma (default is 0)
-    // dens_length_x[0]   : length of the density plateau (default value if sim_length-vacuum_length[0] as for constant)
-    // dens_length_x[1]   : length of the left slope (default value is zero)
-    // dens_length_x[2]   : length of the right slope (default value is the rising slope value species_length[1])
-    // same definition of dens_length_y (but in y-direction)
-    else if (prof_params.profile=="trapezoidal") {
+    
+    // Harris velocity profile: used for reconnection
+    // ----------------------------------------------
+    // vacuum_length[0,1] : length of the vacuum region before the plasma in x & y directions (default is 0)
+    // length_params_y[0] : characteristic length of the Harris profile
+    // length_params_y[0] : characteristic length of the Harris profile
+    // double_params[0]   : density nb parameter
+    else if (prof_params.profile=="harris") {
         
-        // x-direction
-        if (prof_params.length_params_x.size()<2) {
-            prof_params.length_params_x.resize(2);
-            prof_params.length_params_x[1] = 0.0;
+        if (prof_params.double_params.size()<1) {
+            ERROR("For the Harris velocity profile 1 double_params has to be defined");
         }
-        if (prof_params.length_params_x.size()<3) {
-            prof_params.length_params_x.resize(3);
-            prof_params.length_params_x[2] = prof_params.length_params_y[1];
-        }
-        //y-direction
         if (prof_params.length_params_y.size()<2) {
-            prof_params.length_params_y.resize(2);
-            prof_params.length_params_y[1] = 0.0;
+            ERROR("For the Harris velocity profile 2 length_params_y have to be defined");
         }
-        if (prof_params.length_params_y.size()<3) {
-            prof_params.length_params_y.resize(3);
-            prof_params.length_params_y[2] = prof_params.length_params_y[1];
-        }
-        
     }
     
-    // Gaussian density profile
-    // ------------------------
-    // vacuum_length[0]  : length of the vacuum region before the plasma (default is 0)
-    // dens_length_x[0]  : full length of the density distribution (default value is sim_length-vacuum_length[0])
-    // dens_length_x[1]  : FWHM of the gaussian density distribution (default is dens_length_x[0]/3.0)
-    // dens_length_x[2]  : center of the gaussian density distribution (where it is maximum)
-    //                     (default is vaccum_length + 1/2 of full length)
-    // dens_int_params[0]: order of the gaussian density distribution (default is 2)
-    // same definitions hold for the y-direction with dens_int_params[1] the order of the Gaussian
-    // note that if dens_int_params[1]=0 (default value) then the profile is constant in the y-direction
-    else if (prof_params.profile=="gaussian") {
-        
-        // x-direction
-        if (prof_params.int_params.size()<1) {
-            prof_params.int_params.resize(1);
-            prof_params.int_params[0] = 2;
-        }
-        if (prof_params.length_params_x.size()<2) {
-            prof_params.length_params_x.resize(2);
-            prof_params.length_params_x[1] = prof_params.length_params_x[0]/3.0;
-        }
-        if (prof_params.length_params_x.size()<3) {
-            prof_params.length_params_x.resize(3);
-            prof_params.length_params_x[2] = prof_params.vacuum_length[0]+0.5*prof_params.length_params_x[0];
-        }
-        
-        // y-direction
-        if (prof_params.int_params.size()<2) {
-            prof_params.int_params.resize(2);
-            prof_params.int_params[0] = 0;
-        }
-        if (prof_params.length_params_y.size()<2) {
-            prof_params.length_params_y.resize(2);
-            prof_params.length_params_y[1] = prof_params.length_params_y[0]/3.0;
-        }
-        if (prof_params.length_params_y.size()<3) {
-            prof_params.length_params_y.resize(3);
-            prof_params.length_params_y[2] = prof_params.vacuum_length[1]+0.5*prof_params.length_params_y[0];
-        }
-        
+    else {
+        ERROR("Profile " << prof_params.profile << " is not defined");
     }//if species_geometry
     
 }
@@ -91,8 +43,8 @@ VelocityProfile2D::VelocityProfile2D(ProfileSpecies &my_prof_params) : VelocityP
 double VelocityProfile2D::operator() (vector<double> x_cell) {
     double fx, fy;
     
-    // Constant density profile
-    // ------------------------
+    // Constant velocity profile
+    // -------------------------
     // vacuum_length[0,1] : length of the vacuum region before the plasma in x & y directions, respectively
     // species_length_x[0]: length of the plasma in the x-direction
     // species_length_y[0]: length of the plasma in the y-direction
@@ -120,181 +72,21 @@ double VelocityProfile2D::operator() (vector<double> x_cell) {
     }// constant
     
     
-    // Trapezoidal density profile
-    // ---------------------------
-    // vacuum_length[0] : length of the vacuum region before the plasma (default is 0)
-    // dens_length_x[0]   : length of the density plateau (default value if sim_length-vacuum_length[0] as for constant)
-    // dens_length_x[1]   : length of the left slope (default value is zero)
-    // dens_length_x[2]   : length of the right slope (default value is the rising slope value species_length[1])
-    // same definition of dens_length_y (but in y-direction)
-    else if (prof_params.profile=="trapezoidal") {
+    // Harris velocity profile
+    // -----------------------
+    // Harris density profile: used for reconnection
+    // ---------------------------------------------
+    // vacuum_length[0,1] : length of the vacuum region before the plasma in x & y directions (default is 0)
+    // length_params_y[0] : characteristic length of the Harris profile
+    // length_params_y[0] : characteristic length of the Harris profile
+    // double_params[0]   : density nb parameter
+    else if (prof_params.profile=="harris") {
         
-        // x-direction
-        double vacuum      = prof_params.vacuum_length[0];
-        double plateau     = prof_params.length_params_x[0];
-        double left_slope  = prof_params.length_params_x[1];
-        double right_slope = prof_params.length_params_x[2];
+        double nb = prof_params.double_params[0];
+        double L  = prof_params.length_params_y[0];
+        double y0 = prof_params.length_params_y[1];
         
-        // vacuum region
-        if ( x_cell[0] < vacuum ) {
-            fx = 0.0;
-        }
-        // linearly increasing density
-        else if ( x_cell[0] < vacuum+left_slope ) {
-            fx = (x_cell[0]-vacuum) / left_slope;
-        }
-        // density plateau
-        else if ( x_cell[0] < vacuum+left_slope+plateau ) {
-            fx = 1.0;
-        }
-        // linearly decreasing density
-        else if ( x_cell[0] < vacuum+left_slope+plateau+right_slope ) {
-            fx = 1.0 - ( x_cell[0] - (vacuum+left_slope+right_slope) ) / right_slope;
-        }
-        // beyond the plasma
-        else {
-            fx = 0.0;
-        }
-        
-        // x-direction
-        vacuum      = prof_params.vacuum_length[1];
-        plateau     = prof_params.length_params_y[0];
-        left_slope  = prof_params.length_params_y[1];
-        right_slope = prof_params.length_params_y[2];
-        
-        // vacuum region
-        if ( x_cell[1] < vacuum ) {
-            fy = 0.0;
-        }
-        // linearly increasing density
-        else if ( x_cell[1] < vacuum+left_slope ) {
-            fy = (x_cell[1]-vacuum) / left_slope;
-        }
-        // density plateau
-        else if ( x_cell[1] < vacuum+left_slope+plateau ) {
-            fy = 1.0;
-        }
-        // linearly decreasing density
-        else if ( x_cell[1] < vacuum+left_slope+plateau+right_slope ) {
-            fy = 1.0 - ( x_cell[1] - (vacuum+left_slope+right_slope) ) / right_slope;
-        }
-        // beyond the plasma
-        else {
-            fy = 0.0;
-        }
-        
-        // x-y directions
-        return fx*fy;
-        
-    }// trapezoidal
-    
-    
-    // Gaussian profile
-    // ----------------
-    // vacuum_length[0]  : length of the vacuum region before the plasma (default is 0)
-    // dens_length_x[0]  : full length of the density distribution (default value is sim_length-vacuum_length[0])
-    // dens_length_x[1]  : FWHM of the gaussian density distribution (default is dens_length_x[0]/3.0)
-    // dens_length_x[2]  : center of the gaussian density distribution (where it is maximum)
-    //                     (default is vaccum_length + 1/2 of full length)
-    // dens_int_params[0]: order of the gaussian density distribution (default is 2)
-    // same definitions hold for the y-direction with dens_int_params[1] the order of the Gaussian
-    // note that if dens_int_params[1]=0 (default value) then the profile is constant in the y-direction
-    else if (prof_params.profile=="gaussian") {
-        
-        // x-direction
-        short int N        = prof_params.int_params[0];
-        double vacuum      = prof_params.vacuum_length[0];
-        double full_length = prof_params.length_params_x[0];
-        double fwhm        = prof_params.length_params_x[1];
-        double center      = prof_params.length_params_x[2];
-        double sigmaN      = pow(0.5*fwhm,N)/log(2.0);
-        
-        // vacuum region
-        if ( x_cell[0] < vacuum ) {
-            fx = 0.0;
-        }
-        // gaussian profile
-        else if (x_cell[0] < vacuum+full_length ) {
-            fx = exp( -pow(x_cell[0]-center,N) / sigmaN );
-        }
-        // beyond the plasma
-        else {
-            fx = 0.0;
-        }
-        
-        // y-direction
-        N  = prof_params.int_params[1];
-        fy = 1.0;
-        
-        if (N>0) { // if N=0, then returns constant profile in the y-direction (fy=1.0)
-            vacuum      = prof_params.vacuum_length[1];
-            full_length = prof_params.length_params_y[0];
-            fwhm        = prof_params.length_params_y[1];
-            center      = prof_params.length_params_y[2];
-            sigmaN      = pow(0.5*fwhm,N)/log(2.0);
-        
-            // vacuum region
-            if ( x_cell[1] < vacuum ) {
-                fy = 0.0;
-            }
-            // gaussian profile
-            else if (x_cell[1] < vacuum+full_length ) {
-                fy = exp( -pow(x_cell[1]-center,N) / sigmaN );
-            }
-            // beyond the plasma
-            else {
-                fy = 0.0;
-            }
-        }
-        
-        // x-y directions
-        return fx*fy;
-        
-    }// gaussian
-
-    
-    // Plasma density profile corresponding to Fukuda et al., Phys. Rev. Lett. 103, 165002 (2012)
-    // used in simulations for Anna Levy
-    // ------------------------------------------------------------------------------------------
-    else if (prof_params.profile=="fukuda") {
-        
-        // x-direction
-        if (x_cell[0]<2.0*M_PI*2.0) {
-            fx = 0.0;
-        }
-        else if (x_cell[0]<2.0*M_PI*13.0) {
-            fx = 0.2;
-        }
-        else if (x_cell[0]<2.0*M_PI*20.0) {
-            fx = 0.2 + 0.8*(x_cell[0]-2.0*M_PI*13.0)/(2.0*M_PI*7.0);
-        }
-        else if (x_cell[0]<2.0*M_PI*65.0) {
-            fx = 1.0;
-        }
-        else if (x_cell[0]<2.0*M_PI*82.0) {
-            fx = 1.0 - 0.8*(x_cell[0]-2.0*M_PI*65.0)/(2.0*M_PI*17.0);
-        }
-        else if (x_cell[0]<2.0*M_PI*112.0) {
-            fx = 0.2;
-        }
-        else {
-            fx = 0.0;
-        }
-        
-        // y-direction: constant density
-        fy = 1.0;
-        
-        // x-y direction
-        return fx*fy;
-        
-    }// fukuda
-    
-    
-    // Other profiles: not defined
-    // ---------------------------
-    else {
-        ERROR("Density profile " << prof_params.profile <<" not yet defined in 2D");
-        return 0.0;
+        return (1.0 - pow(tanh((x_cell[1]-y0)/L),2)) / (nb + 1.0/pow(cosh((x_cell[1]-y0)/L),2));
     }
 
 }

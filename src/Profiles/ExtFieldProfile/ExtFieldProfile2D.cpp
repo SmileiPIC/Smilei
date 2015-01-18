@@ -3,10 +3,28 @@
 using namespace std;
 
 ExtFieldProfile2D::ExtFieldProfile2D(ExtFieldStructure &extfield_struct) : ExtFieldProfile(extfield_struct) {
-    //checking for errors
+    
+    // ------------------------------------------------
+    // Checking for errors & attributing default values
+    // ------------------------------------------------
+    
+    // if no double_params defined: put to zero and send a warning
+    if (my_struct.double_params.size()<1) {
+        my_struct.double_params.resize(1);
+        my_struct.double_params[0] = 0.0;
+        WARNING("double_params not defined for external field: automatically put to 0");
+    }
+    
     if (my_struct.profile == "constant") {
-        if (my_struct.double_params.size()<1) 
-            ERROR("double params size wrong " );
+        // Constant (uniform) field distribution through all the box
+        // nothing to be done
+        
+    } else if (my_struct.profile == "harris") {
+        // Harris field distribution (initialization for reconnection)
+        // requires at least to values for the length_params_y
+        if (my_struct.length_params_y.size()<2)
+            ERROR("two length_params_y must be defined for Harris profile" );
+        
     } else {
         ERROR("unknown or empty profile :" << my_struct.profile );
     }
@@ -15,11 +33,29 @@ ExtFieldProfile2D::ExtFieldProfile2D(ExtFieldStructure &extfield_struct) : ExtFi
 
 
 double ExtFieldProfile2D::operator() (vector<double> x_cell) {
-
+    
     if (my_struct.profile == "constant") {
+        // ------------------------------------------
+        // Constant field profile through all the box
+        // double_params[0] = field amplitude
+        // ------------------------------------------
         return my_struct.double_params[0];
     }
-
+    
+    else if (my_struct.profile == "harris") {
+        // ------------------------------------------------------
+        // Harris initialization for reconnection
+        // double_params[0]   = field amplitude
+        // length_params_y[0] = characteristic width of the field
+        // length_params_y[1] = position in y of the field maximum
+        // ------------------------------------------------------
+        double A0 = my_struct.double_params[0];
+        double L  = my_struct.length_params_y[0];
+        double y0 = my_struct.length_params_y[1];
+        
+        return A0 * tanh( (x_cell[1]-y0)/L );
+    }
+    
     return 0;
 }
 

@@ -9,6 +9,7 @@
 #include "SmileiMPI.h"
 
 #include "Tools.h"
+#include <cmath>
 
 //! staic creator of plasma velocity profiles (one per species)
 class VelocityFactory {
