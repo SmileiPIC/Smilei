@@ -4,10 +4,6 @@
 
 VelocityProfile1D::VelocityProfile1D(ProfileSpecies &my_prof_params) : VelocityProfile(my_prof_params) {
 
-    if (prof_params.profile.empty()) {
-        prof_params.profile="constant";
-    }
-
     // ------------------------
     // Constant density profile
     // ------------------------

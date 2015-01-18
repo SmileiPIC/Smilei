@@ -160,7 +160,7 @@ Species::~Species()
     if (partBoundCond) delete partBoundCond;
     if (densityProfile) delete densityProfile;
     for (unsigned int i=0; i<velocityProfile.size(); i++)
-        delete velocityProfile[i]
+        delete velocityProfile[i];
     
     DEBUG(10,"Species deleted ");
 }

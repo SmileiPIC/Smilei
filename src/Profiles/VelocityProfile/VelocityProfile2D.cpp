@@ -5,9 +5,6 @@ using namespace std;
 
 VelocityProfile2D::VelocityProfile2D(ProfileSpecies &my_prof_params) : VelocityProfile(my_prof_params) {
     
-    
-    
-    
     // Constant velocity profile
     // -------------------------
     // vacuum_length[0,1] : length of the vacuum region before the plasma in x & y directions, respectively
