@@ -133,6 +133,12 @@ public:
         return data_[idx];
     };
 
+    inline void copyFrom(Field *from_field) {
+        DEBUGEXEC(if (globalDims_!=from_field->globalDims_) ERROR("Field size do not match "<< name << " " << from_field->name));
+        for (unsigned int i=0;i< globalDims_; i++) {
+            (*this)(i)=(*from_field)(i);
+        }
+    }
 
 protected:
 

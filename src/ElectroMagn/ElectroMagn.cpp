@@ -327,5 +327,7 @@ void ElectroMagn::applyExternalFields(ExtFieldParams&extfield_params, SmileiMPI*
             }
         }
     }
-        
+    Bx_m->copyFrom(Bx_);
+    By_m->copyFrom(By_);
+    Bz_m->copyFrom(Bz_);
 }    
