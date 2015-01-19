@@ -196,6 +196,9 @@ int main (int argc, char* argv[])
         if (!EMfields->isRhoNull(smpi)) 
             EMfields->solvePoisson(smpi);
         
+        MESSAGE("----------------------------------------------");
+        MESSAGE("Applying external fields at time t = 0");
+        MESSAGE("----------------------------------------------");
         EMfields->applyExternalFields(extfield_params, smpi);
         
         MESSAGE("----------------------------------------------");

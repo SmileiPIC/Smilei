@@ -981,7 +981,7 @@ void ElectroMagn2D::applyExternalField(Field* my_field,  ExtFieldProfile *my_pro
         
         for (int j=0 ; j<field2D->dims()[1] ; j++) {
             
-            pos[1] = ( (double)(smpi2D->getCellStartingGlobalIndex(1)+i +(field2D->isDual(1)?-0.5:0)) )*dy;
+            pos[1] = ( (double)(smpi2D->getCellStartingGlobalIndex(1)+j +(field2D->isDual(1)?-0.5:0)) )*dy;
             
             (*field2D)(i,j) = (*field2D)(i,j) + (*profile)(pos);
         }
