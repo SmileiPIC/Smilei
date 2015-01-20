@@ -404,21 +404,40 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             
             
         }// ibin
-        #pragma unroll
-        for (unsigned int istart=0 ; istart < 2 ; istart++){
-            #pragma omp for schedule(static)
-            for (unsigned int ibin=istart ; ibin < bmin.size() ; ibin+=2){
-            //Copy the corresponding bin buffer at the correct place in global array
-               for (unsigned int i = 0; i < b_dim0*b_dim1 ; i++) {
-                   //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
-                   (*EMfields->rho_)(ibin*clrw*f_dim1 + i) += *(EMfields->nrho_s[ispec][ibin]+ i);
-                   (*EMfields->Jx_)(ibin*clrw*f_dim1 + i) += *(EMfields->nJx_s[ispec][ibin]+ i);
-                   (*EMfields->Jy_)(ibin*clrw*(f_dim1+1)+ i/f_dim1 + i) += *(EMfields->nJy_s[ispec][ibin]+ i);
-                   (*EMfields->Jz_)(ibin*clrw*f_dim1 + i) += *(EMfields->nJz_s[ispec][ibin]+ i);
-               } 
+        if (ndim == 1){
+            #pragma unroll
+            for (unsigned int istart=0 ; istart < 2 ; istart++){
+                #pragma omp for schedule(static)
+                for (unsigned int ibin=istart ; ibin < bmin.size() ; ibin+=2){
+                //Copy the corresponding bin buffer at the correct place in global array
+                   for (unsigned int i = 0; i < b_dim0 ; i++) {
+                       //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
+                       (*EMfields->rho_)(ibin*clrw + i) += *(EMfields->nrho_s[ispec][ibin]+ i);
+                       (*EMfields->Jx_)(ibin*clrw + i) += *(EMfields->nJx_s[ispec][ibin]+ i);
+                       (*EMfields->Jy_)(ibin*clrw+ i ) += *(EMfields->nJy_s[ispec][ibin]+ i);
+                       (*EMfields->Jz_)(ibin*clrw + i) += *(EMfields->nJz_s[ispec][ibin]+ i);
+                   } 
+                }
             }
         }
-        
+
+        if (ndim == 2){
+            #pragma unroll
+            for (unsigned int istart=0 ; istart < 2 ; istart++){
+                #pragma omp for schedule(static)
+                for (unsigned int ibin=istart ; ibin < bmin.size() ; ibin+=2){
+                //Copy the corresponding bin buffer at the correct place in global array
+                   for (unsigned int i = 0; i < b_dim0*b_dim1 ; i++) {
+                       //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
+                       (*EMfields->rho_)(ibin*clrw*f_dim1 + i) += *(EMfields->nrho_s[ispec][ibin]+ i);
+                       (*EMfields->Jx_)(ibin*clrw*f_dim1 + i) += *(EMfields->nJx_s[ispec][ibin]+ i);
+                       (*EMfields->Jy_)(ibin*clrw*(f_dim1+1) +i/f_dim1 + i) += *(EMfields->nJy_s[ispec][ibin]+ i);
+                       (*EMfields->Jz_)(ibin*clrw*f_dim1 + i) += *(EMfields->nJz_s[ispec][ibin]+ i);
+                   } 
+                }
+            }
+        }
+
         if (Ionize && electron_species) {
             for (unsigned int i=0; i < Ionize->new_electrons.size(); i++) {
                 // electron_species->particles.push_back(Ionize->new_electrons[i]);

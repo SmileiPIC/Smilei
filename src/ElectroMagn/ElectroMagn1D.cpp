@@ -27,6 +27,7 @@ isEastern(smpi->isEastern())
     // local dt to store
     SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
     int process_coord_x = smpi1D->getProcCoord(0);
+    int sizeprojbuffer ;
     
     oversize_ = oversize[0];
     
@@ -85,10 +86,19 @@ isEastern(smpi->isEastern())
         Jy_s[ispec]  = new Field1D(dimPrim, 1, false, ("Jy_"+params.species_param[ispec].species_type).c_str());
         Jz_s[ispec]  = new Field1D(dimPrim, 2, false, ("Jz_"+params.species_param[ispec].species_type).c_str());
         rho_s[ispec] = new Field1D(dimPrim, ("Rho_"+params.species_param[ispec].species_type).c_str());
-        Jx_s[n_species+ispec]  = new Field1D(dimPrim, 0, false, ("Jx_"+params.species_param[ispec].species_type).c_str());
-        Jy_s[n_species+ispec]  = new Field1D(dimPrim, 1, false, ("Jy_"+params.species_param[ispec].species_type).c_str());
-        Jz_s[n_species+ispec]  = new Field1D(dimPrim, 2, false, ("Jz_"+params.species_param[ispec].species_type).c_str());
-        rho_s[n_species+ispec] = new Field1D(dimPrim, ("Rho_"+params.species_param[ispec].species_type).c_str());
+        nJx_s[ispec]  = (double**)malloc(nbin*sizeof(double*));
+        nJy_s[ispec]  = (double**)malloc(nbin*sizeof(double*));
+        nJz_s[ispec]  = (double**)malloc(nbin*sizeof(double*));
+        nrho_s[ispec]  = (double**)malloc(nbin*sizeof(double*));
+    }
+    sizeprojbuffer = 2*oversize[0]+params.clrw + 1;
+    for (unsigned int ispec=0; ispec<n_species; ispec++) {
+        for (unsigned int ibin=0; ibin<nbin; ibin++) {
+            nrho_s[ispec][ibin] = (double*)calloc(4*sizeprojbuffer, sizeof(double));
+            nJx_s[ispec][ibin] = nrho_s[ispec][ibin]+sizeprojbuffer;
+            nJy_s[ispec][ibin] = nJx_s[ispec][ibin]+sizeprojbuffer;
+            nJz_s[ispec][ibin] = nJy_s[ispec][ibin]+sizeprojbuffer;
+        }
     }
     
 //    ostringstream file_name("");
@@ -564,30 +574,22 @@ void ElectroMagn1D::restartRhoJs(unsigned int ispec, bool currents)
     Field1D* Jy1D_s  = static_cast<Field1D*>(Jy_s[ispec]);
     Field1D* Jz1D_s  = static_cast<Field1D*>(Jz_s[ispec]);
     Field1D* rho1D_s = static_cast<Field1D*>(rho_s[ispec]);
-    Field1D* Jx1D_s2  = static_cast<Field1D*>(Jx_s[n_species+ispec]);
-    Field1D* Jy1D_s2  = static_cast<Field1D*>(Jy_s[n_species+ispec]);
-    Field1D* Jz1D_s2  = static_cast<Field1D*>(Jz_s[n_species+ispec]);
-    Field1D* rho1D_s2 = static_cast<Field1D*>(rho_s[n_species+ispec]);
 
     #pragma omp for schedule(static) 
     for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
         (*rho1D_s)(ix) = 0.0;
-        (*rho1D_s2)(ix) = 0.0;
     }
     if (currents){
         // put longitudinal current to zero on the dual grid
         #pragma omp for schedule(static) 
         for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
             (*Jx1D_s)(ix)  = 0.0;
-            (*Jx1D_s2)(ix)  = 0.0;
         }
         #pragma omp for schedule(static) 
         for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
         // all fields are defined on the primal grid
             (*Jy1D_s)(ix)  = 0.0;
             (*Jz1D_s)(ix)  = 0.0;
-            (*Jy1D_s2)(ix)  = 0.0;
-            (*Jz1D_s2)(ix)  = 0.0;
         }
     }
 }
@@ -604,7 +606,7 @@ void ElectroMagn1D::computeTotalRhoJ()
     Field1D* Jz1D    = static_cast<Field1D*>(Jz_);
     Field1D* rho1D   = static_cast<Field1D*>(rho_);
     
-    for (unsigned int ispec=0; ispec<n_species*2; ispec++) {
+    for (unsigned int ispec=0; ispec<n_species; ispec++) {
         Field1D* Jx1D_s  = static_cast<Field1D*>(Jx_s[ispec]);
         Field1D* Jy1D_s  = static_cast<Field1D*>(Jy_s[ispec]);
         Field1D* Jz1D_s  = static_cast<Field1D*>(Jz_s[ispec]);
@@ -626,9 +628,52 @@ void ElectroMagn1D::computeTotalRhoJ()
 }
 void ElectroMagn1D::addToGlobalRho(int ispec, int clrw)
 {
+    int iloc,nbin,b_dim0;
+    nbin = n_space[0]/clrw;
+    b_dim0 = clrw+2*oversize[0]+1; 
+        #pragma unroll
+        for (unsigned istart=0; istart<2; istart++){; 
+            #pragma omp for schedule(static)
+            for (unsigned int ibin=istart ; ibin < nbin ; ibin+=2){
+            //Copy the corresponding bin buffer at the correct place in global array
+               for (unsigned int i = 0; i < b_dim0 ; i++) {
+                   (*rho_)(ibin*clrw + i) += *(nrho_s[ispec][ibin]+ i);
+               } 
+            }
+        }
+
  }
 void ElectroMagn1D::computeTotalRhoJs(int clrw)
 {
+    int nbin,b_dim0;
+    Field1D* Jx1D  ;
+    Field1D* Jy1D  ;
+    Field1D* Jz1D  ;
+    Field1D* rho1D ;
+    nbin = n_space[0]/clrw;
+    b_dim0 = clrw+2*oversize[0]+1; 
+    for (unsigned int ispec=0 ; ispec < n_species; ispec++) {  
+        // static cast of the total currents and densities
+        Jx1D    = static_cast<Field1D*>(Jx_s[ispec]);
+        Jy1D    = static_cast<Field1D*>(Jy_s[ispec]);
+        Jz1D    = static_cast<Field1D*>(Jz_s[ispec]);
+        rho1D   = static_cast<Field1D*>(rho_s[ispec]);
+        #pragma unroll
+        for (unsigned int istart=0; istart <2; istart++) {
+            #pragma omp for schedule(static)
+            for (unsigned int ibin=istart ; ibin < nbin ; ibin+=2){
+            //Copy the corresponding bin buffer at the correct place in global array
+               for (unsigned int i = 0; i < b_dim0 ; i++) {
+                   //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
+                   (*rho1D)(ibin*clrw + i) += *(nrho_s[ispec][ibin]+ i);
+                   (*Jx1D)(ibin*clrw + i) += *(nJx_s[ispec][ibin]+ i);
+                   (*Jy1D)(ibin*clrw + i) += *(nJy_s[ispec][ibin]+ i);
+                   (*Jz1D)(ibin*clrw + i) += *(nJz_s[ispec][ibin]+ i);
+               } 
+            }
+        }
+    }
+
  }
 
 // ---------------------------------------------------------------------------------------------------------------------

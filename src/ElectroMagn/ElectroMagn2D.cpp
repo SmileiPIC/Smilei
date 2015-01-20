@@ -27,7 +27,6 @@ isSouthern(smpi->isSouthern())
     // local dt to store
     SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
     int process_coord_x = smpi2D->getProcCoord(0);
-    //int nbin = n_space[0]/params.clrw;
     int sizeprojbuffer ;
     
     
@@ -105,13 +104,13 @@ isSouthern(smpi->isSouthern())
         nJz_s[ispec]  = (double**)malloc(nbin*sizeof(double*));
         nrho_s[ispec]  = (double**)malloc(nbin*sizeof(double*));
     }
-    sizeprojbuffer = (2*oversize[0]+params.clrw + 1)*ny_p ;
+    sizeprojbuffer = 2*oversize[0]+params.clrw + 1 ;
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
         for (unsigned int ibin=0; ibin<nbin; ibin++) {
-            nrho_s[ispec][ibin] = (double*)calloc(4*sizeprojbuffer, sizeof(double));
-            nJx_s[ispec][ibin] = nrho_s[ispec][ibin]+sizeprojbuffer;
-            nJy_s[ispec][ibin] = nJx_s[ispec][ibin]+sizeprojbuffer;
-            nJz_s[ispec][ibin] = nJy_s[ispec][ibin]+sizeprojbuffer;
+            nrho_s[ispec][ibin] = (double*)calloc((4*ny_p)*sizeprojbuffer, sizeof(double));
+            nJx_s[ispec][ibin] = nrho_s[ispec][ibin]+sizeprojbuffer*ny_p;
+            nJy_s[ispec][ibin] = nJx_s[ispec][ibin]+sizeprojbuffer*ny_p;
+            nJz_s[ispec][ibin] = nJy_s[ispec][ibin]+sizeprojbuffer*ny_p;
         }
     }
 
