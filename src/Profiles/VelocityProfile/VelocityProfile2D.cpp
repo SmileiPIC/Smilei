@@ -26,8 +26,8 @@ VelocityProfile2D::VelocityProfile2D(ProfileSpecies &my_prof_params) : VelocityP
         if (prof_params.double_params.size()<1) {
             ERROR("For the Harris velocity profile 1 double_params has to be defined");
         }
-        if (prof_params.length_params_y.size()<2) {
-            ERROR("For the Harris velocity profile 2 length_params_y have to be defined");
+        if (prof_params.length_params_y.size()<3) {
+            ERROR("For the Harris velocity profile 3 length_params_y have to be defined");
         }
     }
     
@@ -68,12 +68,11 @@ double VelocityProfile2D::operator() (vector<double> x_cell) {
         
     }// constant
     
-    
-    // Harris velocity profile
-    // -----------------------
-    // Harris density profile: used for reconnection
+
+    // Harris velocity profile: used for reconnection
     // ---------------------------------------------
     // vacuum_length[0,1] : length of the vacuum region before the plasma in x & y directions (default is 0)
+    // length_params_y[0] : characteristic length of the Harris profile
     // length_params_y[0] : characteristic length of the Harris profile
     // length_params_y[0] : characteristic length of the Harris profile
     // double_params[0]   : density nb parameter
@@ -82,8 +81,11 @@ double VelocityProfile2D::operator() (vector<double> x_cell) {
         double nb = prof_params.double_params[0];
         double L  = prof_params.length_params_y[0];
         double y0 = prof_params.length_params_y[1];
+        double y1 = prof_params.length_params_y[2];
         
-        return (1.0 - pow(tanh((x_cell[1]-y0)/L),2)) / (nb + 1.0/pow(cosh((x_cell[1]-y0)/L),2));
+        return ( pow(tanh((x_cell[1]-y0)/L),2) - pow(tanh((x_cell[1]-y1)/L),2) )
+        /      ( nb + pow(cosh((x_cell[1]-y0)/L),-2) + pow(cosh((x_cell[1]-y1)/L),-2) );
+        
     }
 
 }

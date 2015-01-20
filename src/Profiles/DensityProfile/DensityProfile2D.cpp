@@ -97,8 +97,8 @@ DensityProfile2D::DensityProfile2D(SpeciesStructure &params) : DensityProfile(pa
         if (species_param.dens_profile.double_params.size()<1) {
             ERROR("For the Harris density profile 1 double_params has to be defined");
         }
-        if (species_param.dens_profile.length_params_y.size()<2) {
-            ERROR("For the Harris density profile 2 length_params_y have to be defined");
+        if (species_param.dens_profile.length_params_y.size()<3) {
+            ERROR("For the Harris density profile 3 length_params_y have to be defined");
         }
         
     }//if species_geometry
@@ -273,15 +273,17 @@ double DensityProfile2D::operator() (vector<double> x_cell) {
     // ---------------------------------------------
     // vacuum_length[0,1] : length of the vacuum region before the plasma in x & y directions (default is 0)
     // length_params_y[0] : characteristic length of the Harris profile
-    // length_params_y[0] : characteristic length of the Harris profile
+    // length_params_y[1] : position of the first density maximum
+    // length_params_y[2] : position of the second density maximum
     // double_params[0]   : density nb parameter
     else if (species_param.dens_profile.profile=="harris") {
     
         double nb = species_param.dens_profile.double_params[0];
         double L  = species_param.dens_profile.length_params_y[0];
         double y0 = species_param.dens_profile.length_params_y[1];
+        double y1 = species_param.dens_profile.length_params_y[2];
         
-        return 1.0 + 1.0/( nb * pow(cosh((x_cell[1]-y0)/L),2) );
+        return 1.0 + 1.0/( nb * pow(cosh((x_cell[1]-y0)/L),2) ) + 1.0/( nb * pow(cosh((x_cell[1]-y1)/L),2) );
         
     }
     

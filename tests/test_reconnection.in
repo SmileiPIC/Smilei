@@ -31,8 +31,8 @@ interpolation_order = 2
 # time step : time step
 # sim_time  : duration of the simulation 
 #
-res_time = 150
-sim_time = 0.0
+res_time = 10
+sim_time = 100.0
 
 # SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
 # either use the resolution (res_space) or cell-length (cell_length)
@@ -41,9 +41,10 @@ sim_time = 0.0
 # sim_length  : length of the simulation 
 # cell_length : cell-length 
 #
-res_space   = 70  70
-sim_length  = 50  20
+res_space   = 5   5
+sim_length  = 100 200
 
+number_of_procs = 2 2
 
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
 # bc_em_type_long/trans : boundary conditions used for EM fields 
@@ -64,8 +65,8 @@ random_seed = 0
 extfield
     field = Bz
     profile = harris
-    double_params   = 1.0
-    length_params_y = 1.0 10.0 
+    double_params   = 0.25
+    length_params_y = 5.0 50.0 150.0
 end
 
 
@@ -85,40 +86,40 @@ end
 #
 species
 	species_type = ion
-	mass   = 1.0
+	mass   = 25.0
 	charge = 1.0
-	n_part_per_cell = 1
+	n_part_per_cell = 2
 	c_part_max = 1.0
    	species_geometry = harris
    	density = 0.2
    	dens_dbl_params = 0.2
-   	dens_length_y = 1.0 10.0
+   	dens_length_y = 5.0 50.0 150.0
    	mvel_x_profile = harris
-   	mean_velocity = 0.8333333333 0.0 0.0
+   	mean_velocity = 0.0 0.0 0.04166666667
    	mvel_x_dbl_params = 0.2
-   	mvel_x_length_y = 1.0 10.0
+   	mvel_x_length_y = 5.0 50.0 150.0
 	initialization_type  = mj
-	temperature = 5.e-4
+	temperature = 0.02604167
 	bc_part_type_long  = none
 	bc_part_type_trans = none 
 end
 
 species
 	species_type = eon
-	mass   = 0.04
+	mass   = 1
 	charge = -1.0
-	n_part_per_cell = 1
+	n_part_per_cell = 2
 	c_part_max = 1.0
    	species_geometry = harris
    	density = 0.2
    	dens_dbl_params = 0.2
-   	dens_length_y = 1.0 10.0
+   	dens_length_y = 5.0 50.0 150.0
    	mvel_x_profile = harris
-   	mean_velocity = 0.1666666667 0.0 0.0
+   	mean_velocity = 0.0 0.0 0.008333333334
    	mvel_x_dbl_params = 0.2
-   	mvel_x_length_y = 1.0 10.0
+   	mvel_x_length_y = 5.0 50.0 150.0
 	initialization_type  = mj
-	temperature = 1.e-4
+	temperature = 0.00520833
 	bc_part_type_long = none
 	bc_part_type_trans = none
 end
@@ -128,10 +129,12 @@ end
 # DIAGNOSTIC PARAMETERS
 # ---------------------
 
+print_every = 10
+
 # DUMP DIAGS
 #
 # every for field dump
-every = 1
+every = 200
 # every for particle dump
 particleDump_every = 0
  

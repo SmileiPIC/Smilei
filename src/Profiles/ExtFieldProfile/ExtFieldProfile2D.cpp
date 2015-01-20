@@ -22,8 +22,8 @@ ExtFieldProfile2D::ExtFieldProfile2D(ExtFieldStructure &extfield_struct) : ExtFi
     } else if (my_struct.profile == "harris") {
         // Harris field distribution (initialization for reconnection)
         // requires at least to values for the length_params_y
-        if (my_struct.length_params_y.size()<2)
-            ERROR("two length_params_y must be defined for Harris profile" );
+        if (my_struct.length_params_y.size()<3)
+            ERROR("three length_params_y must be defined for Harris profile" );
         
     } else {
         ERROR("unknown or empty profile :" << my_struct.profile );
@@ -43,17 +43,19 @@ double ExtFieldProfile2D::operator() (vector<double> x_cell) {
     }
     
     else if (my_struct.profile == "harris") {
-        // ------------------------------------------------------
-        // Harris initialization for reconnection
+        // ---------------------------------------------------------------
+        // Harris initialization for reconnection (field correspond to Bx)
         // double_params[0]   = field amplitude
         // length_params_y[0] = characteristic width of the field
-        // length_params_y[1] = position in y of the field maximum
-        // ------------------------------------------------------
+        // length_params_y[1] = position in y of the 1st field node
+        // length_params_y[2] = position in y of the 2nd field node
+        // ---------------------------------------------------------------
         double A0 = my_struct.double_params[0];
         double L  = my_struct.length_params_y[0];
         double y0 = my_struct.length_params_y[1];
+        double y1 = my_struct.length_params_y[2];
         
-        return A0 * tanh( (x_cell[1]-y0)/L );
+        return A0 * ( tanh((x_cell[1]-y0)/L) - tanh((x_cell[1]-y1)/L) );
     }
     
     return 0;
