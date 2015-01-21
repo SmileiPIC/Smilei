@@ -242,5 +242,5 @@ double VelocityProfile1D::operator() (std::vector<double> x_cell) {
         ERROR("Density profile " << prof_params.profile << " not defined in 1D");
     }
     
-    return 0;
+    return 1;
 };

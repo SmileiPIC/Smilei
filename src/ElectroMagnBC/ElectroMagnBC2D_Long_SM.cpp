@@ -71,7 +71,7 @@ ElectroMagnBC2D_Long_SM::~ElectroMagnBC2D_Long_SM()
 void ElectroMagnBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
 {
     // Static cast of the fields
-    Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
+//    Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
     Field2D* Ey2D = static_cast<Field2D*>(EMfields->Ey_);
     Field2D* Ez2D = static_cast<Field2D*>(EMfields->Ez_);
     Field2D* Bx2D = static_cast<Field2D*>(EMfields->Bx_);
@@ -84,8 +84,8 @@ void ElectroMagnBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, Smi
     // Laser temporal profile
     // -----------------------------------------
     double byW, bzW, byE, bzE;
-    double dfa; //Distance from axis
-    dfa = 0.0;
+//    double dfa; //Distance from axis
+//    dfa = 0.0;
 
 
 

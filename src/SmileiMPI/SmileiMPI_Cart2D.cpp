@@ -170,7 +170,7 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
             params.n_space[i] =  params.nspace_win_x / number_of_procs[i];
             cell_starting_global_index[i] = coords_[i]*(params.nspace_win_x / number_of_procs[i]);
             
-            if ( number_of_procs[i]*params.n_space[i] != params.nspace_win_x ) {
+            if (number_of_procs[i]*params.n_space[i] != (unsigned int)params.nspace_win_x ) {
                 // Correction on the last MPI process of the direction to use the wished number of cells
                 if (coords_[i]==number_of_procs[i]-1) {
                     params.n_space[i] = params.nspace_win_x - params.n_space[i]*(number_of_procs[i]-1);
@@ -240,13 +240,13 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams&
         indexes_of_particles_to_exchange.clear();
         
         int tmp = 0;
-        for (int tid=0 ; tid < indexes_of_particles_to_exchange_per_thd->size() ; tid++)
+        for (int tid=0 ; tid < (int)indexes_of_particles_to_exchange_per_thd->size() ; tid++)
             tmp += ((*indexes_of_particles_to_exchange_per_thd)[tid]).size();
         indexes_of_particles_to_exchange.resize( tmp );
         
         int k=0;
-        for (int tid=0 ; tid < indexes_of_particles_to_exchange_per_thd->size() ; tid++) {
-            for (int ipart = 0 ; ipart < ((*indexes_of_particles_to_exchange_per_thd)[tid]).size() ; ipart++ ) {
+        for (int tid=0 ; tid < (int)indexes_of_particles_to_exchange_per_thd->size() ; tid++) {
+            for (int ipart = 0 ; ipart < (int) ((*indexes_of_particles_to_exchange_per_thd)[tid]).size() ; ipart++ ) {
                 indexes_of_particles_to_exchange[k] =  (*indexes_of_particles_to_exchange_per_thd)[tid][ipart] ;
                 k++;
             }
@@ -491,7 +491,7 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams&
         //1) Count particles coming from south and north
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
             n_part_recv = buff_index_recv_sz[1][iNeighbor];
-            for (unsigned int j=0; j<n_part_recv ;j++){
+            for (unsigned int j=0; j<(unsigned int)n_part_recv ;j++){
                 ii = int((partVectorRecv[1][iNeighbor].position(0,j)-min_local[0])/dbin);//bin in which the particle goes.
                 shift[ii+1]++; // It makes the next bins shift.
             }
@@ -533,7 +533,7 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams&
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
             n_part_recv = buff_index_recv_sz[1][iNeighbor];
             if ( (neighbor_[1][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
-                for(unsigned int j=0; j<n_part_recv; j++){
+                for(unsigned int j=0; j<(unsigned int)n_part_recv; j++){
                     ii = int((partVectorRecv[1][iNeighbor].position(0,j)-min_local[0])/dbin);//bin in which the particle goes.
                     partVectorRecv[1][iNeighbor].overwrite_part2D(j, cuParticles,(*cubmax)[ii]);
                     (*cubmax)[ii] ++ ;

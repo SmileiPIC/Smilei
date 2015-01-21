@@ -27,7 +27,7 @@ isEastern(smpi->isEastern())
 {
     // local dt to store
     SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
-    int process_coord_x = smpi1D->getProcCoord(0);
+    //int process_coord_x = smpi1D->getProcCoord(0);
     
     oversize_ = oversize[0];
     
@@ -65,13 +65,13 @@ isEastern(smpi->isEastern())
     By_m = new Field1D(dimPrim, 1, true,  "By_m");
     Bz_m = new Field1D(dimPrim, 2, true,  "Bz_m");
     
-    for (int i=0 ; i<nx_d ; i++) {
+    for (unsigned int i=0 ; i<nx_d ; i++) {
         double x = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i-0.5) )*params.cell_length[0];
         (*By_)(i) = 0.001 * sin(x * 2.0*M_PI/params.sim_length[0] * 40.0);
     }
     smpi1D->exchangeField(By_);
-    for (int i=0 ; i<nx_d ; i++) {
-        double x = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i-0.5) )*params.cell_length[0];
+    for (unsigned int i=0 ; i<nx_d ; i++) {
+//        double x = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i-0.5) )*params.cell_length[0];
         (*By_m)(i) = (*By_)(i);
     }
     
@@ -190,7 +190,7 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
     
     double       dx_sq          = dx*dx;
     unsigned int nx_p_global    = smpi1D->n_space_global[0] + 1;
-    unsigned int smilei_sz      = smpi1D->smilei_sz;
+//    unsigned int smilei_sz      = smpi1D->smilei_sz;
     unsigned int smilei_rk      = smpi1D->smilei_rk;
     
     // Min and max indices for calculation of the scalar product (for primal & dual grid)
@@ -336,14 +336,16 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
     
     unsigned int rankWest = smpi1D->extrem_ranks[0][0];
     if (smpi1D->isWestern()) {
-        if (smilei_rk != smpi1D->extrem_ranks[0][0]) ERROR("western process not well defined");
+        if ((int)smilei_rk != smpi1D->extrem_ranks[0][0]) {
+            ERROR("western process not well defined");
+        }
         Ex_West = (*Ex1D)(index_bc_min[0]);
     }
     MPI_Bcast(&Ex_West, 1, MPI_DOUBLE, rankWest, MPI_COMM_WORLD);
     
     unsigned int rankEast = smpi1D->extrem_ranks[0][1];
     if (smpi1D->isEastern()) {
-        if (smilei_rk != smpi1D->extrem_ranks[0][1]) ERROR("eastern process not well defined");
+        if ((int)smilei_rk != smpi1D->extrem_ranks[0][1]) ERROR("eastern process not well defined");
         Ex_East = (*Ex1D)(index_bc_max[0]);
     }
     MPI_Bcast(&Ex_East, 1, MPI_DOUBLE, rankEast, MPI_COMM_WORLD);
@@ -654,7 +656,7 @@ void ElectroMagn1D::applyExternalField(Field* my_field,  ExtFieldProfile *my_pro
     SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
     
     vector<double> x(1,0);
-    for (int i=0 ; i<field1D->dims()[0] ; i++) {
+    for (unsigned int i=0 ; i<field1D->dims()[0] ; i++) {
         x[0] = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i +(field1D->isDual(0)?-0.5:0)) )*dx;
         (*field1D)(i) = (*field1D)(i) + (*profile)(x);
     }
