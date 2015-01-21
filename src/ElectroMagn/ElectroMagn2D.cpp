@@ -22,12 +22,12 @@ ElectroMagn2D::ElectroMagn2D(PicParams &params, LaserParams &laser_params, Smile
 ElectroMagn(params, laser_params, smpi),
 isWestern(smpi->isWestern()),
 isEastern(smpi->isEastern()),
-isNorthern(smpi->isNorthern()),
-isSouthern(smpi->isSouthern())
+isSouthern(smpi->isSouthern()),
+isNorthern(smpi->isNorthern())
 {
     // local dt to store
     SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
-    int process_coord_x = smpi2D->getProcCoord(0);
+//    int process_coord_x = smpi2D->getProcCoord(0);
     
     
     // --------------------------------------------------
@@ -207,8 +207,8 @@ void ElectroMagn2D::solvePoisson(SmileiMPI* smpi)
     double two_ov_dx2dy2      = 2.0*(1.0/(dx*dx)+1.0/(dy*dy));
     
     unsigned int nx_p2_global = (smpi2D->n_space_global[0]+1) * (smpi2D->n_space_global[1]+1);
-    unsigned int smilei_sz    = smpi2D->smilei_sz;
-    unsigned int smilei_rk    = smpi2D->smilei_rk;
+//    unsigned int smilei_sz    = smpi2D->smilei_sz;
+//    unsigned int smilei_rk    = smpi2D->smilei_rk;
     
     
     // Boundary condition for the direction vector (all put to 0)
@@ -976,10 +976,10 @@ void ElectroMagn2D::applyExternalField(Field* my_field,  ExtFieldProfile *my_pro
 
     vector<double> pos(2,0);
     
-    for (int i=0 ; i<field2D->dims()[0] ; i++) {
+    for (unsigned int i=0 ; i<field2D->dims()[0] ; i++) {
         pos[0] = ( (double)(smpi2D->getCellStartingGlobalIndex(0)+i +(field2D->isDual(0)?-0.5:0)) )*dx;
         
-        for (int j=0 ; j<field2D->dims()[1] ; j++) {
+        for (unsigned int j=0 ; j<field2D->dims()[1] ; j++) {
             
             pos[1] = ( (double)(smpi2D->getCellStartingGlobalIndex(1)+j +(field2D->isDual(1)?-0.5:0)) )*dy;
             

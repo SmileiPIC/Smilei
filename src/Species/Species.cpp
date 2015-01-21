@@ -39,22 +39,21 @@ using namespace std;
 // input: simulation parameters & Species index
 // ---------------------------------------------------------------------------------------------------------------------
 Species::Species(PicParams& params, int ispec, SmileiMPI* smpi) :
+speciesNumber(ispec),
+clrw(params.clrw),
+oversize(params.oversize),
+cell_length(params.cell_length),
+species_param(params.species_param[ispec]),
 densityProfile(DensityFactory::create(params, ispec)),
 velocityProfile(3,NULL),
-speciesNumber(ispec),
-cell_length(params.cell_length),
-oversize(params.oversize),
 ndim(params.nDim_particle),
-min_loc(smpi->getDomainLocalMin(0)),
-clrw(params.clrw),
-species_param(params.species_param[ispec])
+min_loc(smpi->getDomainLocalMin(0))
 {
 
     velocityProfile[0]=VelocityFactory::create(params, ispec, 0);
     velocityProfile[1]=VelocityFactory::create(params, ispec, 1);
     velocityProfile[2]=VelocityFactory::create(params, ispec, 2);
     
-    int err; 
     // -------------------
     // Variable definition
     // -------------------
@@ -109,7 +108,7 @@ species_param(params.species_param[ispec])
     
 	
     if (!params.restart) {
-        unsigned int npart_effective=0;
+//        unsigned int npart_effective=0;
         
         // Create particles in a space starting at cell_index
         vector<double> cell_index(3,0);
@@ -121,7 +120,8 @@ species_param(params.species_param[ispec])
         int starting_bin_idx = 0;
         // does a loop over all cells in the simulation
         // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
-        npart_effective = createParticles(params.n_space, cell_index, starting_bin_idx, params );
+        /*npart_effective = */
+        createParticles(params.n_space, cell_index, starting_bin_idx, params );
         
         //PMESSAGE( 1, smpi->getRank(),"Species "<< speciesNumber <<" # part "<< npart_effective );
     }
@@ -345,7 +345,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     // Ionization current
     LocalFields Jion;
 	
-    int iloc,jloc;
+    int iloc;
     unsigned int i,j,ibin,iPart;
     
     //! buffers for currents and charge
@@ -374,12 +374,12 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
        b_rho = b_Jz + size_proj_buffer ;
  
 #pragma omp for schedule(runtime)
-        for (ibin = 0 ; ibin < bmin.size() ; ibin++) {
+        for (ibin = 0 ; ibin < (unsigned int)bmin.size() ; ibin++) {
             
             // reset all current-buffers
             memset( &(b_Jx[0]), 0, 4*size_proj_buffer*sizeof(double)); 
 
-            for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
+            for (iPart=(unsigned int)bmin[ibin] ; iPart<(unsigned int)bmax[ibin]; iPart++ ) {
 				
                 // Interpolate the fields at the particle position
                 (*LocInterp)(EMfields, particles, iPart, &Epart, &Bpart);
@@ -476,7 +476,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
         free(b_Jx);
         
         if (Ionize && electron_species) {
-            for (unsigned int i=0; i < Ionize->new_electrons.size(); i++) {
+            for (unsigned int i=0; i < (unsigned int)Ionize->new_electrons.size(); i++) {
                 // electron_species->particles.push_back(Ionize->new_electrons[i]);
 				
                 int ibin = (int) ((Ionize->new_electrons).position(0,i) / cell_length[0]) - ( smpi->getCellStartingGlobalIndex(0) + oversize[0] );
@@ -487,7 +487,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 // Update bins status
                 // (ugly update, memory is allocated anywhere, OK with vectors per particles parameters)
                 electron_species->bmax[ibin]++;
-                for (int i=ibin+1; i<bmin.size(); i++) {
+                for (int i=(int)ibin+1; i<(int)bmin.size(); i++) {
                     electron_species->bmin[i]++;
                     electron_species->bmax[i]++;
                 }
@@ -521,7 +521,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::dump(std::ofstream& ofile)
 {
-    for (unsigned int i=0; i<particles.size(); i++ )
+    for (unsigned int i=0; i<(unsigned int)particles.size(); i++ )
 	{
 	    ofile << i ;
 	    for (unsigned int m=0; m<ndim; m++) ofile << "\t" << particles.position(m,i);
@@ -606,8 +606,8 @@ void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi, PicParams& par
     // Send particles of first bin on process rank-1
     // If no rank-1 -> particles deleted
     clearExchList(0);
-    for (unsigned int ibin = 0 ; ibin < 1 ; ibin++)
-        for (unsigned int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ )
+    for (int ibin = 0 ; ibin < 1 ; ibin++)
+        for (int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ )
             addPartInExchList( 0, iPart );
     
     // bin 0 empty
@@ -650,7 +650,8 @@ void Species::defineNewCells(unsigned int shift, SmileiMPI *smpi, PicParams& par
     n_space_created[1] = params.n_space[1];
     n_space_created[2] = params.n_space[2];
     
-    unsigned int npart_effective = createParticles(n_space_created, cell_index, new_bin_idx, params );
+    //unsigned int npart_effective = 
+    createParticles(n_space_created, cell_index, new_bin_idx, params );
 }
 
 
@@ -810,8 +811,8 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
     
     // Recalculate former position using the particle velocity
     // (necessary to calculate currents at time t=0 using the Esirkepov projection scheme)
-    for (unsigned int iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++) {
-        for (unsigned int i=0; i<ndim; i++) {
+    for (int iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++) {
+        for (int i=0; i<(int)ndim; i++) {
             particles.position_old(i,iPart) -= particles.momentum(i,iPart)/particles.lor_fac(iPart) * params.timestep;
         }
     }

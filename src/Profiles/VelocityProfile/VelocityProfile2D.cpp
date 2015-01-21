@@ -83,10 +83,12 @@ double VelocityProfile2D::operator() (vector<double> x_cell) {
         double y0 = prof_params.length_params_y[1];
         double y1 = prof_params.length_params_y[2];
         
-        return 0.5 * ( pow(tanh((x_cell[1]-y0)/L),2) - pow(tanh((x_cell[1]-y1)/L),2) );
-//        /      ( nb + pow(cosh((x_cell[1]-y0)/L),-2) + pow(cosh((x_cell[1]-y1)/L),-2) );
+        return 0.5 * ( pow(tanh((x_cell[1]-y0)/L),2) - pow(tanh((x_cell[1]-y1)/L),2) )
+        /      ( nb + pow(cosh((x_cell[1]-y0)/L),-2) + pow(cosh((x_cell[1]-y1)/L),-2) );
         
     }
+    
+    return 1;
 
 }
 

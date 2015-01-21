@@ -293,7 +293,7 @@ int main (int argc, char* argv[])
 #pragma omp barrier
                 if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
                         // Loop on dims to manage exchange in corners
-                        for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
+                        for (unsigned int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
                             smpi->exchangeParticles(vecSpecies[ispec], ispec, params, tid);
 #pragma omp barrier
                         vecSpecies[ispec]->sort_part();

@@ -94,10 +94,10 @@ species
    	density = 0.2
    	dens_dbl_params = 0.2
    	dens_length_y = 5.0 50.0 150.0
-   	mvel_x_profile = harris
+   	mvel_z_profile = harris
    	mean_velocity = 0.0 0.0 0.04166666667
-   	mvel_x_dbl_params = 0.2
-   	mvel_x_length_y = 5.0 50.0 150.0
+   	mvel_z_dbl_params = 0.2
+   	mvel_z_length_y = 5.0 50.0 150.0
 	initialization_type  = mj
 	temperature = 0.02604167
 	bc_part_type_long  = none
@@ -114,10 +114,10 @@ species
    	density = 0.2
    	dens_dbl_params = 0.2
    	dens_length_y = 5.0 50.0 150.0
-   	mvel_x_profile = harris
+   	mvel_z_profile = harris
    	mean_velocity = 0.0 0.0 0.008333333334
-   	mvel_x_dbl_params = 0.2
-   	mvel_x_length_y = 5.0 50.0 150.0
+   	mvel_z_dbl_params = 0.2
+   	mvel_z_length_y = 5.0 50.0 150.0
 	initialization_type  = mj
 	temperature = 0.00520833
 	bc_part_type_long = none

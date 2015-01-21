@@ -29,7 +29,7 @@ public:
 
     
     // number of dumping layers
-    int ny_l;
+    unsigned int ny_l;
     // Damping coefficient
     double cdamp; 
     // array of coefficient per layer
