@@ -738,7 +738,7 @@ void SmileiMPI_Cart2D::exchangeField( Field* field )
         
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
             
-            if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (isDual[iDim]==0) ) {
+            if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) ) {
                 
                 istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( 2*oversize[iDim] + isDual[iDim] );
                 ix = (1-iDim)*istart;
@@ -747,7 +747,7 @@ void SmileiMPI_Cart2D::exchangeField( Field* field )
                 
             } // END of Send
             
-            if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (isDual[iDim]==0) ) {
+            if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) ) {
                 
                 istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - 1 ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
                 ix = (1-iDim)*istart;
@@ -759,10 +759,10 @@ void SmileiMPI_Cart2D::exchangeField( Field* field )
         } // END for iNeighbor
         
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-            if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (isDual[iDim]==0) ) {
+            if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) ) {
                 MPI_Wait( &(srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
             }
-            if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (isDual[iDim]==0) ) {
+            if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL)  ) {
                 MPI_Wait( &(rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
             }
         }
