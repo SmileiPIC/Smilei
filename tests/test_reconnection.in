@@ -95,11 +95,12 @@ species
    	dens_dbl_params = 0.2
    	dens_length_y = 5.0 50.0 150.0
    	mvel_z_profile = harris
-   	mean_velocity = 0.0 0.0 0.04166666667
-   	mvel_z_dbl_params = 0.2
+   	mean_velocity = 0.0 0.0 1.0
+	mvel_z_int_params = 0
+   	mvel_z_dbl_params = 0.2 0.25 0.2
    	mvel_z_length_y = 5.0 50.0 150.0
 	initialization_type  = mj
-	temperature = 0.02604167
+	temperature = 0.02604166667
 	bc_part_type_long  = none
 	bc_part_type_trans = none 
 end
@@ -115,11 +116,12 @@ species
    	dens_dbl_params = 0.2
    	dens_length_y = 5.0 50.0 150.0
    	mvel_z_profile = harris
-   	mean_velocity = 0.0 0.0 0.008333333334
-   	mvel_z_dbl_params = 0.2
+   	mean_velocity = 0.0 0.0 1.0
+	mvel_z_int_params = 1
+   	mvel_z_dbl_params = 0.2 0.25 0.2 
    	mvel_z_length_y = 5.0 50.0 150.0
 	initialization_type  = mj
-	temperature = 0.00520833
+	temperature = 0.005208333334
 	bc_part_type_long = none
 	bc_part_type_trans = none
 end

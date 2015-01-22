@@ -55,7 +55,7 @@ double ExtFieldProfile2D::operator() (vector<double> x_cell) {
         double y0 = my_struct.length_params_y[1];
         double y1 = my_struct.length_params_y[2];
         
-        return 0.5 * A0 * ( tanh((x_cell[1]-y0)/L) - tanh((x_cell[1]-y1)/L) );
+        return A0 * ( tanh((x_cell[1]-y0)/L) - tanh((x_cell[1]-y1)/L) - 1.0 );
     }
     
     return 0;

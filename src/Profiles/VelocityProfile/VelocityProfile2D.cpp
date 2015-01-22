@@ -23,8 +23,11 @@ VelocityProfile2D::VelocityProfile2D(ProfileSpecies &my_prof_params) : VelocityP
     // double_params[0]   : density nb parameter
     else if (prof_params.profile=="harris") {
         
-        if (prof_params.double_params.size()<1) {
-            ERROR("For the Harris velocity profile 1 double_params has to be defined");
+        if (prof_params.int_params.size()<1) {
+            ERROR("For the Harris velocity profile 1 int_params has to be defined");
+        }
+        if (prof_params.double_params.size()<3) {
+            ERROR("For the Harris velocity profile 3 double_params has to be defined");
         }
         if (prof_params.length_params_y.size()<3) {
             ERROR("For the Harris velocity profile 3 length_params_y have to be defined");
@@ -76,14 +79,22 @@ double VelocityProfile2D::operator() (vector<double> x_cell) {
     // length_params_y[0] : characteristic length of the Harris profile
     // length_params_y[0] : characteristic length of the Harris profile
     // double_params[0]   : density nb parameter
+    // double_params[1]   : maximum value of the magnetic field
+    // double_params[2]   : electron over ion temperature ratio
+    // int_params[0]      : 0 for ions, 1 for electrons
+    
     else if (prof_params.profile=="harris") {
         
-        double nb = prof_params.double_params[0];
+        double nb       = prof_params.double_params[0];
+        double B0       = prof_params.double_params[1];
+        double Te_ov_Ti = prof_params.double_params[2];
+        int    N        = prof_params.int_params[0];
         double L  = prof_params.length_params_y[0];
         double y0 = prof_params.length_params_y[1];
         double y1 = prof_params.length_params_y[2];
         
-        return 0.5 * ( pow(tanh((x_cell[1]-y0)/L),2) - pow(tanh((x_cell[1]-y1)/L),2) )
+        return B0/L * pow(-Te_ov_Ti,N)/(1+Te_ov_Ti)
+        *      ( pow(tanh((x_cell[1]-y0)/L),2) - pow(tanh((x_cell[1]-y1)/L),2) )
         /      ( nb + pow(cosh((x_cell[1]-y0)/L),-2) + pow(cosh((x_cell[1]-y1)/L),-2) );
         
     }
