@@ -350,8 +350,11 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     unsigned int nParticles = getNbrOfParticles();
     // Reset list of particles to exchange
     int tid(0);
+    std::vector<double> nrj_lost_per_thd(1, 0.);
 #ifdef _OMP
     tid = omp_get_thread_num();
+    int nthds = omp_get_num_threads();
+    nrj_lost_per_thd.resize(nthds, 0.);
 #endif
     clearExchList(tid);
     	
@@ -403,7 +406,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 //	if omp, create a list per thread
                 if ( !partBoundCond->apply( particles, iPart, ener_iPart ) ) {
                     addPartInExchList( tid, iPart );
-		    nrj_bc_lost += ener_iPart;	    
+		    nrj_lost_per_thd[tid] += ener_iPart;
                 }
                 
                 if (ndim <= 2) {
@@ -474,6 +477,9 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             
         }// ibin
         free(b_Jx);
+
+	for (int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
+	    nrj_bc_lost += nrj_lost_per_thd[tid];
         
         if (Ionize && electron_species) {
             for (unsigned int i=0; i < Ionize->new_electrons.size(); i++) {
