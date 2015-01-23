@@ -68,7 +68,7 @@ extfield
     field = Bx
     profile = harris
     double_params   = 0.25
-    length_params_y = 5.0 160.0 480.0
+    length_params_y = 5.0 150.0 450.0
 end
 
 
@@ -95,12 +95,12 @@ species
    	species_geometry = harris
    	density = 0.2
    	dens_dbl_params = 0.2
-   	dens_length_y = 5.0 160.0 480.0
+   	dens_length_y = 5.0 150.0 450.0
    	mvel_z_profile = harris
    	mean_velocity = 0.0 0.0 1.0
 	mvel_z_int_params = 0
    	mvel_z_dbl_params = 0.2 0.25 0.2
-   	mvel_z_length_y = 5.0 160.0 480.0
+   	mvel_z_length_y = 5.0 150.0 450.0
 	initialization_type  = mj
 	temperature = 0.02604166667
 	bc_part_type_long  = none
@@ -116,12 +116,12 @@ species
    	species_geometry = harris
    	density = 0.2
    	dens_dbl_params = 0.2
-   	dens_length_y = 5.0 160.0 480.0
+   	dens_length_y = 5.0 150.0 450.0
    	mvel_z_profile = harris
    	mean_velocity = 0.0 0.0 1.0
 	mvel_z_int_params = 1
    	mvel_z_dbl_params = 0.2 0.25 0.2 
-   	mvel_z_length_y = 5.0 160.0 480.0
+   	mvel_z_length_y = 5.0 150.0 450.0
 	initialization_type  = mj
 	temperature = 0.005208333334
 	bc_part_type_long = none
