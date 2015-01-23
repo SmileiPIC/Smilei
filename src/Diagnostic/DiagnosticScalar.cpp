@@ -58,6 +58,8 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
     ///////////////////////////////////////////////////////////////////////////////////////////
     double Etot_part=0;
     double Elost_part=0;
+    double Emw_lost=0;
+    double Emw_part=0;
     for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
         double charge_tot=0.0;
         double ener_tot=0.0;
@@ -80,6 +82,16 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
 	ener_lost = vecSpecies[ispec]->getLostNrjBC();
         MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&ener_lost, &ener_lost, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
+	// nrj lost with moving window
+	double ener_lost_mw=0.0;
+	ener_lost_mw = vecSpecies[ispec]->getLostNrjMW();
+        MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&ener_lost_mw, &ener_lost_mw, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+	// nrj added with moving window
+	double ener_added_mw=0.0;
+	ener_added_mw = vecSpecies[ispec]-> getNewParticlesNRJ();
+        MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&ener_added_mw, &ener_added_mw, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
         if (isMaster) {
             if (nPart!=0) charge_tot /= nPart;
             string nameSpec=vecSpecies[ispec]->species_param.species_type;
@@ -88,6 +100,9 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
             append("N_"+nameSpec,nPart);
             Etot_part+=ener_tot;
 	    Elost_part += cell_volume*ener_lost;
+
+	    Emw_lost += cell_volume*ener_lost_mw;
+	    Emw_part += cell_volume*ener_added_mw;
         }
     }
 
@@ -255,7 +270,10 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
         prepend("Etot",Total_Energy);
         prepend("Ebalance",Energy_Balance);
         prepend("Ebal_norm",Energy_Bal_norm);
-    }
+
+	prepend("Emw_lost",Emw_lost);
+        prepend("Emw_part",Emw_part);
+   }
 
 
 }

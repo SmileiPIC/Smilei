@@ -164,7 +164,7 @@ private:
     double nrj_bc_lost;
     //! Accumulate nrj lost with moving window
     double nrj_mw_lost;
-    //! Accumulate nrj added with new particles during last call to createParticles
+    //! Accumulate nrj added with new particles (including t0)
     double nrj_new_particles;
 };
 
