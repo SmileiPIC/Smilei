@@ -138,9 +138,11 @@ species_param(params.species_param[ispec])
 #endif
     }
     indexes_of_particles_to_exchange_per_thd.resize(nthds);
-	
     
-    
+    //ener_tot = 0.;
+    nrj_bc_lost = 0.;
+    nrj_mw_lost = 0.;
+
 }//END Species creator
 
 
@@ -352,6 +354,10 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 #endif
     clearExchList(tid);
     	
+    //ener_tot  = 0.;
+    //ener_lost = 0.;
+    double ener_iPart(0.);
+    //bool contribute(true);
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
@@ -394,8 +400,9 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 // Boundary Condition may be physical or due to domain decomposition
                 // apply returns 0 if iPart is no more in the domain local
                 //	if omp, create a list per thread
-                if ( !partBoundCond->apply( particles, iPart ) ) {
+                if ( !partBoundCond->apply( particles, iPart, ener_iPart ) ) {
                     addPartInExchList( tid, iPart );
+		    nrj_bc_lost += ener_iPart;	    
                 }
                 
                 if (ndim <= 2) {
@@ -599,8 +606,10 @@ void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi, PicParams& par
     // If no rank-1 -> particles deleted
     clearExchList(0);
     for (unsigned int ibin = 0 ; ibin < 1 ; ibin++)
-        for (unsigned int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ )
+        for (unsigned int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
             addPartInExchList( 0, iPart );
+	    nrj_mw_lost += particles.weight(iPart)*(particles.lor_fac(iPart)-1.0);
+	}
     
     // bin 0 empty
     // Shifts all the bins by 1. 
@@ -802,10 +811,12 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
     
     // Recalculate former position using the particle velocity
     // (necessary to calculate currents at time t=0 using the Esirkepov projection scheme)
+    nrj_new_particles = 0.;
     for (unsigned int iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++) {
         for (unsigned int i=0; i<ndim; i++) {
             particles.position_old(i,iPart) -= particles.momentum(i,iPart)/particles.lor_fac(iPart) * params.timestep;
         }
+	nrj_new_particles += particles.weight(iPart)*(particles.lor_fac(iPart)-1.0);
     }
     return npart_effective;
     

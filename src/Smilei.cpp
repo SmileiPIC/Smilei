@@ -251,15 +251,15 @@ int main (int argc, char* argv[])
         timer[0].update();
         
         //double timElapsed=smpiData->time_seconds();
-		if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) )
+	if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) )
             MESSAGE(1,"t = "          << setw(7) << setprecision(2)   << time_dual/params.conv_fac
                     << "   it = "       << setw(log10(params.n_time)+1) << itime  << "/" << params.n_time
                     << "   sec = "      << setw(7) << setprecision(2)   << timer[0].getTime()
                     << "   E = "        << std::scientific << setprecision(4)<< Diags->getScalar("Etot")
+                    << "   Epart = "        << std::scientific << setprecision(4)<< Diags->getScalar("Eparticles")
+                    << "   Elost = "        << std::scientific << setprecision(4)<< Diags->getScalar("Elost")
                     << "   E_bal(%) = " << setw(6) << std::fixed << setprecision(2)   << 100.0*Diags->getScalar("Ebal_norm") );
 
-        
-        
         // put density and currents to 0 + save former density
         // ---------------------------------------------------
         EMfields->restartRhoJ();
