@@ -174,10 +174,25 @@ public:
     //! Check if norm of charge denisty is not null
     bool isRhoNull(SmileiMPI* smpi);
 
+    double computeNRJ(unsigned int shift, SmileiMPI *smpi);
+    double getLostNrjMW() const {return nrj_mw_lost;}
+    
+    double getNewFieldsNRJ() const {return nrj_new_fields;}
+    void reinitDiags() {
+	nrj_mw_lost = 0.;
+	nrj_new_fields = 0.;
+    }
+
 private:
     
     //! Vector of boundary-condition per side for the fields
     std::vector<ElectroMagnBC*> emBoundCond;
+
+    //! Accumulate nrj lost with moving window
+    double nrj_mw_lost;
+    //! Accumulate nrj added with new fields
+    double nrj_new_fields;
+
 };
 
 #endif

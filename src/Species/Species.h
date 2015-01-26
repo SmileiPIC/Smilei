@@ -118,6 +118,11 @@ public:
     double getLostNrjMW() const {return species_param.mass*nrj_mw_lost;}
 
     double getNewParticlesNRJ() const {return species_param.mass*nrj_new_particles;}
+    void reinitDiags() { 
+	nrj_bc_lost = 0;
+	nrj_mw_lost = 0;
+	nrj_new_particles = 0;
+    }
 
 private:
     
@@ -164,7 +169,7 @@ private:
     double nrj_bc_lost;
     //! Accumulate nrj lost with moving window
     double nrj_mw_lost;
-    //! Accumulate nrj added with new particles (including t0)
+    //! Accumulate nrj added with new particles
     double nrj_new_particles;
 };
 

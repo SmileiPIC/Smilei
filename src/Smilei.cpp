@@ -262,6 +262,7 @@ int main (int argc, char* argv[])
 	    if (simWindow) 
 		MESSAGE(1, "\t\t MW Elost = " << std::scientific << setprecision(4)<< Diags->getScalar("Emw_lost")
 			<< "     MW Eadd  = " << std::scientific << setprecision(4)<< Diags->getScalar("Emw_part")
+			<< "     MW Elost (fields) = " << std::scientific << setprecision(4)<< Diags->getScalar("Emw_lost_fields")
 			<< setw(6) << std::fixed << setprecision(2) );
 	}
 

@@ -240,8 +240,9 @@ void ElectroMagn::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
     if (emBoundCond[0]!=NULL)
         emBoundCond[0]->laserDisabled();
 
-    //! \ Comms to optimize, only in x, east to west 
-    //! \ Implement SmileiMPI::exchangeE( EMFields*, int nDim, int nbNeighbors );
+    // For nrj balance
+    nrj_mw_lost += computeNRJ(shift, smpi);
+
     smpi->exchangeE( this, shift );
 
     smpi->exchangeB( this, shift );
@@ -258,8 +259,28 @@ void ElectroMagn::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
         smpi->exchangeAvg( this );
     }
 
+    // For now, fields introduced with moving window set to 0 
+    nrj_new_fields =+ 0.;
+
     
     //Here you might want to apply some new boundary conditions on the +x boundary. For the moment, all fields are set to 0.
+}
+
+double ElectroMagn::computeNRJ(unsigned int shift, SmileiMPI *smpi) {
+    double nrj(0.);
+
+    if ( smpi->isWestern() ) {
+	nrj += Ex_->computeNRJ(shift, istart, bufsize);
+	nrj += Ey_->computeNRJ(shift, istart, bufsize);
+	nrj += Ez_->computeNRJ(shift, istart, bufsize);
+
+	nrj += Bx_m->computeNRJ(shift, istart, bufsize);
+	nrj += By_m->computeNRJ(shift, istart, bufsize);
+	nrj += Bz_m->computeNRJ(shift, istart, bufsize);
+
+    }
+
+    return nrj;
 }
 
 bool ElectroMagn::isRhoNull(SmileiMPI* smpi)
