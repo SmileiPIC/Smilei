@@ -259,7 +259,8 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
 {
     // The variable bin received is  number of bin * cluster width.
     // Declare local variables
-    int ipo, ip, iloc;
+    //int ipo, ip, iloc;
+    int ipo, ip;
     int ip_m_ipo;
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;
@@ -322,12 +323,12 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     // 2nd order projection for the total currents & charge density
     // At the 2nd order, oversize = 2.
     for (unsigned int i=0; i<5; i++) {
-        iloc = i + ipo - 2;
+        //iloc = i + ipo - 2;
         DEBUGEXEC(int myloc=(i + ipo - 2); if (myloc < 0) { ERROR("i=" << i << " ipo=" << ipo << " iloc=" << myloc << " index_domain_begin=" << index_domain_begin << " bin=" << bin)});
-        Jx[iloc]  += Jx_p[i];
-        Jy[iloc]  += cry_p * Wt[i];
-        Jz[iloc]  += crz_p * Wt[i];
-        rho[iloc] += charge_weight * S1[i];
+        Jx[i + ipo - 2]  += Jx_p[i];
+        Jy[i + ipo - 2]  += cry_p * Wt[i];
+        Jz[i + ipo - 2]  += crz_p * Wt[i];
+        rho[i + ipo - 2] += charge_weight * S1[i];
     }//i
 
 
@@ -340,7 +341,8 @@ void Projector1D2Order::operator() (double* rho, Particles &particles, unsigned 
 {
     // The variable bin received is  number of bin * cluster width.
     // Declare local variables
-    int ipo, ip, iloc;
+    //int ipo, ip, iloc;
+    int ipo, ip;
     int ip_m_ipo;
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;
@@ -375,8 +377,8 @@ void Projector1D2Order::operator() (double* rho, Particles &particles, unsigned 
     // 2nd order projection for charge density
     // At the 2nd order, oversize = 2.
     for (unsigned int i=0; i<5; i++) {
-        iloc = i + ipo - 2;
-        rho[iloc] += charge_weight * S1[i];
+        //iloc = i + ipo - 2;
+        rho[i + ipo - 2] += charge_weight * S1[i];
     }//i
 
 }

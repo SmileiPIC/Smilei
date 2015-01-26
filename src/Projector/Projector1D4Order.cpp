@@ -172,7 +172,8 @@ void Projector1D4Order::operator() (Field* rho, Particles &particles, int ipart)
 void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_dim0)
 {
     // Declare local variables
-    int ipo, ip, iloc;
+    //int ipo, ip, iloc;
+    int ipo, ip;
     int ip_m_ipo;
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xipo3, xj_m_xipo4, xj_m_xip, xj_m_xip2, xj_m_xip3, xj_m_xip4;
@@ -243,11 +244,11 @@ void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     // 4th order projection for the total currents & charge density
     // At the 4th order, oversize = 3.
     for (unsigned int i=0; i<7; i++) {
-        iloc = i  + ipo - 3;
-        Jx[iloc]  += Jx_p[i];
-        Jy[iloc]  += cry_p * Wt[i];
-        Jz[iloc]  += crz_p * Wt[i];
-        rho[iloc] += charge_weight * S1[i];
+        //iloc = i  + ipo - 3;
+        Jx[i  + ipo - 3]  += Jx_p[i];
+        Jy[i  + ipo - 3]  += cry_p * Wt[i];
+        Jz[i  + ipo - 3]  += crz_p * Wt[i];
+        rho[i  + ipo - 3] += charge_weight * S1[i];
     }//i
 
 }//END Project local current densities (sort)
@@ -259,7 +260,8 @@ void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
 void Projector1D4Order::operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, unsigned int b_dim0)
 {
     // Declare local variables
-    int ipo, ip, iloc;
+    //int ipo, ip, iloc;
+    int ipo, ip;
     int ip_m_ipo;
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xipo3, xj_m_xipo4, xj_m_xip, xj_m_xip2, xj_m_xip3, xj_m_xip4;
@@ -300,8 +302,8 @@ void Projector1D4Order::operator() (double* rho, Particles &particles, unsigned 
     // 4th order projection for the charge density
     // At the 4th order, oversize = 3.
     for (unsigned int i=0; i<7; i++) {
-        iloc = i  + ipo - 3;
-        rho[iloc] += charge_weight * S1[i];
+        //iloc = i  + ipo - 3;
+        rho[i  + ipo - 3] += charge_weight * S1[i];
     }//i
 
 }
