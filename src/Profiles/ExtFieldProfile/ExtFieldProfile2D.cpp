@@ -21,6 +21,8 @@ ExtFieldProfile2D::ExtFieldProfile2D(ExtFieldStructure &extfield_struct) : ExtFi
         
     } else if (my_struct.profile == "harris") {
         // Harris field distribution (initialization for reconnection)
+        if (my_struct.double_params.size()<1)
+            ERROR("one double_params must be defined for Harris profile" );
         // requires at least to values for the length_params_y
         if (my_struct.length_params_y.size()<3)
             ERROR("three length_params_y must be defined for Harris profile" );

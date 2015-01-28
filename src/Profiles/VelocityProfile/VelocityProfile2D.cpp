@@ -19,8 +19,12 @@ VelocityProfile2D::VelocityProfile2D(ProfileSpecies &my_prof_params) : VelocityP
     // ----------------------------------------------
     // vacuum_length[0,1] : length of the vacuum region before the plasma in x & y directions (default is 0)
     // length_params_y[0] : characteristic length of the Harris profile
-    // length_params_y[0] : characteristic length of the Harris profile
+    // length_params_y[0] : position of first max in density
+    // length_params_y[0] : position of second max in density
     // double_params[0]   : density nb parameter
+    // double_params[1]   : maximum value of the magnetic field
+    // double_params[2]   : electron over ion temperature ratio
+    // int_params[0]      : 0 for ions, 1 for electrons
     else if (prof_params.profile=="harris") {
         
         if (prof_params.int_params.size()<1) {

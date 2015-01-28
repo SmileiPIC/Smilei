@@ -85,9 +85,9 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
             }
             if ( !delayExists ) {
                 tmpLaser.delay = tmpLaser.profile_transv.int_params[0]*tmpLaser.profile_transv.double_params[0]
-                * sin(tmpLaser.angle*M_PI/180.0);
+                * abs(tan(tmpLaser.angle*M_PI/180.0));
                 if (tmpLaser.delay!=0)
-                    WARNING("Introduction of a time-delay of " << tmpLaser.delay << " on laser " << n_laser);
+                    WARNING("Introduction of a time-delay: " << tmpLaser.delay/params.conv_fac << " (in input units) on laser " << n_laser);
             }
             if ( ((tmpLaser.angle!=0) || (tmpLaser.isFocused)) && (tmpLaser.profile_transv.profile!="focused") ) {
                 WARNING("Laser "<<n_laser<<" transv_profile redefined as focused (Gaussian) and delta = "<<tmpLaser.delta<< " ignored");
