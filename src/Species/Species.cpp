@@ -423,7 +423,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 }
             }
             if (ndim == 2) {
-                for (i = 0; i < oversize[0]+1 ; i++) {
+                for (i = 0; i < 2*oversize[0]+1 ; i++) {
                     iloc = ibin*clrw + i ;
                     //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
                     for (j = 0; j < b_dim1 ; j++) {
@@ -437,7 +437,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                         (*EMfields->rho_s[ispec])(iloc*(f_dim1  )+j) += b_rho[i*b_dim1+j];   // primal along y
                     }
                 }
-                for (i = oversize[0]+1; i < oversize[0]+clrw ; i++) {
+                for (i = 2*oversize[0]+1; i < clrw ; i++) {
                     iloc = ibin*clrw + i ;
                     //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
                     for (j = 0; j < b_dim1 ; j++) {
@@ -447,7 +447,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                         (*EMfields->rho_s[ispec])(iloc*(f_dim1  )+j) += b_rho[i*b_dim1+j];   // primal along y
                     }
                 }
-                for (i = oversize[0]+clrw; i < b_dim0 ; i++) {
+                for (i = std::max(clrw,2*oversize[0]+1); i < b_dim0 ; i++) {
                     iloc = ibin*clrw + i ;
                     //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
                     for (j = 0; j < b_dim1 ; j++) {
