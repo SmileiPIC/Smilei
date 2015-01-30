@@ -194,8 +194,8 @@ int main (int argc, char* argv[])
         // Very first iteration used to initialize fields
         for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
             vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow);
-            for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
-                smpi->exchangeParticles(vecSpecies[ispec], ispec, params, 0);
+	    for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
+                smpi->exchangeParticles(vecSpecies[ispec], ispec, params, 0, iDim);
             vecSpecies[ispec]->sort_part();
             EMfields->restartRhoJs(ispec, true);
         }
