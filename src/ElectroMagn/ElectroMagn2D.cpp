@@ -919,7 +919,7 @@ void ElectroMagn2D::addToGlobalRho(int ispec, unsigned int clrw)
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn2D::computeTotalRhoJs( unsigned int clrw)
 {
-    int iloc,nbin,b_dim0;
+    int iloc,b_dim0;
     Field2D* Jx2D  ;
     Field2D* Jy2D  ;
     Field2D* Jz2D  ;
