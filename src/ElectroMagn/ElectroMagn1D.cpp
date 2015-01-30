@@ -626,7 +626,7 @@ void ElectroMagn1D::computeTotalRhoJ()
         }
     }//END loop on species ispec
 }
-void ElectroMagn1D::addToGlobalRho(int ispec, int clrw)
+void ElectroMagn1D::addToGlobalRho(int ispec, unsigned int clrw)
 {
     int iloc,nbin,b_dim0;
     nbin = n_space[0]/clrw;
@@ -643,7 +643,7 @@ void ElectroMagn1D::addToGlobalRho(int ispec, int clrw)
         }
 
  }
-void ElectroMagn1D::computeTotalRhoJs(int clrw)
+void ElectroMagn1D::computeTotalRhoJs(unsigned int clrw)
 {
     int nbin,b_dim0;
     Field1D* Jx1D  ;

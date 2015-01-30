@@ -584,7 +584,7 @@ void SmileiMPI_Cart2D::createType( PicParams& params )
 {
     int nx0 = params.n_space[0] + 1 + 2*params.oversize[0];
     int ny0 = params.n_space[1] + 1 + 2*params.oversize[1];
-    int clrw = params.clrw;
+    unsigned int clrw = params.clrw;
     
     // MPI_Datatype ntype_[nDim][primDual][primDual]
     int nx, ny;
@@ -766,7 +766,7 @@ void SmileiMPI_Cart2D::exchangeField( Field* field )
     
 } // END exchangeField
 
-void SmileiMPI_Cart2D::exchangeField_movewin( Field* field, int clrw )
+void SmileiMPI_Cart2D::exchangeField_movewin( Field* field, unsigned int clrw )
 {
     std::vector<unsigned int> n_elem   = field->dims_;
     std::vector<unsigned int> isDual = field->isDual_;

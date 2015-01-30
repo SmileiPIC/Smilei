@@ -39,7 +39,7 @@ public:
     //! Basic method to exchange a field,
     virtual void exchangeField ( Field* field );
     //! Exchange and shift a field along direction X for moving window,
-    virtual void exchangeField_movewin ( Field* field, int clrw );
+    virtual void exchangeField_movewin ( Field* field, unsigned int clrw );
     //! Basic method to sum a field
     virtual void sumField      ( Field* field );
 

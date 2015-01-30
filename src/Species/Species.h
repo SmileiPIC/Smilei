@@ -90,7 +90,7 @@ public:
     Species *electron_species;
 
     //! Cluster width in number of cells
-    unsigned int clrw; //Should divide the number of cells in X of a single MPI domain. Should default to 1.
+    unsigned int clrw; //Should divide the number of cells in X of a single MPI domain. 
     //! first and last index of each particle bin
     std::vector<int> bmin, bmax;
     //! sub dimensions of buffers for dim > 1

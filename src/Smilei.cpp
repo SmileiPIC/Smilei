@@ -150,17 +150,26 @@ int main (int argc, char* argv[])
     // vector of Species (virtual)
     vector<Species*> vecSpecies = SpeciesFactory::createVector(params, smpi);
 
+    // ------------------------------------------------------------------------
+    // Initialize the simulation times time_prim at n=0 and time_dual at n=+1/2
+    // ------------------------------------------------------------------------
+
+    unsigned int stepStart=0, stepStop=params.n_time;
+	
+    // time at integer time-steps (primal grid)
+    double time_prim = stepStart * params.timestep;
+    // time at half-integer time-steps (dual grid)
+    double time_dual = (stepStart +0.5) * params.timestep;
+
     // ----------------------------------------------------------------------------
     // Define Moving Window & restart
     // ----------------------------------------------------------------------------
-    
     SimWindow* simWindow = NULL;
     int start_moving(0);
     if (params.nspace_win_x)
         simWindow = new SimWindow(params);
     smpi->barrier();
     
-    unsigned int stepStart=0, stepStop=params.n_time;
     
     // reading from dumped file the restart values
     if (params.restart) {
@@ -178,8 +187,18 @@ int main (int argc, char* argv[])
         // Initialize the electromagnetic fields
         // -----------------------------------
         // Init rho and J by projecting all particles of subdomain
-        EMfields->initRhoJ(vecSpecies, Proj);
+        EMfields->restartRhoJ();
+        //EMfields->initRhoJ(vecSpecies, Proj, params.clrw, params.timestep);
+        // Very first iteration used to initialize fields
+        for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
+            vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow);
+            for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
+                smpi->exchangeParticles(vecSpecies[ispec], ispec, params, 0);
+            vecSpecies[ispec]->sort_part();
+            EMfields->restartRhoJs(ispec, true);
+        }
         smpi->sumRhoJ( EMfields );
+        EMfields->computeTotalRhoJs(params.clrw);
         for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) smpi->sumRhoJs(EMfields, ispec, true);
 
         // Init electric field (Ex/1D, + Ey/2D)
@@ -190,28 +209,20 @@ int main (int argc, char* argv[])
 	    EMfields->solvePoisson(smpi);
         
         
-        MESSAGE("----------------------------------------------");
-        MESSAGE("Running diags at time t = 0");
-        MESSAGE("----------------------------------------------");
-        // run diagnostics at time-step 0
-        Diags->runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
-        // temporary EM fields dump in Fields.h5
-        sio->writeAllFieldsSingleFileTime( EMfields, 0 );
-        // temporary EM fields dump in Fields_avg.h5
-        if (diag_params.ntime_step_avg!=0)
-            sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
-        // temporary particle dump at time 0
-        sio->writePlasma( vecSpecies, 0., smpi );
+        //MESSAGE("----------------------------------------------");
+        //MESSAGE("Running diags at time t = 0");
+        //MESSAGE("----------------------------------------------");
+        //// run diagnostics at time-step 0
+        //Diags->runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
+        //// temporary EM fields dump in Fields.h5
+        //sio->writeAllFieldsSingleFileTime( EMfields, 0 );
+        //// temporary EM fields dump in Fields_avg.h5
+        //if (diag_params.ntime_step_avg!=0)
+        //    sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
+        //// temporary particle dump at time 0
+        //sio->writePlasma( vecSpecies, 0., smpi );
     }
 
-    // ------------------------------------------------------------------------
-    // Initialize the simulation times time_prim at n=0 and time_dual at n=+1/2
-    // ------------------------------------------------------------------------
-	
-    // time at integer time-steps (primal grid)
-    double time_prim = stepStart * params.timestep;
-    // time at half-integer time-steps (dual grid)
-    double time_dual = (stepStart +0.5) * params.timestep;
 	
     // Count timer
     int ntimer(6);
@@ -334,7 +345,6 @@ int main (int argc, char* argv[])
 #endif
         if  (smpi->isMaster()){
             if (!todump && sio->dump(EMfields, itime, MPI_Wtime() - starttime, vecSpecies, simWindow, params, input_data) ){
-                cout << "dump becomes true" << endl;
                 // Send the action to perform at next iteration
                 itime2dump = itime + 1; 
                 for (unsigned int islave=0; islave < mpisize; islave++) 

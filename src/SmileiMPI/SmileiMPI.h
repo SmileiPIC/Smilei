@@ -64,11 +64,11 @@ public:
     void exchangeAvg( ElectroMagn* EMfields );
 
     //! Exchange clrw columns of electric fields towards the west
-    void exchangeE( ElectroMagn* EMfields, int clrw );
+    void exchangeE( ElectroMagn* EMfields, unsigned int clrw );
     //! Exchange clrw columns of magnetic field towards the west
-    void exchangeB( ElectroMagn* EMfields, int clrw);
+    void exchangeB( ElectroMagn* EMfields, unsigned int clrw);
     //! Exchange clrw columns of centered magnetic field towards the west
-    void exchangeBm( ElectroMagn* EMfields, int clrw );
+    void exchangeBm( ElectroMagn* EMfields, unsigned int clrw );
 
     //! Sum rho and densities on 2 x oversize[]
     void sumRho( ElectroMagn* EMfields );
@@ -81,7 +81,7 @@ public:
     //! Basic method to exchange a field, defined in child class
     virtual void exchangeField ( Field* field ) {};
     //! Basic method to exchange a field towards the west, defined in child class
-    virtual void exchangeField_movewin ( Field* field, int clrw ) {};
+    virtual void exchangeField_movewin ( Field* field, unsigned int clrw ) {};
     //! Basic method to sum a field, defined in child class
     virtual void sumField      ( Field* field ) {};
 

@@ -42,7 +42,7 @@ public:
     //! Basic method to exchange a field,
     virtual void exchangeField ( Field* field );
     //! Basic method to exchange several cells of field toward the X direction
-    virtual void exchangeField_movewin ( Field* field, int clrw );
+    virtual void exchangeField_movewin ( Field* field, unsigned int clrw );
     //! Basic method to sum a field
     virtual void sumField      ( Field* field );
 

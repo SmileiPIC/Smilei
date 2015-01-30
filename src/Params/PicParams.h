@@ -192,7 +192,7 @@ public:
     double vx_win;
     
     //! Clusters width
-    int clrw;
+    unsigned int clrw;
     
     //! initial number of species
     unsigned int n_species;

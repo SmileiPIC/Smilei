@@ -898,7 +898,7 @@ void ElectroMagn2D::computeTotalRhoJ()
 // ---------------------------------------------------------------------------------------------------------------------
 // Compute the total density and currents from local buffers computed for each cluster.
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn2D::addToGlobalRho(int ispec, int clrw)
+void ElectroMagn2D::addToGlobalRho(int ispec, unsigned int clrw)
 {
     int iloc,nbin,b_dim0;
     nbin = n_space[0]/clrw;
@@ -917,14 +917,14 @@ void ElectroMagn2D::addToGlobalRho(int ispec, int clrw)
 // ---------------------------------------------------------------------------------------------------------------------
 // Compute the total density and currents per species from local buffers computed for each cluster. Mostly for diags.
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn2D::computeTotalRhoJs( int clrw)
+void ElectroMagn2D::computeTotalRhoJs( unsigned int clrw)
 {
     int iloc,nbin,b_dim0;
     Field2D* Jx2D  ;
     Field2D* Jy2D  ;
     Field2D* Jz2D  ;
     Field2D* rho2D ;
-    nbin = n_space[0]/clrw;
+
     b_dim0 = clrw+2*oversize[0]+1; 
     for (unsigned int ispec=0 ; ispec < n_species; ispec++) {  
         // static cast of the total currents and densities

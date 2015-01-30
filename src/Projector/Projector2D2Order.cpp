@@ -405,7 +405,6 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     // Variable declaration & initialization
     // -------------------------------------
 
-    //int iloc, jloc;
     int iloc;
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
@@ -429,18 +428,7 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     for (unsigned int i=0; i<5; i++) {
         Sx1[i] = 0.;
         Sy1[i] = 0.;
-        //DSx[i] = 0.;
-        //DSy[i] = 0.;
     }
-    //for (unsigned int i=0; i<5; i++) {
-    //    for (unsigned int j=0; j<5; j++) {
-    //        Wx[i][j]   = 0.;
-    //        Wy[i][j]   = 0.;
-    //        Wz[i][j]   = 0.;
-    //        Jx_p[i][j] = 0.;
-    //        Jy_p[i][j] = 0.;
-    //    }
-    //}//i
 
     // --------------------------------------------------------
     // Locate particles & Calculate Esirkepov coef. S, DS and W
@@ -525,24 +513,9 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     ipo -= i_domain_begin + bin;
     jpo -= j_domain_begin;
 
-    //iloc = (ipo-2)*b_dim1+jpo-2;
-    //#pragma simd vectorlength(4)
-    //for (unsigned int j=1 ; j<5 ; j++) {
-    //   Jy[iloc+j]  += Jy_p[0][j];
-    //   Jz[iloc+j]  += crz_p * Wz[0][j];
-    //   rho[iloc+j] += charge_weight * Sx1[0]*Sy1[j];
-    //}
-    //#pragma unroll
-    //for (unsigned int i=1 ; i<5 ; i++) {
-    //   Jx[(i+ipo-2)*b_dim1+jpo-2]  += Jx_p[i][0];
-    //   Jz[(i+ipo-2)*b_dim1+jpo-2]  += crz_p * Wz[i][0];
-    //   rho[(i+ipo-2)*b_dim1+jpo-2] += charge_weight * Sx1[i]*Sy1[0];
-    //}
     for (unsigned int i=0 ; i<5 ; i++) {
-        //iloc = (i+ipo-2)*b_dim1;
         iloc = (i+ipo-2)*b_dim1+jpo-2;
         for (unsigned int j=0 ; j<5 ; j++) {
-            //jloc = iloc+j+jpo-2; 
             Jx[iloc+j]  += Jx_p[i][j];
             Jy[iloc+j]  += Jy_p[i][j];
             Jz[iloc+j]  += crz_p * Wz[i][j];
@@ -562,7 +535,6 @@ void Projector2D2Order::operator() (double* rho, Particles &particles, unsigned 
     // Variable declaration & initialization
     // -------------------------------------
 
-    //int iloc, jloc;
     int iloc;
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
@@ -613,11 +585,8 @@ void Projector2D2Order::operator() (double* rho, Particles &particles, unsigned 
     jpo -= j_domain_begin;
 
     for (unsigned int i=0 ; i<5 ; i++) {
-        //iloc = (i+ipo-2)*b_dim1;
         iloc = (i+ipo-2)*b_dim1+jpo-2;
-        //rho[iloc] += charge_weight * Sx1[i]*Sy1[0];
         for (unsigned int j=0 ; j<5 ; j++) {
-            //jloc = iloc+j+jpo-2; 
             rho[iloc+j] += charge_weight * Sx1[i]*Sy1[j];
         }
 

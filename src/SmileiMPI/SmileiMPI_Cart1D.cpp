@@ -581,7 +581,7 @@ void SmileiMPI_Cart1D::exchangeField( Field* field )
     
     
 } // END exchangeField
-void SmileiMPI_Cart1D::exchangeField_movewin( Field* field, int clrw )
+void SmileiMPI_Cart1D::exchangeField_movewin( Field* field, unsigned int clrw )
 {
     std::vector<unsigned int> n_elem   = field->dims_;
     std::vector<unsigned int> isDual = field->isDual_;

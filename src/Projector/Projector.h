@@ -36,7 +36,7 @@ public:
 
 
     //! Project local current densities if particles sorting activated in Species::dynamics
-    virtual void operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_dim0) = 0;
+    virtual void operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_lastdim) = 0;
 
     //! Project global current densities if Ionization in Species::dynamics,
     virtual void operator() (Field* Jx, Field* Jy, Field* Jz, Particles &particles, int ipart, LocalFields Jion) = 0;
