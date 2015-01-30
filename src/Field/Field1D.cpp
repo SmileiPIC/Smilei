@@ -129,3 +129,20 @@ void Field1D::shift_x(unsigned int delta)
 
 }
 
+double Field1D::computeNRJ(unsigned int shift, unsigned int istart[3][2], unsigned int bufsize[3][2]) {
+    double nrj(0.);
+
+    int idxlocalstart[1];
+    int idxlocalend[1];
+    for ( int i=0 ; i<1 ; i++ ) {
+	idxlocalstart[i] = istart[i][isDual_[i]];
+	idxlocalend[i]   = istart[i][isDual_[i]]+bufsize[i][isDual_[i]];
+    }
+    idxlocalend[0] = istart[0][isDual_[0]]+shift;
+
+    for ( int i=idxlocalstart[0] ; i<idxlocalend[0] ; i++ ) {
+	nrj += data_[i]*data_[i];
+    }
+    
+    return nrj;
+}

@@ -48,7 +48,7 @@ public:
     virtual void createTopology( PicParams& params ) {};
     //! Echanges particles of Species, list of particles comes frome Species::dynamics
     //! See child classes
-    virtual void exchangeParticles(Species* species, int ispec, PicParams& params, int tnum) {};
+    virtual void exchangeParticles(Species* species, int ispec, PicParams& params, int tnum, int iDim) {};
 
     //! Create MPI_Datatype to exchange/sum fields on ghost data
     //! See child classes
@@ -168,10 +168,12 @@ protected:
     //! Global MPI Communicator
     MPI_Comm SMILEI_COMM_WORLD;
 
-    //! Sort particles to exchange per direction (up to 3), per side (2), contains indexes
-    std::vector<int> buff_index_send[3][2];
-    //! buff_index_recv_sz : number of particles to recv per direction (up to 3), per side (2)
-    int buff_index_recv_sz[3][2];
+    //! Sort particles to exchange per side (2), contains indexes
+    //! Reinitialized per direction
+    std::vector<int> buff_index_send[2];
+    //! buff_index_recv_sz : number of particles to recv per side (2)
+    //! Reinitialized per direction
+    int buff_index_recv_sz[2];
 
     //! Size of ghost data (= 2 x oversize + 1 + 1 if dual direction), depend on :
     //!    - projection/interpolation order
