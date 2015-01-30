@@ -85,6 +85,7 @@ DensityProfile2D::DensityProfile2D(SpeciesStructure &params) : DensityProfile(pa
         }
         
     }
+
     
     // Harris density profile: used for reconnection
     // ---------------------------------------------
@@ -101,11 +102,34 @@ DensityProfile2D::DensityProfile2D(SpeciesStructure &params) : DensityProfile(pa
             ERROR("For the Harris density profile 3 length_params_y have to be defined");
         }
         
-    }//if species_geometry
+    }
+    
+    // Grating
+    // -------
+    // vacuum_length[0,1] : length of the vacuum region before the plasma in x & y directions (default is 0)
+    // double_params[0]   : phase of the cosine perturbation at the center of the grating
+    // length_params_x[0] : full length of the plasma in the x-direction
+    // length_params_x[1] : depth of the grating
+    // length_params_y[0] : full length of the plasma in the y-direction
+    // length_params_y[1] : period of the grating
+    else if (species_param.dens_profile.profile=="grating") {
+        
+        if (species_param.dens_profile.double_params.size()<1) {
+            species_param.dens_profile.double_params.resize(1);
+            species_param.dens_profile.double_params[0] = 0.0;
+            WARNING("For the Grating density profile phase double_params[0] put to zero");
+        }
+        if (   (species_param.dens_profile.length_params_x.size()<2)
+            || (species_param.dens_profile.length_params_y.size()<2) ) {
+            ERROR("For the Grating density profile at least 2 parameters length_params_x/y must be defined");
+        }
+        
+    }//if profile
     
 }
 
 double DensityProfile2D::operator() (vector<double> x_cell) {
+    
     double fx, fy;
     
     // Constant density profile
@@ -284,6 +308,35 @@ double DensityProfile2D::operator() (vector<double> x_cell) {
         double y1 = species_param.dens_profile.length_params_y[2];
         
         return 1.0 + 1.0/( nb * pow(cosh((x_cell[1]-y0)/L),2) ) + 1.0/( nb * pow(cosh((x_cell[1]-y1)/L),2) );
+        
+    }
+    
+    // Grating
+    // -------
+    // vacuum_length[0,1] : length of the vacuum region before the plasma in x & y directions (default is 0)
+    // double_params[0]   : phase of the cosine perturbation at the center of the grating
+    // length_params_x[0] : full length of the plasma in the x-direction
+    // length_params_x[1] : depth of the grating
+    // length_params_y[0] : full length of the plasma in the y-direction
+    // length_params_y[1] : period of the grating
+    else if (species_param.dens_profile.profile=="grating") {
+        
+        double x0    = species_param.dens_profile.vacuum_length[0];
+        double y0    = species_param.dens_profile.vacuum_length[1];
+        double Lx    = species_param.dens_profile.length_params_x[0];
+        double delta = species_param.dens_profile.length_params_x[1];
+        double Ly    = species_param.dens_profile.length_params_y[0];
+        double k     = 2.0*M_PI / species_param.dens_profile.length_params_y[1];
+        double phi   = species_param.dens_profile.double_params[0];
+        // position of the border
+        double xb = x0 + delta * cos( k*(x_cell[1]-(y0+Ly/2.0)) + phi );
+        
+        if (   (xb<x_cell[0]) && (x_cell[0]<x0+Lx)
+            && (y0<x_cell[1]) && (x_cell[1]<y0+Ly) ) {
+            return 1.0;
+        } else {
+            return 0.0;
+        }
         
     }
     
