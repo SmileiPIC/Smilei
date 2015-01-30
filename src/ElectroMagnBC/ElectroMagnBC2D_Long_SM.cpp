@@ -41,7 +41,7 @@ ElectroMagnBC2D_Long_SM::ElectroMagnBC2D_Long_SM( PicParams &params, LaserParams
     // -----------------------------------------------------
 
     // West boundary
-    double theta  = 0.0; //! \todo Introduce in parameters for Boundary cond., e.g., params.EMBoundary->theta_W
+    double theta  = 0.0*conv_deg2rad; //0.0; //! \todo Introduce in parameters for Boundary cond., e.g., params.EMBoundary->theta_W
     double factor = 1.0 / (cos(theta) + dt_ov_dx);
     Alpha_SM_W    = 2.0                     * factor;
     Beta_SM_W     = - (cos(theta)-dt_ov_dx) * factor;
@@ -117,7 +117,7 @@ void ElectroMagnBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, Smi
                         byW += 0.0;
                     }
                     else {
-                        byW += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual)
+                        byW += laser_[ilaser]->a0_delta_y_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual)
                             *  laser_[ilaser]->transverse_profile2D(time_dual,yp);
                     }//isFocused or angle!=0
                     
@@ -147,7 +147,7 @@ void ElectroMagnBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, Smi
                         double theta   = laser_[ilaser]->laser_struct.angle * conv_deg2rad;
                         double zeta    = -xfoc*cos(theta) + (yd-yfoc)*sin(theta);
                         double rho     =  xfoc*sin(theta) + (yd-yfoc)*cos(theta);
-                        double tau     = time_dual - (yd-yfoc)*sin(theta);
+                        double tau     = time_dual - yd*sin(theta) - delay;
                         double bwaist  = 0.5/sqrt(log(2.0)) * laser_[ilaser]->laser_struct.profile_transv.double_params[0];
                         double z2ovLr2 = pow(zeta,2)/pow(bwaist,4);
                         double waist   = bwaist * sqrt( 1.0 + z2ovLr2 );
@@ -156,11 +156,11 @@ void ElectroMagnBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, Smi
                                curvRad = zeta* ( 1.0 + 1.0/z2ovLr2 );
                         double gouyPhs = -0.5 * atan( sqrt(z2ovLr2) );
                         double phi     = -0.5 * pow(rho,2)/curvRad + gouyPhs;
-                        bzW += laser_[ilaser]->laser_struct.a0 * cos(tau+phi) * laser_[ilaser]->time_profile(tau-delay)
+                        bzW += laser_[ilaser]->laser_struct.a0 * sin(tau+phi) * laser_[ilaser]->time_profile(tau)
                             *  laser_[ilaser]->transverse_profile2D(time_dual,rho/waist);
                     }
                     else {
-                        bzW += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual)
+                        bzW += laser_[ilaser]->a0_delta_z_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual)
                             *  laser_[ilaser]->transverse_profile2D(time_dual,yd);
                     }//isFocused or angle!=0
                 }
@@ -184,7 +184,7 @@ void ElectroMagnBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, Smi
             for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
                     // Incident field (west boundary)
                 if (laser_[ilaser]->laser_struct.boxSide == "east") {
-                    byE += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual) * laser_[ilaser]->transverse_profile2D(time_dual,yp);
+                    byE += laser_[ilaser]->a0_delta_y_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual) * laser_[ilaser]->transverse_profile2D(time_dual,yp);
                 }
             }//ilaser
 
@@ -203,7 +203,7 @@ void ElectroMagnBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, Smi
             for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
                 if (laser_[ilaser]->laser_struct.boxSide == "east") {
                     // Incident field (east boundary)
-                    bzE += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual) * laser_[ilaser]->transverse_profile2D(time_dual,yd);
+                    bzE += laser_[ilaser]->a0_delta_z_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual) * laser_[ilaser]->transverse_profile2D(time_dual,yd);
                 }
             }//ilaser
 

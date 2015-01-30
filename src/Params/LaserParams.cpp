@@ -83,12 +83,32 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
                 tmpLaser.profile_transv.int_params.resize(1);
                 tmpLaser.profile_transv.int_params[0] = 3;
             }
+            
             if ( !delayExists ) {
-                tmpLaser.delay = tmpLaser.profile_transv.int_params[0]*tmpLaser.profile_transv.double_params[0]
-                * abs(tan(tmpLaser.angle*M_PI/180.0));
+                double theta   = tmpLaser.angle * M_PI/180.0;
+                double xfoc    = tmpLaser.focus[0];
+                double yfoc    = tmpLaser.focus[1];
+                double ylas    = yfoc - tan(theta)*xfoc;
+                // estimating the effect of diffraction at the border
+                double bwaist  = 0.5/sqrt(log(2.0))*tmpLaser.profile_transv.double_params[0];
+                double zeta    = tmpLaser.focus[0]/cos(theta);       // here, this could be improved (only approximated)
+                double z2ovLr2 = pow(zeta,2)/pow(bwaist,4);
+                double waist   = bwaist * sqrt(1.0+z2ovLr2) * tmpLaser.profile_transv.int_params[0];
+                // computing the entering point of the laser & delay
+                if (theta<0) {
+                    double ylas_max = ylas + waist*sqrt(1.0+pow(tan(theta),2));
+                    if (ylas_max > params.sim_length[1]) WARNING("Possible problem (simulation box size) with laser " << n_laser);
+                    tmpLaser.delay = -ylas_max * sin(theta);
+                } else {
+                    double ylas_min = ylas - waist*sqrt(1.0+pow(tan(theta),2));
+                    if (ylas_min < 0.0) WARNING("Possible problem (simulation box size) with laser " << n_laser);
+                    tmpLaser.delay = -ylas_min * sin(theta);
+                }
+                // send a warning if delay is introduced
                 if (tmpLaser.delay!=0)
                     WARNING("Introduction of a time-delay: " << tmpLaser.delay/params.conv_fac << " (in input units) on laser " << n_laser);
             }
+            
             if ( ((tmpLaser.angle!=0) || (tmpLaser.isFocused)) && (tmpLaser.profile_transv.profile!="focused") ) {
                 WARNING("Laser "<<n_laser<<" transv_profile redefined as focused (Gaussian) and delta = "<<tmpLaser.delta<< " ignored");
                 tmpLaser.profile_transv.profile = "focused";
