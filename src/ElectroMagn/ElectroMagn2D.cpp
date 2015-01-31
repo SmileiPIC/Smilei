@@ -872,6 +872,9 @@ void ElectroMagn2D::computeTotalRhoJ()
 }//END computeTotalRhoJ
 
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Compute electromagnetic energy flows vectors on the border of the simulation box
+// ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn2D::computePoynting() {
 
     if (isWestern) {
