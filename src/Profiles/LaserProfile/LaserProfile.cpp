@@ -52,7 +52,7 @@ LaserProfile::LaserProfile( PicParams &params, LaserParams &laser_params, unsign
     }
 
     // SIN2 time-profile
-    // double_params[0]: rise/fall-time of the sine-square profile (default = sim_time/2)
+    // double_params[0]: rise/fall-time of the sine-square profile (default = sim_time/2), also corresponds to FWHM
     // double_params[1]: duration of constant plateau at maximum (default = 0)
     // double_params[2]: delay before the pulse is turned on (default = 0)
     else if (type_of_time_profile=="sin2") {
@@ -171,28 +171,30 @@ double LaserProfile::time_profile(double time_dual) {
 
 
     // SIN2 time-profile
-    // double_params[0]: rise/fall-time of the sine-square profile (default = sim_time/2)
+    // double_params[0]: rise/fall-time of the sine-square profile (default = sim_time/2), also corresponds to FWHM
     // double_params[1]: duration of constant plateau at maximum (default = 0)
     // double_params[2]: delay before the pulse is turned on (default = 0)
     else if (type_of_time_profile=="sin2") {
+        
+        double tp = double_params[1];
+        double t0 = double_params[2];
+        double T  = double_params[0];
 
         // delay before pulse
-        if (time_dual<=double_params[2]) {
+        if (time_dual<=t0) {
             return 0.0;
         }
         // sin2 rise
-        else if (time_dual<=double_params[2]+double_params[0]) {
-            
-            return pow( sin( pi_ov_2 * (time_dual-double_params[2]) / double_params[0] ) , 2 );
+        else if (time_dual<=t0+T) {
+            return abs( sin(pi_ov_2*(time_dual-t0)/T) );
         }
         // plateau
-        else if (time_dual<=double_params[2]+double_params[0]+double_params[1]) {
+        else if (time_dual<=t0+T+tp) {
             return 1.0;
         }
         // sin2 fall
-        else if (time_dual<=double_params[2]+double_params[0]+double_params[1]+double_params[0]) {
-            return pow( cos(pi_ov_2 * (time_dual-(double_params[2]+double_params[0]+double_params[1]))
-                            / double_params[0] ) , 2 );
+        else if (time_dual<=t0+T+tp+T) {
+            return abs( cos(pi_ov_2*(time_dual-(t0+T+tp))/T) );
         }
         // after the pulse
         else {
@@ -264,7 +266,8 @@ double LaserProfile::transverse_profile2D(double time_dual, double y) {
     }
     
     // GAUSSIAN PROFILE with ARBITRARY INCIDENCE ANGLE & FOCUSING
-    // a cut is defined here according to the integer parameter int_params_transv[0] (which is by default equal to 4)
+    // double_params_transv[0] : FWHM in intensity at the focal spot (beam waist)
+    // a cut is defined here according to the integer parameter int_params_transv[0] (default equal to 4)
     else if (type_of_transv_profile=="focused") {
         double cut=int_params_transv[0];
         if ( (y>=-cut)&&(y<=cut) ) {
