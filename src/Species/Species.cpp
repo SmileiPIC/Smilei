@@ -67,7 +67,7 @@ min_loc(smpi->getDomainLocalMin(0))
 	
     // Width of clusters:
     if (params.n_space[0]%clrw != 0)
-        ERROR("clrw should divide n_space[0]");
+        ERROR("clrw should divide n_space[0] = " << params.n_space[0] );
     
     // Arrays of the min and max indices of the particle bins
     bmin.resize(params.n_space[0]/clrw);
@@ -144,9 +144,12 @@ min_loc(smpi->getDomainLocalMin(0))
 #endif
     }
     indexes_of_particles_to_exchange_per_thd.resize(nthds);
-	
     
-    
+    //ener_tot = 0.;
+    nrj_bc_lost = 0.;
+    nrj_mw_lost = 0.;
+    nrj_new_particles = 0.;
+
 }//END Species creator
 
 
@@ -355,11 +358,18 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     unsigned int nParticles = getNbrOfParticles();
     // Reset list of particles to exchange
     int tid(0);
+    std::vector<double> nrj_lost_per_thd(1, 0.);
 #ifdef _OMP
     tid = omp_get_thread_num();
+    int nthds = omp_get_num_threads();
+    nrj_lost_per_thd.resize(nthds, 0.);
 #endif
     clearExchList(tid);
     	
+    //ener_tot  = 0.;
+    //ener_lost = 0.;
+    double ener_iPart(0.);
+    //bool contribute(true);
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
@@ -402,8 +412,9 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 // Boundary Condition may be physical or due to domain decomposition
                 // apply returns 0 if iPart is no more in the domain local
                 //	if omp, create a list per thread
-                if ( !partBoundCond->apply( particles, iPart ) ) {
+                if ( !partBoundCond->apply( particles, iPart, ener_iPart ) ) {
                     addPartInExchList( tid, iPart );
+		    nrj_lost_per_thd[tid] += ener_iPart;
                 }
                 
                 if (ndim <= 2) {
@@ -474,6 +485,9 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             
         }// ibin
         free(b_Jx);
+
+	for (int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
+	    nrj_bc_lost += nrj_lost_per_thd[tid];
         
         if (Ionize && electron_species) {
             for (unsigned int i=0; i < (unsigned int)Ionize->new_electrons.size(); i++) {
@@ -606,9 +620,12 @@ void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi, PicParams& par
     // Send particles of first bin on process rank-1
     // If no rank-1 -> particles deleted
     clearExchList(0);
-    for (int ibin = 0 ; ibin < 1 ; ibin++)
-        for (int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ )
+
+    for (unsigned int ibin = 0 ; ibin < 1 ; ibin++)
+        for (unsigned int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
             addPartInExchList( 0, iPart );
+	    nrj_mw_lost += particles.weight(iPart)*(particles.lor_fac(iPart)-1.0);
+	}
     
     // bin 0 empty
     // Shifts all the bins by 1. 
@@ -619,8 +636,9 @@ void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi, PicParams& par
     bmin.push_back( bmax[bmax.size()-1] );
     bmax.push_back( bmax[bmax.size()-1] );
     bmin[0] = 0;
-    
-    smpi->exchangeParticles( this, speciesNumber,params, 0 );
+
+    int iDim(0);    
+    smpi->exchangeParticles( this, speciesNumber,params, 0, iDim );
     
     // Create new particles
     if (smpi->isEastern() ) {
@@ -815,7 +833,9 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
         for (int i=0; i<(int)ndim; i++) {
             particles.position_old(i,iPart) -= particles.momentum(i,iPart)/particles.lor_fac(iPart) * params.timestep;
         }
+	nrj_new_particles += particles.weight(iPart)*(particles.lor_fac(iPart)-1.0);
     }
+
     return npart_effective;
     
 }

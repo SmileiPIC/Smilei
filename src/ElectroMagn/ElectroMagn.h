@@ -179,15 +179,34 @@ public:
     //! initialization of the external fields;
     void initExtFields(ExtFieldParams&);
     
-    //! Method used to impose external fields
+    //! Method used to impose external fields (apply to all Fields)
     void applyExternalFields(ExtFieldParams&, SmileiMPI*);
     
+    //! Method used to impose external fields (apply to a given Field)
     virtual void applyExternalField(Field*, ExtFieldProfile*, SmileiMPI*) = 0 ;
     
+    
+    double computeNRJ(unsigned int shift, SmileiMPI *smpi);
+    double getLostNrjMW() const {return nrj_mw_lost;}
+    
+    double getNewFieldsNRJ() const {return nrj_new_fields;}
+    
+    void reinitDiags() {
+        nrj_mw_lost = 0.;
+        nrj_new_fields = 0.;
+    }
+
+
 private:
     
     //! Vector of boundary-condition per side for the fields
     std::vector<ElectroMagnBC*> emBoundCond;
+
+    //! Accumulate nrj lost with moving window
+    double nrj_mw_lost;
+
+    //! Accumulate nrj added with new fields
+    double nrj_new_fields;
 
 };
 

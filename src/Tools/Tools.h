@@ -93,4 +93,9 @@ extern int debug_level;
 
 #endif
 
+class Tools {
+ public:
+  static void printMemFootPrint(std::string tag);
+};
+
 #endif

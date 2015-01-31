@@ -153,3 +153,24 @@ void Field3D::shift_x(unsigned int delta)
 
 }
 
+double Field3D::computeNRJ(unsigned int shift, unsigned int istart[3][2], unsigned int bufsize[3][2]) {
+    double nrj(0.);
+
+    int idxlocalstart[3];
+    int idxlocalend[3];
+    for ( int i=0 ; i<3 ; i++ ) {
+	idxlocalstart[i] = istart[i][isDual_[i]];
+	idxlocalend[i]   = istart[i][isDual_[i]]+bufsize[i][isDual_[i]];
+    }
+    idxlocalend[0] = istart[0][isDual_[0]]+shift;
+
+    for ( int i=idxlocalstart[0] ; i<idxlocalend[0] ; i++ ) {
+	for ( int j=idxlocalstart[1] ; j<idxlocalend[1] ; j++ ) {
+	    for ( int k=idxlocalstart[2] ; k<idxlocalend[2] ; k++ ) {
+		nrj += data_3D[i][j][k]*data_3D[i][j][k];
+	    }
+	}
+    }
+    
+    return nrj;
+}

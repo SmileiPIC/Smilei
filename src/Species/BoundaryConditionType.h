@@ -16,20 +16,24 @@
 //!         1 otherwise
 //!
 
-inline int refl_particle( Particles &particles, int ipart, int direction, double limit_pos ) {
+inline int refl_particle( Particles &particles, int ipart, int direction, double limit_pos, double &nrj_iPart ) {
+    // nrj computed during diagnostics
+    nrj_iPart = 0.;//particles.weight(ipart)*(particles.lor_fac(ipart)-1.0);
     particles.position(direction, ipart) = limit_pos - particles.position(direction, ipart);
     particles.momentum(direction, ipart) = -particles.momentum(direction, ipart);
     return 1;
 
 }
 
-inline int supp_particle( Particles &particles, int ipart, int direction, double limit_pos ) {
+inline int supp_particle( Particles &particles, int ipart, int direction, double limit_pos, double &nrj_iPart ) {
+    nrj_iPart = particles.weight(ipart)*(particles.lor_fac(ipart)-1.0);
     particles.position(direction, ipart) = particles.position_old(direction, ipart);
     particles.charge(ipart) = 0;
     return 0;
 }
 
-inline int stop_particle( Particles &particles, int ipart, int direction, double limit_pos ) {
+inline int stop_particle( Particles &particles, int ipart, int direction, double limit_pos, double &nrj_iPart ) {
+    nrj_iPart = particles.weight(ipart)*(particles.lor_fac(ipart)-1.0);
     particles.position(direction, ipart) = particles.position_old(direction, ipart);
     particles.momentum(0, ipart) = 0.;
     particles.momentum(1, ipart) = 0.;

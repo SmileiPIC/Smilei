@@ -120,26 +120,7 @@ int main (int argc, char* argv[])
     // -------------------------------------------
     // Declaration of the main objects & operators
     // -------------------------------------------
-    MESSAGE("----------------------------------------------");
-    MESSAGE("Creating EMfields/Interp/Proj/Diags");
-    MESSAGE("----------------------------------------------");
-    
-    // Initialize the electromagnetic fields and interpolation-projection operators
-    // according to the simulation geometry
-    // ----------------------------------------------------------------------------
 
-    // object containing the electromagnetic fields (virtual)
-    ElectroMagn* EMfields = ElectroMagnFactory::create(params, laser_params, smpi);
-    
-    // interpolation operator (virtual)
-    Interpolator* Interp = InterpolatorFactory::create(params, smpi);
-    
-    // projection operator (virtual)
-    Projector* Proj = ProjectorFactory::create(params, smpi);
-    
-    // Create diagnostics
-    Diagnostic *Diags =new Diagnostic(params,diag_params, smpi);    
-    
     // ---------------------------
     // Initialize Species & Fields
     // ---------------------------
@@ -161,6 +142,27 @@ int main (int argc, char* argv[])
     int start_moving(0);
     if (params.nspace_win_x)
         simWindow = new SimWindow(params);
+
+    MESSAGE("----------------------------------------------");
+    MESSAGE("Creating EMfields/Interp/Proj/Diags");
+    MESSAGE("----------------------------------------------");
+    
+    // Initialize the electromagnetic fields and interpolation-projection operators
+    // according to the simulation geometry
+    // ----------------------------------------------------------------------------
+
+    // object containing the electromagnetic fields (virtual)
+    ElectroMagn* EMfields = ElectroMagnFactory::create(params, laser_params, smpi);
+    
+    // interpolation operator (virtual)
+    Interpolator* Interp = InterpolatorFactory::create(params, smpi);
+    
+    // projection operator (virtual)
+    Projector* Proj = ProjectorFactory::create(params, smpi);
+    
+    // Create diagnostics
+    Diagnostic *Diags =new Diagnostic(params,diag_params, smpi);    
+    
     smpi->barrier();
     
     unsigned int stepStart=0, stepStop=params.n_time;
@@ -256,15 +258,21 @@ int main (int argc, char* argv[])
         timer[0].update();
         
         //double timElapsed=smpiData->time_seconds();
-		if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) )
+	if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) ) {
             MESSAGE(1,"t = "          << setw(7) << setprecision(2)   << time_dual/params.conv_fac
                     << "   it = "       << setw(log10(params.n_time)+1) << itime  << "/" << params.n_time
                     << "   sec = "      << setw(7) << setprecision(2)   << timer[0].getTime()
                     << "   E = "        << std::scientific << setprecision(4)<< Diags->getScalar("Etot")
+                    << "   Epart = "        << std::scientific << setprecision(4)<< Diags->getScalar("Eparticles")
+                    << "   Elost = "        << std::scientific << setprecision(4)<< Diags->getScalar("Elost")
                     << "   E_bal(%) = " << setw(6) << std::fixed << setprecision(2)   << 100.0*Diags->getScalar("Ebal_norm") );
+	    if (simWindow) 
+		MESSAGE(1, "\t\t MW Elost = " << std::scientific << setprecision(4)<< Diags->getScalar("Emw_lost")
+			<< "     MW Eadd  = " << std::scientific << setprecision(4)<< Diags->getScalar("Emw_part")
+			<< "     MW Elost (fields) = " << std::scientific << setprecision(4)<< Diags->getScalar("Emw_lost_fields")
+			<< setw(6) << std::fixed << setprecision(2) );
+	}
 
-        
-        
         // put density and currents to 0 + save former density
         // ---------------------------------------------------
         EMfields->restartRhoJ();
@@ -292,17 +300,17 @@ int main (int argc, char* argv[])
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 #pragma omp barrier
                 if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
-                        // Loop on dims to manage exchange in corners
-                        for (unsigned int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
-                            smpi->exchangeParticles(vecSpecies[ispec], ispec, params, tid);
+                    // Loop on dims to manage exchange in corners
+                    for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
+                        smpi->exchangeParticles(vecSpecies[ispec], ispec, params, tid, iDim);
 #pragma omp barrier
-                        vecSpecies[ispec]->sort_part();
+                    vecSpecies[ispec]->sort_part();
                 }
             }
         }
         timer[1].update();
         
-		//!\todo To simplify : sum global and per species densities
+	//!\todo To simplify : sum global and per species densities
         timer[4].restart();
         smpi->sumRhoJ( EMfields );
         for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
@@ -349,7 +357,7 @@ int main (int argc, char* argv[])
         if ( simWindow && simWindow->isMoving(time_dual) ) {
             start_moving++;
             if ((start_moving==1) && (smpi->isMaster()) ) {
-                MESSAGE(">>> Window starts moving");
+		MESSAGE(">>> Window starts moving");
             }
             simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi, params);
         }
