@@ -184,6 +184,10 @@ PicParams::PicParams(InputData &ifile) {
         ifile.extract("charge",tmpSpec.charge ,"species",0,n_species);
         
         ifile.extract("density",tmpSpec.density ,"species",0,n_species);
+        if ( (abs(tmpSpec.charge)!=0) && (abs(tmpSpec.charge)!=1)   ) {
+            tmpSpec.density /= (double)(abs(tmpSpec.charge));
+            WARNING("density for species " << n_species <<": changed to correspond to nb density");
+        }
         
         ifile.extract("mean_velocity",tmpSpec.mean_velocity ,"species",0,n_species);
         if (tmpSpec.mean_velocity.size()!=3) {
