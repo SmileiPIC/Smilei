@@ -99,7 +99,7 @@ stop_file_seen_since_last_check(false)
     H5Pclose(plist_id);
 	
     //
-    // Create property list for collective dataset write.
+    // Create property list for collective dataset write: for Fields.h5
     //
     write_plist = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);

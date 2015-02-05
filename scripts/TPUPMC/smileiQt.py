@@ -442,7 +442,7 @@ class smileiQtPlot(QWidget):
                 im.set_clim(data.min(),data.max())
                 
                 
-        self.title='Time: %.3f'%time
+        self.title.set_text('Time: %.3f'%time)
         self.canvas.draw()
         if self.ui.saveImages.isChecked():
             self.fig.savefig(self.dirName+'-%06d.png' % self.step)
