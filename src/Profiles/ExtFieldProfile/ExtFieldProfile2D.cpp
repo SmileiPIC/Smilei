@@ -27,6 +27,13 @@ ExtFieldProfile2D::ExtFieldProfile2D(ExtFieldStructure &extfield_struct) : ExtFi
         if (my_struct.length_params_y.size()<3)
             ERROR("three length_params_y must be defined for Harris profile" );
         
+    } else if (my_struct.profile == "charles") {
+        // Top-Hat profile (C. Ruyer simulations)
+        if (my_struct.double_params.size()<2)
+            ERROR("two double_params must be defined for Charles profile" );
+        if (my_struct.length_params_x.size()<2)
+            ERROR("three length_params_x must be defined for Charles profile" );
+        
     } else {
         ERROR("unknown or empty profile :" << my_struct.profile );
     }
@@ -58,6 +65,28 @@ double ExtFieldProfile2D::operator() (vector<double> x_cell) {
         double y1 = my_struct.length_params_y[2];
         
         return A0 * ( tanh((x_cell[1]-y0)/L) - tanh((x_cell[1]-y1)/L) - 1.0 );
+    }
+    
+    else if (my_struct.profile == "charles") {
+        // ---------------------------------------------------------------------------------
+        // Charles magnetic field profile for Liang simulations
+        // Top-hat profile :
+        // double_params[0]   = background Bfield amplitude
+        // double_params[1]   = maximum Bfield amplitude
+        // length_params_x[0] = length of the first plateau
+        // length_params_x[1] = length of the 2nd plateau (where the field is cst & maximum)
+        // ---------------------------------------------------------------------------------
+        double B0   = my_struct.double_params[0];
+        double Bmax = my_struct.double_params[1];
+        double x0 = my_struct.length_params_x[0];
+        double x1 = my_struct.length_params_x[1];
+        
+        if ( (x0<x_cell[0]) && (x_cell[0]<x1) ) {
+            return Bmax;
+        } else {
+            return B0;
+        }
+        
     }
     
     return 0;
