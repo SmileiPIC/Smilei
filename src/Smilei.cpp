@@ -164,9 +164,9 @@ int main (int argc, char* argv[])
     Diagnostic *Diags =new Diagnostic(params,diag_params, smpi);    
     
     smpi->barrier();
-    
+
     unsigned int stepStart=0, stepStop=params.n_time;
-    
+
     // reading from dumped file the restart values
     if (params.restart) {
         MESSAGE(1, "READING fields and particles for restart");
@@ -178,7 +178,7 @@ int main (int argc, char* argv[])
             simWindow->setOperators(vecSpecies, Interp, Proj, smpi);
             simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi , params);
         }
-	    
+
     } else {
         // Initialize the electromagnetic fields
         // -----------------------------------
@@ -216,7 +216,6 @@ int main (int argc, char* argv[])
         // temporary particle dump at time 0
         sio->writePlasma( vecSpecies, 0., smpi );
     }
-    
     
 
     // ------------------------------------------------------------------------
