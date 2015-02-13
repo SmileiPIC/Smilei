@@ -44,11 +44,11 @@ inline int stop_particle( Particles &particles, int ipart, int direction, double
 }
 
 inline int adrien_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart ) {
-    double val_min, val_max;
-    if ( ( particles.position(1,ipart)>= val_min) && ( particles.position(1,ipart)<= val_max) ) {
+    double val_min(params.vacuum_length[1]), val_max(params.vacuum_length[1]+params.dens_length_y[0]);
+    if ( ( particles.position(1,ipart) >= val_min ) && ( particles.position(1,ipart) <= val_max ) ) {
 	// nrj computed during diagnostics
 	particles.position(direction, ipart) = limit_pos - particles.position(direction, ipart);
-	//particles.momentum(X, ipart) = random,temperature
+	//particles.momentum(X, ipart) = random,params.temperature[]
     }
     else {
 	stop_particle( particles, ipart, direction, limit_pos, params, nrj_iPart );
