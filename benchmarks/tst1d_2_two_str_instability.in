@@ -83,7 +83,8 @@ species
 	charge = 1.0
 	density = 1.0e0
 	time_frozen = 10000.0
-	bc_part_type_long = none
+	bc_part_type_west = none
+	bc_part_type_east = none
 end
 
 species
@@ -96,7 +97,8 @@ species
 	charge = -1.0
 	density = 1.0
 	time_frozen = 0.0
-	bc_part_type_long = none
+	bc_part_type_west = none
+	bc_part_type_east = none
 end
 
 
