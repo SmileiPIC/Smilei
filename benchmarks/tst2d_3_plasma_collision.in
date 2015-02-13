@@ -75,8 +75,10 @@ species
 	dynamics_type = norm
 	time_frozen = 0.0
 	radiating = false
-	bc_part_type_long  = refl
-	bc_part_type_trans = none
+	bc_part_type_west  = refl
+	bc_part_type_east  = refl
+	bc_part_type_south = none
+	bc_part_type_north = none
 end
 
 species
@@ -96,8 +98,10 @@ species
 	dynamics_type = norm
 	time_frozen = 0.0
 	radiating = false
-	bc_part_type_long  = refl
-	bc_part_type_trans = none
+	bc_part_type_west  = refl
+	bc_part_type_east  = refl
+	bc_part_type_south = none
+	bc_part_type_north = none
 end
 
 species
@@ -117,8 +121,10 @@ species
 	dynamics_type = norm
 	time_frozen = 0.0
 	radiating = false
-	bc_part_type_long  = refl
-	bc_part_type_trans = none
+	bc_part_type_west  = refl
+	bc_part_type_east  = refl
+	bc_part_type_south = none
+	bc_part_type_north = none
 end
 
 species
@@ -138,8 +144,10 @@ species
 	dynamics_type = norm
 	time_frozen = 0.0
 	radiating = false
-	bc_part_type_long  = refl
-	bc_part_type_trans = none
+	bc_part_type_west  = refl
+	bc_part_type_east  = refl
+	bc_part_type_south = none
+	bc_part_type_north = none
 end
 
 
