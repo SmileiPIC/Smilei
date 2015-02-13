@@ -81,6 +81,9 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi )
     else if ( params.species_param[ispec].bc_part_type_west == "stop" ) {
 	if (smpi->isWestern()) bc_west = &stop_particle;
     }
+    else if ( params.species_param[ispec].bc_part_type_west == "adrien" ) {
+	if (smpi->isWestern()) bc_west = &adrien_particle;
+    }
     else if ( params.species_param[ispec].bc_part_type_west == "none" ) {
 	WARNING( "No Boundary Condition applied for species in west direction " << ispec );
     }
@@ -97,6 +100,9 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi )
     }
     else if ( params.species_param[ispec].bc_part_type_east == "stop" ) {
 	if (smpi->isEastern()) bc_east = &stop_particle;
+    }
+    else if ( params.species_param[ispec].bc_part_type_east == "adrien" ) {
+	if (smpi->isEastern()) bc_east = &adrien_particle;
     }
     else if ( params.species_param[ispec].bc_part_type_east == "none" ) {
 	WARNING( "No Boundary Condition applied for species in east direction " << ispec );
@@ -117,6 +123,9 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi )
 	else if ( params.species_param[ispec].bc_part_type_south == "stop" ) {
 	    if (smpi->isSouthern()) bc_south = &stop_particle;
 	}	
+	else if ( params.species_param[ispec].bc_part_type_south == "adrien" ) {
+	    if (smpi->isSouthern()) bc_south = &adrien_particle;
+	}	
 	else if ( params.species_param[ispec].bc_part_type_south == "none" ) {
 	    WARNING( "No Boundary Condition applied for species in south direction " << ispec );
 	}
@@ -133,6 +142,9 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi )
 	}
 	else if ( params.species_param[ispec].bc_part_type_north == "stop" ) {
 	    if (smpi->isNorthern()) bc_north = &stop_particle;
+	}
+	else if ( params.species_param[ispec].bc_part_type_north == "adrien" ) {
+	    if (smpi->isNorthern()) bc_north = &adrien_particle;
 	}
 	else if ( params.species_param[ispec].bc_part_type_north == "none" ) {
 	    WARNING( "No Boundary Condition applied for species in north direction " << ispec );
