@@ -53,7 +53,7 @@ ifeq ($(config),debug)
 	CFLAGS += -g -pg -Wall -D__DEBUG -O0# -shared-intel 
 
 else
-	CFLAGS += -O3
+	CFLAGS += -O3 -ip -ipo -xHost
 endif
 
 ifeq ($(openmp),gnu)
