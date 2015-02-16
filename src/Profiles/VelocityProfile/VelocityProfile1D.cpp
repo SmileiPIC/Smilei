@@ -76,11 +76,16 @@ double VelocityProfile1D::operator() (std::vector<double> x_cell) {
         double theta = prof_params.double_params[3];
         double x0    = prof_params.length_params_x[0];
         double L     = prof_params.length_params_x[1];
-        double sigma = pow(L/2,N)/log(2.0);
+        double sigma = pow(L/2.0,N)/log(2.0);
         double x     = x_cell[0]-x0;
-        double alpha = pow(-theta,m)/(1.0+theta) * Bmax/nmax * (double)(N)/sigma;
+        //std::cout << "pow(-theta,m)/(1.0+theta)" << pow(-theta,m)/(1.0+theta) << std::endl;
+        //std::cout << "Bmax/nmax " << Bmax << " " << nmax << " " << Bmax/nmax << std::endl;
+        //std::cout << "(double)(N)/sigma" << N << " " << sigma << " " << (double)(N)/sigma << std::endl;
+        //double alpha = pow(-theta,m)/(1.0+theta) * Bmax/nmax * (double)(N)/sigma;
+        double alpha = Bmax/nmax * (double)(N)/sigma;
+        //std::cout << "alpha " << alpha << std::endl;
         double v     = alpha * pow(x,N-1) * exp(-pow(x,N)/sigma) / (exp(-pow(x,N)/sigma)+n0/nmax);
-        
+        //std::cout << v << std::endl;
         if (abs(v)>1.0) ERROR("Velocity profile exceeding c");
         return v;
     }

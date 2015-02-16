@@ -54,7 +54,7 @@ double ExtFieldProfile1D::operator() (std::vector<double> x_cell) {
         double Bmax  = my_struct.double_params[1];
         double x0    = my_struct.length_params_x[0];
         double L     = my_struct.length_params_x[1];
-        double sigma = pow(L/2,N)/log(2.0);
+        double sigma = pow(L/2.0,N)/log(2.0);
         double x     = x_cell[0]-x0;
         
         return B0 + Bmax * exp(-pow(x,N)/sigma);

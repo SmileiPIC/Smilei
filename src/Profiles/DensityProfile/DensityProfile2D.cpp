@@ -85,6 +85,22 @@ DensityProfile2D::DensityProfile2D(SpeciesStructure &params) : DensityProfile(pa
         }
         
     }
+    
+    else if (species_param.dens_profile.profile=="preplasma") {
+        // Preplasma density profile (exponential pre/post plasma in x-direction, constant in y)
+        // -------------------------------------------------------------------------------------
+        // vacuum_length[0,1] : length of the vacuum region before the plasma in x & y directions, respectively
+        // species_length_x[0]: length of the preplasma
+        // species_length_x[1]: slope of the preplasma
+        // species_length_x[2]: length of the plateau
+        // species_length_x[3]: length of the postplasma
+        // species_length_x[4]: slope of the postplasma
+        // species_length_y[0]: length of the plasma in the y-direction
+        if (species_param.dens_profile.length_params_x.size()<5) {
+            ERROR("For the Preplasma density profile 5 length_params_x have to be defined");
+        }
+
+    }
 
     
     // Harris density profile: used for reconnection
@@ -292,6 +308,48 @@ double DensityProfile2D::operator() (vector<double> x_cell) {
         return fx*fy;
         
     }// gaussian
+    
+    // Preplasma density profile (exponential pre/post plasma in x-direction, constant in y)
+    // -------------------------------------------------------------------------------------
+    // vacuum_length[0,1] : length of the vacuum region before the plasma in x & y directions, respectively
+    // species_length_x[0]: length of the preplasma
+    // species_length_x[1]: slope of the preplasma
+    // species_length_x[2]: length of the plateau
+    // species_length_x[3]: length of the postplasma
+    // species_length_x[4]: slope of the postplasma
+    // species_length_y[0]: length of the plasma in the y-direction
+    if (species_param.dens_profile.profile=="preplasma") {
+        
+        double l0 = species_param.dens_profile.vacuum_length[0];
+        double lf = species_param.dens_profile.length_params_x[0];
+        double l1 = species_param.dens_profile.length_params_x[1];
+        double lp = species_param.dens_profile.length_params_x[2];
+        double lb = species_param.dens_profile.length_params_x[3];
+        double l2 = species_param.dens_profile.length_params_x[4];
+        
+        // x-direction
+        if ( (x_cell[0]>l0) && (x_cell[0]<l0+lf) ) {
+            fx = exp( (x_cell[0]-(l0+lf))/l1 );
+        } else if (x_cell[0]<l0+lf+lp) {
+            fx = 1.0;
+        } else if (x_cell[0]<l0+lf+lp+lb) {
+            fx = exp( (x_cell[0]-(l0+lf+lp))/l2 );
+        } else {
+            fx = 0.0;
+        }
+        
+        // y-direction
+        if (   (x_cell[1]>species_param.dens_profile.vacuum_length[1])
+            && (x_cell[1]<species_param.dens_profile.vacuum_length[1]+species_param.dens_profile.length_params_y[0]) ) {
+            fy = 1.0;
+        } else {
+            fy = 0.0;
+        }
+        
+        // x-y direction
+        return fx*fy;
+        
+    }// constant
 
     // Harris density profile: used for reconnection
     // ---------------------------------------------
