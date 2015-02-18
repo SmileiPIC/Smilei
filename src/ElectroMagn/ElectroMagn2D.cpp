@@ -527,27 +527,31 @@ void ElectroMagn2D::saveMagneticFields()
 #pragma omp for schedule(static)
     // Magnetic field Bx^(p,d)
     for (unsigned int i=0 ; i<nx_p ; i++) {
-        //memcpy(&((*Bx2D_m)(i,0)), &((*Bx2D)(i,0)),ny_d*sizeof(double) );
-        for (unsigned int j=0 ; j<ny_d ; j++) {
-            (*Bx2D_m)(i,j)=(*Bx2D)(i,j);
-        }
+        memcpy(&((*Bx2D_m)(i,0)), &((*Bx2D)(i,0)),ny_d*sizeof(double) );
+        //for (unsigned int j=0 ; j<ny_d ; j++) {
+        //    (*Bx2D_m)(i,j)=(*Bx2D)(i,j);
+        //}
     
     // Magnetic field By^(d,p)
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            (*By2D_m)(i,j)=(*By2D)(i,j);
-        }
+        memcpy(&((*By2D_m)(i,0)), &((*By2D)(i,0)),ny_p*sizeof(double) );
+        //for (unsigned int j=0 ; j<ny_p ; j++) {
+        //    (*By2D_m)(i,j)=(*By2D)(i,j);
+        //}
     
     // Magnetic field Bz^(d,d)
-        for (unsigned int j=0 ; j<ny_d ; j++) {
-            (*Bz2D_m)(i,j)=(*Bz2D)(i,j);
-        }
-    }// end for j
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            (*By2D_m)(nx_p,j)=(*By2D)(nx_p,j);
-        }
-        for (unsigned int j=0 ; j<ny_d ; j++) {
-            (*Bz2D_m)(nx_p,j)=(*Bz2D)(nx_p,j);
-        }
+        memcpy(&((*Bz2D_m)(i,0)), &((*Bz2D)(i,0)),ny_d*sizeof(double) );
+        //for (unsigned int j=0 ; j<ny_d ; j++) {
+        //    (*Bz2D_m)(i,j)=(*Bz2D)(i,j);
+        //}
+    }// end for i
+        memcpy(&((*By2D_m)(nx_p,0)), &((*By2D)(nx_p,0)),ny_p*sizeof(double) );
+        //for (unsigned int j=0 ; j<ny_p ; j++) {
+        //    (*By2D_m)(nx_p,j)=(*By2D)(nx_p,j);
+        //}
+        memcpy(&((*Bz2D_m)(nx_p,0)), &((*Bz2D)(nx_p,0)),ny_d*sizeof(double) );
+        //for (unsigned int j=0 ; j<ny_d ; j++) {
+        //    (*Bz2D_m)(nx_p,j)=(*Bz2D)(nx_p,j);
+        //}
     
 }//END saveMagneticFields
 
