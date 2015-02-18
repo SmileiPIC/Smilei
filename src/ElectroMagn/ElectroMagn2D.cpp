@@ -953,52 +953,62 @@ void ElectroMagn2D::computeTotalRhoJs( unsigned int clrw)
 }//END computeTotalRhoJs
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Gather the total density and currents for species on a single array instead of twin arrays.
+// Synchronize patches ghost nodes
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn2D::sumtwins()
+void ElectroMagn2D::sumtwins(unsigned int clrw)
 {
-    // -----------------------------------
-    // Species currents and charge density
-    // -----------------------------------
-    for (unsigned int ispec=0; ispec<n_species; ispec++) {
-        Field2D* Jx2D_s  = static_cast<Field2D*>(Jx_s[ispec]);
-        Field2D* Jy2D_s  = static_cast<Field2D*>(Jy_s[ispec]);
-        Field2D* Jz2D_s  = static_cast<Field2D*>(Jz_s[ispec]);
-        Field2D* rho2D_s = static_cast<Field2D*>(rho_s[ispec]);
-        Field2D* Jx2D_s2  = static_cast<Field2D*>(Jx_s[n_species+ispec]);
-        Field2D* Jy2D_s2  = static_cast<Field2D*>(Jy_s[n_species+ispec]);
-        Field2D* Jz2D_s2  = static_cast<Field2D*>(Jz_s[n_species+ispec]);
-        Field2D* rho2D_s2 = static_cast<Field2D*>(rho_s[n_species+ispec]);
-        
-        // Charge density rho^(p,p) to 0
-        for (unsigned int i=0 ; i<nx_p ; i++) {
-            for (unsigned int j=0 ; j<ny_p ; j++) {
-                (*rho2D_s)(i,j) += (*rho2D_s2)(i,j);
-            }
-        }
-        
-        // Current Jx^(d,p) to 0
-        for (unsigned int i=0 ; i<nx_d ; i++) {
-            for (unsigned int j=0 ; j<ny_p ; j++) {
-                (*Jx2D_s)(i,j) += (*Jx2D_s2)(i,j);
-            }
-        }
-        
-        // Current Jy^(p,d) to 0
-        for (unsigned int i=0 ; i<nx_p ; i++) {
-            for (unsigned int j=0 ; j<ny_d ; j++) {
-                (*Jy2D_s)(i,j) += (*Jy2D_s2)(i,j);
-            }
-        }
-        
-        // Current Jz^(p,p) to 0
-        for (unsigned int i=0 ; i<nx_p ; i++) {
-            for (unsigned int j=0 ; j<ny_p ; j++) {
-                (*Jz2D_s)(i,j) += (*Jz2D_s2)(i,j);
-            }
-        }
-        
-    }//END loop on species ispec
+    #pragma omp for schedule(static) nowait
+    for (unsigned int ibin=1 ; ibin < nbin ; ibin++){
+       for (unsigned int i = 0; i < (oversize[0]+1)*ny_p ; i++) {
+           //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
+           *(nrho_s[0][ibin-1]+ clrw*ny_p +   i)  += *(nrho_s[0][ibin]+ i);
+           *(nJx_s[0][ibin-1] +  clrw*ny_p +  i)  += *(nJx_s[0][ibin]+ i);
+           *(nJy_s[0][ibin-1] +  clrw*ny_p +  i)  += *(nJy_s[0][ibin]+ i);
+           *(nJz_s[0][ibin-1] +  clrw*ny_p +  i)  += *(nJz_s[0][ibin]+ i);
+       } 
+    }
+    #pragma omp for schedule(static)
+    for (unsigned int ibin=0 ; ibin < nbin-1 ; ibin++){
+       for (unsigned int i = 0; i < (oversize[0]+1)*ny_p ; i++) {
+           //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
+           *(nrho_s[0][ibin+1] + oversize[0]*ny_p +  i)  += *(nrho_s[0][ibin] + (oversize[0]+clrw)*ny_p + i);
+           *(nJx_s[0][ibin+1]  + oversize[0]*ny_p +  i)  += *(nJx_s[0][ibin] +  (oversize[0]+clrw)*ny_p + i);
+           *(nJy_s[0][ibin+1]  + oversize[0]*ny_p +  i)  += *(nJy_s[0][ibin] +  (oversize[0]+clrw)*ny_p + i);
+           *(nJz_s[0][ibin+1]  + oversize[0]*ny_p +  i)  += *(nJz_s[0][ibin] +  (oversize[0]+clrw)*ny_p + i);
+       } 
+    }
+
+    //for (unsigned int ispec=0; ispec<n_species; ispec++) {
+    //    
+    //    // Charge density rho^(p,p) to 0
+    //    for (unsigned int i=0 ; i<nx_p ; i++) {
+    //        for (unsigned int j=0 ; j<ny_p ; j++) {
+    //            (*rho2D_s)(i,j) += (*rho2D_s2)(i,j);
+    //        }
+    //    }
+    //    
+    //    // Current Jx^(d,p) to 0
+    //    for (unsigned int i=0 ; i<nx_d ; i++) {
+    //        for (unsigned int j=0 ; j<ny_p ; j++) {
+    //            (*Jx2D_s)(i,j) += (*Jx2D_s2)(i,j);
+    //        }
+    //    }
+    //    
+    //    // Current Jy^(p,d) to 0
+    //    for (unsigned int i=0 ; i<nx_p ; i++) {
+    //        for (unsigned int j=0 ; j<ny_d ; j++) {
+    //            (*Jy2D_s)(i,j) += (*Jy2D_s2)(i,j);
+    //        }
+    //    }
+    //    
+    //    // Current Jz^(p,p) to 0
+    //    for (unsigned int i=0 ; i<nx_p ; i++) {
+    //        for (unsigned int j=0 ; j<ny_p ; j++) {
+    //            (*Jz2D_s)(i,j) += (*Jz2D_s2)(i,j);
+    //        }
+    //    }
+    //    
+    //}//END loop on species ispec
     
 }//END sumtwins
 

@@ -196,11 +196,13 @@ int main (int argc, char* argv[])
             vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow);
 	    for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
                 smpi->exchangeParticles(vecSpecies[ispec], ispec, params, 0, iDim);
+            
             vecSpecies[ispec]->sort_part();
             EMfields->restartRhoJs(ispec, true);
         }
-        smpi->sumRhoJ( EMfields );
-        EMfields->computeTotalRhoJs(params.clrw);
+        EMfields->sumtwins(params.clrw); //Synchronize patches
+        smpi->sumRhoJ( EMfields );        //Synchronize MPI domains
+        //EMfields->computeTotalRhoJs(params.clrw); //Compute currents per species. Useful only for diags.
         for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) smpi->sumRhoJs(EMfields, ispec, true);
 
         // Init electric field (Ex/1D, + Ey/2D)
@@ -316,7 +318,8 @@ int main (int argc, char* argv[])
         } //End omp parallel region
         timer[1].update();
         timer[4].restart();
-        smpi->sumRhoJ( EMfields );
+        EMfields->sumtwins(params.clrw); //Synchronize patches
+        smpi->sumRhoJ( EMfields );        //Synchronize MPI domains
         timer[4].update();
         
         // solve Maxwell's equations

@@ -151,7 +151,7 @@ public:
     virtual void addToGlobalRho(int ispec, unsigned int clrw) = 0;
     virtual void computeTotalRhoJs(unsigned int clrw) = 0;
     //! Method used to gather species densities and currents on a single array
-    virtual void sumtwins() = 0;
+    virtual void sumtwins(unsigned int clrw) = 0;
 
     //! Method used to initialize the Maxwell solver
     virtual void solvePoisson(SmileiMPI* smpi) = 0;

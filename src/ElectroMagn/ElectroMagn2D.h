@@ -43,7 +43,7 @@ public:
     void addToGlobalRho(int ispec, unsigned int clrw);
     void computeTotalRhoJs(unsigned int clrw);
     //! Method used to gather species densities and currents on a single array
-    void sumtwins();
+    void sumtwins(unsigned int clrw);
 
     //! \todo Create properties the laser time-profile (MG & TV)
 

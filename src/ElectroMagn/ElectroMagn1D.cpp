@@ -679,34 +679,31 @@ void ElectroMagn1D::computeTotalRhoJs(unsigned int clrw)
 // ---------------------------------------------------------------------------------------------------------------------
 // Gather the total density and currents for species on a single array instead of twin arrays.
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn1D::sumtwins()
+void ElectroMagn1D::sumtwins(unsigned int clrw)
 {
-    // -----------------------------------
-    // Species currents and charge density
-    // -----------------------------------
-    for (unsigned int ispec=0; ispec<n_species; ispec++) {
-        Field1D* Jx1D_s  = static_cast<Field1D*>(Jx_s[ispec]);
-        Field1D* Jy1D_s  = static_cast<Field1D*>(Jy_s[ispec]);
-        Field1D* Jz1D_s  = static_cast<Field1D*>(Jz_s[ispec]);
-        Field1D* rho1D_s = static_cast<Field1D*>(rho_s[ispec]);
-        Field1D* Jx1D_s2  = static_cast<Field1D*>(Jx_s[n_species+ispec]);
-        Field1D* Jy1D_s2  = static_cast<Field1D*>(Jy_s[n_species+ispec]);
-        Field1D* Jz1D_s2  = static_cast<Field1D*>(Jz_s[n_species+ispec]);
-        Field1D* rho1D_s2 = static_cast<Field1D*>(rho_s[n_species+ispec]);
-        
-        // Charge density rho^(p) 
-        for (unsigned int i=0 ; i<dimPrim[0] ; i++) {
-            (*rho1D_s)(i) += (*rho1D_s2)(i);
-            (*Jy1D_s)(i) += (*Jy1D_s2)(i);
-            (*Jz1D_s)(i) += (*Jz1D_s2)(i);
-        }
-        
-        // Current Jx^(d)
-        for (unsigned int i=0 ; i<dimDual[0] ; i++) {
-            (*Jx1D_s)(i) += (*Jx1D_s2)(i);
-        }
-        
-    }//END loop on species ispec
+    //for (unsigned int ispec=0; ispec<n_species; ispec++) {
+    //    Field1D* Jx1D_s  = static_cast<Field1D*>(Jx_s[ispec]);
+    //    Field1D* Jy1D_s  = static_cast<Field1D*>(Jy_s[ispec]);
+    //    Field1D* Jz1D_s  = static_cast<Field1D*>(Jz_s[ispec]);
+    //    Field1D* rho1D_s = static_cast<Field1D*>(rho_s[ispec]);
+    //    Field1D* Jx1D_s2  = static_cast<Field1D*>(Jx_s[n_species+ispec]);
+    //    Field1D* Jy1D_s2  = static_cast<Field1D*>(Jy_s[n_species+ispec]);
+    //    Field1D* Jz1D_s2  = static_cast<Field1D*>(Jz_s[n_species+ispec]);
+    //    Field1D* rho1D_s2 = static_cast<Field1D*>(rho_s[n_species+ispec]);
+    //    
+    //    // Charge density rho^(p) 
+    //    for (unsigned int i=0 ; i<dimPrim[0] ; i++) {
+    //        (*rho1D_s)(i) += (*rho1D_s2)(i);
+    //        (*Jy1D_s)(i) += (*Jy1D_s2)(i);
+    //        (*Jz1D_s)(i) += (*Jz1D_s2)(i);
+    //    }
+    //    
+    //    // Current Jx^(d)
+    //    for (unsigned int i=0 ; i<dimDual[0] ; i++) {
+    //        (*Jx1D_s)(i) += (*Jx1D_s2)(i);
+    //    }
+    //    
+    //}//END loop on species ispec
     
 }//END sumtwins
 
