@@ -86,8 +86,8 @@ oversize(params.oversize)
     }    
 
     emBoundCond = ElectroMagnBC_Factory::create(params, laser_params);
-
-    nbin = n_space[0]/params.clrw;
+    clrw = params.clrw;
+    nbin = n_space[0]/clrw;
 }
 
 

@@ -370,7 +370,6 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     // calculate the particle dynamics
     // -------------------------------
     if (time_dual>species_param.time_frozen) { // moving particle
-       //Allocate buffer for projection  *****************************
  
         #pragma omp for schedule(runtime)
         for (ibin = 0 ; ibin < bmin.size() ; ibin++) {

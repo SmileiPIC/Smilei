@@ -562,6 +562,7 @@ void ElectroMagn2D::saveMagneticFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn2D::solveMaxwellAmpere()
 {
+    unsigned int iloc;
     // Static-cast of the fields
     Field2D* Ex2D = static_cast<Field2D*>(Ex_);
     Field2D* Ey2D = static_cast<Field2D*>(Ey_);
@@ -574,33 +575,29 @@ void ElectroMagn2D::solveMaxwellAmpere()
     Field2D* Jz2D = static_cast<Field2D*>(Jz_);
     
     // Electric field Ex^(d,p)
-//#pragma omp parallel
-//{
 #pragma omp for schedule(static)
-    for (unsigned int i=0 ; i<nx_p ; i++) {
-//    for (unsigned int i=0 ; i<nx_d ; i++) {
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            (*Ex2D)(i,j) += -timestep*(*Jx2D)(i,j) + dt_ov_dy * ( (*Bz2D)(i,j+1) - (*Bz2D)(i,j) );
-        }// end for j
-//    }// end for i
-    
-    // Electric field Ey^(p,d)
-//#pragma omp for schedule(static)
-//    for (unsigned int i=0 ; i<nx_p ; i++) {
-        for (unsigned int j=0 ; j<ny_d ; j++) {
-            (*Ey2D)(i,j) += -timestep*(*Jy2D)(i,j) - dt_ov_dx * ( (*Bz2D)(i+1,j) - (*Bz2D)(i,j) );
-        }// end for j
-    //} // end for i
-    
-    // Electric field Ez^(p,p)
-    //for (unsigned int i=0 ;  i<nx_p ; i++) {
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            (*Ez2D)(i,j) += -timestep*(*Jz2D)(i,j)
-            +               dt_ov_dx * ( (*By2D)(i+1,j) - (*By2D)(i,j) )
-            -               dt_ov_dy * ( (*Bx2D)(i,j+1) - (*Bx2D)(i,j) );
-        } // end for j
-    }// end for i
-//} // end parallel
+    for (unsigned int ibin=0 ; ibin<nbin ; ibin++) {
+        for (unsigned int i=0 ; i<clrw ; i++) {
+            iloc = ibin*clrw+i;
+            for (unsigned int j=0 ; j<ny_p ; j++) {
+                //(*Ex2D)(i,j) += -timestep*(*Jx2D)(i,j) + dt_ov_dy * ( (*Bz2D)(i,j+1) - (*Bz2D)(i,j) );
+                (*Ex2D)(iloc,j) += -timestep*(*(nJx_s[0][ibin]+ i*ny_p+j)) + dt_ov_dy * ( (*Bz2D)(iloc,j+1) - (*Bz2D)(iloc,j) );
+            }// end for j
+            //(*rho2D)(iloc,j) += *(nrho_s[ispec][ibin]+ i*ny_p+j);
+        
+        // Electric field Ey^(p,d)
+            for (unsigned int j=0 ; j<ny_d ; j++) {
+                (*Ey2D)(i,j) += -timestep*(*Jy2D)(i,j) - dt_ov_dx * ( (*Bz2D)(i+1,j) - (*Bz2D)(i,j) );
+            }// end for j
+        
+        // Electric field Ez^(p,p)
+            for (unsigned int j=0 ; j<ny_p ; j++) {
+                (*Ez2D)(i,j) += -timestep*(*Jz2D)(i,j)
+                +               dt_ov_dx * ( (*By2D)(i+1,j) - (*By2D)(i,j) )
+                -               dt_ov_dy * ( (*Bx2D)(i,j+1) - (*Bx2D)(i,j) );
+            } // end for j
+        }// end for i
+    }
 #pragma omp single
 {
         for (unsigned int j=0 ; j<ny_p ; j++) {
@@ -996,9 +993,13 @@ void ElectroMagn2D::sumtwins(unsigned int clrw)
        for (unsigned int i = 0; i < (oversize[0]+1)*ny_p ; i++) {
            //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
            *(nrho_s[0][ibin-1]+ clrw*ny_p +   i)  += *(nrho_s[0][ibin]+ i);
-           *(nJx_s[0][ibin-1] +  clrw*ny_p +  i)  += *(nJx_s[0][ibin]+ i);
-           *(nJy_s[0][ibin-1] +  clrw*ny_p +  i)  += *(nJy_s[0][ibin]+ i);
-           *(nJz_s[0][ibin-1] +  clrw*ny_p +  i)  += *(nJz_s[0][ibin]+ i);
+           *(nrho_s[0][ibin]+ i) =   *(nrho_s[0][ibin-1]+ clrw*ny_p +   i);
+           *(nJx_s[0][ibin-1] +  clrw*ny_p +  i)  +=  *(nJx_s[0][ibin]+ i);
+           *(nJx_s[0][ibin]+ i)  =  *(nJx_s[0][ibin-1] +  clrw*ny_p +  i) ;
+           *(nJy_s[0][ibin-1] +  clrw*ny_p +  i)  +=  *(nJy_s[0][ibin]+ i);
+           *(nJy_s[0][ibin]+ i)  =  *(nJy_s[0][ibin-1] +  clrw*ny_p +  i) ;
+           *(nJz_s[0][ibin-1] +  clrw*ny_p +  i)  +=  *(nJz_s[0][ibin]+ i);
+           *(nJz_s[0][ibin]+ i)  =  *(nJz_s[0][ibin-1] +  clrw*ny_p +  i) ;
        } 
     }
     #pragma omp for schedule(static)
@@ -1006,9 +1007,13 @@ void ElectroMagn2D::sumtwins(unsigned int clrw)
        for (unsigned int i = 0; i < (oversize[0]+1)*ny_p ; i++) {
            //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
            *(nrho_s[0][ibin+1] + oversize[0]*ny_p +  i)  += *(nrho_s[0][ibin] + (oversize[0]+clrw)*ny_p + i);
+           *(nrho_s[0][ibin] + (oversize[0]+clrw)*ny_p + i)  =  *(nrho_s[0][ibin+1] + oversize[0]*ny_p +  i);
            *(nJx_s[0][ibin+1]  + oversize[0]*ny_p +  i)  += *(nJx_s[0][ibin] +  (oversize[0]+clrw)*ny_p + i);
+           *(nJx_s[0][ibin] +  (oversize[0]+clrw)*ny_p + i)  =  *(nJx_s[0][ibin+1]  + oversize[0]*ny_p +  i);
            *(nJy_s[0][ibin+1]  + oversize[0]*ny_p +  i)  += *(nJy_s[0][ibin] +  (oversize[0]+clrw)*ny_p + i);
+           *(nJy_s[0][ibin] +  (oversize[0]+clrw)*ny_p + i)  =  *(nJy_s[0][ibin+1]  + oversize[0]*ny_p +  i);
            *(nJz_s[0][ibin+1]  + oversize[0]*ny_p +  i)  += *(nJz_s[0][ibin] +  (oversize[0]+clrw)*ny_p + i);
+           *(nJz_s[0][ibin] +  (oversize[0]+clrw)*ny_p + i)  =  *(nJz_s[0][ibin+1]  + oversize[0]*ny_p +  i);
        } 
     }
 

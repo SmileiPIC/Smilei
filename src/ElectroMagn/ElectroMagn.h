@@ -106,6 +106,8 @@ public:
     double ***nJx_s, ***nJy_s, ***nJz_s, ***nrho_s;
     //! Number of bins
     unsigned int nbin;
+    //! Cluster width
+    unsigned int clrw;
 
     //! nDim_field (from params)
     const unsigned int nDim_field;
