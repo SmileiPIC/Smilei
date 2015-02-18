@@ -469,20 +469,23 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     }
 
     //Do not compute useless weights.
+    double tmp, tmp2, tmp3;
     for (unsigned int i=0 ; i<4 ; i++) {
+        tmp  = Sx0[i] + 0.5*DSx[i];
+        tmp2 = 0.5*Sx1[i] + Sx0[i];
+        tmp3 = 0.5*Sx0[i] + Sx1[i];
         for (unsigned int j=0 ; j<4 ; j++) {
             Wx[i][j] = DSx[i] * (Sy0[j] + 0.5*DSy[j]);
-            Wy[i][j] = DSy[j] * (Sx0[i] + 0.5*DSx[i]);
-            Wz[i][j] = one_third * ( Sx1[i] * (0.5*Sy0[j]+Sy1[j]) + Sx0[i] * (Sy0[j]+0.5*Sy1[j]) );
+            Wy[i][j] = DSy[j] * tmp;
+            Wz[i][j] = one_third * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
         }
-        Wx[i][4] = DSx[i] * (Sy0[4] + 0.5*DSy[4]);
-        Wz[i][4] = one_third * ( Sx1[i] * (0.5*Sy0[4]+Sy1[4]) + Sx0[i] * (Sy0[4]+0.5*Sy1[4]) );
+        Wx[i][4] = DSx[i] * (0.5*Sy1[4]);
+        Wz[i][4] =  one_third * ( Sy1[4]*tmp3 ); 
     }
     for (unsigned int j=0 ; j<4 ; j++) {
-        Wy[4][j] = DSy[j] * (Sx0[4] + 0.5*DSx[4]);
-        Wz[4][j] = one_third * ( Sx1[4] * (0.5*Sy0[j]+Sy1[j]) + Sx0[4] * (Sy0[j]+0.5*Sy1[j]) );
+        Wy[4][j] = DSy[j] * (0.5*Sx1[4]);
+        Wz[4][j] = one_third * ( Sx1[4] * (0.5*Sy0[j]+Sy1[j]) );
     }
-
 
     // ------------------------------------------------
     // Local current created by the particle
