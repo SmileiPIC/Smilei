@@ -225,12 +225,17 @@ PicParams::PicParams(InputData &ifile) {
             tmpSpec.radiating=true;
         }
         
-        if (!ifile.extract("bc_part_type_long",tmpSpec.bc_part_type_long,"species",0,n_species) )
-            ERROR("bc_part_type_long not defined for species " << n_species );
-        
-        if (nDim_particle>1)
-            if (!ifile.extract("bc_part_type_trans ",tmpSpec.bc_part_type_trans,"species",0,n_species) )
-                ERROR("bc_part_type_trans not defined for species " << n_species );
+        if (!ifile.extract("bc_part_type_west",tmpSpec.bc_part_type_west,"species",0,n_species) )
+            ERROR("bc_part_type_west not defined for species " << n_species );
+	if (!ifile.extract("bc_part_type_east",tmpSpec.bc_part_type_east,"species",0,n_species) )
+            ERROR("bc_part_type_east not defined for species " << n_species );
+
+        if (nDim_particle>1) {
+            if (!ifile.extract("bc_part_type_south ",tmpSpec.bc_part_type_south,"species",0,n_species) )
+                ERROR("bc_part_type_south not defined for species " << n_species );
+            if (!ifile.extract("bc_part_type_north ",tmpSpec.bc_part_type_north,"species",0,n_species) )
+                ERROR("bc_part_type_north not defined for species " << n_species );
+	}
         
         tmpSpec.ionization_model = "none"; // default value
         ifile.extract("ionization_model", tmpSpec.ionization_model, "species",0,n_species);
