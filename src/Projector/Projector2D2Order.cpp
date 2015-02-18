@@ -418,7 +418,7 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     double delta, delta2;
     double Sx0[5]={}, Sx1[5]={}, Sy0[5]={}, Sy1[5]={}, DSx[5]={}, DSy[5]={}; // arrays used for the Esirkepov projection method
     double Wx[4][5]={}, Wy[5][4]={}, Wz[5][5]={};                   // idem
-    double Jx_p[5][5]={}, Jy_p[5][5]={};                         // idem
+    double Jx_p[5][5]={};//, Jy_p[5][5]={};                         // idem
 
     // --------------------------------------------------------
     // Locate particles & Calculate Esirkepov coef. S, DS and W
@@ -496,11 +496,11 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
             Jx_p[i][j] = Jx_p[i-1][j] - crx_p * Wx[i-1][j];
         }
     }
-    for (unsigned int i=0 ; i<5 ; i++) {
+    /*for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=1 ; j<5 ; j++) {
             Jy_p[i][j] = Jy_p[i][j-1] - cry_p * Wy[i][j-1];
         }
-    }
+    }*/
 
 
     // ---------------------------
@@ -509,12 +509,39 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     ipo -= i_domain_begin + bin;
     jpo -= j_domain_begin;
 
-    for (unsigned int i=0 ; i<5 ; i++) {
+
+      // i =0
+      {
+        iloc = (ipo-2)*b_dim1;
+	jloc = iloc+jpo-2; 
+	Jz[jloc]  += crz_p * Wz[0][0];
+	rho[jloc] += charge_weight * Sx1[0]*Sy1[0];	
+	tmp = 0;
+        for (unsigned int j=1 ; j<5 ; j++) {
+            jloc = iloc+j+jpo-2; 
+            //Jy[jloc]  += Jy_p[i][j];
+	    tmp -= cry_p * Wy[0][j-1];
+            Jy[jloc]  += tmp;
+            Jz[jloc]  += crz_p * Wz[0][j];
+            rho[jloc] += charge_weight * Sx1[0]*Sy1[j];
+        }
+
+    }//i
+
+
+    for (unsigned int i=1 ; i<5 ; i++) {
         iloc = (i+ipo-2)*b_dim1;
-        for (unsigned int j=0 ; j<5 ; j++) {
+	jloc = iloc+jpo-2; 
+	Jx[jloc]  += Jx_p[i][0];
+	Jz[jloc]  += crz_p * Wz[i][0];
+	rho[jloc] += charge_weight * Sx1[i]*Sy1[0];	
+	tmp = 0;
+        for (unsigned int j=1 ; j<5 ; j++) {
             jloc = iloc+j+jpo-2; 
             Jx[jloc]  += Jx_p[i][j];
-            Jy[jloc]  += Jy_p[i][j];
+            //Jy[jloc]  += Jy_p[i][j];
+	    tmp -= cry_p * Wy[i][j-1];
+            Jy[jloc]  += tmp;
             Jz[jloc]  += crz_p * Wz[i][j];
             rho[jloc] += charge_weight * Sx1[i]*Sy1[j];
         }
