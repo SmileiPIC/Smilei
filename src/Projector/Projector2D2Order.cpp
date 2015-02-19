@@ -517,7 +517,7 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
         iloc = (i+ipo-2)*b_dim1+jpo-2;
         for (unsigned int j=0 ; j<5 ; j++) {
             Jx[iloc+j]  += Jx_p[i][j];
-            Jy[iloc+j]  += Jy_p[i][j];
+            Jy[iloc+i+ipo-2+j]  += Jy_p[i][j]; //Because size of Jy in Y is b_dim1+1.
             Jz[iloc+j]  += crz_p * Wz[i][j];
             rho[iloc+j] += charge_weight * Sx1[i]*Sy1[j];
         }

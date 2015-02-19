@@ -107,10 +107,10 @@ isSouthern(smpi->isSouthern())
     sizeprojbuffer = 2*oversize[0]+params.clrw + 1 ;
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
         for (unsigned int ibin=0; ibin<nbin; ibin++) {
-            nrho_s[ispec][ibin] = (double*)calloc((4*ny_p)*sizeprojbuffer, sizeof(double));
-            nJx_s[ispec][ibin] = nrho_s[ispec][ibin]+sizeprojbuffer*ny_p;
-            nJy_s[ispec][ibin] = nJx_s[ispec][ibin]+sizeprojbuffer*ny_p;
-            nJz_s[ispec][ibin] = nJy_s[ispec][ibin]+sizeprojbuffer*ny_p;
+            nrho_s[ispec][ibin] = (double*)calloc(sizeprojbuffer*ny_p, sizeof(double));
+            nJx_s[ispec][ibin] = (double*)calloc((sizeprojbuffer+1)*ny_p, sizeof(double));
+            nJy_s[ispec][ibin] = (double*)calloc(sizeprojbuffer*(ny_p+1), sizeof(double));
+            nJz_s[ispec][ibin] = (double*)calloc(sizeprojbuffer*ny_p, sizeof(double));
         }
     }
 
@@ -198,6 +198,9 @@ ElectroMagn2D::~ElectroMagn2D()
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
         for (unsigned int ibin=0; ibin<nbin; ibin++) {
             free(nrho_s[ispec][ibin] );
+            free(nJx_s[ispec][ibin] );
+            free(nJy_s[ispec][ibin] );
+            free(nJz_s[ispec][ibin] );
         }
     }
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
@@ -562,7 +565,7 @@ void ElectroMagn2D::saveMagneticFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn2D::solveMaxwellAmpere()
 {
-    unsigned int iloc;
+    unsigned int iloc,ibin;
     // Static-cast of the fields
     Field2D* Ex2D = static_cast<Field2D*>(Ex_);
     Field2D* Ey2D = static_cast<Field2D*>(Ey_);
@@ -570,40 +573,67 @@ void ElectroMagn2D::solveMaxwellAmpere()
     Field2D* Bx2D = static_cast<Field2D*>(Bx_);
     Field2D* By2D = static_cast<Field2D*>(By_);
     Field2D* Bz2D = static_cast<Field2D*>(Bz_);
-    Field2D* Jx2D = static_cast<Field2D*>(Jx_);
-    Field2D* Jy2D = static_cast<Field2D*>(Jy_);
-    Field2D* Jz2D = static_cast<Field2D*>(Jz_);
+    //Field2D* Jx2D = static_cast<Field2D*>(Jx_);
+    //Field2D* Jy2D = static_cast<Field2D*>(Jy_);
+    //Field2D* Jz2D = static_cast<Field2D*>(Jz_);
     
     // Electric field Ex^(d,p)
 #pragma omp for schedule(static)
-    for (unsigned int ibin=0 ; ibin<nbin ; ibin++) {
-        for (unsigned int i=0 ; i<clrw ; i++) {
+    for (ibin=0 ; ibin<nbin-1 ; ibin++) {
+        for (unsigned int i=0 ; i<clrw ; i++) { //Only a part of the cluster is used because fields are still shared between patches for the moment.
             iloc = ibin*clrw+i;
             for (unsigned int j=0 ; j<ny_p ; j++) {
                 //(*Ex2D)(i,j) += -timestep*(*Jx2D)(i,j) + dt_ov_dy * ( (*Bz2D)(i,j+1) - (*Bz2D)(i,j) );
                 (*Ex2D)(iloc,j) += -timestep*(*(nJx_s[0][ibin]+ i*ny_p+j)) + dt_ov_dy * ( (*Bz2D)(iloc,j+1) - (*Bz2D)(iloc,j) );
             }// end for j
-            //(*rho2D)(iloc,j) += *(nrho_s[ispec][ibin]+ i*ny_p+j);
         
         // Electric field Ey^(p,d)
             for (unsigned int j=0 ; j<ny_d ; j++) {
-                (*Ey2D)(i,j) += -timestep*(*Jy2D)(i,j) - dt_ov_dx * ( (*Bz2D)(i+1,j) - (*Bz2D)(i,j) );
+                //(*Ey2D)(i,j) += -timestep*(*Jy2D)(i,j) - dt_ov_dx * ( (*Bz2D)(i+1,j) - (*Bz2D)(i,j) );
+                (*Ey2D)(iloc,j) += -timestep*(*(nJy_s[0][ibin]+ i*ny_d+j)) - dt_ov_dx * ( (*Bz2D)(iloc+1,j) - (*Bz2D)(iloc,j) );
             }// end for j
         
         // Electric field Ez^(p,p)
             for (unsigned int j=0 ; j<ny_p ; j++) {
-                (*Ez2D)(i,j) += -timestep*(*Jz2D)(i,j)
-                +               dt_ov_dx * ( (*By2D)(i+1,j) - (*By2D)(i,j) )
-                -               dt_ov_dy * ( (*Bx2D)(i,j+1) - (*Bx2D)(i,j) );
+                //(*Ez2D)(i,j) += -timestep*(*Jz2D)(i,j)
+                //+               dt_ov_dx * ( (*By2D)(i+1,j) - (*By2D)(i,j) )
+                //-               dt_ov_dy * ( (*Bx2D)(i,j+1) - (*Bx2D)(i,j) );
+                (*Ez2D)(iloc,j) += -timestep*(*(nJz_s[0][ibin]+ i*ny_p+j))
+                +               dt_ov_dx * ( (*By2D)(iloc+1,j) - (*By2D)(iloc,j) )
+                -               dt_ov_dy * ( (*Bx2D)(iloc,j+1) - (*Bx2D)(iloc,j) );
             } // end for j
         }// end for i
-    }
-#pragma omp single
-{
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            (*Ex2D)(nx_p,j) += -timestep*(*Jx2D)(nx_p,j) + dt_ov_dy * ( (*Bz2D)(nx_p,j+1) - (*Bz2D)(nx_p,j) );
-        }
-}
+    } //end for ibin
+#pragma omp single //Last bin
+{       ibin=nbin-1;
+        for (unsigned int i=0 ; i<2*oversize[0]+clrw+2 ; i++) { //Last bin is completely treated. Including dual size along x for Ex and Jx.
+        iloc = ibin*clrw+i;
+            for (unsigned int j=0 ; j<ny_p ; j++) {
+                //(*Ex2D)(i,j) += -timestep*(*Jx2D)(i,j) + dt_ov_dy * ( (*Bz2D)(i,j+1) - (*Bz2D)(i,j) );
+                (*Ex2D)(iloc,j) += -timestep*(*(nJx_s[0][ibin]+ i*ny_p+j)) + dt_ov_dy * ( (*Bz2D)(iloc,j+1) - (*Bz2D)(iloc,j) );
+            }// end for j
+        } // end for i
+        
+        // Electric field Ey^(p,d)
+        for (unsigned int i=0 ; i<2*oversize[0]+clrw+1 ; i++) {
+        iloc = ibin*clrw+i;
+            for (unsigned int j=0 ; j<ny_d ; j++) {
+                //(*Ey2D)(i,j) += -timestep*(*Jy2D)(i,j) - dt_ov_dx * ( (*Bz2D)(i+1,j) - (*Bz2D)(i,j) );
+                (*Ey2D)(iloc,j) += -timestep*(*(nJy_s[0][ibin]+ i*ny_d+j)) - dt_ov_dx * ( (*Bz2D)(iloc+1,j) - (*Bz2D)(iloc,j) );
+            }// end for j
+        
+        // Electric field Ez^(p,p)
+            for (unsigned int j=0 ; j<ny_p ; j++) {
+                //(*Ez2D)(i,j) += -timestep*(*Jz2D)(i,j)
+                //+               dt_ov_dx * ( (*By2D)(i+1,j) - (*By2D)(i,j) )
+                //-               dt_ov_dy * ( (*Bx2D)(i,j+1) - (*Bx2D)(i,j) );
+                (*Ez2D)(iloc,j) += -timestep*(*(nJz_s[0][ibin]+ i*ny_p+j))
+                +               dt_ov_dx * ( (*By2D)(iloc+1,j) - (*By2D)(iloc,j) )
+                -               dt_ov_dy * ( (*Bx2D)(iloc,j+1) - (*Bx2D)(iloc,j) );
+            } // end for j
+        }// end for i
+
+} // End last bin single zone
 //    }
 }//END solveMaxwellAmpere
 
@@ -797,40 +827,49 @@ void ElectroMagn2D::restartRhoJ()
     // --------------------------
     // Total currents and density
     // --------------------------
-    
-    // static cast of the total currents and densities
-    Field2D* Jx2D    = static_cast<Field2D*>(Jx_);
-    Field2D* Jy2D    = static_cast<Field2D*>(Jy_);
-    Field2D* Jz2D    = static_cast<Field2D*>(Jz_);
-    Field2D* rho2D   = static_cast<Field2D*>(rho_);
-    
-    // Charge density rho^(p,p) to 0
-    for (unsigned int i=0 ; i<nx_p ; i++) {
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            (*rho2D)(i,j) = 0.0;
-        }
+    unsigned int size_proj_buffer = 2*oversize[0]+clrw + 1 ;
+   
+    for (unsigned int ibin=0; ibin < nbin ; ibin++){
+        memset( nrho_s[0][ibin], 0, size_proj_buffer*ny_p*sizeof(double));
+        memset( nJx_s[0][ibin], 0, (size_proj_buffer+1)*ny_p*sizeof(double));
+        memset( nJy_s[0][ibin], 0, size_proj_buffer*(ny_p+1)*sizeof(double));
+        memset( nJz_s[0][ibin], 0, size_proj_buffer*ny_p*sizeof(double));
     }
-    
-    // Current Jx^(d,p) to 0
-    for (unsigned int i=0 ; i<nx_d ; i++) {
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            (*Jx2D)(i,j) = 0.0;
-        }
-    }
-    
-    // Current Jy^(p,d) to 0
-    for (unsigned int i=0 ; i<nx_p ; i++) {
-        for (unsigned int j=0 ; j<ny_d ; j++) {
-            (*Jy2D)(i,j) = 0.0;
-        }
-    }
-    
-    // Current Jz^(p,p) to 0
-    for (unsigned int i=0 ; i<nx_p ; i++) {
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            (*Jz2D)(i,j) = 0.0;
-        }
-    }
+
+ 
+    //// static cast of the total currents and densities
+    //Field2D* Jx2D    = static_cast<Field2D*>(Jx_);
+    //Field2D* Jy2D    = static_cast<Field2D*>(Jy_);
+    //Field2D* Jz2D    = static_cast<Field2D*>(Jz_);
+    //Field2D* rho2D   = static_cast<Field2D*>(rho_);
+    //
+    //// Charge density rho^(p,p) to 0
+    //for (unsigned int i=0 ; i<nx_p ; i++) {
+    //    for (unsigned int j=0 ; j<ny_p ; j++) {
+    //        (*rho2D)(i,j) = 0.0;
+    //    }
+    //}
+    //
+    //// Current Jx^(d,p) to 0
+    //for (unsigned int i=0 ; i<nx_d ; i++) {
+    //    for (unsigned int j=0 ; j<ny_p ; j++) {
+    //        (*Jx2D)(i,j) = 0.0;
+    //    }
+    //}
+    //
+    //// Current Jy^(p,d) to 0
+    //for (unsigned int i=0 ; i<nx_p ; i++) {
+    //    for (unsigned int j=0 ; j<ny_d ; j++) {
+    //        (*Jy2D)(i,j) = 0.0;
+    //    }
+    //}
+    //
+    //// Current Jz^(p,p) to 0
+    //for (unsigned int i=0 ; i<nx_p ; i++) {
+    //    for (unsigned int j=0 ; j<ny_p ; j++) {
+    //        (*Jz2D)(i,j) = 0.0;
+    //    }
+    //}
 }//END restartRhoJ
     
     
@@ -1004,7 +1043,7 @@ void ElectroMagn2D::sumtwins(unsigned int clrw)
     }
     #pragma omp for schedule(static)
     for (unsigned int ibin=0 ; ibin < nbin-1 ; ibin++){
-       for (unsigned int i = 0; i < (oversize[0]+1)*ny_p ; i++) {
+       for (unsigned int i = 1*ny_p ; i < (oversize[0]+1)*ny_p ; i++) {
            //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
            *(nrho_s[0][ibin+1] + oversize[0]*ny_p +  i)  += *(nrho_s[0][ibin] + (oversize[0]+clrw)*ny_p + i);
            *(nrho_s[0][ibin] + (oversize[0]+clrw)*ny_p + i)  =  *(nrho_s[0][ibin+1] + oversize[0]*ny_p +  i);

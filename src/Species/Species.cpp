@@ -439,10 +439,12 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
         //        //Copy the corresponding bin buffer at the correct place in global array
         //           for (unsigned int i = 0; i < b_dim0*b_dim1 ; i++) {
         //               //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
-        //               (*EMfields->rho_)(ibin*clrw*f_dim1 + i) += *(EMfields->nrho_s[ispec][ibin]+ i);
-        //               (*EMfields->Jx_)(ibin*clrw*f_dim1 + i) += *(EMfields->nJx_s[ispec][ibin]+ i);
-        //               (*EMfields->Jy_)(ibin*clrw*(f_dim1+1) +i/f_dim1 + i) += *(EMfields->nJy_s[ispec][ibin]+ i);
-        //               (*EMfields->Jz_)(ibin*clrw*f_dim1 + i) += *(EMfields->nJz_s[ispec][ibin]+ i);
+        //               (*EMfields->rho_)(ibin*clrw*f_dim1 + i) += *(EMfields->nrho_s[0][ibin]+ i);
+        //               (*EMfields->Jx_)(ibin*clrw*f_dim1 + i) += *(EMfields->nJx_s[0][ibin]+ i);
+        //               (*EMfields->Jz_)(ibin*clrw*f_dim1 + i) += *(EMfields->nJz_s[0][ibin]+ i);
+        //           } 
+        //           for (unsigned int i = 0; i < b_dim0*(b_dim1+1) ; i++) {
+        //               (*EMfields->Jy_)(ibin*clrw*(f_dim1+1) + i) += *(EMfields->nJy_s[0][ibin]+ i);
         //           } 
         //        }
         //    }
