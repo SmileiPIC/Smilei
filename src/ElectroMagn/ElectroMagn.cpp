@@ -146,17 +146,25 @@ ElectroMagn::~ElectroMagn()
  }*/
 void ElectroMagn::solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, PicParams &params, SimWindow* simWindow)
 {
+#pragma omp parallel
+{
     // saving magnetic fields (to compute centered fields used in the particle pusher)
     saveMagneticFields();
 
     // Compute Ex_, Ey_, Ez_
     solveMaxwellAmpere();
+
+#pragma omp single
+{
     // Exchange Ex_, Ey_, Ez_
     smpi->exchangeE( this );
+}// end single
 
     // Compute Bx_, By_, Bz_
     solveMaxwellFaraday();
 
+#pragma omp single
+{
     // Update Bx_, By_, Bz_
     if ((!simWindow) || (!simWindow->isMoving(time_dual)) )
         if (emBoundCond[0]!=NULL) // <=> if !periodic
@@ -167,10 +175,11 @@ void ElectroMagn::solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, Pic
  
     // Exchange Bx_, By_, Bz_
     smpi->exchangeB( this );
+}// end single
 
     // Compute Bx_m, By_m, Bz_m
     centerMagneticFields();
-
+} // end parallel
 }
 
 
@@ -207,7 +216,7 @@ void ElectroMagn::dump()
 // ---------------------------------------------------------------------------------------------------------------------
 // Method used to initialize the total charge density
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn::initRhoJ(vector<Species*> vecSpecies, Projector* Proj)
+void ElectroMagn::initRhoJ(vector<Species*>& vecSpecies, Projector* Proj)
 {
     //! \todo Check that one uses only none-test particles
     // number of (none-test) used in the simulation
@@ -216,7 +225,7 @@ void ElectroMagn::initRhoJ(vector<Species*> vecSpecies, Projector* Proj)
     
     //loop on all (none-test) Species
     for (unsigned int iSpec=0 ; iSpec<n_species; iSpec++ ) {
-        Particles cuParticles = vecSpecies[iSpec]->getParticlesList();
+        Particles &cuParticles = vecSpecies[iSpec]->getParticlesList();
         unsigned int n_particles = vecSpecies[iSpec]->getNbrOfParticles();
         
         DEBUG(n_particles<<" species "<<iSpec);
