@@ -52,7 +52,7 @@ DEPS := $(SRCS:.cpp=.d)
 ifeq ($(config),debug)
 	CFLAGS += -g -pg -Wall -D__DEBUG -O0# -shared-intel 
 else
-	CFLAGS += -O3 -xHost -ipo
+	CFLAGS += -O3#  -xHost -ipo
 endif
 
 ifeq ($(openmp),gnu)
