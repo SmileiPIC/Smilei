@@ -328,12 +328,14 @@ double DensityProfile2D::operator() (vector<double> x_cell) {
         double l2 = species_param.dens_profile.length_params_x[4];
         
         // x-direction
-        if ( (x_cell[0]>l0) && (x_cell[0]<l0+lf) ) {
+        if (x_cell[0]<l0) {
+	    fx = 0.0;
+        } else if (x_cell[0]<l0+lf) {
             fx = exp( (x_cell[0]-(l0+lf))/l1 );
         } else if (x_cell[0]<l0+lf+lp) {
             fx = 1.0;
         } else if (x_cell[0]<l0+lf+lp+lb) {
-            fx = exp( (x_cell[0]-(l0+lf+lp))/l2 );
+            fx = exp( -(x_cell[0]-(l0+lf+lp))/l2 );
         } else {
             fx = 0.0;
         }
