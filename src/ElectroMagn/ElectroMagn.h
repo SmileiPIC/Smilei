@@ -139,7 +139,7 @@ public:
     virtual void restartRhoJs(int ispec, bool currents) = 0;
 
     //! Method used to initialize the total charge density
-    void initRhoJ(std::vector<Species*> vecSpecies, Projector* Proj);
+    void initRhoJ(std::vector<Species*>& vecSpecies, Projector* Proj);
 
     //! Method used to sum all species densities and currents to compute the total charge density and currents
     virtual void computeTotalRhoJ() = 0;
