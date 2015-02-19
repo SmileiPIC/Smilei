@@ -500,26 +500,29 @@ void ElectroMagn2D::saveMagneticFields()
     Field2D* By2D_m = static_cast<Field2D*>(By_m);
     Field2D* Bz2D_m = static_cast<Field2D*>(Bz_m);
     
+#pragma omp for schedule(runtime)
     // Magnetic field Bx^(p,d)
     for (unsigned int i=0 ; i<nx_p ; i++) {
         for (unsigned int j=0 ; j<ny_d ; j++) {
             (*Bx2D_m)(i,j)=(*Bx2D)(i,j);
         }
-    }
     
     // Magnetic field By^(d,p)
-    for (unsigned int i=0 ; i<nx_d ; i++) {
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*By2D_m)(i,j)=(*By2D)(i,j);
         }
-    }
     
     // Magnetic field Bz^(d,d)
-    for (unsigned int i=0 ; i<nx_d ; i++) {
         for (unsigned int j=0 ; j<ny_d ; j++) {
             (*Bz2D_m)(i,j)=(*Bz2D)(i,j);
         }
-    }
+    }// end for j
+        for (unsigned int j=0 ; j<ny_p ; j++) {
+            (*By2D_m)(nx_p,j)=(*By2D)(nx_p,j);
+        }
+        for (unsigned int j=0 ; j<ny_d ; j++) {
+            (*Bz2D_m)(nx_p,j)=(*Bz2D)(nx_p,j);
+        }
     
 }//END saveMagneticFields
 
@@ -542,28 +545,40 @@ void ElectroMagn2D::solveMaxwellAmpere()
     Field2D* Jz2D = static_cast<Field2D*>(Jz_);
     
     // Electric field Ex^(d,p)
-    for (unsigned int i=0 ; i<nx_d ; i++) {
+//#pragma omp parallel
+//{
+#pragma omp for schedule(runtime)
+    for (unsigned int i=0 ; i<nx_p ; i++) {
+//    for (unsigned int i=0 ; i<nx_d ; i++) {
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*Ex2D)(i,j) += -timestep*(*Jx2D)(i,j) + dt_ov_dy * ( (*Bz2D)(i,j+1) - (*Bz2D)(i,j) );
-        }
-    }
+        }// end for j
+//    }// end for i
     
     // Electric field Ey^(p,d)
-    for (unsigned int i=0 ; i<nx_p ; i++) {
+//#pragma omp for schedule(runtime)
+//    for (unsigned int i=0 ; i<nx_p ; i++) {
         for (unsigned int j=0 ; j<ny_d ; j++) {
             (*Ey2D)(i,j) += -timestep*(*Jy2D)(i,j) - dt_ov_dx * ( (*Bz2D)(i+1,j) - (*Bz2D)(i,j) );
-        }
-    }
+        }// end for j
+    //} // end for i
     
     // Electric field Ez^(p,p)
-    for (unsigned int i=0 ;  i<nx_p ; i++) {
+    //for (unsigned int i=0 ;  i<nx_p ; i++) {
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*Ez2D)(i,j) += -timestep*(*Jz2D)(i,j)
             +               dt_ov_dx * ( (*By2D)(i+1,j) - (*By2D)(i,j) )
             -               dt_ov_dy * ( (*Bx2D)(i,j+1) - (*Bx2D)(i,j) );
+        } // end for j
+    }// end for i
+//} // end parallel
+#pragma omp single
+{
+        for (unsigned int j=0 ; j<ny_p ; j++) {
+            (*Ex2D)(nx_p,j) += -timestep*(*Jx2D)(nx_p,j) + dt_ov_dy * ( (*Bz2D)(nx_p,j+1) - (*Bz2D)(nx_p,j) );
         }
-    }
-    
+}
+//    }
 }//END solveMaxwellAmpere
 
 
@@ -583,27 +598,40 @@ void ElectroMagn2D::solveMaxwellFaraday()
     Field2D* Bz2D = static_cast<Field2D*>(Bz_);
     
     // Magnetic field Bx^(p,d)
-    for (unsigned int i=0 ; i<nx_p;  i++) {
+//cout << "nx_p,nx_d-1" << nx_p << " " << nx_d-1 ; 
+//#pragma omp parallel
+//{
+//#pragma omp for schedule(runtime)
+#pragma omp single
+{
+        for (unsigned int j=1 ; j<ny_d-1 ; j++) {
+            (*Bx2D)(0,j) -= dt_ov_dy * ( (*Ez2D)(0,j) - (*Ez2D)(0,j-1) );
+        }
+}
+#pragma omp for schedule(runtime)
+//    for (unsigned int i=0 ; i<nx_p;  i++) {
+    for (unsigned int i=1 ; i<nx_d-1;  i++) {
         for (unsigned int j=1 ; j<ny_d-1 ; j++) {
             (*Bx2D)(i,j) -= dt_ov_dy * ( (*Ez2D)(i,j) - (*Ez2D)(i,j-1) );
         }
-    }
+//    }
     
     // Magnetic field By^(d,p)
-    for (unsigned int i=1 ; i<nx_d-1 ; i++) {
+//#pragma omp for schedule(runtime)
+//    for (unsigned int i=1 ; i<nx_d-1 ; i++) {
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*By2D)(i,j) += dt_ov_dx * ( (*Ez2D)(i,j) - (*Ez2D)(i-1,j) );
         }
-    }
+    //}
     
     // Magnetic field Bz^(d,d)
-    for (unsigned int i=1 ; i<nx_d-1 ; i++) {
+    //for (unsigned int i=1 ; i<nx_d-1 ; i++) {
         for (unsigned int j=1 ; j<ny_d-1 ; j++) {
             (*Bz2D)(i,j) += dt_ov_dy * ( (*Ex2D)(i,j) - (*Ex2D)(i,j-1) )
             -               dt_ov_dx * ( (*Ey2D)(i,j) - (*Ey2D)(i-1,j) );
         }
     }
-    
+//}// end parallel
 }//END solveMaxwellFaraday
 
 
@@ -621,25 +649,35 @@ void ElectroMagn2D::centerMagneticFields()
     Field2D* Bz2D_m = static_cast<Field2D*>(Bz_m);
     
     // Magnetic field Bx^(p,d)
+#pragma omp for schedule(runtime)
     for (unsigned int i=0 ; i<nx_p ; i++) {
         for (unsigned int j=0 ; j<ny_d ; j++) {
             (*Bx2D_m)(i,j) = ( (*Bx2D)(i,j) + (*Bx2D_m)(i,j) )*0.5;
         }
-    }
+//    }
     
     // Magnetic field By^(d,p)
-    for (unsigned int i=0 ; i<nx_d ; i++) {
+//    for (unsigned int i=0 ; i<nx_d ; i++) {
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*By2D_m)(i,j) = ( (*By2D)(i,j) + (*By2D_m)(i,j) )*0.5;
         }
-    }
+//    }
     
     // Magnetic field Bz^(d,d)
-    for (unsigned int i=0 ; i<nx_d ; i++) {
+//    for (unsigned int i=0 ; i<nx_d ; i++) {
         for (unsigned int j=0 ; j<ny_d ; j++) {
             (*Bz2D_m)(i,j) = ( (*Bz2D)(i,j) + (*Bz2D_m)(i,j) )*0.5;
+        } // end for j
+      } // end for i
+#pragma omp single
+{
+        for (unsigned int j=0 ; j<ny_p ; j++) {
+            (*By2D_m)(nx_p,j) = ( (*By2D)(nx_p,j) + (*By2D_m)(nx_p,j) )*0.5;
         }
-    }
+        for (unsigned int j=0 ; j<ny_d ; j++) {
+            (*Bz2D_m)(nx_p,j) = ( (*Bz2D)(nx_p,j) + (*Bz2D_m)(nx_p,j) )*0.5;
+        } // end for j
+}
     
 }//END centerMagneticFields
 
@@ -781,7 +819,7 @@ void ElectroMagn2D::restartRhoJs(int ispec, bool currents)
     Field2D* rho2D_s = static_cast<Field2D*>(rho_s[ispec]);
     
     // Charge density rho^(p,p) to 0
-    #pragma omp for schedule(static)
+    #pragma omp for schedule(runtime)
     for (unsigned int i=0 ; i<nx_p ; i++) {
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*rho2D_s)(i,j) = 0.0;
@@ -789,7 +827,7 @@ void ElectroMagn2D::restartRhoJs(int ispec, bool currents)
     }
     if (currents){ 
         // Current Jx^(d,p) to 0
-        #pragma omp for schedule(static)
+        #pragma omp for schedule(runtime)
         for (unsigned int i=0 ; i<nx_d ; i++) {
             for (unsigned int j=0 ; j<ny_p ; j++) {
                 (*Jx2D_s)(i,j) = 0.0;
@@ -797,7 +835,7 @@ void ElectroMagn2D::restartRhoJs(int ispec, bool currents)
         }
         
         // Current Jy^(p,d) to 0
-        #pragma omp for schedule(static)
+        #pragma omp for schedule(runtime)
         for (unsigned int i=0 ; i<nx_p ; i++) {
             for (unsigned int j=0 ; j<ny_d ; j++) {
                 (*Jy2D_s)(i,j) = 0.0;
@@ -805,7 +843,7 @@ void ElectroMagn2D::restartRhoJs(int ispec, bool currents)
         }
         
         // Current Jz^(p,p) to 0
-        #pragma omp for schedule(static)
+        #pragma omp for schedule(runtime)
         for (unsigned int i=0 ; i<nx_p ; i++) {
             for (unsigned int j=0 ; j<ny_p ; j++) {
                 (*Jz2D_s)(i,j) = 0.0;

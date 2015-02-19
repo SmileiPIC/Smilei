@@ -412,7 +412,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 // Boundary Condition may be physical or due to domain decomposition
                 // apply returns 0 if iPart is no more in the domain local
                 //	if omp, create a list per thread
-                if ( !partBoundCond->apply( particles, iPart, ener_iPart ) ) {
+                if ( !partBoundCond->apply( particles, iPart, params.species_param[ispec], ener_iPart ) ) {
                     addPartInExchList( tid, iPart );
 		    nrj_lost_per_thd[tid] += ener_iPart;
                 }
