@@ -338,12 +338,3 @@ bool ElectroMagn::isRhoNull(SmileiMPI* smpi)
     return (norm2<=0.);
 
 }
-void ElectroMagn::restartRhoJs(unsigned int ispec, unsigned int clrw)
-{
-    #pragma omp for schedule(static) nowait
-    for (unsigned int i=0 ; i < n_space[0]/clrw ; i++){
-        free(nrho_s[ispec][i]);
-    }
-
-}
-

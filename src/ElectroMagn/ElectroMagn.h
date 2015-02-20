@@ -142,8 +142,7 @@ public:
     //! Method used to initialize the total charge currents and densities
     virtual void restartRhoJ() = 0;
     //! Method used to initialize the total charge currents and densities of species
-    virtual void restartRhoJs(unsigned int ispec, bool currents) = 0;
-    void restartRhoJs(unsigned int ispec, unsigned int clrw);
+    virtual void restartRhoJs() = 0;
 
     //! Method used to initialize the total charge density
     void initRhoJ(std::vector<Species*> vecSpecies, Projector* Proj);
@@ -153,7 +152,8 @@ public:
     virtual void addToGlobalRho(int ispec, unsigned int clrw) = 0;
     virtual void computeTotalRhoJs(unsigned int clrw) = 0;
     //! Method used to gather species densities and currents on a single array
-    virtual void sumtwins(unsigned int clrw) = 0;
+    virtual void synchronizePatch(unsigned int clrw) = 0;
+    virtual void finalizePatch(unsigned int clrw) = 0;
 
     //! Method used to initialize the Maxwell solver
     virtual void solvePoisson(SmileiMPI* smpi) = 0;

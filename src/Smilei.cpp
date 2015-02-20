@@ -141,6 +141,8 @@ int main (int argc, char* argv[])
     double time_prim = stepStart * params.timestep;
     // time at half-integer time-steps (dual grid)
     double time_dual = (stepStart +0.5) * params.timestep;
+    // Do wedo diags or not ?
+    int diag_flag = 1;
 
     // ----------------------------------------------------------------------------
     // Define Moving Window & restart
@@ -189,21 +191,19 @@ int main (int argc, char* argv[])
         // Initialize the electromagnetic fields
         // -----------------------------------
         // Init rho and J by projecting all particles of subdomain
-        EMfields->restartRhoJ();
-        //EMfields->initRhoJ(vecSpecies, Proj, params.clrw, params.timestep);
+        EMfields->restartRhoJs();
         // Very first iteration used to initialize fields
         for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-            vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow);
+            vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow, diag_flag);
 	    for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
                 smpi->exchangeParticles(vecSpecies[ispec], ispec, params, 0, iDim);
             
             vecSpecies[ispec]->sort_part();
-            EMfields->restartRhoJs(ispec, true);
         }
-        EMfields->sumtwins(params.clrw); //Synchronize patches
-        smpi->sumRhoJ( EMfields );        //Synchronize MPI domains
-        //EMfields->computeTotalRhoJs(params.clrw); //Compute currents per species. Useful only for diags.
-        for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) smpi->sumRhoJs(EMfields, ispec, true);
+        EMfields->computeTotalRhoJs(params.clrw); //Compute currents per species from unsynchronized patches. Useful only for diags.
+        for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) smpi->sumRhoJs(EMfields, ispec, true);//Synchronize MPI global arrays per species
+        EMfields->computeTotalRhoJ(); //Compute currents from global Rho_s and J_s.
+        diag_flag = 0;
 
         // Init electric field (Ex/1D, + Ey/2D)
         MESSAGE("----------------------------------------------");
@@ -225,6 +225,7 @@ int main (int argc, char* argv[])
             sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
         // temporary particle dump at time 0
         sio->writePlasma( vecSpecies, 0., smpi );
+        EMfields->restartRhoJs();
     }
 
 	
@@ -260,6 +261,8 @@ int main (int argc, char* argv[])
         time_prim += params.timestep;
         time_dual += params.timestep;
         
+        if  ((diag_params.fieldDump_every != 0) && (itime % diag_params.fieldDump_every == 0)) diag_flag = 1;
+
         // send message at given time-steps
         // --------------------------------
         timer[0].update();
@@ -299,12 +302,12 @@ int main (int argc, char* argv[])
             tid = omp_get_thread_num();
 #endif
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-                    if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
-                        vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow);
-                    } else {
+                    if ( vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag ){
+                        vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow, diag_flag);
+                    } //else {
                         //Add density only
-                        EMfields->addToGlobalRho(ispec, params.clrw);
-                    }
+                      //  EMfields->addToGlobalRho(ispec, params.clrw);
+                      //}
             }
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
                 if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
@@ -318,8 +321,15 @@ int main (int argc, char* argv[])
         } //End omp parallel region
         timer[1].update();
         timer[4].restart();
-        EMfields->sumtwins(params.clrw); //Synchronize patches
-        smpi->sumRhoJ( EMfields );        //Synchronize MPI domains
+        if  (diag_flag) {
+            EMfields->computeTotalRhoJs(params.clrw); //Compute global arrays J_s from patches and restack everything on patch of ispec 0.
+            for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) smpi->sumRhoJs(EMfields, ispec, true);//Synchronize MPI global Rho_s and J_s.
+            EMfields->computeTotalRhoJ(); //Compute total currents from global Rho_s and J_s.
+        }
+        EMfields->synchronizePatch(params.clrw); //Synchronize patches of local MPI domain and copy values on global Rho and J.
+        smpi->sumRhoJ( EMfields );        //Synchronize  global Rho and J.
+        EMfields->finalizePatch(params.clrw); //Copy values back into the patches.
+        
         timer[4].update();
         
         // solve Maxwell's equations
@@ -338,11 +348,10 @@ int main (int argc, char* argv[])
         Diags->runAllDiags(itime, EMfields, vecSpecies, Interp, smpi);
         
         // temporary EM fields dump in Fields.h5
-        if  ((diag_params.fieldDump_every != 0) && (itime % diag_params.fieldDump_every == 0)){
-            for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) EMfields->restartRhoJs(ispec, true);
-            EMfields->computeTotalRhoJs(params.clrw);
-            for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) smpi->sumRhoJs(EMfields, ispec, true);
+        if  (diag_flag){
             sio->writeAllFieldsSingleFileTime( EMfields, itime );
+            diag_flag = 0 ;
+            EMfields->restartRhoJs();
         }
         // temporary EM fields dump in Fields.h5
         if  (diag_params.ntime_step_avg!=0)

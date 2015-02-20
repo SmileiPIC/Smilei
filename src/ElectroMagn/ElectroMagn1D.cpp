@@ -565,21 +565,21 @@ void ElectroMagn1D::restartRhoJ()
         (*Jz1D)(ix)    = 0.0;
     }
 }    
-void ElectroMagn1D::restartRhoJs(unsigned int ispec, bool currents)
+void ElectroMagn1D::restartRhoJs()
 {
-    // -----------------------------------
-    // Species currents and charge density
-    // -----------------------------------
-    Field1D* Jx1D_s  = static_cast<Field1D*>(Jx_s[ispec]);
-    Field1D* Jy1D_s  = static_cast<Field1D*>(Jy_s[ispec]);
-    Field1D* Jz1D_s  = static_cast<Field1D*>(Jz_s[ispec]);
-    Field1D* rho1D_s = static_cast<Field1D*>(rho_s[ispec]);
+    for (unsigned int ispec=0 ; ispec < n_species ; ispec++){
+        // -----------------------------------
+        // Species currents and charge density
+        // -----------------------------------
+        Field1D* Jx1D_s  = static_cast<Field1D*>(Jx_s[ispec]);
+        Field1D* Jy1D_s  = static_cast<Field1D*>(Jy_s[ispec]);
+        Field1D* Jz1D_s  = static_cast<Field1D*>(Jz_s[ispec]);
+        Field1D* rho1D_s = static_cast<Field1D*>(rho_s[ispec]);
 
-    #pragma omp for schedule(static) 
-    for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
-        (*rho1D_s)(ix) = 0.0;
-    }
-    if (currents){
+        #pragma omp for schedule(static) 
+        for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
+            (*rho1D_s)(ix) = 0.0;
+        }
         // put longitudinal current to zero on the dual grid
         #pragma omp for schedule(static) 
         for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
@@ -679,7 +679,7 @@ void ElectroMagn1D::computeTotalRhoJs(unsigned int clrw)
 // ---------------------------------------------------------------------------------------------------------------------
 // Gather the total density and currents for species on a single array instead of twin arrays.
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn1D::sumtwins(unsigned int clrw)
+void ElectroMagn1D::synchronizePatch(unsigned int clrw)
 {
     //for (unsigned int ispec=0; ispec<n_species; ispec++) {
     //    Field1D* Jx1D_s  = static_cast<Field1D*>(Jx_s[ispec]);
@@ -705,7 +705,10 @@ void ElectroMagn1D::sumtwins(unsigned int clrw)
     //    
     //}//END loop on species ispec
     
-}//END sumtwins
+}//END synchronizePatch
+void ElectroMagn1D::finalizePatch(unsigned int clrw)
+{
+}
 
 void ElectroMagn1D::computePoynting() {
     if (isWestern) {

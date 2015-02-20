@@ -39,14 +39,15 @@ public:
     //! Method used to restart the total charge densities and currents
     void restartRhoJ();
     //! Method used to restart the total charge densities and currents
-    void restartRhoJs(unsigned int ispec, bool currents);
+    void restartRhoJs();
 
     //! Method used to compute the total charge density and currents by summing over all species
     void computeTotalRhoJ();
     void addToGlobalRho(int ispec, unsigned int clrw);
     void computeTotalRhoJs(unsigned int clrw);
     //! Method used to gather species densities and currents on a single array
-    void sumtwins(unsigned int clrw);
+    void synchronizePatch(unsigned int clrw);
+    void finalizePatch(unsigned int clrw);
 
     //! \todo Create properties the laser time-profile (MG & TV)
  

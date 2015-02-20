@@ -333,7 +333,7 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
 //   - increment the currents (projection)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfields, Interpolator* Interp,
-                       Projector* Proj, SmileiMPI *smpi, PicParams &params, SimWindow* simWindow)
+                       Projector* Proj, SmileiMPI *smpi, PicParams &params, SimWindow* simWindow, int diag_flag)
 {
     Interpolator* LocInterp = InterpolatorFactory::create(params, smpi);
     
@@ -373,10 +373,11 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
  
         #pragma omp for schedule(runtime)
         for (ibin = 0 ; ibin < bmin.size() ; ibin++) {
-             nb_rho = EMfields->nrho_s[0][ibin];
-             nb_Jx  = EMfields->nJx_s[0][ibin] ;
-             nb_Jy  = EMfields->nJy_s[0][ibin] ;
-             nb_Jz  = EMfields->nJz_s[0][ibin] ;
+             //Add all species contribution on buffer 0 except if we want diags. In that case all species write on a different buffer.
+             nb_rho = EMfields->nrho_s[diag_flag*ispec][ibin];
+             nb_Jx  = EMfields->nJx_s[diag_flag*ispec][ibin] ;
+             nb_Jy  = EMfields->nJy_s[diag_flag*ispec][ibin] ;
+             nb_Jz  = EMfields->nJz_s[diag_flag*ispec][ibin] ;
             
             // reset all current-buffers
             //memset( nb_rho, 0, 4*size_proj_buffer*sizeof(double)); 
@@ -414,41 +415,6 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             
             
         }// ibin
-        //if (ndim == 1){
-        //    #pragma unroll
-        //    for (unsigned int istart=0 ; istart < 2 ; istart++){
-        //        #pragma omp for schedule(static)
-        //        for (unsigned int ibin=istart ; ibin < bmin.size() ; ibin+=2){
-        //        //Copy the corresponding bin buffer at the correct place in global array
-        //           for (unsigned int i = 0; i < b_dim0 ; i++) {
-        //               //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
-        //               (*EMfields->rho_)(ibin*clrw + i) += *(EMfields->nrho_s[ispec][ibin]+ i);
-        //               (*EMfields->Jx_)(ibin*clrw + i) += *(EMfields->nJx_s[ispec][ibin]+ i);
-        //               (*EMfields->Jy_)(ibin*clrw+ i ) += *(EMfields->nJy_s[ispec][ibin]+ i);
-        //               (*EMfields->Jz_)(ibin*clrw + i) += *(EMfields->nJz_s[ispec][ibin]+ i);
-        //           } 
-        //        }
-        //    }
-        //}
-
-        //if (ndim == 2){
-        //    #pragma unroll
-        //    for (unsigned int istart=0 ; istart < 2 ; istart++){
-        //        #pragma omp for schedule(static)
-        //        for (unsigned int ibin=istart ; ibin < bmin.size() ; ibin+=2){
-        //        //Copy the corresponding bin buffer at the correct place in global array
-        //           for (unsigned int i = 0; i < b_dim0*b_dim1 ; i++) {
-        //               //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
-        //               (*EMfields->rho_)(ibin*clrw*f_dim1 + i) += *(EMfields->nrho_s[0][ibin]+ i);
-        //               (*EMfields->Jx_)(ibin*clrw*f_dim1 + i) += *(EMfields->nJx_s[0][ibin]+ i);
-        //               (*EMfields->Jz_)(ibin*clrw*f_dim1 + i) += *(EMfields->nJz_s[0][ibin]+ i);
-        //           } 
-        //           for (unsigned int i = 0; i < b_dim0*(b_dim1+1) ; i++) {
-        //               (*EMfields->Jy_)(ibin*clrw*(f_dim1+1) + i) += *(EMfields->nJy_s[0][ibin]+ i);
-        //           } 
-        //        }
-        //    }
-        //}
 
 	for (int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
 	    nrj_bc_lost += nrj_lost_per_thd[tid];
@@ -480,7 +446,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     else { // immobile particle (at the moment only project density)
         #pragma omp for schedule(static) nowait
         for (ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
-             nb_rho = EMfields->nrho_s[0][ibin];
+             nb_rho = EMfields->nrho_s[diag_flag*ispec][ibin];
             // reset all current-buffers
             //memset( nb_rho, 0, size_proj_buffer*sizeof(double)); 
 
@@ -493,17 +459,6 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 (*Proj)(nb_rho, particles, iPart, ibin*clrw, b_lastdim);
             } //End loop on particles
          }//End loop on bins
-        //#pragma unroll
-        //for (unsigned int istart=0 ; istart < 2 ; istart++){
-        //    #pragma omp for schedule(static)
-        //    for (unsigned int ibin=istart ; ibin < bmin.size() ; ibin+=2){
-        //    //Add the corresponding bin buffer at the correct place in global array
-        //       for (unsigned int i = 0; i < b_dim0*b_dim1 ; i++) {
-        //           (*EMfields->rho_)(ibin*clrw*f_dim1 + i) += *(EMfields->nrho_s[ispec][ibin]+ i);
-        //       } 
-        //    }
-        //}
-
     }//END if time vs. time_frozen
 #pragma omp barrier
     delete LocInterp;
