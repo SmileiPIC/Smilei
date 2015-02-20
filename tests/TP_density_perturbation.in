@@ -113,6 +113,7 @@ species
 	radiating = false
 	bc_part_type_west = none
 	bc_part_type_east = none
+	mvel_x_profile=constant
 end
 
 species
@@ -132,15 +133,10 @@ species
 	dynamics_type = norm
 	time_frozen = 0.0
 	radiating = false
-<<<<<<< HEAD
-	bc_part_type_long = none
-
 	mvel_x_profile=constant
-
-=======
 	bc_part_type_west = none
 	bc_part_type_east = none
->>>>>>> develop
+	mvel_x_profile=constant
 end
 
 
