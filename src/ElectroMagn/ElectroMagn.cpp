@@ -222,7 +222,7 @@ void ElectroMagn::dump()
 // ---------------------------------------------------------------------------------------------------------------------
 // Method used to initialize the total charge density
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn::initRhoJ(vector<Species*> vecSpecies, Projector* Proj)
+void ElectroMagn::initRhoJ(vector<Species*>& vecSpecies, Projector* Proj)
 {
     //! \todo Check that one uses only none-test particles
     // number of (none-test) used in the simulation
@@ -231,7 +231,7 @@ void ElectroMagn::initRhoJ(vector<Species*> vecSpecies, Projector* Proj)
 
     //loop on all (none-test) Species
     for (unsigned int iSpec=0 ; iSpec<n_species; iSpec++ ) {
-        Particles cuParticles = vecSpecies[iSpec]->getParticlesList();
+        Particles &cuParticles = vecSpecies[iSpec]->getParticlesList();
         unsigned int n_particles = vecSpecies[iSpec]->getNbrOfParticles();
         
         DEBUG(n_particles<<" species "<<iSpec);

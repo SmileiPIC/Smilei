@@ -53,13 +53,13 @@ ifeq ($(config),debug)
 	CFLAGS += -g -pg -Wall -D__DEBUG -O0 -shared-intel 
 
 else
-	CFLAGS += -O3
+	CFLAGS += -O3 
 endif
 
 ifeq ($(openmp),gnu)
 	CFLAGS += -fopenmp -D_OMP
 else ifeq ($(openmp),intel)
-	CFLAGS += -openmp -D_OMP -xHost
+	CFLAGS += -openmp -D_OMP -xHost -ipo
 endif
 
 ifeq ($(config),scalasca)
