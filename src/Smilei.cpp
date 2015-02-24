@@ -304,10 +304,7 @@ int main (int argc, char* argv[])
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
                     if ( vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag ){
                         vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow, diag_flag);
-                    } //else {
-                        //Add density only
-                      //  EMfields->addToGlobalRho(ispec, params.clrw);
-                      //}
+                    } 
             }
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
                 if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
@@ -324,7 +321,6 @@ int main (int argc, char* argv[])
         if  (diag_flag) {
             EMfields->computeTotalRhoJs(params.clrw); //Compute global arrays J_s from patches and restack everything on patch of ispec 0.
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) smpi->sumRhoJs(EMfields, ispec, true);//Synchronize MPI global Rho_s and J_s.
-            EMfields->computeTotalRhoJ(); //Compute total currents from global Rho_s and J_s.
         }
         EMfields->synchronizePatch(params.clrw); //Synchronize patches of local MPI domain and copy values on global Rho and J.
         smpi->sumRhoJ( EMfields );        //Synchronize  global Rho and J.
@@ -349,6 +345,7 @@ int main (int argc, char* argv[])
         
         // temporary EM fields dump in Fields.h5
         if  (diag_flag){
+            EMfields->computeTotalRhoJ(); //Compute total currents from global Rho_s and J_s.
             sio->writeAllFieldsSingleFileTime( EMfields, itime );
             diag_flag = 0 ;
             EMfields->restartRhoJs();

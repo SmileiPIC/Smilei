@@ -959,17 +959,25 @@ void ElectroMagn2D::computeTotalRhoJ()
         #pragma omp for schedule(static) nowait
         for (unsigned int i=0 ; i<nx_p ; i++) {
             for (unsigned int j=0 ; j<ny_p ; j++) {
+                if(ispec==0){
+                    (*rho2D)(i,j) = 0.;
+                    (*Jx2D)(i,j)  = 0.;
+                    (*Jy2D)(i,j)  = 0.;
+                    (*Jz2D)(i,j)  = 0.;
+                }
                 (*rho2D)(i,j) += (*rho2D_s)(i,j);
                 (*Jx2D)(i,j) += (*Jx2D_s)(i,j);
                 (*Jy2D)(i,j) += (*Jy2D_s)(i,j);
                 (*Jz2D)(i,j) += (*Jz2D_s)(i,j);
             }
+            if(ispec==0) (*Jy2D)(i,ny_p) = 0. ;
             (*Jy2D)(i,ny_p) += (*Jy2D_s)(i,ny_p);
         }
         
         #pragma omp single
         {
             for (unsigned int j=0 ; j<ny_p ; j++) {
+                if(ispec==0) (*Jx2D)(nx_p,j) = 0. ;
                 (*Jx2D)(nx_p,j) += (*Jx2D_s)(nx_p,j);
             }
         }
@@ -1074,11 +1082,9 @@ void ElectroMagn2D::synchronizePatch(unsigned int clrw)
            *(nrho_s[0][ibin]+ i) =   *(nrho_s[0][ibin-1]+ clrw*ny_p +   i);
            *(nJz_s[0][ibin-1] +  clrw*ny_p +  i)  +=  *(nJz_s[0][ibin]+ i);
            *(nJz_s[0][ibin]+ i)  =  *(nJz_s[0][ibin-1] +  clrw*ny_p +  i) ;
-       } 
-       for (i = 0; i < (oversize[0]+2)*ny_p ; i++) {
            *(nJx_s[0][ibin-1] +  clrw*ny_p +  i)  +=  *(nJx_s[0][ibin]+ i);
            *(nJx_s[0][ibin]+ i)  =  *(nJx_s[0][ibin-1] +  clrw*ny_p +  i) ;
-       }
+       } 
        for (i = 0; i < (oversize[0]+1)*ny_d ; i++) {
            *(nJy_s[0][ibin-1] +  clrw*ny_d +  i)  +=  *(nJy_s[0][ibin]+ i);
            *(nJy_s[0][ibin]+ i)  =  *(nJy_s[0][ibin-1] +  clrw*ny_d +  i) ;
