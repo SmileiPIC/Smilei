@@ -285,7 +285,6 @@ int main (int argc, char* argv[])
 
         // put density and currents to 0 + save former density
         // ---------------------------------------------------
-        EMfields->restartRhoJ();
         
         
         // apply the PIC method
@@ -297,6 +296,7 @@ int main (int argc, char* argv[])
         timer[1].restart();
 #pragma omp parallel shared (EMfields,time_dual,vecSpecies,smpi,params)
         {
+            EMfields->restartRhoJ();
             int tid(0);
 #ifdef _OMP
             tid = omp_get_thread_num();
@@ -320,10 +320,16 @@ int main (int argc, char* argv[])
         timer[4].restart();
         if  (diag_flag) {
             EMfields->computeTotalRhoJs(params.clrw); //Compute global arrays J_s from patches and restack everything on patch of ispec 0.
+            #pragma omp master
+            {
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) smpi->sumRhoJs(EMfields, ispec, true);//Synchronize MPI global Rho_s and J_s.
+            }
         }
         EMfields->synchronizePatch(params.clrw); //Synchronize patches of local MPI domain and copy values on global Rho and J.
+        #pragma omp master
+        {
         smpi->sumRhoJ( EMfields );        //Synchronize  global Rho and J.
+        }
         EMfields->finalizePatch(params.clrw); //Copy values back into the patches.
         
         timer[4].update();
@@ -333,6 +339,7 @@ int main (int argc, char* argv[])
         EMfields->solveMaxwell(itime, time_dual, smpi, params, simWindow);
         timer[2].update();
         
+
         // incrementing averaged electromagnetic fields
         if (diag_params.ntime_step_avg) EMfields->incrementAvgFields(itime, diag_params.ntime_step_avg);
         

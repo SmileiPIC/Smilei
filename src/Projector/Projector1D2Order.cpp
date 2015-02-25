@@ -251,7 +251,10 @@ void Projector1D2Order::operator() (Field* rho, Particles &particles, int ipart)
     (*rho1D)( i+1)  += 0.5 * (xjmxi2+xjmxi+0.25) * rho_j;
 
 } // END Project global current charge
-
+void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_dim0)
+{
+cout << "not yet defined" <<endl;
+}
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local current densities (sort)
 // ---------------------------------------------------------------------------------------------------------------------

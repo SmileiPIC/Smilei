@@ -165,7 +165,10 @@ void Projector1D4Order::operator() (Field* rho, Particles &particles, int ipart)
 
 } // END Project global current charge
 
-
+void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_dim0)
+{
+cout << "not yet defined" << endl;
+}
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local current densities (sort)
 // ---------------------------------------------------------------------------------------------------------------------

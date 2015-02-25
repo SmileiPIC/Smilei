@@ -409,14 +409,20 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                     addPartInExchList( tid, iPart );
 		    nrj_lost_per_thd[tid] += ener_iPart;
                 }
-                
+               
+                if (diag_flag == 0){
+                (*Proj)(nb_Jx, nb_Jy, nb_Jz, particles, iPart, gf, ibin*clrw, b_lastdim);
+                } else { 
                 (*Proj)(nb_Jx, nb_Jy, nb_Jz, nb_rho, particles, iPart, gf, ibin*clrw, b_lastdim);
+                }
+
             }//iPart
             
             
         }// ibin
 
 	for (int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
+        //Shouldn't this be atomic ?
 	    nrj_bc_lost += nrj_lost_per_thd[tid];
         
         if (Ionize && electron_species) {
@@ -444,21 +450,23 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
         }
     }
     else { // immobile particle (at the moment only project density)
-        #pragma omp for schedule(static) nowait
-        for (ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
-             nb_rho = EMfields->nrho_s[diag_flag*ispec][ibin];
-            // reset all current-buffers
-            //memset( nb_rho, 0, size_proj_buffer*sizeof(double)); 
+        if (diag_flag == 1){
+            #pragma omp for schedule(static) nowait
+            for (ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
+                 nb_rho = EMfields->nrho_s[diag_flag*ispec][ibin];
+                // reset all current-buffers
+                //memset( nb_rho, 0, size_proj_buffer*sizeof(double)); 
 
-            for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
-                //Update position_old because it is required for the Projection.
-                for ( int i = 0 ; i<ndim ; i++ ) {
-                    particles.position_old(i, iPart)  = particles.position(i, iPart);
-                }
+                for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
+                    //Update position_old because it is required for the Projection.
+                    for ( int i = 0 ; i<ndim ; i++ ) {
+                        particles.position_old(i, iPart)  = particles.position(i, iPart);
+                    }
 
-                (*Proj)(nb_rho, particles, iPart, ibin*clrw, b_lastdim);
-            } //End loop on particles
-         }//End loop on bins
+                    (*Proj)(nb_rho, particles, iPart, ibin*clrw, b_lastdim);
+                } //End loop on particles
+            }//End loop on bins
+        }
     }//END if time vs. time_frozen
 #pragma omp barrier
     delete LocInterp;
