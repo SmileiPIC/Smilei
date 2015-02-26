@@ -201,6 +201,12 @@ SmileiIO::~SmileiIO()
 // ---------------------------------------------------------------------------------------------------------------------
 void SmileiIO::writeAllFieldsSingleFileTime( ElectroMagn* EMfields, int time )
 {
+    // select fields for output
+    if (outFields.size()==0) {
+	outFields.push_back(EMfields->Ex_);
+    }
+
+
     ostringstream name_t;
     name_t.str("");
     name_t << "/" << setfill('0') << setw(10) << time;

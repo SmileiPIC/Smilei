@@ -15,6 +15,7 @@
 #include "DiagnosticScalar.h"
 #include "DiagnosticProbe.h"
 #include "DiagnosticPhaseSpace.h"
+#include "Timer.h"
 
 class PicParams;
 class SmileiMPI;
@@ -37,7 +38,9 @@ public:
  
     //! get a particular scalar
     double getScalar(std::string name);
-    
+
+    Timer dtimer[3];
+
         
 private:
     
