@@ -315,7 +315,6 @@ int main (int argc, char* argv[])
                         vecSpecies[ispec]->sort_part();
                 }
             }
-        } //End omp parallel region
         timer[1].update();
         timer[4].restart();
         if  (diag_flag) {
@@ -328,7 +327,7 @@ int main (int argc, char* argv[])
         EMfields->synchronizePatch(params.clrw); //Synchronize patches of local MPI domain and copy values on global Rho and J.
         #pragma omp master
         {
-        smpi->sumRhoJ( EMfields );        //Synchronize  global Rho and J.
+            smpi->sumRhoJ( EMfields );        //Synchronize  global Rho and J.
         }
         EMfields->finalizePatch(params.clrw); //Copy values back into the patches.
         
@@ -338,6 +337,7 @@ int main (int argc, char* argv[])
         timer[2].restart();
         EMfields->solveMaxwell(itime, time_dual, smpi, params, simWindow);
         timer[2].update();
+        } //End omp parallel region
         
 
         // incrementing averaged electromagnetic fields

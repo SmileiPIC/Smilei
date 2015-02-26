@@ -120,7 +120,7 @@ void SmileiMPI::sumRho( ElectroMagn* EMfields )
 void SmileiMPI::sumRhoJ( ElectroMagn* EMfields )
 {
     // sum total charge density and currents
-    sumField( EMfields->rho_ );
+    //sumField( EMfields->rho_ );
     sumField( EMfields->Jx_ );
     sumField( EMfields->Jy_ );
     sumField( EMfields->Jz_ );
