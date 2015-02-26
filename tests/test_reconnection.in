@@ -32,7 +32,8 @@ interpolation_order = 2
 # sim_time  : duration of the simulation 
 #
 res_time = 10
-sim_time = 12000.0
+sim_time = 0.0
+#sim_time = 12000.0
 
 # SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
 # either use the resolution (res_space) or cell-length (cell_length)
@@ -41,11 +42,11 @@ sim_time = 12000.0
 # sim_length  : length of the simulation 
 # cell_length : cell-length 
 #
-res_space   = 6.4  6.4
+res_space   = 3.2  3.2
 sim_length  = 640  600
 
 # MPI decomposition and cluster width
-number_of_procs = 8 10
+#number_of_procs = 8 10
 clrw            = 8
 
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
@@ -65,10 +66,18 @@ random_seed = 0
 
 # DEFINE EXTERNAL FIELD
 extfield
-    field = Bx
-    profile = harris
-    double_params   = 0.25
-    length_params_y = 5.0 150.0 450.0
+	field = Bx
+	profile = harrisbx
+	double_params   = 0.25 0.025    
+	length_params_x = 10.0 210.0 430.0
+	length_params_y = 5.0  150.0 450.0 
+end
+extfield
+	field = By
+	profile = harrisby
+	double_params   = 0.25 0.025    
+	length_params_x = 10.0 210.0 430.0
+        length_params_y = 5.0  150.0 450.0
 end
 
 
@@ -90,28 +99,31 @@ species
 	species_type = ion
 	mass   = 100.0
 	charge = 1.0
-	n_part_per_cell = 10
+	n_part_per_cell = 2
 	c_part_max = 1.0
    	species_geometry = harris
    	density = 0.2
    	dens_dbl_params = 0.2
    	dens_length_y = 5.0 150.0 450.0
-   	mvel_z_profile = harris
-   	mean_velocity = 0.0 0.0 1.0
-	mvel_z_int_params = 0
-   	mvel_z_dbl_params = 0.2 0.25 0.2
-   	mvel_z_length_y = 5.0 150.0 450.0
+	mvel_z_profile = harris
+        mean_velocity = 0.0 0.0 1.0
+        mvel_z_int_params = 0
+        mvel_z_dbl_params = 0.2 0.25 0.025 0.2
+        mvel_z_length_x = 10.0 210.0 430.0
+        mvel_z_length_y = 5.0  150.0 450.0
 	initialization_type  = mj
 	temperature = 0.02604166667
-	bc_part_type_long  = none
-	bc_part_type_trans = none 
+	bc_part_type_west  = none
+	bc_part_type_east  = none
+	bc_part_type_south = none
+	bc_part_type_north = none 
 end
 
 species
 	species_type = eon
 	mass   = 1
 	charge = -1.0
-	n_part_per_cell = 10
+	n_part_per_cell = 2
 	c_part_max = 1.0
    	species_geometry = harris
    	density = 0.2
@@ -120,12 +132,15 @@ species
    	mvel_z_profile = harris
    	mean_velocity = 0.0 0.0 1.0
 	mvel_z_int_params = 1
-   	mvel_z_dbl_params = 0.2 0.25 0.2 
-   	mvel_z_length_y = 5.0 150.0 450.0
+   	mvel_z_dbl_params = 0.2 0.25 0.025 0.2
+	mvel_z_length_x = 10.0 210.0 430.0 
+   	mvel_z_length_y = 5.0  150.0 450.0
 	initialization_type  = mj
 	temperature = 0.005208333334
-	bc_part_type_long = none
-	bc_part_type_trans = none
+	bc_part_type_west  = none
+        bc_part_type_east  = none
+        bc_part_type_south = none
+        bc_part_type_north = none
 end
 
 

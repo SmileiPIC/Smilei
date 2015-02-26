@@ -91,16 +91,34 @@ double VelocityProfile2D::operator() (vector<double> x_cell) {
         
         double nb       = prof_params.double_params[0];
         double B0       = prof_params.double_params[1];
-        double Te_ov_Ti = prof_params.double_params[2];
+        double dB       = prof_params.double_params[2];
+        double Te_ov_Ti = prof_params.double_params[3];
         int    N        = prof_params.int_params[0];
-        double L  = prof_params.length_params_y[0];
-        double y0 = prof_params.length_params_y[1];
-        double y1 = prof_params.length_params_y[2];
+        double L   = prof_params.length_params_y[0];
+        double y0  = prof_params.length_params_y[1];
+        double y1  = prof_params.length_params_y[2];
+        double sgl = prof_params.length_params_x[0];
+        double x0  = prof_params.length_params_x[1];
+        double x1  = prof_params.length_params_x[2];
         
-        return B0/L * pow(-Te_ov_Ti,N)/(1+Te_ov_Ti)
-        *      ( pow(tanh((x_cell[1]-y0)/L),2) - pow(tanh((x_cell[1]-y1)/L),2) )
-        /      ( nb + pow(cosh((x_cell[1]-y0)/L),-2) + pow(cosh((x_cell[1]-y1)/L),-2) );
+        //std::cout << "nb" << nb << " sgl " << prof_params.length_params_x[0] << " " << sgl << std::endl;
         
+        double Dx0 = (x_cell[0]-x0)/sgl;
+        double Dx1 = (x_cell[0]-x1)/sgl;
+        double Dy0 = (x_cell[1]-y0)/sgl;
+        double Dy1 = (x_cell[1]-y1)/sgl;
+        
+        double Jz  = B0/L * pow(-Te_ov_Ti,N)/(1+Te_ov_Ti)
+        *       ( pow(tanh((x_cell[1]-y0)/L),2) - pow(tanh((x_cell[1]-y1)/L),2) );
+        
+        //cout << dB << " " << sgl << " " << x0 << " " << x1 << endl;
+        
+        double dJz = 4.0*dB/sgl * (1.0-Dx0*Dx0-Dy0*Dy0) * exp(-Dx0*Dx0-Dy0*Dy0)
+        -            4.0*dB/sgl * (1.0-Dx1*Dx1-Dy1*Dy1) * exp(-Dx1*Dx1-Dy1*Dy1);
+        double n   = nb + pow(cosh((x_cell[1]-y0)/L),-2) + pow(cosh((x_cell[1]-y1)/L),-2);
+        double v   = (Jz+dJz)/n;
+        
+        return v;
     }
     
     return 1;
