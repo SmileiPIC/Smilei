@@ -69,6 +69,10 @@ private:
     
     //! every step to calculate scalars
     const unsigned int every;
+
+    const double tmin;
+    const double tmax;
+    const double dt;
     
     //! output stream
     std::ofstream fout;

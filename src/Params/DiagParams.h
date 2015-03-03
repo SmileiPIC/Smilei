@@ -22,6 +22,12 @@ struct phaseStructure {
     //! phase output every (every phase diagnostic must have this)
     unsigned int every;
 
+    //! phase output from tmin
+    double tmin;
+
+    //! phase output to tmin
+    double tmax;
+
     //! compression level using zlib [0-9] (0 deactvate compression)
     unsigned int deflate;
 
@@ -60,6 +66,12 @@ struct probeStructure {
     //! probe1D output every (every probe1D diagnostic must have this)
     unsigned int every;
     
+    //! probe1D output from tmin
+    double tmin;
+
+    //! probe1D output to tmin
+    double tmax;
+
     //! points defining the probe
     std::vector< std::vector<double> > pos;
         
@@ -91,6 +103,10 @@ public:
 
     //! scalar output every scalar_every (namelist group "diagnostic scalar" key "every")
     unsigned int scalar_every;
+
+    double scalar_tmin;
+    double scalar_tmax;
+
 
     //! list of vars for scalars to be written (empty means all)
     std::vector<std::string> scalar_vars;

@@ -37,6 +37,17 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
 	scalar_every=0;
 	ok=ifile.extract("every",scalar_every,"diagnostic scalar");
     if (!ok) scalar_every=params.global_every;
+
+    vector<double> scalar_time_range(2,0.);
+    ok=ifile.extract("time_range",scalar_time_range,"diagnostic scalar");        
+    if (!ok) { 
+      scalar_tmin = 0.;
+      scalar_tmax = params.sim_time;
+    }
+    else {
+	scalar_tmin = scalar_time_range[0]*conv_fac;
+	scalar_tmax = scalar_time_range[1]*conv_fac;
+    }
 	
     scalar_precision=10;
     ifile.extract("precision",scalar_precision,"diagnostic scalar");
@@ -49,6 +60,18 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
         tmpStruct.every=0;
         ok=ifile.extract("every",tmpStruct.every,"diagnostic probe",0,n_probe);        
         if (!ok) tmpStruct.every=params.global_every;
+
+	vector<double> time_range(2,0.);
+        ok=ifile.extract("time_range",time_range,"diagnostic probe",0,n_probe);        
+        if (!ok) { 
+	    tmpStruct.tmin = 0.;
+	    tmpStruct.tmax = params.sim_time;
+	}
+	else  {
+	    tmpStruct.tmin = time_range[0]*conv_fac;
+	    tmpStruct.tmax = time_range[1]*conv_fac;
+	}
+
 
         ifile.extract("number",tmpStruct.number,"diagnostic probe",0,n_probe);
         tmpStruct.dim=tmpStruct.number.size();
@@ -106,6 +129,19 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
                 tmpPhaseStruct.every=params.global_every;
             }
         }
+
+	vector<double> time_range(2,0.);
+        ok=ifile.extract("time_range",time_range,"diagnostic phase",0,n_probe);        
+        if (!ok) { 
+	    tmpPhaseStruct.tmin = 0.;
+	    tmpPhaseStruct.tmax = params.sim_time;
+	}
+	else {
+	    tmpPhaseStruct.tmin = time_range[0]*conv_fac;
+	    tmpPhaseStruct.tmax = time_range[1]*conv_fac;
+	}
+
+
         ifile.extract("species",tmpPhaseStruct.species,"diagnostic phase",0,n_probephase);
 
         tmpPhaseStruct.deflate=0;

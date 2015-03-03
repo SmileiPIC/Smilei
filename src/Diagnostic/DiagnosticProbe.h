@@ -45,6 +45,9 @@ public:
     std::vector<unsigned int> every;
 
 protected:
+    std::vector<double> tmin;
+    std::vector<double> tmax;
+    double dt;
     
     // rank of the cpu (from smpi)
     const unsigned int cpuRank;

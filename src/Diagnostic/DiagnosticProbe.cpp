@@ -42,6 +42,9 @@ fileId(0) {
         H5Tclose(tid);
         
         every.resize(diagParams.probeStruc.size());
+        tmin.resize(diagParams.probeStruc.size());
+        tmax.resize(diagParams.probeStruc.size());
+	dt = params.timestep;
         probeParticles.resize(diagParams.probeStruc.size());
         probeId.resize(diagParams.probeStruc.size());
 	probesArray.resize(diagParams.probeStruc.size());
@@ -49,6 +52,9 @@ fileId(0) {
 
         for (unsigned int np=0; np<diagParams.probeStruc.size(); np++) {
             every[np]=diagParams.probeStruc[np].every;
+            tmin[np]=diagParams.probeStruc[np].tmin;
+            tmax[np]=diagParams.probeStruc[np].tmax;
+
             unsigned int dimProbe=diagParams.probeStruc[np].dim+2;
             unsigned int ndim=params.nDim_particle;
             
@@ -242,8 +248,13 @@ string DiagnosticProbe::probeName(int p) {
 }
 
 void DiagnosticProbe::run(unsigned int timestep, ElectroMagn* EMfields, Interpolator* interp) {
+
+    double time = (double)timestep * dt;
+    
     for (unsigned int np=0; np<every.size(); np++) {
-        if (every[np] && timestep % every[np] == 0) {
+        if ( (every[np]  && timestep % every[np] == 0) &&
+	     (time <= tmax[np]) && 
+	     (time >= tmin[np]) ) {
 
             
             for (int iprob=0; iprob <probeParticles[np].size(); iprob++) {               
