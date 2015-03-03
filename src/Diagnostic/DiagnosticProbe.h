@@ -20,6 +20,7 @@ class PicParams;
 class SmileiMPI;
 class DiagParams;
 class ElectroMagn;
+class Field2D;
 
 //! this class holds the point probe
 class DiagnosticProbe {
@@ -29,7 +30,7 @@ public:
     //! the creator need both sim parameters params and the diagnostic parameter diagParams
     DiagnosticProbe(PicParams &params, DiagParams &diagParams, SmileiMPI* smpi);
     
-    ~DiagnosticProbe(){};
+    ~DiagnosticProbe();//{};
     
     //! run all probes
     void run(unsigned int timestep, ElectroMagn* EMfields, Interpolator* interp);
@@ -54,6 +55,12 @@ protected:
     //! each probe will be associated with a proc
     std::vector<std::vector<int> >probeId;
     
+    //! each probe will write in a buffer
+    std::vector< Field2D* > probesArray;
+    std::vector< int > probesStart;
+    int nProbeTot;
+    int nDim;
+
     //! E local fields for the projector
     LocalFields Eloc_fields;
     //! B local fields for the projector
