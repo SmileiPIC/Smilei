@@ -33,6 +33,7 @@
 #include "ElectroMagnFactory.h"
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
+#include "PatchesFactory.h"
 
 #include "DiagParams.h"
 #include "Diagnostic.h"
@@ -112,8 +113,11 @@ int main (int argc, char* argv[])
 #else
     if (smpi->isMaster()) MESSAGE("\tOpenMP : Disabled");
 #endif
-    
-    
+
+#ifdef _PATCH
+    vector<Patch*> vecPatches = PatchesFactory::createVector(params, laser_params, smpi);
+#endif
+
     // -------------------------------------------
     // Declaration of the main objects & operators
     // -------------------------------------------
@@ -255,6 +259,19 @@ int main (int argc, char* argv[])
     MESSAGE("-----------------------------------------------------------------------------------------------------");
 	
     for (unsigned int itime=stepStart+1 ; itime <= stepStop ; itime++) {
+
+#ifdef _PATCH
+	int npatches(1);
+	for (unsigned int ipatch=0 ; ipatch<npatches ; ipatch++) {
+	    vector<Species*> cuVecSpec = vecPatches[ipatch]->vecSpecies;
+	    ElectroMagn* cuEMfields = vecPatches[ipatch]->EMfields;
+	    Interpolator* cuInterp = vecPatches[ipatch]->Interp;
+	    Projector* cuProj = vecPatches[ipatch]->Proj;
+	    for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
+		cuVecSpec[ispec]->dynamics(time_dual, ispec, cuEMfields, cuInterp, cuProj, smpi, params, simWindow, diag_flag);
+	    }
+	}
+#endif
         
         // calculate new times
         // -------------------
