@@ -571,7 +571,8 @@ nxy = params.n_space[0]*params.n_space[1];
 int indices[nxy];
 
 npart = particles.size();
-particles_sorted = particles ;
+//particles_sorted = particles ;
+particles_sorted.initialize(npart, params.nDim_particle);
 
 for (unsigned int i=0; i < nxy ; i++) indices[i] = 0 ;
 
