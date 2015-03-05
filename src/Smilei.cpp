@@ -312,7 +312,11 @@ int main (int argc, char* argv[])
 		    for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
 			smpi->exchangeParticles(vecSpecies[ispec], ispec, params, tid, iDim);
                     #pragma omp barrier
-                        vecSpecies[ispec]->sort_part();
+                        //vecSpecies[ispec]->sort_part();
+                        #pragma omp master
+                        {
+                            vecSpecies[ispec]->count_sort_part(params);
+                        }
                 }
             }
         timer[1].update();

@@ -74,13 +74,14 @@ public:
 
     //! Method used to sort particles
     void sort_part();
+    void count_sort_part(PicParams& param);
 
     void movingWindow_x(unsigned int shift, SmileiMPI *smpi, PicParams& param);
     void defineNewCells(unsigned int shift, SmileiMPI *smpi, PicParams& param);
     void updateMvWinLimits(double x_moved);
 
     //! Vector containing all Particles of the considered Species
-    Particles particles;
+    Particles particles, particles_sorted;
     //std::vector<int> index_of_particles_to_exchange;
 
     //! Ionization method
@@ -104,6 +105,8 @@ public:
 
     //! Cell_length (copy from picparams)
     std::vector<double> cell_length;
+    //! min_loc_vec (copy from picparams)
+    std::vector<double> min_loc_vec;
 
     inline void clearExchList(int tid) {
 	    indexes_of_particles_to_exchange_per_thd[tid].clear();
@@ -136,6 +139,8 @@ private:
     
     //! 2 times pi
     double PI2;
+    double dx_inv_, dy_inv_;
+    int i_domain_begin, j_domain_begin;
     
     //! Number of steps for Maxwell-Juettner cumulative function integration
     //! \todo{Put in a code constant class}

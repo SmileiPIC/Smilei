@@ -44,6 +44,7 @@ cell_length(params.cell_length),
 oversize(params.oversize),
 ndim(params.nDim_particle),
 min_loc(smpi->getDomainLocalMin(0)),
+min_loc_vec(smpi->getDomainLocalMin()),
 clrw(params.clrw),
 species_param(params.species_param[ispec])
 {
@@ -53,7 +54,10 @@ species_param(params.species_param[ispec])
     // Variable definition
     // -------------------
     PI2 = 2.0 * M_PI;
-	
+    dx_inv_ = 1./cell_length[0];
+    dy_inv_ = 1./cell_length[1];
+    i_domain_begin = smpi->getCellStartingGlobalIndex(0);
+    j_domain_begin = smpi->getCellStartingGlobalIndex(1);	
     DEBUG(species_param.species_type);
 	
     electron_species = NULL;
@@ -553,8 +557,80 @@ void Species::sort_part()
     }
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Sort particles
+// ---------------------------------------------------------------------------------------------------------------------
+void Species::count_sort_part(PicParams &params)
+{
+
+unsigned int ip, npart, ndim,ixy,tot, oc, nxy, bin;
+int ix,iy;
+double x,y;
+
+nxy = params.n_space[0]*params.n_space[1];
+int indices[nxy];
+
+npart = particles.size();
+particles_sorted = particles ;
+
+for (unsigned int i=0; i < nxy ; i++) indices[i] = 0 ;
+
+// first loop counts the # of particles in each cell
+for (ip=0; ip < npart; ip++)
+{
+    x = particles.position(0,ip)-min_loc;
+    y = particles.position(1,ip)-min_loc_vec[1];
+
+    ix = floor(x * dx_inv_) ;
+    iy = floor(y * dy_inv_) ;
+
+    ixy = iy + ix*params.n_space[1];
+
+
+    indices[ixy] ++;
+}
+
+// second loop convert the count array in cumulative sum
+tot=0;
+for (unsigned int ixy=0; ixy < nxy; ixy++)
+{
+    oc = indices[ixy];
+    indices[ixy] = tot;
+    tot += oc;
+}
+
+
+bmin[0] = 0;    
+for (bin=0; bin<bmin.size()-1; bin++) { //Loop on the bins. 
+
+    bmin[bin+1] = indices[(bin+1)*params.n_space[1]*clrw] ;   
+    bmax[bin] = bmin[bin+1];   
+}
+bin = bmin.size()-1 ;
+bmax[bin] = npart;   
+
+// last loop puts the particles and update the count array
+for (ip=0; ip < npart; ip++) {
+    x = particles.position(0,ip)-min_loc;
+    y = particles.position(1,ip)-min_loc_vec[1];
+
+    ix = floor(x * dx_inv_) ;
+    iy = floor(y * dy_inv_) ;
+
+    ixy = iy + ix*params.n_space[1];
+
+    particles.overwrite_part2D(ip, particles_sorted , indices[ixy]);
+    indices[ixy]++;
+}
+
+particles = particles_sorted ;
+
+}
+
+
 void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi, PicParams& params)
 {
+    i_domain_begin+=shift;
     // Update BC positions
     partBoundCond->moveWindow_x( shift*cell_length[0], smpi );
     // Set for bin managment

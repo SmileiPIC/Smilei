@@ -112,6 +112,11 @@ public:
     inline double getDomainLocalMin(int i) const {
         return min_local[i];
     }
+    //! Return real (excluding oversize) min coordinates (ex : rank 0 retourn 0.) for direction i
+    //! @see min_local
+    inline std::vector<double> getDomainLocalMin() const {
+        return min_local;
+    }
     //! Return real (excluding oversize) max coordinates for direction i
     //! @see max_local
     inline double getDomainLocalMax(int i) const {
