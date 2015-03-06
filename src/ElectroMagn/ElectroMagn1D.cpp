@@ -632,9 +632,9 @@ void ElectroMagn1D::addToGlobalRho(int ispec, unsigned int clrw)
     nbin = n_space[0]/clrw;
     b_dim0 = clrw+2*oversize[0]+1; 
         #pragma unroll
-        for (unsigned istart=0; istart<2; istart++){; 
+        for (unsigned binstart=0; binstart<2; binstart++){; 
             #pragma omp for schedule(static)
-            for (unsigned int ibin=istart ; ibin < nbin ; ibin+=2){
+            for (unsigned int ibin=binstart ; ibin < nbin ; ibin+=2){
             //Copy the corresponding bin buffer at the correct place in global array
                for (unsigned int i = 0; i < b_dim0 ; i++) {
                    (*rho_)(ibin*clrw + i) += *(nrho_s[ispec][ibin]+ i);
@@ -659,9 +659,9 @@ void ElectroMagn1D::computeTotalRhoJs(unsigned int clrw)
         Jz1D    = static_cast<Field1D*>(Jz_s[ispec]);
         rho1D   = static_cast<Field1D*>(rho_s[ispec]);
         #pragma unroll
-        for (unsigned int istart=0; istart <2; istart++) {
+        for (unsigned int binstart=0; binstart <2; binstart++) {
             #pragma omp for schedule(static)
-            for (unsigned int ibin=istart ; ibin < nbin ; ibin+=2){
+            for (unsigned int ibin=binstart ; ibin < nbin ; ibin+=2){
             //Copy the corresponding bin buffer at the correct place in global array
                for (unsigned int i = 0; i < b_dim0 ; i++) {
                    //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.

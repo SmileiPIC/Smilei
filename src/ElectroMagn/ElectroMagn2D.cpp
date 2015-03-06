@@ -997,9 +997,9 @@ void ElectroMagn2D::addToGlobalRho(int ispec, unsigned int clrw)
     nbin = n_space[0]/clrw;
     b_dim0 = clrw+2*oversize[0]+1; 
         #pragma unroll
-        for (unsigned istart=0; istart<2; istart++){; 
+        for (unsigned binstart=0; binstart<2; binstart++){; 
             #pragma omp for schedule(static)
-            for (unsigned int ibin=istart ; ibin < nbin ; ibin+=2){
+            for (unsigned int ibin=binstart ; ibin < nbin ; ibin+=2){
             //Copy the corresponding bin buffer at the correct place in global array
                for (unsigned int i = 0; i < b_dim0*ny_p ; i++) {
                    (*rho_)(ibin*clrw*ny_p + i) += *(nrho_s[ispec][ibin]+ i);
@@ -1026,9 +1026,9 @@ void ElectroMagn2D::computeTotalRhoJs( unsigned int clrw)
         Jz2D    = static_cast<Field2D*>(Jz_s[ispec]);
         rho2D   = static_cast<Field2D*>(rho_s[ispec]);
         #pragma unroll
-        for (unsigned int istart=0; istart <2; istart++) {
+        for (unsigned int binstart=0; binstart <2; binstart++) {
             #pragma omp for schedule(static)
-            for (unsigned int ibin=istart ; ibin < nbin ; ibin+=2){
+            for (unsigned int ibin=binstart ; ibin < nbin ; ibin+=2){
             //Copy the corresponding bin buffer at the correct place in global array
                for (unsigned int i = 0; i < b_dim0 ; i++) {
                    iloc = ibin*clrw + i ;
