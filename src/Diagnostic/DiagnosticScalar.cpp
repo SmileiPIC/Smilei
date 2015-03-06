@@ -67,8 +67,8 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
 
         if (nPart>0) {
             for (unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
-                charge_tot+=(double)vecSpecies[ispec]->particles.charge(iPart);
-                ener_tot+=cell_volume*vecSpecies[ispec]->particles.weight(iPart)*(vecSpecies[ispec]->particles.lor_fac(iPart)-1.0);
+                charge_tot+=(double)vecSpecies[ispec]->particles->charge(iPart);
+                ener_tot+=cell_volume*vecSpecies[ispec]->particles->weight(iPart)*(vecSpecies[ispec]->particles->lor_fac(iPart)-1.0);
             }
             ener_tot*=vecSpecies[ispec]->species_param.mass;
         }

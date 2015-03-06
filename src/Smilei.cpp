@@ -332,7 +332,7 @@ int main (int argc, char* argv[])
                         //vecSpecies[ispec]->sort_part();
                         #pragma omp master
                         {
-                            vecSpecies[ispec]->count_sort_part(params);
+                            vecSpecies[ispec]->count_sort_part(params, itime-stepStart);
                         }
                 }
             }

@@ -46,7 +46,8 @@ ndim(params.nDim_particle),
 min_loc(smpi->getDomainLocalMin(0)),
 min_loc_vec(smpi->getDomainLocalMin()),
 clrw(params.clrw),
-species_param(params.species_param[ispec])
+species_param(params.species_param[ispec]),
+particles(&particles_sorted[0])
 {
 
     int err; 
@@ -176,7 +177,7 @@ Species::~Species()
 void Species::initWeight(PicParams* params, unsigned int ispec, unsigned int iPart, double density)
 {
     for (unsigned  p= iPart; p<iPart+params->species_param[ispec].n_part_per_cell; p++) {
-        particles.weight(p) = density / params->species_param[ispec].n_part_per_cell;
+        (*particles).weight(p) = density / params->species_param[ispec].n_part_per_cell;
     }
 }
 
@@ -188,7 +189,7 @@ void Species::initWeight(PicParams* params, unsigned int ispec, unsigned int iPa
 void Species::initCharge(PicParams* params, unsigned int ispec, unsigned int iPart, double density)
 {
     for (unsigned  p= iPart; p<iPart+params->species_param[ispec].n_part_per_cell; p++) {
-        particles.charge(p) = params->species_param[ispec].charge;
+        (*particles).charge(p) = params->species_param[ispec].charge;
     }
 }
 
@@ -207,11 +208,11 @@ void Species::initPosition(unsigned int np, unsigned int iPart, double *indexes,
 	    for (unsigned  i=0; i<ndim ; i++)
 		{
 		    if (initialization_type == "regular") {
-                            particles.position(i,p)=indexes[i]+(p-iPart+0.5)*cell_length[i]/np;
+                            (*particles).position(i,p)=indexes[i]+(p-iPart+0.5)*cell_length[i]/np;
 		    } else if (initialization_type == "cold" || initialization_type == "maxwell-juettner") {
-                        particles.position(i,p)=indexes[i]+(((double)rand() / RAND_MAX))*cell_length[i];
+                        (*particles).position(i,p)=indexes[i]+(((double)rand() / RAND_MAX))*cell_length[i];
 		    }
-		    particles.position_old(i,p) = particles.position(i,p);
+		    (*particles).position_old(i,p) = (*particles).position(i,p);
 		}// i
 	}// p
 }
@@ -236,7 +237,7 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
 	    // initialize momentum at 0 for regular or cold initialization type
 	    for (unsigned int p= iPart; p<iPart+np; p++) {
             for (unsigned int i=0; i<3 ; i++) {
-                particles.momentum(i,p) = 0.0;
+                (*particles).momentum(i,p) = 0.0;
             }
 			
 			
@@ -267,12 +268,12 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
 		    double Ener=left_w*il*dE +right_w*(il+1)*dE;
 		    double psm = sqrt(pow(1.0+Ener,2)-1.0);
 			
-		    particles.momentum(0,p) = psm*cos(theta)*sin(phi);
-		    particles.momentum(1,p) = psm*sin(theta)*sin(phi);
-		    particles.momentum(2,p) = psm*cos(phi);
+		    (*particles).momentum(0,p) = psm*cos(theta)*sin(phi);
+		    (*particles).momentum(1,p) = psm*sin(theta)*sin(phi);
+		    (*particles).momentum(2,p) = psm*cos(phi);
 		    for (unsigned int i=0; i<3 ; i++)
 			{
-			    pMean[i] += particles.momentum(i,p);
+			    pMean[i] += (*particles).momentum(i,p);
 			}
 		}//p
 		
@@ -281,7 +282,7 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
 	    for (unsigned int p= iPart; p<iPart+np; p++)
 		{
 		    for (unsigned int i=0; i<3 ; i++) {
-                particles.momentum(i,p) -= pMean[i]/np;
+                (*particles).momentum(i,p) -= pMean[i]/np;
 		    }
 		}
 		
@@ -312,13 +313,13 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
         // Lorentz transformation of the momentum
         for (unsigned int p=iPart; p<iPart+np; p++)
 	    {
-            gp = sqrt(1.0 + pow(particles.momentum(0,p),2) + pow(particles.momentum(1,p),2) + pow(particles.momentum(2,p),2));
-            px = -gp*g*vx + Lxx * particles.momentum(0,p) + Lxy * particles.momentum(1,p) + Lxz * particles.momentum(2,p);
-            py = -gp*g*vy + Lxy * particles.momentum(0,p) + Lyy * particles.momentum(1,p) + Lyz * particles.momentum(2,p);
-            pz = -gp*g*vz + Lxz * particles.momentum(0,p) + Lyz * particles.momentum(1,p) + Lzz * particles.momentum(2,p);
-            particles.momentum(0,p) = px;
-            particles.momentum(1,p) = py;
-            particles.momentum(2,p) = pz;
+            gp = sqrt(1.0 + pow((*particles).momentum(0,p),2) + pow((*particles).momentum(1,p),2) + pow((*particles).momentum(2,p),2));
+            px = -gp*g*vx + Lxx * (*particles).momentum(0,p) + Lxy * (*particles).momentum(1,p) + Lxz * (*particles).momentum(2,p);
+            py = -gp*g*vy + Lxy * (*particles).momentum(0,p) + Lyy * (*particles).momentum(1,p) + Lyz * (*particles).momentum(2,p);
+            pz = -gp*g*vz + Lxz * (*particles).momentum(0,p) + Lyz * (*particles).momentum(1,p) + Lzz * (*particles).momentum(2,p);
+            (*particles).momentum(0,p) = px;
+            (*particles).momentum(1,p) = py;
+            (*particles).momentum(2,p) = pz;
 	    }
         
     }//ENDif vel != 0
@@ -389,35 +390,35 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
 				
                 // Interpolate the fields at the particle position
-                (*LocInterp)(EMfields, particles, iPart, &Epart, &Bpart);
+                (*LocInterp)(EMfields, *particles, iPart, &Epart, &Bpart);
 				
                 // Do the ionization
-                if (Ionize && particles.charge(iPart) < (int) species_param.atomic_number) {
+                if (Ionize && (*particles).charge(iPart) < (int) species_param.atomic_number) {
                     //!\todo Check if it is necessary to put to 0 or if LocalFields ensures it
                     Jion.x=0.0;
                     Jion.y=0.0;
                     Jion.z=0.0;
-                    (*Ionize)(particles, iPart, Epart, Jion);
-                    (*Proj)(EMfields->Jx_, EMfields->Jy_, EMfields->Jz_, particles, iPart, Jion);
+                    (*Ionize)(*particles, iPart, Epart, Jion);
+                    (*Proj)(EMfields->Jx_, EMfields->Jy_, EMfields->Jz_, *particles, iPart, Jion);
                 }
 				
 				
                 // Push the particle
-                (*Push)(particles, iPart, Epart, Bpart, gf);
+                (*Push)(*particles, iPart, Epart, Bpart, gf);
 				
                 // Apply boundary condition on the particles
                 // Boundary Condition may be physical or due to domain decomposition
                 // apply returns 0 if iPart is no more in the domain local
                 //	if omp, create a list per thread
-                if ( !partBoundCond->apply( particles, iPart, params.species_param[ispec], ener_iPart ) ) {
+                if ( !partBoundCond->apply( *particles, iPart, params.species_param[ispec], ener_iPart ) ) {
                     addPartInExchList( tid, iPart );
 		    nrj_lost_per_thd[tid] += ener_iPart;
                 }
                
                 if (diag_flag == 0){
-                (*Proj)(nb_Jx, nb_Jy, nb_Jz, particles, iPart, gf, ibin*clrw, b_lastdim);
+                (*Proj)(nb_Jx, nb_Jy, nb_Jz, *particles, iPart, gf, ibin*clrw, b_lastdim);
                 } else { 
-                (*Proj)(nb_Jx, nb_Jy, nb_Jz, nb_rho, particles, iPart, gf, ibin*clrw, b_lastdim);
+                (*Proj)(nb_Jx, nb_Jy, nb_Jz, nb_rho, *particles, iPart, gf, ibin*clrw, b_lastdim);
                 }
 
             }//iPart
@@ -436,7 +437,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 int ibin = (int) ((Ionize->new_electrons).position(0,i) / cell_length[0]) - ( smpi->getCellStartingGlobalIndex(0) + oversize[0] );
                 DEBUG("here " << ibin << " " << (Ionize->new_electrons).position(0,i)/(2*M_PI));
                 // Copy Ionize->new_electrons(i) in electron_species->particles at position electron_species->bmin[ibin]
-                Ionize->new_electrons.cp_particle(i, electron_species->particles, electron_species->bmin[ibin] );
+                Ionize->new_electrons.cp_particle(i, (*electron_species->particles), electron_species->bmin[ibin] );
 				
                 // Update bins status
                 // (ugly update, memory is allocated anywhere, OK with vectors per particles parameters)
@@ -464,10 +465,10 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
                     //Update position_old because it is required for the Projection.
                     for ( int i = 0 ; i<ndim ; i++ ) {
-                        particles.position_old(i, iPart)  = particles.position(i, iPart);
+                        (*particles).position_old(i, iPart)  = (*particles).position(i, iPart);
                     }
 
-                    (*Proj)(nb_rho, particles, iPart, ibin*clrw, b_lastdim);
+                    (*Proj)(nb_rho, (*particles), iPart, ibin*clrw, b_lastdim);
                 } //End loop on particles
             }//End loop on bins
         }
@@ -482,12 +483,12 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::dump(std::ofstream& ofile)
 {
-    for (unsigned int i=0; i<particles.size(); i++ )
+    for (unsigned int i=0; i<(*particles).size(); i++ )
 	{
 	    ofile << i ;
-	    for (unsigned int m=0; m<ndim; m++) ofile << "\t" << particles.position(m,i);
-	    for (unsigned int m=0; m<3; m++)    ofile << "\t" << particles.momentum(m,i);
-	    ofile << "\t" << particles.weight(i); //<< "\t" << Push->getMass() << "\t" << Push->getCharge();
+	    for (unsigned int m=0; m<ndim; m++) ofile << "\t" << (*particles).position(m,i);
+	    for (unsigned int m=0; m<3; m++)    ofile << "\t" << (*particles).momentum(m,i);
+	    ofile << "\t" << (*particles).weight(i); //<< "\t" << Push->getMass() << "\t" << Push->getCharge();
 	    ofile << endl;
 	}
     ofile << endl;
@@ -512,16 +513,16 @@ void Species::sort_part()
         p1 = bmax[bin]-1;
         //If first particles change bin, they do not need to be swapped.
         while (p1 == bmax[bin]-1 && p1 >= bmin[bin]) {
-            if (particles.position(0,p1) >= limit ) {
+            if ((*particles).position(0,p1) >= limit ) {
                 bmax[bin]--;
             }
             p1--;
         }
         //         Now particles have to be swapped
         for( p2 = p1 ; p2 >= bmin[bin] ; p2-- ) { //Loop on the bin's particles.
-            if (particles.position(0,p2) >= limit ) {
+            if ((*particles).position(0,p2) >= limit ) {
                 //This particle goes up one bin.
-                particles.swap_part(p2,bmax[bin]-1);
+                (*particles).swap_part(p2,bmax[bin]-1);
                 bmax[bin]--;
             }
         }
@@ -533,15 +534,15 @@ void Species::sort_part()
         bmin_init = bmin[bin];
         p1 = bmin[bin];
         while (p1 == bmin[bin] && p1 < bmax[bin]) {
-            if (particles.position(0,p1) < limit ) {
+            if ((*particles).position(0,p1) < limit ) {
                 bmin[bin]++;
             }
             p1++;
         }
         for( p2 = p1 ; p2 < bmax[bin] ; p2++ ) { //Loop on the bin's particles.
-            if (particles.position(0,p2) < limit ) {
+            if ((*particles).position(0,p2) < limit ) {
                 //This particle goes down one bin.
-                particles.swap_part(p2,bmin[bin]);
+                (*particles).swap_part(p2,bmin[bin]);
                 bmin[bin]++;
             }
         }
@@ -551,7 +552,7 @@ void Species::sort_part()
         //Number of particles from bin-1 going up is: bmin_init-bmax[bin-1].
         //Total number of particles we need to swap is the min of both.
         p2 = min(bmin[bin]-bmin_init,bmin_init-bmax[bin-1]);
-        if (p2 >0) particles.swap_part(bmax[bin-1],bmin[bin]-p2,p2);
+        if (p2 >0) (*particles).swap_part(bmax[bin-1],bmin[bin]-p2,p2);
         bmax[bin-1] += bmin[bin] - bmin_init;
         bmin[bin] = bmax[bin-1];
     }
@@ -560,7 +561,7 @@ void Species::sort_part()
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::count_sort_part(PicParams &params)
+void Species::count_sort_part(PicParams &params, unsigned int itime)
 {
 
 unsigned int ip, npart, ndim,ixy,tot, oc, nxy, bin;
@@ -569,18 +570,17 @@ double x,y;
 
 nxy = params.n_space[0]*params.n_space[1];
 int indices[nxy];
-
-npart = particles.size();
+npart = (*particles).size();
 //particles_sorted = particles ;
-particles_sorted.initialize(npart, params.nDim_particle);
+particles_sorted[itime%2].initialize(npart, params.nDim_particle);
 
 for (unsigned int i=0; i < nxy ; i++) indices[i] = 0 ;
 
 // first loop counts the # of particles in each cell
 for (ip=0; ip < npart; ip++)
 {
-    x = particles.position(0,ip)-min_loc;
-    y = particles.position(1,ip)-min_loc_vec[1];
+    x = (*particles).position(0,ip)-min_loc;
+    y = (*particles).position(1,ip)-min_loc_vec[1];
 
     ix = floor(x * dx_inv_) ;
     iy = floor(y * dy_inv_) ;
@@ -612,19 +612,19 @@ bmax[bin] = npart;
 
 // last loop puts the particles and update the count array
 for (ip=0; ip < npart; ip++) {
-    x = particles.position(0,ip)-min_loc;
-    y = particles.position(1,ip)-min_loc_vec[1];
+    x = (*particles).position(0,ip)-min_loc;
+    y = (*particles).position(1,ip)-min_loc_vec[1];
 
     ix = floor(x * dx_inv_) ;
     iy = floor(y * dy_inv_) ;
 
     ixy = iy + ix*params.n_space[1];
 
-    particles.overwrite_part2D(ip, particles_sorted , indices[ixy]);
+    (*particles).overwrite_part2D(ip, particles_sorted[itime%2] , indices[ixy]);
     indices[ixy]++;
 }
 
-particles = particles_sorted ;
+particles = &particles_sorted[itime%2] ;
 
 }
 
@@ -643,7 +643,7 @@ void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi, PicParams& par
     for (unsigned int ibin = 0 ; ibin < 1 ; ibin++)
         for (unsigned int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
             addPartInExchList( 0, iPart );
-	    nrj_mw_lost += particles.weight(iPart)*(particles.lor_fac(iPart)-1.0);
+	    nrj_mw_lost += (*particles).weight(iPart)*((*particles).lor_fac(iPart)-1.0);
 	}
     
     // bin 0 empty
@@ -756,8 +756,8 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
     //    particles.initialize(n_existing_particles+npart_effective, params_->nDim_particle);
     // }
     
-    int n_existing_particles = particles.size();
-    particles.initialize(n_existing_particles+npart_effective, params.nDim_particle);
+    int n_existing_particles = (*particles).size();
+    (*particles).initialize(n_existing_particles+npart_effective, params.nDim_particle);
     
     
     // define Maxwell-Juettner related quantities
@@ -845,7 +845,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
     delete [] vel;
     
     for (unsigned int iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++) {
-	nrj_new_particles += particles.weight(iPart)*(particles.lor_fac(iPart)-1.0);
+	nrj_new_particles += (*particles).weight(iPart)*((*particles).lor_fac(iPart)-1.0);
     }
 
     return npart_effective;

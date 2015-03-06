@@ -37,20 +37,20 @@ public:
 
     //! Method returning the Particle list for the considered Species
     inline Particles getParticlesList() const {
-        return particles;
+        return *particles;
     }
     inline Particles& getParticlesList() {
-        return particles;
+        return *particles;
     }
 
     //! Method returning the effective number of Particles for the considered Species
     inline unsigned int getNbrOfParticles() const {
-        return particles.size();
+        return (*particles).size();
     }
     // capacity() = vect ever oversize
     // TO do defince particles.capacity = min.capacity
     inline unsigned int getParticlesCapacity() const {
-        return particles.capacity();
+        return (*particles).capacity();
     }
 
     //! Method calculating the Particle dynamics (interpolation, pusher, projection)
@@ -74,14 +74,15 @@ public:
 
     //! Method used to sort particles
     void sort_part();
-    void count_sort_part(PicParams& param);
+    void count_sort_part(PicParams& param, unsigned int itime);
 
     void movingWindow_x(unsigned int shift, SmileiMPI *smpi, PicParams& param);
     void defineNewCells(unsigned int shift, SmileiMPI *smpi, PicParams& param);
     void updateMvWinLimits(double x_moved);
 
     //! Vector containing all Particles of the considered Species
-    Particles particles, particles_sorted;
+    Particles *particles;
+    Particles particles_sorted[2];
     //std::vector<int> index_of_particles_to_exchange;
 
     //! Ionization method

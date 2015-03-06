@@ -231,13 +231,13 @@ void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) 
 					for (int iPart=(*mySpec)->bmin[ibin] ; iPart<(*mySpec)->bmax[ibin]; iPart++ ) {
                         //! fill the my_part structure
                         for(unsigned int k=0;k<ndim;k++) {
-                            my_part.pos[k]=(*mySpec)->particles.position(k,iPart);
+                            my_part.pos[k]=(*mySpec)->particles->position(k,iPart);
                         }
                         for(unsigned int k=0;k<3;k++) {
-                            my_part.mom[k]=(*mySpec)->particles.momentum(k,iPart);
+                            my_part.mom[k]=(*mySpec)->particles->momentum(k,iPart);
                         }
-                        my_part.weight=(*mySpec)->particles.weight(iPart);
-                        my_part.charge=(*mySpec)->particles.charge(iPart);
+                        my_part.weight=(*mySpec)->particles->weight(iPart);
+                        my_part.charge=(*mySpec)->particles->charge(iPart);
                         for (vector<DiagnosticPhase*>::const_iterator diag=vecDiagPhaseToRun.begin() ; diag != vecDiagPhaseToRun.end(); diag++) {
                             //! do something with each particle
 							(*diag)->run(my_part);
