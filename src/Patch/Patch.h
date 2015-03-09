@@ -47,6 +47,11 @@ public:
     Interpolator* Interp;
     Projector* Proj;
 
+    //! Method used to get patch coordinates from its rank along the Hilbert curve
+    void dtoxy(int npatches_perdim, int *x, int *y, int ipatch);
+    //! Method used to rotate a quadrant approriately
+    void rot(int npatches_perdim, int *x, int *y, int rx, int ry);
+
 protected:
 
 private:
