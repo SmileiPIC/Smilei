@@ -13,6 +13,7 @@
 
 #include "InputData.h"
 #include "PicParams.h"
+#include "DiagnosticParticles.h"
 
 //! this structure holds all the possible paraeters for phase diagnostics. Then every DiagnosticPhaseXXXXX will pick the ones that fit
 struct phaseStructure {
@@ -106,6 +107,10 @@ public:
 	
 	//! vector containing phase1D structures
 	std::vector<phaseStructure> vecPhase;
+	
+	//! Method to find the numbers of requested species, sorted, and duplicates removed
+	static std::vector<unsigned int> FindSpecies(std::vector<std::string>, PicParams&);
+
 };
 
 #endif

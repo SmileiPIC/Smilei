@@ -1,10 +1,22 @@
 #include "DiagParams.h"
 
 #include <cmath>
+#include <iostream>
 
 #include "Tools.h"
 
 using namespace std;
+
+
+inline double convertToDouble(string &s)
+{
+    std::istringstream i(s);
+    double x;
+    if (!(i >> x)) ERROR("Cannot interpret " << s << " as a number");
+    return x;
+}
+
+
 
 DiagParams::DiagParams(PicParams& params, InputData &ifile) {
     
@@ -144,6 +156,143 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
 	}
 	
 	
+    // particles diagnostics start here
+    // --------------------------------
+    int n_diag_particles=0;
+    unsigned int every, time_average, iaxis, axis_nbins;
+    double axis_min, axis_max;
+    string output;
+    bool axis_logscale, axis_edgeinclusive;
+    vector<string> species, axis;
+    vector<unsigned int> species_numbers;
+    DiagnosticParticlesAxis  *tmpAxis;
+    vector<DiagnosticParticlesAxis*> tmpAxes;
+    DiagnosticParticles * tmpDiagParticles;
+    
+    while (ifile.existGroup("diagnostic particles",n_diag_particles)) {
+        
+        // get parameter "output" that determines the quantity to sum in the output array
+        output = "";
+        ok = ifile.extract("output",output,"diagnostic particles",0,n_diag_particles);
+        if (!ok)
+            ERROR("Diagnotic Particles #" << n_diag_particles << ": parameter `output` required");
+        
+        // get parameter "every" which is the period (in timesteps) for getting the outputs
+        every = 0;
+        ok = ifile.extract("every",every,"diagnostic particles",0,n_diag_particles);
+        if (!ok)
+            ERROR("Diagnotic Particles #" << n_diag_particles << ": parameter `every` required");
+        
+        // get parameter "time_average" that determines the number of timestep to average the outputs
+        time_average = 1;
+        ifile.extract("time_average",time_average,"diagnostic particles",0,n_diag_particles);
+        if (time_average > every)
+            ERROR("Diagnotic Particles #" << n_diag_particles << ": `time_average` cannot be larger than `every`");
+        if (time_average < 1) time_average=1;
+        
+        // get parameter "species" that determines the species to use (can be a list of species)
+        species.resize(0);
+        ok = ifile.extract("species",species,"diagnostic particles",0,n_diag_particles);
+        if (!ok)
+            ERROR("Diagnotic Particles #" << n_diag_particles << ": parameter `species` required");
+        // verify that the species exist, remove duplicates and sort by number
+        species_numbers = FindSpecies(species, params);
+        
+        // get parameter "axis" that adds one axis to the diagnostic
+        //  It should contain several items:
+        //      requested quantity, min value, max value ,number of bins, log (optional), edge_inclusive (optional)
+        ok = true;
+        iaxis = 0;
+        tmpAxes.resize(0);
+        while(true) { // loop in case there are several axes
+            axis.resize(0);
+            ok = ifile.extract("axis",axis,"diagnostic particles",iaxis,n_diag_particles);
+            if (!ok) break;
+            if (axis.size()<4)
+                ERROR("Diagnotic Particles #" << n_diag_particles << ": parameter axis needs at least 4 arguments (type, min, max, nbins)");
+            tmpAxis = new DiagnosticParticlesAxis();
+            tmpAxis->type  = axis[0]; // requested quantity (e.g. 'x', 'px', etc.)
+            tmpAxis->min   = convertToDouble(axis[1]);
+            tmpAxis->max   = convertToDouble(axis[2]);
+            tmpAxis->nbins = convertToDouble(axis[3]);
+            if (tmpAxis->nbins - floor(tmpAxis->nbins) != 0.)
+                ERROR("Diagnotic Particles #" << n_diag_particles << ": number of bins must be integer (not " << axis[3] << ")");
+            tmpAxis->logscale = false;
+            tmpAxis->edge_inclusive = false;
+            // Checks for  other keywords such as "logscale" and "edge_inclusive"
+            for(unsigned int i=4; i<axis.size(); i++) {
+                if(axis[i]=="logscale" ||  axis[i]=="log_scale" || axis[i]=="log") {
+                        tmpAxis->logscale = true;
+                        break;
+                }
+                if(axis[i]=="edges" ||  axis[i]=="edge" ||  axis[i]=="edge_inclusive" ||  axis[i]=="edges_inclusive") {
+                        tmpAxis->edge_inclusive = true;
+                        break;
+                }
+                ERROR("Diagnotic Particles #" << n_diag_particles << ": keyword `" << axis[i] << "` not understood");
+            }
+            // If the axis is spatial, then we need to apply the conv_fac
+            if (axis[0]=="x" || axis[0]=="y" || axis[0]=="z") {
+                tmpAxis->min *= conv_fac;
+                tmpAxis->max *= conv_fac;
+            }
+            tmpAxes.push_back(tmpAxis);
+            iaxis++;
+        }
+        if (iaxis == 0)
+            ERROR("Diagnotic Particles #" << n_diag_particles << ": at least one parameter `axis` required");
+        
+        // create new diagnostic object
+        tmpDiagParticles = new DiagnosticParticles(n_diag_particles, output, every, time_average, species_numbers, tmpAxes);
+        // add this object to the list
+        DiagnosticParticles::vecDiagnosticParticles.push_back(tmpDiagParticles);
+        // next diagnostic
+        n_diag_particles++;
+    }
+
+}
+
+
+// Finds requested species in the list of existing species.
+// Returns an array of the numbers of the requested species.
+// Note that there might be several species that have the same "name" or "type"
+//  so that we have to search for all possibilities.
+vector<unsigned int> DiagParams::FindSpecies( vector<string> requested_species, PicParams& params)
+{
+    bool species_found;
+    vector<unsigned int> result;
+    unsigned int i;
+    vector<string> existing_species;
+    
+    // Make an array of the existing species names
+    existing_species.resize(0);
+    for (unsigned int ispec=0 ; ispec<params.n_species ; ispec++) {
+        existing_species.push_back( params.species_param[ispec].species_type );
+    }
+    
+    // Loop over group of requested species
+    for (unsigned int rs=0 ; rs<requested_species.size() ; rs++) {
+        species_found = false;
+        // Loop over existing species
+        for (unsigned int es=0 ; es<existing_species.size() ; es++) {
+            if (requested_species[rs] == existing_species[es]) { // if found
+                species_found = true;
+                // Add to the list and sort
+                for (i=0 ; i<result.size() ; i++) {
+                    if (es == result[i]) break; // skip if duplicate
+                    if (es <  result[i]) {
+                        result.insert(result.begin()+i,es); // insert at the right place
+                        break;
+                    }
+                }
+                // Put at the end if not put earlier
+                if (i == result.size()) result.push_back(es);
+            }
+        }
+        if (!species_found)
+            ERROR("Species `" << requested_species[rs] << "` was not found.");
+    }
 	
+    return result;
 }
 

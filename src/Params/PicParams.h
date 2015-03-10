@@ -197,6 +197,8 @@ public:
     
     //! Clusters width
     int clrw;
+    //! Number of cells per cluster
+    int n_cell_per_cluster;
     
     //! initial number of species
     unsigned int n_species;

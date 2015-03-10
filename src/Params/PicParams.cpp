@@ -52,7 +52,7 @@ PicParams::PicParams(InputData &ifile) {
         ERROR("Simulation units sim_units" << sim_units << " not specified or inexisting");
     }
     
-    
+    wavelength_SI = 0.;
     ifile.extract("wavelength_SI",wavelength_SI);
     
     
@@ -323,6 +323,8 @@ void PicParams::compute()
             n_space[i]=1;
             cell_length[i]=0.0;
         }
+        // compute number of cells per cluster
+        n_cell_per_cluster = clrw * n_space[1] * n_space[2];
         
     } else {
         ERROR("Problem with the definition of nDim_field");
