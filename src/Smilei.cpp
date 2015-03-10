@@ -328,8 +328,8 @@ int main (int argc, char* argv[])
 		    // Loop on dims to manage exchange in corners
 		    for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
 			smpi->exchangeParticles(vecSpecies[ispec], ispec, params, tid, iDim);
-                    #pragma omp barrier
-                            vecSpecies[ispec]->sort_part();
+                        #pragma omp barrier
+                        vecSpecies[ispec]->sort_part();
                         if (itime%200 == 0) {
                             #pragma omp master
                             {
