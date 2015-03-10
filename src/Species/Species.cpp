@@ -561,18 +561,20 @@ void Species::sort_part()
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::count_sort_part(PicParams &params, unsigned int itime)
+void Species::count_sort_part(PicParams &params)
 {
 
-unsigned int ip, npart, ndim,ixy,tot, oc, nxy, bin;
+unsigned int ip, npart, ndim,ixy,tot, oc, nxy, bin, token;
 int ix,iy;
 double x,y;
 
 nxy = params.n_space[0]*params.n_space[1];
+token = (particles == &particles_sorted[0]);
+
 int indices[nxy];
 npart = (*particles).size();
 //particles_sorted = particles ;
-particles_sorted[itime%2].initialize(npart, params.nDim_particle);
+particles_sorted[token].initialize(npart, params.nDim_particle);
 
 for (unsigned int i=0; i < nxy ; i++) indices[i] = 0 ;
 
@@ -600,15 +602,15 @@ for (unsigned int ixy=0; ixy < nxy; ixy++)
     tot += oc;
 }
 
-
-bmin[0] = 0;    
-for (bin=0; bin<bmin.size()-1; bin++) { //Loop on the bins. 
-
-    bmin[bin+1] = indices[(bin+1)*params.n_space[1]*clrw] ;   
-    bmax[bin] = bmin[bin+1];   
-}
-bin = bmin.size()-1 ;
-bmax[bin] = npart;   
+//Bookmarking is not needed if normal sort is called before.
+//bmin[0] = 0;    
+//for (bin=0; bin<bmin.size()-1; bin++) { //Loop on the bins. 
+//
+//    bmin[bin+1] = indices[(bin+1)*params.n_space[1]*clrw] ;   
+//    bmax[bin] = bmin[bin+1];   
+//}
+//bin = bmin.size()-1 ;
+//bmax[bin] = npart;   
 
 // last loop puts the particles and update the count array
 for (ip=0; ip < npart; ip++) {
@@ -620,11 +622,11 @@ for (ip=0; ip < npart; ip++) {
 
     ixy = iy + ix*params.n_space[1];
 
-    (*particles).overwrite_part2D(ip, particles_sorted[itime%2] , indices[ixy]);
+    (*particles).overwrite_part2D(ip, particles_sorted[token] , indices[ixy]);
     indices[ixy]++;
 }
 
-particles = &particles_sorted[itime%2] ;
+particles = &particles_sorted[token] ;
 
 }
 

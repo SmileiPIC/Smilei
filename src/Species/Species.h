@@ -74,7 +74,7 @@ public:
 
     //! Method used to sort particles
     void sort_part();
-    void count_sort_part(PicParams& param, unsigned int itime);
+    void count_sort_part(PicParams& param);
 
     void movingWindow_x(unsigned int shift, SmileiMPI *smpi, PicParams& param);
     void defineNewCells(unsigned int shift, SmileiMPI *smpi, PicParams& param);
