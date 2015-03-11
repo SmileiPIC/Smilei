@@ -205,21 +205,32 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
         iaxis = 0;
         tmpAxes.resize(0);
         while(true) { // loop in case there are several axes
+        	// 1 - Find "axis" keyword and create new axis object
             axis.resize(0);
             ok = ifile.extract("axis",axis,"diagnostic particles",iaxis,n_diag_particles);
             if (!ok) break;
             if (axis.size()<4)
                 ERROR("Diagnotic Particles #" << n_diag_particles << ": parameter axis needs at least 4 arguments (type, min, max, nbins)");
             tmpAxis = new DiagnosticParticlesAxis();
-            tmpAxis->type  = axis[0]; // requested quantity (e.g. 'x', 'px', etc.)
+
+            // 2 - Extract axis type (e.g. 'x', 'px', etc.)
+            tmpAxis->type  = axis[0];
+            if (   (tmpAxis->type == "z" && params.nDim_particle <3)
+                || (tmpAxis->type == "y" && params.nDim_particle <2) )
+                ERROR("Diagnotic Particles #" << n_diag_particles << ": axis " << tmpAxis->type << " cannot exist in " << params.nDim_particle << "D");
+            
+            // 3 - Extract axis min and max
             tmpAxis->min   = convertToDouble(axis[1]);
             tmpAxis->max   = convertToDouble(axis[2]);
+            
+            // 4 - Extract number of bins
             tmpAxis->nbins = convertToDouble(axis[3]);
             if (tmpAxis->nbins - floor(tmpAxis->nbins) != 0.)
                 ERROR("Diagnotic Particles #" << n_diag_particles << ": number of bins must be integer (not " << axis[3] << ")");
+
+            // 5 - Check for  other keywords such as "logscale" and "edge_inclusive"
             tmpAxis->logscale = false;
             tmpAxis->edge_inclusive = false;
-            // Checks for  other keywords such as "logscale" and "edge_inclusive"
             for(unsigned int i=4; i<axis.size(); i++) {
                 if(axis[i]=="logscale" ||  axis[i]=="log_scale" || axis[i]=="log") {
                         tmpAxis->logscale = true;

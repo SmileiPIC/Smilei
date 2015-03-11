@@ -17,7 +17,7 @@ wavelength_SI = 1.e-6
 #      3d3v = cartesian grid with 3d in space + 3d in velocity
 #      2drz = cylindrical (r,z) grid with 3d3v particles
 #
-dim = 2d3v
+dim = 1d3v
 
 # order of interpolation
 #
@@ -31,7 +31,7 @@ interpolation_order = 2
 # sim_time  : duration of the simulation 
 #
 timestep = 0.02
-sim_time  = 2.
+sim_time  = 1.
 
 # SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
 # either use the resolution (res_space) or cell-length (cell_length)
@@ -40,8 +40,8 @@ sim_time  = 2.
 # sim_length  : length of the simulation 
 # cell_length : cell-length 
 #
-cell_length = 0.05 0.05
-sim_length  = 1.  1.
+cell_length = 0.05
+sim_length  = 1.
 
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
 # bc_em_type_long/trans : boundary conditions used for EM fields 
@@ -77,11 +77,11 @@ species
 	species_type = ion1
 	species_geometry = constant
 	vacuum_length   = 0. 0.
-	dens_length_x   = 1. 1. 1.
-	dens_length_y   = 1. 1. 1.
+	dens_length_x   = 100. 100. 100.
+#	dens_length_y   = 1. 1. 1.
 	initialization_type = maxwell-juettner
 	ionization_model = none
-	n_part_per_cell = 300
+	n_part_per_cell = 1000
 	c_part_max = 1.0
 	mass = 1836.0
 	charge = 1.0
@@ -101,10 +101,10 @@ species
 	species_type = electron1
 	species_geometry = constant
 	vacuum_length   = 0.0 0.0 
-	dens_length_x   = 1. 1. 1.
-	dens_length_y   = 1. 1. 1.
+	dens_length_x   = 100. 100. 100.
+#	dens_length_y   = 1. 1. 1.
 	initialization_type = maxwell-juettner
-	n_part_per_cell= 300
+	n_part_per_cell= 1000
 	c_part_max = 1.0
 	mass = 1.0
 	charge = -1.0
@@ -123,26 +123,26 @@ end
 # ----------------
 # LASER DEFINITION
 # ----------------
-laser 
-	a0=0.0
-	angle=0
-	delta=0.707106781                
-	time_profile = constant
-	double_params = 11.0
-	transv_profile = plane-wave
-	boxSide = west
-end
+#laser 
+#	a0=0.0
+#	angle=0
+#	delta=0.707106781                
+#	time_profile = constant
+#	double_params = 11.0
+#	transv_profile = plane-wave
+#	boxSide = west
+#end
 
 # ---------------------
 # DIAGNOSTIC PARAMETERS
 # ---------------------
 
 # print_every (on screen text output) 
-print_every = 1
+print_every = 5
 
 # every for field dump
-fieldDump_every = 1
-avgfieldDump_every = 1
+fieldDump_every    = 5
+avgfieldDump_every = 5
 ntime_step_avg     = 1
 
 
@@ -150,7 +150,7 @@ ntime_step_avg     = 1
 # every = number of time-steps between each output
 #
 diagnostic scalar
-	every = 1
+	every = 5
 end
 
 
@@ -176,7 +176,16 @@ diagnostic particles
 	time_average = 1
 	species = electron1
 	axis = x    0    1    30
-	axis = y    0    1    30
+#	axis = y    0    1    30
+end
+
+diagnostic particles
+	output = density
+	every = 1
+	time_average = 1
+	species = electron1
+	axis = x    0    1    30
+	axis = px  -0.2  0.2  100
 end
 
 diagnostic particles

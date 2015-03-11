@@ -430,6 +430,7 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 	# This array will be the same size as the plotted array
 	bsize = np.prod( np.array( np.meshgrid( *tuple(plot_diff) ) ), axis=0)	
 	bsize /= units_coeff
+	bsize = bsize.transpose()
 	
 	# 4 - Loop times
 	# -------------------------------------------------------------------
