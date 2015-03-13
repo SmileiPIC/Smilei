@@ -5,7 +5,7 @@
 # >>>>>> What can be done
 #   During the simulation, each particle diagnostic collects the data from particles
 #   into a N-dimensional histogram.
-#   Each histogram axis can be: x, y, z, px, py, pz, gamma, ekin, vx, vy, vz or charge.
+#   Each histogram axis can be: x, y, z, px, py, pz, p, gamma, ekin, vx, vy, vz, v or charge.
 #   In each bin of the histogram, several things may be summed: the weights (density), 
 #     or weight*velocity (current density).
 #   Examples:
@@ -51,7 +51,7 @@
 #             slice = { "axis" : [_double_, _double_], ... }  (optional)
 #                     This parameter is used to reduce the number of dimensions of the array.
 #                     If the `axis` key is present, then any axis of the same name will be removed.
-#                     `axis` must be x, y, z, px, py, pz, gamma, ekin, vx, vy, vz or charge.
+#                     `axis` must be x, y, z, px, py, pz, p, gamma, ekin, vx, vy, vz, v or charge.
 #                      - If the value is "all", then a sum is performed over all the axis.
 #                      - If the value is _double_, then only the bin closest to the value is kept.
 #                      - If the value is [_double_,_double_], then a sum is performed between the two values.
@@ -325,9 +325,9 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 			axis_units = " [ wavelength / 2Pi ]"
 			if units == "nice":
 				axis_units = " [ microns ]"; axis_coeff = 1e6*wavelength_SI/(2.*np.pi)
-		elif axis["type"] in ["px","py","pz"]:
+		elif axis["type"] in ["px","py","pz","p"]:
 			axis_units = " [ m c ]"
-		elif axis["type"] in ["vx","vy","vz"]:
+		elif axis["type"] in ["vx","vy","vz","v"]:
 			axis_units = " [ c ]"
 		elif axis["type"] == "gamma":
 			overall_min = "1"
@@ -392,9 +392,9 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 			if   axis["type"] in ["x","y","z"]:
 				units_coeff /= coeff_distances
 				unitsa[0] += 1
-			elif axis["type"] in ["px","py","pz"]:
+			elif axis["type"] in ["px","py","pz","p"]:
 				unitsa[1] += 1
-			elif axis["type"] in ["vx","vy","vz"]:
+			elif axis["type"] in ["vx","vy","vz","v"]:
 				unitsa[2] += 1
 			elif axis["type"] == "ekin":
 				units_coeff /= coeff_energy

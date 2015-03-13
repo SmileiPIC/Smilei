@@ -29,7 +29,7 @@ DiagnosticParticles::DiagnosticParticles(unsigned int ID, string output_, unsign
     // if necessary, resize the output array
     if (time_average>1)
         data_sum.resize(output_size);
-        
+    
     MESSAGE("Created particle diagnostic #" << ID);
     
 }
@@ -135,7 +135,7 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
     if (timestep ==0) {
         // the master creates the hdf file
         if (smpi->isMaster() ) {
-            mystream.clear();
+            mystream.str("");
             mystream << "ParticleDiagnostic" << diagnostic_id << ".h5";
             fileId = H5Fcreate( mystream.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
             // write version
@@ -241,6 +241,10 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
                     for (int ipart = bmin ; ipart < bmax ; ipart++)
                         axis_array[ipart] = mass * (*pz)[ipart];
                 
+                else if (axistype == "p"    )
+                    for (int ipart = bmin ; ipart < bmax ; ipart++)
+                        axis_array[ipart] = mass * sqrt(pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2));
+                
                 else if (axistype == "gamma" )
                     for (int ipart = bmin ; ipart < bmax ; ipart++)
                         axis_array[ipart] = sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
@@ -260,6 +264,10 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
                 else if (axistype == "vz"    )
                     for (int ipart = bmin ; ipart < bmax ; ipart++)
                         axis_array[ipart] = (*pz)[ipart] / sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
+                        
+                else if (axistype == "v"    )
+                    for (int ipart = bmin ; ipart < bmax ; ipart++)
+                        axis_array[ipart] = pow( 1. + 1./(pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2)) , -0.5);
                 
                 else if (axistype == "charge")
                     for (int ipart = bmin ; ipart < bmax ; ipart++)

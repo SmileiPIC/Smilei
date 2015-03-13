@@ -4,7 +4,7 @@ PARTICLE DIAGNOSTICS                -    F. Perez - 03/2015
 -----------------------------------------------------------------------
   During the simulation, each particle diagnostic collects the data from particles
   into a N-dimensional histogram.
-  Each histogram axis can be: x, y, z, px, py, pz, gamma, ekin, vx, vy, vz or charge.
+  Each histogram axis can be: x, y, z, px, py, pz, p, gamma, ekin, vx, vy, vz, v or charge.
   In each bin of the histogram, several things may be summed: the weights (density), 
     or weight*velocity (current density).
   Examples:
@@ -29,7 +29,7 @@ In the input (namelist) file, each diagnostics are provided as follows:
 # time_averate => an integer greater than 0 : number of time-steps to average
 # species      => a list of one or several species whose data will be used
 # axis   = type min max nsteps [logscale] [edgeinclusive]
-#              => `type` can be x, y, z, px, py, pz, gamma, ekin, vx, vy, vz or charge
+#              => `type` can be x, y, z, px, py, pz, p, gamma, ekin, vx, vy, vz, v or charge
 #              => the data is binned for `type` between `min` and `max`, in `nsteps` bins
 #              => "logscale" sets the binning scale to logarithmic
 #              => "edgeinclusive" forces the particles outside (`min`,`max`) to be counted in the extrema bins
