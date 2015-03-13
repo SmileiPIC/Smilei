@@ -74,8 +74,10 @@
 #              ymax = _double_    (optional)
 #                     If present, axes are rescaled before plotting.
 #
+#            figure = None        (default)
 #            figure = _int_       (optional)
-#                     If present, choses the figure number that is passed to matplotlib
+#                     Choses the figure number that is passed to matplotlib.
+#                     If absent or None, returns the first data without plotting.
 #
 # >>>>>> Examples:
 #    ParticleDiagnostic('../test', diagNumber=1, slice={"y":"all"}, units="nice",data_min=0, data_max=3e14, figure=1)
@@ -156,16 +158,39 @@ def getInfo(results_path, diagNumber):
 
 
 # Finds a parameter "param" in the input file
-def findParam(results_path, param):
+# Argument "after" is a string that must be found before "param"
+def findParam(results_path, param, after=None):
 	out = ""
+	ok = True if after is None else False
 	file = glob.glob(results_path+"/*.in")[0]
 	for line in open(file, 'r'):
 		if "#" in line: line = line[:line.find("#")]
+		if ok or (after in line and "=" in line):
+			ok = True
+		else:
+			continue
 		if param in line and "=" in line:
 			out = line.split("=")[1]
 			break
 	return out.strip()
+	
 
+# get all available timesteps for a given diagnostic
+def getAvailableTimesteps(results_path, diagNumber):
+	try:
+		file = results_path+'/ParticleDiagnostic'+str(diagNumber)+'.h5'
+		f = h5py.File(file, 'r')
+	except:
+		print "Cannot open file "+file
+		return np.array([])
+	items = f.items()
+	ntimes = len(items)
+	times = np.zeros(ntimes)
+	for i in range(ntimes):
+		times[i] = int(items[i][0].strip("timestep")) # fill the "times" array with the available timesteps
+	f.close()
+	return times
+	
 
 # -------------------------------------------------------------------
 # Main function
@@ -250,7 +275,8 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 	if info == False:
 		print "Particle diagnostic #"+str(diagNumber)+" not found";
 		return
-	printInfo(info)
+		
+	if figure is not None: printInfo(info)
 	
 	# Open hdf file
 	file = results_path+'/ParticleDiagnostic'+str(diagNumber)+'.h5'
@@ -275,7 +301,8 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 	if timesteps is not None:
 		
 		# get timesteps
-		if (type(timesteps) is tuple or type(timesteps) is list) and len(timesteps)==2:
+		timesteps = np.int_(timesteps).tolist()
+		if type(timesteps) is list and len(timesteps)==2:
 			ts = np.double(timesteps)
 			times = times[ (times>=ts[0]) * (times<=ts[1]) ] # get all times in between bounds
 		elif type(timesteps) is int or len(timesteps)==1:
@@ -299,7 +326,7 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 	axes = info["axes"]
 	naxes = len(axes)
 	shape = []
-	plot_shape = []; plot_label = []; plot_centers = []; plot_log = []; plot_diff = []
+	plot_shape = []; plot_type = []; plot_label = []; plot_centers = []; plot_log = []; plot_diff = []
 	units_coeff = 1.
 	unitsa = [0,0,0,0]
 	for iaxis in range(naxes):
@@ -374,10 +401,11 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 			imax = indices.max(); emax = edges[imax]
 			if imin==0            and axis["edges_included"]: emin = overall_min
 			if imin==axis["size"] and axis["edges_included"]: emax = overall_max
-			if indices.size == 1:
-				print "   Slicing at "+axis["type"]+" = "+str(centers[indices])
-			else:
-				print "   Slicing at "+axis["type"]+" = "+str(edges[indices[0]])+" to "+str(edges[indices[-1]])
+			if figure is not None:
+				if indices.size == 1:
+					print "   Slicing at "+axis["type"]+" = "+str(centers[indices])
+				else:
+					print "   Slicing at "+axis["type"]+" = "+str(edges[indices[0]])+" to "+str(edges[indices[-1]])
 			
 			if axis["type"] in ["x","y","z"]:
 				units_coeff /= coeff_distances*slice_size
@@ -385,6 +413,7 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 		# if not sliced, then add this axis to the overall plot
 		else:
 			plot_shape.append(axis["size"])
+			plot_type.append(axis["type"])
 			plot_label.append(axis["type"]+axis_units)
 			plot_centers.append(centers*axis_coeff)
 			plot_log.append(axis["log"])
@@ -434,7 +463,7 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 	
 	# 4 - Loop times
 	# -------------------------------------------------------------------
-	fig = plt.figure(figure)
+	if figure is not None: fig = plt.figure(figure)
 	for itime in range(times.size):
 		
 		time = times[itime]
@@ -452,6 +481,8 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 		
 		# log scale if requested
 		if data_log: A = np.log10(A)
+		
+		if figure is None: break
 		
 		# plot
 		if A.ndim == 1:
@@ -484,10 +515,16 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 			fig.canvas.draw()
 			plt.show()
 		
-		print "timestep "+str(time)
+		if figure is not None: print "timestep "+str(time)
 	
 	
 	f.close()
+	
+	if figure is None:
+		result = {"data":A}
+		for i in range(len(plot_type)):
+			result.update({ plot_type[i]:plot_centers[i] })
+		return result
 
 
 	
