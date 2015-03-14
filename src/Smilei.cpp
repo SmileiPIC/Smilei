@@ -175,7 +175,7 @@ int main (int argc, char* argv[])
     
     // Create diagnostics
     Diagnostic *Diags =new Diagnostic(params,diag_params, smpi);    
-    
+   
     smpi->barrier();
     
     
@@ -217,18 +217,18 @@ int main (int argc, char* argv[])
 	    EMfields->solvePoisson(smpi);
         
         
-        MESSAGE("----------------------------------------------");
-        MESSAGE("Running diags at time t = 0");
-        MESSAGE("----------------------------------------------");
-        // run diagnostics at time-step 0
-        Diags->runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
-        // temporary EM fields dump in Fields.h5
-        sio->writeAllFieldsSingleFileTime( EMfields, 0 );
-        // temporary EM fields dump in Fields_avg.h5
-        if (diag_params.ntime_step_avg!=0)
-            sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
-        // temporary particle dump at time 0
-        sio->writePlasma( vecSpecies, 0., smpi );
+        //MESSAGE("----------------------------------------------");
+        //MESSAGE("Running diags at time t = 0");
+        //MESSAGE("----------------------------------------------");
+        //// run diagnostics at time-step 0
+        //Diags->runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
+        //// temporary EM fields dump in Fields.h5
+        //sio->writeAllFieldsSingleFileTime( EMfields, 0 );
+        //// temporary EM fields dump in Fields_avg.h5
+        //if (diag_params.ntime_step_avg!=0)
+        //    sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
+        //// temporary particle dump at time 0
+        //sio->writePlasma( vecSpecies, 0., smpi );
         EMfields->restartRhoJs();
     }
 
