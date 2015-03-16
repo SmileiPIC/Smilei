@@ -59,7 +59,7 @@ endif
 ifeq ($(openmp),gnu)
 	CFLAGS += -fopenmp -D_OMP
 else ifeq ($(openmp),intel)
-	CFLAGS += -openmp -D_OMP -xHost -ipo
+	CFLAGS += -openmp -D_OMP -xHost -ipo -D_PATCH
 endif
 
 ifeq ($(config),scalasca)

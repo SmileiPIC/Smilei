@@ -23,13 +23,36 @@ class Patch
 
 public:
     //! Constructor for Patch
-    Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi) {
+    Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int m0, unsigned int m1, unsigned int m2, unsigned int ipatch) {
 
 	vecSpecies = SpeciesFactory::createVector(params, smpi);              // + patchId + min_loc/cell_index(ref smpi, creta Pos & sort) + new n_space
 	// -> partBoundCond : min/max_loc (smpi)
 	EMfields   = ElectroMagnFactory::create(params, laser_params, smpi);  // + patchId + new n_space (now = params by smpi) + BC
 	Interp     = InterpolatorFactory::create(params, smpi);               // + patchId -> idx_domain_begin (now = ref smpi)
 	Proj       = ProjectorFactory::create(params, smpi);                  // + patchId -> idx_domain_begin (now = ref smpi)
+
+        hindex = ipatch;
+        if ( params.geometry == "1d3v" ) {
+            mi.resize(1);
+            Pcoordinates.resize(1);
+            mi[0] = m0;
+            Pcoordinates[0] = hindex;
+        }
+        else if ( params.geometry == "2d3v" ) {
+            mi.resize(2);
+            Pcoordinates.resize(2);
+            mi[0] = m0;
+            mi[1] = m1;
+            compacthilbertindexinv(m0, m1, &Pcoordinates[0], &Pcoordinates[1], hindex);
+        }
+        else {
+            mi.resize(3);
+            Pcoordinates.resize(3);
+            mi[0] = m0;
+            mi[1] = m1;
+            mi[2] = m2;
+            compacthilbertindexinv(m0, m1, m2, &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
+        }
 	
     };
 
@@ -92,7 +115,11 @@ public:
 protected:
 
 private:
-    //! cell_starting_global_index : index of 1st cell of local sub-subdomain in the global domain
+    //!Hilbert index of the patch. Number of the patch along the Hilbert curve.
+    unsigned int hindex;
+    //!Cartesian coordinates of the patch. X,Y,Z of the Patch according to its Hilbert index.
+    std::vector<unsigned int> Pcoordinates;
+    //! cell_starting_global_index : index of 1st cell of local sub-subdomain in the global domain.
     //!     - concerns ghost data
     //!     - "- oversize" on rank 0
     std::vector<int> cell_starting_global_index;
@@ -102,8 +129,11 @@ private:
     //! "Real" max limit of local sub-subdomain (ghost data not concerned)
     std::vector<double> max_local;
 
-    //! number of cells in every direction of the local sub-subdomain, all patch have the same size ???
+    //! number of cells in every direction of the local sub-subdomain. All patch have the same size.
     std::vector<unsigned int> n_space;
+    //! Log2 of the number of patch in the whole simulation box in every direction.
+    //! The number of patch in a given direction MUST be a power of 2 and is 2^(mi[i]).
+    std::vector<unsigned int> mi;
 
 };
 
