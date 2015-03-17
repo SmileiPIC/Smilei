@@ -27,8 +27,8 @@ public:
 
         // create species
         unsigned int nPart;
-        for (unsigned int ipatch = smpi->getRank()*npatches ; ipatch<(smpi->getRank()+1)*npatches ; ipatch++) {
-            vecPatches[ipatch] = PatchesFactory::create(params, laser_params, smpi, m0, m1, m2, ipatch);
+        for (unsigned int ipatch = 0 ; ipatch < npatches ; ipatch++) {
+            vecPatches[ipatch] = PatchesFactory::create(params, laser_params, smpi, m0, m1, m2, smpi->getRank()*npatches + ipatch);
         }
 
         return vecPatches;
