@@ -371,8 +371,7 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 					
 			# if slice is "all", then all the axis has to be summed
 			if slice[axis["type"]] == "all":
-				indices = np.array([0,axis["size"]])
-				slice_size = edges[-1]-edges[0]
+				indices = np.arange(axis["size"])
 			
 			# Otherwise, get the slice from the argument `slice`
 			else:	
@@ -387,18 +386,13 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 					indices = np.array([(np.abs(centers-s)).argmin()])
 				else :
 					indices = np.nonzero( (centers>=s[0]) * (centers<=s[1]) )[0]
-					indices = np.append(indices, indices[-1]+1)
-				# calculate the size of the slice
-				slice_size = edges[indices.max()] - edges[indices.min()]
-				# convert the range of indices into their "conjugate"
-				indices = np.delete(np.arange(axis["size"]), indices)
 			
-			# put the slice in the dictionary
-			axis.update({"slice":indices, "slice_size":slice_size})
+			# calculate the size of the slice
+			imin = indices.min()  ; emin = edges[imin]
+			imax = indices.max()+1; emax = edges[imax]
+			slice_size = emax - emin
 			
 			# print out the slicing
-			imin = indices.min(); emin = edges[imin]
-			imax = indices.max(); emax = edges[imax]
 			if imin==0            and axis["edges_included"]: emin = overall_min
 			if imin==axis["size"] and axis["edges_included"]: emax = overall_max
 			if figure is not None:
@@ -406,6 +400,11 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 					print "   Slicing at "+axis["type"]+" = "+str(centers[indices])
 				else:
 					print "   Slicing at "+axis["type"]+" = "+str(edges[indices[0]])+" to "+str(edges[indices[-1]])
+			
+			# convert the range of indices into their "conjugate"
+			indices = np.delete(np.arange(axis["size"]), indices)
+			# put the slice in the dictionary
+			axis.update({"slice":indices, "slice_size":slice_size})
 			
 			if axis["type"] in ["x","y","z"]:
 				units_coeff /= coeff_distances*slice_size
@@ -500,7 +499,7 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 		elif A.ndim == 2:
 			fig.clf()
 			ax = fig.add_subplot(1,1,1)
-			im = ax.imshow( A.transpose(),
+			im = ax.imshow( np.flipud(A.transpose()),
 				vmin = data_min, vmax = data_max,
 				extent=[plot_centers[0][0], plot_centers[0][-1], plot_centers[1][0], plot_centers[1][-1]],
 				aspect="auto", interpolation="nearest")
