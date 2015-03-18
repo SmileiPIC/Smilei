@@ -269,6 +269,10 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
                     for (int ipart = bmin ; ipart < bmax ; ipart++)
                         axis_array[ipart] = pow( 1. + 1./(pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2)) , -0.5);
                 
+                else if (axistype == "vperp2"    )
+                    for (int ipart = bmin ; ipart < bmax ; ipart++)
+                        axis_array[ipart] = (pow((*py)[ipart],2) + pow((*pz)[ipart],2)) / (1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
+                
                 else if (axistype == "charge")
                     for (int ipart = bmin ; ipart < bmax ; ipart++)
                         axis_array[ipart] = (double) (*q)[ipart];
