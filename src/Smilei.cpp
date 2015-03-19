@@ -276,6 +276,11 @@ int main (int argc, char* argv[])
         EMfields->restartRhoJ();
         
         
+        // apply collisions if requested
+        // -----------------------------
+        if (Collisions::debye_length_required)
+            Collisions::calculate_debye_length(params,vecSpecies);
+        
         // apply the PIC method
         // --------------------
         // for all particles of all species (see dynamic in Species.cpp)

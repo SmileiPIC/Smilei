@@ -132,7 +132,7 @@ end
 collisions
 	species1 = ion1
 	species2 = electron1
-	coulomb_log = 3.
+	coulomb_log = 0.
 end
 
 # ----------------

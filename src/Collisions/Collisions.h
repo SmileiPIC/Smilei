@@ -54,6 +54,9 @@ public:
     //! True if collisions inside a group of species, False if collisions between different groups of species
     double intra_collisions;
     
+    //! Method to calculate the Debye length in each cluster
+    static void calculate_debye_length(PicParams&,std::vector<Species*>&);
+    
     //! is true if any of the collisions objects need automatically-computed coulomb log
     static bool debye_length_required;
     
