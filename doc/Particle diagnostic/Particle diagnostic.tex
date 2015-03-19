@@ -1,0 +1,291 @@
+\documentclass[11pt]{article}
+\usepackage{graphicx}
+\usepackage[margin=2cm]{geometry}
+\usepackage{fancyvrb,xcolor}
+
+\setlength\parindent{0pt}
+
+\newcommand{\code}[1]{\colorbox{yellow!15}{\ttfamily #1}}
+\newcommand{\val}[1]{{\ttfamily \textit{#1}}}
+
+\usepackage{listings}
+\lstset{backgroundcolor=\color{yellow!15}, basicstyle=\ttfamily, columns=fullflexible, keepspaces=true,escapeinside={§}{§}}
+
+\begin{document}
+
+\title{The particle diagnostic in SMILEI}
+\author{F. P\'erez}
+\date{March 19, 2015}
+\maketitle
+
+The \textit{particle diagnostic} collects data from the macro-particles and processes them during runtime.
+It does \underline{not} provide information on individual particles: instead, it produces \underline{averaged quantities}
+like the particle density, currents, etc.
+\\*
+\\*
+The data may be collected from one or several particle species.
+\\*
+\\*
+The data is discretized inside a ``grid'' chosen by the user. This grid may be of any dimension.
+\\*
+Examples:
+\begin{itemize}
+\item 1-dimensional grid along the position $x$ (gives density variation along $x$)
+\item 2-dimensional grid along positions $x$ and $y$ (gives density map)
+\item 1-dimensional grid along the velocity $v_x$ (gives the velocity distribution)
+\item 2-dimensional grid along position $x$ and momentum $p_x$ (gives the phase-space)
+\item 1-dimensional grid along the kinetic energy $E_\mathrm{kin}$ (gives the energy distribution)
+\item 3-dimensional grid along $x$, $y$ and $E_\mathrm{kin}$ (gives the density map for several energies)
+\item 1-dimensional grid along the charge $Z^\star$ (gives the charge distribution)
+\end{itemize}
+Each dimension of the grid is called ``axis".
+\\*
+\\*
+The user may choose to average the data over several time-steps.
+
+
+\clearpage
+
+\section{How to add a particle diagnostic in the input file\\* \\*}
+In the input file, you can add a particle diagnostic with the following syntax.
+
+\begin{lstlisting}
+diagnostic particles
+	output = §\textit{output}§
+	every = §\textit{every}§
+	time_average = §\textit{time\_average}§
+	species = §\textit{species1 species2 ...}§
+	axis = §\textit{type min max nsteps}§ [logscale] [edge_inclusive]
+	axis = §\textit{type min max nsteps}§ [logscale] [edge_inclusive]
+	...
+end
+\end{lstlisting}
+
+\begin{itemize}
+\item \val{output} must be set to \code{density}, \code{current\_density\_x}, \code{current\_density\_y}, \code{current\_density\_z}.
+	It determines the data that is summed in each cell of the grid.
+	In the case of \code{density}, the \textit{weights} are summed.
+	In the case of \code{current\_density\_x}, the \textit{weights}$\times v_x$ are summed (etc.)\\*
+\item \val{every} must be a positive integer. It is the number of time-steps between each output.\\*
+\item \val{time\_average} must be a positive integer. It is the number of time-steps during which the data is averaged before output.\\*
+\item \val{species1 species2 ...}  must be one or several species.
+	Species are recognized by their parameter \code{species\_type} that is included
+	in each group \code{species ... end}\\*
+\item \code{axis} is an argument that describes one axis of the grid.\\
+	Syntax: \code{axis = \textit{type min max nsteps} [logscale] [edge\_inclusive]}\\
+	\val{type} can be \code{x}, \code{y}, \code{z}, \code{px}, \code{py}, \code{pz},
+	 \code{gamma}, \code{ekin}, \code{vx}, \code{vy}, \code{vz} or \code{charge}.\\
+	The axis is discretized for {\ttfamily \textit{type}} from {\ttfamily \textit{min}} to {\ttfamily \textit{max}} in {\ttfamily \textit{nsteps}} bins.\\
+	The optional keyword \code{logscale} sets the axis scale to logarithmic instead of linear.\\
+	The optional keyword \code{edge\_inclusive} includes the particles outside the range [{\ttfamily \textit{min}},  {\ttfamily \textit{max}}]
+	into the extrema bins.\\*\\*
+\end{itemize}
+There may be as many \code{axis} arguments as wanted in one \code{diagnostic particles} block.
+\\*\\*\\*
+There may be as many \code{diagnostic particles} blocks as wanted in the input file.
+
+\clearpage
+In the input file, you may add the following block as a reminder.
+
+\begin{lstlisting}
+# DIAGNOSTICS ON PARTICLES - project the particles on a N-D arbitrary grid
+# ------------------------------------------------------------------------
+# output = density or current_density_[xyz]
+#              => parameter that describes what quantity is obtained 
+# every        => integer > 0 : number of time-steps between each output
+# time_average => integer > 0 : number of time-steps to average
+# species      => list of one or several species whose data will be used
+# axis   = _type_ _min_ _max_ _nsteps_ [logscale] [edge_inclusive]
+#              => _type_ can be one of the following:
+#                  x, y, z, px, py, pz, gamma, ekin, vx, vy, vz or charge
+#              => the data is discretized for _type_ between _min_ and
+#                  _max_, in _nsteps_ bins
+#              => the optional [logscale] sets the scale to logarithmic
+#              => the optional [edge_inclusive] forces the particles
+#                  outside (_min_,_max_) to be counted in the extrema bins
+#   example : axis = x 0 1 30
+#   example : axis = px -1 1 100 
+# >>>> MANY AXES CAN BE ADDED IN A SINGLE DIAGNOSTIC <<<<
+\end{lstlisting}
+
+
+\clearpage
+\section{Examples}
+
+Variation of the density of species \code{electron1} from $x=0$ to 1, every 5 time-steps, without time-averaging.
+\begin{lstlisting}
+diagnostic particles
+	output = density
+	every = 5
+	time_average = 1
+	species = electron1
+	axis = x    0    1    30
+end
+\end{lstlisting}
+
+Density map from $x=0$ to 1, $y=0$ to 1.
+\begin{lstlisting}
+diagnostic particles
+	output = density
+	every = 5
+	time_average = 1
+	species = electron1
+	axis = x    0    1    30
+	axis = y    0    1    30
+end
+\end{lstlisting}
+
+Velocity distribution from $v_x = -0.1$ to $0.1$.
+\begin{lstlisting}
+diagnostic particles
+	output = density
+	every = 5
+	time_average = 1
+	species = electron1
+	axis = vx    -0.1    0.1    100
+end
+\end{lstlisting}
+
+Phase space from $x=0$ to 1 and from $px=-1$ to 1.
+\begin{lstlisting}
+diagnostic particles
+	output = density
+	every = 5
+	time_average = 1
+	species = electron1
+	axis = x    0    1    30
+	axis = px    -1    1    100
+end
+\end{lstlisting}
+
+Energy distribution from 0.01 to 1 MeV in logarithmic scale.
+Note that the input units are $m_ec^2 \sim 0.5$ MeV.
+\begin{lstlisting}
+diagnostic particles
+	output = density
+	every = 5
+	time_average = 1
+	species = electron1
+	axis = ekin    0.02    2   100  logscale
+end
+\end{lstlisting}
+\clearpage
+
+$x$-$y$ density maps for three bands of energy: $[0,1]$, $[1,2]$, $[2,\infty]$.
+Note the use of \code{edge\_inclusive} to reach energies up to $\infty$.
+\begin{lstlisting}
+diagnostic particles
+	output = density
+	every = 5
+	time_average = 1
+	species = electron1
+	axis = x    0    1    30
+	axis = y    0    1    30
+	axis = ekin    0   6   3  edge_inclusive
+end
+\end{lstlisting}
+
+Charge distribution from $Z^\star =0$ to 10.
+\begin{lstlisting}
+diagnostic particles
+	output = density
+	every = 5
+	time_average = 1
+	species = electron1
+	axis = charge    -0.5   10.5   11
+end
+\end{lstlisting}
+
+\clearpage
+\section{How to view and post-process a particle diagnostic}
+
+Each diagnostic produces one file like \textit{ParticleDiagnostic0.h5}, \textit{ParticleDiagnostic1.h5}, etc. They
+are numbered the same way as the order of appearance in the input file.
+\\*
+
+A python script \textit{ParticleDiagnostic.py} is provided to view or extract data from these files.
+To run this script, you will need \textit{python2.7} with the following packages: numpy, matplotlib, pylab, h5py.
+\\*
+
+First, run python and include the script:
+\begin{lstlisting}
+python -i ParticleDiagnostic.py
+\end{lstlisting}
+
+(Alternately, you can include this file into your own script using, for example, \\
+\code{execfile("scripts/ParticleDiagnostic.py")})
+\\*
+
+From the python prompt, you can run the function \textit{ParticleDiagnostic} which can extract the diagnostic data
+and optionally display it in a graph window.
+\\*
+
+Syntax of the function \textit{ParticleDiagnostic}:
+\begin{lstlisting}
+ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None,
+                    units="code", data_log=False, data_min=None, data_max=None,
+                    xmin=None, xmax=None, ymin=None, ymax=None,
+                    figure=None)
+\end{lstlisting}
+
+\begin{itemize}
+\item \code{results\_path} = \code{\_string\_}\\*
+	Path to the directory where the outputs are stored.\\*
+	(Also, this has to contain one and only one input file *.in)
+
+\item \code{diagNumber} = \code{\_int\_} (optional)\\*
+	Number of the diagnostic. The first diagnostic has number 0.\\*
+	If not given, then a list of available diagnostics is printed.
+
+\item \code{timesteps} =  \code{\_int\_ }          (optional)\\*
+	\code{timesteps} = \code{[\_int\_, \_int\_]}   (optional)\\*
+	If omitted, all timesteps are used.\\*
+	If one number  given, the nearest timestep available is used.\\*
+	If two numbers given, all the timesteps in between are used.
+
+\item \code{slice} = \code{\{ \val{axis} : "all", ... \}}                 (optional)\\*
+	\code{slice} = \code{\{ \val{axis} : \_double\_, ... \}}              (optional)\\*
+	\code{slice} = \code{\{ \val{axis} : [\_double\_, \_double\_], ... \}}  (optional)\\*
+	This parameter is used to reduce the number of dimensions of the array.\\*
+	\val{axis} must be \code{"x"}, \code{"y"}, \code{"z"}, \code{"px"}, \code{"py"}, \code{"pz"}, \code{"p"},
+	 \code{"gamma"}, \code{"ekin"}, \code{"vx"}, \code{"vy"}, \code{"vz"}, \code{"v"} or \code{"charge"}.\\*
+	 Any axis of the same name will be removed with the following technique:\\*
+	- If the value is \code{"all"}, then a sum is performed over all the axis.\\*
+	- If the value is \code{\_double\_}, then only the bin closest to the value is kept.\\*
+	- If the value is \code{[\_double\_,\_double\_]}, then a sum is performed between the two values.\\*
+	Example: \code{\{"x":[4,5]\}} will sum all the data for x in the range [4,5].
+
+\item \code{units} = \code{"nice"}    (optional)\\*
+	If \code{"nice"} is chosen, then units are converted into usual units.\\*
+	Distances in microns, density in cm$^{-3}$, energy in MeV.
+
+\item \code{data\_log} = \code{True} or (\code{False})       (optional)\\*
+	If True, then $\log10$ is applied to the output array before plotting.
+
+\item \code{data\_min} = \code{\_double\_}    (optional)\\*
+	\code{data\_max} = \code{\_double\_}    (optional)\\*
+	If present, output is rescaled before plotting.
+
+\item \code{xmin} = \code{\_double\_}    (optional)\\*
+	\code{xmax} = \code{\_double\_}    (optional)\\*
+	\code{ymin} = \code{\_double\_}    (optional)\\*
+	\code{ymax} = \code{\_double\_}    (optional)\\*
+	If present, axes are rescaled before plotting.
+
+\item \code{figure} = \code{None}        (default)\\*
+	\code{figure} = \code{\_int\_}       (optional)\\*
+	Choses the figure number that is passed to matplotlib.\\*
+	If absent or None, returns the first data without plotting.\\*\\*\\*
+\end{itemize}
+
+
+Example of usage from the python prompt:
+\begin{lstlisting}
+>>> ParticleDiagnostic("path/to/my/results", diagNumber=1, slice={"y":"all"},
+   units="nice",data_min=0, data_max=3e14, figure=1)
+\end{lstlisting}
+This will take the diagnostic \#1, and sum the grid over all the $y$ axis. Then it will plot the resulting array in figure 1 from 0 to 3e14.
+
+\end{document}
+
+
