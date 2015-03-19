@@ -183,6 +183,9 @@ public:
     //! local simulation box size in \f$2\pi/k_N \f$
     std::vector<double> sim_length;
     
+    //! time during which fields are frozen
+    double time_fields_frozen;
+    
     //! Boundary conditions for ElectroMagnetic Fields
     std::string bc_em_type_long;
     std::string bc_em_type_trans;

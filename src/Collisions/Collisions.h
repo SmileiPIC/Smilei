@@ -60,10 +60,16 @@ public:
     //! is true if any of the collisions objects need automatically-computed coulomb log
     static bool debye_length_required;
     
+    //! Method called in the main smilei loop to apply collisions at each timestep
+    void collide(PicParams&,std::vector<Species*>&);
+    
 private:
     
     //! Contains the debye length in each cluster, computed each timestep
     static std::vector<double> debye_length_squared; 
+    
+    static double cos_chi(double);
+
 
 };
 

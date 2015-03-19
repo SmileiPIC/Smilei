@@ -33,6 +33,9 @@ interpolation_order = 2
 timestep = 0.02
 sim_time  = 1.
 
+time_fields_frozen = 100000000000.
+
+
 # SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
 # either use the resolution (res_space) or cell-length (cell_length)
 #
