@@ -488,7 +488,7 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 			fig.clf()
 			ax = fig.add_subplot(1,1,1)
 			ax.plot(plot_centers[0], A)
-			if (plot_log[0]): ax.set_xscale("log")
+			if plot_log[0]: ax.set_xscale("log")
 			ax.set_xlabel(plot_label[0])
 			ax.set_xlim(xmin=xmin, xmax=xmax)
 			ax.set_ylim(ymin=data_min, ymax=data_max)
@@ -499,9 +499,11 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 		elif A.ndim == 2:
 			fig.clf()
 			ax = fig.add_subplot(1,1,1)
+			extent = [plot_centers[0][0], plot_centers[0][-1], plot_centers[1][0], plot_centers[1][-1]]
+			if plot_log[0]: extent[0:2] = [np.log10(plot_centers[0][0]), np.log10(plot_centers[0][-1])]
+			if plot_log[1]: extent[2:4] = [np.log10(plot_centers[1][0]), np.log10(plot_centers[1][-1])]
 			im = ax.imshow( np.flipud(A.transpose()),
-				vmin = data_min, vmax = data_max,
-				extent=[plot_centers[0][0], plot_centers[0][-1], plot_centers[1][0], plot_centers[1][-1]],
+				vmin = data_min, vmax = data_max, extent=extent,
 				aspect="auto", interpolation="nearest")
 			if (plot_log[0]): ax.set_xlabel("Log[ "+plot_label[0]+" ]")
 			else:             ax.set_xlabel(        plot_label[0]     )
