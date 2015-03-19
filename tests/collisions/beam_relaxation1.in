@@ -1,0 +1,223 @@
+# ---------------------------------------------
+# SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
+# ---------------------------------------------
+
+# sim_units: normalisation units for the input data
+#            it is used only in the input data & log file
+#            codes outputs are always in "normalised" units
+#            wavelength = input data are in wavelength-related units
+#            normalized = input data are put in code (relativistic) units
+#
+sim_units = wavelength
+wavelength_SI = 1.e-6
+
+# dim: Geometry of the simulation
+#      1d3v = cartesian grid with 1d in space + 3d in velocity
+#      2d3v = cartesian grid with 2d in space + 3d in velocity
+#      3d3v = cartesian grid with 3d in space + 3d in velocity
+#      2drz = cylindrical (r,z) grid with 3d3v particles
+#
+dim = 1d3v
+
+# order of interpolation
+#
+interpolation_order = 2
+
+# SIMULATION TIME 
+# either use the resolution (res_time) or time-step (timestep)
+#
+# res_time  : temporal resolution 
+# timestep : time step
+# sim_time  : duration of the simulation 
+#
+timestep = 0.2
+sim_time  = 40
+
+
+time_fields_frozen = 100000000000.
+
+# SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
+# either use the resolution (res_space) or cell-length (cell_length)
+#
+# res_space   : spatial resolution 
+# sim_length  : length of the simulation 
+# cell_length : cell-length 
+#
+cell_length = 2.
+sim_length  = 100.
+
+# ELECTROMAGNETIC BOUNDARY CONDITIONS
+# bc_em_type_long/trans : boundary conditions used for EM fields 
+#                         in the longitudinal or transverse directions
+#                         periodic      = periodic BC (using MPI topology)
+#                         silver-muller = injecting/absorbing
+#
+bc_em_type_long  = periodic
+bc_em_type_trans = periodic
+
+
+# RANDOM seed 
+# this is used to randomize the random number generator
+#
+random_seed = 0
+
+# DEFINE ALL SPECIES
+#
+# species_type: ion, electron, positron, test ...
+# initialization_type: regular, cold or (isotrop) Maxwell−Juettner distribution
+# n_part_per_cell: number of particle−per−cell
+# c_part_max: factor on the memory reserved for the total number of particles
+# mass: particle mass in units of the electron mass
+# charge: particle charge in units of e (−e is the electron charge)
+# density: species density in units of the normalization density
+# mean_velocity: mean velocity of the species (3D vector) in units of the light velocity
+# temperature: temperature of the species in units of m_e c^2
+# dynamics_type: species type of dynamics = norm or rrLL
+# time_frozen: time during which the particles are frozen in units of the normalization time
+# radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
+#
+species
+	species_type = ion1
+	species_geometry = constant
+	vacuum_length   = 0.
+	dens_length_x   = 1000. 1000. 1000.
+	initialization_type = maxwell-juettner
+	ionization_model = none
+	n_part_per_cell = 1000
+	c_part_max = 1.0
+	mass = 10. #1836.0
+	charge = 1.0
+	density = 10.
+	mean_velocity = 0. 0. 0.
+	temperature = 0.00002
+	dynamics_type = norm
+	time_frozen = 100000000.0
+	radiating = false
+	bc_part_type_west = none
+	bc_part_type_east = none
+	bc_part_type_south = none
+	bc_part_type_north = none
+end
+
+species 
+	species_type = electron1
+	species_geometry = constant
+	vacuum_length   = 0.
+	dens_length_x   = 1000. 1000. 1000.
+	initialization_type = maxwell-juettner
+	n_part_per_cell= 1000
+	c_part_max = 1.0
+	mass = 1.0
+	charge = -1.0
+	density = 10.
+	mean_velocity = 0.05 0. 0.
+	temperature = 0.0000002
+	dynamics_type = norm
+	time_frozen = 100000000.0
+	radiating = false
+	bc_part_type_west = none
+	bc_part_type_east = none
+	bc_part_type_south = none
+	bc_part_type_north = none
+end
+
+# COLLISIONS
+# Several collision types can be defined. For each type, add a group "collisions" containing
+# the following parameters:
+# species1    : "type" or "name" of the first  species that collide
+#               (can be a list of species)
+# species2    : "type" or "name" of the second species that collide
+#               (can be a list of species) (can be the same as the first species)
+# coulomb_log : value of the Coulomb logarithm. If negative or zero, then automatically computed.
+#
+collisions
+	species1 = electron1
+	species2 = ion1
+	coulomb_log = 3
+end
+
+# ----------------
+# LASER DEFINITION
+# ----------------
+#laser 
+#	a0=0.0
+#	angle=0
+#	delta=0.707106781                
+#	time_profile = constant
+#	double_params = 11.0
+#	transv_profile = plane-wave
+#	boxSide = west
+#end
+
+# ---------------------
+# DIAGNOSTIC PARAMETERS
+# ---------------------
+
+# print_every (on screen text output) 
+print_every = 10
+
+# every for field dump
+fieldDump_every    = 1
+avgfieldDump_every = 1
+ntime_step_avg     = 1
+
+
+# DIAG ON SCALARS
+# every = number of time-steps between each output
+#
+diagnostic scalar
+	every = 1
+end
+
+
+# DIAGNOSTICS ON PARTICLES - project the particles on a N-D arbitrary grid
+# ---------------------------------------------------------------------------------
+# output = density or current_density_[xyz]
+#              => parameter that describes what quantity is obtained 
+# every        => an integer : number of time-steps between each output
+# time_averate => an integer greater than 0 : number of time-steps to average
+# species      => a list of one or several species whose data will be used
+# axis   = _type_ _min_ _max_ _nsteps_ [logscale] [edge_inclusive]
+#              => _type_ can be x, y, z, px, py, pz, gamma, ekin, vx, vy, vz or charge
+#              => the data is binned for _type_ between _min_ and _max_, in _nsteps_ bins
+#              => "logscale" sets the binning scale to logarithmic
+#              => "edge_inclusive" forces the particles outside (_min_,_max_) to be counted in the extrema bins
+#   example : axis = x 0 1 30
+#   example : axis = px -1 1 100 
+# >>>> MANY AXES CAN BE ADDED IN A SINGLE DIAGNOSTIC <<<<
+
+diagnostic particles
+	output = density
+	every = 2
+	time_average = 1
+	species = electron1
+	axis = x    0    100.   10
+	axis = vx  -0.1  0.1    1000
+end
+
+diagnostic particles
+	output = density
+	every = 2
+	time_average = 1
+	species = electron1
+	axis = x    0    100.   10
+	axis = vperp2  0  0.01    1000
+end
+
+diagnostic particles
+	output = density
+	every = 2
+	time_average = 1
+	species = ion1
+	axis = x    0    100.   10
+	axis = vx  -0.1  0.1  1000
+end
+
+diagnostic particles
+	output = density
+	every = 10
+	time_average = 1
+	species = electron1
+	axis = ekin  0.0001  0.1 100 logscale
+end
+
