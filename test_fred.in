@@ -120,6 +120,21 @@ species
 	bc_part_type_north = none
 end
 
+# COLLISIONS
+# Several collision types can be defined. For each type, add a group "collisions" containing
+# the following parameters:
+# species1    : "type" or "name" of the first  species that collide
+#               (can be a list of species)
+# species2    : "type" or "name" of the second species that collide
+#               (can be a list of species) (can be the same as the first species)
+# coulomb_log : value of the Coulomb logarithm. If negative or zero, then automatically computed.
+#
+collisions
+	species1 = ion1
+	species2 = electron1
+	coulomb_log = 3.
+end
+
 # ----------------
 # LASER DEFINITION
 # ----------------
