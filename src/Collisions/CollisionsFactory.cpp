@@ -11,7 +11,7 @@ vector<Collisions*> CollisionsFactory::create(PicParams& params, InputData &ifil
 {
     std::vector<Collisions*> vecCollisions;
 
-    vector<string> sg1, sg2, species_types;
+    vector<string> sg1, sg2;
     vector<unsigned int> sgroup1, sgroup2;
     double clog;
     bool intra, debye_length_required = false;
@@ -47,9 +47,9 @@ vector<Collisions*> CollisionsFactory::create(PicParams& params, InputData &ifil
             for (unsigned int i1=0; i1<sgroup1.size(); i1++) {
                 for (unsigned int i2=0; i2<sgroup2.size(); i2++) {
                     if (sgroup1[i1] == sgroup2[i2])
-                        ERROR("Unauthorized species " << species_types[sgroup1[i1]] <<
-                        " in collisions #" << n_collisions <<
-                        " (inter-collisions must not have a species colliding with itself)");
+                        ERROR("Unauthorized species (#" << sgroup1[i1]
+                              << ") in collisions #" << n_collisions
+                              << " (inter-collisions must not have a species colliding with itself)");
                 }
             }
             intra = false;

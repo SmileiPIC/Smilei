@@ -92,7 +92,7 @@ species
 	mean_velocity = 0. 0. 0.
 	temperature = 0.001
 	dynamics_type = norm
-	time_frozen = 0.0
+	time_frozen = 10000000.0
 	radiating = false
 	bc_part_type_west = none
 	bc_part_type_east = none
@@ -115,7 +115,7 @@ species
 	mean_velocity = 0.05 0. 0.
 	temperature = 0.001
 	dynamics_type = norm	
-	time_frozen = 0.0
+	time_frozen = 10000000.0
 	radiating = false
 	bc_part_type_west = none
 	bc_part_type_east = none
@@ -133,7 +133,7 @@ end
 # coulomb_log : value of the Coulomb logarithm. If negative or zero, then automatically computed.
 #
 collisions
-	species1 = ion1
+	species1 = ion1 electron1
 	species2 = electron1
 	coulomb_log = 0.
 end

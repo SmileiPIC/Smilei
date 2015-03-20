@@ -44,6 +44,7 @@ void Collisions::calculate_debye_length(PicParams& params, vector<Species*>& vec
     debye_length_squared.resize(nbins);
     
     // Loop on bins
+    //! \todo Make OpenMP parallelization (MF & JD)
     for (unsigned int ibin=0 ; ibin<nbins ; ibin++) {
         
         density_max = 0.;
