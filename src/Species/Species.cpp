@@ -277,6 +277,14 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
 		    }
 		}
 		
+        // TEMPORARY TEST                    +--------------+
+        // Anisotropic distribution          | DO NOT MERGE |
+        // WORKS ONLY IF NON-RELATIVISTIC    +--------------+
+        for (unsigned int p= iPart; p<iPart+np; p++) {
+            particles.momentum(1,p) *= sqrt(temp[1]/temp[0]);
+            particles.momentum(2,p) *= sqrt(temp[2]/temp[0]);
+        }
+		
     }//END if initialization_type
     
     
