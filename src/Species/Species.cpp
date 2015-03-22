@@ -196,20 +196,20 @@ void Species::initCharge(PicParams* params, unsigned int ispec, unsigned int iPa
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all (np) particles in a mesh initialize their position
-//   - either using regular distribution in the mesh (regular)
-//   - or using uniform random distribution (for cold and maxwell-juettner distribution)
+//   - either using regular distribution in the mesh (initPosition_type = regular)
+//   - or using uniform random distribution (initPosition_type = random)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::initPosition(unsigned int np, unsigned int iPart, double *indexes, unsigned int ndim,
-                           std::vector<double> cell_length, string initialization_type)
+                           std::vector<double> cell_length, string initPosition_type)
 {
-    for (unsigned  p= iPart; p<iPart+np; p++)
-	{
-	    for (unsigned  i=0; i<ndim ; i++)
-		{
-		    if (initialization_type == "regular") {
-                            particles.position(i,p)=indexes[i]+(p-iPart+0.5)*cell_length[i]/np;
-		    } else if (initialization_type == "cold" || initialization_type == "maxwell-juettner") {
-                        particles.position(i,p)=indexes[i]+(((double)rand() / RAND_MAX))*cell_length[i];
+    for (unsigned  p= iPart; p<iPart+np; p++) {
+        for (unsigned  i=0; i<ndim ; i++) {
+            
+            // define new position (either regular or random)
+		    if (initPosition_type == "regular") {
+                particles.position(i,p)=indexes[i]+(p-iPart+0.5)*cell_length[i]/np;
+		    } else if (initPosition_type == "random") {
+                particles.position(i,p)=indexes[i]+(((double)rand() / RAND_MAX))*cell_length[i];
 		    }
 		    particles.position_old(i,p) = particles.position(i,p);
 		}// i
@@ -220,29 +220,25 @@ void Species::initPosition(unsigned int np, unsigned int iPart, double *indexes,
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all (np) particles in a mesh initialize their momentum
-//   - at zero if regular or cold
-//   - using random distribution if maxwell-juettner
+//   - at zero (init_momentum_type = cold)
+//   - using random distribution (init_momentum_type = maxwell-juettner)
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, double *vel, string initialization_type,
+void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, double *vel, string initMomentum_type,
                            vector<double>& max_jutt_cumul)
 {
 	
     // average mean-momentum (used to center the distribution)
     double pMean[3]= {0.0,0.0,0.0};
 	
-	
-    if (initialization_type == "regular" || initialization_type == "cold")
-	{
-	    // initialize momentum at 0 for regular or cold initialization type
+    if (initMomentum_type == "cold") {
+        
 	    for (unsigned int p= iPart; p<iPart+np; p++) {
             for (unsigned int i=0; i<3 ; i++) {
                 particles.momentum(i,p) = 0.0;
             }
-			
-			
 	    }
 		
-	} else if (initialization_type == "maxwell-juettner")
+	} else if (initMomentum_type == "maxwell-juettner")
 	{
 	    // initialize using the Maxwell-Juettner distribution function
 	    for (unsigned int p= iPart; p<iPart+np; p++)
@@ -285,10 +281,11 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
 		    }
 		}
 		
-    }//END if initialization_type
+    }//END if initMomentum_type
     
     
     // Adding the mean velocity (using relativistic composition)
+    // ---------------------------------------------------------
     if ( (vel[0]!=0.0) || (vel[1]!=0.0) || (vel[2]!=0.0) ){
         
         double vx, vy, vz, v2, g, gm1, Lxx, Lyy, Lzz, Lxy, Lxz, Lyz, gp, px, py, pz;
@@ -749,7 +746,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
     // Maxwell-Juettner cumulative function (array)
     std::vector<double> max_jutt_cumul;
     
-    if (species_param.initialization_type=="maxwell-juettner") {
+    if (species_param.initMomentum_type=="maxwell-juettner") {
         //! \todo{Pass this parameters in a code constants class (MG)}
         nE     = 20000;
         muEmax = 20.0;
@@ -809,9 +806,9 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
                     }//ndim > 1
                     
                     initPosition(species_param.n_part_per_cell,iPart, indexes, params.nDim_particle,
-                                 cell_length, species_param.initialization_type);
+                                 cell_length, species_param.initPosition_type);
                     initMomentum(species_param.n_part_per_cell,iPart, temp, vel,
-                                 species_param.initialization_type, max_jutt_cumul);
+                                 species_param.initMomentum_type, max_jutt_cumul);
                     initWeight(&params, speciesNumber, iPart, density(i,j,k));
                     initCharge(&params, speciesNumber, iPart, density(i,j,k));
                     

@@ -30,8 +30,11 @@ struct SpeciesStructure {
     //! density profile
     std::string density_profile;
     
-    //! initialization type. Possible values: "regular" "cold" "Maxwell-Juettner"
-    std::string initialization_type;
+    //! position initialization type, possible values: "regular" or "random"
+    std::string initPosition_type;
+
+    //! momentum initialization type, possible values: "cold" or "maxwell-juettner"
+    std::string initMomentum_type;
     
     //! number of particles per cell
     unsigned int n_part_per_cell;
@@ -159,7 +162,7 @@ public:
     double vx_win;
     
     //! Clusters width
-    int clrw;
+    unsigned int clrw;
     
     //! initial number of species
     unsigned int n_species;

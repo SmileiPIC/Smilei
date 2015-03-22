@@ -69,12 +69,13 @@ random_seed = 0
 
 species
 	species_type = proton
-	initialization_type = regular
+	initPosition_type = regular
+	initMomentum_type = cold
 	ionization_model = none
-        species_geometry = trapezoidal
-        vacuum_length   = 0.0  0.0 
-        dens_length_x = 6000 20  
-        dens_length_y = 2000 0 
+	species_geometry = trapezoidal
+	vacuum_length   = 0.0  0.0 
+	dens_length_x = 6000 20  
+	dens_length_y = 2000 0 
 	n_part_per_cell = 10 
 	c_part_max = 1.0
 	mass = 1836.0
@@ -93,11 +94,12 @@ end
 
 species 
 	species_type = electron
-	initialization_type = regular
-        species_geometry = trapezoidal
-        vacuum_length   = 0.0  0.0 
-        dens_length_x = 2000 20 
-        dens_length_y = 2000 0 
+	initPosition_type = regular
+	initMomentum_type = cold
+	species_geometry = trapezoidal
+	vacuum_length   = 0.0  0.0 
+	dens_length_x = 2000 20 
+	dens_length_y = 2000 0 
 	n_part_per_cell = 10
 	c_part_max = 1.0
 	mass = 1.0

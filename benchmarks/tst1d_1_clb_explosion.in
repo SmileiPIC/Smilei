@@ -30,7 +30,7 @@ interpolation_order = 2
 # time step : time step
 # sim_time  : duration of the simulation 
 #
-res_time = 102
+res_time = 202
 sim_time = 5.0
 
 # SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
@@ -40,8 +40,13 @@ sim_time = 5.0
 # sim_length  : length of the simulation 
 # cell_length : cell-length 
 #
-res_space  = 100   
+res_space  = 200   
 sim_length = 11.0  
+
+
+# PARALLELISATION
+clrw = 10
+
 
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
 # bc_em_type_long/trans : boundary conditions used for EM fields 
@@ -71,21 +76,18 @@ random_seed = 0
 #
 species
 	species_type = charges
-    	species_geometry = constant
-    	vacuum_length   = 5.0 
-    	dens_length_x   = 1.0
-	initialization_type = cold
-	ionization_model = none
-	n_part_per_cell=100
 	c_part_max=1.0
 	mass = 1836.0
+	initPosition_type = random
+	initMomentum_type = cold
+	species_geometry = constant
+	vacuum_length   = 5.0 
+	dens_length_x   = 1.0
+	ionization_model = none
+	n_part_per_cell=100
 	charge = 1.0
 	density = 1.0e0
-	mean_velocity = 0.0
-	temperature = 0.0
-	dynamics_type = norm
 	time_frozen = 0.0
-	radiating = false
 	bc_part_type_west = stop
 	bc_part_type_east = stop
 end

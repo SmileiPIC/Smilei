@@ -169,9 +169,17 @@ PicParams::PicParams(InputData &ifile) {
         
         ifile.extract("species_type",tmpSpec.species_type,"species",0,n_species);
         
-        ifile.extract("initialization_type",tmpSpec.initialization_type ,"species",0,n_species);
-        if (tmpSpec.initialization_type=="mj" || tmpSpec.initialization_type=="m-j") {
-            tmpSpec.initialization_type="maxwell-juettner";
+        ifile.extract("initPosition_type",tmpSpec.initPosition_type ,"species",0,n_species);
+        if ( (tmpSpec.initPosition_type!="regular")&&(tmpSpec.initPosition_type!="random") ) {
+            ERROR("For species " << n_species << " bad definition of initPosition_type");
+        }
+        
+        ifile.extract("initMomentum_type",tmpSpec.initMomentum_type ,"species",0,n_species);
+        if ( (tmpSpec.initMomentum_type=="mj") || (tmpSpec.initMomentum_type=="maxj") ) {
+            tmpSpec.initMomentum_type="maxwell-juettner";
+        }
+        if ( (tmpSpec.initMomentum_type!="cold") && (tmpSpec.initMomentum_type!="maxwell-juettner") ) {
+            ERROR("For species " << n_species << " bad definition of initMomentum_type");
         }
         
         ifile.extract("n_part_per_cell",tmpSpec.n_part_per_cell,"species",0,n_species);
@@ -219,8 +227,8 @@ PicParams::PicParams(InputData &ifile) {
         tmpSpec.time_frozen = 0.0; // default value
         ifile.extract("time_frozen",tmpSpec.time_frozen ,"species",0,n_species);
         if (tmpSpec.time_frozen > 0 && \
-            tmpSpec.initialization_type=="maxwell-juettner") {
-            WARNING("For species " << n_species << " possible conflict in Maxwell-Juettner initialization");
+            tmpSpec.initMomentum_type!="cold") {
+            WARNING("For species " << n_species << " possible conflict between time-frozen & none cold initialization");
         }
         
         tmpSpec.radiating = false; // default value
@@ -459,20 +467,23 @@ void PicParams::computeSpecies()
             if (profiles[iprof]->length_params_x.size()==0) {
                 profiles[iprof]->length_params_x.resize(1);
                 profiles[iprof]->length_params_x[0] = sim_length[0] - profiles[iprof]->vacuum_length[0];
-                WARNING("No dens_length_x defined, automatically put to " << profiles[iprof]->length_params_x[0] << " for species " << ispec);
+                WARNING("No dens_length_x defined, automatically put to " << profiles[iprof]->length_params_x[0]
+                        << " for species " << ispec);
             }
             if ( (geometry=="2d3v") || (geometry=="3d3v") ) {
                 if (profiles[iprof]->length_params_y.size()==0) {
                     profiles[iprof]->length_params_y.resize(1);
                     profiles[iprof]->length_params_y[0] = sim_length[1] - profiles[iprof]->vacuum_length[1];
-                    WARNING("No dens_length_y defined, automatically put to " << profiles[iprof]->length_params_y[0] << " for species " << ispec);
+                    WARNING("No dens_length_y defined, automatically put to " << profiles[iprof]->length_params_y[0]
+                            << " for species " << ispec);
                 }
             }
             if ( geometry=="3d3v" ) {
                 if (profiles[iprof]->length_params_z.size()==0) {
                     profiles[iprof]->length_params_z.resize(1);
                     profiles[iprof]->length_params_z[0] = sim_length[2] - profiles[iprof]->vacuum_length[2];
-                    WARNING("No dens_length_z defined, automatically put to " << profiles[iprof]->length_params_z[0] << " for species " << ispec);
+                    WARNING("No dens_length_z defined, automatically put to " << profiles[iprof]->length_params_z[0]
+                            << " for species " << ispec);
                 }
             }
             
