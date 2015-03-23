@@ -73,11 +73,11 @@ end
 	in each group \code{species ... end}\\*
 \item \code{axis} is an argument that describes one axis of the grid.\\
 	Syntax: \code{axis = \textit{type min max nsteps} [logscale] [edge\_inclusive]}\\
-	\val{type} can be \code{x}, \code{y}, \code{z}, \code{px}, \code{py}, \code{pz},
-	 \code{gamma}, \code{ekin}, \code{vx}, \code{vy}, \code{vz} or \code{charge}.\\
-	The axis is discretized for {\ttfamily \textit{type}} from {\ttfamily \textit{min}} to {\ttfamily \textit{max}} in {\ttfamily \textit{nsteps}} bins.\\
+	\val{type} can be \code{x}, \code{y}, \code{z}, \code{px}, \code{py}, \code{pz}, \code{p}, 
+	 \code{gamma}, \code{ekin}, \code{vx}, \code{vy}, \code{vz}, \code{v} or \code{charge}.\\
+	The axis is discretized for \val{type} from \val{min} to \val{max} in \val{nsteps} bins.\\
 	The optional keyword \code{logscale} sets the axis scale to logarithmic instead of linear.\\
-	The optional keyword \code{edge\_inclusive} includes the particles outside the range [{\ttfamily \textit{min}},  {\ttfamily \textit{max}}]
+	The optional keyword \code{edge\_inclusive} includes the particles outside the range [\val{min},  \val{max}]
 	into the extrema bins.\\*\\*
 \end{itemize}
 There may be as many \code{axis} arguments as wanted in one \code{diagnostic particles} block.
@@ -97,7 +97,7 @@ In the input file, you may add the following block as a reminder.
 # species      => list of one or several species whose data will be used
 # axis   = _type_ _min_ _max_ _nsteps_ [logscale] [edge_inclusive]
 #              => _type_ can be one of the following:
-#                  x, y, z, px, py, pz, gamma, ekin, vx, vy, vz or charge
+#                  x, y, z, px, py, pz, p, gamma, ekin, vx, vy, vz, v or charge
 #              => the data is discretized for _type_ between _min_ and
 #                  _max_, in _nsteps_ bins
 #              => the optional [logscale] sets the scale to logarithmic
@@ -216,11 +216,10 @@ python -i ParticleDiagnostic.py
 \code{execfile("scripts/ParticleDiagnostic.py")})
 \\*
 
-From the python prompt, you can run the function \textit{ParticleDiagnostic} which can extract the diagnostic data
-and optionally display it in a graph window.
+In python, you can run \code{ParticleDiagnostic(...)} to extract the data and optionally plot it.
 \\*
 
-Syntax of the function \textit{ParticleDiagnostic}:
+\underline{Syntax of the function \textit{ParticleDiagnostic}}:
 \begin{lstlisting}
 ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None,
                     units="code", data_log=False, data_min=None, data_max=None,
@@ -275,16 +274,42 @@ ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None,
 \item \code{figure} = \code{None}        (default)\\*
 	\code{figure} = \code{\_int\_}       (optional)\\*
 	Choses the figure number that is passed to matplotlib.\\*
-	If absent or None, returns the first data without plotting.\\*\\*\\*
+	If absent or None, returns the first data without plotting.\\*
 \end{itemize}
 
 
-Example of usage from the python prompt:
+\underline{Output of the function \textit{ParticleDiagnostic}}
+
+If \code{figure} is a number, then the function does not return anything. Instead, it displays the results in a graph.
+\\*
+
+If \code{figure} is not provided, or \code{figure=None}, then the function returns the results as a python dictionary.
+The dictionary is of the form \code{\{"data":\textit{data\_array}, \textit{axis1}:\textit{axis1\_array}, \textit{axis2}:\textit{axis2\_array}, ...\}}
+where:
+\begin{itemize}
+\item \val{data\_array} is the final array containing the data.
+\item \val{axis1} and \val{axis2} are the names of the axes (for example \code{"x"} or \code{"px"}).
+\item \val{axis1\_array} and \val{axis2\_array} are the locations of the axes bins.\\*\\*
+\end{itemize}
+
+\underline{Examples of usage from the python prompt:}
 \begin{lstlisting}
 >>> ParticleDiagnostic("path/to/my/results", diagNumber=1, slice={"y":"all"},
    units="nice",data_min=0, data_max=3e14, figure=1)
 \end{lstlisting}
 This will take the diagnostic \#1, and sum the grid over all the $y$ axis. Then it will plot the resulting array in figure 1 from 0 to 3e14.
+\\*
+
+\begin{lstlisting}
+>>> result = ParticleDiagnostic("path/to/my/results", diagNumber=3,
+    slice={"ekin":[1,10]}, timesteps=1000)
+\end{lstlisting}
+This will take the diagnostic \#3 for the timestep nearest to 1000, and sum for all energies between 1 and 10.
+The results are stored in the variable \code{result}.\\*
+The data can be accessed with \code{result["data"]}.\\*
+If one of the axes is \val{x}, you can access the locations of the bins with \code{result["x"]}.
+
+
 
 \end{document}
 
