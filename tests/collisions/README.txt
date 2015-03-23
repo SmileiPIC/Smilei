@@ -23,7 +23,7 @@ electrons and ions have different temperatures which become equal.
 Three cases for different ratios of weights : 0.2, 1 and 5
 Blue lines : electron temperature
 Red lines : ion temperature
-Theory curves (black lines) form the NRL formulary
+Theory curves (black lines) from the NRL formulary
 
 Temperature isotropization
 --------------------------
@@ -32,7 +32,7 @@ No ions
 Temperature along x (longitudinal) is not equal to the others.
 Blue line : longitudinal temperature
 Red line : trnasverse temperature
-Theory curves (black lines) form the NRL formulary
+Theory curves (black lines) from the NRL formulary
 /!\ WARNING /!\ temporary modification needed in Species.cpp
 
 Maxwellianization
