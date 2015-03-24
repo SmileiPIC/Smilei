@@ -11,14 +11,15 @@
 
 #include "SmileiMPI.h"
 #include "SmileiMPI_Cart2D.h"
+#include "Patch.h"
 
 using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn2D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn2D::ElectroMagn2D(PicParams &params, LaserParams &laser_params, SmileiMPI* smpi) : 
-ElectroMagn(params, laser_params, smpi),
+ElectroMagn2D::ElectroMagn2D(PicParams &params, LaserParams &laser_params, SmileiMPI* smpi, Patch* patch) : 
+  ElectroMagn(params, laser_params, smpi, patch),
 isWestern(smpi->isWestern()),
 isEastern(smpi->isEastern()),
 isNorthern(smpi->isNorthern()),

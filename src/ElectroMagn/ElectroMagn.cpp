@@ -12,6 +12,7 @@
 #include "ElectroMagnBC.h"
 #include "ElectroMagnBC_Factory.h"
 #include "SimWindow.h"
+#include "Patch.h"
 
 using namespace std;
 
@@ -19,7 +20,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for the virtual class ElectroMagn
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn::ElectroMagn(PicParams &params, LaserParams &laser_params, SmileiMPI* smpi) :
+ElectroMagn::ElectroMagn(PicParams &params, LaserParams &laser_params, SmileiMPI* smpi, Patch* patch) :
 timestep(params.timestep),
 cell_length(params.cell_length),
 nDim_field(params.nDim_field),

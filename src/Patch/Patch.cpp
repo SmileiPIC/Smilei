@@ -5,6 +5,68 @@
 
 using namespace std;
 
+
+Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int m0, unsigned int m1, unsigned int m2, unsigned int ipatch) {
+
+        hindex = ipatch;
+        if ( params.geometry == "1d3v" ) {
+            mi.resize(1);
+            Pcoordinates.resize(1);
+            mi[0] = m0;
+            Pcoordinates[0] = hindex;
+        }
+        else if ( params.geometry == "2d3v" ) {
+            mi.resize(2);
+            Pcoordinates.resize(2);
+            mi[0] = m0;
+            mi[1] = m1;
+            compacthilbertindexinv(m0, m1, &Pcoordinates[0], &Pcoordinates[1], hindex);
+        }
+        else {
+            mi.resize(3);
+            Pcoordinates.resize(3);
+            mi[0] = m0;
+            mi[1] = m1;
+            mi[2] = m2;
+            compacthilbertindexinv(m0, m1, m2, &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
+        }
+
+	Pcoordinates[0] = ipatch%m0;
+	Pcoordinates[1] = ipatch/m0 ;
+	std::cout << ipatch << " " << Pcoordinates[0] << " " << Pcoordinates[1] << std::endl;
+
+	min_local.resize(params.nDim_field, 0.);
+	max_local.resize(params.nDim_field, 0.);
+	cell_starting_global_index.resize(params.nDim_field, 0);
+	for (int i = 0 ; i<params.nDim_field ; i++) {
+	    min_local[i] = smpi->getDomainLocalMin(i) + Pcoordinates[i]*params.n_space[i]*params.cell_length[i];
+	    max_local[i] = min_local[i] + params.n_space[i]*params.cell_length[i];
+	    cell_starting_global_index[i] += Pcoordinates[i]*params.n_space[i];
+	}
+
+	std::cout << "Create patch\n";
+
+
+	vecSpecies = SpeciesFactory::createVector(params, smpi, this);
+
+	/* // + min_loc/cell_index(ref smpi,  & sort) // OK through this 
+ * 	   std::cout << "Patch created\n";*/
+	// + new n_space -> in PatchFactory
+	// patchID : ok through coord
+	// create Pos : OK
+	//return;
+
+	// -> partBoundCond : min/max_loc (smpi)
+	EMfields   = ElectroMagnFactory::create(params, laser_params, smpi, this);
+	// + patchId + new n_space (now = params by smpi) + BC
+	// -> Neighbors to define !!
+	
+	Interp     = InterpolatorFactory::create(params, smpi, this);               // + patchId -> idx_domain_begin (now = ref smpi)
+	Proj       = ProjectorFactory::create(params, smpi, this);                  // + patchId -> idx_domain_begin (now = ref smpi)
+
+};
+
+
 //Functions for manipulating Hilbert curves in an arbitrary number of dimensions and arbitrary size.
 //Taken from Chris Hamilton, Technical Report CS-2006-07, Faculty of computer Science, Halifax.
 

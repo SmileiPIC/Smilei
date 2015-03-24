@@ -2,13 +2,12 @@
 #define INTERPOLATOR_H
 
 #include "Field.h"
-#include "PicParams.h"
-#include "SmileiMPI.h"
 
-
+class PicParams;
+class SmileiMPI;
+class Patch;
 class ElectroMagn;
 class Particles;
-
 
 
 //  --------------------------------------------------------------------------------------------------------------------
@@ -17,7 +16,7 @@ class Particles;
 class Interpolator
 {
 public:
-    Interpolator(PicParams&, SmileiMPI*) {};
+    Interpolator(PicParams& params, SmileiMPI *smpi, Patch* patch);
     virtual ~Interpolator() {};
     virtual void mv_win(unsigned int shift) = 0;
     virtual void setMvWinLimits(unsigned int shift) = 0;

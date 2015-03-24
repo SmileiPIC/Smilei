@@ -16,6 +16,7 @@ class Laser;
 class SmileiMPI;
 class ElectroMagnBC;
 class SimWindow;
+class Patch;
 
 //! class ElectroMagn: generic class containing all information on the electromagnetic fields and currents
 
@@ -131,7 +132,7 @@ public:
     const std::vector<unsigned int> oversize;
 
     //! Constructor for Electromagn
-    ElectroMagn( PicParams &params, LaserParams &laser_params, SmileiMPI* smpi );
+    ElectroMagn( PicParams &params, LaserParams &laser_params, SmileiMPI* smpi, Patch* patch );
 
     //! Destructor for Electromagn
     virtual ~ElectroMagn();

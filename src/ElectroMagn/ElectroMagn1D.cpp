@@ -12,6 +12,7 @@
 
 #include "SmileiMPI.h"
 #include "SmileiMPI_Cart1D.h"
+#include "Patch.h"
 
 using namespace std;
 
@@ -19,8 +20,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn1D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn1D::ElectroMagn1D(PicParams &params,  LaserParams &laser_params, SmileiMPI* smpi)
-: ElectroMagn(params, laser_params, smpi),
+ElectroMagn1D::ElectroMagn1D(PicParams &params,  LaserParams &laser_params, SmileiMPI* smpi, Patch* patch)
+  : ElectroMagn(params, laser_params, smpi, patch),
 isWestern(smpi->isWestern()),
 isEastern(smpi->isEastern())
 {

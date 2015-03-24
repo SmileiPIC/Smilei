@@ -7,10 +7,11 @@
 #include "Field1D.h"
 #include "Particles.h"
 #include "SmileiMPI_Cart1D.h"
+#include "Patch.h"
 
 using namespace std;
 
-Interpolator1D3Order::Interpolator1D3Order(PicParams &params, SmileiMPI *smpi) : Interpolator1D(params, smpi)
+Interpolator1D3Order::Interpolator1D3Order(PicParams &params, SmileiMPI *smpi, Patch* patch) : Interpolator1D(params, smpi, patch)
 {
     dx_inv_   = 1.0/params.cell_length[0];
 

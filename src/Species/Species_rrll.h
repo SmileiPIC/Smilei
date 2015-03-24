@@ -16,7 +16,7 @@ class Species_rrll : public Species
 {
 public:
     //! Creator for Species_rrLL
-    Species_rrll(PicParams&, int, SmileiMPI*);
+  Species_rrll(PicParams&, int, SmileiMPI*,Patch*);
     //! Destructor for Species_rrLL
     ~Species_rrll();
 

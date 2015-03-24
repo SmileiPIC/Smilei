@@ -13,7 +13,7 @@ class Interpolator2D2Order : public Interpolator2D
 {
 
 public:
-    Interpolator2D2Order(PicParams&, SmileiMPI*);
+    Interpolator2D2Order(PicParams&, SmileiMPI*, Patch*);
     ~Interpolator2D2Order(){};
 
     void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc);

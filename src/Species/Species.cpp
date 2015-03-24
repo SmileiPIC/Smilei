@@ -24,6 +24,7 @@
 
 #include "SmileiMPI.h"
 #include "SimWindow.h"
+#include "Patch.h"
 
 // #include "Field.h"
 #include "Field1D.h"
@@ -37,19 +38,18 @@ using namespace std;
 // Creator for Species
 // input: simulation parameters & Species index
 // ---------------------------------------------------------------------------------------------------------------------
-Species::Species(PicParams& params, int ispec, SmileiMPI* smpi) :
+Species::Species(PicParams& params, int ispec, SmileiMPI* smpi, Patch* patch) :
 densityProfile(DensityFactory::create(params, ispec)),
 speciesNumber(ispec),
 cell_length(params.cell_length),
 oversize(params.oversize),
 ndim(params.nDim_particle),
-min_loc(smpi->getDomainLocalMin(0)),
-min_loc_vec(smpi->getDomainLocalMin()),
+min_loc(patch->min_local[0]),
+min_loc_vec(patch->min_local),
 clrw(params.clrw),
 species_param(params.species_param[ispec]),
 particles(&particles_sorted[0])
 {
-
     int err; 
     // -------------------
     // Variable definition
@@ -57,8 +57,9 @@ particles(&particles_sorted[0])
     PI2 = 2.0 * M_PI;
     dx_inv_ = 1./cell_length[0];
     dy_inv_ = 1./cell_length[1];
-    i_domain_begin = smpi->getCellStartingGlobalIndex(0);
-    j_domain_begin = smpi->getCellStartingGlobalIndex(1);	
+    // Pcoordinates here is local to patch !!!!!!!!!!
+    i_domain_begin = smpi->getCellStartingGlobalIndex(0)+patch->Pcoordinates[0]*params.n_space[0];
+    j_domain_begin = smpi->getCellStartingGlobalIndex(1)+patch->Pcoordinates[1]*params.n_space[1];	
     DEBUG(species_param.species_type);
 	
     electron_species = NULL;
@@ -67,12 +68,14 @@ particles(&particles_sorted[0])
 	
     // Width of clusters:
     // Clusters must all have the same size:
+#ifdef _BLABLA
     if (params.n_space[0]%clrw != 0)
         ERROR("Cluster width (clrw) = " << clrw << "should divide n_space[0] = " << params.n_space[0] );
     //Testing if clusters width (clrw) is large enough for the spliting technique:
     if (clrw < 2*oversize[0]+2){
         ERROR("Cluster width (clrw) = "<< clrw << " must be greater than 2*oversize[0]+1 = " << 2*oversize[0]+1 );
     }
+#endif
     
     // Arrays of the min and max indices of the particle bins
     bmin.resize(params.n_space[0]/clrw);
@@ -118,17 +121,31 @@ particles(&particles_sorted[0])
         vector<double> cell_index(3,0);
         for (unsigned int i=0 ; i<params.nDim_field ; i++) {
             if (cell_length[i]!=0)
-                cell_index[i] = smpi->getDomainLocalMin(i);
+                cell_index[i] = patch->min_local[i];
         }
         
         int starting_bin_idx = 0;
         // does a loop over all cells in the simulation
         // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
+	//cout << "Patch start idx = " << cell_index[0] << "\t" << cell_index[1] << endl;
         npart_effective = createParticles(params.n_space, cell_index, starting_bin_idx, params );
         
         //PMESSAGE( 1, smpi->getRank(),"Species "<< speciesNumber <<" # part "<< npart_effective );
     }
-    
+    /*double part_min[2], part_max[2];
+    for ( int iDim = 0 ; iDim < 2 ; iDim++ ) {
+	part_min[iDim] = 1000000.;
+	part_max[iDim] = -1.;
+	for ( int iPart = 0; iPart < getNbrOfParticles() ; iPart++ ) {
+	    if ( particles->Position[iDim][iPart] < part_min[iDim] )
+		part_min[iDim] = particles->Position[iDim][iPart];
+	    if ( particles->Position[iDim][iPart] > part_max[iDim] )
+		part_max[iDim] = particles->Position[iDim][iPart];
+	}
+	if (getNbrOfParticles()>0)
+	    cout << " iDim = " << iDim << "\t" << part_min[iDim] << "\t" << part_max[iDim] << endl;
+    }*/
+
     // assign the correct Pusher to Push
     Push = PusherFactory::create( params, ispec );
 	
@@ -137,8 +154,8 @@ particles(&particles_sorted[0])
     if (Ionize) DEBUG("Species " << ispec << " can be ionized!");
 	
     // define limits for BC and functions applied and for domain decomposition
-    partBoundCond = new PartBoundCond( params, ispec, smpi);
-    
+    partBoundCond = new PartBoundCond( params, ispec, smpi, patch);
+
     unsigned int nthds(1);
 #pragma omp parallel shared(nthds) 
     {
@@ -340,7 +357,7 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
 void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfields, Interpolator* Interp,
                        Projector* Proj, SmileiMPI *smpi, PicParams &params, SimWindow* simWindow, int diag_flag)
 {
-    Interpolator* LocInterp = InterpolatorFactory::create(params, smpi);
+    Interpolator* LocInterp = InterpolatorFactory::create(params, smpi, NULL);
     
     // Electric field at the particle position
     LocalFields Epart;

@@ -7,25 +7,26 @@
 
 #include "PicParams.h"
 #include "SmileiMPI.h"
+#include "Patch.h"
 
 #include "Tools.h"
 
 class SpeciesFactory {
 public:
-    static Species* create(PicParams& params, int ispec, SmileiMPI* smpi) {
+  static Species* create(PicParams& params, int ispec, SmileiMPI* smpi, Patch* patch) {
         Species* sp = NULL;
         if (params.species_param[ispec].dynamics_type=="norm") {
             // Species with Boris dynamics
-            sp = new Species_norm(params, ispec, smpi);
+	  sp = new Species_norm(params, ispec, smpi, patch);
         } else if (params.species_param[ispec].dynamics_type=="rrll") {
             // Species with Boris dynamics + Radiation Back-Reaction (using the Landau-Lifshitz formula)
-            sp = new Species_rrll(params, ispec, smpi);
+            sp = new Species_rrll(params, ispec, smpi, patch);
         } // END if
 
         return sp;
     }
 
-    static std::vector<Species*> createVector(PicParams& params, SmileiMPI* smpi) {
+  static std::vector<Species*> createVector(PicParams& params, SmileiMPI* smpi, Patch* patch) {
         std::vector<Species*> vecSpecies;
         vecSpecies.resize(params.n_species);
 
@@ -34,7 +35,7 @@ public:
         // create species
         unsigned int nPart;
         for (unsigned int ispec=0 ; ispec<params.n_species ; ispec++) {
-            vecSpecies[ispec] = SpeciesFactory::create(params, ispec, smpi);
+	  vecSpecies[ispec] = SpeciesFactory::create(params, ispec, smpi, patch);
             if (params.species_param[ispec].species_type=="electron") {
                 electron_species=vecSpecies[ispec];
             }

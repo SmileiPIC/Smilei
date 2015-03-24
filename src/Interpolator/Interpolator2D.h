@@ -11,11 +11,7 @@
 class Interpolator2D : public Interpolator
 {
 public:
-    Interpolator2D(PicParams&params, SmileiMPI*smpi): Interpolator(params, smpi) {
-        SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
-        i_domain_begin = smpi2D->getCellStartingGlobalIndex(0);
-        j_domain_begin = smpi2D->getCellStartingGlobalIndex(1);
-    };
+    Interpolator2D(PicParams&params, SmileiMPI*smpi, Patch *patch);
 
     virtual ~Interpolator2D() {};
     virtual void mv_win(unsigned int shift) {i_domain_begin += shift;}

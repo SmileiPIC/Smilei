@@ -8,11 +8,12 @@
 #include "Particles.h"
 #include "BoundaryConditionType.h"
 #include "SmileiMPI.h"
+#include "Patch.h"
 #include "Tools.h"
 
 using namespace std;
 
-PartBoundCond::PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi )
+PartBoundCond::PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi, Patch* patch )
 {
     nDim_particle = params.nDim_particle;
 
@@ -41,31 +42,31 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi )
 
     // Define limits of local domain
     //if (!params.nspace_win_x) {
-        x_min = max( x_min_global, smpi->getDomainLocalMin(0) );
-        x_max = min( x_max_global, smpi->getDomainLocalMax(0) );
+        x_min = max( x_min_global, patch->min_local[0] );
+        x_max = min( x_max_global, patch->max_local[0] );
     //}
     //else {
-    //    x_min = smpi->getDomainLocalMin(0);
-    //    x_max = smpi->getDomainLocalMax(0);
+    //    x_min = patch->min_local[0];
+    //    x_max = patch->max_local[0];
     //}
 
     if ( nDim_particle > 1 ) {
 	if (params.bc_em_type_trans=="periodic") {
-	    y_min = smpi->getDomainLocalMin(1);
-	    y_max = smpi->getDomainLocalMax(1);
+	    y_min = patch->min_local[1];
+	    y_max = patch->max_local[1];
 	}
 	else {
-	    y_min = max( y_min_global, smpi->getDomainLocalMin(1) );
-	    y_max = min( y_max_global, smpi->getDomainLocalMax(1) );
+	    y_min = max( y_min_global, patch->min_local[1] );
+	    y_max = min( y_max_global, patch->max_local[1] );
 	}
         if ( nDim_particle > 2 ) {
 	    if (params.bc_em_type_trans=="periodic") {
-		z_min = smpi->getDomainLocalMin(2);
-		z_max = smpi->getDomainLocalMax(2);
+		z_min = patch->min_local[2];
+		z_max = patch->max_local[2];
 	    }
 	    else {
-		z_min = max( z_min_global, smpi->getDomainLocalMin(2) );
-		z_max = min( z_max_global, smpi->getDomainLocalMax(2) );
+		z_min = max( z_min_global, patch->min_local[2] );
+		z_max = min( z_max_global, patch->max_local[2] );
 	    }
 	}
     }

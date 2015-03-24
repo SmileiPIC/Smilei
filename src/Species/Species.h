@@ -21,13 +21,14 @@ class Interpolator;
 class Projector;
 class PartBoundCond;
 class Field3D;
+class Patch;
 
 //! class Species
 class Species
 {
 public:
     //! Species creator
-    Species(PicParams&, int, SmileiMPI*);
+    Species(PicParams&, int, SmileiMPI*, Patch*);
 
     //! Species destructor
     virtual ~Species();

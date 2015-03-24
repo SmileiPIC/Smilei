@@ -114,9 +114,10 @@ int main (int argc, char* argv[])
     if (smpi->isMaster()) MESSAGE("\tOpenMP : Disabled");
 #endif
 
-#ifdef _PATCH
+#ifndef _PATCH
     vector<Patch*> vecPatches = PatchesFactory::createVector(params, laser_params, smpi);
 #endif
+    return 0;
 
     // -------------------------------------------
     // Declaration of the main objects & operators
@@ -133,7 +134,8 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------------------------
     
     // vector of Species (virtual)
-    vector<Species*> vecSpecies = SpeciesFactory::createVector(params, smpi);
+    std::vector<int> patch_coord(params.nDim_field, 0);
+    vector<Species*> vecSpecies = SpeciesFactory::createVector(params, smpi, NULL);
 
     // ------------------------------------------------------------------------
     // Initialize the simulation times time_prim at n=0 and time_dual at n=+1/2
@@ -165,13 +167,13 @@ int main (int argc, char* argv[])
     // ----------------------------------------------------------------------------
 
     // object containing the electromagnetic fields (virtual)
-    ElectroMagn* EMfields = ElectroMagnFactory::create(params, laser_params, smpi);
+    ElectroMagn* EMfields = ElectroMagnFactory::create(params, laser_params, smpi, NULL);
     
     // interpolation operator (virtual)
-    Interpolator* Interp = InterpolatorFactory::create(params, smpi);
+    Interpolator* Interp = InterpolatorFactory::create(params, smpi, NULL);
     
     // projection operator (virtual)
-    Projector* Proj = ProjectorFactory::create(params, smpi);
+    Projector* Proj = ProjectorFactory::create(params, smpi, NULL);
     
     // Create diagnostics
     Diagnostic *Diags =new Diagnostic(params,diag_params, smpi);    

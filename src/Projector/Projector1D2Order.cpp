@@ -8,6 +8,7 @@
 #include "Particles.h"
 #include "Tools.h"
 #include "SmileiMPI_Cart1D.h"
+#include "Patch.h"
 
 using namespace std;
 
@@ -15,14 +16,15 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Projector1D2Order
 // ---------------------------------------------------------------------------------------------------------------------
-Projector1D2Order::Projector1D2Order (PicParams& params, SmileiMPI* smpi) : Projector1D(params, smpi)
+Projector1D2Order::Projector1D2Order (PicParams& params, SmileiMPI* smpi, Patch* patch) : Projector1D(params, smpi, patch)
 {
     SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
 
     dx_inv_  = 1.0/params.cell_length[0];
     dx_ov_dt = params.cell_length[0] / params.timestep;
 
-    index_domain_begin = smpi1D->getCellStartingGlobalIndex(0);
+    //index_domain_begin = smpi1D->getCellStartingGlobalIndex(0);
+    index_domain_begin = patch->cell_starting_global_index[0];
 
     DEBUG("cell_length "<< params.cell_length[0]);
 
