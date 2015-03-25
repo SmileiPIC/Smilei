@@ -22,8 +22,6 @@
 \lstset{backgroundcolor=\color{yellow!15}, basicstyle=\ttfamily, columns=fullflexible, keepspaces=true,escapeinside={§}{§}}
 
 
-\newcommand{\vbar}[1]{\hspace*{#1 cm}\vspace{-4pt}$|$\\*}
-\newcommand{\corner}[1]{\hspace*{#1 cm}\hspace{0.7pt}\raisebox{3pt}{$\llcorner$}\raisebox{0.2pt}{$\!-$}}
 \newlength{\tmp}
 \newcommand{\spacing}[1]{\setlength{\tmp}{#1 cm}\addtolength{\tmp}{0.5cm}\hspace*{\tmp}}
 
@@ -103,38 +101,36 @@ The value \val{ln$\Lambda$} must be a number.
 \section{Description of the binary collision scheme}
 Collisions are calculated at each timestep.\\*
 
-For each collision block (given in the input file):\\*
-\vbar{0}
-\corner{0} For each particle cluster:\\*
-\vbar{1}
-\corner{1} If \textit{intra-collisions}\\*
+For each collision block (given in the input file):
+\vspace{0.3cm}\\*
+\spacing{0} - For each particle cluster:
+\vspace{0.3cm}\\*
+\spacing{1} - If \textit{intra-collisions}
+\vspace{0.3cm}\\*
 \spacing{2} Create one array containing the indices pointing to all particles of the species group.\\*
 \spacing{2} Shuffle the array.\\*
-\spacing{2} Split the array in two halves.\\*
-\vbar{1}
-\corner{1} Otherwise\\*
+\spacing{2} Split the array in two halves.
+\vspace{0.3cm}\\*
+\spacing{1} - Otherwise
+\vspace{0.3cm}\\*
 \spacing{2} Create two arrays containing the indices pointing to all particles of each species group.\\*
-\spacing{2} Shuffle the largest array. The other array is not shuffled.\\*
-\vbar{1}
-\corner{1} The two resulting arrays represent pairs of particles (see algorithm in Ref. [3]).\\*
-\vbar{1}
-\corner{1} Calculate a few intermediate quantities:\\*
+\spacing{2} Shuffle the largest array. The other array is not shuffled.\\*\\*
+\vspace*{0.4cm}
+\spacing{1}=> The two resulting arrays represent pairs of particles (see algorithm in Ref. [3]).\\*
+\spacing{1} - Calculate a few intermediate quantities:
+\vspace{0.3cm}\\*
 \spacing{2} Particle density $n_1$ of group 1.\\*
-\spacing{2} Particle density $n_1$  of group 2.\\*
+\spacing{2} Particle density $n_2$  of group 2.\\*
 \spacing{2} ``crossed'' particle density $n_{12}$ (see Ref. [1]).\\*
-\spacing{2} Other constants.\\*
-\vbar{1}
-\corner{1} For each pair of particles:\\*
-\vbar{2}
-\corner{2} Calculate the momenta in the center-of-mass (COM) frame.\\*
-\vbar{2}
-\corner{2} Calculate the coulomb log if requested (see Ref. [1]).\\*
-\vbar{2}
-\corner{2} Calculate the collision parameter $s$ and its correction at low temperature (see Ref. [1]).\\*
-\vbar{2}
-\corner{2} Pick the deflection angle (see Ref. [2]).\\*
-\vbar{2}
-\corner{2} Deflect particles in the COM frame and go back to the laboratory frame.\\*
+\spacing{2} Other constants.
+\vspace{0.3cm}\\*
+\spacing{1} - For each pair of particles:
+\vspace{0.3cm}\\*
+\spacing{2} - Calculate the momenta in the center-of-mass (COM) frame.\\*
+\spacing{2} - Calculate the coulomb log if requested (see Ref. [1]).\\*
+\spacing{2} - Calculate the collision parameter $s$ and its correction at low temperature (see Ref. [1]).\\*
+\spacing{2} - Pick the deflection angle (see Ref. [2]).\\*
+\spacing{2} - Deflect particles in the COM frame and go back to the laboratory frame.\\*
 
  
 \clearpage
@@ -218,7 +214,7 @@ They collide only with themselves (intra-collisions) and the anisotropy disappea
 
 The black lines correspond to the theoretical rates taken from the NRL formulary:\\*
 \begin{equation*}
-\nu_T=\frac{e^4 \,n_e\,\ln\Lambda } { 8\pi^{3/2} \epsilon_0^2 \,m_e^{1/2}T_e^{3/2} } A^{-2} \left[-3+(3-A)\frac{\rm{arctanh}(\sqrt{A})}{\sqrt{A}}\right]
+\nu_T=\frac{e^4 \,n_e\,\ln\Lambda } { 8\pi^{3/2} \epsilon_0^2 \,m_e^{1/2}T_\|^{3/2} } A^{-2} \left[-3+(3-A)\frac{\rm{arctanh}(\sqrt{A})}{\sqrt{A}}\right]
 \quad \rm{where}\quad A=1-\frac{T_\perp}{T_\|}
 \end{equation*}
 
