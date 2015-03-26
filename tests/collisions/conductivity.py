@@ -19,13 +19,15 @@ density = []
 
 for path in ["conductivity1","conductivity2","conductivity3"]:
 
+	ncases = 0
+	while getInfo(path,ncases):
+		ncases += 1
+	if ncases == 0: continue
+
 	coulomb_log  = np.double(findParam(path, "coulomb_log"))
 	dt           = np.double(findParam(path, "timestep"))
 	
 	times = getAvailableTimesteps(path, diagNumber=0)
-	ncases = 0
-	while getInfo(path,ncases):
-		ncases += 1
 	
 	vx_mean = np.zeros((ncases,len(times)))
 	

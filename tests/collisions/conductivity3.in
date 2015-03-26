@@ -2,6 +2,8 @@
 # SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
 # ---------------------------------------------
 
+static_field_for_collisions_test = 1
+
 # sim_units: normalisation units for the input data
 #            it is used only in the input data & log file
 #            codes outputs are always in "normalised" units
@@ -87,7 +89,7 @@ species
 	c_part_max = 1.0
 	mass = 115845      # =  mass of Cu atom
 	charge = 16.7
-	density = 1268.  #76.     # =  number density of solid Cu
+	density = 76.     # =  number density of solid Cu
 	mean_velocity = 0. 0. 0.
 	temperature = 0.0006 # 300 eV
 	dynamics_type = norm
@@ -131,7 +133,7 @@ species
 	c_part_max = 1.0
 	mass = 115845      # =  mass of Cu atom
 	charge = 24.6
-	density = 1869.  #76.     # =  number density of solid Cu
+	density = 76.     # =  number density of solid Cu
 	mean_velocity = 0. 0. 0.
 	temperature = 0.002 # 1000 eV
 	dynamics_type = norm

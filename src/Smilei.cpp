@@ -302,6 +302,27 @@ int main (int argc, char* argv[])
                     EMfields->restartRhoJs(ispec, time_dual > params.species_param[ispec].time_frozen);
                     vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow);
                 }
+                
+                
+                //----------------------------------------------------
+                // TEMPORARY TEST TO APPLY            +--------------+
+                //  A CONSTANT ELECTRIC FIELD         | DO NOT MERGE |
+                // (test for collisions)              +--------------+
+                int collision_test=0;
+                input_data.extract("static_field_for_collisions_test", collision_test);
+                if (collision_test==1) {
+                double E0 = 0.001; // field in units of me.c.w0/e
+                double dp = E0 * params.timestep / vecSpecies[ispec]->species_param.mass;
+                int nbin = vecSpecies[ispec]->bmin.size();
+#pragma omp for schedule(runtime)
+                for (int ibin = 0 ; ibin < nbin ; ibin++) {
+                    for (int iPart=vecSpecies[ispec]->bmin[ibin] ; iPart<vecSpecies[ispec]->bmax[ibin]; iPart++ ) {
+                        vecSpecies[ispec]->particles.momentum(0,iPart) += vecSpecies[ispec]->particles.charge(iPart) * dp;
+                    }
+                }
+                }
+                //----------------------------------------------------
+
             }
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 #pragma omp barrier
