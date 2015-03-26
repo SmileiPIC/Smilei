@@ -176,6 +176,7 @@ void Collisions::collide(PicParams& params, vector<Species*>& vecSpecies)
         //    (It does not really exchange them, it is just a temporary re-indexing)
         index1.resize(npart1);
         for (unsigned int i=0; i<npart1; i++) index1[i] = i; // first, we make an ordered array
+        //! \todo benchmark and improve the shuffling method ?
         random_shuffle(index1.begin(), index1.end()); // shuffle the index array
         if (intra_collisions) { // In the case of collisions within one species
             npairs = (int) ceil(((double)npart1)/2.); // half as many pairs as macro-particles
@@ -345,6 +346,7 @@ void Collisions::collide(PicParams& params, vector<Species*>& vecSpecies)
             
             // Random number to choose whether deflection actually applies.
             // This is to conserve energy in average when weights are not equal.
+            //!\todo make a faster rand by preallocating ??
             U = ((double)rand() / RAND_MAX);
             
             // Go back to the lab frame and store the results in the particle array
@@ -362,24 +364,24 @@ void Collisions::collide(PicParams& params, vector<Species*>& vecSpecies)
                 p2->momentum(2,i2) = -m12 * newpz_COM + COM_vz * term6;
             }
             
-//#ifdef  __DEBUG
+#ifdef  __DEBUG
             smean += s;
             logLmean += logL;
             temperature += m1 * (sqrt(1.+pow(p1->momentum(0,i1),2)+pow(p1->momentum(1,i1),2)+pow(p1->momentum(2,i1),2))-1.);
             ntot++;
-//#endif
+#endif
             
         } // end loop on pairs of particles
         
     } // end loop on bins
 
-//#ifdef  __DEBUG
+#ifdef  __DEBUG
     smean /= ntot;
     logLmean /= ntot;
     temperature /= ntot; temperature *= 1.5 * 511.;
-    MESSAGE( ntot << " collisions , <s> = " << scientific << smean
+    DEBUG( ntot << " collisions , <s> = " << scientific << smean
             << ",  <coulomb log> = " << fixed << logLmean << ", temperature = " << temperature << " keV");
-//#endif
+#endif
 
 
 }
