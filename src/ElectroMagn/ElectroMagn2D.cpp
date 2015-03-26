@@ -157,7 +157,7 @@ isSouthern(smpi->isSouthern())
     for (unsigned int i=0 ; i<nDim_field ; i++) {
         for (unsigned int isDual=0 ; isDual<2 ; isDual++) {
             istart[i][isDual] = oversize[i];
-            if (smpi2D->getProcCoord(i)!=0) istart[i][isDual]+=1;
+            if (patch->Pcoordinates[i]!=0) istart[i][isDual]+=1;
         }
     }
     
@@ -172,13 +172,13 @@ isSouthern(smpi->isSouthern())
         
         for (int isDual=0 ; isDual<2 ; isDual++) {
             bufsize[i][isDual] += isDual; 
-            if ( smpi2D->getNbrOfProcs(i)!=1 ) {
-                
-                if ( ( !isDual ) && (smpi2D->getProcCoord(i)!=0) )
+            if ( patch->mi[i]!=1 ) {                
+
+                if ( ( !isDual ) && (patch->Pcoordinates[i]!=0) )
                     bufsize[i][isDual]--;
                 else if  (isDual) {
                     bufsize[i][isDual]--;
-                    if ( (smpi2D->getProcCoord(i)!=0) && (smpi2D->getProcCoord(i)!=smpi2D->getNbrOfProcs(i)-1) ) 
+                    if ( (patch->Pcoordinates[i]!=0) && (patch->Pcoordinates[i]!=patch->mi[i]-1) ) 
                         bufsize[i][isDual]--;
                 }
                 

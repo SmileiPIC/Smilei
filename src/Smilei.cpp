@@ -117,7 +117,6 @@ int main (int argc, char* argv[])
 #ifndef _PATCH
     vector<Patch*> vecPatches = PatchesFactory::createVector(params, laser_params, smpi);
 #endif
-    return 0;
 
     // -------------------------------------------
     // Declaration of the main objects & operators
@@ -212,11 +211,13 @@ int main (int argc, char* argv[])
         diag_flag = 0;
 
         // Init electric field (Ex/1D, + Ey/2D)
-        MESSAGE("----------------------------------------------");
-        MESSAGE("Solving Poisson at time t = 0");
-        MESSAGE("----------------------------------------------");
-	if (!EMfields->isRhoNull(smpi)) 
+	if (!EMfields->isRhoNull(smpi)) {
+	    MESSAGE("----------------------------------------------");
+	    MESSAGE("Solving Poisson at time t = 0");
+	    MESSAGE("... But Poisson and Patch = pb, comm collective ! ");
+	    MESSAGE("----------------------------------------------");    
 	    EMfields->solvePoisson(smpi);
+	}
         
         
         //MESSAGE("----------------------------------------------");

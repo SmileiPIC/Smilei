@@ -31,9 +31,38 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
             compacthilbertindexinv(m0, m1, m2, &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
         }
 
-	Pcoordinates[0] = ipatch%m0;
-	Pcoordinates[1] = ipatch/m0 ;
-	std::cout << ipatch << " " << Pcoordinates[0] << " " << Pcoordinates[1] << std::endl;
+	Pcoordinates[1] = ipatch%m1;
+	Pcoordinates[0] = ipatch/m1 ;
+	//std::cout << "Coordonnées de " << ipatch << " : " << Pcoordinates[0] << " " << Pcoordinates[1] << std::endl;
+	neighbor_.resize(params.nDim_field);
+	for ( int iDim = 0 ; iDim < params.nDim_field ; iDim++ ) {
+	    neighbor_[iDim].resize(2,-2);
+	}
+	if (Pcoordinates[0]>0)
+	    neighbor_[0][0] = ipatch-m1;
+	if (Pcoordinates[0]<m0-1)
+	    neighbor_[0][1] = ipatch+m1;
+	if (Pcoordinates[1]>0)
+	    neighbor_[1][0] = ipatch-1;
+	if (Pcoordinates[1]<m1-1)
+	    neighbor_[1][1] = ipatch+1;
+
+	// Manage y-periodicity only !
+	SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
+	if ( (params.bc_em_type_trans=="periodic") ) {
+	  if ( (smpi2D->getNbrOfProcs(1)==1) ) {
+	    if ( (smpi2D->getProcCoord(1)==0) || (smpi2D->getProcCoord(1)==smpi2D->getNbrOfProcs(1)-1) ) {
+	      if ( (Pcoordinates[1]==0) )
+		neighbor_[1][0] = Pcoordinates[0]*m1+m1-1;
+	      if ( (Pcoordinates[1]==m1-1) )
+		neighbor_[1][1] = Pcoordinates[0]*m1+0;
+	    }
+	  }
+	}
+	
+	//std::cout << "Voisin dir 0 : " << ipatch << " : " <<  neighbor_[0][0] << " " <<  neighbor_[0][1] << std::endl;
+	//std::cout << "Voisin dir 1 : " << ipatch << " : " <<  neighbor_[1][0] << " " <<  neighbor_[1][1] << std::endl;
+	
 
 	min_local.resize(params.nDim_field, 0.);
 	max_local.resize(params.nDim_field, 0.);
@@ -44,8 +73,7 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
 	    cell_starting_global_index[i] += Pcoordinates[i]*params.n_space[i];
 	}
 
-	std::cout << "Create patch\n";
-
+	std::cout << "Create patch\n\n";
 
 	vecSpecies = SpeciesFactory::createVector(params, smpi, this);
 
@@ -54,7 +82,6 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
 	// + new n_space -> in PatchFactory
 	// patchID : ok through coord
 	// create Pos : OK
-	//return;
 
 	// -> partBoundCond : min/max_loc (smpi)
 	EMfields   = ElectroMagnFactory::create(params, laser_params, smpi, this);
@@ -63,7 +90,7 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
 	
 	Interp     = InterpolatorFactory::create(params, smpi, this);               // + patchId -> idx_domain_begin (now = ref smpi)
 	Proj       = ProjectorFactory::create(params, smpi, this);                  // + patchId -> idx_domain_begin (now = ref smpi)
-
+	
 };
 
 
