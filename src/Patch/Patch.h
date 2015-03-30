@@ -66,7 +66,8 @@ public:
     //!Hilbert index calculates the Hilbert index h of a patch of coordinates x,y(z) for a simulation box with 2^m patches per side (2^(2 or 3*m) patches in total).
     unsigned int hilbertindex(unsigned int m, unsigned int x, unsigned int y, unsigned int *einit, unsigned int *dinit);
     unsigned int hilbertindex(unsigned int m, unsigned int x, unsigned int y, unsigned int z, unsigned int einit, unsigned int dinit);
-    void hilbertindexinv(unsigned int m, unsigned int* x, unsigned int* y, unsigned int h, unsigned int dinit);
+    void hilbertindexinv(unsigned int m, unsigned int* x, unsigned int* y, unsigned int h, unsigned int einit, unsigned int dinit);
+    void hilbertindexinv(unsigned int m, unsigned int* x, unsigned int* y, unsigned int* z, unsigned int h, unsigned int einit, unsigned int dinit);
     //!extractMask extracts a mask µ indicating which axes are active at a given iteration i of the compact hilbert index.
     unsigned int extractmask(unsigned int m0,unsigned int  m1, int i);
     unsigned int extractmask(unsigned int m0,unsigned int  m1, unsigned int  m2, int i);

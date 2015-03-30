@@ -7,7 +7,9 @@ using namespace std;
 
 
 Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int m0, unsigned int m1, unsigned int m2, unsigned int ipatch) {
-        unsigned int xinv, yinv, zinv, hindexold;
+        unsigned int xinv, yinv, zinv, hindexold, *einit, *dinit,e,d;
+        einit=&e;
+        dinit=&d;
         hindex = ipatch;
         if ( params.geometry == "1d3v" ) {
             mi.resize(1);
@@ -22,20 +24,28 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
             mi[1] = m1;
             compacthilbertindexinv(m0, m1, &Pcoordinates[0], &Pcoordinates[1], hindex);
             //For tests by A.B.
-            //if (ipatch == 0){
-            //    //hindex = hilbertindex(m0, 5,6,1);
-            //    for (unsigned int x=0; x < (1<<m0) ; x++){
-            //        for (unsigned int y=0; y < (1<<m1) ; y++){
-            //            for (unsigned int z=0; z < (1<<m2) ; z++){
-            //                hindex = compacthilbertindex2(m0, m1, m2, x,y,z);
-            //                hindexold = compacthilbertindex(m0, m1, m2, x,y,z);
-            //                compacthilbertindexinv2(m0, m1, m2, &xinv, &yinv, &zinv, hindex);
-            //                std::cout << x << " " << y << " " << z << " "<< hindex << " " << hindexold <<" " << xinv <<" " << yinv << " " << zinv << endl;
-            //            }
-            //        }
-            //    }
+            if (ipatch == 0){
+                //compacthilbertindexinv2(m0, m1, m2, &xinv, &yinv, &zinv, 65);
+                //cout << "x = " << xinv << " y= " << yinv << " z = " << zinv << endl;
+                //hindex = hilbertindex(m0, 5,6,1);
+                for (unsigned int x=0; x < (1<<m0) ; x++){
+                    for (unsigned int y=0; y < (1<<m1) ; y++){
+                        for (unsigned int z=0; z < (1<<m2) ; z++){
+                            hindex = compacthilbertindex2(m0, m1, m2, x,y,z);
+                            //*einit=0;
+                            //*dinit=0;
+                            //hindex = compacthilbertindex2(m0, m1, x,y,einit,dinit);
+                            hindexold = compacthilbertindex(m0, m1, m2, x,y,z);
+                            //hindexold = compacthilbertindex(m0, m1, x,y);
+                            //hilbertindexinv(m0, &xinv, &yinv, &zinv, hindex, 0, 0);
+                            compacthilbertindexinv2(m0, m1, m2, &xinv, &yinv, &zinv, hindex);
+                            std::cout << x << " " << y << " " << z << " "<< hindex << " " << hindexold <<" " << xinv <<" " << yinv << " " << zinv << endl;
+                            //std::cout << x << " " << y << " " << hindex << " " << hindexold <<" " << xinv <<" " << yinv << " " << endl;
+                        }
+                    }
+                }
 
-            //}
+            }
         }
         else {
             mi.resize(3);
@@ -225,10 +235,10 @@ unsigned int Patch::hilbertindex(unsigned int m, unsigned int x, unsigned int y,
 }
 
 //!Hilbert index2D inv  calculates the coordinates x,y of the patch of Hilbert index h in a simulation box with 2^m patches per side (2^(2*m) patches in total).
-void Patch::hilbertindexinv(unsigned int m, unsigned int* x, unsigned int* y, unsigned int h, unsigned int dinit)
+void Patch::hilbertindexinv(unsigned int m, unsigned int* x, unsigned int* y, unsigned int h, unsigned int einit, unsigned int dinit)
 {
     unsigned int e,d,l,w;
-    e = 0;
+    e = einit;
     d = dinit;
     *x=0;
     *y=0;
@@ -240,6 +250,26 @@ void Patch::hilbertindexinv(unsigned int m, unsigned int* x, unsigned int* y, un
         setbit(y,(unsigned int)i,bit(l,1));
         e = e ^ (rotl(entry(w), d+1, 2));
         d = (d + direction(w, 2) +1 )%2 ;
+    }
+    return;
+}
+void Patch::hilbertindexinv(unsigned int m, unsigned int* x, unsigned int* y, unsigned int* z, unsigned int h, unsigned int einit, unsigned int dinit)
+{
+    unsigned int e,d,l,w;
+    e = einit;
+    d = dinit;
+    *x=0;
+    *y=0;
+    *z=0;
+    for( int i = m-1; i>=0 ; i--){
+        w = ((bit(h,3*i+2))<<2) + ((bit(h,3*i+1))<<1) + bit(h,3*i);
+        l = gc(w);
+        tedinv(e,d,&l,3);
+        setbit(x,(unsigned int)i,bit(l,0));
+        setbit(y,(unsigned int)i,bit(l,1));
+        setbit(z,(unsigned int)i,bit(l,2));
+        e = e ^ (rotl(entry(w), d+1, 3));
+        d = (d + direction(w, 3) +1 )%3 ;
     }
     return;
 }
@@ -325,19 +355,14 @@ unsigned int Patch::compacthilbertindex(unsigned int m0, unsigned int m1, unsign
     for (int i = m-1; i>=0; i--){
         mu = extractmask(m0, m1, i);
         mu = rotr(mu,d+1,2);
-        cout << "i = " << i << " mu = " << mu << endl;
         l = bit(y,i)*2 + bit(x,i); 
-        cout << "i = " << i << " l = " << l << endl;
         ted(e,d, &l, 2); 
-        cout << "i = " << i << " tedl = " << l << endl;
         w = gcinv(l);
-        cout << "i = " << i << " w = " << w << endl;
         r = gcr(2,mu,w);
         e = e ^ (rotl(entry(w), d+1, 2));
         d = (d + direction(w, 2) + 1)%2 ;
         for (unsigned int k=0; k < 2 ; k++) h = h << bit(mu,k) ;
         h = h | r ;
-        cout << "i = " << i << " r = " << r << " e= " << e << " d= " << d <<  " h= " << h << endl;
     }
     return h;
 }
@@ -349,7 +374,7 @@ unsigned int Patch::compacthilbertindex2(unsigned int m0, unsigned int m1, unsig
     *dinit=0;
     localx = x;
     localy = y;
-    if (m0 > m1){
+    if (m0 >= m1){
        target = &localx;
        mmin = m1;
        mmax = m0;
@@ -371,7 +396,7 @@ return h;
 }
 unsigned int Patch::compacthilbertindex2(unsigned int m0, unsigned int m1, unsigned int m2, unsigned int x, unsigned int y, unsigned int z)
 {
-    unsigned int h,e,d,*einit,*dinit,dimmin,dimmax,dimmed,l,localx,localy,localz, *target,mi[3],localp[3],tempp[3],mmin;
+    unsigned int h,e,d,*einit,*dinit,dimmin,dimmax,dimmed,l,localx,localy,localz, mi[3],localp[3],tempp[3],mmin;
     h=0;
     e=0;
     d=0;
@@ -385,14 +410,14 @@ unsigned int Patch::compacthilbertindex2(unsigned int m0, unsigned int m1, unsig
     mi[1] = m1;
     mi[2] = m2;
     //Compare dimension sizes
-    if ((m0 > m1) && (m0 > m2) ){
+    if ((m0 >= m1) && (m0 >= m2) ){
         dimmax = 0;
-    } else if ((m1 > m0) && (m1 > m2)){
+    } else if ((m1 > m0) && (m1 >= m2)){
         dimmax = 1;
     } else {
         dimmax = 2;
     }
-    if (mi[(dimmax+1)%3] > mi[(dimmax+2)%3]){
+    if (mi[(dimmax+1)%3] >= mi[(dimmax+2)%3]){
         dimmed = (dimmax+1)%3;
         dimmin = (dimmax+2)%3;
     } else {
@@ -476,27 +501,31 @@ void Patch::compacthilbertindexinv(unsigned int m0, unsigned int m1, unsigned in
 }
 void Patch::compacthilbertindexinv2(unsigned int m0, unsigned int m1, unsigned int* x, unsigned int* y, unsigned int h)
 {
-    unsigned int d, mmin, mmax,l,localh, *target, shift ;
-    d = 0;
+    unsigned int einit, dinit, mmin, mmax,l,localh, *target, shift ;
+    einit = 0;
+    dinit = 0;
     shift = 0;
     localh = h;
- 
+    //Compare dimensions. Target points at the dimension which must be shifted. 
     if (m0 > m1){
        target = x;
        mmin = m1;
        mmax = m0;
     } else {
        target = y;
-       d=1;
+       dinit=1;
        mmin = m0;
        mmax = m1;
     }
+    //First define in which sub-hypercube of side 2^mmin the point is.
     for (int i= mmax+mmin-1; i >= mmin+mmin ; i--){
        l = bit(localh,i); 
        shift += l*(1<<(i-mmin));
        localh -= l*(1<<i);
     }
-    hilbertindexinv(mmin, x, y, localh, d);
+    //Run the cubic inversion algorithm in the sub hypercube.
+    hilbertindexinv(mmin, x, y, localh, einit, dinit);
+    //Shift the appropriate coordinate by the necessary value.
     *target += shift;
 
     return;
@@ -540,5 +569,57 @@ void Patch::compacthilbertindexinv(unsigned int m0, unsigned int m1, unsigned in
 }
 void Patch::compacthilbertindexinv2(unsigned int m0, unsigned int m1, unsigned int m2,  unsigned int* x, unsigned int* y, unsigned int* z, unsigned int h)
 {
+    unsigned int e,d,dimmin,dimmax,dimmed,l,localx,localy,localz, mi[3],*localp[3],tempp[3],localh;
+    e=0;
+    d=0;
+    //Store positions and dimensions in arrays
+    localp[0] = x;
+    localp[1] = y;
+    localp[2] = z;
+    mi[0] = m0;
+    mi[1] = m1;
+    mi[2] = m2;
+    //Compare dimension sizes
+    if ((m0 >= m1) && (m0 >= m2) ){
+        dimmax = 0;
+    } else if ((m1 > m0) && (m1 >= m2)){
+        dimmax = 1;
+    } else {
+        dimmax = 2;
+    }
+    if (mi[(dimmax+1)%3] >= mi[(dimmax+2)%3]){
+        dimmed = (dimmax+1)%3;
+        dimmin = (dimmax+2)%3;
+    } else {
+        dimmed = (dimmax+2)%3;
+        dimmin = (dimmax+1)%3;
+    }
+
+    
+    //Localize in which sub hypercube the point is. Do not account for the first 3*dimmin bits of h.
+    localh = (h >> (mi[dimmin]*3));
+    //Run the 2D inversion algorithm on the reduced domain.
+    compacthilbertindexinv2(mi[dimmax]-mi[dimmin],mi[dimmed]-mi[dimmin],localp[dimmax],localp[dimmed],localh);
+    //cout << "x = " << *localp[dimmax] << " y= " << *localp[dimmed] << " z = nothing " << endl;
+    // Now local P stores the position of the cube in the 2D domain
+    // We need to run the 3D inversion algorithm on this cube with the correct entry point and direction.
+    // Run the 2D indexgenerator in order to evaluate e and d.
+    localh = compacthilbertindex2(mi[dimmax]-mi[dimmin],mi[dimmed]-mi[dimmin],*localp[dimmax],*localp[dimmed],&e,&d);
+    //Transform coordinates in the global frame.
+    *localp[dimmax] *= (1<<mi[dimmin]);
+    *localp[dimmed] *= (1<<mi[dimmin]);
+    *localp[dimmin] = 0 ;
+    //cout << "x = " << *localp[dimmax] << " y= " << *localp[dimmed] << " z = " << *localp[dimmin] << endl;
+
+    //Use only first bits of h for the local hypercube.
+    localh = h & ((1<<(mi[dimmin]*3))-1);
+    //cout << "local h = " << localh << " e= " << e << " d = " << d << endl;
+    //Run the cubic inversion algorithm in the local sub hypercube.
+    hilbertindexinv(mi[dimmin], &tempp[dimmax], &tempp[dimmed], &tempp[dimmin], localh, e, d);
+    //Add results to the coordinates.
+    *localp[dimmax] += tempp[dimmax];
+    *localp[dimmed] += tempp[dimmed];
+    *localp[dimmin] += tempp[dimmin];
+
     return;
 }
