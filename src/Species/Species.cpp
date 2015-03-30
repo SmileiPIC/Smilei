@@ -34,6 +34,48 @@
 
 using namespace std;
 
+
+Species::Species(PicParams& params, int ispec, SmileiMPI* smpi) :
+densityProfile(DensityFactory::create(params, ispec)),
+speciesNumber(ispec),
+cell_length(params.cell_length),
+oversize(params.oversize),
+ndim(params.nDim_particle),
+min_loc(smpi->getDomainLocalMin(0)),
+min_loc_vec(smpi->getDomainLocalMin()),
+clrw(params.clrw),
+species_param(params.species_param[ispec]),
+particles(&particles_sorted[0]),
+i_domain_begin( smpi->getCellStartingGlobalIndex(0) ),
+j_domain_begin( smpi->getCellStartingGlobalIndex(1) )
+{
+    
+    initSpecies(params);
+    initCluster(params);
+
+    if (!params.restart) {
+        unsigned int npart_effective=0;
+        
+        // Create particles in a space starting at cell_index
+        vector<double> cell_index(3,0);
+        for (unsigned int i=0 ; i<params.nDim_field ; i++) {
+            if (cell_length[i]!=0)
+	        cell_index[i] = smpi->getDomainLocalMin(i);
+        }
+        
+        int starting_bin_idx = 0;
+        // does a loop over all cells in the simulation
+        // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
+        npart_effective = createParticles(params.n_space, cell_index, starting_bin_idx, params );
+        
+        //PMESSAGE( 1, smpi->getRank(),"Species "<< speciesNumber <<" # part "<< npart_effective );
+    }
+	
+    // define limits for BC and functions applied and for domain decomposition
+    partBoundCond = new PartBoundCond( params, ispec, smpi );
+
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for Species
 // input: simulation parameters & Species index
@@ -48,24 +90,99 @@ min_loc(patch->min_local[0]),
 min_loc_vec(patch->min_local),
 clrw(params.clrw),
 species_param(params.species_param[ispec]),
-particles(&particles_sorted[0])
+particles(&particles_sorted[0]),
+i_domain_begin( smpi->getCellStartingGlobalIndex(0)+patch->Pcoordinates[0]*params.n_space[0] ),
+j_domain_begin( smpi->getCellStartingGlobalIndex(1)+patch->Pcoordinates[1]*params.n_space[1] )	
+
 {
-    int err; 
+	
+	
+    initSpecies(params);
+    initCluster(params);
+
+    if (!params.restart) {
+        unsigned int npart_effective=0;
+        
+        // Create particles in a space starting at cell_index
+        vector<double> cell_index(3,0);
+        for (unsigned int i=0 ; i<params.nDim_field ; i++) {
+            if (cell_length[i]!=0)
+                cell_index[i] = patch->min_local[i];
+	        //cell_index[i] = smpi->getDomainLocalMin(i);
+        }
+        
+        int starting_bin_idx = 0;
+        // does a loop over all cells in the simulation
+        // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
+	//cout << "Patch start idx = " << cell_index[0] << "\t" << cell_index[1] << endl;
+        npart_effective = createParticles(params.n_space, cell_index, starting_bin_idx, params );
+        
+        //PMESSAGE( 1, smpi->getRank(),"Species "<< speciesNumber <<" # part "<< npart_effective );
+    }
+    /*double part_min[2], part_max[2];
+    for ( int iDim = 0 ; iDim < 2 ; iDim++ ) {
+	part_min[iDim] = 1000000.;
+	part_max[iDim] = -1.;
+	for ( int iPart = 0; iPart < getNbrOfParticles() ; iPart++ ) {
+	    if ( particles->Position[iDim][iPart] < part_min[iDim] )
+		part_min[iDim] = particles->Position[iDim][iPart];
+	    if ( particles->Position[iDim][iPart] > part_max[iDim] )
+		part_max[iDim] = particles->Position[iDim][iPart];
+	}
+	if (getNbrOfParticles()>0)
+	    cout << " iDim = " << iDim << "\t" << part_min[iDim] << "\t" << part_max[iDim] << endl;
+    }*/
+
+	
+	
+    // define limits for BC and functions applied and for domain decomposition
+    partBoundCond = new PartBoundCond( params, ispec, smpi, patch);
+
+
+
+}//END Species creator
+
+
+void Species::initSpecies(PicParams& params)
+{
     // -------------------
     // Variable definition
     // -------------------
     PI2 = 2.0 * M_PI;
     dx_inv_ = 1./cell_length[0];
     dy_inv_ = 1./cell_length[1];
-    // Pcoordinates here is local to patch !!!!!!!!!!
-    i_domain_begin = smpi->getCellStartingGlobalIndex(0)+patch->Pcoordinates[0]*params.n_space[0];
-    j_domain_begin = smpi->getCellStartingGlobalIndex(1)+patch->Pcoordinates[1]*params.n_space[1];	
     DEBUG(species_param.species_type);
-	
+
     electron_species = NULL;
 	
     // atomic number
-	
+
+    // assign the correct Pusher to Push
+    Push = PusherFactory::create( params, speciesNumber );
+
+    // assign the Ionization model (if needed) to Ionize
+    Ionize = IonizationFactory::create( params, speciesNumber );
+    if (Ionize) DEBUG("Species " << speciesNumber << " can be ionized!");
+
+    unsigned int nthds(1);
+#pragma omp parallel shared(nthds) 
+    {
+#ifdef _OMP
+        nthds = omp_get_num_threads();	  
+#endif
+    }
+    indexes_of_particles_to_exchange_per_thd.resize(nthds);
+    
+    //ener_tot = 0.;
+    nrj_bc_lost = 0.;
+    nrj_mw_lost = 0.;
+    nrj_new_particles = 0.;
+
+}
+
+void Species::initCluster(PicParams& params)
+{
+
     // Width of clusters:
     // Clusters must all have the same size:
 #ifdef _BLABLA
@@ -76,7 +193,7 @@ particles(&particles_sorted[0])
         ERROR("Cluster width (clrw) = "<< clrw << " must be greater than 2*oversize[0]+1 = " << 2*oversize[0]+1 );
     }
 #endif
-    
+
     // Arrays of the min and max indices of the particle bins
     bmin.resize(params.n_space[0]/clrw);
     bmax.resize(params.n_space[0]/clrw);
@@ -113,64 +230,8 @@ particles(&particles_sorted[0])
     }
     
     size_proj_buffer = b_dim0*b_dim1*b_dim2; //primal size of a single bufefr.
-    
-    if (!params.restart) {
-        unsigned int npart_effective=0;
-        
-        // Create particles in a space starting at cell_index
-        vector<double> cell_index(3,0);
-        for (unsigned int i=0 ; i<params.nDim_field ; i++) {
-            if (cell_length[i]!=0)
-                cell_index[i] = patch->min_local[i];
-        }
-        
-        int starting_bin_idx = 0;
-        // does a loop over all cells in the simulation
-        // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
-	//cout << "Patch start idx = " << cell_index[0] << "\t" << cell_index[1] << endl;
-        npart_effective = createParticles(params.n_space, cell_index, starting_bin_idx, params );
-        
-        //PMESSAGE( 1, smpi->getRank(),"Species "<< speciesNumber <<" # part "<< npart_effective );
-    }
-    /*double part_min[2], part_max[2];
-    for ( int iDim = 0 ; iDim < 2 ; iDim++ ) {
-	part_min[iDim] = 1000000.;
-	part_max[iDim] = -1.;
-	for ( int iPart = 0; iPart < getNbrOfParticles() ; iPart++ ) {
-	    if ( particles->Position[iDim][iPart] < part_min[iDim] )
-		part_min[iDim] = particles->Position[iDim][iPart];
-	    if ( particles->Position[iDim][iPart] > part_max[iDim] )
-		part_max[iDim] = particles->Position[iDim][iPart];
-	}
-	if (getNbrOfParticles()>0)
-	    cout << " iDim = " << iDim << "\t" << part_min[iDim] << "\t" << part_max[iDim] << endl;
-    }*/
 
-    // assign the correct Pusher to Push
-    Push = PusherFactory::create( params, ispec );
-	
-    // assign the Ionization model (if needed) to Ionize
-    Ionize = IonizationFactory::create( params, ispec );
-    if (Ionize) DEBUG("Species " << ispec << " can be ionized!");
-	
-    // define limits for BC and functions applied and for domain decomposition
-    partBoundCond = new PartBoundCond( params, ispec, smpi, patch);
-
-    unsigned int nthds(1);
-#pragma omp parallel shared(nthds) 
-    {
-#ifdef _OMP
-        nthds = omp_get_num_threads();	  
-#endif
-    }
-    indexes_of_particles_to_exchange_per_thd.resize(nthds);
-    
-    //ener_tot = 0.;
-    nrj_bc_lost = 0.;
-    nrj_mw_lost = 0.;
-    nrj_new_particles = 0.;
-
-}//END Species creator
+}
 
 
 // ---------------------------------------------------------------------------------------------------------------------

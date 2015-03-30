@@ -29,6 +29,10 @@ class Species
 public:
     //! Species creator
     Species(PicParams&, int, SmileiMPI*, Patch*);
+    Species(PicParams&, int, SmileiMPI*);
+
+    void initCluster(PicParams&);
+    void initSpecies(PicParams&);
 
     //! Species destructor
     virtual ~Species();

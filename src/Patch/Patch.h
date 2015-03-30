@@ -98,6 +98,13 @@ public:
     //!     - "- oversize" on rank 0
     std::vector<int> cell_starting_global_index;
 
+
+    std::vector< std::vector<int> > neighbor_;
+
+    //! Log2 of the number of patch in the whole simulation box in every direction.
+    //! The number of patch in a given direction MUST be a power of 2 and is 2^(mi[i]).
+    std::vector<unsigned int> mi;
+
 protected:
 
 private:
@@ -105,10 +112,24 @@ private:
     unsigned int hindex;
 
     //! number of cells in every direction of the local sub-subdomain. All patch have the same size.
-    std::vector<unsigned int> n_space;
-    //! Log2 of the number of patch in the whole simulation box in every direction.
-    //! The number of patch in a given direction MUST be a power of 2 and is 2^(mi[i]).
-    std::vector<unsigned int> mi;
+    //std::vector<unsigned int> n_space;
+
+    //exchangeParticles() {
+	// Out of method -> T operator with smpi or patch
+	//for (iDim = 0 ; iDim < ndim_ ; iDim++) {
+
+	// Merge particles per thd                -> per Species / per Patch
+	// Split particles per direction          -> per Species / per Patch
+
+	// Exch nbr particles                     -> if neighbor_ -> Go, else MPI (particles stored in tmp buf)
+	// Exch particles if necessary
+
+	// Clean   send particles
+	// Include recv particles
+	// Store  !exch particles (other direction/MPI)
+	    
+	//}
+    //};
 
 };
 

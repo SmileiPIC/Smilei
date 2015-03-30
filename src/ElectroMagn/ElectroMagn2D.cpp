@@ -151,40 +151,78 @@ isSouthern(smpi->isSouthern())
     // Define limits of non duplicated elements
     // (by construction 1 (prim) or 2 (dual) elements shared between per MPI process)
     // istart 
-    for (unsigned int i=0 ; i<3 ; i++)
-        for (unsigned int isDual=0 ; isDual<2 ; isDual++)
-            istart[i][isDual] = 0;
-    for (unsigned int i=0 ; i<nDim_field ; i++) {
-        for (unsigned int isDual=0 ; isDual<2 ; isDual++) {
-            istart[i][isDual] = oversize[i];
-            if (smpi2D->getProcCoord(i)!=0) istart[i][isDual]+=1;
-        }
-    }
+    if (patch) {
+	for (unsigned int i=0 ; i<3 ; i++)
+	    for (unsigned int isDual=0 ; isDual<2 ; isDual++)
+		istart[i][isDual] = 0;
+	for (unsigned int i=0 ; i<nDim_field ; i++) {
+	    for (unsigned int isDual=0 ; isDual<2 ; isDual++) {
+		istart[i][isDual] = oversize[i];
+		if (patch->Pcoordinates[i]!=0) istart[i][isDual]+=1;
+	    }
+	}
     
-    // bufsize = nelements
-    for (unsigned int i=0 ; i<3 ; i++) 
-        for (unsigned int isDual=0 ; isDual<2 ; isDual++)
-            bufsize[i][isDual] = 1;
+	// bufsize = nelements
+	for (unsigned int i=0 ; i<3 ; i++) 
+	    for (unsigned int isDual=0 ; isDual<2 ; isDual++)
+		bufsize[i][isDual] = 1;
     
-    for (unsigned int i=0 ; i<nDim_field ; i++) {
-        for (int isDual=0 ; isDual<2 ; isDual++)
-            bufsize[i][isDual] = n_space[i] + 1;
+	for (unsigned int i=0 ; i<nDim_field ; i++) {
+	    for (int isDual=0 ; isDual<2 ; isDual++)
+		bufsize[i][isDual] = n_space[i] + 1;
         
-        for (int isDual=0 ; isDual<2 ; isDual++) {
-            bufsize[i][isDual] += isDual; 
-            if ( smpi2D->getNbrOfProcs(i)!=1 ) {
+	    for (int isDual=0 ; isDual<2 ; isDual++) {
+		bufsize[i][isDual] += isDual; 
+		if ( patch->mi[i]!=1 ) {                
+
+		    if ( ( !isDual ) && (patch->Pcoordinates[i]!=0) )
+			bufsize[i][isDual]--;
+		    else if  (isDual) {
+			bufsize[i][isDual]--;
+			if ( (patch->Pcoordinates[i]!=0) && (patch->Pcoordinates[i]!=patch->mi[i]-1) ) 
+			    bufsize[i][isDual]--;
+		    }
                 
-                if ( ( !isDual ) && (smpi2D->getProcCoord(i)!=0) )
-                    bufsize[i][isDual]--;
-                else if  (isDual) {
-                    bufsize[i][isDual]--;
-                    if ( (smpi2D->getProcCoord(i)!=0) && (smpi2D->getProcCoord(i)!=smpi2D->getNbrOfProcs(i)-1) ) 
-                        bufsize[i][isDual]--;
-                }
+		} // if ( smpi2D->getNbrOfProcs(i)!=1 )
+	    } // for (int isDual=0 ; isDual
+	} // for (unsigned int i=0 ; i<nDim_field 
+    } // End if patch
+    else { // if MPI
+	for (unsigned int i=0 ; i<3 ; i++)
+	    for (unsigned int isDual=0 ; isDual<2 ; isDual++)
+		istart[i][isDual] = 0;
+	for (unsigned int i=0 ; i<nDim_field ; i++) {
+	    for (unsigned int isDual=0 ; isDual<2 ; isDual++) {
+		istart[i][isDual] = oversize[i];
+		if (smpi2D->getProcCoord(i)!=0) istart[i][isDual]+=1;
+	    }
+	}
+    
+	// bufsize = nelements
+	for (unsigned int i=0 ; i<3 ; i++) 
+	    for (unsigned int isDual=0 ; isDual<2 ; isDual++)
+		bufsize[i][isDual] = 1;
+    
+	for (unsigned int i=0 ; i<nDim_field ; i++) {
+	    for (int isDual=0 ; isDual<2 ; isDual++)
+		bufsize[i][isDual] = n_space[i] + 1;
+        
+	    for (int isDual=0 ; isDual<2 ; isDual++) {
+		bufsize[i][isDual] += isDual; 
+		if ( smpi2D->getNbrOfProcs(i)!=1 ) {
                 
-            } // if ( smpi2D->getNbrOfProcs(i)!=1 )
-        } // for (int isDual=0 ; isDual
-    } // for (unsigned int i=0 ; i<nDim_field 
+		    if ( ( !isDual ) && (smpi2D->getProcCoord(i)!=0) )
+			bufsize[i][isDual]--;
+		    else if  (isDual) {
+			bufsize[i][isDual]--;
+			if ( (smpi2D->getProcCoord(i)!=0) && (smpi2D->getProcCoord(i)!=smpi2D->getNbrOfProcs(i)-1) ) 
+			    bufsize[i][isDual]--;
+		    }
+                
+		} // if ( smpi2D->getNbrOfProcs(i)!=1 )
+	    } // for (int isDual=0 ; isDual
+	} // for (unsigned int i=0 ; i<nDim_field 
+    } // End else (if MPI)
     
     
 }//END constructor Electromagn2D

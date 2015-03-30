@@ -117,7 +117,6 @@ int main (int argc, char* argv[])
 #ifdef _PATCH
     vector<Patch*> vecPatches = PatchesFactory::createVector(params, laser_params, smpi);
 #endif
-    return 0;
 
     // -------------------------------------------
     // Declaration of the main objects & operators
@@ -134,7 +133,6 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------------------------
     
     // vector of Species (virtual)
-    std::vector<int> patch_coord(params.nDim_field, 0);
     vector<Species*> vecSpecies = SpeciesFactory::createVector(params, smpi, NULL);
 
     // ------------------------------------------------------------------------
@@ -212,11 +210,13 @@ int main (int argc, char* argv[])
         diag_flag = 0;
 
         // Init electric field (Ex/1D, + Ey/2D)
-        MESSAGE("----------------------------------------------");
-        MESSAGE("Solving Poisson at time t = 0");
-        MESSAGE("----------------------------------------------");
-	if (!EMfields->isRhoNull(smpi)) 
+	if (!EMfields->isRhoNull(smpi)) {
+	    MESSAGE("----------------------------------------------");
+	    MESSAGE("Solving Poisson at time t = 0");
+	    MESSAGE("... But Poisson and Patch = pb, comm collective ! ");
+	    MESSAGE("----------------------------------------------");    
 	    EMfields->solvePoisson(smpi);
+	}
         
         
         //MESSAGE("----------------------------------------------");
@@ -265,10 +265,10 @@ int main (int argc, char* argv[])
 #ifdef _PATCH
 	int npatches(1);
 	for (unsigned int ipatch=0 ; ipatch<npatches ; ipatch++) {
-	    vector<Species*> cuVecSpec = vecPatches[ipatch]->vecSpecies;
-	    ElectroMagn* cuEMfields = vecPatches[ipatch]->EMfields;
-	    Interpolator* cuInterp = vecPatches[ipatch]->Interp;
-	    Projector* cuProj = vecPatches[ipatch]->Proj;
+	    vector<Species*> cuVecSpec  = vecPatches[ipatch]->vecSpecies;
+	    ElectroMagn*     cuEMfields = vecPatches[ipatch]->EMfields;
+	    Interpolator*    cuInterp   = vecPatches[ipatch]->Interp;
+	    Projector*       cuProj     = vecPatches[ipatch]->Proj;
 	    for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 		cuVecSpec[ispec]->dynamics(time_dual, ispec, cuEMfields, cuInterp, cuProj, smpi, params, simWindow, diag_flag);
 	    }

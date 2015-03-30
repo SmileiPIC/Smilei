@@ -20,8 +20,9 @@ class Patch;
 class PartBoundCond {
 public:
     //! partBoundCond creator, (default no MPI set)
-  PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi, Patch* patch );
-    //! partBoundCond destructor
+    PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi, Patch* patch );
+    PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi );
+  //! partBoundCond destructor
     ~PartBoundCond();
 
     //! West particles boundary conditions pointers (same prototypes for all conditions)
