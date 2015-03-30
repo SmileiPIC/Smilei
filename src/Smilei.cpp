@@ -114,7 +114,7 @@ int main (int argc, char* argv[])
     if (smpi->isMaster()) MESSAGE("\tOpenMP : Disabled");
 #endif
 
-#ifndef _PATCH
+#ifdef _PATCH
     vector<Patch*> vecPatches = PatchesFactory::createVector(params, laser_params, smpi);
 #endif
     return 0;

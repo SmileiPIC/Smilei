@@ -64,12 +64,12 @@ public:
     void ted(unsigned int e, unsigned int d, unsigned int *b, unsigned int dim);
     void tedinv(unsigned int e, unsigned int d, unsigned int *b, unsigned int dim);
     //!Hilbert index calculates the Hilbert index h of a patch of coordinates x,y(z) for a simulation box with 2^m patches per side (2^(2 or 3*m) patches in total).
-    unsigned int hilbertindex(unsigned int m, unsigned int x, unsigned int y);
-    unsigned int hilbertindex(unsigned int m, unsigned int x, unsigned int y, unsigned int z);
-    void hilbertindexinv(unsigned int m, unsigned int* x, unsigned int* y, unsigned int h);
+    unsigned int hilbertindex(unsigned int m, unsigned int x, unsigned int y, unsigned int *einit, unsigned int *dinit);
+    unsigned int hilbertindex(unsigned int m, unsigned int x, unsigned int y, unsigned int z, unsigned int einit, unsigned int dinit);
+    void hilbertindexinv(unsigned int m, unsigned int* x, unsigned int* y, unsigned int h, unsigned int dinit);
     //!extractMask extracts a mask µ indicating which axes are active at a given iteration i of the compact hilbert index.
-    unsigned int extractmask(unsigned int m0,unsigned int  m1, unsigned int i );
-    unsigned int extractmask(unsigned int m0,unsigned int  m1, unsigned int  m2, unsigned int i );
+    unsigned int extractmask(unsigned int m0,unsigned int  m1, int i);
+    unsigned int extractmask(unsigned int m0,unsigned int  m1, unsigned int  m2, int i);
     //!Gray Code Rank.
     unsigned int gcr(unsigned int dim, unsigned int mu,unsigned int i);
     //!Gray Code Rank Inverse.
@@ -77,9 +77,14 @@ public:
     //!Hilbert index returns the Hilbert index h of a patch of coordinates x,y,z for a simulation box with 2^mi patches per side (2^(m0+m1+m2) patches in total).
     unsigned int compacthilbertindex(unsigned int m0, unsigned int m1, unsigned int x, unsigned int y);
     unsigned int compacthilbertindex(unsigned int m0, unsigned int m1, unsigned int m2, unsigned int x, unsigned int y, unsigned int z);
+    //!compacthilbertindex2 makes sure that successive indexes are neighbours.
+    unsigned int compacthilbertindex2(unsigned int m0, unsigned int m1, unsigned int x, unsigned int y, unsigned int *einit, unsigned int *dinit);
+    unsigned int compacthilbertindex2(unsigned int m0, unsigned int m1, unsigned int m2, unsigned int x, unsigned int y, unsigned int z);
     //!Hilbert index inv calculates the coordinates x,y,z of a patch for a given Hilbert index h in a simulation box with 2^mi patches per side (2^(m0+m1+m2) patches in total)
     void compacthilbertindexinv(unsigned int m0, unsigned int m1, unsigned int* x, unsigned int* y, unsigned int h);
+    void compacthilbertindexinv2(unsigned int m0, unsigned int m1, unsigned int* x, unsigned int* y, unsigned int h);
     void compacthilbertindexinv(unsigned int m0, unsigned int m1, unsigned int m2, unsigned int* x, unsigned int* y, unsigned int* z, unsigned int h);
+    void compacthilbertindexinv2(unsigned int m0, unsigned int m1, unsigned int m2, unsigned int* x, unsigned int* y, unsigned int* z, unsigned int h);
 
     //!Cartesian coordinates of the patch. X,Y,Z of the Patch according to its Hilbert index.
     std::vector<unsigned int> Pcoordinates;
