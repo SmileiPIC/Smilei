@@ -8,6 +8,7 @@
 #include "SmileiMPI.h"
 #include "ElectroMagn.h"
 #include "Species.h"
+#include "DiagnosticParticles.h"
 
 using namespace std;
 
@@ -31,6 +32,7 @@ Diagnostic::~Diagnostic () {
     scalars.close();
     probes.close();
 	phases.close();
+	DiagnosticParticles::closeAll();
 }
 
 double Diagnostic::getScalar(string name){
@@ -49,6 +51,8 @@ void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Specie
     dtimer[2].restart();
     phases.run(timestep, vecSpecies);
     dtimer[2].update();
+
+    DiagnosticParticles::runAll(timestep, vecSpecies, smpi);
 
 }
 
