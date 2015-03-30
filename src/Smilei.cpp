@@ -114,10 +114,6 @@ int main (int argc, char* argv[])
     if (smpi->isMaster()) MESSAGE("\tOpenMP : Disabled");
 #endif
 
-#ifdef _PATCH
-    vector<Patch*> vecPatches = PatchesFactory::createVector(params, laser_params, smpi);
-#endif
-
     // -------------------------------------------
     // Declaration of the main objects & operators
     // -------------------------------------------
@@ -178,6 +174,11 @@ int main (int argc, char* argv[])
    
     smpi->barrier();
     
+
+#ifndef _PATCH
+    vector<Patch*> vecPatches = PatchesFactory::createVector(params, laser_params, smpi);
+#endif
+
     
     // reading from dumped file the restart values
     if (params.restart) {
@@ -320,16 +321,27 @@ int main (int argc, char* argv[])
 #ifdef _OMP
             tid = omp_get_thread_num();
 #endif
+	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+		vecPatches[ipatch]->dynamics(time_dual, smpi, params, simWindow, diag_flag);
+	    }
+
+	    // Inter Patch exchange
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-                    if ( vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag ){
-                        vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow, diag_flag);
-                    } 
-            }
+                if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
+		    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+			for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
+			    vecPatches[ipatch]->exchParticles(smpi, ispec, params, tid, iDim );
+		    }
+		}
+	    }
+	    // Inter MPI exchange
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
                 if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
 		    // Loop on dims to manage exchange in corners
-		    for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
+		    for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ ) {
 			smpi->exchangeParticles(vecSpecies[ispec], ispec, params, tid, iDim);
+		    }
+
                         #pragma omp barrier
                         vecSpecies[ispec]->sort_part();
                         if (itime%200 == 0) {

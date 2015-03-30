@@ -8,11 +8,11 @@
 
 #include "PicParams.h"
 #include "Tools.h"
+#include "Particles.h"
 
 class PicParams;
 class DiagParams;
 class Species;
-class Particles;
 
 class ElectroMagn;
 class Field;
@@ -168,6 +168,9 @@ public:
     int smilei_sz;
     //! MPI process Id in the current communicator
     int smilei_rk;
+
+    //! For patch decomposition
+    Particles interParticles;
 
 protected:
     //! Global MPI Communicator

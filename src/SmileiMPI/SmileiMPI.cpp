@@ -108,6 +108,9 @@ void SmileiMPI::init( PicParams& params )
     min_local.resize(params.nDim_field, 0.);
     max_local.resize(params.nDim_field, 0.);
     n_space_global.resize(params.nDim_field, 0);
+
+    interParticles.initialize(0,params.nDim_particle); 
+
 }
 
 

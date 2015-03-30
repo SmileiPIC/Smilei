@@ -11,6 +11,7 @@
 
 class PicParams;
 class SmileiMPI;
+class Patch;
 
 //----------------------------------------------------------------------------------------------------------------------
 //! Particle class: holds the basic properties of a particle
@@ -101,6 +102,9 @@ public:
 
     //! Test if ipart is in the local MPI subdomain
     bool is_part_in_domain(int ipart, SmileiMPI* smpi);
+
+    //! Test if ipart is in the local patch
+    bool is_part_in_domain(int ipart, Patch* patch);
 
     //! Method used to get the Particle position
     inline double  position( int idim, int ipart ) const {

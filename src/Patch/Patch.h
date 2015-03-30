@@ -100,6 +100,9 @@ public:
     //! The number of patch in a given direction MUST be a power of 2 and is 2^(mi[i]).
     std::vector<unsigned int> mi;
 
+    void dynamics(double time_dual, SmileiMPI *smpi, PicParams &params, SimWindow* simWindow, int diag_flag);
+    void exchParticles(SmileiMPI* smpi, int ispec, PicParams &params, int tid, int iDim);
+
 protected:
 
 private:
