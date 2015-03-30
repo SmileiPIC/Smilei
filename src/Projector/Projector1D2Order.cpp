@@ -23,8 +23,12 @@ Projector1D2Order::Projector1D2Order (PicParams& params, SmileiMPI* smpi, Patch*
     dx_inv_  = 1.0/params.cell_length[0];
     dx_ov_dt = params.cell_length[0] / params.timestep;
 
-    //index_domain_begin = smpi1D->getCellStartingGlobalIndex(0);
-    index_domain_begin = patch->cell_starting_global_index[0];
+    if (patch) {
+	index_domain_begin = patch->cell_starting_global_index[0];
+    }
+    else {
+	index_domain_begin = smpi1D->getCellStartingGlobalIndex(0);
+    }
 
     DEBUG("cell_length "<< params.cell_length[0]);
 

@@ -114,7 +114,7 @@ int main (int argc, char* argv[])
     if (smpi->isMaster()) MESSAGE("\tOpenMP : Disabled");
 #endif
 
-#ifndef _PATCH
+#ifdef _PATCH
     vector<Patch*> vecPatches = PatchesFactory::createVector(params, laser_params, smpi);
 #endif
 
@@ -133,7 +133,6 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------------------------
     
     // vector of Species (virtual)
-    std::vector<int> patch_coord(params.nDim_field, 0);
     vector<Species*> vecSpecies = SpeciesFactory::createVector(params, smpi, NULL);
 
     // ------------------------------------------------------------------------
@@ -266,10 +265,10 @@ int main (int argc, char* argv[])
 #ifdef _PATCH
 	int npatches(1);
 	for (unsigned int ipatch=0 ; ipatch<npatches ; ipatch++) {
-	    vector<Species*> cuVecSpec = vecPatches[ipatch]->vecSpecies;
-	    ElectroMagn* cuEMfields = vecPatches[ipatch]->EMfields;
-	    Interpolator* cuInterp = vecPatches[ipatch]->Interp;
-	    Projector* cuProj = vecPatches[ipatch]->Proj;
+	    vector<Species*> cuVecSpec  = vecPatches[ipatch]->vecSpecies;
+	    ElectroMagn*     cuEMfields = vecPatches[ipatch]->EMfields;
+	    Interpolator*    cuInterp   = vecPatches[ipatch]->Interp;
+	    Projector*       cuProj     = vecPatches[ipatch]->Proj;
 	    for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 		cuVecSpec[ispec]->dynamics(time_dual, ispec, cuEMfields, cuInterp, cuProj, smpi, params, simWindow, diag_flag);
 	    }
