@@ -19,6 +19,7 @@ class SmileiMPI;
 class ElectroMagnBC;
 class SimWindow;
 class ExtFieldProfile;
+class Solver;
 
 //! class ElectroMagn: generic class containing all information on the electromagnetic fields and currents
 
@@ -153,7 +154,8 @@ public:
     //! method used to solve Maxwell's equation (takes current time and time-step as input parameter)
     void solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, PicParams &params, SimWindow* simWindow);
     virtual void solveMaxwellAmpere() = 0;
-    virtual void solveMaxwellFaraday() = 0;
+    //! Maxwell Faraday Solver
+    Solver* MaxwellFaradaySolver_;
     virtual void saveMagneticFields() = 0;
     virtual void centerMagneticFields() = 0;
 

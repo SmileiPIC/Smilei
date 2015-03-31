@@ -172,7 +172,6 @@ isNorthern(smpi->isNorthern())
         } // for (int isDual=0 ; isDual
     } // for (unsigned int i=0 ; i<nDim_field 
     
-    
 }//END constructor Electromagn2D
 
 
@@ -182,7 +181,6 @@ isNorthern(smpi->isNorthern())
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn2D::~ElectroMagn2D()
 {
-    
 }//END ElectroMagn2D
 
 
@@ -580,59 +578,6 @@ void ElectroMagn2D::solveMaxwellAmpere()
 }
 //    }
 }//END solveMaxwellAmpere
-
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Solve the Maxwell-Faraday equation
-// ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn2D::solveMaxwellFaraday()
-{
-    
-    // Static-cast of the fields
-    Field2D* Ex2D = static_cast<Field2D*>(Ex_);
-    Field2D* Ey2D = static_cast<Field2D*>(Ey_);
-    Field2D* Ez2D = static_cast<Field2D*>(Ez_);
-    Field2D* Bx2D = static_cast<Field2D*>(Bx_);
-    Field2D* By2D = static_cast<Field2D*>(By_);
-    Field2D* Bz2D = static_cast<Field2D*>(Bz_);
-    
-    // Magnetic field Bx^(p,d)
-//cout << "nx_p,nx_d-1" << nx_p << " " << nx_d-1 ; 
-//#pragma omp parallel
-//{
-//#pragma omp for schedule(runtime)
-#pragma omp single
-{
-        for (unsigned int j=1 ; j<ny_d-1 ; j++) {
-            (*Bx2D)(0,j) -= dt_ov_dy * ( (*Ez2D)(0,j) - (*Ez2D)(0,j-1) );
-        }
-}
-#pragma omp for schedule(runtime)
-//    for (unsigned int i=0 ; i<nx_p;  i++) {
-    for (unsigned int i=1 ; i<nx_d-1;  i++) {
-        for (unsigned int j=1 ; j<ny_d-1 ; j++) {
-            (*Bx2D)(i,j) -= dt_ov_dy * ( (*Ez2D)(i,j) - (*Ez2D)(i,j-1) );
-        }
-//    }
-    
-    // Magnetic field By^(d,p)
-//#pragma omp for schedule(runtime)
-//    for (unsigned int i=1 ; i<nx_d-1 ; i++) {
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            (*By2D)(i,j) += dt_ov_dx * ( (*Ez2D)(i,j) - (*Ez2D)(i-1,j) );
-        }
-    //}
-    
-    // Magnetic field Bz^(d,d)
-    //for (unsigned int i=1 ; i<nx_d-1 ; i++) {
-        for (unsigned int j=1 ; j<ny_d-1 ; j++) {
-            (*Bz2D)(i,j) += dt_ov_dy * ( (*Ex2D)(i,j) - (*Ex2D)(i,j-1) )
-            -               dt_ov_dx * ( (*Ey2D)(i,j) - (*Ey2D)(i-1,j) );
-        }
-    }
-//}// end parallel
-}//END solveMaxwellFaraday
 
 
 // ---------------------------------------------------------------------------------------------------------------------

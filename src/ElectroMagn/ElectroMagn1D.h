@@ -24,9 +24,6 @@ public:
     //! Method used to solve Maxwell-Ampere equation
     void solveMaxwellAmpere();
 
-    //! Method used to solve Maxwell-Faraday equation
-    void solveMaxwellFaraday();
-
     //! Method used to save the Magnetic fields (used to center them)
     void saveMagneticFields();
 

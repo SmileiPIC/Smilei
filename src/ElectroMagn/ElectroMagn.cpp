@@ -12,7 +12,7 @@
 #include "SimWindow.h"
 #include "ExtFieldProfile1D.h"
 #include "ExtFieldProfile2D.h"
-
+#include "SolverFactory.h"
 
 using namespace std;
 
@@ -85,7 +85,8 @@ oversize(params.oversize)
 
     emBoundCond = ElectroMagnBC_Factory::create(params, laser_params);
     
-    
+    MaxwellFaradaySolver_ = SolverFactory::create(params);
+
 }
 
 
@@ -129,6 +130,8 @@ ElectroMagn::~ElectroMagn()
     for ( int i=0 ; i<nBC ;i++ )
       if (emBoundCond[i]!=NULL) delete emBoundCond[i];
 
+    delete MaxwellFaradaySolver_;
+
 }//END Destructer
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -161,7 +164,7 @@ void ElectroMagn::solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, Pic
 }// end single
 
     // Compute Bx_, By_, Bz_
-    solveMaxwellFaraday();
+    (*MaxwellFaradaySolver_)(this);
 
 #pragma omp single
 {

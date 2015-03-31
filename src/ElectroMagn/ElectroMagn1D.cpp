@@ -13,6 +13,7 @@
 #include "SmileiMPI_Cart1D.h"
 
 #include "ExtFieldProfile1D.h"
+#include "MF_Solver1D_Yee.h"
 
 using namespace std;
 
@@ -162,7 +163,6 @@ isEastern(smpi->isEastern())
             } // if ( smpi1D->getNbrOfProcs(i)!=1 )
         } // for (int isDual=0 ; isDual
     } // for (unsigned int i=0 ; i<nDim_field
-    
     
 }//END constructor Electromagn1D
 
@@ -432,30 +432,6 @@ void ElectroMagn1D::solveMaxwellAmpere()
     for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
         (*Ey1D)(ix)= (*Ey1D)(ix) - dt_ov_dx * ( (*Bz1D)(ix+1) - (*Bz1D)(ix)) - timestep * (*Jy1D)(ix) ;
         (*Ez1D)(ix)= (*Ez1D)(ix) + dt_ov_dx * ( (*By1D)(ix+1) - (*By1D)(ix)) - timestep * (*Jz1D)(ix) ;
-    }
-    
-}
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Maxwell solver using the FDTD scheme
-// ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn1D::solveMaxwellFaraday()
-{
-    Field1D* Ey1D   = static_cast<Field1D*>(Ey_);
-    Field1D* Ez1D   = static_cast<Field1D*>(Ez_);
-    Field1D* By1D   = static_cast<Field1D*>(By_);
-    Field1D* Bz1D   = static_cast<Field1D*>(Bz_);
-    
-    // ---------------------
-    // Solve Maxwell-Faraday
-    // ---------------------
-    // NB: bx is given in 1d and defined when initializing the fields (here put to 0)
-    // Transverse fields  by & bz are defined on the dual grid
-    //for (unsigned int ix=1 ; ix<nx_p ; ix++) {
-    for (unsigned int ix=1 ; ix<dimDual[0]-1 ; ix++) {
-        (*By1D)(ix)= (*By1D)(ix) + dt_ov_dx * ( (*Ez1D)(ix) - (*Ez1D)(ix-1)) ;
-        (*Bz1D)(ix)= (*Bz1D)(ix) - dt_ov_dx * ( (*Ey1D)(ix) - (*Ey1D)(ix-1)) ;
     }
     
 }
