@@ -7,9 +7,6 @@ using namespace std;
 
 
 Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int m0, unsigned int m1, unsigned int m2, unsigned int ipatch) {
-        unsigned int xinv, yinv, zinv, hindexold, *einit, *dinit,e,d;
-        einit=&e;
-        dinit=&d;
         hindex = ipatch;
         if ( params.geometry == "1d3v" ) {
             mi.resize(1);
@@ -22,30 +19,7 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
             Pcoordinates.resize(2);
             mi[0] = m0;
             mi[1] = m1;
-            compacthilbertindexinv(m0, m1, &Pcoordinates[0], &Pcoordinates[1], hindex);
-            //For tests by A.B.
-            if (ipatch == 0){
-                //compacthilbertindexinv2(m0, m1, m2, &xinv, &yinv, &zinv, 65);
-                //cout << "x = " << xinv << " y= " << yinv << " z = " << zinv << endl;
-                //hindex = hilbertindex(m0, 5,6,1);
-                for (unsigned int x=0; x < (1<<m0) ; x++){
-                    for (unsigned int y=0; y < (1<<m1) ; y++){
-                        for (unsigned int z=0; z < (1<<m2) ; z++){
-                            hindex = compacthilbertindex2(m0, m1, m2, x,y,z);
-                            //*einit=0;
-                            //*dinit=0;
-                            //hindex = compacthilbertindex2(m0, m1, x,y,einit,dinit);
-                            hindexold = compacthilbertindex(m0, m1, m2, x,y,z);
-                            //hindexold = compacthilbertindex(m0, m1, x,y);
-                            //hilbertindexinv(m0, &xinv, &yinv, &zinv, hindex, 0, 0);
-                            compacthilbertindexinv2(m0, m1, m2, &xinv, &yinv, &zinv, hindex);
-                            std::cout << x << " " << y << " " << z << " "<< hindex << " " << hindexold <<" " << xinv <<" " << yinv << " " << zinv << endl;
-                            //std::cout << x << " " << y << " " << hindex << " " << hindexold <<" " << xinv <<" " << yinv << " " << endl;
-                        }
-                    }
-                }
-
-            }
+            generalhilbertindexinv(m0, m1, &Pcoordinates[0], &Pcoordinates[1], hindex);
         }
         else {
             mi.resize(3);
@@ -53,7 +27,7 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
             mi[0] = m0;
             mi[1] = m1;
             mi[2] = m2;
-            compacthilbertindexinv(m0, m1, m2, &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
+            generalhilbertindexinv(m0, m1, m2, &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
         }
 
 	Pcoordinates[1] = ipatch%m1;
@@ -274,62 +248,6 @@ void Patch::hilbertindexinv(unsigned int m, unsigned int* x, unsigned int* y, un
     return;
 }
 
-//!extractMask extracts a mask µ indicating which axes are active at a given iteration i of the compact hilbert index.
-//! For a simulation box with 2^m0 patches along X and 2^m1 patches along Y.
-unsigned int Patch::extractmask(unsigned int m0,unsigned int  m1, int  i)
-{
-    unsigned int mu;
-    mu = 0;
-    if (m1 > i) mu = mu | 1;
-    mu = mu << 1;
-    if (m0 > i) mu = mu | 1;
-    return mu;
-}
-//!extractMask extracts a mask µ indicating which axes are active at a given iteration i of the compact hilbert index.
-//! For a simulation box with 2^m0 patches along X, 2^m1 patches along Y and 2^m2 patches along Z.
-unsigned int Patch::extractmask(unsigned int m0,unsigned int  m1,unsigned int  m2, int  i)
-{
-    unsigned int mu;
-    mu = 0;
-    if (m2 > i) mu = mu | 1;
-    mu = mu << 1;
-    if (m1 > i) mu = mu | 1;
-    mu = mu << 1;
-    if (m0 > i) mu = mu | 1;
-    return mu;
-}
-//!Gray Code Rank.
-unsigned int Patch::gcr(unsigned int dim, unsigned int mu,unsigned int i)
-{
-    unsigned int r;
-    r = 0;
-    for (int k = dim-1; k>=0; k--){
-        if( bit(mu, k) ) r = (r << 1) | bit(i,k);
-    }
-    return r;
-}
-//!Gray Code Rank Inverse.
-unsigned int Patch::gcrinv(unsigned int dim, unsigned int mu,unsigned int pi, unsigned int r)
-{
-    unsigned int g,i,j;
-    g = 0;
-    i = 0;
-    j = 0;
-    for (unsigned int k=0; k < dim ; k++) j += bit(mu,k) ; //Counts the number of 1 in the binary representation of mu.
-    j--; //At this point, j = ||mu|| - 1
-
-    for (int k=dim-1; k >=0 ; k--){
-        if(  bit(mu,k) ){
-            setbit(&i, k, bit(r,j));
-            setbit(&g, k, (bit(i,k) + bit(i,k+1))%2 );
-            j--;
-        } else {
-            setbit(&g, k, bit(pi,k));
-            setbit(&i, k, (bit(g,k)+bit(i,k+1))%2);
-        }
-    }
-    return i;
-}
 //!Get kth bit of i.
 unsigned int Patch::bit(unsigned int i, unsigned int k)
 {
@@ -342,32 +260,10 @@ void Patch::setbit(unsigned int* i, unsigned int k, unsigned int value)
     return;
 }
 
-//The "compact" version of the functions allows a different number of patch in each direction.
+//The "general" versions of the functions allow a different number of patch in each direction.
 
-//!Compact Hilbert index2D calculates the compact Hilbert index h of a patch of coordinates x,y for a simulation box with 2^mi patches per side (2^(m0+m1)) patches in total).
-unsigned int Patch::compacthilbertindex(unsigned int m0, unsigned int m1, unsigned int x, unsigned int y)
-{
-    unsigned int h,e,d,m,mu,w,l,r;
-    h=0;
-    e=0;
-    d=0;
-    m=std::max(m0, m1);
-    for (int i = m-1; i>=0; i--){
-        mu = extractmask(m0, m1, i);
-        mu = rotr(mu,d+1,2);
-        l = bit(y,i)*2 + bit(x,i); 
-        ted(e,d, &l, 2); 
-        w = gcinv(l);
-        r = gcr(2,mu,w);
-        e = e ^ (rotl(entry(w), d+1, 2));
-        d = (d + direction(w, 2) + 1)%2 ;
-        for (unsigned int k=0; k < 2 ; k++) h = h << bit(mu,k) ;
-        h = h | r ;
-    }
-    return h;
-}
-//! Compacthilbertindex2 makes sure that successive indices are neighbours.
-unsigned int Patch::compacthilbertindex2(unsigned int m0, unsigned int m1, unsigned int x, unsigned int y, unsigned int *einit, unsigned int *dinit)
+//!General Hilbert index2D calculates the  Hilbert index h of a patch of coordinates x,y for a simulation box with 2^mi patches per side (2^(m0+m1)) patches in total).
+unsigned int Patch::generalhilbertindex(unsigned int m0, unsigned int m1, unsigned int x, unsigned int y, unsigned int *einit, unsigned int *dinit)
 {
     unsigned int h,mmin,mmax,l,localx,localy,*target;
     h=0;
@@ -394,7 +290,8 @@ unsigned int Patch::compacthilbertindex2(unsigned int m0, unsigned int m1, unsig
     }
 return h;
 }
-unsigned int Patch::compacthilbertindex2(unsigned int m0, unsigned int m1, unsigned int m2, unsigned int x, unsigned int y, unsigned int z)
+//!General Hilbert index3D calculates the compact Hilbert index h of a patch of coordinates x,y,z for a simulation box with 2^mi patches per side (2^(m0+m1+m2)) patches in total).
+unsigned int Patch::generalhilbertindex(unsigned int m0, unsigned int m1, unsigned int m2, unsigned int x, unsigned int y, unsigned int z)
 {
     unsigned int h,e,d,*einit,*dinit,dimmin,dimmax,dimmed,l,localx,localy,localz, mi[3],localp[3],tempp[3],mmin;
     h=0;
@@ -427,7 +324,7 @@ unsigned int Patch::compacthilbertindex2(unsigned int m0, unsigned int m1, unsig
     // First approach on a flattened 2D grid along dimmax and dimmed. The 3D grid is projected along dimmin axis.
     tempp[dimmax] = localp[dimmax] >> mi[dimmin]; //Erase last mi[dimmin] bits. Not relevent for this phase.
     tempp[dimmed] = localp[dimmed] >> mi[dimmin]; //Erase last mi[dimmin] bits. Not relevent for this phase.
-    h += compacthilbertindex2(mi[dimmax]-mi[dimmin],mi[dimmed]-mi[dimmin],tempp[dimmax],tempp[dimmed],einit,dinit)*(1<<(3*mi[dimmin]));
+    h += generalhilbertindex(mi[dimmax]-mi[dimmin],mi[dimmed]-mi[dimmin],tempp[dimmax],tempp[dimmed],einit,dinit)*(1<<(3*mi[dimmin]));
 
     //Now in a local cube of side mi[dimmin]. The local entry point "einit" and initial direction "dinit" of the local hilbert curve has been
     //determined by the previous call to compacthilbertindex2.
@@ -442,64 +339,9 @@ unsigned int Patch::compacthilbertindex2(unsigned int m0, unsigned int m1, unsig
 
 return h;
 }
-//!Compact Hilbert index3D calculates the compact Hilbert index h of a patch of coordinates x,y,z for a simulation box with 2^mi patches per side (2^(m0+m1+m2)) patches in total).
-unsigned int Patch::compacthilbertindex(unsigned int m0, unsigned int m1, unsigned int m2, unsigned int x, unsigned int y, unsigned int z)
-{
-    unsigned int h,e,d,m,mu,w,l,r;
-    h=0;
-    e=0;
-    d=0;
-    m=std::max(std::max(m0, m1), m2);
-    for (int i = m-1; i>=0; i--){
-        mu = extractmask(m0, m1, m2, i);
-        mu = rotr(mu,d+1,3);
-        l = bit(z,i)*4 + bit(y,i)*2 + bit(x,i); 
-        ted(e,d, &l, 3); 
-        w = gcinv(l);
-        r = gcr(3,mu,w);
-        e = e ^ (rotl(entry(w), d+1, 3));
-        d = (d + direction(w, 3) + 1)%3 ;
-        for (unsigned int k=0; k < 3 ; k++) h = h << bit(mu,k) ;
-        h = h | r ;
-
-    }
-    return h;
-}
-//!Hilbert index inverse calculates the coordinates x,y of a patch for a given Hilbert index h in a simulation box with 2^mi patches per side (2^(m0+m1) patches in total)
+//!General Hilbert index inverse calculates the coordinates x,y of a patch for a given Hilbert index h in a simulation box with 2^mi patches per side (2^(m0+m1) patches in total)
 //2D version
-void Patch::compacthilbertindexinv(unsigned int m0, unsigned int m1, unsigned int* x, unsigned int* y, unsigned int h)
-{
-    unsigned int e,d,k,mu,l,r,mmax,msum,w,norm,pi;
-    e=0;
-    d=0;
-    k=0;
-    *x=0;
-    *y=0;
-    msum=m0+m1;
-    mmax=std::max(m0, m1);
-    for (int i=mmax-1; i>=0; i--){
-        mu = extractmask(m0, m1, i);
-        mu = rotr(mu,d+1,2);
-        pi = rotr(e,d+1,2) & ~mu;
-        norm=0;
-        for (unsigned int n=0; n < 2 ; n++) norm += bit(mu,n) ;
-        r=0;
-        for (unsigned int n=0; n < norm ; n++){
-            r = r << 1;
-            r += bit(h,msum-1-k-n) ;
-        }
-        k += norm;
-        w = gcrinv(2,mu,pi,r);
-        l = gc(w);
-        tedinv(e,d,&l,2);
-        setbit(x,(unsigned int)i,bit(l,0));
-        setbit(y,(unsigned int)i,bit(l,1));
-        e = e ^ (rotl(entry(w), d+1, 2));
-        d = (d + direction(w, 2) + 1)%2 ;
-    } 
-    return;
-}
-void Patch::compacthilbertindexinv2(unsigned int m0, unsigned int m1, unsigned int* x, unsigned int* y, unsigned int h)
+void Patch::generalhilbertindexinv(unsigned int m0, unsigned int m1, unsigned int* x, unsigned int* y, unsigned int h)
 {
     unsigned int einit, dinit, mmin, mmax,l,localh, *target, shift ;
     einit = 0;
@@ -532,42 +374,7 @@ void Patch::compacthilbertindexinv2(unsigned int m0, unsigned int m1, unsigned i
 
 }
 //3D version
-//Coordinates x,y,z of a patch of index h in a simulation box with a total number of patch = 2^(m0+m1+m2)
-void Patch::compacthilbertindexinv(unsigned int m0, unsigned int m1, unsigned int m2,  unsigned int* x, unsigned int* y, unsigned int* z, unsigned int h)
-{
-    unsigned int e,d,k,mu,l,r,mmax,msum,w,norm,pi;
-    e=0;
-    d=0;
-    k=0;
-    *x=0;
-    *y=0;
-    *z=0;
-    msum=m0+m1+m2;
-    mmax=std::max(std::max(m0, m1), m2);
-    for (int i=mmax-1; i>=0; i--){
-        mu = extractmask(m0, m1, m2, i);
-        mu = rotr(mu,d+1,3);
-        pi = rotr(e,d+1,3) & ~mu;
-        norm=0;
-        for (unsigned int n=0; n < 3 ; n++) norm += bit(mu,n) ;
-        r=0;
-        for (unsigned int n=0; n < norm ; n++){
-            r = r << 1;
-            r += bit(h,msum-1-k-n) ;
-        }
-        k += norm;
-        w = gcrinv(3,mu,pi,r);
-        l = gc(w);
-        tedinv(e,d,&l,3);
-        setbit(x,(unsigned int)i,bit(l,0));
-        setbit(y,(unsigned int)i,bit(l,1));
-        setbit(z,(unsigned int)i,bit(l,2));
-        e = e ^ (rotl(entry(w), d+1, 3));
-        d = (d + direction(w, 3) + 1)%3 ;
-    } 
-    return;
-}
-void Patch::compacthilbertindexinv2(unsigned int m0, unsigned int m1, unsigned int m2,  unsigned int* x, unsigned int* y, unsigned int* z, unsigned int h)
+void Patch::generalhilbertindexinv(unsigned int m0, unsigned int m1, unsigned int m2,  unsigned int* x, unsigned int* y, unsigned int* z, unsigned int h)
 {
     unsigned int e,d,dimmin,dimmax,dimmed,l,localx,localy,localz, mi[3],*localp[3],tempp[3],localh;
     e=0;
@@ -599,21 +406,17 @@ void Patch::compacthilbertindexinv2(unsigned int m0, unsigned int m1, unsigned i
     //Localize in which sub hypercube the point is. Do not account for the first 3*dimmin bits of h.
     localh = (h >> (mi[dimmin]*3));
     //Run the 2D inversion algorithm on the reduced domain.
-    compacthilbertindexinv2(mi[dimmax]-mi[dimmin],mi[dimmed]-mi[dimmin],localp[dimmax],localp[dimmed],localh);
-    //cout << "x = " << *localp[dimmax] << " y= " << *localp[dimmed] << " z = nothing " << endl;
+    generalhilbertindexinv(mi[dimmax]-mi[dimmin],mi[dimmed]-mi[dimmin],localp[dimmax],localp[dimmed],localh);
     // Now local P stores the position of the cube in the 2D domain
     // We need to run the 3D inversion algorithm on this cube with the correct entry point and direction.
     // Run the 2D indexgenerator in order to evaluate e and d.
-    localh = compacthilbertindex2(mi[dimmax]-mi[dimmin],mi[dimmed]-mi[dimmin],*localp[dimmax],*localp[dimmed],&e,&d);
+    localh = generalhilbertindex(mi[dimmax]-mi[dimmin],mi[dimmed]-mi[dimmin],*localp[dimmax],*localp[dimmed],&e,&d);
     //Transform coordinates in the global frame.
     *localp[dimmax] *= (1<<mi[dimmin]);
     *localp[dimmed] *= (1<<mi[dimmin]);
     *localp[dimmin] = 0 ;
-    //cout << "x = " << *localp[dimmax] << " y= " << *localp[dimmed] << " z = " << *localp[dimmin] << endl;
-
     //Use only first bits of h for the local hypercube.
     localh = h & ((1<<(mi[dimmin]*3))-1);
-    //cout << "local h = " << localh << " e= " << e << " d = " << d << endl;
     //Run the cubic inversion algorithm in the local sub hypercube.
     hilbertindexinv(mi[dimmin], &tempp[dimmax], &tempp[dimmed], &tempp[dimmin], localh, e, d);
     //Add results to the coordinates.
@@ -623,3 +426,170 @@ void Patch::compacthilbertindexinv2(unsigned int m0, unsigned int m1, unsigned i
 
     return;
 }
+//Old implmeentation inspired by Chris Hamilton. Not used anymore because the generated Hilbert curves are not continuous.
+//void Patch::compacthilbertindexinv(unsigned int m0, unsigned int m1, unsigned int m2,  unsigned int* x, unsigned int* y, unsigned int* z, unsigned int h)
+//{
+//    unsigned int e,d,k,mu,l,r,mmax,msum,w,norm,pi;
+//    e=0;
+//    d=0;
+//    k=0;
+//    *x=0;
+//    *y=0;
+//    *z=0;
+//    msum=m0+m1+m2;
+//    mmax=std::max(std::max(m0, m1), m2);
+//    for (int i=mmax-1; i>=0; i--){
+//        mu = extractmask(m0, m1, m2, i);
+//        mu = rotr(mu,d+1,3);
+//        pi = rotr(e,d+1,3) & ~mu;
+//        norm=0;
+//        for (unsigned int n=0; n < 3 ; n++) norm += bit(mu,n) ;
+//        r=0;
+//        for (unsigned int n=0; n < norm ; n++){
+//            r = r << 1;
+//            r += bit(h,msum-1-k-n) ;
+//        }
+//        k += norm;
+//        w = gcrinv(3,mu,pi,r);
+//        l = gc(w);
+//        tedinv(e,d,&l,3);
+//        setbit(x,(unsigned int)i,bit(l,0));
+//        setbit(y,(unsigned int)i,bit(l,1));
+//        setbit(z,(unsigned int)i,bit(l,2));
+//        e = e ^ (rotl(entry(w), d+1, 3));
+//        d = (d + direction(w, 3) + 1)%3 ;
+//    } 
+//    return;
+//}
+//void Patch::compacthilbertindexinv(unsigned int m0, unsigned int m1, unsigned int* x, unsigned int* y, unsigned int h)
+//{
+//    unsigned int e,d,k,mu,l,r,mmax,msum,w,norm,pi;
+//    e=0;
+//    d=0;
+//    k=0;
+//    *x=0;
+//    *y=0;
+//    msum=m0+m1;
+//    mmax=std::max(m0, m1);
+//    for (int i=mmax-1; i>=0; i--){
+//        mu = extractmask(m0, m1, i);
+//        mu = rotr(mu,d+1,2);
+//        pi = rotr(e,d+1,2) & ~mu;
+//        norm=0;
+//        for (unsigned int n=0; n < 2 ; n++) norm += bit(mu,n) ;
+//        r=0;
+//        for (unsigned int n=0; n < norm ; n++){
+//            r = r << 1;
+//            r += bit(h,msum-1-k-n) ;
+//        }
+//        k += norm;
+//        w = gcrinv(2,mu,pi,r);
+//        l = gc(w);
+//        tedinv(e,d,&l,2);
+//        setbit(x,(unsigned int)i,bit(l,0));
+//        setbit(y,(unsigned int)i,bit(l,1));
+//        e = e ^ (rotl(entry(w), d+1, 2));
+//        d = (d + direction(w, 2) + 1)%2 ;
+//    } 
+//    return;
+//}
+//unsigned int Patch::compacthilbertindex(unsigned int m0, unsigned int m1, unsigned int m2, unsigned int x, unsigned int y, unsigned int z)
+//{
+//    unsigned int h,e,d,m,mu,w,l,r;
+//    h=0;
+//    e=0;
+//    d=0;
+//    m=std::max(std::max(m0, m1), m2);
+//    for (int i = m-1; i>=0; i--){
+//        mu = extractmask(m0, m1, m2, i);
+//        mu = rotr(mu,d+1,3);
+//        l = bit(z,i)*4 + bit(y,i)*2 + bit(x,i); 
+//        ted(e,d, &l, 3); 
+//        w = gcinv(l);
+//        r = gcr(3,mu,w);
+//        e = e ^ (rotl(entry(w), d+1, 3));
+//        d = (d + direction(w, 3) + 1)%3 ;
+//        for (unsigned int k=0; k < 3 ; k++) h = h << bit(mu,k) ;
+//        h = h | r ;
+//
+//    }
+//    return h;
+//}
+//unsigned int Patch::compacthilbertindex(unsigned int m0, unsigned int m1, unsigned int x, unsigned int y)
+//{
+//    unsigned int h,e,d,m,mu,w,l,r;
+//    h=0;
+//    e=0;
+//    d=0;
+//    m=std::max(m0, m1);
+//    for (int i = m-1; i>=0; i--){
+//        mu = extractmask(m0, m1, i);
+//        mu = rotr(mu,d+1,2);
+//        l = bit(y,i)*2 + bit(x,i); 
+//        ted(e,d, &l, 2); 
+//        w = gcinv(l);
+//        r = gcr(2,mu,w);
+//        e = e ^ (rotl(entry(w), d+1, 2));
+//        d = (d + direction(w, 2) + 1)%2 ;
+//        for (unsigned int k=0; k < 2 ; k++) h = h << bit(mu,k) ;
+//        h = h | r ;
+//    }
+//    return h;
+//}
+//!Gray Code Rank Inverse.
+//unsigned int Patch::gcrinv(unsigned int dim, unsigned int mu,unsigned int pi, unsigned int r)
+//{
+//    unsigned int g,i,j;
+//    g = 0;
+//    i = 0;
+//    j = 0;
+//    for (unsigned int k=0; k < dim ; k++) j += bit(mu,k) ; //Counts the number of 1 in the binary representation of mu.
+//    j--; //At this point, j = ||mu|| - 1
+//
+//    for (int k=dim-1; k >=0 ; k--){
+//        if(  bit(mu,k) ){
+//            setbit(&i, k, bit(r,j));
+//            setbit(&g, k, (bit(i,k) + bit(i,k+1))%2 );
+//            j--;
+//        } else {
+//            setbit(&g, k, bit(pi,k));
+//            setbit(&i, k, (bit(g,k)+bit(i,k+1))%2);
+//        }
+//    }
+//    return i;
+//}
+//!extractMask extracts a mask µ indicating which axes are active at a given iteration i of the compact hilbert index.
+//! For a simulation box with 2^m0 patches along X and 2^m1 patches along Y.
+//unsigned int Patch::extractmask(unsigned int m0,unsigned int  m1, int  i)
+//{
+//    unsigned int mu;
+//    mu = 0;
+//    if (m1 > i) mu = mu | 1;
+//    mu = mu << 1;
+//    if (m0 > i) mu = mu | 1;
+//    return mu;
+//}
+//!extractMask extracts a mask µ indicating which axes are active at a given iteration i of the compact hilbert index.
+//! For a simulation box with 2^m0 patches along X, 2^m1 patches along Y and 2^m2 patches along Z.
+//unsigned int Patch::extractmask(unsigned int m0,unsigned int  m1,unsigned int  m2, int  i)
+//{
+//    unsigned int mu;
+//    mu = 0;
+//    if (m2 > i) mu = mu | 1;
+//    mu = mu << 1;
+//    if (m1 > i) mu = mu | 1;
+//    mu = mu << 1;
+//    if (m0 > i) mu = mu | 1;
+//    return mu;
+//}
+//!Gray Code Rank.
+//unsigned int Patch::gcr(unsigned int dim, unsigned int mu,unsigned int i)
+//{
+//    unsigned int r;
+//    r = 0;
+//    for (int k = dim-1; k>=0; k--){
+//        if( bit(mu, k) ) r = (r << 1) | bit(i,k);
+//    }
+//    return r;
+//}
+
