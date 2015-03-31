@@ -196,15 +196,14 @@ void Species::initPosition(unsigned int np, unsigned int iPart, double *indexes,
 {
     for (unsigned  p= iPart; p<iPart+np; p++)
 	{
-	    for (unsigned  i=0; i<ndim ; i++)
-		{
-		    if (initialization_type == "regular") {
-                            particles.position(i,p)=indexes[i]+(p-iPart+0.5)*cell_length[i]/np;
-            // /!\ boxcar case is temporary - DO NOT MERGE
-		    } else if (initialization_type == "cold" || initialization_type == "maxwell-juettner" || initialization_type == "boxcar") {
-                        particles.position(i,p)=indexes[i]+(((double)rand() / RAND_MAX))*cell_length[i];
-		    }
-		    particles.position_old(i,p) = particles.position(i,p);
+        for (unsigned  i=0; i<ndim ; i++)
+        {
+            if (initialization_type == "regular") {
+                particles.position(i,p)=indexes[i]+(p-iPart+0.5)*cell_length[i]/np;
+            } else {
+                particles.position(i,p)=indexes[i]+(((double)rand() / RAND_MAX))*cell_length[i];
+            }
+            particles.position_old(i,p) = particles.position(i,p);
 		}// i
 	}// p
 }
@@ -270,7 +269,6 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
 		}//p
 		
 	    // center the distribution function around pMean
-	    // \todo{Allow for non-zero mean-velocity (MG)}
 	    for (unsigned int p= iPart; p<iPart+np; p++)
 		{
 		    for (unsigned int i=0; i<3 ; i++) {
@@ -278,23 +276,20 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
 		    }
 		}
 		
-        // TEMPORARY TEST                    +--------------+
-        // Anisotropic distribution          | DO NOT MERGE |
-        // WORKS ONLY IF NON-RELATIVISTIC    +--------------+
+        // Make distribution anisotropic
+        //! \todo{Verify that it is also valid in the relativistic case}
         for (unsigned int p= iPart; p<iPart+np; p++) {
             particles.momentum(1,p) *= sqrt(temp[1]/temp[0]);
             particles.momentum(2,p) *= sqrt(temp[2]/temp[0]);
         }
         
-    // TEMPORARY TEST                    +--------------+
-    // Boxcar distribution along x       | DO NOT MERGE |
-    //                                   +--------------+
-    } else if (initialization_type == "boxcar") {
+    // Rectangular distribution
+    } else if (initialization_type == "rectangular") {
         
         for (unsigned int p= iPart; p<iPart+np; p++) {
             particles.momentum(0,p) = (2.*(double)rand() / RAND_MAX - 1.) * sqrt(temp[0]/species_param.mass);
-            particles.momentum(1,p) = 0.;
-            particles.momentum(2,p) = 0.;
+            particles.momentum(1,p) = (2.*(double)rand() / RAND_MAX - 1.) * sqrt(temp[1]/species_param.mass);
+            particles.momentum(2,p) = (2.*(double)rand() / RAND_MAX - 1.) * sqrt(temp[2]/species_param.mass);
         }
         
     }//END if initialization_type

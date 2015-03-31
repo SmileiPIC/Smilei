@@ -174,13 +174,13 @@ int main (int argc, char* argv[])
         MESSAGE(1, "READING fields and particles for restart");
         DEBUG(vecSpecies.size());
         sio->restartAll( EMfields,  stepStart, vecSpecies, smpi, simWindow, params, input_data);
-
+        
         double restart_time_dual = (stepStart +0.5) * params.timestep;
-	if ( simWindow && ( simWindow->isMoving(restart_time_dual) ) ) {
-	    simWindow->setOperators(vecSpecies, Interp, Proj, smpi);
-	    simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi , params);
-	}
-	    
+        if ( simWindow && ( simWindow->isMoving(restart_time_dual) ) ) {
+            simWindow->setOperators(vecSpecies, Interp, Proj, smpi);
+            simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi , params);
+        }
+        
     } else {
         // Initialize the electromagnetic fields
         // -----------------------------------
@@ -199,7 +199,6 @@ int main (int argc, char* argv[])
         MESSAGE("----------------------------------------------");
 	if (!EMfields->isRhoNull(smpi)) 
 	    EMfields->solvePoisson(smpi);
-        
         
         MESSAGE("----------------------------------------------");
         MESSAGE("Running diags at time t = 0");
@@ -220,12 +219,12 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------------
     // Initialize the simulation times time_prim at n=0 and time_dual at n=+1/2
     // ------------------------------------------------------------------------
-	
+    
     // time at integer time-steps (primal grid)
     double time_prim = stepStart * params.timestep;
     // time at half-integer time-steps (dual grid)
     double time_dual = (stepStart +0.5) * params.timestep;
-	
+    
     // Count timer
     int ntimer(6);
     Timer timer[ntimer];
@@ -282,6 +281,14 @@ int main (int argc, char* argv[])
             Collisions::calculate_debye_length(params,vecSpecies);
         for (unsigned int icoll=0 ; icoll<vecCollisions.size(); icoll++)
             vecCollisions[icoll]->collide(params,vecSpecies);
+#ifdef _CONDUCTIVITYTEST
+        double E0 = 0.001; // field in units of me.c.w0/e
+        for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
+            double dp = E0 * params.timestep / vecSpecies[ispec]->species_param.mass;
+            Particles *p = &(vecSpecies[ispec]->particles);
+            for (int i=0 ; i<p->size(); i++ ) p.momentum(0,i) += p.charge(i) * dp;
+        }
+#endif
         
         
         // apply the PIC method
@@ -302,27 +309,6 @@ int main (int argc, char* argv[])
                     EMfields->restartRhoJs(ispec, time_dual > params.species_param[ispec].time_frozen);
                     vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow);
                 }
-                
-                
-                //----------------------------------------------------
-                // TEMPORARY TEST TO APPLY            +--------------+
-                //  A CONSTANT ELECTRIC FIELD         | DO NOT MERGE |
-                // (test for collisions)              +--------------+
-                int collision_test=0;
-                input_data.extract("static_field_for_collisions_test", collision_test);
-                if (collision_test==1) {
-                double E0 = 0.001; // field in units of me.c.w0/e
-                double dp = E0 * params.timestep / vecSpecies[ispec]->species_param.mass;
-                int nbin = vecSpecies[ispec]->bmin.size();
-#pragma omp for schedule(runtime)
-                for (int ibin = 0 ; ibin < nbin ; ibin++) {
-                    for (int iPart=vecSpecies[ispec]->bmin[ibin] ; iPart<vecSpecies[ispec]->bmax[ibin]; iPart++ ) {
-                        vecSpecies[ispec]->particles.momentum(0,iPart) += vecSpecies[ispec]->particles.charge(iPart) * dp;
-                    }
-                }
-                }
-                //----------------------------------------------------
-
             }
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 #pragma omp barrier

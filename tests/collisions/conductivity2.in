@@ -2,8 +2,6 @@
 # SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
 # ---------------------------------------------
 
-static_field_for_collisions_test = 1
-
 # sim_units: normalisation units for the input data
 #            it is used only in the input data & log file
 #            codes outputs are always in "normalised" units

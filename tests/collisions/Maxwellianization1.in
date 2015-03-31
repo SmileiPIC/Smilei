@@ -104,14 +104,14 @@ species
 	species_geometry = constant
 	vacuum_length   = 0.
 	dens_length_x   = 1000. 1000. 1000.
-	initialization_type = boxcar
+	initialization_type = rectangular
 	n_part_per_cell= 20000
 	c_part_max = 1.0
 	mass = 1.0
 	charge = -1.0
 	density = 10.
 	mean_velocity = 0. 0. 0.
-	temperature = 0.0002 0.0002 0.0002
+	temperature = 0.0002 0.0 0.0
 	dynamics_type = norm
 	time_frozen = 100000000.0
 	radiating = false
