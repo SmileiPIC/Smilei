@@ -16,11 +16,6 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi )
 {
     nDim_particle = params.nDim_particle;
 
-    int n_ord_proj_max = 5;
-    //!\todo define n_ord_proj_max, value from SQUASH
-    if (params.interpolation_order==2) n_ord_proj_max = 5;
-    if (params.interpolation_order==3) n_ord_proj_max = 5;
-
     // Absolute global values
 //    double x_min_global = params.cell_length[0]*n_ord_proj_max;
 //    double x_max_global = params.cell_length[0]*( params.n_space_global[0]-1-n_ord_proj_max );

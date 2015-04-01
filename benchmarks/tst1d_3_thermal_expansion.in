@@ -71,10 +71,11 @@ random_seed = 0
 #
 species
 	species_type = ion
-    	species_geometry = constant
-    	vacuum_length   = 5.0
-    	dens_length_x   = 10.0
-	initialization_type = maxwell-juettner
+	species_geometry = constant
+	vacuum_length   = 5.0
+	dens_length_x   = 10.0
+	initPosition_type = random
+	initMomentum_type = maxwell-juettner
 	ionization_model = none
 	n_part_per_cell = 10
 	c_part_max=1.0
@@ -95,7 +96,8 @@ species
 	species_geometry = constant
 	vacuum_length   = 5.0
 	dens_length_x   = 10.0
-	initialization_type = Maxwell-Juettner
+	initPosition_type = random
+	initMomentum_type = maxwell-juettner
 	ionization_model = none
 	n_part_per_cell = 10
 	c_part_max=1.0

@@ -9,7 +9,6 @@
 #include "SmileiMPI.h"
 #include "ElectroMagn2D.h"
 #include "Field2D.h"
-#include "Laser.h"
 #include "Tools.h"
 
 using namespace std;
@@ -67,7 +66,7 @@ void ElectroMagnBC2D_Trans_SM::apply(ElectroMagn* EMfields, double time_dual, Sm
 {
     // Static cast of the fields
     Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
-    Field2D* Ey2D = static_cast<Field2D*>(EMfields->Ey_);
+//    Field2D* Ey2D = static_cast<Field2D*>(EMfields->Ey_);
     Field2D* Ez2D = static_cast<Field2D*>(EMfields->Ez_);
     Field2D* Bx2D = static_cast<Field2D*>(EMfields->Bx_);
     Field2D* By2D = static_cast<Field2D*>(EMfields->By_);

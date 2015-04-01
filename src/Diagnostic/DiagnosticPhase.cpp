@@ -14,6 +14,8 @@ DiagnosticPhase::~DiagnosticPhase(){
 
 DiagnosticPhase::DiagnosticPhase(phaseStructure phaseStruct) :
 every(phaseStruct.every),
+tmin(phaseStruct.tmin),
+tmax(phaseStruct.tmax),
 my_species(phaseStruct.species),
 dataId(0)
 {

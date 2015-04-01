@@ -125,7 +125,7 @@ void Field1D::shift_x(unsigned int delta)
 {
     memmove( &(data_[0]), &(data_[delta]), (dims_[0]-delta)*sizeof(double) );
     //memset ( &(data_[dims_[0]-delta]), 0, delta*sizeof(double));
-    for (int i=dims_[0]-delta;i<dims_[0];i++) data_[i] = 0.;
+    for (int i=dims_[0]-delta;i<(int)dims_[0];i++) data_[i] = 0.;
 
 }
 

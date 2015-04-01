@@ -59,11 +59,12 @@ random_seed = 0
 # radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
 #
 species
-       species_type = positron1
+	species_type = positron1
 	species_geometry = constant
 	vacuum_length   = 1.0  
 	dens_length_x   = 10.0  
-	initialization_type = mj
+	initPosition_type = regular
+	initMomentum_type = mj
 	ionization_model = none
 	n_part_per_cell = 2
 	c_part_max = 1.0
@@ -82,11 +83,12 @@ species
 end
 
 species
-       species_type = electron1
+	species_type = electron1
 	species_geometry = constant
 	vacuum_length   = 1.0  
 	dens_length_x   = 10.0  
-	initialization_type = mj
+	initPosition_type = regular
+	initMomentum_type = mj
 	ionization_model = none
 	n_part_per_cell = 2
 	c_part_max = 1.0
@@ -105,11 +107,12 @@ species
 end
 
 species
-       species_type = positron2
+    species_type = positron2
 	species_geometry = constant
 	vacuum_length   = 11.0  
 	dens_length_x   = 10.0  
-	initialization_type = mj
+	initPosition_type = regular
+	initMomentum_type = mj
 	ionization_model = none
 	n_part_per_cell = 2
 	c_part_max = 1.0
@@ -128,11 +131,12 @@ species
 end
 
 species
-       species_type = electron2
+	species_type = electron2
 	species_geometry = constant
 	vacuum_length   = 11.0  
 	dens_length_x   = 10.0  
-	initialization_type = mj
+	initPosition_type = regular
+	initMomentum_type = mj
 	ionization_model = none
 	n_part_per_cell = 2
 	c_part_max = 1.0

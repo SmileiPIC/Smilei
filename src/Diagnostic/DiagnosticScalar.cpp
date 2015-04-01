@@ -16,6 +16,9 @@ isMaster(smpi->isMaster()),
 cpuSize(smpi->getSize()),
 res_time(params.res_time),
 every(diagParams.scalar_every),
+tmin(diagParams.scalar_tmin),
+tmax(diagParams.scalar_tmax),
+dt(params.timestep),
 cell_volume(params.cell_volume),
 precision(diagParams.scalar_precision),
 vars(diagParams.scalar_vars)
@@ -39,7 +42,9 @@ void DiagnosticScalar::run(int timestep, ElectroMagn* EMfields, vector<Species*>
         Energy_time_zero  = getScalar("Etot");
         EnergyUsedForNorm = Energy_time_zero;
     }
-    if (every) {
+
+    double time = (double)timestep * dt;
+    if ( (every ) && (time >= tmin) && (time <= tmax) ) {
         EMfields->computePoynting(); // This must be called everytime        
         if (timestep % every == 0) {
             compute(EMfields,vecSpecies,smpi);

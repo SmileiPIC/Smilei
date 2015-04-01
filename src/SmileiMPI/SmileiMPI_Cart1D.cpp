@@ -116,7 +116,7 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
             params.n_space[i] = params.nspace_win_x / number_of_procs[i];
             cell_starting_global_index[i] = coords_[i]*(params.nspace_win_x / number_of_procs[i]);
             
-            if ( number_of_procs[i]*params.n_space[i] != params.nspace_win_x ) {
+            if ( (unsigned int) (number_of_procs[i]*params.n_space[i]) != params.nspace_win_x ) {
                 // Correction on the last MPI process of the direction to use the wished number of cells
                 if (coords_[i]==number_of_procs[i]-1) {
                     params.n_space[i] = params.nspace_win_x - params.n_space[i]*(number_of_procs[i]-1);
@@ -195,7 +195,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams&
         tmp += ((*indexes_of_particles_to_exchange_per_thd)[tid]).size(); //Compute the position where to start copying
     }
 
-    if (tnum == indexes_of_particles_to_exchange_per_thd->size()-1){ //If last thread
+    if (tnum == (int)indexes_of_particles_to_exchange_per_thd->size()-1){ //If last thread
         indexes_of_particles_to_exchange.resize( tmp + ((*indexes_of_particles_to_exchange_per_thd)[tnum]).size());
     }
 #pragma omp barrier 
@@ -203,7 +203,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams&
     //One thread at a time (works)
 #pragma omp master
     {
-        for (tid=0 ; tid < indexes_of_particles_to_exchange_per_thd->size() ; tid++) {
+        for (tid=0 ; tid < (int)indexes_of_particles_to_exchange_per_thd->size() ; tid++) {
             memcpy(&indexes_of_particles_to_exchange[k], &((*indexes_of_particles_to_exchange_per_thd)[tid])[0],((*indexes_of_particles_to_exchange_per_thd)[tid]).size()*sizeof(int));
             k += ((*indexes_of_particles_to_exchange_per_thd)[tid]).size();   
         }
@@ -587,10 +587,10 @@ void SmileiMPI_Cart1D::exchangeField_movewin( Field* field, int clrw )
     std::vector<unsigned int> n_elem   = field->dims_;
     std::vector<unsigned int> isDual = field->isDual_;
     Field1D* f1D =  static_cast<Field1D*>(field);
-    int istart, iDim, iNeighbor, bufsize;
+    int istart, /*iDim,*/ iNeighbor, bufsize;
     void* b;
     
-    iDim = 0; // We exchange only in the X direction for movewin.
+//    iDim = 0; // We exchange only in the X direction for movewin.
     iNeighbor = 0; // We send only towards the West and receive from the East.
 
     bufsize = clrw * sizeof(double) + 2 * MPI_BSEND_OVERHEAD; //Max number of doubles in the buffer. Careful, there might be MPI overhead to take into account.

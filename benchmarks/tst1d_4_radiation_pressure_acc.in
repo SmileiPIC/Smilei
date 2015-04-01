@@ -73,7 +73,8 @@ species
 	species_geometry = constant
 	vacuum_length   = 1.0
 	dens_length_x   = 1.0
-	initialization_type = cold
+	initPosition_type = regular
+	initMomentum_type = cold
 	n_part_per_cell=10
 	c_part_max=1.0
 	mass = 1836.0
@@ -94,7 +95,8 @@ species
 	species_geometry = constant
 	vacuum_length   = 1.0
 	dens_length_x   = 1.0
-	initialization_type = cold
+	initPosition_type = regular
+	initMomentum_type = cold
 	n_part_per_cell=10
 	c_part_max=1.0
 	mass = 1.0

@@ -3,15 +3,16 @@
 #include <limits>
 #include <iostream>
 
-#include "ElectroMagn1D.h"
 #include "PicParams.h"
 #include "Species.h"
 #include "Projector.h"
-#include "Laser.h"
 #include "Field.h"
 #include "ElectroMagnBC.h"
 #include "ElectroMagnBC_Factory.h"
 #include "SimWindow.h"
+#include "ExtFieldProfile1D.h"
+#include "ExtFieldProfile2D.h"
+#include "SolverFactory.h"
 
 using namespace std;
 
@@ -22,9 +23,9 @@ using namespace std;
 ElectroMagn::ElectroMagn(PicParams &params, LaserParams &laser_params, SmileiMPI* smpi) :
 timestep(params.timestep),
 cell_length(params.cell_length),
+n_species(params.n_species),
 nDim_field(params.nDim_field),
 cell_volume(params.cell_volume),
-n_species(params.n_species),
 n_space(params.n_space),
 oversize(params.oversize)
 {
@@ -83,6 +84,8 @@ oversize(params.oversize)
     }    
 
     emBoundCond = ElectroMagnBC_Factory::create(params, laser_params);
+    
+    MaxwellFaradaySolver_ = SolverFactory::create(params);
 
 }
 
@@ -127,6 +130,8 @@ ElectroMagn::~ElectroMagn()
     for ( int i=0 ; i<nBC ;i++ )
       if (emBoundCond[i]!=NULL) delete emBoundCond[i];
 
+    delete MaxwellFaradaySolver_;
+
 }//END Destructer
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -159,7 +164,7 @@ void ElectroMagn::solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, Pic
 }// end single
 
     // Compute Bx_, By_, Bz_
-    solveMaxwellFaraday();
+    (*MaxwellFaradaySolver_)(this);
 
 #pragma omp single
 {
@@ -322,3 +327,40 @@ bool ElectroMagn::isRhoNull(SmileiMPI* smpi)
 
 }
 
+void ElectroMagn::applyExternalFields(ExtFieldParams&extfield_params, SmileiMPI* smpi) {
+    
+    vector<Field*> my_fields;
+    my_fields.push_back(Ex_);
+    my_fields.push_back(Ey_);
+    my_fields.push_back(Ez_);
+    my_fields.push_back(Bx_);
+    my_fields.push_back(By_);
+    my_fields.push_back(Bz_);
+    
+    for (vector<Field*>::iterator field=my_fields.begin(); field!=my_fields.end(); field++) {
+        if (*field) {
+            string lowCaseField=(*field)->name;
+            std::transform(lowCaseField.begin(), lowCaseField.end(), lowCaseField.begin(), ::tolower);
+            for (vector<ExtFieldStructure>::iterator extfield=extfield_params.structs.begin(); extfield!=extfield_params.structs.end(); extfield++ ) {
+                ExtFieldProfile *my_ExtFieldProfile=NULL;
+                if (extfield_params.geometry == "1d3v") {
+                    my_ExtFieldProfile = (ExtFieldProfile*) (new ExtFieldProfile1D(*extfield));
+                } else if (extfield_params.geometry == "2d3v") {
+                    my_ExtFieldProfile = (ExtFieldProfile*) (new ExtFieldProfile2D(*extfield));
+                }
+                if (my_ExtFieldProfile) {
+                    for (vector<string>::iterator fieldName=(*extfield).fields.begin();fieldName!=(*extfield).fields.end();fieldName++) {
+                        if (lowCaseField==(*fieldName)) {
+                            applyExternalField(*field,my_ExtFieldProfile, smpi);
+                        }
+                    }
+                    delete my_ExtFieldProfile;
+                    my_ExtFieldProfile=NULL;
+                }                    
+            }
+        }
+    }
+    Bx_m->copyFrom(Bx_);
+    By_m->copyFrom(By_);
+    Bz_m->copyFrom(Bz_);
+}    

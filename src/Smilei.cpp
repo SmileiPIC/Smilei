@@ -25,6 +25,7 @@
 #include "InputData.h"
 #include "PicParams.h"
 #include "LaserParams.h"
+#include "ExtFieldParams.h"
 
 #include "SmileiMPIFactory.h"
 #include "SmileiIOFactory.h"
@@ -92,6 +93,8 @@ int main (int argc, char* argv[])
     if ( smpiData->isMaster() ) params.print();
     smpiData->barrier();
     LaserParams laser_params(params, input_data);
+    ExtFieldParams extfield_params(params, input_data, "extfield");
+    
     smpiData->barrier();
     DiagParams diag_params(params, input_data);
     
@@ -193,12 +196,23 @@ int main (int argc, char* argv[])
             smpi->sumRhoJs(EMfields, ispec, true);
         }
         
-        // Init electric field (Ex/1D, + Ey/2D)
+        if (!EMfields->isRhoNull(smpi))  {
+            // Init electric field (Ex/1D, + Ey/2D)
+            MESSAGE("----------------------------------------------");
+            MESSAGE("Solving Poisson at time t = 0");
+            MESSAGE("----------------------------------------------");
+            Timer ptimer;
+            ptimer.init(smpi, "global");
+            ptimer.restart();
+            EMfields->solvePoisson(smpi);
+            ptimer.update();
+            MESSAGE(0, "Time in Poisson : " << ptimer.getTime() );
+        }
+        
         MESSAGE("----------------------------------------------");
-        MESSAGE("Solving Poisson at time t = 0");
+        MESSAGE("Applying external fields at time t = 0");
         MESSAGE("----------------------------------------------");
-	if (!EMfields->isRhoNull(smpi)) 
-	    EMfields->solvePoisson(smpi);
+        EMfields->applyExternalFields(extfield_params, smpi);
         
         MESSAGE("----------------------------------------------");
         MESSAGE("Running diags at time t = 0");
@@ -214,7 +228,6 @@ int main (int argc, char* argv[])
         sio->writePlasma( vecSpecies, 0., smpi );
     }
     
-    
 
     // ------------------------------------------------------------------------
     // Initialize the simulation times time_prim at n=0 and time_dual at n=+1/2
@@ -226,7 +239,7 @@ int main (int argc, char* argv[])
     double time_dual = (stepStart +0.5) * params.timestep;
     
     // Count timer
-    int ntimer(6);
+    int ntimer(8);
     Timer timer[ntimer];
     timer[0].init(smpi, "global");
     timer[1].init(smpi, "particles");
@@ -234,6 +247,8 @@ int main (int argc, char* argv[])
     timer[3].init(smpi, "diagnostics");
     timer[4].init(smpi, "densities");
     timer[5].init(smpi, "Mov window");
+    timer[6].init(smpi, "fieldsDump");
+    timer[7].init(smpi, "AvgFields");
     
     
 	// ------------------------------------------------------------------
@@ -313,11 +328,11 @@ int main (int argc, char* argv[])
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 #pragma omp barrier
                 if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
-		    // Loop on dims to manage exchange in corners
-		    for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
-			smpi->exchangeParticles(vecSpecies[ispec], ispec, params, tid, iDim);
+                    // Loop on dims to manage exchange in corners
+                    for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
+                        smpi->exchangeParticles(vecSpecies[ispec], ispec, params, tid, iDim);
 #pragma omp barrier
-                        vecSpecies[ispec]->sort_part();
+                    vecSpecies[ispec]->sort_part();
                 }
             }
         }
@@ -351,15 +366,20 @@ int main (int argc, char* argv[])
         // run all diagnostics
         timer[3].restart();
         Diags->runAllDiags(itime, EMfields, vecSpecies, Interp, smpi);
+        timer[3].update();
         
+        timer[6].restart();
         // temporary EM fields dump in Fields.h5
         if  ((diag_params.fieldDump_every != 0) && (itime % diag_params.fieldDump_every == 0))
             sio->writeAllFieldsSingleFileTime( EMfields, itime );
+        timer[6].update();
         
+        timer[7].restart();
         // temporary EM fields dump in Fields.h5
         if  (diag_params.ntime_step_avg!=0)
             if ((diag_params.avgfieldDump_every != 0) && (itime % diag_params.avgfieldDump_every == 0))
                 sio->writeAvgFieldsSingleFileTime( EMfields, itime );
+        timer[7].update();
         
 #ifdef _IO_PARTICLE
         // temporary particles dump (1 HDF5 file per process)
@@ -369,7 +389,6 @@ int main (int argc, char* argv[])
         
         if (sio->dump(EMfields, itime,  vecSpecies, smpi, simWindow, params, input_data)) break;
         
-        timer[3].update();
 		
         timer[5].restart();
         if ( simWindow && simWindow->isMoving(time_dual) ) {

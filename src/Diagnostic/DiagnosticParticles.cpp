@@ -79,7 +79,6 @@ void H5_attr_double(int fileId, string attribute_name, double attribute_value) {
     H5Sclose(sid);
     H5Aclose(aid);
 }
-
 // -------------------
 
 
@@ -169,10 +168,9 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
     // skip the routine if the timestep is not the good one
     if (timestep % every >= time_average) return;
     
-    // create output array if not already available
-    if (time_average == 1) { // if no time-average, then we need an array.
+    // Allocate memory for the output array (already done if time-averaging)
+    if (time_average <= 1)
         data_sum.resize(output_size);
-    }
     
     // if first time, erase output array
     if (timestep % every == 0)
@@ -201,6 +199,7 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
         fill(index_array.begin(), index_array.end(), 0);
         
         // loop each openMP bin
+        //! \todo Make OpenMP parallelization
         for (int ibin=0 ; ibin<nbins ; ibin++) {
             
             bmin = s->bmin[ibin];
@@ -334,12 +333,6 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
                 }
                 
             } // loop axes
-            
-            int imin=10000000, imax=0;
-            for (int i=0; i<index_array.size(); i++) {
-                if (index_array[i]<imin) imin = index_array[i];
-                if (index_array[i]>imax) imax = index_array[i];
-            }
             
             // 2 - prepare the data to output
             // ------------------------------
