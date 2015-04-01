@@ -6,7 +6,7 @@ PARTICLE DIAGNOSTICS                -    F. Perez - 03/2015
   into a N-dimensional histogram.
   Each histogram axis can be: x, y, z, px, py, pz, p, gamma, ekin, vx, vy, vz, v or charge.
   In each bin of the histogram, several things may be summed: the weights (density), 
-    or weight*velocity (current density).
+    the weight*charge (charge density) or weight*charge*velocity (current density).
   Examples:
       +----------+------------+---------------------+
       |   Rank   |   type     |         Axes        |
@@ -23,7 +23,7 @@ In the input (namelist) file, each diagnostics are provided as follows:
 
 # DIAGNOSTICS ON PARTICLES - project the particles on a N-D arbitrary grid
 # ---------------------------------------------------------------------------------
-# output = density or current_density_[xyz]
+# output = density, charge_density, or current_density_[xyz]
 #              => parameter that describes what quantity is obtained 
 # every        => an integer : number of time-steps between each output
 # time_averate => an integer greater than 0 : number of time-steps to average

@@ -296,14 +296,6 @@ int main (int argc, char* argv[])
             Collisions::calculate_debye_length(params,vecSpecies);
         for (unsigned int icoll=0 ; icoll<vecCollisions.size(); icoll++)
             vecCollisions[icoll]->collide(params,vecSpecies);
-#ifdef _CONDUCTIVITYTEST
-        double E0 = 0.001; // field in units of me.c.w0/e
-        for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-            double dp = E0 * params.timestep / vecSpecies[ispec]->species_param.mass;
-            Particles *p = &(vecSpecies[ispec]->particles);
-            for (int i=0 ; i<p->size(); i++ ) p.momentum(0,i) += p.charge(i) * dp;
-        }
-#endif
         
         
         // apply the PIC method

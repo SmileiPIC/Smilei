@@ -53,7 +53,6 @@ sim_length  = 40000.
 #                         silver-muller = injecting/absorbing
 #
 bc_em_type_long  = periodic
-bc_em_type_trans = periodic
 
 
 # RANDOM seed 
@@ -81,7 +80,8 @@ species
 	species_geometry = constant
 	vacuum_length   = 0.
 	dens_length_x   = 100000. 100000. 100000.
-	initialization_type = maxwell-juettner
+	initPosition_type = regular
+	initMomentum_type = maxwell-juettner
 	ionization_model = none
 	n_part_per_cell = 10000
 	c_part_max = 1.0
@@ -95,8 +95,6 @@ species
 	radiating = false
 	bc_part_type_west = none
 	bc_part_type_east = none
-	bc_part_type_south = none
-	bc_part_type_north = none
 end
 
 species 
@@ -104,7 +102,8 @@ species
 	species_geometry = constant
 	vacuum_length   = 0.
 	dens_length_x   = 20000. 0. 0.
-	initialization_type = maxwell-juettner
+	initPosition_type = regular
+	initMomentum_type = maxwell-juettner
 	n_part_per_cell= 10000
 	c_part_max = 1.0
 	mass = 1.0
@@ -117,8 +116,6 @@ species
 	radiating = false
 	bc_part_type_west = none
 	bc_part_type_east = none
-	bc_part_type_south = none
-	bc_part_type_north = none
 end
 
 species 
@@ -126,7 +123,8 @@ species
 	species_geometry = constant
 	vacuum_length   = 20000.
 	dens_length_x   = 20000. 0. 0.
-	initialization_type = maxwell-juettner
+	initPosition_type = regular
+	initMomentum_type = maxwell-juettner
 	n_part_per_cell= 10000
 	c_part_max = 1.0
 	mass = 1.0
@@ -139,8 +137,6 @@ species
 	radiating = false
 	bc_part_type_west = none
 	bc_part_type_east = none
-	bc_part_type_south = none
-	bc_part_type_north = none
 end
 
 # COLLISIONS

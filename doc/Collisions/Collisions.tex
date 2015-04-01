@@ -201,7 +201,7 @@ The black lines correspond to the theoretical rates taken from the NRL formulary
 
 \clearpage
 
-\subsection{Temperature isotropization {\color{red} \danger temporary modification needed in Species.cpp}}
+\subsection{Temperature isotropization}
 Electrons have a longitudinal temperature different from their transverse temperature.\\*
 They collide only with themselves (intra-collisions) and the anisotropy disappears as shown in Figure \ref{temperature_isotropization}.\\*
 
@@ -219,7 +219,7 @@ The black lines correspond to the theoretical rates taken from the NRL formulary
 \end{equation*}
 
 
-\subsection{Maxwellianization {\color{red} \danger temporary modification needed in Species.cpp}}
+\subsection{Maxwellianization}
 Electrons start with zero temperature along y and z. Their velocity distribution along x is a boxcar.\\*
 They collide only with themselves and the boxcar becomes a maxwellian as shown in Figure \ref{maxwellianization}.
 
@@ -245,9 +245,9 @@ The black line is Frankel's theory (Ref. [6]).}}
 
 
 
-\subsection{Conductivity {\color{red} \danger temporary modification needed in Smilei.cpp}}
+\subsection{Conductivity}
 Solid-density Cu is simulated at different temperatures (e-i equilibrium) with only e-i collisions.\\*
-An electric field of $E=3.2$ GV/m (0.001 in code units) is applied.\\*
+An electric field of $E=3.2$ GV/m (0.001 in code units) is applied using two charged layers on each side of the solid Cu.\\*
 The electron velocity increases until a limit value $v_f$.\\*
 The resulting conductivity $\sigma=en_ev_f/E$ is compared in Figure \ref{conductivity} to the models in Refs. [5] and [1].
 

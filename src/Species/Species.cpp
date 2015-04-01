@@ -188,7 +188,7 @@ void Species::initWeight(PicParams* params, unsigned int ispec, unsigned int iPa
 void Species::initCharge(PicParams* params, unsigned int ispec, unsigned int iPart, double density)
 {
     double q = params->species_param[ispec].charge;
-    short Z = (short)round(q);
+    short Z = (short)q;
     double r = q-(double)Z;
     unsigned int N = params->species_param[ispec].n_part_per_cell;
     
@@ -198,11 +198,10 @@ void Species::initCharge(PicParams* params, unsigned int ispec, unsigned int iPa
             particles.charge(p) = Z;
     // if charge is not integer, then particles can have two different charges
     } else {
-        if (r<0.) { q -= 1.; Z -= 1; r += 1.; }
-        unsigned int tot = 0, Nm, Np;
+        int tot = 0, Nm, Np;
         double rr=r/(1-r), diff;
-        Np = (unsigned int)round(r*(double)N);
-        Nm = N - Np;
+        Np = (int)round(r*(double)N);
+        Nm = (int)N - Np;
         for (unsigned int p = iPart; p<iPart+N; p++) {
             if (Np > rr*Nm) {
                 particles.charge(p) = Z+1;
@@ -214,7 +213,7 @@ void Species::initCharge(PicParams* params, unsigned int ispec, unsigned int iPa
             tot += particles.charge(p);
         }
         diff = ((double)N)*q - (double)tot; // missing charge
-        if (diff != 0) {
+        if (diff != 0.) {
             WARNING("Could not match exactly charge="<<q<<" for species #"<<ispec<<" (difference of "<<diff<<"). Try to add particles.");
         }
     }
@@ -316,7 +315,7 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
         }
         
     // Rectangular distribution
-    } else if (initialization_type == "rectangular") {
+    } else if (initMomentum_type == "rectangular") {
         
         for (unsigned int p= iPart; p<iPart+np; p++) {
             particles.momentum(0,p) = (2.*(double)rand() / RAND_MAX - 1.) * sqrt(temp[0]/species_param.mass);

@@ -7,7 +7,7 @@
 #   into a N-dimensional histogram.
 #   Each histogram axis can be: x, y, z, px, py, pz, p, gamma, ekin, vx, vy, vz, v or charge.
 #   In each bin of the histogram, several things may be summed: the weights (density), 
-#     or weight*velocity (current density).
+#     weight*charge (charge density) or weight*velocity (current density).
 #   Examples:
 #       +----------+------------+---------------------+
 #       |   Rank   |   type     |         Axes        |
@@ -435,8 +435,12 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 	
 	# Build units
 	if   info["output"] == "density":
-		title = "Density"
+		title = "Number density"
 		unitss = "particles"
+		units_coeff *= coeff_density
+	elif info["output"] == "charge_density":
+		title = "Charge density"
+		unitss = "e"
 		units_coeff *= coeff_density
 	elif info["output"][:-1] == "current_density_":
 		title = "J"+info["output"][-1]

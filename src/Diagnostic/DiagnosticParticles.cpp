@@ -340,17 +340,21 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
                 for (int ipart = bmin ; ipart < bmax ; ipart++)
                     data_array[ipart] = (*w)[ipart];
             
+            if      (output == "charge_density")
+                for (int ipart = bmin ; ipart < bmax ; ipart++)
+                    data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]);
+            
             else if (output == "current_density_x")
                 for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = (*w)[ipart] * (*px)[ipart] / sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
+                    data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]) * (*px)[ipart] / sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
             
             else if (output == "current_density_y")
                 for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = (*w)[ipart] * (*py)[ipart] / sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
+                    data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]) * (*py)[ipart] / sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
             
             else if (output == "current_density_z")
                 for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = (*w)[ipart] * (*pz)[ipart] / sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
+                    data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]) * (*pz)[ipart] / sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
             
             // 3 - sum the data into the data_sum according to the indexes
             // ---------------------------------------------------------------
