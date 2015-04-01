@@ -179,8 +179,36 @@ void Species::initWeight(PicParams* params, unsigned int ispec, unsigned int iPa
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::initCharge(PicParams* params, unsigned int ispec, unsigned int iPart, double density)
 {
-    for (unsigned  p= iPart; p<iPart+params->species_param[ispec].n_part_per_cell; p++) {
-        particles.charge(p) = params->species_param[ispec].charge;
+    double q = params->species_param[ispec].charge;
+    short Z = (short)round(q);
+    double r = q-(double)Z;
+    unsigned int N = params->species_param[ispec].n_part_per_cell;
+    
+    // if charge is integer, then all particles have the same charge
+    if ( r == 0. ) {
+        for (unsigned int p = iPart; p<iPart+N; p++)
+            particles.charge(p) = Z;
+    // if charge is not integer, then particles can have two different charges
+    } else {
+        if (r<0.) { q -= 1.; Z -= 1; r += 1.; }
+        unsigned int tot = 0, Nm, Np;
+        double rr=r/(1-r), diff;
+        Np = (unsigned int)round(r*(double)N);
+        Nm = N - Np;
+        for (unsigned int p = iPart; p<iPart+N; p++) {
+            if (Np > rr*Nm) {
+                particles.charge(p) = Z+1;
+                Np--;
+            } else {
+                particles.charge(p) = Z;
+                Nm--;
+            }
+            tot += particles.charge(p);
+        }
+        diff = ((double)N)*q - (double)tot; // missing charge
+        if (diff != 0) {
+            WARNING("Could not match exactly charge="<<q<<" for species #"<<ispec<<" (difference of "<<diff<<"). Try to add particles.");
+        }
     }
 }
 
