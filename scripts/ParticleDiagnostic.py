@@ -7,7 +7,7 @@
 #   into a N-dimensional histogram.
 #   Each histogram axis can be: x, y, z, px, py, pz, p, gamma, ekin, vx, vy, vz, v or charge.
 #   In each bin of the histogram, several things may be summed: the weights (density), 
-#     or weight*velocity (current density).
+#     weight*charge (charge density) or weight*velocity (current density).
 #   Examples:
 #       +----------+------------+---------------------+
 #       |   Rank   |   type     |         Axes        |
@@ -217,21 +217,23 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 		
 		return
 	
-	# Prepare units
-	cell_length = np.double([1., 1., 1.])
-	cell_volume = 1.
-	coeff_density = 1.
-	coeff_distances = 1.
-	coeff_energy = 1.
+	# Get info from the input file and prepare units
 	try:
-		wavelength_SI = float( findParam(results_path, "wavelength_SI") )
+		dim = findParam(results_path, "dim")
+		ndim = int(dim[0])
 	except:
-		print "Could not extract 'wavelength_SI' from the input file"
+		print "Could not extract 'dim' from the input file"
 		return
 	try:
 		sim_units  = findParam(results_path, "sim_units")
 	except:
 		print "Could not extract 'sim_units' from the input file"
+		return
+	try:
+		sim_length = findParam(results_path, "sim_length")
+		sim_length = np.double(sim_length.split())
+	except:
+		print "Could not extract 'sim_length' from the input file"
 		return
 	try:
 		cell_length = findParam(results_path, "cell_length")
@@ -240,32 +242,64 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 		try:
 			res_space = findParam(results_path, "res_space")
 			res_space = np.double(res_space.split())
-			sim_length = findParam(results_path, "sim_length")
-			sim_length = np.double(sim_length.split())
 			cell_length = sim_length/res_space
 		except:
-			print "Could not extract 'cell_length' from the input file"
+			print "Could not extract 'cell_length' or 'res_space' from the input file"
 			return
-	if sim_units == "wavelength": cell_length *= wavelength_SI
-	else :                        cell_length *= wavelength_SI/(2.*np.pi)
+	if   ndim == 1:
+		sim_length  = sim_length [0]
+		cell_length = cell_length[0]
+	elif ndim == 2:
+		if sim_length.size  == 1: sim_length  = np.array([sim_length,sim_length])
+		else                    : sim_length  = sim_length[0:1]
+		if cell_length.size == 1: cell_length = np.array([cell_length,cell_length])
+		else                    : cell_length = cell_length[0:1]
+	elif ndim == 3:
+		if sim_length.size == 1: sim_length = np.array([sim_length,sim_length,sim_length])
+		elif sim_length.size >2: sim_length = sim_length[0:2]
+		else:
+			print "In the input file, 'sim_length' should have 1 or 3 arguments for a 3d simulation"
+			return
+		if cell_length.size == 1: cell_length = np.array([cell_length,cell_length,cell_length])
+		elif cell_length.size >2: cell_length = cell_length[0:2]
+		else:
+			print "In the input file, 'cell_length' or 'res_space' should have 1 or 3 arguments for a 3d simulation"
+			return
+	else:
+		print "Could not understand simulation dimension 'dim="+dim+"' from the input file"
+		return
+	sim_length  = np.array(sim_length ,ndmin=1)
+	cell_length = np.array(cell_length,ndmin=1)
+	ncels = sim_length/cell_length
+	if sim_units == "wavelength": cell_length *= 2.*np.pi
+	cell_size = {"x":cell_length[0]}
+	if ndim>1: cell_size.update({"y":cell_length[1]})
+	if ndim>2: cell_size.update({"z":cell_length[2]})
 	if units == "nice":
-		cell_length *= 1e2 # cm
-		cell_volume = np.prod(cell_length)
-		coeff_density = 1.11e21 / (wavelength_SI/1e-6)**2 * cell_volume
-		coeff_distances = 1e2 * wavelength_SI/(2.*np.pi) # in cm
+		try:
+			wavelength_SI = float( findParam(results_path, "wavelength_SI") )
+		except:
+			print "Could not extract 'wavelength_SI' from the input file"
+			return
+		coeff_density = 1.11e21 / (wavelength_SI/1e-6)**2 # nc in cm^-3
 		coeff_energy = 0.511
-
+	elif units == "code":
+		coeff_density = 1.
+		coeff_energy = 1.
+	else:
+		print "Units type '"+units+"' not recognized. Use 'code' or 'nice'"
+		return
 
 	# 1 - verifications, initialization
 	# -------------------------------------------------------------------
 	# Check value of diagNumber
 	if type(diagNumber) is not int or diagNumber<0:
-		print "Argument `diagNumber` must be a positive or zero integer"
+		print "Argument 'diagNumber' must be a positive or zero integer"
 		return
 	
 	# Check slice is a dict
 	if slice is not None  and  type(slice) is not dict:
-		print "Argument `slice` must be a dictionary"
+		print "Argument 'slice' must be a dictionary"
 		return
 	
 	# Get the info on the requested diagNumber
@@ -299,17 +333,16 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 	# If timesteps is None, then keep all timesteps
 	# otherwise, select timesteps
 	if timesteps is not None:
-		
-		# get timesteps
-		timesteps = np.int_(timesteps).tolist()
-		if type(timesteps) is list and len(timesteps)==2:
-			ts = np.double(timesteps)
-			times = times[ (times>=ts[0]) * (times<=ts[1]) ] # get all times in between bounds
-		elif type(timesteps) is int or len(timesteps)==1:
-			ts = np.double([timesteps])
-			times = np.array([times[(np.abs(times-ts)).argmin()]]) # get nearest time
-		else:
-			print "Argument `timesteps` must be one or two non-negative integers"
+		try:
+			ts = np.array(np.double(timesteps),ndmin=1)
+			if ts.size==2:
+				times = times[ (times>=ts[0]) * (times<=ts[1]) ] # get all times in between bounds
+			elif ts.size==1:
+				times = np.array([times[(np.abs(times-ts)).argmin()]]) # get nearest time
+			else:
+				raise Exception()
+		except:
+			print "Argument 'timesteps' must be one or two non-negative integers"
 			f.close()
 			return
 	
@@ -329,6 +362,7 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 	plot_shape = []; plot_type = []; plot_label = []; plot_centers = []; plot_log = []; plot_diff = []
 	units_coeff = 1.
 	unitsa = [0,0,0,0]
+	spatialaxes = {"x":False, "y":False, "z":False}
 	for iaxis in range(naxes):
 		axis = axes[iaxis]
 		shape.append(axis["size"])
@@ -351,7 +385,9 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 		if   axis["type"] in ["x","y","z"]:
 			axis_units = " [ wavelength / 2Pi ]"
 			if units == "nice":
-				axis_units = " [ microns ]"; axis_coeff = 1e6*wavelength_SI/(2.*np.pi)
+				axis_units = " [ microns ]"
+				axis_coeff = 1e6*wavelength_SI/(2.*np.pi)
+			spatialaxes[axis["type"]] = True
 		elif axis["type"] in ["px","py","pz","p"]:
 			axis_units = " [ m c ]"
 		elif axis["type"] in ["vx","vy","vz","v"]:
@@ -361,7 +397,8 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 		elif axis["type"] == "ekin":
 			axis_units = " [ m c^2 ]"
 			if units == "nice":
-				axis_units = " [ MeV ]"; axis_coeff = 0.511
+				axis_units = " [ MeV ]"
+				axis_coeff = 0.511
 			overall_min = "0"
 		elif axis["type"] == "charge":
 			overall_min = "0"
@@ -407,7 +444,7 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 			axis.update({"slice":indices, "slice_size":slice_size})
 			
 			if axis["type"] in ["x","y","z"]:
-				units_coeff /= coeff_distances*slice_size
+				units_coeff *= cell_size[axis["type"]]/slice_size
 		
 		# if not sliced, then add this axis to the overall plot
 		else:
@@ -418,7 +455,7 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 			plot_log.append(axis["log"])
 			plot_diff.append(np.diff(edges))
 			if   axis["type"] in ["x","y","z"]:
-				units_coeff /= coeff_distances
+				units_coeff *= cell_size[axis["type"]]
 				unitsa[0] += 1
 			elif axis["type"] in ["px","py","pz","p"]:
 				unitsa[1] += 1
@@ -426,7 +463,7 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 				unitsa[2] += 1
 			elif axis["type"] == "ekin":
 				units_coeff /= coeff_energy
-				unitsa[3] += 1
+				unitsa[3] += 1 
 	
 
 	if len(plot_shape) > 2:
@@ -434,31 +471,45 @@ def ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None
 		return
 	
 	# Build units
-	if   info["output"] == "density":
-		title = "Density"
-		unitss = "particles"
-		units_coeff *= coeff_density
-	elif info["output"][:-1] == "current_density_":
-		title = "J"+info["output"][-1]
-		unitss = "particles * c"
-		units_coeff *= coeff_density
+	units_coeff *= coeff_density
+	if   info["output"] == "density":               title = "Number density"
+	elif info["output"] == "charge_density":        title = "Charge density"
+	elif info["output"][:-1] == "current_density_": title = "J"+info["output"][-1]
 	if units == "nice":
-		if unitsa[0]>0: unitss += "/cm"
-		if unitsa[0]>1: unitss += "^"+str(unitsa[0])
+		if   info["output"] == "density":               unitss = "particles/cm$^3$"
+		elif info["output"] == "charge_density":        unitss = "e/cm$^3$"
+		elif info["output"][:-1] == "current_density_": unitss = "particles * c /cm$^3$"
 		if unitsa[1]>0: unitss += "/(mc)"
-		if unitsa[1]>1: unitss += "^"+str(unitsa[1])
+		if unitsa[1]>1: unitss += "$^"+str(unitsa[1])+"$"
 		if unitsa[2]>0: unitss += "/c"
-		if unitsa[2]>1: unitss += "^"+str(unitsa[2])
+		if unitsa[2]>1: unitss += "$^"+str(unitsa[2])+"$"
 		if unitsa[3]>0: unitss += "/MeV"
-		if unitsa[3]>1: unitss += "^"+str(unitsa[3])
-		title += " [ "+unitss+" ]"
+		if unitsa[3]>1: unitss += "$^"+str(unitsa[3])+"$"
+	elif units == "code":
+		if   info["output"] == "density":               unitss = "$n_c$"
+		elif info["output"] == "charge_density":        unitss = "e$\, n_c$"
+		elif info["output"][:-1] == "current_density_": unitss = "particles * $c\, n_c$"
+		if unitsa[1]>0: unitss += "/(mc)"
+		if unitsa[1]>1: unitss += "$^"+str(unitsa[1])+"$"
+		if unitsa[2]>0: unitss += "/c"
+		if unitsa[2]>1: unitss += "$^"+str(unitsa[2])+"$"
+		if unitsa[3]>0: unitss += "/(mc$^2$)"
+		if unitsa[3]>1: unitss += "$^"+str(unitsa[3])+"$"
+	title += " [ "+unitss+" ]"
 	if data_log: title = "Log[ "+title+" ]"
+	
+	# If any spatial dimension did not appear, then count it for calculating the correct density
+	if ndim>=1 and not spatialaxes["x"]: units_coeff /= ncels[0]
+	if ndim>=2 and not spatialaxes["y"]: units_coeff /= ncels[1]
+	if ndim==3 and not spatialaxes["z"]: units_coeff /= ncels[2]
 	
 	# Calculate the array that represents the bins sizes in order to get units right.
 	# This array will be the same size as the plotted array
 	bsize = np.prod( np.array( np.meshgrid( *tuple(plot_diff) ) ), axis=0)	
 	bsize /= units_coeff
 	bsize = bsize.transpose()
+	
+	
 	
 	# 4 - Loop times
 	# -------------------------------------------------------------------
