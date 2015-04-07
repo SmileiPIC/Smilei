@@ -30,8 +30,8 @@ interpolation_order = 2
 # timestep : time step
 # sim_time  : duration of the simulation 
 #
-timestep = 0.001
-sim_time  = 0.1
+timestep = 0.005
+sim_time  = 0.5
 
 # SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
 # either use the resolution (res_space) or cell-length (cell_length)
@@ -40,8 +40,8 @@ sim_time  = 0.1
 # sim_length  : length of the simulation 
 # cell_length : cell-length 
 #
-cell_length = 1.
-sim_length  = 100.
+cell_length = 0.01
+sim_length  = 1.
 
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
 # bc_em_type_long/trans : boundary conditions used for EM fields 
@@ -158,16 +158,16 @@ diagnostic particles
 	every = 4
 	time_average = 2
 	species = electron1
-	axis = x    0    100.   100
-	axis = vx  -0.2  0.2    100
+	axis = x    0    1.   100
+	axis = vx  -0.1  0.1    100
 end
 
 diagnostic particles
 	output = density
 	every = 4
-	time_average = 2
+	time_average = 1
 	species = ion1
-	axis = x    0    100.   100
+	axis = x    0    1.   100
 	axis = vx  -0.001  0.001  100
 end
 
