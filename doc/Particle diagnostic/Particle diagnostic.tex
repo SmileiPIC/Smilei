@@ -215,12 +215,12 @@ First, run python and include the script:
 \begin{lstlisting}
 python -i scripts/ParticleDiagnostic.py
 \end{lstlisting}
+Alternately, you can include this file into your own script using, for example
+\begin{lstlisting}
+execfile("scripts/ParticleDiagnostic.py")
+\end{lstlisting}
 
-(Alternately, you can include this file into your own script using, for example, \\
-\code{execfile("scripts/ParticleDiagnostic.py")})
-\\*
-
-\textbf{\underline{To prepare the data:}}
+\subsection{To prepare the data}
 \begin{lstlisting}
 ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None,
                     units="code", data_log=False)
@@ -262,7 +262,7 @@ ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None,
 \end{itemize}
 
 
-\textbf{\underline{To obtain the data as an array:}}
+\subsection{To obtain the data as an array:}
 \begin{lstlisting}
 ParticleDiagnostic( ... ).getData()
 \end{lstlisting}
@@ -290,7 +290,7 @@ The results are stored in the variable \code{result}.\\*
 The data can be accessed with \code{result["data"]}.\\*
 If one of the axes is \val{x}, you can access the locations of the bins with \code{result["x"]}.\\* \\* \\*
 
-\textbf{\underline{To plot the data:}}
+\subsection{To plot the data}
 \begin{lstlisting}
 ParticleDiagnostic( ... , figure=1, data_min=None, data_max=None,
                           xmin=None, xmax=None, ymin=None, ymax=None ).plot()
@@ -320,7 +320,7 @@ ParticleDiagnostic( ... , figure=1, data_min=None, data_max=None,
 This will take the diagnostic \#1, and sum the grid over all the $y$ axis. Then it will plot the resulting array in figure 1 from 0 to 3e14.
 \clearpage
 
-\textbf{\underline{To simultaneously plot multiple diagnostics in the same figure:}}
+\subsection{To simultaneously plot multiple diagnostics in the same figure}
 \begin{lstlisting}
 multiPlot(diag1, diag2, ... , figure=1, shape=None)
 \end{lstlisting}
@@ -346,22 +346,39 @@ multiPlot(diag1, diag2, ... , figure=1, shape=None)
 >>> multiPlot( A, B, figure=1 )
 \end{lstlisting}
 
-This will plot the diagnostics \#0 and \#1 on the same figure, and make an animation for all available timesteps.
+This will plot the diagnostics \#0 and \#1 on the same figure, and make an animation for all available timesteps.\\*\\*
 
 
+\subsection{Other tips on managing plots}
+After you have prepared a diagnostic with \code{ParticleDiagnostic(...)}, you \textbf{cannot} change anymore the following arguments:
+\code{results\_path}, \code{diagNumber}, \code{timesteps}, \code{slice}, \code{units} and \code{data\_log}.\\*
+However, you can change the plotting parameters using the \code{.plot()} or the \code{.set()} functions:
+\begin{lstlisting}
+>>> A = ParticleDiagnostic("path/to/my/results", diagNumber=0, figure=1, data_max=1)
+>>> A.plot( figure=2 )
+>>> A.set( data_max=2 )
+>>> A.plot()
+\end{lstlisting}
 
-
+Another cool thing is that you can change the colormap for 2D plots, with the \code{cmap} argument.
+For example, you can plot with a gray colormap using
+\begin{lstlisting}
+>>> A.plot( cmap = "gray" )
+\end{lstlisting}
+Many colormaps are available from the \textit{matplotlib} package. With \code{cmap=""}, you will get an error \code{Colormap  is not recognized}, but it lists all the available colormaps.
 
 \clearpage
 \section{Tutorial}
 
 If you don't know how to run SMILEI, please refer to the appropriate documentation first. The commands can vary depending on your system and installation. A typical example of the command to run SMILEI is: \code{mpiexec -np 1 smilei mycase.in}\\*
 
+\subsection{Running the test case}
+
 In the \code{benchmarks} directory, we provide a test case \code{tst1d\_6\_particle\_diagnostic.in}. This case is very simple: it consists of a one-dimensional uniform neutral plasma composed by ions and electrons. The electrons all have a drift velocity of $0.05c$.\\*
 
 Run this case using SMILEI and collect the results in a directory of your choice. In this tutorial, we suppose that the results are in the directory \code{tst1d\_6\_particle\_diagnostic}. Make sure this directory contains the input file \code{tst1d\_6\_particle\_diagnostic.in} and the output files \code{ParticleDiagnostic0.h5}, \code{ParticleDiagnostic1.h5}, etc.\\*
 
-An example of the commands you may use from a \textit{terminal} (or \textit{console}, or \textit{command line window}) is
+An example of the commands you may use from a UNIX \textit{terminal} (or \textit{console}) is
 \begin{lstlisting}
 $ mkdir tst1d_6_particle_diagnostic
 $ cp   benchmarks/tst1d_6_particle_diagnostic.in    tst1d_6_particle_diagnostic
@@ -369,6 +386,8 @@ $ cd tst1d_6_particle_diagnostic
 $ mpiexec -np 1 smilei tst1d_6_particle_diagnostic.in
 $ cd ..
 \end{lstlisting}
+
+\subsection{Starting \textit{python} and listing available diagnostics}
 
 From the same terminal, launch \textit{python} using the command
 \begin{lstlisting}
@@ -394,14 +413,15 @@ Diag#2 - density of species # 1
     ekin from 0.0001 to 0.1 in 100 steps  [ LOG SCALE ] 
 \end{lstlisting}
 
-We want to have a look at the diagnostic \#0, which is the density of species \#1 (here, electrons) with two
+Look at the diagnostic \#0: it is the density of species \#1 (here, electrons) with two
 axes: the position $x$ and the velocity $v_x$. In other words, it is the phase-space of electrons.
 
+\subsection{Plot a diagnostic result at $t=0$}
 To plot the phase-space in the initial conditions, use 
 \begin{lstlisting}
 >>> ParticleDiagnostic('tst1d_6_particle_diagnostic', 0, timesteps=0 ).plot()
 \end{lstlisting}
-A window appears showing the plot in Figure \ref{Tuto1}. We can see that the electrons have indeed a drift velocity of $0.05c$.
+A window appears (see Figure \ref{Tuto1}). We can see that the electrons have indeed a drift velocity of $0.05c$.\\*
 
 To obtain the equivalent plot for the ions, use the diagnostic \#1 with the command
 \begin{lstlisting}
@@ -424,19 +444,62 @@ This results in the plot in Figure \ref{Tuto2}. The ions have a zero average vel
 \end{minipage}
 \end{figure}
 
+\subsection{Make animated plots}
 Use the following command to have an animation of the electron phase-space with time:
 \begin{lstlisting}
 >>> ParticleDiagnostic('tst1d_6_particle_diagnostic', 0 ).plot()
 \end{lstlisting}
 You will see the electron velocity oscillate from $0.05c$ to $-0.05c$. This is due to the fact that we are simulating a plasma wave with infinite wavelength.\\*
 
-Use the following commands to have the same animation with both electrons and ions on the same figure:
+Note that all the available timesteps are animated. If you want to only animate between timesteps 20 and 60, use
+\begin{lstlisting}
+>>> ParticleDiagnostic('tst1d_6_particle_diagnostic', 0, timesteps=[20,60] ).plot()
+\end{lstlisting}
+
+\subsection{Make multiple plots on the same figure}
+
+Use the following commands to have the animation with both electrons and ions on the same figure:
 \begin{lstlisting}
 >>> A = ParticleDiagnostic('tst1d_6_particle_diagnostic', 0 )
 >>> B = ParticleDiagnostic('tst1d_6_particle_diagnostic', 1 )
 >>> multiPlot(A, B)
 \end{lstlisting}
 
+\subsection{Plot sections (``slices'') of the array}
+
+The diagnostic \#0 that we plotted in Figure \ref{Tuto1} is the electron phase-space.
+Let us say we want to sum over the data that is contained between $x=3$ and 4, and plot the result as a function of $v_x$.
+This is achieved by the argument \code{slice}:
+\begin{lstlisting}
+>>> ParticleDiagnostic('tst1d_6_particle_diagnostic', 0, timesteps=0,
+       slice={"x":[3,4]} ).plot()
+\end{lstlisting}
+The result is shown in Figure \ref{Tuto3}. We can see that the peak is located at $v_x=0.05c$, as we have already found before.\\*
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{.46\linewidth}
+\includegraphics[width=7cm]{ParticleDiagTutorial3}
+\caption{$v_x$ distribution of electrons contained between $x=3$ and 4, at $t=0$.}
+\label{Tuto3}
+\end{minipage}
+\hfill{}
+\begin{minipage}[b]{.46\linewidth}
+\includegraphics[width=7cm]{ParticleDiagTutorial4}
+\caption{$x$ distribution of electrons contained between $v_x=-0.1$ and $0.1$, at $t=0$.}
+\label{Tuto4}
+\end{minipage}
+\end{figure}
+
+Now, let us do the slice on $v_x$ instead of $x$.
+\begin{lstlisting}
+>>> ParticleDiagnostic('tst1d_6_particle_diagnostic', 0, timesteps=0,
+       slice={"vx":"all"} ).plot(data_min=0, data_max=11)
+\end{lstlisting}
+By choosing \code{"all"} in the argument \code{slice}, all the velocities $v_x$ are sliced.
+In our case, as our diagnostic goes from $v_x=-0.1$ to $0.1$, these limits are used.\\*
+Note that parameters \code{data\_min} and \code{data\_max} are used to have a nicer plot.\\*
+The result is shown in Figure \ref{Tuto4}. We obtain a constant density of 10$n_c$, which is what was chosen in the input file.
 
 
 

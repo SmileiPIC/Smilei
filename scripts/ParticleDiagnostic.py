@@ -241,6 +241,15 @@ class ParticleDiagnostic(object):
 			except:
 				print "Argument 'results_path' required"
 				return None
+		if not os.path.isdir(results_path):
+			print "Could not find directory "+results_path
+			return None
+		if len(glob.glob(results_path+"/*.in"))==0:
+			print "Could not find an input file in directory "+results_path
+			return None
+		if len(glob.glob(results_path+"/*.in"))>1:
+			print "Directory "+results_path+" contains more than one input file. There should be only one."
+			return None
 		# Is there a "diagNumber" argument ?
 		try:
 			diagNumber = args[1]
@@ -262,11 +271,10 @@ class ParticleDiagnostic(object):
 		# If everything ok, then we create the object
 		return super(ParticleDiagnostic, cls).__new__(cls, *args, **kwargs)
 	
-	# Constructor
+	
+	# This is the constructor, which creates the object
 	def __init__(self, results_path, diagNumber=None, timesteps=None, slice=None,
-                       units="code", data_log=False,
-                       figure=1, data_min=None, data_max=None,
-                       xmin=None, xmax=None, ymin=None, ymax=None):
+	                    units="code", data_log=False, **kwargs):
 		
 		self.valid = False
 		
@@ -369,14 +377,15 @@ class ParticleDiagnostic(object):
 		# Put data_log as object's variable
 		self.data_log = data_log
 		
-		# Put plot parameters as object's variables
-		self.figure = figure
-		self.data_min = data_min
-		self.data_max = data_max
-		self.xmin = xmin
-		self.xmax = xmax
-		self.ymin = ymin
-		self.ymax = ymax
+		# Default some other parameters
+		self.figure   = 1
+		self.data_min = None
+		self.data_max = None
+		self.xmin     = None
+		self.xmax     = None
+		self.ymin     = None
+		self.ymax     = None
+		kwargs = self.setPlot(**kwargs)
 		
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
@@ -590,6 +599,22 @@ class ParticleDiagnostic(object):
 		if not self.validate(): return
 		printInfo(self.info)
 		return
+		
+	# Method to set optional plotting arguments
+	def setPlot(self, **kwargs):
+		self.figure   = kwargs.pop("figure"  ,self.figure  )
+		self.data_min = kwargs.pop("data_min",self.data_min)
+		self.data_max = kwargs.pop("data_max",self.data_max)
+		self.xmin     = kwargs.pop("xmin"    ,self.xmin    )
+		self.xmax     = kwargs.pop("xmax"    ,self.xmax    )
+		self.ymin     = kwargs.pop("ymin"    ,self.ymin    )
+		self.ymax     = kwargs.pop("ymax"    ,self.ymax    )
+		return kwargs
+		
+	# Same Method, without returns
+	def set(self, **kwargs):
+		kwargs = self.setPlot(**kwargs)
+	
 	
 	# Method to obtain the data only
 	def getData(self, time=0):
@@ -612,12 +637,12 @@ class ParticleDiagnostic(object):
 		A = self.getData(time)		
 		result = {"data":A}
 		for i in range(len(self.plot_type)):
-			result.update({ self.plot_type[i]:self.plot_centers[i] })		
+			result.update({ self.plot_type[i]:self.plot_centers[i] })
 		return result
 
 
 	# Method to plot the data when axes are made
-	def plotOnAxes(self, ax, time):
+	def plotOnAxes(self, ax, time, **kwargs):
 		if not self.validate(): return
 		# get data
 		A = self.getData(time)
@@ -647,7 +672,7 @@ class ParticleDiagnostic(object):
 			if self.plot_log[1]: extent[2:4] = [np.log10(self.plot_centers[1][0]), np.log10(self.plot_centers[1][-1])]
 			im = ax.imshow( np.flipud(A.transpose()),
 				vmin = self.data_min, vmax = self.data_max, extent=extent,
-				aspect="auto", interpolation="nearest")
+				aspect="auto", interpolation="nearest", **kwargs)
 			if (self.plot_log[0]): ax.set_xlabel("Log[ "+self.plot_label[0]+" ]")
 			else:                  ax.set_xlabel(        self.plot_label[0]     )
 			if (self.plot_log[1]): ax.set_ylabel("Log[ "+self.plot_label[1]+" ]")
@@ -663,8 +688,10 @@ class ParticleDiagnostic(object):
 	
 	
 	# Method to plot the current diagnostic
-	def plot(self):
+	def plot(self, **kwargs):
 		if not self.validate(): return
+		
+		kwargs = self.setPlot(**kwargs)
 		self.print_info()
 		for ax in self.axes:
 			if "sliceInfo" in ax: print ax["sliceInfo"]
@@ -677,7 +704,7 @@ class ParticleDiagnostic(object):
 			print "timestep "+str(time)
 			# plot
 			ax = fig.add_subplot(1,1,1)
-			self.plotOnAxes(ax, time)
+			self.plotOnAxes(ax, time, **kwargs)
 			fig.canvas.draw()
 			plt.show()
 			
@@ -691,10 +718,8 @@ def multiPlot(*diags, **kwargs):
 	# Gather all times
 	alltimes = np.unique(np.concatenate([diag.times for diag in diags]))
 	# Make figure
-	figure = 1
-	if "figure" in kwargs: figure = kwargs["figure"]
-	shape = None
-	if "shape" in kwargs: shape = kwargs["shape"]
+	figure = kwargs.pop("figure", 1)
+	shape  = kwargs.pop("shape" , None)
 	if shape is None: shape = [ndiags,1]
 	fig = plt.figure(figure)
 	fig.clf()
@@ -704,7 +729,7 @@ def multiPlot(*diags, **kwargs):
 	for time in alltimes:
 		for diag in diags:
 			if time in diag.times:
-				diag.plotOnAxes(diag.ax, time)
+				diag.plotOnAxes(diag.ax, time, **kwargs)
 		fig.canvas.draw()
 		plt.show()
 	return
