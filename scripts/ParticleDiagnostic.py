@@ -230,7 +230,7 @@ def getAvailableTimesteps(results_path, diagNumber):
 # -------------------------------------------------------------------
 class ParticleDiagnostic(object):
 
-	# We use __new__ to prevent object creation is no diagNumber requested
+	# We use __new__ to prevent object creation if no diagNumber requested
 	def __new__(cls, *args, **kwargs):
 		# Is there a "results_path" argument ?
 		try:
@@ -269,7 +269,7 @@ class ParticleDiagnostic(object):
 					print "      No particle diagnostics found in "+results_path;
 				return None
 		# If everything ok, then we create the object
-		return super(ParticleDiagnostic, cls).__new__(cls, *args, **kwargs)
+		return object.__new__(cls, *args, **kwargs)
 	
 	
 	# This is the constructor, which creates the object
@@ -312,17 +312,17 @@ class ParticleDiagnostic(object):
 			cell_length = cell_length[0]
 		elif ndim == 2:
 			if sim_length.size  == 1: sim_length  = np.array([sim_length,sim_length])
-			else                    : sim_length  = sim_length[0:1]
+			else                    : sim_length  = sim_length[0:2]
 			if cell_length.size == 1: cell_length = np.array([cell_length,cell_length])
-			else                    : cell_length = cell_length[0:1]
+			else                    : cell_length = cell_length[0:2]
 		elif ndim == 3:
 			if sim_length.size == 1: sim_length = np.array([sim_length,sim_length,sim_length])
-			elif sim_length.size >2: sim_length = sim_length[0:2]
+			elif sim_length.size >2: sim_length = sim_length[0:3]
 			else:
 				print "In the input file, 'sim_length' should have 1 or 3 arguments for a 3d simulation"
 				return None
 			if cell_length.size == 1: cell_length = np.array([cell_length,cell_length,cell_length])
-			elif cell_length.size >2: cell_length = cell_length[0:2]
+			elif cell_length.size >2: cell_length = cell_length[0:3]
 			else:
 				print "In the input file, 'cell_length' or 'res_space' should have 1 or 3 arguments for a 3d simulation"
 				return None
@@ -385,6 +385,10 @@ class ParticleDiagnostic(object):
 		self.xmax     = None
 		self.ymin     = None
 		self.ymax     = None
+		self.figurekwargs = {}
+		self.plotkwargs = {}
+		self.imkwargs = {"interpolation":"nearest", "aspect":"auto"}
+		self.colorbarkwargs = {}
 		kwargs = self.setPlot(**kwargs)
 		
 		# 2 - Manage timesteps
@@ -477,13 +481,13 @@ class ParticleDiagnostic(object):
 			
 			# if this axis has to be sliced, then select the slice
 			if axis["type"] in slice:
-						
+				
 				# if slice is "all", then all the axis has to be summed
 				if slice[axis["type"]] == "all":
 					indices = np.arange(axis["size"])
 				
 				# Otherwise, get the slice from the argument `slice`
-				else:	
+				else:
 					try:
 						s = np.double(slice[axis["type"]])
 						if s.size>2 or s.size<1: raise Exception()
@@ -543,6 +547,8 @@ class ParticleDiagnostic(object):
 		
 		# Build units
 		units_coeff *= coeff_density
+		self.title = "??"
+		unitss = "??"
 		if   self.info["output"] == "density":               self.title = "Number density"
 		elif self.info["output"] == "charge_density":        self.title = "Charge density"
 		elif self.info["output"][:-1] == "current_density_": self.title = "J"+self.info["output"][-1]
@@ -602,6 +608,7 @@ class ParticleDiagnostic(object):
 		
 	# Method to set optional plotting arguments
 	def setPlot(self, **kwargs):
+		# First, we manage the main optional arguments
 		self.figure   = kwargs.pop("figure"  ,self.figure  )
 		self.data_min = kwargs.pop("data_min",self.data_min)
 		self.data_max = kwargs.pop("data_max",self.data_max)
@@ -609,6 +616,27 @@ class ParticleDiagnostic(object):
 		self.xmax     = kwargs.pop("xmax"    ,self.xmax    )
 		self.ymin     = kwargs.pop("ymin"    ,self.ymin    )
 		self.ymax     = kwargs.pop("ymax"    ,self.ymax    )
+		# Second, we manage all the other arguments that are directly the ones
+		#  of matplotlib
+		# For each keyword argument provided, we save these arguments separately
+		#  depending on the type: figure, plot, image, colorbar.
+		for kwa in kwargs:
+			val = kwargs[kwa]
+			if kwa in ["figsize","dpi","facecolor","edgecolor"]:
+				self.figurekwargs.update({kwa:val})
+			if kwa in ["color","dashes","drawstyle","fillstyle","label","linestyle",
+			           "linewidth","marker","markeredgecolor","markeredgewidth",
+			           "markerfacecolor","markerfacecoloralt","markersize","markevery",
+			           "visible","zorder"]:
+				self.plotkwargs.update({kwa:val})
+			if kwa in ["cmap","aspect","interpolation"]:
+				self.imkwargs.update({kwa:val})
+			if kwa in ["orientation","fraction","pad","shrink","anchor","panchor",
+			           "extend","extendfrac","extendrect","spacing","ticks","format",
+			           "drawedges"]:
+				self.colorbarkwargs.update({kwa:val})
+		# special case: "aspect" is ambiguous because it exists for both imshow and colorbar
+		if "cbaspect" in kwargs: self.colorbarkwargs.update({"aspect":kwargs["cbaspect"]})
 		return kwargs
 		
 	# Same Method, without returns
@@ -639,11 +667,17 @@ class ParticleDiagnostic(object):
 		for i in range(len(self.plot_type)):
 			result.update({ self.plot_type[i]:self.plot_centers[i] })
 		return result
-
-
+	
+	# Method to obtain the plot limits
+	def limits(self):
+		l = []
+		for i in range(len(self.plot_shape)):
+			l.append([min(self.plot_centers[0]), max(self.plot_centers[0])])
+		return l
+	
 	# Method to plot the data when axes are made
-	def plotOnAxes(self, ax, time, **kwargs):
-		if not self.validate(): return
+	def plotOnAxes(self, ax, time):
+		if not self.validate(): return None
 		# get data
 		A = self.getData(time)
 		# apply the slicing
@@ -658,9 +692,8 @@ class ParticleDiagnostic(object):
 		# log scale if requested
 		if self.data_log: A = np.log10(A)
 		# plot
-		ax.cla()
 		if A.ndim == 1:
-			ax.plot(self.plot_centers[0], A)
+			im, = ax.plot(self.plot_centers[0], A, **self.plotkwargs)
 			if self.plot_log[0]: ax.set_xscale("log")
 			ax.set_xlabel(self.plot_label[0])
 			ax.set_xlim(xmin=self.xmin, xmax=self.xmax)
@@ -671,8 +704,7 @@ class ParticleDiagnostic(object):
 			if self.plot_log[0]: extent[0:2] = [np.log10(self.plot_centers[0][0]), np.log10(self.plot_centers[0][-1])]
 			if self.plot_log[1]: extent[2:4] = [np.log10(self.plot_centers[1][0]), np.log10(self.plot_centers[1][-1])]
 			im = ax.imshow( np.flipud(A.transpose()),
-				vmin = self.data_min, vmax = self.data_max, extent=extent,
-				aspect="auto", interpolation="nearest", **kwargs)
+				vmin = self.data_min, vmax = self.data_max, extent=extent, **self.imkwargs)
 			if (self.plot_log[0]): ax.set_xlabel("Log[ "+self.plot_label[0]+" ]")
 			else:                  ax.set_xlabel(        self.plot_label[0]     )
 			if (self.plot_log[1]): ax.set_ylabel("Log[ "+self.plot_label[1]+" ]")
@@ -681,10 +713,11 @@ class ParticleDiagnostic(object):
 			ax.set_ylim(ymin=self.ymin, ymax=self.ymax)
 			try: # if colorbar exists
 				ax.cax.cla()
-				plt.colorbar(mappable=im, cax=ax.cax)
+				plt.colorbar(mappable=im, cax=ax.cax, **self.colorbarkwargs)
 			except AttributeError:
-				ax.cax = plt.colorbar(mappable=im, ax=ax).ax
+				ax.cax = plt.colorbar(mappable=im, ax=ax, **self.colorbarkwargs).ax
 			ax.set_title(self.title)
+		return im
 	
 	
 	# Method to plot the current diagnostic
@@ -698,41 +731,82 @@ class ParticleDiagnostic(object):
 		
 		# Loop times
 		fig = plt.figure(self.figure)
+		fig.set(**self.figurekwargs)
 		fig.clf()
 		for timeindex in range(self.times.size):
 			time = self.times[timeindex]
 			print "timestep "+str(time)
 			# plot
 			ax = fig.add_subplot(1,1,1)
-			self.plotOnAxes(ax, time, **kwargs)
+			ax.cla()
+			artist = self.plotOnAxes(ax, time)
 			fig.canvas.draw()
 			plt.show()
 			
-	
+
 # Function to plot multiple diags on the same figure
 def multiPlot(*diags, **kwargs):
 	ndiags = len(diags)
 	# Verify diags are valid
+	if ndiags == 0: return
 	for diag in diags:
 		if not diag.validate(): return
 	# Gather all times
 	alltimes = np.unique(np.concatenate([diag.times for diag in diags]))
-	# Make figure
+	# Get keyword arguments
 	figure = kwargs.pop("figure", 1)
 	shape  = kwargs.pop("shape" , None)
+	# Determine whether to plot all cases on the same axes
+	sameAxes = False
+	if shape is None or shape == [1,1]:
+		sameAxes = True
+		for diag in diags:
+			if len(diag.plot_shape)!=1 or diag.plot_type!=diags[0].plot_type:
+				sameAxes = False
+				break
+	if not sameAxes and shape == [1,1]:
+		print "Cannot have shape=[1,1] with these diagnostics"
+		return
+	# Determine the shape
+	if sameAxes: shape = [1,1]
 	if shape is None: shape = [ndiags,1]
+	nplots = np.array(shape).prod()
+	if not sameAxes and nplots != ndiags:
+		print "The 'shape' argument is incompatible with the number of diagnostics:"
+		print "  "+str(ndiags)+" diagnostics do not fit "+str(nplots)+" plots"
+		return
+	# Make the figure
 	fig = plt.figure(figure)
+	fig.set(**diags[0].figurekwargs)
 	fig.clf()
-	for i in range(ndiags):
-		diags[i].ax = fig.add_subplot(shape[0], shape[1], i)
+	fig.subplots_adjust(wspace=0.5, hspace=0.5, bottom=0.15)
+	ax = []
+	xmin =  float("inf")
+	xmax = -float("inf")
+	c = plt.matplotlib.rcParams['axes.color_cycle']
+	for i in range(nplots):
+		ax.append( fig.add_subplot(shape[0], shape[1], i) )
+	for i, diag in enumerate(diags):
+		if sameAxes: diag.ax = ax[0]
+		else       : diag.ax = ax[i]
+		diag.artist = None
+		l = diag.limits()[0]
+		xmin = min(xmin,l[0])
+		xmax = max(xmax,l[1])
+		if "color" not in diag.plotkwargs: diag.plotkwargs.update({ "color":c[i%len(c)] })
 	# Loop all times
 	for time in alltimes:
 		for diag in diags:
 			if time in diag.times:
-				diag.plotOnAxes(diag.ax, time, **kwargs)
+				if sameAxes:
+					if diag.artist is not None: diag.artist.remove()
+				else:
+					diag.ax.cla()
+				diag.artist = diag.plotOnAxes(diag.ax, time)
+				if sameAxes:
+					diag.ax.set_xlim(xmin,xmax)
 		fig.canvas.draw()
 		plt.show()
 	return
-
-
+	
 

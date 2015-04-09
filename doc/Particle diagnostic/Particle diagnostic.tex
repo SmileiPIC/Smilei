@@ -2,6 +2,7 @@
 \usepackage{graphicx}
 \usepackage[margin=2cm]{geometry}
 \usepackage{fancyvrb,xcolor}
+\usepackage[urlcolor=blue,colorlinks=true]{hyperref}
 
 \setlength\parindent{0pt}
 
@@ -346,26 +347,42 @@ multiPlot(diag1, diag2, ... , figure=1, shape=None)
 >>> multiPlot( A, B, figure=1 )
 \end{lstlisting}
 
-This will plot the diagnostics \#0 and \#1 on the same figure, and make an animation for all available timesteps.\\*\\*
+This will plot the diagnostics \#0 and \#1 on the same figure, and make an animation for all available timesteps.
 
 
-\subsection{Other tips on managing plots}
-After you have prepared a diagnostic with \code{ParticleDiagnostic(...)}, you \textbf{cannot} change anymore the following arguments:
-\code{results\_path}, \code{diagNumber}, \code{timesteps}, \code{slice}, \code{units} and \code{data\_log}.\\*
-However, you can change the plotting parameters using the \code{.plot()} or the \code{.set()} functions:
+\subsection{Advanced plotting options}
+In addition to \code{figure}, \code{data\_min}, \code{data\_max}, \code{xmin}, \code{xmax}, \code{ymin} and \code{ymax}, there are many
+more optional arguments for the function \code{ParticleDiagnostic(...)}. They are directly passed to the \textit{matplotlib} package.
+\begin{itemize}
+\item Options for the figure: \code{figsize},\code{dpi},\code{facecolor},\code{edgecolor}\\
+	Please refer to \url{http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.figure}
+\item Options for the lines: \code{color},\code{dashes},\code{drawstyle},\code{fillstyle},\code{label},\code{linestyle},\code{linewidth},\\\code{marker},\code{markeredgecolor},\code{markeredgewidth},\code{markerfacecolor},	\code{markerfacecoloralt},\\
+	\code{markersize},\code{markevery},	\code{visible},\code{zorder}\\
+	Please refer to \url{http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.plot}
+\item Options for the image: \code{cmap},\code{aspect},\code{interpolation}\\
+	Please refer to \url{http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.imshow}
+\item Options for the colorbar: \code{cbaspect}, \code{orientation},\code{fraction},\code{pad},\code{shrink},\code{anchor},\code{panchor},\\
+	\code{extend},\code{extendfrac},\code{extendrect},\code{spacing},\code{ticks},\code{format},\code{drawedges}\\
+	Please refer to \url{http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.colorbar}
+\end{itemize}
+\textbf{Example:}\\
+To choose a gray colormap of the image, use \code{cmap="gray"}.
+\begin{lstlisting}
+>>> A = ParticleDiagnostic("path/to/my/results", diagNumber=0, figure=1, cmap="gray")
+\end{lstlisting}
+Many colormaps are available from the \textit{matplotlib} package. With \code{cmap=""}, you will get a list of available colormaps.
+
+
+\subsection{Updating the plotting options}
+
+You can change the plotting parameters using the \code{A.plot()} or the \code{A.set()} functions.\\
+\textbf{Example:}
 \begin{lstlisting}
 >>> A = ParticleDiagnostic("path/to/my/results", diagNumber=0, figure=1, data_max=1)
 >>> A.plot( figure=2 )
 >>> A.set( data_max=2 )
 >>> A.plot()
 \end{lstlisting}
-
-Another cool thing is that you can change the colormap for 2D plots, with the \code{cmap} argument.
-For example, you can plot with a gray colormap using
-\begin{lstlisting}
->>> A.plot( cmap = "gray" )
-\end{lstlisting}
-Many colormaps are available from the \textit{matplotlib} package. With \code{cmap=""}, you will get an error \code{Colormap  is not recognized}, but it lists all the available colormaps.
 
 \clearpage
 \section{Tutorial}
@@ -427,7 +444,7 @@ To obtain the equivalent plot for the ions, use the diagnostic \#1 with the comm
 \begin{lstlisting}
 >>> ParticleDiagnostic('tst1d_6_particle_diagnostic', 1, timesteps=0 ).plot()
 \end{lstlisting}
-This results in the plot in Figure \ref{Tuto2}. The ions have a zero average velocity.
+This results in the plot in Figure \ref{Tuto2}. The ions have a zero average velocity.\\*
 
 \begin{figure}[htbp]
 \centering
@@ -444,26 +461,7 @@ This results in the plot in Figure \ref{Tuto2}. The ions have a zero average vel
 \end{minipage}
 \end{figure}
 
-\subsection{Make animated plots}
-Use the following command to have an animation of the electron phase-space with time:
-\begin{lstlisting}
->>> ParticleDiagnostic('tst1d_6_particle_diagnostic', 0 ).plot()
-\end{lstlisting}
-You will see the electron velocity oscillate from $0.05c$ to $-0.05c$. This is due to the fact that we are simulating a plasma wave with infinite wavelength.\\*
 
-Note that all the available timesteps are animated. If you want to only animate between timesteps 20 and 60, use
-\begin{lstlisting}
->>> ParticleDiagnostic('tst1d_6_particle_diagnostic', 0, timesteps=[20,60] ).plot()
-\end{lstlisting}
-
-\subsection{Make multiple plots on the same figure}
-
-Use the following commands to have the animation with both electrons and ions on the same figure:
-\begin{lstlisting}
->>> A = ParticleDiagnostic('tst1d_6_particle_diagnostic', 0 )
->>> B = ParticleDiagnostic('tst1d_6_particle_diagnostic', 1 )
->>> multiPlot(A, B)
-\end{lstlisting}
 
 \subsection{Plot sections (``slices'') of the array}
 
@@ -500,6 +498,52 @@ By choosing \code{"all"} in the argument \code{slice}, all the velocities $v_x$ 
 In our case, as our diagnostic goes from $v_x=-0.1$ to $0.1$, these limits are used.\\*
 Note that parameters \code{data\_min} and \code{data\_max} are used to have a nicer plot.\\*
 The result is shown in Figure \ref{Tuto4}. We obtain a constant density of 10$n_c$, which is what was chosen in the input file.
+
+\subsection{Make animated plots}
+To have an animation of the electron phase-space with time, you have to remove the \code{timesteps} argument:
+\begin{lstlisting}
+>>> ParticleDiagnostic('tst1d_6_particle_diagnostic', 0 ).plot()
+\end{lstlisting}
+You will see the electron velocity oscillate from $0.05c$ to $-0.05c$. This is due to the fact that we are simulating a plasma wave with infinite wavelength.\\*
+
+Note that all the available timesteps are animated. If you want to only animate between timesteps 20 and 60, use
+\begin{lstlisting}
+>>> ParticleDiagnostic('tst1d_6_particle_diagnostic', 0, timesteps=[20,60] ).plot()
+\end{lstlisting}
+
+
+\subsection{Make multiple plots on the same figure}
+
+Use the following commands to have the animation with both electrons and ions on the same figure:
+\begin{lstlisting}
+>>> A = ParticleDiagnostic('tst1d_6_particle_diagnostic', 0 )
+>>> B = ParticleDiagnostic('tst1d_6_particle_diagnostic', 1 )
+>>> multiPlot(A, B, shape=[1,2])
+\end{lstlisting}
+A snapshot of this double plot is given in Figure \ref{Tuto5}.\\*\\*
+
+If the two plots are 1D, and are both of the same type, then they will automatically be plotted on the same axes.
+\begin{lstlisting}
+>>> A = ParticleDiagnostic('tst1d_6_particle_diagnostic',0,slice={"x":"all"})
+>>> B = ParticleDiagnostic('tst1d_6_particle_diagnostic',1,slice={"x":"all"})
+>>> multiPlot(A, B)
+\end{lstlisting}
+This is shown in Figure \ref{Tuto6} where you can see the two curves in blue and green.
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{.48\linewidth}
+\includegraphics[width=10cm]{ParticleDiagTutorial5}
+\caption{Two plots on the same figure.}
+\label{Tuto5}
+\end{minipage}
+\hfill{}
+\begin{minipage}[b]{.38\linewidth}
+\includegraphics[width=6cm]{ParticleDiagTutorial6}
+\caption{Two curves in the same axes.}
+\label{Tuto6}
+\end{minipage}
+\end{figure}
 
 
 
