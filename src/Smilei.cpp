@@ -245,7 +245,8 @@ int main (int argc, char* argv[])
     timer[6].init(smpi, "fieldsDump");
     timer[7].init(smpi, "AvgFields");
     
-    
+    //Tools::printMemFootPrint("Fin init");
+ 
 	// ------------------------------------------------------------------
     //                     HERE STARTS THE PIC LOOP
     // ------------------------------------------------------------------
