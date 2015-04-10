@@ -328,6 +328,10 @@ PicParams::PicParams(InputData &ifile) {
     // --------------------
     if ( !ifile.extract("number_of_procs", number_of_procs) )
         number_of_procs.resize(nDim_field, 0);
+
+    if ( !ifile.extract("global_output_file", global_output_file) )
+	global_output_file = true;
+
     
     // -------------------------------------------------------
     // Compute usefull quantities and introduce normalizations

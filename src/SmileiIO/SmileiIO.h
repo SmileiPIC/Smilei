@@ -43,6 +43,9 @@ public:
     //! Basic Write of a field in the specified group of the global file
     virtual void writeFieldsSingleFileTime( Field* field, hid_t group_id ) = 0;
 
+    bool global_output_file_;
+    virtual void writeOneFieldSingleFileTime( Field* field, hid_t group_id ) = 0;
+
     //! Each MPI process writes is particles in its own file
     //! Disabled for now, replaced by dump (used for restart)
     void writePlasma( std::vector<Species*> vecSpecies, double time, SmileiMPI* smpi );
