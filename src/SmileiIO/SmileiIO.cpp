@@ -91,15 +91,27 @@ stop_file_seen_since_last_check(false)
     // ----------------------------
     MPI_Info info  = MPI_INFO_NULL;
     hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
-    H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, info);
-    
-    write_plist = H5Pcreate(H5P_DATASET_XFER);
-    H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);
-    
     
     // Fields.h5
     // ---------
-    global_file_id_    = H5Fcreate( "Fields.h5",     H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+    global_output_file_ = params.global_output_file;
+    ostringstream name_t;
+    name_t.str("");
+    if (global_output_file_) { // 1 file
+        name_t << "Fields.h5";
+	write_plist = H5Pcreate(H5P_DATASET_XFER);
+	H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, info);
+	if (smpi->isMaster()) cout << "patate\n";
+    }
+    else { // 1 file per process
+	name_t << "Fields_" << setfill('0') << setw(10) << smpi->getRank() << ".h5";
+	write_plist = H5Pcreate(H5P_DATASET_XFER);
+	// Added some attributes 
+    }
+    global_file_id_    = H5Fcreate( name_t.str().c_str(),     H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+
+
+
     
     // Create property list for collective dataset write: for Fields.h5
     
@@ -213,28 +225,49 @@ void SmileiIO::writeAllFieldsSingleFileTime( ElectroMagn* EMfields, int time )
 	
     DEBUG(10,"[hdf] GROUP _________________________________ " << name_t.str());
     hid_t group_id = H5Gcreate(global_file_id_, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if (global_output_file_) {
 	
-    writeFieldsSingleFileTime( EMfields->Ex_, group_id );
-    writeFieldsSingleFileTime( EMfields->Ey_, group_id );
-    writeFieldsSingleFileTime( EMfields->Ez_, group_id );
-    writeFieldsSingleFileTime( EMfields->Bx_m, group_id );
-    writeFieldsSingleFileTime( EMfields->By_m, group_id );
-    writeFieldsSingleFileTime( EMfields->Bz_m, group_id );
-    writeFieldsSingleFileTime( EMfields->Jx_, group_id );
-    writeFieldsSingleFileTime( EMfields->Jy_, group_id );
-    writeFieldsSingleFileTime( EMfields->Jz_, group_id );
-    writeFieldsSingleFileTime( EMfields->rho_, group_id );
+	writeFieldsSingleFileTime( EMfields->Ex_, group_id );
+	writeFieldsSingleFileTime( EMfields->Ey_, group_id );
+	writeFieldsSingleFileTime( EMfields->Ez_, group_id );
+	writeFieldsSingleFileTime( EMfields->Bx_m, group_id );
+	writeFieldsSingleFileTime( EMfields->By_m, group_id );
+	writeFieldsSingleFileTime( EMfields->Bz_m, group_id );
+	writeFieldsSingleFileTime( EMfields->Jx_, group_id );
+	writeFieldsSingleFileTime( EMfields->Jy_, group_id );
+	writeFieldsSingleFileTime( EMfields->Jz_, group_id );
+	writeFieldsSingleFileTime( EMfields->rho_, group_id );
 	
-    // for all species related quantities
-    for (unsigned int ispec=0; ispec<EMfields->n_species; ispec++) {
-        writeFieldsSingleFileTime( EMfields->rho_s[ispec], group_id );
-        writeFieldsSingleFileTime( EMfields->Jx_s[ispec],  group_id );
-        writeFieldsSingleFileTime( EMfields->Jy_s[ispec],  group_id );
-        writeFieldsSingleFileTime( EMfields->Jz_s[ispec],  group_id );
+	// for all species related quantities
+	for (unsigned int ispec=0; ispec<EMfields->n_species; ispec++) {
+	    writeFieldsSingleFileTime( EMfields->rho_s[ispec], group_id );
+	    writeFieldsSingleFileTime( EMfields->Jx_s[ispec],  group_id );
+	    writeFieldsSingleFileTime( EMfields->Jy_s[ispec],  group_id );
+	    writeFieldsSingleFileTime( EMfields->Jz_s[ispec],  group_id );
+	}
+    }	
+    else {
+	writeOneFieldSingleFileTime( EMfields->Ex_, group_id );
+	writeOneFieldSingleFileTime( EMfields->Ey_, group_id );
+	writeOneFieldSingleFileTime( EMfields->Ez_, group_id );
+	writeOneFieldSingleFileTime( EMfields->Bx_m, group_id );
+	writeOneFieldSingleFileTime( EMfields->By_m, group_id );
+	writeOneFieldSingleFileTime( EMfields->Bz_m, group_id );
+	writeOneFieldSingleFileTime( EMfields->Jx_, group_id );
+	writeOneFieldSingleFileTime( EMfields->Jy_, group_id );
+	writeOneFieldSingleFileTime( EMfields->Jz_, group_id );
+	writeOneFieldSingleFileTime( EMfields->rho_, group_id );
+	// for all species related quantities
+	for (unsigned int ispec=0; ispec<EMfields->n_species; ispec++) {
+	    writeOneFieldSingleFileTime( EMfields->rho_s[ispec], group_id );
+	    writeOneFieldSingleFileTime( EMfields->Jx_s[ispec],  group_id );
+	    writeOneFieldSingleFileTime( EMfields->Jy_s[ispec],  group_id );
+	    writeOneFieldSingleFileTime( EMfields->Jz_s[ispec],  group_id );
+	}
     }
 	
-	
     H5Gclose(group_id);
+
 	
     H5Fflush( global_file_id_, H5F_SCOPE_GLOBAL );
 	
