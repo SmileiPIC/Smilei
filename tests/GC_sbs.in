@@ -71,7 +71,7 @@ species
 	initMomentum_type = maxwell-juettner
 	ionization_model = none
 	n_part_per_cell = 50
-	c_part_max = 1.0
+	c_part_max = 1.2
 	mass = 1836.0
 	charge = 1.0
 	density = 0.05
@@ -97,7 +97,7 @@ species
 	initMomentum_type = maxwell-juettner
 	ionization_model = none
 	n_part_per_cell = 50
-	c_part_max = 1.0
+	c_part_max = 1.2
 	mass = 1.0
 	charge = -1.0
 	density = 0.05
