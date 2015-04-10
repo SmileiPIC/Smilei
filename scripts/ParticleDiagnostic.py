@@ -7,7 +7,8 @@
 #   into a N-dimensional histogram.
 #   Each histogram axis can be: x, y, z, px, py, pz, p, gamma, ekin, vx, vy, vz, v or charge.
 #   In each bin of the histogram, several things may be summed: the weights (density), 
-#     weight*charge (charge density) or weight*velocity (current density).
+#     weight*charge (charge density), weight*charge*velocity (current density),
+#     or weight*momentum (momentum density)
 #   Examples:
 #       +----------+------------+---------------------+
 #       |   Rank   |   type     |         Axes        |
@@ -259,11 +260,8 @@ class ParticleDiagnostic(object):
 			except:
 				print "Printing available particle diagnostics:"
 				print "----------------------------------------"
-				ok = True
 				diagNumber = 0
-				while True:
-					ok = printInfo(getInfo(results_path, diagNumber))
-					if not ok: break
+				while printInfo(getInfo(results_path, diagNumber)):
 					diagNumber += 1
 				if diagNumber == 0:
 					print "      No particle diagnostics found in "+results_path;
@@ -336,41 +334,87 @@ class ParticleDiagnostic(object):
 		cell_size = {"x":cell_length[0]}
 		if ndim>1: cell_size.update({"y":cell_length[1]})
 		if ndim>2: cell_size.update({"z":cell_length[2]})
+		try:
+			timestep = np.double(findParam(results_path, "timestep"))
+		except:
+			try:
+				res_time = np.double(findParam(results_path, "res_time"))
+				sim_time = np.double(findParam(results_path, "sim_time"))
+				timestep = sim_time/res_time
+			except:
+				print "Could not extract 'timestep' or 'res_time' from the input file"
+				return None
 		if units == "nice":
 			try:
-				wavelength_SI = float( findParam(results_path, "wavelength_SI") )
+				wavelength_SI = np.double( findParam(results_path, "wavelength_SI") )
 			except:
 				print "Could not extract 'wavelength_SI' from the input file"
 				return None
 			coeff_density = 1.11e21 / (wavelength_SI/1e-6)**2 # nc in cm^-3
 			coeff_energy = 0.511
+			self.coeff_time = timestep * wavelength_SI/3.e8 # in seconds
+			self.time_units = " s"
 		elif units == "code":
 			coeff_density = 1.
 			coeff_energy = 1.
+			self.coeff_time = timestep
+			self.time_units = " 1/w"
 		else:
 			print "Units type '"+units+"' not recognized. Use 'code' or 'nice'"
 			return None
 		
 		# 1 - verifications, initialization
 		# -------------------------------------------------------------------
-		# Check value of diagNumber
-		if type(diagNumber) is not int or diagNumber<0:
-			print "Argument 'diagNumber' must be a positive or zero integer"
+		# Check the requested diags are ok
+		if type(diagNumber) is int:
+			if diagNumber<0:
+				print "Argument 'diagNumber' cannot be a negative integer."
+				return None
+			diagNumber = '#' + str(diagNumber)
+		if type(diagNumber) is str:
+			self.operation = diagNumber
+			# Get list of requested diags
+			self.diags = sorted(set([ int(d[1:]) for d in re.findall('#\d+',self.operation) ]))
+			try:
+				exec(re.sub('#\d+','1.',self.operation)) in None
+			except:
+				print "Cannot understand operation '"+self.operation+"'"
+				return None
+			# Verify that all requested diags exist and they all have the same shape
+			self.info = {}
+			self.shape = {}
+			self.axes = {}
+			self.naxes = {}
+			for d in self.diags:
+				try:
+					self.info.update({ d:getInfo(results_path, d) })
+				except:
+					print "Particle diagnostic #"+str(d)+" not found."
+					return None
+				self.axes .update ({ d:self.info[d]["axes"] })
+				self.naxes.update ({ d:len(self.axes[d]) })
+				self.shape.update({ d:[ axis["size"] for axis in self.axes[d] ] })
+				if self.naxes[d] != self.naxes[self.diags[0]]:
+					print "All diagnostics in operation '"+self.operation+"' must have as many axes."
+					print (" Diagnotic #"+str(d)+" has "+str(self.naxes[d])+" axes and #"+
+						str(self.diags[0])+" has "+str(self.naxes[self.diags[0]])+" axes")
+					return None
+				for a in self.axes[d]:
+					if self.axes[d] != self.axes[self.diags[0]]:
+						print ("In operation '"+self.operation+"', diagnostics #"+str(d)+" and #"
+							+str(self.diags[0])+" must have the same shape.")
+						return None
+		else:
+			print "Argument 'diagNumber' must be and integer or a string."
 			return None
+		self.axes  = self.axes [self.diags[0]]
+		self.naxes = self.naxes[self.diags[0]]
+		self.shape = self.shape[self.diags[0]]
 		
 		# Check slice is a dict
 		if slice is not None  and  type(slice) is not dict:
 			print "Argument 'slice' must be a dictionary"
 			return None
-		
-		# Get the info on the requested diagNumber
-		self.info = getInfo(results_path, diagNumber)
-		
-		# Leave if diag not found
-		if self.info == False:
-			print "Particle diagnostic #"+str(diagNumber)+" not found";
-			return None
-		
 		# Make slice a dictionary
 		if slice is None: slice = {}
 		
@@ -394,34 +438,42 @@ class ParticleDiagnostic(object):
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
 		# Get available timesteps
-		self.file = results_path+'/ParticleDiagnostic'+str(diagNumber)+'.h5'
-		f = h5py.File(self.file, 'r')
-		items = f.items()
-		ntimes = len(items)
-		self.times = np.zeros(ntimes)
+		self.file = {}
+		self.times = {}
 		self.data  = {}
-		for i in range(ntimes):
-			self.times[i] = int(items[i][0].strip("timestep")) # fill the "times" array with the available timesteps
-			self.data.update({ self.times[i] : i }) # fill the "data" dictionary with indices to the data arrays
-		f.close()
-	
-		# If timesteps is None, then keep all timesteps
-		# otherwise, select timesteps
-		if timesteps is not None:
-			try:
-				ts = np.array(np.double(timesteps),ndmin=1)
-				if ts.size==2:
-					# get all times in between bounds
-					self.times = self.times[ (self.times>=ts[0]) * (self.times<=ts[1]) ]
-				elif ts.size==1:
-					# get nearest time
-					self.times = np.array([self.times[(np.abs(self.times-ts)).argmin()]])
-				else:
-					raise Exception()
-			except:
-				print "Argument 'timesteps' must be one or two non-negative integers"
-				f.close()
+		for d in self.diags:
+			# get all diagnostics files
+			self.file.update({ d:results_path+'/ParticleDiagnostic'+str(d)+'.h5' })
+			# get all diagnostics timesteps
+			self.times.update({ d:getAvailableTimesteps(results_path, d) })
+			# fill the "data" dictionary with indices to the data arrays
+			self.data.update({ d:{} })
+			for i,t in enumerate(self.times[d]):
+				self.data[d].update({ t : i })
+			# If timesteps is None, then keep all timesteps, otherwise, select timesteps
+			if timesteps is not None:
+				try:
+					ts = np.array(np.double(timesteps),ndmin=1)
+					if ts.size==2:
+						# get all times in between bounds
+						self.times[d] = self.times[d][ (self.times>=ts[0]) * (self.times<=ts[1]) ]
+					elif ts.size==1:
+						# get nearest time
+						self.times[d] = np.array([self.times[d][(np.abs(self.times[d]-ts)).argmin()]])
+					else:
+						raise Exception()
+				except:
+					print "Argument 'timesteps' must be one or two non-negative integers"
+					f.close()
+					return None
+			# Verify that timesteps are the same for all diagnostics
+			if (self.times[d] != self.times[self.diags[0]]).any() :
+				print "All diagnostics in operation '"+self.operation+"' must have the same timesteps."
+				print (" Diagnotic #"+str(d)+" has "+str(len(self.times[d]))+ " timesteps and #"
+					+str(self.diags[0])+" has "+str(len(self.times[self.diags[0]])))+ " timesteps"
 				return None
+		# Now we need to keep only one array of timesteps because they should be all the same
+		self.times = self.times[self.diags[0]]
 		
 		# Need at least one timestep
 		if self.times.size < 1:
@@ -431,17 +483,13 @@ class ParticleDiagnostic(object):
 		
 		# 3 - Manage axes
 		# -------------------------------------------------------------------
-		# Fabricate all axes values and slices
-		self.axes = self.info["axes"]
-		self.naxes = len(self.axes)
-		self.shape = []
+		# Fabricate all axes values for all diags
 		self.plot_shape = []; self.plot_type = []; plot_diff = []
 		self.plot_label = []; self.plot_centers = []; self.plot_log = []
 		units_coeff = 1.
 		unitsa = [0,0,0,0]
 		spatialaxes = {"x":False, "y":False, "z":False}
 		for axis in self.axes:
-			self.shape.append(axis["size"])
 			
 			# Find the vector of values along the axis
 			if axis["log"]:
@@ -544,41 +592,62 @@ class ParticleDiagnostic(object):
 		if len(self.plot_shape) > 2:
 			print "Cannot plot in "+str(len(self.plot_shape))+"d. You need to 'slice' some axes."
 			return None
-		
+			
 		# Build units
-		units_coeff *= coeff_density
-		self.title = "??"
-		unitss = "??"
-		if   self.info["output"] == "density":               self.title = "Number density"
-		elif self.info["output"] == "charge_density":        self.title = "Charge density"
-		elif self.info["output"][:-1] == "current_density_": self.title = "J"+self.info["output"][-1]
-		if units == "nice":
-			if   self.info["output"] == "density":               unitss = "particles/cm$^3$"
-			elif self.info["output"] == "charge_density":        unitss = "e/cm$^3$"
-			elif self.info["output"][:-1] == "current_density_": unitss = "particles * c /cm$^3$"
-			if unitsa[1]>0: unitss += "/(mc)"
-			if unitsa[1]>1: unitss += "$^"+str(unitsa[1])+"$"
-			if unitsa[2]>0: unitss += "/c"
-			if unitsa[2]>1: unitss += "$^"+str(unitsa[2])+"$"
-			if unitsa[3]>0: unitss += "/MeV"
-			if unitsa[3]>1: unitss += "$^"+str(unitsa[3])+"$"
-		elif units == "code":
-			if   self.info["output"] == "density":               unitss = "$n_c$"
-			elif self.info["output"] == "charge_density":        unitss = "e$\, n_c$"
-			elif self.info["output"][:-1] == "current_density_": unitss = "particles * $c\, n_c$"
-			if unitsa[1]>0: unitss += "/(mc)"
-			if unitsa[1]>1: unitss += "$^"+str(unitsa[1])+"$"
-			if unitsa[2]>0: unitss += "/c"
-			if unitsa[2]>1: unitss += "$^"+str(unitsa[2])+"$"
-			if unitsa[3]>0: unitss += "/(mc$^2$)"
-			if unitsa[3]>1: unitss += "$^"+str(unitsa[3])+"$"
-		self.title += " [ "+unitss+" ]"
+		self.titles = {}
+		self.units = {}
+		for d in self.diags:
+			self.titles.update({ d:"??" })
+			unitss = "??"
+			output = self.info[d]["output"]
+			if   output == "density"                        : self.titles[d] = "Number density"
+			elif output == "charge_density"                 : self.titles[d] = "Charge density"
+			elif output[:-1] == "current_density_"          : self.titles[d] = "J"+output[-1]
+			elif output == "p_density"                      : self.titles[d] = "P density"
+			elif output[2:] == "_density" and output[0]=="p": self.titles[d] = "P"+output[1]+" density"
+			if units == "nice":
+				if   output == "density"                        : unitss = "particles/cm$^3$"
+				elif output == "charge_density"                 : unitss = "$e$/cm$^3$"
+				elif output[:-1] == "current_density_"          : unitss = "particles * $c$ /cm$^3$"
+				elif output == "p_density"                      : unitss = "particles * $m\,c$ /cm$^3$"
+				elif output[2:] == "_density" and output[0]=="p": unitss = "particles * $m\,c$ /cm$^3$"
+				if unitsa[1]>0: unitss += "/(mc)"
+				if unitsa[1]>1: unitss += "$^"+str(unitsa[1])+"$"
+				if unitsa[2]>0: unitss += "/c"
+				if unitsa[2]>1: unitss += "$^"+str(unitsa[2])+"$"
+				if unitsa[3]>0: unitss += "/MeV"
+				if unitsa[3]>1: unitss += "$^"+str(unitsa[3])+"$"
+			elif units == "code":
+				if   output == "density"                        : unitss = "$n_c$"
+				elif output == "charge_density"                 : unitss = "$e\, n_c$"
+				elif output[:-1] == "current_density_"          : unitss = "particles * $c\, n_c$"
+				elif output == "p_density"                      : unitss = "particles * $m\,c\, n_c$"
+				elif output[2:] == "_density" and output[0]=="p": unitss = "particles * $m\,c\, n_c$"
+				if unitsa[1]>0: unitss += "/(mc)"
+				if unitsa[1]>1: unitss += "$^"+str(unitsa[1])+"$"
+				if unitsa[2]>0: unitss += "/c"
+				if unitsa[2]>1: unitss += "$^"+str(unitsa[2])+"$"
+				if unitsa[3]>0: unitss += "/(mc$^2$)"
+				if unitsa[3]>1: unitss += "$^"+str(unitsa[3])+"$"
+			self.units[d] = " [ "+unitss+" ]"
+		# finish title creation
+		if len(self.diags) == 1:
+			self.title = self.titles[self.diags[0]] + self.units[self.diags[0]]
+		else:
+			self.title = self.operation
+			for d in self.diags:
+				self.title = self.title.replace("#"+str(d), self.titles[d])
 		if self.data_log: self.title = "Log[ "+self.title+" ]"
 		
 		# If any spatial dimension did not appear, then count it for calculating the correct density
 		if ndim>=1 and not spatialaxes["x"]: units_coeff /= ncels[0]
 		if ndim>=2 and not spatialaxes["y"]: units_coeff /= ncels[1]
 		if ndim==3 and not spatialaxes["z"]: units_coeff /= ncels[2]
+		units_coeff *= coeff_density
+			
+		# Compute the total coefficient of units
+		units_operation = re.sub("#\d+",str(units_coeff),self.operation)
+		exec("units_coeff = " + units_operation) in None
 		
 		# Calculate the array that represents the bins sizes in order to get units right.
 		# This array will be the same size as the plotted array
@@ -603,7 +672,11 @@ class ParticleDiagnostic(object):
 	# Method to print info on the current diag
 	def print_info(self):
 		if not self.validate(): return
-		printInfo(self.info)
+		for d in self.diags:
+			printInfo(self.info[d])
+		print "Operation : "+self.operation
+		for ax in self.axes:
+			if "sliceInfo" in ax: print ax["sliceInfo"]
 		return
 		
 	# Method to set optional plotting arguments
@@ -638,31 +711,61 @@ class ParticleDiagnostic(object):
 		# special case: "aspect" is ambiguous because it exists for both imshow and colorbar
 		if "cbaspect" in kwargs: self.colorbarkwargs.update({"aspect":kwargs["cbaspect"]})
 		return kwargs
-		
+	
 	# Same Method, without returns
 	def set(self, **kwargs):
 		kwargs = self.setPlot(**kwargs)
 	
 	
 	# Method to obtain the data only
-	def getData(self, time=0):
+	def getData(self, **kwargs):
 		if not self.validate(): return
-		if time not in self.data:
-			print "Time "+time+" not found in this diagnostic"
+		# if optional argument "time" not provided, find out which time to plot
+		try:    time = kwargs["time"]
+		except: time = self.times[0]
+		# Verify that the timestep is valid
+		if time not in self.times:
+			print "Timestep "+time+" not found in this diagnostic"
 			return []
-		# Open file
-		f = h5py.File(self.file, 'r')
-		# get data
-		A = np.reshape(f.items()[self.data[time]][1],self.shape)
-		f.close()
+		# Get arrays from all requested diagnostics
+		A = {}
+		for d in self.diags:
+			# Open file
+			f = h5py.File(self.file[d], 'r')
+			# get data
+			index = self.data[d][time]
+			A.update({ d:np.reshape(f.items()[index][1],self.shape) })
+			f.close()
+			# Apply the slicing
+			for iaxis in range(self.naxes):
+				axis = self.axes[iaxis]
+				if "slice" in axis:
+					A[d] = np.delete(A[d], axis["slice"], axis=iaxis) # remove parts outside of the slice
+					A[d][np.isnan(A[d])] = 0.
+					A[d] = np.sum(A[d], axis=iaxis, keepdims=True) # sum over the slice
+			A[d] = np.squeeze(A[d]) # remove sliced axes
+			# Divide by the bins size
+			A[d] /= self.bsize
+		# Calculate operation
+		data_operation = self.operation
+		for d in self.diags:
+			data_operation = data_operation.replace("#"+str(d),"A["+str(d)+"]")
+		exec("A = "+data_operation) in None
+		# log scale if requested
+		if self.data_log: A = np.log10(A)
 		return A
 	
-	
 	# Method to obtain the data and the axes
-	def get(self, time=0):
+	def get(self, **kwargs):
 		if not self.validate(): return
-		print "timestep "+str(self.times[time])
-		A = self.getData(time)		
+		# if optional argument "time" not provided, find out which time to plot
+		try:    time = kwargs["time"]
+		except: time = self.times[0]
+		# obtain the data array
+		A = self.getData(time=time)		
+		# print timestep
+		print "timestep "+str(time)+ "   -   t = "+str(time*self.coeff_time)+self.time_units
+		# format the results into a dictionary
 		result = {"data":A}
 		for i in range(len(self.plot_type)):
 			result.update({ self.plot_type[i]:self.plot_centers[i] })
@@ -676,21 +779,10 @@ class ParticleDiagnostic(object):
 		return l
 	
 	# Method to plot the data when axes are made
-	def plotOnAxes(self, ax, time):
+	def animateOnAxes(self, ax, time):
 		if not self.validate(): return None
 		# get data
-		A = self.getData(time)
-		# apply the slicing
-		for iaxis in range(self.naxes):
-			axis = self.axes[iaxis]
-			if "slice" in axis:
-				A = np.delete(A, axis["slice"], axis=iaxis) # remove parts outside of the slice
-				A = np.sum(A, axis=iaxis, keepdims=True) # sum over the slice
-		A = np.squeeze(A) # remove sliced axes
-		# Divide by the bins size
-		A /= self.bsize
-		# log scale if requested
-		if self.data_log: A = np.log10(A)
+		A = self.getData(time=time)
 		# plot
 		if A.ndim == 1:
 			im, = ax.plot(self.plot_centers[0], A, **self.plotkwargs)
@@ -698,7 +790,6 @@ class ParticleDiagnostic(object):
 			ax.set_xlabel(self.plot_label[0])
 			ax.set_xlim(xmin=self.xmin, xmax=self.xmax)
 			ax.set_ylim(ymin=self.data_min, ymax=self.data_max)
-			ax.set_title(self.title)
 		elif A.ndim == 2:
 			extent = [self.plot_centers[0][0], self.plot_centers[0][-1], self.plot_centers[1][0], self.plot_centers[1][-1]]
 			if self.plot_log[0]: extent[0:2] = [np.log10(self.plot_centers[0][0]), np.log10(self.plot_centers[0][-1])]
@@ -716,43 +807,66 @@ class ParticleDiagnostic(object):
 				plt.colorbar(mappable=im, cax=ax.cax, **self.colorbarkwargs)
 			except AttributeError:
 				ax.cax = plt.colorbar(mappable=im, ax=ax, **self.colorbarkwargs).ax
-			ax.set_title(self.title)
+		if self.title is not None: ax.set_title(self.title)
 		return im
 	
+	
+	# If the sliced data has 0 dimension, this function can plot it 
+	def plotVsTime(self, ax):
+		if len(self.plot_shape) > 0:
+			print "To plot vs. time, it is necessary to slice all axes in order to obtain a 0-D array"
+			return None
+		# Loop times to gather data
+		A = np.zeros(self.times.size)
+		for i, time in enumerate(self.times):
+			A[i] = self.getData(time=time)
+		im, = ax.plot(self.times*self.coeff_time, A, **self.plotkwargs)
+		ax.set_xlabel('Time ['+self.time_units+' ]')
+		ax.set_xlim(xmin=self.xmin, xmax=self.xmax)
+		ax.set_ylim(ymin=self.data_min, ymax=self.data_max)
+		if self.title is not None: ax.set_title(self.title)
+		return im
+		
 	
 	# Method to plot the current diagnostic
 	def plot(self, **kwargs):
 		if not self.validate(): return
-		
 		kwargs = self.setPlot(**kwargs)
 		self.print_info()
-		for ax in self.axes:
-			if "sliceInfo" in ax: print ax["sliceInfo"]
 		
-		# Loop times
+		# Make figure
 		fig = plt.figure(self.figure)
 		fig.set(**self.figurekwargs)
 		fig.clf()
-		for timeindex in range(self.times.size):
-			time = self.times[timeindex]
-			print "timestep "+str(time)
-			# plot
-			ax = fig.add_subplot(1,1,1)
+		ax = fig.add_subplot(1,1,1)
+		# Animation if several dimensions
+		if len(self.plot_shape) > 0:
+			# Loop times
+			for timeindex in range(self.times.size):
+				time = self.times[timeindex]
+				print "timestep "+str(time)+ "   -   t = "+str(time*self.coeff_time)+self.time_units
+				# plot
+				ax.cla()
+				artist = self.animateOnAxes(ax, time)
+				fig.canvas.draw()
+				plt.show()
+		# Static plot if 0 dimensions
+		else:
 			ax.cla()
-			artist = self.plotOnAxes(ax, time)
-			fig.canvas.draw()
-			plt.show()
+			artist = self.plotVsTime(ax)
 			
+				
+		
 
-# Function to plot multiple diags on the same figure
-def multiPlot(*diags, **kwargs):
-	ndiags = len(diags)
-	# Verify diags are valid
-	if ndiags == 0: return
-	for diag in diags:
-		if not diag.validate(): return
+# Function to plot multiple particle diags on the same figure
+def multiPlot(*Pdiags, **kwargs):
+	nPdiags = len(Pdiags)
+	# Verify Pdiags are valid
+	if nPdiags == 0: return
+	for Pdiag in Pdiags:
+		if not Pdiag.validate(): return
 	# Gather all times
-	alltimes = np.unique(np.concatenate([diag.times for diag in diags]))
+	alltimes = np.unique(np.concatenate([Pdiag.times for Pdiag in Pdiags]))
 	# Get keyword arguments
 	figure = kwargs.pop("figure", 1)
 	shape  = kwargs.pop("shape" , None)
@@ -760,8 +874,10 @@ def multiPlot(*diags, **kwargs):
 	sameAxes = False
 	if shape is None or shape == [1,1]:
 		sameAxes = True
-		for diag in diags:
-			if len(diag.plot_shape)!=1 or diag.plot_type!=diags[0].plot_type:
+		for Pdiag in Pdiags:
+			if len(Pdiag.plot_shape)==0 and len(Pdiags[0].plot_shape)==0:
+				continue
+			if len(Pdiag.plot_shape)!=1 or Pdiag.plot_type!=Pdiags[0].plot_type:
 				sameAxes = False
 				break
 	if not sameAxes and shape == [1,1]:
@@ -769,15 +885,16 @@ def multiPlot(*diags, **kwargs):
 		return
 	# Determine the shape
 	if sameAxes: shape = [1,1]
-	if shape is None: shape = [ndiags,1]
+	if shape is None: shape = [nPdiags,1]
 	nplots = np.array(shape).prod()
-	if not sameAxes and nplots != ndiags:
+	if not sameAxes and nplots != nPdiags:
 		print "The 'shape' argument is incompatible with the number of diagnostics:"
-		print "  "+str(ndiags)+" diagnostics do not fit "+str(nplots)+" plots"
+		print "  "+str(nPdiags)+" diagnostics do not fit "+str(nplots)+" plots"
 		return
 	# Make the figure
 	fig = plt.figure(figure)
-	fig.set(**diags[0].figurekwargs)
+	Pdiags[0].set(**kwargs)
+	fig.set(**Pdiags[0].figurekwargs)
 	fig.clf()
 	fig.subplots_adjust(wspace=0.5, hspace=0.5, bottom=0.15)
 	ax = []
@@ -786,27 +903,39 @@ def multiPlot(*diags, **kwargs):
 	c = plt.matplotlib.rcParams['axes.color_cycle']
 	for i in range(nplots):
 		ax.append( fig.add_subplot(shape[0], shape[1], i) )
-	for i, diag in enumerate(diags):
-		if sameAxes: diag.ax = ax[0]
-		else       : diag.ax = ax[i]
-		diag.artist = None
-		l = diag.limits()[0]
-		xmin = min(xmin,l[0])
-		xmax = max(xmax,l[1])
-		if "color" not in diag.plotkwargs: diag.plotkwargs.update({ "color":c[i%len(c)] })
-	# Loop all times
-	for time in alltimes:
-		for diag in diags:
-			if time in diag.times:
-				if sameAxes:
-					if diag.artist is not None: diag.artist.remove()
-				else:
-					diag.ax.cla()
-				diag.artist = diag.plotOnAxes(diag.ax, time)
-				if sameAxes:
-					diag.ax.set_xlim(xmin,xmax)
+	for i, Pdiag in enumerate(Pdiags):
+		if sameAxes: Pdiag.ax = ax[0]
+		else       : Pdiag.ax = ax[i]
+		Pdiag.artist = None
+		try:
+			l = Pdiag.limits()[0]
+			xmin = min(xmin,l[0])
+			xmax = max(xmax,l[1])
+		except:
+			pass
+		if "color" not in Pdiag.plotkwargs:
+			Pdiag.plotkwargs.update({ "color":c[i%len(c)] })
+	# Static plot
+	if sameAxes and len(Pdiags[0].plot_shape)==0:
+		for Pdiag in Pdiags:
+			Pdiag.artist = Pdiag.plotVsTime(Pdiag.ax)
 		fig.canvas.draw()
 		plt.show()
-	return
+	# Animated plot
+	else:
+		# Loop all times
+		for time in alltimes:
+			for Pdiag in Pdiags:
+				if time in Pdiag.times:
+					if sameAxes:
+						if Pdiag.artist is not None: Pdiag.artist.remove()
+					else:
+						Pdiag.ax.cla()
+					Pdiag.artist = Pdiag.animateOnAxes(Pdiag.ax, time)
+					if sameAxes:
+						Pdiag.ax.set_xlim(xmin,xmax)
+			fig.canvas.draw()
+			plt.show()
+		return
 	
 

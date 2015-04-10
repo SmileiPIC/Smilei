@@ -63,11 +63,13 @@ end
 \end{lstlisting}
 
 \begin{itemize}
-\item \val{output} must be set to \code{density}, \code{charge\_density}, \code{current\_density\_x}, \code{current\_density\_y}, \code{current\_density\_z}.
+\item \val{output} must be set to \code{density}, \code{charge\_density}, \code{current\_density\_x}, \code{current\_density\_y},
+	\code{current\_density\_z}, \code{p\_density}, \code{px\_density}, \code{py\_density} or \code{pz\_density}
 	It determines the data that is summed in each cell of the grid.
 	In the case of \code{density}, the \textit{weights} are summed.
 	In the case of \code{charge\_density}, the \textit{weights}$\times$\textit{charge} are summed.
-	In the case of \code{current\_density\_x}, the \textit{weights}$\times$\textit{charge}$\times v_x$ are summed (etc.)\\*
+	In the case of \code{current\_density\_x}, the \textit{weights}$\times$\textit{charge}$\times v_x$ are summed (etc.).
+	In the case of \code{p\_density}, the \textit{weights}$\times p$ are summed (etc.)\\*
 \item \val{every} must be a positive integer. It is the number of time-steps between each output.\\*
 \item \val{time\_average} must be a positive integer. It is the number of time-steps during which the data is averaged before output.\\*
 \item \val{species1 species2 ...}  must be one or several species.
@@ -92,7 +94,7 @@ In the input file, you may add the following block as a reminder.
 \begin{lstlisting}
 # DIAGNOSTICS ON PARTICLES - project the particles on a N-D arbitrary grid
 # ------------------------------------------------------------------------
-# output = density, charge_density or current_density_[xyz]
+# output = density, charge_density, current_density_[xyz] or p[xyz]_density
 #              => parameter that describes what quantity is obtained 
 # every        => integer > 0 : number of time-steps between each output
 # time_average => integer > 0 : number of time-steps to average
@@ -212,14 +214,8 @@ A python script \textit{ParticleDiagnostic.py} is provided to view or extract da
 To run this script, you will need \textit{python2.7} with the following packages: numpy, matplotlib, pylab, h5py.
 \\*
 
-First, run python and include the script:
-\begin{lstlisting}
-python -i scripts/ParticleDiagnostic.py
-\end{lstlisting}
-Alternately, you can include this file into your own script using, for example
-\begin{lstlisting}
-execfile("scripts/ParticleDiagnostic.py")
-\end{lstlisting}
+First, run python and include the script: \code{python -i scripts/ParticleDiagnostic.py}\\*
+Alternately, include this file into your own script: \code{execfile("scripts/ParticleDiagnostic.py")}
 
 \subsection{To prepare the data}
 \begin{lstlisting}
@@ -232,9 +228,10 @@ ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None,
 	Path to the directory where the outputs are stored.\\*
 	(Also, this has to contain one and only one input file *.in)
 
-\item \code{diagNumber} = \code{\_int\_} (optional)\\*
-	Number of the diagnostic. The first diagnostic has number 0.\\*
-	If not given, then a list of available diagnostics is printed.
+\item \code{diagNumber} = \code{\_int\_} or  \code{\_string\_} (optional)\\*
+	If not given, then a list of available diagnostics is printed.\\*
+	If \code{\_int\_}: number of the diagnostic. The first diagnostic has number 0.\\*
+	If \code{\_string\_}: operation between several diagnostics. See section \ref{operations}.
 
 \item \code{timesteps} =  \code{\_int\_ }          (optional)\\*
 	\code{timesteps} = \code{[\_int\_, \_int\_]}   (optional)\\*
@@ -384,6 +381,25 @@ You can change the plotting parameters using the \code{A.plot()} or the \code{A.
 >>> A.plot()
 \end{lstlisting}
 
+
+\subsection{\label{operations}Operations between several diagnostics}
+Sometimes, you have two (or more) diagnostics and you want to combine them with some operation. For example,
+imagine that you have one diagnostic with \code{output=px\_density} and another one with \code{output=density}.
+You may want to divide the first by the second in order to obtain the average $p_x$.\\*
+This is directly possible here by using the argument \code{diagNumber}: you simply need to define this argument
+as a string containing an operation of your choice, and use a pound sign (\#) to indicate each diagnostic. For example,
+the string \code{"\#1 / \#0"} will achieve the division between diagnostics \#1 and \#0.\\*
+This feature is very useful as you can make any type of operation, as long as the two diagnostics have the same axes
+and the same timesteps.\\
+\textbf{Example:}
+\begin{lstlisting}
+>>> A = ParticleDiagnostic("path/to/my/results", diagNumber="(#1 + #2) / #0").plot()
+\end{lstlisting}
+
+
+
+
+
 \clearpage
 \section{Tutorial}
 
@@ -528,7 +544,7 @@ If the two plots are 1D, and are both of the same type, then they will automatic
 >>> B = ParticleDiagnostic('tst1d_6_particle_diagnostic',1,slice={"x":"all"})
 >>> multiPlot(A, B)
 \end{lstlisting}
-This is shown in Figure \ref{Tuto6} where you can see the two curves in blue and green.
+This is shown in Figure \ref{Tuto6} where you can see the two curves in blue and green.\\*\\*
 
 \begin{figure}[htbp]
 \centering
@@ -545,6 +561,15 @@ This is shown in Figure \ref{Tuto6} where you can see the two curves in blue and
 \end{minipage}
 \end{figure}
 
+
+\subsection{Make a plot as a function of time}
+If you have sliced all the axes, then you obtain a 0-dimensional array (a scalar). In this case, the plots are automatically done 
+as a function of time (they are not animated).\\*
+In our case, use
+\begin{lstlisting}
+>>> ParticleDiagnostic('tst1d_6_particle_diagnostic',3,slice={"ekin":"all"}).plot()
+\end{lstlisting}
+-- WORK IN PROGRESS --
 
 
 \end{document}

@@ -356,6 +356,22 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
                 for (int ipart = bmin ; ipart < bmax ; ipart++)
                     data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]) * (*pz)[ipart] / sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
             
+            else if (output == "p_density")
+                for (int ipart = bmin ; ipart < bmax ; ipart++)
+                    data_array[ipart] = (*w)[ipart] * sqrt(pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2));
+            
+            else if (output == "px_density")
+                for (int ipart = bmin ; ipart < bmax ; ipart++)
+                    data_array[ipart] = (*w)[ipart] * (*px)[ipart];
+            
+            else if (output == "py_density")
+                for (int ipart = bmin ; ipart < bmax ; ipart++)
+                    data_array[ipart] = (*w)[ipart] * (*py)[ipart];
+            
+            else if (output == "pz_density")
+                for (int ipart = bmin ; ipart < bmax ; ipart++)
+                    data_array[ipart] = (*w)[ipart] * (*pz)[ipart];
+            
             // 3 - sum the data into the data_sum according to the indexes
             // ---------------------------------------------------------------
             for (int ipart = bmin ; ipart < bmax ; ipart++) {
