@@ -12,32 +12,25 @@ VelocityProfile1D::VelocityProfile1D(ProfileSpecies &my_prof_params) : VelocityP
     if (prof_params.profile=="constant") {
         // nothing done here, by default: vacuum_length[0] = 0, dens_length_x[0] = 0
     }
-    
     // ---------------------------------------------------------------------------------
     // Charles magnetic field profile for Liang simulations
-    // Top-hat profile :
-    // int_params[0]      = order of the Gaussian
-    // int_params[1]      = 0 for ions, 1 for electrons
+    // vacuum_length[0]  : not used here
     // double_params[0]   = background density
-    // double_params[1]   = maximum density
-    // double_params[2]   = maximum Bfield amplitude
-    // double_params[3]   = electron over ion temperature ratio
-    // length_params_x[0] = position of the maximum of the B-field
-    // length_params_x[1] = FWHM of the magnetic field (Gaussian) distribution
+    // double_params[1]   = Total plasma pressure at infinity P0 = n0*(Te + Ti +...)
+    // double_params[2]   = background magnetic field
+    // double_params[3]   = Maximum magnetic field
+    // length_params_x[0] = position of the maximum magnetic field
+    // length_params_x[1] = Length of the magnetic gradient
     // ---------------------------------------------------------------------------------
     else if (prof_params.profile == "magexpansion") {
-        
-        if (prof_params.int_params.size()<2)
-            ERROR("two int_params must be defined for Charles velocity profile" );
+        //if (prof_params.int_params.size()<2)
+        //    ERROR("two int_params must be defined for Charles velocity profile" );
         if (prof_params.double_params.size()<4)
             ERROR("four double_params must be defined for Charles velocity profile" );
         if (prof_params.length_params_x.size()<2)
-            ERROR("three length_params_x must be defined for Charles velocity profile" );
-    }
-    
-    
+            ERROR("two length_params_x must be defined for Charles velocity profile" );
+    } 
 }
-
 
 double VelocityProfile1D::operator() (std::vector<double> x_cell) {
     
@@ -59,35 +52,55 @@ double VelocityProfile1D::operator() (std::vector<double> x_cell) {
     // Charles velocity profile
     // ------------------------
     // vacuum_length[0]  : not used here
-    // int_params[0]      = order of the Gaussian
     // double_params[0]   = background density
-    // double_params[1]   = maximum density
-    // double_params[2]   = maximum magnetic field
-    // double_params[3]   = ratio of electron over ion temperature
-    // length_params_x[0] = position of the maximum density
-    // length_params_x[1] = FWHM of the density (Gaussian) distribution
+    // double_params[1]   = Total plasma pressure at infinity P0 = n0*(Te + Ti +...)
+    // double_params[2]   = background magnetic field
+    // double_params[3]   = Maximum magnetic field
+    // length_params_x[0] = position of the maximum magnetic field
+    // length_params_x[1] = Length of the magnetic gradient
     // ---------------------------------------------------------------------------------
     else if (prof_params.profile=="magexpansion") {
-        int    N     = prof_params.int_params[0];
-        int    m     = prof_params.int_params[1];
+        //int    N     = prof_params.int_params[0];
+        //int    m     = prof_params.int_params[1];
         double n0    = prof_params.double_params[0];
-        double nmax  = prof_params.double_params[1];
-        double Bmax  = prof_params.double_params[2];
-        double theta = prof_params.double_params[3];
+        double P0    = prof_params.double_params[1];
+        double B0    = prof_params.double_params[2];
+        double Bmax  = prof_params.double_params[3];
+        //double theta = prof_params.double_params[3];
         double x0    = prof_params.length_params_x[0];
         double L     = prof_params.length_params_x[1];
-        double sigma = pow(L/2.0,N)/log(2.0);
+        //double alpha = Bmax/nmax * (double)(N)/sigma;
+        //double sigma = pow(L/2.0,N)/log(2.0);
         double x     = x_cell[0]-x0;
-        //std::cout << "pow(-theta,m)/(1.0+theta)" << pow(-theta,m)/(1.0+theta) << std::endl;
-        //std::cout << "Bmax/nmax " << Bmax << " " << nmax << " " << Bmax/nmax << std::endl;
-        //std::cout << "(double)(N)/sigma" << N << " " << sigma << " " << (double)(N)/sigma << std::endl;
-        //double alpha = pow(-theta,m)/(1.0+theta) * Bmax/nmax * (double)(N)/sigma;
-        double alpha = Bmax/nmax * (double)(N)/sigma;
-        //std::cout << "alpha " << alpha << std::endl;
-        double v     = alpha * pow(x,N-1) * exp(-pow(x,N)/sigma) / (exp(-pow(x,N)/sigma)+n0/nmax);
-        //std::cout << v << std::endl;
-        if (abs(v)>1.0) ERROR("Velocity profile exceeding c");
-        return v;
+	double tiny  = 1e-10*L;
+	if (Bmax == 0.) {
+		double Bm = sqrt(pow(B0,2) + 2*P0)-B0;
+		double B  = B0 + Bm/pow(cosh(x/L),2);
+		double A  = B0*x + Bm*L*tanh(x/L);
+		double DP = P0 + pow(B0,2)/2 - pow(B,2)/2;
+		if (abs(x)<tiny) {
+			return (0);
+		}
+		else {	double v     = -2*Bm/(L*n0)*tanh(x/L) /(pow(cosh(x/L),2))*exp( 2*A*Bm/L*tanh(x/L) /(DP*pow(cosh(x/L),2)) );
+        		//double v   = alpha * pow(x,N-1) * exp(-pow(x,N)/sigma) / (exp(-pow(x,N)/sigma)+n0/nmax);
+        		if (abs(v)>1.0) ERROR("Velocity profile exceeding c");
+			return v;
+		}
+	}
+	else {	
+		double Bm = Bmax;
+		double B  = B0 + Bm/pow(cosh(x/L),2);
+		double A  = B0*x + Bm*L*tanh(x/L);
+		double DP = P0 + pow(B0,2)/2 - pow(B,2)/2;
+		if (abs(x)<tiny) {
+			return (0);
+		}
+		else {	double v     = -2*Bm/(L*n0)*tanh(x/L) /(pow(cosh(x/L),2))*exp( 2*A*Bm/L*tanh(x/L) /(DP*pow(cosh(x/L),2)) );
+        		//double v   = alpha * pow(x,N-1) * exp(-pow(x,N)/sigma) / (exp(-pow(x,N)/sigma)+n0/nmax);
+        		if (abs(v)>1.0) ERROR("Velocity profile exceeding c");
+			return v;
+		}
+	}
     }
     
     return 1;

@@ -61,21 +61,22 @@ DensityProfile1D::DensityProfile1D(SpeciesStructure &params) : DensityProfile(pa
     
     // ---------------------------------------------------------------------------------
     // Charles magnetic field profile for Liang simulations
-    // Top-hat profile :
-    // int_params[0]      = order of the Gaussian
-    // double_params[0]   = background Bfield amplitude
-    // double_params[1]   = maximum Bfield amplitude
-    // length_params_x[0] = position of the maximum of the B-field
-    // length_params_x[1] = FWHM of the magnetic field (Gaussian) distribution
+    // vacuum_length[0]  : not used here
+    // double_params[0]   = background density
+    // double_params[1]   = Total plasma pressure at infinity P0 = n0*(Te + Ti +...)
+    // double_params[2]   = background magnetic field
+    // double_params[3]   = Maximum magnetic field
+    // length_params_x[0] = position of the maximum magnetic field
+    // length_params_x[1] = Length of the magnetic gradient
     // ---------------------------------------------------------------------------------
     else if (species_param.dens_profile.profile == "magexpansion") {
     
-        if (species_param.dens_profile.int_params.size()<1)
-            ERROR("one int_params must be defined for Charles profile" );
-        if (species_param.dens_profile.double_params.size()<2)
+        //if (species_param.dens_profile.int_params.size()<1)
+        //    ERROR("one int_params must be defined for Charles profile" );
+        if (species_param.dens_profile.double_params.size()<4)
             ERROR("two double_params must be defined for Charles profile" );
         if (species_param.dens_profile.length_params_x.size()<2)
-            ERROR("three length_params_x must be defined for Charles profile" );
+            ERROR("two length_params_x must be defined for Charles profile" );
     }
     
     
@@ -211,22 +212,53 @@ double DensityProfile1D::operator() (std::vector<double> x_cell) {
     // Charles density profile
     // ------------------------
     // vacuum_length[0]  : not used here
-    // int_params[0]      = order of the Gaussian
     // double_params[0]   = background density
-    // double_params[1]   = maximum density
-    // length_params_x[0] = position of the maximum density
-    // length_params_x[1] = FWHM of the density (Gaussian) distribution
+    // double_params[1]   = Total plasma pressure at infinity P0 = n0*(Te + Ti +...)
+    // double_params[2]   = background magnetic field
+    // double_params[3]   = Maximum magnetic field
+    // length_params_x[0] = position of the maximum magnetic field
+    // length_params_x[1] = Length of the magnetic gradient
     // ---------------------------------------------------------------------------------
     else if (species_param.dens_profile.profile=="magexpansion") {
-        int    N     = species_param.dens_profile.int_params[0];
-        double n0    = species_param.dens_profile.double_params[0];
-        double nmax  = species_param.dens_profile.double_params[1];
+        //int    N     = species_param.dens_profile.int_params[0];
+        //double n0    = species_param.dens_profile.double_params[0];
+        double P0    = species_param.dens_profile.double_params[1];
+        double B0    = species_param.dens_profile.double_params[2];
+        double Bmax  = species_param.dens_profile.double_params[3];
         double x0    = species_param.dens_profile.length_params_x[0];
         double L     = species_param.dens_profile.length_params_x[1];
-        double sigma = pow(L/2.0,N)/log(2.0);
+	double tiny  = 1e-10*L;
+        //double sigma = pow(L/2.0,N)/log(2.0);
         double x     = x_cell[0]-x0;
-        
-        return (n0 + nmax*exp(-pow(x,N)/sigma))/3.0;
+	if (Bmax == 0.) {
+		double Bm = sqrt(pow(B0,2) + 2*P0)-B0;
+		double B  = B0 + Bm/pow(cosh(x/L),2);
+		double A  = B0*x + Bm*L*tanh(x/L);
+		double DP = P0 + pow(B0,2)/2 - pow(B,2)/2;
+		if (abs(x)<tiny) {
+			return (exp(-2));
+			//return 1.;
+		}
+		else {
+        		return (exp( -2*A*Bm/L*tanh(x/L) /(DP*pow(cosh(x/L),2)) ));
+        		//return (exp( - abs(tanh(x/L) )));
+			//return 1.;
+		}
+	}
+	else {
+		double Bm = Bmax;
+		double B  = B0 + Bm/pow(cosh(x/L),2);
+		double A  = B0*x + Bm*L*tanh(x/L);
+		double DP = P0 + pow(B0,2)/2 - pow(B,2)/2;
+		if (abs(x)<tiny) {
+			return (exp( -2));
+		}
+		else {
+        		return (exp( -2*A*Bm/L*tanh(x/L) /(DP*pow(cosh(x/L),2)) ));
+		}
+	}
+	
+        //return (n0 + nmax*exp(-pow(x,N)/sigma))/3.0;
     }
     
     // Polygonal density profile
