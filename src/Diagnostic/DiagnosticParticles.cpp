@@ -30,8 +30,22 @@ DiagnosticParticles::DiagnosticParticles(unsigned int ID, string output_, unsign
     if (time_average>1)
         data_sum.resize(output_size);
     
-    MESSAGE("Created particle diagnostic #" << ID);
-    
+    // Output info on diagnostics
+    ostringstream mystream("");
+    mystream.str("");
+    mystream << species[0];
+    for(int i=0; i<species.size(); i++)
+        mystream << "," << diagnostic_id;
+    MESSAGE("Created particle diagnostic #" << ID << ": species " << mystream.str());
+    DiagnosticParticlesAxis *a;
+    for(int i=0; i<axes.size(); i++) {
+        a = axes[i];
+        mystream.str("");
+        mystream << "    Axis " << a->type << " from " << a->min << " to " << a->max << " in " << a->nbins << " steps";
+        if( a->logscale       ) mystream << " [LOGSCALE] ";
+        if( a->edge_inclusive ) mystream << " [EDGE INCLUSIVE]";
+        MESSAGE(mystream.str());
+    }
 }
 
 // destructor
@@ -340,17 +354,37 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
                 for (int ipart = bmin ; ipart < bmax ; ipart++)
                     data_array[ipart] = (*w)[ipart];
             
+            if      (output == "charge_density")
+                for (int ipart = bmin ; ipart < bmax ; ipart++)
+                    data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]);
+            
             else if (output == "current_density_x")
                 for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = (*w)[ipart] * (*px)[ipart] / sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
+                    data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]) * (*px)[ipart] / sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
             
             else if (output == "current_density_y")
                 for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = (*w)[ipart] * (*py)[ipart] / sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
+                    data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]) * (*py)[ipart] / sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
             
             else if (output == "current_density_z")
                 for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = (*w)[ipart] * (*pz)[ipart] / sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
+                    data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]) * (*pz)[ipart] / sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
+            
+            else if (output == "p_density")
+                for (int ipart = bmin ; ipart < bmax ; ipart++)
+                    data_array[ipart] = mass * (*w)[ipart] * sqrt(pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2));
+            
+            else if (output == "px_density")
+                for (int ipart = bmin ; ipart < bmax ; ipart++)
+                    data_array[ipart] = mass * (*w)[ipart] * (*px)[ipart];
+            
+            else if (output == "py_density")
+                for (int ipart = bmin ; ipart < bmax ; ipart++)
+                    data_array[ipart] = mass * (*w)[ipart] * (*py)[ipart];
+            
+            else if (output == "pz_density")
+                for (int ipart = bmin ; ipart < bmax ; ipart++)
+                    data_array[ipart] = mass * (*w)[ipart] * (*pz)[ipart];
             
             // 3 - sum the data into the data_sum according to the indexes
             // ---------------------------------------------------------------
@@ -375,7 +409,7 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
         if (fileId > 0) { // only the master has fileId>0
             // if time_average, then we need to divide by the number of timesteps
             if (time_average > 1) {
-                coeff = 1./((double)output_size);
+                coeff = 1./((double)time_average);
                 for (int i=0; i<output_size; i++)
                     data_sum[i] *= coeff;
             }

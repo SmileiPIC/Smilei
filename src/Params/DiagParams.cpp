@@ -241,14 +241,14 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
         iaxis = 0;
         tmpAxes.resize(0);
         while(true) { // loop in case there are several axes
-        	// 1 - Find "axis" keyword and create new axis object
+            // 1 - Find "axis" keyword and create new axis object
             axis.resize(0);
             ok = ifile.extract("axis",axis,"diagnostic particles",iaxis,n_diag_particles);
             if (!ok) break;
             if (axis.size()<4)
                 ERROR("Diagnotic Particles #" << n_diag_particles << ": parameter axis needs at least 4 arguments (type, min, max, nbins)");
             tmpAxis = new DiagnosticParticlesAxis();
-
+            
             // 2 - Extract axis type (e.g. 'x', 'px', etc.)
             tmpAxis->type  = axis[0];
             if (   (tmpAxis->type == "z" && params.nDim_particle <3)
@@ -263,20 +263,17 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
             tmpAxis->nbins = convertToDouble(axis[3]);
             if (tmpAxis->nbins - floor(tmpAxis->nbins) != 0.)
                 ERROR("Diagnotic Particles #" << n_diag_particles << ": number of bins must be integer (not " << axis[3] << ")");
-
+            
             // 5 - Check for  other keywords such as "logscale" and "edge_inclusive"
             tmpAxis->logscale = false;
             tmpAxis->edge_inclusive = false;
             for(unsigned int i=4; i<axis.size(); i++) {
-                if(axis[i]=="logscale" ||  axis[i]=="log_scale" || axis[i]=="log") {
-                        tmpAxis->logscale = true;
-                        break;
-                }
-                if(axis[i]=="edges" ||  axis[i]=="edge" ||  axis[i]=="edge_inclusive" ||  axis[i]=="edges_inclusive") {
-                        tmpAxis->edge_inclusive = true;
-                        break;
-                }
-                ERROR("Diagnotic Particles #" << n_diag_particles << ": keyword `" << axis[i] << "` not understood");
+                if(axis[i]=="logscale" ||  axis[i]=="log_scale" || axis[i]=="log")
+                    tmpAxis->logscale = true;
+                else if(axis[i]=="edges" ||  axis[i]=="edge" ||  axis[i]=="edge_inclusive" ||  axis[i]=="edges_inclusive")
+                    tmpAxis->edge_inclusive = true;
+                else
+                    ERROR("Diagnotic Particles #" << n_diag_particles << ": keyword `" << axis[i] << "` not understood");
             }
             // If the axis is spatial, then we need to apply the conv_fac
             if (axis[0]=="x" || axis[0]=="y" || axis[0]=="z") {
