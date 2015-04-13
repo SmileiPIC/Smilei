@@ -3,6 +3,7 @@
 \usepackage[margin=2cm]{geometry}
 \usepackage{fancyvrb,xcolor}
 \usepackage[urlcolor=blue,colorlinks=true]{hyperref}
+\usepackage{wrapfig}
 
 \setlength\parindent{0pt}
 
@@ -567,10 +568,48 @@ If you have sliced all the axes, then you obtain a 0-dimensional array (a scalar
 as a function of time (they are not animated).\\*
 In our case, use
 \begin{lstlisting}
->>> ParticleDiagnostic('tst1d_6_particle_diagnostic',3,slice={"ekin":"all"}).plot()
+>>> A=ParticleDiagnostic('tst1d_6_particle_diagnostic', 3, slice={"ekin":"all"})
+>>> B=ParticleDiagnostic('tst1d_6_particle_diagnostic', 3, slice={"ekin":[0,0.001]})
+>>> multiPlot(A,B)
 \end{lstlisting}
--- WORK IN PROGRESS --
 
+\begin{wrapfigure}{r}{80mm}
+  \centering
+  \includegraphics[width=6.5cm]{ParticleDiagTutorial7}
+  \caption{Blue: total density \emph{vs} time. Green: density of slow electrons \emph{vs} time.}
+  \label{Tuto7}
+\end{wrapfigure}
+The diagnostic that we employ here (\#3) is the energy spectrum of electrons: the axis is along \code{ekin} which is the kinetic energy. In the first line of the code above, we are using a slice \code{"ekin":"all"}. Consequently, all the electrons, with all energies, will be summed, thus obtaining a scalar value equal to the total plasma density. In the second line of code, we are using \code{"ekin":[0,0.001]}, which means that only the electrons below 0.511 keV are considered.\\*
+Both these quantities \code{A} and \code{B} are scalars, not arrays: they will be plotted as a function of time. This is shown in Figure \ref{Tuto7} where you can see \code{A} in blue and \code{B} in green. \code{A} represents all the electrons, and indeed, their density is constant. \code{B} represents only the slower electrons, and their number varies in time because, as we have seen before, all electrons oscillate and they do not have a constant energy. This appears on the green curve as an oscillating density.
+
+
+
+\subsection{Make an operation between diagnostics}
+Let us consider again the diagnostic \#0, which is the density of electrons as a function of $x$ an $v_x$. Diagnostic \#2 is very similar to \#0 as it has the same axes $x$ and $v_x$, but it has \code{ouput=px\_density} instead of \code{ouput=density}. Consequently, if we divide \#2 by \#0, we will obtain the average value of $p_x$ as a function of $x$ an $v_x$. To do this operation, we need to indicate \code{"\#2/\#0"} instead of the diagnostic number:
+\begin{lstlisting}
+>>> ParticleDiagnostic('tst1d_6_particle_diagnostic', "#2/#0").plot()
+\end{lstlisting}
+We obtain the plot of Figure \ref{Tuto8}, which is actually not very helpful because $\left<p_x\right>$ varies with $v_x$. To have something nicer, let us slice all axes with \code{slice=\{"x":"all","vx":"all"\}}.
+\begin{lstlisting}
+>>> ParticleDiagnostic('tst1d_6_particle_diagnostic', "#2/#0",
+          slice={"x":"all","vx":"all"}).plot()
+\end{lstlisting}
+We obtain Figure \ref{Tuto9} which nicely shows the average $p_x$ as a function of time. This value oscillates, as we have seen previously.
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{.48\linewidth}
+\includegraphics[width=7.5cm]{ParticleDiagTutorial8}
+\caption{$\left<p_x\right>$ as a function of $x$ and $v_x$.}
+\label{Tuto8}
+\end{minipage}
+\hfill{}
+\begin{minipage}[b]{.48\linewidth}
+\includegraphics[width=7.3cm]{ParticleDiagTutorial9}
+\caption{$\left<p_x\right>$ as a function of time.}
+\label{Tuto9}
+\end{minipage}
+\end{figure}
 
 \end{document}
 

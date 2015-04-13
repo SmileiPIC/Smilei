@@ -370,43 +370,45 @@ class ParticleDiagnostic(object):
 			if diagNumber<0:
 				print "Argument 'diagNumber' cannot be a negative integer."
 				return None
-			diagNumber = '#' + str(diagNumber)
-		if type(diagNumber) is str:
+			self.operation = '#' + str(diagNumber)
+		elif type(diagNumber) is str:
 			self.operation = diagNumber
-			# Get list of requested diags
-			self.diags = sorted(set([ int(d[1:]) for d in re.findall('#\d+',self.operation) ]))
-			try:
-				exec(re.sub('#\d+','1.',self.operation)) in None
-			except:
-				print "Cannot understand operation '"+self.operation+"'"
-				return None
-			# Verify that all requested diags exist and they all have the same shape
-			self.info = {}
-			self.shape = {}
-			self.axes = {}
-			self.naxes = {}
-			for d in self.diags:
-				try:
-					self.info.update({ d:getInfo(results_path, d) })
-				except:
-					print "Particle diagnostic #"+str(d)+" not found."
-					return None
-				self.axes .update ({ d:self.info[d]["axes"] })
-				self.naxes.update ({ d:len(self.axes[d]) })
-				self.shape.update({ d:[ axis["size"] for axis in self.axes[d] ] })
-				if self.naxes[d] != self.naxes[self.diags[0]]:
-					print "All diagnostics in operation '"+self.operation+"' must have as many axes."
-					print (" Diagnotic #"+str(d)+" has "+str(self.naxes[d])+" axes and #"+
-						str(self.diags[0])+" has "+str(self.naxes[self.diags[0]])+" axes")
-					return None
-				for a in self.axes[d]:
-					if self.axes[d] != self.axes[self.diags[0]]:
-						print ("In operation '"+self.operation+"', diagnostics #"+str(d)+" and #"
-							+str(self.diags[0])+" must have the same shape.")
-						return None
 		else:
 			print "Argument 'diagNumber' must be and integer or a string."
 			return None
+			
+		# Get list of requested diags
+		self.diags = sorted(set([ int(d[1:]) for d in re.findall('#\d+',self.operation) ]))
+		try:
+			exec(re.sub('#\d+','1.',self.operation)) in None
+		except:
+			print "Cannot understand operation '"+self.operation+"'"
+			return None
+		# Verify that all requested diags exist and they all have the same shape
+		self.info = {}
+		self.shape = {}
+		self.axes = {}
+		self.naxes = {}
+		for d in self.diags:
+			try:
+				self.info.update({ d:getInfo(results_path, d) })
+			except:
+				print "Particle diagnostic #"+str(d)+" not found."
+				return None
+			self.axes .update ({ d:self.info[d]["axes"] })
+			self.naxes.update ({ d:len(self.axes[d]) })
+			self.shape.update({ d:[ axis["size"] for axis in self.axes[d] ] })
+			if self.naxes[d] != self.naxes[self.diags[0]]:
+				print "All diagnostics in operation '"+self.operation+"' must have as many axes."
+				print (" Diagnotic #"+str(d)+" has "+str(self.naxes[d])+" axes and #"+
+					str(self.diags[0])+" has "+str(self.naxes[self.diags[0]])+" axes")
+				return None
+			for a in self.axes[d]:
+				if self.axes[d] != self.axes[self.diags[0]]:
+					print ("In operation '"+self.operation+"', diagnostics #"+str(d)+" and #"
+						+str(self.diags[0])+" must have the same shape.")
+					return None
+
 		self.axes  = self.axes [self.diags[0]]
 		self.naxes = self.naxes[self.diags[0]]
 		self.shape = self.shape[self.diags[0]]
@@ -495,6 +497,7 @@ class ParticleDiagnostic(object):
 			if axis["log"]:
 				edges = np.linspace(np.log10(axis["min"]), np.log10(axis["max"]), axis["size"]+1)
 				centers = edges + (edges[1]-edges[0])/2.
+				edges = 10.**edges
 				centers = 10.**(centers[:-1])
 			else:
 				edges = np.linspace(axis["min"], axis["max"], axis["size"]+1)
@@ -674,7 +677,7 @@ class ParticleDiagnostic(object):
 		if not self.validate(): return
 		for d in self.diags:
 			printInfo(self.info[d])
-		print "Operation : "+self.operation
+		if len(self.operation)>2: print "Operation : "+self.operation
 		for ax in self.axes:
 			if "sliceInfo" in ax: print ax["sliceInfo"]
 		return
@@ -788,8 +791,10 @@ class ParticleDiagnostic(object):
 			im, = ax.plot(self.plot_centers[0], A, **self.plotkwargs)
 			if self.plot_log[0]: ax.set_xscale("log")
 			ax.set_xlabel(self.plot_label[0])
-			ax.set_xlim(xmin=self.xmin, xmax=self.xmax)
-			ax.set_ylim(ymin=self.data_min, ymax=self.data_max)
+			if self.xmin is not None: ax.set_xlim(xmin=self.xmin)
+			if self.xmax is not None: ax.set_xlim(xmax=self.xmax)
+			if self.data_min is not None: ax.set_ylim(ymin=self.data_min)
+			if self.data_max is not None: ax.set_ylim(ymax=self.data_max)
 		elif A.ndim == 2:
 			extent = [self.plot_centers[0][0], self.plot_centers[0][-1], self.plot_centers[1][0], self.plot_centers[1][-1]]
 			if self.plot_log[0]: extent[0:2] = [np.log10(self.plot_centers[0][0]), np.log10(self.plot_centers[0][-1])]
@@ -800,8 +805,10 @@ class ParticleDiagnostic(object):
 			else:                  ax.set_xlabel(        self.plot_label[0]     )
 			if (self.plot_log[1]): ax.set_ylabel("Log[ "+self.plot_label[1]+" ]")
 			else:                  ax.set_ylabel(        self.plot_label[1]     )
-			ax.set_xlim(xmin=self.xmin, xmax=self.xmax)
-			ax.set_ylim(ymin=self.ymin, ymax=self.ymax)
+			if self.xmin is not None: ax.set_xlim(xmin=self.xmin)
+			if self.xmax is not None: ax.set_xlim(xmax=self.xmax)
+			if self.ymin is not None: ax.set_ylim(ymin=self.ymin)
+			if self.ymax is not None: ax.set_ylim(ymax=self.ymax)
 			try: # if colorbar exists
 				ax.cax.cla()
 				plt.colorbar(mappable=im, cax=ax.cax, **self.colorbarkwargs)
@@ -822,8 +829,10 @@ class ParticleDiagnostic(object):
 			A[i] = self.getData(time=time)
 		im, = ax.plot(self.times*self.coeff_time, A, **self.plotkwargs)
 		ax.set_xlabel('Time ['+self.time_units+' ]')
-		ax.set_xlim(xmin=self.xmin, xmax=self.xmax)
-		ax.set_ylim(ymin=self.data_min, ymax=self.data_max)
+		if self.xmin is not None: ax.set_xlim(xmin=self.xmin)
+		if self.xmax is not None: ax.set_xlim(xmax=self.xmax)
+		if self.data_min is not None: ax.set_ylim(ymin=self.data_min)
+		if self.data_max is not None: ax.set_ylim(ymax=self.data_max)
 		if self.title is not None: ax.set_title(self.title)
 		return im
 		
