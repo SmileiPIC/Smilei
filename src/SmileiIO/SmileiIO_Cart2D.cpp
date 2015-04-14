@@ -101,9 +101,12 @@ void SmileiIO_Cart2D::createPattern( PicParams& params, SmileiMPI* smpi )
                         bufsize[1] -= 1;
                 }
             }
-            count[0] = bufsize[0];
-            count[1] = bufsize[1];
-            H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset, stride, count, NULL);
+            count[0] = 1;
+            count[1] = 1;
+            hsize_t     block[2];
+            block[0] = bufsize[0];
+            block[1] = bufsize[1];
+            H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset, stride, count, block);
             memspace_ [ ix_isPrim ][ iy_isPrim ] = memspace;
 
 
@@ -132,7 +135,6 @@ void SmileiIO_Cart2D::createPattern( PicParams& params, SmileiMPI* smpi )
             stride[1] = 1;
             count[0] = 1;
             count[1] = 1;
-            hsize_t     block[2];
             block[0] = bufsize[0];
             block[1] = bufsize[1];
             H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, stride, count, block);
