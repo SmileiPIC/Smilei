@@ -38,7 +38,8 @@ res_space  = 30    30
 sim_length = 1024  512
 
 # BG-Q conf
-number_of_procs = 64 1024
+number_of_procs = 64 8
+#number_of_procs = 64 1024
 clrw = 16
 
 bc_em_type_long  = silver-muller
@@ -70,7 +71,7 @@ species
 	initPosition_type = random
 	initMomentum_type = maxwell-juettner
 	ionization_model = none
-	n_part_per_cell = 50
+	n_part_per_cell = 1
 	c_part_max = 1.2
 	mass = 1836.0
 	charge = 1.0
@@ -96,7 +97,7 @@ species
 	initPosition_type = random
 	initMomentum_type = maxwell-juettner
 	ionization_model = none
-	n_part_per_cell = 50
+	n_part_per_cell = 1
 	c_part_max = 1.2
 	mass = 1.0
 	charge = -1.0

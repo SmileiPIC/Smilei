@@ -1,4 +1,7 @@
 
+//IDRIS
+#include <cstring>
+//IDRIS
 #include "Tools.h"
 
 #include <fcntl.h>
@@ -15,7 +18,9 @@ void Tools::printMemFootPrint(std::string tag) {
     int fd, num_read;
     long lmem;
     pid_t numpro;
-    pid_t getpid(void);
+// IDRIS
+//    pid_t getpid(void);
+// IDRIS
 
     numpro = getpid();
 

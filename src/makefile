@@ -1,12 +1,18 @@
-SMILEICXX     ?= mpic++
+SMILEICXX     ?=  mpixlcxx_r
+#SMILEICXX     ?= skin mpixlcxx_r
+#SMILEICXX     ?= mpixlcxx_r -pg -cxx=powerpc64-bgq-linux-g++ 
+#SMILEICXX     ?= mpixlcxx_r -cxx=powerpc64-bgq-linux-g++ 
+#SMILEICXX     ?= mpixlcxx_r 
 HDF5_ROOT_DIR ?=
 
 ##################################################
 
 VERSION:="$(shell git describe 2>/dev/null || echo '??')"
 
-CFLAGS += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include
-LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5 -lz
+#CFLAGS += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include
+#LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5 /bgsys/linux/RHEL6.5_V1R2M2-7/opt/ibmcmp/vac/bg/12.1/bglib64/libxl.a /bgsys/linux/RHEL6.5_V1R2M2-7/opt/ibmcmp/vac/bg/12.1/bglib64/libxlopt.a
+CFLAGS += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include -I/bglocal/cn/pub/HDF5/1.8.9/par/include 
+LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5 /bgsys/linux/RHEL6.5_V1R2M2-7/opt/ibmcmp/vac/bg/12.1/bglib64/libxl.a /bgsys/linux/RHEL6.5_V1R2M2-7/opt/ibmcmp/vac/bg/12.1/bglib64/libxlopt.a -L/bglocal/cn/pub/HDF5/1.8.9/par/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lm -L/bglocal/cn/pub/zlib/1.2.5/lib -lz
 
 ifneq (,$(findstring poincare,$(HOSTNAME)))
     LDFLAGS += -lgpfs -lz
@@ -47,27 +53,27 @@ scalasca:
 #collect all cpp files
 SRCS := $(shell find . -name \*.cpp)
 OBJS := $(SRCS:.cpp=.o)
-DEPS := $(SRCS:.cpp=.d)
+DEPS := $(OBJS:.o=.d)
 
 ifeq ($(config),debug)
-	CFLAGS += -g -pg -Wall -D__DEBUG -O0# -shared-intel 
+	CFLAGS += -g -pg -Wall -D__DEBUG
 else
-	CFLAGS += -O3#  -xHost -ipo
+	CFLAGS += -O3              
 endif
 
 ifeq ($(openmp),gnu)
 	CFLAGS += -fopenmp -D_OMP
 else ifeq ($(openmp),intel)
-	CFLAGS += -openmp -D_OMP
+	CFLAGS += -qsmp=omp -D_OMP
 endif
 
 ifeq ($(config),scalasca)
-	CFLAGS += -openmp -D_OMP
+	CFLAGS += -qsmp=omp -D_OMP
     SMILEICXX = scalasca -instrument mpic++
 endif
 
 clean:
-	rm -f $(OBJS) $(DEPS)
+	rm -f $(OBJS)
 	
 distclean: clean
 	rm -f $(EXEC)
@@ -80,11 +86,11 @@ ifeq (0, $(words $(findstring $(MAKECMDGOALS), $(NODEPS))))
 endif
 
 
-%.d: %.cpp
-	@ echo "Checking dependencies for $<"
-	$(eval DIR := $(shell  dirname $<))
+#%.d: %.cpp
+	#@ echo "Checking dependencies for $<"
+	#$(eval DIR := $(shell  dirname $<))
 # create and modify dependecy file .d to take into account the location subdir	
-	@ $(SMILEICXX) -MM $(CFLAGS) $*.cpp 2>/dev/null | sed -e "s@\(^.*\)\.o:@$(DIR)/\1.d $(DIR)/\1.o:@" > $@  
+	#@ $(SMILEICXX) -MM $(CFLAGS) $*.cpp 2>/dev/null | sed -e "s@\(^.*\)\.o:@$(DIR)/\1.d $(DIR)/\1.o:@" > $@  
 
 %.o : %.cpp
 	$(SMILEICXX) $(CFLAGS) -c $< -o $@

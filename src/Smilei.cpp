@@ -199,7 +199,7 @@ int main (int argc, char* argv[])
             Timer ptimer;
             ptimer.init(smpi, "global");
             ptimer.restart();
-            EMfields->solvePoisson(smpi);
+//            EMfields->solvePoisson(smpi);
             ptimer.update();
             MESSAGE(0, "Time in Poisson : " << ptimer.getTime() );
         }
@@ -218,7 +218,7 @@ int main (int argc, char* argv[])
         sio->writeAllFieldsSingleFileTime( EMfields, 0 );
         // temporary EM fields dump in Fields_avg.h5
         if (diag_params.ntime_step_avg!=0)
-            sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
+           sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
         // temporary particle dump at time 0
         sio->writePlasma( vecSpecies, 0., smpi );
     }
@@ -235,7 +235,10 @@ int main (int argc, char* argv[])
 	
     // Count timer
     int ntimer(8);
-    Timer timer[ntimer];
+// IDRIS
+//    Timer timer[ntimer];
+    Timer timer[8];
+// IDRIS
     timer[0].init(smpi, "global");
     timer[1].init(smpi, "particles");
     timer[2].init(smpi, "maxwell");

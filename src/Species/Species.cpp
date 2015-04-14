@@ -8,6 +8,9 @@
 
 #include <omp.h>
 
+// IDRIS
+#include <cstring>
+// IDRIS
 #include "PusherFactory.h"
 #include "IonizationFactory.h"
 
@@ -45,7 +48,10 @@ oversize(params.oversize),
 cell_length(params.cell_length),
 species_param(params.species_param[ispec]),
 densityProfile(DensityFactory::create(params, ispec)),
-velocityProfile(3,NULL),
+// IDRIS
+//velocityProfile(3, NULL),
+velocityProfile(3,(VelocityProfile * ) NULL),
+// IDRIS
 ndim(params.nDim_particle),
 min_loc(smpi->getDomainLocalMin(0))
 {
