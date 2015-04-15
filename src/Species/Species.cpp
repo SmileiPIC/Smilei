@@ -483,8 +483,11 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
         }// ibin
         free(b_Jx);
 
-	for (int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
-	    nrj_bc_lost += nrj_lost_per_thd[tid];
+#pragma omp single
+        {
+	    for (int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
+	        nrj_bc_lost += nrj_lost_per_thd[tid];
+        }
         
         if (Ionize && electron_species) {
             for (unsigned int i=0; i < (unsigned int)Ionize->new_electrons.size(); i++) {
