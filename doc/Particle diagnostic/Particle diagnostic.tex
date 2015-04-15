@@ -401,7 +401,7 @@ and the same timesteps.\\
 
 
 \clearpage
-\section{Bonus: view fields as well}
+\section{Bonus: view fields and scalars as well}
 
 SMILEI provides maps of the fields $\overrightarrow E$, $\overrightarrow B$, $\rho$ (etc.) controlled by the parameter \code{fieldDump\_every} in the input file. They are written in the file \code{Fields.h5}. The script \code{Diagnostics.py} is capable of opening and plotting these fields together with the particle diagnostics. In fact the procedure is almost the same:
 \begin{lstlisting}
@@ -413,17 +413,30 @@ As you can see, \code{Field(...)} works almost the same way as \code{ParticleDia
 \item \code{field} must be one of \code{"Bx\_m"}, \code{"By\_m"}, \code{"Bz\_m"}, \code{"Ex"}, \code{"Ey"}, \code{"Ez"}, \code{"Jx"}, \code{"Jy"}, \code{"Jz"}, \code{"Jx\_\textit{species}"}, \code{"Jy\_\textit{species}"}, \code{"Jz\_\textit{species}"}, \code{"Rho"} or \code{"Rho\_\textit{species}"} where \val{species} is the name of one of the existing species. If you omit the argument \code{field}, the list of available fields will be displayed.
 \item \code{slice} can only accept three axes: \code{"x"}, \code{"y"}, \code{"z"}. For instance, \code{slice=\{"x":"all"\}}. Note that the slice does \textbf{not} calculate the sum of the axis, but the \textbf{average}.
 \end{itemize}
-Please refer to the previous section to understand the other arguments. In addition, all the plotting arguments discussed in the previous section are available for the fields as well.\\*\\*
 
-All the functions \code{plot()}, \code{set()}, \code{get()} and \code{getData()} are also compatible with \code{Field(...)}.\\*\\*
+In addition to fields, SMILEI outputs scalar values as a function of time in the file \code{scalars.txt}. You can plot them as well:
+\begin{lstlisting}
+Scalar(results_path, scalar=None, timesteps=None, units="code", data_log=False)
+\end{lstlisting}
+The differences are:
+\begin{itemize}
+\item \code{scalar} must be the name of an available scalar. If you omit this argument, the list of available scalar will be displayed.
+\item There is no more \code{slice} argument of course!
+\end{itemize}
 
-Last but not least: \code{multiPlot()} can be used to combine field and particle diagnostics on the same figure.\\*\\*
+
+Please refer to the previous section to understand the other arguments. In addition, all the plotting arguments discussed in the previous section are available for the fields and scalars as well.\\*\\*
+
+All the functions \code{plot()}, \code{set()}, \code{get()} and \code{getData()} are also compatible with \code{Field(...)} and \code{Scalar(...)}.\\*\\*
+
+Last but not least: \code{multiPlot()} can be used to combine particle, field and scalar diagnostics on the same figure.\\*\\*
 
 \textbf{Example:}
 \begin{lstlisting}
 >>> A = Field("path/to/my/results", field="Ex")
 >>> B = ParticleDiagnostic("path/to/my/results", diagNumber=0)
->>> multiPlot( A, B )
+>>> C = ParticleDiagnostic("path/to/my/results", scalar="Ebalance")
+>>> multiPlot( A, B, C )
 \end{lstlisting}
 
 \clearpage

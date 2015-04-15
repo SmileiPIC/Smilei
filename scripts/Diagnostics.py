@@ -138,8 +138,13 @@
 # - `slice` can only accept three axes: "x", "y", "z".
 #   For instance, slice={"x":"all"}.
 #   Note that the slice does NOT calculate the sum of the axis, but the AVERAGE.
-
-
+#
+#
+#
+#  +---------------------------+
+#  | 3 . Scalars               |
+#  +---------------------------+
+# TODO
 
 
 import h5py
@@ -261,7 +266,7 @@ class Diagnostic(object):
 		ncels = sim_length/cell_length
 		if sim_units == "wavelength": cell_length *= 2.*np.pi
 		return ncels, cell_length
-	def read_timestep(self):
+	def read_timestep(self,sim_units):
 		try:
 			timestep = np.double(findParam(self.results_path, "timestep"))
 		except:
@@ -272,10 +277,11 @@ class Diagnostic(object):
 			except:
 				print "Could not extract 'timestep' or 'res_time' from the input file"
 				raise
+		if sim_units == "wavelength": timestep *= 2.*np.pi
 		return timestep
 	def read_wavelength_SI(self):
 		try:
-			wavelength_SI = np.double( findParam(results_path, "wavelength_SI") )
+			wavelength_SI = np.double( findParam(self.results_path, "wavelength_SI") )
 		except:
 			print "Could not extract 'wavelength_SI' from the input file"
 			raise
@@ -359,6 +365,7 @@ class Diagnostic(object):
 		return l
 	
 	# Method to obtain the data and the axes
+	# Note: this is overloaded in the case of scalars
 	def get(self, **kwargs):
 		if not self.validate(): return
 		# if optional argument "time" not provided, find out which time to plot
@@ -407,12 +414,20 @@ class Diagnostic(object):
 		# get data
 		A = self.getData(time=time)
 		# plot
-		if A.ndim == 1:
+		if A.ndim == 0: # as a function of time
+			times = self.times[self.times<=time]
+			A = np.zeros(times.size)
+			for i, time in enumerate(times):
+				A[i] = self.getData(time=time)
+			im, = ax.plot(times*self.coeff_time, A, **self.plotkwargs)
+			ax.set_xlabel('Time ['+self.time_units+' ]')
+			ax.set_xlim(xmax=self.times[-1]*self.coeff_time)
+			if self.data_min is not None: ax.set_ylim(ymin=self.data_min)
+			if self.data_max is not None: ax.set_ylim(ymax=self.data_max)
+		elif A.ndim == 1:
 			im, = ax.plot(self.plot_centers[0], A, **self.plotkwargs)
 			if self.plot_log[0]: ax.set_xscale("log")
 			ax.set_xlabel(self.plot_label[0])
-			if self.xmin is not None: ax.set_xlim(xmin=self.xmin)
-			if self.xmax is not None: ax.set_xlim(xmax=self.xmax)
 			if self.data_min is not None: ax.set_ylim(ymin=self.data_min)
 			if self.data_max is not None: ax.set_ylim(ymax=self.data_max)
 		elif A.ndim == 2:
@@ -425,8 +440,6 @@ class Diagnostic(object):
 			else:                  ax.set_xlabel(        self.plot_label[0]     )
 			if (self.plot_log[1]): ax.set_ylabel("Log[ "+self.plot_label[1]+" ]")
 			else:                  ax.set_ylabel(        self.plot_label[1]     )
-			if self.xmin is not None: ax.set_xlim(xmin=self.xmin)
-			if self.xmax is not None: ax.set_xlim(xmax=self.xmax)
 			if self.ymin is not None: ax.set_ylim(ymin=self.ymin)
 			if self.ymax is not None: ax.set_ylim(ymax=self.ymax)
 			try: # if colorbar exists
@@ -434,6 +447,8 @@ class Diagnostic(object):
 				plt.colorbar(mappable=im, cax=ax.cax, **self.colorbarkwargs)
 			except AttributeError:
 				ax.cax = plt.colorbar(mappable=im, ax=ax, **self.colorbarkwargs).ax
+		if self.xmin is not None: ax.set_xlim(xmin=self.xmin)
+		if self.xmax is not None: ax.set_xlim(xmax=self.xmax)
 		if self.title is not None: ax.set_title(self.title)
 		return im
 	
@@ -499,7 +514,7 @@ class ParticleDiagnostic(Diagnostic):
 			ndim               = self.read_ndim()
 			sim_units          = self.read_sim_units()
 			ncels, cell_length = self.read_ncels_cell_length(ndim, sim_units)
-			timestep           = self.read_timestep()
+			timestep           = self.read_timestep(sim_units)
 			cell_size = {"x":cell_length[0]}
 			if ndim>1: cell_size.update({"y":cell_length[1]})
 			if ndim>2: cell_size.update({"z":cell_length[2]})
@@ -972,10 +987,10 @@ class Field(Diagnostic):
 				if len(fields)>0:
 					print "Printing available fields:"
 					print "--------------------------"
-					if len(fields)%3==0:
-						print '\n'.join(['\t\t'.join(list(i)) for i in np.reshape(fields,(-1,3))])
-					else:
-						print "%s\n" % '\n'.join()
+					l = (len(fields)/3) * 3
+					if l>0:
+						print '\n'.join(['\t\t'.join(list(i)) for i in np.reshape(fields[:l],(-1,3))])
+					print '\t\t'.join(fields[l:])
 				else:
 					print "No fields found in '"+results_path+"'"
 				return None
@@ -995,7 +1010,7 @@ class Field(Diagnostic):
 			ndim               = self.read_ndim()
 			sim_units          = self.read_sim_units()
 			ncels, cell_length = self.read_ncels_cell_length(ndim, sim_units)
-			timestep           = self.read_timestep()
+			timestep           = self.read_timestep(sim_units)
 		except:
 			return None
 		
@@ -1226,8 +1241,215 @@ class Field(Diagnostic):
 		# log scale if requested
 		if self.data_log: A = np.log10(A)
 		return A
+
+
+
+
+# -------------------------------------------------------------------
+# Class for scalars
+# -------------------------------------------------------------------
+class Scalar(Diagnostic):
+	# We use __new__ to prevent object creation if no field requested
+	def __new__(cls, *args, **kwargs):
+		# Is there a "results_path" argument ?
+		try   : results_path = cls.validatePath(*args, **kwargs)
+		except: return None
+		# Is there a "scalar" argument ?
+		try:
+			scalar = args[1]
+		except:
+			try:
+				scalar = kwargs["scalar"]
+			except:
+				scalars = cls.getScalarsIn(results_path)
+				if len(scalars)>0:
+					print "Printing available scalars:"
+					print "---------------------------"
+					l = [""]
+					for s in scalars:
+						if s[:2] != l[-1][:2] and s[-2:]!=l[-1][-2:]:
+							if l!=[""]: print "\t".join(l)
+							l = []
+						l.append(s)
+				else:
+					print "No scalars found in '"+results_path+"'"
+				return None
+		# If everything ok, then we create the object
+		return Diagnostic.__new__(cls, *args, **kwargs)
 	
 	
+	# This is the constructor, which creates the object
+	def __init__(self,results_path, scalar=None, timesteps=None,
+	             units="code", data_log=False, **kwargs):
+	
+		self.valid = False
+		self.results_path = results_path
+
+		# Get info from the input file and prepare units
+		try:
+			sim_units          = self.read_sim_units()
+			self.timestep      = self.read_timestep("")
+		except:
+			return None
+		
+		if units == "nice":
+			try   : wavelength_SI = self.read_wavelength_SI()
+			except: return None
+			self.coeff_time = self.timestep * wavelength_SI/3.e8/(2.*np.pi) # in seconds
+			self.time_units = " s"
+		elif units == "code":
+			self.coeff_time = self.timestep
+			self.time_units = " 1/w"
+		if sim_units == "wavelength": self.coeff_time *= 2. * np.pi
+		
+		# Get available scalars
+		scalars = self.getScalars()
+		
+		# 1 - verifications, initialization
+		# -------------------------------------------------------------------
+		# Check value of field
+		if scalar not in scalars:
+			fs = filter(lambda x:scalar in x, scalars)
+			if len(fs)==0:		
+				print "No scalar `"+scalar+"` found in scalars.txt"
+				return
+			if len(fs)>1:
+				print "Several scalars match: "+(' '.join(fs))
+				print "Please be more specific and retry."
+				return
+			scalar = fs[0]
+		self.scalarn = scalars.index(scalar) # index of the requested scalar
+		self.scalarname = scalar
+		
+		# Put data_log as object's variable
+		self.data_log = data_log
+		
+		# Default plot parameters
+		self.setDefaultPlot()
+		# Set user's plot parameters
+		kwargs = self.setPlot(**kwargs)
+		
+		# Already get the data from the file
+		# Loop file line by line
+		self.times = []
+		self.values = []
+		file = results_path+'/scalars.txt'
+		f = open(file, 'r')
+		for line in f:
+			line = line.strip()
+			if line[0]=="#": continue
+			line = line.split()
+			self.times .append( int( float(line[0]) / self.timestep ) )
+			self.values.append( float(line[self.scalarn+1]) )
+		self.times  = np.array(self.times )
+		self.values = np.array(self.values)
+		f.close()
+		
+		
+		# 2 - Manage timesteps
+		# -------------------------------------------------------------------
+		# fill the "data" dictionary with the index to each time
+		self.data = {}
+		for i,t in enumerate(self.times):
+			self.data.update({ t : i })
+		# If timesteps is None, then keep all timesteps otherwise, select timesteps
+		if timesteps is not None:
+			try:
+				ts = np.array(np.double(timesteps),ndmin=1)
+				if ts.size==2:
+					# get all times in between bounds
+					self.times = self.times[ (self.times>=ts[0]) * (self.times<=ts[1]) ]
+				elif ts.size==1:
+					# get nearest time
+					self.times = np.array([self.times[(np.abs(self.times-ts)).argmin()]])
+				else:
+					raise
+			except:
+				print "Argument `timesteps` must be one or two non-negative integers"
+				return
+		
+		# Need at least one timestep
+		if self.times.size < 1:
+			print "Timesteps not found"
+			return
+		
+		
+		# 3 - Manage axes
+		# -------------------------------------------------------------------
+		# There are no axes for scalars
+		self.naxes = 0
+		self.plot_type = []
+		self.plot_label = []
+		self.plot_centers = []
+		self.plot_shape = []
+		self.plot_log   = []
+		self.slices = []
+		# Build units
+		self.scalarunits = "unknown units"
+		self.unitscoeff = 1.
+		self.title = "??"
+		if units == "nice":
+			self.title      = scalar +"( "+self.scalarunits+" )" # todo
+		else:
+			self.title      = scalar +"( "+self.scalarunits+" )" # todo
+		if data_log: self.title = "Log[ "+self.title+" ]"
+		
+		# Finish constructor
+		self.valid = True
+	
+	# Method to print info on included scalars
+	def info(self):
+		if not self.validate(): return
+		print "Scalar "+self.scalarname,
+		#todo
+		return
+	
+	# get all available scalars
+	@staticmethod
+	def getScalarsIn(results_path):
+		try:
+			file = results_path+'/scalars.txt'
+			f = open(file, 'r')
+		except:
+			print "Cannot open file "+file
+			return []
+		try:
+			# Find last commented line 
+			prevline = ""
+			for line in f:
+				line = line.strip()
+				if line[0]!="#": break
+				prevline = line[1:].strip()
+			scalars = prevline.split() # list of scalars
+			scalars = scalars[1:] # remove first, which is "time"
+		except:
+			scalars = []
+		f.close()
+		return scalars
+	def getScalars(self):
+		return self.getScalarsIn(self.results_path)
+	
+	
+	# get all available timesteps
+	def getAvailableTimesteps(self):
+		return self.times
+	
+	# Method to obtain the data only
+	def getData(self, **kwargs):
+		if not self.validate(): return
+		# if optional argument "time" not provided, find out which time to plot
+		try:    time = kwargs["time"]
+		except: time = self.times[0]
+		# Verify that the timestep is valid
+		if time not in self.times:
+			print "Timestep "+time+" not found in this diagnostic"
+			return []
+		# Get value at selected time
+		A = self.values[ self.data[time] ]
+		A *= self.unitscoeff
+		# log scale if requested
+		if self.data_log: A = np.log10(A)
+		return A
 
 
 
