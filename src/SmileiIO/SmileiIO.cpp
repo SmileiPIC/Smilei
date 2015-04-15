@@ -100,8 +100,8 @@ stop_file_seen_since_last_check(false)
     if (global_output_file_) { // 1 file
         name_t << "Fields.h5";
 	write_plist = H5Pcreate(H5P_DATASET_XFER);
+        H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_COLLECTIVE);
 	H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, info);
-	if (smpi->isMaster()) cout << "patate\n";
     }
     else { // 1 file per process
 	name_t << "Fields_" << setfill('0') << setw(10) << smpi->getRank() << ".h5";
