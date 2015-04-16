@@ -267,18 +267,21 @@ ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None,
 \begin{lstlisting}
 ParticleDiagnostic( ... ).getData()
 \end{lstlisting}
-This method returns only the data array.
+This method returns only a list of the data arrays (for each timestep requested).
 
 \begin{lstlisting}
 ParticleDiagnostic( ... ).get()
 \end{lstlisting}
-This method returns the results as a python dictionary.
-The dictionary is of the form\\* \code{\{"data":\textit{data\_array}, \textit{axis1}:\textit{axis1\_array}, \textit{axis2}:\textit{axis2\_array}, ...\}}
+This method returns the results as a python dictionary:
+\begin{lstlisting}
+{"data":§\val{data\_array}§, "times":§\val{times\_array}§, §\val{axis1}§:§\val{axis1\_array}§, §\val{axis2}§:§\val{axis2\_array}§, ...}
+\end{lstlisting}
 where:
 \begin{itemize}
-\item \val{data\_array} is the final array containing the data.
-\item \val{axis1} and \val{axis2} are the names of the axes (for example \code{"x"} or \code{"px"}).
-\item \val{axis1\_array} and \val{axis2\_array} are the locations of the axes bins.\\*
+\item \val{data\_array} is the result of \code{getData()}.
+\item \val{times\_array} is a list of the requested timesteps.
+\item \val{axis1}, \val{axis2} (...) are the names of the axes (for example \code{"x"} or \code{"px"}).
+\item \val{axis1\_array}, \val{axis2\_array} (...) are the locations of the axes bins.\\*
 \end{itemize}
 
 \textbf{Example:}
@@ -289,7 +292,7 @@ where:
 This will take the diagnostic \#3 for the timestep nearest to 1000, and sum for all energies between 1 and 10.
 The results are stored in the variable \code{result}.\\*
 The data can be accessed with \code{result["data"]}.\\*
-If one of the axes is \val{x}, you can access the locations of the bins with \code{result["x"]}.\\* \\* \\*
+If one of the axes is \val{x}, you can access the locations of the bins with \code{result["x"]}.\\* \\*
 
 \subsection{To plot the data}
 \begin{lstlisting}

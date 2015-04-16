@@ -92,10 +92,10 @@
 #        Note that only the first requested timestep is given.
 #
 # ParticleDiagnostic(...).getData()
-#   This method returns only the data array.
+#   This method returns only a list of the data arrays (for each timestep requested).
 #
 # ParticleDiagnostic(...).get()
-#   This method returns a dictionary containing the data, and the axes scales.
+#   This method returns a dictionary containing the data, the list of timesteps and the axes scales.
 #
 #
 # >>>>>> Examples:
@@ -380,19 +380,21 @@ class Diagnostic(object):
 			l.append([min(self.plot_centers[0]), max(self.plot_centers[0])])
 		return l
 	
-	# Method to obtain the data and the axes
-	# Note: this is overloaded in the case of scalars
-	def get(self, **kwargs):
+	# Method to get only the arrays of data
+	def getData(self):
 		if not self.validate(): return
-		# if optional argument "time" not provided, find out which time to plot
-		try:    time = kwargs["time"]
-		except: time = self.times[0]
-		# obtain the data array
-		A = self.getData(time=time)		
-		# print timestep
-		print "timestep "+str(time)+ "   -   t = "+str(time*self.coeff_time)+self.time_units
+		data = []
+		for t in self.times:
+			data.append( self.getDataAtTime(t) )
+		return data
+	
+	# Method to obtain the data and the axes
+	def get(self):
+		if not self.validate(): return
+		# obtain the data arrays
+		data = self.getData()
 		# format the results into a dictionary
-		result = {"data":A}
+		result = {"data":data, "times":self.times}
 		for i in range(len(self.plot_type)):
 			result.update({ self.plot_type[i]:self.plot_centers[i] })
 		return result
@@ -425,16 +427,16 @@ class Diagnostic(object):
 			artist = self.plotVsTime(ax)
 	
 	# Method to plot the data when axes are made
-	def animateOnAxes(self, ax, time):
+	def animateOnAxes(self, ax, t):
 		if not self.validate(): return None
 		# get data
-		A = self.getData(time=time)
+		A = self.getDataAtTime(t)
 		# plot
 		if A.ndim == 0: # as a function of time
-			times = self.times[self.times<=time]
+			times = self.times[self.times<=t]
 			A = np.zeros(times.size)
-			for i, time in enumerate(times):
-				A[i] = self.getData(time=time)
+			for i, t in enumerate(times):
+				A[i] = self.getDataAtTime(t)
 			im, = ax.plot(times*self.coeff_time, A, **self.plotkwargs)
 			ax.set_xlabel('Time ['+self.time_units+' ]')
 			ax.set_xlim(xmax=self.times[-1]*self.coeff_time)
@@ -474,9 +476,7 @@ class Diagnostic(object):
 			print "To plot vs. time, it is necessary to slice all axes in order to obtain a 0-D array"
 			return None
 		# Loop times to gather data
-		A = np.zeros(self.times.size)
-		for i, time in enumerate(self.times):
-			A[i] = self.getData(time=time)
+		A = np.squeeze(self.getData())
 		im, = ax.plot(self.times*self.coeff_time, A, **self.plotkwargs)
 		ax.set_xlabel('Time ['+self.time_units+' ]')
 		if self.xmin is not None: ax.set_xlim(xmin=self.xmin)
@@ -486,7 +486,6 @@ class Diagnostic(object):
 		if self.title is not None: ax.set_title(self.title)
 		return im
 	
-
 
 
 
@@ -939,14 +938,11 @@ class ParticleDiagnostic(Diagnostic):
 			return times
 		
 	# Method to obtain the data only
-	def getData(self, **kwargs):
+	def getDataAtTime(self, t):
 		if not self.validate(): return
-		# if optional argument "time" not provided, find out which time to plot
-		try:    time = kwargs["time"]
-		except: time = self.times[0]
 		# Verify that the timestep is valid
-		if time not in self.times:
-			print "Timestep "+time+" not found in this diagnostic"
+		if t not in self.times:
+			print "Timestep "+t+" not found in this diagnostic"
 			return []
 		# Get arrays from all requested diagnostics
 		A = {}
@@ -954,7 +950,7 @@ class ParticleDiagnostic(Diagnostic):
 			# Open file
 			f = h5py.File(self.file[d], 'r')
 			# get data
-			index = self.data[d][time]
+			index = self.data[d][t]
 			A.update({ d:np.reshape(f.items()[index][1],self.shape) })
 			f.close()
 			# Apply the slicing
@@ -1240,20 +1236,17 @@ class Field(Diagnostic):
 		return times
 	
 	# Method to obtain the data only
-	def getData(self, **kwargs):
+	def getDataAtTime(self, t):
 		if not self.validate(): return
-		# if optional argument "time" not provided, find out which time to plot
-		try:    time = kwargs["time"]
-		except: time = self.times[0]
 		# Verify that the timestep is valid
-		if time not in self.times:
-			print "Timestep "+time+" not found in this diagnostic"
+		if t not in self.times:
+			print "Timestep "+t+" not found in this diagnostic"
 			return []
 		# Get arrays from requested field
 		# Open file
 		f = h5py.File(self.file, 'r')
 		# get data
-		index = self.data[time]
+		index = self.data[t]
 		C = {}
 		op = "A=" + self.operation
 		for n in reversed(self.fieldn): # for each field in operation
@@ -1470,17 +1463,14 @@ class Scalar(Diagnostic):
 		return self.times
 	
 	# Method to obtain the data only
-	def getData(self, **kwargs):
+	def getDataAtTime(self, t):
 		if not self.validate(): return
-		# if optional argument "time" not provided, find out which time to plot
-		try:    time = kwargs["time"]
-		except: time = self.times[0]
 		# Verify that the timestep is valid
-		if time not in self.times:
-			print "Timestep "+time+" not found in this diagnostic"
+		if t not in self.times:
+			print "Timestep "+t+" not found in this diagnostic"
 			return []
 		# Get value at selected time
-		A = self.values[ self.data[time] ]
+		A = self.values[ self.data[t] ]
 		A *= self.unitscoeff
 		# log scale if requested
 		if self.data_log: A = np.log10(A)
@@ -1489,15 +1479,15 @@ class Scalar(Diagnostic):
 
 
 
-# Function to plot multiple particle diags on the same figure
-def multiPlot(*Pdiags, **kwargs):
-	nPdiags = len(Pdiags)
-	# Verify Pdiags are valid
-	if nPdiags == 0: return
-	for Pdiag in Pdiags:
-		if not Pdiag.validate(): return
+# Function to plot multiple diags on the same figure
+def multiPlot(*Diags, **kwargs):
+	nDiags = len(Diags)
+	# Verify Diags are valid
+	if nDiags == 0: return
+	for Diag in Diags:
+		if not Diag.validate(): return
 	# Gather all times
-	alltimes = np.unique(np.concatenate([Pdiag.times for Pdiag in Pdiags]))
+	alltimes = np.unique(np.concatenate([Diag.times for Diag in Diags]))
 	# Get keyword arguments
 	figure = kwargs.pop("figure", 1)
 	shape  = kwargs.pop("shape" , None)
@@ -1505,10 +1495,10 @@ def multiPlot(*Pdiags, **kwargs):
 	sameAxes = False
 	if shape is None or shape == [1,1]:
 		sameAxes = True
-		for Pdiag in Pdiags:
-			if len(Pdiag.plot_shape)==0 and len(Pdiags[0].plot_shape)==0:
+		for Diag in Diags:
+			if len(Diag.plot_shape)==0 and len(Diags[0].plot_shape)==0:
 				continue
-			if len(Pdiag.plot_shape)!=1 or Pdiag.plot_type!=Pdiags[0].plot_type:
+			if len(Diag.plot_shape)!=1 or Diag.plot_type!=Diags[0].plot_type:
 				sameAxes = False
 				break
 	if not sameAxes and shape == [1,1]:
@@ -1516,11 +1506,11 @@ def multiPlot(*Pdiags, **kwargs):
 		return
 	# Determine the shape
 	if sameAxes: shape = [1,1]
-	if shape is None: shape = [nPdiags,1]
+	if shape is None: shape = [nDiags,1]
 	nplots = np.array(shape).prod()
-	if not sameAxes and nplots != nPdiags:
+	if not sameAxes and nplots != nDiags:
 		print "The 'shape' argument is incompatible with the number of diagnostics:"
-		print "  "+str(nPdiags)+" diagnostics do not fit "+str(nplots)+" plots"
+		print "  "+str(nDiags)+" diagnostics do not fit "+str(nplots)+" plots"
 		return
 	# Make the figure
 	fig = plt.figure(figure)
@@ -1533,37 +1523,37 @@ def multiPlot(*Pdiags, **kwargs):
 	c = plt.matplotlib.rcParams['axes.color_cycle']
 	for i in range(nplots):
 		ax.append( fig.add_subplot(shape[0], shape[1], i) )
-	for i, Pdiag in enumerate(Pdiags):
-		if sameAxes: Pdiag.ax = ax[0]
-		else       : Pdiag.ax = ax[i]
-		Pdiag.artist = None
+	for i, Diag in enumerate(Diags):
+		if sameAxes: Diag.ax = ax[0]
+		else       : Diag.ax = ax[i]
+		Diag.artist = None
 		try:
-			l = Pdiag.limits()[0]
+			l = Diag.limits()[0]
 			xmin = min(xmin,l[0])
 			xmax = max(xmax,l[1])
 		except:
 			pass
-		if "color" not in Pdiag.plotkwargs:
-			Pdiag.plotkwargs.update({ "color":c[i%len(c)] })
+		if "color" not in Diag.plotkwargs:
+			Diag.plotkwargs.update({ "color":c[i%len(c)] })
 	# Static plot
-	if sameAxes and len(Pdiags[0].plot_shape)==0:
-		for Pdiag in Pdiags:
-			Pdiag.artist = Pdiag.plotVsTime(Pdiag.ax)
+	if sameAxes and len(Diags[0].plot_shape)==0:
+		for Diag in Diags:
+			Diag.artist = Diag.plotVsTime(Diag.ax)
 		fig.canvas.draw()
 		plt.show()
 	# Animated plot
 	else:
 		# Loop all times
 		for time in alltimes:
-			for Pdiag in Pdiags:
-				if time in Pdiag.times:
+			for Diag in Diags:
+				if time in Diag.times:
 					if sameAxes:
-						if Pdiag.artist is not None: Pdiag.artist.remove()
+						if Diag.artist is not None: Diag.artist.remove()
 					else:
-						Pdiag.ax.cla()
-					Pdiag.artist = Pdiag.animateOnAxes(Pdiag.ax, time)
+						Diag.ax.cla()
+					Diag.artist = Diag.animateOnAxes(Diag.ax, time)
 					if sameAxes:
-						Pdiag.ax.set_xlim(xmin,xmax)
+						Diag.ax.set_xlim(xmin,xmax)
 			fig.canvas.draw()
 			plt.show()
 		return

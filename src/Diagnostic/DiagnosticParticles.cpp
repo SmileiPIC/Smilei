@@ -93,6 +93,21 @@ void H5_attr_double(int fileId, string attribute_name, double attribute_value) {
     H5Sclose(sid);
     H5Aclose(aid);
 }
+// write a vector of doubles
+void H5_vector_double(int fileId, string name, double& v, int size) {
+    // create dataspace for 1D array with good number of elements
+    hsize_t dims = size;
+    hid_t sid = H5Screate_simple(1, &dims, NULL);
+    hid_t pid = H5Pcreate(H5P_DATASET_CREATE); // property list
+    // create dataset 
+    hid_t did = H5Dcreate(fileId, name.c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, pid, H5P_DEFAULT);
+    // write vector in dataset
+    H5Dwrite(did, H5T_NATIVE_DOUBLE, sid, sid, H5P_DEFAULT, &v);
+    // close all
+    H5Dclose(did);
+    H5Pclose(pid);
+    H5Sclose(sid);
+}
 // -------------------
 
 
@@ -413,22 +428,11 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
                 for (int i=0; i<output_size; i++)
                     data_sum[i] *= coeff;
             }
-            
-            // create dataspace for 1D array with "output_size" number of elements
-            hsize_t dims = output_size;
-            hid_t sid = H5Screate_simple(1, &dims, NULL);
-            hid_t pid = H5Pcreate(H5P_DATASET_CREATE); // property list
-            // make name of the dataset
+            // make name of the array
             mystream.str("");
             mystream << "timestep" << setw(8) << setfill('0') << timestep;
-            // create dataset 
-            hid_t did = H5Dcreate(fileId, mystream.str().c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, pid, H5P_DEFAULT);
-            // write data_sum in dataset
-            H5Dwrite(did, H5T_NATIVE_DOUBLE, sid, sid, H5P_DEFAULT, &data_sum[0]);
-            // close all
-            H5Dclose(did);
-            H5Pclose(pid);
-            H5Sclose(sid);
+            // write the array
+            H5_vector_double(fileId, mystream.str(), data_sum[0], output_size);
         }
         
     }
