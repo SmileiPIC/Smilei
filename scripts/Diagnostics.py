@@ -1,6 +1,13 @@
 # -----------------------------------------------------------------------
 # HOW TO VIEW DIAGNOSTICS                -    F. Perez - 03/2015
 # -----------------------------------------------------------------------
+# >>>>>> Requirements
+#   python2.7 with the following packages: numpy, matplotlib, pylab, h5py
+#
+# >>>>>> First step: invoke python and load this file
+#      $ python -i Diagnostics.py
+#
+#
 #  +---------------------------+
 #  | 1 . Particle diagnostics  |
 #  +---------------------------+
@@ -22,14 +29,8 @@
 #       |   3-D    |  density   | 'x', 'y' and 'ekin' | => density map for several energy ranges.
 #       +----------+------------+---------------------+
 #
-# >>>>>> Requirements
-#   python2.7 with the following packages: numpy, matplotlib, pylab, h5py
-#
-# >>>>>> First step: invoke python and load this file
-#      $ python -i Diagnostics.py
-#
-# >>>>>> Second step: in the python shell, use the class "ParticleDiagnostic"
-#                     to create a ParticleDiagnostic object
+# >>>>>> In the python shell, use the class "ParticleDiagnostic"
+#        to create a ParticleDiagnostic object
 #
 # ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None,
 #                    units="code", data_log=False):
@@ -67,7 +68,7 @@
 #                     If True, then log10 is applied to the output array before plotting.
 #
 #
-# >>>>>> Third step: To plot the data, use the following method.
+# >>>>>> To plot the data, use the following method.
 #
 # ParticleDiagnostic(..., figure=1, data_min=None, data_max=None,
 #                         xmin=None, xmax=None, ymin=None, ymax=None) .plot()
@@ -97,12 +98,56 @@
 #   This method returns a dictionary containing the data, and the axes scales.
 #
 #
-# >>>>>> To simultaneously plot multiple diagnostics in the same figure:
+# >>>>>> Examples:
+#    ParticleDiagnostic('../test', diagNumber=1, slice={"y":"all"}, units="nice").plot(figure=1, data_min=0, data_max=3e14)
 #
-# multiPlot(diag1, diag2, ... , figure=1, shape=None)
 #
-#              diag1 = diagnostic prepared by ParticleDiagnostic(...)
-#              diag2 = diagnostic prepared by ParticleDiagnostic(...)
+#  +---------------------------+
+#  | 2 . Fields                |
+#  +---------------------------+
+#
+# You can view fields with a similar procedure:
+#
+# Field(results_path, field=None, timesteps=None, slice=None, units="code", data_log=False)
+#
+# This works almost the same way as ParticleDiagnostic(...), with some exceptions:
+#
+# - `field` must be one of "Bx_m", "By_m", "Bz_m", "Ex", "Ey", "Ez", "Jx", "Jy", "Jz",
+#   "Jx_[species]", "Jy_[species]", "Jz_[species]", "Rho" or "Rho_[species]"
+#   where [species] is the name of one of the existing species.
+#   If you omit the argument `field`, the list of available fields will be displayed.
+#   Additionally, you can write an operation instead of just one field. For instance,
+#   you can have "Jx+Jy".
+#
+# - `slice` can only accept three axes: "x", "y", "z".
+#   For instance, slice={"x":"all"}.
+#   Note that the slice does NOT calculate the sum of the axis, but the AVERAGE.
+#
+#
+#
+#  +---------------------------+
+#  | 3 . Scalars               |
+#  +---------------------------+
+#
+# For scalars, this is almost the same:
+#
+# Scalar(results_path, scalar=None, timesteps=None, units="code", data_log=False)
+#
+# - `scalar` must be an available scalar name. To get a list of available scalars, 
+#    simply omit this argument.
+#
+# - there is no more `slice` argument of course!
+#
+#
+#  +---------------------------+
+#  | 4 . Multiple diagnostics  |
+#  +---------------------------+
+# To simultaneously plot multiple diagnostics in the same figure:
+#
+# multiPlot(diag1, diag2, ... , figure=1, shape=None, **kwargs)
+#
+#              diag1 = diagnostic prepared by ParticleDiagnostic(), Field() or Scalar()
+#              diag2 = diagnostic prepared by ParticleDiagnostic(), Field() or Scalar()
 #                      ...
 #
 #            figure = _int_             (optional)
@@ -115,36 +160,7 @@
 #                      and [1, 2] makes two plots stacked horizontally.
 #                     If absent, stacks plots vertically.
 #
-# >>>>>> Examples:
-#    ParticleDiagnostic('../test', diagNumber=1, slice={"y":"all"}, units="nice").plot(figure=1, data_min=0, data_max=3e14)
-#
-#
-#  +---------------------------+
-#  | 2 . Fields                |
-#  +---------------------------+
-#
-# You can view fields with a similar procedure:
-#
-# Field(results_path, field=None, timesteps=None, slice=None,
-#       units="code", data_log=False)
-#
-# This works almost the same way as ParticleDiagnostic(...), with some exceptions:
-#
-# - `field` must be one of "Bx_m", "By_m", "Bz_m", "Ex", "Ey", "Ez", "Jx", "Jy", "Jz",
-#   "Jx_[species]", "Jy_[species]", "Jz_[species]", "Rho" or "Rho_[species]"
-#   where [species] is the name of one of the existing species.
-#   If you omit the argument `field`, the list of available fields will be displayed.
-#
-# - `slice` can only accept three axes: "x", "y", "z".
-#   For instance, slice={"x":"all"}.
-#   Note that the slice does NOT calculate the sum of the axis, but the AVERAGE.
-#
-#
-#
-#  +---------------------------+
-#  | 3 . Scalars               |
-#  +---------------------------+
-# TODO
+#            kwargs = many other keyword-arguments can be used -> refer to the doc.
 
 
 import h5py
@@ -811,10 +827,6 @@ class ParticleDiagnostic(Diagnostic):
 		if ndim>=2 and not spatialaxes["y"]: units_coeff /= ncels[1]
 		if ndim==3 and not spatialaxes["z"]: units_coeff /= ncels[2]
 		units_coeff *= coeff_density
-			
-		# Compute the total coefficient of units
-		units_operation = re.sub("#\d+",str(units_coeff),self.operation)
-		exec("units_coeff = " + units_operation) in None
 		
 		# Calculate the array that represents the bins sizes in order to get units right.
 		# This array will be the same size as the plotted array
@@ -957,7 +969,7 @@ class ParticleDiagnostic(Diagnostic):
 			A[d] /= self.bsize
 		# Calculate operation
 		data_operation = self.operation
-		for d in self.diags:
+		for d in reversed(self.diags):
 			data_operation = data_operation.replace("#"+str(d),"A["+str(d)+"]")
 		exec("A = "+data_operation) in None
 		# log scale if requested
@@ -1019,14 +1031,14 @@ class Field(Diagnostic):
 			except: return None
 			cell_length *= 1e2*wavelength_SI/(2.*np.pi) # in cm
 			cell_volume = np.prod(cell_length)
-			coeff_density = 1.11e21 / (wavelength_SI/1e-6)**2 * cell_volume
-			coeff_current = coeff_density * 4.803e-9
+			coeff_density = 1.11e21 / (wavelength_SI/1e-6)**2 * cell_volume # in e/cm^3
+			coeff_current = coeff_density * 4.803e-9 # in A/cm^2
 			self.coeff_time = timestep * wavelength_SI/3.e8 # in seconds
 			self.time_units = " s"
 		elif units == "code":
-			coeff_density = 1.
-			coeff_current = 1.
-			self.coeff_time = timestep
+			coeff_density = 1. # in nc
+			coeff_current = 1. # in e*c*nc
+			self.coeff_time = timestep # in 1/w
 			self.time_units = " 1/w"
 		
 		# Get available times
@@ -1037,22 +1049,22 @@ class Field(Diagnostic):
 		
 		# Get available fields
 		fields = self.getFields()
+		sortedfields = reversed(sorted(fields, key = len))
 		
 		# 1 - verifications, initialization
 		# -------------------------------------------------------------------
-		# Check value of field
-		if field not in fields:
-			fs = filter(lambda x:field in x, fields)
-			if len(fs)==0:		
-				print "No field `"+field+"` found in Fields.h5"
-				return
-			if len(fs)>1:
-				print "Several fields match: "+(' '.join(fs))
-				print "Please be more specific and retry."
-				return
-			field = fs[0]
-		self.fieldn = fields.index(field) # index of the requested field
-		self.fieldname = field
+		# Parse the `field` argument
+		self.operation = field
+		for f in sortedfields:
+			i = fields.index(f)
+			self.operation = self.operation.replace(f,"#"+str(i))
+		requested_fields = re.findall("#\d+",self.operation)
+		if len(requested_fields) == 0:
+			print "Could not find any existing field in `"+field+"`"
+			return None
+		self.fieldn = [ int(f[1:]) for f in requested_fields ] # indexes of the requested fields
+		self.fieldn = list(set(self.fieldn))
+		self.fieldname = [ fields[i] for i in self.fieldn ] # names of the requested fields
 		
 		# Check slice is a dict
 		if slice is not None  and  type(slice) is not dict:
@@ -1069,11 +1081,13 @@ class Field(Diagnostic):
 		# Set user's plot parameters
 		kwargs = self.setPlot(**kwargs)
 		
-		# Get the shape of field
+		# Get the shape of fields
 		self.file = results_path+'/Fields.h5'
 		f = h5py.File(self.file, 'r')
-		sample = np.double(f.values()[0].values()[self.fieldn])
-		shape = sample.shape
+		self.shape = np.double(f.values()[0].values()[0]).shape
+		for n in self.fieldn:
+			s = np.double(f.values()[0].values()[n]).shape
+			self.shape = np.min((self.shape, s), axis=0)
 		f.close()
 		
 		
@@ -1117,7 +1131,7 @@ class Field(Diagnostic):
 		self.sliceinfo = {}
 		self.slices = [None]*ndim
 		for iaxis in range(self.naxes):
-			centers = np.linspace(0., shape[iaxis]*cell_length[iaxis], shape[iaxis])
+			centers = np.linspace(0., self.shape[iaxis]*cell_length[iaxis], self.shape[iaxis])
 			label = {0:"x", 1:"y", 2:"z"}[iaxis]
 			axisunits = "[code units]"
 			if units == "nice": axisunits = "[cm]"
@@ -1125,7 +1139,7 @@ class Field(Diagnostic):
 			if label in slice:
 				# if slice is "all", then all the axis has to be summed
 				if slice[label] == "all":
-					indices = np.arange(shape[iaxis])
+					indices = np.arange(self.shape[iaxis])
 				# Otherwise, get the slice from the argument `slice`
 				else:
 					try:
@@ -1147,10 +1161,10 @@ class Field(Diagnostic):
 						self.sliceinfo.update({ label:"Sliced for "+label
 							+" from "+str(centers[indices[ 0]])+" to "+str(centers[indices[-1]])+" "+axisunits })
 				# convert the range of indices into their "conjugate"
-				self.slices[iaxis] = np.delete(np.arange(shape[iaxis]), indices)
+				self.slices[iaxis] = np.delete(np.arange(self.shape[iaxis]), indices)
 			else:
 				self.plot_type   .append(label)
-				self.plot_shape  .append(shape[iaxis])
+				self.plot_shape  .append(self.shape[iaxis])
 				self.plot_centers.append(centers)
 				self.plot_label  .append(label+" "+axisunits)
 				self.plot_log    .append(False)
@@ -1160,18 +1174,29 @@ class Field(Diagnostic):
 			return
 		
 		# Build units
-		self.fieldunits = "??"
-		self.unitscoeff = "??"
-		self.title = "??"
-		if units == "nice":
-			self.fieldunits = {"B":"T"  ,"E":"V/m"  ,"J":"A"          ,"R":"1/cm$^3$"   }[field[0]]
-			self.unitscoeff = {"B":10710,"E":3.21e12,"J":coeff_current,"R":coeff_density}[field[0]]
-			self.title      = field + "("+self.fieldunits+")"
+		self.titles = {}
+		self.fieldunits = {}
+		self.unitscoeff = {}
+		for f in self.fieldname:
+			i = fields.index(f)
+			self.fieldunits.update({ i:"??" })
+			self.unitscoeff.update({ i:1 })
+			self.titles    .update({ i:"??" })
+			if units == "nice":
+				self.fieldunits[i] = " ("+{"B":"T"  ,"E":"V/m"  ,"J":"A/cm$^2$"   ,"R":"e/cm$^3$"   }[f[0]]+")"
+				self.unitscoeff[i] =      {"B":10710,"E":3.21e12,"J":coeff_current,"R":coeff_density}[f[0]]
+				self.titles    [i] = f
+			else:
+				self.fieldunits[i] = " in units of "+{"B":"$m_e\omega/e$","E":"$m_ec\omega/e$","J":"$ecn_c$"    ,"R":"$n_c$"      }[f[0]]
+				self.unitscoeff[i] =                 {"B":1              ,"E":1               ,"J":coeff_current,"R":coeff_density}[f[0]]
+				self.titles    [i] = f
+		# finish title creation
+		if len(self.fieldname) == 1:
+			self.title = self.titles[self.fieldn[0]] + self.fieldunits[self.fieldn[0]]
 		else:
-			self.fieldunits = {"B":"$m_e\omega/e$","E":"$m_ec\omega/e$","J":"$ecn_c$","R":"$n_c$"}[field[0]]
-			self.unitscoeff = {"B":1              ,"E":1               ,"J":1        ,"R":1      }[field[0]]
-			self.title      = field + " in units of "+self.fieldunits
-		if data_log: self.title = "Log[ "+self.title+" ]"
+			self.title = self.operation
+			for n in self.fieldn:
+				self.title = self.title.replace("#"+str(n), self.titles[n])
 		
 		# Finish constructor
 		self.valid = True
@@ -1179,11 +1204,11 @@ class Field(Diagnostic):
 	# Method to print info on included fields
 	def info(self):
 		if not self.validate(): return
-		print "Field "+self.fieldname,
+		print self.title
 		#todo
 		return
 	
-	# get all available fields
+	# get all available fields, sorted by name length
 	@staticmethod
 	def getFieldsIn(results_path):
 		try:
@@ -1229,15 +1254,25 @@ class Field(Diagnostic):
 		f = h5py.File(self.file, 'r')
 		# get data
 		index = self.data[time]
-		A = np.double(f.values()[index].values()[self.fieldn])
+		C = {}
+		op = "A=" + self.operation
+		for n in reversed(self.fieldn): # for each field in operation
+			B = np.double(f.values()[index].values()[n]) # get array
+			B *= self.unitscoeff[n]
+			for axis, size in enumerate(self.shape):
+				l = np.arange(size, B.shape[axis])
+				B = np.delete(B, l, axis=axis) # remove extra cells if necessary
+			C.update({ n:B })
+			op = op.replace("#"+str(n), "C["+str(n)+"]")
 		f.close()
+		# Calculate the operation
+		exec op in None
 		# Apply the slicing
 		for iaxis in range(self.naxes):
 			if self.slices[iaxis] is None: continue
 			A = np.delete(A, self.slices[iaxis], axis=iaxis) # remove parts outside of the slice
 			A = np.mean(A, axis=iaxis, keepdims=True) # sum over the slice
 		A = np.squeeze(A) # remove sliced axes
-		A *= self.unitscoeff
 		# log scale if requested
 		if self.data_log: A = np.log10(A)
 		return A

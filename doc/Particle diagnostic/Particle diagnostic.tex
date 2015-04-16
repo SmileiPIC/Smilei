@@ -410,7 +410,8 @@ Field(results_path, field=None, timesteps=None, slice=None,
 \end{lstlisting}
 As you can see, \code{Field(...)} works almost the same way as \code{ParticleDiagnostic(...)}, with some exceptions:
 \begin{itemize}
-\item \code{field} must be one of \code{"Bx\_m"}, \code{"By\_m"}, \code{"Bz\_m"}, \code{"Ex"}, \code{"Ey"}, \code{"Ez"}, \code{"Jx"}, \code{"Jy"}, \code{"Jz"}, \code{"Jx\_\textit{species}"}, \code{"Jy\_\textit{species}"}, \code{"Jz\_\textit{species}"}, \code{"Rho"} or \code{"Rho\_\textit{species}"} where \val{species} is the name of one of the existing species. If you omit the argument \code{field}, the list of available fields will be displayed.
+\item \code{field} must be one of \code{"Bx\_m"}, \code{"By\_m"}, \code{"Bz\_m"}, \code{"Ex"}, \code{"Ey"}, \code{"Ez"}, \code{"Jx"}, \code{"Jy"}, \code{"Jz"}, \code{"Jx\_\textit{species}"}, \code{"Jy\_\textit{species}"}, \code{"Jz\_\textit{species}"}, \code{"Rho"} or \code{"Rho\_\textit{species}"} where \val{species} is the name of one of the existing species. If you omit the argument \code{field}, the list of available fields will be displayed.\\*
+You can also make operations between fields (e.g. \code{"Jx+Jy"}).
 \item \code{slice} can only accept three axes: \code{"x"}, \code{"y"}, \code{"z"}. For instance, \code{slice=\{"x":"all"\}}. Note that the slice does \textbf{not} calculate the sum of the axis, but the \textbf{average}.
 \end{itemize}
 
