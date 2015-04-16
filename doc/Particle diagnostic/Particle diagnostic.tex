@@ -2,7 +2,7 @@
 \usepackage{graphicx}
 \usepackage[margin=2cm]{geometry}
 \usepackage{fancyvrb,xcolor}
-\usepackage[urlcolor=blue,colorlinks=true]{hyperref}
+\usepackage[urlcolor=blue,linkcolor=black,colorlinks=true]{hyperref}
 \usepackage{wrapfig}
 
 \setlength\parindent{0pt}
@@ -44,11 +44,13 @@ Each dimension of the grid is called ``axis".
 \\*
 \\*
 The user may choose to average the data over several time-steps.
-
+\\*
+\setcounter{tocdepth}{1}
+\tableofcontents
 
 \clearpage
 
-\section{How to add a particle diagnostic in the input file\\* \\*}
+\section{How to add a particle diagnostic in the input file}
 In the input file, you can add a particle diagnostic with the following syntax.
 
 \begin{lstlisting}
@@ -211,12 +213,12 @@ Each diagnostic produces one file like \textit{ParticleDiagnostic0.h5}, \textit{
 are numbered the same way as the order of appearance in the input file.
 \\*
 
-A python script \textit{ParticleDiagnostic.py} is provided to view or extract data from these files.
+A python script \textit{Diagnostics.py} is provided to view or extract data from these files.
 To run this script, you will need \textit{python2.7} with the following packages: numpy, matplotlib, pylab, h5py.
 \\*
 
-First, run python and include the script: \code{python -i scripts/ParticleDiagnostic.py}\\*
-Alternately, include this file into your own script: \code{execfile("scripts/ParticleDiagnostic.py")}
+First, run python and include the script: \code{python -i scripts/Diagnostics.py}\\*
+Alternately, include this file into your own script: \code{execfile("scripts/Diagnostics.py")}
 
 \subsection{To prepare the data}
 \begin{lstlisting}
@@ -257,7 +259,7 @@ ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None,
 	Distances in microns, density in cm$^{-3}$, energy in MeV.
 
 \item \code{data\_log} = \code{True} or (\code{False})       (optional)\\*
-	If True, then $\log10$ is applied to the output array.
+	If True, then $\log_{10}$ is applied to the output array.
 \end{itemize}
 
 
@@ -313,8 +315,8 @@ ParticleDiagnostic( ... , figure=1, data_min=None, data_max=None,
 
 \textbf{Example:}
 \begin{lstlisting}
->>> ParticleDiagnostic("path/to/my/results", diagNumber=1, slice={"y":"all"},
-    units="nice").plot(figure=1,data_min=0, data_max=3e14)
+>>> ParticleDiagnostic("path/to/my/results", diagNumber=1,
+                       figure=1,data_min=0, data_max=1e14 ).plot()
 \end{lstlisting}
 This will take the diagnostic \#1, and sum the grid over all the $y$ axis. Then it will plot the resulting array in figure 1 from 0 to 3e14.
 \clearpage
@@ -398,8 +400,45 @@ and the same timesteps.\\
 \end{lstlisting}
 
 
+\clearpage
+\section{Bonus: view fields and scalars as well}
+
+SMILEI provides maps of the fields $\overrightarrow E$, $\overrightarrow B$, $\rho$ (etc.) controlled by the parameter \code{fieldDump\_every} in the input file. They are written in the file \code{Fields.h5}. The script \code{Diagnostics.py} is capable of opening and plotting these fields together with the particle diagnostics. In fact the procedure is almost the same:
+\begin{lstlisting}
+Field(results_path, field=None, timesteps=None, slice=None,
+       units="code", data_log=False)
+\end{lstlisting}
+As you can see, \code{Field(...)} works almost the same way as \code{ParticleDiagnostic(...)}, with some exceptions:
+\begin{itemize}
+\item \code{field} must be one of \code{"Bx\_m"}, \code{"By\_m"}, \code{"Bz\_m"}, \code{"Ex"}, \code{"Ey"}, \code{"Ez"}, \code{"Jx"}, \code{"Jy"}, \code{"Jz"}, \code{"Jx\_\textit{species}"}, \code{"Jy\_\textit{species}"}, \code{"Jz\_\textit{species}"}, \code{"Rho"} or \code{"Rho\_\textit{species}"} where \val{species} is the name of one of the existing species. If you omit the argument \code{field}, the list of available fields will be displayed.\\*
+You can also make operations between fields (e.g. \code{"Jx+Jy"}).
+\item \code{slice} can only accept three axes: \code{"x"}, \code{"y"}, \code{"z"}. For instance, \code{slice=\{"x":"all"\}}. Note that the slice does \textbf{not} calculate the sum of the axis, but the \textbf{average}.
+\end{itemize}
+
+In addition to fields, SMILEI outputs scalar values as a function of time in the file \code{scalars.txt}. You can plot them as well:
+\begin{lstlisting}
+Scalar(results_path, scalar=None, timesteps=None, units="code", data_log=False)
+\end{lstlisting}
+The differences are:
+\begin{itemize}
+\item \code{scalar} must be the name of an available scalar. If you omit this argument, the list of available scalar will be displayed.
+\item There is no more \code{slice} argument of course!
+\end{itemize}
 
 
+Please refer to the previous section to understand the other arguments. In addition, all the plotting arguments discussed in the previous section are available for the fields and scalars as well.\\*\\*
+
+All the functions \code{plot()}, \code{set()}, \code{get()} and \code{getData()} are also compatible with \code{Field(...)} and \code{Scalar(...)}.\\*\\*
+
+Last but not least: \code{multiPlot()} can be used to combine particle, field and scalar diagnostics on the same figure.\\*\\*
+
+\textbf{Example:}
+\begin{lstlisting}
+>>> A = Field("path/to/my/results", field="Ex")
+>>> B = ParticleDiagnostic("path/to/my/results", diagNumber=0)
+>>> C = ParticleDiagnostic("path/to/my/results", scalar="Ebalance")
+>>> multiPlot( A, B, C )
+\end{lstlisting}
 
 \clearpage
 \section{Tutorial}
@@ -425,7 +464,7 @@ $ cd ..
 
 From the same terminal, launch \textit{python} using the command
 \begin{lstlisting}
-$ python -i scripts/ParticleDiagnostic.py
+$ python -i scripts/Diagnostics.py
 \end{lstlisting}
 
 Your are now in the \textit{python} prompt.\\*
@@ -596,6 +635,7 @@ We obtain the plot of Figure \ref{Tuto8}, which is actually not very helpful bec
 \end{lstlisting}
 We obtain Figure \ref{Tuto9} which nicely shows the average $p_x$ as a function of time. This value oscillates, as we have seen previously.
 
+
 \begin{figure}[htbp]
 \centering
 \begin{minipage}[b]{.48\linewidth}
@@ -610,6 +650,9 @@ We obtain Figure \ref{Tuto9} which nicely shows the average $p_x$ as a function 
 \label{Tuto9}
 \end{minipage}
 \end{figure}
+
+
+
 
 \end{document}
 
