@@ -314,6 +314,35 @@ PicParams::PicParams(InputData &ifile) {
         tmpSpec.mvel_y_profile.vacuum_length=tmpSpec.dens_profile.vacuum_length;
         tmpSpec.mvel_z_profile.vacuum_length=tmpSpec.dens_profile.vacuum_length;
         
+	// Species mean temperature parameters
+        // ----------------
+        
+        // X : Only in 1D
+        ifile.extract("temp_x_profile", tmpSpec.temp_x_profile.profile,"species",0,n_species);
+        // species length (check DensityProfile for definitions)
+        ifile.extract("temp_x_length_x", tmpSpec.temp_x_profile.length_params_x,"species",0,n_species);
+        ifile.extract("temp_x_dbl_params", tmpSpec.temp_x_profile.double_params,"species",0,n_species);
+        ifile.extract("temp_x_int_params", tmpSpec.temp_x_profile.int_params,"species",0,n_species);
+	
+	
+        ifile.extract("temp_y_profile", tmpSpec.temp_y_profile.profile,"species",0,n_species);
+        // species length (check DensityProfile for definitions)
+        ifile.extract("temp_y_length_x", tmpSpec.temp_y_profile.length_params_x,"species",0,n_species);
+        ifile.extract("temp_y_dbl_params", tmpSpec.temp_y_profile.double_params,"species",0,n_species);
+        ifile.extract("temp_y_int_params", tmpSpec.temp_y_profile.int_params,"species",0,n_species);
+	
+	
+        ifile.extract("temp_z_profile", tmpSpec.temp_z_profile.profile,"species",0,n_species);
+        // species length (check DensityProfile for definitions)
+        ifile.extract("temp_z_length_x", tmpSpec.temp_z_profile.length_params_x,"species",0,n_species);
+        ifile.extract("temp_z_dbl_params", tmpSpec.temp_z_profile.double_params,"species",0,n_species);
+        ifile.extract("temp_z_int_params", tmpSpec.temp_z_profile.int_params,"species",0,n_species);
+	
+        tmpSpec.temp_x_profile.vacuum_length=tmpSpec.dens_profile.vacuum_length;
+        tmpSpec.temp_y_profile.vacuum_length=tmpSpec.dens_profile.vacuum_length;
+        tmpSpec.temp_z_profile.vacuum_length=tmpSpec.dens_profile.vacuum_length;
+	
+	
         species_param.push_back(tmpSpec);
  
         n_species++;

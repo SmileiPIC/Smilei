@@ -15,6 +15,7 @@
 #include "ElectroMagn.h"
 #include "DensityProfile.h"
 #include "VelocityProfile.h"
+#include "TemperatureProfile.h"
 
 class ElectroMagn;
 class Pusher;
@@ -132,6 +133,9 @@ private:
     
     //! vector of density (one per species)
     std::vector<VelocityProfile *> velocityProfile;
+    
+    //! vector of temperature (one per species)
+    std::vector<TemperatureProfile *> temperatureProfile;
     
     //! 2 times pi
     double PI2;

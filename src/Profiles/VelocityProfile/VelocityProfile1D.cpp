@@ -72,13 +72,13 @@ double VelocityProfile1D::operator() (std::vector<double> x_cell) {
         //double alpha = Bmax/nmax * (double)(N)/sigma;
         //double sigma = pow(L/2.0,N)/log(2.0);
         double x     = x_cell[0]-x0;
-	double tiny  = 1e-10*L;
+	double tiny  = 1e-3*L;
 	if (Bmax == 0.) {
 		double Bm = sqrt(pow(B0,2) + 2*P0)-B0;
 		double B  = B0 + Bm/pow(cosh(x/L),2);
 		double A  = B0*x + Bm*L*tanh(x/L);
 		double DP = P0 + pow(B0,2)/2 - pow(B,2)/2;
-		if (abs(x)<tiny) {
+		if (abs(x)<tiny) {     // X=0 -> velocity is 0 imposed here to avoid 0/0
 			return (0);
 		}
 		else {	double v     = -2*Bm/(L*n0)*tanh(x/L) /(pow(cosh(x/L),2))*exp( 2*A*Bm/L*tanh(x/L) /(DP*pow(cosh(x/L),2)) );
@@ -93,7 +93,7 @@ double VelocityProfile1D::operator() (std::vector<double> x_cell) {
 		double A  = B0*x + Bm*L*tanh(x/L);
 		double DP = P0 + pow(B0,2)/2 - pow(B,2)/2;
 		if (abs(x)<tiny) {
-			return (0);
+			return (0);    // X=0 -> velocity is 0 imposed here to avoid 0/0
 		}
 		else {	double v     = -2*Bm/(L*n0)*tanh(x/L) /(pow(cosh(x/L),2))*exp( 2*A*Bm/L*tanh(x/L) /(DP*pow(cosh(x/L),2)) );
         		//double v   = alpha * pow(x,N-1) * exp(-pow(x,N)/sigma) / (exp(-pow(x,N)/sigma)+n0/nmax);

@@ -87,7 +87,10 @@ struct SpeciesStructure {
     ProfileSpecies mvel_z_profile;
     
     
-    //! velocity profile
+    //! temperature profile
+    ProfileSpecies temp_x_profile;
+    ProfileSpecies temp_y_profile;
+    ProfileSpecies temp_z_profile;
     
 };
 
