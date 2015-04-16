@@ -199,7 +199,7 @@ int main (int argc, char* argv[])
             Timer ptimer;
             ptimer.init(smpi, "global");
             ptimer.restart();
-//            EMfields->solvePoisson(smpi);
+            EMfields->solvePoisson(smpi);
             ptimer.update();
             MESSAGE(0, "Time in Poisson : " << ptimer.getTime() );
         }
@@ -212,15 +212,21 @@ int main (int argc, char* argv[])
         MESSAGE("----------------------------------------------");
         MESSAGE("Running diags at time t = 0");
         MESSAGE("----------------------------------------------");
-        // run diagnostics at time-step 0
+// run diagnostics at time-step 0
+        Timer iotimer[1];
         Diags->runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
-        // temporary EM fields dump in Fields.h5
-        sio->writeAllFieldsSingleFileTime( EMfields, 0 );
-        // temporary EM fields dump in Fields_avg.h5
-        if (diag_params.ntime_step_avg!=0)
-           sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
-        // temporary particle dump at time 0
-        sio->writePlasma( vecSpecies, 0., smpi );
+// temporary EM fields dump in Fields.h5
+         iotimer[0].init(smpi, "WriteAllFields");
+         iotimer[0].restart();
+         sio->writeAllFieldsSingleFileTime( EMfields, 0 );
+         iotimer[0].update();
+         iotimer[0].print(iotimer[0].getTime());
+// temporary EM fields dump in Fields_avg.h5
+         if (diag_params.ntime_step_avg!=0)
+            sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
+// temporary particle dump at time 0
+//         sio->writePlasma( vecSpecies, 0., smpi );
+//
     }
     
 
