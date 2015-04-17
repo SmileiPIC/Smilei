@@ -72,7 +72,7 @@ double VelocityProfile1D::operator() (std::vector<double> x_cell) {
         //double alpha = Bmax/nmax * (double)(N)/sigma;
         //double sigma = pow(L/2.0,N)/log(2.0);
         double x     = x_cell[0]-x0;
-	double tiny  = 1e-3*L;
+	double tiny  = 1e-10*L;
 	if (Bmax == 0.) {
 		double Bm = sqrt(pow(B0,2) + 2*P0)-B0;
 		double B  = B0 + Bm/pow(cosh(x/L),2);

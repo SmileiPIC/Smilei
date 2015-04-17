@@ -68,7 +68,7 @@ double TemperatureProfile1D::operator() (std::vector<double> x_cell) {
         double x0    = prof_params.length_params_x[0];
         double L     = prof_params.length_params_x[1];
         double x     = x_cell[0]-x0;
-	double tiny  = 1e-3;
+	double tiny  = 1e-10;
 	if (Bmax == 0.) {
 		double Bm = sqrt(pow(B0,2) + 2*P0)-B0;
 		double B  = B0 + Bm/pow(cosh(x/L),2);
