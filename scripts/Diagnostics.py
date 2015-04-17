@@ -190,13 +190,20 @@ def findParam(results_path, param, after=None):
 # Method to manage Matplotlib-compatible kwargs
 def matplotlibArgs(kwargs):
 	figurekwargs   = {}
+	axeskwargs     = {}
 	plotkwargs     = {}
 	imkwargs       = {}
 	colorbarkwargs = {}
+	xtickkwargs    = {}
+	ytickkwargs    = {}
 	for kwa in kwargs:
 		val = kwargs[kwa]
 		if kwa in ["figsize","dpi","facecolor","edgecolor"]:
 			figurekwargs.update({kwa:val})
+		if kwa in ["aspect","axis_bgcolor",
+		           "frame_on","position","title","visible","xlabel","xscale","xticklabels",
+		           "xticks","ylabel","yscale","yticklabels","yticks","zorder"]:
+			axeskwargs.update({kwa:val})
 		if kwa in ["color","dashes","drawstyle","fillstyle","label","linestyle",
 		           "linewidth","marker","markeredgecolor","markeredgewidth",
 		           "markerfacecolor","markerfacecoloralt","markersize","markevery",
@@ -208,7 +215,13 @@ def matplotlibArgs(kwargs):
 		           "extend","extendfrac","extendrect","spacing","ticks","format",
 		           "drawedges"]:
 			colorbarkwargs.update({kwa:val})
-	return figurekwargs, plotkwargs, imkwargs, colorbarkwargs
+		if kwa in ["style_x","scilimits_x","useOffset_x"]:
+			xtickkwargs.update({kwa[:-2]:val})
+		if kwa in ["style_y","scilimits_y","useOffset_y"]:
+			ytickkwargs.update({kwa[:-2]:val})
+	# special case: "aspect" is ambiguous because it exists for both imshow and colorbar
+	if "cbaspect" in kwargs: self.colorbarkwargs.update({"aspect":kwargs["cbaspect"]})
+	return figurekwargs, axeskwargs, plotkwargs, imkwargs, colorbarkwargs, xtickkwargs, ytickkwargs
 
 
 # -------------------------------------------------------------------
@@ -350,11 +363,12 @@ class Diagnostic(object):
 		#  depending on the type: figure, plot, image, colorbar.
 		args = matplotlibArgs(kwargs)
 		self.figurekwargs  .update(args[0])
-		self.plotkwargs    .update(args[1])
-		self.imkwargs      .update(args[2])
-		self.colorbarkwargs.update(args[3])
-		# special case: "aspect" is ambiguous because it exists for both imshow and colorbar
-		if "cbaspect" in kwargs: self.colorbarkwargs.update({"aspect":kwargs["cbaspect"]})
+		self.axeskwargs    .update(args[1])
+		self.plotkwargs    .update(args[2])
+		self.imkwargs      .update(args[3])
+		self.colorbarkwargs.update(args[4])
+		self.xtickkwargs   .update(args[5])
+		self.ytickkwargs   .update(args[6])
 		return kwargs
 	def set(self, **kwargs):
 		kwargs = self.setPlot(**kwargs)
@@ -369,9 +383,12 @@ class Diagnostic(object):
 		self.ymin     = None
 		self.ymax     = None
 		self.figurekwargs = {}
+		self.axeskwargs = {}
 		self.plotkwargs = {}
 		self.imkwargs = {"interpolation":"nearest", "aspect":"auto"}
 		self.colorbarkwargs = {}
+		self.xtickkwargs = {}
+		self.ytickkwargs = {}
 	
 	# Method to obtain the plot limits
 	def limits(self):
@@ -468,6 +485,9 @@ class Diagnostic(object):
 		if self.xmin is not None: ax.set_xlim(xmin=self.xmin)
 		if self.xmax is not None: ax.set_xlim(xmax=self.xmax)
 		if self.title is not None: ax.set_title(self.title)
+		ax.set(**self.axeskwargs)
+		ax.ticklabel_format(axis="x",**self.xtickkwargs)
+		ax.ticklabel_format(axis="y",**self.ytickkwargs)
 		return im
 	
 	# If the sliced data has 0 dimension, this function can plot it 
@@ -484,6 +504,9 @@ class Diagnostic(object):
 		if self.data_min is not None: ax.set_ylim(ymin=self.data_min)
 		if self.data_max is not None: ax.set_ylim(ymax=self.data_max)
 		if self.title is not None: ax.set_title(self.title)
+		ax.set(**self.axeskwargs)
+		ax.ticklabel_format(axis="x",**self.xtickkwargs)
+		ax.ticklabel_format(axis="y",**self.ytickkwargs)
 		return im
 	
 
@@ -829,7 +852,9 @@ class ParticleDiagnostic(Diagnostic):
 		
 		# Calculate the array that represents the bins sizes in order to get units right.
 		# This array will be the same size as the plotted array
-		if len(plot_diff)==1:
+		if len(plot_diff)==0:
+			self.bsize = 1.
+		elif len(plot_diff)==1:
 			self.bsize = plot_diff[0]
 		else:
 			self.bsize = np.prod( np.array( np.meshgrid( *plot_diff ) ), axis=0)

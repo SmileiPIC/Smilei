@@ -3,6 +3,7 @@
 \usepackage[margin=2cm]{geometry}
 \usepackage{fancyvrb,xcolor}
 \usepackage[urlcolor=blue,linkcolor=black,colorlinks=true]{hyperref}
+\urlstyle{rm}
 \usepackage{wrapfig}
 
 \setlength\parindent{0pt}
@@ -359,7 +360,11 @@ more optional arguments for the function \code{ParticleDiagnostic(...)}. They ar
 \begin{itemize}
 \item Options for the figure: \code{figsize},\code{dpi},\code{facecolor},\code{edgecolor}\\
 	Please refer to \url{http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.figure}
-\item Options for the lines: \code{color},\code{dashes},\code{drawstyle},\code{fillstyle},\code{label},\code{linestyle},\code{linewidth},\\\code{marker},\code{markeredgecolor},\code{markeredgewidth},\code{markerfacecolor},	\code{markerfacecoloralt},\\
+\item Options for the axes frame: \code{aspect}, \code{axis\_bgcolor}, \code{frame\_on}, \code{position}, \code{title}, \code{visible},\\
+	\code{xlabel}, \code{xscale}, \code{xticklabels}, \code{xticks}, \code{ylabel}, \code{yscale}, \code{yticklabels}, \code{yticks}, \code{zorder}\\
+	Please refer to \url{http://matplotlib.org/api/axes_api.html#matplotlib.axes.Axes.set}
+\item Options for the lines: \code{color},\code{dashes},\code{drawstyle},\code{fillstyle},\code{label},\code{linestyle},\code{linewidth},\\
+	\code{marker},\code{markeredgecolor},\code{markeredgewidth},\code{markerfacecolor},	\code{markerfacecoloralt},\\
 	\code{markersize},\code{markevery},	\code{visible},\code{zorder}\\
 	Please refer to \url{http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.plot}
 \item Options for the image: \code{cmap},\code{aspect},\code{interpolation}\\
@@ -367,6 +372,8 @@ more optional arguments for the function \code{ParticleDiagnostic(...)}. They ar
 \item Options for the colorbar: \code{cbaspect}, \code{orientation},\code{fraction},\code{pad},\code{shrink},\code{anchor},\code{panchor},\\
 	\code{extend},\code{extendfrac},\code{extendrect},\code{spacing},\code{ticks},\code{format},\code{drawedges}\\
 	Please refer to \url{http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.colorbar}
+\item Options for the tick labels: \code{style\_x}, \code{scilimits\_x}, \code{useOffset\_x}, \code{style\_y}, \code{scilimits\_y}, \code{useOffset\_y}\\
+	Please refer to \url{http://matplotlib.org/api/axes_api.html#matplotlib.axes.Axes.ticklabel_format}
 \end{itemize}
 \textbf{Example:}\\
 To choose a gray colormap of the image, use \code{cmap="gray"}.
