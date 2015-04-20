@@ -382,13 +382,13 @@ class Diagnostic(object):
 		self.xmax     = None
 		self.ymin     = None
 		self.ymax     = None
-		self.figurekwargs = {}
+		self.figurekwargs = {"facecolor":"w"}
 		self.axeskwargs = {}
 		self.plotkwargs = {}
 		self.imkwargs = {"interpolation":"nearest", "aspect":"auto"}
 		self.colorbarkwargs = {}
-		self.xtickkwargs = {}
-		self.ytickkwargs = {}
+		self.xtickkwargs = {"useOffset":False}
+		self.ytickkwargs = {"useOffset":False}
 	
 	# Method to obtain the plot limits
 	def limits(self):
@@ -552,7 +552,7 @@ class ParticleDiagnostic(Diagnostic):
 			ndim               = self.read_ndim()
 			sim_units          = self.read_sim_units()
 			ncels, cell_length = self.read_ncels_cell_length(ndim, sim_units)
-			timestep           = self.read_timestep(sim_units)
+			self.timestep           = self.read_timestep(sim_units)
 			cell_size = {"x":cell_length[0]}
 			if ndim>1: cell_size.update({"y":cell_length[1]})
 			if ndim>2: cell_size.update({"z":cell_length[2]})
@@ -564,13 +564,13 @@ class ParticleDiagnostic(Diagnostic):
 			except: return None
 			coeff_density = 1.11e21 / (wavelength_SI/1e-6)**2 # nc in cm^-3
 			coeff_energy = 0.511
-			self.coeff_time = timestep * wavelength_SI/3.e8 # in seconds
+			self.coeff_time = self.timestep * wavelength_SI/3.e8 # in seconds
 			self.time_units = " s"
 		elif units == "code":
 			coeff_density = 1.
 			coeff_energy = 1.
-			self.coeff_time = timestep
-			self.time_units = " 1/w"
+			self.coeff_time = self.timestep
+			self.time_units = " $1/\omega$"
 		else:
 			print "Units type '"+units+"' not recognized. Use 'code' or 'nice'"
 			return None
@@ -1043,7 +1043,7 @@ class Field(Diagnostic):
 			ndim               = self.read_ndim()
 			sim_units          = self.read_sim_units()
 			ncels, cell_length = self.read_ncels_cell_length(ndim, sim_units)
-			timestep           = self.read_timestep(sim_units)
+			self.timestep      = self.read_timestep(sim_units)
 		except:
 			return None
 		
@@ -1054,13 +1054,13 @@ class Field(Diagnostic):
 			cell_volume = np.prod(cell_length)
 			coeff_density = 1.11e21 / (wavelength_SI/1e-6)**2 * cell_volume # in e/cm^3
 			coeff_current = coeff_density * 4.803e-9 # in A/cm^2
-			self.coeff_time = timestep * wavelength_SI/3.e8 # in seconds
+			self.coeff_time = self.timestep * wavelength_SI/3.e8 # in seconds
 			self.time_units = " s"
 		elif units == "code":
 			coeff_density = 1. # in nc
 			coeff_current = 1. # in e*c*nc
-			self.coeff_time = timestep # in 1/w
-			self.time_units = " 1/w"
+			self.coeff_time = self.timestep # in 1/w
+			self.time_units = " $1/\omega$"
 		
 		# Get available times
 		self.times = self.getAvailableTimesteps()
@@ -1341,18 +1341,19 @@ class Scalar(Diagnostic):
 		# Get info from the input file and prepare units
 		try:
 			sim_units          = self.read_sim_units()
-			self.timestep      = self.read_timestep("")
+			self.timestep      = self.read_timestep(sim_units)
+			self.timestepbis   = self.read_timestep("")
 		except:
 			return None
 		
 		if units == "nice":
 			try   : wavelength_SI = self.read_wavelength_SI()
 			except: return None
-			self.coeff_time = self.timestep * wavelength_SI/3.e8/(2.*np.pi) # in seconds
+			self.coeff_time = self.timestepbis * wavelength_SI/3.e8/(2.*np.pi) # in seconds
 			self.time_units = " s"
 		elif units == "code":
-			self.coeff_time = self.timestep
-			self.time_units = " 1/w"
+			self.coeff_time = self.timestepbis
+			self.time_units = " $1/\omega$"
 		if sim_units == "wavelength": self.coeff_time *= 2. * np.pi
 		
 		# Get available scalars
@@ -1392,7 +1393,7 @@ class Scalar(Diagnostic):
 			line = line.strip()
 			if line[0]=="#": continue
 			line = line.split()
-			self.times .append( int( float(line[0]) / self.timestep ) )
+			self.times .append( int( float(line[0]) / self.timestepbis ) )
 			self.values.append( float(line[self.scalarn+1]) )
 		self.times  = np.array(self.times )
 		self.values = np.array(self.values)
@@ -1512,7 +1513,7 @@ def multiPlot(*Diags, **kwargs):
 	for Diag in Diags:
 		if not Diag.validate(): return
 	# Gather all times
-	alltimes = np.unique(np.concatenate([Diag.times for Diag in Diags]))
+	alltimes = np.concatenate([Diag.times*Diag.timestep for Diag in Diags])
 	# Get keyword arguments
 	figure = kwargs.pop("figure", 1)
 	shape  = kwargs.pop("shape" , None)
@@ -1571,12 +1572,13 @@ def multiPlot(*Diags, **kwargs):
 		# Loop all times
 		for time in alltimes:
 			for Diag in Diags:
-				if time in Diag.times:
+				t = np.round(time/Diag.timestep) # convert time to timestep
+				if t in Diag.times:
 					if sameAxes:
 						if Diag.artist is not None: Diag.artist.remove()
 					else:
 						Diag.ax.cla()
-					Diag.artist = Diag.animateOnAxes(Diag.ax, time)
+					Diag.artist = Diag.animateOnAxes(Diag.ax, t)
 					if sameAxes:
 						Diag.ax.set_xlim(xmin,xmax)
 			fig.canvas.draw()
