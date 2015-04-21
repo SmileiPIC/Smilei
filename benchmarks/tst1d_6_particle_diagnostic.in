@@ -83,7 +83,7 @@ species
 	dens_length_x   = 1000. 1000. 1000.
 	initPosition_type = random
 	initMomentum_type = maxwell-juettner
-	n_part_per_cell = 10000
+	n_part_per_cell = 2000
 	c_part_max = 1.0
 	mass = 1836.0
 	charge = 1.0
@@ -102,7 +102,7 @@ species
 	dens_length_x   = 1000. 1000. 1000.
 	initPosition_type = random
 	initMomentum_type = maxwell-juettner
-	n_part_per_cell= 10000
+	n_part_per_cell= 2000
 	c_part_max = 1.0
 	mass = 1.0
 	charge = -1.0
@@ -205,9 +205,18 @@ diagnostic particles
 end
 
 diagnostic particles
+	output = px_density
+	every = 4
+	time_average = 2
+	species = electron1
+	axis = x    0    1.   100
+	axis = vx  -0.1  0.1    100
+end
+
+diagnostic particles
 	output = density
-	every = 10
-	time_average = 5
+	every = 1
+	time_average = 1
 	species = electron1
 	axis = ekin  0.0001  0.1 100 logscale edge_inclusive
 end

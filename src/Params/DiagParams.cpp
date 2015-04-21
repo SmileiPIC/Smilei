@@ -268,15 +268,12 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
             tmpAxis->logscale = false;
             tmpAxis->edge_inclusive = false;
             for(unsigned int i=4; i<axis.size(); i++) {
-                if(axis[i]=="logscale" ||  axis[i]=="log_scale" || axis[i]=="log") {
-                        tmpAxis->logscale = true;
-                        break;
-                }
-                if(axis[i]=="edges" ||  axis[i]=="edge" ||  axis[i]=="edge_inclusive" ||  axis[i]=="edges_inclusive") {
-                        tmpAxis->edge_inclusive = true;
-                        break;
-                }
-                ERROR("Diagnotic Particles #" << n_diag_particles << ": keyword `" << axis[i] << "` not understood");
+                if(axis[i]=="logscale" ||  axis[i]=="log_scale" || axis[i]=="log")
+                    tmpAxis->logscale = true;
+                else if(axis[i]=="edges" ||  axis[i]=="edge" ||  axis[i]=="edge_inclusive" ||  axis[i]=="edges_inclusive")
+                    tmpAxis->edge_inclusive = true;
+                else
+                    ERROR("Diagnotic Particles #" << n_diag_particles << ": keyword `" << axis[i] << "` not understood");
             }
             // If the axis is spatial, then we need to apply the conv_fac
             if (axis[0]=="x" || axis[0]=="y" || axis[0]=="z") {
