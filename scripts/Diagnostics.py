@@ -257,12 +257,14 @@ class Diagnostic(object):
 		try:
 			sim_length = findParam(self.results_path, "sim_length")
 			sim_length = np.double(sim_length.split())
+			if sim_length.size==0: raise
 		except:
 			print "Could not extract 'sim_length' from the input file"
 			raise
 		try:
 			cell_length = findParam(self.results_path, "cell_length")
 			cell_length = np.double(cell_length.split())
+			if cell_length.size==0: raise
 		except:
 			try:
 				res_space = findParam(self.results_path, "res_space")
@@ -1513,7 +1515,7 @@ def multiPlot(*Diags, **kwargs):
 	for Diag in Diags:
 		if not Diag.validate(): return
 	# Gather all times
-	alltimes = np.concatenate([Diag.times*Diag.timestep for Diag in Diags])
+	alltimes = np.unique(np.concatenate([Diag.times*Diag.timestep for Diag in Diags]))
 	# Get keyword arguments
 	figure = kwargs.pop("figure", 1)
 	shape  = kwargs.pop("shape" , None)
@@ -1548,7 +1550,7 @@ def multiPlot(*Diags, **kwargs):
 	xmax = -float("inf")
 	c = plt.matplotlib.rcParams['axes.color_cycle']
 	for i in range(nplots):
-		ax.append( fig.add_subplot(shape[0], shape[1], i) )
+		ax.append( fig.add_subplot(shape[0], shape[1], i+1) )
 	for i, Diag in enumerate(Diags):
 		if sameAxes: Diag.ax = ax[0]
 		else       : Diag.ax = ax[i]
