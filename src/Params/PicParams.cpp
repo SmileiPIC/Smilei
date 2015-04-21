@@ -128,6 +128,9 @@ PicParams::PicParams(InputData &ifile) {
         ERROR("Dimension of sim_length ("<< sim_length.size() << ") != " << nDim_field << " for geometry " << geometry);
     }
     
+    // time during which fields are frozen
+    time_fields_frozen = 0.;
+    ifile.extract("time_fields_frozen", time_fields_frozen);
     
     //! Boundary conditions for ElectroMagnetic Fields
     if ( !ifile.extract("bc_em_type_long", bc_em_type_long)  ) {
@@ -381,6 +384,9 @@ void PicParams::compute()
     // simulation time & time-step value
     timestep = conv_fac/res_time;
     sim_time = (double)(n_time) * timestep;
+    
+    // time during which fields are frozen
+    time_fields_frozen *= conv_fac;
     
     // time after which the moving-window is turned on
     t_move_win *= conv_fac;

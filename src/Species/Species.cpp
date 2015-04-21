@@ -211,6 +211,7 @@ void Species::initCharge(PicParams* params, unsigned int ispec, unsigned int iPa
 void Species::initPosition(unsigned int np, unsigned int iPart, double *indexes, unsigned int ndim,
                            std::vector<double> cell_length, string initPosition_type)
 {
+
     for (unsigned  p= iPart; p<iPart+np; p++) {
         for (unsigned  i=0; i<ndim ; i++) {
             
@@ -219,6 +220,7 @@ void Species::initPosition(unsigned int np, unsigned int iPart, double *indexes,
                 particles.position(i,p)=indexes[i]+(p-iPart+0.5)*cell_length[i]/np;
 		    } else if (initPosition_type == "random") {
                 particles.position(i,p)=indexes[i]+(((double)rand() / RAND_MAX))*cell_length[i];
+
 		    }
 		    particles.position_old(i,p) = particles.position(i,p);
 		}// i
@@ -292,7 +294,27 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
 		    }
 		}
 		
-    }//END if initMomentum_type
+
+        // TEMPORARY TEST                    +--------------+
+        // Anisotropic distribution          | DO NOT MERGE |
+        // WORKS ONLY IF NON-RELATIVISTIC    +--------------+
+        for (unsigned int p= iPart; p<iPart+np; p++) {
+            particles.momentum(1,p) *= sqrt(temp[1]/temp[0]);
+            particles.momentum(2,p) *= sqrt(temp[2]/temp[0]);
+        }
+        
+    // TEMPORARY TEST                    +--------------+
+    // Boxcar distribution along x       | DO NOT MERGE |
+    //                                   +--------------+
+    } else if (initialization_type == "boxcar") {
+        
+        for (unsigned int p= iPart; p<iPart+np; p++) {
+            particles.momentum(0,p) = (2.*(double)rand() / RAND_MAX - 1.) * sqrt(temp[0]/species_param.mass);
+            particles.momentum(1,p) = 0.;
+            particles.momentum(2,p) = 0.;
+        }
+        
+    }//END if initialization_type
     
     
     // Adding the mean velocity (using relativistic composition)

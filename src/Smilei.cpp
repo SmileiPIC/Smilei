@@ -31,6 +31,7 @@
 #include "SmileiIOFactory.h"
 
 #include "SpeciesFactory.h"
+#include "CollisionsFactory.h"
 #include "ElectroMagnFactory.h"
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
@@ -134,6 +135,10 @@ int main (int argc, char* argv[])
     // vector of Species (virtual)
     vector<Species*> vecSpecies = SpeciesFactory::createVector(params, smpi);
 
+    // Initialize the collisions (vector of collisions)
+    // ------------------------------------------------------------------------------------
+    vector<Collisions*> vecCollisions = CollisionsFactory::create(params, input_data, vecSpecies);
+    
     // ----------------------------------------------------------------------------
     // Define Moving Window & restart
     // ----------------------------------------------------------------------------
@@ -285,6 +290,14 @@ int main (int argc, char* argv[])
         EMfields->restartRhoJ();
         
         
+        // apply collisions if requested
+        // -----------------------------
+        if (Collisions::debye_length_required)
+            Collisions::calculate_debye_length(params,vecSpecies);
+        for (unsigned int icoll=0 ; icoll<vecCollisions.size(); icoll++)
+            vecCollisions[icoll]->collide(params,vecSpecies);
+        
+        
         // apply the PIC method
         // --------------------
         // for all particles of all species (see dynamic in Species.cpp)
@@ -317,22 +330,27 @@ int main (int argc, char* argv[])
         }
         timer[1].update();
         
-	//!\todo To simplify : sum global and per species densities
-        timer[4].restart();
-        smpi->sumRhoJ( EMfields );
-        for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-            if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ) smpi->sumRhoJs(EMfields, ispec, time_dual > params.species_param[ispec].time_frozen);
+        
+        if( time_dual > params.time_fields_frozen ) {
+            
+            //!\todo To simplify : sum global and per species densities
+            timer[4].restart();
+            smpi->sumRhoJ( EMfields );
+            for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
+                if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ) smpi->sumRhoJs(EMfields, ispec, time_dual > params.species_param[ispec].time_frozen);
+            }
+            EMfields->computeTotalRhoJ();
+            timer[4].update();
+            
+            // solve Maxwell's equations
+            timer[2].restart();
+            EMfields->solveMaxwell(itime, time_dual, smpi, params, simWindow);
+            timer[2].update();
+            
+            // incrementing averaged electromagnetic fields
+            if (diag_params.ntime_step_avg) EMfields->incrementAvgFields(itime, diag_params.ntime_step_avg);
+            
         }
-        EMfields->computeTotalRhoJ();
-        timer[4].update();
-        
-        // solve Maxwell's equations
-        timer[2].restart();
-        EMfields->solveMaxwell(itime, time_dual, smpi, params, simWindow);
-        timer[2].update();
-        
-        // incrementing averaged electromagnetic fields
-        if (diag_params.ntime_step_avg) EMfields->incrementAvgFields(itime, diag_params.ntime_step_avg);
         
         // call the various diagnostics
         // ----------------------------

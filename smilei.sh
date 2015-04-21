@@ -39,6 +39,7 @@ do
     cd $dir
     $MPIEXEC -np $proc $smilei `basename $nml`
     cd ..
+    mv $dir `dirname $nml`
 done
 # echo ${outDirs}
 # $DIRSMILEI/../scripts/TPUPMC/smileiQt.py ${outDirs}
