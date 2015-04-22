@@ -216,7 +216,7 @@ int main (int argc, char* argv[])
 	    MESSAGE("Solving Poisson at time t = 0");
 	    MESSAGE("... But Poisson and Patch = pb, comm collective ! ");
 	    MESSAGE("----------------------------------------------");    
-	    EMfields->solvePoisson(smpi);
+	    //EMfields->solvePoisson(smpi);
 	}
         
         
@@ -336,9 +336,11 @@ int main (int argc, char* argv[])
 		    }
 		    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 			vecPatches[ipatch]->finalizeCommParticles(smpi, ispec, params, 100, 100);
+			vecPatches[ipatch]->vecSpecies[ispec]->sort_part();
 		    }
 		}
 	    }
+#ifdef _PARTSOVERMPI
 	    // Inter MPI exchange
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
                 if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
@@ -349,14 +351,15 @@ int main (int argc, char* argv[])
 
                         #pragma omp barrier
                         vecSpecies[ispec]->sort_part();
-                        if (itime%200 == 0) {
+                        /*if (itime%200 == 0) {
                             #pragma omp master
                             {
                                 vecSpecies[ispec]->count_sort_part(params);
                             }
-                        }
+                        }*/
                 }
             }
+#endif
         timer[1].update();
         timer[4].restart();
         if  (diag_flag) {

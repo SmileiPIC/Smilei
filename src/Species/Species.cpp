@@ -469,7 +469,8 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
 				
                 // Interpolate the fields at the particle position
-                (*LocInterp)(EMfields, *particles, iPart, &Epart, &Bpart);
+                //(*LocInterp)(EMfields, *particles, iPart, &Epart, &Bpart);
+                (*Interp)(EMfields, *particles, iPart, &Epart, &Bpart);
 				
                 // Do the ionization
                 if (Ionize && (*particles).charge(iPart) < (int) species_param.atomic_number) {

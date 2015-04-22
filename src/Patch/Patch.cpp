@@ -33,6 +33,7 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
 	Pcoordinates[1] = ipatch%m1;
 	Pcoordinates[0] = ipatch/m1 ;
 	//std::cout << "Coordonnées de " << ipatch << " : " << Pcoordinates[0] << " " << Pcoordinates[1] << std::endl;
+	nbNeighbors_ = 2;
 	neighbor_.resize(params.nDim_field);
 	for ( int iDim = 0 ; iDim < params.nDim_field ; iDim++ ) {
 	    neighbor_[iDim].resize(2,-2);
@@ -62,6 +63,81 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
 	    }
 	  }
 	}
+
+
+	if ( (neighbor_[1][0]>=0) && (neighbor_[0][0]>=0) )
+	    corner_neighbor_[0][0] = neighbor_[0][0]-1;
+	else 
+	    corner_neighbor_[0][0] = MPI_PROC_NULL;
+
+	if ( (neighbor_[1][0]>=0) && (neighbor_[0][1]>=0) )
+	    corner_neighbor_[1][0] = neighbor_[0][1]-1;
+	else 
+	    corner_neighbor_[1][0] = MPI_PROC_NULL;
+
+	if ( (neighbor_[1][1]>=0) && (neighbor_[0][0]>=0) )
+	    corner_neighbor_[0][1] = neighbor_[0][0]+1;
+	else 
+	    corner_neighbor_[0][1] = MPI_PROC_NULL;
+
+	if ( (neighbor_[0][1]>=0) && (neighbor_[1][1]>=0) )
+	    corner_neighbor_[1][1] = neighbor_[0][1]+1;   
+	else
+	    corner_neighbor_[1][1] = MPI_PROC_NULL;   
+
+	//cout << Pcoordinates[0] << " " << Pcoordinates[1] << endl;
+	//cout << number_of_procs[0] << " " << m1 << endl;
+
+	// Must be completed in really MPI context
+	if ( (params.bc_em_type_trans=="periodic") ) {
+	    if (Pcoordinates[1]==0) {
+		if (Pcoordinates[0]!=0)
+		    corner_neighbor_[0][0] = neighbor_[1][0]-m1;
+		if (Pcoordinates[0]!=m0-1)
+		    corner_neighbor_[1][0] = neighbor_[1][0]+m1;
+	    }
+	    else if (Pcoordinates[1]==m1-1) {
+		if (Pcoordinates[0]!=0)
+		    corner_neighbor_[0][1] = neighbor_[1][1]-m1;
+		if (Pcoordinates[0]!=m0-1)
+		    corner_neighbor_[1][1] = neighbor_[1][1]+m1;
+	    }
+	}
+	if ( (params.bc_em_type_long=="periodic") ) {
+	    if (Pcoordinates[0]==0) {
+		if (Pcoordinates[1]!=0)
+		    corner_neighbor_[0][0] = neighbor_[0][0]-1;
+		if (Pcoordinates[1]!=m0-1) {
+		    corner_neighbor_[0][1] = neighbor_[0][0]+1;
+		}
+	    }
+	    else if (Pcoordinates[0]==m0-1) {
+		if (Pcoordinates[1]!=0)
+		    corner_neighbor_[1][0] = neighbor_[0][1]-1;
+		if (Pcoordinates[1]!=m0-1)
+		    corner_neighbor_[1][1] = neighbor_[0][1]+1;
+	    }
+	}
+
+	if ( (params.bc_em_type_trans=="periodic") && (params.bc_em_type_long=="periodic") ) {
+	    if ((Pcoordinates[0]==0) && (Pcoordinates[1]==0) )
+		corner_neighbor_[0][0] = m0*m1-1;
+	    if ((Pcoordinates[0]==0) && (Pcoordinates[1]==m1-1) )
+		corner_neighbor_[0][1] = (m0-1)*m1;
+	    if ((Pcoordinates[0]==m0-1) && (Pcoordinates[1]==0) )
+		corner_neighbor_[1][0] = (m1-1);
+	    if ((Pcoordinates[0]==m0-1) && (Pcoordinates[1]==m1-1) )
+		corner_neighbor_[1][1] = 0;
+	}
+
+	/* OK
+	cout << "\n\tCorner decomp : " << corner_neighbor_[0][1] << "\t" << neighbor_[1][1]  << "\t" << corner_neighbor_[1][1] << endl;
+	cout << "\tCorner decomp : " << neighbor_[0][0] << "\t" << hindex << "\t" << neighbor_[0][1] << endl;
+	cout << "\tCorner decomp : " << corner_neighbor_[0][0] << "\t" << neighbor_[1][0]  << "\t" << corner_neighbor_[1][0] << endl;
+	*/
+
+
+
 	
 	//std::cout << "Voisin dir 0 : " << ipatch << " : " <<  neighbor_[0][0] << " " <<  neighbor_[0][1] << std::endl;
 	//std::cout << "Voisin dir 1 : " << ipatch << " : " <<  neighbor_[1][0] << " " <<  neighbor_[1][1] << std::endl;
@@ -73,6 +149,7 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
 	    min_local[i] = smpi->getDomainLocalMin(i) + Pcoordinates[i]*params.n_space[i]*params.cell_length[i];
 	    max_local[i] = min_local[i] + params.n_space[i]*params.cell_length[i];
 	    cell_starting_global_index[i] += Pcoordinates[i]*params.n_space[i];
+	    cell_starting_global_index[i] -= params.oversize[i];
 	}
 
 	std::cout << "Create patch\n\n";
@@ -494,7 +571,7 @@ void Patch::exchParticles(SmileiMPI* smpi, int ispec, PicParams &params, int tid
         diagonalParticles.initialize(0,cuParticles.dimension());     
 
 	// A définir : buff_index_send
-	int nbNeighbors_(2);
+	nbNeighbors_ = 2;
 	std::vector<int> buff_index_send[nbNeighbors_];
 	int buff_index_recv_sz[nbNeighbors_];
 	for (int i=0 ; i<nbNeighbors_ ; i++) {
@@ -1014,32 +1091,32 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, int
 
 	if ( cuParticles.position(0,iPart) < min_local[0]) { 
 	    if ( cuParticles.position(1,iPart) < min_local[1]) {
-		vecSpecies[ispec]->specMPI.corner_buff_index_send[0][0].push_back( (*indexes_of_particles_to_exchange)[i] );
+		vecSpecies[ispec]->specMPI.corner_buff_index_send[0][0].push_back( iPart );
 	    }
 	    else if ( cuParticles.position(1,iPart) >= max_local[1]) {
-		vecSpecies[ispec]->specMPI.corner_buff_index_send[0][1].push_back( (*indexes_of_particles_to_exchange)[i] );
+		vecSpecies[ispec]->specMPI.corner_buff_index_send[0][1].push_back( iPart );
 	    }
 	    else {
-		vecSpecies[ispec]->specMPI.patch_buff_index_send[0][0].push_back( (*indexes_of_particles_to_exchange)[i] );
+		vecSpecies[ispec]->specMPI.patch_buff_index_send[0][0].push_back( iPart );
 	    }
 	}
 	else if ( cuParticles.position(0,iPart) >= max_local[0]) { 
 	    if ( cuParticles.position(1,iPart) < min_local[1]) {
-		vecSpecies[ispec]->specMPI.corner_buff_index_send[1][0].push_back( (*indexes_of_particles_to_exchange)[i] );
+		vecSpecies[ispec]->specMPI.corner_buff_index_send[1][0].push_back( iPart );
 	    }
 	    else if ( cuParticles.position(1,iPart) >= max_local[1]) {
-		vecSpecies[ispec]->specMPI.corner_buff_index_send[1][1].push_back( (*indexes_of_particles_to_exchange)[i] );
+		vecSpecies[ispec]->specMPI.corner_buff_index_send[1][1].push_back( iPart );
 	    }
 	    else {
-		vecSpecies[ispec]->specMPI.patch_buff_index_send[0][1].push_back( (*indexes_of_particles_to_exchange)[i] );
+		vecSpecies[ispec]->specMPI.patch_buff_index_send[0][1].push_back( iPart );
 	    }
 	}
 	else {
 	    if ( cuParticles.position(1,iPart) < min_local[1]) {
-		vecSpecies[ispec]->specMPI.patch_buff_index_send[1][0].push_back( (*indexes_of_particles_to_exchange)[i] );
+		vecSpecies[ispec]->specMPI.patch_buff_index_send[1][0].push_back( iPart );
 	    }
 	    else if ( cuParticles.position(1,iPart) >= max_local[1]) {
-		vecSpecies[ispec]->specMPI.patch_buff_index_send[1][1].push_back( (*indexes_of_particles_to_exchange)[i] );
+		vecSpecies[ispec]->specMPI.patch_buff_index_send[1][1].push_back( iPart );
 	    }
 	    else {
 		//If partciles is in but here, to be suppressed (= supp BC)
@@ -1054,13 +1131,23 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, int
 	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
 	    if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
 		n_part_send = (vecSpecies[ispec]->specMPI.patch_buff_index_send[iDim][iNeighbor]).size();
-		MPI_Isend( &n_part_send, 1, MPI_INT, neighbor_[iDim][iNeighbor], ispec, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.patch_srequest[iDim][iNeighbor]) );
+		stringstream stag("");
+		stag << "9" << hindex << "00" << neighbor_[iDim][iNeighbor];
+		int tag(0);
+		stag >> tag; // Should had ispec ?
+		MPI_Isend( &n_part_send, 1, MPI_INT, 0, tag, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.patch_srequest[iDim][iNeighbor]) );
+		cout << hindex << " will sent " << n_part_send << " to " << neighbor_[iDim][iNeighbor] << " with tag " << tag << endl;
 	    } // END of Send
 	    else
 		n_part_send = 0;
 	    if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
 		vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2] = 0;
-		MPI_Irecv( &(vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2]), 1, MPI_INT, neighbor_[iDim][(iNeighbor+1)%2], ispec, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]) );
+		stringstream stag("");
+		stag << "9" << neighbor_[iDim][(iNeighbor+1)%2] << "00" << hindex;
+		int tag(0);
+		stag >> tag; // Should had ispec ?
+		MPI_Irecv( &(vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2]), 1, MPI_INT, 0, tag, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]) );
+		cout << hindex << " will recv from " << neighbor_[iDim][(iNeighbor+1)%2] << " with tag " << tag << endl;
 	    }
 	    else 
 		vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2] = 0;
@@ -1070,13 +1157,23 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, int
 	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
 	    if (corner_neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
 		n_part_send = (vecSpecies[ispec]->specMPI.corner_buff_index_send[iDim][iNeighbor]).size();
-		MPI_Isend( &n_part_send, 1, MPI_INT, corner_neighbor_[iDim][iNeighbor], ispec, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.corner_srequest[iDim][iNeighbor]) );
+		stringstream stag("");
+		stag << "9" << hindex << "00" << corner_neighbor_[iDim][iNeighbor];
+		int tag(0);
+		stag >> tag; // Should had ispec ?
+		MPI_Isend( &n_part_send, 1, MPI_INT, 0, tag, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.corner_srequest[iDim][iNeighbor]) );
+		cout << hindex << " will sent " << n_part_send << " to " << corner_neighbor_[iDim][iNeighbor] << " with tag " << tag << endl;
 	    } // END of Send
 	    else
 		n_part_send = 0;
 	    if (corner_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
 		vecSpecies[ispec]->specMPI.corner_buff_index_recv_sz[iDim][(iNeighbor+1)%2] = 0;
-		MPI_Irecv( &(vecSpecies[ispec]->specMPI.corner_buff_index_recv_sz[iDim][(iNeighbor+1)%2]), 1, MPI_INT, corner_neighbor_[iDim][(iNeighbor+1)%2], ispec, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.corner_rrequest[iDim][(iNeighbor+1)%2]) );
+		stringstream stag("");
+		stag << "9" << corner_neighbor_[iDim][(iNeighbor+1)%2] << "00" << hindex;
+		int tag(0);
+		stag >> tag; // Should had ispec ?
+		MPI_Irecv( &(vecSpecies[ispec]->specMPI.corner_buff_index_recv_sz[iDim][(iNeighbor+1)%2]), 1, MPI_INT, 0, tag, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.corner_rrequest[iDim][(iNeighbor+1)%2]) );
+		cout << hindex << " will recv from " << corner_neighbor_[iDim][(iNeighbor+1)%2] << " with tag " << tag << endl;
 	    }
 	    else 
 		vecSpecies[ispec]->specMPI.corner_buff_index_recv_sz[iDim][(iNeighbor+1)%2] = 0;
@@ -1114,6 +1211,7 @@ void Patch::initCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int
 	    }
 	    if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
 		MPI_Wait( &(vecSpecies[ispec]->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[(iNeighbor+1)%2]) );
+		cout << hindex << " will recv " << vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2] << " particles from " << neighbor_[iDim][(iNeighbor+1)%2] << endl;
 		if (vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2]!=0) {
 		    vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2].initialize( vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2], cuParticles.dimension());
 		}
@@ -1130,6 +1228,7 @@ void Patch::initCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int
 	    }
 	    if (corner_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
 		MPI_Wait( &(vecSpecies[ispec]->specMPI.corner_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[(iNeighbor+1)%2]) );
+		cout << hindex << " will recv " << vecSpecies[ispec]->specMPI.corner_buff_index_recv_sz[iDim][(iNeighbor+1)%2] << " particles from " << corner_neighbor_[iDim][(iNeighbor+1)%2] << endl;
 		if (vecSpecies[ispec]->specMPI.corner_buff_index_recv_sz[iDim][(iNeighbor+1)%2]!=0) {
 		    vecSpecies[ispec]->specMPI.cornerVectorRecv[iDim][(iNeighbor+1)%2].initialize( vecSpecies[ispec]->specMPI.corner_buff_index_recv_sz[iDim][(iNeighbor+1)%2], cuParticles.dimension());
 		}
@@ -1157,18 +1256,23 @@ void Patch::initCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int
 		for (int iPart=0 ; iPart<n_part_send ; iPart++) {
 		    if (smpi2D->periods_[iDim]==1) {
 			// Enabled periodicity
-			if ( ( iNeighbor==0 ) &&  (smpi2D->coords_[iDim] == 0 ) &&( cuParticles.position(iDim,vecSpecies[ispec]->specMPI.patch_buff_index_send[iDim][iNeighbor][iPart]) < 0. ) ) {
+			if ( ( iNeighbor==0 ) &&  (Pcoordinates[iDim] == 0 ) &&( cuParticles.position(iDim,vecSpecies[ispec]->specMPI.patch_buff_index_send[iDim][iNeighbor][iPart]) < 0. ) ) {
 			    cuParticles.position(iDim,vecSpecies[ispec]->specMPI.patch_buff_index_send[iDim][iNeighbor][iPart])     += x_max;
 			}
-			else if ( ( iNeighbor==1 ) &&  (smpi2D->coords_[iDim] == smpi2D->number_of_procs[iDim]-1 ) && ( cuParticles.position(iDim,vecSpecies[ispec]->specMPI.patch_buff_index_send[iDim][iNeighbor][iPart]) >= x_max ) ) {
+			else if ( ( iNeighbor==1 ) &&  (Pcoordinates[iDim] == smpi2D->number_of_procs[iDim]-1 ) && ( cuParticles.position(iDim,vecSpecies[ispec]->specMPI.patch_buff_index_send[iDim][iNeighbor][iPart]) >= x_max ) ) {
 			    cuParticles.position(iDim,vecSpecies[ispec]->specMPI.patch_buff_index_send[iDim][iNeighbor][iPart])     -= x_max;
 			}
 		    }
 		    cuParticles.cp_particle(vecSpecies[ispec]->specMPI.patch_buff_index_send[iDim][iNeighbor][iPart], vecSpecies[ispec]->specMPI.patchVectorSend[iDim][iNeighbor]);
 		}
 
+		stringstream stag("");
+		stag << "9" << hindex << "000" << neighbor_[iDim][iNeighbor];
+		int tag(0);
+		stag >> tag; // Should had ispec ? 10*ispec+1 to change from number of parts ?
 		typePartSend = smpi2D->createMPIparticles( &(vecSpecies[ispec]->specMPI.patchVectorSend[iDim][iNeighbor]), nbrOfProp );
-		MPI_Isend( &((vecSpecies[ispec]->specMPI.patchVectorSend[iDim][iNeighbor]).position(0,0)), 1, typePartSend, neighbor_[iDim][iNeighbor], 10*ispec+1, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.patch_srequest[iDim][iNeighbor]) );
+		MPI_Isend( &((vecSpecies[ispec]->specMPI.patchVectorSend[iDim][iNeighbor]).position(0,0)), 1, typePartSend, 0, tag, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.patch_srequest[iDim][iNeighbor]) );
+		cout << hindex << " really send " << n_part_send << " to " << neighbor_[iDim][iNeighbor] << " with tag " << tag << endl;
 		MPI_Type_free( &typePartSend );
 
 	    } // END of Send
@@ -1176,7 +1280,12 @@ void Patch::initCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int
 	    n_part_recv = vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2];
 	    if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
 		typePartRecv = smpi2D->createMPIparticles( &(vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2]), nbrOfProp );
-		MPI_Irecv( &((vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2]).position(0,0)), 1, typePartRecv,  neighbor_[iDim][(iNeighbor+1)%2], 10*ispec+1, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]) );
+		stringstream stag("");
+		stag << "9" << neighbor_[iDim][(iNeighbor+1)%2] << "000" << hindex;
+		int tag(0);
+		stag >> tag; // Should had ispec ?  10*ispec+1 to change from number of parts ?
+		MPI_Irecv( &((vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2]).position(0,0)), 1, typePartRecv,  0, tag, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]) );
+		cout << hindex << " will really recv from " << neighbor_[iDim][(iNeighbor+1)%2] << " with tag " << tag << endl;
 		MPI_Type_free( &typePartRecv );
 
 	    } // END of Recv
@@ -1196,16 +1305,16 @@ void Patch::initCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int
 		for (int iPart=0 ; iPart<n_part_send ; iPart++) {
 		    if (smpi2D->periods_[iDim]==1) {
 			// Enabled periodicity
-			if ( (smpi2D->coords_[(iDim+1)%2] == 0 ) &&( cuParticles.position((iDim+1)%2,vecSpecies[ispec]->specMPI.corner_buff_index_send[iDim][iNeighbor][iPart]) < 0. ) ) {
+			if ( (Pcoordinates[(iDim+1)%2] == 0 ) &&( cuParticles.position((iDim+1)%2,vecSpecies[ispec]->specMPI.corner_buff_index_send[iDim][iNeighbor][iPart]) < 0. ) ) {
 			    cuParticles.position((iDim+1)%2,vecSpecies[ispec]->specMPI.corner_buff_index_send[iDim][iNeighbor][iPart])     += x_max;
 			}
-			if ( (smpi2D->coords_[iDim] == 0 ) &&( cuParticles.position(iDim,vecSpecies[ispec]->specMPI.corner_buff_index_send[iDim][iNeighbor][iPart]) < 0. ) ) {
+			if ( (Pcoordinates[iDim] == 0 ) &&( cuParticles.position(iDim,vecSpecies[ispec]->specMPI.corner_buff_index_send[iDim][iNeighbor][iPart]) < 0. ) ) {
 			    cuParticles.position(iDim,vecSpecies[ispec]->specMPI.corner_buff_index_send[iDim][iNeighbor][iPart])     += y_max;
 			}
-			if ( (smpi2D->coords_[(iDim+1)%2] == smpi2D->number_of_procs[(iDim+1)%2]-1 ) && ( cuParticles.position((iDim+1)%2,vecSpecies[ispec]->specMPI.corner_buff_index_send[iDim][iNeighbor][iPart]) >= x_max ) ) {
+			if ( (Pcoordinates[(iDim+1)%2] == smpi2D->number_of_procs[(iDim+1)%2]-1 ) && ( cuParticles.position((iDim+1)%2,vecSpecies[ispec]->specMPI.corner_buff_index_send[iDim][iNeighbor][iPart]) >= x_max ) ) {
 			    cuParticles.position((iDim+1)%2,vecSpecies[ispec]->specMPI.corner_buff_index_send[iDim][iNeighbor][iPart])     -= x_max;
 			}
-			if ( (smpi2D->coords_[iDim] == smpi2D->number_of_procs[iDim]-1 ) && ( cuParticles.position(iDim,vecSpecies[ispec]->specMPI.corner_buff_index_send[iDim][iNeighbor][iPart]) >= y_max ) ) {
+			if ( (Pcoordinates[iDim] == smpi2D->number_of_procs[iDim]-1 ) && ( cuParticles.position(iDim,vecSpecies[ispec]->specMPI.corner_buff_index_send[iDim][iNeighbor][iPart]) >= y_max ) ) {
 			    cuParticles.position(iDim,vecSpecies[ispec]->specMPI.corner_buff_index_send[iDim][iNeighbor][iPart])     -= y_max;
 			}
 
@@ -1214,7 +1323,12 @@ void Patch::initCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int
 		}
 
 		typePartSend = smpi2D->createMPIparticles( &(vecSpecies[ispec]->specMPI.cornerVectorSend[iDim][iNeighbor]), nbrOfProp );
-		MPI_Isend( &((vecSpecies[ispec]->specMPI.cornerVectorSend[iDim][iNeighbor]).position(0,0)), 1, typePartSend, corner_neighbor_[iDim][iNeighbor], 10*ispec+1, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.corner_srequest[iDim][iNeighbor]) );
+		stringstream stag("");
+		stag << "9" << hindex << "000" << corner_neighbor_[iDim][iNeighbor];
+		int tag(0);
+		stag >> tag; // Should had ispec ?
+		MPI_Isend( &((vecSpecies[ispec]->specMPI.cornerVectorSend[iDim][iNeighbor]).position(0,0)), 1, typePartSend, 0, tag, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.corner_srequest[iDim][iNeighbor]) );
+		cout << hindex << " really send " << n_part_send << " to " << corner_neighbor_[iDim][iNeighbor] << " with tag " << tag << endl;
 		MPI_Type_free( &typePartSend );
 
 	    } // END of Send
@@ -1222,7 +1336,12 @@ void Patch::initCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int
 	    n_part_recv = vecSpecies[ispec]->specMPI.corner_buff_index_recv_sz[iDim][(iNeighbor+1)%2];
 	    if ( (corner_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
 		typePartRecv = smpi2D->createMPIparticles( &(vecSpecies[ispec]->specMPI.cornerVectorRecv[iDim][(iNeighbor+1)%2]), nbrOfProp );
-		MPI_Irecv( &((vecSpecies[ispec]->specMPI.cornerVectorRecv[iDim][(iNeighbor+1)%2]).position(0,0)), 1, typePartRecv,  corner_neighbor_[iDim][(iNeighbor+1)%2], 10*ispec+1, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.corner_rrequest[iDim][(iNeighbor+1)%2]) );
+		stringstream stag("");
+		stag << "9" << corner_neighbor_[iDim][(iNeighbor+1)%2] << "000" << hindex;
+		int tag(0);
+		stag >> tag; // Should had ispec ?
+		MPI_Irecv( &((vecSpecies[ispec]->specMPI.cornerVectorRecv[iDim][(iNeighbor+1)%2]).position(0,0)), 1, typePartRecv, 0, tag, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.corner_rrequest[iDim][(iNeighbor+1)%2]) );
+		cout << hindex << " will really recv from " << corner_neighbor_[iDim][(iNeighbor+1)%2] << " with tag " << tag << endl;
 		MPI_Type_free( &typePartRecv );
 
 	    } // END of Recv
@@ -1270,10 +1389,11 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params,
 	    if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (n_part_send!=0) ) {
 		MPI_Wait( &(vecSpecies[ispec]->specMPI.patch_srequest[iDim][iNeighbor]), &(sstat[iNeighbor]) );
 		// clean vecSpecies[ispec]->specMPI.patchVectorSend
-		vecSpecies[ispec]->specMPI.patchVectorSend[iDim][iNeighbor].erase_particle_trail(0);
+		//vecSpecies[ispec]->specMPI.patchVectorSend[iDim][iNeighbor].erase_particle_trail(0);
 	    }
 	    if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
-		MPI_Wait( &(vecSpecies[ispec]->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[(iNeighbor+1)%2]) );                    
+		MPI_Wait( &(vecSpecies[ispec]->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[(iNeighbor+1)%2]) );     
+		cout << hindex << " recv from " << neighbor_[iDim][(iNeighbor+1)%2] << endl;
 	    }
 	}
     }
@@ -1290,10 +1410,11 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params,
 	    if ( (corner_neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (n_part_send!=0) ) {
 		MPI_Wait( &(vecSpecies[ispec]->specMPI.corner_srequest[iDim][iNeighbor]), &(sstat[iNeighbor]) );
 		// clean cornerVectorSend
-		vecSpecies[ispec]->specMPI.cornerVectorSend[iDim][iNeighbor].erase_particle_trail(0);
+		//vecSpecies[ispec]->specMPI.cornerVectorSend[iDim][iNeighbor].erase_particle_trail(0);
 	    }
 	    if ( (corner_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
 		MPI_Wait( &(vecSpecies[ispec]->specMPI.corner_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[(iNeighbor+1)%2]) );
+		cout << hindex << " recv from " << corner_neighbor_[iDim][(iNeighbor+1)%2] << endl;
 	    }
 	}
     }

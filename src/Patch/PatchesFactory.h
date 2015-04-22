@@ -18,8 +18,8 @@ public:
 	// Compute npatches (1 is std MPI behavior)
 	unsigned int npatches;
         unsigned int m0, m1, m2; //Defines the total number of patches.
-        m0 = 5;
-        m1 = 3;
+        m0 = 3;
+        m1 = 5;
         m2 = 2;
         npatches = (1 << (m0 + m1 + m2)) / smpi->getSize() ;// npatches = 2^(m0+m1+m2) / number of mpi process. Local number of patches. 
 
