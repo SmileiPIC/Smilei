@@ -66,8 +66,8 @@ end
 #define DiagnosticParticles_H
 
 #include <cmath>
-#include <hdf5.h>
 
+#include "H5.h"
 #include "Species.h"
 #include "Particles.h"
 #include "SmileiMPI.h"

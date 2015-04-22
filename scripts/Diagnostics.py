@@ -488,8 +488,14 @@ class Diagnostic(object):
 		if self.xmax is not None: ax.set_xlim(xmax=self.xmax)
 		if self.title is not None: ax.set_title(self.title)
 		ax.set(**self.axeskwargs)
-		ax.ticklabel_format(axis="x",**self.xtickkwargs)
-		ax.ticklabel_format(axis="y",**self.ytickkwargs)
+		try:
+			if len(self.xtickkwargs)>0: ax.ticklabel_format(axis="x",**self.xtickkwargs)
+		except:
+			print "Cannot format x ticks (typically happens with log-scale)"
+		try:
+			if len(self.ytickkwargs)>0: ax.ticklabel_format(axis="y",**self.ytickkwargs)
+		except:
+			print "Cannot format y ticks (typically happens with log-scale)"
 		return im
 	
 	# If the sliced data has 0 dimension, this function can plot it 
