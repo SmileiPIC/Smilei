@@ -16,6 +16,7 @@ class Species;
 class SmileiMPI_Cart2D : public SmileiMPI {
 public:
     friend class SmileiIO_Cart2D;
+    friend class Patch;
 
     //! Create intial MPI environment
     SmileiMPI_Cart2D( int* argc, char*** argv );

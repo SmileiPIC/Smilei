@@ -49,6 +49,7 @@ particles(&particles_sorted[0]),
 i_domain_begin( smpi->getCellStartingGlobalIndex(0) ),
 j_domain_begin( smpi->getCellStartingGlobalIndex(1) )
 {
+    specMPI.init();
     
     initSpecies(params);
     initCluster(params);

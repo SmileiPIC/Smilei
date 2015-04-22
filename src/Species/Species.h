@@ -14,6 +14,8 @@
 #include "Ionization.h"
 #include "ElectroMagn.h"
 #include "DensityProfile.h"
+#include "SpeciesMPI.h"
+
 
 class ElectroMagn;
 class Pusher;
@@ -27,6 +29,8 @@ class Patch;
 class Species
 {
 public:
+    SpeciesMPI specMPI;
+
     //! Species creator
     Species(PicParams&, int, SmileiMPI*, Patch*);
     Species(PicParams&, int, SmileiMPI*);
@@ -121,6 +125,7 @@ public:
         indexes_of_particles_to_exchange_per_thd[tid].push_back(iPart);
     }
     std::vector< std::vector<int> > indexes_of_particles_to_exchange_per_thd;
+    std::vector<int>                indexes_of_particles_to_exchange;
 
     //Copy of the species parameters from picparams
     SpeciesStructure species_param;

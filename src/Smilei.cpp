@@ -329,8 +329,13 @@ int main (int argc, char* argv[])
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
                 if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
 		    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-			for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
-			    vecPatches[ipatch]->exchParticles(smpi, ispec, params, tid, iDim );
+			vecPatches[ipatch]->initExchParticles(smpi, ispec, params, 100, 100);
+		    }
+		    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+			vecPatches[ipatch]->initCommParticles(smpi, ispec, params, 100, 100);
+		    }
+		    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+			vecPatches[ipatch]->finalizeCommParticles(smpi, ispec, params, 100, 100);
 		    }
 		}
 	    }
