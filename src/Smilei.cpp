@@ -175,7 +175,7 @@ int main (int argc, char* argv[])
     smpi->barrier();
     
 
-#ifndef _PATCH
+#ifdef _PATCH
     vector<Patch*> vecPatches = PatchesFactory::createVector(params, laser_params, smpi);
 #endif
 
@@ -210,14 +210,15 @@ int main (int argc, char* argv[])
         EMfields->computeTotalRhoJ(); //Compute currents from global Rho_s and J_s.
         diag_flag = 0;
 
+#ifndef _PATCH
         // Init electric field (Ex/1D, + Ey/2D)
 	if (!EMfields->isRhoNull(smpi)) {
 	    MESSAGE("----------------------------------------------");
 	    MESSAGE("Solving Poisson at time t = 0");
-	    MESSAGE("... But Poisson and Patch = pb, comm collective ! ");
 	    MESSAGE("----------------------------------------------");    
-	    //EMfields->solvePoisson(smpi);
+	    EMfields->solvePoisson(smpi);
 	}
+#endif
         
         
         //MESSAGE("----------------------------------------------");
@@ -263,19 +264,6 @@ int main (int argc, char* argv[])
 	
     for (unsigned int itime=stepStart+1 ; itime <= stepStop ; itime++) {
 
-#ifdef _PATCH
-	int npatches(1);
-	for (unsigned int ipatch=0 ; ipatch<npatches ; ipatch++) {
-	    vector<Species*> cuVecSpec  = vecPatches[ipatch]->vecSpecies;
-	    ElectroMagn*     cuEMfields = vecPatches[ipatch]->EMfields;
-	    Interpolator*    cuInterp   = vecPatches[ipatch]->Interp;
-	    Projector*       cuProj     = vecPatches[ipatch]->Proj;
-	    for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-		cuVecSpec[ispec]->dynamics(time_dual, ispec, cuEMfields, cuInterp, cuProj, smpi, params, simWindow, diag_flag);
-	    }
-	}
-#endif
-        
         // calculate new times
         // -------------------
         time_prim += params.timestep;
@@ -321,6 +309,9 @@ int main (int argc, char* argv[])
 #ifdef _OMP
             tid = omp_get_thread_num();
 #endif
+
+
+#ifdef _PATCH
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 		vecPatches[ipatch]->dynamics(time_dual, smpi, params, simWindow, diag_flag);
 	    }
@@ -340,7 +331,13 @@ int main (int argc, char* argv[])
 		    }
 		}
 	    }
-#ifdef _PARTSOVERMPI
+#endif
+#ifndef _PATCH
+            for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
+                    if ( vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag ){
+                        vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow, diag_flag);
+                    } 
+            }
 	    // Inter MPI exchange
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
                 if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
@@ -351,12 +348,12 @@ int main (int argc, char* argv[])
 
                         #pragma omp barrier
                         vecSpecies[ispec]->sort_part();
-                        /*if (itime%200 == 0) {
+                        if (itime%200 == 0) {
                             #pragma omp master
                             {
                                 vecSpecies[ispec]->count_sort_part(params);
                             }
-                        }*/
+                        }
                 }
             }
 #endif
