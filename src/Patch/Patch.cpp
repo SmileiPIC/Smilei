@@ -137,8 +137,6 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
 	cout << "\tCorner decomp : " << corner_neighbor_[0][0] << "\t" << neighbor_[1][0]  << "\t" << corner_neighbor_[1][0] << endl;
 	*/
 
-
-
 	
 	//std::cout << "Voisin dir 0 : " << ipatch << " : " <<  neighbor_[0][0] << " " <<  neighbor_[0][1] << std::endl;
 	//std::cout << "Voisin dir 1 : " << ipatch << " : " <<  neighbor_[1][0] << " " <<  neighbor_[1][1] << std::endl;
@@ -805,7 +803,7 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, int
 		n_part_send = 0;
 	    if (corner_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
 		vecSpecies[ispec]->specMPI.corner_buff_index_recv_sz[iDim][(iNeighbor+1)%2] = 0;
-		int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], hindex);
+		int tag = buildtag( corner_neighbor_[iDim][(iNeighbor+1)%2], hindex);
 		MPI_Irecv( &(vecSpecies[ispec]->specMPI.corner_buff_index_recv_sz[iDim][(iNeighbor+1)%2]), 1, MPI_INT, 0, tag, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.corner_rrequest[iDim][(iNeighbor+1)%2]) );
 		//cout << hindex << " will recv from " << corner_neighbor_[iDim][(iNeighbor+1)%2] << " with tag " << tag << endl;
 	    }
@@ -859,7 +857,6 @@ void Patch::initCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int
 	    MPI_Status rstat    [2];
 	    if (corner_neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
 		MPI_Wait( &(vecSpecies[ispec]->specMPI.corner_srequest[iDim][iNeighbor]), &(sstat[iNeighbor]) );
-		
 	    }
 	    if (corner_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
 		MPI_Wait( &(vecSpecies[ispec]->specMPI.corner_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[(iNeighbor+1)%2]) );
@@ -870,7 +867,7 @@ void Patch::initCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int
 	    }
 	}
     }
-
+    
     /********************************************************************************/
     // Proceed to effective Particles' communications
     /********************************************************************************/
@@ -1231,7 +1228,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params,
 int buildtag(int send, int recv) {
     // + flag / orientation
     stringstream stag("");
-    stag << "9" << send << "0" << recv;
+    stag << send << "0" << recv;
     int tag(0);
     stag >> tag; // Should had ispec ?
     return tag;
