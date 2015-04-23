@@ -127,8 +127,19 @@ fileId(0) {
                 for (int idim=0 ; idim<ndim  ; idim++)
                     posArray[ipb][idim] = probeParticles[np].position(idim,ipb);
             
-            // Write the positions array into the current HDF5 group
+            // Add array "positions" into the current HDF5 group
             H5::matrix_MPI(did, "positions", posArray[0][0], nPart_total[np], ndim, probesStart[np], nPart_local);
+            
+            // Add arrays "p0", "p1", ... to the current group
+            ostringstream pk;
+            for (unsigned int iDimProbe=0; iDimProbe<=dimProbe; iDimProbe++) {
+                pk.str("");
+                pk << "p" << iDimProbe;
+                H5::vector(did, pk.str(), diagParams.probeStruc[np].pos[iDimProbe][0], ndim);
+            }
+            
+            // Add array "number" to the current group
+            H5::vector(did, "number", diagParams.probeStruc[np].number[0], dimProbe);
             
             // Add attribute every to the current group
             H5::attr(did, "every", every[np]);

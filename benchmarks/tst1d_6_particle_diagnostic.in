@@ -61,7 +61,7 @@ random_seed = 0
 #
 # species_type: ion, electron, positron, test ...
 # initPosition_type = regular
-	initMomentum_type = maxwell-juettner distribution
+# initMomentum_type = maxwell-juettner distribution
 # n_part_per_cell: number of particle−per−cell
 # c_part_max: factor on the memory reserved for the total number of particles
 # mass: particle mass in units of the electron mass
@@ -187,4 +187,3 @@ diagnostic particles
 	species = electron1
 	axis = ekin  0.0001  0.1 100 logscale edge_inclusive
 end
-

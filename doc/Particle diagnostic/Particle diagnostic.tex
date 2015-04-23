@@ -411,8 +411,8 @@ and the same timesteps.\\
 
 
 \clearpage
-\section{Bonus: view fields and scalars as well}
-
+\section{Bonus: view fields, probes and scalars as well}
+\subsection{Fields}
 SMILEI provides maps of the fields $\overrightarrow E$, $\overrightarrow B$, $\rho$ (etc.) controlled by the parameter \code{fieldDump\_every} in the input file. They are written in the file \code{Fields.h5}. The script \code{Diagnostics.py} is capable of opening and plotting these fields together with the particle diagnostics. In fact the procedure is almost the same:
 \begin{lstlisting}
 Field(results_path, field=None, timesteps=None, slice=None,
@@ -425,7 +425,24 @@ You can also make operations between fields (e.g. \code{"Jx+Jy"}).
 \item \code{slice} can only accept three axes: \code{"x"}, \code{"y"}, \code{"z"}. For instance, \code{slice=\{"x":"all"\}}. Note that the slice does \textbf{not} calculate the sum of the axis, but the \textbf{average}.
 \end{itemize}
 
-In addition to fields, SMILEI outputs scalar values as a function of time in the file \code{scalars.txt}. You can plot them as well:
+\subsection{Probes}
+SMILEI also provides fields interpolated at other locations than the grid points. These diagnostics are called \emph{probes} and are written in the file \code{Probes.h5}. The probes interpolate the fields at either one point (0-D), several points arranged in a line (1-D) or several points arranged in a mesh (2-D). These points are defined in the input file in groups called \code{diagnostic probe}.
+To open and plot these probes, the procedure is again very similar to fields:
+\begin{lstlisting}
+Probe(results_path, probeNumber=None, field=None, timesteps=None, slice=None,
+       units="code", data_log=False)
+\end{lstlisting}
+The differences are:
+\begin{itemize}
+\item \code{probeNumber} must be the number of the requested probe, in the order of appearance in the input file (0 is the number of the first probe). If you omit this argument, a list of probes is provided.
+\item \code{field} must be one of \code{"Bx"}, \code{"By"}, \code{"Bz"}, \code{"Ex"}, \code{"Ey"}, \code{"Ez"}, \code{"Jx"}, \code{"Jy"}, \code{"Jz"} or \code{"Rho"}. If you omit this argument, the list of available fields will be displayed.\\*
+You can also make operations between fields (e.g. \code{"Jx+Jy"}).
+\item \code{slice} can only accept two axes: \code{"axis1"}, \code{"axis2"}. For instance, \code{slice=\{"axis1":"all"\}}. Note that the slice does \textbf{not} calculate the sum of the axis, but the \textbf{average}. Also, \code{"axis1"} and \code{"axis2"} are not necessarily $x$ or $y$ because the probe mesh may be rotated.
+\end{itemize}
+
+\subsection{Scalars}
+
+In addition, SMILEI outputs scalar values as a function of time in the file \code{scalars.txt}. You can plot them as well:
 \begin{lstlisting}
 Scalar(results_path, scalar=None, timesteps=None, units="code", data_log=False)
 \end{lstlisting}
@@ -435,19 +452,21 @@ The differences are:
 \item There is no more \code{slice} argument of course!
 \end{itemize}
 
+\subsection{Plotting all these diagnostics together}
 
-Please refer to the previous section to understand the other arguments. In addition, all the plotting arguments discussed in the previous section are available for the fields and scalars as well.\\*\\*
+Please refer to the \emph{particle diagnostic} section to have more details on the other arguments. Similarly, all the plotting arguments discussed previously are available for the fields, probes and scalars.\\*\\*
 
-All the functions \code{plot()}, \code{set()}, \code{get()} and \code{getData()} are also compatible with \code{Field(...)} and \code{Scalar(...)}.\\*\\*
+All the functions \code{plot()}, \code{set()}, \code{get()} and \code{getData()} are also compatible with \code{Field(...)}, \code{Probe(...)} and \code{Scalar(...)}.\\*\\*
 
-Last but not least: \code{multiPlot()} can be used to combine particle, field and scalar diagnostics on the same figure.\\*\\*
+Last but not least: \code{multiPlot()} can be used to combine particle, field, probe and scalar diagnostics on the same figure.\\*\\*
 
 \textbf{Example:}
 \begin{lstlisting}
 >>> A = Field("path/to/my/results", field="Ex")
 >>> B = ParticleDiagnostic("path/to/my/results", diagNumber=0)
->>> C = ParticleDiagnostic("path/to/my/results", scalar="Ebalance")
->>> multiPlot( A, B, C )
+>>> C = Probe("path/to/my/results", probeNumber=0, field="Ex")
+>>> D = Scalar("path/to/my/results", scalar="Ebalance")
+>>> multiPlot( A, B, C, D )
 \end{lstlisting}
 
 \clearpage

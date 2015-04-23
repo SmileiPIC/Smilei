@@ -440,6 +440,7 @@ class Diagnostic(object):
 				artist = self.animateOnAxes(ax, time)
 				fig.canvas.draw()
 				plt.show()
+			return artist
 		# Static plot if 0 dimensions
 		else:
 			ax.cla()
@@ -468,11 +469,7 @@ class Diagnostic(object):
 			if self.data_min is not None: ax.set_ylim(ymin=self.data_min)
 			if self.data_max is not None: ax.set_ylim(ymax=self.data_max)
 		elif A.ndim == 2:
-			extent = [self.plot_centers[0][0], self.plot_centers[0][-1], self.plot_centers[1][0], self.plot_centers[1][-1]]
-			if self.plot_log[0]: extent[0:2] = [np.log10(self.plot_centers[0][0]), np.log10(self.plot_centers[0][-1])]
-			if self.plot_log[1]: extent[2:4] = [np.log10(self.plot_centers[1][0]), np.log10(self.plot_centers[1][-1])]
-			im = ax.imshow( np.flipud(A.transpose()),
-				vmin = self.data_min, vmax = self.data_max, extent=extent, **self.imkwargs)
+			im = self.animateOnAxes_2D(ax, A)
 			if (self.plot_log[0]): ax.set_xlabel("Log[ "+self.plot_label[0]+" ]")
 			else:                  ax.set_xlabel(        self.plot_label[0]     )
 			if (self.plot_log[1]): ax.set_ylabel("Log[ "+self.plot_label[1]+" ]")
@@ -496,6 +493,16 @@ class Diagnostic(object):
 			if len(self.ytickkwargs)>0: ax.ticklabel_format(axis="y",**self.ytickkwargs)
 		except:
 			print "Cannot format y ticks (typically happens with log-scale)"
+		return im
+	
+	# Special case: 2D plot
+	# This is overloaded by class "Probe" because it requires to replace imshow
+	def animateOnAxes_2D(self, ax, A):
+		extent = [self.plot_centers[0][0], self.plot_centers[0][-1], self.plot_centers[1][0], self.plot_centers[1][-1]]
+		if self.plot_log[0]: extent[0:2] = [np.log10(self.plot_centers[0][0]), np.log10(self.plot_centers[0][-1])]
+		if self.plot_log[1]: extent[2:4] = [np.log10(self.plot_centers[1][0]), np.log10(self.plot_centers[1][-1])]
+		im = ax.imshow( np.flipud(A.transpose()),
+			vmin = self.data_min, vmax = self.data_max, extent=extent, **self.imkwargs)
 		return im
 	
 	# If the sliced data has 0 dimension, this function can plot it 
@@ -610,7 +617,6 @@ class ParticleDiagnostic(Diagnostic):
 		self.axes = {}
 		self.naxes = {}
 		for d in self.diags:
-			self.getMyInfo(d)
 			try:
 				self.info_.update({ d:self.getMyInfo(d) })
 			except:
@@ -1509,6 +1515,401 @@ class Scalar(Diagnostic):
 		# log scale if requested
 		if self.data_log: A = np.log10(A)
 		return A
+
+
+
+
+# -------------------------------------------------------------------
+# Class for fields diagnostics
+# -------------------------------------------------------------------
+class Probe(Diagnostic):
+	# We use __new__ to prevent object creation if no field requested
+	def __new__(cls, *args, **kwargs):
+		# Is there a "results_path" argument ?
+		try   : results_path = cls.validatePath(*args, **kwargs)
+		except: return None
+		# Is there a "probeNumber" argument ?
+		try:
+			probeNumber = args[1]
+		except:
+			try:
+				probeNumber = kwargs["probeNumber"]
+			except:
+				probes = cls.getProbesIn(results_path)
+				if len(probes)>0:
+					print "Printing available probes:"
+					print "--------------------------"
+					for p in probes:
+						cls.printInfo(cls.getInfo(results_path, p))
+				else:
+					print "No probes found in '"+results_path+"'"
+				return None
+		# Is there a "field" argument ?
+		try:
+			field = args[2]
+		except:
+			try:
+				field = kwargs["field"]
+			except:
+				print "Printing available fields for probes:"
+				print "-------------------------------------"
+				print "Ex Ey Ez Bx By Bz Jx Jy Jz Rho"
+				return None
+		# If everything ok, then we create the object
+		return Diagnostic.__new__(cls, *args, **kwargs)
+	
+	
+	# This is the constructor, which creates the object
+	def __init__(self,results_path, probeNumber=None, field=None, timesteps=None, slice=None,
+	             units="code", data_log=False, **kwargs):
+
+		self.valid = False
+		self.results_path = results_path
+		self.probeNumber  = probeNumber
+		self.file = results_path+"/Probes.h5"
+
+		# Get info from the input file and prepare units
+		try:
+			ndim               = self.read_ndim()
+			sim_units          = self.read_sim_units()
+			ncels, cell_length = self.read_ncels_cell_length(ndim, sim_units)
+			self.timestep      = self.read_timestep(sim_units)
+		except:
+			return None
+		
+		if units == "nice":
+			try   : wavelength_SI = self.read_wavelength_SI()
+			except: return None
+			cell_length *= 1e2*wavelength_SI/(2.*np.pi) # in cm
+			cell_volume = np.prod(cell_length)
+			coeff_distance = 1e2*wavelength_SI/(2.*np.pi) # in cm
+			coeff_density = 1.11e21 / (wavelength_SI/1e-6)**2 * cell_volume # in e/cm^3
+			coeff_current = coeff_density * 4.803e-9 # in A/cm^2
+			self.coeff_time = self.timestep * wavelength_SI/3.e8 # in seconds
+			self.time_units = " s"
+		elif units == "code":
+			coeff_distance = 1 # in c/w
+			coeff_density = 1. # in nc
+			coeff_current = 1. # in e*c*nc
+			self.coeff_time = self.timestep # in 1/w
+			self.time_units = " $1/\omega$"
+		
+		# Get available times
+		self.times = self.getAvailableTimesteps()
+		if self.times.size == 0:
+			print "No probes found in Probes.h5"
+			return
+		
+		# Get available fields
+		fields = ["Ex","Ey","Ez","Bx","By","Bz","Jx","Jy","Jz","Rho"]
+		sortedfields = reversed(sorted(fields, key = len))
+		
+		# 1 - verifications, initialization
+		# -------------------------------------------------------------------
+		# Parse the `field` argument
+		self.operation = field
+		for f in sortedfields:
+			i = fields.index(f)
+			self.operation = self.operation.replace(f,"#"+str(i))
+		requested_fields = re.findall("#\d+",self.operation)
+		if len(requested_fields) == 0:
+			print "Could not find any existing field in `"+field+"`"
+			return None
+		self.fieldn = [ int(f[1:]) for f in requested_fields ] # indexes of the requested fields
+		self.fieldn = list(set(self.fieldn))
+		self.fieldname = [ fields[i] for i in self.fieldn ] # names of the requested fields
+		
+		# Check slice is a dict
+		if slice is not None  and  type(slice) is not dict:
+			print "Argument `slice` must be a dictionary"
+			return None
+		# Make slice a dictionary
+		if slice is None: slice = {}
+		
+		# Put data_log as object's variable
+		self.data_log = data_log
+		
+		# Default plot parameters
+		self.setDefaultPlot()
+		# Set user's plot parameters
+		kwargs = self.setPlot(**kwargs)
+		
+		# Get the shape of the probe
+		self.info_ = self.getMyInfo()
+		self.shape = self.info_["shape"]
+		
+		# 2 - Manage timesteps
+		# -------------------------------------------------------------------
+		# fill the "data" dictionary with indices to the data arrays
+		self.data = {}
+		for i,t in enumerate(self.times):
+			self.data.update({ t : i })
+		# If timesteps is None, then keep all timesteps otherwise, select timesteps
+		if timesteps is not None:
+			try:
+				ts = np.array(np.double(timesteps),ndmin=1)
+				if ts.size==2:
+					# get all times in between bounds
+					self.times = self.times[ (self.times>=ts[0]) * (self.times<=ts[1]) ]
+				elif ts.size==1:
+					# get nearest time
+					self.times = np.array([self.times[(np.abs(self.times-ts)).argmin()]])
+				else:
+					raise
+			except:
+				print "Argument `timesteps` must be one or two non-negative integers"
+				return
+		
+		# Need at least one timestep
+		if self.times.size < 1:
+			print "Timesteps not found"
+			return
+		
+		
+		# 3 - Manage axes
+		# -------------------------------------------------------------------
+		# Fabricate all axes values
+		self.naxes = self.shape.size
+		self.plot_type = []
+		self.plot_label = []
+		self.plot_centers = []
+		self.plot_shape = []
+		self.plot_log   = []
+		self.sliceinfo = {}
+		self.slices = [None]*ndim
+		for iaxis in range(self.naxes):
+			
+			# calculate grid points locations
+			p0 = self.info_["p0"            ] # reference point
+			pi = self.info_["p"+str(iaxis+1)] # end point of this axis
+			centers = np.zeros((self.shape[iaxis],p0.size))
+			for i in range(p0.size):
+				centers[:,i] = np.linspace(p0[i],pi[i],self.shape[iaxis])
+			centers *= coeff_distance
+			
+			label = {0:"axis1", 1:"axis2", 2:"axis3"}[iaxis]
+			axisunits = "[code units]"
+			if units == "nice": axisunits = "[cm]"
+			
+			if label in slice:
+				# if slice is "all", then all the axis has to be summed
+				if slice[label] == "all":
+					indices = np.arange(self.shape[iaxis])
+				# Otherwise, get the slice from the argument `slice`
+				else:
+					indices = np.arange(self.shape[iaxis])
+					try:
+						s = np.double(slice[label])
+						if s.size>2 or s.size<1: raise
+					except:
+						print "Slice along axis "+label+" should be one or two floats"
+						return None
+					if s.size==1:
+						indices = np.array([(np.abs(indices-s)).argmin()])
+					elif s.size==2:
+						indices = np.nonzero( (indices>=s[0]) * (indices<=s[1]) )[0]
+					if indices.size == 0:
+						print "Slice along "+label+" is out of the box range"
+						return None
+					if indices.size == 1:
+						self.sliceinfo.update({ label:"Sliced at "+label+" = "+str(indices[0]) })
+					else:
+						self.sliceinfo.update({ label:"Sliced for "+label+" from "+str(indices[0])+" to "+str(indices[-1]) })
+				# convert the range of indices into their "conjugate"
+				self.slices[iaxis] = np.delete(np.arange(self.shape[iaxis]), indices)
+			else:
+				self.plot_type   .append(label)
+				self.plot_shape  .append(self.shape[iaxis])
+				self.plot_centers.append(centers)
+				self.plot_label  .append(label+" "+axisunits)
+				self.plot_log    .append(False)
+				
+			
+		if len(self.plot_centers) > 2:
+			print "Cannot plot in "+str(len(self.plot_shape))+"d. You need to 'slice' some axes."
+			return
+		
+		# Special case in 1D: we convert the point locations to scalar distances
+		if len(self.plot_centers) == 1:
+			self.plot_centers[0] = np.sqrt(np.sum((self.plot_centers[0]-self.plot_centers[0][0])**2,axis=1))
+		# Special case in 2D: we have to prepare for pcolormesh instead of imshow
+		elif len(self.plot_centers) == 2:
+			p1 = self.plot_centers[0] # locations of grid points along first dimension
+			d = np.diff(p1, axis=0) # separation between the points
+			p1 = np.vstack((p1, p1[-1,:])) # add last edges at the end of box
+			p1[1:-1] -= d/2 # move points by one half
+			p2 = self.plot_centers[1] # locations of grid points along second dimension
+			d = np.diff(p2, axis=0) # separation between the points
+			p2 = np.vstack((p2, p2[-1,:])) # add last edges at the end of box
+			p2[1:-1] -= d/2 # move points by one half
+			# Now p1 and p2 contain edges grid points along the 2 dimensions
+			# We have to convert into X and Y 2D arrays (similar to meshgrid)
+			X = np.zeros((p1.shape[0], p2.shape[0]))
+			Y = np.zeros((p1.shape[0], p2.shape[0]))
+			for i in range(p2.shape[0]):
+				X[:,i] = p1[:,0] + p2[i,0]-p2[0,0]
+				Y[:,i] = p1[:,1] + p2[i,1]-p2[0,1]
+			self.plot_edges = [X, Y]
+			self.plot_label = ["x "+axisunits, "y "+axisunits]
+		
+		
+		# Build units
+		self.titles = {}
+		self.fieldunits = {}
+		self.unitscoeff = {}
+		for f in self.fieldname:
+			i = fields.index(f)
+			self.fieldunits.update({ i:"??" })
+			self.unitscoeff.update({ i:1 })
+			self.titles    .update({ i:"??" })
+			if units == "nice":
+				self.fieldunits[i] = " ("+{"B":"T"  ,"E":"V/m"  ,"J":"A/cm$^2$"   ,"R":"e/cm$^3$"   }[f[0]]+")"
+				self.unitscoeff[i] =      {"B":10710,"E":3.21e12,"J":coeff_current,"R":coeff_density}[f[0]]
+				self.titles    [i] = f
+			else:
+				self.fieldunits[i] = " in units of "+{"B":"$m_e\omega/e$","E":"$m_ec\omega/e$","J":"$ecn_c$"    ,"R":"$n_c$"      }[f[0]]
+				self.unitscoeff[i] =                 {"B":1              ,"E":1               ,"J":coeff_current,"R":coeff_density}[f[0]]
+				self.titles    [i] = f
+		# finish title creation
+		if len(self.fieldname) == 1:
+			self.title = self.titles[self.fieldn[0]] + self.fieldunits[self.fieldn[0]]
+		else:
+			self.title = self.operation
+			for n in self.fieldn:
+				self.title = self.title.replace("#"+str(n), self.titles[n])
+		
+		# Finish constructor
+		self.valid = True
+	
+	# Method to print info on included probe
+	def info(self):
+		if not self.validate(): return
+		self.printInfo(self.getMyInfo())
+	# Method to print info previously obtained with getInfo
+	@staticmethod
+	def printInfo(info):
+		print ("Probe #"+str(info["probeNumber"])+": "+str(info["dimension"])+"-dimensional,"
+			+" every "+str(info["every"])+" timesteps")
+		i = 0
+		while "p"+str(i) in info:
+			print "p"+str(i)+" = "+" ".join(info["p"+str(i)].astype(np.str).tolist())
+			i += 1
+		print "number = "+" ".join(info["shape"].astype(np.str).tolist())
+
+	# Method to get info on a given probe
+	@staticmethod
+	def getInfo(results_path, probeNumber):
+		try:
+			file = results_path+'/Probes.h5'
+			f = h5py.File(file, 'r')
+		except:
+			print "Cannot open file "+file
+			return {}
+		try:
+			probes = [int(key.strip("p")) for key in f.keys()]
+			k = probes.index(probeNumber)
+			probe = f.values()[k]
+		except:
+			print "Cannot find probe "+str(probeNumber)+" in file "+file
+			return {}
+		out = {}
+		out.update({"probeNumber":probeNumber, "dimension":probe.attrs["dimension"],
+			"every":probe.attrs["every"]})
+		i = 0
+		while "p"+str(i) in probe.keys():
+			k = probe.keys().index("p"+str(i))
+			out.update({ "p"+str(i):np.array(probe.values()[k]) })
+			i += 1
+		k = probe.keys().index("number")
+		out.update({ "shape":np.array(probe.values()[k]) })
+		f.close()
+		return out
+	def getMyInfo(self):
+		return self.getInfo(self.results_path, self.probeNumber)
+		
+	# get all available fields, sorted by name length
+	@staticmethod
+	def getProbesIn(results_path):
+		try:
+			file = results_path+'/Probes.h5'
+			f = h5py.File(file, 'r')
+		except:
+			print "Cannot open file "+file
+			return []
+		try:
+			probes = [int(key.strip("p")) for key in f.keys()] # list of probes
+		except:
+			probes = []
+		f.close()
+		return probes
+	def getProbes(self):
+		return self.getProbesIn(self.results_path)
+	
+	# get all available timesteps
+	def getAvailableTimesteps(self):
+		try:
+			f = h5py.File(self.file, 'r')
+		except:
+			print "Cannot open file "+self.file
+			return np.array([])
+		try:
+			probes = [int(key.strip("p")) for key in f.keys()]
+			k = probes.index(self.probeNumber)
+			probe = f.values()[k]
+		except:
+			print "Cannot find probe "+str(self.probeNumber)+" in file "+file
+			return np.array([])
+		times = []
+		for key in probe.keys():
+			try   : times.append( int(key) )
+			except: pass
+		f.close()
+		return np.double(times)
+	
+	# Method to obtain the data only
+	def getDataAtTime(self, t):
+		if not self.validate(): return
+		# Verify that the timestep is valid
+		if t not in self.times:
+			print "Timestep "+t+" not found in this diagnostic"
+			return []
+		# Get arrays from requested field
+		# Open file
+		f = h5py.File(self.file, 'r')
+		# get data
+		index = self.data[t]
+		C = {}
+		op = "A=" + self.operation
+		for n in reversed(self.fieldn): # for each field in operation
+			B = np.double(f.values()[self.probeNumber].values()[index][:,n]) # get array
+			B = np.reshape(B, self.shape) # reshape array because it is flattened in the file
+			B *= self.unitscoeff[n]
+			C.update({ n:B })
+			op = op.replace("#"+str(n), "C["+str(n)+"]")
+		f.close()
+		# Calculate the operation
+		exec op in None
+		# Apply the slicing
+		for iaxis in range(self.naxes):
+			if self.slices[iaxis] is None: continue
+			A = np.delete(A, self.slices[iaxis], axis=iaxis) # remove parts outside of the slice
+			A = np.mean(A, axis=iaxis, keepdims=True) # average over the slice
+		A = np.squeeze(A) # remove sliced axes
+		# log scale if requested
+		if self.data_log: A = np.log10(A)
+		return A
+	
+	# Overloading a plotting function in order to use pcolormesh instead of imshow
+	def animateOnAxes_2D(self, ax, A):
+		# first, we remove kwargs that are not supported by pcolormesh
+		kwargs = dict(self.imkwargs)
+		for kwarg in self.imkwargs:
+			if kwarg not in ["cmap"]: del kwargs[kwarg]
+		im = ax.pcolormesh(self.plot_edges[0], self.plot_edges[1], np.flipud(A.transpose()),
+			vmin = self.data_min, vmax = self.data_max, **kwargs)
+		return im
+
+
 
 
 

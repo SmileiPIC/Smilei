@@ -15,63 +15,75 @@ class H5 {
     
     // write a string as an attribute
     static void attr(hid_t locationId, std::string attribute_name, std::string attribute_value) {
-        hid_t sid  = H5Screate(H5S_SCALAR);
         hid_t atype = H5Tcopy(H5T_C_S1);
         H5Tset_size(atype, attribute_value.size());
         H5Tset_strpad(atype,H5T_STR_NULLTERM);
-        hid_t aid = H5Acreate(locationId, attribute_name.c_str(), atype, sid, H5P_DEFAULT, H5P_DEFAULT);
-        H5Awrite(aid, atype, attribute_value.c_str());
-        H5Aclose(aid);
-        H5Sclose(sid);
+        
+        attr(locationId, attribute_name, *(attribute_value.c_str()), atype);
+        
         H5Tclose(atype);
     }
     
     // write an unsigned int as an attribute
     static void attr(hid_t locationId, std::string attribute_name, unsigned int attribute_value) {
-        hid_t sid = H5Screate(H5S_SCALAR);
-        hid_t aid = H5Acreate(locationId, attribute_name.c_str(), H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
-        H5Awrite(aid, H5T_NATIVE_UINT, &attribute_value);
-        H5Sclose(sid);
-        H5Aclose(aid);
-    }
+        attr(locationId, attribute_name, attribute_value, H5T_NATIVE_UINT);}
     
     // write an int as an attribute
     static void attr(hid_t locationId, std::string attribute_name, int attribute_value) {
-        hid_t sid = H5Screate(H5S_SCALAR);
-        hid_t aid = H5Acreate(locationId, attribute_name.c_str(), H5T_NATIVE_INT, sid, H5P_DEFAULT, H5P_DEFAULT);
-        H5Awrite(aid, H5T_NATIVE_INT, &attribute_value);
-        H5Sclose(sid);
-        H5Aclose(aid);
-    }
+        attr(locationId, attribute_name, attribute_value, H5T_NATIVE_INT);}
     
     // write a double as an attribute
     static void attr(hid_t locationId, std::string attribute_name, double attribute_value) {
+        attr(locationId, attribute_name, attribute_value, H5T_NATIVE_DOUBLE);}
+    
+    // write anything as an attribute
+    template<class T>
+    static void attr(hid_t locationId, std::string attribute_name, T & attribute_value, hid_t type) {
         hid_t sid = H5Screate(H5S_SCALAR);
-        hid_t aid = H5Acreate(locationId, attribute_name.c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT);
-        H5Awrite(aid, H5T_NATIVE_DOUBLE, &attribute_value);
+        hid_t aid = H5Acreate(locationId, attribute_name.c_str(), type, sid, H5P_DEFAULT, H5P_DEFAULT);
+        H5Awrite(aid, type, &attribute_value);
         H5Sclose(sid);
         H5Aclose(aid);
     }
     
-    // write a vector of doubles
+    // write a vector of unsigned ints
     // v is the vector
     // size is the number of elements in the vector
+    static void vector(hid_t locationId, std::string name, unsigned int& v, int size) {
+        vector(locationId, name, v, size, H5T_NATIVE_UINT);
+    }
+    
+    // write a vector of ints
+    static void vector(hid_t locationId, std::string name, int& v, int size) {
+        vector(locationId, name, v, size, H5T_NATIVE_INT);
+    }
+    
+    // write a vector of doubles
     static void vector(hid_t locationId, std::string name, double& v, int size) {
+        vector(locationId, name, v, size, H5T_NATIVE_DOUBLE);
+    }
+    
+    // write any vector
+    // type is the h5 type (H5T_NATIVE_DOUBLE, H5T_NATIVE_INT, etc.)
+    template<class T>
+    static void vector(hid_t locationId, std::string name, T & v, int size, hid_t type) {
         // create dataspace for 1D array with good number of elements
         hsize_t dims = size;
         hid_t sid = H5Screate_simple(1, &dims, NULL);
         hid_t pid = H5Pcreate(H5P_DATASET_CREATE); // property list
         // create dataset 
-        hid_t did = H5Dcreate(locationId, name.c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, pid, H5P_DEFAULT);
+        hid_t did = H5Dcreate(locationId, name.c_str(), type, sid, H5P_DEFAULT, pid, H5P_DEFAULT);
         // write vector in dataset
-        H5Dwrite(did, H5T_NATIVE_DOUBLE, sid, sid, H5P_DEFAULT, &v);
+        H5Dwrite(did, type, sid, sid, H5P_DEFAULT, &v);
         // close all
         H5Dclose(did);
         H5Pclose(pid);
         H5Sclose(sid);
     }
     
-    // write a 2-D array in parallel (several MPI nodes)
+    
+    
+    // write a 2-D array of doubles in parallel (several MPI nodes)
     // m is the matrix (2D array)
     // sizex, sizey is the number of elements in both axes of the matrix
     // offset is the x-location where the current node will start to write
