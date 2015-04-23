@@ -71,16 +71,18 @@ void ElectroMagnBC1D_SM::apply(ElectroMagn* EMfields, double time_dual, SmileiMP
 
     // ----------------------------
     // Apply EM boundary conditions
+    // In case of External field, we apply the boundary conditions on the field created by the plasma -> Bz-Bzext
+    // where Bzext is the external field defined as initial conditon 
     // ----------------------------
     if ( smpi->isWestern() ) {
         // Silver-Mueller boundary conditions (left)
-        (*By1D)(0) =  Alpha_SM*(*Ez1D)(0) + Beta_SM*(*By1D)(1) + Gamma_SM*byL;
-        (*Bz1D)(0) = -Alpha_SM*(*Ey1D)(0) + Beta_SM*(*Bz1D)(1) + Gamma_SM*bzL;
+        (*By1D)(0) =  Alpha_SM*((*Ez1D)(0)-Ez1D->ExtFieldAt_xmin) + Beta_SM*((*By1D)(1)-By1D->ExtFieldAt_xmin) + Gamma_SM*byL;
+        (*Bz1D)(0) = -Alpha_SM*((*Ey1D)(0)-Ey1D->ExtFieldAt_xmin) + Beta_SM*((*Bz1D)(1)-Bz1D->ExtFieldAt_xmin) + Gamma_SM*bzL;
     }//if Western
     if ( smpi->isEastern() ) {
         // Silver-Mueller boundary conditions (right)
-        (*By1D)(nx_d-1) = -Alpha_SM*(*Ez1D)(nx_p-1) + Beta_SM*(*By1D)(nx_d-2) + Gamma_SM*byR;
-        (*Bz1D)(nx_d-1) =  Alpha_SM*(*Ey1D)(nx_p-1) + Beta_SM*(*Bz1D)(nx_d-2) + Gamma_SM*bzR;
+        (*By1D)(nx_d-1) = -Alpha_SM*((*Ez1D)(nx_p-1)-Ez1D->ExtFieldAt_xmax) + Beta_SM*((*By1D)(nx_d-2)-By1D->ExtFieldAt_xmax) + Gamma_SM*byR;
+        (*Bz1D)(nx_d-1) =  Alpha_SM*((*Ey1D)(nx_p-1)-Ey1D->ExtFieldAt_xmax) + Beta_SM*((*Bz1D)(nx_d-2)-Bz1D->ExtFieldAt_xmax) + Gamma_SM*bzR;
     }//if Eastern
 
 }
