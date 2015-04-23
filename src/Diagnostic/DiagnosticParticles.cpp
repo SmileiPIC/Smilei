@@ -400,6 +400,18 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
             else if (output == "pz_density")
                 for (int ipart = bmin ; ipart < bmax ; ipart++)
                     data_array[ipart] = mass * (*w)[ipart] * (*pz)[ipart];
+		    
+            else if (output == "px_flux")
+                for (int ipart = bmin ; ipart < bmax ; ipart++)
+                    data_array[ipart] = mass * (*w)[ipart] * pow((*px)[ipart],2)/ sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
+		    
+            else if (output == "py_flux")
+                for (int ipart = bmin ; ipart < bmax ; ipart++)
+                    data_array[ipart] = mass * (*w)[ipart] * pow((*py)[ipart],2)/ sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
+		    
+            else if (output == "pz_flux")
+                for (int ipart = bmin ; ipart < bmax ; ipart++)
+                    data_array[ipart] = mass * (*w)[ipart] * pow((*pz)[ipart],2)/ sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
             
             // 3 - sum the data into the data_sum according to the indexes
             // ---------------------------------------------------------------

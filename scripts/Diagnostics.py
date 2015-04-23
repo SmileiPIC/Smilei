@@ -488,8 +488,8 @@ class Diagnostic(object):
 		if self.xmax is not None: ax.set_xlim(xmax=self.xmax)
 		if self.title is not None: ax.set_title(self.title)
 		ax.set(**self.axeskwargs)
-		ax.ticklabel_format(axis="x",**self.xtickkwargs)
-		ax.ticklabel_format(axis="y",**self.ytickkwargs)
+		#ax.ticklabel_format(axis="x",**self.xtickkwargs)
+		#ax.ticklabel_format(axis="y",**self.ytickkwargs)
 		return im
 	
 	# If the sliced data has 0 dimension, this function can plot it 
@@ -811,6 +811,9 @@ class ParticleDiagnostic(Diagnostic):
 			elif output == "charge_density"                 : self.titles[d] = "Charge density"
 			elif output[:-1] == "current_density_"          : self.titles[d] = "J"+output[-1]
 			elif output == "p_density"                      : self.titles[d] = "P density"
+			elif output == "px_flux"                        : self.titles[d] = "Px flux"
+			elif output == "py_flux"                        : self.titles[d] = "Py flux"
+			elif output == "pz_flux"                        : self.titles[d] = "Pz flux"
 			elif output[2:] == "_density" and output[0]=="p": self.titles[d] = "P"+output[1]+" density"
 			if units == "nice":
 				if   output == "density"                        : unitss = "particles/cm$^3$"
@@ -818,6 +821,7 @@ class ParticleDiagnostic(Diagnostic):
 				elif output[:-1] == "current_density_"          : unitss = "particles * $c$ /cm$^3$"
 				elif output == "p_density"                      : unitss = "particles * $m\,c$ /cm$^3$"
 				elif output[2:] == "_density" and output[0]=="p": unitss = "particles * $m\,c$ /cm$^3$"
+				elif output[2:] == "_flux"    and output[0]=="p": unitss = "particles * $keV$"
 				if unitsa[1]>0: unitss += "/(mc)"
 				if unitsa[1]>1: unitss += "$^"+str(unitsa[1])+"$"
 				if unitsa[2]>0: unitss += "/c"
@@ -830,6 +834,7 @@ class ParticleDiagnostic(Diagnostic):
 				elif output[:-1] == "current_density_"          : unitss = "particles * $c\, n_c$"
 				elif output == "p_density"                      : unitss = "particles * $m\,c\, n_c$"
 				elif output[2:] == "_density" and output[0]=="p": unitss = "particles * $m\,c\, n_c$"
+				elif output[2:] == "_flux"    and output[0]=="p": unitss = " $n_cm_ec^2$"
 				if unitsa[1]>0: unitss += "/(mc)"
 				if unitsa[1]>1: unitss += "$^"+str(unitsa[1])+"$"
 				if unitsa[2]>0: unitss += "/c"

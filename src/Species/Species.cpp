@@ -293,7 +293,7 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
                 particles.momentum(i,p) -= pMean[i]/np;
 		    }
 		}
-		
+/*		
 
         // TEMPORARY TEST                    +--------------+
         // Anisotropic distribution          | DO NOT MERGE |
@@ -313,7 +313,7 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
             particles.momentum(1,p) = 0.;
             particles.momentum(2,p) = 0.;
         }
-        
+*/
     }//END if initialization_type
     
     
