@@ -78,28 +78,28 @@ double VelocityProfile1D::operator() (std::vector<double> x_cell) {
 		double B  = B0 + Bm/pow(cosh(x/L),2);
 		double A  = B0*x + Bm*L*tanh(x/L);
 		double DP = P0 + pow(B0,2)/2 - pow(B,2)/2;
-		if (abs(x)<tiny) {     // X=0 -> velocity is 0 imposed here to avoid 0/0
-			return (0);
-		}
-		else {	double v     = -2*Bm/(L*n0)*tanh(x/L) /(pow(cosh(x/L),2))*exp( 2*A*Bm/L*tanh(x/L) /(DP*pow(cosh(x/L),2)) );
-        		//double v   = alpha * pow(x,N-1) * exp(-pow(x,N)/sigma) / (exp(-pow(x,N)/sigma)+n0/nmax);
-        		if (abs(v)>1.0) ERROR("Velocity profile exceeding c");
-			return v;
-		}
+		//if (abs(x)<tiny) {     // X=0 -> velocity is 0 imposed here to avoid 0/0
+		//	return (0);
+		//}
+		//else {	
+		double v     = -2*Bm/(L*n0)*tanh(x/L) /(pow(cosh(x/L),2))*exp( 2*A*Bm/L*tanh(x/L) /(DP*pow(cosh(x/L),2)) );
+        	if (abs(v)>1.0) ERROR("Velocity profile exceeding c");
+		return v;
+		//}
 	}
 	else {	
 		double Bm = Bmax;
 		double B  = B0 + Bm/pow(cosh(x/L),2);
 		double A  = B0*x + Bm*L*tanh(x/L);
 		double DP = P0 + pow(B0,2)/2 - pow(B,2)/2;
-		if (abs(x)<tiny) {
-			return (0);    // X=0 -> velocity is 0 imposed here to avoid 0/0
-		}
-		else {	double v     = -2*Bm/(L*n0)*tanh(x/L) /(pow(cosh(x/L),2))*exp( 2*A*Bm/L*tanh(x/L) /(DP*pow(cosh(x/L),2)) );
-        		//double v   = alpha * pow(x,N-1) * exp(-pow(x,N)/sigma) / (exp(-pow(x,N)/sigma)+n0/nmax);
-        		if (abs(v)>1.0) ERROR("Velocity profile exceeding c");
-			return v;
-		}
+		//if (abs(x)<tiny) {
+		//	return (0);    // X=0 -> velocity is 0 imposed here to avoid 0/0
+		//}
+		//else {	
+		double v     = -2*Bm/(L*n0)*tanh(x/L) /(pow(cosh(x/L),2))*exp( 2*A*Bm/L*tanh(x/L) /(DP*pow(cosh(x/L),2)) );
+        	if (abs(v)>1.0) ERROR("Velocity profile exceeding c");
+		return v;
+		//}
 	}
     }
     
