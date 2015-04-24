@@ -169,9 +169,9 @@ int main (int argc, char* argv[])
     Diagnostic *Diags =new Diagnostic(params,diag_params, smpi);    
     
     smpi->barrier();
-
+    
     unsigned int stepStart=0, stepStop=params.n_time;
-
+    
     // reading from dumped file the restart values
     if (params.restart) {
         MESSAGE(1, "READING fields and particles for restart");
@@ -183,7 +183,7 @@ int main (int argc, char* argv[])
             simWindow->setOperators(vecSpecies, Interp, Proj, smpi);
             simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi , params);
         }
-
+        
     } else {
         // Initialize the electromagnetic fields
         // -----------------------------------
@@ -232,12 +232,12 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------------
     // Initialize the simulation times time_prim at n=0 and time_dual at n=+1/2
     // ------------------------------------------------------------------------
-	
+    
     // time at integer time-steps (primal grid)
     double time_prim = stepStart * params.timestep;
     // time at half-integer time-steps (dual grid)
     double time_dual = (stepStart +0.5) * params.timestep;
-	
+    
     // Count timer
     int ntimer(8);
     Timer timer[ntimer];

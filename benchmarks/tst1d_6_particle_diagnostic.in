@@ -115,8 +115,6 @@ species
 	bc_part_type_east = none
 end
 
-<<<<<<< HEAD:benchmarks/tst1d_6_particle_diagnostic.in
-=======
 # COLLISIONS
 # Several collision types can be defined. For each type, add a group "collisions" containing
 # the following parameters:
@@ -144,7 +142,6 @@ end
 #	transv_profile = plane-wave
 #	boxSide = west
 #end
->>>>>>> develop-collisions:test_fred.in
 
 # ---------------------
 # DIAGNOSTIC PARAMETERS

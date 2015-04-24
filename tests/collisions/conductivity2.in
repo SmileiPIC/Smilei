@@ -30,8 +30,8 @@ interpolation_order = 2
 # timestep : time step
 # sim_time  : duration of the simulation 
 #
-timestep = 200.
-sim_time  = 5000
+timestep = 0.002
+sim_time  = 0.1
 
 
 time_fields_frozen = 100000000000.
@@ -43,8 +43,8 @@ time_fields_frozen = 100000000000.
 # sim_length  : length of the simulation 
 # cell_length : cell-length 
 #
-cell_length = 5000.
-sim_length  = 40000.
+cell_length = 1
+sim_length  = 40
 
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
 # bc_em_type_long/trans : boundary conditions used for EM fields 
@@ -76,68 +76,161 @@ random_seed = 0
 # radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
 #
 species
-	species_type = backgroundelectron
+	species_type = ghostChargeLayerLeft
 	species_geometry = constant
-	vacuum_length   = 0.
-	dens_length_x   = 100000. 100000. 100000.
+	vacuum_length   = 5.
+	dens_length_x   = 1.
 	initPosition_type = regular
 	initMomentum_type = maxwell-juettner
-	ionization_model = none
-	n_part_per_cell = 10000
+	n_part_per_cell = 10
 	c_part_max = 1.0
-	mass = 1.
-	charge = -1.0
-	density = 10.
+	mass = 1000
+	charge =  1.
+	density = 0.00064
 	mean_velocity = 0. 0. 0.
-	temperature = 0.01
+	temperature = 0.0001
 	dynamics_type = norm
-	time_frozen = 100000000.0
-	radiating = false
+	time_frozen = 100000.0
+	bc_part_type_west = none
+	bc_part_type_east = none
+end
+species
+	species_type = ghostChargeLayerRight
+	species_geometry = constant
+	vacuum_length   = 35.
+	dens_length_x   = 1.
+	initPosition_type = regular
+	initMomentum_type = maxwell-juettner
+	n_part_per_cell = 10
+	c_part_max = 1.0
+	mass = 1000
+	charge = -1.
+	density = 0.00064
+	mean_velocity = 0. 0. 0.
+	temperature = 0.0001
+	dynamics_type = norm
+	time_frozen = 100000.0
 	bc_part_type_west = none
 	bc_part_type_east = none
 end
 
-species 
-	species_type = electron1
+species
+	species_type = copper1
 	species_geometry = constant
-	vacuum_length   = 0.
-	dens_length_x   = 20000. 0. 0.
+	vacuum_length   = 15.
+	dens_length_x   = 10.
 	initPosition_type = regular
 	initMomentum_type = maxwell-juettner
-	n_part_per_cell= 10000
+	n_part_per_cell = 10000
+	c_part_max = 1.0
+	mass = 115845      # =  mass of Cu atom
+	charge = 5.6
+	density = 415.     # =  number density of solid Cu
+	mean_velocity = 0. 0. 0.
+	temperature = 0.00004 # 20 eV
+	dynamics_type = norm
+	time_frozen = 0.0
+	bc_part_type_west = none
+	bc_part_type_east = none
+end
+species
+	species_type = electron1
+	species_geometry = constant
+	vacuum_length   = 15.
+	dens_length_x   = 10.
+	initPosition_type = regular
+	initMomentum_type = maxwell-juettner
+	n_part_per_cell= 50000
 	c_part_max = 1.0
 	mass = 1.0
 	charge = -1.0
-	density = 0.00001
-	mean_velocity = 0.55 0. 0.
-	temperature = 0.0000001
+	density = 415.
+	mean_velocity = 0. 0. 0.
+	temperature = 0.00004 # 20 eV
 	dynamics_type = norm
-	time_frozen = 100000000.0
-	radiating = false
+	time_frozen = 0.0
 	bc_part_type_west = none
 	bc_part_type_east = none
 end
 
+species
+	species_type = copper2
+	species_geometry = constant
+	vacuum_length   = 15.
+	dens_length_x   = 10.
+	initPosition_type = regular
+	initMomentum_type = maxwell-juettner
+	n_part_per_cell = 10000
+	c_part_max = 1.0
+	mass = 115845      # =  mass of Cu atom
+	charge = 7.4
+	density = 554.     # =  number density of solid Cu
+	mean_velocity = 0. 0. 0.
+	temperature = 0.0001 # 50 eV
+	dynamics_type = norm
+	time_frozen = 0.0
+	bc_part_type_west = none
+	bc_part_type_east = none
+end
 species 
 	species_type = electron2
 	species_geometry = constant
-	vacuum_length   = 20000.
-	dens_length_x   = 20000. 0. 0.
+	vacuum_length   = 15.
+	dens_length_x   = 10.
 	initPosition_type = regular
 	initMomentum_type = maxwell-juettner
-	n_part_per_cell= 10000
+	n_part_per_cell= 100000
 	c_part_max = 1.0
 	mass = 1.0
 	charge = -1.0
-	density = 0.00001
-	mean_velocity = 0.776 0. 0.
-	temperature = 0.0000001
+	density = 554.
+	mean_velocity = 0. 0. 0.
+	temperature = 0.0001 # 50 eV
 	dynamics_type = norm
-	time_frozen = 100000000.0
-	radiating = false
+	time_frozen = 0.0
 	bc_part_type_west = none
 	bc_part_type_east = none
 end
+
+species
+	species_type = copper3
+	species_geometry = constant
+	vacuum_length   = 15.
+	dens_length_x   = 10.
+	initPosition_type = regular
+	initMomentum_type = maxwell-juettner
+	n_part_per_cell = 10000
+	c_part_max = 1.0
+	mass = 115845      # =  mass of Cu atom
+	charge = 10.
+	density = 757.     # =  number density of solid Cu
+	mean_velocity = 0. 0. 0.
+	temperature = 0.0002 # 100 eV
+	dynamics_type = norm
+	time_frozen = 0.0
+	bc_part_type_west = none
+	bc_part_type_east = none
+end
+species 
+	species_type = electron3
+	species_geometry = constant
+	vacuum_length   = 15.
+	dens_length_x   = 10.
+	initPosition_type = regular
+	initMomentum_type = maxwell-juettner
+	n_part_per_cell= 50000
+	c_part_max = 1.0
+	mass = 1.0
+	charge = -1.0
+	density = 757.
+	mean_velocity = 0. 0. 0.
+	temperature = 0.0002 # 100 eV
+	dynamics_type = norm
+	time_frozen = 0.0
+	bc_part_type_west = none
+	bc_part_type_east = none
+end
+
 
 # COLLISIONS
 # Several collision types can be defined. For each type, add a group "collisions" containing
@@ -149,9 +242,19 @@ end
 # coulomb_log : value of the Coulomb logarithm. If negative or zero, then automatically computed.
 #
 collisions
-	species1 = backgroundelectron
-	species2 = electron1 electron2
-	coulomb_log = 3.
+	species1 = copper1
+	species2 = electron1
+	coulomb_log = 2.
+end
+collisions
+	species1 = copper2
+	species2 = electron2
+	coulomb_log = 2.
+end
+collisions
+	species1 = copper3
+	species2 = electron3
+	coulomb_log = 2.
 end
 
 # ----------------
@@ -175,8 +278,8 @@ end
 print_every = 10
 
 # every for field dump
-fieldDump_every    = 1
-avgfieldDump_every = 1
+fieldDump_every    = 5
+avgfieldDump_every = 5
 ntime_step_avg     = 1
 
 
@@ -206,9 +309,23 @@ end
 
 diagnostic particles
 	output = density
-	every = 2
-	time_average = 1
-	species = electron1 electron2
-	axis = x    0    40000.   2
-	axis = ekin   0.1  1   500 logscale
+	every = 5
+	time_average = 4
+	species = electron1
+	axis = vx  -0.03  0.03    1000
 end
+diagnostic particles
+	output = density
+	every = 5
+	time_average = 4
+	species = electron2
+	axis = vx  -0.04  0.04    1000
+end
+diagnostic particles
+	output = density
+	every = 5
+	time_average = 4
+	species = electron3
+	axis = vx  -0.06  0.06    1000
+end
+

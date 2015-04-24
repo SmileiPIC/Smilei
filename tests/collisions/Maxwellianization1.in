@@ -99,26 +99,25 @@ random_seed = 0
 #	bc_part_type_north = none
 #end
 
-species 
+species
 	species_type = electron1
 	species_geometry = constant
 	vacuum_length   = 0.
 	dens_length_x   = 1000. 1000. 1000.
-	initialization_type = boxcar
+	initPosition_type = regular
+	initMomentum_type = rectangular
 	n_part_per_cell= 20000
 	c_part_max = 1.0
 	mass = 1.0
 	charge = -1.0
 	density = 10.
 	mean_velocity = 0. 0. 0.
-	temperature = 0.0002 0.0002 0.0002
+	temperature = 0.0002 0.0 0.0
 	dynamics_type = norm
 	time_frozen = 100000000.0
 	radiating = false
 	bc_part_type_west = none
 	bc_part_type_east = none
-	bc_part_type_south = none
-	bc_part_type_north = none
 end
 
 # COLLISIONS

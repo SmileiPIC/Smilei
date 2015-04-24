@@ -71,7 +71,7 @@ for path in ["beam_relaxation4","beam_relaxation5","beam_relaxation6"]:
 	for i in range(len(t)):
 		ve_theory[i] = v
 		vperp2_theory[i] = vp2
-		nu0 = coeff * charge_ion**2 * density_ion * coulomb_log / (v-vi[i])**3
+		nu0 = coeff * charge_ion * density_ion * coulomb_log / (v-vi[i])**3
 		x = mass_ion*(v-vi[i])**2/(2.*ti[i])
 		phi = erf(np.sqrt(x))-2./np.sqrt(np.pi)*np.exp(-x)*np.sqrt(x)
 		v -= nu0*(1.+1./mass_ion)*phi* dt*1e-15*v

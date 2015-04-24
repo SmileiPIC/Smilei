@@ -196,8 +196,35 @@ void Species::initWeight(PicParams* params, unsigned int ispec, unsigned int iPa
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::initCharge(PicParams* params, unsigned int ispec, unsigned int iPart, double density)
 {
-    for (unsigned  p= iPart; p<iPart+params->species_param[ispec].n_part_per_cell; p++) {
-        particles.charge(p) = params->species_param[ispec].charge;
+    double q = params->species_param[ispec].charge;
+    short Z = (short)q;
+    double r = q-(double)Z;
+    unsigned int N = params->species_param[ispec].n_part_per_cell;
+    
+    // if charge is integer, then all particles have the same charge
+    if ( r == 0. ) {
+        for (unsigned int p = iPart; p<iPart+N; p++)
+            particles.charge(p) = Z;
+    // if charge is not integer, then particles can have two different charges
+    } else {
+        int tot = 0, Nm, Np;
+        double rr=r/(1-r), diff;
+        Np = (int)round(r*(double)N);
+        Nm = (int)N - Np;
+        for (unsigned int p = iPart; p<iPart+N; p++) {
+            if (Np > rr*Nm) {
+                particles.charge(p) = Z+1;
+                Np--;
+            } else {
+                particles.charge(p) = Z;
+                Nm--;
+            }
+            tot += particles.charge(p);
+        }
+        diff = ((double)N)*q - (double)tot; // missing charge
+        if (diff != 0.) {
+            WARNING("Could not match exactly charge="<<q<<" for species #"<<ispec<<" (difference of "<<diff<<"). Try to add particles.");
+        }
     }
 }
 
@@ -211,7 +238,6 @@ void Species::initCharge(PicParams* params, unsigned int ispec, unsigned int iPa
 void Species::initPosition(unsigned int np, unsigned int iPart, double *indexes, unsigned int ndim,
                            std::vector<double> cell_length, string initPosition_type)
 {
-
     for (unsigned  p= iPart; p<iPart+np; p++) {
         for (unsigned  i=0; i<ndim ; i++) {
             
@@ -220,7 +246,6 @@ void Species::initPosition(unsigned int np, unsigned int iPart, double *indexes,
                 particles.position(i,p)=indexes[i]+(p-iPart+0.5)*cell_length[i]/np;
 		    } else if (initPosition_type == "random") {
                 particles.position(i,p)=indexes[i]+(((double)rand() / RAND_MAX))*cell_length[i];
-
 		    }
 		    particles.position_old(i,p) = particles.position(i,p);
 		}// i
@@ -286,36 +311,27 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
 		}//p
 		
 	    // center the distribution function around pMean
-	    // \todo{Allow for non-zero mean-velocity (MG)}
 	    for (unsigned int p= iPart; p<iPart+np; p++)
 		{
 		    for (unsigned int i=0; i<3 ; i++) {
                 particles.momentum(i,p) -= pMean[i]/np;
 		    }
 		}
-/*		
-
-        // TEMPORARY TEST                    +--------------+
-        // Anisotropic distribution          | DO NOT MERGE |
-        // WORKS ONLY IF NON-RELATIVISTIC    +--------------+
+		
         for (unsigned int p= iPart; p<iPart+np; p++) {
             particles.momentum(1,p) *= sqrt(temp[1]/temp[0]);
             particles.momentum(2,p) *= sqrt(temp[2]/temp[0]);
         }
         
-    // TEMPORARY TEST                    +--------------+
-    // Boxcar distribution along x       | DO NOT MERGE |
-    //                                   +--------------+
-    } else if (initialization_type == "boxcar") {
+    // Rectangular distribution
+    } else if (initMomentum_type == "rectangular") {
         
         for (unsigned int p= iPart; p<iPart+np; p++) {
             particles.momentum(0,p) = (2.*(double)rand() / RAND_MAX - 1.) * sqrt(temp[0]/species_param.mass);
-            particles.momentum(1,p) = 0.;
-            particles.momentum(2,p) = 0.;
+            particles.momentum(1,p) = (2.*(double)rand() / RAND_MAX - 1.) * sqrt(temp[1]/species_param.mass);
+            particles.momentum(2,p) = (2.*(double)rand() / RAND_MAX - 1.) * sqrt(temp[2]/species_param.mass);
         }
-*/
-    }//END if initialization_type
-    
+    }//END if initMomentum_type
     
     // Adding the mean velocity (using relativistic composition)
     // ---------------------------------------------------------
