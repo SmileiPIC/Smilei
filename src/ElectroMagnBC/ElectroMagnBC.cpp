@@ -7,7 +7,7 @@
 
 #include "PicParams.h"
 #include "LaserParams.h"
-#include "Laser.h"
+#include "LaserProfile.h"
 #include "Tools.h"
 
 using namespace std;
@@ -19,7 +19,7 @@ ElectroMagnBC::ElectroMagnBC( PicParams &params, LaserParams &laser_params )
 
     for (unsigned int i=0; i<laser_.size(); i++) {
         DEBUG(5,"Initializing Laser "<<i);        
-        laser_[i] = new Laser(params,laser_params, i);
+        laser_[i] = new LaserProfile(params,laser_params, i);
     }
 
     dt = params.timestep;

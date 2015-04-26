@@ -43,5 +43,5 @@ do
     $MPIEXEC -np $proc $smilei `basename $nml`
     cd ..
 done
-
-$DIRSMILEI/../scripts/TPUPMC/smileiQt.py ${outDirs}
+# echo ${outDirs}
+# $DIRSMILEI/../scripts/TPUPMC/smileiQt.py ${outDirs}

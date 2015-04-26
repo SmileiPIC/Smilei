@@ -11,6 +11,7 @@
 #include "SmileiMPI_Cart2D.h"
 #include "ElectroMagn.h"
 #include "Field1D.h"
+#include "Field2D.h"
 #include "Field.h"
 #include "DiagParams.h"
 
@@ -21,139 +22,144 @@ cpuRank((int)smpi->getRank()),
 probeSize(10), 
 fileId(0) {
     
-    if (diagParams.probeStruc.size() >0) {
+    // diagParams.probeStruc is an array of several probeStructure objects.
+    // They were collected in DiagParams.cpp by reading the input file.
+    unsigned int nprobes = diagParams.probeStruc.size();
+    if ( nprobes>0) {
+        
+        // Create the HDF5 file that will contain all the probes
         hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
         H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
         fileId = H5Fcreate( "Probes.h5", H5F_ACC_TRUNC, H5P_DEFAULT, pid);
         H5Pclose(pid);
         
+        // Write the version of the code as an attribute
         string ver(__VERSION);
-        hid_t sid = H5Screate(H5S_SCALAR);
-        hid_t tid = H5Tcopy(H5T_C_S1);
-        H5Tset_size(tid, ver.size());
-        H5Tset_strpad(tid,H5T_STR_NULLTERM);
-        hid_t aid = H5Acreate(fileId, "Version", tid, sid, H5P_DEFAULT, H5P_DEFAULT);
+        H5::attr(fileId, "Version", ver);
         
-        H5Awrite(aid, tid, ver.c_str());
+        // Initialize arrays with 1 element for each probe
+        dt = params.timestep;
+        every         .resize(nprobes);
+        tmin          .resize(nprobes);
+        tmax          .resize(nprobes);
+        probeParticles.resize(nprobes);
+        nPart_total   .resize(nprobes);
+        probesArray   .resize(nprobes);
+        probesStart   .resize(nprobes);
         
-        H5Aclose(aid);
-        H5Sclose(sid);
-        H5Tclose(tid);
-        
-        every.resize(diagParams.probeStruc.size());
-        probeParticles.resize(diagParams.probeStruc.size());
-        probeId.resize(diagParams.probeStruc.size());
-        
+        // Loop each probe and collect the data from the probeStructure
         for (unsigned int np=0; np<diagParams.probeStruc.size(); np++) {
             every[np]=diagParams.probeStruc[np].every;
-            unsigned int dimProbe=diagParams.probeStruc[np].dim+2;
+            tmin[np] =diagParams.probeStruc[np].tmin;
+            tmax[np] =diagParams.probeStruc[np].tmax;
+            
+            // dimension of the probe grid
+            unsigned int dimProbe=diagParams.probeStruc[np].dim;
+            // dimension of the simulation
             unsigned int ndim=params.nDim_particle;
-            
+            // "shape" of the probe grid
             vector<unsigned int> vecNumber=diagParams.probeStruc[np].number;
+            // list of the positions of the points "pos", "pos_first", etc.
+            vector< vector<double> > * p = &(diagParams.probeStruc[np].pos);
             
-            unsigned int totPart=1;
-            for (unsigned int iDimProbe=0; iDimProbe<diagParams.probeStruc[np].dim; iDimProbe++) {
-                totPart *= vecNumber[iDimProbe];
+            // Calculate the total number of points in the grid
+            // Each point is actually a "fake" macro-particle
+            nPart_total[np]=1;
+            for (unsigned int iDimProbe=0; iDimProbe<dimProbe; iDimProbe++) {
+                nPart_total[np] *= vecNumber[iDimProbe];
             }
             
-            probeParticles[np].initialize(totPart, ndim);
-            probeId[np].resize(totPart);
+            // Initialize the list of "fake" particles the same way are actual macro-particles
+            probeParticles[np].initialize(nPart_total[np], ndim);
             
-            vector<double> partPos(ndim*totPart,0.0);
-            
-            for(unsigned int ipart=0; ipart!=totPart; ++ipart) {
-                int found=cpuRank;
-                for(unsigned int iDim=0; iDim!=ndim; ++iDim) {
-                    partPos[iDim+ipart*ndim]=diagParams.probeStruc[np].pos[0][iDim];
-                    // the particle position is a linear combiantion of the point pos with posFirst or posSecond or posThird
-                    for (unsigned int iDimProbe=0; iDimProbe<diagParams.probeStruc[np].dim; iDimProbe++) {
-                        partPos[iDim+ipart*ndim] += (ipart%vecNumber[iDimProbe])*(diagParams.probeStruc[np].pos[iDimProbe+1][iDim]-diagParams.probeStruc[np].pos[0][iDim])/(vecNumber[iDimProbe]-1);
-                    }
-                    probeParticles[np].position(iDim,ipart) = partPos[iDim+ipart*ndim];
-                    
-                    //!fixme this is awful: we add one cell if we're on the upper border
-                    double maxToCheck=smpi->getDomainLocalMax(iDim);                    
-                    if (ndim==1) {
-                        if ((static_cast<SmileiMPI_Cart1D*>(smpi))->isEastern()) {
-                            maxToCheck+=params.cell_length[iDim];
-                        }
-                    } else if (ndim==2) {
-                        if ((iDim == 0 && (static_cast<SmileiMPI_Cart2D*>(smpi))->isEastern()) ||
-                            (iDim == 1 && (static_cast<SmileiMPI_Cart2D*>(smpi))->isNorthern())) {
-                            maxToCheck+=params.cell_length[iDim];
-                        }                        
-                    } else {
-                        ERROR("implement here");
-                    }
-
-                    if (probeParticles[np].position(iDim,ipart) < smpi->getDomainLocalMin(iDim) ||
-                        probeParticles[np].position(iDim,ipart) >= maxToCheck) {
-                        found=-1;
-                    }
+            // For each grid point, calculate its position and assign that position to the particle
+            // The particle position is a linear combination of the `pos` with `pos_first` or `pos_second`, etc.
+            double partPos, dx;
+            vector<unsigned int> ipartND (dimProbe);
+            for(unsigned int ipart=0; ipart<nPart_total[np]; ++ipart) { // for each particle
+                // first, convert the index `ipart` into N-D indexes
+                unsigned int i = ipart;
+                for (unsigned int iDimProbe=0; iDimProbe<dimProbe; iDimProbe++) {
+                    ipartND[iDimProbe] = i%vecNumber[iDimProbe];
+                    i = i/vecNumber[iDimProbe]; // integer division
                 }
-                probeId[np][ipart] = found;
+                // Now assign the position of the particle
+                for(unsigned int iDim=0; iDim!=ndim; ++iDim) { // for each dimension of the simulation
+                    partPos = (*p)[0][iDim]; // position of `pos`
+                    for (unsigned int iDimProbe=0; iDimProbe<dimProbe; iDimProbe++) { // for each of `pos`, `pos_first`, etc.
+                        dx = ((*p)[iDimProbe+1][iDim]-(*p)[0][iDim])/(vecNumber[iDimProbe]-1); // distance between 2 gridpoints
+                        partPos += ipartND[iDimProbe] * dx;
+                    }
+                    probeParticles[np].position(iDim,ipart) = partPos;
+                }
             }
-            vector<hsize_t> dims(dimProbe);
-            vector<hsize_t> max_dims(dimProbe);
-            vector<hsize_t> chunk_dims(dimProbe);
             
-            dims[0]=0;
-            max_dims[0]=H5S_UNLIMITED;
-            chunk_dims[0]=1;
-            
-            for (unsigned int iDimProbe=1; iDimProbe<dimProbe-1; iDimProbe++) {
-                dims[iDimProbe]=vecNumber[iDimProbe-1];
-                max_dims[iDimProbe]=vecNumber[iDimProbe-1];
-                chunk_dims[iDimProbe]=1;
+            // Remove particles out of the domain
+            for ( int ipb=nPart_total[np]-1 ; ipb>=0 ; ipb--) {
+                if (!probeParticles[np].is_part_in_domain(ipb, smpi))
+                    probeParticles[np].erase_particle(ipb);
             }
-            dims.back()=probeSize;
-            max_dims.back()=probeSize;
-            chunk_dims.back()=probeSize;
+            unsigned int nPart_local = probeParticles[np].size(); // number of fake particles for this proc
             
-            sid = H5Screate_simple(dimProbe, &dims[0], &max_dims[0]);
-            hid_t pid = H5Pcreate(H5P_DATASET_CREATE);
-            H5Pset_layout(pid, H5D_CHUNKED);
-            H5Pset_chunk(pid, dimProbe, &chunk_dims[0]);
+            // Make the array that will contain the data
+            // probesArray : 10 x nPart_tot
+            vector<unsigned int> probesArraySize(2);
+            probesArraySize[0] = nPart_local; // number of particles
+            probesArraySize[1] = probeSize; // number of fields (Ex, Ey, etc)
+            probesArray[np] = new Field2D(probesArraySize);
             
-            hid_t did = H5Dcreate(fileId, probeName(np).c_str(), H5T_NATIVE_FLOAT, sid, H5P_DEFAULT, pid, H5P_DEFAULT);
-            H5Pclose(pid);
-            H5Sclose(sid);
+            // Exchange data between MPI cpus so that they can figure out which part
+            // of the grid they have to manage
+            MPI_Status status;
+            // Receive the location where to start from the previous node
+            probesStart[np] = 0;
+            if (cpuRank>0) MPI_Recv( &(probesStart[np]), 1, MPI_INTEGER, cpuRank-1, 0, MPI_COMM_WORLD, &status );
+            // Send the location where to end to the next node
+            int probeEnd = probesStart[np]+nPart_local;
+            if (cpuRank!=smpi->getSize()-1) MPI_Send( &probeEnd, 1, MPI_INTEGER, cpuRank+1, 0, MPI_COMM_WORLD );
             
-            unsigned int vecNumberProd=1;
-            for (unsigned int iDimProbe=0; iDimProbe<vecNumber.size(); iDimProbe++) {
-                vecNumberProd*=vecNumber[iDimProbe];
-            }  
+            // Create group for the current probe
+            hid_t did = H5Gcreate(fileId, probeName(np).c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
             
-            vector<hsize_t> dimsPos(1+vecNumber.size());
-            for (unsigned int iDimProbe=0; iDimProbe<vecNumber.size(); iDimProbe++) {
-                dimsPos[iDimProbe]=vecNumber[iDimProbe];
+            // Create an array to hold the positions of local probe particles
+            double posArray [nPart_local][ndim];
+            for (int ipb=0 ; ipb<nPart_local ; ipb++)
+                for (int idim=0 ; idim<ndim  ; idim++)
+                    posArray[ipb][idim] = probeParticles[np].position(idim,ipb);
+            
+            // Add array "positions" into the current HDF5 group
+            H5::matrix_MPI(did, "positions", posArray[0][0], nPart_total[np], ndim, probesStart[np], nPart_local);
+            
+            // Add arrays "p0", "p1", ... to the current group
+            ostringstream pk;
+            for (unsigned int iDimProbe=0; iDimProbe<=dimProbe; iDimProbe++) {
+                pk.str("");
+                pk << "p" << iDimProbe;
+                H5::vector(did, pk.str(), diagParams.probeStruc[np].pos[iDimProbe][0], ndim);
             }
-            dimsPos[vecNumber.size()]=ndim;
             
-            hid_t sid = H5Screate_simple(dimsPos.size(), &dimsPos[0], NULL);
+            // Add array "number" to the current group
+            H5::vector(did, "number", diagParams.probeStruc[np].number[0], dimProbe);
             
-            hid_t aid = H5Acreate (did, "position", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT);
-            H5Awrite(aid, H5T_NATIVE_DOUBLE, &partPos[0]);
-            H5Aclose(aid);
-            H5Sclose(sid);
+            // Add attribute every to the current group
+            H5::attr(did, "every", every[np]);
+            // Add attribute "dimension" to the current group
+            H5::attr(did, "dimension", diagParams.probeStruc[np].dim);
             
-            sid = H5Screate(H5S_SCALAR);	
-            aid = H5Acreate(did, "every", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
-            H5Awrite(aid, H5T_NATIVE_UINT, &every[np]);
-            H5Sclose(sid);
-            H5Aclose(aid);
-            
-            sid = H5Screate(H5S_SCALAR);	
-            aid = H5Acreate(did, "dimension", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
-            H5Awrite(aid, H5T_NATIVE_UINT, &diagParams.probeStruc[np].dim);
-            H5Sclose(sid);
-            H5Aclose(aid);
-            
-            H5Dclose(did);
+            // Close current group
+            H5Gclose(did);
         }
-        
+    
     }
 }
+
+
+DiagnosticProbe::~DiagnosticProbe()
+{
+    for ( int np=0 ; np < probesArray.size() ; np++ )
+    delete probesArray[np];
+}
+
 
 void DiagnosticProbe::close() {
     if (fileId>0) {
@@ -168,91 +174,48 @@ string DiagnosticProbe::probeName(int p) {
 }
 
 void DiagnosticProbe::run(unsigned int timestep, ElectroMagn* EMfields, Interpolator* interp) {
+
+    double time = (double)timestep * dt;
+    
+    // Loop probes
     for (unsigned int np=0; np<every.size(); np++) {
-        if (every[np] && timestep % every[np] == 0) {
-            vector<double> data(probeSize);
+        // skip if current timestep is not requested
+        if ( (every[np]  && timestep % every[np] == 0) &&
+             (time <= tmax[np]) && (time >= tmin[np]) ) {
             
-            hid_t did = H5Dopen2(fileId, probeName(np).c_str(), H5P_DEFAULT);
-            
-            // All rank open all probes dataset
-            hid_t sid = H5Dget_space(did);
-            
-            hsize_t dimProbe = H5Sget_simple_extent_dims(sid, NULL, NULL);
-            
-            vector<hsize_t> dims(dimProbe);
-            vector<hsize_t> nulldims(dimProbe);
-            for (unsigned int iDimProb=0; iDimProb<dimProbe-1; iDimProb++) {
-                dims[iDimProb]=1;
-                nulldims[iDimProb]=0;
-            }
-            dims.back()=probeSize;
-            nulldims.back()=0;
-            
-            hid_t sidPart = H5Screate_simple(dimProbe, &dims[0], NULL);
-            hid_t sidNull = H5Screate_simple(dimProbe, &nulldims[0], NULL);
-            
-            // Get dataset existing dims
-            vector<hsize_t> dimsO(dimProbe);
-            
-            H5Sget_simple_extent_dims(sid, &dimsO[0], NULL);
-            
-            // Increment dataset size
-            dimsO[0]++;
-            
-            H5Dset_extent(did, &dimsO[0]);
-            
-            H5Sclose(sid);
-            
-            sid = H5Dget_space(did);
-            
-            for (int iprob=0; iprob <probeParticles[np].size(); iprob++) {
+            // Loop probe ("fake") particles
+            unsigned int nPart_local = probeParticles[np].size();
+            for (int iprob=0; iprob<nPart_local; iprob++) {               
                 
-                vector<hsize_t> count(dimProbe);
-                if (probeId[np][iprob]==cpuRank) {
-                    fill(count.begin(),count.end()-1,1);
-                    count.back()=probeSize;
-                } else {
-                    fill(count.begin(),count.end(),0);
-                }
+                // Interpolate fields at the location of the fake particles
+                (*interp)(EMfields,probeParticles[np],iprob,&Eloc_fields,&Bloc_fields,&Jloc_fields,&Rloc_fields);
                 
-                vector<hsize_t> start(dimProbe);
-                start.front()=dimsO[0]-1;                
-                for (unsigned int iDimProb=1; iDimProb<dimProbe-1; iDimProb++) {
-                    start[iDimProb]=iprob % dimsO[iDimProb];
-                }
-                start.back()=0;
-                
-                H5Sselect_hyperslab(sid, H5S_SELECT_SET, &start[0], NULL, &count[0], NULL);
-                
-                hid_t pid = H5Pcreate(H5P_DATASET_XFER);
-                H5Pset_dxpl_mpio(pid, H5FD_MPIO_INDEPENDENT);
-                
-                if (probeId[np][iprob]==cpuRank) {
-                    (*interp)(EMfields,probeParticles[np],iprob,&Eloc_fields,&Bloc_fields,&Jloc_fields,&data[probeSize-1]);
-                    
-                    //! here we fill the probe data!!!
-                    data[0]=Eloc_fields.x;
-                    data[1]=Eloc_fields.y;
-                    data[2]=Eloc_fields.z;
-                    data[3]=Bloc_fields.x;
-                    data[4]=Bloc_fields.y;
-                    data[5]=Bloc_fields.z;
-                    data[6]=Jloc_fields.x;
-                    data[7]=Jloc_fields.y;
-                    data[8]=Jloc_fields.z;
-                    
-                    H5Dwrite(did, H5T_NATIVE_DOUBLE, sidPart, sid, pid, &data[0]);
-                } else {
-                    H5Dwrite(did, H5T_NATIVE_DOUBLE, sidNull, sid, pid, &data[0]);
-                }
-                
-                H5Pclose( pid );
+                //! here we fill the probe data!!!
+                probesArray[np]->data_2D[iprob][0]=Eloc_fields.x;
+                probesArray[np]->data_2D[iprob][1]=Eloc_fields.y;
+                probesArray[np]->data_2D[iprob][2]=Eloc_fields.z;
+                probesArray[np]->data_2D[iprob][3]=Bloc_fields.x;
+                probesArray[np]->data_2D[iprob][4]=Bloc_fields.y;
+                probesArray[np]->data_2D[iprob][5]=Bloc_fields.z;
+                probesArray[np]->data_2D[iprob][6]=Jloc_fields.x;
+                probesArray[np]->data_2D[iprob][7]=Jloc_fields.y;
+                probesArray[np]->data_2D[iprob][8]=Jloc_fields.z;
+                probesArray[np]->data_2D[iprob][9]=Rloc_fields;
                 
             }
-            H5Sclose(sidNull);
-            H5Sclose(sidPart);
-            H5Sclose(sid);
-            H5Dclose(did);
+            
+            // Make the name for the array
+            ostringstream name_t;
+            name_t.str("");
+            name_t << "/" << probeName(np).c_str() << "/" << setfill('0') << setw(10) << timestep;
+            
+            // Open the existing HDF5 group for that probe
+            hid_t did = H5Gopen2(fileId, probeName(np).c_str(), H5P_DEFAULT);
+            // Write the positions array into the current HDF5 group
+            H5::matrix_MPI(did, name_t.str(), probesArray[np]->data_2D[0][0], nPart_total[np], probeSize, probesStart[np], nPart_local);
+            // Close the group
+            H5Gclose(did);
+            
         }
     }
     if (fileId) H5Fflush(fileId, H5F_SCOPE_GLOBAL );

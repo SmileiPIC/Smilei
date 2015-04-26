@@ -416,29 +416,20 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     // variable declaration
     double xpn, ypn;
     double delta, delta2;
-    double Sx0[5], Sx1[5], Sy0[5], Sy1[5], DSx[5], DSy[5]; // arrays used for the Esirkepov projection method
-    double Wx[5][5], Wy[5][5], Wz[5][5];                   // idem
-    double Jx_p[5][5], Jy_p[5][5];                         // idem
+    // arrays used for the Esirkepov projection method
+    double  Sx0[5], Sx1[5], Sy0[5], Sy1[5], DSx[5], DSy[5], tmpJx[5];
 
-    // Initialize all current-related arrays to zero
     for (unsigned int i=0; i<5; i++) {
-        Sx0[i] = 0.;
         Sx1[i] = 0.;
-        Sy0[i] = 0.;
         Sy1[i] = 0.;
-        DSx[i] = 0.;
-        DSy[i] = 0.;
+	// local array to accumulate Jx
+	// Jx_p[i][j] = Jx_p[i-1][j] - crx_p * Wx[i-1][j];
+	tmpJx[i] = 0.;
     }
-    for (unsigned int i=0; i<5; i++) {
-        for (unsigned int j=0; j<5; j++) {
-            Wx[i][j]   = 0.;
-            Wy[i][j]   = 0.;
-            Wz[i][j]   = 0.;
-            Jx_p[i][j] = 0.;
-            Jy_p[i][j] = 0.;
-        }
-    }//i
-
+    Sx0[0] = 0.;
+    Sx0[4] = 0.;
+    Sy0[0] = 0.;
+    Sy0[4] = 0.;
 
     // --------------------------------------------------------
     // Locate particles & Calculate Esirkepov coef. S, DS and W
@@ -481,52 +472,63 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     Sy1[jp_m_jpo+2] = 0.75-delta2;
     Sy1[jp_m_jpo+3] = 0.5 * (delta2+delta+0.25);
 
-
-    // calculate Esirkepov coeff. Wx, Wy, Wz
     for (unsigned int i=0; i < 5; i++) {
         DSx[i] = Sx1[i] - Sx0[i];
         DSy[i] = Sy1[i] - Sy0[i];
     }
 
-    for (unsigned int i=0 ; i<5 ; i++) {
-        for (unsigned int j=0 ; j<5 ; j++) {
-            Wx[i][j] = DSx[i] * (Sy0[j] + 0.5*DSy[j]);
-            Wy[i][j] = DSy[j] * (Sx0[i] + 0.5*DSx[i]);
-            Wz[i][j] = one_third * ( Sx1[i] * (0.5*Sy0[j]+Sy1[j]) + Sx0[i] * (Sy0[j]+0.5*Sy1[j]) );
-        }
-    }
-
-
+    // calculate Esirkepov coeff. Wx, Wy, Wz when used
+    double tmp, tmp2, tmp3, tmpY;
+    //Do not compute useless weights.
     // ------------------------------------------------
     // Local current created by the particle
     // calculate using the charge conservation equation
     // ------------------------------------------------
-    for (unsigned int i=1 ; i<5 ; i++) {
-        for (unsigned int j=0 ; j<5 ; j++) {
-            Jx_p[i][j] = Jx_p[i-1][j] - crx_p * Wx[i-1][j];
-        }
-    }
-    for (unsigned int i=0 ; i<5 ; i++) {
-        for (unsigned int j=1 ; j<5 ; j++) {
-            Jy_p[i][j] = Jy_p[i][j-1] - cry_p * Wy[i][j-1];
-        }
-    }
-
 
     // ---------------------------
     // Calculate the total current
     // ---------------------------
     ipo -= i_domain_begin + bin;
     jpo -= j_domain_begin;
+    // i =0
+    {
+	iloc = (ipo-2)*b_dim1;
+	jloc = iloc+jpo-2; 
+	tmp2 = 0.5*Sx1[0];
+	tmp3 =     Sx1[0];
+	Jz[jloc]  += crz_p * one_third * ( Sy1[0]*tmp3 );
+	rho[jloc] += charge_weight * Sx1[0]*Sy1[0];	
+	tmp = 0;
+	tmpY = Sx0[0] + 0.5*DSx[0];
+	for (unsigned int j=1 ; j<5 ; j++) {
+	    jloc = iloc+j+jpo-2; 
+	    tmp -= cry_p * DSy[j-1] * tmpY;
+	    Jy[jloc]  += tmp;
+	    Jz[jloc]  += crz_p * one_third * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
+	    rho[jloc] += charge_weight * Sx1[0]*Sy1[j];
+	}
 
-    for (unsigned int i=0 ; i<5 ; i++) {
+    }//i
+
+    for (unsigned int i=1 ; i<5 ; i++) {
         iloc = (i+ipo-2)*b_dim1;
-        for (unsigned int j=0 ; j<5 ; j++) {
-            jloc = iloc+j+jpo-2; //jloc is supposed to go either from 0 to 4 or from 1 to 5
-            Jx[jloc]  += Jx_p[i][j];
-            Jy[jloc]  += Jy_p[i][j];
-            Jz[jloc]  += crz_p * Wz[i][j];
-            rho[jloc] += charge_weight * Sx1[i]*Sy1[j];
+	jloc = iloc+jpo-2; 
+	tmpJx[0] -= crx_p *  DSx[i-1] * (0.5*DSy[0]);
+	Jx[jloc]  += tmpJx[0];
+        tmp2 = 0.5*Sx1[i] + Sx0[i];
+        tmp3 = 0.5*Sx0[i] + Sx1[i];
+	Jz[jloc]  += crz_p * one_third * ( Sy1[0]*tmp3 );
+	rho[jloc] += charge_weight * Sx1[i]*Sy1[0];	
+	tmp = 0;
+	tmpY = Sx0[i] + 0.5*DSx[i];
+        for (unsigned int j=1 ; j<5 ; j++) {
+            jloc = iloc+j+jpo-2; 
+            tmpJx[j] -= crx_p * DSx[i-1] * (Sy0[j] + 0.5*DSy[j]);
+	    Jx[jloc]  += tmpJx[j];
+	    tmp -= cry_p * DSy[j-1] * tmpY;
+            Jy[jloc]  += tmp;
+            Jz[jloc]  += crz_p * one_third * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
+	    rho[jloc] += charge_weight * Sx1[i]*Sy1[j];
         }
 
     }//i

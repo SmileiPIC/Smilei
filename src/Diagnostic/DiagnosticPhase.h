@@ -66,5 +66,11 @@ public:
 	
     //! HDF identifier of data
     hid_t dataId;
+
+    //! dt not passed to this, tmin/tmax do not run for this for now
+    double tmin;
+    double tmax;
+    double dt;
+
 };
 #endif

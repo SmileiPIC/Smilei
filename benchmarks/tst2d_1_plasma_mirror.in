@@ -8,7 +8,7 @@
 #            wavelength = input data are in wavelength-related units
 #            normalized = input data are put in code (relativistic) units
 #
-sim_units = normalized
+sim_units = wavelength
 
 
 # dim: Geometry of the simulation
@@ -27,7 +27,7 @@ interpolation_order = 2
 # sim_time: duration of the simulation in units of the normalization period 
 #
 res_time = 30
-sim_time = 30
+sim_time = 40
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
@@ -61,9 +61,10 @@ species
 	dens_length_x   = 4.0  
 	dens_length_y   = 50.0
 	species_type = ion
-	initialization_type = cold
+	initPosition_type = random
+	initMomentum_type = cold
 	ionization_model = none
-	n_part_per_cell = 10
+	n_part_per_cell = 5
 	c_part_max = 1.0
 	mass = 1836.0
 	charge = 1.0
@@ -73,8 +74,10 @@ species
 	dynamics_type = norm
 	time_frozen = 30.0
 	radiating = false
-	bc_part_type_long  = refl
-	bc_part_type_trans = none
+	bc_part_type_west  = refl
+	bc_part_type_east  = refl
+	bc_part_type_south = none
+	bc_part_type_north = none
 end
 
 species 
@@ -83,8 +86,9 @@ species
 	dens_length_x   = 4.0  
 	dens_length_y   = 50.0
 	species_type = electron
-	initialization_type = mj
-	n_part_per_cell=10
+	initPosition_type = random
+	initMomentum_type = maxj
+	n_part_per_cell=5
 	c_part_max=1.0
 	mass = 1.0
 	charge = -1.0
@@ -94,8 +98,10 @@ species
 	dynamics_type = norm	
 	time_frozen = 0.0
 	radiating = false
-	bc_part_type_long  = refl
-	bc_part_type_trans = none
+	bc_part_type_west  = refl
+	bc_part_type_east  = refl
+	bc_part_type_south = none
+	bc_part_type_north = none
 end
 
 

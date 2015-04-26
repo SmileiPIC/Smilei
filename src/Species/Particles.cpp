@@ -307,7 +307,7 @@ void Particles::overwrite_part2D(int part1, Particles &dest_parts, int part2, in
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::overwrite_part1D(int part1, int part2, int N)
 {
-        for (unsigned int j=0; j< N; j++) {
+        for (unsigned int j=0; j< (unsigned int) N; j++) {
                 Position[0][part2+j]   =    Position[0][part1+j];
             Position_old[0][part2+j] =  Position_old[0][part1+j];
                 Momentum[0][part2+j]     =  Momentum[0][part1+j];
@@ -323,7 +323,7 @@ void Particles::overwrite_part1D(int part1, int part2, int N)
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::overwrite_part1D(int part1, Particles &dest_parts, int part2, int N)
 {
-        for (unsigned int j=0; j< N; j++) {
+        for (unsigned int j=0; j< (unsigned int) N; j++) {
                 dest_parts.Position[0][part2+j]     = Position[0][part1+j];
             dest_parts.Position_old[0][part2+j] = Position_old[0][part1+j];
                 dest_parts.Momentum[0][part2+j] =     Momentum[0][part1+j];

@@ -10,9 +10,15 @@
 
 #include <vector>
 #include <string>
-#include "InputData.h"
+#include "ProfileParams.h"
+
+class InputData;
 
 
+struct ProfileSpecies : ProfileStructure {
+    //! vacuum lengths
+    std::vector<double> vacuum_length;
+};
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each species
@@ -24,8 +30,11 @@ struct SpeciesStructure {
     //! density profile
     std::string density_profile;
     
-    //! initialization type. Possible values: "regular" "cold" "Maxwell-Juettner"
-    std::string initialization_type;
+    //! position initialization type, possible values: "regular" or "random"
+    std::string initPosition_type;
+
+    //! momentum initialization type, possible values: "cold" or "maxwell-juettner"
+    std::string initMomentum_type;
     
     //! number of particles per cell
     unsigned int n_part_per_cell;
@@ -59,65 +68,26 @@ struct SpeciesStructure {
     bool radiating;
     
     //! Boundary conditions for particules
-    std::string bc_part_type_long;
-    std::string bc_part_type_trans;
+    std::string bc_part_type_west;
+    std::string bc_part_type_east;
+    std::string bc_part_type_south;
+    std::string bc_part_type_north;
+    std::string bc_part_type_bottom;
+    std::string bc_part_type_up;
     
     //! Ionization model per Specie (tunnel)
     std::string ionization_model;
-
-    //! species geometry
-    std::string species_geometry;
-
-    //! vacuum lengths
-    std::vector<double> vacuum_length;
     
-    //! lengths related to the density profile definition
-    std::vector<double> dens_length_x;
+    //! density profile
+    ProfileSpecies dens_profile;
     
-    //! lengths related to the density profile definition
-    std::vector<double> dens_length_y;
+    //! velocity profile
+    ProfileSpecies mvel_x_profile;
+    ProfileSpecies mvel_y_profile;
+    ProfileSpecies mvel_z_profile;
     
-    //! lengths related to the density profile definition
-    std::vector<double> dens_length_z;
     
-    //! doubles related to the density profile definition
-    std::vector<double> dens_dbl_params;
-    
-    //! integer related to the density profile definition
-    std::vector<short int> dens_int_params;
-    
-    //! slope lengths (symmetric for trapezoidal geometry, general for triangular geometry)
-    std::vector<double> slope_length;
-    
-    //! left slope lengths(not symmetric for trapezoidal case)
-    std::vector<double> left_slope_length;
-    
-    //! right slope lengths(not symmetric for trapezoidal case)
-    std::vector<double> right_slope_length;
-    
-    //! cut parameter for a gaussian profile
-    std::vector<double> cut;
-    
-    //! sigma parameter for a gaussian profile
-    std::vector<double> sigma;
-    
-    //! plateau for a gaussian profile
-    std::vector<double> plateau;
-    
-    //! polygonal density profile in x direction
-    std::vector<double> x_density_coor;
-    
-    //! polygonal density profile relative values in x direction
-    std::vector<double> density_rel_values_x;
-    
-    //! mode for 1D cos density profile
-    double mode;
-    
-    //! fase  for 1D cos density profile
-    double thetax;
-    
-    //! amplitude  for 1D cos density profile
-    double ampl;
+    //! velocity profile
     
 };
 
@@ -192,7 +162,10 @@ public:
     double vx_win;
     
     //! Clusters width
+    //unsigned int clrw;
     int clrw;
+    //! Number of cells per cluster
+    int n_cell_per_cluster;
     
     //! initial number of species
     unsigned int n_species;

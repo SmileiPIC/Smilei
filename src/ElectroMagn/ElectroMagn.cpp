@@ -3,15 +3,16 @@
 #include <limits>
 #include <iostream>
 
-#include "ElectroMagn1D.h"
 #include "PicParams.h"
 #include "Species.h"
 #include "Projector.h"
-#include "Laser.h"
 #include "Field.h"
 #include "ElectroMagnBC.h"
 #include "ElectroMagnBC_Factory.h"
 #include "SimWindow.h"
+#include "ExtFieldProfile1D.h"
+#include "ExtFieldProfile2D.h"
+#include "SolverFactory.h"
 
 using namespace std;
 
@@ -22,9 +23,9 @@ using namespace std;
 ElectroMagn::ElectroMagn(PicParams &params, LaserParams &laser_params, SmileiMPI* smpi) :
 timestep(params.timestep),
 cell_length(params.cell_length),
+n_species(params.n_species),
 nDim_field(params.nDim_field),
 cell_volume(params.cell_volume),
-n_species(params.n_species),
 n_space(params.n_space),
 oversize(params.oversize)
 {
@@ -83,6 +84,8 @@ oversize(params.oversize)
     }    
 
     emBoundCond = ElectroMagnBC_Factory::create(params, laser_params);
+    
+    MaxwellFaradaySolver_ = SolverFactory::create(params);
 
 }
 
@@ -127,6 +130,8 @@ ElectroMagn::~ElectroMagn()
     for ( int i=0 ; i<nBC ;i++ )
       if (emBoundCond[i]!=NULL) delete emBoundCond[i];
 
+    delete MaxwellFaradaySolver_;
+
 }//END Destructer
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -144,17 +149,25 @@ ElectroMagn::~ElectroMagn()
  }*/
 void ElectroMagn::solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, PicParams &params, SimWindow* simWindow)
 {
+#pragma omp parallel
+{
     // saving magnetic fields (to compute centered fields used in the particle pusher)
     saveMagneticFields();
 
     // Compute Ex_, Ey_, Ez_
     solveMaxwellAmpere();
+
+#pragma omp single
+{
     // Exchange Ex_, Ey_, Ez_
     smpi->exchangeE( this );
+}// end single
 
     // Compute Bx_, By_, Bz_
-    solveMaxwellFaraday();
+    (*MaxwellFaradaySolver_)(this);
 
+#pragma omp single
+{
     // Update Bx_, By_, Bz_
     if ((!simWindow) || (!simWindow->isMoving(time_dual)) )
         if (emBoundCond[0]!=NULL) // <=> if !periodic
@@ -165,10 +178,11 @@ void ElectroMagn::solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, Pic
  
     // Exchange Bx_, By_, Bz_
     smpi->exchangeB( this );
+}// end single
 
     // Compute Bx_m, By_m, Bz_m
     centerMagneticFields();
-
+} // end parallel
 }
 
 
@@ -205,7 +219,7 @@ void ElectroMagn::dump()
 // ---------------------------------------------------------------------------------------------------------------------
 // Method used to initialize the total charge density
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn::initRhoJ(vector<Species*> vecSpecies, Projector* Proj)
+void ElectroMagn::initRhoJ(vector<Species*>& vecSpecies, Projector* Proj)
 {
     //! \todo Check that one uses only none-test particles
     // number of (none-test) used in the simulation
@@ -214,7 +228,7 @@ void ElectroMagn::initRhoJ(vector<Species*> vecSpecies, Projector* Proj)
     
     //loop on all (none-test) Species
     for (unsigned int iSpec=0 ; iSpec<n_species; iSpec++ ) {
-        Particles cuParticles = vecSpecies[iSpec]->getParticlesList();
+        Particles &cuParticles = vecSpecies[iSpec]->getParticlesList();
         unsigned int n_particles = vecSpecies[iSpec]->getNbrOfParticles();
         
         DEBUG(n_particles<<" species "<<iSpec);
@@ -240,8 +254,9 @@ void ElectroMagn::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
     if (emBoundCond[0]!=NULL)
         emBoundCond[0]->laserDisabled();
 
-    //! \ Comms to optimize, only in x, east to west 
-    //! \ Implement SmileiMPI::exchangeE( EMFields*, int nDim, int nbNeighbors );
+    // For nrj balance
+    nrj_mw_lost += computeNRJ(shift, smpi);
+
     smpi->exchangeE( this, shift );
 
     smpi->exchangeB( this, shift );
@@ -258,8 +273,28 @@ void ElectroMagn::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
         smpi->exchangeAvg( this );
     }
 
+    // For now, fields introduced with moving window set to 0 
+    nrj_new_fields =+ 0.;
+
     
     //Here you might want to apply some new boundary conditions on the +x boundary. For the moment, all fields are set to 0.
+}
+
+double ElectroMagn::computeNRJ(unsigned int shift, SmileiMPI *smpi) {
+    double nrj(0.);
+
+    if ( smpi->isWestern() ) {
+	nrj += Ex_->computeNRJ(shift, istart, bufsize);
+	nrj += Ey_->computeNRJ(shift, istart, bufsize);
+	nrj += Ez_->computeNRJ(shift, istart, bufsize);
+
+	nrj += Bx_m->computeNRJ(shift, istart, bufsize);
+	nrj += By_m->computeNRJ(shift, istart, bufsize);
+	nrj += Bz_m->computeNRJ(shift, istart, bufsize);
+
+    }
+
+    return nrj;
 }
 
 bool ElectroMagn::isRhoNull(SmileiMPI* smpi)
@@ -292,3 +327,40 @@ bool ElectroMagn::isRhoNull(SmileiMPI* smpi)
 
 }
 
+void ElectroMagn::applyExternalFields(ExtFieldParams&extfield_params, SmileiMPI* smpi) {
+    
+    vector<Field*> my_fields;
+    my_fields.push_back(Ex_);
+    my_fields.push_back(Ey_);
+    my_fields.push_back(Ez_);
+    my_fields.push_back(Bx_);
+    my_fields.push_back(By_);
+    my_fields.push_back(Bz_);
+    
+    for (vector<Field*>::iterator field=my_fields.begin(); field!=my_fields.end(); field++) {
+        if (*field) {
+            string lowCaseField=(*field)->name;
+            std::transform(lowCaseField.begin(), lowCaseField.end(), lowCaseField.begin(), ::tolower);
+            for (vector<ExtFieldStructure>::iterator extfield=extfield_params.structs.begin(); extfield!=extfield_params.structs.end(); extfield++ ) {
+                ExtFieldProfile *my_ExtFieldProfile=NULL;
+                if (extfield_params.geometry == "1d3v") {
+                    my_ExtFieldProfile = (ExtFieldProfile*) (new ExtFieldProfile1D(*extfield));
+                } else if (extfield_params.geometry == "2d3v") {
+                    my_ExtFieldProfile = (ExtFieldProfile*) (new ExtFieldProfile2D(*extfield));
+                }
+                if (my_ExtFieldProfile) {
+                    for (vector<string>::iterator fieldName=(*extfield).fields.begin();fieldName!=(*extfield).fields.end();fieldName++) {
+                        if (lowCaseField==(*fieldName)) {
+                            applyExternalField(*field,my_ExtFieldProfile, smpi);
+                        }
+                    }
+                    delete my_ExtFieldProfile;
+                    my_ExtFieldProfile=NULL;
+                }                    
+            }
+        }
+    }
+    Bx_m->copyFrom(Bx_);
+    By_m->copyFrom(By_);
+    Bz_m->copyFrom(Bz_);
+}    

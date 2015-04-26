@@ -7,10 +7,11 @@
 
 #include "PicParams.h"
 #include "Field2D.h"
-#include "Laser.h"
 
 #include "SmileiMPI.h"
 #include "SmileiMPI_Cart2D.h"
+
+#include "ExtFieldProfile2D.h"
 
 using namespace std;
 
@@ -21,12 +22,12 @@ ElectroMagn2D::ElectroMagn2D(PicParams &params, LaserParams &laser_params, Smile
 ElectroMagn(params, laser_params, smpi),
 isWestern(smpi->isWestern()),
 isEastern(smpi->isEastern()),
-isNorthern(smpi->isNorthern()),
-isSouthern(smpi->isSouthern())
+isSouthern(smpi->isSouthern()),
+isNorthern(smpi->isNorthern())
 {
     // local dt to store
     SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
-    int process_coord_x = smpi2D->getProcCoord(0);
+//    int process_coord_x = smpi2D->getProcCoord(0);
     
     
     // --------------------------------------------------
@@ -171,7 +172,6 @@ isSouthern(smpi->isSouthern())
         } // for (int isDual=0 ; isDual
     } // for (unsigned int i=0 ; i<nDim_field 
     
-    
 }//END constructor Electromagn2D
 
 
@@ -181,7 +181,6 @@ isSouthern(smpi->isSouthern())
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn2D::~ElectroMagn2D()
 {
-    
 }//END ElectroMagn2D
 
 
@@ -206,8 +205,8 @@ void ElectroMagn2D::solvePoisson(SmileiMPI* smpi)
     double two_ov_dx2dy2      = 2.0*(1.0/(dx*dx)+1.0/(dy*dy));
     
     unsigned int nx_p2_global = (smpi2D->n_space_global[0]+1) * (smpi2D->n_space_global[1]+1);
-    unsigned int smilei_sz    = smpi2D->smilei_sz;
-    unsigned int smilei_rk    = smpi2D->smilei_rk;
+//    unsigned int smilei_sz    = smpi2D->smilei_sz;
+//    unsigned int smilei_rk    = smpi2D->smilei_rk;
     
     
     // Boundary condition for the direction vector (all put to 0)
@@ -499,26 +498,29 @@ void ElectroMagn2D::saveMagneticFields()
     Field2D* By2D_m = static_cast<Field2D*>(By_m);
     Field2D* Bz2D_m = static_cast<Field2D*>(Bz_m);
     
+#pragma omp for schedule(runtime)
     // Magnetic field Bx^(p,d)
     for (unsigned int i=0 ; i<nx_p ; i++) {
         for (unsigned int j=0 ; j<ny_d ; j++) {
             (*Bx2D_m)(i,j)=(*Bx2D)(i,j);
         }
-    }
     
     // Magnetic field By^(d,p)
-    for (unsigned int i=0 ; i<nx_d ; i++) {
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*By2D_m)(i,j)=(*By2D)(i,j);
         }
-    }
     
     // Magnetic field Bz^(d,d)
-    for (unsigned int i=0 ; i<nx_d ; i++) {
         for (unsigned int j=0 ; j<ny_d ; j++) {
             (*Bz2D_m)(i,j)=(*Bz2D)(i,j);
         }
-    }
+    }// end for j
+        for (unsigned int j=0 ; j<ny_p ; j++) {
+            (*By2D_m)(nx_p,j)=(*By2D)(nx_p,j);
+        }
+        for (unsigned int j=0 ; j<ny_d ; j++) {
+            (*Bz2D_m)(nx_p,j)=(*Bz2D)(nx_p,j);
+        }
     
 }//END saveMagneticFields
 
@@ -541,69 +543,41 @@ void ElectroMagn2D::solveMaxwellAmpere()
     Field2D* Jz2D = static_cast<Field2D*>(Jz_);
     
     // Electric field Ex^(d,p)
-    for (unsigned int i=0 ; i<nx_d ; i++) {
+//#pragma omp parallel
+//{
+#pragma omp for schedule(runtime)
+    for (unsigned int i=0 ; i<nx_p ; i++) {
+//    for (unsigned int i=0 ; i<nx_d ; i++) {
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*Ex2D)(i,j) += -timestep*(*Jx2D)(i,j) + dt_ov_dy * ( (*Bz2D)(i,j+1) - (*Bz2D)(i,j) );
-        }
-    }
+        }// end for j
+//    }// end for i
     
     // Electric field Ey^(p,d)
-    for (unsigned int i=0 ; i<nx_p ; i++) {
+//#pragma omp for schedule(runtime)
+//    for (unsigned int i=0 ; i<nx_p ; i++) {
         for (unsigned int j=0 ; j<ny_d ; j++) {
             (*Ey2D)(i,j) += -timestep*(*Jy2D)(i,j) - dt_ov_dx * ( (*Bz2D)(i+1,j) - (*Bz2D)(i,j) );
-        }
-    }
+        }// end for j
+    //} // end for i
     
     // Electric field Ez^(p,p)
-    for (unsigned int i=0 ;  i<nx_p ; i++) {
+    //for (unsigned int i=0 ;  i<nx_p ; i++) {
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*Ez2D)(i,j) += -timestep*(*Jz2D)(i,j)
             +               dt_ov_dx * ( (*By2D)(i+1,j) - (*By2D)(i,j) )
             -               dt_ov_dy * ( (*Bx2D)(i,j+1) - (*Bx2D)(i,j) );
-        }
-    }
-    
-}//END solveMaxwellAmpere
-
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Solve the Maxwell-Faraday equation
-// ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn2D::solveMaxwellFaraday()
+        } // end for j
+    }// end for i
+//} // end parallel
+#pragma omp single
 {
-    
-    // Static-cast of the fields
-    Field2D* Ex2D = static_cast<Field2D*>(Ex_);
-    Field2D* Ey2D = static_cast<Field2D*>(Ey_);
-    Field2D* Ez2D = static_cast<Field2D*>(Ez_);
-    Field2D* Bx2D = static_cast<Field2D*>(Bx_);
-    Field2D* By2D = static_cast<Field2D*>(By_);
-    Field2D* Bz2D = static_cast<Field2D*>(Bz_);
-    
-    // Magnetic field Bx^(p,d)
-    for (unsigned int i=0 ; i<nx_p;  i++) {
-        for (unsigned int j=1 ; j<ny_d-1 ; j++) {
-            (*Bx2D)(i,j) -= dt_ov_dy * ( (*Ez2D)(i,j) - (*Ez2D)(i,j-1) );
-        }
-    }
-    
-    // Magnetic field By^(d,p)
-    for (unsigned int i=1 ; i<nx_d-1 ; i++) {
         for (unsigned int j=0 ; j<ny_p ; j++) {
-            (*By2D)(i,j) += dt_ov_dx * ( (*Ez2D)(i,j) - (*Ez2D)(i-1,j) );
+            (*Ex2D)(nx_p,j) += -timestep*(*Jx2D)(nx_p,j) + dt_ov_dy * ( (*Bz2D)(nx_p,j+1) - (*Bz2D)(nx_p,j) );
         }
-    }
-    
-    // Magnetic field Bz^(d,d)
-    for (unsigned int i=1 ; i<nx_d-1 ; i++) {
-        for (unsigned int j=1 ; j<ny_d-1 ; j++) {
-            (*Bz2D)(i,j) += dt_ov_dy * ( (*Ex2D)(i,j) - (*Ex2D)(i,j-1) )
-            -               dt_ov_dx * ( (*Ey2D)(i,j) - (*Ey2D)(i-1,j) );
-        }
-    }
-    
-}//END solveMaxwellFaraday
+}
+//    }
+}//END solveMaxwellAmpere
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -620,25 +594,35 @@ void ElectroMagn2D::centerMagneticFields()
     Field2D* Bz2D_m = static_cast<Field2D*>(Bz_m);
     
     // Magnetic field Bx^(p,d)
+#pragma omp for schedule(runtime)
     for (unsigned int i=0 ; i<nx_p ; i++) {
         for (unsigned int j=0 ; j<ny_d ; j++) {
             (*Bx2D_m)(i,j) = ( (*Bx2D)(i,j) + (*Bx2D_m)(i,j) )*0.5;
         }
-    }
+//    }
     
     // Magnetic field By^(d,p)
-    for (unsigned int i=0 ; i<nx_d ; i++) {
+//    for (unsigned int i=0 ; i<nx_d ; i++) {
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*By2D_m)(i,j) = ( (*By2D)(i,j) + (*By2D_m)(i,j) )*0.5;
         }
-    }
+//    }
     
     // Magnetic field Bz^(d,d)
-    for (unsigned int i=0 ; i<nx_d ; i++) {
+//    for (unsigned int i=0 ; i<nx_d ; i++) {
         for (unsigned int j=0 ; j<ny_d ; j++) {
             (*Bz2D_m)(i,j) = ( (*Bz2D)(i,j) + (*Bz2D_m)(i,j) )*0.5;
+        } // end for j
+      } // end for i
+#pragma omp single
+{
+        for (unsigned int j=0 ; j<ny_p ; j++) {
+            (*By2D_m)(nx_p,j) = ( (*By2D)(nx_p,j) + (*By2D_m)(nx_p,j) )*0.5;
         }
-    }
+        for (unsigned int j=0 ; j<ny_d ; j++) {
+            (*Bz2D_m)(nx_p,j) = ( (*Bz2D)(nx_p,j) + (*Bz2D_m)(nx_p,j) )*0.5;
+        } // end for j
+}
     
 }//END centerMagneticFields
 
@@ -780,7 +764,7 @@ void ElectroMagn2D::restartRhoJs(int ispec, bool currents)
     Field2D* rho2D_s = static_cast<Field2D*>(rho_s[ispec]);
     
     // Charge density rho^(p,p) to 0
-    #pragma omp for schedule(static)
+    #pragma omp for schedule(runtime)
     for (unsigned int i=0 ; i<nx_p ; i++) {
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*rho2D_s)(i,j) = 0.0;
@@ -788,7 +772,7 @@ void ElectroMagn2D::restartRhoJs(int ispec, bool currents)
     }
     if (currents){ 
         // Current Jx^(d,p) to 0
-        #pragma omp for schedule(static)
+        #pragma omp for schedule(runtime)
         for (unsigned int i=0 ; i<nx_d ; i++) {
             for (unsigned int j=0 ; j<ny_p ; j++) {
                 (*Jx2D_s)(i,j) = 0.0;
@@ -796,7 +780,7 @@ void ElectroMagn2D::restartRhoJs(int ispec, bool currents)
         }
         
         // Current Jy^(p,d) to 0
-        #pragma omp for schedule(static)
+        #pragma omp for schedule(runtime)
         for (unsigned int i=0 ; i<nx_p ; i++) {
             for (unsigned int j=0 ; j<ny_d ; j++) {
                 (*Jy2D_s)(i,j) = 0.0;
@@ -804,7 +788,7 @@ void ElectroMagn2D::restartRhoJs(int ispec, bool currents)
         }
         
         // Current Jz^(p,p) to 0
-        #pragma omp for schedule(static)
+        #pragma omp for schedule(runtime)
         for (unsigned int i=0 ; i<nx_p ; i++) {
             for (unsigned int j=0 ; j<ny_p ; j++) {
                 (*Jz2D_s)(i,j) = 0.0;
@@ -871,6 +855,9 @@ void ElectroMagn2D::computeTotalRhoJ()
 }//END computeTotalRhoJ
 
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Compute electromagnetic energy flows vectors on the border of the simulation box
+// ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn2D::computePoynting() {
 
     if (isWestern) {
@@ -965,4 +952,22 @@ void ElectroMagn2D::computePoynting() {
         }
     }//if North
 
+}
+
+void ElectroMagn2D::applyExternalField(Field* my_field,  ExtFieldProfile *my_profile, SmileiMPI* smpi) {
+    
+    Field2D* field2D=static_cast<Field2D*>(my_field);
+    ExtFieldProfile2D* profile=static_cast<ExtFieldProfile2D*> (my_profile);
+    SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
+
+    vector<double> pos(2,0);
+    
+    for (int i=0 ; i<field2D->dims()[0] ; i++) {
+        pos[0] = ( (double)(smpi2D->getCellStartingGlobalIndex(0)+i +(field2D->isDual(0)?-0.5:0)) )*dx;
+        for (int j=0 ; j<field2D->dims()[1] ; j++) {
+            pos[1] = ( (double)(smpi2D->getCellStartingGlobalIndex(1)+j +(field2D->isDual(1)?-0.5:0)) )*dy;
+            (*field2D)(i,j) = (*field2D)(i,j) + (*profile)(pos);
+        }//j
+    }//i
+    
 }

@@ -8,10 +8,12 @@
 
 #include "PicParams.h"
 #include "Field1D.h"
-#include "Laser.h"
 
 #include "SmileiMPI.h"
 #include "SmileiMPI_Cart1D.h"
+
+#include "ExtFieldProfile1D.h"
+#include "MF_Solver1D_Yee.h"
 
 using namespace std;
 
@@ -26,7 +28,7 @@ isEastern(smpi->isEastern())
 {
     // local dt to store
     SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
-    int process_coord_x = smpi1D->getProcCoord(0);
+    //int process_coord_x = smpi1D->getProcCoord(0);
     
     oversize_ = oversize[0];
     
@@ -64,6 +66,16 @@ isEastern(smpi->isEastern())
     By_m = new Field1D(dimPrim, 1, true,  "By_m");
     Bz_m = new Field1D(dimPrim, 2, true,  "Bz_m");
     
+    // for (unsigned int i=0 ; i<nx_d ; i++) {
+//         double x = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i-0.5) )*params.cell_length[0];
+//         (*By_)(i) = 0.001 * sin(x * 2.0*M_PI/params.sim_length[0] * 40.0);
+//     }
+//     smpi1D->exchangeField(By_);
+//     for (unsigned int i=0 ; i<nx_d ; i++) {
+// //        double x = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i-0.5) )*params.cell_length[0];
+//         (*By_m)(i) = (*By_)(i);
+//     }
+//     
     // Allocation of time-averaged EM fields
     Ex_avg  = new Field1D(dimPrim, 0, false, "Ex_avg");
     Ey_avg  = new Field1D(dimPrim, 1, false, "Ey_avg");
@@ -152,7 +164,6 @@ isEastern(smpi->isEastern())
         } // for (int isDual=0 ; isDual
     } // for (unsigned int i=0 ; i<nDim_field
     
-    
 }//END constructor Electromagn1D
 
 
@@ -179,7 +190,7 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
     
     double       dx_sq          = dx*dx;
     unsigned int nx_p_global    = smpi1D->n_space_global[0] + 1;
-    unsigned int smilei_sz      = smpi1D->smilei_sz;
+//    unsigned int smilei_sz      = smpi1D->smilei_sz;
     unsigned int smilei_rk      = smpi1D->smilei_rk;
     
     // Min and max indices for calculation of the scalar product (for primal & dual grid)
@@ -325,14 +336,16 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
     
     unsigned int rankWest = smpi1D->extrem_ranks[0][0];
     if (smpi1D->isWestern()) {
-        if (smilei_rk != smpi1D->extrem_ranks[0][0]) ERROR("western process not well defined");
+        if ((int)smilei_rk != smpi1D->extrem_ranks[0][0]) {
+            ERROR("western process not well defined");
+        }
         Ex_West = (*Ex1D)(index_bc_min[0]);
     }
     MPI_Bcast(&Ex_West, 1, MPI_DOUBLE, rankWest, MPI_COMM_WORLD);
     
     unsigned int rankEast = smpi1D->extrem_ranks[0][1];
     if (smpi1D->isEastern()) {
-        if (smilei_rk != smpi1D->extrem_ranks[0][1]) ERROR("eastern process not well defined");
+        if ((int)smilei_rk != smpi1D->extrem_ranks[0][1]) ERROR("eastern process not well defined");
         Ex_East = (*Ex1D)(index_bc_max[0]);
     }
     MPI_Bcast(&Ex_East, 1, MPI_DOUBLE, rankEast, MPI_COMM_WORLD);
@@ -419,30 +432,6 @@ void ElectroMagn1D::solveMaxwellAmpere()
     for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
         (*Ey1D)(ix)= (*Ey1D)(ix) - dt_ov_dx * ( (*Bz1D)(ix+1) - (*Bz1D)(ix)) - timestep * (*Jy1D)(ix) ;
         (*Ez1D)(ix)= (*Ez1D)(ix) + dt_ov_dx * ( (*By1D)(ix+1) - (*By1D)(ix)) - timestep * (*Jz1D)(ix) ;
-    }
-    
-}
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Maxwell solver using the FDTD scheme
-// ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn1D::solveMaxwellFaraday()
-{
-    Field1D* Ey1D   = static_cast<Field1D*>(Ey_);
-    Field1D* Ez1D   = static_cast<Field1D*>(Ez_);
-    Field1D* By1D   = static_cast<Field1D*>(By_);
-    Field1D* Bz1D   = static_cast<Field1D*>(Bz_);
-    
-    // ---------------------
-    // Solve Maxwell-Faraday
-    // ---------------------
-    // NB: bx is given in 1d and defined when initializing the fields (here put to 0)
-    // Transverse fields  by & bz are defined on the dual grid
-    //for (unsigned int ix=1 ; ix<nx_p ; ix++) {
-    for (unsigned int ix=1 ; ix<dimDual[0]-1 ; ix++) {
-        (*By1D)(ix)= (*By1D)(ix) + dt_ov_dx * ( (*Ez1D)(ix) - (*Ez1D)(ix-1)) ;
-        (*Bz1D)(ix)= (*Bz1D)(ix) - dt_ov_dx * ( (*Ey1D)(ix) - (*Ey1D)(ix-1)) ;
     }
     
 }
@@ -635,3 +624,19 @@ void ElectroMagn1D::computePoynting() {
         
     }    
 }
+
+void ElectroMagn1D::applyExternalField(Field* my_field,  ExtFieldProfile *my_profile, SmileiMPI* smpi) {
+    
+    Field1D* field1D=static_cast<Field1D*>(my_field);
+    ExtFieldProfile1D* profile=static_cast<ExtFieldProfile1D*> (my_profile);
+    SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
+    
+    vector<double> x(1,0);
+    for (int i=0 ; i<field1D->dims()[0] ; i++) {
+        x[0] = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i +(field1D->isDual(0)?-0.5:0)) )*dx;
+        (*field1D)(i) = (*field1D)(i) + (*profile)(x);
+    }
+}
+
+    
+

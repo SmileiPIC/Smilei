@@ -31,7 +31,7 @@ interpolation_order = 2
 # timestep : time step
 # sim_time : duration of the simulation 
 #
-timestep = 0.01
+timestep = 0.009
 sim_time = 50.0
 
 # SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
@@ -41,8 +41,8 @@ sim_time = 50.0
 # sim_length  : length of the simulation 
 # cell_length : cell-length 
 #
-cell_length = 0.02
-sim_length  = 1.0
+cell_length = 0.01
+sim_length  = 1.03
 
 
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
@@ -76,29 +76,49 @@ random_seed = 0
 #
 species
 	species_type = ion
-   	species_geometry = constant
-	initialization_type = regular
+   	species_geometry  = constant
+	initPosition_type = regular
+	initMomentum_type = cold
 	n_part_per_cell = 10
 	mass = 1836.0
 	charge = 1.0
 	density = 1.0e0
 	time_frozen = 10000.0
-	bc_part_type_long = none
+	bc_part_type_west = none
+	bc_part_type_east = none
 end
 
 species
-	species_type = eon
-    	species_geometry = cosine
-	dens_dbl_params = 0.01 1.0
-	initialization_type = regular
+	species_type = eon1
+	species_geometry = cosine
+	dens_dbl_params = 0.001 1.0
+	initPosition_type = regular
+	initMomentum_type = cold
 	n_part_per_cell = 10
 	mass = 1.0
 	charge = -1.0
-	density = 1.0
+	density = 0.5
+	mean_velocity = -0.1 0.0 0.0
 	time_frozen = 0.0
-	bc_part_type_long = none
+	bc_part_type_west = none
+	bc_part_type_east = none
 end
 
+species
+	species_type = eon2
+	species_geometry = cosine
+	dens_dbl_params = 0.001 1.0
+	initPosition_type = regular
+	initMomentum_type = cold
+	n_part_per_cell = 10
+	mass = 1.0
+	charge = -1.0
+	density = 0.5
+	mean_velocity = 0.1 0.0 0.0
+	time_frozen = 0.0
+	bc_part_type_west = none
+	bc_part_type_east = none
+end
 
 
 # ---------------------
@@ -126,14 +146,14 @@ end
 #
 diagnostic phase
  	kind    = xPx 
- 	species = eon
+ 	species = eon1 eon2
  
  	pos_min = 0
- 	pos_max = 1.0
+ 	pos_max = 0
  	pos_num = 25
  	
- 	mom_min = -0.002
- 	mom_max = 0.002
+ 	mom_min = -0.4
+ 	mom_max = 0.4
  	mom_num = 50
  	
  	deflate=5

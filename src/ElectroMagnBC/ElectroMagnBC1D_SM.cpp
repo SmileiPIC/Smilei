@@ -9,7 +9,6 @@
 #include "SmileiMPI.h"
 #include "ElectroMagn.h"
 #include "Field1D.h"
-#include "Laser.h"
 #include "Tools.h"
 
 using namespace std;
@@ -43,7 +42,7 @@ ElectroMagnBC1D_SM::~ElectroMagnBC1D_SM()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBC1D_SM::apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
 {
-    Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
+//    Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
     Field1D* Ey1D   = static_cast<Field1D*>(EMfields->Ey_);
     Field1D* Ez1D   = static_cast<Field1D*>(EMfields->Ez_);
     Field1D* By1D   = static_cast<Field1D*>(EMfields->By_);

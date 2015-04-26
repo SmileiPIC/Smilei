@@ -115,6 +115,8 @@ private:
 
     //! function that checks if file named "stop" exists;
     bool fileStopCreated();
+
+    std::vector<Field*> outFields;
 	
 	
 };

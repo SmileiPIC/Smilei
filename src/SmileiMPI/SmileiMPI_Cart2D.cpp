@@ -45,11 +45,9 @@ SmileiMPI_Cart2D::SmileiMPI_Cart2D( SmileiMPI* smpi)
         for (int iNeighbors=0 ; iNeighbors<nbNeighbors_ ; iNeighbors++)
             neighbor_[iDim][iNeighbors] = MPI_PROC_NULL;
     
-    for (int iDim=0 ; iDim<ndims_ ; iDim++) {
-        for (int i=0 ; i<nbNeighbors_ ; i++) {
-            buff_index_send[iDim][i].resize(0);
-            buff_index_recv_sz[iDim][i] = 0;
-        }
+    for (int i=0 ; i<nbNeighbors_ ; i++) {
+	buff_index_send[i].resize(0);
+	buff_index_recv_sz[i] = 0;
     }
     
 }
@@ -170,14 +168,14 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
             params.n_space[i] =  params.nspace_win_x / number_of_procs[i];
             cell_starting_global_index[i] = coords_[i]*(params.nspace_win_x / number_of_procs[i]);
             
-            if ( number_of_procs[i]*params.n_space[i] != params.nspace_win_x ) {
+            if (number_of_procs[i]*params.n_space[i] != (unsigned int)params.nspace_win_x ) {
                 // Correction on the last MPI process of the direction to use the wished number of cells
                 if (coords_[i]==number_of_procs[i]-1) {
                     params.n_space[i] = params.nspace_win_x - params.n_space[i]*(number_of_procs[i]-1);
                 }
             }
         }
-        
+
         oversize[i] = params.oversize[i] = params.interpolation_order + (params.exchange_particles_each-1);
         if ( params.n_space[i] <= 2*oversize[i] ) {
             WARNING ( "Increase space resolution or reduce number of MPI process in direction " << i << " "<< params.n_space[i]); 
@@ -222,7 +220,7 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
     
 }
 
-void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams& params, int tnum)
+void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams& params, int tnum, int iDim)
 {
     Particles &cuParticles = species->particles;
     std::vector<int>* cubmin = &species->bmin;
@@ -240,13 +238,13 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams&
         indexes_of_particles_to_exchange.clear();
         
         int tmp = 0;
-        for (int tid=0 ; tid < indexes_of_particles_to_exchange_per_thd->size() ; tid++)
+        for (int tid=0 ; tid < (int)indexes_of_particles_to_exchange_per_thd->size() ; tid++)
             tmp += ((*indexes_of_particles_to_exchange_per_thd)[tid]).size();
         indexes_of_particles_to_exchange.resize( tmp );
         
         int k=0;
-        for (int tid=0 ; tid < indexes_of_particles_to_exchange_per_thd->size() ; tid++) {
-            for (int ipart = 0 ; ipart < ((*indexes_of_particles_to_exchange_per_thd)[tid]).size() ; ipart++ ) {
+        for (int tid=0 ; tid < (int)indexes_of_particles_to_exchange_per_thd->size() ; tid++) {
+            for (int ipart = 0 ; ipart < (int) ((*indexes_of_particles_to_exchange_per_thd)[tid]).size() ; ipart++ ) {
                 indexes_of_particles_to_exchange[k] =  (*indexes_of_particles_to_exchange_per_thd)[tid][ipart] ;
                 k++;
             }
@@ -266,174 +264,165 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams&
         for (unsigned int j=0; j<(*cubmax).size()+1 ;j++){
             shift[j]=0;
         }
+
+
+        Particles diagonalParticles;
+        diagonalParticles.initialize(0,cuParticles.dimension());     
         
         for (int i=0 ; i<n_part_send ; i++) {
             iPart = indexes_of_particles_to_exchange[i];
-            // Y direction managed firstly to force considering periodic modification
-            for (int iDim=1 ; iDim>=0 ; iDim--) {
-                if ( cuParticles.position(iDim,iPart) < min_local[iDim]) {
-                    buff_index_send[iDim][0].push_back( indexes_of_particles_to_exchange[i] );
-                    break;
-                }
-                if ( cuParticles.position(iDim,iPart) >= max_local[iDim]) {
-                    buff_index_send[iDim][1].push_back( indexes_of_particles_to_exchange[i] );
-                    break;
-                }
-            }
+	    if ( cuParticles.position(iDim,iPart) < min_local[iDim]) {
+		buff_index_send[0].push_back( indexes_of_particles_to_exchange[i] );
+	    }
+	    else if ( cuParticles.position(iDim,iPart) >= max_local[iDim]) {
+		buff_index_send[1].push_back( indexes_of_particles_to_exchange[i] );
+	    }
+	    else if ( !(cuParticles.is_part_in_domain(iPart, this) ) ) {
+		// at the end of exchangeParticles, diagonalParticles will be reinjected 
+		// at the end of cuParticles & indexes_of_particles_to_exchange_per_thd[0] for next iDim
+		cuParticles.cp_particle(indexes_of_particles_to_exchange[i], diagonalParticles);
+	    }
+	    else { // particle will be deleted, if supp_particle particles still in the domain
+	    }
         } // END for iPart = f(i)
         
-        Particles partVectorSend[2][2];
-        partVectorSend[0][0].initialize(0,cuParticles.dimension());
-        partVectorSend[0][1].initialize(0,cuParticles.dimension());
-        partVectorSend[1][0].initialize(0,cuParticles.dimension());
-        partVectorSend[1][1].initialize(0,cuParticles.dimension());
-        Particles partVectorRecv[2][2];
-        partVectorRecv[0][0].initialize(0,cuParticles.dimension());
-        partVectorRecv[0][1].initialize(0,cuParticles.dimension());
-        partVectorRecv[1][0].initialize(0,cuParticles.dimension());
-        partVectorRecv[1][1].initialize(0,cuParticles.dimension());
-        
-        Particles diagonalParticles;
-        diagonalParticles.initialize(0,cuParticles.dimension());
+        Particles partVectorSend[2];
+        partVectorSend[0].initialize(0,cuParticles.dimension());
+        partVectorSend[1].initialize(0,cuParticles.dimension());
+        Particles partVectorRecv[2];
+        partVectorRecv[0].initialize(0,cuParticles.dimension());
+        partVectorRecv[1].initialize(0,cuParticles.dimension());
         
         /********************************************************************************/
         // Exchange particles
         /********************************************************************************/
-        for (int iDim=0 ; iDim<ndims_ ; iDim++) {
             
-            MPI_Status sstat    [ndims_][2];
-            MPI_Status rstat    [ndims_][2];
-            MPI_Request srequest[ndims_][2];
-            MPI_Request rrequest[ndims_][2];
+	MPI_Status sstat    [2];
+	MPI_Status rstat    [2];
+	MPI_Request srequest[2];
+	MPI_Request rrequest[2];
             
-            /********************************************************************************/
-            // Exchange number of particles to exchange to establish or not a communication
-            /********************************************************************************/
-            for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-                if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
-                    n_part_send = (buff_index_send[iDim][iNeighbor]).size();
-                    MPI_Isend( &n_part_send, 1, MPI_INT, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D, &(srequest[iDim][iNeighbor]) );
-                } // END of Send
-                if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
-                    MPI_Irecv( &(buff_index_recv_sz[iDim][(iNeighbor+1)%2]), 1, MPI_INT, neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &(rrequest[iDim][(iNeighbor+1)%2]) );
-                }
-            }
-            barrier();
+	/********************************************************************************/
+	// Exchange number of particles to exchange to establish or not a communication
+	/********************************************************************************/
+	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+	    if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
+		n_part_send = (buff_index_send[iNeighbor]).size();
+		MPI_Isend( &n_part_send, 1, MPI_INT, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D, &(srequest[iNeighbor]) );
+	    } // END of Send
+	    else
+	        n_part_send = 0;
+	    if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+		buff_index_recv_sz[(iNeighbor+1)%2] = 0;
+		MPI_Irecv( &(buff_index_recv_sz[(iNeighbor+1)%2]), 1, MPI_INT, neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &(rrequest[(iNeighbor+1)%2]) );
+	    }
+	    else 
+	        buff_index_recv_sz[(iNeighbor+1)%2] = 0;
+	}
+	barrier();
             
-            /********************************************************************************/
-            // Wait for end of communications over number of particles
-            /********************************************************************************/
-            for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-                if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
-                    MPI_Wait( &(srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
-                }
-                if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
-                    MPI_Wait( &(rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
-                    if (buff_index_recv_sz[iDim][(iNeighbor+1)%2]!=0) {
-                        partVectorRecv[iDim][(iNeighbor+1)%2].initialize( buff_index_recv_sz[iDim][(iNeighbor+1)%2], cuParticles.dimension());
-                    }
-                }
-            }
-            barrier();
+	/********************************************************************************/
+	// Wait for end of communications over number of particles
+	/********************************************************************************/
+	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+	    if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
+		MPI_Wait( &(srequest[iNeighbor]), &(sstat[iNeighbor]) );
+	    }
+	    if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+		MPI_Wait( &(rrequest[(iNeighbor+1)%2]), &(rstat[(iNeighbor+1)%2]) );
+		if (buff_index_recv_sz[(iNeighbor+1)%2]!=0) {
+		    partVectorRecv[(iNeighbor+1)%2].initialize( buff_index_recv_sz[(iNeighbor+1)%2], cuParticles.dimension());
+		}
+	    }
+	}
+	barrier();
             
-            /********************************************************************************/
-            // Define buffers to exchange buff_index_send[iDim][iNeighbor].size();
-            /********************************************************************************/
+	/********************************************************************************/
+	// Define buffers to exchange buff_index_send[iNeighbor].size();
+	/********************************************************************************/
             
             
-            /********************************************************************************/
-            // Proceed to effective Particles' communications
-            /********************************************************************************/
+	/********************************************************************************/
+	// Proceed to effective Particles' communications
+	/********************************************************************************/
 
-            // Number of properties per particles = nDim_Particles + 3 + 1 + 1
-	    int nbrOfProp( 7 );
-	    MPI_Datatype typePartSend, typePartRecv;
+	// Number of properties per particles = nDim_Particles + 3 + 1 + 1
+	int nbrOfProp( 7 );
+	MPI_Datatype typePartSend, typePartRecv;
 
-            for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
                 
-                // n_part_send : number of particles to send to current neighbor
-                n_part_send = (buff_index_send[iDim][iNeighbor]).size();
-                if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (n_part_send!=0) ) {
-                    double x_max = params.cell_length[0]*( params.n_space_global[0] );
-                    double y_max = params.cell_length[1]*( params.n_space_global[1] );
-                    for (int iPart=0 ; iPart<n_part_send ; iPart++) {
-
-			if (iDim==0) {
-			    // Enabled periodicity in X
-			    if ( ( iNeighbor==0 ) &&  (coords_[0] == 0 ) &&( cuParticles.position(0,buff_index_send[iDim][iNeighbor][iPart]) < 0. ) ) {
-                                cuParticles.position(0,buff_index_send[iDim][iNeighbor][iPart])     += x_max;
-                            }
-                            else if ( ( iNeighbor==1 ) &&  (coords_[0] == number_of_procs[0]-1 ) && ( cuParticles.position(0,buff_index_send[iDim][iNeighbor][iPart]) >= x_max ) ) {
-                                cuParticles.position(0,buff_index_send[iDim][iNeighbor][iPart])     -= x_max;
-                            }
+	    // n_part_send : number of particles to send to current neighbor
+	    n_part_send = (buff_index_send[iNeighbor]).size();
+	    if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (n_part_send!=0) ) {
+		double x_max = params.cell_length[iDim]*( params.n_space_global[iDim] );
+		for (int iPart=0 ; iPart<n_part_send ; iPart++) {
+		    if (periods_[iDim]==1) {
+			// Enabled periodicity
+			if ( ( iNeighbor==0 ) &&  (coords_[iDim] == 0 ) &&( cuParticles.position(iDim,buff_index_send[iNeighbor][iPart]) < 0. ) ) {
+			    cuParticles.position(iDim,buff_index_send[iNeighbor][iPart])     += x_max;
 			}
-			else if (iDim==1) {
-			    // Enabled periodicity in Y
-                            if ( ( iNeighbor==0 ) &&  (coords_[1] == 0 ) &&( cuParticles.position(1,buff_index_send[iDim][iNeighbor][iPart]) < 0. ) ) {
-                                cuParticles.position(1,buff_index_send[iDim][iNeighbor][iPart])     += y_max;
-                            }
-                            else if ( ( iNeighbor==1 ) &&  (coords_[1] == number_of_procs[1]-1 ) && ( cuParticles.position(1,buff_index_send[iDim][iNeighbor][iPart]) >= y_max ) ) {
-                                cuParticles.position(1,buff_index_send[iDim][iNeighbor][iPart])     -= y_max;
-                            }
+			else if ( ( iNeighbor==1 ) &&  (coords_[iDim] == number_of_procs[iDim]-1 ) && ( cuParticles.position(iDim,buff_index_send[iNeighbor][iPart]) >= x_max ) ) {
+			    cuParticles.position(iDim,buff_index_send[iNeighbor][iPart])     -= x_max;
 			}
-                        cuParticles.cp_particle(buff_index_send[iDim][iNeighbor][iPart], partVectorSend[iDim][iNeighbor]);
-                    }
+		    }
+		    cuParticles.cp_particle(buff_index_send[iNeighbor][iPart], partVectorSend[iNeighbor]);
+		}
 
-		    typePartSend = createMPIparticles( &(partVectorSend[iDim][iNeighbor]), nbrOfProp );
-		    MPI_Isend( &((partVectorSend[iDim][iNeighbor]).position(0,0)), 1, typePartSend, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D, &(srequest[iDim][iNeighbor]) );
-		    MPI_Type_free( &typePartSend );
+		typePartSend = createMPIparticles( &(partVectorSend[iNeighbor]), nbrOfProp );
+		MPI_Isend( &((partVectorSend[iNeighbor]).position(0,0)), 1, typePartSend, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D, &(srequest[iNeighbor]) );
+		MPI_Type_free( &typePartSend );
 
-                } // END of Send
+	    } // END of Send
                 
-                n_part_recv = buff_index_recv_sz[iDim][(iNeighbor+1)%2];
-                if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
-		    typePartRecv = createMPIparticles( &(partVectorRecv[iDim][(iNeighbor+1)%2]), nbrOfProp );
-		    MPI_Irecv( &((partVectorRecv[iDim][(iNeighbor+1)%2]).position(0,0)), 1, typePartRecv,  neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &(rrequest[iDim][(iNeighbor+1)%2]) );
-		    MPI_Type_free( &typePartRecv );
+	    n_part_recv = buff_index_recv_sz[(iNeighbor+1)%2];
+	    if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
+		typePartRecv = createMPIparticles( &(partVectorRecv[(iNeighbor+1)%2]), nbrOfProp );
+		MPI_Irecv( &((partVectorRecv[(iNeighbor+1)%2]).position(0,0)), 1, typePartRecv,  neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &(rrequest[(iNeighbor+1)%2]) );
+		MPI_Type_free( &typePartRecv );
 
-                } // END of Recv
+	    } // END of Recv
                 
-            } // END for iNeighbor
+	} // END for iNeighbor
             
             
-            /********************************************************************************/
-            // Wait for end of communications over Particles
-            /********************************************************************************/
-            for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+	/********************************************************************************/
+	// Wait for end of communications over Particles
+	/********************************************************************************/
+	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
                 
-                n_part_send = buff_index_send[iDim][iNeighbor].size();
-                n_part_recv = buff_index_recv_sz[iDim][(iNeighbor+1)%2];
+	    n_part_send = buff_index_send[iNeighbor].size();
+	    n_part_recv = buff_index_recv_sz[(iNeighbor+1)%2];
                 
-                if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (n_part_send!=0) ) {
-                    MPI_Wait( &(srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
-                }
+	    if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (n_part_send!=0) ) {
+		MPI_Wait( &(srequest[iNeighbor]), &(sstat[iNeighbor]) );
+	    }
                 
-                if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
-                    MPI_Wait( &(rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
+	    if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
+		MPI_Wait( &(rrequest[(iNeighbor+1)%2]), &(rstat[(iNeighbor+1)%2]) );
                     
-                    // Extract corner particles, not managed in the following process 
-                    // but reinjected at the end in the main list
-                    for (int iPart=0 ; iPart<n_part_recv; iPart++ )
-                        if ( !(partVectorRecv[iDim][(iNeighbor+1)%2]).is_part_in_domain(iPart, this) )
-                            (partVectorRecv[iDim][(iNeighbor+1)%2]).cp_particle(iPart, diagonalParticles);
-                    for (int iPart=n_part_recv-1 ; iPart>=0; iPart-- ) {
-                        if ( !(partVectorRecv[iDim][(iNeighbor+1)%2]).is_part_in_domain(iPart, this) ) {
-                            (partVectorRecv[iDim][(iNeighbor+1)%2]).erase_particle(iPart);
-                            buff_index_recv_sz[iDim][(iNeighbor+1)%2]--;
-                        }
-                    }
+		// Extract corner particles, not managed in the following process 
+		// but reinjected at the end in the main list
+		for (int iPart=0 ; iPart<n_part_recv; iPart++ )
+		    if ( !(partVectorRecv[(iNeighbor+1)%2]).is_part_in_domain(iPart, this) )
+			(partVectorRecv[(iNeighbor+1)%2]).cp_particle(iPart, diagonalParticles);
+		for (int iPart=n_part_recv-1 ; iPart>=0; iPart-- ) {
+		    if ( !(partVectorRecv[(iNeighbor+1)%2]).is_part_in_domain(iPart, this) ) {
+			(partVectorRecv[(iNeighbor+1)%2]).erase_particle(iPart);
+			buff_index_recv_sz[(iNeighbor+1)%2]--;
+		    }
+		}
                     
-                }
+	    }
                 
-            }
-            barrier();
-            /********************************************************************************/
-            // Clean lists of indexes of particle to exchange per neighbor
-            /********************************************************************************/
-            for (int i=0 ; i<nbNeighbors_ ; i++)
-                buff_index_send[iDim][i].clear();
+	}
+	barrier();
+	/********************************************************************************/
+	// Clean lists of indexes of particle to exchange per neighbor
+	/********************************************************************************/
+	for (int i=0 ; i<nbNeighbors_ ; i++)
+	    buff_index_send[i].clear();
             
-        } //End of iDim loop
         
         /********************************************************************************/
         // Delete Particles included in buff_send/buff_recv
@@ -487,18 +476,22 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams&
         // Copy newly arrived particles back to the vector
         // WARNING: very different behaviour depending on which dimension particles are coming from.
         /********************************************************************************/
-        //We first evaluate how many particles arrive in each bin. 
-        //1) Count particles coming from south and north
-        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-            n_part_recv = buff_index_recv_sz[1][iNeighbor];
-            for (unsigned int j=0; j<n_part_recv ;j++){
-                ii = int((partVectorRecv[1][iNeighbor].position(0,j)-min_local[0])/dbin);//bin in which the particle goes.
-                shift[ii+1]++; // It makes the next bins shift.
-            }
-        }
-        //2) Add particles coming from west and east
-        shift[1] += buff_index_recv_sz[0][0];//Particles coming from south all go to bin 0 and shift all the other bins.
-        shift[(*cubmax).size()] += buff_index_recv_sz[0][1];//Used only to count the total number of particles arrived.
+        //We first evaluate how many particles arrive in each bin.
+	if (iDim==1) {
+	    //1) Count particles coming from south and north
+	    for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+		n_part_recv = buff_index_recv_sz[iNeighbor];
+		for (unsigned int j=0; j<n_part_recv ;j++){
+		    ii = int((partVectorRecv[iNeighbor].position(0,j)-min_local[0])/dbin);//bin in which the particle goes.
+		    shift[ii+1]++; // It makes the next bins shift.
+		}
+	    }
+	}
+	if (iDim==0) {
+	    //2) Add particles coming from west and east
+	    shift[1] += buff_index_recv_sz[0];//Particles coming from south all go to bin 0 and shift all the other bins.
+	    shift[(*cubmax).size()] += buff_index_recv_sz[1];//Used only to count the total number of particles arrived.
+	}
         
         //Evaluation of the necessary shift of all bins.
         //Must be done sequentially
@@ -521,27 +514,33 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams&
         
         //Space has been made now to write the arriving particles into the correct bins
         //iDim == 0  is the easy case, when particles arrive either in first or last bin.
-        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-            n_part_recv = buff_index_recv_sz[0][iNeighbor];
-            if ( (neighbor_[0][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
-                ii = iNeighbor*((*cubmax).size()-1);//0 if iNeighbor=0(particles coming from West) and (*cubmax).size()-1 otherwise.
-                partVectorRecv[0][iNeighbor].overwrite_part2D(0, cuParticles,(*cubmax)[ii],n_part_recv);
-                (*cubmax)[ii] += n_part_recv ;
-            }
-        }
+	if (iDim==0) {
+	    for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+		n_part_recv = buff_index_recv_sz[iNeighbor];
+		if ( (neighbor_[0][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
+		    ii = iNeighbor*((*cubmax).size()-1);//0 if iNeighbor=0(particles coming from West) and (*cubmax).size()-1 otherwise.
+		    partVectorRecv[iNeighbor].overwrite_part2D(0, cuParticles,(*cubmax)[ii],n_part_recv);
+		    (*cubmax)[ii] += n_part_recv ;
+		}
+	    }
+	}
         //iDim == 1) is the difficult case, when particles can arrive in any bin.
-        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-            n_part_recv = buff_index_recv_sz[1][iNeighbor];
-            if ( (neighbor_[1][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
-                for(unsigned int j=0; j<n_part_recv; j++){
-                    ii = int((partVectorRecv[1][iNeighbor].position(0,j)-min_local[0])/dbin);//bin in which the particle goes.
-                    partVectorRecv[1][iNeighbor].overwrite_part2D(j, cuParticles,(*cubmax)[ii]);
-                    (*cubmax)[ii] ++ ;
-                }
-            }
-        }
+	if (iDim==1) {
+	    for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+		n_part_recv = buff_index_recv_sz[iNeighbor];
+		if ( (neighbor_[1][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
+		    for(unsigned int j=0; j<n_part_recv; j++){
+			ii = int((partVectorRecv[iNeighbor].position(0,j)-min_local[0])/dbin);//bin in which the particle goes.
+			partVectorRecv[iNeighbor].overwrite_part2D(j, cuParticles,(*cubmax)[ii]);
+			(*cubmax)[ii] ++ ;
+		    }
+		}
+	    }
+	}
+
         
         // Inject corner particles at the end of the list, update bmax
+	//if (iDim==cuParticles.dimension()-1) cout << "Number of diag particles " << diagonalParticles.size() << endl;
         for (int iPart = 0 ; iPart<diagonalParticles.size() ; iPart++) {
             diagonalParticles.cp_particle(iPart, cuParticles);
             (*indexes_of_particles_to_exchange_per_thd)[0].push_back(cuParticles.size()-1);
@@ -740,7 +739,7 @@ void SmileiMPI_Cart2D::exchangeField( Field* field )
         
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
             
-            if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
+            if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) ) {
                 
                 istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( 2*oversize[iDim] + isDual[iDim] );
                 ix = (1-iDim)*istart;
@@ -749,7 +748,7 @@ void SmileiMPI_Cart2D::exchangeField( Field* field )
                 
             } // END of Send
             
-            if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+            if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) ) {
                 
                 istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - 1 ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
                 ix = (1-iDim)*istart;
@@ -761,10 +760,10 @@ void SmileiMPI_Cart2D::exchangeField( Field* field )
         } // END for iNeighbor
         
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-            if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
+            if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) ) {
                 MPI_Wait( &(srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
             }
-            if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+            if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL)  ) {
                 MPI_Wait( &(rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
             }
         }

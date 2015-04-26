@@ -40,8 +40,6 @@ stop_file_seen_since_last_check(false)
     // Create 1 file containing 1 dataset per Species
     partFile_id = H5Fcreate( name.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 	
-	
-	
     hsize_t dims[2] = {0, particleSize};
     hsize_t max_dims[2] = {H5S_UNLIMITED, particleSize};
     hid_t file_space = H5Screate_simple(2, dims, max_dims);
@@ -88,29 +86,29 @@ stop_file_seen_since_last_check(false)
     partMemSpace = H5Screate_simple(2, dims, NULL);
 #endif
 	
+    // ----------------------------
     // Management of global IO file
+    // ----------------------------
     MPI_Info info  = MPI_INFO_NULL;
     hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
     H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, info);
-    global_file_id_    = H5Fcreate( "Fields.h5",     H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
-    global_file_id_avg = 0;
-    if  (diagParams.ntime_step_avg!=0)
-        global_file_id_avg = H5Fcreate( "Fields_avg.h5", H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
-    H5Pclose(plist_id);
-	
-    //
-    // Create property list for collective dataset write.
-    //
+    
     write_plist = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);
-	
-
+    
+    
+    // Fields.h5
+    // ---------
+    global_file_id_    = H5Fcreate( "Fields.h5",     H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+    
+    // Create property list for collective dataset write: for Fields.h5
+    
     hid_t sid  = H5Screate(H5S_SCALAR);
     hid_t aid = H5Acreate (global_file_id_, "res_time", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, write_plist);
     H5Awrite(aid, H5T_NATIVE_DOUBLE, &(params.res_time));
     H5Sclose(sid);
     H5Aclose(aid);
-
+    
     sid  = H5Screate(H5S_SCALAR);
     aid = H5Acreate (global_file_id_, "every", H5T_NATIVE_UINT, sid, H5P_DEFAULT, write_plist);
     H5Awrite(aid, H5T_NATIVE_UINT, &(diagParams.fieldDump_every));
@@ -123,19 +121,61 @@ stop_file_seen_since_last_check(false)
     H5Awrite(aid, H5T_NATIVE_DOUBLE, &(params.res_space[0]));
     H5Aclose(aid);
     H5Sclose(sid);
-
+    
     dimsPos = params.sim_length.size();
     sid = H5Screate_simple(1, &dimsPos, NULL);
     vector<double> sim_length_norm=params.sim_length;
-    std::transform(sim_length_norm.begin(), sim_length_norm.end(), sim_length_norm.begin(),std::bind1st(std::multiplies<double>(),1.0/params.conv_fac));
-
+    transform(sim_length_norm.begin(), sim_length_norm.end(), sim_length_norm.begin(),bind1st(multiplies<double>(),1.0/params.conv_fac));
+    
     aid = H5Acreate (global_file_id_, "sim_length", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, write_plist);
     H5Awrite(aid, H5T_NATIVE_DOUBLE, &(sim_length_norm[0]));
     H5Aclose(aid);
     H5Sclose(sid);
+
     
-	// 
+    // Fields_avg.h5
+    // -------------
+    global_file_id_avg = 0;
+    if  (diagParams.ntime_step_avg!=0) {
+        global_file_id_avg = H5Fcreate( "Fields_avg.h5", H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+        
+        // Create property list for collective dataset write: for Fields.h5
+        hid_t sid  = H5Screate(H5S_SCALAR);
+        hid_t aid = H5Acreate (global_file_id_avg, "res_time", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, write_plist);
+        H5Awrite(aid, H5T_NATIVE_DOUBLE, &(params.res_time));
+        H5Sclose(sid);
+        H5Aclose(aid);
+        
+        sid  = H5Screate(H5S_SCALAR);
+        aid = H5Acreate (global_file_id_avg, "every", H5T_NATIVE_UINT, sid, H5P_DEFAULT, write_plist);
+        H5Awrite(aid, H5T_NATIVE_UINT, &(diagParams.fieldDump_every));
+        H5Sclose(sid);
+        H5Aclose(aid);
+        
+        hsize_t dimsPos = params.res_space.size();
+        sid = H5Screate_simple(1, &dimsPos, NULL);
+        aid = H5Acreate (global_file_id_avg, "res_space", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, write_plist);
+        H5Awrite(aid, H5T_NATIVE_DOUBLE, &(params.res_space[0]));
+        H5Aclose(aid);
+        H5Sclose(sid);
+        
+        dimsPos = params.sim_length.size();
+        sid = H5Screate_simple(1, &dimsPos, NULL);
+        vector<double> sim_length_norm=params.sim_length;
+        transform(sim_length_norm.begin(), sim_length_norm.end(), sim_length_norm.begin(),bind1st(multiplies<double>(),1.0/params.conv_fac));
+        
+        aid = H5Acreate (global_file_id_avg, "sim_length", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, write_plist);
+        H5Awrite(aid, H5T_NATIVE_DOUBLE, &(sim_length_norm[0]));
+        H5Aclose(aid);
+        H5Sclose(sid);
+    }
+
+    H5Pclose(plist_id);
+
+    
+	// ???
 	initDumpCases();
+    
 }
 
 SmileiIO::~SmileiIO()
@@ -161,6 +201,12 @@ SmileiIO::~SmileiIO()
 // ---------------------------------------------------------------------------------------------------------------------
 void SmileiIO::writeAllFieldsSingleFileTime( ElectroMagn* EMfields, int time )
 {
+    // select fields for output
+    if (outFields.size()==0) {
+	outFields.push_back(EMfields->Ex_);
+    }
+
+
     ostringstream name_t;
     name_t.str("");
     name_t << "/" << setfill('0') << setw(10) << time;
