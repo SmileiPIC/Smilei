@@ -1,5 +1,5 @@
 
-execfile("../../scripts/ParticleDiagnostic.py")
+execfile("../../scripts/Diagnostics.py")
 from scipy.special import erf as erf
 
 for path in ["thermalisation_ei1","thermalisation_ei2","thermalisation_ei3"]:
@@ -14,12 +14,12 @@ for path in ["thermalisation_ei1","thermalisation_ei2","thermalisation_ei3"]:
 	coulomb_log          = np.double(findParam(path, "coulomb_log"  ,"ion1"))
 	dt                   = np.double(findParam(path, "timestep"))
 	
-	re = 2.8179403267e-15 # meters
+	re_ = 2.8179403267e-15 # meters
 	wavelength = 1e-6 # meters
 	c = 3e8
-	coeff = (2.*np.pi/wavelength)**2*re*c / 8.
+	coeff = (2.*np.pi/wavelength)**2*re_*c / 8.
 	
-	times = getAvailableTimesteps(path, diagNumber=0)
+	times = ParticleDiagnostic(path, diagNumber=0).getAvailableTimesteps()
 	
 	e_T_mean = np.zeros(len(times))
 	i_T_mean = np.zeros(len(times))
@@ -29,38 +29,38 @@ for path in ["thermalisation_ei1","thermalisation_ei2","thermalisation_ei3"]:
 	if fig: fig.clf()
 	if fig: ax = fig.add_subplot(1,1,1)
 	for i,t in enumerate(times):
-		electrons = ParticleDiagnostic(path,0, units="nice", slice={"x":"all"}, timesteps=t)
+		electrons = ParticleDiagnostic(path,0, units="nice", slice={"x":"all"}, timesteps=t).get()
 		vx = electrons["vx"]
-		A = electrons["data"]
+		A = electrons["data"][0]
 		vx0 = (A*vx).sum() / A.sum()
 		e_T_mean[i] = (A*(vx-vx0)**2).sum() / A.sum()
-		electrons = ParticleDiagnostic(path,1, units="nice", slice={"x":"all"}, timesteps=t)
+		electrons = ParticleDiagnostic(path,1, units="nice", slice={"x":"all"}, timesteps=t).get()
 		vy = electrons["vy"]
-		A = electrons["data"]
+		A = electrons["data"][0]
 		vy0 = (A*vy).sum() / A.sum()
 		e_T_mean[i] += (A*(vy-vy0)**2).sum() / A.sum()
-		electrons = ParticleDiagnostic(path,2, units="nice", slice={"x":"all"}, timesteps=t)
+		electrons = ParticleDiagnostic(path,2, units="nice", slice={"x":"all"}, timesteps=t).get()
 		vz = electrons["vz"]
-		A = electrons["data"]
+		A = electrons["data"][0]
 		vz0 = (A*vz).sum() / A.sum()
 		e_T_mean[i] += (A*(vz-vz0)**2).sum() / A.sum()
 		if fig:
 			ax.cla()
 			ax.plot(vx,A,'b')
 		
-		ions = ParticleDiagnostic(path,3, units="nice", slice={"x":"all"}, timesteps=t)
+		ions = ParticleDiagnostic(path,3, units="nice", slice={"x":"all"}, timesteps=t).get()
 		vx = ions["vx"]
-		A = ions["data"]
+		A = ions["data"][0]
 		vx0 = (A*vx).sum() / A.sum()
 		i_T_mean[i] = (A*(vx-vx0)**2).sum() / A.sum()
-		ions = ParticleDiagnostic(path,4, units="nice", slice={"x":"all"}, timesteps=t)
+		ions = ParticleDiagnostic(path,4, units="nice", slice={"x":"all"}, timesteps=t).get()
 		vy = ions["vy"]
-		A = ions["data"]
+		A = ions["data"][0]
 		vy0 = (A*vy).sum() / A.sum()
 		i_T_mean[i] += (A*(vy-vy0)**2).sum() / A.sum()
-		ions = ParticleDiagnostic(path,5, units="nice", slice={"x":"all"}, timesteps=t)
+		ions = ParticleDiagnostic(path,5, units="nice", slice={"x":"all"}, timesteps=t).get()
 		vz = ions["vz"]
-		A = ions["data"]
+		A = ions["data"][0]
 		vz0 = (A*vz).sum() / A.sum()
 		i_T_mean[i] += (A*(vz-vz0)**2).sum() / A.sum()
 		if fig:

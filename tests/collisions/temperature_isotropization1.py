@@ -1,5 +1,5 @@
 
-execfile("../../scripts/ParticleDiagnostic.py")
+execfile("../../scripts/Diagnostics.py")
 from scipy.special import erf as erf
 
 path = "temperature_isotropization1"
@@ -8,12 +8,12 @@ density_electron    = np.double(findParam(path, "density","electron1"))
 coulomb_log         = np.double(findParam(path, "coulomb_log"  ,"electron1"))
 dt                  = np.double(findParam(path, "timestep"))
 
-re = 2.8179403267e-15 # meters
+re_ = 2.8179403267e-15 # meters
 wavelength = 1e-6 # meters
 c = 3e8
-coeff = (2.*np.pi/wavelength)**2*re*c / (2.*np.sqrt(np.pi))
+coeff = (2.*np.pi/wavelength)**2*re_*c / (2.*np.sqrt(np.pi))
 
-times = getAvailableTimesteps(path, diagNumber=0)
+times = ParticleDiagnostic(path, diagNumber=0).getAvailableTimesteps()
 
 e_Tpar  = np.zeros(len(times))
 e_Tperp = np.zeros(len(times))
@@ -23,23 +23,23 @@ fig = None
 if fig: fig.clf()
 if fig: ax = fig.add_subplot(1,1,1)
 for i,t in enumerate(times):
-	electrons = ParticleDiagnostic(path,0, units="nice", slice={"x":"all"}, timesteps=t)
+	electrons = ParticleDiagnostic(path,0, units="nice", slice={"x":"all"}, timesteps=t).get()
 	vx = electrons["vx"]
-	A = electrons["data"]
+	A = electrons["data"][0]
 	vx0 = (A*vx).sum() / A.sum()
 	e_Tpar[i] = (A*(vx-vx0)**2).sum() / A.sum()
 	if fig:
 		ax.cla()
 		ax.plot(vx,A,'b')
 
-	electrons = ParticleDiagnostic(path,1, units="nice", slice={"x":"all"}, timesteps=t)
+	electrons = ParticleDiagnostic(path,1, units="nice", slice={"x":"all"}, timesteps=t).get()
 	vy = electrons["vy"]
-	A = electrons["data"]
+	A = electrons["data"][0]
 	vy0 = (A*vy).sum() / A.sum()
 	e_Tperp[i] = (A*(vy-vy0)**2).sum() / A.sum()
-	electrons = ParticleDiagnostic(path,2, units="nice", slice={"x":"all"}, timesteps=t)
+	electrons = ParticleDiagnostic(path,2, units="nice", slice={"x":"all"}, timesteps=t).get()
 	vz = electrons["vz"]
-	A = electrons["data"]
+	A = electrons["data"][0]
 	vz0 = (A*vz).sum() / A.sum()
 	e_Tperp[i] += (A*(vz-vz0)**2).sum() / A.sum()
 	if fig:

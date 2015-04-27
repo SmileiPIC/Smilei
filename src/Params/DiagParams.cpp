@@ -21,35 +21,35 @@ inline double convertToDouble(string &s)
 DiagParams::DiagParams(PicParams& params, InputData &ifile) {
     
     double conv_fac = params.conv_fac; // conversion factor (see sim_units in PicParams.cpp for more details)
-	
+    
     bool ok=false;
     
     // defining default values & reading diagnostic every-parameter
     // ------------------------------------------------------------
-	print_every=params.n_time/10;
+    print_every=params.n_time/10;
     ifile.extract("print_every", print_every);
     
-	fieldDump_every=0;
+    fieldDump_every=0;
     ok=ifile.extract("fieldDump_every", fieldDump_every);
     if (!ok) fieldDump_every=params.global_every;
         
     avgfieldDump_every=params.res_time*10;
     ok=ifile.extract("avgfieldDump_every", avgfieldDump_every);
     if (!ok) avgfieldDump_every=params.global_every;
-
+    
     //!\todo Define default behaviour : 0 or params.res_time
     //ntime_step_avg=params.res_time;
     ntime_step_avg=0;
-	ifile.extract("ntime_step_avg", ntime_step_avg);
+    ifile.extract("ntime_step_avg", ntime_step_avg);
     
-	particleDump_every=0;
-	if (ifile.extract("particleDump_every", particleDump_every))
+    particleDump_every=0;
+    if (ifile.extract("particleDump_every", particleDump_every))
             WARNING("Option particleDump_every disabled");
-	
-	scalar_every=0;
-	ok=ifile.extract("every",scalar_every,"diagnostic scalar");
+    
+    scalar_every=0;
+    ok=ifile.extract("every",scalar_every,"diagnostic scalar");
     if (!ok) scalar_every=params.global_every;
-
+    
     vector<double> scalar_time_range(2,0.);
     ok=ifile.extract("time_range",scalar_time_range,"diagnostic scalar");        
     if (!ok) { 
@@ -57,14 +57,14 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
       scalar_tmax = params.sim_time;
     }
     else {
-	scalar_tmin = scalar_time_range[0]*conv_fac;
-	scalar_tmax = scalar_time_range[1]*conv_fac;
+    scalar_tmin = scalar_time_range[0]*conv_fac;
+    scalar_tmax = scalar_time_range[1]*conv_fac;
     }
-	
+    
     scalar_precision=10;
     ifile.extract("precision",scalar_precision,"diagnostic scalar");
     ifile.extract("vars",scalar_vars,"diagnostic scalar");
-	
+    
     unsigned int n_probe=0;
     while (ifile.existGroup("diagnostic probe",n_probe)) {
         probeStructure tmpStruct;
@@ -72,26 +72,24 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
         tmpStruct.every=0;
         ok=ifile.extract("every",tmpStruct.every,"diagnostic probe",0,n_probe);        
         if (!ok) tmpStruct.every=params.global_every;
-
-	vector<double> time_range(2,0.);
+        
+        vector<double> time_range(2,0.);
         ok=ifile.extract("time_range",time_range,"diagnostic probe",0,n_probe);        
         if (!ok) { 
-	    tmpStruct.tmin = 0.;
-	    tmpStruct.tmax = params.sim_time;
-	}
-	else  {
-	    tmpStruct.tmin = time_range[0]*conv_fac;
-	    tmpStruct.tmax = time_range[1]*conv_fac;
-	}
-
-
+            tmpStruct.tmin = 0.;
+            tmpStruct.tmax = params.sim_time;
+        } else {
+            tmpStruct.tmin = time_range[0]*conv_fac;
+            tmpStruct.tmax = time_range[1]*conv_fac;
+        }
+        
         ifile.extract("number",tmpStruct.number,"diagnostic probe",0,n_probe);
         tmpStruct.dim=tmpStruct.number.size();
         if (tmpStruct.dim == 0) { // in 1D case you have one probe, forcing it
             tmpStruct.number.resize(1);
             tmpStruct.number[0]=1;
         }
-
+        
         vector<double> pos;
         ifile.extract("pos",pos,"diagnostic probe",0,n_probe);
         for (unsigned int i=0; i<pos.size(); i++)
@@ -113,17 +111,15 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
             pos[i] *= conv_fac;
         if (pos.size()>0) tmpStruct.pos.push_back(pos);
         
-
         probeStruc.push_back(tmpStruct);
-
         n_probe++;
     }
     
-	int n_probephase=0;
-	while (ifile.existGroup("diagnostic phase",n_probephase)) {
-		phaseStructure tmpPhaseStruct;
+    int n_probephase=0;
+    while (ifile.existGroup("diagnostic phase",n_probephase)) {
+        phaseStructure tmpPhaseStruct;
         vector<string> kind;
-		ifile.extract("kind",kind,"diagnostic phase",0,n_probephase);        
+        ifile.extract("kind",kind,"diagnostic phase",0,n_probephase);        
         for (vector<string>::iterator it=kind.begin(); it!=kind.end();it++) {
             if (std::find(kind.begin(), it, *it) == it) {
                 tmpPhaseStruct.kind.push_back(*it); 
@@ -131,9 +127,9 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
                 WARNING("removed duplicate " << *it << " in \"diagnostic phase\" " << n_probephase);
             }
         }
-
+        
         tmpPhaseStruct.every=0;
-		ok=ifile.extract("every",tmpPhaseStruct.every,"diagnostic phase",0,n_probephase);
+        ok=ifile.extract("every",tmpPhaseStruct.every,"diagnostic phase",0,n_probephase);
         if (!ok) {
             if (n_probephase>0) {
                 tmpPhaseStruct.every=vecPhase.end()->every;
@@ -141,34 +137,34 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
                 tmpPhaseStruct.every=params.global_every;
             }
         }
-
-	vector<double> time_range(2,0.);
+        
+        vector<double> time_range(2,0.);
         ok=ifile.extract("time_range",time_range,"diagnostic phase",0,n_probe);        
         if (!ok) { 
-	    tmpPhaseStruct.tmin = 0.;
-	    tmpPhaseStruct.tmax = params.sim_time;
-	}
-	else {
-	    tmpPhaseStruct.tmin = time_range[0]*conv_fac;
-	    tmpPhaseStruct.tmax = time_range[1]*conv_fac;
-	}
-
-
+            tmpPhaseStruct.tmin = 0.;
+            tmpPhaseStruct.tmax = params.sim_time;
+        }
+        else {
+            tmpPhaseStruct.tmin = time_range[0]*conv_fac;
+            tmpPhaseStruct.tmax = time_range[1]*conv_fac;
+        }
+        
+        
         ifile.extract("species",tmpPhaseStruct.species,"diagnostic phase",0,n_probephase);
-
+        
         tmpPhaseStruct.deflate=0;
         ifile.extract("deflate",tmpPhaseStruct.deflate,"diagnostic phase",0,n_probephase);
-
-		if (tmpPhaseStruct.species.size()==0) {
-            WARNING("adding all species to the \"diagnostic phase\" " << n_probephase);
-			for (unsigned int i=0;i<params.n_species; i++) {
-				tmpPhaseStruct.species.push_back(params.species_param[i].species_type);
-			}			
-		}
         
-		ifile.extract("pos_min",tmpPhaseStruct.pos_min,"diagnostic phase",0,n_probephase);
-		ifile.extract("pos_max",tmpPhaseStruct.pos_max,"diagnostic phase",0,n_probephase);
-		ifile.extract("pos_num",tmpPhaseStruct.pos_num,"diagnostic phase",0,n_probephase);
+        if (tmpPhaseStruct.species.size()==0) {
+            WARNING("adding all species to the \"diagnostic phase\" " << n_probephase);
+            for (unsigned int i=0;i<params.n_species; i++) {
+                tmpPhaseStruct.species.push_back(params.species_param[i].species_type);
+            }
+        }
+        
+        ifile.extract("pos_min",tmpPhaseStruct.pos_min,"diagnostic phase",0,n_probephase);
+        ifile.extract("pos_max",tmpPhaseStruct.pos_max,"diagnostic phase",0,n_probephase);
+        ifile.extract("pos_num",tmpPhaseStruct.pos_num,"diagnostic phase",0,n_probephase);
         for (unsigned int i=0; i<tmpPhaseStruct.pos_min.size(); i++) {
             tmpPhaseStruct.pos_min[i] *= conv_fac;
             tmpPhaseStruct.pos_max[i] *= conv_fac;
@@ -178,20 +174,20 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
             }
         }
         
-
-		ifile.extract("mom_min",tmpPhaseStruct.mom_min,"diagnostic phase",0,n_probephase);
-		ifile.extract("mom_max",tmpPhaseStruct.mom_max,"diagnostic phase",0,n_probephase);
-		ifile.extract("mom_num",tmpPhaseStruct.mom_num,"diagnostic phase",0,n_probephase);
-		
-		ifile.extract("lor_min",tmpPhaseStruct.lor_min,"diagnostic phase",0,n_probephase);
-		ifile.extract("lor_max",tmpPhaseStruct.lor_max,"diagnostic phase",0,n_probephase);
-		ifile.extract("lor_num",tmpPhaseStruct.lor_num,"diagnostic phase",0,n_probephase);
-		
-		vecPhase.push_back(tmpPhaseStruct);
-		n_probephase++;
-	}
-	
-	
+        
+        ifile.extract("mom_min",tmpPhaseStruct.mom_min,"diagnostic phase",0,n_probephase);
+        ifile.extract("mom_max",tmpPhaseStruct.mom_max,"diagnostic phase",0,n_probephase);
+        ifile.extract("mom_num",tmpPhaseStruct.mom_num,"diagnostic phase",0,n_probephase);
+        
+        ifile.extract("lor_min",tmpPhaseStruct.lor_min,"diagnostic phase",0,n_probephase);
+        ifile.extract("lor_max",tmpPhaseStruct.lor_max,"diagnostic phase",0,n_probephase);
+        ifile.extract("lor_num",tmpPhaseStruct.lor_num,"diagnostic phase",0,n_probephase);
+        
+        vecPhase.push_back(tmpPhaseStruct);
+        n_probephase++;
+    }
+    
+    
     // particles diagnostics start here
     // --------------------------------
     int n_diag_particles=0;
@@ -241,14 +237,14 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
         iaxis = 0;
         tmpAxes.resize(0);
         while(true) { // loop in case there are several axes
-        	// 1 - Find "axis" keyword and create new axis object
+            // 1 - Find "axis" keyword and create new axis object
             axis.resize(0);
             ok = ifile.extract("axis",axis,"diagnostic particles",iaxis,n_diag_particles);
             if (!ok) break;
             if (axis.size()<4)
                 ERROR("Diagnotic Particles #" << n_diag_particles << ": parameter axis needs at least 4 arguments (type, min, max, nbins)");
             tmpAxis = new DiagnosticParticlesAxis();
-
+            
             // 2 - Extract axis type (e.g. 'x', 'px', etc.)
             tmpAxis->type  = axis[0];
             if (   (tmpAxis->type == "z" && params.nDim_particle <3)
@@ -263,20 +259,17 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
             tmpAxis->nbins = convertToDouble(axis[3]);
             if (tmpAxis->nbins - floor(tmpAxis->nbins) != 0.)
                 ERROR("Diagnotic Particles #" << n_diag_particles << ": number of bins must be integer (not " << axis[3] << ")");
-
+            
             // 5 - Check for  other keywords such as "logscale" and "edge_inclusive"
             tmpAxis->logscale = false;
             tmpAxis->edge_inclusive = false;
             for(unsigned int i=4; i<axis.size(); i++) {
-                if(axis[i]=="logscale" ||  axis[i]=="log_scale" || axis[i]=="log") {
-                        tmpAxis->logscale = true;
-                        break;
-                }
-                if(axis[i]=="edges" ||  axis[i]=="edge" ||  axis[i]=="edge_inclusive" ||  axis[i]=="edges_inclusive") {
-                        tmpAxis->edge_inclusive = true;
-                        break;
-                }
-                ERROR("Diagnotic Particles #" << n_diag_particles << ": keyword `" << axis[i] << "` not understood");
+                if(axis[i]=="logscale" ||  axis[i]=="log_scale" || axis[i]=="log")
+                    tmpAxis->logscale = true;
+                else if(axis[i]=="edges" ||  axis[i]=="edge" ||  axis[i]=="edge_inclusive" ||  axis[i]=="edges_inclusive")
+                    tmpAxis->edge_inclusive = true;
+                else
+                    ERROR("Diagnotic Particles #" << n_diag_particles << ": keyword `" << axis[i] << "` not understood");
             }
             // If the axis is spatial, then we need to apply the conv_fac
             if (axis[0]=="x" || axis[0]=="y" || axis[0]=="z") {

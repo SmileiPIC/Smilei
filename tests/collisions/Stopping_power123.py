@@ -1,5 +1,5 @@
 
-execfile("../../scripts/ParticleDiagnostic.py")
+execfile("../../scripts/Diagnostics.py")
 
 from scipy.special import kv
 from scipy.integrate import quad
@@ -59,24 +59,23 @@ for path in ["Stopping_power1","Stopping_power2","Stopping_power3"]:
 	coulomb_log          = np.double(findParam(path, "coulomb_log"))
 	dt                   = np.double(findParam(path, "timestep"))
 	
-	re = 2.8179403267e-15 # meters
 	wavelength = 1e-6 # meters
 	c = 3e8
 	
-	times = getAvailableTimesteps(path, diagNumber=0)
-	nx = ParticleDiagnostic(path,0,timesteps=0)["x"].size
+	times = ParticleDiagnostic(path, diagNumber=0).getAvailableTimesteps()
+	nx = ParticleDiagnostic(path,0,timesteps=0).get()["x"].size
 	
 	Ekin = np.zeros((nx,len(times)))
 	
 	fig = None
-	#fig = plt.figure(1)
+	fig = plt.figure(1)
 	if fig: fig.clf()
 	if fig: ax = fig.add_subplot(1,1,1)
 	for i,t in enumerate(times):
-		electrons = ParticleDiagnostic(path,0, units="nice", timesteps=t)
+		electrons = ParticleDiagnostic(path,0, units="nice", timesteps=t).get()
 		x = electrons["x"]
 		ekin = electrons["ekin"]
-		A = electrons["data"]
+		A = electrons["data"][0]
 		for k in range(nx): Ekin[k][i] = (A[k,:]*ekin).sum()/A[k,:].sum()
 	
 		if fig:

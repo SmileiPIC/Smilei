@@ -1,5 +1,5 @@
 
-execfile("../../scripts/ParticleDiagnostic.py")
+execfile("../../scripts/Diagnostics.py")
 execfile("resparis.py")
 from scipy.special import erf as erf
 
@@ -20,14 +20,14 @@ density = []
 for path in ["conductivity1","conductivity2","conductivity3"]:
 
 	ncases = 0
-	while getInfo(path,ncases):
+	while ParticleDiagnostic.getInfo(path,ncases):
 		ncases += 1
 	if ncases == 0: continue
 
 	coulomb_log  = np.double(findParam(path, "coulomb_log"))
 	dt           = np.double(findParam(path, "timestep"))
 	
-	times = getAvailableTimesteps(path, diagNumber=0)
+	times = ParticleDiagnostic(path, diagNumber=0).getAvailableTimesteps()
 	
 	vx_mean = np.zeros((ncases,len(times)))
 	
@@ -37,9 +37,9 @@ for path in ["conductivity1","conductivity2","conductivity3"]:
 	if fig: ax = fig.add_subplot(1,1,1)
 	for i,t in enumerate(times):
 		for k in range(ncases):
-			electrons = ParticleDiagnostic(path,k, timesteps=t)
+			electrons = ParticleDiagnostic(path,k, timesteps=t).get()
 			vx = electrons["vx"]
-			A = electrons["data"]
+			A = electrons["data"][0]
 			vx_mean[k][i] = (A*vx).sum() / A.sum()
 
 		if fig:
