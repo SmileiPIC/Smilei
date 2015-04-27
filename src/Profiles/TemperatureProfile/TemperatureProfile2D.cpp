@@ -27,7 +27,7 @@ TemperatureProfile2D::TemperatureProfile2D(ProfileSpecies &my_prof_params) : Tem
         //    ERROR("two int_params must be defined for Charles velocity profile" );
         if (prof_params.double_params.size()<5)
             ERROR("five double_params must be defined for Charles Temperature profile" );
-        if (prof_params.length_params_x.size()<2)
+        if (prof_params.length_params_y.size()<2)
             ERROR("two length_params_x must be defined for Charles Temperature profile" );
     } 
 }
@@ -61,7 +61,7 @@ double TemperatureProfile2D::operator() (std::vector<double> x_cell) {
         return fx*fy;
     }
      
-     /*
+     
     // ------------------------
     // Charles temperature profile
     // ------------------------
@@ -84,9 +84,9 @@ double TemperatureProfile2D::operator() (std::vector<double> x_cell) {
 	//	alpha = prof_params.double_params[4];
 	//	}
 	//else { alpha = 0.;}
-        double x0    = prof_params.length_params_x[0];
-        double L     = prof_params.length_params_x[1];
-        double x     = x_cell[0]-x0;
+        double x0    = prof_params.length_params_y[0];
+        double L     = prof_params.length_params_y[1];
+        double x     = x_cell[1]-x0;
 	double tiny  = 1e-10;
 	if (Bmax == 0.) { //-> maximum value of Bmax
 		double Bm = sqrt(pow(B0,2) + 2*P0)-B0;
@@ -115,6 +115,6 @@ double TemperatureProfile2D::operator() (std::vector<double> x_cell) {
 		return  std::max(Temp,Tempmin);
 		}
 	}
-    */
+    
     	return 1;
 };
