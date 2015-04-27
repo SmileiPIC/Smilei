@@ -189,6 +189,7 @@ def findParam(results_path, param, after=None):
 
 # Method to manage Matplotlib-compatible kwargs
 def matplotlibArgs(kwargs):
+	figurekwargs0   = {}
 	figurekwargs   = {}
 	axeskwargs     = {}
 	plotkwargs     = {}
@@ -198,7 +199,9 @@ def matplotlibArgs(kwargs):
 	ytickkwargs    = {}
 	for kwa in kwargs:
 		val = kwargs[kwa]
-		if kwa in ["figsize","dpi","facecolor","edgecolor"]:
+		if kwa in ["figsize"]:
+			figurekwargs0.update({kwa:val})
+		if kwa in ["dpi","facecolor","edgecolor"]:
 			figurekwargs.update({kwa:val})
 		if kwa in ["aspect","axis_bgcolor",
 		           "frame_on","position","title","visible","xlabel","xscale","xticklabels",
@@ -219,10 +222,7 @@ def matplotlibArgs(kwargs):
 			xtickkwargs.update({kwa[:-2]:val})
 		if kwa in ["style_y","scilimits_y","useOffset_y"]:
 			ytickkwargs.update({kwa[:-2]:val})
-	# special case: "aspect" is ambiguous because it exists for both imshow and colorbar
-	if "cbaspect" in kwargs: self.colorbarkwargs.update({"aspect":kwargs["cbaspect"]})
-	return figurekwargs, axeskwargs, plotkwargs, imkwargs, colorbarkwargs, xtickkwargs, ytickkwargs
-
+	return figurekwargs0, figurekwargs, axeskwargs, plotkwargs, imkwargs, colorbarkwargs, xtickkwargs, ytickkwargs
 
 # -------------------------------------------------------------------
 # Mother class for all diagnostics
@@ -364,13 +364,16 @@ class Diagnostic(object):
 		# For each keyword argument provided, we save these arguments separately
 		#  depending on the type: figure, plot, image, colorbar.
 		args = matplotlibArgs(kwargs)
-		self.figurekwargs  .update(args[0])
-		self.axeskwargs    .update(args[1])
-		self.plotkwargs    .update(args[2])
-		self.imkwargs      .update(args[3])
-		self.colorbarkwargs.update(args[4])
-		self.xtickkwargs   .update(args[5])
-		self.ytickkwargs   .update(args[6])
+		self.figurekwargs0 .update(args[0])
+		self.figurekwargs  .update(args[1])
+		self.axeskwargs    .update(args[2])
+		self.plotkwargs    .update(args[3])
+		self.imkwargs      .update(args[4])
+		self.colorbarkwargs.update(args[5])
+		self.xtickkwargs   .update(args[6])
+		self.ytickkwargs   .update(args[7])
+		# special case: "aspect" is ambiguous because it exists for both imshow and colorbar
+		if "cbaspect" in kwargs: self.colorbarkwargs.update({"aspect":kwargs["cbaspect"]})
 		return kwargs
 	def set(self, **kwargs):
 		kwargs = self.setPlot(**kwargs)
@@ -384,6 +387,7 @@ class Diagnostic(object):
 		self.xmax     = None
 		self.ymin     = None
 		self.ymax     = None
+		self.figurekwargs0 = {}
 		self.figurekwargs = {"facecolor":"w"}
 		self.axeskwargs = {}
 		self.plotkwargs = {}
@@ -425,7 +429,7 @@ class Diagnostic(object):
 		self.info()
 		
 		# Make figure
-		fig = plt.figure(self.figure)
+		fig = plt.figure(self.figure, **self.figurekwargs0)
 		fig.set(**self.figurekwargs)
 		fig.clf()
 		ax = fig.add_subplot(1,1,1)
@@ -1948,8 +1952,11 @@ def multiPlot(*Diags, **kwargs):
 		print "  "+str(nDiags)+" diagnostics do not fit "+str(nplots)+" plots"
 		return
 	# Make the figure
-	fig = plt.figure(figure)
-	fig.set(**matplotlibArgs(kwargs)[0]) # Apply figure kwargs
+	if "facecolor" not in kwargs: kwargs.update({ "facecolor":"w" })
+	figurekwargs0 = matplotlibArgs(kwargs)[0]
+	figurekwargs  = matplotlibArgs(kwargs)[1]
+	fig = plt.figure(figure, **figurekwargs0)
+	fig.set(**figurekwargs) # Apply figure kwargs
 	fig.clf()
 	fig.subplots_adjust(wspace=0.5, hspace=0.5, bottom=0.15)
 	ax = []
