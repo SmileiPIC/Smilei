@@ -81,7 +81,10 @@ public:
     	
     //! get vector of string from python
     bool extract(std::string name, std::vector<std::string> &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
+
+    PyObject* py_val_from_string(std::string name, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
     
+    std::vector<PyObject*> py_vec_from_string(std::string name, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
     
     //! return true if the nth group exists
     bool existGroup(std::string groupName, unsigned int occurrenceGroup=0);
