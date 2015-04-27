@@ -72,6 +72,7 @@ public:
     //!General Hilbert index returns the Hilbert index h of a patch of coordinates x,y,z for a simulation box with 2^mi patches per side (2^(m0+m1+m2) patches in total).
     //The 2D version of this function stores the final entry point and direction in enit and dinit (needed by the 3D version).
     unsigned int generalhilbertindex(unsigned int m0, unsigned int m1, unsigned int x, unsigned int y, unsigned int *einit, unsigned int *dinit);
+    unsigned int generalhilbertindex(unsigned int m0, unsigned int m1, unsigned int x, unsigned int y);
     unsigned int generalhilbertindex(unsigned int m0, unsigned int m1, unsigned int m2, unsigned int x, unsigned int y, unsigned int z);
     //!General Hilbert index inv calculates the coordinates x,y,z of a patch for a given Hilbert index h in a simulation box with 2^mi patches per side (2^(m0+m1+m2) patches in total)
     void generalhilbertindexinv(unsigned int m0, unsigned int m1, unsigned int* x, unsigned int* y, unsigned int h);

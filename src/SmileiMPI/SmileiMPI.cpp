@@ -108,6 +108,7 @@ void SmileiMPI::init( PicParams& params )
     min_local.resize(params.nDim_field, 0.);
     max_local.resize(params.nDim_field, 0.);
     n_space_global.resize(params.nDim_field, 0);
+    patch_count.resize(smilei_sz);
 
     interParticles.initialize(0,params.nDim_particle); 
 
@@ -193,4 +194,16 @@ void SmileiMPI::exchangeAvg( ElectroMagn* EMfields )
     exchangeField( EMfields->Bx_avg );
     exchangeField( EMfields->By_avg );
     exchangeField( EMfields->Bz_avg );
+}
+
+int SmileiMPI::hrank(int h)
+{
+    unsigned int patch_counter,rank;
+    rank=0;
+    patch_counter = patch_count[0];
+    while (h >= patch_counter) {
+        rank++;
+        patch_counter += patch_count[rank];
+    }
+    return rank;
 }

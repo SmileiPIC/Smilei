@@ -171,6 +171,8 @@ public:
 
     //! For patch decomposition
     Particles interParticles;
+    std::vector<int>  patch_count;  //Number of patches owned by each mpi process.
+    int hrank(int h); // Returns the rank of the MPI process currently owning patch h.
 
 protected:
     //! Global MPI Communicator
