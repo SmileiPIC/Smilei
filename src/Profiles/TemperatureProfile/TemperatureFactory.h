@@ -3,6 +3,7 @@
 
 #include "TemperatureProfile.h"
 #include "TemperatureProfile1D.h"
+#include "TemperatureProfile2D.h"
 #include "PicParams.h"
 #include "SmileiMPI.h"
 
@@ -33,7 +34,24 @@ public:
                     break;
             }
         }
-        
+        // ---------------
+        // 1d3v simulation
+        // ---------------
+        else if (params.geometry == "2d3v") {
+            switch (direction) {
+                case 0:
+                    TemperatureProfile = new TemperatureProfile2D(params.species_param[speciesNumber].temp_x_profile);
+                    break;
+                case 1:
+                    TemperatureProfile = new TemperatureProfile2D(params.species_param[speciesNumber].temp_y_profile);
+                    break;
+                case 2:
+                    TemperatureProfile = new TemperatureProfile2D(params.species_param[speciesNumber].temp_z_profile);
+                    break;
+                default:
+                    break;
+            }
+        }
         else {
             ERROR( "Unsupported geometry : " << params.geometry);
         }

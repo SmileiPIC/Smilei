@@ -1,21 +1,20 @@
-#ifndef ExtFieldProfile2D_H
-#define ExtFieldProfile2D_H
+#ifndef TemperatureProfile2D_H
+#define TemperatureProfile2D_H
 
 
-#include "ExtFieldProfile.h"
+#include "TemperatureProfile.h"
 #include <cmath>
 
 //  --------------------------------------------------------------------------------------------------------------------
-//! 2D ExtField profile class
+//! 2D density profile class
 //  --------------------------------------------------------------------------------------------------------------------
-class ExtFieldProfile2D : public ExtFieldProfile
+class TemperatureProfile2D : public TemperatureProfile
 {
     
 public:
-    ExtFieldProfile2D(ExtFieldStructure &extfield_struct);
-    ~ExtFieldProfile2D() {};
+    TemperatureProfile2D(ProfileSpecies &params);
+    ~TemperatureProfile2D() {};
     double operator() (std::vector<double>);
-    
     
 private:
     

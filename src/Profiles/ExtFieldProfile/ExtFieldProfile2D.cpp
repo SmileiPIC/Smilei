@@ -40,6 +40,22 @@ ExtFieldProfile2D::ExtFieldProfile2D(ExtFieldStructure &extfield_struct) : ExtFi
         if (my_struct.length_params_y.size()<3)
             ERROR("three length_params_y must be defined for Harris profile" );
         
+    }  else if (my_struct.profile == "magexpansion") {
+        // ---------------------------------------------------------------------------------
+        // Charles magnetic field profile for Liang simulations
+        // double_params[0]   = background Bfield amplitude
+        // double_params[1]   = maximum Bfield amplitude
+        // double_params[2]   = Total plasma pressure at infinity P0 = n0*(Te + Ti +...)
+        // length_params_y[0] = position of the maximum of the B-field
+        // length_params_y[1] = Length of the magnetic gradient
+        // ---------------------------------------------------------------------------------
+        //if (my_struct.int_params.size()<1)
+        //    ERROR("one int_params must be defined for Charles profile" );
+        if (my_struct.double_params.size()<3)
+            ERROR("three double_params must be defined for Charles profile" );
+        if (my_struct.length_params_y.size()<2)
+            ERROR("three length_params_x must be defined for Charles profile" );
+
     } else {
         ERROR("unknown or empty profile: " << my_struct.profile );
     }
@@ -133,6 +149,29 @@ double ExtFieldProfile2D::operator() (vector<double> x_cell) {
         return 2.0*dB * Dx0 * exp(-Dx0*Dx0-Dy0*Dy0)
         -      2.0*dB * Dx1 * exp(-Dx1*Dx1-Dy1*Dy1) ;
         
+    } 
+    else if (my_struct.profile == "magexpansion") {
+        // ---------------------------------------------------------------------------------
+        // Charles magnetic field profile for Liang simulations
+        // double_params[0]   = background Bfield amplitude
+        // double_params[1]   = maximum Bfield amplitude
+        // double_params[2]   = Total plasma pressure at infinity P0 = n0*(Te + Ti +...)
+        // length_params_x[0] = position of the maximum of the B-field
+        // length_params_x[1] = Length of the magnetic gradient
+        // ---------------------------------------------------------------------------------
+        //int    N     = my_struct.int_params[0];
+        double B0    = my_struct.double_params[0];
+        double Bmax  = my_struct.double_params[1];
+	double P0    = my_struct.double_params[2];
+        double y0    = my_struct.length_params_y[0];
+        double L     = my_struct.length_params_y[1];
+        double y     = x_cell[1]-y0;
+	if (Bmax == 0.) {
+		//double Bm = sqrt(B0*B0+2*P0)-B0;
+		return B0 + (sqrt(B0*B0+2*P0)-B0)/pow(cosh(y/L),2);
+	}else {	return B0 + Bmax/pow(cosh(y/L),2);
+	}
+            
     } else {
         return 0;
     }

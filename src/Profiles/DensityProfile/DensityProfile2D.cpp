@@ -120,6 +120,26 @@ DensityProfile2D::DensityProfile2D(SpeciesStructure &params) : DensityProfile(pa
         
     }
     
+    // ---------------------------------------------------------------------------------
+    // Charles magnetic field profile for Liang simulations
+    // vacuum_length[0]  : not used here
+    // double_params[0]   = background density
+    // double_params[1]   = Total plasma pressure at infinity P0 = n0*(Te + Ti +...)
+    // double_params[2]   = background magnetic field
+    // double_params[3]   = Maximum magnetic field
+    // length_params_y[0] = position of the maximum magnetic field
+    // length_params_y[1] = Length of the magnetic gradient
+    // ---------------------------------------------------------------------------------
+    else if (species_param.dens_profile.profile == "magexpansion") {
+    
+        //if (species_param.dens_profile.int_params.size()<1)
+        //    ERROR("one int_params must be defined for Charles profile" );
+        if (species_param.dens_profile.double_params.size()<4)
+            ERROR("two double_params must be defined for Charles profile" );
+        if (species_param.dens_profile.length_params_y.size()<2)
+            ERROR("two length_params_y must be defined for Charles profile" );
+    }
+    
     // Grating
     // -------
     // vacuum_length[0,1] : length of the vacuum region before the plasma in x & y directions (default is 0)
@@ -245,7 +265,44 @@ double DensityProfile2D::operator() (vector<double> x_cell) {
         
     }// trapezoidal
     
-    
+    // ------------------------
+    // Charles density profile
+    // ------------------------
+    // vacuum_length[0]  : not used here
+    // double_params[0]   = background density
+    // double_params[1]   = Total plasma pressure at infinity P0 = n0*(Te + Ti +...)
+    // double_params[2]   = background magnetic field
+    // double_params[3]   = Maximum magnetic field
+    // length_params_x[0] = position of the maximum magnetic field
+    // length_params_x[1] = Length of the magnetic gradient
+    // ---------------------------------------------------------------------------------
+    else if (species_param.dens_profile.profile=="magexpansion") {
+        //int    N     = species_param.dens_profile.int_params[0];
+        //double n0    = species_param.dens_profile.double_params[0];
+        double P0    = species_param.dens_profile.double_params[1];
+        double B0    = species_param.dens_profile.double_params[2];
+        double Bmax  = species_param.dens_profile.double_params[3];
+        double x0    = species_param.dens_profile.length_params_y[0];
+        double L     = species_param.dens_profile.length_params_y[1];
+	double tiny  = 1e-10*L;
+        //double sigma = pow(L/2.0,N)/log(2.0);
+        double x     = x_cell[1]-x0;
+	if (Bmax == 0.) {
+		double Bm = sqrt(pow(B0,2) + 2*P0)-B0;
+		double B  = B0 + Bm/pow(cosh(x/L),2);
+		double A  = B0*x + Bm*L*tanh(x/L);
+		double DP = P0 + pow(B0,2)/2 - pow(B,2)/2;
+		if (abs(x)<tiny) {
+			return (exp(-2));
+			//return 1.;
+		}
+		else {
+        		return (exp( -2*A*Bm/L*tanh(x/L) /(DP*pow(cosh(x/L),2)) ));
+        		//return (exp( - abs(tanh(x/L) )));
+			//return 1.;
+		}
+	}}
+	
     // Gaussian profile
     // ----------------
     // vacuum_length[0]  : length of the vacuum region before the plasma (default is 0)
