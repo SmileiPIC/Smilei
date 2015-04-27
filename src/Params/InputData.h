@@ -8,6 +8,8 @@
 #ifndef INPUTDATA_H
 #define INPUTDATA_H
 
+#include <Python.h>
+
 #include <cstdlib>
 
 #include <fstream>
@@ -24,6 +26,7 @@
 #include "PicParams.h"
 
 
+
 /*! \brief This is the text parser (similar to namelists).
  It reads once the datafile (at constructor time or later with readFile) and stores the whole read text
  (after being cleaned) in a string variable (namelist) then this variable is passed to all nodes and parsed by filling the structure (allData)
@@ -34,6 +37,7 @@ class InputData {
 
 public:
     InputData();
+    ~InputData();
     //! parse file
     void readFile(std::string=std::string());
 
@@ -47,123 +51,47 @@ public:
     void write() {
         write(std::cerr);
     };
+    
+    //! get bool from python
+    bool extract(std::string name, bool &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
+    
+    //! get short from python
+    bool extract(std::string name, short int &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
+    
+    //! get uint from python
+    bool extract(std::string name, unsigned int &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
+    
+    //! get int from python
+    bool extract(std::string name, int &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
+    
+    //! get double from python
+    bool extract(std::string name, double &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
+    
+    //! get string from python
+    bool extract(std::string name, std::string &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
 
-    //! generic template to InputData a single value
-    template <class T> bool extract(std::string data, T &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0) {
-        data=cleanString(data);
-        group=cleanString(group);
-        int n_occur_group=0;
-        for (unsigned int i=0; i<allData.size(); i++) {
-            if (group == allData[i].first) {
-                if (occurrenceGroup==n_occur_group || occurrenceGroup < 0) {
-                    int n_occur_item=0;
-                    for (unsigned int j=0; j<allData[i].second.size(); j++) {
-                        if (data == allData[i].second[j].first) {
-                            if (occurrenceItem==n_occur_item || occurrenceItem < 0) {
-                                std::stringstream iss(allData[i].second[j].second);
-                                iss >> std::boolalpha >> val;
-                                DEBUG(100,"scalar " << data << "[" << occurrenceItem << "] g:" << group << " [" << occurrenceGroup << "] = " << val );
-                                return true;
-                            }
-                            n_occur_item++;
-                        }
-                    }
-                }
-                n_occur_group++;
-            }
-        }
-        DEBUG(10,"NOT FOUND! searching for scalar \"" << data << "\" [" << occurrenceItem << "] in group \"" << group << "\" [" << occurrenceGroup << "]");
-        return false;
-    }
-
-
-    //! generic class to InputData a vector (pay attention that T will be allocated and it's up to you to delete it!) return value is the number of values InputData
-    template <class T> bool extract(std::string data, std::vector<T>&val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0) {
-        data=cleanString(data);
-        group=cleanString(group);
-        bool found=false;
-        int n_occur_group=0;
-        for (unsigned int i=0; i<allData.size(); i++) {
-            if (group == allData[i].first) {
-                if (occurrenceGroup==n_occur_group || occurrenceGroup < 0) {
-                    int n_occur_item=0;
-                    for (unsigned int j=0; j<allData[i].second.size(); j++) {
-                        if (data == allData[i].second[j].first) {
-                            if (occurrenceItem==n_occur_item || occurrenceItem < 0) {
-                                std::stringstream iss(allData[i].second[j].second);
-                                std::vector<std::string> strVec;
-                                copy(std::istream_iterator<std::string>(iss), std::istream_iterator<std::string>(),
-                                     std::back_inserter<std::vector<std::string> >(strVec));
-                                size_t nums=strVec.size();
-                                val.resize(nums);
-                                for (size_t i=0; i<nums; i++) {
-                                    std::stringstream(strVec[i]) >> val[i];
-                                    DEBUG(100,"vector " << data << "[" << occurrenceItem << "] g:" << group << " [" << occurrenceGroup << "]" << val[i]);
-                                }
-                                return true;
-                            }
-                            n_occur_item++;
-                        }
-                    }
-                }
-                n_occur_group++;
-            }
-        }
-        DEBUG(10,"NOT FOUND! searching for vector \"" << data << "\" [" << occurrenceItem << "] in group \"" << group << "\" [" << occurrenceGroup << "]");
-        return found;
-
-    }
-
-    //! specialized method to extract a vector of strings
-	bool extract(std::string data, std::vector<std::string>&val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0) {
-        data=cleanString(data);
-        group=cleanString(group);
-        bool found=false;
-        int n_occur_group=0;
-        for (unsigned int i=0; i<allData.size(); i++) {
-            if (group == allData[i].first) {
-                if (occurrenceGroup==n_occur_group || occurrenceGroup < 0) {
-                    int n_occur_item=0;
-                    for (unsigned int j=0; j<allData[i].second.size(); j++) {
-                        if (data == allData[i].second[j].first) {
-                            if (occurrenceItem==n_occur_item || occurrenceItem < 0) {
-                                std::stringstream iss(allData[i].second[j].second);
-								do {
-									std::string sub;
-									iss >> sub;
-									sub = cleanString(sub);
-									if (!sub.empty()) val.push_back(sub);
-								} while (iss);								
-                                return true;
-                            }
-                            n_occur_item++;
-                        }
-                    }
-                }
-                n_occur_group++;
-            }
-        }
-        DEBUG(10,"NOT FOUND! searching for vector \"" << data << "\" [" << occurrenceItem << "] in group \"" << group << "\" [" << occurrenceGroup << "]");
-        return found;
-		
-    }
-	
+    //! get get vector of uint from python
+    bool extract(std::string name, std::vector<unsigned int> &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
+    
+    //! get get vector of int from python
+    bool extract(std::string name, std::vector<int> &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
+    
+    //! get get vector of double from python
+    bool extract(std::string name, std::vector<double> &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
+    	
+    //! get vector of string from python
+    bool extract(std::string name, std::vector<std::string> &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
+    
+    
     //! return true if the nth group exists
     bool existGroup(std::string groupName, unsigned int occurrenceGroup=0);
 
     //! string containing the whole clean namelist
     std::string namelist;
 
-    //! to add a varible to a group
-    template <class T> void addVar(std::string nameVar, T &valVar,std::string nameGroup="") {
-        std::vector< std::pair <std::string,std::string> > myvec;
-        std::ostringstream s;
-        s << valVar;
-        myvec.push_back(make_pair(nameVar,s.str()));
-        allData.push_back(make_pair(nameGroup,myvec));
-    };
-
 private:
+    PyObject* py_namelist;
+    
     //! print the namelist on stream
     void write(std::ostream&);
 

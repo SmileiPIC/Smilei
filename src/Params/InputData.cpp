@@ -1,9 +1,20 @@
 #include "InputData.h"
 #include <sstream>
+#include <vector>
+
+extern "C" {
+    #include "pyinit.h"
+}
 
 using namespace std;
 
 InputData::InputData():namelist("") {
+    Py_Initialize();
+    PyRun_SimpleString(reinterpret_cast<const char*>(Python_pyinit_py));
+}
+
+InputData::~InputData() {
+    Py_Finalize();
 }
 
 
@@ -20,7 +31,7 @@ string InputData::cleanString(string str) {
     str.erase( pos + 1 );
     pos = str.find_first_not_of( whiteSpaces );
     str.erase( 0, pos );
-    std::string::iterator new_end = std::unique(str.begin(), str.end(), BothAreSpaces);
+    string::iterator new_end = unique(str.begin(), str.end(), BothAreSpaces);
     str.erase(new_end, str.end());
     return str;
 }
@@ -47,52 +58,81 @@ void InputData::write(ostream &ostr) {
     }
 }
 
+//! get bool from python
+bool InputData::extract(string name, bool &val, string group, int occurrenceItem, int occurrenceGroup) {
+    return true;
+}
+
+//! get uint from python
+bool InputData::extract(string name, short int &val, string group, int occurrenceItem, int occurrenceGroup) {
+    return true;
+}
+
+//! get uint from python
+bool InputData::extract(string name, unsigned int &val, string group, int occurrenceItem, int occurrenceGroup) {
+    return true;
+}
+
+//! get int from python
+bool InputData::extract(string name, int &val, string group, int occurrenceItem, int occurrenceGroup) {
+    return true;
+}
+
+//! get double from python
+bool InputData::extract(string name, double &val, string group, int occurrenceItem, int occurrenceGroup) {
+    return true;
+}
+
+//! get string from python
+bool InputData::extract(string name, string &val, string group, int occurrenceItem, int occurrenceGroup) {
+    PyObject* py_val = PyObject_GetAttrString(py_namelist,name.c_str());
+    if (py_val) {
+        const char* s = PyString_AsString(py_val);
+        val=string(s);
+        DEBUG(name << " : " << val);
+        return true;
+    }
+    return false;
+}
+
+//! get uint from python
+bool InputData::extract(string name, vector<unsigned int> &val, string group, int occurrenceItem, int occurrenceGroup) {
+    return true;
+}
+
+//! get int from python
+bool InputData::extract(string name, vector<int> &val, string group, int occurrenceItem, int occurrenceGroup) {
+    return true;
+}
+
+//! get double from python
+bool InputData::extract(string name, vector<double> &val, string group, int occurrenceItem, int occurrenceGroup) {
+    return true;
+}
+
+//! get string from python
+bool InputData::extract(string name, vector<string> &val, string group, int occurrenceItem, int occurrenceGroup) {
+    return true;
+}
+
 void InputData::parseStream() {
-    if (namelist.empty()) ERROR("namelist is empty");
-    
-    stringstream my_stream(namelist);
-    allData.clear();
 
-    vector<pair <string,string> > defaultGroupVec;
-    vector<pair <string,string> > thisGroup;
-
-    string group("");
-    string strLine("");
-    while (getline(my_stream, strLine)) {
-        strLine=cleanString(strLine);
-        if (!strLine.empty()) {
-            if (strLine.find('=') == string::npos) {
-                if (strLine == "end") {
-                    allData.push_back(make_pair(group,thisGroup));
-                    group.clear();
-                    thisGroup.clear();
-                } else {
-                    group=strLine;
-                }
-            } else {
-                stringstream ss(strLine);
-                string item;
-                while(getline(ss, item, ',')) {
-                    item=cleanString(item);
-                    size_t posEqual=item.find('=');
-                    string left=cleanString(item.substr(0,posEqual));
-                    string right=cleanString(item.substr(posEqual+1));
-                    if (group.empty()) {
-                        defaultGroupVec.push_back(make_pair(left,right));
-                    } else {
-                        thisGroup.push_back(make_pair(left,right));
-                    }
-                }
-            }
-        }
+    //! we let python execute the namelist
+    int retval=PyRun_SimpleString(namelist.c_str());
+    if (retval==-1) {
+        ERROR("error parsing namelist")
     }
     
-    if (!group.empty()) ERROR("Final group "<< group << " not closed. Check the namelist");
-
-    // this wil put the default empty group "" in front of others
-    std::reverse( allData.begin(), allData.end() );
-    allData.push_back(make_pair("",defaultGroupVec));
-    std::reverse( allData.begin(), allData.end() );
+    //this is  apython function described in pyinit.py
+    PyRun_SimpleString("check_namelist()");
+    
+    // we store in a pyobject the smilei class of the namelist
+    PyObject* myFunction = PyObject_GetAttrString(PyImport_AddModule("__main__"),(char*)"get_smilei");
+    py_namelist = PyObject_CallFunction(myFunction,"");
+    
+    if (!py_namelist) {
+        ERROR("no smilei class defined")
+    }
     
 }
 
@@ -106,32 +146,15 @@ void InputData::readFile(string filename) {
 
     if (istr.is_open()) {
         while (getline(istr, strLine)) {
-            strLine=cleanString(strLine);
-            if (!strLine.empty()) namelist += strLine + "\n";
+            namelist += strLine + "\n";
         }
     } else {
         ERROR("File " << filename << " does not exists");
     }
-    namelist +="\n";
-    
-    
-    unsigned long seedTime=0;
-    if (!extract("random_seed",seedTime)) {
-        RELEASEEXEC(seedTime=time(NULL));
-        stringstream ss;
-        ss << "random_seed = " << seedTime << endl;
-        namelist+=ss.str();
-    }
-        
-    size_t i = namelist.rfind('.', namelist.length( ));
-    if (i != string::npos) {
-        filename=filename.substr(0, i);
-    }    
-    write(filename+".parsed");
-    
+    namelist +="\n";    
 }
 
-bool InputData::existGroup(std::string groupName, unsigned int occurrenceGroup) {
+bool InputData::existGroup(string groupName, unsigned int occurrenceGroup) {
     unsigned int n_occur_group=0;
     for (vector<pair<string , vector<pair<string,string> > > >::iterator  it_type = allData.begin(); it_type != allData.end(); it_type++) {
         if (groupName == it_type->first) {

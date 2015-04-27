@@ -1,12 +1,14 @@
 SMILEICXX     ?= mpic++
 HDF5_ROOT_DIR ?=
 
+PYTHONCONFIG ?= python-config
 ##################################################
 
 VERSION:="$(shell git describe 2>/dev/null || echo '??')"
 
 CFLAGS += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include
 LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5 -lz
+
 
 ifneq (,$(findstring poincare,$(HOSTNAME)))
     LDFLAGS += -lgpfs -lz
@@ -49,6 +51,13 @@ SRCS := $(shell find . -name \*.cpp)
 OBJS := $(SRCS:.cpp=.o)
 DEPS := $(SRCS:.cpp=.d)
 
+
+CFLAGS+=$(shell $(PYTHONCONFIG) --include)
+LDFLAGS+=$(shell $(PYTHONCONFIG) --ldflags)
+PYINIT := $(shell find . -name \*.py)
+PYHEADERS := $(PYINIT:.py=.h)
+
+
 ifeq ($(config),debug)
 	CFLAGS += -g -pg -Wall -D__DEBUG -O0# -shared-intel 
 else
@@ -79,6 +88,13 @@ ifeq (0, $(words $(findstring $(MAKECMDGOALS), $(NODEPS))))
 	-include $(DEPS)
 endif
 
+deps: $(DEPS)
+
+# this generates a .h file containing a char[] with the python script in binary then
+#you can just include this file to get the contents
+%.h: %.py
+	@ echo "Creating binary char for $<"
+	@ xxd -i $< > $@
 
 %.d: %.cpp
 	@ echo "Checking dependencies for $<"
@@ -89,7 +105,7 @@ endif
 %.o : %.cpp
 	$(SMILEICXX) $(CFLAGS) -c $< -o $@
 
-$(EXEC): $(OBJS)
+$(EXEC): $(PYHEADERS) $(OBJS)  
 	$(SMILEICXX) $(CFLAGS) -o $(EXEC) $(OBJS) $(LDFLAGS)
 
 # DO NOT DELETE
