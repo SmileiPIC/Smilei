@@ -37,6 +37,14 @@ ElectroMagnBC1D_SM::~ElectroMagnBC1D_SM()
 {
 }
 
+void ElectroMagnBC1D_SM::save_fields_value_for_BC(Field* my_field) {
+    Field1D* field1D=static_cast<Field1D*>(my_field);
+    xvalmin=(*field1D)(0);
+    xvalmax=(*field1D)(field1D->dims()[0]-1);
+}
+
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
