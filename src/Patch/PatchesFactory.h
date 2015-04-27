@@ -22,6 +22,10 @@ public:
         m1 = 5;
         m2 = 2;
         npatches = (1 << (m0 + m1 + m2)) / smpi->getSize() ;// npatches = 2^(m0+m1+m2) / number of mpi process. Local number of patches. 
+        //Naive initialization of patch_count, assuming all mpi processes initially have the same number of patches.
+        for (unsigned int impi = 0 ; impi < smpi->getSize() ; impi++) {
+            smpi->patch_count[impi] = npatches;
+        }
 
 	// Modified to test Patch integration
 	npatches = m0*m1;
@@ -37,8 +41,8 @@ public:
         unsigned int nPart;
         for (unsigned int ipatch = 0 ; ipatch < npatches ; ipatch++) {
 	    // For Patch integration : ipatch is local to MPI process
-	    //vecPatches[ipatch] = PatchesFactory::create(params, laser_params, smpi, m0, m1, m2, smpi->getRank()*npatches + ipatch);
-            vecPatches[ipatch] = PatchesFactory::create(params, laser_params, smpi, m0, m1, m2, ipatch);
+	    vecPatches[ipatch] = PatchesFactory::create(params, laser_params, smpi, m0, m1, m2, smpi->getRank()*npatches + ipatch);
+            //vecPatches[ipatch] = PatchesFactory::create(params, laser_params, smpi, m0, m1, m2, ipatch);
         }
 
         return vecPatches;
