@@ -75,7 +75,10 @@ for path in ["Stopping_power1","Stopping_power2","Stopping_power3"]:
 		electrons = ParticleDiagnostic(path,0, units="nice", timesteps=t).get()
 		x = electrons["x"]
 		ekin = electrons["ekin"]
+		dekin = np.diff(ekin)
+		dekin = np.hstack((dekin, dekin[-1]))
 		A = electrons["data"][0]
+		A = A*dekin
 		for k in range(nx): Ekin[k][i] = (A[k,:]*ekin).sum()/A[k,:].sum()
 	
 		if fig:
