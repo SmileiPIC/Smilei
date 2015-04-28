@@ -69,7 +69,7 @@ public:
     virtual double computeNRJ(unsigned int shift, unsigned int istart[3][2], unsigned int bufsize[3][2]);
     
     
-    double ExtFieldAt_xmin,ExtFieldAt_xmax;
+    //double ExtFieldAt_xmin,ExtFieldAt_xmax;
 
 private:
 };

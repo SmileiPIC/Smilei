@@ -26,9 +26,9 @@ TemperatureProfile2D::TemperatureProfile2D(ProfileSpecies &my_prof_params) : Tem
         //if (prof_params.int_params.size()<2)
         //    ERROR("two int_params must be defined for Charles velocity profile" );
         if (prof_params.double_params.size()<5)
-            ERROR("five double_params must be defined for Charles Temperature profile" );
+            ERROR("five double_params must be defined for magexpansion Temperature profile" );
         if (prof_params.length_params_y.size()<2)
-            ERROR("two length_params_x must be defined for Charles Temperature profile" );
+            ERROR("two length_params_y must be defined for magexpansion Temperature profile" );
     } 
 }
 

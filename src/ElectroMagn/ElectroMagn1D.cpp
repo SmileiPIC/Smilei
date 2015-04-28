@@ -637,11 +637,8 @@ void ElectroMagn1D::applyExternalField(Field* my_field,  ExtFieldProfile *my_pro
     for (int i=0 ; i<field1D->dims()[0] ; i++) {
         x[0] = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i +(field1D->isDual(0)?-0.5:0)) )*dx;
         (*field1D)(i) = (*field1D)(i) + (*profile)(x);
-        if (i==0) field1D->ExtFieldAt_xmin;
-        if (i==field1D->dims()[0]-1) field1D->ExtFieldAt_xmax;
     }
-    
-    emBoundCond[0]->save_fields_value_for_BC(my_field);
+    emBoundCond[0]->save_fields_BC(my_field);
 
 }
 
