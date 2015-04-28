@@ -8,54 +8,14 @@ extern "C" {
 
 using namespace std;
 
-InputData::InputData():namelist("") {
+InputData::InputData():namelist(""), py_namelist(NULL) {
     Py_Initialize();
+    // this will read the file pyinit.h
     PyRun_SimpleString(reinterpret_cast<const char*>(Python_pyinit_py));
 }
 
 InputData::~InputData() {
     Py_Finalize();
-}
-
-
-bool BothAreSpaces(char lhs, char rhs) {
-    return (lhs == rhs) && (lhs == ' ');
-}
-
-string InputData::cleanString(string str) {
-    str=str.substr(0, str.find('#'));
-    str=str.substr(0, str.find('!'));
-    transform(str.begin(), str.end(), str.begin(), ::tolower);
-    const string whiteSpaces( " \f\n\r\t\v" );
-    size_t pos = str.find_last_not_of( whiteSpaces );
-    str.erase( pos + 1 );
-    pos = str.find_first_not_of( whiteSpaces );
-    str.erase( 0, pos );
-    string::iterator new_end = unique(str.begin(), str.end(), BothAreSpaces);
-    str.erase(new_end, str.end());
-    return str;
-}
-
-void InputData::write(string filename=string()) {
-    ofstream ostr(filename.c_str());
-    if (ostr.is_open()) {
-        ostr << "# smilei " << __VERSION << endl << endl;
-        write(ostr);
-    } else {
-        write(cerr);
-    }
-}
-
-void InputData::write(ostream &ostr) {
-    for(vector<pair<string , vector<pair<string,string> > > >::iterator it_type = allData.begin(); it_type != allData.end(); it_type++) {
-        if (!it_type->first.empty()) ostr << it_type->first << endl;
-        for(vector<pair<string, string> >::iterator it_type2 = it_type->second.begin(); it_type2 != it_type->second.end(); it_type2++) {
-            if (!it_type->first.empty()) ostr << "\t";
-            ostr << it_type2->first << " = " << it_type2->second << endl;
-        }
-        if (!it_type->first.empty()) ostr << "end" << endl;
-        ostr << endl;
-    }
 }
 
 //! get bool from python
@@ -210,19 +170,57 @@ bool InputData::extract(string name, vector<string> &val, string group, int occu
 }
 
 //! retrieve python object
-PyObject* InputData::py_val_from_string(string name, string group, int occurrenceItem, int occurrenceGroup) {
-    PyObject* py_val = PyObject_GetAttrString(py_namelist,name.c_str());
+PyObject* InputData::py_val_from_string(string name, string group, int occurrenceItem, int occurrenceGroup) {    
+    PyObject *py_obj=py_namelist;
+    if (!group.empty()) {
+        py_obj = PyObject_GetAttrString(py_namelist,group.c_str());
+        if (py_obj) {
+            if (PyList_Check(py_obj)) {
+                int len = PySequence_Size(py_obj);
+                if (len >= occurrenceGroup) {
+                    PyObject* seq = PySequence_Fast(py_obj, "expected a sequence");
+                    py_obj = PySequence_Fast_GET_ITEM(seq, occurrenceGroup);
+                    Py_DECREF(seq);
+                } else {
+                    ERROR("group " << group << " is not big enough");
+                }
+            }
+        } else {
+            ERROR("group " << group << " does not exists");
+        }
+    }
+    PyObject* py_val=NULL;
+    if (py_obj) {
+        py_val = PyObject_GetAttrString(py_obj,name.c_str());
+        if (occurrenceItem>0) {
+            if (PyList_Check(py_val)) {
+                int len = PySequence_Size(py_val);
+                if (len >= occurrenceGroup) {
+                    PyObject* seq = PySequence_Fast(py_val, "expected a sequence");
+                    py_val = PySequence_Fast_GET_ITEM(seq, occurrenceItem);
+                    Py_DECREF(seq);
+                } else {
+                    ERROR(name << " is not big enough");
+                }
+            } else {
+                ERROR(name << " is not a list");
+            }
+
+        }
+    } else {
+        ERROR("something bad happened " << name << "in group " << group);
+    }
     return py_val;
 }    
 
-//! retrieve python object
+//! retrieve a vector of python objects
 vector<PyObject*> InputData::py_vec_from_string(string name, string group, int occurrenceItem, int occurrenceGroup) {
+    PyObject* py_val = py_val_from_string(name,group,occurrenceItem,occurrenceGroup);
     vector<PyObject*> retvec;
-    PyObject* py_val = PyObject_GetAttrString(py_namelist,name.c_str());
-    
-    if (py_val) {        
+    if (py_val) {      
         if (!PyTuple_Check(py_val)) {
             retvec.push_back(py_val);
+            WARNING(name << " should be a tuple, not a scalar : fix it");
         } else {
             PyObject* seq = PySequence_Fast(py_val, "expected a sequence");
             int len = PySequence_Size(py_val);
@@ -230,7 +228,6 @@ vector<PyObject*> InputData::py_vec_from_string(string name, string group, int o
             for (int i = 0; i < len; i++) {
                 PyObject* item = PySequence_Fast_GET_ITEM(seq, i);
                 retvec[i]=item;
-                DEBUG(" here " << i);
             }
             Py_DECREF(seq);
         }      
@@ -238,6 +235,20 @@ vector<PyObject*> InputData::py_vec_from_string(string name, string group, int o
     return retvec;
 }    
 
+
+bool InputData::existGroup(std::string group, unsigned int occurrenceGroup) {
+    PyObject *py_obj = PyObject_GetAttrString(py_namelist,group.c_str());
+    if (py_obj) {
+        if (PyList_Check(py_obj)) {
+            int len = PySequence_Size(py_obj);
+            if (len > occurrenceGroup) {
+                DEBUG("here " << len << " " << occurrenceGroup);
+                return true;
+            }
+        }
+    }
+    return false;
+}
 
 void InputData::parseStream() {
     
@@ -247,17 +258,12 @@ void InputData::parseStream() {
         ERROR("error parsing namelist")
     }
     
-    //this is  apython function described in pyinit.py
-    PyRun_SimpleString("check_namelist()");
-    
-    // we store in a pyobject the smilei class of the namelist
     PyObject* myFunction = PyObject_GetAttrString(PyImport_AddModule("__main__"),(char*)"get_smilei");
     py_namelist = PyObject_CallFunction(myFunction,const_cast<char *>(""));
     
     if (!py_namelist) {
         ERROR("no smilei class defined")
     }
-    
 }
 
 
@@ -278,17 +284,5 @@ void InputData::readFile(string filename) {
     namelist +="\n";    
 }
 
-bool InputData::existGroup(string groupName, unsigned int occurrenceGroup) {
-    unsigned int n_occur_group=0;
-    for (vector<pair<string , vector<pair<string,string> > > >::iterator  it_type = allData.begin(); it_type != allData.end(); it_type++) {
-        if (groupName == it_type->first) {
-            if (occurrenceGroup==n_occur_group) {
-                return true;
-            }
-            n_occur_group++;
-        }
-    }
-    return false;
-}
 
 

@@ -43,14 +43,6 @@ public:
 
     //! parse stringstream
     void parseStream();
-
-    //! write namelist onto file (or cerr if unable)
-    void write(std::string);
-
-    //! write namelist onto cerr
-    void write() {
-        write(std::cerr);
-    };
     
     //! get bool from python
     bool extract(std::string name, bool &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
@@ -86,24 +78,19 @@ public:
     
     std::vector<PyObject*> py_vec_from_string(std::string name, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
     
-    //! return true if the nth group exists
-    bool existGroup(std::string groupName, unsigned int occurrenceGroup=0);
-
     //! string containing the whole clean namelist
     std::string namelist;
 
+    //! return true if the nth group exists
+    bool existGroup(std::string groupName, unsigned int occurrenceGroup=0);
+    
+    
 private:
+    // python object: main namelist
     PyObject* py_namelist;
     
     //! print the namelist on stream
     void write(std::ostream&);
-
-    //! this is a function that removes trailing spaces and tabs from the beginning and the end of a string (and transforms in lowercase)
-    std::string cleanString(std::string);
-
-    //! this is a vector of pairs string, vector of pairs string,string....
-    //! the first string is the name of the group and the second vector of pairs contains the variable name and it's value (as string)
-    std::vector<std::pair<std::string , std::vector< std::pair <std::string,std::string> > > > allData;
 
 };
 

@@ -11,7 +11,7 @@ using namespace std;
 // PicParams : open & parse the input data file, test that parameters are coherent
 // ---------------------------------------------------------------------------------------------------------------------
 PicParams::PicParams(InputData &ifile) {
-
+    
     
     // --------------
     // Stop & Restart
@@ -89,7 +89,7 @@ PicParams::PicParams(InputData &ifile) {
     if ((res_space.size()!=0)&&(res_space.size()!=nDim_field)) {
         ERROR("Dimension of res_space ("<< res_space.size() << ") != " << nDim_field << " for geometry " << geometry);
     }
-
+    
     // definition of time_step & cell_length (if res_time & res_space are not defined)
     if (!defbyRes) {
         ifile.extract("timestep", timestep);
@@ -137,7 +137,7 @@ PicParams::PicParams(InputData &ifile) {
         if ( !ifile.extract("bc_em_type_trans", bc_em_type_trans) )
             ERROR("bc_em_type_trans not defined" );
     }
-
+    
     
     // ------------------------
     // Moving window parameters
@@ -168,7 +168,7 @@ PicParams::PicParams(InputData &ifile) {
         SpeciesStructure tmpSpec;
         
         ifile.extract("species_type",tmpSpec.species_type,"species",0,n_species);
-        
+
         ifile.extract("initPosition_type",tmpSpec.initPosition_type ,"species",0,n_species);
         if ( (tmpSpec.initPosition_type!="regular")&&(tmpSpec.initPosition_type!="random") ) {
             ERROR("For species " << n_species << " bad definition of initPosition_type");
@@ -183,7 +183,7 @@ PicParams::PicParams(InputData &ifile) {
         }
         
         ifile.extract("n_part_per_cell",tmpSpec.n_part_per_cell,"species",0,n_species);
-
+        
         tmpSpec.c_part_max = 1.0;// default value
         ifile.extract("c_part_max",tmpSpec.c_part_max,"species",0,n_species);
         
@@ -240,15 +240,15 @@ PicParams::PicParams(InputData &ifile) {
         
         if (!ifile.extract("bc_part_type_west",tmpSpec.bc_part_type_west,"species",0,n_species) )
             ERROR("bc_part_type_west not defined for species " << n_species );
-	if (!ifile.extract("bc_part_type_east",tmpSpec.bc_part_type_east,"species",0,n_species) )
+        if (!ifile.extract("bc_part_type_east",tmpSpec.bc_part_type_east,"species",0,n_species) )
             ERROR("bc_part_type_east not defined for species " << n_species );
-
+        
         if (nDim_particle>1) {
             if (!ifile.extract("bc_part_type_south ",tmpSpec.bc_part_type_south,"species",0,n_species) )
                 ERROR("bc_part_type_south not defined for species " << n_species );
             if (!ifile.extract("bc_part_type_north ",tmpSpec.bc_part_type_north,"species",0,n_species) )
                 ERROR("bc_part_type_north not defined for species " << n_species );
-	}
+        }
         
         tmpSpec.ionization_model = "none"; // default value
         ifile.extract("ionization_model", tmpSpec.ionization_model, "species",0,n_species);
@@ -314,15 +314,16 @@ PicParams::PicParams(InputData &ifile) {
         tmpSpec.mvel_y_profile.vacuum_length=tmpSpec.dens_profile.vacuum_length;
         tmpSpec.mvel_z_profile.vacuum_length=tmpSpec.dens_profile.vacuum_length;
         
+
         species_param.push_back(tmpSpec);
- 
+        
         n_species++;
     }
-    
+
     global_every=0;
     
     ifile.extract("every",global_every);
-        
+    
     // --------------------
     // Number of processors
     // --------------------
@@ -336,6 +337,7 @@ PicParams::PicParams(InputData &ifile) {
     compute();
     computeSpecies();
     
+    HEREIAM("");
 }
 
 
@@ -401,7 +403,7 @@ void PicParams::compute()
 // ---------------------------------------------------------------------------------------------------------------------
 void PicParams::computeSpecies()
 {
-
+    
     // Loop on all species
     for (unsigned int ispec=0; ispec< species_param.size(); ispec++) {
         
@@ -491,7 +493,7 @@ void PicParams::computeSpecies()
             
             
         }
-    
+        
     }//end loop on all species (ispec)
     
 }
@@ -540,7 +542,7 @@ void PicParams::print()
         MESSAGE(1,"dimension " << i << " - (res_space, sim_length) : (" << res_space[i] << ", " << sim_length[i] << ")");
         MESSAGE(1,"            - (n_space,  cell_length) : " << "(" << n_space[i] << ", " << cell_length[i] << ")");
     }
-
+    
     // Plasma related parameters
     // -------------------------
     MESSAGE("Plasma related parameters");
@@ -551,6 +553,6 @@ void PicParams::print()
                 << ", " << species_param[i].n_part_per_cell << ")");
     }
     
-
+    
 }
 

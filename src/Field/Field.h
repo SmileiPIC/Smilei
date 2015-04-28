@@ -50,6 +50,7 @@ public:
     Field( std::vector<unsigned int> dims, std::string name_in ) : name(name_in) {
         ;
     } ;
+    
     //! Constructor for Field: isPrimal define if mainDim is Primal or Dual
     Field( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name_in ) : name(name_in) {
         ;
