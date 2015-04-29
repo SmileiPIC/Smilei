@@ -6,6 +6,7 @@
 
 #include "PicParams.h"
 #include "DiagParams.h"
+#include "H5.h"
 
 using namespace std;
 

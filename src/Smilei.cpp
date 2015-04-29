@@ -96,11 +96,6 @@ int main (int argc, char* argv[])
     
     smpiData->barrier();
     
-    // Create diagnostics
-    Diagnostic Diags;
-    
-    // read input file and fill Diags
-    DiagParams diag_params(Diags, params, input_data, smpi);
     
     
     // Geometry known, MPI environment specified
@@ -108,7 +103,15 @@ int main (int argc, char* argv[])
     MESSAGE("Creating MPI & IO environments");
     MESSAGE("----------------------------------------------");
     SmileiMPI* smpi = SmileiMPIFactory::create(params, smpiData);
+
+    // Create diagnostics
+    Diagnostic Diags(smpi);
+    // read input file and fill Diags
+    DiagParams diag_params(Diags, params, input_data, smpi);
+
     SmileiIO*  sio  = SmileiIOFactory::create(params, diag_params, smpi);
+
+    
 #ifdef _OMP
     int nthds(0);
 #pragma omp parallel shared(nthds)
@@ -215,7 +218,7 @@ int main (int argc, char* argv[])
         MESSAGE("Running diags at time t = 0");
         MESSAGE("----------------------------------------------");
         // run diagnostics at time-step 0
-        Diags->runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
+        Diags.runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
         // temporary EM fields dump in Fields.h5
         sio->writeAllFieldsSingleFileTime( EMfields, 0 );
         // temporary EM fields dump in Fields_avg.h5
@@ -271,14 +274,14 @@ int main (int argc, char* argv[])
             MESSAGE(1,"t = "          << setw(7) << setprecision(2)   << time_dual/params.conv_fac
                     << "   it = "       << setw(log10(params.n_time)+1) << itime  << "/" << params.n_time
                     << "   sec = "      << setw(7) << setprecision(2)   << timer[0].getTime()
-                    << "   E = "        << std::scientific << setprecision(4)<< Diags->getScalar("Etot")
-                    << "   Epart = "        << std::scientific << setprecision(4)<< Diags->getScalar("Eparticles")
-                    << "   Elost = "        << std::scientific << setprecision(4)<< Diags->getScalar("Elost")
-                    << "   E_bal(%) = " << setw(6) << std::fixed << setprecision(2)   << 100.0*Diags->getScalar("Ebal_norm") );
+                    << "   E = "        << std::scientific << setprecision(4)<< Diags.getScalar("Etot")
+                    << "   Epart = "        << std::scientific << setprecision(4)<< Diags.getScalar("Eparticles")
+                    << "   Elost = "        << std::scientific << setprecision(4)<< Diags.getScalar("Elost")
+                    << "   E_bal(%) = " << setw(6) << std::fixed << setprecision(2)   << 100.0*Diags.getScalar("Ebal_norm") );
             if (simWindow) 
-                MESSAGE(1, "\t\t MW Elost = " << std::scientific << setprecision(4)<< Diags->getScalar("Emw_lost")
-                        << "     MW Eadd  = " << std::scientific << setprecision(4)<< Diags->getScalar("Emw_part")
-                        << "     MW Elost (fields) = " << std::scientific << setprecision(4)<< Diags->getScalar("Emw_lost_fields")
+                MESSAGE(1, "\t\t MW Elost = " << std::scientific << setprecision(4)<< Diags.getScalar("Emw_lost")
+                        << "     MW Eadd  = " << std::scientific << setprecision(4)<< Diags.getScalar("Emw_part")
+                        << "     MW Elost (fields) = " << std::scientific << setprecision(4)<< Diags.getScalar("Emw_lost_fields")
                         << setw(6) << std::fixed << setprecision(2) );
         }
         
@@ -341,7 +344,7 @@ int main (int argc, char* argv[])
 		
         // run all diagnostics
         timer[3].restart();
-        Diags->runAllDiags(itime, EMfields, vecSpecies, Interp, smpi);
+        Diags.runAllDiags(itime, EMfields, vecSpecies, Interp, smpi);
         timer[3].update();
         
         timer[6].restart();

@@ -67,10 +67,10 @@ end
 
 #include <cmath>
 
-#include "H5.h"
 #include "Species.h"
 #include "Particles.h"
 #include "SmileiMPI.h"
+#include "H5.h"
 
 // Class for each axis of the particle diags
 class DiagnosticParticlesAxis {

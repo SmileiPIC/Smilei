@@ -12,7 +12,9 @@
 using namespace std;
 
 Diagnostic::Diagnostic(SmileiMPI* smpi) :
-scalars(smpi)
+scalars(smpi),
+probes(smpi),
+phases(smpi)
 {
     dtimer[0].init(smpi, "scalars");
     dtimer[1].init(smpi, "probes");

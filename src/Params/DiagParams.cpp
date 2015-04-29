@@ -2,8 +2,12 @@
 
 #include <cmath>
 #include <iostream>
+#include <iomanip>
 
 #include "Tools.h"
+#include "Diagnostic.h"
+#include "H5.h"
+#include "SmileiMPI.h"
 
 using namespace std;
 
@@ -16,10 +20,8 @@ inline double convertToDouble(string &s)
     return x;
 }
 
-DiagParams::DiagParams(Diagnostic& diags, PicParams& params, InputData &ifile) {
-    
-    double conv_fac = params.conv_fac; // conversion factor (see sim_units in PicParams.cpp for more details)
-    
+DiagParams::DiagParams(Diagnostic& diags, PicParams& params, InputData &ifile, SmileiMPI *smpi) {
+        
     bool ok=false;
     
     // defining default values & reading diagnostic every-parameter
@@ -48,10 +50,10 @@ DiagParams::DiagParams(Diagnostic& diags, PicParams& params, InputData &ifile) {
     initScalars(diags,params,ifile);
     
     // probes initialization
-    initProbes(diags,params,ifile);
+    initProbes(diags,params,ifile,smpi);
     
     // phasespaces initialization    
-    initPhase(diags,params,ifile);
+    initPhases(diags,params,ifile);
     
     // particles initialization    
     initParticles(diags,params,ifile);
@@ -59,8 +61,9 @@ DiagParams::DiagParams(Diagnostic& diags, PicParams& params, InputData &ifile) {
 }
 
 void DiagParams::initScalars(Diagnostic& diags, PicParams& params, InputData &ifile) {
+
     diags.scalars.every=0;
-    ok=ifile.extract("every",diags.scalars.every,"diagnostic scalar");
+    bool ok=ifile.extract("every",diags.scalars.every,"diagnostic scalar");
     if (!ok) diags.scalars.every=params.global_every;
     
     vector<double> scalar_time_range(2,0.);
@@ -70,8 +73,8 @@ void DiagParams::initScalars(Diagnostic& diags, PicParams& params, InputData &if
         diags.scalars.tmax = params.sim_time;
     }
     else {
-        diags.scalars.tmin = scalar_time_range[0]*conv_fac;
-        diags.scalars.tmax = scalar_time_range[1]*conv_fac;
+        diags.scalars.tmin = scalar_time_range[0]*params.conv_fac;
+        diags.scalars.tmax = scalar_time_range[1]*params.conv_fac;
     }
     
     diags.scalars.precision=10;
@@ -79,65 +82,395 @@ void DiagParams::initScalars(Diagnostic& diags, PicParams& params, InputData &if
     ifile.extract("vars",diags.scalars.vars,"diagnostic scalar");
     
     // copy from params remaining stuff
-    diags.scalars.res_time=params.res_time);
+    diags.scalars.res_time=params.res_time;
     diags.scalars.dt=params.timestep;
     diags.scalars.cell_volume=params.cell_volume;
 }
 
-void DiagParams::initProbes(Diagnostic& diags, PicParams& params, InputData &ifile) {
+void DiagParams::initProbes(Diagnostic& diags, PicParams& params, InputData &ifile, SmileiMPI *smpi) {
+    bool ok;
     unsigned int n_probe=0;
     while (ifile.existGroup("diagnostic probe",n_probe)) {
-        probeStructure tmpStruct;
         
-        tmpStruct.every=0;
-        ok=ifile.extract("every",tmpStruct.every,"diagnostic probe",0,n_probe);        
-        if (!ok) tmpStruct.every=params.global_every;
+        if (n_probe==0) {
+            // Create the HDF5 file that will contain all the probes
+            hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
+            H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
+            diags.probes.fileId = H5Fcreate( "Probes.h5", H5F_ACC_TRUNC, H5P_DEFAULT, pid);
+            H5Pclose(pid);
+            
+            // Write the version of the code as an attribute
+            string ver(__VERSION);
+            H5::attr(diags.probes.fileId, "Version", ver);
+            
+            diags.probes.dt = params.timestep;
+            diags.probes.every         .resize(0);
+            diags.probes.tmin          .resize(0);
+            diags.probes.tmax          .resize(0);
+            diags.probes.probeParticles.resize(0);
+            diags.probes.nPart_total   .resize(0);
+            diags.probes.probesArray   .resize(0);
+            diags.probes.probesStart   .resize(0);
+        }
+        
+        
+        
+        unsigned int every=0;
+        ok=ifile.extract("every",every,"diagnostic probe",0,n_probe);        
+        if (!ok) every=params.global_every;
+        diags.probes.every.push_back(every);
         
         vector<double> time_range(2,0.);
+        double tmin,tmax;
         ok=ifile.extract("time_range",time_range,"diagnostic probe",0,n_probe);        
         if (!ok) { 
-            tmpStruct.tmin = 0.;
-            tmpStruct.tmax = params.sim_time;
+            tmin = 0.;
+            tmax = params.sim_time;
         } else {
-            tmpStruct.tmin = time_range[0]*conv_fac;
-            tmpStruct.tmax = time_range[1]*conv_fac;
+            tmin = time_range[0]*params.conv_fac;
+            tmax = time_range[1]*params.conv_fac;
         }
+        diags.probes.tmin.push_back(tmin);
+        diags.probes.tmax.push_back(tmax);
+  
+        // number is the numer of probes you have in each dimension of the probe 
+        // (which must be smaller than the code dimensions)
+        vector<unsigned int> vecNumber; 
+        ifile.extract("number",vecNumber,"diagnostic probe",0,n_probe);
+
+        unsigned int dim=vecNumber.size();
+
+        //fixme : I don't understand this... 
+        if (vecNumber.size() == 0) { // force at least one probe...
+            vecNumber.resize(1);
+            vecNumber[0]=1;
+        }
+        // dimension of the probe grid
+        unsigned int dimProbe=vecNumber.size();
         
-        ifile.extract("number",tmpStruct.number,"diagnostic probe",0,n_probe);
-        tmpStruct.dim=tmpStruct.number.size();
-        if (tmpStruct.dim == 0) { // in 1D case you have one probe, forcing it
-            tmpStruct.number.resize(1);
-            tmpStruct.number[0]=1;
+        if (dimProbe > params.nDim_particle) {
+            ERROR("probe dimension is greater than simulation dimension")
         }
+     
+        // dimension of the simulation
+        unsigned int ndim=params.nDim_particle;
+        
+        vector< vector<double> > allPos;
         
         vector<double> pos;
         ifile.extract("pos",pos,"diagnostic probe",0,n_probe);
         for (unsigned int i=0; i<pos.size(); i++)
-            pos[i] *= conv_fac;
-        if (pos.size()>0) tmpStruct.pos.push_back(pos);
+            pos[i] *= params.conv_fac;
+        if (pos.size()>0) allPos.push_back(pos);
         
         ifile.extract("pos_first",pos,"diagnostic probe",0,n_probe);
         for (unsigned int i=0; i<pos.size(); i++)
-            pos[i] *= conv_fac;
-        if (pos.size()>0) tmpStruct.pos.push_back(pos);
+            pos[i] *= params.conv_fac;
+        if (pos.size()>0) allPos.push_back(pos);
         
         ifile.extract("pos_second",pos,"diagnostic probe",0,n_probe);
         for (unsigned int i=0; i<pos.size(); i++)
-            pos[i] *= conv_fac;
-        if (pos.size()>0) tmpStruct.pos.push_back(pos);
+            pos[i] *= params.conv_fac;
+        if (pos.size()>0) allPos.push_back(pos);
         
         ifile.extract("pos_third",pos,"diagnostic probe",0,n_probe);
         for (unsigned int i=0; i<pos.size(); i++)
-            pos[i] *= conv_fac;
-        if (pos.size()>0) tmpStruct.pos.push_back(pos);
+            pos[i] *= params.conv_fac;
+        if (pos.size()>0) allPos.push_back(pos);
         
-        probeStruc.push_back(tmpStruct);
+                
+        // Calculate the total number of points in the grid
+        // Each point is actually a "fake" macro-particle
+        unsigned int nPart_total=1;
+        for (unsigned int iDimProbe=0; iDimProbe<dimProbe; iDimProbe++) {
+            nPart_total *= vecNumber[iDimProbe];
+        }
+        diags.probes.nPart_total.push_back(nPart_total);
+        
+        Particles probeParticles; //create fake particles
+        
+        // Initialize the list of "fake" particles the same way are actual macro-particles
+        probeParticles.initialize(nPart_total, ndim);
+        
+        // For each grid point, calculate its position and assign that position to the particle
+        // The particle position is a linear combination of the `pos` with `pos_first` or `pos_second`, etc.
+        double partPos, dx;
+        vector<unsigned int> ipartND (dimProbe);
+        for(unsigned int ipart=0; ipart<nPart_total; ++ipart) { // for each particle
+            // first, convert the index `ipart` into N-D indexes
+            unsigned int i = ipart;
+            for (unsigned int iDimProbe=0; iDimProbe<dimProbe; iDimProbe++) {
+                ipartND[iDimProbe] = i%vecNumber[iDimProbe];
+                i = i/vecNumber[iDimProbe]; // integer division
+            }
+            // Now assign the position of the particle
+            for(unsigned int iDim=0; iDim!=ndim; ++iDim) { // for each dimension of the simulation
+                partPos = allPos[0][iDim]; // position of `pos`
+                for (unsigned int iDimProbe=0; iDimProbe<dimProbe; iDimProbe++) { // for each of `pos`, `pos_first`, etc.
+                    dx = (allPos[iDimProbe+1][iDim]-allPos[0][iDim])/(vecNumber[iDimProbe]-1); // distance between 2 gridpoints
+                    partPos += ipartND[iDimProbe] * dx;
+                }
+                probeParticles.position(iDim,ipart) = partPos;
+            }
+        }
+        
+
+        // Remove particles out of the domain
+        for ( int ipb=nPart_total-1 ; ipb>=0 ; ipb--) {
+            if (!probeParticles.is_part_in_domain(ipb, smpi))
+                probeParticles.erase_particle(ipb);
+        }
+        diags.probes.probeParticles.push_back(probeParticles);
+
+        unsigned int nPart_local = probeParticles.size(); // number of fake particles for this proc
+        
+        // Make the array that will contain the data
+        // probesArray : 10 x nPart_tot
+        vector<unsigned int> probesArraySize(2);
+        probesArraySize[0] = nPart_local; // number of particles
+        probesArraySize[1] = diags.probes.probeSize; // number of fields (Ex, Ey, etc)
+        Field2D *myfield = new Field2D(probesArraySize);
+        diags.probes.probesArray.push_back(myfield);
+        
+        // Exchange data between MPI cpus so that they can figure out which part
+        // of the grid they have to manage
+        MPI_Status status;
+        // Receive the location where to start from the previous node
+        int probesStart = 0;
+        if (smpi->getRank()>0) MPI_Recv( &(probesStart), 1, MPI_INTEGER, smpi->getRank()-1, 0, MPI_COMM_WORLD, &status );
+        // Send the location where to end to the next node
+        int probeEnd = probesStart+nPart_local;
+        if (smpi->getRank()!=smpi->getSize()-1) MPI_Send( &probeEnd, 1, MPI_INTEGER, smpi->getRank()+1, 0, MPI_COMM_WORLD );
+                
+        // Create group for the current probe
+        ostringstream prob_name("");
+        prob_name << "p" << setfill('0') << setw(4) << n_probe;
+        hid_t did = H5Gcreate(diags.probes.fileId, prob_name.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        
+        // Create an array to hold the positions of local probe particles
+        double posArray [nPart_local][ndim];
+        for (int ipb=0 ; ipb<nPart_local ; ipb++)
+            for (int idim=0 ; idim<ndim  ; idim++)
+                posArray[ipb][idim] = probeParticles.position(idim,ipb);
+        
+        // Add array "positions" into the current HDF5 group
+        H5::matrix_MPI(did, "positions", posArray[0][0], nPart_total, ndim, probesStart, nPart_local);
+        
+        diags.probes.probesStart.push_back(probesStart);
+        
+        // Add arrays "p0", "p1", ... to the current group
+        ostringstream pk;
+        for (unsigned int iDimProbe=0; iDimProbe<=dimProbe; iDimProbe++) {
+            pk.str("");
+            pk << "p" << iDimProbe;
+            // FIXME 
+            // FIXME 
+            // FIXME 
+            // FIXME 
+            // FIXME 
+            // FIXME 
+            // FIXME I do not understand next line
+//            H5::vector(did, pk.str(), diagParams.probeStruc[np].pos[iDimProbe][0], ndim);
+        }
+        
+        // Add array "number" to the current group
+        H5::vector(did, "number", vecNumber[0], dimProbe);
+        
+        // Add attribute every to the current group
+        H5::attr(did, "every", every);
+        // Add attribute "dimension" to the current group
+        H5::attr(did, "dimension", dim);
+        
+        // Close current group
+        H5Gclose(did);
+        
         n_probe++;
     }
 }
 
-void DiagParams::initPhase(Diagnostic& diags, PicParams& params, InputData &ifile) {
+void DiagParams::initPhases(Diagnostic& diags, PicParams& params, InputData &ifile) {
     int n_probephase=0;
+    //! create the particle structure
+    diags.phases.ndim=params.nDim_particle;    
+    diags.phases.my_part.pos.resize(params.nDim_particle);
+    diags.phases.my_part.mom.resize(3);
+
+    /*
+	for (unsigned int i = 0 ; i < diagParams.vecPhase.size(); i++) {
+        hid_t gidParent=0;
+        if (smpi->isMaster() ) {
+            if (i==0) {
+                ostringstream file_name("");
+                file_name<<"PhaseSpace.h5";
+                fileId = H5Fcreate( file_name.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+                string ver(__VERSION);
+                
+                // write version
+                hid_t aid3  = H5Screate(H5S_SCALAR);
+                hid_t atype = H5Tcopy(H5T_C_S1);
+                H5Tset_size(atype, ver.size());
+                H5Tset_strpad(atype,H5T_STR_NULLTERM);
+                hid_t attr3 = H5Acreate(fileId, "Version", atype, aid3, H5P_DEFAULT, H5P_DEFAULT);
+                
+                H5Awrite(attr3, atype, ver.c_str());
+                
+                H5Aclose(attr3);
+                H5Sclose(aid3);
+                H5Tclose(atype);
+            }
+            ostringstream groupName("");
+            groupName << "ps" << setw(4) << setfill('0') << i;
+            gidParent = H5Gcreate(fileId, groupName.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT); 
+            
+            hid_t sid = H5Screate(H5S_SCALAR);	
+            hid_t aid = H5Acreate(gidParent, "every", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
+            H5Awrite(aid, H5T_NATIVE_UINT, &diagParams.vecPhase[i].every);
+            H5Sclose(sid);
+            H5Aclose(aid);
+            
+        }
+        
+        for (unsigned int ii=0 ; ii < diagParams.vecPhase[i].kind.size(); ii++) {
+            DiagnosticPhase *diagPhase=NULL;
+            
+            // create DiagnosticPhase
+            if (params.geometry == "1d3v") {
+                if (diagParams.vecPhase[i].kind[ii] == "xpx") {
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],0,0);
+                } else if (diagParams.vecPhase[i].kind[ii] == "xpy") {
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],0,1);
+                } else if (diagParams.vecPhase[i].kind[ii] == "xpz") {
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],0,2);
+                } else if (diagParams.vecPhase[i].kind[ii] == "xlor") {
+                    diagPhase =  new DiagnosticPhasePosLor(diagParams.vecPhase[i],0);
+                } else if (diagParams.vecPhase[i].kind[ii] == "pxpy") {
+                    diagPhase =  new DiagnosticPhaseMomMom(diagParams.vecPhase[i],0,1);
+                } else if (diagParams.vecPhase[i].kind[ii] == "pxpz") {
+                    diagPhase =  new DiagnosticPhaseMomMom(diagParams.vecPhase[i],0,2);
+                } else if (diagParams.vecPhase[i].kind[ii] == "pypz") {
+                    diagPhase =  new DiagnosticPhaseMomMom(diagParams.vecPhase[i],1,2);
+                } else {
+                    ERROR("kind " << diagParams.vecPhase[i].kind[ii] << " not implemented for geometry " << params.geometry);
+                }
+            } else if (params.geometry == "2d3v") {
+                if (diagParams.vecPhase[i].kind[ii] == "xpx") {
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],0,0);
+                } else if (diagParams.vecPhase[i].kind[ii] == "xpy") {
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],0,1);
+                } else if (diagParams.vecPhase[i].kind[ii] == "xpz") {
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],0,2);
+                } else if (diagParams.vecPhase[i].kind[ii] == "ypx") {
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],1,0);
+                } else if (diagParams.vecPhase[i].kind[ii] == "ypy") {
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],1,1);
+                } else if (diagParams.vecPhase[i].kind[ii] == "ypz") {
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],1,2);
+                } else if (diagParams.vecPhase[i].kind[ii] == "pxpy") {
+                    diagPhase =  new DiagnosticPhaseMomMom(diagParams.vecPhase[i],0,1);
+                } else if (diagParams.vecPhase[i].kind[ii] == "pxpz") {
+                    diagPhase =  new DiagnosticPhaseMomMom(diagParams.vecPhase[i],0,2);
+                } else if (diagParams.vecPhase[i].kind[ii] == "pypz") {
+                    diagPhase =  new DiagnosticPhaseMomMom(diagParams.vecPhase[i],1,2);                    
+                } else if (diagParams.vecPhase[i].kind[ii] == "xlor") {
+                    diagPhase =  new DiagnosticPhasePosLor(diagParams.vecPhase[i],0);
+                } else if (diagParams.vecPhase[i].kind[ii] == "ylor") {
+                    diagPhase =  new DiagnosticPhasePosLor(diagParams.vecPhase[i],1);
+                } else {
+                    ERROR("kind " << diagParams.vecPhase[i].kind[ii] << " not implemented for geometry " << params.geometry);
+                }
+            } else if (params.geometry == "3d3v") {
+                if (diagParams.vecPhase[i].kind[ii] == "xpx") {
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],0,0);
+                } else if (diagParams.vecPhase[i].kind[ii] == "xpy") {
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],0,1);
+                } else if (diagParams.vecPhase[i].kind[ii] == "xpz") {
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],0,2);
+                } else if (diagParams.vecPhase[i].kind[ii] == "ypx") {
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],1,0);
+                } else if (diagParams.vecPhase[i].kind[ii] == "ypy") {
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],1,1);
+                } else if (diagParams.vecPhase[i].kind[ii] == "ypz") {
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],1,2);
+                } else if (diagParams.vecPhase[i].kind[ii] == "zpx") {
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],2,0);
+                } else if (diagParams.vecPhase[i].kind[ii] == "zpy") {
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],2,1);
+                } else if (diagParams.vecPhase[i].kind[ii] == "zpz") {
+                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],2,2);
+                } else if (diagParams.vecPhase[i].kind[ii] == "pxpy") {
+                    diagPhase =  new DiagnosticPhaseMomMom(diagParams.vecPhase[i],0,1);
+                } else if (diagParams.vecPhase[i].kind[ii] == "pxpz") {
+                    diagPhase =  new DiagnosticPhaseMomMom(diagParams.vecPhase[i],0,2);
+                } else if (diagParams.vecPhase[i].kind[ii] == "pypz") {
+                    diagPhase =  new DiagnosticPhaseMomMom(diagParams.vecPhase[i],1,2);                    
+                } else if (diagParams.vecPhase[i].kind[ii] == "xlor") {
+                    diagPhase =  new DiagnosticPhasePosLor(diagParams.vecPhase[i],0);
+                } else if (diagParams.vecPhase[i].kind[ii] == "ylor") {
+                    diagPhase =  new DiagnosticPhasePosLor(diagParams.vecPhase[i],1);
+                } else if (diagParams.vecPhase[i].kind[ii] == "zlor") {
+                    diagPhase =  new DiagnosticPhasePosLor(diagParams.vecPhase[i],2);
+                } else {
+                    ERROR("kind " << diagParams.vecPhase[i].kind[ii] << " not implemented for geometry " << params.geometry);
+                }                
+            } else {
+                ERROR("DiagnosticPhase not implemented for geometry " << params.geometry);
+            }
+            
+            if (diagPhase) {
+                if (smpi->isMaster()) {
+                    //! create a group for each species of this diag and keep track of its ID.
+                    
+                    hsize_t dims[3] = {0,diagPhase->my_data.dims()[0],diagPhase->my_data.dims()[1]};
+                    hsize_t max_dims[3] = {H5S_UNLIMITED,diagPhase->my_data.dims()[0],diagPhase->my_data.dims()[1]};
+                    hsize_t chunk_dims[3] = {1,diagPhase->my_data.dims()[0],diagPhase->my_data.dims()[1]};
+                    
+                    hid_t sid = H5Screate_simple (3, dims, max_dims);	
+                    hid_t pid = H5Pcreate(H5P_DATASET_CREATE);
+                    H5Pset_layout(pid, H5D_CHUNKED);
+                    H5Pset_chunk(pid, 3, chunk_dims);
+                    
+                    H5Pset_deflate (pid, std::min((unsigned int)9,diagParams.vecPhase[i].deflate));
+                    
+                    hid_t did = H5Dcreate (gidParent, diagParams.vecPhase[i].kind[ii].c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, pid,H5P_DEFAULT);
+                    H5Pclose (pid);	
+                    H5Sclose (sid);
+                    
+                    // write attribute of species present in the phaseSpace
+                    string namediag;
+                    for (unsigned int k=0; k<diagParams.vecPhase[i].species.size(); k++) {
+                        namediag+=diagParams.vecPhase[i].species[k]+" ";
+                    }
+                    namediag=namediag.substr(0, namediag.size()-1);
+                    sid = H5Screate(H5S_SCALAR);
+                    hid_t tid = H5Tcopy(H5T_C_S1);
+                    H5Tset_size(tid, namediag.size());
+                    H5Tset_strpad(tid,H5T_STR_NULLTERM);
+                    hid_t aid = H5Acreate(gidParent, "species", tid, sid, H5P_DEFAULT, H5P_DEFAULT);
+                    H5Awrite(aid, tid, namediag.c_str());
+                    
+                    
+                    // write attribute extent of the phaseSpace
+                    hsize_t dimsPos[2] = {2,2};
+                    sid = H5Screate_simple(2, dimsPos, NULL);
+                    aid = H5Acreate (gidParent, "extents", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT);
+                    double tmp[4] = {diagPhase->firstmin, diagPhase->firstmax, diagPhase->secondmin, diagPhase->secondmax};
+                    H5Awrite(aid, H5T_NATIVE_DOUBLE, tmp);
+                    H5Aclose(aid);
+                    H5Sclose(sid);
+                    
+                    diagPhase->dataId=did;
+                    
+                }
+                vecDiagPhase.push_back(diagPhase);	
+            }
+        }
+        if (smpi->isMaster() ) {
+            H5Gclose(gidParent);
+        }
+	}
+     */
+    
+    bool ok;
     while (ifile.existGroup("diagnostic phase",n_probephase)) {
         phaseStructure tmpPhaseStruct;
         vector<string> kind;
@@ -161,14 +494,14 @@ void DiagParams::initPhase(Diagnostic& diags, PicParams& params, InputData &ifil
         }
         
         vector<double> time_range(2,0.);
-        ok=ifile.extract("time_range",time_range,"diagnostic phase",0,n_probe);        
+        ok=ifile.extract("time_range",time_range,"diagnostic phase",0,n_probephase);        
         if (!ok) { 
             tmpPhaseStruct.tmin = 0.;
             tmpPhaseStruct.tmax = params.sim_time;
         }
         else {
-            tmpPhaseStruct.tmin = time_range[0]*conv_fac;
-            tmpPhaseStruct.tmax = time_range[1]*conv_fac;
+            tmpPhaseStruct.tmin = time_range[0]*params.conv_fac;
+            tmpPhaseStruct.tmax = time_range[1]*params.conv_fac;
         }
         
         
@@ -188,8 +521,8 @@ void DiagParams::initPhase(Diagnostic& diags, PicParams& params, InputData &ifil
         ifile.extract("pos_max",tmpPhaseStruct.pos_max,"diagnostic phase",0,n_probephase);
         ifile.extract("pos_num",tmpPhaseStruct.pos_num,"diagnostic phase",0,n_probephase);
         for (unsigned int i=0; i<tmpPhaseStruct.pos_min.size(); i++) {
-            tmpPhaseStruct.pos_min[i] *= conv_fac;
-            tmpPhaseStruct.pos_max[i] *= conv_fac;
+            tmpPhaseStruct.pos_min[i] *= params.conv_fac;
+            tmpPhaseStruct.pos_max[i] *= params.conv_fac;
             if (tmpPhaseStruct.pos_min[i]==tmpPhaseStruct.pos_max[i]) {
                 tmpPhaseStruct.pos_min[i] = 0.0;
                 tmpPhaseStruct.pos_max[i] = params.sim_length[i];
@@ -222,7 +555,7 @@ void DiagParams::initParticles(Diagnostic& diags, PicParams& params, InputData &
     DiagnosticParticlesAxis  *tmpAxis;
     vector<DiagnosticParticlesAxis*> tmpAxes;
     DiagnosticParticles * tmpDiagParticles;
-    
+    bool ok;
     while (ifile.existGroup("diagnostic particles",n_diag_particles)) {
         
         // get parameter "output" that determines the quantity to sum in the output array
@@ -295,8 +628,8 @@ void DiagParams::initParticles(Diagnostic& diags, PicParams& params, InputData &
             }
             // If the axis is spatial, then we need to apply the conv_fac
             if (axis[0]=="x" || axis[0]=="y" || axis[0]=="z") {
-                tmpAxis->min *= conv_fac;
-                tmpAxis->max *= conv_fac;
+                tmpAxis->min *= params.conv_fac;
+                tmpAxis->max *= params.conv_fac;
             }
             tmpAxes.push_back(tmpAxis);
             iaxis++;
