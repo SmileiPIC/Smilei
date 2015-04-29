@@ -32,7 +32,7 @@ class DiagnosticScalar {
 
 public:
     //! creator (called from Diagnostic)
-    DiagnosticScalar(PicParams &params, DiagParams &diagParams, SmileiMPI* smpi);
+    DiagnosticScalar(SmileiMPI* smpi);
     //! destructor
     ~DiagnosticScalar(){};
     

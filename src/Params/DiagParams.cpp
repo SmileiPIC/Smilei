@@ -16,9 +16,7 @@ inline double convertToDouble(string &s)
     return x;
 }
 
-
-
-DiagParams::DiagParams(PicParams& params, InputData &ifile) {
+DiagParams::DiagParams(Diagnostic& diags, PicParams& params, InputData &ifile) {
     
     double conv_fac = params.conv_fac; // conversion factor (see sim_units in PicParams.cpp for more details)
     
@@ -32,7 +30,7 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
     fieldDump_every=0;
     ok=ifile.extract("fieldDump_every", fieldDump_every);
     if (!ok) fieldDump_every=params.global_every;
-        
+    
     avgfieldDump_every=params.res_time*10;
     ok=ifile.extract("avgfieldDump_every", avgfieldDump_every);
     if (!ok) avgfieldDump_every=params.global_every;
@@ -44,27 +42,49 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
     
     particleDump_every=0;
     if (ifile.extract("particleDump_every", particleDump_every))
-            WARNING("Option particleDump_every disabled");
+        WARNING("Option particleDump_every disabled");
     
-    scalar_every=0;
-    ok=ifile.extract("every",scalar_every,"diagnostic scalar");
-    if (!ok) scalar_every=params.global_every;
+    // scalars initialization   
+    initScalars(diags,params,ifile);
+    
+    // probes initialization
+    initProbes(diags,params,ifile);
+    
+    // phasespaces initialization    
+    initPhase(diags,params,ifile);
+    
+    // particles initialization    
+    initParticles(diags,params,ifile);
+    
+}
+
+void DiagParams::initScalars(Diagnostic& diags, PicParams& params, InputData &ifile) {
+    diags.scalars.every=0;
+    ok=ifile.extract("every",diags.scalars.every,"diagnostic scalar");
+    if (!ok) diags.scalars.every=params.global_every;
     
     vector<double> scalar_time_range(2,0.);
     ok=ifile.extract("time_range",scalar_time_range,"diagnostic scalar");        
     if (!ok) { 
-      scalar_tmin = 0.;
-      scalar_tmax = params.sim_time;
+        diags.scalars.tmin = 0.;
+        diags.scalars.tmax = params.sim_time;
     }
     else {
-    scalar_tmin = scalar_time_range[0]*conv_fac;
-    scalar_tmax = scalar_time_range[1]*conv_fac;
+        diags.scalars.tmin = scalar_time_range[0]*conv_fac;
+        diags.scalars.tmax = scalar_time_range[1]*conv_fac;
     }
     
-    scalar_precision=10;
-    ifile.extract("precision",scalar_precision,"diagnostic scalar");
-    ifile.extract("vars",scalar_vars,"diagnostic scalar");
+    diags.scalars.precision=10;
+    ifile.extract("precision",diags.scalars.precision,"diagnostic scalar");
+    ifile.extract("vars",diags.scalars.vars,"diagnostic scalar");
     
+    // copy from params remaining stuff
+    diags.scalars.res_time=params.res_time);
+    diags.scalars.dt=params.timestep;
+    diags.scalars.cell_volume=params.cell_volume;
+}
+
+void DiagParams::initProbes(Diagnostic& diags, PicParams& params, InputData &ifile) {
     unsigned int n_probe=0;
     while (ifile.existGroup("diagnostic probe",n_probe)) {
         probeStructure tmpStruct;
@@ -114,7 +134,9 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
         probeStruc.push_back(tmpStruct);
         n_probe++;
     }
-    
+}
+
+void DiagParams::initPhase(Diagnostic& diags, PicParams& params, InputData &ifile) {
     int n_probephase=0;
     while (ifile.existGroup("diagnostic phase",n_probephase)) {
         phaseStructure tmpPhaseStruct;
@@ -186,10 +208,10 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
         vecPhase.push_back(tmpPhaseStruct);
         n_probephase++;
     }
-    
-    
-    // particles diagnostics start here
-    // --------------------------------
+}
+
+
+void DiagParams::initParticles(Diagnostic& diags, PicParams& params, InputData &ifile) {
     int n_diag_particles=0;
     unsigned int every, time_average, iaxis, axis_nbins;
     double axis_min, axis_max;
@@ -285,11 +307,10 @@ DiagParams::DiagParams(PicParams& params, InputData &ifile) {
         // create new diagnostic object
         tmpDiagParticles = new DiagnosticParticles(n_diag_particles, output, every, time_average, species_numbers, tmpAxes);
         // add this object to the list
-        DiagnosticParticles::vecDiagnosticParticles.push_back(tmpDiagParticles);
+        diags.vecDiagnosticParticles.push_back(tmpDiagParticles);
         // next diagnostic
         n_diag_particles++;
     }
-
 }
 
 

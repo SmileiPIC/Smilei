@@ -105,13 +105,7 @@ public:
     
     ~DiagnosticParticles();
     
-    static std::vector<DiagnosticParticles*> vecDiagnosticParticles;
-    
-    static void closeAll();
-    
     void close();
-    
-    static void runAll(int, std::vector<Species*>&, SmileiMPI*);
     
     void run(int, std::vector<Species*>&, SmileiMPI*);
     

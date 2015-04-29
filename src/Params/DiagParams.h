@@ -13,7 +13,7 @@
 
 #include "InputData.h"
 #include "PicParams.h"
-#include "DiagnosticParticles.h"
+#include "Diagnostic.h"
 
 //! this structure holds all the possible paraeters for phase diagnostics. Then every DiagnosticPhaseXXXXX will pick the ones that fit
 struct phaseStructure {
@@ -88,8 +88,12 @@ class DiagParams {
 
 public:
     //! Creator for DiagParams
-    DiagParams(PicParams&, InputData &);
+    DiagParams(Diagnostic&, PicParams&, InputData &);
 
+    void initScalars(Diagnostic&, PicParams&, InputData &);
+    
+    void initProbes(Diagnostic&, PicParams&, InputData &);
+    
     //! field dump output
     unsigned int fieldDump_every;
     
@@ -101,19 +105,6 @@ public:
 
     //! particle dump output
     unsigned int particleDump_every;
-
-    //! scalar output every scalar_every (namelist group "diagnostic scalar" key "every")
-    unsigned int scalar_every;
-
-    double scalar_tmin;
-    double scalar_tmax;
-
-
-    //! list of vars for scalars to be written (empty means all)
-    std::vector<std::string> scalar_vars;
-
-    //! scalar output precision
-    unsigned int scalar_precision;
     
     //! vector of probes
     std::vector<probeStructure> probeStruc;
@@ -125,7 +116,7 @@ public:
 	std::vector<phaseStructure> vecPhase;
 	
 	//! Method to find the numbers of requested species, sorted, and duplicates removed
-	static std::vector<unsigned int> FindSpecies(std::vector<std::string>, PicParams&);
+    std::vector<unsigned int> FindSpecies(std::vector<std::string>, PicParams&);
 
 };
 

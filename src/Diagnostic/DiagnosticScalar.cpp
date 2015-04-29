@@ -11,17 +11,9 @@
 using namespace std;
 
 // constructor
-DiagnosticScalar::DiagnosticScalar(PicParams &params, DiagParams &diagParams, SmileiMPI* smpi) :
+DiagnosticScalar::DiagnosticScalar(SmileiMPI* smpi) :
 isMaster(smpi->isMaster()),
-cpuSize(smpi->getSize()),
-res_time(params.res_time),
-every(diagParams.scalar_every),
-tmin(diagParams.scalar_tmin),
-tmax(diagParams.scalar_tmax),
-dt(params.timestep),
-cell_volume(params.cell_volume),
-precision(diagParams.scalar_precision),
-vars(diagParams.scalar_vars)
+cpuSize(smpi->getSize())
 {
     if (isMaster) {
         fout.open("scalars.txt");
