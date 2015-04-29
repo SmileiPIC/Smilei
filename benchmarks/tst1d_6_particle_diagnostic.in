@@ -133,6 +133,10 @@ diagnostic scalar
 	every = 1
 end
 
+diagnostic probe
+	every = 1
+	pos = 1
+end
 
 # DIAGNOSTICS ON PARTICLES - project the particles on a N-D arbitrary grid
 # ------------------------------------------------------------------------
