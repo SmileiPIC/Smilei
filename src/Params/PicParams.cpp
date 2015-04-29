@@ -165,13 +165,18 @@ PicParams::PicParams(InputData &ifile) {
     n_species=0;
     
     while (ifile.existGroup("species",n_species)) {
+        HEREIAM("species " << n_species);
         SpeciesStructure tmpSpec;
         
         ifile.extract("species_type",tmpSpec.species_type,"species",0,n_species);
-
+        if(tmpSpec.species_type.empty()) {
+            ERROR("For species " << n_species << " empty species_type");
+        }
         ifile.extract("initPosition_type",tmpSpec.initPosition_type ,"species",0,n_species);
-        if ( (tmpSpec.initPosition_type!="regular")&&(tmpSpec.initPosition_type!="random") ) {
-            ERROR("For species " << n_species << " bad definition of initPosition_type");
+        if (tmpSpec.initPosition_type.empty()) {
+            ERROR("For species " << n_species << " empty initPosition_type");
+        } else if ( (tmpSpec.initPosition_type!="regular")&&(tmpSpec.initPosition_type!="random") ) {
+            ERROR("For species " << n_species << " bad definition of initPosition_type " << tmpSpec.initPosition_type);
         }
         
         ifile.extract("initMomentum_type",tmpSpec.initMomentum_type ,"species",0,n_species);
@@ -244,9 +249,9 @@ PicParams::PicParams(InputData &ifile) {
             ERROR("bc_part_type_east not defined for species " << n_species );
         
         if (nDim_particle>1) {
-            if (!ifile.extract("bc_part_type_south ",tmpSpec.bc_part_type_south,"species",0,n_species) )
+            if (!ifile.extract("bc_part_type_south",tmpSpec.bc_part_type_south,"species",0,n_species) )
                 ERROR("bc_part_type_south not defined for species " << n_species );
-            if (!ifile.extract("bc_part_type_north ",tmpSpec.bc_part_type_north,"species",0,n_species) )
+            if (!ifile.extract("bc_part_type_north",tmpSpec.bc_part_type_north,"species",0,n_species) )
                 ERROR("bc_part_type_north not defined for species " << n_species );
         }
         
@@ -258,7 +263,8 @@ PicParams::PicParams(InputData &ifile) {
         
         // Species geometry
         // ----------------
-        ifile.extract("species_geometry", tmpSpec.dens_profile.profile,"species",0,n_species);
+        ifile.extract("dens_profile", tmpSpec.dens_profile.profile,"species",0,n_species);
+        HEREIAM(tmpSpec.dens_profile.profile);
         // species length (check DensityProfile for definitions)
         ifile.extract("vacuum_length", tmpSpec.dens_profile.vacuum_length,"species",0,n_species);
         ifile.extract("dens_length_x", tmpSpec.dens_profile.length_params_x,"species",0,n_species);
@@ -337,7 +343,6 @@ PicParams::PicParams(InputData &ifile) {
     compute();
     computeSpecies();
     
-    HEREIAM("");
 }
 
 

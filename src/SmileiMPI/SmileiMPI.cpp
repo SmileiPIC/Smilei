@@ -55,15 +55,6 @@ SmileiMPI::~SmileiMPI()
 
 }
 
-void SmileiMPI::bcast( InputData& input_data )
-{
-    DEBUG(10,"broadcast namelist");
-    bcast(input_data.namelist);    
-
-    input_data.parseStream();
-    
-}
-
 void SmileiMPI::bcast( string& val )
 {
     int charSize=0;

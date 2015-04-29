@@ -8,6 +8,8 @@
 #ifndef PICPARAMS_H
 #define PICPARAMS_H
 
+#include <Python.h>
+
 #include <vector>
 #include <string>
 #include "ProfileParams.h"
@@ -18,6 +20,9 @@ class InputData;
 struct ProfileSpecies : ProfileStructure {
     //! vacuum lengths
     std::vector<double> vacuum_length;
+
+    //!PyObject *py_profile;
+
 };
 
 // ---------------------------------------------------------------------------------------------------------------------

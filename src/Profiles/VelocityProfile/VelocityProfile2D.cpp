@@ -40,7 +40,7 @@ VelocityProfile2D::VelocityProfile2D(ProfileSpecies &my_prof_params) : VelocityP
     
     else {
         ERROR("Profile " << prof_params.profile << " is not defined");
-    }//if species_geometry
+    }//if prof_params.profile
     
 }
 

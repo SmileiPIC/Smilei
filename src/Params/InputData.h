@@ -24,6 +24,7 @@
 
 #include "Tools.h"
 #include "PicParams.h"
+#include "SmileiMPI.h"
 
 
 
@@ -36,14 +37,12 @@
 class InputData {
 
 public:
-    InputData();
+    InputData(SmileiMPI* =NULL, std::string=std::string());
     ~InputData();
-    //! parse file
-    void readFile(std::string=std::string());
 
-    //! parse stringstream
-    void parseStream();
-    
+    //! string containing the whole clean namelist
+    std::string namelist;
+        
     //! get bool from python
     bool extract(std::string name, bool &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
     
@@ -74,13 +73,10 @@ public:
     //! get vector of string from python
     bool extract(std::string name, std::vector<std::string> &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
 
-    PyObject* py_val_from_string(std::string name, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
+    PyObject* extract_py(std::string name, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
     
-    std::vector<PyObject*> py_vec_from_string(std::string name, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
+    std::vector<PyObject*> extract_vec(std::string name, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
     
-    //! string containing the whole clean namelist
-    std::string namelist;
-
     //! return true if the nth group exists
     bool existGroup(std::string groupName, unsigned int occurrenceGroup=0);
     

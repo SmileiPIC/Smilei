@@ -14,7 +14,6 @@
 class DensityFactory {
 public:
     static DensityProfile* create(PicParams& params, unsigned int speciesNumber) {
-       
         DensityProfile* densityProfile = NULL;
         // ---------------
         // 1d3v simulation

@@ -27,13 +27,13 @@ For creating a 0-D grid `pos_first` should also be omitted.
 
 
 >> Example: 0-D probe in 1-D simulation
-diagnostic probe
+diag_probe
     every = 1
     pos   = 1.2
 end
 
 >> Example: 1-D probe in 1-D simulation
-diagnostic probe
+diag_probe
     every = 1
     pos       = 1.2
     pos_first = 5.6
@@ -41,7 +41,7 @@ diagnostic probe
 end
 
 >> Example: 1-D probe in 2-D simulation
-diagnostic probe
+diag_probe
     every = 1
     pos       = 1.2  4.
     pos_first = 5.6  4.
@@ -49,7 +49,7 @@ diagnostic probe
 end
 
 >> Example: 2-D probe in 2-D simulation
-diagnostic probe
+diag_probe
     every = 1
     pos        = 0.    0.
     pos_first  = 10.   0.

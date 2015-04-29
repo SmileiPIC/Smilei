@@ -39,7 +39,7 @@ In the input (namelist) file, each diagnostics are provided as follows:
 # >>>> MANY AXES CAN BE ADDED IN A SINGLE DIAGNOSTIC <<<<
 
 # EXAMPLE
-diagnostic particles
+diag_particles
 	output = density
 	every = 5
 	time_average = 1
@@ -49,7 +49,7 @@ diagnostic particles
 end
 
 # EXAMPLE
-diagnostic particles
+diag_particles
 	output = density
 	every = 5
 	time_average = 1

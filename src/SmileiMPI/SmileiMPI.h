@@ -40,9 +40,6 @@ public:
     //! @see max_local
     //! @see n_space_global
     void init( PicParams& params );
-    //! Broadcast to all process
-    //! \param idata read data
-    void bcast( InputData& idata );
 
     //! Create MPI communicator
     virtual void createTopology( PicParams& params ) {};
@@ -164,6 +161,9 @@ public:
     //! Number of MPI process in the current communicator
     int smilei_rk;
 
+    // Broadcast a string in current communicator
+    void bcast( std::string& val );
+
 protected:
     //! Global MPI Communicator
     MPI_Comm SMILEI_COMM_WORLD;
@@ -188,10 +188,6 @@ protected:
     std::vector<double> min_local;
     //! "Real" max limit of local domain (ghost data not concerned)
     std::vector<double> max_local;
-
-private:
-    // Broadcast a string in current communicator
-    void bcast( std::string& val );
 
 };
 

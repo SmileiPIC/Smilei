@@ -115,8 +115,8 @@ DensityProfile1D::DensityProfile1D(SpeciesStructure &params) : DensityProfile(pa
     else {
         ERROR("Density profile " << species_param.dens_profile.profile << " not defined in 1D");
     }
-
     
+    HEREIAM("");
     
 }
 
