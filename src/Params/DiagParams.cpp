@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "Tools.h"
+#include "DiagnosticParticles.h"
 
 using namespace std;
 
