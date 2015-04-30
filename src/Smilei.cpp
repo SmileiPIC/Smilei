@@ -100,17 +100,15 @@ int main (int argc, char* argv[])
     
     // Geometry known, MPI environment specified
     MESSAGE("----------------------------------------------");
-    MESSAGE("Creating MPI & IO environments");
+    MESSAGE("Creating MPI, Diags & IO environments");
     MESSAGE("----------------------------------------------");
     SmileiMPI* smpi = SmileiMPIFactory::create(params, smpiData);
-
     // Create diagnostics
     Diagnostic Diags(smpi);
     // read input file and fill Diags
     DiagParams diag_params(Diags, params, input_data, smpi);
-
     SmileiIO*  sio  = SmileiIOFactory::create(params, diag_params, smpi);
-
+    
     
 #ifdef _OMP
     int nthds(0);
@@ -152,7 +150,7 @@ int main (int argc, char* argv[])
         simWindow = new SimWindow(params);
     
     MESSAGE("----------------------------------------------");
-    MESSAGE("Creating EMfields/Interp/Proj/Diags");
+    MESSAGE("Creating EMfields/Interp/Proj");
     MESSAGE("----------------------------------------------");
     
     // Initialize the electromagnetic fields and interpolation-projection operators

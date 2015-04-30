@@ -145,6 +145,12 @@ void DiagParams::initProbes(Diagnostic& diags, PicParams& params, InputData &ifi
         vector<unsigned int> vecNumber; 
         ifile.extract("number",vecNumber,"diagnostic probe",0,n_probe);
         
+        // Dimension of the probe grid
+        unsigned int dimProbe=vecNumber.size();
+        if (dimProbe > params.nDim_particle) {
+            ERROR("probe dimension is greater than simulation dimension")
+        }
+        
         // If there is no "number" argument provided, then it corresponds to
         // a zero-dimensional probe (one point). In this case, we say the probe
         // has actually one dimension with only one point.
@@ -152,12 +158,6 @@ void DiagParams::initProbes(Diagnostic& diags, PicParams& params, InputData &ifi
         if (vecNumber.size() == 0) {
             vecNumber.resize(1);
             vecNumber[0]=1;
-        }
-        
-        // Dimension of the probe grid
-        unsigned int dimProbe=vecNumber.size();
-        if (dimProbe > params.nDim_particle) {
-            ERROR("probe dimension is greater than simulation dimension")
         }
         
         // Dimension of the simulation
