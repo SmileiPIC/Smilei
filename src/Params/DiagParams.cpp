@@ -263,14 +263,7 @@ void DiagParams::initProbes(Diagnostic& diags, PicParams& params, InputData &ifi
         for (unsigned int iDimProbe=0; iDimProbe<=dimProbe; iDimProbe++) {
             pk.str("");
             pk << "p" << iDimProbe;
-            // FIXME 
-            // FIXME 
-            // FIXME 
-            // FIXME 
-            // FIXME 
-            // FIXME 
-            // FIXME I do not understand next line
-//            H5::vector(did, pk.str(), diagParams.probeStruc[np].pos[iDimProbe][0], ndim);
+            H5::vector(did, pk.str(), allPos[iDimProbe][0], ndim);
         }
         
         // Add array "number" to the current group
