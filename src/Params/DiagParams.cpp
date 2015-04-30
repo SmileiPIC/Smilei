@@ -93,6 +93,8 @@ void DiagParams::initScalars(Diagnostic& diags, PicParams& params, InputData &if
 
 void DiagParams::initProbes(Diagnostic& diags, PicParams& params, InputData &ifile, SmileiMPI *smpi) {
     bool ok;
+    
+    // loop all "diagnostic probe" groups in the input file
     unsigned int n_probe=0;
     while (ifile.existGroup("diagnostic probe",n_probe)) {
         
@@ -118,12 +120,13 @@ void DiagParams::initProbes(Diagnostic& diags, PicParams& params, InputData &ifi
         }
         
         
-        
+        // Extract "every" (number of timesteps between each output)
         unsigned int every=0;
         ok=ifile.extract("every",every,"diagnostic probe",0,n_probe);        
         if (!ok) every=params.global_every;
         diags.probes.every.push_back(every);
         
+        // Extract "time_range" (tmin and tmax of the outputs)
         vector<double> time_range(2,0.);
         double tmin,tmax;
         ok=ifile.extract("time_range",time_range,"diagnostic probe",0,n_probe);        
@@ -136,31 +139,33 @@ void DiagParams::initProbes(Diagnostic& diags, PicParams& params, InputData &ifi
         }
         diags.probes.tmin.push_back(tmin);
         diags.probes.tmax.push_back(tmax);
-  
-        // number is the numer of probes you have in each dimension of the probe 
-        // (which must be smaller than the code dimensions)
+        
+        // Extract "number" (number of points you have in each dimension of the probe,
+        // which must be smaller than the code dimensions)
         vector<unsigned int> vecNumber; 
         ifile.extract("number",vecNumber,"diagnostic probe",0,n_probe);
-
+        
+        // If there is no "number" argument provided, then it corresponds to
+        // a zero-dimensional probe (one point). In this case, we say the probe
+        // has actually one dimension with only one point.
         unsigned int dim=vecNumber.size();
-
-        //fixme : I don't understand this... 
-        if (vecNumber.size() == 0) { // force at least one probe...
+        if (vecNumber.size() == 0) {
             vecNumber.resize(1);
             vecNumber[0]=1;
         }
-        // dimension of the probe grid
-        unsigned int dimProbe=vecNumber.size();
         
+        // Dimension of the probe grid
+        unsigned int dimProbe=vecNumber.size();
         if (dimProbe > params.nDim_particle) {
             ERROR("probe dimension is greater than simulation dimension")
         }
-     
-        // dimension of the simulation
+        
+        // Dimension of the simulation
         unsigned int ndim=params.nDim_particle;
         
+        // Extract "pos", "pos_first", "pos_second" and "pos_third"
+        // (positions of the vertices of the grid)
         vector< vector<double> > allPos;
-        
         vector<double> pos;
         ifile.extract("pos",pos,"diagnostic probe",0,n_probe);
         for (unsigned int i=0; i<pos.size(); i++)
@@ -182,7 +187,7 @@ void DiagParams::initProbes(Diagnostic& diags, PicParams& params, InputData &ifi
             pos[i] *= params.conv_fac;
         if (pos.size()>0) allPos.push_back(pos);
         
-                
+        
         // Calculate the total number of points in the grid
         // Each point is actually a "fake" macro-particle
         unsigned int nPart_total=1;
@@ -191,9 +196,9 @@ void DiagParams::initProbes(Diagnostic& diags, PicParams& params, InputData &ifi
         }
         diags.probes.nPart_total.push_back(nPart_total);
         
-        Particles probeParticles; //create fake particles
         
-        // Initialize the list of "fake" particles the same way are actual macro-particles
+        // Initialize the list of "fake" particles just as actual macro-particles
+        Particles probeParticles;
         probeParticles.initialize(nPart_total, ndim);
         
         // For each grid point, calculate its position and assign that position to the particle
@@ -218,14 +223,14 @@ void DiagParams::initProbes(Diagnostic& diags, PicParams& params, InputData &ifi
             }
         }
         
-
+        
         // Remove particles out of the domain
         for ( int ipb=nPart_total-1 ; ipb>=0 ; ipb--) {
             if (!probeParticles.is_part_in_domain(ipb, smpi))
                 probeParticles.erase_particle(ipb);
         }
         diags.probes.probeParticles.push_back(probeParticles);
-
+        
         unsigned int nPart_local = probeParticles.size(); // number of fake particles for this proc
         
         // Make the array that will contain the data
