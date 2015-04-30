@@ -9,6 +9,10 @@
 #include "H5.h"
 #include "SmileiMPI.h"
 
+#include "DiagnosticPhasePosMom.h"
+#include "DiagnosticPhasePosLor.h"
+#include "DiagnosticPhaseMomMom.h"
+
 using namespace std;
 
 
@@ -53,7 +57,7 @@ DiagParams::DiagParams(Diagnostic& diags, PicParams& params, InputData &ifile, S
     initProbes(diags,params,ifile,smpi);
     
     // phasespaces initialization    
-    initPhases(diags,params,ifile);
+    initPhases(diags,params,ifile,smpi);
     
     // particles initialization    
     initParticles(diags,params,ifile);
@@ -281,134 +285,203 @@ void DiagParams::initProbes(Diagnostic& diags, PicParams& params, InputData &ifi
     }
 }
 
-void DiagParams::initPhases(Diagnostic& diags, PicParams& params, InputData &ifile) {
+void DiagParams::initPhases(Diagnostic& diags, PicParams& params, InputData &ifile, SmileiMPI *smpi) {
+
     int n_probephase=0;
     //! create the particle structure
     diags.phases.ndim=params.nDim_particle;    
     diags.phases.my_part.pos.resize(params.nDim_particle);
     diags.phases.my_part.mom.resize(3);
+    
+    
+    bool ok;
+    while (ifile.existGroup("diagnostic phase",n_probephase)) {
+        
+        phaseStructure my_phase;
 
-    /*
-	for (unsigned int i = 0 ; i < diagParams.vecPhase.size(); i++) {
-        hid_t gidParent=0;
-        if (smpi->isMaster() ) {
-            if (i==0) {
-                ostringstream file_name("");
-                file_name<<"PhaseSpace.h5";
-                fileId = H5Fcreate( file_name.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-                string ver(__VERSION);
-                
-                // write version
-                hid_t aid3  = H5Screate(H5S_SCALAR);
-                hid_t atype = H5Tcopy(H5T_C_S1);
-                H5Tset_size(atype, ver.size());
-                H5Tset_strpad(atype,H5T_STR_NULLTERM);
-                hid_t attr3 = H5Acreate(fileId, "Version", atype, aid3, H5P_DEFAULT, H5P_DEFAULT);
-                
-                H5Awrite(attr3, atype, ver.c_str());
-                
-                H5Aclose(attr3);
-                H5Sclose(aid3);
-                H5Tclose(atype);
+        my_phase.every=0;
+        ok=ifile.extract("every",my_phase.every,"diagnostic phase",0,n_probephase);
+        if (!ok) {
+//            if (n_probephase>0) {
+//                my_phase.every=diags.phases.vecDiagPhase.end()->every;
+//            } else {
+                my_phase.every=params.global_every;
+//            }
+        }
+        
+        vector<string> kind;
+        ifile.extract("kind",kind,"diagnostic phase",0,n_probephase);        
+        for (vector<string>::iterator it=kind.begin(); it!=kind.end();it++) {
+            if (std::find(kind.begin(), it, *it) == it) {
+                my_phase.kind.push_back(*it); 
+            } else {
+                WARNING("removed duplicate " << *it << " in \"diagnostic phase\" " << n_probephase);
             }
+        }
+            
+        vector<double> time_range(2,0.);
+        ok=ifile.extract("time_range",time_range,"diagnostic phase",0,n_probephase);        
+        if (!ok) { 
+            my_phase.tmin = 0.;
+            my_phase.tmax = params.sim_time;
+        }
+        else {
+            my_phase.tmin = time_range[0]*params.conv_fac;
+            my_phase.tmax = time_range[1]*params.conv_fac;
+        }
+        
+        
+        ifile.extract("species",my_phase.species,"diagnostic phase",0,n_probephase);
+        
+        my_phase.deflate=0;
+        ifile.extract("deflate",my_phase.deflate,"diagnostic phase",0,n_probephase);
+        
+        if (my_phase.species.size()==0) {
+            WARNING("adding all species to the \"diagnostic phase\" " << n_probephase);
+            for (unsigned int i=0;i<params.n_species; i++) {
+                my_phase.species.push_back(params.species_param[i].species_type);
+            }
+        }
+        
+        ifile.extract("pos_min",my_phase.pos_min,"diagnostic phase",0,n_probephase);
+        ifile.extract("pos_max",my_phase.pos_max,"diagnostic phase",0,n_probephase);
+        ifile.extract("pos_num",my_phase.pos_num,"diagnostic phase",0,n_probephase);
+        for (unsigned int i=0; i<my_phase.pos_min.size(); i++) {
+            my_phase.pos_min[i] *= params.conv_fac;
+            my_phase.pos_max[i] *= params.conv_fac;
+            if (my_phase.pos_min[i]==my_phase.pos_max[i]) {
+                my_phase.pos_min[i] = 0.0;
+                my_phase.pos_max[i] = params.sim_length[i];
+            }
+        }
+        
+        
+        ifile.extract("mom_min",my_phase.mom_min,"diagnostic phase",0,n_probephase);
+        ifile.extract("mom_max",my_phase.mom_max,"diagnostic phase",0,n_probephase);
+        ifile.extract("mom_num",my_phase.mom_num,"diagnostic phase",0,n_probephase);
+        
+        ifile.extract("lor_min",my_phase.lor_min,"diagnostic phase",0,n_probephase);
+        ifile.extract("lor_max",my_phase.lor_max,"diagnostic phase",0,n_probephase);
+        ifile.extract("lor_num",my_phase.lor_num,"diagnostic phase",0,n_probephase);
+        
+        
+        hid_t gidParent=0;
+        if (n_probephase == 0 && smpi->isMaster()) {
+            ostringstream file_name("");
+            file_name<<"PhaseSpace.h5";
+            diags.phases.fileId = H5Fcreate( file_name.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+            string ver(__VERSION);
+            
+            // write version
+            hid_t aid3  = H5Screate(H5S_SCALAR);
+            hid_t atype = H5Tcopy(H5T_C_S1);
+            H5Tset_size(atype, ver.size());
+            H5Tset_strpad(atype,H5T_STR_NULLTERM);
+            hid_t attr3 = H5Acreate(diags.phases.fileId, "Version", atype, aid3, H5P_DEFAULT, H5P_DEFAULT);
+            
+            H5Awrite(attr3, atype, ver.c_str());
+            
+            H5Aclose(attr3);
+            H5Sclose(aid3);
+            H5Tclose(atype);            
+            
             ostringstream groupName("");
-            groupName << "ps" << setw(4) << setfill('0') << i;
-            gidParent = H5Gcreate(fileId, groupName.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT); 
+            groupName << "ps" << setw(4) << setfill('0') << n_probephase;
+            gidParent = H5Gcreate(diags.phases.fileId, groupName.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT); 
             
             hid_t sid = H5Screate(H5S_SCALAR);	
             hid_t aid = H5Acreate(gidParent, "every", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
-            H5Awrite(aid, H5T_NATIVE_UINT, &diagParams.vecPhase[i].every);
+            H5Awrite(aid, H5T_NATIVE_UINT, &my_phase.every);
             H5Sclose(sid);
             H5Aclose(aid);
-            
         }
         
-        for (unsigned int ii=0 ; ii < diagParams.vecPhase[i].kind.size(); ii++) {
+        
+        for (unsigned int ii=0 ; ii < my_phase.kind.size(); ii++) {
             DiagnosticPhase *diagPhase=NULL;
             
             // create DiagnosticPhase
             if (params.geometry == "1d3v") {
-                if (diagParams.vecPhase[i].kind[ii] == "xpx") {
-                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],0,0);
-                } else if (diagParams.vecPhase[i].kind[ii] == "xpy") {
-                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],0,1);
-                } else if (diagParams.vecPhase[i].kind[ii] == "xpz") {
-                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],0,2);
-                } else if (diagParams.vecPhase[i].kind[ii] == "xlor") {
-                    diagPhase =  new DiagnosticPhasePosLor(diagParams.vecPhase[i],0);
-                } else if (diagParams.vecPhase[i].kind[ii] == "pxpy") {
-                    diagPhase =  new DiagnosticPhaseMomMom(diagParams.vecPhase[i],0,1);
-                } else if (diagParams.vecPhase[i].kind[ii] == "pxpz") {
-                    diagPhase =  new DiagnosticPhaseMomMom(diagParams.vecPhase[i],0,2);
-                } else if (diagParams.vecPhase[i].kind[ii] == "pypz") {
-                    diagPhase =  new DiagnosticPhaseMomMom(diagParams.vecPhase[i],1,2);
+                if (my_phase.kind[ii] == "xpx") {
+                    diagPhase =  new DiagnosticPhasePosMom(my_phase,0,0);
+                } else if (my_phase.kind[ii] == "xpy") {
+                    diagPhase =  new DiagnosticPhasePosMom(my_phase,0,1);
+                } else if (my_phase.kind[ii] == "xpz") {
+                    diagPhase =  new DiagnosticPhasePosMom(my_phase,0,2);
+                } else if (my_phase.kind[ii] == "xlor") {
+                    diagPhase =  new DiagnosticPhasePosLor(my_phase,0);
+                } else if (my_phase.kind[ii] == "pxpy") {
+                    diagPhase =  new DiagnosticPhaseMomMom(my_phase,0,1);
+                } else if (my_phase.kind[ii] == "pxpz") {
+                    diagPhase =  new DiagnosticPhaseMomMom(my_phase,0,2);
+                } else if (my_phase.kind[ii] == "pypz") {
+                    diagPhase =  new DiagnosticPhaseMomMom(my_phase,1,2);
                 } else {
-                    ERROR("kind " << diagParams.vecPhase[i].kind[ii] << " not implemented for geometry " << params.geometry);
+                    ERROR("kind " << my_phase.kind[ii] << " not implemented for geometry " << params.geometry);
                 }
             } else if (params.geometry == "2d3v") {
-                if (diagParams.vecPhase[i].kind[ii] == "xpx") {
-                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],0,0);
-                } else if (diagParams.vecPhase[i].kind[ii] == "xpy") {
-                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],0,1);
-                } else if (diagParams.vecPhase[i].kind[ii] == "xpz") {
-                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],0,2);
-                } else if (diagParams.vecPhase[i].kind[ii] == "ypx") {
-                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],1,0);
-                } else if (diagParams.vecPhase[i].kind[ii] == "ypy") {
-                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],1,1);
-                } else if (diagParams.vecPhase[i].kind[ii] == "ypz") {
-                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],1,2);
-                } else if (diagParams.vecPhase[i].kind[ii] == "pxpy") {
-                    diagPhase =  new DiagnosticPhaseMomMom(diagParams.vecPhase[i],0,1);
-                } else if (diagParams.vecPhase[i].kind[ii] == "pxpz") {
-                    diagPhase =  new DiagnosticPhaseMomMom(diagParams.vecPhase[i],0,2);
-                } else if (diagParams.vecPhase[i].kind[ii] == "pypz") {
-                    diagPhase =  new DiagnosticPhaseMomMom(diagParams.vecPhase[i],1,2);                    
-                } else if (diagParams.vecPhase[i].kind[ii] == "xlor") {
-                    diagPhase =  new DiagnosticPhasePosLor(diagParams.vecPhase[i],0);
-                } else if (diagParams.vecPhase[i].kind[ii] == "ylor") {
-                    diagPhase =  new DiagnosticPhasePosLor(diagParams.vecPhase[i],1);
+                if (my_phase.kind[ii] == "xpx") {
+                    diagPhase =  new DiagnosticPhasePosMom(my_phase,0,0);
+                } else if (my_phase.kind[ii] == "xpy") {
+                    diagPhase =  new DiagnosticPhasePosMom(my_phase,0,1);
+                } else if (my_phase.kind[ii] == "xpz") {
+                    diagPhase =  new DiagnosticPhasePosMom(my_phase,0,2);
+                } else if (my_phase.kind[ii] == "ypx") {
+                    diagPhase =  new DiagnosticPhasePosMom(my_phase,1,0);
+                } else if (my_phase.kind[ii] == "ypy") {
+                    diagPhase =  new DiagnosticPhasePosMom(my_phase,1,1);
+                } else if (my_phase.kind[ii] == "ypz") {
+                    diagPhase =  new DiagnosticPhasePosMom(my_phase,1,2);
+                } else if (my_phase.kind[ii] == "pxpy") {
+                    diagPhase =  new DiagnosticPhaseMomMom(my_phase,0,1);
+                } else if (my_phase.kind[ii] == "pxpz") {
+                    diagPhase =  new DiagnosticPhaseMomMom(my_phase,0,2);
+                } else if (my_phase.kind[ii] == "pypz") {
+                    diagPhase =  new DiagnosticPhaseMomMom(my_phase,1,2);                    
+                } else if (my_phase.kind[ii] == "xlor") {
+                    diagPhase =  new DiagnosticPhasePosLor(my_phase,0);
+                } else if (my_phase.kind[ii] == "ylor") {
+                    diagPhase =  new DiagnosticPhasePosLor(my_phase,1);
                 } else {
-                    ERROR("kind " << diagParams.vecPhase[i].kind[ii] << " not implemented for geometry " << params.geometry);
+                    ERROR("kind " << my_phase.kind[ii] << " not implemented for geometry " << params.geometry);
                 }
             } else if (params.geometry == "3d3v") {
-                if (diagParams.vecPhase[i].kind[ii] == "xpx") {
-                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],0,0);
-                } else if (diagParams.vecPhase[i].kind[ii] == "xpy") {
-                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],0,1);
-                } else if (diagParams.vecPhase[i].kind[ii] == "xpz") {
-                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],0,2);
-                } else if (diagParams.vecPhase[i].kind[ii] == "ypx") {
-                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],1,0);
-                } else if (diagParams.vecPhase[i].kind[ii] == "ypy") {
-                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],1,1);
-                } else if (diagParams.vecPhase[i].kind[ii] == "ypz") {
-                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],1,2);
-                } else if (diagParams.vecPhase[i].kind[ii] == "zpx") {
-                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],2,0);
-                } else if (diagParams.vecPhase[i].kind[ii] == "zpy") {
-                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],2,1);
-                } else if (diagParams.vecPhase[i].kind[ii] == "zpz") {
-                    diagPhase =  new DiagnosticPhasePosMom(diagParams.vecPhase[i],2,2);
-                } else if (diagParams.vecPhase[i].kind[ii] == "pxpy") {
-                    diagPhase =  new DiagnosticPhaseMomMom(diagParams.vecPhase[i],0,1);
-                } else if (diagParams.vecPhase[i].kind[ii] == "pxpz") {
-                    diagPhase =  new DiagnosticPhaseMomMom(diagParams.vecPhase[i],0,2);
-                } else if (diagParams.vecPhase[i].kind[ii] == "pypz") {
-                    diagPhase =  new DiagnosticPhaseMomMom(diagParams.vecPhase[i],1,2);                    
-                } else if (diagParams.vecPhase[i].kind[ii] == "xlor") {
-                    diagPhase =  new DiagnosticPhasePosLor(diagParams.vecPhase[i],0);
-                } else if (diagParams.vecPhase[i].kind[ii] == "ylor") {
-                    diagPhase =  new DiagnosticPhasePosLor(diagParams.vecPhase[i],1);
-                } else if (diagParams.vecPhase[i].kind[ii] == "zlor") {
-                    diagPhase =  new DiagnosticPhasePosLor(diagParams.vecPhase[i],2);
+                if (my_phase.kind[ii] == "xpx") {
+                    diagPhase =  new DiagnosticPhasePosMom(my_phase,0,0);
+                } else if (my_phase.kind[ii] == "xpy") {
+                    diagPhase =  new DiagnosticPhasePosMom(my_phase,0,1);
+                } else if (my_phase.kind[ii] == "xpz") {
+                    diagPhase =  new DiagnosticPhasePosMom(my_phase,0,2);
+                } else if (my_phase.kind[ii] == "ypx") {
+                    diagPhase =  new DiagnosticPhasePosMom(my_phase,1,0);
+                } else if (my_phase.kind[ii] == "ypy") {
+                    diagPhase =  new DiagnosticPhasePosMom(my_phase,1,1);
+                } else if (my_phase.kind[ii] == "ypz") {
+                    diagPhase =  new DiagnosticPhasePosMom(my_phase,1,2);
+                } else if (my_phase.kind[ii] == "zpx") {
+                    diagPhase =  new DiagnosticPhasePosMom(my_phase,2,0);
+                } else if (my_phase.kind[ii] == "zpy") {
+                    diagPhase =  new DiagnosticPhasePosMom(my_phase,2,1);
+                } else if (my_phase.kind[ii] == "zpz") {
+                    diagPhase =  new DiagnosticPhasePosMom(my_phase,2,2);
+                } else if (my_phase.kind[ii] == "pxpy") {
+                    diagPhase =  new DiagnosticPhaseMomMom(my_phase,0,1);
+                } else if (my_phase.kind[ii] == "pxpz") {
+                    diagPhase =  new DiagnosticPhaseMomMom(my_phase,0,2);
+                } else if (my_phase.kind[ii] == "pypz") {
+                    diagPhase =  new DiagnosticPhaseMomMom(my_phase,1,2);                    
+                } else if (my_phase.kind[ii] == "xlor") {
+                    diagPhase =  new DiagnosticPhasePosLor(my_phase,0);
+                } else if (my_phase.kind[ii] == "ylor") {
+                    diagPhase =  new DiagnosticPhasePosLor(my_phase,1);
+                } else if (my_phase.kind[ii] == "zlor") {
+                    diagPhase =  new DiagnosticPhasePosLor(my_phase,2);
                 } else {
-                    ERROR("kind " << diagParams.vecPhase[i].kind[ii] << " not implemented for geometry " << params.geometry);
+                    ERROR("kind " << my_phase.kind[ii] << " not implemented for geometry " << params.geometry);
                 }                
             } else {
                 ERROR("DiagnosticPhase not implemented for geometry " << params.geometry);
             }
-            
             if (diagPhase) {
                 if (smpi->isMaster()) {
                     //! create a group for each species of this diag and keep track of its ID.
@@ -422,16 +495,16 @@ void DiagParams::initPhases(Diagnostic& diags, PicParams& params, InputData &ifi
                     H5Pset_layout(pid, H5D_CHUNKED);
                     H5Pset_chunk(pid, 3, chunk_dims);
                     
-                    H5Pset_deflate (pid, std::min((unsigned int)9,diagParams.vecPhase[i].deflate));
+                    H5Pset_deflate (pid, std::min((unsigned int)9,my_phase.deflate));
                     
-                    hid_t did = H5Dcreate (gidParent, diagParams.vecPhase[i].kind[ii].c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, pid,H5P_DEFAULT);
+                    hid_t did = H5Dcreate (gidParent, my_phase.kind[ii].c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, pid,H5P_DEFAULT);
                     H5Pclose (pid);	
                     H5Sclose (sid);
                     
                     // write attribute of species present in the phaseSpace
                     string namediag;
-                    for (unsigned int k=0; k<diagParams.vecPhase[i].species.size(); k++) {
-                        namediag+=diagParams.vecPhase[i].species[k]+" ";
+                    for (unsigned int k=0; k<my_phase.species.size(); k++) {
+                        namediag+=my_phase.species[k]+" ";
                     }
                     namediag=namediag.substr(0, namediag.size()-1);
                     sid = H5Screate(H5S_SCALAR);
@@ -454,84 +527,16 @@ void DiagParams::initPhases(Diagnostic& diags, PicParams& params, InputData &ifi
                     diagPhase->dataId=did;
                     
                 }
-                vecDiagPhase.push_back(diagPhase);	
+                diags.phases.vecDiagPhase.push_back(diagPhase);	
             }
-        }
+            
+        } 
+        
         if (smpi->isMaster() ) {
             H5Gclose(gidParent);
         }
-	}
-     */
-    
-    bool ok;
-    while (ifile.existGroup("diagnostic phase",n_probephase)) {
-        phaseStructure tmpPhaseStruct;
-        vector<string> kind;
-        ifile.extract("kind",kind,"diagnostic phase",0,n_probephase);        
-        for (vector<string>::iterator it=kind.begin(); it!=kind.end();it++) {
-            if (std::find(kind.begin(), it, *it) == it) {
-                tmpPhaseStruct.kind.push_back(*it); 
-            } else {
-                WARNING("removed duplicate " << *it << " in \"diagnostic phase\" " << n_probephase);
-            }
-        }
-        
-        tmpPhaseStruct.every=0;
-        ok=ifile.extract("every",tmpPhaseStruct.every,"diagnostic phase",0,n_probephase);
-        if (!ok) {
-            if (n_probephase>0) {
-                tmpPhaseStruct.every=vecPhase.end()->every;
-            } else {
-                tmpPhaseStruct.every=params.global_every;
-            }
-        }
-        
-        vector<double> time_range(2,0.);
-        ok=ifile.extract("time_range",time_range,"diagnostic phase",0,n_probephase);        
-        if (!ok) { 
-            tmpPhaseStruct.tmin = 0.;
-            tmpPhaseStruct.tmax = params.sim_time;
-        }
-        else {
-            tmpPhaseStruct.tmin = time_range[0]*params.conv_fac;
-            tmpPhaseStruct.tmax = time_range[1]*params.conv_fac;
-        }
         
         
-        ifile.extract("species",tmpPhaseStruct.species,"diagnostic phase",0,n_probephase);
-        
-        tmpPhaseStruct.deflate=0;
-        ifile.extract("deflate",tmpPhaseStruct.deflate,"diagnostic phase",0,n_probephase);
-        
-        if (tmpPhaseStruct.species.size()==0) {
-            WARNING("adding all species to the \"diagnostic phase\" " << n_probephase);
-            for (unsigned int i=0;i<params.n_species; i++) {
-                tmpPhaseStruct.species.push_back(params.species_param[i].species_type);
-            }
-        }
-        
-        ifile.extract("pos_min",tmpPhaseStruct.pos_min,"diagnostic phase",0,n_probephase);
-        ifile.extract("pos_max",tmpPhaseStruct.pos_max,"diagnostic phase",0,n_probephase);
-        ifile.extract("pos_num",tmpPhaseStruct.pos_num,"diagnostic phase",0,n_probephase);
-        for (unsigned int i=0; i<tmpPhaseStruct.pos_min.size(); i++) {
-            tmpPhaseStruct.pos_min[i] *= params.conv_fac;
-            tmpPhaseStruct.pos_max[i] *= params.conv_fac;
-            if (tmpPhaseStruct.pos_min[i]==tmpPhaseStruct.pos_max[i]) {
-                tmpPhaseStruct.pos_min[i] = 0.0;
-                tmpPhaseStruct.pos_max[i] = params.sim_length[i];
-            }
-        }
-        
-        
-        ifile.extract("mom_min",tmpPhaseStruct.mom_min,"diagnostic phase",0,n_probephase);
-        ifile.extract("mom_max",tmpPhaseStruct.mom_max,"diagnostic phase",0,n_probephase);
-        ifile.extract("mom_num",tmpPhaseStruct.mom_num,"diagnostic phase",0,n_probephase);
-        
-        ifile.extract("lor_min",tmpPhaseStruct.lor_min,"diagnostic phase",0,n_probephase);
-        ifile.extract("lor_max",tmpPhaseStruct.lor_max,"diagnostic phase",0,n_probephase);
-        ifile.extract("lor_num",tmpPhaseStruct.lor_num,"diagnostic phase",0,n_probephase);
-        
-        vecPhase.push_back(tmpPhaseStruct);
         n_probephase++;
     }
 }

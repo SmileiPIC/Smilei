@@ -14,6 +14,7 @@
 #include "InputData.h"
 #include "PicParams.h"
 
+
 class Diagnostic;
 class SmileiMPI;
 
@@ -74,7 +75,7 @@ public:
     
     void initProbes(Diagnostic&, PicParams&, InputData&, SmileiMPI *);
     
-    void initPhases(Diagnostic&, PicParams&, InputData&);
+    void initPhases(Diagnostic&, PicParams&, InputData&, SmileiMPI *);
     
     void initParticles(Diagnostic&, PicParams&, InputData&);
     

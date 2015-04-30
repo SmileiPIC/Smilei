@@ -10,9 +10,6 @@
 #include "Field1D.h"
 #include "Field.h"
 #include "DiagParams.h"
-#include "DiagnosticPhasePosMom.h"
-#include "DiagnosticPhasePosLor.h"
-#include "DiagnosticPhaseMomMom.h"
 
 using namespace std;
 
