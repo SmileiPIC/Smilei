@@ -39,16 +39,17 @@ ElectroMagnBC1D_SM::~ElectroMagnBC1D_SM()
 
 void ElectroMagnBC1D_SM::save_fields_BC(Field* my_field) {
     Field1D* field1D=static_cast<Field1D*>(my_field);
-    //if (field1D->name=="Bz1D_m"){   //Only Physical external field in 1D -> Bz/By
+    if (field1D->name=="Bz"){   //Only Physical external field in 1D -> Bz/By
+    	//MESSAGE(" BC : " << field1D->name)
         Bz_xvalmin=(*field1D)(0);
 	Bz_xvalmax=(*field1D)(field1D->dims()[0]-1);
-	By_xvalmin = 0.;
-	By_xvalmax = 0.;
-	//}
-    //if (field1D->name=="By1D_m"){   //Only Physical external field in 1D -> Bz/By
-    //    By_xvalmin=(*field1D)(0);
-    //	By_xvalmax=(*field1D)(field1D->dims()[0]-1);
-    //	}
+	//By_xvalmin = 0.;
+	//By_xvalmax = 0.;
+	}
+    if (field1D->name=="By"){   //Only Physical external field in 1D -> Bz/By
+        By_xvalmin=(*field1D)(0);
+    	By_xvalmax=(*field1D)(field1D->dims()[0]-1);
+    	}
 }
 
 
