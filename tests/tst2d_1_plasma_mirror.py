@@ -1,3 +1,5 @@
+import math 
+
 part_per_cell=5
 t_sim=40
 thickness=1
@@ -8,10 +10,8 @@ dx, dy = 20, 50
 
 twopi=2*math.pi
 
-import math 
-
 def profile_dens(x,y):
-    if x < twopi(dx-thickness)/2.0 or x  > twopi*(dx+thickness)/2.0:
+    if x < twopi*(dx-thickness)/2.0 or x  > twopi*(dx+thickness)/2.0:
         return 0.0
     else :
         return 1.0
