@@ -54,7 +54,7 @@ DEPS := $(SRCS:.cpp=.d)
 
 CFLAGS+=$(shell $(PYTHONCONFIG) --include)
 LDFLAGS+=$(shell $(PYTHONCONFIG) --ldflags)
-PYINIT := $(shell find . -name \*.py)
+PYINIT := $(shell find Python -name \*.py)
 PYHEADERS := $(PYINIT:.py=.h)
 
 

@@ -4,56 +4,78 @@
 
 extern "C" {
 #include "pyinit.h"
+#include "pycontrol.h"
 }
 
 using namespace std;
 
-InputData::InputData(SmileiMPI *smpi, string filename): namelist(""), py_namelist(NULL) {
+InputData::InputData(SmileiMPI *smpi, std::vector<std::string> namelistsFiles): namelist(""), py_namelist(NULL) {
     Py_Initialize();
 
+    // here we add the main python class definitions from pyinit.py
+    pyRunScript(string(reinterpret_cast<const char*>(Python_pyinit_py), Python_pyinit_py_len), "pyinit.py");
     
-    if (smpi->isMaster()) {
-        ifstream istr(filename.c_str());        
-        if (istr.is_open()) {
-            string strLine ="";
-            while (getline(istr, strLine)) {
-                namelist += strLine + "\n";
+    // we read the file
+    for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {
+        string strNamelist="";
+        if (smpi->isMaster()) {
+            HEREIAM("");
+            ifstream istr(it->c_str());        
+            if (istr.is_open()) {
+                string oneLine;
+                while (getline(istr, oneLine)) {
+                    strNamelist += oneLine + "\n";
+                }
+            } else {
+                ERROR("File " << (*it) << " does not exists");
             }
-        } else {
-            ERROR("File " << filename << " does not exists");
+            strNamelist +="\n";
         }
-        namelist +="\n";    
+        smpi->bcast(strNamelist);
+        pyRunScript(strNamelist,(*it));
     }
-
-    smpi->bcast(namelist);   
     
-    // here we add other files  
-    namelist.insert(0,string(reinterpret_cast<const char*>(Python_pyinit_py), Python_pyinit_py_len));
+    
+    // here we add the check namelist stuff from pycontrol.py
+    pyRunScript(string(reinterpret_cast<const char*>(Python_pycontrol_py), Python_pycontrol_py_len),"pycontrol.py");
 
-    DEBUG(">>>>>>>>>>>>>>> passing this to python:\n" <<namelist );
+    
+    
+
     int retval=PyRun_SimpleString(namelist.c_str());
     if (retval==-1) {
         ERROR("error parsing namelist")
     }
     
+
+
     PyObject* myFunction = PyObject_GetAttrString(PyImport_AddModule("__main__"),(char*)"get_smilei");
     py_namelist = PyObject_CallFunction(myFunction,const_cast<char *>(""));
-    
     if (!py_namelist) {
-        ERROR("no smilei class defined")
+        ERROR("no smilei class defined, but we should never get here...");
     }
-    DEBUG("<<<<<<<<<<<<<<  end");
-
     
-    // HERE WE SHOULD PASS SOMETHING TO PYTHON FOR EXAMPLE THE RANK AND THE POSITION OF EACH PROC
-    namelist+="#"+string(Py_GetVersion());
-    
+    if (smpi->isMaster()) {
+        ofstream out("smilei.py");
+        out << namelist;
+        out.close();
+    }        
 }
-
-
 
 InputData::~InputData() {
     Py_Finalize();
+}
+
+//! run script
+void InputData::pyRunScript(string command, string name) {
+    namelist+=command;
+    MESSAGE(1,"passing to python " << name);
+    DEBUG(">>>>>>>>>>>>>>> passing this to python:\n" <<command);
+    int retval=PyRun_SimpleString(command.c_str());
+    DEBUG("<<<<<<<<<<<<<<< from " << name);
+    if (retval==-1) {
+        ERROR("error parsing "<< name);
+    }
 }
 
 //! get bool from python
@@ -148,7 +170,7 @@ bool InputData::extract(string name, string &val, string group, int occurrenceIt
 
 //! get uint from python
 bool InputData::extract(string name, vector<unsigned int> &val, string group, int occurrenceItem, int occurrenceGroup) {
-    vector<PyObject*> pyvec=extract_vec(name,group,occurrenceItem,occurrenceGroup);
+    vector<PyObject*> pyvec=extract_pyVvec(name,group,occurrenceItem,occurrenceGroup);
     val.resize(pyvec.size());
     for (unsigned int i=0;i<pyvec.size();i++) {
         if (PyInt_Check(pyvec[i])) {
@@ -163,7 +185,7 @@ bool InputData::extract(string name, vector<unsigned int> &val, string group, in
 
 //! get int from python
 bool InputData::extract(string name, vector<int> &val, string group, int occurrenceItem, int occurrenceGroup) {
-    vector<PyObject*> pyvec=extract_vec(name,group,occurrenceItem,occurrenceGroup);
+    vector<PyObject*> pyvec=extract_pyVvec(name,group,occurrenceItem,occurrenceGroup);
     val.resize(pyvec.size());
     for (unsigned int i=0;i<pyvec.size();i++) {
         if (PyInt_Check(pyvec[i])) {
@@ -178,7 +200,7 @@ bool InputData::extract(string name, vector<int> &val, string group, int occurre
 
 //! get double from python
 bool InputData::extract(string name, vector<double> &val, string group, int occurrenceItem, int occurrenceGroup) {
-    vector<PyObject*> pyvec=extract_vec(name,group,occurrenceItem,occurrenceGroup);
+    vector<PyObject*> pyvec=extract_pyVvec(name,group,occurrenceItem,occurrenceGroup);
     val.resize(pyvec.size());
     for (unsigned int i=0;i<pyvec.size();i++) {
         if (PyFloat_Check(pyvec[i])) {
@@ -194,7 +216,7 @@ bool InputData::extract(string name, vector<double> &val, string group, int occu
 
 //! get string from python
 bool InputData::extract(string name, vector<string> &val, string group, int occurrenceItem, int occurrenceGroup) {
-    vector<PyObject*> pyvec=extract_vec(name,group,occurrenceItem,occurrenceGroup);
+    vector<PyObject*> pyvec=extract_pyVvec(name,group,occurrenceItem,occurrenceGroup);
     val.resize(pyvec.size());
     for (unsigned int i=0;i<pyvec.size();i++) {
         if (PyString_Check(pyvec[i])) {
@@ -212,6 +234,7 @@ PyObject* InputData::extract_py(string name, string group, int occurrenceItem, i
     if (name.find(" ")!= string::npos || group.find(" ")!= string::npos) {
         WARNING("asking for [" << name << "] [" << group << "] : it has white inside: please fix the code");
     }
+
     PyObject *py_obj=py_namelist;
     if (!group.empty()) {
         py_obj = PyObject_GetAttrString(py_namelist,group.c_str());
@@ -256,7 +279,7 @@ PyObject* InputData::extract_py(string name, string group, int occurrenceItem, i
 }    
 
 //! retrieve a vector of python objects
-vector<PyObject*> InputData::extract_vec(string name, string group, int occurrenceItem, int occurrenceGroup) {
+vector<PyObject*> InputData::extract_pyVvec(string name, string group, int occurrenceItem, int occurrenceGroup) {
     PyObject* py_val = extract_py(name,group,occurrenceItem,occurrenceGroup);
     vector<PyObject*> retvec;
     if (py_val) {      
@@ -280,7 +303,7 @@ vector<PyObject*> InputData::extract_vec(string name, string group, int occurren
 
 bool InputData::existGroup(std::string group, unsigned int occurrenceGroup) {
     if (group.find(" ")!= string::npos) {
-        WARNING("[" << group << "] has white inside: please fix the code");
+        ERROR("[" << group << "] has white inside: please fix the code");
     }
     PyObject *py_obj = PyObject_GetAttrString(py_namelist,group.c_str());
     if (py_obj) {

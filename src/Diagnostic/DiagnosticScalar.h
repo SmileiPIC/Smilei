@@ -32,7 +32,7 @@ class DiagnosticScalar {
 
 public:
     //! creator (called from Diagnostic)
-    DiagnosticScalar(PicParams &params, DiagParams &diagParams, SmileiMPI* smpi);
+    DiagnosticScalar(SmileiMPI* smpi);
     //! destructor
     ~DiagnosticScalar(){};
     
@@ -51,6 +51,28 @@ public:
     //! get a particular scalar
     double getScalar(std::string name);
 
+    //! every step to calculate scalars
+    unsigned int every;
+    
+    //! this is copied from params
+    double res_time;
+    
+    double tmin;
+    double tmax;
+    double dt;
+
+    //! write precision
+    unsigned int precision;
+    
+    //! this is a list to keep variable name and value
+    std::vector<std::pair<std::string,double> > out_list;
+    
+    //! list of keys for scalars to be written
+    std::vector<std::string> vars;
+    
+    //! copied from params
+    double cell_volume;
+    
 private:
     //! check if proc is master (from smpi)
     const bool isMaster;
@@ -64,36 +86,15 @@ private:
     //! energy used for the normalization of energy balance (former total energy)
     double EnergyUsedForNorm;
     
-    //! this is copied from params
-    const double res_time;
-    
-    //! every step to calculate scalars
-    const unsigned int every;
-
-    const double tmin;
-    const double tmax;
-    const double dt;
     
     //! output stream
     std::ofstream fout;
     
-    //! copied from params
-    double cell_volume;
-    
-    //! write precision
-    unsigned int precision;
-    
-    //! this is a list to keep variable name and value
-    std::vector<std::pair<std::string,double> > out_list;
-        
     //! append to outlist
     void append(std::string, double);
 
     //! prepend to outlist
     void prepend(std::string, double);
-
-    //! list of keys for scalars to be written
-    std::vector<std::string> vars;
 
     //! check if key is allowed
     bool allowedKey(std::string);

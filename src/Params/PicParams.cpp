@@ -162,6 +162,28 @@ PicParams::PicParams(InputData &ifile) {
     // ------------------
     // Species properties
     // ------------------
+    readSpecies(ifile);
+    
+    global_every=0;
+    
+    ifile.extract("every",global_every);
+    
+    // --------------------
+    // Number of processors
+    // --------------------
+    if ( !ifile.extract("number_of_procs", number_of_procs) )
+        number_of_procs.resize(nDim_field, 0);
+    
+    // -------------------------------------------------------
+    // Compute usefull quantities and introduce normalizations
+    // also defines defaults values for the species lengths
+    // -------------------------------------------------------
+    compute();
+    computeSpecies();
+    
+}
+
+void PicParams::readSpecies(InputData &ifile) {
     n_species=0;
     
     while (ifile.existGroup("species",n_species)) {
@@ -265,6 +287,7 @@ PicParams::PicParams(InputData &ifile) {
         // ----------------
         ifile.extract("dens_profile", tmpSpec.dens_profile.profile,"species",0,n_species);
         HEREIAM(tmpSpec.dens_profile.profile);
+        
         // species length (check DensityProfile for definitions)
         ifile.extract("vacuum_length", tmpSpec.dens_profile.vacuum_length,"species",0,n_species);
         ifile.extract("dens_length_x", tmpSpec.dens_profile.length_params_x,"species",0,n_species);
@@ -320,32 +343,12 @@ PicParams::PicParams(InputData &ifile) {
         tmpSpec.mvel_y_profile.vacuum_length=tmpSpec.dens_profile.vacuum_length;
         tmpSpec.mvel_z_profile.vacuum_length=tmpSpec.dens_profile.vacuum_length;
         
-
+        
         species_param.push_back(tmpSpec);
         
         n_species++;
     }
-
-    global_every=0;
-    
-    ifile.extract("every",global_every);
-    
-    // --------------------
-    // Number of processors
-    // --------------------
-    if ( !ifile.extract("number_of_procs", number_of_procs) )
-        number_of_procs.resize(nDim_field, 0);
-    
-    // -------------------------------------------------------
-    // Compute usefull quantities and introduce normalizations
-    // also defines defaults values for the species lengths
-    // -------------------------------------------------------
-    compute();
-    computeSpecies();
-    
 }
-
-
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Compute useful values (normalisation, time/space step, etc...)

@@ -110,6 +110,9 @@ public:
     //! compute grid-related parameters & apply normalization
     void compute();
     
+    //! read species
+    void readSpecies(InputData &);
+    
     //! compute species-related parameters & apply normalization
     void computeSpecies();
     

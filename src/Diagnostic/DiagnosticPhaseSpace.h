@@ -28,13 +28,15 @@ class DiagnosticPhaseSpace {
 
 public:
 
-    DiagnosticPhaseSpace(PicParams &params, DiagParams &diagParams, SmileiMPI* smpi);
+    DiagnosticPhaseSpace(SmileiMPI* smpi);
     ~DiagnosticPhaseSpace();
 
 	void run(int timestep, std::vector<Species*>& vecSpecies);
 	
 	void close();
-private:
+
+    //! check if proc is master (from smpi)
+    const bool isMaster;
     
     //! this vector will hold all the diagnostics created
 	std::vector<DiagnosticPhase*> vecDiagPhase;

@@ -6,6 +6,7 @@
 
 #include "PicParams.h"
 #include "DiagParams.h"
+#include "H5.h"
 
 using namespace std;
 
@@ -54,36 +55,11 @@ DiagnosticParticles::~DiagnosticParticles()
     DEBUG("here");
 }
 
-
-
-// Declare static variables here
-vector<DiagnosticParticles*> DiagnosticParticles::vecDiagnosticParticles;
-
-// close all the files
-void DiagnosticParticles::closeAll()
-{
-    
-    int n = vecDiagnosticParticles.size();
-    for (int i=0; i<n; i++) // loop all particle diagnostics
-        vecDiagnosticParticles[i]->close();
-    
-}
-
 // close the hdf file
 void DiagnosticParticles::close()
 {
     
     if (fileId != 0) H5Fclose(fileId);
-    
-}
-
-// run all the particle diagnostics
-void DiagnosticParticles::runAll(int timestep, vector<Species*> &vecSpecies, SmileiMPI* smpi)
-{
-    
-    int n = vecDiagnosticParticles.size();
-    for (int i=0; i<n; i++) // loop all particle diagnostics
-        vecDiagnosticParticles[i]->run(timestep, vecSpecies, smpi);
     
 }
 

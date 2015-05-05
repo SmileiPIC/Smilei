@@ -67,10 +67,10 @@ end
 
 #include <cmath>
 
-#include "H5.h"
 #include "Species.h"
 #include "Particles.h"
 #include "SmileiMPI.h"
+#include "H5.h"
 
 // Class for each axis of the particle diags
 class DiagnosticParticlesAxis {
@@ -105,13 +105,7 @@ public:
     
     ~DiagnosticParticles();
     
-    static std::vector<DiagnosticParticles*> vecDiagnosticParticles;
-    
-    static void closeAll();
-    
     void close();
-    
-    static void runAll(int, std::vector<Species*>&, SmileiMPI*);
     
     void run(int, std::vector<Species*>&, SmileiMPI*);
     

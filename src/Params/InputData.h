@@ -37,7 +37,7 @@
 class InputData {
 
 public:
-    InputData(SmileiMPI* =NULL, std::string=std::string());
+    InputData(SmileiMPI*, std::vector<std::string>);
     ~InputData();
 
     //! string containing the whole clean namelist
@@ -75,11 +75,12 @@ public:
 
     PyObject* extract_py(std::string name, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
     
-    std::vector<PyObject*> extract_vec(std::string name, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
+    std::vector<PyObject*> extract_pyVvec(std::string name, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
     
     //! return true if the nth group exists
     bool existGroup(std::string groupName, unsigned int occurrenceGroup=0);
     
+    void pyRunScript(std::string, std::string);
     
 private:
     // python object: main namelist
