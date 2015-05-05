@@ -54,49 +54,6 @@ DiagnosticParticles::~DiagnosticParticles()
 }
 
 
-// -------------------
-// Some HDF5 overlays
-// -------------------
-// write a string as an attribute
-void H5_attr_string(int fileId, string attribute_name, string attribute_value) {
-    hid_t sid  = H5Screate(H5S_SCALAR);
-    hid_t atype = H5Tcopy(H5T_C_S1);
-    H5Tset_size(atype, attribute_value.size());
-    H5Tset_strpad(atype,H5T_STR_NULLTERM);
-    hid_t aid = H5Acreate(fileId, attribute_name.c_str(), atype, sid, H5P_DEFAULT, H5P_DEFAULT);
-    H5Awrite(aid, atype, attribute_value.c_str());
-    H5Aclose(aid);
-    H5Sclose(sid);
-    H5Tclose(atype);
-}
-// write an unsigned int as an attribute
-void H5_attr_uint(int fileId, string attribute_name, unsigned int attribute_value) {
-    hid_t sid = H5Screate(H5S_SCALAR);
-    hid_t aid = H5Acreate(fileId, attribute_name.c_str(), H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
-    H5Awrite(aid, H5T_NATIVE_UINT, &attribute_value);
-    H5Sclose(sid);
-    H5Aclose(aid);
-}
-// write an int as an attribute
-void H5_attr_int(int fileId, string attribute_name, int attribute_value) {
-    hid_t sid = H5Screate(H5S_SCALAR);
-    hid_t aid = H5Acreate(fileId, attribute_name.c_str(), H5T_NATIVE_INT, sid, H5P_DEFAULT, H5P_DEFAULT);
-    H5Awrite(aid, H5T_NATIVE_INT, &attribute_value);
-    H5Sclose(sid);
-    H5Aclose(aid);
-}
-// write a double as an attribute
-void H5_attr_double(int fileId, string attribute_name, double attribute_value) {
-    hid_t sid = H5Screate(H5S_SCALAR);
-    hid_t aid = H5Acreate(fileId, attribute_name.c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT);
-    H5Awrite(aid, H5T_NATIVE_DOUBLE, &attribute_value);
-    H5Sclose(sid);
-    H5Aclose(aid);
-}
-// -------------------
-
-
-
 
 // Declare static variables here
 vector<DiagnosticParticles*> DiagnosticParticles::vecDiagnosticParticles;
@@ -151,20 +108,17 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
             mystream.str("");
             mystream << "ParticleDiagnostic" << diagnostic_id << ".h5";
             fileId = H5Fcreate( mystream.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-            // write version
+            // write all parameters as HDF5 attributes
             string ver(__VERSION);
-            H5_attr_string(fileId, "Version", ver);
-            // write output
-            H5_attr_string(fileId, "output" , output);
-            // write every
-            H5_attr_uint  (fileId, "every"  , every);
-            // write time_average
-            H5_attr_uint  (fileId, "time_average"  , time_average);
+            H5::attr(fileId, "Version", ver);
+            H5::attr(fileId, "output" , output);
+            H5::attr(fileId, "every"  , every);
+            H5::attr(fileId, "time_average"  , time_average);
             // write all species
             mystream.str(""); // clear
             for (int i=0 ; i < species.size() ; i++)
                 mystream << species[i] << " ";
-            H5_attr_string(fileId, "species", mystream.str().c_str());
+            H5::attr(fileId, "species", mystream.str().c_str());
             // write each axis
             for (int iaxis=0 ; iaxis < axes.size() ; iaxis++) {
                 mystream.str(""); // clear
@@ -174,7 +128,7 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
                 mystream << axes[iaxis]->type << " " << axes[iaxis]->min << " " << axes[iaxis]->max << " "
                          << axes[iaxis]->nbins << " " << axes[iaxis]->logscale << " " << axes[iaxis]->edge_inclusive;
                 str2 = mystream.str();
-                H5_attr_string(fileId, str1, str2);
+                H5::attr(fileId, str1, str2);
             }
         }
     }
@@ -413,22 +367,11 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
                 for (int i=0; i<output_size; i++)
                     data_sum[i] *= coeff;
             }
-            
-            // create dataspace for 1D array with "output_size" number of elements
-            hsize_t dims = output_size;
-            hid_t sid = H5Screate_simple(1, &dims, NULL);
-            hid_t pid = H5Pcreate(H5P_DATASET_CREATE); // property list
-            // make name of the dataset
+            // make name of the array
             mystream.str("");
             mystream << "timestep" << setw(8) << setfill('0') << timestep;
-            // create dataset 
-            hid_t did = H5Dcreate(fileId, mystream.str().c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, pid, H5P_DEFAULT);
-            // write data_sum in dataset
-            H5Dwrite(did, H5T_NATIVE_DOUBLE, sid, sid, H5P_DEFAULT, &data_sum[0]);
-            // close all
-            H5Dclose(did);
-            H5Pclose(pid);
-            H5Sclose(sid);
+            // write the array
+            H5::vector(fileId, mystream.str(), data_sum[0], output_size);
         }
         
     }
