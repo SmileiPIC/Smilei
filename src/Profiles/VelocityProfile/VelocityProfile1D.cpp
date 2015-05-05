@@ -89,6 +89,21 @@ double VelocityProfile1D::operator() (std::vector<double> x_cell) {
         if (abs(v)>1.0) ERROR("Velocity profile exceeding c");
         return v;
     }
+    else if (prof_params.profile=="python") {
+        PyObject *pyresult = PyObject_CallFunction(prof_params.py_profile, const_cast<char *>("d"), x_cell[0]);
+        if (pyresult == NULL) {
+            ERROR("can't evaluate python function");
+        }
+        double cppresult = PyFloat_AsDouble(pyresult);
+        Py_XDECREF(pyresult);
+        return cppresult;
+    }
+    else if (prof_params.profile=="python") {
+        DEBUG("it's a python profile");
+    }
+    else {
+        ERROR("Profile " << prof_params.profile << " not defined");
+    }
     
     return 1;
 };

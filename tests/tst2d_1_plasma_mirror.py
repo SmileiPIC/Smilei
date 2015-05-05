@@ -6,6 +6,16 @@ res=8
 
 dx, dy = 20, 50
 
+
+import math 
+
+def profile_dens(x,y):
+    if x/(2*math.pi) < (dx-thickness)/2.0 or x/(2*math.pi)  > (dx+thickness)/2.0:
+        return 0.0
+    else :
+        return 1.0
+
+
 mysim=Smilei()
 # ---------------------------------------------
 # SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
@@ -56,7 +66,7 @@ mysim.random_seed = 0
 mysim.fieldDump_every = 24
 
 myspec1=Species()
-myspec1.dens_profile = 'constant'
+myspec1.dens_profile = 'profile_dens'
 myspec1.vacuum_length   = ((dx-thickness)/2.0,  0.0) 
 myspec1.dens_length_x   = thickness
 myspec1.dens_length_y   = dy
@@ -82,7 +92,7 @@ myspec1.bc_part_type_north = 'none'
 
 
 Species(
-dens_profile = 'constant',
+dens_profile = 'profile_dens',
 vacuum_length   = ((dx-thickness)/2.0,  0.0) ,
 dens_length_x   = thickness ,
 dens_length_y   = dy,

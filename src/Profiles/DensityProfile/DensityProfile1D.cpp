@@ -108,16 +108,14 @@ DensityProfile1D::DensityProfile1D(SpeciesStructure &params) : DensityProfile(pa
         if (species_param.dens_profile.double_params[0]>1.0)
             ERROR("Incorrect definition of the cosine density profile, dens_dbl_params[0] should be <= 1");
     }
-    
-    
-    // Other density profile
-    // ---------------------
+    else if (species_param.dens_profile.profile=="python") {
+        DEBUG("it's a python profile");
+    }
     else {
-        ERROR("Density profile " << species_param.dens_profile.profile << " not defined in 1D");
+        ERROR("Profile " << species_param.dens_profile.profile << " not defined");
     }
     
-    HEREIAM("");
-    
+        
 }
 
 
@@ -283,7 +281,15 @@ double DensityProfile1D::operator() (std::vector<double> x_cell) {
             return 0.0;
         }
     }
-    
+    else if (species_param.dens_profile.profile=="python") {
+        PyObject *pyresult = PyObject_CallFunction(species_param.dens_profile.py_profile, const_cast<char *>("d"), x_cell[0]);
+        if (pyresult == NULL) {
+            ERROR("can't evaluate python function");
+        }
+        double cppresult = PyFloat_AsDouble(pyresult);
+        Py_XDECREF(pyresult);
+        return cppresult;
+    }
     
     // Other density profile
     // ---------------------
