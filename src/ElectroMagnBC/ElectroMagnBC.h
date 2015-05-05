@@ -19,7 +19,9 @@ public:
     virtual void apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi) = 0;
     void laserDisabled();
 
-    virtual void save_fields_BC(Field*) {};
+    virtual void save_fields_BC1D(Field*) {};
+    virtual void save_fields_BC2D_Long(Field*) {};
+    virtual void save_fields_BC2D_Trans(Field*) {};
     
  protected:
 
