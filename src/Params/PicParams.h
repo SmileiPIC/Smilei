@@ -20,9 +20,7 @@ class InputData;
 struct ProfileSpecies : ProfileStructure {
     //! vacuum lengths
     std::vector<double> vacuum_length;
-
-    //!PyObject *py_profile;
-
+    PyObject *py_profile;
 };
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -85,7 +85,7 @@ bool InputData::extract(string name, bool &val, string group, int occurrenceItem
         if (PyBool_Check(py_val)) {
             return py_val==Py_True;
         } else {
-            ERROR(name << " is not a boolean");
+            DEBUG(name << " is not a boolean");
         }
     }
     return false;
@@ -100,7 +100,7 @@ bool InputData::extract(string name, short int &val, string group, int occurrenc
             val = (short int) lval;
             return true;
         } else {
-            ERROR(name << " is not a short int");
+            DEBUG(name << " is not a short int");
         }
     }
     return false;
@@ -115,7 +115,7 @@ bool InputData::extract(string name, unsigned int &val, string group, int occurr
             val = (unsigned int) lval;
             return true;
         } else {
-            ERROR(name << " is not a unsigned int");
+            DEBUG(name << " is not a unsigned int");
         }
     }
     return false;
@@ -130,7 +130,7 @@ bool InputData::extract(string name, int &val, string group, int occurrenceItem,
             val = (int) lval;
             return true;
         } else {
-            ERROR(name << " is not a int");
+            DEBUG(name << " is not a int");
         }
     }
     return false;
@@ -147,7 +147,7 @@ bool InputData::extract(string name, double &val, string group, int occurrenceIt
             val=(double) PyInt_AsLong(py_val);
             return true;
         } else {
-            ERROR(name << " is not a double");
+            DEBUG(name << " is not a double");
         }
     }
     return false;
@@ -162,7 +162,7 @@ bool InputData::extract(string name, string &val, string group, int occurrenceIt
             val=string(s);
             return true;
         } else {
-            ERROR(name << " is not a string");
+            DEBUG(name << " is not a string");
         }
     }
     return false;
@@ -177,7 +177,7 @@ bool InputData::extract(string name, vector<unsigned int> &val, string group, in
             long int lval = PyInt_AsLong(pyvec[i]);
             val[i] = (unsigned int) lval;
         } else {
-            ERROR("reading float in " << name << " at pos " <<i );
+            DEBUG("reading unsigned int in " << name << " at pos " <<i );
         }
     }
     return false;
@@ -192,7 +192,7 @@ bool InputData::extract(string name, vector<int> &val, string group, int occurre
             long int lval = PyInt_AsLong(pyvec[i]);
             val[i] = (int) lval;
         } else {
-            ERROR("reading int in " << name << " at pos " <<i );
+            DEBUG("reading int in " << name << " at pos " <<i );
         }
     }
     return false;
@@ -208,7 +208,7 @@ bool InputData::extract(string name, vector<double> &val, string group, int occu
         } else if (PyInt_Check(pyvec[i])) {
             val[i] = (double) PyInt_AsLong(pyvec[i]);
         } else {
-            ERROR("reading float in " << name << " at pos " <<i );
+            DEBUG("reading float in " << name << " at pos " <<i );
         }
     }
     return false;
@@ -222,7 +222,7 @@ bool InputData::extract(string name, vector<string> &val, string group, int occu
         if (PyString_Check(pyvec[i])) {
             val[i]=string(PyString_AsString(pyvec[i]));
         } else {
-            ERROR("reading string in " << name << " at pos " <<i );
+            DEBUG("reading string in " << name << " at pos " <<i );
         }
     }
     return false;

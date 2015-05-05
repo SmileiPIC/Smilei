@@ -37,10 +37,12 @@ VelocityProfile2D::VelocityProfile2D(ProfileSpecies &my_prof_params) : VelocityP
             ERROR("For the Harris velocity profile 3 length_params_y have to be defined");
         }
     }
-    
+    else if (prof_params.profile=="python") {
+        DEBUG("it's a python profile");
+    }
     else {
-        ERROR("Profile " << prof_params.profile << " is not defined");
-    }//if prof_params.profile
+        ERROR("Profile " << prof_params.profile << " not defined");
+    }
     
 }
 
@@ -119,6 +121,15 @@ double VelocityProfile2D::operator() (vector<double> x_cell) {
         double v   = (Jz+dJz)/n;
         
         return v;
+    }
+    else if (prof_params.profile=="python") {
+        PyObject *pyresult = PyObject_CallFunction(prof_params.py_profile, const_cast<char *>("dd"), x_cell[0], x_cell[1]);
+        if (pyresult == NULL) {
+            ERROR("can't evaluate python function");
+        }
+        double cppresult = PyFloat_AsDouble(pyresult);
+        Py_XDECREF(pyresult);
+        return cppresult;
     }
     
     return 1;
