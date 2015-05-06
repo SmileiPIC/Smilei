@@ -6,15 +6,15 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // LASER CONSTRUCTOR
 // ---------------------------------------------------------------------------------------------------------------------
-LaserProfile::LaserProfile( PicParams &params, LaserParams &laser_params, unsigned int n_laser) {
+LaserProfile::LaserProfile( PicParams &params, LaserParams &laser_params, unsigned int n_laser) :
+laser_struct(laser_params.laser_param[n_laser])
+{
     
     MESSAGE(1,"Creating laser " << n_laser);
              
     double sim_time= params.sim_time;
     vector<double> sim_length= params.sim_length;
-    
-    laser_struct = laser_params.laser_param[n_laser];
-    
+        
     pi_ov_2 = 0.5 * M_PI;
     PI2     = 2.0 * M_PI;
 
@@ -89,7 +89,9 @@ LaserProfile::LaserProfile( PicParams &params, LaserParams &laser_params, unsign
         }
 
     }
-
+    // python function probably empty
+    else if (type_of_time_profile=="python") {
+    }
     else {
         ERROR("Laser profile " << type_of_time_profile <<  " not defined");
     }// ENDIF type_of_time_profile
@@ -132,7 +134,9 @@ LaserProfile::LaserProfile( PicParams &params, LaserParams &laser_params, unsign
             WARNING("Laser waist redefined to sim_length[1]/4 = " << double_params_transv[0]);
         }
     }
-
+    // python function probably empty
+    else if (type_of_transv_profile=="python") {
+    }
     
     // If transverse profile is not defined use the plane-wave as default
     else {
@@ -238,6 +242,17 @@ double LaserProfile::time_profile(double time_dual) {
         }
         
     }
+    
+    // python function
+    else if (type_of_time_profile=="python") {
+        PyObject *pyresult = PyObject_CallFunction(laser_struct.profile_time.py_profile, const_cast<char *>("d"), time_dual);
+        if (pyresult == NULL) {
+            ERROR("can't evaluate python function");
+        }
+        double cppresult = PyFloat_AsDouble(pyresult);
+        Py_XDECREF(pyresult);
+        return cppresult;
+    } 
     else {
         return 0.0;
     }
@@ -277,6 +292,16 @@ double LaserProfile::transverse_profile2D(double time_dual, double y) {
             return 0.0;
         }
     }
+    // python function
+    else if (type_of_transv_profile=="python") {
+        PyObject *pyresult = PyObject_CallFunction(laser_struct.profile_transv.py_profile, const_cast<char *>("dd"), time_dual,y);
+        if (pyresult == NULL) {
+            ERROR("can't evaluate python function");
+        }
+        double cppresult = PyFloat_AsDouble(pyresult);
+        Py_XDECREF(pyresult);
+        return cppresult;
+    } 
     
     else
         return 0.0;

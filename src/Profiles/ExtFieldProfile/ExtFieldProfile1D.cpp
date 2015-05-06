@@ -7,8 +7,8 @@ ExtFieldProfile1D::ExtFieldProfile1D(ExtFieldStructure &extfield_struct) : ExtFi
     if (my_struct.profile == "constant") {
         if (my_struct.double_params.size()<1)
             ERROR("double params size wrong " );
-
-    } else if (my_struct.profile == "magexpansion") {
+    } 
+    else if (my_struct.profile == "magexpansion") {
         // ---------------------------------------------------------------------------------
         // Charles magnetic field profile for Liang simulations
         // Top-hat profile :
@@ -25,7 +25,10 @@ ExtFieldProfile1D::ExtFieldProfile1D(ExtFieldStructure &extfield_struct) : ExtFi
         if (my_struct.length_params_x.size()<2)
             ERROR("three length_params_x must be defined for Charles profile" );
 
-    } else {
+    } 
+    else if (my_struct.profile=="python") {
+    }
+    else {
         ERROR("unknown or empty profile :" << my_struct.profile );
     }
 
@@ -60,7 +63,15 @@ double ExtFieldProfile1D::operator() (std::vector<double> x_cell) {
         return B0 + Bmax * exp(-pow(x,N)/sigma);
             
     }
-    
+    else if (my_struct.profile=="python") {
+        PyObject *pyresult = PyObject_CallFunction(my_struct.py_profile, const_cast<char *>("d"), x_cell[0]);
+        if (pyresult == NULL) {
+            ERROR("can't evaluate python function");
+        }
+        double cppresult = PyFloat_AsDouble(pyresult);
+        Py_XDECREF(pyresult);
+        return cppresult;
+    }
     else {
         return 0;
     }

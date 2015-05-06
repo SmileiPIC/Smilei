@@ -187,7 +187,6 @@ void PicParams::readSpecies(InputData &ifile) {
     n_species=0;
     
     while (ifile.existGroup("species",n_species)) {
-        HEREIAM("species " << n_species);
         SpeciesStructure tmpSpec;
         
         ifile.extract("species_type",tmpSpec.species_type,"species",0,n_species);
@@ -285,31 +284,36 @@ void PicParams::readSpecies(InputData &ifile) {
         
         // Species geometry
         // ----------------
-        ifile.extract("dens_profile", tmpSpec.dens_profile.profile,"species",0,n_species);
+
         
-        if (!tmpSpec.dens_profile.profile.empty()) {
+        ifile.extract("dens_profile", tmpSpec.dens_profile.profile,"species",0,n_species);
+        if (tmpSpec.dens_profile.profile.empty()) {
+        
+            PyObject *mypy = ifile.extract_py("dens_profile","species",0,n_species);
+            if (mypy) {
+                tmpSpec.dens_profile.py_profile=mypy;
+                tmpSpec.dens_profile.profile="python";
+            }
+
+        } else {
             //check if we have a function with that name ()
             //!FIXME: we should directly get the function, but somehow it doesn't work... 
             
-            tmpSpec.dens_profile.py_profile=PyObject_GetAttrString(PyImport_AddModule("__main__"),tmpSpec.dens_profile.profile.c_str());
-            if (tmpSpec.dens_profile.py_profile != NULL) {
-                tmpSpec.dens_profile.profile="python";
-            } else {
-                // species length (check DensityProfile for definitions)
-                ifile.extract("vacuum_length", tmpSpec.dens_profile.vacuum_length,"species",0,n_species);
-                ifile.extract("dens_length_x", tmpSpec.dens_profile.length_params_x,"species",0,n_species);
-                if ( (geometry=="2d3v") || (geometry=="3d3v") )
-                    ifile.extract("dens_length_y", tmpSpec.dens_profile.length_params_y,"species",0,n_species);
-                if (geometry=="3d3v")
-                    ifile.extract("dens_length_z", tmpSpec.dens_profile.length_params_z,"species",0,n_species);
-                // getting additional parameters for the density profile (check DensityProfile for definitions)
-                ifile.extract("dens_dbl_params", tmpSpec.dens_profile.double_params,"species",0,n_species);
-                ifile.extract("dens_int_params", tmpSpec.dens_profile.int_params,"species",0,n_species);
-            }
-        } else {
-            ERROR("dens_profile can't be empty");
+            // species length (check DensityProfile for definitions)
+            ifile.extract("vacuum_length", tmpSpec.dens_profile.vacuum_length,"species",0,n_species);
+            ifile.extract("dens_length_x", tmpSpec.dens_profile.length_params_x,"species",0,n_species);
+            if ( (geometry=="2d3v") || (geometry=="3d3v") )
+                ifile.extract("dens_length_y", tmpSpec.dens_profile.length_params_y,"species",0,n_species);
+            if (geometry=="3d3v")
+                ifile.extract("dens_length_z", tmpSpec.dens_profile.length_params_z,"species",0,n_species);
+            // getting additional parameters for the density profile (check DensityProfile for definitions)
+            ifile.extract("dens_dbl_params", tmpSpec.dens_profile.double_params,"species",0,n_species);
+            ifile.extract("dens_int_params", tmpSpec.dens_profile.int_params,"species",0,n_species);
         }
         
+        if (tmpSpec.dens_profile.profile.empty()) {
+            ERROR("dens_profile can't be empty");
+        }
         
         // Species mean velocity parameters
         // ----------------

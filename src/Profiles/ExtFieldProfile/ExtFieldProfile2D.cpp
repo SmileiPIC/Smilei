@@ -40,10 +40,12 @@ ExtFieldProfile2D::ExtFieldProfile2D(ExtFieldStructure &extfield_struct) : ExtFi
         if (my_struct.length_params_y.size()<3)
             ERROR("three length_params_y must be defined for Harris profile" );
         
-    } else {
-        ERROR("unknown or empty profile: " << my_struct.profile );
+    }     
+    else if (my_struct.profile=="python") {
     }
-    
+    else {
+        ERROR("unknown or empty profile: " << my_struct.profile );
+    }    
 }
 
 
@@ -133,6 +135,15 @@ double ExtFieldProfile2D::operator() (vector<double> x_cell) {
         return 2.0*dB * Dx0 * exp(-Dx0*Dx0-Dy0*Dy0)
         -      2.0*dB * Dx1 * exp(-Dx1*Dx1-Dy1*Dy1) ;
         
+    }    
+    else if (my_struct.profile=="python") {
+        PyObject *pyresult = PyObject_CallFunction(my_struct.py_profile, const_cast<char *>("dd"), x_cell[0], x_cell[1]);
+        if (pyresult == NULL) {
+            ERROR("can't evaluate python function");
+        }
+        double cppresult = PyFloat_AsDouble(pyresult);
+        Py_XDECREF(pyresult);
+        return cppresult;
     } else {
         return 0;
     }

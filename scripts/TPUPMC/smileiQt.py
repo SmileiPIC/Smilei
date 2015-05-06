@@ -445,7 +445,9 @@ class smileiQtPlot(QWidget):
         self.title.set_text('Time: %.3f'%time)
         self.canvas.draw()
         if self.ui.saveImages.isChecked():
-            self.fig.savefig(self.dirName+'-%06d.png' % self.step)
+            fname=self.dirName+'/frame-%06d.png' % self.step
+            print fname
+            self.fig.savefig(fname)
 
     def closeEvent(self,event):
         self.save_settings()

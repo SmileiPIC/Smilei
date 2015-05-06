@@ -36,13 +36,30 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
         
         // laser time-profile & associated parameters
         ifile.extract("time_profile",tmpLaser.profile_time.profile ,"laser",0,n_laser);
-        ifile.extract("int_params",tmpLaser.profile_time.int_params ,"laser",0,n_laser);
-        ifile.extract("double_params",tmpLaser.profile_time.double_params ,"laser",0,n_laser);
+        if (tmpLaser.profile_time.profile.empty()) {
+            PyObject *mypy = ifile.extract_py("time_profile","laser",0,n_laser);
+            if (mypy) {
+                tmpLaser.profile_time.py_profile=mypy;
+                tmpLaser.profile_time.profile="python";
+            }
+        } else {
+            ifile.extract("int_params",tmpLaser.profile_time.int_params ,"laser",0,n_laser);
+            ifile.extract("double_params",tmpLaser.profile_time.double_params ,"laser",0,n_laser);            
+        }
+        
         
         // laser transverse-profile & associated parameters
         ifile.extract("transv_profile",tmpLaser.profile_transv.profile ,"laser",0,n_laser);
-        ifile.extract("int_params_transv",tmpLaser.profile_transv.int_params ,"laser",0,n_laser);
-        ifile.extract("double_params_transv",tmpLaser.profile_transv.double_params ,"laser",0,n_laser);
+        if (tmpLaser.profile_transv.profile.empty()) {
+            PyObject *mypy = ifile.extract_py("transv_profile","laser",0,n_laser);
+            if (mypy) {
+                tmpLaser.profile_transv.py_profile=mypy;
+                tmpLaser.profile_transv.profile="python";
+            }
+        } else {
+            ifile.extract("int_params_transv",tmpLaser.profile_transv.int_params ,"laser",0,n_laser);
+            ifile.extract("double_params_transv",tmpLaser.profile_transv.double_params ,"laser",0,n_laser);
+        }   
         
         bool delayExists = ifile.extract("delay",tmpLaser.delay ,"laser",0,n_laser);
         

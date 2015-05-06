@@ -8,8 +8,6 @@
 #ifndef INPUTDATA_H
 #define INPUTDATA_H
 
-#include <Python.h>
-
 #include <cstdlib>
 
 #include <fstream>

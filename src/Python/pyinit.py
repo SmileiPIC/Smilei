@@ -9,8 +9,6 @@ class Smilei():
         if kwargs is not None:
             for key, value in kwargs.iteritems():
                 setattr(self, key, value)
-    length_conversion=1.0
-    time_conversion=1.0
     species=[]
     laser=[]
     diag_probe=[]

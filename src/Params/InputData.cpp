@@ -46,8 +46,6 @@ InputData::InputData(SmileiMPI *smpi, std::vector<std::string> namelistsFiles): 
     if (retval==-1) {
         ERROR("error parsing namelist")
     }
-    
-
 
     PyObject* myFunction = PyObject_GetAttrString(PyImport_AddModule("__main__"),(char*)"get_smilei");
     py_namelist = PyObject_CallFunction(myFunction,const_cast<char *>(""));
@@ -56,7 +54,10 @@ InputData::InputData(SmileiMPI *smpi, std::vector<std::string> namelistsFiles): 
     }
     
     if (smpi->isMaster()) {
-        ofstream out("smilei.py");
+        string file_namelist_out="smilei.py";
+        extract("output_script", file_namelist_out);
+        
+        ofstream out(file_namelist_out.c_str());
         out << namelist;
         out.close();
     }        
