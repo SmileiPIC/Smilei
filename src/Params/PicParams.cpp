@@ -288,9 +288,8 @@ void PicParams::readSpecies(InputData &ifile) {
         
         ifile.extract("dens_profile", tmpSpec.dens_profile.profile,"species",0,n_species);
         if (tmpSpec.dens_profile.profile.empty()) {
-        
             PyObject *mypy = ifile.extract_py("dens_profile","species",0,n_species);
-            if (mypy) {
+            if (mypy && PyCallable_Check(mypy)) {
                 tmpSpec.dens_profile.py_profile=mypy;
                 tmpSpec.dens_profile.profile="python";
             }
@@ -324,43 +323,44 @@ void PicParams::readSpecies(InputData &ifile) {
             //check if we have a function with that name ()
             //!FIXME: we should directly get the function, but somehow it doesn't work... 
             
-            tmpSpec.mvel_x_profile.py_profile=PyObject_GetAttrString(PyImport_AddModule("__main__"),tmpSpec.mvel_x_profile.profile.c_str());
-            if (tmpSpec.mvel_x_profile.py_profile != NULL) {
+            PyObject *mypy = ifile.extract_py("mvel_x_profile", "species",0,n_species);
+            if (mypy && PyCallable_Check(mypy)) {
+                tmpSpec.mvel_x_profile.py_profile=mypy;
                 tmpSpec.mvel_x_profile.profile="python";
-            } else {
-                ifile.extract("mvel_x_length_x", tmpSpec.mvel_x_profile.length_params_x,"species",0,n_species);
-                if ( (geometry=="2d3v") || (geometry=="3d3v") )
-                    ifile.extract("mvel_x_length_y", tmpSpec.mvel_x_profile.length_params_y,"species",0,n_species);
-                if (geometry=="3d3v")
-                    ifile.extract("mvel_x_length_z", tmpSpec.mvel_x_profile.length_params_z,"species",0,n_species);
-                
-                ifile.extract("mvel_x_dbl_params", tmpSpec.mvel_x_profile.double_params,"species",0,n_species);
-                ifile.extract("mvel_x_int_params", tmpSpec.mvel_x_profile.int_params,"species",0,n_species);
-                tmpSpec.mvel_x_profile.vacuum_length=tmpSpec.dens_profile.vacuum_length;
             }
+        } else {
+            ifile.extract("mvel_x_length_x", tmpSpec.mvel_x_profile.length_params_x,"species",0,n_species);
+            if ( (geometry=="2d3v") || (geometry=="3d3v") )
+                ifile.extract("mvel_x_length_y", tmpSpec.mvel_x_profile.length_params_y,"species",0,n_species);
+            if (geometry=="3d3v")
+                ifile.extract("mvel_x_length_z", tmpSpec.mvel_x_profile.length_params_z,"species",0,n_species);
+            
+            ifile.extract("mvel_x_dbl_params", tmpSpec.mvel_x_profile.double_params,"species",0,n_species);
+            ifile.extract("mvel_x_int_params", tmpSpec.mvel_x_profile.int_params,"species",0,n_species);
+            tmpSpec.mvel_x_profile.vacuum_length=tmpSpec.dens_profile.vacuum_length;
         }
         
-
         // Y
-        ifile.extract("mvel_y_profile", tmpSpec.mvel_y_profile.profile,"species",0,n_species);        
+        ifile.extract("mvel_y_profile", tmpSpec.mvel_y_profile.profile,"species",0,n_species);
         if (!tmpSpec.mvel_y_profile.profile.empty()) {
             //check if we have a function with that name ()
             //!FIXME: we should directly get the function, but somehow it doesn't work... 
             
-            tmpSpec.mvel_y_profile.py_profile=PyObject_GetAttrString(PyImport_AddModule("__main__"),tmpSpec.mvel_y_profile.profile.c_str());
-            if (tmpSpec.mvel_y_profile.py_profile != NULL) {
+            PyObject *mypy = ifile.extract_py("mvel_y_profile", "species",0,n_species);
+            if (mypy && PyCallable_Check(mypy)) {
+                tmpSpec.mvel_y_profile.py_profile=mypy;
                 tmpSpec.mvel_y_profile.profile="python";
-            } else {
-                ifile.extract("mvel_x_length_x", tmpSpec.mvel_y_profile.length_params_x,"species",0,n_species);
-                if ( (geometry=="2d3v") || (geometry=="3d3v") )
-                    ifile.extract("mvel_x_length_y", tmpSpec.mvel_y_profile.length_params_y,"species",0,n_species);
-                if (geometry=="3d3v")
-                    ifile.extract("mvel_x_length_z", tmpSpec.mvel_y_profile.length_params_z,"species",0,n_species);
-                
-                ifile.extract("mvel_x_dbl_params", tmpSpec.mvel_y_profile.double_params,"species",0,n_species);
-                ifile.extract("mvel_x_int_params", tmpSpec.mvel_y_profile.int_params,"species",0,n_species);
-                tmpSpec.mvel_y_profile.vacuum_length=tmpSpec.dens_profile.vacuum_length;
             }
+        } else {
+            ifile.extract("mvel_y_length_x", tmpSpec.mvel_y_profile.length_params_x,"species",0,n_species);
+            if ( (geometry=="2d3v") || (geometry=="3d3v") )
+                ifile.extract("mvel_y_length_y", tmpSpec.mvel_y_profile.length_params_y,"species",0,n_species);
+            if (geometry=="3d3v")
+                ifile.extract("mvel_y_length_z", tmpSpec.mvel_y_profile.length_params_z,"species",0,n_species);
+            
+            ifile.extract("mvel_y_dbl_params", tmpSpec.mvel_y_profile.double_params,"species",0,n_species);
+            ifile.extract("mvel_y_int_params", tmpSpec.mvel_y_profile.int_params,"species",0,n_species);
+            tmpSpec.mvel_y_profile.vacuum_length=tmpSpec.dens_profile.vacuum_length;
         }
         
         // Z
@@ -369,21 +369,23 @@ void PicParams::readSpecies(InputData &ifile) {
             //check if we have a function with that name ()
             //!FIXME: we should directly get the function, but somehow it doesn't work... 
             
-            tmpSpec.mvel_z_profile.py_profile=PyObject_GetAttrString(PyImport_AddModule("__main__"),tmpSpec.mvel_z_profile.profile.c_str());
-            if (tmpSpec.mvel_z_profile.py_profile != NULL) {
+            PyObject *mypy = ifile.extract_py("mvel_z_profile", "species",0,n_species);
+            if (mypy && PyCallable_Check(mypy)) {
+                tmpSpec.mvel_z_profile.py_profile=mypy;
                 tmpSpec.mvel_z_profile.profile="python";
-            } else {
-                ifile.extract("mvel_x_length_x", tmpSpec.mvel_z_profile.length_params_x,"species",0,n_species);
-                if ( (geometry=="2d3v") || (geometry=="3d3v") )
-                    ifile.extract("mvel_x_length_y", tmpSpec.mvel_z_profile.length_params_y,"species",0,n_species);
-                if (geometry=="3d3v")
-                    ifile.extract("mvel_x_length_z", tmpSpec.mvel_z_profile.length_params_z,"species",0,n_species);
-                
-                ifile.extract("mvel_x_dbl_params", tmpSpec.mvel_z_profile.double_params,"species",0,n_species);
-                ifile.extract("mvel_x_int_params", tmpSpec.mvel_z_profile.int_params,"species",0,n_species);
-                tmpSpec.mvel_z_profile.vacuum_length=tmpSpec.dens_profile.vacuum_length;
             }
+        } else {
+            ifile.extract("mvel_z_length_x", tmpSpec.mvel_z_profile.length_params_x,"species",0,n_species);
+            if ( (geometry=="2d3v") || (geometry=="3d3v") )
+                ifile.extract("mvel_z_length_y", tmpSpec.mvel_z_profile.length_params_y,"species",0,n_species);
+            if (geometry=="3d3v")
+                ifile.extract("mvel_z_length_z", tmpSpec.mvel_z_profile.length_params_z,"species",0,n_species);
+            
+            ifile.extract("mvel_z_dbl_params", tmpSpec.mvel_z_profile.double_params,"species",0,n_species);
+            ifile.extract("mvel_z_int_params", tmpSpec.mvel_z_profile.int_params,"species",0,n_species);
+            tmpSpec.mvel_z_profile.vacuum_length=tmpSpec.dens_profile.vacuum_length;
         }
+        
         
         
         species_param.push_back(tmpSpec);

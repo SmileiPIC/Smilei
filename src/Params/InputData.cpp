@@ -12,11 +12,18 @@ using namespace std;
 InputData::InputData(SmileiMPI *smpi, std::vector<std::string> namelistsFiles): namelist(""), py_namelist(NULL) {
     Py_Initialize();
 
+    // here we add the rank, in case some script need it
+    PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_rank", smpi->getRank());
+    
     // here we add the main python class definitions from pyinit.py
     pyRunScript(string(reinterpret_cast<const char*>(Python_pyinit_py), Python_pyinit_py_len), "pyinit.py");
     
-    // we read the file
+    PyObject *rank=Py_BuildValue("i", smpi->getRank());
+    
+    
+    // we read the file(s)
     for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {
+        MESSAGE("Reading file " << *it);
         string strNamelist="";
         if (smpi->isMaster()) {
             HEREIAM("");
@@ -84,7 +91,9 @@ bool InputData::extract(string name, bool &val, string group, int occurrenceItem
     PyObject* py_val = extract_py(name,group,occurrenceItem,occurrenceGroup);
     if(py_val) {
         if (PyBool_Check(py_val)) {
-            return py_val==Py_True;
+            val=(py_val==Py_True);
+            HEREIAM(name << " " << val);
+            return true;
         } else {
             DEBUG(name << " is not a boolean");
         }

@@ -1,20 +1,22 @@
 import math 
 
-part_per_cell=1
+part_per_cell=10
 t_sim=40
-thickness=0.5
-
-res=4
+position=15
+thickness=1
+length =0.1
+res=12
 
 dx, dy = 20, 50
 
 twopi=2*math.pi
 
+
 def my_func_density(codex,codey):
     x,y=codex/twopi,codey/twopi
-
-    valx=math.exp(-((x-dx/2))**2)
-    valy=math.cos(y/2)+1.0
+    
+    valx = math.exp(-((x-position)/length)**2) if x<position else 1 if x < position+thickness else 0
+    valy = math.cos(2*y)+1.0 if x<position else 1
         
     return valx*valy
 
@@ -70,7 +72,7 @@ mysim.bc_em_type_trans = 'periodic'
 # this is used to randomize the random number generator
 mysim.random_seed = 0
 
-mysim.fieldDump_every = 20
+mysim.fieldDump_every = 10
 
 mysim.print_every = 10
 
@@ -78,9 +80,9 @@ mysim.print_every = 10
 
 myspec1=Species()
 myspec1.dens_profile = my_func_density
-myspec1.vacuum_length   = ((dx-thickness)/2.0,  0.0) 
+myspec1.vacuum_length   = ((dx-thickness)/2.0,  dy/4.0) 
 myspec1.dens_length_x   = thickness
-myspec1.dens_length_y   = dy
+myspec1.dens_length_y   = dy/2
 myspec1.species_type = 'ion'
 myspec1.initPosition_type = 'random'
 myspec1.initMomentum_type = 'cold'
@@ -104,9 +106,9 @@ myspec1.bc_part_type_north = 'none'
 
 Species(
 dens_profile = my_func_density,
-vacuum_length   = ((dx-thickness)/2.0,  0.0) ,
+vacuum_length   = ((dx-thickness)/2.0,  dy/4,0) ,
 dens_length_x   = thickness ,
-dens_length_y   = dy,
+dens_length_y   = dy/2,
 species_type = 'electron' ,
 initPosition_type = 'random' ,
 initMomentum_type = 'maxj' ,
@@ -126,11 +128,9 @@ bc_part_type_south = 'none' ,
 bc_part_type_north = 'none'
 )
 
-
-
-def my_func_laser_time(codet) :
-    t=codet*twopi
-    return math.exp(-(t-t_sim/(twopi*2.0))**2)
+def my_func_laser_profile(t,y):
+    val = math.exp(-t**2)*math.exp(-(y/10.0)**2)
+    return val
 # ----------------
 # LASER PROPERTIES
 # ----------------
@@ -146,12 +146,11 @@ Laser(
 boxSide = 'west' ,
 a0=0.1 ,
 focus=(10.0,  25.0) ,
-angle=20.0 ,
+angle=0.1 ,
 delta=0.0 ,
-
-time_profile = my_func_laser_time ,
+time_profile = 'sin2' ,
 double_params = 5 ,
-transv_profile = 'focused' ,
+transv_profile = my_func_laser_profile ,
 double_params_transv = 5.0 
 )
 

@@ -38,7 +38,7 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
         ifile.extract("time_profile",tmpLaser.profile_time.profile ,"laser",0,n_laser);
         if (tmpLaser.profile_time.profile.empty()) {
             PyObject *mypy = ifile.extract_py("time_profile","laser",0,n_laser);
-            if (mypy) {
+            if (mypy && PyCallable_Check(mypy)) {
                 tmpLaser.profile_time.py_profile=mypy;
                 tmpLaser.profile_time.profile="python";
             }
@@ -52,27 +52,17 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
         ifile.extract("transv_profile",tmpLaser.profile_transv.profile ,"laser",0,n_laser);
         if (tmpLaser.profile_transv.profile.empty()) {
             PyObject *mypy = ifile.extract_py("transv_profile","laser",0,n_laser);
-            if (mypy) {
+            if (mypy && PyCallable_Check(mypy)) {
                 tmpLaser.profile_transv.py_profile=mypy;
                 tmpLaser.profile_transv.profile="python";
             }
-        } else {
-            ifile.extract("int_params_transv",tmpLaser.profile_transv.int_params ,"laser",0,n_laser);
-            ifile.extract("double_params_transv",tmpLaser.profile_transv.double_params ,"laser",0,n_laser);
-        }   
+
+        } 
+        ifile.extract("int_params_transv",tmpLaser.profile_transv.int_params ,"laser",0,n_laser);
+        ifile.extract("double_params_transv",tmpLaser.profile_transv.double_params ,"laser",0,n_laser);
+        
         
         bool delayExists = ifile.extract("delay",tmpLaser.delay ,"laser",0,n_laser);
-        
-        
-        // -------------------------------------
-        // Printing out laser related parameters
-        // -------------------------------------
-        MESSAGE("Laser related parameters");
-        MESSAGE(1,"n_laser        : " << n_laser);
-        for ( unsigned int i=0 ; i<n_laser ; i++ ) {
-            MESSAGE(2,"laser " << i << ": (boxSide, a0) : (" << laser_param[i].boxSide <<  ", " << laser_param[i].a0 <<  ")");
-        }
-        
         
         // -----------------------------------------------------------------
         // normalization (from wavelength-related units to normalized units)
@@ -87,7 +77,7 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
                 tmpLaser.focus[i] *= params.conv_fac;
         }
 
-        
+        WARNING("FIXME: WE SHOULD RECTIFY FROM HERE ON");
         // -----------------------------------------------------------------
         // tests on the laser parameters (when arbitrary focus or incidence)
         // -----------------------------------------------------------------
@@ -102,6 +92,7 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
             }
             
             if ( !delayExists ) {
+                tmpLaser.profile_transv.double_params.resize(1);
                 double theta   = tmpLaser.angle * M_PI/180.0;
                 double xfoc    = tmpLaser.focus[0];
                 double yfoc    = tmpLaser.focus[1];
@@ -136,6 +127,14 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
         n_laser++;
     }
     
-	
+    // -------------------------------------
+    // Printing out laser related parameters
+    // -------------------------------------
+    MESSAGE("Laser related parameters");
+    MESSAGE(1,"n_laser        : " << n_laser);
+    for ( unsigned int i=0 ; i<n_laser ; i++ ) {
+        MESSAGE(2,"laser " << i << ": (boxSide, a0) : (" << laser_param[i].boxSide <<  ", " << laser_param[i].a0 <<  ")");
+    }
+    
 }
 

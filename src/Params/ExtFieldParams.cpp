@@ -22,7 +22,7 @@ ProfileParams(params)
         
         if (tmpExtField.profile.empty()) {
             PyObject *mypy = ifile.extract_py("profile",groupName,0,n_extfield);
-            if (mypy) {
+            if (mypy && PyCallable_Check(mypy)) {
                 tmpExtField.py_profile=mypy;
                 tmpExtField.profile="python";
             }

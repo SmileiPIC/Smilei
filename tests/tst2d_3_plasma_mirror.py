@@ -1,3 +1,6 @@
+
+print "----------------------- RANK -----------------------",smilei_mpi_rank
+
 import math 
 
 part_per_cell=5
@@ -67,7 +70,7 @@ mysim.random_seed = 0
 mysim.fieldDump_every = 24
 
 myspec1=Species()
-myspec1.dens_profile = 'profile_dens'
+myspec1.dens_profile = profile_dens
 myspec1.vacuum_length   = ((dx-thickness)/2.0,  0.0) 
 myspec1.dens_length_x   = thickness
 myspec1.dens_length_y   = dy
@@ -93,7 +96,7 @@ myspec1.bc_part_type_north = 'none'
 
 
 Species(
-dens_profile = 'profile_dens',
+dens_profile = profile_dens,
 vacuum_length   = ((dx-thickness)/2.0,  0.0) ,
 dens_length_x   = thickness ,
 dens_length_y   = dy,
