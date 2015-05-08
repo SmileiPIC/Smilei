@@ -1,13 +1,13 @@
 import math 
 
-part_per_cell=10
-t_sim=40
-position=15
+part_per_cell=20
+t_sim=30
+position=8
 thickness=1
-length =0.1
-res=12
+length =1
+res=20
 
-dx, dy = 20, 50
+dx, dy = 10, 50
 
 twopi=2*math.pi
 
@@ -15,10 +15,9 @@ twopi=2*math.pi
 def my_func_density(codex,codey):
     x,y=codex/twopi,codey/twopi
     
-    valx = math.exp(-((x-position)/length)**2) if x<position else 1 if x < position+thickness else 0
-    valy = math.cos(2*y)+1.0 if x<position else 1
+    val = (math.cos(2*y)+2.0)*math.exp(-((x-position)/length)**2)/3 if x<position else 1 if x < position+thickness else 0
         
-    return valx*valy
+    return val
 
 
 mysim=Smilei()
@@ -91,7 +90,7 @@ myspec1.n_part_per_cell = part_per_cell
 myspec1.c_part_max = 1.0
 myspec1.mass = 1836.0
 myspec1.charge = 1
-myspec1.density = 2.0
+myspec1.density = 1.0
 myspec1.mean_velocity = 0.0
 myspec1.temperature = 0.0
 myspec1.dynamics_type = 'norm'
@@ -116,7 +115,7 @@ n_part_per_cell = part_per_cell ,
 c_part_max=1.0 ,
 mass = 1.0 ,
 charge = -1 ,
-density = 2.0 ,
+density = 1.0 ,
 mean_velocity = 0.0 ,
 temperature = 0.0001 ,
 dynamics_type = 'norm' ,
@@ -129,8 +128,9 @@ bc_part_type_north = 'none'
 )
 
 def my_func_laser_profile(t,y):
-    val = math.exp(-t**2)*math.exp(-(y/10.0)**2)
+    val = math.exp(-t**2)*math.exp(-(y)**2)
     return val
+    
 # ----------------
 # LASER PROPERTIES
 # ----------------
@@ -144,14 +144,14 @@ def my_func_laser_profile(t,y):
 #
 Laser(
 boxSide = 'west' ,
-a0=0.1 ,
-focus=(10.0,  25.0) ,
-angle=0.1 ,
+a0=0.2 ,
+focus=(position,  25.0) ,
+angle=20 ,
 delta=0.0 ,
 time_profile = 'sin2' ,
-double_params = 5 ,
+double_params = 2 ,
 transv_profile = my_func_laser_profile ,
-double_params_transv = 5.0 
+double_params_transv = 10.0 
 )
 
 

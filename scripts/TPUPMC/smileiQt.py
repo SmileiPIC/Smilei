@@ -54,7 +54,7 @@ class smileiQtPlot(QWidget):
     nplots=0
     ax={}
     dirName=None
-    someCheckBoxChanged=False
+    someCheckBoxChanged=True
     pauseSignal=pyqtSignal()
     shiftPressed=False
     title=''
@@ -89,6 +89,9 @@ class smileiQtPlot(QWidget):
         
         self.fig = Figure()
         
+        self.ui.reload.setIcon(self.ui.style().standardIcon(QStyle.SP_BrowserReload))
+        self.ui.reload.released.connect(self.reloadAll)
+
         
         self.canvas = FigureCanvas(self.fig)
         self.canvas.setFocusPolicy(Qt.StrongFocus)
@@ -173,6 +176,25 @@ class smileiQtPlot(QWidget):
         if sys.platform == "darwin":
             self.raise_()
         self.show()
+        
+        
+    def reloadAll(self):
+        self.fieldSteps=[]
+        
+        fname=os.path.join(self.dirName, "Fields.h5")
+        if isinstance(self.fieldFile,tb.file.File):
+            self.fieldFile.close()
+            print "here"
+        if os.path.isfile(fname) :
+            self.fieldFile=tb.openFile(fname)
+            for group in self.fieldFile.listNodes("/", classname='Group'):
+                self.fieldSteps.append(group._v_name)
+        print "last:",self.fieldSteps[-1]
+        self.ui.spinStep.setSuffix("/"+str(len(self.fieldSteps)-1))
+        self.ui.spinStep.setMaximum(len(self.fieldSteps)-1)
+        self.ui.slider.setRange(0,len(self.fieldSteps)-1)
+        self.preparePlots()
+        
     def doSavePoints(self):
         fname=QFileDialog.getSaveFileName(self, 'Save Point logger', self.dirName, selectedFilter='*.txt')
         if fname:
@@ -384,6 +406,27 @@ class smileiQtPlot(QWidget):
                             self.canvas.draw()
                         except ValueError:
                             self.canvas.draw()
+        elif event.key == 'x':
+            range, ok = QInputDialog.getText(self, 'Ranges', 'Give '+event.key+' range:')        
+            if ok:
+                ranges=range.split(' ')
+                event.inaxes.set_xlim(float(ranges[0]),float(ranges[1]))
+
+            self.canvas.draw()
+        elif event.key == 'y':
+            range, ok = QInputDialog.getText(self, 'Ranges', 'Give '+event.key+' range:')        
+            if ok:
+                ranges=range.split(' ')
+                event.inaxes.set_ylim(float(ranges[0]),float(ranges[1]))
+
+            self.canvas.draw()
+        elif event.key == 'z':
+            range, ok = QInputDialog.getText(self, 'Ranges', 'Give '+event.key+' range:')        
+            if ok:
+                ranges=range.split(' ')
+                event.inaxes.set_clim(float(ranges[0]),float(ranges[1]))
+
+            self.canvas.draw()
         elif event.key == 'shift':
             self.shiftPressed=True
 
@@ -468,6 +511,7 @@ class smileiQt(QMainWindow):
         self.ui=uic.loadUi(uiFile,self)
 
         self.ui.dir.setIcon(self.ui.style().standardIcon(QStyle.SP_DirOpenIcon))
+        
         self.ui.playStop.setIcon(self.ui.style().standardIcon(QStyle.SP_MediaPlay))
         self.ui.previous.setIcon(self.ui.style().standardIcon(QStyle.SP_MediaSeekBackward))
         self.ui.next.setIcon(self.ui.style().standardIcon(QStyle.SP_MediaSeekForward))
