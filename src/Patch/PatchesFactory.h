@@ -17,24 +17,26 @@ public:
 
 	// Compute npatches (1 is std MPI behavior)
 	unsigned int npatches;
-        unsigned int m0, m1, m2; //Defines the total number of patches.
+        unsigned int m0, m1, m2; //Defines the log2 of the total number of patches for each direction.
         m0 = 3;
-        m1 = 5;
-        m2 = 2;
+        m1 = 2;
+        m2 = 0;
         npatches = (1 << (m0 + m1 + m2)) / smpi->getSize() ;// npatches = 2^(m0+m1+m2) / number of mpi process. Local number of patches. 
         //Naive initialization of patch_count, assuming all mpi processes initially have the same number of patches.
+        smpi->patch_count.resize(smpi->getSize(), 0);
+        std::cout << smpi->patch_count.size() << " "<< smpi->getSize() << std::endl;
         for (unsigned int impi = 0 ; impi < smpi->getSize() ; impi++) {
             smpi->patch_count[impi] = npatches;
         }
 
 	// Modified to test Patch integration
-	npatches = m0*m1;
+	//npatches = m0*m1;
 	std::cout << npatches << " " << m0 << " " << m1 << std::endl;
         vecPatches.resize(npatches);
-	std::cout << "n_space : " << params.n_space[0] << " " << params.n_space[1] << std::endl;
-	params.n_space[0] /= m0;
-	params.n_space[1] /= m1;
-	std::cout << "n_space : " << params.n_space[0] << " " << params.n_space[1] << std::endl;
+	//std::cout << "n_space : " << params.n_space[0] << " " << params.n_space[1] << std::endl;
+	//params.n_space[0] /= m0;
+	//params.n_space[1] /= m1;
+	//std::cout << "n_space : " << params.n_space[0] << " " << params.n_space[1] << std::endl;
 
 
         // create species
