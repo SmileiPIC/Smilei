@@ -200,6 +200,8 @@ void SmileiMPI::exchangeAvg( ElectroMagn* EMfields )
 
 int SmileiMPI::hrank(int h)
 {
+    if (h == MPI_PROC_NULL) return MPI_PROC_NULL;
+
     unsigned int patch_counter,rank;
     rank=0;
     patch_counter = patch_count[0];
