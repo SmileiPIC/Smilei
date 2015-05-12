@@ -59,18 +59,24 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
 	    neighbor_[1][1] = generalhilbertindex( m0, m1, Pcoordinates[0], Pcoordinates[1]+1);
 
 	// Manage y-periodicity only !
-	SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
+	//SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
 	if ( (params.bc_em_type_trans=="periodic") ) {
-	  if ( (smpi2D->getNbrOfProcs(1)==1) ) {
-	    if ( (smpi2D->getProcCoord(1)==0) || (smpi2D->getProcCoord(1)==smpi2D->getNbrOfProcs(1)-1) ) {
+	  //if ( (smpi2D->getNbrOfProcs(1)==1) ) {
+	    //if ( (smpi2D->getProcCoord(1)==0) || (smpi2D->getProcCoord(1)==smpi2D->getNbrOfProcs(1)-1) ) {
 	      if ( (Pcoordinates[1]==0) )
 		//neighbor_[1][0] = Pcoordinates[0]*m1+m1-1;
 	        neighbor_[1][0] = generalhilbertindex( m0, m1, Pcoordinates[0], (1<<m1)-1);
 	      if ( (Pcoordinates[1]==(1<<m1)-1) )
 		//neighbor_[1][1] = Pcoordinates[0]*m1+0;
 	        neighbor_[1][1] = generalhilbertindex( m0, m1, Pcoordinates[0], 0);
-	    }
-	  }
+	    //}
+	  //}
+	}
+	if ( (params.bc_em_type_long=="periodic") ) {
+	      if ( (Pcoordinates[0]==0) )
+	        neighbor_[0][0] = generalhilbertindex( m0, m1,(1<<m0)-1, Pcoordinates[1]);
+	      if ( (Pcoordinates[0]==(1<<m0)-1) )
+	        neighbor_[0][1] = generalhilbertindex( m0, m1, 0, Pcoordinates[1]);
 	}
 
 
@@ -155,7 +161,7 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
 	        corner_neighbor_[1][1] = generalhilbertindex( m0, m1, 0, 0 );
 	}
 
-	cout << "\n\tCorner decomp : " << corner_neighbor_[0][1] << "\t" << neighbor_[1][1]  << "\t" << corner_neighbor_[1][1] << endl;
+	cout << "\n\tCorner decomp : " << smpi->hrank(corner_neighbor_[0][1]) << "\t" << neighbor_[1][1]  << "\t" << corner_neighbor_[1][1] << endl;
 	cout << "\tCorner decomp : " << neighbor_[0][0] << "\t" << hindex << "\t" << neighbor_[0][1] << endl;
 	cout << "\tCorner decomp : " << corner_neighbor_[0][0] << "\t" << neighbor_[1][0]  << "\t" << corner_neighbor_[1][0] << endl;
 
