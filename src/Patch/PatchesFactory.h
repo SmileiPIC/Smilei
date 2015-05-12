@@ -16,22 +16,24 @@ public:
         std::vector<Patch*> vecPatches;
 
 	// Compute npatches (1 is std MPI behavior)
-	unsigned int npatches;
+	unsigned int npatches, firstpatch;
         unsigned int m0, m1, m2; //Defines the log2 of the total number of patches for each direction.
         m0 = 3;
         m1 = 2;
         m2 = 0;
-        npatches = (1 << (m0 + m1 + m2)) / smpi->getSize() ;// npatches = 2^(m0+m1+m2) / number of mpi process. Local number of patches. 
+        npatches = (1 << (m0 + m1 + m2)) / smpi->getSize() + ( smpi->getRank() < (1 << (m0 + m1 + m2))%smpi->getSize() );// npatches = 2^(m0+m1+m2) / number of mpi process. Local number of patches. 
         //Naive initialization of patch_count, assuming all mpi processes initially have the same number of patches.
-        smpi->patch_count.resize(smpi->getSize(), 0);
-        std::cout << smpi->patch_count.size() << " "<< smpi->getSize() << std::endl;
         for (unsigned int impi = 0 ; impi < smpi->getSize() ; impi++) {
-            smpi->patch_count[impi] = npatches;
+            smpi->patch_count[impi] = (1 << (m0 + m1 + m2)) / smpi->getSize() +1*( impi < (1 << (m0 + m1 + m2))%smpi->getSize() );
         }
+        firstpatch = 0;
+        for (unsigned int impi = 0 ; impi < smpi->getRank() ; impi++) {
+            firstpatch += smpi->patch_count[impi];
+        }
+        
 
 	// Modified to test Patch integration
 	//npatches = m0*m1;
-	std::cout << npatches << " " << m0 << " " << m1 << std::endl;
         vecPatches.resize(npatches);
 	//std::cout << "n_space : " << params.n_space[0] << " " << params.n_space[1] << std::endl;
 	//params.n_space[0] /= m0;
@@ -43,7 +45,7 @@ public:
         unsigned int nPart;
         for (unsigned int ipatch = 0 ; ipatch < npatches ; ipatch++) {
 	    // For Patch integration : ipatch is local to MPI process
-	    vecPatches[ipatch] = PatchesFactory::create(params, laser_params, smpi, m0, m1, m2, smpi->getRank()*npatches + ipatch);
+	    vecPatches[ipatch] = PatchesFactory::create(params, laser_params, smpi, m0, m1, m2, firstpatch + ipatch);
             //vecPatches[ipatch] = PatchesFactory::create(params, laser_params, smpi, m0, m1, m2, ipatch);
         }
 

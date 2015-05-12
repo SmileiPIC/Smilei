@@ -62,6 +62,7 @@ SmileiMPI::SmileiMPI( SmileiMPI *smpi )
     max_local = smpi->max_local;
 
     n_space_global = smpi->n_space_global;
+    patch_count.resize(smilei_sz, 0);
 
 }
 
@@ -108,9 +109,7 @@ void SmileiMPI::init( PicParams& params )
     min_local.resize(params.nDim_field, 0.);
     max_local.resize(params.nDim_field, 0.);
     n_space_global.resize(params.nDim_field, 0);
-    cout << "Resizing to size " << smilei_sz << endl;
     patch_count.resize(smilei_sz, 0);
-    cout << "Size is now " << patch_count.size() << endl;
 
     interParticles.initialize(0,params.nDim_particle); 
 
