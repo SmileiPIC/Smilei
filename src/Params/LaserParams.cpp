@@ -25,6 +25,14 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
         // laser intensity
         ifile.extract("a0",tmpLaser.a0,"laser",0,n_laser);
         
+        // laser angular frequency (default=1)
+        tmpLaser.omega0=1.0;
+        ifile.extract("omega0",tmpLaser.omega0,"laser",0,n_laser);
+        
+        // laser temporal chirp (default=0)
+        tmpLaser.tchirp=0.0;
+        ifile.extract("tchirp",tmpLaser.tchirp,"laser",0,n_laser);
+        
         // laser ellipticity/polarization parameter
         ifile.extract("delta",tmpLaser.delta,"laser",0,n_laser);
         

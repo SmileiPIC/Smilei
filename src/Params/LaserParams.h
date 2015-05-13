@@ -26,6 +26,12 @@ struct LaserStructure {
     //! Laser field amplitude
     double a0;
     
+    //! Laser angular frequency
+    double omega0;
+    
+    //! Laser temporal chirp (for now assumed constant, maybe later use a fct?)
+    double tchirp;
+    
     //! Laser angle
     double angle;
     
