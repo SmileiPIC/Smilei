@@ -34,6 +34,7 @@ SmileiMPI_Cart1D::SmileiMPI_Cart1D( SmileiMPI* smpi)
 {
     ndims_ = 1;
     number_of_procs  = new int[ndims_];
+    number_of_patches  = new int[ndims_];
     coords_  = new int[ndims_];
     periods_  = new int[ndims_];
     reorder_ = 0;
@@ -43,6 +44,7 @@ SmileiMPI_Cart1D::SmileiMPI_Cart1D( SmileiMPI* smpi)
     for (int i=0 ; i<ndims_ ; i++) periods_[i] = 0;
     for (int i=0 ; i<ndims_ ; i++) coords_[i] = 0;
     for (int i=0 ; i<ndims_ ; i++) number_of_procs[i] = 1;
+    for (int i=0 ; i<ndims_ ; i++) number_of_patches[i] = 0;
     
     for (int iDim=0 ; iDim<ndims_ ; iDim++) {
         for (int i=0 ; i<nbNeighbors_ ; i++) {
@@ -61,6 +63,7 @@ SmileiMPI_Cart1D::SmileiMPI_Cart1D( SmileiMPI* smpi)
 SmileiMPI_Cart1D::~SmileiMPI_Cart1D()
 {
     delete [] number_of_procs;
+    delete [] number_of_patches;
     delete [] periods_;
     delete [] coords_;
     
@@ -79,6 +82,8 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
     }
     
     number_of_procs[0] = smilei_sz;
+    for (unsigned int i=0 ; i<params.nDim_field ; i++)
+        number_of_patches[i] = params.number_of_patches[i];
 
     // Geometry periodic in x
     if (params.bc_em_type_long=="periodic") {
@@ -101,27 +106,27 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
         n_space_global[i] = params.n_space_global[i];
         if ( (!params.nspace_win_x)||(i!=0) ) {
             
-            params.n_space[i] = params.n_space_global[i] / number_of_procs[i];
+            params.n_space[i] = params.n_space_global[i] / number_of_patches[i];
             cell_starting_global_index[i] = coords_[i]*(params.n_space_global[i] / number_of_procs[i]);
             
-            if ( number_of_procs[i]*params.n_space[i] != params.n_space_global[i] ) {
-                // Correction on the last MPI process of the direction to use the wished number of cells
-                if (coords_[i]==number_of_procs[i]-1) {
-                    params.n_space[i] = params.n_space_global[i] - params.n_space[i]*(number_of_procs[i]-1);
-                }
-            }
+            //if ( number_of_procs[i]*params.n_space[i] != params.n_space_global[i] ) {
+            //    // Correction on the last MPI process of the direction to use the wished number of cells
+            //    if (coords_[i]==number_of_procs[i]-1) {
+            //        params.n_space[i] = params.n_space_global[i] - params.n_space[i]*(number_of_procs[i]-1);
+            //    }
+            //}
         }
         else { // if use_moving_window
             // Number of space in window (not split)
-            params.n_space[i] = params.nspace_win_x / number_of_procs[i];
+            params.n_space[i] = params.nspace_win_x / number_of_patches[i];
             cell_starting_global_index[i] = coords_[i]*(params.nspace_win_x / number_of_procs[i]);
             
-            if ( number_of_procs[i]*params.n_space[i] != params.nspace_win_x ) {
-                // Correction on the last MPI process of the direction to use the wished number of cells
-                if (coords_[i]==number_of_procs[i]-1) {
-                    params.n_space[i] = params.nspace_win_x - params.n_space[i]*(number_of_procs[i]-1);
-                }
-            }
+            //if ( number_of_procs[i]*params.n_space[i] != params.nspace_win_x ) {
+            //    // Correction on the last MPI process of the direction to use the wished number of cells
+            //    if (coords_[i]==number_of_procs[i]-1) {
+            //        params.n_space[i] = params.nspace_win_x - params.n_space[i]*(number_of_procs[i]-1);
+            //    }
+            //}
         }
         
         oversize[i] = params.oversize[i] = params.interpolation_order + (params.exchange_particles_each-1);

@@ -76,6 +76,8 @@ protected:
     int ndims_;
     //! Number of MPI process per direction in the cartesian topology
     int* number_of_procs;
+    //! Number of patches per direction.
+    int* number_of_patches;
 
     //! Array of coordinates in the cartesian topology
     int* coords_;
