@@ -31,6 +31,7 @@ SmileiMPI_Cart2D::SmileiMPI_Cart2D( SmileiMPI* smpi)
 {
     ndims_ = 2;
     number_of_procs = new int[ndims_];
+    number_of_patches = new int[ndims_];
     coords_  = new int[ndims_];
     periods_  = new int[ndims_];
     reorder_ = 0;
@@ -40,6 +41,7 @@ SmileiMPI_Cart2D::SmileiMPI_Cart2D( SmileiMPI* smpi)
     for (int i=0 ; i<ndims_ ; i++) periods_[i] = 0;
     for (int i=0 ; i<ndims_ ; i++) coords_[i] = 0;
     for (int i=0 ; i<ndims_ ; i++) number_of_procs[i] = 1;
+    for (int i=0 ; i<ndims_ ; i++) number_of_patches[i] = 0;
     
     for (int iDim=0 ; iDim<ndims_ ; iDim++)
         for (int iNeighbors=0 ; iNeighbors<nbNeighbors_ ; iNeighbors++)
@@ -70,6 +72,7 @@ SmileiMPI_Cart2D::~SmileiMPI_Cart2D()
     }
     
     delete[] number_of_procs;
+    delete[] number_of_patches;
     delete[]periods_;
     delete[] coords_;
     
@@ -85,6 +88,8 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
         params.n_space_global[i] = round(params.sim_length[i]/params.cell_length[i]);
         MESSAGE("Total number of cells in direction " << i << ": " << params.n_space_global[i]);
     }
+    for (unsigned int i=0 ; i<params.nDim_field ; i++)
+        number_of_patches[i] = params.number_of_patches[i];
     
     if (params.number_of_procs[0]!=0) {
         for (unsigned int i=0 ; i<params.nDim_field ; i++)
@@ -147,27 +152,27 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
         
         if ((!params.nspace_win_x)||(i!=0)) {
             
-            params.n_space[i] = params.n_space_global[i] / number_of_procs[i];
+            params.n_space[i] = params.n_space_global[i] / number_of_patches[i];
             cell_starting_global_index[i] = coords_[i]*(params.n_space_global[i] / number_of_procs[i]);
             
-            if ( number_of_procs[i]*params.n_space[i] != params.n_space_global[i] ) {
-                // Correction on the last MPI process of the direction to use the wished number of cells
-                if (coords_[i]==number_of_procs[i]-1) {
-                    params.n_space[i] = params.n_space_global[i] - params.n_space[i]*(number_of_procs[i]-1);
-                }
-            }
+            //if ( number_of_procs[i]*params.n_space[i] != params.n_space_global[i] ) {
+            //    // Correction on the last MPI process of the direction to use the wished number of cells
+            //    if (coords_[i]==number_of_procs[i]-1) {
+            //        params.n_space[i] = params.n_space_global[i] - params.n_space[i]*(number_of_procs[i]-1);
+            //    }
+            //}
         }
         else {  // if use_moving_window
             // Number of space in window (not split)
-            params.n_space[i] =  params.nspace_win_x / number_of_procs[i];
+            params.n_space[i] =  params.nspace_win_x / number_of_patches[i];
             cell_starting_global_index[i] = coords_[i]*(params.nspace_win_x / number_of_procs[i]);
             
-            if ( number_of_procs[i]*params.n_space[i] != params.nspace_win_x ) {
-                // Correction on the last MPI process of the direction to use the wished number of cells
-                if (coords_[i]==number_of_procs[i]-1) {
-                    params.n_space[i] = params.nspace_win_x - params.n_space[i]*(number_of_procs[i]-1);
-                }
-            }
+            //if ( number_of_procs[i]*params.n_space[i] != params.nspace_win_x ) {
+            //    // Correction on the last MPI process of the direction to use the wished number of cells
+            //    if (coords_[i]==number_of_procs[i]-1) {
+            //        params.n_space[i] = params.nspace_win_x - params.n_space[i]*(number_of_procs[i]-1);
+            //    }
+            //}
         }
 
         oversize[i] = params.oversize[i] = params.interpolation_order + (params.exchange_particles_each-1);

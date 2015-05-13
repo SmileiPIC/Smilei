@@ -272,6 +272,11 @@ PicParams::PicParams(InputData &ifile) {
     // --------------------
     if ( !ifile.extract("number_of_procs", number_of_procs) )
         number_of_procs.resize(nDim_field, 0);
+    // --------------------
+    // Number of Patches
+    // --------------------
+    if ( !ifile.extract("number_of_patches", number_of_patches) )
+        number_of_patches.resize(nDim_field, 0);
     
     // -------------------------------------------------------
     // Compute usefull quantities and introduce normalizations

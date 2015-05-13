@@ -179,9 +179,10 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
 	    cell_starting_global_index[i] -= params.oversize[i];
 	}
 
-	std::cout << "Create patch\n\n";
+	std::cout << "Created patch\n\n";
 
 	vecSpecies = SpeciesFactory::createVector(params, smpi, this);
+	std::cout << "Created Species\n\n";
 
 	/* // + min_loc/cell_index(ref smpi,  & sort) // OK through this 
  * 	   std::cout << "Patch created\n";*/
@@ -193,9 +194,11 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
 	EMfields   = ElectroMagnFactory::create(params, laser_params, smpi, this);
 	// + patchId + new n_space (now = params by smpi) + BC
 	// -> Neighbors to define !!
+	std::cout << "Created EMfields\n\n";
 	
 	Interp     = InterpolatorFactory::create(params, smpi, this);               // + patchId -> idx_domain_begin (now = ref smpi)
 	Proj       = ProjectorFactory::create(params, smpi, this);                  // + patchId -> idx_domain_begin (now = ref smpi)
+	std::cout << "Created Interp and Proj \n\n";
 	
 };
 

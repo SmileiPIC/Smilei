@@ -254,6 +254,7 @@ public:
     
     //! Number of MPI process per direction (default : as square as possible)
     std::vector<int> number_of_procs;
+    std::vector<int> number_of_patches;
     
     //! global number of time exits (it will be used if not specified in various diags/fields)
     unsigned int global_every;

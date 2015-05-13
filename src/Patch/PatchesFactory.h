@@ -18,14 +18,18 @@ public:
 	// Compute npatches (1 is std MPI behavior)
 	unsigned int npatches, firstpatch;
         unsigned int m0, m1, m2; //Defines the log2 of the total number of patches for each direction.
-        m0 = 3;
-        m1 = 2;
+        m0 = 0;
+        m1 = 0;
         m2 = 0;
-        npatches = (1 << (m0 + m1 + m2)) / smpi->getSize() + ( smpi->getRank() < (1 << (m0 + m1 + m2))%smpi->getSize() );// npatches = 2^(m0+m1+m2) / number of mpi process. Local number of patches. 
+        while ((params.number_of_patches[0] >> m0) >1) m0++ ;
+        while ((params.number_of_patches[1] >> m1) >1) m1++ ;
+        while ((params.number_of_patches[2] >> m2) >1) m2++ ;
         //Naive initialization of patch_count, assuming all mpi processes initially have the same number of patches.
         for (unsigned int impi = 0 ; impi < smpi->getSize() ; impi++) {
-            smpi->patch_count[impi] = (1 << (m0 + m1 + m2)) / smpi->getSize() +1*( impi < (1 << (m0 + m1 + m2))%smpi->getSize() );
+            //Computes number of patches owned by each MPI process
+            smpi->patch_count[impi] = (1 << (m0 + m1 + m2)) / smpi->getSize() + ( impi < (1 << (m0 + m1 + m2))%smpi->getSize() );
         }
+        npatches = smpi->patch_count[smpi->getRank()];// Number of patch of current MPI process.
         firstpatch = 0;
         for (unsigned int impi = 0 ; impi < smpi->getRank() ; impi++) {
             firstpatch += smpi->patch_count[impi];
@@ -33,20 +37,17 @@ public:
         
 
 	// Modified to test Patch integration
-	//npatches = m0*m1;
-        vecPatches.resize(npatches);
-	//std::cout << "n_space : " << params.n_space[0] << " " << params.n_space[1] << std::endl;
+	std::cout << "n_space : " << params.n_space[0] << " " << params.n_space[1] << std::endl;
+	std::cout << "n_patch : " << params.number_of_patches[0] << " " << params.number_of_patches[1] << std::endl;
 	//params.n_space[0] /= m0;
 	//params.n_space[1] /= m1;
 	//std::cout << "n_space : " << params.n_space[0] << " " << params.n_space[1] << std::endl;
 
 
         // create species
-        unsigned int nPart;
+        vecPatches.resize(npatches);
         for (unsigned int ipatch = 0 ; ipatch < npatches ; ipatch++) {
-	    // For Patch integration : ipatch is local to MPI process
 	    vecPatches[ipatch] = PatchesFactory::create(params, laser_params, smpi, m0, m1, m2, firstpatch + ipatch);
-            //vecPatches[ipatch] = PatchesFactory::create(params, laser_params, smpi, m0, m1, m2, ipatch);
         }
 
         return vecPatches;
