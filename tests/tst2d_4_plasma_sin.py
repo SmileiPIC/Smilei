@@ -7,6 +7,8 @@ thickness=1
 length =1
 res=20
 
+density=0.5
+
 dx, dy = 10, 50
 
 twopi=2*math.pi
@@ -90,11 +92,11 @@ myspec1.n_part_per_cell = part_per_cell
 myspec1.c_part_max = 1.0
 myspec1.mass = 1836.0
 myspec1.charge = 1
-myspec1.density = 1.0
+myspec1.density = density
 myspec1.mean_velocity = 0.0
 myspec1.temperature = 0.0
 myspec1.dynamics_type = 'norm'
-myspec1.time_frozen = t_sim
+myspec1.time_frozen = 0.0
 myspec1.radiating = False
 myspec1.bc_part_type_west  = 'refl'
 myspec1.bc_part_type_east  = 'refl'
@@ -115,7 +117,7 @@ n_part_per_cell = part_per_cell ,
 c_part_max=1.0 ,
 mass = 1.0 ,
 charge = -1 ,
-density = 1.0 ,
+density = density ,
 mean_velocity = 0.0 ,
 temperature = 0.0001 ,
 dynamics_type = 'norm' ,

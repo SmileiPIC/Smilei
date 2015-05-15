@@ -330,6 +330,7 @@ class smileiQtPlot(QWidget):
                         ax.set_ylabel(name)
 
                         im=ax.imshow([[0]],extent=(0,self.sim_length[0],0,self.sim_length[1]), aspect='auto',origin='lower')
+                        im.set_interpolation('nearest')
                         cb=plt.colorbar(im, cax=cax)
                         self.ax[name]=ax
 
@@ -350,6 +351,7 @@ class smileiQtPlot(QWidget):
                     self.fig.add_axes(cax)
 
                     im=ax.imshow([[0]],extent=node._v_parent._v_attrs.extents.reshape(4).tolist(),aspect='auto',origin='lower')
+                    im.set_interpolation('nearest')
                     cb=plt.colorbar(im, cax=cax)
 
                     self.ax[name]=ax
@@ -420,11 +422,11 @@ class smileiQtPlot(QWidget):
                 event.inaxes.set_ylim(float(ranges[0]),float(ranges[1]))
 
             self.canvas.draw()
-        elif event.key == 'z':
+        elif event.key == 'c':
             range, ok = QInputDialog.getText(self, 'Ranges', 'Give '+event.key+' range:')        
             if ok:
                 ranges=range.split(' ')
-                event.inaxes.set_clim(float(ranges[0]),float(ranges[1]))
+                event.inaxes.images[0].set_clim(float(ranges[0]),float(ranges[1]))
 
             self.canvas.draw()
         elif event.key == 'shift':
