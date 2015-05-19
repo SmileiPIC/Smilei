@@ -2,7 +2,10 @@
 #ifndef ELECTROMAGNBC2D_Trans_SM_H
 #define ELECTROMAGNBC2D_Trans_SM_H
 
+#include <vector>
+#include "Tools.h"
 #include "ElectroMagnBC.h" 
+#include "ElectroMagn2D.h" 
 
 class PicParams;
 class ElectroMagn;
@@ -13,11 +16,15 @@ public:
     ~ElectroMagnBC2D_Trans_SM();
 
     virtual void apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi);
+    
+    virtual void save_fields_BC2D_Trans(Field*);
 
  private:
+    std::vector<double>  Bz_yvalmin_Trans,Bz_yvalmax_Trans,By_yvalmin_Trans,By_yvalmax_Trans,Bx_yvalmin_Trans,Bx_yvalmax_Trans;
+    
     //! Number of nodes on the primal grid in the x-direction
     unsigned int nx_p;
-
+    
     //! Number of nodes on the dual grid in the x-direction
     unsigned int nx_d;
 

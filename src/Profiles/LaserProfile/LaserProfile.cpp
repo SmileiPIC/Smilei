@@ -18,6 +18,9 @@ laser_struct(laser_params.laser_param[n_laser])
     pi_ov_2 = 0.5 * M_PI;
     PI2     = 2.0 * M_PI;
 
+    omega0_                = laser_struct.omega0;
+    tchirp_                = laser_struct.tchirp;
+    
     a0_delta_y_            = laser_struct.a0 * laser_struct.delta;
     a0_delta_z_            = laser_struct.a0 * sqrt(1.0-pow(laser_struct.delta,2));
 

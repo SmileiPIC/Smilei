@@ -199,11 +199,12 @@ public:
     }
 
 
-private:
-    
+protected:
     //! Vector of boundary-condition per side for the fields
     std::vector<ElectroMagnBC*> emBoundCond;
 
+private:
+    
     //! Accumulate nrj lost with moving window
     double nrj_mw_lost;
 

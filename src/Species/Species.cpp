@@ -20,6 +20,7 @@
 
 #include "DensityFactory.h"
 #include "VelocityFactory.h"
+#include "TemperatureFactory.h"
 
 #include "Projector.h"
 
@@ -46,6 +47,7 @@ cell_length(params.cell_length),
 species_param(params.species_param[ispec]),
 densityProfile(DensityFactory::create(params, ispec)),
 velocityProfile(3,NULL),
+temperatureProfile(3,NULL),
 ndim(params.nDim_particle),
 min_loc(smpi->getDomainLocalMin(0))
 {
@@ -53,6 +55,10 @@ min_loc(smpi->getDomainLocalMin(0))
     velocityProfile[0]=VelocityFactory::create(params, ispec, 0);
     velocityProfile[1]=VelocityFactory::create(params, ispec, 1);
     velocityProfile[2]=VelocityFactory::create(params, ispec, 2);
+    
+    temperatureProfile[0]=TemperatureFactory::create(params, ispec, 0);
+    temperatureProfile[1]=TemperatureFactory::create(params, ispec, 1);
+    temperatureProfile[2]=TemperatureFactory::create(params, ispec, 2);
     
     // -------------------
     // Variable definition
@@ -108,6 +114,7 @@ min_loc(smpi->getDomainLocalMin(0))
     
 	
     if (!params.restart) {
+    
 //        unsigned int npart_effective=0;
         
         // Create particles in a space starting at cell_index
@@ -164,6 +171,8 @@ Species::~Species()
     if (densityProfile) delete densityProfile;
     for (unsigned int i=0; i<velocityProfile.size(); i++)
         delete velocityProfile[i];
+    for (unsigned int i=0; i<temperatureProfile.size(); i++)
+        delete temperatureProfile[i];
     
     DEBUG(10,"Species deleted ");
 }
@@ -187,8 +196,35 @@ void Species::initWeight(PicParams* params, unsigned int ispec, unsigned int iPa
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::initCharge(PicParams* params, unsigned int ispec, unsigned int iPart, double density)
 {
-    for (unsigned  p= iPart; p<iPart+params->species_param[ispec].n_part_per_cell; p++) {
-        particles.charge(p) = params->species_param[ispec].charge;
+    double q = params->species_param[ispec].charge;
+    short Z = (short)q;
+    double r = q-(double)Z;
+    unsigned int N = params->species_param[ispec].n_part_per_cell;
+    
+    // if charge is integer, then all particles have the same charge
+    if ( r == 0. ) {
+        for (unsigned int p = iPart; p<iPart+N; p++)
+            particles.charge(p) = Z;
+    // if charge is not integer, then particles can have two different charges
+    } else {
+        int tot = 0, Nm, Np;
+        double rr=r/(1-r), diff;
+        Np = (int)round(r*(double)N);
+        Nm = (int)N - Np;
+        for (unsigned int p = iPart; p<iPart+N; p++) {
+            if (Np > rr*Nm) {
+                particles.charge(p) = Z+1;
+                Np--;
+            } else {
+                particles.charge(p) = Z;
+                Nm--;
+            }
+            tot += particles.charge(p);
+        }
+        diff = ((double)N)*q - (double)tot; // missing charge
+        if (diff != 0.) {
+            WARNING("Could not match exactly charge="<<q<<" for species #"<<ispec<<" (difference of "<<diff<<"). Try to add particles.");
+        }
     }
 }
 
@@ -235,12 +271,14 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
 	    for (unsigned int p= iPart; p<iPart+np; p++) {
             for (unsigned int i=0; i<3 ; i++) {
                 particles.momentum(i,p) = 0.0;
+		
             }
 	    }
 		
 	} else if (initMomentum_type == "maxwell-juettner")
 	{
 	    // initialize using the Maxwell-Juettner distribution function
+	    
 	    for (unsigned int p= iPart; p<iPart+np; p++)
 		{
 		    double Renergy=(double)rand() / RAND_MAX;
@@ -273,7 +311,6 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
 		}//p
 		
 	    // center the distribution function around pMean
-	    // \todo{Allow for non-zero mean-velocity (MG)}
 	    for (unsigned int p= iPart; p<iPart+np; p++)
 		{
 		    for (unsigned int i=0; i<3 ; i++) {
@@ -281,8 +318,20 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
 		    }
 		}
 		
+        for (unsigned int p= iPart; p<iPart+np; p++) {
+            particles.momentum(1,p) *= sqrt(temp[1]/temp[0]);
+            particles.momentum(2,p) *= sqrt(temp[2]/temp[0]);
+        }
+        
+    // Rectangular distribution
+    } else if (initMomentum_type == "rectangular") {
+        
+        for (unsigned int p= iPart; p<iPart+np; p++) {
+            particles.momentum(0,p) = (2.*(double)rand() / RAND_MAX - 1.) * sqrt(temp[0]/species_param.mass);
+            particles.momentum(1,p) = (2.*(double)rand() / RAND_MAX - 1.) * sqrt(temp[1]/species_param.mass);
+            particles.momentum(2,p) = (2.*(double)rand() / RAND_MAX - 1.) * sqrt(temp[2]/species_param.mass);
+        }
     }//END if initMomentum_type
-    
     
     // Adding the mean velocity (using relativistic composition)
     // ---------------------------------------------------------
@@ -700,6 +749,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
                 x_cell[1] = cell_index[1] + (j+0.5)*cell_length[1];
                 x_cell[2] = cell_index[2] + (k+0.5)*cell_length[2];
                 
+		    
                 // assign density its correct value in the cell
                 density(i,j,k) = species_param.density
                 *                (*densityProfile)(x_cell);
@@ -709,7 +759,10 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
                     
                     // assign the temperature & mean-velocity their correct value in the cell
                     for (unsigned int m=0; m<3; m++)	{
-                        temperature[m](i,j,k) = species_param.temperature[m];
+                        double temp_profile=(*temperatureProfile[m])(x_cell);
+                        temperature[m](i,j,k) = species_param.temperature[m]*temp_profile;
+			//MESSAGE("temp 1 :" <<  temperature[m](i,j,k))
+			
                         double vel_profile=(*velocityProfile[m])(x_cell);
                         velocity[m](i,j,k) = species_param.mean_velocity[m]*vel_profile;
                     }
@@ -746,6 +799,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
     // Maxwell-Juettner cumulative function (array)
     std::vector<double> max_jutt_cumul;
     
+    /*
     if (species_param.initMomentum_type=="maxwell-juettner") {
         //! \todo{Pass this parameters in a code constants class (MG)}
         nE     = 20000;
@@ -753,6 +807,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
         
         max_jutt_cumul.resize(nE);
         double mu=species_param.mass/species_param.temperature[0];
+        //double mu=species_param.mass/temperature[m](i,j,k);
         double Emax=muEmax/mu;
         dE=Emax/nE;
         
@@ -768,7 +823,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
         for (unsigned int i=0; i<nE; i++) max_jutt_cumul[i]/=max_jutt_cumul[nE-1];
         
     }
-    
+    */
     
     // Initialization of the particles properties
     // ------------------------------------------
@@ -790,6 +845,29 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
                 // initialize particles in meshes where the density is non-zero
                 if (density(i,j,k)>0) {
                     
+    		if (species_param.initMomentum_type=="maxwell-juettner") {
+        		//! \todo{Pass this parameters in a code constants class (MG)}
+        		nE     = 20000;
+        		muEmax = 20.0;
+        
+        		max_jutt_cumul.resize(nE);
+        		//double mu=species_param.mass/species_param.temperature[0];
+        		double mu=species_param.mass/temperature[0](i,j,k); // For Temperature profile
+        		double Emax=muEmax/mu;
+        		dE=Emax/nE;
+        
+        		double fl=0;
+        		double fr=0;
+        		max_jutt_cumul[0]=0.0;
+        		for (unsigned  i=1; i<nE; i++ ) {
+            		//! \todo{this is just the isotropic case, generalise to non-isotropic (MG)}
+            		fr=(1+i*dE)*sqrt(pow(1.0+i*dE,2)-1.0) * exp(-mu*i*dE);
+            		max_jutt_cumul[i]=max_jutt_cumul[i-1] + 0.5*dE*(fr+fl);
+            		fl=fr;
+        		}
+        		for (unsigned int i=0; i<nE; i++) max_jutt_cumul[i]/=max_jutt_cumul[nE-1];
+    			}
+			
                     temp[0] = temperature[0](i,j,k);
                     vel[0]  = velocity[0](i,j,k);
                     temp[1] = temperature[1](i,j,k);
@@ -807,8 +885,10 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
                     
                     initPosition(species_param.n_part_per_cell,iPart, indexes, params.nDim_particle,
                                  cell_length, species_param.initPosition_type);
+		    
                     initMomentum(species_param.n_part_per_cell,iPart, temp, vel,
                                  species_param.initMomentum_type, max_jutt_cumul);
+				 
                     initWeight(&params, speciesNumber, iPart, density(i,j,k));
                     initCharge(&params, speciesNumber, iPart, density(i,j,k));
                     

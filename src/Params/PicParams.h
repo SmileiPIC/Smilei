@@ -44,7 +44,7 @@ struct SpeciesStructure {
     unsigned int atomic_number;
     
     //! charge [proton charge]
-    short charge;
+    double charge;
     
     //! density [\f$n_N=\epsilon_0\,m_e\,\omega_N^{2}/e^2\f$ ]
     double density;
@@ -82,7 +82,10 @@ struct SpeciesStructure {
     ProfileSpecies mvel_z_profile;
     
     
-    //! velocity profile
+    //! temperature profile
+    ProfileSpecies temp_x_profile;
+    ProfileSpecies temp_y_profile;
+    ProfileSpecies temp_z_profile;
     
 };
 
@@ -146,6 +149,9 @@ public:
     
     //! local simulation box size in \f$2\pi/k_N \f$
     std::vector<double> sim_length;
+    
+    //! time during which fields are frozen
+    double time_fields_frozen;
     
     //! Boundary conditions for ElectroMagnetic Fields
     std::string bc_em_type_long;

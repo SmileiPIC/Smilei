@@ -13,6 +13,8 @@
 
 #include "ExtFieldProfile2D.h"
 
+#include "ElectroMagnBC.h"
+
 using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -969,5 +971,8 @@ void ElectroMagn2D::applyExternalField(Field* my_field,  ExtFieldProfile *my_pro
             (*field2D)(i,j) = (*field2D)(i,j) + (*profile)(pos);
         }//j
     }//i
+    
+    if (emBoundCond[0]!=0) emBoundCond[0]->save_fields_BC2D_Long(my_field);
+    if (emBoundCond[1]!=0) emBoundCond[1]->save_fields_BC2D_Trans(my_field);
     
 }

@@ -109,7 +109,7 @@ public:
 	std::vector<phaseStructure> vecPhase;
 	
 	//! Method to find the numbers of requested species, sorted, and duplicates removed
-    std::vector<unsigned int> FindSpecies(std::vector<std::string>, PicParams&);
+    static std::vector<unsigned int> FindSpecies(std::vector<std::string>, PicParams&);
 
 };
 

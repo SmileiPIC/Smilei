@@ -33,6 +33,9 @@ interpolation_order = 2
 timestep = 0.005
 sim_time  = 0.5
 
+time_fields_frozen = 100000000000.
+
+
 # SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
 # either use the resolution (res_space) or cell-length (cell_length)
 #
@@ -112,6 +115,33 @@ species
 	bc_part_type_east = none
 end
 
+# COLLISIONS
+# Several collision types can be defined. For each type, add a group "collisions" containing
+# the following parameters:
+# species1    : "type" or "name" of the first  species that collide
+#               (can be a list of species)
+# species2    : "type" or "name" of the second species that collide
+#               (can be a list of species) (can be the same as the first species)
+# coulomb_log : value of the Coulomb logarithm. If negative or zero, then automatically computed.
+#
+collisions
+	species1 = ion1
+	species2 = electron1
+	coulomb_log = 0.
+end
+
+# ----------------
+# LASER DEFINITION
+# ----------------
+#laser 
+#	a0=0.0
+#	angle=0
+#	delta=0.707106781                
+#	time_profile = constant
+#	double_params = 11.0
+#	transv_profile = plane-wave
+#	boxSide = west
+#end
 
 # ---------------------
 # DIAGNOSTIC PARAMETERS

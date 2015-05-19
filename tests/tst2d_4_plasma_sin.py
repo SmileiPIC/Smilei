@@ -147,7 +147,7 @@ def my_func_laser_profile(t,y):
 Laser(
 boxSide = 'west' ,
 a0=0.2 ,
-focus=(position,  25.0) ,
+focus=(position,  dy/2) ,
 angle=20 ,
 delta=0.0 ,
 time_profile = 'sin2' ,
