@@ -110,6 +110,22 @@ public:
     //! finalize exch / particles, manage particles suppr/introduce
     virtual void finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int tnum, int iDim);
 
+    void initSumRhoJ( ElectroMagn* EMfields );
+    void finalizeSumRhoJ( ElectroMagn* EMfields );
+    virtual void initSumField( Field* field );
+    virtual void finalizeSumField( Field* field );
+
+    void createType( PicParams& params );
+    //! MPI_Datatype to exchange [ndims_][iDim=0 prim/dial][iDim=1 prim/dial]
+    MPI_Datatype ntypeSum_[2][2][2];
+    MPI_Datatype corner_ntypeSum_[2][2][2];
+
+    MPI_Datatype ntype_[3][2][2];
+    MPI_Datatype corner_ntype_[2][2][2];
+    
+    // Use a buffer per direction to exchange data before summing
+    Field2D buf[2][2];
+    Field2D corner_buf[2][2];
 
     //Implementation of Chris Hamilton. Not used because it generates non continuous curves.
     //!extractMask extracts a mask µ indicating which axes are active at a given iteration i of the compact hilbert index.

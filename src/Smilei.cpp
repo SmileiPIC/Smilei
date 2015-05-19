@@ -301,6 +301,10 @@ int main (int argc, char* argv[])
         // (1) interpolate the fields at the particle position
         // (2) move the particle
         // (3) calculate the currents (charge conserving method)
+
+	/*******************************************/
+	/********** Move particles *****************/
+	/*******************************************/
         timer[1].restart();
 #pragma omp parallel shared (EMfields,time_dual,vecSpecies,smpi,params)
         {
@@ -309,7 +313,6 @@ int main (int argc, char* argv[])
 #ifdef _OMP
             tid = omp_get_thread_num();
 #endif
-
 
 #ifdef _PATCH
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
@@ -358,7 +361,25 @@ int main (int argc, char* argv[])
             }
 #endif
         timer[1].update();
+
+
+	/*******************************************/
+	/*********** Sum densities *****************/
+	/*******************************************/
         timer[4].restart();
+#ifdef _PATCH
+	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	    vecPatches[ipatch]->EMfields->computeTotalRhoJ(); // Attention if output -> Sync / per species fields
+	}
+	
+	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	    vecPatches[ipatch]->initSumField( EMfields->rho_ ); // initialize
+	}
+	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	    vecPatches[ipatch]->finalizeSumFields( EMfields->rho_ EMfields ); // finalize (waitall + sum)
+	}
+#endif
+#ifndef _PATCH
         if  (diag_flag) {
             EMfields->computeTotalRhoJs(params.clrw); //Compute global arrays J_s from patches and restack everything on patch of ispec 0.
             #pragma omp master
@@ -372,8 +393,13 @@ int main (int argc, char* argv[])
             smpi->sumRhoJ( EMfields );        //Synchronize  global Rho and J.
         }
         EMfields->finalizePatch(params.clrw); //Copy values back into the patches.
-        
+#endif 
         timer[4].update();
+
+
+	/*******************************************/
+	/*********** Maxwell solver ****************/
+	/*******************************************/
         
         // solve Maxwell's equations
         timer[2].restart();
