@@ -1424,12 +1424,14 @@ void Patch::initSumField( Field* field )
 		istart = iNeighbor * ( n_elem[iDim]- oversize2[iDim] ) + (1-iNeighbor) * ( 0 );
 		ix = (1-iDim)*istart;
 		iy =    iDim *istart;
-		MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, neighbor_[iDim][iNeighbor], 0, MPI_COMM_SELF, &(srequest[iDim][iNeighbor]) );
+		int tag = buildtag( hindex, neighbor_[iDim][iNeighbor]);
+		MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.patch_srequest[iDim][iNeighbor]) );
 	    } // END of Send
             
 	    if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
 		int tmp_elem = (buf[iDim][(iNeighbor+1)%2]).dims_[0]*(buf[iDim][(iNeighbor+1)%2]).dims_[1];
-		MPI_Irecv( &( (buf[iDim][(iNeighbor+1)%2]).data_2D[0][0] ), tmp_elem, MPI_DOUBLE, neighbor_[iDim][(iNeighbor+1)%2], 0, MPI_COMM_SELF, &(rrequest[iDim][(iNeighbor+1)%2]) );
+		int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], hindex);
+		MPI_Irecv( &( (buf[iDim][(iNeighbor+1)%2]).data_2D[0][0] ), tmp_elem, MPI_DOUBLE, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]) );
 	    } // END of Recv
             
 	} // END for iNeighbor
@@ -1438,20 +1440,20 @@ void Patch::initSumField( Field* field )
     for (int iDim=0 ; iDim<2 ; iDim++) {
 	
 	MPI_Datatype ntype = corner_ntypeSum_[0][isDual[0]][isDual[1]]; // 1st dimension useless
-	MPI_Request corner_srequest[patch_ndims_][2];
-	MPI_Request corner_rrequest[patch_ndims_][2];
       
 	for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
             
 	    if (corner_neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
 		ix = iDim      * ( n_elem[iDim]     - oversize2[iDim]      ) + (1-iDim     ) * ( 0 );
 		iy = iNeighbor * ( n_elem[iNeighbor]- oversize2[iNeighbor] ) + (1-iNeighbor) * ( 0 );
-		MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, corner_neighbor_[iDim][iNeighbor], 0, MPI_COMM_SELF, &(corner_srequest[iDim][iNeighbor]) );
+		int tag = buildtag( hindex, corner_neighbor_[iDim][iNeighbor]);
+		MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.corner_srequest[iDim][iNeighbor]) );
 	    } // END of Send
             
 	    if (corner_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
 		int tmp_elem = (corner_buf[iDim][(iNeighbor+1)%2]).dims_[0]*(corner_buf[iDim][(iNeighbor+1)%2]).dims_[1];
-		MPI_Irecv( &( (corner_buf[iDim][(iNeighbor+1)%2]).data_2D[0][0] ), tmp_elem, MPI_DOUBLE, corner_neighbor_[iDim][(iNeighbor+1)%2], 0, MPI_COMM_SELF, &(corner_rrequest[iDim][(iNeighbor+1)%2]) );
+		int tag = buildtag( corner_neighbor_[iDim][(iNeighbor+1)%2], hindex);
+		MPI_Irecv( &( (corner_buf[iDim][(iNeighbor+1)%2]).data_2D[0][0] ), tmp_elem, MPI_DOUBLE, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.corner_rrequest[iDim][(iNeighbor+1)%2]) );
 	    } // END of Recv
             
 	} // END for iNeighbor
@@ -1499,15 +1501,13 @@ void Patch::finalizeSumField( Field* field )
         MPI_Datatype ntype = ntypeSum_[iDim][isDual[0]][isDual[1]];
         MPI_Status sstat    [patch_ndims_][2];
         MPI_Status rstat    [patch_ndims_][2];
-        MPI_Request srequest[patch_ndims_][2];
-        MPI_Request rrequest[patch_ndims_][2];
 	
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
             if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
-                MPI_Wait( &(srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
+                MPI_Wait( &(f2D->specMPI.patch_srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
             }
             if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
-                MPI_Wait( &(rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
+                MPI_Wait( &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
             }
         }
     }
@@ -1517,15 +1517,13 @@ void Patch::finalizeSumField( Field* field )
         MPI_Datatype ntype = corner_ntypeSum_[0][isDual[0]][isDual[1]];; // 1st dimension useless
         MPI_Status corner_sstat    [patch_ndims_][2];
         MPI_Status corner_rstat    [patch_ndims_][2];
-        MPI_Request corner_srequest[patch_ndims_][2];
-        MPI_Request corner_rrequest[patch_ndims_][2];
 	
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
             if (corner_neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
-                MPI_Wait( &(corner_srequest[iDim][iNeighbor]), &(corner_sstat[iDim][iNeighbor]) );
+                MPI_Wait( &(f2D->specMPI.corner_srequest[iDim][iNeighbor]), &(corner_sstat[iDim][iNeighbor]) );
             }
             if (corner_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
-                MPI_Wait( &(corner_rrequest[iDim][(iNeighbor+1)%2]), &(corner_rstat[iDim][(iNeighbor+1)%2]) );
+                MPI_Wait( &(f2D->specMPI.corner_rrequest[iDim][(iNeighbor+1)%2]), &(corner_rstat[iDim][(iNeighbor+1)%2]) );
             }
         }
     }
@@ -1563,5 +1561,85 @@ void Patch::finalizeSumField( Field* field )
             
         } // END for iNeighbor
     }       
+
+    for (int iDim=0 ; iDim<patch_ndims_ ; iDim++) {
+        for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
+	    buf[iDim][iNeighbor].deallocateDims();
+        }
+    }
+     for (int iDim=0 ; iDim<patch_ndims_ ; iDim++) {
+        for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
+	    corner_buf[iDim][iNeighbor].deallocateDims();
+        }
+    }
+
 } // END finalizeSumField
 
+void Patch::initExchange( Field* field )
+{
+    int patch_ndims_(2);
+    int patch_nbNeighbors_(2);
+    vector<unsigned int> patch_oversize(2,2);
+
+    std::vector<unsigned int> n_elem   = field->dims_;
+    std::vector<unsigned int> isDual = field->isDual_;
+    Field2D* f2D =  static_cast<Field2D*>(field);
+
+    int istart, ix, iy;
+
+    // Loop over dimField
+    for (int iDim=0 ; iDim<patch_ndims_ ; iDim++) {
+
+        MPI_Datatype ntype = ntype_[iDim][isDual[0]][isDual[1]];
+        for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
+
+            if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) ) {
+
+                istart = iNeighbor * ( n_elem[iDim]- (2*patch_oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( 2*patch_oversize[iDim] + isDual[iDim] );
+                ix = (1-iDim)*istart;
+                iy =    iDim *istart;
+		int tag = buildtag( hindex, neighbor_[iDim][iNeighbor]);
+                MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.patch_srequest[iDim][iNeighbor]) );
+
+            } // END of Send
+
+            if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) ) {
+
+                istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - 1 ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
+                ix = (1-iDim)*istart;
+                iy =    iDim *istart;
+ 		int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], hindex);
+		MPI_Irecv( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]));
+
+            } // END of Recv
+
+        } // END for iNeighbor
+
+    } // END for iDim
+
+}
+
+void Patch::finalizeExchange( Field* field )
+{
+    int patch_ndims_(2);
+    int patch_nbNeighbors_(2);
+
+    Field2D* f2D =  static_cast<Field2D*>(field);
+
+    MPI_Status sstat    [patch_ndims_][2];
+    MPI_Status rstat    [patch_ndims_][2];
+
+    // Loop over dimField
+    for (int iDim=0 ; iDim<patch_ndims_ ; iDim++) {
+
+        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+            if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) ) {
+                MPI_Wait( &(f2D->specMPI.patch_srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
+            }
+            if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL)  ) {
+                MPI_Wait( &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
+            }
+        }
+
+    } // END for iDim
+}

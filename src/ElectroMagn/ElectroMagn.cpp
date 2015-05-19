@@ -29,6 +29,7 @@ n_species(params.n_species),
 n_space(params.n_space),
 oversize(params.oversize)
 {
+
     // initialize poynting vector
     poynting[0].resize(nDim_field,0.0);
     poynting[1].resize(nDim_field,0.0);
@@ -189,6 +190,16 @@ void ElectroMagn::solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, Pic
 //} // end parallel
 }
 
+void ElectroMagn::boundaryConditions(int itime, double time_dual, SmileiMPI* smpi, PicParams &params, SimWindow* simWindow)
+{
+    if ((!simWindow) || (!simWindow->isMoving(time_dual)) )
+        if (emBoundCond[0]!=NULL) // <=> if !periodic
+	    emBoundCond[0]->apply(this, time_dual, smpi);
+    if ( (emBoundCond.size()>1) )
+        if (emBoundCond[1]!=NULL) // <=> if !periodic
+	    emBoundCond[1]->apply(this, time_dual, smpi);
+    
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Method used to create a dump of the data contained in ElectroMagn

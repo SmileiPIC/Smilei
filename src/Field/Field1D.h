@@ -31,6 +31,7 @@ public:
 
     //! Method used to allocate a Field1D
     void allocateDims(std::vector<unsigned int> dims);
+    void deallocateDims();
     //! a Field1D can also be initialized win an unsigned int 
 	void allocateDims(unsigned int dims1);
     //! 1D method used to allocate Field, isPrimal define if mainDim is Primal or Dual

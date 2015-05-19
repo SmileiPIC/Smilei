@@ -376,8 +376,27 @@ int main (int argc, char* argv[])
 	    vecPatches[ipatch]->initSumField( EMfields->rho_ ); // initialize
 	}
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	    vecPatches[ipatch]->finalizeSumFields( EMfields->rho_ EMfields ); // finalize (waitall + sum)
+	    vecPatches[ipatch]->finalizeSumField( EMfields->rho_ ); // finalize (waitall + sum)
 	}
+	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	    vecPatches[ipatch]->initSumField( EMfields->Jx_ ); // initialize
+	}
+	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	    vecPatches[ipatch]->finalizeSumField( EMfields->Jx_ ); // finalize (waitall + sum)
+	}
+	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	    vecPatches[ipatch]->initSumField( EMfields->Jy_ ); // initialize
+	}
+	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	    vecPatches[ipatch]->finalizeSumField( EMfields->Jy_ ); // finalize (waitall + sum)
+	}
+	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	    vecPatches[ipatch]->initSumField( EMfields->Jz_ ); // initialize
+	}
+	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	    vecPatches[ipatch]->finalizeSumField( EMfields->Jz_ ); // finalize (waitall + sum)
+	}
+
 #endif
 #ifndef _PATCH
         if  (diag_flag) {
@@ -403,11 +422,68 @@ int main (int argc, char* argv[])
         
         // solve Maxwell's equations
         timer[2].restart();
-        EMfields->solveMaxwell(itime, time_dual, smpi, params, simWindow);
+        //EMfields->solveMaxwell(itime, time_dual, smpi, params, simWindow);
+	// saving magnetic fields (to compute centered fields used in the particle pusher)
+	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	    vecPatches[ipatch]->EMfields->saveMagneticFields();
+
+	// Compute Ex_, Ey_, Ez_
+	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	    vecPatches[ipatch]->EMfields->solveMaxwellAmpere();
+
+        #pragma omp single
+	{
+	    // Exchange Ex_, Ey_, Ez_
+	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+		vecPatches[ipatch]->initExchange( vecPatches[ipatch]->EMfields->Ex_ );
+	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+		vecPatches[ipatch]->finalizeExchange( vecPatches[ipatch]->EMfields->Ex_ );
+	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+		vecPatches[ipatch]->initExchange( vecPatches[ipatch]->EMfields->Ey_ );
+	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+		vecPatches[ipatch]->finalizeExchange( vecPatches[ipatch]->EMfields->Ey_ );
+	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+		vecPatches[ipatch]->initExchange( vecPatches[ipatch]->EMfields->Ez_ );
+	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+		vecPatches[ipatch]->finalizeExchange( vecPatches[ipatch]->EMfields->Ez_ );
+
+	}// end single
+
+	// Compute Bx_, By_, Bz_
+	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	    vecPatches[ipatch]->EMfields->solveMaxwellFaraday();
+
+        #pragma omp single
+	{
+	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
+		vecPatches[ipatch]->EMfields->boundaryConditions(itime, time_dual, smpi, params, simWindow);
+	    
+	    // Exchange Bx_, By_, Bz_
+	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+		vecPatches[ipatch]->initExchange( vecPatches[ipatch]->EMfields->Bx_ );
+	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+		vecPatches[ipatch]->finalizeExchange( vecPatches[ipatch]->EMfields->Bx_ );
+	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+		vecPatches[ipatch]->initExchange( vecPatches[ipatch]->EMfields->By_ );
+	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+		vecPatches[ipatch]->finalizeExchange( vecPatches[ipatch]->EMfields->By_ );
+	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+		vecPatches[ipatch]->initExchange( vecPatches[ipatch]->EMfields->Bz_ );
+	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+		vecPatches[ipatch]->finalizeExchange( vecPatches[ipatch]->EMfields->Bz_ );
+
+
+	}// end single
+
+	// Compute Bx_m, By_m, Bz_m
+	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	    vecPatches[ipatch]->EMfields->centerMagneticFields();
+	//} // end parallel
+
         timer[2].update();
         } //End omp parallel region
         
-
+#ifdef _TOBEPATCHED
         // incrementing averaged electromagnetic fields
         if (diag_params.ntime_step_avg) EMfields->incrementAvgFields(itime, diag_params.ntime_step_avg);
         
@@ -469,7 +545,7 @@ int main (int argc, char* argv[])
             simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi, params);
         }
         timer[5].update();
-        
+#endif
     }//END of the time loop
     
     smpi->barrier();

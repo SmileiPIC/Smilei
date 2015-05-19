@@ -10,6 +10,7 @@
 #include <fstream>
 
 #include "Tools.h"
+#include "SpeciesMPI.h"
 
 //! Structure containing the fields at a given position (e.g. at a Particle position)
 struct LocalFields
@@ -28,31 +29,32 @@ class Field
 {
 
 public:
+    SpeciesMPI specMPI;
 
     //! name of the field
     std::string name;
 
     //! Constructor for Field: with no input argument
     Field() {
-        ;
+      specMPI.init();
     };
 
     //! Constructor for Field: with the Field dimensions as input argument
     Field( std::vector<unsigned int> dims ) {
-        ;
+        specMPI.init();
     };
     //! Constructor, isPrimal define if mainDim is Primal or Dual
     Field( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal ) {
-        ;
+        specMPI.init();
     };
 
     //! Constructor for Field: with the Field dimensions and dump file name as input argument
     Field( std::vector<unsigned int> dims, std::string name_in ) : name(name_in) {
-        ;
+        specMPI.init();
     } ;
     //! Constructor for Field: isPrimal define if mainDim is Primal or Dual
     Field( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name_in ) : name(name_in) {
-        ;
+       specMPI.init() ;
     } ;
 
     //! Destructor for Field
@@ -62,6 +64,7 @@ public:
 
     //! Virtual method used to allocate Field
     virtual void allocateDims(std::vector<unsigned int> dims) = 0;
+    virtual void deallocateDims() = 0;
     
     //! Virtual method used to allocate Field, isPrimal define if mainDim is Primal or Dual
     virtual void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal) = 0;

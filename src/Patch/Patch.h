@@ -115,6 +115,9 @@ public:
     virtual void initSumField( Field* field );
     virtual void finalizeSumField( Field* field );
 
+    virtual void initExchange( Field* field );
+    virtual void finalizeExchange( Field* field );
+
     void createType( PicParams& params );
     //! MPI_Datatype to exchange [ndims_][iDim=0 prim/dial][iDim=1 prim/dial]
     MPI_Datatype ntypeSum_[2][2][2];
@@ -167,5 +170,22 @@ private:
     //};
 
 };
+
+#ifdef _VECTORPATCH
+class VectorPatch {
+ public :
+    VectorPatch();
+    ~VectorPatch();
+    void sumField( Field* field ) {
+	for (unsigned int ipatch=0 ; ipatch<patches_.size() ; ipatch++)
+	    patches_[ipatch]->initSumField( field ); // initialize
+	for (unsigned int ipatch=0 ; ipatch<patches_.size() ; ipatch++)
+	    patches_[ipatch]->finalizeSumField( field ); // finalize (waitall + sum)
+    }
+ private :
+    std::vector<Patch*> patches_;
+    
+};
+#endif
 
 #endif

@@ -86,6 +86,15 @@ void Field2D::allocateDims(std::vector<unsigned int> dims )
 	
 }
 
+void Field2D::deallocateDims()
+{
+    delete [] data_;
+    data_ = NULL;
+    delete [] data_2D;
+    data_2D = NULL;
+        
+}
+
 void Field2D::allocateDims(unsigned int dims1, unsigned int dims2)
 {
 	vector<unsigned int> dims(2);

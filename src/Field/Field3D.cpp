@@ -84,6 +84,16 @@ void Field3D::allocateDims(std::vector<unsigned int> dims ) {
 
 }
 
+void Field3D::deallocateDims()
+{
+    delete [] data_;
+    data_ = NULL;
+    for (unsigned int i=0; i<dims_[0]; i++) delete [] data_3D[i];
+    delete [] data_3D;
+    data_3D = NULL;
+
+}
+
 
 void Field3D::allocateDims(unsigned int dims1, unsigned int dims2, unsigned int dims3)
 {
