@@ -17,10 +17,6 @@ vector<Collisions*> CollisionsFactory::create(PicParams& params, InputData &ifil
     bool intra, debye_length_required = false;
     ostringstream mystream;
     
-    // Needs wavelength_SI to be defined
-    if (params.wavelength_SI <= 0.)
-        ERROR("The parameter `wavelength_SI` needs to be defined and positive in order to compute collisions");
-    
     // Loop over each binary collisions group and parse info
     int n_collisions = 0;
     while (ifile.existGroup("collisions",n_collisions)) {
@@ -76,6 +72,11 @@ vector<Collisions*> CollisionsFactory::create(PicParams& params, InputData &ifil
         vecCollisions.push_back( new Collisions(params,n_collisions,sgroup1,sgroup2,clog,intra) );
         n_collisions++;
     }
+    
+    // Needs wavelength_SI to be defined
+    if (n_collisions > 0)
+        if (params.wavelength_SI <= 0.)
+            ERROR("The parameter `wavelength_SI` needs to be defined and positive in order to compute collisions");
     
     // pass the variable "debye_length_required" into the Collision class
     Collisions::debye_length_required = debye_length_required;
