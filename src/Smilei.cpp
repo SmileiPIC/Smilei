@@ -361,7 +361,7 @@ int main (int argc, char* argv[])
 		    }
 		}
 	    }
-	    cout << "Particles have moved" << endl;
+	    //cout << "Particles have moved" << endl;
 #endif
 #ifndef _PATCH
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
@@ -400,16 +400,16 @@ int main (int argc, char* argv[])
 	    vecPatches[ipatch]->EMfields->computeTotalRhoJ(); // Attention if output -> Sync / per species fields
 	}
 
-	cout << "Field summed : before rho" << endl;
+	//cout << "Field summed : before rho" << endl;
 
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 	    vecPatches[ipatch]->initSumField( EMfields->rho_ ); // initialize
 	}
-	cout << "Field summed : mid rho" << endl;
+	//cout << "Field summed : mid rho" << endl;
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 	    vecPatches[ipatch]->finalizeSumField( EMfields->rho_ ); // finalize (waitall + sum)
 	}
-	cout << "Field summed : after rho" << endl;
+	//cout << "Field summed : after rho" << endl;
 
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 	    vecPatches[ipatch]->initSumField( EMfields->Jx_ ); // initialize
@@ -429,7 +429,7 @@ int main (int argc, char* argv[])
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 	    vecPatches[ipatch]->finalizeSumField( EMfields->Jz_ ); // finalize (waitall + sum)
 	}
-	cout << "Field summed" << endl;
+	//cout << "Field summed" << endl;
 #endif
 #ifndef _PATCH
         if  (diag_flag) {
@@ -463,7 +463,7 @@ int main (int argc, char* argv[])
 	// Compute Ex_, Ey_, Ez_
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches[ipatch]->EMfields->solveMaxwellAmpere();
-	cout << "MA solved" << endl;
+	//cout << "MA solved" << endl;
 
         #pragma omp single
 	{
@@ -486,7 +486,7 @@ int main (int argc, char* argv[])
 	// Compute Bx_, By_, Bz_
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches[ipatch]->EMfields->solveMaxwellFaraday();
-	cout << "MF solved" << endl;
+	//cout << "MF solved" << endl;
 
         #pragma omp single
 	{
