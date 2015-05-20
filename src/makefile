@@ -100,7 +100,7 @@ deps: $(DEPS)
 	@ echo "Checking dependencies for $<"
 	$(eval DIR := $(shell  dirname $<))
 # create and modify dependecy file .d to take into account the location subdir	
-	@ $(SMILEICXX) -MM $*.cpp 2>/dev/null | sed -e "s@\(^.*\)\.o:@$(DIR)/\1.d $(DIR)/\1.o:@" > $@  
+	@ $(SMILEICXX) $(CFLAGS) -MM $*.cpp 2>/dev/null | sed -e "s@\(^.*\)\.o:@$(DIR)/\1.d $(DIR)/\1.o:@" > $@  
 
 %.o : %.cpp
 	$(SMILEICXX) $(CFLAGS) -c $< -o $@

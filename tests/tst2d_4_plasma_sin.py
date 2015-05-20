@@ -102,6 +102,10 @@ myspec1.bc_part_type_west  = 'refl'
 myspec1.bc_part_type_east  = 'refl'
 myspec1.bc_part_type_south = 'none'
 myspec1.bc_part_type_north = 'none'
+myspec1.mvel_x_profile='constant'
+myspec1.mvel_y_profile='constant'
+myspec1.mvel_z_profile='constant'
+
 
 
 
@@ -119,6 +123,9 @@ mass = 1.0 ,
 charge = -1 ,
 density = density ,
 mean_velocity = 0.0 ,
+mvel_x_profile='constant',
+mvel_y_profile='constant',
+mvel_z_profile='constant',
 temperature = 0.0001 ,
 dynamics_type = 'norm' ,
 time_frozen = 0.0 ,

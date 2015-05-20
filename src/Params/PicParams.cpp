@@ -319,15 +319,16 @@ void PicParams::readSpecies(InputData &ifile) {
         
         // X
         ifile.extract("mvel_x_profile", tmpSpec.mvel_x_profile.profile,"species",0,n_species);
-        if (!tmpSpec.mvel_x_profile.profile.empty()) {
+        HEREIAM(tmpSpec.mvel_x_profile.profile);
+        if (tmpSpec.mvel_x_profile.profile.empty()) {
             //check if we have a function with that name ()
             //!FIXME: we should directly get the function, but somehow it doesn't work... 
-            
             PyObject *mypy = ifile.extract_py("mvel_x_profile", "species",0,n_species);
             if (mypy && PyCallable_Check(mypy)) {
                 tmpSpec.mvel_x_profile.py_profile=mypy;
                 tmpSpec.mvel_x_profile.profile="python";
             }
+            HEREIAM("HEHE " << tmpSpec.mvel_x_profile.profile << " : " << mypy);
         } else {
             ifile.extract("mvel_x_length_x", tmpSpec.mvel_x_profile.length_params_x,"species",0,n_species);
             if ( (geometry=="2d3v") || (geometry=="3d3v") )
@@ -342,7 +343,7 @@ void PicParams::readSpecies(InputData &ifile) {
         
         // Y
         ifile.extract("mvel_y_profile", tmpSpec.mvel_y_profile.profile,"species",0,n_species);
-        if (!tmpSpec.mvel_y_profile.profile.empty()) {
+        if (tmpSpec.mvel_y_profile.profile.empty()) {
             //check if we have a function with that name ()
             //!FIXME: we should directly get the function, but somehow it doesn't work... 
             
@@ -365,7 +366,7 @@ void PicParams::readSpecies(InputData &ifile) {
         
         // Z
         ifile.extract("mvel_z_profile", tmpSpec.mvel_z_profile.profile,"species",0,n_species);
-        if (!tmpSpec.mvel_z_profile.profile.empty()) {
+        if (tmpSpec.mvel_z_profile.profile.empty()) {
             //check if we have a function with that name ()
             //!FIXME: we should directly get the function, but somehow it doesn't work... 
             
