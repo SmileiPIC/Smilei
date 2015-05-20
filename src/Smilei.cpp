@@ -129,7 +129,7 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------------------------
     
     // vector of Species (virtual)
-    vector<Species*> vecSpecies = SpeciesFactory::createVector(params, smpi, NULL);
+    vector<Species*> vecSpecies;// = SpeciesFactory::createVector(params, smpi, NULL);
 
     // ------------------------------------------------------------------------
     // Initialize the simulation times time_prim at n=0 and time_dual at n=+1/2
@@ -176,7 +176,9 @@ int main (int argc, char* argv[])
     
 
 #ifdef _PATCH
+    cout << "Before Patches allocated\n";
     vector<Patch*> vecPatches = PatchesFactory::createVector(params, laser_params, smpi);
+    cout << "Patches allocated\n";
 #endif
 
     
@@ -196,6 +198,7 @@ int main (int argc, char* argv[])
         // Initialize the electromagnetic fields
         // -----------------------------------
         // Init rho and J by projecting all particles of subdomain
+#ifdef _NOPATCH
         EMfields->restartRhoJs();
         // Very first iteration used to initialize fields
         for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
@@ -205,10 +208,31 @@ int main (int argc, char* argv[])
             
             vecSpecies[ispec]->sort_part();
         }
+	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+		vecPatches[ipatch]->dynamics(time_dual, smpi, params, simWindow, diag_flag);
+	    }
+
+	    // Inter Patch exchange
+            for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
+                if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
+		    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+			vecPatches[ipatch]->initExchParticles(smpi, ispec, params, 100, 100);
+		    }
+		    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+			vecPatches[ipatch]->initCommParticles(smpi, ispec, params, 100, 100);
+		    }
+		    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+			vecPatches[ipatch]->finalizeCommParticles(smpi, ispec, params, 100, 100);
+			vecPatches[ipatch]->vecSpecies[ispec]->sort_part();
+		    }
+		}
+	    }
+
         EMfields->computeTotalRhoJs(params.clrw); //Compute currents per species from unsynchronized patches. Useful only for diags.
         for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) smpi->sumRhoJs(EMfields, ispec, true);//Synchronize MPI global arrays per species
         EMfields->computeTotalRhoJ(); //Compute currents from global Rho_s and J_s.
         diag_flag = 0;
+#endif
 
 #ifndef _PATCH
         // Init electric field (Ex/1D, + Ey/2D)
@@ -233,7 +257,9 @@ int main (int argc, char* argv[])
         //    sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
         //// temporary particle dump at time 0
         //sio->writePlasma( vecSpecies, 0., smpi );
-        EMfields->restartRhoJs();
+
+	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	    vecPatches[ipatch]->EMfields->restartRhoJs();
     }
 
 	
@@ -308,7 +334,8 @@ int main (int argc, char* argv[])
         timer[1].restart();
 #pragma omp parallel shared (EMfields,time_dual,vecSpecies,smpi,params)
         {
-            EMfields->restartRhoJ();
+            for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	      vecPatches[ipatch]->EMfields->restartRhoJ();
             int tid(0);
 #ifdef _OMP
             tid = omp_get_thread_num();
@@ -321,7 +348,7 @@ int main (int argc, char* argv[])
 
 	    // Inter Patch exchange
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-                if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
+                if ( vecPatches[0]->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
 		    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 			vecPatches[ipatch]->initExchParticles(smpi, ispec, params, 100, 100);
 		    }
@@ -334,6 +361,7 @@ int main (int argc, char* argv[])
 		    }
 		}
 	    }
+	    cout << "Particles have moved" << endl;
 #endif
 #ifndef _PATCH
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
@@ -371,13 +399,18 @@ int main (int argc, char* argv[])
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 	    vecPatches[ipatch]->EMfields->computeTotalRhoJ(); // Attention if output -> Sync / per species fields
 	}
-	
+
+	cout << "Field summed : before rho" << endl;
+
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 	    vecPatches[ipatch]->initSumField( EMfields->rho_ ); // initialize
 	}
+	cout << "Field summed : mid rho" << endl;
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 	    vecPatches[ipatch]->finalizeSumField( EMfields->rho_ ); // finalize (waitall + sum)
 	}
+	cout << "Field summed : after rho" << endl;
+
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 	    vecPatches[ipatch]->initSumField( EMfields->Jx_ ); // initialize
 	}
@@ -396,7 +429,7 @@ int main (int argc, char* argv[])
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 	    vecPatches[ipatch]->finalizeSumField( EMfields->Jz_ ); // finalize (waitall + sum)
 	}
-
+	cout << "Field summed" << endl;
 #endif
 #ifndef _PATCH
         if  (diag_flag) {
@@ -430,6 +463,7 @@ int main (int argc, char* argv[])
 	// Compute Ex_, Ey_, Ez_
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches[ipatch]->EMfields->solveMaxwellAmpere();
+	cout << "MA solved" << endl;
 
         #pragma omp single
 	{
@@ -452,6 +486,7 @@ int main (int argc, char* argv[])
 	// Compute Bx_, By_, Bz_
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches[ipatch]->EMfields->solveMaxwellFaraday();
+	cout << "MF solved" << endl;
 
         #pragma omp single
 	{

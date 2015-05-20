@@ -165,6 +165,8 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
 	cout << "\tCorner decomp : " << neighbor_[0][0] << "\t" << hindex << "\t" << neighbor_[0][1] << endl;
 	cout << "\tCorner decomp : " << corner_neighbor_[0][0] << "\t" << neighbor_[1][0]  << "\t" << corner_neighbor_[1][0] << endl;
 
+
+	createType(params);
 	
 	//std::cout << "Voisin dir 0 : " << ipatch << " : " <<  neighbor_[0][0] << " " <<  neighbor_[0][1] << std::endl;
 	//std::cout << "Voisin dir 1 : " << ipatch << " : " <<  neighbor_[1][0] << " " <<  neighbor_[1][1] << std::endl;
@@ -1350,7 +1352,7 @@ void Patch::createType( PicParams& params )
 	    MPI_Type_commit( &(corner_ntypeSum_[0][ix_isPrim][iy_isPrim]) );
             corner_ntypeSum_[1][ix_isPrim][iy_isPrim] = NULL;
 	    ncol  = 1 + 2*params.oversize[1] + iy_isPrim;
-	    MPI_Type_vector(corner_nx, ncol, ny, MPI_DOUBLE, &(ntypeSum_[1][ix_isPrim][iy_isPrim])); // column
+	    MPI_Type_vector(corner_nx, ncol, ny, MPI_DOUBLE, &(corner_ntypeSum_[1][ix_isPrim][iy_isPrim])); // column
 	    MPI_Type_commit( &(corner_ntypeSum_[1][ix_isPrim][iy_isPrim]) );
 
             
@@ -1425,12 +1427,14 @@ void Patch::initSumField( Field* field )
 		ix = (1-iDim)*istart;
 		iy =    iDim *istart;
 		int tag = buildtag( hindex, neighbor_[iDim][iNeighbor]);
+		cout << hindex << " send to " << neighbor_[iDim][iNeighbor] << endl;
 		MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.patch_srequest[iDim][iNeighbor]) );
 	    } // END of Send
             
 	    if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
 		int tmp_elem = (buf[iDim][(iNeighbor+1)%2]).dims_[0]*(buf[iDim][(iNeighbor+1)%2]).dims_[1];
 		int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], hindex);
+		cout << hindex << " recv from " << neighbor_[iDim][(iNeighbor+1)%2] << " ; n_elements = " << tmp_elem << endl;
 		MPI_Irecv( &( (buf[iDim][(iNeighbor+1)%2]).data_2D[0][0] ), tmp_elem, MPI_DOUBLE, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]) );
 	    } // END of Recv
             
@@ -1444,15 +1448,17 @@ void Patch::initSumField( Field* field )
 	for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
             
 	    if (corner_neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
-		ix = iDim      * ( n_elem[iDim]     - oversize2[iDim]      ) + (1-iDim     ) * ( 0 );
-		iy = iNeighbor * ( n_elem[iNeighbor]- oversize2[iNeighbor] ) + (1-iNeighbor) * ( 0 );
+		ix = iDim      * ( n_elem[0]     - oversize2[0]      ) + (1-iDim     ) * ( 0 );
+		iy = iNeighbor * ( n_elem[1]- oversize2[1] ) + (1-iNeighbor) * ( 0 );
 		int tag = buildtag( hindex, corner_neighbor_[iDim][iNeighbor]);
+		cout << hindex << " send in diagonal to " << corner_neighbor_[iDim][iNeighbor] << " from " << ix << " " << iy << endl;
 		MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.corner_srequest[iDim][iNeighbor]) );
 	    } // END of Send
             
 	    if (corner_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
 		int tmp_elem = (corner_buf[iDim][(iNeighbor+1)%2]).dims_[0]*(corner_buf[iDim][(iNeighbor+1)%2]).dims_[1];
 		int tag = buildtag( corner_neighbor_[iDim][(iNeighbor+1)%2], hindex);
+		cout << hindex << " recv from " << corner_neighbor_[iDim][(iNeighbor+1)%2] << " ; n_elements = " << tmp_elem << endl;
 		MPI_Irecv( &( (corner_buf[iDim][(iNeighbor+1)%2]).data_2D[0][0] ), tmp_elem, MPI_DOUBLE, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.corner_rrequest[iDim][(iNeighbor+1)%2]) );
 	    } // END of Recv
             
@@ -1504,9 +1510,11 @@ void Patch::finalizeSumField( Field* field )
 	
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
             if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
+		cout << hindex << " is waiting for send at " << neighbor_[iDim][iNeighbor] << endl;
                 MPI_Wait( &(f2D->specMPI.patch_srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
             }
             if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+		cout << hindex << " is waiting for recv from " << neighbor_[iDim][(iNeighbor+1)%2] << endl;	
                 MPI_Wait( &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
             }
         }
@@ -1520,9 +1528,11 @@ void Patch::finalizeSumField( Field* field )
 	
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
             if (corner_neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
+		cout << hindex << " is waiting for corner send at " << corner_neighbor_[iDim][iNeighbor] << endl;
                 MPI_Wait( &(f2D->specMPI.corner_srequest[iDim][iNeighbor]), &(corner_sstat[iDim][iNeighbor]) );
             }
             if (corner_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+		cout << hindex << " is waiting for corner recv from " << corner_neighbor_[iDim][(iNeighbor+1)%2] << endl;	
                 MPI_Wait( &(f2D->specMPI.corner_rrequest[iDim][(iNeighbor+1)%2]), &(corner_rstat[iDim][(iNeighbor+1)%2]) );
             }
         }
@@ -1550,8 +1560,8 @@ void Patch::finalizeSumField( Field* field )
     for (int iDim=0 ; iDim<2 ; iDim++) {
        
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-	    int ix0 = iDim      * ( n_elem[iDim]     - oversize2[iDim]      ) + (1-iDim     ) * ( 0 );
-	    int iy0 = iNeighbor * ( n_elem[iNeighbor]- oversize2[iNeighbor] ) + (1-iNeighbor) * ( 0 );
+	    int ix0 = iDim      * ( n_elem[0]     - oversize2[0]      ) + (1-iDim     ) * ( 0 );
+	    int iy0 = iNeighbor * ( n_elem[1]- oversize2[1] ) + (1-iNeighbor) * ( 0 );
             if (corner_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
                 for (unsigned int ix=0 ; ix< (corner_buf[iDim][(iNeighbor+1)%2]).dims_[0] ; ix++) {
                     for (unsigned int iy=0 ; iy< (corner_buf[iDim][(iNeighbor+1)%2]).dims_[1] ; iy++)

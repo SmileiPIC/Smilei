@@ -50,7 +50,8 @@ OBJS := $(SRCS:.cpp=.o)
 DEPS := $(OBJS:.o=.d)
 
 ifeq ($(config),debug)
-	CFLAGS += -g -pg -Wall -D__DEBUG -O0 -shared-intel -D_PATCH
+	CFLAGS += -g -pg -Wall -D__DEBUG -O0 -D_PATCH
+	#CFLAGS += -g -pg -Wall -D__DEBUG -O0 -shared-intel -D_PATCH
 
 else
 	CFLAGS += -O3 -D_PATCH
