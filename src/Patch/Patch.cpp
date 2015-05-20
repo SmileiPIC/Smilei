@@ -491,7 +491,7 @@ void Patch::generalhilbertindexinv(unsigned int m0, unsigned int m1, unsigned in
     shift = 0;
     localh = h;
     //Compare dimensions. Target points at the dimension which must be shifted. 
-    if (m0 > m1){
+    if (m0 >= m1){
        target = x;
        mmin = m1;
        mmax = m0;
