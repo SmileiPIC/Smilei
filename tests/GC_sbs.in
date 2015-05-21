@@ -27,8 +27,8 @@ interpolation_order = 2
 # sim_time: duration of the simulation in units of the normalization period 
 #
 res_time = 45
-#sim_time = 3300
-sim_time = 0.2
+sim_time = 3900
+#sim_time = 0.2
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
@@ -38,8 +38,8 @@ res_space  = 30    30
 sim_length = 1024  512
 
 # BG-Q conf
-number_of_procs = 64 8
-#number_of_procs = 64 1024
+#number_of_procs = 64 8
+number_of_procs = 32 1024
 clrw = 16
 
 bc_em_type_long  = silver-muller
@@ -134,7 +134,7 @@ laser
 	time_profile = sin2
 	double_params = 630
 	transv_profile = focused
-	double_params_transv = 166.0
+	double_params_transv = 130.0
 	int_params_transv = 3 
 end
 
@@ -147,8 +147,8 @@ laser
 	delta = 0.0              
 	time_profile = sin2
 	double_params = 105.0 0.0 950.0 
-	transv_profile = focused
-	double_params_transv = 166.0
+	transv_profile = gaussian
+	double_params_transv = 256.0 130.0
 	int_params_transv = 3 
 end
 # ---------------------
@@ -164,13 +164,24 @@ print_every = 10
 #
 
 # FIELD DUMPS
-#fieldDump_every = 750
+fieldDump_every = 50
 
 
-#diagnostic probe
-#    every = 1;
-#    pos_first = 0.0 0.0
-#    pos_second = 0.0 500.0
-#    number = 50
-#end
+diagnostic probe
+    every = 5
+    pos_first = 0.0 0.0
+    pos_second = 0.0 512.0
+    number = 150
+end
+
+
+diagnostic probe
+    every = 5
+    pos_first = 1024.0 0.0
+    pos_second = 1024.0 512.0
+    number = 150
+end
+
+dump_step = 100
+exit_after_dump = true
 
