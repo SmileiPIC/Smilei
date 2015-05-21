@@ -9,15 +9,17 @@ res=10
 
 density=0.5
 
-dx, dy = 10, 50
+dx, dy = 30, 30
 
 twopi=2*math.pi
 
-
-def my_func_density(codex=0,codey=0, FWHM= 1.0):
+def gaussian(x,offset,sigma):
+    return math.exp(-((x-offset)/sigma)**2)
+    
+def my_func_density(codex,codey, xoffset, xsigma, yoffset, ysigma):
     x,y=codex/twopi,codey/twopi
     
-    val = (math.cos(2*y)+2.0)*math.exp(-((x-position)/length)**2)/3 if x<position else 1 if x < position+thickness else 0
+    val = gaussian(x, xoffset, xsigma) *gaussian(y, yoffset, ysigma)
         
     return val
 
@@ -73,14 +75,14 @@ mysim.bc_em_type_trans = 'periodic'
 # this is used to randomize the random number generator
 mysim.random_seed = 0
 
-mysim.fieldDump_every = 0
+mysim.fieldDump_every = 10
 
 mysim.print_every = 10
 
 
 
 myspec1=Species()
-myspec1.dens_profile = my_func_density
+myspec1.dens_profile = (my_func_density, dx/2, 1, dy/2, 1) 
 myspec1.vacuum_length   = ((dx-thickness)/2.0,  dy/4.0) 
 myspec1.dens_length_x   = thickness
 myspec1.dens_length_y   = dy/2
@@ -110,7 +112,7 @@ myspec1.mvel_z_profile='constant'
 
 
 Species(
-dens_profile = my_func_density,
+dens_profile = (my_func_density, dx/2, 1, dy/2, 1),
 vacuum_length   = ((dx-thickness)/2.0,  dy/4,0) ,
 dens_length_x   = thickness ,
 dens_length_y   = dy/2,
@@ -153,7 +155,7 @@ def my_func_laser_profile(t,y):
 #
 Laser(
 boxSide = 'west' ,
-a0=0.2 ,
+a0=0.1 ,
 focus=(position,  dy/2) ,
 angle=20 ,
 delta=0.0 ,
