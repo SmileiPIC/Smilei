@@ -163,82 +163,151 @@
 #            kwargs = many other keyword-arguments can be used -> refer to the doc.
 
 
-# Finds a parameter "param" in the input file
-# Argument "after" is a string that must be found before "param"
-def findParam(results_path, param, after=None):
-	import glob
-	out = ""
-	ok = True if after is None else False
-	file = glob.glob(results_path+"/*.in")[0]
-	for line in open(file, 'r'):
-		if "#" in line: line = line[:line.find("#")]
-		if ok or (after in line and "=" in line):
-			ok = True
-		else:
-			continue
-		if param in line and "=" in line:
-			out = line.split("=")[1]
-			break
-	return out.strip()
+class Smilei(object):
 
-# Method to manage Matplotlib-compatible kwargs
-def matplotlibArgs(kwargs):
-	figurekwargs0   = {}
-	figurekwargs   = {}
-	axeskwargs     = {}
-	plotkwargs     = {}
-	imkwargs       = {}
-	colorbarkwargs = {}
-	xtickkwargs    = {}
-	ytickkwargs    = {}
-	for kwa in kwargs:
-		val = kwargs[kwa]
-		if kwa in ["figsize"]:
-			figurekwargs0.update({kwa:val})
-		if kwa in ["dpi","facecolor","edgecolor"]:
-			figurekwargs.update({kwa:val})
-		if kwa in ["aspect","axis_bgcolor",
-		           "frame_on","position","title","visible","xlabel","xscale","xticklabels",
-		           "xticks","ylabel","yscale","yticklabels","yticks","zorder"]:
-			axeskwargs.update({kwa:val})
-		if kwa in ["color","dashes","drawstyle","fillstyle","label","linestyle",
-		           "linewidth","marker","markeredgecolor","markeredgewidth",
-		           "markerfacecolor","markerfacecoloralt","markersize","markevery",
-		           "visible","zorder"]:
-			plotkwargs.update({kwa:val})
-		if kwa in ["cmap","aspect","interpolation"]:
-			imkwargs.update({kwa:val})
-		if kwa in ["orientation","fraction","pad","shrink","anchor","panchor",
-		           "extend","extendfrac","extendrect","spacing","ticks","format",
-		           "drawedges"]:
-			colorbarkwargs.update({kwa:val})
-		if kwa in ["style_x","scilimits_x","useOffset_x"]:
-			xtickkwargs.update({kwa[:-2]:val})
-		if kwa in ["style_y","scilimits_y","useOffset_y"]:
-			ytickkwargs.update({kwa[:-2]:val})
-	return figurekwargs0, figurekwargs, axeskwargs, plotkwargs, imkwargs, colorbarkwargs, xtickkwargs, ytickkwargs
+	valid = False
+	
+	def __init__(self, results_path="."):
+		import h5py
+		import numpy as np
+		import os.path, glob, re
+		import matplotlib.pyplot
+		import pylab
+		pylab.ion()
+		self.results_path = results_path
+		self.h5py = h5py
+		self.np = np
+		self.ospath = os.path
+		self.glob = glob.glob
+		self.re = re
+		self.plt = matplotlib.pyplot
+		# Verify that results_path is valid
+		if not self.ospath.isdir(results_path):
+			print "Could not find directory "+results_path
+			return
+		if len(self.glob(results_path+"/*.in"))==0:
+			print "Could not find an input file in directory "+results_path
+			return
+		if len(self.glob(results_path+"/*.in"))>1:
+			print "Directory "+results_path+" contains more than one input file. There should be only one."
+			return
+		self.valid = True
+		
+	def __repr__(self):
+		if not self.valid:
+			return "Invalid Smilei simulation"
+		file = self.glob(self.results_path+"/*.in")[0]
+		return "Smilei simulation with input file located at `"+file+"`"
+	
+	# Finds a parameter "param" in the input file
+	# Argument "after" is a string that must be found before "param"
+	def findParam(self, param, after=None):
+		out = ""
+		ok = True if after is None else False
+		file = self.glob(self.results_path+"/*.in")[0]
+		for line in open(file, 'r'):
+			if "#" in line: line = line[:line.find("#")]
+			if ok or (after in line and "=" in line):
+				ok = True
+			else:
+				continue
+			if param in line and "=" in line:
+				out = line.split("=")[1]
+				break
+		return out.strip()
+	
+	# Method to manage Matplotlib-compatible kwargs
+	@staticmethod
+	def matplotlibArgs(kwargs):
+		figurekwargs0  = {}
+		figurekwargs   = {}
+		axeskwargs     = {}
+		plotkwargs     = {}
+		imkwargs       = {}
+		colorbarkwargs = {}
+		xtickkwargs    = {}
+		ytickkwargs    = {}
+		for kwa in kwargs:
+			val = kwargs[kwa]
+			if kwa in ["figsize"]:
+				figurekwargs0.update({kwa:val})
+			if kwa in ["dpi","facecolor","edgecolor"]:
+				figurekwargs.update({kwa:val})
+			if kwa in ["aspect","axis_bgcolor",
+					   "frame_on","position","title","visible","xlabel","xscale","xticklabels",
+					   "xticks","ylabel","yscale","yticklabels","yticks","zorder"]:
+				axeskwargs.update({kwa:val})
+			if kwa in ["color","dashes","drawstyle","fillstyle","label","linestyle",
+					   "linewidth","marker","markeredgecolor","markeredgewidth",
+					   "markerfacecolor","markerfacecoloralt","markersize","markevery",
+					   "visible","zorder"]:
+				plotkwargs.update({kwa:val})
+			if kwa in ["cmap","aspect","interpolation"]:
+				imkwargs.update({kwa:val})
+			if kwa in ["orientation","fraction","pad","shrink","anchor","panchor",
+					   "extend","extendfrac","extendrect","spacing","ticks","format",
+					   "drawedges"]:
+				colorbarkwargs.update({kwa:val})
+			if kwa in ["style_x","scilimits_x","useOffset_x"]:
+				xtickkwargs.update({kwa[:-2]:val})
+			if kwa in ["style_y","scilimits_y","useOffset_y"]:
+				ytickkwargs.update({kwa[:-2]:val})
+		return figurekwargs0, figurekwargs, axeskwargs, plotkwargs, imkwargs, colorbarkwargs, xtickkwargs, ytickkwargs
+	
+	# Methods to create instances of diagnostics
+	def Scalar            (self, *args, **kwargs): return Scalar            (self, *args, **kwargs)
+	def Field             (self, *args, **kwargs): return Field             (self, *args, **kwargs)
+	def Probe             (self, *args, **kwargs): return Probe             (self, *args, **kwargs)
+	def ParticleDiagnostic(self, *args, **kwargs): return ParticleDiagnostic(self, *args, **kwargs)
+	
 
 # -------------------------------------------------------------------
 # Mother class for all diagnostics
 # -------------------------------------------------------------------
 class Diagnostic(object):
+	valid = False
+	previousdata = None
 	
+	# Initialize with "results_path" argument being either the `results_path` or
+	# the parent `Smilei` object
+	def __init__(self, results_path=None, *args, **kwargs):
+		# if string, try to use it as a results_path
+		if type(results_path) is str:
+			self.Smilei = Smilei(results_path)
+		# if given a Smilei object, use it directly
+		elif type(results_path) is Smilei:
+			self.Smilei = results_path
+		# Otherwise, error
+		else:
+			print "Could not find information on the Smilei simulation"
+			return
+		if not self.Smilei.valid: return
+		# pass packages to each diagnostic
+		self.results_path = self.Smilei.results_path
+		self.h5py = self.Smilei.h5py
+		self.np = self.Smilei.np
+		self.ospath = self.Smilei.ospath
+		self.glob = self.Smilei.glob
+		self.re = self.Smilei.re
+		self.plt = self.Smilei.plt
+		self.init(*args, **kwargs)
+
 	# When no action is performed on the object, this is what appears
 	def __repr__(self):
 		if not self.valid: return ""
 		self.info()
 		return ""
-	
+
 	# Various methods to extract stuff from the input file
 	def read_sim_units(self):
 		try:
-			return findParam(self.results_path, "sim_units")
+			return self.Smilei.findParam("sim_units")
 		except:
 			print "Could not extract 'sim_units' from the input file"
 			raise
 	def read_ndim(self):
 		try:
-			dim = findParam(self.results_path, "dim")
+			dim = self.Smilei.findParam("dim")
 			ndim = int(dim[0])
 		except:
 			print "Could not extract 'dim' from the input file"
@@ -249,19 +318,19 @@ class Diagnostic(object):
 		return ndim
 	def read_ncels_cell_length(self, ndim, sim_units):
 		try:
-			sim_length = findParam(self.results_path, "sim_length")
+			sim_length = self.Smilei.findParam("sim_length")
 			sim_length = self.np.double(sim_length.split())
 			if sim_length.size==0: raise
 		except:
 			print "Could not extract 'sim_length' from the input file"
 			raise
 		try:
-			cell_length = findParam(self.results_path, "cell_length")
+			cell_length = self.Smilei.findParam("cell_length")
 			cell_length = self.np.double(cell_length.split())
 			if cell_length.size==0: raise
 		except:
 			try:
-				res_space = findParam(self.results_path, "res_space")
+				res_space = self.Smilei.findParam("res_space")
 				res_space = self.np.double(res_space.split())
 				cell_length = sim_length/res_space
 			except:
@@ -293,11 +362,11 @@ class Diagnostic(object):
 		return ncels, cell_length
 	def read_timestep(self,sim_units):
 		try:
-			timestep = self.np.double(findParam(self.results_path, "timestep"))
+			timestep = self.np.double(self.Smilei.findParam("timestep"))
 		except:
 			try:
-				res_time = self.np.double(findParam(self.results_path, "res_time"))
-				sim_time = self.np.double(findParam(self.results_path, "sim_time"))
+				res_time = self.np.double(self.Smilei.findParam("res_time"))
+				sim_time = self.np.double(self.Smilei.findParam("sim_time"))
 				timestep = sim_time/res_time
 			except:
 				print "Could not extract 'timestep' or 'res_time' from the input file"
@@ -306,50 +375,19 @@ class Diagnostic(object):
 		return timestep
 	def read_wavelength_SI(self):
 		try:
-			wavelength_SI = self.np.double( findParam(self.results_path, "wavelength_SI") )
+			wavelength_SI = self.np.double( self.Smilei.findParam("wavelength_SI") )
 		except:
 			print "Could not extract 'wavelength_SI' from the input file"
 			raise
 		return wavelength_SI
-	
-	# Method called at beginning of the constructor, to do some preparation
-	def begin(self, results_path):
-		import h5py
-		import numpy as np
-		import os.path, glob, re
-		import matplotlib.pyplot
-		import pylab
-		pylab.ion()
-		self.valid = False
-		self.results_path = results_path
-		self.h5py = h5py
-		self.np = np
-		self.ospath = os.path
-		self.glob = glob.glob
-		self.re = re
-		self.plt = matplotlib.pyplot
-		self.previousdata = None
-	
+
 	# Method to verify everything was ok during initialization
 	def validate(self):
-		if not self.valid:
+		if not self.Smilei.valid or not self.valid:
 			print "Diagnostic is invalid"
 			return False
 		return True
 		
-	# Method to verify that results_path is valid
-	def validPath(self,results_path):
-		if not self.ospath.isdir(results_path):
-			print "Could not find directory "+results_path
-			return False
-		if len(self.glob(results_path+"/*.in"))==0:
-			print "Could not find an input file in directory "+results_path
-			return False
-		if len(self.glob(results_path+"/*.in"))>1:
-			print "Directory "+results_path+" contains more than one input file. There should be only one."
-			return False
-		return True
-	
 	# Method to set optional plotting arguments
 	def setPlot(self, **kwargs):
 		# First, we manage the main optional arguments
@@ -363,7 +401,7 @@ class Diagnostic(object):
 		# Second, we manage all the other arguments that are directly the ones of matplotlib
 		# For each keyword argument provided, we save these arguments separately
 		#  depending on the type: figure, plot, image, colorbar.
-		args = matplotlibArgs(kwargs)
+		args = self.Smilei.matplotlibArgs(kwargs)
 		self.figurekwargs0 .update(args[0])
 		self.figurekwargs  .update(args[1])
 		self.axeskwargs    .update(args[2])
@@ -377,7 +415,7 @@ class Diagnostic(object):
 		return kwargs
 	def set(self, **kwargs):
 		kwargs = self.setPlot(**kwargs)
-	
+
 	# Method to set the default plot parameters
 	def setDefaultPlot(self):
 		self.figure   = 1
@@ -395,14 +433,14 @@ class Diagnostic(object):
 		self.colorbarkwargs = {}
 		self.xtickkwargs = {"useOffset":False}
 		self.ytickkwargs = {"useOffset":False}
-	
+
 	# Method to obtain the plot limits
 	def limits(self):
 		l = []
 		for i in range(len(self.plot_shape)):
 			l.append([min(self.plot_centers[0]), max(self.plot_centers[0])])
 		return l
-	
+
 	# Method to get only the arrays of data
 	def getData(self):
 		if not self.validate(): return
@@ -410,7 +448,7 @@ class Diagnostic(object):
 		for t in self.times:
 			data.append( self.getDataAtTime(t) )
 		return data
-	
+
 	# Method to obtain the data and the axes
 	def get(self):
 		if not self.validate(): return
@@ -421,13 +459,13 @@ class Diagnostic(object):
 		for i in range(len(self.plot_type)):
 			result.update({ self.plot_type[i]:self.plot_centers[i] })
 		return result
-	
+
 	# Method to plot the current diagnostic
 	def plot(self, **kwargs):
 		if not self.validate(): return
 		kwargs = self.setPlot(**kwargs)
 		self.info()
-		
+	
 		# Make figure
 		fig = self.plt.figure(self.figure, **self.figurekwargs0)
 		fig.set(**self.figurekwargs)
@@ -449,7 +487,7 @@ class Diagnostic(object):
 		else:
 			ax.cla()
 			artist = self.plotVsTime(ax)
-	
+
 	# Method to plot the data when axes are made
 	def animateOnAxes(self, ax, t):
 		if not self.validate(): return None
@@ -500,7 +538,7 @@ class Diagnostic(object):
 		except:
 			print "Cannot format y ticks (typically happens with log-scale)"
 		return im
-	
+
 	# Special case: 2D plot
 	# This is overloaded by class "Probe" because it requires to replace imshow
 	def animateOnAxes_2D(self, ax, A):
@@ -510,7 +548,7 @@ class Diagnostic(object):
 		im = ax.imshow( self.np.flipud(A.transpose()),
 			vmin = self.data_min, vmax = self.data_max, extent=extent, **self.imkwargs)
 		return im
-	
+
 	# If the sliced data has 0 dimension, this function can plot it 
 	def plotVsTime(self, ax):
 		if len(self.plot_shape) > 0:
@@ -529,22 +567,18 @@ class Diagnostic(object):
 		ax.ticklabel_format(axis="x",**self.xtickkwargs)
 		ax.ticklabel_format(axis="y",**self.ytickkwargs)
 		return im
-	
-
 
 
 # -------------------------------------------------------------------
 # Class for particle diagnostics
 # -------------------------------------------------------------------
 class ParticleDiagnostic(Diagnostic):
-	
+
 	# This is the constructor, which creates the object
-	def __init__(self, results_path, diagNumber=None, timesteps=None, slice=None,
-	             units="code", data_log=False, **kwargs):
+	def init(self, diagNumber=None, timesteps=None, slice=None,
+				 units="code", data_log=False, **kwargs):
 		
-		self.begin(results_path)
-		if not self.validPath(results_path):
-			return None
+		if not self.Smilei.valid: return None
 		if diagNumber is None:
 			print "Printing available particle diagnostics:"
 			print "----------------------------------------"
@@ -552,7 +586,7 @@ class ParticleDiagnostic(Diagnostic):
 			while self.printInfo(self.getInfo(diagNumber)):
 				diagNumber += 1
 			if diagNumber == 0:
-				print "      No particle diagnostics found in "+results_path;
+				print "      No particle diagnostics found in "+self.results_path;
 			return None
 
 		# Get info from the input file and prepare units
@@ -596,7 +630,7 @@ class ParticleDiagnostic(Diagnostic):
 		else:
 			print"Argument 'diagNumber' must be and integer or a string."
 			return None
-			
+		
 		# Get list of requested diags
 		self.diags = sorted(set([ int(d[1:]) for d in self.re.findall('#\d+',self.operation) ]))
 		try:
@@ -628,26 +662,26 @@ class ParticleDiagnostic(Diagnostic):
 					print ("In operation '"+self.operation+"', diagnostics #"+str(d)+" and #"
 						+str(self.diags[0])+" must have the same shape.")
 					return None
-		
+	
 		self.axes  = self.axes [self.diags[0]]
 		self.naxes = self.naxes[self.diags[0]]
 		self.shape = self.shape[self.diags[0]]
-		
+	
 		# Check slice is a dict
 		if slice is not None  and  type(slice) is not dict:
 			print "Argument 'slice' must be a dictionary"
 			return None
 		# Make slice a dictionary
 		if slice is None: slice = {}
-		
+	
 		# Put data_log as object's variable
 		self.data_log = data_log
-		
+	
 		# Default plot parameters
 		self.setDefaultPlot()
 		# Set user's plot parameters
 		kwargs = self.setPlot(**kwargs)
-		
+	
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
 		# Get available timesteps
@@ -656,7 +690,7 @@ class ParticleDiagnostic(Diagnostic):
 		self.data  = {}
 		for d in self.diags:
 			# get all diagnostics files
-			self.file.update({ d:results_path+'/ParticleDiagnostic'+str(d)+'.h5' })
+			self.file.update({ d:self.results_path+'/ParticleDiagnostic'+str(d)+'.h5' })
 			# get all diagnostics timesteps
 			self.times.update({ d:self.getAvailableTimesteps(d) })
 			# fill the "data" dictionary with indices to the data arrays
@@ -686,12 +720,12 @@ class ParticleDiagnostic(Diagnostic):
 				return None
 		# Now we need to keep only one array of timesteps because they should be all the same
 		self.times = self.times[self.diags[0]]
-		
+	
 		# Need at least one timestep
 		if self.times.size < 1:
 			print "Timesteps not found"
 			return None
-		
+	
 		# 3 - Manage axes
 		# -------------------------------------------------------------------
 		# Fabricate all axes values for all diags
@@ -701,7 +735,7 @@ class ParticleDiagnostic(Diagnostic):
 		unitsa = [0,0,0,0]
 		spatialaxes = {"x":False, "y":False, "z":False}
 		for axis in self.axes:
-			
+		
 			# Find the vector of values along the axis
 			if axis["log"]:
 				edges = self.np.linspace(self.np.log10(axis["min"]), self.np.log10(axis["max"]), axis["size"]+1)
@@ -714,7 +748,7 @@ class ParticleDiagnostic(Diagnostic):
 				centers = centers[:-1]
 			axis.update({ "edges"   : edges   })
 			axis.update({ "centers" : centers })
-			
+		
 			# Find some quantities depending on the axis type
 			overall_min = "-inf"; overall_max = "inf"
 			axis_units = ""; axis_coeff = 1.
@@ -738,14 +772,14 @@ class ParticleDiagnostic(Diagnostic):
 				overall_min = "0"
 			elif axis["type"] == "charge":
 				overall_min = "0"
-			
+		
 			# if this axis has to be sliced, then select the slice
 			if axis["type"] in slice:
-				
+			
 				# if slice is "all", then all the axis has to be summed
 				if slice[axis["type"]] == "all":
 					indices = self.np.arange(axis["size"])
-				
+			
 				# Otherwise, get the slice from the argument `slice`
 				else:
 					try:
@@ -759,12 +793,12 @@ class ParticleDiagnostic(Diagnostic):
 						indices = self.np.array([(self.np.abs(centers-s)).argmin()])
 					else :
 						indices = self.np.nonzero( (centers>=s[0]) * (centers<=s[1]) )[0]
-				
+			
 				# calculate the size of the slice
 				imin = indices.min()  ; emin = edges[imin]
 				imax = indices.max()+1; emax = edges[imax]
 				slice_size = emax - emin
-				
+			
 				# print out the slicing
 				if imin==0            and axis["edges_included"]: emin = overall_min
 				if imin==axis["size"] and axis["edges_included"]: emax = overall_max
@@ -772,15 +806,15 @@ class ParticleDiagnostic(Diagnostic):
 					axis.update({ "sliceInfo" : "      Slicing at "+axis["type"]+" = "+str(centers[indices][0]) })
 				else:
 					axis.update({ "sliceInfo" : "      Slicing "+axis["type"]+" from "+str(edges[indices[0]])+" to "+str(edges[indices[-1]+1]) })
-				
+			
 				# convert the range of indices into their "conjugate"
 				indices = self.np.delete(self.np.arange(axis["size"]), indices)
 				# put the slice in the dictionary
 				axis.update({"slice":indices, "slice_size":slice_size})
-				
+			
 				if axis["type"] in ["x","y","z"]:
 					units_coeff *= cell_size[axis["type"]]/slice_size
-			
+		
 			# if not sliced, then add this axis to the overall plot
 			else:
 				self.plot_type   .append(axis["type"])
@@ -799,12 +833,12 @@ class ParticleDiagnostic(Diagnostic):
 				elif axis["type"] == "ekin":
 					units_coeff /= coeff_energy
 					unitsa[3] += 1
-		
-		
+	
+	
 		if len(self.plot_shape) > 2:
 			print "Cannot plot in "+str(len(self.plot_shape))+"d. You need to 'slice' some axes."
 			return None
-			
+		
 		# Build units
 		self.titles = {}
 		self.units = {}
@@ -850,13 +884,13 @@ class ParticleDiagnostic(Diagnostic):
 			for d in self.diags:
 				self.title = self.title.replace("#"+str(d), self.titles[d])
 		if self.data_log: self.title = "Log[ "+self.title+" ]"
-		
+	
 		# If any spatial dimension did not appear, then count it for calculating the correct density
 		if ndim>=1 and not spatialaxes["x"]: units_coeff /= ncels[0]
 		if ndim>=2 and not spatialaxes["y"]: units_coeff /= ncels[1]
 		if ndim==3 and not spatialaxes["z"]: units_coeff /= ncels[2]
 		units_coeff *= coeff_density
-		
+	
 		# Calculate the array that represents the bins sizes in order to get units right.
 		# This array will be the same size as the plotted array
 		if len(plot_diff)==0:
@@ -867,11 +901,11 @@ class ParticleDiagnostic(Diagnostic):
 			self.bsize = self.np.prod( self.np.array( self.np.meshgrid( *plot_diff ) ), axis=0)
 			self.bsize = self.bsize.transpose()
 		self.bsize /= units_coeff
-		
+	
 		# Finish constructor
 		self.valid = True
-	
-	
+
+
 	# Gets info about diagnostic number "diagNumber"
 	def getInfo(self,diagNumber):
 		# path to the file
@@ -891,9 +925,9 @@ class ParticleDiagnostic(Diagnostic):
 			if (name == "every" ): every  = int(value)
 			if (name == "time_average"): time_average = int(value)
 			if (name == "species"):
-			    species = value.strip().split(" ") # get all species numbers
-			    for i in range(len(species)):
-			    	species[i] = int(species[i]) # convert string to int
+				species = value.strip().split(" ") # get all species numbers
+				for i in range(len(species)):
+					species[i] = int(species[i]) # convert string to int
 			if (name[0:4] == "axis" ):
 				n = int(name[4:]) # axis number
 				sp = value.split(" ")
@@ -907,34 +941,34 @@ class ParticleDiagnostic(Diagnostic):
 				axes[n] = {"type":axistype,"min":axismin,"max":axismax,"size":axissize,"log":logscale,"edges_included":edge_inclusive}
 		f.close()
 		return {"#":diagNumber, "output":output, "every":every, "tavg":time_average, "species":species, "axes":axes}
-	
-	
+
+
 	# Prints the info obtained by the function "getInfo"
 	@staticmethod
 	def printInfo(info):
 		if info==False: return
-		
+	
 		# 1 - diag number, type and list of species
 		species = ""
 		for i in range(len(info["species"])): species += str(info["species"][i])+" " # reconstitute species string
 		print "Diag#"+str(info["#"])+" - "+info["output"]+" of species # "+species
-		
+	
 		# 2 - period and time-averaging
 		tavg = "no time-averaging"
 		if (info["tavg"] > 1):
 			tavg = "averaging over "+str(info["tavg"])+" timesteps"
 		print "    Every "+ str(info["every"]) + " timesteps, "+tavg
-		
+	
 		# 3 - axes
 		for i in range(len(info["axes"])):
 			axis = info["axes"][i];
 			logscale = "" if not axis["log"] else " [ LOG SCALE ] "
 			edges    = "" if not axis["edges_included"] else " [ INCLUDING EDGES ] "
 			print ("    "+axis["type"]+" from "+str(axis["min"])+" to "+str(axis["max"])
-			       +" in "+str(axis["size"])+" steps "+logscale+edges)
-			       
+				   +" in "+str(axis["size"])+" steps "+logscale+edges)
+			   
 		return True
-	
+
 	# Method to print info on all included diags
 	def info(self):
 		if not self.validate(): return
@@ -944,7 +978,7 @@ class ParticleDiagnostic(Diagnostic):
 		for ax in self.axes:
 			if "sliceInfo" in ax: print ax["sliceInfo"]
 		return
-	
+
 	# get all available timesteps for a given diagnostic
 	def getAvailableTimesteps(self, diagNumber=None):
 		# if argument "diagNumber" not provided, return the times calculated in __init__
@@ -965,7 +999,7 @@ class ParticleDiagnostic(Diagnostic):
 				times[i] = int(items[i][0].strip("timestep")) # fill the "times" array with the available timesteps
 			f.close()
 			return times
-		
+	
 	# Method to obtain the data only
 	def getDataAtTime(self, t):
 		if not self.validate(): return
@@ -1008,13 +1042,12 @@ class ParticleDiagnostic(Diagnostic):
 # Class for fields diagnostics
 # -------------------------------------------------------------------
 class Field(Diagnostic):
-	
-	# This is the constructor, which creates the object
-	def __init__(self,results_path, field=None, timesteps=None, slice=None,
-	             units="code", data_log=False, **kwargs):
 
-		self.begin(results_path)
-		if not self.validPath(results_path): return None
+	# This is the constructor, which creates the object
+	def init(self, field=None, timesteps=None, slice=None,
+				 units="code", data_log=False, **kwargs):
+
+		if not self.Smilei.valid: return None
 		if field is None:
 			fields = self.getFields()
 			if len(fields)>0:
@@ -1025,10 +1058,10 @@ class Field(Diagnostic):
 					print '\n'.join(['\t\t'.join(list(i)) for i in self.np.reshape(fields[:l],(-1,3))])
 				print '\t\t'.join(fields[l:])
 			else:
-				print "No fields found in '"+results_path+"'"
+				print "No fields found in '"+self.results_path+"'"
 			return None
 
-		
+	
 		# Get info from the input file and prepare units
 		try:
 			ndim               = self.read_ndim()
@@ -1037,7 +1070,7 @@ class Field(Diagnostic):
 			self.timestep      = self.read_timestep(sim_units)
 		except:
 			return None
-		
+	
 		if units == "nice":
 			try   : wavelength_SI = self.read_wavelength_SI()
 			except: return None
@@ -1052,17 +1085,17 @@ class Field(Diagnostic):
 			coeff_current = 1. # in e*c*nc
 			self.coeff_time = self.timestep # in 1/w
 			self.time_units = " $1/\omega$"
-		
+	
 		# Get available times
 		self.times = self.getAvailableTimesteps()
 		if self.times.size == 0:
 			print "No fields found in Fields.h5"
 			return
-		
+	
 		# Get available fields
 		fields = self.getFields()
 		sortedfields = reversed(sorted(fields, key = len))
-		
+	
 		# 1 - verifications, initialization
 		# -------------------------------------------------------------------
 		# Parse the `field` argument
@@ -1077,32 +1110,32 @@ class Field(Diagnostic):
 		self.fieldn = [ int(f[1:]) for f in requested_fields ] # indexes of the requested fields
 		self.fieldn = list(set(self.fieldn))
 		self.fieldname = [ fields[i] for i in self.fieldn ] # names of the requested fields
-		
+	
 		# Check slice is a dict
 		if slice is not None  and  type(slice) is not dict:
 			print "Argument `slice` must be a dictionary"
 			return None
 		# Make slice a dictionary
 		if slice is None: slice = {}
-		
+	
 		# Put data_log as object's variable
 		self.data_log = data_log
-		
+	
 		# Default plot parameters
 		self.setDefaultPlot()
 		# Set user's plot parameters
 		kwargs = self.setPlot(**kwargs)
-		
+	
 		# Get the shape of fields
-		self.file = results_path+'/Fields.h5'
+		self.file = self.results_path+'/Fields.h5'
 		f = self.h5py.File(self.file, 'r')
 		self.shape = self.np.double(f.values()[0].values()[0]).shape
 		for n in self.fieldn:
 			s = self.np.double(f.values()[0].values()[n]).shape
 			self.shape = self.np.min((self.shape, s), axis=0)
 		f.close()
-		
-		
+	
+	
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
 		# fill the "data" dictionary with indices to the data arrays
@@ -1124,13 +1157,13 @@ class Field(Diagnostic):
 			except:
 				print "Argument `timesteps` must be one or two non-negative integers"
 				return None
-		
+	
 		# Need at least one timestep
 		if self.times.size < 1:
 			print "Timesteps not found"
 			return None
+	
 		
-			
 		# 3 - Manage axes
 		# -------------------------------------------------------------------
 		# Fabricate all axes values
@@ -1147,7 +1180,7 @@ class Field(Diagnostic):
 			label = {0:"x", 1:"y", 2:"z"}[iaxis]
 			axisunits = "[code units]"
 			if units == "nice": axisunits = "[cm]"
-			
+		
 			if label in slice:
 				# if slice is "all", then all the axis has to be summed
 				if slice[label] == "all":
@@ -1180,11 +1213,11 @@ class Field(Diagnostic):
 				self.plot_centers.append(centers)
 				self.plot_label  .append(label+" "+axisunits)
 				self.plot_log    .append(False)
-			
+		
 		if len(self.plot_centers) > 2:
 			print "Cannot plot in "+str(len(self.plot_shape))+"d. You need to 'slice' some axes."
 			return
-		
+	
 		# Build units
 		self.titles = {}
 		self.fieldunits = {}
@@ -1209,17 +1242,17 @@ class Field(Diagnostic):
 			self.title = self.operation
 			for n in self.fieldn:
 				self.title = self.title.replace("#"+str(n), self.titles[n])
-		
+	
 		# Finish constructor
 		self.valid = True
-	
+
 	# Method to print info on included fields
 	def info(self):
 		if not self.validate(): return
 		print self.title
 		#todo
 		return
-	
+
 	# get all available fields, sorted by name length
 	def getFields(self):
 		try:
@@ -1234,8 +1267,8 @@ class Field(Diagnostic):
 			fields = []
 		f.close()
 		return fields
-	
-	
+
+
 	# get all available timesteps
 	def getAvailableTimesteps(self):
 		try:
@@ -1247,7 +1280,7 @@ class Field(Diagnostic):
 		times = self.np.double(f.keys())
 		f.close()
 		return times
-	
+
 	# Method to obtain the data only
 	def getDataAtTime(self, t):
 		if not self.validate(): return
@@ -1290,13 +1323,12 @@ class Field(Diagnostic):
 # Class for scalars
 # -------------------------------------------------------------------
 class Scalar(Diagnostic):
-	
+
 	# This is the constructor, which creates the object
-	def __init__(self,results_path, scalar=None, timesteps=None,
-	             units="code", data_log=False, **kwargs):
-	
-		self.begin(results_path)
-		if not self.validPath(results_path): return None
+	def init(self, scalar=None, timesteps=None,
+				 units="code", data_log=False, **kwargs):
+
+		if not self.Smilei.valid: return None
 		if scalar is None:
 			scalars = self.getScalars()
 			if len(scalars)>0:
@@ -1309,7 +1341,7 @@ class Scalar(Diagnostic):
 						l = []
 					l.append(s)
 			else:
-				print "No scalars found in '"+results_path+"'"
+				print "No scalars found in '"+self.results_path+"'"
 			return None
 
 		# Get info from the input file and prepare units
@@ -1319,7 +1351,7 @@ class Scalar(Diagnostic):
 			self.timestepbis   = self.read_timestep("")
 		except:
 			return None
-		
+	
 		if units == "nice":
 			try   : wavelength_SI = self.read_wavelength_SI()
 			except: return None
@@ -1329,10 +1361,10 @@ class Scalar(Diagnostic):
 			self.coeff_time = self.timestepbis
 			self.time_units = " $1/\omega$"
 		if sim_units == "wavelength": self.coeff_time *= 2. * self.np.pi
-		
+	
 		# Get available scalars
 		scalars = self.getScalars()
-		
+	
 		# 1 - verifications, initialization
 		# -------------------------------------------------------------------
 		# Check value of field
@@ -1348,20 +1380,20 @@ class Scalar(Diagnostic):
 			scalar = fs[0]
 		self.scalarn = scalars.index(scalar) # index of the requested scalar
 		self.scalarname = scalar
-		
+	
 		# Put data_log as object's variable
 		self.data_log = data_log
-		
+	
 		# Default plot parameters
 		self.setDefaultPlot()
 		# Set user's plot parameters
 		kwargs = self.setPlot(**kwargs)
-		
+	
 		# Already get the data from the file
 		# Loop file line by line
 		self.times = []
 		self.values = []
-		file = results_path+'/scalars.txt'
+		file = self.results_path+'/scalars.txt'
 		f = open(file, 'r')
 		for line in f:
 			line = line.strip()
@@ -1372,8 +1404,8 @@ class Scalar(Diagnostic):
 		self.times  = self.np.array(self.times )
 		self.values = self.np.array(self.values)
 		f.close()
-		
-		
+	
+	
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
 		# fill the "data" dictionary with the index to each time
@@ -1395,13 +1427,13 @@ class Scalar(Diagnostic):
 			except:
 				print "Argument `timesteps` must be one or two non-negative integers"
 				return
-		
+	
 		# Need at least one timestep
 		if self.times.size < 1:
 			print "Timesteps not found"
 			return
-		
-		
+	
+	
 		# 3 - Manage axes
 		# -------------------------------------------------------------------
 		# There are no axes for scalars
@@ -1421,17 +1453,17 @@ class Scalar(Diagnostic):
 		else:
 			self.title      = scalar +"( "+self.scalarunits+" )" # todo
 		if data_log: self.title = "Log[ "+self.title+" ]"
-		
+	
 		# Finish constructor
 		self.valid = True
-	
+
 	# Method to print info on included scalars
 	def info(self):
 		if not self.validate(): return
 		print "Scalar "+self.scalarname,
 		#todo
 		return
-	
+
 	# get all available scalars
 	def getScalars(self):
 		try:
@@ -1453,12 +1485,12 @@ class Scalar(Diagnostic):
 			scalars = []
 		f.close()
 		return scalars
-	
-	
+
+
 	# get all available timesteps
 	def getAvailableTimesteps(self):
 		return self.times
-	
+
 	# Method to obtain the data only
 	def getDataAtTime(self, t):
 		if not self.validate(): return
@@ -1477,16 +1509,15 @@ class Scalar(Diagnostic):
 
 
 # -------------------------------------------------------------------
-# Class for fields diagnostics
+# Class for probe diagnostics
 # -------------------------------------------------------------------
 class Probe(Diagnostic):
-	
-	# This is the constructor, which creates the object
-	def __init__(self,results_path, probeNumber=None, field=None, timesteps=None, slice=None,
-	             units="code", data_log=False, **kwargs):
 
-		self.begin(results_path)
-		if not self.validPath(results_path): return None
+	# This is the constructor, which creates the object
+	def init(self, probeNumber=None, field=None, timesteps=None, slice=None,
+				 units="code", data_log=False, **kwargs):
+
+		if not self.Smilei.valid: return None
 		if probeNumber is None:
 			probes = self.getProbes()
 			if len(probes)>0:
@@ -1495,7 +1526,7 @@ class Probe(Diagnostic):
 				for p in probes:
 					self.printInfo(self.getInfo(p))
 			else:
-				print "No probes found in '"+results_path+"'"
+				print "No probes found in '"+self.results_path+"'"
 			return None
 		if field is None:
 			print "Printing available fields for probes:"
@@ -1503,9 +1534,9 @@ class Probe(Diagnostic):
 			print "Ex Ey Ez Bx By Bz Jx Jy Jz Rho"
 			return None
 
-		
+	
 		self.probeNumber  = probeNumber
-		self.file = results_path+"/Probes.h5"
+		self.file = self.results_path+"/Probes.h5"
 
 		# Get info from the input file and prepare units
 		try:
@@ -1532,7 +1563,7 @@ class Probe(Diagnostic):
 			coeff_current = 1. # in e*c*nc
 			self.coeff_time = self.timestep # in 1/w
 			self.time_units = " $1/\omega$"
-		
+	
 		# Get available times
 		self.times = self.getAvailableTimesteps()
 		if self.times.size == 0:
@@ -1542,7 +1573,7 @@ class Probe(Diagnostic):
 		# Get available fields
 		fields = ["Ex","Ey","Ez","Bx","By","Bz","Jx","Jy","Jz","Rho"]
 		sortedfields = reversed(sorted(fields, key = len))
-		
+	
 		# 1 - verifications, initialization
 		# -------------------------------------------------------------------
 		# Parse the `field` argument
@@ -1557,26 +1588,26 @@ class Probe(Diagnostic):
 		self.fieldn = [ int(f[1:]) for f in requested_fields ] # indexes of the requested fields
 		self.fieldn = list(set(self.fieldn))
 		self.fieldname = [ fields[i] for i in self.fieldn ] # names of the requested fields
-		
+	
 		# Check slice is a dict
 		if slice is not None  and  type(slice) is not dict:
 			print "Argument `slice` must be a dictionary"
 			return None
 		# Make slice a dictionary
 		if slice is None: slice = {}
-		
+	
 		# Put data_log as object's variable
 		self.data_log = data_log
-		
+	
 		# Default plot parameters
 		self.setDefaultPlot()
 		# Set user's plot parameters
 		kwargs = self.setPlot(**kwargs)
-		
+	
 		# Get the shape of the probe
 		self.info_ = self.getMyInfo()
 		self.shape = self.info_["shape"]
-		
+	
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
 		# fill the "data" dictionary with indices to the data arrays
@@ -1598,13 +1629,13 @@ class Probe(Diagnostic):
 			except:
 				print "Argument `timesteps` must be one or two non-negative integers"
 				return
-		
+	
 		# Need at least one timestep
 		if self.times.size < 1:
 			print "Timesteps not found"
 			return
-		
-		
+	
+	
 		# 3 - Manage axes
 		# -------------------------------------------------------------------
 		# Fabricate all axes values
@@ -1617,7 +1648,7 @@ class Probe(Diagnostic):
 		self.sliceinfo = {}
 		self.slices = [None]*ndim
 		for iaxis in range(self.naxes):
-			
+		
 			# calculate grid points locations
 			p0 = self.info_["p0"            ] # reference point
 			pi = self.info_["p"+str(iaxis+1)] # end point of this axis
@@ -1625,11 +1656,11 @@ class Probe(Diagnostic):
 			for i in range(p0.size):
 				centers[:,i] = self.np.linspace(p0[i],pi[i],self.shape[iaxis])
 			centers *= coeff_distance
-			
+		
 			label = {0:"axis1", 1:"axis2", 2:"axis3"}[iaxis]
 			axisunits = "[code units]"
 			if units == "nice": axisunits = "[cm]"
-			
+		
 			if label in slice:
 				# if slice is "all", then all the axis has to be summed
 				if slice[label] == "all":
@@ -1662,12 +1693,12 @@ class Probe(Diagnostic):
 				self.plot_centers.append(centers)
 				self.plot_label  .append(label+" "+axisunits)
 				self.plot_log    .append(False)
-				
 			
+		
 		if len(self.plot_centers) > 2:
 			print "Cannot plot in "+str(len(self.plot_shape))+"d. You need to 'slice' some axes."
 			return
-		
+	
 		# Special case in 1D: we convert the point locations to scalar distances
 		if len(self.plot_centers) == 1:
 			self.plot_centers[0] = self.np.sqrt(self.np.sum((self.plot_centers[0]-self.plot_centers[0][0])**2,axis=1))
@@ -1690,8 +1721,8 @@ class Probe(Diagnostic):
 				Y[:,i] = p1[:,1] + p2[i,1]-p2[0,1]
 			self.plot_edges = [X, Y]
 			self.plot_label = ["x "+axisunits, "y "+axisunits]
-		
-		
+	
+	
 		# Build units
 		self.titles = {}
 		self.fieldunits = {}
@@ -1716,10 +1747,10 @@ class Probe(Diagnostic):
 			self.title = self.operation
 			for n in self.fieldn:
 				self.title = self.title.replace("#"+str(n), self.titles[n])
-		
+	
 		# Finish constructor
 		self.valid = True
-	
+
 	# Method to print info on included probe
 	def info(self):
 		if not self.validate(): return
@@ -1765,7 +1796,7 @@ class Probe(Diagnostic):
 		return out
 	def getMyInfo(self):
 		return self.getInfo(self.probeNumber)
-		
+	
 	# get all available fields, sorted by name length
 	def getProbes(self):
 		try:
@@ -1780,7 +1811,7 @@ class Probe(Diagnostic):
 			probes = []
 		f.close()
 		return probes
-	
+
 	# get all available timesteps
 	def getAvailableTimesteps(self):
 		try:
@@ -1801,7 +1832,7 @@ class Probe(Diagnostic):
 			except: pass
 		f.close()
 		return self.np.double(times)
-	
+
 	# Method to obtain the data only
 	def getDataAtTime(self, t):
 		if not self.validate(): return
@@ -1834,7 +1865,7 @@ class Probe(Diagnostic):
 		# log scale if requested
 		if self.data_log: A = self.np.log10(A)
 		return A
-	
+
 	# Overloading a plotting function in order to use pcolormesh instead of imshow
 	def animateOnAxes_2D(self, ax, A):
 		# first, we remove kwargs that are not supported by pcolormesh
@@ -1887,8 +1918,8 @@ def multiPlot(*Diags, **kwargs):
 		return
 	# Make the figure
 	if "facecolor" not in kwargs: kwargs.update({ "facecolor":"w" })
-	figurekwargs0 = matplotlibArgs(kwargs)[0]
-	figurekwargs  = matplotlibArgs(kwargs)[1]
+	figurekwargs0 = Smilei.matplotlibArgs(kwargs)[0]
+	figurekwargs  = Smilei.matplotlibArgs(kwargs)[1]
 	fig = plt.figure(figure, **figurekwargs0)
 	fig.set(**figurekwargs) # Apply figure kwargs
 	fig.clf()

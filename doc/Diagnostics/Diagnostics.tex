@@ -425,17 +425,27 @@ First, run python and include the script: \code{python -i scripts/Diagnostics.py
 Alternately, include this file into your own script: \code{execfile("scripts/Diagnostics.py")}
 \vspace{0.5cm}
 
-\subsection{To prepare a scalar diagnostic}
+\subsection{To select the simulation that you want to analyse}
 
 \begin{lstlisting}
-Scalar(results_path, scalar=None, timesteps=None, units="code", data_log=False)
+Smilei(results_path)
 \end{lstlisting}
 
 \begin{itemize}
 \item \code{results\_path} = \code{\_string\_}\\*
 	Path to the directory where the results of the simulation are stored.\\*
 	(Also, this has to contain one and only one input file *.in)
+\end{itemize}
 
+You can store this to a variable for later, for instance: \code{S = Smilei("path/to/my/results")}.
+
+\subsection{To prepare a scalar diagnostic}
+
+\begin{lstlisting}
+Smilei.Scalar(scalar=None, timesteps=None, units="code", data_log=False)
+\end{lstlisting}
+
+\begin{itemize}
 \item \code{scalar} = \code{\_string\_} (optional)\\*
 	If not given, then a list of available scalars is printed.\\*
 	If \code{\_string\_}: name of the scalar (see available scalars in section \ref{sec:scalars}).\\*
@@ -458,8 +468,7 @@ Scalar(results_path, scalar=None, timesteps=None, units="code", data_log=False)
 \subsection{To prepare a field diagnostic}
 
 \begin{lstlisting}
-Field(results_path, field=None, timesteps=None, slice=None,
-       units="code", data_log=False)
+Smilei.Field(field=None, timesteps=None, slice=None, units="code", data_log=False)
 \end{lstlisting}
 
 \begin{itemize}
@@ -485,7 +494,7 @@ Field(results_path, field=None, timesteps=None, slice=None,
 \subsection{To prepare a probe diagnostic}
 
 \begin{lstlisting}
-Probe(results_path, probeNumber=None, field=None, timesteps=None, slice=None,
+Smilei.Probe(probeNumber=None, field=None, timesteps=None, slice=None,
        units="code", data_log=False)
 \end{lstlisting}
 
@@ -507,7 +516,7 @@ Probe(results_path, probeNumber=None, field=None, timesteps=None, slice=None,
 \subsection{To prepare a particle diagnostic}
 
 \begin{lstlisting}
-ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None,
+Smilei.ParticleDiagnostic(diagNumber=None, timesteps=None, slice=None,
                     units="code", data_log=False)
 \end{lstlisting}
 
@@ -547,18 +556,19 @@ and the same timesteps.\\
 \subsection{To obtain the data as an array:}
 The method \code{getData} returns a list of the data arrays (for each timestep requested).
 \begin{lstlisting}
-Scalar( ... ).getData()
-Field( ... ).getData()
-Probe( ... ).getData()
-ParticleDiagnostic( ... ).getData()
+S = Smilei("path/to/my/results")
+S.Scalar( ... ).getData()
+S.Field( ... ).getData()
+S.Probe( ... ).getData()
+S.ParticleDiagnostic( ... ).getData()
 \end{lstlisting}
 
 The method \code{get} returns more things.
 \begin{lstlisting}
-Scalar( ... ).get()
-Field( ... ).get()
-Probe( ... ).get()
-ParticleDiagnostic( ... ).get()
+S.Scalar( ... ).get()
+S.Field( ... ).get()
+S.Probe( ... ).get()
+S.ParticleDiagnostic( ... ).get()
 \end{lstlisting}
 This method returns the results as a python dictionary:
 \begin{lstlisting}
@@ -574,8 +584,9 @@ where:
 
 \textbf{Example:}
 \begin{lstlisting}
->>> result = ParticleDiagnostic("path/to/my/results", diagNumber=3,
-    slice={"ekin":[1,10]}, timesteps=1000).get()
+>>> S = Smilei("path/to/my/results")
+>>> result = S.ParticleDiagnostic(diagNumber=3, slice={"ekin":[1,10]},
+                                  timesteps=1000).get()
 \end{lstlisting}
 This will take the particle diagnostic \#3 for the timestep nearest to 1000, and sum for all energies between 1 and 10.
 The results are stored in the variable \code{result}.\\*
@@ -617,8 +628,8 @@ If the data is \textbf{zero}-dimensional, it is plotted as a \textbf{curve} as f
 
 \textbf{Example:}
 \begin{lstlisting}
->>> ParticleDiagnostic("path/to/my/results", diagNumber=1,
-                       figure=1,data_min=0, data_max=1e14 ).plot()
+>>> S = Smilei("path/to/my/results")
+>>> S.ParticleDiagnostic(diagNumber=1, figure=1, data_min=0, data_max=1e14 ).plot()
 \end{lstlisting}
 This will take the particle diagnostic \#1 and plot the resulting array in figure 1 from 0 to 3e14.
 \clearpage
@@ -645,8 +656,9 @@ multiPlot(diag1, diag2, ... , figure=1, shape=None)
 
 \textbf{Example:}
 \begin{lstlisting}
->>> A = Probe("path/to/my/results", probeNumber=0, field="Ex")
->>> B = ParticleDiagnostic("path/to/my/results", diagNumber=1)
+>>> S = Smilei("path/to/my/results")
+>>> A = S.Probe(probeNumber=0, field="Ex")
+>>> B = S.ParticleDiagnostic(diagNumber=1)
 >>> multiPlot( A, B, figure=1 )
 \end{lstlisting}
 
@@ -676,7 +688,8 @@ In addition to \code{figure}, \code{data\_min}, \code{data\_max}, \code{xmin}, \
 \textbf{Example:}\\
 To choose a gray colormap of the image, use \code{cmap="gray"}.
 \begin{lstlisting}
->>> ParticleDiagnostic("path/to/my/results", 0, figure=1, cmap="gray") .plot()
+>>> S = Smilei("path/to/my/results")
+>>> S.ParticleDiagnostic(0, figure=1, cmap="gray") .plot()
 \end{lstlisting}
 Many colormaps are available from the \textit{matplotlib} package. With \code{cmap=""}, you will get a list of available colormaps.
 
@@ -686,11 +699,29 @@ Many colormaps are available from the \textit{matplotlib} package. With \code{cm
 You can change the plotting parameters using the \code{A.plot()} or the \code{A.set()} functions.\\
 \textbf{Example:}
 \begin{lstlisting}
->>> A = ParticleDiagnostic("path/to/my/results", diagNumber=0, figure=1, data_max=1)
+>>> S = Smilei("path/to/my/results")
+>>> A = ParticleDiagnostic(diagNumber=0, figure=1, data_max=1)
 >>> A.plot( figure=2 )
 >>> A.set( data_max=2 )
 >>> A.plot()
 \end{lstlisting}
+
+
+\subsection{Alternative syntax}
+
+Instead of \code{S = Smilei("path/to/my/results")}, you can directly choose which simulation you would like to use
+by specifying the \code{results\_path} parameter as the first argument when calling a diagnostic.\\
+\\
+For example, instead of 
+\begin{lstlisting}
+>>> S = Smilei("path/to/my/results")
+>>> A = S.ParticleDiagnostic(0)
+\end{lstlisting}
+you may use
+\begin{lstlisting}
+>>> A = ParticleDiagnostic("path/to/my/results", 0)
+\end{lstlisting}
+
 
 \clearpage
 
@@ -725,7 +756,8 @@ $ python -i scripts/Diagnostics.py
 Your are now in the \textit{python} prompt.\\*
 Obtain a list of available particle diagnostics using
 \begin{lstlisting}
->>> ParticleDiagnostic('tst1d_6_particle_diagnostic')
+>>> S = Smilei('tst1d_6_particle_diagnostic')
+>>> S.ParticleDiagnostic()
 Printing available particle diagnostics:
 ----------------------------------------
 Diag#0 - density of species # 1 
@@ -747,13 +779,13 @@ axes: the position $x$ and the velocity $v_x$. In other words, it is the phase-s
 \subsection{Plot a diagnostic result at $t=0$}
 To plot the phase-space in the initial conditions, use 
 \begin{lstlisting}
->>> ParticleDiagnostic('tst1d_6_particle_diagnostic', 0, timesteps=0 ).plot()
+>>> S.ParticleDiagnostic(0, timesteps=0 ).plot()
 \end{lstlisting}
 A window appears (see Figure \ref{Tuto1}). We can see that the electrons have indeed a drift velocity of $0.05c$.\\*
 
 To obtain the equivalent plot for the ions, use the diagnostic \#1 with the command
 \begin{lstlisting}
->>> ParticleDiagnostic('tst1d_6_particle_diagnostic', 1, timesteps=0 ).plot()
+>>> S.ParticleDiagnostic(1, timesteps=0 ).plot()
 \end{lstlisting}
 This results in the plot in Figure \ref{Tuto2}. The ions have a zero average velocity.\\*
 
@@ -780,8 +812,7 @@ The diagnostic \#0 that we plotted in Figure \ref{Tuto1} is the electron phase-s
 Let us say we want to sum over the data that is contained between $x=3$ and 4, and plot the result as a function of $v_x$.
 This is achieved by the argument \code{slice}:
 \begin{lstlisting}
->>> ParticleDiagnostic('tst1d_6_particle_diagnostic', 0, timesteps=0,
-       slice={"x":[3,4]} ).plot()
+>>> S.ParticleDiagnostic(0, timesteps=0, slice={"x":[3,4]} ).plot()
 \end{lstlisting}
 The result is shown in Figure \ref{Tuto3}. We can see that the peak is located at $v_x=0.05c$, as we have already found before.\\*
 
@@ -802,8 +833,8 @@ The result is shown in Figure \ref{Tuto3}. We can see that the peak is located a
 
 Now, let us do the slice on $v_x$ instead of $x$.
 \begin{lstlisting}
->>> ParticleDiagnostic('tst1d_6_particle_diagnostic', 0, timesteps=0,
-       slice={"vx":"all"} ).plot(data_min=0, data_max=11)
+>>> S.ParticleDiagnostic(0, timesteps=0, slice={"vx":"all"}
+                         ).plot(data_min=0, data_max=11)
 \end{lstlisting}
 By choosing \code{"all"} in the argument \code{slice}, all the velocities $v_x$ are sliced.
 In our case, as our diagnostic goes from $v_x=-0.1$ to $0.1$, these limits are used.\\*
@@ -813,13 +844,13 @@ The result is shown in Figure \ref{Tuto4}. We obtain a constant density of 10$n_
 \subsection{Make animated plots}
 To have an animation of the electron phase-space with time, you have to remove the \code{timesteps} argument:
 \begin{lstlisting}
->>> ParticleDiagnostic('tst1d_6_particle_diagnostic', 0 ).plot()
+>>> S.ParticleDiagnostic( 0 ).plot()
 \end{lstlisting}
 You will see the electron velocity oscillate from $0.05c$ to $-0.05c$. This is due to the fact that we are simulating a plasma wave with infinite wavelength.\\*
 
 Note that all the available timesteps are animated. If you want to only animate between timesteps 20 and 60, use
 \begin{lstlisting}
->>> ParticleDiagnostic('tst1d_6_particle_diagnostic', 0, timesteps=[20,60] ).plot()
+>>> S.ParticleDiagnostic( 0, timesteps=[20,60] ).plot()
 \end{lstlisting}
 
 
@@ -827,16 +858,16 @@ Note that all the available timesteps are animated. If you want to only animate 
 
 Use the following commands to have the animation with both electrons and ions on the same figure:
 \begin{lstlisting}
->>> A = ParticleDiagnostic('tst1d_6_particle_diagnostic', 0 )
->>> B = ParticleDiagnostic('tst1d_6_particle_diagnostic', 1 )
+>>> A = S.ParticleDiagnostic( 0 )
+>>> B = S.ParticleDiagnostic( 1 )
 >>> multiPlot(A, B, shape=[1,2])
 \end{lstlisting}
 A snapshot of this double plot is given in Figure \ref{Tuto5}.\\*\\*
 
 If the two plots are 1D, and are both of the same type, then they will automatically be plotted on the same axes.
 \begin{lstlisting}
->>> A = ParticleDiagnostic('tst1d_6_particle_diagnostic',0,slice={"x":"all"})
->>> B = ParticleDiagnostic('tst1d_6_particle_diagnostic',1,slice={"x":"all"})
+>>> A = S.ParticleDiagnostic(0,slice={"x":"all"})
+>>> B = S.ParticleDiagnostic(1,slice={"x":"all"})
 >>> multiPlot(A, B)
 \end{lstlisting}
 This is shown in Figure \ref{Tuto6} where you can see the two curves in blue and green.\\*\\*
@@ -862,8 +893,8 @@ If you have sliced all the axes, then you obtain a 0-dimensional array (a scalar
 as a function of time (they are not animated).\\*
 In our case, use
 \begin{lstlisting}
->>> A=ParticleDiagnostic('tst1d_6_particle_diagnostic', 3, slice={"ekin":"all"})
->>> B=ParticleDiagnostic('tst1d_6_particle_diagnostic', 3, slice={"ekin":[0,0.001]})
+>>> A=S.ParticleDiagnostic(3, slice={"ekin":"all"})
+>>> B=S.ParticleDiagnostic(3, slice={"ekin":[0,0.001]})
 >>> multiPlot(A,B)
 \end{lstlisting}
 
@@ -881,12 +912,11 @@ Both these quantities \code{A} and \code{B} are scalars, not arrays: they will b
 \subsection{Make an operation between diagnostics}
 Let us consider again the diagnostic \#0, which is the density of electrons as a function of $x$ an $v_x$. Diagnostic \#2 is very similar to \#0 as it has the same axes $x$ and $v_x$, but it has \code{ouput=px\_density} instead of \code{ouput=density}. Consequently, if we divide \#2 by \#0, we will obtain the average value of $p_x$ as a function of $x$ an $v_x$. To do this operation, we need to indicate \code{"\#2/\#0"} instead of the diagnostic number:
 \begin{lstlisting}
->>> ParticleDiagnostic('tst1d_6_particle_diagnostic', "#2/#0").plot()
+>>> S.ParticleDiagnostic("#2/#0").plot()
 \end{lstlisting}
 We obtain the plot of Figure \ref{Tuto8}, which is actually not very helpful because $\left<p_x\right>$ varies with $v_x$. To have something nicer, let us slice all axes with \code{slice=\{"x":"all","vx":"all"\}}.
 \begin{lstlisting}
->>> ParticleDiagnostic('tst1d_6_particle_diagnostic', "#2/#0",
-          slice={"x":"all","vx":"all"}).plot()
+>>> S.ParticleDiagnostic("#2/#0", slice={"x":"all","vx":"all"}).plot()
 \end{lstlisting}
 We obtain Figure \ref{Tuto9} which nicely shows the average $p_x$ as a function of time. This value oscillates, as we have seen previously.
 
