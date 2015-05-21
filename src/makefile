@@ -76,7 +76,7 @@ ifeq ($(config),scalasca)
 endif
 
 clean:
-	rm -f $(OBJS) $(DEPS)
+	rm -f $(OBJS) $(DEPS) $(PYHEADERS)
 	
 distclean: clean
 	rm -f $(EXEC)
@@ -90,8 +90,7 @@ endif
 
 deps: $(DEPS)
 
-# this generates a .h file containing a char[] with the python script in binary then
-#you can just include this file to get the contents
+# this generates a .h file containing a char[] from the python script
 %.h: %.py
 	@ echo "Creating binary char for $<"
 	@ xxd -i $< > $@

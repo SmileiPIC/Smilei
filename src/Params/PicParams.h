@@ -8,11 +8,52 @@
 #ifndef PICPARAMS_H
 #define PICPARAMS_H
 
+#include <Python.h>
 #include <vector>
 #include <string>
-#include "ProfileParams.h"
 
 class InputData;
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! This structure contains the properties of each Profile
+// ---------------------------------------------------------------------------------------------------------------------
+struct ProfileStructure {
+    
+    //! Profile profile
+    std::string profile; 
+    
+    //! in case profile is give in Python
+    PyObject *py_profile;
+    
+    //! in case profile is give in Python
+    PyObject *py_args;
+    
+    //! int vector for profile parameters
+    std::vector<int> int_params;
+    
+    //! double vector for profile parameters
+    std::vector<double> double_params;
+    
+    //! double vector for profile parameters (x lengths: will be multiplied by 2pi)
+    std::vector<double> length_params_x;
+    
+    //! double vector for profile parameters (y lengths: will be multiplied by 2pi)
+    std::vector<double> length_params_y;
+    
+    //! double vector for profile parameters (z lengths: will be multiplied by 2pi)
+    std::vector<double> length_params_z;
+    
+};
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! for the species we need an additional variable
+// ---------------------------------------------------------------------------------------------------------------------
+struct ProfileSpecies : ProfileStructure {
+    //! vacuum lengths
+    std::vector<double> vacuum_length;
+};
 
 
 // ---------------------------------------------------------------------------------------------------------------------

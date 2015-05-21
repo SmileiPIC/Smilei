@@ -13,7 +13,6 @@
 
 #include "InputData.h"
 #include "PicParams.h"
-#include "ProfileParams.h"
 
 class ExtFieldProfile;
 
@@ -31,11 +30,14 @@ struct ExtFieldStructure : ProfileStructure {
 // ---------------------------------------------------------------------------------------------------------------------
 //! ExtFieldParams class: holds all the properties of the lasers that are read from the input file
 // ---------------------------------------------------------------------------------------------------------------------
-class ExtFieldParams : public ProfileParams {
+class ExtFieldParams {
 
 public:
     //! Creator for ExtFieldParams
     ExtFieldParams(PicParams&, InputData &, std::string);
+
+    //! copied from params
+    std::string geometry;
 
     //! external fields parameters the key string is the name of the field and the value is a vector of ExtFieldStructure
     std::vector<ExtFieldStructure> structs;

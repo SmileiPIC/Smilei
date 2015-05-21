@@ -115,6 +115,9 @@ double TemperatureProfile2D::operator() (std::vector<double> x_cell) {
 		return  std::max(Temp,Tempmin);
 		}
 	}
+    else if (prof_params.profile=="python") {
+        return PyHelper::py_eval_profile(prof_params,x_cell[0], x_cell[1]);
+    }
     
     	return 1;
 };

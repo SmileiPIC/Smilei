@@ -43,14 +43,8 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
         ifile.extract("angle",tmpLaser.angle ,"laser",0,n_laser);
         
         // laser time-profile & associated parameters
-        ifile.extract("time_profile",tmpLaser.profile_time.profile ,"laser",0,n_laser);
-        if (tmpLaser.profile_time.profile.empty()) {
-            PyObject *mypy = ifile.extract_py("time_profile","laser",0,n_laser);
-            if (mypy && PyCallable_Check(mypy)) {
-                tmpLaser.profile_time.py_profile=mypy;
-                tmpLaser.profile_time.profile="python";
-            }
-        } else {
+        if (!ifile.extract_py_profile(tmpLaser.profile_time,"time_profile","laser",0,n_laser)) {
+            ifile.extract("time_profile",tmpLaser.profile_time.profile ,"laser",0,n_laser);
             ifile.extract("int_params",tmpLaser.profile_time.int_params ,"laser",0,n_laser);
             ifile.extract("double_params",tmpLaser.profile_time.double_params ,"laser",0,n_laser);            
         }

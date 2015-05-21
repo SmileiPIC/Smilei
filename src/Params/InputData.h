@@ -72,7 +72,9 @@ public:
     bool extract(std::string name, std::vector<std::string> &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
 
     PyObject* extract_py(std::string name, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
-    
+
+    bool extract_py_profile(ProfileStructure &prof, std::string name, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
+
     std::vector<PyObject*> extract_pyVvec(std::string name, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
     
     //! return true if the nth group exists

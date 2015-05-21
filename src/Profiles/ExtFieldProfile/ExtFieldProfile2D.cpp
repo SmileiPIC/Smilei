@@ -177,13 +177,7 @@ double ExtFieldProfile2D::operator() (vector<double> x_cell) {
         
     }    
     else if (my_struct.profile=="python") {
-        PyObject *pyresult = PyObject_CallFunction(my_struct.py_profile, const_cast<char *>("dd"), x_cell[0], x_cell[1]);
-        if (pyresult == NULL) {
-            ERROR("can't evaluate python function");
-        }
-        double cppresult = PyFloat_AsDouble(pyresult);
-        Py_XDECREF(pyresult);
-        return cppresult;
+        return PyHelper::py_eval_profile(my_struct,x_cell[0], x_cell[1]);
     } else {
         return 0;
     }
