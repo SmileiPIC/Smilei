@@ -16,7 +16,8 @@ public:
 
     double pi_ov_2;
     double PI2;
-    
+    double omega0_;
+    double tchirp_;
     double a0_delta_y_;
     double a0_delta_z_;
 
