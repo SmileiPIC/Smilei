@@ -103,7 +103,13 @@ double VelocityProfile1D::operator() (std::vector<double> x_cell) {
 	}
     }
     else if (prof_params.profile=="python") {
-        return PyHelper::py_eval_profile(prof_params,x_cell[0]);
+        PyObject *pyresult = PyObject_CallFunction(prof_params.py_profile, const_cast<char *>("d"), x_cell[0]);
+        if (pyresult == NULL) {
+            ERROR("can't evaluate python function");
+        }
+        double cppresult = PyFloat_AsDouble(pyresult);
+        Py_XDECREF(pyresult);
+        return cppresult;
     }
     else if (prof_params.profile=="python") {
         DEBUG("it's a python profile");

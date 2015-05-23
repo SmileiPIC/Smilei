@@ -3,7 +3,6 @@
 
 #include <cmath>
 #include "ExtFieldParams.h"
-#include "pyHelper.h"
 
 
 

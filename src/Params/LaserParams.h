@@ -13,6 +13,7 @@
 
 #include "InputData.h"
 #include "PicParams.h"
+#include "ProfileParams.h"
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each Laser

@@ -500,7 +500,13 @@ double DensityProfile2D::operator() (vector<double> x_cell) {
         
     }// fukuda
     else if (species_param.dens_profile.profile=="python") {
-        return PyHelper::py_eval_profile(species_param.dens_profile,x_cell[0], x_cell[1]);
+        PyObject *pyresult = PyObject_CallFunction(species_param.dens_profile.py_profile, const_cast<char *>("dd"), x_cell[0], x_cell[1]);
+        if (pyresult == NULL) {
+            ERROR("can't evaluate python function");
+        }
+        double cppresult = PyFloat_AsDouble(pyresult);
+        Py_XDECREF(pyresult);
+        return cppresult;
     }
     // Other profiles: not defined
     // ---------------------------

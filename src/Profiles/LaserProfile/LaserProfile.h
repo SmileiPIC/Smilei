@@ -5,7 +5,6 @@
 
 #include "PicParams.h"
 #include "LaserParams.h"
-#include "pyHelper.h"
 
 
 class LaserProfile {

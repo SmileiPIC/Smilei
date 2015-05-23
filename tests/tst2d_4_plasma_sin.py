@@ -5,11 +5,11 @@ t_sim=30
 position=8
 thickness=1
 length =1
-res=10
+res=8
 
 density=0.5
 
-dx, dy = 30, 30
+dx, dy = 10, 50
 
 twopi=2*math.pi
 
@@ -17,7 +17,7 @@ twopi=2*math.pi
 def func_density(codex,codey, offset =1.0):
     x,y=codex/twopi,codey/twopi
     
-    val = gaussian(x, xoffset, xsigma) *gaussian(y, yoffset, ysigma)
+    val = (math.cos(2*y)+2.0)*math.exp(-((x-position)/length)**2)/3 if x<position else 1 if x < position+thickness else 0
         
     return val
 
@@ -152,7 +152,7 @@ def my_func_laser_profile(t,y):
 #
 Laser(
 boxSide = 'west' ,
-a0=0.1 ,
+a0=0.2 ,
 focus=(position,  dy/2) ,
 angle=20 ,
 delta=0.0 ,

@@ -7,7 +7,7 @@
 using namespace std;
 
 ExtFieldParams::ExtFieldParams(PicParams& params, InputData &ifile, string groupName) :
-geometry(params.geometry)
+ProfileParams(params)
 {
 	
     // -----------------
@@ -18,10 +18,15 @@ geometry(params.geometry)
         
         ExtFieldStructure tmpExtField;
         ifile.extract("field",tmpExtField.fields,groupName,0,n_extfield);
-
-        if (!ifile.extract_py_profile(tmpExtField,"profile",groupName,0,n_extfield)) {
-            ifile.extract("profile",tmpExtField.profile,groupName,0,n_extfield);
+        ifile.extract("profile",tmpExtField.profile,groupName,0,n_extfield);
         
+        if (tmpExtField.profile.empty()) {
+            PyObject *mypy = ifile.extract_py("profile",groupName,0,n_extfield);
+            if (mypy && PyCallable_Check(mypy)) {
+                tmpExtField.py_profile=mypy;
+                tmpExtField.profile="python";
+            }
+        } else {
             ifile.extract("int_params",tmpExtField.int_params,groupName,0,n_extfield);
             ifile.extract("double_params",tmpExtField.double_params,groupName,0,n_extfield);
             ifile.extract("length_params_x",tmpExtField.length_params_x,groupName,0,n_extfield);

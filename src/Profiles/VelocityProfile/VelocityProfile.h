@@ -3,7 +3,6 @@
 
 #include <cmath>
 #include "PicParams.h"
-#include "pyHelper.h"
 
 
 

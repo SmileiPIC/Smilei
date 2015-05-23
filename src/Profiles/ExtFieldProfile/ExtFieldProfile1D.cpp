@@ -2,7 +2,7 @@
 
 
 ExtFieldProfile1D::ExtFieldProfile1D(ExtFieldStructure &extfield_struct) : ExtFieldProfile(extfield_struct){
-    
+
     //checking for errors
     if (my_struct.profile == "constant") {
         if (my_struct.double_params.size()<1)
@@ -23,20 +23,20 @@ ExtFieldProfile1D::ExtFieldProfile1D(ExtFieldStructure &extfield_struct) : ExtFi
             ERROR("three double_params must be defined for Charles profile" );
         if (my_struct.length_params_x.size()<2)
             ERROR("three length_params_x must be defined for Charles profile" );
-        
+
     } 
     else if (my_struct.profile=="python") {
     }
     else {
         ERROR("unknown or empty profile :" << my_struct.profile );
     }
-    
-    
+
+
 }
 
 
 double ExtFieldProfile1D::operator() (std::vector<double> x_cell) {
-    
+
     if (my_struct.profile == "constant") {
         return my_struct.double_params[0];
     }
@@ -53,23 +53,29 @@ double ExtFieldProfile1D::operator() (std::vector<double> x_cell) {
         //int    N     = my_struct.int_params[0];
         double B0    = my_struct.double_params[0];
         double Bmax  = my_struct.double_params[1];
-        double P0    = my_struct.double_params[2];
+	double P0    = my_struct.double_params[2];
         double x0    = my_struct.length_params_x[0];
         double L     = my_struct.length_params_x[1];
         double x     = x_cell[0]-x0;
-        //double Bm    = Bmax;
+	//double Bm    = Bmax;
         //double sigma = pow(L/2.0,N)/log(2.0);
-        if (Bmax == 0.) {
-            //double Bm = sqrt(B0*B0+2*P0)-B0;
-            return B0 + (sqrt(B0*B0+2*P0)-B0)/pow(cosh(x/L),2);
-        }else {	return B0 + Bmax/pow(cosh(x/L),2);
-        }
+	if (Bmax == 0.) {
+		//double Bm = sqrt(B0*B0+2*P0)-B0;
+		return B0 + (sqrt(B0*B0+2*P0)-B0)/pow(cosh(x/L),2);
+	}else {	return B0 + Bmax/pow(cosh(x/L),2);
+	}
         
         //return B0 + Bmax * exp(-pow(x,N)/sigma);
-        
+            
     }
     else if (my_struct.profile=="python") {
-        return PyHelper::py_eval_profile(my_struct,x_cell[0]);
+        PyObject *pyresult = PyObject_CallFunction(my_struct.py_profile, const_cast<char *>("d"), x_cell[0]);
+        if (pyresult == NULL) {
+            ERROR("can't evaluate python function");
+        }
+        double cppresult = PyFloat_AsDouble(pyresult);
+        Py_XDECREF(pyresult);
+        return cppresult;
     }
     else {
         return 0;

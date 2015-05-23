@@ -54,8 +54,8 @@ InputData::InputData(SmileiMPI *smpi, std::vector<std::string> namelistsFiles): 
         ERROR("error parsing namelist")
     }
 
-    PyObject* pyFunc = PyObject_GetAttrString(PyImport_AddModule("__main__"),(char*)"get_smilei");
-    py_namelist = PyObject_CallFunction(pyFunc,const_cast<char *>(""));
+    PyObject* myFunction = PyObject_GetAttrString(PyImport_AddModule("__main__"),(char*)"get_smilei");
+    py_namelist = PyObject_CallFunction(myFunction,const_cast<char *>(""));
     if (!py_namelist) {
         ERROR("no smilei class defined, but we should never get here...");
     }
@@ -287,35 +287,6 @@ PyObject* InputData::extract_py(string name, string group, int occurrenceItem, i
     }
     return py_val;
 }    
-
-bool InputData::extract_py_profile(ProfileStructure &prof, std::string name, std::string group, int occurrenceItem, int occurrenceGroup) {
-
-    PyObject* myStuff = extract_py(name,group,occurrenceItem,occurrenceGroup);
-    
-    prof.py_profile = NULL;
-    prof.py_args = NULL;
-    
-    if (!myStuff) return false;
-    
-    if (!PyTuple_Check(myStuff)) {
-        if(!PyCallable_Check(myStuff)){
-            return false;
-        }
-        prof.py_profile=myStuff;
-        prof.py_args=PyTuple_New(0);
-    } else {       
-        prof.py_profile=PyTuple_GetItem(myStuff, 0);
-        if(!PyCallable_Check(prof.py_profile)){
-            return false;
-        }
-        prof.py_args=PyTuple_GetSlice(myStuff, 1,PyTuple_Size(myStuff));
-        Py_XDECREF(myStuff);
-    }
-    // everything should be fine
-    prof.profile="python";
-    return true;
-}
-
 
 //! retrieve a vector of python objects
 vector<PyObject*> InputData::extract_pyVvec(string name, string group, int occurrenceItem, int occurrenceGroup) {

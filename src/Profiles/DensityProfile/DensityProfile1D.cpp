@@ -312,7 +312,13 @@ double DensityProfile1D::operator() (std::vector<double> x_cell) {
         }
     }
     else if (species_param.dens_profile.profile=="python") {
-        return PyHelper::py_eval_profile(species_param.dens_profile,x_cell[0]);
+        PyObject *pyresult = PyObject_CallFunction(species_param.dens_profile.py_profile, const_cast<char *>("d"), x_cell[0]);
+        if (pyresult == NULL) {
+            ERROR("can't evaluate python function");
+        }
+        double cppresult = PyFloat_AsDouble(pyresult);
+        Py_XDECREF(pyresult);
+        return cppresult;
     }
     
     // Other density profile

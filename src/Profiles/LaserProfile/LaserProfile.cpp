@@ -248,7 +248,13 @@ double LaserProfile::time_profile(double time_dual) {
     
     // python function
     else if (type_of_time_profile=="python") {
-        return PyHelper::py_eval_profile(laser_struct.profile_transv,time_dual);
+        PyObject *pyresult = PyObject_CallFunction(laser_struct.profile_time.py_profile, const_cast<char *>("d"), time_dual);
+        if (pyresult == NULL) {
+            ERROR("can't evaluate python function");
+        }
+        double cppresult = PyFloat_AsDouble(pyresult);
+        Py_XDECREF(pyresult);
+        return cppresult;
     } 
     else {
         return 0.0;
@@ -291,7 +297,13 @@ double LaserProfile::transverse_profile2D(double time_dual, double y) {
     }
     // python function
     else if (type_of_transv_profile=="python") {
-        return PyHelper::py_eval_profile(laser_struct.profile_transv,time_dual,y);
+        PyObject *pyresult = PyObject_CallFunction(laser_struct.profile_transv.py_profile, const_cast<char *>("dd"), time_dual,y);
+        if (pyresult == NULL) {
+            ERROR("can't evaluate python function");
+        }
+        double cppresult = PyFloat_AsDouble(pyresult);
+        Py_XDECREF(pyresult);
+        return cppresult;
     } 
     
     else

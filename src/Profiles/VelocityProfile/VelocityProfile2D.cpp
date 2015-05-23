@@ -157,7 +157,17 @@ double VelocityProfile2D::operator() (vector<double> x_cell) {
         double v   = (Jz+dJz)/n;
         
         return v;
-    }    
+    }
+    else if (prof_params.profile=="python") {
+        PyObject *pyresult = PyObject_CallFunction(prof_params.py_profile, const_cast<char *>("dd"), x_cell[0], x_cell[1]);
+        if (pyresult == NULL) {
+            ERROR("can't evaluate python function");
+        }
+        double cppresult = PyFloat_AsDouble(pyresult);
+        Py_XDECREF(pyresult);
+        return cppresult;
+    }
+    
     // ------------------------
     // Charles velocity profile
     // ------------------------
@@ -220,11 +230,6 @@ double VelocityProfile2D::operator() (vector<double> x_cell) {
 	double pi   = 4*atan(1.);
 	return cos(2*pi/L*x);
 	}
-    // Python
-    else if (prof_params.profile=="python") {
-        return PyHelper::py_eval_profile(prof_params,x_cell[0],x_cell[1]);
-    }
-    
     return 1;
 
 }
