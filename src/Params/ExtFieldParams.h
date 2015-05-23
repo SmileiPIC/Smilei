@@ -26,8 +26,6 @@ struct ExtFieldStructure : ProfileStructure {
 
 };
 
-
-
 // ---------------------------------------------------------------------------------------------------------------------
 //! ExtFieldParams class: holds all the properties of the lasers that are read from the input file
 // ---------------------------------------------------------------------------------------------------------------------

@@ -1,25 +1,42 @@
 import math 
 
-part_per_cell=2
+part_per_cell=5
 t_sim=30
+res=10
+
 position=8
 thickness=1
-length =1
-res=8
 
-density=0.5
+
+density=0.8
 
 dx, dy = 10, 50
 
 twopi=2*math.pi
 
 
-def func_density(codex,codey, offset =1.0):
+def my_function1(pos=0,leng=1,thick=1):
+    """ my function 1 """
+    return lambda x,y: (math.cos(2*y/twopi)+2.0)*math.exp(-((x/twopi-pos)/leng)**2)/3 if x/twopi<pos else 1 if x/twopi < pos+thick else 0       
+
+def my_function2(codex,codey, pos=0,leng=1,thick=1):
+    """ my function 2 """
     x,y=codex/twopi,codey/twopi
-    
-    val = (math.cos(2*y)+2.0)*math.exp(-((x-position)/length)**2)/3 if x<position else 1 if x < position+thickness else 0
+    return (math.cos(2*y)+2.0)*math.exp(-((x-pos)/leng)**2)/3 if x<pos else 1 if x < pos+thick else 0
+
+
+class my_function3():
+    def __init__(self, pos=0,leng=1,thick=1):
+        """ my function 3 """
+        self.pos=pos
+        self.leng=leng
+        self.thick=thick
         
-    return val
+    def __call__(self, codex, codey):
+        x,y=codex/twopi,codey/twopi
+        return (math.cos(2*y)+2.0)*math.exp(-((x-self.pos)/self.leng)**2)/3 if x<self.pos else 1 if x < self.pos+self.thick else 0
+
+
 
 mysim=Smilei()
 
@@ -77,9 +94,8 @@ mysim.fieldDump_every = 10
 mysim.print_every = 10
 
 
-
 myspec1=Species()
-myspec1.dens_profile = lambda x,y : func_density(x,y,1)
+myspec1.dens_profile = my_function3(pos=8,leng=1,thick=1)
 myspec1.vacuum_length   = ((dx-thickness)/2.0,  dy/4.0) 
 myspec1.dens_length_x   = thickness
 myspec1.dens_length_y   = dy/2
@@ -105,11 +121,8 @@ myspec1.mvel_x_profile='constant'
 myspec1.mvel_y_profile='constant'
 myspec1.mvel_z_profile='constant'
 
-
-
-
 Species(
-dens_profile = lambda x,y : func_density(x,y,10),
+dens_profile = lambda x,y : my_function2(x,y,pos=8,leng=1,thick=1),
 vacuum_length   = ((dx-thickness)/2.0,  dy/4,0) ,
 dens_length_x   = thickness ,
 dens_length_y   = dy/2,
@@ -134,6 +147,7 @@ bc_part_type_east  = 'refl' ,
 bc_part_type_south = 'none' ,
 bc_part_type_north = 'none'
 )
+
 
 def my_func_laser_profile(t,y):
     val = math.exp(-t**2)*math.exp(-(y)**2)
