@@ -13,16 +13,13 @@ dx, dy = 30, 30
 
 twopi=2*math.pi
 
-def gaussian(x,offset,sigma):
-    return math.exp(-((x-offset)/sigma)**2)
-    
-def my_func_density(codex,codey, xoffset, xsigma, yoffset, ysigma):
+
+def func_density(codex,codey, offset =1.0):
     x,y=codex/twopi,codey/twopi
     
     val = gaussian(x, xoffset, xsigma) *gaussian(y, yoffset, ysigma)
         
     return val
-
 
 mysim=Smilei()
 
@@ -82,7 +79,7 @@ mysim.print_every = 10
 
 
 myspec1=Species()
-myspec1.dens_profile = (my_func_density, dx/2, 1, dy/2, 1) 
+myspec1.dens_profile = lambda x,y : func_density(x,y,1)
 myspec1.vacuum_length   = ((dx-thickness)/2.0,  dy/4.0) 
 myspec1.dens_length_x   = thickness
 myspec1.dens_length_y   = dy/2
@@ -112,7 +109,7 @@ myspec1.mvel_z_profile='constant'
 
 
 Species(
-dens_profile = (my_func_density, dx/2, 1, dy/2, 1),
+dens_profile = lambda x,y : func_density(x,y,10),
 vacuum_length   = ((dx-thickness)/2.0,  dy/4,0) ,
 dens_length_x   = thickness ,
 dens_length_y   = dy/2,

@@ -286,8 +286,17 @@ void PicParams::readSpecies(InputData &ifile) {
         // ----------------
 
         
-        if (!ifile.extract_py_profile(tmpSpec.dens_profile,"dens_profile", "species",0,n_species)) {
-            ifile.extract("dens_profile", tmpSpec.dens_profile.profile,"species",0,n_species);
+        ifile.extract("dens_profile", tmpSpec.dens_profile.profile,"species",0,n_species);
+        if (tmpSpec.dens_profile.profile.empty()) {
+            PyObject *mypy = ifile.extract_py("dens_profile","species",0,n_species);
+            HEREIAM(mypy->ob_type->tp_name);
+            if (mypy && PyCallable_Check(mypy)) {
+                tmpSpec.dens_profile.py_profile=mypy;
+                tmpSpec.dens_profile.profile="python";
+            }
+
+        } else {
+            // species length (check DensityProfile for definitions)
             ifile.extract("vacuum_length", tmpSpec.dens_profile.vacuum_length,"species",0,n_species);
             ifile.extract("dens_length_x", tmpSpec.dens_profile.length_params_x,"species",0,n_species);
             if ( (geometry=="2d3v") || (geometry=="3d3v") )
@@ -323,8 +332,14 @@ void PicParams::readSpecies(InputData &ifile) {
         
         HEREIAM("");
         // Y
-        if (!ifile.extract_py_profile(tmpSpec.mvel_y_profile,"mvel_y_profile", "species",0,n_species)) {
-            ifile.extract("mvel_y_profile", tmpSpec.mvel_y_profile.profile,"species",0,n_species);
+        ifile.extract("mvel_y_profile", tmpSpec.mvel_y_profile.profile,"species",0,n_species);
+        if (tmpSpec.mvel_y_profile.profile.empty()) {
+            PyObject *mypy = ifile.extract_py("mvel_y_profile", "species",0,n_species);
+            if (mypy && PyCallable_Check(mypy)) {
+                tmpSpec.mvel_y_profile.py_profile=mypy;
+                tmpSpec.mvel_y_profile.profile="python";
+            }
+        } else {
             ifile.extract("mvel_y_length_x", tmpSpec.mvel_y_profile.length_params_x,"species",0,n_species);
             if ( (geometry=="2d3v") || (geometry=="3d3v") )
                 ifile.extract("mvel_y_length_y", tmpSpec.mvel_y_profile.length_params_y,"species",0,n_species);
@@ -338,8 +353,14 @@ void PicParams::readSpecies(InputData &ifile) {
         
         HEREIAM("");
         // Z
-        if (!ifile.extract_py_profile(tmpSpec.mvel_z_profile,"mvel_x_profile", "species",0,n_species)) {
-            ifile.extract("mvel_z_profile", tmpSpec.mvel_z_profile.profile,"species",0,n_species);
+        ifile.extract("mvel_z_profile", tmpSpec.mvel_z_profile.profile,"species",0,n_species);
+        if (tmpSpec.mvel_z_profile.profile.empty()) {
+            PyObject *mypy = ifile.extract_py("mvel_z_profile", "species",0,n_species);
+            if (mypy && PyCallable_Check(mypy)) {
+                tmpSpec.mvel_z_profile.py_profile=mypy;
+                tmpSpec.mvel_z_profile.profile="python";
+            }
+        } else {
             ifile.extract("mvel_z_length_x", tmpSpec.mvel_z_profile.length_params_x,"species",0,n_species);
             if ( (geometry=="2d3v") || (geometry=="3d3v") )
                 ifile.extract("mvel_z_length_y", tmpSpec.mvel_z_profile.length_params_y,"species",0,n_species);
@@ -351,14 +372,18 @@ void PicParams::readSpecies(InputData &ifile) {
             tmpSpec.mvel_z_profile.vacuum_length=tmpSpec.dens_profile.vacuum_length;
         }
         
-        HEREIAM("-------------------------------------");
-        
         // Species mean temperature parameters
         // ----------------
         
         // X : Only in 1D
-        if (!ifile.extract_py_profile(tmpSpec.temp_x_profile,"temp_x_profile", "species",0,n_species)) {
-            HEREIAM("");
+        ifile.extract("temp_x_profile", tmpSpec.temp_x_profile.profile,"species",0,n_species);
+        if (tmpSpec.temp_x_profile.profile.empty()) {
+            PyObject *mypy = ifile.extract_py("temp_x_profile", "species",0,n_species);
+            if (mypy && PyCallable_Check(mypy)) {
+                tmpSpec.temp_x_profile.py_profile=mypy;
+                tmpSpec.temp_x_profile.profile="python";
+            }
+        } else {
             ifile.extract("temp_x_profile", tmpSpec.temp_x_profile.profile,"species",0,n_species);
             // species length (check DensityProfile for definitions)
             ifile.extract("temp_x_length_x", tmpSpec.temp_x_profile.length_params_x,"species",0,n_species);
@@ -369,11 +394,16 @@ void PicParams::readSpecies(InputData &ifile) {
             
             ifile.extract("temp_x_dbl_params", tmpSpec.temp_x_profile.double_params,"species",0,n_species);
             ifile.extract("temp_x_int_params", tmpSpec.temp_x_profile.int_params,"species",0,n_species);
-        }
+        }            
         
-        HEREIAM("");
-        if (!ifile.extract_py_profile(tmpSpec.temp_y_profile,"temp_y_profile", "species",0,n_species)) {
-            ifile.extract("temp_y_profile", tmpSpec.temp_y_profile.profile,"species",0,n_species);
+        ifile.extract("temp_y_profile", tmpSpec.temp_y_profile.profile,"species",0,n_species);
+        if (tmpSpec.temp_y_profile.profile.empty()) {
+            PyObject *mypy = ifile.extract_py("temp_y_profile", "species",0,n_species);
+            if (mypy && PyCallable_Check(mypy)) {
+                tmpSpec.temp_y_profile.py_profile=mypy;
+                tmpSpec.temp_y_profile.profile="python";
+            }
+        } else {
             // species length (check DensityProfile for definitions)
             ifile.extract("temp_y_length_x", tmpSpec.temp_y_profile.length_params_x,"species",0,n_species);
             if ( (geometry=="2d3v") || (geometry=="3d3v") )
@@ -382,11 +412,16 @@ void PicParams::readSpecies(InputData &ifile) {
                 ifile.extract("temp_y_length_z", tmpSpec.temp_y_profile.length_params_z,"species",0,n_species);
             ifile.extract("temp_y_dbl_params", tmpSpec.temp_y_profile.double_params,"species",0,n_species);
             ifile.extract("temp_y_int_params", tmpSpec.temp_y_profile.int_params,"species",0,n_species);
+            
         }            
-        
-        HEREIAM("");
-        if (!ifile.extract_py_profile(tmpSpec.temp_z_profile,"temp_z_profile", "species",0,n_species)) {
-            ifile.extract("temp_z_profile", tmpSpec.temp_z_profile.profile,"species",0,n_species);
+        ifile.extract("temp_z_profile", tmpSpec.temp_z_profile.profile,"species",0,n_species);
+        if (tmpSpec.temp_z_profile.profile.empty()) {
+            PyObject *mypy = ifile.extract_py("temp_z_profile", "species",0,n_species);
+            if (mypy && PyCallable_Check(mypy)) {
+                tmpSpec.temp_z_profile.py_profile=mypy;
+                tmpSpec.temp_z_profile.profile="python";
+            }
+        } else {
             // species length (check DensityProfile for definitions)
             ifile.extract("temp_z_length_x", tmpSpec.temp_z_profile.length_params_x,"species",0,n_species);
             if ( (geometry=="2d3v") || (geometry=="3d3v") )
@@ -396,15 +431,9 @@ void PicParams::readSpecies(InputData &ifile) {
             ifile.extract("temp_z_dbl_params", tmpSpec.temp_z_profile.double_params,"species",0,n_species);
             ifile.extract("temp_z_int_params", tmpSpec.temp_z_profile.int_params,"species",0,n_species);
         }
-        HEREIAM("");
-        
         tmpSpec.temp_x_profile.vacuum_length=tmpSpec.dens_profile.vacuum_length;
         tmpSpec.temp_y_profile.vacuum_length=tmpSpec.dens_profile.vacuum_length;
         tmpSpec.temp_z_profile.vacuum_length=tmpSpec.dens_profile.vacuum_length;
-        
-        
-        HEREIAM("");
-        
         
         species_param.push_back(tmpSpec);
         
