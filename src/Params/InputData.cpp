@@ -272,7 +272,7 @@ PyObject* InputData::extract_py(string name, string group, int occurrenceItem, i
         if (occurrenceItem>0) {
             if (PyList_Check(py_val)) {
                 int len = PySequence_Size(py_val);
-                if (len >= occurrenceGroup) {
+                if (len >= occurrenceItem) {
                     PyObject* seq = PySequence_Fast(py_val, "expected a sequence");
                     py_val = PySequence_Fast_GET_ITEM(seq, occurrenceItem);
                     Py_DECREF(seq);

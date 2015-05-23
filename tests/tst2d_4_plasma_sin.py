@@ -1,11 +1,11 @@
 import math 
 
-part_per_cell=20
+part_per_cell=2
 t_sim=30
 position=8
 thickness=1
 length =1
-res=20
+res=8
 
 density=0.5
 
@@ -14,13 +14,12 @@ dx, dy = 10, 50
 twopi=2*math.pi
 
 
-def my_func_density(codex,codey):
+def func_density(codex,codey, offset =1.0):
     x,y=codex/twopi,codey/twopi
     
     val = (math.cos(2*y)+2.0)*math.exp(-((x-position)/length)**2)/3 if x<position else 1 if x < position+thickness else 0
         
     return val
-
 
 mysim=Smilei()
 
@@ -80,7 +79,7 @@ mysim.print_every = 10
 
 
 myspec1=Species()
-myspec1.dens_profile = my_func_density
+myspec1.dens_profile = lambda x,y : func_density(x,y,1)
 myspec1.vacuum_length   = ((dx-thickness)/2.0,  dy/4.0) 
 myspec1.dens_length_x   = thickness
 myspec1.dens_length_y   = dy/2
@@ -110,7 +109,7 @@ myspec1.mvel_z_profile='constant'
 
 
 Species(
-dens_profile = my_func_density,
+dens_profile = lambda x,y : func_density(x,y,10),
 vacuum_length   = ((dx-thickness)/2.0,  dy/4,0) ,
 dens_length_x   = thickness ,
 dens_length_y   = dy/2,
