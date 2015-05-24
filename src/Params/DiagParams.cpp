@@ -594,38 +594,31 @@ void DiagParams::initParticles(Diagnostic& diags, PicParams& params, InputData &
         vector<PyObject*> allAxes=ifile.extract_pyVec("axis","diag_particles",n_diag_particles);
         
         if (allAxes.size() == 0)
-            ERROR("Diagnotic Particles #" << n_diag_particles << ": at least one parameter `axis` required");
+            ERROR("Diagnotic Particles #" << n_diag_particles << ": axis must contain something");
 
         for (unsigned int iaxis; iaxis<allAxes.size(); iaxis++ ) {
             tmpAxis = new DiagnosticParticlesAxis();
             PyObject *oneAxis=allAxes[iaxis];
             if (PyTuple_Check(oneAxis) || PyList_Check(oneAxis)) {
                 PyObject* seq = PySequence_Fast(oneAxis, "expected a sequence");
-                PyObject* py_val = NULL; 
+                int lenAxisArgs=PySequence_Size(seq);
+                if (lenAxisArgs<4)
+                    ERROR("Diagnotic Particles #" << n_diag_particles << ": axis must contain at least 4 arguments");
                 
-                py_val= PySequence_Fast_GET_ITEM(seq, 0);
-                if (PyString_Check(py_val)) {
-                    tmpAxis->type=string(PyString_AsString(py_val));
+                if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 0),tmpAxis->type)) {
+                    ERROR("First item must be a string" << n_diag_particles << ": axis " << iaxis);
+                } else {
                     if (   (tmpAxis->type == "z" && params.nDim_particle <3)
                         || (tmpAxis->type == "y" && params.nDim_particle <2) )
                         ERROR("Diagnotic Particles #" << n_diag_particles << ": axis " << tmpAxis->type << " cannot exist in " << params.nDim_particle << "D");
-                } else {
-                    ERROR("requested quantity must be a string" << n_diag_particles << ": axis " << iaxis);
                 }
                 
-                // 3 - Extract axis min and max
-                py_val= PySequence_Fast_GET_ITEM(seq, 1);
-                if (PyFloat_Check(py_val)) {
-                    tmpAxis->min = PyFloat_AsDouble(py_val);
-                } else if (PyInt_Check(py_val)) {
-                    tmpAxis->min=(double) PyInt_AsLong(py_val);
+                if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 1),tmpAxis->min)) {
+                    ERROR("Second item must be a double " << n_diag_particles << ": axis " << iaxis);
                 }
-
-                py_val= PySequence_Fast_GET_ITEM(seq, 2);
-                if (PyFloat_Check(py_val)) {
-                    tmpAxis->max = PyFloat_AsDouble(py_val);
-                } else if (PyInt_Check(py_val)) {
-                    tmpAxis->max=(double) PyInt_AsLong(py_val);
+                
+                if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 2),tmpAxis->max)) {
+                    ERROR("Third item must be a double " << n_diag_particles << ": axis " << iaxis);
                 }
                 
                 // If the axis is spatial, then we need to apply the conv_fac
@@ -634,29 +627,23 @@ void DiagParams::initParticles(Diagnostic& diags, PicParams& params, InputData &
                     tmpAxis->max *= params.conv_fac;
                 }
                 
-                
-                // 4 - Extract number of bins
-                py_val= PySequence_Fast_GET_ITEM(seq, 3);
-                if (PyInt_Check(py_val)) {
-                    tmpAxis->nbins=(double) PyInt_AsLong(py_val);
-                } else {
-                    ERROR("Diagnotic Particles #" << n_diag_particles << ": number of bins must be integer");
-                }                
-                
+                WARNING("Fred: tmpAxis->nbins souln't be an integer??")
+                if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 3),tmpAxis->nbins)) {
+                    ERROR("Fourth item must be a double " << n_diag_particles << ": axis " << iaxis);
+                }
+
                 // 5 - Check for  other keywords such as "logscale" and "edge_inclusive"
                 tmpAxis->logscale = false;
                 tmpAxis->edge_inclusive = false;
-                for(unsigned int i=4; i<PySequence_Size(seq); i++) {
-                    if (PyString_Check(py_val)) {
-                        string my_str=string(PyString_AsString(py_val));
-                        if(my_str=="logscale" ||  my_str=="log_scale" || my_str=="log")
-                            tmpAxis->logscale = true;
-                        else if(my_str=="edges" ||  my_str=="edge" ||  my_str=="edge_inclusive" ||  my_str=="edges_inclusive")
-                            tmpAxis->edge_inclusive = true;
-                        else
-                            ERROR("Diagnotic Particles #" << n_diag_particles << ": keyword `" << my_str << "` not understood");
-                    }
-                    
+                for(unsigned int i=4; i<lenAxisArgs; i++) {
+                    string my_str("");
+                    PyTools::convert(PySequence_Fast_GET_ITEM(seq, i),my_str)
+                    if(my_str=="logscale" ||  my_str=="log_scale" || my_str=="log")
+                        tmpAxis->logscale = true;
+                    else if(my_str=="edges" ||  my_str=="edge" ||  my_str=="edge_inclusive" ||  my_str=="edges_inclusive")
+                        tmpAxis->edge_inclusive = true;
+                    else
+                        ERROR("Diagnotic Particles #" << n_diag_particles << ": keyword `" << my_str << "` not understood");
                 }
                 
                 tmpAxes.push_back(tmpAxis);
