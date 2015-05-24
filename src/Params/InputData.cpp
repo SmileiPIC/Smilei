@@ -86,158 +86,6 @@ void InputData::pyRunScript(string command, string name) {
     }
 }
 
-//! get bool from python
-bool InputData::extract(string name, bool &val, string component, int nComponent) {
-    PyObject* py_val = extract_py(name,component,nComponent);
-    if(py_val) {
-        if (PyBool_Check(py_val)) {
-            val=(py_val==Py_True);
-            HEREIAM(name << " " << val);
-            return true;
-        } else {
-            DEBUG(name << " is not a boolean");
-        }
-    }
-    return false;
-}
-
-//! get uint from python
-bool InputData::extract(string name, short int &val, string component, int nComponent) {
-    PyObject* py_val = extract_py(name,component,nComponent);
-    if (py_val) {
-        if (PyInt_Check(py_val)) {
-            long int lval = PyInt_AsLong(py_val);
-            val = (short int) lval;
-            return true;
-        } else {
-            DEBUG(name << " is not a short int");
-        }
-    }
-    return false;
-}
-
-//! get uint from python
-bool InputData::extract(string name, unsigned int &val, string component, int nComponent) {
-    PyObject* py_val = extract_py(name,component,nComponent);
-    if (py_val) {
-        if (PyInt_Check(py_val)) {
-            long int lval = PyInt_AsLong(py_val);
-            val = (unsigned int) lval;
-            return true;
-        } else {
-            DEBUG(name << " is not a unsigned int");
-        }
-    }
-    return false;
-}
-
-//! get int from python
-bool InputData::extract(string name, int &val, string component, int nComponent) {
-    PyObject* py_val = extract_py(name,component,nComponent);
-    if (py_val) {
-        if (PyInt_Check(py_val)) {
-            long int lval = PyInt_AsLong(py_val);
-            val = (int) lval;
-            return true;
-        } else {
-            DEBUG(name << " is not a int");
-        }
-    }
-    return false;
-}
-
-//! get double from python
-bool InputData::extract(string name, double &val, string component, int nComponent) {
-    PyObject* py_val = extract_py(name,component,nComponent);
-    if (py_val) {
-        if (PyFloat_Check(py_val)) {
-            val = PyFloat_AsDouble(py_val);
-            return true;
-        } else if (PyInt_Check(py_val)) {
-            val=(double) PyInt_AsLong(py_val);
-            return true;
-        } else {
-            DEBUG(name << " is not a double");
-        }
-    }
-    return false;
-}
-
-//! get string from python
-bool InputData::extract(string name, string &val, string component, int nComponent) {
-    PyObject* py_val = extract_py(name,component,nComponent);
-    if (py_val) {
-        if (PyString_Check(py_val)) {
-            const char* s = PyString_AsString(py_val);
-            val=string(s);
-            return true;
-        } else {
-            DEBUG(name << " is not a string");
-        }
-    }
-    return false;
-}
-
-//! get uint from python
-bool InputData::extract(string name, vector<unsigned int> &val, string component, int nComponent) {
-    vector<PyObject*> pyvec=extract_pyVvec(name,component,nComponent);
-    val.resize(pyvec.size());
-    for (unsigned int i=0;i<pyvec.size();i++) {
-        if (PyInt_Check(pyvec[i])) {
-            long int lval = PyInt_AsLong(pyvec[i]);
-            val[i] = (unsigned int) lval;
-        } else {
-            DEBUG("reading unsigned int in " << name << " at pos " <<i );
-        }
-    }
-    return false;
-}
-
-//! get int from python
-bool InputData::extract(string name, vector<int> &val, string component, int nComponent) {
-    vector<PyObject*> pyvec=extract_pyVvec(name,component,nComponent);
-    val.resize(pyvec.size());
-    for (unsigned int i=0;i<pyvec.size();i++) {
-        if (PyInt_Check(pyvec[i])) {
-            long int lval = PyInt_AsLong(pyvec[i]);
-            val[i] = (int) lval;
-        } else {
-            DEBUG("reading int in " << name << " at pos " <<i );
-        }
-    }
-    return false;
-}
-
-//! get double from python
-bool InputData::extract(string name, vector<double> &val, string component, int nComponent) {
-    vector<PyObject*> pyvec=extract_pyVvec(name,component,nComponent);
-    val.resize(pyvec.size());
-    for (unsigned int i=0;i<pyvec.size();i++) {
-        if (PyFloat_Check(pyvec[i])) {
-            val[i] = PyFloat_AsDouble(pyvec[i]);
-        } else if (PyInt_Check(pyvec[i])) {
-            val[i] = (double) PyInt_AsLong(pyvec[i]);
-        } else {
-            DEBUG("reading float in " << name << " at pos " <<i );
-        }
-    }
-    return false;
-}
-
-//! get string from python
-bool InputData::extract(string name, vector<string> &val, string component, int nComponent) {
-    vector<PyObject*> pyvec=extract_pyVvec(name,component,nComponent);
-    val.resize(pyvec.size());
-    for (unsigned int i=0;i<pyvec.size();i++) {
-        if (PyString_Check(pyvec[i])) {
-            val[i]=string(PyString_AsString(pyvec[i]));
-        } else {
-            DEBUG("reading string in " << name << " at pos " <<i );
-        }
-    }
-    return false;
-}
-
 //! retrieve python object
 PyObject* InputData::extract_py(string name, string component, int nComponent) {    
 //    DEBUG("[" << name << "] [" << component << "]");
@@ -271,7 +119,7 @@ PyObject* InputData::extract_py(string name, string component, int nComponent) {
 }    
 
 //! retrieve a vector of python objects
-vector<PyObject*> InputData::extract_pyVvec(string name, string component, int nComponent) {
+vector<PyObject*> InputData::extract_pyVec(string name, string component, int nComponent) {
     PyObject* py_val = extract_py(name,component,nComponent);
     vector<PyObject*> retvec;
     if (py_val) {      
@@ -291,7 +139,6 @@ vector<PyObject*> InputData::extract_pyVvec(string name, string component, int n
     }    
     return retvec;
 }    
-
 
 bool InputData::existComponent(std::string component, unsigned int nComponent) {
     if (component.find(" ")!= string::npos) {

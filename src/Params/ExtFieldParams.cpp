@@ -2,12 +2,10 @@
 
 #include <cmath>
 
-#include "Tools.h"
-
 using namespace std;
 
 ExtFieldParams::ExtFieldParams(PicParams& params, InputData &ifile, string groupName) :
-ProfileParams(params)
+geometry(params.geometry)
 {
 	
     // -----------------

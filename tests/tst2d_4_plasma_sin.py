@@ -1,7 +1,7 @@
 import math 
 
-part_per_cell=5
-t_sim=30
+part_per_cell=2
+t_sim=50
 res=10
 
 position=8
@@ -15,17 +15,18 @@ dx, dy = 10, 50
 twopi=2*math.pi
 
 
-def my_function1(pos=0,leng=1,thick=1):
-    """ my function 1 """
-    return lambda x,y: (math.cos(2*y/twopi)+2.0)*math.exp(-((x/twopi-pos)/leng)**2)/3 if x/twopi<pos else 1 if x/twopi < pos+thick else 0       
-
-def my_function2(codex,codey, pos=0,leng=1,thick=1):
+def my_function_easy(codex,codey, pos=0,leng=1,thick=1):
     """ my function 2 """
     x,y=codex/twopi,codey/twopi
     return (math.cos(2*y)+2.0)*math.exp(-((x-pos)/leng)**2)/3 if x<pos else 1 if x < pos+thick else 0
 
 
-class my_function3():
+def my_function_nicer(pos=0,leng=1,thick=1):
+    """ my function 1 """
+    return lambda x,y: (math.cos(2*y/twopi)+2.0)*math.exp(-((x/twopi-pos)/leng)**2)/3 if x/twopi<pos else 1 if x/twopi < pos+thick else 0       
+
+
+class my_function_easy_and_nice():
     def __init__(self, pos=0,leng=1,thick=1):
         """ my function 3 """
         self.pos=pos
@@ -95,7 +96,7 @@ mysim.print_every = 10
 
 
 myspec1=Species()
-myspec1.dens_profile = my_function3(pos=8,leng=1,thick=1)
+myspec1.dens_profile = my_function_easy_and_nice(pos=8,leng=1,thick=1)
 myspec1.vacuum_length   = ((dx-thickness)/2.0,  dy/4.0) 
 myspec1.dens_length_x   = thickness
 myspec1.dens_length_y   = dy/2
@@ -122,7 +123,7 @@ myspec1.mvel_y_profile='constant'
 myspec1.mvel_z_profile='constant'
 
 Species(
-dens_profile = lambda x,y : my_function2(x,y,pos=8,leng=1,thick=1),
+dens_profile = lambda x,y : my_function_easy(x,y,pos=8,leng=1,thick=1),
 vacuum_length   = ((dx-thickness)/2.0,  dy/4,0) ,
 dens_length_x   = thickness ,
 dens_length_y   = dy/2,

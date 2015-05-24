@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "Tools.h"
+#include "PyTools.h"
 #include "PicParams.h"
 #include "SmileiMPI.h"
 
@@ -41,39 +42,24 @@ public:
     //! string containing the whole clean namelist
     std::string namelist;
         
-    //! get bool from python
-    bool extract(std::string name, bool &val, std::string component=std::string(""), int nComponent=0);
-    
-    //! get short from python
-    bool extract(std::string name, short int &val, std::string component=std::string(""), int nComponent=0);
-    
-    //! get uint from python
-    bool extract(std::string name, unsigned int &val, std::string component=std::string(""), int nComponent=0);
-    
-    //! get int from python
-    bool extract(std::string name, int &val, std::string component=std::string(""), int nComponent=0);
-    
-    //! get double from python
-    bool extract(std::string name, double &val, std::string component=std::string(""), int nComponent=0);
-    
-    //! get string from python
-    bool extract(std::string name, std::string &val, std::string component=std::string(""), int nComponent=0);
-
-    //! get get vector of uint from python
-    bool extract(std::string name, std::vector<unsigned int> &val, std::string component=std::string(""), int nComponent=0);
-    
-    //! get get vector of int from python
-    bool extract(std::string name, std::vector<int> &val, std::string component=std::string(""), int nComponent=0);
-    
-    //! get get vector of double from python
-    bool extract(std::string name, std::vector<double> &val, std::string component=std::string(""), int nComponent=0);
-    	
-    //! get vector of string from python
-    bool extract(std::string name, std::vector<std::string> &val, std::string component=std::string(""), int nComponent=0);
-
     PyObject* extract_py(std::string name, std::string component=std::string(""), int nComponent=0);
     
-    std::vector<PyObject*> extract_pyVvec(std::string name, std::string component=std::string(""), int nComponent=0);
+    std::vector<PyObject*> extract_pyVec(std::string name, std::string component=std::string(""), int nComponent=0);
+    
+    //! get T from python
+    template< typename T>
+    bool extract(std::string name, T &val, std::string component=std::string(""), int nComponent=0) {
+        PyObject* py_val = extract_py(name,component,nComponent);
+        return PyTools::convert(py_val,val);
+    }
+    
+    template< typename T>
+    bool extract(std::string name, std::vector<T> &val, std::string component=std::string(""), int nComponent=0) {
+        std::vector<PyObject*> py_val = extract_pyVec(name,component,nComponent);
+        if (py_val.size())
+            return PyTools::convert(py_val,val);
+        return false;
+    }
     
     //! return true if the nth component exists
     bool existComponent(std::string componentName, unsigned int nComponent=0);
