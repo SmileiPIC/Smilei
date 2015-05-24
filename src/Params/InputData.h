@@ -42,41 +42,41 @@ public:
     std::string namelist;
         
     //! get bool from python
-    bool extract(std::string name, bool &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
+    bool extract(std::string name, bool &val, std::string component=std::string(""), int nComponent=0);
     
     //! get short from python
-    bool extract(std::string name, short int &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
+    bool extract(std::string name, short int &val, std::string component=std::string(""), int nComponent=0);
     
     //! get uint from python
-    bool extract(std::string name, unsigned int &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
+    bool extract(std::string name, unsigned int &val, std::string component=std::string(""), int nComponent=0);
     
     //! get int from python
-    bool extract(std::string name, int &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
+    bool extract(std::string name, int &val, std::string component=std::string(""), int nComponent=0);
     
     //! get double from python
-    bool extract(std::string name, double &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
+    bool extract(std::string name, double &val, std::string component=std::string(""), int nComponent=0);
     
     //! get string from python
-    bool extract(std::string name, std::string &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
+    bool extract(std::string name, std::string &val, std::string component=std::string(""), int nComponent=0);
 
     //! get get vector of uint from python
-    bool extract(std::string name, std::vector<unsigned int> &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
+    bool extract(std::string name, std::vector<unsigned int> &val, std::string component=std::string(""), int nComponent=0);
     
     //! get get vector of int from python
-    bool extract(std::string name, std::vector<int> &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
+    bool extract(std::string name, std::vector<int> &val, std::string component=std::string(""), int nComponent=0);
     
     //! get get vector of double from python
-    bool extract(std::string name, std::vector<double> &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
+    bool extract(std::string name, std::vector<double> &val, std::string component=std::string(""), int nComponent=0);
     	
     //! get vector of string from python
-    bool extract(std::string name, std::vector<std::string> &val, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
+    bool extract(std::string name, std::vector<std::string> &val, std::string component=std::string(""), int nComponent=0);
 
-    PyObject* extract_py(std::string name, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
+    PyObject* extract_py(std::string name, std::string component=std::string(""), int nComponent=0);
     
-    std::vector<PyObject*> extract_pyVvec(std::string name, std::string group=std::string(""), int occurrenceItem=0, int occurrenceGroup=0);
+    std::vector<PyObject*> extract_pyVvec(std::string name, std::string component=std::string(""), int nComponent=0);
     
-    //! return true if the nth group exists
-    bool existGroup(std::string groupName, unsigned int occurrenceGroup=0);
+    //! return true if the nth component exists
+    bool existComponent(std::string componentName, unsigned int nComponent=0);
     
     void pyRunScript(std::string, std::string);
     

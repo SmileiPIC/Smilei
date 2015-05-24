@@ -14,24 +14,24 @@ ProfileParams(params)
     // ExtFields properties
     // -----------------
     int n_extfield=0;
-    while (ifile.existGroup(groupName,n_extfield)) {
+    while (ifile.existComponent(groupName,n_extfield)) {
         
         ExtFieldStructure tmpExtField;
-        ifile.extract("field",tmpExtField.fields,groupName,0,n_extfield);
-        ifile.extract("profile",tmpExtField.profile,groupName,0,n_extfield);
+        ifile.extract("field",tmpExtField.fields,groupName,n_extfield);
+        ifile.extract("profile",tmpExtField.profile,groupName,n_extfield);
         
         if (tmpExtField.profile.empty()) {
-            PyObject *mypy = ifile.extract_py("profile",groupName,0,n_extfield);
+            PyObject *mypy = ifile.extract_py("profile",groupName,n_extfield);
             if (mypy && PyCallable_Check(mypy)) {
                 tmpExtField.py_profile=mypy;
                 tmpExtField.profile="python";
             }
         } else {
-            ifile.extract("int_params",tmpExtField.int_params,groupName,0,n_extfield);
-            ifile.extract("double_params",tmpExtField.double_params,groupName,0,n_extfield);
-            ifile.extract("length_params_x",tmpExtField.length_params_x,groupName,0,n_extfield);
-            ifile.extract("length_params_y",tmpExtField.length_params_y,groupName,0,n_extfield);
-            ifile.extract("length_params_z",tmpExtField.length_params_z,groupName,0,n_extfield);
+            ifile.extract("int_params",tmpExtField.int_params,groupName,n_extfield);
+            ifile.extract("double_params",tmpExtField.double_params,groupName,n_extfield);
+            ifile.extract("length_params_x",tmpExtField.length_params_x,groupName,n_extfield);
+            ifile.extract("length_params_y",tmpExtField.length_params_y,groupName,n_extfield);
+            ifile.extract("length_params_z",tmpExtField.length_params_z,groupName,n_extfield);
             
             transform(tmpExtField.length_params_x.begin(), tmpExtField.length_params_x.end(), tmpExtField.length_params_x.begin(),
                       bind1st(multiplies<double>(),params.conv_fac));

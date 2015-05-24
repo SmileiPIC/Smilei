@@ -171,7 +171,7 @@ focus=(position,  dy/2) ,
 angle=20 ,
 delta=0.0 ,
 time_profile = 'sin2' ,
-double_params = 2 ,
+double_params = 10 ,
 transv_profile = my_func_laser_profile ,
 double_params_transv = 10.0 
 )

@@ -87,8 +87,8 @@ void InputData::pyRunScript(string command, string name) {
 }
 
 //! get bool from python
-bool InputData::extract(string name, bool &val, string group, int occurrenceItem, int occurrenceGroup) {
-    PyObject* py_val = extract_py(name,group,occurrenceItem,occurrenceGroup);
+bool InputData::extract(string name, bool &val, string component, int nComponent) {
+    PyObject* py_val = extract_py(name,component,nComponent);
     if(py_val) {
         if (PyBool_Check(py_val)) {
             val=(py_val==Py_True);
@@ -102,8 +102,8 @@ bool InputData::extract(string name, bool &val, string group, int occurrenceItem
 }
 
 //! get uint from python
-bool InputData::extract(string name, short int &val, string group, int occurrenceItem, int occurrenceGroup) {
-    PyObject* py_val = extract_py(name,group,occurrenceItem,occurrenceGroup);
+bool InputData::extract(string name, short int &val, string component, int nComponent) {
+    PyObject* py_val = extract_py(name,component,nComponent);
     if (py_val) {
         if (PyInt_Check(py_val)) {
             long int lval = PyInt_AsLong(py_val);
@@ -117,8 +117,8 @@ bool InputData::extract(string name, short int &val, string group, int occurrenc
 }
 
 //! get uint from python
-bool InputData::extract(string name, unsigned int &val, string group, int occurrenceItem, int occurrenceGroup) {
-    PyObject* py_val = extract_py(name,group,occurrenceItem,occurrenceGroup);
+bool InputData::extract(string name, unsigned int &val, string component, int nComponent) {
+    PyObject* py_val = extract_py(name,component,nComponent);
     if (py_val) {
         if (PyInt_Check(py_val)) {
             long int lval = PyInt_AsLong(py_val);
@@ -132,8 +132,8 @@ bool InputData::extract(string name, unsigned int &val, string group, int occurr
 }
 
 //! get int from python
-bool InputData::extract(string name, int &val, string group, int occurrenceItem, int occurrenceGroup) {
-    PyObject* py_val = extract_py(name,group,occurrenceItem,occurrenceGroup);
+bool InputData::extract(string name, int &val, string component, int nComponent) {
+    PyObject* py_val = extract_py(name,component,nComponent);
     if (py_val) {
         if (PyInt_Check(py_val)) {
             long int lval = PyInt_AsLong(py_val);
@@ -147,8 +147,8 @@ bool InputData::extract(string name, int &val, string group, int occurrenceItem,
 }
 
 //! get double from python
-bool InputData::extract(string name, double &val, string group, int occurrenceItem, int occurrenceGroup) {
-    PyObject* py_val = extract_py(name,group,occurrenceItem,occurrenceGroup);
+bool InputData::extract(string name, double &val, string component, int nComponent) {
+    PyObject* py_val = extract_py(name,component,nComponent);
     if (py_val) {
         if (PyFloat_Check(py_val)) {
             val = PyFloat_AsDouble(py_val);
@@ -164,8 +164,8 @@ bool InputData::extract(string name, double &val, string group, int occurrenceIt
 }
 
 //! get string from python
-bool InputData::extract(string name, string &val, string group, int occurrenceItem, int occurrenceGroup) {
-    PyObject* py_val = extract_py(name,group,occurrenceItem,occurrenceGroup);
+bool InputData::extract(string name, string &val, string component, int nComponent) {
+    PyObject* py_val = extract_py(name,component,nComponent);
     if (py_val) {
         if (PyString_Check(py_val)) {
             const char* s = PyString_AsString(py_val);
@@ -179,8 +179,8 @@ bool InputData::extract(string name, string &val, string group, int occurrenceIt
 }
 
 //! get uint from python
-bool InputData::extract(string name, vector<unsigned int> &val, string group, int occurrenceItem, int occurrenceGroup) {
-    vector<PyObject*> pyvec=extract_pyVvec(name,group,occurrenceItem,occurrenceGroup);
+bool InputData::extract(string name, vector<unsigned int> &val, string component, int nComponent) {
+    vector<PyObject*> pyvec=extract_pyVvec(name,component,nComponent);
     val.resize(pyvec.size());
     for (unsigned int i=0;i<pyvec.size();i++) {
         if (PyInt_Check(pyvec[i])) {
@@ -194,8 +194,8 @@ bool InputData::extract(string name, vector<unsigned int> &val, string group, in
 }
 
 //! get int from python
-bool InputData::extract(string name, vector<int> &val, string group, int occurrenceItem, int occurrenceGroup) {
-    vector<PyObject*> pyvec=extract_pyVvec(name,group,occurrenceItem,occurrenceGroup);
+bool InputData::extract(string name, vector<int> &val, string component, int nComponent) {
+    vector<PyObject*> pyvec=extract_pyVvec(name,component,nComponent);
     val.resize(pyvec.size());
     for (unsigned int i=0;i<pyvec.size();i++) {
         if (PyInt_Check(pyvec[i])) {
@@ -209,8 +209,8 @@ bool InputData::extract(string name, vector<int> &val, string group, int occurre
 }
 
 //! get double from python
-bool InputData::extract(string name, vector<double> &val, string group, int occurrenceItem, int occurrenceGroup) {
-    vector<PyObject*> pyvec=extract_pyVvec(name,group,occurrenceItem,occurrenceGroup);
+bool InputData::extract(string name, vector<double> &val, string component, int nComponent) {
+    vector<PyObject*> pyvec=extract_pyVvec(name,component,nComponent);
     val.resize(pyvec.size());
     for (unsigned int i=0;i<pyvec.size();i++) {
         if (PyFloat_Check(pyvec[i])) {
@@ -225,8 +225,8 @@ bool InputData::extract(string name, vector<double> &val, string group, int occu
 }
 
 //! get string from python
-bool InputData::extract(string name, vector<string> &val, string group, int occurrenceItem, int occurrenceGroup) {
-    vector<PyObject*> pyvec=extract_pyVvec(name,group,occurrenceItem,occurrenceGroup);
+bool InputData::extract(string name, vector<string> &val, string component, int nComponent) {
+    vector<PyObject*> pyvec=extract_pyVvec(name,component,nComponent);
     val.resize(pyvec.size());
     for (unsigned int i=0;i<pyvec.size();i++) {
         if (PyString_Check(pyvec[i])) {
@@ -239,25 +239,25 @@ bool InputData::extract(string name, vector<string> &val, string group, int occu
 }
 
 //! retrieve python object
-PyObject* InputData::extract_py(string name, string group, int occurrenceItem, int occurrenceGroup) {    
-//    DEBUG("[" << name << "] [" << group << "]");
-    if (name.find(" ")!= string::npos || group.find(" ")!= string::npos) {
-        WARNING("asking for [" << name << "] [" << group << "] : it has white inside: please fix the code");
+PyObject* InputData::extract_py(string name, string component, int nComponent) {    
+//    DEBUG("[" << name << "] [" << component << "]");
+    if (name.find(" ")!= string::npos || component.find(" ")!= string::npos) {
+        WARNING("asking for [" << name << "] [" << component << "] : it has white inside: please fix the code");
     }
 
     PyObject *py_obj=py_namelist;
-    if (!group.empty()) {
-        py_obj = PyObject_GetAttrString(py_namelist,group.c_str());
+    if (!component.empty()) {
+        py_obj = PyObject_GetAttrString(py_namelist,component.c_str());
         if (py_obj) {
-            if (PyList_Check(py_obj)) {
+            if (PyList_Check(py_obj) || PyTuple_Check(py_obj)) {
                 int len = PySequence_Size(py_obj);
                 if (len > 0) { 
-                    if (len >= occurrenceGroup) {
+                    if (len >= nComponent) {
                         PyObject* seq = PySequence_Fast(py_obj, "expected a sequence");
-                        py_obj = PySequence_Fast_GET_ITEM(seq, occurrenceGroup);
+                        py_obj = PySequence_Fast_GET_ITEM(seq, nComponent);
                         Py_DECREF(seq);
                     } else {
-                        ERROR("group " << group << " is not big enough");
+                        ERROR("component " << component << " is not big enough");
                     }
                 }
             } else {
@@ -266,31 +266,13 @@ PyObject* InputData::extract_py(string name, string group, int occurrenceItem, i
 
         }
     }
-    PyObject* py_val=NULL;
-    if (py_obj) {
-        py_val = PyObject_GetAttrString(py_obj,name.c_str());
-        if (occurrenceItem>0) {
-            if (PyList_Check(py_val)) {
-                int len = PySequence_Size(py_val);
-                if (len >= occurrenceItem) {
-                    PyObject* seq = PySequence_Fast(py_val, "expected a sequence");
-                    py_val = PySequence_Fast_GET_ITEM(seq, occurrenceItem);
-                    Py_DECREF(seq);
-                } else {
-                    ERROR(name << " is not big enough");
-                }
-            } else {
-                ERROR(name << " is not a list");
-            }
+    return PyObject_GetAttrString(py_obj,name.c_str());
 
-        }
-    }
-    return py_val;
 }    
 
 //! retrieve a vector of python objects
-vector<PyObject*> InputData::extract_pyVvec(string name, string group, int occurrenceItem, int occurrenceGroup) {
-    PyObject* py_val = extract_py(name,group,occurrenceItem,occurrenceGroup);
+vector<PyObject*> InputData::extract_pyVvec(string name, string component, int nComponent) {
+    PyObject* py_val = extract_py(name,component,nComponent);
     vector<PyObject*> retvec;
     if (py_val) {      
         if (!PyTuple_Check(py_val)) {
@@ -311,14 +293,14 @@ vector<PyObject*> InputData::extract_pyVvec(string name, string group, int occur
 }    
 
 
-bool InputData::existGroup(std::string group, unsigned int occurrenceGroup) {
-    if (group.find(" ")!= string::npos) {
-        ERROR("[" << group << "] has white inside: please fix the code");
+bool InputData::existComponent(std::string component, unsigned int nComponent) {
+    if (component.find(" ")!= string::npos) {
+        ERROR("[" << component << "] has white inside: please fix the code");
     }
-    PyObject *py_obj = PyObject_GetAttrString(py_namelist,group.c_str());
+    PyObject *py_obj = PyObject_GetAttrString(py_namelist,component.c_str());
     if (py_obj) {
         if (PyList_Check(py_obj)) {
-            if (PySequence_Size(py_obj) > occurrenceGroup) {
+            if (PySequence_Size(py_obj) > nComponent) {
                 return true;
             }
         }

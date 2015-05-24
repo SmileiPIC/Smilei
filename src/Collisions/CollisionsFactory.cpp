@@ -19,7 +19,7 @@ vector<Collisions*> CollisionsFactory::create(PicParams& params, InputData &ifil
     
     // Loop over each binary collisions group and parse info
     int n_collisions = 0;
-    while (ifile.existGroup("collisions",n_collisions)) {
+    while (ifile.existComponent("collisions",n_collisions)) {
         
         MESSAGE("Parameters for collisions #" << n_collisions << " :");
         
@@ -27,8 +27,8 @@ vector<Collisions*> CollisionsFactory::create(PicParams& params, InputData &ifil
         // which are the names of the two species that will collide
         sg1.resize(0);
         sg2.resize(0);
-        ifile.extract("species1",sg1,"collisions",0,n_collisions);
-        ifile.extract("species2",sg2,"collisions",0,n_collisions);
+        ifile.extract("species1",sg1,"collisions",n_collisions);
+        ifile.extract("species2",sg2,"collisions",n_collisions);
         
         // Obtain the lists of species numbers from the lists of species names.
         sgroup1 = DiagParams::FindSpecies(sg1,params);
@@ -55,7 +55,7 @@ vector<Collisions*> CollisionsFactory::create(PicParams& params, InputData &ifil
         
         // Coulomb logarithm (if negative or unset, then automatically computed)
         clog = 0.; // default
-        ifile.extract("coulomb_log",clog,"collisions",0,n_collisions);
+        ifile.extract("coulomb_log",clog,"collisions",n_collisions);
         if (clog <= 0.) debye_length_required = true; // auto coulomb log requires debye length
         
         // Print collisions parameters
