@@ -35,6 +35,11 @@ DiagParams::DiagParams(Diagnostic& diags, PicParams& params, InputData &ifile, S
     fieldDump_every=0;
     ok=ifile.extract("fieldDump_every", fieldDump_every);
     if (!ok) fieldDump_every=params.global_every;
+
+    ok=ifile.extract("fieldsToDump", fieldsToDump);
+    if (!ok) {
+        DEBUG("activating all fields to dump");
+    }    
     
     avgfieldDump_every=params.res_time*10;
     ok=ifile.extract("avgfieldDump_every", avgfieldDump_every);
@@ -637,7 +642,7 @@ void DiagParams::initParticles(Diagnostic& diags, PicParams& params, InputData &
                 tmpAxis->edge_inclusive = false;
                 for(unsigned int i=4; i<lenAxisArgs; i++) {
                     string my_str("");
-                    PyTools::convert(PySequence_Fast_GET_ITEM(seq, i),my_str)
+                    PyTools::convert(PySequence_Fast_GET_ITEM(seq, i),my_str);
                     if(my_str=="logscale" ||  my_str=="log_scale" || my_str=="log")
                         tmpAxis->logscale = true;
                     else if(my_str=="edges" ||  my_str=="edge" ||  my_str=="edge_inclusive" ||  my_str=="edges_inclusive")

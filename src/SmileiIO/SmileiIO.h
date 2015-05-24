@@ -116,7 +116,8 @@ private:
     //! function that checks if file named "stop" exists;
     bool fileStopCreated();
 
-    std::vector<Field*> outFields;
+    //! name of the fields to dump (copied from diagparams)
+    std::vector<std::string> fieldsToDump; 
 	
 	
 };

@@ -91,6 +91,7 @@ mysim.bc_em_type_trans = 'periodic'
 mysim.random_seed = 0
 
 mysim.fieldDump_every = 10
+mysim.fieldsToDump = ("Ey","Rho_electron")
 
 mysim.print_every = 10
 

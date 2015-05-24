@@ -80,6 +80,9 @@ public:
     //! field dump output
     unsigned int fieldDump_every;
     
+    //! name of the fields to dump
+    std::vector<std::string> fieldsToDump;
+    
     //! time-averaged field dump output
     unsigned int avgfieldDump_every;
     

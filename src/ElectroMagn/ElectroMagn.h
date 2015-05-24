@@ -104,7 +104,9 @@ public:
     //! time-average z-component of the magnetic field
     Field* Bz_avg;
 
-
+    //! all Fields in electromagn
+    std::vector<Field*> allFields;
+    
     //! Vector of charge density and currents for each species
     const unsigned int n_species;
     std::vector<Field*> Jx_s;

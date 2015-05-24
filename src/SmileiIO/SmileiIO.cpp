@@ -22,7 +22,8 @@ using namespace std;
 
 SmileiIO::SmileiIO( PicParams& params, DiagParams& diagParams, SmileiMPI* smpi ) : 
 dump_times(0), 
-stop_file_seen_since_last_check(false)
+stop_file_seen_since_last_check(false),
+fieldsToDump(diagParams.fieldsToDump)
 {
 		
     nDim_particle=params.nDim_particle;
@@ -99,7 +100,7 @@ stop_file_seen_since_last_check(false)
     
     // Fields.h5
     // ---------
-    global_file_id_    = H5Fcreate( "Fields.h5",     H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+    global_file_id_  = H5Fcreate( "Fields.h5",     H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
     
     // Create property list for collective dataset write: for Fields.h5
     
@@ -201,12 +202,6 @@ SmileiIO::~SmileiIO()
 // ---------------------------------------------------------------------------------------------------------------------
 void SmileiIO::writeAllFieldsSingleFileTime( ElectroMagn* EMfields, int time )
 {
-    // select fields for output
-    if (outFields.size()==0) {
-	outFields.push_back(EMfields->Ex_);
-    }
-
-
     ostringstream name_t;
     name_t.str("");
     name_t << "/" << setfill('0') << setw(10) << time;
@@ -214,25 +209,15 @@ void SmileiIO::writeAllFieldsSingleFileTime( ElectroMagn* EMfields, int time )
     DEBUG(10,"[hdf] GROUP _________________________________ " << name_t.str());
     hid_t group_id = H5Gcreate(global_file_id_, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	
-    writeFieldsSingleFileTime( EMfields->Ex_, group_id );
-    writeFieldsSingleFileTime( EMfields->Ey_, group_id );
-    writeFieldsSingleFileTime( EMfields->Ez_, group_id );
-    writeFieldsSingleFileTime( EMfields->Bx_m, group_id );
-    writeFieldsSingleFileTime( EMfields->By_m, group_id );
-    writeFieldsSingleFileTime( EMfields->Bz_m, group_id );
-    writeFieldsSingleFileTime( EMfields->Jx_, group_id );
-    writeFieldsSingleFileTime( EMfields->Jy_, group_id );
-    writeFieldsSingleFileTime( EMfields->Jz_, group_id );
-    writeFieldsSingleFileTime( EMfields->rho_, group_id );
-	
-    // for all species related quantities
-    for (unsigned int ispec=0; ispec<EMfields->n_species; ispec++) {
-        writeFieldsSingleFileTime( EMfields->rho_s[ispec], group_id );
-        writeFieldsSingleFileTime( EMfields->Jx_s[ispec],  group_id );
-        writeFieldsSingleFileTime( EMfields->Jy_s[ispec],  group_id );
-        writeFieldsSingleFileTime( EMfields->Jz_s[ispec],  group_id );
+    for (vector<Field*>::iterator iterField=EMfields->allFields.begin(); iterField!=EMfields->allFields.end(); iterField++) {
+        if (fieldsToDump.empty())
+            writeFieldsSingleFileTime( *iterField, group_id );
+        else
+            for (vector<string>::iterator iterName=fieldsToDump.begin(); iterName!=fieldsToDump.end(); iterName++) 
+                if ((*iterField)->name==(*iterName)) {
+                    writeFieldsSingleFileTime( *iterField, group_id );
+                }
     }
-	
 	
     H5Gclose(group_id);
 	
