@@ -61,13 +61,16 @@ DensityProfile1D::DensityProfile1D(SpeciesStructure &params) : DensityProfile(pa
     
     // ---------------------------------------------------------------------------------
     // Charles magnetic field profile for Liang simulations
-    // vacuum_length[0]  : not used here
+    // vacuum_length[0]  = density of the vacuum (default 0.)
     // double_params[0]   = background density
     // double_params[1]   = Total plasma pressure at infinity P0 = n0*(Te + Ti +...)
     // double_params[2]   = background magnetic field
     // double_params[3]   = Maximum magnetic field
     // length_params_x[0] = position of the maximum magnetic field
     // length_params_x[1] = Length of the magnetic gradient
+    // dens_length_x[2]   : length of the density plateau (default value if sim_length-vacuum_length[0] as for constant)
+    // dens_length_x[3]   : length of the left slope (default value is zero)
+    // dens_length_x[4]   : length of the right slope (default value is the rising slope value species_length[1])
     // ---------------------------------------------------------------------------------
     else if (species_param.dens_profile.profile == "magexpansion") {
     
@@ -77,6 +80,19 @@ DensityProfile1D::DensityProfile1D(SpeciesStructure &params) : DensityProfile(pa
             ERROR("two double_params must be defined for Charles profile" );
         if (species_param.dens_profile.length_params_x.size()<2)
             ERROR("two length_params_x must be defined for Charles profile" );
+	    
+	if (species_param.dens_profile.length_params_x.size()<3) {
+            species_param.dens_profile.length_params_x.resize(3);
+            species_param.dens_profile.length_params_x[2] = 1.e+10;
+        }
+        if (species_param.dens_profile.length_params_x.size()<4) {
+            species_param.dens_profile.length_params_x.resize(4);
+            species_param.dens_profile.length_params_x[3] = 0.;
+        }
+        if (species_param.dens_profile.length_params_x.size()<5) {
+            species_param.dens_profile.length_params_x.resize(5);
+            species_param.dens_profile.length_params_x[4] = species_param.dens_profile.length_params_x[3];
+        }
     }
     
     
@@ -208,13 +224,16 @@ double DensityProfile1D::operator() (std::vector<double> x_cell) {
     // ------------------------
     // Charles density profile
     // ------------------------
-    // vacuum_length[0]  : not used here
+    // vacuum_length[0]   = length of the vacuum region (default 0.)
     // double_params[0]   = background density
     // double_params[1]   = Total plasma pressure at infinity P0 = n0*(Te + Ti +...)
     // double_params[2]   = background magnetic field
     // double_params[3]   = Maximum magnetic field
     // length_params_x[0] = position of the maximum magnetic field
     // length_params_x[1] = Length of the magnetic gradient
+    // dens_length_x[2]   : length of the density plateau (default value if sim_length-vacuum_length[0] as for constant)
+    // dens_length_x[3]   : length of the left slope (default value is zero)
+    // dens_length_x[4]   : length of the right slope (default value is the rising slope value species_length[1])
     // ---------------------------------------------------------------------------------
     else if (species_param.dens_profile.profile=="magexpansion") {
         //int    N     = species_param.dens_profile.int_params[0];
@@ -225,6 +244,36 @@ double DensityProfile1D::operator() (std::vector<double> x_cell) {
         double x0    = species_param.dens_profile.length_params_x[0];
         double L     = species_param.dens_profile.length_params_x[1];
 	double tiny  = 1e-10*L;
+	
+	
+        double plateau     = species_param.dens_profile.length_params_x[2];
+        double left_slope  = species_param.dens_profile.length_params_x[3];
+        double right_slope = species_param.dens_profile.length_params_x[4];
+        double vacuum      = species_param.dens_profile.vacuum_length[0];
+	double ntrap;
+	
+        // vacuum region
+        if ( x_cell[0] < vacuum ) {
+           ntrap = 0.0;
+        }
+	 // linearly increasing density
+        else if ( x_cell[0] < vacuum + left_slope ) {
+            ntrap = (x_cell[0]-vacuum)/left_slope;
+        }
+        // density plateau
+        else if ( x_cell[0] < vacuum + left_slope + plateau ) {
+           ntrap =1.0;
+        }
+        // linearly decreasing density
+        else if ( x_cell[0] < vacuum + left_slope + plateau + right_slope ) {
+           ntrap = 1.0 - ( x_cell[0] - (vacuum + left_slope + plateau) ) / right_slope;
+        }
+        // beyond the plasma
+        else {
+            ntrap = 0.0;
+        }
+	
+	
         //double sigma = pow(L/2.0,N)/log(2.0);
         double x     = x_cell[0]-x0;
 	if (Bmax == 0.) {
@@ -237,7 +286,7 @@ double DensityProfile1D::operator() (std::vector<double> x_cell) {
 			//return 1.;
 		}
 		else {
-        		return (exp( -2*A*Bm/L*tanh(x/L) /(DP*pow(cosh(x/L),2)) ));
+        		return ntrap * (exp( -2*A*Bm/L*tanh(x/L) /(DP*pow(cosh(x/L),2)) ));
         		//return (exp( - abs(tanh(x/L) )));
 			//return 1.;
 		}
@@ -248,10 +297,10 @@ double DensityProfile1D::operator() (std::vector<double> x_cell) {
 		double A  = B0*x + Bm*L*tanh(x/L);
 		double DP = P0 + pow(B0,2)/2 - pow(B,2)/2;
 		if (abs(x)<tiny) {
-			return (exp( -2));
+			return ntrap *(exp( -2));
 		}
 		else {
-        		return (exp( -2*A*Bm/L*tanh(x/L) /(DP*pow(cosh(x/L),2)) ));
+        		return ntrap *(exp( -2*A*Bm/L*tanh(x/L) /(DP*pow(cosh(x/L),2)) ));
 		}
 	}
 	

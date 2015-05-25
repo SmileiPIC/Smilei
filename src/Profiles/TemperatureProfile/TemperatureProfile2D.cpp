@@ -29,7 +29,28 @@ TemperatureProfile2D::TemperatureProfile2D(ProfileSpecies &my_prof_params) : Tem
             ERROR("five double_params must be defined for magexpansion Temperature profile" );
         if (prof_params.length_params_y.size()<2)
             ERROR("two length_params_y must be defined for magexpansion Temperature profile" );
-    } 
+    }
+    
+    // ---------------------------------------------------------------------------------
+    // Blob magnetic field profile for Liang simulations
+    // double_params[0]   = background density
+    // double_params[1]   = relative density variation
+    // double_params[2]   = Total plasma pressure
+    // double_params[3]   = background magnetic field
+    // double_params[4]   = Maximum magnetic field
+    // length_params_x[0] = x position of the maximum of the B-field
+    // length_params_x[1] = Length of the magnetic gradient
+    // length_params_y[2] = y position of the maximum of the B-field
+    // ---------------------------------------------------------------------------------
+    else if (prof_params.profile == "blob") {
+        if (prof_params.double_params.size()<5)
+            ERROR("five double_params_x must be defined for magexpansion Temperature profile" );
+        if (prof_params.length_params_x.size()<2)
+            ERROR("two length_params_y must be defined for magexpansion Temperature profile" );
+        if (prof_params.length_params_y.size()<1)
+            ERROR("two length_params_y must be defined for magexpansion Temperature profile" );
+    }
+     
 }
 
 double TemperatureProfile2D::operator() (std::vector<double> x_cell) {
@@ -113,6 +134,54 @@ double TemperatureProfile2D::operator() (std::vector<double> x_cell) {
 		double Tempmin  = DP_min/n0*exp( 2*Amin*Bm/L*tanh(tiny) /(DP_min*pow(cosh(tiny),2)) );
         	if (Temp<0.) ERROR("Temperature profile smaller than 0 imposed in profile magexpansion");
 		return  std::max(Temp,Tempmin);
+		}
+	}
+	
+	
+    // ---------------------------------------------------------------------------------
+    // Blob magnetic field profile for Liang simulations
+    // double_params[0]   = background density
+    // double_params[1]   = relative density variation
+    // double_params[2]   = Total electron pressure n0*Te0
+    // double_params[3]   = background magnetic field
+    // double_params[4]   = Maximum magnetic field
+    // length_params_x[0] = x position of the maximum of the B-field
+    // length_params_x[1] = Length of the magnetic gradient
+    // length_params_y[2] = y position of the maximum of the B-field
+    // ---------------------------------------------------------------------------------
+    else if (prof_params.profile=="blob") {
+        double n0    = prof_params.double_params[0];
+        double dn    = prof_params.double_params[1];
+        double P0    = prof_params.double_params[2];
+        double B0    = prof_params.double_params[3];
+        double Bmax  = prof_params.double_params[4];
+        double x0    = prof_params.length_params_x[0];
+        double y0    = prof_params.length_params_y[0];
+        double L     = prof_params.length_params_x[1];
+        double  r    = sqrt(pow(x_cell[0]-x0,2) + pow(x_cell[1]-y0,2));
+	double ne    = n0*(1 - dn/(pow(cosh(r/L),2)));
+	double tiny  = 1e-10;
+	double Er;
+	if (r/L>tiny) {
+		Er    = n0*dn*(L*tanh(r/L) - pow(L,2)/(r+1e-10)*log(cosh(r/L)) );
+	}else{
+		Er    = 0.5*n0*r;
+	}
+	
+	if (Bmax == 0.) { //-> maximum value of Bmax
+		double Bm = sqrt(pow(B0,2) + 2*P0)-B0;
+		double B  = B0 + Bm/pow(cosh(r/L),2);
+		double Temp = P0/ne + 0.5*(pow(B0,2) - pow(B,2))/ne  - 0.5*pow(Er,2)/ne;
+         	//if (Temp<0.) ERROR("Temperature smaller than 0 imposed in profile magexpansion");
+         	if (Temp<0.) MESSAGE("Temperature smaller than 0 imposed in profile magexpansion");
+		return std::max(Temp,P0/n0/1000);
+		}
+	else {	
+		double Bm = Bmax;
+		double B  = B0 + Bm/pow(cosh(r/L),2);
+		double Temp = P0/ne + 0.5*(pow(B0,2) - pow(B,2))/ne  - 0.5*pow(Er,2)/ne;
+         	if (Temp<0.) ERROR("Temperature smaller than 0 imposed in profile magexpansion");
+		return std::max(Temp,P0/n0/1000);
 		}
 	}
     
