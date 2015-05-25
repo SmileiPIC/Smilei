@@ -1,8 +1,8 @@
 import math 
 
-part_per_cell=2
+part_per_cell=10
 t_sim=50
-res=10
+res=20
 
 position=8
 thickness=1
@@ -14,16 +14,19 @@ dx, dy = 10, 50
 
 twopi=2*math.pi
 
+def my_real_func(x,y,pos,leng,thick):
+    return (math.cos(y)+2.0)*math.exp(-((x-pos)/leng)**2)/3 if x<pos else 1 if x < pos+thick else 0
+
 
 def my_function_easy(codex,codey, pos=0,leng=1,thick=1):
     """ my function 2 """
     x,y=codex/twopi,codey/twopi
-    return (math.cos(2*y)+2.0)*math.exp(-((x-pos)/leng)**2)/3 if x<pos else 1 if x < pos+thick else 0
+    return my_real_func(x,y,pos,leng,thick)
 
 
 def my_function_nicer(pos=0,leng=1,thick=1):
     """ my function 1 """
-    return lambda x,y: (math.cos(2*y/twopi)+2.0)*math.exp(-((x/twopi-pos)/leng)**2)/3 if x/twopi<pos else 1 if x/twopi < pos+thick else 0       
+    return lambda x,y: my_real_func(x/twopi,y/twopi,pos,leng,thick)      
 
 
 class my_function_easy_and_nice():
@@ -35,7 +38,7 @@ class my_function_easy_and_nice():
         
     def __call__(self, codex, codey):
         x,y=codex/twopi,codey/twopi
-        return (math.cos(2*y)+2.0)*math.exp(-((x-self.pos)/self.leng)**2)/3 if x<self.pos else 1 if x < self.pos+self.thick else 0
+        return my_real_func(x,y,self.pos,self.leng,self.thick)
 
 
 

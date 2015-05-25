@@ -54,18 +54,34 @@ VelocityProfile2D::VelocityProfile2D(ProfileSpecies &my_prof_params) : VelocityP
             ERROR("four double_params must be defined for Charles velocity profile" );
         if (prof_params.length_params_y.size()<2)
             ERROR("two length_params_y must be defined for Charles velocity profile" );
+    }     
+    
+    // ---------------------------------------------------------------------------------
+    // Blob magnetic field profile for Liang simulations
+    // double_params[0]   = background density
+    // double_params[1]   = relative density variation
+    // double_params[2]   = Total electrons pressure
+    // double_params[3]   = Background magnetic field
+    // double_params[4]   = Maximum magnetic field
+    // double_params[5]   = phase argument
+    // length_params_x[0] = x position of the maximum of the B-field
+    // length_params_x[1] = Length of the magnetic gradient
+    // length_params_y[2] = y position of the maximum of the B-field
+    // ---------------------------------------------------------------------------------
+    else if (prof_params.profile == "blob") {
+        if (prof_params.double_params.size()<6)
+            ERROR("four double_params must be defined for Charles velocity profile" );
+        if (prof_params.length_params_x.size()<1)
+            ERROR("two length_params_x must be defined for Charles velocity profile" );
+        if (prof_params.length_params_y.size()<2)
+            ERROR("two length_params_y must be defined for Charles velocity profile" );
     } 
     
     
     // ---------------------------------------------------------------------------------
-    // Charles magnetic field profile for Liang simulations
-    // vacuum_length[0]  : not used here
-    // double_params[0]   = background density
-    // double_params[1]   = Total plasma pressure at infinity P0 = n0*(Te + Ti +...)
-    // double_params[2]   = background magnetic field
-    // double_params[3]   = Maximum magnetic field
-    // length_params_y[0] = position of the maximum magnetic field
-    // length_params_y[1] = Length of the magnetic gradient
+    // Cosinus of x velocity profile
+    // length_params_x[0] = wavelength
+    // length_params_x[1] = phase of the argument
     // ---------------------------------------------------------------------------------
     else if (prof_params.profile == "cos_x") {
         //if (prof_params.int_params.size()<2)
@@ -216,6 +232,51 @@ double VelocityProfile2D::operator() (vector<double> x_cell) {
 		//}
 	}
     }
+    
+    
+    // ---------------------------------------------------------------------------------
+    // Blob magnetic field profile for Liang simulations
+    // double_params[0]   = background density
+    // double_params[1]   = relative density variation
+    // double_params[2]   = Total electrons pressure
+    // double_params[3]   = Background magnetic field
+    // double_params[4]   = Maximum magnetic field
+    // double_params[5]   = phase argument
+    // length_params_x[0] = x position of the maximum of the B-field
+    // length_params_x[1] = Length of the magnetic gradient
+    // length_params_y[2] = y position of the maximum of the B-field
+    // ---------------------------------------------------------------------------------
+     else if (prof_params.profile=="blob") {
+        double n0    = prof_params.double_params[0];
+        double dn    = prof_params.double_params[1];
+        double P0    = prof_params.double_params[2];
+        double B0    = prof_params.double_params[3];
+        double Bmax  = prof_params.double_params[4];
+        double theta0= prof_params.double_params[5];
+        double v0= prof_params.double_params[6];
+        double x0    = prof_params.length_params_x[0];
+        double y0    = prof_params.length_params_y[0];
+        double L     = prof_params.length_params_x[1];
+        double  r    = sqrt(pow(x_cell[0]-x0,2) + pow(x_cell[1]-y0,2));
+	double ne    = n0*( 1 - dn/(pow(cosh(r/L),2)));
+	double theta = atan((x_cell[1]-y0)/(x_cell[0]-x0));
+	double vd;
+	if (r<5*L) { vd = v0;}
+	else {vd=v0;}
+	double v;
+	if (Bmax == 0.) {
+		double Bm = sqrt(pow(B0,2) + 2*P0)-B0;	
+		double v     = -2*Bm/(L*ne)*tanh(r/L) /(pow(cosh(r/L),2))*cos(theta + theta0) +vd;
+        	if (abs(v)>1.0) ERROR("Velocity profile exceeding c");
+		return v;
+	}
+	else {	double Bm = Bmax;
+		double v     = -2*Bm/(L*ne)*tanh(r/L) /(pow(cosh(r/L),2))*cos(theta + theta0)+vd;
+        	if (abs(v)>1.0) ERROR("Velocity profile exceeding c");
+		return v;
+	}
+    }
+    
     
     // Cos profileover the x direction
     // ------------------------

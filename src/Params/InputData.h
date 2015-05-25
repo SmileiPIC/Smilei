@@ -27,11 +27,8 @@
 
 
 
-/*! \brief This is the text parser (similar to namelists).
- It reads once the datafile (at constructor time or later with readFile) and stores the whole read text
- (after being cleaned) in a string variable (namelist) then this variable is passed to all nodes and parsed by filling the structure (allData)
- then you can extract the values with the extract methos (2 templates: one for single variables and one for vectors).
- You can also query the structure with existGroup
+/*! \brief This is namelist helper.
+ Namelist must be a valid python script.
 */
 class InputData {
 
@@ -42,8 +39,10 @@ public:
     //! string containing the whole clean namelist
     std::string namelist;
         
+    //! extract python object from namelist
     PyObject* extract_py(std::string name, std::string component=std::string(""), int nComponent=0);
     
+    //! extract pytohn vector of objects from namelist
     std::vector<PyObject*> extract_pyVec(std::string name, std::string component=std::string(""), int nComponent=0);
     
     //! get T from python
@@ -53,6 +52,7 @@ public:
         return PyTools::convert(py_val,val);
     }
     
+    //! extract vectors
     template< typename T>
     bool extract(std::string name, std::vector<T> &val, std::string component=std::string(""), int nComponent=0) {
         std::vector<PyObject*> py_val = extract_pyVec(name,component,nComponent);
@@ -64,9 +64,10 @@ public:
     //! return true if the nth component exists
     bool existComponent(std::string componentName, unsigned int nComponent=0);
     
-    void pyRunScript(std::string, std::string);
-    
 private:
+    //! passing named command to python
+    void pyRunScript(std::string command, std::string name);
+    
     // python object: main namelist
     PyObject* py_namelist;
     

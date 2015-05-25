@@ -55,6 +55,24 @@ ExtFieldProfile2D::ExtFieldProfile2D(ExtFieldStructure &extfield_struct) : ExtFi
             ERROR("three double_params must be defined for Charles profile" );
         if (my_struct.length_params_y.size()<2)
             ERROR("three length_params_x must be defined for Charles profile" );
+    } else if (my_struct.profile == "blob") {
+        // ---------------------------------------------------------------------------------
+        // Blob magnetic field profile for Liang simulations
+        // double_params[0]   = background Bfield amplitude
+        // double_params[1]   = maximum Bfield amplitude
+        // double_params[2]   = Total plasma pressure at infinity P0 = n0*Te
+        // length_params_x[0] = x position of the maximum of the B-field
+        // length_params_x[1] = Length of the magnetic gradient
+        // length_params_y[2] = y position of the maximum of the B-field
+        // ---------------------------------------------------------------------------------
+        //if (my_struct.int_params.size()<1)
+        //    ERROR("one int_params must be defined for Charles profile" );
+        if (my_struct.double_params.size()<3)
+            ERROR("three double_params must be defined for Charles profile" );
+        if (my_struct.length_params_y.size()<1)
+            ERROR("three length_params_x must be defined for Charles profile" );
+        if (my_struct.length_params_x.size()<2)
+            ERROR("three length_params_x must be defined for Charles profile" );
         
     } 
     else if (my_struct.profile=="python") {
@@ -153,6 +171,7 @@ double ExtFieldProfile2D::operator() (vector<double> x_cell) {
         -      2.0*dB * Dx1 * exp(-Dx1*Dx1-Dy1*Dy1) ;
         
     } 
+    
     else if (my_struct.profile == "magexpansion") {
         // ---------------------------------------------------------------------------------
         // Charles magnetic field profile for Liang simulations
@@ -175,7 +194,31 @@ double ExtFieldProfile2D::operator() (vector<double> x_cell) {
         }else {	return B0 + Bmax/pow(cosh(y/L),2);
         }
         
-    }    
+    }
+    
+    else if (my_struct.profile == "blob") {
+        // ---------------------------------------------------------------------------------
+        // Blob magnetic field profile for Liang simulations
+        // double_params[0]   = background Bfield amplitude
+        // double_params[1]   = maximum Bfield amplitude
+        // double_params[2]   = Total plasma pressure at infinity P0 = n0*Te
+        // length_params_x[0] = x position of the maximum of the B-field
+        // length_params_x[1] = Length of the magnetic gradient
+        // length_params_y[2] = y position of the maximum of the B-field
+        // ---------------------------------------------------------------------------------
+        double B0    = my_struct.double_params[0];
+        double Bmax  = my_struct.double_params[1];
+        double P0    = my_struct.double_params[2];
+        double x0    = my_struct.length_params_x[0];
+        double y0    = my_struct.length_params_y[0];
+        double L     = my_struct.length_params_x[1];
+        double r     = sqrt(pow(x_cell[0]-x0,2) + pow(x_cell[1]-y0,2));
+        if (Bmax == 0.) {
+            return B0 + (sqrt(B0*B0+2*P0)-B0)/pow(cosh(r/L),2);
+        } else {	
+            return B0 + Bmax/pow(cosh(r/L),2);
+        }
+    }
     else if (my_struct.profile=="python") {
         PyObject *pyresult = PyObject_CallFunction(my_struct.py_profile, const_cast<char *>("dd"), x_cell[0], x_cell[1]);
         if (pyresult == NULL) {
@@ -184,9 +227,8 @@ double ExtFieldProfile2D::operator() (vector<double> x_cell) {
         double cppresult = PyFloat_AsDouble(pyresult);
         Py_XDECREF(pyresult);
         return cppresult;
-    } else {
-        return 0;
     }
+    return 0;
     
 }
 

@@ -129,6 +129,9 @@ DensityProfile2D::DensityProfile2D(SpeciesStructure &params) : DensityProfile(pa
     // double_params[3]   = Maximum magnetic field
     // length_params_y[0] = position of the maximum magnetic field
     // length_params_y[1] = Length of the magnetic gradient
+    // dens_length_y[2]   : length of the density plateau (default value if sim_length-vacuum_length[0] as for constant)
+    // dens_length_y[3]   : length of the left slope (default value is zero)
+    // dens_length_y[4]   : length of the right slope (default value is the rising slope value species_length[1])
     // ---------------------------------------------------------------------------------
     else if (species_param.dens_profile.profile == "magexpansion") {
     
@@ -138,6 +141,57 @@ DensityProfile2D::DensityProfile2D(SpeciesStructure &params) : DensityProfile(pa
             ERROR("two double_params must be defined for Charles profile" );
         if (species_param.dens_profile.length_params_y.size()<2)
             ERROR("two length_params_y must be defined for Charles profile" );
+	    
+	 
+        //y-direction
+        if (species_param.dens_profile.length_params_y.size()<3) {
+            species_param.dens_profile.length_params_y.resize(3);
+            species_param.dens_profile.length_params_y[2] = 1.e+10;
+        }
+        if (species_param.dens_profile.length_params_y.size()<4) {
+            species_param.dens_profile.length_params_y.resize(4);
+            species_param.dens_profile.length_params_y[3] = 0.0;
+        }
+        if (species_param.dens_profile.length_params_y.size()<5) {
+            species_param.dens_profile.length_params_y.resize(5);
+            species_param.dens_profile.length_params_y[4] = species_param.dens_profile.length_params_y[3];
+        }
+    }
+    
+    // ---------------------------------------------------------------------------------
+    // Blob magnetic field profile for Korneev simulations
+    // vacuum_length[0]  : not used here
+    // double_params[0] = Relative Density variation 
+    // dens_length_x[0] = x position of the maximum magnetic field
+    // dens_length_x[1] = Length of the density gradient
+    // dens_length_y[0] = y position of the maximum magnetic field
+    // dens_length_y[1]   : length of the density plateau (default value if sim_length-vacuum_length[0] as for constant)
+    // dens_length_y[2]   : length of the left slope (default value is zero)
+    // dens_length_y[3]   : length of the right slope (default value is the rising slope value species_length[1])
+    // ---------------------------------------------------------------------------------
+    else if (species_param.dens_profile.profile == "blob") {
+    
+        if (species_param.dens_profile.double_params.size()<1)
+            ERROR("two double_params must be defined for Charles profile" );
+        if (species_param.dens_profile.length_params_y.size()<1)
+            ERROR("two length_params_y must be defined for Charles profile" );
+        if (species_param.dens_profile.length_params_x.size()<2)
+            ERROR("two length_params_x must be defined for Charles profile" );
+	   
+	 
+        //y-direction
+        if (species_param.dens_profile.length_params_y.size()<2) {
+            species_param.dens_profile.length_params_y.resize(2);
+            species_param.dens_profile.length_params_y[1] = 1.e+10;
+        }
+        if (species_param.dens_profile.length_params_y.size()<3) {
+            species_param.dens_profile.length_params_y.resize(3);
+            species_param.dens_profile.length_params_y[2] = 0.0;
+        }
+        if (species_param.dens_profile.length_params_y.size()<4) {
+            species_param.dens_profile.length_params_y.resize(4);
+            species_param.dens_profile.length_params_y[3] = species_param.dens_profile.length_params_y[2];
+        }
     }
     
     // Grating
@@ -294,22 +348,104 @@ double DensityProfile2D::operator() (vector<double> x_cell) {
 	double tiny  = 1e-10*L;
         //double sigma = pow(L/2.0,N)/log(2.0);
         double x     = x_cell[1]-x0;
+	
+	double fy;
+        
+        // y-direction
+        double vacuum      = species_param.dens_profile.vacuum_length[1];
+        double plateau     = species_param.dens_profile.length_params_y[2];
+        double left_slope  = species_param.dens_profile.length_params_y[3];
+        double right_slope = species_param.dens_profile.length_params_y[4];
+        
+        // vacuum region
+        if ( x_cell[1] < vacuum ) {
+            fy = 0.0;
+        }
+        // linearly increasing density
+        else if ( x_cell[1] < vacuum+left_slope ) {
+            fy = (x_cell[1]-vacuum) / left_slope;
+        }
+        // density plateau
+        else if ( x_cell[1] < vacuum+left_slope+plateau ) {
+            fy = 1.0;
+        }
+        // linearly decreasing density
+        else if ( x_cell[1] < vacuum+left_slope+plateau+right_slope ) {
+            fy = 1.0 - ( x_cell[1] - (vacuum+left_slope+right_slope) ) / right_slope;
+        }
+        // beyond the plasma
+        else {
+            fy = 0.0;
+        }
+	
+	
+	
 	if (Bmax == 0.) {
 		double Bm = sqrt(pow(B0,2) + 2*P0)-B0;
 		double B  = B0 + Bm/pow(cosh(x/L),2);
 		double A  = B0*x + Bm*L*tanh(x/L);
 		double DP = P0 + pow(B0,2)/2 - pow(B,2)/2;
 		if (abs(x)<tiny) {
-			return (exp(-2));
+			return fy*(exp(-2));
 			//return 1.;
 		}
 		else {
-        		return (exp( -2*A*Bm/L*tanh(x/L) /(DP*pow(cosh(x/L),2)) ));
+        		return fy*(exp( -2*A*Bm/L*tanh(x/L) /(DP*pow(cosh(x/L),2)) ));
         		//return (exp( - abs(tanh(x/L) )));
 			//return 1.;
 		}
 	}}
 	
+    // ---------------------------------------------------------------------------------
+    // Blob magnetic field profile for Korneev simulations
+    // vacuum_length[0]  : used here
+    // double_params[0]   = Density variation 
+    // dens_length_x[0] = x position of the maximum magnetic field
+    // dens_length_x[1] = Length of the density gradient
+    // dens_length_y[0] = y position of the maximum magnetic field
+    // dens_length_y[1]   : length of the density plateau (default value if sim_length-vacuum_length[0] as for constant)
+    // dens_length_y[2]   : length of the left slope (default value is zero)
+    // dens_length_y[3]   : length of the right slope (default value is the rising slope value species_length[1])
+    // ---------------------------------------------------------------------------------
+    else if (species_param.dens_profile.profile=="blob") {
+        double dn    = species_param.dens_profile.double_params[0];
+        double x0    = species_param.dens_profile.length_params_x[0];
+        double y0    = species_param.dens_profile.length_params_y[0];
+        double L     = species_param.dens_profile.length_params_x[1];
+        double r     = sqrt(pow(x_cell[0]-x0,2) + pow(x_cell[1]-y0,2));
+	
+	double fy;
+        
+        // y-direction
+        double vacuum      = species_param.dens_profile.vacuum_length[1];
+        double plateau     = species_param.dens_profile.length_params_y[1];
+        double left_slope  = species_param.dens_profile.length_params_y[2];
+        double right_slope = species_param.dens_profile.length_params_y[3];
+        
+        // vacuum region
+        if ( x_cell[1] < vacuum ) {
+            fy = 0.0;
+        }
+        // linearly increasing density
+        else if ( x_cell[1] < vacuum+left_slope ) {
+            fy = (x_cell[1]-vacuum) / left_slope;
+        }
+        // density plateau
+        else if ( x_cell[1] < vacuum+left_slope+plateau ) {
+            fy = 1.0;
+        }
+        // linearly decreasing density
+        else if ( x_cell[1] < vacuum+left_slope+plateau+right_slope ) {
+            fy = 1.0 - ( x_cell[1] - (vacuum+left_slope+right_slope) ) / right_slope;
+        }
+        // beyond the plasma
+        else {
+            fy = 0.0;
+        }
+	
+	
+        return fy*( 1 - dn/(pow(cosh(r/L),2)) );
+	}
     // Gaussian profile
     // ----------------
     // vacuum_length[0]  : length of the vacuum region before the plasma (default is 0)
