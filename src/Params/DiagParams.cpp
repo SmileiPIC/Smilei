@@ -559,10 +559,10 @@ void DiagParams::initParticles(Diagnostic& diags, PicParams& params, InputData &
     DiagnosticParticlesAxis  *tmpAxis;
     vector<DiagnosticParticlesAxis*> tmpAxes;
     DiagnosticParticles * tmpDiagParticles;
-
+    
     bool ok;
     while (ifile.existComponent("diag_particles",n_diag_particles)) {
-
+        
         
         // get parameter "output" that determines the quantity to sum in the output array
         output = "";
@@ -591,7 +591,6 @@ void DiagParams::initParticles(Diagnostic& diags, PicParams& params, InputData &
         // verify that the species exist, remove duplicates and sort by number
         species_numbers = FindSpecies(species, params);
         
-
         
         // get parameter "axis" that adds one axis to the diagnostic
         //  It should contain several items:
@@ -600,7 +599,7 @@ void DiagParams::initParticles(Diagnostic& diags, PicParams& params, InputData &
         
         if (allAxes.size() == 0)
             ERROR("Diagnotic Particles #" << n_diag_particles << ": axis must contain something");
-
+        
         for (unsigned int iaxis; iaxis<allAxes.size(); iaxis++ ) {
             tmpAxis = new DiagnosticParticlesAxis();
             PyObject *oneAxis=allAxes[iaxis];
@@ -611,7 +610,7 @@ void DiagParams::initParticles(Diagnostic& diags, PicParams& params, InputData &
                     ERROR("Diagnotic Particles #" << n_diag_particles << ": axis must contain at least 4 arguments");
                 
                 if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 0),tmpAxis->type)) {
-                    ERROR("First item must be a string" << n_diag_particles << ": axis " << iaxis);
+                    ERROR("Diag Particles #" << n_diag_particles << ", axis #" << iaxis << ": First item must be a string (axis type)");
                 } else {
                     if (   (tmpAxis->type == "z" && params.nDim_particle <3)
                         || (tmpAxis->type == "y" && params.nDim_particle <2) )
@@ -619,11 +618,11 @@ void DiagParams::initParticles(Diagnostic& diags, PicParams& params, InputData &
                 }
                 
                 if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 1),tmpAxis->min)) {
-                    ERROR("Second item must be a double " << n_diag_particles << ": axis " << iaxis);
+                    ERROR("Diag Particles #" << n_diag_particles << ", axis #" << iaxis << ": Second item must be a double (axis min)");
                 }
                 
                 if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 2),tmpAxis->max)) {
-                    ERROR("Third item must be a double " << n_diag_particles << ": axis " << iaxis);
+                    ERROR("Diag Particles #" << n_diag_particles << ", axis #" << iaxis << ": Third item must be a double (axis max)");
                 }
                 
                 // If the axis is spatial, then we need to apply the conv_fac
@@ -632,11 +631,10 @@ void DiagParams::initParticles(Diagnostic& diags, PicParams& params, InputData &
                     tmpAxis->max *= params.conv_fac;
                 }
                 
-                WARNING("Fred: tmpAxis->nbins souln't be an integer??")
                 if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 3),tmpAxis->nbins)) {
-                    ERROR("Fourth item must be a double " << n_diag_particles << ": axis " << iaxis);
+                    ERROR("Diag Particles #" << n_diag_particles << ", axis #" << iaxis << ": Fourth item must be an int (number of bins)");
                 }
-
+                
                 // 5 - Check for  other keywords such as "logscale" and "edge_inclusive"
                 tmpAxis->logscale = false;
                 tmpAxis->edge_inclusive = false;
@@ -656,7 +654,7 @@ void DiagParams::initParticles(Diagnostic& diags, PicParams& params, InputData &
                 Py_DECREF(seq);
             }
             
-                
+            
             HEREIAM(iaxis)
         }
         

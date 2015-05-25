@@ -84,7 +84,7 @@ public:
     //! ending point for the axis binning
     double max;
     //! number of bins for the axis binning
-    double nbins;
+    int nbins;
     
     //! determines whether linear scale or log scale
     bool logscale;
