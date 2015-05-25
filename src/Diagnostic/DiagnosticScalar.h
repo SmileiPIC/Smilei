@@ -33,6 +33,7 @@ class DiagnosticScalar {
 public:
     //! creator (called from Diagnostic)
     DiagnosticScalar(PicParams &params, DiagParams &diagParams, SmileiMPI* smpi);
+    
     //! destructor
     ~DiagnosticScalar(){};
     

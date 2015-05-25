@@ -265,20 +265,28 @@ int main (int argc, char* argv[])
         timer[0].update();
         
         //double timElapsed=smpiData->time_seconds();
-	if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) ) {
+        if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) ) {
+            
             MESSAGE(1,"t = "          << setw(7) << setprecision(2)   << time_dual/params.conv_fac
-                    << "   it = "       << setw(log10(params.n_time)+1) << itime  << "/" << params.n_time
-                    << "   sec = "      << setw(7) << setprecision(2)   << timer[0].getTime()
-                    << "   E = "        << std::scientific << setprecision(4)<< Diags->getScalar("Etot")
-                    << "   Epart = "        << std::scientific << setprecision(4)<< Diags->getScalar("Eparticles")
-                    << "   Elost = "        << std::scientific << setprecision(4)<< Diags->getScalar("Elost")
-                    << "   E_bal(%) = " << setw(6) << std::fixed << setprecision(2)   << 100.0*Diags->getScalar("Ebal_norm") );
-	    if (simWindow) 
-		MESSAGE(1, "\t\t MW Elost = " << std::scientific << setprecision(4)<< Diags->getScalar("Emw_lost")
-			<< "     MW Eadd  = " << std::scientific << setprecision(4)<< Diags->getScalar("Emw_part")
-			<< "     MW Elost (fields) = " << std::scientific << setprecision(4)<< Diags->getScalar("Emw_lost_fields")
-			<< setw(6) << std::fixed << setprecision(2) );
-	}
+                    << "   it = "     << setw(log10(params.n_time)+1) << itime  << "/" << params.n_time
+                    << "   sec = "    << setw(7) << setprecision(2)   << timer[0].getTime()
+                    << "   Utot = "   << std::scientific << setprecision(4)<< Diags->getScalar("Utot")
+                    << "   Ukin = "   << std::scientific << setprecision(4)<< Diags->getScalar("Utot_particles")
+                    << "   Ufld = "   << std::scientific << setprecision(4)<< Diags->getScalar("Utot_fields")
+                    << "   Ubal(%) = "<< setw(6) << std::fixed << setprecision(2) << 100.0*Diags->getScalar("Ubal_norm")
+                    );
+            
+            //!\todo (MG to JD/AD) We should clear this. Either not print it OR add it to the former stream
+            if (simWindow) {
+                double Uadded_mvw = Diags->getScalar("Uadded_particles_mvw") + Diags->getScalar("Uadded_particles_mvw");
+                double Ulost_mvw  = Diags->getScalar("Ulost_particles_mvw")  + Diags->getScalar("Ulost_fields_mvw");
+                MESSAGE(1, "\t\t Uadded_mvw = "  << std::scientific << setprecision(4) << Uadded_mvw
+                        << "   Ulost_mvw = " << std::scientific << setprecision(4) << Ulost_mvw
+                        );
+            }//simWindow
+            
+        }//itime
+        
 
         // put density and currents to 0 + save former density
         // ---------------------------------------------------
