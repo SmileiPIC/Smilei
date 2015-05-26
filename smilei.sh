@@ -22,7 +22,7 @@ outDirs=""
 
 for nml in $@
 do
-    base="`basename $nml .in`"
+    base="`basename $nml .py`"
     dir="${base}${suffix}"
     outDirs="${outDirs} ${dir}"
     

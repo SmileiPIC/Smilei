@@ -595,7 +595,7 @@ void DiagParams::initParticles(Diagnostic& diags, PicParams& params, InputData &
         // get parameter "axis" that adds one axis to the diagnostic
         //  It should contain several items:
         //      requested quantity, min value, max value ,number of bins, log (optional), edge_inclusive (optional)
-        vector<PyObject*> allAxes=ifile.extract_pyVec("axis","diag_particles",n_diag_particles);
+        vector<PyObject*> allAxes=ifile.extract_pyVec("axes","diag_particles",n_diag_particles);
         
         if (allAxes.size() == 0)
             ERROR("Diagnotic Particles #" << n_diag_particles << ": axis must contain something");
