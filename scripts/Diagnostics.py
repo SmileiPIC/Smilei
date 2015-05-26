@@ -332,7 +332,7 @@ class Diagnostic(object):
 			try:
 				res_space = self.Smilei.findParam("res_space")
 				res_space = self.np.double(res_space.split())
-				cell_length = sim_length/res_space
+				cell_length = 1./res_space
 			except:
 				print "Could not extract 'cell_length' or 'res_space' from the input file"
 				raise
