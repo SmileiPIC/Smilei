@@ -1,5 +1,6 @@
 #include "ExtFieldProfile1D.h"
 
+using namespace std;
 
 ExtFieldProfile1D::ExtFieldProfile1D(ExtFieldStructure &extfield_struct) : ExtFieldProfile(extfield_struct){
 
@@ -35,7 +36,7 @@ ExtFieldProfile1D::ExtFieldProfile1D(ExtFieldStructure &extfield_struct) : ExtFi
 }
 
 
-double ExtFieldProfile1D::operator() (std::vector<double> x_cell) {
+double ExtFieldProfile1D::operator() (vector<double> x_cell) {
 
     if (my_struct.profile == "constant") {
         return my_struct.double_params[0];
@@ -70,12 +71,7 @@ double ExtFieldProfile1D::operator() (std::vector<double> x_cell) {
     }
     else if (my_struct.profile=="python") {
         PyObject *pyresult = PyObject_CallFunction(my_struct.py_profile, const_cast<char *>("d"), x_cell[0]);
-        if (pyresult == NULL) {
-            ERROR("can't evaluate python function");
-        }
-        double cppresult = PyFloat_AsDouble(pyresult);
-        Py_XDECREF(pyresult);
-        return cppresult;
+        return PyTools::get_py_result(pyresult);
     }
     else {
         return 0;

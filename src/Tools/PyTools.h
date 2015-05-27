@@ -13,7 +13,23 @@
 //! tools to convert python values to C++ values and vectors
 class PyTools {    
 public:
-
+    //! check error and display message
+    static double get_py_result(PyObject* pyresult) {
+        if (pyresult==NULL) {
+            PyObject *ptype, *pvalue, *ptraceback;
+            PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+            ERROR("can't evaluate python function:" << std::endl << std::string(PyString_AsString(pvalue)));
+        }
+        double cppresult;
+        if(!convert(pyresult,cppresult)) {
+            PyObject *ptype, *pvalue, *ptraceback;
+            PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+            ERROR("function does not return float but " << pyresult->ob_type->tp_name);
+        }
+        Py_XDECREF(pyresult);
+        return cppresult;
+    }
+    
     //! convert Python object to bool
     static bool convert(PyObject* py_val, bool &val) {
         if (py_val && PyBool_Check(py_val)) {

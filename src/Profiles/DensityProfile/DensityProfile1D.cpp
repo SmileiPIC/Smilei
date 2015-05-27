@@ -1,6 +1,7 @@
 #include "DensityProfile1D.h"
 #include "Tools.h"
 
+using namespace std;
 
 DensityProfile1D::DensityProfile1D(SpeciesStructure &params) : DensityProfile(params){
 
@@ -134,7 +135,7 @@ DensityProfile1D::DensityProfile1D(SpeciesStructure &params) : DensityProfile(pa
 }
 
 
-double DensityProfile1D::operator() (std::vector<double> x_cell) {
+double DensityProfile1D::operator() (vector<double> x_cell) {
     
     // ------------------------
     // Constant density profile
@@ -362,12 +363,7 @@ double DensityProfile1D::operator() (std::vector<double> x_cell) {
     }
     else if (species_param.dens_profile.profile=="python") {
         PyObject *pyresult = PyObject_CallFunction(species_param.dens_profile.py_profile, const_cast<char *>("d"), x_cell[0]);
-        if (pyresult == NULL) {
-            ERROR("can't evaluate python function");
-        }
-        double cppresult = PyFloat_AsDouble(pyresult);
-        Py_XDECREF(pyresult);
-        return cppresult;
+        return PyTools::get_py_result(pyresult);
     }
     
     // Other density profile

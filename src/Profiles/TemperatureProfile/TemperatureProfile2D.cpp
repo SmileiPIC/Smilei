@@ -1,9 +1,10 @@
 #include "TemperatureProfile2D.h"
 #include "Tools.h"
 
+using namespace std;
 
 TemperatureProfile2D::TemperatureProfile2D(ProfileSpecies &my_prof_params) : TemperatureProfile(my_prof_params) {
-
+    
     // -------------------------
     // Constant Temperature profile
     // -------------------------
@@ -50,11 +51,11 @@ TemperatureProfile2D::TemperatureProfile2D(ProfileSpecies &my_prof_params) : Tem
         if (prof_params.length_params_y.size()<1)
             ERROR("two length_params_y must be defined for magexpansion Temperature profile" );
     }
-     
+    
 }
 
-double TemperatureProfile2D::operator() (std::vector<double> x_cell) {
-  
+double TemperatureProfile2D::operator() (vector<double> x_cell) {
+    
     double fx, fy;
     // ------------------------
     // Constant density profile
@@ -62,7 +63,7 @@ double TemperatureProfile2D::operator() (std::vector<double> x_cell) {
     // vacuum_length[0] : length of the vacuum region before the plasma (default is 0)
     // dens_length_x[0]   : length of the density (default is sim_length-vacuum_length[0])
     if (prof_params.profile=="constant") {
-    // x-direction
+        // x-direction
         if (   (x_cell[0]>prof_params.vacuum_length[0])
             && (x_cell[0]<prof_params.vacuum_length[0]+prof_params.length_params_x[0]) ) {
             fx = 1.0;
@@ -81,8 +82,8 @@ double TemperatureProfile2D::operator() (std::vector<double> x_cell) {
         // x-y direction
         return fx*fy;
     }
-     
-     
+    
+    
     // ------------------------
     // Charles temperature profile
     // ------------------------
@@ -101,39 +102,39 @@ double TemperatureProfile2D::operator() (std::vector<double> x_cell) {
         double B0    = prof_params.double_params[2];
         double Bmax  = prof_params.double_params[3];
         double alpha = prof_params.double_params[4];
-	//if (prof_params.double_params.size>4) { 
-	//	alpha = prof_params.double_params[4];
-	//	}
-	//else { alpha = 0.;}
+        //if (prof_params.double_params.size>4) { 
+        //	alpha = prof_params.double_params[4];
+        //	}
+        //else { alpha = 0.;}
         double x0    = prof_params.length_params_y[0];
         double L     = prof_params.length_params_y[1];
         double x     = x_cell[1]-x0;
-	double tiny  = 1e-10;
-	if (Bmax == 0.) { //-> maximum value of Bmax
-		double Bm = sqrt(pow(B0,2) + 2*P0)-B0;
-		double B  = B0 + Bm/pow(cosh(x/L),2);
-		double A  = B0*x + Bm*L*tanh(x/L);
-		double Amin  = B0*L*tiny + Bm*L*tanh(tiny);
-		double DP = P0 + pow(B0,2)/2 - pow(B,2)/2;
-		double DP_min =P0 + pow(B0,2)/2-pow(B0 + Bm/pow(cosh(tiny),2),2 )/2;
-		
-		double Temp     = DP/n0*exp( 2*A*Bm/L*tanh(x/L) /(DP*pow(cosh(x/L),2)) )*(1+tanh(alpha*x/L));
-		double Tempmin  = DP_min/n0*exp( 2*Amin*Bm/L*tanh(tiny) /(DP_min*pow(cosh(tiny),2)) );
+        double tiny  = 1e-10;
+        if (Bmax == 0.) { //-> maximum value of Bmax
+            double Bm = sqrt(pow(B0,2) + 2*P0)-B0;
+            double B  = B0 + Bm/pow(cosh(x/L),2);
+            double A  = B0*x + Bm*L*tanh(x/L);
+            double Amin  = B0*L*tiny + Bm*L*tanh(tiny);
+            double DP = P0 + pow(B0,2)/2 - pow(B,2)/2;
+            double DP_min =P0 + pow(B0,2)/2-pow(B0 + Bm/pow(cosh(tiny),2),2 )/2;
+            
+            double Temp     = DP/n0*exp( 2*A*Bm/L*tanh(x/L) /(DP*pow(cosh(x/L),2)) )*(1+tanh(alpha*x/L));
+            double Tempmin  = DP_min/n0*exp( 2*Amin*Bm/L*tanh(tiny) /(DP_min*pow(cosh(tiny),2)) );
         	if (Temp<0.) ERROR("Temperature smaller than 0 imposed in profile magexpansion");
-		return std::max(Temp,Tempmin);
+            return max(Temp,Tempmin);
 		}
-	else {	
-		double Bm = Bmax;
-		double B  = B0 + Bm/pow(cosh(x/L),2);
-		double A  = B0*x + Bm*L*tanh(x/L);
-		double Amin  = B0*L*tiny + Bm*L*tanh(tiny);
-		double DP = P0 + pow(B0,2)/2 - pow(B,2)/2;
-		double DP_min =P0 + pow(B0,2)/2-pow(B0 + Bm/pow(cosh(tiny),2),2 )/2;
-		
-		double Temp     = DP/n0*exp( 2*A*Bm/L*tanh(x/L) /(DP*pow(cosh(x/L),2)) )*(1+tanh(alpha*x/L));
-		double Tempmin  = DP_min/n0*exp( 2*Amin*Bm/L*tanh(tiny) /(DP_min*pow(cosh(tiny),2)) );
+        else {	
+            double Bm = Bmax;
+            double B  = B0 + Bm/pow(cosh(x/L),2);
+            double A  = B0*x + Bm*L*tanh(x/L);
+            double Amin  = B0*L*tiny + Bm*L*tanh(tiny);
+            double DP = P0 + pow(B0,2)/2 - pow(B,2)/2;
+            double DP_min =P0 + pow(B0,2)/2-pow(B0 + Bm/pow(cosh(tiny),2),2 )/2;
+            
+            double Temp     = DP/n0*exp( 2*A*Bm/L*tanh(x/L) /(DP*pow(cosh(x/L),2)) )*(1+tanh(alpha*x/L));
+            double Tempmin  = DP_min/n0*exp( 2*Amin*Bm/L*tanh(tiny) /(DP_min*pow(cosh(tiny),2)) );
         	if (Temp<0.) ERROR("Temperature profile smaller than 0 imposed in profile magexpansion");
-		return  std::max(Temp,Tempmin);
+            return  max(Temp,Tempmin);
 		}
 	}
 	
@@ -159,31 +160,35 @@ double TemperatureProfile2D::operator() (std::vector<double> x_cell) {
         double y0    = prof_params.length_params_y[0];
         double L     = prof_params.length_params_x[1];
         double  r    = sqrt(pow(x_cell[0]-x0,2) + pow(x_cell[1]-y0,2));
-	double ne    = n0*(1 - dn/(pow(cosh(r/L),2)));
-	double tiny  = 1e-10;
-	double Er;
-	if (r/L>tiny) {
-		Er    = n0*dn*(L*tanh(r/L) - pow(L,2)/(r+1e-10)*log(cosh(r/L)) );
-	}else{
-		Er    = 0.5*n0*r;
-	}
-	
-	if (Bmax == 0.) { //-> maximum value of Bmax
-		double Bm = sqrt(pow(B0,2) + 2*P0)-B0;
-		double B  = B0 + Bm/pow(cosh(r/L),2);
-		double Temp = P0/ne + 0.5*(pow(B0,2) - pow(B,2))/ne  - 0.5*pow(Er,2)/ne;
+        double ne    = n0*(1 - dn/(pow(cosh(r/L),2)));
+        double tiny  = 1e-10;
+        double Er;
+        if (r/L>tiny) {
+            Er    = n0*dn*(L*tanh(r/L) - pow(L,2)/(r+1e-10)*log(cosh(r/L)) );
+        }else{
+            Er    = 0.5*n0*r;
+        }
+        
+        if (Bmax == 0.) { //-> maximum value of Bmax
+            double Bm = sqrt(pow(B0,2) + 2*P0)-B0;
+            double B  = B0 + Bm/pow(cosh(r/L),2);
+            double Temp = P0/ne + 0.5*(pow(B0,2) - pow(B,2))/ne  - 0.5*pow(Er,2)/ne;
          	//if (Temp<0.) ERROR("Temperature smaller than 0 imposed in profile magexpansion");
          	if (Temp<0.) MESSAGE("Temperature smaller than 0 imposed in profile magexpansion");
-		return std::max(Temp,P0/n0/1000);
+            return max(Temp,P0/n0/1000);
 		}
-	else {	
-		double Bm = Bmax;
-		double B  = B0 + Bm/pow(cosh(r/L),2);
-		double Temp = P0/ne + 0.5*(pow(B0,2) - pow(B,2))/ne  - 0.5*pow(Er,2)/ne;
+        else {	
+            double Bm = Bmax;
+            double B  = B0 + Bm/pow(cosh(r/L),2);
+            double Temp = P0/ne + 0.5*(pow(B0,2) - pow(B,2))/ne  - 0.5*pow(Er,2)/ne;
          	if (Temp<0.) ERROR("Temperature smaller than 0 imposed in profile magexpansion");
-		return std::max(Temp,P0/n0/1000);
+            return max(Temp,P0/n0/1000);
 		}
 	}
+    else if (prof_params.profile=="python") {
+        PyObject *pyresult = PyObject_CallFunction(prof_params.py_profile, const_cast<char *>("dd"), x_cell[0], x_cell[1]);
+        return PyTools::get_py_result(pyresult);
+    }
     
-    	return 1;
+    return 1;
 };

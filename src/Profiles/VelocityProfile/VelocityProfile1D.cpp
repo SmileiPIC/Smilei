@@ -30,6 +30,9 @@ VelocityProfile1D::VelocityProfile1D(ProfileSpecies &my_prof_params) : VelocityP
         if (prof_params.length_params_x.size()<2)
             ERROR("two length_params_x must be defined for Charles velocity profile" );
     } 
+    else if (prof_params.profile=="python") {
+        DEBUG("it's a python profile");
+    }
 }
 
 double VelocityProfile1D::operator() (std::vector<double> x_cell) {
@@ -104,15 +107,7 @@ double VelocityProfile1D::operator() (std::vector<double> x_cell) {
     }
     else if (prof_params.profile=="python") {
         PyObject *pyresult = PyObject_CallFunction(prof_params.py_profile, const_cast<char *>("d"), x_cell[0]);
-        if (pyresult == NULL) {
-            ERROR("can't evaluate python function");
-        }
-        double cppresult = PyFloat_AsDouble(pyresult);
-        Py_XDECREF(pyresult);
-        return cppresult;
-    }
-    else if (prof_params.profile=="python") {
-        DEBUG("it's a python profile");
+        return PyTools::get_py_result(pyresult);
     }
     else {
         ERROR("Profile " << prof_params.profile << " not defined");

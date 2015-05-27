@@ -1,28 +1,24 @@
 import math 
 
-part_per_cell=1
-t_sim=50
-res=5
+part_per_cell=20
+t_sim=150
+res=20
 
 position=8
 thickness=1
 
 
-density=0.8
+density=2
 
-dx, dy = 50, 50
+dx, dy = 10, 40
 
 twopi=2*math.pi
 
 wavelength=0.2
 
 def my_real_func(codex,codey,leng):
-    x,y=codex/twopi,codey/twopi
-    xpart=math.exp(-((x-dx/2)/leng)**2)
-    ypart=math.exp(-((y-dy/2)/leng)**2)
-    retVal=xpart*ypart*(math.cos(x/wavelength)+1)*(math.cos(y/wavelength)+1)
-    
-    return retVal if retVal>1e-2 else 0
+    x=codex/twopi
+    return 1 if x>leng and x <leng+1    else 0
 
 
 def my_function_easy(x,y,leng=1):
@@ -102,7 +98,7 @@ mysim.print_every = 10
 
 
 myspec1=Species()
-myspec1.dens_profile = my_function_easy_and_nice(leng=5)
+myspec1.dens_profile = my_function_easy_and_nice(leng=4*dx/5)
 myspec1.vacuum_length   = ((dx-thickness)/2.0,  dy/4.0) 
 myspec1.dens_length_x   = thickness
 myspec1.dens_length_y   = dy/2
@@ -118,7 +114,7 @@ myspec1.density = density
 myspec1.mean_velocity = 0.0
 myspec1.temperature = 0.0
 myspec1.dynamics_type = 'norm'
-myspec1.time_frozen = 0.0
+myspec1.time_frozen = t_sim
 myspec1.radiating = False
 myspec1.bc_part_type_west  = 'refl'
 myspec1.bc_part_type_east  = 'refl'
@@ -173,14 +169,14 @@ def my_func_laser_profile(t,y):
 #
 Laser(
 boxSide = 'west' ,
-a0=0.2 ,
-focus=(dx/2.,  dy/2.) ,
-angle=10 ,
+a0=0.01 ,
+focus=(4*dx/5,  dy/2.) ,
+angle=40 ,
 delta=0.0 ,
 time_profile = 'sin2' ,
-double_params = 10 ,
+double_params = 5 ,
 transv_profile = my_func_laser_profile ,
-double_params_transv = 10.0 
+double_params_transv = 5.0 
 )
 
 
