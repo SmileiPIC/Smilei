@@ -1,36 +1,43 @@
-# this is useful to kill the running simulation
+"""@package pyinit
+    Definition of Smilei singleton class
+    Definition of Smilei components
+"""
+
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 
-class Smilei():
-    """Smilei Main class"""
-    def __init__(self, **kwargs):
-        if kwargs is not None:
-            for key, value in kwargs.iteritems():
-                setattr(self, key, value)
+class Singleton(type):
+    _instances = {}
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+class Smilei(object):
+    """ Smilei Main class"""
+    __metaclass__ = Singleton
+        
     species=[]
     laser=[]
     diag_probe=[]
     diag_particles=[]
     diag_phase=[]
     diag_scalar=[]
-    
-    def __init__(self):
-        """"default constructor"""
 
-def get_smilei():
-    """ get first Smilei object declared"""
-    for key,value in globals().items() :
-        if isinstance(value,Smilei) :
-            return value
-    return None
+    def __init__(self, **kwargs):
+        if kwargs is not None:
+            for key, value in kwargs.iteritems():
+                setattr(self, key, value)
+
+# this ensure at least one Smilei is instatiated
+_smilei=Smilei()
 
         
 class SmileiComponent():
     """Species generic class"""
     def __init__(self, *args, **kwargs):
-        self.mysim = get_smilei() # set mysim to the first Smilei object available
+        self.mysim = Smilei() # set mysim to the first Smilei singleton
         for key in args:
             if isinstance(key,Smilei) :
                 self.mysim=key
@@ -83,8 +90,5 @@ class DiagScalar(SmileiComponent):
         SmileiComponent.__init__(self, *args, **kwargs)
         if isinstance(self.mysim,Smilei):
             self.mysim.diag_scalar.append(self)
-
-    
-
 
 

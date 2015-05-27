@@ -1,7 +1,7 @@
 import math 
 
 part_per_cell=10
-t_sim=50
+t_sim=500
 res=20
 
 position=8
@@ -10,36 +10,39 @@ thickness=1
 
 density=0.8
 
-dx, dy = 10, 50
+dx, dy = 50, 50
 
 twopi=2*math.pi
 
-def my_real_func(x,y,pos,leng,thick):
-    return (math.cos(y)+2.0)*math.exp(-((x-pos)/leng)**2)/3 if x<pos else 1 if x < pos+thick else 0
+wavelength=0.2
 
-
-def my_function_easy(codex,codey, pos=0,leng=1,thick=1):
-    """ my function 2 """
+def my_real_func(codex,codey,leng):
     x,y=codex/twopi,codey/twopi
-    return my_real_func(x,y,pos,leng,thick)
+    
+    xpart=math.exp(-((x-dx/2)/leng)**2)
+    ypart=math.exp(-((y-dy/2)/leng)**2)
+    retVal=xpart*ypart*(math.cos(x/wavelength)+1)*(math.cos(y/wavelength)+1)
+    
+    return retVal if retVal>1e-2 else 0
 
 
-def my_function_nicer(pos=0,leng=1,thick=1):
+def my_function_easy(x,y,leng=1):
+    """ my function 2 """
+    return my_real_func(x,y,leng)
+
+
+def my_function_nicer(leng=1):
     """ my function 1 """
-    return lambda x,y: my_real_func(x/twopi,y/twopi,pos,leng,thick)      
+    return lambda x,y: my_real_func(x,y,leng)      
 
 
 class my_function_easy_and_nice():
-    def __init__(self, pos=0,leng=1,thick=1):
+    def __init__(self, leng=1):
         """ my function 3 """
-        self.pos=pos
         self.leng=leng
-        self.thick=thick
         
-    def __call__(self, codex, codey):
-        x,y=codex/twopi,codey/twopi
-        return my_real_func(x,y,self.pos,self.leng,self.thick)
-
+    def __call__(self, x, y):
+        return my_real_func(x,y,self.leng)
 
 
 mysim=Smilei()
@@ -100,7 +103,7 @@ mysim.print_every = 10
 
 
 myspec1=Species()
-myspec1.dens_profile = my_function_easy_and_nice(pos=8,leng=1,thick=1)
+myspec1.dens_profile = my_function_easy_and_nice(leng=5)
 myspec1.vacuum_length   = ((dx-thickness)/2.0,  dy/4.0) 
 myspec1.dens_length_x   = thickness
 myspec1.dens_length_y   = dy/2
@@ -127,7 +130,7 @@ myspec1.mvel_y_profile='constant'
 myspec1.mvel_z_profile='constant'
 
 Species(
-dens_profile = lambda x,y : my_function_easy(x,y,pos=8,leng=1,thick=1),
+dens_profile = myspec1.dens_profile,
 vacuum_length   = ((dx-thickness)/2.0,  dy/4,0) ,
 dens_length_x   = thickness ,
 dens_length_y   = dy/2,
@@ -172,8 +175,8 @@ def my_func_laser_profile(t,y):
 Laser(
 boxSide = 'west' ,
 a0=0.2 ,
-focus=(position,  dy/2) ,
-angle=20 ,
+focus=(dx/2.,  dy/2.) ,
+angle=10 ,
 delta=0.0 ,
 time_profile = 'sin2' ,
 double_params = 10 ,

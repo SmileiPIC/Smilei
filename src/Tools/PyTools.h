@@ -10,6 +10,7 @@
 #include <Python.h>
 #include "Tools.h"
 
+//! tools to convert python values to C++ values and vectors
 class PyTools {    
 public:
 
@@ -73,7 +74,7 @@ public:
     }
     
     //! convert vector of Python objects to vector of C++ values
-    template< typename T>
+    template <typename T>
     static bool convert(std::vector<PyObject*> py_vec, std::vector<T> &val) {
         bool retval=true;
         val.resize(py_vec.size());

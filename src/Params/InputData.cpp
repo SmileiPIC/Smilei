@@ -54,7 +54,7 @@ InputData::InputData(SmileiMPI *smpi, std::vector<std::string> namelistsFiles): 
         ERROR("error parsing namelist")
     }
 
-    PyObject* myFunction = PyObject_GetAttrString(PyImport_AddModule("__main__"),(char*)"get_smilei");
+    PyObject* myFunction = PyObject_GetAttrString(PyImport_AddModule("__main__"),(char*)"Smilei");
     py_namelist = PyObject_CallFunction(myFunction,const_cast<char *>(""));
     if (!py_namelist) {
         ERROR("no smilei class defined, but we should never get here...");

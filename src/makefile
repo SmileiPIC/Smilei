@@ -76,7 +76,7 @@ ifeq ($(config),scalasca)
 endif
 
 clean:
-	rm -f $(OBJS) $(DEPS)
+	rm -f $(OBJS) $(DEPS) $(PYHEADERS)
 	
 distclean: clean
 	rm -f $(EXEC)
