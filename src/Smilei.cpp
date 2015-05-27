@@ -136,7 +136,7 @@ int main (int argc, char* argv[])
     
     // vector of Species (virtual)
     vector<Species*> vecSpecies = SpeciesFactory::createVector(params, smpi);
-
+    
     // Initialize the collisions (vector of collisions)
     // ------------------------------------------------------------------------------------
     vector<Collisions*> vecCollisions = CollisionsFactory::create(params, input_data, vecSpecies);

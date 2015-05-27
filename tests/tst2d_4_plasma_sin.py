@@ -1,8 +1,8 @@
 import math 
 
-part_per_cell=10
-t_sim=500
-res=20
+part_per_cell=1
+t_sim=50
+res=5
 
 position=8
 thickness=1
@@ -18,7 +18,6 @@ wavelength=0.2
 
 def my_real_func(codex,codey,leng):
     x,y=codex/twopi,codey/twopi
-    
     xpart=math.exp(-((x-dx/2)/leng)**2)
     ypart=math.exp(-((y-dy/2)/leng)**2)
     retVal=xpart*ypart*(math.cos(x/wavelength)+1)*(math.cos(y/wavelength)+1)

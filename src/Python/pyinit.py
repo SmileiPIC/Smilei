@@ -24,16 +24,21 @@ class Smilei(object):
     diag_particles=[]
     diag_phase=[]
     diag_scalar=[]
+    
+    # We define methods that create components for the current Smilei object
+    def SmileiComponent(self, **kwargs): return SmileiComponent(self, **kwargs)
+    def Species        (self, **kwargs): return Species        (self, **kwargs)
+    def Laser          (self, **kwargs): return Laser          (self, **kwargs)
+    def DiagProbe      (self, **kwargs): return DiagProbe      (self, **kwargs)
+    def DiagParticles  (self, **kwargs): return DiagParticles  (self, **kwargs)
+    def DiagPhase      (self, **kwargs): return DiagPhase      (self, **kwargs)
+    def DiagScalar     (self, **kwargs): return DiagScalar     (self, **kwargs)
 
     def __init__(self, **kwargs):
         if kwargs is not None:
             for key, value in kwargs.iteritems():
                 setattr(self, key, value)
 
-# this ensure at least one Smilei is instatiated
-_smilei=Smilei()
-
-        
 class SmileiComponent():
     """Species generic class"""
     def __init__(self, *args, **kwargs):
@@ -50,16 +55,13 @@ class Species(SmileiComponent):
     species_type='None'
     def __init__(self, *args, **kwargs):
         SmileiComponent.__init__(self, *args, **kwargs)
-        if isinstance(self.mysim,Smilei):
-            self.mysim.species.append(self)
-    
-                    
+        self.mysim.species.append(self)
+
 class Laser(SmileiComponent):
     """Laser parameters"""
     def __init__(self, *args, **kwargs):
         SmileiComponent.__init__(self, *args, **kwargs)
-        if isinstance(self.mysim,Smilei):
-            self.mysim.laser.append(self)
+        self.mysim.laser.append(self)
 
 
 #diagnostics
@@ -67,28 +69,23 @@ class DiagProbe(SmileiComponent):
     """Diagnostic probe"""
     def __init__(self, *args, **kwargs):
         SmileiComponent.__init__(self, *args, **kwargs)
-        if isinstance(self.mysim,Smilei):
-            self.mysim.diag_probe.append(self)
+        self.mysim.diag_probe.append(self)
 
 class DiagParticles(SmileiComponent):
     """Diagnostic particles"""
     def __init__(self, *args, **kwargs):
         SmileiComponent.__init__(self, *args, **kwargs)
-        if isinstance(self.mysim,Smilei):
-            self.mysim.diag_particles.append(self)
+        self.mysim.diag_particles.append(self)
 
 class DiagPhase(SmileiComponent):
     """Diagnostic phase"""
     def __init__(self, *args, **kwargs):
         SmileiComponent.__init__(self, *args, **kwargs)
-        if isinstance(self.mysim,Smilei):
-            self.mysim.diag_phase.append(self)
+        self.mysim.diag_phase.append(self)
 
 class DiagScalar(SmileiComponent):
     """Diagnostic scalar"""
     def __init__(self, *args, **kwargs):
         SmileiComponent.__init__(self, *args, **kwargs)
-        if isinstance(self.mysim,Smilei):
-            self.mysim.diag_scalar.append(self)
-
+        self.mysim.diag_scalar.append(self)
 

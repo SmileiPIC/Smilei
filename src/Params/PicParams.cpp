@@ -293,9 +293,12 @@ void PicParams::readSpecies(InputData &ifile) {
             if (mypy && PyCallable_Check(mypy)) {
                 tmpSpec.dens_profile.py_profile=mypy;
                 tmpSpec.dens_profile.profile="python";
+            } else {
+                WARNING("For species " << n_species << ", dens_profile not defined, assumed constant.");
+                tmpSpec.dens_profile.profile = "constant";
             }
-
-        } else {
+        }
+        if (tmpSpec.dens_profile.profile != "python") {
             // species length (check DensityProfile for definitions)
             ifile.extract("vacuum_length", tmpSpec.dens_profile.vacuum_length,"species",n_species);
             ifile.extract("dens_length_x", tmpSpec.dens_profile.length_params_x,"species",n_species);
@@ -306,10 +309,6 @@ void PicParams::readSpecies(InputData &ifile) {
             // getting additional parameters for the density profile (check DensityProfile for definitions)
             ifile.extract("dens_dbl_params", tmpSpec.dens_profile.double_params,"species",n_species);
             ifile.extract("dens_int_params", tmpSpec.dens_profile.int_params,"species",n_species);
-        }
-        
-        if (tmpSpec.dens_profile.profile.empty()) {
-            ERROR("dens_profile can't be empty");
         }
         
         // Species mean velocity parameters
@@ -325,9 +324,13 @@ void PicParams::readSpecies(InputData &ifile) {
             if (mypy && PyCallable_Check(mypy)) {
                 tmpSpec.mvel_x_profile.py_profile=mypy;
                 tmpSpec.mvel_x_profile.profile="python";
+            } else {
+                WARNING("For species " << n_species << ", mvel_x_profile not defined, assumed constant.");
+                tmpSpec.mvel_x_profile.profile = "constant";
             }
             HEREIAM("HEHE " << tmpSpec.mvel_x_profile.profile << " : " << mypy);
-        } else {
+        }
+        if (tmpSpec.mvel_x_profile.profile != "python") {
             ifile.extract("mvel_x_length_x", tmpSpec.mvel_x_profile.length_params_x,"species",n_species);
             if ( (geometry=="2d3v") || (geometry=="3d3v") )
                 ifile.extract("mvel_x_length_y", tmpSpec.mvel_x_profile.length_params_y,"species",n_species);
@@ -346,8 +349,12 @@ void PicParams::readSpecies(InputData &ifile) {
             if (mypy && PyCallable_Check(mypy)) {
                 tmpSpec.mvel_y_profile.py_profile=mypy;
                 tmpSpec.mvel_y_profile.profile="python";
+            } else {
+                WARNING("For species " << n_species << ", mvel_y_profile not defined, assumed constant.");
+                tmpSpec.mvel_y_profile.profile = "constant";
             }
-        } else {
+        }
+        if (tmpSpec.mvel_y_profile.profile != "python") {
             ifile.extract("mvel_y_length_x", tmpSpec.mvel_y_profile.length_params_x,"species",n_species);
             if ( (geometry=="2d3v") || (geometry=="3d3v") )
                 ifile.extract("mvel_y_length_y", tmpSpec.mvel_y_profile.length_params_y,"species",n_species);
@@ -366,8 +373,12 @@ void PicParams::readSpecies(InputData &ifile) {
             if (mypy && PyCallable_Check(mypy)) {
                 tmpSpec.mvel_z_profile.py_profile=mypy;
                 tmpSpec.mvel_z_profile.profile="python";
+            } else {
+                WARNING("For species " << n_species << ", mvel_z_profile not defined, assumed constant.");
+                tmpSpec.mvel_z_profile.profile = "constant";
             }
-        } else {
+        }
+        if (tmpSpec.mvel_z_profile.profile != "python") {
             ifile.extract("mvel_z_length_x", tmpSpec.mvel_z_profile.length_params_x,"species",n_species);
             if ( (geometry=="2d3v") || (geometry=="3d3v") )
                 ifile.extract("mvel_z_length_y", tmpSpec.mvel_z_profile.length_params_y,"species",n_species);
@@ -389,8 +400,12 @@ void PicParams::readSpecies(InputData &ifile) {
             if (mypy && PyCallable_Check(mypy)) {
                 tmpSpec.temp_x_profile.py_profile=mypy;
                 tmpSpec.temp_x_profile.profile="python";
+            } else {
+                WARNING("For species " << n_species << ", temp_x_profile not defined, assumed constant.");
+                tmpSpec.temp_x_profile.profile = "constant";
             }
-        } else {
+        }
+        if (tmpSpec.temp_x_profile.profile != "python") {
             ifile.extract("temp_x_profile", tmpSpec.temp_x_profile.profile,"species",n_species);
             // species length (check DensityProfile for definitions)
             ifile.extract("temp_x_length_x", tmpSpec.temp_x_profile.length_params_x,"species",n_species);
@@ -401,7 +416,7 @@ void PicParams::readSpecies(InputData &ifile) {
             
             ifile.extract("temp_x_dbl_params", tmpSpec.temp_x_profile.double_params,"species",n_species);
             ifile.extract("temp_x_int_params", tmpSpec.temp_x_profile.int_params,"species",n_species);
-        }            
+        }
         
         ifile.extract("temp_y_profile", tmpSpec.temp_y_profile.profile,"species",n_species);
         if (tmpSpec.temp_y_profile.profile.empty()) {
@@ -409,8 +424,12 @@ void PicParams::readSpecies(InputData &ifile) {
             if (mypy && PyCallable_Check(mypy)) {
                 tmpSpec.temp_y_profile.py_profile=mypy;
                 tmpSpec.temp_y_profile.profile="python";
+            } else {
+                WARNING("For species " << n_species << ", temp_y_profile not defined, assumed constant.");
+                tmpSpec.temp_y_profile.profile = "constant";
             }
-        } else {
+        }
+        if (tmpSpec.temp_y_profile.profile != "python") {
             // species length (check DensityProfile for definitions)
             ifile.extract("temp_y_length_x", tmpSpec.temp_y_profile.length_params_x,"species",n_species);
             if ( (geometry=="2d3v") || (geometry=="3d3v") )
@@ -420,15 +439,20 @@ void PicParams::readSpecies(InputData &ifile) {
             ifile.extract("temp_y_dbl_params", tmpSpec.temp_y_profile.double_params,"species",n_species);
             ifile.extract("temp_y_int_params", tmpSpec.temp_y_profile.int_params,"species",n_species);
             
-        }            
+        }
+        
         ifile.extract("temp_z_profile", tmpSpec.temp_z_profile.profile,"species",n_species);
         if (tmpSpec.temp_z_profile.profile.empty()) {
             PyObject *mypy = ifile.extract_py("temp_z_profile", "species",n_species);
             if (mypy && PyCallable_Check(mypy)) {
                 tmpSpec.temp_z_profile.py_profile=mypy;
                 tmpSpec.temp_z_profile.profile="python";
+            } else {
+                WARNING("For species " << n_species << ", temp_z_profile not defined, assumed constant.");
+                tmpSpec.temp_z_profile.profile = "constant";
             }
-        } else {
+        }
+        if (tmpSpec.temp_z_profile.profile != "python") {
             // species length (check DensityProfile for definitions)
             ifile.extract("temp_z_length_x", tmpSpec.temp_z_profile.length_params_x,"species",n_species);
             if ( (geometry=="2d3v") || (geometry=="3d3v") )
@@ -517,16 +541,22 @@ void PicParams::computeSpecies()
         // Normalizing Species-related quantities
         // --------------------------------------
         
+        SpeciesStructure * s = &(species_param[ispec]);
+        
         // time during which particles are frozen
-        species_param[ispec].time_frozen *= conv_fac;
+        s->time_frozen *= conv_fac;
         
         vector<ProfileSpecies*> profiles;
-        profiles.push_back(&species_param[ispec].dens_profile);
-        profiles.push_back(&species_param[ispec].mvel_x_profile);
-        profiles.push_back(&species_param[ispec].mvel_y_profile);
-        profiles.push_back(&species_param[ispec].mvel_z_profile);
+        vector<string> prefixes;
+        profiles.push_back(&(s->dens_profile  )); prefixes.push_back("dens_"  );
+        profiles.push_back(&(s->mvel_x_profile)); prefixes.push_back("mvel_x_");
+        profiles.push_back(&(s->mvel_y_profile)); prefixes.push_back("mvel_y_");
+        profiles.push_back(&(s->mvel_z_profile)); prefixes.push_back("mvel_z_");
+        profiles.push_back(&(s->temp_x_profile)); prefixes.push_back("temp_x_");
+        profiles.push_back(&(s->temp_y_profile)); prefixes.push_back("temp_y_");
+        profiles.push_back(&(s->temp_z_profile)); prefixes.push_back("temp_z_");
         
-        for (unsigned int iprof=0;iprof<profiles.size(); iprof++) {
+        for (unsigned int iprof=0; iprof<profiles.size(); iprof++) {
             
             // normalizing the vacuum lengths
             for (unsigned int i=0; i<profiles[iprof]->vacuum_length.size(); i++)
@@ -577,14 +607,14 @@ void PicParams::computeSpecies()
             if (profiles[iprof]->length_params_x.size()==0) {
                 profiles[iprof]->length_params_x.resize(1);
                 profiles[iprof]->length_params_x[0] = sim_length[0] - profiles[iprof]->vacuum_length[0];
-                WARNING("No dens_length_x defined, automatically put to " << profiles[iprof]->length_params_x[0]
+                WARNING("No " << prefixes[iprof]<< "length_x defined, automatically put to " << profiles[iprof]->length_params_x[0]
                         << " for species " << ispec);
             }
             if ( (geometry=="2d3v") || (geometry=="3d3v") ) {
                 if (profiles[iprof]->length_params_y.size()==0) {
                     profiles[iprof]->length_params_y.resize(1);
                     profiles[iprof]->length_params_y[0] = sim_length[1] - profiles[iprof]->vacuum_length[1];
-                    WARNING("No dens_length_y defined, automatically put to " << profiles[iprof]->length_params_y[0]
+                    WARNING("No " << prefixes[iprof]<< "length_y defined, automatically put to " << profiles[iprof]->length_params_y[0]
                             << " for species " << ispec);
                 }
             }
@@ -592,7 +622,7 @@ void PicParams::computeSpecies()
                 if (profiles[iprof]->length_params_z.size()==0) {
                     profiles[iprof]->length_params_z.resize(1);
                     profiles[iprof]->length_params_z[0] = sim_length[2] - profiles[iprof]->vacuum_length[2];
-                    WARNING("No dens_length_z defined, automatically put to " << profiles[iprof]->length_params_z[0]
+                    WARNING("No " << prefixes[iprof]<< "length_z defined, automatically put to " << profiles[iprof]->length_params_z[0]
                             << " for species " << ispec);
                 }
             }
