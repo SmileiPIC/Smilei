@@ -35,7 +35,7 @@ public:
     std::string geometry;
     
     //! Creator for ExtFieldParams
-    ExtFieldParams(PicParams&, InputData &, std::string);
+    ExtFieldParams(PicParams&, InputData &);
 
     //! external fields parameters the key string is the name of the field and the value is a vector of ExtFieldStructure
     std::vector<ExtFieldStructure> structs;

@@ -20,6 +20,7 @@ class Smilei(object):
         
     species=[]
     laser=[]
+    ext_field=[]
     diag_probe=[]
     diag_particles=[]
     diag_phase=[]
@@ -33,6 +34,7 @@ class Smilei(object):
     def DiagParticles  (self, **kwargs): return DiagParticles  (self, **kwargs)
     def DiagPhase      (self, **kwargs): return DiagPhase      (self, **kwargs)
     def DiagScalar     (self, **kwargs): return DiagScalar     (self, **kwargs)
+    def ExtField       (self, **kwargs): return ExtField       (self, **kwargs)
 
     def __init__(self, **kwargs):
         if kwargs is not None:
@@ -88,4 +90,13 @@ class DiagScalar(SmileiComponent):
     def __init__(self, *args, **kwargs):
         SmileiComponent.__init__(self, *args, **kwargs)
         self.mysim.diag_scalar.append(self)
+
+# external fields
+class ExtField(SmileiComponent):
+    """External Field"""
+    def __init__(self, *args, **kwargs):
+        SmileiComponent.__init__(self, *args, **kwargs)
+        self.mysim.ext_field.append(self)
+
+
 
