@@ -23,7 +23,6 @@ wavelength=0.2
 import numpy as np
 def my_real_func(codex,codey):
     x=codex/twopi
-    print codex, codey, x
     pippo=np.array(0.)
     return 1 if x>position else 0
 
