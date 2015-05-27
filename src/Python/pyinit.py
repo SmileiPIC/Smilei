@@ -48,3 +48,10 @@ class DiagScalar(SmileiComponent):
     """Diagnostic scalar"""
     list = []
 
+# external fields
+class ExtField(SmileiComponent):
+    """External Field"""
+    list = []
+
+
+

@@ -1,28 +1,31 @@
+# ---------------------------------------------
+# SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
+# ---------------------------------------------
+# Remember: never override the following names:
+#           SmileiComponent, Species, Laser, Collisions, DiagProbe, DiagParticles,
+#           DiagScalar, DiagPhase or ExtField
+
 import math 
 
-part_per_cell=1
-t_sim=50
-res=5
+part_per_cell=20
+t_sim=150
+res=20
 
 position=8
 thickness=1
 
 
-density=0.8
+density=2
 
-dx, dy = 50, 50
+dx, dy = 10, 40
 
 twopi=2*math.pi
 
 wavelength=0.2
 
 def my_real_func(codex,codey,leng):
-    x,y=codex/twopi,codey/twopi
-    xpart=math.exp(-((x-dx/2)/leng)**2)
-    ypart=math.exp(-((y-dy/2)/leng)**2)
-    retVal=xpart*ypart*(math.cos(x/wavelength)+1)*(math.cos(y/wavelength)+1)
-    
-    return retVal if retVal>1e-2 else 0
+    x=codex/twopi
+    return 1 if x>leng and x <leng+1    else 0
 
 
 def my_function_easy(x,y,leng=1):
@@ -44,14 +47,7 @@ class my_function_easy_and_nice():
         return my_real_func(x,y,self.leng)
 
 
-mysim=Smilei()
-
-mysim.output_script='my_test.py'
-
-
-# ---------------------------------------------
-# SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
-# ---------------------------------------------
+output_script='my_test.py'
 
 # sim_units: normalisation units for the input data
 #            it is used only in the input data & log file
@@ -60,7 +56,7 @@ mysim.output_script='my_test.py'
 #            normalized = input data are put in code (relativistic) units
 #
 
-mysim.sim_units = 'wavelength'
+sim_units = 'wavelength'
 
 
 # dim: Geometry of the simulation
@@ -69,43 +65,43 @@ mysim.sim_units = 'wavelength'
 #      3d3v = cartesian grid with 3d in space + 3d in velocity
 #      2drz = cylindrical (r,z) grid with 3d3v particles
 #
-mysim.dim = '2d3v'
+dim = '2d3v'
 
 # order of interpolation
-mysim.interpolation_order = 2 
+interpolation_order = 2 
 
 # SIMULATION TIME
 # res_time: temporal resolution integer  number of time-steps within one normalization period
 # sim_time: duration of the simulation in units of the normalization period 
 #
-mysim.res_time = 1.5*res
-mysim.sim_time = t_sim
+res_time = 1.5*res
+sim_time = t_sim
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
 # sim_length: length of the simulation in units of the normalization wavelength 
 #
-mysim.res_space  = (res, res)  
-mysim.sim_length = (dx,  dy)
+res_space  = [res, res]
+sim_length = [dx,  dy]
 
-mysim.bc_em_type_long  = 'silver-muller'
-mysim.bc_em_type_trans = 'periodic'
+bc_em_type_long  = 'silver-muller'
+bc_em_type_trans = 'periodic'
 
 # RANDOM seed 
 # this is used to randomize the random number generator
-mysim.random_seed = 0
+random_seed = 0
 
-mysim.fieldDump_every = 10
-mysim.fieldsToDump = ("Ey","Rho_electron")
+fieldDump_every = 10
+fieldsToDump = ["Ey","Rho_electron"]
 
-mysim.print_every = 10
+print_every = 10
 
 
 myspec1=Species()
-myspec1.dens_profile = my_function_easy_and_nice(leng=5)
-myspec1.vacuum_length   = ((dx-thickness)/2.0,  dy/4.0) 
-myspec1.dens_length_x   = thickness
-myspec1.dens_length_y   = dy/2
+myspec1.dens_profile = my_function_easy_and_nice(leng=4*dx/5)
+myspec1.vacuum_length   = [(dx-thickness)/2.0,  dy/4.0]
+myspec1.dens_length_x   = [thickness]
+myspec1.dens_length_y   = [dy/2]
 myspec1.species_type = 'ion'
 myspec1.initPosition_type = 'random'
 myspec1.initMomentum_type = 'cold'
@@ -118,7 +114,7 @@ myspec1.density = density
 myspec1.mean_velocity = 0.0
 myspec1.temperature = 0.0
 myspec1.dynamics_type = 'norm'
-myspec1.time_frozen = 0.0
+myspec1.time_frozen = t_sim
 myspec1.radiating = False
 myspec1.bc_part_type_west  = 'refl'
 myspec1.bc_part_type_east  = 'refl'
@@ -129,30 +125,30 @@ myspec1.mvel_y_profile='constant'
 myspec1.mvel_z_profile='constant'
 
 Species(
-dens_profile = myspec1.dens_profile,
-vacuum_length   = ((dx-thickness)/2.0,  dy/4,0) ,
-dens_length_x   = thickness ,
-dens_length_y   = dy/2,
-species_type = 'electron' ,
-initPosition_type = 'random' ,
-initMomentum_type = 'maxj' ,
-n_part_per_cell = part_per_cell ,
-c_part_max=1.0 ,
-mass = 1.0 ,
-charge = -1 ,
-density = density ,
-mean_velocity = 0.0 ,
-mvel_x_profile='constant',
-mvel_y_profile='constant',
-mvel_z_profile='constant',
-temperature = 0.0001 ,
-dynamics_type = 'norm' ,
-time_frozen = 0.0 ,
-radiating = False ,
-bc_part_type_west  = 'refl' ,
-bc_part_type_east  = 'refl' ,
-bc_part_type_south = 'none' ,
-bc_part_type_north = 'none'
+	dens_profile = myspec1.dens_profile,
+	vacuum_length   = [(dx-thickness)/2.0,  dy/4, 0] ,
+	dens_length_x   = [thickness] ,
+	dens_length_y   = [dy/2],
+	species_type = 'electron' ,
+	initPosition_type = 'random' ,
+	initMomentum_type = 'maxj' ,
+	n_part_per_cell = part_per_cell ,
+	c_part_max=1.0 ,
+	mass = 1.0 ,
+	charge = -1 ,
+	density = density ,
+	mean_velocity = 0.0 ,
+	mvel_x_profile='constant',
+	mvel_y_profile='constant',
+	mvel_z_profile='constant',
+	temperature = 0.0001 ,
+	dynamics_type = 'norm' ,
+	time_frozen = 0.0 ,
+	radiating = False ,
+	bc_part_type_west  = 'refl' ,
+	bc_part_type_east  = 'refl' ,
+	bc_part_type_south = 'none' ,
+	bc_part_type_north = 'none'
 )
 
 
@@ -172,15 +168,15 @@ def my_func_laser_profile(t,y):
 # double_params: vector of real parameters used by the different time-profiles
 #
 Laser(
-boxSide = 'west' ,
-a0=0.2 ,
-focus=(dx/2.,  dy/2.) ,
-angle=10 ,
-delta=0.0 ,
-time_profile = 'sin2' ,
-double_params = 10 ,
-transv_profile = my_func_laser_profile ,
-double_params_transv = 10.0 
+	boxSide = 'west' ,
+	a0=0.01 ,
+	focus=[4*dx/5,  dy/2.] ,
+	angle=40 ,
+	delta=0.0 ,
+	time_profile = 'sin2' ,
+	double_params = 5 ,
+	transv_profile = my_func_laser_profile ,
+	double_params_transv = 5.0 
 )
 
 

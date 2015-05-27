@@ -129,7 +129,7 @@ double VelocityProfile2D::operator() (vector<double> x_cell) {
         
     }// constant
     
-
+    
     // Harris velocity profile: used for reconnection
     // ---------------------------------------------
     // vacuum_length[0,1] : length of the vacuum region before the plasma in x & y directions (default is 0)
@@ -174,15 +174,6 @@ double VelocityProfile2D::operator() (vector<double> x_cell) {
         
         return v;
     }
-    else if (prof_params.profile=="python") {
-        PyObject *pyresult = PyObject_CallFunction(prof_params.py_profile, const_cast<char *>("dd"), x_cell[0], x_cell[1]);
-        if (pyresult == NULL) {
-            ERROR("can't evaluate python function");
-        }
-        double cppresult = PyFloat_AsDouble(pyresult);
-        Py_XDECREF(pyresult);
-        return cppresult;
-    }
     
     // ------------------------
     // Charles velocity profile
@@ -203,34 +194,34 @@ double VelocityProfile2D::operator() (vector<double> x_cell) {
         double x0    = prof_params.length_params_y[0];
         double L     = prof_params.length_params_y[1];
         double x     = x_cell[1]-x0;
-	double tiny  = 1e-10*L;
-	if (Bmax == 0.) {
-		double Bm = sqrt(pow(B0,2) + 2*P0)-B0;
-		double B  = B0 + Bm/pow(cosh(x/L),2);
-		double A  = B0*x + Bm*L*tanh(x/L);
-		double DP = P0 + pow(B0,2)/2 - pow(B,2)/2;
-		//if (abs(x)<tiny) {     // X=0 -> velocity is 0 imposed here to avoid 0/0
-		//	return (0);
-		//}
-		//else {	
-		double v     = -2*Bm/(L*n0)*tanh(x/L) /(pow(cosh(x/L),2))*exp( 2*A*Bm/L*tanh(x/L) /(DP*pow(cosh(x/L),2)) );
+        double tiny  = 1e-10*L;
+        if (Bmax == 0.) {
+            double Bm = sqrt(pow(B0,2) + 2*P0)-B0;
+            double B  = B0 + Bm/pow(cosh(x/L),2);
+            double A  = B0*x + Bm*L*tanh(x/L);
+            double DP = P0 + pow(B0,2)/2 - pow(B,2)/2;
+            //if (abs(x)<tiny) {     // X=0 -> velocity is 0 imposed here to avoid 0/0
+            //	return (0);
+            //}
+            //else {	
+            double v     = -2*Bm/(L*n0)*tanh(x/L) /(pow(cosh(x/L),2))*exp( 2*A*Bm/L*tanh(x/L) /(DP*pow(cosh(x/L),2)) );
         	if (abs(v)>1.0) ERROR("Velocity profile exceeding c");
-		return v;
-		//}
-	}
-	else {	double Bm = Bmax;
-		double B  = B0 + Bm/pow(cosh(x/L),2);
-		double A  = B0*x + Bm*L*tanh(x/L);
-		double DP = P0 + pow(B0,2)/2 - pow(B,2)/2;
-		//if (abs(x)<tiny) {
-		//	return (0);    // X=0 -> velocity is 0 imposed here to avoid 0/0
-		//}
-		//else {	
-		double v     = -2*Bm/(L*n0)*tanh(x/L) /(pow(cosh(x/L),2))*exp( 2*A*Bm/L*tanh(x/L) /(DP*pow(cosh(x/L),2)) );
+            return v;
+            //}
+        }
+        else {	double Bm = Bmax;
+            double B  = B0 + Bm/pow(cosh(x/L),2);
+            double A  = B0*x + Bm*L*tanh(x/L);
+            double DP = P0 + pow(B0,2)/2 - pow(B,2)/2;
+            //if (abs(x)<tiny) {
+            //	return (0);    // X=0 -> velocity is 0 imposed here to avoid 0/0
+            //}
+            //else {	
+            double v     = -2*Bm/(L*n0)*tanh(x/L) /(pow(cosh(x/L),2))*exp( 2*A*Bm/L*tanh(x/L) /(DP*pow(cosh(x/L),2)) );
         	if (abs(v)>1.0) ERROR("Velocity profile exceeding c");
-		return v;
-		//}
-	}
+            return v;
+            //}
+        }
     }
     
     
@@ -246,7 +237,7 @@ double VelocityProfile2D::operator() (vector<double> x_cell) {
     // length_params_x[1] = Length of the magnetic gradient
     // length_params_y[2] = y position of the maximum of the B-field
     // ---------------------------------------------------------------------------------
-     else if (prof_params.profile=="blob") {
+    else if (prof_params.profile=="blob") {
         double n0    = prof_params.double_params[0];
         double dn    = prof_params.double_params[1];
         double P0    = prof_params.double_params[2];
@@ -258,23 +249,23 @@ double VelocityProfile2D::operator() (vector<double> x_cell) {
         double y0    = prof_params.length_params_y[0];
         double L     = prof_params.length_params_x[1];
         double  r    = sqrt(pow(x_cell[0]-x0,2) + pow(x_cell[1]-y0,2));
-	double ne    = n0*( 1 - dn/(pow(cosh(r/L),2)));
-	double theta = atan((x_cell[1]-y0)/(x_cell[0]-x0));
-	double vd;
-	if (r<5*L) { vd = v0;}
-	else {vd=v0;}
-	double v;
-	if (Bmax == 0.) {
-		double Bm = sqrt(pow(B0,2) + 2*P0)-B0;	
-		double v     = -2*Bm/(L*ne)*tanh(r/L) /(pow(cosh(r/L),2))*cos(theta + theta0) +vd;
+        double ne    = n0*( 1 - dn/(pow(cosh(r/L),2)));
+        double theta = atan((x_cell[1]-y0)/(x_cell[0]-x0));
+        double vd;
+        if (r<5*L) { vd = v0;}
+        else {vd=v0;}
+        double v;
+        if (Bmax == 0.) {
+            double Bm = sqrt(pow(B0,2) + 2*P0)-B0;	
+            double v     = -2*Bm/(L*ne)*tanh(r/L) /(pow(cosh(r/L),2))*cos(theta + theta0) +vd;
         	if (abs(v)>1.0) ERROR("Velocity profile exceeding c");
-		return v;
-	}
-	else {	double Bm = Bmax;
-		double v     = -2*Bm/(L*ne)*tanh(r/L) /(pow(cosh(r/L),2))*cos(theta + theta0)+vd;
+            return v;
+        }
+        else {	double Bm = Bmax;
+            double v     = -2*Bm/(L*ne)*tanh(r/L) /(pow(cosh(r/L),2))*cos(theta + theta0)+vd;
         	if (abs(v)>1.0) ERROR("Velocity profile exceeding c");
-		return v;
-	}
+            return v;
+        }
     }
     
     
@@ -288,10 +279,16 @@ double VelocityProfile2D::operator() (vector<double> x_cell) {
         double L    = prof_params.length_params_x[0];
         double x0 = prof_params.length_params_x[1];
         double x    = x_cell[0]-x0;
-	double pi   = 4*atan(1.);
-	return cos(2*pi/L*x);
+        double pi   = 4*atan(1.);
+        return cos(2*pi/L*x);
 	}
+    
+    else if (prof_params.profile=="python") {
+        PyObject *pyresult = PyObject_CallFunction(prof_params.py_profile, const_cast<char *>("dd"), x_cell[0], x_cell[1]);
+        return PyTools::get_py_result(pyresult);
+    }
+    
     return 1;
-
+    
 }
 
