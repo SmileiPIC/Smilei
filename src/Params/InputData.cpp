@@ -45,17 +45,14 @@ InputData::InputData(SmileiMPI *smpi, std::vector<std::string> namelistsFiles): 
     
     // here we add the check namelist stuff from pycontrol.py
     pyRunScript(string(reinterpret_cast<const char*>(Python_pycontrol_py), Python_pycontrol_py_len),"pycontrol.py");
-
     
     
-
     int retval=PyRun_SimpleString(namelist.c_str());
     if (retval==-1) {
         ERROR("error parsing namelist")
     }
-
-    PyObject* myFunction = PyObject_GetAttrString(PyImport_AddModule("__main__"),(char*)"Smilei");
-    py_namelist = PyObject_CallFunction(myFunction,const_cast<char *>(""));
+    
+    py_namelist = PyImport_AddModule("__main__");
     if (!py_namelist) {
         ERROR("no smilei class defined, but we should never get here...");
     }
@@ -67,7 +64,7 @@ InputData::InputData(SmileiMPI *smpi, std::vector<std::string> namelistsFiles): 
         ofstream out(file_namelist_out.c_str());
         out << namelist;
         out.close();
-    }        
+    }
 }
 
 InputData::~InputData() {
@@ -92,49 +89,51 @@ PyObject* InputData::extract_py(string name, string component, int nComponent) {
     if (name.find(" ")!= string::npos || component.find(" ")!= string::npos) {
         WARNING("asking for [" << name << "] [" << component << "] : it has white inside: please fix the code");
     }
-
+    
     PyObject *py_obj=py_namelist;
+    string list = "list";
+    // If component requested
     if (!component.empty()) {
+        // Get the selected component (e.g. "Species" or "Laser")
         py_obj = PyObject_GetAttrString(py_namelist,component.c_str());
         PyTools::checkPyError();
-        if (py_obj) {
-            if (PyList_Check(py_obj) || PyTuple_Check(py_obj)) {
-                int len = PySequence_Size(py_obj);
-                if (len > 0) { 
-                    if (len >= nComponent) {
-                        PyObject* seq = PySequence_Fast(py_obj, "expected a sequence");
-                        py_obj = PySequence_Fast_GET_ITEM(seq, nComponent);
-                        Py_DECREF(seq);
-                    } else {
-                        ERROR("component " << component << " is not big enough");
-                    }
+        // Error if not found
+        if (!py_obj) ERROR("Component "<<component<<" not found in namelist");
+        // Get the "list" that contains the list of the objects in this component
+        py_obj = PyObject_GetAttrString(py_obj,list.c_str());
+        // If list successfully found
+        if (PyList_Check(py_obj) || PyTuple_Check(py_obj)) {
+            int len = PySequence_Size(py_obj);
+            if (len > 0) { 
+                if (len >= nComponent) {
+                    PyObject* seq = PySequence_Fast(py_obj, "expected a sequence");
+                    py_obj = PySequence_Fast_GET_ITEM(seq, nComponent);
+                    Py_DECREF(seq);
+                } else {
+                    ERROR("component " << component << " is not big enough");
                 }
-            } else {
-                py_obj=NULL;
             }
-
         } else {
-            
+            py_obj=NULL;
         }
-
     }
     PyObject *py_return=PyObject_GetAttrString(py_obj,name.c_str());
     PyTools::checkPyError();
     return py_return;
 
-}    
+}
 
 //! retrieve a vector of python objects
 vector<PyObject*> InputData::extract_pyVec(string name, string component, int nComponent) {
-    PyObject* py_val = extract_py(name,component,nComponent);
     vector<PyObject*> retvec;
-    if (py_val) {      
-        if (!PyTuple_Check(py_val)) {
-            retvec.push_back(py_val);
-            WARNING(name << " should be a tuple, not a scalar : fix it");
+    PyObject* py_obj = extract_py(name,component,nComponent);
+    if (py_obj) {
+        if (!PyTuple_Check(py_obj) && !PyList_Check(py_obj)) {
+            retvec.push_back(py_obj);
+            WARNING(name << " should be a list or tuple, not a scalar : fix it");
         } else {
-            PyObject* seq = PySequence_Fast(py_val, "expected a sequence");
-            int len = PySequence_Size(py_val);
+            PyObject* seq = PySequence_Fast(py_obj, "expected a sequence");
+            int len = PySequence_Size(py_obj);
             retvec.resize(len);
             for (int i = 0; i < len; i++) {
                 PyObject* item = PySequence_Fast_GET_ITEM(seq, i);
@@ -145,18 +144,24 @@ vector<PyObject*> InputData::extract_pyVec(string name, string component, int nC
     }    
     PyTools::checkPyError();
     return retvec;
-}    
+}
 
 bool InputData::existComponent(std::string component, unsigned int nComponent) {
     if (component.find(" ")!= string::npos) {
-        ERROR("[" << component << "] has white inside: please fix the code");
+        ERROR("[" << component << "] has whitespace inside: please fix the code");
     }
+    // Get the selected component (e.g. "Species" or "Laser")
+    string list = "list";
     PyObject *py_obj = PyObject_GetAttrString(py_namelist,component.c_str());
     PyTools::checkPyError();
     if (py_obj) {
-        if (PyList_Check(py_obj)) {
-            if (PySequence_Size(py_obj) > nComponent) {
-                return true;
+        // Get the "list" that contains the list of the objects in this component
+        py_obj = PyObject_GetAttrString(py_obj,list.c_str());
+        if (py_obj) {
+            if (PyList_Check(py_obj)) {
+                if (PySequence_Size(py_obj) > nComponent) {
+                    return true;
+                }
             }
         }
     }

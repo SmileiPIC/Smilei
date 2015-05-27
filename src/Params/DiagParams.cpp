@@ -71,12 +71,12 @@ DiagParams::DiagParams(Diagnostic& diags, PicParams& params, InputData &ifile, S
 void DiagParams::initScalars(Diagnostic& diags, PicParams& params, InputData &ifile) {
 
     diags.scalars.every=0;
-    bool ok=ifile.extract("every",diags.scalars.every,"diag_scalar");
+    bool ok=ifile.extract("every",diags.scalars.every,"DiagScalar");
     if (!ok) diags.scalars.every=params.global_every;
     
     vector<double> scalar_time_range(2,0.);
-
-    ok=ifile.extract("time_range",scalar_time_range,"diag_scalar");        
+    
+    ok=ifile.extract("time_range",scalar_time_range,"DiagScalar");        
     if (!ok) { 
         diags.scalars.tmin = 0.;
         diags.scalars.tmax = params.sim_time;
@@ -86,9 +86,9 @@ void DiagParams::initScalars(Diagnostic& diags, PicParams& params, InputData &if
         diags.scalars.tmax = scalar_time_range[1]*params.conv_fac;
     }
     
-    scalar_precision=10;
-    ifile.extract("precision",scalar_precision,"diag_scalar");
-    ifile.extract("vars",scalar_vars,"diag_scalar");
+    diags.scalars.precision=10;
+    ifile.extract("precision",diags.scalars.precision,"DiagScalar");
+    ifile.extract("vars",scalar_vars,"DiagScalar");
     
     // copy from params remaining stuff
     diags.scalars.res_time=params.res_time;
@@ -101,7 +101,7 @@ void DiagParams::initProbes(Diagnostic& diags, PicParams& params, InputData &ifi
     
     // loop all "diagnostic probe" groups in the input file
     unsigned int n_probe=0;
-    while (ifile.existComponent("diag_probe",n_probe)) {
+    while (ifile.existComponent("DiagProbe",n_probe)) {
         
         if (n_probe==0) {
             // Create the HDF5 file that will contain all the probes
@@ -127,14 +127,14 @@ void DiagParams::initProbes(Diagnostic& diags, PicParams& params, InputData &ifi
         
         // Extract "every" (number of timesteps between each output)
         unsigned int every=0;
-        ok=ifile.extract("every",every,"diag_probe",n_probe);        
+        ok=ifile.extract("every",every,"DiagProbe",n_probe);        
         if (!ok) every=params.global_every;
         diags.probes.every.push_back(every);
         
         // Extract "time_range" (tmin and tmax of the outputs)
         vector<double> time_range(2,0.);
         double tmin,tmax;
-        ok=ifile.extract("time_range",time_range,"diag_probe",n_probe);        
+        ok=ifile.extract("time_range",time_range,"DiagProbe",n_probe);        
         if (!ok) { 
             tmin = 0.;
             tmax = params.sim_time;
@@ -148,7 +148,7 @@ void DiagParams::initProbes(Diagnostic& diags, PicParams& params, InputData &ifi
         // Extract "number" (number of points you have in each dimension of the probe,
         // which must be smaller than the code dimensions)
         vector<unsigned int> vecNumber; 
-        ifile.extract("number",vecNumber,"diag_probe",n_probe);
+        ifile.extract("number",vecNumber,"DiagProbe",n_probe);
         
         // Dimension of the probe grid
         unsigned int dimProbe=vecNumber.size();
@@ -172,22 +172,22 @@ void DiagParams::initProbes(Diagnostic& diags, PicParams& params, InputData &ifi
         // (positions of the vertices of the grid)
         vector< vector<double> > allPos;
         vector<double> pos;
-        ifile.extract("pos",pos,"diag_probe",n_probe);
+        ifile.extract("pos",pos,"DiagProbe",n_probe);
         for (unsigned int i=0; i<pos.size(); i++)
             pos[i] *= params.conv_fac;
         if (pos.size()>0) allPos.push_back(pos);
         
-        ifile.extract("pos_first",pos,"diag_probe",n_probe);
+        ifile.extract("pos_first",pos,"DiagProbe",n_probe);
         for (unsigned int i=0; i<pos.size(); i++)
             pos[i] *= params.conv_fac;
         if (pos.size()>0) allPos.push_back(pos);
         
-        ifile.extract("pos_second",pos,"diag_probe",n_probe);
+        ifile.extract("pos_second",pos,"DiagProbe",n_probe);
         for (unsigned int i=0; i<pos.size(); i++)
             pos[i] *= params.conv_fac;
         if (pos.size()>0) allPos.push_back(pos);
         
-        ifile.extract("pos_third",pos,"diag_probe",n_probe);
+        ifile.extract("pos_third",pos,"DiagProbe",n_probe);
         for (unsigned int i=0; i<pos.size(); i++)
             pos[i] *= params.conv_fac;
         if (pos.size()>0) allPos.push_back(pos);
@@ -305,12 +305,12 @@ void DiagParams::initPhases(Diagnostic& diags, PicParams& params, InputData &ifi
     
     
     bool ok;
-    while (ifile.existComponent("diag_phase",n_phase)) {
+    while (ifile.existComponent("DiagPhase",n_phase)) {
         
         phaseStructure my_phase;
 
         my_phase.every=0;
-        ok=ifile.extract("every",my_phase.every,"diag_phase",n_phase);
+        ok=ifile.extract("every",my_phase.every,"DiagPhase",n_phase);
         if (!ok) {
 //            if (n_probephase>0) {
 //                my_phase.every=diags.phases.vecDiagPhase.end()->every;
@@ -320,18 +320,18 @@ void DiagParams::initPhases(Diagnostic& diags, PicParams& params, InputData &ifi
         }
         
         vector<string> kind;
-        ifile.extract("kind",kind,"diag_phase",n_phase);        
+        ifile.extract("kind",kind,"DiagPhase",n_phase);        
         for (vector<string>::iterator it=kind.begin(); it!=kind.end();it++) {
             if (std::find(kind.begin(), it, *it) == it) {
                 my_phase.kind.push_back(*it); 
             } else {
-                WARNING("removed duplicate " << *it << " in \"diag_phase\" " << n_phase);
+                WARNING("removed duplicate " << *it << " in \"DiagPhase\" " << n_phase);
             }
         }
-            
+        
         vector<double> time_range(2,0.);
-        ok=ifile.extract("time_range",time_range,"diag_phase",n_phase);        
-
+        ok=ifile.extract("time_range",time_range,"DiagPhase",n_phase);        
+        
         if (!ok) { 
             my_phase.tmin = 0.;
             my_phase.tmax = params.sim_time;
@@ -342,21 +342,21 @@ void DiagParams::initPhases(Diagnostic& diags, PicParams& params, InputData &ifi
         }
         
         
-        ifile.extract("species",my_phase.species,"diag_phase",n_phase);
+        ifile.extract("species",my_phase.species,"DiagPhase",n_phase);
         
         my_phase.deflate=0;
-        ifile.extract("deflate",my_phase.deflate,"diag_phase",n_phase);
+        ifile.extract("deflate",my_phase.deflate,"DiagPhase",n_phase);
         
         if (my_phase.species.size()==0) {
-            WARNING("adding all species to the \"diag_phase\" " << n_phase);
+            WARNING("adding all species to the \"DiagPhase\" " << n_phase);
             for (unsigned int i=0;i<params.n_species; i++) {
                 my_phase.species.push_back(params.species_param[i].species_type);
             }
         }
         
-        ifile.extract("pos_min",my_phase.pos_min,"diag_phase",n_phase);
-        ifile.extract("pos_max",my_phase.pos_max,"diag_phase",n_phase);
-        ifile.extract("pos_num",my_phase.pos_num,"diag_phase",n_phase);
+        ifile.extract("pos_min",my_phase.pos_min,"DiagPhase",n_phase);
+        ifile.extract("pos_max",my_phase.pos_max,"DiagPhase",n_phase);
+        ifile.extract("pos_num",my_phase.pos_num,"DiagPhase",n_phase);
         for (unsigned int i=0; i<my_phase.pos_min.size(); i++) {
             my_phase.pos_min[i] *= params.conv_fac;
             my_phase.pos_max[i] *= params.conv_fac;
@@ -367,13 +367,13 @@ void DiagParams::initPhases(Diagnostic& diags, PicParams& params, InputData &ifi
         }
         
         
-        ifile.extract("mom_min",my_phase.mom_min,"diag_phase",n_phase);
-        ifile.extract("mom_max",my_phase.mom_max,"diag_phase",n_phase);
-        ifile.extract("mom_num",my_phase.mom_num,"diag_phase",n_phase);
+        ifile.extract("mom_min",my_phase.mom_min,"DiagPhase",n_phase);
+        ifile.extract("mom_max",my_phase.mom_max,"DiagPhase",n_phase);
+        ifile.extract("mom_num",my_phase.mom_num,"DiagPhase",n_phase);
         
-        ifile.extract("lor_min",my_phase.lor_min,"diag_phase",n_phase);
-        ifile.extract("lor_max",my_phase.lor_max,"diag_phase",n_phase);
-        ifile.extract("lor_num",my_phase.lor_num,"diag_phase",n_phase);
+        ifile.extract("lor_min",my_phase.lor_min,"DiagPhase",n_phase);
+        ifile.extract("lor_max",my_phase.lor_max,"DiagPhase",n_phase);
+        ifile.extract("lor_num",my_phase.lor_num,"DiagPhase",n_phase);
         
         
         hid_t gidParent=0;
@@ -559,55 +559,57 @@ void DiagParams::initParticles(Diagnostic& diags, PicParams& params, InputData &
     DiagnosticParticlesAxis  *tmpAxis;
     vector<DiagnosticParticlesAxis*> tmpAxes;
     DiagnosticParticles * tmpDiagParticles;
+    vector<PyObject*> allAxes;
     
     bool ok;
-    while (ifile.existComponent("diag_particles",n_diag_particles)) {
+    while (ifile.existComponent("DiagParticles",n_diag_particles)) {
         
         
         // get parameter "output" that determines the quantity to sum in the output array
         output = "";
-        ok = ifile.extract("output",output,"diag_particles",n_diag_particles);
+        ok = ifile.extract("output",output,"DiagParticles",n_diag_particles);
         if (!ok)
             ERROR("Diagnotic Particles #" << n_diag_particles << ": parameter `output` required");
         
         // get parameter "every" which is the period (in timesteps) for getting the outputs
         every = 0;
-        ok = ifile.extract("every",every,"diag_particles",n_diag_particles);
+        ok = ifile.extract("every",every,"DiagParticles",n_diag_particles);
         if (!ok)
             ERROR("Diagnotic Particles #" << n_diag_particles << ": parameter `every` required");
         
         // get parameter "time_average" that determines the number of timestep to average the outputs
         time_average = 1;
-        ifile.extract("time_average",time_average,"diag_particles",n_diag_particles);
+        ifile.extract("time_average",time_average,"DiagParticles",n_diag_particles);
         if (time_average > every)
             ERROR("Diagnotic Particles #" << n_diag_particles << ": `time_average` cannot be larger than `every`");
         if (time_average < 1) time_average=1;
         
         // get parameter "species" that determines the species to use (can be a list of species)
         species.resize(0);
-        ok = ifile.extract("species",species,"diag_particles",n_diag_particles);
+        ok = ifile.extract("species",species,"DiagParticles",n_diag_particles);
         if (!ok)
             ERROR("Diagnotic Particles #" << n_diag_particles << ": parameter `species` required");
         // verify that the species exist, remove duplicates and sort by number
         species_numbers = FindSpecies(species, params);
         
         
-        // get parameter "axis" that adds one axis to the diagnostic
-        //  It should contain several items:
+        // get parameter "axes" that adds axes to the diagnostic
+        // Each axis should contain several items:
         //      requested quantity, min value, max value ,number of bins, log (optional), edge_inclusive (optional)
-        vector<PyObject*> allAxes=ifile.extract_pyVec("axes","diag_particles",n_diag_particles);
+        allAxes=ifile.extract_pyVec("axes","DiagParticles",n_diag_particles);
         
         if (allAxes.size() == 0)
-            ERROR("Diagnotic Particles #" << n_diag_particles << ": axis must contain something");
+            ERROR("Diagnotic Particles #" << n_diag_particles << ": axes must contain something");
         
-        for (unsigned int iaxis; iaxis<allAxes.size(); iaxis++ ) {
+        tmpAxes.resize(0);
+        for (unsigned int iaxis=0; iaxis<allAxes.size(); iaxis++ ) {
             tmpAxis = new DiagnosticParticlesAxis();
             PyObject *oneAxis=allAxes[iaxis];
             if (PyTuple_Check(oneAxis) || PyList_Check(oneAxis)) {
                 PyObject* seq = PySequence_Fast(oneAxis, "expected a sequence");
                 int lenAxisArgs=PySequence_Size(seq);
                 if (lenAxisArgs<4)
-                    ERROR("Diagnotic Particles #" << n_diag_particles << ": axis must contain at least 4 arguments");
+                    ERROR("Diagnotic Particles #" << n_diag_particles << ": axis #" << iaxis << " contain at least 4 arguments");
                 
                 if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 0),tmpAxis->type)) {
                     ERROR("Diag Particles #" << n_diag_particles << ", axis #" << iaxis << ": First item must be a string (axis type)");
@@ -655,7 +657,7 @@ void DiagParams::initParticles(Diagnostic& diags, PicParams& params, InputData &
             }
             
             
-            HEREIAM(iaxis)
+            HEREIAM(iaxis);
         }
         
         

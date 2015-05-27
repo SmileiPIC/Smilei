@@ -35,8 +35,8 @@ DiagnosticParticles::DiagnosticParticles(unsigned int ID, string output_, unsign
     ostringstream mystream("");
     mystream.str("");
     mystream << species[0];
-    for(int i=0; i<species.size(); i++)
-        mystream << "," << diagnostic_id;
+    for(int i=1; i<species.size(); i++)
+        mystream << "," << species[i];
     MESSAGE("Created particle diagnostic #" << ID << ": species " << mystream.str());
     DiagnosticParticlesAxis *a;
     for(int i=0; i<axes.size(); i++) {
@@ -316,15 +316,15 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
             else if (output == "pz_density")
                 for (int ipart = bmin ; ipart < bmax ; ipart++)
                     data_array[ipart] = mass * (*w)[ipart] * (*pz)[ipart];
-		    
+            
             else if (output == "pxvx_density")
                 for (int ipart = bmin ; ipart < bmax ; ipart++)
                     data_array[ipart] = mass * (*w)[ipart] * pow((*px)[ipart],2)/ sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
-		    
+            
             else if (output == "pyvy_density")
                 for (int ipart = bmin ; ipart < bmax ; ipart++)
                     data_array[ipart] = mass * (*w)[ipart] * pow((*py)[ipart],2)/ sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
-		    
+            
             else if (output == "pzvz_density")
                 for (int ipart = bmin ; ipart < bmax ; ipart++)
                     data_array[ipart] = mass * (*w)[ipart] * pow((*pz)[ipart],2)/ sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );

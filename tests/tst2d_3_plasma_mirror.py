@@ -1,3 +1,9 @@
+# ---------------------------------------------
+# SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
+# ---------------------------------------------
+# Remember: never override the following names:
+#           SmileiComponent, Species, Laser, Collisions, DiagProbe, DiagParticles,
+#           DiagScalar, DiagPhase or ExtField
 
 print "----------------------- RANK -----------------------",smilei_mpi_rank
 
@@ -20,10 +26,6 @@ def profile_dens(x,y):
         return 1.0
 
 
-mysim=Smilei()
-# ---------------------------------------------
-# SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
-# ---------------------------------------------
 
 # sim_units: normalisation units for the input data
 #            it is used only in the input data & log file
@@ -32,7 +34,7 @@ mysim=Smilei()
 #            normalized = input data are put in code (relativistic) units
 #
 
-mysim.sim_units = 'wavelength'
+sim_units = 'wavelength'
 
 
 # dim: Geometry of the simulation
@@ -41,37 +43,37 @@ mysim.sim_units = 'wavelength'
 #      3d3v = cartesian grid with 3d in space + 3d in velocity
 #      2drz = cylindrical (r,z) grid with 3d3v particles
 #
-mysim.dim = '2d3v'
+dim = '2d3v'
 
 # order of interpolation
-mysim.interpolation_order = 2 
+interpolation_order = 2 
 
 # SIMULATION TIME
 # res_time: temporal resolution integer  number of time-steps within one normalization period
 # sim_time: duration of the simulation in units of the normalization period 
 #
-mysim.res_time = 1.5*res
-mysim.sim_time = t_sim
+res_time = 1.5*res
+sim_time = t_sim
 
 # SIMULATION BOX : for all space directions (use vector)
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
 # sim_length: length of the simulation in units of the normalization wavelength 
 #
-mysim.res_space  = (res, res)  
-mysim.sim_length = (dx,  dy)
+res_space  = [res, res]
+sim_length = [dx,  dy]
 
-mysim.bc_em_type_long  = 'silver-muller'
-mysim.bc_em_type_trans = 'periodic'
+bc_em_type_long  = 'silver-muller'
+bc_em_type_trans = 'periodic'
 
 # RANDOM seed 
 # this is used to randomize the random number generator
-mysim.random_seed = 0
+random_seed = 0
 
-mysim.fieldDump_every = 24
+fieldDump_every = 24
 
 myspec1=Species()
 myspec1.dens_profile = profile_dens
-myspec1.vacuum_length   = ((dx-thickness)/2.0,  0.0) 
+myspec1.vacuum_length   = [(dx-thickness)/2.0,  0.0] 
 myspec1.dens_length_x   = thickness
 myspec1.dens_length_y   = dy
 myspec1.species_type = 'ion'
@@ -97,7 +99,7 @@ myspec1.bc_part_type_north = 'none'
 
 Species(
 dens_profile = profile_dens,
-vacuum_length   = ((dx-thickness)/2.0,  0.0) ,
+vacuum_length   = [(dx-thickness)/2.0,  0.0] ,
 dens_length_x   = thickness ,
 dens_length_y   = dy,
 species_type = 'electron' ,
@@ -134,7 +136,7 @@ bc_part_type_north = 'none'
 Laser(
 boxSide = 'west' ,
 a0=0.1 ,
-focus=(10.0,  25.0) ,
+focus=[10.0,  25.0] ,
 angle=20.0 ,
 delta=0.0 ,
 time_profile = 'sin2' ,

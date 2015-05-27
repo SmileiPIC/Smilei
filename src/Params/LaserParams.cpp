@@ -12,65 +12,65 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
     // Lasers properties
     // -----------------
     n_laser=0;
-    while (ifile.existComponent("laser",n_laser)) {
+    while (ifile.existComponent("Laser",n_laser)) {
         LaserStructure tmpLaser;
         
         // side from which the laser enters the simulation box (only west/east at the moment)
-        ifile.extract("boxSide",tmpLaser.boxSide,"laser",n_laser);
+        ifile.extract("boxSide",tmpLaser.boxSide,"Laser",n_laser);
         if ( (tmpLaser.boxSide!="west") && (tmpLaser.boxSide!="east") ) {
             ERROR("At the moment laser can enter only from West/East sides: boxSide \""
                   << tmpLaser.boxSide << " not defined");
         }
         
         // laser intensity
-        ifile.extract("a0",tmpLaser.a0,"laser",n_laser);
+        ifile.extract("a0",tmpLaser.a0,"Laser",n_laser);
         
         // laser angular frequency (default=1)
         tmpLaser.omega0=1.0;
-        ifile.extract("omega0",tmpLaser.omega0,"laser",n_laser);
+        ifile.extract("omega0",tmpLaser.omega0,"Laser",n_laser);
         
         // laser temporal chirp (default=0)
         tmpLaser.tchirp=0.0;
-        ifile.extract("tchirp",tmpLaser.tchirp,"laser",n_laser);
+        ifile.extract("tchirp",tmpLaser.tchirp,"Laser",n_laser);
         
         // laser ellipticity/polarization parameter
-        ifile.extract("delta",tmpLaser.delta,"laser",n_laser);
+        ifile.extract("delta",tmpLaser.delta,"Laser",n_laser);
         
         // position of the laser focus
-        tmpLaser.isFocused = ifile.extract("focus",tmpLaser.focus,"laser",n_laser);
+        tmpLaser.isFocused = ifile.extract("focus",tmpLaser.focus,"Laser",n_laser);
         
         // incident angle
-        ifile.extract("angle",tmpLaser.angle ,"laser",n_laser);
+        ifile.extract("angle",tmpLaser.angle ,"Laser",n_laser);
         
         // laser time-profile & associated parameters
-        ifile.extract("time_profile",tmpLaser.profile_time.profile ,"laser",n_laser);
+        ifile.extract("time_profile",tmpLaser.profile_time.profile ,"Laser",n_laser);
         if (tmpLaser.profile_time.profile.empty()) {
-            PyObject *mypy = ifile.extract_py("time_profile","laser",n_laser);
+            PyObject *mypy = ifile.extract_py("time_profile","Laser",n_laser);
             if (mypy && PyCallable_Check(mypy)) {
                 tmpLaser.profile_time.py_profile=mypy;
                 tmpLaser.profile_time.profile="python";
             }
         } else {
-            ifile.extract("int_params",tmpLaser.profile_time.int_params ,"laser",n_laser);
-            ifile.extract("double_params",tmpLaser.profile_time.double_params ,"laser",n_laser);            
+            ifile.extract("int_params",tmpLaser.profile_time.int_params ,"Laser",n_laser);
+            ifile.extract("double_params",tmpLaser.profile_time.double_params ,"Laser",n_laser);            
         }
         
         
         // laser transverse-profile & associated parameters
-        ifile.extract("transv_profile",tmpLaser.profile_transv.profile ,"laser",n_laser);
+        ifile.extract("transv_profile",tmpLaser.profile_transv.profile ,"Laser",n_laser);
         if (tmpLaser.profile_transv.profile.empty()) {
-            PyObject *mypy = ifile.extract_py("transv_profile","laser",n_laser);
+            PyObject *mypy = ifile.extract_py("transv_profile","Laser",n_laser);
             if (mypy && PyCallable_Check(mypy)) {
                 tmpLaser.profile_transv.py_profile=mypy;
                 tmpLaser.profile_transv.profile="python";
             }
 
         } 
-        ifile.extract("int_params_transv",tmpLaser.profile_transv.int_params ,"laser",n_laser);
-        ifile.extract("double_params_transv",tmpLaser.profile_transv.double_params ,"laser",n_laser);
+        ifile.extract("int_params_transv",tmpLaser.profile_transv.int_params ,"Laser",n_laser);
+        ifile.extract("double_params_transv",tmpLaser.profile_transv.double_params ,"Laser",n_laser);
         
         
-        bool delayExists = ifile.extract("delay",tmpLaser.delay ,"laser",n_laser);
+        bool delayExists = ifile.extract("delay",tmpLaser.delay ,"Laser",n_laser);
         
         // -----------------------------------------------------------------
         // normalization (from wavelength-related units to normalized units)

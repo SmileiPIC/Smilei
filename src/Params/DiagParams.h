@@ -92,7 +92,7 @@ public:
     //! particle dump output
     unsigned int particleDump_every;
 
-    //! scalar output every scalar_every (namelist group "diag_scalar" key "every")
+    //! scalar output every scalar_every (namelist group "DiagScalar" key "every")
     unsigned int scalar_every;
 
     double scalar_tmin;

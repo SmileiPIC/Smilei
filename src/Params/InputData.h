@@ -35,10 +35,10 @@ class InputData {
 public:
     InputData(SmileiMPI*, std::vector<std::string>);
     ~InputData();
-
+    
     //! string containing the whole clean namelist
     std::string namelist;
-        
+    
     //! extract python object from namelist
     PyObject* extract_py(std::string name, std::string component=std::string(""), int nComponent=0);
     
