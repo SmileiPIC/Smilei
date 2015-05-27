@@ -98,7 +98,7 @@ deps: $(DEPS)
 
 %.d: %.cpp
 	@ echo "Checking dependencies for $<"
-# create and modify dependecy file .d to take into account the location subdir	
+# create and modify dependecy file .d to take into account the location subdir
 	@ $(SMILEICXX) $(CFLAGS) -MM $*.cpp 2>/dev/null | sed -e "s@\(^.*\)\.o:@$(shell  dirname $<)/\1.d $(shell  dirname $<)/\1.o:@" > $@  
 
 %.o : %.cpp
