@@ -12,26 +12,9 @@
 
 //! tools to convert python values to C++ values and vectors
 class PyTools {    
-public:
-    //! check error and display message
-    static double get_py_result(PyObject* pyresult) {
-        if (pyresult==NULL) {
-            PyObject *ptype, *pvalue, *ptraceback;
-            PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-            ERROR("can't evaluate python function:" << std::endl << std::string(PyString_AsString(pvalue)));
-        }
-        double cppresult;
-        if(!convert(pyresult,cppresult)) {
-            PyObject *ptype, *pvalue, *ptraceback;
-            PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-            ERROR("function does not return float but " << pyresult->ob_type->tp_name);
-        }
-        Py_XDECREF(pyresult);
-        return cppresult;
-    }
-    
+private:     
     //! convert Python object to bool
-    static bool convert(PyObject* py_val, bool &val) {
+    static bool pyconvert(PyObject* py_val, bool &val) {
         if (py_val && PyBool_Check(py_val)) {
             val=(py_val==Py_True);
             return true;
@@ -40,7 +23,7 @@ public:
     }
     
     //! convert Python object to short int
-    static bool convert(PyObject* py_val, short int &val) {
+    static bool pyconvert(PyObject* py_val, short int &val) {
         if (py_val && PyInt_Check(py_val)) {
             val=(short int) PyInt_AsLong(py_val);
             return true;
@@ -49,7 +32,7 @@ public:
     }
     
     //! convert Python object to unsigned int
-    static bool convert(PyObject* py_val, unsigned int &val) {
+    static bool pyconvert(PyObject* py_val, unsigned int &val) {
         if (py_val && PyInt_Check(py_val)) {
             val=(unsigned int) PyInt_AsLong(py_val);
             return true;
@@ -58,7 +41,7 @@ public:
     }
     
     //! convert Python object to int
-    static bool convert(PyObject* py_val, int &val) {
+    static bool pyconvert(PyObject* py_val, int &val) {
         if (py_val && PyInt_Check(py_val)) {
             val=(int) PyInt_AsLong(py_val);
             return true;
@@ -67,7 +50,7 @@ public:
     }
     
     //! convert Python object to double
-    static bool convert(PyObject* py_val, double &val) {
+    static bool pyconvert(PyObject* py_val, double &val) {
         if(py_val) {
             if (PyFloat_Check(py_val)) {
                 val = PyFloat_AsDouble(py_val);
@@ -81,14 +64,35 @@ public:
     }
 
     //! convert Python object to string
-    static bool convert(PyObject* py_val, std::string &val) {
+    static bool pyconvert(PyObject* py_val, std::string &val) {
         if (py_val && PyString_Check(py_val)) {
             val=std::string(PyString_AsString(py_val));
             return true;
         }
         return false;
     }
+
+public:
+    //! check error and display message
+    static double get_py_result(PyObject* pyresult) {
+        checkPyError();
+        double cppresult=0;
+        if(!convert(pyresult,cppresult)) {
+            PyObject *ptype, *pvalue, *ptraceback;
+            PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+            ERROR("function does not return float but " << pyresult->ob_type->tp_name);
+        }
+        Py_XDECREF(pyresult);
+        return cppresult;
+    }
     
+    //! convert vector of Python objects to vector of C++ values
+    template <typename T>
+    static bool convert(PyObject* py_vec, T &val) {
+        bool retval=pyconvert(py_vec, val);
+        return retval;
+    }
+
     //! convert vector of Python objects to vector of C++ values
     template <typename T>
     static bool convert(std::vector<PyObject*> py_vec, std::vector<T> &val) {
@@ -100,7 +104,29 @@ public:
         }
         return retval;
     }
-    
+    static void checkPyError() {
+        if (PyErr_Occurred()) {
+            PyObject *type, *value, *traceback;
+            PyErr_Fetch(&type, &value, &traceback);
+            PyErr_Clear();
+            
+            std::string message;
+            if (type) {
+                type = PyObject_Str(type);
+                message += PyString_AsString(type);
+            }
+            if (value) {
+                value = PyObject_Str(value);
+                message += ": ";
+                message += PyString_AsString(value);
+            }
+            Py_XDECREF(type);
+            Py_XDECREF(value);
+            Py_XDECREF(traceback);
+            
+            WARNING(message);
+        }                
+    }
 };
 
 #endif

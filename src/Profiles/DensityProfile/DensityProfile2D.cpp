@@ -637,6 +637,7 @@ double DensityProfile2D::operator() (vector<double> x_cell) {
     }// fukuda
     else if (species_param.dens_profile.profile=="python") {
         PyObject *pyresult = PyObject_CallFunction(species_param.dens_profile.py_profile, const_cast<char *>("dd"), x_cell[0], x_cell[1]);
+        HEREIAM(species_param.dens_profile.py_profile->ob_type->tp_name << " " << pyresult );
         return PyTools::get_py_result(pyresult);
     }
     // Other profiles: not defined

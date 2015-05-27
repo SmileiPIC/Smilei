@@ -1,43 +1,51 @@
 import math 
 
-part_per_cell=20
-t_sim=150
+
+import sys
+print sys.path
+
+part_per_cell=200
+t_sim=40
 res=20
 
-position=8
+position=9
 thickness=1
 
 
-density=2
+density=10
 
-dx, dy = 10, 40
+dx, dy = 10, 25
 
 twopi=2*math.pi
 
 wavelength=0.2
 
-def my_real_func(codex,codey,leng):
+import numpy as np
+def my_real_func(codex,codey):
     x=codex/twopi
-    return 1 if x>leng and x <leng+1    else 0
+    print codex, codey, x
+    pippo=np.array(0.)
+    return 1 if x>position else 0
 
 
-def my_function_easy(x,y,leng=1):
-    """ my function 2 """
-    return my_real_func(x,y,leng)
-
-
-def my_function_nicer(leng=1):
-    """ my function 1 """
-    return lambda x,y: my_real_func(x,y,leng)      
-
-
-class my_function_easy_and_nice():
-    def __init__(self, leng=1):
-        """ my function 3 """
-        self.leng=leng
-        
-    def __call__(self, x, y):
-        return my_real_func(x,y,self.leng)
+# 
+# def my_function_easy(x,y,leng=1):
+#     """ my function 2 """
+#     return my_real_func(x,y,leng)
+# 
+# 
+# def my_function_nicer(leng=1):
+#     """ my function 1 """
+#     return lambda x,y: my_real_func(x,y,leng)      
+# 
+# 
+# class my_function_easy_and_nice():
+#     def __init__(self, leng=1):
+#         """ my function 3 """
+#         self.leng=leng
+#         
+#     def __call__(self, x, y):
+#         return my_real_func(x,y,self.leng)
 
 
 mysim=Smilei()
@@ -91,14 +99,14 @@ mysim.bc_em_type_trans = 'periodic'
 # this is used to randomize the random number generator
 mysim.random_seed = 0
 
-mysim.fieldDump_every = 10
-mysim.fieldsToDump = ("Ey","Rho_electron")
+mysim.fieldDump_every = 5
+mysim.fieldsToDump = ("Bz")
 
 mysim.print_every = 10
 
 
 myspec1=Species()
-myspec1.dens_profile = my_function_easy_and_nice(leng=4*dx/5)
+myspec1.dens_profile = my_real_func
 myspec1.vacuum_length   = ((dx-thickness)/2.0,  dy/4.0) 
 myspec1.dens_length_x   = thickness
 myspec1.dens_length_y   = dy/2
@@ -169,14 +177,14 @@ def my_func_laser_profile(t,y):
 #
 Laser(
 boxSide = 'west' ,
-a0=0.01 ,
+a0=0.1 ,
 focus=(4*dx/5,  dy/2.) ,
-angle=40 ,
+angle=30 ,
 delta=0.0 ,
 time_profile = 'sin2' ,
 double_params = 5 ,
 transv_profile = my_func_laser_profile ,
-double_params_transv = 5.0 
+double_params_transv = 2.0 
 )
 
 

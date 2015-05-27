@@ -96,6 +96,7 @@ PyObject* InputData::extract_py(string name, string component, int nComponent) {
     PyObject *py_obj=py_namelist;
     if (!component.empty()) {
         py_obj = PyObject_GetAttrString(py_namelist,component.c_str());
+        PyTools::checkPyError();
         if (py_obj) {
             if (PyList_Check(py_obj) || PyTuple_Check(py_obj)) {
                 int len = PySequence_Size(py_obj);
@@ -112,9 +113,14 @@ PyObject* InputData::extract_py(string name, string component, int nComponent) {
                 py_obj=NULL;
             }
 
+        } else {
+            
         }
+
     }
-    return PyObject_GetAttrString(py_obj,name.c_str());
+    PyObject *py_return=PyObject_GetAttrString(py_obj,name.c_str());
+    PyTools::checkPyError();
+    return py_return;
 
 }    
 
@@ -137,6 +143,7 @@ vector<PyObject*> InputData::extract_pyVec(string name, string component, int nC
             Py_DECREF(seq);
         }      
     }    
+    PyTools::checkPyError();
     return retvec;
 }    
 
@@ -145,6 +152,7 @@ bool InputData::existComponent(std::string component, unsigned int nComponent) {
         ERROR("[" << component << "] has white inside: please fix the code");
     }
     PyObject *py_obj = PyObject_GetAttrString(py_namelist,component.c_str());
+    PyTools::checkPyError();
     if (py_obj) {
         if (PyList_Check(py_obj)) {
             if (PySequence_Size(py_obj) > nComponent) {

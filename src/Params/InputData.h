@@ -49,6 +49,7 @@ public:
     template< typename T>
     bool extract(std::string name, T &val, std::string component=std::string(""), int nComponent=0) {
         PyObject* py_val = extract_py(name,component,nComponent);
+        PyTools::checkPyError();        
         return PyTools::convert(py_val,val);
     }
     
