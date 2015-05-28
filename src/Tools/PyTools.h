@@ -104,6 +104,8 @@ public:
         }
         return retval;
     }
+    
+    //! check if there has been a python error
     static void checkPyError() {
         if (PyErr_Occurred()) {
             PyObject *type, *value, *traceback;
@@ -124,7 +126,7 @@ public:
             Py_XDECREF(value);
             Py_XDECREF(traceback);
             
-            WARNING(message);
+            MESSAGE(1,"[Python] " << message);
         }                
     }
 };
