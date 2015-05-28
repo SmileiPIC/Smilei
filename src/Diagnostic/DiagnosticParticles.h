@@ -6,7 +6,8 @@ PARTICLE DIAGNOSTICS                -    F. Perez - 03/2015
   into a N-dimensional histogram.
   Each histogram axis can be: x, y, z, px, py, pz, p, gamma, ekin, vx, vy, vz, v or charge.
   In each bin of the histogram, several things may be summed: the weights (density), 
-    the weight*charge (charge density) or weight*charge*velocity (current density).
+    weight*charge (charge density), weight*charge*velocity (current density),
+    or weight*momentum (momentum density)
   Examples:
       +----------+------------+---------------------+
       |   Rank   |   type     |         Axes        |
@@ -22,39 +23,45 @@ In the input (namelist) file, each diagnostics are provided as follows:
 
 
 # DIAGNOSTICS ON PARTICLES - project the particles on a N-D arbitrary grid
-# ---------------------------------------------------------------------------------
-# output = density, charge_density, or current_density_[xyz]
-#              => parameter that describes what quantity is obtained 
-# every        => an integer : number of time-steps between each output
-# time_average => an integer greater than 0 : number of time-steps to average
-# species      => a list of one or several species whose data will be used
-# axis   = type min max nsteps [logscale] [edge_inclusive]
-#              => `type` can be x, y, z, px, py, pz, p, gamma, ekin, vx, vy, vz, v or charge
-#              => the data is binned for `type` between `min` and `max`, in `nsteps` bins
-#              => "logscale" sets the binning scale to logarithmic
-#              => "edge_inclusive" forces the particles outside (`min`,`max`) to be counted in the extrema bins
-#   example : axis = x 0 1 30
-#   example : axis = px -1 1 100 
-# >>>> MANY AXES CAN BE ADDED IN A SINGLE DIAGNOSTIC <<<<
+# ------------------------------------------------------------------------
+# output       = string: "density", "charge_density" or "current_density_[xyz]"
+#                parameter that describes what quantity is obtained 
+# every        = integer > 0: number of time-steps between each output
+# time_average = integer > 0: number of time-steps to average
+# species      = list of strings, one or several species whose data will be used
+# axes         = list of axes
+# Each axis is a list: (_type_ _min_ _max_ _nsteps_ ["logscale"] ["edge_inclusive"])
+#   _type_ is a string, one of the following options:
+#      x, y, z, px, py, pz, p, gamma, ekin, vx, vy, vz, v or charge
+#   The data is discretized for _type_ between _min_ and _max_, in _nsteps_ bins
+#   The optional "logscale" sets the scale to logarithmic
+#   The optional "edge_inclusive" forces the particles that are outside (_min_,_max_)
+#     to be counted in the extrema bins
+#   Example : axes = ("x", 0, 1, 30)
+#   Example : axes = ("px", -1, 1, 100, "edge_inclusive")
 
 # EXAMPLE
-diag_particles
-	output = density
-	every = 5
-	time_average = 1
-	species = electron1
-	axis = x    0    1    30
-	axis = y    0    1    30
-end
+DiagParticles(
+	output = "density",
+	every = 5,
+	time_average = 1,
+	species = ["electron1"],
+	axes = [
+		 ["x", 0,  1, 30],
+		 ["y", 0,  1, 30]
+	]
+)
 
 # EXAMPLE
-diag_particles
-	output = density
-	every = 5
-	time_average = 1
-	species = electron1
-	axis = ekin  0.0001  0.1 100 logscale
-end
+DiagParticles(
+	output = "density",
+	every = 5,
+	time_average = 1,
+	species = ["electron1"],
+	axes = [
+		 ["ekin", 0.0001, 0.1, 100, "logscale"]
+	]
+)
 
 */
 

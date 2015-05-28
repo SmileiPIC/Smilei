@@ -80,7 +80,7 @@ Species(
 	initMomentum_type = "maxwell-juettner",
 	n_part_per_cell = 10,
 	c_part_max = 1.0,
-	mass = 1000,
+	mass = 1000.,
 	charge =  1.,
 	density = 0.00064,
 	mean_velocity = [0., 0., 0.],
@@ -98,7 +98,7 @@ Species(
 	initMomentum_type = "maxwell-juettner",
 	n_part_per_cell = 10,
 	c_part_max = 1.0,
-	mass = 1000,
+	mass = 1000.,
 	charge = -1.,
 	density = 0.00064,
 	mean_velocity = [0., 0., 0.],
@@ -117,11 +117,11 @@ Species(
 	initMomentum_type = "maxwell-juettner",
 	n_part_per_cell = 10000,
 	c_part_max = 1.0,
-	mass = 115845      # =  mass of Cu atom
+	mass = 115845.,      # =  mass of Cu atom
 	charge = 5.6,
-	density = 415.     # =  number density of solid Cu
+	density = 415.,   # =  number density of solid Cu
 	mean_velocity = [0., 0., 0.],
-	temperature = [0.00004, #, 20, eV],
+	temperature = [0.00004], # 20 eV
 	dynamics_type = "norm",
 	time_frozen = 0.0,
 	bc_part_type_west = "none",
@@ -139,7 +139,7 @@ Species(
 	charge = -1.0,
 	density = 415.,
 	mean_velocity = [0., 0., 0.],
-	temperature = [0.00004, #, 20, eV],
+	temperature = [0.00004], # 20 eV
 	dynamics_type = "norm",
 	time_frozen = 0.0,
 	bc_part_type_west = "none",
@@ -154,11 +154,11 @@ Species(
 	initMomentum_type = "maxwell-juettner",
 	n_part_per_cell = 10000,
 	c_part_max = 1.0,
-	mass = 115845      # =  mass of Cu atom
+	mass = 115845.,      # =  mass of Cu atom
 	charge = 7.4,
-	density = 554.     # =  number density of solid Cu
+	density = 554.,   # =  number density of solid Cu
 	mean_velocity = [0., 0., 0.],
-	temperature = [0.0001, #, 50, eV],
+	temperature = [0.0001], # 50 eV
 	dynamics_type = "norm",
 	time_frozen = 0.0,
 	bc_part_type_west = "none",
@@ -176,7 +176,7 @@ Species(
 	charge = -1.0,
 	density = 554.,
 	mean_velocity = [0., 0., 0.],
-	temperature = [0.0001, #, 50, eV],
+	temperature = [0.0001], # 50 eV
 	dynamics_type = "norm",
 	time_frozen = 0.0,
 	bc_part_type_west = "none",
@@ -191,11 +191,11 @@ Species(
 	initMomentum_type = "maxwell-juettner",
 	n_part_per_cell = 10000,
 	c_part_max = 1.0,
-	mass = 115845      # =  mass of Cu atom
+	mass = 115845.,      # =  mass of Cu atom
 	charge = 10.,
-	density = 757.     # =  number density of solid Cu
+	density = 757.,   # =  number density of solid Cu
 	mean_velocity = [0., 0., 0.],
-	temperature = [0.0002, #, 100, eV],
+	temperature = [0.0002], # 100 eV
 	dynamics_type = "norm",
 	time_frozen = 0.0,
 	bc_part_type_west = "none",
@@ -213,7 +213,7 @@ Species(
 	charge = -1.0,
 	density = 757.,
 	mean_velocity = [0., 0., 0.],
-	temperature = [0.0002, #, 100, eV],
+	temperature = [0.0002], # 100 eV
 	dynamics_type = "norm",
 	time_frozen = 0.0,
 	bc_part_type_west = "none",

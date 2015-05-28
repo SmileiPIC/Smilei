@@ -572,7 +572,6 @@ class ParticleDiagnostic(Diagnostic):
 
 		# Get info from the input file and prepare units
 		try:
-
 			ndim               = self.read_ndim()
 			sim_units          = self.read_sim_units()
 			
@@ -616,6 +615,10 @@ class ParticleDiagnostic(Diagnostic):
 		
 		# Get list of requested diags
 		self.diags = sorted(set([ int(d[1:]) for d in self.re.findall('#\d+',self.operation) ]))
+		for diag in self.diags:
+			if not self.getInfo(diag):
+				print "No particle diagnostic #"+str(diag)
+				return None
 		try:
 			exec(self.re.sub('#\d+','1.',self.operation)) in None
 		except:
