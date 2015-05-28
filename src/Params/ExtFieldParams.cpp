@@ -23,7 +23,9 @@ geometry(params.geometry)
             if (mypy && PyCallable_Check(mypy)) {
                 tmpExtField.py_profile=mypy;
                 tmpExtField.profile="python";
-            }
+            } else{
+	        ERROR(" ExtField #"<<n_extfield<<": parameter 'profile' not understood");
+	    }
         } else {
             ifile.extract("int_params",tmpExtField.int_params,"ExtField",n_extfield);
             ifile.extract("double_params",tmpExtField.double_params,"ExtField",n_extfield);
