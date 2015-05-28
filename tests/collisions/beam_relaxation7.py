@@ -29,8 +29,8 @@ interpolation_order = 2
 # res_time = integer, number of time-steps within one unit of time (`sim_units`)
 # timestep = float, time step in units of `sim_units`
 # sim_time = float, duration of the simulation  in units of `sim_units`
-timestep = 0.002
-sim_time  = 0.5
+timestep = 0.0002
+sim_time  = 0.02
 
 
 #  optional parameter time_fields_frozen, during which fields are not updated
@@ -41,8 +41,8 @@ time_fields_frozen = 100000000000.
 # res_space   = list of integers, number of cells in one unit of space (`sim_units`)
 # sim_length  = length of the simulation in units of `sim_units`
 # cell_length = cell length  in units of `sim_units`
-cell_length = [20.]
-sim_length  = [1000.]
+cell_length = [2.]
+sim_length  = [100.]
 
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
 # bc_em_type_long/trans : boundary conditions used for EM fields 
@@ -73,20 +73,38 @@ random_seed = 0
 # dynamics_type     = string, type of species dynamics = "norm" or "rrLL"
 # time_frozen       = float, time during which particles are frozen in units of the normalization time
 # radiating         = boolean, if true, incoherent radiation calculated using the Larmor formula 
+Species(
+	species_type = "ion1",
+	vacuum_length   = [0.],
+	dens_length_x   = [1000., 1000., 1000.],
+	initPosition_type = "regular",
+	initMomentum_type = "maxwell-juettner",
+	n_part_per_cell = 1000,
+	c_part_max = 1.0,
+	mass = 10., #1836.0,
+	charge = 3.0,
+	density = 10.,
+	mean_velocity = [0., 0., 0.],
+	temperature = [0.00002],
+	dynamics_type = "norm",
+	time_frozen = 100000000.0,
+	bc_part_type_west = "none",
+	bc_part_type_east = "none"
+)
 
 Species(
 	species_type = "electron1",
 	vacuum_length   = [0.],
 	dens_length_x   = [1000., 1000., 1000.],
 	initPosition_type = "regular",
-	initMomentum_type = "rectangular",
-	n_part_per_cell= 20000,
+	initMomentum_type = "maxwell-juettner",
+	n_part_per_cell= 1000,
 	c_part_max = 1.0,
 	mass = 1.0,
 	charge = -1.0,
 	density = 10.,
-	mean_velocity = [0., 0., 0.],
-	temperature = [0.0002, 0.0, 0.0],
+	mean_velocity = [0.01, 0., 0.],
+	temperature = [0.0000002],
 	dynamics_type = "norm",
 	time_frozen = 100000000.0,
 	bc_part_type_west = "none",
@@ -100,7 +118,7 @@ Species(
 # coulomb_log = float, Coulomb logarithm. If negative or zero, then automatically computed.
 Collisions(
 	species1 = ["electron1"],
-	species2 = ["electron1"],
+	species2 = ["ion1"],
 	coulomb_log = 3
 )
 
@@ -144,28 +162,44 @@ DiagScalar(
 
 DiagParticles(
 	output = "density",
-	every = 5,
+	every = 2,
+	time_average = 1,
 	species = ["electron1"],
 	axes = [
-		 ["x",    0,    1000.,   10],
-		 ["vx",  -0.02,  0.02,    1000]
+		 ["x",    0,    100.,   10],
+		 ["vx",  -0.1,  0.1,    1000]
 	]
 )
+
 DiagParticles(
 	output = "density",
-	every = 5,
+	every = 2,
+	time_average = 1,
 	species = ["electron1"],
 	axes = [
-		 ["x",    0,    1000.,   10],
-		 ["vy",  -0.02,  0.02,    1000]
+		 ["x",    0,    100.,   10],
+		 ["vperp2",  0,  0.0002,  4000]
 	]
 )
+
 DiagParticles(
 	output = "density",
-	every = 5,
-	species = ["electron1"],
+	every = 2,
+	time_average = 1,
+	species = ["ion1"],
 	axes = [
-		 ["x",    0,    1000.,   10],
-		 ["vz",  -0.02,  0.02,    1000]
+		 ["x",    0,    100.,   10],
+		 ["vx",  -0.1,  0.1,  100]
 	]
 )
+
+DiagParticles(
+	output = "density",
+	every = 10,
+	time_average = 1,
+	species = ["electron1"],
+	axes = [
+		 ["ekin",  0.0001,  0.1, 100, "logscale"]
+	]
+)
+

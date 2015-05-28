@@ -47,18 +47,16 @@ sim_length  = [1.]
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
 # bc_em_type_long/trans : boundary conditions used for EM fields 
 #                         in the longitudinal or transverse directions
-#                         periodic      = periodic BC (using MPI topology)
-#                         silver-muller = injecting/absorbing
+#                         'periodic'      : periodic BC (using MPI topology)
+#                         'silver-muller' : injecting/absorbing
 bc_em_type_long  = "periodic"
 
 
-# RANDOM seed 
-# this is used to randomize the random number generator
+# RANDOM seed used to randomize the random number generator
 random_seed = 0
 
 
 # DEFINE ALL SPECIES
-#
 # species_type      = string, given name to the species (e.g. ion, electron, positron, test ...)
 # initPosition_type = string, "regular" or "random"
 # initMomentum_type = string "cold", "maxwell-juettner" or "rectangular"
@@ -67,9 +65,12 @@ random_seed = 0
 # mass              = float, particle mass in units of the electron mass
 # charge            = float, particle charge in units of the electron charge
 # density           = float, species density in units of the "critical" density
+# density_profile   = string or python function (see doc)
+# vacuum_length     = list of floats, distance from box borders without particles
+# dens_length_[xyz] = list of floats, various distances to define the density profile (see doc)
 # mean_velocity     = list of floats, mean velocity in units of the speed of light
 # temperature       = list of floats, temperature in units of m_e c^2
-# dynamics_type     = string, species type of dynamics = "norm" or "rrLL"
+# dynamics_type     = string, type of species dynamics = "norm" or "rrLL"
 # time_frozen       = float, time during which particles are frozen in units of the normalization time
 # radiating         = boolean, if true, incoherent radiation calculated using the Larmor formula 
 

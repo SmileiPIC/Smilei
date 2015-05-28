@@ -317,7 +317,6 @@ class Diagnostic(object):
 			except:
 				print "Could not extract 'cell_length' or 'res_space' from the input file"
 				raise
-		print ndim, sim_length,cell_length
 		if   ndim == 1:
 			sim_length  = sim_length[0]
 			cell_length = cell_length[0]
@@ -578,7 +577,6 @@ class ParticleDiagnostic(Diagnostic):
 			sim_units          = self.read_sim_units()
 			
 			ncels, cell_length = self.read_ncels_cell_length(ndim, sim_units)
-			print ndim,sim_units,ncels
 			self.timestep           = self.read_timestep(sim_units)
 			cell_size = {"x":cell_length[0]}
 			if ndim>1: cell_size.update({"y":cell_length[1]})

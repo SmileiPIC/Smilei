@@ -1,25 +1,29 @@
-
-execfile("../../scripts/ParticleDiagnostic.py")
+execfile("../../scripts/Diagnostics.py")
+import numpy as np
+import matplotlib.pyplot as plt
 from scipy.special import erf as erf
 
 for path in ["beam_relaxation7","beam_relaxation8","beam_relaxation9"]:
 
-	mass_ion             = np.double(findParam(path, "mass"         ,"ion1"))
-	charge_ion           = np.double(findParam(path, "charge"       ,"ion1"))
-	density_ion          = np.double(findParam(path, "density"      ,"ion1"))
-	temperature_ion      = np.double(findParam(path, "temperature"  ,"ion1"))
-	velocity_electron    =           findParam(path, "mean_velocity","electron1")
-	velocity_electron    = np.double(velocity_electron.split()[0])
-	temperature_electron = np.double(findParam(path, "temperature"  ,"electron1"))
-	coulomb_log          = np.double(findParam(path, "coulomb_log"  ,"ion1"))
-	dt                   = np.double(findParam(path, "timestep"))
+	sim = Smilei(path)
+	species = {}
+	for s in sim.namelist["Species"].list:
+		species.update({s.species_type:s})
+	mass_ion             = np.double(species["ion1"].mass)
+	charge_ion           = np.double(species["ion1"].charge)
+	density_ion          = np.double(species["ion1"].density)
+	temperature_ion      = np.double(species["ion1"].temperature)
+	velocity_electron    = np.double(species["electron1"].mean_velocity)[0]
+	temperature_electron = np.double(species["electron1"].temperature)
+	coulomb_log          = np.double(sim.namelist["Collisions"].list[0].coulomb_log)
+	dt                   = np.double(sim.namelist["timestep"])
 	
 	re = 2.8179403267e-15 # meters
 	wavelength = 1e-6 # meters
 	c = 3e8
 	coeff = (2.*np.pi/wavelength)**2*re*c
 	
-	times = getAvailableTimesteps(path, diagNumber=0)
+	times = sim.ParticleDiagnostic(diagNumber=0).getAvailableTimesteps()
 	
 	e_vx_mean = np.zeros(len(times))
 	e_vperp2  = np.zeros(len(times))
@@ -31,23 +35,23 @@ for path in ["beam_relaxation7","beam_relaxation8","beam_relaxation9"]:
 	if fig: fig.clf()
 	if fig: ax = fig.add_subplot(1,1,1)
 	for i,t in enumerate(times):
-		electrons = ParticleDiagnostic(path,0, units="nice", slice={"x":"all"}, timesteps=t)
+		electrons = sim.ParticleDiagnostic(0, units="nice", slice={"x":"all"}, timesteps=t).get()
 		vx = electrons["vx"]
-		A = electrons["data"]
+		A = electrons["data"][0]
 		e_vx_mean[i] = (A*vx).sum() / A.sum()
 	
 		if fig:
 			ax.cla()
 			ax.plot(vx,A,'b')
 	
-		electrons = ParticleDiagnostic(path,1, units="nice", slice={"x":"all"}, timesteps=t)
+		electrons = sim.ParticleDiagnostic(1, units="nice", slice={"x":"all"}, timesteps=t).get()
 		vperp2 = electrons["vperp2"]
-		A = electrons["data"]
+		A = electrons["data"][0]
 		e_vperp2[i] = (A*vperp2).sum() / A.sum()
 	
-		ions = ParticleDiagnostic(path,2, units="nice", slice={"x":"all"}, timesteps=t)
+		ions = sim.ParticleDiagnostic(2, units="nice", slice={"x":"all"}, timesteps=t).get()
 		vx = ions["vx"]
-		A = ions["data"]
+		A = ions["data"][0]
 		i_vx_mean[i] = (A*vx).sum() / A.sum()
 		Ti[i] = (A*(vx-i_vx_mean[i])**2).sum() / A.sum() * mass_ion
 		

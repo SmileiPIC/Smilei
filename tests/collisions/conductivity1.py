@@ -30,7 +30,7 @@ interpolation_order = 2
 # timestep = float, time step in units of `sim_units`
 # sim_time = float, duration of the simulation  in units of `sim_units`
 timestep = 0.002
-sim_time  = 0.5
+sim_time  = 0.4
 
 
 #  optional parameter time_fields_frozen, during which fields are not updated
@@ -41,8 +41,8 @@ time_fields_frozen = 100000000000.
 # res_space   = list of integers, number of cells in one unit of space (`sim_units`)
 # sim_length  = length of the simulation in units of `sim_units`
 # cell_length = cell length  in units of `sim_units`
-cell_length = [20.]
-sim_length  = [1000.]
+cell_length = [1]
+sim_length  = [40]
 
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
 # bc_em_type_long/trans : boundary conditions used for EM fields 
@@ -50,7 +50,6 @@ sim_length  = [1000.]
 #                         'periodic'      : periodic BC (using MPI topology)
 #                         'silver-muller' : injecting/absorbing
 bc_em_type_long  = "periodic"
-bc_em_type_trans = "periodic"
 
 
 # RANDOM seed used to randomize the random number generator
@@ -73,25 +72,154 @@ random_seed = 0
 # dynamics_type     = string, type of species dynamics = "norm" or "rrLL"
 # time_frozen       = float, time during which particles are frozen in units of the normalization time
 # radiating         = boolean, if true, incoherent radiation calculated using the Larmor formula 
-
 Species(
-	species_type = "electron1",
-	vacuum_length   = [0.],
-	dens_length_x   = [1000., 1000., 1000.],
+	species_type = "ghostChargeLayerLeft",
+	vacuum_length   = [5.],
+	dens_length_x   = [1.],
 	initPosition_type = "regular",
-	initMomentum_type = "rectangular",
-	n_part_per_cell= 20000,
+	initMomentum_type = "maxwell-juettner",
+	n_part_per_cell = 10,
 	c_part_max = 1.0,
-	mass = 1.0,
-	charge = -1.0,
-	density = 10.,
+	mass = 1000,
+	charge =  1.,
+	density = 0.00064,
 	mean_velocity = [0., 0., 0.],
-	temperature = [0.0002, 0.0, 0.0],
+	temperature = [0.0001],
 	dynamics_type = "norm",
-	time_frozen = 100000000.0,
+	time_frozen = 100000.0,
 	bc_part_type_west = "none",
 	bc_part_type_east = "none"
 )
+Species(
+	species_type = "ghostChargeLayerRight",
+	vacuum_length   = [35.],
+	dens_length_x   = [1.],
+	initPosition_type = "regular",
+	initMomentum_type = "maxwell-juettner",
+	n_part_per_cell = 10,
+	c_part_max = 1.0,
+	mass = 1000,
+	charge = -1.,
+	density = 0.00064,
+	mean_velocity = [0., 0., 0.],
+	temperature = [0.0001],
+	dynamics_type = "norm",
+	time_frozen = 100000.0,
+	bc_part_type_west = "none",
+	bc_part_type_east = "none"
+)
+
+Species(
+	species_type = "copper1",
+	vacuum_length   = [15.],
+	dens_length_x   = [10.],
+	initPosition_type = "regular",
+	initMomentum_type = "maxwell-juettner",
+	n_part_per_cell = 1000,
+	c_part_max = 1.0,
+	mass = 115845      # =  mass of Cu atom
+	charge = 4.4,
+	density = 330.     # =  number density of solid Cu
+	mean_velocity = [0., 0., 0.],
+	temperature = [0.000002, #, 1eV],
+	dynamics_type = "norm",
+	time_frozen = 0.0,
+	bc_part_type_west = "none",
+	bc_part_type_east = "none"
+)
+Species(
+	species_type = "electron1",
+	vacuum_length   = [15.],
+	dens_length_x   = [10.],
+	initPosition_type = "regular",
+	initMomentum_type = "maxwell-juettner",
+	n_part_per_cell= 10000,
+	c_part_max = 1.0,
+	mass = 1.0,
+	charge = -1.0,
+	density = 330.,
+	mean_velocity = [0., 0., 0.],
+	temperature = [0.000002, #, 1, eV],
+	dynamics_type = "norm",
+	time_frozen = 0.0,
+	bc_part_type_west = "none",
+	bc_part_type_east = "none"
+)
+
+Species(
+	species_type = "copper2",
+	vacuum_length   = [15.],
+	dens_length_x   = [10.],
+	initPosition_type = "regular",
+	initMomentum_type = "maxwell-juettner",
+	n_part_per_cell = 1000,
+	c_part_max = 1.0,
+	mass = 115845      # =  mass of Cu atom
+	charge = 4.4,
+	density = 333.     # =  number density of solid Cu
+	mean_velocity = [0., 0., 0.],
+	temperature = [0.000006, #, 3eV],
+	dynamics_type = "norm",
+	time_frozen = 0.0,
+	bc_part_type_west = "none",
+	bc_part_type_east = "none"
+)
+Species(
+	species_type = "electron2",
+	vacuum_length   = [15.],
+	dens_length_x   = [10.],
+	initPosition_type = "regular",
+	initMomentum_type = "maxwell-juettner",
+	n_part_per_cell= 10000,
+	c_part_max = 1.0,
+	mass = 1.0,
+	charge = -1.0,
+	density = 333.,
+	mean_velocity = [0., 0., 0.],
+	temperature = [0.000006, #, 3, eV],
+	dynamics_type = "norm",
+	time_frozen = 0.0,
+	bc_part_type_west = "none",
+	bc_part_type_east = "none"
+)
+
+Species(
+	species_type = "copper3",
+	vacuum_length   = [15.],
+	dens_length_x   = [10.],
+	initPosition_type = "regular",
+	initMomentum_type = "maxwell-juettner",
+	n_part_per_cell = 1000,
+	c_part_max = 1.0,
+	mass = 115845,      # =  mass of Cu atom
+	charge = 5.,
+	density = 368.     # =  number density of solid Cu
+	mean_velocity = [0., 0., 0.],
+	temperature = [0.00002, #, 10eV],
+	dynamics_type = "norm",
+	time_frozen = 0.0,
+	bc_part_type_west = "none",
+	bc_part_type_east = "none"
+)
+Species(
+	species_type = "electron3",
+	vacuum_length   = [15.],
+	dens_length_x   = [10.],
+	initPosition_type = "regular",
+	initMomentum_type = "maxwell-juettner",
+	n_part_per_cell= 10000,
+	c_part_max = 1.0,
+	mass = 1.0,
+	charge = -1.0,
+	density = 368.,
+	mean_velocity = [0., 0., 0.],
+	temperature = [0.00002, #, 10, eV],
+	dynamics_type = "norm",
+	time_frozen = 0.0,
+	bc_part_type_west = "none",
+	bc_part_type_east = "none"
+)
+
 
 # COLLISIONS
 # species1    = list of strings, the names of the first species that collide
@@ -99,9 +227,19 @@ Species(
 #               (can be the same as species1)
 # coulomb_log = float, Coulomb logarithm. If negative or zero, then automatically computed.
 Collisions(
-	species1 = ["electron1"],
+	species1 = ["copper1"],
 	species2 = ["electron1"],
-	coulomb_log = 3
+	coulomb_log = 2.
+)
+Collisions(
+	species1 = ["copper2"],
+	species2 = ["electron2"],
+	coulomb_log = 2.
+)
+Collisions(
+	species1 = ["copper3"],
+	species2 = ["electron3"],
+	coulomb_log = 2.
 )
 
 # ---------------------
@@ -112,8 +250,8 @@ Collisions(
 print_every = 10
 
 # DIAGNOSTICS ON FIELDS
-fieldDump_every    = 1
-avgfieldDump_every = 1
+fieldDump_every    = 5
+avgfieldDump_every = 5
 ntime_step_avg     = 1
 
 
@@ -145,27 +283,28 @@ DiagScalar(
 DiagParticles(
 	output = "density",
 	every = 5,
+	time_average = 1,
 	species = ["electron1"],
 	axes = [
-		 ["x",    0,    1000.,   10],
-		 ["vx",  -0.02,  0.02,    1000]
+		 ["vx",  -0.01,  0.01,    1000]
 	]
 )
 DiagParticles(
 	output = "density",
 	every = 5,
-	species = ["electron1"],
+	time_average = 1,
+	species = ["electron2"],
 	axes = [
-		 ["x",    0,    1000.,   10],
-		 ["vy",  -0.02,  0.02,    1000]
+		 ["vx",  -0.01,  0.01,    1000]
 	]
 )
 DiagParticles(
 	output = "density",
 	every = 5,
-	species = ["electron1"],
+	time_average = 1,
+	species = ["electron3"],
 	axes = [
-		 ["x",    0,    1000.,   10],
-		 ["vz",  -0.02,  0.02,    1000]
+		 ["vx",  -0.015,  0.015,    1000]
 	]
 )
+
