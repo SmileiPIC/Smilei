@@ -124,7 +124,7 @@ public:
             Py_XDECREF(value);
             Py_XDECREF(traceback);
             
-            WARNING(message);
+            DEBUG(message);
         }                
     }
 };

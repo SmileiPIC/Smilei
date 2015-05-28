@@ -5,6 +5,7 @@
 #           SmileiComponent, Species, Laser, Collisions, DiagProbe, DiagParticles,
 #           DiagScalar, DiagPhase or ExtField
 
+
 # sim_units: normalisation units for the input data
 #            it is used only in the input data & log file
 #            codes outputs are always in "normalised" units
