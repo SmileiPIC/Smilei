@@ -559,7 +559,6 @@ class ParticleDiagnostic(Diagnostic):
 	def init(self, diagNumber=None, timesteps=None, slice=None,
 				 units="code", data_log=False, **kwargs):
 		
-		print "Youpi 1"
 		if not self.Smilei.valid: return None
 		if diagNumber is None:
 			print "Printing available particle diagnostics:"
@@ -570,14 +569,14 @@ class ParticleDiagnostic(Diagnostic):
 			if diagNumber == 0:
 				print "      No particle diagnostics found in "+self.results_path;
 			return None
-		print "Youpi 2"
+		
 
 		# Get info from the input file and prepare units
 		try:
 
 			ndim               = self.read_ndim()
 			sim_units          = self.read_sim_units()
-			print "Youpi 3"
+			
 			ncels, cell_length = self.read_ncels_cell_length(ndim, sim_units)
 			print ndim,sim_units,ncels
 			self.timestep           = self.read_timestep(sim_units)
