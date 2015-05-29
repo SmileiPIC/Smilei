@@ -1,6 +1,8 @@
 
-execfile("../../scripts/ParticleDiagnostic.py")
+execfile("../../scripts/Diagnostics.py")
 execfile("resparis.py")
+import numpy as np
+import matplotlib.pyplot as plt
 from scipy.special import erf as erf
 
 v0  = { "conductivity1":[-0.00033 ,-0.000185,-0.00011 ],
@@ -19,15 +21,20 @@ density = []
 
 for path in ["conductivity1","conductivity2","conductivity3"]:
 
+	sim = Smilei(path)
+	species = {}
+	for s in sim.namelist["Species"].list:
+		species.update({s.species_type:s})
+
 	ncases = 0
-	while getInfo(path,ncases):
+	while sim.ParticleDiagnostic(0).getInfo(ncases):
 		ncases += 1
 	if ncases == 0: continue
 
-	coulomb_log  = np.double(findParam(path, "coulomb_log"))
-	dt           = np.double(findParam(path, "timestep"))
+	coulomb_log = np.double(sim.namelist["Collisions"].list[0].coulomb_log)
+	dt          = np.double(sim.namelist["timestep"])
 	
-	times = getAvailableTimesteps(path, diagNumber=0)
+	times = sim.ParticleDiagnostic(diagNumber=0).getAvailableTimesteps()
 	
 	vx_mean = np.zeros((ncases,len(times)))
 	
@@ -37,9 +44,9 @@ for path in ["conductivity1","conductivity2","conductivity3"]:
 	if fig: ax = fig.add_subplot(1,1,1)
 	for i,t in enumerate(times):
 		for k in range(ncases):
-			electrons = ParticleDiagnostic(path,k, timesteps=t)
+			electrons = sim.ParticleDiagnostic(k, timesteps=t).get()
 			vx = electrons["vx"]
-			A = electrons["data"]
+			A = electrons["data"][0]
 			vx_mean[k][i] = (A*vx).sum() / A.sum()
 
 		if fig:
@@ -62,8 +69,8 @@ for path in ["conductivity1","conductivity2","conductivity3"]:
 		ax.plot(times, v0[path][k]+times*dv0[path][k], "--"+style[path])
 		
 		velocity.append(v0[path][k])
-		temperature.append( np.double(findParam(path, "temperature"  ,"electron"+str(k+1))))
-		density    .append( np.double(findParam(path, "density"      ,"electron"+str(k+1))))
+		temperature.append( np.double(species["electron"+str(k+1)].temperature))
+		density    .append( np.double(species["electron"+str(k+1)].density))
 	
 	ax.set_xlabel('time in fs')
 	ax.set_ylabel('$v_x / c$')

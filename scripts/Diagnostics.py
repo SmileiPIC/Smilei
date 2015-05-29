@@ -568,11 +568,13 @@ class ParticleDiagnostic(Diagnostic):
 			if diagNumber == 0:
 				print "      No particle diagnostics found in "+self.results_path;
 			return None
+		
 
 		# Get info from the input file and prepare units
 		try:
 			ndim               = self.read_ndim()
 			sim_units          = self.read_sim_units()
+			
 			ncels, cell_length = self.read_ncels_cell_length(ndim, sim_units)
 			self.timestep           = self.read_timestep(sim_units)
 			cell_size = {"x":cell_length[0]}
@@ -613,6 +615,10 @@ class ParticleDiagnostic(Diagnostic):
 		
 		# Get list of requested diags
 		self.diags = sorted(set([ int(d[1:]) for d in self.re.findall('#\d+',self.operation) ]))
+		for diag in self.diags:
+			if not self.getInfo(diag):
+				print "No particle diagnostic #"+str(diag)
+				return None
 		try:
 			exec(self.re.sub('#\d+','1.',self.operation)) in None
 		except:

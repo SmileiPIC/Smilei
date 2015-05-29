@@ -1,6 +1,6 @@
-
-execfile("../../scripts/ParticleDiagnostic.py")
-
+execfile("../../scripts/Diagnostics.py")
+import numpy as np
+import matplotlib.pyplot as plt
 from scipy.special import kv
 from scipy.integrate import quad
 
@@ -54,17 +54,21 @@ def FrankelStoppingPower(E0,T):
 
 for path in ["Stopping_power1","Stopping_power2","Stopping_power3"]:
 
-	temperature_electron = np.double(findParam(path, "temperature","backgroundelectron"))
-	density_electron     = np.double(findParam(path, "density"    ,"backgroundelectron"))
-	coulomb_log          = np.double(findParam(path, "coulomb_log"))
-	dt                   = np.double(findParam(path, "timestep"))
+	sim = Smilei(path)
+	species = {}
+	for s in sim.namelist["Species"].list:
+		species.update({s.species_type:s})
+	temperature_electron = np.double(species["backgroundelectron"].temperature)
+	density_electron     = np.double(species["backgroundelectron"].density)
+	coulomb_log          = np.double(sim.namelist["Collisions"].list[0].coulomb_log)
+	dt                   = np.double(sim.namelist["timestep"])
 	
 	re = 2.8179403267e-15 # meters
 	wavelength = 1e-6 # meters
 	c = 3e8
 	
-	times = getAvailableTimesteps(path, diagNumber=0)
-	nx = ParticleDiagnostic(path,0,timesteps=0)["x"].size
+	times = sim.ParticleDiagnostic(diagNumber=0).getAvailableTimesteps()
+	nx = sim.ParticleDiagnostic(diagNumber=0,timesteps=0).get()["x"].size
 	
 	Ekin = np.zeros((nx,len(times)))
 	
@@ -73,12 +77,15 @@ for path in ["Stopping_power1","Stopping_power2","Stopping_power3"]:
 	if fig: fig.clf()
 	if fig: ax = fig.add_subplot(1,1,1)
 	for i,t in enumerate(times):
-		electrons = ParticleDiagnostic(path,0, units="nice", timesteps=t)
+		electrons = sim.ParticleDiagnostic(0, units="nice", timesteps=t).get()
 		x = electrons["x"]
 		ekin = electrons["ekin"]
-		A = electrons["data"]
+		dekin = np.diff(ekin)
+		dekin = np.hstack((dekin, dekin[-1]))
+		A = electrons["data"][0]
+		A = A*dekin
 		for k in range(nx): Ekin[k][i] = (A[k,:]*ekin).sum()/A[k,:].sum()
-	
+		
 		if fig:
 			ax.cla()
 			ax.plot(ekin,A[0,:],'b')

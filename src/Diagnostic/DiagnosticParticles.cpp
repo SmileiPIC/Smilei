@@ -52,7 +52,6 @@ DiagnosticParticles::DiagnosticParticles(unsigned int ID, string output_, unsign
 // destructor
 DiagnosticParticles::~DiagnosticParticles()
 {
-    DEBUG("here");
 }
 
 // close the hdf file

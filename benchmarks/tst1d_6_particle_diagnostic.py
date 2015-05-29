@@ -47,18 +47,16 @@ sim_length  = [1.]
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
 # bc_em_type_long/trans : boundary conditions used for EM fields 
 #                         in the longitudinal or transverse directions
-#                         periodic      = periodic BC (using MPI topology)
-#                         silver-muller = injecting/absorbing
+#                         'periodic'      : periodic BC (using MPI topology)
+#                         'silver-muller' : injecting/absorbing
 bc_em_type_long  = "periodic"
 
 
-# RANDOM seed 
-# this is used to randomize the random number generator
+# RANDOM seed used to randomize the random number generator
 random_seed = 0
 
 
 # DEFINE ALL SPECIES
-#
 # species_type      = string, given name to the species (e.g. ion, electron, positron, test ...)
 # initPosition_type = string, "regular" or "random"
 # initMomentum_type = string "cold", "maxwell-juettner" or "rectangular"
@@ -67,9 +65,12 @@ random_seed = 0
 # mass              = float, particle mass in units of the electron mass
 # charge            = float, particle charge in units of the electron charge
 # density           = float, species density in units of the "critical" density
+# density_profile   = string or python function (see doc)
+# vacuum_length     = list of floats, distance from box borders without particles
+# dens_length_[xyz] = list of floats, various distances to define the density profile (see doc)
 # mean_velocity     = list of floats, mean velocity in units of the speed of light
 # temperature       = list of floats, temperature in units of m_e c^2
-# dynamics_type     = string, species type of dynamics = "norm" or "rrLL"
+# dynamics_type     = string, type of species dynamics = "norm" or "rrLL"
 # time_frozen       = float, time during which particles are frozen in units of the normalization time
 # radiating         = boolean, if true, incoherent radiation calculated using the Larmor formula 
 
@@ -125,6 +126,8 @@ ntime_step_avg     = 1
 
 # DIAGNOSTICS ON SCALARS
 # every = integer, number of time-steps between each output
+# tmin and tmax = floats, min and max times that will be used
+# precision = integer, number of digits of the outputs. Default = 10
 DiagScalar(every = 1)
 
 # PROBE DIAGNOSTICS - interpolate the fields on a N-D arbitrary grid
@@ -148,15 +151,15 @@ DiagProbe(
 # time_average = integer > 0: number of time-steps to average
 # species      = list of strings, one or several species whose data will be used
 # axes         = list of axes
-# Each axis is a list: (_type_ _min_ _max_ _nsteps_ ["logscale"] ["edge_inclusive"])
+# Each axis is a list: [_type_,_min_,_max_,_nsteps_,"logscale","edge_inclusive"]
 #   _type_ is a string, one of the following options:
 #      x, y, z, px, py, pz, p, gamma, ekin, vx, vy, vz, v or charge
 #   The data is discretized for _type_ between _min_ and _max_, in _nsteps_ bins
 #   The optional "logscale" sets the scale to logarithmic
 #   The optional "edge_inclusive" forces the particles that are outside (_min_,_max_)
 #     to be counted in the extrema bins
-#   Example : axes = ("x", 0, 1, 30)
-#   Example : axes = ("px", -1, 1, 100, "edge_inclusive")
+#   Example : axes = [["x", 0, 1, 30]]
+#   Example : axes =[["px", -1, 1, 100, "edge_inclusive"]]
 
 DiagParticles(
 	output = "density",

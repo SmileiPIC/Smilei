@@ -58,27 +58,27 @@ Following Refs. provide additional information.\\*
 To have binary collisions in SMILEI, add one or several copies of the following block in the input file:
 
 \begin{lstlisting}
-collisions
-	species1 = §\textit{species\_name}  \textit{species\_name}  ...§
-	species2 = §\textit{species\_name}  \textit{species\_name}  ...§
+Collisions(
+	species1 = §["\textit{species\_name}",  "\textit{species\_name}",  ...]§,
+	species2 = §["\textit{species\_name}",  "\textit{species\_name}",  ...]§,
 	coulomb_log = §\textit{ln}$\Lambda$§
-end
+)
 \end{lstlisting}
 \vspace{1cm}
 
 Each \val{species\_name} must be the name (sometimes called "type") of an existing species. This name can be
-found in the input file inside any block \code{species ... end} under the keyword \code{species\_type}.\\*
+found in the input file inside any block \code{Species(...)} under the keyword \code{species\_type}.\\*
 
 The collisions will occur between (1) all species under the group \code{species1} and (2) all species under the group \code{species2}.
 For instance, to have collisions between \code{electrons1} and \code{ions1} , use
 \begin{lstlisting}
-	species1 = electrons1
-	species2 = ions1
+	species1 = ["electrons1"],
+	species2 = ["ions1"]
 \end{lstlisting}
 Other example:
 \begin{lstlisting}
-	species1 = electrons1 electrons2
-	species2 = ions
+	species1 = ["electrons1", "electrons2"],
+	species2 = ["ions"]
 \end{lstlisting}
 will collide all electrons with ions.\\*
 \textbf{WARNING: this does not make \code{electrons1} collide with \code{electrons2}.}\\*

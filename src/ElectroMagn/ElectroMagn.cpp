@@ -329,8 +329,13 @@ bool ElectroMagn::isRhoNull(SmileiMPI* smpi)
 
 }
 
-void ElectroMagn::applyExternalFields(SmileiMPI* smpi) {
-    
+string LowerCase(string in){
+    string out=in;
+    std::transform(out.begin(), out.end(), out.begin(), ::tolower);
+    return out;
+}
+
+void ElectroMagn::applyExternalFields(SmileiMPI* smpi) {    
     vector<Field*> my_fields;
     my_fields.push_back(Ex_);
     my_fields.push_back(Ey_);
@@ -341,8 +346,6 @@ void ElectroMagn::applyExternalFields(SmileiMPI* smpi) {
     
     for (vector<Field*>::iterator field=my_fields.begin(); field!=my_fields.end(); field++) {
         if (*field) {
-            string lowCaseField=(*field)->name;
-            std::transform(lowCaseField.begin(), lowCaseField.end(), lowCaseField.begin(), ::tolower);
             for (vector<ExtFieldStructure>::iterator extfield=extfield_params.structs.begin(); extfield!=extfield_params.structs.end(); extfield++ ) {
                 ExtFieldProfile *my_ExtFieldProfile=NULL;
                 if (extfield_params.geometry == "1d3v") {
@@ -352,13 +355,15 @@ void ElectroMagn::applyExternalFields(SmileiMPI* smpi) {
                 }
                 if (my_ExtFieldProfile) {
                     for (vector<string>::iterator fieldName=(*extfield).fields.begin();fieldName!=(*extfield).fields.end();fieldName++) {
-                        if (lowCaseField==(*fieldName)) {
+                        if (LowerCase((*field)->name)==LowerCase(*fieldName)) {
                             applyExternalField(*field,my_ExtFieldProfile, smpi);
                         }
                     }
                     delete my_ExtFieldProfile;
                     my_ExtFieldProfile=NULL;
-                }                    
+                } else{
+		    ERROR("Could not initialize external field Profile");
+		}
             }
         }
     }

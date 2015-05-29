@@ -204,7 +204,9 @@ void PicParams::readSpecies(InputData &ifile) {
         if ( (tmpSpec.initMomentum_type=="mj") || (tmpSpec.initMomentum_type=="maxj") ) {
             tmpSpec.initMomentum_type="maxwell-juettner";
         }
-        if ( (tmpSpec.initMomentum_type!="cold") && (tmpSpec.initMomentum_type!="maxwell-juettner") ) {
+        if (   (tmpSpec.initMomentum_type!="cold")
+            && (tmpSpec.initMomentum_type!="maxwell-juettner")
+            && (tmpSpec.initMomentum_type!="rectangular") ) {
             ERROR("For species " << n_species << " bad definition of initMomentum_type");
         }
         
