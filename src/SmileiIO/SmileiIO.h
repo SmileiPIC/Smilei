@@ -13,7 +13,7 @@
 #include <hdf5.h>
 
 class PicParams;
-class DiagParams;
+class Diagnostic;
 class InputData;
 class SmileiMPI;
 class SimWindow;
@@ -29,7 +29,7 @@ public:
     //! Create // HDF5 environment
     //! @see global_file_id_ 
     //! @see global_file_id_avg
-    SmileiIO( PicParams& params, DiagParams &diagParams, SmileiMPI* smpi );
+    SmileiIO( PicParams& params, Diagnostic &diag, SmileiMPI* smpi );
     //! Destructor for SmileiIO
     virtual ~SmileiIO();
 

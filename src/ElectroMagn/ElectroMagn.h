@@ -10,6 +10,7 @@
 #include "LaserParams.h"
 #include "ExtFieldParams.h"
 
+
 class PicParams;
 class Species;
 class Projector;
@@ -28,11 +29,15 @@ class ElectroMagn
 
 public:
     //! Constructor for Electromagn
-    ElectroMagn( PicParams &params, LaserParams &laser_params, SmileiMPI* smpi );
+    ElectroMagn( PicParams &params, InputData &input_data, SmileiMPI* smpi );
     
     //! Destructor for Electromagn
     virtual ~ElectroMagn();
-        
+    
+    LaserParams laser_params;
+    ExtFieldParams extfield_params;
+
+    
     std::vector<unsigned int> dimPrim;
     std::vector<unsigned int> dimDual;
 
@@ -184,7 +189,7 @@ public:
     void initExtFields(ExtFieldParams&);
     
     //! Method used to impose external fields (apply to all Fields)
-    void applyExternalFields(ExtFieldParams&, SmileiMPI*);
+    void applyExternalFields(SmileiMPI*);
     
     //! Method used to impose external fields (apply to a given Field)
     virtual void applyExternalField(Field*, ExtFieldProfile*, SmileiMPI*) = 0 ;

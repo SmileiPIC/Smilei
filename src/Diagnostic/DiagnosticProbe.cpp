@@ -20,9 +20,10 @@ using namespace std;
 
 DiagnosticProbe::DiagnosticProbe(SmileiMPI* smpi):
 isMaster(smpi->isMaster()),
-cpuRank((int)smpi->getRank()),
-probeSize(10), 
-fileId(0) {}
+cpuRank((int)smpi->getRank()), 
+fileId(0) ,
+probeSize(10)
+{}
 
 
 DiagnosticProbe::~DiagnosticProbe()

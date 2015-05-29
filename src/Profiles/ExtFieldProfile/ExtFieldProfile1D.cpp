@@ -70,8 +70,7 @@ double ExtFieldProfile1D::operator() (vector<double> x_cell) {
             
     }
     else if (my_struct.profile=="python") {
-        PyObject *pyresult = PyObject_CallFunction(my_struct.py_profile, const_cast<char *>("d"), x_cell[0]);
-        return PyTools::get_py_result(pyresult);
+        return PyTools::runPyFunction(my_struct.py_profile, x_cell[0]);
     }
     else {
         return 0;

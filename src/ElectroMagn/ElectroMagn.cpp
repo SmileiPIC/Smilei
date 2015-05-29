@@ -20,7 +20,9 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for the virtual class ElectroMagn
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn::ElectroMagn(PicParams &params, LaserParams &laser_params, SmileiMPI* smpi) :
+ElectroMagn::ElectroMagn(PicParams &params, InputData &input_data, SmileiMPI* smpi) :
+laser_params(params, input_data),
+extfield_params(params, input_data),
 timestep(params.timestep),
 cell_length(params.cell_length),
 n_species(params.n_species),
@@ -333,8 +335,7 @@ string LowerCase(string in){
     return out;
 }
 
-void ElectroMagn::applyExternalFields(ExtFieldParams&extfield_params, SmileiMPI* smpi) {
-    
+void ElectroMagn::applyExternalFields(SmileiMPI* smpi) {    
     vector<Field*> my_fields;
     my_fields.push_back(Ex_);
     my_fields.push_back(Ey_);

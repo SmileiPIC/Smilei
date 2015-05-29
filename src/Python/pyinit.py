@@ -2,7 +2,12 @@
     Definition of Smilei components
 """
 
+<<<<<<< HEAD
+# Since the pytohn interpreter grabs key keyboards,
+# we have to filter the ctrl-c kill command:
+=======
 # This import allows for using ctrl+C during the simulation
+>>>>>>> 257769e4002a67e1ec8d2ea8b55807479c050e87
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 

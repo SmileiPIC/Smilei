@@ -23,7 +23,7 @@ inline double convertToDouble(string &s)
     return x;
 }
 
-DiagParams::DiagParams(Diagnostic& diags, PicParams& params, InputData &ifile, SmileiMPI *smpi) {
+DiagParams::DiagParams(Diagnostic* diags, PicParams& params, InputData &ifile, SmileiMPI *smpi) {
 
     bool ok=false;
     
@@ -68,35 +68,35 @@ DiagParams::DiagParams(Diagnostic& diags, PicParams& params, InputData &ifile, S
     
 }
 
-void DiagParams::initScalars(Diagnostic& diags, PicParams& params, InputData &ifile) {
+void DiagParams::initScalars(Diagnostic* diags, PicParams& params, InputData &ifile) {
 
-    diags.scalars.every=0;
-    bool ok=ifile.extract("every",diags.scalars.every,"DiagScalar");
-    if (!ok) diags.scalars.every=params.global_every;
+    diags->scalars.every=0;
+    bool ok=ifile.extract("every",diags->scalars.every,"DiagScalar");
+    if (!ok) diags->scalars.every=params.global_every;
     
     vector<double> scalar_time_range(2,0.);
     
     ok=ifile.extract("time_range",scalar_time_range,"DiagScalar");        
     if (!ok) { 
-        diags.scalars.tmin = 0.;
-        diags.scalars.tmax = params.sim_time;
+        diags->scalars.tmin = 0.;
+        diags->scalars.tmax = params.sim_time;
     }
     else {
-        diags.scalars.tmin = scalar_time_range[0]*params.conv_fac;
-        diags.scalars.tmax = scalar_time_range[1]*params.conv_fac;
+        diags->scalars.tmin = scalar_time_range[0]*params.conv_fac;
+        diags->scalars.tmax = scalar_time_range[1]*params.conv_fac;
     }
     
-    diags.scalars.precision=10;
-    ifile.extract("precision",diags.scalars.precision,"DiagScalar");
+    diags->scalars.precision=10;
+    ifile.extract("precision",diags->scalars.precision,"DiagScalar");
     ifile.extract("vars",scalar_vars,"DiagScalar");
     
     // copy from params remaining stuff
-    diags.scalars.res_time=params.res_time;
-    diags.scalars.dt=params.timestep;
-    diags.scalars.cell_volume=params.cell_volume;
+    diags->scalars.res_time=params.res_time;
+    diags->scalars.dt=params.timestep;
+    diags->scalars.cell_volume=params.cell_volume;
 }
 
-void DiagParams::initProbes(Diagnostic& diags, PicParams& params, InputData &ifile, SmileiMPI *smpi) {
+void DiagParams::initProbes(Diagnostic* diags, PicParams& params, InputData &ifile, SmileiMPI *smpi) {
     bool ok;
     
     // loop all "diagnostic probe" groups in the input file
@@ -107,21 +107,21 @@ void DiagParams::initProbes(Diagnostic& diags, PicParams& params, InputData &ifi
             // Create the HDF5 file that will contain all the probes
             hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
             H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
-            diags.probes.fileId = H5Fcreate( "Probes.h5", H5F_ACC_TRUNC, H5P_DEFAULT, pid);
+            diags->probes.fileId = H5Fcreate( "Probes.h5", H5F_ACC_TRUNC, H5P_DEFAULT, pid);
             H5Pclose(pid);
             
             // Write the version of the code as an attribute
             string ver(__VERSION);
-            H5::attr(diags.probes.fileId, "Version", ver);
+            H5::attr(diags->probes.fileId, "Version", ver);
             
-            diags.probes.dt = params.timestep;
-            diags.probes.every         .resize(0);
-            diags.probes.tmin          .resize(0);
-            diags.probes.tmax          .resize(0);
-            diags.probes.probeParticles.resize(0);
-            diags.probes.nPart_total   .resize(0);
-            diags.probes.probesArray   .resize(0);
-            diags.probes.probesStart   .resize(0);
+            diags->probes.dt = params.timestep;
+            diags->probes.every         .resize(0);
+            diags->probes.tmin          .resize(0);
+            diags->probes.tmax          .resize(0);
+            diags->probes.probeParticles.resize(0);
+            diags->probes.nPart_total   .resize(0);
+            diags->probes.probesArray   .resize(0);
+            diags->probes.probesStart   .resize(0);
         }
         
         
@@ -129,7 +129,7 @@ void DiagParams::initProbes(Diagnostic& diags, PicParams& params, InputData &ifi
         unsigned int every=0;
         ok=ifile.extract("every",every,"DiagProbe",n_probe);        
         if (!ok) every=params.global_every;
-        diags.probes.every.push_back(every);
+        diags->probes.every.push_back(every);
         
         // Extract "time_range" (tmin and tmax of the outputs)
         vector<double> time_range(2,0.);
@@ -142,8 +142,8 @@ void DiagParams::initProbes(Diagnostic& diags, PicParams& params, InputData &ifi
             tmin = time_range[0]*params.conv_fac;
             tmax = time_range[1]*params.conv_fac;
         }
-        diags.probes.tmin.push_back(tmin);
-        diags.probes.tmax.push_back(tmax);
+        diags->probes.tmin.push_back(tmin);
+        diags->probes.tmax.push_back(tmax);
         
         // Extract "number" (number of points you have in each dimension of the probe,
         // which must be smaller than the code dimensions)
@@ -199,7 +199,7 @@ void DiagParams::initProbes(Diagnostic& diags, PicParams& params, InputData &ifi
         for (unsigned int iDimProbe=0; iDimProbe<dimProbe; iDimProbe++) {
             nPart_total *= vecNumber[iDimProbe];
         }
-        diags.probes.nPart_total.push_back(nPart_total);
+        diags->probes.nPart_total.push_back(nPart_total);
         
         
         // Initialize the list of "fake" particles just as actual macro-particles
@@ -234,7 +234,7 @@ void DiagParams::initProbes(Diagnostic& diags, PicParams& params, InputData &ifi
             if (!probeParticles.is_part_in_domain(ipb, smpi))
                 probeParticles.erase_particle(ipb);
         }
-        diags.probes.probeParticles.push_back(probeParticles);
+        diags->probes.probeParticles.push_back(probeParticles);
         
         unsigned int nPart_local = probeParticles.size(); // number of fake particles for this proc
         
@@ -242,9 +242,9 @@ void DiagParams::initProbes(Diagnostic& diags, PicParams& params, InputData &ifi
         // probesArray : 10 x nPart_tot
         vector<unsigned int> probesArraySize(2);
         probesArraySize[0] = nPart_local; // number of particles
-        probesArraySize[1] = diags.probes.probeSize; // number of fields (Ex, Ey, etc)
+        probesArraySize[1] = diags->probes.probeSize; // number of fields (Ex, Ey, etc)
         Field2D *myfield = new Field2D(probesArraySize);
-        diags.probes.probesArray.push_back(myfield);
+        diags->probes.probesArray.push_back(myfield);
         
         // Exchange data between MPI cpus so that they can figure out which part
         // of the grid they have to manage
@@ -259,7 +259,7 @@ void DiagParams::initProbes(Diagnostic& diags, PicParams& params, InputData &ifi
         // Create group for the current probe
         ostringstream prob_name("");
         prob_name << "p" << setfill('0') << setw(4) << n_probe;
-        hid_t did = H5Gcreate(diags.probes.fileId, prob_name.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        hid_t did = H5Gcreate(diags->probes.fileId, prob_name.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         
         // Create an array to hold the positions of local probe particles
         double posArray [nPart_local][ndim];
@@ -270,7 +270,7 @@ void DiagParams::initProbes(Diagnostic& diags, PicParams& params, InputData &ifi
         // Add array "positions" into the current HDF5 group
         H5::matrix_MPI(did, "positions", posArray[0][0], nPart_total, ndim, probesStart, nPart_local);
         
-        diags.probes.probesStart.push_back(probesStart);
+        diags->probes.probesStart.push_back(probesStart);
         
         // Add arrays "p0", "p1", ... to the current group
         ostringstream pk;
@@ -295,13 +295,13 @@ void DiagParams::initProbes(Diagnostic& diags, PicParams& params, InputData &ifi
     }
 }
 
-void DiagParams::initPhases(Diagnostic& diags, PicParams& params, InputData &ifile, SmileiMPI *smpi) {
+void DiagParams::initPhases(Diagnostic* diags, PicParams& params, InputData &ifile, SmileiMPI *smpi) {
 
     int n_phase=0;
     //! create the particle structure
-    diags.phases.ndim=params.nDim_particle;    
-    diags.phases.my_part.pos.resize(params.nDim_particle);
-    diags.phases.my_part.mom.resize(3);
+    diags->phases.ndim=params.nDim_particle;    
+    diags->phases.my_part.pos.resize(params.nDim_particle);
+    diags->phases.my_part.mom.resize(3);
     
     
     bool ok;
@@ -313,7 +313,7 @@ void DiagParams::initPhases(Diagnostic& diags, PicParams& params, InputData &ifi
         ok=ifile.extract("every",my_phase.every,"DiagPhase",n_phase);
         if (!ok) {
 //            if (n_probephase>0) {
-//                my_phase.every=diags.phases.vecDiagPhase.end()->every;
+//                my_phase.every=diags->phases.vecDiagPhase.end()->every;
 //            } else {
                 my_phase.every=params.global_every;
 //            }
@@ -380,7 +380,7 @@ void DiagParams::initPhases(Diagnostic& diags, PicParams& params, InputData &ifi
         if (n_phase == 0 && smpi->isMaster()) {
             ostringstream file_name("");
             file_name<<"PhaseSpace.h5";
-            diags.phases.fileId = H5Fcreate( file_name.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+            diags->phases.fileId = H5Fcreate( file_name.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
             string ver(__VERSION);
             
             // write version
@@ -388,7 +388,7 @@ void DiagParams::initPhases(Diagnostic& diags, PicParams& params, InputData &ifi
             hid_t atype = H5Tcopy(H5T_C_S1);
             H5Tset_size(atype, ver.size());
             H5Tset_strpad(atype,H5T_STR_NULLTERM);
-            hid_t attr3 = H5Acreate(diags.phases.fileId, "Version", atype, aid3, H5P_DEFAULT, H5P_DEFAULT);
+            hid_t attr3 = H5Acreate(diags->phases.fileId, "Version", atype, aid3, H5P_DEFAULT, H5P_DEFAULT);
             
             H5Awrite(attr3, atype, ver.c_str());
             
@@ -398,7 +398,7 @@ void DiagParams::initPhases(Diagnostic& diags, PicParams& params, InputData &ifi
             
             ostringstream groupName("");
             groupName << "ps" << setw(4) << setfill('0') << n_phase;
-            gidParent = H5Gcreate(diags.phases.fileId, groupName.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT); 
+            gidParent = H5Gcreate(diags->phases.fileId, groupName.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT); 
             
             hid_t sid = H5Screate(H5S_SCALAR);	
             hid_t aid = H5Acreate(gidParent, "every", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
@@ -536,7 +536,7 @@ void DiagParams::initPhases(Diagnostic& diags, PicParams& params, InputData &ifi
                     H5Sclose(sid);
                     
                 }
-                diags.phases.vecDiagPhase.push_back(diagPhase);	
+                diags->phases.vecDiagPhase.push_back(diagPhase);	
             }
             
         } 
@@ -550,7 +550,7 @@ void DiagParams::initPhases(Diagnostic& diags, PicParams& params, InputData &ifi
 }
 
 
-void DiagParams::initParticles(Diagnostic& diags, PicParams& params, InputData &ifile) {
+void DiagParams::initParticles(Diagnostic* diags, PicParams& params, InputData &ifile) {
     int n_diag_particles=0;
     unsigned int every, time_average;
     string output;
@@ -665,7 +665,7 @@ void DiagParams::initParticles(Diagnostic& diags, PicParams& params, InputData &
         // create new diagnostic object
         tmpDiagParticles = new DiagnosticParticles(n_diag_particles, output, every, time_average, species_numbers, tmpAxes);
         // add this object to the list
-        diags.vecDiagnosticParticles.push_back(tmpDiagParticles);
+        diags->vecDiagnosticParticles.push_back(tmpDiagParticles);
         // next diagnostic
         n_diag_particles++;
     }

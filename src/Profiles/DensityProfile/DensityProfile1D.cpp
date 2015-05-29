@@ -362,8 +362,7 @@ double DensityProfile1D::operator() (vector<double> x_cell) {
         }
     }
     else if (species_param.dens_profile.profile=="python") {
-        PyObject *pyresult = PyObject_CallFunction(species_param.dens_profile.py_profile, const_cast<char *>("d"), x_cell[0]);
-        return PyTools::get_py_result(pyresult);
+        return PyTools::runPyFunction(species_param.dens_profile.py_profile, x_cell[0]);
     }
     
     // Other density profile

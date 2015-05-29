@@ -11,12 +11,12 @@ import math
 import sys
 print sys.path
 
-part_per_cell=200
+part_per_cell=100
 t_sim=40
 res=20
 
-position=9
-thickness=1
+position=8
+thickness=0.5
 
 
 density=10
@@ -30,8 +30,7 @@ wavelength=0.2
 import numpy as np
 def my_real_func(codex,codey):
     x=codex/twopi
-    this_does_not_hurt=np.array(0.)
-    return 1 if x>position else 0
+    return 1 if x>position and x<position+thickness else 0
 
 
 # 
@@ -99,7 +98,7 @@ bc_em_type_trans = 'periodic'
 random_seed = 0
 
 fieldDump_every = 10
-fieldsToDump = ["Ey","Rho_electron"]
+fieldsToDump = ["Ey","Rho_electron","Rho_ion"]
 
 print_every = 10
 
@@ -123,7 +122,7 @@ myspec1.density = density
 myspec1.mean_velocity = 0.0
 myspec1.temperature = 0.0
 myspec1.dynamics_type = 'norm'
-myspec1.time_frozen = t_sim
+myspec1.time_frozen = 0.0
 myspec1.radiating = False
 myspec1.bc_part_type_west  = 'refl'
 myspec1.bc_part_type_east  = 'refl'
@@ -177,15 +176,15 @@ def my_func_laser_profile(t,y):
 # double_params: vector of real parameters used by the different time-profiles
 #
 Laser(
-	boxSide = 'west' ,
-	a0=0.01 ,
-	focus=[4*dx/5,  dy/2.] ,
-	angle=40 ,
-	delta=0.0 ,
-	time_profile = 'sin2' ,
-	double_params = 5 ,
-	transv_profile = my_func_laser_profile ,
-	double_params_transv = 5.0 
+    boxSide = 'west' ,
+    a0=10 ,
+    focus=[position,  dy/2.] ,
+    angle=30 ,
+    delta=0.0 ,
+    time_profile = 'sin2' ,
+    double_params = 5 ,
+    transv_profile = my_func_laser_profile ,
+    double_params_transv = 2.0 
 )
 
 

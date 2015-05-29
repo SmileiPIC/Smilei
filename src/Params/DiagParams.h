@@ -67,15 +67,15 @@ class DiagParams {
 
 public:
     //! Creator for DiagParams
-    DiagParams(Diagnostic&, PicParams&, InputData&, SmileiMPI *);
+    DiagParams(Diagnostic*, PicParams&, InputData&, SmileiMPI *);
 
-    void initScalars(Diagnostic&, PicParams&, InputData&);
+    void initScalars(Diagnostic*, PicParams&, InputData&);
     
-    void initProbes(Diagnostic&, PicParams&, InputData&, SmileiMPI *);
+    void initProbes(Diagnostic*, PicParams&, InputData&, SmileiMPI *);
     
-    void initPhases(Diagnostic&, PicParams&, InputData&, SmileiMPI *);
+    void initPhases(Diagnostic*, PicParams&, InputData&, SmileiMPI *);
     
-    void initParticles(Diagnostic&, PicParams&, InputData&);
+    void initParticles(Diagnostic*, PicParams&, InputData&);
     
     //! field dump output
     unsigned int fieldDump_every;

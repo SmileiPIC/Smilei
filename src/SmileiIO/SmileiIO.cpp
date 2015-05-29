@@ -12,7 +12,7 @@
 #include <mpi.h>
 
 #include "PicParams.h"
-#include "DiagParams.h"
+#include "Diagnostic.h"
 #include "SmileiMPI.h"
 #include "SimWindow.h"
 #include "ElectroMagn.h"
@@ -20,10 +20,10 @@
 
 using namespace std;
 
-SmileiIO::SmileiIO( PicParams& params, DiagParams& diagParams, SmileiMPI* smpi ) : 
+SmileiIO::SmileiIO( PicParams& params, Diagnostic& diag, SmileiMPI* smpi ) : 
 dump_times(0), 
 stop_file_seen_since_last_check(false),
-fieldsToDump(diagParams.fieldsToDump)
+fieldsToDump(diag.params.fieldsToDump)
 {
 		
     nDim_particle=params.nDim_particle;
@@ -112,7 +112,7 @@ fieldsToDump(diagParams.fieldsToDump)
     
     sid  = H5Screate(H5S_SCALAR);
     aid = H5Acreate (global_file_id_, "every", H5T_NATIVE_UINT, sid, H5P_DEFAULT, write_plist);
-    H5Awrite(aid, H5T_NATIVE_UINT, &(diagParams.fieldDump_every));
+    H5Awrite(aid, H5T_NATIVE_UINT, &(diag.params.fieldDump_every));
     H5Sclose(sid);
     H5Aclose(aid);
     
@@ -137,7 +137,7 @@ fieldsToDump(diagParams.fieldsToDump)
     // Fields_avg.h5
     // -------------
     global_file_id_avg = 0;
-    if  (diagParams.ntime_step_avg!=0) {
+    if  (diag.params.ntime_step_avg!=0) {
         global_file_id_avg = H5Fcreate( "Fields_avg.h5", H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
         
         // Create property list for collective dataset write: for Fields.h5
@@ -149,7 +149,7 @@ fieldsToDump(diagParams.fieldsToDump)
         
         sid  = H5Screate(H5S_SCALAR);
         aid = H5Acreate (global_file_id_avg, "every", H5T_NATIVE_UINT, sid, H5P_DEFAULT, write_plist);
-        H5Awrite(aid, H5T_NATIVE_UINT, &(diagParams.fieldDump_every));
+        H5Awrite(aid, H5T_NATIVE_UINT, &(diag.params.fieldDump_every));
         H5Sclose(sid);
         H5Aclose(aid);
         

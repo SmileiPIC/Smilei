@@ -291,7 +291,6 @@ void PicParams::readSpecies(InputData &ifile) {
         ifile.extract("dens_profile", tmpSpec.dens_profile.profile,"Species",n_species);
         if (tmpSpec.dens_profile.profile.empty()) {
             PyObject *mypy = ifile.extract_py("dens_profile","Species",n_species);
-            HEREIAM(mypy->ob_type->tp_name);
             if (mypy && PyCallable_Check(mypy)) {
                 tmpSpec.dens_profile.py_profile=mypy;
                 tmpSpec.dens_profile.profile="python";

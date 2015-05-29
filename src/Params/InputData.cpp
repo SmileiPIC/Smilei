@@ -72,6 +72,7 @@ void InputData::pyRunScript(string command, string name) {
     DEBUG("<<<<<<<<<<<<<<< from " << name);
     if (retval==-1) {
         ERROR("error parsing "<< name);
+        PyTools::checkPyError();
     }
 }
 
@@ -83,7 +84,6 @@ PyObject* InputData::extract_py(string name, string component, int nComponent) {
     }
     
     PyObject *py_obj=py_namelist;
-    string list = "list";
     // If component requested
     if (!component.empty()) {
         // Get the selected component (e.g. "Species" or "Laser")
@@ -92,7 +92,7 @@ PyObject* InputData::extract_py(string name, string component, int nComponent) {
         // Error if not found
         if (!py_obj) ERROR("Component "<<component<<" not found in namelist");
         // Get the "list" that contains the list of the objects in this component
-        py_obj = PyObject_GetAttrString(py_obj,list.c_str());
+        py_obj = PyObject_GetAttrString(py_obj,const_cast<char *>("list"));
         // If list successfully found
         if (PyList_Check(py_obj) || PyTuple_Check(py_obj)) {
             int len = PySequence_Size(py_obj);
@@ -143,12 +143,11 @@ bool InputData::existComponent(std::string component, unsigned int nComponent) {
         ERROR("[" << component << "] has whitespace inside: please fix the code");
     }
     // Get the selected component (e.g. "Species" or "Laser")
-    string list = "list";
     PyObject *py_obj = PyObject_GetAttrString(py_namelist,component.c_str());
     PyTools::checkPyError();
     if (py_obj) {
         // Get the "list" that contains the list of the objects in this component
-        py_obj = PyObject_GetAttrString(py_obj,list.c_str());
+        py_obj = PyObject_GetAttrString(py_obj,const_cast<char *>("list"));
         if (py_obj) {
             if (PyList_Check(py_obj)) {
                 if (PySequence_Size(py_obj) > nComponent) {
