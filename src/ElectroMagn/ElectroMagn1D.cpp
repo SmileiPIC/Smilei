@@ -23,8 +23,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn1D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn1D::ElectroMagn1D(PicParams &params,  LaserParams &laser_params, SmileiMPI* smpi)
-: ElectroMagn(params, laser_params, smpi),
+ElectroMagn1D::ElectroMagn1D(PicParams &params, InputData &input_data, SmileiMPI* smpi)
+: ElectroMagn(params, input_data, smpi),
 isWestern(smpi->isWestern()),
 isEastern(smpi->isEastern())
 {

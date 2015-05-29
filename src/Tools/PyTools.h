@@ -72,20 +72,24 @@ private:
         return false;
     }
 
-public:
     //! check error and display message
     static double get_py_result(PyObject* pyresult) {
         checkPyError();
         double cppresult=0;
-        if(!convert(pyresult,cppresult)) {
-            PyObject *ptype, *pvalue, *ptraceback;
-            PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-            ERROR("function does not return float but " << pyresult->ob_type->tp_name);
+        if (pyresult) {
+            if(!convert(pyresult,cppresult)) {
+                PyObject *ptype, *pvalue, *ptraceback;
+                PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+                ERROR("function does not return float but " << pyresult->ob_type->tp_name);
+            }
+        } else {
+            // we should never reach this point... something is weird
+            ERROR("Function does not return a valid Python object");
         }
-        Py_XDECREF(pyresult);
         return cppresult;
     }
     
+public:
     //! convert vector of Python objects to vector of C++ values
     template <typename T>
     static bool convert(PyObject* py_vec, T &val) {
@@ -128,6 +132,30 @@ public:
             
             MESSAGE(1,"[Python] " << message);
         }                
+    }
+    
+    //! get python function one variable
+    static double runPyFunction(PyObject *pyFunction, double x1) {
+        PyObject *pyresult = PyObject_CallFunction(pyFunction, const_cast<char *>("d"), x1);
+        double retval=get_py_result(pyresult);
+        Py_XDECREF(pyresult);
+        return retval;
+    }
+    
+    //! get python function two variables
+    static double runPyFunction(PyObject *pyFunction, double x1, double x2) {
+        PyObject *pyresult = PyObject_CallFunction(pyFunction, const_cast<char *>("dd"), x1, x2);
+        double retval=get_py_result(pyresult);
+        Py_XDECREF(pyresult);
+        return retval;
+    }
+    
+    //! get python function three variables
+    static double runPyFunction(PyObject *pyFunction, double x1, double x2, double x3) {
+        PyObject *pyresult = PyObject_CallFunction(pyFunction, const_cast<char *>("ddd"), x1, x2, x3);
+        double retval=get_py_result(pyresult);
+        Py_XDECREF(pyresult);
+        return retval;
     }
 };
 

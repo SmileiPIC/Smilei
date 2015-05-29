@@ -106,8 +106,7 @@ double TemperatureProfile1D::operator() (vector<double> x_cell) {
 		}
 	}
     else if (prof_params.profile=="python") {
-        PyObject *pyresult = PyObject_CallFunction(prof_params.py_profile, const_cast<char *>("d"), x_cell[0]);
-        return PyTools::get_py_result(pyresult);
+        return PyTools::runPyFunction(prof_params.py_profile, x_cell[0]);
     }
     
     

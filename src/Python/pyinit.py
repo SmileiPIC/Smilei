@@ -2,7 +2,8 @@
     Definition of Smilei components
 """
 
-# \fixme Please explain what this is for
+# Since the pytohn interpreter grabs key keyboards,
+# we have to filter the ctrl-c kill command:
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 

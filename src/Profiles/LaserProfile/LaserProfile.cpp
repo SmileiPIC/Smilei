@@ -248,8 +248,7 @@ double LaserProfile::time_profile(double time_dual) {
     
     // python function
     else if (type_of_time_profile=="python") {
-        PyObject *pyresult = PyObject_CallFunction(laser_struct.profile_time.py_profile, const_cast<char *>("d"), time_dual);
-        return PyTools::get_py_result(pyresult);
+        return PyTools::runPyFunction(laser_struct.profile_time.py_profile,time_dual);
     } 
     else {
         return 0.0;
@@ -292,8 +291,7 @@ double LaserProfile::transverse_profile2D(double time_dual, double y) {
     }
     // python function
     else if (type_of_transv_profile=="python") {
-        PyObject *pyresult = PyObject_CallFunction(laser_struct.profile_transv.py_profile, const_cast<char *>("dd"), time_dual,y);
-        return PyTools::get_py_result(pyresult);
+        return PyTools::runPyFunction(laser_struct.profile_transv.py_profile, time_dual,y);
     } 
     
     else

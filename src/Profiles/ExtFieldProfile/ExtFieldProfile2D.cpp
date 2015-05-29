@@ -153,9 +153,9 @@ double ExtFieldProfile2D::operator() (vector<double> x_cell) {
         // length_params_y[1] = position in y of the 1st field node
         // length_params_y[2] = position in y of the 2nd field node
         // ---------------------------------------------------------------
-        double B0  = my_struct.double_params[0];
+//unused        double B0  = my_struct.double_params[0];
         double dB  = my_struct.double_params[1];
-        double L   = my_struct.length_params_y[0];
+//unused        double L   = my_struct.length_params_y[0];
         double y0  = my_struct.length_params_y[1];
         double y1  = my_struct.length_params_y[2];
         double sgl = my_struct.length_params_x[0];
@@ -220,8 +220,7 @@ double ExtFieldProfile2D::operator() (vector<double> x_cell) {
         }
     }
     else if (my_struct.profile=="python") {
-        PyObject *pyresult = PyObject_CallFunction(my_struct.py_profile, const_cast<char *>("dd"), x_cell[0], x_cell[1]);
-        return PyTools::get_py_result(pyresult);
+        return PyTools::runPyFunction(my_struct.py_profile, x_cell[0], x_cell[1]);
     }
     return 0;
     

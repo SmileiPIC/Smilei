@@ -24,8 +24,6 @@
 
 #include "InputData.h"
 #include "PicParams.h"
-#include "LaserParams.h"
-#include "ExtFieldParams.h"
 
 #include "SmileiMPIFactory.h"
 #include "SmileiIOFactory.h"
@@ -88,10 +86,6 @@ int main (int argc, char* argv[])
     smpiData->init(params);
     smpiData->barrier();
     if ( smpiData->isMaster() ) params.print();
-    smpiData->barrier();
-    LaserParams laser_params(params, input_data);
-    ExtFieldParams extfield_params(params, input_data);
-    
     smpiData->barrier();
     
     
@@ -159,7 +153,7 @@ int main (int argc, char* argv[])
     // ----------------------------------------------------------------------------
     
     // object containing the electromagnetic fields (virtual)
-    ElectroMagn* EMfields = ElectroMagnFactory::create(params, laser_params, smpi);
+    ElectroMagn* EMfields = ElectroMagnFactory::create(params, input_data, smpi);
     
     // interpolation operator (virtual)
     Interpolator* Interp = InterpolatorFactory::create(params, smpi);
@@ -211,7 +205,7 @@ int main (int argc, char* argv[])
         MESSAGE("----------------------------------------------");
         MESSAGE("Applying external fields at time t = 0");
         MESSAGE("----------------------------------------------");
-        EMfields->applyExternalFields(extfield_params, smpi);
+        EMfields->applyExternalFields(smpi);
         
         MESSAGE("----------------------------------------------");
         MESSAGE("Running diags at time t = 0");

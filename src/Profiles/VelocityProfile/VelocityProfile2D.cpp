@@ -194,7 +194,7 @@ double VelocityProfile2D::operator() (vector<double> x_cell) {
         double x0    = prof_params.length_params_y[0];
         double L     = prof_params.length_params_y[1];
         double x     = x_cell[1]-x0;
-        double tiny  = 1e-10*L;
+//unused        double tiny  = 1e-10*L;
         if (Bmax == 0.) {
             double Bm = sqrt(pow(B0,2) + 2*P0)-B0;
             double B  = B0 + Bm/pow(cosh(x/L),2);
@@ -254,7 +254,6 @@ double VelocityProfile2D::operator() (vector<double> x_cell) {
         double vd;
         if (r<5*L) { vd = v0;}
         else {vd=v0;}
-        double v;
         if (Bmax == 0.) {
             double Bm = sqrt(pow(B0,2) + 2*P0)-B0;	
             double v     = -2*Bm/(L*ne)*tanh(r/L) /(pow(cosh(r/L),2))*cos(theta + theta0) +vd;
@@ -284,8 +283,7 @@ double VelocityProfile2D::operator() (vector<double> x_cell) {
 	}
     
     else if (prof_params.profile=="python") {
-        PyObject *pyresult = PyObject_CallFunction(prof_params.py_profile, const_cast<char *>("dd"), x_cell[0], x_cell[1]);
-        return PyTools::get_py_result(pyresult);
+        return PyTools::runPyFunction(prof_params.py_profile, x_cell[0], x_cell[1]);
     }
     
     return 1;
