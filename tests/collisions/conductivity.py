@@ -23,7 +23,7 @@ for path in ["conductivity1","conductivity2","conductivity3"]:
 
 	sim = Smilei(path)
 	species = {}
-	for s in sim.namelist["Species"].list:
+	for s in sim.namelist.Species.list:
 		species.update({s.species_type:s})
 
 	ncases = 0
@@ -31,8 +31,8 @@ for path in ["conductivity1","conductivity2","conductivity3"]:
 		ncases += 1
 	if ncases == 0: continue
 
-	coulomb_log = np.double(sim.namelist["Collisions"].list[0].coulomb_log)
-	dt          = np.double(sim.namelist["timestep"])
+	coulomb_log          = np.double(sim.namelist.Collisions(0).coulomb_log)
+	dt                   = np.double(sim.namelist.timestep)
 	
 	times = sim.ParticleDiagnostic(diagNumber=0).getAvailableTimesteps()
 	
