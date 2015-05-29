@@ -28,7 +28,7 @@ class Diagnostic {
 
 public:
     //! creator called from main
-    Diagnostic(SmileiMPI* smpi);
+    Diagnostic(PicParams&, InputData&, SmileiMPI *smpi);
     
     //! destructor
     ~Diagnostic(){};
@@ -52,6 +52,7 @@ public:
 	
     std::vector<DiagnosticParticles*> vecDiagnosticParticles;
     
+    DiagParams params;
 };
 
 #endif

@@ -11,10 +11,11 @@
 
 using namespace std;
 
-Diagnostic::Diagnostic(SmileiMPI* smpi) :
+Diagnostic::Diagnostic(PicParams& params, InputData &ifile, SmileiMPI *smpi) :
 scalars(smpi),
 probes(smpi),
-phases(smpi)
+phases(smpi),
+params(this, params,ifile,smpi)
 {
     dtimer[0].init(smpi, "scalars");
     dtimer[1].init(smpi, "probes");
