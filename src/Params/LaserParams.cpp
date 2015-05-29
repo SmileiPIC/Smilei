@@ -11,66 +11,66 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
     // -----------------
     // Lasers properties
     // -----------------
-    n_laser=0;
-    while (ifile.existComponent("Laser",n_laser)) {
+    n_laser=ifile.nComponents("Laser");
+    for (unsigned int ilaser = 0; ilaser < n_laser; ilaser++) {
         LaserStructure tmpLaser;
         
         // side from which the laser enters the simulation box (only west/east at the moment)
-        ifile.extract("boxSide",tmpLaser.boxSide,"Laser",n_laser);
+        ifile.extract("boxSide",tmpLaser.boxSide,"Laser",ilaser);
         if ( (tmpLaser.boxSide!="west") && (tmpLaser.boxSide!="east") ) {
             ERROR("At the moment laser can enter only from West/East sides: boxSide \""
                   << tmpLaser.boxSide << " not defined");
         }
         
         // laser intensity
-        ifile.extract("a0",tmpLaser.a0,"Laser",n_laser);
+        ifile.extract("a0",tmpLaser.a0,"Laser",ilaser);
         
         // laser angular frequency (default=1)
         tmpLaser.omega0=1.0;
-        ifile.extract("omega0",tmpLaser.omega0,"Laser",n_laser);
+        ifile.extract("omega0",tmpLaser.omega0,"Laser",ilaser);
         
         // laser temporal chirp (default=0)
         tmpLaser.tchirp=0.0;
-        ifile.extract("tchirp",tmpLaser.tchirp,"Laser",n_laser);
+        ifile.extract("tchirp",tmpLaser.tchirp,"Laser",ilaser);
         
         // laser ellipticity/polarization parameter
-        ifile.extract("delta",tmpLaser.delta,"Laser",n_laser);
+        ifile.extract("delta",tmpLaser.delta,"Laser",ilaser);
         
         // position of the laser focus
-        tmpLaser.isFocused = ifile.extract("focus",tmpLaser.focus,"Laser",n_laser);
+        tmpLaser.isFocused = ifile.extract("focus",tmpLaser.focus,"Laser",ilaser);
         
         // incident angle
-        ifile.extract("angle",tmpLaser.angle ,"Laser",n_laser);
+        ifile.extract("angle",tmpLaser.angle ,"Laser",ilaser);
         
         // laser time-profile & associated parameters
-        ifile.extract("time_profile",tmpLaser.profile_time.profile ,"Laser",n_laser);
+        ifile.extract("time_profile",tmpLaser.profile_time.profile ,"Laser",ilaser);
         if (tmpLaser.profile_time.profile.empty()) {
-            PyObject *mypy = ifile.extract_py("time_profile","Laser",n_laser);
+            PyObject *mypy = ifile.extract_py("time_profile","Laser",ilaser);
             if (mypy && PyCallable_Check(mypy)) {
                 tmpLaser.profile_time.py_profile=mypy;
                 tmpLaser.profile_time.profile="python";
             }
         } else {
-            ifile.extract("int_params",tmpLaser.profile_time.int_params ,"Laser",n_laser);
-            ifile.extract("double_params",tmpLaser.profile_time.double_params ,"Laser",n_laser);            
+            ifile.extract("int_params",tmpLaser.profile_time.int_params ,"Laser",ilaser);
+            ifile.extract("double_params",tmpLaser.profile_time.double_params ,"Laser",ilaser);            
         }
         
         
         // laser transverse-profile & associated parameters
-        ifile.extract("transv_profile",tmpLaser.profile_transv.profile ,"Laser",n_laser);
+        ifile.extract("transv_profile",tmpLaser.profile_transv.profile ,"Laser",ilaser);
         if (tmpLaser.profile_transv.profile.empty()) {
-            PyObject *mypy = ifile.extract_py("transv_profile","Laser",n_laser);
+            PyObject *mypy = ifile.extract_py("transv_profile","Laser",ilaser);
             if (mypy && PyCallable_Check(mypy)) {
                 tmpLaser.profile_transv.py_profile=mypy;
                 tmpLaser.profile_transv.profile="python";
             }
 
         } 
-        ifile.extract("int_params_transv",tmpLaser.profile_transv.int_params ,"Laser",n_laser);
-        ifile.extract("double_params_transv",tmpLaser.profile_transv.double_params ,"Laser",n_laser);
+        ifile.extract("int_params_transv",tmpLaser.profile_transv.int_params ,"Laser",ilaser);
+        ifile.extract("double_params_transv",tmpLaser.profile_transv.double_params ,"Laser",ilaser);
         
         
-        bool delayExists = ifile.extract("delay",tmpLaser.delay ,"Laser",n_laser);
+        bool delayExists = ifile.extract("delay",tmpLaser.delay ,"Laser",ilaser);
         
         // -----------------------------------------------------------------
         // normalization (from wavelength-related units to normalized units)
@@ -94,7 +94,7 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
         if ( (tmpLaser.boxSide=="west") && ((tmpLaser.angle!=0) || (tmpLaser.isFocused)) ){
             
             if ( (tmpLaser.profile_transv.int_params.size()==0) ) {
-                WARNING("A default cut-off (3 sigma) is applied on laser " << n_laser << " transverse profile");
+                WARNING("A default cut-off (3 sigma) is applied on laser " << ilaser << " transverse profile");
                 tmpLaser.profile_transv.int_params.resize(1);
                 tmpLaser.profile_transv.int_params[0] = 3;
             }
@@ -113,26 +113,25 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
                 // computing the entering point of the laser & delay
                 if (theta<0) {
                     double ylas_max = ylas + waist*sqrt(1.0+pow(tan(theta),2));
-                    if (ylas_max > params.sim_length[1]) WARNING("Possible problem (simulation box size) with laser " << n_laser);
+                    if (ylas_max > params.sim_length[1]) WARNING("Possible problem (simulation box size) with laser " << ilaser);
                     tmpLaser.delay = -ylas_max * sin(theta);
                 } else {
                     double ylas_min = ylas - waist*sqrt(1.0+pow(tan(theta),2));
-                    if (ylas_min < 0.0) WARNING("Possible problem (simulation box size) with laser " << n_laser);
+                    if (ylas_min < 0.0) WARNING("Possible problem (simulation box size) with laser " << ilaser);
                     tmpLaser.delay = -ylas_min * sin(theta);
                 }
                 // send a warning if delay is introduced
                 if (tmpLaser.delay!=0)
-                    WARNING("Introduction of a time-delay: " << tmpLaser.delay/params.conv_fac << " (in input units) on laser " << n_laser);
+                    WARNING("Introduction of a time-delay: " << tmpLaser.delay/params.conv_fac << " (in input units) on laser " << ilaser);
             }
             
             if ( ((tmpLaser.angle!=0) || (tmpLaser.isFocused)) && (tmpLaser.profile_transv.profile!="focused") ) {
-                WARNING("Laser "<<n_laser<<" transv_profile redefined as focused (Gaussian) and delta = "<<tmpLaser.delta<< " ignored");
+                WARNING("Laser "<<ilaser<<" transv_profile redefined as focused (Gaussian) and delta = "<<tmpLaser.delta<< " ignored");
                 tmpLaser.profile_transv.profile = "focused";
             }
         }//test on laser focus/angle
         
         laser_param.push_back(tmpLaser);
-        n_laser++;
     }
     
     // -------------------------------------

@@ -11,9 +11,8 @@ geometry(params.geometry)
     // -----------------
     // ExtFields properties
     // -----------------
-    int n_extfield=0;
-    while (ifile.existComponent("ExtField",n_extfield)) {
-        
+    unsigned int numExtFields=ifile.nComponents("ExtField");
+    for (unsigned int n_extfield = 0; n_extfield < numExtFields; n_extfield++) {
         ExtFieldStructure tmpExtField;
         ifile.extract("field",tmpExtField.fields,"ExtField",n_extfield);
         ifile.extract("profile",tmpExtField.profile,"ExtField",n_extfield);
@@ -41,7 +40,6 @@ geometry(params.geometry)
                       bind1st(multiplies<double>(),params.conv_fac));
         }
         structs.push_back(tmpExtField);
-        n_extfield++;
     }
     
 }

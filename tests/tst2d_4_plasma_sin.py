@@ -1,10 +1,3 @@
-# ---------------------------------------------
-# SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
-# ---------------------------------------------
-# Remember: never override the following names:
-#           SmileiComponent, Species, Laser, Collisions, DiagProbe, DiagParticles,
-#           DiagScalar, DiagPhase or ExtField
-
 import math 
 
 
@@ -15,22 +8,21 @@ part_per_cell=100
 t_sim=40
 res=20
 
-position=8
-thickness=0.5
+position=9
+thickness=1
 
 
 density=10
 
-dx, dy = 10, 25
+dx, dy = 15, 40
 
 twopi=2*math.pi
 
 wavelength=0.2
 
-import numpy as np
-def my_real_func(codex,codey):
-    x=codex/twopi
-    return 1 if x>position and x<position+thickness else 0
+def my_real_func(codex,codey, fwhm=1):
+    x, y=codex/twopi, codey/twopi
+    return 1 if x>position and x< position+thickness and y>10 and y<30 else 0
 
 
 # 
@@ -54,6 +46,11 @@ def my_real_func(codex,codey):
 
 
 output_script='my_test.py'
+
+
+# ---------------------------------------------
+# SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
+# ---------------------------------------------
 
 # sim_units: normalisation units for the input data
 #            it is used only in the input data & log file
@@ -87,8 +84,8 @@ sim_time = t_sim
 # res_space: spatial resolution (vector of integer = number of cells in one normalization wavelength )
 # sim_length: length of the simulation in units of the normalization wavelength 
 #
-res_space  = [res, res]
-sim_length = [dx,  dy]
+res_space  = (res, res)  
+sim_length = (dx,  dy)
 
 bc_em_type_long  = 'silver-muller'
 bc_em_type_trans = 'periodic'
@@ -97,66 +94,65 @@ bc_em_type_trans = 'periodic'
 # this is used to randomize the random number generator
 random_seed = 0
 
-fieldDump_every = 10
-fieldsToDump = ["Ey","Rho_electron","Rho_ion"]
+fieldDump_every = 5
+fieldsToDump = ("Bz", "Rho_electron")
 
 print_every = 10
 
 
-myspec1=Species()
-myspec1.dens_profile = my_real_func
-myspec1.vacuum_length   = ((dx-thickness)/2.0,  dy/4.0) 
-myspec1.dens_length_x   = thickness
-myspec1.dens_length_y   = dy/2
-myspec1.dens_length_x   = [thickness]
-myspec1.dens_length_y   = [dy/2]
-myspec1.species_type = 'ion'
-myspec1.initPosition_type = 'random'
-myspec1.initMomentum_type = 'cold'
-myspec1.ionization_model = 'none'
-myspec1.n_part_per_cell = part_per_cell
-myspec1.c_part_max = 1.0
-myspec1.mass = 1836.0
-myspec1.charge = 1
-myspec1.density = density
-myspec1.mean_velocity = 0.0
-myspec1.temperature = 0.0
-myspec1.dynamics_type = 'norm'
-myspec1.time_frozen = 0.0
-myspec1.radiating = False
-myspec1.bc_part_type_west  = 'refl'
-myspec1.bc_part_type_east  = 'refl'
-myspec1.bc_part_type_south = 'none'
-myspec1.bc_part_type_north = 'none'
-myspec1.mvel_x_profile='constant'
-myspec1.mvel_y_profile='constant'
-myspec1.mvel_z_profile='constant'
+Species(
+    dens_profile = lambda x, y: my_real_func(x,y,10),
+    vacuum_length   = ((dx-thickness)/2.0,  dy/4.0) ,
+    dens_length_x   = thickness,
+    dens_length_y   = dy/2,
+    species_type = 'ion',
+    initPosition_type = 'random',
+    initMomentum_type = 'cold',
+    ionization_model = 'none',
+    n_part_per_cell = part_per_cell,
+    c_part_max = 1.0,
+    mass = 1836.0,
+    charge = 1,
+    density = density,
+    mean_velocity = 0.0,
+    temperature = 0.0,
+    dynamics_type = 'norm',
+    time_frozen = t_sim,
+    radiating = False,
+    bc_part_type_west  = 'refl',
+    bc_part_type_east  = 'refl',
+    bc_part_type_south = 'none',
+    bc_part_type_north = 'none',
+    mvel_x_profile='constant',
+    mvel_y_profile='constant',
+    mvel_z_profile='constant'
+)
 
 Species(
-	dens_profile = myspec1.dens_profile,
-	vacuum_length   = [(dx-thickness)/2.0,  dy/4, 0] ,
-	dens_length_x   = [thickness] ,
-	dens_length_y   = [dy/2],
-	species_type = 'electron' ,
-	initPosition_type = 'random' ,
-	initMomentum_type = 'maxj' ,
-	n_part_per_cell = part_per_cell ,
-	c_part_max=1.0 ,
-	mass = 1.0 ,
-	charge = -1 ,
-	density = density ,
-	mean_velocity = 0.0 ,
-	mvel_x_profile='constant',
-	mvel_y_profile='constant',
-	mvel_z_profile='constant',
-	temperature = 0.0001 ,
-	dynamics_type = 'norm' ,
-	time_frozen = 0.0 ,
-	radiating = False ,
-	bc_part_type_west  = 'refl' ,
-	bc_part_type_east  = 'refl' ,
-	bc_part_type_south = 'none' ,
-	bc_part_type_north = 'none'
+    dens_profile = lambda x, y: my_real_func(x,y,10),
+    vacuum_length   = ((dx-thickness)/2.0,  dy/4,0) ,
+    dens_length_x   = thickness ,
+    dens_length_y   = dy/2,
+    species_type = 'electron' ,
+    initPosition_type = 'random' ,
+    initMomentum_type = 'maxj' ,
+    n_part_per_cell = part_per_cell ,
+    c_part_max=1.0 ,
+    mass = 1.0 ,
+    charge = -1 ,
+    density = density ,
+    mean_velocity = 0.0 ,
+    mvel_x_profile='constant',
+    mvel_y_profile='constant',
+    mvel_z_profile='constant',
+    temperature = 0.0001 ,
+    dynamics_type = 'norm' ,
+    time_frozen = 0.0 ,
+    radiating = False ,
+    bc_part_type_west  = 'refl' ,
+    bc_part_type_east  = 'refl' ,
+    bc_part_type_south = 'none' ,
+    bc_part_type_north = 'none'
 )
 
 
@@ -178,13 +174,13 @@ def my_func_laser_profile(t,y):
 Laser(
     boxSide = 'west' ,
     a0=10 ,
-    focus=[position,  dy/2.] ,
+    focus=(position,  dy/2.) ,
     angle=30 ,
     delta=0.0 ,
     time_profile = 'sin2' ,
-    double_params = 5 ,
+    double_params = 2 ,
     transv_profile = my_func_laser_profile ,
-    double_params_transv = 2.0 
+    double_params_transv = 1.0 
 )
 
 

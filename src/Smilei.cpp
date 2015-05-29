@@ -97,7 +97,7 @@ int main (int argc, char* argv[])
     SmileiMPI* smpi = SmileiMPIFactory::create(params, smpiData);
     // Create diagnostics
     Diagnostic Diags(params, input_data, smpi);
-    //Create mpi envirenement 
+    //Create mpi environment 
     SmileiIO*  sio  = SmileiIOFactory::create(params, Diags, smpi);
     
     

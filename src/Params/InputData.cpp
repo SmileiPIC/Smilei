@@ -127,18 +127,13 @@ vector<PyObject*> InputData::extract_pyVec(string name, string component, int nC
     return retvec;
 }
 
-bool InputData::existComponent(std::string component, unsigned int nComponent) {
-    if (component.find(" ")!= string::npos) {
-        ERROR("[" << component << "] has whitespace inside: please fix the code");
-    }
+int InputData::nComponents(std::string componentName) {
     // Get the selected component (e.g. "Species" or "Laser")
-    PyObject *py_obj = PyObject_GetAttrString(py_namelist,component.c_str());
+    PyObject *py_obj = PyObject_GetAttrString(py_namelist,componentName.c_str());
     PyTools::checkPyError();
-    if (py_obj) {
-        int len = PyObject_Length(py_obj);
-        if (len > nComponent) return true;
-    }
-    return false;
+    int retval = PyObject_Length(py_obj);
+    HEREIAM(py_obj << " " << retval);
+    return retval;
 }
 
 

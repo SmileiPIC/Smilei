@@ -18,8 +18,8 @@ vector<Collisions*> CollisionsFactory::create(PicParams& params, InputData &ifil
     ostringstream mystream;
     
     // Loop over each binary collisions group and parse info
-    int n_collisions = 0;
-    while (ifile.existComponent("Collisions",n_collisions)) {
+    int numcollisions=ifile.nComponents("Collisions");
+    for (int n_collisions = 0; n_collisions < numcollisions; n_collisions++) {
         
         MESSAGE("Parameters for collisions #" << n_collisions << " :");
         
@@ -70,11 +70,11 @@ vector<Collisions*> CollisionsFactory::create(PicParams& params, InputData &ifil
         
         // Add new Collisions objects to vector
         vecCollisions.push_back( new Collisions(params,n_collisions,sgroup1,sgroup2,clog,intra) );
-        n_collisions++;
+
     }
     
     // Needs wavelength_SI to be defined
-    if (n_collisions > 0)
+    if (numcollisions > 0)
         if (params.wavelength_SI <= 0.)
             ERROR("The parameter `wavelength_SI` needs to be defined and positive in order to compute collisions");
     

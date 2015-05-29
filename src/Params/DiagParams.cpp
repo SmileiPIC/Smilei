@@ -15,14 +15,6 @@
 using namespace std;
 
 
-inline double convertToDouble(string &s)
-{
-    std::istringstream i(s);
-    double x;
-    if (!(i >> x)) ERROR("Cannot interpret " << s << " as a number");
-    return x;
-}
-
 DiagParams::DiagParams(Diagnostic* diags, PicParams& params, InputData &ifile, SmileiMPI *smpi) {
 
     bool ok=false;
@@ -100,8 +92,8 @@ void DiagParams::initProbes(Diagnostic* diags, PicParams& params, InputData &ifi
     bool ok;
     
     // loop all "diagnostic probe" groups in the input file
-    unsigned int n_probe=0;
-    while (ifile.existComponent("DiagProbe",n_probe)) {
+    unsigned  numProbes=ifile.nComponents("DiagProbe");
+    for (unsigned int n_probe = 0; n_probe < numProbes; n_probe++) {
         
         if (n_probe==0) {
             // Create the HDF5 file that will contain all the probes
@@ -263,8 +255,8 @@ void DiagParams::initProbes(Diagnostic* diags, PicParams& params, InputData &ifi
         
         // Create an array to hold the positions of local probe particles
         double posArray [nPart_local][ndim];
-        for (int ipb=0 ; ipb<nPart_local ; ipb++)
-            for (int idim=0 ; idim<ndim  ; idim++)
+        for (unsigned int ipb=0 ; ipb<nPart_local ; ipb++)
+            for (unsigned int idim=0 ; idim<ndim  ; idim++)
                 posArray[ipb][idim] = probeParticles.position(idim,ipb);
         
         // Add array "positions" into the current HDF5 group
@@ -291,21 +283,20 @@ void DiagParams::initProbes(Diagnostic* diags, PicParams& params, InputData &ifi
         // Close current group
         H5Gclose(did);
         
-        n_probe++;
     }
 }
 
 void DiagParams::initPhases(Diagnostic* diags, PicParams& params, InputData &ifile, SmileiMPI *smpi) {
 
-    int n_phase=0;
     //! create the particle structure
     diags->phases.ndim=params.nDim_particle;    
     diags->phases.my_part.pos.resize(params.nDim_particle);
     diags->phases.my_part.mom.resize(3);
     
-    
     bool ok;
-    while (ifile.existComponent("DiagPhase",n_phase)) {
+    
+    unsigned int numPhases=ifile.nComponents("DiagPhase");
+    for (unsigned int n_phase = 0; n_phase < numPhases; n_phase++) {
         
         phaseStructure my_phase;
 
@@ -544,14 +535,11 @@ void DiagParams::initPhases(Diagnostic* diags, PicParams& params, InputData &ifi
         if (smpi->isMaster() ) {
             H5Gclose(gidParent);
         }
-                
-        n_phase++;
     }
 }
 
 
 void DiagParams::initParticles(Diagnostic* diags, PicParams& params, InputData &ifile) {
-    int n_diag_particles=0;
     unsigned int every, time_average;
     string output;
     vector<string> species;
@@ -562,8 +550,9 @@ void DiagParams::initParticles(Diagnostic* diags, PicParams& params, InputData &
     vector<PyObject*> allAxes;
     
     bool ok;
-    while (ifile.existComponent("DiagParticles",n_diag_particles)) {
-        
+    
+    unsigned int numDiagParticles=ifile.nComponents("DiagParticles");
+    for (unsigned int n_diag_particles = 0; n_diag_particles < numDiagParticles; n_diag_particles++) {
         
         // get parameter "output" that determines the quantity to sum in the output array
         output = "";
@@ -607,7 +596,7 @@ void DiagParams::initParticles(Diagnostic* diags, PicParams& params, InputData &
             PyObject *oneAxis=allAxes[iaxis];
             if (PyTuple_Check(oneAxis) || PyList_Check(oneAxis)) {
                 PyObject* seq = PySequence_Fast(oneAxis, "expected a sequence");
-                int lenAxisArgs=PySequence_Size(seq);
+                unsigned int lenAxisArgs=PySequence_Size(seq);
                 if (lenAxisArgs<4)
                     ERROR("Diagnotic Particles #" << n_diag_particles << ": axis #" << iaxis << " contain at least 4 arguments");
                 
@@ -666,8 +655,6 @@ void DiagParams::initParticles(Diagnostic* diags, PicParams& params, InputData &
         tmpDiagParticles = new DiagnosticParticles(n_diag_particles, output, every, time_average, species_numbers, tmpAxes);
         // add this object to the list
         diags->vecDiagnosticParticles.push_back(tmpDiagParticles);
-        // next diagnostic
-        n_diag_particles++;
     }
 }
 

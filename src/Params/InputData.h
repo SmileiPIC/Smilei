@@ -62,8 +62,8 @@ public:
         return false;
     }
     
-    //! return true if the nth component exists
-    bool existComponent(std::string componentName, unsigned int nComponent=0);
+    //! return the numebr of components (see pyinit.py)
+    int nComponents(std::string componentName);
     
 private:
     //! passing named command to python
