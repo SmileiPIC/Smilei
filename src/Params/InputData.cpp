@@ -80,9 +80,8 @@ void InputData::pyRunScript(string command, string name) {
 PyObject* InputData::extract_py(string name, string component, int nComponent) {    
 //    DEBUG("[" << name << "] [" << component << "]");
     if (name.find(" ")!= string::npos || component.find(" ")!= string::npos) {
-        WARNING("asking for [" << name << "] [" << component << "] : it has white inside: please fix the code");
+        WARNING("asking for [" << name << "] [" << component << "] : it has whitespace inside: please fix the code");
     }
-    
     PyObject *py_obj=py_namelist;
     // If component requested
     if (!component.empty()) {
@@ -91,22 +90,12 @@ PyObject* InputData::extract_py(string name, string component, int nComponent) {
         PyTools::checkPyError();
         // Error if not found
         if (!py_obj) ERROR("Component "<<component<<" not found in namelist");
-        // Get the "list" that contains the list of the objects in this component
-        py_obj = PyObject_GetAttrString(py_obj,const_cast<char *>("list"));
-        // If list successfully found
-        if (PyList_Check(py_obj) || PyTuple_Check(py_obj)) {
-            int len = PySequence_Size(py_obj);
-            if (len > 0) { 
-                if (len >= nComponent) {
-                    PyObject* seq = PySequence_Fast(py_obj, "expected a sequence");
-                    py_obj = PySequence_Fast_GET_ITEM(seq, nComponent);
-                    Py_DECREF(seq);
-                } else {
-                    ERROR("component " << component << " is not big enough");
-                }
-            }
+        // If successfully found
+        int len = PyObject_Length(py_obj);
+        if (len > nComponent) {
+            py_obj = PySequence_GetItem(py_obj, nComponent);
         } else {
-            py_obj=NULL;
+            ERROR("Requested " << component << " #" <<nComponent<< ", but only "<<len<<" available");
         }
     }
     PyObject *py_return=PyObject_GetAttrString(py_obj,name.c_str());
@@ -146,15 +135,8 @@ bool InputData::existComponent(std::string component, unsigned int nComponent) {
     PyObject *py_obj = PyObject_GetAttrString(py_namelist,component.c_str());
     PyTools::checkPyError();
     if (py_obj) {
-        // Get the "list" that contains the list of the objects in this component
-        py_obj = PyObject_GetAttrString(py_obj,const_cast<char *>("list"));
-        if (py_obj) {
-            if (PyList_Check(py_obj)) {
-                if (PySequence_Size(py_obj) > nComponent) {
-                    return true;
-                }
-            }
-        }
+        int len = PyObject_Length(py_obj);
+        if (len > nComponent) return true;
     }
     return false;
 }
