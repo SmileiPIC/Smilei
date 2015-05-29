@@ -55,12 +55,9 @@ def FrankelStoppingPower(E0,T):
 for path in ["Stopping_power1","Stopping_power2","Stopping_power3"]:
 
 	sim = Smilei(path)
-	species = {}
-	for s in sim.namelist.Species.list:
-		species.update({s.species_type:s})
-	temperature_electron = np.double(species["backgroundelectron"].temperature)
-	density_electron     = np.double(species["backgroundelectron"].density)
-	coulomb_log          = np.double(sim.namelist.Collisions(0).coulomb_log)
+	temperature_electron = np.double(sim.namelist.Species["backgroundelectron"].temperature)
+	density_electron     = np.double(sim.namelist.Species["backgroundelectron"].density)
+	coulomb_log          = np.double(sim.namelist.Collisions[0].coulomb_log)
 	dt                   = np.double(sim.namelist.timestep)
 	
 	re = 2.8179403267e-15 # meters

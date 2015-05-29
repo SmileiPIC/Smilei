@@ -6,11 +6,8 @@ from scipy.special import erf as erf
 path = "temperature_isotropization1"
 
 sim = Smilei(path)
-species = {}
-for s in sim.namelist.Species.list:
-	species.update({s.species_type:s})
-density_electron     = np.double(species["electron1"].density)
-coulomb_log          = np.double(sim.namelist.Collisions(0).coulomb_log)
+density_electron     = np.double(sim.namelist.Species["electron1"].density)
+coulomb_log          = np.double(sim.namelist.Collisions[0].coulomb_log)
 dt                   = np.double(sim.namelist.timestep)
 
 re_ = 2.8179403267e-15 # meters

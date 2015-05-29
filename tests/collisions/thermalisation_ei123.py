@@ -7,16 +7,13 @@ from scipy.special import erf as erf
 for path in ["thermalisation_ei1","thermalisation_ei2","thermalisation_ei3"]:
 
 	sim = Smilei(path)
-	species = {}
-	for s in sim.namelist.Species.list:
-		species.update({s.species_type:s})
-	mass_ion             = np.double(species["ion1"].mass)
-	charge_ion           = np.double(species["ion1"].charge)
-	density_ion          = np.double(species["ion1"].density)/charge_ion
-	temperature_ion      = np.double(species["ion1"].temperature)
-	velocity_electron    = np.double(species["electron1"].mean_velocity)[0]
-	temperature_electron = np.double(species["electron1"].temperature)
-	coulomb_log          = np.double(sim.namelist.Collisions(0).coulomb_log)
+	mass_ion             = np.double(sim.namelist.Species["ion1"].mass)
+	charge_ion           = np.double(sim.namelist.Species["ion1"].charge)
+	density_ion          = np.double(sim.namelist.Species["ion1"].density)/charge_ion
+	temperature_ion      = np.double(sim.namelist.Species["ion1"].temperature)
+	velocity_electron    = np.double(sim.namelist.Species["electron1"].mean_velocity)[0]
+	temperature_electron = np.double(sim.namelist.Species["electron1"].temperature)
+	coulomb_log          = np.double(sim.namelist.Collisions[0].coulomb_log)
 	dt                   = np.double(sim.namelist.timestep)
 	
 	re_ = 2.8179403267e-15 # meters

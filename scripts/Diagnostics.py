@@ -196,6 +196,11 @@ class Smilei(object):
 		for key, value in namespace.iteritems(): # transfer all variables to this object
 			if key[0:2]=="__": continue # skip builtins
 			setattr(self.namelist, key, value)
+		# Prevent creating new components (by mistake)
+		def noNewComponents(cls, *args, **kwargs):
+			print "Please do not create a new "+cls.__name__
+			return None
+		self.namelist.SmileiComponent.__new__ = staticmethod(noNewComponents)
 		
 		self.valid = True
 	
