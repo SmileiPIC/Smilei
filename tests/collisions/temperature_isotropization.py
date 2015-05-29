@@ -7,11 +7,11 @@ path = "temperature_isotropization1"
 
 sim = Smilei(path)
 species = {}
-for s in sim.namelist["Species"].list:
+for s in sim.namelist.Species.list:
 	species.update({s.species_type:s})
 density_electron     = np.double(species["electron1"].density)
-coulomb_log          = np.double(sim.namelist["Collisions"].list[0].coulomb_log)
-dt                   = np.double(sim.namelist["timestep"])
+coulomb_log          = np.double(sim.namelist.Collisions(0).coulomb_log)
+dt                   = np.double(sim.namelist.timestep)
 
 re_ = 2.8179403267e-15 # meters
 wavelength = 1e-6 # meters

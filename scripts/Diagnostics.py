@@ -188,9 +188,14 @@ class Smilei(object):
 		if len(self.glob(results_path+"/smilei.py"))==0:
 			print "Could not find an input file in directory "+results_path
 			return
-		# Execute the python namelist
-		self.namelist={};
-		execfile(results_path+'/smilei.py',self.namelist)
+		# Fetch the python namelist
+		namespace={};
+		execfile(results_path+'/smilei.py',namespace) # execute the namelist into an empty namespace
+		class Namelist: pass # empty class to store the namelist variables
+		self.namelist = Namelist() # create new empty object
+		for key, value in namespace.iteritems(): # transfer all variables to this object
+			if key[0:2]=="__": continue # skip builtins
+			setattr(self.namelist, key, value)
 		
 		self.valid = True
 	
@@ -274,6 +279,7 @@ class Diagnostic(object):
 		self.glob = self.Smilei.glob
 		self.re = self.Smilei.re
 		self.plt = self.Smilei.plt
+		self.namelist = self.Smilei.namelist
 		self.init(*args, **kwargs)
 
 	# When no action is performed on the object, this is what appears
@@ -285,13 +291,13 @@ class Diagnostic(object):
 	# Various methods to extract stuff from the input file
 	def read_sim_units(self):
 		try:
-			return self.Smilei.namelist["sim_units"]
+			return self.namelist.sim_units
 		except:
 			print "Could not extract 'sim_units' from the input file"
 			raise
 	def read_ndim(self):
 		try:
-			dim = self.Smilei.namelist["dim"]
+			dim = self.namelist.dim
 			ndim = int(dim[0])
 		except:
 			print "Could not extract 'dim' from the input file"
@@ -302,17 +308,17 @@ class Diagnostic(object):
 		return ndim
 	def read_ncels_cell_length(self, ndim, sim_units):
 		try:
-			sim_length = self.np.double( self.Smilei.namelist["sim_length"] )
+			sim_length = self.np.double( self.namelist.sim_length )
 			if sim_length.size==0: raise
 		except:
 			print "Could not extract 'sim_length' from the input file"
 			raise
 		try:
-			cell_length = self.np.double( self.Smilei.namelist["cell_length"] )
+			cell_length = self.np.double( self.namelist.cell_length )
 			if cell_length.size==0: raise
 		except:
 			try:
-				res_space = self.np.double( self.Smilei.namelist["res_space"] )
+				res_space = self.np.double( self.namelist.res_space )
 				cell_length = 1./res_space
 			except:
 				print "Could not extract 'cell_length' or 'res_space' from the input file"
@@ -343,10 +349,10 @@ class Diagnostic(object):
 		return ncels, cell_length
 	def read_timestep(self,sim_units):
 		try:
-			timestep = self.np.double(self.Smilei.namelist["timestep"])
+			timestep = self.np.double(self.namelist.timestep)
 		except:
 			try:
-				res_time = self.np.double(self.Smilei.namelist["res_time"])
+				res_time = self.np.double(self.namelist.res_time)
 				timestep = 1./res_time
 			except:
 				print "Could not extract 'timestep' or 'res_time' from the input file"
@@ -355,7 +361,7 @@ class Diagnostic(object):
 		return timestep
 	def read_wavelength_SI(self):
 		try:
-			wavelength_SI = self.np.double( self.Smilei.namelist["wavelength_SI"] )
+			wavelength_SI = self.np.double( self.namelist.wavelength_SI )
 		except:
 			print "Could not extract 'wavelength_SI' from the input file"
 			raise
