@@ -19,3 +19,14 @@ def smilei_check():
     
     
 smilei_check()
+
+
+def keep_python_running():
+    retval=True
+    for las in Laser:
+        for prof in (las.time_profile, las.transv_profile):
+            if callable(prof):
+                print "Don't stop me now! I'm having such a good time... "
+                retval=False
+    return retval
+        

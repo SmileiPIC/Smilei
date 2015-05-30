@@ -77,7 +77,7 @@ int main (int argc, char* argv[])
     
     // Read the namelists file (no check!)
     InputData input_data(smpiData,namelists);
-        
+    
     MESSAGE("----------------------------------------------");
     MESSAGE("Input data info");
     MESSAGE("----------------------------------------------");
@@ -112,7 +112,7 @@ int main (int argc, char* argv[])
 #else
     if (smpi->isMaster()) MESSAGE("\tOpenMP : Disabled");
 #endif
-        
+    
     // -------------------------------------------
     // Declaration of the main objects & operators
     // -------------------------------------------
@@ -220,6 +220,15 @@ int main (int argc, char* argv[])
         sio->writePlasma( vecSpecies, 0., smpi );
     }
     
+
+    // ------------------------------------------------------------------------
+    // check here if we can close the python interpreter
+    // ------------------------------------------------------------------------
+    MESSAGE("----------------------------------------------");
+    MESSAGE("Cleaning up python runtime environement");
+    MESSAGE("----------------------------------------------");
+    input_data.cleanup();
+    
     
     // ------------------------------------------------------------------------
     // Initialize the simulation times time_prim at n=0 and time_dual at n=+1/2
@@ -270,13 +279,13 @@ int main (int argc, char* argv[])
                     << "   Epart = "        << scientific << setprecision(4)<< Diags.getScalar("Eparticles")
                     << "   Elost = "        << scientific << setprecision(4)<< Diags.getScalar("Elost")
                     << "   E_bal(%) = " << setw(6) << fixed << setprecision(2)   << 100.0*Diags.getScalar("Ebal_norm") );
-	    if (simWindow) 
-		MESSAGE(1, "\t\t MW Elost = " << scientific << setprecision(4)<< Diags.getScalar("Emw_lost")
-			<< "     MW Eadd  = " << scientific << setprecision(4)<< Diags.getScalar("Emw_part")
-			<< "     MW Elost (fields) = " << scientific << setprecision(4)<< Diags.getScalar("Emw_lost_fields")
-			<< setw(6) << fixed << setprecision(2) );
-	}
-
+            if (simWindow) 
+                MESSAGE(1, "\t\t MW Elost = " << scientific << setprecision(4)<< Diags.getScalar("Emw_lost")
+                        << "     MW Eadd  = " << scientific << setprecision(4)<< Diags.getScalar("Emw_part")
+                        << "     MW Elost (fields) = " << scientific << setprecision(4)<< Diags.getScalar("Emw_lost_fields")
+                        << setw(6) << fixed << setprecision(2) );
+        }
+        
         // put density and currents to 0 + save former density
         // ---------------------------------------------------
         EMfields->restartRhoJ();
@@ -321,7 +330,7 @@ int main (int argc, char* argv[])
             }
         }
         timer[1].update();
-                
+        
         if( time_dual > params.time_fields_frozen ) {
             
             //!\todo To simplify : sum global and per species densities

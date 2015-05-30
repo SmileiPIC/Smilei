@@ -4,9 +4,9 @@ import math
 import sys
 print sys.path
 
-part_per_cell=100
+part_per_cell=1
 t_sim=40
-res=20
+res=10
 
 position=9
 thickness=1
@@ -171,6 +171,13 @@ def my_func_laser_profile(t,y):
 # time_profile: string defining the time profile
 # double_params: vector of real parameters used by the different time-profiles
 #
+
+import numpy as np
+large_memory_variable=np.arange(0,200000000,0.9)
+
+def cleanup():
+    print "cleanup"
+
 Laser(
     boxSide = 'west' ,
     a0=10 ,
@@ -179,7 +186,7 @@ Laser(
     delta=0.0 ,
     time_profile = 'sin2' ,
     double_params = 2 ,
-    transv_profile = my_func_laser_profile ,
+    transv_profile = 'focused' ,
     double_params_transv = 1.0 
 )
 

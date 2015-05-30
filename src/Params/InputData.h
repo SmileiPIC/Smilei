@@ -62,8 +62,11 @@ public:
         return false;
     }
     
-    //! return the numebr of components (see pyinit.py)
+    //! return the number of components (see pyinit.py)
     int nComponents(std::string componentName);
+    
+    //! check if python can be closed (e.g. there is no laser python profile)
+    void cleanup();
     
 private:
     //! passing named command to python
