@@ -54,15 +54,17 @@ void ElectroMagnBC1D_SM::apply(ElectroMagn* EMfields, double time_dual, SmileiMP
     double byL=0.0, bzL=0.0, byR=0.0, bzR=0.0;
 
     for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
-
+        double wt = laser_[ilaser]->omega0_ * time_dual
+        * ( 1.0 + laser_[ilaser]->tchirp_*laser_[ilaser]->omega0_*time_dual );
         if (laser_[ilaser]->laser_struct.boxSide == "west") {
             // Incident field (left boundary)
-            byL += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
-            bzL += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
+            byL += laser_[ilaser]->a0_delta_y_ * sin(wt) * laser_[ilaser]->time_profile(time_dual);
+            bzL += laser_[ilaser]->a0_delta_z_ * cos(wt) * laser_[ilaser]->time_profile(time_dual);
         } else if (laser_[ilaser]->laser_struct.boxSide == "east") {
             // Incident field (right boundary)
-            byR += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
-            bzR += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
+            byR += laser_[ilaser]->a0_delta_y_ * sin(wt) * laser_[ilaser]->time_profile(time_dual);
+            bzR += laser_[ilaser]->a0_delta_z_ * cos(wt) * laser_[ilaser]->time_profile(time_dual);
+           
         } else {
             ERROR("Angle not allowed for 1D/2D laser pulse " << ilaser);
         }

@@ -60,6 +60,7 @@ random_seed = 0
  
 laser
     a0=1.0
+    tchirp= -0.5
     boxSide = west 
     angle=0
     delta=1.0              
@@ -73,25 +74,11 @@ end
 
 print_every = 101
 
-diagnostic scalar
-    every = 1
-end
- 
- 
 diagnostic probe
-    every = 1
-    pos = 0.0   
-end
- 
-diagnostic probe
-    every = 1;
-    pos = 0.0
-    pos_first = 10.0
-    number = 5
-     
-end
- 
- 
+pos_first=0.0
+pos_second=5.0
+number=5
+end  
 fieldDump_every = 101
  
 # dump_step = 2500
