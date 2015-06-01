@@ -10,6 +10,7 @@
 
 #include "PicParams.h"
 #include "Particles.h"
+#include "tabulatedFunctions.h"
 
 class SmileiMPI;
 
@@ -25,17 +26,17 @@ public:
 
     //! West particles boundary conditions pointers (same prototypes for all conditions)
     //! @see BoundaryConditionType.h for functions that this pointers will target
-    int (*bc_west)  ( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart );
+    int (*bc_west)  ( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart, tabulatedFunctions &tabFcts );
     //! East particles boundary conditions pointers
-    int (*bc_east)  ( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart );
+    int (*bc_east)  ( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart, tabulatedFunctions &tabFcts );
     //! South particles boundary conditions pointers
-    int (*bc_south) ( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart );
+    int (*bc_south) ( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart, tabulatedFunctions &tabFcts );
     //! North particles boundary conditions pointers
-    int (*bc_north) ( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart );
+    int (*bc_north) ( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart, tabulatedFunctions &tabFcts );
     //! Bottom particles boundary conditions pointers
-    int (*bc_bottom)( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart );
+    int (*bc_bottom)( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart, tabulatedFunctions &tabFcts );
     //! Up particles boundary conditions pointers
-    int (*bc_up)    ( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart );
+    int (*bc_up)    ( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart, tabulatedFunctions &tabFcts );
 
     //! Method which applies particles boundary conditions.
     //! If the MPI process is not a border process, particles will be flagged as an exchange particle returning 0
@@ -49,13 +50,13 @@ public:
         if ( particles.position(0, ipart) <  x_min ) {
             if (bc_west==NULL) keep_part = 0;
             else {
-                keep_part = (*bc_west)( particles, ipart, 0, 2.*x_min, params,nrj_iPart );
+                keep_part = (*bc_west)( particles, ipart, 0, 2.*x_min, params,nrj_iPart, tabFcts );
             }
         }
         else if ( particles.position(0, ipart) >= x_max ) {
             if (bc_east==NULL) keep_part = 0;
             else {
-                keep_part = (*bc_east)( particles, ipart, 0, 2.*x_max, params,nrj_iPart );
+                keep_part = (*bc_east)( particles, ipart, 0, 2.*x_max, params,nrj_iPart, tabFcts );
             }
         }
         if (nDim_particle >= 2) {
@@ -63,13 +64,13 @@ public:
             if ( particles.position(1, ipart) <  y_min ) {
 		if (bc_south==NULL) keep_part = 0;
                 else {
-                    keep_part *= (*bc_south)( particles, ipart, 1, 2.*y_min, params,nrj_iPart );
+                    keep_part *= (*bc_south)( particles, ipart, 1, 2.*y_min, params,nrj_iPart, tabFcts );
                 }
             }
             else if ( particles.position(1, ipart) >= y_max ) {
 		if (bc_north==NULL) keep_part = 0;
                 else {
-                    keep_part *= (*bc_north)( particles, ipart, 1, 2.*y_max, params,nrj_iPart );
+                    keep_part *= (*bc_north)( particles, ipart, 1, 2.*y_max, params,nrj_iPart, tabFcts );
                 }
             }
 
@@ -78,13 +79,13 @@ public:
                 if ( particles.position(2, ipart) <  z_min ) {
                     if (bc_bottom==NULL) keep_part = 0;
                     else {
-                        keep_part *= (*bc_bottom)( particles, ipart, 2, 2.*z_min, params,nrj_iPart );
+                        keep_part *= (*bc_bottom)( particles, ipart, 2, 2.*z_min, params,nrj_iPart, tabFcts );
                     }
                 }
                 else if ( particles.position(2, ipart) >= z_max ) {
                     if (bc_up==NULL) keep_part = 0;
                     else {
-			keep_part *= (*bc_up)( particles, ipart, 2, 2.*z_max, params,nrj_iPart );
+			keep_part *= (*bc_up)( particles, ipart, 2, 2.*z_max, params,nrj_iPart, tabFcts );
                     }
                 }
             } // end if (nDim_particle == 3)
@@ -99,8 +100,8 @@ public:
 
     //! Set the condition window if restart
     inline void updateMvWinLimits( double x_moved ) {
-	x_min += x_moved;
-	x_max += x_moved;
+        x_min += x_moved;
+        x_max += x_moved;
     }
 
 private:
@@ -120,7 +121,10 @@ private:
 
     //! Space dimension of a particle
     int nDim_particle;
-
+    
+    //! tabulated functions
+    tabulatedFunctions tabFcts;
+    
 };
 
 #endif

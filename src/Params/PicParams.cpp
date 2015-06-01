@@ -166,7 +166,7 @@ PicParams::PicParams(InputData &ifile) {
     
     while (ifile.existGroup("species",n_species)) {
         SpeciesStructure tmpSpec;
-        
+
         ifile.extract("species_type",tmpSpec.species_type,"species",0,n_species);
         
         ifile.extract("initPosition_type",tmpSpec.initPosition_type ,"species",0,n_species);
@@ -404,6 +404,21 @@ void PicParams::computeSpecies()
 
     // Loop on all species
     for (unsigned int ispec=0; ispec< species_param.size(); ispec++) {
+        
+        // here I save the dimension of the pb (to use in BoundaryConditionType.h)
+        if (geometry=="1d3v")
+            species_param[ispec].nDim_fields = 1;
+        else if (geometry=="2d3v")
+            species_param[ispec].nDim_fields = 2;
+        else if (geometry=="3d3v")
+            species_param[ispec].nDim_fields = 3;
+        
+        // define thermal velocity as \sqrt{T/m}
+        species_param[ispec].thermalVelocity.resize(3);
+        for (unsigned int i=0; i<3; i++) {
+            species_param[ispec].thermalVelocity[i] = sqrt( species_param[ispec].temperature[i]/species_param[ispec].mass );
+        }
+        
         
         // --------------------------------------
         // Normalizing Species-related quantities

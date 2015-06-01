@@ -24,6 +24,7 @@ struct ProfileSpecies : ProfileStructure {
 //! This structure contains the properties of each species
 // ---------------------------------------------------------------------------------------------------------------------
 struct SpeciesStructure {
+
     //! kind of species possible values: "ion" "eon" "test"
     std::string species_type;
     
@@ -57,6 +58,8 @@ struct SpeciesStructure {
     std::vector<double> mean_velocity; // must be params.nDim_field
     //! temperature [\f$m_e\,c^2\f$ ]
     std::vector<double> temperature;
+    //! thermal velocity [\f$c\f$]
+    std::vector<double> thermalVelocity;
     
     //! dynamics type. Possible values: "Norm" "Radiation Reaction"
     std::string dynamics_type;
@@ -66,6 +69,9 @@ struct SpeciesStructure {
     
     //! logical true if particles radiate
     bool radiating;
+    
+    //! nDim_fields
+    int nDim_fields;
     
     //! Boundary conditions for particules
     std::string bc_part_type_west;
