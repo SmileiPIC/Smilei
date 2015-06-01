@@ -16,6 +16,7 @@
 
 % yellow box for code, inline
 \newcommand{\code}[1]{\colorbox{yellow!15}{\ttfamily #1}}
+\newcommand{\blue}[1]{{\color{blue} #1}}
 
 % yellow box for code, full line
 \usepackage{listings}
@@ -50,6 +51,11 @@ Following Refs. provide additional information.\\*
 \item \href{http://dx.doi.org/10.1143/JPSJ.67.4084}{N. E. Frankel, K. C. Hines, and R. L. Dewar, Phys. Rev. A \textbf{20}, 2120 (1979)}
 \end{enumerate}
 
+\vfill
+\setcounter{tocdepth}{1}
+\tableofcontents
+\vfill
+
 \clearpage
 
 \section{How to add collisions in the input file}
@@ -61,12 +67,12 @@ To have binary collisions in SMILEI, add one or several copies of the following 
 Collisions(
 	species1 = §["\textit{species\_name}",  "\textit{species\_name}",  ...]§,
 	species2 = §["\textit{species\_name}",  "\textit{species\_name}",  ...]§,
-	coulomb_log = §\textit{ln}$\Lambda$§
+	§\blue{coulomb\_log = \textit{ln}$\Lambda$}§,
+	§\blue{debug\_every = \textit{every}}§
 )
 \end{lstlisting}
-\vspace{1cm}
-
-Each \val{species\_name} must be the name (sometimes called "type") of an existing species. This name can be
+\vfill
+Each \val{species\_name} must be the name of an existing species. This name can be
 found in the input file inside any block \code{Species(...)} under the keyword \code{species\_type}.\\*
 
 The collisions will occur between (1) all species under the group \code{species1} and (2) all species under the group \code{species2}.
@@ -87,14 +93,16 @@ The two group of species have to be \underline{completely different} OR \underli
 In other words, if \code{species1} is not equal to \code{species2}, then they cannot have any common species.
 If the two groups are exactly equal, we call this situation ``intra-collisions''.
 
-\vspace{1cm}
-The value \val{ln$\Lambda$} must be a number.
+\vfill
+The \blue{optional} value \val{ln$\Lambda$} must be a float.
 \begin{itemize}
-	\item If \val{ln$\Lambda$} $=0$, the Coulomb logarithm is automatically computed for each collision.
+	\item If \val{ln$\Lambda$} $=0$, the Coulomb logarithm is automatically computed for each collision (default).
 	\item If \val{ln$\Lambda$} $>0$, the Coulomb logarithm is equal to this value.
 \end{itemize}
 
-
+\vfill
+The \blue{optional} value \val{debug\_every} must be an integer: the number of timesteps between each output of
+information about collisions. If absent or zero, there will be no outputs. See section \ref{sec:debug}
 \clearpage
 
 
@@ -257,6 +265,32 @@ The resulting conductivity $\sigma=en_ev_f/E$ is compared in Figure \ref{conduct
 \caption{Conductivity of colid-density copper. Each point is one simulation.}
 \label{conductivity}
 \end{figure}
+
+
+
+\clearpage
+
+\section{Collisions debugging\label{sec:debug}}
+
+Using the parameter \code{debug\_every} in a \code{Collisions(..)} group will create a file with info about these
+collisions. These information are stored in the files "Collisions0.h5", "Collisions1.h5", etc.\\
+\\
+The \emph{hdf5} files are structured as follows:\\
+> One HDF5 file contains several groups called "t********" where "********" is the timestep.\\
+> Each group "t********" contains several arrays, which represent quantities \emph{vs.} space.\\
+
+The available arrays are:
+\begin{itemize}
+	\item \val{s}: defined in Ref. [1]: $s=N\left<\theta^2\right>$, where $N$ is the typical number of real
+	collisions during a timestep, and $\left<\theta^2\right>$ is the average square deviation of individual 
+	real collisions. This quantity somewhat represents the typical amount of angular deflection accumulated
+	during one timestep.\\ \textbf{It is recommended that $s<1$ in order to have realistic collisions.}
+	\item \val{coulomb\_log}: average Coulomb logarithm.
+	\item \val{debyelength}: Debye length (not provided if all Coulomb logs are manually defined).
+\end{itemize}
+
+The arrays are all one-dimensional: they are in the same order as the \textit{clusters} or \textit{patches}.\\
+You have to figure out by yourself how to convert that to (x, y, z) !
 
 
 \end{document}

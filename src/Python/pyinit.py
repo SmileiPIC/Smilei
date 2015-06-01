@@ -59,7 +59,10 @@ class SmileiComponent(object):
     def __init__(self, **kwargs):
         if kwargs is not None: # add all kwargs as internal class variables
             for key, value in kwargs.iteritems():
-                setattr(self, key, value)
+                if key=="list":
+                    print "Python warning: in "+type(self).__name__+": cannot have argument named 'list'. Discarding."
+                else:
+                    setattr(self, key, value)
         type(self).list.append(self) # add the current object to the static list "list"
 
 
@@ -73,7 +76,7 @@ class Laser(SmileiComponent):
 
 class Collisions(SmileiComponent):
     """Collisions parameters"""
-    pass
+    debug_every = 0
 
 
 #diagnostics
@@ -83,7 +86,7 @@ class DiagProbe(SmileiComponent):
 
 class DiagParticles(SmileiComponent):
     """Diagnostic particles"""
-    pass
+    time_average = 1
 
 class DiagPhase(SmileiComponent):
     """Diagnostic phase"""

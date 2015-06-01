@@ -1,4 +1,7 @@
 #include "Collisions.h"
+#include "SmileiMPI.h"
+#include "Field2D.h"
+#include "H5.h"
 
 #include <cmath>
 #include <iomanip>
@@ -9,15 +12,66 @@ using namespace std;
 
 
 // Constructor
-Collisions::Collisions(PicParams& param, unsigned int ncol, vector<unsigned int> sgroup1, vector<unsigned int>sgroup2, double clog, bool intra)
+Collisions::Collisions(PicParams& param, vector<Species*>& vecSpecies, SmileiMPI* smpi,
+                       unsigned int n_collisions, 
+                       vector<unsigned int> species_group1, 
+                       vector<unsigned int> species_group2, 
+                       double coulomb_log, 
+                       bool intra_collisions,
+                       int debug_every) :
+n_collisions    (n_collisions    ),
+species_group1  (species_group1  ),
+species_group2  (species_group2  ),
+coulomb_log     (coulomb_log     ),
+intra_collisions(intra_collisions),
+debug_every     (debug_every     ),
+start           (0               )
 {
-
-    n_collisions     = ncol;
-    species_group1   = sgroup1;
-    species_group2   = sgroup2;
-    coulomb_log      = clog;
-    intra_collisions = intra;
     
+    // Calculate total number of bins
+    int nbins = vecSpecies[0]->bmin.size();
+    totbins = nbins;
+    MPI_Allreduce( smpi->isMaster()?MPI_IN_PLACE:&totbins, &totbins, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD);
+    
+    // if debug requested, prepare hdf5 file
+    fileId = 0;
+    if( debug_every>0 ) {
+        ostringstream mystream;
+        mystream.str("");
+        mystream << "Collisions" << n_collisions << ".h5";
+        // Create the HDF5 file 
+        hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
+        H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
+        fileId = H5Fcreate(mystream.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid);
+        H5Pclose(pid);
+        // write all parameters as HDF5 attributes
+        string ver(__VERSION);
+        H5::attr(fileId, "Version", ver);
+        mystream.str("");
+        mystream << species_group1[0];
+        for(int i=1; i<species_group1.size(); i++) mystream << "," << species_group1[i];
+        H5::attr(fileId, "species1" , mystream.str());
+        mystream.str("");
+        mystream << species_group2[0];
+        for(int i=1; i<species_group2.size(); i++) mystream << "," << species_group2[i];
+        H5::attr(fileId, "species2" , mystream.str());
+        H5::attr(fileId, "coulomb_log" , coulomb_log);
+        H5::attr(fileId, "debug_every"  , debug_every);
+        
+        // Find out where the proc will start writing in the overall array
+        MPI_Status status;
+        // Receive the location where to start from the previous node
+        if (smpi->getRank()>0) MPI_Recv( &(start), 1, MPI_INTEGER, smpi->getRank()-1, 0, MPI_COMM_WORLD, &status );
+        // Send the location where to end to the next node
+        int end = start+nbins;
+        if (smpi->getRank()!=smpi->getSize()-1) MPI_Send( &end, 1, MPI_INTEGER, smpi->getRank()+1, 0, MPI_COMM_WORLD );
+    }
+    
+}
+
+Collisions::~Collisions()
+{
+    if (fileId != 0) H5Fclose(fileId);
 }
 
 
@@ -104,7 +158,7 @@ void Collisions::calculate_debye_length(PicParams& params, vector<Species*>& vec
 
 
 // Calculates the collisions for a given Collisions object
-void Collisions::collide(PicParams& params, vector<Species*>& vecSpecies)
+void Collisions::collide(PicParams& params, vector<Species*>& vecSpecies, int itime)
 {
 
     unsigned int nbins = vecSpecies[0]->bmin.size(); // number of bins
@@ -123,16 +177,29 @@ void Collisions::collide(PicParams& params, vector<Species*>& vecSpecies)
            vcv1, vcv2, px_COM, py_COM, pz_COM, p2_COM, p_COM, gamma1_COM, gamma2_COM,
            logL, bmin, s, vrel, smax,
            cosX, sinX, phi, sinXcosPhi, sinXsinPhi, p_perp, inv_p_perp, 
-           newpx_COM, newpy_COM, newpz_COM, U, vcp,
-           smean, logLmean, temperature;
+           newpx_COM, newpy_COM, newpz_COM, U, vcp;
+    Field2D *smean, *logLmean, *temperature, *ncol;
+    ostringstream name;
+    hid_t did;
     
     sg1 = &species_group1;
     sg2 = &species_group2;
     
-    smean = 0.;
-    logLmean = 0.;
-    temperature = 0.;
-    ntot = 0.;
+    
+    bool debug = (debug_every > 0 && itime % debug_every == 0); // debug only every N timesteps
+    
+    if( debug ) {
+        // Create H5 group for the current timestep
+        name.str("");
+        name << "t" << setfill('0') << setw(8) << itime;
+        did = H5Gcreate(fileId, name.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        // Prepare storage arrays
+        vector<unsigned int> outsize(2); outsize[0]=nbins; outsize[1]=1;
+        smean       = new Field2D(outsize);
+        logLmean    = new Field2D(outsize);
+        //temperature = new Field2D(outsize);
+        ncol        = new Field2D(outsize);
+    }
     
     // Loop on bins
     for (unsigned int ibin=0 ; ibin<nbins ; ibin++) {
@@ -234,12 +301,13 @@ void Collisions::collide(PicParams& params, vector<Species*>& vecSpecies)
         coeff3 = coeff2 * params.timestep * n1*n2/n12;
         coeff4 = pow( 3.*coeff2 , -1./3. ) * params.timestep * n1*n2/n12;
         
-#ifdef  __DEBUG
-        DEBUG("Collisions #" << n_collisions << ", bin " << ibin);
-        //DEBUG("    species groups : " << (sg1==&species_group1 ? 1:2) << " vs " << (sg2==&species_group1 ? 1:2));
-        DEBUG("    npart1 = " << npart1 << " , npart2 = " << npart2);
-        DEBUG("    n1 = " << n1 << " , n2 = " << n2 << " , n12 = " << n12);
-#endif
+        if( debug ) {
+            smean      ->data_2D[ibin][0] = 0.;
+            logLmean   ->data_2D[ibin][0] = 0.;
+            //temperature->data_2D[ibin][0] = 0.;
+            ncol       ->data_2D[ibin][0] = (double)npairs;
+        }
+        
         
         // Now start the real loop on pairs of particles
         // See equations in http://dx.doi.org/10.1063/1.4742167
@@ -364,25 +432,43 @@ void Collisions::collide(PicParams& params, vector<Species*>& vecSpecies)
                 p2->momentum(2,i2) = -m12 * newpz_COM + COM_vz * term6;
             }
             
-#ifdef  __DEBUG
-            smean += s;
-            logLmean += logL;
-            temperature += m1 * (sqrt(1.+pow(p1->momentum(0,i1),2)+pow(p1->momentum(1,i1),2)+pow(p1->momentum(2,i1),2))-1.);
-            ntot++;
-#endif
+            if( debug ) {
+                smean      ->data_2D[ibin][0] += s;
+                logLmean   ->data_2D[ibin][0] += logL;
+                //temperature->data_2D[ibin][0] += m1 * (sqrt(1.+pow(p1->momentum(0,i1),2)+pow(p1->momentum(1,i1),2)+pow(p1->momentum(2,i1),2))-1.);
+            }
             
         } // end loop on pairs of particles
         
+        if( debug && ncol->data_2D[ibin][0]>0.) {
+            smean      ->data_2D[ibin][0] /= ncol->data_2D[ibin][0];
+            logLmean   ->data_2D[ibin][0] /= ncol->data_2D[ibin][0];
+            //temperature->data_2D[ibin][0] /= ncol->data_2D[ibin][0];
+        }
+        
     } // end loop on bins
-
-#ifdef  __DEBUG
-    smean /= ntot;
-    logLmean /= ntot;
-    temperature /= ntot; temperature *= 1.5 * 511.;
-    DEBUG( ntot << " collisions , <s> = " << scientific << smean
-            << ",  <coulomb log> = " << fixed << logLmean << ", temperature = " << temperature << " keV");
-#endif
-
+    
+    if( debug ) {
+        name.str("");
+        name << "/t" << setfill('0') << setw(8) << itime << "/s";
+        H5::matrix_MPI(did, name.str(), smean      ->data_2D[0][0], (int)totbins, 1, (int)start, (int)nbins);
+        name.str("");
+        name << "/t" << setfill('0') << setw(8) << itime << "/coulomb_log";
+        H5::matrix_MPI(did, name.str(), logLmean   ->data_2D[0][0], (int)totbins, 1, (int)start, (int)nbins);
+        //name.str("");
+        //name << "/t" << setfill('0') << setw(8) << itime << "/temperature";
+        //H5::matrix_MPI(did, name.str(), temperature->data_2D[0][0], (int)totbins, 1, (int)start, (int)nbins);
+        if(debye_length_squared.size()>0) {
+            // We reuse the smean array for the debye length
+            for(unsigned int i=0; i<nbins; i++)
+                smean->data_2D[i][0] = sqrt(debye_length_squared[i]) * params.wavelength_SI/(2.*M_PI);
+            name.str("");
+            name << "/t" << setfill('0') << setw(8) << itime << "/debyelength";
+            H5::matrix_MPI(did, name.str(), smean->data_2D[0][0], (int)totbins, 1, (int)start, (int)nbins);
+        }
+        // Close the group
+        H5Gclose(did);
+    }
 
 }
 

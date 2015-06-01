@@ -2,10 +2,8 @@
 #include <sstream>
 #include <vector>
 
-extern "C" {
 #include "pyinit.h"
 #include "pycontrol.h"
-}
 
 #include <sys/time.h>
 #include <sys/resource.h>

@@ -22,7 +22,7 @@ class CollisionsFactory {
 
 public:
     //! Method that creates a vector of Collisions objects: one for each group in the input file.
-    static std::vector<Collisions*> create(PicParams&, InputData&, std::vector<Species*>&);
+    static std::vector<Collisions*> create(PicParams&, InputData&, std::vector<Species*>&, SmileiMPI*);
 
 };
 

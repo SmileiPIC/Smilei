@@ -101,7 +101,8 @@ Species(
 Collisions(
 	species1 = ["electron1"],
 	species2 = ["electron1"],
-	coulomb_log = 3
+	coulomb_log = 3,
+	debug_every = 10
 )
 
 # ---------------------
@@ -127,21 +128,20 @@ DiagScalar(
 # DIAGNOSTICS ON PARTICLES - project the particles on a N-D arbitrary grid
 # ------------------------------------------------------------------------
 # output       = string: "density", "charge_density" or "current_density_[xyz]"
-#                parameter that describes what quantity is obtained 
+#                parameter that describes what quantity is obtained
 # every        = integer > 0: number of time-steps between each output
 # time_average = integer > 0: number of time-steps to average
 # species      = list of strings, one or several species whose data will be used
 # axes         = list of axes
-# Each axis is a list: (_type_ _min_ _max_ _nsteps_ ["logscale"] ["edge_inclusive"])
+# Each axis is a list: [_type_,_min_,_max_,_nsteps_,"logscale","edge_inclusive"]
 #   _type_ is a string, one of the following options:
-#      x, y, z, px, py, pz, p, gamma, ekin, vx, vy, vz, v or charge
+#     x, y, z, px, py, pz, p, gamma, ekin, vx, vy, vz, v or charge
 #   The data is discretized for _type_ between _min_ and _max_, in _nsteps_ bins
 #   The optional "logscale" sets the scale to logarithmic
 #   The optional "edge_inclusive" forces the particles that are outside (_min_,_max_)
-#     to be counted in the extrema bins
-#   Example : axes = ("x", 0, 1, 30)
-#   Example : axes = ("px", -1, 1, 100, "edge_inclusive")
-
+#    to be counted in the extrema bins
+#   Example : axes = [["x", 0., 1., 30]]
+#   Example : axes =[["px", -1., 1., 100, "edge_inclusive"]]
 DiagParticles(
 	output = "density",
 	every = 5,

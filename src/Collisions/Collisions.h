@@ -34,13 +34,15 @@ Several collision types can be defined. For each type, add a group "Collisions()
 #include "Tools.h"
 #include "PicParams.h"
 #include "Species.h"
+#include "H5.h"
 
 class Collisions
 {
 
 public:
     //! Constructor for Collisions between two species
-    Collisions(PicParams&,unsigned int,std::vector<unsigned int>,std::vector<unsigned int>,double,bool);
+    Collisions(PicParams&,std::vector<Species*>&,SmileiMPI*,unsigned int,std::vector<unsigned int>,std::vector<unsigned int>,double,bool,int);
+    ~Collisions();
     
     //! Identification number of the Collisions object
     int n_collisions;
@@ -50,6 +52,9 @@ public:
     
     //! Coulomb logarithm (zero or negative means automatic)
     double coulomb_log;
+    
+    //! Number of timesteps between each dump of collisions debugging
+    int debug_every;
     
     //! True if collisions inside a group of species, False if collisions between different groups of species
     double intra_collisions;
@@ -61,7 +66,7 @@ public:
     static bool debye_length_required;
     
     //! Method called in the main smilei loop to apply collisions at each timestep
-    void collide(PicParams&,std::vector<Species*>&);
+    void collide(PicParams&,std::vector<Species*>&,int);
     
 private:
     
@@ -69,7 +74,12 @@ private:
     static std::vector<double> debye_length_squared; 
     
     static double cos_chi(double);
-
+    
+    //! Hdf5 file id
+    hid_t fileId;
+    
+    int totbins;
+    int start;
 
 };
 

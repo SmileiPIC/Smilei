@@ -7,7 +7,7 @@ using namespace std;
 
 
 // Reads the input file and creates the Collisions objects accordingly
-vector<Collisions*> CollisionsFactory::create(PicParams& params, InputData &ifile, vector<Species*>& vecSpecies)
+vector<Collisions*> CollisionsFactory::create(PicParams& params, InputData &ifile, vector<Species*>& vecSpecies, SmileiMPI* smpi)
 {
     std::vector<Collisions*> vecCollisions;
 
@@ -15,6 +15,7 @@ vector<Collisions*> CollisionsFactory::create(PicParams& params, InputData &ifil
     vector<unsigned int> sgroup1, sgroup2;
     double clog;
     bool intra, debye_length_required = false;
+    int debug_every;
     ostringstream mystream;
     
     // Loop over each binary collisions group and parse info
@@ -58,6 +59,10 @@ vector<Collisions*> CollisionsFactory::create(PicParams& params, InputData &ifil
         ifile.extract("coulomb_log",clog,"Collisions",n_collisions);
         if (clog <= 0.) debye_length_required = true; // auto coulomb log requires debye length
         
+        // Number of timesteps between each debug output (if 0 or unset, no debug)
+        debug_every = 0; // default
+        ifile.extract("debug_every",debug_every,"Collisions",n_collisions);
+        
         // Print collisions parameters
         mystream.str(""); // clear
         for (unsigned int rs=0 ; rs<sgroup1.size() ; rs++) mystream << " #" << sgroup1[rs];
@@ -67,10 +72,13 @@ vector<Collisions*> CollisionsFactory::create(PicParams& params, InputData &ifil
         MESSAGE(1,"Second group of species :" << mystream.str());
         MESSAGE(1,"Coulomb logarithm       : " << clog);
         MESSAGE(1,"Intra collisions        : " << (intra?"True":"False"));
+        mystream.str(""); // clear
+        mystream << "Every " << debug_every << " timesteps";
+        MESSAGE(1,"Debug                   : " << (debug_every<=0?"No debug":mystream.str()));
         
         // Add new Collisions objects to vector
-        vecCollisions.push_back( new Collisions(params,n_collisions,sgroup1,sgroup2,clog,intra) );
-
+        vecCollisions.push_back( new Collisions(params,vecSpecies,smpi,n_collisions,sgroup1,sgroup2,clog,intra,debug_every) );
+        
     }
     
     // Needs wavelength_SI to be defined

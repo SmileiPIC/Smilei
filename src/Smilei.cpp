@@ -132,7 +132,7 @@ int main (int argc, char* argv[])
     
     // Initialize the collisions (vector of collisions)
     // ------------------------------------------------------------------------------------
-    vector<Collisions*> vecCollisions = CollisionsFactory::create(params, input_data, vecSpecies);
+    vector<Collisions*> vecCollisions = CollisionsFactory::create(params, input_data, vecSpecies, smpi);
     
     // ----------------------------------------------------------------------------
     // Define Moving Window & restart
@@ -296,7 +296,7 @@ int main (int argc, char* argv[])
         if (Collisions::debye_length_required)
             Collisions::calculate_debye_length(params,vecSpecies);
         for (unsigned int icoll=0 ; icoll<vecCollisions.size(); icoll++)
-            vecCollisions[icoll]->collide(params,vecSpecies);
+            vecCollisions[icoll]->collide(params,vecSpecies,itime);
         
         
         // apply the PIC method
@@ -437,6 +437,8 @@ int main (int argc, char* argv[])
     delete Proj;
     delete Interp;
     delete EMfields;
+    for(int i=0; i<vecCollisions.size(); i++) delete vecCollisions[i];
+    vecCollisions.clear();
     Diags.closeAll();
     
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
