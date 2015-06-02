@@ -90,36 +90,10 @@ void SimWindow::operate(vector<Patches*> vecPatches, SmileiMPI* smpi, PicParams&
             if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<m1)-1);
 	    corner_neighbor_[0][0] = generalhilbertindex( m0, m1, xcall, ycall);
 
-            ///////////// USELESS //////////////////////////////////////////////////////////////////////////
-	    if (Pcoordinates[0]>0 && Pcoordinates[1]>0){
-	        corner_neighbor_[0][0] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, Pcoordinates[1]-1);
-            }else if(Pcoordinates[0] == 0 && params.bc_em_type_long=="periodic" && Pcoordinates[1] == 0 && params.bc_em_type_trans=="periodic"){
-	        corner_neighbor_[0][0] = generalhilbertindex( m0, m1, (1<<m0)-1, (1<<m1)-1);
-            }else if( Pcoordinates[0] == 0 && Pcoordinates[1]>0 && params.bc_em_type_long=="periodic") {
-	        corner_neighbor_[0][0] = generalhilbertindex( m0, m1, (1<<m0)-1, Pcoordinates[1]-1);
-            }else if( Pcoordinates[1] == 0 && Pcoordinates[0]>0 && params.bc_em_type_trans=="periodic") {
-	        corner_neighbor_[0][0] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, (1<<m1)-1);
-            } else {
-                corner_neighbor_[0][0] = MPI_PROC_NULL;
-            }
-            -------------------------------------------------------------------------------------------------
-            ycall = Pcoordinates[1]+1;
+                        ycall = Pcoordinates[1]+1;
             if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<m1)-1);
 	    corner_neighbor_[0][1] = generalhilbertindex( m0, m1, xcall, ycall);
-            ///////////// USELESS //////////////////////////////////////////////////////////////////////////
-           if (Pcoordinates[0]>0 && Pcoordinates[1] != (1<<m1)-1){
-	        corner_neighbor_[0][1] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, Pcoordinates[1]+1);
-            }else if(Pcoordinates[0] == 0 && params.bc_em_type_long=="periodic" && Pcoordinates[1] == (1<<m1)-1 && params.bc_em_type_trans=="periodic"){
-	        corner_neighbor_[0][1] = generalhilbertindex( m0, m1, (1<<m0)-1, 0);
-            }else if( Pcoordinates[0] == 0 && Pcoordinates[1]!= (1<<m1)-1 && params.bc_em_type_long=="periodic") {
-	        corner_neighbor_[0][1] = generalhilbertindex( m0, m1, (1<<m0)-1, Pcoordinates[1]+1);
-            }else if( Pcoordinates[1] == (1<<m1)-1 && Pcoordinates[0]>0 && params.bc_em_type_trans=="periodic") {
-	        corner_neighbor_[0][1] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, 0);
-            } else {
-                corner_neighbor_[0][1] = MPI_PROC_NULL;
-            }
-            -------------------------------------------------------------------------------------------------
- 
+             
         }
         //Si je ne possede pas mon voisin de droite...
         if (MpiRNeighbour != MPI_PROC_NULL) {
@@ -127,7 +101,6 @@ void SimWindow::operate(vector<Patches*> vecPatches, SmileiMPI* smpi, PicParams&
             Mpi_Receive_Patch(MpiRNeighbour);
             //Les fonctions SendPatch ou ReceivePatch doivent transformer le Patch comme ci dessus.
             //Ce serait plus simple de mettre hindex, neighbor_ et corner_neighbor_ dans un seul et meme tableau.
-            //Ce serait plus simple de mettre les conditions de périodicité dans la fonction generalhilbertindex.
         }
     }
 

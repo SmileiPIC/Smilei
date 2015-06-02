@@ -8,6 +8,8 @@ using namespace std;
 int buildtag(int send, int recv);
 
 Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int m0, unsigned int m1, unsigned int m2, unsigned int ipatch) {
+
+        int xcall, ycall;
         hindex = ipatch;
         
         if ( params.geometry == "1d3v" ) {
@@ -44,6 +46,25 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
 	for ( int iDim = 0 ; iDim < params.nDim_field ; iDim++ ) {
 	    corner_neighbor_[iDim].resize(2,MPI_PROC_NULL);
 	}
+
+
+        xcall = Pcoordinates[0]-1;
+        ycall = Pcoordinates[1];
+	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0)-1);
+	neighbor_[0][0] = generalhilbertindex( m0, m1, xcall, ycall);
+        xcall = Pcoordinates[0]+1;
+	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0)-1);
+	neighbor_[0][1] = generalhilbertindex( m0, m1, xcall, ycall);
+        xcall = Pcoordinates[0];
+        ycall = Pcoordinates[1]-1;
+	if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<m1)-1);
+	neighbor_[1][0] = generalhilbertindex( m0, m1, xcall, ycall);
+        ycall = Pcoordinates[1]+1;
+	if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<m1)-1);
+	neighbor_[1][1] = generalhilbertindex( m0, m1, xcall, ycall);
+
+
+        /*
 	if (Pcoordinates[0]>0)
 	    //neighbor_[0][0] = ipatch-m1;
 	    neighbor_[0][0] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, Pcoordinates[1]);
@@ -77,9 +98,22 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
 	        neighbor_[0][0] = generalhilbertindex( m0, m1,(1<<m0)-1, Pcoordinates[1]);
 	      if ( (Pcoordinates[0]==(1<<m0)-1) )
 	        neighbor_[0][1] = generalhilbertindex( m0, m1, 0, Pcoordinates[1]);
-	}
+	}*/
 
+        xcall = Pcoordinates[0]+1;
+	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0)-1);
+	corner_neighbor_[1][1] = generalhilbertindex( m0, m1, xcall, ycall);
+        xcall = Pcoordinates[0]-1;
+	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0)-1);
+	corner_neighbor_[0][1] = generalhilbertindex( m0, m1, xcall, ycall);
+        ycall = Pcoordinates[1]-1;
+	if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<m1)-1);
+	corner_neighbor_[0][0] = generalhilbertindex( m0, m1, xcall, ycall);
+        xcall = Pcoordinates[0]+1;
+	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0)-1);
+	corner_neighbor_[1][0] = generalhilbertindex( m0, m1, xcall, ycall);
 
+        /*
 	if ( (neighbor_[1][0]>=0) && (neighbor_[0][0]>=0) )
 	    //corner_neighbor_[0][0] = neighbor_[0][0]-1;
 	    corner_neighbor_[0][0] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, Pcoordinates[1]-1);
@@ -160,6 +194,7 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
 		//corner_neighbor_[1][1] = 0; 
 	        corner_neighbor_[1][1] = generalhilbertindex( m0, m1, 0, 0 );
 	}
+        */
 
 	cout << "\n\tCorner decomp : " << smpi->hrank(corner_neighbor_[0][1]) << "\t" << neighbor_[1][1]  << "\t" << corner_neighbor_[1][1] << endl;
 	cout << "\tCorner decomp : " << neighbor_[0][0] << "\t" << hindex << "\t" << neighbor_[0][1] << endl;
@@ -405,6 +440,8 @@ return h;
 }
 unsigned int Patch::generalhilbertindex(unsigned int m0, unsigned int m1, unsigned int x, unsigned int y)
 {
+    if(x%((1<<m0)-1) != x || y%((1<<m1)-1) != y ) return MPI_PROC_NULL ;
+
     unsigned int h,mmin,mmax,l,localx,localy,*target,einit,dinit;
     h=0;
     dinit=0;
@@ -435,6 +472,8 @@ return h;
 //!General Hilbert index3D calculates the compact Hilbert index h of a patch of coordinates x,y,z for a simulation box with 2^mi patches per side (2^(m0+m1+m2)) patches in total).
 unsigned int Patch::generalhilbertindex(unsigned int m0, unsigned int m1, unsigned int m2, unsigned int x, unsigned int y, unsigned int z)
 {
+    if(x%((1<<m0)-1) != x || y%((1<<m1)-1) != y || z%((1<<m2)-1) != z) return MPI_PROC_NULL ;
+
     unsigned int h,e,d,*einit,*dinit,dimmin,dimmax,dimmed,l,localx,localy,localz, mi[3],localp[3],tempp[3],mmin;
     h=0;
     e=0;
