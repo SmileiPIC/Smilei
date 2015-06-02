@@ -376,6 +376,8 @@ void Patch::setbit(unsigned int* i, unsigned int k, unsigned int value)
 //!General Hilbert index2D calculates the  Hilbert index h of a patch of coordinates x,y for a simulation box with 2^mi patches per side (2^(m0+m1)) patches in total).
 unsigned int Patch::generalhilbertindex(unsigned int m0, unsigned int m1, unsigned int x, unsigned int y, unsigned int *einit, unsigned int *dinit)
 {
+    if(x%((1<<m0)-1) != x || y%((1<<m1)-1) != y ) return MPI_PROC_NULL ;
+
     unsigned int h,mmin,mmax,l,localx,localy,*target;
     h=0;
     *dinit=0;

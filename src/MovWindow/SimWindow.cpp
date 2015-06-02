@@ -52,6 +52,7 @@ void SimWindow::operate(vector<Species*> vecSpecies, ElectroMagn* EMfields, Inte
 /* For discussion
 void SimWindow::operate(vector<Patches*> vecPatches, SmileiMPI* smpi, PicParams& params)
 {
+    int xcall, ycall;
     #pragma omp for
     for (unsigned int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++) {
         //Si je ne possede pas mon voisin de gauche...
@@ -83,6 +84,13 @@ void SimWindow::operate(vector<Patches*> vecPatches, SmileiMPI* smpi, PicParams&
             }else {
                 neighbor_[0][0] = MPI_PROC_NULL ;
             }
+            xcall = Pcoordinates[0]-1;
+            ycall = Pcoordinates[1]-1;
+            if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0)-1);
+            if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<m1)-1);
+	    corner_neighbor_[0][0] = generalhilbertindex( m0, m1, xcall, ycall);
+
+            ///////////// USELESS //////////////////////////////////////////////////////////////////////////
 	    if (Pcoordinates[0]>0 && Pcoordinates[1]>0){
 	        corner_neighbor_[0][0] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, Pcoordinates[1]-1);
             }else if(Pcoordinates[0] == 0 && params.bc_em_type_long=="periodic" && Pcoordinates[1] == 0 && params.bc_em_type_trans=="periodic"){
@@ -94,6 +102,11 @@ void SimWindow::operate(vector<Patches*> vecPatches, SmileiMPI* smpi, PicParams&
             } else {
                 corner_neighbor_[0][0] = MPI_PROC_NULL;
             }
+            -------------------------------------------------------------------------------------------------
+            ycall = Pcoordinates[1]+1;
+            if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<m1)-1);
+	    corner_neighbor_[0][1] = generalhilbertindex( m0, m1, xcall, ycall);
+            ///////////// USELESS //////////////////////////////////////////////////////////////////////////
            if (Pcoordinates[0]>0 && Pcoordinates[1] != (1<<m1)-1){
 	        corner_neighbor_[0][1] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, Pcoordinates[1]+1);
             }else if(Pcoordinates[0] == 0 && params.bc_em_type_long=="periodic" && Pcoordinates[1] == (1<<m1)-1 && params.bc_em_type_trans=="periodic"){
@@ -105,6 +118,7 @@ void SimWindow::operate(vector<Patches*> vecPatches, SmileiMPI* smpi, PicParams&
             } else {
                 corner_neighbor_[0][1] = MPI_PROC_NULL;
             }
+            -------------------------------------------------------------------------------------------------
  
         }
         //Si je ne possede pas mon voisin de droite...
