@@ -34,8 +34,6 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
             generalhilbertindexinv(m0, m1, m2, &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
         }
 
-	//Pcoordinates[1] = ipatch%m1;
-	//Pcoordinates[0] = ipatch/m1 ;
 	//std::cout << "Coordonnées de " << ipatch << " : " << Pcoordinates[0] << " " << Pcoordinates[1] << std::endl;
 	nbNeighbors_ = 2;
 	neighbor_.resize(params.nDim_field);
@@ -50,151 +48,34 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
 
         xcall = Pcoordinates[0]-1;
         ycall = Pcoordinates[1];
-	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0)-1);
+	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0));
 	neighbor_[0][0] = generalhilbertindex( m0, m1, xcall, ycall);
+        cout << xcall << " " << ycall << " " << neighbor_[0][0] << endl;
         xcall = Pcoordinates[0]+1;
-	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0)-1);
+	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0));
 	neighbor_[0][1] = generalhilbertindex( m0, m1, xcall, ycall);
         xcall = Pcoordinates[0];
         ycall = Pcoordinates[1]-1;
-	if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<m1)-1);
+	if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<m1));
 	neighbor_[1][0] = generalhilbertindex( m0, m1, xcall, ycall);
         ycall = Pcoordinates[1]+1;
-	if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<m1)-1);
+	if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<m1));
 	neighbor_[1][1] = generalhilbertindex( m0, m1, xcall, ycall);
 
 
-        /*
-	if (Pcoordinates[0]>0)
-	    //neighbor_[0][0] = ipatch-m1;
-	    neighbor_[0][0] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, Pcoordinates[1]);
-
-	if (Pcoordinates[0]< (1<<m0)-1  )
-	    //neighbor_[0][1] = ipatch+m1;
-	    neighbor_[0][1] = generalhilbertindex( m0, m1, Pcoordinates[0]+1, Pcoordinates[1]);
-	if (Pcoordinates[1]>0)
-	    //neighbor_[1][0] = ipatch-1;
-	    neighbor_[1][0] = generalhilbertindex( m0, m1, Pcoordinates[0], Pcoordinates[1]-1);
-	if (Pcoordinates[1]< (1<<m1)-1  )
-	    //neighbor_[1][1] = ipatch+1;
-	    neighbor_[1][1] = generalhilbertindex( m0, m1, Pcoordinates[0], Pcoordinates[1]+1);
-
-	// Manage y-periodicity only !
-	//SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
-	if ( (params.bc_em_type_trans=="periodic") ) {
-	  //if ( (smpi2D->getNbrOfProcs(1)==1) ) {
-	    //if ( (smpi2D->getProcCoord(1)==0) || (smpi2D->getProcCoord(1)==smpi2D->getNbrOfProcs(1)-1) ) {
-	      if ( (Pcoordinates[1]==0) )
-		//neighbor_[1][0] = Pcoordinates[0]*m1+m1-1;
-	        neighbor_[1][0] = generalhilbertindex( m0, m1, Pcoordinates[0], (1<<m1)-1);
-	      if ( (Pcoordinates[1]==(1<<m1)-1) )
-		//neighbor_[1][1] = Pcoordinates[0]*m1+0;
-	        neighbor_[1][1] = generalhilbertindex( m0, m1, Pcoordinates[0], 0);
-	    //}
-	  //}
-	}
-	if ( (params.bc_em_type_long=="periodic") ) {
-	      if ( (Pcoordinates[0]==0) )
-	        neighbor_[0][0] = generalhilbertindex( m0, m1,(1<<m0)-1, Pcoordinates[1]);
-	      if ( (Pcoordinates[0]==(1<<m0)-1) )
-	        neighbor_[0][1] = generalhilbertindex( m0, m1, 0, Pcoordinates[1]);
-	}*/
-
         xcall = Pcoordinates[0]+1;
-	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0)-1);
+	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0));
 	corner_neighbor_[1][1] = generalhilbertindex( m0, m1, xcall, ycall);
         xcall = Pcoordinates[0]-1;
-	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0)-1);
+	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0));
 	corner_neighbor_[0][1] = generalhilbertindex( m0, m1, xcall, ycall);
         ycall = Pcoordinates[1]-1;
-	if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<m1)-1);
+	if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<m1));
 	corner_neighbor_[0][0] = generalhilbertindex( m0, m1, xcall, ycall);
         xcall = Pcoordinates[0]+1;
-	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0)-1);
+	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0));
 	corner_neighbor_[1][0] = generalhilbertindex( m0, m1, xcall, ycall);
 
-        /*
-	if ( (neighbor_[1][0]>=0) && (neighbor_[0][0]>=0) )
-	    //corner_neighbor_[0][0] = neighbor_[0][0]-1;
-	    corner_neighbor_[0][0] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, Pcoordinates[1]-1);
-	//else 
-	//    corner_neighbor_[0][0] = MPI_PROC_NULL;
-
-	if ( (neighbor_[1][0]>=0) && (neighbor_[0][1]>=0) )
-	    //corner_neighbor_[1][0] = neighbor_[0][1]-1;
-	    corner_neighbor_[1][0] = generalhilbertindex( m0, m1, Pcoordinates[0]+1, Pcoordinates[1]-1);
-	//else 
-	//    corner_neighbor_[1][0] = MPI_PROC_NULL;
-
-	if ( (neighbor_[1][1]>=0) && (neighbor_[0][0]>=0) )
-	    //corner_neighbor_[0][1] = neighbor_[0][0]+1;
-	    corner_neighbor_[0][1] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, Pcoordinates[1]+1);
-	//else 
-	//    corner_neighbor_[0][1] = MPI_PROC_NULL;
-
-	if ( (neighbor_[0][1]>=0) && (neighbor_[1][1]>=0) )
-	    //corner_neighbor_[1][1] = neighbor_[0][1]+1;   
-	    corner_neighbor_[1][1] = generalhilbertindex( m0, m1, Pcoordinates[0]+1, Pcoordinates[1]+1);
-	//else
-	//    corner_neighbor_[1][1] = MPI_PROC_NULL;   
-
-	//cout << Pcoordinates[0] << " " << Pcoordinates[1] << endl;
-	//cout << number_of_procs[0] << " " << m1 << endl;
-
-	// Must be completed in really MPI context
-	if ( (params.bc_em_type_trans=="periodic") ) {
-	    if (Pcoordinates[1]==0) {
-		if (Pcoordinates[0]!=0)
-		    //corner_neighbor_[0][0] = neighbor_[1][0]-m1;
-	            corner_neighbor_[0][0] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, (1<<m1)-1);
-		if (Pcoordinates[0]!= (1<<m0)-1)
-		    //corner_neighbor_[1][0] = neighbor_[1][0]+m1;
-	            corner_neighbor_[1][0] = generalhilbertindex( m0, m1, Pcoordinates[0]+1, (1<<m1)-1);
-	    }
-	    else if (Pcoordinates[1]== (1<<m1)-1) {
-		if (Pcoordinates[0]!=0)
-		    //corner_neighbor_[0][1] = neighbor_[1][1]-m1;
-	            corner_neighbor_[0][1] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, 0);
-		if (Pcoordinates[0]!= (1<<m0)-1)
-		    //corner_neighbor_[1][1] = neighbor_[1][1]+m1;
-	            corner_neighbor_[1][1] = generalhilbertindex( m0, m1, Pcoordinates[0]+1, 0);
-	    }
-	}
-	if ( (params.bc_em_type_long=="periodic") ) {
-	    if (Pcoordinates[0]==0) {
-		if (Pcoordinates[1]!=0)
-		    //corner_neighbor_[0][0] = neighbor_[0][0]-1;
-	            corner_neighbor_[0][0] = generalhilbertindex( m0, m1, (1<<m0)-1, Pcoordinates[1]-1);
-		if (Pcoordinates[1]!= (1<<m1)-1) {
-		    //corner_neighbor_[0][1] = neighbor_[0][0]+1;
-	            corner_neighbor_[0][1] = generalhilbertindex( m0, m1, (1<<m0)-1, Pcoordinates[1]+1);
-		}
-	    }
-	    else if (Pcoordinates[0]== (1<<m0)-1) {
-		if (Pcoordinates[1]!=0)
-		    //corner_neighbor_[1][0] = neighbor_[0][1]-1;
-	            corner_neighbor_[1][0] = generalhilbertindex( m0, m1, 0, Pcoordinates[1]-1);
-		if (Pcoordinates[1]!= (1<<m1)-1)
-		    //corner_neighbor_[1][1] = neighbor_[0][1]+1;
-	            corner_neighbor_[1][1] = generalhilbertindex( m0, m1, 0, Pcoordinates[1]+1);
-	    }
-	}
-
-	if ( (params.bc_em_type_trans=="periodic") && (params.bc_em_type_long=="periodic") ) {
-	    if ((Pcoordinates[0]==0) && (Pcoordinates[1]==0) )
-		//corner_neighbor_[0][0] = m0*m1-1;
-	        corner_neighbor_[0][0] = generalhilbertindex( m0, m1, (1<<m0)-1, (1<<m1)-1 );
-	    if ((Pcoordinates[0]==0) && (Pcoordinates[1]== (1<<m1)-1) )
-		//corner_neighbor_[0][1] = (m0-1)*m1;
-	        corner_neighbor_[0][1] = generalhilbertindex( m0, m1, (1<<m0)-1, 0 );
-	    if ((Pcoordinates[0]== (1<<m0)-1) && (Pcoordinates[1]==0) )
-		//corner_neighbor_[1][0] = (m1-1);
-	        corner_neighbor_[1][0] = generalhilbertindex( m0, m1, 0, (1<<m1)-1 );
-	    if ((Pcoordinates[0]== (1<<m0)-1) && (Pcoordinates[1]== (1<<m1)-1) )
-		//corner_neighbor_[1][1] = 0; 
-	        corner_neighbor_[1][1] = generalhilbertindex( m0, m1, 0, 0 );
-	}
-        */
 
 	cout << "\n\tCorner decomp : " << smpi->hrank(corner_neighbor_[0][1]) << "\t" << neighbor_[1][1]  << "\t" << corner_neighbor_[1][1] << endl;
 	cout << "\tCorner decomp : " << neighbor_[0][0] << "\t" << hindex << "\t" << neighbor_[0][1] << endl;
@@ -411,7 +292,7 @@ void Patch::setbit(unsigned int* i, unsigned int k, unsigned int value)
 //!General Hilbert index2D calculates the  Hilbert index h of a patch of coordinates x,y for a simulation box with 2^mi patches per side (2^(m0+m1)) patches in total).
 unsigned int Patch::generalhilbertindex(unsigned int m0, unsigned int m1, unsigned int x, unsigned int y, unsigned int *einit, unsigned int *dinit)
 {
-    if(x%((1<<m0)-1) != x || y%((1<<m1)-1) != y ) return MPI_PROC_NULL ;
+    if(x%((1<<m0)) != x || y%((1<<m1)) != y ) return MPI_PROC_NULL ;
 
     unsigned int h,mmin,mmax,l,localx,localy,*target;
     h=0;
@@ -440,7 +321,7 @@ return h;
 }
 unsigned int Patch::generalhilbertindex(unsigned int m0, unsigned int m1, unsigned int x, unsigned int y)
 {
-    if(x%((1<<m0)-1) != x || y%((1<<m1)-1) != y ) return MPI_PROC_NULL ;
+    if(x%((1<<m0)) != x || y%((1<<m1)) != y ) return MPI_PROC_NULL ;
 
     unsigned int h,mmin,mmax,l,localx,localy,*target,einit,dinit;
     h=0;
@@ -472,7 +353,7 @@ return h;
 //!General Hilbert index3D calculates the compact Hilbert index h of a patch of coordinates x,y,z for a simulation box with 2^mi patches per side (2^(m0+m1+m2)) patches in total).
 unsigned int Patch::generalhilbertindex(unsigned int m0, unsigned int m1, unsigned int m2, unsigned int x, unsigned int y, unsigned int z)
 {
-    if(x%((1<<m0)-1) != x || y%((1<<m1)-1) != y || z%((1<<m2)-1) != z) return MPI_PROC_NULL ;
+    if(x%((1<<m0)) != x || y%((1<<m1)) != y || z%((1<<m2)) != z) return MPI_PROC_NULL ;
 
     unsigned int h,e,d,*einit,*dinit,dimmin,dimmax,dimmed,l,localx,localy,localz, mi[3],localp[3],tempp[3],mmin;
     h=0;
