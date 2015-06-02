@@ -49,6 +49,80 @@ void SimWindow::operate(vector<Species*> vecSpecies, ElectroMagn* EMfields, Inte
 
 }
 
+/* For discussion
+void SimWindow::operate(vector<Patches*> vecPatches, SmileiMPI* smpi, PicParams& params)
+{
+    #pragma omp for
+    for (unsigned int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++) {
+        //Si je ne possede pas mon voisin de gauche...
+        if (MpiLNeighbour != MPI_PROC_NULL) {
+            //...je l'envois...
+            Mpi_Send_Patch(MpiLNeighbour);
+            //... et je detruit mes donnees.
+            delete (vecPatches[ipatch].vecSpecies);
+            delete (vecPatches[ipatch].EMfields);
+            delete (vecPatches[ipatch].Interp);
+            delete (vecPatches[ipatch].Proj);
+        //Sinon, je deviens mon voisin de gauche.
+        } else {
+            Pcoordinates[0] -= 1;
+            min_local -= patch_size[0]*dx;
+            max_local -= patch_size[0]*dx;
+            cell_starting_globalindex[0] -= patch_size[0];
+            nbNeighbors ???
+            neighbor_[0][1] = hindex;
+            corner_neighbor[1][1] = neighbor[1][1];
+            corner_neighbor[1][0] = neighbor[1][0];
+            hindex = neighbor_[0][0];
+            neighbor_[1][0] = corner_neighbor_[0][0] ;
+            neighbor_[1][1] = corner_neighbor_[0][1] ;
+	    if (Pcoordinates[0]>0){
+	        neighbor_[0][0] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, Pcoordinates[1]);
+	    } else if (params.bc_em_type_long=="periodic") {
+	        neighbor_[0][0] = generalhilbertindex( m0, m1,(1<<m0)-1, Pcoordinates[1]);
+            }else {
+                neighbor_[0][0] = MPI_PROC_NULL ;
+            }
+	    if (Pcoordinates[0]>0 && Pcoordinates[1]>0){
+	        corner_neighbor_[0][0] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, Pcoordinates[1]-1);
+            }else if(Pcoordinates[0] == 0 && params.bc_em_type_long=="periodic" && Pcoordinates[1] == 0 && params.bc_em_type_trans=="periodic"){
+	        corner_neighbor_[0][0] = generalhilbertindex( m0, m1, (1<<m0)-1, (1<<m1)-1);
+            }else if( Pcoordinates[0] == 0 && Pcoordinates[1]>0 && params.bc_em_type_long=="periodic") {
+	        corner_neighbor_[0][0] = generalhilbertindex( m0, m1, (1<<m0)-1, Pcoordinates[1]-1);
+            }else if( Pcoordinates[1] == 0 && Pcoordinates[0]>0 && params.bc_em_type_trans=="periodic") {
+	        corner_neighbor_[0][0] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, (1<<m1)-1);
+            } else {
+                corner_neighbor_[0][0] = MPI_PROC_NULL;
+            }
+           if (Pcoordinates[0]>0 && Pcoordinates[1] != (1<<m1)-1){
+	        corner_neighbor_[0][1] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, Pcoordinates[1]+1);
+            }else if(Pcoordinates[0] == 0 && params.bc_em_type_long=="periodic" && Pcoordinates[1] == (1<<m1)-1 && params.bc_em_type_trans=="periodic"){
+	        corner_neighbor_[0][1] = generalhilbertindex( m0, m1, (1<<m0)-1, 0);
+            }else if( Pcoordinates[0] == 0 && Pcoordinates[1]!= (1<<m1)-1 && params.bc_em_type_long=="periodic") {
+	        corner_neighbor_[0][1] = generalhilbertindex( m0, m1, (1<<m0)-1, Pcoordinates[1]+1);
+            }else if( Pcoordinates[1] == (1<<m1)-1 && Pcoordinates[0]>0 && params.bc_em_type_trans=="periodic") {
+	        corner_neighbor_[0][1] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, 0);
+            } else {
+                corner_neighbor_[0][1] = MPI_PROC_NULL;
+            }
+ 
+        }
+        //Si je ne possede pas mon voisin de droite...
+        if (MpiRNeighbour != MPI_PROC_NULL) {
+            //...je reçois.
+            Mpi_Receive_Patch(MpiRNeighbour);
+            //Les fonctions SendPatch ou ReceivePatch doivent transformer le Patch comme ci dessus.
+            //Ce serait plus simple de mettre hindex, neighbor_ et corner_neighbor_ dans un seul et meme tableau.
+            //Ce serait plus simple de mettre les conditions de périodicité dans la fonction generalhilbertindex.
+        }
+    }
+
+}
+
+*/
+
+
+
 bool SimWindow::isMoving(double time_dual)
 {
     return ( (nspace_win_x_) && ((time_dual - t_move_win_)*vx_win_ > x_moved) );

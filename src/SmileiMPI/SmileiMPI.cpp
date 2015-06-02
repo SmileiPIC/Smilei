@@ -197,6 +197,7 @@ void SmileiMPI::exchangeAvg( ElectroMagn* EMfields )
     exchangeField( EMfields->Bz_avg );
 }
 
+// Returns the rank of the MPI process currently owning patch h.
 int SmileiMPI::hrank(int h)
 {
     if (h == MPI_PROC_NULL) return MPI_PROC_NULL;
