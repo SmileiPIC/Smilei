@@ -109,6 +109,9 @@ PicParams::PicParams(InputData &ifile) {
         ERROR("Dimension of res_space: "<< res_space.size() << " != " << nDim_field << " for geometry " << geometry);
     }
     
+    time_fields_frozen=0.0;
+    ifile.extract("time_fields_frozen", time_fields_frozen);
+    
     
     // testing the CFL condition
     double res_space2 = 0.0;
@@ -354,6 +357,9 @@ void PicParams::compute()
     // simulation time & time-step value
     timestep = conv_fac/res_time;
     sim_time = (double)(n_time) * timestep;
+    
+    // time during which Maxwell's eqs. are not solved (cst fields)
+    time_fields_frozen *= conv_fac;
     
     // time after which the moving-window is turned on
     t_move_win *= conv_fac;

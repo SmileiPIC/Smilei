@@ -46,18 +46,38 @@ inline int stop_particle( Particles &particles, int ipart, int direction, double
 
 //!\todo (MG) at the moment the particle is thermalize whether or not there is a plasma initially at the boundary
 inline int thermalize_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart, tabulatedFunctions &tabFcts ) {
-    nrj_iPart = particles.weight(ipart)*(particles.lor_fac(ipart)-1.0); // energy before thermalization
-    particles.position(direction, ipart) = limit_pos - particles.position(direction, ipart);
+    
+    double sqrt_of_2 = std::sqrt(2.0);
+
+    // energy before thermalization
+    nrj_iPart = particles.weight(ipart)*(particles.lor_fac(ipart)-1.0);
+    
+    // velocity of the particle after reflection (unchanged in the directions that are not resolved in the simulations)
     for (int i=0; i<params.nDim_fields; i++) {
+        
         if (i==direction) {
-            particles.momentum(i,ipart) = params.thermalVelocity[direction]
-            *                             sqrt(-2.0 * log(1.0-((double)rand() / RAND_MAX)) );
+            // change of momentum in the direction normal to the reflection plane
+            double sign_vel = -(particles.position(direction, ipart)-0.5*limit_pos)
+            /          std::abs(particles.position(direction, ipart)-0.5*limit_pos);
+            double vel0     = sign_vel * sqrt_of_2 * params.thermalVelocity[direction]
+            *                 std::sqrt(-std::log(1.0-((double)rand() / RAND_MAX)) );
+            particles.momentum(i,ipart) = vel0/std::sqrt( 1.0-std::pow(vel0,2) );
         } else {
-            particles.momentum(i,ipart) = params.thermalVelocity[direction]
-            *                             sqrt( 2.0 * tabFcts.erfinv( (double)rand() / RAND_MAX ) );
+            // change of momentum in the direction(s) along the reflection plane
+            double sign_rnd = (double)rand() / RAND_MAX - 0.5; sign_rnd = (sign_rnd)/std::abs(sign_rnd);
+            double vel1     = sign_rnd * sqrt_of_2 * params.thermalVelocity[direction]
+            *                 tabFcts.erfinv( (double)rand() / RAND_MAX );
+            particles.momentum(i,ipart) = vel1/std::sqrt( 1.0-std::pow(vel1,2) );
         }//if
+        
     }//i
-    nrj_iPart -= particles.weight(ipart)*(particles.lor_fac(ipart)-1.0); // energy lost
+    
+    // position of the particle after reflection
+    particles.position(direction, ipart) = limit_pos - particles.position(direction, ipart);
+    
+    // energy lost during thermalization
+    nrj_iPart -= particles.weight(ipart)*(particles.lor_fac(ipart)-1.0);
+    
     
     /* HERE IS AN ATTEMPT TO INTRODUCE A SPACE DEPENDENCE ON THE BCs
     // double val_min(params.dens_profile.vacuum_length[1]), val_max(params.dens_profile.vacuum_length[1]+params.dens_profile.length_params_y[0]);
@@ -71,6 +91,7 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
 	stop_particle( particles, ipart, direction, limit_pos, params, nrj_iPart, tabFcts );
     }
      */
+    
     
     return 1;
 

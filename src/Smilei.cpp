@@ -60,8 +60,8 @@ int main (int argc, char* argv[])
     
     // -------------------------
     // Simulation Initialization
-    // ------------------------- 
-
+    // -------------------------
+    
     // Check for namelist (input file)
     if (argc<2) ERROR("No namelists given!");
     string namelist=argv[1];
@@ -77,10 +77,10 @@ int main (int argc, char* argv[])
     
     // Parse the namelist file (no check!)
     InputData input_data;
-    if ( smpiData->isMaster() ) input_data.readFile(namelist);    
-
+    if ( smpiData->isMaster() ) input_data.readFile(namelist);
+    
     // broadcast file and parse it and randomize
-    smpiData->bcast(input_data);    
+    smpiData->bcast(input_data);
     
     MESSAGE("----------------------------------------------");
     MESSAGE("Input data info");
@@ -120,7 +120,7 @@ int main (int argc, char* argv[])
     // -------------------------------------------
     // Declaration of the main objects & operators
     // -------------------------------------------
-
+    
     // ---------------------------
     // Initialize Species & Fields
     // ---------------------------
@@ -133,7 +133,7 @@ int main (int argc, char* argv[])
     
     // vector of Species (virtual)
     vector<Species*> vecSpecies = SpeciesFactory::createVector(params, smpi);
-
+    
     // ----------------------------------------------------------------------------
     // Define Moving Window & restart
     // ----------------------------------------------------------------------------
@@ -142,7 +142,7 @@ int main (int argc, char* argv[])
     int start_moving(0);
     if (params.nspace_win_x)
         simWindow = new SimWindow(params);
-
+    
     MESSAGE("----------------------------------------------");
     MESSAGE("Creating EMfields/Interp/Proj/Diags");
     MESSAGE("----------------------------------------------");
@@ -150,7 +150,7 @@ int main (int argc, char* argv[])
     // Initialize the electromagnetic fields and interpolation-projection operators
     // according to the simulation geometry
     // ----------------------------------------------------------------------------
-
+    
     // object containing the electromagnetic fields (virtual)
     ElectroMagn* EMfields = ElectroMagnFactory::create(params, laser_params, smpi);
     
@@ -161,12 +161,12 @@ int main (int argc, char* argv[])
     Projector* Proj = ProjectorFactory::create(params, smpi);
     
     // Create diagnostics
-    Diagnostic *Diags =new Diagnostic(params,diag_params, smpi);    
+    Diagnostic *Diags =new Diagnostic(params,diag_params, smpi);
     
     smpi->barrier();
-
+    
     unsigned int stepStart=0, stepStop=params.n_time;
-
+    
     // reading from dumped file the restart values
     if (params.restart) {
         MESSAGE(1, "READING fields and particles for restart");
@@ -178,7 +178,7 @@ int main (int argc, char* argv[])
             simWindow->setOperators(vecSpecies, Interp, Proj, smpi);
             simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi , params);
         }
-
+        
     } else {
         // Initialize the electromagnetic fields
         // -----------------------------------
@@ -223,16 +223,16 @@ int main (int argc, char* argv[])
         sio->writePlasma( vecSpecies, 0., smpi );
     }
     
-
+    
     // ------------------------------------------------------------------------
     // Initialize the simulation times time_prim at n=0 and time_dual at n=+1/2
     // ------------------------------------------------------------------------
-	
+    
     // time at integer time-steps (primal grid)
     double time_prim = stepStart * params.timestep;
     // time at half-integer time-steps (dual grid)
     double time_dual = (stepStart +0.5) * params.timestep;
-	
+    
     // Count timer
     int ntimer(8);
     Timer timer[ntimer];
@@ -246,13 +246,13 @@ int main (int argc, char* argv[])
     timer[7].init(smpi, "AvgFields");
     
     
-	// ------------------------------------------------------------------
+    // ------------------------------------------------------------------
     //                     HERE STARTS THE PIC LOOP
     // ------------------------------------------------------------------
     MESSAGE("-----------------------------------------------------------------------------------------------------");
     MESSAGE("Time-Loop is started: number of time-steps n_time = " << params.n_time);
     MESSAGE("-----------------------------------------------------------------------------------------------------");
-	
+    
     for (unsigned int itime=stepStart+1 ; itime <= stepStop ; itime++) {
         
         // calculate new times
@@ -287,7 +287,7 @@ int main (int argc, char* argv[])
             
         }//itime
         
-
+        
         // put density and currents to 0 + save former density
         // ---------------------------------------------------
         EMfields->restartRhoJ();
@@ -325,7 +325,8 @@ int main (int argc, char* argv[])
         }
         timer[1].update();
         
-	//!\todo To simplify : sum global and per species densities
+
+        //!\todo To simplify : sum global and per species densities
         timer[4].restart();
         smpi->sumRhoJ( EMfields );
         for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
@@ -334,17 +335,20 @@ int main (int argc, char* argv[])
         EMfields->computeTotalRhoJ();
         timer[4].update();
         
-        // solve Maxwell's equations
-        timer[2].restart();
-        EMfields->solveMaxwell(itime, time_dual, smpi, params, simWindow);
-        timer[2].update();
+        
+        if( time_dual > params.time_fields_frozen ) {
+            // solve Maxwell's equations
+            timer[2].restart();
+            EMfields->solveMaxwell(itime, time_dual, smpi, params, simWindow);
+            timer[2].update();
+        }
         
         // incrementing averaged electromagnetic fields
         if (diag_params.ntime_step_avg) EMfields->incrementAvgFields(itime, diag_params.ntime_step_avg);
         
         // call the various diagnostics
         // ----------------------------
-		
+        
         // run all diagnostics
         timer[3].restart();
         Diags->runAllDiags(itime, EMfields, vecSpecies, Interp, smpi);
@@ -371,12 +375,12 @@ int main (int argc, char* argv[])
         
         if (sio->dump(EMfields, itime,  vecSpecies, smpi, simWindow, params, input_data)) break;
         
-		
+        
         timer[5].restart();
         if ( simWindow && simWindow->isMoving(time_dual) ) {
             start_moving++;
             if ((start_moving==1) && (smpi->isMaster()) ) {
-		MESSAGE(">>> Window starts moving");
+                MESSAGE(">>> Window starts moving");
             }
             simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi, params);
         }
@@ -419,8 +423,8 @@ int main (int argc, char* argv[])
     // temporary particles dump (1 HDF5 file per process)
     if  ( (diag_params.particleDump_every != 0) && (params.n_time % diag_params.particleDump_every != 0) )
         sio->writePlasma( vecSpecies, time_dual, smpi );
-#endif    
-
+#endif
+    
     // ------------------------------
     //  Cleanup & End the simulation
     // ------------------------------
@@ -435,7 +439,7 @@ int main (int argc, char* argv[])
     MESSAGE("-----------------------------------------------------------------------------------------------------");
     MESSAGE("END " << namelist);
     MESSAGE("-----------------------------------------------------------------------------------------------------");
-
+    
     delete sio;
     delete smpi;
     delete smpiData;
