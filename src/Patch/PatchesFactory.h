@@ -31,7 +31,7 @@ public:
             //Computes number of patches owned by each MPI process
             smpi->patch_count[impi] = (1 << (m0 + m1 + m2)) / smpi->getSize() + ( impi < (1 << (m0 + m1 + m2))%smpi->getSize() );
         }
-        npatches = smpi->patch_count[smpi->getRank()];// Number of patch of current MPI process.
+        npatches = smpi->patch_count[smpi->getRank()];// Number of patches owned by current MPI process.
         firstpatch = 0;
         for (unsigned int impi = 0 ; impi < smpi->getRank() ; impi++) {
             firstpatch += smpi->patch_count[impi];

@@ -38,11 +38,11 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
 	nbNeighbors_ = 2;
 	neighbor_.resize(params.nDim_field);
 	for ( int iDim = 0 ; iDim < params.nDim_field ; iDim++ ) {
-	    neighbor_[iDim].resize(2,-2);
+	    neighbor_[iDim].resize(2,MPI_PROC_NULL);
 	}
 	corner_neighbor_.resize(params.nDim_field);
 	for ( int iDim = 0 ; iDim < params.nDim_field ; iDim++ ) {
-	    corner_neighbor_[iDim].resize(2,-2);
+	    corner_neighbor_[iDim].resize(2,MPI_PROC_NULL);
 	}
 	if (Pcoordinates[0]>0)
 	    //neighbor_[0][0] = ipatch-m1;
@@ -83,26 +83,26 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
 	if ( (neighbor_[1][0]>=0) && (neighbor_[0][0]>=0) )
 	    //corner_neighbor_[0][0] = neighbor_[0][0]-1;
 	    corner_neighbor_[0][0] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, Pcoordinates[1]-1);
-	else 
-	    corner_neighbor_[0][0] = MPI_PROC_NULL;
+	//else 
+	//    corner_neighbor_[0][0] = MPI_PROC_NULL;
 
 	if ( (neighbor_[1][0]>=0) && (neighbor_[0][1]>=0) )
 	    //corner_neighbor_[1][0] = neighbor_[0][1]-1;
 	    corner_neighbor_[1][0] = generalhilbertindex( m0, m1, Pcoordinates[0]+1, Pcoordinates[1]-1);
-	else 
-	    corner_neighbor_[1][0] = MPI_PROC_NULL;
+	//else 
+	//    corner_neighbor_[1][0] = MPI_PROC_NULL;
 
 	if ( (neighbor_[1][1]>=0) && (neighbor_[0][0]>=0) )
 	    //corner_neighbor_[0][1] = neighbor_[0][0]+1;
 	    corner_neighbor_[0][1] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, Pcoordinates[1]+1);
-	else 
-	    corner_neighbor_[0][1] = MPI_PROC_NULL;
+	//else 
+	//    corner_neighbor_[0][1] = MPI_PROC_NULL;
 
 	if ( (neighbor_[0][1]>=0) && (neighbor_[1][1]>=0) )
 	    //corner_neighbor_[1][1] = neighbor_[0][1]+1;   
 	    corner_neighbor_[1][1] = generalhilbertindex( m0, m1, Pcoordinates[0]+1, Pcoordinates[1]+1);
-	else
-	    corner_neighbor_[1][1] = MPI_PROC_NULL;   
+	//else
+	//    corner_neighbor_[1][1] = MPI_PROC_NULL;   
 
 	//cout << Pcoordinates[0] << " " << Pcoordinates[1] << endl;
 	//cout << number_of_procs[0] << " " << m1 << endl;
@@ -131,7 +131,7 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
 		if (Pcoordinates[1]!=0)
 		    //corner_neighbor_[0][0] = neighbor_[0][0]-1;
 	            corner_neighbor_[0][0] = generalhilbertindex( m0, m1, (1<<m0)-1, Pcoordinates[1]-1);
-		if (Pcoordinates[1]!= (1<<m0)-1) {
+		if (Pcoordinates[1]!= (1<<m1)-1) {
 		    //corner_neighbor_[0][1] = neighbor_[0][0]+1;
 	            corner_neighbor_[0][1] = generalhilbertindex( m0, m1, (1<<m0)-1, Pcoordinates[1]+1);
 		}
@@ -140,7 +140,7 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
 		if (Pcoordinates[1]!=0)
 		    //corner_neighbor_[1][0] = neighbor_[0][1]-1;
 	            corner_neighbor_[1][0] = generalhilbertindex( m0, m1, 0, Pcoordinates[1]-1);
-		if (Pcoordinates[1]!= (1<<m0)-1)
+		if (Pcoordinates[1]!= (1<<m1)-1)
 		    //corner_neighbor_[1][1] = neighbor_[0][1]+1;
 	            corner_neighbor_[1][1] = generalhilbertindex( m0, m1, 0, Pcoordinates[1]+1);
 	    }
@@ -378,6 +378,8 @@ void Patch::setbit(unsigned int* i, unsigned int k, unsigned int value)
 //!General Hilbert index2D calculates the  Hilbert index h of a patch of coordinates x,y for a simulation box with 2^mi patches per side (2^(m0+m1)) patches in total).
 unsigned int Patch::generalhilbertindex(unsigned int m0, unsigned int m1, unsigned int x, unsigned int y, unsigned int *einit, unsigned int *dinit)
 {
+    if(x%((1<<m0)-1) != x || y%((1<<m1)-1) != y ) return MPI_PROC_NULL ;
+
     unsigned int h,mmin,mmax,l,localx,localy,*target;
     h=0;
     *dinit=0;

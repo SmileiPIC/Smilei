@@ -578,6 +578,9 @@ int main (int argc, char* argv[])
 		MESSAGE(">>> Window starts moving");
             }
             simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi, params);
+            /* For discussion
+            simWindow->operate(vecPatches, smpi, params);
+            */
         }
         timer[5].update();
 #endif
