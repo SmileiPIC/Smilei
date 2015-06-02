@@ -62,6 +62,9 @@ public:
         return false;
     }
     
+    //! extract a profile
+    void extractProfile(std::string, ProfileSpecies &, int, std::string, std::vector<double>);
+    
     //! return the number of components (see pyinit.py)
     int nComponents(std::string componentName);
     

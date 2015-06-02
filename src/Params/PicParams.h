@@ -19,6 +19,9 @@ class InputData;
 // ---------------------------------------------------------------------------------------------------------------------
 struct ProfileStructure {
     
+    //! Constructor
+    ProfileStructure() { profile=""; }
+    
     //! Profile profile
     std::string profile; 
     

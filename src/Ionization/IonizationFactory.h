@@ -17,12 +17,12 @@ public:
 
         if ( model == "tunnel" ) {
             if (params.species_param[ispec].charge > (int)params.species_param[ispec].atomic_number)
-                ERROR( "Charge > atomic_number for specie " << ispec );
+                ERROR( "Charge > atomic_number for species " << ispec );
 
             Ionize = new IonizationTunnel( params, ispec );
 
         } else if ( model != "none" ) {
-            WARNING( "Unknown Ionization Model : " << model );
+            WARNING( "For species #" << ispec << ": unknown ionization model `" << model << "` ... assuming no ionization");
         }
         return Ionize;
     }

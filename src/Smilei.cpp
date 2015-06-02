@@ -29,7 +29,7 @@
 #include "SmileiIOFactory.h"
 
 #include "SpeciesFactory.h"
-#include "CollisionsFactory.h"
+#include "Collisions.h"
 #include "ElectroMagnFactory.h"
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
@@ -132,7 +132,7 @@ int main (int argc, char* argv[])
     
     // Initialize the collisions (vector of collisions)
     // ------------------------------------------------------------------------------------
-    vector<Collisions*> vecCollisions = CollisionsFactory::create(params, input_data, vecSpecies, smpi);
+    vector<Collisions*> vecCollisions = Collisions::create(params, input_data, vecSpecies, smpi);
     
     // ----------------------------------------------------------------------------
     // Define Moving Window & restart

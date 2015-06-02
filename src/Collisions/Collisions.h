@@ -44,6 +44,9 @@ public:
     Collisions(PicParams&,std::vector<Species*>&,SmileiMPI*,unsigned int,std::vector<unsigned int>,std::vector<unsigned int>,double,bool,int);
     ~Collisions();
     
+    //! Method that creates a vector of Collisions objects: one for each group in the input file.
+    static std::vector<Collisions*> create(PicParams&, InputData&, std::vector<Species*>&, SmileiMPI*);
+    
     //! Identification number of the Collisions object
     int n_collisions;
     

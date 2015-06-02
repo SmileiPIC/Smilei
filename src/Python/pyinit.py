@@ -68,7 +68,30 @@ class SmileiComponent(object):
 
 class Species(SmileiComponent):
     """Species parameters"""
-    species_type='None'
+    species_type = None
+    initPosition_type = None
+    initMomentum_type = ""
+    n_part_per_cell = None
+    c_part_max = 1.0
+    charge_density = None
+    nb_density = None
+    density = None
+    mean_velocity = None
+    temperature = None
+    dynamics_type = "norm"
+    time_frozen = 0.0
+    radiating = False
+    bc_part_type_west = None
+    bc_part_type_east = None
+    bc_part_type_north = None
+    bc_part_type_south = None
+    ionization_model = "none"
+    atomic_number = None
+    vacuum_length = []
+    for prefix in ["dens","mvel_x","mvel_y","mvel_z","temp_x","temp_y","temp_z"]:
+        exec prefix+"_profile = None"
+        for suffix in ["length_x","length_y","length_z","dbl_params","int_params"]:
+            exec prefix+"_"+suffix+" = []"
 
 class Laser(SmileiComponent):
     """Laser parameters"""
@@ -94,12 +117,49 @@ class DiagPhase(SmileiComponent):
 
 class DiagScalar(SmileiComponent):
     """Diagnostic scalar"""
-    pass
+    every = None
+    time_range = [None]
+    precision = 10
+    vars = [None]
 
 # external fields
 class ExtField(SmileiComponent):
     """External Field"""
     pass
+
+# default simulation values
+output_script = "smilei.py"
+dump_step = 0
+dump_minutes = 0.0
+exit_after_dump = True
+restart = False
+check_stop_file = False
+dump_file_sequence = 2
+sim_units = ""
+wavelength_SI = 0.
+dim = ""
+interpolation_order = None
+res_time = None
+res_space = [None]
+timestep = None
+cell_length = [None]
+sim_time = None
+sim_length = [None]
+bc_em_type_long = None
+bc_em_type_trans = None
+nspace_win_x = 0
+t_move_win = 0.0
+vx_win = 1.
+clrw = 1
+every = 0
+number_of_procs = [None]
+print_every = None
+fieldDump_every = 0
+fieldsToDump = [None]
+avgfieldDump_every = None
+ntime_step_avg = 0
+particleDump_every = None # for backwards-compatibility
+
 
 
 

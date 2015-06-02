@@ -11,15 +11,15 @@
 #include "Tools.h"
 
 //! tools to convert python values to C++ values and vectors
-class PyTools {    
-private:     
+class PyTools {
+private:
     //! convert Python object to bool
     static bool pyconvert(PyObject* py_val, bool &val) {
         if (py_val && PyBool_Check(py_val)) {
             val=(py_val==Py_True);
             return true;
         }
-        return false;        
+        return false;
     }
     
     //! convert Python object to short int
@@ -28,7 +28,7 @@ private:
             val=(short int) PyInt_AsLong(py_val);
             return true;
         }
-        return false;        
+        return false;
     }
     
     //! convert Python object to unsigned int
@@ -37,7 +37,7 @@ private:
             val=(unsigned int) PyInt_AsLong(py_val);
             return true;
         }
-        return false;        
+        return false;
     }
     
     //! convert Python object to int
@@ -46,7 +46,7 @@ private:
             val=(int) PyInt_AsLong(py_val);
             return true;
         }
-        return false;        
+        return false;
     }
     
     //! convert Python object to double
@@ -60,9 +60,9 @@ private:
                 return true;
             }
         }
-        return false;        
+        return false;
     }
-
+    
     //! convert Python object to string
     static bool pyconvert(PyObject* py_val, std::string &val) {
         if (py_val && PyString_Check(py_val)) {
@@ -71,7 +71,7 @@ private:
         }
         return false;
     }
-
+    
     //! check error and display message
     static double get_py_result(PyObject* pyresult) {
         checkPyError();
@@ -88,15 +88,15 @@ private:
         }
         return cppresult;
     }
-    
+
 public:
-    //! convert vector of Python objects to vector of C++ values
+    //! convert Python object to C++ value
     template <typename T>
     static bool convert(PyObject* py_vec, T &val) {
         bool retval=pyconvert(py_vec, val);
         return retval;
     }
-
+    
     //! convert vector of Python objects to vector of C++ values
     template <typename T>
     static bool convert(std::vector<PyObject*> py_vec, std::vector<T> &val) {
