@@ -720,6 +720,12 @@ void SmileiMPI_Cart2D::sumField( Field* field )
         
     } // END for iDim
     
+
+    for ( int i=0; i<ndims_; i++ )
+        delete [] buf[i];
+    delete [] buf;    
+
+
 } // END sumField
 
 
