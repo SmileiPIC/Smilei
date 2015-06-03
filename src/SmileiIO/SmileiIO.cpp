@@ -186,7 +186,7 @@ stop_file_seen_since_last_check(false)
 
     
 	// ???
-	initDumpCases();
+	//initDumpCases();
     
 }
 
@@ -349,12 +349,16 @@ void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI*
 }
 
 bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin, PicParams &params, InputData& input_data) { 
-    if  ((params.dump_step != 0 && (itime % params.dump_step == 0)) ||
+    if  (params.dump_step != 0 && (itime % params.dump_step == 0)) {
+	dumpAll( EMfields, itime,  vecSpecies, smpi, simWin, params, input_data);
+	if (params.exit_after_dump)	return true;
+    }
+    /*if  ((params.dump_step != 0 && (itime % params.dump_step == 0)) ||
 	 (params.dump_minutes != 0.0 && time_seconds()/60.0 > smpi->getSize()*(params.dump_minutes*(dump_times+1))) || 
 	 (params.check_stop_file && fileStopCreated())) {
 	dumpAll( EMfields, itime,  vecSpecies, smpi, simWin, params, input_data);
 	if (params.exit_after_dump)	return true;
-    }	
+    }	*/
     return false;
 }
 

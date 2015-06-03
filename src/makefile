@@ -11,8 +11,8 @@ VERSION:="$(shell git describe 2>/dev/null || echo '??')"
 
 #CFLAGS += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include
 #LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5 /bgsys/linux/RHEL6.5_V1R2M2-7/opt/ibmcmp/vac/bg/12.1/bglib64/libxl.a /bgsys/linux/RHEL6.5_V1R2M2-7/opt/ibmcmp/vac/bg/12.1/bglib64/libxlopt.a
-CFLAGS += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include -I/bglocal/cn/pub/HDF5/1.8.9/par/include 
-LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5 /bgsys/linux/RHEL6.5_V1R2M2-7/opt/ibmcmp/vac/bg/12.1/bglib64/libxl.a /bgsys/linux/RHEL6.5_V1R2M2-7/opt/ibmcmp/vac/bg/12.1/bglib64/libxlopt.a -L/bglocal/cn/pub/HDF5/1.8.9/par/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lm -L/bglocal/cn/pub/zlib/1.2.5/lib -lz
+CFLAGS += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include -I/bglocal/cn/pub/HDF5/1.8.14/par/include 
+LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5 /bgsys/linux/RHEL6.5_V1R2M2-7/opt/ibmcmp/vac/bg/12.1/bglib64/libxl.a /bgsys/linux/RHEL6.5_V1R2M2-7/opt/ibmcmp/vac/bg/12.1/bglib64/libxlopt.a -L/bglocal/cn/pub/HDF5/1.8.14/par/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lm -L/bglocal/cn/pub/zlib/1.2.5/lib -lz
 
 ifneq (,$(findstring poincare,$(HOSTNAME)))
     LDFLAGS += -lgpfs -lz
