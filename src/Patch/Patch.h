@@ -94,6 +94,8 @@ public:
 
     std::vector< std::vector<int> > neighbor_;
     std::vector< std::vector<int> > corner_neighbor_;
+    std::vector< int > MPI_neighborhood_;
+    std::vector< int > patch_neighborhood_;
 
 
     //! Log2 of the number of patch in the whole simulation box in every direction.

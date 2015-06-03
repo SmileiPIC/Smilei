@@ -70,35 +70,42 @@ void SimWindow::operate(vector<Patches*> vecPatches, SmileiMPI* smpi, PicParams&
             min_local -= patch_size[0]*dx;
             max_local -= patch_size[0]*dx;
             cell_starting_globalindex[0] -= patch_size[0];
-            nbNeighbors ???
-            neighbor_[0][1] = hindex;
-            corner_neighbor[1][1] = neighbor[1][1];
-            corner_neighbor[1][0] = neighbor[1][0];
-            hindex = neighbor_[0][0];
-            neighbor_[1][0] = corner_neighbor_[0][0] ;
-            neighbor_[1][1] = corner_neighbor_[0][1] ;
-	    if (Pcoordinates[0]>0){
-	        neighbor_[0][0] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, Pcoordinates[1]);
-	    } else if (params.bc_em_type_long=="periodic") {
-	        neighbor_[0][0] = generalhilbertindex( m0, m1,(1<<m0)-1, Pcoordinates[1]);
-            }else {
-                neighbor_[0][0] = MPI_PROC_NULL ;
+
+            //Shift neighborhood tables.
+	    for ( int x = 1 ; x < 3 ; x++ ) {
+	        for ( int y = 0 ; y < 1+2*(params.nDim_field >= 2) ; y++ ) {
+	            for ( int z = 0 ; z < 1+2*(params.nDim_field == 3) ; z++ ) {
+	            patch_neighborhood_[x*9+y*3+z] = patch_neighborhood_[x*9+y*3+z+1];
+	            MPI_neighborhood_[x*9+y*3+z] = MPI_neighborhood_[x*9+y*3+z+1];
+                    }
+                }
             }
+            //Compute missing part of the new neighborhood tables.
             xcall = Pcoordinates[0]-1;
             ycall = Pcoordinates[1]-1;
-            if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0)-1);
-            if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<m1)-1);
-	    corner_neighbor_[0][0] = generalhilbertindex( m0, m1, xcall, ycall);
-
-                        ycall = Pcoordinates[1]+1;
-            if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<m1)-1);
-	    corner_neighbor_[0][1] = generalhilbertindex( m0, m1, xcall, ycall);
+            if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0));
+            if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<m1));
+	    patch_neighborhood_[0] = generalhilbertindex( m0, m1, xcall, ycall);
+	    patch_neighborhood_[1] = generalhilbertindex( m0, m1, xcall, Pcoordinates[1]);
+            ycall = Pcoordinates[1]+1;
+            if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<m1));
+	    patch_neighborhood_[2] = generalhilbertindex( m0, m1, xcall, ycall);
+	    for ( int y = 0 ; y < 1+2*(params.nDim_field >= 2) ; y++ ) {
+	        for ( int z = 0 ; z < 1+2*(params.nDim_field == 3) ; z++ ) {
+                    MPI_neighborhood_[y*3+z] = smpi->hrank(patch_neighborhood_[y*3+z]);
+                }
+            }
+            
              
         }
         //Si je ne possede pas mon voisin de droite...
         if (MpiRNeighbour != MPI_PROC_NULL) {
-            //...je reçois.
-            Mpi_Receive_Patch(MpiRNeighbour);
+            //...je reçois ou je cré.
+            if (Pcoordinates[0] < (1<<m0-1)) {
+                Mpi_Receive_Patch(MpiRNeighbour);
+            } else {
+                Create_Patch();
+            }
             //Les fonctions SendPatch ou ReceivePatch doivent transformer le Patch comme ci dessus.
             //Ce serait plus simple de mettre hindex, neighbor_ et corner_neighbor_ dans un seul et meme tableau.
         }

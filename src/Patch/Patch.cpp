@@ -17,6 +17,8 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
             Pcoordinates.resize(1);
             mi[0] = m0;
             Pcoordinates[0] = hindex;
+	    MPI_neighborhood_.resize(3);
+	    patch_neighborhood_.resize(3);
         }
         else if ( params.geometry == "2d3v" ) {
             mi.resize(2);
@@ -24,6 +26,8 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
             mi[0] = m0;
             mi[1] = m1;
             generalhilbertindexinv(m0, m1, &Pcoordinates[0], &Pcoordinates[1], hindex);
+	    MPI_neighborhood_.resize(9);
+	    patch_neighborhood_.resize(9);
         }
         else {
             mi.resize(3);
@@ -32,16 +36,16 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
             mi[1] = m1;
             mi[2] = m2;
             generalhilbertindexinv(m0, m1, m2, &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
+	    MPI_neighborhood_.resize(27);
+	    patch_neighborhood_.resize(27);
         }
 
 	//std::cout << "Coordonnées de " << ipatch << " : " << Pcoordinates[0] << " " << Pcoordinates[1] << std::endl;
 	nbNeighbors_ = 2;
 	neighbor_.resize(params.nDim_field);
-	for ( int iDim = 0 ; iDim < params.nDim_field ; iDim++ ) {
-	    neighbor_[iDim].resize(2,MPI_PROC_NULL);
-	}
 	corner_neighbor_.resize(params.nDim_field);
 	for ( int iDim = 0 ; iDim < params.nDim_field ; iDim++ ) {
+	    neighbor_[iDim].resize(2,MPI_PROC_NULL);
 	    corner_neighbor_[iDim].resize(2,MPI_PROC_NULL);
 	}
 
@@ -77,10 +81,33 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
 	corner_neighbor_[1][0] = generalhilbertindex( m0, m1, xcall, ycall);
 
 
-	cout << "\n\tCorner decomp : " << smpi->hrank(corner_neighbor_[0][1]) << "\t" << neighbor_[1][1]  << "\t" << corner_neighbor_[1][1] << endl;
+        patch_neighborhood_[0] = corner_neighbor_[0][0];
+        patch_neighborhood_[1] = neighbor_[0][0];
+        patch_neighborhood_[2] = corner_neighbor_[0][1];
+        patch_neighborhood_[3] = neighbor_[1][0];
+        patch_neighborhood_[4] = hindex;
+        patch_neighborhood_[5] = neighbor_[1][1];
+        patch_neighborhood_[6] = corner_neighbor_[1][0];
+        patch_neighborhood_[7] = neighbor_[0][1];
+        patch_neighborhood_[8] = corner_neighbor_[1][1];
+
+
+
+	for ( int x = 0 ; x < 3 ; x++ ) {
+	    for ( int y = 0 ; y < 1+2*(params.nDim_field >= 2) ; y++ ) {
+	        for ( int z = 0 ; z < 1+2*(params.nDim_field == 3) ; z++ ) {
+	        MPI_neighborhood_[x*9+y*3+z] = smpi->hrank(patch_neighborhood_[x*9+y*3+z]);
+                }
+            }
+        }
+
+	cout << "\n\tCorner decomp : " << corner_neighbor_[0][1] << "\t" << neighbor_[1][1]  << "\t" << corner_neighbor_[1][1] << endl;
 	cout << "\tCorner decomp : " << neighbor_[0][0] << "\t" << hindex << "\t" << neighbor_[0][1] << endl;
 	cout << "\tCorner decomp : " << corner_neighbor_[0][0] << "\t" << neighbor_[1][0]  << "\t" << corner_neighbor_[1][0] << endl;
 
+	cout << "\n\tCorner decomp : " << MPI_neighborhood_[6] << "\t" << MPI_neighborhood_[7]  << "\t" << MPI_neighborhood_[8] << endl;
+	cout << "\tCorner decomp : " << MPI_neighborhood_[3] << "\t" << MPI_neighborhood_[4] << "\t" << MPI_neighborhood_[5] << endl;
+	cout << "\tCorner decomp : " << MPI_neighborhood_[0] << "\t" << MPI_neighborhood_[1]  << "\t" << MPI_neighborhood_[2] << endl;
 	
 	//std::cout << "Voisin dir 0 : " << ipatch << " : " <<  neighbor_[0][0] << " " <<  neighbor_[0][1] << std::endl;
 	//std::cout << "Voisin dir 1 : " << ipatch << " : " <<  neighbor_[1][0] << " " <<  neighbor_[1][1] << std::endl;
