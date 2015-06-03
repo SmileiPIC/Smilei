@@ -64,15 +64,24 @@ random_seed = 0
 # c_part_max        = float, factor on the memory reserved for the total number of particles
 # mass              = float, particle mass in units of the electron mass
 # charge            = float, particle charge in units of the electron charge
-# density           = float, species density in units of the "critical" density
-# density_profile   = string or python function (see doc)
-# vacuum_length     = list of floats, distance from box borders without particles
-# dens_length_[xyz] = list of floats, various distances to define the density profile (see doc)
-# mean_velocity     = list of floats, mean velocity in units of the speed of light
-# temperature       = list of floats, temperature in units of m_e c^2
 # dynamics_type     = string, type of species dynamics = "norm" or "rrLL"
 # time_frozen       = float, time during which particles are frozen in units of the normalization time
 # radiating         = boolean, if true, incoherent radiation calculated using the Larmor formula 
+# vacuum_length      = list of floats, distance from box borders without particles.
+# density            = float, species density in units of the "critical" density
+# mean_velocity      = list of floats, mean velocity in units of the speed of light
+# temperature        = list of floats, temperature in units of m_e c^2
+# SPECIES PROFILES from python function (see doc)
+#    Predefined functions: constant, trapezoidal, gaussian, polygonal, cosine
+# dens_profile       = python function. Units: n_c
+# mvel_[xyz]_profile = python function. Units: c
+# temp_[xyz]_profile = python function. Units: m_e c^2
+# SPECIES PROFILES from hardcoded functions
+# dens_profile       = name of a profile ("constant", "gaussian", etc.)
+# mvel_[xyz]_profile = name of a profile ("constant", "gaussian", etc.)
+# temp_[xyz]_profile = name of a profile ("constant", "gaussian", etc.)
+
+p = constant(1.)
 
 Species(
 	species_type = "ion1",
@@ -85,6 +94,7 @@ Species(
 	mass = 1836.0,
 	charge = 1.0,
 	density = 10.,
+	dens_profile = p,
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.00002],
 	dynamics_type = "norm",
@@ -104,6 +114,7 @@ Species(
 	mass = 1.0,
 	charge = -1.0,
 	density = 10.,
+	dens_profile = p,
 	mean_velocity = [0.05, 0., 0.],
 	temperature = [0.00002],
 	dynamics_type = "norm",
@@ -138,10 +149,7 @@ DiagScalar(every = 1)
 # pos          = N floats, position of the reference point
 # pos_first    = N floats, optional, position of the first point
 # pos_second   = N floats, optional, position of the second point
-DiagProbe(
-	every = 1,
-	pos = [1]
-)
+
 
 # DIAGNOSTICS ON PARTICLES - project the particles on a N-D arbitrary grid
 # ------------------------------------------------------------------------

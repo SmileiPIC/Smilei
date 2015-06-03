@@ -5,7 +5,8 @@
 using namespace std;
 
 ExtFieldParams::ExtFieldParams(PicParams& params, InputData &ifile) :
-geometry(params.geometry)
+geometry(params.geometry),
+conv_fac(params.conv_fac)
 {
 
     // -----------------
@@ -23,9 +24,12 @@ geometry(params.geometry)
                 tmpExtField.py_profile=mypy;
                 tmpExtField.profile="python";
             } else{
-	        ERROR(" ExtField #"<<n_extfield<<": parameter 'profile' not understood");
-	    }
+                ERROR(" ExtField #"<<n_extfield<<": parameter 'profile' not understood");
+            }
         } else {
+            if( !ifile.extract("factor",tmpExtField.factor,"ExtField",n_extfield) ) {
+                ERROR("ExtField #"<<n_extfield<<": parameter 'factor' not provided");
+            }
             ifile.extract("int_params",tmpExtField.int_params,"ExtField",n_extfield);
             ifile.extract("double_params",tmpExtField.double_params,"ExtField",n_extfield);
             ifile.extract("length_params_x",tmpExtField.length_params_x,"ExtField",n_extfield);

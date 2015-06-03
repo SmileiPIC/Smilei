@@ -9,6 +9,7 @@
 #include "LaserProfile.h"
 #include "LaserParams.h"
 #include "ExtFieldParams.h"
+#include "Profile.h"
 
 
 class PicParams;
@@ -184,15 +185,12 @@ public:
 
     //! Check if norm of charge denisty is not null
     bool isRhoNull(SmileiMPI* smpi);
-
-    //! initialization of the external fields;
-    void initExtFields(ExtFieldParams&);
     
     //! Method used to impose external fields (apply to all Fields)
     void applyExternalFields(SmileiMPI*);
     
     //! Method used to impose external fields (apply to a given Field)
-    virtual void applyExternalField(Field*, ExtFieldProfile*, SmileiMPI*) = 0 ;
+    virtual void applyExternalField(Field*, Profile*, SmileiMPI*) = 0 ;
     
     
     double computeNRJ(unsigned int shift, SmileiMPI *smpi);

@@ -175,29 +175,3 @@ void InputData::cleanup() {
     }
 }
 
-
-void InputData::extractProfile(string prefix, ProfileSpecies &P, int ispec, string geometry, vector<double> vacuum_length) {
-    
-    extract(prefix+"_profile", P.profile, "Species", ispec);
-    if (P.profile.empty()) {
-        PyObject *mypy = extract_py(prefix+"_profile", "Species", ispec);
-        if (mypy && PyCallable_Check(mypy)) {
-            P.py_profile=mypy;
-            P.profile="python";
-        } else {
-            WARNING("For species " << ispec << ", "+prefix+"_profile not defined, assumed constant.");
-            P.profile = "constant";
-        }
-    }
-    if (P.profile != "python") {
-        P.vacuum_length = vacuum_length;
-        extract(prefix+"_length_x", P.length_params_x, "Species", ispec);
-        if ( (geometry=="2d3v") || (geometry=="3d3v") )
-            extract(prefix+"_length_y", P.length_params_y, "Species", ispec);
-        if ( geometry=="3d3v" )
-            extract(prefix+"_length_z", P.length_params_z, "Species", ispec);
-        extract(prefix+"_dbl_params", P.double_params, "Species", ispec);
-        extract(prefix+"_int_params", P.int_params, "Species", ispec);
-    }
-    
-}

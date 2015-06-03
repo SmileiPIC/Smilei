@@ -10,8 +10,7 @@
 #include "ElectroMagnBC.h"
 #include "ElectroMagnBC_Factory.h"
 #include "SimWindow.h"
-#include "ExtFieldProfile1D.h"
-#include "ExtFieldProfile2D.h"
+#include "Profile.h"
 #include "SolverFactory.h"
 
 using namespace std;
@@ -347,12 +346,7 @@ void ElectroMagn::applyExternalFields(SmileiMPI* smpi) {
     for (vector<Field*>::iterator field=my_fields.begin(); field!=my_fields.end(); field++) {
         if (*field) {
             for (vector<ExtFieldStructure>::iterator extfield=extfield_params.structs.begin(); extfield!=extfield_params.structs.end(); extfield++ ) {
-                ExtFieldProfile *my_ExtFieldProfile=NULL;
-                if (extfield_params.geometry == "1d3v") {
-                    my_ExtFieldProfile = (ExtFieldProfile*) (new ExtFieldProfile1D(*extfield));
-                } else if (extfield_params.geometry == "2d3v") {
-                    my_ExtFieldProfile = (ExtFieldProfile*) (new ExtFieldProfile2D(*extfield));
-                }
+                Profile *my_ExtFieldProfile = new Profile(*extfield, extfield_params.geometry, extfield_params.conv_fac);
                 if (my_ExtFieldProfile) {
                     for (vector<string>::iterator fieldName=(*extfield).fields.begin();fieldName!=(*extfield).fields.end();fieldName++) {
                         if (LowerCase((*field)->name)==LowerCase(*fieldName)) {
@@ -360,7 +354,7 @@ void ElectroMagn::applyExternalFields(SmileiMPI* smpi) {
                         }
                     }
                     delete my_ExtFieldProfile;
-                    my_ExtFieldProfile=NULL;
+                    //my_ExtFieldProfile=NULL;
                 } else{
 		    ERROR("Could not initialize external field Profile");
 		}

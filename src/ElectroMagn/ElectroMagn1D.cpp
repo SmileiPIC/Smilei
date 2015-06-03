@@ -12,7 +12,7 @@
 #include "SmileiMPI.h"
 #include "SmileiMPI_Cart1D.h"
 
-#include "ExtFieldProfile1D.h"
+#include "Profile.h"
 #include "MF_Solver1D_Yee.h"
 
 #include "ElectroMagnBC.h"
@@ -627,16 +627,15 @@ void ElectroMagn1D::computePoynting() {
     }    
 }
 
-void ElectroMagn1D::applyExternalField(Field* my_field,  ExtFieldProfile *my_profile, SmileiMPI* smpi) {
+void ElectroMagn1D::applyExternalField(Field* my_field,  Profile *profile, SmileiMPI* smpi) {
 
     Field1D* field1D=static_cast<Field1D*>(my_field);
-    ExtFieldProfile1D* profile=static_cast<ExtFieldProfile1D*> (my_profile);
     SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
     
     vector<double> x(1,0);
     for (int i=0 ; i<field1D->dims()[0] ; i++) {
          x[0] = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i +(field1D->isDual(0)?-0.5:0)) )*dx;
-         (*field1D)(i) = (*field1D)(i) + (*profile)(x);
+         (*field1D)(i) = (*field1D)(i) + profile->valueAt(x);
     }
     
     emBoundCond[0]->save_fields_BC1D(my_field);

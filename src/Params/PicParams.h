@@ -20,7 +20,10 @@ class InputData;
 struct ProfileStructure {
     
     //! Constructor
-    ProfileStructure() { profile=""; }
+    ProfileStructure() {
+        profile="";
+        vacuum_length.resize(0);
+    }
     
     //! Profile profile
     std::string profile; 
@@ -43,16 +46,10 @@ struct ProfileStructure {
     //! double vector for profile parameters (z lengths: will be multiplied by 2pi)
     std::vector<double> length_params_z;
     
-};
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-//! for the species we need an additional variable
-// ---------------------------------------------------------------------------------------------------------------------
-struct ProfileSpecies : ProfileStructure {
     //! vacuum lengths
     std::vector<double> vacuum_length;
 };
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each species
@@ -113,18 +110,18 @@ struct SpeciesStructure {
     std::string ionization_model;
     
     //! density profile
-    ProfileSpecies dens_profile;
+    ProfileStructure dens_profile;
     
     //! velocity profile
-    ProfileSpecies mvel_x_profile;
-    ProfileSpecies mvel_y_profile;
-    ProfileSpecies mvel_z_profile;
+    ProfileStructure mvel_x_profile;
+    ProfileStructure mvel_y_profile;
+    ProfileStructure mvel_z_profile;
     
     
     //! temperature profile
-    ProfileSpecies temp_x_profile;
-    ProfileSpecies temp_y_profile;
-    ProfileSpecies temp_z_profile;
+    ProfileStructure temp_x_profile;
+    ProfileStructure temp_y_profile;
+    ProfileStructure temp_z_profile;
     
 };
 
@@ -139,6 +136,9 @@ public:
     //! Creator for PicParams
     PicParams(InputData &);
     
+    //! extract a profile
+    void extractProfile(InputData &, std::string, ProfileStructure &, int, std::string, std::vector<double>);
+
     //! compute grid-related parameters & apply normalization
     void compute();
     
@@ -239,30 +239,30 @@ public:
     
     //! wavelength (in SI units)
     double wavelength_SI;
-
+    
     //! Oversize domain to exchange less particles
     std::vector<unsigned int> oversize;
-	
-	//! Timestep to dump everything
-	unsigned int dump_step;
     
-	//! Human minutes to dump everything
-	double dump_minutes;
+    //! Timestep to dump everything
+    unsigned int dump_step;
     
-	//! exit once dump done
-	bool exit_after_dump;
-	
-	//! check for file named "stop"
-	bool check_stop_file;
-	
-	//! keep the last dump_file_sequence dump files
-	unsigned int dump_file_sequence;
-	
-	//! restart namelist
-	bool restart;
-	
-	//! frequency of exchange particles (default = 1, disabled for now, incompatible with sort) 
-	int exchange_particles_each;
+    //! Human minutes to dump everything
+    double dump_minutes;
+    
+    //! exit once dump done
+    bool exit_after_dump;
+    
+    //! check for file named "stop"
+    bool check_stop_file;
+    
+    //! keep the last dump_file_sequence dump files
+    unsigned int dump_file_sequence;
+    
+    //! restart namelist
+    bool restart;
+    
+    //! frequency of exchange particles (default = 1, disabled for now, incompatible with sort) 
+    int exchange_particles_each;
     
     //! Number of MPI process per direction (default : as square as possible)
     std::vector<int> number_of_procs;

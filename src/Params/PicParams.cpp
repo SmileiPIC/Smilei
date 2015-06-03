@@ -256,6 +256,9 @@ void PicParams::readSpecies(InputData &ifile) {
                 WARNING("For species #" << ispec << ", `density` assumed to be the charge density.");
             }
         }
+        if( !ok ) {
+            ERROR("For species #" << ispec << ", need 'charge_density' or 'nb_density' defined.");
+        }
         
         ok = ifile.extract("mean_velocity",tmpSpec.mean_velocity ,"Species",ispec);
         if (tmpSpec.mean_velocity.size()!=3) {
@@ -330,16 +333,43 @@ void PicParams::readSpecies(InputData &ifile) {
         vector<double> vacuum_length;
         ok = ifile.extract("vacuum_length", vacuum_length,"Species",ispec);
         
-        ifile.extractProfile("dens"  , tmpSpec.dens_profile  , ispec, geometry, vacuum_length);
-        ifile.extractProfile("mvel_x", tmpSpec.mvel_x_profile, ispec, geometry, vacuum_length);
-        ifile.extractProfile("mvel_y", tmpSpec.mvel_y_profile, ispec, geometry, vacuum_length);
-        ifile.extractProfile("mvel_z", tmpSpec.mvel_z_profile, ispec, geometry, vacuum_length);
-        ifile.extractProfile("temp_x", tmpSpec.temp_x_profile, ispec, geometry, vacuum_length);
-        ifile.extractProfile("temp_y", tmpSpec.temp_y_profile, ispec, geometry, vacuum_length);
-        ifile.extractProfile("temp_z", tmpSpec.temp_z_profile, ispec, geometry, vacuum_length);
+        extractProfile(ifile, "dens"  , tmpSpec.dens_profile  , ispec, geometry, vacuum_length);
+        extractProfile(ifile, "mvel_x", tmpSpec.mvel_x_profile, ispec, geometry, vacuum_length);
+        extractProfile(ifile, "mvel_y", tmpSpec.mvel_y_profile, ispec, geometry, vacuum_length);
+        extractProfile(ifile, "mvel_z", tmpSpec.mvel_z_profile, ispec, geometry, vacuum_length);
+        extractProfile(ifile, "temp_x", tmpSpec.temp_x_profile, ispec, geometry, vacuum_length);
+        extractProfile(ifile, "temp_y", tmpSpec.temp_y_profile, ispec, geometry, vacuum_length);
+        extractProfile(ifile, "temp_z", tmpSpec.temp_z_profile, ispec, geometry, vacuum_length);
         
         species_param.push_back(tmpSpec);
     }
+}
+
+void PicParams::extractProfile(InputData &ifile, string prefix, ProfileStructure &P, int ispec, string geometry, vector<double> vacuum_length)
+{
+    
+    ifile.extract(prefix+"_profile", P.profile, "Species", ispec);
+    if (P.profile.empty()) {
+        PyObject *mypy = ifile.extract_py(prefix+"_profile", "Species", ispec);
+        if (mypy && PyCallable_Check(mypy)) {
+            P.py_profile=mypy;
+            P.profile="python";
+        } else {
+            WARNING("For species " << ispec << ", "+prefix+"_profile not defined, assumed constant.");
+            P.profile = "constant";
+        }
+    }
+    if (P.profile != "python") {
+        P.vacuum_length = vacuum_length;
+        ifile.extract(prefix+"_length_x", P.length_params_x, "Species", ispec);
+        if ( (geometry=="2d3v") || (geometry=="3d3v") )
+            ifile.extract(prefix+"_length_y", P.length_params_y, "Species", ispec);
+        if ( geometry=="3d3v" )
+            ifile.extract(prefix+"_length_z", P.length_params_z, "Species", ispec);
+        ifile.extract(prefix+"_dbl_params", P.double_params, "Species", ispec);
+        ifile.extract(prefix+"_int_params", P.int_params, "Species", ispec);
+    }
+    
 }
 
 
@@ -418,7 +448,7 @@ void PicParams::computeSpecies()
         // time during which particles are frozen
         s->time_frozen *= conv_fac;
         
-        vector<ProfileSpecies*> profiles;
+        vector<ProfileStructure*> profiles;
         vector<string> prefixes;
         profiles.push_back(&(s->dens_profile  )); prefixes.push_back("dens_"  );
         profiles.push_back(&(s->mvel_x_profile)); prefixes.push_back("mvel_x_");
@@ -429,6 +459,8 @@ void PicParams::computeSpecies()
         profiles.push_back(&(s->temp_z_profile)); prefixes.push_back("temp_z_");
         
         for (unsigned int iprof=0; iprof<profiles.size(); iprof++) {
+            
+            if (profiles[iprof]->profile=="python") continue;
             
             // normalizing the vacuum lengths
             for (unsigned int i=0; i<profiles[iprof]->vacuum_length.size(); i++)
