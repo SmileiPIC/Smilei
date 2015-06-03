@@ -82,21 +82,21 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
 
 
         patch_neighborhood_[0] = corner_neighbor_[0][0];
-        patch_neighborhood_[1] = neighbor_[0][0];
-        patch_neighborhood_[2] = corner_neighbor_[0][1];
-        patch_neighborhood_[3] = neighbor_[1][0];
+        patch_neighborhood_[1] = neighbor_[1][0];
+        patch_neighborhood_[2] = corner_neighbor_[1][0];
+        patch_neighborhood_[3] = neighbor_[0][0];
         patch_neighborhood_[4] = hindex;
-        patch_neighborhood_[5] = neighbor_[1][1];
-        patch_neighborhood_[6] = corner_neighbor_[1][0];
-        patch_neighborhood_[7] = neighbor_[0][1];
+        patch_neighborhood_[5] = neighbor_[0][1];
+        patch_neighborhood_[6] = corner_neighbor_[0][1];
+        patch_neighborhood_[7] = neighbor_[1][1];
         patch_neighborhood_[8] = corner_neighbor_[1][1];
 
 
 
-	for ( int x = 0 ; x < 3 ; x++ ) {
+	for ( int z = 0 ; z < 1+2*(params.nDim_field == 3) ; z++ ) {
 	    for ( int y = 0 ; y < 1+2*(params.nDim_field >= 2) ; y++ ) {
-	        for ( int z = 0 ; z < 1+2*(params.nDim_field == 3) ; z++ ) {
-	        MPI_neighborhood_[x*9+y*3+z] = smpi->hrank(patch_neighborhood_[x*9+y*3+z]);
+	        for ( int x = 0 ; x < 3 ; x++ ) {
+	        MPI_neighborhood_[z*9+y*3+x] = smpi->hrank(patch_neighborhood_[z*9+y*3+x]);
                 }
             }
         }

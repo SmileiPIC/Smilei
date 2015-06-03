@@ -72,11 +72,11 @@ void SimWindow::operate(vector<Patches*> vecPatches, SmileiMPI* smpi, PicParams&
             cell_starting_globalindex[0] -= patch_size[0];
 
             //Shift neighborhood tables.
-	    for ( int x = 1 ; x < 3 ; x++ ) {
+	    for ( int z = 0 ; z < 1+2*(params.nDim_field == 3) ; z++ ) {
 	        for ( int y = 0 ; y < 1+2*(params.nDim_field >= 2) ; y++ ) {
-	            for ( int z = 0 ; z < 1+2*(params.nDim_field == 3) ; z++ ) {
-	            patch_neighborhood_[x*9+y*3+z] = patch_neighborhood_[x*9+y*3+z+1];
-	            MPI_neighborhood_[x*9+y*3+z] = MPI_neighborhood_[x*9+y*3+z+1];
+	            for ( int x = 2 ; x > 0 ; x-- ) {
+	            patch_neighborhood_[z*9+y*3+x] = patch_neighborhood_[z*9+y*3+x-1];
+	            MPI_neighborhood_[z*9+y*3+x] = MPI_neighborhood_[z*9+y*3+x-1];
                     }
                 }
             }
