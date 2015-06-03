@@ -536,7 +536,8 @@ void SmileiMPI_Cart1D::sumField( Field* field )
                 f1D->data_[istart+i] += (buf[(iNeighbor+1)%2])(i);
         }
     } // END for iNeighbor
-    
+
+    delete [] buf;
     
 } // END sumField
 
