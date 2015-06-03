@@ -55,7 +55,7 @@ public:
             }
             // reflective bcs
             else if ( params.bc_em_type_x[1] == "reflective" ) {
-                //emBoundCond[1] = new ElectroMagnBC1D_refl(params, laser_params);
+                emBoundCond[1] = new ElectroMagnBC1D_refl(params, laser_params);
             }
             // else: error
             else if ( params.bc_em_type_x[1] != "periodic" ) {
