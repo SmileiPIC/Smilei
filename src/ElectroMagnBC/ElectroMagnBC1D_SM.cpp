@@ -40,25 +40,61 @@ ElectroMagnBC1D_SM::~ElectroMagnBC1D_SM()
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnBC1D_SM::apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
+void ElectroMagnBC1D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
 {
-//    Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
+    if ( smpi->isWestern() ) {
+        
+        Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
+        Field1D* Ey1D   = static_cast<Field1D*>(EMfields->Ey_);
+        Field1D* Ez1D   = static_cast<Field1D*>(EMfields->Ez_);
+        Field1D* By1D   = static_cast<Field1D*>(EMfields->By_);
+        Field1D* Bz1D   = static_cast<Field1D*>(EMfields->Bz_);
+        
+        // Laser temporal profile
+        double byL=0.0, bzL=0.0;
+        
+        for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
+            
+            if (laser_[ilaser]->laser_struct.boxSide == "west") {
+                // Incident field (left boundary)
+                byL += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
+                bzL += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
+            } else if (laser_[ilaser]->laser_struct.boxSide == "east") {
+                // nothing done (treating only west bnd here)
+            } else {
+                ERROR("Angle not allowed for 1D/2D laser pulse " << ilaser);
+            }
+            
+        }//ilaser
+        
+
+        // Apply Silver-Mueller EM boundary condition at x=xmin
+        (*By1D)(0) =  Alpha_SM*(*Ez1D)(0) + Beta_SM*(*By1D)(1) + Gamma_SM*byL;
+        (*Bz1D)(0) = -Alpha_SM*(*Ey1D)(0) + Beta_SM*(*Bz1D)(1) + Gamma_SM*bzL;
+        
+    }//if Western
+
+}
+// ---------------------------------------------------------------------------------------------------------------------
+// Apply Boundary Conditions
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagnBC1D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
+{
+    Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
     Field1D* Ey1D   = static_cast<Field1D*>(EMfields->Ey_);
     Field1D* Ez1D   = static_cast<Field1D*>(EMfields->Ez_);
     Field1D* By1D   = static_cast<Field1D*>(EMfields->By_);
     Field1D* Bz1D   = static_cast<Field1D*>(EMfields->Bz_);
-
+    
     // --------------------------------------------------
     // Laser temporal profile
     // --------------------------------------------------
-    double byL=0.0, bzL=0.0, byR=0.0, bzR=0.0;
-
+    double byR=0.0, bzR=0.0;
+    
     for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
-
+        
         if (laser_[ilaser]->laser_struct.boxSide == "west") {
-            // Incident field (left boundary)
-            byL += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
-            bzL += laser_[ilaser]->a0_delta_z_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual);
+            // nothing to be done (treating only east bnd here)
         } else if (laser_[ilaser]->laser_struct.boxSide == "east") {
             // Incident field (right boundary)
             byR += laser_[ilaser]->a0_delta_y_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual);
@@ -66,21 +102,23 @@ void ElectroMagnBC1D_SM::apply(ElectroMagn* EMfields, double time_dual, SmileiMP
         } else {
             ERROR("Angle not allowed for 1D/2D laser pulse " << ilaser);
         }
-
+        
     }//ilaser
-
+    
     // ----------------------------
     // Apply EM boundary conditions
     // ----------------------------
-    if ( smpi->isWestern() ) {
-        // Silver-Mueller boundary conditions (left)
-        (*By1D)(0) =  Alpha_SM*(*Ez1D)(0) + Beta_SM*(*By1D)(1) + Gamma_SM*byL;
-        (*Bz1D)(0) = -Alpha_SM*(*Ey1D)(0) + Beta_SM*(*Bz1D)(1) + Gamma_SM*bzL;
-    }//if Western
     if ( smpi->isEastern() ) {
         // Silver-Mueller boundary conditions (right)
         (*By1D)(nx_d-1) = -Alpha_SM*(*Ez1D)(nx_p-1) + Beta_SM*(*By1D)(nx_d-2) + Gamma_SM*byR;
         (*Bz1D)(nx_d-1) =  Alpha_SM*(*Ey1D)(nx_p-1) + Beta_SM*(*Bz1D)(nx_d-2) + Gamma_SM*bzR;
     }//if Eastern
+    
+}
 
+void ElectroMagnBC1D_SM::apply_ymin(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
+{
+}
+void ElectroMagnBC1D_SM::apply_ymax(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
+{
 }

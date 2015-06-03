@@ -46,7 +46,7 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi )
     
     // 2d3v and/or 3d3v
     if ( nDim_particle > 1 ) {
-        if (params.bc_em_type_trans=="periodic") {
+        if ( (params.bc_em_type_y[0]=="periodic") || (params.bc_em_type_y[0]=="periodic") ) {
             y_min = smpi->getDomainLocalMin(1);
             y_max = smpi->getDomainLocalMax(1);
         }
@@ -58,7 +58,7 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi )
     
     // 3d3v
     if ( nDim_particle > 2 ) {
-        if (params.bc_em_type_trans=="periodic") {
+        if ( (params.bc_em_type_z[0]=="periodic") || (params.bc_em_type_z[0]=="periodic") ) {
             z_min = smpi->getDomainLocalMin(2);
             z_max = smpi->getDomainLocalMax(2);
         }

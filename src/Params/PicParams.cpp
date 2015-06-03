@@ -133,14 +133,17 @@ PicParams::PicParams(InputData &ifile) {
     
     
     //! Boundary conditions for ElectroMagnetic Fields
-    if ( !ifile.extract("bc_em_type_long", bc_em_type_long)  ) {
-        ERROR("bc_em_type_long not defined" );
+    if ( !ifile.extract("bc_em_type_x", bc_em_type_x)  ) {
+        ERROR("Electromagnetic boundary condition type (bc_em_type_x) not defined" );
     }
     if ( geometry == "2d3v" ) {
-        if ( !ifile.extract("bc_em_type_trans", bc_em_type_trans) )
-            ERROR("bc_em_type_trans not defined" );
+        if ( !ifile.extract("bc_em_type_y", bc_em_type_y) )
+            ERROR("Electromagnetic boundary condition type (bc_em_type_y) not defined" );
     }
-
+    if ( geometry == "3d3v" ) {
+        if ( !ifile.extract("bc_em_type_z", bc_em_type_z) )
+            ERROR("Electromagnetic boundary condition type (bc_em_type_z) not defined" );
+    }
     
     // ------------------------
     // Moving window parameters

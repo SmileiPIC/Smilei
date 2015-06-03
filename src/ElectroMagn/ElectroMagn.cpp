@@ -168,13 +168,19 @@ void ElectroMagn::solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, Pic
 
 #pragma omp single
 {
-    // Update Bx_, By_, Bz_
-    if ((!simWindow) || (!simWindow->isMoving(time_dual)) )
-        if (emBoundCond[0]!=NULL) // <=> if !periodic
-	    emBoundCond[0]->apply(this, time_dual, smpi);
-    if ( (emBoundCond.size()>1) )
-        if (emBoundCond[1]!=NULL) // <=> if !periodic
-	    emBoundCond[1]->apply(this, time_dual, smpi);
+    // Compute EM Bcs
+    if ( (!simWindow) || (!simWindow->isMoving(time_dual)) ) {
+        if (emBoundCond[0]!=NULL) { // <=> if !periodic
+            emBoundCond[0]->apply_xmin(this, time_dual, smpi);
+            emBoundCond[1]->apply_xmax(this, time_dual, smpi);
+        }
+    }
+    if (emBoundCond.size()>2) {
+        if (emBoundCond[2]!=NULL) {// <=> if !periodic
+            emBoundCond[2]->apply_ymin(this, time_dual, smpi);
+            emBoundCond[3]->apply_ymax(this, time_dual, smpi);
+        }
+    }
  
     // Exchange Bx_, By_, Bz_
     smpi->exchangeB( this );

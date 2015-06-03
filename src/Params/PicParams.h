@@ -159,8 +159,9 @@ public:
     double time_fields_frozen;
     
     //! Boundary conditions for ElectroMagnetic Fields
-    std::string bc_em_type_long;
-    std::string bc_em_type_trans;
+    std::vector<std::string> bc_em_type_x;
+    std::vector<std::string> bc_em_type_y;
+    std::vector<std::string> bc_em_type_z;
     
     
     //! window simulation box size in number of cells

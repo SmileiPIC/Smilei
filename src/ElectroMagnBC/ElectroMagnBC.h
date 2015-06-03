@@ -15,7 +15,10 @@ public:
     ElectroMagnBC( PicParams &params,  LaserParams &laser_params );
     ~ElectroMagnBC();
 
-    virtual void apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi) = 0;
+    virtual void apply_xmin(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi) = 0;
+    virtual void apply_xmax(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi) = 0;
+    virtual void apply_ymin(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi) = 0;
+    virtual void apply_ymax(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi) = 0;
     void laserDisabled();
 
  protected:

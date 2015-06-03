@@ -12,6 +12,7 @@
 
 using namespace std;
 
+// Constructor for ElectromagnBC
 ElectroMagnBC::ElectroMagnBC( PicParams &params, LaserParams &laser_params )
 {
     // check for laser conditions
@@ -22,10 +23,11 @@ ElectroMagnBC::ElectroMagnBC( PicParams &params, LaserParams &laser_params )
         laser_[i] = new LaserProfile(params,laser_params, i);
     }
 
+    // time step
     dt = params.timestep;
-
 }
 
+// Destructor for ElectromagnBC
 ElectroMagnBC::~ElectroMagnBC()
 {
     for (unsigned int i=0; i< laser_.size(); i++) {
@@ -33,6 +35,7 @@ ElectroMagnBC::~ElectroMagnBC()
     }
 }
 
+// Disable all lasers when using moving window
 void ElectroMagnBC::laserDisabled()
 {
     for (unsigned int i=0; i< laser_.size(); i++) {

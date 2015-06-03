@@ -81,7 +81,7 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
     number_of_procs[0] = smilei_sz;
 
     // Geometry periodic in x
-    if (params.bc_em_type_long=="periodic") {
+    if ( (params.bc_em_type_x[0]=="periodic") || (params.bc_em_type_x[1]=="periodic") ) {
         periods_[0] = 1;
         MESSAGE("Periodic geometry in x-direction");
     }  
