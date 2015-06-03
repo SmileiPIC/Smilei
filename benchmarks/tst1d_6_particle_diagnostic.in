@@ -49,7 +49,7 @@ sim_length  = 1.
 #                         periodic      = periodic BC (using MPI topology)
 #                         silver-muller = injecting/absorbing
 #
-bc_em_type_long  = periodic
+bc_em_type_x = periodic
 
 
 # RANDOM seed 

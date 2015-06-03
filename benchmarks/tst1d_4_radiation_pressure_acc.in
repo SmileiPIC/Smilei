@@ -48,7 +48,7 @@ sim_length = 10.0
 #                         periodic      = periodic BC (using MPI topology)
 #                         silver-muller = injecting/absorbing
 #
-bc_em_type_long = silver-muller
+bc_em_type_x = silver-muller 
 
 # RANDOM seed 
 # this is used to randomize the random number generator
