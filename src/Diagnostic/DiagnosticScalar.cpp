@@ -341,22 +341,24 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
         // outputs
         // -------
         
-        // total energies & energy balance
-        prepend("Utot",Utot);
-        prepend("Uexp",Uexp);
-        prepend("Ubal",Ubal);
-        prepend("Ubal_norm",Ubal_norm);
-        prepend("Utot_fields",Utot_fields);
-        prepend("Utot_particles",Utot_particles);
-        
-        // added & lost energies at the boundaries
-        prepend("Uinj_poynting",Uinj_poynting);
-        prepend("Ulost_particles_bnd",Ulost_particles_bnd);
         // added & lost energies due to the moving window
         prepend("Ulost_particles_mvw",Ulost_particles_mvw);
         prepend("Uadded_particles_mvw",Uadded_particles_mvw);
         prepend("Ulost_fields_mvw",Ulost_fields_mvw);
         prepend("Uadded_fields_mvw",Uadded_fields_mvw);
+        
+        // added & lost energies at the boundaries
+        prepend("Ulost_particles_bnd",Ulost_particles_bnd);
+        prepend("Uinj_poynting",Uinj_poynting);
+        
+        // total energies & energy balance
+        prepend("Utot_particles",Utot_particles);
+        prepend("Utot_fields",Utot_fields);
+        prepend("Ubal_norm",Ubal_norm);
+        prepend("Ubal",Ubal);
+        prepend("Uexp",Uexp);
+        prepend("Utot",Utot);
+        
     }
     
 }
@@ -386,6 +388,7 @@ void DiagnosticScalar::append(std::string my_var, double val) {
 
 void DiagnosticScalar::write(int itime) {
     if(isMaster) {
+        unsigned int added_length = 15; //! \todo (MG) might be better to compute it to make sure it works for all species name
         fout << std::scientific;
         fout.precision(precision);
         if (fout.tellp()==ifstream::pos_type(0)) {
@@ -398,18 +401,18 @@ void DiagnosticScalar::write(int itime) {
                 }
             }
             
-            fout << "#\n#" << setw(precision+9) << "time";
+            fout << "#\n#" << setw(precision+added_length) << "time";
             for(vector<pair<string,double> >::iterator iter = out_list.begin(); iter !=out_list.end(); iter++) {
                 if (allowedKey((*iter).first) == true) {
-                    fout << setw(precision+9) << (*iter).first;
+                    fout << setw(precision+added_length) << (*iter).first;
                 }
             }
             fout << endl;
         }
-        fout << setw(precision+9) << itime/res_time;
+        fout << setw(precision+added_length) << itime/res_time;
         for(vector<pair<string,double> >::iterator iter = out_list.begin(); iter !=out_list.end(); iter++) {
             if (allowedKey((*iter).first) == true) {
-                fout << setw(precision+9) << (*iter).second;
+                fout << setw(precision+added_length) << (*iter).second;
             }
         }
         fout << endl;

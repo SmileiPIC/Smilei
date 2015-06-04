@@ -366,8 +366,7 @@ class Diagnostic(object):
 		except:
 			try:
 				res_time = self.np.double(self.Smilei.findParam("res_time"))
-				sim_time = self.np.double(self.Smilei.findParam("sim_time"))
-				timestep = sim_time/res_time
+				timestep = 1./res_time
 			except:
 				print "Could not extract 'timestep' or 'res_time' from the input file"
 				raise
@@ -1399,7 +1398,7 @@ class Scalar(Diagnostic):
 			line = line.strip()
 			if line[0]=="#": continue
 			line = line.split()
-			self.times .append( int( float(line[0]) / self.timestepbis ) )
+			self.times .append( int( self.np.round(float(line[0]) / float(self.timestepbis)) ) )
 			self.values.append( float(line[self.scalarn+1]) )
 		self.times  = self.np.array(self.times )
 		self.values = self.np.array(self.values)
