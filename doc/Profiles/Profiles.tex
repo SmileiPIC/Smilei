@@ -1,0 +1,325 @@
+\documentclass[11pt]{article}
+\usepackage{graphicx}
+\usepackage[margin=2cm]{geometry}
+\usepackage{fancyvrb,xcolor}
+\usepackage[urlcolor=blue,linkcolor=black,colorlinks=true]{hyperref}
+\urlstyle{rm}
+\usepackage{wrapfig}
+\usepackage{tabularx}
+
+\setlength\parindent{0pt}
+
+\newcommand{\code}[1]{\colorbox{yellow!15}{\ttfamily #1}}
+\newcommand{\val}[1]{{\ttfamily \textit{#1}}}
+\newcommand{\blue}[1]{{\color{blue} #1}}
+
+\usepackage{listings}
+\lstset{backgroundcolor=\color{yellow!15}, basicstyle=\ttfamily, columns=fullflexible, keepspaces=true,escapeinside={§}{§}}
+
+\begin{document}
+
+\title{Profiles in SMILEI}
+\author{F. P\'erez}
+\maketitle
+
+\vfill
+
+Several quantities require the input of a spatial and/or temporal profile:
+\begin{itemize}
+\item Species density: to define either charge or number density of a species at each point.
+\item Species average velocity: to define an offset of the velocity distribution at each point.
+\item Species temperature: to define the width of the velocity distribution at each point 
+	(valid only for distributions which require a temperature value).
+\item External field: to define an initial external field at each point.
+\item Laser: to define a temporal and/or spatial laser enveloppe.
+\end{itemize}
+
+\vfill
+
+\setcounter{tocdepth}{2}
+\tableofcontents
+\vfill
+
+\clearpage
+
+
+\section{Species profiles\label{sec:species}}
+
+For each species, it is possible to define spatial profiles that will determine the initial distribution
+of the particles. There are many ways to define a profile.
+\vspace{2cm}
+
+\subsection{First technique: no profile}
+You may decide to have a constant profile: a constant value over the whole box.
+In this case, it is very easy: you do not need to define a profile.
+\vspace{1cm}
+
+For the density, you only need to define the keyword \code{density}. For example:
+\begin{lstlisting}
+Species( ... ,
+	density = 10.,
+	... )
+\end{lstlisting}
+defines a species with density $10\,n_c$ over the whole box ($n_c$ is the critical density
+ of light which wavelength is equal to the normalization length).
+\vspace{1cm}
+
+For the drift velocity, you only need to define the keyword \code{mean\_velocity}. For example:
+\begin{lstlisting}
+Species( ... ,
+	mean_velocity = [0.05, 0., 0.],
+	... )
+\end{lstlisting}
+defines a species with drift velocity $v_x = 0.05\,c$ over the whole box ($c$ is the speed of light).
+\vspace{1cm}
+
+For the temperature, you only need to define the keyword \code{temperature}. For example:
+\begin{lstlisting}
+Species( ... ,
+	initMomentum_type = "maxwell-juettner",
+	temperature = [1e-5],
+	... )
+\end{lstlisting}
+defines a species with a Maxwell-J\"uttner distribution of temperature $T = 10^{-5}\,m_ec^2$ over the whole box.
+Note that the temperature may be anisotropic: \code{temperature=[1e-5, 2e-5, 2e-5]}.
+\vfill
+ \clearpage
+  
+ \subsection{Second technique: \emph{python} profile}
+ Any \emph{python} function can be a profile. You must have basic \emph{python} knowledge to build these functions. Examples:
+\begin{lstlisting}
+def f(x):
+	if x<1.: return 0.
+	if x>1.: return 1.
+\end{lstlisting}
+\begin{lstlisting}
+def f(x,y):    # two variables for 2D simulation
+	import math
+	twoPI = 2.* math.pi
+	return math.cos(  twoPI * x/3.2 )
+\end{lstlisting}
+\begin{lstlisting}
+f = lambda x: x**2 - 1
+\end{lstlisting}
+\vspace{1cm}
+
+Once the function is created, you have to include it in the species definition, using the keywords\\
+\code{dens\_profile}, \code{mvel\_x\_profile}, \code{mvel\_y\_profile}, \code{mvel\_z\_profile}, \code{temp\_x\_profile}, \\\code{temp\_y\_profile} or \code{temp\_z\_profile}:
+\begin{lstlisting}
+Species( ... ,
+	density = 10.,
+	dens_profile = f,
+	... )
+\end{lstlisting}
+\begin{lstlisting}
+Species( ... ,
+	mean_velocity = [0.05, 0., 0.],
+	mvel_x_profile = f,
+	... )
+\end{lstlisting}
+\begin{lstlisting}
+Species( ... ,
+	temperature = [1e-5],
+	temp_x_profile = f,
+	temp_y_profile = f,
+	temp_z_profile = f,
+	... )
+\end{lstlisting}
+and so on ...
+\\ \\
+\textbf{Important note}: \\
+The \code{density}, \code{mean\_velocity} and \code{temperature} are always required. They define a factor by which the profile is multiplied.
+\vfill
+
+\subsection{Third technique: built-in \emph{python} functions\label{sec:pyprofiles}}
+SMILEI provides some \emph{python} functions to help you build your profiles.
+
+The same keywords from the previous sections apply. We use the notation \code{\val{****}\_§profile},
+where \val{****} is one of \val{dens}, \val{mvel\_x}, \val{mvel\_y}, \val{mvel\_z},
+\val{temp\_x}, \val{temp\_y} or \val{temp\_z}, depending on what profile you want to define.
+
+Do not forget the \code{density}, \code{mean\_velocity} and \code{temperature} keywords in any case!
+\vspace{1cm}
+
+To define a \underline{constant profile}:
+\begin{lstlisting}
+§\val{****}\_profile = constant(value=1., xvacuum=0., yvacuum=0.)§
+\end{lstlisting}
+The argument \code{value} can be used to change the magnitude, but typically \code{constant()} is used.\\
+\code{xvacuum} and \code{yvacuum} are empty lengths before starting the profile.
+\vspace{1cm}
+
+To define a \underline{trapezoidal profile}:
+\begin{lstlisting}
+§\val{****}\_§profile = trapezoidal(max=1.,
+                           xvacuum=0., xplateau=None, xslope1=0., xslope2=0.,
+                           yvacuum=0., yplateau=None, yslope1=0., yslope2=0. )
+\end{lstlisting}
+where \code{max} is the maximum value, \code{xvacuum} is the empty length before the ramp up,
+\code{xplateau} is the length of the plateau (default is {\ttfamily sim\_length - xvacuum}),
+\code{xslope1} is the length of the ramp up and \code{xslope2} is the length of the ramp down.
+The other arguments are the same, but for a 2D simulation.\\
+All arguments are optional.
+\vspace{1cm}
+
+To define a \underline{gaussian profile}:
+\begin{lstlisting}
+§\val{****}\_§profile = gaussian(max=1.,
+                        xvacuum=0., xlength=None, xfwhm=None, xcenter=None, xorder=2,
+                        yvacuum=0., ylength=None, yfwhm=None, ycenter=None, yorder=2 )
+\end{lstlisting}
+where \code{max} is the maximum value, \code{xvacuum} is the empty length before starting the profile,
+\code{xlength} is the length of the profile (default is {\ttfamily sim\_length - xvacuum}),
+\code{xfwhm} is the gaussian FWHM (default is {\ttfamily xlength/3.}),
+\code{xcenter} is the gaussian center position (default is in the middle of {\ttfamily xlength}
+and \code{xorder} is the order of the gaussian.
+The other arguments are the same, but for a 2D simulation. If \code{yorder==0}, then the profile is constant over $y$.\\
+All arguments are optional.
+\vspace{1cm}
+
+To define a \underline{polygonal profile}:
+\begin{lstlisting}
+§\val{****}\_§profile = polygonal( xpoints=[], xvalues=[] )
+\end{lstlisting}
+where \code{xpoints} is a list defining the position of points, and \code{xvalues} is
+a list defining the values of the profile at each point.\\
+All arguments are optional.
+\clearpage
+To define a \underline{cosine profile}:
+\begin{lstlisting}
+§\val{****}\_§profile = cosine( base=1., amplitude=1.,
+                       xvacuum=0., xlength=None, xoffset=0., xnumber=1 )
+\end{lstlisting}
+where \code{base} is an offset of the profile value, \code{amplitude} is the amplitude of the cosine,
+\code{xvacuum} is the empty length before starting the profile,
+\code{xlength} is the length of the profile (default is {\ttfamily sim\_length - xvacuum}),
+\code{xoffset} is the offset of the first peak
+and \code{xnumber} is the number of periods within \code{xlength}.\\
+All arguments are optional.
+
+\vspace{1cm}
+\textbf{Example:}
+\begin{lstlisting}
+Species( ... ,
+	density = 10.,
+	dens_profile = gaussian(xfwhm=0.3, xcenter=0.8),
+	... )
+\end{lstlisting}
+\vfill
+
+{
+\center
+\includegraphics[width=17cm]{pythonprofiles.pdf} 
+}
+\vfill
+
+\clearpage
+
+\subsection{Fourth technique: old-style built-in c++ profiles (not recommended)\label{sec:cpp}}
+SMILEI still has hard-coded profiles that will be deprecated. They are mostly used for backwards-compatibility.
+\vspace{0.7cm}
+
+In this situation, several keywords may be needed: \code{\val{****}\_§profile}, \code{vacuum\_length},
+\code{\val{****}\_length\_x}, \code{\val{****}\_length\_y}, \code{\val{****}\_length\_z},
+\code{\val{****}\_dbl\_params} and \code{\val{****}\_int\_params}.
+\vspace{0.7cm}
+
+The use of these keywords depends on the type of profile.
+\begin{lstlisting}
+Species( ... ,
+	§\val{****}§_profile = "constant",
+	vacuum_length = §[\val{x}, \val{y}],§
+	... )
+\end{lstlisting}
+\vspace{0.7cm}
+\begin{lstlisting}
+Species( ... ,
+	§\val{****}§_profile = "trapezoidal",
+	vacuum_length = §[\val{x}, \val{y}],§
+	§\val{****}§_length_x = §[\val{xplateau}, \val{xslope1}, \val{xslope2}],§
+	§\val{****}§_length_y = §[\val{yplateau}, \val{yslope1}, \val{yslope2}],§
+	... )
+\end{lstlisting}
+\vspace{0.7cm}
+\begin{lstlisting}
+Species( ... ,
+	§\val{****}§_profile = "gaussian",
+	vacuum_length = §[\val{x}, \val{y}],§
+	§\val{****}§_length_x = §[\val{xlength}, \val{xfwhm}, \val{xcenter}],§
+	§\val{****}§_length_y = §[\val{ylength}, \val{yfwhm}, \val{ycenter}],§
+	§\val{****}§_int_params = §[\val{xorder}, \val{yorder}],§
+	... )
+\end{lstlisting}
+\vspace{0.7cm}
+\begin{lstlisting}
+Species( ... ,
+	§\val{****}§_profile = "polygonal",
+	vacuum_length = §[\val{x}, \val{y}],§
+	§\val{****}§_length_x = §[\val{xpoints}],§
+	§\val{****}§_dbl_params = §[\val{xvalues}],§
+	... )
+\end{lstlisting}
+\vspace{0.7cm}
+\begin{lstlisting}
+Species( ... ,
+	§\val{****}§_profile = "cosine",
+	vacuum_length = §[\val{x}, \val{y}],§
+	§\val{****}§_length_x = §[\val{xlength}],§
+	§\val{****}§_dbl_params = §[\val{amplitude}, \val{xnumber}],§
+	... )
+\end{lstlisting}
+
+
+
+\clearpage
+
+\section{External field profiles\label{sec:extfields}}
+
+External field profiles work almost the same way as species profiles.
+
+\vspace{0.7cm}
+
+\subsection{First technique: no profile}
+\begin{lstlisting}
+ExtField(
+	field = "§\val{any\_field}§",
+	magnitude = §\val{magnitude}§
+)
+\end{lstlisting}
+The \code{magnitude} keyword determines a constant value of the chosen external field.
+
+\vspace{1cm}
+
+\subsection{Second technique: \emph{python} function or \emph{python} built-in profile}
+\begin{lstlisting}
+ExtField(
+	field = "§\val{any\_field}§",
+	magnitude = §\val{magnitude}§,
+	profile = §\val{myProfile}§
+)
+\end{lstlisting}
+where \val{myProfile} is a \emph{python} function or a built-in \emph{python} profile.
+
+All the built-in profiles from section \ref{sec:pyprofiles} are available here.
+
+\vspace{1cm}
+
+\subsection{Last technique: old-style built-in c++ profiles (not recommended)}
+The built-in profiles are the same as the species profiles (see section \ref{sec:cpp}).
+However, the keywords are different: \code{profile}, \code{length\_params\_x},
+\code{length\_params\_y}, \code{length\_params\_z}, \code{double\_params} and
+\code{int\_params}.
+
+
+
+
+\clearpage
+
+\section{Laser profiles\label{sec:laser}}
+
+Anybody ?
+
+
+\end{document}
+
+

@@ -164,8 +164,10 @@ particleDump_every = None # for backwards-compatibility
 
 # Some predefined profiles
 
-def constant(value):
-    return lambda x: value
+def constant(value=1., xvacuum=0., yvacuum=0.):
+    global dim, sim_length
+    if dim == "1d3v": return lambda x: value if x>=xvacuum else 0.
+    if dim == "2d3v": return lambda x,y: value if (x>=xvacuum and y>=yvacuum) else 0.
 
 def trapezoidal(max=1.,
                 xvacuum=0., xplateau=None, xslope1=0., xslope2=0.,
@@ -233,7 +235,7 @@ def gaussian(max=1.,
     if dim == "1d3v": return fx
     if dim == "2d3v": return lambda x,y: fx(x)*fy(y)
 
-def polygonal(xvacuum=0., xpoints=[], xvalues=[]):
+def polygonal(xpoints=[], xvalues=[]):
     global dim, sim_length
     if len(xpoints)!=len(xvalues):
         raise Exception("polygonal profile requires as many points as values")
@@ -243,7 +245,7 @@ def polygonal(xvacuum=0., xpoints=[], xvalues=[]):
     N = len(xpoints)
     def f(x,y=0.):
         # vacuum region
-        if x < xvacuum: return 0.0;
+        if x < xpoints[0]: return 0.0;
         # polygon region (defined over N segments)
         elif x < xpoints[-1]:
             for i in range(1,len(xpoints)):
@@ -256,7 +258,7 @@ def polygonal(xvacuum=0., xpoints=[], xvalues=[]):
     return f
 
 def cosine(base=1., amplitude=1.,
-           xvacuum=0., xlength=None, xnumber=1):
+           xvacuum=0., xlength=None, xoffset=0., xnumber=1):
     import math
     global sim_length
     if len(sim_length)>0 and xlength is None: xlength = sim_length[0]-xvacuum
@@ -265,7 +267,7 @@ def cosine(base=1., amplitude=1.,
         if x < xvacuum: return 0.
         # profile region
         elif x < xvacuum+xlength:
-            return base + amplitude * math.cos(2.*math.pi * xnumber * (x-xvacuum)/xlength)
+            return base + amplitude * math.cos(2.*math.pi * xnumber * (x-xvacuum+xoffset)/xlength)
         # beyond
         else: return 0.
     return f
