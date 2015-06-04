@@ -26,7 +26,7 @@ conv_fac(convfac)
     profile_param = static_cast<ProfileStructure> (pp);
     
     // define the factor
-    factor = pp.factor;
+    factor = pp.magnitude;
     // define the vacuum_length as zeros
     profile_param.vacuum_length.resize(dim);
     for( int i=0; i<dim; i++) profile_param.vacuum_length[i]=0.;

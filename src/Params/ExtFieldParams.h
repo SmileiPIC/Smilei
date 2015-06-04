@@ -23,7 +23,7 @@ struct ExtFieldStructure : ProfileStructure {
     //! fields to which apply the exeternal field
     std::vector<std::string> fields;
     
-    double factor;   
+    double magnitude;   
 
 };
 

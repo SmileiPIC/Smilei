@@ -27,7 +27,7 @@ conv_fac(params.conv_fac)
                 ERROR(" ExtField #"<<n_extfield<<": parameter 'profile' not understood");
             }
         } else {
-            if( !ifile.extract("factor",tmpExtField.factor,"ExtField",n_extfield) ) {
+            if( !ifile.extract("magnitude",tmpExtField.magnitude,"ExtField",n_extfield) ) {
                 ERROR("ExtField #"<<n_extfield<<": parameter 'factor' not provided");
             }
             ifile.extract("int_params",tmpExtField.int_params,"ExtField",n_extfield);
