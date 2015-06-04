@@ -188,12 +188,12 @@ All arguments are optional.
 To define a \underline{cosine profile}:
 \begin{lstlisting}
 §\val{****}\_§profile = cosine( base=1., amplitude=1.,
-                       xvacuum=0., xlength=None, xoffset=0., xnumber=1 )
+                       xvacuum=0., xlength=None, phi=0., xnumber=1 )
 \end{lstlisting}
 where \code{base} is an offset of the profile value, \code{amplitude} is the amplitude of the cosine,
 \code{xvacuum} is the empty length before starting the profile,
 \code{xlength} is the length of the profile (default is {\ttfamily sim\_length - xvacuum}),
-\code{xoffset} is the offset of the first peak
+\code{phi} is the phase offset
 and \code{xnumber} is the number of periods within \code{xlength}.\\
 All arguments are optional.
 

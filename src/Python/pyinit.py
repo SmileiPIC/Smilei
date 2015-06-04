@@ -258,7 +258,7 @@ def polygonal(xpoints=[], xvalues=[]):
     return f
 
 def cosine(base=1., amplitude=1.,
-           xvacuum=0., xlength=None, xoffset=0., xnumber=1):
+           xvacuum=0., xlength=None, phi=0., xnumber=1):
     import math
     global sim_length
     if len(sim_length)>0 and xlength is None: xlength = sim_length[0]-xvacuum
@@ -267,7 +267,7 @@ def cosine(base=1., amplitude=1.,
         if x < xvacuum: return 0.
         # profile region
         elif x < xvacuum+xlength:
-            return base + amplitude * math.cos(2.*math.pi * xnumber * (x-xvacuum+xoffset)/xlength)
+            return base + amplitude * math.cos(phi + 2.*math.pi * xnumber * (x-xvacuum)/xlength)
         # beyond
         else: return 0.
     return f
