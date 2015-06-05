@@ -13,7 +13,7 @@
 \newcommand{\val}[1]{{\ttfamily \textit{#1}}}
 
 \usepackage{listings}
-\lstset{backgroundcolor=\color{yellow!15}, basicstyle=\ttfamily, columns=fullflexible, keepspaces=true,escapeinside={§}{§}}
+\lstset{backgroundcolor=\color{yellow!15}, basicstyle=\ttfamily, columns=fullflexible, keepspaces=true,escapeinside={ï¿½}{ï¿½}}
 
 \begin{document}
 
@@ -35,7 +35,7 @@ This is done if the following block is included in the input file.
 
 \begin{lstlisting}
 diagnostic scalar
-	every = §\val{every}§
+	every = ï¿½\val{every}ï¿½
 end
 \end{lstlisting}
 where \val{every} is the number of timesteps between each output.\\
@@ -49,17 +49,26 @@ In the input file, you may add the following block as a reminder.
 The full list of scalars is:\\
 
 \begin{tabularx}{\textwidth}{X r | l X}
-& Emw\_fields & Field energy added through the moving window & \\
-& Emw\_lost\_fields & Field energy lost through the moving window &\\
-& Emw\_part & Particle energy added through the moving window &\\
-& Emw\_lost & Particle energy lost through the moving window &\\
+&	 & {\bf Global energies}& \\
+&Utot & Total energy& \\
+&Ukin&  Total kinetic energy in the particles&\\
+&Uelm& Total electromagnetic energy in the EM-fields&\\
+&Uexp& Expected value for the total energy (Initial energy in the box $\pm$ energy lost or gained)&\\
+&Ubal& Energy balance (Total energy - Expected energy)&\\
+&Ubal\_norm& Normalized energy balance (${\rm Ubal/Utot}$)&\\
 & & & \\
+&	 & {\bf Energies lost/gained at boundaries \& due to moving window}& \\
+&Ukin\_bnd& Kinetic energy exchanged at the boundaries during the timestep &\\
+&Uelm\_bnd& Electromagneticenergy exchanged at the boundaries during the timestep &\\
+&Ukin\_out\_mvw& Kinetic energy lost during the timestep due to the moving window&\\
+&Ukin\_inj\_mvw& Kinetic energy injected during the timestep due to the moving window&\\
+&Uelm\_out\_mvw& Electromagnetic energy lost during the timestep due to the moving window&\\
+&Uelm\_inj\_mvw& Electromagnetic energy injected during the timestep due to the moving window&\\
+& & & \\
+&	 & {\bf Energies lost/gained at boundaries \& due to moving window}& \\
 & Ebal\_norm & Ebalance $/$ Etot &\\
 & Ebalance & Current energy $-$ initial total energy&\\
-& Etot & Current total energy &\\
 & Elost & Lost particle energy during last timestep &\\
-& Eparticles & Current energy in particles &\\
-& EFields & Current energy in fields &\\
 & Poynting & Accumulated Poyting flux through all boundaries&\\
 & & & \\
 & Z\_abc & Average charge of species "abc" &\\
@@ -91,9 +100,9 @@ SMILEI can collect various field data (electric fields, magnetic fields, current
 taken at the location of the PIC grid, both as instantaneous values and averaged values.
 This is done if the following instructions are included in the input file.
 \begin{lstlisting}
-fieldDump_every    = §\val{every}§
-avgfieldDump_every = §\val{every\_avg}§
-ntime_step_avg     = §\val{t\_avg}§
+fieldDump_every    = ï¿½\val{every}ï¿½
+avgfieldDump_every = ï¿½\val{every\_avg}ï¿½
+ntime_step_avg     = ï¿½\val{t\_avg}ï¿½
 \end{lstlisting}
 where
 \begin{itemize}
@@ -140,8 +149,8 @@ To add one probe diagnostic in the input file, there are several cases:\\
 For only one point (zero-dimensional probe)
 \begin{lstlisting}
 diagnostic probe
-    every      = §\val{every}§
-    pos        = §\val{x0} [\val{y0} [\val{z0}]] §
+    every      = ï¿½\val{every}ï¿½
+    pos        = ï¿½\val{x0} [\val{y0} [\val{z0}]] ï¿½
 end
 \end{lstlisting}
 where
@@ -154,10 +163,10 @@ where
 For a series of points arranged in a line (one-dimensional probe)
 \begin{lstlisting}
 diagnostic probe
-    every      = §\val{every}§
-    pos        = §\val{x0} [\val{y0} [\val{z0}]] §
-    pos_first  = §\val{x1} [\val{y1} [\val{z1}]] §
-    number     = §\val{n1}§
+    every      = ï¿½\val{every}ï¿½
+    pos        = ï¿½\val{x0} [\val{y0} [\val{z0}]] ï¿½
+    pos_first  = ï¿½\val{x1} [\val{y1} [\val{z1}]] ï¿½
+    number     = ï¿½\val{n1}ï¿½
 end
 \end{lstlisting}
 where
@@ -170,11 +179,11 @@ where
 For a series of points arranged in a mesh (two-dimensional probe)
 \begin{lstlisting}
 diagnostic probe
-    every      = §\val{every}§
-    pos        = §\val{x0} [\val{y0} [\val{z0}]] §
-    pos_first  = §\val{x1} [\val{y1} [\val{z1}]] §
-    pos_second = §\val{x2} [\val{y2} [\val{z2}]] §
-    number     = §\val{n1} \val{n2} §
+    every      = ï¿½\val{every}ï¿½
+    pos        = ï¿½\val{x0} [\val{y0} [\val{z0}]] ï¿½
+    pos_first  = ï¿½\val{x1} [\val{y1} [\val{z1}]] ï¿½
+    pos_second = ï¿½\val{x2} [\val{y2} [\val{z2}]] ï¿½
+    number     = ï¿½\val{n1} \val{n2} ï¿½
 end
 \end{lstlisting}
 In this case, the three points define three vertices of a paralellogram.
@@ -260,12 +269,12 @@ In the input file, you can add a particle diagnostic with the following block.
 
 \begin{lstlisting}
 diagnostic particles
-	output = §\textit{output}§
-	every = §\textit{every}§
-	time_average = §\textit{time\_average}§
-	species = §\textit{species1 species2 ...}§
-	axis = §\textit{type min max nsteps}§ [logscale] [edge_inclusive]
-	axis = §\textit{type min max nsteps}§ [logscale] [edge_inclusive]
+	output = ï¿½\textit{output}ï¿½
+	every = ï¿½\textit{every}ï¿½
+	time_average = ï¿½\textit{time\_average}ï¿½
+	species = ï¿½\textit{species1 species2 ...}ï¿½
+	axis = ï¿½\textit{type min max nsteps}ï¿½ [logscale] [edge_inclusive]
+	axis = ï¿½\textit{type min max nsteps}ï¿½ [logscale] [edge_inclusive]
 	...
 end
 \end{lstlisting}
@@ -572,7 +581,7 @@ S.ParticleDiagnostic( ... ).get()
 \end{lstlisting}
 This method returns the results as a python dictionary:
 \begin{lstlisting}
-{"data":§\val{data\_array}§, "times":§\val{times\_array}§, §\val{axis1}§:§\val{axis1\_array}§, §\val{axis2}§:§\val{axis2\_array}§, ...}
+{"data":ï¿½\val{data\_array}ï¿½, "times":ï¿½\val{times\_array}ï¿½, ï¿½\val{axis1}ï¿½:ï¿½\val{axis1\_array}ï¿½, ï¿½\val{axis2}ï¿½:ï¿½\val{axis2\_array}ï¿½, ...}
 \end{lstlisting}
 where:
 \begin{itemize}

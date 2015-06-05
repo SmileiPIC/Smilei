@@ -79,10 +79,10 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
     // ------------------------
     // SPECIES-related energies
     // ------------------------
-    double Utot_particles=0;        // total (kinetic) energy carried by particles (test-particles do not contribute)
-    double Ulost_particles_bnd=0;   // total energy lost by particles due to boundary conditions
-    double Ulost_particles_mvw=0;   // total energy lost due to particles being suppressed by the moving-window
-    double Uadded_particles_mvw=0;  // total energy added due to particles created by the moving-window
+    double Ukin=0;              // total (kinetic) energy carried by particles (test-particles do not contribute)
+    double Ukin_bnd=0;          // total energy lost by particles due to boundary conditions
+    double Ukin_out_mvw=0;      // total energy lost due to particles being suppressed by the moving-window
+    double Ukin_inj_mvw=0;      // total energy added due to particles created by the moving-window
     
     // Compute scalars for each species
     for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
@@ -129,12 +129,12 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
             append("Ukin_"+nameSpec,ener_tot);
             
             // incremement the total kinetic energy
-            Utot_particles += ener_tot;
+            Ukin += ener_tot;
             
             // increment all energy loss & energy input
-            Ulost_particles_bnd  += cell_volume*ener_lost_bcs;
-            Ulost_particles_mvw  += cell_volume*ener_lost_mvw;
-            Uadded_particles_mvw += cell_volume*ener_added_mvw;
+            Ukin_bnd        += cell_volume*ener_lost_bcs;
+            Ukin_out_mvw    += cell_volume*ener_lost_mvw;
+            Ukin_inj_mvw    += cell_volume*ener_added_mvw;
         }
         
         vecSpecies[ispec]->reinitDiags();
@@ -158,7 +158,7 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
     // Compute all electromagnetic energies
     // ------------------------------------
     
-    double Utot_fields=0.0; // total electromagnetic energy in the fields
+    double Uelm=0.0; // total electromagnetic energy in the fields
     
     // loop on all electromagnetic fields
     for (vector<Field*>::iterator field=fields.begin(); field!=fields.end(); field++) {
@@ -191,22 +191,22 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
         
         if (isMaster) {
             append("Uelm_"+(*field)->name,Utot_crtField);
-            Utot_fields+=Utot_crtField;
+            Uelm+=Utot_crtField;
         }
     }
     
     // nrj lost with moving window (fields)
-    double Ulost_fields_mvw = EMfields->getLostNrjMW();
-    MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&Ulost_fields_mvw, &Ulost_fields_mvw, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    double Uelm_out_mvw = EMfields->getLostNrjMW();
+    MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&Uelm_out_mvw, &Uelm_out_mvw, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     if (isMaster) {
-        Ulost_fields_mvw *= 0.5*cell_volume;
+        Uelm_out_mvw *= 0.5*cell_volume;
     }
     
     // nrj added due to moving window (fields)
-    double Uadded_fields_mvw=EMfields->getNewFieldsNRJ();
-    MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&Uadded_fields_mvw, &Uadded_fields_mvw, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    double Uelm_inj_mvw=EMfields->getNewFieldsNRJ();
+    MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&Uelm_inj_mvw, &Uelm_inj_mvw, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     if (isMaster) {
-        Uadded_fields_mvw *= 0.5*cell_volume;
+        Uelm_inj_mvw *= 0.5*cell_volume;
     }
     EMfields->reinitDiags();
     
@@ -279,7 +279,7 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
     // ------------------------
     
     // electromagnetic energy injected in the simulation (calculated from Poynting fluxes)
-    double Uinj_poynting=0.0;
+    double Uelm_bnd=0.0;
     
     for (unsigned int j=0; j<2;j++) {
         for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {
@@ -306,7 +306,7 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
                 append(name,poy[0]);
                 append(name+"Inst",poy[1]);
                 
-                Uinj_poynting += poy[0];
+                Uelm_bnd += poy[0];
                 
             }//if isMaster
             
@@ -321,11 +321,11 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
     if (isMaster) {
     
         // total energy in the simulation
-        double Utot = Utot_particles + Utot_fields;
+        double Utot = Ukin + Uelm;
         
         // expected total energy
-        double Uexp = Energy_time_zero + Uinj_poynting + Uadded_particles_mvw + Uadded_fields_mvw
-        -           ( Ulost_particles_bnd + Ulost_particles_mvw + Ulost_fields_mvw );
+        double Uexp = Energy_time_zero + Uelm_bnd + Ukin_inj_mvw + Uelm_inj_mvw
+        -           ( Ukin_bnd + Ukin_out_mvw + Uelm_out_mvw );
         
         // energy balance
         double Ubal = Utot - Uexp;
@@ -342,18 +342,18 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
         // -------
         
         // added & lost energies due to the moving window
-        prepend("Ulost_particles_mvw",Ulost_particles_mvw);
-        prepend("Uadded_particles_mvw",Uadded_particles_mvw);
-        prepend("Ulost_fields_mvw",Ulost_fields_mvw);
-        prepend("Uadded_fields_mvw",Uadded_fields_mvw);
+        prepend("Ukin_out_mvw",Ukin_out_mvw);
+        prepend("Ukin_inj_mvw",Ukin_inj_mvw);
+        prepend("Uelm_out_mvw",Uelm_out_mvw);
+        prepend("Uelm_inj_mvw",Uelm_inj_mvw);
         
         // added & lost energies at the boundaries
-        prepend("Ulost_particles_bnd",Ulost_particles_bnd);
-        prepend("Uinj_poynting",Uinj_poynting);
+        prepend("Ukin_bnd",Ukin_bnd);
+        prepend("Uelm_bnd",Uelm_bnd);
         
         // total energies & energy balance
-        prepend("Utot_particles",Utot_particles);
-        prepend("Utot_fields",Utot_fields);
+        prepend("Ukin",Ukin);
+        prepend("Uelm",Uelm);
         prepend("Ubal_norm",Ubal_norm);
         prepend("Ubal",Ubal);
         prepend("Uexp",Uexp);
