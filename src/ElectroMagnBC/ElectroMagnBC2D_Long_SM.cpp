@@ -83,7 +83,7 @@ void ElectroMagnBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, Smi
     // -----------------------------------------
     // Laser temporal profile
     // -----------------------------------------
-    double byW, bzW, byE, bzE;
+//    double byW, bzW, byE, bzE;
 //    double dfa; //Distance from axis
 //    dfa = 0.0;
 
@@ -108,7 +108,7 @@ void ElectroMagnBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, Smi
         // for By^(d,p)
         for (unsigned int j=0 ; j<ny_p ; j++) {
 
-            byW = 0.;
+            double byW = 0.;
             double yp     = smpi->getDomainLocalMin(1) + ((double)j)     * dy;
             for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
                 if (laser_[ilaser]->laser_struct.boxSide == "west") {
@@ -134,7 +134,7 @@ void ElectroMagnBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, Smi
         // for Bz^(d,d)
         for (unsigned int j=0 ; j<ny_d ; j++) {
 
-            bzW = 0.;
+            double bzW = 0.;
             double yd     = smpi->getDomainLocalMin(1) + ((double)j-0.5) * dy;
             
             for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
@@ -179,7 +179,7 @@ void ElectroMagnBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, Smi
         // for By^(d,p)
         for (unsigned int j=0 ; j<ny_p ; j++) {
             
-            byE = 0.;
+            double byE = 0.;
             double yp     = smpi->getDomainLocalMin(1) + ((double)j)     * dy;
             for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
                     // Incident field (west boundary)
@@ -198,7 +198,7 @@ void ElectroMagnBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, Smi
         // for Bz^(d,d)
         for (unsigned int j=0 ; j<ny_d ; j++) {
 
-            bzE = 0.;
+            double bzE = 0.;
             double yd     = smpi->getDomainLocalMin(1) + ((double)j-0.5) * dy;
             for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
                 if (laser_[ilaser]->laser_struct.boxSide == "east") {
