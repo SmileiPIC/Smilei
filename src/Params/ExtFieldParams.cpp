@@ -28,7 +28,7 @@ conv_fac(params.conv_fac)
             }
         } else {
             if( !ifile.extract("magnitude",tmpExtField.magnitude,"ExtField",n_extfield) ) {
-                ERROR("ExtField #"<<n_extfield<<": parameter 'factor' not provided");
+                ERROR("ExtField #"<<n_extfield<<": parameter 'magnitude' not provided");
             }
             ifile.extract("int_params",tmpExtField.int_params,"ExtField",n_extfield);
             ifile.extract("double_params",tmpExtField.double_params,"ExtField",n_extfield);
