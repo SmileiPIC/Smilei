@@ -56,7 +56,7 @@ for path in ["Stopping_power1","Stopping_power2","Stopping_power3"]:
 
 	sim = Smilei(path)
 	temperature_electron = np.double(sim.namelist.Species["backgroundelectron"].temperature)
-	density_electron     = np.double(sim.namelist.Species["backgroundelectron"].density)
+	density_electron     = np.double(sim.namelist.Species["backgroundelectron"].charge_density)
 	coulomb_log          = np.double(sim.namelist.Collisions[0].coulomb_log)
 	dt                   = np.double(sim.namelist.timestep)
 	
@@ -109,12 +109,12 @@ for path in ["Stopping_power1","Stopping_power2","Stopping_power3"]:
 		Q *= 0.01 # MeV/cm
 		Q /= density_electron*1.11e21 # MeV*cm^2
 		ax.loglog(E0,Q, 'ok')
+		
+E = np.logspace(-2,1,1000)
+ax.loglog(E,FrankelStoppingPower(E,temperature_electron*0.511), 'k', label='Frankel theory' )
+if not ax.legend_: ax.legend()
+ax.set_xlim(0.01,10)
+ax.set_xlabel('Electron energy (MeV)')
+ax.set_title('Stopping power $Q/(n_e \ln\Lambda)$ (MeV cm$^2$)')
 
-	E = np.logspace(-2,1,1000)
-	ax.loglog(E,FrankelStoppingPower(E,temperature_electron*0.511), 'k', label='Frankel theory' )
-	if not ax.legend_: ax.legend()
-	ax.set_xlim(0.01,10)
-	ax.set_xlabel('Electron energy (MeV)')
-	ax.set_title('Stopping power $Q/(n_e \ln\Lambda)$ (MeV cm$^2$)')
-
-	plt.show()
+plt.show()

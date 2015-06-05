@@ -57,18 +57,19 @@ random_seed = 0
 
 
 # DEFINE ALL SPECIES
-# species_type      = string, given name to the species (e.g. ion, electron, positron, test ...)
-# initPosition_type = string, "regular" or "random"
-# initMomentum_type = string "cold", "maxwell-juettner" or "rectangular"
-# n_part_per_cell   = integer, number of particles/cell
-# c_part_max        = float, factor on the memory reserved for the total number of particles
-# mass              = float, particle mass in units of the electron mass
-# charge            = float, particle charge in units of the electron charge
-# dynamics_type     = string, type of species dynamics = "norm" or "rrLL"
-# time_frozen       = float, time during which particles are frozen in units of the normalization time
-# radiating         = boolean, if true, incoherent radiation calculated using the Larmor formula 
+# species_type       = string, given name to the species (e.g. ion, electron, positron, test ...)
+# initPosition_type  = string, "regular" or "random"
+# initMomentum_type  = string "cold", "maxwell-juettner" or "rectangular"
+# n_part_per_cell    = integer, number of particles/cell
+# c_part_max         = float, factor on the memory reserved for the total number of particles
+# mass               = float, particle mass in units of the electron mass
+# charge             = float, particle charge in units of the electron charge
+# dynamics_type      = string, type of species dynamics = "norm" or "rrLL"
+# time_frozen        = float, time during which particles are frozen in units of the normalization time
+# radiating          = boolean, if true, incoherent radiation calculated using the Larmor formula 
 # vacuum_length      = list of floats, distance from box borders without particles.
-# density            = float, species density in units of the "critical" density
+# charge_density     = float, species charge density in units of the "critical" density
+#     or nb_density for number density
 # mean_velocity      = list of floats, mean velocity in units of the speed of light
 # temperature        = list of floats, temperature in units of m_e c^2
 # SPECIES PROFILES from python function (see doc)
@@ -76,28 +77,17 @@ random_seed = 0
 # dens_profile       = python function. Units: n_c
 # mvel_[xyz]_profile = python function. Units: c
 # temp_[xyz]_profile = python function. Units: m_e c^2
-# SPECIES PROFILES from hardcoded functions
-# dens_profile       = name of a profile ("constant", "gaussian", etc.)
-# mvel_[xyz]_profile = name of a profile ("constant", "gaussian", etc.)
-# temp_[xyz]_profile = name of a profile ("constant", "gaussian", etc.)
-
-p = constant(1.)
 
 Species(
 	species_type = "ion1",
 	initPosition_type = "random",
 	initMomentum_type = "maxwell-juettner",
-	vacuum_length   = [0.],
-	dens_length_x   = [1000., 1000., 1000.],
 	n_part_per_cell = 2000,
-	c_part_max = 1.0,
 	mass = 1836.0,
 	charge = 1.0,
-	density = 10.,
-	dens_profile = p,
+	nb_density = 10.,
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.00002],
-	dynamics_type = "norm",
 	time_frozen = 0.0,
 	bc_part_type_west = "none",
 	bc_part_type_east = "none"
@@ -107,17 +97,12 @@ Species(
 	species_type = "electron1",
 	initPosition_type = "random",
 	initMomentum_type = "maxwell-juettner",
-	vacuum_length   = [0.],
-	dens_length_x   = [1000., 1000., 1000.],
 	n_part_per_cell= 2000,
-	c_part_max = 1.0,
 	mass = 1.0,
 	charge = -1.0,
-	density = 10.,
-	dens_profile = p,
+	nb_density = 10.,
 	mean_velocity = [0.05, 0., 0.],
 	temperature = [0.00002],
-	dynamics_type = "norm",
 	time_frozen = 0.0,
 	bc_part_type_west = "none",
 	bc_part_type_east = "none"

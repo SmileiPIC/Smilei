@@ -67,7 +67,7 @@ for path in ["conductivity1","conductivity2","conductivity3"]:
 		
 		velocity.append(v0[path][k])
 		temperature.append( np.double(sim.namelist.Species["electron"+str(k+1)].temperature))
-		density    .append( np.double(sim.namelist.Species["electron"+str(k+1)].density))
+		density    .append( np.double(sim.namelist.Species["electron"+str(k+1)].charge_density))
 	
 	ax.set_xlabel('time in fs')
 	ax.set_ylabel('$v_x / c$')

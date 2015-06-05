@@ -56,37 +56,37 @@ bc_em_type_long  = "periodic"
 random_seed = 0
 
 # DEFINE ALL SPECIES
-# species_type      = string, given name to the species (e.g. ion, electron, positron, test ...)
-# initPosition_type = string, "regular" or "random"
-# initMomentum_type = string "cold", "maxwell-juettner" or "rectangular"
-# n_part_per_cell   = integer, number of particles/cell
-# c_part_max        = float, factor on the memory reserved for the total number of particles
-# mass              = float, particle mass in units of the electron mass
-# charge            = float, particle charge in units of the electron charge
-# density           = float, species density in units of the "critical" density
-# density_profile   = string or python function (see doc)
-# vacuum_length     = list of floats, distance from box borders without particles
-# dens_length_[xyz] = list of floats, various distances to define the density profile (see doc)
-# mean_velocity     = list of floats, mean velocity in units of the speed of light
-# temperature       = list of floats, temperature in units of m_e c^2
-# dynamics_type     = string, type of species dynamics = "norm" or "rrLL"
-# time_frozen       = float, time during which particles are frozen in units of the normalization time
-# radiating         = boolean, if true, incoherent radiation calculated using the Larmor formula 
+# species_type       = string, given name to the species (e.g. ion, electron, positron, test ...)
+# initPosition_type  = string, "regular" or "random"
+# initMomentum_type  = string "cold", "maxwell-juettner" or "rectangular"
+# n_part_per_cell    = integer, number of particles/cell
+# c_part_max         = float, factor on the memory reserved for the total number of particles
+# mass               = float, particle mass in units of the electron mass
+# charge             = float, particle charge in units of the electron charge
+# dynamics_type      = string, type of species dynamics = "norm" or "rrLL"
+# time_frozen        = float, time during which particles are frozen in units of the normalization time
+# radiating          = boolean, if true, incoherent radiation calculated using the Larmor formula 
+# vacuum_length      = list of floats, distance from box borders without particles.
+# charge_density     = float, species charge density in units of the "critical" density
+#     or nb_density for number density
+# mean_velocity      = list of floats, mean velocity in units of the speed of light
+# temperature        = list of floats, temperature in units of m_e c^2
+# SPECIES PROFILES from python function (see doc)
+#    Predefined functions: constant, trapezoidal, gaussian, polygonal, cosine
+# dens_profile       = python function. Units: n_c
+# mvel_[xyz]_profile = python function. Units: c
+# temp_[xyz]_profile = python function. Units: m_e c^2
 Species(
 	species_type = "backgroundelectron",
-	vacuum_length   = [0.],
-	dens_length_x   = [100000., 100000., 100000.],
 	initPosition_type = "regular",
 	initMomentum_type = "maxwell-juettner",
 	ionization_model = "none",
 	n_part_per_cell = 10000,
-	c_part_max = 1.0,
 	mass = 1.,
 	charge = -1.0,
-	density = 10.,
+	charge_density = 10.,
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.01],
-	dynamics_type = "norm",
 	time_frozen = 100000000.0,
 	bc_part_type_west = "none",
 	bc_part_type_east = "none"
@@ -94,18 +94,15 @@ Species(
 
 Species(
 	species_type = "electron1",
-	vacuum_length   = [0.],
-	dens_length_x   = [20000., 0., 0.],
 	initPosition_type = "regular",
 	initMomentum_type = "maxwell-juettner",
 	n_part_per_cell= 10000,
-	c_part_max = 1.0,
 	mass = 1.0,
 	charge = -1.0,
-	density = 0.00001,
+	charge_density = 0.00001,
+	dens_profile = trapezoidal(xvacuum=0., xplateau=20000.),
 	mean_velocity = [0.941, 0., 0.],
 	temperature = [0.0000001],
-	dynamics_type = "norm",
 	time_frozen = 100000000.0,
 	bc_part_type_west = "none",
 	bc_part_type_east = "none"
@@ -113,18 +110,15 @@ Species(
 
 Species(
 	species_type = "electron2",
-	vacuum_length   = [20000.],
-	dens_length_x   = [20000., 0., 0.],
 	initPosition_type = "regular",
 	initMomentum_type = "maxwell-juettner",
 	n_part_per_cell= 10000,
-	c_part_max = 1.0,
 	mass = 1.0,
 	charge = -1.0,
-	density = 0.00001,
+	charge_density = 0.00001,
+	dens_profile = trapezoidal(xvacuum=20000., xplateau=20000.),
 	mean_velocity = [0.989, 0., 0.],
 	temperature = [0.0000001],
-	dynamics_type = "norm",
 	time_frozen = 100000000.0,
 	bc_part_type_west = "none",
 	bc_part_type_east = "none"
@@ -132,18 +126,15 @@ Species(
 
 Species(
 	species_type = "electron3",
-	vacuum_length   = [40000.],
-	dens_length_x   = [20000., 0., 0.],
 	initPosition_type = "regular",
 	initMomentum_type = "maxwell-juettner",
 	n_part_per_cell= 10000,
-	c_part_max = 1.0,
 	mass = 1.0,
 	charge = -1.0,
-	density = 0.00001,
+	charge_density = 0.00001,
+	dens_profile = trapezoidal(xvacuum=40000., xplateau=20000.),
 	mean_velocity = [0.99882, 0., 0.],
 	temperature = [0.0000001],
-	dynamics_type = "norm",
 	time_frozen = 100000000.0,
 	bc_part_type_west = "none",
 	bc_part_type_east = "none"

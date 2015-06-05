@@ -490,20 +490,20 @@ void PicParams::computeSpecies()
             if (profiles[iprof]->vacuum_length.size()==0) {
                 profiles[iprof]->vacuum_length.resize(1);
                 profiles[iprof]->vacuum_length[0] = 0.0;
-                WARNING("No vacuum length defined in x-direction, automatically put to 0 for species " << ispec);
+                //WARNING("No vacuum length defined in x-direction, automatically put to 0 for species " << ispec);
             }
             if ( (geometry=="2d3v") || (geometry=="3d3v") ) {
                 if (profiles[iprof]->vacuum_length.size()<2) {
                     profiles[iprof]->vacuum_length.resize(2);
                     profiles[iprof]->vacuum_length[1] = 0.0;
-                    WARNING("No vacuum length defined in y-direction, automatically put to 0 for species " << ispec);
+                    //WARNING("No vacuum length defined in y-direction, automatically put to 0 for species " << ispec);
                 }
             }
             if (geometry=="3d3v") {
                 if (profiles[iprof]->vacuum_length.size()<3) {
                     profiles[iprof]->vacuum_length.resize(3);
                     profiles[iprof]->vacuum_length[2] = 0.0;
-                    WARNING("No vacuum length defined in z-direction, automatically put to 0 for species " << ispec);
+                    //WARNING("No vacuum length defined in z-direction, automatically put to 0 for species " << ispec);
                 }
             }
             
@@ -511,23 +511,23 @@ void PicParams::computeSpecies()
             if (profiles[iprof]->length_params_x.size()==0) {
                 profiles[iprof]->length_params_x.resize(1);
                 profiles[iprof]->length_params_x[0] = sim_length[0] - profiles[iprof]->vacuum_length[0];
-                WARNING("No " << prefixes[iprof]<< "length_x defined, automatically put to " << profiles[iprof]->length_params_x[0]
-                        << " for species " << ispec);
+                //WARNING("No " << prefixes[iprof]<< "length_x defined, automatically put to " << profiles[iprof]->length_params_x[0]
+                //        << " for species " << ispec);
             }
             if ( (geometry=="2d3v") || (geometry=="3d3v") ) {
                 if (profiles[iprof]->length_params_y.size()==0) {
                     profiles[iprof]->length_params_y.resize(1);
                     profiles[iprof]->length_params_y[0] = sim_length[1] - profiles[iprof]->vacuum_length[1];
-                    WARNING("No " << prefixes[iprof]<< "length_y defined, automatically put to " << profiles[iprof]->length_params_y[0]
-                            << " for species " << ispec);
+                    //WARNING("No " << prefixes[iprof]<< "length_y defined, automatically put to " << profiles[iprof]->length_params_y[0]
+                    //        << " for species " << ispec);
                 }
             }
             if ( geometry=="3d3v" ) {
                 if (profiles[iprof]->length_params_z.size()==0) {
                     profiles[iprof]->length_params_z.resize(1);
                     profiles[iprof]->length_params_z[0] = sim_length[2] - profiles[iprof]->vacuum_length[2];
-                    WARNING("No " << prefixes[iprof]<< "length_z defined, automatically put to " << profiles[iprof]->length_params_z[0]
-                            << " for species " << ispec);
+                    //WARNING("No " << prefixes[iprof]<< "length_z defined, automatically put to " << profiles[iprof]->length_params_z[0]
+                    //        << " for species " << ispec);
                 }
             }
             

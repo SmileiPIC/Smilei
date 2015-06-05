@@ -9,7 +9,7 @@ for path in ["thermalisation_ei1","thermalisation_ei2","thermalisation_ei3"]:
 	sim = Smilei(path)
 	mass_ion             = np.double(sim.namelist.Species["ion1"].mass)
 	charge_ion           = np.double(sim.namelist.Species["ion1"].charge)
-	density_ion          = np.double(sim.namelist.Species["ion1"].density)/charge_ion
+	density_ion          = np.double(sim.namelist.Species["ion1"].charge_density)/charge_ion
 	temperature_ion      = np.double(sim.namelist.Species["ion1"].temperature)
 	velocity_electron    = np.double(sim.namelist.Species["electron1"].mean_velocity)[0]
 	temperature_electron = np.double(sim.namelist.Species["electron1"].temperature)
