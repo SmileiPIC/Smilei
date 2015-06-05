@@ -9,6 +9,16 @@ int buildtag(int send, int recv);
 
 Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int m0, unsigned int m1, unsigned int m2, unsigned int ipatch) {
 
+
+//Neighborhood definition in 2D:
+//   
+//   Y axis
+//   ^
+//   |   6       7          8
+//   |   3    4(self)       5
+//       0       1          2    --> X axis
+
+
         int xcall, ycall;
         hindex = ipatch;
         

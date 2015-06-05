@@ -3,6 +3,7 @@
 #define SIMWINDOW_H
 
 #include <vector>
+#include "Patch.h"
 
 class PicParams;
 class Species;
@@ -23,6 +24,7 @@ class SimWindow {
     ~SimWindow();
     //! Move the simulation window (particles, fields, MPI environment & operator related to the grid)
     void operate(std::vector<Species*> vecSpecies, ElectroMagn* EMfields, Interpolator* Interp, Projector* Proj, SmileiMPI* smpi, PicParams& param);
+    void operate(std::vector<Patch*> vecPatches, SmileiMPI* smpi, PicParams& param);
 
     //! Returns a boolean : True if the window should be moved, False if it should not.
     //! Warning : Actually moving the window (function operate) changes the value of x_moved so the returned value of isMoving changes
