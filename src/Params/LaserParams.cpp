@@ -25,6 +25,14 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
         // laser intensity
         ifile.extract("a0",tmpLaser.a0,"laser",0,n_laser);
         
+        // laser angular frequency (default=1)
+        tmpLaser.omega0=1.0;
+        ifile.extract("omega0",tmpLaser.omega0,"laser",0,n_laser);
+        
+        // laser temporal chirp (default=0)
+        tmpLaser.tchirp=0.0;
+        ifile.extract("tchirp",tmpLaser.tchirp,"laser",0,n_laser);
+        
         // laser ellipticity/polarization parameter
         ifile.extract("delta",tmpLaser.delta,"laser",0,n_laser);
         
@@ -50,11 +58,13 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
         // -------------------------------------
         // Printing out laser related parameters
         // -------------------------------------
-        MESSAGE("Laser related parameters");
-        MESSAGE(1,"n_laser        : " << n_laser);
-        for ( unsigned int i=0 ; i<n_laser ; i++ ) {
-            MESSAGE(2,"laser " << i << ": (boxSide, a0) : (" << laser_param[i].boxSide <<  ", " << laser_param[i].a0 <<  ")");
-        }
+        if (n_laser==0) // just print "Laser related parameters" once
+            MESSAGE("Laser related parameters");
+        MESSAGE(1, "n_laser: " << n_laser << " : (boxSide, a0) : (" << tmpLaser.boxSide
+                << ", " << tmpLaser.a0 <<  ")");
+        //for ( unsigned int i=0 ; i<n_laser ; i++ ) {
+        //    MESSAGE(2,"laser " << i << ": (boxSide, a0) : (" << laser_param[i].boxSide <<  ", " << laser_param[i].a0 <<  ")");
+        //}
         
         
         // -----------------------------------------------------------------
