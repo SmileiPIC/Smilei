@@ -174,28 +174,25 @@ private:
 
 };
 
-void exchangeParticles(int ispec, std::vector<Patch*> vecPatches, PicParams &params, SmileiMPI* smpi);
-void sumRhoJ( int ispec, std::vector<Patch*> vecPatches );
-void exchangeE( std::vector<Patch*> vecPatches );
-void exchangeB( std::vector<Patch*> vecPatches );
 
-
-
-#ifdef _VECTORPATCH
 class VectorPatch {
  public :
     VectorPatch();
     ~VectorPatch();
-    void sumField( Field* field ) {
-	for (unsigned int ipatch=0 ; ipatch<patches_.size() ; ipatch++)
-	    patches_[ipatch]->initSumField( field ); // initialize
-	for (unsigned int ipatch=0 ; ipatch<patches_.size() ; ipatch++)
-	    patches_[ipatch]->finalizeSumField( field ); // finalize (waitall + sum)
-    }
- private :
+
+    void resize(int npatches) {patches_.resize(npatches);};
+    int size() const {return patches_.size();};
+
+    Patch* operator()(int ipatch) {return patches_[ipatch];};
+
+    void exchangeParticles(int ispec, PicParams &params, SmileiMPI* smpi);
+    void sumRhoJ( int ispec );
+    void exchangeE(  );
+    void exchangeB(  );
+
     std::vector<Patch*> patches_;
+ private :
     
 };
-#endif
 
 #endif

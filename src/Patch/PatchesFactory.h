@@ -12,8 +12,8 @@ public:
         return patch;
     }
 
-    static std::vector<Patch*> createVector(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi) {
-        std::vector<Patch*> vecPatches;
+    static VectorPatch createVector(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi) {
+        VectorPatch vecPatches;
 
 	// Compute npatches (1 is std MPI behavior)
 	unsigned int npatches, firstpatch;
@@ -50,7 +50,7 @@ public:
         vecPatches.resize(npatches);
 	std::cout << "Before patch creation " << std::endl;
         for (unsigned int ipatch = 0 ; ipatch < npatches ; ipatch++) {
-	    vecPatches[ipatch] = PatchesFactory::create(params, laser_params, smpi, m0, m1, m2, firstpatch + ipatch);
+	  vecPatches.patches_[ipatch] = PatchesFactory::create(params, laser_params, smpi, m0, m1, m2, firstpatch + ipatch);
         }
 	std::cout << "After patch creation " << std::endl;
 

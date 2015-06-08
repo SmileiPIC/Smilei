@@ -18,7 +18,6 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
 //   |   3    4(self)       5
 //       0       1          2    --> X axis
 
-
         int xcall, ycall;
         hindex = ipatch;
         
@@ -445,7 +444,8 @@ return h;
 //2D version
 void Patch::generalhilbertindexinv(unsigned int m0, unsigned int m1, unsigned int* x, unsigned int* y, unsigned int h)
 {
-    unsigned int einit, dinit, mmin, mmax,l,localh, *target, shift ;
+    unsigned int einit, dinit,l,localh, *target, shift ;
+    int mmin,mmax;
     einit = 0;
     dinit = 0;
     shift = 0;
@@ -1617,90 +1617,100 @@ void Patch::finalizeExchange( Field* field )
     } // END for iDim
 }
 
-void exchangeParticles(int ispec, vector<Patch*> vecPatches, PicParams &params, SmileiMPI* smpi)
+
+
+VectorPatch::VectorPatch()
+{
+}
+
+VectorPatch::~VectorPatch()
+{
+}
+
+void VectorPatch::exchangeParticles(int ispec, PicParams &params, SmileiMPI* smpi)
 {
     int useless(0);
 
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	vecPatches[ipatch]->initExchParticles(smpi, ispec, params, useless, useless);
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	(*this)(ipatch)->initExchParticles(smpi, ispec, params, useless, useless);
     }
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	vecPatches[ipatch]->initCommParticles(smpi, ispec, params, useless, useless);
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	(*this)(ipatch)->initCommParticles(smpi, ispec, params, useless, useless);
     }
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	vecPatches[ipatch]->finalizeCommParticles(smpi, ispec, params, useless, useless);
-	vecPatches[ipatch]->vecSpecies[ispec]->sort_part();
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	(*this)(ipatch)->finalizeCommParticles(smpi, ispec, params, useless, useless);
+	(*this)(ipatch)->vecSpecies[ispec]->sort_part();
     }
 
 }
 
-void sumRhoJ( int ispec, vector<Patch*> vecPatches )
+void VectorPatch::sumRhoJ( int ispec )
 {
 
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	vecPatches[ipatch]->initSumField( vecPatches[ipatch]->EMfields->rho_ ); // initialize
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->rho_ ); // initialize
     }
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	vecPatches[ipatch]->finalizeSumField( vecPatches[ipatch]->EMfields->rho_ ); // finalize (waitall + sum)
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->rho_ ); // finalize (waitall + sum)
     }
 
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	vecPatches[ipatch]->initSumField( vecPatches[ipatch]->EMfields->Jx_ ); // initialize
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jx_ ); // initialize
     }
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	vecPatches[ipatch]->finalizeSumField( vecPatches[ipatch]->EMfields->Jx_ ); // finalize (waitall + sum)
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jx_ ); // finalize (waitall + sum)
     }
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	vecPatches[ipatch]->initSumField( vecPatches[ipatch]->EMfields->Jy_ ); // initialize
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jy_ ); // initialize
     }
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	vecPatches[ipatch]->finalizeSumField( vecPatches[ipatch]->EMfields->Jy_ ); // finalize (waitall + sum)
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jy_ ); // finalize (waitall + sum)
     }
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	vecPatches[ipatch]->initSumField( vecPatches[ipatch]->EMfields->Jz_ ); // initialize
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jz_ ); // initialize
     }
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	vecPatches[ipatch]->finalizeSumField( vecPatches[ipatch]->EMfields->Jz_ ); // finalize (waitall + sum)
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jz_ ); // finalize (waitall + sum)
     }
 
 
 }
 
-void exchangeE( std::vector<Patch*> vecPatches )
+void VectorPatch::exchangeE( )
 {
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-	vecPatches[ipatch]->initExchange( vecPatches[ipatch]->EMfields->Ex_ );
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-	vecPatches[ipatch]->finalizeExchange( vecPatches[ipatch]->EMfields->Ex_ );
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->Ex_ );
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->Ex_ );
 
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-	vecPatches[ipatch]->initExchange( vecPatches[ipatch]->EMfields->Ey_ );
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-	vecPatches[ipatch]->finalizeExchange( vecPatches[ipatch]->EMfields->Ey_ );
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->Ey_ );
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->Ey_ );
 
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-	vecPatches[ipatch]->initExchange( vecPatches[ipatch]->EMfields->Ez_ );
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-	vecPatches[ipatch]->finalizeExchange( vecPatches[ipatch]->EMfields->Ez_ );
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->Ez_ );
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->Ez_ );
 
 }
 
-void exchangeB( std::vector<Patch*> vecPatches )
+void VectorPatch::exchangeB( )
 {
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-	vecPatches[ipatch]->initExchange( vecPatches[ipatch]->EMfields->Bx_ );
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-	vecPatches[ipatch]->finalizeExchange( vecPatches[ipatch]->EMfields->Bx_ );
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->Bx_ );
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->Bx_ );
 
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-	vecPatches[ipatch]->initExchange( vecPatches[ipatch]->EMfields->By_ );
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-	vecPatches[ipatch]->finalizeExchange( vecPatches[ipatch]->EMfields->By_ );
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->By_ );
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->By_ );
 
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-	vecPatches[ipatch]->initExchange( vecPatches[ipatch]->EMfields->Bz_ );
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-	vecPatches[ipatch]->finalizeExchange( vecPatches[ipatch]->EMfields->Bz_ );
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->Bz_ );
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->Bz_ );
 
 }
 
