@@ -15,9 +15,11 @@ conv_fac(params.conv_fac)
     unsigned int numExtFields=ifile.nComponents("ExtField");
     for (unsigned int n_extfield = 0; n_extfield < numExtFields; n_extfield++) {
         ExtFieldStructure tmpExtField;
-        ifile.extract("field",tmpExtField.fields,"ExtField",n_extfield);
-        ifile.extract("profile",tmpExtField.profile,"ExtField",n_extfield);
+        if( !ifile.extract("field",tmpExtField.fields,"ExtField",n_extfield)) {
+            ERROR("ExtField #"<<n_extfield<<": parameter 'field' not provided'");
+        }
         
+        ifile.extract("profile",tmpExtField.profile,"ExtField",n_extfield);
         if (tmpExtField.profile.empty()) {
             PyObject *mypy = ifile.extract_py("profile","ExtField",n_extfield);
             if (mypy && PyCallable_Check(mypy)) {

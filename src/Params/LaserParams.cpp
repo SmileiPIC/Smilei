@@ -23,7 +23,9 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
         }
         
         // laser intensity
-        ifile.extract("a0",tmpLaser.a0,"Laser",ilaser);
+        if( !ifile.extract("a0",tmpLaser.a0,"Laser",ilaser)) {
+            ERROR("Need parameter 'a0' for the laser");
+        }
         
         // laser angular frequency (default=1)
         tmpLaser.omega0=1.0;
@@ -34,12 +36,15 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
         ifile.extract("tchirp",tmpLaser.tchirp,"Laser",ilaser);
         
         // laser ellipticity/polarization parameter
-        ifile.extract("delta",tmpLaser.delta,"Laser",ilaser);
+        //\fixme Delta parameter not used
+        tmpLaser.delta = 0.;
+        //ifile.extract("delta",tmpLaser.delta,"Laser",ilaser);
         
         // position of the laser focus
         tmpLaser.isFocused = ifile.extract("focus",tmpLaser.focus,"Laser",ilaser);
         
         // incident angle
+        tmpLaser.angle = 0.;
         ifile.extract("angle",tmpLaser.angle ,"Laser",ilaser);
         
         // laser time-profile & associated parameters
@@ -49,6 +54,8 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
             if (mypy && PyCallable_Check(mypy)) {
                 tmpLaser.profile_time.py_profile=mypy;
                 tmpLaser.profile_time.profile="python";
+            } else {
+                ERROR("Laser: time_profile parameter not understood");
             }
         } else {
             ifile.extract("int_params",tmpLaser.profile_time.int_params ,"Laser",ilaser);
@@ -63,11 +70,13 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
             if (mypy && PyCallable_Check(mypy)) {
                 tmpLaser.profile_transv.py_profile=mypy;
                 tmpLaser.profile_transv.profile="python";
+            } else {
+                ERROR("Laser: transv_profile parameter not understood");
             }
-
-        } 
-        ifile.extract("int_params_transv",tmpLaser.profile_transv.int_params ,"Laser",ilaser);
-        ifile.extract("double_params_transv",tmpLaser.profile_transv.double_params ,"Laser",ilaser);
+        } else {
+            ifile.extract("int_params_transv",tmpLaser.profile_transv.int_params ,"Laser",ilaser);
+            ifile.extract("double_params_transv",tmpLaser.profile_transv.double_params ,"Laser",ilaser);
+        }
         
         
         bool delayExists = ifile.extract("delay",tmpLaser.delay ,"Laser",ilaser);
