@@ -8,6 +8,18 @@ using namespace std;
 int buildtag(int send, int recv);
 
 Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int m0, unsigned int m1, unsigned int m2, unsigned int ipatch) {
+
+
+//Neighborhood definition in 2D:
+//   
+//   Y axis
+//   ^
+//   |   6       7          8
+//   |   3    4(self)       5
+//       0       1          2    --> X axis
+
+
+        int xcall, ycall;
         hindex = ipatch;
         
         if ( params.geometry == "1d3v" ) {
@@ -15,6 +27,8 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
             Pcoordinates.resize(1);
             mi[0] = m0;
             Pcoordinates[0] = hindex;
+	    MPI_neighborhood_.resize(3);
+	    patch_neighborhood_.resize(3);
         }
         else if ( params.geometry == "2d3v" ) {
             mi.resize(2);
@@ -22,6 +36,8 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
             mi[0] = m0;
             mi[1] = m1;
             generalhilbertindexinv(m0, m1, &Pcoordinates[0], &Pcoordinates[1], hindex);
+	    MPI_neighborhood_.resize(9);
+	    patch_neighborhood_.resize(9);
         }
         else {
             mi.resize(3);
@@ -30,143 +46,81 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
             mi[1] = m1;
             mi[2] = m2;
             generalhilbertindexinv(m0, m1, m2, &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
+	    MPI_neighborhood_.resize(27);
+	    patch_neighborhood_.resize(27);
         }
 
-	//Pcoordinates[1] = ipatch%m1;
-	//Pcoordinates[0] = ipatch/m1 ;
 	//std::cout << "Coordonnées de " << ipatch << " : " << Pcoordinates[0] << " " << Pcoordinates[1] << std::endl;
 	nbNeighbors_ = 2;
 	neighbor_.resize(params.nDim_field);
-	for ( int iDim = 0 ; iDim < params.nDim_field ; iDim++ ) {
-	    neighbor_[iDim].resize(2,MPI_PROC_NULL);
-	}
 	corner_neighbor_.resize(params.nDim_field);
 	for ( int iDim = 0 ; iDim < params.nDim_field ; iDim++ ) {
+	    neighbor_[iDim].resize(2,MPI_PROC_NULL);
 	    corner_neighbor_[iDim].resize(2,MPI_PROC_NULL);
 	}
-	if (Pcoordinates[0]>0)
-	    //neighbor_[0][0] = ipatch-m1;
-	    neighbor_[0][0] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, Pcoordinates[1]);
-
-	if (Pcoordinates[0]< (1<<m0)-1  )
-	    //neighbor_[0][1] = ipatch+m1;
-	    neighbor_[0][1] = generalhilbertindex( m0, m1, Pcoordinates[0]+1, Pcoordinates[1]);
-	if (Pcoordinates[1]>0)
-	    //neighbor_[1][0] = ipatch-1;
-	    neighbor_[1][0] = generalhilbertindex( m0, m1, Pcoordinates[0], Pcoordinates[1]-1);
-	if (Pcoordinates[1]< (1<<m1)-1  )
-	    //neighbor_[1][1] = ipatch+1;
-	    neighbor_[1][1] = generalhilbertindex( m0, m1, Pcoordinates[0], Pcoordinates[1]+1);
-
-	// Manage y-periodicity only !
-	//SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
-	if ( (params.bc_em_type_trans=="periodic") ) {
-	  //if ( (smpi2D->getNbrOfProcs(1)==1) ) {
-	    //if ( (smpi2D->getProcCoord(1)==0) || (smpi2D->getProcCoord(1)==smpi2D->getNbrOfProcs(1)-1) ) {
-	      if ( (Pcoordinates[1]==0) )
-		//neighbor_[1][0] = Pcoordinates[0]*m1+m1-1;
-	        neighbor_[1][0] = generalhilbertindex( m0, m1, Pcoordinates[0], (1<<m1)-1);
-	      if ( (Pcoordinates[1]==(1<<m1)-1) )
-		//neighbor_[1][1] = Pcoordinates[0]*m1+0;
-	        neighbor_[1][1] = generalhilbertindex( m0, m1, Pcoordinates[0], 0);
-	    //}
-	  //}
-	}
-	if ( (params.bc_em_type_long=="periodic") ) {
-	      if ( (Pcoordinates[0]==0) )
-	        neighbor_[0][0] = generalhilbertindex( m0, m1,(1<<m0)-1, Pcoordinates[1]);
-	      if ( (Pcoordinates[0]==(1<<m0)-1) )
-	        neighbor_[0][1] = generalhilbertindex( m0, m1, 0, Pcoordinates[1]);
-	}
 
 
-	if ( (neighbor_[1][0]>=0) && (neighbor_[0][0]>=0) )
-	    //corner_neighbor_[0][0] = neighbor_[0][0]-1;
-	    corner_neighbor_[0][0] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, Pcoordinates[1]-1);
-	//else 
-	//    corner_neighbor_[0][0] = MPI_PROC_NULL;
+        xcall = Pcoordinates[0]-1;
+        ycall = Pcoordinates[1];
+	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0));
+	neighbor_[0][0] = generalhilbertindex( m0, m1, xcall, ycall);
+        cout << xcall << " " << ycall << " " << neighbor_[0][0] << endl;
+        xcall = Pcoordinates[0]+1;
+	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0));
+	neighbor_[0][1] = generalhilbertindex( m0, m1, xcall, ycall);
+        xcall = Pcoordinates[0];
+        ycall = Pcoordinates[1]-1;
+	if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<m1));
+	neighbor_[1][0] = generalhilbertindex( m0, m1, xcall, ycall);
+        ycall = Pcoordinates[1]+1;
+	if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<m1));
+	neighbor_[1][1] = generalhilbertindex( m0, m1, xcall, ycall);
 
-	if ( (neighbor_[1][0]>=0) && (neighbor_[0][1]>=0) )
-	    //corner_neighbor_[1][0] = neighbor_[0][1]-1;
-	    corner_neighbor_[1][0] = generalhilbertindex( m0, m1, Pcoordinates[0]+1, Pcoordinates[1]-1);
-	//else 
-	//    corner_neighbor_[1][0] = MPI_PROC_NULL;
 
-	if ( (neighbor_[1][1]>=0) && (neighbor_[0][0]>=0) )
-	    //corner_neighbor_[0][1] = neighbor_[0][0]+1;
-	    corner_neighbor_[0][1] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, Pcoordinates[1]+1);
-	//else 
-	//    corner_neighbor_[0][1] = MPI_PROC_NULL;
+        xcall = Pcoordinates[0]+1;
+	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0));
+	corner_neighbor_[1][1] = generalhilbertindex( m0, m1, xcall, ycall);
+        xcall = Pcoordinates[0]-1;
+	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0));
+	corner_neighbor_[0][1] = generalhilbertindex( m0, m1, xcall, ycall);
+        ycall = Pcoordinates[1]-1;
+	if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<m1));
+	corner_neighbor_[0][0] = generalhilbertindex( m0, m1, xcall, ycall);
+        xcall = Pcoordinates[0]+1;
+	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0));
+	corner_neighbor_[1][0] = generalhilbertindex( m0, m1, xcall, ycall);
 
-	if ( (neighbor_[0][1]>=0) && (neighbor_[1][1]>=0) )
-	    //corner_neighbor_[1][1] = neighbor_[0][1]+1;   
-	    corner_neighbor_[1][1] = generalhilbertindex( m0, m1, Pcoordinates[0]+1, Pcoordinates[1]+1);
-	//else
-	//    corner_neighbor_[1][1] = MPI_PROC_NULL;   
 
-	//cout << Pcoordinates[0] << " " << Pcoordinates[1] << endl;
-	//cout << number_of_procs[0] << " " << m1 << endl;
+        patch_neighborhood_[0] = corner_neighbor_[0][0];
+        patch_neighborhood_[1] = neighbor_[1][0];
+        patch_neighborhood_[2] = corner_neighbor_[1][0];
+        patch_neighborhood_[3] = neighbor_[0][0];
+        patch_neighborhood_[4] = hindex;
+        patch_neighborhood_[5] = neighbor_[0][1];
+        patch_neighborhood_[6] = corner_neighbor_[0][1];
+        patch_neighborhood_[7] = neighbor_[1][1];
+        patch_neighborhood_[8] = corner_neighbor_[1][1];
 
-	// Must be completed in really MPI context
-	if ( (params.bc_em_type_trans=="periodic") ) {
-	    if (Pcoordinates[1]==0) {
-		if (Pcoordinates[0]!=0)
-		    //corner_neighbor_[0][0] = neighbor_[1][0]-m1;
-	            corner_neighbor_[0][0] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, (1<<m1)-1);
-		if (Pcoordinates[0]!= (1<<m0)-1)
-		    //corner_neighbor_[1][0] = neighbor_[1][0]+m1;
-	            corner_neighbor_[1][0] = generalhilbertindex( m0, m1, Pcoordinates[0]+1, (1<<m1)-1);
-	    }
-	    else if (Pcoordinates[1]== (1<<m1)-1) {
-		if (Pcoordinates[0]!=0)
-		    //corner_neighbor_[0][1] = neighbor_[1][1]-m1;
-	            corner_neighbor_[0][1] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, 0);
-		if (Pcoordinates[0]!= (1<<m0)-1)
-		    //corner_neighbor_[1][1] = neighbor_[1][1]+m1;
-	            corner_neighbor_[1][1] = generalhilbertindex( m0, m1, Pcoordinates[0]+1, 0);
-	    }
-	}
-	if ( (params.bc_em_type_long=="periodic") ) {
-	    if (Pcoordinates[0]==0) {
-		if (Pcoordinates[1]!=0)
-		    //corner_neighbor_[0][0] = neighbor_[0][0]-1;
-	            corner_neighbor_[0][0] = generalhilbertindex( m0, m1, (1<<m0)-1, Pcoordinates[1]-1);
-		if (Pcoordinates[1]!= (1<<m1)-1) {
-		    //corner_neighbor_[0][1] = neighbor_[0][0]+1;
-	            corner_neighbor_[0][1] = generalhilbertindex( m0, m1, (1<<m0)-1, Pcoordinates[1]+1);
-		}
-	    }
-	    else if (Pcoordinates[0]== (1<<m0)-1) {
-		if (Pcoordinates[1]!=0)
-		    //corner_neighbor_[1][0] = neighbor_[0][1]-1;
-	            corner_neighbor_[1][0] = generalhilbertindex( m0, m1, 0, Pcoordinates[1]-1);
-		if (Pcoordinates[1]!= (1<<m1)-1)
-		    //corner_neighbor_[1][1] = neighbor_[0][1]+1;
-	            corner_neighbor_[1][1] = generalhilbertindex( m0, m1, 0, Pcoordinates[1]+1);
-	    }
-	}
 
-	if ( (params.bc_em_type_trans=="periodic") && (params.bc_em_type_long=="periodic") ) {
-	    if ((Pcoordinates[0]==0) && (Pcoordinates[1]==0) )
-		//corner_neighbor_[0][0] = m0*m1-1;
-	        corner_neighbor_[0][0] = generalhilbertindex( m0, m1, (1<<m0)-1, (1<<m1)-1 );
-	    if ((Pcoordinates[0]==0) && (Pcoordinates[1]== (1<<m1)-1) )
-		//corner_neighbor_[0][1] = (m0-1)*m1;
-	        corner_neighbor_[0][1] = generalhilbertindex( m0, m1, (1<<m0)-1, 0 );
-	    if ((Pcoordinates[0]== (1<<m0)-1) && (Pcoordinates[1]==0) )
-		//corner_neighbor_[1][0] = (m1-1);
-	        corner_neighbor_[1][0] = generalhilbertindex( m0, m1, 0, (1<<m1)-1 );
-	    if ((Pcoordinates[0]== (1<<m0)-1) && (Pcoordinates[1]== (1<<m1)-1) )
-		//corner_neighbor_[1][1] = 0; 
-	        corner_neighbor_[1][1] = generalhilbertindex( m0, m1, 0, 0 );
-	}
 
-	cout << "\n\tCorner decomp : " << smpi->hrank(corner_neighbor_[0][1]) << "\t" << neighbor_[1][1]  << "\t" << corner_neighbor_[1][1] << endl;
+	for ( int z = 0 ; z < 1+2*(params.nDim_field == 3) ; z++ ) {
+	    for ( int y = 0 ; y < 1+2*(params.nDim_field >= 2) ; y++ ) {
+	        for ( int x = 0 ; x < 3 ; x++ ) {
+	        MPI_neighborhood_[z*9+y*3+x] = smpi->hrank(patch_neighborhood_[z*9+y*3+x]);
+                }
+            }
+        }
+
+	cout << "\n\tCorner decomp : " << corner_neighbor_[0][1] << "\t" << neighbor_[1][1]  << "\t" << corner_neighbor_[1][1] << endl;
 	cout << "\tCorner decomp : " << neighbor_[0][0] << "\t" << hindex << "\t" << neighbor_[0][1] << endl;
 	cout << "\tCorner decomp : " << corner_neighbor_[0][0] << "\t" << neighbor_[1][0]  << "\t" << corner_neighbor_[1][0] << endl;
 
+	cout << "\n\tCorner decomp : " << MPI_neighborhood_[6] << "\t" << MPI_neighborhood_[7]  << "\t" << MPI_neighborhood_[8] << endl;
+	cout << "\tCorner decomp : " << MPI_neighborhood_[3] << "\t" << MPI_neighborhood_[4] << "\t" << MPI_neighborhood_[5] << endl;
+	cout << "\tCorner decomp : " << MPI_neighborhood_[0] << "\t" << MPI_neighborhood_[1]  << "\t" << MPI_neighborhood_[2] << endl;
 
 	createType(params);
+
 	
 	//std::cout << "Voisin dir 0 : " << ipatch << " : " <<  neighbor_[0][0] << " " <<  neighbor_[0][1] << std::endl;
 	//std::cout << "Voisin dir 1 : " << ipatch << " : " <<  neighbor_[1][0] << " " <<  neighbor_[1][1] << std::endl;
@@ -378,7 +332,7 @@ void Patch::setbit(unsigned int* i, unsigned int k, unsigned int value)
 //!General Hilbert index2D calculates the  Hilbert index h of a patch of coordinates x,y for a simulation box with 2^mi patches per side (2^(m0+m1)) patches in total).
 unsigned int Patch::generalhilbertindex(unsigned int m0, unsigned int m1, unsigned int x, unsigned int y, unsigned int *einit, unsigned int *dinit)
 {
-    if(x%((1<<m0)-1) != x || y%((1<<m1)-1) != y ) return MPI_PROC_NULL ;
+    if(x%((1<<m0)) != x || y%((1<<m1)) != y ) return MPI_PROC_NULL ;
 
     unsigned int h,mmin,mmax,l,localx,localy,*target;
     h=0;
@@ -407,6 +361,8 @@ return h;
 }
 unsigned int Patch::generalhilbertindex(unsigned int m0, unsigned int m1, unsigned int x, unsigned int y)
 {
+    if(x%((1<<m0)) != x || y%((1<<m1)) != y ) return MPI_PROC_NULL ;
+
     unsigned int h,mmin,mmax,l,localx,localy,*target,einit,dinit;
     h=0;
     dinit=0;
@@ -437,6 +393,8 @@ return h;
 //!General Hilbert index3D calculates the compact Hilbert index h of a patch of coordinates x,y,z for a simulation box with 2^mi patches per side (2^(m0+m1+m2)) patches in total).
 unsigned int Patch::generalhilbertindex(unsigned int m0, unsigned int m1, unsigned int m2, unsigned int x, unsigned int y, unsigned int z)
 {
+    if(x%((1<<m0)) != x || y%((1<<m1)) != y || z%((1<<m2)) != z) return MPI_PROC_NULL ;
+
     unsigned int h,e,d,*einit,*dinit,dimmin,dimmax,dimmed,l,localx,localy,localz, mi[3],localp[3],tempp[3],mmin;
     h=0;
     e=0;
@@ -1658,3 +1616,91 @@ void Patch::finalizeExchange( Field* field )
 
     } // END for iDim
 }
+
+void exchangeParticles(int ispec, vector<Patch*> vecPatches, PicParams &params, SmileiMPI* smpi)
+{
+    int useless(0);
+
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	vecPatches[ipatch]->initExchParticles(smpi, ispec, params, useless, useless);
+    }
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	vecPatches[ipatch]->initCommParticles(smpi, ispec, params, useless, useless);
+    }
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	vecPatches[ipatch]->finalizeCommParticles(smpi, ispec, params, useless, useless);
+	vecPatches[ipatch]->vecSpecies[ispec]->sort_part();
+    }
+
+}
+
+void sumRhoJ( int ispec, vector<Patch*> vecPatches )
+{
+
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	vecPatches[ipatch]->initSumField( vecPatches[ipatch]->EMfields->rho_ ); // initialize
+    }
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	vecPatches[ipatch]->finalizeSumField( vecPatches[ipatch]->EMfields->rho_ ); // finalize (waitall + sum)
+    }
+
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	vecPatches[ipatch]->initSumField( vecPatches[ipatch]->EMfields->Jx_ ); // initialize
+    }
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	vecPatches[ipatch]->finalizeSumField( vecPatches[ipatch]->EMfields->Jx_ ); // finalize (waitall + sum)
+    }
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	vecPatches[ipatch]->initSumField( vecPatches[ipatch]->EMfields->Jy_ ); // initialize
+    }
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	vecPatches[ipatch]->finalizeSumField( vecPatches[ipatch]->EMfields->Jy_ ); // finalize (waitall + sum)
+    }
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	vecPatches[ipatch]->initSumField( vecPatches[ipatch]->EMfields->Jz_ ); // initialize
+    }
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	vecPatches[ipatch]->finalizeSumField( vecPatches[ipatch]->EMfields->Jz_ ); // finalize (waitall + sum)
+    }
+
+
+}
+
+void exchangeE( std::vector<Patch*> vecPatches )
+{
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	vecPatches[ipatch]->initExchange( vecPatches[ipatch]->EMfields->Ex_ );
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	vecPatches[ipatch]->finalizeExchange( vecPatches[ipatch]->EMfields->Ex_ );
+
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	vecPatches[ipatch]->initExchange( vecPatches[ipatch]->EMfields->Ey_ );
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	vecPatches[ipatch]->finalizeExchange( vecPatches[ipatch]->EMfields->Ey_ );
+
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	vecPatches[ipatch]->initExchange( vecPatches[ipatch]->EMfields->Ez_ );
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	vecPatches[ipatch]->finalizeExchange( vecPatches[ipatch]->EMfields->Ez_ );
+
+}
+
+void exchangeB( std::vector<Patch*> vecPatches )
+{
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	vecPatches[ipatch]->initExchange( vecPatches[ipatch]->EMfields->Bx_ );
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	vecPatches[ipatch]->finalizeExchange( vecPatches[ipatch]->EMfields->Bx_ );
+
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	vecPatches[ipatch]->initExchange( vecPatches[ipatch]->EMfields->By_ );
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	vecPatches[ipatch]->finalizeExchange( vecPatches[ipatch]->EMfields->By_ );
+
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	vecPatches[ipatch]->initExchange( vecPatches[ipatch]->EMfields->Bz_ );
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	vecPatches[ipatch]->finalizeExchange( vecPatches[ipatch]->EMfields->Bz_ );
+
+}
+

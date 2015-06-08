@@ -58,7 +58,7 @@ else
 endif
 
 ifeq ($(openmp),gnu)
-	CFLAGS += -fopenmp -D_OMP
+	CFLAGS += -fopenmp -D_OMP -D_PATCH
 else ifeq ($(openmp),intel)
 	CFLAGS += -openmp -D_OMP -xHost -ipo -D_PATCH
 endif

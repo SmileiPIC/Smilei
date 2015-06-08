@@ -6,6 +6,7 @@
 #include "Interpolator.h"
 #include "Projector.h"
 #include "SmileiMPI.h"
+#include "Patch.h"
 using namespace std;
 
 SimWindow::SimWindow(PicParams& params)
@@ -49,91 +50,73 @@ void SimWindow::operate(vector<Species*> vecSpecies, ElectroMagn* EMfields, Inte
 
 }
 
-/* For discussion
-void SimWindow::operate(vector<Patches*> vecPatches, SmileiMPI* smpi, PicParams& params)
+void SimWindow::operate(std::vector<Patch*> vecPatches, SmileiMPI* smpi, PicParams& params)
 {
     int xcall, ycall;
     #pragma omp for
     for (unsigned int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++) {
         //Si je ne possede pas mon voisin de gauche...
-        if (MpiLNeighbour != MPI_PROC_NULL) {
-            //...je l'envois...
-            Mpi_Send_Patch(MpiLNeighbour);
+        if (vecPatches[ipatch]->MPI_neighborhood_[3] != vecPatches[ipatch]->MPI_neighborhood_[4]) {
+            //...je l'envois si necessaire ... 
+            if (vecPatches[ipatch]->MPI_neighborhood_[3] != MPI_PROC_NULL)
+                cout << "Sending Patch" << endl;
+                //Mpi_Send_Patch(MpiLNeighbour);
             //... et je detruit mes donnees.
-            delete (vecPatches[ipatch].vecSpecies);
-            delete (vecPatches[ipatch].EMfields);
-            delete (vecPatches[ipatch].Interp);
-            delete (vecPatches[ipatch].Proj);
+            for (unsigned int ispec=0 ; ispec<vecPatches[ipatch]->vecSpecies.size(); ispec++) delete vecPatches[ipatch]->vecSpecies[ispec];
+	    vecPatches[ipatch]->vecSpecies.clear();
+            delete (vecPatches[ipatch]->EMfields);
+            delete (vecPatches[ipatch]->Interp);
+            delete (vecPatches[ipatch]->Proj);
         //Sinon, je deviens mon voisin de gauche.
         } else {
-            Pcoordinates[0] -= 1;
-            min_local -= patch_size[0]*dx;
-            max_local -= patch_size[0]*dx;
-            cell_starting_globalindex[0] -= patch_size[0];
-            nbNeighbors ???
-            neighbor_[0][1] = hindex;
-            corner_neighbor[1][1] = neighbor[1][1];
-            corner_neighbor[1][0] = neighbor[1][0];
-            hindex = neighbor_[0][0];
-            neighbor_[1][0] = corner_neighbor_[0][0] ;
-            neighbor_[1][1] = corner_neighbor_[0][1] ;
-	    if (Pcoordinates[0]>0){
-	        neighbor_[0][0] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, Pcoordinates[1]);
-	    } else if (params.bc_em_type_long=="periodic") {
-	        neighbor_[0][0] = generalhilbertindex( m0, m1,(1<<m0)-1, Pcoordinates[1]);
-            }else {
-                neighbor_[0][0] = MPI_PROC_NULL ;
-            }
-            xcall = Pcoordinates[0]-1;
-            ycall = Pcoordinates[1]-1;
-            if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0)-1);
-            if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<m1)-1);
-	    corner_neighbor_[0][0] = generalhilbertindex( m0, m1, xcall, ycall);
+            vecPatches[ipatch]->Pcoordinates[0] -= 1;
+            vecPatches[ipatch]->min_local[0] -= params.n_space[0]*cell_length_x_;
+            vecPatches[ipatch]->max_local[0] -= params.n_space[0]*cell_length_x_;
+            vecPatches[ipatch]->cell_starting_global_index[0] -= params.n_space[0];
 
-            ///////////// USELESS //////////////////////////////////////////////////////////////////////////
-	    if (Pcoordinates[0]>0 && Pcoordinates[1]>0){
-	        corner_neighbor_[0][0] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, Pcoordinates[1]-1);
-            }else if(Pcoordinates[0] == 0 && params.bc_em_type_long=="periodic" && Pcoordinates[1] == 0 && params.bc_em_type_trans=="periodic"){
-	        corner_neighbor_[0][0] = generalhilbertindex( m0, m1, (1<<m0)-1, (1<<m1)-1);
-            }else if( Pcoordinates[0] == 0 && Pcoordinates[1]>0 && params.bc_em_type_long=="periodic") {
-	        corner_neighbor_[0][0] = generalhilbertindex( m0, m1, (1<<m0)-1, Pcoordinates[1]-1);
-            }else if( Pcoordinates[1] == 0 && Pcoordinates[0]>0 && params.bc_em_type_trans=="periodic") {
-	        corner_neighbor_[0][0] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, (1<<m1)-1);
-            } else {
-                corner_neighbor_[0][0] = MPI_PROC_NULL;
+            //Shift neighborhood tables.
+	    for ( int z = 0 ; z < 1+2*(params.nDim_field == 3) ; z++ ) {
+	        for ( int y = 0 ; y < 1+2*(params.nDim_field >= 2) ; y++ ) {
+	            for ( int x = 2 ; x > 0 ; x-- ) {
+	            vecPatches[ipatch]->patch_neighborhood_[z*9+y*3+x] = vecPatches[ipatch]->patch_neighborhood_[z*9+y*3+x-1];
+	            vecPatches[ipatch]->MPI_neighborhood_[z*9+y*3+x] = vecPatches[ipatch]->MPI_neighborhood_[z*9+y*3+x-1];
+                    }
+                }
             }
-            -------------------------------------------------------------------------------------------------
-            ycall = Pcoordinates[1]+1;
-            if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<m1)-1);
-	    corner_neighbor_[0][1] = generalhilbertindex( m0, m1, xcall, ycall);
-            ///////////// USELESS //////////////////////////////////////////////////////////////////////////
-           if (Pcoordinates[0]>0 && Pcoordinates[1] != (1<<m1)-1){
-	        corner_neighbor_[0][1] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, Pcoordinates[1]+1);
-            }else if(Pcoordinates[0] == 0 && params.bc_em_type_long=="periodic" && Pcoordinates[1] == (1<<m1)-1 && params.bc_em_type_trans=="periodic"){
-	        corner_neighbor_[0][1] = generalhilbertindex( m0, m1, (1<<m0)-1, 0);
-            }else if( Pcoordinates[0] == 0 && Pcoordinates[1]!= (1<<m1)-1 && params.bc_em_type_long=="periodic") {
-	        corner_neighbor_[0][1] = generalhilbertindex( m0, m1, (1<<m0)-1, Pcoordinates[1]+1);
-            }else if( Pcoordinates[1] == (1<<m1)-1 && Pcoordinates[0]>0 && params.bc_em_type_trans=="periodic") {
-	        corner_neighbor_[0][1] = generalhilbertindex( m0, m1, Pcoordinates[0]-1, 0);
-            } else {
-                corner_neighbor_[0][1] = MPI_PROC_NULL;
+            //Compute missing part of the new neighborhood tables.
+            xcall = vecPatches[ipatch]->Pcoordinates[0]-1;
+            ycall = vecPatches[ipatch]->Pcoordinates[1]-1;
+            if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<vecPatches[ipatch]->mi[0]));
+            if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<vecPatches[ipatch]->mi[1]));
+	    vecPatches[ipatch]->patch_neighborhood_[0] = vecPatches[ipatch]->generalhilbertindex(vecPatches[ipatch]->mi[0] , vecPatches[ipatch]->mi[1], xcall, ycall);
+	    vecPatches[ipatch]->patch_neighborhood_[1] = vecPatches[ipatch]->generalhilbertindex(vecPatches[ipatch]->mi[0] , vecPatches[ipatch]->mi[1], xcall, vecPatches[ipatch]->Pcoordinates[1]);
+            ycall = vecPatches[ipatch]->Pcoordinates[1]+1;
+            if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<vecPatches[ipatch]->mi[1]));
+	    vecPatches[ipatch]->patch_neighborhood_[2] = vecPatches[ipatch]->generalhilbertindex(vecPatches[ipatch]->mi[0] , vecPatches[ipatch]->mi[1], xcall, ycall);
+	    for ( int y = 0 ; y < 1+2*(params.nDim_field >= 2) ; y++ ) {
+	        for ( int z = 0 ; z < 1+2*(params.nDim_field == 3) ; z++ ) {
+                    vecPatches[ipatch]->MPI_neighborhood_[y*3+z] = smpi->hrank(vecPatches[ipatch]->patch_neighborhood_[y*3+z]);
+                }
             }
-            -------------------------------------------------------------------------------------------------
- 
+            
+             
         }
         //Si je ne possede pas mon voisin de droite...
-        if (MpiRNeighbour != MPI_PROC_NULL) {
-            //...je reçois.
-            Mpi_Receive_Patch(MpiRNeighbour);
-            //Les fonctions SendPatch ou ReceivePatch doivent transformer le Patch comme ci dessus.
-            //Ce serait plus simple de mettre hindex, neighbor_ et corner_neighbor_ dans un seul et meme tableau.
-            //Ce serait plus simple de mettre les conditions de périodicité dans la fonction generalhilbertindex.
+        if (vecPatches[ipatch]->MPI_neighborhood_[5] != vecPatches[ipatch]->MPI_neighborhood_[4]) {
+            //...je reçois ou je cré.
+            if (vecPatches[ipatch]->MPI_neighborhood_[3] != MPI_PROC_NULL){
+                //Mpi_Receive_Patch(MpiRNeighbour);
+                cout << "Receiving Patch" << endl;
+            } else {
+                //Create_Patch();
+                cout << "Patch creation" << endl;
+            }
         }
-    }
+        //Les fonctions SendPatch ou ReceivePatch doivent transformer le Patch comme ci dessus.
+        //Ce serait plus simple de mettre hindex, neighbor_ et corner_neighbor_ dans un seul et meme tableau.
 
+    }//End loop on Patches
 }
-
-*/
 
 
 

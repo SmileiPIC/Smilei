@@ -348,17 +348,8 @@ int main (int argc, char* argv[])
 
 	    // Inter Patch exchange
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-                if ( vecPatches[0]->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
-		    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-			vecPatches[ipatch]->initExchParticles(smpi, ispec, params, 100, 100);
-		    }
-		    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-			vecPatches[ipatch]->initCommParticles(smpi, ispec, params, 100, 100);
-		    }
-		    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-			vecPatches[ipatch]->finalizeCommParticles(smpi, ispec, params, 100, 100);
-			vecPatches[ipatch]->vecSpecies[ispec]->sort_part();
-		    }
+		if ( vecPatches[0]->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
+		    exchangeParticles(ispec, vecPatches, params, smpi );
 		}
 	    }
 	    //cout << "Particles have moved" << endl;
@@ -399,37 +390,10 @@ int main (int argc, char* argv[])
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 	    vecPatches[ipatch]->EMfields->computeTotalRhoJ(); // Attention if output -> Sync / per species fields
 	}
+	for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
+	    sumRhoJ( ispec, vecPatches ); 
+	}
 
-	//cout << "Field summed : before rho" << endl;
-
-	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	    vecPatches[ipatch]->initSumField( EMfields->rho_ ); // initialize
-	}
-	//cout << "Field summed : mid rho" << endl;
-	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	    vecPatches[ipatch]->finalizeSumField( EMfields->rho_ ); // finalize (waitall + sum)
-	}
-	//cout << "Field summed : after rho" << endl;
-
-	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	    vecPatches[ipatch]->initSumField( EMfields->Jx_ ); // initialize
-	}
-	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	    vecPatches[ipatch]->finalizeSumField( EMfields->Jx_ ); // finalize (waitall + sum)
-	}
-	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	    vecPatches[ipatch]->initSumField( EMfields->Jy_ ); // initialize
-	}
-	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	    vecPatches[ipatch]->finalizeSumField( EMfields->Jy_ ); // finalize (waitall + sum)
-	}
-	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	    vecPatches[ipatch]->initSumField( EMfields->Jz_ ); // initialize
-	}
-	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	    vecPatches[ipatch]->finalizeSumField( EMfields->Jz_ ); // finalize (waitall + sum)
-	}
-	//cout << "Field summed" << endl;
 #endif
 #ifndef _PATCH
         if  (diag_flag) {
@@ -468,18 +432,7 @@ int main (int argc, char* argv[])
         #pragma omp single
 	{
 	    // Exchange Ex_, Ey_, Ez_
-	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-		vecPatches[ipatch]->initExchange( vecPatches[ipatch]->EMfields->Ex_ );
-	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-		vecPatches[ipatch]->finalizeExchange( vecPatches[ipatch]->EMfields->Ex_ );
-	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-		vecPatches[ipatch]->initExchange( vecPatches[ipatch]->EMfields->Ey_ );
-	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-		vecPatches[ipatch]->finalizeExchange( vecPatches[ipatch]->EMfields->Ey_ );
-	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-		vecPatches[ipatch]->initExchange( vecPatches[ipatch]->EMfields->Ez_ );
-	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-		vecPatches[ipatch]->finalizeExchange( vecPatches[ipatch]->EMfields->Ez_ );
+	    exchangeE( vecPatches );
 
 	}// end single
 
@@ -492,20 +445,8 @@ int main (int argc, char* argv[])
 	{
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
 		vecPatches[ipatch]->EMfields->boundaryConditions(itime, time_dual, smpi, params, simWindow);
-	    
 	    // Exchange Bx_, By_, Bz_
-	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-		vecPatches[ipatch]->initExchange( vecPatches[ipatch]->EMfields->Bx_ );
-	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-		vecPatches[ipatch]->finalizeExchange( vecPatches[ipatch]->EMfields->Bx_ );
-	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-		vecPatches[ipatch]->initExchange( vecPatches[ipatch]->EMfields->By_ );
-	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-		vecPatches[ipatch]->finalizeExchange( vecPatches[ipatch]->EMfields->By_ );
-	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-		vecPatches[ipatch]->initExchange( vecPatches[ipatch]->EMfields->Bz_ );
-	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-		vecPatches[ipatch]->finalizeExchange( vecPatches[ipatch]->EMfields->Bz_ );
+	    exchangeB( vecPatches );
 
 
 	}// end single

@@ -14,6 +14,7 @@
 #include "PicParams.h"
 #include "LaserParams.h"
 #include "SmileiMPI.h"
+#include "SimWindow.h"
 
 
 //! Class Patch : sub MPI domain 
@@ -94,6 +95,8 @@ public:
 
     std::vector< std::vector<int> > neighbor_;
     std::vector< std::vector<int> > corner_neighbor_;
+    std::vector< int > MPI_neighborhood_;
+    std::vector< int > patch_neighborhood_;
 
 
     //! Log2 of the number of patch in the whole simulation box in every direction.
@@ -170,6 +173,13 @@ private:
     //};
 
 };
+
+void exchangeParticles(int ispec, std::vector<Patch*> vecPatches, PicParams &params, SmileiMPI* smpi);
+void sumRhoJ( int ispec, std::vector<Patch*> vecPatches );
+void exchangeE( std::vector<Patch*> vecPatches );
+void exchangeB( std::vector<Patch*> vecPatches );
+
+
 
 #ifdef _VECTORPATCH
 class VectorPatch {
