@@ -110,7 +110,7 @@ public:
     }
     
     //! check if there has been a python error
-    static void checkPyError() {
+    static void checkPyError(bool exitOnError=false) {
         if (PyErr_Occurred()) {
             PyObject *type, *value, *traceback;
             PyErr_Fetch(&type, &value, &traceback);
@@ -129,31 +129,63 @@ public:
             Py_XDECREF(type);
             Py_XDECREF(value);
             Py_XDECREF(traceback);
-            
-            MESSAGE(1,"[Python] " << message);
-        }                
+            if (exitOnError) {
+                ERROR(message);
+            } else {
+                MESSAGE(1,"[Python] " << message);
+            }
+        }
     }
     
-    //! get python function one variable
-    static double runPyFunction(PyObject *pyFunction, double x1) {
+    static void runPyFunction(std::string name) {
+        PyObject* myFunction = PyObject_GetAttrString(PyImport_AddModule("__main__"),name.c_str());
+        if (myFunction) {
+            MESSAGE(1,"Calling python " << name);
+            PyObject_CallFunction(myFunction,const_cast<char *>(""));
+            checkPyError(true);
+            Py_DECREF(myFunction);
+        } else {
+            MESSAGE(1,"python " << name << " function does not exists");
+        }
+    }
+
+    //! get python function without arguments
+    template <typename T=double>
+    static T runPyFunction(std::string name) {
+        T retval;
+        PyObject* myFunction = PyObject_GetAttrString(PyImport_AddModule("__main__"),name.c_str());
+        if (myFunction) {
+            PyObject *pyresult = PyObject_CallFunction(myFunction, const_cast<char *>(""));
+            retval = (T) get_py_result(pyresult);
+            Py_DECREF(myFunction);
+            Py_XDECREF(pyresult);
+        }
+        return retval;
+    }
+    
+    //! get python function one variable    
+    template <typename T=double>
+    static T runPyFunction(PyObject *pyFunction, double x1) {
         PyObject *pyresult = PyObject_CallFunction(pyFunction, const_cast<char *>("d"), x1);
-        double retval=get_py_result(pyresult);
+        T retval = (T) get_py_result(pyresult);
         Py_XDECREF(pyresult);
         return retval;
     }
     
     //! get python function two variables
-    static double runPyFunction(PyObject *pyFunction, double x1, double x2) {
+    template <typename T=double>
+    static T runPyFunction(PyObject *pyFunction, double x1, double x2) {
         PyObject *pyresult = PyObject_CallFunction(pyFunction, const_cast<char *>("dd"), x1, x2);
-        double retval=get_py_result(pyresult);
+        T retval = (T) get_py_result(pyresult);
         Py_XDECREF(pyresult);
         return retval;
     }
     
     //! get python function three variables
-    static double runPyFunction(PyObject *pyFunction, double x1, double x2, double x3) {
+    template <typename T=double>
+    static T runPyFunction(PyObject *pyFunction, double x1, double x2, double x3) {
         PyObject *pyresult = PyObject_CallFunction(pyFunction, const_cast<char *>("ddd"), x1, x2, x3);
-        double retval=get_py_result(pyresult);
+        T retval = (T) get_py_result(pyresult);
         Py_XDECREF(pyresult);
         return retval;
     }

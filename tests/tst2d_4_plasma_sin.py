@@ -1,11 +1,11 @@
 import math 
 
 
-import sys
-print sys.path
+# import sys
+# print sys.path
 
-part_per_cell=1
-t_sim=40
+part_per_cell=100
+t_sim=50
 res=10
 
 position=9
@@ -20,10 +20,10 @@ twopi=2*math.pi
 
 wavelength=0.2
 
-def my_real_func(codex,codey, fwhm=1):
-    x, y=codex/twopi, codey/twopi
-    return 1 if x>position and x< position+thickness and y>10 and y<30 else 0
+def my_real_func(x,y):
+    return 1 if x>position and x< position+thickness and y>5 and y<35 else 0
 
+check_stop_file=True
 
 # 
 # def my_function_easy(x,y,leng=1):
@@ -94,17 +94,17 @@ bc_em_type_trans = 'periodic'
 # this is used to randomize the random number generator
 random_seed = 0
 
-fieldDump_every = 5
-fieldsToDump = ("Bz", "Rho_electron")
+fieldDump_every = res
+avgfieldDump_every =res
+ntime_step_avg=res_time
+
+fieldsToDump = ("Bz", "Rho_electron", "Rho_ion")
 
 print_every = 10
 
 
 Species(
-    dens_profile = lambda x, y: my_real_func(x,y,10),
-    vacuum_length   = ((dx-thickness)/2.0,  dy/4.0) ,
-    dens_length_x   = thickness,
-    dens_length_y   = dy/2,
+    dens_profile = lambda x, y: my_real_func(x,y),
     species_type = 'ion',
     initPosition_type = 'random',
     initMomentum_type = 'cold',
@@ -114,10 +114,10 @@ Species(
     mass = 1836.0,
     charge = 1,
     density = density,
-    mean_velocity = 0.0,
+    mean_velocity = (0.0,0.0,0.0),
     temperature = 0.0,
     dynamics_type = 'norm',
-    time_frozen = t_sim,
+    time_frozen = 0,
     radiating = False,
     bc_part_type_west  = 'refl',
     bc_part_type_east  = 'refl',
@@ -129,10 +129,7 @@ Species(
 )
 
 Species(
-    dens_profile = lambda x, y: my_real_func(x,y,10),
-    vacuum_length   = ((dx-thickness)/2.0,  dy/4,0) ,
-    dens_length_x   = thickness ,
-    dens_length_y   = dy/2,
+    dens_profile = Species[0].dens_profile,
     species_type = 'electron' ,
     initPosition_type = 'random' ,
     initMomentum_type = 'maxj' ,
@@ -141,7 +138,7 @@ Species(
     mass = 1.0 ,
     charge = -1 ,
     density = density ,
-    mean_velocity = 0.0 ,
+    mean_velocity = (0.0,0.0,0.0),
     mvel_x_profile='constant',
     mvel_y_profile='constant',
     mvel_z_profile='constant',
@@ -172,8 +169,8 @@ def my_func_laser_profile(t,y):
 # double_params: vector of real parameters used by the different time-profiles
 #
 
-import numpy as np
-large_memory_variable=np.arange(0,200000000,0.9)
+# import numpy as np
+# large_memory_variable=np.arange(0,200000000,0.9)
 
 def cleanup():
     print "cleanup"

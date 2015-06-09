@@ -6,12 +6,10 @@ using namespace std;
 // Default constructor.
 // Applies to profiles for species (density, velocity and temperature profiles)
 Profile::Profile(ProfileStructure & pp, string geometry, double convfac) :
-conv_fac(convfac)
+conv_fac(convfac),
+profile_param(pp),
+factor(1.)
 {
-    
-    factor = 1.;
-    profile_param = pp;
-    
     // Launch the initialization
     init(profile_param, geometry);
     
@@ -405,7 +403,7 @@ double Profile::valueAt (vector<double> x_cell) {
         }
     }
     
-    
+    // python profile
     else if (profile_param.profile=="python") {
         if        ( dim == 1 ) {
             return PyTools::runPyFunction(profile_param.py_profile, x_cell[0]/conv_fac);
@@ -417,7 +415,7 @@ double Profile::valueAt (vector<double> x_cell) {
     // Other density profile
     // ---------------------
     else {
-        ERROR("Density profile " << profile_param.profile << " not defined in 1D");
+        ERROR("Density profile " << profile_param.profile << " not defined in " << dim << "D");
     }
     
     return 0;

@@ -17,16 +17,29 @@ def smilei_check():
         except:
             raise Exception("ERROR in the namelist: it seems that the name `"+CheckClassName+"` has been overriden")
     
+    # check species for undefined/duplicate species_type
+    all_species=[]
+    for spec in Species:
+        this_spec=spec.species_type
+        try:
+            if this_spec==None: raise
+        except:
+            raise Exception("ERROR in the namelist: there is a species without species_type")
+
+        all_species.append(spec.species_type)
+    try:
+        if len(all_species)!=len(set(all_species)): raise
+    except:
+        raise Exception("ERROR in the namelist: there is duplicate species_type")
     
-smilei_check()
-
-
+    
+# this function will be called after initialising the simulation, just before entering the time loop
+# if it returns false, the code will call a Py_Finalize();
 def keep_python_running():
-    retval=True
+    retval=False
     for las in Laser:
         for prof in (las.time_profile, las.transv_profile):
             if callable(prof):
-                print "Don't stop me now! I'm having such a good time... "
-                retval=False
+                retval=True
     return retval
         
