@@ -11,15 +11,17 @@
 #include "SmileiMPI.h"
 #include "SmileiMPI_Cart2D.h"
 
-#include "ExtFieldProfile2D.h"
+#include "Profile.h"
+
+#include "ElectroMagnBC.h"
 
 using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn2D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn2D::ElectroMagn2D(PicParams &params, LaserParams &laser_params, SmileiMPI* smpi) : 
-ElectroMagn(params, laser_params, smpi),
+ElectroMagn2D::ElectroMagn2D(PicParams &params, InputData &input_data, SmileiMPI* smpi) : 
+ElectroMagn(params, input_data, smpi),
 isWestern(smpi->isWestern()),
 isEastern(smpi->isEastern()),
 isSouthern(smpi->isSouthern()),
@@ -954,10 +956,9 @@ void ElectroMagn2D::computePoynting() {
 
 }
 
-void ElectroMagn2D::applyExternalField(Field* my_field,  ExtFieldProfile *my_profile, SmileiMPI* smpi) {
+void ElectroMagn2D::applyExternalField(Field* my_field,  Profile *profile, SmileiMPI* smpi) {
     
     Field2D* field2D=static_cast<Field2D*>(my_field);
-    ExtFieldProfile2D* profile=static_cast<ExtFieldProfile2D*> (my_profile);
     SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
 
     vector<double> pos(2,0);
@@ -966,8 +967,11 @@ void ElectroMagn2D::applyExternalField(Field* my_field,  ExtFieldProfile *my_pro
         pos[0] = ( (double)(smpi2D->getCellStartingGlobalIndex(0)+i +(field2D->isDual(0)?-0.5:0)) )*dx;
         for (int j=0 ; j<field2D->dims()[1] ; j++) {
             pos[1] = ( (double)(smpi2D->getCellStartingGlobalIndex(1)+j +(field2D->isDual(1)?-0.5:0)) )*dy;
-            (*field2D)(i,j) = (*field2D)(i,j) + (*profile)(pos);
+            (*field2D)(i,j) = (*field2D)(i,j) + profile->valueAt(pos);
         }//j
     }//i
+    
+    if (emBoundCond[0]!=0) emBoundCond[0]->save_fields_BC2D_Long(my_field);
+    if (emBoundCond[1]!=0) emBoundCond[1]->save_fields_BC2D_Trans(my_field);
     
 }

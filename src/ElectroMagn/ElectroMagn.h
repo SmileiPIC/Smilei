@@ -9,6 +9,8 @@
 #include "LaserProfile.h"
 #include "LaserParams.h"
 #include "ExtFieldParams.h"
+#include "Profile.h"
+
 
 class PicParams;
 class Species;
@@ -28,11 +30,15 @@ class ElectroMagn
 
 public:
     //! Constructor for Electromagn
-    ElectroMagn( PicParams &params, LaserParams &laser_params, SmileiMPI* smpi );
+    ElectroMagn( PicParams &params, InputData &input_data, SmileiMPI* smpi );
     
     //! Destructor for Electromagn
     virtual ~ElectroMagn();
-        
+    
+    LaserParams laser_params;
+    ExtFieldParams extfield_params;
+
+    
     std::vector<unsigned int> dimPrim;
     std::vector<unsigned int> dimDual;
 
@@ -104,7 +110,9 @@ public:
     //! time-average z-component of the magnetic field
     Field* Bz_avg;
 
-
+    //! all Fields in electromagn (filled in ElectromagnFactory.h)
+    std::vector<Field*> allFields;
+    
     //! Vector of charge density and currents for each species
     const unsigned int n_species;
     std::vector<Field*> Jx_s;
@@ -177,15 +185,12 @@ public:
 
     //! Check if norm of charge denisty is not null
     bool isRhoNull(SmileiMPI* smpi);
-
-    //! initialization of the external fields;
-    void initExtFields(ExtFieldParams&);
     
     //! Method used to impose external fields (apply to all Fields)
-    void applyExternalFields(ExtFieldParams&, SmileiMPI*);
+    void applyExternalFields(SmileiMPI*);
     
     //! Method used to impose external fields (apply to a given Field)
-    virtual void applyExternalField(Field*, ExtFieldProfile*, SmileiMPI*) = 0 ;
+    virtual void applyExternalField(Field*, Profile*, SmileiMPI*) = 0 ;
     
     
     double computeNRJ(unsigned int shift, SmileiMPI *smpi);
@@ -199,11 +204,12 @@ public:
     }
 
 
-private:
-    
+protected:
     //! Vector of boundary-condition per side for the fields
     std::vector<ElectroMagnBC*> emBoundCond;
 
+private:
+    
     //! Accumulate nrj lost with moving window
     double nrj_mw_lost;
 

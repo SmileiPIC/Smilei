@@ -9,3 +9,11 @@ Run*
 RUN*
 Validation*
 src/smilei
+*.aux
+*.dvi
+*.log
+*.out
+*.synctex.gz
+*.toc
+src/Python/pycontrol.h
+src/Python/pyinit.h

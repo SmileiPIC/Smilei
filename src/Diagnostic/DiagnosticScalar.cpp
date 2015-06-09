@@ -13,17 +13,9 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for DiagnosticScalar
 // ---------------------------------------------------------------------------------------------------------------------
-DiagnosticScalar::DiagnosticScalar(PicParams &params, DiagParams &diagParams, SmileiMPI* smpi) :
+DiagnosticScalar::DiagnosticScalar(SmileiMPI* smpi) :
 isMaster(smpi->isMaster()),
-cpuSize(smpi->getSize()),
-res_time(params.res_time),
-every(diagParams.scalar_every),
-tmin(diagParams.scalar_tmin),
-tmax(diagParams.scalar_tmax),
-dt(params.timestep),
-cell_volume(params.cell_volume),
-precision(diagParams.scalar_precision),
-vars(diagParams.scalar_vars)
+cpuSize(smpi->getSize())
 {
     if (isMaster) {
         fout.open("scalars.txt");
@@ -246,7 +238,7 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
                     }
                     if (maxVal.val<(**field)(ii)) {
                         maxVal.val=(**field)(ii);
-                        minVal.index=ii; // rank encoded
+                        maxVal.index=ii; // rank encoded
                     }
                 }
             }

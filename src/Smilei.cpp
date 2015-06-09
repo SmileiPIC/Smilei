@@ -24,13 +24,12 @@
 
 #include "InputData.h"
 #include "PicParams.h"
-#include "LaserParams.h"
-#include "ExtFieldParams.h"
 
 #include "SmileiMPIFactory.h"
 #include "SmileiIOFactory.h"
 
 #include "SpeciesFactory.h"
+#include "Collisions.h"
 #include "ElectroMagnFactory.h"
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
@@ -51,7 +50,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 int main (int argc, char* argv[])
 {
-    std::cout.setf( std::ios::fixed, std:: ios::floatfield ); // floatfield set to fixed
+    cout.setf( ios::fixed,  ios::floatfield ); // floatfield set to fixed
     
     // Define 2 MPI environments :
     //  - smpiData : to broadcast input data, unknown geometry
@@ -60,11 +59,12 @@ int main (int argc, char* argv[])
     
     // -------------------------
     // Simulation Initialization
-    // -------------------------
+    // ------------------------- 
     
     // Check for namelist (input file)
-    if (argc<2) ERROR("No namelists given!");
-    string namelist=argv[1];
+    vector<string> namelists(argv + 1, argv + argc);
+    
+    if (namelists.size()==0) ERROR("No namelists given!");
     
     // Send information on current simulation
     
@@ -72,15 +72,11 @@ int main (int argc, char* argv[])
     MESSAGE(" ___           _  | |        _  \\ \\    ");
     MESSAGE("/ __|  _ __   (_) | |  ___  (_)  | |   Version  :  " << __VERSION);
     MESSAGE("\\__ \\ | '  \\   _  | | / -_)  _   | |   Compiled :  " << __DATE__ << " " << __TIME__);
-    MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  | |   Namelist :  " << namelist);
+    MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  | |  ");
     MESSAGE("                                /_/    ");
     
-    // Parse the namelist file (no check!)
-    InputData input_data;
-    if ( smpiData->isMaster() ) input_data.readFile(namelist);
-    
-    // broadcast file and parse it and randomize
-    smpiData->bcast(input_data);
+    // Read the namelists file (no check!)
+    InputData input_data(smpiData,namelists);
     
     MESSAGE("----------------------------------------------");
     MESSAGE("Input data info");
@@ -91,19 +87,20 @@ int main (int argc, char* argv[])
     smpiData->barrier();
     if ( smpiData->isMaster() ) params.print();
     smpiData->barrier();
-    LaserParams laser_params(params, input_data);
-    ExtFieldParams extfield_params(params, input_data, "extfield");
-    
-    smpiData->barrier();
-    DiagParams diag_params(params, input_data);
     
     
-    // Geometry known, MPI environment specified
+    
+    // Geometry known, MPI & MPI-IO environments specified
     MESSAGE("----------------------------------------------");
-    MESSAGE("Creating MPI & IO environments");
+    MESSAGE("Creating MPI, Diags & IO environments");
     MESSAGE("----------------------------------------------");
-    SmileiMPI* smpi = SmileiMPIFactory::create(params, smpiData);
-    SmileiIO*  sio  = SmileiIOFactory::create(params, diag_params, smpi);
+
+    SmileiMPI* smpi = SmileiMPIFactory::create(params, smpiData);           // smpi
+    // Diagnostic Diags(smpi);                                                 // create diagnostics
+    Diagnostic Diags(params, input_data, smpi);//DiagParams Diags.params(Diags, params, input_data, smpi);                // read input file and fill Diags
+    SmileiIO*  sio  = SmileiIOFactory::create(params, Diags, smpi);   // create IO
+
+    
 #ifdef _OMP
     int nthds(0);
 #pragma omp parallel shared(nthds)
@@ -115,7 +112,6 @@ int main (int argc, char* argv[])
 #else
     if (smpi->isMaster()) MESSAGE("\tOpenMP : Disabled");
 #endif
-    
     
     // -------------------------------------------
     // Declaration of the main objects & operators
@@ -134,6 +130,10 @@ int main (int argc, char* argv[])
     // vector of Species (virtual)
     vector<Species*> vecSpecies = SpeciesFactory::createVector(params, smpi);
     
+    // Initialize the collisions (vector of collisions)
+    // ------------------------------------------------------------------------------------
+    vector<Collisions*> vecCollisions = Collisions::create(params, input_data, vecSpecies, smpi);
+    
     // ----------------------------------------------------------------------------
     // Define Moving Window & restart
     // ----------------------------------------------------------------------------
@@ -144,7 +144,7 @@ int main (int argc, char* argv[])
         simWindow = new SimWindow(params);
     
     MESSAGE("----------------------------------------------");
-    MESSAGE("Creating EMfields/Interp/Proj/Diags");
+    MESSAGE("Creating EMfields/Interp/Proj");
     MESSAGE("----------------------------------------------");
     
     // Initialize the electromagnetic fields and interpolation-projection operators
@@ -152,16 +152,13 @@ int main (int argc, char* argv[])
     // ----------------------------------------------------------------------------
     
     // object containing the electromagnetic fields (virtual)
-    ElectroMagn* EMfields = ElectroMagnFactory::create(params, laser_params, smpi);
+    ElectroMagn* EMfields = ElectroMagnFactory::create(params, input_data, smpi);
     
     // interpolation operator (virtual)
     Interpolator* Interp = InterpolatorFactory::create(params, smpi);
     
     // projection operator (virtual)
     Projector* Proj = ProjectorFactory::create(params, smpi);
-    
-    // Create diagnostics
-    Diagnostic *Diags =new Diagnostic(params,diag_params, smpi);
     
     smpi->barrier();
     
@@ -207,21 +204,30 @@ int main (int argc, char* argv[])
         MESSAGE("----------------------------------------------");
         MESSAGE("Applying external fields at time t = 0");
         MESSAGE("----------------------------------------------");
-        EMfields->applyExternalFields(extfield_params, smpi);
+        EMfields->applyExternalFields(smpi);
         
         MESSAGE("----------------------------------------------");
         MESSAGE("Running diags at time t = 0");
         MESSAGE("----------------------------------------------");
         // run diagnostics at time-step 0
-        Diags->runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
+        Diags.runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
         // temporary EM fields dump in Fields.h5
         sio->writeAllFieldsSingleFileTime( EMfields, 0 );
         // temporary EM fields dump in Fields_avg.h5
-        if (diag_params.ntime_step_avg!=0)
+        if (Diags.params.ntime_step_avg!=0)
             sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
         // temporary particle dump at time 0
         sio->writePlasma( vecSpecies, 0., smpi );
     }
+    
+    
+    // ------------------------------------------------------------------------
+    // check here if we can close the python interpreter
+    // ------------------------------------------------------------------------
+    MESSAGE("----------------------------------------------");
+    MESSAGE("Cleaning up python runtime environement");
+    MESSAGE("----------------------------------------------");
+    input_data.cleanup();
     
     
     // ------------------------------------------------------------------------
@@ -264,24 +270,42 @@ int main (int argc, char* argv[])
         // --------------------------------
         timer[0].update();
         
+/*
         //double timElapsed=smpiData->time_seconds();
-        if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) ) {
+        if ( (itime % Diags.params.print_every == 0) &&  ( smpi->isMaster() ) ) {
+            MESSAGE(1,"t = "          << setw(7) << setprecision(2)   << time_dual/params.conv_fac
+                    << "   it = "       << setw(log10(params.n_time)+1) << itime  << "/" << params.n_time
+                    << "   sec = "      << setw(7) << setprecision(2)   << timer[0].getTime()
+                    << "   E = "        << scientific << setprecision(4)<< Diags.getScalar("Etot")
+                    << "   Epart = "        << scientific << setprecision(4)<< Diags.getScalar("Eparticles")
+                    << "   Elost = "        << scientific << setprecision(4)<< Diags.getScalar("Elost")
+                    << "   E_bal(%) = " << setw(6) << fixed << setprecision(2)   << 100.0*Diags.getScalar("Ebal_norm") );
+            if (simWindow)
+                MESSAGE(1, "\t\t MW Elost = " << scientific << setprecision(4)<< Diags.getScalar("Emw_lost")
+                        << "     MW Eadd  = " << scientific << setprecision(4)<< Diags.getScalar("Emw_part")
+                        << "     MW Elost (fields) = " << scientific << setprecision(4)<< Diags.getScalar("Emw_lost_fields")
+                        << setw(6) << fixed << setprecision(2) );
+        
+*/
+            
+        //double timElapsed=smpiData->time_seconds();
+        if ( (itime % Diags.params.print_every == 0) &&  ( smpi->isMaster() ) ) {
             
             MESSAGE(1,"t = "          << setw(7) << setprecision(2)   << time_dual/params.conv_fac
                     << "   it = "     << setw(log10(params.n_time)+1) << itime  << "/" << params.n_time
                     << "   sec = "    << setw(7) << setprecision(2)   << timer[0].getTime()
-                    << "   Utot = "   << std::scientific << setprecision(4)<< Diags->getScalar("Utot")
-                    << "   Ukin = "   << std::scientific << setprecision(4)<< Diags->getScalar("Utot_particles")
-                    << "   Ufld = "   << std::scientific << setprecision(4)<< Diags->getScalar("Utot_fields")
-                    << "   Ubal(%) = "<< setw(6) << std::fixed << setprecision(2) << 100.0*Diags->getScalar("Ubal_norm")
+                    << "   Utot = "   << scientific << setprecision(4)<< Diags.getScalar("Utot")
+                    << "   Uelm = "   << scientific << setprecision(4)<< Diags.getScalar("Uelm")
+                    << "   Ukin = "   << scientific << setprecision(4)<< Diags.getScalar("Ukin")
+                    << "   Ubal(%) = "<< setw(6) << fixed << setprecision(2) << 100.0*Diags.getScalar("Ubal_norm")
                     );
             
             //!\todo (MG to JD/AD) We should clear this. Either not print it OR add it to the former stream
             if (simWindow) {
-                double Uadded_mvw = Diags->getScalar("Uadded_particles_mvw") + Diags->getScalar("Uadded_particles_mvw");
-                double Ulost_mvw  = Diags->getScalar("Ulost_particles_mvw")  + Diags->getScalar("Ulost_fields_mvw");
-                MESSAGE(1, "\t\t Uadded_mvw = "  << std::scientific << setprecision(4) << Uadded_mvw
-                        << "   Ulost_mvw = " << std::scientific << setprecision(4) << Ulost_mvw
+                double Uinj_mvw = Diags.getScalar("Uelm_inj_mvw") + Diags.getScalar("Ukin_inj_mvw");
+                double Uout_mvw = Diags.getScalar("Uelm_out_mvw") + Diags.getScalar("Ukin_out_mvw");
+                MESSAGE(1, "\t\t Uinj_mvw = " << scientific << setprecision(4) << Uinj_mvw
+                        << "     Uout_mvw = " << scientific << setprecision(4) << Uout_mvw
                         );
             }//simWindow
             
@@ -291,6 +315,14 @@ int main (int argc, char* argv[])
         // put density and currents to 0 + save former density
         // ---------------------------------------------------
         EMfields->restartRhoJ();
+        
+        
+        // apply collisions if requested
+        // -----------------------------
+        if (Collisions::debye_length_required)
+            Collisions::calculate_debye_length(params,vecSpecies);
+        for (unsigned int icoll=0 ; icoll<vecCollisions.size(); icoll++)
+            vecCollisions[icoll]->collide(params,vecSpecies,itime);
         
         
         // apply the PIC method
@@ -325,51 +357,51 @@ int main (int argc, char* argv[])
         }
         timer[1].update();
         
-
-        //!\todo To simplify : sum global and per species densities
-        timer[4].restart();
-        smpi->sumRhoJ( EMfields );
-        for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-            if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ) smpi->sumRhoJs(EMfields, ispec, time_dual > params.species_param[ispec].time_frozen);
-        }
-        EMfields->computeTotalRhoJ();
-        timer[4].update();
-        
-        
         if( time_dual > params.time_fields_frozen ) {
+            
+            //!\todo To simplify : sum global and per species densities
+            timer[4].restart();
+            smpi->sumRhoJ( EMfields );
+            for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
+                if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ) smpi->sumRhoJs(EMfields, ispec, time_dual > params.species_param[ispec].time_frozen);
+            }
+            EMfields->computeTotalRhoJ();
+            timer[4].update();
+            
             // solve Maxwell's equations
             timer[2].restart();
             EMfields->solveMaxwell(itime, time_dual, smpi, params, simWindow);
             timer[2].update();
+            
+            // incrementing averaged electromagnetic fields
+            if (Diags.params.ntime_step_avg) EMfields->incrementAvgFields(itime, Diags.params.ntime_step_avg);
+            
         }
-        
-        // incrementing averaged electromagnetic fields
-        if (diag_params.ntime_step_avg) EMfields->incrementAvgFields(itime, diag_params.ntime_step_avg);
         
         // call the various diagnostics
         // ----------------------------
         
         // run all diagnostics
         timer[3].restart();
-        Diags->runAllDiags(itime, EMfields, vecSpecies, Interp, smpi);
+        Diags.runAllDiags(itime, EMfields, vecSpecies, Interp, smpi);
         timer[3].update();
         
         timer[6].restart();
         // temporary EM fields dump in Fields.h5
-        if  ((diag_params.fieldDump_every != 0) && (itime % diag_params.fieldDump_every == 0))
+        if  ((Diags.params.fieldDump_every != 0) && (itime % Diags.params.fieldDump_every == 0))
             sio->writeAllFieldsSingleFileTime( EMfields, itime );
         timer[6].update();
         
         timer[7].restart();
         // temporary EM fields dump in Fields.h5
-        if  (diag_params.ntime_step_avg!=0)
-            if ((diag_params.avgfieldDump_every != 0) && (itime % diag_params.avgfieldDump_every == 0))
+        if  (Diags.params.ntime_step_avg!=0)
+            if ((Diags.params.avgfieldDump_every != 0) && (itime % Diags.params.avgfieldDump_every == 0))
                 sio->writeAvgFieldsSingleFileTime( EMfields, itime );
         timer[7].update();
         
 #ifdef _IO_PARTICLE
         // temporary particles dump (1 HDF5 file per process)
-        if  ((diag_params.particleDump_every != 0) && (itime % diag_params.particleDump_every == 0))
+        if  ((Diags.params.particleDump_every != 0) && (itime % Diags.params.particleDump_every == 0))
             sio->writePlasma( vecSpecies, time_dual, smpi );
 #endif
         
@@ -413,17 +445,17 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     
     // temporary EM fields dump in Fields.h5
-    if  ( (diag_params.fieldDump_every != 0) && (params.n_time % diag_params.fieldDump_every != 0) )
+    if  ( (Diags.params.fieldDump_every != 0) && (params.n_time % Diags.params.fieldDump_every != 0) )
         sio->writeAllFieldsSingleFileTime( EMfields, params.n_time );
     // temporary time-averaged EM fields dump in Fields_avg.h5
-    if  (diag_params.ntime_step_avg!=0)
-        if  ( (diag_params.avgfieldDump_every != 0) && (params.n_time % diag_params.avgfieldDump_every != 0) )
+    if  (Diags.params.ntime_step_avg!=0)
+        if  ( (Diags.params.avgfieldDump_every != 0) && (params.n_time % Diags.params.avgfieldDump_every != 0) )
             sio->writeAvgFieldsSingleFileTime( EMfields, params.n_time );
 #ifdef _IO_PARTICLE
     // temporary particles dump (1 HDF5 file per process)
-    if  ( (diag_params.particleDump_every != 0) && (params.n_time % diag_params.particleDump_every != 0) )
+    if  ( (Diags.params.particleDump_every != 0) && (params.n_time % Diags.params.particleDump_every != 0) )
         sio->writePlasma( vecSpecies, time_dual, smpi );
-#endif
+#endif    
     
     // ------------------------------
     //  Cleanup & End the simulation
@@ -431,13 +463,15 @@ int main (int argc, char* argv[])
     delete Proj;
     delete Interp;
     delete EMfields;
-    delete Diags;
+    for(int i=0; i<vecCollisions.size(); i++) delete vecCollisions[i];
+    vecCollisions.clear();
+    Diags.closeAll();
     
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
     vecSpecies.clear();
     
     MESSAGE("-----------------------------------------------------------------------------------------------------");
-    MESSAGE("END " << namelist);
+    MESSAGE("END ");
     MESSAGE("-----------------------------------------------------------------------------------------------------");
     
     delete sio;

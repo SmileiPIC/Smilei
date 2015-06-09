@@ -16,8 +16,11 @@ public:
     virtual void apply_xmax(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi);
     virtual void apply_ymin(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi);
     virtual void apply_ymax(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi);
-    
+    virtual void save_fields_BC1D(Field*);
  private:
+    
+    double Bz_xvalmin,Bz_xvalmax,By_xvalmin,By_xvalmax;
+    
     //! Number of nodes on the primal grid
     unsigned int nx_p;
 

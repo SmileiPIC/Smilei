@@ -2,13 +2,21 @@
 #ifndef ELECTROMAGNBC2D_SM_H
 #define ELECTROMAGNBC2D_SM_H
 
-#include "ElectroMagnBC.h"
+
+#include <vector>
+#include "Tools.h"
+#include "ElectroMagnBC.h" 
+#include "ElectroMagn2D.h" 
+#include "Field2D.h"
+
 
 class PicParams;
 class ElectroMagn;
+class Field;
 
 class ElectroMagnBC2D_SM : public ElectroMagnBC {
 public:
+
     ElectroMagnBC2D_SM( PicParams &params, LaserParams &laser_params );
     ~ElectroMagnBC2D_SM();
     
@@ -18,6 +26,13 @@ public:
     virtual void apply_ymax(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi);
     
 private:
+    
+    virtual void save_fields_BC2D_Long(Field*);
+    virtual void save_fields_BC2D_Trans(Field*);
+
+ 	//! Save external fields for silver muller EM Boundary condition
+     std::vector<double>  Bz_xvalmin_Long, Bz_xvalmax_Long, By_xvalmin_Long, By_xvalmax_Long, Bx_xvalmin_Long, Bx_xvalmax_Long,
+                          Bz_yvalmin_Trans, Bz_yvalmax_Trans, By_yvalmin_Trans, By_yvalmax_Trans, Bx_yvalmin_Trans, Bx_yvalmax_Trans;
     
     //! Conversion factor from degree to radian
     double conv_deg2rad;

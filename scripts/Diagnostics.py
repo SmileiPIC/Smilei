@@ -163,14 +163,14 @@
 #            kwargs = many other keyword-arguments can be used -> refer to the doc.
 
 
-class Smilei(object):
-
+class Smilei(object): 
+	
 	valid = False
 	
 	def __init__(self, results_path="."):
 		import h5py
 		import numpy as np
-		import os.path, glob, re
+		import os.path, glob, re, sys
 		import matplotlib.pyplot
 		import pylab
 		pylab.ion()
@@ -185,36 +185,30 @@ class Smilei(object):
 		if not self.ospath.isdir(results_path):
 			print "Could not find directory "+results_path
 			return
-		if len(self.glob(results_path+"/*.in"))==0:
+		if len(self.glob(results_path+"/smilei.py"))==0:
 			print "Could not find an input file in directory "+results_path
 			return
-		if len(self.glob(results_path+"/*.in"))>1:
-			print "Directory "+results_path+" contains more than one input file. There should be only one."
-			return
-		self.valid = True
+		# Fetch the python namelist
+		namespace={};
+		execfile(results_path+'/smilei.py',namespace) # execute the namelist into an empty namespace
+		class Namelist: pass # empty class to store the namelist variables
+		self.namelist = Namelist() # create new empty object
+		for key, value in namespace.iteritems(): # transfer all variables to this object
+			if key[0:2]=="__": continue # skip builtins
+			setattr(self.namelist, key, value)
+		# Prevent creating new components (by mistake)
+		def noNewComponents(cls, *args, **kwargs):
+			print "Please do not create a new "+cls.__name__
+			return None
+		self.namelist.SmileiComponent.__new__ = staticmethod(noNewComponents)
 		
+		self.valid = True
+	
 	def __repr__(self):
 		if not self.valid:
 			return "Invalid Smilei simulation"
-		file = self.glob(self.results_path+"/*.in")[0]
+		file = self.glob(self.results_path+"/smilei.py")[0]
 		return "Smilei simulation with input file located at `"+file+"`"
-	
-	# Finds a parameter "param" in the input file
-	# Argument "after" is a string that must be found before "param"
-	def findParam(self, param, after=None):
-		out = ""
-		ok = True if after is None else False
-		file = self.glob(self.results_path+"/*.in")[0]
-		for line in open(file, 'r'):
-			if "#" in line: line = line[:line.find("#")]
-			if ok or (after in line and "=" in line):
-				ok = True
-			else:
-				continue
-			if param in line and "=" in line:
-				out = line.split("=")[1]
-				break
-		return out.strip()
 	
 	# Method to manage Matplotlib-compatible kwargs
 	@staticmethod
@@ -290,6 +284,7 @@ class Diagnostic(object):
 		self.glob = self.Smilei.glob
 		self.re = self.Smilei.re
 		self.plt = self.Smilei.plt
+		self.namelist = self.Smilei.namelist
 		self.init(*args, **kwargs)
 
 	# When no action is performed on the object, this is what appears
@@ -301,13 +296,13 @@ class Diagnostic(object):
 	# Various methods to extract stuff from the input file
 	def read_sim_units(self):
 		try:
-			return self.Smilei.findParam("sim_units")
+			return self.namelist.sim_units
 		except:
 			print "Could not extract 'sim_units' from the input file"
 			raise
 	def read_ndim(self):
 		try:
-			dim = self.Smilei.findParam("dim")
+			dim = self.namelist.dim
 			ndim = int(dim[0])
 		except:
 			print "Could not extract 'dim' from the input file"
@@ -318,20 +313,17 @@ class Diagnostic(object):
 		return ndim
 	def read_ncels_cell_length(self, ndim, sim_units):
 		try:
-			sim_length = self.Smilei.findParam("sim_length")
-			sim_length = self.np.double(sim_length.split())
+			sim_length = self.np.double( self.namelist.sim_length )
 			if sim_length.size==0: raise
 		except:
 			print "Could not extract 'sim_length' from the input file"
 			raise
 		try:
-			cell_length = self.Smilei.findParam("cell_length")
-			cell_length = self.np.double(cell_length.split())
+			cell_length = self.np.double( self.namelist.cell_length )
 			if cell_length.size==0: raise
 		except:
 			try:
-				res_space = self.Smilei.findParam("res_space")
-				res_space = self.np.double(res_space.split())
+				res_space = self.np.double( self.namelist.res_space )
 				cell_length = 1./res_space
 			except:
 				print "Could not extract 'cell_length' or 'res_space' from the input file"
@@ -362,10 +354,10 @@ class Diagnostic(object):
 		return ncels, cell_length
 	def read_timestep(self,sim_units):
 		try:
-			timestep = self.np.double(self.Smilei.findParam("timestep"))
+			timestep = self.np.double(self.namelist.timestep)
 		except:
 			try:
-				res_time = self.np.double(self.Smilei.findParam("res_time"))
+				res_time = self.np.double(self.namelist.res_time)
 				timestep = 1./res_time
 			except:
 				print "Could not extract 'timestep' or 'res_time' from the input file"
@@ -374,7 +366,7 @@ class Diagnostic(object):
 		return timestep
 	def read_wavelength_SI(self):
 		try:
-			wavelength_SI = self.np.double( self.Smilei.findParam("wavelength_SI") )
+			wavelength_SI = self.np.double( self.namelist.wavelength_SI )
 		except:
 			print "Could not extract 'wavelength_SI' from the input file"
 			raise
@@ -481,7 +473,7 @@ class Diagnostic(object):
 				artist = self.animateOnAxes(ax, time)
 				fig.canvas.draw()
 				self.plt.show()
-			return artist
+			#return artist
 		# Static plot if 0 dimensions
 		else:
 			ax.cla()
@@ -587,11 +579,13 @@ class ParticleDiagnostic(Diagnostic):
 			if diagNumber == 0:
 				print "      No particle diagnostics found in "+self.results_path;
 			return None
+		
 
 		# Get info from the input file and prepare units
 		try:
 			ndim               = self.read_ndim()
 			sim_units          = self.read_sim_units()
+			
 			ncels, cell_length = self.read_ncels_cell_length(ndim, sim_units)
 			self.timestep           = self.read_timestep(sim_units)
 			cell_size = {"x":cell_length[0]}
@@ -632,6 +626,10 @@ class ParticleDiagnostic(Diagnostic):
 		
 		# Get list of requested diags
 		self.diags = sorted(set([ int(d[1:]) for d in self.re.findall('#\d+',self.operation) ]))
+		for diag in self.diags:
+			if not self.getInfo(diag):
+				print "No particle diagnostic #"+str(diag)
+				return None
 		try:
 			exec(self.re.sub('#\d+','1.',self.operation)) in None
 		except:

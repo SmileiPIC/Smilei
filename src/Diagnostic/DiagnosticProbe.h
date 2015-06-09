@@ -27,13 +27,13 @@ For creating a 0-D grid `pos_first` should also be omitted.
 
 
 >> Example: 0-D probe in 1-D simulation
-diagnostic probe
+diag_probe
     every = 1
     pos   = 1.2
 end
 
 >> Example: 1-D probe in 1-D simulation
-diagnostic probe
+diag_probe
     every = 1
     pos       = 1.2
     pos_first = 5.6
@@ -41,7 +41,7 @@ diagnostic probe
 end
 
 >> Example: 1-D probe in 2-D simulation
-diagnostic probe
+diag_probe
     every = 1
     pos       = 1.2  4.
     pos_first = 5.6  4.
@@ -49,7 +49,7 @@ diagnostic probe
 end
 
 >> Example: 2-D probe in 2-D simulation
-diagnostic probe
+diag_probe
     every = 1
     pos        = 0.    0.
     pos_first  = 10.   0.
@@ -91,7 +91,7 @@ class DiagnosticProbe {
 public:
     
     //! the creator need both sim parameters params and the diagnostic parameter diagParams
-    DiagnosticProbe(PicParams &params, DiagParams &diagParams, SmileiMPI* smpi);
+    DiagnosticProbe(SmileiMPI* smpi);
     
     ~DiagnosticProbe();//{};
     
@@ -107,13 +107,12 @@ public:
     //! vector containing the timesteps at which calculate each probe
     std::vector<unsigned int> every;
 
-protected:
+    //! hdf5 file ID
+    hid_t fileId;
+    
     std::vector<double> tmin;
     std::vector<double> tmax;
     double dt;
-    
-    // rank of the cpu (from smpi)
-    const unsigned int cpuRank;
     
     //! fake particles acting as probes
     std::vector<Particles> probeParticles;
@@ -123,9 +122,19 @@ protected:
     
     //! each probe will write in a buffer
     std::vector< Field2D* > probesArray;
-    std::vector< int > probesStart;
-    int nDim;
+    
+    std::vector<int> probesStart;
 
+    //! memory size of a probe should be 6 = Exyz + Bxyz
+    const int probeSize;
+    
+protected:
+    //! check if proc is master (from smpi)
+    const bool isMaster;
+
+    // rank of the cpu (from smpi)
+    const unsigned int cpuRank;
+    
     //! E local fields for the projector
     LocalFields Eloc_fields;
     //! B local fields for the projector
@@ -134,12 +143,6 @@ protected:
     LocalFields Jloc_fields;
     //! Rho local field for the projector
     double Rloc_fields;
-    
-    //! memory size of a probe should be 6 = Exyz + Bxyz
-    const int probeSize;
-    
-    //! hdf5 file ID
-    hid_t fileId;
     
 };
 #endif

@@ -12,7 +12,7 @@
 #include <mpi.h>
 
 #include "PicParams.h"
-#include "DiagParams.h"
+#include "Diagnostic.h"
 #include "SmileiMPI.h"
 #include "SimWindow.h"
 #include "ElectroMagn.h"
@@ -20,9 +20,10 @@
 
 using namespace std;
 
-SmileiIO::SmileiIO( PicParams& params, DiagParams& diagParams, SmileiMPI* smpi ) : 
+SmileiIO::SmileiIO( PicParams& params, Diagnostic& diag, SmileiMPI* smpi ) : 
 dump_times(0), 
-stop_file_seen_since_last_check(false)
+stop_file_seen_since_last_check(false),
+fieldsToDump(diag.params.fieldsToDump)
 {
 		
     nDim_particle=params.nDim_particle;
@@ -99,7 +100,7 @@ stop_file_seen_since_last_check(false)
     
     // Fields.h5
     // ---------
-    global_file_id_    = H5Fcreate( "Fields.h5",     H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+    global_file_id_  = H5Fcreate( "Fields.h5",     H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
     
     // Create property list for collective dataset write: for Fields.h5
     
@@ -111,7 +112,7 @@ stop_file_seen_since_last_check(false)
     
     sid  = H5Screate(H5S_SCALAR);
     aid = H5Acreate (global_file_id_, "every", H5T_NATIVE_UINT, sid, H5P_DEFAULT, write_plist);
-    H5Awrite(aid, H5T_NATIVE_UINT, &(diagParams.fieldDump_every));
+    H5Awrite(aid, H5T_NATIVE_UINT, &(diag.params.fieldDump_every));
     H5Sclose(sid);
     H5Aclose(aid);
     
@@ -136,7 +137,7 @@ stop_file_seen_since_last_check(false)
     // Fields_avg.h5
     // -------------
     global_file_id_avg = 0;
-    if  (diagParams.ntime_step_avg!=0) {
+    if  (diag.params.ntime_step_avg!=0) {
         global_file_id_avg = H5Fcreate( "Fields_avg.h5", H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
         
         // Create property list for collective dataset write: for Fields.h5
@@ -148,7 +149,7 @@ stop_file_seen_since_last_check(false)
         
         sid  = H5Screate(H5S_SCALAR);
         aid = H5Acreate (global_file_id_avg, "every", H5T_NATIVE_UINT, sid, H5P_DEFAULT, write_plist);
-        H5Awrite(aid, H5T_NATIVE_UINT, &(diagParams.fieldDump_every));
+        H5Awrite(aid, H5T_NATIVE_UINT, &(diag.params.fieldDump_every));
         H5Sclose(sid);
         H5Aclose(aid);
         
@@ -201,12 +202,6 @@ SmileiIO::~SmileiIO()
 // ---------------------------------------------------------------------------------------------------------------------
 void SmileiIO::writeAllFieldsSingleFileTime( ElectroMagn* EMfields, int time )
 {
-    // select fields for output
-    if (outFields.size()==0) {
-	outFields.push_back(EMfields->Ex_);
-    }
-
-
     ostringstream name_t;
     name_t.str("");
     name_t << "/" << setfill('0') << setw(10) << time;
@@ -214,25 +209,15 @@ void SmileiIO::writeAllFieldsSingleFileTime( ElectroMagn* EMfields, int time )
     DEBUG(10,"[hdf] GROUP _________________________________ " << name_t.str());
     hid_t group_id = H5Gcreate(global_file_id_, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	
-    writeFieldsSingleFileTime( EMfields->Ex_, group_id );
-    writeFieldsSingleFileTime( EMfields->Ey_, group_id );
-    writeFieldsSingleFileTime( EMfields->Ez_, group_id );
-    writeFieldsSingleFileTime( EMfields->Bx_m, group_id );
-    writeFieldsSingleFileTime( EMfields->By_m, group_id );
-    writeFieldsSingleFileTime( EMfields->Bz_m, group_id );
-    writeFieldsSingleFileTime( EMfields->Jx_, group_id );
-    writeFieldsSingleFileTime( EMfields->Jy_, group_id );
-    writeFieldsSingleFileTime( EMfields->Jz_, group_id );
-    writeFieldsSingleFileTime( EMfields->rho_, group_id );
-	
-    // for all species related quantities
-    for (unsigned int ispec=0; ispec<EMfields->n_species; ispec++) {
-        writeFieldsSingleFileTime( EMfields->rho_s[ispec], group_id );
-        writeFieldsSingleFileTime( EMfields->Jx_s[ispec],  group_id );
-        writeFieldsSingleFileTime( EMfields->Jy_s[ispec],  group_id );
-        writeFieldsSingleFileTime( EMfields->Jz_s[ispec],  group_id );
+    for (vector<Field*>::iterator iterField=EMfields->allFields.begin(); iterField!=EMfields->allFields.end(); iterField++) {
+        if (fieldsToDump.empty())
+            writeFieldsSingleFileTime( *iterField, group_id );
+        else
+            for (vector<string>::iterator iterName=fieldsToDump.begin(); iterName!=fieldsToDump.end(); iterName++) 
+                if ((*iterField)->name==(*iterName)) {
+                    writeFieldsSingleFileTime( *iterField, group_id );
+                }
     }
-	
 	
     H5Gclose(group_id);
 	

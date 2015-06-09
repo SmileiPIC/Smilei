@@ -11,7 +11,7 @@ using namespace std;
 // PicParams : open & parse the input data file, test that parameters are coherent
 // ---------------------------------------------------------------------------------------------------------------------
 PicParams::PicParams(InputData &ifile) {
-
+    
     
     // --------------
     // Stop & Restart
@@ -24,18 +24,18 @@ PicParams::PicParams(InputData &ifile) {
     
     exit_after_dump=true;
     ifile.extract("exit_after_dump", exit_after_dump);
-	
+    
     restart=false;
     ifile.extract("restart", restart);
     if (restart) MESSAGE("Code running from restart"); //! \todo Give info on restart properties
-	
+    
     check_stop_file=false;
     ifile.extract("check_stop_file", check_stop_file);
-	
+    
     dump_file_sequence=2;
     ifile.extract("dump_file_sequence", dump_file_sequence);
     dump_file_sequence=std::max((unsigned int)1,dump_file_sequence);
-	
+    
     
     // ---------------------
     // Normalisation & units
@@ -89,7 +89,7 @@ PicParams::PicParams(InputData &ifile) {
     if ((res_space.size()!=0)&&(res_space.size()!=nDim_field)) {
         ERROR("Dimension of res_space ("<< res_space.size() << ") != " << nDim_field << " for geometry " << geometry);
     }
-
+    
     // definition of time_step & cell_length (if res_time & res_space are not defined)
     if (!defbyRes) {
         ifile.extract("timestep", timestep);
@@ -153,6 +153,7 @@ PicParams::PicParams(InputData &ifile) {
             bc_em_type_z.resize(2); bc_em_type_z[1]=bc_em_type_z[0];
         }
     }
+
     
     // ------------------------
     // Moving window parameters
@@ -177,167 +178,12 @@ PicParams::PicParams(InputData &ifile) {
     // ------------------
     // Species properties
     // ------------------
-    n_species=0;
-    
-    while (ifile.existGroup("species",n_species)) {
-        SpeciesStructure tmpSpec;
-
-        ifile.extract("species_type",tmpSpec.species_type,"species",0,n_species);
-        
-        ifile.extract("initPosition_type",tmpSpec.initPosition_type ,"species",0,n_species);
-        if ( (tmpSpec.initPosition_type!="regular")&&(tmpSpec.initPosition_type!="random") ) {
-            ERROR("For species " << n_species << " bad definition of initPosition_type");
-        }
-        
-        ifile.extract("initMomentum_type",tmpSpec.initMomentum_type ,"species",0,n_species);
-        if ( (tmpSpec.initMomentum_type=="mj") || (tmpSpec.initMomentum_type=="maxj") ) {
-            tmpSpec.initMomentum_type="maxwell-juettner";
-        }
-        if ( (tmpSpec.initMomentum_type!="cold") && (tmpSpec.initMomentum_type!="maxwell-juettner") ) {
-            ERROR("For species " << n_species << " bad definition of initMomentum_type");
-        }
-        
-        ifile.extract("n_part_per_cell",tmpSpec.n_part_per_cell,"species",0,n_species);
-
-        tmpSpec.c_part_max = 1.0;// default value
-        ifile.extract("c_part_max",tmpSpec.c_part_max,"species",0,n_species);
-        
-        ifile.extract("mass",tmpSpec.mass ,"species",0,n_species);
-        
-        ifile.extract("charge",tmpSpec.charge ,"species",0,n_species);
-        
-        ifile.extract("density",tmpSpec.density ,"species",0,n_species);
-        if ( (abs(tmpSpec.charge)!=0) && (abs(tmpSpec.charge)!=1)   ) {
-            tmpSpec.density /= (double)(abs(tmpSpec.charge));
-            WARNING("density for species " << n_species <<": changed to correspond to nb density");
-        }
-        
-        ifile.extract("mean_velocity",tmpSpec.mean_velocity ,"species",0,n_species);
-        if (tmpSpec.mean_velocity.size()!=3) {
-            WARNING("mean_velocity for species " << n_species << ": put to 0 by default (either not defined or with incorrect dimension)");
-            tmpSpec.mean_velocity.resize(3);
-            tmpSpec.mean_velocity[0]=tmpSpec.mean_velocity[1]=tmpSpec.mean_velocity[2]=0.0;
-        }
-        
-        ifile.extract("temperature",tmpSpec.temperature ,"species",0,n_species);
-        if (tmpSpec.temperature.size()==0) {
-            tmpSpec.temperature.resize(3);
-            tmpSpec.temperature[0]=tmpSpec.temperature[1]=tmpSpec.temperature[2]=0.0;
-            WARNING("Temperature not defined for species " << n_species << ": put to 0 by default");
-        }
-        else if (tmpSpec.temperature.size()==1) {
-            tmpSpec.temperature.resize(3);
-            tmpSpec.temperature[1]=tmpSpec.temperature[2]=tmpSpec.temperature[0];
-            WARNING("Isotropic temperature T ="<< tmpSpec.temperature[0] << " for species " << n_species);
-        }
-        
-        tmpSpec.dynamics_type = "norm"; // default value
-        bool dynTypeisDefined = ifile.extract("dynamics_type",tmpSpec.dynamics_type ,"species",0,n_species);
-        if (!dynTypeisDefined)
-            WARNING("dynamics_type not defined for species "<<n_species<<" put to norm by default");
-        if (tmpSpec.dynamics_type!="norm"){
-            ERROR("dynamics_type different than norm not yet implemented");
-        }
-        
-        tmpSpec.time_frozen = 0.0; // default value
-        ifile.extract("time_frozen",tmpSpec.time_frozen ,"species",0,n_species);
-        if (tmpSpec.time_frozen > 0 && \
-            tmpSpec.initMomentum_type!="cold") {
-            WARNING("For species " << n_species << " possible conflict between time-frozen & none cold initialization");
-        }
-        
-        tmpSpec.radiating = false; // default value
-        ifile.extract("radiating",tmpSpec.radiating ,"species",0,n_species);
-        if (tmpSpec.dynamics_type=="rrll" && (!tmpSpec.radiating)) {
-            WARNING("dynamics_type rrll forcing radiating true");
-            tmpSpec.radiating=true;
-        }
-        
-        if (!ifile.extract("bc_part_type_west",tmpSpec.bc_part_type_west,"species",0,n_species) )
-            ERROR("bc_part_type_west not defined for species " << n_species );
-	if (!ifile.extract("bc_part_type_east",tmpSpec.bc_part_type_east,"species",0,n_species) )
-            ERROR("bc_part_type_east not defined for species " << n_species );
-
-        if (nDim_particle>1) {
-            if (!ifile.extract("bc_part_type_south ",tmpSpec.bc_part_type_south,"species",0,n_species) )
-                ERROR("bc_part_type_south not defined for species " << n_species );
-            if (!ifile.extract("bc_part_type_north ",tmpSpec.bc_part_type_north,"species",0,n_species) )
-                ERROR("bc_part_type_north not defined for species " << n_species );
-	}
-        
-        tmpSpec.ionization_model = "none"; // default value
-        ifile.extract("ionization_model", tmpSpec.ionization_model, "species",0,n_species);
-        
-        ifile.extract("atomic_number", tmpSpec.atomic_number, "species",0,n_species);
-        
-        
-        // Species geometry
-        // ----------------
-        ifile.extract("species_geometry", tmpSpec.dens_profile.profile,"species",0,n_species);
-        // species length (check DensityProfile for definitions)
-        ifile.extract("vacuum_length", tmpSpec.dens_profile.vacuum_length,"species",0,n_species);
-        ifile.extract("dens_length_x", tmpSpec.dens_profile.length_params_x,"species",0,n_species);
-        if ( (geometry=="2d3v") || (geometry=="3d3v") )
-            ifile.extract("dens_length_y", tmpSpec.dens_profile.length_params_y,"species",0,n_species);
-        if (geometry=="3d3v")
-            ifile.extract("dens_length_z", tmpSpec.dens_profile.length_params_z,"species",0,n_species);
-        // getting additional parameters for the density profile (check DensityProfile for definitions)
-        ifile.extract("dens_dbl_params", tmpSpec.dens_profile.double_params,"species",0,n_species);
-        ifile.extract("dens_int_params", tmpSpec.dens_profile.int_params,"species",0,n_species);
-        
-        // Species mean velocity parameters
-        // ----------------
-        
-        // X
-        ifile.extract("mvel_x_profile", tmpSpec.mvel_x_profile.profile,"species",0,n_species);
-        // species length (check DensityProfile for definitions)
-        
-        ifile.extract("mvel_x_length_x", tmpSpec.mvel_x_profile.length_params_x,"species",0,n_species);
-        if ( (geometry=="2d3v") || (geometry=="3d3v") )
-            ifile.extract("mvel_x_length_y", tmpSpec.mvel_x_profile.length_params_y,"species",0,n_species);
-        if (geometry=="3d3v")
-            ifile.extract("mvel_x_length_z", tmpSpec.mvel_x_profile.length_params_z,"species",0,n_species);
-        
-        ifile.extract("mvel_x_dbl_params", tmpSpec.mvel_x_profile.double_params,"species",0,n_species);
-        ifile.extract("mvel_x_int_params", tmpSpec.mvel_x_profile.int_params,"species",0,n_species);
-        
-        // Y
-        ifile.extract("mvel_y_profile", tmpSpec.mvel_y_profile.profile,"species",0,n_species);
-        // species length (check DensityProfile for definitions)
-        ifile.extract("mvel_y_length_x", tmpSpec.mvel_y_profile.length_params_x,"species",0,n_species);
-        if ( (geometry=="2d3v") || (geometry=="3d3v") )
-            ifile.extract("mvel_y_length_y", tmpSpec.mvel_y_profile.length_params_y,"species",0,n_species);
-        if (geometry=="3d3v")
-            ifile.extract("mvel_y_length_z", tmpSpec.mvel_y_profile.length_params_z,"species",0,n_species);
-        
-        ifile.extract("mvel_y_dbl_params", tmpSpec.mvel_y_profile.double_params,"species",0,n_species);
-        ifile.extract("mvel_y_int_params", tmpSpec.mvel_y_profile.int_params,"species",0,n_species);
-        
-        // Z
-        ifile.extract("mvel_z_profile", tmpSpec.mvel_z_profile.profile,"species",0,n_species);
-        // species length (check DensityProfile for definitions)
-        ifile.extract("mvel_z_length_x", tmpSpec.mvel_z_profile.length_params_x,"species",0,n_species);
-        if ( (geometry=="2d3v") || (geometry=="3d3v") )
-            ifile.extract("mvel_z_length_y", tmpSpec.mvel_z_profile.length_params_y,"species",0,n_species);
-        if (geometry=="3d3v")
-            ifile.extract("mvel_z_length_z", tmpSpec.mvel_z_profile.length_params_z,"species",0,n_species);
-        
-        ifile.extract("mvel_z_dbl_params", tmpSpec.mvel_z_profile.double_params,"species",0,n_species);
-        ifile.extract("mvel_z_int_params", tmpSpec.mvel_z_profile.int_params,"species",0,n_species);
-        
-        tmpSpec.mvel_x_profile.vacuum_length=tmpSpec.dens_profile.vacuum_length;
-        tmpSpec.mvel_y_profile.vacuum_length=tmpSpec.dens_profile.vacuum_length;
-        tmpSpec.mvel_z_profile.vacuum_length=tmpSpec.dens_profile.vacuum_length;
-        
-        species_param.push_back(tmpSpec);
- 
-        n_species++;
-    }
+    readSpecies(ifile);
     
     global_every=0;
     
     ifile.extract("every",global_every);
-        
+    
     // --------------------
     // Number of processors
     // --------------------
@@ -350,6 +196,195 @@ PicParams::PicParams(InputData &ifile) {
     // -------------------------------------------------------
     compute();
     computeSpecies();
+    
+}
+
+void PicParams::readSpecies(InputData &ifile) {
+    bool ok;
+    n_species=ifile.nComponents("Species");
+    for (unsigned int ispec = 0; ispec < n_species; ispec++) {
+        SpeciesStructure tmpSpec;
+
+        ifile.extract("species_type",tmpSpec.species_type,"Species",ispec);
+        if(tmpSpec.species_type.empty()) {
+            ERROR("For species #" << ispec << " empty species_type");
+        }
+        ifile.extract("initPosition_type",tmpSpec.initPosition_type ,"Species",ispec);
+        if (tmpSpec.initPosition_type.empty()) {
+            ERROR("For species #" << ispec << " empty initPosition_type");
+        } else if ( (tmpSpec.initPosition_type!="regular")&&(tmpSpec.initPosition_type!="random") ) {
+            ERROR("For species #" << ispec << " bad definition of initPosition_type " << tmpSpec.initPosition_type);
+        }
+        
+        ifile.extract("initMomentum_type",tmpSpec.initMomentum_type ,"Species",ispec);
+        if ( (tmpSpec.initMomentum_type=="mj") || (tmpSpec.initMomentum_type=="maxj") ) {
+            tmpSpec.initMomentum_type="maxwell-juettner";
+        }
+        if (   (tmpSpec.initMomentum_type!="cold")
+            && (tmpSpec.initMomentum_type!="maxwell-juettner")
+            && (tmpSpec.initMomentum_type!="rectangular") ) {
+            ERROR("For species #" << ispec << " bad definition of initMomentum_type");
+        }
+        
+        if( !ifile.extract("n_part_per_cell",tmpSpec.n_part_per_cell,"Species",ispec) ) {
+            ERROR("For species #" << ispec << ", n_part_per_cell was not defined.");
+        }
+        
+        tmpSpec.c_part_max = 1.0;// default value
+        ifile.extract("c_part_max",tmpSpec.c_part_max,"Species",ispec);
+        
+        if( !ifile.extract("mass",tmpSpec.mass ,"Species",ispec) ) {
+            ERROR("For species #" << ispec << ", mass not defined.");
+        }
+        
+        if( !ifile.extract("charge",tmpSpec.charge ,"Species",ispec) ) {
+            ERROR("For species #" << ispec << ", charge not defined.");
+        }
+        
+        double density;
+        ok = false;
+        if( ifile.extract("charge_density", density ,"Species",ispec) ) {
+            if( tmpSpec.charge==0. ) {
+                ERROR("For species #" << ispec << ", cannot define charge_density with charge=0. Define nb_density instead.");
+           }
+            ok = true;
+            tmpSpec.density = abs(density/((double)abs(tmpSpec.charge)));
+        }
+        if( ifile.extract("nb_density", density ,"Species",ispec) ) {
+            if( ok ) { 
+                ERROR("For species #" << ispec << ", nb_density and charge_density should not both be defined.");
+            }
+            ok = true;
+            tmpSpec.density = density;
+        }
+        if( ifile.extract("density", density ,"Species",ispec) ) {
+            if( ok ) { 
+                ERROR("For species #" << ispec << ", choose only one of density, nb_density or charge_density.");
+            }
+            WARNING("For species #" << ispec << ", keyword `density` not recommended. Consider `nb_density` or `charge_density` instead.");
+            ok = true;
+            // Convert to number density
+            if ( abs(tmpSpec.charge)==0. ) {
+                tmpSpec.density = density;
+                WARNING("For species #" << ispec << ", `density` assumed to be the number density.");
+            } else {
+                tmpSpec.density = abs(density/((double)abs(tmpSpec.charge)));
+                WARNING("For species #" << ispec << ", `density` assumed to be the charge density.");
+            }
+        }
+        if( !ok ) {
+            ERROR("For species #" << ispec << ", need 'charge_density' or 'nb_density' defined.");
+        }
+        
+        ok = ifile.extract("mean_velocity",tmpSpec.mean_velocity ,"Species",ispec);
+        if (tmpSpec.mean_velocity.size()!=3) {
+            if( ok ) {
+                ERROR("For species #" << ispec << ", mean_velocity must be have 3 components.");
+            }
+            WARNING("For species #" << ispec << ", mean_velocity assumed = 0.");
+            tmpSpec.mean_velocity.resize(3);
+            tmpSpec.mean_velocity[0]=tmpSpec.mean_velocity[1]=tmpSpec.mean_velocity[2]=0.0;
+        }
+        
+        ok = ifile.extract("temperature",tmpSpec.temperature ,"Species",ispec);
+        if( ok ) {
+            if( tmpSpec.temperature.size()==1 ) {
+                tmpSpec.temperature.resize(3);
+                tmpSpec.temperature[1]=tmpSpec.temperature[2]=tmpSpec.temperature[0];
+                WARNING("For species #" << ispec << ", assumed isotropic temperature T = "<< tmpSpec.temperature[0]);
+            } else if ( tmpSpec.temperature.size()!=3 ) {
+                ERROR("For species #" << ispec << ", temperature must be have 3 components.");
+            }
+        } else {
+            tmpSpec.temperature.resize(3);
+            tmpSpec.temperature[0]=tmpSpec.temperature[1]=tmpSpec.temperature[2]=0.0;
+            WARNING("For species #" << ispec << ", temperature not defined: assumed = 0.");
+        }
+        
+        tmpSpec.dynamics_type = "norm"; // default value
+        if (!ifile.extract("dynamics_type",tmpSpec.dynamics_type ,"Species",ispec) )
+            WARNING("For species #" << ispec << ", dynamics_type not defined: assumed = 'norm'.");
+        if (tmpSpec.dynamics_type!="norm"){
+            ERROR("dynamics_type different than norm not yet implemented");
+        }
+        
+        tmpSpec.time_frozen = 0.0; // default value
+        ifile.extract("time_frozen",tmpSpec.time_frozen ,"Species",ispec);
+        if (tmpSpec.time_frozen > 0 && \
+            tmpSpec.initMomentum_type!="cold") {
+            WARNING("For species #" << ispec << " possible conflict between time-frozen & not cold initialization");
+        }
+        
+        tmpSpec.radiating = false; // default value
+        ifile.extract("radiating",tmpSpec.radiating ,"Species",ispec);
+        if (tmpSpec.dynamics_type=="rrll" && (!tmpSpec.radiating)) {
+            WARNING("For species #" << ispec << ", dynamics_type='rrll' forcing radiating=True");
+            tmpSpec.radiating=true;
+        }
+        
+        if (!ifile.extract("bc_part_type_west",tmpSpec.bc_part_type_west,"Species",ispec) )
+            ERROR("For species #" << ispec << ", bc_part_type_west not defined");
+        if (!ifile.extract("bc_part_type_east",tmpSpec.bc_part_type_east,"Species",ispec) )
+            ERROR("For species #" << ispec << ", bc_part_type_east not defined");
+        
+        if (nDim_particle>1) {
+            if (!ifile.extract("bc_part_type_south",tmpSpec.bc_part_type_south,"Species",ispec) )
+                ERROR("For species #" << ispec << ", bc_part_type_south not defined");
+            if (!ifile.extract("bc_part_type_north",tmpSpec.bc_part_type_north,"Species",ispec) )
+                ERROR("For species #" << ispec << ", bc_part_type_north not defined");
+        }
+        
+        tmpSpec.ionization_model = "none"; // default value
+        ifile.extract("ionization_model", tmpSpec.ionization_model, "Species",ispec);
+        
+        ok = ifile.extract("atomic_number", tmpSpec.atomic_number, "Species",ispec);
+        if( !ok && tmpSpec.ionization_model!="none" ) {
+            ERROR("For species #" << ispec << ", `atomic_number` not found => required for the ionization model .");
+        }
+        
+        
+        // Species geometry
+        // ----------------
+        
+        vector<double> vacuum_length;
+        ok = ifile.extract("vacuum_length", vacuum_length,"Species",ispec);
+        
+        extractProfile(ifile, "dens"  , tmpSpec.dens_profile  , ispec, geometry, vacuum_length);
+        extractProfile(ifile, "mvel_x", tmpSpec.mvel_x_profile, ispec, geometry, vacuum_length);
+        extractProfile(ifile, "mvel_y", tmpSpec.mvel_y_profile, ispec, geometry, vacuum_length);
+        extractProfile(ifile, "mvel_z", tmpSpec.mvel_z_profile, ispec, geometry, vacuum_length);
+        extractProfile(ifile, "temp_x", tmpSpec.temp_x_profile, ispec, geometry, vacuum_length);
+        extractProfile(ifile, "temp_y", tmpSpec.temp_y_profile, ispec, geometry, vacuum_length);
+        extractProfile(ifile, "temp_z", tmpSpec.temp_z_profile, ispec, geometry, vacuum_length);
+        
+        species_param.push_back(tmpSpec);
+    }
+}
+
+void PicParams::extractProfile(InputData &ifile, string prefix, ProfileStructure &P, int ispec, string geometry, vector<double> vacuum_length)
+{
+    
+    ifile.extract(prefix+"_profile", P.profile, "Species", ispec);
+    if (P.profile.empty()) {
+        PyObject *mypy = ifile.extract_py(prefix+"_profile", "Species", ispec);
+        if (mypy && PyCallable_Check(mypy)) {
+            P.py_profile=mypy;
+            P.profile="python";
+        } else {
+            WARNING("For species " << ispec << ", "+prefix+"_profile not defined, assumed constant.");
+            P.profile = "constant";
+        }
+    }
+    if (P.profile != "python") {
+        P.vacuum_length = vacuum_length;
+        ifile.extract(prefix+"_length_x", P.length_params_x, "Species", ispec);
+        if ( (geometry=="2d3v") || (geometry=="3d3v") )
+            ifile.extract(prefix+"_length_y", P.length_params_y, "Species", ispec);
+        if ( geometry=="3d3v" )
+            ifile.extract(prefix+"_length_z", P.length_params_z, "Species", ispec);
+        ifile.extract(prefix+"_dbl_params", P.double_params, "Species", ispec);
+        ifile.extract(prefix+"_int_params", P.int_params, "Species", ispec);
+    }
     
 }
 
@@ -419,7 +454,7 @@ void PicParams::compute()
 // ---------------------------------------------------------------------------------------------------------------------
 void PicParams::computeSpecies()
 {
-
+    
     // Loop on all species
     for (unsigned int ispec=0; ispec< species_param.size(); ispec++) {
         
@@ -442,16 +477,24 @@ void PicParams::computeSpecies()
         // Normalizing Species-related quantities
         // --------------------------------------
         
+        SpeciesStructure * s = &(species_param[ispec]);
+        
         // time during which particles are frozen
-        species_param[ispec].time_frozen *= conv_fac;
+        s->time_frozen *= conv_fac;
         
-        vector<ProfileSpecies*> profiles;
-        profiles.push_back(&species_param[ispec].dens_profile);
-        profiles.push_back(&species_param[ispec].mvel_x_profile);
-        profiles.push_back(&species_param[ispec].mvel_y_profile);
-        profiles.push_back(&species_param[ispec].mvel_z_profile);
+        vector<ProfileStructure*> profiles;
+        vector<string> prefixes;
+        profiles.push_back(&(s->dens_profile  )); prefixes.push_back("dens_"  );
+        profiles.push_back(&(s->mvel_x_profile)); prefixes.push_back("mvel_x_");
+        profiles.push_back(&(s->mvel_y_profile)); prefixes.push_back("mvel_y_");
+        profiles.push_back(&(s->mvel_z_profile)); prefixes.push_back("mvel_z_");
+        profiles.push_back(&(s->temp_x_profile)); prefixes.push_back("temp_x_");
+        profiles.push_back(&(s->temp_y_profile)); prefixes.push_back("temp_y_");
+        profiles.push_back(&(s->temp_z_profile)); prefixes.push_back("temp_z_");
         
-        for (unsigned int iprof=0;iprof<profiles.size(); iprof++) {
+        for (unsigned int iprof=0; iprof<profiles.size(); iprof++) {
+            
+            if (profiles[iprof]->profile=="python") continue;
             
             // normalizing the vacuum lengths
             for (unsigned int i=0; i<profiles[iprof]->vacuum_length.size(); i++)
@@ -481,20 +524,20 @@ void PicParams::computeSpecies()
             if (profiles[iprof]->vacuum_length.size()==0) {
                 profiles[iprof]->vacuum_length.resize(1);
                 profiles[iprof]->vacuum_length[0] = 0.0;
-                WARNING("No vacuum length defined in x-direction, automatically put to 0 for species " << ispec);
+                //WARNING("No vacuum length defined in x-direction, automatically put to 0 for species " << ispec);
             }
             if ( (geometry=="2d3v") || (geometry=="3d3v") ) {
                 if (profiles[iprof]->vacuum_length.size()<2) {
                     profiles[iprof]->vacuum_length.resize(2);
                     profiles[iprof]->vacuum_length[1] = 0.0;
-                    WARNING("No vacuum length defined in y-direction, automatically put to 0 for species " << ispec);
+                    //WARNING("No vacuum length defined in y-direction, automatically put to 0 for species " << ispec);
                 }
             }
             if (geometry=="3d3v") {
                 if (profiles[iprof]->vacuum_length.size()<3) {
                     profiles[iprof]->vacuum_length.resize(3);
                     profiles[iprof]->vacuum_length[2] = 0.0;
-                    WARNING("No vacuum length defined in z-direction, automatically put to 0 for species " << ispec);
+                    //WARNING("No vacuum length defined in z-direction, automatically put to 0 for species " << ispec);
                 }
             }
             
@@ -502,29 +545,29 @@ void PicParams::computeSpecies()
             if (profiles[iprof]->length_params_x.size()==0) {
                 profiles[iprof]->length_params_x.resize(1);
                 profiles[iprof]->length_params_x[0] = sim_length[0] - profiles[iprof]->vacuum_length[0];
-                WARNING("No dens_length_x defined, automatically put to " << profiles[iprof]->length_params_x[0]
-                        << " for species " << ispec);
+                //WARNING("No " << prefixes[iprof]<< "length_x defined, automatically put to " << profiles[iprof]->length_params_x[0]
+                //        << " for species " << ispec);
             }
             if ( (geometry=="2d3v") || (geometry=="3d3v") ) {
                 if (profiles[iprof]->length_params_y.size()==0) {
                     profiles[iprof]->length_params_y.resize(1);
                     profiles[iprof]->length_params_y[0] = sim_length[1] - profiles[iprof]->vacuum_length[1];
-                    WARNING("No dens_length_y defined, automatically put to " << profiles[iprof]->length_params_y[0]
-                            << " for species " << ispec);
+                    //WARNING("No " << prefixes[iprof]<< "length_y defined, automatically put to " << profiles[iprof]->length_params_y[0]
+                    //        << " for species " << ispec);
                 }
             }
             if ( geometry=="3d3v" ) {
                 if (profiles[iprof]->length_params_z.size()==0) {
                     profiles[iprof]->length_params_z.resize(1);
                     profiles[iprof]->length_params_z[0] = sim_length[2] - profiles[iprof]->vacuum_length[2];
-                    WARNING("No dens_length_z defined, automatically put to " << profiles[iprof]->length_params_z[0]
-                            << " for species " << ispec);
+                    //WARNING("No " << prefixes[iprof]<< "length_z defined, automatically put to " << profiles[iprof]->length_params_z[0]
+                    //        << " for species " << ispec);
                 }
             }
             
             
         }
-    
+        
     }//end loop on all species (ispec)
     
 }
@@ -573,7 +616,7 @@ void PicParams::print()
         MESSAGE(1,"dimension " << i << " - (res_space, sim_length) : (" << res_space[i] << ", " << sim_length[i] << ")");
         MESSAGE(1,"            - (n_space,  cell_length) : " << "(" << n_space[i] << ", " << cell_length[i] << ")");
     }
-
+    
     // Plasma related parameters
     // -------------------------
     MESSAGE("Plasma related parameters");
@@ -584,6 +627,6 @@ void PicParams::print()
                 << ", " << species_param[i].n_part_per_cell << ")");
     }
     
-
+    
 }
 

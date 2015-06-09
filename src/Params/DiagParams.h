@@ -13,7 +13,8 @@
 
 #include "InputData.h"
 #include "PicParams.h"
-#include "DiagnosticParticles.h"
+class Diagnostic;
+class SmileiMPI;
 
 //! this structure holds all the possible paraeters for phase diagnostics. Then every DiagnosticPhaseXXXXX will pick the ones that fit
 struct phaseStructure {
@@ -59,28 +60,6 @@ struct phaseStructure {
 };
 
 
-//! this structure contains the definition of a probe (0D 1D 2D and 3D)
-struct probeStructure {
-    //! this is the dimension of the probe, it is automatically calculated by looking at the size of the number
-    unsigned int dim;
-
-    //! probe1D output every (every probe1D diagnostic must have this)
-    unsigned int every;
-    
-    //! probe1D output from tmin
-    double tmin;
-
-    //! probe1D output to tmin
-    double tmax;
-
-    //! points defining the probe
-    std::vector< std::vector<double> > pos;
-        
-    //! number of probes between pos and all the end positions (only for 1Dprobe or 2Dprobe or 3D probe)
-    //! this will be one value for 1D probe, two values for 2D probe and three values for 3D probe
-    std::vector<unsigned int> number;
-};
-
 // ---------------------------------------------------------------------------------------------------------------------
 //! DiagParams class: holds all the properties of the simulation that are read from the input file
 // ---------------------------------------------------------------------------------------------------------------------
@@ -88,10 +67,21 @@ class DiagParams {
 
 public:
     //! Creator for DiagParams
-    DiagParams(PicParams&, InputData &);
+    DiagParams(Diagnostic*, PicParams&, InputData&, SmileiMPI *);
 
+    void initScalars(Diagnostic*, PicParams&, InputData&);
+    
+    void initProbes(Diagnostic*, PicParams&, InputData&, SmileiMPI *);
+    
+    void initPhases(Diagnostic*, PicParams&, InputData&, SmileiMPI *);
+    
+    void initParticles(Diagnostic*, PicParams&, InputData&);
+    
     //! field dump output
     unsigned int fieldDump_every;
+    
+    //! name of the fields to dump
+    std::vector<std::string> fieldsToDump;
     
     //! time-averaged field dump output
     unsigned int avgfieldDump_every;
@@ -102,7 +92,7 @@ public:
     //! particle dump output
     unsigned int particleDump_every;
 
-    //! scalar output every scalar_every (namelist group "diagnostic scalar" key "every")
+    //! scalar output every scalar_every (namelist group "DiagScalar" key "every")
     unsigned int scalar_every;
 
     double scalar_tmin;
@@ -115,9 +105,6 @@ public:
     //! scalar output precision
     unsigned int scalar_precision;
     
-    //! vector of probes
-    std::vector<probeStructure> probeStruc;
-    
     //! every for the standard pic timeloop output
     unsigned int print_every;
 	
@@ -125,7 +112,7 @@ public:
 	std::vector<phaseStructure> vecPhase;
 	
 	//! Method to find the numbers of requested species, sorted, and duplicates removed
-	static std::vector<unsigned int> FindSpecies(std::vector<std::string>, PicParams&);
+    static std::vector<unsigned int> FindSpecies(std::vector<std::string>, PicParams&);
 
 };
 

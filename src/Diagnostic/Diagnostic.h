@@ -11,10 +11,10 @@
 #include <fstream>
 
 #include "Interpolator.h"
-#include "DiagParams.h"
 #include "DiagnosticScalar.h"
 #include "DiagnosticProbe.h"
 #include "DiagnosticPhaseSpace.h"
+#include "DiagnosticParticles.h"
 #include "Timer.h"
 
 class PicParams;
@@ -28,10 +28,13 @@ class Diagnostic {
 
 public:
     //! creator called from main
-    Diagnostic(PicParams &params,  DiagParams &dParams, SmileiMPI* smpi);
+    Diagnostic(PicParams&, InputData&, SmileiMPI *smpi);
     
     //! destructor
-    ~Diagnostic();
+    ~Diagnostic(){};
+    
+    //! close all diags
+    void closeAll();
     
     //! check if at timestep diagnostics must be called
     void runAllDiags (int timestep, ElectroMagn* EMfields, std::vector<Species*>&, Interpolator *interp, SmileiMPI *smpi);
@@ -39,17 +42,17 @@ public:
     //! get a particular scalar
     double getScalar(std::string name);
 
-    Timer dtimer[3];
+    Timer dtimer[4];
 
-        
-private:
-    
     DiagnosticScalar scalars;
 
     DiagnosticProbe probes;
 
 	DiagnosticPhaseSpace phases;
 	
+    std::vector<DiagnosticParticles*> vecDiagnosticParticles;
+    
+    DiagParams params;
 };
 
 #endif
