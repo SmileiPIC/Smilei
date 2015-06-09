@@ -127,7 +127,7 @@ void DiagParams::initProbes(Diagnostic* diags, PicParams& params, InputData &ifi
         vector<double> time_range(2,0.);
         double tmin,tmax;
         ok=ifile.extract("time_range",time_range,"DiagProbe",n_probe);        
-        if (!ok) { 
+        if (!ok) {
             tmin = 0.;
             tmax = params.sim_time;
         } else {

@@ -1,4 +1,4 @@
-# Some predefined profiles
+# Some predefined profiles (see doc)
 
 def constant(value=1., xvacuum=0., yvacuum=0.):
     global dim, sim_length
@@ -107,4 +107,3 @@ def cosine(base=1., amplitude=1.,
         # beyond
         else: return 0.
     return f
-

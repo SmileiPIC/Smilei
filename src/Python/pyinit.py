@@ -95,21 +95,42 @@ class Species(SmileiComponent):
 
 class Laser(SmileiComponent):
     """Laser parameters"""
-    pass
+    boxSide = None
+    a0 = None
+    omega0 = 1.
+    tchirp = 0.
+    focus = False
+    angle = 0.
+    time_profile = None
+    transv_profile = None
+    delay = None
 
 class Collisions(SmileiComponent):
     """Collisions parameters"""
+    species1 = None
+    species2 = None
+    coulomb_log = 0.
     debug_every = 0
 
 
 #diagnostics
 class DiagProbe(SmileiComponent):
     """Diagnostic probe"""
-    pass
+    every = 0
+    time_range = [None, None]
+    number = []
+    pos = []
+    pos_first = []
+    pos_second = []
+    pos_third = []
 
 class DiagParticles(SmileiComponent):
     """Diagnostic particles"""
+    output = None
+    every = None
     time_average = 1
+    species = None
+    axes = []
 
 class DiagPhase(SmileiComponent):
     """Diagnostic phase"""
@@ -125,7 +146,9 @@ class DiagScalar(SmileiComponent):
 # external fields
 class ExtField(SmileiComponent):
     """External Field"""
-    pass
+    field = None
+    magnitude = None
+    profile = None
 
 # default simulation values
 output_script = "smilei.py"
@@ -159,6 +182,4 @@ fieldsToDump = [None]
 avgfieldDump_every = None
 ntime_step_avg = 0
 particleDump_every = None # for backwards-compatibility
-
-
 
