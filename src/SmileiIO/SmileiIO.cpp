@@ -238,14 +238,16 @@ void SmileiIO::writeAvgFieldsSingleFileTime( ElectroMagn* EMfields, int time )
 	
     DEBUG(10,"[hdf] GROUP _________________________________ " << name_t.str());
     hid_t group_id = H5Gcreate(global_file_id_avg, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	
-    writeFieldsSingleFileTime( EMfields->Ex_avg, group_id );
-    writeFieldsSingleFileTime( EMfields->Ey_avg, group_id );
-    writeFieldsSingleFileTime( EMfields->Ez_avg, group_id );
-    writeFieldsSingleFileTime( EMfields->Bx_avg, group_id );
-    writeFieldsSingleFileTime( EMfields->By_avg, group_id );
-    writeFieldsSingleFileTime( EMfields->Bz_avg, group_id );
-	
+    
+    for (vector<Field*>::iterator iterField=EMfields->allFields_avg.begin(); iterField!=EMfields->allFields_avg.end(); iterField++) {
+        if (fieldsToDump.empty())
+            writeFieldsSingleFileTime( *iterField, group_id );
+        else
+            for (vector<string>::iterator iterName=fieldsToDump.begin(); iterName!=fieldsToDump.end(); iterName++) 
+                if ((*iterField)->name==(*iterName)) {
+                    writeFieldsSingleFileTime( *iterField, group_id );
+                }
+    }
 	
     H5Gclose(group_id);
 	

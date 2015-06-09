@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "pyinit.h"
+#include "pyprofiles.h"
 #include "pycontrol.h"
 
 #include <sys/time.h>
@@ -23,6 +24,9 @@ py_namelist(NULL)
 
     // Running pyinit.py
     pyRunScript(string(reinterpret_cast<const char*>(Python_pyinit_py), Python_pyinit_py_len), "pyinit.py");
+
+    // Running pyfunctons.py
+    pyRunScript(string(reinterpret_cast<const char*>(Python_pyinit_py), Python_pyprofiles_py_len), "pyprofiles.py");
 
     // Running the namelists
     for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {
@@ -48,6 +52,9 @@ py_namelist(NULL)
     // Running pycontrol.py
     pyRunScript(string(reinterpret_cast<const char*>(Python_pycontrol_py), Python_pycontrol_py_len),"pycontrol.py");
 
+    PyTools::runPyFunction("smilei_check");
+    
+    
     // Now the string "namelist" contains all the python files concatenated
     // It is written as a file, by default "smilei.py"
     if (smpi->isMaster()) {
@@ -67,8 +74,9 @@ InputData::~InputData() {
 
 //! run script
 void InputData::pyRunScript(string command, string name) {
+    PyTools::checkPyError();
     namelist+=command;
-    MESSAGE(1,"Passing through python " << name);
+    MESSAGE(1,"Passing to python " << name);
     DEBUG(">>>>>>>>>>>>>>> passing this to python:\n" <<command);
     int retval=PyRun_SimpleString(command.c_str());
     DEBUG("<<<<<<<<<<<<<<< from " << name);
@@ -145,33 +153,19 @@ void InputData::cleanup() {
     // call cleanup function from the user namelist (it can be used to free some memory 
     // from the python side) while keeping the interpreter running
     MESSAGE(1,"Checking for cleanup() function:");
-    PyObject* myFunction = PyObject_GetAttrString(py_namelist,(char*)"cleanup");
-    if (myFunction) {
-        MESSAGE(1,"Calling python cleanup()");
-        PyObject_CallFunction(myFunction,const_cast<char *>(""));
-        Py_DECREF(myFunction);
-    } else {
-        MESSAGE(1,"python cleanup() function does not exists");
-    }
+    PyTools::runPyFunction("cleanup");
     // this will reset error in python in case cleanup doesn't exists
     PyErr_Clear();
 
     // this function is defined in the Python/pyontrol.py file and should return false if we can close
     // the python interpreter
-    MESSAGE(1,"Calling python keep_python_running() :");
-    myFunction = PyObject_GetAttrString(py_namelist,(char*)"keep_python_running");
-    PyObject* keep_python_running = PyObject_CallFunction(myFunction,const_cast<char *>(""));
-    PyTools::checkPyError();
-    Py_DECREF(myFunction);
-    bool closepython=false;
-    PyTools::convert(keep_python_running,closepython);
-    Py_DECREF(keep_python_running);
-    if (closepython) {
+    MESSAGE(1,"Calling python keep_python_running() :");    
+    if (PyTools::runPyFunction<bool>("keep_python_running")) {
+        MESSAGE(2,"Keeping Python interpreter alive");
+    } else {
         MESSAGE(2,"Closing Python");
         PyErr_Print();
         Py_Finalize();
-    } else {
-        MESSAGE(2,"Keep Python interpreter alive");
     }
 }
 

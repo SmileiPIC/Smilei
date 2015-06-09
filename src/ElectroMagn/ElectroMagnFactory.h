@@ -36,17 +36,11 @@ public:
         EMfields->allFields.push_back(EMfields->Bx_m);
         EMfields->allFields.push_back(EMfields->By_m);
         EMfields->allFields.push_back(EMfields->Bz_m);
-        EMfields->allFields.push_back(EMfields->Ex_avg);
-        EMfields->allFields.push_back(EMfields->Ey_avg);
-        EMfields->allFields.push_back(EMfields->Ez_avg);
-        EMfields->allFields.push_back(EMfields->Bx_avg);
-        EMfields->allFields.push_back(EMfields->By_avg);
-        EMfields->allFields.push_back(EMfields->Bz_avg);
         EMfields->allFields.push_back(EMfields->Jx_ );
         EMfields->allFields.push_back(EMfields->Jy_ );
         EMfields->allFields.push_back(EMfields->Jz_ );
         EMfields->allFields.push_back(EMfields->rho_);
-        
+
         for (unsigned int ispec=0; ispec<params.n_species; ispec++) {
             EMfields->allFields.push_back(EMfields->Jx_s[ispec] );
             EMfields->allFields.push_back(EMfields->Jy_s[ispec] );
@@ -54,11 +48,24 @@ public:
             EMfields->allFields.push_back(EMfields->rho_s[ispec]);
         }
                     
+        EMfields->allFields_avg.push_back(EMfields->Ex_avg);
+        EMfields->allFields_avg.push_back(EMfields->Ey_avg);
+        EMfields->allFields_avg.push_back(EMfields->Ez_avg);
+        EMfields->allFields_avg.push_back(EMfields->Bx_avg);
+        EMfields->allFields_avg.push_back(EMfields->By_avg);
+        EMfields->allFields_avg.push_back(EMfields->Bz_avg);
+        
         std::stringstream ss;
         for (std::vector<Field*>::iterator iterField=EMfields->allFields.begin(); iterField!=EMfields->allFields.end(); iterField++) {
             ss << (*iterField)->name << " ";
         }
-        MESSAGE("Created EM fields : " << ss.str());
+        MESSAGE(1,"Created EM         fields : " << ss.str());
+        
+        ss.str("");
+        for (std::vector<Field*>::iterator iterField=EMfields->allFields_avg.begin(); iterField!=EMfields->allFields_avg.end(); iterField++) {
+            ss << (*iterField)->name << " ";
+        }
+        MESSAGE(1,"Created EM average fields : " << ss.str());
         
         
         

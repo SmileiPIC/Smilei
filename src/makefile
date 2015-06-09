@@ -6,7 +6,7 @@ PYTHONCONFIG ?= python-config
 
 VERSION:="$(shell git describe 2>/dev/null || echo '??')"
 
-CFLAGS += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include
+CFLAGS += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include -std=c++0x 
 LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5 -lz
 
 
@@ -21,7 +21,7 @@ CFLAGS += $(DIRS:%=-I%)
 
 EXEC = smilei
 
-default: smilei
+default: $(EXEC)
 
 help: 
 	@echo 'Usage                 : make [clean] [openmp={gnu|intel}] [config=debug]'
@@ -45,6 +45,8 @@ scalasca:
 	make config=scalasca
 
 
+PYSCRIPTS := $(shell find Python -name \*.py)
+PYHEADERS := $(PYSCRIPTS:.py=.h)
 
 #collect all cpp files
 SRCS := $(shell find . -name \*.cpp)
@@ -54,8 +56,6 @@ DEPS := $(SRCS:.cpp=.d)
 
 CFLAGS+=$(shell $(PYTHONCONFIG) --includes)
 LDFLAGS+=$(shell $(PYTHONCONFIG) --ldflags)
-PYINIT := $(shell find Python -name \*.py)
-PYHEADERS := $(PYINIT:.py=.h)
 
 
 ifeq ($(config),debug)
@@ -81,14 +81,9 @@ clean:
 distclean: clean
 	rm -f $(EXEC)
 	
-NODEPS:=clean	
-ifeq (0, $(words $(findstring $(MAKECMDGOALS), $(NODEPS))))
-    #Chances are, these files don't exist.  GMake will create them and
-    #clean up automatically afterwards
-	-include $(DEPS)
+ifneq ($(MAKECMDGOALS),clean)
+-include $(DEPS)
 endif
-
-deps: $(DEPS)
 
 # this generates a .h file containing a char[] with the python script in binary then
 #you can just include this file to get the contents
@@ -96,15 +91,15 @@ deps: $(DEPS)
 	@ echo "Creating binary char for $<"
 	@ xxd -i $< > $@
 
-%.d: %.cpp
+%.d: %.cpp $(PYHEADERS) 
 	@ echo "Checking dependencies for $<"
 # create and modify dependecy file .d to take into account the location subdir
-	@ $(SMILEICXX) $(CFLAGS) -MM $*.cpp 2>/dev/null | sed -e "s@\(^.*\)\.o:@$(shell  dirname $<)/\1.d $(shell  dirname $<)/\1.o:@" > $@  
+	@ $(SMILEICXX) $(CFLAGS) -MM $< 2>/dev/null | sed -e "s@\(^.*\)\.o:@$(shell  dirname $<)/\1.d $(shell  dirname $<)/\1.o:@" > $@  
 
 %.o : %.cpp
 	$(SMILEICXX) $(CFLAGS) -c $< -o $@
 
-$(EXEC): $(PYHEADERS) $(OBJS)  
+$(EXEC): $(PYHEADERS) $(OBJS)
 	$(SMILEICXX) $(CFLAGS) -o $(EXEC) $(OBJS) $(LDFLAGS)
 
 # DO NOT DELETE

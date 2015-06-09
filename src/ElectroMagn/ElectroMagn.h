@@ -112,6 +112,9 @@ public:
 
     //! all Fields in electromagn (filled in ElectromagnFactory.h)
     std::vector<Field*> allFields;
+
+    //! all Fields in electromagn (filled in ElectromagnFactory.h)
+    std::vector<Field*> allFields_avg;
     
     //! Vector of charge density and currents for each species
     const unsigned int n_species;
