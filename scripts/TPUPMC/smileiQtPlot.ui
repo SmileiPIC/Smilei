@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>596</width>
-    <height>785</height>
+    <width>574</width>
+    <height>570</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -122,10 +122,7 @@
       <attribute name="title">
        <string>Diagnostics</string>
       </attribute>
-      <layout class="QHBoxLayout" name="horizontalLayout_2">
-       <property name="spacing">
-        <number>2</number>
-       </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,1,1">
        <property name="margin">
         <number>0</number>
        </property>
@@ -148,8 +145,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>131</width>
-               <height>752</height>
+               <width>161</width>
+               <height>537</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -185,8 +182,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>131</width>
-               <height>752</height>
+               <width>161</width>
+               <height>537</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -195,43 +192,6 @@
               </property>
               <item>
                <layout class="QVBoxLayout" name="layoutFields"/>
-              </item>
-             </layout>
-            </widget>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <widget class="QGroupBox" name="fields_avg">
-         <property name="title">
-          <string>Fields_avg</string>
-         </property>
-         <layout class="QGridLayout" name="gridLayout_4">
-          <property name="margin">
-           <number>0</number>
-          </property>
-          <item row="0" column="0">
-           <widget class="QScrollArea" name="scrollArea_5">
-            <property name="widgetResizable">
-             <bool>true</bool>
-            </property>
-            <widget class="QWidget" name="scrollAreaWidgetContents_5">
-             <property name="geometry">
-              <rect>
-               <x>0</x>
-               <y>0</y>
-               <width>130</width>
-               <height>752</height>
-              </rect>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout_9">
-              <property name="margin">
-               <number>0</number>
-              </property>
-              <item>
-               <layout class="QVBoxLayout" name="layoutFields_avg"/>
               </item>
              </layout>
             </widget>
@@ -259,8 +219,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>131</width>
-               <height>752</height>
+               <width>161</width>
+               <height>537</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_8">

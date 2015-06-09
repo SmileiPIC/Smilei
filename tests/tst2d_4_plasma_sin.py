@@ -95,10 +95,11 @@ bc_em_type_trans = 'periodic'
 random_seed = 0
 
 fieldDump_every = res
-avgfieldDump_every =res
-ntime_step_avg=res_time
 
-fieldsToDump = ("Bz", "Rho_electron", "Rho_ion")
+avgfieldDump_every =res
+ntime_step_avg=res
+
+fieldsToDump = ("Bz", "Rho_electron", "Rho_ion", "Bz_avg")
 
 print_every = 10
 

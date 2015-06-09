@@ -48,7 +48,6 @@ signal.signal(signal.SIGINT, signal.SIG_DFL)
 class smileiQtPlot(QWidget):
     scalarDict=dict()
     fieldDict=dict()
-    field_avgDict=dict()
     phaseDict=dict()
     fieldFile=None
     phaseFile=None
@@ -156,40 +155,9 @@ class smileiQtPlot(QWidget):
         else :
             print "Problem reading ",fname
 #             self.deleteLater()
-        self.field_avgSteps=[]
-        fname=os.path.join(dirName, "Fields_avg.h5")
-        if os.path.isfile(fname) :
 
-            self.field_avgFile=tb.openFile(fname)
-            log.info(type(self.field_avgFile))
-            self.res_space=self.field_avgFile.root._v_attrs.res_space[0]
-            self.res_time=self.field_avgFile.root._v_attrs.res_time
-            self.sim_length=self.field_avgFile.root._v_attrs.sim_length
-            self.field_avgEvery=self.field_avgFile.root._v_attrs.every
-            
-            first=True
-            log.info(type(self.field_avgFile))
-            for group in self.field_avgFile.listNodes("/", classname='Group'):
-                self.field_avgSteps.append(group._v_name)
-                if first:
-                    first=False
-                    for array in group:
-                        my_button= QCheckBox(array._v_name)
-                        my_button.stateChanged.connect(self.checkBoxChanged)
-                        self.ui.layoutFields_avg.addWidget(my_button)
-
-            self.ui.layoutFields_avg.addStretch()
-            self.ui.slider.setRange(0,len(self.field_avgSteps)-1)
-        else :
-            print "Problem reading ",fname
-#             self.deleteLater()
-
-
-        if len(self.field_avgSteps) != len(self.fieldSteps) :
-            log.info("problem in len(self.field_avgSteps) and len(self.fieldSteps)")
-            
-        self.ui.spinStep.setSuffix("/"+str(len(self.field_avgSteps)-1))
-        self.ui.spinStep.setMaximum(len(self.field_avgSteps)-1)
+        self.ui.spinStep.setSuffix("/"+str(len(self.fieldSteps)-1))
+        self.ui.spinStep.setMaximum(len(self.fieldSteps)-1)
         
         fname=os.path.join(dirName, "PhaseSpace.h5")
         if os.path.isfile(fname) :
@@ -295,12 +263,11 @@ class smileiQtPlot(QWidget):
         
         self.scalarDict=dict()
         self.fieldDict=dict()
-        self.field_avgDict=dict()
         self.phaseDict=dict()
 
         self.nplots=0
         frames=[self.ui.scalars, self.ui.fields, self.ui.phase]
-        for frame in [self.ui.scalars, self.ui.fields, self.ui.fields_avg, self.ui.phase] :
+        for frame in [self.ui.scalars, self.ui.fields, self.ui.phase] :
             for chkbox in frame.findChildren(QCheckBox):
                 if chkbox.isChecked() :
                     self.nplots+=1
@@ -348,43 +315,6 @@ class smileiQtPlot(QWidget):
                         data.append(d._f_getChild(name))
                         
                     self.fieldDict[name]=data
-                    
-                    if len(self.sim_length) == 1 :
-                        ax.set_xlim(0,self.sim_length)
-                        ax.set_ylabel(name)
-                        x=np.array(range(len(data[0])))/self.res_space
-                        y=data[0].read()
-                        ax.plot(x,y)
-                        self.ax[name]=ax
-                    elif len(self.sim_length) == 2 :
-                        divider = make_axes_locatable(ax)
-                        cax = divider.new_horizontal(size="2%", pad=0.05)
-                        self.fig.add_axes(cax)
-                        ax.set_ylabel(name)
-
-                        im=ax.imshow([[0]],extent=(0,self.sim_length[0],0,self.sim_length[1]), aspect='auto',origin='lower')
-                        im.set_interpolation('nearest')
-                        cb=plt.colorbar(im, cax=cax)
-                        self.ax[name]=ax
-
-                    plot+=1
-                    
-            log.info("preparing fields_avg")
-            for i in self.ui.fields_avg.findChildren(QCheckBox):
-                log.info(i) 
-
-                if i.isChecked() :
-                    log.info(i.text())
-                    ax=self.fig.add_subplot(self.nplots,1,plot+1)
-                    ax.xaxis.grid(True)
-                    ax.yaxis.grid(True)
-
-                    data=[]
-                    name=str(i.text())
-                    for d in self.field_avgFile.root:
-                        data.append(d._f_getChild(name))
-                    log.info(name) 
-                    self.field_avgDict[name]=data
                     
                     if len(self.sim_length) == 1 :
                         ax.set_xlim(0,self.sim_length)
@@ -549,21 +479,6 @@ class smileiQtPlot(QWidget):
                     im.set_clim(npData.min(),npData.max())
 
                     
-        for name in self.field_avgDict:
-            print name
-            data=self.field_avgDict[name][self.step].read()
-            if len(self.sim_length) == 1 :
-                self.ax[name].lines[-1].set_ydata(data)
-                if self.ui.autoScale.isChecked():
-                    self.ax[name].set_ylim(min(data),max(data))
-            elif len(self.sim_length) == 2 :
-                im=self.ax[name].images[-1]
-                npData=np.array(data)
-                im.set_data(npData.T)
-                if self.ui.autoScale.isChecked():
-                    im.set_clim(npData.min(),npData.max())
-
-                    
         for name in self.phaseDict:
             data=self.phaseDict[name][self.step].T
             im=self.ax[name].images[-1]
@@ -582,7 +497,6 @@ class smileiQtPlot(QWidget):
     def closeEvent(self,event):
         self.save_settings()
         if self.fieldFile is not None : self.fieldFile.close()
-        if self.field_avgFile is not None : self.field_avgFile.close()
         if self.phaseFile is not None : self.phaseFile.close()
         self.parent.plots.remove(self)
         QApplication.processEvents()
