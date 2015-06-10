@@ -1,7 +1,7 @@
 /*!
  \page macros Code macros
  
- The c++ macros used in the code should be paced in the \ref Tools.h file.
+ The c++ macros used in the code should be placed in the \ref Tools.h file.
  
  \section caveats Warning, Error and Debug
  All these macros will print to the standard error a tag , the name, line of the source file that caused the call
