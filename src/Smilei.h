@@ -1,9 +1,13 @@
 // You can add interesting cite commands like this \cite Grech2011 (you need to put the BIBTEX record in doc/smilei.bib)
 
-/*! \mainpage SMILEI overview
+/*! \mainpage Overview Home
 
+ \image html smileiLogo.png
+
+ 
  \section intro Introduction
 
+ 
  The Particle-In-Cell (PIC) code SMILEI is an open-source project developed by the PIC community at the 
  Plateau de Saclay to support the development of the Apollon laser within the CILEX framework. 
  
@@ -81,9 +85,14 @@
  \section python Python
  
  The code uses Python as interpreter of the namelist, which obviously must be a valid Python script. In the directory <tt>src/Python</tt> , 
- you can find several files which defines different python class. The main one is <tt> Smilei </tt> which is intended to keep part of the namelist.
- obviously this class must be instantiated only once
-
+ you can find several files will be given to the python interpreter in this order:
+ <ol>
+ <li> <tt> pyinit.py </tt> is the python code which defines and initializes base smilei-python classes (Species, Laser, Diagnostic etc...)
+ <li> <tt> pyfunctions.py </tt> which contains basic function (gaussian shape , trapezoidal, etc...)
+ <li> Here are inserted all the files specified in the command line
+ <li> <tt> pycontrol.py </tt> contains some internal function to test if the namelist is self-consistent and a routine to internally check if the python interpeter can be switched off after the initalization
+ </ol>
+ These files are read in InputData.cpp
  
  */
 

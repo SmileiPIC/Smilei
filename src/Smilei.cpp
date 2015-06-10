@@ -61,9 +61,8 @@ int main (int argc, char* argv[])
     // Simulation Initialization
     // ------------------------- 
     
-    // Check for namelist (input file)
+    // Check for namelists (input files)
     vector<string> namelists(argv + 1, argv + argc);
-    
     if (namelists.size()==0) ERROR("No namelists given!");
     
     // Send information on current simulation
@@ -74,6 +73,11 @@ int main (int argc, char* argv[])
     MESSAGE("\\__ \\ | '  \\   _  | | / -_)  _   | |   Compiled :  " << __DATE__ << " " << __TIME__);
     MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  | |  ");
     MESSAGE("                                /_/    ");
+    MESSAGE("----------------------------------------------");
+    for (vector<string>::iterator fname=namelists.begin(); fname!=namelists.end(); fname++) {
+        MESSAGE(1,*fname);
+    }
+    MESSAGE("----------------------------------------------");
     
     // Read the namelists file (no check!)
     InputData input_data(smpiData,namelists);

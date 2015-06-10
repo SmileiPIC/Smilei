@@ -23,3 +23,4 @@ WARN_IF_DOC_ERROR      = YES
 WARN_LOGFILE           = smilei_warn.log
 RECURSIVE              = YES
 PROJECT_LOGO           = logo.png
+IMAGE_PATH             = smileiLogo
