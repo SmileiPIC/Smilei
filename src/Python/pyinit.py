@@ -139,9 +139,9 @@ class DiagPhase(SmileiComponent):
 class DiagScalar(SmileiComponent):
     """Diagnostic scalar"""
     every = None
-    time_range = [None]
+    time_range = []
     precision = 10
-    vars = [None]
+    vars = []
 
 # external fields
 class ExtField(SmileiComponent):
@@ -163,11 +163,11 @@ wavelength_SI = 0.
 dim = ""
 interpolation_order = None
 res_time = None
-res_space = [None]
+res_space = []
 timestep = None
-cell_length = [None]
+cell_length = []
 sim_time = None
-sim_length = [None]
+sim_length = []
 bc_em_type_long = None
 bc_em_type_trans = None
 nspace_win_x = 0
@@ -175,10 +175,10 @@ t_move_win = 0.0
 vx_win = 1.
 clrw = 1
 every = 0
-number_of_procs = [None]
+number_of_procs = []
 print_every = None
 fieldDump_every = 0
-fieldsToDump = [None]
+fieldsToDump = []
 avgfieldDump_every = None
 ntime_step_avg = 0
 particleDump_every = None # for backwards-compatibility
