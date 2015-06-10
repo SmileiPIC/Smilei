@@ -21,14 +21,8 @@ scalasca:
 
 clean:
 	make -C src clean
-	rm -rf doc/latex doc/html
-	rm -rf build
+	make -C doc clean
 
-doc: htmldoc pdfdoc
+doc:
+	make -C doc all
 
-htmldoc:
-#	convert -resize 100x100 doc/smileiLogo/smileiLogo.png doc/logo.png
-	cd doc; (cat smilei.dox; echo "PROJECT_NUMBER=${VERSION}") | doxygen -
-
-pdfdoc:
-	cd doc/latex; pdflatex refman.tex; bibtex refman; pdflatex refman.tex

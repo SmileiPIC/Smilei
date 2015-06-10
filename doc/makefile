@@ -1,30 +1,23 @@
 VERSION:="$(shell git describe 2>/dev/null || echo '??')"
 
-TEXFILES=Collisions/Collisions.tex Diagnostics/Diagnostics.tex Profiles/Profiles.tex latex/refman.tex
+TEXFILES=Collisions/Collisions.tex Diagnostics/Diagnostics.tex Profiles/Profiles.tex
 
 PDFS:=$(TEXFILES:.tex=.pdf)
 
+default: $(PDFS) 
 
-
-.PHONY: doc
-
-
-default: doc
-
-clean:
-	for fname in $(TEXFILES); do cd `dirname $$fname` && echo `pwd` && latexmk -C && cd ..; done
-	rm -rf latex html
-
-doc: html $(PDFS)
-
-PDFLATEX_FLAGS=-interaction=batchmode -halt-on-error -file-line-error
+all: $(PDFS) doxygen
 
 %.pdf: %.tex
-	@ echo "Creating doc for $< : $@"
-	cd $(shell  dirname $<) && latexmk -pdf $(shell basename $<)
+	latexmk -cd -pdf $< && latexmk -cd -c $<
 
-
-html: smilei.dox
+doxygen: smilei.dox
 #	convert -resize 100x100 doc/smileiLogo/smileiLogo.png doc/logo.png
-	cd doc; (cat smilei.dox; echo "PROJECT_NUMBER=${VERSION}") | doxygen -
+	cd doc; (echo "PROJECT_NUMBER=${VERSION}"; cat smilei.dox) | doxygen -
+#   pdf generation is buggy... dropped
+#	latexmk -cd -pdf latex/refman.tex && latexmk -cd -c latex/refman.tex
+	
+clean:
+	for fname in $(TEXFILES); do latexmk -cd -C $$fname; done
+	rm -rf html smilei_warn.log
 
