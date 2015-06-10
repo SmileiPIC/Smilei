@@ -13,6 +13,9 @@
 #include "Particles.h"
 #include "PicParams.h"
 #include "tabulatedFunctions.h"
+
+static tabulatedFunctions tabFcts;
+
 //!
 //! int function( Particles &particles, int ipart, int direction, double limit_pos )
 //!     returns :
@@ -20,21 +23,21 @@
 //!         1 otherwise
 //!
 
-inline int refl_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart, tabulatedFunctions &tabFcts ) {
+inline int refl_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart) {
     nrj_iPart = 0.;     // no energy loss during reflection
     particles.position(direction, ipart) = limit_pos - particles.position(direction, ipart);
     particles.momentum(direction, ipart) = -particles.momentum(direction, ipart);
     return 1;
 }
 
-inline int supp_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart, tabulatedFunctions &tabFcts ) {
+inline int supp_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart) {
     nrj_iPart = particles.weight(ipart)*(particles.lor_fac(ipart)-1.0); // energy lost
     particles.position(direction, ipart) = particles.position_old(direction, ipart);
     particles.charge(ipart) = 0;
     return 0;
 }
 
-inline int stop_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart, tabulatedFunctions &tabFcts ) {
+inline int stop_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart) {
     nrj_iPart = particles.weight(ipart)*(particles.lor_fac(ipart)-1.0); // energy lost
     particles.position(direction, ipart) = particles.position_old(direction, ipart);
     particles.momentum(0, ipart) = 0.;
@@ -45,7 +48,7 @@ inline int stop_particle( Particles &particles, int ipart, int direction, double
 }
 
 //!\todo (MG) at the moment the particle is thermalize whether or not there is a plasma initially at the boundary
-inline int thermalize_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart, tabulatedFunctions &tabFcts ) {
+inline int thermalize_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart) {
     
     double sqrt_of_2 = std::sqrt(2.0);
 
