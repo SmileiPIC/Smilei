@@ -12,6 +12,8 @@
 
 class PicParams;
 class DiagParams;
+class Diagnostic;
+class DiagnosticScalar;
 class Species;
 
 class ElectroMagn;
@@ -84,6 +86,9 @@ public:
     virtual void exchangeField_movewin ( Field* field, unsigned int clrw ) {};
     //! Basic method to sum a field, defined in child class
     virtual void sumField      ( Field* field ) {};
+
+    void computeGlobalDiags(Diagnostic* diags, int timestep);
+    void computeGlobalDiags(DiagnosticScalar& scalars, int timestep);
 
     //! Method to identify the rank 0 MPI process
     inline bool isMaster() {

@@ -24,7 +24,7 @@ class Species;
 
 //! class holder for all the diagnostics: scalars, probes(0D, 1D, 2D and 3D) and phase-space
 class Diagnostic {
-
+    friend class SmileiMPI;
 public:
     //! creator called from main
     Diagnostic(PicParams &params,  DiagParams &dParams, SmileiMPI* smpi);

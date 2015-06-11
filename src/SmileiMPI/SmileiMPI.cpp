@@ -26,6 +26,7 @@
 
 #include "PicParams.h"
 #include "DiagParams.h"
+#include "Diagnostic.h"
 #include "Tools.h"
 
 #include "ElectroMagn.h"
@@ -210,4 +211,38 @@ int SmileiMPI::hrank(int h)
         patch_counter += patch_count[rank];
     }
     return rank;
+}
+
+void SmileiMPI::computeGlobalDiags(Diagnostic* diags, int timestep)
+{
+    if (timestep % diags->scalars.every == 0) computeGlobalDiags(diags->scalars, timestep);
+    //computeGlobalDiags(probes);
+    //computeGlobalDiags(phases);
+}
+
+void SmileiMPI::computeGlobalDiags(DiagnosticScalar& scalars, int timestep)
+{
+    int nscalars(0);
+    for(vector<pair<string,double> >::iterator iter = scalars.out_list.begin(); iter !=scalars.out_list.end(); iter++) {
+	if ( ( (iter->first).find("Min") == std::string::npos ) && ( (iter->first).find("Max") == std::string::npos ) ) {
+	    MPI_Reduce(isMaster()?MPI_IN_PLACE:&((*iter).second), &((*iter).second), 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	}
+	else if ( (iter->first).find("MinCell") != std::string::npos ) {
+	    vector<pair<string,double> >::iterator iterVal = iter-1;
+	    val_index minVal;
+	    minVal.val   = (*iterVal).second;
+	    minVal.index = (*iter).second;
+	    MPI_Reduce(isMaster()?MPI_IN_PLACE:&minVal, &minVal, 1, MPI_DOUBLE_INT, MPI_MINLOC, 0, MPI_COMM_WORLD);
+	}
+	else if ( (iter->first).find("MaxCell") != std::string::npos ) {
+	    vector<pair<string,double> >::iterator iterVal = iter-1;
+	    val_index maxVal;
+	    maxVal.val   = (*iterVal).second;
+	    maxVal.index = (*iter).second;
+	    MPI_Reduce(isMaster()?MPI_IN_PLACE:&maxVal, &maxVal, 1, MPI_DOUBLE_INT, MPI_MAXLOC, 0, MPI_COMM_WORLD);
+	}	  
+    }
+
+    scalars.write(timestep);
+
 }

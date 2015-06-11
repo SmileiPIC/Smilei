@@ -29,7 +29,7 @@ struct val_index
 
 //! the user who wants to implement a scalar diagnostic, can fill the scalars map in species::computeScalar
 class DiagnosticScalar {
-
+    friend class SmileiMPI;
 public:
     //! creator (called from Diagnostic)
     DiagnosticScalar(PicParams &params, DiagParams &diagParams, SmileiMPI* smpi);

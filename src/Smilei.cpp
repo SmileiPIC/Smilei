@@ -258,7 +258,9 @@ int main (int argc, char* argv[])
         //MESSAGE("Running diags at time t = 0");
         //MESSAGE("----------------------------------------------");
         //// run diagnostics at time-step 0
-        //Diags->runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
+        Diags->runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
+	smpi->computeGlobalDiags(Diags, 0);
+
         //// temporary EM fields dump in Fields.h5
         //sio->writeAllFieldsSingleFileTime( EMfields, 0 );
         //// temporary EM fields dump in Fields_avg.h5
@@ -477,14 +479,17 @@ int main (int argc, char* argv[])
 #ifdef _TOBEPATCHED
         // incrementing averaged electromagnetic fields
         if (diag_params.ntime_step_avg) EMfields->incrementAvgFields(itime, diag_params.ntime_step_avg);
-        
+#endif        
         // call the various diagnostics
         // ----------------------------
 		
         // run all diagnostics
         timer[3].restart();
         Diags->runAllDiags(itime, EMfields, vecSpecies, Interp, smpi);
-        
+	smpi->computeGlobalDiags(Diags, itime);
+	timer[3].update();
+
+#ifdef _TOBEPATCHED
         // temporary EM fields dump in Fields.h5
         if  (diag_flag){
             EMfields->computeTotalRhoJ(); //Compute total currents from global Rho_s and J_s.
@@ -525,7 +530,7 @@ int main (int argc, char* argv[])
             if (params.exit_after_dump ) break;
         }
         
-        timer[3].update();
+        //timer[3].update();
 		
         timer[5].restart();
         if ( simWindow && simWindow->isMoving(time_dual) ) {
