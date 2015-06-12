@@ -226,6 +226,7 @@ int main (int argc, char* argv[])
 
 #else
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	    vecPatches(ipatch)->EMfields->restartRhoJs();
 	    vecPatches(ipatch)->dynamics(time_dual, smpi, params, simWindow, diag_flag);
 	}
 	for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
@@ -325,7 +326,7 @@ int main (int argc, char* argv[])
                     << "   sec = "      << setw(7) << setprecision(2)   << timer[0].getTime() 
                     << "   E = "        << std::scientific << setprecision(4)<< vecPatches(0)->Diags->getScalar("Etot") 
 		    << "   Epart = "        << std::scientific << setprecision(4)<< vecPatches(0)->Diags->getScalar("Eparticles")
-		    << "   Efield = "        << std::scientific << setprecision(4)<< vecPatches(0)->Diags->getScalar("Efields")
+		    << "   EFields = "        << std::scientific << setprecision(4)<< vecPatches(0)->Diags->getScalar("EFields")
 		    << "   Elost = "        << std::scientific << setprecision(4)<< vecPatches(0)->Diags->getScalar("Elost") 
                     << "   E_bal(%) = " << setw(6) << std::fixed << setprecision(2) 
 		    << 100.0*vecPatches(0)->Diags->getScalar("Ebal_norm") );
@@ -356,6 +357,8 @@ int main (int argc, char* argv[])
 #ifdef _PATCH
             for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	      vecPatches(ipatch)->EMfields->restartRhoJ();
+            for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	      vecPatches(ipatch)->EMfields->restartRhoJs();
 #else
 	    EMfields->restartRhoJ();
 #endif

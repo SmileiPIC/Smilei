@@ -904,6 +904,41 @@ void ElectroMagn2D::restartRhoJ()
     // --------------------------
     // Total currents and density
     // --------------------------
+#ifdef _PATCH
+    // static cast of the total currents and densities
+    Field2D* Jx2D    = static_cast<Field2D*>(Jx_);
+    Field2D* Jy2D    = static_cast<Field2D*>(Jy_);
+    Field2D* Jz2D    = static_cast<Field2D*>(Jz_);
+    Field2D* rho2D   = static_cast<Field2D*>(rho_);
+    
+    // Charge density rho^(p,p) to 0
+    for (unsigned int i=0 ; i<nx_p ; i++) {
+        for (unsigned int j=0 ; j<ny_p ; j++) {
+            (*rho2D)(i,j) = 0.0;
+        }
+    }
+    
+    // Current Jx^(d,p) to 0
+    for (unsigned int i=0 ; i<nx_d ; i++) {
+        for (unsigned int j=0 ; j<ny_p ; j++) {
+            (*Jx2D)(i,j) = 0.0;
+        }
+    }
+    
+    // Current Jy^(p,d) to 0
+    for (unsigned int i=0 ; i<nx_p ; i++) {
+        for (unsigned int j=0 ; j<ny_d ; j++) {
+            (*Jy2D)(i,j) = 0.0;
+        }
+    }
+    
+    // Current Jz^(p,p) to 0
+    for (unsigned int i=0 ; i<nx_p ; i++) {
+        for (unsigned int j=0 ; j<ny_p ; j++) {
+            (*Jz2D)(i,j) = 0.0;
+        }
+    }
+#else
     unsigned int size_proj_buffer = 2*oversize[0]+clrw + 1 ;
     unsigned int ibin;
    
@@ -914,9 +949,9 @@ void ElectroMagn2D::restartRhoJ()
         memset( nJy_s[0][ibin], 0, size_proj_buffer*(ny_p+1)*sizeof(double));
         memset( nJz_s[0][ibin], 0, size_proj_buffer*ny_p*sizeof(double));
     }
-
- 
-    }//END restartRhoJ
+#endif
+    
+}//END restartRhoJ
     
     
 void ElectroMagn2D::restartRhoJs()
