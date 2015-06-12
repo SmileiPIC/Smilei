@@ -7,7 +7,7 @@ using namespace std;
 
 int buildtag(int send, int recv);
 
-Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int m0, unsigned int m1, unsigned int m2, unsigned int ipatch) {
+Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int m0, unsigned int m1, unsigned int m2, unsigned int ipatch) {
 
 
 //Neighborhood definition in 2D:
@@ -154,6 +154,8 @@ Patch::Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsi
 	Interp     = InterpolatorFactory::create(params, smpi, this);               // + patchId -> idx_domain_begin (now = ref smpi)
 	Proj       = ProjectorFactory::create(params, smpi, this);                  // + patchId -> idx_domain_begin (now = ref smpi)
 	std::cout << "Created Interp and Proj \n\n";
+
+	Diags =new Diagnostic(params,diag_params, smpi);
 	
 };
 
@@ -1714,3 +1716,61 @@ void VectorPatch::exchangeB( )
 
 }
 
+void VectorPatch::computeGlobalDiags(int timestep)
+{
+    
+    computeScalarsDiags(timestep);
+    //computeGlobalDiags(probes);
+    //computeGlobalDiags(phases);
+}
+
+void VectorPatch::computeScalarsDiags(int timestep)
+{
+    int scalars_every( (*this)(0)->Diags->scalars.every );
+    if (timestep % scalars_every != 0) return;
+
+    int nDiags( (*this)(0)->Diags->scalars.out_list.size() );
+    // Initialize scalars iterator on 1st diag
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->Diags->scalars.itDiagScalar =  (*this)(ipatch)->Diags->scalars.out_list.begin();
+
+
+    for (int idiags = 0 ; idiags<nDiags ; idiags++) {
+	string diagName( (*this)(0)->Diags->scalars.itDiagScalar->first );
+
+	if ( ( diagName.find("Min") == std::string::npos ) && ( diagName.find("Max") == std::string::npos ) ) {
+	    double sum(0);
+	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+		sum += (*this)(ipatch)->Diags->scalars.itDiagScalar->second;
+		if (ipatch)
+		    (*this)(ipatch)->Diags->scalars.itDiagScalar++;
+	    }
+	    (*this)(0)->Diags->scalars.itDiagScalar->second = sum;
+	    (*this)(0)->Diags->scalars.itDiagScalar++;
+	}
+	//else if ( diagName.find("MinCell") != std::string::npos ) {}
+	//else if ( diagName.find("MaxCell") != std::string::npos ) {}
+
+	// Go to next diag
+    }
+
+    (*this)(0)->Diags->scalars.write(timestep);
+    
+#ifdef _MINETMAX
+	/*else if ( (iter->first).find("MinCell") != std::string::npos ) {
+	  vector<pair<string,double> >::iterator iterVal = iter-1;
+	  val_index minVal;
+	  minVal.val   = (*iterVal).second;
+	  minVal.index = (*iter).second;
+	  MPI_Reduce(isMaster()?MPI_IN_PLACE:&minVal, &minVal, 1, MPI_DOUBLE_INT, MPI_MINLOC, 0, MPI_COMM_WORLD);
+	  }
+	  else if ( (iter->first).find("MaxCell") != std::string::npos ) {
+	  vector<pair<string,double> >::iterator iterVal = iter-1;
+	  val_index maxVal;
+	  maxVal.val   = (*iterVal).second;
+	  maxVal.index = (*iter).second;
+	  MPI_Reduce(isMaster()?MPI_IN_PLACE:&maxVal, &maxVal, 1, MPI_DOUBLE_INT, MPI_MAXLOC, 0, MPI_COMM_WORLD);
+	  }*/	  
+#endif
+
+}

@@ -133,7 +133,6 @@ int main (int argc, char* argv[])
 #ifndef _PATCH
     vecSpecies = SpeciesFactory::createVector(params, smpi, NULL);
  #endif
-
     // ------------------------------------------------------------------------
     // Initialize the simulation times time_prim at n=0 and time_dual at n=+1/2
     // ------------------------------------------------------------------------
@@ -183,13 +182,13 @@ int main (int argc, char* argv[])
 #endif
     
     // Create diagnostics
-    Diagnostic *Diags =new Diagnostic(params,diag_params, smpi);    
+    Diagnostic *Diags = NULL;//new Diagnostic(params,diag_params, smpi);    
    
     smpi->barrier();
     
 
 #ifdef _PATCH
-    VectorPatch vecPatches = PatchesFactory::createVector(params, laser_params, smpi);
+    VectorPatch vecPatches = PatchesFactory::createVector(params, diag_params, laser_params, smpi);
 #endif
 
     
@@ -258,8 +257,11 @@ int main (int argc, char* argv[])
         //MESSAGE("Running diags at time t = 0");
         //MESSAGE("----------------------------------------------");
         //// run diagnostics at time-step 0
-        Diags->runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
-	smpi->computeGlobalDiags(Diags, 0);
+	
+	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	    vecPatches(ipatch)->Diags->runAllDiags(0, vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, vecPatches(ipatch)->Interp, smpi);
+	vecPatches.computeGlobalDiags(0);
+	//smpi->computeGlobalDiags(Diags, 0);
 
         //// temporary EM fields dump in Fields.h5
         //sio->writeAllFieldsSingleFileTime( EMfields, 0 );
@@ -320,11 +322,13 @@ int main (int argc, char* argv[])
 	if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) ) {
             MESSAGE(1,"t = "          << setw(7) << setprecision(2)   << time_dual/params.conv_fac
                     << "   it = "       << setw(log10(params.n_time)+1) << itime  << "/" << params.n_time
-                    << "   sec = "      << setw(7) << setprecision(2)   << timer[0].getTime()
-                    << "   E = "        << std::scientific << setprecision(4)<< Diags->getScalar("Etot")
-                    << "   Epart = "        << std::scientific << setprecision(4)<< Diags->getScalar("Eparticles")
-                    << "   Elost = "        << std::scientific << setprecision(4)<< Diags->getScalar("Elost")
-                    << "   E_bal(%) = " << setw(6) << std::fixed << setprecision(2)   << 100.0*Diags->getScalar("Ebal_norm") );
+                    << "   sec = "      << setw(7) << setprecision(2)   << timer[0].getTime() 
+                    << "   E = "        << std::scientific << setprecision(4)<< vecPatches(0)->Diags->getScalar("Etot") 
+		    << "   Epart = "        << std::scientific << setprecision(4)<< vecPatches(0)->Diags->getScalar("Eparticles")
+		    << "   Efield = "        << std::scientific << setprecision(4)<< vecPatches(0)->Diags->getScalar("Efields")
+		    << "   Elost = "        << std::scientific << setprecision(4)<< vecPatches(0)->Diags->getScalar("Elost") 
+                    << "   E_bal(%) = " << setw(6) << std::fixed << setprecision(2) 
+		    << 100.0*vecPatches(0)->Diags->getScalar("Ebal_norm") );
 	    if (simWindow) 
 		MESSAGE(1, "\t\t MW Elost = " << std::scientific << setprecision(4)<< Diags->getScalar("Emw_lost")
 			<< "     MW Eadd  = " << std::scientific << setprecision(4)<< Diags->getScalar("Emw_part")
@@ -442,37 +446,30 @@ int main (int argc, char* argv[])
 	// saving magnetic fields (to compute centered fields used in the particle pusher)
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->EMfields->saveMagneticFields();
-
 	// Compute Ex_, Ey_, Ez_
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->EMfields->solveMaxwellAmpere();
-
         #pragma omp single
 	{
 	    // Exchange Ex_, Ey_, Ez_
 	    vecPatches.exchangeE();
-
 	}// end single
-
 	// Compute Bx_, By_, Bz_
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->EMfields->solveMaxwellFaraday();
-
         #pragma omp single
 	{
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
 		vecPatches(ipatch)->EMfields->boundaryConditions(itime, time_dual, smpi, params, simWindow);
 	    // Exchange Bx_, By_, Bz_
 	    vecPatches.exchangeB();
-
-
 	}// end single
-
 	// Compute Bx_m, By_m, Bz_m
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->EMfields->centerMagneticFields();
 	//} // end parallel
 #endif
+
         timer[2].update();
         } //End omp parallel region
         
@@ -485,8 +482,10 @@ int main (int argc, char* argv[])
 		
         // run all diagnostics
         timer[3].restart();
-        Diags->runAllDiags(itime, EMfields, vecSpecies, Interp, smpi);
-	smpi->computeGlobalDiags(Diags, itime);
+        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	    vecPatches(ipatch)->Diags->runAllDiags(itime, vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, vecPatches(ipatch)->Interp, smpi);
+	vecPatches.computeGlobalDiags(itime);
+	//smpi->computeGlobalDiags(Diags, itime);
 	timer[3].update();
 
 #ifdef _TOBEPATCHED
@@ -590,7 +589,7 @@ int main (int argc, char* argv[])
     delete Proj;
     delete Interp;
     delete EMfields;
-    delete Diags;
+    if (Diags) delete Diags;
     
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
     vecSpecies.clear();

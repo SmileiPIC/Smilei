@@ -29,6 +29,7 @@ struct val_index
 
 //! the user who wants to implement a scalar diagnostic, can fill the scalars map in species::computeScalar
 class DiagnosticScalar {
+    friend class VectorPatch;
     friend class SmileiMPI;
 public:
     //! creator (called from Diagnostic)
@@ -50,6 +51,8 @@ public:
 
     //! get a particular scalar
     double getScalar(std::string name);
+
+    std::vector<std::pair<std::string,double> >::iterator itDiagScalar;
 
 private:
     //! check if proc is master (from smpi)

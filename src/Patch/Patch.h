@@ -11,11 +11,15 @@
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
 
+#include "DiagParams.h"
 #include "PicParams.h"
 #include "LaserParams.h"
 #include "SmileiMPI.h"
 #include "SimWindow.h"
+#include "Diagnostic.h"
 
+class Diagnostic;
+class DiagnosticScalar;
 
 //! Class Patch : sub MPI domain 
 //!     Collection of patch = MPI domain
@@ -24,11 +28,12 @@ class Patch
 
 public:
     //! Constructor for Patch
-  Patch(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int m0, unsigned int m1, unsigned int m2, unsigned int ipatch);
+  Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int m0, unsigned int m1, unsigned int m2, unsigned int ipatch);
 
     //! Destructor for Patch
     ~Patch() {
 
+	delete Diags;
 	delete Proj;
 	delete Interp;
 	delete EMfields;
@@ -42,6 +47,8 @@ public:
 
     Interpolator* Interp;
     Projector* Proj;
+
+    Diagnostic* Diags;
 
     //!Get bit.
     unsigned int bit(unsigned int i, unsigned int k);
@@ -189,6 +196,9 @@ class VectorPatch {
     void sumRhoJ( int ispec );
     void exchangeE(  );
     void exchangeB(  );
+
+    void computeGlobalDiags(int timestep);
+    void computeScalarsDiags(int timestep);
 
     std::vector<Patch*> patches_;
  private :

@@ -7,12 +7,12 @@
 
 class PatchesFactory {
 public:
-    static Patch* create(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int m0,unsigned int  m1,unsigned int  m2,unsigned int  ipatch) {
-        Patch* patch = new Patch(params, laser_params, smpi, m0, m1, m2, ipatch);
+    static Patch* create(PicParams& params, DiagParams& diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int m0,unsigned int  m1,unsigned int  m2,unsigned int  ipatch) {
+	Patch* patch = new Patch(params, diag_params, laser_params, smpi, m0, m1, m2, ipatch);
         return patch;
     }
 
-    static VectorPatch createVector(PicParams& params, LaserParams& laser_params, SmileiMPI* smpi) {
+    static VectorPatch createVector(PicParams& params, DiagParams& diag_params, LaserParams& laser_params, SmileiMPI* smpi) {
         VectorPatch vecPatches;
 
 	// Compute npatches (1 is std MPI behavior)
@@ -50,7 +50,7 @@ public:
         vecPatches.resize(npatches);
 	std::cout << "Before patch creation " << std::endl;
         for (unsigned int ipatch = 0 ; ipatch < npatches ; ipatch++) {
-	  vecPatches.patches_[ipatch] = PatchesFactory::create(params, laser_params, smpi, m0, m1, m2, firstpatch + ipatch);
+	    vecPatches.patches_[ipatch] = PatchesFactory::create(params, diag_params, laser_params, smpi, m0, m1, m2, firstpatch + ipatch);
         }
 	std::cout << "After patch creation " << std::endl;
 
