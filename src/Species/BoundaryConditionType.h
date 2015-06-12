@@ -14,8 +14,6 @@
 #include "PicParams.h"
 #include "tabulatedFunctions.h"
 
-static tabulatedFunctions tabFcts;
-
 //!
 //! int function( Particles &particles, int ipart, int direction, double limit_pos )
 //!     returns :
@@ -69,7 +67,7 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
             // change of momentum in the direction(s) along the reflection plane
             double sign_rnd = (double)rand() / RAND_MAX - 0.5; sign_rnd = (sign_rnd)/std::abs(sign_rnd);
             double vel1     = sign_rnd * sqrt_of_2 * params.thermalVelocity[direction]
-            *                 tabFcts.erfinv( (double)rand() / RAND_MAX );
+            *                 erfinv::instance().call( (double)rand() / RAND_MAX );
             particles.momentum(i,ipart) = vel1/std::sqrt( 1.0-std::pow(vel1,2) );
         }//if
         
@@ -91,7 +89,7 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
         particles.momentum(direction, ipart) = sqrt(params.thermalVelocity[direction]) * tabFcts.erfinv( (double)rand() / RAND_MAX );
     }
     else {
-	stop_particle( particles, ipart, direction, limit_pos, params, nrj_iPart, tabFcts );
+	stop_particle( particles, ipart, direction, limit_pos, params, nrj_iPart );
     }
      */
     

@@ -5,10 +5,9 @@ class userFunctions {
     
 public:
 
-    double erfinv(double x);
+    static double erfinv(double x);
+    static double erfinv2(double x);
     
-    double u_InitTemperature(double x, double y, double z);
-
 private:
     
     
