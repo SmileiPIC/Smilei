@@ -191,6 +191,7 @@ class Smilei(object):
 		# Fetch the python namelist
 		namespace={};
 		execfile(results_path+'/smilei.py',namespace) # execute the namelist into an empty namespace
+		exec "signal.signal(signal.SIGINT, signalsave)" in namespace
 		class Namelist: pass # empty class to store the namelist variables
 		self.namelist = Namelist() # create new empty object
 		for key, value in namespace.iteritems(): # transfer all variables to this object
@@ -325,6 +326,7 @@ class Diagnostic(object):
 			try:
 				res_space = self.np.double( self.namelist.res_space )
 				cell_length = 1./res_space
+				if cell_length.size==0: raise
 			except:
 				print "Could not extract 'cell_length' or 'res_space' from the input file"
 				raise
@@ -355,10 +357,12 @@ class Diagnostic(object):
 	def read_timestep(self,sim_units):
 		try:
 			timestep = self.np.double(self.namelist.timestep)
+			if not self.np.isfinite(timestep): raise 
 		except:
 			try:
 				res_time = self.np.double(self.namelist.res_time)
 				timestep = 1./res_time
+				if not self.np.isfinite(timestep): raise 
 			except:
 				print "Could not extract 'timestep' or 'res_time' from the input file"
 				raise

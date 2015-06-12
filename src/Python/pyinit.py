@@ -5,6 +5,7 @@
 # Since the pytohn interpreter grabs key keyboards,
 # we have to filter the ctrl-c kill command:
 import signal
+signalsave = signal.getsignal(signal.SIGINT)
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 class SmileiComponentType(type):
