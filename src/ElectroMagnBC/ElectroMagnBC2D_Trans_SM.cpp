@@ -63,7 +63,7 @@ ElectroMagnBC2D_Trans_SM::~ElectroMagnBC2D_Trans_SM()
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnBC2D_Trans_SM::apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
+void ElectroMagnBC2D_Trans_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
     // Static cast of the fields
     Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
@@ -77,7 +77,8 @@ void ElectroMagnBC2D_Trans_SM::apply(ElectroMagn* EMfields, double time_dual, Sm
     // -----------------------------------------
     // Silver-Mueller boundary conditions (South)
     // -----------------------------------------
-    if ( smpi->isSouthern() ) {
+    if ( patch->isSouthern() ) {
+	//cout << "\t Southern Patch " << patch->Hindex() << endl;
         // for Bx^(p,d)
         for (unsigned int j=0 ; j<nx_p ; j++) {
 
@@ -97,7 +98,8 @@ void ElectroMagnBC2D_Trans_SM::apply(ElectroMagn* EMfields, double time_dual, Sm
     // -----------------------------------------
     // Silver-Mueller boundary conditions (North)
     // -----------------------------------------
-    if ( smpi->isNorthern() ) {
+    if ( patch->isNorthern() ) {
+	//cout << "\t Northern Patch " << patch->Hindex() << endl;
         // for Bx^(p,d)
         for (unsigned int j=0 ; j<nx_p ; j++) {
             (*Bx2D)(j,ny_d-1) = -Alpha_SM_N   * (*Ez2D)(j,ny_p-1)

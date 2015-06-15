@@ -44,7 +44,7 @@ ElectroMagnBC2D_Trans_Damping::~ElectroMagnBC2D_Trans_Damping()
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnBC2D_Trans_Damping::apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
+void ElectroMagnBC2D_Trans_Damping::apply(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
     // Static cast of the fields
     Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
@@ -56,7 +56,7 @@ void ElectroMagnBC2D_Trans_Damping::apply(ElectroMagn* EMfields, double time_dua
 
 
     //   BC : Bx(i=0...nx_p, 0) & Bx(i=0...nx_p, ny_d-1)
-    if ( smpi->isSouthern() ) {
+    if ( patch->isSouthern() ) {
         // for Bx^(p,d)
         for (unsigned int i=0 ; i<nx_p ; i++) {
 	    for (unsigned int j=0 ; j<ny_l ; j++)
@@ -98,7 +98,7 @@ void ElectroMagnBC2D_Trans_Damping::apply(ElectroMagn* EMfields, double time_dua
     }
 
     //   BC : Bz(i=0...nx_d-1, 0) & Bz(i=0...nx_d-1, ny_d-1)
-    if ( smpi->isNorthern() ) {
+    if ( patch->isNorthern() ) {
         // for Bx^(p,d)
         for (unsigned int i=0 ; i<nx_p ; i++) {
 	    for (unsigned int j=0 ; j<ny_l ; j++)

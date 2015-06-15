@@ -41,7 +41,7 @@ ElectroMagnBC1D_SM::~ElectroMagnBC1D_SM()
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnBC1D_SM::apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
+void ElectroMagnBC1D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
     Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
     Field1D* Ey1D   = static_cast<Field1D*>(EMfields->Ey_);
@@ -73,12 +73,12 @@ void ElectroMagnBC1D_SM::apply(ElectroMagn* EMfields, double time_dual, SmileiMP
     // ----------------------------
     // Apply EM boundary conditions
     // ----------------------------
-    if ( smpi->isWestern() ) {
+    if ( patch->isWestern() ) {
         // Silver-Mueller boundary conditions (left)
         (*By1D)(0) =  Alpha_SM*(*Ez1D)(0) + Beta_SM*(*By1D)(1) + Gamma_SM*byL;
         (*Bz1D)(0) = -Alpha_SM*(*Ey1D)(0) + Beta_SM*(*Bz1D)(1) + Gamma_SM*bzL;
     }//if Western
-    if ( smpi->isEastern() ) {
+    if ( patch->isEastern() ) {
         // Silver-Mueller boundary conditions (right)
         (*By1D)(nx_d-1) = -Alpha_SM*(*Ez1D)(nx_p-1) + Beta_SM*(*By1D)(nx_d-2) + Gamma_SM*byR;
         (*Bz1D)(nx_d-1) =  Alpha_SM*(*Ey1D)(nx_p-1) + Beta_SM*(*Bz1D)(nx_d-2) + Gamma_SM*bzR;

@@ -98,6 +98,11 @@ public:
     //!     - "- oversize" on rank 0
     std::vector<int> cell_starting_global_index;
 
+
+    inline double getDomainLocalMin(int i) const {
+        return min_local[i];
+    }
+
     int nbNeighbors_;
 
     std::vector< std::vector<int> > neighbor_;
@@ -153,6 +158,18 @@ public:
     //void compacthilbertindexinv(unsigned int m0, unsigned int m1, unsigned int* x, unsigned int* y, unsigned int h);
     //void compacthilbertindexinv(unsigned int m0, unsigned int m1, unsigned int m2, unsigned int* x, unsigned int* y, unsigned int* z, unsigned int h);
 
+
+    inline bool isWestern()  { return locateOnBorders(0, 0); }
+    inline bool isEastern()  { return locateOnBorders(0, 1); }
+    inline bool isSouthern() { return locateOnBorders(1, 0); }
+    inline bool isNorthern() { return locateOnBorders(1, 1); }
+
+    inline bool locateOnBorders(int dir, int way) {
+	if ( neighbor_[dir][way] == MPI_PROC_NULL ) 
+	    return true;
+	return false;
+    };
+    inline unsigned int Hindex() { return  hindex; }
 protected:
 
 private:

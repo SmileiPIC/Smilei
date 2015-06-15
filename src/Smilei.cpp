@@ -329,7 +329,7 @@ int main (int argc, char* argv[])
 		    << "   EFields = "        << std::scientific << setprecision(4)<< vecPatches(0)->Diags->getScalar("EFields")
 		    << "   Elost = "        << std::scientific << setprecision(4)<< vecPatches(0)->Diags->getScalar("Elost") 
                     << "   E_bal(%) = " << setw(6) << std::fixed << setprecision(2) 
-		    << 100.0*vecPatches(0)->Diags->getScalar("Ebal_norm") );
+		    << 100.0*vecPatches(0)->Diags->getScalar("Ebal_norm") << std::scientific << setprecision(4));
 	    if (simWindow) 
 		MESSAGE(1, "\t\t MW Elost = " << std::scientific << setprecision(4)<< Diags->getScalar("Emw_lost")
 			<< "     MW Eadd  = " << std::scientific << setprecision(4)<< Diags->getScalar("Emw_part")
@@ -463,7 +463,7 @@ int main (int argc, char* argv[])
         #pragma omp single
 	{
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
-		vecPatches(ipatch)->EMfields->boundaryConditions(itime, time_dual, smpi, params, simWindow);
+		vecPatches(ipatch)->EMfields->boundaryConditions(itime, time_dual, vecPatches(ipatch), params, simWindow);
 	    // Exchange Bx_, By_, Bz_
 	    vecPatches.exchangeB();
 	}// end single

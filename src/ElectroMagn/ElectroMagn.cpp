@@ -176,10 +176,10 @@ void ElectroMagn::solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, Pic
     // Update Bx_, By_, Bz_
     if ((!simWindow) || (!simWindow->isMoving(time_dual)) )
         if (emBoundCond[0]!=NULL) // <=> if !periodic
-	    emBoundCond[0]->apply(this, time_dual, smpi);
+	    emBoundCond[0]->apply(this, time_dual, NULL);
     if ( (emBoundCond.size()>1) )
         if (emBoundCond[1]!=NULL) // <=> if !periodic
-	    emBoundCond[1]->apply(this, time_dual, smpi);
+	    emBoundCond[1]->apply(this, time_dual, NULL);
  
     // Exchange Bx_, By_, Bz_
     smpi->exchangeB( this );
@@ -190,15 +190,20 @@ void ElectroMagn::solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, Pic
 //} // end parallel
 }
 
-void ElectroMagn::boundaryConditions(int itime, double time_dual, SmileiMPI* smpi, PicParams &params, SimWindow* simWindow)
+void ElectroMagn::boundaryConditions(int itime, double time_dual, Patch* patch, PicParams &params, SimWindow* simWindow)
 {
     if ((!simWindow) || (!simWindow->isMoving(time_dual)) )
         if (emBoundCond[0]!=NULL) // <=> if !periodic
-	    emBoundCond[0]->apply(this, time_dual, smpi);
+	    emBoundCond[0]->apply(this, time_dual, patch);
+#ifdef _PATCH_DEBUG
+    cout << "\t\tBz = "  << Bz_->norm() << endl;
+#endif
     if ( (emBoundCond.size()>1) )
         if (emBoundCond[1]!=NULL) // <=> if !periodic
-	    emBoundCond[1]->apply(this, time_dual, smpi);
-    
+	    emBoundCond[1]->apply(this, time_dual, patch);
+#ifdef _PATCH_DEBUG
+    cout << "\t\tBz = "  << Bz_->norm() << endl;
+#endif
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

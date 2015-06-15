@@ -139,6 +139,12 @@ public:
     //virtual double computeNRJ(unsigned int shift, unsigned int** istart, unsigned int** bufsize) = 0;
     virtual double computeNRJ(unsigned int shift, unsigned int istart[3][2], unsigned int bufsize[3][2]) = 0;
 
+    inline long double norm() {
+	long double sum(0.); 
+	for (int i=0;i<globalDims_;i++) sum+= data_[i]*data_[i];
+	return sum;
+    }
+
 protected:
 
 private:

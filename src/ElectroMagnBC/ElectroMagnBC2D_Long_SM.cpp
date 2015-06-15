@@ -69,7 +69,7 @@ ElectroMagnBC2D_Long_SM::~ElectroMagnBC2D_Long_SM()
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
+void ElectroMagnBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
     // Static cast of the fields
     Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
@@ -104,13 +104,14 @@ void ElectroMagnBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, Smi
     // -----------------------------------------
     // Silver-Mueller boundary conditions (West)
     // -----------------------------------------
-    if ( smpi->isWestern() ) {
-        
+    if ( patch->isWestern() ) {
+      	//cout << "\t Western Patch " << patch->Hindex() << endl;
+  
         // for By^(d,p)
         for (unsigned int j=0 ; j<ny_p ; j++) {
 
             byW = 0.;
-            double yp     = smpi->getDomainLocalMin(1) + ((double)j)     * dy;
+            double yp     = patch->min_local[1] + ((double)j)     * dy;
             for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
                 if (laser_[ilaser]->laser_struct.boxSide == "west") {
                     
@@ -136,7 +137,7 @@ void ElectroMagnBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, Smi
         for (unsigned int j=0 ; j<ny_d ; j++) {
 
             bzW = 0.;
-            double yd     = smpi->getDomainLocalMin(1) + ((double)j-0.5) * dy;
+            double yd     = patch->min_local[1] + ((double)j-0.5) * dy;
             
             for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
                 if (laser_[ilaser]->laser_struct.boxSide == "west") {
@@ -176,12 +177,13 @@ void ElectroMagnBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, Smi
     // -----------------------------------------
     // Silver-Mueller boundary conditions (East)
     // -----------------------------------------
-    if ( smpi->isEastern() ) {
+    if ( patch->isEastern() ) {
+      	//cout << "\t Eastern Patch " << patch->Hindex() << endl;
         // for By^(d,p)
         for (unsigned int j=0 ; j<ny_p ; j++) {
             
             byE = 0.;
-            double yp     = smpi->getDomainLocalMin(1) + ((double)j)     * dy;
+            double yp     = patch->min_local[1] + ((double)j)     * dy;
             for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
                     // Incident field (west boundary)
                 if (laser_[ilaser]->laser_struct.boxSide == "east") {
@@ -200,7 +202,7 @@ void ElectroMagnBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, Smi
         for (unsigned int j=0 ; j<ny_d ; j++) {
 
             bzE = 0.;
-            double yd     = smpi->getDomainLocalMin(1) + ((double)j-0.5) * dy;
+            double yd     = patch->min_local[1] + ((double)j-0.5) * dy;
             for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
                 if (laser_[ilaser]->laser_struct.boxSide == "east") {
                     // Incident field (east boundary)

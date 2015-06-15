@@ -12,7 +12,7 @@ public:
     ElectroMagnBC1D_SM( PicParams &param, LaserParams &laser_params);
     ~ElectroMagnBC1D_SM();
 
-    virtual void apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi);
+    virtual void apply(ElectroMagn* EMfields, double time_dual, Patch* patch);
 
  private:
     //! Number of nodes on the primal grid

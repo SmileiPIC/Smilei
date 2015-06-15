@@ -12,7 +12,7 @@ public:
     ElectroMagnBC2D_Trans_SM( PicParams &params, LaserParams &laser_params );
     ~ElectroMagnBC2D_Trans_SM();
 
-    virtual void apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi);
+    virtual void apply(ElectroMagn* EMfields, double time_dual, Patch* patch);
 
  private:
     //! Number of nodes on the primal grid in the x-direction

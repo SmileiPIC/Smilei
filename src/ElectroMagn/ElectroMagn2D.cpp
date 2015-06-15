@@ -638,7 +638,11 @@ void ElectroMagn2D::solveMaxwellAmpere()
             -               dt_ov_dy * ( (*Bx2D)(i,j+1) - (*Bx2D)(i,j) );
         }
     }
-    
+#ifdef _PATCH_DEBUG
+    cout << "\tEx = "  << Ex_->norm() << endl;
+    cout << "\tEy = "  << Ey_->norm() << endl;
+#endif
+
 #else
 
     unsigned int iloc,ibin;
@@ -765,6 +769,9 @@ void ElectroMagn2D::solveMaxwellFaraday()
         }
     }
 //}// end parallel
+#ifdef _PATCH_DEBUG
+    cout << "\tBz = "  << Bz_->norm() << endl;
+#endif
 }//END solveMaxwellFaraday
 
 
@@ -811,6 +818,12 @@ void ElectroMagn2D::centerMagneticFields()
             (*Bz2D_m)(nx_p,j) = ( (*Bz2D)(nx_p,j) + (*Bz2D_m)(nx_p,j) )*0.5;
         } // end for j
 }
+/*    cout << "\tBx_m = "  << Bx_m->norm() << endl;
+      cout << "\tBy_m = "  << By_m->norm() << endl;*/
+#ifdef _PATCH_DEBUG
+    cout << "\tBz_m = "  << Bz_m->norm() << endl;
+#endif
+
     
 }//END centerMagneticFields
 
@@ -1143,8 +1156,7 @@ void ElectroMagn2D::computeTotalRhoJs( unsigned int clrw)
             for (unsigned int ibin=binstart ; ibin < nbin ; ibin+=2){
             //Copy the corresponding bin buffer at the correct place in global array
                for (unsigned int i = 0; i < b_dim0 ; i++) {
-                   iloc = ibin*clrw + i ;
-                   for (unsigned int j = 0; j < ny_p ; j++) {
+                   iloc = ibin*clrw + i ;                   for (unsigned int j = 0; j < ny_p ; j++) {
                    //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
                        (*rho2D)(iloc,j) += *(nrho_s[ispec][ibin]+ i*ny_p+j);
                        (*Jx2D)(iloc,j) += *(nJx_s[ispec][ibin]+ i*ny_p+j);

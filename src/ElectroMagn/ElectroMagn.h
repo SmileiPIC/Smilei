@@ -166,7 +166,7 @@ public:
     virtual void solveMaxwellFaraday() = 0;
     virtual void saveMagneticFields() = 0;
     virtual void centerMagneticFields() = 0;
-    void boundaryConditions(int itime, double time_dual, SmileiMPI* smpi, PicParams &params, SimWindow* simWindow);
+    void boundaryConditions(int itime, double time_dual, Patch* patch, PicParams &params, SimWindow* simWindow);
 
     void movingWindow_x(unsigned int shift, SmileiMPI *smpi);
     
