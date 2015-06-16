@@ -1,9 +1,16 @@
 #ifndef USERFUNCTIONS_H
 #define USERFUNCTIONS_H
 
+class userFunctions {
+    
+public:
 
-
-double u_InitTemperature(double x, double y, double z);
-
+    static double erfinv(double x);
+    static double erfinv2(double x);
+    
+private:
+    
+    
+};
 #endif
 

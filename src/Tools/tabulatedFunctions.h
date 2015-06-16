@@ -6,28 +6,35 @@
 #include <iomanip>
 #include <vector>
 #include <cmath>
+#include "Tools.h"
 
-//! class of tabulated functions
-class tabulatedFunctions {
-    
+
+
+//! singleton class of tabulated functions
+
+class erfinv
+{
 public:
-    
-    //! constructor of tabulatedFunctions
-    tabulatedFunctions();
-    
-    //! destructor of tabulatedFunctions
-    ~tabulatedFunctions();
+    static erfinv& instance()
+    {
+        static erfinv one_and_only_instance; // Guaranteed to be destroyed.
+        // Instantiated on first use.
+        return one_and_only_instance;
+    }
     
     //! returns inverse error function of a double x
-    double erfinv(double x);
+    double call(double x);
     
     //! needs to be called one time before using erfinv
-    void erfinv_loadTab();
+    void prepare();
     
-private:
-    
-    //! boolean .true. as long as the table as never been loaded
-    bool erfinv_needLoad_;
+protected:    
+    // creator is private for singletons
+    erfinv(){};    
+    erfinv(erfinv const&); // avoid implementation of this
+    void operator=(erfinv const&); // avoid implementation of this
+
+private:    
     
     //! number of points used to sample the fct
     unsigned int erfinv_tabSize_;
@@ -47,8 +54,8 @@ private:
     //! vector storing the sampled values of erfinv
     std::vector<double> erfinv_tab_;
     
-    
-};//tabulatedFunctions
+};
+
 
 #endif
 

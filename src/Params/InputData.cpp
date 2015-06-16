@@ -2,9 +2,9 @@
 #include <sstream>
 #include <vector>
 
-#include "pyinit.h"
-#include "pyprofiles.h"
-#include "pycontrol.h"
+#include "pyinit.pyh"
+#include "pyprofiles.pyh"
+#include "pycontrol.pyh"
 
 #include <sys/time.h>
 #include <sys/resource.h>

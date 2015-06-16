@@ -191,7 +191,7 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi )
     // Compute the tabulated inverse error function used in thermalizing bcs
     // ---------------------------------------------------------------------
     if ( thermCond ) {
-        tabFcts.erfinv_loadTab();
+        erfinv::instance().prepare();
     }//thermCond
     
 }

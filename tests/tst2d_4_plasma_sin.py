@@ -87,8 +87,8 @@ sim_time = t_sim
 res_space  = (res, res)  
 sim_length = (dx,  dy)
 
-bc_em_type_long  = 'silver-muller'
-bc_em_type_trans = 'periodic'
+bc_em_type_x  = 'silver-muller'
+bc_em_type_y = 'periodic'
 
 # RANDOM seed 
 # this is used to randomize the random number generator

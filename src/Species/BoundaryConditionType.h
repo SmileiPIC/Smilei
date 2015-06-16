@@ -13,6 +13,7 @@
 #include "Particles.h"
 #include "PicParams.h"
 #include "tabulatedFunctions.h"
+
 //!
 //! int function( Particles &particles, int ipart, int direction, double limit_pos )
 //!     returns :
@@ -20,21 +21,21 @@
 //!         1 otherwise
 //!
 
-inline int refl_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart, tabulatedFunctions &tabFcts ) {
+inline int refl_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart) {
     nrj_iPart = 0.;     // no energy loss during reflection
     particles.position(direction, ipart) = limit_pos - particles.position(direction, ipart);
     particles.momentum(direction, ipart) = -particles.momentum(direction, ipart);
     return 1;
 }
 
-inline int supp_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart, tabulatedFunctions &tabFcts ) {
+inline int supp_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart) {
     nrj_iPart = particles.weight(ipart)*(particles.lor_fac(ipart)-1.0); // energy lost
     particles.position(direction, ipart) = particles.position_old(direction, ipart);
     particles.charge(ipart) = 0;
     return 0;
 }
 
-inline int stop_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart, tabulatedFunctions &tabFcts ) {
+inline int stop_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart) {
     nrj_iPart = particles.weight(ipart)*(particles.lor_fac(ipart)-1.0); // energy lost
     particles.position(direction, ipart) = particles.position_old(direction, ipart);
     particles.momentum(0, ipart) = 0.;
@@ -45,7 +46,7 @@ inline int stop_particle( Particles &particles, int ipart, int direction, double
 }
 
 //!\todo (MG) at the moment the particle is thermalize whether or not there is a plasma initially at the boundary
-inline int thermalize_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart, tabulatedFunctions &tabFcts ) {
+inline int thermalize_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart) {
     
     double sqrt_of_2 = std::sqrt(2.0);
 
@@ -66,7 +67,7 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
             // change of momentum in the direction(s) along the reflection plane
             double sign_rnd = (double)rand() / RAND_MAX - 0.5; sign_rnd = (sign_rnd)/std::abs(sign_rnd);
             double vel1     = sign_rnd * sqrt_of_2 * params.thermalVelocity[direction]
-            *                 tabFcts.erfinv( (double)rand() / RAND_MAX );
+            *                 erfinv::instance().call( (double)rand() / RAND_MAX );
             particles.momentum(i,ipart) = vel1/std::sqrt( 1.0-std::pow(vel1,2) );
         }//if
         
@@ -88,7 +89,7 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
         particles.momentum(direction, ipart) = sqrt(params.thermalVelocity[direction]) * tabFcts.erfinv( (double)rand() / RAND_MAX );
     }
     else {
-	stop_particle( particles, ipart, direction, limit_pos, params, nrj_iPart, tabFcts );
+	stop_particle( particles, ipart, direction, limit_pos, params, nrj_iPart );
     }
      */
     

@@ -157,7 +157,7 @@ PicParams::PicParams(InputData &ifile) {
     if (bc_em_type_x.size()==1) { // if just one type is specified, then take the same bc type in a given dimension
         bc_em_type_x.resize(2); bc_em_type_x[1]=bc_em_type_x[0];
     }
-    if ( geometry == "2d3v" ) {
+    if ( geometry == "2d3v" || geometry == "3d3v" ) {
         if ( !ifile.extract("bc_em_type_y", bc_em_type_y) )
             ERROR("Electromagnetic boundary condition type (bc_em_type_y) not defined" );
         if (bc_em_type_y.size()==1) { // if just one type is specified, then take the same bc type in a given dimension
