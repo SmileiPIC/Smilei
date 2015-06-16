@@ -69,10 +69,6 @@ oversize(params.oversize)
     Jy_s.resize(n_species);
     Jz_s.resize(n_species);
     rho_s.resize(n_species);
-    nJx_s  = (double***)malloc(n_species*sizeof(double**));
-    nJy_s  = (double***)malloc(n_species*sizeof(double**));
-    nJz_s  = (double***)malloc(n_species*sizeof(double**));
-    nrho_s = (double***)malloc(n_species*sizeof(double**));
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
         Jx_s[ispec]  = NULL;
         Jy_s[ispec]  = NULL;
@@ -128,10 +124,6 @@ ElectroMagn::~ElectroMagn()
       delete Jz_s[ispec];
       delete rho_s[ispec];
     }
-    free (nJx_s);
-    free (nJy_s);
-    free (nJz_s);
-    free (nrho_s);
   
     int nBC = emBoundCond.size();
     for ( int i=0 ; i<nBC ;i++ )
@@ -245,36 +237,25 @@ void ElectroMagn::initRhoJ(vector<Species*>& vecSpecies, Projector* Proj)
     // number of (none-test) used in the simulation
     //! \todo fix this: n_species is already a member of electromagn, is it this confusing? what happens if n_species grows (i.e. with ionization)?
     unsigned int n_species = vecSpecies.size();
-
+    
     //loop on all (none-test) Species
     for (unsigned int iSpec=0 ; iSpec<n_species; iSpec++ ) {
         Particles &cuParticles = vecSpecies[iSpec]->getParticlesList();
         unsigned int n_particles = vecSpecies[iSpec]->getNbrOfParticles();
         
         DEBUG(n_particles<<" species "<<iSpec);
-        for(unsigned int ibin=0; ibin < nbin ; ibin++){
-            //for (unsigned int iPart=0 ; iPart<n_particles; iPart++ ) {
-            for (unsigned int iPart=vecSpecies[iSpec]->bmin[ibin]; iPart<vecSpecies[iSpec]->bmax[ibin]; iPart++ ) {
-                // project charge & current densities
-                (*Proj)(nJx_s[iSpec][ibin], nJy_s[iSpec][ibin], nJz_s[iSpec][ibin], nrho_s[iSpec][ibin], cuParticles, iPart, 1.0, ibin*vecSpecies[iSpec]->clrw, vecSpecies[iSpec]->b_lastdim);
-            }
+        for (unsigned int iPart=0 ; iPart<n_particles; iPart++ ) {
+            // project charge & current densities
+            (*Proj)(Jx_s[iSpec], Jy_s[iSpec], Jz_s[iSpec], rho_s[iSpec], cuParticles, iPart,
+                    cuParticles.lor_fac(iPart));
         }
         
     }//iSpec
-
-
     DEBUG("before computeTotalRhoJ");    
-    if(n_species > 0){
-        //Compute correct rho_s,J_s from nrho_s, nJ_s.
-        computeTotalRhoJs(vecSpecies[0]->clrw);
-        //Compute correct rho and J from rho_s and J_s.
-        computeTotalRhoJ();
-    }
+    computeTotalRhoJ();
     DEBUG("projection done for initRhoJ");
     
 }
-
-
 
 
 void ElectroMagn::movingWindow_x(unsigned int shift, SmileiMPI *smpi)

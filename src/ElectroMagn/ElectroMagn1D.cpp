@@ -87,19 +87,6 @@ isEastern(smpi->isEastern())
         Jy_s[ispec]  = new Field1D(dimPrim, 1, false, ("Jy_"+params.species_param[ispec].species_type).c_str());
         Jz_s[ispec]  = new Field1D(dimPrim, 2, false, ("Jz_"+params.species_param[ispec].species_type).c_str());
         rho_s[ispec] = new Field1D(dimPrim, ("Rho_"+params.species_param[ispec].species_type).c_str());
-        nJx_s[ispec]  = (double**)malloc(nbin*sizeof(double*));
-        nJy_s[ispec]  = (double**)malloc(nbin*sizeof(double*));
-        nJz_s[ispec]  = (double**)malloc(nbin*sizeof(double*));
-        nrho_s[ispec]  = (double**)malloc(nbin*sizeof(double*));
-    }
-    sizeprojbuffer = 2*oversize[0]+params.clrw + 1;
-    for (unsigned int ispec=0; ispec<n_species; ispec++) {
-        for (unsigned int ibin=0; ibin<nbin; ibin++) {
-            nrho_s[ispec][ibin] = (double*)calloc(4*sizeprojbuffer, sizeof(double));
-            nJx_s[ispec][ibin] = nrho_s[ispec][ibin]+sizeprojbuffer;
-            nJy_s[ispec][ibin] = nJx_s[ispec][ibin]+sizeprojbuffer;
-            nJz_s[ispec][ibin] = nJy_s[ispec][ibin]+sizeprojbuffer;
-        }
     }
     
 //    ostringstream file_name("");
@@ -663,89 +650,6 @@ void ElectroMagn1D::computeTotalRhoJ()
             (*Jx1D)(dimPrim[0])  += (*Jx1D_s)(dimPrim[0]);
         }
     }//END loop on species ispec
-}
-void ElectroMagn1D::addToGlobalRho(int ispec, unsigned int clrw)
-{
-    int iloc,nbin,b_dim0;
-    nbin = n_space[0]/clrw;
-    b_dim0 = clrw+2*oversize[0]+1; 
-        #pragma unroll
-        for (unsigned binstart=0; binstart<2; binstart++){; 
-            #pragma omp for schedule(static)
-            for (unsigned int ibin=binstart ; ibin < nbin ; ibin+=2){
-            //Copy the corresponding bin buffer at the correct place in global array
-               for (unsigned int i = 0; i < b_dim0 ; i++) {
-                   (*rho_)(ibin*clrw + i) += *(nrho_s[ispec][ibin]+ i);
-               } 
-            }
-        }
-
- }
-void ElectroMagn1D::computeTotalRhoJs(unsigned int clrw)
-{
-    int nbin,b_dim0;
-    Field1D* Jx1D  ;
-    Field1D* Jy1D  ;
-    Field1D* Jz1D  ;
-    Field1D* rho1D ;
-    nbin = n_space[0]/clrw;
-    b_dim0 = clrw+2*oversize[0]+1; 
-    for (unsigned int ispec=0 ; ispec < n_species; ispec++) {  
-        // static cast of the total currents and densities
-        Jx1D    = static_cast<Field1D*>(Jx_s[ispec]);
-        Jy1D    = static_cast<Field1D*>(Jy_s[ispec]);
-        Jz1D    = static_cast<Field1D*>(Jz_s[ispec]);
-        rho1D   = static_cast<Field1D*>(rho_s[ispec]);
-        #pragma unroll
-        for (unsigned int binstart=0; binstart <2; binstart++) {
-            #pragma omp for schedule(static)
-            for (unsigned int ibin=binstart ; ibin < nbin ; ibin+=2){
-            //Copy the corresponding bin buffer at the correct place in global array
-               for (unsigned int i = 0; i < b_dim0 ; i++) {
-                   //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
-                   (*rho1D)(ibin*clrw + i) += *(nrho_s[ispec][ibin]+ i);
-                   (*Jx1D)(ibin*clrw + i) += *(nJx_s[ispec][ibin]+ i);
-                   (*Jy1D)(ibin*clrw + i) += *(nJy_s[ispec][ibin]+ i);
-                   (*Jz1D)(ibin*clrw + i) += *(nJz_s[ispec][ibin]+ i);
-               } 
-            }
-        }
-    }
-
- }
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Gather the total density and currents for species on a single array instead of twin arrays.
-// ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn1D::synchronizePatch(unsigned int clrw)
-{
-    //for (unsigned int ispec=0; ispec<n_species; ispec++) {
-    //    Field1D* Jx1D_s  = static_cast<Field1D*>(Jx_s[ispec]);
-    //    Field1D* Jy1D_s  = static_cast<Field1D*>(Jy_s[ispec]);
-    //    Field1D* Jz1D_s  = static_cast<Field1D*>(Jz_s[ispec]);
-    //    Field1D* rho1D_s = static_cast<Field1D*>(rho_s[ispec]);
-    //    Field1D* Jx1D_s2  = static_cast<Field1D*>(Jx_s[n_species+ispec]);
-    //    Field1D* Jy1D_s2  = static_cast<Field1D*>(Jy_s[n_species+ispec]);
-    //    Field1D* Jz1D_s2  = static_cast<Field1D*>(Jz_s[n_species+ispec]);
-    //    Field1D* rho1D_s2 = static_cast<Field1D*>(rho_s[n_species+ispec]);
-    //    
-    //    // Charge density rho^(p) 
-    //    for (unsigned int i=0 ; i<dimPrim[0] ; i++) {
-    //        (*rho1D_s)(i) += (*rho1D_s2)(i);
-    //        (*Jy1D_s)(i) += (*Jy1D_s2)(i);
-    //        (*Jz1D_s)(i) += (*Jz1D_s2)(i);
-    //    }
-    //    
-    //    // Current Jx^(d)
-    //    for (unsigned int i=0 ; i<dimDual[0] ; i++) {
-    //        (*Jx1D_s)(i) += (*Jx1D_s2)(i);
-    //    }
-    //    
-    //}//END loop on species ispec
-    
-}//END synchronizePatch
-void ElectroMagn1D::finalizePatch(unsigned int clrw)
-{
 }
 
 void ElectroMagn1D::computePoynting() {
