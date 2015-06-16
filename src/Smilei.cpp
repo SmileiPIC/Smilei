@@ -262,7 +262,7 @@ int main (int argc, char* argv[])
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->Diags->runAllDiags(0, vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, vecPatches(ipatch)->Interp, smpi);
 	vecPatches.computeGlobalDiags(0);
-	//smpi->computeGlobalDiags(Diags, 0);
+	smpi->computeGlobalDiags( vecPatches(0)->Diags, 0);
 
         //// temporary EM fields dump in Fields.h5
         //sio->writeAllFieldsSingleFileTime( EMfields, 0 );
@@ -488,7 +488,7 @@ int main (int argc, char* argv[])
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->Diags->runAllDiags(itime, vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, vecPatches(ipatch)->Interp, smpi);
 	vecPatches.computeGlobalDiags(itime);
-	//smpi->computeGlobalDiags(Diags, itime);
+	smpi->computeGlobalDiags( vecPatches(0)->Diags, itime);
 	timer[3].update();
 
 #ifdef _TOBEPATCHED

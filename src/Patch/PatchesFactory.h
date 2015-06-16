@@ -21,9 +21,9 @@ public:
         m0 = 0;
         m1 = 0;
         m2 = 0;
-	std::cout << " params.number_of_patches[0] = " << params.number_of_patches[0] << std::endl;
+	//std::cout << " params.number_of_patches[0] = " << params.number_of_patches[0] << std::endl;
         while ((params.number_of_patches[0] >> m0) >1) m0++ ;
-	std::cout << " m0 = " << m0 << std::endl;
+	//std::cout << " m0 = " << m0 << std::endl;
         while ((params.number_of_patches[1] >> m1) >1) m1++ ;
         while ((params.number_of_patches[2] >> m2) >1) m2++ ;
         //Naive initialization of patch_count, assuming all mpi processes initially have the same number of patches.
@@ -39,8 +39,10 @@ public:
         
 
 	// Modified to test Patch integration
+
 	std::cout << "n_space : " << params.n_space[0] << " " << params.n_space[1] << std::endl;
 	std::cout << "n_patch : " << params.number_of_patches[0] << " " << params.number_of_patches[1] << std::endl;
+
 	//params.n_space[0] /= m0;
 	//params.n_space[1] /= m1;
 	//std::cout << "n_space : " << params.n_space[0] << " " << params.n_space[1] << std::endl;
@@ -48,11 +50,9 @@ public:
 
         // create species
         vecPatches.resize(npatches);
-	std::cout << "Before patch creation " << std::endl;
         for (unsigned int ipatch = 0 ; ipatch < npatches ; ipatch++) {
 	    vecPatches.patches_[ipatch] = PatchesFactory::create(params, diag_params, laser_params, smpi, m0, m1, m2, firstpatch + ipatch);
         }
-	std::cout << "After patch creation " << std::endl;
 
         return vecPatches;
     }

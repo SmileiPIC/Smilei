@@ -107,6 +107,10 @@ public:
 
     std::vector< std::vector<int> > neighbor_;
     std::vector< std::vector<int> > corner_neighbor_;
+
+    std::vector< std::vector<int> > MPI_neighbor_;
+    std::vector< std::vector<int> > MPI_corner_neighbor_;
+
     std::vector< int > MPI_neighborhood_;
     std::vector< int > patch_neighborhood_;
 
