@@ -100,18 +100,22 @@ int main (int argc, char* argv[])
     MESSAGE("----------------------------------------------");
     MESSAGE("Creating MPI & IO environments");
     MESSAGE("----------------------------------------------");
-    SmileiMPI* smpi = SmileiMPIFactory::create(params, smpiData);
-    SmileiIO*  sio  = SmileiIOFactory::create(params, diag_params, smpi);
+    SmileiMPI* smpi = NULL;
+    SmileiIO*  sio  = NULL;
+#ifdef _TOBEPATCHED
+    sio = SmileiIOFactory::create(params, diag_params, smpi);
+#endif
+
 #ifdef _OMP
     int nthds(0);
 #pragma omp parallel shared(nthds)
     {
         nthds = omp_get_num_threads();
     }
-    if (smpi->isMaster())
+    if (smpiData->isMaster())
         MESSAGE("\tOpenMP : Number of thread per MPI process : " << nthds );
 #else
-    if (smpi->isMaster()) MESSAGE("\tOpenMP : Disabled");
+    if (smpiData->isMaster()) MESSAGE("\tOpenMP : Disabled");
 #endif
 
     // -------------------------------------------
@@ -172,7 +176,7 @@ int main (int argc, char* argv[])
     Diagnostic *Diags = NULL;
 
     
-    VectorPatch vecPatches = PatchesFactory::createVector(params, diag_params, laser_params, smpi);
+    VectorPatch vecPatches = PatchesFactory::createVector(params, diag_params, laser_params, smpiData);
 
     
     // reading from dumped file the restart values
@@ -228,7 +232,7 @@ int main (int argc, char* argv[])
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->Diags->runAllDiags(0, vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, vecPatches(ipatch)->Interp, smpi);
 	vecPatches.computeGlobalDiags(0);
-	smpi->computeGlobalDiags( vecPatches(0)->Diags, 0);
+	smpiData->computeGlobalDiags( vecPatches(0)->Diags, 0);
 
         //// temporary EM fields dump in Fields.h5
         //sio->writeAllFieldsSingleFileTime( EMfields, 0 );
@@ -246,12 +250,12 @@ int main (int argc, char* argv[])
     // Count timer
     int ntimer(6);
     Timer timer[ntimer];
-    timer[0].init(smpi, "global");
-    timer[1].init(smpi, "particles");
-    timer[2].init(smpi, "maxwell");
-    timer[3].init(smpi, "diagnostics");
-    timer[4].init(smpi, "densities");
-    timer[5].init(smpi, "Mov window");
+    timer[0].init(smpiData, "global");
+    timer[1].init(smpiData, "particles");
+    timer[2].init(smpiData, "maxwell");
+    timer[3].init(smpiData, "diagnostics");
+    timer[4].init(smpiData, "densities");
+    timer[5].init(smpiData, "Mov window");
    
     // Action to send to other MPI procs when an action is required
     int mpisize,itime2dump(-1),todump(0); 
@@ -282,7 +286,7 @@ int main (int argc, char* argv[])
         timer[0].update();
         
         //double timElapsed=smpiData->time_seconds();
-	if ( (itime % diag_params.print_every == 0) &&  ( smpi->isMaster() ) ) {
+	if ( (itime % diag_params.print_every == 0) &&  ( smpiData->isMaster() ) ) {
             MESSAGE(1,"t = "          << setw(7) << setprecision(2)   << time_dual/params.conv_fac
                     << "   it = "       << setw(log10(params.n_time)+1) << itime  << "/" << params.n_time
                     << "   sec = "      << setw(7) << setprecision(2)   << timer[0].getTime() 
@@ -408,7 +412,7 @@ int main (int argc, char* argv[])
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->Diags->runAllDiags(itime, vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, vecPatches(ipatch)->Interp, smpi);
 	vecPatches.computeGlobalDiags(itime); // Only scalars reduction for now 
-	smpi->computeGlobalDiags( vecPatches(0)->Diags, itime); // Only scalars reduction for now 
+	smpiData->computeGlobalDiags( vecPatches(0)->Diags, itime); // Only scalars reduction for now 
 	timer[3].update();
 
 #ifdef _TOBEPATCHED
@@ -424,7 +428,7 @@ int main (int argc, char* argv[])
             if ((diag_params.avgfieldDump_every != 0) && (itime % diag_params.avgfieldDump_every == 0))
                 sio->writeAvgFieldsSingleFileTime( EMfields, itime );
         
-        if  (smpi->isMaster()){
+        if  (smpiData->isMaster()){
             if (!todump && sio->dump(EMfields, itime, MPI_Wtime() - starttime, vecSpecies, simWindow, params, input_data) ){
                 // Send the action to perform at next iteration
                 itime2dump = itime + 1; 
@@ -452,7 +456,7 @@ int main (int argc, char* argv[])
         timer[5].restart();
         if ( simWindow && simWindow->isMoving(time_dual) ) {
             start_moving++;
-            if ((start_moving==1) && (smpi->isMaster()) ) {
+            if ((start_moving==1) && (smpiData->isMaster()) ) {
 		MESSAGE(">>> Window starts moving");
             }
             simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi, params);
@@ -464,7 +468,7 @@ int main (int argc, char* argv[])
 #endif
     }//END of the time loop
     
-    smpi->barrier();
+    smpiData->barrier();
     
     // ------------------------------------------------------------------
     //                      HERE ENDS THE PIC LOOP
@@ -473,10 +477,10 @@ int main (int argc, char* argv[])
     MESSAGE("-----------------------------------------------------------------------------------------------------");
     
     //double timElapsed=smpiData->time_seconds();
-    //if ( smpi->isMaster() ) MESSAGE(0, "Time in time loop : " << timElapsed );
+    //if ( smpiData->isMaster() ) MESSAGE(0, "Time in time loop : " << timElapsed );
     timer[0].update();
     MESSAGE(0, "Time in time loop : " << timer[0].getTime() );
-    if ( smpi->isMaster() )
+    if ( smpiData->isMaster() )
         for (int i=1 ; i<ntimer ; i++) timer[i].print(timer[0].getTime());
     
     double coverage(0.);
@@ -522,7 +526,7 @@ int main (int argc, char* argv[])
     MESSAGE("-----------------------------------------------------------------------------------------------------");
 
     delete sio;
-    delete smpi;
+    if (smpi) delete smpi;
     delete smpiData;
     if (params.nspace_win_x)
         delete simWindow;

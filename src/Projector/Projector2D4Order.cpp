@@ -27,14 +27,8 @@ Projector2D4Order::Projector2D4Order (PicParams& params, SmileiMPI* smpi, Patch*
 
     one_third = 1.0/3.0;
 
-    if (patch) {
-	i_domain_begin = patch->cell_starting_global_index[0];
-	j_domain_begin = patch->cell_starting_global_index[1];
-    }
-    else {
-	i_domain_begin = smpi2D->getCellStartingGlobalIndex(0);
-	j_domain_begin = smpi2D->getCellStartingGlobalIndex(1);
-    }
+    i_domain_begin = patch->cell_starting_global_index[0];
+    j_domain_begin = patch->cell_starting_global_index[1];
 
     DEBUG("cell_length "<< params.cell_length[0]);
 

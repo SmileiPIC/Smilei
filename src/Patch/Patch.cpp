@@ -20,6 +20,7 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 
         int xcall, ycall;
         hindex = ipatch;
+	std::cout << smpi->getRank() << ", mypatch is : " << hindex << std::endl;        
         
         if ( params.geometry == "1d3v" ) {
             mi.resize(1);
@@ -179,7 +180,7 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 	Interp     = InterpolatorFactory::create(params, smpi, this);               // + patchId -> idx_domain_begin (now = ref smpi)
 	Proj       = ProjectorFactory::create(params, smpi, this);                  // + patchId -> idx_domain_begin (now = ref smpi)
 
-	Diags =new Diagnostic(params,diag_params, smpi);
+	Diags = new Diagnostic(params,diag_params, smpi);
 	
 };
 

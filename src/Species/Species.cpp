@@ -92,8 +92,9 @@ min_loc_vec(patch->min_local),
 clrw(params.clrw),
 species_param(params.species_param[ispec]),
 particles(&particles_sorted[0]),
-i_domain_begin( smpi->getCellStartingGlobalIndex(0)+patch->Pcoordinates[0]*params.n_space[0] ),
-j_domain_begin( smpi->getCellStartingGlobalIndex(1)+patch->Pcoordinates[1]*params.n_space[1] )	
+
+i_domain_begin( patch->Pcoordinates[0]*params.n_space[0] ),
+j_domain_begin( patch->Pcoordinates[1]*params.n_space[1] )	
 
 {
 	
@@ -419,7 +420,7 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
 void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfields, Interpolator* Interp,
                        Projector* Proj, SmileiMPI *smpi, PicParams &params, SimWindow* simWindow, int diag_flag)
 {
-    Interpolator* LocInterp = InterpolatorFactory::create(params, smpi, NULL);
+    //Interpolator* LocInterp = InterpolatorFactory::create(params, smpi, NULL);
     
     // Electric field at the particle position
     LocalFields Epart;
@@ -595,7 +596,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
         }
     }//END if time vs. time_frozen
 #pragma omp barrier
-    delete LocInterp;
+    //delete LocInterp;
 }//END dynamic
 
 // ---------------------------------------------------------------------------------------------------------------------

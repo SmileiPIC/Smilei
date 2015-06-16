@@ -20,14 +20,13 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn2D::ElectroMagn2D(PicParams &params, LaserParams &laser_params, SmileiMPI* smpi, Patch* patch) : 
   ElectroMagn(params, laser_params, smpi, patch),
-isWestern(smpi->isWestern()),
-isEastern(smpi->isEastern()),
-isNorthern(smpi->isNorthern()),
-isSouthern(smpi->isSouthern())
+isWestern(patch->isWestern()),
+isEastern(patch->isEastern()),
+isNorthern(patch->isNorthern()),
+isSouthern(patch->isSouthern())
 {
     // local dt to store
     SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
-    int process_coord_x = smpi2D->getProcCoord(0);
     int sizeprojbuffer ;
     
     
@@ -138,7 +137,6 @@ isSouthern(smpi->isSouthern())
     // Define limits of non duplicated elements
     // (by construction 1 (prim) or 2 (dual) elements shared between per MPI process)
     // istart 
-    if (patch) {
 	for (unsigned int i=0 ; i<3 ; i++)
 	    for (unsigned int isDual=0 ; isDual<2 ; isDual++)
 		istart[i][isDual] = 0;
@@ -173,44 +171,6 @@ isSouthern(smpi->isSouthern())
 		} // if ( smpi2D->getNbrOfProcs(i)!=1 )
 	    } // for (int isDual=0 ; isDual
 	} // for (unsigned int i=0 ; i<nDim_field 
-    } // End if patch
-    else { // if MPI
-	for (unsigned int i=0 ; i<3 ; i++)
-	    for (unsigned int isDual=0 ; isDual<2 ; isDual++)
-		istart[i][isDual] = 0;
-	for (unsigned int i=0 ; i<nDim_field ; i++) {
-	    for (unsigned int isDual=0 ; isDual<2 ; isDual++) {
-		istart[i][isDual] = oversize[i];
-		if (smpi2D->getProcCoord(i)!=0) istart[i][isDual]+=1;
-	    }
-	}
-    
-	// bufsize = nelements
-	for (unsigned int i=0 ; i<3 ; i++) 
-	    for (unsigned int isDual=0 ; isDual<2 ; isDual++)
-		bufsize[i][isDual] = 1;
-    
-	for (unsigned int i=0 ; i<nDim_field ; i++) {
-	    for (int isDual=0 ; isDual<2 ; isDual++)
-		bufsize[i][isDual] = n_space[i] + 1;
-        
-	    for (int isDual=0 ; isDual<2 ; isDual++) {
-		bufsize[i][isDual] += isDual; 
-		if ( smpi2D->getNbrOfProcs(i)!=1 ) {
-                
-		    if ( ( !isDual ) && (smpi2D->getProcCoord(i)!=0) )
-			bufsize[i][isDual]--;
-		    else if  (isDual) {
-			bufsize[i][isDual]--;
-			if ( (smpi2D->getProcCoord(i)!=0) && (smpi2D->getProcCoord(i)!=smpi2D->getNbrOfProcs(i)-1) ) 
-			    bufsize[i][isDual]--;
-		    }
-                
-		} // if ( smpi2D->getNbrOfProcs(i)!=1 )
-	    } // for (int isDual=0 ; isDual
-	} // for (unsigned int i=0 ; i<nDim_field 
-    } // End else (if MPI)
-    
     
 }//END constructor Electromagn2D
 

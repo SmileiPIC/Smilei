@@ -36,7 +36,7 @@ public:
         for (unsigned int impi = 0 ; impi < smpi->getRank() ; impi++) {
             firstpatch += smpi->patch_count[impi];
         }
-        
+	std::cout << smpi->getRank() << ", nPatch = " << npatches << " - starting at " << firstpatch << std::endl;        
 
 	// Modified to test Patch integration
 
