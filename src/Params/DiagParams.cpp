@@ -74,8 +74,10 @@ void DiagParams::initScalars(Diagnostic* diags, PicParams& params, InputData &if
         diags->scalars.tmax = params.sim_time;
     }
     else {
-        diags->scalars.tmin = scalar_time_range[0]*params.conv_fac;
-        diags->scalars.tmax = scalar_time_range[1]*params.conv_fac;
+/*MG150609        diags->scalars.tmin = scalar_time_range[0]*params.conv_fac;
+        diags->scalars.tmax = scalar_time_range[1]*params.conv_fac;*/
+        diags->scalars.tmin = scalar_time_range[0];
+        diags->scalars.tmax = scalar_time_range[1];
     }
     
     diags->scalars.precision=10;
@@ -131,8 +133,10 @@ void DiagParams::initProbes(Diagnostic* diags, PicParams& params, InputData &ifi
             tmin = 0.;
             tmax = params.sim_time;
         } else {
-            tmin = time_range[0]*params.conv_fac;
-            tmax = time_range[1]*params.conv_fac;
+            /* MG150609 tmin = time_range[0]*params.conv_fac;
+            tmax = time_range[1]*params.conv_fac;*/
+            tmin = time_range[0];
+            tmax = time_range[1];
         }
         diags->probes.tmin.push_back(tmin);
         diags->probes.tmax.push_back(tmax);
@@ -164,25 +168,25 @@ void DiagParams::initProbes(Diagnostic* diags, PicParams& params, InputData &ifi
         // (positions of the vertices of the grid)
         vector< vector<double> > allPos;
         vector<double> pos;
-        ifile.extract("pos",pos,"DiagProbe",n_probe);
-        for (unsigned int i=0; i<pos.size(); i++)
-            pos[i] *= params.conv_fac;
+        ifile.extract("pos",pos,"DiagProbe",n_probe); //MG150609 ALL OF MODIFICATION BELOW VVVV
+        /*for (unsigned int i=0; i<pos.size(); i++)
+            pos[i] *= params.conv_fac;*/
         if (pos.size()>0) allPos.push_back(pos);
         
         ifile.extract("pos_first",pos,"DiagProbe",n_probe);
-        for (unsigned int i=0; i<pos.size(); i++)
-            pos[i] *= params.conv_fac;
+        /*for (unsigned int i=0; i<pos.size(); i++)
+            pos[i] *= params.conv_fac;*/
         if (pos.size()>0) allPos.push_back(pos);
         
         ifile.extract("pos_second",pos,"DiagProbe",n_probe);
-        for (unsigned int i=0; i<pos.size(); i++)
-            pos[i] *= params.conv_fac;
+        /*for (unsigned int i=0; i<pos.size(); i++)
+            pos[i] *= params.conv_fac;*/
         if (pos.size()>0) allPos.push_back(pos);
         
         ifile.extract("pos_third",pos,"DiagProbe",n_probe);
-        for (unsigned int i=0; i<pos.size(); i++)
-            pos[i] *= params.conv_fac;
-        if (pos.size()>0) allPos.push_back(pos);
+        /*for (unsigned int i=0; i<pos.size(); i++)
+            pos[i] *= params.conv_fac;*/
+        if (pos.size()>0) allPos.push_back(pos);    //MG150609 ALL OF MODIFICATION ABOVE AAAAAA
         
         
         // Calculate the total number of points in the grid
@@ -328,8 +332,10 @@ void DiagParams::initPhases(Diagnostic* diags, PicParams& params, InputData &ifi
             my_phase.tmax = params.sim_time;
         }
         else {
-            my_phase.tmin = time_range[0]*params.conv_fac;
-            my_phase.tmax = time_range[1]*params.conv_fac;
+            /*MG150609 my_phase.tmin = time_range[0]*params.conv_fac;
+            my_phase.tmax = time_range[1]*params.conv_fac;*/
+            my_phase.tmin = time_range[0];
+            my_phase.tmax = time_range[1];
         }
         
         
@@ -349,8 +355,8 @@ void DiagParams::initPhases(Diagnostic* diags, PicParams& params, InputData &ifi
         ifile.extract("pos_max",my_phase.pos_max,"DiagPhase",n_phase);
         ifile.extract("pos_num",my_phase.pos_num,"DiagPhase",n_phase);
         for (unsigned int i=0; i<my_phase.pos_min.size(); i++) {
-            my_phase.pos_min[i] *= params.conv_fac;
-            my_phase.pos_max[i] *= params.conv_fac;
+            /*MG150609 my_phase.pos_min[i] *= params.conv_fac;
+            my_phase.pos_max[i] *= params.conv_fac;*/
             if (my_phase.pos_min[i]==my_phase.pos_max[i]) {
                 my_phase.pos_min[i] = 0.0;
                 my_phase.pos_max[i] = params.sim_length[i];
@@ -616,11 +622,11 @@ void DiagParams::initParticles(Diagnostic* diags, PicParams& params, InputData &
                     ERROR("Diag Particles #" << n_diag_particles << ", axis #" << iaxis << ": Third item must be a double (axis max)");
                 }
                 
-                // If the axis is spatial, then we need to apply the conv_fac
+/*MG150609                // If the axis is spatial, then we need to apply the conv_fac
                 if (tmpAxis->type=="x" || tmpAxis->type=="y" || tmpAxis->type=="z") {
                     tmpAxis->min *= params.conv_fac;
                     tmpAxis->max *= params.conv_fac;
-                }
+                }*/
                 
                 if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 3),tmpAxis->nbins)) {
                     ERROR("Diag Particles #" << n_diag_particles << ", axis #" << iaxis << ": Fourth item must be an int (number of bins)");

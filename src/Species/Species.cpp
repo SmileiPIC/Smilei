@@ -47,7 +47,7 @@ temperatureProfile(3,NULL),
 ndim(params.nDim_particle),
 min_loc(smpi->getDomainLocalMin(0))
 {
-    densityProfile        = new Profile(species_param.dens_profile  , params.geometry, params.conv_fac);
+/*MG150609    densityProfile        = new Profile(species_param.dens_profile  , params.geometry, params.conv_fac);
     
     velocityProfile[0]    = new Profile(species_param.mvel_x_profile, params.geometry, params.conv_fac);
     velocityProfile[1]    = new Profile(species_param.mvel_y_profile, params.geometry, params.conv_fac);
@@ -55,7 +55,17 @@ min_loc(smpi->getDomainLocalMin(0))
     
     temperatureProfile[0] = new Profile(species_param.temp_x_profile, params.geometry, params.conv_fac);
     temperatureProfile[1] = new Profile(species_param.temp_y_profile, params.geometry, params.conv_fac);
-    temperatureProfile[2] = new Profile(species_param.temp_z_profile, params.geometry, params.conv_fac);
+    temperatureProfile[2] = new Profile(species_param.temp_z_profile, params.geometry, params.conv_fac);*/
+    
+    densityProfile        = new Profile(species_param.dens_profile  , params.geometry);
+    
+    velocityProfile[0]    = new Profile(species_param.mvel_x_profile, params.geometry);
+    velocityProfile[1]    = new Profile(species_param.mvel_y_profile, params.geometry);
+    velocityProfile[2]    = new Profile(species_param.mvel_z_profile, params.geometry);
+    
+    temperatureProfile[0] = new Profile(species_param.temp_x_profile, params.geometry);
+    temperatureProfile[1] = new Profile(species_param.temp_y_profile, params.geometry);
+    temperatureProfile[2] = new Profile(species_param.temp_z_profile, params.geometry);
     
     // -------------------
     // Variable definition

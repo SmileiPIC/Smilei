@@ -41,7 +41,7 @@ PicParams::PicParams(InputData &ifile) {
     // Normalisation & units
     // ---------------------
     
-    ifile.extract("sim_units",sim_units);
+/*MG150609    ifile.extract("sim_units",sim_units);
     if (sim_units == "normalized") {
         conv_fac = 1.0;
     }
@@ -52,6 +52,7 @@ PicParams::PicParams(InputData &ifile) {
     else {
         ERROR("Simulation units sim_units" << sim_units << " not specified or inexisting");
     }
+ */
     
     wavelength_SI = 0.;
     ifile.extract("wavelength_SI",wavelength_SI);
@@ -61,13 +62,14 @@ PicParams::PicParams(InputData &ifile) {
     // Simulation box info
     // -------------------
     
+    // geometry of the simulation
     ifile.extract("dim", geometry);
     if (geometry!="1d3v" && geometry!="2d3v") {
         ERROR("Geometry " << geometry << " does not exist");
     }
     setDimensions();
     
-    
+    // interpolation order
     ifile.extract("interpolation_order", interpolation_order);
     if (interpolation_order!=2 && interpolation_order!=4) {
         ERROR("Interpolation/projection order " << interpolation_order << " not defined");
@@ -76,17 +78,18 @@ PicParams::PicParams(InputData &ifile) {
         ERROR("Interpolation/projection order " << interpolation_order << " not yet defined in 2D");
     }
     
-    
+    //!\todo (MG to JD) Please check if this parameter should still appear here
     // Disabled, not compatible for now with particles sort
     // if ( !ifile.extract("exchange_particles_each", exchange_particles_each) )
-    //!\todo (MG to JD) Please check if this parameter should still appear here
     exchange_particles_each = 1;
     
     
-    // definition or res_time & res_space
+    // TIME & SPACE RESOLUTION/TIME-STEPS
+    
+/*MG150609    // definition or res_time & res_space
     bool defbyRes = ifile.extract("res_time", res_time);
     ifile.extract("res_space",res_space);
-    if ((res_space.size()!=0)&&(res_space.size()!=nDim_field)) {
+    if ( (res_space.size()!=0) && (res_space.size()!=nDim_field) ) {
         ERROR("Dimension of res_space ("<< res_space.size() << ") != " << nDim_field << " for geometry " << geometry);
     }
     
@@ -103,23 +106,38 @@ PicParams::PicParams(InputData &ifile) {
             res_space[i] = 1.0/cell_length[i];
         }
     }
-    
-    // check that res_space has the good dimension
+*/
+    // reads timestep & cell_length
+    ifile.extract("timestep", timestep);
+    res_time = 1.0/timestep;
+    ifile.extract("cell_length",cell_length);
+    if (cell_length.size()!=nDim_field) {
+        ERROR("Dimension of cell_length ("<< cell_length.size() << ") != " << nDim_field << " for geometry " << geometry);
+    }
+    res_space.resize(nDim_field);
+    for (unsigned int i=0;i<nDim_field;i++){
+        res_space[i] = 1.0/cell_length[i];
+    }
+
+/*MG150609    // check that res_space has the good dimension
     if (res_space.size()!=nDim_field) {
         ERROR("Dimension of res_space: "<< res_space.size() << " != " << nDim_field << " for geometry " << geometry);
-    }
+    }*/
     
     time_fields_frozen=0.0;
     ifile.extract("time_fields_frozen", time_fields_frozen);
     
-    
     // testing the CFL condition
-    double res_space2 = 0.0;
-    for (unsigned int i=0; i<res_space.size(); i++) {
-        res_space2 += (res_space[i]*res_space[i]);
+    //!\todo (MG) CFL cond. depends on the Maxwell solv. ==> Move this computation to the ElectroMagn Solver
+    double res_space2=0;
+    for (unsigned int i=0; i<nDim_field; i++) {
+        res_space2 += res_space[i]*res_space[i];
     }
-    if ( (sqrt(res_space2) > res_time) || (res_time < *min_element(res_space.begin(),res_space.end())) ) {
-        WARNING("Possible CFL problem: res_time = "<<res_time<<" < "<<*min_element(res_space.begin(),res_space.end()));
+    double dtmin=1.0/sqrt(res_space2);
+    if ( timestep>dtmin ) {
+        ERROR("Possible CFL problem: timestep=" << timestep << " should be smaller than " << dtmin);
+    } else {
+        MESSAGE(1,"timestep \sim " << timestep/dtmin << " * CFL");
     }
     
     
@@ -402,14 +420,15 @@ void PicParams::compute()
     n_time   = (int)(res_time*sim_time);
     
     // simulation time & time-step value
-    timestep = conv_fac/res_time;
+    timestep = 1.0/res_time;//*MG150609 conv_fac/res_time;
     sim_time = (double)(n_time) * timestep;
     
-    // time during which Maxwell's eqs. are not solved (cst fields)
+/*MG150609   // time during which Maxwell's eqs. are not solved (cst fields)
     time_fields_frozen *= conv_fac;
     
     // time after which the moving-window is turned on
     t_move_win *= conv_fac;
+ */
     
     
     // grid/cell-related parameters
@@ -421,8 +440,12 @@ void PicParams::compute()
         
         // compute number of cells & normalized lengths
         for (unsigned int i=0; i<nDim_field; i++) {
-            cell_length[i] = conv_fac/res_space[i];
+            /*MG150609cell_length[i] = conv_fac/res_space[i];
             sim_length[i] *= conv_fac;
+            n_space[i]     = round(sim_length[i]/cell_length[i]);
+            sim_length[i]  = (double)(n_space[i])*cell_length[i]; // ensure that nspace = sim_length/cell_length
+            cell_volume   *= cell_length[i];*/
+            cell_length[i] = 1.0/res_space[i];
             n_space[i]     = round(sim_length[i]/cell_length[i]);
             sim_length[i]  = (double)(n_space[i])*cell_length[i]; // ensure that nspace = sim_length/cell_length
             cell_volume   *= cell_length[i];
@@ -480,7 +503,7 @@ void PicParams::computeSpecies()
         SpeciesStructure * s = &(species_param[ispec]);
         
         // time during which particles are frozen
-        s->time_frozen *= conv_fac;
+        //*MG150609s->time_frozen *= conv_fac;
         
         vector<ProfileStructure*> profiles;
         vector<string> prefixes;
@@ -494,7 +517,7 @@ void PicParams::computeSpecies()
         
         for (unsigned int iprof=0; iprof<profiles.size(); iprof++) {
             
-            if (profiles[iprof]->profile=="python") continue;
+/*MG150609            if (profiles[iprof]->profile=="python") continue;
             
             // normalizing the vacuum lengths
             for (unsigned int i=0; i<profiles[iprof]->vacuum_length.size(); i++)
@@ -513,7 +536,7 @@ void PicParams::computeSpecies()
                 for (unsigned int i=0; i<profiles[iprof]->length_params_z.size(); i++)
                     profiles[iprof]->length_params_z[i] *= conv_fac;
             }
-            
+*/
             
             // -----------------------------------------------------
             // Defining default values for species-lengths

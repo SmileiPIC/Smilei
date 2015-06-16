@@ -5,8 +5,17 @@ using namespace std;
 
 // Default constructor.
 // Applies to profiles for species (density, velocity and temperature profiles)
+/*MG150609
 Profile::Profile(ProfileStructure & pp, string geometry, double convfac) :
 conv_fac(convfac),
+profile_param(pp),
+factor(1.)
+{
+    // Launch the initialization
+    init(profile_param, geometry);
+    
+}*/
+Profile::Profile(ProfileStructure & pp, string geometry) :
 profile_param(pp),
 factor(1.)
 {
@@ -18,8 +27,22 @@ factor(1.)
 
 // Special constructor.
 // Applies to external field profiles
-Profile::Profile(ExtFieldStructure & pp, string geometry, double convfac) :
+/*MG150609 Profile::Profile(ExtFieldStructure & pp, string geometry, double convfac) :
 conv_fac(convfac)
+{
+    profile_param = static_cast<ProfileStructure> (pp);
+    
+    // define the factor
+    factor = pp.magnitude;
+    // define the vacuum_length as zeros
+    profile_param.vacuum_length.resize(dim);
+    for( int i=0; i<dim; i++) profile_param.vacuum_length[i]=0.;
+    
+    // Launch the initialization
+    init(profile_param, geometry);
+    
+}*/
+Profile::Profile(ExtFieldStructure & pp, string geometry)
 {
     profile_param = static_cast<ProfileStructure> (pp);
     
@@ -141,7 +164,7 @@ void Profile::init(ProfileStructure & pp, string geometry)
     // Note: Polygon applies only to X
     else if (profile_param.profile=="polygonal") {
         if ( profile_param.length_params_x.size() != profile_param.double_params.size() ) {
-            ERROR("Incorrect definition of the polygonal profile, size of ****_length_x & ****_dbl_params do not match");
+            ERROR("Incorrect definition of the polygonal profile, size of ***_length_x & ***_dbl_params do not match");
         }
     }
     
@@ -169,7 +192,7 @@ void Profile::init(ProfileStructure & pp, string geometry)
     
     
     else if (profile_param.profile=="python") {
-        DEBUG("it's a python profile");
+        DEBUG("Using a python profile");
     }
     
     
@@ -406,9 +429,11 @@ double Profile::valueAt (vector<double> x_cell) {
     // python profile
     else if (profile_param.profile=="python") {
         if        ( dim == 1 ) {
-            return PyTools::runPyFunction(profile_param.py_profile, x_cell[0]/conv_fac);
+            //*MG150609 return PyTools::runPyFunction(profile_param.py_profile, x_cell[0]/conv_fac);
+            return PyTools::runPyFunction(profile_param.py_profile, x_cell[0]);
         } else if ( dim == 2 ) {
-            return PyTools::runPyFunction(profile_param.py_profile, x_cell[0]/conv_fac, x_cell[1]/conv_fac);
+            //*MG150609 return PyTools::runPyFunction(profile_param.py_profile, x_cell[0]/conv_fac, x_cell[1]/conv_fac);
+            return PyTools::runPyFunction(profile_param.py_profile, x_cell[0], x_cell[1]);
         }
     }
     

@@ -18,10 +18,10 @@ class Profile
 {
 public:
     //! Default constructor (for species profiles)
-    Profile(ProfileStructure& , std::string, double);
+    Profile(ProfileStructure& , std::string);
     
     //! Alternate constructor (for external fields profiles)
-    Profile(ExtFieldStructure&, std::string, double);
+    Profile(ExtFieldStructure&, std::string);
     
     //! Default destructor
     ~Profile();
@@ -35,7 +35,7 @@ public:
 private:
     int dim;
     double factor;
-    double conv_fac; // taken from PicParams
+//*MG150609    double conv_fac; // taken from PicParams
     
 protected:
     ProfileStructure  profile_param;

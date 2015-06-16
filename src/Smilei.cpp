@@ -291,7 +291,7 @@ int main (int argc, char* argv[])
         //double timElapsed=smpiData->time_seconds();
         if ( (itime % Diags.params.print_every == 0) &&  ( smpi->isMaster() ) ) {
             
-            MESSAGE(1,"t = "          << setw(7) << setprecision(2)   << time_dual/params.conv_fac
+            MESSAGE(1,"t = "          << setw(7) << setprecision(2)   << time_dual//*MG150609/params.conv_fac
                     << "   it = "     << setw(log10(params.n_time)+1) << itime  << "/" << params.n_time
                     << "   sec = "    << setw(7) << setprecision(2)   << timer[0].getTime()
                     << "   Utot = "   << scientific << setprecision(4)<< Diags.getScalar("Utot")
@@ -425,7 +425,8 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     //                      HERE ENDS THE PIC LOOP
     // ------------------------------------------------------------------
-    MESSAGE("End time loop, time dual = " << time_dual/params.conv_fac);
+//*MG150609    MESSAGE("End time loop, time dual = " << time_dual/params.conv_fac);
+    MESSAGE("End time loop, time dual = " << time_dual);
     MESSAGE("-----------------------------------------------------------------------------------------------------");
     
     //double timElapsed=smpiData->time_seconds();

@@ -5,8 +5,8 @@
 using namespace std;
 
 ExtFieldParams::ExtFieldParams(PicParams& params, InputData &ifile) :
-geometry(params.geometry),
-conv_fac(params.conv_fac)
+geometry(params.geometry)/*MG150609,
+conv_fac(params.conv_fac)*/
 {
 
     // -----------------
@@ -38,12 +38,12 @@ conv_fac(params.conv_fac)
             ifile.extract("length_params_y",tmpExtField.length_params_y,"ExtField",n_extfield);
             ifile.extract("length_params_z",tmpExtField.length_params_z,"ExtField",n_extfield);
             
-            transform(tmpExtField.length_params_x.begin(), tmpExtField.length_params_x.end(), tmpExtField.length_params_x.begin(),
+            /*MG150609transform(tmpExtField.length_params_x.begin(), tmpExtField.length_params_x.end(), tmpExtField.length_params_x.begin(),
                       bind1st(multiplies<double>(),params.conv_fac));
             transform(tmpExtField.length_params_y.begin(), tmpExtField.length_params_y.end(), tmpExtField.length_params_y.begin(),
                       bind1st(multiplies<double>(),params.conv_fac));
             transform(tmpExtField.length_params_z.begin(), tmpExtField.length_params_z.end(), tmpExtField.length_params_z.begin(),
-                      bind1st(multiplies<double>(),params.conv_fac));
+                      bind1st(multiplies<double>(),params.conv_fac));*/
         }
         structs.push_back(tmpExtField);
     }

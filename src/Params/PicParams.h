@@ -175,11 +175,11 @@ public:
     //! normalization (used in the input files only)
     std::string sim_units;
     
-    //! conversion factor (=1 when normalized units, 2\pi when wavelength-related normalisations)
+/*MG150609    //! conversion factor (=1 when normalized units, 2\pi when wavelength-related normalisations)
     double conv_fac;
-
+*/
     
-    /*! \brief Time resolution.
+    /*! \brief Time resolution
      Number of timesteps in \f$ 2\pi/\omega_N \f$ where \f$ \omega_N \f$ is the normalization (plasma or laser) frequency
      */
     double res_time;
@@ -187,7 +187,7 @@ public:
     //! simulation exit time in units of \f$ 2\pi/\omega_N \f$
     double sim_time;
     
-    /*! \brief Space resolution.
+    /*! \brief Space resolution
      Number of cells in every direction in \f$ 2\pi/k_N \f$ where \f$ k_N=\omega_N/c \f$ is the normalization wavenumber
      */
     std::vector<double> res_space;
