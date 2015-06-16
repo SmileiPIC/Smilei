@@ -221,6 +221,8 @@ class VectorPatch {
     void computeGlobalDiags(int timestep);
     void computeScalarsDiags(int timestep);
 
+    void clear() {patches_.clear();}
+
     std::vector<Patch*> patches_;
  private :
     

@@ -130,9 +130,6 @@ int main (int argc, char* argv[])
     
     // vector of Species (virtual)
     vector<Species*> vecSpecies(0);
-#ifndef _PATCH
-    vecSpecies = SpeciesFactory::createVector(params, smpi, NULL);
- #endif
     // ------------------------------------------------------------------------
     // Initialize the simulation times time_prim at n=0 and time_dual at n=+1/2
     // ------------------------------------------------------------------------
@@ -170,26 +167,12 @@ int main (int argc, char* argv[])
     
     // projection operator (virtual)
     Projector* Proj = NULL;
-#ifndef _PATCH
-    // object containing the electromagnetic fields (virtual)
-    EMfields = ElectroMagnFactory::create(params, laser_params, smpi, NULL);
-    
-    // interpolation operator (virtual)
-    Interp = InterpolatorFactory::create(params, smpi, NULL);
-    
-    // projection operator (virtual)
-    Proj = ProjectorFactory::create(params, smpi, NULL);
-#endif
     
     // Create diagnostics
-    Diagnostic *Diags = NULL;//new Diagnostic(params,diag_params, smpi);    
-   
-    smpi->barrier();
-    
+    Diagnostic *Diags = NULL;
 
-#ifdef _PATCH
+    
     VectorPatch vecPatches = PatchesFactory::createVector(params, diag_params, laser_params, smpi);
-#endif
 
     
     // reading from dumped file the restart values
@@ -208,39 +191,22 @@ int main (int argc, char* argv[])
         // Initialize the electromagnetic fields
         // -----------------------------------
         // Init rho and J by projecting all particles of subdomain
-#ifndef _PATCH
-        EMfields->restartRhoJs();
-        // Very first iteration used to initialize fields
-        for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-            vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow, diag_flag);
-	    for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
-                smpi->exchangeParticles(vecSpecies[ispec], ispec, params, 0, iDim);
-            
-            vecSpecies[ispec]->sort_part();
-        }
-	
-	EMfields->computeTotalRhoJs(params.clrw); //Compute currents per species from unsynchronized patches. Useful only for diags.
-        for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) smpi->sumRhoJs(EMfields, ispec, true);//Synchronize MPI global arrays per species
-        EMfields->computeTotalRhoJ(); //Compute currents from global Rho_s and J_s.
-        diag_flag = 0;
-
-#else
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 	    vecPatches(ipatch)->EMfields->restartRhoJs();
-	    vecPatches(ipatch)->dynamics(time_dual, smpi, params, simWindow, diag_flag);
+	    vecPatches(ipatch)->dynamics(time_dual, smpi, params, simWindow, diag_flag); //include test
 	}
 	for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-	    if ( vecPatches(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
-		vecPatches.exchangeParticles(ispec, params, smpi );
+	    if ( vecPatches(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ) {
+		vecPatches.exchangeParticles(ispec, params, smpi ); // Included sort_part
 	    }
 	}
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	    vecPatches(ipatch)->EMfields->computeTotalRhoJ();
+	    vecPatches(ipatch)->EMfields->computeTotalRhoJ(); // Per species in global, Attention if output -> Sync / per species fields
 	}
 	for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-	    vecPatches.sumRhoJ( ispec ); 
+	    vecPatches.sumRhoJ( ispec ); // MPI
 	}
-#endif
+        diag_flag = 0;
 
  
 #ifdef _TOBEPATCHED
@@ -272,12 +238,8 @@ int main (int argc, char* argv[])
         //// temporary particle dump at time 0
         //sio->writePlasma( vecSpecies, 0., smpi );
 
-#ifdef _PATCH
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->EMfields->restartRhoJ();
-#else
-	EMfields->restartRhoJ();
-#endif
     }
 
 	
@@ -324,12 +286,13 @@ int main (int argc, char* argv[])
             MESSAGE(1,"t = "          << setw(7) << setprecision(2)   << time_dual/params.conv_fac
                     << "   it = "       << setw(log10(params.n_time)+1) << itime  << "/" << params.n_time
                     << "   sec = "      << setw(7) << setprecision(2)   << timer[0].getTime() 
-                    << "   E = "        << std::scientific << setprecision(4)<< vecPatches(0)->Diags->getScalar("Etot") 
-		    << "   Epart = "        << std::scientific << setprecision(4)<< vecPatches(0)->Diags->getScalar("Eparticles")
-		    << "   EFields = "        << std::scientific << setprecision(4)<< vecPatches(0)->Diags->getScalar("EFields")
-		    << "   Elost = "        << std::scientific << setprecision(4)<< vecPatches(0)->Diags->getScalar("Elost") 
-                    << "   E_bal(%) = " << setw(6) << std::fixed << setprecision(2) 
-		    << 100.0*vecPatches(0)->Diags->getScalar("Ebal_norm") << std::scientific << setprecision(4));
+                    << "   E = "        << std::scientific << setprecision(8)<< vecPatches(0)->Diags->getScalar("Etot") 
+		    << "   Epart = "        << std::scientific << setprecision(8)<< vecPatches(0)->Diags->getScalar("Eparticles")
+		    << "   EFields = "        << std::scientific << setprecision(8)<< vecPatches(0)->Diags->getScalar("EFields")
+//		    << "   Elost = "        << std::scientific << setprecision(4)<< vecPatches(0)->Diags->getScalar("Elost") 
+//                  << "   E_bal(%) = " << setw(6) << std::fixed << setprecision(2) 
+//		    << 100.0*vecPatches(0)->Diags->getScalar("Ebal_norm") << std::scientific << setprecision(4)
+		    );
 	    if (simWindow) 
 		MESSAGE(1, "\t\t MW Elost = " << std::scientific << setprecision(4)<< Diags->getScalar("Emw_lost")
 			<< "     MW Eadd  = " << std::scientific << setprecision(4)<< Diags->getScalar("Emw_part")
@@ -351,89 +314,49 @@ int main (int argc, char* argv[])
 	/*******************************************/
 	/********** Move particles *****************/
 	/*******************************************/
-        timer[1].restart();
 #pragma omp parallel shared (EMfields,time_dual,vecSpecies,smpi,params)
         {
-#ifdef _PATCH
-            for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-	      vecPatches(ipatch)->EMfields->restartRhoJ();
+	    timer[1].restart();
             for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	      vecPatches(ipatch)->EMfields->restartRhoJs();
-#else
-	    EMfields->restartRhoJ();
-#endif
+
             int tid(0);
 #ifdef _OMP
             tid = omp_get_thread_num();
 #endif
 
-#ifdef _PATCH
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-		vecPatches(ipatch)->dynamics(time_dual, smpi, params, simWindow, diag_flag);
+		vecPatches(ipatch)->dynamics(time_dual, smpi, params, simWindow, diag_flag); // include test
 	    }
 
 	    // Inter Patch exchange
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 		if ( vecPatches(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
-		    vecPatches.exchangeParticles(ispec, params, smpi );
-		}
-	    }
-	    //cout << "Particles have moved" << endl;
-#else
-            for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-                    if ( vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag ){
-                        vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow, diag_flag);
-                    } 
-            }
-	    // Inter MPI exchange
-            for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-                if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
-		    // Loop on dims to manage exchange in corners
-		    for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ ) {
-			smpi->exchangeParticles(vecSpecies[ispec], ispec, params, tid, iDim);
-		    }
-
-                        #pragma omp barrier
-                        vecSpecies[ispec]->sort_part();
+		    vecPatches.exchangeParticles(ispec, params, smpi ); // Included sort_part
                         if (itime%200 == 0) {
                             #pragma omp master
                             {
-                                vecSpecies[ispec]->count_sort_part(params);
+				for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+				    vecPatches(ipatch)->vecSpecies[ispec]->count_sort_part(params);
                             }
                         }
-                }
-            }
-#endif
-        timer[1].update();
+		}
+	    }
+
+	    timer[1].update();
 
 
 	/*******************************************/
 	/*********** Sum densities *****************/
 	/*******************************************/
         timer[4].restart();
-#ifdef _PATCH
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	    vecPatches(ipatch)->EMfields->computeTotalRhoJ(); // Attention if output -> Sync / per species fields
+	    // if  (diag_flag) à introduire
+	    vecPatches(ipatch)->EMfields->computeTotalRhoJ(); // Per species in global, Attention if output -> Sync / per species fields
 	}
 	for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-	    vecPatches.sumRhoJ( ispec ); 
+	    vecPatches.sumRhoJ( ispec ); // MPI
 	}
-
-#else
-        if  (diag_flag) {
-            EMfields->computeTotalRhoJs(params.clrw); //Compute global arrays J_s from patches and restack everything on patch of ispec 0.
-            #pragma omp master
-            {
-            for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) smpi->sumRhoJs(EMfields, ispec, true);//Synchronize MPI global Rho_s and J_s.
-            }
-        }
-        EMfields->synchronizePatch(params.clrw); //Synchronize patches of local MPI domain and copy values on global Rho and J.
-        #pragma omp master
-        {
-            smpi->sumRhoJ( EMfields );        //Synchronize  global Rho and J.
-        }
-        EMfields->finalizePatch(params.clrw); //Copy values back into the patches.
-#endif 
         timer[4].update();
 
 
@@ -443,9 +366,6 @@ int main (int argc, char* argv[])
         
         // solve Maxwell's equations
         timer[2].restart();
-#ifndef _PATCH
-        EMfields->solveMaxwell(itime, time_dual, smpi, params, simWindow);
-#else
 	// saving magnetic fields (to compute centered fields used in the particle pusher)
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->EMfields->saveMagneticFields();
@@ -457,6 +377,7 @@ int main (int argc, char* argv[])
 	    // Exchange Ex_, Ey_, Ez_
 	    vecPatches.exchangeE();
 	}// end single
+
 	// Compute Bx_, By_, Bz_
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->EMfields->solveMaxwellFaraday();
@@ -470,10 +391,9 @@ int main (int argc, char* argv[])
 	// Compute Bx_m, By_m, Bz_m
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->EMfields->centerMagneticFields();
-	//} // end parallel
-#endif
 
         timer[2].update();
+
         } //End omp parallel region
         
 #ifdef _TOBEPATCHED
@@ -487,8 +407,8 @@ int main (int argc, char* argv[])
         timer[3].restart();
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->Diags->runAllDiags(itime, vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, vecPatches(ipatch)->Interp, smpi);
-	vecPatches.computeGlobalDiags(itime);
-	smpi->computeGlobalDiags( vecPatches(0)->Diags, itime);
+	vecPatches.computeGlobalDiags(itime); // Only scalars reduction for now 
+	smpi->computeGlobalDiags( vecPatches(0)->Diags, itime); // Only scalars reduction for now 
 	timer[3].update();
 
 #ifdef _TOBEPATCHED
@@ -504,11 +424,6 @@ int main (int argc, char* argv[])
             if ((diag_params.avgfieldDump_every != 0) && (itime % diag_params.avgfieldDump_every == 0))
                 sio->writeAvgFieldsSingleFileTime( EMfields, itime );
         
-#ifdef _IO_PARTICLE
-        // temporary particles dump (1 HDF5 file per process)
-        if  ((diag_params.particleDump_every != 0) && (itime % diag_params.particleDump_every == 0))
-            sio->writePlasma( vecSpecies, time_dual, smpi );
-#endif
         if  (smpi->isMaster()){
             if (!todump && sio->dump(EMfields, itime, MPI_Wtime() - starttime, vecSpecies, simWindow, params, input_data) ){
                 // Send the action to perform at next iteration
@@ -589,9 +504,14 @@ int main (int argc, char* argv[])
     // ------------------------------
     //  Cleanup & End the simulation
     // ------------------------------
-    delete Proj;
-    delete Interp;
-    delete EMfields;
+
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) delete vecPatches(ipatch);
+    vecPatches.clear();
+
+
+    if (Proj) delete Proj;
+    if (Interp) delete Interp;
+    if (EMfields) delete EMfields;
     if (Diags) delete Diags;
     
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];

@@ -35,6 +35,11 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
             mi[0] = m0;
             mi[1] = m1;
             generalhilbertindexinv(m0, m1, &Pcoordinates[0], &Pcoordinates[1], hindex);
+
+	    /////////////////////////////////////
+	    //  Define local domain
+	    /////////////////////////////////////
+
 	    MPI_neighborhood_.resize(9);
 	    patch_neighborhood_.resize(9);
         }

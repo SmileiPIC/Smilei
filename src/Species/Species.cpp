@@ -434,8 +434,6 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     //! buffers for currents and charge
     double *b_Jx,*b_Jy,*b_Jz,*b_rho;
 
-    double *nb_Jx,*nb_Jy,*nb_Jz,*nb_rho;
-   
     // Reset list of particles to exchange
     int tid(0);
     double gf = 1.0;
@@ -469,17 +467,6 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 
             memset( &(b_Jx[0]), 0, 4*size_proj_buffer*sizeof(double)); 
 
-#ifdef _PATCH_V0 
-             //Add all species contribution on buffer 0 except if we want diags. In that case all species write on a different buffer.
-             nb_rho = EMfields->nrho_s[diag_flag*ispec][ibin];
-             nb_Jx  = EMfields->nJx_s[diag_flag*ispec][ibin] ;
-             nb_Jy  = EMfields->nJy_s[diag_flag*ispec][ibin] ;
-             nb_Jz  = EMfields->nJz_s[diag_flag*ispec][ibin] ;
-            
-            // reset all current-buffers
-            //memset( nb_rho, 0, 4*size_proj_buffer*sizeof(double)); 
-#endif
-
             for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
 				
                 // Interpolate the fields at the particle position
@@ -509,15 +496,8 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 		    nrj_lost_per_thd[tid] += ener_iPart;
                 }
 
+		// if (diag_flag == 0) else no rho
 		(*Proj)(b_Jx , b_Jy , b_Jz , b_rho , *particles,  iPart, gf, ibin*clrw, b_lastdim);
-
-#ifdef _PATCH_V0 
-                if (diag_flag == 0){
-                (*Proj)(nb_Jx, nb_Jy, nb_Jz, *particles, iPart, gf, ibin*clrw, b_lastdim);
-                } else { 
-                (*Proj)(nb_Jx, nb_Jy, nb_Jz, nb_rho, *particles, iPart, gf, ibin*clrw, b_lastdim);
-                }
-#endif
 
             }//iPart
 
@@ -594,11 +574,13 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     }
     else { // immobile particle (at the moment only project density)
         if (diag_flag == 1){
+
+	    // *4 accounts for Jy, Jz and rho. * nthds accounts for each thread.
+	    b_rho = (double *) malloc(size_proj_buffer * sizeof(double));
+
             #pragma omp for schedule(static) nowait
             for (ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
-                 nb_rho = EMfields->nrho_s[diag_flag*ispec][ibin];
-                // reset all current-buffers
-                //memset( nb_rho, 0, size_proj_buffer*sizeof(double)); 
+		 memset( &(b_rho[0]), 0, size_proj_buffer*sizeof(double)); 
 
                 for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
                     //Update position_old because it is required for the Projection.
@@ -606,9 +588,10 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                         (*particles).position_old(i, iPart)  = (*particles).position(i, iPart);
                     }
 
-                    (*Proj)(nb_rho, (*particles), iPart, ibin*clrw, b_lastdim);
+                    (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_lastdim);
                 } //End loop on particles
             }//End loop on bins
+	    free(b_rho);
         }
     }//END if time vs. time_frozen
 #pragma omp barrier

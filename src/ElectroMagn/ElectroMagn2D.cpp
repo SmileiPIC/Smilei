@@ -604,7 +604,8 @@ void ElectroMagn2D::saveMagneticFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn2D::solveMaxwellAmpere()
 {
-#ifdef _PATCH
+    // OMP à réintroduire
+
     // Static-cast of the fields
     Field2D* Ex2D = static_cast<Field2D*>(Ex_);
     Field2D* Ey2D = static_cast<Field2D*>(Ey_);
@@ -643,79 +644,6 @@ void ElectroMagn2D::solveMaxwellAmpere()
     cout << "\tEy = "  << Ey_->norm() << endl;
 #endif
 
-#else
-
-    unsigned int iloc,ibin;
-    // Static-cast of the fields
-    Field2D* Ex2D = static_cast<Field2D*>(Ex_);
-    Field2D* Ey2D = static_cast<Field2D*>(Ey_);
-    Field2D* Ez2D = static_cast<Field2D*>(Ez_);
-    Field2D* Bx2D = static_cast<Field2D*>(Bx_);
-    Field2D* By2D = static_cast<Field2D*>(By_);
-    Field2D* Bz2D = static_cast<Field2D*>(Bz_);
-    //Field2D* Jx2D = static_cast<Field2D*>(Jx_);
-    //Field2D* Jy2D = static_cast<Field2D*>(Jy_);
-    //Field2D* Jz2D = static_cast<Field2D*>(Jz_);
-    
-    // Electric field Ex^(d,p)
-#pragma omp for schedule(static)
-    for (ibin=0 ; ibin<nbin-1 ; ibin++) {
-        for (unsigned int i=0 ; i<clrw ; i++) { //Only a part of the cluster is used because fields are still shared between patches for the moment.
-            iloc = ibin*clrw+i;
-            for (unsigned int j=0 ; j<ny_p ; j++) {
-                //(*Ex2D)(i,j) += -timestep*(*Jx2D)(i,j) + dt_ov_dy * ( (*Bz2D)(i,j+1) - (*Bz2D)(i,j) );
-                (*Ex2D)(iloc,j) += -timestep*(*(nJx_s[0][ibin]+ i*ny_p+j)) + dt_ov_dy * ( (*Bz2D)(iloc,j+1) - (*Bz2D)(iloc,j) );
-            }// end for j
-        
-        // Electric field Ey^(p,d)
-            for (unsigned int j=0 ; j<ny_d ; j++) {
-                //(*Ey2D)(i,j) += -timestep*(*Jy2D)(i,j) - dt_ov_dx * ( (*Bz2D)(i+1,j) - (*Bz2D)(i,j) );
-                (*Ey2D)(iloc,j) += -timestep*(*(nJy_s[0][ibin]+ i*ny_d+j)) - dt_ov_dx * ( (*Bz2D)(iloc+1,j) - (*Bz2D)(iloc,j) );
-            }// end for j
-        
-        // Electric field Ez^(p,p)
-            for (unsigned int j=0 ; j<ny_p ; j++) {
-                //(*Ez2D)(i,j) += -timestep*(*Jz2D)(i,j)
-                //+               dt_ov_dx * ( (*By2D)(i+1,j) - (*By2D)(i,j) )
-                //-               dt_ov_dy * ( (*Bx2D)(i,j+1) - (*Bx2D)(i,j) );
-                (*Ez2D)(iloc,j) += -timestep*(*(nJz_s[0][ibin]+ i*ny_p+j))
-                +               dt_ov_dx * ( (*By2D)(iloc+1,j) - (*By2D)(iloc,j) )
-                -               dt_ov_dy * ( (*Bx2D)(iloc,j+1) - (*Bx2D)(iloc,j) );
-            } // end for j
-        }// end for i
-    } //end for ibin
-#pragma omp single //Last bin
-{       ibin=nbin-1;
-        for (unsigned int i=0 ; i<2*oversize[0]+clrw+2 ; i++) { //Last bin is completely treated. Including dual size along x for Ex and Jx.
-        iloc = ibin*clrw+i;
-            for (unsigned int j=0 ; j<ny_p ; j++) {
-                //(*Ex2D)(i,j) += -timestep*(*Jx2D)(i,j) + dt_ov_dy * ( (*Bz2D)(i,j+1) - (*Bz2D)(i,j) );
-                (*Ex2D)(iloc,j) += -timestep*(*(nJx_s[0][ibin]+ i*ny_p+j)) + dt_ov_dy * ( (*Bz2D)(iloc,j+1) - (*Bz2D)(iloc,j) );
-            }// end for j
-        } // end for i
-        
-        // Electric field Ey^(p,d)
-        for (unsigned int i=0 ; i<2*oversize[0]+clrw+1 ; i++) {
-        iloc = ibin*clrw+i;
-            for (unsigned int j=0 ; j<ny_d ; j++) {
-                //(*Ey2D)(i,j) += -timestep*(*Jy2D)(i,j) - dt_ov_dx * ( (*Bz2D)(i+1,j) - (*Bz2D)(i,j) );
-                (*Ey2D)(iloc,j) += -timestep*(*(nJy_s[0][ibin]+ i*ny_d+j)) - dt_ov_dx * ( (*Bz2D)(iloc+1,j) - (*Bz2D)(iloc,j) );
-            }// end for j
-        
-        // Electric field Ez^(p,p)
-            for (unsigned int j=0 ; j<ny_p ; j++) {
-                //(*Ez2D)(i,j) += -timestep*(*Jz2D)(i,j)
-                //+               dt_ov_dx * ( (*By2D)(i+1,j) - (*By2D)(i,j) )
-                //-               dt_ov_dy * ( (*Bx2D)(i,j+1) - (*Bx2D)(i,j) );
-                (*Ez2D)(iloc,j) += -timestep*(*(nJz_s[0][ibin]+ i*ny_p+j))
-                +               dt_ov_dx * ( (*By2D)(iloc+1,j) - (*By2D)(iloc,j) )
-                -               dt_ov_dy * ( (*Bx2D)(iloc,j+1) - (*Bx2D)(iloc,j) );
-            } // end for j
-        }// end for i
-
-} // End last bin single zone
-//    }
-#endif
 }//END solveMaxwellAmpere
 
 
