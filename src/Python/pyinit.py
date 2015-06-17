@@ -98,12 +98,13 @@ class Laser(SmileiComponent):
     boxSide = None
     a0 = None
     omega0 = 1.
+    delta = 1.
     tchirp = 0.
-    focus = False
+    focus = []
     angle = 0.
     time_profile = None
     transv_profile = None
-    delay = None
+    delay = 0.
 
 class Collisions(SmileiComponent):
     """Collisions parameters"""

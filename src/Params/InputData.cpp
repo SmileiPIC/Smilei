@@ -30,7 +30,7 @@ py_namelist(NULL)
 
     // Running the namelists
     for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {
-        MESSAGE("Reading file " << *it);
+        MESSAGE(1,"Reading file " << *it);
         string strNamelist="";
         if (smpi->isMaster()) {
             HEREIAM("");

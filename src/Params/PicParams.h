@@ -230,8 +230,11 @@ public:
     //! number of total timesteps to perform in the simulation
     unsigned int n_time;
     
-    //! dt for the simulation (CFL)
+    //! dt for the simulation
     double timestep;
+    
+    //! max value for dt (due to usual FDTD CFL condition: should be moved to ElectroMagn solver (MG))
+    double dtCFL;
     
     //! number of cells in every direction of the local domain
     std::vector<unsigned int> n_space;

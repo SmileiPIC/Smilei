@@ -133,11 +133,9 @@ PicParams::PicParams(InputData &ifile) {
     for (unsigned int i=0; i<nDim_field; i++) {
         res_space2 += res_space[i]*res_space[i];
     }
-    double dtmin=1.0/sqrt(res_space2);
-    if ( timestep>dtmin ) {
-        ERROR("Possible CFL problem: timestep=" << timestep << " should be smaller than " << dtmin);
-    } else {
-        MESSAGE(1,"timestep \sim " << timestep/dtmin << " * CFL");
+    dtCFL=1.0/sqrt(res_space2);
+    if ( timestep>dtCFL ) {
+        ERROR("Possible CFL problem: timestep=" << timestep << " should be smaller than " << dtCFL);
     }
     
     
@@ -634,6 +632,7 @@ void PicParams::print()
     MESSAGE(1,"Interpolation_order : " <<  interpolation_order);
     MESSAGE(1,"(res_time, sim_time) : (" << res_time << ", " << sim_time << ")");
     MESSAGE(1,"(n_time,   timestep) : (" << n_time << ", " << timestep << ")");
+    MESSAGE(1,"           timestep  = " << timestep/dtCFL << " * CFL");
     
     for ( unsigned int i=0 ; i<sim_length.size() ; i++ ){
         MESSAGE(1,"dimension " << i << " - (res_space, sim_length) : (" << res_space[i] << ", " << sim_length[i] << ")");

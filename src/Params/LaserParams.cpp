@@ -69,7 +69,7 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
                 tmpLaser.profile_transv.py_profile=mypy;
                 tmpLaser.profile_transv.profile="python";
             } else {
-                WARNING("Laser: transv_profile not defined or not existing");
+                ERROR("Laser: transv_profile not defined or not existing");
             }
         } else {
             ifile.extract("int_params_transv",tmpLaser.profile_transv.int_params ,"Laser",ilaser);
@@ -77,14 +77,14 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
         }
         
         
-        // -------------------------------------
+/*        // -------------------------------------
         // Printing out laser related parameters
         // -------------------------------------
         if (n_laser==0) // just print "Laser related parameters" once
             MESSAGE("Laser related parameters");
         MESSAGE(1, "laser #" << ilaser << ":   (boxSide, a0):   (" << tmpLaser.boxSide
                 << ", " << tmpLaser.a0 <<  ")");
-        
+*/
         
 /*MG150609        // -----------------------------------------------------------------
         // normalization (from wavelength-related units to normalized units)
@@ -132,7 +132,8 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
                 // computing the entering point of the laser & delay
                 if (theta<0) {
                     double ylas_max = ylas + waist*sqrt(1.0+pow(tan(theta),2));
-                    if (ylas_max > params.sim_length[1]) WARNING("Possible problem (simulation box size) with laser " << ilaser);
+                    if (ylas_max > params.sim_length[1])
+                        WARNING("Possible problem (simulation box size) with laser " << ilaser);
                     tmpLaser.delay = -ylas_max * sin(theta);
                 } else {
                     double ylas_min = ylas - waist*sqrt(1.0+pow(tan(theta),2));
