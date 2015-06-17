@@ -17,3 +17,5 @@ src/smilei
 *.toc
 src/Python/pycontrol.h
 src/Python/pyinit.h
+*.orig
+*.pyh
