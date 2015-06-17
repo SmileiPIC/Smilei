@@ -43,9 +43,9 @@ public:
 	std::cout << "n_space : " << params.n_space[0] << " " << params.n_space[1] << std::endl;
 	std::cout << "n_patch : " << params.number_of_patches[0] << " " << params.number_of_patches[1] << std::endl;
 
-	//params.n_space[0] /= m0;
-	//params.n_space[1] /= m1;
-	//std::cout << "n_space : " << params.n_space[0] << " " << params.n_space[1] << std::endl;
+	params.n_space[0] /= params.number_of_patches[0];
+	params.n_space[1] /= params.number_of_patches[1];
+	std::cout << "\ Patch : n_space : " << params.n_space[0] << " " << params.n_space[1] << std::endl;
 
 
         // create species
