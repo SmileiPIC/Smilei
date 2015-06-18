@@ -102,9 +102,13 @@ class Laser(SmileiComponent):
     tchirp = 0.
     focus = []
     angle = 0.
-    time_profile = None
-    transv_profile = None
     delay = 0.
+    time_profile = None
+    int_params = []
+    double_params = []
+    transv_profile = None
+    int_params_transv = []
+    double_params_transv = []
 
 class Collisions(SmileiComponent):
     """Collisions parameters"""
@@ -171,6 +175,7 @@ sim_time = None
 sim_length = []
 bc_em_type_x = []
 bc_em_type_y = []
+time_fields_frozen = 0.0
 nspace_win_x = 0
 t_move_win = 0.0
 vx_win = 1.

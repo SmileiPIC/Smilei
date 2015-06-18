@@ -62,19 +62,22 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
         
         
         // laser transverse-profile & associated parameters
-        ifile.extract("transv_profile",tmpLaser.profile_transv.profile ,"Laser",ilaser);
-        if (tmpLaser.profile_transv.profile.empty()) {
-            PyObject *mypy = ifile.extract_py("transv_profile","Laser",ilaser);
-            if (mypy && PyCallable_Check(mypy)) {
-                tmpLaser.profile_transv.py_profile=mypy;
-                tmpLaser.profile_transv.profile="python";
+        if (params.geometry!="1d3v") {  //transv_profile is not define in 1d3v
+            
+            ifile.extract("transv_profile",tmpLaser.profile_transv.profile ,"Laser",ilaser);
+            if (tmpLaser.profile_transv.profile.empty()) {
+                PyObject *mypy = ifile.extract_py("transv_profile","Laser",ilaser);
+                if (mypy && PyCallable_Check(mypy)) {
+                    tmpLaser.profile_transv.py_profile=mypy;
+                    tmpLaser.profile_transv.profile="python";
+                } else {
+                    ERROR("Laser: transv_profile not defined or not existing");
+                }
             } else {
-                ERROR("Laser: transv_profile not defined or not existing");
+                ifile.extract("int_params_transv",tmpLaser.profile_transv.int_params ,"Laser",ilaser);
+                ifile.extract("double_params_transv",tmpLaser.profile_transv.double_params ,"Laser",ilaser);
             }
-        } else {
-            ifile.extract("int_params_transv",tmpLaser.profile_transv.int_params ,"Laser",ilaser);
-            ifile.extract("double_params_transv",tmpLaser.profile_transv.double_params ,"Laser",ilaser);
-        }
+        }//geometry
         
         
 /*        // -------------------------------------
@@ -100,7 +103,7 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
         }
 */
         //!\todo (MG) Guys put your name or initials so one can understand what's this comment stand for (also use todo rather than warning)
-        WARNING("FIXME: WE SHOULD RECTIFY FROM HERE ON");
+        //WARNING("FIXME: WE SHOULD RECTIFY FROM HERE ON");
         
         bool delayExists = ifile.extract("delay",tmpLaser.delay ,"Laser",ilaser);
         

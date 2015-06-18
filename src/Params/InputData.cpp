@@ -26,7 +26,7 @@ py_namelist(NULL)
     pyRunScript(string(reinterpret_cast<const char*>(Python_pyinit_py), Python_pyinit_py_len), "pyinit.py");
 
     // Running pyfunctons.py
-    pyRunScript(string(reinterpret_cast<const char*>(Python_pyinit_py), Python_pyprofiles_py_len), "pyprofiles.py");
+    pyRunScript(string(reinterpret_cast<const char*>(Python_pyprofiles_py), Python_pyprofiles_py_len), "pyprofiles.py");
 
     // Running the namelists
     for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {
