@@ -82,7 +82,7 @@ void DiagParams::initScalars(Diagnostic* diags, PicParams& params, InputData &if
     
     diags->scalars.precision=10;
     ifile.extract("precision",diags->scalars.precision,"DiagScalar");
-    ifile.extract("vars",scalar_vars,"DiagScalar");
+    ifile.extract("vars",diags->scalars.vars,"DiagScalar");
     
     // copy from params remaining stuff
     diags->scalars.res_time=params.res_time;

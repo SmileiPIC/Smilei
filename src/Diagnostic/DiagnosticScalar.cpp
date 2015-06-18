@@ -357,13 +357,12 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
 
 
 bool DiagnosticScalar::allowedKey(string my_var) {
-    bool retval=true;
-    if (vars.size()) {
-        transform(my_var.begin(), my_var.end(), my_var.begin(), ::tolower);
-        vector<string>::const_iterator it = find(vars.begin(), vars.end(),my_var);
-        retval=(it != vars.end());
+    int s=vars.size();
+    if (s==0) return true;
+    for( int i=0; i<s; i++) {
+        if( my_var==vars[i] ) return true;
     }
-    return retval;
+    return false;
 }
 
 

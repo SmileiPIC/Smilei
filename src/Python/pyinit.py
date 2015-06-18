@@ -146,7 +146,7 @@ class DiagScalar(SmileiComponent):
     every = None
     time_range = [None]
     precision = 10
-    vars = [None]
+    vars = []
 
 # external fields
 class ExtField(SmileiComponent):

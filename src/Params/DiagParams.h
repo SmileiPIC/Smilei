@@ -92,18 +92,20 @@ public:
     //! particle dump output
     unsigned int particleDump_every;
 
+    /*MG150609
     //! scalar output every scalar_every (namelist group "DiagScalar" key "every")
     unsigned int scalar_every;
 
     double scalar_tmin;
     double scalar_tmax;
 
-
     //! list of vars for scalars to be written (empty means all)
-    std::vector<std::string> scalar_vars;
+    std:vector<std::string> scalar_vars;
+    
 
     //! scalar output precision
     unsigned int scalar_precision;
+     */
     
     //! every for the standard pic timeloop output
     unsigned int print_every;
