@@ -16,18 +16,18 @@ namelist(""),
 py_namelist(NULL)
 {
     Py_Initialize();
-
+    
     py_namelist = PyImport_AddModule("__main__");
-
+    
     // here we add the rank, in case some script need it
     PyModule_AddIntConstant(py_namelist, "smilei_mpi_rank", smpi->getRank());
-
+    
     // Running pyinit.py
     pyRunScript(string(reinterpret_cast<const char*>(Python_pyinit_py), Python_pyinit_py_len), "pyinit.py");
-
+    
     // Running pyfunctons.py
-    pyRunScript(string(reinterpret_cast<const char*>(Python_pyinit_py), Python_pyprofiles_py_len), "pyprofiles.py");
-
+    pyRunScript(string(reinterpret_cast<const char*>(Python_pyprofiles_py), Python_pyprofiles_py_len), "pyprofiles.py");
+    
     // Running the namelists
     for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {
         MESSAGE("Reading file " << *it);
@@ -48,10 +48,10 @@ py_namelist(NULL)
         smpi->bcast(strNamelist);
         pyRunScript(strNamelist,(*it));
     }
-
+    
     // Running pycontrol.py
     pyRunScript(string(reinterpret_cast<const char*>(Python_pycontrol_py), Python_pycontrol_py_len),"pycontrol.py");
-
+    
     PyTools::runPyFunction("smilei_check");
     
     
@@ -60,7 +60,7 @@ py_namelist(NULL)
     if (smpi->isMaster()) {
         string file_namelist_out="smilei.py";
         extract("output_script", file_namelist_out);
-
+    
         ofstream out(file_namelist_out.c_str());
         out << namelist;
         out.close();
