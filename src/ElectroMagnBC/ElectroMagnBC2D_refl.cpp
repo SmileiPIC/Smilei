@@ -81,7 +81,7 @@ void ElectroMagnBC2D_refl::apply_xmin(ElectroMagn* EMfields, double time_dual, S
         }//i
         
         // for Ey^(p,d)
-        for (unsigned int i=0; i<oversize_i<oversize_+1; i++) {
+        for (unsigned int i=0; i<oversize_; i++) {
             for (unsigned int j=0 ; j<ny_d ; j++) {
                 (*Ey2D)(i,j) = 0.0;
             }//j
