@@ -2,11 +2,6 @@
     Definition of Smilei components
 """
 
-# Since the pytohn interpreter grabs key keyboards,
-# we have to filter the ctrl-c kill command:
-import signal
-signalsave = signal.getsignal(signal.SIGINT)
-signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 class SmileiComponentType(type):
     """Metaclass to all Smilei components"""
@@ -183,4 +178,4 @@ fieldsToDump = []
 avgfieldDump_every = None
 ntime_step_avg = 0
 particleDump_every = None # for backwards-compatibility
-
+time_fields_frozen = 0.

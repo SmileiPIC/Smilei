@@ -22,6 +22,12 @@ py_namelist(NULL)
     // here we add the rank, in case some script need it
     PyModule_AddIntConstant(py_namelist, "smilei_mpi_rank", smpi->getRank());
     
+    // First, we tell python to filter the ctrl-C kill command (or it would prevent to kill the code execution).
+    // This is done separately from other scripts because we don't want it in the concatenated python namelist.
+    PyTools::checkPyError();
+    string command = "import signal\nsignal.signal(signal.SIGINT, signal.SIG_DFL)";
+    if( !PyRun_SimpleString(command.c_str()) ) PyTools::checkPyError();
+    
     // Running pyinit.py
     pyRunScript(string(reinterpret_cast<const char*>(Python_pyinit_py), Python_pyinit_py_len), "pyinit.py");
     
@@ -60,7 +66,7 @@ py_namelist(NULL)
     if (smpi->isMaster()) {
         string file_namelist_out="smilei.py";
         extract("output_script", file_namelist_out);
-    
+        
         ofstream out(file_namelist_out.c_str());
         out << namelist;
         out.close();
@@ -156,7 +162,7 @@ void InputData::cleanup() {
     PyTools::runPyFunction("cleanup");
     // this will reset error in python in case cleanup doesn't exists
     PyErr_Clear();
-
+    
     // this function is defined in the Python/pyontrol.py file and should return false if we can close
     // the python interpreter
     MESSAGE(1,"Calling python keep_python_running() :");    
