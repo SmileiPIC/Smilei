@@ -415,12 +415,6 @@ class Diagnostic(object):
 		return ""
 
 	# Various methods to extract stuff from the input file
-	def read_sim_units(self):
-		try:
-			return self.namelist.sim_units
-		except:
-			print "Could not extract 'sim_units' from the input file"
-			raise
 	def read_ndim(self):
 		try:
 			dim = self.namelist.dim
@@ -432,7 +426,7 @@ class Diagnostic(object):
 			print "Could not understand simulation dimension 'dim="+dim+"' from the input file"
 			raise
 		return ndim
-	def read_ncels_cell_length(self, ndim, sim_units):
+	def read_ncels_cell_length(self, ndim):
 		try:
 			sim_length = self.np.double( self.namelist.sim_length )
 			if sim_length.size==0: raise
@@ -472,9 +466,8 @@ class Diagnostic(object):
 		sim_length  = self.np.array(sim_length ,ndmin=1)
 		cell_length = self.np.array(cell_length,ndmin=1)
 		ncels = sim_length/cell_length
-		if sim_units == "wavelength": cell_length *= 2.*self.np.pi
 		return ncels, cell_length
-	def read_timestep(self,sim_units):
+	def read_timestep(self):
 		try:
 			timestep = self.np.double(self.namelist.timestep)
 			if not self.np.isfinite(timestep): raise 
@@ -486,7 +479,6 @@ class Diagnostic(object):
 			except:
 				print "Could not extract 'timestep' or 'res_time' from the input file"
 				raise
-		if sim_units == "wavelength": timestep *= 2.*self.np.pi
 		return timestep
 	def read_wavelength_SI(self):
 		try:
@@ -597,7 +589,6 @@ class Diagnostic(object):
 				artist = self.animateOnAxes(ax, time)
 				fig.canvas.draw()
 				self.plt.show()
-			#return artist
 		# Static plot if 0 dimensions
 		else:
 			ax.cla()
@@ -648,10 +639,12 @@ class Diagnostic(object):
 			if len(self.xtickkwargs)>0: ax.ticklabel_format(axis="x",**self.xtickkwargs)
 		except:
 			print "Cannot format x ticks (typically happens with log-scale)"
+			self.xtickkwargs = []
 		try:
 			if len(self.ytickkwargs)>0: ax.ticklabel_format(axis="y",**self.ytickkwargs)
 		except:
 			print "Cannot format y ticks (typically happens with log-scale)"
+			self.xtickkwargs = []
 		return im
 
 	# Special case: 2D plot
@@ -708,10 +701,9 @@ class ParticleDiagnostic(Diagnostic):
 		# Get info from the input file and prepare units
 		try:
 			ndim               = self.read_ndim()
-			sim_units          = self.read_sim_units()
 			
-			ncels, cell_length = self.read_ncels_cell_length(ndim, sim_units)
-			self.timestep           = self.read_timestep(sim_units)
+			ncels, cell_length = self.read_ncels_cell_length(ndim)
+			self.timestep           = self.read_timestep()
 			cell_size = {"x":cell_length[0]}
 			if ndim>1: cell_size.update({"y":cell_length[1]})
 			if ndim>2: cell_size.update({"z":cell_length[2]})
@@ -809,9 +801,11 @@ class ParticleDiagnostic(Diagnostic):
 		self.file = {}
 		self.times = {}
 		self.data  = {}
+		self.h5items = {}
 		for d in self.diags:
 			# get all diagnostics files
-			self.file.update({ d:self.results_path+'/ParticleDiagnostic'+str(d)+'.h5' })
+			self.file.update({ d:self.h5py.File(self.results_path+'/ParticleDiagnostic'+str(d)+'.h5') })
+			self.h5items.update({ d:self.file[d].items() })
 			# get all diagnostics timesteps
 			self.times.update({ d:self.getAvailableTimesteps(d) })
 			# fill the "data" dictionary with indices to the data arrays
@@ -1131,12 +1125,9 @@ class ParticleDiagnostic(Diagnostic):
 		# Get arrays from all requested diagnostics
 		A = {}
 		for d in self.diags:
-			# Open file
-			f = self.h5py.File(self.file[d], 'r')
 			# get data
 			index = self.data[d][t]
-			A.update({ d:self.np.reshape(f.items()[index][1],self.shape) })
-			f.close()
+			A.update({ d:self.np.reshape(self.h5items[d][index][1],self.shape) })
 			# Apply the slicing
 			for iaxis in range(self.naxes):
 				axis = self.axes[iaxis]
@@ -1186,9 +1177,8 @@ class Field(Diagnostic):
 		# Get info from the input file and prepare units
 		try:
 			ndim               = self.read_ndim()
-			sim_units          = self.read_sim_units()
-			ncels, cell_length = self.read_ncels_cell_length(ndim, sim_units)
-			self.timestep      = self.read_timestep(sim_units)
+			ncels, cell_length = self.read_ncels_cell_length(ndim)
+			self.timestep      = self.read_timestep()
 		except:
 			return None
 	
@@ -1467,8 +1457,7 @@ class Scalar(Diagnostic):
 
 		# Get info from the input file and prepare units
 		try:
-			sim_units          = self.read_sim_units()
-			self.timestep      = self.read_timestep(sim_units)
+			self.timestep      = self.read_timestep()
 			self.timestepbis   = self.read_timestep("")
 		except:
 			return None
@@ -1481,7 +1470,6 @@ class Scalar(Diagnostic):
 		elif units == "code":
 			self.coeff_time = self.timestepbis
 			self.time_units = " $1/\omega$"
-		if sim_units == "wavelength": self.coeff_time *= 2. * self.np.pi
 	
 		# Get available scalars
 		scalars = self.getScalars()
@@ -1662,9 +1650,8 @@ class Probe(Diagnostic):
 		# Get info from the input file and prepare units
 		try:
 			ndim               = self.read_ndim()
-			sim_units          = self.read_sim_units()
-			ncels, cell_length = self.read_ncels_cell_length(ndim, sim_units)
-			self.timestep      = self.read_timestep(sim_units)
+			ncels, cell_length = self.read_ncels_cell_length(ndim)
+			self.timestep      = self.read_timestep()
 		except:
 			return None
 		
