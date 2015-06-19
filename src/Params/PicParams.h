@@ -91,6 +91,8 @@ struct SpeciesStructure {
     std::vector<double> temperature;
     //! thermal velocity [\f$c\f$]
     std::vector<double> thermalVelocity;
+    //! thermal momentum [\f$m_e c\f$]
+    std::vector<double> thermalMomentum;
     
     //! dynamics type. Possible values: "Norm" "Radiation Reaction"
     std::string dynamics_type;

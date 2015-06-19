@@ -489,8 +489,10 @@ void PicParams::computeSpecies()
         
         // define thermal velocity as \sqrt{T/m}
         species_param[ispec].thermalVelocity.resize(3);
+        species_param[ispec].thermalMomentum.resize(3);
         for (unsigned int i=0; i<3; i++) {
-            species_param[ispec].thermalVelocity[i] = sqrt( species_param[ispec].temperature[i]/species_param[ispec].mass );
+            species_param[ispec].thermalVelocity[i] = sqrt( 2.0 *species_param[ispec].temperature[i]/species_param[ispec].mass );
+            species_param[ispec].thermalMomentum[i] = species_param[ispec].mass * species_param[ispec].thermalVelocity[i];
         }
         
         
