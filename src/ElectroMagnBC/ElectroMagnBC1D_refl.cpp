@@ -61,8 +61,10 @@ void ElectroMagnBC1D_refl::apply_xmin(ElectroMagn* EMfields, double time_dual, S
         }
         
         // force 0 electric fields in the ghost cells
-        for (unsigned int i=0; oversize_-1; i++) {
+        for (unsigned int i=0; i<oversize_+1; i++) {
             (*Ex1D)(i) = 0.0;
+        }
+        for (unsigned int i=0; i<oversize_; i++) {
             (*Ey1D)(i) = 0.0;
             (*Ez1D)(i) = 0.0;
         }
