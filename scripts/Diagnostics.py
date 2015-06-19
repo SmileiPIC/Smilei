@@ -163,17 +163,26 @@
 #            kwargs = many other keyword-arguments can be used -> refer to the doc.
 
 
-class Smilei(object): 
+class Smilei(object):
+	""" Smilei(results_path=".")
+	
+	Import Smilei simulation information.
+	
+	The argument `results_path` specifies where the simulation results are located.
+	Omit this argument if you are already in the results path.
+	"""
 	
 	valid = False
 	
 	def __init__(self, results_path="."):
+		# Import packages
 		import h5py
 		import numpy as np
 		import os.path, glob, re, sys
 		import matplotlib.pyplot
 		import pylab
 		pylab.ion()
+		# Transfer packages to local attributes
 		self.results_path = results_path
 		self.h5py = h5py
 		self.np = np
@@ -189,18 +198,13 @@ class Smilei(object):
 			print "Could not find an input file in directory "+results_path
 			return
 		# Fetch the python namelist
-		namespace={};
+		namespace={}
 		execfile(results_path+'/smilei.py',namespace) # execute the namelist into an empty namespace
 		class Namelist: pass # empty class to store the namelist variables
 		self.namelist = Namelist() # create new empty object
 		for key, value in namespace.iteritems(): # transfer all variables to this object
 			if key[0:2]=="__": continue # skip builtins
 			setattr(self.namelist, key, value)
-		# Prevent creating new components (by mistake)
-		def noNewComponents(cls, *args, **kwargs):
-			print "Please do not create a new "+cls.__name__
-			return None
-		self.namelist.SmileiComponent.__new__ = staticmethod(noNewComponents)
 		
 		self.valid = True
 	
@@ -210,9 +214,132 @@ class Smilei(object):
 		file = self.glob(self.results_path+"/smilei.py")[0]
 		return "Smilei simulation with input file located at `"+file+"`"
 	
-	# Method to manage Matplotlib-compatible kwargs
+	# Methods to create instances of diagnostics
+	def Scalar(self, *args, **kwargs):
+		""" Scalar(scalar=None, timesteps=None, units="code", data_log=False)
+		
+		Import and analyze a scalar diagnostic from a Smilei simulation
+		
+		Parameters:
+		-----------
+		scalar : an available scalar name. (optional)
+			To get a list of available scalars, simply omit this argument.
+		timesteps : int or [int, int] (optional)
+			If omitted, all timesteps are used.
+			If one number  given, the nearest timestep available is used.
+			If two numbers given, all the timesteps in between are used.
+		units : "code" or "nice"    (optional)
+			If "nice" is chosen, then units are converted into usual units:
+			distances in microns, density in 1/cm^3, energy in MeV.
+		data_log : True or False    (optional)
+			If True, then log10 is applied to the output array before plotting.
+		
+		Usage:
+		------
+			scalar = S.Scalar(...)
+		where S is a `Smilei` object.
+		"""
+		return Scalar(self, *args, **kwargs)
+	def Field(self, *args, **kwargs):
+		""" Field(field=None, timesteps=None, slice=None, units="code", data_log=False)
+		
+		Import and analyze a field diagnostic from a Smilei simulation
+		
+		Parameters:
+		-----------
+		field : an available field name. (optional)
+			To get a list of available fields, simply omit this argument.
+			You may write an operation instead of just one field, e.g. "Jx+Jy".
+		timesteps : int or [int, int] (optional)
+			If omitted, all timesteps are used.
+			If one number  given, the nearest timestep available is used.
+			If two numbers given, all the timesteps in between are used.
+		slice : a python dictionary of the form { axis:range, ... } (optional)
+			`axis` may be "x", "y" or "z".
+			`range` may be "all", a float, or [float, float].
+			For instance, slice={"x":"all", "y":[2,3]}.
+			The average of all values within the 'slice' is computed.
+		units : "code" or "nice"    (optional)
+			If "nice" is chosen, then units are converted into usual units:
+			distances in microns, density in 1/cm^3, energy in MeV.
+		data_log : True or False    (optional)
+			If True, then log10 is applied to the output array before plotting.
+		
+		Usage:
+		------
+			field = S.Field(...) # S is a Smilei object
+			field.get()
+			field.plot()
+		"""
+		return Field(self, *args, **kwargs)
+	def Probe(self, *args, **kwargs):
+		""" Probe(probeNumber=None, field=None, timesteps=None, slice=None, units="code", data_log=False)
+		
+		Import and analyze a probe diagnostic from a Smilei simulation
+		
+		Parameters:
+		-----------
+		probeNumber : index of an available probe. (optional)
+			To get a list of available probes, simply omit this argument.
+		field : name of an available field. (optional)
+			To get a list of available fields, simply omit this argument.
+		timesteps : int or [int, int] (optional)
+			If omitted, all timesteps are used.
+			If one number  given, the nearest timestep available is used.
+			If two numbers given, all the timesteps in between are used.
+		slice : a python dictionary of the form { axis:range, ... } (optional)
+			`axis` may be "axis1" or "axis2" (the probe axes).
+			`range` may be "all", a float, or [float, float].
+			For instance, slice={"axis1":"all", "axis2":[2,3]}.
+			The average of all values within the 'slice' is computed.
+		units : "code" or "nice"    (optional)
+			If "nice" is chosen, then units are converted into usual units:
+			distances in microns, density in 1/cm^3, energy in MeV.
+		data_log : True or False    (optional)
+			If True, then log10 is applied to the output array before plotting.
+		
+		Usage:
+		------
+			probe = S.Probe(...) # S is a Smilei object
+			probe.get()
+			probe.plot()
+		"""
+		return Probe(self, *args, **kwargs)
+	def ParticleDiagnostic(self, *args, **kwargs):
+		""" ParticleDiagnostic(diagNumber=None, timesteps=None, slice=None, units="code", data_log=False)
+		
+		Import and analyze a particle diagnostic from a Smilei simulation
+		
+		Parameters:
+		-----------
+		diagNumber : index of an available particle diagnostic. (optional)
+			To get a list of available diags, simply omit this argument.
+		timesteps : int or [int, int] (optional)
+			If omitted, all timesteps are used.
+			If one number  given, the nearest timestep available is used.
+			If two numbers given, all the timesteps in between are used.
+		slice : a python dictionary of the form { axis:range, ... } (optional)
+			`axis` may be "x", "y", "z", "px", "py", "pz", "p", "gamma", "ekin", "vx", "vy", "vz", "v" or "charge".
+			`range` may be "all", a float, or [float, float].
+			For instance, slice={"x":"all", "y":[2,3]}.
+			The SUM of all values within the 'slice' is computed.
+		units : "code" or "nice"    (optional)
+			If "nice" is chosen, then units are converted into usual units:
+			distances in microns, density in 1/cm^3, energy in MeV.
+		data_log : True or False    (optional)
+			If True, then log10 is applied to the output array before plotting.
+		
+		Usage:
+		------
+			diag = S.ParticleDiagnostic(...) # S is a Smilei object
+			diag.get()
+			diag.plot()
+		"""
+		return ParticleDiagnostic(self, *args, **kwargs)
+	
 	@staticmethod
 	def matplotlibArgs(kwargs):
+		""" Method to manage Matplotlib-compatible kwargs. Please do not use it. """
 		figurekwargs0  = {}
 		figurekwargs   = {}
 		axeskwargs     = {}
@@ -247,12 +374,6 @@ class Smilei(object):
 			if kwa in ["style_y","scilimits_y","useOffset_y"]:
 				ytickkwargs.update({kwa[:-2]:val})
 		return figurekwargs0, figurekwargs, axeskwargs, plotkwargs, imkwargs, colorbarkwargs, xtickkwargs, ytickkwargs
-	
-	# Methods to create instances of diagnostics
-	def Scalar            (self, *args, **kwargs): return Scalar            (self, *args, **kwargs)
-	def Field             (self, *args, **kwargs): return Field             (self, *args, **kwargs)
-	def Probe             (self, *args, **kwargs): return Probe             (self, *args, **kwargs)
-	def ParticleDiagnostic(self, *args, **kwargs): return ParticleDiagnostic(self, *args, **kwargs)
 	
 
 # -------------------------------------------------------------------
@@ -325,6 +446,7 @@ class Diagnostic(object):
 			try:
 				res_space = self.np.double( self.namelist.res_space )
 				cell_length = 1./res_space
+				if cell_length.size==0: raise
 			except:
 				print "Could not extract 'cell_length' or 'res_space' from the input file"
 				raise
@@ -355,10 +477,12 @@ class Diagnostic(object):
 	def read_timestep(self,sim_units):
 		try:
 			timestep = self.np.double(self.namelist.timestep)
+			if not self.np.isfinite(timestep): raise 
 		except:
 			try:
 				res_time = self.np.double(self.namelist.res_time)
 				timestep = 1./res_time
+				if not self.np.isfinite(timestep): raise 
 			except:
 				print "Could not extract 'timestep' or 'res_time' from the input file"
 				raise
@@ -1875,11 +1999,15 @@ class Probe(Diagnostic):
 
 
 
-
-
-
-# Function to plot multiple diags on the same figure
 def multiPlot(*Diags, **kwargs):
+	""" multiplot(Diag1, Diag2, ..., figure=1, shape=None)
+	
+	Plots simultaneously several diagnostics.
+	
+	Parameters:
+	-----------
+	Diag1, Diag2, ... : Several objects of classes 'Scalar', 'Field', 'Probe' or 'ParticleDiagnostic' 
+	"""
 	import numpy as np
 	import matplotlib.pyplot as plt
 	nDiags = len(Diags)

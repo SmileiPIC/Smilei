@@ -2,10 +2,6 @@
     Definition of Smilei components
 """
 
-# Since the pytohn interpreter grabs key keyboards,
-# we have to filter the ctrl-c kill command:
-import signal
-signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 class SmileiComponentType(type):
     """Metaclass to all Smilei components"""
@@ -144,7 +140,7 @@ class DiagPhase(SmileiComponent):
 class DiagScalar(SmileiComponent):
     """Diagnostic scalar"""
     every = None
-    time_range = [None]
+    time_range = []
     precision = 10
     vars = []
 
@@ -168,9 +164,9 @@ wavelength_SI = 0.
 dim = ""
 interpolation_order = None
 res_time = None
-res_space = [None]
+res_space = []
 timestep = None
-cell_length = [None]
+cell_length = []
 sim_time = None
 sim_length = []
 bc_em_type_x = []
@@ -184,8 +180,8 @@ every = 0
 number_of_procs = [None]
 print_every = None
 fieldDump_every = 0
-fieldsToDump = [None]
+fieldsToDump = []
 avgfieldDump_every = None
 ntime_step_avg = 0
 particleDump_every = None # for backwards-compatibility
-
+time_fields_frozen = 0.
