@@ -1458,17 +1458,16 @@ class Scalar(Diagnostic):
 		# Get info from the input file and prepare units
 		try:
 			self.timestep      = self.read_timestep()
-			self.timestepbis   = self.read_timestep("")
 		except:
 			return None
 	
 		if units == "nice":
 			try   : wavelength_SI = self.read_wavelength_SI()
 			except: return None
-			self.coeff_time = self.timestepbis * wavelength_SI/3.e8/(2.*self.np.pi) # in seconds
+			self.coeff_time = self.timestep * wavelength_SI/3.e8/(2.*self.np.pi) # in seconds
 			self.time_units = " s"
 		elif units == "code":
-			self.coeff_time = self.timestepbis
+			self.coeff_time = self.timestep
 			self.time_units = " $1/\omega$"
 	
 		# Get available scalars
@@ -1508,7 +1507,7 @@ class Scalar(Diagnostic):
 			line = line.strip()
 			if line[0]=="#": continue
 			line = line.split()
-			self.times .append( int( self.np.round(float(line[0]) / float(self.timestepbis)) ) )
+			self.times .append( int( self.np.round(float(line[0]) / float(self.timestep)) ) )
 			self.values.append( float(line[self.scalarn+1]) )
 		self.times  = self.np.array(self.times )
 		self.values = self.np.array(self.values)
