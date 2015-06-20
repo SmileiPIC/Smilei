@@ -134,7 +134,13 @@ DiagScalar(every = 1)
 # pos          = N floats, position of the reference point
 # pos_first    = N floats, optional, position of the first point
 # pos_second   = N floats, optional, position of the second point
-
+DiagProbe(
+	every = 1,
+	time_range = [0.1, 0.4],
+	number = 10,
+	pos = [0.1],
+	pos_first = [0.9]
+)
 
 # DIAGNOSTICS ON PARTICLES - project the particles on a N-D arbitrary grid
 # ------------------------------------------------------------------------

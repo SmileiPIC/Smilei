@@ -1629,7 +1629,7 @@ class Probe(Diagnostic):
 		
 		self.probeNumber  = probeNumber
 		self._file = self._results_path+"/Probes.h5"
-		f = self._h5py.File(file, 'r')
+		f = self._h5py.File(self._file, 'r')
 		self._h5items = f.values()
 		
 		# Get info from the input file and prepare units
@@ -1657,7 +1657,7 @@ class Probe(Diagnostic):
 			coeff_current = 1. # in e*c*nc
 			self._coeff_time = self.timestep # in 1/w
 			self._time_units = " $1/\omega$"
-	
+		
 		# Get available times
 		self.times = self.getAvailableTimesteps()
 		if self.times.size == 0:
