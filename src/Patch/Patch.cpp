@@ -1,4 +1,5 @@
 #include "Patch.h"
+#include "Hilbert_functions.h"
 #include <cstdlib>
 #include <iostream>
 #include <iomanip>

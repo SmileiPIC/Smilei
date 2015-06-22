@@ -320,6 +320,7 @@ void PicParams::compute()
             cell_length[i] = conv_fac/res_space[i];
             sim_length[i] *= conv_fac;
             n_space[i]     = round(sim_length[i]/cell_length[i]);
+            if (i==0 && nspace_win_x != 0) n_space[i] = nspace_win_x;
             sim_length[i]  = (double)(n_space[i])*cell_length[i]; // ensure that nspace = sim_length/cell_length
             cell_volume   *= cell_length[i];
         }
@@ -341,6 +342,7 @@ void PicParams::compute()
     oversize.resize(3, 0);
     for (unsigned int i=0; i<nDim_field; i++) oversize[i]  = interpolation_order + (exchange_particles_each-1);;
 
+    //Redondant ?
     n_space_global.resize(nDim_field, 0);
     for (unsigned int i=0; i<nDim_field; i++) n_space_global[i] = n_space[i]; 
 
