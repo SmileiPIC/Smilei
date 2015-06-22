@@ -257,13 +257,12 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar& scalars, int timestep)
 
 	double Total_Energy=Etot_part+Etot_fields;
 
-	//double Energy_Balance=Total_Energy-(Energy_time_zero+poyTot)+Elost_part+Emw_lost+Emw_lost_fields;
-	double Energy_Balance=Total_Energy-(Energy_time_zero);
+	double Energy_Balance=Total_Energy-(Energy_time_zero+poyTot)+Elost_part+Emw_lost+Emw_lost_fields;
+	//double Energy_Balance=Total_Energy-(Energy_time_zero);
 	double Energy_Bal_norm(0.);
 	if (scalars.EnergyUsedForNorm>0.)
 	    Energy_Bal_norm=Energy_Balance/scalars.EnergyUsedForNorm;
 	scalars.EnergyUsedForNorm = Total_Energy;
-	cout << " Energy_Bal_norm =" << Energy_Bal_norm << endl;
 
 	scalars.setScalar("Etot",Total_Energy);
 	scalars.setScalar("Ebalance",Energy_Balance);

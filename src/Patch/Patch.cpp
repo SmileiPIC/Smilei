@@ -1788,38 +1788,46 @@ void VectorPatch::computeScalarsDiags(int timestep)
 	    (*this)(0)->Diags->scalars.itDiagScalar++;
 	}
 	else if ( diagName.find("MinCell") != std::string::npos ) {
-	    double min(0.);
-	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-		min += (*this)(ipatch)->Diags->scalars.itDiagScalar->second;
+	    vector<pair<string,double> >::iterator iterVal    = (*this)(0)->Diags->scalars.itDiagScalar-1;
+	    vector<pair<string,double> >::iterator iterValRef = (*this)(0)->Diags->scalars.itDiagScalar-1;
+	    double min( iterValRef->second );
+
+	    for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++) {
+		if ((*this)(ipatch)->Diags->scalars.itDiagScalar->second < min) {
+		    min = (*this)(ipatch)->Diags->scalars.itDiagScalar->second;
+		    iterVal = (*this)(ipatch)->Diags->scalars.itDiagScalar-1;
+		}
 		if (ipatch)
 		    (*this)(ipatch)->Diags->scalars.itDiagScalar++;
 	    }
 	    (*this)(0)->Diags->scalars.itDiagScalar->second = min;
+	    iterValRef->second = iterVal->second;
+
 	    (*this)(0)->Diags->scalars.itDiagScalar++;	    
 	}
-	//else if ( diagName.find("MaxCell") != std::string::npos ) {}
+	else if ( diagName.find("MaxCell") != std::string::npos ) {
+	    vector<pair<string,double> >::iterator iterVal    = (*this)(0)->Diags->scalars.itDiagScalar-1;
+	    vector<pair<string,double> >::iterator iterValRef = (*this)(0)->Diags->scalars.itDiagScalar-1;
+	    double max( iterValRef->second );
+
+	    for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++) {
+		if ((*this)(ipatch)->Diags->scalars.itDiagScalar->second > max) {
+		    max = (*this)(ipatch)->Diags->scalars.itDiagScalar->second;
+		    iterVal = (*this)(ipatch)->Diags->scalars.itDiagScalar-1;
+		}
+		if (ipatch)
+		    (*this)(ipatch)->Diags->scalars.itDiagScalar++;
+	    }
+	    (*this)(0)->Diags->scalars.itDiagScalar->second = max;
+	    iterValRef->second = iterVal->second;
+
+	    (*this)(0)->Diags->scalars.itDiagScalar++;	    
+	}
 
 	// Go to next diag
     }
 
     // After MPI sync
     //(*this)(0)->Diags->scalars.write(timestep);
-    
-#ifdef _MINETMAX
-	/*else if ( (iter->first).find("MinCell") != std::string::npos ) {
-	  vector<pair<string,double> >::iterator iterVal = iter-1;
-	  val_index minVal;
-	  minVal.val   = (*iterVal).second;
-	  minVal.index = (*iter).second;
-	  MPI_Reduce(isMaster()?MPI_IN_PLACE:&minVal, &minVal, 1, MPI_DOUBLE_INT, MPI_MINLOC, 0, MPI_COMM_WORLD);
-	  }
-	  else if ( (iter->first).find("MaxCell") != std::string::npos ) {
-	  vector<pair<string,double> >::iterator iterVal = iter-1;
-	  val_index maxVal;
-	  maxVal.val   = (*iterVal).second;
-	  maxVal.index = (*iter).second;
-	  MPI_Reduce(isMaster()?MPI_IN_PLACE:&maxVal, &maxVal, 1, MPI_DOUBLE_INT, MPI_MAXLOC, 0, MPI_COMM_WORLD);
-	  }*/	  
-#endif
 
 }
