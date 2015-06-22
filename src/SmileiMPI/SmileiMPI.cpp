@@ -240,8 +240,43 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar& scalars, int timestep)
 	    maxVal.val   = (*iterVal).second;
 	    maxVal.index = (*iter).second;
 	    MPI_Reduce(isMaster()?MPI_IN_PLACE:&maxVal, &maxVal, 1, MPI_DOUBLE_INT, MPI_MAXLOC, 0, MPI_COMM_WORLD);
-	}	  
+	}
     }
+
+    if (isMaster()) {
+
+	double Etot_part = scalars.getScalar("Eparticles");
+	double Etot_fields = scalars.getScalar("EFields");
+	
+	double Energy_time_zero = 0.;//scalars.Energy_time_zero;
+	double poyTot = scalars.getScalar("Poynting");
+
+	double Elost_part = scalars.getScalar("Elost");
+	double Emw_lost  = scalars.getScalar("Emw_lost");
+	double Emw_lost_fields = scalars.getScalar("Emw_lost_fields");
+
+	double Total_Energy=Etot_part+Etot_fields;
+
+	//double Energy_Balance=Total_Energy-(Energy_time_zero+poyTot)+Elost_part+Emw_lost+Emw_lost_fields;
+	double Energy_Balance=Total_Energy-(Energy_time_zero);
+	double Energy_Bal_norm(0.);
+	if (scalars.EnergyUsedForNorm>0.)
+	    Energy_Bal_norm=Energy_Balance/scalars.EnergyUsedForNorm;
+	scalars.EnergyUsedForNorm = Total_Energy;
+	cout << " Energy_Bal_norm =" << Energy_Bal_norm << endl;
+
+	scalars.setScalar("Etot",Total_Energy);
+	scalars.setScalar("Ebalance",Energy_Balance);
+	scalars.setScalar("Ebal_norm",Energy_Bal_norm);
+
+	if (timestep==0) {
+	    scalars.Energy_time_zero  = Total_Energy;
+	    scalars.EnergyUsedForNorm = Energy_time_zero;
+	}
+
+
+    }
+	
 
     scalars.write(timestep);
 

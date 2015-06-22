@@ -273,35 +273,29 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
     // FINAL STUFF
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    //if (isMaster) {
+    double Total_Energy=Etot_part+Etot_fields;
 
-        double Total_Energy=Etot_part+Etot_fields;
+    // Initialized,  but computed after Patch & MPI sync
+    double Energy_Balance=0;
+    double Energy_Bal_norm(0.);
 
-        double Energy_Balance=Total_Energy-(Energy_time_zero+poyTot)+Elost_part+Emw_lost+Emw_lost_fields;
-//        double Energy_Bal_norm=Energy_Balance/Total_Energy;
-	double Energy_Bal_norm(0.);
-	if (EnergyUsedForNorm>0.)
-	  Energy_Bal_norm=Energy_Balance/EnergyUsedForNorm;
-        EnergyUsedForNorm = Total_Energy;
+    prepend("Poynting",poyTot);
+    prepend("EFields",Etot_fields);
+    prepend("Eparticles",Etot_part);
 
-        prepend("Poynting",poyTot);
-        prepend("EFields",Etot_fields);
-        prepend("Eparticles",Etot_part);
+    // Energy & particles BC
+    prepend("Elost",Elost_part); 
 
-	// Energy & particles BC
-        prepend("Elost",Elost_part); 
+    prepend("Etot",Total_Energy);
+    prepend("Ebalance",Energy_Balance);
+    prepend("Ebal_norm",Energy_Bal_norm);
 
-        prepend("Etot",Total_Energy);
-        prepend("Ebalance",Energy_Balance);
-        prepend("Ebal_norm",Energy_Bal_norm);
+    // Energy & moving window
+    prepend("Emw_lost",Emw_lost);
+    prepend("Emw_part",Emw_part);
 
-	// Energy & moving window
-	prepend("Emw_lost",Emw_lost);
-        prepend("Emw_part",Emw_part);
-
-	prepend("Emw_lost_fields",Emw_lost_fields);
-        prepend("Emw_fields",Emw_fields);
-	//}
+    prepend("Emw_lost_fields",Emw_lost_fields);
+    prepend("Emw_fields",Emw_fields);
 
 
 }
@@ -367,5 +361,14 @@ double DiagnosticScalar::getScalar(string my_var){
     }
     DEBUG("key not found " << my_var);
     return 0.0;
+}
+
+void DiagnosticScalar::setScalar(string my_var, double value){
+    for (unsigned int i=0; i< out_list.size(); i++) {
+        if (out_list[i].first==my_var) {
+	  out_list[i].second = value;
+        }
+    }
+    DEBUG("key not found " << my_var);
 }
 

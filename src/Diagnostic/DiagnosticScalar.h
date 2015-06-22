@@ -51,6 +51,8 @@ public:
 
     //! get a particular scalar
     double getScalar(std::string name);
+    //! get a particular scalar
+    void setScalar(std::string name, double value);
 
     std::vector<std::pair<std::string,double> >::iterator itDiagScalar;
 

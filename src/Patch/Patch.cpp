@@ -1778,7 +1778,7 @@ void VectorPatch::computeScalarsDiags(int timestep)
 	string diagName( (*this)(0)->Diags->scalars.itDiagScalar->first );
 
 	if ( ( diagName.find("Min") == std::string::npos ) && ( diagName.find("Max") == std::string::npos ) ) {
-	    double sum(0);
+	    double sum(0.);
 	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
 		sum += (*this)(ipatch)->Diags->scalars.itDiagScalar->second;
 		if (ipatch)
@@ -1787,13 +1787,23 @@ void VectorPatch::computeScalarsDiags(int timestep)
 	    (*this)(0)->Diags->scalars.itDiagScalar->second = sum;
 	    (*this)(0)->Diags->scalars.itDiagScalar++;
 	}
-	//else if ( diagName.find("MinCell") != std::string::npos ) {}
+	else if ( diagName.find("MinCell") != std::string::npos ) {
+	    double min(0.);
+	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+		min += (*this)(ipatch)->Diags->scalars.itDiagScalar->second;
+		if (ipatch)
+		    (*this)(ipatch)->Diags->scalars.itDiagScalar++;
+	    }
+	    (*this)(0)->Diags->scalars.itDiagScalar->second = min;
+	    (*this)(0)->Diags->scalars.itDiagScalar++;	    
+	}
 	//else if ( diagName.find("MaxCell") != std::string::npos ) {}
 
 	// Go to next diag
     }
 
-    (*this)(0)->Diags->scalars.write(timestep);
+    // After MPI sync
+    //(*this)(0)->Diags->scalars.write(timestep);
     
 #ifdef _MINETMAX
 	/*else if ( (iter->first).find("MinCell") != std::string::npos ) {
