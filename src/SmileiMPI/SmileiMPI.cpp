@@ -33,6 +33,7 @@
 #include "Field.h"
 
 #include "Species.h"
+#include "Hilbert_functions.h"
 
 using namespace std;
 
@@ -105,6 +106,9 @@ void SmileiMPI::bcast( string& val )
 
 void SmileiMPI::init( PicParams& params )
 {
+
+    unsigned int Npatches, Tload, local_load;
+
     oversize.resize(params.nDim_field, 0);
     cell_starting_global_index.resize(params.nDim_field, 0);
     min_local.resize(params.nDim_field, 0.);
@@ -113,6 +117,17 @@ void SmileiMPI::init( PicParams& params )
     patch_count.resize(smilei_sz, 0);
 
     interParticles.initialize(0,params.nDim_particle); 
+ 
+    //Compute total Load
+    Tload = 0;
+    Npatches = params.number_of_patches[0];
+    for (unsigned int i = 1; i < params.nDim_field; i++) Npatches *=  params.number_of_patches[i];
+
+    for (unsigned int ipatch = 0; ipatch < Npatches; ipatch++){
+        local_load = 1. ;
+        Tload += local_load;
+    }
+
 
 }
 
