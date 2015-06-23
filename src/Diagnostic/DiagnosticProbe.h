@@ -18,8 +18,10 @@
 
 class PicParams;
 class SmileiMPI;
+class Patch;
 class DiagParams;
 class ElectroMagn;
+class Field2D;
 
 //! this class holds the point probe
 class DiagnosticProbe {
@@ -27,9 +29,9 @@ class DiagnosticProbe {
 public:
     
     //! the creator need both sim parameters params and the diagnostic parameter diagParams
-    DiagnosticProbe(PicParams &params, DiagParams &diagParams, SmileiMPI* smpi);
+    DiagnosticProbe(PicParams &params, DiagParams &diagParams, Patch* patch);
     
-    ~DiagnosticProbe(){};
+    ~DiagnosticProbe();
     
     //! run all probes
     void run(unsigned int timestep, ElectroMagn* EMfields, Interpolator* interp);
@@ -45,7 +47,7 @@ public:
 
 protected:
     
-    // rank of the cpu (from smpi)
+    // rank of the cpu (from smpi) -> patch->hindex
     const unsigned int cpuRank;
     
     //! fake particles acting as probes
@@ -53,6 +55,12 @@ protected:
     
     //! each probe will be associated with a proc
     std::vector<std::vector<int> >probeId;
+
+    //! each probe will write in a buffer
+    std::vector< Field2D* > probesArray;
+    std::vector< int > probesStart;
+    int nProbeTot;
+    int nDim;
     
     //! E local fields for the projector
     LocalFields Eloc_fields;

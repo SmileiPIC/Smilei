@@ -216,7 +216,7 @@ int SmileiMPI::hrank(int h)
 void SmileiMPI::computeGlobalDiags(Diagnostic* diags, int timestep)
 {
     if (timestep % diags->scalars.every == 0) computeGlobalDiags(diags->scalars, timestep);
-    //computeGlobalDiags(probes);
+    //computeGlobalDiags(probes); // HDF5 write done per patch in DiagProbes::*
     //computeGlobalDiags(phases);
 }
 

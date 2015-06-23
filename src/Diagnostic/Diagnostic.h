@@ -18,6 +18,7 @@
 
 class PicParams;
 class SmileiMPI;
+class Patch;
 class VectorPatch;
 class ElectroMagn;
 class Species;
@@ -29,7 +30,7 @@ class Diagnostic {
     friend class VectorPatch;
 public:
     //! creator called from main
-    Diagnostic(PicParams &params,  DiagParams &dParams, SmileiMPI* smpi);
+    Diagnostic(PicParams &params,  DiagParams &dParams, SmileiMPI* smpi, Patch* patch);
     
     //! destructor
     ~Diagnostic();

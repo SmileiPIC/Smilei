@@ -5,7 +5,7 @@
 
 using namespace std;
 
-int buildtag(int send, int recv);
+//int buildtag(int send, int recv);
 
 Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int m0, unsigned int m1, unsigned int m2, unsigned int ipatch) {
 
@@ -180,7 +180,7 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 	Interp     = InterpolatorFactory::create(params, smpi, this);               // + patchId -> idx_domain_begin (now = ref smpi)
 	Proj       = ProjectorFactory::create(params, smpi, this);                  // + patchId -> idx_domain_begin (now = ref smpi)
 
-	Diags = new Diagnostic(params,diag_params, smpi);
+	Diags = new Diagnostic(params,diag_params, smpi, this);
 	
 };
 
@@ -1282,14 +1282,6 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params,
     } // End for iDim
 }
 
-int buildtag(int send, int recv) {
-    // + flag / orientation
-    stringstream stag("");
-    stag << send << "0" << recv;
-    int tag(0);
-    stag >> tag; // Should had ispec ?
-    return tag;
-}
 
 void Patch::createType( PicParams& params )
 {
@@ -1759,7 +1751,7 @@ void VectorPatch::computeGlobalDiags(int timestep)
 {
     
     computeScalarsDiags(timestep);
-    //computeGlobalDiags(probes);
+    //computeGlobalDiags(probes); // HDF5 write done per patch in DiagProbes::*
     //computeGlobalDiags(phases);
 }
 
