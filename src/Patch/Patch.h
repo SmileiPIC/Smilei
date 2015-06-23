@@ -66,6 +66,9 @@ public:
     inline double getDomainLocalMin(int i) const {
         return min_local[i];
     }
+    inline double getDomainLocalMax(int i) const {
+        return max_local[i];
+    }
 
     int nbNeighbors_;
 
@@ -137,6 +140,19 @@ public:
 	    return true;
 	return false;
     };
+
+
+    //! Return MPI rank of this->hrank +/- 1
+    //! Should be replaced by an analytic formula
+    inline int getMPIRank(int hrank_pm1) {
+	if  (hrank_pm1 == neighbor_[0][0]) return MPI_neighbor_[0][0];
+	else if  (hrank_pm1 == neighbor_[0][1]) return MPI_neighbor_[0][1];
+	else if  (hrank_pm1 == neighbor_[1][0]) return MPI_neighbor_[1][0];
+	else if  (hrank_pm1 == neighbor_[1][1]) return MPI_neighbor_[1][1];
+	else
+	    return MPI_PROC_NULL;
+    }
+
     inline unsigned int Hindex() { return  hindex; }
 protected:
 
@@ -187,8 +203,20 @@ class VectorPatch {
     void clear() {patches_.clear();}
 
     std::vector<Patch*> patches_;
+
  private :
     
 };
+
+
+inline int buildtag(int send, int recv) {
+    // + flag / orientation
+    std::stringstream stag("");
+    stag << send << "0" << recv;
+    int tag(0);
+    stag >> tag; // Should had ispec ?
+    return tag;
+}
+
 
 #endif

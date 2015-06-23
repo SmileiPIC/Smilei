@@ -6,14 +6,15 @@
 
 #include "PicParams.h"
 #include "SmileiMPI.h"
+#include "Patch.h"
 #include "ElectroMagn.h"
 #include "Species.h"
 
 using namespace std;
 
-Diagnostic::Diagnostic( PicParams &picParams, DiagParams &dParams , SmileiMPI* smpi) :
+Diagnostic::Diagnostic( PicParams &picParams, DiagParams &dParams , SmileiMPI* smpi, Patch* patch) :
 scalars(picParams, dParams, smpi),
-probes(picParams, dParams, smpi),
+probes(picParams, dParams, patch),
 phases(picParams, dParams, smpi)
 {
 }
