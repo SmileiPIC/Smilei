@@ -7,6 +7,8 @@
 #include "Projector.h"
 #include "SmileiMPI.h"
 #include "Patch.h"
+#include "Hilbert_functions.h"
+
 using namespace std;
 
 SimWindow::SimWindow(PicParams& params)
@@ -88,11 +90,11 @@ void SimWindow::operate(std::vector<Patch*> vecPatches, SmileiMPI* smpi, PicPara
             ycall = vecPatches[ipatch]->Pcoordinates[1]-1;
             if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<vecPatches[ipatch]->mi[0]));
             if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<vecPatches[ipatch]->mi[1]));
-	    vecPatches[ipatch]->patch_neighborhood_[0] = vecPatches[ipatch]->generalhilbertindex(vecPatches[ipatch]->mi[0] , vecPatches[ipatch]->mi[1], xcall, ycall);
-	    vecPatches[ipatch]->patch_neighborhood_[1] = vecPatches[ipatch]->generalhilbertindex(vecPatches[ipatch]->mi[0] , vecPatches[ipatch]->mi[1], xcall, vecPatches[ipatch]->Pcoordinates[1]);
+	    vecPatches[ipatch]->patch_neighborhood_[0] = generalhilbertindex(vecPatches[ipatch]->mi[0] , vecPatches[ipatch]->mi[1], xcall, ycall);
+	    vecPatches[ipatch]->patch_neighborhood_[1] = generalhilbertindex(vecPatches[ipatch]->mi[0] , vecPatches[ipatch]->mi[1], xcall, vecPatches[ipatch]->Pcoordinates[1]);
             ycall = vecPatches[ipatch]->Pcoordinates[1]+1;
             if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<vecPatches[ipatch]->mi[1]));
-	    vecPatches[ipatch]->patch_neighborhood_[2] = vecPatches[ipatch]->generalhilbertindex(vecPatches[ipatch]->mi[0] , vecPatches[ipatch]->mi[1], xcall, ycall);
+	    vecPatches[ipatch]->patch_neighborhood_[2] = generalhilbertindex(vecPatches[ipatch]->mi[0] , vecPatches[ipatch]->mi[1], xcall, ycall);
 	    for ( int y = 0 ; y < 1+2*(params.nDim_field >= 2) ; y++ ) {
 	        for ( int z = 0 ; z < 1+2*(params.nDim_field == 3) ; z++ ) {
                     vecPatches[ipatch]->MPI_neighborhood_[y*3+z] = smpi->hrank(vecPatches[ipatch]->patch_neighborhood_[y*3+z]);

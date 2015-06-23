@@ -320,6 +320,7 @@ void PicParams::compute()
             cell_length[i] = conv_fac/res_space[i];
             sim_length[i] *= conv_fac;
             n_space[i]     = round(sim_length[i]/cell_length[i]);
+            if (i==0 && nspace_win_x != 0) n_space[i] = nspace_win_x;
             sim_length[i]  = (double)(n_space[i])*cell_length[i]; // ensure that nspace = sim_length/cell_length
             cell_volume   *= cell_length[i];
         }

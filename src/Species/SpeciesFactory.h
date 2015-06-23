@@ -41,8 +41,8 @@ public:
                 electron_species=vecSpecies[ispec];
             }
             nPart = vecSpecies[ispec]->getNbrOfParticles();
-            MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&nPart, &nPart, 1, MPI_UNSIGNED, MPI_SUM, 0, MPI_COMM_WORLD);
-            MESSAGE(1,"Species " << ispec << " (" << params.species_param[ispec].species_type << ") created with " << nPart << " particles" );
+            //MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&nPart, &nPart, 1, MPI_UNSIGNED, MPI_SUM, 0, MPI_COMM_WORLD);
+            //MESSAGE(1,"Species " << ispec << " (" << params.species_param[ispec].species_type << ") created with " << nPart << " particles" );
         } // END for ispec
 
         // add the found electron species to the ionizable species

@@ -33,6 +33,7 @@
 #include "Field.h"
 
 #include "Species.h"
+#include "Hilbert_functions.h"
 
 using namespace std;
 
@@ -105,6 +106,15 @@ void SmileiMPI::bcast( string& val )
 
 void SmileiMPI::init( PicParams& params )
 {
+
+    unsigned int Npatches, r,Ncur,Pcoordinates[3],patch_size[3],m0,m1,m2,ncells_perpatch;
+    double Tload,Tcur, Lcur, Lcur_tot, local_load, local_load_temp, above_target, below_target;
+    std::vector<unsigned int> mincell,maxcell,capabilities; //Min and max values of non empty cells for each species and in each dimension.
+    double density_length[3];
+    //Load of a cell = coef_cell*load of a particle.
+    //Load of a frozen particle = coef_frozen*load of a particle.
+    double coef_cell, coef_frozen; 
+
     oversize.resize(params.nDim_field, 0);
     cell_starting_global_index.resize(params.nDim_field, 0);
     min_local.resize(params.nDim_field, 0.);
@@ -113,7 +123,101 @@ void SmileiMPI::init( PicParams& params )
     patch_count.resize(smilei_sz, 0);
 
     interParticles.initialize(0,params.nDim_particle); 
+   
+    coef_cell = 0.1;
+    coef_frozen = 0.1;
+ 
+    mincell.resize(params.species_param.size()*3);
+    maxcell.resize(params.species_param.size()*3);
+    capabilities.resize(smilei_sz, 1); //Capabilities of devices hosting the different mpi processes. All capabilities are assumed to be equal for the moment.
 
+    //Defines the log2 of the total number of patches for each direction.
+    m0 = 0;
+    m1 = 0;
+    m2 = 0;
+    while ((params.number_of_patches[0] >> m0) >1) m0++ ;
+    while ((params.number_of_patches[1] >> m1) >1) m1++ ;
+    while ((params.number_of_patches[2] >> m2) >1) m2++ ;
+ 
+    //Compute total Load
+    
+    Tload = 0;
+    Npatches = params.number_of_patches[0];
+    ncells_perpatch = 1; //Initialization
+    r = 0;  //Start by finding work for rank 0.
+    Ncur = 0; // Number of patches assigned to current rank r.
+    Lcur = 0; //Load assigned to current rank r.
+
+    for (unsigned int i = 1; i < params.nDim_field; i++) {
+        Npatches *=  params.number_of_patches[i]; // Total number of patches.
+    }
+
+    for (unsigned int ispecies = 0; ispecies < params.species_param.size(); ispecies++){
+        density_length[0] = params.species_param[ispecies].dens_length_x[0];
+        density_length[1] = params.species_param[ispecies].dens_length_y[0];
+        //Needs to be updated when dens_lenth is a vector in params.
+        //density_length[2] = params.species_param[ispecies].dens_length_z[0];
+
+        local_load = params.species_param[ispecies].n_part_per_cell ;
+        for (unsigned int idim = 0; idim < params.nDim_field; idim++){
+            patch_size[idim] = params.n_space_global[idim]/params.number_of_patches[idim];
+            ncells_perpatch *= patch_size[idim]+2*params.oversize[idim];
+            mincell[ispecies*3+idim] = params.species_param[ispecies].vacuum_length[idim]/params.cell_length[idim];
+            // This strange way of writing this below prevents rounding errors.
+            maxcell[ispecies*3+idim] = min (params.sim_length[idim]/params.cell_length[idim],  mincell[ispecies*3+idim] + density_length[idim]/params.cell_length[idim]);
+            local_load *= (maxcell[ispecies*3+idim]-mincell[ispecies*3+idim]);
+        }
+        Tload += local_load; //Particle contribution to the load
+    }
+    Tload += Npatches*ncells_perpatch*coef_cell ; // We assume the load of one cell to be equal to be coef_cell and account for ghost cells.
+    if (smilei_rk == smilei_sz-1) cout << "Total load = " << Tload << endl;
+    Tload /= smilei_sz; //Target load for each mpi process.
+
+    //Loop over all patches
+    Lcur_tot = 0.; 
+    for(unsigned int hindex=0; hindex < Npatches; hindex++){
+        generalhilbertindexinv(m0, m1, &Pcoordinates[0], &Pcoordinates[1], hindex);
+        for (unsigned int idim = 0; idim < params.nDim_field; idim++) Pcoordinates[idim] *= patch_size[idim]; //Compute patch cells coordinates
+        local_load = 0; //Accumulate load of the current patch
+        for (unsigned int ispecies = 0; ispecies < params.species_param.size(); ispecies++){
+            local_load_temp = params.species_param[ispecies].n_part_per_cell; //Accumulate load of the current species.
+            if(params.species_param[ispecies].time_frozen > 0.) local_load_temp *= coef_frozen;
+            for (unsigned int idim = 0; idim < params.nDim_field; idim++){
+                local_load_temp *= min (min( (int)(maxcell[ispecies*3+idim]-Pcoordinates[idim]), (int)patch_size[idim]), min((int)(Pcoordinates[idim]+patch_size[idim]-mincell[ispecies*3+idim]), (int)patch_size[idim]));
+                if (local_load_temp < 0) local_load_temp = 0;
+            } 
+            local_load += local_load_temp; // Accumulate species contribution to the load.
+        }
+
+        local_load += ncells_perpatch*coef_cell; //Add grid contribution to the load.
+        Lcur += local_load; //Add grid contribution to the load.
+        Ncur++; // Try to assign current patch to rank r.
+
+        if (r < smilei_sz-1){
+
+            Tcur = Tload * capabilities[r];  //Target load for current rank r.
+            if ( Lcur > Tcur || smilei_sz-r >= Npatches-hindex){ //Load target is exceeded or we have as many patches as procs left.
+                above_target = Lcur - Tcur;  //Including current patch, we exceed target by that much.
+                below_target = Tcur - (Lcur-local_load); // Excluding current patch, we mis the target by that much.
+                if(above_target > below_target) { // If we're closer to target without the current patch...
+                    patch_count[r] = Ncur-1;      // ... include patches up to current one.
+                    Ncur = 1;
+                    Lcur_tot += Lcur-local_load;
+                    Lcur = local_load;
+                } else {                          //Else ...
+                    patch_count[r] = Ncur;        //...assign patches including the current one.
+                    Ncur = 0;
+                    Lcur_tot += Lcur-local_load;
+                    Lcur = 0;
+                }
+                r++; //Move on to the next rank.
+            } 
+        }// End if on r.
+        if (hindex == Npatches-1){
+            patch_count[smilei_sz-1] = Ncur; //When we reach the last patch, the last MPI process takes what's left.
+        }
+    }// End loop on patches.
+    if (smilei_rk == smilei_sz-1) for (unsigned int i=0; i<smilei_sz; i++) cout << "patch count = " << patch_count[i]<<endl;
 }
 
 

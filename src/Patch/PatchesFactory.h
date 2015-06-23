@@ -26,11 +26,6 @@ public:
 	//std::cout << " m0 = " << m0 << std::endl;
         while ((params.number_of_patches[1] >> m1) >1) m1++ ;
         while ((params.number_of_patches[2] >> m2) >1) m2++ ;
-        //Naive initialization of patch_count, assuming all mpi processes initially have the same number of patches.
-        for (unsigned int impi = 0 ; impi < smpi->getSize() ; impi++) {
-            //Computes number of patches owned by each MPI process
-            smpi->patch_count[impi] = (1 << (m0 + m1 + m2)) / smpi->getSize() + ( impi < (1 << (m0 + m1 + m2))%smpi->getSize() );
-        }
         npatches = smpi->patch_count[smpi->getRank()];// Number of patches owned by current MPI process.
         firstpatch = 0;
         for (unsigned int impi = 0 ; impi < smpi->getRank() ; impi++) {
