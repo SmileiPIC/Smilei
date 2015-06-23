@@ -127,8 +127,8 @@ void SmileiMPI::init( PicParams& params )
     coef_cell = 0.1;
     coef_frozen = 0.1;
  
-    mincell.resize(params.species_param.size()*3);
-    maxcell.resize(params.species_param.size()*3);
+    mincell.resize(params.n_species*3);
+    maxcell.resize(params.n_species*3);
     capabilities.resize(smilei_sz, 1); //Capabilities of devices hosting the different mpi processes. All capabilities are assumed to be equal for the moment.
 
     //Defines the log2 of the total number of patches for each direction.
@@ -152,7 +152,7 @@ void SmileiMPI::init( PicParams& params )
         Npatches *=  params.number_of_patches[i]; // Total number of patches.
     }
 
-    for (unsigned int ispecies = 0; ispecies < params.species_param.size(); ispecies++){
+    for (unsigned int ispecies = 0; ispecies < params.n_species; ispecies++){
         density_length[0] = params.species_param[ispecies].dens_length_x[0];
         density_length[1] = params.species_param[ispecies].dens_length_y[0];
         //Needs to be updated when dens_lenth is a vector in params.
@@ -179,7 +179,7 @@ void SmileiMPI::init( PicParams& params )
         generalhilbertindexinv(m0, m1, &Pcoordinates[0], &Pcoordinates[1], hindex);
         for (unsigned int idim = 0; idim < params.nDim_field; idim++) Pcoordinates[idim] *= patch_size[idim]; //Compute patch cells coordinates
         local_load = 0; //Accumulate load of the current patch
-        for (unsigned int ispecies = 0; ispecies < params.species_param.size(); ispecies++){
+        for (unsigned int ispecies = 0; ispecies < params.n_species; ispecies++){
             local_load_temp = params.species_param[ispecies].n_part_per_cell; //Accumulate load of the current species.
             if(params.species_param[ispecies].time_frozen > 0.) local_load_temp *= coef_frozen;
             for (unsigned int idim = 0; idim < params.nDim_field; idim++){

@@ -177,7 +177,6 @@ int main (int argc, char* argv[])
 
     
     VectorPatch vecPatches = PatchesFactory::createVector(params, diag_params, laser_params, smpiData);
-
     
     // reading from dumped file the restart values
     if (params.restart) {
@@ -233,6 +232,8 @@ int main (int argc, char* argv[])
 	    vecPatches(ipatch)->Diags->runAllDiags(0, vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, vecPatches(ipatch)->Interp, smpi);
 	vecPatches.computeGlobalDiags(0);
 	smpiData->computeGlobalDiags( vecPatches(0)->Diags, 0);
+        for (unsigned int ispec=0 ; ispec<params.n_species; ispec++)
+            MESSAGE(1,"Species " << ispec << " (" << params.species_param[ispec].species_type << ") created with " << vecPatches(0)->Diags->getScalar("N_"+params.species_param[ispec].species_type) << " particles" );
 
         //// temporary EM fields dump in Fields.h5
         //sio->writeAllFieldsSingleFileTime( EMfields, 0 );
