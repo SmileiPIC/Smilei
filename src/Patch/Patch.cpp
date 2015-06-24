@@ -1274,3 +1274,16 @@ void VectorPatch::computeScalarsDiags(int timestep)
     //(*this)(0)->Diags->scalars.write(timestep);
 
 }
+
+void VectorPatch::computeProbesDiags(PicParams& params, DiagParams &diag_params, int timestep)
+{
+    (*this)(0)->Diags->probes.createFile(diag_params);
+    for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++) {
+	(*this)(ipatch)->Diags->probes.setFile( (*this)(0)->Diags->probes.fileId );
+    }
+    cout << " File created " << endl;
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	cout << "Data written for " << ipatch << endl;
+	(*this)(ipatch)->Diags->probes.writePositionIn(params, diag_params);
+    }
+}

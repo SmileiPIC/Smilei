@@ -22,246 +22,247 @@ DiagnosticProbe::DiagnosticProbe(PicParams &params, DiagParams &diagParams, Patc
 cpuRank((int)patch->Hindex()),
 probeSize(10), 
 fileId(0) {
-    
-    if (diagParams.probeStruc.size() >0) {
 
-	ifstream exists("Probes.h5");
-	if (!exists) {
-	    hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
-	    H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
-	    fileId = H5Fcreate( "Probes.h5", H5F_ACC_TRUNC, H5P_DEFAULT, pid);
-	    H5Pclose(pid);
+    every.resize(diagParams.probeStruc.size());
+    probeParticles.resize(diagParams.probeStruc.size());
+
+    probesArray.resize(diagParams.probeStruc.size());
+    probesStart.resize(diagParams.probeStruc.size());
+
+    // Loop on all Probes
+    for (unsigned int np=0; np<diagParams.probeStruc.size(); np++) {
+	every[np]=diagParams.probeStruc[np].every;
+	unsigned int dimProbe=diagParams.probeStruc[np].dim+2;
+	unsigned int ndim=params.nDim_particle;
+            
+	vector<unsigned int> vecNumber=diagParams.probeStruc[np].number;
+            
+	unsigned int totPart=1;
+	for (unsigned int iDimProbe=0; iDimProbe<diagParams.probeStruc[np].dim; iDimProbe++) {
+	    totPart *= vecNumber[iDimProbe];
 	}
-	else
-	    fileId = H5Fopen( "Probes.h5", H5F_ACC_RDWR, H5P_DEFAULT);
-        
-        string ver(__VERSION);
-        hid_t sid = H5Screate(H5S_SCALAR);
-        hid_t tid = H5Tcopy(H5T_C_S1);
-        H5Tset_size(tid, ver.size());
-        H5Tset_strpad(tid,H5T_STR_NULLTERM);
 
-	hid_t aid;
-	if (!H5Aexists( fileId, "Version" ) ) {
-	    aid = H5Acreate(fileId, "Version", tid, sid, H5P_DEFAULT, H5P_DEFAULT);
-	    H5Awrite(aid, tid, ver.c_str());       
-	    H5Aclose(aid);
-	}
-        H5Sclose(sid);
-        H5Tclose(tid);
-        
-        every.resize(diagParams.probeStruc.size());
-        probeParticles.resize(diagParams.probeStruc.size());
-        probeId.resize(diagParams.probeStruc.size());
-
-	probesArray.resize(diagParams.probeStruc.size());
-	probesStart.resize(diagParams.probeStruc.size());
-        
-        for (unsigned int np=0; np<diagParams.probeStruc.size(); np++) {
-            every[np]=diagParams.probeStruc[np].every;
-            unsigned int dimProbe=diagParams.probeStruc[np].dim+2;
-            unsigned int ndim=params.nDim_particle;
+	// -----------------------------------------------------
+	// Start definition of probeParticles (probes positions)
+	// -----------------------------------------------------            
+	probeParticles[np].initialize(totPart, ndim);
             
-            vector<unsigned int> vecNumber=diagParams.probeStruc[np].number;
-            
-            unsigned int totPart=1;
-            for (unsigned int iDimProbe=0; iDimProbe<diagParams.probeStruc[np].dim; iDimProbe++) {
-                totPart *= vecNumber[iDimProbe];
-            }
-            
-            probeParticles[np].initialize(totPart, ndim);
-            probeId[np].resize(totPart);
-            
-            vector<double> partPos(ndim*totPart,0.0);
-            
-            for(unsigned int ipart=0; ipart!=totPart; ++ipart) {
-                int found=cpuRank;
-                for(unsigned int iDim=0; iDim!=ndim; ++iDim) {
-                    partPos[iDim+ipart*ndim]=diagParams.probeStruc[np].pos[0][iDim];
-                    // the particle position is a linear combiantion of the point pos with posFirst or posSecond or posThird
-                    for (unsigned int iDimProbe=0; iDimProbe<diagParams.probeStruc[np].dim; iDimProbe++) {
-                        partPos[iDim+ipart*ndim] += (ipart%vecNumber[iDimProbe])*(diagParams.probeStruc[np].pos[iDimProbe+1][iDim]-diagParams.probeStruc[np].pos[0][iDim])/(vecNumber[iDimProbe]-1);
-                    }
-                    probeParticles[np].position(iDim,ipart) = partPos[iDim+ipart*ndim];
+	vector<double> partPos(ndim*totPart,0.0);
+	for(unsigned int ipart=0; ipart!=totPart; ++ipart) {
+	    int found=cpuRank;
+	    for(unsigned int iDim=0; iDim!=ndim; ++iDim) {
+		partPos[iDim+ipart*ndim]=diagParams.probeStruc[np].pos[0][iDim];
+		// the particle position is a linear combiantion of the point pos with posFirst or posSecond or posThird
+		for (unsigned int iDimProbe=0; iDimProbe<diagParams.probeStruc[np].dim; iDimProbe++) {
+		    partPos[iDim+ipart*ndim] += (ipart%vecNumber[iDimProbe])*(diagParams.probeStruc[np].pos[iDimProbe+1][iDim]-diagParams.probeStruc[np].pos[0][iDim])/(vecNumber[iDimProbe]-1);
+		}
+		probeParticles[np].position(iDim,ipart) = partPos[iDim+ipart*ndim];
                     
-                    //!fixme this is awful: we add one cell if we're on the upper border
-                    double maxToCheck=patch->getDomainLocalMax(iDim);                    
-                    if (ndim==1) {
-                        if (patch->isEastern()) {
-                            maxToCheck+=params.cell_length[iDim];
-                        }
-                    } else if (ndim==2) {
-                        if ((iDim == 0 && patch->isEastern()) ||
-                            (iDim == 1 && patch->isNorthern())) {
-                            maxToCheck+=params.cell_length[iDim];
-                        }                        
-                    } else {
-                        ERROR("implement here");
-                    }
+		//!fixme this is awful: we add one cell if we're on the upper border
+		double maxToCheck=patch->getDomainLocalMax(iDim);                    
+		if (ndim==1) {
+		    if (patch->isEastern()) {
+			maxToCheck+=params.cell_length[iDim];
+		    }
+		} else if (ndim==2) {
+		    if ((iDim == 0 && patch->isEastern()) ||
+			(iDim == 1 && patch->isNorthern())) {
+			maxToCheck+=params.cell_length[iDim];
+		    }                        
+		} else {
+		    ERROR("implement here");
+		}
 
-                    if (probeParticles[np].position(iDim,ipart) < patch->getDomainLocalMin(iDim) ||
-                        probeParticles[np].position(iDim,ipart) >= maxToCheck) {
-                        found=-1;
-                    }
-                }
-                probeId[np][ipart] = found;
-            }
-
-
-	    nProbeTot = probeParticles[np].size();
-	    for ( int ipb=nProbeTot-1 ; ipb>=0 ; ipb--) {
-		if (!probeParticles[np].is_part_in_domain(ipb, patch))
-		    probeParticles[np].erase_particle(ipb);
+		if (probeParticles[np].position(iDim,ipart) < patch->getDomainLocalMin(iDim) ||
+		    probeParticles[np].position(iDim,ipart) >= maxToCheck) {
+		    found=-1;
+		}
 	    }
-	    // probesArray : np vectors x 10 vectors x probeParticles[np].size() double
-	    vector<unsigned int> probesArraySize(2);
-	    probesArraySize[0] = probeParticles[np].size();
-	    probesArraySize[1] = probeSize;
-	    probesArray[np] = new Field2D(probesArraySize);
+	}
+
+	nProbeTot = probeParticles[np].size();
+	for ( int ipb=nProbeTot-1 ; ipb>=0 ; ipb--) {
+	    if (!probeParticles[np].is_part_in_domain(ipb, patch))
+		probeParticles[np].erase_particle(ipb);
+	}
+	// ---------------------------------------------------
+	// End definition of probeParticles (probes positions)
+	// ---------------------------------------------------
+
+	// probesArray : np vectors x 10 vectors x probeParticles[np].size() double
+	vector<unsigned int> probesArraySize(2);
+	probesArraySize[0] = probeParticles[np].size();
+	probesArraySize[1] = probeSize;
+	probesArray[np] = new Field2D(probesArraySize);
 
 
-	    int nPatches(1);
-	    for (int iDim=0;iDim<params.nDim_field;iDim++) nPatches*=params.number_of_patches[iDim];
-	    // probesStart
-	    probesStart[np] = 0;
-	    MPI_Status status;
-	    stringstream rtag("");
-	    rtag << cpuRank-1 << "0" << cpuRank;
-	    int tag(0);
-	    rtag >> tag;
+	// ---------------------------------------------------
+	// Start file split definition
+	// ---------------------------------------------------
+	int nPatches(1);
+	for (int iDim=0;iDim<params.nDim_field;iDim++) nPatches*=params.number_of_patches[iDim];
+	// probesStart
+	probesStart[np] = 0;
+	MPI_Status status;
+	stringstream rtag("");
+	rtag << cpuRank-1 << "0" << cpuRank;
+	int tag(0);
+	rtag >> tag;
 
-	    if (cpuRank>0)
-		MPI_Recv( &(probesStart[np]), 1, MPI_INTEGER, patch->getMPIRank(cpuRank-1), tag, MPI_COMM_WORLD, &status );
+	if (cpuRank>0) {
+	    cout << patch->Hindex() << " Recv from " << patch->getMPIRank(cpuRank-1) << " with tag " << tag << endl;
+	    MPI_Recv( &(probesStart[np]), 1, MPI_INTEGER, patch->getMPIRank(cpuRank-1), tag, MPI_COMM_WORLD, &status );
+	}
 	    
-	    int probeEnd = probesStart[np]+probeParticles[np].size();
-	    stringstream stag("");
-	    stag << cpuRank << "0" << cpuRank+1;
-	    tag = 0;
-	    stag >> tag;
-	    if (cpuRank!=nPatches-1)
-		MPI_Send( &probeEnd, 1, MPI_INTEGER, patch->getMPIRank(cpuRank+1), tag, MPI_COMM_WORLD );
+	int probeEnd = probesStart[np]+probeParticles[np].size();
+	stringstream stag("");
+	stag << cpuRank << "0" << cpuRank+1;
+	tag = 0;
+	stag >> tag;
+	if (cpuRank!=nPatches-1) {
+	    cout << patch->Hindex() << " Send to " << patch->getMPIRank(cpuRank+1) << " with tag " << tag << endl;
+	    MPI_Send( &probeEnd, 1, MPI_INTEGER, patch->getMPIRank(cpuRank+1), tag, MPI_COMM_WORLD );
 
-            vector<hsize_t> dims(dimProbe);
-            vector<hsize_t> max_dims(dimProbe);
-            vector<hsize_t> chunk_dims(dimProbe);
-            
-            dims[0]=0;
-            max_dims[0]=H5S_UNLIMITED;
-            chunk_dims[0]=1;
-            
-            for (unsigned int iDimProbe=1; iDimProbe<dimProbe-1; iDimProbe++) {
-                dims[iDimProbe]=vecNumber[iDimProbe-1];
-                max_dims[iDimProbe]=vecNumber[iDimProbe-1];
-                chunk_dims[iDimProbe]=1;
-            }
-            dims.back()=probeSize;
-            max_dims.back()=probeSize;
-            chunk_dims.back()=probeSize;
-            
-            sid = H5Screate_simple(dimProbe, &dims[0], &max_dims[0]);
-            hid_t pid = H5Pcreate(H5P_DATASET_CREATE);
-            H5Pset_layout(pid, H5D_CHUNKED);
-            H5Pset_chunk(pid, dimProbe, &chunk_dims[0]);
-            
-	    hid_t did;
-	    if ( !H5Lexists( fileId, probeName(np).c_str(), H5P_DEFAULT ) )
-		did = H5Gcreate(fileId, probeName(np).c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	    else {
-                did = H5Gopen(fileId, probeName(np).c_str() ,H5P_DEFAULT);
-	    }
-            H5Pclose(pid);
-            H5Sclose(sid);
-
-	    // vecNumberProd ??
-            unsigned int vecNumberProd=1;
-            for (unsigned int iDimProbe=0; iDimProbe<vecNumber.size(); iDimProbe++) {
-                vecNumberProd*=vecNumber[iDimProbe];
-            }  
-            
-            vector<hsize_t> dimsPos(1+vecNumber.size());
-            for (unsigned int iDimProbe=0; iDimProbe<vecNumber.size(); iDimProbe++) {
-                dimsPos[iDimProbe]=vecNumber[iDimProbe];
-            }
-            dimsPos[vecNumber.size()]=ndim;
-            
-
-	    vector<unsigned int> posArraySize(2);
-	    posArraySize[0] = probeParticles[np].size();
-	    posArraySize[1] = ndim;
-	    Field2D* posArray = new Field2D(posArraySize);
-	    for ( int ipb=0 ; ipb<probeParticles[np].size() ; ipb++) {
-		for (int idim=0 ; idim<ndim  ; idim++ )
-		    posArray->data_2D[ipb][idim] = probeParticles[np].position(idim,ipb);
-	    }
-	    // memspace OK : 1 block 
-            hsize_t     chunk_parts[2];
-            chunk_parts[0] = probeParticles[np].size();
-            chunk_parts[1] = 2; 
-	    hid_t memspace  = H5Screate_simple(2, chunk_parts, NULL);
-	    // filespace :
-	    hsize_t dimsf[2], offset[2], stride[2], count[2];
-	    dimsf[0] = nProbeTot;
-	    dimsf[1] = 2;
-            hid_t filespace = H5Screate_simple(2, dimsf, NULL);
-            offset[0] = probesStart[np];
-            offset[1] = 0;
-            stride[0] = 1;
-            stride[1] = 1;
-            count[0] = 1;
-            count[1] = 1;
-            hsize_t     block[2];
-            block[0] = probeParticles[np].size();
-            block[1] = ndim;
-            H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, stride, count, block);
-
-	    //define , write_plist
-	    hid_t write_plist = H5Pcreate(H5P_DATASET_XFER);
-	    H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);
-            hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
-	    hid_t dset_id;
-	    if ( !H5Lexists( did, "positions", H5P_DEFAULT ) )
-		dset_id = H5Dcreate(did, "positions", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
-	    else
-		dset_id = H5Dopen(did, "positions", H5P_DEFAULT);
-
-
-	    H5Pclose(plist_id);
-	    H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &(posArray->data_2D[0][0]) );
-	    H5Dclose(dset_id);
-	    H5Pclose( write_plist );
-
-	    H5Sclose(filespace);
-	    H5Sclose(memspace);
-
-	    delete posArray;
-
-            
-            sid = H5Screate(H5S_SCALAR);	
-	    if (!H5Aexists( did, "every" ) ) {
-		aid = H5Acreate(did, "every", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
-		H5Awrite(aid, H5T_NATIVE_UINT, &every[np]);
-		H5Aclose(aid);
-	    }
-            H5Sclose(sid);
-            
-            sid = H5Screate(H5S_SCALAR);	
-	    if (!H5Aexists( did, "dimension" ) ) {
-		aid = H5Acreate(did, "dimension", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
-		H5Awrite(aid, H5T_NATIVE_UINT, &diagParams.probeStruc[np].dim);
-		H5Aclose(aid);
-	    }	    
-	    H5Sclose(sid);
-
-            
-            H5Gclose(did);
-        }
-        
-	H5Fclose(fileId);
+	}
+	// ---------------------------------------------------
+	// End file split definition
+	// ---------------------------------------------------
     }
+
 }
+
+// Done by patch master only
+void DiagnosticProbe::createFile(DiagParams &diagParams)
+{
+    if (!every.size())
+	return;
+    
+    hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
+    H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
+    fileId = H5Fcreate( "Probes.h5", H5F_ACC_TRUNC, H5P_DEFAULT, pid);
+    H5Pclose(pid);
+        
+    string ver(__VERSION);
+    hid_t sid = H5Screate(H5S_SCALAR);
+    hid_t tid = H5Tcopy(H5T_C_S1);
+    H5Tset_size(tid, ver.size());
+    H5Tset_strpad(tid,H5T_STR_NULLTERM);
+
+    hid_t aid;
+    aid = H5Acreate(fileId, "Version", tid, sid, H5P_DEFAULT, H5P_DEFAULT);
+    H5Awrite(aid, tid, ver.c_str());       
+    H5Aclose(aid);
+    H5Sclose(sid);
+    H5Tclose(tid);
+
+    // Loop on all Probes
+    for (unsigned int probe_id=0; probe_id<every.size(); probe_id++) {
+
+	// Open group de write in	
+	hid_t group_id = H5Gcreate(fileId, probeName(probe_id).c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+	hid_t sid;
+	sid = H5Screate(H5S_SCALAR);	
+	hid_t aid = H5Acreate(group_id, "every", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
+	H5Awrite(aid, H5T_NATIVE_UINT, &every[probe_id]);
+	H5Aclose(aid);
+	H5Sclose(sid);
+            
+	sid = H5Screate(H5S_SCALAR);	
+	aid = H5Acreate(group_id, "dimension", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
+	H5Awrite(aid, H5T_NATIVE_UINT, &diagParams.probeStruc[probe_id].dim);
+	H5Aclose(aid);
+	H5Sclose(sid);
+
+	// Close the group
+	H5Gclose(group_id);
+
+    }
+
+
+}
+
+
+void DiagnosticProbe::setFile(hid_t masterFileId)
+{
+    fileId = masterFileId;
+}
+
+
+void DiagnosticProbe::writePositionIn( PicParams &params, DiagParams &diagParams )
+{
+    // Loop on all Probes
+    for (unsigned int probe_id=0; probe_id<every.size(); probe_id++) {
+
+	// Open group de write in	
+        hid_t group_id = H5Gopen(fileId, probeName(probe_id).c_str() ,H5P_DEFAULT);
+	// Write in the did group
+	writePositions(probe_id, params.nDim_particle, diagParams.probeStruc[probe_id].dim, group_id);
+	// Close the group
+	H5Gclose(group_id);
+
+    }
+    
+}
+
+
+void DiagnosticProbe::writePositions(int probe_id, int ndim_Particles, int probeDim, hid_t group_id ) {
+    vector<unsigned int> posArraySize(2);
+    posArraySize[0] = probeParticles[probe_id].size();
+    posArraySize[1] = ndim_Particles;
+    Field2D* posArray = new Field2D(posArraySize);
+    for ( int ipb=0 ; ipb<probeParticles[probe_id].size() ; ipb++) {
+	for (int idim=0 ; idim<ndim_Particles  ; idim++ )
+	    posArray->data_2D[ipb][idim] = probeParticles[probe_id].position(idim,ipb);
+    }
+
+
+    // memspace OK : 1 block 
+    hsize_t     chunk_parts[2];
+    chunk_parts[0] = probeParticles[probe_id].size();
+    chunk_parts[1] = 2; 
+    hid_t memspace  = H5Screate_simple(2, chunk_parts, NULL);
+    // filespace :
+    hsize_t dimsf[2], offset[2], stride[2], count[2];
+    dimsf[0] = nProbeTot;
+    dimsf[1] = 2;
+    hid_t filespace = H5Screate_simple(2, dimsf, NULL);
+    offset[0] = probesStart[probe_id];
+    offset[1] = 0;
+    stride[0] = 1;
+    stride[1] = 1;
+    count[0] = 1;
+    count[1] = 1;
+    hsize_t     block[2];
+    block[0] = probeParticles[probe_id].size();
+    block[1] = ndim_Particles;
+    H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, stride, count, block);
+
+    //define , write_plist
+    hid_t write_plist = H5Pcreate(H5P_DATASET_XFER);
+    H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);
+    hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
+    hid_t dset_id;
+    dset_id = H5Dcreate(group_id, "positions", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+
+    H5Pclose(plist_id);
+    H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &(posArray->data_2D[0][0]) );
+    H5Dclose(dset_id);
+    H5Pclose( write_plist );
+
+    H5Sclose(filespace);
+    H5Sclose(memspace);
+
+
+
+    delete posArray;
+
+}
+
 
 DiagnosticProbe::~DiagnosticProbe()
 {
+
     for ( int np=0 ; np < probesArray.size() ; np++ )
 	delete probesArray[np];
 
@@ -271,6 +272,7 @@ void DiagnosticProbe::close() {
     /*if (fileId>0) {
         H5Fclose(fileId);
 	}*/
+    H5Fclose(fileId);
 }
 
 string DiagnosticProbe::probeName(int p) {
@@ -280,6 +282,7 @@ string DiagnosticProbe::probeName(int p) {
 }
 
 void DiagnosticProbe::run(unsigned int timestep, ElectroMagn* EMfields, Interpolator* interp) {
+    return;
     for (unsigned int np=0; np<every.size(); np++) {
 	fileId = H5Fopen( "Probes.h5", H5F_ACC_RDWR, H5P_DEFAULT);
         if (every[np] && timestep % every[np] == 0) {

@@ -30,6 +30,12 @@ public:
     
     //! the creator need both sim parameters params and the diagnostic parameter diagParams
     DiagnosticProbe(PicParams &params, DiagParams &diagParams, Patch* patch);
+
+    void createFile(DiagParams &diagParams);
+    void setFile(hid_t masterFileId);
+
+    void writePositionIn( PicParams &params, DiagParams &diagParams );
+    void writePositions(int probe_id, int ndim_Particles, int probeDim, hid_t group_id );
     
     ~DiagnosticProbe();
     
@@ -44,6 +50,8 @@ public:
 
     //! vector containing the timesteps at which calculate each probe
     std::vector<unsigned int> every;
+    //! hdf5 file ID
+    hid_t fileId;
 
 protected:
     
@@ -53,14 +61,11 @@ protected:
     //! fake particles acting as probes
     std::vector<Particles> probeParticles;
     
-    //! each probe will be associated with a proc
-    std::vector<std::vector<int> >probeId;
-
     //! each probe will write in a buffer
     std::vector< Field2D* > probesArray;
     std::vector< int > probesStart;
     int nProbeTot;
-    int nDim;
+    //int nDim;
     
     //! E local fields for the projector
     LocalFields Eloc_fields;
@@ -73,8 +78,7 @@ protected:
     //! memory size of a probe should be 6 = Exyz + Bxyz
     const int probeSize;
     
-    //! hdf5 file ID
-    hid_t fileId;
-    
+
+ private:
 };
 #endif
