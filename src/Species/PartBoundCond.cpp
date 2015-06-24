@@ -103,31 +103,31 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi, Pat
 
     // Define limits of local domain
     //if (!params.nspace_win_x) {
-        x_min = max( x_min_global, patch->min_local[0] );
-        x_max = min( x_max_global, patch->max_local[0] );
+        x_min = max( x_min_global, patch->getDomainLocalMin(0) );
+        x_max = min( x_max_global, patch->getDomainLocalMax(0) );
     //}
     //else {
-    //    x_min = patch->min_local[0];
-    //    x_max = patch->max_local[0];
+    //    x_min = patch->getDomainLocalMin(0);
+    //    x_max = patch->getDomainLocalMax(0);
     //}
 
     if ( nDim_particle > 1 ) {
 	if (params.bc_em_type_trans=="periodic") {
-	    y_min = patch->min_local[1];
-	    y_max = patch->max_local[1];
+	    y_min = patch->getDomainLocalMin(1);
+	    y_max = patch->getDomainLocalMax(1);
 	}
 	else {
-	    y_min = max( y_min_global, patch->min_local[1] );
-	    y_max = min( y_max_global, patch->max_local[1] );
+	    y_min = max( y_min_global, patch->getDomainLocalMin(1) );
+	    y_max = min( y_max_global, patch->getDomainLocalMax(1) );
 	}
         if ( nDim_particle > 2 ) {
 	    if (params.bc_em_type_trans=="periodic") {
-		z_min = patch->min_local[2];
-		z_max = patch->max_local[2];
+		z_min = patch->getDomainLocalMin(2);
+		z_max = patch->getDomainLocalMax(2);
 	    }
 	    else {
-		z_min = max( z_min_global, patch->min_local[2] );
-		z_max = min( z_max_global, patch->max_local[2] );
+		z_min = max( z_min_global, patch->getDomainLocalMin(2) );
+		z_max = min( z_max_global, patch->getDomainLocalMax(2) );
 	    }
 	}
     }

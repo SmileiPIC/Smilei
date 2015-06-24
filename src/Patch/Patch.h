@@ -52,31 +52,45 @@ public:
 
     //!Cartesian coordinates of the patch. X,Y,Z of the Patch according to its Hilbert index.
     std::vector<unsigned int> Pcoordinates;
-    //! "Real" min limit of local sub-subdomain (ghost data not concerned)
-    //!     - "0." on rank 0
-    std::vector<double> min_local;
-    //! "Real" max limit of local sub-subdomain (ghost data not concerned)
-    std::vector<double> max_local;
-    //! cell_starting_global_index : index of 1st cell of local sub-subdomain in the global domain.
-    //!     - concerns ghost data
-    //!     - "- oversize" on rank 0
-    std::vector<int> cell_starting_global_index;
 
 
+    //! Return real (excluding oversize) min coordinates (ex : rank 0 retourn 0.) for direction i
+    //! @see min_local
     inline double getDomainLocalMin(int i) const {
         return min_local[i];
     }
+    //! Return real (excluding oversize) min coordinates (ex : rank 0 retourn 0.) for direction i
+    //! @see min_local
     inline double getDomainLocalMax(int i) const {
         return max_local[i];
     }
+    //! Return global starting (including oversize, ex : rank 0 returns -oversize) index for direction i
+    //! \param i direction
+    //! @see cell_starting_global_index
+    inline int    getCellStartingGlobalIndex(int i) const {
+        return cell_starting_global_index[i];
+    }
+    //! Set global starting index for direction i
+    //! @see cell_starting_global_index
+    inline int&    getCellStartingGlobalIndex(int i)  {
+        return cell_starting_global_index[i];
+    }
+    //! Set real min coordinate for direction i
+    //! @see min_local
+    inline double& getDomainLocalMin(int i)  {
+        return min_local[i];
+    }
+    //! Set real max coordinate for direction i
+    //! @see max_local
+    inline double& getDomainLocalMax(int i)  {
+        return max_local[i];
+    }
+    //! Return real (excluding oversize) min coordinates (ex : rank 0 retourn 0.) for direction i
+    //! @see min_local
+    inline std::vector<double> getDomainLocalMin() const {
+        return min_local;
+    }
 
-    int nbNeighbors_;
-
-    std::vector< std::vector<int> > neighbor_;
-    std::vector< std::vector<int> > corner_neighbor_;
-
-    std::vector< std::vector<int> > MPI_neighbor_;
-    std::vector< std::vector<int> > MPI_corner_neighbor_;
 
     std::vector< int > MPI_neighborhood_;
     std::vector< int > patch_neighborhood_;
@@ -111,20 +125,6 @@ public:
     Field2D buf[2][2];
     Field2D corner_buf[2][2];
 
-    //Implementation of Chris Hamilton. Not used because it generates non continuous curves.
-    //!extractMask extracts a mask µ indicating which axes are active at a given iteration i of the compact hilbert index.
-    //unsigned int extractmask(unsigned int m0,unsigned int  m1, int i);
-    //unsigned int extractmask(unsigned int m0,unsigned int  m1, unsigned int  m2, int i);
-    //!Gray Code Rank.
-    //unsigned int gcr(unsigned int dim, unsigned int mu,unsigned int i);
-    //!Gray Code Rank Inverse.
-    //unsigned int gcrinv(unsigned int dim, unsigned int mu,unsigned int pi, unsigned int r);
-    //unsigned int compacthilbertindex(unsigned int m0, unsigned int m1, unsigned int x, unsigned int y);
-    //unsigned int compacthilbertindex(unsigned int m0, unsigned int m1, unsigned int m2, unsigned int x, unsigned int y, unsigned int z);
-    //void compacthilbertindexinv(unsigned int m0, unsigned int m1, unsigned int* x, unsigned int* y, unsigned int h);
-    //void compacthilbertindexinv(unsigned int m0, unsigned int m1, unsigned int m2, unsigned int* x, unsigned int* y, unsigned int* z, unsigned int h);
-
-
     inline bool isWestern()  { return locateOnBorders(0, 0); }
     inline bool isEastern()  { return locateOnBorders(0, 1); }
     inline bool isSouthern() { return locateOnBorders(1, 0); }
@@ -155,25 +155,25 @@ private:
     //!Hilbert index of the patch. Number of the patch along the Hilbert curve.
     unsigned int hindex;
 
-    //! number of cells in every direction of the local sub-subdomain. All patch have the same size.
-    //std::vector<unsigned int> n_space;
 
-    //exchangeParticles() {
-	// Out of method -> T operator with smpi or patch
-	//for (iDim = 0 ; iDim < ndim_ ; iDim++) {
+    int nbNeighbors_;
 
-	// Merge particles per thd                -> per Species / per Patch
-	// Split particles per direction          -> per Species / per Patch
+    std::vector< std::vector<int> > neighbor_;
+    std::vector< std::vector<int> > corner_neighbor_;
 
-	// Exch nbr particles                     -> if neighbor_ -> Go, else MPI (particles stored in tmp buf)
-	// Exch particles if necessary
+    std::vector< std::vector<int> > MPI_neighbor_;
+    std::vector< std::vector<int> > MPI_corner_neighbor_;
 
-	// Clean   send particles
-	// Include recv particles
-	// Store  !exch particles (other direction/MPI)
-	    
-	//}
-    //};
+    //! "Real" min limit of local sub-subdomain (ghost data not concerned)
+    //!     - "0." on rank 0
+    std::vector<double> min_local;
+    //! "Real" max limit of local sub-subdomain (ghost data not concerned)
+    std::vector<double> max_local;
+    //! cell_starting_global_index : index of 1st cell of local sub-subdomain in the global domain.
+    //!     - concerns ghost data
+    //!     - "- oversize" on rank 0
+    std::vector<int> cell_starting_global_index;
+
 };
 
 

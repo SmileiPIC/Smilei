@@ -36,7 +36,7 @@ Projector1D4Order::Projector1D4Order (PicParams& params, SmileiMPI* smpi, Patch*
     dble_115_ov_192 = 115.0/192.0;
     dble_5_ov_8 = 5.0/8.0;
 
-    index_domain_begin = patch->cell_starting_global_index[0];
+    index_domain_begin = patch->getCellStartingGlobalIndex(0);
 
     DEBUG("cell_length "<< params.cell_length[0]);
 

@@ -15,6 +15,7 @@ class DiagParams;
 class Diagnostic;
 class DiagnosticScalar;
 class Species;
+class VectorPatch;
 
 class ElectroMagn;
 class Field;

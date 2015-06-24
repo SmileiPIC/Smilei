@@ -87,8 +87,8 @@ speciesNumber(ispec),
 cell_length(params.cell_length),
 oversize(params.oversize),
 ndim(params.nDim_particle),
-min_loc(patch->min_local[0]),
-min_loc_vec(patch->min_local),
+min_loc(patch->getDomainLocalMin(0)),
+min_loc_vec(patch->getDomainLocalMin()),
 clrw(params.clrw),
 species_param(params.species_param[ispec]),
 particles(&particles_sorted[0]),
@@ -109,8 +109,7 @@ j_domain_begin( patch->Pcoordinates[1]*params.n_space[1] )
         vector<double> cell_index(3,0);
         for (unsigned int i=0 ; i<params.nDim_field ; i++) {
             if (cell_length[i]!=0)
-                cell_index[i] = patch->min_local[i];
-	        //cell_index[i] = smpi->getDomainLocalMin(i);
+                cell_index[i] = patch->getDomainLocalMin(i);
         }
         
         int starting_bin_idx = 0;

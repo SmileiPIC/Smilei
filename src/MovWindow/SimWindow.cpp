@@ -72,9 +72,9 @@ void SimWindow::operate(std::vector<Patch*> vecPatches, SmileiMPI* smpi, PicPara
         //Sinon, je deviens mon voisin de gauche.
         } else {
             vecPatches[ipatch]->Pcoordinates[0] -= 1;
-            vecPatches[ipatch]->min_local[0] -= params.n_space[0]*cell_length_x_;
-            vecPatches[ipatch]->max_local[0] -= params.n_space[0]*cell_length_x_;
-            vecPatches[ipatch]->cell_starting_global_index[0] -= params.n_space[0];
+            vecPatches[ipatch]->getDomainLocalMin(0) -= params.n_space[0]*cell_length_x_;
+            vecPatches[ipatch]->getDomainLocalMax(0) -= params.n_space[0]*cell_length_x_;
+            vecPatches[ipatch]->getCellStartingGlobalIndex(0) -= params.n_space[0];
 
             //Shift neighborhood tables.
 	    for ( int z = 0 ; z < 1+2*(params.nDim_field == 3) ; z++ ) {

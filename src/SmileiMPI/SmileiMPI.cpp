@@ -34,6 +34,7 @@
 
 #include "Species.h"
 #include "Hilbert_functions.h"
+#include "Patch.h"
 
 using namespace std;
 
