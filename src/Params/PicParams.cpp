@@ -268,15 +268,14 @@ PicParams::PicParams(InputData &ifile) {
     ifile.extract("every",global_every);
         
     // --------------------
-    // Number of processors
-    // --------------------
-    if ( !ifile.extract("number_of_procs", number_of_procs) )
-        number_of_procs.resize(nDim_field, 0);
-    // --------------------
     // Number of Patches
     // --------------------
     if ( !ifile.extract("number_of_patches", number_of_patches) )
         number_of_patches.resize(nDim_field, 0);
+        mi.resize(nDim_field, 0);
+    while ((number_of_patches[0] >> mi[0]) >1) mi[0]++ ;
+    while ((number_of_patches[1] >> mi[1]) >1) mi[1]++ ;
+    while ((number_of_patches[2] >> mi[2]) >1) mi[2]++ ;
     
     // -------------------------------------------------------
     // Compute usefull quantities and introduce normalizations

@@ -158,13 +158,13 @@ isSouthern(patch->isSouthern())
         
 	    for (int isDual=0 ; isDual<2 ; isDual++) {
 		bufsize[i][isDual] += isDual; 
-		if ( patch->mi[i]!=1 ) {                
+		if ( params.number_of_patches[i]!=1 ) {                
 
 		    if ( ( !isDual ) && (patch->Pcoordinates[i]!=0) )
 			bufsize[i][isDual]--;
 		    else if  (isDual) {
 			bufsize[i][isDual]--;
-			if ( (patch->Pcoordinates[i]!=0) && (patch->Pcoordinates[i]!=patch->mi[i]-1) ) 
+			if ( (patch->Pcoordinates[i]!=0) && (patch->Pcoordinates[i]!=params.number_of_patches[i]-1) ) 
 			    bufsize[i][isDual]--;
 		    }
                 

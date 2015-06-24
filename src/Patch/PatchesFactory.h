@@ -7,8 +7,8 @@
 
 class PatchesFactory {
 public:
-    static Patch* create(PicParams& params, DiagParams& diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int m0,unsigned int  m1,unsigned int  m2,unsigned int  ipatch) {
-	Patch* patch = new Patch(params, diag_params, laser_params, smpi, m0, m1, m2, ipatch);
+    static Patch* create(PicParams& params, DiagParams& diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int  ipatch) {
+	Patch* patch = new Patch(params, diag_params, laser_params, smpi, ipatch);
         return patch;
     }
 
@@ -17,15 +17,15 @@ public:
 
 	// Compute npatches (1 is std MPI behavior)
 	unsigned int npatches, firstpatch;
-        unsigned int m0, m1, m2; //Defines the log2 of the total number of patches for each direction.
-        m0 = 0;
-        m1 = 0;
-        m2 = 0;
-	//std::cout << " params.number_of_patches[0] = " << params.number_of_patches[0] << std::endl;
-        while ((params.number_of_patches[0] >> m0) >1) m0++ ;
-	//std::cout << " m0 = " << m0 << std::endl;
-        while ((params.number_of_patches[1] >> m1) >1) m1++ ;
-        while ((params.number_of_patches[2] >> m2) >1) m2++ ;
+        //unsigned int m0, m1, m2; //Defines the log2 of the total number of patches for each direction.
+        //m0 = 0;
+        //m1 = 0;
+        //m2 = 0;
+	////std::cout << " params.number_of_patches[0] = " << params.number_of_patches[0] << std::endl;
+        //while ((params.number_of_patches[0] >> m0) >1) m0++ ;
+	////std::cout << " m0 = " << m0 << std::endl;
+        //while ((params.number_of_patches[1] >> m1) >1) m1++ ;
+        //while ((params.number_of_patches[2] >> m2) >1) m2++ ;
         npatches = smpi->patch_count[smpi->getRank()];// Number of patches owned by current MPI process.
         firstpatch = 0;
         for (unsigned int impi = 0 ; impi < smpi->getRank() ; impi++) {
@@ -46,7 +46,7 @@ public:
         // create species
         vecPatches.resize(npatches);
         for (unsigned int ipatch = 0 ; ipatch < npatches ; ipatch++) {
-	    vecPatches.patches_[ipatch] = PatchesFactory::create(params, diag_params, laser_params, smpi, m0, m1, m2, firstpatch + ipatch);
+	    vecPatches.patches_[ipatch] = PatchesFactory::create(params, diag_params, laser_params, smpi, firstpatch + ipatch);
         }
 
         return vecPatches;
