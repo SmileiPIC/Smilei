@@ -185,10 +185,11 @@ int main (int argc, char* argv[])
         sio->restartAll( EMfields,  stepStart, vecSpecies, smpi, simWindow, params, input_data);
 
         double restart_time_dual = (stepStart +0.5) * params.timestep;
-	if ( simWindow && ( simWindow->isMoving(restart_time_dual) ) ) {
-	    simWindow->setOperators(vecSpecies, Interp, Proj, smpi);
-	    simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi , params);
-	}
+        // A revoir !
+	//if ( simWindow && ( simWindow->isMoving(restart_time_dual) ) ) {
+	//    simWindow->setOperators(vecSpecies, Interp, Proj, smpi);
+	//    simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi , params);
+	//}
 	    
     } else {
         // Initialize the electromagnetic fields
