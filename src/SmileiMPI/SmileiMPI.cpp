@@ -175,11 +175,14 @@ void SmileiMPI::init_patch_count( PicParams& params)
     Tload += Npatches*ncells_perpatch*coef_cell ; // We assume the load of one cell to be equal to be coef_cell and account for ghost cells.
     if (isMaster()) cout << "Total load = " << Tload << endl;
     Tload /= Tcapabilities; //Target load for each mpi process.
+    Tcur = Tload * capabilities[0];  //Init.
 
     //Loop over all patches
     for(unsigned int hindex=0; hindex < Npatches; hindex++){
         generalhilbertindexinv(params.mi[0], params.mi[1], &Pcoordinates[0], &Pcoordinates[1], hindex);
-        for (unsigned int idim = 0; idim < params.nDim_field; idim++) Pcoordinates[idim] *= params.n_space[idim]; //Compute patch cells coordinates
+        for (unsigned int idim = 0; idim < params.nDim_field; idim++) {
+            Pcoordinates[idim] *= params.n_space[idim]; //Compute patch cells coordinates
+        }
         local_load = 0.; //Accumulate load of the current patch
         for (unsigned int ispecies = 0; ispecies < params.n_species; ispecies++){
             local_load_temp = params.species_param[ispecies].n_part_per_cell; //Accumulate load of the current species.
@@ -197,7 +200,6 @@ void SmileiMPI::init_patch_count( PicParams& params)
 
         if (r < smilei_sz-1){
 
-            Tcur = Tload * capabilities[r];  //Target load for current rank r.
             if ( Lcur > Tcur || smilei_sz-r >= Npatches-hindex){ //Load target is exceeded or we have as many patches as procs left.
                 above_target = Lcur - Tcur;  //Including current patch, we exceed target by that much.
                 below_target = Tcur - (Lcur-local_load); // Excluding current patch, we mis the target by that much.
@@ -211,6 +213,7 @@ void SmileiMPI::init_patch_count( PicParams& params)
                     Lcur = 0.;
                 }
                 r++; //Move on to the next rank.
+                Tcur = Tload * capabilities[r];  //Target load for current rank r.
             } 
         }// End if on r.
         if (hindex == Npatches-1){
@@ -272,6 +275,7 @@ void SmileiMPI::recompute_patch_count( PicParams& params, VectorPatch& vecpatche
     for(unsigned int hindex=0; hindex < Npatches; hindex++) Tload += Lp_global[hindex];
     if (isMaster()) cout << "Total load = " << Tload << endl;
     Tload /= Tcapabilities; //Target load for each mpi process.
+    Tcur = Tload * capabilities[0];  //Init.
 
 
     //Loop over all patches
@@ -282,7 +286,6 @@ void SmileiMPI::recompute_patch_count( PicParams& params, VectorPatch& vecpatche
 
         if (r < smilei_sz-1){
 
-            Tcur = Tload * capabilities[r];  //Target load for current rank r.
             if ( Lcur > Tcur || smilei_sz-r >= Npatches-hindex){ //Load target is exceeded or we have as many patches as procs left.
                 above_target = Lcur - Tcur;  //Including current patch, we exceed target by that much.
                 below_target = Tcur - (Lcur-Lp_global[hindex]); // Excluding current patch, we mis the target by that much.
@@ -296,6 +299,7 @@ void SmileiMPI::recompute_patch_count( PicParams& params, VectorPatch& vecpatche
                     Lcur = 0;
                 }
                 r++; //Move on to the next rank.
+                Tcur = Tload * capabilities[r];  //Target load for current rank r.
             } 
         }// End if on r.
         if (hindex == Npatches-1){
