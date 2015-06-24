@@ -43,6 +43,10 @@ public:
     //! @see max_local
     //! @see n_space_global
     void init( PicParams& params );
+    // Initialize the patch_count vector. Patches are distributed in order to balance the load between MPI processes.
+    void init_patch_count( PicParams& params );
+    // Recompute the patch_count vector. Browse patches and redistribute them in order to balance the load between MPI processes.
+    void recompute_patch_count( PicParams& params, VectorPatch& vecpatches, double time_dual );
     //! Broadcast to all process
     //! \param idata read data
     void bcast( InputData& idata );
