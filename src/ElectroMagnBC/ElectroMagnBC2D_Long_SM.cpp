@@ -111,7 +111,7 @@ void ElectroMagnBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, Pat
         for (unsigned int j=0 ; j<ny_p ; j++) {
 
             byW = 0.;
-            double yp     = patch->min_local[1] + ((double)j)     * dy;
+            double yp     = patch->getDomainLocalMin(1) + ((double)j)     * dy;
             for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
                 if (laser_[ilaser]->laser_struct.boxSide == "west") {
                     
@@ -137,7 +137,7 @@ void ElectroMagnBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, Pat
         for (unsigned int j=0 ; j<ny_d ; j++) {
 
             bzW = 0.;
-            double yd     = patch->min_local[1] + ((double)j-0.5) * dy;
+            double yd     = patch->getDomainLocalMin(1) + ((double)j-0.5) * dy;
             
             for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
                 if (laser_[ilaser]->laser_struct.boxSide == "west") {
@@ -183,7 +183,7 @@ void ElectroMagnBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, Pat
         for (unsigned int j=0 ; j<ny_p ; j++) {
             
             byE = 0.;
-            double yp     = patch->min_local[1] + ((double)j)     * dy;
+            double yp     = patch->getDomainLocalMin(1) + ((double)j)     * dy;
             for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
                     // Incident field (west boundary)
                 if (laser_[ilaser]->laser_struct.boxSide == "east") {
@@ -202,7 +202,7 @@ void ElectroMagnBC2D_Long_SM::apply(ElectroMagn* EMfields, double time_dual, Pat
         for (unsigned int j=0 ; j<ny_d ; j++) {
 
             bzE = 0.;
-            double yd     = patch->min_local[1] + ((double)j-0.5) * dy;
+            double yd     = patch->getDomainLocalMin(1) + ((double)j-0.5) * dy;
             for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
                 if (laser_[ilaser]->laser_struct.boxSide == "east") {
                     // Incident field (east boundary)
