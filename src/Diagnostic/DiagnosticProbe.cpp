@@ -255,8 +255,8 @@ fileId(0) {
             H5Gclose(did);
         }
         
+	H5Fclose(fileId);
     }
-    H5Fclose(fileId);
 }
 
 DiagnosticProbe::~DiagnosticProbe()
@@ -279,8 +279,8 @@ string DiagnosticProbe::probeName(int p) {
 }
 
 void DiagnosticProbe::run(unsigned int timestep, ElectroMagn* EMfields, Interpolator* interp) {
-    fileId = H5Fopen( "Probes.h5", H5F_ACC_RDWR, H5P_DEFAULT);
     for (unsigned int np=0; np<every.size(); np++) {
+	fileId = H5Fopen( "Probes.h5", H5F_ACC_RDWR, H5P_DEFAULT);
         if (every[np] && timestep % every[np] == 0) {
 	    
 	    for (int iprob=0; iprob <probeParticles[np].size(); iprob++) {             
@@ -347,8 +347,9 @@ void DiagnosticProbe::run(unsigned int timestep, ElectroMagn* EMfields, Interpol
 
 
         }
+	if (fileId) H5Fflush(fileId, H5F_SCOPE_GLOBAL );
+	H5Fclose(fileId);
+
     }
-    if (fileId) H5Fflush(fileId, H5F_SCOPE_GLOBAL );
-    H5Fclose(fileId);
 
 }
