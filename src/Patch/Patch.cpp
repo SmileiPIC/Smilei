@@ -8,7 +8,7 @@ using namespace std;
 
 //int buildtag(int send, int recv);
 
-Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int m0, unsigned int m1, unsigned int m2, unsigned int ipatch) {
+Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int ipatch) {
 
 
 //Neighborhood definition in 2D:
@@ -24,19 +24,14 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 	std::cout << smpi->getRank() << ", mypatch is : " << hindex << std::endl;        
         
         if ( params.geometry == "1d3v" ) {
-            mi.resize(1);
             Pcoordinates.resize(1);
-            mi[0] = m0;
             Pcoordinates[0] = hindex;
 	    MPI_neighborhood_.resize(3);
 	    patch_neighborhood_.resize(3);
         }
         else if ( params.geometry == "2d3v" ) {
-            mi.resize(2);
             Pcoordinates.resize(2);
-            mi[0] = m0;
-            mi[1] = m1;
-            generalhilbertindexinv(m0, m1, &Pcoordinates[0], &Pcoordinates[1], hindex);
+            generalhilbertindexinv(params.mi[0], params.mi[1], &Pcoordinates[0], &Pcoordinates[1], hindex);
 
 	    /////////////////////////////////////
 	    //  Define local domain
@@ -46,12 +41,8 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 	    patch_neighborhood_.resize(9);
         }
         else {
-            mi.resize(3);
             Pcoordinates.resize(3);
-            mi[0] = m0;
-            mi[1] = m1;
-            mi[2] = m2;
-            generalhilbertindexinv(m0, m1, m2, &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
+            generalhilbertindexinv(params.mi[0], params.mi[1], params.mi[2], &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
 	    MPI_neighborhood_.resize(27);
 	    patch_neighborhood_.resize(27);
         }
@@ -73,35 +64,35 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 
         xcall = Pcoordinates[0]-1;
         ycall = Pcoordinates[1];
-	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0));
-	neighbor_[0][0] = generalhilbertindex( m0, m1, xcall, ycall);
+	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<params.mi[0]));
+	neighbor_[0][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
 #ifdef _PATCH_DEBUG
         cout << xcall << " " << ycall << " " << neighbor_[0][0] << endl;
 #endif
         xcall = Pcoordinates[0]+1;
-	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0));
-	neighbor_[0][1] = generalhilbertindex( m0, m1, xcall, ycall);
+	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<params.mi[0]));
+	neighbor_[0][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
         xcall = Pcoordinates[0];
         ycall = Pcoordinates[1]-1;
-	if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<m1));
-	neighbor_[1][0] = generalhilbertindex( m0, m1, xcall, ycall);
+	if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<params.mi[1]));
+	neighbor_[1][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
         ycall = Pcoordinates[1]+1;
-	if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<m1));
-	neighbor_[1][1] = generalhilbertindex( m0, m1, xcall, ycall);
+	if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<params.mi[1]));
+	neighbor_[1][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
 
 
         xcall = Pcoordinates[0]+1;
-	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0));
-	corner_neighbor_[1][1] = generalhilbertindex( m0, m1, xcall, ycall);
+	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<params.mi[0]));
+	corner_neighbor_[1][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
         xcall = Pcoordinates[0]-1;
-	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0));
-	corner_neighbor_[0][1] = generalhilbertindex( m0, m1, xcall, ycall);
+	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<params.mi[0]));
+	corner_neighbor_[0][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
         ycall = Pcoordinates[1]-1;
-	if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<m1));
-	corner_neighbor_[0][0] = generalhilbertindex( m0, m1, xcall, ycall);
+	if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<params.mi[1]));
+	corner_neighbor_[0][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
         xcall = Pcoordinates[0]+1;
-	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<m0));
-	corner_neighbor_[1][0] = generalhilbertindex( m0, m1, xcall, ycall);
+	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<params.mi[0]));
+	corner_neighbor_[1][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
 
 
         patch_neighborhood_[0] = corner_neighbor_[0][0];

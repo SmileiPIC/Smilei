@@ -253,8 +253,10 @@ public:
 	int exchange_particles_each;
     
     //! Number of MPI process per direction (default : as square as possible)
-    std::vector<int> number_of_procs;
     std::vector<int> number_of_patches;
+    //! Log2 of the number of patch in the whole simulation box in every direction.
+    //! The number of patch in a given direction MUST be a power of 2 and is 2^(mi[i]).
+    std::vector<unsigned int> mi;
     
     //! global number of time exits (it will be used if not specified in various diags/fields)
     unsigned int global_every;

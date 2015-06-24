@@ -28,7 +28,7 @@ class Patch
 
 public:
     //! Constructor for Patch
-  Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int m0, unsigned int m1, unsigned int m2, unsigned int ipatch);
+  Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int ipatch);
 
     //! Destructor for Patch
     ~Patch() {
@@ -80,11 +80,6 @@ public:
 
     std::vector< int > MPI_neighborhood_;
     std::vector< int > patch_neighborhood_;
-
-
-    //! Log2 of the number of patch in the whole simulation box in every direction.
-    //! The number of patch in a given direction MUST be a power of 2 and is 2^(mi[i]).
-    std::vector<unsigned int> mi;
 
     void dynamics(double time_dual, SmileiMPI *smpi, PicParams &params, SimWindow* simWindow, int diag_flag);
     void exchParticles(SmileiMPI* smpi, int ispec, PicParams &params, int tid, int iDim);

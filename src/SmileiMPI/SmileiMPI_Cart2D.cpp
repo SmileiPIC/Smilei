@@ -91,39 +91,39 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
     for (unsigned int i=0 ; i<params.nDim_field ; i++)
         number_of_patches[i] = params.number_of_patches[i];
     
-    if (params.number_of_procs[0]!=0) {
-        for (unsigned int i=0 ; i<params.nDim_field ; i++)
-            number_of_procs[i] = params.number_of_procs[i];
-        if (number_of_procs[0]*number_of_procs[1]!=smilei_sz) {
-            DEBUG(3,"Domain decomposition specified in the namelist don't match with the number of MPI process");
-            DEBUG(3,"\tit will be computed to be as square as possible");
-            for (unsigned int i=0 ; i<params.nDim_field ; i++)
-                params.number_of_procs[i] = 0;
-        }
-    }
-    if (params.number_of_procs[0]==0) {
-	double tmp(0.);
-        //      without moving-window
-        if (!params.nspace_win_x)
-            tmp  = params.res_space[0]*params.sim_length[0] / ( params.res_space[1]*params.sim_length[1] );
-        else // with moving-window
-            tmp = params.nspace_win_x * 2.0 * M_PI / ( params.res_space[1]*params.sim_length[1] );
+    //if (params.number_of_procs[0]!=0) {
+    //    for (unsigned int i=0 ; i<params.nDim_field ; i++)
+    //        number_of_procs[i] = params.number_of_procs[i];
+    //    if (number_of_procs[0]*number_of_procs[1]!=smilei_sz) {
+    //        DEBUG(3,"Domain decomposition specified in the namelist don't match with the number of MPI process");
+    //        DEBUG(3,"\tit will be computed to be as square as possible");
+    //        for (unsigned int i=0 ; i<params.nDim_field ; i++)
+    //            params.number_of_procs[i] = 0;
+    //    }
+    //}
+    //if (params.number_of_procs[0]==0) {
+    //    double tmp(0.);
+    //    //      without moving-window
+    //    if (!params.nspace_win_x)
+    //        tmp  = params.res_space[0]*params.sim_length[0] / ( params.res_space[1]*params.sim_length[1] );
+    //    else // with moving-window
+    //        tmp = params.nspace_win_x * 2.0 * M_PI / ( params.res_space[1]*params.sim_length[1] );
 
-        number_of_procs[0] = min( smilei_sz, max(1, (int)sqrt ( (double)smilei_sz*tmp*tmp) ) );
-        number_of_procs[1] = (int)(smilei_sz / number_of_procs[0]);
-        
-        while ( number_of_procs[0]*number_of_procs[1] != smilei_sz ) {
-            if (number_of_procs[0]>=number_of_procs[1] ) {
-                number_of_procs[0]++;
-                number_of_procs[1] = (int)(smilei_sz / number_of_procs[0]);
-            }
-            else {
-                number_of_procs[1]++;
-                number_of_procs[0] = (int)(smilei_sz / number_of_procs[1]);
-            }
-        }
-        
-    }
+    //    number_of_procs[0] = min( smilei_sz, max(1, (int)sqrt ( (double)smilei_sz*tmp*tmp) ) );
+    //    number_of_procs[1] = (int)(smilei_sz / number_of_procs[0]);
+    //    
+    //    while ( number_of_procs[0]*number_of_procs[1] != smilei_sz ) {
+    //        if (number_of_procs[0]>=number_of_procs[1] ) {
+    //            number_of_procs[0]++;
+    //            number_of_procs[1] = (int)(smilei_sz / number_of_procs[0]);
+    //        }
+    //        else {
+    //            number_of_procs[1]++;
+    //            number_of_procs[0] = (int)(smilei_sz / number_of_procs[1]);
+    //        }
+    //    }
+    //    
+    //}
     // Force configuration of MPI domain decomposition
     MESSAGE("MPI Domain decomposition : " << smilei_sz << " = " << number_of_procs[0] << " x " << number_of_procs[1]);
     MESSAGE("Boundary conditions in x- & y-directions: "<< params.bc_em_type_long << ", " << params.bc_em_type_trans);
