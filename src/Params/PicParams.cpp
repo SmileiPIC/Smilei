@@ -271,8 +271,8 @@ PicParams::PicParams(InputData &ifile) {
     // Number of Patches
     // --------------------
     if ( !ifile.extract("number_of_patches", number_of_patches) )
-        number_of_patches.resize(nDim_field, 0);
-        mi.resize(nDim_field, 0);
+        ERROR("You must declare number_of_patches " );
+    mi.resize(nDim_field, 0);
     while ((number_of_patches[0] >> mi[0]) >1) mi[0]++ ;
     while ((number_of_patches[1] >> mi[1]) >1) mi[1]++ ;
     while ((number_of_patches[2] >> mi[2]) >1) mi[2]++ ;
@@ -342,8 +342,10 @@ void PicParams::compute()
     for (unsigned int i=0; i<nDim_field; i++) oversize[i]  = interpolation_order + (exchange_particles_each-1);;
 
     n_space_global.resize(nDim_field, 0);
-    for (unsigned int i=0; i<nDim_field; i++) n_space_global[i] = n_space[i]; 
-
+    for (unsigned int i=0; i<nDim_field; i++){
+        n_space_global[i] = n_space[i]; 
+        n_space[i] /= number_of_patches[i];
+    }
     
 }
 
@@ -476,7 +478,8 @@ void PicParams::print()
     
     for ( unsigned int i=0 ; i<sim_length.size() ; i++ ){
         MESSAGE(1,"dimension " << i << " - (res_space, sim_length) : (" << res_space[i] << ", " << sim_length[i] << ")");
-        MESSAGE(1,"            - (n_space,  cell_length) : " << "(" << n_space[i] << ", " << cell_length[i] << ")");
+        MESSAGE(1,"            - (n_space_global,  cell_length) : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")");
+        MESSAGE(1,"            - (number_of_patches, n_cell perpatch) : " << "(" << number_of_patches[i] << ", " << n_space[i] << ")");
     }
 
     // Plasma related parameters
