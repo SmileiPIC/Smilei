@@ -24,15 +24,16 @@ probeSize(10),
 fileId(0) {
     
     if (diagParams.probeStruc.size() >0) {
-        hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
-        H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
 
 	ifstream exists("Probes.h5");
-	if (!exists)
+	if (!exists) {
+	    hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
+	    H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
 	    fileId = H5Fcreate( "Probes.h5", H5F_ACC_TRUNC, H5P_DEFAULT, pid);
+	    H5Pclose(pid);
+	}
 	else
 	    fileId = H5Fopen( "Probes.h5", H5F_ACC_RDWR, H5P_DEFAULT);
-        H5Pclose(pid);
         
         string ver(__VERSION);
         hid_t sid = H5Screate(H5S_SCALAR);
