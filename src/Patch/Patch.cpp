@@ -1281,9 +1281,16 @@ void VectorPatch::computeProbesDiags(PicParams& params, DiagParams &diag_params,
     for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++) {
 	(*this)(ipatch)->Diags->probes.setFile( (*this)(0)->Diags->probes.fileId );
     }
-    cout << " File created " << endl;
+    //cout << " File created " << endl;
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	cout << "Data written for " << ipatch << endl;
+	//cout << "Data written for " << ipatch << endl;
 	(*this)(ipatch)->Diags->probes.writePositionIn(params, diag_params);
+	//cout << "End of Data written for " << ipatch << endl;
     }
+    //cout << " Before File close " << endl;
+    //(*this)(0)->Diags->probes.close();
+    for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++) {
+	(*this)(ipatch)->Diags->probes.setFile( 0 );
+    }
+    //cout << " File close " << endl;
 }

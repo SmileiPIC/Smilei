@@ -81,15 +81,15 @@ fileId(0) {
 	}
 
 	nProbeTot = probeParticles[np].size();
-	cout << " \t Before " << cpuRank << " nprobes : " << probeParticles[0].size() << endl;
+	//cout << " \t Before " << cpuRank << " nprobes : " << probeParticles[0].size() << endl;
 
 	for ( int ipb=nProbeTot-1 ; ipb>=0 ; ipb--) {
 	    if (!probeParticles[np].is_part_in_domain(ipb, patch))
 		probeParticles[np].erase_particle(ipb);
-	    cout << patch->getDomainLocalMin(0) << " " << probeParticles[np].position(0, ipb) << " " << patch->getDomainLocalMax(0) << endl;
-	    cout << patch->getDomainLocalMin(1) << " " << probeParticles[np].position(1, ipb) << " " << patch->getDomainLocalMax(1) << endl;
+	    //cout << patch->getDomainLocalMin(0) << " " << probeParticles[np].position(0, ipb) << " " << patch->getDomainLocalMax(0) << endl;
+	    //cout << patch->getDomainLocalMin(1) << " " << probeParticles[np].position(1, ipb) << " " << patch->getDomainLocalMax(1) << endl;
 	}
-	cout << " \t After " << cpuRank << " nprobes : " << probeParticles[0].size() << endl;
+	//cout << " \t After " << cpuRank << " nprobes : " << probeParticles[0].size() << endl;
 	// ---------------------------------------------------
 	// End definition of probeParticles (probes positions)
 	// ---------------------------------------------------
@@ -115,7 +115,7 @@ fileId(0) {
 	rtag >> tag;
 
 	if (cpuRank>0) {
-	    cout << patch->Hindex() << " Recv from " << patch->getMPIRank(cpuRank-1) << " with tag " << tag << endl;
+	    //cout << patch->Hindex() << " Recv from " << patch->getMPIRank(cpuRank-1) << " with tag " << tag << endl;
 	    MPI_Recv( &(probesStart[np]), 1, MPI_INTEGER, patch->getMPIRank(cpuRank-1), tag, MPI_COMM_WORLD, &status );
 	}
 	    
@@ -125,7 +125,7 @@ fileId(0) {
 	tag = 0;
 	stag >> tag;
 	if (cpuRank!=nPatches-1) {
-	    cout << patch->Hindex() << " Send to " << patch->getMPIRank(cpuRank+1) << " with tag " << tag << endl;
+	    //cout << patch->Hindex() << " Send to " << patch->getMPIRank(cpuRank+1) << " with tag " << tag << endl;
 	    MPI_Send( &probeEnd, 1, MPI_INTEGER, patch->getMPIRank(cpuRank+1), tag, MPI_COMM_WORLD );
 
 	}
@@ -133,7 +133,7 @@ fileId(0) {
 	// End file split definition
 	// ---------------------------------------------------
     }
-    cout << " nprobes : " << probeParticles[0].size() << endl;
+    //cout << " nprobes : " << probeParticles[0].size() << endl;
  
 
 }
@@ -213,8 +213,8 @@ void DiagnosticProbe::writePositionIn( PicParams &params, DiagParams &diagParams
 
 
 void DiagnosticProbe::writePositions(int probe_id, int ndim_Particles, int probeDim, hid_t group_id ) {
-    cout << probeParticles[probe_id].size() << endl;
-    if (!probeParticles[probe_id].size()) return;
+    //cout << probeParticles[probe_id].size() << endl;
+    //if (!probeParticles[probe_id].size()) return;
 
     vector<unsigned int> posArraySize(2);
     posArraySize[0] = probeParticles[probe_id].size();
@@ -255,12 +255,12 @@ void DiagnosticProbe::writePositions(int probe_id, int ndim_Particles, int probe
     plist_id = H5Pcreate(H5P_DATASET_CREATE);
     //else 
     //plist_id = H5Pcreate(H5P_DATASET_ACCESS);
-    cout << "Before create" << endl;
-    //if ( !H5Lexists( group_id, "positions", H5P_DEFAULT ) )
-    dset_id = H5Dcreate(group_id, "positions", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
-    //else
-    //dset_id = H5Dopen(group_id, "positions", H5P_DEFAULT);
-    cout << "After create" << endl;
+    //cout << "Before create" << endl;
+    if ( !H5Lexists( group_id, "positions", H5P_DEFAULT ) )
+	dset_id = H5Dcreate(group_id, "positions", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+    else
+	dset_id = H5Dopen(group_id, "positions", H5P_DEFAULT);
+    //cout << "After create" << endl;
 
 
     H5Pclose(plist_id);
@@ -287,10 +287,12 @@ DiagnosticProbe::~DiagnosticProbe()
 }
 
 void DiagnosticProbe::close() {
-    /*if (fileId>0) {
+    if (fileId>0) {
         H5Fclose(fileId);
-	}*/
-    H5Fclose(fileId);
+    }
+    /*cout << " I 'm here " << endl;
+    H5Fflush(fileId, H5F_SCOPE_GLOBAL );
+    H5Fclose(fileId);*/
 }
 
 string DiagnosticProbe::probeName(int p) {

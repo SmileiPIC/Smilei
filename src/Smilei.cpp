@@ -235,7 +235,6 @@ int main (int argc, char* argv[])
 	smpiData->computeGlobalDiags( vecPatches(0)->Diags, 0);
 
 	vecPatches.computeProbesDiags(params, diag_params, 0);
-	return;
 
         for (unsigned int ispec=0 ; ispec<params.n_species; ispec++)
             MESSAGE(1,"Species " << ispec << " (" << params.species_param[ispec].species_type << ") created with " << vecPatches(0)->Diags->getScalar("N_"+params.species_param[ispec].species_type) << " particles" );
