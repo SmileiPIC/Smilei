@@ -52,61 +52,61 @@ void SimWindow::operate(vector<Species*> vecSpecies, ElectroMagn* EMfields, Inte
 
 }
 
-void SimWindow::operate(std::vector<Patch*> vecPatches, SmileiMPI* smpi, PicParams& params)
+void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& params)
 {
     int xcall, ycall;
     #pragma omp for
     for (unsigned int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++) {
         //Si je ne possede pas mon voisin de gauche...
-        if (vecPatches[ipatch]->MPI_neighborhood_[3] != vecPatches[ipatch]->MPI_neighborhood_[4]) {
+        if (vecPatches(ipatch)->MPI_neighborhood_[3] != vecPatches(ipatch)->MPI_neighborhood_[4]) {
             //...je l'envois si necessaire ... 
-            if (vecPatches[ipatch]->MPI_neighborhood_[3] != MPI_PROC_NULL)
+            if (vecPatches(ipatch)->MPI_neighborhood_[3] != MPI_PROC_NULL)
                 cout << "Sending Patch" << endl;
                 //Mpi_Send_Patch(MpiLNeighbour);
             //... et je detruit mes donnees.
-            for (unsigned int ispec=0 ; ispec<vecPatches[ipatch]->vecSpecies.size(); ispec++) delete vecPatches[ipatch]->vecSpecies[ispec];
-	    vecPatches[ipatch]->vecSpecies.clear();
-            delete (vecPatches[ipatch]->EMfields);
-            delete (vecPatches[ipatch]->Interp);
-            delete (vecPatches[ipatch]->Proj);
+            for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++) delete vecPatches(ipatch)->vecSpecies[ispec];
+	    vecPatches(ipatch)->vecSpecies.clear();
+            delete (vecPatches(ipatch)->EMfields);
+            delete (vecPatches(ipatch)->Interp);
+            delete (vecPatches(ipatch)->Proj);
         //Sinon, je deviens mon voisin de gauche.
         } else {
-            vecPatches[ipatch]->Pcoordinates[0] -= 1;
-            vecPatches[ipatch]->getDomainLocalMin(0) -= params.n_space[0]*cell_length_x_;
-            vecPatches[ipatch]->getDomainLocalMax(0) -= params.n_space[0]*cell_length_x_;
-            vecPatches[ipatch]->getCellStartingGlobalIndex(0) -= params.n_space[0];
+            vecPatches(ipatch)->Pcoordinates[0] -= 1;
+            vecPatches(ipatch)->getDomainLocalMin(0) -= params.n_space[0]*cell_length_x_;
+            vecPatches(ipatch)->getDomainLocalMax(0) -= params.n_space[0]*cell_length_x_;
+            vecPatches(ipatch)->getCellStartingGlobalIndex(0) -= params.n_space[0];
 
             //Shift neighborhood tables.
 	    for ( int z = 0 ; z < 1+2*(params.nDim_field == 3) ; z++ ) {
 	        for ( int y = 0 ; y < 1+2*(params.nDim_field >= 2) ; y++ ) {
 	            for ( int x = 2 ; x > 0 ; x-- ) {
-	            vecPatches[ipatch]->patch_neighborhood_[z*9+y*3+x] = vecPatches[ipatch]->patch_neighborhood_[z*9+y*3+x-1];
-	            vecPatches[ipatch]->MPI_neighborhood_[z*9+y*3+x] = vecPatches[ipatch]->MPI_neighborhood_[z*9+y*3+x-1];
+	            vecPatches(ipatch)->patch_neighborhood_[z*9+y*3+x] = vecPatches(ipatch)->patch_neighborhood_[z*9+y*3+x-1];
+	            vecPatches(ipatch)->MPI_neighborhood_[z*9+y*3+x] = vecPatches(ipatch)->MPI_neighborhood_[z*9+y*3+x-1];
                     }
                 }
             }
             //Compute missing part of the new neighborhood tables.
-            xcall = vecPatches[ipatch]->Pcoordinates[0]-1;
-            ycall = vecPatches[ipatch]->Pcoordinates[1]-1;
+            xcall = vecPatches(ipatch)->Pcoordinates[0]-1;
+            ycall = vecPatches(ipatch)->Pcoordinates[1]-1;
             if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<params.mi[0]));
             if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<params.mi[1]));
-	    vecPatches[ipatch]->patch_neighborhood_[0] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, ycall);
-	    vecPatches[ipatch]->patch_neighborhood_[1] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, vecPatches[ipatch]->Pcoordinates[1]);
-            ycall = vecPatches[ipatch]->Pcoordinates[1]+1;
+	    vecPatches(ipatch)->patch_neighborhood_[0] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, ycall);
+	    vecPatches(ipatch)->patch_neighborhood_[1] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, vecPatches(ipatch)->Pcoordinates[1]);
+            ycall = vecPatches(ipatch)->Pcoordinates[1]+1;
             if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<params.mi[1]));
-	    vecPatches[ipatch]->patch_neighborhood_[2] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, ycall);
+	    vecPatches(ipatch)->patch_neighborhood_[2] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, ycall);
 	    for ( int y = 0 ; y < 1+2*(params.nDim_field >= 2) ; y++ ) {
 	        for ( int z = 0 ; z < 1+2*(params.nDim_field == 3) ; z++ ) {
-                    vecPatches[ipatch]->MPI_neighborhood_[y*3+z] = smpi->hrank(vecPatches[ipatch]->patch_neighborhood_[y*3+z]);
+                    vecPatches(ipatch)->MPI_neighborhood_[y*3+z] = smpi->hrank(vecPatches(ipatch)->patch_neighborhood_[y*3+z]);
                 }
             }
             
              
         }
         //Si je ne possede pas mon voisin de droite...
-        if (vecPatches[ipatch]->MPI_neighborhood_[5] != vecPatches[ipatch]->MPI_neighborhood_[4]) {
+        if (vecPatches(ipatch)->MPI_neighborhood_[5] != vecPatches(ipatch)->MPI_neighborhood_[4]) {
             //...je reçois ou je cré.
-            if (vecPatches[ipatch]->MPI_neighborhood_[3] != MPI_PROC_NULL){
+            if (vecPatches(ipatch)->MPI_neighborhood_[3] != MPI_PROC_NULL){
                 //Mpi_Receive_Patch(MpiRNeighbour);
                 cout << "Receiving Patch" << endl;
             } else {

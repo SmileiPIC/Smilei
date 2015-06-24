@@ -185,7 +185,7 @@ class VectorPatch {
     void resize(int npatches) {patches_.resize(npatches);};
     int size() const {return patches_.size();};
 
-    Patch* operator()(int ipatch) {return patches_[ipatch];};
+    inline Patch* operator()(int ipatch) {return patches_[ipatch];};
 
     void exchangeParticles(int ispec, PicParams &params, SmileiMPI* smpi);
     void sumRhoJ( int ispec );
