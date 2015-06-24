@@ -81,10 +81,15 @@ fileId(0) {
 	}
 
 	nProbeTot = probeParticles[np].size();
+	cout << " \t Before " << cpuRank << " nprobes : " << probeParticles[0].size() << endl;
+
 	for ( int ipb=nProbeTot-1 ; ipb>=0 ; ipb--) {
 	    if (!probeParticles[np].is_part_in_domain(ipb, patch))
 		probeParticles[np].erase_particle(ipb);
+	    cout << patch->getDomainLocalMin(0) << " " << probeParticles[np].position(0, ipb) << " " << patch->getDomainLocalMax(0) << endl;
+	    cout << patch->getDomainLocalMin(1) << " " << probeParticles[np].position(1, ipb) << " " << patch->getDomainLocalMax(1) << endl;
 	}
+	cout << " \t After " << cpuRank << " nprobes : " << probeParticles[0].size() << endl;
 	// ---------------------------------------------------
 	// End definition of probeParticles (probes positions)
 	// ---------------------------------------------------
@@ -128,6 +133,8 @@ fileId(0) {
 	// End file split definition
 	// ---------------------------------------------------
     }
+    cout << " nprobes : " << probeParticles[0].size() << endl;
+ 
 
 }
 
@@ -179,7 +186,6 @@ void DiagnosticProbe::createFile(DiagParams &diagParams)
 
     }
 
-
 }
 
 
@@ -207,6 +213,9 @@ void DiagnosticProbe::writePositionIn( PicParams &params, DiagParams &diagParams
 
 
 void DiagnosticProbe::writePositions(int probe_id, int ndim_Particles, int probeDim, hid_t group_id ) {
+    cout << probeParticles[probe_id].size() << endl;
+    if (!probeParticles[probe_id].size()) return;
+
     vector<unsigned int> posArraySize(2);
     posArraySize[0] = probeParticles[probe_id].size();
     posArraySize[1] = ndim_Particles;
@@ -241,9 +250,18 @@ void DiagnosticProbe::writePositions(int probe_id, int ndim_Particles, int probe
     //define , write_plist
     hid_t write_plist = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);
-    hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
+    hid_t plist_id;
     hid_t dset_id;
+    plist_id = H5Pcreate(H5P_DATASET_CREATE);
+    //else 
+    //plist_id = H5Pcreate(H5P_DATASET_ACCESS);
+    cout << "Before create" << endl;
+    //if ( !H5Lexists( group_id, "positions", H5P_DEFAULT ) )
     dset_id = H5Dcreate(group_id, "positions", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+    //else
+    //dset_id = H5Dopen(group_id, "positions", H5P_DEFAULT);
+    cout << "After create" << endl;
+
 
     H5Pclose(plist_id);
     H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &(posArray->data_2D[0][0]) );
