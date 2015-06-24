@@ -309,8 +309,13 @@ void PicParams::compute()
     
     // grid/cell-related parameters
     // ----------------------------
-    n_space.resize(3);
-    cell_length.resize(3);
+
+    // create a 3d equivalent of n_space & cell_length
+    n_space.resize(3, 1);
+    n_space_global.resize(3, 1);	//! \todo{3 but not real size !!! Pbs in Species::Species}
+    cell_length.resize(3, 0.);
+    oversize.resize(3, 0);
+
     cell_volume=1.0;
     if (nDim_field==res_space.size() && nDim_field==sim_length.size()) {
         
@@ -323,30 +328,20 @@ void PicParams::compute()
             sim_length[i]  = (double)(n_space[i])*cell_length[i]; // ensure that nspace = sim_length/cell_length
             cell_volume   *= cell_length[i];
         }
-        // create a 3d equivalent of n_space & cell_length
-        for (unsigned int i=nDim_field; i<3; i++) {
-            n_space[i]=1;
-            cell_length[i]=0.0;
-        }
-        
     } else {
         ERROR("Problem with the definition of nDim_field");
     }
-    
-    //!\todo (MG to JD) Are these 2 lines really necessary ? It seems to me it has just been done before
-    n_space.resize(3, 1);
-    cell_length.resize(3, 0.);	    //! \todo{3 but not real size !!! Pbs in Species::Species}
-    
-    n_space_global.resize(3, 1);	//! \todo{3 but not real size !!! Pbs in Species::Species}
-    oversize.resize(3, 0);
+
     for (unsigned int i=0; i<nDim_field; i++) oversize[i]  = interpolation_order + (exchange_particles_each-1);;
 
-    n_space_global.resize(nDim_field, 0);
+    //n_space_global.resize(nDim_field, 0);
     for (unsigned int i=0; i<nDim_field; i++){
         n_space_global[i] = n_space[i]; 
         n_space[i] /= number_of_patches[i];
+        if(n_space_global[i]%number_of_patches[i] !=0) ERROR("ERROR in dimension " << i <<" Number of patches = " << number_of_patches[i] << " must divide n_space_global = " << n_space_global[i]);
     }
-    
+
+        
 }
 
 

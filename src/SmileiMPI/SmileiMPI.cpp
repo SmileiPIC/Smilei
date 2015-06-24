@@ -164,6 +164,7 @@ void SmileiMPI::init_patch_count( PicParams& params)
         //density_length[2] = params.species_param[ispecies].dens_length_z[0];
 
         local_load = params.species_param[ispecies].n_part_per_cell ;
+        if(params.species_param[ispecies].time_frozen > 0.) local_load *= coef_frozen;
         for (unsigned int idim = 0; idim < params.nDim_field; idim++){
             mincell[ispecies*3+idim] = params.species_param[ispecies].vacuum_length[idim]/params.cell_length[idim];
             // This strange way of writing this below prevents rounding errors.
@@ -198,6 +199,7 @@ void SmileiMPI::init_patch_count( PicParams& params)
         Lcur += local_load; //Add grid contribution to the load.
         Ncur++; // Try to assign current patch to rank r.
 
+        //if (isMaster()) cout <<"h= " << hindex << " Tcur = " << Tcur << " Lcur = " << Lcur <<" Ncur = " << Ncur <<" r= " << r << endl;
         if (r < smilei_sz-1){
 
             if ( Lcur > Tcur || smilei_sz-r >= Npatches-hindex){ //Load target is exceeded or we have as many patches as procs left.
