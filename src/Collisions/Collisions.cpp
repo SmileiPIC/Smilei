@@ -51,11 +51,11 @@ start           (0               )
         H5::attr(fileId, "Version", ver);
         mystream.str("");
         mystream << species_group1[0];
-        for(int i=1; i<species_group1.size(); i++) mystream << "," << species_group1[i];
+        for(unsigned int i=1; i<species_group1.size(); i++) mystream << "," << species_group1[i];
         H5::attr(fileId, "species1" , mystream.str());
         mystream.str("");
         mystream << species_group2[0];
-        for(int i=1; i<species_group2.size(); i++) mystream << "," << species_group2[i];
+        for(unsigned int i=1; i<species_group2.size(); i++) mystream << "," << species_group2[i];
         H5::attr(fileId, "species2" , mystream.str());
         H5::attr(fileId, "coulomb_log" , coulomb_log);
         H5::attr(fileId, "debug_every"  , debug_every);
@@ -89,8 +89,8 @@ vector<Collisions*> Collisions::create(PicParams& params, InputData &ifile, vect
     ostringstream mystream;
     
     // Loop over each binary collisions group and parse info
-    int numcollisions=ifile.nComponents("Collisions");
-    for (int n_collisions = 0; n_collisions < numcollisions; n_collisions++) {
+    unsigned int numcollisions=ifile.nComponents("Collisions");
+    for (unsigned int n_collisions = 0; n_collisions < numcollisions; n_collisions++) {
         
         MESSAGE("Parameters for collisions #" << n_collisions << " :");
         
@@ -293,7 +293,7 @@ void Collisions::collide(PicParams& params, vector<Species*>& vecSpecies, int it
     for (unsigned int ibin=0 ; ibin<nbins ; ibin++) {
         
         // get bin start/end for all necessary species, and number of particles
-        for (int i=0; i<2; i++) { // try twice to ensure group 1 has more macro-particles
+        for (unsigned int i=0; i<2; i++) { // try twice to ensure group 1 has more macro-particles
             nspec1 = sg1->size();
             nspec2 = sg2->size();
             bmin1.resize(nspec1); // bin starting point, for each of species group 1
