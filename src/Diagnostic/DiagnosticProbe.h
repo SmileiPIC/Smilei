@@ -42,6 +42,9 @@ public:
     //! run all probes
     void run(unsigned int timestep, ElectroMagn* EMfields, Interpolator* interp);
     
+    void compute(int probe_id, unsigned int timestep, ElectroMagn* EMfields, Interpolator* interp);
+    void write(int probe_id, unsigned int timestep, hid_t group_id);
+
     //! return name of the probe based on its number
     std::string probeName(int p);
 

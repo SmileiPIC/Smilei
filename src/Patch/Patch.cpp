@@ -1275,7 +1275,7 @@ void VectorPatch::computeScalarsDiags(int timestep)
 
 }
 
-void VectorPatch::computeProbesDiags(PicParams& params, DiagParams &diag_params, int timestep)
+void VectorPatch::initProbesDiags(PicParams& params, DiagParams &diag_params, int timestep)
 {
     (*this)(0)->Diags->probes.createFile(diag_params);
     for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++) {
@@ -1287,10 +1287,12 @@ void VectorPatch::computeProbesDiags(PicParams& params, DiagParams &diag_params,
 	(*this)(ipatch)->Diags->probes.writePositionIn(params, diag_params);
 	//cout << "End of Data written for " << ipatch << endl;
     }
-    //cout << " Before File close " << endl;
-    //(*this)(0)->Diags->probes.close();
+}
+
+void VectorPatch::finalizeProbesDiags(PicParams& params, DiagParams &diag_params, int timestep)
+{
     for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++) {
 	(*this)(ipatch)->Diags->probes.setFile( 0 );
     }
-    //cout << " File close " << endl;
+
 }
