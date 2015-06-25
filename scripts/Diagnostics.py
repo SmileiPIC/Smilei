@@ -99,7 +99,7 @@
 #
 #
 # >>>>>> Examples:
-#    ParticleDiagnostic('../test', diagNumber=1, slice={"y":"all"}, units="nice").plot(figure=1, data_min=0, data_max=3e14)
+#    ParticleDiagnostic('../test', diagNumber=1, slice={"y":"all"},units="nice").plot(figure=1,data_min=0,data_max=3e14)
 #
 #
 #  +---------------------------+

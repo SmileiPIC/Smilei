@@ -1,0 +1,169 @@
+# ----------------------------------------------------------------------------------------
+# 					SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
+# ----------------------------------------------------------------------------------------
+#
+# CAUTION:  never override the following names:
+#           SmileiComponent, Species, Laser, Collisions, DiagProbe, DiagParticles,
+#           DiagScalar, DiagPhase or ExtField
+#
+
+# MY PYTHON VARIABLES
+# here are defined some useful python variables
+# 
+import math
+L  = 1.03			# wavelength=simulation box length
+k  = 2.0*math.pi/L	# wavelength in normalized units
+dn = 0.001			# amplitude of the perturbation
+
+# perturbed density profile
+def f(x):
+    return 1.0 + dn*math.cos(k*x)
+
+
+
+# wavelength_SI: used by Fred Diags. (MG: should be removed at some point)
+#
+wavelength_SI = 1.e-6
+
+# dim: Geometry of the simulation
+#      1d3v = cartesian grid with 1d in space + 3d in velocity
+#      2d3v = cartesian grid with 2d in space + 3d in velocity
+#      3d3v = cartesian grid with 3d in space + 3d in velocity
+#      2drz = cylindrical (r,z) grid with 3d3v particles
+#
+dim = '1d3v'
+ 
+# order of interpolation
+#
+interpolation_order = 2
+ 
+# SIMULATION BOX : for all space directions (use vector)
+# cell_length: length of the cell
+# sim_length: length of the simulation in units of the normalization wavelength 
+#
+cell_length = [0.01]
+sim_length  = [L]
+
+# SIMULATION TIME
+# timestep: duration of the timestep
+# sim_time: duration of the simulation in units of the normalization period 
+#
+timestep = 0.0095
+sim_time = 50.
+ 
+# ELECTROMAGNETIC BOUNDARY CONDITIONS
+# bc_em_type_x/y/z : boundary conditions used for EM fields 
+#                    periodic = periodic BC (using MPI topology)
+#                    silver-muller = injecting/absorbing BC
+#                    reflective = consider the ghost-cells as a perfect conductor
+#
+bc_em_type_x = ['periodic']
+ 
+# RANDOM seed 
+# this is used to randomize the random number generator
+#
+random_seed = 0
+
+
+# DEFINE ALL SPECIES
+# species_type: ion, electron, positron, test ...
+# initialization_type: regular, cold or (isotrop) Maxwell?~H~RJuettner distribution
+# n_part_per_cell: number of particle?~H~Rper?~H~Rcell
+# c_part_max: factor on the memory reserved for the total number of particles
+# mass: particle mass in units of the electron mass
+# charge: particle charge in units of e (?~H~Re is the electron charge)
+# density: species density in units of the normalization density
+# mean_velocity: mean velocity of the species (3D vector) in units of the light velocity
+# temperature: temperature of the species in units of m_e c^2
+# dynamics_type: species type of dynamics = norm or rrLL
+# time_frozen: time during which the particles are frozen in units of the normalization time
+# radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
+#
+#
+Species(
+	species_type = "ion",
+	initPosition_type = "regular",
+	initMomentum_type = "cold",
+	n_part_per_cell = 10,
+	mass = 1836.0,
+	charge = 1.0,
+	nb_density = 1.0e0,
+	time_frozen = 10000.0,
+	bc_part_type_west = "none",
+	bc_part_type_east = "none"
+)
+Species(
+	species_type = "eon1",
+	initPosition_type = "regular",
+	initMomentum_type = "cold",
+	n_part_per_cell = 10,
+	mass = 1.0,
+	charge = -1.0,
+	dens_profile = f,
+	nb_density = 0.5,
+	mean_velocity = [-0.1,0.0,0.0],
+	bc_part_type_west = "none",
+	bc_part_type_east = "none"
+)
+Species(
+	species_type = "eon2",
+	initPosition_type = "regular",
+	initMomentum_type = "cold",
+	n_part_per_cell = 10,
+	mass = 1.0,
+	charge = -1.0,
+	dens_profile = f,
+	nb_density = 0.5,
+	mean_velocity = [0.1,0.0,0.0],
+	bc_part_type_west = "none",
+	bc_part_type_east = "none"
+)
+
+
+# ---------------------
+# DIAGNOSTIC PARAMETERS
+# ---------------------
+
+every=1000000000000
+
+# SCALAR DIAGNOSTICS
+# every       = integer, nb of timesteps between each output
+# tmin & tmax = floats, min & max times between which scalars are computed (optional)
+# precision   = integer, nb of digits for the outputs (default=10)
+DiagScalar(every = every, vars=['Utot','Ubal_norm','Uelm','Ukin'])	
+
+
+# FIELD DUMPS
+# fieldDump_every = integer, nb of timesteps between each output
+# fieldsToDump    = ('string'), name of the fields to dump
+fieldDump_every = every
+fieldsToDump = ('Ex','Ey','Ez','By_m','Bz_m');
+
+
+# PHASE-SPACE DIAGNOSTICS (older version working with TPUPMC/SmileiQt.py)
+# kind of projection: 1D) xPx xPy xPz xLor PxPy PxPz PyPz
+# kind of projection: 2D) xPx xPy xPz xLor yPx yPy yPz yLor PxPy PxPz PyPz
+#
+DiagPhase(
+	every	= every,
+ 	kind    = 'xpx',
+ 	species = ['eon1','eon2'],
+ 	pos_min = 0.,
+ 	pos_max = 0.,
+ 	pos_num = 50,
+ 	mom_min = -0.4,
+ 	mom_max = 0.4,
+ 	mom_num = 100,
+ 	deflate=5
+)
+
+# PHASE-SPACE DIAGNOSTICS (new version from DiagParticles)
+DiagParticles(
+	output = "density",
+	every = every,
+	species = ["eon1","eon2"],
+	axes = [
+		["x", 0., L, 50],
+		["px", -0.4, 0.4, 100]
+	]
+)
