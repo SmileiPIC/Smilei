@@ -45,7 +45,7 @@ inline int stop_particle( Particles &particles, int ipart, int direction, double
 
 }
 
-//!\todo (MG) at the moment the particle is thermalize whether or not there is a plasma initially at the boundary, als
+//!\todo (MG) at the moment the particle is thermalize whether or not there is a plasma initially at the boundary.                  Also this works only for species with an isotropic maxwellian distribution
 inline int thermalize_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart) {
 
     // checking the particle's velocity compared to the thermal one
