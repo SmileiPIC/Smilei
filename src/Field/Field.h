@@ -27,6 +27,7 @@ struct LocalFields
 //! Class Field: generic class allowing to define vectors
 class Field
 {
+    friend class SmileiMPI ;
 
 public:
     SpeciesMPI specMPI;
