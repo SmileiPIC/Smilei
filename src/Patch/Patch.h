@@ -25,7 +25,7 @@ class DiagnosticScalar;
 //!     Collection of patch = MPI domain
 class Patch
 {
-
+    friend class SmileiMPI;
 public:
     //! Constructor for Patch
   Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int ipatch);
@@ -150,10 +150,10 @@ public:
 
     inline unsigned int Hindex() { return  hindex; }
 protected:
-
-private:
     //!Hilbert index of the patch. Number of the patch along the Hilbert curve.
     unsigned int hindex;
+
+private:
 
 
     int nbNeighbors_;
