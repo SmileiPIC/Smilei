@@ -7,32 +7,30 @@
 #include "SmileiIO_Cart1D.h"
 
 #include "PicParams.h"
-#include "SmileiMPI_Cart1D.h"
+#include "Patch.h"
 #include "Field1D.h"
 
 using namespace std;
 
-SmileiIO_Cart1D::SmileiIO_Cart1D( PicParams& params, DiagParams &diagParams, SmileiMPI* smpi )
-    : SmileiIO( params, diagParams, smpi )
+SmileiIO_Cart1D::SmileiIO_Cart1D( PicParams& params, DiagParams &diagParams, Patch* patch )
+    : SmileiIO( params, diagParams, patch )
 {
-    createPattern(params,smpi);
+    createPattern(params,patch);
 }
 
 SmileiIO_Cart1D::~SmileiIO_Cart1D()
 {
 }
 
-void SmileiIO_Cart1D::createPattern( PicParams& params, SmileiMPI* smpi )
+void SmileiIO_Cart1D::createPattern( PicParams& params, Patch* patch )
 {
-    SmileiMPI_Cart1D* smpi1D =  static_cast<SmileiMPI_Cart1D*>(smpi);
-
     std::vector<unsigned int> istart;
-    istart = smpi1D->oversize;
+    istart = params.oversize;
     std::vector<unsigned int> bufsize;
     bufsize.resize(params.nDim_field, 0);
 
     for (unsigned int i=0 ; i<params.nDim_field ; i++) {
-        if (smpi1D->getProcCoord(i)!=0) istart[i]+=1;
+        if (patch->Pcoordinates[i]!=0) istart[i]+=1;
         bufsize[i] = params.n_space[i] + 1;
     }
 
@@ -44,11 +42,11 @@ void SmileiIO_Cart1D::createPattern( PicParams& params, SmileiMPI* smpi )
     for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
         nx = nx0 + ix_isPrim;
 
-        istart = smpi1D->oversize;
+        istart = params.oversize;
         bufsize.resize(params.nDim_field, 0);
 
         for (unsigned int i=0 ; i<params.nDim_field ; i++) {
-            if (smpi1D->getProcCoord(i)!=0) istart[i]+=1;
+            if (patch->Pcoordinates[i]!=0) istart[i]+=1;
             bufsize[i] = params.n_space[i] + 1;
         }
         bufsize[0] += ix_isPrim;
@@ -57,7 +55,7 @@ void SmileiIO_Cart1D::createPattern( PicParams& params, SmileiMPI* smpi )
          * Create the dataspace for the dataset.
          */
         hsize_t     chunk_dims[1];
-        chunk_dims[0] = nx + 2*smpi1D->oversize[0] ;
+        chunk_dims[0] = nx + 2*params.oversize[0] ;
         hid_t memspace  = H5Screate_simple(params.nDim_field, chunk_dims, NULL);
 
         hsize_t     offset[1];
@@ -67,13 +65,13 @@ void SmileiIO_Cart1D::createPattern( PicParams& params, SmileiMPI* smpi )
         offset[0] = istart[0];
         stride[0] = 1;
 
-        if (smpi1D->number_of_procs[0] != 1) {
+        if (params.number_of_patches[0] != 1) {
             if ( ix_isPrim == 0 ) {
-                if (smpi1D->getProcCoord(0)!=0)
+                if (patch->Pcoordinates[0]==0)
                     bufsize[0]--;
             }
             else {
-                if ( (smpi1D->coords_[0]!=0) && (smpi1D->coords_[0]!=smpi1D->number_of_procs[0]-1) )
+                if ( (patch->Pcoordinates[0]!=0) && (patch->Pcoordinates[0]!=params.number_of_patches[0]-1) )
                     bufsize[0] -= 2;
                 else
                     bufsize[0] -= 1;
@@ -96,7 +94,7 @@ void SmileiIO_Cart1D::createPattern( PicParams& params, SmileiMPI* smpi )
         //
         // Select hyperslab in the file.
         //
-        offset[0] = smpi->getCellStartingGlobalIndex(0)+istart[0];
+        offset[0] = patch->getCellStartingGlobalIndex(0)+istart[0];
         stride[0] = 1;
         count[0] = 1;
         hsize_t     block[1];

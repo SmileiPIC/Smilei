@@ -26,7 +26,6 @@
 #include "PicParams.h"
 #include "LaserParams.h"
 
-#include "SmileiMPIFactory.h"
 #include "SmileiIOFactory.h"
 
 #include "SpeciesFactory.h"

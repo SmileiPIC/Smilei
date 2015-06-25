@@ -17,12 +17,12 @@
 class SmileiIO_Cart2D : public SmileiIO {
 public:
     //! Create // HDF5 environment
-    SmileiIO_Cart2D( PicParams& params, DiagParams &diagParams, SmileiMPI* smpi );
+    SmileiIO_Cart2D( PicParams& params, DiagParams &diagParams, Patch* patch );
     //! Destructor for SmileiIO
     ~SmileiIO_Cart2D();
 
     //! Build memory and file space for // HDF5 write/read
-    void createPattern( PicParams& params, SmileiMPI* smpi );
+    void createPattern( PicParams& params, Patch* patch );
 
     //! Basic write current field in specified group of the global file
     void writeFieldsSingleFileTime( Field* field, hid_t group_id );

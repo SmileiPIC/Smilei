@@ -16,6 +16,7 @@ class PicParams;
 class DiagParams;
 class InputData;
 class SmileiMPI;
+class Patch;
 class SimWindow;
 class ElectroMagn;
 class Field;
@@ -29,7 +30,7 @@ public:
     //! Create // HDF5 environment
     //! @see global_file_id_ 
     //! @see global_file_id_avg
-    SmileiIO( PicParams& params, DiagParams &diagParams, SmileiMPI* smpi );
+    SmileiIO( PicParams& params, DiagParams &diagParams, Patch* patch );
     //! Destructor for SmileiIO
     virtual ~SmileiIO();
 
@@ -60,14 +61,6 @@ public:
     //! Disabled for now
     hid_t  partFile_id;
 
-#ifdef _IO_PARTICLE
-    //! Particles output in progress
-    std::vector<hid_t> partDataset_id;
-    //unsigned int nDatasetSpecies;
-    hid_t partMemSpace;
-    int particleSize;
-#endif
-	
     //! Space dimension of a particle
     unsigned int nDim_particle;
 

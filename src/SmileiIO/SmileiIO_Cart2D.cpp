@@ -9,32 +9,31 @@
 #include <sstream>
 
 #include "PicParams.h"
-#include "SmileiMPI_Cart2D.h"
+#include "Patch.h"
 #include "Field2D.h"
 
 using namespace std;
 
-SmileiIO_Cart2D::SmileiIO_Cart2D( PicParams& params, DiagParams &diagParams, SmileiMPI* smpi )
-: SmileiIO( params, diagParams, smpi )
+SmileiIO_Cart2D::SmileiIO_Cart2D( PicParams& params, DiagParams &diagParams, Patch* patch )
+: SmileiIO( params, diagParams, patch )
 {
-    createPattern(params,smpi);
+    createPattern(params,patch);
 }
 
 SmileiIO_Cart2D::~SmileiIO_Cart2D()
 {
 }
 
-void SmileiIO_Cart2D::createPattern( PicParams& params, SmileiMPI* smpi )
+void SmileiIO_Cart2D::createPattern( PicParams& params, Patch* patch )
 {
-    SmileiMPI_Cart2D* smpi2D =  static_cast<SmileiMPI_Cart2D*>(smpi);
 
     std::vector<unsigned int> istart;
-    istart = smpi2D->oversize;
+    istart = params.oversize;
     std::vector<unsigned int> bufsize;
     bufsize.resize(params.nDim_field, 0);
 
     for (unsigned int i=0 ; i<params.nDim_field ; i++) {
-        if (smpi2D->getProcCoord(i)!=0) istart[i]+=1;
+        if (patch->Pcoordinates[i]!=0) istart[i]+=1;
         bufsize[i] = params.n_space[i] + 1;
     }
 
@@ -49,11 +48,11 @@ void SmileiIO_Cart2D::createPattern( PicParams& params, SmileiMPI* smpi )
         for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {
             ny = ny0 + iy_isPrim;
 
-            istart = smpi2D->oversize;
+            istart = params.oversize;
             bufsize.resize(params.nDim_field, 0);
 
             for (unsigned int i=0 ; i<params.nDim_field ; i++) {
-                if (smpi2D->getProcCoord(i)!=0) istart[i]+=1;
+                if (patch->Pcoordinates[i]!=0) istart[i]+=1;
                 bufsize[i] = params.n_space[i] + 1;
             }
             bufsize[0] += ix_isPrim;
@@ -64,8 +63,8 @@ void SmileiIO_Cart2D::createPattern( PicParams& params, SmileiMPI* smpi )
              * Create the dataspace for the dataset.
              */
             hsize_t     chunk_dims[2];
-            chunk_dims[0] = nx + 2*smpi2D->oversize[0] ;
-            chunk_dims[1] = ny + 2*smpi2D->oversize[1] ;
+            chunk_dims[0] = nx + 2*params.oversize[0] ;
+            chunk_dims[1] = ny + 2*params.oversize[1] ;
             hid_t memspace  = H5Screate_simple(params.nDim_field, chunk_dims, NULL);
 
             hsize_t     offset[2];
@@ -77,25 +76,25 @@ void SmileiIO_Cart2D::createPattern( PicParams& params, SmileiMPI* smpi )
             stride[0] = 1;
             stride[1] = 1;
 
-            if (smpi2D->number_of_procs[0] != 1) {
+            if (params.number_of_patches[0] != 1) {
                 if ( ix_isPrim == 0 ) {
-                    if (smpi2D->getProcCoord(0)!=0)
+                    if (patch->Pcoordinates[0]!=0)
                         bufsize[0]--;
                 }
                 else {
-                    if ( (smpi2D->coords_[0]!=0) && (smpi2D->coords_[0]!=smpi2D->number_of_procs[0]-1) )
+                    if ( (patch->Pcoordinates[0]!=0) && (patch->Pcoordinates[0]!=params.number_of_patches[0]-1) )
                         bufsize[0] -= 2;
                     else
                         bufsize[0] -= 1;
                 }
             }
-            if (smpi2D->number_of_procs[1] != 1) {
+            if (params.number_of_patches[1] != 1) {
                 if ( iy_isPrim == 0 ) {
-                    if (smpi2D->getProcCoord(1)!=0)
+                    if (patch->Pcoordinates[1]!=0)
                         bufsize[1]--;
                 }
                 else {
-                    if ( (smpi2D->coords_[1]!=0) && (smpi2D->coords_[1]!=smpi2D->number_of_procs[1]-1) )
+                    if ( (patch->Pcoordinates[1]!=0) && (patch->Pcoordinates[1]!=params.number_of_patches[1]-1) )
                         bufsize[1] -= 2;
                     else
                         bufsize[1] -= 1;
@@ -126,8 +125,8 @@ void SmileiIO_Cart2D::createPattern( PicParams& params, SmileiMPI* smpi )
             //
             // Select hyperslab in the file.
             //
-            offset[0] = smpi->getCellStartingGlobalIndex(0)+istart[0];
-            offset[1] = smpi->getCellStartingGlobalIndex(1)+istart[1];
+            offset[0] = patch->getCellStartingGlobalIndex(0)+istart[0];
+            offset[1] = patch->getCellStartingGlobalIndex(1)+istart[1];
             stride[0] = 1;
             stride[1] = 1;
             count[0] = 1;

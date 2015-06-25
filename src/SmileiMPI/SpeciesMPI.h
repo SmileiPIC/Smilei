@@ -11,7 +11,7 @@ class SpeciesMPI {
     ~SpeciesMPI();
     void init();
 
-    friend class SmileiMPI_Cart2D;
+    //friend class SmileiMPI_Cart2D;
 
 
     Particles patchVectorRecv[2][2];

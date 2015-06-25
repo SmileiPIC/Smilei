@@ -71,6 +71,8 @@ SmileiMPI::SmileiMPI( SmileiMPI *smpi )
 
 SmileiMPI::~SmileiMPI()
 {
+    delete[]periods_;
+
     int status = 0;
     MPI_Finalized( &status );
     if (!status) MPI_Finalize();
@@ -118,7 +120,22 @@ void SmileiMPI::init( PicParams& params )
 
     interParticles.initialize(0,params.nDim_particle); 
  
-    init_patch_count(params);  
+    init_patch_count(params);
+
+    periods_  = new int[params.nDim_field];
+    for (int i=0 ; i<params.nDim_field ; i++) periods_[i] = 0;
+    // Geometry periodic in x
+    if (params.bc_em_type_long=="periodic") {
+        periods_[0] = 1;
+        MESSAGE(1,"applied topology for periodic BCs in x-direction");
+    }
+    if (params.nDim_field>1) {
+	// Geometry periodic in y
+	if (params.bc_em_type_trans=="periodic") {
+	    periods_[1] = 1;
+	    MESSAGE(2,"applied topology for periodic BCs in y-direction");
+	}
+    }
 }
 
 void SmileiMPI::init_patch_count( PicParams& params)
@@ -395,6 +412,45 @@ void SmileiMPI::exchangeAvg( ElectroMagn* EMfields )
     exchangeField( EMfields->By_avg );
     exchangeField( EMfields->Bz_avg );
 }
+
+// ! Attention 1D
+MPI_Datatype SmileiMPI::createMPIparticles( Particles* particles, int nbrOfProp )
+{
+    if (particles->Position.size()!=2)
+	cout << "1D Particles not managed" << endl;
+
+    MPI_Datatype typeParticlesMPI;
+
+    MPI_Aint address[nbrOfProp];
+    MPI_Get_address( &(particles->position(0,0)), &(address[0]) );
+    MPI_Get_address( &(particles->position(1,0)), &(address[1]) );
+    //MPI_Get_address( &(particles->position_old(0,0)), &(address[2]) );
+    //MPI_Get_address( &(particles->position_old(1,0)), &(address[3]) );
+    MPI_Get_address( &(particles->momentum(0,0)), &(address[2]) );
+    MPI_Get_address( &(particles->momentum(1,0)), &(address[3]) );
+    MPI_Get_address( &(particles->momentum(2,0)), &(address[4]) );
+    MPI_Get_address( &(particles->weight(0)),     &(address[5]) );
+    MPI_Get_address( &(particles->charge(0)),     &(address[6]) );
+
+    int nbr_parts[nbrOfProp];
+    MPI_Aint disp[nbrOfProp];
+    MPI_Datatype partDataType[nbrOfProp];
+
+    for (int i=0 ; i<nbrOfProp ; i++)
+	nbr_parts[i] = particles->size();
+    disp[0] = 0;
+    for (int i=1 ; i<nbrOfProp ; i++)
+	disp[i] = address[i] - address[0];
+    for (int i=0 ; i<nbrOfProp ; i++)
+	partDataType[i] = MPI_DOUBLE;
+    partDataType[nbrOfProp-1] = MPI_SHORT;
+
+    MPI_Type_struct( nbrOfProp, &(nbr_parts[0]), &(disp[0]), &(partDataType[0]), &typeParticlesMPI);
+    MPI_Type_commit( &typeParticlesMPI );
+
+    return typeParticlesMPI;
+} // END createMPIparticles
+
 
 // Returns the rank of the MPI process currently owning patch h.
 int SmileiMPI::hrank(int h)

@@ -8,8 +8,6 @@
 #include "PicParams.h"
 #include "SmileiMPI.h"
 #include "Patch.h"
-#include "SmileiMPI_Cart1D.h"
-#include "SmileiMPI_Cart2D.h"
 #include "ElectroMagn.h"
 #include "Field1D.h"
 #include "Field2D.h"

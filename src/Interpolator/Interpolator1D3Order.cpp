@@ -6,7 +6,6 @@
 #include "ElectroMagn.h"
 #include "Field1D.h"
 #include "Particles.h"
-#include "SmileiMPI_Cart1D.h"
 #include "Patch.h"
 
 using namespace std;

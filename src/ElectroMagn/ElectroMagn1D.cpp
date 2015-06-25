@@ -11,7 +11,6 @@
 #include "Laser.h"
 
 #include "SmileiMPI.h"
-#include "SmileiMPI_Cart1D.h"
 #include "Patch.h"
 
 using namespace std;
@@ -26,7 +25,6 @@ isWestern(patch->isWestern()),
 isEastern(patch->isEastern())
 {
     // local dt to store
-    SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
     int sizeprojbuffer ;
     
     oversize_ = oversize[0];
@@ -170,8 +168,8 @@ ElectroMagn1D::~ElectroMagn1D()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
 {
-    
-    SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
+#ifdef _TOBEPATCHED    
+    //SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
     //int process_coord_x = smpi1D->getProcCoord(0);
     
     unsigned int iteration_max  = 100000;
@@ -359,7 +357,7 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
     if (smpi1D->isMaster())
         MESSAGE(1,"Poisson equation solved. Maximum error = " << deltaPoisson_max << " at i= " << i_deltaPoisson_max);
     
-    
+#endif    
     
 }//END solvePoisson
 
