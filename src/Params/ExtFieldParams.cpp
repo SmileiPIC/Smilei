@@ -19,6 +19,10 @@ conv_fac(params.conv_fac)*/
             ERROR("ExtField #"<<n_extfield<<": parameter 'field' not provided'");
         }
         
+        if( !ifile.extract("magnitude",tmpExtField.magnitude,"ExtField",n_extfield) ) {
+            ERROR("ExtField #"<<n_extfield<<": parameter 'magnitude' not provided");
+        }
+        
         ifile.extract("profile",tmpExtField.profile,"ExtField",n_extfield);
         if (tmpExtField.profile.empty()) {
             PyObject *mypy = ifile.extract_py("profile","ExtField",n_extfield);
@@ -29,9 +33,6 @@ conv_fac(params.conv_fac)*/
                 ERROR(" ExtField #"<<n_extfield<<": parameter 'profile' not understood");
             }
         } else {
-            if( !ifile.extract("magnitude",tmpExtField.magnitude,"ExtField",n_extfield) ) {
-                ERROR("ExtField #"<<n_extfield<<": parameter 'magnitude' not provided");
-            }
             ifile.extract("int_params",tmpExtField.int_params,"ExtField",n_extfield);
             ifile.extract("double_params",tmpExtField.double_params,"ExtField",n_extfield);
             ifile.extract("length_params_x",tmpExtField.length_params_x,"ExtField",n_extfield);

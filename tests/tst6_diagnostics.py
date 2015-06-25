@@ -49,7 +49,7 @@ sim_length  = [1.]
 #                         in the longitudinal or transverse directions
 #                         'periodic'      : periodic BC (using MPI topology)
 #                         'silver-muller' : injecting/absorbing
-bc_em_type_x  = ["periodic"]*2
+bc_em_type_long  = "periodic"
 
 
 # RANDOM seed used to randomize the random number generator
@@ -134,7 +134,13 @@ DiagScalar(every = 1)
 # pos          = N floats, position of the reference point
 # pos_first    = N floats, optional, position of the first point
 # pos_second   = N floats, optional, position of the second point
-
+DiagProbe(
+	every = 1,
+	time_range = [0.1, 0.4],
+	number = 10,
+	pos = [0.1],
+	pos_first = [0.9]
+)
 
 # DIAGNOSTICS ON PARTICLES - project the particles on a N-D arbitrary grid
 # ------------------------------------------------------------------------

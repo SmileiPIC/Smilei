@@ -616,13 +616,13 @@ If one of the axes is \val{x}, you can access the locations of the bins with \co
 \subsection{To plot the data}
 Use the method \code{plot} to display the data. New arguments are available to modify some plot options.
 \begin{lstlisting}
-Smilei(...).Scalar            ( ... , figure=1, data_min=None, data_max=None,
+Smilei(...).Scalar            ( ... , figure=1, vmin=None, vmax=None,
                                   xmin=None, xmax=None, ymin=None, ymax=None ).plot()
-Smilei(...).Field             ( ... , figure=1, data_min=None, data_max=None,
+Smilei(...).Field             ( ... , figure=1, vmin=None, vmax=None,
                                   xmin=None, xmax=None, ymin=None, ymax=None ).plot()
-Smilei(...).Probe             ( ... , figure=1, data_min=None, data_max=None,
+Smilei(...).Probe             ( ... , figure=1, vmin=None, vmax=None,
                                   xmin=None, xmax=None, ymin=None, ymax=None ).plot()
-Smilei(...).ParticleDiagnostic( ... , figure=1, data_min=None, data_max=None,
+Smilei(...).ParticleDiagnostic( ... , figure=1, vmin=None, vmax=None,
                                   xmin=None, xmax=None, ymin=None, ymax=None ).plot()
 \end{lstlisting}
 
@@ -631,9 +631,9 @@ Smilei(...).ParticleDiagnostic( ... , figure=1, data_min=None, data_max=None,
 	The figure number that is passed to matplotlib.\\*
 	If absent, figure 1 is used.
 
-\item \code{data\_min} = \code{\_double\_}    (optional)\\*
-	\code{data\_max} = \code{\_double\_}    (optional)\\*
-	If present, output is rescaled before plotting.
+\item \code{vmin} = \code{\_double\_}    (optional)\\*
+	\code{vmax} = \code{\_double\_}    (optional)\\*
+	If present, output value is rescaled before plotting.
 
 \item \code{xmin} = \code{\_double\_}    (optional)\\*
 	\code{xmax} = \code{\_double\_}    (optional)\\*
@@ -649,7 +649,7 @@ If the data is \textbf{zero}-dimensional, it is plotted as a \textbf{curve} as f
 \textbf{Example:}
 \begin{lstlisting}
 >>> S = Smilei("path/to/my/results")
->>> S.ParticleDiagnostic(diagNumber=1, figure=1, data_min=0, data_max=1e14 ).plot()
+>>> S.ParticleDiagnostic(diagNumber=1, figure=1, vmin=0, vmax=1e14 ).plot()
 \end{lstlisting}
 This will take the particle diagnostic \#1 and plot the resulting array in figure 1 from 0 to 3e14.
 \clearpage
@@ -686,7 +686,7 @@ This will plot the diagnostics \#0 and \#1 on the same figure, and make an anima
 
 
 \subsection{Advanced plotting options}
-In addition to \code{figure}, \code{data\_min}, \code{data\_max}, \code{xmin}, \code{xmax}, \code{ymin} and \code{ymax}, there are many more optional arguments. They are directly passed to the \textit{matplotlib} package.
+In addition to \code{figure}, \code{vmin}, \code{vmax}, \code{xmin}, \code{xmax}, \code{ymin} and \code{ymax}, there are many more optional arguments. They are directly passed to the \textit{matplotlib} package.
 \begin{itemize}
 \item Options for the figure: \code{figsize},\code{dpi},\code{facecolor},\code{edgecolor}\\
 	Please refer to \url{http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.figure}
@@ -720,9 +720,9 @@ You can change the plotting parameters using the \code{A.plot()} or the \code{A.
 \textbf{Example:}
 \begin{lstlisting}
 >>> S = Smilei("path/to/my/results")
->>> A = ParticleDiagnostic(diagNumber=0, figure=1, data_max=1)
+>>> A = ParticleDiagnostic(diagNumber=0, figure=1, vmax=1)
 >>> A.plot( figure=2 )
->>> A.set( data_max=2 )
+>>> A.set( vmax=2 )
 >>> A.plot()
 \end{lstlisting}
 
@@ -742,6 +742,7 @@ you may use
 >>> A = ParticleDiagnostic("path/to/my/results", 0)
 \end{lstlisting}
 
+WARNING: this syntax can be much slower than the official one.
 
 \clearpage
 
@@ -854,11 +855,11 @@ The result is shown in Figure \ref{Tuto3}. We can see that the peak is located a
 Now, let us do the slice on $v_x$ instead of $x$.
 \begin{lstlisting}
 >>> S.ParticleDiagnostic(0, timesteps=0, slice={"vx":"all"}
-                         ).plot(data_min=0, data_max=11)
+                         ).plot(vmin=0, vmax=11)
 \end{lstlisting}
 By choosing \code{"all"} in the argument \code{slice}, all the velocities $v_x$ are sliced.
 In our case, as our diagnostic goes from $v_x=-0.1$ to $0.1$, these limits are used.\\*
-Note that parameters \code{data\_min} and \code{data\_max} are used to have a nicer plot.\\*
+Note that parameters \code{vmin} and \code{vmax} are used to have a nicer plot.\\*
 The result is shown in Figure \ref{Tuto4}. We obtain a constant density of 10$n_c$, which is what was chosen in the input file.
 
 \subsection{Make animated plots}
