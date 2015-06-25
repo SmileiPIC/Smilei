@@ -200,7 +200,7 @@ int main (int argc, char* argv[])
 	}
 	for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 	    if ( vecPatches(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ) {
-		vecPatches.exchangeParticles(ispec, params, smpi ); // Included sort_part
+		vecPatches.exchangeParticles(ispec, params, smpiData ); // Included sort_part
 	    }
 	}
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
@@ -341,7 +341,7 @@ int main (int argc, char* argv[])
 	    // Inter Patch exchange
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 		if ( vecPatches(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
-		    vecPatches.exchangeParticles(ispec, params, smpi ); // Included sort_part
+		    vecPatches.exchangeParticles(ispec, params, smpiData ); // Included sort_part
                         if (itime%200 == 0) {
                             #pragma omp master
                             {
