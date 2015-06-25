@@ -17,22 +17,23 @@ interpolation_order = 2
 # sim_time: duration of the simulation in 1/w0 .
 
 timestep = 0.124
-sim_time = 1000
+sim_time = 50
 
 # SIMULATION BOX : for all space directions (use vector)
 # cell_length: length of one cell in c/w0.
 # sim_length: Total length of the simulation in c/w0 .
 
 cell_length  = 0.125 3. 
-sim_length = 600000.  189.  
+sim_length = 600000.  192.  
+#sim_length = 108.  192.  
 bc_em_type_long = silver-muller
 bc_em_type_trans = silver-muller
 
 #Topology:
-#number_of_procs: Number of MPI processes in each direction.
+#number_of_patches: Number of patches in each direction.
+number_of_patches = 8 8 0
 #clrw: width of a cluster in number of cell. Warning: clrw must divide nspace_win_x.
-number_of_procs = 2 2 
-clrw = 6
+clrw = 1
 
 # PLASMA GEOMETRY
 # plasma_geometry: string defining the plasma geometry.
@@ -69,6 +70,8 @@ random_seed = 0
 
 species
 	species_type = proton
+	#initPosition_type = regular
+        #initMomentum_type = cold
 	initialization_type = regular
 	ionization_model = none
         species_geometry = trapezoidal
@@ -93,6 +96,8 @@ end
 
 species 
 	species_type = electron
+	#initPosition_type = regular
+        #initMomentum_type = cold
 	initialization_type = regular
         species_geometry = trapezoidal
         vacuum_length   = 0.0  0.0 
@@ -138,15 +143,16 @@ laser
         int_params_transv= 2 # order of the hyper gaussian
 end
 
+
 # ---------------------
 # DIAGNOSTIC PARAMETERS
 # ---------------------
 
 # print_every (on screen text output) 
-print_every = 10
+print_every = 1
 
 # every for field dump
-fieldDump_every = 500
+fieldDump_every = 500000
 
 # every for particle dump
 particleDump_every = 10000000

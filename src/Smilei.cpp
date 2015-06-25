@@ -177,6 +177,7 @@ int main (int argc, char* argv[])
 
     
     VectorPatch vecPatches = PatchesFactory::createVector(params, diag_params, laser_params, smpiData);
+
     
     // reading from dumped file the restart values
     if (params.restart) {
@@ -199,11 +200,12 @@ int main (int argc, char* argv[])
 	    vecPatches(ipatch)->EMfields->restartRhoJs();
 	    vecPatches(ipatch)->dynamics(time_dual, smpi, params, simWindow, diag_flag); //include test
 	}
+        cout << " dynamics done " << endl;
 	for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-	    if ( vecPatches(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ) {
+	    if ( vecPatches(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) )
 		vecPatches.exchangeParticles(ispec, params, smpi ); // Included sort_part
-	    }
 	}
+        cout << " Exchange done " << endl;
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 	    vecPatches(ipatch)->EMfields->computeTotalRhoJ(); // Per species in global, Attention if output -> Sync / per species fields
 	}
@@ -211,6 +213,7 @@ int main (int argc, char* argv[])
 	    vecPatches.sumRhoJ( ispec ); // MPI
 	}
         diag_flag = 0;
+        cout << " sumRhoJ done " << endl;
 
  
 #ifdef _TOBEPATCHED
@@ -224,13 +227,14 @@ int main (int argc, char* argv[])
 #endif
         
         
-        //MESSAGE("----------------------------------------------");
-        //MESSAGE("Running diags at time t = 0");
-        //MESSAGE("----------------------------------------------");
-        //// run diagnostics at time-step 0
+        MESSAGE("----------------------------------------------");
+        MESSAGE("Running diags at time t = 0");
+        MESSAGE("----------------------------------------------");
+        // run diagnostics at time-step 0
 	
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->Diags->runAllDiags(0, vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, vecPatches(ipatch)->Interp, smpi);
+        cout << "done runalldiags" << endl;
 	vecPatches.computeGlobalDiags(0);
 	smpiData->computeGlobalDiags( vecPatches(0)->Diags, 0);
 
@@ -250,6 +254,8 @@ int main (int argc, char* argv[])
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->EMfields->restartRhoJ();
     }
+    cout << "About to start pic loop" << endl;
+    smpiData->barrier(); //for test !
 
 	
     // Count timer
@@ -261,6 +267,9 @@ int main (int argc, char* argv[])
     timer[3].init(smpiData, "diagnostics");
     timer[4].init(smpiData, "densities");
     timer[5].init(smpiData, "Mov window");
+
+    cout << "Timer set" << endl;
+    smpiData->barrier(); //for test !
    
     // Action to send to other MPI procs when an action is required
     int mpisize,itime2dump(-1),todump(0); 
@@ -303,9 +312,9 @@ int main (int argc, char* argv[])
 		    << 100.0*vecPatches(0)->Diags->getScalar("Ebal_norm")
 		    );
 	    if (simWindow) 
-		MESSAGE(1, "\t\t MW Elost = " << std::scientific << setprecision(4)<< Diags->getScalar("Emw_lost")
-			<< "     MW Eadd  = " << std::scientific << setprecision(4)<< Diags->getScalar("Emw_part")
-			<< "     MW Elost (fields) = " << std::scientific << setprecision(4)<< Diags->getScalar("Emw_lost_fields")
+		MESSAGE(1, "\t\t MW Elost = " << std::scientific << setprecision(4)<< vecPatches(0)->Diags->getScalar("Emw_lost")
+			<< "     MW Eadd  = " << std::scientific << setprecision(4)<< vecPatches(0)->Diags->getScalar("Emw_part")
+			<< "     MW Elost (fields) = " << std::scientific << setprecision(4)<< vecPatches(0)->Diags->getScalar("Emw_lost_fields")
 			<< setw(6) << std::fixed << setprecision(2) );
 	}
 
@@ -334,9 +343,11 @@ int main (int argc, char* argv[])
             tid = omp_get_thread_num();
 #endif
 
+            cout << "start dynamics" << endl;
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 		vecPatches(ipatch)->dynamics(time_dual, smpi, params, simWindow, diag_flag); // include test
 	    }
+            cout << "done dynamics" << endl;
 
 	    // Inter Patch exchange
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {

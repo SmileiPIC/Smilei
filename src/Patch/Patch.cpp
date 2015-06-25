@@ -180,7 +180,7 @@ void Patch::dynamics(double time_dual, SmileiMPI *smpi, PicParams &params, SimWi
 {
     for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 	if ( vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ){    
-	    vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow, diag_flag);
+	    vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, diag_flag);
 	}
     }
 

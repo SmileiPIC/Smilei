@@ -111,7 +111,7 @@ Laser::Laser( PicParams &params, LaserParams &laser_params, unsigned int n_laser
     // double_params_transv[1] : FWHM in intensity (default = length_sim[1]/4)
     // int_params_transv[0]    : order of the hyper-Gaussian profile  (default=2)
     else if (type_of_transv_profile=="gaussian") {
-        MESSAGE(2,"Laser has a Gaussian or hyper-Gaussian transverse profile");
+        //MESSAGE(2,"Laser has a Gaussian or hyper-Gaussian transverse profile");
         if (double_params_transv.size()<2) {
             double_params_transv.resize(2);
             double_params_transv[0] = sim_length[1]/2.0;
@@ -125,7 +125,7 @@ Laser::Laser( PicParams &params, LaserParams &laser_params, unsigned int n_laser
     
     // focused: laser beam with either an arbitrary incident angle or focus
     else if (type_of_transv_profile=="focused") {
-        MESSAGE(2,"Laser has a Gaussian transverse profile with arbitrary focus or incidence");
+        //MESSAGE(2,"Laser has a Gaussian transverse profile with arbitrary focus or incidence");
         if (double_params_transv.size()<1) {
             double_params_transv.resize(1);
             double_params_transv[0] = sim_length[1]/4.0;

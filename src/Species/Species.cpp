@@ -417,7 +417,7 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
 //   - increment the currents (projection)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfields, Interpolator* Interp,
-                       Projector* Proj, SmileiMPI *smpi, PicParams &params, SimWindow* simWindow, int diag_flag)
+                       Projector* Proj, SmileiMPI *smpi, PicParams &params, int diag_flag)
 {
     //Interpolator* LocInterp = InterpolatorFactory::create(params, smpi, NULL);
     
@@ -501,21 +501,6 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 
             }//iPart
 
-//             for (i = 0; i < oversize[0]+1 ; i++) {
-//                    iloc = ibin*clrw + i ;
-//                    //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
-//                    for (j = 0; j < b_dim1 ; j++) {
-//#pragma omp atomic
-//                        (*EMfields->Jx_s[ispec]) (iloc*(f_dim1  )+j) +=  b_Jx[i*b_dim1+j];   //  primal along y
-//#pragma omp atomic
-//                        (*EMfields->Jy_s[ispec]) (iloc*(f_dim1+1)+j) +=  b_Jy[i*b_dim1+j];   //+1 because dual along y
-//#pragma omp atomic
-//                        (*EMfields->Jz_s[ispec]) (iloc*(f_dim1  )+j) +=  b_Jz[i*b_dim1+j];   // primal along y
-//#pragma omp atomic
-//                        (*EMfields->rho_s[ispec])(iloc*(f_dim1  )+j) += b_rho[i*b_dim1+j];   // primal along y
-//                    }
-//                }
-                //for (i = oversize[0]+1; i < oversize[0]+clrw ; i++) {
                 for (i = 0; i < b_dim0 ; i++) {
                     iloc = ibin*clrw + i ;
                     //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
@@ -526,22 +511,6 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                         (*EMfields->rho_s[ispec])(iloc*(f_dim1  )+j) += b_rho[i*b_dim1+j];   // primal along y
                     }
                 }
-//                for (i = oversize[0]+clrw; i < b_dim0 ; i++) {
-//                    iloc = ibin*clrw + i ;
-//                    //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
-//                    for (j = 0; j < b_dim1 ; j++) {
-//#pragma omp atomic
-//                        (*EMfields->Jx_s[ispec]) (iloc*(f_dim1  )+j) +=  b_Jx[i*b_dim1+j];   //  primal along y
-//#pragma omp atomic
-//                        (*EMfields->Jy_s[ispec]) (iloc*(f_dim1+1)+j) +=  b_Jy[i*b_dim1+j];   //+1 because dual along y
-//#pragma omp atomic
-//                        (*EMfields->Jz_s[ispec]) (iloc*(f_dim1  )+j) +=  b_Jz[i*b_dim1+j];   // primal along y
-//#pragma omp atomic
-//                        (*EMfields->rho_s[ispec])(iloc*(f_dim1  )+j) += b_rho[i*b_dim1+j];   // primal along y
-//                    }
-//                }
-
-            
         }// ibin
         free(b_Jx);
 
@@ -575,14 +544,12 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     }
     else { // immobile particle (at the moment only project density)
         if (diag_flag == 1){
-
 	    // *4 accounts for Jy, Jz and rho. * nthds accounts for each thread.
 	    b_rho = (double *) malloc(size_proj_buffer * sizeof(double));
 
             #pragma omp for schedule(static) nowait
             for (ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
 		 memset( &(b_rho[0]), 0, size_proj_buffer*sizeof(double)); 
-
                 for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
                     //Update position_old because it is required for the Projection.
                     for ( int i = 0 ; i<ndim ; i++ ) {

@@ -64,7 +64,7 @@ public:
 
     //! Method calculating the Particle dynamics (interpolation, pusher, projection)
     virtual void dynamics(double time, unsigned int ispec, ElectroMagn* EMfields, Interpolator* interp,
-                          Projector* proj, SmileiMPI *smpi, PicParams &params, SimWindow* simWindow, int diag_flag);
+                          Projector* proj, SmileiMPI *smpi, PicParams &params, int diag_flag);
 
     //! Method used to initialize the Particle position in a given cell
     void initPosition(unsigned int, unsigned int, double *, unsigned int, std::vector<double>, std::string);
