@@ -6,7 +6,7 @@ A = S.ParticleDiagnostic(0, timesteps=[20,80])
 A.plot(data_min=0, data_max=1000)
 
 S.ParticleDiagnostic(0, timesteps=0, slice={"x":[3,4]} ).plot(figure=1)
-S.ParticleDiagnostic(0, timesteps=0, slice={"vx":"all"}).plot(figure=2,data_min=0, data_max=11)
+S.ParticleDiagnostic(0, timesteps=0, slice={"vx":"all"}).plot(figure=2, xmax=1, vmin=0, vmax=11)
 
 A = S.ParticleDiagnostic( 0 )
 B = S.ParticleDiagnostic( 1 )

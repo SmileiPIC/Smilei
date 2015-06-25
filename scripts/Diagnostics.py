@@ -70,15 +70,15 @@
 #
 # >>>>>> To plot the data, use the following method.
 #
-# ParticleDiagnostic(..., figure=1, data_min=None, data_max=None,
+# ParticleDiagnostic(..., figure=1, vmin=None, vmax=None,
 #                         xmin=None, xmax=None, ymin=None, ymax=None) .plot()
 #
 #            figure = _int_       (optional)
 #                     The figure number that is passed to matplotlib.
 #                     If absent, figure 1 is used.
 #
-#          data_min = _double_    (optional)
-#          data_max = _double_    (optional)
+#              vmin = _double_    (optional)
+#              vmax = _double_    (optional)
 #                     If present, output is rescaled before plotting.
 #
 #              xmin = _double_    (optional)
@@ -99,7 +99,7 @@
 #
 #
 # >>>>>> Examples:
-#    ParticleDiagnostic('../test', diagNumber=1, slice={"y":"all"}, units="nice").plot(figure=1, data_min=0, data_max=3e14)
+#    ParticleDiagnostic('../test', diagNumber=1, slice={"y":"all"}, units="nice").plot(figure=1, vmin=0, vmax=3e14)
 #
 #
 #  +---------------------------+
@@ -340,13 +340,13 @@ class Smilei(object):
 	
 class Options(object):
 	""" Class to contain matplotlib plotting options """
-	figure   = 1
-	data_min = None
-	data_max = None
-	xmin     = None
-	xmax     = None
-	ymin     = None
-	ymax     = None
+	figure = 1
+	xmin   = None
+	xmax   = None
+	ymin   = None
+	ymax   = None
+	vmin   = None
+	vmax   = None
 	figure0 = {}
 	figure1 = {"facecolor":"w"}
 	axes = {}
@@ -362,13 +362,13 @@ class Options(object):
 	# Method to set optional plotting arguments
 	def set(self, **kwargs):
 		# First, we manage the main optional arguments
-		self.figure   = kwargs.pop("figure"  ,self.figure  )
-		self.data_min = kwargs.pop("data_min",self.data_min)
-		self.data_max = kwargs.pop("data_max",self.data_max)
-		self.xmin     = kwargs.pop("xmin"    ,self.xmin    )
-		self.xmax     = kwargs.pop("xmax"    ,self.xmax    )
-		self.ymin     = kwargs.pop("ymin"    ,self.ymin    )
-		self.ymax     = kwargs.pop("ymax"    ,self.ymax    )
+		self.figure0.update({ "num":kwargs.pop("figure",self.figure) })
+		self.xmin     = kwargs.pop("xmin"   ,self.xmin  )
+		self.xmax     = kwargs.pop("xmax"   ,self.xmax  )
+		self.ymin     = kwargs.pop("ymin"   ,self.ymin  )
+		self.ymax     = kwargs.pop("ymax"   ,self.ymax  )
+		self.vmin     = kwargs.pop("vmin"   ,kwargs.pop("data_min",self.vmin))
+		self.vmax     = kwargs.pop("vmax"   ,kwargs.pop("data_max",self.vmax))
 		# Second, we manage all the other arguments that are directly the ones of matplotlib
 		for kwa in kwargs:
 			val = kwargs[kwa]
@@ -567,7 +567,7 @@ class Diagnostic(object):
 		self.info()
 		
 		# Make figure
-		fig = self._plt.figure(self.options.figure, **self.options.figure0)
+		fig = self._plt.figure(**self.options.figure0)
 		fig.set(**self.options.figure1)
 		fig.clf()
 		ax = fig.add_subplot(1,1,1)
@@ -588,6 +588,13 @@ class Diagnostic(object):
 			ax.cla()
 			artist = self._plotVsTime(ax)
 	
+	# Method to set limits to a plot
+	def _setLimits(self, ax, xmin=None, xmax=None, ymin=None, ymax=None):
+		if xmin is not None: ax.set_xlim(xmin=xmin)
+		if xmax is not None: ax.set_xlim(xmax=xmax)
+		if ymin is not None: ax.set_ylim(ymin=ymin)
+		if ymax is not None: ax.set_ylim(ymax=ymax)
+	
 	# Method to plot the data when axes are made
 	def _animateOnAxes(self, ax, t):
 		if not self._validate(): return None
@@ -603,30 +610,25 @@ class Diagnostic(object):
 			A     = self._previousdata[self.times<=t]
 			im, = ax.plot(times*self._coeff_time, A, **self.options.plot)
 			ax.set_xlabel('Time ['+self._time_units+' ]')
-			ax.set_xlim(xmax=self.times[-1]*self._coeff_time)
-			if self.options.data_min is not None: ax.set_ylim(ymin=self.options.data_min)
-			if self.options.data_max is not None: ax.set_ylim(ymax=self.options.data_max)
+			self._setLimits(ax, xmax=self.times[-1]*self._coeff_time, ymin=self.options.vmin, ymax=self.options.vmax)
 		elif A.ndim == 1:
 			im, = ax.plot(self._plot_centers[0], A, **self.options.plot)
 			if self._plot_log[0]: ax.set_xscale("log")
 			ax.set_xlabel(self._plot_label[0])
-			if self.options.data_min is not None: ax.set_ylim(ymin=self.options.data_min)
-			if self.options.data_max is not None: ax.set_ylim(ymax=self.options.data_max)
+			self._setLimits(ax, ymin=self.options.vmin, ymax=self.options.vmax)
 		elif A.ndim == 2:
 			im = self._animateOnAxes_2D(ax, A)
 			if (self._plot_log[0]): ax.set_xlabel("Log[ "+self._plot_label[0]+" ]")
-			else:                  ax.set_xlabel(        self._plot_label[0]     )
+			else:                   ax.set_xlabel(        self._plot_label[0]     )
 			if (self._plot_log[1]): ax.set_ylabel("Log[ "+self._plot_label[1]+" ]")
-			else:                  ax.set_ylabel(        self._plot_label[1]     )
-			if self.options.ymin is not None: ax.set_ylim(ymin=self.options.ymin)
-			if self.options.ymax is not None: ax.set_ylim(ymax=self.options.ymax)
+			else:                   ax.set_ylabel(        self._plot_label[1]     )
+			self._setLimits(ax, ymin=self.options.ymin, ymax=self.options.ymax)
 			try: # if colorbar exists
 				ax.cax.cla()
 				self._plt.colorbar(mappable=im, cax=ax.cax, **self.options.colorbar)
 			except AttributeError:
 				ax.cax = self._plt.colorbar(mappable=im, ax=ax, **self.options.colorbar).ax
-		if self.options.xmin is not None: ax.set_xlim(xmin=self.options.xmin)
-		if self.options.xmax is not None: ax.set_xlim(xmax=self.options.xmax)
+		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax)
 		if self._title is not None: ax.set_title(self._title)
 		ax.set(**self.options.axes)
 		try:
@@ -646,7 +648,7 @@ class Diagnostic(object):
 		if self._plot_log[0]: extent[0:2] = [self._np.log10(self._plot_centers[0][0]), self._np.log10(self._plot_centers[0][-1])]
 		if self._plot_log[1]: extent[2:4] = [self._np.log10(self._plot_centers[1][0]), self._np.log10(self._plot_centers[1][-1])]
 		im = ax.imshow( self._np.flipud(A.transpose()),
-			vmin = self.options.data_min, vmax = self.options.data_max, extent=extent, **self.options.image)
+			vmin = self.options.vmin, vmax = self.options.vmax, extent=extent, **self.options.image)
 		return im
 	
 	# If the sliced data has 0 dimension, this function can plot it 
@@ -658,10 +660,7 @@ class Diagnostic(object):
 		A = self._np.squeeze(self.getData())
 		im, = ax.plot(self.times*self._coeff_time, A, **self.options.plot)
 		ax.set_xlabel('Time ['+self._time_units+' ]')
-		if self.options.xmin is not None: ax.set_xlim(xmin=self.options.xmin)
-		if self.options.xmax is not None: ax.set_xlim(xmax=self.options.xmax)
-		if self.options.data_min is not None: ax.set_ylim(ymin=self.options.data_min)
-		if self.options.data_max is not None: ax.set_ylim(ymax=self.options.data_max)
+		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.vmin, ymax=self.options.vmax)
 		if self._title is not None: ax.set_title(self._title)
 		ax.set(**self.options.axes)
 		ax.ticklabel_format(axis="x",**self.options.xtick)
@@ -1962,7 +1961,7 @@ class Probe(Diagnostic):
 		for kwarg in self.options.image:
 			if kwarg not in ["cmap"]: del kwargs[kwarg]
 		im = ax.pcolormesh(self._plot_edges[0], self._plot_edges[1], self._np.flipud(A.transpose()),
-			vmin = self.options.data_min, vmax = self.options.data_max, **kwargs)
+			vmin = self.options.vmin, vmax = self.options.vmax, **kwargs)
 		return im
 
 
@@ -1986,7 +1985,6 @@ def multiPlot(*Diags, **kwargs):
 	# Gather all times
 	alltimes = np.unique(np.concatenate([Diag.times*Diag.timestep for Diag in Diags]))
 	# Get keyword arguments
-	figure = kwargs.pop("figure", 1)
 	shape  = kwargs.pop("shape" , None)
 	# Determine whether to plot all cases on the same axes
 	sameAxes = False
@@ -2012,7 +2010,7 @@ def multiPlot(*Diags, **kwargs):
 	# Make the figure
 	if "facecolor" not in kwargs: kwargs.update({ "facecolor":"w" })
 	options = Options(**kwargs)
-	fig = plt.figure(figure, **options.figure0)
+	fig = plt.figure(**options.figure0)
 	fig.set(**options.figure1) # Apply figure kwargs
 	fig.clf()
 	fig.subplots_adjust(wspace=0.5, hspace=0.5, bottom=0.15)
