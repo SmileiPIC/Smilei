@@ -6,7 +6,6 @@
 #include "ElectroMagn.h"
 #include "Field2D.h"
 #include "Particles.h"
-#include "SmileiMPI_Cart2D.h"
 
 using namespace std;
 

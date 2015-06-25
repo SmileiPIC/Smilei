@@ -7,7 +7,6 @@
 #include "Field1D.h"
 #include "Particles.h"
 #include "Tools.h"
-#include "SmileiMPI_Cart1D.h"
 #include "Patch.h"
 
 using namespace std;
@@ -18,8 +17,6 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 Projector1D2Order::Projector1D2Order (PicParams& params, SmileiMPI* smpi, Patch* patch) : Projector1D(params, smpi, patch)
 {
-    SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
-
     dx_inv_  = 1.0/params.cell_length[0];
     dx_ov_dt = params.cell_length[0] / params.timestep;
 

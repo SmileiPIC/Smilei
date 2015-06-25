@@ -29,8 +29,7 @@ public:
 	//std::cout << "n_space : " << params.n_space[0] << " " << params.n_space[1] << std::endl;
 	//std::cout << "n_patch : " << params.number_of_patches[0] << " " << params.number_of_patches[1] << std::endl;
 
-	//std::cout << "\ Patch : n_space : " << params.n_space[0] << " " << params.n_space[1] << std::endl;
-
+	std::cout << "Patch : n_space : " << params.n_space[0] << " " << params.n_space[1] << std::endl;	
 
         // create species
         vecPatches.resize(npatches);

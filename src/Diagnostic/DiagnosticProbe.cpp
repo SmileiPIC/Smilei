@@ -8,8 +8,6 @@
 #include "PicParams.h"
 #include "SmileiMPI.h"
 #include "Patch.h"
-#include "SmileiMPI_Cart1D.h"
-#include "SmileiMPI_Cart2D.h"
 #include "ElectroMagn.h"
 #include "Field1D.h"
 #include "Field2D.h"
@@ -301,79 +299,96 @@ string DiagnosticProbe::probeName(int p) {
     return prob_name.str();
 }
 
-void DiagnosticProbe::run(unsigned int timestep, ElectroMagn* EMfields, Interpolator* interp) {
-    return;
-    for (unsigned int np=0; np<every.size(); np++) {
-	fileId = H5Fopen( "Probes.h5", H5F_ACC_RDWR, H5P_DEFAULT);
-        if (every[np] && timestep % every[np] == 0) {
-	    
-	    for (int iprob=0; iprob <probeParticles[np].size(); iprob++) {             
-		(*interp)(EMfields,probeParticles[np],iprob,&Eloc_fields,&Bloc_fields,&Jloc_fields,&probesArray[np]->data_2D[iprob][probeSize-1]);
 
- 		//! here we fill the probe data!!!
-		probesArray[np]->data_2D[iprob][0]=Eloc_fields.x;
-		probesArray[np]->data_2D[iprob][1]=Eloc_fields.y;
-		probesArray[np]->data_2D[iprob][2]=Eloc_fields.z;
-		probesArray[np]->data_2D[iprob][3]=Bloc_fields.x;
-		probesArray[np]->data_2D[iprob][4]=Bloc_fields.y;
-		probesArray[np]->data_2D[iprob][5]=Bloc_fields.z;
-		probesArray[np]->data_2D[iprob][6]=Jloc_fields.x;
-		probesArray[np]->data_2D[iprob][7]=Jloc_fields.y;
-		probesArray[np]->data_2D[iprob][8]=Jloc_fields.z;          
-                
-            }
+void DiagnosticProbe::run( unsigned int timestep, ElectroMagn* EMfields, Interpolator* interp )
+{
+    // Loop on all Probes
+    for (unsigned int probe_id=0; probe_id<every.size(); probe_id++) {
 
-	    // memspace OK : 1 block 
-            hsize_t     chunk_parts[2];
-            chunk_parts[0] = probeParticles[np].size();
-            chunk_parts[1] = probeSize; 
-	    hid_t memspace  = H5Screate_simple(2, chunk_parts, NULL);
-	    // filespace :
-	    hsize_t dimsf[2], offset[2], stride[2], count[2];
-	    dimsf[0] = nProbeTot;
-	    dimsf[1] = probeSize;
-            hid_t filespace = H5Screate_simple(2, dimsf, NULL);
-            offset[0] = probesStart[np];
-            offset[1] = 0;
-            stride[0] = 1;
-            stride[1] = 1;
-            count[0] = 1;
-            count[1] = 1;
-            hsize_t     block[2];
-            block[0] = probeParticles[np].size();
-            block[1] = probeSize;
-            H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, stride, count, block);
+	if (every[probe_id] && timestep % every[probe_id] == 0) {
 
-	    // define filespace, memspace
-	    hid_t write_plist = H5Pcreate(H5P_DATASET_XFER);
-	    H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);
-	    hid_t did = H5Gopen2(fileId, probeName(np).c_str(), H5P_DEFAULT);
-            hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
-	    ostringstream name_t;
-	    name_t.str("");
-	    name_t << "/" << probeName(np).c_str() << "/" << setfill('0') << setw(10) << timestep;
-	    hid_t dset_id;
-	    htri_t status = H5Lexists( did, name_t.str().c_str(), H5P_DEFAULT ); 
-	    if (!status)
-		dset_id  = H5Dcreate(did, name_t.str().c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
-	    else
-		dset_id = H5Dopen(did, name_t.str().c_str(), H5P_DEFAULT);		
-	    H5Pclose(plist_id);
-	    H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &(probesArray[np]->data_2D[0][0]) );
-	    H5Dclose(dset_id);
-	    H5Gclose(did);
-	    H5Pclose( write_plist );
+	    // Open group de write in	
+	    hid_t group_id = H5Gopen(fileId, probeName(probe_id).c_str() ,H5P_DEFAULT);
+	    // Write in group_id
+	    compute(probe_id, timestep, EMfields, interp);
+	    write(probe_id, timestep, group_id);
+	    // Close the group
+	    H5Gclose(group_id);
 
-	    H5Sclose(filespace);
-	    H5Sclose(memspace);
+	    if (fileId) H5Fflush(fileId, H5F_SCOPE_GLOBAL );
 
-
-
-
-        }
-	if (fileId) H5Fflush(fileId, H5F_SCOPE_GLOBAL );
-	H5Fclose(fileId);
+	}
 
     }
+    
+}
+
+
+void DiagnosticProbe::compute(int probe_id, unsigned int timestep, ElectroMagn* EMfields, Interpolator* interp) {
+    for (int iprob=0; iprob <probeParticles[probe_id].size(); iprob++) {             
+	(*interp)(EMfields,probeParticles[probe_id],iprob,&Eloc_fields,&Bloc_fields,&Jloc_fields,&probesArray[probe_id]->data_2D[iprob][probeSize-1]);
+
+	//! here we fill the probe data!!!
+	probesArray[probe_id]->data_2D[iprob][0]=Eloc_fields.x;
+	probesArray[probe_id]->data_2D[iprob][1]=Eloc_fields.y;
+	probesArray[probe_id]->data_2D[iprob][2]=Eloc_fields.z;
+	probesArray[probe_id]->data_2D[iprob][3]=Bloc_fields.x;
+	probesArray[probe_id]->data_2D[iprob][4]=Bloc_fields.y;
+	probesArray[probe_id]->data_2D[iprob][5]=Bloc_fields.z;
+	probesArray[probe_id]->data_2D[iprob][6]=Jloc_fields.x;
+	probesArray[probe_id]->data_2D[iprob][7]=Jloc_fields.y;
+	probesArray[probe_id]->data_2D[iprob][8]=Jloc_fields.z;          
+                
+    } // End for iprob
+
+}
+
+
+void DiagnosticProbe::write(int probe_id, unsigned int timestep, hid_t group_id) {
+    // memspace OK : 1 block 
+    hsize_t     chunk_parts[2];
+    chunk_parts[0] = probeParticles[probe_id].size();
+    chunk_parts[1] = probeSize; 
+    hid_t memspace  = H5Screate_simple(2, chunk_parts, NULL);
+    // filespace :
+    hsize_t dimsf[2], offset[2], stride[2], count[2];
+    dimsf[0] = nProbeTot;
+    dimsf[1] = probeSize;
+    hid_t filespace = H5Screate_simple(2, dimsf, NULL);
+    offset[0] = probesStart[probe_id];
+    offset[1] = 0;
+    stride[0] = 1;
+    stride[1] = 1;
+    count[0] = 1;
+    count[1] = 1;
+    hsize_t     block[2];
+    block[0] = probeParticles[probe_id].size();
+    block[1] = probeSize;
+    H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, stride, count, block);
+
+    // define filespace, memspace
+    hid_t write_plist = H5Pcreate(H5P_DATASET_XFER);
+    H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);
+    hid_t did = H5Gopen2(fileId, probeName(probe_id).c_str(), H5P_DEFAULT);
+    hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
+    ostringstream name_t;
+    name_t.str("");
+    name_t << "/" << probeName(probe_id).c_str() << "/" << setfill('0') << setw(10) << timestep;
+
+    hid_t dset_id;
+    htri_t status = H5Lexists( group_id, name_t.str().c_str(), H5P_DEFAULT ); 
+    if (!status)
+	dset_id  = H5Dcreate(group_id, name_t.str().c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+    else
+	dset_id = H5Dopen(group_id, name_t.str().c_str(), H5P_DEFAULT);		
+
+    H5Pclose(plist_id);
+    H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &(probesArray[probe_id]->data_2D[0][0]) );
+    H5Dclose(dset_id);
+    H5Gclose(did);
+    H5Pclose( write_plist );
+
+    H5Sclose(filespace);
+    H5Sclose(memspace);
 
 }

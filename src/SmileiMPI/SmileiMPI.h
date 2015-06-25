@@ -25,6 +25,8 @@ class Field;
 //  --------------------------------------------------------------------------------------------------------------------
 class SmileiMPI {
 public:
+    friend class Patch;
+
     //! Create intial MPI environment
     SmileiMPI( int* argc, char*** argv );
     //! Create MPI environment for the data geometry from 
@@ -56,6 +58,9 @@ public:
     //! Echanges particles of Species, list of particles comes frome Species::dynamics
     //! See child classes
     virtual void exchangeParticles(Species* species, int ispec, PicParams& params, int tnum, int iDim) {};
+
+    MPI_Datatype createMPIparticles( Particles* particles, int nbrOfProp );
+
 
     //! Create MPI_Datatype to exchange/sum fields on ghost data
     //! See child classes
@@ -187,6 +192,8 @@ public:
 protected:
     //! Global MPI Communicator
     MPI_Comm SMILEI_COMM_WORLD;
+
+    int* periods_;
 
     //! Sort particles to exchange per side (2), contains indexes
     //! Reinitialized per direction

@@ -10,7 +10,6 @@
 #include "Laser.h"
 
 #include "SmileiMPI.h"
-#include "SmileiMPI_Cart2D.h"
 #include "Patch.h"
 
 using namespace std;
@@ -26,7 +25,6 @@ isNorthern(patch->isNorthern()),
 isSouthern(patch->isSouthern())
 {
     // local dt to store
-    SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
     int sizeprojbuffer ;
     
     
@@ -191,8 +189,8 @@ ElectroMagn2D::~ElectroMagn2D()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn2D::solvePoisson(SmileiMPI* smpi)
 {
-    
-    SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
+#ifdef _TOBEPATCHED    
+    //SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
     
     unsigned int iteration_max = 50000;
     double       error_max     = 1.e-14;
@@ -482,7 +480,7 @@ void ElectroMagn2D::solvePoisson(SmileiMPI* smpi)
             (*Ey2D)(i,j) += Ey_Add;
         }
     }
-    
+#endif    
 }//END solvePoisson
 
 

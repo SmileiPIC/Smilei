@@ -26,7 +26,6 @@
 #include "PicParams.h"
 #include "LaserParams.h"
 
-#include "SmileiMPIFactory.h"
 #include "SmileiIOFactory.h"
 
 #include "SpeciesFactory.h"
@@ -200,20 +199,15 @@ int main (int argc, char* argv[])
 	    vecPatches(ipatch)->EMfields->restartRhoJs();
 	    vecPatches(ipatch)->dynamics(time_dual, smpi, params, simWindow, diag_flag); //include test
 	}
-        cout << " dynamics done " << endl;
 	for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 	    if ( vecPatches(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) )
-		vecPatches.exchangeParticles(ispec, params, smpi ); // Included sort_part
+		vecPatches.exchangeParticles(ispec, params, smpiData ); // Included sort_part
 	}
-        cout << " Exchange done " << endl;
-	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
 	    vecPatches(ipatch)->EMfields->computeTotalRhoJ(); // Per species in global, Attention if output -> Sync / per species fields
-	}
-	for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
+	for (unsigned int ispec=0 ; ispec<params.n_species; ispec++)
 	    vecPatches.sumRhoJ( ispec ); // MPI
-	}
         diag_flag = 0;
-        cout << " sumRhoJ done " << endl;
 
  
 #ifdef _TOBEPATCHED
@@ -231,17 +225,16 @@ int main (int argc, char* argv[])
         MESSAGE("Running diags at time t = 0");
         MESSAGE("----------------------------------------------");
         // run diagnostics at time-step 0
+	vecPatches.initProbesDiags(params, diag_params, 0);
 	
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->Diags->runAllDiags(0, vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, vecPatches(ipatch)->Interp, smpi);
-        cout << "done runalldiags" << endl;
 	vecPatches.computeGlobalDiags(0);
 	smpiData->computeGlobalDiags( vecPatches(0)->Diags, 0);
 
-	vecPatches.computeProbesDiags(params, diag_params, 0);
 
         for (unsigned int ispec=0 ; ispec<params.n_species; ispec++)
-            MESSAGE(1,"Species " << ispec << " (" << params.species_param[ispec].species_type << ") created with " << vecPatches(0)->Diags->getScalar("N_"+params.species_param[ispec].species_type) << " particles" );
+	  MESSAGE(1,"Species " << ispec << " (" << params.species_param[ispec].species_type << ") created with " << (int)vecPatches(0)->Diags->getScalar("N_"+params.species_param[ispec].species_type) << " particles" );
 
         //// temporary EM fields dump in Fields.h5
         //sio->writeAllFieldsSingleFileTime( EMfields, 0 );
@@ -343,16 +336,14 @@ int main (int argc, char* argv[])
             tid = omp_get_thread_num();
 #endif
 
-            cout << "start dynamics" << endl;
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 		vecPatches(ipatch)->dynamics(time_dual, smpi, params, simWindow, diag_flag); // include test
 	    }
-            cout << "done dynamics" << endl;
 
 	    // Inter Patch exchange
             for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 		if ( vecPatches(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
-		    vecPatches.exchangeParticles(ispec, params, smpi ); // Included sort_part
+		    vecPatches.exchangeParticles(ispec, params, smpiData ); // Included sort_part
                         if (itime%200 == 0) {
                             #pragma omp master
                             {
@@ -524,6 +515,7 @@ int main (int argc, char* argv[])
     // ------------------------------
     //  Cleanup & End the simulation
     // ------------------------------
+    vecPatches.finalizeProbesDiags(params, diag_params, 0);
 
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) delete vecPatches(ipatch);
     vecPatches.clear();

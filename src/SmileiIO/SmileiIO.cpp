@@ -14,13 +14,14 @@
 #include "PicParams.h"
 #include "DiagParams.h"
 #include "SmileiMPI.h"
+#include "Patch.h"
 #include "SimWindow.h"
 #include "ElectroMagn.h"
 #include "Species.h"
 
 using namespace std;
 
-SmileiIO::SmileiIO( PicParams& params, DiagParams& diagParams, SmileiMPI* smpi ) : 
+SmileiIO::SmileiIO( PicParams& params, DiagParams& diagParams,  Patch* patch) : 
 dump_times(0), 
 dump_minutes_times(0), 
 stop_file_seen_since_last_check(false)
@@ -28,66 +29,6 @@ stop_file_seen_since_last_check(false)
 		
     nDim_particle=params.nDim_particle;
     //particleSize = nDim_particle + 3 + 1;
-
-
-#ifdef _IO_PARTICLE
-    particleSize = nDim_particle + 3 + 1;
-
-    ostringstream name("");
-    name << "particles-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
-	
-    hid_t attribute_id;
-	
-    // Create 1 file containing 1 dataset per Species
-    partFile_id = H5Fcreate( name.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-	
-	
-	
-    hsize_t dims[2] = {0, particleSize};
-    hsize_t max_dims[2] = {H5S_UNLIMITED, particleSize};
-    hid_t file_space = H5Screate_simple(2, dims, max_dims);
-	
-    hid_t plist = H5Pcreate(H5P_DATASET_CREATE);
-    H5Pset_layout(plist, H5D_CHUNKED);
-    hsize_t chunk_dims[2] = {1, particleSize};
-    H5Pset_chunk(plist, 2, chunk_dims);
-	
-    for (unsigned int ispec=0 ; ispec<params.species_param.size() ; ispec++) {
-        ostringstream speciesName("");
-        speciesName << params.species_param[ispec].species_type;
-
-        //here we check for the presence of multiple ccurence of the same particle name... Souldn't we add a tag for each species?
-        unsigned int occurrence=0;
-        for (unsigned int iocc=0 ; iocc<ispec ; iocc++) {
-            if (params.species_param[ispec].species_type == params.species_param[iocc].species_type)
-                occurrence++;
-        }
-        if (occurrence>0) 
-            speciesName << "_" << occurrence;
-        
-        hid_t did = H5Dcreate(partFile_id, speciesName.str().c_str(), H5T_NATIVE_FLOAT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
-        partDataset_id.push_back(did);
-        
-        hid_t tmp_space = H5Screate(H5S_SCALAR);
-		
-        attribute_id = H5Acreate (partDataset_id[ispec], "Mass", H5T_IEEE_F64BE, tmp_space,H5P_DEFAULT, H5P_DEFAULT);
-        H5Awrite(attribute_id, H5T_NATIVE_DOUBLE, &params.species_param[ispec].mass);
-        H5Aclose(attribute_id);
-		
-        attribute_id = H5Acreate (partDataset_id[ispec], "Charge", H5T_IEEE_F64BE, tmp_space,H5P_DEFAULT, H5P_DEFAULT);
-        H5Awrite(attribute_id, H5T_NATIVE_DOUBLE, &params.species_param[ispec].charge);
-        H5Aclose(attribute_id);
-		
-        H5Sclose(tmp_space);
-    }
-	
-    H5Pclose(plist);
-    H5Sclose(file_space);
-	
-    dims[0] = 1;
-    dims[1] = particleSize;
-    partMemSpace = H5Screate_simple(2, dims, NULL);
-#endif
 	
     // Management of global IO file
     MPI_Info info  = MPI_INFO_NULL;
@@ -223,52 +164,6 @@ void SmileiIO::writeAvgFieldsSingleFileTime( ElectroMagn* EMfields, int time )
 	
 }
 
-
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Each MPI process writes is particles in its own file, data are overwritten at each call ( particles-MPI_Rank.h5 )
-// In progress ...
-// ---------------------------------------------------------------------------------------------------------------------
-void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI* smpi )
-{
-	
-#ifdef _IO_PARTICLE
-    if (smpi->isMaster()) DEBUG("write species disabled");
-    return;
-	
-    int n_species = vecSpecies.size();
-    for (int ispec=0 ; ispec<n_species ; ispec++) {
-        Particles* cuParticles = &(vecSpecies[ispec])->particles;
-        MESSAGE(2,"write species " << ispec);
-		
-        for (unsigned int p=0; p<(vecSpecies[ispec])->getNbrOfParticles(); p++ ) {
-			
-            hid_t file_space = H5Dget_space(partDataset_id[ispec]);
-            hsize_t dimsO[2];
-            H5Sget_simple_extent_dims(file_space, dimsO, NULL);
-            H5Sclose(file_space);
-            hsize_t dims[2];
-            dims[0] = dimsO[0]+1;
-            dims[1] = dimsO[1];
-            H5Dset_extent(partDataset_id[ispec], dims);
-			
-            file_space = H5Dget_space(partDataset_id[ispec]);
-            hsize_t start[2];
-            hsize_t count[2] = {1, particleSize};
-            start[0] = dimsO[0];
-            start[1] = 0;
-            H5Sselect_hyperslab(file_space, H5S_SELECT_SET, start, NULL, count, NULL);
-            H5Dwrite(partDataset_id[ispec], H5T_NATIVE_DOUBLE, partMemSpace, file_space, H5P_DEFAULT, &((*cuParticles)[ p ]->position(0)));
-            H5Sclose(file_space);
-			
-			
-        } // End for p
-		
-    } // End for ispec
-	
-#endif
-}
 
 bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, double time, std::vector<Species*> vecSpecies, SimWindow* simWin, PicParams &params, InputData& input_data) { 
     if  ((params.dump_step != 0 && ((itime + 1) % params.dump_step == 0)) ||  //+1 because itime2dump receives itime + 1.

@@ -195,7 +195,8 @@ class VectorPatch {
     void computeGlobalDiags(int timestep);
     void computeScalarsDiags(int timestep);
 
-    void computeProbesDiags(PicParams& params, DiagParams &diag_params, int timestep);
+    void initProbesDiags(PicParams& params, DiagParams &diag_params, int timestep);
+    void finalizeProbesDiags(PicParams& params, DiagParams &diag_params, int timestep);
 
     void clear() {patches_.clear();}
 

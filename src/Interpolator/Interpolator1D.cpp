@@ -3,7 +3,6 @@
 #include <cmath>
 #include <iostream>
 
-#include "SmileiMPI_Cart1D.h"
 #include "Patch.h"
 
 using namespace std;
