@@ -236,6 +236,9 @@ int main (int argc, char* argv[])
         for (unsigned int ispec=0 ; ispec<params.n_species; ispec++)
 	  MESSAGE(1,"Species " << ispec << " (" << params.species_param[ispec].species_type << ") created with " << (int)vecPatches(0)->Diags->getScalar("N_"+params.species_param[ispec].species_type) << " particles" );
 
+	for (int ipatch = 0 ; ipatch<vecPatches.size() ; ipatch++)
+	    cout << (int)vecPatches(ipatch)->vecSpecies[0]->getNbrOfParticles() << " particles on " << vecPatches(ipatch)->Hindex() << endl;
+
         //// temporary EM fields dump in Fields.h5
         //sio->writeAllFieldsSingleFileTime( EMfields, 0 );
         //// temporary EM fields dump in Fields_avg.h5
@@ -472,6 +475,31 @@ int main (int argc, char* argv[])
             */
         }
         timer[5].update();
+#endif
+
+#ifdef _TESTPATCHEXCH
+	if (itime==1) {
+	    if (smpiData->getRank()==0)
+		vecPatches.send_patch_id_.push_back(3);
+	    else if (smpiData->getRank()==1) 
+		vecPatches.recv_patch_id_.push_back(3);
+
+	    smpiData->patch_count[0] = 3;
+	    smpiData->patch_count[1] = 5;
+
+	    cout << "patch_count modified" << endl;
+	    vecPatches.createPacthes(params, diag_params, laser_params, smpiData);
+	    cout << "patch created" << endl;
+	    vecPatches.setNbrParticlesToExch(smpiData);
+	    cout << "nbr particles exchanged" << endl;
+	    vecPatches.exchangePatches(smpiData);
+	    cout << "data exchanged" << endl;
+
+	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+		cout << smpiData->getRank() << " run patchId = " << vecPatches(ipatch)->Hindex() << endl;
+
+	    
+	}
 #endif
     }//END of the time loop
     

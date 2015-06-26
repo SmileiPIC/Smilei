@@ -1,8 +1,14 @@
+
 #include "Patch.h"
-#include "Hilbert_functions.h"
+
 #include <cstdlib>
 #include <iostream>
 #include <iomanip>
+
+#include "Hilbert_functions.h"
+#include "PatchesFactory.h"
+#include "Species.h"
+#include "Particles.h"
 
 using namespace std;
 
@@ -1291,5 +1297,116 @@ void VectorPatch::finalizeProbesDiags(PicParams& params, DiagParams &diag_params
     for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++) {
 	(*this)(ipatch)->Diags->probes.setFile( 0 );
     }
+
+}
+
+void VectorPatch::createPacthes(PicParams& params, DiagParams& diag_params, LaserParams& laser_params, SmileiMPI* smpi)
+{
+    // Set Index of the 1st patch of the vector yet on current MPI rank
+    refHindex_ = (*this)(0)->Hindex();
+
+    for (unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++) {
+	// density profile is initializes as if t = 0 !
+	// Species will be cleared when, nbr of particles will be known
+	Patch* newPatch = PatchesFactory::create(params, diag_params, laser_params, smpi, recv_patch_id_[ipatch]);
+	if ( recv_patch_id_[ipatch] > refHindex_ )
+	    patches_.push_back( newPatch );
+	else
+	    patches_.insert( patches_.begin(), newPatch );
+    }
+
+}
+
+void VectorPatch::setNbrParticlesToExch(SmileiMPI* smpi)
+{
+    int nSpecies( (*this)(0)->vecSpecies.size() );
+    int nDim_Parts( (*this)(0)->vecSpecies[0]->particles->dimension() );
+
+    // Send particles
+    for (unsigned int ipatch=0 ; ipatch<send_patch_id_.size() ; ipatch++) {
+
+	int newMPIrank(0);
+	// locale rank which owns send_patch_id_[ipatch]
+	int tmp( smpi->patch_count[newMPIrank] );
+	while ( tmp <= send_patch_id_[ipatch] ) {
+	    newMPIrank++;
+	    tmp += smpi->patch_count[newMPIrank];
+	}
+
+	vector<int> nbrOfPartsSend(nSpecies,0);
+	for (int ispec=0 ; ispec<nSpecies ; ispec++)
+	    nbrOfPartsSend[ispec] = (*this)(send_patch_id_[ipatch])->vecSpecies[ispec]->getNbrOfParticles();
+
+	cout << smpi->getRank() << " send to " << newMPIrank << " with tag " << send_patch_id_[ipatch] << endl;
+	for (int ispec=0;ispec<nSpecies;ispec++)
+	  cout << "n part send = " << nbrOfPartsSend[ispec] << endl;
+	smpi->send( nbrOfPartsSend, newMPIrank, send_patch_id_[ipatch] );
+    }
+
+
+    // Recv part
+    for (unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++) {
+
+	vector<int> nbrOfPartsRecv(nSpecies,0);
+	int oldMPIrank(0); // Comparing recv_patch_id_[ipatch] to 1st yet on current MPI rank
+	if ( recv_patch_id_[ipatch] > refHindex_ )
+	    oldMPIrank = smpi->getRank()+1;
+	else
+	    oldMPIrank = smpi->getRank()-1;
+
+	cout << smpi->getRank() << " recv from " << oldMPIrank << " with tag " << recv_patch_id_[ipatch] << endl;
+	for (int ispec=0;ispec<nSpecies;ispec++)
+	  cout << "n part recv = " << nbrOfPartsRecv[ispec] << endl;
+	smpi->recv( &nbrOfPartsRecv, oldMPIrank, recv_patch_id_[ipatch] );
+	for (int ispec=0;ispec<nSpecies;ispec++)
+	  cout << "n part recv = " << nbrOfPartsRecv[ispec] << endl;
+
+	for (int ispec=0 ; ispec<nSpecies ; ispec++)
+	    (*this)(ipatch)->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv[ispec], nDim_Parts );
+    }
+
+    //Synchro, send/recv must be non-blocking !!!
+    smpi->barrier();
+}
+
+
+void VectorPatch::exchangePatches(SmileiMPI* smpi)
+{
+    int nSpecies( (*this)(0)->vecSpecies.size() );
+
+    // Send part
+    for (unsigned int ipatch=0 ; ipatch<send_patch_id_.size() ; ipatch++) {
+
+	int newMPIrank(0);
+	// locale rank which owns send_patch_id_[ipatch]
+	int tmp( smpi->patch_count[newMPIrank] );
+	while ( tmp <= send_patch_id_[ipatch] ) {
+	    newMPIrank++;
+	    tmp += smpi->patch_count[newMPIrank];
+	}
+	cout << smpi->getRank() << " send to " << newMPIrank << " with tag " << send_patch_id_[ipatch] << endl;
+	smpi->send( (*this)(send_patch_id_[ipatch]), newMPIrank, send_patch_id_[ipatch] );
+
+	delete (*this)(send_patch_id_[ipatch]);
+	patches_[ send_patch_id_[ipatch] ] = NULL;
+	patches_.erase( patches_.begin() + send_patch_id_[ipatch] );
+	
+    }
+
+
+    // Recv part
+    // recv_patch_id_ must be sorted !
+    // Loop / This, check this->hindex is/not recv_patch_id
+    for (unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++) {
+	int oldMPIrank(0); // Comparing recv_patch_id_[ipatch] to 1st yet on current MPI rank
+	if ( recv_patch_id_[ipatch] > refHindex_ )
+	    oldMPIrank = smpi->getRank()+1;
+	else
+	    oldMPIrank = smpi->getRank()-1;
+	cout << smpi->getRank() << " recv from " << oldMPIrank << " with tag " << recv_patch_id_[ipatch] << endl;
+	smpi->recv( (*this)(ipatch), oldMPIrank, recv_patch_id_[ipatch] );
+    }
+
+    //Synchro, send/recv must be non-blocking !!!
 
 }

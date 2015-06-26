@@ -111,7 +111,7 @@ fileId(0) {
 	rtag << cpuRank-1 << "0" << cpuRank;
 	int tag(0);
 	rtag >> tag;
-
+#ifdef _TOBEPATCHED
 	if (cpuRank>0) {
 	    //cout << patch->Hindex() << " Recv from " << patch->getMPIRank(cpuRank-1) << " with tag " << tag << endl;
 	    MPI_Recv( &(probesStart[np]), 1, MPI_INTEGER, patch->getMPIRank(cpuRank-1), tag, MPI_COMM_WORLD, &status );
@@ -127,6 +127,7 @@ fileId(0) {
 	    MPI_Send( &probeEnd, 1, MPI_INTEGER, patch->getMPIRank(cpuRank+1), tag, MPI_COMM_WORLD );
 
 	}
+#endif
 	// ---------------------------------------------------
 	// End file split definition
 	// ---------------------------------------------------
@@ -285,9 +286,11 @@ DiagnosticProbe::~DiagnosticProbe()
 }
 
 void DiagnosticProbe::close() {
+#ifdef _TOBEPATCHED
     if (fileId>0) {
         H5Fclose(fileId);
     }
+#endif
     /*cout << " I 'm here " << endl;
     H5Fflush(fileId, H5F_SCOPE_GLOBAL );
     H5Fclose(fileId);*/
