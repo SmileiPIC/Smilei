@@ -26,6 +26,7 @@ class DiagnosticScalar;
 class Patch
 {
     friend class SmileiMPI;
+    friend class VectorPatch;
 public:
     //! Constructor for Patch
   Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int ipatch);
@@ -148,6 +149,8 @@ public:
     }
 
     inline unsigned int Hindex() { return  hindex; }
+    void updateMPIenv(SmileiMPI *smpi);
+
 protected:
     //!Hilbert index of the patch. Number of the patch along the Hilbert curve.
     unsigned int hindex;
@@ -197,12 +200,20 @@ class VectorPatch {
     void initProbesDiags(PicParams& params, DiagParams &diag_params, int timestep);
     void finalizeProbesDiags(PicParams& params, DiagParams &diag_params, int timestep);
 
+    void createPacthes(PicParams& params, DiagParams& diag_params, LaserParams& laser_params, SmileiMPI* smpi);
+    void setNbrParticlesToExch(SmileiMPI* smpi);
+    void exchangePatches(SmileiMPI* smpi);
+
     void clear() {patches_.clear();}
 
     std::vector<Patch*> patches_;
 
+    std::vector<int> recv_patch_id_;
+    std::vector<int> send_patch_id_;    
+
  private :
-    
+    // 1st patch index of patches_ (stored for balancing op)
+    int refHindex_;
 };
 
 

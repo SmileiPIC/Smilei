@@ -101,23 +101,20 @@ public:
     // --------------------------------------------------
     // ------------- PATCH EXCHANGE METHODS -------------
     // --------------------------------------------------
-    void send(Patch* patch, int to);
-    void recv(Patch* patch, int from);
+    void send(Patch* patch, int to  , int hindex);
+    void recv(Patch* patch, int from, int hindex);
 
-    void send(int value, int to);
-    void recv(int value, int from);
+    void send(Species* species, int to  , int hindex);
+    void recv(Species* species, int from, int hindex);
+    void send(Particles* particles, int to   , int hindex);
+    void recv(Particles* partictles, int from, int hindex);
+    void send(std::vector<int> vec, int to  , int hindex);
+    void recv(std::vector<int> *vec, int from, int hindex);
 
-    void send(Species* species, int to);
-    void recv(Species* species, int from);
-    void send(Particles* particles, int to);
-    void recv(Particles* partictles, int from);
-    void send(std::vector<int> vec, int to);
-    void recv(std::vector<int> vec, int from);
-
-    void send(ElectroMagn* fields, int to);
-    void recv(ElectroMagn* fields, int from);
-    void send(Field* field, int to);
-    void recv(Field* field, int from);
+    void send(ElectroMagn* fields, int to  , int hindex);
+    void recv(ElectroMagn* fields, int from, int hindex);
+    void send(Field* field, int to  , int hindex);
+    void recv(Field* field, int from, int hindex);
     // --------------------------------------------------
     // ------ END OF PATCH EXCHANGE METHODS -------------
     // --------------------------------------------------
