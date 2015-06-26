@@ -497,7 +497,6 @@ void ElectroMagn2D::saveMagneticFields()
     Field2D* By2D_m = static_cast<Field2D*>(By_m);
     Field2D* Bz2D_m = static_cast<Field2D*>(Bz_m);
     
-#pragma omp for schedule(static)
     // Magnetic field Bx^(p,d)
     for (unsigned int i=0 ; i<nx_p ; i++) {
         memcpy(&((*Bx2D_m)(i,0)), &((*Bx2D)(i,0)),ny_d*sizeof(double) );
@@ -598,13 +597,9 @@ void ElectroMagn2D::solveMaxwellFaraday()
 //#pragma omp parallel
 //{
 //#pragma omp for schedule(static)
-#pragma omp single
-{
         for (unsigned int j=1 ; j<ny_d-1 ; j++) {
             (*Bx2D)(0,j) -= dt_ov_dy * ( (*Ez2D)(0,j) - (*Ez2D)(0,j-1) );
         }
-}
-#pragma omp for schedule(static)
 //    for (unsigned int i=0 ; i<nx_p;  i++) {
     for (unsigned int i=1 ; i<nx_d-1;  i++) {
         for (unsigned int j=1 ; j<ny_d-1 ; j++) {
@@ -648,7 +643,6 @@ void ElectroMagn2D::centerMagneticFields()
     Field2D* Bz2D_m = static_cast<Field2D*>(Bz_m);
     
     // Magnetic field Bx^(p,d)
-#pragma omp for schedule(static)
     for (unsigned int i=0 ; i<nx_p ; i++) {
         for (unsigned int j=0 ; j<ny_d ; j++) {
             (*Bx2D_m)(i,j) = ( (*Bx2D)(i,j) + (*Bx2D_m)(i,j) )*0.5;
@@ -668,15 +662,12 @@ void ElectroMagn2D::centerMagneticFields()
             (*Bz2D_m)(i,j) = ( (*Bz2D)(i,j) + (*Bz2D_m)(i,j) )*0.5;
         } // end for j
       } // end for i
-#pragma omp single
-{
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*By2D_m)(nx_p,j) = ( (*By2D)(nx_p,j) + (*By2D_m)(nx_p,j) )*0.5;
         }
         for (unsigned int j=0 ; j<ny_d ; j++) {
             (*Bz2D_m)(nx_p,j) = ( (*Bz2D)(nx_p,j) + (*Bz2D_m)(nx_p,j) )*0.5;
         } // end for j
-}
 /*    cout << "\tBx_m = "  << Bx_m->norm() << endl;
       cout << "\tBy_m = "  << By_m->norm() << endl;*/
 #ifdef _PATCH_DEBUG
