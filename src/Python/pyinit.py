@@ -71,9 +71,8 @@ class Species(SmileiComponent):
     c_part_max = 1.0
     charge_density = None
     nb_density = None
-    density = None
-    mean_velocity = None
-    temperature = None
+    mean_velocity = [0.]
+    temperature = [1e-10]
     dynamics_type = "norm"
     time_frozen = 0.0
     radiating = False
@@ -83,11 +82,7 @@ class Species(SmileiComponent):
     bc_part_type_south = None
     ionization_model = "none"
     atomic_number = None
-    vacuum_length = []
-    for prefix in ["dens","mvel_x","mvel_y","mvel_z","temp_x","temp_y","temp_z"]:
-        exec prefix+"_profile = None"
-        for suffix in ["length_x","length_y","length_z","dbl_params","int_params"]:
-            exec prefix+"_"+suffix+" = []"
+
 
 class Laser(SmileiComponent):
     """Laser parameters"""
@@ -147,8 +142,7 @@ class DiagScalar(SmileiComponent):
 # external fields
 class ExtField(SmileiComponent):
     """External Field"""
-    field = None
-    magnitude = None
+    field = []
     profile = None
 
 # default simulation values

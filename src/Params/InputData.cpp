@@ -78,7 +78,7 @@ InputData::~InputData() {
         Py_Finalize();
 }
 
-//! run script
+//! Run string as python script and add to namelist
 void InputData::pyRunScript(string command, string name) {
     PyTools::checkPyError();
     namelist+=command;
@@ -91,6 +91,8 @@ void InputData::pyRunScript(string command, string name) {
         PyTools::checkPyError();
     }
 }
+
+
 
 //! retrieve python object
 PyObject* InputData::extract_py(string name, string component, int nComponent) {

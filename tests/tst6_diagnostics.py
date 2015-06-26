@@ -55,20 +55,15 @@ random_seed = 0
 # n_part_per_cell    = integer, number of particles/cell
 # c_part_max         = float, factor on the memory reserved for the total number of particles
 # mass               = float, particle mass in units of the electron mass
-# charge             = float, particle charge in units of the electron charge
 # dynamics_type      = string, type of species dynamics = "norm" or "rrLL"
 # time_frozen        = float, time during which particles are frozen in units of the normalization time
 # radiating          = boolean, if true, incoherent radiation calculated using the Larmor formula 
-# vacuum_length      = list of floats, distance from box borders without particles.
-# charge_density     = float, species charge density in units of the "critical" density
+# charge             = float or function, particle charge in units of the electron charge
+# charge_density     = float or function, species charge density in units of the "critical" density
 #     or nb_density for number density
-# mean_velocity      = list of floats, mean velocity in units of the speed of light
-# temperature        = list of floats, temperature in units of m_e c^2
-# SPECIES PROFILES from python function (see doc)
-#    Predefined functions: constant, trapezoidal, gaussian, polygonal, cosine
-# dens_profile       = python function. Units: n_c
-# mvel_[xyz]_profile = python function. Units: c
-# temp_[xyz]_profile = python function. Units: m_e c^2
+# mean_velocity      = list of floats or functions, mean velocity in units of the speed of light
+# temperature        = list of floats or functions, temperature in units of m_e c^2
+# Predefined functions: constant, trapezoidal, gaussian, polygonal, cosine
 
 Species(
 	species_type = "ion1",
@@ -78,7 +73,6 @@ Species(
 	mass = 1836.0,
 	charge = 1.0,
 	nb_density = 10.,
-	mean_velocity = [0., 0., 0.],
 	temperature = [0.00002],
 	time_frozen = 0.0,
 	bc_part_type_west = "none",
@@ -93,7 +87,7 @@ Species(
 	mass = 1.0,
 	charge = -1.0,
 	nb_density = 10.,
-	mean_velocity = [0.05, 0., 0.],
+	mean_velocity = [0.05],
 	temperature = [0.00002],
 	time_frozen = 0.0,
 	bc_part_type_west = "none",

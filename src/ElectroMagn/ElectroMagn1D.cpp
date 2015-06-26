@@ -647,7 +647,6 @@ void ElectroMagn1D::applyExternalField(Field* my_field,  Profile *profile, Smile
     }
     
     emBoundCond[0]->save_fields_BC1D(my_field);
-
 }
 
 

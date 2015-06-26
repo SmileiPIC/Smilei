@@ -19,14 +19,26 @@ class InputData;
 // ---------------------------------------------------------------------------------------------------------------------
 struct ProfileStructure {
     
+    //! Magnitude of the profile if constant profile
+    double profile; 
+    
+    //! in case profile is give in Python
+    PyObject *py_profile;
+    
+};
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! This structure contains the properties of each Laser Profile
+// ---------------------------------------------------------------------------------------------------------------------
+struct LaserProfileStructure {
+    
     //! Constructor
-    ProfileStructure() {
+    LaserProfileStructure() {
         profile="";
-        vacuum_length.resize(0);
     }
     
     //! Profile profile
-    std::string profile; 
+    std::string profile;
     
     //! in case profile is give in Python
     PyObject *py_profile;
@@ -37,18 +49,8 @@ struct ProfileStructure {
     //! double vector for profile parameters
     std::vector<double> double_params;
     
-    //! double vector for profile parameters (x lengths: will be multiplied by 2pi)
-    std::vector<double> length_params_x;
-    
-    //! double vector for profile parameters (y lengths: will be multiplied by 2pi)
-    std::vector<double> length_params_y;
-    
-    //! double vector for profile parameters (z lengths: will be multiplied by 2pi)
-    std::vector<double> length_params_z;
-    
-    //! vacuum lengths
-    std::vector<double> vacuum_length;
 };
+
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -59,17 +61,11 @@ struct SpeciesStructure {
     //! kind of species possible values: "ion" "eon" "test"
     std::string species_type;
     
-    //! density profile
-    std::string density_profile;
-    
     //! position initialization type, possible values: "regular" or "random"
     std::string initPosition_type;
-
+    
     //! momentum initialization type, possible values: "cold" or "maxwell-juettner"
     std::string initMomentum_type;
-    
-    //! number of particles per cell
-    unsigned int n_part_per_cell;
     
     //! coefficient on the maximum number of particles for the species
     double c_part_max;
@@ -80,15 +76,6 @@ struct SpeciesStructure {
     //! atomic number
     unsigned int atomic_number;
     
-    //! charge [proton charge]
-    double charge;
-    
-    //! density [\f$n_N=\epsilon_0\,m_e\,\omega_N^{2}/e^2\f$ ]
-    double density;
-    //! mean velocity in units of light velocity
-    std::vector<double> mean_velocity; // must be params.nDim_field
-    //! temperature [\f$m_e\,c^2\f$ ]
-    std::vector<double> temperature;
     //! thermal velocity [\f$c\f$]
     std::vector<double> thermalVelocity;
     //! thermal momentum [\f$m_e c\f$]
@@ -119,6 +106,8 @@ struct SpeciesStructure {
     
     //! density profile
     ProfileStructure dens_profile;
+    ProfileStructure charge_profile;
+    std::string density_type;
     
     //! velocity profile
     ProfileStructure mvel_x_profile;
@@ -130,6 +119,8 @@ struct SpeciesStructure {
     ProfileStructure temp_x_profile;
     ProfileStructure temp_y_profile;
     ProfileStructure temp_z_profile;
+    
+    ProfileStructure ppc_profile;
     
 };
 
@@ -144,9 +135,11 @@ public:
     //! Creator for PicParams
     PicParams(InputData &);
     
-    //! extract a profile
-    void extractProfile(InputData &, std::string, ProfileStructure &, int, std::string, std::vector<double>);
-
+    //! extract profiles
+    bool extractProfile         (InputData &, PyObject *, ProfileStructure &);
+    bool extractOneProfile      (InputData &, std::string, ProfileStructure &, int);
+    void extractVectorOfProfiles(InputData &, std::string, std::vector<ProfileStructure*> &, int);
+    
     //! compute grid-related parameters & apply normalization
     void compute();
     
