@@ -26,6 +26,7 @@ class DiagnosticScalar;
 class Patch
 {
     friend class SmileiMPI;
+    friend class VectorPatch;
 public:
     //! Constructor for Patch
   Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int ipatch);
@@ -148,6 +149,8 @@ public:
     }
 
     inline unsigned int Hindex() { return  hindex; }
+    void updateMPIenv(SmileiMPI *smpi);
+
 protected:
     //!Hilbert index of the patch. Number of the patch along the Hilbert curve.
     unsigned int hindex;

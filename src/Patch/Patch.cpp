@@ -111,41 +111,7 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
         patch_neighborhood_[7] = neighbor_[1][1];
         patch_neighborhood_[8] = corner_neighbor_[1][1];
 
-
-
-	for ( int z = 0 ; z < 1+2*(params.nDim_field == 3) ; z++ ) {
-	    for ( int y = 0 ; y < 1+2*(params.nDim_field >= 2) ; y++ ) {
-	        for ( int x = 0 ; x < 3 ; x++ ) {
-	        MPI_neighborhood_[z*9+y*3+x] = smpi->hrank(patch_neighborhood_[z*9+y*3+x]);
-                }
-            }
-        }
-
-#ifdef _PATCH_DEBUG
-	cout << "\n\tPatch Corner decomp : " << corner_neighbor_[0][1] << "\t" << neighbor_[1][1]  << "\t" << corner_neighbor_[1][1] << endl;
-	cout << "\tPatch Corner decomp : " << neighbor_[0][0] << "\t" << hindex << "\t" << neighbor_[0][1] << endl;
-	cout << "\tPatch Corner decomp : " << corner_neighbor_[0][0] << "\t" << neighbor_[1][0]  << "\t" << corner_neighbor_[1][0] << endl;
-
-	cout << "\n\tMPI Corner decomp : " << MPI_neighborhood_[6] << "\t" << MPI_neighborhood_[7]  << "\t" << MPI_neighborhood_[8] << endl;
-	cout << "\tMPI Corner decomp : " << MPI_neighborhood_[3] << "\t" << MPI_neighborhood_[4] << "\t" << MPI_neighborhood_[5] << endl;
-	cout << "\tMPI Corner decomp : " << MPI_neighborhood_[0] << "\t" << MPI_neighborhood_[1]  << "\t" << MPI_neighborhood_[2] << endl;
-#endif
-
-	// Redundant temporary solution, to introduce, MPI-Patched features
-	MPI_neighbor_[0][0] = MPI_neighborhood_[3];
-	MPI_neighbor_[0][1] = MPI_neighborhood_[5];
-	MPI_neighbor_[1][0] = MPI_neighborhood_[1];
-	MPI_neighbor_[1][1] = MPI_neighborhood_[7];
-	MPI_corner_neighbor_[0][0] = MPI_neighborhood_[0];
-	MPI_corner_neighbor_[0][1] = MPI_neighborhood_[6];
-	MPI_corner_neighbor_[1][0] = MPI_neighborhood_[2];
-	MPI_corner_neighbor_[1][1] = MPI_neighborhood_[8];
-
-#ifdef _PATCH_DEBUG
-	cout << "\n\tMPI Corner decomp : " << MPI_corner_neighbor_[0][1] << "\t" << MPI_neighbor_[1][1]  << "\t" << MPI_corner_neighbor_[1][1] << endl;
-	cout << "\tMPI Corner decomp : " << MPI_neighbor_[0][0] << "\t" << smpi->getRank() << "\t" << MPI_neighbor_[0][1] << endl;
-	cout << "\tMPI Corner decomp : " << MPI_corner_neighbor_[0][0] << "\t" << MPI_neighbor_[1][0]  << "\t" << MPI_corner_neighbor_[1][0] << endl;
-#endif
+	updateMPIenv(smpi);
 
 	createType(params);
 
@@ -181,6 +147,45 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 	Diags = new Diagnostic(params,diag_params, smpi, this);
 	
 };
+
+void Patch::updateMPIenv(SmileiMPI* smpi)
+{
+	for ( int z = 0 ; z < 1+2*(2 == 3) ; z++ ) {
+	    for ( int y = 0 ; y < 1+2*(2 >= 2) ; y++ ) {
+	        for ( int x = 0 ; x < 3 ; x++ ) {
+		    MPI_neighborhood_[z*9+y*3+x] = smpi->hrank(patch_neighborhood_[z*9+y*3+x]);
+                }
+            }
+        }
+
+#ifndef _PATCH_DEBUG
+	cout << "\n\tPatch Corner decomp : " << corner_neighbor_[0][1] << "\t" << neighbor_[1][1]  << "\t" << corner_neighbor_[1][1] << endl;
+	cout << "\tPatch Corner decomp : " << neighbor_[0][0] << "\t" << hindex << "\t" << neighbor_[0][1] << endl;
+	cout << "\tPatch Corner decomp : " << corner_neighbor_[0][0] << "\t" << neighbor_[1][0]  << "\t" << corner_neighbor_[1][0] << endl;
+
+	cout << "\n\tMPI Corner decomp : " << MPI_neighborhood_[6] << "\t" << MPI_neighborhood_[7]  << "\t" << MPI_neighborhood_[8] << endl;
+	cout << "\tMPI Corner decomp : " << MPI_neighborhood_[3] << "\t" << MPI_neighborhood_[4] << "\t" << MPI_neighborhood_[5] << endl;
+	cout << "\tMPI Corner decomp : " << MPI_neighborhood_[0] << "\t" << MPI_neighborhood_[1]  << "\t" << MPI_neighborhood_[2] << endl;
+#endif
+
+	// Redundant temporary solution, to introduce, MPI-Patched features
+	MPI_neighbor_[0][0] = MPI_neighborhood_[3];
+	MPI_neighbor_[0][1] = MPI_neighborhood_[5];
+	MPI_neighbor_[1][0] = MPI_neighborhood_[1];
+	MPI_neighbor_[1][1] = MPI_neighborhood_[7];
+	MPI_corner_neighbor_[0][0] = MPI_neighborhood_[0];
+	MPI_corner_neighbor_[0][1] = MPI_neighborhood_[6];
+	MPI_corner_neighbor_[1][0] = MPI_neighborhood_[2];
+	MPI_corner_neighbor_[1][1] = MPI_neighborhood_[8];
+
+#ifdef _PATCH_DEBUG
+	cout << "\n\tMPI Corner decomp : " << MPI_corner_neighbor_[0][1] << "\t" << MPI_neighbor_[1][1]  << "\t" << MPI_corner_neighbor_[1][1] << endl;
+	cout << "\tMPI Corner decomp : " << MPI_neighbor_[0][0] << "\t" << smpi->getRank() << "\t" << MPI_neighbor_[0][1] << endl;
+	cout << "\tMPI Corner decomp : " << MPI_corner_neighbor_[0][0] << "\t" << MPI_neighbor_[1][0]  << "\t" << MPI_corner_neighbor_[1][0] << endl;
+#endif
+
+}
+
 
 void Patch::dynamics(double time_dual, SmileiMPI *smpi, PicParams &params, SimWindow* simWindow, int diag_flag)
 {
@@ -1403,5 +1408,11 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi)
     }
 
     //Synchro, send/recv must be non-blocking !!!
+
+
+    cout << smpi->getRank() << " number of patches " << this->size() << endl;
+    for (int ipatch=0 ; ipatch<patches_.size() ; ipatch++ ) { 
+	(*this)(ipatch)->updateMPIenv(smpi);
+    }
 
 }
