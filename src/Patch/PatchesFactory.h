@@ -22,14 +22,16 @@ public:
         for (unsigned int impi = 0 ; impi < smpi->getRank() ; impi++) {
             firstpatch += smpi->patch_count[impi];
         }
+#ifdef _DEBUGPATCH
 	std::cout << smpi->getRank() << ", nPatch = " << npatches << " - starting at " << firstpatch << std::endl;        
-
+#endif
 	// Modified to test Patch integration
 
 	//std::cout << "n_space : " << params.n_space[0] << " " << params.n_space[1] << std::endl;
 	//std::cout << "n_patch : " << params.number_of_patches[0] << " " << params.number_of_patches[1] << std::endl;
 
-	std::cout << "Patch : n_space : " << params.n_space[0] << " " << params.n_space[1] << std::endl;	
+	if (smpi->isMaster())
+	    std::cout << "Patch : n_space : " << params.n_space[0] << " " << params.n_space[1] << std::endl;	
 
         // create species
         vecPatches.resize(npatches);

@@ -236,10 +236,10 @@ int main (int argc, char* argv[])
 
         for (unsigned int ispec=0 ; ispec<params.n_species; ispec++)
 	  MESSAGE(1,"Species " << ispec << " (" << params.species_param[ispec].species_type << ") created with " << (int)vecPatches(0)->Diags->getScalar("N_"+params.species_param[ispec].species_type) << " particles" );
-
+#ifdef _DEBUGPATCH
 	for (int ipatch = 0 ; ipatch<vecPatches.size() ; ipatch++)
 	    cout << (int)vecPatches(ipatch)->vecSpecies[0]->getNbrOfParticles() << " particles on " << vecPatches(ipatch)->Hindex() << endl;
-
+#endif
         //// temporary EM fields dump in Fields.h5
         //sio->writeAllFieldsSingleFileTime( EMfields, 0 );
         //// temporary EM fields dump in Fields_avg.h5

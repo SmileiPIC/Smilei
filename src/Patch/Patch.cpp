@@ -27,8 +27,9 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 
         int xcall, ycall;
         hindex = ipatch;
+#ifdef _DEBUGPATCH
 	std::cout << smpi->getRank() << ", mypatch is : " << hindex << std::endl;        
-        
+#endif
         if ( params.geometry == "1d3v" ) {
             Pcoordinates.resize(1);
             Pcoordinates[0] = hindex;
@@ -158,7 +159,7 @@ void Patch::updateMPIenv(SmileiMPI* smpi)
             }
         }
 
-#ifndef _PATCH_DEBUG
+#ifdef _PATCH_DEBUG
 	cout << "\n\tPatch Corner decomp : " << corner_neighbor_[0][1] << "\t" << neighbor_[1][1]  << "\t" << corner_neighbor_[1][1] << endl;
 	cout << "\tPatch Corner decomp : " << neighbor_[0][0] << "\t" << hindex << "\t" << neighbor_[0][1] << endl;
 	cout << "\tPatch Corner decomp : " << corner_neighbor_[0][0] << "\t" << neighbor_[1][0]  << "\t" << corner_neighbor_[1][0] << endl;
@@ -1337,9 +1338,11 @@ void VectorPatch::setNbrParticlesToExch(SmileiMPI* smpi)
 	for (int ispec=0 ; ispec<nSpecies ; ispec++)
 	    nbrOfPartsSend[ispec] = (*this)(send_patch_id_[ipatch])->vecSpecies[ispec]->getNbrOfParticles();
 
+#ifdef _DEBUGPATCH
 	cout << smpi->getRank() << " send to " << newMPIrank << " with tag " << send_patch_id_[ipatch] << endl;
 	for (int ispec=0;ispec<nSpecies;ispec++)
 	  cout << "n part send = " << nbrOfPartsSend[ispec] << endl;
+#endif
 	smpi->send( nbrOfPartsSend, newMPIrank, send_patch_id_[ipatch] );
     }
 
@@ -1354,13 +1357,16 @@ void VectorPatch::setNbrParticlesToExch(SmileiMPI* smpi)
 	else
 	    oldMPIrank = smpi->getRank()-1;
 
+#ifdef _DEBUGPATCH
 	cout << smpi->getRank() << " recv from " << oldMPIrank << " with tag " << recv_patch_id_[ipatch] << endl;
 	for (int ispec=0;ispec<nSpecies;ispec++)
 	  cout << "n part recv = " << nbrOfPartsRecv[ispec] << endl;
+#endif
 	smpi->recv( &nbrOfPartsRecv, oldMPIrank, recv_patch_id_[ipatch] );
+#ifdef _DEBUGPATCH
 	for (int ispec=0;ispec<nSpecies;ispec++)
 	  cout << "n part recv = " << nbrOfPartsRecv[ispec] << endl;
-
+#endif
 	for (int ispec=0 ; ispec<nSpecies ; ispec++)
 	    (*this)(ipatch)->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv[ispec], nDim_Parts );
     }
@@ -1384,7 +1390,9 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi)
 	    newMPIrank++;
 	    tmp += smpi->patch_count[newMPIrank];
 	}
+#ifdef _DEBUGPATCH
 	cout << smpi->getRank() << " send to " << newMPIrank << " with tag " << send_patch_id_[ipatch] << endl;
+#endif
 	smpi->send( (*this)(send_patch_id_[ipatch]), newMPIrank, send_patch_id_[ipatch] );
 
 	delete (*this)(send_patch_id_[ipatch]);
@@ -1403,14 +1411,17 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi)
 	    oldMPIrank = smpi->getRank()+1;
 	else
 	    oldMPIrank = smpi->getRank()-1;
+#ifdef _DEBUGPATCH
 	cout << smpi->getRank() << " recv from " << oldMPIrank << " with tag " << recv_patch_id_[ipatch] << endl;
+#endif
 	smpi->recv( (*this)(ipatch), oldMPIrank, recv_patch_id_[ipatch] );
     }
 
     //Synchro, send/recv must be non-blocking !!!
 
-
+#ifdef _DEBUGPATCH
     cout << smpi->getRank() << " number of patches " << this->size() << endl;
+#endif
     for (int ipatch=0 ; ipatch<patches_.size() ; ipatch++ ) { 
 	(*this)(ipatch)->updateMPIenv(smpi);
     }
