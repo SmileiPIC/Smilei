@@ -177,6 +177,7 @@ int main (int argc, char* argv[])
     
     VectorPatch vecPatches = PatchesFactory::createVector(params, diag_params, laser_params, smpiData);
 
+    smpiData->recompute_patch_count( params, vecPatches, time_dual );
     
     // reading from dumped file the restart values
     if (params.restart) {
@@ -247,8 +248,6 @@ int main (int argc, char* argv[])
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->EMfields->restartRhoJ();
     }
-    cout << "About to start pic loop" << endl;
-    smpiData->barrier(); //for test !
 
 	
     // Count timer
@@ -261,9 +260,6 @@ int main (int argc, char* argv[])
     timer[4].init(smpiData, "densities");
     timer[5].init(smpiData, "Mov window");
 
-    cout << "Timer set" << endl;
-    smpiData->barrier(); //for test !
-   
     // Action to send to other MPI procs when an action is required
     int mpisize,itime2dump(-1),todump(0); 
     double starttime = MPI_Wtime();
@@ -335,24 +331,23 @@ int main (int argc, char* argv[])
 #ifdef _OMP
             tid = omp_get_thread_num();
 #endif
-
+            #pragma omp for
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 		vecPatches(ipatch)->dynamics(time_dual, smpi, params, simWindow, diag_flag); // include test
 	    }
-
 	    // Inter Patch exchange
-            for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-		if ( vecPatches(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
-		    vecPatches.exchangeParticles(ispec, params, smpiData ); // Included sort_part
-                        if (itime%200 == 0) {
-                            #pragma omp master
-                            {
-				for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-				    vecPatches(ipatch)->vecSpecies[ispec]->count_sort_part(params);
+            #pragma omp master
+            {
+                for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
+	            if ( vecPatches(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
+	                vecPatches.exchangeParticles(ispec, params, smpiData ); // Included sort_part
+                            if (itime%200 == 0) {
+	            		for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	            		    vecPatches(ipatch)->vecSpecies[ispec]->count_sort_part(params);
                             }
-                        }
-		}
-	    }
+	            }
+	        }
+            }
 
 	    timer[1].update();
 
@@ -361,13 +356,17 @@ int main (int argc, char* argv[])
 	/*********** Sum densities *****************/
 	/*******************************************/
         timer[4].restart();
+        #pragma omp for
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 	    // if  (diag_flag) à introduire
 	    vecPatches(ipatch)->EMfields->computeTotalRhoJ(); // Per species in global, Attention if output -> Sync / per species fields
 	}
-	for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-	    vecPatches.sumRhoJ( ispec ); // MPI
-	}
+        #pragma omp master
+        {
+	    for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
+	        vecPatches.sumRhoJ( ispec ); // MPI
+	    }
+        }
         timer[4].update();
 
 
@@ -378,21 +377,24 @@ int main (int argc, char* argv[])
         // solve Maxwell's equations
         timer[2].restart();
 	// saving magnetic fields (to compute centered fields used in the particle pusher)
+        #pragma omp for
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->EMfields->saveMagneticFields();
 	// Compute Ex_, Ey_, Ez_
+        #pragma omp for
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->EMfields->solveMaxwellAmpere();
-        #pragma omp single
+        #pragma omp master
 	{
 	    // Exchange Ex_, Ey_, Ez_
 	    vecPatches.exchangeE();
 	}// end single
 
 	// Compute Bx_, By_, Bz_
+        #pragma omp for
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->EMfields->solveMaxwellFaraday();
-        #pragma omp single
+        #pragma omp master
 	{
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
 		vecPatches(ipatch)->EMfields->boundaryConditions(itime, time_dual, vecPatches(ipatch), params, simWindow);
@@ -400,6 +402,7 @@ int main (int argc, char* argv[])
 	    vecPatches.exchangeB();
 	}// end single
 	// Compute Bx_m, By_m, Bz_m
+        #pragma omp for
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->EMfields->centerMagneticFields();
 
