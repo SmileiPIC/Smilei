@@ -922,7 +922,6 @@ void ElectroMagn2D::computeTotalRhoJ()
         Field2D* rho2D_s = static_cast<Field2D*>(rho_s[ispec]);
         
         // Charge density rho^(p,p) to 0
-        #pragma omp for schedule(static) nowait
         for (unsigned int i=0 ; i<nx_p ; i++) {
             for (unsigned int j=0 ; j<ny_p ; j++) {
                 if(ispec==0){
@@ -940,7 +939,6 @@ void ElectroMagn2D::computeTotalRhoJ()
             (*Jy2D)(i,ny_p) += (*Jy2D_s)(i,ny_p);
         }
         
-        #pragma omp single
         {
             for (unsigned int j=0 ; j<ny_p ; j++) {
                 if(ispec==0) (*Jx2D)(nx_p,j) = 0. ;

@@ -117,6 +117,7 @@ void SmileiMPI::init( PicParams& params )
     max_local.resize(params.nDim_field, 0.);
     n_space_global.resize(params.nDim_field, 0);
     patch_count.resize(smilei_sz, 0);
+    target_patch_count.resize(smilei_sz, 0);
 
     interParticles.initialize(0,params.nDim_particle); 
  
@@ -181,7 +182,7 @@ void SmileiMPI::init_patch_count( PicParams& params)
         //density_length[2] = params.species_param[ispecies].dens_length_z[0];
 
         local_load = params.species_param[ispecies].n_part_per_cell ;
-        if(params.species_param[ispecies].time_frozen > 0.) local_load *= coef_frozen;
+        if(params.species_param[ispecies].time_frozen > 0.) local_load *= coef_frozen; // Assumes time_dual = 0. Might be false at restart !
         for (unsigned int idim = 0; idim < params.nDim_field; idim++){
             mincell[ispecies*3+idim] = params.species_param[ispecies].vacuum_length[idim]/params.cell_length[idim];
             // This strange way of writing this below prevents rounding errors.
@@ -245,14 +246,14 @@ void SmileiMPI::init_patch_count( PicParams& params)
 
 void SmileiMPI::recompute_patch_count( PicParams& params, VectorPatch& vecpatches, double time_dual )
 {
-    unsigned int Npatches, r,Ncur,Pcoordinates[3],ncells_perpatch, Tcapabilities;
+    unsigned int Npatches, r,Ncur,Pcoordinates[3],ncells_perpatch, Tcapabilities, Lmin, Lmintemp;
     double Tload,Tcur, Lcur, above_target, below_target;
     std::vector<unsigned int> mincell,maxcell,capabilities; //Min and max values of non empty cells for each species and in each dimension.
     //Load of a cell = coef_cell*load of a particle.
     //Load of a frozen particle = coef_frozen*load of a particle.
     double coef_cell, coef_frozen; 
     std::vector<double> Lp,Lp_global;
-
+    int recv_counts[smilei_sz];
 
     coef_cell = 0.1;
     coef_frozen = 0.1;
@@ -271,7 +272,7 @@ void SmileiMPI::recompute_patch_count( PicParams& params, VectorPatch& vecpatche
     Tcapabilities = 0;
     for (unsigned int i = 0; i < smilei_sz; i++)
         Tcapabilities += capabilities[i];
-    Lp.resize(vecpatches.size(),0.);
+    Lp.resize(patch_count[smilei_rk],0.);
     Lp_global.resize(Npatches,0.);
 
     Tload = 0.;
@@ -280,19 +281,21 @@ void SmileiMPI::recompute_patch_count( PicParams& params, VectorPatch& vecpatche
     Lcur = 0.; //Load assigned to current rank r.
 
     //Compute Local Loads of each Patch (Lp)
-    for(unsigned int hindex=0; hindex < Lp.size(); hindex++){
+    for(unsigned int hindex=0; hindex < patch_count[smilei_rk]; hindex++){
         for (unsigned int ispecies = 0; ispecies < params.n_species; ispecies++)
             Lp[hindex] += params.species_param[ispecies].n_part_per_cell*vecpatches(hindex)->vecSpecies[ispecies]->getNbrOfParticles()*(1+(coef_frozen-1)*(time_dual > params.species_param[ispecies].time_frozen)) ;
         Lp[hindex] += ncells_perpatch*coef_cell ;
     }
 
-    //Allgather loads of all patches
-   
-    MPI_Allgather(&Lp,vecpatches.size(),MPI_DOUBLE,&Lp_global,Npatches,MPI_DOUBLE,MPI_COMM_WORLD);
- 
+    //Allgatherv loads of all patches
+  
+    recv_counts[0] = 0;
+    for(unsigned int i=1; i < smilei_sz ; i++) recv_counts[i] = recv_counts[i-1]+patch_count[i-1];
+
+    MPI_Allgatherv(&Lp[0],patch_count[smilei_rk],MPI_DOUBLE,&Lp_global[0], &patch_count[0], recv_counts, MPI_DOUBLE,MPI_COMM_WORLD);
+
     //Compute total loads
     for(unsigned int hindex=0; hindex < Npatches; hindex++) Tload += Lp_global[hindex];
-    if (isMaster()) cout << "Total load = " << Tload << endl;
     Tload /= Tcapabilities; //Target load for each mpi process.
     Tcur = Tload * capabilities[0];  //Init.
 
@@ -309,11 +312,11 @@ void SmileiMPI::recompute_patch_count( PicParams& params, VectorPatch& vecpatche
                 above_target = Lcur - Tcur;  //Including current patch, we exceed target by that much.
                 below_target = Tcur - (Lcur-Lp_global[hindex]); // Excluding current patch, we mis the target by that much.
                 if(above_target > below_target) { // If we're closer to target without the current patch...
-                    patch_count[r] = Ncur-1;      // ... include patches up to current one.
+                    target_patch_count[r] = Ncur-1;      // ... include patches up to current one.
                     Ncur = 1;
                     Lcur = Lp_global[hindex];
                 } else {                          //Else ...
-                    patch_count[r] = Ncur;        //...assign patches including the current one.
+                    target_patch_count[r] = Ncur;        //...assign patches including the current one.
                     Ncur = 0;
                     Lcur = 0;
                 }
@@ -322,10 +325,43 @@ void SmileiMPI::recompute_patch_count( PicParams& params, VectorPatch& vecpatche
             } 
         }// End if on r.
         if (hindex == Npatches-1){
-            patch_count[smilei_sz-1] = Ncur; //When we reach the last patch, the last MPI process takes what's left.
+            target_patch_count[smilei_sz-1] = Ncur; //When we reach the last patch, the last MPI process takes what's left.
         }
     }// End loop on patches.
-    if (isMaster()) for (unsigned int i=0; i<smilei_sz; i++) cout << "patch count = " << patch_count[i]<<endl;
+
+
+        //Make sure the new patch_count is not too different from the previous one.
+        // First patch
+        Lcur = patch_count[0]+ patch_count[1]-1;
+        Ncur = 0;
+        Tcur = target_patch_count[0];  
+        Lmintemp = patch_count[0]+1;
+        if (Tcur > Lcur ){
+            patch_count[0] = Lcur - Ncur;
+        } else {
+            patch_count[0] = target_patch_count[0] - Ncur;
+        }
+
+        //Loop
+        for(unsigned int i=1; i< smilei_sz-1; i++){
+            Ncur += patch_count[i-1];                  //Ncur = sum n=0..i-1 new patch_count[n]
+            Tcur += target_patch_count[i];            //Tcur = sum n=0..i target_patch_count[n]
+            Lcur += patch_count[i+1];                  //Lcur = sum n=0..i+1 initial patch_count[n] -1
+            Lmin = Lmintemp;
+            Lmintemp += patch_count[i];
+ 
+            if (Tcur < Lmin){                      
+                patch_count[i] = Lmin - Ncur;
+            } else if (Tcur > Lcur ){                      
+                patch_count[i] = Lcur - Ncur;
+            } else {
+                patch_count[i] = Tcur-Ncur;
+            }
+        }
+
+        //Last patch
+        Ncur += patch_count[smilei_sz-2];                  //Ncur = sum n=0..i-1 new patch_count[n]
+        patch_count[smilei_sz-1] = Npatches-Ncur;
 
     return;
 }

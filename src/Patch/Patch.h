@@ -96,7 +96,6 @@ public:
     std::vector< int > patch_neighborhood_;
 
     void dynamics(double time_dual, SmileiMPI *smpi, PicParams &params, SimWindow* simWindow, int diag_flag);
-    void exchParticles(SmileiMPI* smpi, int ispec, PicParams &params, int tid, int iDim);
 
     //! manage Idx of particles from per thread to per direction, init comm / nbr of particles
     virtual void initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, int tnum, int iDim);

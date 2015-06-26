@@ -192,11 +192,6 @@ void Patch::dynamics(double time_dual, SmileiMPI *smpi, PicParams &params, SimWi
 
 }
 
-
-void Patch::exchParticles(SmileiMPI* smpi, int ispec, PicParams &params, int tid, int iDim)
-{
-}
-
 void Patch::initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, int tnum, int iDimOld)
 {
     Particles &cuParticles = (*vecSpecies[ispec]->particles);
