@@ -207,6 +207,7 @@ class VectorPatch {
     void clear() {patches_.clear();}
 
     std::vector<Patch*> patches_;
+    std::vector<Patch*> recv_patches_;
 
     std::vector<int> recv_patch_id_;
     std::vector<int> send_patch_id_;    

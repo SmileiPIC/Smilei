@@ -480,7 +480,7 @@ int main (int argc, char* argv[])
         timer[5].update();
 #endif
 
-#ifdef _TESTPATCHEXCH
+#ifndef _TESTPATCHEXCH
 	if (itime==1) {
 	    if (smpiData->getRank()==0)
 		vecPatches.send_patch_id_.push_back(3);
@@ -490,17 +490,16 @@ int main (int argc, char* argv[])
 	    smpiData->patch_count[0] = 3;
 	    smpiData->patch_count[1] = 5;
 
-	    cout << "patch_count modified" << endl;
+	    //cout << "patch_count modified" << endl;
 	    vecPatches.createPacthes(params, diag_params, laser_params, smpiData);
-	    cout << "patch created" << endl;
+	    //cout << "patch created" << endl;
 	    vecPatches.setNbrParticlesToExch(smpiData);
-	    cout << "nbr particles exchanged" << endl;
+	    //cout << "nbr particles exchanged" << endl;
 	    vecPatches.exchangePatches(smpiData);
-	    cout << "data exchanged" << endl;
+	    //cout << "data exchanged" << endl;
 
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 		cout << smpiData->getRank() << " run patchId = " << vecPatches(ipatch)->Hindex() << endl;
-
 	    
 	}
 #endif
@@ -548,6 +547,7 @@ int main (int argc, char* argv[])
     // ------------------------------
     vecPatches.finalizeProbesDiags(params, diag_params, 0);
 
+    
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) delete vecPatches(ipatch);
     vecPatches.clear();
 
@@ -556,7 +556,8 @@ int main (int argc, char* argv[])
     if (Interp) delete Interp;
     if (EMfields) delete EMfields;
     if (Diags) delete Diags;
-    
+
+    WARNING("Bug identified in ~DiagnosticProbe : An error occurred in MPI_File_set_errhandler\n\n");  
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
     vecSpecies.clear();
     
@@ -564,7 +565,7 @@ int main (int argc, char* argv[])
     MESSAGE("END " << namelist);
     MESSAGE("-----------------------------------------------------------------------------------------------------");
 
-    delete sio;
+    if (sio) delete sio;
     if (smpi) delete smpi;
     delete smpiData;
     if (params.nspace_win_x)

@@ -1305,15 +1305,13 @@ void VectorPatch::createPacthes(PicParams& params, DiagParams& diag_params, Lase
 {
     // Set Index of the 1st patch of the vector yet on current MPI rank
     refHindex_ = (*this)(0)->Hindex();
+    recv_patches_.resize(0);
 
     for (unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++) {
 	// density profile is initializes as if t = 0 !
 	// Species will be cleared when, nbr of particles will be known
 	Patch* newPatch = PatchesFactory::create(params, diag_params, laser_params, smpi, recv_patch_id_[ipatch]);
-	if ( recv_patch_id_[ipatch] > refHindex_ )
-	    patches_.push_back( newPatch );
-	else
-	    patches_.insert( patches_.begin(), newPatch );
+	recv_patches_.push_back( newPatch );
     }
 
 }
@@ -1368,7 +1366,7 @@ void VectorPatch::setNbrParticlesToExch(SmileiMPI* smpi)
 	  cout << "n part recv = " << nbrOfPartsRecv[ispec] << endl;
 #endif
 	for (int ispec=0 ; ispec<nSpecies ; ispec++)
-	    (*this)(ipatch)->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv[ispec], nDim_Parts );
+	    recv_patches_[ipatch]->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv[ispec], nDim_Parts );
     }
 
     //Synchro, send/recv must be non-blocking !!!
@@ -1395,10 +1393,6 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi)
 #endif
 	smpi->send( (*this)(send_patch_id_[ipatch]), newMPIrank, send_patch_id_[ipatch] );
 
-	delete (*this)(send_patch_id_[ipatch]);
-	patches_[ send_patch_id_[ipatch] ] = NULL;
-	patches_.erase( patches_.begin() + send_patch_id_[ipatch] );
-	
     }
 
 
@@ -1414,10 +1408,25 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi)
 #ifdef _DEBUGPATCH
 	cout << smpi->getRank() << " recv from " << oldMPIrank << " with tag " << recv_patch_id_[ipatch] << endl;
 #endif
-	smpi->recv( (*this)(ipatch), oldMPIrank, recv_patch_id_[ipatch] );
+	smpi->recv( recv_patches_[ipatch], oldMPIrank, recv_patch_id_[ipatch] );
     }
 
     //Synchro, send/recv must be non-blocking !!!
+
+    for (unsigned int ipatch=0 ; ipatch<send_patch_id_.size() ; ipatch++) {
+	delete (*this)(send_patch_id_[ipatch]);
+	patches_[ send_patch_id_[ipatch] ] = NULL;
+	patches_.erase( patches_.begin() + send_patch_id_[ipatch] );
+	
+    }
+
+    for (unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++) {
+	if ( recv_patch_id_[ipatch] > refHindex_ )
+	    patches_.push_back( recv_patches_[ipatch] );
+	else
+	    patches_.insert( patches_.begin(), recv_patches_[ipatch] );
+    }
+    recv_patches_.clear();
 
 #ifdef _DEBUGPATCH
     cout << smpi->getRank() << " number of patches " << this->size() << endl;
