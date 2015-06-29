@@ -42,7 +42,7 @@ public:
     //! get a particular scalar
     double getScalar(std::string name);
 
-    Timer dtimer[4];
+    Timer dtimer[5]; // may have a memory problem, so +1
 
     DiagnosticScalar scalars;
 
