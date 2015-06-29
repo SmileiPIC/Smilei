@@ -166,12 +166,12 @@ void Species::initSpecies(PicParams& params)
     if (Ionize) DEBUG("Species " << speciesNumber << " can be ionized!");
 
     unsigned int nthds(1);
-#pragma omp parallel shared(nthds) 
-    {
-#ifdef _OMP
-        nthds = omp_get_num_threads();	  
-#endif
-    }
+//#pragma omp parallel shared(nthds) 
+//    {
+//#ifdef _OMP
+//        nthds = omp_get_num_threads();	  
+//#endif
+//    }
     indexes_of_particles_to_exchange_per_thd.resize(nthds);
     
     //ener_tot = 0.;
@@ -438,11 +438,11 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     int tid(0);
     double gf = 1.0;
     std::vector<double> nrj_lost_per_thd(1, 0.);
-#ifdef _OMP
-    tid = omp_get_thread_num();
-    int nthds = omp_get_num_threads();
-    nrj_lost_per_thd.resize(nthds, 0.);
-#endif
+//#ifdef _OMP
+//    tid = omp_get_thread_num();
+//    int nthds = omp_get_num_threads();
+//    nrj_lost_per_thd.resize(nthds, 0.);
+//#endif
     clearExchList(tid);
     	
     //ener_tot  = 0.;
@@ -462,7 +462,6 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 	b_Jz = b_Jy + size_proj_buffer ;
 	b_rho = b_Jz + size_proj_buffer ;
 
-        #pragma omp for schedule(runtime)
         for (ibin = 0 ; ibin < bmin.size() ; ibin++) {
 
             memset( &(b_Jx[0]), 0, 4*size_proj_buffer*sizeof(double)); 
@@ -547,7 +546,6 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 	    // *4 accounts for Jy, Jz and rho. * nthds accounts for each thread.
 	    b_rho = (double *) malloc(size_proj_buffer * sizeof(double));
 
-            #pragma omp for schedule(static) nowait
             for (ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
 		 memset( &(b_rho[0]), 0, size_proj_buffer*sizeof(double)); 
                 for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
@@ -562,7 +560,6 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 	    free(b_rho);
         }
     }//END if time vs. time_frozen
-#pragma omp barrier
     //delete LocInterp;
 }//END dynamic
 

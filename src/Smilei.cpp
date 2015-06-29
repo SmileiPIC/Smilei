@@ -177,7 +177,6 @@ int main (int argc, char* argv[])
     
     VectorPatch vecPatches = PatchesFactory::createVector(params, diag_params, laser_params, smpiData);
 
-    smpiData->recompute_patch_count( params, vecPatches, time_dual );
     
     // reading from dumped file the restart values
     if (params.restart) {
@@ -191,6 +190,8 @@ int main (int argc, char* argv[])
 	//    simWindow->setOperators(vecSpecies, Interp, Proj, smpi);
 	//    simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi , params);
 	//}
+        smpiData->recompute_patch_count( params, vecPatches, restart_time_dual );
+        // Redistribute patches.
 	    
     } else {
         // Initialize the electromagnetic fields
@@ -334,23 +335,26 @@ int main (int argc, char* argv[])
 #ifdef _OMP
             tid = omp_get_thread_num();
 #endif
+            //cout << "Starting dynamics" << endl;
             #pragma omp for
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 		vecPatches(ipatch)->dynamics(time_dual, smpi, params, simWindow, diag_flag); // include test
 	    }
+            //cout << "End dynamics" << endl;
 	    // Inter Patch exchange
-            #pragma omp master
+	    #pragma omp master
             {
                 for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 	            if ( vecPatches(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
 	                vecPatches.exchangeParticles(ispec, params, smpiData ); // Included sort_part
-                            if (itime%200 == 0) {
-	            		for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-	            		    vecPatches(ipatch)->vecSpecies[ispec]->count_sort_part(params);
-                            }
+                            //if (itime%200 == 0) {
+	            	    //    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	            	    //        vecPatches(ipatch)->vecSpecies[ispec]->count_sort_part(params);
+                            //}
 	            }
 	        }
-            }
+             }
+             //cout << "End ExchangeP" << endl;
 
 	    timer[1].update();
 
@@ -364,12 +368,11 @@ int main (int argc, char* argv[])
 	    // if  (diag_flag) à introduire
 	    vecPatches(ipatch)->EMfields->computeTotalRhoJ(); // Per species in global, Attention if output -> Sync / per species fields
 	}
-        #pragma omp master
-        {
+        //cout << "End computeTrho" << endl;
 	    for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 	        vecPatches.sumRhoJ( ispec ); // MPI
 	    }
-        }
+        //cout << "End sumrho" << endl;
         timer[4].update();
 
 
@@ -383,20 +386,24 @@ int main (int argc, char* argv[])
         #pragma omp for
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->EMfields->saveMagneticFields();
+        //cout << "End saveMagfield" << endl;
 	// Compute Ex_, Ey_, Ez_
         #pragma omp for
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->EMfields->solveMaxwellAmpere();
+        //cout << "End solvMaxAmpere" << endl;
         #pragma omp master
 	{
 	    // Exchange Ex_, Ey_, Ez_
 	    vecPatches.exchangeE();
 	}// end single
+        //cout << "End exchnageE" << endl;
 
 	// Compute Bx_, By_, Bz_
         #pragma omp for
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->EMfields->solveMaxwellFaraday();
+        //cout << "End solvMaxFara" << endl;
         #pragma omp master
 	{
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
@@ -404,10 +411,12 @@ int main (int argc, char* argv[])
 	    // Exchange Bx_, By_, Bz_
 	    vecPatches.exchangeB();
 	}// end single
+        //cout << "End exchangeB" << endl;
 	// Compute Bx_m, By_m, Bz_m
         #pragma omp for
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->EMfields->centerMagneticFields();
+        //cout << "End centerMagField" << endl;
 
         timer[2].update();
 
