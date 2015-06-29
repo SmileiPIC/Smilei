@@ -1467,7 +1467,7 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi)
 	if ( recv_patch_id_[ipatch] > refHindex_ )
 	    patches_.push_back( recv_patches_[ipatch] );
 	else
-	    patches_.insert( patches_.begin(), recv_patches_[ipatch] );
+	    patches_.insert( patches_.begin()+ipatch, recv_patches_[ipatch] );
     }
     recv_patches_.clear();
 
