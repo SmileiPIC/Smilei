@@ -363,8 +363,8 @@ void ElectroMagn::applyExternalFields(SmileiMPI* smpi) {
                     delete my_ExtFieldProfile;
                     //my_ExtFieldProfile=NULL;
                 } else{
-		    ERROR("Could not initialize external field Profile");
-		}
+                    ERROR("Could not initialize external field Profile");
+                }
             }
         }
     }

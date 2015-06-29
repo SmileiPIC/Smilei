@@ -34,7 +34,6 @@ public:
     
 private:
     int dim;
-    double factor;
 //*MG150609    double conv_fac; // taken from PicParams
     
 protected:

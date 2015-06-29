@@ -19,35 +19,27 @@ conv_fac(params.conv_fac)*/
             ERROR("ExtField #"<<n_extfield<<": parameter 'field' not provided'");
         }
         
-        if( !ifile.extract("magnitude",tmpExtField.magnitude,"ExtField",n_extfield) ) {
-            ERROR("ExtField #"<<n_extfield<<": parameter 'magnitude' not provided");
+        // If profile is a float
+        if( ifile.extract("profile", tmpExtField.profile, "ExtField", n_extfield) ) {
+            string xyz = "x";
+            if(geometry=="2d3v") xyz = "x,y";
+            // redefine the profile as a constant function instead of float
+            PyTools::checkPyError();
+            ostringstream command;
+            command.str("");
+            command << "ExtField["<<n_extfield<<"].profile=lambda "<<xyz<<":" << tmpExtField.profile;
+            if( !PyRun_SimpleString(command.str().c_str()) ) PyTools::checkPyError();
+        }
+        // Now import the profile as a python function
+        PyObject *mypy = ifile.extract_py("profile","ExtField",n_extfield);
+        if (mypy && PyCallable_Check(mypy)) {
+            tmpExtField.py_profile=mypy;
+        } else{
+            ERROR(" ExtField #"<<n_extfield<<": parameter 'profile' not understood");
         }
         
-        ifile.extract("profile",tmpExtField.profile,"ExtField",n_extfield);
-        if (tmpExtField.profile.empty()) {
-            PyObject *mypy = ifile.extract_py("profile","ExtField",n_extfield);
-            if (mypy && PyCallable_Check(mypy)) {
-                tmpExtField.py_profile=mypy;
-                tmpExtField.profile="python";
-            } else{
-                ERROR(" ExtField #"<<n_extfield<<": parameter 'profile' not understood");
-            }
-        } else {
-            ifile.extract("int_params",tmpExtField.int_params,"ExtField",n_extfield);
-            ifile.extract("double_params",tmpExtField.double_params,"ExtField",n_extfield);
-            ifile.extract("length_params_x",tmpExtField.length_params_x,"ExtField",n_extfield);
-            ifile.extract("length_params_y",tmpExtField.length_params_y,"ExtField",n_extfield);
-            ifile.extract("length_params_z",tmpExtField.length_params_z,"ExtField",n_extfield);
-            
-            /*MG150609transform(tmpExtField.length_params_x.begin(), tmpExtField.length_params_x.end(), tmpExtField.length_params_x.begin(),
-                      bind1st(multiplies<double>(),params.conv_fac));
-            transform(tmpExtField.length_params_y.begin(), tmpExtField.length_params_y.end(), tmpExtField.length_params_y.begin(),
-                      bind1st(multiplies<double>(),params.conv_fac));
-            transform(tmpExtField.length_params_z.begin(), tmpExtField.length_params_z.end(), tmpExtField.length_params_z.begin(),
-                      bind1st(multiplies<double>(),params.conv_fac));*/
-        }
         structs.push_back(tmpExtField);
     }
-    
+
 }
 
