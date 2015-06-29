@@ -489,15 +489,17 @@ int main (int argc, char* argv[])
         timer[5].update();
 #endif
 
-#ifndef _TESTPATCHEXCH
+#ifdef _TESTPATCHEXCH
 	if (itime==1) {
-	    if (smpiData->getRank()==0)
+	    /*if (smpiData->getRank()==0)
 		vecPatches.send_patch_id_.push_back(3);
 	    else if (smpiData->getRank()==1) 
-		vecPatches.recv_patch_id_.push_back(3);
+	    vecPatches.recv_patch_id_.push_back(3);*/
 
-	    smpiData->patch_count[0] = 3;
-	    smpiData->patch_count[1] = 5;
+	    //smpiData->patch_count[0] = 5;
+	    //smpiData->patch_count[1] = 3;
+	    smpiData->recompute_patch_count( params, vecPatches, 0. );
+
 
 	    //cout << "patch_count modified" << endl;
 	    vecPatches.createPacthes(params, diag_params, laser_params, smpiData);

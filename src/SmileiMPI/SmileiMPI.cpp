@@ -330,6 +330,15 @@ void SmileiMPI::recompute_patch_count( PicParams& params, VectorPatch& vecpatche
     }// End loop on patches.
 
 
+    // ------------- target patch count
+#ifdef _TESTPATCHEXCH
+    for (int irk=0;irk<smilei_sz;irk++) {
+	patch_count[irk] = 5;
+	if (irk==4) patch_count[irk] = 29;
+    }
+#endif
+    // ------------- target patch count
+
         //Make sure the new patch_count is not too different from the previous one.
         // First patch
         Lcur = patch_count[0]+ patch_count[1]-1;
@@ -362,6 +371,10 @@ void SmileiMPI::recompute_patch_count( PicParams& params, VectorPatch& vecpatche
         //Last patch
         Ncur += patch_count[smilei_sz-2];                  //Ncur = sum n=0..i-1 new patch_count[n]
         patch_count[smilei_sz-1] = Npatches-Ncur;
+
+	if (smilei_rk==0)
+	    for (int irk=0;irk<smilei_sz;irk++)
+		cout << " patch_count[" << irk << "]" << patch_count[irk] << endl;
 
     return;
 }
@@ -630,7 +643,6 @@ void SmileiMPI::recv(Particles* particles, int from, int hindex)
 void SmileiMPI::send(std::vector<int> vec, int to, int hindex)
 {
     MPI_Send( &(vec[0]), vec.size(), MPI_INT, to, hindex, MPI_COMM_WORLD );
-    barrier();
 
 }
 
@@ -638,7 +650,6 @@ void SmileiMPI::recv(std::vector<int> *vec, int from, int hindex)
 {
     MPI_Status status;
     MPI_Recv( &((*vec)[0]), vec->size(), MPI_INT, from, hindex, MPI_COMM_WORLD, &status );
-    barrier();
 
 }
 

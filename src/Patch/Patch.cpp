@@ -1303,10 +1303,46 @@ void VectorPatch::finalizeProbesDiags(PicParams& params, DiagParams &diag_params
 
 void VectorPatch::createPacthes(PicParams& params, DiagParams& diag_params, LaserParams& laser_params, SmileiMPI* smpi)
 {
-    // Set Index of the 1st patch of the vector yet on current MPI rank
-    refHindex_ = (*this)(0)->Hindex();
     recv_patches_.resize(0);
 
+    // Set Index of the 1st patch of the vector yet on current MPI rank
+    refHindex_ = (*this)(0)->Hindex();
+
+    recv_patch_id_.clear();
+    send_patch_id_.clear();
+    
+    
+    // define recv_patches_ parsing patch_count
+    // Go to 1st patch to recv (maybe yet on current CPU)
+    // istart = Index of the futur 1st patch
+    // recv : store real Hindex
+    int istart( 0 );
+    for (int irk=0 ; irk<smpi->getRank() ; irk++) istart += smpi->patch_count[irk];
+    for (int ipatch=0 ; ipatch<smpi->patch_count[smpi->getRank()] ; ipatch++)
+	recv_patch_id_.push_back( istart+ipatch );
+
+    // define send_patches_ parsing patch_count
+    // send : store local hindex
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	send_patch_id_.push_back( ipatch );
+    }
+
+
+    std::vector<int> tmp(0);
+    for (unsigned int ipatch=0 ; ipatch<send_patch_id_.size() ; ipatch++)
+	if ( ( refHindex_+ipatch<recv_patch_id_[0] ) || ( refHindex_+ipatch>recv_patch_id_[recv_patch_id_.size()-1] ) )
+	    tmp.push_back( ipatch );
+
+    int nPatches( recv_patch_id_.size()-1 );
+    for ( int ipatch=nPatches ; ipatch>=0 ; ipatch--) {
+	if ( ( recv_patch_id_[ipatch]>=refHindex_+send_patch_id_[0] ) && ( recv_patch_id_[ipatch]<=refHindex_+send_patch_id_[send_patch_id_.size()-1] ) ) {
+	    recv_patch_id_.erase( recv_patch_id_.begin()+ipatch );
+	}
+    }
+
+    send_patch_id_ = tmp;
+
+    // Store in local vector future patches
     for (unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++) {
 	// density profile is initializes as if t = 0 !
 	// Species will be cleared when, nbr of particles will be known
@@ -1325,23 +1361,23 @@ void VectorPatch::setNbrParticlesToExch(SmileiMPI* smpi)
     for (unsigned int ipatch=0 ; ipatch<send_patch_id_.size() ; ipatch++) {
 
 	int newMPIrank(0);
-	// locale rank which owns send_patch_id_[ipatch]
+	// locate rank which will own send_patch_id_[ipatch]
 	int tmp( smpi->patch_count[newMPIrank] );
-	while ( tmp <= send_patch_id_[ipatch] ) {
+	while ( tmp <= send_patch_id_[ipatch]+refHindex_ ) {
 	    newMPIrank++;
 	    tmp += smpi->patch_count[newMPIrank];
 	}
 
 	vector<int> nbrOfPartsSend(nSpecies,0);
-	for (int ispec=0 ; ispec<nSpecies ; ispec++)
+	for (int ispec=0 ; ispec<nSpecies ; ispec++) {
 	    nbrOfPartsSend[ispec] = (*this)(send_patch_id_[ipatch])->vecSpecies[ispec]->getNbrOfParticles();
-
+	}
 #ifdef _DEBUGPATCH
-	cout << smpi->getRank() << " send to " << newMPIrank << " with tag " << send_patch_id_[ipatch] << endl;
+	cout << smpi->getRank() << " send to " << newMPIrank << " with tag " << refHindex_+send_patch_id_[ipatch] << endl;
 	for (int ispec=0;ispec<nSpecies;ispec++)
 	  cout << "n part send = " << nbrOfPartsSend[ispec] << endl;
 #endif
-	smpi->send( nbrOfPartsSend, newMPIrank, send_patch_id_[ipatch] );
+	smpi->send( nbrOfPartsSend, newMPIrank, refHindex_+send_patch_id_[ipatch] );
     }
 
 
@@ -1382,16 +1418,16 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi)
     for (unsigned int ipatch=0 ; ipatch<send_patch_id_.size() ; ipatch++) {
 
 	int newMPIrank(0);
-	// locale rank which owns send_patch_id_[ipatch]
+	// locate rank which owns send_patch_id_[ipatch]
 	int tmp( smpi->patch_count[newMPIrank] );
-	while ( tmp <= send_patch_id_[ipatch] ) {
+	while ( tmp <= send_patch_id_[ipatch]+refHindex_ ) {
 	    newMPIrank++;
 	    tmp += smpi->patch_count[newMPIrank];
 	}
 #ifdef _DEBUGPATCH
 	cout << smpi->getRank() << " send to " << newMPIrank << " with tag " << send_patch_id_[ipatch] << endl;
 #endif
-	smpi->send( (*this)(send_patch_id_[ipatch]), newMPIrank, send_patch_id_[ipatch] );
+	smpi->send( (*this)(send_patch_id_[ipatch]), newMPIrank, refHindex_+send_patch_id_[ipatch] );
 
     }
 
@@ -1413,7 +1449,14 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi)
 
     //Synchro, send/recv must be non-blocking !!!
 
-    for (unsigned int ipatch=0 ; ipatch<send_patch_id_.size() ; ipatch++) {
+    /*for (unsigned int ipatch=0 ; ipatch<send_patch_id_.size() ; ipatch++) {
+	delete (*this)(send_patch_id_[ipatch]-refHindex_);
+	patches_[ send_patch_id_[ipatch]-refHindex_ ] = NULL;
+	patches_.erase( patches_.begin() + send_patch_id_[ipatch] - refHindex_ );
+	
+    }*/
+    int nPatchSend(send_patch_id_.size());
+    for (int ipatch=nPatchSend-1 ; ipatch>=0 ; ipatch--) {
 	delete (*this)(send_patch_id_[ipatch]);
 	patches_[ send_patch_id_[ipatch] ] = NULL;
 	patches_.erase( patches_.begin() + send_patch_id_[ipatch] );
