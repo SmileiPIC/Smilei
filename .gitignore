@@ -19,3 +19,4 @@ src/Python/pycontrol.h
 src/Python/pyinit.h
 *.orig
 *.pyh
+pyprofiles.h
