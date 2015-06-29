@@ -55,7 +55,7 @@ DEPS := $(SRCS:.cpp=.d)
 
 
 CFLAGS+=$(shell $(PYTHONCONFIG) --includes)
-LDFLAGS+=$(shell $(PYTHONCONFIG) --ldflags)
+LDFLAGS+=-L/gpfslocal/pub/python/anaconda/Anaconda-2.1.0/lib $(shell $(PYTHONCONFIG) --ldflags)
 
 
 ifeq ($(config),debug)

@@ -25,9 +25,7 @@ conv_fac(convfac)
     
     // define the factor
     factor = pp.magnitude;
-    // define the vacuum_length as zeros
-    profile_param.vacuum_length.resize(dim);
-    for( int i=0; i<dim; i++) profile_param.vacuum_length[i]=0.;
+
     
     // Launch the initialization
     init(profile_param, geometry);
@@ -169,6 +167,9 @@ void Profile::init(ProfileStructure & pp, string geometry)
     
     
     else if (profile_param.profile=="python") {
+	// define the vacuum_length as zeros
+	profile_param.vacuum_length.resize(dim);
+	for( int i=0; i<dim; i++) profile_param.vacuum_length[i]=0.;
         DEBUG("it's a python profile");
     }
     
