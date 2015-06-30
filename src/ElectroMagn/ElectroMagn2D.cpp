@@ -772,14 +772,14 @@ void ElectroMagn2D::restartRhoJ()
     Field2D* Jy2D    = static_cast<Field2D*>(Jy_);
     Field2D* Jz2D    = static_cast<Field2D*>(Jz_);
     Field2D* rho2D   = static_cast<Field2D*>(rho_);
-    
-    // Charge density rho^(p,p) to 0
-    for (unsigned int i=0 ; i<nx_p ; i++) {
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            (*rho2D)(i,j) = 0.0;
+        
+        // Charge density rho^(p,p) to 0
+        for (unsigned int i=0 ; i<nx_p ; i++) {
+            for (unsigned int j=0 ; j<ny_p ; j++) {
+                (*rho2D)(i,j) = 0.0;
+            }
         }
-    }
-    
+
     // Current Jx^(d,p) to 0
     for (unsigned int i=0 ; i<nx_d ; i++) {
         for (unsigned int j=0 ; j<ny_p ; j++) {
@@ -818,14 +818,12 @@ void ElectroMagn2D::restartRhoJs()
         Field2D* rho2D_s = static_cast<Field2D*>(rho_s[ispec]);
    
         // Charge density rho^(p,p) to 0
-        #pragma omp for schedule(static) nowait
         for (unsigned int i=0 ; i<nx_p ; i++) {
             for (unsigned int j=0 ; j<ny_p ; j++) {
                 (*rho2D_s)(i,j) = 0.0;
             }
         }
         // Current Jx^(d,p) to 0
-        #pragma omp for schedule(static) nowait
         for (unsigned int i=0 ; i<nx_d ; i++) {
             for (unsigned int j=0 ; j<ny_p ; j++) {
                 (*Jx2D_s)(i,j) = 0.0;
@@ -833,7 +831,6 @@ void ElectroMagn2D::restartRhoJs()
         }
         
         // Current Jy^(p,d) to 0
-        #pragma omp for schedule(static) nowait
         for (unsigned int i=0 ; i<nx_p ; i++) {
             for (unsigned int j=0 ; j<ny_d ; j++) {
                 (*Jy2D_s)(i,j) = 0.0;
@@ -841,7 +838,6 @@ void ElectroMagn2D::restartRhoJs()
         }
         
         // Current Jz^(p,p) to 0
-        #pragma omp for schedule(static) nowait
         for (unsigned int i=0 ; i<nx_p ; i++) {
             for (unsigned int j=0 ; j<ny_p ; j++) {
                 (*Jz2D_s)(i,j) = 0.0;
@@ -855,7 +851,6 @@ void ElectroMagn2D::restartRhoJs()
     Field2D* rho2D   = static_cast<Field2D*>(rho_);
     
     // Charge density rho^(p,p) to 0
-    #pragma omp for schedule(static) nowait
     for (unsigned int i=0 ; i<nx_p ; i++) {
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*rho2D)(i,j) = 0.0;
@@ -863,7 +858,6 @@ void ElectroMagn2D::restartRhoJs()
     }
     
     // Current Jx^(d,p) to 0
-    #pragma omp for schedule(static) nowait
     for (unsigned int i=0 ; i<nx_d ; i++) {
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*Jx2D)(i,j) = 0.0;
@@ -871,7 +865,6 @@ void ElectroMagn2D::restartRhoJs()
     }
     
     // Current Jy^(p,d) to 0
-    #pragma omp for schedule(static) nowait
     for (unsigned int i=0 ; i<nx_p ; i++) {
         for (unsigned int j=0 ; j<ny_d ; j++) {
             (*Jy2D)(i,j) = 0.0;
@@ -879,7 +872,6 @@ void ElectroMagn2D::restartRhoJs()
     }
     
     // Current Jz^(p,p) to 0
-    #pragma omp for schedule(static)
     for (unsigned int i=0 ; i<nx_p ; i++) {
         for (unsigned int j=0 ; j<ny_p ; j++) {
             (*Jz2D)(i,j) = 0.0;

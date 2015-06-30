@@ -803,16 +803,17 @@ void Patch::createType( PicParams& params )
     
 } //END createType
 
-
-void Patch::initSumRhoJ( ElectroMagn* EMfields )
-{
-    // sum total charge density and currents
-    initSumField( EMfields->rho_ );
-    initSumField( EMfields->Jx_ );
-    initSumField( EMfields->Jy_ );
-    initSumField( EMfields->Jz_ );
-
-}
+//Useless function ?
+//void Patch::initSumRhoJ( ElectroMagn* EMfields, unsigned int diag_flag )
+//{
+//    // sum total charge density and currents
+//
+//    if (diag_flag) initSumField( EMfields->rho_ );
+//    initSumField( EMfields->Jx_ );
+//    initSumField( EMfields->Jy_ );
+//    initSumField( EMfields->Jz_ );
+//
+//}
 
 void Patch::initSumField( Field* field )
 {
@@ -915,16 +916,16 @@ void Patch::initSumField( Field* field )
 
 } // END initSumField
 
-
-void Patch::finalizeSumRhoJ( ElectroMagn* EMfields )
-{
-    // sum total charge density and currents
-    finalizeSumField( EMfields->rho_ );
-    finalizeSumField( EMfields->Jx_ );
-    finalizeSumField( EMfields->Jy_ );
-    finalizeSumField( EMfields->Jz_ );
-
-}
+//Useless function ?
+//void Patch::finalizeSumRhoJ( ElectroMagn* EMfields, unsigned int diag_flag )
+//{
+//    // sum total charge density and currents
+//    if (diag_flag) finalizeSumField( EMfields->rho_ );
+//    finalizeSumField( EMfields->Jx_ );
+//    finalizeSumField( EMfields->Jy_ );
+//    finalizeSumField( EMfields->Jz_ );
+//
+//}
 
 void Patch::finalizeSumField( Field* field )
 {
@@ -1119,12 +1120,15 @@ void VectorPatch::exchangeParticles(int ispec, PicParams &params, SmileiMPI* smp
 {
     int useless(0);
 
+    #pragma omp for
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
 	(*this)(ipatch)->initExchParticles(smpi, ispec, params, useless, useless);
     }
+    #pragma omp for
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
 	(*this)(ipatch)->initCommParticles(smpi, ispec, params, useless, useless);
     }
+    #pragma omp for
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
 	(*this)(ipatch)->finalizeCommParticles(smpi, ispec, params, useless, useless);
 	(*this)(ipatch)->vecSpecies[ispec]->sort_part();
@@ -1132,12 +1136,14 @@ void VectorPatch::exchangeParticles(int ispec, PicParams &params, SmileiMPI* smp
 
 }
 
-void VectorPatch::sumRhoJ( int ispec )
+void VectorPatch::sumRhoJ(unsigned int diag_flag )
 {
-
+    if (diag_flag)
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
 	(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->rho_ ); // initialize
     }
+
+    if (diag_flag)
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
 	(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->rho_ ); // finalize (waitall + sum)
     }
@@ -1159,6 +1165,37 @@ void VectorPatch::sumRhoJ( int ispec )
     }
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
 	(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jz_ ); // finalize (waitall + sum)
+    }
+
+
+}
+void VectorPatch::sumRhoJs( int ispec )
+{
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->rho_s[ispec] ); // initialize
+    }
+
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->rho_s[ispec]); // finalize (waitall + sum)
+    }
+
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jx_s[ispec]); // initialize
+    }
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jx_s[ispec]); // finalize (waitall + sum)
+    }
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jy_s[ispec] ); // initialize
+    }
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jy_s[ispec] ); // finalize (waitall + sum)
+    }
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jz_s[ispec] ); // initialize
+    }
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jz_s[ispec] ); // finalize (waitall + sum)
     }
 
 

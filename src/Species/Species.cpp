@@ -456,15 +456,26 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
  
 	//Allocate buffer for projection  *****************************
 	// *4 accounts for Jy, Jz and rho. * nthds accounts for each thread.
-	b_Jx = (double *) malloc(4 * size_proj_buffer * sizeof(double));
+	//b_Jx = (double *) malloc(4 * size_proj_buffer * sizeof(double));
 	//Point buffers of each thread to the correct position
-	b_Jy = b_Jx + size_proj_buffer ;
-	b_Jz = b_Jy + size_proj_buffer ;
-	b_rho = b_Jz + size_proj_buffer ;
+	//b_Jy = b_Jx + size_proj_buffer ;
+	//b_Jz = b_Jy + size_proj_buffer ;
+	//b_rho = b_Jz + size_proj_buffer ;
 
         for (ibin = 0 ; ibin < bmin.size() ; ibin++) {
 
-            memset( &(b_Jx[0]), 0, 4*size_proj_buffer*sizeof(double)); 
+            //memset( &(b_Jx[0]), 0, 4*size_proj_buffer*sizeof(double)); 
+            if (diag_flag == 0){
+	        b_Jx =  &(*EMfields->Jx_ )(ibin*clrw*f_dim1);
+	        b_Jy =  &(*EMfields->Jy_ )(ibin*clrw*(f_dim1+1));
+	        b_Jz =  &(*EMfields->Jz_ )(ibin*clrw*f_dim1);
+
+            } else { 
+	        b_Jx =  &(*EMfields->Jx_s[ispec] )(ibin*clrw*f_dim1);
+	        b_Jy =  &(*EMfields->Jy_s[ispec] )(ibin*clrw*(f_dim1+1));
+	        b_Jz =  &(*EMfields->Jz_s[ispec] )(ibin*clrw*f_dim1);
+	        b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1);
+            }
 
             for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
 				
@@ -495,26 +506,28 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 		    nrj_lost_per_thd[tid] += ener_iPart;
                 }
 
-		// if (diag_flag == 0) else no rho
-		(*Proj)(b_Jx , b_Jy , b_Jz , b_rho , *particles,  iPart, gf, ibin*clrw, b_lastdim);
+		if (diag_flag == 0){ 
+		    (*Proj)(b_Jx , b_Jy , b_Jz , *particles,  iPart, gf, ibin*clrw, b_lastdim);
+                } else {
+		    (*Proj)(b_Jx , b_Jy , b_Jz ,b_rho, *particles,  iPart, gf, ibin*clrw, b_lastdim);
+                }
 
             }//iPart
 
-                for (i = 0; i < b_dim0 ; i++) {
-                    iloc = ibin*clrw + i ;
-                    //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
-                    for (j = 0; j < b_dim1 ; j++) {
-                        (*EMfields->Jx_s[ispec]) (iloc*(f_dim1  )+j) +=  b_Jx[i*b_dim1+j];   //  primal along y
-                        (*EMfields->Jy_s[ispec]) (iloc*(f_dim1+1)+j) +=  b_Jy[i*b_dim1+j];   //+1 because dual along y
-                        (*EMfields->Jz_s[ispec]) (iloc*(f_dim1  )+j) +=  b_Jz[i*b_dim1+j];   // primal along y
-                        (*EMfields->rho_s[ispec])(iloc*(f_dim1  )+j) += b_rho[i*b_dim1+j];   // primal along y
-                    }
-                }
+                //for (i = 0; i < b_dim0 ; i++) {
+                //    iloc = ibin*clrw + i ;
+                //    //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
+                //    for (j = 0; j < b_dim1 ; j++) {
+                //        (*EMfields->Jx_s[ispec]) (iloc*(f_dim1  )+j) +=  b_Jx[i*b_dim1+j];   //  primal along y
+                //        (*EMfields->Jy_s[ispec]) (iloc*(f_dim1+1)+j) +=  b_Jy[i*b_dim1+j];   //+1 because dual along y
+                //        (*EMfields->Jz_s[ispec]) (iloc*(f_dim1  )+j) +=  b_Jz[i*b_dim1+j];   // primal along y
+                //        (*EMfields->rho_s[ispec])(iloc*(f_dim1  )+j) += b_rho[i*b_dim1+j];   // primal along y
+                //    }
+                //}
         }// ibin
-        free(b_Jx);
+        //free(b_Jx);
 
 	for (int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
-	    #pragma omp atomic
 	    nrj_bc_lost += nrj_lost_per_thd[tid];
         
         if (Ionize && electron_species) {
@@ -543,11 +556,11 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     }
     else { // immobile particle (at the moment only project density)
         if (diag_flag == 1){
-	    // *4 accounts for Jy, Jz and rho. * nthds accounts for each thread.
-	    b_rho = (double *) malloc(size_proj_buffer * sizeof(double));
+	    //b_rho = (double *) malloc(size_proj_buffer * sizeof(double));
+	    b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1);
 
             for (ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
-		 memset( &(b_rho[0]), 0, size_proj_buffer*sizeof(double)); 
+		//memset( &(b_rho[0]), 0, size_proj_buffer*sizeof(double)); 
                 for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
                     //Update position_old because it is required for the Projection.
                     for ( int i = 0 ; i<ndim ; i++ ) {
@@ -557,7 +570,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                     (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_lastdim);
                 } //End loop on particles
             }//End loop on bins
-	    free(b_rho);
+	    //free(b_rho);
         }
     }//END if time vs. time_frozen
     //delete LocInterp;

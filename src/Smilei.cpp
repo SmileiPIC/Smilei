@@ -143,7 +143,7 @@ int main (int argc, char* argv[])
     double time_prim = stepStart * params.timestep;
     // time at half-integer time-steps (dual grid)
     double time_dual = (stepStart +0.5) * params.timestep;
-    // Do wedo diags or not ?
+    // Do we initially do diags or not ?
     int diag_flag = 1;
 
     // ----------------------------------------------------------------------------
@@ -207,8 +207,9 @@ int main (int argc, char* argv[])
 	}
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
 	    vecPatches(ipatch)->EMfields->computeTotalRhoJ(); // Per species in global, Attention if output -> Sync / per species fields
+	vecPatches.sumRhoJ( diag_flag ); // MPI
 	for (unsigned int ispec=0 ; ispec<params.n_species; ispec++)
-	    vecPatches.sumRhoJ( ispec ); // MPI
+	    vecPatches.sumRhoJs( ispec ); // MPI
         diag_flag = 0;
 
  
@@ -248,9 +249,6 @@ int main (int argc, char* argv[])
         //    sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
         //// temporary particle dump at time 0
         //sio->writePlasma( vecSpecies, 0., smpi );
-
-	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-	    vecPatches(ipatch)->EMfields->restartRhoJ();
     }
 
 	
@@ -325,11 +323,17 @@ int main (int argc, char* argv[])
 	/*******************************************/
 	/********** Move particles *****************/
 	/*******************************************/
-#pragma omp parallel shared (EMfields,time_dual,vecSpecies,smpi,params)
+#pragma omp parallel shared (EMfields,time_dual,vecSpecies,smpi,params, vecPatches)
         {
 	    timer[1].restart();
+            if (diag_flag){
+                #pragma omp for
+                for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	          vecPatches(ipatch)->EMfields->restartRhoJs();
+            }
+            #pragma omp for
             for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-	      vecPatches(ipatch)->EMfields->restartRhoJs();
+	      vecPatches(ipatch)->EMfields->restartRhoJ();
 
             int tid(0);
 #ifdef _OMP
@@ -341,8 +345,6 @@ int main (int argc, char* argv[])
 		vecPatches(ipatch)->dynamics(time_dual, smpi, params, simWindow, diag_flag); // include test
 	    }
 	    // Inter Patch exchange
-	    #pragma omp master
-            {
                 for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 	            if ( vecPatches(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
 	                vecPatches.exchangeParticles(ispec, params, smpiData ); // Included sort_part
@@ -352,7 +354,6 @@ int main (int argc, char* argv[])
                             //}
 	            }
 	        }
-             }
 
 	    timer[1].update();
 
@@ -361,17 +362,21 @@ int main (int argc, char* argv[])
 	/*********** Sum densities *****************/
 	/*******************************************/
         timer[4].restart();
-        #pragma omp for
-	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	    // if  (diag_flag) à introduire
-	    vecPatches(ipatch)->EMfields->computeTotalRhoJ(); // Per species in global, Attention if output -> Sync / per species fields
-	}
+	if  (diag_flag){
+            #pragma omp for
+	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	        vecPatches(ipatch)->EMfields->computeTotalRhoJ(); // Per species in global, Attention if output -> Sync / per species fields
+	    }
+        }
         //cout << "End computeTrho" << endl;
 	#pragma omp master
         {
-	    for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
-	        vecPatches.sumRhoJ( ispec ); // MPI
-	    }
+
+	    vecPatches.sumRhoJ( diag_flag ); // MPI
+            if(diag_flag)
+	        for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
+	            vecPatches.sumRhoJs( ispec ); // MPI
+	        }
         }
         //cout << "End sumrho" << endl;
         timer[4].update();

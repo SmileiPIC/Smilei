@@ -105,8 +105,8 @@ public:
     //! finalize exch / particles, manage particles suppr/introduce
     virtual void finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int tnum, int iDim);
 
-    void initSumRhoJ( ElectroMagn* EMfields );
-    void finalizeSumRhoJ( ElectroMagn* EMfields );
+    //void initSumRhoJ( ElectroMagn* EMfields, unsigned int diag_flag );
+    //void finalizeSumRhoJ( ElectroMagn* EMfields, unsigned int diag_flag );
     virtual void initSumField( Field* field );
     virtual void finalizeSumField( Field* field );
 
@@ -190,7 +190,8 @@ class VectorPatch {
     inline Patch* operator()(int ipatch) {return patches_[ipatch];};
 
     void exchangeParticles(int ispec, PicParams &params, SmileiMPI* smpi);
-    void sumRhoJ( int ispec );
+    void sumRhoJ( unsigned int diag_flag );
+    void sumRhoJs( int ispec );
     void exchangeE(  );
     void exchangeB(  );
 

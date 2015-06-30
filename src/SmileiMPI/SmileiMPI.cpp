@@ -42,7 +42,7 @@ SmileiMPI::SmileiMPI( int* argc, char*** argv )
 {    
     int mpi_provided;
 
-    MPI_Init_thread( argc, argv, MPI_THREAD_FUNNELED, &mpi_provided );
+    MPI_Init_thread( argc, argv, MPI_THREAD_MULTIPLE, &mpi_provided );
     if (mpi_provided == MPI_THREAD_SINGLE){
         MESSAGE("openMP not supported");
     }
