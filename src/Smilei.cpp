@@ -340,7 +340,6 @@ int main (int argc, char* argv[])
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 		vecPatches(ipatch)->dynamics(time_dual, smpi, params, simWindow, diag_flag); // include test
 	    }
-            //cout << "End dynamics" << endl;
 	    // Inter Patch exchange
 	    #pragma omp master
             {
@@ -354,7 +353,6 @@ int main (int argc, char* argv[])
 	            }
 	        }
              }
-             //cout << "End ExchangeP" << endl;
 
 	    timer[1].update();
 
@@ -369,9 +367,12 @@ int main (int argc, char* argv[])
 	    vecPatches(ipatch)->EMfields->computeTotalRhoJ(); // Per species in global, Attention if output -> Sync / per species fields
 	}
         //cout << "End computeTrho" << endl;
+	#pragma omp master
+        {
 	    for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 	        vecPatches.sumRhoJ( ispec ); // MPI
 	    }
+        }
         //cout << "End sumrho" << endl;
         timer[4].update();
 

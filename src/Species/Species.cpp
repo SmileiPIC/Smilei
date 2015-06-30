@@ -593,7 +593,6 @@ void Species::sort_part()
 
 	
     //Backward pass
-#pragma omp for schedule(runtime) 
     for (bin=0; bin<bmin.size()-1; bin++) { //Loop on the bins. 
         limit = min_loc + (bin+1)*cell_length[0]*clrw;
         p1 = bmax[bin]-1;
@@ -614,7 +613,6 @@ void Species::sort_part()
         }
     }
     //Forward pass + Rebracketting
-#pragma omp for schedule(runtime) nowait
     for (bin=1; bin<bmin.size(); bin++) { //Loop on the bins. 
         limit = min_loc + bin*cell_length[0]*clrw;
         bmin_init = bmin[bin];
