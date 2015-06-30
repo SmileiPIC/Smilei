@@ -1203,18 +1203,24 @@ void VectorPatch::sumRhoJs( int ispec )
 
 void VectorPatch::exchangeE( )
 {
+    #pragma omp for
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
 	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->Ex_ );
+    #pragma omp for
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
 	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->Ex_ );
 
+    #pragma omp for
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
 	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->Ey_ );
+    #pragma omp for
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
 	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->Ey_ );
 
+    #pragma omp for
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
 	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->Ez_ );
+    #pragma omp for
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
 	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->Ez_ );
 
@@ -1222,18 +1228,24 @@ void VectorPatch::exchangeE( )
 
 void VectorPatch::exchangeB( )
 {
+    #pragma omp for
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
 	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->Bx_ );
+    #pragma omp for
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
 	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->Bx_ );
 
+    #pragma omp for
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
 	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->By_ );
+    #pragma omp for
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
 	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->By_ );
 
+    #pragma omp for
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
 	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->Bz_ );
+    #pragma omp for
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
 	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->Bz_ );
 

@@ -534,8 +534,6 @@ void ElectroMagn2D::saveMagneticFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn2D::solveMaxwellAmpere()
 {
-    // OMP à réintroduire
-
     // Static-cast of the fields
     Field2D* Ex2D = static_cast<Field2D*>(Ex_);
     Field2D* Ey2D = static_cast<Field2D*>(Ey_);

@@ -372,6 +372,7 @@ int main (int argc, char* argv[])
 	#pragma omp master
         {
 
+            //Synchronize J and posisbly Rho between patches.
 	    vecPatches.sumRhoJ( diag_flag ); // MPI
             if(diag_flag)
 	        for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
@@ -390,39 +391,22 @@ int main (int argc, char* argv[])
         timer[2].restart();
 	// saving magnetic fields (to compute centered fields used in the particle pusher)
         #pragma omp for
-	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
+            //Stores B at time n in B_m.
 	    vecPatches(ipatch)->EMfields->saveMagneticFields();
-        //cout << "End saveMagfield" << endl;
-	// Compute Ex_, Ey_, Ez_
-        #pragma omp for
-	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	    // Computes Ex_, Ey_, Ez_ on all points. E is already synchronized because J has been synchronized before.
 	    vecPatches(ipatch)->EMfields->solveMaxwellAmpere();
-        //cout << "End solvMaxAmpere" << endl;
-        #pragma omp master
-	{
-	    // Exchange Ex_, Ey_, Ez_
-	    vecPatches.exchangeE();
-	}// end single
-        //cout << "End exchnageE" << endl;
-
-	// Compute Bx_, By_, Bz_
-        #pragma omp for
-	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	    // Computes Bx_, By_, Bz_ at time n+1 on interior points.
 	    vecPatches(ipatch)->EMfields->solveMaxwellFaraday();
-        //cout << "End solvMaxFara" << endl;
-        #pragma omp master
-	{
-	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
-		vecPatches(ipatch)->EMfields->boundaryConditions(itime, time_dual, vecPatches(ipatch), params, simWindow);
-	    // Exchange Bx_, By_, Bz_
-	    vecPatches.exchangeB();
-	}// end single
-        //cout << "End exchangeB" << endl;
-	// Compute Bx_m, By_m, Bz_m
+            // Applies boundary conditions on B
+	    vecPatches(ipatch)->EMfields->boundaryConditions(itime, time_dual, vecPatches(ipatch), params, simWindow);
+        }
+        //Synchronize B fields between patches.
+	vecPatches.exchangeB();
+        // Computes B at time n+1/2 using B and B_m.
         #pragma omp for
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->EMfields->centerMagneticFields();
-        //cout << "End centerMagField" << endl;
 
         timer[2].update();
 
