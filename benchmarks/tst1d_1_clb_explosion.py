@@ -17,13 +17,6 @@ rest = 110.0
 # plasma length
 L = 2.0*math.pi
 
-# step-like density profile
-def f(x):
-    if L < x < 2.0*L:
-        return 1.0
-    else :
-        return 0.0
-
 # wavelength_SI: used by Fred Diags. should be removed
 #
 wavelength_SI = 1.e-6
@@ -70,28 +63,30 @@ bc_em_type_x = ['silver-muller']
 random_seed = 0
 
 # DEFINE ALL SPECIES
-# species_type: ion, electron, positron, test ...
-# initialization_type: regular, cold or (isotrop) Maxwell−Juettner distribution
-# n_part_per_cell: number of particle−per−cell
-# c_part_max: factor on the memory reserved for the total number of particles
-# mass: particle mass in units of the electron mass
-# charge: particle charge in units of e (−e is the electron charge)
-# density: species density in units of the normalization density
-# mean_velocity: mean velocity of the species (3D vector) in units of the light velocity
-# temperature: temperature of the species in units of m_e c^2
-# dynamics_type: species type of dynamics = norm or rrLL
-# time_frozen: time during which the particles are frozen in units of the normalization time
-# radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
+# species_type       = string, given name to the species (e.g. ion, electron, positron, test ...)
+# initPosition_type  = string, "regular" or "random"
+# initMomentum_type  = string "cold", "maxwell-juettner" or "rectangular"
+# n_part_per_cell    = integer, number of particles/cell
+# c_part_max         = float, factor on the memory reserved for the total number of particles
+# mass               = float, particle mass in units of the electron mass
+# dynamics_type      = string, type of species dynamics = "norm" or "rrLL"
+# time_frozen        = float, time during which particles are frozen in units of the normalization time
+# radiating          = boolean, if true, incoherent radiation calculated using the Larmor formula 
+# charge             = float or function, particle charge in units of the electron charge
+# charge_density     = float or function, species charge density in units of the "critical" density
+#     or nb_density for number density
+# mean_velocity      = list of floats or functions, mean velocity in units of the speed of light
+# temperature        = list of floats or functions, temperature in units of m_e c^2
+# Predefined functions: constant, trapezoidal, gaussian, polygonal, cosine
 #
 Species(
 	species_type = "charges",
 	initPosition_type = "random",
 	initMomentum_type = "cold",
-	dens_profile = f,
 	n_part_per_cell = 100,
 	mass = 1836.0,
 	charge = 1.0,
-	nb_density = 1.0,
+	nb_density = trapezoidal(1., xvacuum=L, xplateau=L),
 	bc_part_type_west = "stop",
 	bc_part_type_east = "stop"
 )

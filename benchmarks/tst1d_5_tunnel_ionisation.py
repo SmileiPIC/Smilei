@@ -18,11 +18,6 @@ resx = 100.0		# nb cells in 1 wavelength
 Lsim = 2.0*l0		# simulation length
 Tsim = 10.0*t0		# duration of the simulation
 
-def f(x):
-	if (0.99*l0 < x < 1.01*l0):
-		return 1.0
-	else:
-		return 0.0	
 
 # wavelength_SI: used by Fred Diags. (MG: should be removed at some point)
 #
@@ -68,18 +63,21 @@ bc_em_type_x = ['silver-muller']
 random_seed = 0
  
 # DEFINE ALL SPECIES
-# species_type: ion, electron, positron, test ...
-# initialization_type: regular, cold or (isotrop) Maxwell−Juettner distribution
-# n_part_per_cell: number of particle−per−cell
-# c_part_max: factor on the memory reserved for the total number of particles
-# mass: particle mass in units of the electron mass
-# charge: particle charge in units of e (−e is the electron charge)
-# density: species density in units of the normalization density
-# mean_velocity: mean velocity of the species (3D vector) in units of the light velocity
-# temperature: temperature of the species in units of m_e c^2
-# dynamics_type: species type of dynamics = norm or rrLL
-# time_frozen: time during which the particles are frozen in units of the normalization time
-# radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
+# species_type       = string, given name to the species (e.g. ion, electron, positron, test ...)
+# initPosition_type  = string, "regular" or "random"
+# initMomentum_type  = string "cold", "maxwell-juettner" or "rectangular"
+# n_part_per_cell    = integer, number of particles/cell
+# c_part_max         = float, factor on the memory reserved for the total number of particles
+# mass               = float, particle mass in units of the electron mass
+# dynamics_type      = string, type of species dynamics = "norm" or "rrLL"
+# time_frozen        = float, time during which particles are frozen in units of the normalization time
+# radiating          = boolean, if true, incoherent radiation calculated using the Larmor formula 
+# charge             = float or function, particle charge in units of the electron charge
+# charge_density     = float or function, species charge density in units of the "critical" density
+#     or nb_density for number density
+# mean_velocity      = list of floats or functions, mean velocity in units of the speed of light
+# temperature        = list of floats or functions, temperature in units of m_e c^2
+# Predefined functions: constant, trapezoidal, gaussian, polygonal, cosine
 #
 Species(
 	species_type = 'helium',
@@ -87,11 +85,10 @@ Species(
 	atomic_number = 2,
 	initPosition_type = 'regular',
 	initMomentum_type = 'cold',
-	dens_profile = f,
 	n_part_per_cell = 1000,
 	mass = 1836.0,
 	charge = 0.0,
-	nb_density = 1.0,
+	nb_density = trapezoidal(1.0,xvacuum=0.99*l0,xplateau=0.02*l0),
 	bc_part_type_west = 'none',
 	bc_part_type_east = 'none'
 )
@@ -99,7 +96,6 @@ Species(
 	species_type = 'electron',
 	initPosition_type = 'regular',
 	initMomentum_type = 'cold',
-	dens_profile = f,
 	n_part_per_cell = 0,
 	mass = 1.0,
 	charge = -1.0,
@@ -141,3 +137,17 @@ DiagScalar(every = 10)
 # dump_step = 2500
 # dump_minutes = 1
 # random_seed = 13121977
+
+
+
+
+DiagParticles(
+	output = "density",
+	every = 50,
+	species = ["electron"],
+	axes = [
+		["x",  0.45*Lsim, 0.55*Lsim, 200],
+		["px", -0.1, 0.1, 200]
+	]
+)
+

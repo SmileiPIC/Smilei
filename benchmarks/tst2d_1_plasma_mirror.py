@@ -9,17 +9,12 @@
 import math
 
 l0 = 2.*math.pi			# laser wavelength
-t0 = l0					# optical cicle
+t0 = l0					# optical cycle
 Lsim = [20.*l0,50.*l0]	# length of the simulation
 Tsim = 50.*t0			# duration of the simulation
 resx = 20.				# nb of cells in on laser wavelength
 rest = 30.				# time of timestep in one optical cycle 
 
-def f(x,y):
-	if (10.*l0 < x < 14.*l0):
-		return 1.
-	else:
-		return 0.
 
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
@@ -83,21 +78,25 @@ Laser(
 	double_params_transv = 5.0*l0
 )
 
-# species_type: ion, electron, positron, test ...
-# initialization_type: regular, cold or (isotrop) Maxwell−Juettner distribution# n_part_per_cell: number of particle−per−cell
-# c_part_max: factor on the memory reserved for the total number of particles
-# mass: particle mass in units of the electron mass
-# charge: particle charge in units of e (−e is the electron charge)
-# density: species density in units of the normalization density
-# mean_velocity: mean velocity of the species (3D vector) in units of the light velocity
-# temperature: temperature of the species in units of m_e c^2
-# dynamics_type: species type of dynamics = norm or rrLL
-# time_frozen: time during which the particles are frozen in units of the normalization time
-# radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
+# DEFINE ALL SPECIES
+# species_type       = string, given name to the species (e.g. ion, electron, positron, test ...)
+# initPosition_type  = string, "regular" or "random"
+# initMomentum_type  = string "cold", "maxwell-juettner" or "rectangular"
+# n_part_per_cell    = integer, number of particles/cell
+# c_part_max         = float, factor on the memory reserved for the total number of particles
+# mass               = float, particle mass in units of the electron mass
+# dynamics_type      = string, type of species dynamics = "norm" or "rrLL"
+# time_frozen        = float, time during which particles are frozen in units of the normalization time
+# radiating          = boolean, if true, incoherent radiation calculated using the Larmor formula 
+# charge             = float or function, particle charge in units of the electron charge
+# charge_density     = float or function, species charge density in units of the "critical" density
+#     or nb_density for number density
+# mean_velocity      = list of floats or functions, mean velocity in units of the speed of light
+# temperature        = list of floats or functions, temperature in units of m_e c^2
+# Predefined functions: constant, trapezoidal, gaussian, polygonal, cosine
 #
 Species(
 	species_type = 'ion',
-	dens_profile = f,
 	initPosition_type = 'random',
 	initMomentum_type = 'cold',
 	ionization_model = 'none',
@@ -105,7 +104,7 @@ Species(
 	c_part_max = 1.0,
 	mass = 1836.0,
 	charge = 1.0,
-	nb_density = 2.0,
+	nb_density = trapezoidal(2.0,xvacuum=10.*l0,xplateau=4.*l0),
 	time_frozen = Tsim,
 	bc_part_type_west  = 'refl',
 	bc_part_type_east  = 'refl',
@@ -114,7 +113,6 @@ Species(
 )
 Species(
 	species_type = 'eon',
-	dens_profile = f,
 	initPosition_type = 'random',
 	initMomentum_type = 'cold',
 	ionization_model = 'none',
@@ -122,7 +120,7 @@ Species(
 	c_part_max = 1.0,
 	mass = 1.0,
 	charge = -1.0,
-	nb_density = 2.0,
+	nb_density = trapezoidal(2.0,xvacuum=10.*l0,xplateau=4.*l0),
 	time_frozen = 0.,
 	bc_part_type_west  = 'refl',
 	bc_part_type_east  = 'refl',

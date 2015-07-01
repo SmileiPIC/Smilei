@@ -12,12 +12,7 @@
 # 
 import math
 L  = 1.03			# wavelength=simulation box length
-k  = 2.0*math.pi/L	# wavelength in normalized units
 dn = 0.001			# amplitude of the perturbation
-
-# perturbed density profile
-def f(x):
-    return 1.0 + dn*math.cos(k*x)
 
 
 
@@ -66,19 +61,21 @@ random_seed = 0
 
 
 # DEFINE ALL SPECIES
-# species_type: ion, electron, positron, test ...
-# initialization_type: regular, cold or (isotrop) Maxwell?~H~RJuettner distribution
-# n_part_per_cell: number of particle?~H~Rper?~H~Rcell
-# c_part_max: factor on the memory reserved for the total number of particles
-# mass: particle mass in units of the electron mass
-# charge: particle charge in units of e (?~H~Re is the electron charge)
-# density: species density in units of the normalization density
-# mean_velocity: mean velocity of the species (3D vector) in units of the light velocity
-# temperature: temperature of the species in units of m_e c^2
-# dynamics_type: species type of dynamics = norm or rrLL
-# time_frozen: time during which the particles are frozen in units of the normalization time
-# radiating: boolean, if true incoherent radiation are calculated using the Larmor formula 
-#
+# species_type       = string, given name to the species (e.g. ion, electron, positron, test ...)
+# initPosition_type  = string, "regular" or "random"
+# initMomentum_type  = string "cold", "maxwell-juettner" or "rectangular"
+# n_part_per_cell    = integer, number of particles/cell
+# c_part_max         = float, factor on the memory reserved for the total number of particles
+# mass               = float, particle mass in units of the electron mass
+# dynamics_type      = string, type of species dynamics = "norm" or "rrLL"
+# time_frozen        = float, time during which particles are frozen in units of the normalization time
+# radiating          = boolean, if true, incoherent radiation calculated using the Larmor formula 
+# charge             = float or function, particle charge in units of the electron charge
+# charge_density     = float or function, species charge density in units of the "critical" density
+#     or nb_density for number density
+# mean_velocity      = list of floats or functions, mean velocity in units of the speed of light
+# temperature        = list of floats or functions, temperature in units of m_e c^2
+# Predefined functions: constant, trapezoidal, gaussian, polygonal, cosine
 #
 Species(
 	species_type = "ion",
@@ -87,7 +84,7 @@ Species(
 	n_part_per_cell = 10,
 	mass = 1836.0,
 	charge = 1.0,
-	nb_density = 1.0e0,
+	nb_density = 1.,
 	time_frozen = 10000.0,
 	bc_part_type_west = "none",
 	bc_part_type_east = "none"
@@ -99,8 +96,7 @@ Species(
 	n_part_per_cell = 10,
 	mass = 1.0,
 	charge = -1.0,
-	dens_profile = f,
-	nb_density = 0.5,
+	nb_density = cosine(0.5,amplitude=dn,xlength=L),
 	mean_velocity = [-0.1,0.0,0.0],
 	bc_part_type_west = "none",
 	bc_part_type_east = "none"
@@ -112,8 +108,7 @@ Species(
 	n_part_per_cell = 10,
 	mass = 1.0,
 	charge = -1.0,
-	dens_profile = f,
-	nb_density = 0.5,
+	nb_density = cosine(0.5,amplitude=dn,xlength=L),
 	mean_velocity = [0.1,0.0,0.0],
 	bc_part_type_west = "none",
 	bc_part_type_east = "none"
@@ -124,7 +119,8 @@ Species(
 # DIAGNOSTIC PARAMETERS
 # ---------------------
 
-every=1000000000000
+#every = 1000000000000
+every = 100
 
 # SCALAR DIAGNOSTICS
 # every       = integer, nb of timesteps between each output
