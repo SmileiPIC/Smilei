@@ -558,7 +558,6 @@ int main (int argc, char* argv[])
     if (EMfields) delete EMfields;
     if (Diags) delete Diags;
 
-    WARNING("Bug identified in ~DiagnosticProbe : An error occurred in MPI_File_set_errhandler\n\n");  
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
     vecSpecies.clear();
     

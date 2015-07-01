@@ -14,6 +14,7 @@ class PicParams;
 class DiagParams;
 class Diagnostic;
 class DiagnosticScalar;
+class DiagnosticProbe;
 class Species;
 class VectorPatch;
 
@@ -115,6 +116,8 @@ public:
     void recv(ElectroMagn* fields, int from, int hindex);
     void send(Field* field, int to  , int hindex);
     void recv(Field* field, int from, int hindex);
+    void send( Diagnostic* diags, int to  , int hindex );
+    void recv( Diagnostic* diags, int from, int hindex );
     // --------------------------------------------------
     // ------ END OF PATCH EXCHANGE METHODS -------------
     // --------------------------------------------------

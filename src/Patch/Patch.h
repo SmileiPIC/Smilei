@@ -200,6 +200,7 @@ class VectorPatch {
 
     void initProbesDiags(PicParams& params, DiagParams &diag_params, int timestep);
     void finalizeProbesDiags(PicParams& params, DiagParams &diag_params, int timestep);
+    void definePatchDiagsMaster();
 
     void createPacthes(PicParams& params, DiagParams& diag_params, LaserParams& laser_params, SmileiMPI* smpi);
     void setNbrParticlesToExch(SmileiMPI* smpi);

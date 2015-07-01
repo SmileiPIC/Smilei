@@ -27,6 +27,7 @@
 #include "PicParams.h"
 #include "DiagParams.h"
 #include "Diagnostic.h"
+#include "DiagnosticProbe.h"
 #include "Tools.h"
 
 #include "ElectroMagn.h"
@@ -333,8 +334,8 @@ void SmileiMPI::recompute_patch_count( PicParams& params, VectorPatch& vecpatche
     // ------------- target patch count
 #ifdef _TESTPATCHEXCH
     for (int irk=0;irk<smilei_sz;irk++) {
-	patch_count[irk] = 5;
-	if (irk==4) patch_count[irk] = 29;
+	patch_count[irk] = 2;
+	//if (irk==4) patch_count[irk] = 29;
     }
 #endif
     // ------------- target patch count
@@ -591,6 +592,8 @@ void SmileiMPI::send(Patch* patch, int to, int hindex)
 
     send( patch->EMfields, to, hindex );
 
+    send( patch->Diags, to, hindex );
+
 }
 
 void SmileiMPI::recv(Patch* patch, int from, int hindex)
@@ -600,19 +603,22 @@ void SmileiMPI::recv(Patch* patch, int from, int hindex)
 
     recv( patch->EMfields, from, hindex );
 
+    recv( patch->Diags, from, hindex );
 
 }
 
 void SmileiMPI::send(Species* species, int to, int hindex)
 {
-    send( species->particles, to, hindex );
+    if ( species->getNbrOfParticles() )
+	send( species->particles, to, hindex );
     send( species->bmin, to, hindex );
     send( species->bmax, to, hindex );
 }
 
 void SmileiMPI::recv(Species* species, int from, int hindex)
 {
-    recv( species->particles, from, hindex );
+    if ( species->getNbrOfParticles() )
+	recv( species->particles, from, hindex );
     recv( &species->bmin, from, hindex );
     recv( &species->bmax, from, hindex );
 }
@@ -683,4 +689,14 @@ void SmileiMPI::recv(Field* field, int from, int hindex)
     MPI_Status status;
     MPI_Recv( &((*field)(0)),field->globalDims_, MPI_DOUBLE, from, hindex, MPI_COMM_WORLD, &status );
 
+}
+
+void SmileiMPI::send( Diagnostic* diags, int to, int hindex )
+{
+    send( diags->probes.probesStart, to, hindex );
+}
+
+void SmileiMPI::recv( Diagnostic* diags, int from, int hindex )
+{
+    recv( &(diags->probes.probesStart), from, hindex );
 }

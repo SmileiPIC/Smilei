@@ -42,7 +42,7 @@ public:
     double getScalar(std::string name);
     
         
-private:
+protected:
     
     DiagnosticScalar scalars;
 
