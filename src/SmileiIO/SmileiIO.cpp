@@ -22,17 +22,17 @@ using namespace std;
 
 SmileiIO::SmileiIO( PicParams& params, Diagnostic& diag, SmileiMPI* smpi ) : 
 dump_times(0), 
-stop_file_seen_since_last_check(false),
-fieldsToDump(diag.params.fieldsToDump)
+fieldsToDump(diag.params.fieldsToDump),
+time_reference(0.0)
 {
-		
+    
     nDim_particle=params.nDim_particle;
     //particleSize = nDim_particle + 3 + 1;
-
-
+    
+    
 #ifdef _IO_PARTICLE
     particleSize = nDim_particle + 3 + 1;
-
+    
     ostringstream name("");
     name << "particles-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
 	
@@ -53,7 +53,7 @@ fieldsToDump(diag.params.fieldsToDump)
     for (unsigned int ispec=0 ; ispec<params.species_param.size() ; ispec++) {
         ostringstream speciesName("");
         speciesName << params.species_param[ispec].species_type;
-
+        
         //here we check for the presence of multiple ccurence of the same particle name... Souldn't we add a tag for each species?
         unsigned int occurrence=0;
         for (unsigned int iocc=0 ; iocc<ispec ; iocc++) {
@@ -132,7 +132,7 @@ fieldsToDump(diag.params.fieldsToDump)
     H5Awrite(aid, H5T_NATIVE_DOUBLE, &(sim_length_norm[0]));
     H5Aclose(aid);
     H5Sclose(sid);
-
+    
     
     // Fields_avg.h5
     // -------------
@@ -170,12 +170,10 @@ fieldsToDump(diag.params.fieldsToDump)
         H5Aclose(aid);
         H5Sclose(sid);
     }
-
-    H5Pclose(plist_id);
-
     
-	// ???
-	initDumpCases();
+    H5Pclose(plist_id);
+    
+    time_reference=time_seconds();
     
 }
 
@@ -303,24 +301,23 @@ void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI*
 
 bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin, PicParams &params, InputData& input_data) { 
     if  ((params.dump_step != 0 && (itime % params.dump_step == 0)) ||
-	 (params.dump_minutes != 0.0 && time_seconds()/60.0 > smpi->getSize()*(params.dump_minutes*(dump_times+1))) || 
-	 (params.check_stop_file && fileStopCreated())) {
-	dumpAll( EMfields, itime,  vecSpecies, smpi, simWin, params, input_data);
-	if (params.exit_after_dump)	return true;
+         (params.dump_minutes != 0.0 && time_seconds()/60.0 > smpi->getSize()*(params.dump_minutes*(dump_times+1))) ) {
+        dumpAll( EMfields, itime,  vecSpecies, smpi, simWin, params, input_data);
+        if (params.exit_after_dump)	return true;
     }	
     return false;
 }
 
 void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin, PicParams &params, InputData& input_data) { 
 	hid_t fid, gid, sid, aid, did, tid;
-		
+    
 	ostringstream nameDump("");
 	nameDump << "dump-" << setfill('0') << setw(4) << dump_times%params.dump_file_sequence << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
 	fid = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 	dump_times++;
 	
 	MESSAGE(2, "DUMPING fields and particles " << nameDump.str());
-
+    
 	
 	sid  = H5Screate(H5S_SCALAR);
     tid = H5Tcopy(H5T_C_S1);
@@ -369,14 +366,14 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
 		name << setfill('0') << setw(2) << ispec;
 		string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->species_param.species_type;
 		gid = H5Gcreate(fid, groupName.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-				
+        
 		sid = H5Screate(H5S_SCALAR);
 		aid = H5Acreate(gid, "partCapacity", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
 		unsigned int partCapacity=vecSpecies[ispec]->particles.capacity();
 		H5Awrite(aid, H5T_NATIVE_UINT, &partCapacity);
 		H5Aclose(aid);
 		H5Sclose(sid);
-
+        
 		sid = H5Screate(H5S_SCALAR);
 		aid = H5Acreate(gid, "partSize", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
 		unsigned int partSize=vecSpecies[ispec]->particles.size();
@@ -418,30 +415,30 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
 			H5Dwrite(did, H5T_NATIVE_SHORT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Charge[0]);
 			H5Dclose(did);
 			H5Sclose(sid);
-
-
+            
+            
 			hsize_t dimsbmin[1] = {vecSpecies[ispec]->bmin.size()};
 			sid = H5Screate_simple(1, dimsbmin, NULL);
 			did = H5Dcreate(gid, "bmin", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 			H5Dwrite(did, H5T_NATIVE_UINT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->bmin[0]);
 			H5Dclose(did);
 			H5Sclose(sid);
-
+            
 			hsize_t dimsbmax[1] = {vecSpecies[ispec]->bmax.size()};
 			sid = H5Screate_simple(1, dimsbmax, NULL);
 			did = H5Dcreate(gid, "bmax", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 			H5Dwrite(did, H5T_NATIVE_UINT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->bmax[0]);
 			H5Dclose(did);
 			H5Sclose(sid);
-		
+            
 		}
 		H5Gclose(gid);
     }
-
+    
     // Dump moving window status
     if (simWin!=NULL)
-	dumpMovingWindow(fid, simWin);
-
+        dumpMovingWindow(fid, simWin);
+    
     H5Fclose( fid );
 	
 };
@@ -459,13 +456,13 @@ void SmileiIO::dumpFieldsPerProc(hid_t fid, Field* field)
 void SmileiIO::dumpMovingWindow(hid_t fid, SimWindow* simWin)
 {  
     double x_moved = simWin->getXmoved();
-
+    
     hid_t sid = H5Screate(H5S_SCALAR);	
     hid_t aid = H5Acreate(fid, "x_moved", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT);
     H5Awrite(aid, H5T_NATIVE_DOUBLE, &x_moved);
     H5Sclose(sid);
     H5Aclose(aid);
-
+    
 }
 
 
@@ -497,7 +494,7 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
 	if (nameDump.empty()) ERROR("Cannot find a valid restart file");
 	
 	MESSAGE(2, "RESTARTING fields and particles " << nameDump);
-
+    
 	hid_t fid = H5Fopen( nameDump.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
 	
 	hid_t aid, gid, did, sid;
@@ -541,7 +538,7 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
 		H5Aread(aid, H5T_NATIVE_UINT, &partCapacity);
 		H5Aclose(aid);
 		vecSpecies[ispec]->particles.reserve(partCapacity,nDim_particle);		
-
+        
 		aid = H5Aopen(gid, "partSize", H5T_NATIVE_UINT);
 		unsigned int partSize=0;
 		H5Aread(aid, H5T_NATIVE_UINT, &partSize);
@@ -573,7 +570,7 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
 			did = H5Dopen(gid, "Charge", H5P_DEFAULT);
 			H5Dread(did, H5T_NATIVE_SHORT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Charge[0]);
 			H5Dclose(did);
-
+            
 			did = H5Dopen(gid, "bmin", H5P_DEFAULT);
 			sid = H5Dget_space(did);
 			
@@ -602,7 +599,7 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
     // load window status
     if (simWin!=NULL)
         restartMovingWindow(fid, simWin);
-
+    
 	H5Fclose( fid );
 };
 
@@ -622,38 +619,10 @@ void SmileiIO::restartMovingWindow(hid_t fid, SimWindow* simWin)
     double x_moved=0.;
     H5Aread(aid, H5T_NATIVE_DOUBLE, &x_moved);	
     H5Aclose(aid);
-
+    
     simWin->setXmoved(x_moved);
-
+    
 }
-
-void SmileiIO::initDumpCases() {
-	double time_temp = MPI_Wtime();	
-	time_reference=0;
-	MPI_Allreduce(&time_temp,&time_reference,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-	
-	stop_file_seen_since_last_check=fileStopCreated();
-	if (stop_file_seen_since_last_check) ERROR("File stop exists, remove it and rerun");
-}
-
-bool SmileiIO::fileStopCreated() {
-	if (stop_file_seen_since_last_check) return false;
-	
-	int foundStopFile=0;
-	ifstream f("stop");
-	if (f.good()) foundStopFile=1;
-	f.close();
-	int foundStopFileAll = 0;	
-	MPI_Allreduce(&foundStopFile,&foundStopFileAll,1,MPI_INT,MPI_SUM,MPI_COMM_WORLD);
-	
-	if (foundStopFileAll>0) {
-		stop_file_seen_since_last_check=true;
-		return true;
-	} else {
-		return false;
-	}
-}
-
 
 double SmileiIO::time_seconds() {
 	double time_temp = MPI_Wtime();	

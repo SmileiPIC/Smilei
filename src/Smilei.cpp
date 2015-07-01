@@ -241,7 +241,8 @@ int main (int argc, char* argv[])
     
     // Count timer
     int ntimer(8);
-    Timer timer[ntimer];
+    vector<Timer> timer(ntimer);
+    
     timer[0].init(smpi, "global");
     timer[1].init(smpi, "particles");
     timer[2].init(smpi, "maxwell");
@@ -367,7 +368,7 @@ int main (int argc, char* argv[])
         timer[6].update();
         
         timer[7].restart();
-        // temporary EM fields dump in Fields.h5
+        // temporary EM fields dump in Fields_avg.h5
         if  (Diags.params.ntime_step_avg!=0)
             if ((Diags.params.avgfieldDump_every != 0) && (itime % Diags.params.avgfieldDump_every == 0))
                 sio->writeAvgFieldsSingleFileTime( EMfields, itime );

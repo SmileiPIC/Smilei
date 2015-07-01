@@ -42,8 +42,8 @@ public:
     //! get a particular scalar
     double getScalar(std::string name);
 
-    Timer dtimer[5]; // may have a memory problem, so +1
-
+    std::vector<Timer> dtimer;
+    
     DiagnosticScalar scalars;
 
     DiagnosticProbe probes;

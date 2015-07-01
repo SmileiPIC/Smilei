@@ -89,11 +89,7 @@ public:
 private:
     //! incremental number of times we've done a dump
     unsigned int dump_times;
-    
-    //! initialize the time zero of the simulation 
-    void initDumpCases();
-	
-	
+    	
     //! dump everything to file per processor
     void dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  PicParams &params, InputData& input_data);
 	
@@ -109,13 +105,6 @@ private:
     //! function that returns elapsed time from creator (uses private var time_reference)
     double time_seconds();
 	
-    //! to dump and stop a simulation you might just check if a file named stop has been created this variable
-    //! is true if since last time a file named stop appeared
-    bool stop_file_seen_since_last_check;
-
-    //! function that checks if file named "stop" exists;
-    bool fileStopCreated();
-
     //! name of the fields to dump (copied from diagparams)
     std::vector<std::string> fieldsToDump; 
 	
