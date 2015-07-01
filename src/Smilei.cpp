@@ -46,7 +46,6 @@
 
 using namespace std;
 
-int signal_num=0;
 // ---------------------------------------------------------------------------------------------------------------------
 //                                                   MAIN CODE
 // ---------------------------------------------------------------------------------------------------------------------
@@ -102,6 +101,10 @@ int main (int argc, char* argv[])
     //Create mpi environment 
     SmileiIO*  sio  = SmileiIOFactory::create(params, Diags, smpi);
     
+    
+    //! registering signal handler
+    signal(SIGUSR1, signal_callback_handler);
+
     
 #ifdef _OMP
     int nthds(0);
@@ -382,7 +385,7 @@ int main (int argc, char* argv[])
             sio->writePlasma( vecSpecies, time_dual, smpi );
 #endif
         
-        if (sio->dump(EMfields, itime,  signal_num, vecSpecies, smpi, simWindow, params, input_data)) break;
+        if (sio->dump(EMfields, itime, signal_received, vecSpecies, smpi, simWindow, params, input_data)) break;
         
         timer[5].restart();
         if ( simWindow && simWindow->isMoving(time_dual) ) {
@@ -447,7 +450,7 @@ int main (int argc, char* argv[])
     vecSpecies.clear();
     
     MESSAGE("-----------------------------------------------------------------------------------------------------");
-    MESSAGE("END ");
+    MESSAGE("END");
     MESSAGE("-----------------------------------------------------------------------------------------------------");
     
     delete sio;
@@ -460,9 +463,5 @@ int main (int argc, char* argv[])
     
 }//END MAIN
 
-void signal_callback_handler(int signum) {
-    MESSAGE("Caught signal " << signum << " : exiting");
-    signal_num = signum;
-}
 
 

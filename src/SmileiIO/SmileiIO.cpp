@@ -298,12 +298,12 @@ void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI*
 #endif
 }
 
-bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, int signal_num, std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWindow, PicParams &params, InputData& input_data) { 
-    if ((signal_num>0) ||
+bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, bool signal_received, std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWindow, PicParams &params, InputData& input_data) { 
+    if (signal_received ||
         (params.dump_step != 0 && (itime % params.dump_step == 0)) ||
         (params.dump_minutes != 0.0 && time_seconds()/60.0 > smpi->getSize()*(params.dump_minutes*(dump_times+1))) ) {
         dumpAll( EMfields, itime,  vecSpecies, smpi, simWindow, params, input_data);
-        if (params.exit_after_dump || (signal_num>0))	return true;
+        if (signal_received || params.exit_after_dump)	return true;
     }
     return false;
 }

@@ -105,6 +105,17 @@ int debug_level = 10;
 int debug_level = 0;
 #endif
 
+bool signal_received=false;
+void signal_callback_handler(int signum) {
+    MESSAGE("----------------------------------------------");
+    MESSAGE("Caught signal " << signum << " : dump + exit");
+    MESSAGE("----------------------------------------------");
+    signal_received = true;
+}
+
 //! main function
 int main (int argc, char* argv[]);
+
+
+
 
