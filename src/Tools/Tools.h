@@ -83,7 +83,8 @@ extern int debug_level;
 
 #define HEREIAM(__txt) {const int __num_minus=40; int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); for(int __i=0;__i<__num_minus;__i++) {std::cerr << "-";}; std::cerr << "> " << __rk << " " << __FILE__ << ":" << __LINE__ << " (" << __FUNCTION__ << ") " << __txt << " <" ; for(int __i=0;__i<__num_minus;__i++) {std::cerr << "-";}; std::cerr << std::endl; }
 
-#else
+#else // __DEBUG
+
 #define DEBUG(...)
 #define DEBUGEXEC(...)
 #define RELEASEEXEC(...) __VA_ARGS__
@@ -92,7 +93,7 @@ extern int debug_level;
 
 #define HEREIAM(...)
 
-#endif
+#endif // __DEBUG
 
 class Tools {
  public:

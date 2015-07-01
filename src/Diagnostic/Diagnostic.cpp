@@ -12,7 +12,7 @@
 using namespace std;
 
 Diagnostic::Diagnostic(PicParams& params, InputData &ifile, SmileiMPI *smpi) :
-dtimer(5), // may have a memory problem, so +1
+dtimer(4),
 scalars(smpi),
 probes(smpi),
 phases(smpi),

@@ -42,8 +42,6 @@
 #include "Timer.h"
 #include <omp.h>
 
-#include <signal.h>
-
 using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -102,9 +100,6 @@ int main (int argc, char* argv[])
     SmileiIO*  sio  = SmileiIOFactory::create(params, Diags, smpi);
     
     
-    //! registering signal handler
-    signal(SIGUSR1, signal_callback_handler);
-
     
 #ifdef _OMP
     int nthds(0);
@@ -245,8 +240,7 @@ int main (int argc, char* argv[])
     double time_dual = (stepStart +0.5) * params.timestep;
     
     // Count timer
-    int ntimer(8);
-    vector<Timer> timer(ntimer);
+    vector<Timer> timer(9);
     
     timer[0].init(smpi, "global");
     timer[1].init(smpi, "particles");
@@ -256,6 +250,7 @@ int main (int argc, char* argv[])
     timer[5].init(smpi, "Mov window");
     timer[6].init(smpi, "fieldsDump");
     timer[7].init(smpi, "AvgFields");
+    timer[8].init(smpi, "Collisions");
     
     
 	// ------------------------------------------------------------------
@@ -297,12 +292,14 @@ int main (int argc, char* argv[])
         EMfields->restartRhoJ();
         
         
+        timer[8].restart();
         // apply collisions if requested
         // -----------------------------
         if (Collisions::debye_length_required)
             Collisions::calculate_debye_length(params,vecSpecies);
         for (unsigned int icoll=0 ; icoll<vecCollisions.size(); icoll++)
             vecCollisions[icoll]->collide(params,vecSpecies,itime);
+        timer[8].update();
         
         
         // apply the PIC method
@@ -374,9 +371,11 @@ int main (int argc, char* argv[])
         
         timer[7].restart();
         // temporary EM fields dump in Fields_avg.h5
-        if  (Diags.params.ntime_step_avg!=0)
-            if ((Diags.params.avgfieldDump_every != 0) && (itime % Diags.params.avgfieldDump_every == 0))
-                sio->writeAvgFieldsSingleFileTime( EMfields, itime );
+        if  ((Diags.params.ntime_step_avg!=0) &&
+             (Diags.params.avgfieldDump_every != 0) && 
+             (itime % Diags.params.avgfieldDump_every == 0)) {
+            sio->writeAvgFieldsSingleFileTime( EMfields, itime );
+        }
         timer[7].update();
         
 #ifdef _IO_PARTICLE
@@ -385,7 +384,7 @@ int main (int argc, char* argv[])
             sio->writePlasma( vecSpecies, time_dual, smpi );
 #endif
         
-        if (sio->dump(EMfields, itime, signal_received, vecSpecies, smpi, simWindow, params, input_data)) break;
+        if (sio->dump(EMfields, itime, vecSpecies, smpi, simWindow, params, input_data)) break;
         
         timer[5].restart();
         if ( simWindow && simWindow->isMoving(time_dual) ) {
@@ -412,10 +411,10 @@ int main (int argc, char* argv[])
     timer[0].update();
     MESSAGE(0, "Time in time loop : " << timer[0].getTime() );
     if ( smpi->isMaster() )
-        for (int i=1 ; i<ntimer ; i++) timer[i].print(timer[0].getTime());
+        for (int i=1 ; i<timer.size() ; i++) timer[i].print(timer[0].getTime());
     
     double coverage(0.);
-    for (int i=1 ; i<ntimer ; i++) coverage += timer[i].getTime();
+    for (int i=1 ; i<timer.size() ; i++) coverage += timer[i].getTime();
     MESSAGE(0, "\t" << setw(12) << "Coverage\t" << coverage/timer[0].getTime()*100. << " %" );
     
     

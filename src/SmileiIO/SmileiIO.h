@@ -11,6 +11,7 @@
 #include <vector>
 
 #include <hdf5.h>
+#include <Tools.h>
 
 class PicParams;
 class Diagnostic;
@@ -20,6 +21,8 @@ class SimWindow;
 class ElectroMagn;
 class Field;
 class Species;
+
+#include <signal.h>
 
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class SmileiIO
@@ -84,8 +87,16 @@ public:
     void restartMovingWindow(hid_t fid, SimWindow* simWindow);
 	
     //! test before writing everything to file per processor
-    bool dump(ElectroMagn* EMfields, unsigned int itime, bool signal_received, std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  PicParams &params, InputData& input_data);
+    bool dump(ElectroMagn* EMfields, unsigned int itime, std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  PicParams &params, InputData& input_data);
 	
+    static bool signal_received;
+    static void signal_callback_handler(int signum) {
+        MESSAGE("----------------------------------------------");
+        MESSAGE("Caught signal " << signum << " : dump + exit");
+        MESSAGE("----------------------------------------------");
+        signal_received = true;
+    }
+    
 private:
     //! incremental number of times we've done a dump
     unsigned int dump_times;
