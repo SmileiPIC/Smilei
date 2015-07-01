@@ -42,8 +42,6 @@
 #include "Timer.h"
 #include <omp.h>
 
-#include <signal.h>
-
 using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -102,9 +100,6 @@ int main (int argc, char* argv[])
     SmileiIO*  sio  = SmileiIOFactory::create(params, Diags, smpi);
     
     
-    //! registering signal handler
-    signal(SIGUSR1, signal_callback_handler);
-
     
 #ifdef _OMP
     int nthds(0);
@@ -374,9 +369,11 @@ int main (int argc, char* argv[])
         
         timer[7].restart();
         // temporary EM fields dump in Fields_avg.h5
-        if  (Diags.params.ntime_step_avg!=0)
-            if ((Diags.params.avgfieldDump_every != 0) && (itime % Diags.params.avgfieldDump_every == 0))
-                sio->writeAvgFieldsSingleFileTime( EMfields, itime );
+        if  ((Diags.params.ntime_step_avg!=0) &&
+             (Diags.params.avgfieldDump_every != 0) && 
+             (itime % Diags.params.avgfieldDump_every == 0)) {
+            sio->writeAvgFieldsSingleFileTime( EMfields, itime );
+        }
         timer[7].update();
         
 #ifdef _IO_PARTICLE
@@ -385,7 +382,7 @@ int main (int argc, char* argv[])
             sio->writePlasma( vecSpecies, time_dual, smpi );
 #endif
         
-        if (sio->dump(EMfields, itime, signal_received, vecSpecies, smpi, simWindow, params, input_data)) break;
+        if (sio->dump(EMfields, itime, vecSpecies, smpi, simWindow, params, input_data)) break;
         
         timer[5].restart();
         if ( simWindow && simWindow->isMoving(time_dual) ) {

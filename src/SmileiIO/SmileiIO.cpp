@@ -20,6 +20,15 @@
 
 using namespace std;
 
+#include <signal.h>
+bool signal_received=false;
+void signal_callback_handler(int signum) {
+    MESSAGE("----------------------------------------------");
+    MESSAGE("Caught signal " << signum << " : dump + exit");
+    MESSAGE("----------------------------------------------");
+    signal_received = true;
+}
+
 SmileiIO::SmileiIO( PicParams& params, Diagnostic& diag, SmileiMPI* smpi ) : 
 dump_times(0), 
 fieldsToDump(diag.params.fieldsToDump),
@@ -28,7 +37,9 @@ time_reference(0.0)
     nDim_particle=params.nDim_particle;
     //particleSize = nDim_particle + 3 + 1;
     
-    
+    //! registering signal handler
+    signal(SIGUSR1, signal_callback_handler);
+        
 #ifdef _IO_PARTICLE
     particleSize = nDim_particle + 3 + 1;
     
@@ -298,7 +309,7 @@ void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI*
 #endif
 }
 
-bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, bool signal_received, std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWindow, PicParams &params, InputData& input_data) { 
+bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWindow, PicParams &params, InputData& input_data) { 
     if (signal_received ||
         (params.dump_step != 0 && (itime % params.dump_step == 0)) ||
         (params.dump_minutes != 0.0 && time_seconds()/60.0 > smpi->getSize()*(params.dump_minutes*(dump_times+1))) ) {
@@ -316,7 +327,7 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
 	fid = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 	dump_times++;
 	
-	MESSAGE(2, "DUMPING fields and particles " << nameDump.str());
+	PMESSAGE(2, "Step " << itime << " : DUMP fields and particles " << nameDump.str());
     
 	
 	sid  = H5Screate(H5S_SCALAR);
