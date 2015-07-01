@@ -11,7 +11,7 @@ LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5 -lz
 
 
 ifneq (,$(findstring poincare,$(HOSTNAME)))
-    LDFLAGS += -lgpfs -lz
+    LDFLAGS += -lgpfs -lz -L/gpfslocal/pub/python/anaconda/Anaconda-2.1.0/lib
 endif
 
 #add subdirs
@@ -55,7 +55,7 @@ DEPS := $(SRCS:.cpp=.d)
 
 
 CFLAGS+=$(shell $(PYTHONCONFIG) --includes)
-LDFLAGS+=-L/gpfslocal/pub/python/anaconda/Anaconda-2.1.0/lib $(shell $(PYTHONCONFIG) --ldflags)
+LDFLAGS+=$(shell $(PYTHONCONFIG) --ldflags)
 
 
 ifeq ($(config),debug)

@@ -184,7 +184,7 @@ int main (int argc, char* argv[])
         
         // Sum rho and J on ghost domains
         smpi->sumRhoJ( EMfields );
-        for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
+        for (unsigned int ispec=0 ; ispec<params.species_param.size(); ispec++) {
             smpi->sumRhoJs(EMfields, ispec, true);
         }
         
@@ -312,13 +312,13 @@ int main (int argc, char* argv[])
 #ifdef _OMP
             tid = omp_get_thread_num();
 #endif
-            for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
+            for (unsigned int ispec=0 ; ispec<params.species_param.size(); ispec++) {
                 if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
                     EMfields->restartRhoJs(ispec, time_dual > params.species_param[ispec].time_frozen);
                     vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow);
                 }
             }
-            for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
+            for (unsigned int ispec=0 ; ispec<params.species_param.size(); ispec++) {
 #pragma omp barrier
                 if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
                     // Loop on dims to manage exchange in corners
@@ -336,7 +336,7 @@ int main (int argc, char* argv[])
             //!\todo To simplify : sum global and per species densities
             timer[4].restart();
             smpi->sumRhoJ( EMfields );
-            for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
+            for (unsigned int ispec=0 ; ispec<params.species_param.size(); ispec++) {
                 if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ) smpi->sumRhoJs(EMfields, ispec, time_dual > params.species_param[ispec].time_frozen);
             }
             EMfields->computeTotalRhoJ();

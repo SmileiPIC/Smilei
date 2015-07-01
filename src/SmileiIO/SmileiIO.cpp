@@ -269,8 +269,7 @@ void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI*
     if (smpi->isMaster()) DEBUG("write species disabled");
     return;
 	
-    int n_species = vecSpecies.size();
-    for (int ispec=0 ; ispec<n_species ; ispec++) {
+    for (int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
         Particles* cuParticles = &(vecSpecies[ispec])->particles;
         MESSAGE(2,"write species " << ispec);
 		

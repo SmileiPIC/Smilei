@@ -185,8 +185,7 @@ PicParams::PicParams(InputData &ifile) {
 
 void PicParams::readSpecies(InputData &ifile) {
     bool ok;
-    n_species=ifile.nComponents("Species");
-    for (unsigned int ispec = 0; ispec < n_species; ispec++) {
+    for (unsigned int ispec = 0; ispec < ifile.nComponents("Species"); ispec++) {
         SpeciesStructure tmpSpec;
         
         ifile.extract("species_type",tmpSpec.species_type,"Species",ispec);
@@ -586,8 +585,8 @@ void PicParams::print()
     // Plasma related parameters
     // -------------------------
     MESSAGE("Plasma related parameters");
-    MESSAGE(1,"n_species       : " << n_species);
-    for ( unsigned int i=0 ; i<n_species ; i++ ) {
+    MESSAGE(1,"number of species       : " << species_param.size());
+    for ( unsigned int i=0 ; i<species_param.size() ; i++ ) {
         MESSAGE(1,"dens_profile.profile : " << species_param[i].dens_profile.profile);
         MESSAGE(1,"            (species_type, number of particles/cell) : ("<< species_param[i].species_type
                 << ", " << species_param[i].n_part_per_cell << ")");

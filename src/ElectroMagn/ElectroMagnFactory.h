@@ -41,7 +41,7 @@ public:
         EMfields->allFields.push_back(EMfields->Jz_ );
         EMfields->allFields.push_back(EMfields->rho_);
 
-        for (unsigned int ispec=0; ispec<params.n_species; ispec++) {
+        for (unsigned int ispec=0; ispec<params.species_param.size(); ispec++) {
             EMfields->allFields.push_back(EMfields->Jx_s[ispec] );
             EMfields->allFields.push_back(EMfields->Jy_s[ispec] );
             EMfields->allFields.push_back(EMfields->Jz_s[ispec] );

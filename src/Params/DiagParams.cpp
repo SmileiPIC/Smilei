@@ -340,7 +340,7 @@ void DiagParams::initPhases(Diagnostic* diags, PicParams& params, InputData &ifi
         
         if (my_phase.species.size()==0) {
             WARNING("adding all species to the \"DiagPhase\" " << n_phase);
-            for (unsigned int i=0;i<params.n_species; i++) {
+            for (unsigned int i=0;i<params.species_param.size(); i++) {
                 my_phase.species.push_back(params.species_param[i].species_type);
             }
         }
@@ -672,7 +672,7 @@ vector<unsigned int> DiagParams::FindSpecies( vector<string> requested_species, 
     
     // Make an array of the existing species names
     existing_species.resize(0);
-    for (unsigned int ispec=0 ; ispec<params.n_species ; ispec++) {
+    for (unsigned int ispec=0 ; ispec<params.species_param.size() ; ispec++) {
         existing_species.push_back( params.species_param[ispec].species_type );
     }
     
