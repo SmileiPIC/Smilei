@@ -25,7 +25,6 @@ dump_times(0),
 fieldsToDump(diag.params.fieldsToDump),
 time_reference(0.0)
 {
-    
     nDim_particle=params.nDim_particle;
     //particleSize = nDim_particle + 3 + 1;
     
@@ -299,12 +298,13 @@ void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI*
 #endif
 }
 
-bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin, PicParams &params, InputData& input_data) { 
-    if  ((params.dump_step != 0 && (itime % params.dump_step == 0)) ||
-         (params.dump_minutes != 0.0 && time_seconds()/60.0 > smpi->getSize()*(params.dump_minutes*(dump_times+1))) ) {
-        dumpAll( EMfields, itime,  vecSpecies, smpi, simWin, params, input_data);
-        if (params.exit_after_dump)	return true;
-    }	
+bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, int signal_num, std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWindow, PicParams &params, InputData& input_data) { 
+    if ((signal_num>0) ||
+        (params.dump_step != 0 && (itime % params.dump_step == 0)) ||
+        (params.dump_minutes != 0.0 && time_seconds()/60.0 > smpi->getSize()*(params.dump_minutes*(dump_times+1))) ) {
+        dumpAll( EMfields, itime,  vecSpecies, smpi, simWindow, params, input_data);
+        if (params.exit_after_dump || (signal_num>0))	return true;
+    }
     return false;
 }
 
@@ -630,8 +630,3 @@ double SmileiIO::time_seconds() {
 	MPI_Allreduce(&time_temp,&time_sec,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
 	return (time_sec-time_reference);
 }
-
-
-
-
-

@@ -84,7 +84,7 @@ public:
     void restartMovingWindow(hid_t fid, SimWindow* simWindow);
 	
     //! test before writing everything to file per processor
-    bool dump(ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  PicParams &params, InputData& input_data);
+    bool dump(ElectroMagn* EMfields, unsigned int itime, int signal_num, std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  PicParams &params, InputData& input_data);
 	
 private:
     //! incremental number of times we've done a dump
@@ -108,7 +108,7 @@ private:
     //! name of the fields to dump (copied from diagparams)
     std::vector<std::string> fieldsToDump; 
 	
-	
+    
 };
 
 #endif /* SMILEI_OUTPUT_H_ */
