@@ -595,12 +595,12 @@ void ElectroMagn2D::solveMaxwellFaraday()
 //#pragma omp parallel
 //{
 //#pragma omp for schedule(static)
-        for (unsigned int j=1 ; j<ny_d-1 ; j++) {
+        for (unsigned int j=1 ; j<ny_p ; j++) {
             (*Bx2D)(0,j) -= dt_ov_dy * ( (*Ez2D)(0,j) - (*Ez2D)(0,j-1) );
         }
 //    for (unsigned int i=0 ; i<nx_p;  i++) {
-    for (unsigned int i=1 ; i<nx_d-1;  i++) {
-        for (unsigned int j=1 ; j<ny_d-1 ; j++) {
+    for (unsigned int i=1 ; i<nx_p;  i++) {
+        for (unsigned int j=1 ; j<ny_p ; j++) {
             (*Bx2D)(i,j) -= dt_ov_dy * ( (*Ez2D)(i,j) - (*Ez2D)(i,j-1) );
         }
 //    }
@@ -615,7 +615,7 @@ void ElectroMagn2D::solveMaxwellFaraday()
     
     // Magnetic field Bz^(d,d)
     //for (unsigned int i=1 ; i<nx_d-1 ; i++) {
-        for (unsigned int j=1 ; j<ny_d-1 ; j++) {
+        for (unsigned int j=1 ; j<ny_p ; j++) {
             (*Bz2D)(i,j) += dt_ov_dy * ( (*Ex2D)(i,j) - (*Ex2D)(i,j-1) )
             -               dt_ov_dx * ( (*Ey2D)(i,j) - (*Ey2D)(i-1,j) );
         }

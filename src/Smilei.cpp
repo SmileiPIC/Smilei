@@ -329,11 +329,11 @@ int main (int argc, char* argv[])
         {
 	    timer[1].restart();
             if (diag_flag){
-                #pragma omp for
+                #pragma omp for schedule(static)
                 for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	          vecPatches(ipatch)->EMfields->restartRhoJs();
             }
-            #pragma omp for
+            #pragma omp for schedule(static)
             for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	      vecPatches(ipatch)->EMfields->restartRhoJ();
 
@@ -342,7 +342,7 @@ int main (int argc, char* argv[])
             tid = omp_get_thread_num();
 #endif
             //cout << "Starting dynamics" << endl;
-            #pragma omp for
+            #pragma omp for schedule(runtime)
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 		vecPatches(ipatch)->dynamics(time_dual, smpi, params, simWindow, diag_flag); // include test
 	    }
@@ -393,7 +393,7 @@ int main (int argc, char* argv[])
         // solve Maxwell's equations
         timer[2].restart();
 	// saving magnetic fields (to compute centered fields used in the particle pusher)
-        #pragma omp for
+        #pragma omp for schedule(static)
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
             //Stores B at time n in B_m.
 	    vecPatches(ipatch)->EMfields->saveMagneticFields();
@@ -407,7 +407,7 @@ int main (int argc, char* argv[])
         //Synchronize B fields between patches.
 	vecPatches.exchangeB();
         // Computes B at time n+1/2 using B and B_m.
-        #pragma omp for
+        #pragma omp for schedule(static)
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->EMfields->centerMagneticFields();
 
