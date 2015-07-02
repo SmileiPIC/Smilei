@@ -1139,7 +1139,7 @@ void VectorPatch::exchangeParticles(int ispec, PicParams &params, SmileiMPI* smp
 void VectorPatch::sumRhoJ(unsigned int diag_flag )
 {
 
-    /*unsigned int nx_p,nx_d,ny_p,ny_d, h0, oversize[2], n_space[2],step, steploc;
+  /*  unsigned int nx_p,nx_d,ny_p,ny_d, h0, oversize[2], n_space[2],gsp;
     double *pt1,*pt2;
 
     h0 = (*this)(0)->hindex;
@@ -1151,6 +1151,7 @@ void VectorPatch::sumRhoJ(unsigned int diag_flag )
     ny_p = n_space[1]+1+2*oversize[1];
     nx_d = nx_p+1;
     ny_d = ny_p+1;
+    gsp = 1+2*oversize[0]; //Ghost size primal
 
     #pragma omp for schedule(dynamic) private(pt1,pt2)
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
@@ -1159,65 +1160,68 @@ void VectorPatch::sumRhoJ(unsigned int diag_flag )
             if(diag_flag){
                 pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->rho_)(n_space[0]*ny_p);
                 pt2 = &(*(*this)(ipatch)->EMfields->rho_)(0);
-                for (unsigned int i = 0; i < (2*oversize[0]+1)* ny_p ; i++) pt1[i] += pt2[i];
-                memcpy( pt2, pt1, (2*oversize[0]+1)*ny_p*sizeof(double)); 
+                for (unsigned int i = 0; i < gsp* ny_p ; i++) pt1[i] += pt2[i];
+                memcpy( pt2, pt1, gsp*ny_p*sizeof(double)); 
                     
             }
             pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->Jx_)(n_space[0]*ny_p);
             pt2 = &(*(*this)(ipatch)->EMfields->Jx_)(0);
-            for (unsigned int i = 0; i < (2*oversize[0]+2)* ny_p ; i++) pt1[i] += pt2[i];
-            memcpy( pt2, pt1, (2*oversize[0]+2)*ny_p*sizeof(double)); 
+            for (unsigned int i = 0; i < (gsp+1)* ny_p ; i++) pt1[i] += pt2[i];
+            memcpy( pt2, pt1, (gsp+1)*ny_p*sizeof(double)); 
 
             pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->Jy_)(n_space[0]*ny_d);
             pt2 = &(*(*this)(ipatch)->EMfields->Jy_)(0);
-            for (unsigned int i = 0; i < (2*oversize[0]+1)* ny_d ; i++) pt1[i] += pt2[i];
-            memcpy( pt2, pt1, (2*oversize[0]+1)*ny_d*sizeof(double)); 
+            for (unsigned int i = 0; i < gsp* ny_d ; i++) pt1[i] += pt2[i];
+            memcpy( pt2, pt1, gsp*ny_d*sizeof(double)); 
 
             pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->Jz_)(n_space[0]*ny_p);
             pt2 = &(*(*this)(ipatch)->EMfields->Jz_)(0);
-            for (unsigned int i = 0; i < (2*oversize[0]+1)* ny_p ; i++) pt1[i] += pt2[i];
-            memcpy( pt2, pt1, (2*oversize[0]+1)*ny_p*sizeof(double)); 
+            for (unsigned int i = 0; i < gsp* ny_p ; i++) pt1[i] += pt2[i];
+            memcpy( pt2, pt1, gsp*ny_p*sizeof(double)); 
         }
     }//End of openmp for used as a barrier
-    #pragma omp for schedule(dynamic) private(step, steploc, pt1, pt2)
+    gsp = 1+2*oversize[1]; //Ghost size primal
+    #pragma omp for schedule(dynamic) private(pt1, pt2)
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
         if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[1]){
         //The patch below me belongs to the same MPI process than I.
-            step = 2*oversize[1]+1;
             if(diag_flag){
                 pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->rho_)(n_space[1]);
                 pt2 = &(*(*this)(ipatch)->EMfields->rho_)(0);
-                for (unsigned int i = 0; i < step* nx_p ; i++){
-                    steploc = i%step+ny_p*(i/step);
-                    pt1[steploc] += pt2[steploc];
-                    pt2[steploc] = pt1[steploc] ;
+                for (unsigned int j = 0; j < nx_p ; j++){
+                    for (unsigned int i = 0; i < gsp ; i++) pt1[i] += pt2[i];
+                    memcpy( pt2, pt1, gsp*sizeof(double)); 
+                    pt1 += ny_p;
+                    pt2 += ny_p;
                 }
             }
             pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->Jx_)(n_space[1]);
             pt2 = &(*(*this)(ipatch)->EMfields->Jx_)(0);
-            for (unsigned int i = 0; i < step* nx_d ; i++){
-                steploc = i%step+ny_p*(i/step);
-                pt1[steploc] += pt2[steploc];
-                pt2[steploc] = pt1[steploc] ;
+            for (unsigned int j = 0; j < nx_d ; j++){
+                for (unsigned int i = 0; i < gsp ; i++) pt1[i] += pt2[i];
+                memcpy( pt2, pt1, gsp*sizeof(double)); 
+                pt1 += ny_p;
+                pt2 += ny_p;
             }
             pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->Jz_)(n_space[1]);
             pt2 = &(*(*this)(ipatch)->EMfields->Jz_)(0);
-            for (unsigned int i = 0; i < step* nx_p ; i++){
-                steploc = i%step+ny_p*(i/step);
-                pt1[steploc] += pt2[steploc];
-                pt2[steploc] = pt1[steploc] ;
+            for (unsigned int j = 0; j < nx_p ; j++){
+                for (unsigned int i = 0; i < gsp ; i++) pt1[i] += pt2[i];
+                memcpy( pt2, pt1, gsp*sizeof(double)); 
+                pt1 += ny_p;
+                pt2 += ny_p;
             }
-            step = 2*oversize[1]+2;
             pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->Jy_)(n_space[1]);
             pt2 = &(*(*this)(ipatch)->EMfields->Jy_)(0);
-            for (unsigned int i = 0; i < step* nx_p ; i++){
-                steploc = i%step+ny_d*(i/step);
-                pt1[steploc] += pt2[steploc];
-                pt2[steploc] = pt1[steploc] ;
+            for (unsigned int j = 0; j < nx_p ; j++){
+                for (unsigned int i = 0; i < gsp+1 ; i++) pt1[i] += pt2[i];
+                memcpy( pt2, pt1, (gsp+1)*sizeof(double)); 
+                pt1 += ny_d;
+                pt2 += ny_d;
             }
         }
-    }
-*/
+    }*/
+
 
     #pragma omp master
     {
