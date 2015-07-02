@@ -284,7 +284,9 @@ int main (int argc, char* argv[])
         time_prim += params.timestep;
         time_dual += params.timestep;
         
+#ifdef _TOBEPATCHED
         if  ((diag_params.fieldDump_every != 0) && (itime % diag_params.fieldDump_every == 0)) diag_flag = 1;
+#endif
 
         // send message at given time-steps
         // --------------------------------
@@ -369,15 +371,16 @@ int main (int argc, char* argv[])
 	    }
         }
         //cout << "End computeTrho" << endl;
+        //Synchronize J and posisbly Rho between patches.
+	vecPatches.sumRhoJ( diag_flag ); // MPI
 	#pragma omp master
         {
 
-            //Synchronize J and posisbly Rho between patches.
-	    vecPatches.sumRhoJ( diag_flag ); // MPI
-            if(diag_flag)
+            if(diag_flag){
 	        for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 	            vecPatches.sumRhoJs( ispec ); // MPI
 	        }
+            }
         }
         //cout << "End sumrho" << endl;
         timer[4].update();

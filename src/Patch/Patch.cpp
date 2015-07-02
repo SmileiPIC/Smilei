@@ -1138,33 +1138,117 @@ void VectorPatch::exchangeParticles(int ispec, PicParams &params, SmileiMPI* smp
 
 void VectorPatch::sumRhoJ(unsigned int diag_flag )
 {
-    if (diag_flag)
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->rho_ ); // initialize
-    }
 
-    if (diag_flag)
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->rho_ ); // finalize (waitall + sum)
-    }
+    /*unsigned int nx_p,nx_d,ny_p,ny_d, h0, oversize[2], n_space[2],step, steploc;
+    double *pt1,*pt2;
 
+    h0 = (*this)(0)->hindex;
+    oversize[0] = (*this)(0)->EMfields->oversize[0];
+    oversize[1] = (*this)(0)->EMfields->oversize[1];
+    n_space[0] = (*this)(0)->EMfields->n_space[0];
+    n_space[1] = (*this)(0)->EMfields->n_space[1];
+    nx_p = n_space[0]+1+2*oversize[0];
+    ny_p = n_space[1]+1+2*oversize[1];
+    nx_d = nx_p+1;
+    ny_d = ny_p+1;
+
+    #pragma omp for schedule(dynamic) private(pt1,pt2)
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jx_ ); // initialize
+        if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[3]){
+        //The patch on my left belongs to the same MPI process than I.
+            if(diag_flag){
+                pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->rho_)(n_space[0]*ny_p);
+                pt2 = &(*(*this)(ipatch)->EMfields->rho_)(0);
+                for (unsigned int i = 0; i < (2*oversize[0]+1)* ny_p ; i++) pt1[i] += pt2[i];
+                memcpy( pt2, pt1, (2*oversize[0]+1)*ny_p*sizeof(double)); 
+                    
+            }
+            pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->Jx_)(n_space[0]*ny_p);
+            pt2 = &(*(*this)(ipatch)->EMfields->Jx_)(0);
+            for (unsigned int i = 0; i < (2*oversize[0]+2)* ny_p ; i++) pt1[i] += pt2[i];
+            memcpy( pt2, pt1, (2*oversize[0]+2)*ny_p*sizeof(double)); 
+
+            pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->Jy_)(n_space[0]*ny_d);
+            pt2 = &(*(*this)(ipatch)->EMfields->Jy_)(0);
+            for (unsigned int i = 0; i < (2*oversize[0]+1)* ny_d ; i++) pt1[i] += pt2[i];
+            memcpy( pt2, pt1, (2*oversize[0]+1)*ny_d*sizeof(double)); 
+
+            pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->Jz_)(n_space[0]*ny_p);
+            pt2 = &(*(*this)(ipatch)->EMfields->Jz_)(0);
+            for (unsigned int i = 0; i < (2*oversize[0]+1)* ny_p ; i++) pt1[i] += pt2[i];
+            memcpy( pt2, pt1, (2*oversize[0]+1)*ny_p*sizeof(double)); 
+        }
+    }//End of openmp for used as a barrier
+    #pragma omp for schedule(dynamic) private(step, steploc, pt1, pt2)
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+        if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[1]){
+        //The patch below me belongs to the same MPI process than I.
+            step = 2*oversize[1]+1;
+            if(diag_flag){
+                pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->rho_)(n_space[1]);
+                pt2 = &(*(*this)(ipatch)->EMfields->rho_)(0);
+                for (unsigned int i = 0; i < step* nx_p ; i++){
+                    steploc = i%step+ny_p*(i/step);
+                    pt1[steploc] += pt2[steploc];
+                    pt2[steploc] = pt1[steploc] ;
+                }
+            }
+            pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->Jx_)(n_space[1]);
+            pt2 = &(*(*this)(ipatch)->EMfields->Jx_)(0);
+            for (unsigned int i = 0; i < step* nx_d ; i++){
+                steploc = i%step+ny_p*(i/step);
+                pt1[steploc] += pt2[steploc];
+                pt2[steploc] = pt1[steploc] ;
+            }
+            pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->Jz_)(n_space[1]);
+            pt2 = &(*(*this)(ipatch)->EMfields->Jz_)(0);
+            for (unsigned int i = 0; i < step* nx_p ; i++){
+                steploc = i%step+ny_p*(i/step);
+                pt1[steploc] += pt2[steploc];
+                pt2[steploc] = pt1[steploc] ;
+            }
+            step = 2*oversize[1]+2;
+            pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->Jy_)(n_space[1]);
+            pt2 = &(*(*this)(ipatch)->EMfields->Jy_)(0);
+            for (unsigned int i = 0; i < step* nx_p ; i++){
+                steploc = i%step+ny_d*(i/step);
+                pt1[steploc] += pt2[steploc];
+                pt2[steploc] = pt1[steploc] ;
+            }
+        }
     }
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jx_ ); // finalize (waitall + sum)
-    }
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jy_ ); // initialize
-    }
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jy_ ); // finalize (waitall + sum)
-    }
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jz_ ); // initialize
-    }
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jz_ ); // finalize (waitall + sum)
+*/
+
+    #pragma omp master
+    {
+        if (diag_flag)
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            (*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->rho_ ); // initialize
+        }
+
+        if (diag_flag)
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            (*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->rho_ ); // finalize (waitall + sum)
+        }
+
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            (*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jx_ ); // initialize
+        }
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            (*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jx_ ); // finalize (waitall + sum)
+        }
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            (*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jy_ ); // initialize
+        }
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            (*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jy_ ); // finalize (waitall + sum)
+        }
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            (*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jz_ ); // initialize
+        }
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            (*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jz_ ); // finalize (waitall + sum)
+        }
     }
 
 
