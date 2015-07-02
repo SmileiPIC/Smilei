@@ -91,14 +91,15 @@ public:
 	
     //! this static variable is deined (in the .cpp) as false but becomes true when
     //! the signal SIGUSR1 is captured by the signal_callback_handler fnction
-    static bool signal_received;
+    static int signal_received;
     
     //! this function catches the SIGUSR1 signal and sets the signal_received to true
     static void signal_callback_handler(int signum) {
         MESSAGE("----------------------------------------------");
         MESSAGE("Caught signal " << signum << " : dump + exit");
         MESSAGE("----------------------------------------------");
-        signal_received = true;
+        if (signum!=SIGUSR2)
+            signal_received = signum;
     }
     
 private:

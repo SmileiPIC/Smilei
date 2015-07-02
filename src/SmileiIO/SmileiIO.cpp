@@ -21,7 +21,7 @@
 using namespace std;
 
 // static varable must be defined and initialized here
-bool SmileiIO::signal_received=false;
+int SmileiIO::signal_received=0;
 
 SmileiIO::SmileiIO( PicParams& params, Diagnostic& diag, SmileiMPI* smpi ) : 
 dump_times(0), 
@@ -35,10 +35,17 @@ time_reference(0.0)
     if (SIG_ERR == signal(SIGUSR1, SmileiIO::signal_callback_handler)) {
         WARNING("Cannot catch signal SIGUSR1");
     }
+    if (SIG_ERR == signal(SIGUSR2, SmileiIO::signal_callback_handler)) {
+        WARNING("Cannot catch signal SIGUSR2");
+    }
+    // one of these below should be the soft linit signal for loadlever
     if (SIG_ERR == signal(SIGXCPU, SmileiIO::signal_callback_handler)) {
         WARNING("Cannot catch signal SIGXCPU");
     }
-        
+    if (SIG_ERR == signal(SIGTERM, SmileiIO::signal_callback_handler)) {
+        WARNING("Cannot catch signal SIGTERM");
+    }
+    
 #ifdef _IO_PARTICLE
     particleSize = nDim_particle + 3 + 1;
     
@@ -309,11 +316,11 @@ void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI*
 }
 
 bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWindow, PicParams &params, InputData& input_data) { 
-    if (signal_received ||
+    if (signal_received!=0 ||
         (params.dump_step != 0 && (itime % params.dump_step == 0)) ||
         (params.dump_minutes != 0.0 && time_seconds()/60.0 > smpi->getSize()*(params.dump_minutes*(dump_times+1))) ) {
         dumpAll( EMfields, itime,  vecSpecies, smpi, simWindow, params, input_data);
-        if (signal_received || params.exit_after_dump)	return true;
+        if ((signal_received != SIGUSR2) || params.exit_after_dump)	return true;
     }
     return false;
 }
