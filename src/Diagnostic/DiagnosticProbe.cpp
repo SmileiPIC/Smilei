@@ -99,38 +99,7 @@ fileId(0) {
 	probesArray[np] = new Field2D(probesArraySize);
 
 
-	// ---------------------------------------------------
-	// Start file split definition
-	// ---------------------------------------------------
-	int nPatches(1);
-	for (int iDim=0;iDim<params.nDim_field;iDim++) nPatches*=params.number_of_patches[iDim];
-	// probesStart
-	probesStart[np] = 0;
-	MPI_Status status;
-	stringstream rtag("");
-	rtag << cpuRank-1 << "0" << cpuRank;
-	int tag(0);
-	rtag >> tag;
-#ifdef _TOBEPATCHED
-	if (cpuRank>0) {
-	    //cout << patch->Hindex() << " Recv from " << patch->getMPIRank(cpuRank-1) << " with tag " << tag << endl;
-	    MPI_Recv( &(probesStart[np]), 1, MPI_INTEGER, patch->getMPIRank(cpuRank-1), tag, MPI_COMM_WORLD, &status );
-	}
-	    
-	int probeEnd = probesStart[np]+probeParticles[np].size();
-	stringstream stag("");
-	stag << cpuRank << "0" << cpuRank+1;
-	tag = 0;
-	stag >> tag;
-	if (cpuRank!=nPatches-1) {
-	    //cout << patch->Hindex() << " Send to " << patch->getMPIRank(cpuRank+1) << " with tag " << tag << endl;
-	    MPI_Send( &probeEnd, 1, MPI_INTEGER, patch->getMPIRank(cpuRank+1), tag, MPI_COMM_WORLD );
 
-	}
-#endif
-	// ---------------------------------------------------
-	// End file split definition
-	// ---------------------------------------------------
     }
     //cout << " nprobes : " << probeParticles[0].size() << endl;
  
@@ -188,11 +157,51 @@ void DiagnosticProbe::createFile(DiagParams &diagParams)
 }
 
 
-void DiagnosticProbe::setFile(hid_t masterFileId)
+void DiagnosticProbe::setFile(hid_t masterFileId, Patch* patch, PicParams& params, DiagParams& diagParams)
 {
     fileId = masterFileId;
+
+    // ---------------------------------------------------
+    // Start file split definition
+    // ---------------------------------------------------
+    int nPatches(1);
+    for (int iDim=0;iDim<params.nDim_field;iDim++) nPatches*=params.number_of_patches[iDim];
+    // probesStart
+    for (unsigned int np=0; np<diagParams.probeStruc.size(); np++) {
+	probesStart[np] = 0;
+	MPI_Status status;
+	stringstream rtag("");
+	rtag << cpuRank-1 << "0" << cpuRank;
+	int tag(0);
+	rtag >> tag;
+
+	if (cpuRank>0) {
+	    //cout << patch->Hindex() << " Recv from " << patch->getMPIRank(cpuRank-1) << " with tag " << tag << endl;
+	    MPI_Recv( &(probesStart[np]), 1, MPI_INTEGER, patch->getMPIRank(cpuRank-1), tag, MPI_COMM_WORLD, &status );
+	}
+	    
+	int probeEnd = probesStart[np]+probeParticles[np].size();
+	stringstream stag("");
+	stag << cpuRank << "0" << cpuRank+1;
+	tag = 0;
+	stag >> tag;
+	if (cpuRank!=nPatches-1) {
+	    //cout << patch->Hindex() << " Send to " << patch->getMPIRank(cpuRank+1) << " with tag " << tag << endl;
+	    MPI_Send( &probeEnd, 1, MPI_INTEGER, patch->getMPIRank(cpuRank+1), tag, MPI_COMM_WORLD );
+
+	}
+    }
+
+    // ---------------------------------------------------
+    // End file split definition
+    // ---------------------------------------------------
+
 }
 
+void DiagnosticProbe::setFile(hid_t masterFileId)
+{
+    fileId = masterFileId;  
+}
 
 void DiagnosticProbe::writePositionIn( PicParams &params, DiagParams &diagParams )
 {
@@ -286,11 +295,9 @@ DiagnosticProbe::~DiagnosticProbe()
 }
 
 void DiagnosticProbe::close() {
-#ifdef _TOBEPATCHED
     if (fileId>0) {
         H5Fclose(fileId);
     }
-#endif
     /*cout << " I 'm here " << endl;
     H5Fflush(fileId, H5F_SCOPE_GLOBAL );
     H5Fclose(fileId);*/
@@ -358,6 +365,7 @@ void DiagnosticProbe::write(int probe_id, unsigned int timestep, hid_t group_id)
     dimsf[0] = nProbeTot;
     dimsf[1] = probeSize;
     hid_t filespace = H5Screate_simple(2, dimsf, NULL);
+    //cout << " CPU Rank " << cpuRank << " - writing at "  << probesStart[probe_id] << endl;
     offset[0] = probesStart[probe_id];
     offset[1] = 0;
     stride[0] = 1;

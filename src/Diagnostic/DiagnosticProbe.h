@@ -27,11 +27,13 @@ class Field2D;
 class DiagnosticProbe {
     
 public:
+    friend class SmileiMPI;
     
     //! the creator need both sim parameters params and the diagnostic parameter diagParams
     DiagnosticProbe(PicParams &params, DiagParams &diagParams, Patch* patch);
 
     void createFile(DiagParams &diagParams);
+    void setFile(hid_t masterFileId, Patch* patch, PicParams& params, DiagParams &diagParams);
     void setFile(hid_t masterFileId);
 
     void writePositionIn( PicParams &params, DiagParams &diagParams );

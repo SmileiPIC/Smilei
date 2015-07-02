@@ -1415,8 +1415,9 @@ void VectorPatch::computeScalarsDiags(int timestep)
 void VectorPatch::initProbesDiags(PicParams& params, DiagParams &diag_params, int timestep)
 {
     (*this)(0)->Diags->probes.createFile(diag_params);
-    for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++) {
-	(*this)(ipatch)->Diags->probes.setFile( (*this)(0)->Diags->probes.fileId );
+    // Start at 0, cause of setFile set probesStart (locate writing point in h5 file)
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	(*this)(ipatch)->Diags->probes.setFile( (*this)(0)->Diags->probes.fileId, (*this)(ipatch), params, diag_params );
     }
     //cout << " File created " << endl;
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
@@ -1590,6 +1591,8 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi)
     }*/
     int nPatchSend(send_patch_id_.size());
     for (int ipatch=nPatchSend-1 ; ipatch>=0 ; ipatch--) {
+	//Ok while at least 1 old patch stay inon current CPU
+	(*this)(send_patch_id_[ipatch])->Diags->probes.setFile(0);
 	delete (*this)(send_patch_id_[ipatch]);
 	patches_[ send_patch_id_[ipatch] ] = NULL;
 	patches_.erase( patches_.begin() + send_patch_id_[ipatch] );
@@ -1611,4 +1614,20 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi)
 	(*this)(ipatch)->updateMPIenv(smpi);
     }
 
+    definePatchDiagsMaster();
+
+}
+
+void VectorPatch::definePatchDiagsMaster()
+{
+    int patchIdMaster(0);
+    for (patchIdMaster=0 ; patchIdMaster<patches_.size() ; patchIdMaster++ )
+	if ( (*this)(patchIdMaster)->Diags->probes.fileId != 0 ) break;
+
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	if(ipatch!=patchIdMaster)
+	    (*this)(ipatch)->Diags->probes.setFile( (*this)(patchIdMaster)->Diags->probes.fileId );
+    }
+
+    
 }
