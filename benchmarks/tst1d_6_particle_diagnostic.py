@@ -5,13 +5,9 @@
 #           SmileiComponent, Species, Laser, Collisions, DiagProbe, DiagParticles,
 #           DiagScalar, DiagPhase or ExtField
 
+import math
 
-# sim_units: normalisation units for the input data
-#            it is used only in the input data & log file
-#            codes outputs are always in "normalised" units
-#            'wavelength' : input data are in wavelength-related units
-#            'normalized' : input data are put in code (relativistic) units
-sim_units = "wavelength"
+L0 = 2.*math.pi
 wavelength_SI = 1.e-6
 
 # dim: Geometry of the simulation
@@ -25,31 +21,27 @@ dim = "1d3v"
 interpolation_order = 2
 
 # SIMULATION TIME 
-# set either the resolution (res_time) or the timestep
-# res_time = integer, number of time-steps within one unit of time (`sim_units`)
-# timestep = float, time step in units of `sim_units`
-# sim_time = float, duration of the simulation  in units of `sim_units`
-timestep = 0.005
-sim_time  = 0.5
+# timestep = float, time steps
+# sim_time = float, duration of the simulation
+timestep = 0.005 * L0
+sim_time  = 0.5 * L0
 
 #  optional parameter time_fields_frozen, during which fields are not updated
 time_fields_frozen = 100000000000.
 
 
 # SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
-# either use the resolution (res_space) or cell-length (cell_length)
-# res_space   = list of integers, number of cells in one unit of space (`sim_units`)
-# sim_length  = length of the simulation in units of `sim_units`
-# cell_length = cell length  in units of `sim_units`
-cell_length = [0.01]
-sim_length  = [1.]
+# cell_length = cell length`
+# sim_length  = length of the simulation
+cell_length = [0.01 * L0]
+sim_length  = [1. * L0]
 
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
-# bc_em_type_long/trans : boundary conditions used for EM fields 
-#                         in the longitudinal or transverse directions
-#                         'periodic'      : periodic BC (using MPI topology)
-#                         'silver-muller' : injecting/absorbing
-bc_em_type_x  = ["periodic"]*2
+# bc_em_type_x : two strings, x boundary conditions for EM fields 
+# bc_em_type_y : two strings, y boundary conditions for EM fields 
+#                'periodic'      : periodic BC (using MPI topology)
+#                'silver-muller' : injecting/absorbing
+bc_em_type_x  = ["periodic"]
 
 
 # RANDOM seed used to randomize the random number generator
@@ -60,12 +52,12 @@ random_seed = 0
 # species_type       = string, given name to the species (e.g. ion, electron, positron, test ...)
 # initPosition_type  = string, "regular" or "random"
 # initMomentum_type  = string "cold", "maxwell-juettner" or "rectangular"
-# n_part_per_cell    = integer, number of particles/cell
 # c_part_max         = float, factor on the memory reserved for the total number of particles
 # mass               = float, particle mass in units of the electron mass
 # dynamics_type      = string, type of species dynamics = "norm" or "rrLL"
 # time_frozen        = float, time during which particles are frozen in units of the normalization time
 # radiating          = boolean, if true, incoherent radiation calculated using the Larmor formula 
+# n_part_per_cell    = integer or function, number of particles/cell
 # charge             = float or function, particle charge in units of the electron charge
 # charge_density     = float or function, species charge density in units of the "critical" density
 #     or nb_density for number density
@@ -81,7 +73,6 @@ Species(
 	mass = 1836.0,
 	charge = 1.0,
 	nb_density = 10.,
-	mean_velocity = [0., 0., 0.],
 	temperature = [0.00002],
 	time_frozen = 0.0,
 	bc_part_type_west = "none",
@@ -155,7 +146,7 @@ DiagParticles(
 	time_average = 2,
 	species = ["electron1"],
 	axes = [
-		["x", 0., 1., 100],
+		["x", 0.*L0, 1.*L0, 100],
 		["vx", -0.1, 0.1, 100]
 	]
 )
@@ -166,7 +157,7 @@ DiagParticles(
 	time_average = 1,
 	species = ["ion1"],
 	axes = [
-		("x", 0., 1., 100),
+		("x", 0.*L0, 1.*L0, 100),
 		("vx", -0.001, 0.001, 100)
 	]
 )
@@ -177,7 +168,7 @@ DiagParticles(
 	time_average = 2,
 	species = ["electron1"],
 	axes = [
-		["x", 0., 1., 100],
+		["x", 0.*L0, 1.*L0, 100],
 		["vx", -0.1, 0.1, 100]
 	]
 )

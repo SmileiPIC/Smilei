@@ -58,7 +58,7 @@ for path in ["Stopping_power1","Stopping_power2","Stopping_power3"]:
 	temperature_electron = np.double(sim.namelist.Species["backgroundelectron"].temperature)
 	density_electron     = np.double(sim.namelist.Species["backgroundelectron"].charge_density)
 	coulomb_log          = np.double(sim.namelist.Collisions[0].coulomb_log)
-	dt                   = np.double(sim.namelist.timestep)
+	dt                   = np.double(sim.namelist.timestep)/(2*np.pi)
 	
 	re = 2.8179403267e-15 # meters
 	wavelength = 1e-6 # meters

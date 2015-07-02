@@ -23,7 +23,6 @@ def f(x):
         return 0.0
 
 # wavelength_SI: used by Fred Diags. should be removed
-#
 wavelength_SI = 1.e-6
 
 # dim: Geometry of the simulation
@@ -69,12 +68,12 @@ random_seed = 0
 # species_type       = string, given name to the species (e.g. ion, electron, positron, test ...)
 # initPosition_type  = string, "regular" or "random"
 # initMomentum_type  = string "cold", "maxwell-juettner" or "rectangular"
-# n_part_per_cell    = integer, number of particles/cell
 # c_part_max         = float, factor on the memory reserved for the total number of particles
 # mass               = float, particle mass in units of the electron mass
 # dynamics_type      = string, type of species dynamics = "norm" or "rrLL"
 # time_frozen        = float, time during which particles are frozen in units of the normalization time
 # radiating          = boolean, if true, incoherent radiation calculated using the Larmor formula 
+# n_part_per_cell    = integer or function, number of particles/cell
 # charge             = float or function, particle charge in units of the electron charge
 # charge_density     = float or function, species charge density in units of the "critical" density
 #     or nb_density for number density

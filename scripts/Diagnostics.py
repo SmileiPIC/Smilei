@@ -1122,7 +1122,7 @@ class ParticleDiagnostic(Diagnostic):
 					A[d] = self._np.sum(A[d], axis=iaxis, keepdims=True) # sum over the slice
 			A[d] = self._np.squeeze(A[d]) # remove sliced axes
 			# Divide by the bins size
-			A[d] /= self._bsize
+			A[d] /= self._np.squeeze(self._bsize)
 		# Calculate operation
 		data_operation = self.operation
 		for d in reversed(self._diags):

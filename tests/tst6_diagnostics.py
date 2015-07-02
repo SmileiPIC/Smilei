@@ -38,7 +38,7 @@ sim_length  = [1. * L0]
 
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
 # bc_em_type_x : two strings, x boundary conditions for EM fields 
-# bc_em_type_y : two strings, x boundary conditions for EM fields 
+# bc_em_type_y : two strings, y boundary conditions for EM fields 
 #                'periodic'      : periodic BC (using MPI topology)
 #                'silver-muller' : injecting/absorbing
 bc_em_type_x  = ["periodic"]
@@ -52,12 +52,12 @@ random_seed = 0
 # species_type       = string, given name to the species (e.g. ion, electron, positron, test ...)
 # initPosition_type  = string, "regular" or "random"
 # initMomentum_type  = string "cold", "maxwell-juettner" or "rectangular"
-# n_part_per_cell    = integer, number of particles/cell
 # c_part_max         = float, factor on the memory reserved for the total number of particles
 # mass               = float, particle mass in units of the electron mass
 # dynamics_type      = string, type of species dynamics = "norm" or "rrLL"
 # time_frozen        = float, time during which particles are frozen in units of the normalization time
 # radiating          = boolean, if true, incoherent radiation calculated using the Larmor formula 
+# n_part_per_cell    = integer or function, number of particles/cell
 # charge             = float or function, particle charge in units of the electron charge
 # charge_density     = float or function, species charge density in units of the "critical" density
 #     or nb_density for number density
@@ -87,7 +87,7 @@ Species(
 	mass = 1.0,
 	charge = -1.0,
 	nb_density = 10.,
-	mean_velocity = [0.05],
+	mean_velocity = [0.05, 0., 0.],
 	temperature = [0.00002],
 	time_frozen = 0.0,
 	bc_part_type_west = "none",
