@@ -242,13 +242,13 @@ int main (int argc, char* argv[])
     // Count timer
     vector<Timer> timer(9);
     
-    timer[0].init(smpi, "global");
-    timer[1].init(smpi, "particles");
-    timer[2].init(smpi, "maxwell");
-    timer[3].init(smpi, "diagnostics");
-    timer[4].init(smpi, "densities");
+    timer[0].init(smpi, "Global");
+    timer[1].init(smpi, "Particles");
+    timer[2].init(smpi, "Maxwell");
+    timer[3].init(smpi, "Diagnostics");
+    timer[4].init(smpi, "Densities");
     timer[5].init(smpi, "Mov window");
-    timer[6].init(smpi, "fieldsDump");
+    timer[6].init(smpi, "Fields");
     timer[7].init(smpi, "AvgFields");
     timer[8].init(smpi, "Collisions");
     
@@ -409,14 +409,20 @@ int main (int argc, char* argv[])
     //double timElapsed=smpiData->time_seconds();
     //if ( smpi->isMaster() ) MESSAGE(0, "Time in time loop : " << timElapsed );
     timer[0].update();
-    MESSAGE(0, "Time in time loop : " << timer[0].getTime() );
+    MESSAGE("Time profiling :");
+    MESSAGE("----------------------------------------------");
+
+    MESSAGE(0, "Time in time loop :\t" << timer[0].getTime() );
     if ( smpi->isMaster() )
         for (int i=1 ; i<timer.size() ; i++) timer[i].print(timer[0].getTime());
     
     double coverage(0.);
     for (int i=1 ; i<timer.size() ; i++) coverage += timer[i].getTime();
-    MESSAGE(0, "\t" << setw(12) << "Coverage\t" << coverage/timer[0].getTime()*100. << " %" );
+    MESSAGE(0, "\t" << setw(12) << "Coverage\t\t" << coverage/timer[0].getTime()*100. << " %" );
     
+    MESSAGE("----------------------------------------------");
+    Diags.printTimers(smpi,timer[3].getTime());
+
     
     // ------------------------------------------------------------------
     //                      Temporary validation diagnostics

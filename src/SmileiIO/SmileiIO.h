@@ -89,7 +89,11 @@ public:
     //! test before writing everything to file per processor
     bool dump(ElectroMagn* EMfields, unsigned int itime, std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  PicParams &params, InputData& input_data);
 	
+    //! this static variable is deined (in the .cpp) as false but becomes true when
+    //! the signal SIGUSR1 is captured by the signal_callback_handler fnction
     static bool signal_received;
+    
+    //! this function catches the SIGUSR1 signal and sets the signal_received to true
     static void signal_callback_handler(int signum) {
         MESSAGE("----------------------------------------------");
         MESSAGE("Caught signal " << signum << " : dump + exit");

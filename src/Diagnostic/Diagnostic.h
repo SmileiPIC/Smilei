@@ -33,9 +33,12 @@ public:
     //! destructor
     ~Diagnostic(){};
     
+    //! print timers
+    void printTimers(SmileiMPI *smpi, double tottime);
+    
     //! close all diags
     void closeAll();
-    
+
     //! check if at timestep diagnostics must be called
     void runAllDiags (int timestep, ElectroMagn* EMfields, std::vector<Species*>&, Interpolator *interp, SmileiMPI *smpi);
  

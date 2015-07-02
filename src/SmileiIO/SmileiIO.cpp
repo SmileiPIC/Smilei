@@ -20,7 +20,7 @@
 
 using namespace std;
 
-
+// static varable must be defined and initialized here
 bool SmileiIO::signal_received=false;
 
 SmileiIO::SmileiIO( PicParams& params, Diagnostic& diag, SmileiMPI* smpi ) : 
@@ -33,7 +33,7 @@ time_reference(0.0)
     
     // registering signal handler
     signal(SIGUSR1, SmileiIO::signal_callback_handler);
-        
+    
 #ifdef _IO_PARTICLE
     particleSize = nDim_particle + 3 + 1;
     
@@ -321,8 +321,7 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
 	fid = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 	dump_times++;
 	
-	MESSAGEALL("Step " << itime << " : DUMP fields and particles " << nameDump.str());
-    
+	MESSAGEALL("Step " << itime << " : DUMP fields and particles " << nameDump.str());    
 	
 	sid  = H5Screate(H5S_SCALAR);
     tid = H5Tcopy(H5T_C_S1);

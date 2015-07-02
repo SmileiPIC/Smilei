@@ -1,6 +1,7 @@
 #include "Diagnostic.h"
 
 #include <string>
+#include <iomanip>
 
 #include <hdf5.h>
 
@@ -27,12 +28,6 @@ params(this, params,ifile,smpi)
 
 void Diagnostic::closeAll () {
     
-    MESSAGE(0, "Time in diags : ");
-    MESSAGE(0, "scalars : " << dtimer[0].getTime() );
-    MESSAGE(0, "probes : " << dtimer[1].getTime() );
-    MESSAGE(0, "phases : " << dtimer[2].getTime() );
-    MESSAGE(0, "particles : " << dtimer[3].getTime() );
-    
     scalars.close();
     probes.close();
     phases.close();
@@ -40,6 +35,18 @@ void Diagnostic::closeAll () {
     for (int i=0; i<vecDiagnosticParticles.size(); i++) // loop all particle diagnostics
         vecDiagnosticParticles[i]->close();
     
+}
+
+void Diagnostic::printTimers (SmileiMPI *smpi, double tottime) {
+    
+    double coverage(0.);
+    MESSAGE(0, "Time in diagnostics : \t"<< tottime);
+    if ( smpi->isMaster() )
+        for (int i=0 ; i<dtimer.size() ; i++) {
+            dtimer[i].print(tottime) ;
+            coverage += dtimer[i].getTime();
+        }
+    MESSAGE(0, "\t" << setw(12) << "Coverage\t\t" << coverage/tottime*100. << " %" );    
 }
 
 double Diagnostic::getScalar(string name){
