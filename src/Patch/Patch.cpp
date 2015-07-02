@@ -9,6 +9,7 @@
 #include "PatchesFactory.h"
 #include "Species.h"
 #include "Particles.h"
+#include "SmileiIOFactory.h"
 
 using namespace std;
 
@@ -146,6 +147,8 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 	Proj       = ProjectorFactory::create(params, smpi, this);                  // + patchId -> idx_domain_begin (now = ref smpi)
 
 	Diags = new Diagnostic(params,diag_params, smpi, this);
+
+	sio = SmileiIOFactory::create(params, diag_params, this);
 	
 };
 
@@ -1435,6 +1438,22 @@ void VectorPatch::finalizeProbesDiags(PicParams& params, DiagParams &diag_params
 {
     for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++) {
 	(*this)(ipatch)->Diags->probes.setFile( 0 );
+    }
+
+}
+
+void VectorPatch::initDumpFields(PicParams& params, DiagParams &diag_params, int timestep)
+{
+    (*this)(0)->sio->createFiles(params, diag_params, (*this)(0));
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	(*this)(ipatch)->sio->setFiles( (*this)(0)->sio->global_file_id_, (*this)(0)->sio->global_file_id_avg );
+    }
+}
+
+void VectorPatch::finalizeDumpFields(PicParams& params, DiagParams &diag_params, int timestep)
+{
+    for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++) {
+	(*this)(ipatch)->sio->setFiles( 0, 0 );
     }
 
 }

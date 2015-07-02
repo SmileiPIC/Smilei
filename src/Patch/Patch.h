@@ -17,6 +17,7 @@
 #include "SmileiMPI.h"
 #include "SimWindow.h"
 #include "Diagnostic.h"
+#include "SmileiIO.h"
 
 class Diagnostic;
 class DiagnosticScalar;
@@ -38,6 +39,7 @@ public:
 	delete Proj;
 	delete Interp;
 	delete EMfields;
+	delete sio;
 	for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
 	vecSpecies.clear();
 	    
@@ -50,6 +52,8 @@ public:
     Projector* Proj;
 
     Diagnostic* Diags;
+
+    SmileiIO* sio;
 
     //!Cartesian coordinates of the patch. X,Y,Z of the Patch according to its Hilbert index.
     std::vector<unsigned int> Pcoordinates;
@@ -205,6 +209,9 @@ class VectorPatch {
     void createPacthes(PicParams& params, DiagParams& diag_params, LaserParams& laser_params, SmileiMPI* smpi);
     void setNbrParticlesToExch(SmileiMPI* smpi);
     void exchangePatches(SmileiMPI* smpi);
+    
+    void initDumpFields(PicParams& params, DiagParams &diag_params, int timestep);
+    void finalizeDumpFields(PicParams& params, DiagParams &diag_params, int timestep);
 
     void clear() {patches_.clear();}
 
