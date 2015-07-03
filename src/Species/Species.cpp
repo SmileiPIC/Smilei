@@ -34,7 +34,7 @@
 
 using namespace std;
 
-
+//Obsolete
 Species::Species(PicParams& params, int ispec, SmileiMPI* smpi) :
 densityProfile(DensityFactory::create(params, ispec)),
 speciesNumber(ispec),
@@ -45,9 +45,9 @@ min_loc(smpi->getDomainLocalMin(0)),
 min_loc_vec(smpi->getDomainLocalMin()),
 clrw(params.clrw),
 species_param(params.species_param[ispec]),
-particles(&particles_sorted[0]),
-i_domain_begin( smpi->getCellStartingGlobalIndex(0) ),
-j_domain_begin( smpi->getCellStartingGlobalIndex(1) )
+particles(&particles_sorted[0])
+//i_domain_begin( smpi->getCellStartingGlobalIndex(0) ),
+//j_domain_begin( smpi->getCellStartingGlobalIndex(1) )
 {
     specMPI.init();
     
@@ -91,10 +91,10 @@ min_loc(patch->getDomainLocalMin(0)),
 min_loc_vec(patch->getDomainLocalMin()),
 clrw(params.clrw),
 species_param(params.species_param[ispec]),
-particles(&particles_sorted[0]),
+particles(&particles_sorted[0])
 
-i_domain_begin( patch->Pcoordinates[0]*params.n_space[0] ),
-j_domain_begin( patch->Pcoordinates[1]*params.n_space[1] )	
+//i_domain_begin( patch->getCellStartingGlobalIndex(0) ),
+//j_domain_begin( patch->getCellStartingGlobalIndex(1) )
 
 {
 	
@@ -728,40 +728,41 @@ particles = &particles_sorted[token] ;
 }
 
 
+//Obsolete
 void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi, PicParams& params)
 {
-    i_domain_begin+=shift;
+    //i_domain_begin+=shift;
     // Update BC positions
     partBoundCond->moveWindow_x( shift*cell_length[0], smpi );
     // Set for bin managment
-    min_loc += shift*cell_length[0];
+    //min_loc += shift*cell_length[0];
     
     // Send particles of first bin on process rank-1
     // If no rank-1 -> particles deleted
-    clearExchList(0);
-    for (unsigned int ibin = 0 ; ibin < 1 ; ibin++)
-        for (unsigned int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
-            addPartInExchList( 0, iPart );
-	    nrj_mw_lost += (*particles).weight(iPart)*((*particles).lor_fac(iPart)-1.0);
-	}
-    
-    // bin 0 empty
-    // Shifts all the bins by 1. 
-    bmin.erase( bmin.begin() );
-    bmax.erase( bmax.begin() );
-    // Create new bin at the end
-    // Update last values of bmin and bmax to handle correctly received particles
-    bmin.push_back( bmax[bmax.size()-1] );
-    bmax.push_back( bmax[bmax.size()-1] );
-    bmin[0] = 0;
+    //clearExchList(0);
+    //for (unsigned int ibin = 0 ; ibin < 1 ; ibin++)
+    //    for (unsigned int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
+    //        addPartInExchList( 0, iPart );
+    //        nrj_mw_lost += (*particles).weight(iPart)*((*particles).lor_fac(iPart)-1.0);
+    //    }
+    //
+    //// bin 0 empty
+    //// Shifts all the bins by 1. 
+    //bmin.erase( bmin.begin() );
+    //bmax.erase( bmax.begin() );
+    //// Create new bin at the end
+    //// Update last values of bmin and bmax to handle correctly received particles
+    //bmin.push_back( bmax[bmax.size()-1] );
+    //bmax.push_back( bmax[bmax.size()-1] );
+    //bmin[0] = 0;
 
-    int iDim(0);    
-    smpi->exchangeParticles( this, speciesNumber,params, 0, iDim );
-    
-    // Create new particles
-    if (smpi->isEastern() ) {
-        defineNewCells(shift, smpi, params);
-    }
+    //int iDim(0);    
+    //smpi->exchangeParticles( this, speciesNumber,params, 0, iDim );
+    //
+    //// Create new particles
+    //if (smpi->isEastern() ) {
+    //    defineNewCells(shift, smpi, params);
+    //}
     
 }
 
@@ -951,7 +952,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
     
 }
 
-
+// Obsolete ...
 void Species::updateMvWinLimits(double x_moved) {
     partBoundCond->updateMvWinLimits(x_moved);
     min_loc += x_moved;
@@ -966,7 +967,7 @@ void Species::updateMvWinLimits(double x_moved) {
                      (species_param.species_geometry == "gaussian" ||
                          (species_param.species_geometry == "trapezoidal" &&
                             //Before end of density ramp up.
-                            (simWindow->getXmoved() < species_param.vacuum_length[0] + species_param.dens_length_x[1] + clrw*cell_length[0] || 
+                            (simWindow->getXmoved() < species_param.vacuum_length[0] + species_param.dens_length_x[1] + oversize[0]*cell_length[0] || 
                             //After begining of density ramp down. 
                             simWindow->getXmoved() +  simWindow->getNspace_win_x()*cell_length[0] > species_param.vacuum_length[0] + species_param.dens_length_x[1]+ species_param.dens_length_x[0]
                             )

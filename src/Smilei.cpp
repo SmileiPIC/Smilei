@@ -325,7 +325,7 @@ int main (int argc, char* argv[])
 	/*******************************************/
 	/********** Move particles *****************/
 	/*******************************************/
-#pragma omp parallel shared (EMfields,time_dual,vecSpecies,smpi,params, vecPatches)
+#pragma omp parallel shared (EMfields,time_dual,smpi,params, vecPatches)
         {
 	    timer[1].restart();
             if (diag_flag){
@@ -468,19 +468,16 @@ int main (int argc, char* argv[])
         
         //timer[3].update();
 		
+#endif
         timer[5].restart();
         if ( simWindow && simWindow->isMoving(time_dual) ) {
             start_moving++;
             if ((start_moving==1) && (smpiData->isMaster()) ) {
 		MESSAGE(">>> Window starts moving");
             }
-            simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi, params);
-            /* For discussion
-            simWindow->operate(vecPatches, smpi, params);
-            */
+            simWindow->operate(vecPatches, smpiData, params, diag_params, laser_params);
         }
         timer[5].update();
-#endif
 
 #ifdef _TESTPATCHEXCH
 	if (itime==1) {
@@ -495,7 +492,7 @@ int main (int argc, char* argv[])
 
 
 	    //cout << "patch_count modified" << endl;
-	    vecPatches.createPacthes(params, diag_params, laser_params, smpiData);
+	    vecPatches.createPatches(params, diag_params, laser_params, smpiData);
 	    //cout << "patch created" << endl;
 	    vecPatches.setNbrParticlesToExch(smpiData);
 	    //cout << "nbr particles exchanged" << endl;

@@ -14,7 +14,7 @@ using namespace std;
 
 //int buildtag(int send, int recv);
 
-Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int ipatch) {
+Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved) {
 
 
 //Neighborhood definition in 2D:
@@ -73,6 +73,7 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
         ycall = Pcoordinates[1];
 	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<params.mi[0]));
 	neighbor_[0][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
+        if (xcall == -1) cout << "neighbour00 = " << neighbor_[0][0] << endl;
 #ifdef _PATCH_DEBUG
         cout << xcall << " " << ycall << " " << neighbor_[0][0] << endl;
 #endif
@@ -129,6 +130,9 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 	    cell_starting_global_index[i] += Pcoordinates[i]*params.n_space[i];
 	    cell_starting_global_index[i] -= params.oversize[i];
 	}
+	cell_starting_global_index[0] += n_moved;
+	min_local[0] += n_moved*params.cell_length[0];
+	max_local[0] += n_moved*params.cell_length[0];
 
 	vecSpecies = SpeciesFactory::createVector(params, smpi, this);
 
@@ -159,7 +163,7 @@ void Patch::updateMPIenv(SmileiMPI* smpi)
             }
         }
 
-#ifdef _PATCH_DEBUG
+//#ifdef _PATCH_DEBUG
 	cout << "\n\tPatch Corner decomp : " << corner_neighbor_[0][1] << "\t" << neighbor_[1][1]  << "\t" << corner_neighbor_[1][1] << endl;
 	cout << "\tPatch Corner decomp : " << neighbor_[0][0] << "\t" << hindex << "\t" << neighbor_[0][1] << endl;
 	cout << "\tPatch Corner decomp : " << corner_neighbor_[0][0] << "\t" << neighbor_[1][0]  << "\t" << corner_neighbor_[1][0] << endl;
@@ -167,7 +171,7 @@ void Patch::updateMPIenv(SmileiMPI* smpi)
 	cout << "\n\tMPI Corner decomp : " << MPI_neighborhood_[6] << "\t" << MPI_neighborhood_[7]  << "\t" << MPI_neighborhood_[8] << endl;
 	cout << "\tMPI Corner decomp : " << MPI_neighborhood_[3] << "\t" << MPI_neighborhood_[4] << "\t" << MPI_neighborhood_[5] << endl;
 	cout << "\tMPI Corner decomp : " << MPI_neighborhood_[0] << "\t" << MPI_neighborhood_[1]  << "\t" << MPI_neighborhood_[2] << endl;
-#endif
+//#endif
 
 	// Redundant temporary solution, to introduce, MPI-Patched features
 	MPI_neighbor_[0][0] = MPI_neighborhood_[3];
@@ -1316,7 +1320,7 @@ void VectorPatch::exchangeE( )
 
 void VectorPatch::exchangeB( )
 {
-    /*unsigned int nx_p,nx_d,ny_p,ny_d, h0, oversize[2], n_space[2],gsp[2];
+    unsigned int nx_p,nx_d,ny_p,ny_d, h0, oversize[2], n_space[2],gsp[2];
     double *pt1,*pt2;
 
     h0 = (*this)(0)->hindex;
@@ -1364,29 +1368,29 @@ void VectorPatch::exchangeB( )
                pt1[i+gsp[1]] = pt2[i+gsp[1]] ;
            }
         }
-    }*/
+    }
     
 
-    #pragma omp for
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->Bx_ );
-    #pragma omp for
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->Bx_ );
-
-    #pragma omp for
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->By_ );
-    #pragma omp for
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->By_ );
-
-    #pragma omp for
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->Bz_ );
-    #pragma omp for
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->Bz_ );
+//    #pragma omp for
+//    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+//	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->Bx_ );
+//    #pragma omp for
+//    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+//	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->Bx_ );
+//
+//    #pragma omp for
+//    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+//	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->By_ );
+//    #pragma omp for
+//    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+//	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->By_ );
+//
+//    #pragma omp for
+//    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+//	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->Bz_ );
+//    #pragma omp for
+//    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+//	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->Bz_ );
 
 }
 

@@ -151,7 +151,7 @@ private:
     //! 2 times pi
     double PI2;
     double dx_inv_, dy_inv_;
-    int i_domain_begin, j_domain_begin;
+    //int i_domain_begin, j_domain_begin;
     
     //! Number of steps for Maxwell-Juettner cumulative function integration
     //! \todo{Put in a code constant class}

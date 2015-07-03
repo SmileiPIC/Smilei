@@ -8,7 +8,7 @@
 class PatchesFactory {
 public:
     static Patch* create(PicParams& params, DiagParams& diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int  ipatch) {
-	Patch* patch = new Patch(params, diag_params, laser_params, smpi, ipatch);
+	Patch* patch = new Patch(params, diag_params, laser_params, smpi, ipatch, 0);
         return patch;
     }
 

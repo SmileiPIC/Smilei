@@ -27,9 +27,10 @@ class Patch
 {
     friend class SmileiMPI;
     friend class VectorPatch;
+    friend class SimWindow;
 public:
     //! Constructor for Patch
-  Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int ipatch);
+  Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
 
     //! Destructor for Patch
     ~Patch() {
@@ -43,8 +44,8 @@ public:
 	    
     };
 
-    std::vector<Species*> vecSpecies;
-    ElectroMagn* EMfields;
+    std::vector<Species*> vecSpecies, vecSpecies_old;
+    ElectroMagn* EMfields, *EMfields_old;
 
     Interpolator* Interp;
     Projector* Proj;
