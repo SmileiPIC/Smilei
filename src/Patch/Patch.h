@@ -153,7 +153,10 @@ public:
     }
 
     inline unsigned int Hindex() { return  hindex; }
+    inline bool isMaster() {return (hindex==0);}
+
     void updateMPIenv(SmileiMPI *smpi);
+    
 
 protected:
     //!Hilbert index of the patch. Number of the patch along the Hilbert curve.

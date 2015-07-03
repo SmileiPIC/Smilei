@@ -7,13 +7,13 @@
 #include "SmileiMPI.h"
 #include "ElectroMagn.h"
 #include "DiagParams.h"
+#include "Patch.h" 
 
 using namespace std;
 
 // constructor
-DiagnosticScalar::DiagnosticScalar(PicParams &params, DiagParams &diagParams, SmileiMPI* smpi) :
-isMaster(smpi->isMaster()),
-cpuSize(smpi->getSize()),
+DiagnosticScalar::DiagnosticScalar(PicParams &params, DiagParams &diagParams, Patch* patch) :
+isMaster(patch->isMaster()),
 res_time(params.res_time),
 every(diagParams.scalar_every),
 cell_volume(params.cell_volume),

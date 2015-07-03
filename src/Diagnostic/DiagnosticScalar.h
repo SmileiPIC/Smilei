@@ -13,6 +13,7 @@ class PicParams;
 class SmileiMPI;
 class DiagParams;
 class ElectroMagn;
+class Patch;
 
 
 //! double-int structure to communicate min/max and location trough MPI 
@@ -33,7 +34,7 @@ class DiagnosticScalar {
     friend class SmileiMPI;
 public:
     //! creator (called from Diagnostic)
-    DiagnosticScalar(PicParams &params, DiagParams &diagParams, SmileiMPI* smpi);
+    DiagnosticScalar(PicParams &params, DiagParams &diagParams, Patch* patch);
     //! destructor
     ~DiagnosticScalar(){};
     
@@ -60,9 +61,6 @@ private:
     //! check if proc is master (from smpi)
     const bool isMaster;
     
-    //! tot number of cpus (from smpi)
-    const unsigned int cpuSize;
-
     //! initial energy (kinetic + EM)
     double Energy_time_zero;
     

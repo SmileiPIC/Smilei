@@ -490,7 +490,7 @@ int main (int argc, char* argv[])
 #endif
 
 #ifdef _TESTPATCHEXCH
-	if (itime==1) {
+	if (itime==61) {
 	    /*if (smpiData->getRank()==0)
 		vecPatches.send_patch_id_.push_back(3);
 	    else if (smpiData->getRank()==1) 
