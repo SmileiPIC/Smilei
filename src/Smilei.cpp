@@ -101,9 +101,6 @@ int main (int argc, char* argv[])
     MESSAGE("----------------------------------------------");
     SmileiMPI* smpi = NULL;
     SmileiIO*  sio  = NULL;
-#ifdef _TOBEPATCHED
-    sio = SmileiIOFactory::create(params, diag_params, smpi);
-#endif
 
 #ifdef _OMP
     int nthds(0);
@@ -229,6 +226,7 @@ int main (int argc, char* argv[])
         MESSAGE("----------------------------------------------");
         // run diagnostics at time-step 0
 	vecPatches.initProbesDiags(params, diag_params, 0);
+	vecPatches.initDumpFields(params, diag_params, 0);
 	
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->Diags->runAllDiags(0, vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, vecPatches(ipatch)->Interp, smpi);
@@ -242,13 +240,17 @@ int main (int argc, char* argv[])
 	for (int ipatch = 0 ; ipatch<vecPatches.size() ; ipatch++)
 	    cout << (int)vecPatches(ipatch)->vecSpecies[0]->getNbrOfParticles() << " particles on " << vecPatches(ipatch)->Hindex() << endl;
 #endif
-        //// temporary EM fields dump in Fields.h5
-        //sio->writeAllFieldsSingleFileTime( EMfields, 0 );
-        //// temporary EM fields dump in Fields_avg.h5
-        //if (diag_params.ntime_step_avg!=0)
-        //    sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
-        //// temporary particle dump at time 0
-        //sio->writePlasma( vecSpecies, 0., smpi );
+        // temporary EM fields dump in Fields.h5
+	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	    vecPatches(ipatch)->EMfields->computeTotalRhoJ(); //Compute total currents from global Rho_s and J_s.
+	    if (ipatch==0) vecPatches(ipatch)->sio->createTimeStepInSingleFileTime( 0, diag_params );
+	    vecPatches(ipatch)->sio->writeAllFieldsSingleFileTime( vecPatches(ipatch)->EMfields, 0 );
+	    // temporary EM fields dump in Fields_avg.h5
+	    if (diag_params.ntime_step_avg!=0)
+		vecPatches(ipatch)->sio->writeAvgFieldsSingleFileTime( vecPatches(ipatch)->EMfields, 0 );
+	    vecPatches(ipatch)->EMfields->restartRhoJs();
+	}
+	diag_flag = 0 ;
     }
 
 	
@@ -284,9 +286,7 @@ int main (int argc, char* argv[])
         time_prim += params.timestep;
         time_dual += params.timestep;
         
-#ifdef _TOBEPATCHED
         if  ((diag_params.fieldDump_every != 0) && (itime % diag_params.fieldDump_every == 0)) diag_flag = 1;
-#endif
 
         // send message at given time-steps
         // --------------------------------
@@ -430,14 +430,21 @@ int main (int argc, char* argv[])
 	smpiData->computeGlobalDiags( vecPatches(0)->Diags, itime); // Only scalars reduction for now 
 	timer[3].update();
 
-#ifdef _TOBEPATCHED
+
         // temporary EM fields dump in Fields.h5
         if  (diag_flag){
-            EMfields->computeTotalRhoJ(); //Compute total currents from global Rho_s and J_s.
-            sio->writeAllFieldsSingleFileTime( EMfields, itime );
+            for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+                vecPatches(ipatch)->EMfields->computeTotalRhoJ(); //Compute total currents from global Rho_s and J_s.
+		if (ipatch==0) vecPatches(ipatch)->sio->createTimeStepInSingleFileTime( itime, diag_params );
+                vecPatches(ipatch)->sio->writeAllFieldsSingleFileTime( vecPatches(ipatch)->EMfields, itime );
+		// temporary EM fields dump in Fields_avg.h5
+		if (diag_params.ntime_step_avg!=0)
+		    vecPatches(ipatch)->sio->writeAvgFieldsSingleFileTime( vecPatches(ipatch)->EMfields, 0 );
+                vecPatches(ipatch)->EMfields->restartRhoJs();
+            }
             diag_flag = 0 ;
-            EMfields->restartRhoJs();
         }
+#ifdef _TOBEPATCHED
         // temporary EM fields dump in Fields.h5
         if  (diag_params.ntime_step_avg!=0)
             if ((diag_params.avgfieldDump_every != 0) && (itime % diag_params.avgfieldDump_every == 0))
@@ -480,7 +487,7 @@ int main (int argc, char* argv[])
         timer[5].update();
 
 #ifdef _TESTPATCHEXCH
-	if (itime==1) {
+	if (itime==61) {
 	    /*if (smpiData->getRank()==0)
 		vecPatches.send_patch_id_.push_back(3);
 	    else if (smpiData->getRank()==1) 
@@ -546,9 +553,9 @@ int main (int argc, char* argv[])
     // ------------------------------
     //  Cleanup & End the simulation
     // ------------------------------
-    vecPatches.finalizeProbesDiags(params, diag_params, 0);
+    vecPatches.finalizeProbesDiags(params, diag_params, stepStop);
+    vecPatches.finalizeDumpFields(params, diag_params, stepStop);
 
-    
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) delete vecPatches(ipatch);
     vecPatches.clear();
 

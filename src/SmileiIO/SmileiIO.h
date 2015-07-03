@@ -31,12 +31,15 @@ public:
     //! @see global_file_id_ 
     //! @see global_file_id_avg
     SmileiIO( PicParams& params, DiagParams &diagParams, Patch* patch );
+    void createFiles( PicParams& params, DiagParams &diagParams, Patch* patch );
+    void setFiles( hid_t masterFileId, hid_t masterFileIdAvg );
     //! Destructor for SmileiIO
     virtual ~SmileiIO();
 
     //! Write all fields (E, B, J, rho, per species ; 10 + 4 x nspecies fields) of all time step in the same file
     void writeAllFieldsSingleFileTime( ElectroMagn* EMfields, int itime );
-    
+    void createTimeStepInSingleFileTime( int time,  DiagParams &diagParams );
+
     //! Write time-averaged fields E, B) of all time step in the same file
     //! @see global_file_id_avg
     void writeAvgFieldsSingleFileTime( ElectroMagn* EMfields, int itime );

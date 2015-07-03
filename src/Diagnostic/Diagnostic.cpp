@@ -13,7 +13,7 @@
 using namespace std;
 
 Diagnostic::Diagnostic( PicParams &picParams, DiagParams &dParams , SmileiMPI* smpi, Patch* patch) :
-scalars(picParams, dParams, smpi),
+scalars(picParams, dParams, patch),
 probes(picParams, dParams, patch),
 phases(picParams, dParams, smpi)
 {
