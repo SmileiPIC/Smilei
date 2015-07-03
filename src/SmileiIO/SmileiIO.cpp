@@ -96,7 +96,6 @@ SmileiIO::~SmileiIO()
     // Management of global IO file
     if (global_file_id_ != 0)
 	H5Fclose( global_file_id_ );
-    
     // Management of global IO file
     if (global_file_id_avg != 0)
         H5Fclose( global_file_id_avg );
@@ -113,19 +112,8 @@ void SmileiIO::createTimeStepInSingleFileTime( int time )
 	
     DEBUG(10,"[hdf] GROUP _________________________________ " << name_t.str());
     hid_t group_id = H5Gcreate(global_file_id_, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-}
-
-void SmileiIO::closeTimeStepInSingleFileTime( int time )
-{
-    ostringstream name_t;
-    name_t.str("");
-    name_t << "/" << setfill('0') << setw(10) << time;
-	
-    DEBUG(10,"[hdf] GROUP _________________________________ " << name_t.str());
-    hid_t group_id = H5Gcreate(global_file_id_, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     H5Gclose(group_id);
-	
-    H5Fflush( global_file_id_, H5F_SCOPE_GLOBAL );
+ 
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -159,6 +147,7 @@ void SmileiIO::writeAllFieldsSingleFileTime( ElectroMagn* EMfields, int time )
         writeFieldsSingleFileTime( EMfields->Jz_s[ispec],  group_id );
     }
 	
+    H5Gclose(group_id);
 	
 	
 }
@@ -175,8 +164,8 @@ void SmileiIO::writeAvgFieldsSingleFileTime( ElectroMagn* EMfields, int time )
     name_t << "/" << setfill('0') << setw(10) << time;
 	
     DEBUG(10,"[hdf] GROUP _________________________________ " << name_t.str());
-    hid_t group_id = H5Gcreate(global_file_id_avg, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	
+    hid_t group_id = H5Gopen(global_file_id_avg, name_t.str().c_str(), H5P_DEFAULT);
+
     writeFieldsSingleFileTime( EMfields->Ex_avg, group_id );
     writeFieldsSingleFileTime( EMfields->Ey_avg, group_id );
     writeFieldsSingleFileTime( EMfields->Ez_avg, group_id );

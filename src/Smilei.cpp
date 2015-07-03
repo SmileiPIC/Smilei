@@ -240,13 +240,17 @@ int main (int argc, char* argv[])
 	for (int ipatch = 0 ; ipatch<vecPatches.size() ; ipatch++)
 	    cout << (int)vecPatches(ipatch)->vecSpecies[0]->getNbrOfParticles() << " particles on " << vecPatches(ipatch)->Hindex() << endl;
 #endif
-        //// temporary EM fields dump in Fields.h5
-        //sio->writeAllFieldsSingleFileTime( EMfields, 0 );
+        // temporary EM fields dump in Fields.h5
+	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	    vecPatches(ipatch)->EMfields->computeTotalRhoJ(); //Compute total currents from global Rho_s and J_s.
+	    if (ipatch==0) vecPatches(ipatch)->sio->createTimeStepInSingleFileTime( 0 );
+	    vecPatches(ipatch)->sio->writeAllFieldsSingleFileTime( vecPatches(ipatch)->EMfields, 0 );
+	    vecPatches(ipatch)->EMfields->restartRhoJs();
+	}
+	diag_flag = 0 ;
         //// temporary EM fields dump in Fields_avg.h5
         //if (diag_params.ntime_step_avg!=0)
         //    sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
-        //// temporary particle dump at time 0
-        //sio->writePlasma( vecSpecies, 0., smpi );
     }
 
 	
@@ -432,8 +436,7 @@ int main (int argc, char* argv[])
             for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
                 vecPatches(ipatch)->EMfields->computeTotalRhoJ(); //Compute total currents from global Rho_s and J_s.
 		if (ipatch==0) vecPatches(ipatch)->sio->createTimeStepInSingleFileTime( itime );
-                vecPatches(ipatch)->sio->writeAllFieldsSingleFileTime( EMfields, itime );
-		if (ipatch==0) vecPatches(ipatch)->sio->closeTimeStepInSingleFileTime( itime );
+                vecPatches(ipatch)->sio->writeAllFieldsSingleFileTime( vecPatches(ipatch)->EMfields, itime );
                 vecPatches(ipatch)->EMfields->restartRhoJs();
             }
             diag_flag = 0 ;
@@ -553,7 +556,6 @@ int main (int argc, char* argv[])
     vecPatches.finalizeProbesDiags(params, diag_params, stepStop);
     vecPatches.finalizeDumpFields(params, diag_params, stepStop);
 
-    
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) delete vecPatches(ipatch);
     vecPatches.clear();
 
