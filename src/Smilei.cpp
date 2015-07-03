@@ -436,7 +436,6 @@ int main (int argc, char* argv[])
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
     vecSpecies.clear();
     
-    TITLE("END");
         
     delete sio;
     delete smpi;
@@ -444,6 +443,8 @@ int main (int argc, char* argv[])
     if (params.nspace_win_x)
         delete simWindow;
     
+    TITLE("END");
+
     return 0;
     
 }//END MAIN
