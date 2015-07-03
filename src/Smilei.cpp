@@ -67,19 +67,17 @@ int main (int argc, char* argv[])
     
     // Send information on current simulation
     
-    MESSAGE("                   _            __     ");
+    MESSAGE("                   _            _");
     MESSAGE(" ___           _  | |        _  \\ \\    ");
-    MESSAGE("/ __|  _ __   (_) | |  ___  (_)  | |   Version  :  " << __VERSION);
-    MESSAGE("\\__ \\ | '  \\   _  | | / -_)  _   | |   Compiled :  " << __DATE__ << " " << __TIME__);
-    MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  | |  ");
+    MESSAGE("/ __|  _ __   (_) | |  ___  (_)  | |");
+    MESSAGE("\\__ \\ | '  \\   _  | | / -_)  _   | |   Version  : " << __VERSION);
+    MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  | |   Compiled : " << __DATE__ << " " << __TIME__);
     MESSAGE("                                /_/    ");
     
+    TITLE("Input data info");
     // Read the namelists file (no check!)
     InputData input_data(smpiData,namelists);
     
-    MESSAGE("----------------------------------------------");
-    MESSAGE("Input data info");
-    MESSAGE("----------------------------------------------");
     // Read simulation & diagnostics parameters
     PicParams params(input_data);
     smpiData->init(params);
@@ -90,14 +88,13 @@ int main (int argc, char* argv[])
     
     
     // Geometry known, MPI environment specified
-    MESSAGE("----------------------------------------------");
-    MESSAGE("Creating MPI, Diags & IO environments");
-    MESSAGE("----------------------------------------------");
+    TITLE("Creating MPI, Diags & IO environments");
     SmileiMPI* smpi = SmileiMPIFactory::create(params, smpiData);
     // Create diagnostics
     Diagnostic Diags(params, input_data, smpi);
     //Create mpi environment 
     SmileiIO*  sio  = SmileiIOFactory::create(params, Diags, smpi);
+    
     
     
     
@@ -120,9 +117,7 @@ int main (int argc, char* argv[])
     // ---------------------------
     // Initialize Species & Fields
     // ---------------------------
-    MESSAGE("----------------------------------------------");
-    MESSAGE("Initializing particles, fields & moving-window");
-    MESSAGE("----------------------------------------------");
+    TITLE("Initializing particles, fields & moving-window");
     
     // Initialize the vecSpecies object containing all information of the different Species
     // ------------------------------------------------------------------------------------
@@ -143,9 +138,7 @@ int main (int argc, char* argv[])
     if (params.nspace_win_x)
         simWindow = new SimWindow(params);
     
-    MESSAGE("----------------------------------------------");
-    MESSAGE("Creating EMfields/Interp/Proj");
-    MESSAGE("----------------------------------------------");
+    TITLE("Creating EMfields/Interp/Proj");
     
     // Initialize the electromagnetic fields and interpolation-projection operators
     // according to the simulation geometry
@@ -190,25 +183,21 @@ int main (int argc, char* argv[])
         
         if (!EMfields->isRhoNull(smpi))  {
             // Init electric field (Ex/1D, + Ey/2D)
-            MESSAGE("----------------------------------------------");
-            MESSAGE("Solving Poisson at time t = 0");
-            MESSAGE("----------------------------------------------");
+            TITLE("Solving Poisson at time t = 0");
             Timer ptimer;
             ptimer.init(smpi, "global");
             ptimer.restart();
             EMfields->solvePoisson(smpi);
             ptimer.update();
-            MESSAGE(0, "Time in Poisson : " << ptimer.getTime() );
+            MESSAGE("Time in Poisson : " << ptimer.getTime() );
         }
         
-        MESSAGE("----------------------------------------------");
-        MESSAGE("Applying external fields at time t = 0");
-        MESSAGE("----------------------------------------------");
+        TITLE("Applying external fields at time t = 0");
+        
         EMfields->applyExternalFields(smpi);
         
-        MESSAGE("----------------------------------------------");
-        MESSAGE("Running diags at time t = 0");
-        MESSAGE("----------------------------------------------");
+        TITLE("Running diags at time t = 0");
+        
         // run diagnostics at time-step 0
         Diags.runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
         // temporary EM fields dump in Fields.h5
@@ -224,9 +213,7 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------------
     // check here if we can close the python interpreter
     // ------------------------------------------------------------------------
-    MESSAGE("----------------------------------------------");
-    MESSAGE("Cleaning up python runtime environement");
-    MESSAGE("----------------------------------------------");
+    TITLE("Cleaning up python runtime environement");
     input_data.cleanup();
     
     
@@ -256,10 +243,8 @@ int main (int argc, char* argv[])
 	// ------------------------------------------------------------------
     //                     HERE STARTS THE PIC LOOP
     // ------------------------------------------------------------------
-    MESSAGE("-----------------------------------------------------------------------------------------------------");
-    MESSAGE("Time-Loop is started: number of time-steps n_time = " << params.n_time);
-    MESSAGE("-----------------------------------------------------------------------------------------------------");
-	
+    TITLE("Time-Loop is started: number of time-steps n_time = " << params.n_time);
+    	
     for (unsigned int itime=stepStart+1 ; itime <= stepStop ; itime++) {
         
         // calculate new times
@@ -404,23 +389,20 @@ int main (int argc, char* argv[])
     //                      HERE ENDS THE PIC LOOP
     // ------------------------------------------------------------------
     MESSAGE("End time loop, time dual = " << time_dual/params.conv_fac);
-    MESSAGE("-----------------------------------------------------------------------------------------------------");
-    
+        
     //double timElapsed=smpiData->time_seconds();
-    //if ( smpi->isMaster() ) MESSAGE(0, "Time in time loop : " << timElapsed );
+    //if ( smpi->isMaster() ) MESSAGE("Time in time loop : " << timElapsed );
     timer[0].update();
-    MESSAGE("Time profiling :");
-    MESSAGE("----------------------------------------------");
+    TITLE("Time profiling :");
 
-    MESSAGE(0, "Time in time loop :\t" << timer[0].getTime() );
+    MESSAGE("Time in time loop :\t" << timer[0].getTime() );
     if ( smpi->isMaster() )
         for (int i=1 ; i<timer.size() ; i++) timer[i].print(timer[0].getTime());
     
     double coverage(0.);
     for (int i=1 ; i<timer.size() ; i++) coverage += timer[i].getTime();
-    MESSAGE(0, "\t" << setw(12) << "Coverage\t\t" << coverage/timer[0].getTime()*100. << " %" );
+    MESSAGE("\t" << setw(12) << "Coverage\t\t" << coverage/timer[0].getTime()*100. << " %" );
     
-    MESSAGE("----------------------------------------------");
     Diags.printTimers(smpi,timer[3].getTime());
 
     
@@ -454,10 +436,8 @@ int main (int argc, char* argv[])
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
     vecSpecies.clear();
     
-    MESSAGE("-----------------------------------------------------------------------------------------------------");
-    MESSAGE("END");
-    MESSAGE("-----------------------------------------------------------------------------------------------------");
-    
+    TITLE("END");
+        
     delete sio;
     delete smpi;
     delete smpiData;

@@ -45,7 +45,10 @@ time_reference(0.0)
     if (SIG_ERR == signal(SIGTERM, SmileiIO::signal_callback_handler)) {
         WARNING("Cannot catch signal SIGTERM");
     }
-    
+    if (SIG_ERR == signal(SIGINT, SmileiIO::signal_callback_handler)) {
+        WARNING("Cannot catch signal SIGINT");
+    }
+
 #ifdef _IO_PARTICLE
     particleSize = nDim_particle + 3 + 1;
     

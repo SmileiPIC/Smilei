@@ -22,7 +22,7 @@ class ElectroMagn;
 class Field;
 class Species;
 
-#include <signal.h>
+#include <csignal>
 
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class SmileiIO

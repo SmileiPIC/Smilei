@@ -4,7 +4,7 @@ HDF5_ROOT_DIR ?=
 PYTHONCONFIG ?= python-config
 ##################################################
 
-VERSION:="$(shell git describe 2>/dev/null || echo '??')"
+VERSION:="$(shell git describe 2>/dev/null || echo '??')-$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '??')"
 
 CFLAGS += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include -std=c++0x 
 LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5 -lz
