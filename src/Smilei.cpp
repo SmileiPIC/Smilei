@@ -243,14 +243,14 @@ int main (int argc, char* argv[])
         // temporary EM fields dump in Fields.h5
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 	    vecPatches(ipatch)->EMfields->computeTotalRhoJ(); //Compute total currents from global Rho_s and J_s.
-	    if (ipatch==0) vecPatches(ipatch)->sio->createTimeStepInSingleFileTime( 0 );
+	    if (ipatch==0) vecPatches(ipatch)->sio->createTimeStepInSingleFileTime( 0, diag_params );
 	    vecPatches(ipatch)->sio->writeAllFieldsSingleFileTime( vecPatches(ipatch)->EMfields, 0 );
+	    // temporary EM fields dump in Fields_avg.h5
+	    if (diag_params.ntime_step_avg!=0)
+		vecPatches(ipatch)->sio->writeAvgFieldsSingleFileTime( vecPatches(ipatch)->EMfields, 0 );
 	    vecPatches(ipatch)->EMfields->restartRhoJs();
 	}
 	diag_flag = 0 ;
-        //// temporary EM fields dump in Fields_avg.h5
-        //if (diag_params.ntime_step_avg!=0)
-        //    sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
     }
 
 	
@@ -435,8 +435,11 @@ int main (int argc, char* argv[])
         if  (diag_flag){
             for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
                 vecPatches(ipatch)->EMfields->computeTotalRhoJ(); //Compute total currents from global Rho_s and J_s.
-		if (ipatch==0) vecPatches(ipatch)->sio->createTimeStepInSingleFileTime( itime );
+		if (ipatch==0) vecPatches(ipatch)->sio->createTimeStepInSingleFileTime( itime, diag_params );
                 vecPatches(ipatch)->sio->writeAllFieldsSingleFileTime( vecPatches(ipatch)->EMfields, itime );
+		// temporary EM fields dump in Fields_avg.h5
+		if (diag_params.ntime_step_avg!=0)
+		    vecPatches(ipatch)->sio->writeAvgFieldsSingleFileTime( vecPatches(ipatch)->EMfields, 0 );
                 vecPatches(ipatch)->EMfields->restartRhoJs();
             }
             diag_flag = 0 ;

@@ -38,7 +38,7 @@ public:
 
     //! Write all fields (E, B, J, rho, per species ; 10 + 4 x nspecies fields) of all time step in the same file
     void writeAllFieldsSingleFileTime( ElectroMagn* EMfields, int itime );
-    void createTimeStepInSingleFileTime( int time );
+    void createTimeStepInSingleFileTime( int time,  DiagParams &diagParams );
 
     //! Write time-averaged fields E, B) of all time step in the same file
     //! @see global_file_id_avg

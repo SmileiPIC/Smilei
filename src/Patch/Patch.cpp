@@ -1667,6 +1667,7 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi)
     for (int ipatch=nPatchSend-1 ; ipatch>=0 ; ipatch--) {
 	//Ok while at least 1 old patch stay inon current CPU
 	(*this)(send_patch_id_[ipatch])->Diags->probes.setFile(0);
+	(*this)(send_patch_id_[ipatch])->sio->setFiles(0,0);
 	delete (*this)(send_patch_id_[ipatch]);
 	patches_[ send_patch_id_[ipatch] ] = NULL;
 	patches_.erase( patches_.begin() + send_patch_id_[ipatch] );
@@ -1699,8 +1700,10 @@ void VectorPatch::definePatchDiagsMaster()
 	if ( (*this)(patchIdMaster)->Diags->probes.fileId != 0 ) break;
 
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	if(ipatch!=patchIdMaster)
+	if(ipatch!=patchIdMaster) {
 	    (*this)(ipatch)->Diags->probes.setFile( (*this)(patchIdMaster)->Diags->probes.fileId );
+	    (*this)(ipatch)->sio->setFiles( (*this)(patchIdMaster)->sio->global_file_id_, (*this)(patchIdMaster)->sio->global_file_id_avg );
+	}
     }
 
     
