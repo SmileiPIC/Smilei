@@ -8,7 +8,7 @@ class SmileiComponentType(type):
     
     # Constructor of classes
     def __init__(self, name, bases, attrs):
-        self.list = []
+        self._list = []
         self.verify = True
         self.current = 0
         # Run standard metaclass init
@@ -18,32 +18,32 @@ class SmileiComponentType(type):
     def __iter__(self):
         return self
     def next(self):
-        if self.current >= len(self.list):
+        if self.current >= len(self._list):
             raise StopIteration
         self.current += 1
-        return self.list[self.current - 1]
+        return self._list[self.current - 1]
     
     # Function to return one given instance, for example DiagParticles[0]
     # Special case: species can also be indexed by their name: Species["ion1"]
     def __getitem__(self, key):
         if self.__name__ == "Species" and type(key) is str:
-            for obj in self.list:
+            for obj in self._list:
                 if obj.species_type == key:
                     return obj
         else:
-            return self.list[key]
+            return self._list[key]
     
     # Function to return the number of instances, for example len(Species)
     def __len__(self):
-        return len(self.list)
+        return len(self._list)
     
     # Function to display the content of the component
     def __repr__(self):
-        if len(self.list)==0:
+        if len(self._list)==0:
             return "<Empty list of "+self.__name__+">"
         else:
             l = []
-            for obj in self.list: l.append(str(obj))
+            for obj in self._list: l.append(str(obj))
             return "["+", ".join(l)+"]"
 
 
@@ -55,11 +55,11 @@ class SmileiComponent(object):
     def __init__(self, **kwargs):
         if kwargs is not None: # add all kwargs as internal class variables
             for key, value in kwargs.iteritems():
-                if key=="list":
-                    print "Python warning: in "+type(self).__name__+": cannot have argument named 'list'. Discarding."
+                if key=="_list":
+                    print "Python warning: in "+type(self).__name__+": cannot have argument named '_list'. Discarding."
                 else:
                     setattr(self, key, value)
-        type(self).list.append(self) # add the current object to the static list "list"
+        type(self)._list.append(self) # add the current object to the static list "list"
 
 
 class Species(SmileiComponent):

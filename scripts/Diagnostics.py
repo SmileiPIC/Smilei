@@ -203,7 +203,7 @@ class Smilei(object):
 		class Namelist: pass # empty class to store the namelist variables
 		self.namelist = Namelist() # create new empty object
 		for key, value in namespace.iteritems(): # transfer all variables to this object
-			if key[0:2]=="__": continue # skip builtins
+			if key[0]=="_": continue # skip builtins
 			setattr(self.namelist, key, value)
 		
 		self.valid = True

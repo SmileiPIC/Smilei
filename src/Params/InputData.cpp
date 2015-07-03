@@ -58,7 +58,7 @@ py_namelist(NULL)
     // Running pycontrol.py
     pyRunScript(string(reinterpret_cast<const char*>(Python_pycontrol_py), Python_pycontrol_py_len),"pycontrol.py");
     
-    PyTools::runPyFunction("smilei_check");
+    PyTools::runPyFunction("_smilei_check");
     
     
     // Now the string "namelist" contains all the python files concatenated
@@ -155,7 +155,7 @@ int InputData::nComponents(std::string componentName) {
 }
 
 
-//! run the python functions cleanup (user defined) and keep_python_running (in pycontrol.py)
+//! run the python functions cleanup (user defined) and _keep_python_running (in pycontrol.py)
 void InputData::cleanup() {
     
     // call cleanup function from the user namelist (it can be used to free some memory 
@@ -167,8 +167,8 @@ void InputData::cleanup() {
     
     // this function is defined in the Python/pyontrol.py file and should return false if we can close
     // the python interpreter
-    MESSAGE(1,"Calling python keep_python_running() :");    
-    if (PyTools::runPyFunction<bool>("keep_python_running")) {
+    MESSAGE(1,"Calling python _keep_python_running() :");    
+    if (PyTools::runPyFunction<bool>("_keep_python_running")) {
         MESSAGE(2,"Keeping Python interpreter alive");
     } else {
         MESSAGE(2,"Closing Python");
