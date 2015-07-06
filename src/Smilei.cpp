@@ -220,7 +220,7 @@ int main (int argc, char* argv[])
 	}
 #endif
         
-        
+	
         MESSAGE("----------------------------------------------");
         MESSAGE("Running diags at time t = 0");
         MESSAGE("----------------------------------------------");
@@ -232,17 +232,17 @@ int main (int argc, char* argv[])
 	    vecPatches(ipatch)->Diags->runAllDiags(0, vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, vecPatches(ipatch)->Interp, smpi);
 	vecPatches.computeGlobalDiags(0);
 	smpiData->computeGlobalDiags( vecPatches(0)->Diags, 0);
-
-
+	
+	
         for (unsigned int ispec=0 ; ispec<params.n_species; ispec++)
 	  MESSAGE(1,"Species " << ispec << " (" << params.species_param[ispec].species_type << ") created with " << (int)vecPatches(0)->Diags->getScalar("N_"+params.species_param[ispec].species_type) << " particles" );
 #ifdef _DEBUGPATCH
 	for (int ipatch = 0 ; ipatch<vecPatches.size() ; ipatch++)
 	    cout << (int)vecPatches(ipatch)->vecSpecies[0]->getNbrOfParticles() << " particles on " << vecPatches(ipatch)->Hindex() << endl;
 #endif
+	
         // temporary EM fields dump in Fields.h5
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	    vecPatches(ipatch)->EMfields->computeTotalRhoJ(); //Compute total currents from global Rho_s and J_s.
 	    if (ipatch==0) vecPatches(ipatch)->sio->createTimeStepInSingleFileTime( 0, diag_params );
 	    vecPatches(ipatch)->sio->writeAllFieldsSingleFileTime( vecPatches(ipatch)->EMfields, 0 );
 	    // temporary EM fields dump in Fields_avg.h5
@@ -255,7 +255,7 @@ int main (int argc, char* argv[])
 
 	
     // Count timer
-    int ntimer(6);
+    int ntimer(7);
     Timer timer[ntimer];
     timer[0].init(smpiData, "global");
     timer[1].init(smpiData, "particles");
@@ -263,6 +263,7 @@ int main (int argc, char* argv[])
     timer[3].init(smpiData, "diagnostics");
     timer[4].init(smpiData, "densities");
     timer[5].init(smpiData, "Mov window");
+    timer[6].init(smpiData, "diag fields");
 
     // Action to send to other MPI procs when an action is required
     int mpisize,itime2dump(-1),todump(0); 
@@ -399,6 +400,10 @@ int main (int argc, char* argv[])
 	    vecPatches(ipatch)->EMfields->saveMagneticFields();
 	    // Computes Ex_, Ey_, Ez_ on all points. E is already synchronized because J has been synchronized before.
 	    vecPatches(ipatch)->EMfields->solveMaxwellAmpere();
+	}
+	vecPatches.exchangeE();
+        #pragma omp for schedule(static)
+	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
 	    // Computes Bx_, By_, Bz_ at time n+1 on interior points.
 	    vecPatches(ipatch)->EMfields->solveMaxwellFaraday();
             // Applies boundary conditions on B
@@ -432,9 +437,9 @@ int main (int argc, char* argv[])
 
 
         // temporary EM fields dump in Fields.h5
+        timer[6].restart();
         if  (diag_flag){
             for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-                vecPatches(ipatch)->EMfields->computeTotalRhoJ(); //Compute total currents from global Rho_s and J_s.
 		if (ipatch==0) vecPatches(ipatch)->sio->createTimeStepInSingleFileTime( itime, diag_params );
                 vecPatches(ipatch)->sio->writeAllFieldsSingleFileTime( vecPatches(ipatch)->EMfields, itime );
 		// temporary EM fields dump in Fields_avg.h5
@@ -444,6 +449,8 @@ int main (int argc, char* argv[])
             }
             diag_flag = 0 ;
         }
+	timer[6].update();
+
 #ifdef _TOBEPATCHED
         // temporary EM fields dump in Fields.h5
         if  (diag_params.ntime_step_avg!=0)
@@ -499,6 +506,8 @@ int main (int argc, char* argv[])
 	    //smpiData->patch_count[0] = 5;
 	    //smpiData->patch_count[1] = 3;
 	    smpiData->recompute_patch_count( params, vecPatches, 0. );
+	    smpiData->patch_count[0] = 5;
+	    smpiData->patch_count[1] = 3;
 
 
 	    //cout << "patch_count modified" << endl;

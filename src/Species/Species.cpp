@@ -453,7 +453,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     // calculate the particle dynamics
     // -------------------------------
     if (time_dual>species_param.time_frozen) { // moving particle
- 
+
 	//Allocate buffer for projection  *****************************
 	// *4 accounts for Jy, Jz and rho. * nthds accounts for each thread.
 	//b_Jx = (double *) malloc(4 * size_proj_buffer * sizeof(double));
@@ -557,9 +557,10 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     else { // immobile particle (at the moment only project density)
         if (diag_flag == 1){
 	    //b_rho = (double *) malloc(size_proj_buffer * sizeof(double));
-	    b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1);
 
             for (ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
+
+		b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1);    
 		//memset( &(b_rho[0]), 0, size_proj_buffer*sizeof(double)); 
                 for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
                     //Update position_old because it is required for the Projection.
