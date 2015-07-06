@@ -72,35 +72,35 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 
         xcall = Pcoordinates[0]-1;
         ycall = Pcoordinates[1];
-	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<params.mi[0]));
+	if (params.bc_em_type_long=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
 	neighbor_[0][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
         if (xcall == -1) cout << "neighbour00 = " << neighbor_[0][0] << endl;
 #ifdef _PATCH_DEBUG
         cout << xcall << " " << ycall << " " << neighbor_[0][0] << endl;
 #endif
         xcall = Pcoordinates[0]+1;
-	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<params.mi[0]));
+	if (params.bc_em_type_long=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
 	neighbor_[0][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
         xcall = Pcoordinates[0];
         ycall = Pcoordinates[1]-1;
-	if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<params.mi[1]));
+	if (params.bc_em_type_trans=="periodic" && ycall < 0) ycall += (1<<params.mi[1]);
 	neighbor_[1][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
         ycall = Pcoordinates[1]+1;
-	if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<params.mi[1]));
+	if (params.bc_em_type_trans=="periodic" && ycall >= (1<<params.mi[1])) ycall -= (1<<params.mi[1]);
 	neighbor_[1][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
 
 
         xcall = Pcoordinates[0]+1;
-	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<params.mi[0]));
+	if (params.bc_em_type_long=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
 	corner_neighbor_[1][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
         xcall = Pcoordinates[0]-1;
-	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<params.mi[0]));
+	if (params.bc_em_type_long=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
 	corner_neighbor_[0][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
         ycall = Pcoordinates[1]-1;
-	if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<params.mi[1]));
+	if (params.bc_em_type_trans=="periodic" && ycall < 0) ycall += (1<<params.mi[1]);
 	corner_neighbor_[0][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
         xcall = Pcoordinates[0]+1;
-	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<params.mi[0]));
+	if (params.bc_em_type_long=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
 	corner_neighbor_[1][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
 
 
@@ -166,7 +166,7 @@ void Patch::updateMPIenv(SmileiMPI* smpi)
             }
         }
 
-//#ifdef _PATCH_DEBUG
+#ifdef _PATCH_DEBUG
 	cout << "\n\tPatch Corner decomp : " << corner_neighbor_[0][1] << "\t" << neighbor_[1][1]  << "\t" << corner_neighbor_[1][1] << endl;
 	cout << "\tPatch Corner decomp : " << neighbor_[0][0] << "\t" << hindex << "\t" << neighbor_[0][1] << endl;
 	cout << "\tPatch Corner decomp : " << corner_neighbor_[0][0] << "\t" << neighbor_[1][0]  << "\t" << corner_neighbor_[1][0] << endl;
@@ -174,7 +174,7 @@ void Patch::updateMPIenv(SmileiMPI* smpi)
 	cout << "\n\tMPI Corner decomp : " << MPI_neighborhood_[6] << "\t" << MPI_neighborhood_[7]  << "\t" << MPI_neighborhood_[8] << endl;
 	cout << "\tMPI Corner decomp : " << MPI_neighborhood_[3] << "\t" << MPI_neighborhood_[4] << "\t" << MPI_neighborhood_[5] << endl;
 	cout << "\tMPI Corner decomp : " << MPI_neighborhood_[0] << "\t" << MPI_neighborhood_[1]  << "\t" << MPI_neighborhood_[2] << endl;
-//#endif
+#endif
 
 	// Redundant temporary solution, to introduce, MPI-Patched features
 	MPI_neighbor_[0][0] = MPI_neighborhood_[3];
@@ -195,11 +195,11 @@ void Patch::updateMPIenv(SmileiMPI* smpi)
 }
 
 
-void Patch::dynamics(double time_dual, SmileiMPI *smpi, PicParams &params, SimWindow* simWindow, int diag_flag)
+void Patch::dynamics(double time_dual, PicParams &params, SimWindow* simWindow, int diag_flag)
 {
     for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 	if ( vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ){    
-	    vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, diag_flag);
+	    vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, params, diag_flag);
 	}
     }
 

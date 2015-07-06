@@ -417,7 +417,7 @@ void Species::initMomentum(unsigned int np, unsigned int iPart, double *temp, do
 //   - increment the currents (projection)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfields, Interpolator* Interp,
-                       Projector* Proj, SmileiMPI *smpi, PicParams &params, int diag_flag)
+                       Projector* Proj, PicParams &params, int diag_flag)
 {
     //Interpolator* LocInterp = InterpolatorFactory::create(params, smpi, NULL);
     
@@ -529,30 +529,32 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 
 	for (int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
 	    nrj_bc_lost += nrj_lost_per_thd[tid];
-        
-        if (Ionize && electron_species) {
-            for (unsigned int i=0; i < Ionize->new_electrons.size(); i++) {
-                // electron_species->particles.push_back(Ionize->new_electrons[i]);
-				
-                int ibin = (int) ((Ionize->new_electrons).position(0,i) / cell_length[0]) - ( smpi->getCellStartingGlobalIndex(0) + oversize[0] );
-                DEBUG("here " << ibin << " " << (Ionize->new_electrons).position(0,i)/(2*M_PI));
-                // Copy Ionize->new_electrons(i) in electron_species->particles at position electron_species->bmin[ibin]
-                Ionize->new_electrons.cp_particle(i, (*electron_species->particles), electron_species->bmin[ibin] );
-				
-                // Update bins status
-                // (ugly update, memory is allocated anywhere, OK with vectors per particles parameters)
-                electron_species->bmax[ibin]++;
-                for (int i=ibin+1; i<bmin.size(); i++) {
-                    electron_species->bmin[i]++;
-                    electron_species->bmax[i]++;
-                }
-                DEBUG("here");
-            }
-			
-            // if (Ionize->new_electrons.size())
-            //      DEBUG("number of electrons " << electron_species->particles.size() << " " << );
-            Ionize->new_electrons.clear();
-        }
+       
+
+        // Needs to be reviewed 
+        //if (Ionize && electron_species) {
+        //    for (unsigned int i=0; i < Ionize->new_electrons.size(); i++) {
+        //        // electron_species->particles.push_back(Ionize->new_electrons[i]);
+	//			
+        //        int ibin = (int) ((Ionize->new_electrons).position(0,i) / cell_length[0]) - ( smpi->getCellStartingGlobalIndex(0) + oversize[0] );
+        //        DEBUG("here " << ibin << " " << (Ionize->new_electrons).position(0,i)/(2*M_PI));
+        //        // Copy Ionize->new_electrons(i) in electron_species->particles at position electron_species->bmin[ibin]
+        //        Ionize->new_electrons.cp_particle(i, (*electron_species->particles), electron_species->bmin[ibin] );
+	//			
+        //        // Update bins status
+        //        // (ugly update, memory is allocated anywhere, OK with vectors per particles parameters)
+        //        electron_species->bmax[ibin]++;
+        //        for (int i=ibin+1; i<bmin.size(); i++) {
+        //            electron_species->bmin[i]++;
+        //            electron_species->bmax[i]++;
+        //        }
+        //        DEBUG("here");
+        //    }
+	//		
+        //    // if (Ionize->new_electrons.size())
+        //    //      DEBUG("number of electrons " << electron_species->particles.size() << " " << );
+        //    Ionize->new_electrons.clear();
+        //}
     }
     else { // immobile particle (at the moment only project density)
         if (diag_flag == 1){

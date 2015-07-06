@@ -55,26 +55,39 @@ SimWindow::~SimWindow()
 
 void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& params, DiagParams &diag_params, LaserParams& laser_params)
 {
-    int xcall, ycall, h0;
+    int xcall, ycall, h0, do_right, receive_flag, old_index;
     Patch* mypatch;
-    std::vector<Patch*> vecPatches_old;
+    //std::vector<Patch*> vecPatches_old;
 
     h0 = vecPatches(0)->hindex;
+    #pragma omp single
+    {
     vecPatches_old.resize(vecPatches.size());
-    //#pragma omp single
-    //{
-    x_moved += cell_length_x_*params.n_space[0];
-    n_moved += params.n_space[0];
-    //}
-
-    //#pragma omp for
-    for (unsigned int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++) {
-        vecPatches_old[ipatch] = vecPatches(ipatch);
     }
 
-    //#pragma omp for private(mypatch)
+    cout << " old_size = " << vecPatches_old.size() << endl;
+
+    #pragma omp for 
+    for (unsigned int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++) {
+        vecPatches_old[ipatch] = vecPatches(ipatch);
+    } //Barrier at the end of this omp for is important to prevent an update of x_moved before resolution of isMoving in the main loop.
+    #pragma omp single
+    {
+        x_moved += cell_length_x_*params.n_space[0];
+        n_moved += params.n_space[0];
+    }
+
+    #pragma omp for private(xcall,ycall,mypatch, do_right, receive_flag, old_index)
     for (unsigned int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++) {
          mypatch = vecPatches_old[ipatch];
+         do_right = 0;
+         receive_flag = 0;
+        //If my right neighbor does not belong to me ...
+        if (mypatch->MPI_neighborhood_[2+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)] != mypatch->MPI_neighborhood_[1+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)]){
+            do_right = 1;
+            old_index = mypatch->hindex;
+            if (mypatch->MPI_neighborhood_[2+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)] != MPI_PROC_NULL) receive_flag = 1;
+        }
         //If my left neighbor does not belong to me ...
         if (mypatch->MPI_neighborhood_[3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)] != mypatch->MPI_neighborhood_[1+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)]) {
             //... I might have to MPI send myself to the left...
@@ -89,9 +102,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
             delete (mypatch->Proj);
             cout << "end of data destruction" << endl;
         } else {
-            cout << "Moving to the left" << endl;
             //Else, if my left neighbor belongs to my Patch vector, I become my left neighbor.
             //Nothing to do on global indexes or min_locals. The Patch structure remains the same and unmoved.
+            cout << "Moving Left" << endl;
             mypatch->hindex = mypatch->patch_neighborhood_[0+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)];
             mypatch->Pcoordinates[0] -= 1;
 
@@ -107,12 +120,12 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
             //Compute missing part of the new neighborhood tables.
             xcall = mypatch->Pcoordinates[0]-1;
             ycall = mypatch->Pcoordinates[1]-1;
-            if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<params.mi[0]));
-            if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<params.mi[1]));
+            if (params.bc_em_type_long=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
+            if (params.bc_em_type_trans=="periodic" && ycall <0) ycall += (1<<params.mi[1]);
 	    mypatch->patch_neighborhood_[0] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, ycall);
 	    mypatch->patch_neighborhood_[3] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, mypatch->Pcoordinates[1]);
             ycall = mypatch->Pcoordinates[1]+1;
-            if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<params.mi[1]));
+            if (params.bc_em_type_trans=="periodic" && ycall >= 1<<params.mi[1]) ycall -= (1<<params.mi[1]);
 	    mypatch->patch_neighborhood_[6] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, ycall);
 	    for ( int y = 0 ; y < 1+2*(params.nDim_field >= 2) ; y++ ) {
 	        for ( int z = 0 ; z < 1+2*(params.nDim_field == 3) ; z++ ) {
@@ -142,17 +155,16 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
             vecPatches.patches_[mypatch->hindex - h0 ] = mypatch ; 
              
         }
-        //Si je ne possede pas mon voisin de droite...
-        if (mypatch->MPI_neighborhood_[2+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)] != mypatch->MPI_neighborhood_[1+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)]) {
+        //Warning, from here on the neigbors might have been updated !!
+        if (do_right) {
             //...je reçois ou je cré.
-            if (mypatch->MPI_neighborhood_[3] != MPI_PROC_NULL){
+            if (receive_flag){
                 //Mpi_Receive_Patch(MpiRNeighbour);
                 cout << "Receiving Patch" << endl;
             } else {
                 //Create_Patch();
-                cout << "Patch creation" << endl;
-	        //vecPatches.patches_[ipatch] = PatchesFactory::create(params, diag_params, laser_params, smpi, mypatch->hindex);
-                vecPatches.patches_[ipatch] = new Patch(params, diag_params, laser_params, smpi, mypatch->hindex, n_moved);
+                cout << "Patch creation n_moved = " << n_moved << " old_index = " << old_index << endl;
+                vecPatches.patches_[ipatch] = new Patch(params, diag_params, laser_params, smpi, old_index, n_moved);
 
             }
         }

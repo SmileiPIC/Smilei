@@ -57,6 +57,8 @@ class SimWindow {
     double vx_win_;
     //! Time at which the window starts moving.
     double t_move_win_;
+    //! Keep track of old patches assignement
+    std::vector<Patch*> vecPatches_old;
 
 };
 
