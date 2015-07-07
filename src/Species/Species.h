@@ -64,7 +64,7 @@ public:
 
     //! Method calculating the Particle dynamics (interpolation, pusher, projection)
     virtual void dynamics(double time, unsigned int ispec, ElectroMagn* EMfields, Interpolator* interp,
-                          Projector* proj, SmileiMPI *smpi, PicParams &params, int diag_flag);
+                          Projector* proj, PicParams &params, int diag_flag);
 
     //! Method used to initialize the Particle position in a given cell
     void initPosition(unsigned int, unsigned int, double *, unsigned int, std::vector<double>, std::string);
@@ -151,7 +151,7 @@ private:
     //! 2 times pi
     double PI2;
     double dx_inv_, dy_inv_;
-    int i_domain_begin, j_domain_begin;
+    //int i_domain_begin, j_domain_begin;
     
     //! Number of steps for Maxwell-Juettner cumulative function integration
     //! \todo{Put in a code constant class}

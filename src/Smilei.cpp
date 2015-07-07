@@ -179,13 +179,13 @@ int main (int argc, char* argv[])
     if (params.restart) {
         MESSAGE(1, "READING fields and particles for restart");
         DEBUG(vecSpecies.size());
-        sio->restartAll( EMfields,  stepStart, vecSpecies, smpi, simWindow, params, input_data);
+        sio->restartAll( EMfields,  stepStart, vecSpecies, smpiData, simWindow, params, input_data);
 
         double restart_time_dual = (stepStart +0.5) * params.timestep;
         // A revoir !
 	//if ( simWindow && ( simWindow->isMoving(restart_time_dual) ) ) {
-	//    simWindow->setOperators(vecSpecies, Interp, Proj, smpi);
-	//    simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi , params);
+	//    simWindow->setOperators(vecSpecies, Interp, Proj, smpiData);
+	//    simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpiData , params);
 	//}
         smpiData->recompute_patch_count( params, vecPatches, restart_time_dual );
         // Redistribute patches.
@@ -196,7 +196,7 @@ int main (int argc, char* argv[])
         // Init rho and J by projecting all particles of subdomain
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 	    vecPatches(ipatch)->EMfields->restartRhoJs();
-	    vecPatches(ipatch)->dynamics(time_dual, smpi, params, simWindow, diag_flag); //include test
+	    vecPatches(ipatch)->dynamics(time_dual, params, simWindow, diag_flag); //include test
 	}
 	for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 	    if ( vecPatches(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) )
@@ -326,7 +326,7 @@ int main (int argc, char* argv[])
 	/*******************************************/
 	/********** Move particles *****************/
 	/*******************************************/
-#pragma omp parallel shared (EMfields,time_dual,vecSpecies,smpi,params, vecPatches)
+#pragma omp parallel shared (EMfields,time_dual,smpi,params, vecPatches, simWindow)
         {
 	    timer[1].restart();
             if (diag_flag){
@@ -345,7 +345,7 @@ int main (int argc, char* argv[])
             //cout << "Starting dynamics" << endl;
             #pragma omp for schedule(runtime)
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-		vecPatches(ipatch)->dynamics(time_dual, smpi, params, simWindow, diag_flag); // include test
+		vecPatches(ipatch)->dynamics(time_dual, params, simWindow, diag_flag); // include test
 	    }
 	    // Inter Patch exchange
                 for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
@@ -418,7 +418,6 @@ int main (int argc, char* argv[])
 
         timer[2].update();
 
-        } //End omp parallel region
         
 #ifdef _TOBEPATCHED
         // incrementing averaged electromagnetic fields
@@ -426,16 +425,9 @@ int main (int argc, char* argv[])
 #endif        
         // call the various diagnostics
         // ----------------------------
-		
-        // run all diagnostics
-        timer[3].restart();
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-	    vecPatches(ipatch)->Diags->runAllDiags(itime, vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, vecPatches(ipatch)->Interp, smpi);
-	vecPatches.computeGlobalDiags(itime); // Only scalars reduction for now 
-	smpiData->computeGlobalDiags( vecPatches(0)->Diags, itime); // Only scalars reduction for now 
-	timer[3].update();
 
-
+        #pragma omp master
+        {		
         // temporary EM fields dump in Fields.h5
         timer[6].restart();
         if  (diag_flag){
@@ -448,8 +440,17 @@ int main (int argc, char* argv[])
                 vecPatches(ipatch)->EMfields->restartRhoJs();
             }
             diag_flag = 0 ;
-        }
+            }
 	timer[6].update();
+
+        // run all diagnostics
+        timer[3].restart();
+        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	    vecPatches(ipatch)->Diags->runAllDiags(itime, vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, vecPatches(ipatch)->Interp, smpiData);
+	vecPatches.computeGlobalDiags(itime); // Only scalars reduction for now 
+	smpiData->computeGlobalDiags( vecPatches(0)->Diags, itime); // Only scalars reduction for now 
+	timer[3].update();
+        }
 
 #ifdef _TOBEPATCHED
         // temporary EM fields dump in Fields.h5
@@ -475,26 +476,30 @@ int main (int argc, char* argv[])
         }
 
         if(itime==itime2dump){
-            sio->dumpAll( EMfields, itime,  vecSpecies, smpi, simWindow, params, input_data);
+            sio->dumpAll( EMfields, itime,  vecSpecies, smpiData, simWindow, params, input_data);
             todump = 0;
             if (params.exit_after_dump ) break;
         }
         
         //timer[3].update();
 		
+#endif
+
+#ifdef _INPROGRESS
         timer[5].restart();
+        cout << "ismoving " << simWindow->isMoving(time_dual) << endl;
         if ( simWindow && simWindow->isMoving(time_dual) ) {
             start_moving++;
             if ((start_moving==1) && (smpiData->isMaster()) ) {
 		MESSAGE(">>> Window starts moving");
             }
-            simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi, params);
-            /* For discussion
-            simWindow->operate(vecPatches, smpi, params);
-            */
+            simWindow->operate(vecPatches, smpiData, params, diag_params, laser_params);
         }
         timer[5].update();
 #endif
+
+
+        } //End omp parallel region
 
 #ifdef _TESTPATCHEXCH
 	if (itime==61) {
@@ -511,7 +516,7 @@ int main (int argc, char* argv[])
 
 
 	    //cout << "patch_count modified" << endl;
-	    vecPatches.createPacthes(params, diag_params, laser_params, smpiData);
+	    vecPatches.createPatches(params, diag_params, laser_params, smpiData);
 	    //cout << "patch created" << endl;
 	    vecPatches.setNbrParticlesToExch(smpiData);
 	    //cout << "nbr particles exchanged" << endl;

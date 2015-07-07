@@ -15,7 +15,7 @@ using namespace std;
 
 //int buildtag(int send, int recv);
 
-Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int ipatch) {
+Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved) {
 
 
 //Neighborhood definition in 2D:
@@ -72,34 +72,35 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 
         xcall = Pcoordinates[0]-1;
         ycall = Pcoordinates[1];
-	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<params.mi[0]));
+	if (params.bc_em_type_long=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
 	neighbor_[0][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
+        if (xcall == -1) cout << "neighbour00 = " << neighbor_[0][0] << endl;
 #ifdef _PATCH_DEBUG
         cout << xcall << " " << ycall << " " << neighbor_[0][0] << endl;
 #endif
         xcall = Pcoordinates[0]+1;
-	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<params.mi[0]));
+	if (params.bc_em_type_long=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
 	neighbor_[0][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
         xcall = Pcoordinates[0];
         ycall = Pcoordinates[1]-1;
-	if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<params.mi[1]));
+	if (params.bc_em_type_trans=="periodic" && ycall < 0) ycall += (1<<params.mi[1]);
 	neighbor_[1][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
         ycall = Pcoordinates[1]+1;
-	if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<params.mi[1]));
+	if (params.bc_em_type_trans=="periodic" && ycall >= (1<<params.mi[1])) ycall -= (1<<params.mi[1]);
 	neighbor_[1][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
 
 
         xcall = Pcoordinates[0]+1;
-	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<params.mi[0]));
+	if (params.bc_em_type_long=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
 	corner_neighbor_[1][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
         xcall = Pcoordinates[0]-1;
-	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<params.mi[0]));
+	if (params.bc_em_type_long=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
 	corner_neighbor_[0][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
         ycall = Pcoordinates[1]-1;
-	if (params.bc_em_type_trans=="periodic") ycall = ycall%((1<<params.mi[1]));
+	if (params.bc_em_type_trans=="periodic" && ycall < 0) ycall += (1<<params.mi[1]);
 	corner_neighbor_[0][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
         xcall = Pcoordinates[0]+1;
-	if (params.bc_em_type_long=="periodic") xcall = xcall%((1<<params.mi[0]));
+	if (params.bc_em_type_long=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
 	corner_neighbor_[1][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
 
 
@@ -130,6 +131,9 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 	    cell_starting_global_index[i] += Pcoordinates[i]*params.n_space[i];
 	    cell_starting_global_index[i] -= params.oversize[i];
 	}
+	cell_starting_global_index[0] += n_moved;
+	min_local[0] += n_moved*params.cell_length[0];
+	max_local[0] += n_moved*params.cell_length[0];
 
 	vecSpecies = SpeciesFactory::createVector(params, smpi, this);
 
@@ -191,11 +195,11 @@ void Patch::updateMPIenv(SmileiMPI* smpi)
 }
 
 
-void Patch::dynamics(double time_dual, SmileiMPI *smpi, PicParams &params, SimWindow* simWindow, int diag_flag)
+void Patch::dynamics(double time_dual, PicParams &params, SimWindow* simWindow, int diag_flag)
 {
     for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 	if ( vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ){    
-	    vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, diag_flag);
+	    vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, params, diag_flag);
 	}
     }
 
@@ -1627,7 +1631,6 @@ void VectorPatch::exchangeE( )
 
 void VectorPatch::exchangeB( )
 {
-
     unsigned int nx_p,nx_d,ny_p,ny_d, h0, oversize[2], n_space[2],gsp[2];
     double *pt1,*pt2;
 

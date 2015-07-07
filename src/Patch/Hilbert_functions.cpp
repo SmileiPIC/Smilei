@@ -175,15 +175,16 @@ void hilbertindexinv(unsigned int m, unsigned int* x, unsigned int* y, unsigned 
 //The "general" versions of the functions allow a different number of patch in each direction.
 
 //!General Hilbert index2D calculates the  Hilbert index h of a patch of coordinates x,y for a simulation box with 2^mi patches per side (2^(m0+m1)) patches in total).
-unsigned int generalhilbertindex(unsigned int m0, unsigned int m1, unsigned int x, unsigned int y, unsigned int *einit, unsigned int *dinit)
+unsigned int generalhilbertindex(unsigned int m0, unsigned int m1, int x, int y, unsigned int *einit, unsigned int *dinit)
 {
-    if(x%((1<<m0)) != x || y%((1<<m1)) != y ) return MPI_PROC_NULL ;
 
+    if( (x<0) || (x>=(1<<m0)) || (y<0) || (y>=(1<<m1)) )return MPI_PROC_NULL ;
+    
     unsigned int h,mmin,mmax,l,localx,localy,*target;
     h=0;
     *dinit=0;
-    localx = x;
-    localy = y;
+    localx = (unsigned int)x;
+    localy = (unsigned int)y;
     if (m0 >= m1){
        target = &localx;
        mmin = m1;
@@ -204,16 +205,17 @@ unsigned int generalhilbertindex(unsigned int m0, unsigned int m1, unsigned int 
     }
 return h;
 }
-unsigned int generalhilbertindex(unsigned int m0, unsigned int m1, unsigned int x, unsigned int y)
+unsigned int generalhilbertindex(unsigned int m0, unsigned int m1, int x, int y)
 {
-    if(x%((1<<m0)) != x || y%((1<<m1)) != y ) return MPI_PROC_NULL ;
+
+    if( (x<0) || (x>=(1<<m0)) || (y<0) || (y>=(1<<m1)) )return MPI_PROC_NULL ;
 
     unsigned int h,mmin,mmax,l,localx,localy,*target,einit,dinit;
     h=0;
     dinit=0;
     einit=0;
-    localx = x;
-    localy = y;
+    localx = (unsigned int)x;
+    localy = (unsigned int)y;
     if (m0 >= m1){
        target = &localx;
        mmin = m1;
@@ -236,9 +238,9 @@ return h;
 }
 
 //!General Hilbert index3D calculates the compact Hilbert index h of a patch of coordinates x,y,z for a simulation box with 2^mi patches per side (2^(m0+m1+m2)) patches in total).
-unsigned int generalhilbertindex(unsigned int m0, unsigned int m1, unsigned int m2, unsigned int x, unsigned int y, unsigned int z)
+unsigned int generalhilbertindex(unsigned int m0, unsigned int m1, unsigned int m2,  int x,  int y,  int z)
 {
-    if(x%((1<<m0)) != x || y%((1<<m1)) != y || z%((1<<m2)) != z) return MPI_PROC_NULL ;
+    if( (x<0) || (x>=(1<<m0)) || (y<0) || (y>=(1<<m1)) || (z<0) || (z>=(1<<m2)))return MPI_PROC_NULL ;
 
     unsigned int h,e,d,*einit,*dinit,dimmin,dimmax,dimmed,l,localx,localy,localz, mi[3],localp[3],tempp[3],mmin;
     h=0;
@@ -247,9 +249,9 @@ unsigned int generalhilbertindex(unsigned int m0, unsigned int m1, unsigned int 
     dinit=&d;
     einit=&e;
     //Store positions and dimensions in arrays
-    localp[0] = x;
-    localp[1] = y;
-    localp[2] = z;
+    localp[0] = (unsigned int)x;
+    localp[1] = (unsigned int)y;
+    localp[2] = (unsigned int)z;
     mi[0] = m0;
     mi[1] = m1;
     mi[2] = m2;
