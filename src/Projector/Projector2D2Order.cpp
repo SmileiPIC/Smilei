@@ -15,7 +15,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Projector2D2Order
 // ---------------------------------------------------------------------------------------------------------------------
-Projector2D2Order::Projector2D2Order (PicParams& params, SmileiMPI* smpi, Patch* patch) : Projector2D(params, smpi, patch)
+Projector2D2Order::Projector2D2Order (PicParams& params, Patch* patch) : Projector2D(params, patch)
 {
     dx_inv_   = 1.0/params.cell_length[0];
     dx_ov_dt  = params.cell_length[0] / params.timestep;

@@ -147,8 +147,8 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 	// + patchId + new n_space (now = params by smpi) + BC
 	// -> Neighbors to define !!
 	
-	Interp     = InterpolatorFactory::create(params, smpi, this);               // + patchId -> idx_domain_begin (now = ref smpi)
-	Proj       = ProjectorFactory::create(params, smpi, this);                  // + patchId -> idx_domain_begin (now = ref smpi)
+	Interp     = InterpolatorFactory::create(params, this);               // + patchId -> idx_domain_begin (now = ref smpi)
+	Proj       = ProjectorFactory::create(params, this);                  // + patchId -> idx_domain_begin (now = ref smpi)
 
 	Diags = new Diagnostic(params,diag_params, smpi, this);
 

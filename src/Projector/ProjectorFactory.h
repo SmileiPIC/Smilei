@@ -15,22 +15,22 @@
 
 class ProjectorFactory {
 public:
-  static Projector* create(PicParams& params, SmileiMPI* smpi, Patch* patch) {
+  static Projector* create(PicParams& params, Patch* patch) {
         Projector* Proj = NULL;
         // ---------------
         // 1d3v simulation
         // ---------------
         if ( ( params.geometry == "1d3v" ) && ( params.interpolation_order == (unsigned int)2 ) ) {
-	  Proj = new Projector1D2Order(params, smpi, patch);
+	  Proj = new Projector1D2Order(params, patch);
         }
         else if ( ( params.geometry == "1d3v" ) && ( params.interpolation_order == (unsigned int)4 ) ) {
-            Proj = new Projector1D4Order(params, smpi, patch);
+            Proj = new Projector1D4Order(params, patch);
         }
         // ---------------
         // 2d3v simulation
         // ---------------
         else if ( ( params.geometry == "2d3v" ) && ( params.interpolation_order == (unsigned int)2 ) ) {
-            Proj = new Projector2D2Order(params, smpi, patch);
+            Proj = new Projector2D2Order(params, patch);
         }
         else {
             ERROR( "Unknwon parameters : " << params.geometry << ", Order : " << params.interpolation_order );
