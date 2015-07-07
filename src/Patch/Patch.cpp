@@ -286,7 +286,7 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, int
 	    if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
 		//n_part_send = (vecSpecies[ispec]->specMPI.patch_buff_index_send[iDim][iNeighbor]).size();
 		vecSpecies[ispec]->specMPI.patch_buff_index_send_sz[iDim][iNeighbor] = (vecSpecies[ispec]->specMPI.patch_buff_index_send[iDim][iNeighbor]).size();
-		int tag = buildtag( hindex, neighbor_[iDim][iNeighbor]);
+		int tag = buildtag( 1, hindex, neighbor_[iDim][iNeighbor]);
 		//MPI_Isend( &(vecSpecies[ispec]->specMPI.patch_buff_index_send_sz[iDim][iNeighbor]), 1, MPI_INT, 0, tag, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.patch_srequest[iDim][iNeighbor]) );
 		MPI_Isend( &(vecSpecies[ispec]->specMPI.patch_buff_index_send_sz[iDim][iNeighbor]), 1, MPI_INT, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(vecSpecies[ispec]->specMPI.patch_srequest[iDim][iNeighbor]) );
 		//cout << hindex << " will sent " << n_part_send << " to " << neighbor_[iDim][iNeighbor] << " with tag " << tag << endl;
@@ -295,7 +295,7 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, int
 		n_part_send = 0;
 	    if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
 		vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2] = 0;
-		int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], hindex);
+		int tag = buildtag( 1, neighbor_[iDim][(iNeighbor+1)%2], hindex);
 		//MPI_Irecv( &(vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2]), 1, MPI_INT, 0, tag, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]) );
 		MPI_Irecv( &(vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2]), 1, MPI_INT, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(vecSpecies[ispec]->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]) );
 		//cout << hindex << " will recv from " << neighbor_[iDim][(iNeighbor+1)%2] << " with tag " << tag << endl;
@@ -310,7 +310,7 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, int
 	    if (corner_neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
 		//n_part_send = (vecSpecies[ispec]->specMPI.corner_buff_index_send[iDim][iNeighbor]).size();
 		vecSpecies[ispec]->specMPI.corner_buff_index_send_sz[iDim][iNeighbor] = (vecSpecies[ispec]->specMPI.corner_buff_index_send[iDim][iNeighbor]).size();
-		int tag = buildtag( hindex, corner_neighbor_[iDim][iNeighbor]);
+		int tag = buildtag( 1, hindex, corner_neighbor_[iDim][iNeighbor]);
 		//MPI_Isend( &(vecSpecies[ispec]->specMPI.corner_buff_index_send_sz[iDim][iNeighbor]), 1, MPI_INT, 0, tag, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.corner_srequest[iDim][iNeighbor]) );
 		MPI_Isend( &(vecSpecies[ispec]->specMPI.corner_buff_index_send_sz[iDim][iNeighbor]), 1, MPI_INT, MPI_corner_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(vecSpecies[ispec]->specMPI.corner_srequest[iDim][iNeighbor]) );
 		//cout << hindex << " will sent " << n_part_send << " to " << corner_neighbor_[iDim][iNeighbor] << " with tag " << tag << endl;
@@ -319,7 +319,7 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, int
 		n_part_send = 0;
 	    if (corner_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
 		vecSpecies[ispec]->specMPI.corner_buff_index_recv_sz[iDim][(iNeighbor+1)%2] = 0;
-		int tag = buildtag( corner_neighbor_[iDim][(iNeighbor+1)%2], hindex);
+		int tag = buildtag( 1, corner_neighbor_[iDim][(iNeighbor+1)%2], hindex);
 		//MPI_Irecv( &(vecSpecies[ispec]->specMPI.corner_buff_index_recv_sz[iDim][(iNeighbor+1)%2]), 1, MPI_INT, 0, tag, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.corner_rrequest[iDim][(iNeighbor+1)%2]) );
 		MPI_Irecv( &(vecSpecies[ispec]->specMPI.corner_buff_index_recv_sz[iDim][(iNeighbor+1)%2]), 1, MPI_INT, MPI_corner_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(vecSpecies[ispec]->specMPI.corner_rrequest[iDim][(iNeighbor+1)%2]) );
 		//cout << hindex << " will recv from " << corner_neighbor_[iDim][(iNeighbor+1)%2] << " with tag " << tag << endl;
@@ -414,7 +414,7 @@ void Patch::initCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int
 		    cuParticles.cp_particle(vecSpecies[ispec]->specMPI.patch_buff_index_send[iDim][iNeighbor][iPart], vecSpecies[ispec]->specMPI.patchVectorSend[iDim][iNeighbor]);
 		}
 
-		int tag = buildtag( hindex, neighbor_[iDim][iNeighbor]);
+		int tag = buildtag( 2, hindex, neighbor_[iDim][iNeighbor]);
 		typePartSend = smpi->createMPIparticles( &(vecSpecies[ispec]->specMPI.patchVectorSend[iDim][iNeighbor]), nbrOfProp );
 		//MPI_Isend( &((vecSpecies[ispec]->specMPI.patchVectorSend[iDim][iNeighbor]).position(0,0)), 1, typePartSend, 0, tag, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.patch_srequest[iDim][iNeighbor]) );
 		MPI_Isend( &((vecSpecies[ispec]->specMPI.patchVectorSend[iDim][iNeighbor]).position(0,0)), 1, typePartSend, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(vecSpecies[ispec]->specMPI.patch_srequest[iDim][iNeighbor]) );
@@ -426,7 +426,7 @@ void Patch::initCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int
 	    n_part_recv = vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2];
 	    if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
 		typePartRecv = smpi->createMPIparticles( &(vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2]), nbrOfProp );
-		int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], hindex);
+		int tag = buildtag( 2, neighbor_[iDim][(iNeighbor+1)%2], hindex);
 		//MPI_Irecv( &((vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2]).position(0,0)), 1, typePartRecv,  0, tag, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]) );
 		MPI_Irecv( &((vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2]).position(0,0)), 1, typePartRecv, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(vecSpecies[ispec]->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]) );
 		//cout << hindex << " will really recv " << n_part_recv << " from " << neighbor_[iDim][(iNeighbor+1)%2] << " with tag " << tag << endl;
@@ -467,7 +467,7 @@ void Patch::initCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int
 		}
 
 		typePartSend = smpi->createMPIparticles( &(vecSpecies[ispec]->specMPI.cornerVectorSend[iDim][iNeighbor]), nbrOfProp );
-		int tag = buildtag( hindex, corner_neighbor_[iDim][iNeighbor]);
+		int tag = buildtag( 2, hindex, corner_neighbor_[iDim][iNeighbor]);
 		//MPI_Isend( &((vecSpecies[ispec]->specMPI.cornerVectorSend[iDim][iNeighbor]).position(0,0)), 1, typePartSend, 0, tag, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.corner_srequest[iDim][iNeighbor]) );
 		MPI_Isend( &((vecSpecies[ispec]->specMPI.cornerVectorSend[iDim][iNeighbor]).position(0,0)), 1, typePartSend, MPI_corner_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(vecSpecies[ispec]->specMPI.corner_srequest[iDim][iNeighbor]) );
 		//cout << hindex << " really send " << n_part_send << " to " << corner_neighbor_[iDim][iNeighbor] << " with tag " << tag << endl;
@@ -478,7 +478,7 @@ void Patch::initCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int
 	    n_part_recv = vecSpecies[ispec]->specMPI.corner_buff_index_recv_sz[iDim][(iNeighbor+1)%2];
 	    if ( (corner_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
 		typePartRecv = smpi->createMPIparticles( &(vecSpecies[ispec]->specMPI.cornerVectorRecv[iDim][(iNeighbor+1)%2]), nbrOfProp );
-		int tag = buildtag( corner_neighbor_[iDim][(iNeighbor+1)%2], hindex);
+		int tag = buildtag( 2, corner_neighbor_[iDim][(iNeighbor+1)%2], hindex);
 		//MPI_Irecv( &((vecSpecies[ispec]->specMPI.cornerVectorRecv[iDim][(iNeighbor+1)%2]).position(0,0)), 1, typePartRecv, 0, tag, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.corner_rrequest[iDim][(iNeighbor+1)%2]) );
 		MPI_Irecv( &((vecSpecies[ispec]->specMPI.cornerVectorRecv[iDim][(iNeighbor+1)%2]).position(0,0)), 1, typePartRecv, MPI_corner_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(vecSpecies[ispec]->specMPI.corner_rrequest[iDim][(iNeighbor+1)%2]) );
 		//cout << hindex << " will really recv from " << corner_neighbor_[iDim][(iNeighbor+1)%2] << " with tag " << tag << endl;
@@ -822,7 +822,7 @@ void Patch::createType( PicParams& params )
 //
 //}
 
-void Patch::initSumField( Field* field )
+void Patch::initSumField( Field* field, int iDim )
 {
     int patch_ndims_(2);
     int patch_nbNeighbors_(2);
@@ -843,28 +843,28 @@ void Patch::initSumField( Field* field )
     oversize2[1] *= 2;
     oversize2[1] += 1 + f2D->isDual_[1];
     
-    for (int iDim=0 ; iDim<patch_ndims_ ; iDim++) {
+    //for (int iDim=0 ; iDim<patch_ndims_ ; iDim++) {
         for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
             std::vector<unsigned int> tmp(patch_ndims_,0);
             tmp[0] =    iDim  * n_elem[0] + (1-iDim) * oversize2[0];
             tmp[1] = (1-iDim) * n_elem[1] +    iDim  * oversize2[1];
             buf[iDim][iNeighbor].allocateDims( tmp );
         }
-    }
-     for (int iDim=0 ; iDim<patch_ndims_ ; iDim++) {
+	//}
+    /* for (int iDim=0 ; iDim<patch_ndims_ ; iDim++) {
         for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
             std::vector<unsigned int> tmp(patch_ndims_,0);
             tmp[0] = 1 + 2 * patch_oversize[0] + isDual[0];
             tmp[1] = 1 + 2 * patch_oversize[1] + isDual[1];
             corner_buf[iDim][iNeighbor].allocateDims( tmp );
         }
-    }
+    }*/
      
     int istart, ix, iy;
     /********************************************************************************/
     // Send/Recv in a buffer data to sum
     /********************************************************************************/
-    for (int iDim=0 ; iDim<2 ; iDim++) {
+    //for (int iDim=0 ; iDim<2 ; iDim++) {
         
 	MPI_Datatype ntype = ntypeSum_[iDim][isDual[0]][isDual[1]];
 	MPI_Request srequest[patch_ndims_][2];
@@ -872,37 +872,37 @@ void Patch::initSumField( Field* field )
         
 	for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
             
-	    if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (MPI_neighbor_[iDim][iNeighbor]!=MPI_neighborhood_[4]) ) {
+	    if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
 		istart = iNeighbor * ( n_elem[iDim]- oversize2[iDim] ) + (1-iNeighbor) * ( 0 );
 		ix = (1-iDim)*istart;
 		iy =    iDim *istart;
-		int tag = buildtag( hindex, neighbor_[iDim][iNeighbor]);
+		int tag = buildtag( 3, hindex, neighbor_[iDim][iNeighbor]);
 		//cout << hindex << " send to " << neighbor_[iDim][iNeighbor] << endl;
 		//MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.patch_srequest[iDim][iNeighbor]) );
 		MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f2D->specMPI.patch_srequest[iDim][iNeighbor]) );
 	    } // END of Send
             
-	    if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (MPI_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_neighborhood_[4]) ) {
+	    if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
 		int tmp_elem = (buf[iDim][(iNeighbor+1)%2]).dims_[0]*(buf[iDim][(iNeighbor+1)%2]).dims_[1];
-		int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], hindex);
+		int tag = buildtag( 3, neighbor_[iDim][(iNeighbor+1)%2], hindex);
 		//cout << hindex << " recv from " << neighbor_[iDim][(iNeighbor+1)%2] << " ; n_elements = " << tmp_elem << endl;
 		//MPI_Irecv( &( (buf[iDim][(iNeighbor+1)%2]).data_2D[0][0] ), tmp_elem, MPI_DOUBLE, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]) );
 		MPI_Irecv( &( (buf[iDim][(iNeighbor+1)%2]).data_2D[0][0] ), tmp_elem, MPI_DOUBLE, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]) );
 	    } // END of Recv
             
 	} // END for iNeighbor
-    }
+	//}
 
-    for (int iDim=0 ; iDim<2 ; iDim++) {
+    /*for (int iDim=0 ; iDim<2 ; iDim++) {
 	
 	MPI_Datatype ntype = corner_ntypeSum_[0][isDual[0]][isDual[1]]; // 1st dimension useless
       
 	for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
             
-	    if ( (corner_neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (MPI_corner_neighbor_[iDim][iNeighbor]!=MPI_neighborhood_[4]) ) {
+	    if ( is_a_corner_MPI_neighbor( iDim, iNeighbor ) ) {
 		ix = iDim      * ( n_elem[0]     - oversize2[0]      ) + (1-iDim     ) * ( 0 );
 		iy = iNeighbor * ( n_elem[1]- oversize2[1] ) + (1-iNeighbor) * ( 0 );
-		int tag = buildtag( hindex, corner_neighbor_[iDim][iNeighbor]);
+		int tag = buildtag( 3, hindex, corner_neighbor_[iDim][iNeighbor]);
 		int tabsize(0);
 		MPI_Type_size( ntype, &tabsize );
 		//cout << hindex << " send in diagonal to " << corner_neighbor_[iDim][iNeighbor] << " from " << ix << " " << iy << " " << tabsize <<  endl;
@@ -910,16 +910,16 @@ void Patch::initSumField( Field* field )
 		MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, MPI_corner_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f2D->specMPI.corner_srequest[iDim][iNeighbor]) );
 	    } // END of Send
             
-	    if ( (corner_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (MPI_corner_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_neighborhood_[4]) ) {
+	    if ( is_a_corner_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
 		int tmp_elem = (corner_buf[iDim][(iNeighbor+1)%2]).dims_[0]*(corner_buf[iDim][(iNeighbor+1)%2]).dims_[1];
-		int tag = buildtag( corner_neighbor_[iDim][(iNeighbor+1)%2], hindex);
+		int tag = buildtag( 3, corner_neighbor_[iDim][(iNeighbor+1)%2], hindex);
 		//cout << hindex << " recv from " << corner_neighbor_[iDim][(iNeighbor+1)%2] << " ; n_elements = " << tmp_elem << endl;
 		//MPI_Irecv( &( (corner_buf[iDim][(iNeighbor+1)%2]).data_2D[0][0] ), tmp_elem, MPI_DOUBLE, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.corner_rrequest[iDim][(iNeighbor+1)%2]) );
 		MPI_Irecv( &( (corner_buf[iDim][(iNeighbor+1)%2]).data_2D[0][0] ), tmp_elem, MPI_DOUBLE, MPI_corner_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(f2D->specMPI.corner_rrequest[iDim][(iNeighbor+1)%2]) );
 	    } // END of Recv
             
 	} // END for iNeighbor
-    }
+    }*/
 
 } // END initSumField
 
@@ -934,7 +934,7 @@ void Patch::initSumField( Field* field )
 //
 //}
 
-void Patch::finalizeSumField( Field* field )
+void Patch::finalizeSumField( Field* field, int iDim )
 {
     int patch_ndims_(2);
     int patch_nbNeighbors_(2);
@@ -958,53 +958,53 @@ void Patch::finalizeSumField( Field* field )
     // Send/Recv in a buffer data to sum
     /********************************************************************************/
 
-    for (int iDim=0 ; iDim<2 ; iDim++) {
+    //for (int iDim=0 ; iDim<2 ; iDim++) {
  
         MPI_Datatype ntype = ntypeSum_[iDim][isDual[0]][isDual[1]];
         MPI_Status sstat    [patch_ndims_][2];
         MPI_Status rstat    [patch_ndims_][2];
 	
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-            if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (MPI_neighbor_[iDim][iNeighbor]!=MPI_neighborhood_[4]) ) {
+	    if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
 		//cout << hindex << " is waiting for send at " << neighbor_[iDim][iNeighbor] << endl;
                 MPI_Wait( &(f2D->specMPI.patch_srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
             }
-            if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (MPI_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_neighborhood_[4]) )  {
+	    if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
 		//cout << hindex << " is waiting for recv from " << neighbor_[iDim][(iNeighbor+1)%2] << endl;	
                 MPI_Wait( &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
             }
         }
-    }
+	//}
 
-    for (int iDim=0 ; iDim<2 ; iDim++) {
+    /*for (int iDim=0 ; iDim<2 ; iDim++) {
  
         MPI_Datatype ntype = corner_ntypeSum_[0][isDual[0]][isDual[1]];; // 1st dimension useless
         MPI_Status corner_sstat    [patch_ndims_][2];
         MPI_Status corner_rstat    [patch_ndims_][2];
 	
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-            if ( (corner_neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (MPI_corner_neighbor_[iDim][iNeighbor]!=MPI_neighborhood_[4]) ) {
+	    if ( is_a_corner_MPI_neighbor( iDim, iNeighbor ) ) {
 		//cout << hindex << " is waiting for corner send at " << corner_neighbor_[iDim][iNeighbor] << endl;
                 MPI_Wait( &(f2D->specMPI.corner_srequest[iDim][iNeighbor]), &(corner_sstat[iDim][iNeighbor]) );
 		//cout << hindex << " is waiting for corner send at " << corner_neighbor_[iDim][iNeighbor] << " ACHIEVED" << endl;
             }
-            if ( (corner_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (MPI_corner_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_neighborhood_[4]) ) {
+	    if ( is_a_corner_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
 		//cout << hindex << " is waiting for corner recv from " << corner_neighbor_[iDim][(iNeighbor+1)%2] << endl;	
                 MPI_Wait( &(f2D->specMPI.corner_rrequest[iDim][(iNeighbor+1)%2]), &(corner_rstat[iDim][(iNeighbor+1)%2]) );
             }
         }
-    }
+    }*/
 
     /********************************************************************************/
     // Sum data on each process, same operation on both side
     /********************************************************************************/
-    for (int iDim=0 ; iDim<2 ; iDim++) {
+    //for (int iDim=0 ; iDim<2 ; iDim++) {
        
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
             istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim]- oversize2[iDim] ) + (1-(iNeighbor+1)%2) * ( 0 );
             int ix0 = (1-iDim)*istart;
             int iy0 =    iDim *istart;
-            if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (MPI_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_neighborhood_[4]) ) {
+	    if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
                 for (unsigned int ix=0 ; ix< (buf[iDim][(iNeighbor+1)%2]).dims_[0] ; ix++) {
                     for (unsigned int iy=0 ; iy< (buf[iDim][(iNeighbor+1)%2]).dims_[1] ; iy++)
                         f2D->data_2D[ix0+ix][iy0+iy] += (buf[iDim][(iNeighbor+1)%2])(ix,iy);
@@ -1012,14 +1012,14 @@ void Patch::finalizeSumField( Field* field )
             } // END if
             
         } // END for iNeighbor
-    }
+	//}
         
-    for (int iDim=0 ; iDim<2 ; iDim++) {
+    /*for (int iDim=0 ; iDim<2 ; iDim++) {
        
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
 	    int ix0 = iDim      * ( n_elem[0]     - oversize2[0]      ) + (1-iDim     ) * ( 0 );
 	    int iy0 = iNeighbor * ( n_elem[1]- oversize2[1] ) + (1-iNeighbor) * ( 0 );
-            if ( (corner_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (MPI_corner_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_neighborhood_[4]) ) {
+	    if ( is_a_corner_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
                 for (unsigned int ix=0 ; ix< (corner_buf[iDim][(iNeighbor+1)%2]).dims_[0] ; ix++) {
                     for (unsigned int iy=0 ; iy< (corner_buf[iDim][(iNeighbor+1)%2]).dims_[1] ; iy++)
                         f2D->data_2D[ix0+ix][iy0+iy] += (corner_buf[iDim][(iNeighbor+1)%2])(ix,iy);
@@ -1027,18 +1027,18 @@ void Patch::finalizeSumField( Field* field )
             } // END if
             
         } // END for iNeighbor
-    }       
+    } */      
 
-    for (int iDim=0 ; iDim<patch_ndims_ ; iDim++) {
+    //for (int iDim=0 ; iDim<patch_ndims_ ; iDim++) {
         for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
 	    buf[iDim][iNeighbor].deallocateDims();
         }
-    }
-     for (int iDim=0 ; iDim<patch_ndims_ ; iDim++) {
+	//}
+    /*for (int iDim=0 ; iDim<patch_ndims_ ; iDim++) {
         for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
 	    corner_buf[iDim][iNeighbor].deallocateDims();
         }
-    }
+    }*/
 
 } // END finalizeSumField
 
@@ -1060,23 +1060,23 @@ void Patch::initExchange( Field* field )
         MPI_Datatype ntype = ntype_[iDim][isDual[0]][isDual[1]];
         for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
 
-            if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) ) {
+	    if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
 
                 istart = iNeighbor * ( n_elem[iDim]- (2*patch_oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( 2*patch_oversize[iDim] + isDual[iDim] );
                 ix = (1-iDim)*istart;
                 iy =    iDim *istart;
-		int tag = buildtag( hindex, neighbor_[iDim][iNeighbor]);
+		int tag = buildtag( 4, hindex, neighbor_[iDim][iNeighbor]);
                 //MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.patch_srequest[iDim][iNeighbor]) );
                 MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f2D->specMPI.patch_srequest[iDim][iNeighbor]) );
 
             } // END of Send
 
-            if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) ) {
+	    if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
 
                 istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - 1 ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
                 ix = (1-iDim)*istart;
                 iy =    iDim *istart;
- 		int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], hindex);
+ 		int tag = buildtag( 4, neighbor_[iDim][(iNeighbor+1)%2], hindex);
 		//MPI_Irecv( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]));
 		MPI_Irecv( &(f2D->data_2D[ix][iy]), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]));
 
@@ -1087,6 +1087,48 @@ void Patch::initExchange( Field* field )
     } // END for iDim
 
 }
+void Patch::initExchange( Field* field, int iDim )
+{
+    int patch_ndims_(2);
+    int patch_nbNeighbors_(2);
+    vector<unsigned int> patch_oversize(2,2);
+
+    std::vector<unsigned int> n_elem   = field->dims_;
+    std::vector<unsigned int> isDual = field->isDual_;
+    Field2D* f2D =  static_cast<Field2D*>(field);
+
+    int istart, ix, iy;
+
+    MPI_Datatype ntype = ntype_[iDim][isDual[0]][isDual[1]];
+    for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
+
+	if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
+
+	    istart = iNeighbor * ( n_elem[iDim]- (2*patch_oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( 2*patch_oversize[iDim] + isDual[iDim] );
+	    ix = (1-iDim)*istart;
+	    iy =    iDim *istart;
+	    int tag = buildtag( 4, hindex, neighbor_[iDim][iNeighbor]);
+	    //MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.patch_srequest[iDim][iNeighbor]) );
+	    MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f2D->specMPI.patch_srequest[iDim][iNeighbor]) );
+
+	} // END of Send
+
+	if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
+
+	    istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - 1 ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
+	    ix = (1-iDim)*istart;
+	    iy =    iDim *istart;
+	    int tag = buildtag( 4, neighbor_[iDim][(iNeighbor+1)%2], hindex);
+	    //MPI_Irecv( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]));
+	    MPI_Irecv( &(f2D->data_2D[ix][iy]), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]));
+
+	} // END of Recv
+
+    } // END for iNeighbor
+
+
+}
+
 
 void Patch::finalizeExchange( Field* field )
 {
@@ -1102,15 +1144,36 @@ void Patch::finalizeExchange( Field* field )
     for (int iDim=0 ; iDim<patch_ndims_ ; iDim++) {
 
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-            if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) ) {
+	    if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
                 MPI_Wait( &(f2D->specMPI.patch_srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
             }
-            if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL)  ) {
-                MPI_Wait( &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
+ 	    if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
+               MPI_Wait( &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
             }
         }
 
     } // END for iDim
+}
+
+void Patch::finalizeExchange( Field* field, int iDim )
+{
+    int patch_ndims_(2);
+    int patch_nbNeighbors_(2);
+
+    Field2D* f2D =  static_cast<Field2D*>(field);
+
+    MPI_Status sstat    [patch_ndims_][2];
+    MPI_Status rstat    [patch_ndims_][2];
+
+    for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+	if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
+	    MPI_Wait( &(f2D->specMPI.patch_srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
+	}
+	if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
+	    MPI_Wait( &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
+	}
+    }
+
 }
 
 
@@ -1188,6 +1251,50 @@ void VectorPatch::sumRhoJ(unsigned int diag_flag )
             memcpy( pt2, pt1, gsp[0]*ny_p*sizeof(double)); 
         }
     }//End of openmp for used as a barrier
+
+
+    #pragma omp master
+    {
+	for (int iDim=0;iDim<1;iDim++) {
+	    if (diag_flag)
+		for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+		    (*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->rho_, iDim ); // initialize
+		}
+
+	    if (diag_flag)
+		for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+		    (*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->rho_, iDim ); // finalize (waitall + sum)
+		}
+	}
+
+	for (int iDim=0;iDim<1;iDim++) {
+	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+		(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jx_, iDim ); // initialize
+	    }
+	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+		(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jx_ , iDim); // finalize (waitall + sum)
+	    }
+	}
+	for (int iDim=0;iDim<1;iDim++) {
+	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+		(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jy_, iDim ); // initialize
+	    }
+	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+		(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jy_, iDim ); // finalize (waitall + sum)
+	    }
+	}
+	for (int iDim=0;iDim<1;iDim++) {
+	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+		(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jz_, iDim ); // initialize
+	    }
+	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+		(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jz_, iDim ); // finalize (waitall + sum)
+	    }
+	}
+    }
+
+
+
     #pragma omp for schedule(dynamic) private(pt1, pt2)
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
         if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[1]){
@@ -1230,42 +1337,53 @@ void VectorPatch::sumRhoJ(unsigned int diag_flag )
     }
 
 
+
     #pragma omp master
     {
-	if (diag_flag)
-	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-		(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->rho_ ); // initialize
-	    }
+	for (int iDim=1;iDim<2;iDim++) {
+	    if (diag_flag)
+		for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+		    (*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->rho_, iDim ); // initialize
+		}
 
-	if (diag_flag)
-	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-		(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->rho_ ); // finalize (waitall + sum)
-	    }
+	    if (diag_flag)
+		for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+		    (*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->rho_, iDim ); // finalize (waitall + sum)
+		}
+	}
 
-	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	    (*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jx_ ); // initialize
+	for (int iDim=1;iDim<2;iDim++) {
+	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+		(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jx_, iDim ); // initialize
+	    }
+	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+		(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jx_ , iDim); // finalize (waitall + sum)
+	    }
 	}
-	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	    (*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jx_ ); // finalize (waitall + sum)
+	for (int iDim=1;iDim<2;iDim++) {
+	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+		(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jy_, iDim ); // initialize
+	    }
+	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+		(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jy_, iDim ); // finalize (waitall + sum)
+	    }
 	}
-	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	    (*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jy_ ); // initialize
-	}
-	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	    (*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jy_ ); // finalize (waitall + sum)
-	}
-	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	    (*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jz_ ); // initialize
-	}
-	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	    (*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jz_ ); // finalize (waitall + sum)
+	for (int iDim=1;iDim<2;iDim++) {
+	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+		(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jz_, iDim ); // initialize
+	    }
+	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+		(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jz_, iDim ); // finalize (waitall + sum)
+	    }
 	}
     }
+    
 
 }
 
 void VectorPatch::sumRhoJs( int ispec )
 {
+
     unsigned int nx_p,nx_d,ny_p,ny_d, h0, oversize[2], n_space[2],gsp[2];
     double *pt1,*pt2;
 
@@ -1306,6 +1424,44 @@ void VectorPatch::sumRhoJs( int ispec )
             memcpy( pt2, pt1, gsp[0]*ny_p*sizeof(double)); 
         }
     }//End of openmp for used as a barrier
+
+
+    for (int iDim=0;iDim<1;iDim++) {
+	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	    (*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->rho_s[ispec], iDim ); // initialize
+	}
+
+	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	    (*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->rho_s[ispec], iDim); // finalize (waitall + sum)
+	}
+    }
+    for (int iDim=0;iDim<1;iDim++) {
+	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	    (*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jx_s[ispec], iDim); // initialize
+	}
+	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	    (*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jx_s[ispec], iDim); // finalize (waitall + sum)
+	}
+    }
+    for (int iDim=0;iDim<1;iDim++) {
+	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	    (*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jy_s[ispec], iDim ); // initialize
+	}
+	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	    (*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jy_s[ispec], iDim ); // finalize (waitall + sum)
+	}
+    }
+    for (int iDim=0;iDim<1;iDim++) {
+	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	    (*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jz_s[ispec], iDim ); // initialize
+	}
+	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	    (*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jz_s[ispec], iDim ); // finalize (waitall + sum)
+	}
+    }
+
+
+
     #pragma omp for schedule(dynamic) private(pt1, pt2)
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
         if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[1]){
@@ -1346,39 +1502,110 @@ void VectorPatch::sumRhoJs( int ispec )
     }
 
 
+    for (int iDim=1;iDim<2;iDim++) {
+	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	    (*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->rho_s[ispec], iDim ); // initialize
+	}
 
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->rho_s[ispec] ); // initialize
+	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	    (*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->rho_s[ispec], iDim); // finalize (waitall + sum)
+	}
     }
-
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->rho_s[ispec]); // finalize (waitall + sum)
+    for (int iDim=1;iDim<2;iDim++) {
+	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	    (*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jx_s[ispec], iDim); // initialize
+	}
+	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	    (*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jx_s[ispec], iDim); // finalize (waitall + sum)
+	}
     }
-
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jx_s[ispec]); // initialize
+    for (int iDim=1;iDim<2;iDim++) {
+	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	    (*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jy_s[ispec], iDim ); // initialize
+	}
+	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	    (*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jy_s[ispec], iDim ); // finalize (waitall + sum)
+	}
     }
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jx_s[ispec]); // finalize (waitall + sum)
+    for (int iDim=1;iDim<2;iDim++) {
+	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	    (*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jz_s[ispec], iDim ); // initialize
+	}
+	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	    (*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jz_s[ispec], iDim ); // finalize (waitall + sum)
+	}
     }
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jy_s[ispec] ); // initialize
-    }
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jy_s[ispec] ); // finalize (waitall + sum)
-    }
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jz_s[ispec] ); // initialize
-    }
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jz_s[ispec] ); // finalize (waitall + sum)
-    }
-
-
+    
 }
 
 void VectorPatch::exchangeE( )
 {
+    return;
+    unsigned int nx_p,nx_d,ny_p,ny_d, h0, oversize[2], n_space[2],gsp[2];
+    double *pt1,*pt2;
+
+    h0 = (*this)(0)->hindex;
+    oversize[0] = (*this)(0)->EMfields->oversize[0];
+    oversize[1] = (*this)(0)->EMfields->oversize[1];
+    n_space[0] = (*this)(0)->EMfields->n_space[0];
+    n_space[1] = (*this)(0)->EMfields->n_space[1];
+    nx_p = n_space[0]+1+2*oversize[0];
+    ny_p = n_space[1]+1+2*oversize[1];
+    nx_d = nx_p+1;
+    ny_d = ny_p+1;
+    gsp[0] = 1+2*oversize[0]; //Ghost size primal
+    gsp[1] = 1+2*oversize[1]; //Ghost size primal
+
+    #pragma omp for schedule(dynamic) private(pt1,pt2)
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+        if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[3]){
+        //The patch on my left belongs to the same MPI process than I.
+	        
+	    
+	    pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->Ex_)((n_space[0])*ny_p);
+	    pt2 = &(*(*this)(ipatch)->EMfields->Ex_)(0);
+	    memcpy( pt2, pt1, ny_p*sizeof(double)); 
+	    memcpy( pt1+gsp[0]*ny_p, pt2+gsp[0]*ny_p, ny_p*sizeof(double)); 
+	    
+
+	    pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->Ey_)((n_space[0]-1)*ny_d);
+           pt2 = &(*(*this)(ipatch)->EMfields->Ey_)(0);
+           memcpy( pt2, pt1, ny_d*sizeof(double)); 
+           memcpy( pt1+gsp[0]*ny_d, pt2+gsp[0]*ny_d, ny_d*sizeof(double)); 
+           
+                    
+	   pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->Ez_)((n_space[0]-1)*ny_p);
+            pt2 = &(*(*this)(ipatch)->EMfields->Ez_)(0);
+            memcpy( pt2, pt1, ny_p*sizeof(double)); 
+            memcpy( pt1+gsp[0]*ny_p, pt2+gsp[0]*ny_p, ny_p*sizeof(double)); 
+        }
+        if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[1]){
+        //The patch below me belongs to the same MPI process than I.
+
+	    pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->Ex_)(n_space[1]-1);
+           pt2 = &(*(*this)(ipatch)->EMfields->Ex_)(0);
+           for (unsigned int i = 0 ; i < nx_d*ny_p ; i += ny_p){
+               pt2[i] = pt1[i] ;
+               pt1[i+gsp[1]] = pt2[i+gsp[1]] ;
+           } 
+	   	   
+           pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->Ey_)(n_space[1]);
+           pt2 = &(*(*this)(ipatch)->EMfields->Ey_)(0);
+           for (unsigned int i = 0 ; i < nx_p*ny_d ; i += ny_d){
+               pt2[i] = pt1[i] ;
+               pt1[i+gsp[1]] = pt2[i+gsp[1]] ;
+	   } 
+
+
+           pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->Ez_)(n_space[1]-1);
+           pt2 = &(*(*this)(ipatch)->EMfields->Ez_)(0);
+           for (unsigned int i = 0 ; i < nx_p*ny_p ; i += ny_p){
+               pt2[i] = pt1[i] ;
+               pt1[i+gsp[1]] = pt2[i+gsp[1]] ;
+           }
+        }
+    }
+    /*
     #pragma omp for
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
 	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->Ex_ );
@@ -1399,7 +1626,7 @@ void VectorPatch::exchangeE( )
     #pragma omp for
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
 	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->Ez_ );
-
+    */
 }
 
 void VectorPatch::exchangeB( )
@@ -1423,12 +1650,17 @@ void VectorPatch::exchangeB( )
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
         if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[3]){
         //The patch on my left belongs to the same MPI process than I.
+	        
+	    //pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->Bx_)((n_space[0]-1)*ny_d);
+	    //pt2 = &(*(*this)(ipatch)->EMfields->Bx_)(0);
+	    //memcpy( pt2, pt1, ny_d*sizeof(double)); 
+	    //memcpy( pt1+gsp[0]*ny_d, pt2+gsp[0]*ny_d, ny_d*sizeof(double));
 
-           pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->By_)(n_space[0]*ny_p);
-           pt2 = &(*(*this)(ipatch)->EMfields->By_)(0);
-           memcpy( pt2, pt1, ny_p*sizeof(double)); 
-           memcpy( pt1+gsp[0]*ny_p, pt2+gsp[0]*ny_p, ny_p*sizeof(double)); 
-           
+	    pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->By_)(n_space[0]*ny_p);
+	    pt2 = &(*(*this)(ipatch)->EMfields->By_)(0);
+	    memcpy( pt2, pt1, ny_p*sizeof(double)); 
+	    memcpy( pt1+gsp[0]*ny_p, pt2+gsp[0]*ny_p, ny_p*sizeof(double)); 
+	              
                     
             pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->Bz_)(n_space[0]*ny_d);
             pt2 = &(*(*this)(ipatch)->EMfields->Bz_)(0);
@@ -1444,6 +1676,13 @@ void VectorPatch::exchangeB( )
                pt2[i] = pt1[i] ;
                pt1[i+gsp[1]] = pt2[i+gsp[1]] ;
            } 
+	   
+           //pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->By_)(n_space[1]-1);
+           //pt2 = &(*(*this)(ipatch)->EMfields->By_)(0);
+           //for (unsigned int i = 0 ; i < nx_d*ny_p ; i += ny_p){
+           //    pt2[i] = pt1[i] ;
+           //    pt1[i+gsp[1]] = pt2[i+gsp[1]] ;
+	   //}
 
            pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->Bz_)(n_space[1]);
            pt2 = &(*(*this)(ipatch)->EMfields->Bz_)(0);
@@ -1453,28 +1692,35 @@ void VectorPatch::exchangeB( )
            }
         }
     }
-    
 
-//    #pragma omp for
-//    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-//	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->Bx_ );
-//    #pragma omp for
-//    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-//	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->Bx_ );
-//
-//    #pragma omp for
-//    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-//	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->By_ );
-//    #pragma omp for
-//    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-//	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->By_ );
-//
-//    #pragma omp for
-//    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-//	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->Bz_ );
-//    #pragma omp for
-//    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-//	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->Bz_ );
+
+    #pragma omp for
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->Bx_, 1 );
+    #pragma omp for
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->Bx_,1 );
+
+    #pragma omp for
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->By_, 0 );
+    #pragma omp for
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->By_, 0 );
+
+    #pragma omp for
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->Bz_, 0 );
+    #pragma omp for
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->Bz_, 0 );
+	
+    #pragma omp for
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->Bz_, 1 );
+    #pragma omp for
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->Bz_, 1 );
 
 }
 
