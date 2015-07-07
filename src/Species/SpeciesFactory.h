@@ -11,23 +11,24 @@
 
 #include "Tools.h"
 
+
 class SpeciesFactory {
 public:
-  static Species* create(PicParams& params, int ispec, SmileiMPI* smpi, Patch* patch) {
+  static Species* create(PicParams& params, int ispec, Patch* patch) {
         Species* sp = NULL;
         if (params.species_param[ispec].dynamics_type=="norm") {
             // Species with Boris dynamics
-	    sp = new Species_norm(params, ispec, smpi, patch);
+	    sp = new Species_norm(params, ispec, patch);
 
         } else if (params.species_param[ispec].dynamics_type=="rrll") {
             // Species with Boris dynamics + Radiation Back-Reaction (using the Landau-Lifshitz formula)
-            sp = new Species_rrll(params, ispec, smpi, patch);
+            sp = new Species_rrll(params, ispec, patch);
         } // END if
 
         return sp;
     }
 
-  static std::vector<Species*> createVector(PicParams& params, SmileiMPI* smpi, Patch* patch) {
+  static std::vector<Species*> createVector(PicParams& params, Patch* patch) {
         std::vector<Species*> vecSpecies;
         vecSpecies.resize(params.n_species);
 
@@ -36,7 +37,7 @@ public:
         // create species
         unsigned int nPart;
         for (unsigned int ispec=0 ; ispec<params.n_species ; ispec++) {
-	  vecSpecies[ispec] = SpeciesFactory::create(params, ispec, smpi, patch);
+	  vecSpecies[ispec] = SpeciesFactory::create(params, ispec, patch);
             if (params.species_param[ispec].species_type=="electron") {
                 electron_species=vecSpecies[ispec];
             }
@@ -48,7 +49,8 @@ public:
             if (vecSpecies[ispec]->Ionize)  {
                 if (electron_species) {
                     vecSpecies[ispec]->electron_species=electron_species;
-                    PMESSAGE(2,smpi->getRank(),"Added electron species to species " << vecSpecies[ispec]->species_param.species_type);
+                    //Compilation fails with "pointer to incomplete class type is not allowed" if following line is uncommented.
+                    //PMESSAGE(2,patch->Hindex(),"Added electron species to species " << vecSpecies[ispec]->species_param.species_type);
                 } else {
                     ERROR("Ionization needs a species called \"electron\" to be defined");
                 }

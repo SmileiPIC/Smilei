@@ -135,7 +135,7 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 	min_local[0] += n_moved*params.cell_length[0];
 	max_local[0] += n_moved*params.cell_length[0];
 
-	vecSpecies = SpeciesFactory::createVector(params, smpi, this);
+	vecSpecies = SpeciesFactory::createVector(params, this);
 
 	/* // + min_loc/cell_index(ref smpi,  & sort) // OK through this */
 	// + new n_space -> in PatchFactory

@@ -81,7 +81,7 @@ particles(&particles_sorted[0])
 // Creator for Species
 // input: simulation parameters & Species index
 // ---------------------------------------------------------------------------------------------------------------------
-Species::Species(PicParams& params, int ispec, SmileiMPI* smpi, Patch* patch) :
+Species::Species(PicParams& params, int ispec, Patch* patch) :
 densityProfile(DensityFactory::create(params, ispec)),
 speciesNumber(ispec),
 cell_length(params.cell_length),
@@ -137,7 +137,7 @@ particles(&particles_sorted[0])
 	
 	
     // define limits for BC and functions applied and for domain decomposition
-    partBoundCond = new PartBoundCond( params, ispec, smpi, patch);
+    partBoundCond = new PartBoundCond( params, ispec, patch);
 
 
 
