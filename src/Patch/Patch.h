@@ -111,11 +111,13 @@ public:
 
     //void initSumRhoJ( ElectroMagn* EMfields, unsigned int diag_flag );
     //void finalizeSumRhoJ( ElectroMagn* EMfields, unsigned int diag_flag );
-    virtual void initSumField( Field* field );
-    virtual void finalizeSumField( Field* field );
+    virtual void initSumField( Field* field, int iDim );
+    virtual void finalizeSumField( Field* field, int iDim );
 
     virtual void initExchange( Field* field );
     virtual void finalizeExchange( Field* field );
+    virtual void initExchange( Field* field, int iDim );
+    virtual void finalizeExchange( Field* field, int iDim );
 
     void createType( PicParams& params );
     //! MPI_Datatype to exchange [ndims_][iDim=0 prim/dial][iDim=1 prim/dial]
@@ -156,7 +158,20 @@ public:
     inline bool isMaster() {return (hindex==0);}
 
     void updateMPIenv(SmileiMPI *smpi);
-    
+
+    inline bool is_a_MPI_neighbor(int iDim, int iNeighbor) {
+	// all MPI
+	//return( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) );
+	// MPI & local
+	return( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (MPI_neighbor_[iDim][iNeighbor]!=MPI_neighborhood_[4]) );
+    }
+    inline bool is_a_corner_MPI_neighbor(int iDim, int iNeighbor) {
+	// all MPI 
+	//return( (corner_neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) );
+	// MPI & local
+	return( (corner_neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (MPI_corner_neighbor_[iDim][iNeighbor]!=MPI_neighborhood_[4]) );
+    }
+ 
 
 protected:
     //!Hilbert index of the patch. Number of the patch along the Hilbert curve.
@@ -230,10 +245,10 @@ class VectorPatch {
 };
 
 
-inline int buildtag(int send, int recv) {
+inline int buildtag(int commid, int send, int recv) {
     // + flag / orientation
     std::stringstream stag("");
-    stag << send << "0" << recv;
+    stag << commid << send  << recv;
     int tag(0);
     stag >> tag; // Should had ispec ?
     return tag;
