@@ -130,7 +130,7 @@ public:
     const std::vector<unsigned int> oversize;
 
     //! Constructor for Electromagn
-    ElectroMagn( PicParams &params, LaserParams &laser_params, SmileiMPI* smpi, Patch* patch );
+    ElectroMagn( PicParams &params, LaserParams &laser_params, Patch* patch );
 
     //! Destructor for Electromagn
     virtual ~ElectroMagn();

@@ -19,8 +19,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn1D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn1D::ElectroMagn1D(PicParams &params,  LaserParams &laser_params, SmileiMPI* smpi, Patch* patch)
-  : ElectroMagn(params, laser_params, smpi, patch),
+ElectroMagn1D::ElectroMagn1D(PicParams &params,  LaserParams &laser_params, Patch* patch)
+  : ElectroMagn(params, laser_params, patch),
 isWestern(patch->isWestern()),
 isEastern(patch->isEastern())
 {

@@ -20,7 +20,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for the virtual class ElectroMagn
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn::ElectroMagn(PicParams &params, LaserParams &laser_params, SmileiMPI* smpi, Patch* patch) :
+ElectroMagn::ElectroMagn(PicParams &params, LaserParams &laser_params, Patch* patch) :
 timestep(params.timestep),
 cell_length(params.cell_length),
 nDim_field(params.nDim_field),

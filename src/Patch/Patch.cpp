@@ -143,7 +143,7 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 	// create Pos : OK
 
 	// -> partBoundCond : min/max_loc (smpi)
-	EMfields   = ElectroMagnFactory::create(params, laser_params, smpi, this);
+	EMfields   = ElectroMagnFactory::create(params, laser_params, this);
 	// + patchId + new n_space (now = params by smpi) + BC
 	// -> Neighbors to define !!
 	
