@@ -21,8 +21,8 @@ Species_norm::Species_norm( PicParams& params, int ispec, SmileiMPI* smpi )
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for Species_norm
 // ---------------------------------------------------------------------------------------------------------------------
-Species_norm::Species_norm( PicParams& params, int ispec, SmileiMPI* smpi, Patch* patch )
-  : Species( params, ispec, smpi, patch )
+Species_norm::Species_norm( PicParams& params, int ispec, Patch* patch )
+  : Species( params, ispec, patch )
 {
     DEBUG(20,"Species " << ispec << "created as norm");
 }

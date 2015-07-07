@@ -32,7 +32,7 @@ public:
     SpeciesMPI specMPI;
 
     //! Species creator
-    Species(PicParams&, int, SmileiMPI*, Patch*);
+    Species(PicParams&, int, Patch*);
     Species(PicParams&, int, SmileiMPI*);
 
     void initCluster(PicParams&);

@@ -67,7 +67,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
 
     cout << " old_size = " << vecPatches_old.size() << endl;
 
-    #pragma omp for 
+    #pragma omp for schedule(static)
     for (unsigned int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++) {
         vecPatches_old[ipatch] = vecPatches(ipatch);
     } //Barrier at the end of this omp for is important to prevent an update of x_moved before resolution of isMoving in the main loop.
@@ -77,7 +77,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
         n_moved += params.n_space[0];
     }
 
-    #pragma omp for private(xcall,ycall,mypatch, do_right, receive_flag, old_index)
+    #pragma omp for private(xcall,ycall,mypatch, do_right, receive_flag, old_index) schedule(runtime)
     for (unsigned int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++) {
          mypatch = vecPatches_old[ipatch];
          do_right = 0;

@@ -13,6 +13,7 @@
 
 using namespace std;
 
+//Obsolete
 PartBoundCond::PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi )
 {
     nDim_particle = params.nDim_particle;
@@ -74,7 +75,7 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi )
     
 }
 
-PartBoundCond::PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi, Patch* patch )
+PartBoundCond::PartBoundCond( PicParams& params, int ispec, Patch* patch )
 {
     nDim_particle = params.nDim_particle;
 

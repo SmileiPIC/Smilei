@@ -60,12 +60,12 @@ public:
     std::vector<unsigned int> Pcoordinates;
 
 
-    //! Return real (excluding oversize) min coordinates (ex : rank 0 retourn 0.) for direction i
+    //! Return real (excluding oversize) min coordinates (ex : rank 0 returns 0.) for direction i
     //! @see min_local
     inline double getDomainLocalMin(int i) const {
         return min_local[i];
     }
-    //! Return real (excluding oversize) min coordinates (ex : rank 0 retourn 0.) for direction i
+    //! Return real (excluding oversize) min coordinates (ex : rank 0 returns 0.) for direction i
     //! @see min_local
     inline double getDomainLocalMax(int i) const {
         return max_local[i];
