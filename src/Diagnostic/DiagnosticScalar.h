@@ -32,12 +32,14 @@ class DiagnosticScalar {
 
 public:
     //! creator (called from Diagnostic)
-    DiagnosticScalar(SmileiMPI* smpi);
+    DiagnosticScalar(){};
     //! destructor
     ~DiagnosticScalar(){};
     
+
+    void openFile(SmileiMPI* smpi);
     //! close the file
-    void close();
+    void closeFile(SmileiMPI* smpi);
 
     //! calls the compute_proc_gather, compute and write
     void run(int timestep, ElectroMagn* EMfields, std::vector<Species*>&, SmileiMPI *smpi);
@@ -73,13 +75,7 @@ public:
     //! copied from params
     double cell_volume;
     
-private:
-    //! check if proc is master (from smpi)
-    const bool isMaster;
-    
-    //! tot number of cpus (from smpi)
-    const unsigned int cpuSize;
-
+private:    
     //! initial energy (kinetic + EM)
     double Energy_time_zero;
     

@@ -91,7 +91,7 @@ class DiagnosticProbe {
 public:
     
     //! the creator need both sim parameters params and the diagnostic parameter diagParams
-    DiagnosticProbe(SmileiMPI* smpi);
+    DiagnosticProbe();
     
     ~DiagnosticProbe();//{};
     
@@ -129,12 +129,6 @@ public:
     const int probeSize;
     
 protected:
-    //! check if proc is master (from smpi)
-    const bool isMaster;
-
-    // rank of the cpu (from smpi)
-    const unsigned int cpuRank;
-    
     //! E local fields for the projector
     LocalFields Eloc_fields;
     //! B local fields for the projector

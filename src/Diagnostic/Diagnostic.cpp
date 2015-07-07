@@ -12,12 +12,9 @@
 
 using namespace std;
 
-Diagnostic::Diagnostic(PicParams& params, InputData &ifile, SmileiMPI *smpi) :
+Diagnostic::Diagnostic(PicParams& picparams, InputData &ifile, SmileiMPI *smpi) :
 dtimer(4),
-scalars(smpi),
-probes(smpi),
-phases(smpi),
-params(this, params,ifile,smpi)
+dparams(this, picparams,ifile,smpi)
 {
     dtimer[0].init(smpi, "scalars");
     dtimer[1].init(smpi, "probes");
@@ -26,9 +23,9 @@ params(this, params,ifile,smpi)
     
 }
 
-void Diagnostic::closeAll () {
+void Diagnostic::closeAll (SmileiMPI* smpi) {
     
-    scalars.close();
+    scalars.closeFile(smpi);
     probes.close();
     phases.close();
     
@@ -40,13 +37,17 @@ void Diagnostic::closeAll () {
 void Diagnostic::printTimers (SmileiMPI *smpi, double tottime) {
     
     double coverage(0.);
-    MESSAGE(0, "Time in diagnostics : \t"<< tottime);
-    if ( smpi->isMaster() )
+    if ( smpi->isMaster() ) {
         for (int i=0 ; i<dtimer.size() ; i++) {
-            dtimer[i].print(tottime) ;
             coverage += dtimer[i].getTime();
         }
-    MESSAGE(0, "\t" << setw(12) << "Coverage\t\t" << coverage/tottime*100. << " %" );    
+    }
+    MESSAGE(0, "\nTime in diagnostics : \t"<< tottime <<"\t(" << coverage/tottime*100. << "% coverage)" );    
+    if ( smpi->isMaster() ) {
+        for (int i=0 ; i<dtimer.size() ; i++) {
+            dtimer[i].print(tottime) ;
+        }
+    }
 }
 
 double Diagnostic::getScalar(string name){

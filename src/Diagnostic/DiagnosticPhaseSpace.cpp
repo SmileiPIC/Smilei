@@ -25,7 +25,7 @@ void DiagnosticPhaseSpace::close() {
 
 
 
-DiagnosticPhaseSpace::DiagnosticPhaseSpace(SmileiMPI* smpi) : isMaster(smpi->isMaster()), fileId(0) {}
+DiagnosticPhaseSpace::DiagnosticPhaseSpace() : fileId(0) {}
 
 void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) {
 	//! check which diagnosticPhase to run at this timestep

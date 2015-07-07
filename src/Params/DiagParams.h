@@ -69,7 +69,7 @@ public:
     //! Creator for DiagParams
     DiagParams(Diagnostic*, PicParams&, InputData&, SmileiMPI *);
 
-    void initScalars(Diagnostic*, PicParams&, InputData&);
+    void initScalars(Diagnostic*, PicParams&, InputData&, SmileiMPI *smpi);
     
     void initProbes(Diagnostic*, PicParams&, InputData&, SmileiMPI *);
     

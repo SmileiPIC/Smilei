@@ -46,8 +46,8 @@ DiagParams::DiagParams(Diagnostic* diags, PicParams& params, InputData &ifile, S
     if (ifile.extract("particleDump_every", particleDump_every))
         WARNING("Option particleDump_every disabled");
     
-    // scalars initialization   
-    initScalars(diags,params,ifile);
+    // scalars initialization
+    initScalars(diags,params,ifile, smpi);
     
     // probes initialization
     initProbes(diags,params,ifile,smpi);
@@ -60,8 +60,11 @@ DiagParams::DiagParams(Diagnostic* diags, PicParams& params, InputData &ifile, S
     
 }
 
-void DiagParams::initScalars(Diagnostic* diags, PicParams& params, InputData &ifile) {
-
+void DiagParams::initScalars(Diagnostic* diags, PicParams& params, InputData &ifile, SmileiMPI *smpi) {
+    //open file scalars.txt
+    diags->scalars.openFile(smpi);
+    
+    MESSAGE(1,"Initilizing scalars");
     diags->scalars.every=0;
     bool ok=ifile.extract("every",diags->scalars.every,"DiagScalar");
     if (!ok) diags->scalars.every=params.global_every;
@@ -89,10 +92,12 @@ void DiagParams::initScalars(Diagnostic* diags, PicParams& params, InputData &if
 }
 
 void DiagParams::initProbes(Diagnostic* diags, PicParams& params, InputData &ifile, SmileiMPI *smpi) {
+
     bool ok;
     
     // loop all "diagnostic probe" groups in the input file
     unsigned  numProbes=ifile.nComponents("DiagProbe");
+    MESSAGE(1,"Initializing Probes (" << numProbes << ")");
     for (unsigned int n_probe = 0; n_probe < numProbes; n_probe++) {
         
         if (n_probe==0) {
@@ -296,6 +301,7 @@ void DiagParams::initPhases(Diagnostic* diags, PicParams& params, InputData &ifi
     bool ok;
     
     unsigned int numPhases=ifile.nComponents("DiagPhase");
+    MESSAGE(1,"Initializing PhaseSpaces (" << numPhases << ")");
     for (unsigned int n_phase = 0; n_phase < numPhases; n_phase++) {
         
         phaseStructure my_phase;
@@ -552,6 +558,7 @@ void DiagParams::initParticles(Diagnostic* diags, PicParams& params, InputData &
     bool ok;
     
     unsigned int numDiagParticles=ifile.nComponents("DiagParticles");
+    MESSAGE(1,"Initializing Particles (" << numDiagParticles << ")");
     for (unsigned int n_diag_particles = 0; n_diag_particles < numDiagParticles; n_diag_particles++) {
         
         // get parameter "output" that determines the quantity to sum in the output array

@@ -10,19 +10,16 @@
 
 using namespace std;
 
-// constructor
-DiagnosticScalar::DiagnosticScalar(SmileiMPI* smpi) :
-isMaster(smpi->isMaster()),
-cpuSize(smpi->getSize())
-{
-    if (isMaster) {
+// file open 
+void DiagnosticScalar::openFile(SmileiMPI* smpi) {
+    if (smpi->isMaster()) {
         fout.open("scalars.txt");
         if (!fout.is_open()) ERROR("can't open scalar file");
     }
 }
 
-void DiagnosticScalar::close() {
-    if (isMaster) {
+void DiagnosticScalar::closeFile(SmileiMPI* smpi) {
+    if (smpi->isMaster()) {
         fout.close();
     }
 }
@@ -40,7 +37,9 @@ void DiagnosticScalar::run(int timestep, ElectroMagn* EMfields, vector<Species*>
         EMfields->computePoynting(); // This must be called everytime        
         if (timestep % every == 0) {
             compute(EMfields,vecSpecies,smpi);
-            write(timestep);
+            if (smpi->isMaster()) {
+                write(timestep);
+            }
         }
     }
 }
@@ -89,7 +88,7 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
         ener_added_mw = vecSpecies[ispec]->getNewParticlesNRJ();
         MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&ener_added_mw, &ener_added_mw, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
         
-        if (isMaster) {
+        if (smpi->isMaster()) {
             if (nPart!=0) charge_tot /= nPart;
             string nameSpec=vecSpecies[ispec]->species_param.species_type;
             append("Z_"+nameSpec,charge_tot);
@@ -145,7 +144,7 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
         }
         Etot*=0.5*cell_volume;
         MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&Etot, &Etot, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        if (isMaster) {
+        if (smpi->isMaster()) {
             append((*field)->name+"_U",Etot);
             Etot_fields+=Etot;
         }
@@ -154,14 +153,14 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
     // nrj lost with moving window (fields)
     double Emw_lost_fields = EMfields->getLostNrjMW();
     MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&Emw_lost_fields, &Emw_lost_fields, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    if (isMaster) {
+    if (smpi->isMaster()) {
     Emw_lost_fields *= 0.5*cell_volume;
     }
     
     // nrj created with moving window (fields)
     double Emw_fields=EMfields->getNewFieldsNRJ();
     MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&Emw_fields, &Emw_fields, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    if (isMaster) {
+    if (smpi->isMaster()) {
     Emw_fields *= 0.5*cell_volume;
     }
     EMfields->reinitDiags();
@@ -211,7 +210,7 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
     MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&minis[0], &minis[0], minis.size(), MPI_DOUBLE_INT, MPI_MINLOC, 0, MPI_COMM_WORLD);
     MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&maxis[0], &maxis[0], maxis.size(), MPI_DOUBLE_INT, MPI_MAXLOC, 0, MPI_COMM_WORLD);
     
-    if (isMaster) {
+    if (smpi->isMaster()) {
         if (minis.size() == maxis.size() && minis.size() == fields.size()) {
             unsigned int i=0;
             for (vector<Field*>::iterator field=fields.begin(); field!=fields.end() && i<minis.size(); field++, i++) {
@@ -238,7 +237,7 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
             
             MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:poy, poy, 2, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
             
-            if (isMaster) {
+            if (smpi->isMaster()) {
                 string name("Poy");
                 switch (i) { // dimension
                     case 0:
@@ -268,7 +267,7 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
     // FINAL STUFF
     ///////////////////////////////////////////////////////////////////////////////////////////
     
-    if (isMaster) {
+    if (smpi->isMaster()) {
         
         double Total_Energy=Etot_part+Etot_fields;
         
@@ -318,35 +317,33 @@ void DiagnosticScalar::append(std::string my_var, double val) {
 }
 
 void DiagnosticScalar::write(int itime) {
-    if(isMaster) {
-        fout << std::scientific;
-        fout.precision(precision);
-        if (fout.tellp()==ifstream::pos_type(0)) {
-            fout << "# " << 1 << " time" << endl;
-            unsigned int i=2;
-            for(vector<pair<string,double> >::iterator iter = out_list.begin(); iter !=out_list.end(); iter++) {
-                if (allowedKey((*iter).first) == true) {
-                    fout << "# " << i << " " << (*iter).first << endl;
-                    i++;
-                }
-            }
-            
-            fout << "#\n#" << setw(precision+9) << "time";
-            for(vector<pair<string,double> >::iterator iter = out_list.begin(); iter !=out_list.end(); iter++) {
-                if (allowedKey((*iter).first) == true) {
-                    fout << setw(precision+9) << (*iter).first;
-                }
-            }
-            fout << endl;
-        }
-        fout << setw(precision+9) << itime/res_time;
+    fout << std::scientific;
+    fout.precision(precision);
+    if (fout.tellp()==ifstream::pos_type(0)) {
+        fout << "# " << 1 << " time" << endl;
+        unsigned int i=2;
         for(vector<pair<string,double> >::iterator iter = out_list.begin(); iter !=out_list.end(); iter++) {
             if (allowedKey((*iter).first) == true) {
-                fout << setw(precision+9) << (*iter).second;
+                fout << "# " << i << " " << (*iter).first << endl;
+                i++;
+            }
+        }
+        
+        fout << "#\n#" << setw(precision+9) << "time";
+        for(vector<pair<string,double> >::iterator iter = out_list.begin(); iter !=out_list.end(); iter++) {
+            if (allowedKey((*iter).first) == true) {
+                fout << setw(precision+9) << (*iter).first;
             }
         }
         fout << endl;
     }
+    fout << setw(precision+9) << itime/res_time;
+    for(vector<pair<string,double> >::iterator iter = out_list.begin(); iter !=out_list.end(); iter++) {
+        if (allowedKey((*iter).first) == true) {
+            fout << setw(precision+9) << (*iter).second;
+        }
+    }
+    fout << endl;
 }
 
 double DiagnosticScalar::getScalar(string my_var){

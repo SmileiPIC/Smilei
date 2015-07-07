@@ -37,7 +37,7 @@ public:
     void printTimers(SmileiMPI *smpi, double tottime);
     
     //! close all diags
-    void closeAll();
+    void closeAll(SmileiMPI* smpi);
 
     //! check if at timestep diagnostics must be called
     void runAllDiags (int timestep, ElectroMagn* EMfields, std::vector<Species*>&, Interpolator *interp, SmileiMPI *smpi);
@@ -55,7 +55,7 @@ public:
 	
     std::vector<DiagnosticParticles*> vecDiagnosticParticles;
     
-    DiagParams params;
+    DiagParams dparams;
 };
 
 #endif

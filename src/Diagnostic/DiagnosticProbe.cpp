@@ -18,12 +18,11 @@
 
 using namespace std;
 
-DiagnosticProbe::DiagnosticProbe(SmileiMPI* smpi):
-isMaster(smpi->isMaster()),
-cpuRank((int)smpi->getRank()), 
+DiagnosticProbe::DiagnosticProbe():
 fileId(0) ,
 probeSize(10)
-{}
+{
+}
 
 
 DiagnosticProbe::~DiagnosticProbe()

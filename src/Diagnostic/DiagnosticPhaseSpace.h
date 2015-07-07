@@ -19,7 +19,6 @@
 #include "DiagnosticPhase.h"
 
 class PicParams;
-class SmileiMPI;
 class DiagParams;
 class ElectroMagn;
 
@@ -28,16 +27,13 @@ class DiagnosticPhaseSpace {
 
 public:
 
-    DiagnosticPhaseSpace(SmileiMPI* smpi);
+    DiagnosticPhaseSpace();
     ~DiagnosticPhaseSpace();
 
 	void run(int timestep, std::vector<Species*>& vecSpecies);
 	
 	void close();
 
-    //! check if proc is master (from smpi)
-    const bool isMaster;
-    
     //! this vector will hold all the diagnostics created
 	std::vector<DiagnosticPhase*> vecDiagPhase;
 	

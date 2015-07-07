@@ -21,6 +21,7 @@ public:
     //  --------------------------------------------------------------------------------------------------------------------
     static SmileiMPI* create(PicParams& params, SmileiMPI* smpiData) {
         SmileiMPI* smpi = NULL;
+        MESSAGE(1, "Geometry:" << params.geometry);
         if ( params.geometry == "1d3v" ) {
             smpi = new  SmileiMPI_Cart1D(smpiData);
         }

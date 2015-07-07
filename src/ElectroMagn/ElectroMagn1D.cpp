@@ -629,6 +629,7 @@ void ElectroMagn1D::computePoynting() {
 
 void ElectroMagn1D::applyExternalField(Field* my_field,  Profile *profile, SmileiMPI* smpi) {
 
+    MESSAGE(1,"Applying External field to " << my_field->name);
     Field1D* field1D=static_cast<Field1D*>(my_field);
     SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
     

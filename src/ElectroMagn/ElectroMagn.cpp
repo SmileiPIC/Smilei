@@ -342,7 +342,7 @@ void ElectroMagn::applyExternalFields(SmileiMPI* smpi) {
     my_fields.push_back(Bx_);
     my_fields.push_back(By_);
     my_fields.push_back(Bz_);
-    
+    bool found=false;
     for (vector<Field*>::iterator field=my_fields.begin(); field!=my_fields.end(); field++) {
         if (*field) {
             for (vector<ExtFieldStructure>::iterator extfield=extfield_params.structs.begin(); extfield!=extfield_params.structs.end(); extfield++ ) {
@@ -351,15 +351,21 @@ void ElectroMagn::applyExternalFields(SmileiMPI* smpi) {
                     for (vector<string>::iterator fieldName=(*extfield).fields.begin();fieldName!=(*extfield).fields.end();fieldName++) {
                         if (LowerCase((*field)->name)==LowerCase(*fieldName)) {
                             applyExternalField(*field,my_ExtFieldProfile, smpi);
+                            found=true;
                         }
                     }
                     delete my_ExtFieldProfile;
                     //my_ExtFieldProfile=NULL;
                 } else{
-		    ERROR("Could not initialize external field Profile");
-		}
+                    ERROR("Could not initialize external field Profile");
+                }
             }
         }
+    }
+    if (found) {
+        MESSAGE(1,"Finish");
+    } else {
+        MESSAGE(1,"Nothing to do");
     }
     Bx_m->copyFrom(Bx_);
     By_m->copyFrom(By_);
