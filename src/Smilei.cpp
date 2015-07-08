@@ -167,7 +167,8 @@ int main (int argc, char* argv[])
 
     
     VectorPatch vecPatches = PatchesFactory::createVector(params, diag_params, laser_params, smpiData);
-
+    vecPatches.initProbesDiags(params, diag_params, 0);
+    vecPatches.initDumpFields(params, diag_params, 0);
     
     // reading from dumped file the restart values
     if (params.restart) {
@@ -181,9 +182,8 @@ int main (int argc, char* argv[])
 	//    simWindow->setOperators(vecSpecies, Interp, Proj, smpiData);
 	//    simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpiData , params);
 	//}
-        smpiData->recompute_patch_count( params, vecPatches, restart_time_dual );
-        // Redistribute patches.
-	    
+        //smpiData->recompute_patch_count( params, vecPatches, restart_time_dual );
+	
     } else {
         // Initialize the electromagnetic fields
         // -----------------------------------
@@ -218,10 +218,7 @@ int main (int argc, char* argv[])
         MESSAGE("----------------------------------------------");
         MESSAGE("Running diags at time t = 0");
         MESSAGE("----------------------------------------------");
-        // run diagnostics at time-step 0
-	vecPatches.initProbesDiags(params, diag_params, 0);
-	vecPatches.initDumpFields(params, diag_params, 0);
-	
+        // run diagnostics at time-step 0	
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    vecPatches(ipatch)->Diags->runAllDiags(0, vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, vecPatches(ipatch)->Interp, smpi);
 	vecPatches.computeGlobalDiags(0);
