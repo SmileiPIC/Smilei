@@ -8,10 +8,14 @@
 
 #include "PicParams.h"
 #include "Field1D.h"
-#include "Laser.h"
 
 #include "SmileiMPI.h"
 #include "SmileiMPI_Cart1D.h"
+
+#include "Profile.h"
+#include "MF_Solver1D_Yee.h"
+
+#include "ElectroMagnBC.h"
 
 using namespace std;
 
@@ -19,14 +23,14 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn1D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn1D::ElectroMagn1D(PicParams &params,  LaserParams &laser_params, SmileiMPI* smpi)
-: ElectroMagn(params, laser_params, smpi),
+ElectroMagn1D::ElectroMagn1D(PicParams &params, InputData &input_data, SmileiMPI* smpi)
+: ElectroMagn(params, input_data, smpi),
 isWestern(smpi->isWestern()),
 isEastern(smpi->isEastern())
 {
     // local dt to store
     SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
-    int process_coord_x = smpi1D->getProcCoord(0);
+    //int process_coord_x = smpi1D->getProcCoord(0);
     
     oversize_ = oversize[0];
     
@@ -64,6 +68,16 @@ isEastern(smpi->isEastern())
     By_m = new Field1D(dimPrim, 1, true,  "By_m");
     Bz_m = new Field1D(dimPrim, 2, true,  "Bz_m");
     
+    // for (unsigned int i=0 ; i<nx_d ; i++) {
+    //         double x = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i-0.5) )*params.cell_length[0];
+    //         (*By_)(i) = 0.001 * sin(x * 2.0*M_PI/params.sim_length[0] * 40.0);
+    //     }
+    //     smpi1D->exchangeField(By_);
+    //     for (unsigned int i=0 ; i<nx_d ; i++) {
+    // //        double x = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i-0.5) )*params.cell_length[0];
+    //         (*By_m)(i) = (*By_)(i);
+    //     }
+    //     
     // Allocation of time-averaged EM fields
     Ex_avg  = new Field1D(dimPrim, 0, false, "Ex_avg");
     Ey_avg  = new Field1D(dimPrim, 1, false, "Ey_avg");
@@ -79,7 +93,7 @@ isEastern(smpi->isEastern())
     rho_  = new Field1D(dimPrim, "Rho" );
     
     // Charge currents currents and density for each species
-
+    
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
         Jx_s[ispec]  = new Field1D(dimPrim, 0, false, ("Jx_"+params.species_param[ispec].species_type).c_str());
         Jy_s[ispec]  = new Field1D(dimPrim, 1, false, ("Jy_"+params.species_param[ispec].species_type).c_str());
@@ -87,21 +101,21 @@ isEastern(smpi->isEastern())
         rho_s[ispec] = new Field1D(dimPrim, ("Rho_"+params.species_param[ispec].species_type).c_str());
     }
     
-//    ostringstream file_name("");
-//    for (unsigned int ispec=0; ispec<n_species; ispec++) {
-//        file_name.str("");
-//        file_name << "Jx_s" << ispec;
-//        Jx_s[ispec]  = new Field1D(dimPrim, 0, false, file_name.str().c_str());
-//        file_name.str("");
-//        file_name << "Jy_s" << ispec;
-//        Jy_s[ispec]  = new Field1D(dimPrim, 1, false, file_name.str().c_str());
-//        file_name.str("");
-//        file_name << "Jz_s" << ispec;
-//        Jz_s[ispec]  = new Field1D(dimPrim, 2, false, file_name.str().c_str());
-//        file_name.str("");
-//        file_name << "rho_s" << ispec;
-//        rho_s[ispec] = new Field1D(dimPrim, file_name.str().c_str());
-//    }
+    //    ostringstream file_name("");
+    //    for (unsigned int ispec=0; ispec<n_species; ispec++) {
+    //        file_name.str("");
+    //        file_name << "Jx_s" << ispec;
+    //        Jx_s[ispec]  = new Field1D(dimPrim, 0, false, file_name.str().c_str());
+    //        file_name.str("");
+    //        file_name << "Jy_s" << ispec;
+    //        Jy_s[ispec]  = new Field1D(dimPrim, 1, false, file_name.str().c_str());
+    //        file_name.str("");
+    //        file_name << "Jz_s" << ispec;
+    //        Jz_s[ispec]  = new Field1D(dimPrim, 2, false, file_name.str().c_str());
+    //        file_name.str("");
+    //        file_name << "rho_s" << ispec;
+    //        rho_s[ispec] = new Field1D(dimPrim, file_name.str().c_str());
+    //    }
     
     // ----------------------------------------------------------------
     // Definition of the min and max index according to chosen oversize
@@ -152,7 +166,6 @@ isEastern(smpi->isEastern())
         } // for (int isDual=0 ; isDual
     } // for (unsigned int i=0 ; i<nDim_field
     
-    
 }//END constructor Electromagn1D
 
 
@@ -179,7 +192,7 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
     
     double       dx_sq          = dx*dx;
     unsigned int nx_p_global    = smpi1D->n_space_global[0] + 1;
-    unsigned int smilei_sz      = smpi1D->smilei_sz;
+    //    unsigned int smilei_sz      = smpi1D->smilei_sz;
     unsigned int smilei_rk      = smpi1D->smilei_rk;
     
     // Min and max indices for calculation of the scalar product (for primal & dual grid)
@@ -325,14 +338,16 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
     
     unsigned int rankWest = smpi1D->extrem_ranks[0][0];
     if (smpi1D->isWestern()) {
-        if (smilei_rk != smpi1D->extrem_ranks[0][0]) ERROR("western process not well defined");
+        if ((int)smilei_rk != smpi1D->extrem_ranks[0][0]) {
+            ERROR("western process not well defined");
+        }
         Ex_West = (*Ex1D)(index_bc_min[0]);
     }
     MPI_Bcast(&Ex_West, 1, MPI_DOUBLE, rankWest, MPI_COMM_WORLD);
     
     unsigned int rankEast = smpi1D->extrem_ranks[0][1];
     if (smpi1D->isEastern()) {
-        if (smilei_rk != smpi1D->extrem_ranks[0][1]) ERROR("eastern process not well defined");
+        if ((int)smilei_rk != smpi1D->extrem_ranks[0][1]) ERROR("eastern process not well defined");
         Ex_East = (*Ex1D)(index_bc_max[0]);
     }
     MPI_Bcast(&Ex_East, 1, MPI_DOUBLE, rankEast, MPI_COMM_WORLD);
@@ -419,30 +434,6 @@ void ElectroMagn1D::solveMaxwellAmpere()
     for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
         (*Ey1D)(ix)= (*Ey1D)(ix) - dt_ov_dx * ( (*Bz1D)(ix+1) - (*Bz1D)(ix)) - timestep * (*Jy1D)(ix) ;
         (*Ez1D)(ix)= (*Ez1D)(ix) + dt_ov_dx * ( (*By1D)(ix+1) - (*By1D)(ix)) - timestep * (*Jz1D)(ix) ;
-    }
-    
-}
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Maxwell solver using the FDTD scheme
-// ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn1D::solveMaxwellFaraday()
-{
-    Field1D* Ey1D   = static_cast<Field1D*>(Ey_);
-    Field1D* Ez1D   = static_cast<Field1D*>(Ez_);
-    Field1D* By1D   = static_cast<Field1D*>(By_);
-    Field1D* Bz1D   = static_cast<Field1D*>(Bz_);
-    
-    // ---------------------
-    // Solve Maxwell-Faraday
-    // ---------------------
-    // NB: bx is given in 1d and defined when initializing the fields (here put to 0)
-    // Transverse fields  by & bz are defined on the dual grid
-    //for (unsigned int ix=1 ; ix<nx_p ; ix++) {
-    for (unsigned int ix=1 ; ix<dimDual[0]-1 ; ix++) {
-        (*By1D)(ix)= (*By1D)(ix) + dt_ov_dx * ( (*Ez1D)(ix) - (*Ez1D)(ix-1)) ;
-        (*Bz1D)(ix)= (*Bz1D)(ix) - dt_ov_dx * ( (*Ey1D)(ix) - (*Ey1D)(ix-1)) ;
     }
     
 }
@@ -560,20 +551,20 @@ void ElectroMagn1D::restartRhoJs(int ispec, bool currents)
     Field1D* Jy1D_s  = static_cast<Field1D*>(Jy_s[ispec]);
     Field1D* Jz1D_s  = static_cast<Field1D*>(Jz_s[ispec]);
     Field1D* rho1D_s = static_cast<Field1D*>(rho_s[ispec]);
-
-    #pragma omp for schedule(static) 
+    
+#pragma omp for schedule(static) 
     for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
         (*rho1D_s)(ix) = 0.0;
     }
     if (currents){
         // put longitudinal current to zero on the dual grid
-        #pragma omp for schedule(static) 
+#pragma omp for schedule(static) 
         for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
             (*Jx1D_s)(ix)  = 0.0;
         }
-        #pragma omp for schedule(static) 
+#pragma omp for schedule(static) 
         for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
-        // all fields are defined on the primal grid
+            // all fields are defined on the primal grid
             (*Jy1D_s)(ix)  = 0.0;
             (*Jz1D_s)(ix)  = 0.0;
         }
@@ -635,3 +626,22 @@ void ElectroMagn1D::computePoynting() {
         
     }    
 }
+
+void ElectroMagn1D::applyExternalField(Field* my_field,  Profile *profile, SmileiMPI* smpi) {
+
+    Field1D* field1D=static_cast<Field1D*>(my_field);
+    SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
+    
+    vector<double> x(1,0);
+    for (int i=0 ; i<field1D->dims()[0] ; i++) {
+         x[0] = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i +(field1D->isDual(0)?-0.5:0)) )*dx;
+         (*field1D)(i) = (*field1D)(i) + profile->valueAt(x);
+    }
+    
+    emBoundCond[0]->save_fields_BC1D(my_field);
+
+}
+
+
+
+

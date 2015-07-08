@@ -25,6 +25,12 @@ struct LaserStructure {
     //! Laser field amplitude
     double a0;
     
+    //! Laser angular frequency
+    double omega0;
+    
+    //! Laser temporal chirp (for now assumed constant, maybe later use a fct?)
+    double tchirp;
+    
     //! Laser angle
     double angle;
     
@@ -37,24 +43,12 @@ struct LaserStructure {
     //! Laser delta (ellipticity/polarization parameter)
     double delta;
     
-    //! Laser profile
-    std::string time_profile; //Longitudinal profile
+    //! time profile 
+    ProfileStructure profile_time;
     
-    //! int vector for laser parameters
-    std::vector<int> int_params;
-    
-    //! double vector for laser parameters
-    std::vector<double> double_params;
-    
-    //! Laser transverse profile
-    std::string transv_profile;
-    
-    //! int vector for laser parameters
-    std::vector<int> int_params_transv;
-    
-    //! double vector for laser parameters
-    std::vector<double> double_params_transv;
-    
+    //! transverse profile
+    ProfileStructure profile_transv;
+
     //! time-delay used when the laser as non-normal incidence
     double delay;
 };

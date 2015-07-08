@@ -1,15 +1,17 @@
 SMILEICXX     ?= mpic++
 HDF5_ROOT_DIR ?=
 
+PYTHONCONFIG ?= python-config
 ##################################################
 
-VERSION:="$(shell git describe 2>/dev/null || echo '??')"
+VERSION:="$(shell git describe 2>/dev/null || echo '??')-$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '??')"
 
-CFLAGS += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include
-LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5
+CFLAGS += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include -std=c++0x 
+LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5 -lz
+
 
 ifneq (,$(findstring poincare,$(HOSTNAME)))
-    LDFLAGS += -lgpfs -lz
+    LDFLAGS += -lgpfs -lz -L/gpfslocal/pub/python/anaconda/Anaconda-2.1.0/lib
 endif
 
 #add subdirs
@@ -19,7 +21,7 @@ CFLAGS += $(DIRS:%=-I%)
 
 EXEC = smilei
 
-default: smilei
+default: $(EXEC)
 
 help: 
 	@echo 'Usage                 : make [clean] [openmp={gnu|intel}] [config=debug]'
@@ -43,17 +45,23 @@ scalasca:
 	make config=scalasca
 
 
+PYSCRIPTS := $(shell find Python -name \*.py)
+PYHEADERS := $(PYSCRIPTS:.py=.h)
 
 #collect all cpp files
 SRCS := $(shell find . -name \*.cpp)
 OBJS := $(SRCS:.cpp=.o)
-DEPS := $(OBJS:.o=.d)
+DEPS := $(SRCS:.cpp=.d)
+
+
+CFLAGS+=$(shell $(PYTHONCONFIG) --includes)
+LDFLAGS+=$(shell $(PYTHONCONFIG) --ldflags)
+
 
 ifeq ($(config),debug)
-	CFLAGS += -g -pg -Wall -D__DEBUG -O0 -shared-intel 
-
+	CFLAGS += -g -pg -Wall -D__DEBUG -O0# -shared-intel 
 else
-	CFLAGS += -O3
+	CFLAGS += -O3#  -xHost -ipo
 endif
 
 ifeq ($(openmp),gnu)
@@ -68,29 +76,30 @@ ifeq ($(config),scalasca)
 endif
 
 clean:
-	rm -f $(OBJS) $(DEPS)
+	rm -f $(OBJS) $(DEPS) $(PYHEADERS)
 	
 distclean: clean
 	rm -f $(EXEC)
 	
-NODEPS:=clean	
-ifeq (0, $(words $(findstring $(MAKECMDGOALS), $(NODEPS))))
-    #Chances are, these files don't exist.  GMake will create them and
-    #clean up automatically afterwards
-	-include $(DEPS)
+ifneq ($(MAKECMDGOALS),clean)
+-include $(DEPS)
 endif
 
+# this generates a .h file containing a char[] with the python script in binary then
+#you can just include this file to get the contents
+%.h: %.py
+	@ echo "Creating binary char for $<"
+	@ xxd -i $< > $@
 
-%.d: %.cpp
+%.d: %.cpp $(PYHEADERS) 
 	@ echo "Checking dependencies for $<"
-	$(eval DIR := $(shell  dirname $<))
-# create and modify dependecy file .d to take into account the location subdir	
-	@ $(SMILEICXX) -MM $(CFLAGS) $*.cpp 2>/dev/null | sed -e "s@\(^.*\)\.o:@$(DIR)/\1.d $(DIR)/\1.o:@" > $@  
+# create and modify dependecy file .d to take into account the location subdir
+	@ $(SMILEICXX) $(CFLAGS) -MM $< 2>/dev/null | sed -e "s@\(^.*\)\.o:@$(shell  dirname $<)/\1.d $(shell  dirname $<)/\1.o:@" > $@  
 
 %.o : %.cpp
 	$(SMILEICXX) $(CFLAGS) -c $< -o $@
 
-$(EXEC): $(OBJS)
+$(EXEC): $(PYHEADERS) $(OBJS)
 	$(SMILEICXX) $(CFLAGS) -o $(EXEC) $(OBJS) $(LDFLAGS)
 
 # DO NOT DELETE

@@ -10,7 +10,7 @@ class ElectroMagn2D : public ElectroMagn
 {
 public:
     //! Constructor for ElectroMagn2D
-    ElectroMagn2D(PicParams &params, LaserParams &laser_params, SmileiMPI* smpi);
+    ElectroMagn2D(PicParams &params, InputData &input_data, SmileiMPI* smpi);
 
     //! Destructor for ElectroMagn2D
     ~ElectroMagn2D();
@@ -20,9 +20,6 @@ public:
 
     //! Method used to solve Maxwell-Ampere equation
     void solveMaxwellAmpere();
-
-    //! Method used to solve Maxwell-Faraday equation
-    void solveMaxwellFaraday();
 
     //! Method used to save the Magnetic fields (used to center them)
     void saveMagneticFields();
@@ -76,6 +73,9 @@ public:
     //! compute Poynting on borders
     void computePoynting();
 
+    //! Method used to impose external fields
+    void applyExternalField(Field*, Profile*, SmileiMPI*);
+        
 private:
     
     //! from smpi is west

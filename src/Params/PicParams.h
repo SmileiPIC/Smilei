@@ -8,10 +8,47 @@
 #ifndef PICPARAMS_H
 #define PICPARAMS_H
 
+#include <Python.h>
 #include <vector>
 #include <string>
-#include "InputData.h"
 
+class InputData;
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! This structure contains the properties of each Profile
+// ---------------------------------------------------------------------------------------------------------------------
+struct ProfileStructure {
+    
+    //! Constructor
+    ProfileStructure() {
+        profile="";
+        vacuum_length.resize(0);
+    }
+    
+    //! Profile profile
+    std::string profile; 
+    
+    //! in case profile is give in Python
+    PyObject *py_profile;
+    
+    //! int vector for profile parameters
+    std::vector<int> int_params;
+    
+    //! double vector for profile parameters
+    std::vector<double> double_params;
+    
+    //! double vector for profile parameters (x lengths: will be multiplied by 2pi)
+    std::vector<double> length_params_x;
+    
+    //! double vector for profile parameters (y lengths: will be multiplied by 2pi)
+    std::vector<double> length_params_y;
+    
+    //! double vector for profile parameters (z lengths: will be multiplied by 2pi)
+    std::vector<double> length_params_z;
+    
+    //! vacuum lengths
+    std::vector<double> vacuum_length;
+};
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -24,8 +61,11 @@ struct SpeciesStructure {
     //! density profile
     std::string density_profile;
     
-    //! initialization type. Possible values: "regular" "cold" "Maxwell-Juettner"
-    std::string initialization_type;
+    //! position initialization type, possible values: "regular" or "random"
+    std::string initPosition_type;
+
+    //! momentum initialization type, possible values: "cold" or "maxwell-juettner"
+    std::string initMomentum_type;
     
     //! number of particles per cell
     unsigned int n_part_per_cell;
@@ -40,7 +80,7 @@ struct SpeciesStructure {
     unsigned int atomic_number;
     
     //! charge [proton charge]
-    short charge;
+    double charge;
     
     //! density [\f$n_N=\epsilon_0\,m_e\,\omega_N^{2}/e^2\f$ ]
     double density;
@@ -62,65 +102,29 @@ struct SpeciesStructure {
     bool isTest;
     
     //! Boundary conditions for particules
-    std::string bc_part_type_long;
-    std::string bc_part_type_trans;
+    std::string bc_part_type_west;
+    std::string bc_part_type_east;
+    std::string bc_part_type_south;
+    std::string bc_part_type_north;
+    std::string bc_part_type_bottom;
+    std::string bc_part_type_up;
     
     //! Ionization model per Specie (tunnel)
     std::string ionization_model;
-
-    //! species geometry
-    std::string species_geometry;
-
-    //! vacuum lengths
-    std::vector<double> vacuum_length;
     
-    //! lengths related to the density profile definition
-    std::vector<double> dens_length_x;
+    //! density profile
+    ProfileStructure dens_profile;
     
-    //! lengths related to the density profile definition
-    std::vector<double> dens_length_y;
+    //! velocity profile
+    ProfileStructure mvel_x_profile;
+    ProfileStructure mvel_y_profile;
+    ProfileStructure mvel_z_profile;
     
-    //! lengths related to the density profile definition
-    std::vector<double> dens_length_z;
     
-    //! doubles related to the density profile definition
-    std::vector<double> dens_dbl_params;
-    
-    //! integer related to the density profile definition
-    std::vector<short int> dens_int_params;
-    
-    //! slope lengths (symmetric for trapezoidal geometry, general for triangular geometry)
-    std::vector<double> slope_length;
-    
-    //! left slope lengths(not symmetric for trapezoidal case)
-    std::vector<double> left_slope_length;
-    
-    //! right slope lengths(not symmetric for trapezoidal case)
-    std::vector<double> right_slope_length;
-    
-    //! cut parameter for a gaussian profile
-    std::vector<double> cut;
-    
-    //! sigma parameter for a gaussian profile
-    std::vector<double> sigma;
-    
-    //! plateau for a gaussian profile
-    std::vector<double> plateau;
-    
-    //! polygonal density profile in x direction
-    std::vector<double> x_density_coor;
-    
-    //! polygonal density profile relative values in x direction
-    std::vector<double> density_rel_values_x;
-    
-    //! mode for 1D cos density profile
-    double mode;
-    
-    //! fase  for 1D cos density profile
-    double thetax;
-    
-    //! amplitude  for 1D cos density profile
-    double ampl;
+    //! temperature profile
+    ProfileStructure temp_x_profile;
+    ProfileStructure temp_y_profile;
+    ProfileStructure temp_z_profile;
     
 };
 
@@ -135,8 +139,14 @@ public:
     //! Creator for PicParams
     PicParams(InputData &);
     
+    //! extract a profile
+    void extractProfile(InputData &, std::string, ProfileStructure &, int, std::string, std::vector<double>);
+
     //! compute grid-related parameters & apply normalization
     void compute();
+    
+    //! read species
+    void readSpecies(InputData &);
     
     //! compute species-related parameters & apply normalization
     void computeSpecies();
@@ -182,6 +192,9 @@ public:
     //! local simulation box size in \f$2\pi/k_N \f$
     std::vector<double> sim_length;
     
+    //! time during which fields are frozen
+    double time_fields_frozen;
+    
     //! Boundary conditions for ElectroMagnetic Fields
     std::string bc_em_type_long;
     std::string bc_em_type_trans;
@@ -195,10 +208,10 @@ public:
     double vx_win;
     
     //! Clusters width
+    //unsigned int clrw;
     int clrw;
-    
-    //! initial number of species
-    unsigned int n_species;
+    //! Number of cells per cluster
+    int n_cell_per_cluster;
     
     //! parameters of the species
     std::vector<SpeciesStructure> species_param;
@@ -226,30 +239,30 @@ public:
     
     //! wavelength (in SI units)
     double wavelength_SI;
-
+    
     //! Oversize domain to exchange less particles
     std::vector<unsigned int> oversize;
-	
-	//! Timestep to dump everything
-	unsigned int dump_step;
     
-	//! Human minutes to dump everything
-	double dump_minutes;
+    //! Timestep to dump everything
+    unsigned int dump_step;
     
-	//! exit once dump done
-	bool exit_after_dump;
-	
-	//! check for file named "stop"
-	bool check_stop_file;
-	
-	//! keep the last dump_file_sequence dump files
-	unsigned int dump_file_sequence;
-	
-	//! restart namelist
-	bool restart;
-	
-	//! frequency of exchange particles (default = 1, disabled for now, incompatible with sort) 
-	int exchange_particles_each;
+    //! Human minutes to dump everything
+    double dump_minutes;
+    
+    //! exit once dump done
+    bool exit_after_dump;
+    
+    //! check for file named "stop"
+    bool check_stop_file;
+    
+    //! keep the last dump_file_sequence dump files
+    unsigned int dump_file_sequence;
+    
+    //! restart namelist
+    bool restart;
+    
+    //! frequency of exchange particles (default = 1, disabled for now, incompatible with sort) 
+    int exchange_particles_each;
     
     //! Number of MPI process per direction (default : as square as possible)
     std::vector<int> number_of_procs;

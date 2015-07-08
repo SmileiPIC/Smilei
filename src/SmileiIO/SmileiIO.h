@@ -11,15 +11,18 @@
 #include <vector>
 
 #include <hdf5.h>
+#include <Tools.h>
 
 class PicParams;
-class DiagParams;
+class Diagnostic;
 class InputData;
 class SmileiMPI;
 class SimWindow;
 class ElectroMagn;
 class Field;
 class Species;
+
+#include <csignal>
 
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class SmileiIO
@@ -29,7 +32,7 @@ public:
     //! Create // HDF5 environment
     //! @see global_file_id_ 
     //! @see global_file_id_avg
-    SmileiIO( PicParams& params, DiagParams &diagParams, SmileiMPI* smpi );
+    SmileiIO( PicParams& params, Diagnostic &diag, SmileiMPI* smpi );
     //! Destructor for SmileiIO
     virtual ~SmileiIO();
 
@@ -92,14 +95,23 @@ public:
     template <class T> void appendTestParticles(hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type );
 
 	
+    //! this static variable is deined (in the .cpp) as false but becomes true when
+    //! the signal SIGUSR1 is captured by the signal_callback_handler fnction
+    static int signal_received;
+    
+    //! this function catches the SIGUSR1 signal and sets the signal_received to true
+    static void signal_callback_handler(int signum) {
+        MESSAGE("----------------------------------------------");
+        MESSAGE("Caught signal " << signum << " : dump + exit");
+        MESSAGE("----------------------------------------------");
+        if (signum!=SIGUSR2)
+            signal_received = signum;
+    }
+    
 private:
     //! incremental number of times we've done a dump
     unsigned int dump_times;
-    
-    //! initialize the time zero of the simulation 
-    void initDumpCases();
-	
-	
+    	
     //! dump everything to file per processor
     void dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  PicParams &params, InputData& input_data);
 	
@@ -115,14 +127,10 @@ private:
     //! function that returns elapsed time from creator (uses private var time_reference)
     double time_seconds();
 	
-    //! to dump and stop a simulation you might just check if a file named stop has been created this variable
-    //! is true if since last time a file named stop appeared
-    bool stop_file_seen_since_last_check;
-
-    //! function that checks if file named "stop" exists;
-    bool fileStopCreated();
+    //! name of the fields to dump (copied from diagparams)
+    std::vector<std::string> fieldsToDump; 
 	
-	
+    
 };
 
 #endif /* SMILEI_OUTPUT_H_ */

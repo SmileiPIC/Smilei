@@ -25,7 +25,7 @@ public:
 	if (params.species_param[ispec].isTest) {
 	    int locNbrParticles = sp->getNbrOfParticles();
 	    int* allNbrParticles = new int[smpi->smilei_sz];
-	    MPI_Gather( &locNbrParticles, 1, MPI_INTEGER, allNbrParticles, 1, MPI_INTEGER, 0, smpi->SMILEI_COMM_WORLD );
+	    MPI_Gather( &locNbrParticles, 1, MPI_INTEGER, allNbrParticles, 1, MPI_INTEGER, 0, MPI_COMM_WORLD );
 	    int nParticles(0);
 	    if (smpi->isMaster()) {
 		nParticles =  allNbrParticles[0];
@@ -40,7 +40,7 @@ public:
 
 	    }
 	    int offset(0);
-	    MPI_Scatter(allNbrParticles, 1 , MPI_INTEGER, &offset, 1, MPI_INTEGER, 0, smpi->SMILEI_COMM_WORLD );
+	    MPI_Scatter(allNbrParticles, 1 , MPI_INTEGER, &offset, 1, MPI_INTEGER, 0, MPI_COMM_WORLD );
 	    sp->particles.setIds(offset);
 	}
 
@@ -49,13 +49,13 @@ public:
 
     static std::vector<Species*> createVector(PicParams& params, SmileiMPI* smpi) {
         std::vector<Species*> vecSpecies;
-        vecSpecies.resize(params.n_species);
+        vecSpecies.resize(params.species_param.size());
 
         Species *electron_species=NULL;
 
         // create species
         unsigned int nPart;
-        for (unsigned int ispec=0 ; ispec<params.n_species ; ispec++) {
+        for (unsigned int ispec=0 ; ispec<params.species_param.size() ; ispec++) {
             vecSpecies[ispec] = SpeciesFactory::create(params, ispec, smpi);
             if (params.species_param[ispec].species_type=="electron") {
                 electron_species=vecSpecies[ispec];
@@ -66,7 +66,7 @@ public:
         } // END for ispec
 
         // add the found electron species to the ionizable species
-        for (unsigned int ispec=0 ; ispec<params.n_species ; ispec++) {
+        for (unsigned int ispec=0 ; ispec<params.species_param.size() ; ispec++) {
             if (vecSpecies[ispec]->Ionize)  {
                 if (electron_species) {
                     vecSpecies[ispec]->electron_species=electron_species;

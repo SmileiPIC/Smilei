@@ -57,7 +57,7 @@
            <bold>false</bold>
           </font>
          </property>
-         <layout class="QHBoxLayout" name="horizontalLayout" stretch="2,0,1,0,0">
+         <layout class="QHBoxLayout" name="horizontalLayout" stretch="2,0,0,1,0,0">
           <property name="margin">
            <number>0</number>
           </property>
@@ -72,6 +72,13 @@
             </property>
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="reload">
+            <property name="text">
+             <string>R</string>
             </property>
            </widget>
           </item>

@@ -13,7 +13,7 @@
 #include "Pusher.h"
 #include "Ionization.h"
 #include "ElectroMagn.h"
-#include "DensityProfile.h"
+#include "Profile.h"
 
 class ElectroMagn;
 class Pusher;
@@ -113,11 +113,27 @@ public:
 
     //! Method to know if we have to project this species or not.
     bool  isProj(double time_dual, SimWindow* simWindow);
-    
+
+    double getLostNrjBC() const {return species_param.mass*nrj_bc_lost;}
+    double getLostNrjMW() const {return species_param.mass*nrj_mw_lost;}
+
+    double getNewParticlesNRJ() const {return species_param.mass*nrj_new_particles;}
+    void reinitDiags() { 
+	nrj_bc_lost = 0;
+	nrj_mw_lost = 0;
+	nrj_new_particles = 0;
+    }
+
 private:
     
     //! vector of density (one per species)
-    DensityProfile *densityProfile;
+    Profile *densityProfile;
+    
+    //! vector of density (one per species)
+    std::vector<Profile *> velocityProfile;
+    
+    //! vector of temperature (one per species)
+    std::vector<Profile *> temperatureProfile;
     
     //! 2 times pi
     double PI2;
@@ -155,6 +171,12 @@ private:
     //! Method to create new particles.
     int  createParticles(std::vector<unsigned int> n_space_to_create, std::vector<double> cell_index, int new_bin_idx,  PicParams& param);
 
+    //! Accumulate nrj lost with bc
+    double nrj_bc_lost;
+    //! Accumulate nrj lost with moving window
+    double nrj_mw_lost;
+    //! Accumulate nrj added with new particles
+    double nrj_new_particles;
 };
 
 #endif

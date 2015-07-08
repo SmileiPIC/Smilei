@@ -51,7 +51,8 @@ species
 	vacuum_length = 1.0 0.0
 	dens_length_x = 0.44
 	dens_length_y = 10.0
-	initialization_type = cold
+	initPosition_type = regular
+	initMomentum_type = cold
 	ionization_model = none
 	n_part_per_cell = 2
 	c_part_max = 1.0
@@ -63,8 +64,10 @@ species
 	dynamics_type = norm
 	time_frozen = 0.0
 	radiating = false
-	bc_part_type_long = refl
-	bc_part_type_trans = none
+	bc_part_type_west = refl
+	bc_part_type_east = refl
+	bc_part_type_south = none
+	bc_part_type_north = none
 end
 
 species 
@@ -73,7 +76,8 @@ species
 	vacuum_length = 1.0 0.0
 	dens_length_x = 0.44
 	dens_length_y = 10.0
-	initialization_type = mj
+	initPosition_type = regular
+	initMomentum_type = mj
 	n_part_per_cell=2
 	c_part_max=1.0
 	mass = 1.0
@@ -84,8 +88,10 @@ species
 	dynamics_type = norm	
 	time_frozen = 0.0
 	radiating = false
-	bc_part_type_long = refl
-	bc_part_type_trans = none
+	bc_part_type_west = refl
+	bc_part_type_east = refl
+	bc_part_type_south = none
+	bc_part_type_north = none
 end
 
 laser 

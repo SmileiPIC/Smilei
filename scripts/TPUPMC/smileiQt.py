@@ -4,6 +4,13 @@ Plot fields of smilei simulaition
 """
 import sys, os, random
 
+import logging as log
+
+log.basicConfig(level=log.INFO,
+    format='%(asctime)s %(levelname)-8s %(filename)s:%(lineno)-4d: %(message)s',
+    datefmt='%m-%d %H:%M',
+    )
+    
 from pprint import pprint
 
 from matplotlib.figure import Figure
@@ -47,7 +54,7 @@ class smileiQtPlot(QWidget):
     nplots=0
     ax={}
     dirName=None
-    someCheckBoxChanged=False
+    someCheckBoxChanged=True
     pauseSignal=pyqtSignal()
     shiftPressed=False
     title=''
@@ -82,6 +89,9 @@ class smileiQtPlot(QWidget):
         
         self.fig = Figure()
         
+        self.ui.reload.setIcon(self.ui.style().standardIcon(QStyle.SP_BrowserReload))
+        self.ui.reload.released.connect(self.reloadAll)
+
         
         self.canvas = FigureCanvas(self.fig)
         self.canvas.setFocusPolicy(Qt.StrongFocus)
@@ -166,6 +176,25 @@ class smileiQtPlot(QWidget):
         if sys.platform == "darwin":
             self.raise_()
         self.show()
+        
+        
+    def reloadAll(self):
+        self.fieldSteps=[]
+        
+        fname=os.path.join(self.dirName, "Fields.h5")
+        if isinstance(self.fieldFile,tb.file.File):
+            self.fieldFile.close()
+            print "here"
+        if os.path.isfile(fname) :
+            self.fieldFile=tb.openFile(fname)
+            for group in self.fieldFile.listNodes("/", classname='Group'):
+                self.fieldSteps.append(group._v_name)
+        print "last:",self.fieldSteps[-1]
+        self.ui.spinStep.setSuffix("/"+str(len(self.fieldSteps)-1))
+        self.ui.spinStep.setMaximum(len(self.fieldSteps)-1)
+        self.ui.slider.setRange(0,len(self.fieldSteps)-1)
+        self.preparePlots()
+        
     def doSavePoints(self):
         fname=QFileDialog.getSaveFileName(self, 'Save Point logger', self.dirName, selectedFilter='*.txt')
         if fname:
@@ -180,6 +209,7 @@ class smileiQtPlot(QWidget):
     def load_settings(self):
         settings=QSettings(QFileInfo(__file__).fileName(),"")
         settings.beginGroup(QDir(self.dirName).dirName())
+        log.info("settings file: %s"%settings.fileName())
         frames=[self.ui.scalars, self.ui.fields, self.ui.phase]
         for frame in [self.ui.scalars, self.ui.fields, self.ui.phase] :
             settings.beginGroup(frame.objectName())            
@@ -228,6 +258,7 @@ class smileiQtPlot(QWidget):
             self.pauseSignal.emit()
 
     def preparePlots(self):
+        log.info("here")
         self.someCheckBoxChanged=False
         
         self.scalarDict=dict()
@@ -249,7 +280,7 @@ class smileiQtPlot(QWidget):
               
             plot=0
             col=0
-            print "preparing scalars"
+            log.info("preparing scalars")
             for i in self.ui.scalars.findChildren(QCheckBox):
                 col+=1
                 if i.isChecked() :
@@ -270,9 +301,10 @@ class smileiQtPlot(QWidget):
                     plot+=1
                 
 
-            print "preparing fields"
+            log.info("preparing fields")
             for i in self.ui.fields.findChildren(QCheckBox):
                 if i.isChecked() :
+                    log.info(i.text())
                     ax=self.fig.add_subplot(self.nplots,1,plot+1)
                     ax.xaxis.grid(True)
                     ax.yaxis.grid(True)
@@ -288,7 +320,7 @@ class smileiQtPlot(QWidget):
                         ax.set_xlim(0,self.sim_length)
                         ax.set_ylabel(name)
                         x=np.array(range(len(data[0])))/self.res_space
-                        y=data[0]
+                        y=data[0].read()
                         ax.plot(x,y)
                         self.ax[name]=ax
                     elif len(self.sim_length) == 2 :
@@ -298,12 +330,13 @@ class smileiQtPlot(QWidget):
                         ax.set_ylabel(name)
 
                         im=ax.imshow([[0]],extent=(0,self.sim_length[0],0,self.sim_length[1]), aspect='auto',origin='lower')
+                        im.set_interpolation('nearest')
                         cb=plt.colorbar(im, cax=cax)
                         self.ax[name]=ax
 
                     plot+=1
 
-            print "preparing phase"
+            log.info("preparing phase")
             for i in self.ui.phase.findChildren(QCheckBox):
                 if i.isChecked() :
                     name=str(i.text())
@@ -318,12 +351,13 @@ class smileiQtPlot(QWidget):
                     self.fig.add_axes(cax)
 
                     im=ax.imshow([[0]],extent=node._v_parent._v_attrs.extents.reshape(4).tolist(),aspect='auto',origin='lower')
+                    im.set_interpolation('nearest')
                     cb=plt.colorbar(im, cax=cax)
 
                     self.ax[name]=ax
                     plot+=1
                 
-            print "done"
+            log.info("done")    
             self.doPlots()
     
     def on_movement(self, event):
@@ -368,13 +402,33 @@ class smileiQtPlot(QWidget):
                     mini = np.array(image.get_array()).clip(0).min()
                     if mini >0:
                         maxi = np.array(image.get_array()).clip(0).max()
-                        print ">>>>>>>>",mini,maxi
                         pprint (vars(event.inaxes.images[0].norm))
                         try:
                             event.inaxes.images[0].set_norm(LogNorm(mini,maxi))
                             self.canvas.draw()
                         except ValueError:
                             self.canvas.draw()
+        elif event.key == 'x':
+            range, ok = QInputDialog.getText(self, 'Ranges', 'Give '+event.key+' range:')        
+            if ok:
+                ranges=range.split(' ')
+                event.inaxes.set_xlim(float(ranges[0]),float(ranges[1]))
+
+            self.canvas.draw()
+        elif event.key == 'y':
+            range, ok = QInputDialog.getText(self, 'Ranges', 'Give '+event.key+' range:')        
+            if ok:
+                ranges=range.split(' ')
+                event.inaxes.set_ylim(float(ranges[0]),float(ranges[1]))
+
+            self.canvas.draw()
+        elif event.key == 'c':
+            range, ok = QInputDialog.getText(self, 'Ranges', 'Give '+event.key+' range:')        
+            if ok:
+                ranges=range.split(' ')
+                event.inaxes.images[0].set_clim(float(ranges[0]),float(ranges[1]))
+
+            self.canvas.draw()
         elif event.key == 'shift':
             self.shiftPressed=True
 
@@ -397,7 +451,6 @@ class smileiQtPlot(QWidget):
             
         
     def doPlots(self):
-            
         if len(self.fieldSteps) == 0 : return
 
         if self.someCheckBoxChanged==True:
@@ -413,7 +466,7 @@ class smileiQtPlot(QWidget):
             self.ax[name].lines[-1].set_xdata(time)
            
         for name in self.fieldDict:
-            data=self.fieldDict[name][self.step]
+            data=self.fieldDict[name][self.step].read()
             if len(self.sim_length) == 1 :
                 self.ax[name].lines[-1].set_ydata(data)
                 if self.ui.autoScale.isChecked():
@@ -434,11 +487,13 @@ class smileiQtPlot(QWidget):
                 im.set_clim(data.min(),data.max())
                 
                 
-        self.title.set_text('Time: %.3f'%time)
+        self.title='Time: %.3f'%time
         self.canvas.draw()
         if self.ui.saveImages.isChecked():
-            self.fig.savefig(self.dirName+'-%06d.png' % self.step)
-               
+            fname=self.dirName+'/frame-%06d.png' % self.step
+            print fname
+            self.fig.savefig(fname)
+
     def closeEvent(self,event):
         self.save_settings()
         if self.fieldFile is not None : self.fieldFile.close()
@@ -458,6 +513,7 @@ class smileiQt(QMainWindow):
         self.ui=uic.loadUi(uiFile,self)
 
         self.ui.dir.setIcon(self.ui.style().standardIcon(QStyle.SP_DirOpenIcon))
+        
         self.ui.playStop.setIcon(self.ui.style().standardIcon(QStyle.SP_MediaPlay))
         self.ui.previous.setIcon(self.ui.style().standardIcon(QStyle.SP_MediaSeekBackward))
         self.ui.next.setIcon(self.ui.style().standardIcon(QStyle.SP_MediaSeekForward))

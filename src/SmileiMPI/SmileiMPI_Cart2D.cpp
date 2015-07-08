@@ -168,7 +168,7 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
             params.n_space[i] =  params.nspace_win_x / number_of_procs[i];
             cell_starting_global_index[i] = coords_[i]*(params.nspace_win_x / number_of_procs[i]);
             
-            if ( number_of_procs[i]*params.n_space[i] != params.nspace_win_x ) {
+            if (number_of_procs[i]*params.n_space[i] != (unsigned int)params.nspace_win_x ) {
                 // Correction on the last MPI process of the direction to use the wished number of cells
                 if (coords_[i]==number_of_procs[i]-1) {
                     params.n_space[i] = params.nspace_win_x - params.n_space[i]*(number_of_procs[i]-1);
@@ -238,13 +238,13 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams&
         indexes_of_particles_to_exchange.clear();
         
         int tmp = 0;
-        for (int tid=0 ; tid < indexes_of_particles_to_exchange_per_thd->size() ; tid++)
+        for (int tid=0 ; tid < (int)indexes_of_particles_to_exchange_per_thd->size() ; tid++)
             tmp += ((*indexes_of_particles_to_exchange_per_thd)[tid]).size();
         indexes_of_particles_to_exchange.resize( tmp );
         
         int k=0;
-        for (int tid=0 ; tid < indexes_of_particles_to_exchange_per_thd->size() ; tid++) {
-            for (int ipart = 0 ; ipart < ((*indexes_of_particles_to_exchange_per_thd)[tid]).size() ; ipart++ ) {
+        for (int tid=0 ; tid < (int)indexes_of_particles_to_exchange_per_thd->size() ; tid++) {
+            for (int ipart = 0 ; ipart < (int) ((*indexes_of_particles_to_exchange_per_thd)[tid]).size() ; ipart++ ) {
                 indexes_of_particles_to_exchange[k] =  (*indexes_of_particles_to_exchange_per_thd)[tid][ipart] ;
                 k++;
             }
@@ -476,7 +476,7 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams&
         // Copy newly arrived particles back to the vector
         // WARNING: very different behaviour depending on which dimension particles are coming from.
         /********************************************************************************/
-        //We first evaluate how many particles arrive in each bin. 
+        //We first evaluate how many particles arrive in each bin.
 	if (iDim==1) {
 	    //1) Count particles coming from south and north
 	    for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
@@ -537,6 +537,7 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams&
 		}
 	    }
 	}
+
         
         // Inject corner particles at the end of the list, update bmax
 	//if (iDim==cuParticles.dimension()-1) cout << "Number of diag particles " << diagonalParticles.size() << endl;
@@ -744,7 +745,7 @@ void SmileiMPI_Cart2D::exchangeField( Field* field )
         
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
             
-            if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (isDual[iDim]==0) ) {
+            if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) ) {
                 
                 istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( 2*oversize[iDim] + isDual[iDim] );
                 ix = (1-iDim)*istart;
@@ -753,7 +754,7 @@ void SmileiMPI_Cart2D::exchangeField( Field* field )
                 
             } // END of Send
             
-            if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (isDual[iDim]==0) ) {
+            if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) ) {
                 
                 istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - 1 ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
                 ix = (1-iDim)*istart;
@@ -765,10 +766,10 @@ void SmileiMPI_Cart2D::exchangeField( Field* field )
         } // END for iNeighbor
         
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-            if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (isDual[iDim]==0) ) {
+            if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) ) {
                 MPI_Wait( &(srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
             }
-            if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (isDual[iDim]==0) ) {
+            if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL)  ) {
                 MPI_Wait( &(rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
             }
         }
