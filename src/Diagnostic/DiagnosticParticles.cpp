@@ -360,6 +360,7 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
             mystream << "timestep" << setw(8) << setfill('0') << timestep;
             // write the array
             H5::vector(fileId, mystream.str(), data_sum[0], output_size);
+            H5Fflush(fileId, H5F_SCOPE_GLOBAL);
         }
         
     }
