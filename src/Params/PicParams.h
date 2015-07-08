@@ -266,6 +266,10 @@ public:
     
     //! global number of time exits (it will be used if not specified in various diags/fields)
     unsigned int global_every;
+    
+    //! Method to find the numbers of requested species, sorted, and duplicates removed
+    std::vector<unsigned int> FindSpecies(std::vector<std::string>);
+    
 };
 
 #endif

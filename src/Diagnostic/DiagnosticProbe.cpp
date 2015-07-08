@@ -13,7 +13,6 @@
 #include "Field1D.h"
 #include "Field2D.h"
 #include "Field.h"
-#include "DiagParams.h"
 #include "H5.h"
 
 using namespace std;

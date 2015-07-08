@@ -11,7 +11,6 @@
 
 class PicParams;
 class SmileiMPI;
-class DiagParams;
 class ElectroMagn;
 
 

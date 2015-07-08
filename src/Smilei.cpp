@@ -34,7 +34,6 @@
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
 
-#include "DiagParams.h"
 #include "Diagnostic.h"
 
 #include "SimWindow.h"
@@ -200,12 +199,11 @@ int main (int argc, char* argv[])
         EMfields->applyExternalFields(smpi);
         
         TITLE("Running diags at time t = 0");
-        // run diagnostics at time-step 0
         Diags.runAllDiags(0, EMfields, vecSpecies, Interp, smpi);        
         // temporary EM fields dump in Fields.h5
         sio->writeAllFieldsSingleFileTime( EMfields, 0 );
         // temporary EM fields dump in Fields_avg.h5
-        if (Diags.dparams.ntime_step_avg!=0)
+        if (Diags.ntime_step_avg!=0)
             sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
         // temporary particle dump at time 0
         sio->writePlasma( vecSpecies, 0., smpi );
@@ -260,7 +258,7 @@ int main (int argc, char* argv[])
         timer[0].update();
         
         //double timElapsed=smpiData->time_seconds();
-        if ( (itime % Diags.dparams.print_every == 0) &&  ( smpi->isMaster() ) ) {
+        if ( (itime % Diags.print_every == 0) &&  ( smpi->isMaster() ) ) {
             MESSAGE(1,"t = "          << setw(7) << setprecision(2)   << time_dual/params.conv_fac
                     << "   it = "       << setw(log10(params.n_time)+1) << itime  << "/" << params.n_time
                     << "   sec = "      << setw(7) << setprecision(2)   << timer[0].getTime()
@@ -339,7 +337,7 @@ int main (int argc, char* argv[])
             timer[2].update();
             
             // incrementing averaged electromagnetic fields
-            if (Diags.dparams.ntime_step_avg) EMfields->incrementAvgFields(itime, Diags.dparams.ntime_step_avg);
+            if (Diags.ntime_step_avg) EMfields->incrementAvgFields(itime, Diags.ntime_step_avg);
             
         }
         
@@ -353,22 +351,22 @@ int main (int argc, char* argv[])
         
         timer[6].restart();
         // temporary EM fields dump in Fields.h5
-        if  ((Diags.dparams.fieldDump_every != 0) && (itime % Diags.dparams.fieldDump_every == 0))
+        if  ((Diags.fieldDump_every != 0) && (itime % Diags.fieldDump_every == 0))
             sio->writeAllFieldsSingleFileTime( EMfields, itime );
         timer[6].update();
         
         timer[7].restart();
         // temporary EM fields dump in Fields_avg.h5
-        if  ((Diags.dparams.ntime_step_avg!=0) &&
-             (Diags.dparams.avgfieldDump_every != 0) && 
-             (itime % Diags.dparams.avgfieldDump_every == 0)) {
+        if  ((Diags.ntime_step_avg!=0) &&
+             (Diags.avgfieldDump_every != 0) && 
+             (itime % Diags.avgfieldDump_every == 0)) {
             sio->writeAvgFieldsSingleFileTime( EMfields, itime );
         }
         timer[7].update();
         
 #ifdef _IO_PARTICLE
         // temporary particles dump (1 HDF5 file per process)
-        if  ((Diags.dparams.particleDump_every != 0) && (itime % Diags.dparams.particleDump_every == 0))
+        if  ((Diags.particleDump_every != 0) && (itime % Diags.particleDump_every == 0))
             sio->writePlasma( vecSpecies, time_dual, smpi );
 #endif
         
@@ -412,15 +410,15 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     
     // temporary EM fields dump in Fields.h5
-    if  ( (Diags.dparams.fieldDump_every != 0) && (params.n_time % Diags.dparams.fieldDump_every != 0) )
+    if  ( (Diags.fieldDump_every != 0) && (params.n_time % Diags.fieldDump_every != 0) )
         sio->writeAllFieldsSingleFileTime( EMfields, params.n_time );
     // temporary time-averaged EM fields dump in Fields_avg.h5
-    if  (Diags.dparams.ntime_step_avg!=0)
-        if  ( (Diags.dparams.avgfieldDump_every != 0) && (params.n_time % Diags.dparams.avgfieldDump_every != 0) )
+    if  (Diags.ntime_step_avg!=0)
+        if  ( (Diags.avgfieldDump_every != 0) && (params.n_time % Diags.avgfieldDump_every != 0) )
             sio->writeAvgFieldsSingleFileTime( EMfields, params.n_time );
 #ifdef _IO_PARTICLE
     // temporary particles dump (1 HDF5 file per process)
-    if  ( (Diags.dparams.particleDump_every != 0) && (params.n_time % Diags.dparams.particleDump_every != 0) )
+    if  ( (Diags.particleDump_every != 0) && (params.n_time % Diags.particleDump_every != 0) )
         sio->writePlasma( vecSpecies, time_dual, smpi );
 #endif    
     

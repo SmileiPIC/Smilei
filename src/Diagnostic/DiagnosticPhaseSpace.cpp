@@ -9,7 +9,6 @@
 #include "ElectroMagn.h"
 #include "Field1D.h"
 #include "Field.h"
-#include "DiagParams.h"
 
 using namespace std;
 

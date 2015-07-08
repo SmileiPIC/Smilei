@@ -25,7 +25,7 @@ int SmileiIO::signal_received=0;
 
 SmileiIO::SmileiIO( PicParams& params, Diagnostic& diag, SmileiMPI* smpi ) : 
 dump_times(0), 
-fieldsToDump(diag.dparams.fieldsToDump),
+fieldsToDump(diag.fieldsToDump),
 time_reference(0.0)
 {
     nDim_particle=params.nDim_particle;
@@ -131,7 +131,7 @@ time_reference(0.0)
     
     sid  = H5Screate(H5S_SCALAR);
     aid = H5Acreate (global_file_id_, "every", H5T_NATIVE_UINT, sid, H5P_DEFAULT, write_plist);
-    H5Awrite(aid, H5T_NATIVE_UINT, &(diag.dparams.fieldDump_every));
+    H5Awrite(aid, H5T_NATIVE_UINT, &(diag.fieldDump_every));
     H5Sclose(sid);
     H5Aclose(aid);
     
@@ -156,7 +156,7 @@ time_reference(0.0)
     // Fields_avg.h5
     // -------------
     global_file_id_avg = 0;
-    if  (diag.dparams.ntime_step_avg!=0) {
+    if  (diag.ntime_step_avg!=0) {
         global_file_id_avg = H5Fcreate( "Fields_avg.h5", H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
         
         // Create property list for collective dataset write: for Fields.h5
@@ -168,7 +168,7 @@ time_reference(0.0)
         
         sid  = H5Screate(H5S_SCALAR);
         aid = H5Acreate (global_file_id_avg, "every", H5T_NATIVE_UINT, sid, H5P_DEFAULT, write_plist);
-        H5Awrite(aid, H5T_NATIVE_UINT, &(diag.dparams.fieldDump_every));
+        H5Awrite(aid, H5T_NATIVE_UINT, &(diag.fieldDump_every));
         H5Sclose(sid);
         H5Aclose(aid);
         

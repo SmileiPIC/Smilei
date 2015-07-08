@@ -18,7 +18,7 @@ public:
     //  --------------------------------------------------------------------------------------------------------------------
     //! Create appropriate IO environment for the geometry 
     //! \param params : Parameters
-    //! \param diagParams : Diagnostic parameters
+    //! \param diag : Diagnostics
     //! \param smpi : MPI environment
     //  --------------------------------------------------------------------------------------------------------------------
     static SmileiIO* create(PicParams& params, Diagnostic& diag, SmileiMPI* smpi) {

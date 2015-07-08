@@ -2,7 +2,6 @@
 #include "SmileiMPI.h"
 #include "Field2D.h"
 #include "H5.h"
-#include "DiagParams.h"
 
 
 #include <cmath>
@@ -102,8 +101,8 @@ vector<Collisions*> Collisions::create(PicParams& params, InputData &ifile, vect
         ifile.extract("species2",sg2,"Collisions",n_collisions);
         
         // Obtain the lists of species numbers from the lists of species names.
-        sgroup1 = DiagParams::FindSpecies(sg1,params);
-        sgroup2 = DiagParams::FindSpecies(sg2,params);
+        sgroup1 = params.FindSpecies(sg1);
+        sgroup2 = params.FindSpecies(sg2);
         
         // Each group of species sgroup1 and sgroup2 must not be empty
         if (sgroup1.size()==0) ERROR("No valid `species1` requested in collisions #" << n_collisions);
@@ -590,6 +589,7 @@ inline double Collisions::cos_chi(double s)
     return 2.*U - 1.;
     
 }
+
 
 
 

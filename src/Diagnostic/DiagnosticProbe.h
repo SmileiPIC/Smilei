@@ -81,7 +81,6 @@ end
 
 class PicParams;
 class SmileiMPI;
-class DiagParams;
 class ElectroMagn;
 class Field2D;
 
@@ -90,7 +89,7 @@ class DiagnosticProbe {
     
 public:
     
-    //! the creator need both sim parameters params and the diagnostic parameter diagParams
+    //! the creator
     DiagnosticProbe();
     
     ~DiagnosticProbe();//{};

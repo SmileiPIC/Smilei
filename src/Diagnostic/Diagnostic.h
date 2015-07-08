@@ -54,8 +54,49 @@ public:
 	DiagnosticPhaseSpace phases;
 	
     std::vector<DiagnosticParticles*> vecDiagnosticParticles;
+        
+    void initScalars(PicParams&, InputData&, SmileiMPI *smpi);
     
-    DiagParams dparams;
+    void initProbes(PicParams&, InputData&, SmileiMPI *);
+    
+    void initPhases(PicParams&, InputData&, SmileiMPI *);
+    
+    void initParticles(PicParams&, InputData&);
+    
+    //! field dump output
+    unsigned int fieldDump_every;
+    
+    //! name of the fields to dump
+    std::vector<std::string> fieldsToDump;
+    
+    //! time-averaged field dump output
+    unsigned int avgfieldDump_every;
+    
+    //! number of time-steps for time-averaging of fields
+    unsigned int ntime_step_avg;
+    
+    //! particle dump output
+    unsigned int particleDump_every;
+    
+    //! scalar output every scalar_every (namelist group "DiagScalar" key "every")
+    unsigned int scalar_every;
+    
+    double scalar_tmin;
+    double scalar_tmax;
+    
+    
+    //! list of vars for scalars to be written (empty means all)
+    std::vector<std::string> scalar_vars;
+    
+    //! scalar output precision
+    unsigned int scalar_precision;
+    
+    //! every for the standard pic timeloop output
+    unsigned int print_every;
+	
+	//! vector containing phase1D structures
+	std::vector<phaseStructure> vecPhase;
+	
 };
 
 #endif

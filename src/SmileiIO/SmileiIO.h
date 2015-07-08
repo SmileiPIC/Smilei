@@ -121,7 +121,7 @@ private:
     //! function that returns elapsed time from creator (uses private var time_reference)
     double time_seconds();
 	
-    //! name of the fields to dump (copied from diagparams)
+    //! name of the fields to dump
     std::vector<std::string> fieldsToDump; 
 	
     

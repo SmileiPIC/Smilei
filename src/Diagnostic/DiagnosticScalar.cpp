@@ -6,7 +6,6 @@
 #include "PicParams.h"
 #include "SmileiMPI.h"
 #include "ElectroMagn.h"
-#include "DiagParams.h"
 
 using namespace std;
 

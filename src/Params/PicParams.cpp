@@ -595,3 +595,47 @@ void PicParams::print()
     
 }
 
+// Finds requested species in the list of existing species.
+// Returns an array of the numbers of the requested species.
+// Note that there might be several species that have the same "name" or "type"
+//  so that we have to search for all possibilities.
+vector<unsigned int> PicParams::FindSpecies( vector<string> requested_species)
+{
+    bool species_found;
+    vector<unsigned int> result;
+    unsigned int i;
+    vector<string> existing_species;
+    
+    // Make an array of the existing species names
+    existing_species.resize(0);
+    for (unsigned int ispec=0 ; ispec<species_param.size() ; ispec++) {
+        existing_species.push_back( species_param[ispec].species_type );
+    }
+    
+    // Loop over group of requested species
+    for (unsigned int rs=0 ; rs<requested_species.size() ; rs++) {
+        species_found = false;
+        // Loop over existing species
+        for (unsigned int es=0 ; es<existing_species.size() ; es++) {
+            if (requested_species[rs] == existing_species[es]) { // if found
+                species_found = true;
+                // Add to the list and sort
+                for (i=0 ; i<result.size() ; i++) {
+                    if (es == result[i]) break; // skip if duplicate
+                    if (es <  result[i]) {
+                        result.insert(result.begin()+i,es); // insert at the right place
+                        break;
+                    }
+                }
+                // Put at the end if not put earlier
+                if (i == result.size()) result.push_back(es);
+            }
+        }
+        if (!species_found)
+            ERROR("Species `" << requested_species[rs] << "` was not found.");
+    }
+	
+    return result;
+}
+
+

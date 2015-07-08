@@ -10,7 +10,6 @@
 #include "Tools.h"
 
 class PicParams;
-class DiagParams;
 class Species;
 class Particles;
 
