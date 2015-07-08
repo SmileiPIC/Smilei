@@ -14,7 +14,7 @@ class Projector1D : public Projector
 
 public:
     //! Constructor for Projector1D
-    Projector1D(PicParams& params, SmileiMPI* smpi, Patch* patch);
+    Projector1D(PicParams& params, Patch* patch);
     virtual ~Projector1D() {};
     virtual void mv_win(unsigned int shift) { index_domain_begin+=shift; }
     virtual void setMvWinLimits(unsigned int shift) {index_domain_begin = shift;}

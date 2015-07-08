@@ -16,22 +16,22 @@
 
 class InterpolatorFactory {
 public:
-  static Interpolator* create(PicParams& params, SmileiMPI *smpi, Patch *patch) {
+  static Interpolator* create(PicParams& params, Patch *patch) {
         Interpolator* Interp = NULL;
         // ---------------
         // 1d3v simulation
         // ---------------
         if ( ( params.geometry == "1d3v" ) && ( params.interpolation_order == 2 ) ) {
-            Interp = new Interpolator1D2Order(params, smpi, patch);
+            Interp = new Interpolator1D2Order(params, patch);
         }
         else if ( ( params.geometry == "1d3v" ) && ( params.interpolation_order == 4 ) ) {
-            Interp = new Interpolator1D4Order(params, smpi, patch);
+            Interp = new Interpolator1D4Order(params, patch);
         }
         // ---------------
         // 2d3v simulation
         // ---------------
         else if ( ( params.geometry == "2d3v" ) && ( params.interpolation_order == 2 ) ) {
-            Interp = new Interpolator2D2Order(params, smpi, patch);
+            Interp = new Interpolator2D2Order(params, patch);
         }
         else {
             ERROR( "Unknwon parameters : " << params.geometry << ", Order : " << params.interpolation_order );

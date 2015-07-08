@@ -4,8 +4,8 @@
 #include "SmileiMPI.h"
 #include "Patch.h"
 
-Projector1D::Projector1D(PicParams &params, SmileiMPI *smpi, Patch* patch)
-  : Projector(params, smpi, patch)
+Projector1D::Projector1D(PicParams &params, Patch* patch)
+  : Projector(params, patch)
 {
 }
 

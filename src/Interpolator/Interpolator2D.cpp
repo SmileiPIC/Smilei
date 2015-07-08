@@ -7,8 +7,8 @@
 
 using namespace std;
 
-Interpolator2D::Interpolator2D(PicParams &params, SmileiMPI *smpi, Patch* patch)
-  : Interpolator(params, smpi, patch) {
+Interpolator2D::Interpolator2D(PicParams &params, Patch* patch)
+  : Interpolator(params, patch) {
 
     i_domain_begin = patch->getCellStartingGlobalIndex(0);
     j_domain_begin = patch->getCellStartingGlobalIndex(1);

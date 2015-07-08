@@ -9,7 +9,7 @@
 
 using namespace std;
 
-Interpolator::Interpolator(PicParams &params, SmileiMPI *smpi, Patch* patch)
+Interpolator::Interpolator(PicParams &params, Patch* patch)
 {
 }
 
