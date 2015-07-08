@@ -100,7 +100,7 @@ int main (int argc, char* argv[])
     MESSAGE("Creating MPI & IO environments");
     MESSAGE("----------------------------------------------");
     SmileiMPI* smpi = NULL;
-    SmileiIO*  sio  = NULL;
+    Checkpoint checkpoint(params, diag_params);
 
 #ifdef _OMP
     int nthds(0);
@@ -179,7 +179,7 @@ int main (int argc, char* argv[])
     if (params.restart) {
         MESSAGE(1, "READING fields and particles for restart");
         DEBUG(vecSpecies.size());
-        sio->restartAll( EMfields,  stepStart, vecSpecies, smpiData, simWindow, params, input_data);
+        stopRestart.restartAll( vecPatches, stepStart, smpiData, simWindow, params, input_data);
 
         double restart_time_dual = (stepStart +0.5) * params.timestep;
         // A revoir !
@@ -435,7 +435,7 @@ int main (int argc, char* argv[])
 		if (ipatch==0) vecPatches(ipatch)->sio->createTimeStepInSingleFileTime( itime, diag_params );
                 vecPatches(ipatch)->sio->writeAllFieldsSingleFileTime( vecPatches(ipatch)->EMfields, itime );
 		// temporary EM fields dump in Fields_avg.h5
-		if (diag_params.ntime_step_avg!=0)
+		if (diag_params.ntime_step_avg!=0) //  if ((diag_params.avgfieldDump_every != 0) && (itime % diag_params.avgfieldDump_every == 0))
 		    vecPatches(ipatch)->sio->writeAvgFieldsSingleFileTime( vecPatches(ipatch)->EMfields, 0 );
                 vecPatches(ipatch)->EMfields->restartRhoJs();
             }
@@ -452,14 +452,11 @@ int main (int argc, char* argv[])
 	timer[3].update();
         }
 
-#ifdef _TOBEPATCHED
-        // temporary EM fields dump in Fields.h5
-        if  (diag_params.ntime_step_avg!=0)
-            if ((diag_params.avgfieldDump_every != 0) && (itime % diag_params.avgfieldDump_every == 0))
-                sio->writeAvgFieldsSingleFileTime( EMfields, itime );
-        
+	// ----------------------------------------------------------------------
+	// Validate restart  : to do
+	// Restart patched moving window : to do
         if  (smpiData->isMaster()){
-            if (!todump && sio->dump(EMfields, itime, MPI_Wtime() - starttime, vecSpecies, simWindow, params, input_data) ){
+	    if (!todump && checkpoint.dump( itime, MPI_Wtime() - starttime, params ) ){
                 // Send the action to perform at next iteration
                 itime2dump = itime + 1; 
                 for (unsigned int islave=0; islave < mpisize; islave++) 
@@ -476,12 +473,12 @@ int main (int argc, char* argv[])
         }
 
         if(itime==itime2dump){
-            sio->dumpAll( EMfields, itime,  vecSpecies, smpiData, simWindow, params, input_data);
+            checkpoint.dumpAll( vecPatches, itime, smpiData, simWindow, params, input_data);
             todump = 0;
             if (params.exit_after_dump ) break;
         }
-        
-        //timer[3].update();
+	// ----------------------------------------------------------------------        
+
 		
 #endif
 
@@ -561,11 +558,6 @@ int main (int argc, char* argv[])
 //    if  (diag_params.ntime_step_avg!=0)
 //        if  ( (diag_params.avgfieldDump_every != 0) && (params.n_time % diag_params.avgfieldDump_every != 0) )
 //            sio->writeAvgFieldsSingleFileTime( EMfields, params.n_time );
-//#ifdef _IO_PARTICLE
-//    // temporary particles dump (1 HDF5 file per process)
-//    if  ( (diag_params.particleDump_every != 0) && (params.n_time % diag_params.particleDump_every != 0) )
-//        sio->writePlasma( vecSpecies, time_dual, smpi );
-//#endif    
 
     // ------------------------------
     //  Cleanup & End the simulation
@@ -589,7 +581,6 @@ int main (int argc, char* argv[])
     MESSAGE("END " << namelist);
     MESSAGE("-----------------------------------------------------------------------------------------------------");
 
-    if (sio) delete sio;
     if (smpi) delete smpi;
     delete smpiData;
     if (params.nspace_win_x)
