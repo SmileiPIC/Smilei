@@ -196,7 +196,7 @@ void DiagParams::initProbes(Diagnostic* diags, PicParams& params, InputData &ifi
         
         // Initialize the list of "fake" particles just as actual macro-particles
         Particles probeParticles;
-        probeParticles.initialize(nPart_total, ndim);
+        probeParticles.initialize(nPart_total, params);
         
         // For each grid point, calculate its position and assign that position to the particle
         // The particle position is a linear combination of the `pos` with `pos_first` or `pos_second`, etc.

@@ -231,11 +231,11 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams&
         } // END for iPart = f(i)
         
         Particles partVectorSend[1][2];
-        partVectorSend[0][0].initialize(0,cuParticles.dimension());
-        partVectorSend[0][1].initialize(0,cuParticles.dimension());
+        partVectorSend[0][0].initialize(0, params, ispec);
+        partVectorSend[0][1].initialize(0, params, ispec);
         Particles partVectorRecv[1][2];
-        partVectorRecv[0][0].initialize(0,cuParticles.dimension());
-        partVectorRecv[0][1].initialize(0,cuParticles.dimension());
+        partVectorRecv[0][0].initialize(0, params, ispec);
+        partVectorRecv[0][1].initialize(0, params, ispec);
         
         /********************************************************************************/
         // Exchange particles
@@ -301,7 +301,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams&
 
   	        typePartSend = createMPIparticles( &(partVectorSend[0][iNeighbor]), nbrOfProp );
 
-                partVectorRecv[0][(iNeighbor+1)%2].initialize( n_part_recv, cuParticles.dimension());
+                partVectorRecv[0][(iNeighbor+1)%2].initialize( n_part_recv, params, ispec );
 	        typePartRecv = createMPIparticles( &(partVectorRecv[0][(iNeighbor+1)%2]), nbrOfProp );
 
 	        MPI_Sendrecv(&((partVectorSend[0][iNeighbor      ]).position(0,0)),	1, typePartSend, neighbor_[0][iNeighbor      ], 0,
@@ -330,7 +330,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams&
 
             } else if ( (neighbor_[0][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
                 //Receive
-                partVectorRecv[0][(iNeighbor+1)%2].initialize( buff_index_recv_sz[(iNeighbor+1)%2], cuParticles.dimension());
+		partVectorRecv[0][(iNeighbor+1)%2].initialize( buff_index_recv_sz[(iNeighbor+1)%2], params, ispec );
 	        typePartRecv = createMPIparticles( &(partVectorRecv[0][(iNeighbor+1)%2]), nbrOfProp );
                 MPI_Recv( &((partVectorRecv[0][(iNeighbor+1)%2]).position(0,0)), 1, typePartRecv,  neighbor_[0][(iNeighbor+1)%2], 0, SMILEI_COMM_1D, &Stat );
 	        MPI_Type_free( &typePartRecv );
@@ -424,7 +424,11 @@ MPI_Datatype SmileiMPI_Cart1D::createMPIparticles( Particles* particles, int nbr
 {
     MPI_Datatype typeParticlesMPI;
 
-    MPI_Aint address[nbrOfProp];
+
+    int nbrOfProp2(nbrOfProp);
+    if (particles->isTestParticles) nbrOfProp2++;
+
+    MPI_Aint address[nbrOfProp2];
     MPI_Get_address( &(particles->position(0,0)), &(address[0]) );
     MPI_Get_address( &(particles->momentum(0,0)), &(address[1]) );
     MPI_Get_address( &(particles->momentum(1,0)), &(address[2]) );
@@ -432,21 +436,25 @@ MPI_Datatype SmileiMPI_Cart1D::createMPIparticles( Particles* particles, int nbr
     MPI_Get_address( &(particles->weight(0)),     &(address[4]) );
     MPI_Get_address( &(particles->charge(0)),     &(address[5]) );
     //MPI_Get_address( &(particles.position_old(0,0)), &address[6] )
+    if (particles->isTestParticles)
+        MPI_Get_address( &(particles->id(0)),     &(address[nbrOfProp2-1]) );
 
-    int nbr_parts[nbrOfProp];
-    MPI_Aint disp[nbrOfProp];
-    MPI_Datatype partDataType[nbrOfProp];
+    int nbr_parts[nbrOfProp2];
+    MPI_Aint disp[nbrOfProp2];
+    MPI_Datatype partDataType[nbrOfProp2];
 
-    for (int i=0 ; i<nbrOfProp ; i++)
+    for (int i=0 ; i<nbrOfProp2 ; i++)
 	nbr_parts[i] = particles->size();
     disp[0] = 0;
-    for (int i=1 ; i<nbrOfProp ; i++)
+    for (int i=1 ; i<nbrOfProp2 ; i++)
 	disp[i] = address[i] - address[0];
-    for (int i=0 ; i<nbrOfProp ; i++)
+    for (int i=0 ; i<nbrOfProp2 ; i++)
 	partDataType[i] = MPI_DOUBLE;
     partDataType[nbrOfProp-1] = MPI_SHORT;
+    if (particles->isTestParticles)
+        partDataType[nbrOfProp2-1] = MPI_SHORT;
 
-    MPI_Type_struct( nbrOfProp, &(nbr_parts[0]), &(disp[0]), &(partDataType[0]), &typeParticlesMPI);
+    MPI_Type_struct( nbrOfProp2, &(nbr_parts[0]), &(disp[0]), &(partDataType[0]), &typeParticlesMPI);
     MPI_Type_commit( &typeParticlesMPI );
 
     return typeParticlesMPI;

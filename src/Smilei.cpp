@@ -178,7 +178,7 @@ int main (int argc, char* argv[])
         // Sum rho and J on ghost domains
         smpi->sumRhoJ( EMfields );
         for (unsigned int ispec=0 ; ispec<params.species_param.size(); ispec++) {
-            smpi->sumRhoJs(EMfields, ispec, true);
+            smpi->sumRhoJs(EMfields, ispec, true);  // only if !isTestParticles
         }
         
         if (!EMfields->isRhoNull(smpi))  {
@@ -207,6 +207,18 @@ int main (int argc, char* argv[])
             sio->writeAvgFieldsSingleFileTime( EMfields, 0 );
         // temporary particle dump at time 0
         sio->writePlasma( vecSpecies, 0., smpi );
+
+
+	for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
+	  if ( (vecSpecies[ispec]->particles.isTestParticles) ) {
+		sio->initWriteTestParticles(vecSpecies[ispec], ispec, 0, params, smpi);
+                sio->writeTestParticles(vecSpecies[ispec], ispec, 0, params, smpi);
+		//MPI_Finalize();
+		//return 0;
+	  }
+	}
+
+
     }
     
 
@@ -302,7 +314,7 @@ int main (int argc, char* argv[])
 #endif
             for (unsigned int ispec=0 ; ispec<params.species_param.size(); ispec++) {
                 if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
-                    EMfields->restartRhoJs(ispec, time_dual > params.species_param[ispec].time_frozen);
+                    EMfields->restartRhoJs(ispec, time_dual > params.species_param[ispec].time_frozen); // if (!isTestParticles)
                     vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow);
                 }
             }
@@ -313,7 +325,7 @@ int main (int argc, char* argv[])
                     for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
                         smpi->exchangeParticles(vecSpecies[ispec], ispec, params, tid, iDim);
 #pragma omp barrier
-                    vecSpecies[ispec]->sort_part();
+		    vecSpecies[ispec]->sort_part(); // Faut il trier les particules test ???
                 }
             }
         }
@@ -324,10 +336,10 @@ int main (int argc, char* argv[])
             //!\todo To simplify : sum global and per species densities
             timer[4].restart();
             smpi->sumRhoJ( EMfields );
-            for (unsigned int ispec=0 ; ispec<params.species_param.size(); ispec++) {
+            for (unsigned int ispec=0 ; ispec<params.species_param.size(); ispec++) { // if (!isTestParticles)
                 if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ) smpi->sumRhoJs(EMfields, ispec, time_dual > params.species_param[ispec].time_frozen);
             }
-            EMfields->computeTotalRhoJ();
+            EMfields->computeTotalRhoJ(); // if (!isTestParticles)
             timer[4].update();
             
             // solve Maxwell's equations
@@ -345,6 +357,12 @@ int main (int argc, char* argv[])
 		
         // run all diagnostics
         timer[3].restart();
+	for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
+	    if ( (vecSpecies[ispec]->particles.isTestParticles)  )
+		sio->writeTestParticles(vecSpecies[ispec], ispec, itime, params, smpi);
+	}
+
+
         Diags.runAllDiags(itime, EMfields, vecSpecies, Interp, smpi);
         timer[3].update();
         
@@ -438,13 +456,14 @@ int main (int argc, char* argv[])
     
         
     delete sio;
-    delete smpi;
-    delete smpiData;
+
     if (params.nspace_win_x)
         delete simWindow;
     
     TITLE("END");
 
+    delete smpi;
+    delete smpiData;
     return 0;
     
 }//END MAIN

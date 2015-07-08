@@ -21,6 +21,7 @@ class Field;
 //! Class SmileiMPI
 //  --------------------------------------------------------------------------------------------------------------------
 class SmileiMPI {
+    friend class SmileiIO;
 public:
     //! Create intial MPI environment
     SmileiMPI( int* argc, char*** argv );
@@ -46,6 +47,9 @@ public:
     //! Echanges particles of Species, list of particles comes frome Species::dynamics
     //! See child classes
     virtual void exchangeParticles(Species* species, int ispec, PicParams& params, int tnum, int iDim) {};
+
+    //virtual MPI_Datatype createMPIparticles( Particles* particles, int nbrOfProp ) {MPI_Datatype type ; return type; }
+    virtual MPI_Datatype createMPIparticles( Particles* particles, int nbrOfProp ) {return NULL;}
 
     //! Create MPI_Datatype to exchange/sum fields on ghost data
     //! See child classes
@@ -160,6 +164,12 @@ public:
     int smilei_sz;
     //! Number of MPI process in the current communicator
     int smilei_rk;
+
+    inline int globalNbrParticles(Species* species, int locNbrParticles) {
+	int nParticles(0);
+	MPI_Reduce( &locNbrParticles, &nParticles, 1, MPI_INT, MPI_SUM, 0, SMILEI_COMM_WORLD );
+	return nParticles;
+    }
 
     // Broadcast a string in current communicator
     void bcast( std::string& val );
