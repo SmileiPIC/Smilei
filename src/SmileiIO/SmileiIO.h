@@ -60,61 +60,11 @@ public:
     //! Property list for collective dataset write, set for // IO.
     hid_t write_plist;
 
-    //! Id of "particles-mpirank.h5", contains particles of current mpirank
-    //! Disabled for now
-    hid_t  partFile_id;
-
-    //! Space dimension of a particle
-    unsigned int nDim_particle;
-
     //! Basic write field on its own file (debug)
     virtual void write( Field* field ) = 0;
 
-    //! restart everything to file per processor
-    void restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> &vecSpecies, SmileiMPI* smpi, SimWindow* simWin, PicParams &params, InputData& input_data);
-
-    //! restart field per proc
-    void restartFieldsPerProc(hid_t fid, Field* field);
-
-    //! load moving window parameters
-    void restartMovingWindow(hid_t fid, SimWindow* simWindow);
-	
-    //! test before writing everything to file per processor
-    bool dump(ElectroMagn* EMfields, unsigned int itime, double time,  std::vector<Species*> vecSpecies, SimWindow* simWin,  PicParams &params, InputData& input_data);
-	
-    //! dump everything to file per processor
-    void dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  PicParams &params, InputData& input_data);
-
-    //! incremental number of times we've done a dump
-    unsigned int dump_times;
-
-    //! incremental number of times we've done a dump_minutes
-    unsigned int dump_minutes_times;
-
 private:
-    
-    //! initialize the time zero of the simulation 
-    void initDumpCases();
-	
-    //! dump field per proc
-    void dumpFieldsPerProc(hid_t fid, Field* field);
-
-    //! dump moving window parameters
-    void dumpMovingWindow(hid_t fid, SimWindow* simWindow);
-
-    //! time of the constructor
-    //double time_reference;
-	
-    //! function that returns elapsed time from creator (uses private var time_reference)
-    //double time_seconds();
-	
-    //! to dump and stop a simulation you might just check if a file named stop has been created this variable
-    //! is true if since last time a file named stop appeared
-    bool stop_file_seen_since_last_check;
-
-    //! function that checks if file named "stop" exists;
-    bool fileStopCreated();
-	
+   	
 	
 };
 

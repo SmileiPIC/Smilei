@@ -26,16 +26,10 @@
 #include "PicParams.h"
 #include "LaserParams.h"
 
-#include "SmileiIOFactory.h"
-
-#include "SpeciesFactory.h"
-#include "ElectroMagnFactory.h"
-#include "InterpolatorFactory.h"
-#include "ProjectorFactory.h"
 #include "PatchesFactory.h"
+#include "Checkpoint.h"
 
 #include "DiagParams.h"
-#include "Diagnostic.h"
 
 #include "SimWindow.h"
 
@@ -179,7 +173,7 @@ int main (int argc, char* argv[])
     if (params.restart) {
         MESSAGE(1, "READING fields and particles for restart");
         DEBUG(vecSpecies.size());
-        stopRestart.restartAll( vecPatches, stepStart, smpiData, simWindow, params, input_data);
+        checkpoint.restartAll( vecPatches, stepStart, smpiData, simWindow, params, input_data);
 
         double restart_time_dual = (stepStart +0.5) * params.timestep;
         // A revoir !
@@ -480,8 +474,6 @@ int main (int argc, char* argv[])
 	// ----------------------------------------------------------------------        
 
 		
-#endif
-
 #ifdef _INPROGRESS
         timer[5].restart();
         cout << "ismoving " << simWindow->isMoving(time_dual) << endl;
