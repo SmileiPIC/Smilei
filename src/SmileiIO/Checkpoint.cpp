@@ -18,7 +18,7 @@
 #include "SimWindow.h"
 #include "ElectroMagn.h"
 #include "Species.h"
-#include "Patch.h"
+#include "VectorPatch.h"
 
 using namespace std;
 

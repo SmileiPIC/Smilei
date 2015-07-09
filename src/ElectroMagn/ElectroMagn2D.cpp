@@ -484,6 +484,154 @@ void ElectroMagn2D::solvePoisson(SmileiMPI* smpi)
 }//END solvePoisson
 
 
+
+void ElectroMagn2D::initPoisson(Patch *patch)
+{
+    Field2D* rho2D = static_cast<Field2D*>(rho_);
+
+    // Min and max indices for calculation of the scalar product (for primal & dual grid)
+    //     scalar products are computed accounting only on real nodes
+    //     ghost cells are used only for the (non-periodic) boundaries
+    // dual indexes suppressed during "patchization"
+    // ----------------------------------------------------------------------------------
+
+    index_min_p_.resize(2,0);
+    index_max_p_.resize(2,0);
+    
+    index_min_p_[0] = oversize[0];
+    index_min_p_[1] = oversize[1];
+    index_max_p_[0] = nx_p - 2 - oversize[0];
+    index_max_p_[1] = ny_p - 2 - oversize[1];
+    if (patch->isWestern()) {
+        index_min_p_[0] = 0;
+    }
+    if (patch->isEastern()) {
+        index_max_p_[0] = nx_p-1;
+    }
+
+    phi_ = new Field2D(dimPrim);    // scalar potential
+    r_   = new Field2D(dimPrim);    // residual vector
+    p_   = new Field2D(dimPrim);    // direction vector
+    Ap_  = new Field2D(dimPrim);    // A*p vector
+
+    
+    for (unsigned int i=0; i<nx_p; i++) {
+        for (unsigned int j=0; j<ny_p; j++) {
+            (*phi_)(i,j)   = 0.0;
+            (*r_)(i,j)     = -(*rho2D)(i,j);
+            (*p_)(i,j)     = (*r_)(i,j);
+        }//j
+    }//i
+
+}
+
+double ElectroMagn2D::compute_r()
+{
+    double rnew_dot_rnew_local(0.);
+    for (unsigned int i=index_min_p_[0]; i<=index_max_p_[0]; i++) {
+        for (unsigned int j=index_min_p_[1]; j<=index_max_p_[1]; j++) {
+            rnew_dot_rnew_local += (*r_)(i,j)*(*r_)(i,j);
+        }
+    }
+    return rnew_dot_rnew_local;
+}
+
+void ElectroMagn2D::compute_Ap(Patch* patch)
+{
+    double one_ov_dx_sq       = 1.0/(dx*dx);
+    double one_ov_dy_sq       = 1.0/(dy*dy);
+    double two_ov_dx2dy2      = 2.0*(1.0/(dx*dx)+1.0/(dy*dy));
+    
+    // vector product Ap = A*p
+    for (unsigned int i=1; i<nx_p-1; i++) {
+	for (unsigned int j=1; j<ny_p-1; j++) {
+	    (*Ap_)(i,j) = one_ov_dx_sq*((*p_)(i-1,j)+(*p_)(i+1,j))
+		+ one_ov_dy_sq*((*p_)(i,j-1)+(*p_)(i,j+1))
+		- two_ov_dx2dy2*(*p_)(i,j);
+	}//j
+    }//i
+        
+        
+    // Western BC
+    if ( patch->isWestern() ) {
+	for (unsigned int j=1; j<ny_p-1; j++) {
+	    //Ap_(0,j)      = one_ov_dx_sq*(pWest[j]+p_(1,j))
+	    (*Ap_)(0,j)      = one_ov_dx_sq*((*p_)(1,j))
+                +              one_ov_dy_sq*((*p_)(0,j-1)+(*p_)(0,j+1))
+                -              two_ov_dx2dy2*(*p_)(0,j);
+	}
+	// at corners
+	//Ap_(0,0)           = one_ov_dx_sq*(pWest[0]+p_(1,0))               // West/South
+        //    +                   one_ov_dy_sq*(pSouth[0]+p_(0,1))
+	(*Ap_)(0,0)           = one_ov_dx_sq*((*p_)(1,0))               // West/South
+            +                   one_ov_dy_sq*((*p_)(0,1))
+            -                   two_ov_dx2dy2*(*p_)(0,0);
+	//Ap_(0,ny_p-1)      = one_ov_dx_sq*(pWest[ny_p-1]+p_(1,ny_p-1))     // West/North
+        //    +                   one_ov_dy_sq*(p_(0,ny_p-2)+pNorth[0])
+	(*Ap_)(0,ny_p-1)      = one_ov_dx_sq*((*p_)(1,ny_p-1))     // West/North
+            +                   one_ov_dy_sq*((*p_)(0,ny_p-2))
+            -                   two_ov_dx2dy2*(*p_)(0,ny_p-1);
+    }
+        
+    // Eastern BC
+    if ( patch->isEastern() ) {
+            
+	for (unsigned int j=1; j<ny_p-1; j++) {
+	    //Ap_(nx_p-1,j) = one_ov_dx_sq*(p_(nx_p-2,j)+pEast[j])
+	    (*Ap_)(nx_p-1,j) = one_ov_dx_sq*((*p_)(nx_p-2,j))
+                +              one_ov_dy_sq*((*p_)(nx_p-1,j-1)+(*p_)(nx_p-1,j+1))
+                -              two_ov_dx2dy2*(*p_)(nx_p-1,j);
+	}
+	// at corners
+	//Ap_(nx_p-1,0)      = one_ov_dx_sq*(p_(nx_p-2,0)+pEast[0])                 // East/South
+        //    +                   one_ov_dy_sq*(pSouth[nx_p-1]+p_(nx_p-1,1))
+	(*Ap_)(nx_p-1,0)      = one_ov_dx_sq*((*p_)(nx_p-2,0))                 // East/South
+            +                   one_ov_dy_sq*((*p_)(nx_p-1,1))
+            -                   two_ov_dx2dy2*(*p_)(nx_p-1,0);
+	//Ap_(nx_p-1,ny_p-1) = one_ov_dx_sq*(p_(nx_p-2,ny_p-1)+pEast[ny_p-1])       // East/North
+        //    +                   one_ov_dy_sq*(p_(nx_p-1,ny_p-2)+pNorth[nx_p-1])
+	(*Ap_)(nx_p-1,ny_p-1) = one_ov_dx_sq*((*p_)(nx_p-2,ny_p-1))       // East/North
+            +                   one_ov_dy_sq*((*p_)(nx_p-1,ny_p-2))
+            -                   two_ov_dx2dy2*(*p_)(nx_p-1,ny_p-1);
+    }
+        
+}
+
+double ElectroMagn2D::compute_pAp()
+{
+    double p_dot_Ap_local = 0.0;
+    for (unsigned int i=index_min_p_[0]; i<=index_max_p_[0]; i++) {
+	for (unsigned int j=index_min_p_[1]; j<=index_max_p_[1]; j++) {
+	    p_dot_Ap_local += (*p_)(i,j)*(*Ap_)(i,j);
+	}
+    }
+    return p_dot_Ap_local;
+}
+
+void ElectroMagn2D::update_pand_r(double r_dot_r, double p_dot_Ap)
+{
+    double alpha_k = r_dot_r/p_dot_Ap;
+    for(unsigned int i=0; i<nx_p; i++) {
+	for(unsigned int j=0; j<ny_p; j++) {
+	    (*phi_)(i,j) += alpha_k * (*p_)(i,j);
+	    (*r_)(i,j)   -= alpha_k * (*Ap_)(i,j);
+	}
+    }
+
+}
+
+void ElectroMagn2D::update_p(double rnew_dot_rnew, double r_dot_r)
+{
+    double beta_k = rnew_dot_rnew/r_dot_r;
+    for (unsigned int i=0; i<nx_p; i++) {
+	for(unsigned int j=0; j<ny_p; j++) {
+	    (*p_)(i,j) = (*r_)(i,j) + beta_k * (*p_)(i,j);
+	}
+    }
+}
+
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Save the former Magnetic-Fields (used to center them)
 // ---------------------------------------------------------------------------------------------------------------------

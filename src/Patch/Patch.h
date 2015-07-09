@@ -202,50 +202,6 @@ private:
 };
 
 
-class VectorPatch {
- public :
-    VectorPatch();
-    ~VectorPatch();
-
-    void resize(int npatches) {patches_.resize(npatches);};
-    int size() const {return patches_.size();};
-
-    inline Patch* operator()(int ipatch) {return patches_[ipatch];};
-
-    void exchangeParticles(int ispec, PicParams &params, SmileiMPI* smpi);
-    void sumRhoJ( unsigned int diag_flag );
-    void sumRhoJs( int ispec );
-    void exchangeE(  );
-    void exchangeB(  );
-
-    void computeGlobalDiags(int timestep);
-    void computeScalarsDiags(int timestep);
-
-    void initProbesDiags(PicParams& params, DiagParams &diag_params, int timestep);
-    void finalizeProbesDiags(PicParams& params, DiagParams &diag_params, int timestep);
-    void definePatchDiagsMaster();
-
-    void createPacthes(PicParams& params, DiagParams& diag_params, LaserParams& laser_params, SmileiMPI* smpi);
-    void setNbrParticlesToExch(SmileiMPI* smpi);
-    void exchangePatches(SmileiMPI* smpi);
-    
-    void initDumpFields(PicParams& params, DiagParams &diag_params, int timestep);
-    void finalizeDumpFields(PicParams& params, DiagParams &diag_params, int timestep);
-
-    void clear() {patches_.clear();}
-
-    std::vector<Patch*> patches_;
-    std::vector<Patch*> recv_patches_;
-
-    std::vector<int> recv_patch_id_;
-    std::vector<int> send_patch_id_;    
-
- private :
-    // 1st patch index of patches_ (stored for balancing op)
-    int refHindex_;
-};
-
-
 inline int buildtag(int commid, int send, int recv) {
     // + flag / orientation
     std::stringstream stag("");

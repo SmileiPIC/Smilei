@@ -6,7 +6,7 @@
 #include "Interpolator.h"
 #include "Projector.h"
 #include "SmileiMPI.h"
-#include "Patch.h"
+#include "VectorPatch.h"
 #include "Hilbert_functions.h"
 
 using namespace std;

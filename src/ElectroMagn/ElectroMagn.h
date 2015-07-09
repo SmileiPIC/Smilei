@@ -152,6 +152,31 @@ public:
     //! Method used to initialize the Maxwell solver
     virtual void solvePoisson(SmileiMPI* smpi) = 0;
 
+    // --------------------------------------
+    //  --------- PATCH IN PROGRESS ---------
+    // --------------------------------------
+    virtual void initPoisson(Patch *patch) = 0;
+    virtual double compute_r() = 0;
+    virtual void compute_Ap(Patch *patch) = 0;
+    //Access to Ap
+    virtual double compute_pAp() = 0;
+    virtual void update_pand_r(double r_dot_r, double p_dot_Ap) = 0;
+    virtual void update_p(double rnew_dot_rnew, double r_dot_r) = 0;
+
+
+    std::vector<unsigned int> index_min_p_;
+    std::vector<unsigned int> index_max_p_;
+    Field* phi_;
+    Field* r_;
+    Field* p_;
+    Field* Ap_;
+
+    // --------------------------------------
+    // --------------------------------------
+    //  --------- PATCH IN PROGRESS ---------
+    // --------------------------------------
+
+
     //! \todo check time_dual or time_prim (MG)
     //! method used to solve Maxwell's equation (takes current time and time-step as input parameter)
     void solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, PicParams &params, SimWindow* simWindow);

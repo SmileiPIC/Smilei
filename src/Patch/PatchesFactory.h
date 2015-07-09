@@ -1,6 +1,7 @@
 #ifndef PATCHESFACTORY_H
 #define PATCHESFACTORY_H
 
+#include "VectorPatch.h"
 #include "Patch.h"
 
 #include "Tools.h"

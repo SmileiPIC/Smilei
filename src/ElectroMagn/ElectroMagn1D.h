@@ -20,7 +20,21 @@ public:
 
     //! Method used for initializing Maxwell solver
     void solvePoisson(SmileiMPI* smpi);
-
+    
+    // --------------------------------------
+    //  --------- PATCH IN PROGRESS ---------
+    // --------------------------------------
+    void initPoisson(Patch *patch) {};
+    double compute_r() {};
+    void compute_Ap(Patch *patch) {};
+    //Access to Ap
+    double compute_pAp() {};
+    void update_pand_r(double r_dot_r, double p_dot_Ap) {};
+    void update_p(double rnew_dot_rnew, double r_dot_r) {};
+    // --------------------------------------
+    //  --------- PATCH IN PROGRESS ---------
+    // --------------------------------------
+    
     //! Method used to solve Maxwell-Ampere equation
     void solveMaxwellAmpere();
 

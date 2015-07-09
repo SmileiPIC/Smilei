@@ -35,7 +35,7 @@
 
 #include "Species.h"
 #include "Hilbert_functions.h"
-#include "Patch.h"
+#include "VectorPatch.h"
 
 using namespace std;
 
@@ -142,6 +142,17 @@ void SmileiMPI::init( PicParams& params )
 
 void SmileiMPI::init_patch_count( PicParams& params)
 {
+#ifdef _NOTBALANCED
+    bool use_load_balancing(true);
+    if (!use_load_balancing) {
+	int Npatches = params.number_of_patches[0];
+	for (unsigned int i = 1; i < params.nDim_field; i++)
+	    Npatches *=  params.number_of_patches[i]; // Total number of patches.
+	if (Npatches!=smilei_sz) ERROR("number of patches abd MPI processes");
+	for (unsigned int i=0; i<smilei_sz; i++) patch_count[i] = 1;
+	return;
+    }
+#endif
     unsigned int Npatches, r,Ncur,Pcoordinates[3],ncells_perpatch, Tcapabilities;
     double Tload,Tcur, Lcur, local_load, local_load_temp, above_target, below_target;
     std::vector<unsigned int> mincell,maxcell,capabilities; //Min and max values of non empty cells for each species and in each dimension.
