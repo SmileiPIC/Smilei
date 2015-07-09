@@ -255,7 +255,7 @@ void Diagnostic::initProbes(PicParams& params, InputData &ifile, SmileiMPI *smpi
         
         // Initialize the list of "fake" particles just as actual macro-particles
         Particles probeParticles;
-        probeParticles.initialize(nPart_total, ndim);
+        probeParticles.initialize(nPart_total, params);
         
         // For each grid point, calculate its position and assign that position to the particle
         // The particle position is a linear combination of the `pos` with `pos_first` or `pos_second`, etc.

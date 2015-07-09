@@ -35,11 +35,11 @@ py_namelist(NULL)
     pyRunScript(string(reinterpret_cast<const char*>(Python_pyprofiles_py), Python_pyprofiles_py_len), "pyprofiles.py");
     
     // Running the namelists
+    pyRunScript("############### BEGIN USER NAMELISTS ###############");
     for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {
         MESSAGE("Reading file " << *it);
         string strNamelist="";
         if (smpi->isMaster()) {
-            HEREIAM("");
             ifstream istr(it->c_str());
             if (istr.is_open()) {
                 string oneLine;
@@ -54,7 +54,7 @@ py_namelist(NULL)
         smpi->bcast(strNamelist);
         pyRunScript(strNamelist,(*it));
     }
-    
+    pyRunScript("################ END USER NAMELISTS ################");    
     // Running pycontrol.py
     pyRunScript(string(reinterpret_cast<const char*>(Python_pycontrol_py), Python_pycontrol_py_len),"pycontrol.py");
     
@@ -82,7 +82,7 @@ InputData::~InputData() {
 void InputData::pyRunScript(string command, string name) {
     PyTools::checkPyError();
     namelist+=command;
-    MESSAGE(1,"Passing to python " << name);
+    if (name.size()>0)  MESSAGE(1,"Passing to python " << name);
     DEBUG(">>>>>>>>>>>>>>> passing this to python:\n" <<command);
     int retval=PyRun_SimpleString(command.c_str());
     DEBUG("<<<<<<<<<<<<<<< from " << name);

@@ -70,7 +70,7 @@ public:
     
 private:
     //! passing named command to python
-    void pyRunScript(std::string command, std::string name);
+    void pyRunScript(std::string command, std::string name=std::string(""));
     
     // python object: main namelist
     PyObject* py_namelist;
