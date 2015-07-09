@@ -87,7 +87,13 @@ public:
     void restartMovingWindow(hid_t fid, SimWindow* simWindow);
 	
     //! test before writing everything to file per processor
-    bool dump(ElectroMagn* EMfields, unsigned int itime, std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  PicParams &params, InputData& input_data);
+    bool dump(ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  PicParams &params, InputData& input_data);
+
+    void initWriteTestParticles(Species* species, int ispec, int itime, PicParams& params, SmileiMPI* smpi);
+    void writeTestParticles(Species* species, int ispec, int itime, PicParams& params, SmileiMPI* smpi);
+
+    template <class T> void appendTestParticles(hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type );
+
 	
     //! this static variable is deined (in the .cpp) as false but becomes true when
     //! the signal SIGUSR1 is captured by the signal_callback_handler fnction

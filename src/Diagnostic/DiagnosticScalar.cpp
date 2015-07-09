@@ -59,18 +59,22 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
         double charge_tot=0.0;
         double ener_tot=0.0;
         unsigned int nPart=vecSpecies[ispec]->getNbrOfParticles();
-        
-        if (nPart>0) {
-            for (unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
-                charge_tot+=(double)vecSpecies[ispec]->particles.charge(iPart);
-                ener_tot+=cell_volume*vecSpecies[ispec]->particles.weight(iPart)*(vecSpecies[ispec]->particles.lor_fac(iPart)-1.0);
-            }
-            ener_tot*=vecSpecies[ispec]->species_param.mass;
-        }
-        
-        MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&charge_tot, &charge_tot, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&ener_tot, &ener_tot, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&nPart, &nPart, 1, MPI_UNSIGNED, MPI_SUM, 0, MPI_COMM_WORLD);
+
+	if (!vecSpecies[ispec]->particles.isTestParticles) {
+
+	    if (nPart>0) {
+		for (unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
+		    charge_tot+=(double)vecSpecies[ispec]->particles.charge(iPart);
+		    ener_tot+=cell_volume*vecSpecies[ispec]->particles.weight(iPart)*(vecSpecies[ispec]->particles.lor_fac(iPart)-1.0);
+		}
+		ener_tot*=vecSpecies[ispec]->species_param.mass;
+	    }
+	}
+
+	MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&charge_tot, &charge_tot, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&ener_tot, &ener_tot, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&nPart, &nPart, 1, MPI_UNSIGNED, MPI_SUM, 0, MPI_COMM_WORLD);
+
         
         // nrj lost witb boundary conditions
         double ener_lost=0.0;
@@ -102,6 +106,7 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
         }
         
         vecSpecies[ispec]->reinitDiags();
+	
     }
     
     ///////////////////////////////////////////////////////////////////////////////////////////

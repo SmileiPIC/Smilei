@@ -97,6 +97,9 @@ struct SpeciesStructure {
     
     //! logical true if particles radiate
     bool radiating;
+
+    //! logical true if particles radiate
+    bool isTest;
     
     //! Boundary conditions for particules
     std::string bc_part_type_west;
