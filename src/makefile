@@ -3,10 +3,13 @@ HDF5_ROOT_DIR ?=
 
 PYTHONCONFIG ?= python-config
 ##################################################
+DESCRIBE:=$(shell git describe 2>/dev/null || echo '??')
+BRANCH:=$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '??')
+COMMITDATE:=$(shell git show -s --pretty="%ci" 2>/dev/null || echo '??')
 
-VERSION:="$(shell git describe 2>/dev/null || echo '??')-$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '??')"
+VERSION:="$(DESCRIBE)-$(BRANCH)"
 
-CFLAGS += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include -std=c++0x 
+CFLAGS += -D__VERSION=\"$(VERSION)\" -D__COMMITDATE=\""$(COMMITDATE)"\" -I${HDF5_ROOT_DIR}/include -std=c++0x 
 LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5 -lz
 
 

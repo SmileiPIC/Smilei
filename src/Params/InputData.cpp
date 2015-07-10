@@ -35,7 +35,7 @@ py_namelist(NULL)
     pyRunScript(string(reinterpret_cast<const char*>(Python_pyprofiles_py), Python_pyprofiles_py_len), "pyprofiles.py");
     
     // Running the namelists
-    pyRunScript("############### BEGIN USER NAMELISTS ###############");
+    pyRunScript("############### BEGIN USER NAMELISTS ###############\n");
     for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {
         MESSAGE("Reading file " << *it);
         string strNamelist="";
@@ -54,7 +54,7 @@ py_namelist(NULL)
         smpi->bcast(strNamelist);
         pyRunScript(strNamelist,(*it));
     }
-    pyRunScript("################ END USER NAMELISTS ################");    
+    pyRunScript("################ END USER NAMELISTS ################\n");    
     // Running pycontrol.py
     pyRunScript(string(reinterpret_cast<const char*>(Python_pycontrol_py), Python_pycontrol_py_len),"pycontrol.py");
     
@@ -62,14 +62,13 @@ py_namelist(NULL)
     
     
     // Now the string "namelist" contains all the python files concatenated
-    // It is written as a file, by default "smilei.py"
+    // It is written as a file: smilei.py
     if (smpi->isMaster()) {
-        string file_namelist_out="smilei.py";
-        extract("output_script", file_namelist_out);
-        
-        ofstream out(file_namelist_out.c_str());
-        out << namelist;
-        out.close();
+        ofstream out_namelist("smilei.py");
+        if (out_namelist.is_open()) {
+            out_namelist << namelist;
+            out_namelist.close();
+        }
     }
 }
 

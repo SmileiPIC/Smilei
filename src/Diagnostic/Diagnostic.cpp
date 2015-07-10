@@ -19,11 +19,6 @@ using namespace std;
 Diagnostic::Diagnostic(PicParams& params, InputData &ifile, SmileiMPI *smpi) :
 dtimer(4)
 {
-    dtimer[0].init(smpi, "scalars");
-    dtimer[1].init(smpi, "probes");
-    dtimer[2].init(smpi, "phases");
-    dtimer[3].init(smpi, "particles");
-    
     // defining default values & reading diagnostic every-parameter
     // ------------------------------------------------------------
     print_every=params.n_time/10;
@@ -49,15 +44,19 @@ dtimer(4)
         WARNING("Option particleDump_every disabled");
     
     // scalars initialization
+    dtimer[0].init(smpi, "scalars");
     initScalars(params,ifile, smpi);
     
     // probes initialization
+    dtimer[1].init(smpi, "probes");
     initProbes(params,ifile,smpi);
     
     // phasespaces initialization    
+    dtimer[2].init(smpi, "phases");
     initPhases(params,ifile,smpi);
     
     // particles initialization    
+    dtimer[3].init(smpi, "particles");
     initParticles(params,ifile);
     
 }
