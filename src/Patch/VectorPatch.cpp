@@ -675,8 +675,9 @@ void VectorPatch::finalizeDumpFields(PicParams& params, DiagParams &diag_params,
 
 }
 
-void VectorPatch::createPacthes(PicParams& params, DiagParams& diag_params, LaserParams& laser_params, SmileiMPI* smpi)
+void VectorPatch::createPatches(PicParams& params, DiagParams& diag_params, LaserParams& laser_params, SmileiMPI* smpi, SimWindow* simWindow)
 {
+    unsigned int n_moved(0);
     recv_patches_.resize(0);
 
     // Set Index of the 1st patch of the vector yet on current MPI rank
@@ -720,7 +721,8 @@ void VectorPatch::createPacthes(PicParams& params, DiagParams& diag_params, Lase
     for (unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++) {
 	// density profile is initializes as if t = 0 !
 	// Species will be cleared when, nbr of particles will be known
-	Patch* newPatch = PatchesFactory::create(params, diag_params, laser_params, smpi, recv_patch_id_[ipatch]);
+	if (simWindow) n_moved = simWindow->getNmoved(); 
+	Patch* newPatch = PatchesFactory::create(params, diag_params, laser_params, smpi, recv_patch_id_[ipatch], n_moved );
 	recv_patches_.push_back( newPatch );
     }
 

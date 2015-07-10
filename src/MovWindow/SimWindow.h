@@ -35,6 +35,8 @@ class SimWindow {
 
     //! Return total length the window has moved
     double getXmoved() {return x_moved;}
+    //! Return the number of cells the window has moved
+    unsigned int getNmoved() {return n_moved;}
     //! Return total number of cell of the window
     double getNspace_win_x() {return nspace_win_x_;}
     //! Set total length the window has moved (restart case)

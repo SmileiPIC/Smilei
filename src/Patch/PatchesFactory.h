@@ -13,6 +13,11 @@ public:
         return patch;
     }
 
+    static Patch* create(PicParams& params, DiagParams& diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int  ipatch, unsigned int n_moved) {
+	Patch* patch = new Patch(params, diag_params, laser_params, smpi, ipatch, n_moved);
+        return patch;
+    }
+
     static VectorPatch createVector(PicParams& params, DiagParams& diag_params, LaserParams& laser_params, SmileiMPI* smpi) {
         VectorPatch vecPatches;
 

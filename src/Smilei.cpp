@@ -493,7 +493,7 @@ int main (int argc, char* argv[])
 
 
 	    //cout << "patch_count modified" << endl;
-	    vecPatches.createPatches(params, diag_params, laser_params, smpiData);
+	    vecPatches.createPatches(params, diag_params, laser_params, smpiData, simWindow);
 	    //cout << "patch created" << endl;
 	    vecPatches.setNbrParticlesToExch(smpiData);
 	    //cout << "nbr particles exchanged" << endl;
