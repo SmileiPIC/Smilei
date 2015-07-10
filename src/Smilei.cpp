@@ -96,14 +96,9 @@ int main (int argc, char* argv[])
     SmileiMPI* smpi = NULL;
     Checkpoint checkpoint(params, diag_params);
 
-#ifdef _OMP
-    int nthds(0);
-#pragma omp parallel shared(nthds)
-    {
-        nthds = omp_get_num_threads();
-    }
+#ifdef _OPENMP
     if (smpiData->isMaster())
-        MESSAGE("\tOpenMP : Number of thread per MPI process : " << nthds );
+        MESSAGE("\tOpenMP : Number of thread per MPI process : " << omp_get_max_threads() );
 #else
     if (smpiData->isMaster()) MESSAGE("\tOpenMP : Disabled");
 #endif
@@ -330,10 +325,6 @@ int main (int argc, char* argv[])
             for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	      vecPatches(ipatch)->EMfields->restartRhoJ();
 
-            int tid(0);
-#ifdef _OMP
-            tid = omp_get_thread_num();
-#endif
             //cout << "Starting dynamics" << endl;
             #pragma omp for schedule(runtime)
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
@@ -447,34 +438,33 @@ int main (int argc, char* argv[])
 	// ----------------------------------------------------------------------
 	// Validate restart  : to do
 	// Restart patched moving window : to do
-        if  (smpiData->isMaster()){
-	    if (!todump && checkpoint.dump( itime, MPI_Wtime() - starttime, params ) ){
-                // Send the action to perform at next iteration
-                itime2dump = itime + 1; 
-                for (unsigned int islave=0; islave < mpisize; islave++) 
-                    MPI_Isend(&itime2dump,1,MPI_INT,islave,0,MPI_COMM_WORLD,&action_srequests[islave]);
-                todump = 1;
-            }
-        } else {
-            MPI_Iprobe(0,0,MPI_COMM_WORLD,&todump,&action_status[0]); // waiting for a control message from master (rank=0)
-            //Receive action
-            if( todump ){
-                MPI_Recv(&itime2dump,1,MPI_INT,0,0,MPI_COMM_WORLD,&action_status[1]);
-                todump = 0;
-            }
-        }
+        //if  (smpiData->isMaster()){
+	//    if (!todump && checkpoint.dump( itime, MPI_Wtime() - starttime, params ) ){
+        //        // Send the action to perform at next iteration
+        //        itime2dump = itime + 1; 
+        //        for (unsigned int islave=0; islave < mpisize; islave++) 
+        //            MPI_Isend(&itime2dump,1,MPI_INT,islave,0,MPI_COMM_WORLD,&action_srequests[islave]);
+        //        todump = 1;
+        //    }
+        //} else {
+        //    MPI_Iprobe(0,0,MPI_COMM_WORLD,&todump,&action_status[0]); // waiting for a control message from master (rank=0)
+        //    //Receive action
+        //    if( todump ){
+        //        MPI_Recv(&itime2dump,1,MPI_INT,0,0,MPI_COMM_WORLD,&action_status[1]);
+        //        todump = 0;
+        //    }
+        //}
 
-        if(itime==itime2dump){
-            checkpoint.dumpAll( vecPatches, itime, smpiData, simWindow, params, input_data);
-            todump = 0;
-            if (params.exit_after_dump ) break;
-        }
+        //if(itime==itime2dump){
+        //    checkpoint.dumpAll( vecPatches, itime, smpiData, simWindow, params, input_data);
+        //    todump = 0;
+        //    if (params.exit_after_dump ) break;
+        //}
 	// ----------------------------------------------------------------------        
 
 		
-#ifdef _INPROGRESS
+//#ifdef _INPROGRESS
         timer[5].restart();
-        cout << "ismoving " << simWindow->isMoving(time_dual) << endl;
         if ( simWindow && simWindow->isMoving(time_dual) ) {
             start_moving++;
             if ((start_moving==1) && (smpiData->isMaster()) ) {
@@ -483,7 +473,7 @@ int main (int argc, char* argv[])
             simWindow->operate(vecPatches, smpiData, params, diag_params, laser_params);
         }
         timer[5].update();
-#endif
+//#endif
 
 
         } //End omp parallel region

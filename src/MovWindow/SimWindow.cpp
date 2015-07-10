@@ -8,6 +8,8 @@
 #include "SmileiMPI.h"
 #include "VectorPatch.h"
 #include "Hilbert_functions.h"
+#include <iostream>
+#include <omp.h>
 
 using namespace std;
 
@@ -19,6 +21,12 @@ SimWindow::SimWindow(PicParams& params)
     n_moved = 0;      //The window has not moved at t=0. Warning: not true anymore for restarts.
     vx_win_ = params.vx_win; 
     t_move_win_ = params.t_move_win;      
+    int nthds(1);
+    #ifdef _OPENMP
+        nthds = omp_get_max_threads();
+    #endif
+    patch_to_be_created.resize(nthds);
+    index_to_be_created.resize(nthds);
 }
 
 SimWindow::~SimWindow()
@@ -58,14 +66,22 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
     int xcall, ycall, h0, do_right, receive_flag, old_index;
     Patch* mypatch;
     //std::vector<Patch*> vecPatches_old;
+    int tid(0), nthds(1);
+    #ifdef _OPENMP
+        tid = omp_get_thread_num();
+        nthds = omp_get_num_threads();
+    #endif
 
     h0 = vecPatches(0)->hindex;
     #pragma omp single
     {
-    vecPatches_old.resize(vecPatches.size());
+        for (unsigned int i=0; i< nthds; i++){
+            patch_to_be_created[i].clear();
+            index_to_be_created[i].clear();
+        }
+        vecPatches_old.resize(vecPatches.size());
     }
 
-    cout << " old_size = " << vecPatches_old.size() << endl;
 
     #pragma omp for schedule(static)
     for (unsigned int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++) {
@@ -77,7 +93,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
         n_moved += params.n_space[0];
     }
 
-    #pragma omp for private(xcall,ycall,mypatch, do_right, receive_flag, old_index) schedule(runtime)
+    #pragma omp for schedule(runtime)
     for (unsigned int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++) {
          mypatch = vecPatches_old[ipatch];
          do_right = 0;
@@ -100,11 +116,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
             delete (mypatch->EMfields);
             delete (mypatch->Interp);
             delete (mypatch->Proj);
-            cout << "end of data destruction" << endl;
         } else {
             //Else, if my left neighbor belongs to my Patch vector, I become my left neighbor.
             //Nothing to do on global indexes or min_locals. The Patch structure remains the same and unmoved.
-            cout << "Moving Left" << endl;
             mypatch->hindex = mypatch->patch_neighborhood_[0+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)];
             mypatch->Pcoordinates[0] -= 1;
 
@@ -164,7 +178,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
             } else {
                 //Create_Patch();
                 cout << "Patch creation n_moved = " << n_moved << " old_index = " << old_index << endl;
-                vecPatches.patches_[ipatch] = new Patch(params, diag_params, laser_params, smpi, old_index, n_moved);
+                patch_to_be_created[tid].push_back(ipatch);
+                index_to_be_created[tid].push_back(old_index);
+                //vecPatches.patches_[ipatch] = new Patch(params, diag_params, laser_params, smpi, old_index, n_moved);
 
             }
         }
@@ -172,7 +188,15 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
         //Ce serait plus simple de mettre hindex, neighbor_ et corner_neighbor_ dans un seul et meme tableau.
 
     }//End loop on Patches
-    cout << "end of operate Simwin" << endl;
+   #pragma omp master
+    {
+        for (unsigned int i=0; i<nthds; i++){
+            for (unsigned int j=0; j< patch_to_be_created[i].size(); j++){
+                vecPatches.patches_[patch_to_be_created[i][j]] = new Patch(params, diag_params, laser_params, smpi, index_to_be_created[i][j], n_moved);
+                cout << "creating " << patch_to_be_created[i][j] << " " << index_to_be_created[i][j] << endl;
+            }
+        }
+    }
 }
 
 

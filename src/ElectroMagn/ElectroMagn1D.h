@@ -25,10 +25,10 @@ public:
     //  --------- PATCH IN PROGRESS ---------
     // --------------------------------------
     void initPoisson(Patch *patch) {};
-    double compute_r() {};
+    double compute_r() {return 0.;};
     void compute_Ap(Patch *patch) {};
     //Access to Ap
-    double compute_pAp() {};
+    double compute_pAp() {return 0.;};
     void update_pand_r(double r_dot_r, double p_dot_Ap) {};
     void update_p(double rnew_dot_rnew, double r_dot_r) {};
     // --------------------------------------

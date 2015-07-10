@@ -59,6 +59,7 @@ class SimWindow {
     double t_move_win_;
     //! Keep track of old patches assignement
     std::vector<Patch*> vecPatches_old;
+    std::vector<std::vector<int> > patch_to_be_created, index_to_be_created;
 
 };
 

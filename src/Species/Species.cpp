@@ -168,7 +168,7 @@ void Species::initSpecies(PicParams& params)
     unsigned int nthds(1);
 //#pragma omp parallel shared(nthds) 
 //    {
-//#ifdef _OMP
+//#ifdef _OPENMP
 //        nthds = omp_get_num_threads();	  
 //#endif
 //    }
@@ -438,7 +438,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     int tid(0);
     double gf = 1.0;
     std::vector<double> nrj_lost_per_thd(1, 0.);
-//#ifdef _OMP
+//#ifdef _OPENMP
 //    tid = omp_get_thread_num();
 //    int nthds = omp_get_num_threads();
 //    nrj_lost_per_thd.resize(nthds, 0.);
