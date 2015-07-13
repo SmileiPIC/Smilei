@@ -79,32 +79,6 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
             }
         }//geometry
         
-        
-/*        // -------------------------------------
-        // Printing out laser related parameters
-        // -------------------------------------
-        if (n_laser==0) // just print "Laser related parameters" once
-            MESSAGE("Laser related parameters");
-        MESSAGE(1, "laser #" << ilaser << ":   (boxSide, a0):   (" << tmpLaser.boxSide
-                << ", " << tmpLaser.a0 <<  ")");
-*/
-        
-/*MG150609        // -----------------------------------------------------------------
-        // normalization (from wavelength-related units to normalized units)
-        // -----------------------------------------------------------------
-        for (unsigned int i=0; i<tmpLaser.profile_time.double_params.size(); i++)
-            tmpLaser.profile_time.double_params[i] *= params.conv_fac;
-        for (unsigned int i=0; i<tmpLaser.profile_transv.double_params.size(); i++)
-            tmpLaser.profile_transv.double_params[i] *= params.conv_fac;
-        
-        if ( (tmpLaser.angle!=0) || (tmpLaser.isFocused) ) {
-            for (unsigned int i=0; i<tmpLaser.focus.size(); i++)
-                tmpLaser.focus[i] *= params.conv_fac;
-        }
-*/
-        //!\todo (MG) Guys put your name or initials so one can understand what's this comment stand for (also use todo rather than warning)
-        //WARNING("FIXME: WE SHOULD RECTIFY FROM HERE ON");
-        
         bool delayExists = ifile.extract("delay",tmpLaser.delay ,"Laser",ilaser);
         
         // -----------------------------------------------------------------
@@ -145,7 +119,6 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
                 }
                 // send a warning if delay is introduced
                 if (tmpLaser.delay!=0)
-                    //*MG150609 WARNING("Introduction of a time-delay: " << tmpLaser.delay/params.conv_fac << " (in input units) on laser " << ilaser);
                     WARNING("Introduction of a time-delay: " << tmpLaser.delay << " (in input units) on laser " << ilaser);
             }
             

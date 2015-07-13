@@ -42,19 +42,6 @@ PicParams::PicParams(InputData &ifile) {
     // Normalisation & units
     // ---------------------
     
-/*MG150609    ifile.extract("sim_units",sim_units);
-    if (sim_units == "normalized") {
-        conv_fac = 1.0;
-    }
-    else if (sim_units == "wavelength") {
-        conv_fac = 2.0*M_PI;
-        WARNING("Wavelength-related units are used for code entries but not for outputs (apart from log file)");
-    }
-    else {
-        ERROR("Simulation units sim_units" << sim_units << " not specified or inexisting");
-    }
- */
-    
     wavelength_SI = 0.;
     ifile.extract("wavelength_SI",wavelength_SI);
     
@@ -87,27 +74,6 @@ PicParams::PicParams(InputData &ifile) {
     
     // TIME & SPACE RESOLUTION/TIME-STEPS
     
-/*MG150609    // definition or res_time & res_space
-    bool defbyRes = ifile.extract("res_time", res_time);
-    ifile.extract("res_space",res_space);
-    if ( (res_space.size()!=0) && (res_space.size()!=nDim_field) ) {
-        ERROR("Dimension of res_space ("<< res_space.size() << ") != " << nDim_field << " for geometry " << geometry);
-    }
-    
-    // definition of time_step & cell_length (if res_time & res_space are not defined)
-    if (!defbyRes) {
-        ifile.extract("timestep", timestep);
-        res_time = 1.0/timestep;
-        ifile.extract("cell_length",cell_length);
-        if (cell_length.size()!=nDim_field) {
-            ERROR("Dimension of cell_length ("<< cell_length.size() << ") != " << nDim_field << " for geometry " << geometry);
-        }
-        res_space.resize(nDim_field);
-        for (unsigned int i=0;i<nDim_field;i++){
-            res_space[i] = 1.0/cell_length[i];
-        }
-    }
-*/
     // reads timestep & cell_length
     ifile.extract("timestep", timestep);
     res_time = 1.0/timestep;
@@ -119,11 +85,6 @@ PicParams::PicParams(InputData &ifile) {
     for (unsigned int i=0;i<nDim_field;i++){
         res_space[i] = 1.0/cell_length[i];
     }
-
-/*MG150609    // check that res_space has the good dimension
-    if (res_space.size()!=nDim_field) {
-        ERROR("Dimension of res_space: "<< res_space.size() << " != " << nDim_field << " for geometry " << geometry);
-    }*/
     
     time_fields_frozen=0.0;
     ifile.extract("time_fields_frozen", time_fields_frozen);
@@ -388,15 +349,9 @@ void PicParams::compute()
     n_time   = (int)(res_time*sim_time);
     
     // simulation time & time-step value
-    timestep = 1.0/res_time;//*MG150609 conv_fac/res_time;
+    timestep = 1.0/res_time;
     sim_time = (double)(n_time) * timestep;
     
-/*MG150609   // time during which Maxwell's eqs. are not solved (cst fields)
-    time_fields_frozen *= conv_fac;
-    
-    // time after which the moving-window is turned on
-    t_move_win *= conv_fac;
- */
     
     
     // grid/cell-related parameters
@@ -408,11 +363,6 @@ void PicParams::compute()
         
         // compute number of cells & normalized lengths
         for (unsigned int i=0; i<nDim_field; i++) {
-            /*MG150609cell_length[i] = conv_fac/res_space[i];
-            sim_length[i] *= conv_fac;
-            n_space[i]     = round(sim_length[i]/cell_length[i]);
-            sim_length[i]  = (double)(n_space[i])*cell_length[i]; // ensure that nspace = sim_length/cell_length
-            cell_volume   *= cell_length[i];*/
             cell_length[i] = 1.0/res_space[i];
             n_space[i]     = round(sim_length[i]/cell_length[i]);
             sim_length[i]  = (double)(n_space[i])*cell_length[i]; // ensure that nspace = sim_length/cell_length

@@ -34,7 +34,6 @@ public:
     
 private:
     int dim;
-//*MG150609    double conv_fac; // taken from PicParams
     
 protected:
     ProfileStructure  profile_param;

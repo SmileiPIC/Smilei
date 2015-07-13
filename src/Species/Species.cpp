@@ -47,16 +47,6 @@ temperatureProfile(3,NULL),
 ndim(params.nDim_particle),
 min_loc(smpi->getDomainLocalMin(0))
 {
-/*MG150609    densityProfile        = new Profile(species_param.dens_profile  , params.geometry, params.conv_fac);
-    
-    velocityProfile[0]    = new Profile(species_param.mvel_x_profile, params.geometry, params.conv_fac);
-    velocityProfile[1]    = new Profile(species_param.mvel_y_profile, params.geometry, params.conv_fac);
-    velocityProfile[2]    = new Profile(species_param.mvel_z_profile, params.geometry, params.conv_fac);
-    
-    temperatureProfile[0] = new Profile(species_param.temp_x_profile, params.geometry, params.conv_fac);
-    temperatureProfile[1] = new Profile(species_param.temp_y_profile, params.geometry, params.conv_fac);
-    temperatureProfile[2] = new Profile(species_param.temp_z_profile, params.geometry, params.conv_fac);*/
-    
     
     densityProfileType = species_param.density_type;
     chargeProfile         = new Profile(species_param.charge_profile, params.geometry);
@@ -887,13 +877,13 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
                         double fl=0;
                         double fr=0;
                         max_jutt_cumul[0]=0.0;
-                        for (unsigned  i=1; i<nE; i++ ) {
+                        for (unsigned int l=1; l<nE; l++ ) {
                             //! \todo{this is just the isotropic case, generalise to non-isotropic (MG)}
-                            fr=(1+i*dE)*sqrt(pow(1.0+i*dE,2)-1.0) * exp(-mu*i*dE);
-                            max_jutt_cumul[i]=max_jutt_cumul[i-1] + 0.5*dE*(fr+fl);
+                            fr=(1.+l*dE)*sqrt(pow(1.0+l*dE,2)-1.0) * exp(-mu*l*dE);
+                            max_jutt_cumul[l]=max_jutt_cumul[l-1] + 0.5*dE*(fr+fl);
                             fl=fr;
                         }
-                        for (unsigned int i=0; i<nE; i++) max_jutt_cumul[i]/=max_jutt_cumul[nE-1];
+                        for (unsigned int l=0; l<nE; l++) max_jutt_cumul[l]/=max_jutt_cumul[nE-1];
                     }
                     
                     temp[0] = temperature[0](i,j,k);

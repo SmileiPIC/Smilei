@@ -33,7 +33,6 @@ class ExtFieldParams {
 public:
     //! we copy this from picparams
     std::string geometry;
-    //*MG150609 double conv_fac;
     
     //! Creator for ExtFieldParams
     ExtFieldParams(PicParams&, InputData &);

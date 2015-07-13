@@ -5,8 +5,7 @@
 using namespace std;
 
 ExtFieldParams::ExtFieldParams(PicParams& params, InputData &ifile) :
-geometry(params.geometry)/*MG150609,
-conv_fac(params.conv_fac)*/
+geometry(params.geometry)
 {
 
     // -----------------

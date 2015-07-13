@@ -166,13 +166,9 @@ public:
     
     //! number of space dimensions for the fields
     unsigned int nDim_field;
-
+    
     //! normalization (used in the input files only)
     std::string sim_units;
-    
-/*MG150609    //! conversion factor (=1 when normalized units, 2\pi when wavelength-related normalisations)
-    double conv_fac;
-*/
     
     /*! \brief Time resolution
      Number of timesteps in \f$ 2\pi/\omega_N \f$ where \f$ \omega_N \f$ is the normalization (plasma or laser) frequency
