@@ -340,23 +340,23 @@ class Smilei(object):
 	
 class Options(object):
 	""" Class to contain matplotlib plotting options """
-	figure = 1
-	xmin   = None
-	xmax   = None
-	ymin   = None
-	ymax   = None
-	vmin   = None
-	vmax   = None
-	figure0 = {}
-	figure1 = {"facecolor":"w"}
-	axes = {}
-	plot = {}
-	image = {"interpolation":"nearest", "aspect":"auto"}
-	colorbar = {}
-	xtick = {"useOffset":False}
-	ytick = {"useOffset":False}
 	
 	def __init__(self, **kwargs):
+		self.figure = 1
+		self.xmin   = None
+		self.xmax   = None
+		self.ymin   = None
+		self.ymax   = None
+		self.vmin   = None
+		self.vmax   = None
+		self.figure0 = {}
+		self.figure1 = {"facecolor":"w"}
+		self.axes = {}
+		self.plot = {}
+		self.image = {"interpolation":"nearest", "aspect":"auto"}
+		self.colorbar = {}
+		self.xtick = {"useOffset":False}
+		self.ytick = {"useOffset":False}
 		self.set(**kwargs)
 	
 	# Method to set optional plotting arguments
@@ -404,12 +404,12 @@ class Options(object):
 # Mother class for all diagnostics
 # -------------------------------------------------------------------
 class Diagnostic(object):
-	valid = False
-	_previousdata = None
 	
 	# Initialize with "results_path" argument being either the `results_path` or
 	# the parent `Smilei` object
 	def __init__(self, results_path=None, *args, **kwargs):
+		self.valid = False
+		self._previousdata = None
 		# if string, try to use it as a results_path
 		if type(results_path) is str:
 			self.Smilei = Smilei(results_path)
