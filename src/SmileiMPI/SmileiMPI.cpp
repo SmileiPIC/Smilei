@@ -663,10 +663,10 @@ void SmileiMPI::send(std::vector<int> vec, int to, int hindex)
 
 }
 
-void SmileiMPI::recv(std::vector<int> *vec, int from, int hindex)
+void SmileiMPI::recv(std::vector<int> *vec, int from, int tag)
 {
     MPI_Status status;
-    MPI_Recv( &((*vec)[0]), vec->size(), MPI_INT, from, hindex, MPI_COMM_WORLD, &status );
+    MPI_Recv( &((*vec)[0]), vec->size(), MPI_INT, from, tag, MPI_COMM_WORLD, &status );
 
 }
 

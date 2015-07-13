@@ -26,7 +26,6 @@ SimWindow::SimWindow(PicParams& params)
         nthds = omp_get_max_threads();
     #endif
     patch_to_be_created.resize(nthds);
-    index_to_be_created.resize(nthds);
 }
 
 SimWindow::~SimWindow()
@@ -63,23 +62,30 @@ SimWindow::~SimWindow()
 
 void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& params, DiagParams &diag_params, LaserParams& laser_params)
 {
-    int xcall, ycall, h0, do_right, receive_flag, old_index;
+    int xcall, ycall, h0;
     Patch* mypatch;
-    //std::vector<Patch*> vecPatches_old;
-    int tid(0), nthds(1);
+    int tid(0), nthds(1), tag, Rneighbor, Lneighbor;
     #ifdef _OPENMP
         tid = omp_get_thread_num();
         nthds = omp_get_num_threads();
     #endif
 
+    //Initialization for inter-process communications
+
     h0 = vecPatches(0)->hindex;
+    int nSpecies( vecPatches(0)->vecSpecies.size() );
+    int nDim_Parts( vecPatches(0)->vecSpecies[0]->particles->dimension() );
+    vector<int> nbrOfPartsSend(nSpecies,0);
+    vector<int> nbrOfPartsRecv(nSpecies,0);
+    std::vector<Patch*> send_patches_, recv_patches_;
+
     #pragma omp single
     {
         for (unsigned int i=0; i< nthds; i++){
             patch_to_be_created[i].clear();
-            index_to_be_created[i].clear();
         }
         vecPatches_old.resize(vecPatches.size());
+        recv_patches_.resize(0);
     }
 
 
@@ -96,29 +102,38 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++) {
          mypatch = vecPatches_old[ipatch];
-         do_right = 0;
-         receive_flag = 0;
+
         //If my right neighbor does not belong to me ...
-        if (mypatch->MPI_neighborhood_[2+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)] != mypatch->MPI_neighborhood_[1+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)]){
-            do_right = 1;
-            old_index = mypatch->hindex;
-            if (mypatch->MPI_neighborhood_[2+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)] != MPI_PROC_NULL) receive_flag = 1;
-        }
+        if (mypatch->MPI_neighborhood_[2+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)] != mypatch->MPI_neighborhood_[1+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)])  patch_to_be_created[tid].push_back(ipatch);// Store it as a patch to be created later.
+
         //If my left neighbor does not belong to me ...
         if (mypatch->MPI_neighborhood_[3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)] != mypatch->MPI_neighborhood_[1+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)]) {
             //... I might have to MPI send myself to the left...
-            if (mypatch->MPI_neighborhood_[3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)] != MPI_PROC_NULL)
-                cout << "Sending Patch" << endl;
-                //Mpi_Send_Patch(MpiLNeighbour);
-            //... and, for sure, destroy my data.
+            if (mypatch->MPI_neighborhood_[3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)] != MPI_PROC_NULL){
+                send_patches_.push_back(mypatch); // Stores pointers to patches to be sent in send_patches_
+                //Tag is the index of the patch after reception (left neighbour index because it is sent to the left).
+                tag = mypatch->patch_neighborhood_[3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)];
+                for (int ispec=0 ; ispec<nSpecies ; ispec++) {
+	            nbrOfPartsSend[ispec] = mypatch->vecSpecies[ispec]->getNbrOfParticles();
+	        }
+                //Left neighbour to which the patch should be sent to.
+                Lneighbor = mypatch->MPI_neighborhood_[3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)];
+                //Sends the number of particles first
+	        smpi->send( nbrOfPartsSend, Lneighbor, tag );
+                //Then sends the patch
+	        smpi->send( mypatch, Lneighbor, tag );
+            } else {
+            //Erase my data right away. Data of sent patches will be erased later (after the receive has been completed)
             for (unsigned int ispec=0 ; ispec<mypatch->vecSpecies.size(); ispec++) delete (mypatch->vecSpecies[ispec]);
 	    mypatch->vecSpecies.clear();
             delete (mypatch->EMfields);
             delete (mypatch->Interp);
             delete (mypatch->Proj);
-        } else {
-            //Else, if my left neighbor belongs to my Patch vector, I become my left neighbor.
+            }
+        } else { //In case my left neighbor does belong to me:
+            // I become my left neighbor.
             //Nothing to do on global indexes or min_locals. The Patch structure remains the same and unmoved.
+            //Update hindex and coordinates
             mypatch->hindex = mypatch->patch_neighborhood_[0+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)];
             mypatch->Pcoordinates[0] -= 1;
 
@@ -169,33 +184,43 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
             vecPatches.patches_[mypatch->hindex - h0 ] = mypatch ; 
              
         }
-        //Warning, from here on the neigbors might have been updated !!
-        if (do_right) {
-            //...je reçois ou je cré.
-            if (receive_flag){
-                //Mpi_Receive_Patch(MpiRNeighbour);
-                cout << "Receiving Patch" << endl;
-            } else {
-                //Create_Patch();
-                cout << "Patch creation n_moved = " << n_moved << " old_index = " << old_index << endl;
-                patch_to_be_created[tid].push_back(ipatch);
-                index_to_be_created[tid].push_back(old_index);
-                //vecPatches.patches_[ipatch] = new Patch(params, diag_params, laser_params, smpi, old_index, n_moved);
-
-            }
-        }
-        //Les fonctions SendPatch ou ReceivePatch doivent transformer le Patch comme ci dessus.
-        //Ce serait plus simple de mettre hindex, neighbor_ et corner_neighbor_ dans un seul et meme tableau.
 
     }//End loop on Patches
-   #pragma omp master
+
+    //Creation of new Patches if necessary
+    //The "new" operator must be included in a single area otherwise conflicts arise for unknown reasons.
+    #pragma omp single
     {
-        for (unsigned int i=0; i<nthds; i++){
-            for (unsigned int j=0; j< patch_to_be_created[i].size(); j++){
-                vecPatches.patches_[patch_to_be_created[i][j]] = new Patch(params, diag_params, laser_params, smpi, index_to_be_created[i][j], n_moved);
-                cout << "creating " << patch_to_be_created[i][j] << " " << index_to_be_created[i][j] << endl;
-            }
-        }
+         for (unsigned int i=0; i<nthds; i++){
+             for (unsigned int j=0; j< patch_to_be_created[i].size(); j++){
+                 vecPatches.patches_[patch_to_be_created[i][j]] = new Patch(params, diag_params, laser_params, smpi, h0 + patch_to_be_created[i][j], n_moved);
+                 if (i>0) patch_to_be_created[0].push_back(patch_to_be_created[i][j]);
+             }
+         }
+    } // This barrier is important.
+
+    //Initialization of new Patches if necessary.
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch = 0 ; ipatch < patch_to_be_created[0].size() ; ipatch++) {
+         mypatch = vecPatches(patch_to_be_created[0][ipatch]);
+         Rneighbor = mypatch->MPI_neighborhood_[2+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)];
+         //If I receive something from my right neighbour:
+         if (Rneighbor != MPI_PROC_NULL){
+             smpi->recv( &nbrOfPartsRecv, Rneighbor, mypatch->Hindex() );
+	     for (int ispec=0 ; ispec<nSpecies ; ispec++)
+	         mypatch->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv[ispec], nDim_Parts );
+             smpi->recv( mypatch, Rneighbor, mypatch->Hindex() );
+         }
+         // And else, nothing to do.
+    } 
+
+    //Each thread erases data of sent patches
+    for (unsigned int j=0; j< send_patches_.size(); j++){
+        for (unsigned int ispec=0 ; ispec<send_patches_[j]->vecSpecies.size(); ispec++) delete (send_patches_[j]->vecSpecies[ispec]);
+        send_patches_[j]->vecSpecies.clear();
+        delete (send_patches_[j]->EMfields);
+        delete (send_patches_[j]->Interp);
+        delete (send_patches_[j]->Proj);
     }
 }
 
