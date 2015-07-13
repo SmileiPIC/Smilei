@@ -8,7 +8,7 @@ class SmileiComponentType(type):
     
     # Constructor of classes
     def __init__(self, name, bases, attrs):
-        self.list = []
+        self._list = []
         self.verify = True
         self.current = 0
         # Run standard metaclass init
@@ -18,32 +18,32 @@ class SmileiComponentType(type):
     def __iter__(self):
         return self
     def next(self):
-        if self.current >= len(self.list):
+        if self.current >= len(self._list):
             raise StopIteration
         self.current += 1
-        return self.list[self.current - 1]
+        return self._list[self.current - 1]
     
     # Function to return one given instance, for example DiagParticles[0]
     # Special case: species can also be indexed by their name: Species["ion1"]
     def __getitem__(self, key):
         if self.__name__ == "Species" and type(key) is str:
-            for obj in self.list:
+            for obj in self._list:
                 if obj.species_type == key:
                     return obj
         else:
-            return self.list[key]
+            return self._list[key]
     
     # Function to return the number of instances, for example len(Species)
     def __len__(self):
-        return len(self.list)
+        return len(self._list)
     
     # Function to display the content of the component
     def __repr__(self):
-        if len(self.list)==0:
+        if len(self._list)==0:
             return "<Empty list of "+self.__name__+">"
         else:
             l = []
-            for obj in self.list: l.append(str(obj))
+            for obj in self._list: l.append(str(obj))
             return "["+", ".join(l)+"]"
 
 
@@ -55,11 +55,11 @@ class SmileiComponent(object):
     def __init__(self, **kwargs):
         if kwargs is not None: # add all kwargs as internal class variables
             for key, value in kwargs.iteritems():
-                if key=="list":
-                    print "Python warning: in "+type(self).__name__+": cannot have argument named 'list'. Discarding."
+                if key=="_list":
+                    print "Python warning: in "+type(self).__name__+": cannot have argument named '_list'. Discarding."
                 else:
                     setattr(self, key, value)
-        type(self).list.append(self) # add the current object to the static list "list"
+        type(self)._list.append(self) # add the current object to the static list "list"
 
 
 class Species(SmileiComponent):
@@ -71,9 +71,8 @@ class Species(SmileiComponent):
     c_part_max = 1.0
     charge_density = None
     nb_density = None
-    density = None
-    mean_velocity = None
-    temperature = None
+    mean_velocity = [0.]
+    temperature = [1e-10]
     dynamics_type = "norm"
     time_frozen = 0.0
     radiating = False
@@ -83,23 +82,25 @@ class Species(SmileiComponent):
     bc_part_type_south = None
     ionization_model = "none"
     atomic_number = None
-    vacuum_length = []
-    for prefix in ["dens","mvel_x","mvel_y","mvel_z","temp_x","temp_y","temp_z"]:
-        exec prefix+"_profile = None"
-        for suffix in ["length_x","length_y","length_z","dbl_params","int_params"]:
-            exec prefix+"_"+suffix+" = []"
+    isTest = False
+
 
 class Laser(SmileiComponent):
     """Laser parameters"""
     boxSide = None
     a0 = None
     omega0 = 1.
+    delta = 1.
     tchirp = 0.
-    focus = False
+    focus = []
     angle = 0.
+    delay = 0.
     time_profile = None
+    int_params = []
+    double_params = []
     transv_profile = None
-    delay = None
+    int_params_transv = []
+    double_params_transv = []
 
 class Collisions(SmileiComponent):
     """Collisions parameters"""
@@ -142,8 +143,7 @@ class DiagScalar(SmileiComponent):
 # external fields
 class ExtField(SmileiComponent):
     """External Field"""
-    field = None
-    magnitude = None
+    field = []
     profile = None
 
 # default simulation values
@@ -164,14 +164,15 @@ timestep = None
 cell_length = []
 sim_time = None
 sim_length = []
-bc_em_type_long = None
-bc_em_type_trans = None
+bc_em_type_x = []
+bc_em_type_y = []
+time_fields_frozen = 0.0
 nspace_win_x = 0
 t_move_win = 0.0
 vx_win = 1.
 clrw = 1
 every = 0
-number_of_procs = []
+number_of_procs = [None]
 print_every = None
 fieldDump_every = 0
 fieldsToDump = []

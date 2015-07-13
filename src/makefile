@@ -49,7 +49,7 @@ scalasca:
 
 
 PYSCRIPTS := $(shell find Python -name \*.py)
-PYHEADERS := $(PYSCRIPTS:.py=.h)
+PYHEADERS := $(PYSCRIPTS:.py=.pyh)
 
 #collect all cpp files
 SRCS := $(shell find . -name \*.cpp)
@@ -90,8 +90,8 @@ endif
 
 # this generates a .h file containing a char[] with the python script in binary then
 #you can just include this file to get the contents
-%.h: %.py
-	@ echo "Creating binary char for $<"
+%.pyh: %.py
+	@ echo "Creating binary char for $< : $@"
 	@ xxd -i $< > $@
 
 %.d: %.cpp $(PYHEADERS) 

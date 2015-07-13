@@ -203,7 +203,7 @@ class Smilei(object):
 		class Namelist: pass # empty class to store the namelist variables
 		self.namelist = Namelist() # create new empty object
 		for key, value in namespace.iteritems(): # transfer all variables to this object
-			if key[0:2]=="__": continue # skip builtins
+			if key[0]=="_": continue # skip builtins
 			setattr(self.namelist, key, value)
 		
 		self.valid = True
@@ -442,12 +442,6 @@ class Diagnostic(object):
 		return ""
 	
 	# Various methods to extract stuff from the input file
-	def _read_sim_units(self):
-		try:
-			return self.namelist.sim_units
-		except:
-			print "Could not extract 'sim_units' from the input file"
-			raise
 	def _read_ndim(self):
 		try:
 			dim = self.namelist.dim
@@ -459,7 +453,7 @@ class Diagnostic(object):
 			print "Could not understand simulation dimension 'dim="+dim+"' from the input file"
 			raise
 		return ndim
-	def _read_ncels_cell_length(self, ndim, sim_units):
+	def _read_ncels_cell_length(self, ndim):
 		try:
 			sim_length = self._np.double( self.namelist.sim_length )
 			if sim_length.size==0: raise
@@ -499,9 +493,8 @@ class Diagnostic(object):
 		sim_length  = self._np.array(sim_length ,ndmin=1)
 		cell_length = self._np.array(cell_length,ndmin=1)
 		ncels = sim_length/cell_length
-		if sim_units == "wavelength": cell_length *= 2.*self._np.pi
 		return ncels, cell_length
-	def _read_timestep(self,sim_units):
+	def _read_timestep(self):
 		try:
 			timestep = self._np.double(self.namelist.timestep)
 			if not self._np.isfinite(timestep): raise 
@@ -513,7 +506,6 @@ class Diagnostic(object):
 			except:
 				print "Could not extract 'timestep' or 'res_time' from the input file"
 				raise
-		if sim_units == "wavelength": timestep *= 2.*self._np.pi
 		return timestep
 	def _read_wavelength_SI(self):
 		try:
@@ -635,10 +627,12 @@ class Diagnostic(object):
 			if len(self.options.xtick)>0: ax.ticklabel_format(axis="x",**self.options.xtick)
 		except:
 			print "Cannot format x ticks (typically happens with log-scale)"
+			self.xtickkwargs = []
 		try:
 			if len(self.options.ytick)>0: ax.ticklabel_format(axis="y",**self.options.ytick)
 		except:
 			print "Cannot format y ticks (typically happens with log-scale)"
+			self.xtickkwargs = []
 		return im
 	
 	# Special case: 2D plot
@@ -697,10 +691,9 @@ class ParticleDiagnostic(Diagnostic):
 		# Get info from the input file and prepare units
 		try:
 			ndim               = self._read_ndim()
-			sim_units          = self._read_sim_units()
 			
-			ncels, cell_length = self._read_ncels_cell_length(ndim, sim_units)
-			self.timestep           = self._read_timestep(sim_units)
+			ncels, cell_length = self._read_ncels_cell_length(ndim)
+			self.timestep      = self._read_timestep()
 			cell_size = {"x":cell_length[0]}
 			if ndim>1: cell_size.update({"y":cell_length[1]})
 			if ndim>2: cell_size.update({"z":cell_length[2]})
@@ -1129,7 +1122,7 @@ class ParticleDiagnostic(Diagnostic):
 					A[d] = self._np.sum(A[d], axis=iaxis, keepdims=True) # sum over the slice
 			A[d] = self._np.squeeze(A[d]) # remove sliced axes
 			# Divide by the bins size
-			A[d] /= self._bsize
+			A[d] /= self._np.squeeze(self._bsize)
 		# Calculate operation
 		data_operation = self.operation
 		for d in reversed(self._diags):
@@ -1169,9 +1162,8 @@ class Field(Diagnostic):
 		# Get info from the input file and prepare units
 		try:
 			ndim               = self._read_ndim()
-			sim_units          = self._read_sim_units()
-			ncels, cell_length = self._read_ncels_cell_length(ndim, sim_units)
-			self.timestep      = self._read_timestep(sim_units)
+			ncels, cell_length = self._read_ncels_cell_length(ndim)
+			self.timestep      = self._read_timestep()
 		except:
 			return None
 		
@@ -1442,22 +1434,19 @@ class Scalar(Diagnostic):
 		
 		# Get info from the input file and prepare units
 		try:
-			sim_units          = self._read_sim_units()
-			self.timestep      = self._read_timestep(sim_units)
-			self._timestepbis   = self._read_timestep("")
+			self.timestep      = self._read_timestep()
 		except:
 			return None
 		
 		if units == "nice":
 			try   : wavelength_SI = self._read_wavelength_SI()
 			except: return None
-			self._coeff_time = self._timestepbis * wavelength_SI/3.e8/(2.*self._np.pi) # in seconds
+			self._coeff_time = self.timestep * wavelength_SI/3.e8/(2.*self.np.pi) # in seconds
 			self._time_units = " s"
 		elif units == "code":
-			self._coeff_time = self._timestepbis
+			self._coeff_time  = self.timestep
 			self._time_units = " $1/\omega$"
-		if sim_units == "wavelength": self._coeff_time *= 2. * self._np.pi
-		
+	
 		# Get available scalars
 		scalars = self.getScalars()
 		
@@ -1490,7 +1479,7 @@ class Scalar(Diagnostic):
 			line = line.strip()
 			if line[0]=="#": continue
 			line = line.split()
-			self.times .append( int( self._np.round(float(line[0]) / float(self._timestepbis)) ) )
+			self.times .append( int( self._np.round(float(line[0]) / float(self.timestep)) ) )
 			self._values.append( float(line[self._scalarn+1]) )
 		self.times  = self._np.array(self.times )
 		self._values = self._np.array(self._values)
@@ -1634,9 +1623,8 @@ class Probe(Diagnostic):
 		# Get info from the input file and prepare units
 		try:
 			ndim               = self._read_ndim()
-			sim_units          = self._read_sim_units()
-			ncels, cell_length = self._read_ncels_cell_length(ndim, sim_units)
-			self.timestep      = self._read_timestep(sim_units)
+			ncels, cell_length = self._read_ncels_cell_length(ndim)
+			self.timestep      = self._read_timestep()
 		except:
 			return None
 		

@@ -1,3 +1,8 @@
+div.image img[src="smileiLogo.png"]{ 
+    width:20%; 
+}
+
+
 /* The standard CSS for doxygen 1.8.5 */
 
 body, table, div, p, dl {

@@ -36,9 +36,7 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
         ifile.extract("tchirp",tmpLaser.tchirp,"Laser",ilaser);
         
         // laser ellipticity/polarization parameter
-        //\fixme Delta parameter not used
-        tmpLaser.delta = 0.;
-        //ifile.extract("delta",tmpLaser.delta,"Laser",ilaser);
+        ifile.extract("delta",tmpLaser.delta,"Laser",ilaser);
         
         // position of the laser focus
         tmpLaser.isFocused = ifile.extract("focus",tmpLaser.focus,"Laser",ilaser);
@@ -64,37 +62,25 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
         
         
         // laser transverse-profile & associated parameters
-        ifile.extract("transv_profile",tmpLaser.profile_transv.profile ,"Laser",ilaser);
-        if (tmpLaser.profile_transv.profile.empty()) {
-            PyObject *mypy = ifile.extract_py("transv_profile","Laser",ilaser);
-            if (mypy && PyCallable_Check(mypy)) {
-                tmpLaser.profile_transv.py_profile=mypy;
-                tmpLaser.profile_transv.profile="python";
+        if (params.geometry!="1d3v") {  //transv_profile is not define in 1d3v
+            
+            ifile.extract("transv_profile",tmpLaser.profile_transv.profile ,"Laser",ilaser);
+            if (tmpLaser.profile_transv.profile.empty()) {
+                PyObject *mypy = ifile.extract_py("transv_profile","Laser",ilaser);
+                if (mypy && PyCallable_Check(mypy)) {
+                    tmpLaser.profile_transv.py_profile=mypy;
+                    tmpLaser.profile_transv.profile="python";
+                } else {
+                    ERROR("Laser: transv_profile not defined or not existing");
+                }
             } else {
-                ERROR("Laser: transv_profile parameter not understood");
+                ifile.extract("int_params_transv",tmpLaser.profile_transv.int_params ,"Laser",ilaser);
+                ifile.extract("double_params_transv",tmpLaser.profile_transv.double_params ,"Laser",ilaser);
             }
-        } else {
-            ifile.extract("int_params_transv",tmpLaser.profile_transv.int_params ,"Laser",ilaser);
-            ifile.extract("double_params_transv",tmpLaser.profile_transv.double_params ,"Laser",ilaser);
-        }
-        
+        }//geometry
         
         bool delayExists = ifile.extract("delay",tmpLaser.delay ,"Laser",ilaser);
         
-        // -----------------------------------------------------------------
-        // normalization (from wavelength-related units to normalized units)
-        // -----------------------------------------------------------------
-        for (unsigned int i=0; i<tmpLaser.profile_time.double_params.size(); i++)
-            tmpLaser.profile_time.double_params[i] *= params.conv_fac;
-        for (unsigned int i=0; i<tmpLaser.profile_transv.double_params.size(); i++)
-            tmpLaser.profile_transv.double_params[i] *= params.conv_fac;
-        
-        if ( (tmpLaser.angle!=0) || (tmpLaser.isFocused) ) {
-            for (unsigned int i=0; i<tmpLaser.focus.size(); i++)
-                tmpLaser.focus[i] *= params.conv_fac;
-        }
-
-        WARNING("FIXME: WE SHOULD RECTIFY FROM HERE ON");
         // -----------------------------------------------------------------
         // tests on the laser parameters (when arbitrary focus or incidence)
         // -----------------------------------------------------------------
@@ -107,6 +93,7 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
                 tmpLaser.profile_transv.int_params.resize(1);
                 tmpLaser.profile_transv.int_params[0] = 3;
             }
+            
             
             if ( !delayExists ) {
                 tmpLaser.profile_transv.double_params.resize(1);
@@ -122,7 +109,8 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
                 // computing the entering point of the laser & delay
                 if (theta<0) {
                     double ylas_max = ylas + waist*sqrt(1.0+pow(tan(theta),2));
-                    if (ylas_max > params.sim_length[1]) WARNING("Possible problem (simulation box size) with laser " << ilaser);
+                    if (ylas_max > params.sim_length[1])
+                        WARNING("Possible problem (simulation box size) with laser " << ilaser);
                     tmpLaser.delay = -ylas_max * sin(theta);
                 } else {
                     double ylas_min = ylas - waist*sqrt(1.0+pow(tan(theta),2));
@@ -131,7 +119,7 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
                 }
                 // send a warning if delay is introduced
                 if (tmpLaser.delay!=0)
-                    WARNING("Introduction of a time-delay: " << tmpLaser.delay/params.conv_fac << " (in input units) on laser " << ilaser);
+                    WARNING("Introduction of a time-delay: " << tmpLaser.delay << " (in input units) on laser " << ilaser);
             }
             
             if ( ((tmpLaser.angle!=0) || (tmpLaser.isFocused)) && (tmpLaser.profile_transv.profile!="focused") ) {

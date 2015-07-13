@@ -7,7 +7,7 @@ from scipy.special import erf as erf
 
 v0  = { "conductivity1":[-0.00033 ,-0.000185,-0.00011 ],
         "conductivity2":[-0.000088,-0.000108,-0.000135],
-        "conductivity3":[-0.00027 ,-0.0007            ]}
+        "conductivity3":[-0.00023  ,-0.0007            ]}
 
 dv0 = { "conductivity1":[0.000018,0.       , 0        ],
         "conductivity2":[-0.00001,-0.000015,-0.00002  ],
@@ -24,12 +24,12 @@ for path in ["conductivity1","conductivity2","conductivity3"]:
 	sim = Smilei(path)
 
 	ncases = 0
-	while sim.ParticleDiagnostic(0).getInfo(ncases):
+	while sim.namelist.DiagParticles[ncases].output == "current_density_x":
 		ncases += 1
 	if ncases == 0: continue
 
 	coulomb_log          = np.double(sim.namelist.Collisions[0].coulomb_log)
-	dt                   = np.double(sim.namelist.timestep)
+	dt                   = np.double(sim.namelist.timestep)/(2*np.pi)
 	
 	times = sim.ParticleDiagnostic(diagNumber=0).getAvailableTimesteps()
 	
@@ -39,17 +39,10 @@ for path in ["conductivity1","conductivity2","conductivity3"]:
 	#fig = plt.figure(1)
 	if fig: fig.clf()
 	if fig: ax = fig.add_subplot(1,1,1)
-	for i,t in enumerate(times):
-		for k in range(ncases):
-			electrons = sim.ParticleDiagnostic(k, timesteps=t).get()
-			vx = electrons["vx"]
-			A = electrons["data"][0]
-			vx_mean[k][i] = (A*vx).sum() / A.sum()
-
-		if fig:
-			ax.cla()
-			ax.plot(vx,A,'b')
-			fig.canvas.draw()
+	for k in range(ncases):
+		evx_density = -np.array(sim.ParticleDiagnostic(k).getData())
+		edensity = np.array(sim.ParticleDiagnostic(k+ncases).getData())
+		vx_mean[k,:] = evx_density/edensity
 	
 	
 	times *= 3.33*dt # fs
@@ -62,12 +55,12 @@ for path in ["conductivity1","conductivity2","conductivity3"]:
 	
 	
 	for k in range(ncases):
-		ax.plot(times, vx_mean[k], style[path], label='electrons $v_x$  #' + str(k))
+		ax.plot(times, vx_mean[k,:], style[path], label='electrons $v_x$  #' + str(k))
 		ax.plot(times, v0[path][k]+times*dv0[path][k], "--"+style[path])
 		
 		velocity.append(v0[path][k])
 		temperature.append( np.double(sim.namelist.Species["electron"+str(k+1)].temperature))
-		density    .append( np.double(sim.namelist.Species["electron"+str(k+1)].charge_density))
+		density    .append( np.double(sim.namelist.Species["electron"+str(k+1)].charge_density(20*(2*np.pi))))
 	
 	ax.set_xlabel('time in fs')
 	ax.set_ylabel('$v_x / c$')

@@ -5,7 +5,7 @@
 import gc 
 gc.collect()
 
-def smilei_check():
+def _smilei_check():
     """Do checks over the script"""
     
     # Verify classes were not overriden
@@ -29,17 +29,17 @@ def smilei_check():
     
 # this function will be called after initialising the simulation, just before entering the time loop
 # if it returns false, the code will call a Py_Finalize();
-def keep_python_running():
+def _keep_python_running():
     for las in Laser:
         for prof in (las.time_profile, las.transv_profile):
             if callable(prof): return True
     return False
 
 # Prevent creating new components (by mistake)
-def noNewComponents(cls, *args, **kwargs):
+def _noNewComponents(cls, *args, **kwargs):
     print "Please do not create a new "+cls.__name__
     return None
-SmileiComponent.__new__ = staticmethod(noNewComponents)
+SmileiComponent.__new__ = staticmethod(_noNewComponents)
 
 
 

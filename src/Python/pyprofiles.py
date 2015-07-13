@@ -1,11 +1,11 @@
 # Some predefined profiles (see doc)
 
-def constant(value=1., xvacuum=0., yvacuum=0.):
+def constant(value, xvacuum=0., yvacuum=0.):
     global dim, sim_length
     if dim == "1d3v": return lambda x: value if x>=xvacuum else 0.
     if dim == "2d3v": return lambda x,y: value if (x>=xvacuum and y>=yvacuum) else 0.
 
-def trapezoidal(max=1.,
+def trapezoidal(max,
                 xvacuum=0., xplateau=None, xslope1=0., xslope2=0.,
                 yvacuum=0., yplateau=None, yslope1=0., yslope2=0. ):
     global dim, sim_length
@@ -38,7 +38,7 @@ def trapezoidal(max=1.,
     if dim == "1d3v": return fx
     if dim == "2d3v": return lambda x,y: fx(x)*fy(y)
 
-def gaussian(max=1.,
+def gaussian(max,
              xvacuum=0., xlength=None, xfwhm=None, xcenter=None, xorder=2,
              yvacuum=0., ylength=None, yfwhm=None, ycenter=None, yorder=2 ):
     import math
@@ -93,7 +93,7 @@ def polygonal(xpoints=[], xvalues=[]):
         else: return 0.
     return f
 
-def cosine(base=1., amplitude=1.,
+def cosine(base, amplitude=1.,
            xvacuum=0., xlength=None, phi=0., xnumber=1):
     import math
     global sim_length

@@ -134,6 +134,7 @@ isEastern(smpi->isEastern())
     for (unsigned int i=0 ; i<3 ; i++)
         for (unsigned int isDual=0 ; isDual<2 ; isDual++)
             istart[i][isDual] = 0;
+    
     for (unsigned int i=0 ; i<nDim_field ; i++) {
         for (unsigned int isDual=0 ; isDual<2 ; isDual++) {
             istart[i][isDual] = oversize[i];
@@ -603,7 +604,12 @@ void ElectroMagn1D::computeTotalRhoJ()
     }//END loop on species ispec
 }
 
+// --------------------------------------------------------------------------
+// Compute Poynting (return the electromagnetic energy injected at the border
+// --------------------------------------------------------------------------
 void ElectroMagn1D::computePoynting() {
+    
+    // Western border (Energy injected = +Poynting)
     if (isWestern) {
         unsigned int iEy=istart[0][Ey_->isDual(0)];
         unsigned int iBz=istart[0][Bz_m->isDual(0)];
@@ -613,7 +619,9 @@ void ElectroMagn1D::computePoynting() {
         poynting_inst[0][0]=0.5*timestep*((*Ey_)(iEy) * ((*Bz_m)(iBz) + (*Bz_m)(iBz+1)) -
                                           (*Ez_)(iEz) * ((*By_m)(iBy) + (*By_m)(iBy+1)));
         poynting[0][0] += poynting_inst[0][0];
-    } 
+    }
+    
+    // Eastern border (Energy injected = -Poynting)
     if (isEastern) {
         unsigned int iEy=istart[0][Ey_->isDual(0)]  + bufsize[0][Ey_->isDual(0)]-1;
         unsigned int iBz=istart[0][Bz_m->isDual(0)] + bufsize[0][Bz_m->isDual(0)]-1;
@@ -639,8 +647,7 @@ void ElectroMagn1D::applyExternalField(Field* my_field,  Profile *profile, Smile
          (*field1D)(i) = (*field1D)(i) + profile->valueAt(x);
     }
     
-    emBoundCond[0]->save_fields_BC1D(my_field);
-
+    if(emBoundCond[0]) emBoundCond[0]->save_fields_BC1D(my_field);
 }
 
 

@@ -33,7 +33,6 @@ Temperature along x (longitudinal) is not equal to the others.
 Blue line : longitudinal temperature
 Red line : trnasverse temperature
 Theory curves (black lines) from the NRL formulary
-/!\ WARNING /!\ temporary modification needed in Species.cpp
 
 Maxwellianization
 -----------------
@@ -43,7 +42,6 @@ Ty = Tz = 0
 Distribution along Px is initially a boxcar distribution
 Blue lines : Vx distributions for different times
 Red line : gaussian
-/!\ WARNING /!\ temporary modification needed in Species.cpp
 
 Stopping power
 --------------
@@ -62,6 +60,5 @@ E-field of 0.001 is applied and forced constant.
 Limit velocity is measured => conductivity deducted.
 Black line is conductivity from code PARIS (from Lee & More, PoF (1984)).
 Black dashed line is conductivity from related formula (Perez, PoP (2012)).
-/!\ WARNING /!\ temporary modification needed in Smilei.cpp
 
 

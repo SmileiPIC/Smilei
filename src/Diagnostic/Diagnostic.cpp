@@ -117,7 +117,6 @@ void Diagnostic::initScalars(PicParams& params, InputData &ifile, SmileiMPI *smp
     //open file scalars.txt
     scalars.openFile(smpi);
     
-    MESSAGE(1,"Initilizing scalars");
     scalars.every=0;
     bool ok=ifile.extract("every",scalars.every,"DiagScalar");
     if (!ok) scalars.every=params.global_every;
@@ -130,13 +129,13 @@ void Diagnostic::initScalars(PicParams& params, InputData &ifile, SmileiMPI *smp
         scalars.tmax = params.sim_time;
     }
     else {
-        scalars.tmin = scalar_time_range[0]*params.conv_fac;
-        scalars.tmax = scalar_time_range[1]*params.conv_fac;
+        scalars.tmin = scalar_time_range[0];
+        scalars.tmax = scalar_time_range[1];
     }
     
     scalars.precision=10;
     ifile.extract("precision",scalars.precision,"DiagScalar");
-    ifile.extract("vars",scalar_vars,"DiagScalar");
+    ifile.extract("vars",scalars.vars,"DiagScalar");
     
     // copy from params remaining stuff
     scalars.res_time=params.res_time;
@@ -145,12 +144,10 @@ void Diagnostic::initScalars(PicParams& params, InputData &ifile, SmileiMPI *smp
 }
 
 void Diagnostic::initProbes(PicParams& params, InputData &ifile, SmileiMPI *smpi) {
-    
     bool ok;
     
     // loop all "diagnostic probe" groups in the input file
     unsigned  numProbes=ifile.nComponents("DiagProbe");
-    MESSAGE(1,"Initializing Probes (" << numProbes << ")");
     for (unsigned int n_probe = 0; n_probe < numProbes; n_probe++) {
         
         if (n_probe==0) {
@@ -189,8 +186,8 @@ void Diagnostic::initProbes(PicParams& params, InputData &ifile, SmileiMPI *smpi
             tmin = 0.;
             tmax = params.sim_time;
         } else {
-            tmin = time_range[0]*params.conv_fac;
-            tmax = time_range[1]*params.conv_fac;
+            tmin = time_range[0];
+            tmax = time_range[1];
         }
         probes.tmin.push_back(tmin);
         probes.tmax.push_back(tmax);
@@ -223,23 +220,15 @@ void Diagnostic::initProbes(PicParams& params, InputData &ifile, SmileiMPI *smpi
         vector< vector<double> > allPos;
         vector<double> pos;
         ifile.extract("pos",pos,"DiagProbe",n_probe);
-        for (unsigned int i=0; i<pos.size(); i++)
-            pos[i] *= params.conv_fac;
         if (pos.size()>0) allPos.push_back(pos);
         
         ifile.extract("pos_first",pos,"DiagProbe",n_probe);
-        for (unsigned int i=0; i<pos.size(); i++)
-            pos[i] *= params.conv_fac;
         if (pos.size()>0) allPos.push_back(pos);
         
         ifile.extract("pos_second",pos,"DiagProbe",n_probe);
-        for (unsigned int i=0; i<pos.size(); i++)
-            pos[i] *= params.conv_fac;
         if (pos.size()>0) allPos.push_back(pos);
         
         ifile.extract("pos_third",pos,"DiagProbe",n_probe);
-        for (unsigned int i=0; i<pos.size(); i++)
-            pos[i] *= params.conv_fac;
         if (pos.size()>0) allPos.push_back(pos);
         
         
@@ -354,7 +343,6 @@ void Diagnostic::initPhases(PicParams& params, InputData &ifile, SmileiMPI *smpi
     bool ok;
     
     unsigned int numPhases=ifile.nComponents("DiagPhase");
-    MESSAGE(1,"Initializing PhaseSpaces (" << numPhases << ")");
     for (unsigned int n_phase = 0; n_phase < numPhases; n_phase++) {
         
         phaseStructure my_phase;
@@ -387,8 +375,8 @@ void Diagnostic::initPhases(PicParams& params, InputData &ifile, SmileiMPI *smpi
             my_phase.tmax = params.sim_time;
         }
         else {
-            my_phase.tmin = time_range[0]*params.conv_fac;
-            my_phase.tmax = time_range[1]*params.conv_fac;
+            my_phase.tmin = time_range[0];
+            my_phase.tmax = time_range[1];
         }
         
         
@@ -408,8 +396,6 @@ void Diagnostic::initPhases(PicParams& params, InputData &ifile, SmileiMPI *smpi
         ifile.extract("pos_max",my_phase.pos_max,"DiagPhase",n_phase);
         ifile.extract("pos_num",my_phase.pos_num,"DiagPhase",n_phase);
         for (unsigned int i=0; i<my_phase.pos_min.size(); i++) {
-            my_phase.pos_min[i] *= params.conv_fac;
-            my_phase.pos_max[i] *= params.conv_fac;
             if (my_phase.pos_min[i]==my_phase.pos_max[i]) {
                 my_phase.pos_min[i] = 0.0;
                 my_phase.pos_max[i] = params.sim_length[i];
@@ -611,7 +597,6 @@ void Diagnostic::initParticles(PicParams& params, InputData &ifile) {
     bool ok;
     
     unsigned int numDiagParticles=ifile.nComponents("DiagParticles");
-    MESSAGE(1,"Initializing Particles (" << numDiagParticles << ")");
     for (unsigned int n_diag_particles = 0; n_diag_particles < numDiagParticles; n_diag_particles++) {
         
         // get parameter "output" that determines the quantity to sum in the output array
@@ -676,11 +661,6 @@ void Diagnostic::initParticles(PicParams& params, InputData &ifile) {
                     ERROR("Diag Particles #" << n_diag_particles << ", axis #" << iaxis << ": Third item must be a double (axis max)");
                 }
                 
-                // If the axis is spatial, then we need to apply the conv_fac
-                if (tmpAxis->type=="x" || tmpAxis->type=="y" || tmpAxis->type=="z") {
-                    tmpAxis->min *= params.conv_fac;
-                    tmpAxis->max *= params.conv_fac;
-                }
                 
                 if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 3),tmpAxis->nbins)) {
                     ERROR("Diag Particles #" << n_diag_particles << ", axis #" << iaxis << ": Fourth item must be an int (number of bins)");

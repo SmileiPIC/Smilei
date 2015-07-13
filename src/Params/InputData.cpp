@@ -2,9 +2,9 @@
 #include <sstream>
 #include <vector>
 
-#include "pyinit.h"
-#include "pyprofiles.h"
-#include "pycontrol.h"
+#include "pyinit.pyh"
+#include "pyprofiles.pyh"
+#include "pycontrol.pyh"
 
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -37,7 +37,7 @@ py_namelist(NULL)
     // Running the namelists
     pyRunScript("############### BEGIN USER NAMELISTS ###############\n");
     for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {
-        MESSAGE("Reading file " << *it);
+        MESSAGE(1,"Reading file " << *it);
         string strNamelist="";
         if (smpi->isMaster()) {
             ifstream istr(it->c_str());
@@ -58,7 +58,7 @@ py_namelist(NULL)
     // Running pycontrol.py
     pyRunScript(string(reinterpret_cast<const char*>(Python_pycontrol_py), Python_pycontrol_py_len),"pycontrol.py");
     
-    PyTools::runPyFunction("smilei_check");
+    PyTools::runPyFunction("_smilei_check");
     
     
     // Now the string "namelist" contains all the python files concatenated
@@ -77,7 +77,7 @@ InputData::~InputData() {
         Py_Finalize();
 }
 
-//! run script
+//! Run string as python script and add to namelist
 void InputData::pyRunScript(string command, string name) {
     PyTools::checkPyError();
     namelist+=command;
@@ -90,6 +90,8 @@ void InputData::pyRunScript(string command, string name) {
         PyTools::checkPyError();
     }
 }
+
+
 
 //! retrieve python object
 PyObject* InputData::extract_py(string name, string component, int nComponent) {
@@ -152,7 +154,7 @@ int InputData::nComponents(std::string componentName) {
 }
 
 
-//! run the python functions cleanup (user defined) and keep_python_running (in pycontrol.py)
+//! run the python functions cleanup (user defined) and _keep_python_running (in pycontrol.py)
 void InputData::cleanup() {
     
     // call cleanup function from the user namelist (it can be used to free some memory 
@@ -164,8 +166,8 @@ void InputData::cleanup() {
     
     // this function is defined in the Python/pyontrol.py file and should return false if we can close
     // the python interpreter
-    MESSAGE(1,"Calling python keep_python_running() :");    
-    if (PyTools::runPyFunction<bool>("keep_python_running")) {
+    MESSAGE(1,"Calling python _keep_python_running() :");    
+    if (PyTools::runPyFunction<bool>("_keep_python_running")) {
         MESSAGE(2,"Keeping Python interpreter alive");
     } else {
         MESSAGE(2,"Closing Python");

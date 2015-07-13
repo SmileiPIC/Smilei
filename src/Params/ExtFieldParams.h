@@ -22,8 +22,6 @@ class ExtFieldProfile;
 struct ExtFieldStructure : ProfileStructure {
     //! fields to which apply the exeternal field
     std::vector<std::string> fields;
-    
-    double magnitude;   
 
 };
 
@@ -35,7 +33,6 @@ class ExtFieldParams {
 public:
     //! we copy this from picparams
     std::string geometry;
-    double conv_fac;
     
     //! Creator for ExtFieldParams
     ExtFieldParams(PicParams&, InputData &);

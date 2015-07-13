@@ -59,9 +59,8 @@ int main (int argc, char* argv[])
     // Simulation Initialization
     // ------------------------- 
     
-    // Check for namelist (input file)
+    // Check for namelists (input files)
     vector<string> namelists(argv + 1, argv + argc);
-    
     if (namelists.size()==0) ERROR("No namelists given!");
     
     // Send information on current simulation
@@ -98,8 +97,7 @@ int main (int argc, char* argv[])
     TITLE("MPI input output environment");
     SmileiIO*  sio  = SmileiIOFactory::create(params, Diags, smpi);
     
-    
-    
+    // setup OpenMP
     TITLE("OpenMP");
 #ifdef _OMP
     int nthds(0);
@@ -220,7 +218,7 @@ int main (int argc, char* argv[])
         
     }
     
-
+    
     // ------------------------------------------------------------------------
     // check here if we can close the python interpreter
     // ------------------------------------------------------------------------
@@ -251,7 +249,7 @@ int main (int argc, char* argv[])
     timer[8].init(smpi, "Collisions");
     
     
-	// ------------------------------------------------------------------
+    // ------------------------------------------------------------------
     //                     HERE STARTS THE PIC LOOP
     // ------------------------------------------------------------------
     TITLE("Time-Loop is started: number of time-steps n_time = " << params.n_time);
@@ -266,22 +264,29 @@ int main (int argc, char* argv[])
         // send message at given time-steps
         // --------------------------------
         timer[0].update();
-        
-        //double timElapsed=smpiData->time_seconds();
+            
         if ( (itime % Diags.print_every == 0) &&  ( smpi->isMaster() ) ) {
-            MESSAGE(1,"t = "          << setw(7) << setprecision(2)   << time_dual/params.conv_fac
-                    << "   it = "       << setw(log10(params.n_time)+1) << itime  << "/" << params.n_time
-                    << "   sec = "      << setw(7) << setprecision(2)   << timer[0].getTime()
-                    << "   E = "        << scientific << setprecision(4)<< Diags.getScalar("Etot")
-                    << "   Epart = "        << scientific << setprecision(4)<< Diags.getScalar("Eparticles")
-                    << "   Elost = "        << scientific << setprecision(4)<< Diags.getScalar("Elost")
-                    << "   E_bal(%) = " << setw(6) << fixed << setprecision(2)   << 100.0*Diags.getScalar("Ebal_norm") );
-            if (simWindow) 
-                MESSAGE(1, "\t\t MW Elost = " << scientific << setprecision(4)<< Diags.getScalar("Emw_lost")
-                        << "     MW Eadd  = " << scientific << setprecision(4)<< Diags.getScalar("Emw_part")
-                        << "     MW Elost (fields) = " << scientific << setprecision(4)<< Diags.getScalar("Emw_lost_fields")
-                        << setw(6) << fixed << setprecision(2) );
-        }
+            
+            MESSAGE(1,"t = "          << setw(7) << setprecision(2)   << time_dual
+                    << "   it = "     << setw(log10(params.n_time)+1) << itime  << "/" << params.n_time
+                    << "   sec = "    << setw(7) << setprecision(2)   << timer[0].getTime()
+                    << "   Utot = "   << scientific << setprecision(4)<< Diags.getScalar("Utot")
+                    << "   Uelm = "   << scientific << setprecision(4)<< Diags.getScalar("Uelm")
+                    << "   Ukin = "   << scientific << setprecision(4)<< Diags.getScalar("Ukin")
+                    << "   Ubal(%) = "<< setw(6) << fixed << setprecision(2) << 100.0*Diags.getScalar("Ubal_norm")
+                    );
+            
+            //!\todo (MG to JD/AD) We should clear this. Either not print it OR add it to the former stream
+            if (simWindow) {
+                double Uinj_mvw = Diags.getScalar("Uelm_inj_mvw") + Diags.getScalar("Ukin_inj_mvw");
+                double Uout_mvw = Diags.getScalar("Uelm_out_mvw") + Diags.getScalar("Ukin_out_mvw");
+                MESSAGE(1, "\t\t Uinj_mvw = " << scientific << setprecision(4) << Uinj_mvw
+                        << "     Uout_mvw = " << scientific << setprecision(4) << Uout_mvw
+                        );
+            }//simWindow
+            
+        }//itime
+        
         
         // put density and currents to 0 + save former density
         // ---------------------------------------------------
@@ -324,7 +329,7 @@ int main (int argc, char* argv[])
                     for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
                         smpi->exchangeParticles(vecSpecies[ispec], ispec, params, tid, iDim);
 #pragma omp barrier
-		    vecSpecies[ispec]->sort_part(); // Faut il trier les particules test ???
+                        vecSpecies[ispec]->sort_part(); // Should we sort test particles ?? (JD)
                 }
             }
         }
@@ -353,13 +358,13 @@ int main (int argc, char* argv[])
         
         // call the various diagnostics
         // ----------------------------
-		
+        
         // run all diagnostics
         timer[3].restart();
-	for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
-	    if ( (vecSpecies[ispec]->particles.isTestParticles)  )
-		sio->writeTestParticles(vecSpecies[ispec], ispec, itime, params, smpi);
-	}
+    for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
+        if ( (vecSpecies[ispec]->particles.isTestParticles)  )
+            sio->writeTestParticles(vecSpecies[ispec], ispec, itime, params, smpi);
+    }
 
 
         Diags.runAllDiags(itime, EMfields, vecSpecies, Interp, smpi);
@@ -405,8 +410,9 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     //                      HERE ENDS THE PIC LOOP
     // ------------------------------------------------------------------
-    MESSAGE("End time loop, time dual = " << time_dual/params.conv_fac);
-        
+    MESSAGE("End time loop, time dual = " << time_dual);
+    MESSAGE("-----------------------------------------------------------------------------------------------------");
+    
     //double timElapsed=smpiData->time_seconds();
     //if ( smpi->isMaster() ) MESSAGE("Time in time loop : " << timElapsed );
     timer[0].update();

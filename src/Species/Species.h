@@ -64,10 +64,13 @@ public:
     void initMomentum(unsigned int, unsigned int, double *, double *, std::string, std::vector<double>&);
 
     //! Method used to initialize the Particle weight (equivalent to a charge density) in a given cell
-    void initWeight(PicParams*, unsigned int, unsigned int, double);
+    void initWeight(unsigned int, unsigned int, unsigned int, double);
 
     //! Method used to initialize the Particle charge
-    void initCharge(PicParams*, unsigned int, unsigned int, double);
+    void initCharge(unsigned int, unsigned int, unsigned int, double);
+    
+    //! Maximum charge at initialization
+    double max_charge;
 
     //! Method used to save all Particles properties for the considered Species
     void dump(std::ofstream&);
@@ -126,14 +129,22 @@ public:
 
 private:
     
-    //! vector of density (one per species)
+    //! Type of density profile ("nb" or "charge")
+    std::string densityProfileType;
+    
+    //! charge profile
+    Profile *chargeProfile;
+    
+    //! density profile
     Profile *densityProfile;
     
-    //! vector of density (one per species)
+    //! vector of velocity profiles (vx, vy, vz)
     std::vector<Profile *> velocityProfile;
     
-    //! vector of temperature (one per species)
+    //! vector of temperature profiles (Tx, Ty, Tz)
     std::vector<Profile *> temperatureProfile;
+    
+    Profile *ppcProfile;
     
     //! 2 times pi
     double PI2;

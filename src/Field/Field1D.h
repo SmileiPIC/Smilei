@@ -46,7 +46,7 @@ public:
     inline double& operator () (unsigned int i)
     {
         DEBUGEXEC(if (i>=dims_[0]) ERROR(name << "Out of limits & "<< i));
-        DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR(name << "Not finite "<< i << " = " << data_[i]));
+        DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR(name << " not finite at i=" << i << " = " << data_[i]));
         return data_[i];
     };
 
@@ -57,12 +57,6 @@ public:
         DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR(name << "Not finite "<< i << " = " << data_[i]));
         return data_[i];
     };
-
-    //! \todo What is this? (MG)
-    //! \todo private/friend/modify SmileiMPI* (JD)
-    // 
-    //! Now in Field, all arrays may be viewed as a 1D array
-    //double* data_;
 
 
     //virtual double computeNRJ(unsigned int shift, unsigned int** istart, unsigned int** bufsize) {return 0.;};

@@ -23,7 +23,7 @@ multiPlot(A,B)
 S.ParticleDiagnostic("#2/#0").plot(figure=1)
 S.ParticleDiagnostic("#2/#0", slice={"x":"all","vx":"all"}).plot(figure=2)
 
-A = S.Scalar("Etot")
+A = S.Scalar("Utot")
 A.plot()
 
 F=S.Field("Ex")

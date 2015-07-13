@@ -11,12 +11,12 @@
 //! this class create and associate the right ionization model to species
 class IonizationFactory {
 public:
-    static Ionization* create(PicParams& params, int ispec) {
+    static Ionization* create(PicParams& params, int ispec, double max_charge) {
         Ionization* Ionize = NULL;
         std::string model=params.species_param[ispec].ionization_model;
 
         if ( model == "tunnel" ) {
-            if (params.species_param[ispec].charge > (int)params.species_param[ispec].atomic_number)
+            if (max_charge > (int)params.species_param[ispec].atomic_number)
                 ERROR( "Charge > atomic_number for species " << ispec );
 
             Ionize = new IonizationTunnel( params, ispec );
