@@ -62,8 +62,8 @@ sim_time = t_sim
 res_space  = [res, res]
 sim_length = [dx,  dy]
 
-bc_em_type_long  = 'silver-muller'
-bc_em_type_trans = 'periodic'
+bc_em_type_x  = 'silver-muller'
+bc_em_type_y = 'periodic'
 
 # RANDOM seed 
 # this is used to randomize the random number generator
@@ -71,30 +71,36 @@ random_seed = 0
 
 fieldDump_every = 24
 
-myspec1=Species()
-myspec1.dens_profile = profile_dens
-myspec1.vacuum_length   = [(dx-thickness)/2.0,  0.0] 
-myspec1.dens_length_x   = thickness
-myspec1.dens_length_y   = dy
-myspec1.species_type = 'ion'
-myspec1.initPosition_type = 'random'
-myspec1.initMomentum_type = 'cold'
-myspec1.ionization_model = 'none'
-myspec1.n_part_per_cell = part_per_cell
-myspec1.c_part_max = 1.0
-myspec1.mass = 1836.0
-myspec1.charge = 1
-myspec1.density = 2.0
-myspec1.mean_velocity = 0.0
-myspec1.temperature = 0.0
-myspec1.dynamics_type = 'norm'
-myspec1.time_frozen = t_sim
-myspec1.radiating = False
-myspec1.bc_part_type_west  = 'refl'
-myspec1.bc_part_type_east  = 'refl'
-myspec1.bc_part_type_south = 'none'
-myspec1.bc_part_type_north = 'none'
+avgfieldDump_every =24
+ntime_step_avg=24
 
+fieldsToDump = ("Bz", "Rho_electron", "Rho_ion", "Bz_avg")
+
+
+Species(
+dens_profile = profile_dens,
+vacuum_length   = [(dx-thickness)/2.0,  0.0] ,
+dens_length_x   = thickness,
+dens_length_y   = dy,
+species_type = 'ion',
+initPosition_type = 'random',
+initMomentum_type = 'cold',
+ionization_model = 'none',
+n_part_per_cell = part_per_cell,
+c_part_max = 1.0,
+mass = 1836.0,
+charge = 1,
+density = 2.0,
+mean_velocity = [0.0,0.0,0.0],
+temperature = 0.0,
+dynamics_type = 'norm',
+time_frozen = t_sim,
+radiating = False,
+bc_part_type_west  = 'refl',
+bc_part_type_east  = 'refl',
+bc_part_type_south = 'none',
+bc_part_type_north = 'none'
+)
 
 
 Species(
@@ -110,7 +116,7 @@ c_part_max=1.0 ,
 mass = 1.0 ,
 charge = -1 ,
 density = 2.0 ,
-mean_velocity = 0.0 ,
+mean_velocity =  [0.0,0.0,0.0],
 temperature = 0.0001 ,
 dynamics_type = 'norm' ,
 time_frozen = 0.0 ,

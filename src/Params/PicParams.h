@@ -19,14 +19,26 @@ class InputData;
 // ---------------------------------------------------------------------------------------------------------------------
 struct ProfileStructure {
     
+    //! Magnitude of the profile if constant profile
+    double profile; 
+    
+    //! in case profile is give in Python
+    PyObject *py_profile;
+    
+};
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! This structure contains the properties of each Laser Profile
+// ---------------------------------------------------------------------------------------------------------------------
+struct LaserProfileStructure {
+    
     //! Constructor
-    ProfileStructure() {
+    LaserProfileStructure() {
         profile="";
-        vacuum_length.resize(0);
     }
     
     //! Profile profile
-    std::string profile; 
+    std::string profile;
     
     //! in case profile is give in Python
     PyObject *py_profile;
@@ -37,38 +49,23 @@ struct ProfileStructure {
     //! double vector for profile parameters
     std::vector<double> double_params;
     
-    //! double vector for profile parameters (x lengths: will be multiplied by 2pi)
-    std::vector<double> length_params_x;
-    
-    //! double vector for profile parameters (y lengths: will be multiplied by 2pi)
-    std::vector<double> length_params_y;
-    
-    //! double vector for profile parameters (z lengths: will be multiplied by 2pi)
-    std::vector<double> length_params_z;
-    
-    //! vacuum lengths
-    std::vector<double> vacuum_length;
 };
+
 
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each species
 // ---------------------------------------------------------------------------------------------------------------------
 struct SpeciesStructure {
+
     //! kind of species possible values: "ion" "eon" "test"
     std::string species_type;
     
-    //! density profile
-    std::string density_profile;
-    
     //! position initialization type, possible values: "regular" or "random"
     std::string initPosition_type;
-
+    
     //! momentum initialization type, possible values: "cold" or "maxwell-juettner"
     std::string initMomentum_type;
-    
-    //! number of particles per cell
-    unsigned int n_part_per_cell;
     
     //! coefficient on the maximum number of particles for the species
     double c_part_max;
@@ -79,15 +76,10 @@ struct SpeciesStructure {
     //! atomic number
     unsigned int atomic_number;
     
-    //! charge [proton charge]
-    double charge;
-    
-    //! density [\f$n_N=\epsilon_0\,m_e\,\omega_N^{2}/e^2\f$ ]
-    double density;
-    //! mean velocity in units of light velocity
-    std::vector<double> mean_velocity; // must be params.nDim_field
-    //! temperature [\f$m_e\,c^2\f$ ]
-    std::vector<double> temperature;
+    //! thermal velocity [\f$c\f$]
+    std::vector<double> thermalVelocity;
+    //! thermal momentum [\f$m_e c\f$]
+    std::vector<double> thermalMomentum;
     
     //! dynamics type. Possible values: "Norm" "Radiation Reaction"
     std::string dynamics_type;
@@ -100,6 +92,9 @@ struct SpeciesStructure {
 
     //! logical true if particles radiate
     bool isTest;
+    
+    //! nDim_fields
+    int nDim_fields;
     
     //! Boundary conditions for particules
     std::string bc_part_type_west;
@@ -114,6 +109,8 @@ struct SpeciesStructure {
     
     //! density profile
     ProfileStructure dens_profile;
+    ProfileStructure charge_profile;
+    std::string density_type;
     
     //! velocity profile
     ProfileStructure mvel_x_profile;
@@ -125,6 +122,8 @@ struct SpeciesStructure {
     ProfileStructure temp_x_profile;
     ProfileStructure temp_y_profile;
     ProfileStructure temp_z_profile;
+    
+    ProfileStructure ppc_profile;
     
 };
 
@@ -139,9 +138,11 @@ public:
     //! Creator for PicParams
     PicParams(InputData &);
     
-    //! extract a profile
-    void extractProfile(InputData &, std::string, ProfileStructure &, int, std::string, std::vector<double>);
-
+    //! extract profiles
+    bool extractProfile         (InputData &, PyObject *, ProfileStructure &);
+    bool extractOneProfile      (InputData &, std::string, ProfileStructure &, int);
+    void extractVectorOfProfiles(InputData &, std::string, std::vector<ProfileStructure*> &, int);
+    
     //! compute grid-related parameters & apply normalization
     void compute();
     
@@ -168,15 +169,11 @@ public:
     
     //! number of space dimensions for the fields
     unsigned int nDim_field;
-
+    
     //! normalization (used in the input files only)
     std::string sim_units;
     
-    //! conversion factor (=1 when normalized units, 2\pi when wavelength-related normalisations)
-    double conv_fac;
-
-    
-    /*! \brief Time resolution.
+    /*! \brief Time resolution
      Number of timesteps in \f$ 2\pi/\omega_N \f$ where \f$ \omega_N \f$ is the normalization (plasma or laser) frequency
      */
     double res_time;
@@ -184,7 +181,7 @@ public:
     //! simulation exit time in units of \f$ 2\pi/\omega_N \f$
     double sim_time;
     
-    /*! \brief Space resolution.
+    /*! \brief Space resolution
      Number of cells in every direction in \f$ 2\pi/k_N \f$ where \f$ k_N=\omega_N/c \f$ is the normalization wavenumber
      */
     std::vector<double> res_space;
@@ -192,12 +189,14 @@ public:
     //! local simulation box size in \f$2\pi/k_N \f$
     std::vector<double> sim_length;
     
-    //! time during which fields are frozen
+    //!\todo (MG to FP) Check here if one cannot limit time_fields_frozen to solve_maxwell only (so that one can plot the density & currents)
+    //! time during which the Maxwell's equations are not solved
     double time_fields_frozen;
     
     //! Boundary conditions for ElectroMagnetic Fields
-    std::string bc_em_type_long;
-    std::string bc_em_type_trans;
+    std::vector<std::string> bc_em_type_x;
+    std::vector<std::string> bc_em_type_y;
+    std::vector<std::string> bc_em_type_z;
     
     
     //! window simulation box size in number of cells
@@ -222,8 +221,11 @@ public:
     //! number of total timesteps to perform in the simulation
     unsigned int n_time;
     
-    //! dt for the simulation (CFL)
+    //! dt for the simulation
     double timestep;
+    
+    //! max value for dt (due to usual FDTD CFL condition: should be moved to ElectroMagn solver (MG))
+    double dtCFL;
     
     //! number of cells in every direction of the local domain
     std::vector<unsigned int> n_space;

@@ -10,6 +10,7 @@
 
 #include "PicParams.h"
 #include "Particles.h"
+#include "tabulatedFunctions.h"
 
 class SmileiMPI;
 
@@ -25,17 +26,17 @@ public:
 
     //! West particles boundary conditions pointers (same prototypes for all conditions)
     //! @see BoundaryConditionType.h for functions that this pointers will target
-    int (*bc_west)  ( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart );
+    int (*bc_west)  ( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart);
     //! East particles boundary conditions pointers
-    int (*bc_east)  ( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart );
+    int (*bc_east)  ( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart);
     //! South particles boundary conditions pointers
-    int (*bc_south) ( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart );
+    int (*bc_south) ( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart);
     //! North particles boundary conditions pointers
-    int (*bc_north) ( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart );
+    int (*bc_north) ( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart);
     //! Bottom particles boundary conditions pointers
-    int (*bc_bottom)( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart );
+    int (*bc_bottom)( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart);
     //! Up particles boundary conditions pointers
-    int (*bc_up)    ( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart );
+    int (*bc_up)    ( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart);
 
     //! Method which applies particles boundary conditions.
     //! If the MPI process is not a border process, particles will be flagged as an exchange particle returning 0
@@ -99,8 +100,8 @@ public:
 
     //! Set the condition window if restart
     inline void updateMvWinLimits( double x_moved ) {
-	x_min += x_moved;
-	x_max += x_moved;
+        x_min += x_moved;
+        x_max += x_moved;
     }
 
 private:
@@ -120,7 +121,7 @@ private:
 
     //! Space dimension of a particle
     int nDim_particle;
-
+    
 };
 
 #endif

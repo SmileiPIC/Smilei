@@ -15,6 +15,5 @@ src/smilei
 *.out
 *.synctex.gz
 *.toc
-src/Python/pycontrol.h
-src/Python/pyinit.h
-src/Python/pyprofiles.h
+*.orig
+*.pyh

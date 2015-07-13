@@ -5,13 +5,9 @@
 #           SmileiComponent, Species, Laser, Collisions, DiagProbe, DiagParticles,
 #           DiagScalar, DiagPhase or ExtField
 
+import math
+L0 = 2.*math.pi # conversion from normalization length to wavelength
 
-# sim_units: normalisation units for the input data
-#            it is used only in the input data & log file
-#            codes outputs are always in "normalised" units
-#            'wavelength' : input data are in wavelength-related units
-#            'normalized' : input data are put in code (relativistic) units
-sim_units = "wavelength"
 wavelength_SI = 1.e-6
 
 # dim: Geometry of the simulation
@@ -25,12 +21,10 @@ dim = "1d3v"
 interpolation_order = 2
 
 # SIMULATION TIME 
-# set either the resolution (res_time) or the timestep
-# res_time = integer, number of time-steps within one unit of time (`sim_units`)
-# timestep = float, time step in units of `sim_units`
-# sim_time = float, duration of the simulation  in units of `sim_units`
-timestep = 0.001
-sim_time  = 0.1
+# timestep = float, time steps
+# sim_time = float, duration of the simulation
+timestep = 0.001 * L0
+sim_time  = 0.1 * L0
 
 
 #  optional parameter time_fields_frozen, during which fields are not updated
@@ -41,16 +35,15 @@ time_fields_frozen = 100000000000.
 # res_space   = list of integers, number of cells in one unit of space (`sim_units`)
 # sim_length  = length of the simulation in units of `sim_units`
 # cell_length = cell length  in units of `sim_units`
-cell_length = [2.]
-sim_length  = [100.]
+cell_length = [2.*L0]
+sim_length  = [100.*L0]
 
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
-# bc_em_type_long/trans : boundary conditions used for EM fields 
-#                         in the longitudinal or transverse directions
-#                         'periodic'      : periodic BC (using MPI topology)
-#                         'silver-muller' : injecting/absorbing
-bc_em_type_long  = "periodic"
-bc_em_type_trans = "periodic"
+# bc_em_type_x : two strings, x boundary conditions for EM fields 
+# bc_em_type_y : two strings, y boundary conditions for EM fields 
+#                'periodic'      : periodic BC (using MPI topology)
+#                'silver-muller' : injecting/absorbing
+bc_em_type_x  = ["periodic"]
 
 
 # RANDOM seed used to randomize the random number generator
@@ -60,23 +53,18 @@ random_seed = 0
 # species_type       = string, given name to the species (e.g. ion, electron, positron, test ...)
 # initPosition_type  = string, "regular" or "random"
 # initMomentum_type  = string "cold", "maxwell-juettner" or "rectangular"
-# n_part_per_cell    = integer, number of particles/cell
 # c_part_max         = float, factor on the memory reserved for the total number of particles
 # mass               = float, particle mass in units of the electron mass
-# charge             = float, particle charge in units of the electron charge
 # dynamics_type      = string, type of species dynamics = "norm" or "rrLL"
 # time_frozen        = float, time during which particles are frozen in units of the normalization time
 # radiating          = boolean, if true, incoherent radiation calculated using the Larmor formula 
-# vacuum_length      = list of floats, distance from box borders without particles.
-# charge_density     = float, species charge density in units of the "critical" density
+# n_part_per_cell    = integer or function, number of particles/cell
+# charge             = float or function, particle charge in units of the electron charge
+# charge_density     = float or function, species charge density in units of the "critical" density
 #     or nb_density for number density
-# mean_velocity      = list of floats, mean velocity in units of the speed of light
-# temperature        = list of floats, temperature in units of m_e c^2
-# SPECIES PROFILES from python function (see doc)
-#    Predefined functions: constant, trapezoidal, gaussian, polygonal, cosine
-# dens_profile       = python function. Units: n_c
-# mvel_[xyz]_profile = python function. Units: c
-# temp_[xyz]_profile = python function. Units: m_e c^2
+# mean_velocity      = list of floats or functions, mean velocity in units of the speed of light
+# temperature        = list of floats or functions, temperature in units of m_e c^2
+# Predefined functions: constant, trapezoidal, gaussian, polygonal, cosine
 Species(
 	species_type = "ion1",
 	initPosition_type = "regular",
@@ -146,7 +134,7 @@ DiagScalar(
 # time_average = integer > 0: number of time-steps to average
 # species      = list of strings, one or several species whose data will be used
 # axes         = list of axes
-# Each axis is a list: (_type_ _min_ _max_ _nsteps_ ["logscale"] ["edge_inclusive"])
+# Each axis is a list: [_type_,_min_,_max_,_nsteps_,"logscale","edge_inclusive"]
 #   _type_ is a string, one of the following options:
 #      x, y, z, px, py, pz, p, gamma, ekin, vx, vy, vz, v or charge
 #   The data is discretized for _type_ between _min_ and _max_, in _nsteps_ bins
@@ -162,7 +150,7 @@ DiagParticles(
 	time_average = 1,
 	species = ["electron1"],
 	axes = [
-		 ["x",    0,    100.,   10],
+		 ["x",    0*L0,    100.*L0,   10],
 		 ["vx",  -0.1,  0.1,    1000]
 	]
 )
@@ -173,7 +161,7 @@ DiagParticles(
 	time_average = 1,
 	species = ["electron1"],
 	axes = [
-		 ["x",    0,    100.,   10],
+		 ["x",    0*L0,    100.*L0,   10],
 		 ["vperp2",  0,  0.0001,    1000]
 	]
 )
@@ -184,7 +172,7 @@ DiagParticles(
 	time_average = 1,
 	species = ["ion1"],
 	axes = [
-		 ["x",    0,    100.,   10],
+		 ["x",    0*L0,    100.*L0,   10],
 		 ["vx",  -0.1,  0.1,  1000]
 	]
 )

@@ -14,7 +14,7 @@
 \newcommand{\blue}[1]{{\color{blue} #1}}
 
 \usepackage{listings}
-\lstset{backgroundcolor=\color{yellow!15}, basicstyle=\ttfamily, columns=fullflexible, keepspaces=true,escapeinside={§}{§}}
+\lstset{backgroundcolor=\color{yellow!15}, basicstyle=\ttfamily, columns=fullflexible, keepspaces=true,escapeinside={<>}{<>}}
 
 \begin{document}
 
@@ -35,10 +35,10 @@ SMILEI can collect various scalar data, such as total particle energy, total fie
 This is done if the following block is included in the input file.
 
 \begin{lstlisting}
-Scalar( every     = §\val{every}§,
-	§\blue{tmin      = \val{tmin}}§,
-	§\blue{tmax      = \val{tmax}}§,
-	§\blue{precision = \val{precision}}§ )
+Scalar( every     = <>\val{every}<>,
+	<>\blue{tmin      = \val{tmin}}<>,
+	<>\blue{tmax      = \val{tmax}}<>,
+	<>\blue{precision = \val{precision}}<> )
 \end{lstlisting}
 \vspace{-1em}
 \begin{itemize}
@@ -59,17 +59,26 @@ The full list of scalars is:\\
 \vspace{-0.7em}
 
 \begin{tabularx}{\textwidth}{X r | l X}
-& Emw\_fields & Field energy added through the moving window & \\
-& Emw\_lost\_fields & Field energy lost through the moving window &\\
-& Emw\_part & Particle energy added through the moving window &\\
-& Emw\_lost & Particle energy lost through the moving window &\\
+&	 & {\bf Global energies}& \\
+&Utot & Total energy& \\
+&Ukin&  Total kinetic energy in the particles&\\
+&Uelm& Total electromagnetic energy in the EM-fields&\\
+&Uexp& Expected value for the total energy (Initial energy in the box $\pm$ energy lost or gained)&\\
+&Ubal& Energy balance (Total energy - Expected energy)&\\
+&Ubal\_norm& Normalized energy balance (${\rm Ubal/Utot}$)&\\
 & & & \\
+&	 & {\bf Energies lost/gained at boundaries \& due to moving window}& \\
+&Ukin\_bnd& Kinetic energy exchanged at the boundaries during the timestep &\\
+&Uelm\_bnd& Electromagneticenergy exchanged at the boundaries during the timestep &\\
+&Ukin\_out\_mvw& Kinetic energy lost during the timestep due to the moving window&\\
+&Ukin\_inj\_mvw& Kinetic energy injected during the timestep due to the moving window&\\
+&Uelm\_out\_mvw& Electromagnetic energy lost during the timestep due to the moving window&\\
+&Uelm\_inj\_mvw& Electromagnetic energy injected during the timestep due to the moving window&\\
+& & & \\
+&	 & {\bf Energies lost/gained at boundaries \& due to moving window}& \\
 & Ebal\_norm & Ebalance $/$ Etot &\\
 & Ebalance & Current energy $-$ initial total energy&\\
-& Etot & Current total energy &\\
 & Elost & Lost particle energy during last timestep &\\
-& Eparticles & Current energy in particles &\\
-& EFields & Current energy in fields &\\
 & Poynting & Accumulated Poyting flux through all boundaries&\\
 & & & \\
 & Z\_abc & Average charge of species "abc" &\\
@@ -101,9 +110,9 @@ SMILEI can collect various field data (electric fields, magnetic fields, current
 taken at the location of the PIC grid, both as instantaneous values and averaged values.
 This is done if the following instructions are included in the input file.
 \begin{lstlisting}
-fieldDump_every    = §\val{every}§
-avgfieldDump_every = §\val{every\_avg}§
-ntime_step_avg     = §\val{t\_avg}§
+fieldDump_every    = <>\val{every}<>
+avgfieldDump_every = <>\val{every\_avg}<>
+ntime_step_avg     = <>\val{t\_avg}<>
 \end{lstlisting}
 where
 \begin{itemize}
@@ -150,8 +159,8 @@ To add one probe diagnostic in the input file, there are several cases:\\
 For only one point (zero-dimensional probe)
 \begin{lstlisting}
 DiagProbe(
-    every      = §\val{every}§,
-    pos        = [§\val{x0}, \blue{\val{y0}, \val{z0}}§]
+    every      = <>\val{every}<>,
+    pos        = [<>\val{x0}, \blue{\val{y0}, \val{z0}}<>]
 )
 \end{lstlisting}
 where
@@ -164,10 +173,10 @@ where
 For a series of points arranged in a line (one-dimensional probe)
 \begin{lstlisting}
 DiagProbe(
-    every      = §\val{every}§,
-    pos        = [§\val{x0}, \blue{\val{y0}, \val{z0}}§],
-    pos_first  = [§\val{x1}, \blue{\val{y1}, \val{z1}}§],
-    number     = [§\val{n1}§]
+    every      = <>\val{every}<>,
+    pos        = [<>\val{x0}, \blue{\val{y0}, \val{z0}}<>],
+    pos_first  = [<>\val{x1}, \blue{\val{y1}, \val{z1}}<>],
+    number     = [<>\val{n1}<>]
 )
 \end{lstlisting}
 where
@@ -180,11 +189,11 @@ where
 For a series of points arranged in a mesh (two-dimensional probe)
 \begin{lstlisting}
 DiagProbe(
-    every      = §\val{every}§,
-    pos        = [§\val{x0}, \blue{\val{y0}, \val{z0}}§],
-    pos_first  = [§\val{x1}, \blue{\val{y1}, \val{z1}}§],
-    pos_second = [§\val{x2}, \blue{\val{y2}, \val{z2}}§],
-    number     = [§\val{n1}, \val{n2}§]
+    every      = <>\val{every}<>,
+    pos        = [<>\val{x0}, \blue{\val{y0}, \val{z0}}<>],
+    pos_first  = [<>\val{x1}, \blue{\val{y1}, \val{z1}}<>],
+    pos_second = [<>\val{x2}, \blue{\val{y2}, \val{z2}}<>],
+    number     = [<>\val{n1}, \val{n2}<>]
 )
 \end{lstlisting}
 In this case, the three points define three vertices of a paralellogram.
@@ -270,14 +279,14 @@ In the input file, you can add a particle diagnostic with the following block.
 
 \begin{lstlisting}
 DiagParticles(
-	output = §\val{output}§,
-	every = §\val{every}§,
-	time_average = §\val{time\_average}§,
-	species = [§\val{species1, \blue{species2, ...}}§],
+	output = <>\val{output}<>,
+	every = <>\val{every}<>,
+	time_average = <>\val{time\_average}<>,
+	species = [<>\val{species1, \blue{species2, ...}}<>],
 	axes = [
-		§[\val{type, min, max, nsteps,} \blue{"logscale", "edge\_inclusive"}]§,
-		§\blue{[\val{type, min, max, nsteps,} "logscale", "edge\_inclusive"]}§,
-		§\blue{...}§
+		<>[\val{type, min, max, nsteps,} \blue{"logscale", "edge\_inclusive"}]<>,
+		<>\blue{[\val{type, min, max, nsteps,} "logscale", "edge\_inclusive"]}<>,
+		<>\blue{...}<>
 	]
 )
 \end{lstlisting}
@@ -583,7 +592,7 @@ Smilei(...).ParticleDiagnostic(...).get()
 \end{lstlisting}
 This method returns the results as a python dictionary:
 \begin{lstlisting}
-{"data":§\val{data\_array}§, "times":§\val{times\_array}§, §\val{axis1}§:§\val{axis1\_array}§, §\val{axis2}§:§\val{axis2\_array}§, ...}
+{"data":<>\val{data\_array}<>, "times":<>\val{times\_array}<>, <>\val{axis1}<>:<>\val{axis1\_array}<>, <>\val{axis2}<>:<>\val{axis2\_array}<>, ...}
 \end{lstlisting}
 where:
 \begin{itemize}

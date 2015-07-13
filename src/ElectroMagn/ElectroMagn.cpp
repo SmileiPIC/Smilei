@@ -169,13 +169,19 @@ void ElectroMagn::solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, Pic
 
 #pragma omp single
 {
-    // Update Bx_, By_, Bz_
-    if ((!simWindow) || (!simWindow->isMoving(time_dual)) )
-        if (emBoundCond[0]!=NULL) // <=> if !periodic
-	    emBoundCond[0]->apply(this, time_dual, smpi);
-    if ( (emBoundCond.size()>1) )
-        if (emBoundCond[1]!=NULL) // <=> if !periodic
-	    emBoundCond[1]->apply(this, time_dual, smpi);
+    // Compute EM Bcs
+    if ( (!simWindow) || (!simWindow->isMoving(time_dual)) ) {
+        if (emBoundCond[0]!=NULL) { // <=> if !periodic
+            emBoundCond[0]->apply_xmin(this, time_dual, smpi);
+            emBoundCond[1]->apply_xmax(this, time_dual, smpi);
+        }
+    }
+    if (emBoundCond.size()>2) {
+        if (emBoundCond[2]!=NULL) {// <=> if !periodic
+            emBoundCond[2]->apply_ymin(this, time_dual, smpi);
+            emBoundCond[3]->apply_ymax(this, time_dual, smpi);
+        }
+    }
  
     // Exchange Bx_, By_, Bz_
     smpi->exchangeB( this );
@@ -348,7 +354,7 @@ void ElectroMagn::applyExternalFields(SmileiMPI* smpi) {
     for (vector<Field*>::iterator field=my_fields.begin(); field!=my_fields.end(); field++) {
         if (*field) {
             for (vector<ExtFieldStructure>::iterator extfield=extfield_params.structs.begin(); extfield!=extfield_params.structs.end(); extfield++ ) {
-                Profile *my_ExtFieldProfile = new Profile(*extfield, extfield_params.geometry, extfield_params.conv_fac);
+                Profile *my_ExtFieldProfile = new Profile(*extfield, extfield_params.geometry);
                 if (my_ExtFieldProfile) {
                     for (vector<string>::iterator fieldName=(*extfield).fields.begin();fieldName!=(*extfield).fields.end();fieldName++) {
                         if (LowerCase((*field)->name)==LowerCase(*fieldName)) {
@@ -356,10 +362,9 @@ void ElectroMagn::applyExternalFields(SmileiMPI* smpi) {
                         }
                     }
                     delete my_ExtFieldProfile;
-                    //my_ExtFieldProfile=NULL;
                 } else{
-		    ERROR("Could not initialize external field Profile");
-		}
+                    ERROR("Could not initialize external field Profile");
+                }
             }
         }
     }

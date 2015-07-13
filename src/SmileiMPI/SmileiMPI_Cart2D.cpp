@@ -123,15 +123,16 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
     //number_of_procs[0] = 1;
     //number_of_procs[1] = 16;
     MESSAGE("MPI Domain decomposition : " << smilei_sz << " = " << number_of_procs[0] << " x " << number_of_procs[1]);
-    MESSAGE("Boundary conditions in x- & y-directions: "<< params.bc_em_type_long << ", " << params.bc_em_type_trans);
+    MESSAGE("em. bound. condit. in xmin & xmax directions: "<< params.bc_em_type_x[0] << ", "<< params.bc_em_type_x[1]);
+    MESSAGE("em. bound. condit. in ymin & ymax directions: "<< params.bc_em_type_y[0] << ", "<< params.bc_em_type_y[1]);
             
     // Geometry periodic in x
-    if (params.bc_em_type_long=="periodic") {
+    if ( (params.bc_em_type_x[0]=="periodic") || (params.bc_em_type_x[1]=="periodic") ) {
         periods_[0] = 1;
         MESSAGE(1,"applied topology for periodic BCs in x-direction");
     }
     // Geometry periodic in y
-    if (params.bc_em_type_trans=="periodic") {
+    if ( (params.bc_em_type_y[0]=="periodic") || (params.bc_em_type_y[1]=="periodic") ) {
         periods_[1] = 1;
         MESSAGE(2,"applied topology for periodic BCs in y-direction");
     }

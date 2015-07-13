@@ -5,13 +5,9 @@
 #           SmileiComponent, Species, Laser, Collisions, DiagProbe, DiagParticles,
 #           DiagScalar, DiagPhase or ExtField
 
+import math
+L0 = 2.*math.pi # conversion from normalization length to wavelength
 
-# sim_units: normalisation units for the input data
-#            it is used only in the input data & log file
-#            codes outputs are always in "normalised" units
-#            'wavelength' : input data are in wavelength-related units
-#            'normalized' : input data are put in code (relativistic) units
-sim_units = "wavelength"
 wavelength_SI = 1.e-6
 
 # dim: Geometry of the simulation
@@ -25,12 +21,10 @@ dim = "1d3v"
 interpolation_order = 2
 
 # SIMULATION TIME 
-# set either the resolution (res_time) or the timestep
-# res_time = integer, number of time-steps within one unit of time (`sim_units`)
-# timestep = float, time step in units of `sim_units`
-# sim_time = float, duration of the simulation  in units of `sim_units`
-timestep = 0.002
-sim_time  = 0.1
+# timestep = float, time steps
+# sim_time = float, duration of the simulation
+timestep = 0.001 * L0
+sim_time  = 0.3 * L0
 
 
 #  optional parameter time_fields_frozen, during which fields are not updated
@@ -41,81 +35,51 @@ time_fields_frozen = 100000000000.
 # res_space   = list of integers, number of cells in one unit of space (`sim_units`)
 # sim_length  = length of the simulation in units of `sim_units`
 # cell_length = cell length  in units of `sim_units`
-cell_length = [1]
-sim_length  = [40]
+cell_length = [1*L0]
+sim_length  = [20*L0]
 
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
-# bc_em_type_long/trans : boundary conditions used for EM fields 
-#                         in the longitudinal or transverse directions
-#                         'periodic'      : periodic BC (using MPI topology)
-#                         'silver-muller' : injecting/absorbing
-bc_em_type_long  = "periodic"
+# bc_em_type_x : two strings, x boundary conditions for EM fields 
+# bc_em_type_y : two strings, y boundary conditions for EM fields 
+#                'periodic'      : periodic BC (using MPI topology)
+#                'silver-muller' : injecting/absorbing
+bc_em_type_x  = ["periodic"]
 
 
 # RANDOM seed used to randomize the random number generator
 random_seed = 0
 
+# EXTERNAL FIELDS
+ExtField(
+	field = "Ex",
+	profile = 0.001
+)
+
 # DEFINE ALL SPECIES
 # species_type       = string, given name to the species (e.g. ion, electron, positron, test ...)
 # initPosition_type  = string, "regular" or "random"
 # initMomentum_type  = string "cold", "maxwell-juettner" or "rectangular"
-# n_part_per_cell    = integer, number of particles/cell
 # c_part_max         = float, factor on the memory reserved for the total number of particles
 # mass               = float, particle mass in units of the electron mass
-# charge             = float, particle charge in units of the electron charge
 # dynamics_type      = string, type of species dynamics = "norm" or "rrLL"
 # time_frozen        = float, time during which particles are frozen in units of the normalization time
 # radiating          = boolean, if true, incoherent radiation calculated using the Larmor formula 
-# vacuum_length      = list of floats, distance from box borders without particles.
-# charge_density     = float, species charge density in units of the "critical" density
+# n_part_per_cell    = integer or function, number of particles/cell
+# charge             = float or function, particle charge in units of the electron charge
+# charge_density     = float or function, species charge density in units of the "critical" density
 #     or nb_density for number density
-# mean_velocity      = list of floats, mean velocity in units of the speed of light
-# temperature        = list of floats, temperature in units of m_e c^2
-# SPECIES PROFILES from python function (see doc)
-#    Predefined functions: constant, trapezoidal, gaussian, polygonal, cosine
-# dens_profile       = python function. Units: n_c
-# mvel_[xyz]_profile = python function. Units: c
-# temp_[xyz]_profile = python function. Units: m_e c^2
-Species(
-	species_type = "ghostChargeLayerLeft",
-	initPosition_type = "regular",
-	initMomentum_type = "maxwell-juettner",
-	n_part_per_cell = 10,
-	mass = 1000.,
-	charge =  1.,
-	charge_density = 0.00064,
-	dens_profile = trapezoidal(xvacuum=5., xplateau=1.),
-	mean_velocity = [0., 0., 0.],
-	temperature = [0.0001],
-	time_frozen = 100000.0,
-	bc_part_type_west = "none",
-	bc_part_type_east = "none"
-)
-Species(
-	species_type = "ghostChargeLayerRight",
-	initPosition_type = "regular",
-	initMomentum_type = "maxwell-juettner",
-	n_part_per_cell = 10,
-	mass = 1000.,
-	charge = -1.,
-	charge_density = 0.00064,
-	dens_profile = trapezoidal(xvacuum=35., xplateau=1.),
-	mean_velocity = [0., 0., 0.],
-	temperature = [0.0001],
-	time_frozen = 100000.0,
-	bc_part_type_west = "none",
-	bc_part_type_east = "none"
-)
+# mean_velocity      = list of floats or functions, mean velocity in units of the speed of light
+# temperature        = list of floats or functions, temperature in units of m_e c^2
+# Predefined functions: constant, trapezoidal, gaussian, polygonal, cosine
 
 Species(
 	species_type = "copper1",
 	initPosition_type = "regular",
 	initMomentum_type = "maxwell-juettner",
-	n_part_per_cell = 10000,
+	n_part_per_cell = 100000,
 	mass = 115845.,      # =  mass of Cu atom
 	charge = 5.6,
-	charge_density = 415.,   # =  density of solid Cu
-	dens_profile = trapezoidal(xvacuum=15., xplateau=10.),
+	charge_density = constant(415.),
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.00004], # 20 eV
 	time_frozen = 0.0,
@@ -126,11 +90,10 @@ Species(
 	species_type = "electron1",
 	initPosition_type = "regular",
 	initMomentum_type = "maxwell-juettner",
-	n_part_per_cell= 50000,
+	n_part_per_cell= 100000,
 	mass = 1.0,
 	charge = -1.0,
-	charge_density = 415.,
-	dens_profile = trapezoidal(xvacuum=15., xplateau=10.),
+	charge_density = constant(415.),
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.00004], # 20 eV
 	time_frozen = 0.0,
@@ -142,11 +105,10 @@ Species(
 	species_type = "copper2",
 	initPosition_type = "regular",
 	initMomentum_type = "maxwell-juettner",
-	n_part_per_cell = 10000,
+	n_part_per_cell = 100000,
 	mass = 115845.,      # =  mass of Cu atom
 	charge = 7.4,
-	charge_density = 554.,   # =  density of solid Cu
-	dens_profile = trapezoidal(xvacuum=15., xplateau=10.),
+	charge_density = constant(554.),
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.0001], # 50 eV
 	time_frozen = 0.0,
@@ -160,8 +122,7 @@ Species(
 	n_part_per_cell= 100000,
 	mass = 1.0,
 	charge = -1.0,
-	charge_density = 554.,
-	dens_profile = trapezoidal(xvacuum=15., xplateau=10.),
+	charge_density = constant(554.),
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.0001], # 50 eV
 	time_frozen = 0.0,
@@ -173,11 +134,10 @@ Species(
 	species_type = "copper3",
 	initPosition_type = "regular",
 	initMomentum_type = "maxwell-juettner",
-	n_part_per_cell = 10000,
+	n_part_per_cell = 100000,
 	mass = 115845.,      # =  mass of Cu atom
 	charge = 10.,
-	charge_density = 757.,   # =  density of solid Cu
-	dens_profile = trapezoidal(xvacuum=15., xplateau=10.),
+	charge_density = constant(757.),
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.0002], # 100 eV
 	time_frozen = 0.0,
@@ -188,11 +148,10 @@ Species(
 	species_type = "electron3",
 	initPosition_type = "regular",
 	initMomentum_type = "maxwell-juettner",
-	n_part_per_cell= 50000,
+	n_part_per_cell= 100000,
 	mass = 1.0,
 	charge = -1.0,
-	charge_density = 757.,
-	dens_profile = trapezoidal(xvacuum=15., xplateau=10.),
+	charge_density = constant(757.),
 	mean_velocity = [0., 0., 0.],
 	temperature = [0.0002], # 100 eV
 	time_frozen = 0.0,
@@ -250,7 +209,7 @@ DiagScalar(
 # time_average = integer > 0: number of time-steps to average
 # species      = list of strings, one or several species whose data will be used
 # axes         = list of axes
-# Each axis is a list: (_type_ _min_ _max_ _nsteps_ ["logscale"] ["edge_inclusive"])
+# Each axis is a list: [_type_,_min_,_max_,_nsteps_,"logscale","edge_inclusive"]
 #   _type_ is a string, one of the following options:
 #      x, y, z, px, py, pz, p, gamma, ekin, vx, vy, vz, v or charge
 #   The data is discretized for _type_ between _min_ and _max_, in _nsteps_ bins
@@ -261,30 +220,58 @@ DiagScalar(
 #   Example : axes = ("px", -1, 1, 100, "edge_inclusive")
 
 DiagParticles(
-	output = "density",
-	every = 5,
-	time_average = 4,
+	output = "current_density_x",
+	every = 10,
+	time_average = 10,
 	species = ["electron1"],
 	axes = [
-		 ["vx",  -0.03,  0.03,    1000]
+		 ["x",  0, 20*L0, 1]
 	]
 )
 DiagParticles(
-	output = "density",
-	every = 5,
-	time_average = 4,
+	output = "current_density_x",
+	every = 10,
+	time_average = 10,
 	species = ["electron2"],
 	axes = [
-		 ["vx",  -0.04,  0.04,    1000]
+		 ["x",  0, 20*L0, 1]
+	]
+)
+DiagParticles(
+	output = "current_density_x",
+	every = 10,
+	time_average = 10,
+	species = ["electron3"],
+	axes = [
+		 ["x",  0, 20*L0, 1]
+	]
+)
+
+DiagParticles(
+	output = "density",
+	every = 10,
+	time_average = 10,
+	species = ["electron1"],
+	axes = [
+		 ["x",  0, 20*L0, 1]
 	]
 )
 DiagParticles(
 	output = "density",
-	every = 5,
-	time_average = 4,
+	every = 10,
+	time_average = 10,
+	species = ["electron2"],
+	axes = [
+		 ["x",  0, 20*L0, 1]
+	]
+)
+DiagParticles(
+	output = "density",
+	every = 10,
+	time_average = 10,
 	species = ["electron3"],
 	axes = [
-		 ["vx",  -0.06,  0.06,    1000]
+		 ["x",  0, 20*L0, 1]
 	]
 )
 

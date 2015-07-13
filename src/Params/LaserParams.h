@@ -44,10 +44,10 @@ struct LaserStructure {
     double delta;
     
     //! time profile 
-    ProfileStructure profile_time;
+    LaserProfileStructure profile_time;
     
     //! transverse profile
-    ProfileStructure profile_transv;
+    LaserProfileStructure profile_transv;
 
     //! time-delay used when the laser as non-normal incidence
     double delay;

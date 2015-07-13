@@ -13,7 +13,7 @@ for path in ["beam_relaxation4","beam_relaxation5","beam_relaxation6"]:
 	velocity_electron    = np.double(sim.namelist.Species["electron1"].mean_velocity)[0]
 	temperature_electron = np.double(sim.namelist.Species["electron1"].temperature)
 	coulomb_log          = np.double(sim.namelist.Collisions[0].coulomb_log)
-	dt                   = np.double(sim.namelist.timestep)
+	dt                   = np.double(sim.namelist.timestep)/(2*np.pi)
 
 	re = 2.8179403267e-15 # meters
 	wavelength = 1e-6 # meters
