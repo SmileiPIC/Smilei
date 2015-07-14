@@ -72,13 +72,13 @@ int main (int argc, char* argv[])
     MESSAGE("                                /_/    ");
     
     TITLE("Input data info");
+    
     // Read simulation & diagnostics parameters
     PicParams params(smpiData,namelists);
     smpiData->init(params);
     smpiData->barrier();
     if ( smpiData->isMaster() ) params.print();
     smpiData->barrier();
-    
     
     
     // Geometry known, MPI environment specified
@@ -448,6 +448,7 @@ int main (int argc, char* argv[])
     delete EMfields;
     for(int i=0; i<vecCollisions.size(); i++) delete vecCollisions[i];
     vecCollisions.clear();
+    
     Diags.closeAll(smpi);
     
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
@@ -456,10 +457,13 @@ int main (int argc, char* argv[])
     if (params.nspace_win_x)
         delete simWindow;
     
+    PyTools::closePython();
+
     TITLE("END");
     delete sio;
     delete smpi;
     delete smpiData;
+    
     return 0;
     
 }//END MAIN

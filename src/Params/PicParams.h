@@ -146,11 +146,10 @@ class PicParams {
 public:
     //! Creator for PicParams
     PicParams(SmileiMPI*, std::vector<std::string>);
-    ~PicParams() {
-        if (Py_IsInitialized())
-            Py_Finalize();
-    }
-
+    
+    //! destructor
+    ~PicParams();
+    
     //! extract profiles
     bool extractProfile         (PyObject *, ProfileStructure &);
     bool extractOneProfile      (std::string, ProfileStructure &, int);
@@ -295,6 +294,9 @@ public:
     //! check if python can be closed (e.g. there is no laser python profile)
     //! by calling the _keep_python_running python function (part of pycontrol.pyh)
     void cleanup();
+    
+    //! close Python
+    static void closePython();
     
 private:
     //! init python RTE

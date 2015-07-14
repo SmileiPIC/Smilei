@@ -11,7 +11,7 @@
 #include <vector>
 #include "Tools.h"
 
-//! tools to convert python values to C++ values and vectors
+//! tools to query python nemlist and get back C++ values and vectors
 class PyTools {
 private:
     //! convert Python object to bool
@@ -91,6 +91,18 @@ private:
     }
 
 public:
+
+    static void openPython() {
+        if (!Py_IsInitialized())
+            Py_Initialize();
+    }
+    
+    static void closePython() {
+        if (Py_IsInitialized())
+            Py_Finalize();
+    }
+    
+    
     //! convert Python object to C++ value
     template <typename T>
     static bool convert(PyObject* py_vec, T &val) {
@@ -138,6 +150,7 @@ public:
         }
     }
     
+    //! run python function
     static void runPyFunction(std::string name) {
         PyObject* myFunction = PyObject_GetAttrString(PyImport_AddModule("__main__"),name.c_str());
         if (myFunction) {

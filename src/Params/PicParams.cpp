@@ -19,11 +19,16 @@ PicParams::PicParams(SmileiMPI* smpi, std::vector<std::string> namelistsFiles) :
 namelist("")
 {
     //init Python
+    PyTools::openPython();
     initPython(smpi,namelistsFiles);
     
-    // --------------
-    // Stop & Restart
-    // --------------   
+    unsigned int random_seed=0;
+    if (!PyTools::extract("random_seed", random_seed)) {
+        random_seed = time(NULL);
+    }
+    srand(random_seed);
+    
+    
     dump_step=0;
     PyTools::extract("dump_step", dump_step);
     
@@ -32,6 +37,10 @@ namelist("")
     
     exit_after_dump=true;
     PyTools::extract("exit_after_dump", exit_after_dump);
+    
+    // --------------
+    // Stop & Restart
+    // --------------   
     
     restart=false;
     PyTools::extract("restart", restart);
@@ -184,9 +193,10 @@ namelist("")
     
 }
 
+PicParams::~PicParams() {
+    PyTools::closePython();
+}
 void PicParams::initPython(SmileiMPI *smpi, std::vector<std::string> namelistsFiles){
-    if (!Py_IsInitialized()) Py_Initialize();
-    
     // here we add the rank, in case some script need it
     PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_rank", smpi->getRank());
     
