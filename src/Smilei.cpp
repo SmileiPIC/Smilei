@@ -22,7 +22,6 @@
 #include <iostream>
 #include <iomanip>
 
-#include "InputData.h"
 #include "PicParams.h"
 
 #include "SmileiMPIFactory.h"
@@ -73,11 +72,8 @@ int main (int argc, char* argv[])
     MESSAGE("                                /_/    ");
     
     TITLE("Input data info");
-    // Read the namelists file (no check!)
-    InputData input_data(smpiData,namelists);
-    
     // Read simulation & diagnostics parameters
-    PicParams params;
+    PicParams params(smpiData,namelists);
     smpiData->init(params);
     smpiData->barrier();
     if ( smpiData->isMaster() ) params.print();
@@ -162,7 +158,7 @@ int main (int argc, char* argv[])
     if (params.restart) {
         MESSAGE(1, "READING fields and particles for restart");
         DEBUG(vecSpecies.size());
-        sio->restartAll( EMfields,  stepStart, vecSpecies, smpi, simWindow, params, input_data);
+        sio->restartAll( EMfields,  stepStart, vecSpecies, smpi, simWindow, params);
         
         double restart_time_dual = (stepStart +0.5) * params.timestep;
         if ( simWindow && ( simWindow->isMoving(restart_time_dual) ) ) {
@@ -223,7 +219,7 @@ int main (int argc, char* argv[])
     // check here if we can close the python interpreter
     // ------------------------------------------------------------------------
     TITLE("Cleaning up python runtime environement");
-    input_data.cleanup();
+    params.cleanup();
     
     
     // ------------------------------------------------------------------------
@@ -391,7 +387,7 @@ int main (int argc, char* argv[])
             sio->writePlasma( vecSpecies, time_dual, smpi );
 #endif
         
-        if (sio->dump(EMfields, itime, vecSpecies, smpi, simWindow, params, input_data)) break;
+        if (sio->dump(EMfields, itime, vecSpecies, smpi, simWindow, params)) break;
         
         timer[5].restart();
         if ( simWindow && simWindow->isMoving(time_dual) ) {

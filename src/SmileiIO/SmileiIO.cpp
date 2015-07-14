@@ -16,7 +16,6 @@
 #include "SmileiMPI.h"
 #include "SimWindow.h"
 #include "ElectroMagn.h"
-#include "InputData.h"
 #include "Species.h"
 
 using namespace std;
@@ -317,17 +316,17 @@ void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI*
 #endif
 }
 
-bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWindow, PicParams &params, InputData& input_data) { 
+bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWindow, PicParams &params) { 
     if (signal_received!=0 ||
         (params.dump_step != 0 && (itime % params.dump_step == 0)) ||
         (params.dump_minutes != 0.0 && time_seconds()/60.0 > smpi->getSize()*(params.dump_minutes*(dump_times+1))) ) {
-        dumpAll( EMfields, itime,  vecSpecies, smpi, simWindow, params, input_data);
+        dumpAll( EMfields, itime,  vecSpecies, smpi, simWindow, params);
         if ((signal_received != SIGUSR2) || params.exit_after_dump)	return true;
     }
     return false;
 }
 
-void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin, PicParams &params, InputData& input_data) { 
+void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin, PicParams &params) { 
 	hid_t fid, gid, sid, aid, did, tid;
     
 	ostringstream nameDump("");
@@ -339,10 +338,10 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
 	
 	sid  = H5Screate(H5S_SCALAR);
     tid = H5Tcopy(H5T_C_S1);
-    H5Tset_size(tid, input_data.namelist.size());
+    H5Tset_size(tid, params.namelist.size());
     H5Tset_strpad(tid,H5T_STR_NULLTERM);
     aid = H5Acreate(fid, "Namelist", tid, sid, H5P_DEFAULT, H5P_DEFAULT);
-    H5Awrite(aid, tid, input_data.namelist.c_str());	
+    H5Awrite(aid, tid, params.namelist.c_str());	
     H5Aclose(aid);
     H5Sclose(sid);
     H5Tclose(tid);
@@ -491,7 +490,7 @@ void SmileiIO::dumpMovingWindow(hid_t fid, SimWindow* simWin)
 }
 
 
-void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> &vecSpecies, SmileiMPI* smpi, SimWindow* simWin, PicParams &params, InputData& input_data) { 
+void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> &vecSpecies, SmileiMPI* smpi, SimWindow* simWin, PicParams &params) { 
 	
 	string nameDump("");
 	

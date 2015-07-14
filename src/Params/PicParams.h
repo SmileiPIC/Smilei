@@ -21,6 +21,8 @@
 #include <algorithm>
 #include <iterator>
 
+class SmileiMPI;
+
 // ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each Profile
 // ---------------------------------------------------------------------------------------------------------------------
@@ -143,8 +145,12 @@ class PicParams {
     
 public:
     //! Creator for PicParams
-    PicParams();
-    
+    PicParams(SmileiMPI*, std::vector<std::string>);
+    ~PicParams() {
+        if (Py_IsInitialized())
+            Py_Finalize();
+    }
+
     //! extract profiles
     bool extractProfile         (PyObject *, ProfileStructure &);
     bool extractOneProfile      (std::string, ProfileStructure &, int);
@@ -281,6 +287,21 @@ public:
     
     //! Method to find the numbers of requested species, sorted, and duplicates removed
     std::vector<unsigned int> FindSpecies(std::vector<std::string>);
+    
+    //! string containing the whole clean namelist
+    std::string namelist;
+    
+    //! call the python cleanup function and 
+    //! check if python can be closed (e.g. there is no laser python profile)
+    //! by calling the _keep_python_running python function (part of pycontrol.pyh)
+    void cleanup();
+    
+private:
+    //! init python RTE
+    void initPython(SmileiMPI*, std::vector<std::string>);
+    
+    //! passing named command to python
+    void pyRunScript(std::string command, std::string name=std::string(""));
     
 };
 
