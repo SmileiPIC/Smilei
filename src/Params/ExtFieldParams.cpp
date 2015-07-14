@@ -4,22 +4,22 @@
 
 using namespace std;
 
-ExtFieldParams::ExtFieldParams(PicParams& params, InputData &ifile) :
+ExtFieldParams::ExtFieldParams(PicParams& params) :
 geometry(params.geometry)
 {
 
     // -----------------
     // ExtFields properties
     // -----------------
-    unsigned int numExtFields=ifile.nComponents("ExtField");
+    unsigned int numExtFields=PyTools::nComponents("ExtField");
     for (unsigned int n_extfield = 0; n_extfield < numExtFields; n_extfield++) {
         ExtFieldStructure tmpExtField;
-        if( !ifile.extract("field",tmpExtField.fields,"ExtField",n_extfield)) {
+        if( !PyTools::extract("field",tmpExtField.fields,"ExtField",n_extfield)) {
             ERROR("ExtField #"<<n_extfield<<": parameter 'field' not provided'");
         }
         
         // If profile is a float
-        if( ifile.extract("profile", tmpExtField.profile, "ExtField", n_extfield) ) {
+        if( PyTools::extract("profile", tmpExtField.profile, "ExtField", n_extfield) ) {
             string xyz = "x";
             if(geometry=="2d3v") xyz = "x,y";
             // redefine the profile as a constant function instead of float
@@ -30,7 +30,7 @@ geometry(params.geometry)
             if( !PyRun_SimpleString(command.str().c_str()) ) PyTools::checkPyError();
         }
         // Now import the profile as a python function
-        PyObject *mypy = ifile.extract_py("profile","ExtField",n_extfield);
+        PyObject *mypy = PyTools::extract_py("profile","ExtField",n_extfield);
         if (mypy && PyCallable_Check(mypy)) {
             tmpExtField.py_profile=mypy;
         } else{

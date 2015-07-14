@@ -11,7 +11,6 @@
 #include <vector>
 #include <string>
 
-#include "InputData.h"
 #include "PicParams.h"
 
 class ExtFieldProfile;
@@ -35,7 +34,7 @@ public:
     std::string geometry;
     
     //! Creator for ExtFieldParams
-    ExtFieldParams(PicParams&, InputData &);
+    ExtFieldParams(PicParams&);
 
     //! external fields parameters the key string is the name of the field and the value is a vector of ExtFieldStructure
     std::vector<ExtFieldStructure> structs;

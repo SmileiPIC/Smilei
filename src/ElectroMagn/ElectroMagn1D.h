@@ -10,7 +10,7 @@ class ElectroMagn1D : public ElectroMagn
 {
 public:
     //! Constructor for ElectroMagn1D
-    ElectroMagn1D(PicParams &params, InputData &input_data, SmileiMPI* smpi);
+    ElectroMagn1D(PicParams &params, SmileiMPI* smpi);
 
     //! Destructor for ElectroMagn1D
     ~ElectroMagn1D();

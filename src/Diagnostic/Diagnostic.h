@@ -28,7 +28,7 @@ class Diagnostic {
 
 public:
     //! creator called from main
-    Diagnostic(PicParams&, InputData&, SmileiMPI *smpi);
+    Diagnostic(PicParams&, SmileiMPI *smpi);
     
     //! destructor
     ~Diagnostic(){};
@@ -55,13 +55,13 @@ public:
 	
     std::vector<DiagnosticParticles*> vecDiagnosticParticles;
         
-    void initScalars(PicParams&, InputData&, SmileiMPI *smpi);
+    void initScalars(PicParams&, SmileiMPI *smpi);
     
-    void initProbes(PicParams&, InputData&, SmileiMPI *);
+    void initProbes(PicParams&, SmileiMPI *);
     
-    void initPhases(PicParams&, InputData&, SmileiMPI *);
+    void initPhases(PicParams&, SmileiMPI *);
     
-    void initParticles(PicParams&, InputData&);
+    void initParticles(PicParams&);
     
     //! field dump output
     unsigned int fieldDump_every;

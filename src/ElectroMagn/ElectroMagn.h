@@ -30,7 +30,7 @@ class ElectroMagn
 
 public:
     //! Constructor for Electromagn
-    ElectroMagn( PicParams &params, InputData &input_data, SmileiMPI* smpi );
+    ElectroMagn( PicParams &params, SmileiMPI* smpi );
     
     //! Destructor for Electromagn
     virtual ~ElectroMagn();

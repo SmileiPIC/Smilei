@@ -12,15 +12,12 @@
 using namespace std;
 
 InputData::InputData(SmileiMPI *smpi, std::vector<std::string> namelistsFiles):
-namelist(""),
-py_namelist(NULL)
+namelist("")
 {
-    Py_Initialize();
-    
-    py_namelist = PyImport_AddModule("__main__");
+    if (!Py_IsInitialized()) Py_Initialize();
     
     // here we add the rank, in case some script need it
-    PyModule_AddIntConstant(py_namelist, "smilei_mpi_rank", smpi->getRank());
+    PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_rank", smpi->getRank());
     
     // First, we tell python to filter the ctrl-C kill command (or it would prevent to kill the code execution).
     // This is done separately from other scripts because we don't want it in the concatenated python namelist.
@@ -90,69 +87,6 @@ void InputData::pyRunScript(string command, string name) {
         PyTools::checkPyError();
     }
 }
-
-
-
-//! retrieve python object
-PyObject* InputData::extract_py(string name, string component, int nComponent) {
-//    DEBUG("[" << name << "] [" << component << "]");
-    if (name.find(" ")!= string::npos || component.find(" ")!= string::npos) {
-        WARNING("asking for [" << name << "] [" << component << "] : it has whitespace inside: please fix the code");
-    }
-    PyObject *py_obj=py_namelist;
-    // If component requested
-    if (!component.empty()) {
-        // Get the selected component (e.g. "Species" or "Laser")
-        py_obj = PyObject_GetAttrString(py_namelist,component.c_str());
-        PyTools::checkPyError();
-        // Error if not found
-        if (!py_obj) ERROR("Component "<<component<<" not found in namelist");
-        // If successfully found
-        int len = PyObject_Length(py_obj);
-        if (len > nComponent) {
-            py_obj = PySequence_GetItem(py_obj, nComponent);
-        } else {
-            ERROR("Requested " << component << " #" <<nComponent<< ", but only "<<len<<" available");
-        }
-    }
-    PyObject *py_return=PyObject_GetAttrString(py_obj,name.c_str());
-    PyTools::checkPyError();
-    return py_return;
-
-}
-
-//! retrieve a vector of python objects
-vector<PyObject*> InputData::extract_pyVec(string name, string component, int nComponent) {
-    vector<PyObject*> retvec;
-    PyObject* py_obj = extract_py(name,component,nComponent);
-    if (py_obj) {
-        if (!PyTuple_Check(py_obj) && !PyList_Check(py_obj)) {
-            retvec.push_back(py_obj);
-            WARNING(name << " should be a list or tuple, not a scalar : fix it");
-        } else {
-            PyObject* seq = PySequence_Fast(py_obj, "expected a sequence");
-            int len = PySequence_Size(py_obj);
-            retvec.resize(len);
-            for (int i = 0; i < len; i++) {
-                PyObject* item = PySequence_Fast_GET_ITEM(seq, i);
-                retvec[i]=item;
-            }
-            Py_DECREF(seq);
-        }
-    }
-    PyTools::checkPyError();
-    return retvec;
-}
-
-int InputData::nComponents(std::string componentName) {
-    // Get the selected component (e.g. "Species" or "Laser")
-    PyObject *py_obj = PyObject_GetAttrString(py_namelist,componentName.c_str());
-    PyTools::checkPyError();
-    int retval = PyObject_Length(py_obj);
-    HEREIAM(componentName << " " << retval);
-    return retval;
-}
-
 
 //! run the python functions cleanup (user defined) and _keep_python_running (in pycontrol.py)
 void InputData::cleanup() {

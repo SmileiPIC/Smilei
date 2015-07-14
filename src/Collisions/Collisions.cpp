@@ -76,7 +76,7 @@ Collisions::~Collisions()
 }
 
 // Reads the input file and creates the Collisions objects accordingly
-vector<Collisions*> Collisions::create(PicParams& params, InputData &ifile, vector<Species*>& vecSpecies, SmileiMPI* smpi)
+vector<Collisions*> Collisions::create(PicParams& params, vector<Species*>& vecSpecies, SmileiMPI* smpi)
 {
     vector<Collisions*> vecCollisions;
     
@@ -88,7 +88,7 @@ vector<Collisions*> Collisions::create(PicParams& params, InputData &ifile, vect
     ostringstream mystream;
     
     // Loop over each binary collisions group and parse info
-    unsigned int numcollisions=ifile.nComponents("Collisions");
+    unsigned int numcollisions=PyTools::nComponents("Collisions");
     for (unsigned int n_collisions = 0; n_collisions < numcollisions; n_collisions++) {
         
         MESSAGE("Parameters for collisions #" << n_collisions << " :");
@@ -97,8 +97,8 @@ vector<Collisions*> Collisions::create(PicParams& params, InputData &ifile, vect
         // which are the names of the two species that will collide
         sg1.resize(0);
         sg2.resize(0);
-        ifile.extract("species1",sg1,"Collisions",n_collisions);
-        ifile.extract("species2",sg2,"Collisions",n_collisions);
+        PyTools::extract("species1",sg1,"Collisions",n_collisions);
+        PyTools::extract("species2",sg2,"Collisions",n_collisions);
         
         // Obtain the lists of species numbers from the lists of species names.
         sgroup1 = params.FindSpecies(sg1);
@@ -125,12 +125,12 @@ vector<Collisions*> Collisions::create(PicParams& params, InputData &ifile, vect
         
         // Coulomb logarithm (if negative or unset, then automatically computed)
         clog = 0.; // default
-        ifile.extract("coulomb_log",clog,"Collisions",n_collisions);
+        PyTools::extract("coulomb_log",clog,"Collisions",n_collisions);
         if (clog <= 0.) debye_length_required = true; // auto coulomb log requires debye length
         
         // Number of timesteps between each debug output (if 0 or unset, no debug)
         debug_every = 0; // default
-        ifile.extract("debug_every",debug_every,"Collisions",n_collisions);
+        PyTools::extract("debug_every",debug_every,"Collisions",n_collisions);
         
         // Print collisions parameters
         mystream.str(""); // clear

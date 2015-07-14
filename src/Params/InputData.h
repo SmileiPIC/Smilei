@@ -39,45 +39,15 @@ public:
     //! string containing the whole clean namelist
     std::string namelist;
     
-    //! extract python object from namelist
-    PyObject* extract_py(std::string name, std::string component=std::string(""), int nComponent=0);
-    
-    //! extract pytohn vector of objects from namelist
-    std::vector<PyObject*> extract_pyVec(std::string name, std::string component=std::string(""), int nComponent=0);
-    
-    //! get T from python
-    template< typename T>
-    bool extract(std::string name, T &val, std::string component=std::string(""), int nComponent=0) {
-        PyObject* py_val = extract_py(name,component,nComponent);
-        PyTools::checkPyError();        
-        return PyTools::convert(py_val,val);
-    }
-    
-    //! extract vectors
-    template< typename T>
-    bool extract(std::string name, std::vector<T> &val, std::string component=std::string(""), int nComponent=0) {
-        std::vector<PyObject*> py_val = extract_pyVec(name,component,nComponent);
-        if (py_val.size())
-            return PyTools::convert(py_val,val);
-        return false;
-    }
-    
-    //! return the number of components (see pyinit.py)
-    int nComponents(std::string componentName);
-    
+    //! call the python cleanup function and 
     //! check if python can be closed (e.g. there is no laser python profile)
+    //! by calling the _keep_python_running python function (part of pycontrol.pyh)
     void cleanup();
     
 private:
     //! passing named command to python
     void pyRunScript(std::string command, std::string name=std::string(""));
     
-    // python object: main namelist
-    PyObject* py_namelist;
-    
-    //! print the namelist on stream
-    void write(std::ostream&);
-
 };
 
 #endif

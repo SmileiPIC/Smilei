@@ -8,11 +8,18 @@
 #ifndef PICPARAMS_H
 #define PICPARAMS_H
 
-#include <Python.h>
+#include <PyTools.h>
 #include <vector>
 #include <string>
+#include <cstdlib>
 
-class InputData;
+#include <fstream>
+#include <sstream>
+#include <map>
+#include <iostream>
+#include <ostream>
+#include <algorithm>
+#include <iterator>
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each Profile
@@ -136,18 +143,18 @@ class PicParams {
     
 public:
     //! Creator for PicParams
-    PicParams(InputData &);
+    PicParams();
     
     //! extract profiles
-    bool extractProfile         (InputData &, PyObject *, ProfileStructure &);
-    bool extractOneProfile      (InputData &, std::string, ProfileStructure &, int);
-    void extractVectorOfProfiles(InputData &, std::string, std::vector<ProfileStructure*> &, int);
+    bool extractProfile         (PyObject *, ProfileStructure &);
+    bool extractOneProfile      (std::string, ProfileStructure &, int);
+    void extractVectorOfProfiles(std::string, std::vector<ProfileStructure*> &, int);
     
     //! compute grid-related parameters & apply normalization
     void compute();
     
     //! read species
-    void readSpecies(InputData &);
+    void readSpecies();
     
     //! compute species-related parameters & apply normalization
     void computeSpecies();

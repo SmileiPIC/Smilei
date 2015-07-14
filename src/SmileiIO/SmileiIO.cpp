@@ -16,6 +16,7 @@
 #include "SmileiMPI.h"
 #include "SimWindow.h"
 #include "ElectroMagn.h"
+#include "InputData.h"
 #include "Species.h"
 
 using namespace std;

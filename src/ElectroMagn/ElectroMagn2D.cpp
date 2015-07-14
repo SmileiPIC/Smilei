@@ -20,8 +20,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn2D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn2D::ElectroMagn2D(PicParams &params, InputData &input_data, SmileiMPI* smpi) : 
-ElectroMagn(params, input_data, smpi),
+ElectroMagn2D::ElectroMagn2D(PicParams &params, SmileiMPI* smpi) : 
+ElectroMagn(params, smpi),
 isWestern(smpi->isWestern()),
 isEastern(smpi->isEastern()),
 isSouthern(smpi->isSouthern()),

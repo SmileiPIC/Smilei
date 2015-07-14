@@ -81,7 +81,7 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
         // the master creates the hdf file
         if (smpi->isMaster() ) {
             mystream.str("");
-            mystream << "ParticleDiagnostic" << diagnostic_id << ".h5";
+            mystream << "ParticleDiagnostic" << setfill('0') << setw(2) << diagnostic_id << ".h5";
             fileId = H5Fcreate( mystream.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
             // write all parameters as HDF5 attributes
             string ver(__VERSION);

@@ -77,7 +77,7 @@ int main (int argc, char* argv[])
     InputData input_data(smpiData,namelists);
     
     // Read simulation & diagnostics parameters
-    PicParams params(input_data);
+    PicParams params;
     smpiData->init(params);
     smpiData->barrier();
     if ( smpiData->isMaster() ) params.print();
@@ -91,7 +91,7 @@ int main (int argc, char* argv[])
 
     // Create diagnostics
     TITLE("Creating Diagnostics");
-    Diagnostic Diags(params, input_data, smpi);
+    Diagnostic Diags(params, smpi);
     
     //Create mpi i/o environment
     TITLE("MPI input output environment");
@@ -128,7 +128,7 @@ int main (int argc, char* argv[])
     
     // Initialize the collisions (vector of collisions)
     // ------------------------------------------------------------------------------------
-    vector<Collisions*> vecCollisions = Collisions::create(params, input_data, vecSpecies, smpi);
+    vector<Collisions*> vecCollisions = Collisions::create(params, vecSpecies, smpi);
     
     // ----------------------------------------------------------------------------
     // Define Moving Window & restart
@@ -146,7 +146,7 @@ int main (int argc, char* argv[])
     // ----------------------------------------------------------------------------
     
     // object containing the electromagnetic fields (virtual)
-    ElectroMagn* EMfields = ElectroMagnFactory::create(params, input_data, smpi);
+    ElectroMagn* EMfields = ElectroMagnFactory::create(params, smpi);
     
     // interpolation operator (virtual)
     Interpolator* Interp = InterpolatorFactory::create(params, smpi);

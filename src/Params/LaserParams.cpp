@@ -6,49 +6,49 @@
 
 using namespace std;
 
-LaserParams::LaserParams(PicParams& params, InputData &ifile) {
+LaserParams::LaserParams(PicParams& params) {
 	
     // -----------------
     // Lasers properties
     // -----------------
-    n_laser=ifile.nComponents("Laser");
+    n_laser=PyTools::nComponents("Laser");
     for (unsigned int ilaser = 0; ilaser < n_laser; ilaser++) {
         LaserStructure tmpLaser;
         
         // side from which the laser enters the simulation box (only west/east at the moment)
-        ifile.extract("boxSide",tmpLaser.boxSide,"Laser",ilaser);
+        PyTools::extract("boxSide",tmpLaser.boxSide,"Laser",ilaser);
         if ( (tmpLaser.boxSide!="west") && (tmpLaser.boxSide!="east") ) {
             ERROR("At the moment laser can enter only from West/East sides: boxSide \""
                   << tmpLaser.boxSide << " not defined");
         }
         
         // laser intensity
-        if( !ifile.extract("a0",tmpLaser.a0,"Laser",ilaser)) {
+        if( !PyTools::extract("a0",tmpLaser.a0,"Laser",ilaser)) {
             ERROR("Need parameter 'a0' for the laser");
         }
         
         // laser angular frequency (default=1)
         tmpLaser.omega0=1.0;
-        ifile.extract("omega0",tmpLaser.omega0,"Laser",ilaser);
+        PyTools::extract("omega0",tmpLaser.omega0,"Laser",ilaser);
         
         // laser temporal chirp (default=0)
         tmpLaser.tchirp=0.0;
-        ifile.extract("tchirp",tmpLaser.tchirp,"Laser",ilaser);
+        PyTools::extract("tchirp",tmpLaser.tchirp,"Laser",ilaser);
         
         // laser ellipticity/polarization parameter
-        ifile.extract("delta",tmpLaser.delta,"Laser",ilaser);
+        PyTools::extract("delta",tmpLaser.delta,"Laser",ilaser);
         
         // position of the laser focus
-        tmpLaser.isFocused = ifile.extract("focus",tmpLaser.focus,"Laser",ilaser);
+        tmpLaser.isFocused = PyTools::extract("focus",tmpLaser.focus,"Laser",ilaser);
         
         // incident angle
         tmpLaser.angle = 0.;
-        ifile.extract("angle",tmpLaser.angle ,"Laser",ilaser);
+        PyTools::extract("angle",tmpLaser.angle ,"Laser",ilaser);
         
         // laser time-profile & associated parameters
-        ifile.extract("time_profile",tmpLaser.profile_time.profile ,"Laser",ilaser);
+        PyTools::extract("time_profile",tmpLaser.profile_time.profile ,"Laser",ilaser);
         if (tmpLaser.profile_time.profile.empty()) {
-            PyObject *mypy = ifile.extract_py("time_profile","Laser",ilaser);
+            PyObject *mypy = PyTools::extract_py("time_profile","Laser",ilaser);
             if (mypy && PyCallable_Check(mypy)) {
                 tmpLaser.profile_time.py_profile=mypy;
                 tmpLaser.profile_time.profile="python";
@@ -56,17 +56,17 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
                 ERROR("Laser: time_profile parameter not understood");
             }
         } else {
-            ifile.extract("int_params",tmpLaser.profile_time.int_params ,"Laser",ilaser);
-            ifile.extract("double_params",tmpLaser.profile_time.double_params ,"Laser",ilaser);            
+            PyTools::extract("int_params",tmpLaser.profile_time.int_params ,"Laser",ilaser);
+            PyTools::extract("double_params",tmpLaser.profile_time.double_params ,"Laser",ilaser);            
         }
         
         
         // laser transverse-profile & associated parameters
         if (params.geometry!="1d3v") {  //transv_profile is not define in 1d3v
             
-            ifile.extract("transv_profile",tmpLaser.profile_transv.profile ,"Laser",ilaser);
+            PyTools::extract("transv_profile",tmpLaser.profile_transv.profile ,"Laser",ilaser);
             if (tmpLaser.profile_transv.profile.empty()) {
-                PyObject *mypy = ifile.extract_py("transv_profile","Laser",ilaser);
+                PyObject *mypy = PyTools::extract_py("transv_profile","Laser",ilaser);
                 if (mypy && PyCallable_Check(mypy)) {
                     tmpLaser.profile_transv.py_profile=mypy;
                     tmpLaser.profile_transv.profile="python";
@@ -74,12 +74,12 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
                     ERROR("Laser: transv_profile not defined or not existing");
                 }
             } else {
-                ifile.extract("int_params_transv",tmpLaser.profile_transv.int_params ,"Laser",ilaser);
-                ifile.extract("double_params_transv",tmpLaser.profile_transv.double_params ,"Laser",ilaser);
+                PyTools::extract("int_params_transv",tmpLaser.profile_transv.int_params ,"Laser",ilaser);
+                PyTools::extract("double_params_transv",tmpLaser.profile_transv.double_params ,"Laser",ilaser);
             }
         }//geometry
         
-        bool delayExists = ifile.extract("delay",tmpLaser.delay ,"Laser",ilaser);
+        bool delayExists = PyTools::extract("delay",tmpLaser.delay ,"Laser",ilaser);
         
         // -----------------------------------------------------------------
         // tests on the laser parameters (when arbitrary focus or incidence)
