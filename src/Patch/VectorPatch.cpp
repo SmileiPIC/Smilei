@@ -375,187 +375,42 @@ void VectorPatch::sumRhoJs( int ispec )
 
 void VectorPatch::exchangeE( )
 {
-    return;
-    unsigned int nx_p,nx_d,ny_p,ny_d, h0, oversize[2], n_space[2],gsp[2];
-    double *pt1,*pt2;
-
-    h0 = (*this)(0)->hindex;
-    oversize[0] = (*this)(0)->EMfields->oversize[0];
-    oversize[1] = (*this)(0)->EMfields->oversize[1];
-    n_space[0] = (*this)(0)->EMfields->n_space[0];
-    n_space[1] = (*this)(0)->EMfields->n_space[1];
-    nx_p = n_space[0]+1+2*oversize[0];
-    ny_p = n_space[1]+1+2*oversize[1];
-    nx_d = nx_p+1;
-    ny_d = ny_p+1;
-    gsp[0] = 1+2*oversize[0]; //Ghost size primal
-    gsp[1] = 1+2*oversize[1]; //Ghost size primal
-
-    #pragma omp for schedule(dynamic) private(pt1,pt2)
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-        if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[3]){
-        //The patch on my left belongs to the same MPI process than I.
-	        
-	    
-	    pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->Ex_)((n_space[0])*ny_p);
-	    pt2 = &(*(*this)(ipatch)->EMfields->Ex_)(0);
-	    memcpy( pt2, pt1, ny_p*sizeof(double)); 
-	    memcpy( pt1+gsp[0]*ny_p, pt2+gsp[0]*ny_p, ny_p*sizeof(double)); 
-	    
-
-	    pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->Ey_)((n_space[0]-1)*ny_d);
-           pt2 = &(*(*this)(ipatch)->EMfields->Ey_)(0);
-           memcpy( pt2, pt1, ny_d*sizeof(double)); 
-           memcpy( pt1+gsp[0]*ny_d, pt2+gsp[0]*ny_d, ny_d*sizeof(double)); 
-           
-                    
-	   pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->Ez_)((n_space[0]-1)*ny_p);
-            pt2 = &(*(*this)(ipatch)->EMfields->Ez_)(0);
-            memcpy( pt2, pt1, ny_p*sizeof(double)); 
-            memcpy( pt1+gsp[0]*ny_p, pt2+gsp[0]*ny_p, ny_p*sizeof(double)); 
-        }
-        if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[1]){
-        //The patch below me belongs to the same MPI process than I.
-
-	    pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->Ex_)(n_space[1]-1);
-           pt2 = &(*(*this)(ipatch)->EMfields->Ex_)(0);
-           for (unsigned int i = 0 ; i < nx_d*ny_p ; i += ny_p){
-               pt2[i] = pt1[i] ;
-               pt1[i+gsp[1]] = pt2[i+gsp[1]] ;
-           } 
-	   	   
-           pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->Ey_)(n_space[1]);
-           pt2 = &(*(*this)(ipatch)->EMfields->Ey_)(0);
-           for (unsigned int i = 0 ; i < nx_p*ny_d ; i += ny_d){
-               pt2[i] = pt1[i] ;
-               pt1[i+gsp[1]] = pt2[i+gsp[1]] ;
-	   } 
-
-
-           pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->Ez_)(n_space[1]-1);
-           pt2 = &(*(*this)(ipatch)->EMfields->Ez_)(0);
-           for (unsigned int i = 0 ; i < nx_p*ny_p ; i += ny_p){
-               pt2[i] = pt1[i] ;
-               pt1[i+gsp[1]] = pt2[i+gsp[1]] ;
-           }
-        }
+    Ex_.resize(0);
+    Ey_.resize(0);
+    Ez_.resize(0);
+    for (int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	Ex_.push_back( (*this)(ipatch)->EMfields->Ex_ );
+	Ey_.push_back( (*this)(ipatch)->EMfields->Ey_ );
+	Ez_.push_back( (*this)(ipatch)->EMfields->Ez_ );
     }
-    /*
-    #pragma omp for
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->Ex_ );
-    #pragma omp for
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->Ex_ );
 
-    #pragma omp for
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->Ey_ );
-    #pragma omp for
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->Ey_ );
+    exchange( Ex_ );
+    exchange( Ey_  );
+    //exchange ( Ez_ );
 
-    #pragma omp for
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->Ez_ );
-    #pragma omp for
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->Ez_ );
-    */
+    Ex_.clear();
+    Ey_.clear();
+    Ez_.clear();
 }
 
 void VectorPatch::exchangeB( )
 {
-    unsigned int nx_p,nx_d,ny_p,ny_d, h0, oversize[2], n_space[2],gsp[2];
-    double *pt1,*pt2;
-
-    h0 = (*this)(0)->hindex;
-    oversize[0] = (*this)(0)->EMfields->oversize[0];
-    oversize[1] = (*this)(0)->EMfields->oversize[1];
-    n_space[0] = (*this)(0)->EMfields->n_space[0];
-    n_space[1] = (*this)(0)->EMfields->n_space[1];
-    nx_p = n_space[0]+1+2*oversize[0];
-    ny_p = n_space[1]+1+2*oversize[1];
-    nx_d = nx_p+1;
-    ny_d = ny_p+1;
-    gsp[0] = 1+2*oversize[0]; //Ghost size primal
-    gsp[1] = 1+2*oversize[1]; //Ghost size primal
-
-    #pragma omp for schedule(dynamic) private(pt1,pt2)
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-        if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[3]){
-        //The patch on my left belongs to the same MPI process than I.
-	        
-	    //pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->Bx_)((n_space[0]-1)*ny_d);
-	    //pt2 = &(*(*this)(ipatch)->EMfields->Bx_)(0);
-	    //memcpy( pt2, pt1, ny_d*sizeof(double)); 
-	    //memcpy( pt1+gsp[0]*ny_d, pt2+gsp[0]*ny_d, ny_d*sizeof(double));
-
-	    pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->By_)(n_space[0]*ny_p);
-	    pt2 = &(*(*this)(ipatch)->EMfields->By_)(0);
-	    memcpy( pt2, pt1, ny_p*sizeof(double)); 
-	    memcpy( pt1+gsp[0]*ny_p, pt2+gsp[0]*ny_p, ny_p*sizeof(double)); 
-	              
-                    
-            pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->Bz_)(n_space[0]*ny_d);
-            pt2 = &(*(*this)(ipatch)->EMfields->Bz_)(0);
-            memcpy( pt2, pt1, ny_d*sizeof(double)); 
-            memcpy( pt1+gsp[0]*ny_d, pt2+gsp[0]*ny_d, ny_d*sizeof(double)); 
-        }
-        if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[1]){
-        //The patch below me belongs to the same MPI process than I.
-
-           pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->Bx_)(n_space[1]);
-           pt2 = &(*(*this)(ipatch)->EMfields->Bx_)(0);
-           for (unsigned int i = 0 ; i < nx_p*ny_d ; i += ny_d){
-               pt2[i] = pt1[i] ;
-               pt1[i+gsp[1]] = pt2[i+gsp[1]] ;
-           } 
-	   
-           //pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->By_)(n_space[1]-1);
-           //pt2 = &(*(*this)(ipatch)->EMfields->By_)(0);
-           //for (unsigned int i = 0 ; i < nx_d*ny_p ; i += ny_p){
-           //    pt2[i] = pt1[i] ;
-           //    pt1[i+gsp[1]] = pt2[i+gsp[1]] ;
-	   //}
-
-           pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->Bz_)(n_space[1]);
-           pt2 = &(*(*this)(ipatch)->EMfields->Bz_)(0);
-           for (unsigned int i = 0 ; i < nx_d*ny_d ; i += ny_d){
-               pt2[i] = pt1[i] ;
-               pt1[i+gsp[1]] = pt2[i+gsp[1]] ;
-           }
-        }
+    Bx_.resize(0);
+    By_.resize(0);
+    Bz_.resize(0);
+    for (int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	Bx_.push_back( (*this)(ipatch)->EMfields->Bx_ );
+	By_.push_back( (*this)(ipatch)->EMfields->By_ );
+	Bz_.push_back( (*this)(ipatch)->EMfields->Bz_ );
     }
+    
+    exchange1( Bx_ );
+    exchange0( By_  );
+    exchange ( Bz_ );
 
-
-    #pragma omp for
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->Bx_, 1 );
-    #pragma omp for
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->Bx_,1 );
-
-    #pragma omp for
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->By_, 0 );
-    #pragma omp for
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->By_, 0 );
-
-    #pragma omp for
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->Bz_, 0 );
-    #pragma omp for
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->Bz_, 0 );
-	
-    #pragma omp for
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-	(*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->Bz_, 1 );
-    #pragma omp for
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-	(*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->Bz_, 1 );
+    Bx_.clear();
+    By_.clear();
+    Bz_.clear();
 
 }
 
@@ -902,6 +757,10 @@ void VectorPatch::solvePoisson( PicParams &params, SmileiMPI* smpi )
     }
     MPI_Allreduce(&rnew_dot_rnew_local, &rnew_dot_rnew, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
+    Ap_.resize(0);
+    for (int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	Ap_.push_back( (*this)(ipatch)->EMfields->Ap_ );
+
     // compute control parameter
     double ctrl = rnew_dot_rnew / (double)(nx_p2_global);
 	
@@ -920,40 +779,8 @@ void VectorPatch::solvePoisson( PicParams &params, SmileiMPI* smpi )
 	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) 
 	    (*this)(ipatch)->EMfields->compute_Ap( (*this)(ipatch) );
 
-	// Exchange_Ap
-	unsigned int nx_p, ny_p, h0, oversize[2], n_space[2],gsp[2];
-	double *pt1,*pt2;
-	h0 = (*this)(0)->hindex;
-	oversize[0] = (*this)(0)->EMfields->oversize[0];
-	oversize[1] = (*this)(0)->EMfields->oversize[1];
-	n_space[0] = (*this)(0)->EMfields->n_space[0];
-	n_space[1] = (*this)(0)->EMfields->n_space[1];
-	nx_p = n_space[0]+1+2*oversize[0];
-	ny_p = n_space[1]+1+2*oversize[1];
-	gsp[0] = 2*oversize[0]; //Ghost size primal
-	gsp[1] = 2*oversize[1]; //Ghost size primal
-	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	    if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[3]){
-		pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->Ap_)((n_space[0])*ny_p);
-		pt2 = &(*(*this)(ipatch)->EMfields->Ap_)(0);
-		memcpy( pt2, pt1, ny_p*sizeof(double)); 
-		memcpy( pt1+gsp[0]*ny_p, pt2+gsp[0]*ny_p, ny_p*sizeof(double)); 
-	    }
-	    if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[1]){
-		pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->Ap_)(n_space[1]);
-		pt2 = &(*(*this)(ipatch)->EMfields->Ap_)(0);
-		for (unsigned int i = 0 ; i < nx_p*ny_p ; i += ny_p){
-		    pt2[i] = pt1[i] ;
-		    pt1[i+gsp[1]] = pt2[i+gsp[1]] ;
-		} 
-	    }
-	}
-
-	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-	    (*this)(ipatch)->initExchange( (*this)(ipatch)->EMfields->Ap_ );
-	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-	    (*this)(ipatch)->finalizeExchange( (*this)(ipatch)->EMfields->Ap_ );
-
+	// Exchange Ap_ (intra & extra MPI)
+	exchange( Ap_ );
 
        // scalar product p.Ap
         double p_dot_Ap       = 0.0;
@@ -1004,7 +831,202 @@ void VectorPatch::solvePoisson( PicParams &params, SmileiMPI* smpi )
                     << ", relative error is ctrl = " << 1.0e14*ctrl << " x 1e-14");
     }
 
+    Ap_.clear();
+
+    // ------------------------------------------
+    // Compute the electrostatic fields Ex and Ey
+    // ------------------------------------------
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->EMfields->initE( (*this)(ipatch) );
+
+    exchangeE();
+    //exchange( Ex_ );
+    //exchange( Ey_ );
+    
+    
+    // Centering of the electrostatic fields
+    // -------------------------------------
+    
+    double Ex_WestNorth = 0.0;
+    double Ey_WestNorth = 0.0;
+    double Ex_EastSouth = 0.0;
+    double Ey_EastSouth = 0.0;
+
+    int rank_WestNorth(0), rank_EastSouth(0);
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	// West-North corner
+	if ( ((*this)(ipatch)->isWestern()) && ((*this)(ipatch)->isNorthern()) ) {
+	    Ex_WestNorth = (*this)(ipatch)->EMfields->getEx_WestNorth();
+	    Ey_WestNorth = (*this)(ipatch)->EMfields->getEy_WestNorth();
+	    rank_WestNorth = (*this)(ipatch)->MPI_neighborhood_[4]; 
+	}
+    
+	// East-South corner
+	if ( ((*this)(ipatch)->isEastern() ) && ((*this)(ipatch)->isSouthern()) ) {
+	    Ex_EastSouth = (*this)(ipatch)->EMfields->getEx_EastSouth();
+	    Ey_EastSouth = (*this)(ipatch)->EMfields->getEy_EastSouth();
+	    rank_EastSouth = (*this)(ipatch)->MPI_neighborhood_[4];
+	}
+    }
+
+    MPI_Bcast(&Ex_WestNorth, 1, MPI_DOUBLE, rank_WestNorth, MPI_COMM_WORLD);
+    MPI_Bcast(&Ey_WestNorth, 1, MPI_DOUBLE, rank_WestNorth, MPI_COMM_WORLD);
+
+    MPI_Bcast(&Ex_EastSouth, 1, MPI_DOUBLE, rank_EastSouth, MPI_COMM_WORLD);
+    MPI_Bcast(&Ey_EastSouth, 1, MPI_DOUBLE, rank_EastSouth, MPI_COMM_WORLD);
+    
+
+    vector<double> E_Add(2,0.);
+    E_Add[0] = -0.5*(Ex_WestNorth+Ex_EastSouth);
+    E_Add[1] = -0.5*(Ey_WestNorth+Ey_EastSouth);
+    
+    // Centering electrostatic fields
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->EMfields->centeringE( E_Add );
 
 }
 
 
+void VectorPatch::exchange( std::vector<Field*> fields )
+{
+    unsigned int nx_, ny_, h0, oversize[2], n_space[2],gsp[2];
+    double *pt1,*pt2;
+    h0 = (*this)(0)->hindex;
+
+    oversize[0] = (*this)(0)->EMfields->oversize[0];
+    oversize[1] = (*this)(0)->EMfields->oversize[1];
+
+    n_space[0] = (*this)(0)->EMfields->n_space[0];
+    n_space[1] = (*this)(0)->EMfields->n_space[1];
+
+    nx_ = fields[0]->dims_[0];
+    ny_ = fields[0]->dims_[1];
+
+    gsp[0] = 2*oversize[0]+fields[0]->isDual_[0]; //Ghost size primal
+    gsp[1] = 2*oversize[1]+fields[0]->isDual_[1]; //Ghost size primal
+
+    #pragma omp for schedule(dynamic) private(pt1,pt2)
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+
+	if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[3]){
+	    pt1 = &(*fields[(*this)(ipatch)->patch_neighborhood_[3]-h0])((n_space[0])*ny_);
+	    pt2 = &(*fields[ipatch])(0);
+	    memcpy( pt2, pt1, ny_*sizeof(double)); 
+	    memcpy( pt1+gsp[0]*ny_, pt2+gsp[0]*ny_, ny_*sizeof(double)); 
+	} // End if ( MPI_neighborhood_[4] == MPI_neighborhood_[3] ) 
+
+	if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[1]){
+	    pt1 = &(*fields[(*this)(ipatch)->patch_neighborhood_[1]-h0])(n_space[1]);
+	    pt2 = &(*fields[ipatch])(0);
+	    for (unsigned int i = 0 ; i < nx_*ny_ ; i += ny_){
+		pt2[i] = pt1[i] ;
+		pt1[i+gsp[1]] = pt2[i+gsp[1]] ;
+	    } 
+	} // End if ( MPI_neighborhood_[4] == MPI_neighborhood_[1] ) 
+
+    } // End for( ipatch )
+
+    #pragma omp for
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->initExchange( fields[ipatch], 0 );
+
+    #pragma omp for
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->finalizeExchange( fields[ipatch], 0 );
+
+
+    #pragma omp for
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->initExchange( fields[ipatch], 1 );
+
+    #pragma omp for
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->finalizeExchange( fields[ipatch], 1 );
+
+
+}
+
+void VectorPatch::exchange0( std::vector<Field*> fields )
+{
+    unsigned int nx_, ny_, h0, oversize[2], n_space[2],gsp[2];
+    double *pt1,*pt2;
+    h0 = (*this)(0)->hindex;
+
+    oversize[0] = (*this)(0)->EMfields->oversize[0];
+    oversize[1] = (*this)(0)->EMfields->oversize[1];
+
+    n_space[0] = (*this)(0)->EMfields->n_space[0];
+    n_space[1] = (*this)(0)->EMfields->n_space[1];
+
+    nx_ = fields[0]->dims_[0];
+    ny_ = fields[0]->dims_[1];
+
+    gsp[0] = 2*oversize[0]+fields[0]->isDual_[0]; //Ghost size primal
+    gsp[1] = 2*oversize[1]+fields[0]->isDual_[1]; //Ghost size primal
+
+    #pragma omp for schedule(dynamic) private(pt1,pt2)
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+
+	if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[3]){
+	    pt1 = &(*fields[(*this)(ipatch)->patch_neighborhood_[3]-h0])((n_space[0])*ny_);
+	    pt2 = &(*fields[ipatch])(0);
+	    memcpy( pt2, pt1, ny_*sizeof(double)); 
+	    memcpy( pt1+gsp[0]*ny_, pt2+gsp[0]*ny_, ny_*sizeof(double)); 
+	} // End if ( MPI_neighborhood_[4] == MPI_neighborhood_[3] ) 
+
+
+    } // End for( ipatch )
+
+    #pragma omp for
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->initExchange( fields[ipatch], 0 );
+
+    #pragma omp for
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->finalizeExchange( fields[ipatch], 0 );
+
+
+}
+
+void VectorPatch::exchange1( std::vector<Field*> fields )
+{
+    unsigned int nx_, ny_, h0, oversize[2], n_space[2],gsp[2];
+    double *pt1,*pt2;
+    h0 = (*this)(0)->hindex;
+
+    oversize[0] = (*this)(0)->EMfields->oversize[0];
+    oversize[1] = (*this)(0)->EMfields->oversize[1];
+
+    n_space[0] = (*this)(0)->EMfields->n_space[0];
+    n_space[1] = (*this)(0)->EMfields->n_space[1];
+
+    nx_ = fields[0]->dims_[0];
+    ny_ = fields[0]->dims_[1];
+
+    gsp[0] = 2*oversize[0]+fields[0]->isDual_[0]; //Ghost size primal
+    gsp[1] = 2*oversize[1]+fields[0]->isDual_[1]; //Ghost size primal
+
+    #pragma omp for schedule(dynamic) private(pt1,pt2)
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+
+	if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[1]){
+	    pt1 = &(*fields[(*this)(ipatch)->patch_neighborhood_[1]-h0])(n_space[1]);
+	    pt2 = &(*fields[ipatch])(0);
+	    for (unsigned int i = 0 ; i < nx_*ny_ ; i += ny_){
+		pt2[i] = pt1[i] ;
+		pt1[i+gsp[1]] = pt2[i+gsp[1]] ;
+	    } 
+	} // End if ( MPI_neighborhood_[4] == MPI_neighborhood_[1] ) 
+
+    } // End for( ipatch )
+
+    #pragma omp for
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->initExchange( fields[ipatch], 1 );
+
+    #pragma omp for
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->finalizeExchange( fields[ipatch], 1 );
+
+
+}

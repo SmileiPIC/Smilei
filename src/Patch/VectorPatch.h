@@ -21,6 +21,7 @@
 
 class Diagnostic;
 class DiagnosticScalar;
+class Field;
 
 //! Class Patch : sub MPI domain 
 //!     Collection of patch = MPI domain
@@ -58,6 +59,10 @@ class VectorPatch {
 
     void solvePoisson( PicParams &params, SmileiMPI* smpi );
 
+    void exchange( std::vector<Field*> fields );
+    void exchange0( std::vector<Field*> fields );
+    void exchange1( std::vector<Field*> fields );
+
 
     void clear() {patches_.clear();}
 
@@ -70,6 +75,14 @@ class VectorPatch {
  private :
     // 1st patch index of patches_ (stored for balancing op)
     int refHindex_;
+
+    std::vector<Field*> Ap_;
+    std::vector<Field*> Bx_;
+    std::vector<Field*> By_;
+    std::vector<Field*> Bz_;
+    std::vector<Field*> Ex_;
+    std::vector<Field*> Ey_;
+    std::vector<Field*> Ez_;
 };
 
 

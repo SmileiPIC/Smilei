@@ -2,7 +2,8 @@
 #define ELECTROMAGN2D_H
 
 #include "ElectroMagn.h"
-
+#include "Field.h"
+#include "Field2D.h"
 class PicParams;
 
 //! class ElectroMagn2D containing all information on the electromagnetic fields & currents for 2d3v simulations
@@ -28,6 +29,13 @@ public:
     double compute_pAp();
     void update_pand_r(double r_dot_r, double p_dot_Ap);
     void update_p(double rnew_dot_rnew, double r_dot_r);
+    void initE(Patch *patch);
+    void centeringE( std::vector<double> E_Add );
+
+    double getEx_WestNorth() { return (*Ex_)(0,ny_p-1); }
+    double getEy_WestNorth() { return (*Ey_)(0,ny_d-1); }
+    double getEx_EastSouth() { return (*Ex_)(nx_d-1,0); }
+    double getEy_EastSouth() { return (*Ey_)(nx_p-1,0); }
 
     // --------------------------------------
     //  --------- PATCH IN PROGRESS ---------

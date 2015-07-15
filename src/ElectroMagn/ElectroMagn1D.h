@@ -31,6 +31,14 @@ public:
     double compute_pAp() {return 0.;};
     void update_pand_r(double r_dot_r, double p_dot_Ap) {};
     void update_p(double rnew_dot_rnew, double r_dot_r) {};
+    void initE(Patch *patch) {};
+    void centeringE( std::vector<double> E_Add ) {};
+
+    double getEx_WestNorth() { return 0.; }
+    double getEy_WestNorth() { return 0.; }
+    double getEx_EastSouth() { return 0.; }
+    double getEy_EastSouth() { return 0.; }
+
     // --------------------------------------
     //  --------- PATCH IN PROGRESS ---------
     // --------------------------------------
