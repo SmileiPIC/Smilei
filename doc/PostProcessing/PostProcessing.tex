@@ -18,435 +18,24 @@
 
 \begin{document}
 
-\title{Diagnostics in SMILEI}
-\author{F. P\'erez}
+\title{Post-processing SMILEI diagnostics}
 \maketitle
-
-\setcounter{tocdepth}{2}
-\tableofcontents
-
-\clearpage
-
-
-%%%%%%%%%%%%%%%%%%% SCALARS
-\section{Scalars\label{sec:scalars}}
-
-SMILEI can collect various scalar data, such as total particle energy, total field energy, etc.
-This is done if the following block is included in the input file.
-
-\begin{lstlisting}
-Scalar( every     = <>\val{every}<>,
-	<>\blue{tmin      = \val{tmin}}<>,
-	<>\blue{tmax      = \val{tmax}}<>,
-	<>\blue{precision = \val{precision}}<> )
-\end{lstlisting}
-\vspace{-1em}
-\begin{itemize}
-\item\val{every} is the number of timesteps between each output.
-\item\val{tmin} and \val{tmax} (\blue{optional}) are the min and max times that will be used.
-\item\val{precision} (\blue{optional}) is the number of digits of the outputs. Default = 10.
-\end{itemize}
 \vfill
-In the input file, you may add the following block as a reminder.
-\begin{lstlisting}
-# DIAGNOSTICS ON SCALARS
-# every = integer, number of time-steps between each output
-# tmin and tmax = floats, min and max times that will be used
-# precision = integer, number of digits of the outputs. Default = 10
-\end{lstlisting}
-\vfill
-The full list of scalars is:\\
-\vspace{-0.7em}
-
-\begin{tabularx}{\textwidth}{X r | l X}
-&	 & {\bf Global energies}& \\
-&Utot & Total energy& \\
-&Ukin&  Total kinetic energy in the particles&\\
-&Uelm& Total electromagnetic energy in the EM-fields&\\
-&Uexp& Expected value for the total energy (Initial energy in the box $\pm$ energy lost or gained)&\\
-&Ubal& Energy balance (Total energy - Expected energy)&\\
-&Ubal\_norm& Normalized energy balance (${\rm Ubal/Utot}$)&\\
-& & & \\
-&	 & {\bf Energies lost/gained at boundaries \& due to moving window}& \\
-&Ukin\_bnd& Kinetic energy exchanged at the boundaries during the timestep &\\
-&Uelm\_bnd& Electromagneticenergy exchanged at the boundaries during the timestep &\\
-&Ukin\_out\_mvw& Kinetic energy lost during the timestep due to the moving window&\\
-&Ukin\_inj\_mvw& Kinetic energy injected during the timestep due to the moving window&\\
-&Uelm\_out\_mvw& Electromagnetic energy lost during the timestep due to the moving window&\\
-&Uelm\_inj\_mvw& Electromagnetic energy injected during the timestep due to the moving window&\\
-& & & \\
-&	 & {\bf Energies lost/gained at boundaries \& due to moving window}& \\
-& Ebal\_norm & Ebalance $/$ Etot &\\
-& Ebalance & Current energy $-$ initial total energy&\\
-& Elost & Lost particle energy during last timestep &\\
-& Poynting & Accumulated Poyting flux through all boundaries&\\
-& & & \\
-& Z\_abc & Average charge of species "abc" &\\
-& E\_abc & ... their kinetic energy &\\
-& N\_abc & ... and number of particles &\\
-& & & \\
-& Ex\_U & $\int E_x^2 dV /2$ & \\
-& & ... and similar for fields Ey, Ez, Bx\_m, By\_m and Bz\_m & \\
-& & & \\
-& ExMin & Minimum of $E_x$ & \\
-& ExMinCell &  ... and its location (cell index) & \\
-& ExMax & Maximum of $E_x$ & \\
-& ExMaxCell &  ... and its location (cell index) & \\
-& & ... and same things for fields Ey, Ez, Bx\_m, By\_m, Bz\_m, Jx, Jy, Jz and Rho & \\
-& & & \\
-& PoyEast & Accumulated Poynting flux through eastern boundary & \\
-& PoyEastInst & Current Poynting flux through eastern boundary & \\
-& & ... and same things for boundaries West, South, North, Bottom, Top &\\
-\end{tabularx}
-\vfill
-
-\clearpage
-
-
-%%%%%%%%%%%%%%%%%%% FIELDS
-\section{Fields\label{sec:fields}}
-
-SMILEI can collect various field data (electric fields, magnetic fields, currents and density)
-taken at the location of the PIC grid, both as instantaneous values and averaged values.
-This is done if the following instructions are included in the input file.
-\begin{lstlisting}
-fieldDump_every    = <>\val{every}<>
-avgfieldDump_every = <>\val{every\_avg}<>
-ntime_step_avg     = <>\val{t\_avg}<>
-\end{lstlisting}
-where
-\begin{itemize}
-\item \val{every} is the number of timesteps between each output of the instantaneous fields.
-\item \val{every\_avg} is the number of timesteps between each output of the time-averaged fields.
-\item \val{t\_avg} is the number of timesteps for time-averaging.
-\end{itemize}
-\vspace{1cm}
-The full list of fields is:\\
-
-\begin{tabularx}{\textwidth}{X r | l X}
-& Bx\_m &  & \\
-& By\_m &  Components of the magnetic field & \\
-& Bz\_m &  & \\
-& & & \\
-& Ex &  & \\
-& Ey & Components of the electric field & \\
-& Ez &  & \\
-& & & \\
-& Jx &  & \\
-& Jy & Components of the total current & \\
-& Jz &  & \\
-& & & \\
-& Jx\_abc &  & \\
-& Jy\_abc & Components of the current due to species "abc" & \\
-& Jz\_abc &  & \\
-& & & \\
-& Rho & Total density & \\
-& Rho\_abc & Density of species "abc" & \\
-\end{tabularx}
-
-\clearpage
-
-
-%%%%%%%%%%%%%%%%%%% PROBES
-\section{Probes\label{sec:probes}}
-
-The fields from the previous section are taken at the PIC grid locations, but it is also possible to obtain
-the fields at arbitrary locations. These are called \textit{probes}.
-
-The probes interpolate the fields at either one point (0-D), several points arranged in a line (1-D) or several points arranged in a mesh (2-D).
-
-To add one probe diagnostic in the input file, there are several cases:\\
-For only one point (zero-dimensional probe)
-\begin{lstlisting}
-DiagProbe(
-    every      = <>\val{every}<>,
-    pos        = [<>\val{x0}, \blue{\val{y0}, \val{z0}}<>]
-)
-\end{lstlisting}
-where
-\begin{itemize}
-\item \val{every} is the number of timesteps between each output.
-\item \val{x0}, \val{y0}, \val{z0} is the position of the point where to interpolate the fields.\\
-\textbf{Note that \val{y0} (or \val{z0}) should only be used in the case of a 2-D (or 3-D) simulation.}
-\end{itemize}
-
-For a series of points arranged in a line (one-dimensional probe)
-\begin{lstlisting}
-DiagProbe(
-    every      = <>\val{every}<>,
-    pos        = [<>\val{x0}, \blue{\val{y0}, \val{z0}}<>],
-    pos_first  = [<>\val{x1}, \blue{\val{y1}, \val{z1}}<>],
-    number     = [<>\val{n1}<>]
-)
-\end{lstlisting}
-where
-\begin{itemize}
-\item \val{x0}, \val{y0}, \val{z0} is the position of the starting point of the line.
-\item \val{x1}, \val{y1}, \val{z1} is the position of the ending point of the line.
-\item \val{n1} is the number of points along this line.
-\end{itemize}
-
-For a series of points arranged in a mesh (two-dimensional probe)
-\begin{lstlisting}
-DiagProbe(
-    every      = <>\val{every}<>,
-    pos        = [<>\val{x0}, \blue{\val{y0}, \val{z0}}<>],
-    pos_first  = [<>\val{x1}, \blue{\val{y1}, \val{z1}}<>],
-    pos_second = [<>\val{x2}, \blue{\val{y2}, \val{z2}}<>],
-    number     = [<>\val{n1}, \val{n2}<>]
-)
-\end{lstlisting}
-In this case, the three points define three vertices of a paralellogram.
-
-\subsection*{Notes}
-\begin{itemize}
-\item Probes only output the electromagnetic fields, the total current and the total density.
-\item The dimension of the probe is decided only by the instruction \code{number}: without it, the probe is 0-D, with \code{number = [\val{n1}]}, the probe is 1-D, and with \code{number =  [\val{n1}, \val{n2}]}, the probe is 2-D.
-\item You can have several probes in the input file.
-\end{itemize}
-
-
-\subsection*{Examples of probe diagnostics}
-
-0-D probe in 1-D simulation
-\begin{lstlisting}
-DiagProbe(
-    every = 1,
-    pos   = [1.2]
-)
-\end{lstlisting}
-
-1-D probe in 1-D simulation
-\begin{lstlisting}
-DiagProbe(
-    every = 1,
-    pos       = [1.2],
-    pos_first = [5.6],
-    number    = [100]
-)
-\end{lstlisting}
-
-1-D probe in 2-D simulation
-\begin{lstlisting}
-DiagProbe(
-    every = 1,
-    pos       = [1.2,  4.],
-    pos_first = [5.6,  4.],
-    number    = [100]
-)
-\end{lstlisting}
-
-2-D probe in 2-D simulation
-\begin{lstlisting}
-DiagProbe(
-    every = 1,
-    pos        = [0. ,   0.],
-    pos_first  = [10. ,  0.],
-    pos_second = [0.,    10.],
-    number     = [100,   100]
-)
-\end{lstlisting}
-
-\clearpage
-
-
-
-%%%%%%%%%%%%%%%%%%% PARTICLE DIAGNOSTICS
-\section{Particle diagnostics}
-
-A \textit{particle diagnostic} can collect data from the macro-particles and processes them during runtime.
-It does \underline{not} provide information on individual particles: instead, it produces \underline{averaged quantities}
-like the particle density, currents, etc.\\
-\\
-The data may be collected from one or several particle species.\\
-\\
-The data is discretized inside a ``grid'' chosen by the user. This grid may be of any dimension.\\
-Examples:
-\begin{itemize}
-\item 1-dimensional grid along the position $x$ (gives density variation along $x$)
-\item 2-dimensional grid along positions $x$ and $y$ (gives density map)
-\item 1-dimensional grid along the velocity $v_x$ (gives the velocity distribution)
-\item 2-dimensional grid along position $x$ and momentum $p_x$ (gives the phase-space)
-\item 1-dimensional grid along the kinetic energy $E_\mathrm{kin}$ (gives the energy distribution)
-\item 3-dimensional grid along $x$, $y$ and $E_\mathrm{kin}$ (gives the density map for several energies)
-\item 1-dimensional grid along the charge $Z^\star$ (gives the charge distribution)
-\end{itemize}
-Each dimension of the grid is called ``axis".\\
-\\
-The user may choose to average the data over several time-steps.\\
-\\
-In the input file, you can add a particle diagnostic with the following block.
-
-\begin{lstlisting}
-DiagParticles(
-	output = <>\val{output}<>,
-	every = <>\val{every}<>,
-	time_average = <>\val{time\_average}<>,
-	species = [<>\val{species1, \blue{species2, ...}}<>],
-	axes = [
-		<>[\val{type, min, max, nsteps,} \blue{"logscale", "edge\_inclusive"}]<>,
-		<>\blue{[\val{type, min, max, nsteps,} "logscale", "edge\_inclusive"]}<>,
-		<>\blue{...}<>
-	]
-)
-\end{lstlisting}
-
-\begin{itemize}
-\item \val{output} is a string: \code{"density"}, \code{"charge\_density"}, \code{"current\_density\_x"},\\
-	\code{"current\_density\_y"}, \code{"current\_density\_z"}, \code{"p\_density"}, \code{"px\_density"}, \code{"py\_density"}\\
-	 or \code{"pz\_density"}.\\
-	It determines the data that is summed in each cell of the grid.\\
-	In the case of \code{"density"}, the \textit{weights} are summed.\\
-	In the case of \code{"charge\_density"}, the \textit{weights}$\times$\textit{charge} are summed.\\
-	In the case of \code{"current\_density\_x"}, the \textit{weights}$\times$\textit{charge}$\times v_x$ are summed (etc.).\\
-	In the case of \code{"p\_density"}, the \textit{weights}$\times p$ are summed (etc.)
-\item \val{every} is a positive integer: the number of time-steps between each output.
-\item \val{time\_average} is a positive integer: the number of time-steps during which the data is averaged before output.
-\item \val{species1, species2, ...} is a list of strings: the names of one or several species.
-	Species are recognized by their parameter \code{species\_type} that is included
-	in each group \code{Species( ... )}\\
-\item \code{axes} is a list of "axes".\\
-	Syntax of one axis: \code{[\val{type, min, max, nsteps,} \blue{"logscale", "edge\_inclusive"}]}\\
-	\val{type} is one of \code{"x"}, \code{"y"}, \code{"z"}, \code{"px"}, \code{"py"}, \code{"pz"}, \code{"p"}, 
-	 \code{"gamma"}, \code{"ekin"}, \code{"vx"}, \code{"vy"}, \code{"vz"}, \code{"v"} or \code{"charge"}.\\
-	The axis is discretized for \val{type} from \val{min} to \val{max} in \val{nsteps} bins.\\
-	The \blue{optional} keyword \code{logscale} sets the axis scale to logarithmic instead of linear.\\
-	The \blue{optional} keyword \code{edge\_inclusive} includes the particles outside the range [\val{min},  \val{max}]
-	into the extrema bins.\\ \\
-\end{itemize}
-There may be as many axes as wanted in one \code{DiagParticles( ... )} block.\\
-\\
-\\
-There may be as many \code{DiagParticles( ... )} blocks as wanted in the input file.\\
-\\
-\\
-
-In the input file, you may add the following block as a reminder.
-
-\begin{lstlisting}
-# DIAGNOSTICS ON PARTICLES - project the particles on a N-D arbitrary grid
-# ------------------------------------------------------------------------
-# output       = string: "density", "charge_density" or "current_density_[xyz]"
-#                parameter that describes what quantity is obtained 
-# every        = integer > 0: number of time-steps between each output
-# time_average = integer > 0: number of time-steps to average
-# species      = list of strings, one or several species whose data will be used
-# axes         = list of axes
-# Each axis is a list: [_type_,_min_,_max_,_nsteps_,"logscale","edge_inclusive"]
-#   _type_ is a string, one of the following options:
-#      x, y, z, px, py, pz, p, gamma, ekin, vx, vy, vz, v or charge
-#   The data is discretized for _type_ between _min_ and _max_, in _nsteps_ bins
-#   The optional "logscale" sets the scale to logarithmic
-#   The optional "edge_inclusive" forces the particles that are outside (_min_,_max_)
-#     to be counted in the extrema bins
-#   Example : axes = [["x", 0., 1., 30]]
-#   Example : axes =[["px", -1., 1., 100, "edge_inclusive"]]
-\end{lstlisting}
-
-
-\clearpage
-\subsection*{Examples of particle diagnostics}
-
-Variation of the density of species \code{electron1} from $x=0$ to 1, every 5 time-steps, without time-averaging.
-\begin{lstlisting}
-DiagParticles(
-	output = "density",
-	every = 5,
-	time_average = 1,
-	species = ["electron1"],
-	axes = [ ["x",    0.,    1.,    30] ]
-)
-\end{lstlisting}
-
-Density map from $x=0$ to 1, $y=0$ to 1.
-\begin{lstlisting}
-DiagParticles(
-	output = "density",
-	every = 5,
-	time_average = 1,
-	species = ["electron1"],
-	axes = [ ["x",    0.,    1.,    30],
-	         ["y",    0.,    1.,    30] ]
-)
-\end{lstlisting}
-
-Velocity distribution from $v_x = -0.1$ to $0.1$.
-\begin{lstlisting}
-DiagParticles(
-	output = "density",
-	every = 5,
-	time_average = 1,
-	species = ["electron1"],
-	axes = [ ["vx",   -0.1,    0.1,    100] ]
-)
-\end{lstlisting}
-
-Phase space from $x=0$ to 1 and from $px=-1$ to 1.
-\begin{lstlisting}
-DiagParticles(
-	output = "density",
-	every = 5,
-	time_average = 1,
-	species = ["electron1"],
-	axes = [ ["x",    0.,    1.,    30],
-	         ["px",   -1.,   1.,    100] ]
-)
-\end{lstlisting}
-
-Energy distribution from 0.01 to 1 MeV in logarithmic scale.
-Note that the input units are $m_ec^2 \sim 0.5$ MeV.
-\begin{lstlisting}
-DiagParticles(
-	output = "density",
-	every = 5,
-	time_average = 1,
-	species = ["electron1"],
-	axes = [ ["ekin",    0.02,    2.,   100, "logscale"] ]
-)
-\end{lstlisting}
-\clearpage
-
-$x$-$y$ density maps for three bands of energy: $[0,1]$, $[1,2]$, $[2,\infty]$.
-Note the use of \code{edge\_inclusive} to reach energies up to $\infty$.
-\begin{lstlisting}
-DiagParticles(
-	output = "density",
-	every = 5,
-	time_average = 1,
-	species = ["electron1"],
-	axes = [ ["x",    0.,    1.,    30],
-	         ["y",    0.,    1.,    30],
-	         ["ekin", 0.,    6.,    3,  "edge_inclusive"] ]
-)
-\end{lstlisting}
-
-Charge distribution from $Z^\star =0$ to 10.
-\begin{lstlisting}
-DiagParticles(
-	output = "density",
-	every = 5,
-	time_average = 1,
-	species = ["electron1"],
-	axes = [ ["charge",    -0.5,   10.5,   11] ]
-)
-\end{lstlisting}
-
-
-\clearpage
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{How to view and post-process diagnostics}
-
-A python script \textit{Diagnostics.py} is provided to view or extract data from all the diagnostics discussed above.
+A python script \textit{Diagnostics.py} is provided to view or extract data from all the diagnostics.
 To run this script, you will need \textit{python2.7} with the following packages: numpy, matplotlib, pylab, h5py.
 \\*
 
 First, run python and include the script: \code{python -i scripts/Diagnostics.py}\\*
 Alternately, include this file into your own script: \code{execfile("scripts/Diagnostics.py")}
-\vspace{0.5cm}
 
-\subsection{To select the simulation that you want to analyse}
+
+\vfill
+\setcounter{tocdepth}{1}
+\tableofcontents
+\vfill
+\clearpage
+
+\section{To select the simulation that you want to analyse}
 
 \begin{lstlisting}
 Smilei(results_path)
@@ -455,12 +44,11 @@ Smilei(results_path)
 \begin{itemize}
 \item \code{results\_path} = \code{\_string\_}\\*
 	Path to the directory where the results of the simulation are stored.\\*
-	(Also, this has to contain one and only one input file *.in)
 \end{itemize}
 
 You can store this to a variable for later, for instance: \code{S = Smilei("path/to/my/results")}.
 
-\subsection{To prepare a scalar diagnostic}
+\section{To prepare a scalar diagnostic}
 
 \begin{lstlisting}
 Smilei(...).Scalar(scalar=None, timesteps=None, units="code", data_log=False)
@@ -469,7 +57,7 @@ Smilei(...).Scalar(scalar=None, timesteps=None, units="code", data_log=False)
 \begin{itemize}
 \item \code{scalar} = \code{\_string\_} (optional)\\*
 	If not given, then a list of available scalars is printed.\\*
-	If \code{\_string\_}: name of the scalar (see available scalars in section \ref{sec:scalars}).\\*
+	If \code{\_string\_}: name of the scalar.\\*
 
 \item \code{timesteps} =  \code{\_int\_ }          (optional)\\*
 	\code{timesteps} = \code{[\_int\_, \_int\_]}   (optional)\\*
@@ -486,7 +74,7 @@ Smilei(...).Scalar(scalar=None, timesteps=None, units="code", data_log=False)
 \end{itemize}
 \vspace{0.5cm}
 
-\subsection{To prepare a field diagnostic}
+\section{To prepare a field diagnostic}
 
 \begin{lstlisting}
 Smilei(...).Field(field=None, timesteps=None, slice=None, units="code", data_log=False)
@@ -496,7 +84,7 @@ Smilei(...).Field(field=None, timesteps=None, slice=None, units="code", data_log
 \item \code{results\_path}, \code{timesteps}, \code{units}, \code{data\_log}: same as before.
 \item \code{field} = \code{\_string\_} (optional)\\*
 	If not given, then a list of available fields is printed.\\*
-	If \code{\_string\_}: name of the field (see available fields in section \ref{sec:fields}).\\*
+	If \code{\_string\_}: name of the field.\\*
 	The string can also be an operation between several fields, such as \code{"Jx+Jy"}.
 \item \code{slice} = \code{\{ \val{axis} : "all", ... \}}                 (optional)\\*
 	\code{slice} = \code{\{ \val{axis} : \_double\_, ... \}}              (optional)\\*
@@ -512,7 +100,7 @@ Smilei(...).Field(field=None, timesteps=None, slice=None, units="code", data_log
 \vspace{0.5cm}
 
 
-\subsection{To prepare a probe diagnostic}
+\section{To prepare a probe diagnostic}
 
 \begin{lstlisting}
 Smilei(...).Probe(probeNumber=None, field=None, timesteps=None, slice=None,
@@ -534,7 +122,7 @@ Smilei(...).Probe(probeNumber=None, field=None, timesteps=None, slice=None,
 \vspace{0.5cm}
 
 
-\subsection{To prepare a particle diagnostic}
+\section{To prepare a particle diagnostic}
 
 \begin{lstlisting}
 Smilei(...).ParticleDiagnostic(diagNumber=None, timesteps=None, slice=None,
@@ -574,7 +162,7 @@ This feature is very useful as you can make any type of operation, as long as th
 and the same timesteps.\\
 
 
-\subsection{To obtain the data as an array:}
+\section{To obtain the data as an array:}
 The method \code{getData} returns a list of the data arrays (for each timestep requested).
 \begin{lstlisting}
 Smilei(...).Scalar(...).getData()
@@ -613,7 +201,7 @@ The results are stored in the variable \code{result}.\\*
 The data can be accessed with \code{result["data"]}.\\*
 If one of the axes is \val{x}, you can access the locations of the bins with \code{result["x"]}.\\* \\*
 
-\subsection{To plot the data}
+\section{To plot the data}
 Use the method \code{plot} to display the data. New arguments are available to modify some plot options.
 \begin{lstlisting}
 Smilei(...).Scalar            ( ... , figure=1, vmin=None, vmax=None,
@@ -655,7 +243,7 @@ This will take the particle diagnostic \#1 and plot the resulting array in figur
 \clearpage
 
 
-\subsection{To simultaneously plot multiple diagnostics in the same figure}
+\section{To simultaneously plot multiple diagnostics in the same figure}
 \begin{lstlisting}
 multiPlot(diag1, diag2, ... , figure=1, shape=None)
 \end{lstlisting}
@@ -685,7 +273,7 @@ multiPlot(diag1, diag2, ... , figure=1, shape=None)
 This will plot the diagnostics \#0 and \#1 on the same figure, and make an animation for all available timesteps.
 
 
-\subsection{Advanced plotting options}
+\section{Advanced plotting options}
 In addition to \code{figure}, \code{vmin}, \code{vmax}, \code{xmin}, \code{xmax}, \code{ymin} and \code{ymax}, there are many more optional arguments. They are directly passed to the \textit{matplotlib} package.
 \begin{itemize}
 \item Options for the figure: \code{figsize},\code{dpi},\code{facecolor},\code{edgecolor}\\
@@ -714,7 +302,7 @@ To choose a gray colormap of the image, use \code{cmap="gray"}.
 Many colormaps are available from the \textit{matplotlib} package. With \code{cmap=""}, you will get a list of available colormaps.
 
 
-\subsection{Updating the plotting options}
+\section{Updating the plotting options}
 
 You can change the plotting parameters using the \code{A.plot()} or the \code{A.set()} functions.\\
 \textbf{Example:}
@@ -727,7 +315,7 @@ You can change the plotting parameters using the \code{A.plot()} or the \code{A.
 \end{lstlisting}
 
 
-\subsection{Alternative syntax}
+\section{Alternative syntax}
 
 Instead of \code{S = Smilei("path/to/my/results")}, you can directly choose which simulation you would like to use
 by specifying the \code{results\_path} parameter as the first argument when calling a diagnostic.\\
