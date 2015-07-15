@@ -62,6 +62,7 @@ class VectorPatch {
     void exchange( std::vector<Field*> fields );
     void exchange0( std::vector<Field*> fields );
     void exchange1( std::vector<Field*> fields );
+    void sum( std::vector<Field*> fields );
 
 
     void clear() {patches_.clear();}
@@ -83,6 +84,12 @@ class VectorPatch {
     std::vector<Field*> Ex_;
     std::vector<Field*> Ey_;
     std::vector<Field*> Ez_;
+
+    std::vector<Field*> Jx_;
+    std::vector<Field*> Jy_;
+    std::vector<Field*> Jz_;
+    std::vector<Field*> rho_;
+
 };
 
 

@@ -44,332 +44,51 @@ void VectorPatch::exchangeParticles(int ispec, PicParams &params, SmileiMPI* smp
 void VectorPatch::sumRhoJ(unsigned int diag_flag )
 {
 
-    unsigned int nx_p,nx_d,ny_p,ny_d, h0, oversize[2], n_space[2],gsp[2];
-    double *pt1,*pt2;
-
-    h0 = (*this)(0)->hindex;
-    oversize[0] = (*this)(0)->EMfields->oversize[0];
-    oversize[1] = (*this)(0)->EMfields->oversize[1];
-    n_space[0] = (*this)(0)->EMfields->n_space[0];
-    n_space[1] = (*this)(0)->EMfields->n_space[1];
-    nx_p = n_space[0]+1+2*oversize[0];
-    ny_p = n_space[1]+1+2*oversize[1];
-    nx_d = nx_p+1;
-    ny_d = ny_p+1;
-    gsp[0] = 1+2*oversize[0]; //Ghost size primal
-    gsp[1] = 1+2*oversize[1]; //Ghost size primal
-
-    #pragma omp for schedule(dynamic) private(pt1,pt2)
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-        if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[3]){
-        //The patch on my left belongs to the same MPI process than I.
-            if(diag_flag){
-                pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->rho_)(n_space[0]*ny_p);
-                pt2 = &(*(*this)(ipatch)->EMfields->rho_)(0);
-                for (unsigned int i = 0; i < gsp[0]* ny_p ; i++) pt1[i] += pt2[i];
-                memcpy( pt2, pt1, gsp[0]*ny_p*sizeof(double)); 
-                    
-            }
-            pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->Jx_)(n_space[0]*ny_p);
-            pt2 = &(*(*this)(ipatch)->EMfields->Jx_)(0);
-            for (unsigned int i = 0; i < (gsp[0]+1)* ny_p ; i++) pt1[i] += pt2[i];
-            memcpy( pt2, pt1, (gsp[0]+1)*ny_p*sizeof(double)); 
-
-            pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->Jy_)(n_space[0]*ny_d);
-            pt2 = &(*(*this)(ipatch)->EMfields->Jy_)(0);
-            for (unsigned int i = 0; i < gsp[0]* ny_d ; i++) pt1[i] += pt2[i];
-            memcpy( pt2, pt1, gsp[0]*ny_d*sizeof(double)); 
-
-            pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->Jz_)(n_space[0]*ny_p);
-            pt2 = &(*(*this)(ipatch)->EMfields->Jz_)(0);
-            for (unsigned int i = 0; i < gsp[0]* ny_p ; i++) pt1[i] += pt2[i];
-            memcpy( pt2, pt1, gsp[0]*ny_p*sizeof(double)); 
-        }
-    }//End of openmp for used as a barrier
-
-
-    #pragma omp master
-    {
-	for (int iDim=0;iDim<1;iDim++) {
-	    if (diag_flag)
-		for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-		    (*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->rho_, iDim ); // initialize
-		}
-
-	    if (diag_flag)
-		for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-		    (*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->rho_, iDim ); // finalize (waitall + sum)
-		}
-	}
-
-	for (int iDim=0;iDim<1;iDim++) {
-	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-		(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jx_, iDim ); // initialize
-	    }
-	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-		(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jx_ , iDim); // finalize (waitall + sum)
-	    }
-	}
-	for (int iDim=0;iDim<1;iDim++) {
-	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-		(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jy_, iDim ); // initialize
-	    }
-	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-		(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jy_, iDim ); // finalize (waitall + sum)
-	    }
-	}
-	for (int iDim=0;iDim<1;iDim++) {
-	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-		(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jz_, iDim ); // initialize
-	    }
-	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-		(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jz_, iDim ); // finalize (waitall + sum)
-	    }
-	}
+    Jx_.resize(0);
+    Jy_.resize(0);
+    Jz_.resize(0);
+    rho_.resize(0);
+    for (int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	Jx_.push_back( (*this)(ipatch)->EMfields->Jx_ );
+	Jy_.push_back( (*this)(ipatch)->EMfields->Jy_ );
+	Jz_.push_back( (*this)(ipatch)->EMfields->Jz_ );
+	rho_.push_back( (*this)(ipatch)->EMfields->rho_ );
     }
 
+    sum( Jx_ );
+    sum( Jy_ );
+    sum( Jz_ );
+    if(diag_flag) sum( rho_ );
 
-
-    #pragma omp for schedule(dynamic) private(pt1, pt2)
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-        if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[1]){
-        //The patch below me belongs to the same MPI process than I.
-            if(diag_flag){
-                pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->rho_)(n_space[1]);
-                pt2 = &(*(*this)(ipatch)->EMfields->rho_)(0);
-                for (unsigned int j = 0; j < nx_p ; j++){
-                    for (unsigned int i = 0; i < gsp[1] ; i++) pt1[i] += pt2[i];
-                    memcpy( pt2, pt1, gsp[1]*sizeof(double)); 
-                    pt1 += ny_p;
-                    pt2 += ny_p;
-                }
-            }
-            pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->Jx_)(n_space[1]);
-            pt2 = &(*(*this)(ipatch)->EMfields->Jx_)(0);
-            for (unsigned int j = 0; j < nx_d ; j++){
-                for (unsigned int i = 0; i < gsp[1] ; i++) pt1[i] += pt2[i];
-                memcpy( pt2, pt1, gsp[1]*sizeof(double)); 
-                pt1 += ny_p;
-                pt2 += ny_p;
-            }
-            pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->Jz_)(n_space[1]);
-            pt2 = &(*(*this)(ipatch)->EMfields->Jz_)(0);
-            for (unsigned int j = 0; j < nx_p ; j++){
-                for (unsigned int i = 0; i < gsp[1] ; i++) pt1[i] += pt2[i];
-                memcpy( pt2, pt1, gsp[1]*sizeof(double)); 
-                pt1 += ny_p;
-                pt2 += ny_p;
-            }
-            pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->Jy_)(n_space[1]);
-            pt2 = &(*(*this)(ipatch)->EMfields->Jy_)(0);
-            for (unsigned int j = 0; j < nx_p ; j++){
-                for (unsigned int i = 0; i < gsp[1]+1 ; i++) pt1[i] += pt2[i];
-                memcpy( pt2, pt1, (gsp[1]+1)*sizeof(double)); 
-                pt1 += ny_d;
-                pt2 += ny_d;
-            }
-        }
-    }
-
-
-
-    #pragma omp master
-    {
-	for (int iDim=1;iDim<2;iDim++) {
-	    if (diag_flag)
-		for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-		    (*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->rho_, iDim ); // initialize
-		}
-
-	    if (diag_flag)
-		for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-		    (*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->rho_, iDim ); // finalize (waitall + sum)
-		}
-	}
-
-	for (int iDim=1;iDim<2;iDim++) {
-	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-		(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jx_, iDim ); // initialize
-	    }
-	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-		(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jx_ , iDim); // finalize (waitall + sum)
-	    }
-	}
-	for (int iDim=1;iDim<2;iDim++) {
-	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-		(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jy_, iDim ); // initialize
-	    }
-	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-		(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jy_, iDim ); // finalize (waitall + sum)
-	    }
-	}
-	for (int iDim=1;iDim<2;iDim++) {
-	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-		(*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jz_, iDim ); // initialize
-	    }
-	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-		(*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jz_, iDim ); // finalize (waitall + sum)
-	    }
-	}
-    }
-    
+    Jx_.clear();
+    Jy_.clear();
+    Jz_.clear();
+    rho_.clear();
 
 }
 
 void VectorPatch::sumRhoJs( int ispec )
 {
-
-    unsigned int nx_p,nx_d,ny_p,ny_d, h0, oversize[2], n_space[2],gsp[2];
-    double *pt1,*pt2;
-
-    h0 = (*this)(0)->hindex;
-    oversize[0] = (*this)(0)->EMfields->oversize[0];
-    oversize[1] = (*this)(0)->EMfields->oversize[1];
-    n_space[0] = (*this)(0)->EMfields->n_space[0];
-    n_space[1] = (*this)(0)->EMfields->n_space[1];
-    nx_p = n_space[0]+1+2*oversize[0];
-    ny_p = n_space[1]+1+2*oversize[1];
-    nx_d = nx_p+1;
-    ny_d = ny_p+1;
-    gsp[0] = 1+2*oversize[0]; //Ghost size primal
-    gsp[1] = 1+2*oversize[1]; //Ghost size primal
-
-    #pragma omp for schedule(dynamic) private(pt1,pt2)
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-        if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[3]){
-        //The patch on my left belongs to the same MPI process than I.
-	    pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->rho_s[ispec])(n_space[0]*ny_p);
-	    pt2 = &(*(*this)(ipatch)->EMfields->rho_s[ispec])(0);
-	    for (unsigned int i = 0; i < gsp[0]* ny_p ; i++) pt1[i] += pt2[i];
-	    memcpy( pt2, pt1, gsp[0]*ny_p*sizeof(double)); 
-                    
-            pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->Jx_s[ispec])(n_space[0]*ny_p);
-            pt2 = &(*(*this)(ipatch)->EMfields->Jx_s[ispec])(0);
-            for (unsigned int i = 0; i < (gsp[0]+1)* ny_p ; i++) pt1[i] += pt2[i];
-            memcpy( pt2, pt1, (gsp[0]+1)*ny_p*sizeof(double)); 
-
-            pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->Jy_s[ispec])(n_space[0]*ny_d);
-            pt2 = &(*(*this)(ipatch)->EMfields->Jy_s[ispec])(0);
-            for (unsigned int i = 0; i < gsp[0]* ny_d ; i++) pt1[i] += pt2[i];
-            memcpy( pt2, pt1, gsp[0]*ny_d*sizeof(double)); 
-
-            pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[3]-h0)->EMfields->Jz_s[ispec])(n_space[0]*ny_p);
-            pt2 = &(*(*this)(ipatch)->EMfields->Jz_s[ispec])(0);
-            for (unsigned int i = 0; i < gsp[0]* ny_p ; i++) pt1[i] += pt2[i];
-            memcpy( pt2, pt1, gsp[0]*ny_p*sizeof(double)); 
-        }
-    }//End of openmp for used as a barrier
-
-
-    for (int iDim=0;iDim<1;iDim++) {
-	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	    (*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->rho_s[ispec], iDim ); // initialize
-	}
-
-	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	    (*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->rho_s[ispec], iDim); // finalize (waitall + sum)
-	}
-    }
-    for (int iDim=0;iDim<1;iDim++) {
-	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	    (*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jx_s[ispec], iDim); // initialize
-	}
-	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	    (*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jx_s[ispec], iDim); // finalize (waitall + sum)
-	}
-    }
-    for (int iDim=0;iDim<1;iDim++) {
-	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	    (*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jy_s[ispec], iDim ); // initialize
-	}
-	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	    (*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jy_s[ispec], iDim ); // finalize (waitall + sum)
-	}
-    }
-    for (int iDim=0;iDim<1;iDim++) {
-	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	    (*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jz_s[ispec], iDim ); // initialize
-	}
-	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	    (*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jz_s[ispec], iDim ); // finalize (waitall + sum)
-	}
+    Jx_.resize(0);
+    Jy_.resize(0);
+    Jz_.resize(0);
+    rho_.resize(0);
+    for (int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	Jx_.push_back( (*this)(ipatch)->EMfields->Jx_s[ispec] );
+	Jy_.push_back( (*this)(ipatch)->EMfields->Jy_s[ispec] );
+	Jz_.push_back( (*this)(ipatch)->EMfields->Jz_s[ispec] );
+	rho_.push_back( (*this)(ipatch)->EMfields->rho_s[ispec] );
     }
 
+    sum( Jx_ );
+    sum( Jy_ );
+    sum( Jz_ );
+    sum( rho_ );
 
-
-    #pragma omp for schedule(dynamic) private(pt1, pt2)
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-        if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[1]){
-        //The patch below me belongs to the same MPI process than I.
-	    pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->rho_s[ispec])(n_space[1]);
-	    pt2 = &(*(*this)(ipatch)->EMfields->rho_s[ispec])(0);
-	    for (unsigned int j = 0; j < nx_p ; j++){
-		for (unsigned int i = 0; i < gsp[1] ; i++) pt1[i] += pt2[i];
-		memcpy( pt2, pt1, gsp[1]*sizeof(double)); 
-		pt1 += ny_p;
-		pt2 += ny_p;
-	    }
-            pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->Jx_s[ispec])(n_space[1]);
-            pt2 = &(*(*this)(ipatch)->EMfields->Jx_s[ispec])(0);
-            for (unsigned int j = 0; j < nx_d ; j++){
-                for (unsigned int i = 0; i < gsp[1] ; i++) pt1[i] += pt2[i];
-                memcpy( pt2, pt1, gsp[1]*sizeof(double)); 
-                pt1 += ny_p;
-                pt2 += ny_p;
-            }
-            pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->Jz_s[ispec])(n_space[1]);
-            pt2 = &(*(*this)(ipatch)->EMfields->Jz_s[ispec])(0);
-            for (unsigned int j = 0; j < nx_p ; j++){
-                for (unsigned int i = 0; i < gsp[1] ; i++) pt1[i] += pt2[i];
-                memcpy( pt2, pt1, gsp[1]*sizeof(double)); 
-                pt1 += ny_p;
-                pt2 += ny_p;
-            }
-            pt1 = &(*(*this)((*this)(ipatch)->patch_neighborhood_[1]-h0)->EMfields->Jy_s[ispec])(n_space[1]);
-            pt2 = &(*(*this)(ipatch)->EMfields->Jy_s[ispec])(0);
-            for (unsigned int j = 0; j < nx_p ; j++){
-                for (unsigned int i = 0; i < gsp[1]+1 ; i++) pt1[i] += pt2[i];
-                memcpy( pt2, pt1, (gsp[1]+1)*sizeof(double)); 
-                pt1 += ny_d;
-                pt2 += ny_d;
-            }
-        }
-    }
-
-
-    for (int iDim=1;iDim<2;iDim++) {
-	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	    (*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->rho_s[ispec], iDim ); // initialize
-	}
-
-	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	    (*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->rho_s[ispec], iDim); // finalize (waitall + sum)
-	}
-    }
-    for (int iDim=1;iDim<2;iDim++) {
-	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	    (*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jx_s[ispec], iDim); // initialize
-	}
-	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	    (*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jx_s[ispec], iDim); // finalize (waitall + sum)
-	}
-    }
-    for (int iDim=1;iDim<2;iDim++) {
-	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	    (*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jy_s[ispec], iDim ); // initialize
-	}
-	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	    (*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jy_s[ispec], iDim ); // finalize (waitall + sum)
-	}
-    }
-    for (int iDim=1;iDim<2;iDim++) {
-	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	    (*this)(ipatch)->initSumField( (*this)(ipatch)->EMfields->Jz_s[ispec], iDim ); // initialize
-	}
-	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	    (*this)(ipatch)->finalizeSumField( (*this)(ipatch)->EMfields->Jz_s[ispec], iDim ); // finalize (waitall + sum)
-	}
-    }
+    Jx_.clear();
+    Jy_.clear();
+    Jz_.clear();
+    rho_.clear();
     
 }
 
@@ -385,8 +104,8 @@ void VectorPatch::exchangeE( )
     }
 
     exchange( Ex_ );
-    exchange( Ey_  );
-    //exchange ( Ez_ );
+    exchange( Ey_ );
+    exchange( Ez_ );
 
     Ex_.clear();
     Ey_.clear();
@@ -839,10 +558,7 @@ void VectorPatch::solvePoisson( PicParams &params, SmileiMPI* smpi )
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
 	(*this)(ipatch)->EMfields->initE( (*this)(ipatch) );
 
-    exchangeE();
-    //exchange( Ex_ );
-    //exchange( Ey_ );
-    
+    exchangeE();    
     
     // Centering of the electrostatic fields
     // -------------------------------------
@@ -1030,3 +746,81 @@ void VectorPatch::exchange1( std::vector<Field*> fields )
 
 
 }
+
+void VectorPatch::sum( std::vector<Field*> fields )
+{
+    unsigned int nx_,ny_, h0, oversize[2], n_space[2],gsp[2];
+    double *pt1,*pt2;
+    h0 = (*this)(0)->hindex;
+
+    oversize[0] = (*this)(0)->EMfields->oversize[0];
+    oversize[1] = (*this)(0)->EMfields->oversize[1];
+    
+    n_space[0] = (*this)(0)->EMfields->n_space[0];
+    n_space[1] = (*this)(0)->EMfields->n_space[1];
+    
+    nx_ = fields[0]->dims_[0];
+    ny_ = fields[0]->dims_[1];
+    
+    gsp[0] = 1+2*oversize[0]+fields[0]->isDual_[0]; //Ghost size primal
+    gsp[1] = 1+2*oversize[1]+fields[0]->isDual_[1]; //Ghost size primal
+
+    #pragma omp for schedule(dynamic) private(pt1,pt2)
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+
+        if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[3]){
+	    //The patch on my left belongs to the same MPI process than I.
+	    pt1 = &(*fields[(*this)(ipatch)->patch_neighborhood_[3]-h0])(n_space[0]*ny_);
+	    pt2 = &(*fields[ipatch])(0);
+	    for (unsigned int i = 0; i < gsp[0]* ny_ ; i++) pt1[i] += pt2[i];
+	    memcpy( pt2, pt1, gsp[0]*ny_*sizeof(double)); 
+                    
+	}
+
+    }
+    
+    #pragma omp master
+    {
+	for (int iDim=0;iDim<1;iDim++) {
+	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+		(*this)(ipatch)->initSumField( fields[ipatch], iDim ); // initialize
+	    }
+
+	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+		(*this)(ipatch)->finalizeSumField( fields[ipatch], iDim ); // finalize (waitall + sum)
+	    }
+	}
+    }
+
+    #pragma omp for schedule(dynamic) private(pt1,pt2)
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+
+        if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[1]){
+	    //The patch below me belongs to the same MPI process than I.
+	    pt1 = &(*fields[(*this)(ipatch)->patch_neighborhood_[1]-h0])(n_space[1]);
+	    pt2 = &(*fields[ipatch])(0);
+	    for (unsigned int j = 0; j < nx_ ; j++){
+		for (unsigned int i = 0; i < gsp[1] ; i++) pt1[i] += pt2[i];
+		memcpy( pt2, pt1, gsp[1]*sizeof(double)); 
+		pt1 += ny_;
+		pt2 += ny_;
+	    }
+	}
+
+    }
+
+    #pragma omp master
+    {
+	for (int iDim=1;iDim<2;iDim++) {
+	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+		(*this)(ipatch)->initSumField( fields[ipatch], iDim ); // initialize
+	    }
+
+	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+		(*this)(ipatch)->finalizeSumField( fields[ipatch], iDim ); // finalize (waitall + sum)
+	    }
+	}
+    }
+
+}
+
