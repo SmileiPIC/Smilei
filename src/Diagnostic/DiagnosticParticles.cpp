@@ -4,7 +4,7 @@
 #include <ostream>
 #include <cmath>
 
-#include "PicParams.h"
+#include "Params.h"
 #include "H5.h"
 
 using namespace std;

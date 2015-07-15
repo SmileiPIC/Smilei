@@ -2,7 +2,7 @@
 #define INTERPOLATOR_H
 
 #include "Field.h"
-#include "PicParams.h"
+#include "Params.h"
 #include "SmileiMPI.h"
 
 
@@ -17,7 +17,7 @@ class Particles;
 class Interpolator
 {
 public:
-    Interpolator(PicParams&, SmileiMPI*) {};
+    Interpolator(Params&, SmileiMPI*) {};
     virtual ~Interpolator() {};
     virtual void mv_win(unsigned int shift) = 0;
     virtual void setMvWinLimits(unsigned int shift) = 0;

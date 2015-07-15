@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string>
 
-#include "PicParams.h"
+#include "Params.h"
 #include "SmileiMPI.h"
 #include "ElectroMagn.h"
 #include "Field1D.h"
@@ -19,7 +19,7 @@ using namespace std;
 //      - electric fields are put to zero in the ghost cells
 //      - magnetic fields are constant in the ghost cells
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagnBC1D_refl::ElectroMagnBC1D_refl( PicParams &params, LaserParams &laser_params )
+ElectroMagnBC1D_refl::ElectroMagnBC1D_refl( Params &params, LaserParams &laser_params )
 : ElectroMagnBC( params, laser_params )
 {
     

@@ -6,7 +6,7 @@
 #include <string>
 #include <iostream>
 
-#include "PicParams.h"
+#include "Params.h"
 #include "Field1D.h"
 
 #include "SmileiMPI.h"
@@ -23,7 +23,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn1D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn1D::ElectroMagn1D(PicParams &params, SmileiMPI* smpi)
+ElectroMagn1D::ElectroMagn1D(Params &params, SmileiMPI* smpi)
 : ElectroMagn(params, smpi),
 isWestern(smpi->isWestern()),
 isEastern(smpi->isEastern())

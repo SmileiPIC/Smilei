@@ -11,7 +11,7 @@
 
 #include <mpi.h>
 
-#include "PicParams.h"
+#include "Params.h"
 #include "Diagnostic.h"
 #include "SmileiMPI.h"
 #include "SimWindow.h"
@@ -23,7 +23,7 @@ using namespace std;
 // static varable must be defined and initialized here
 int SmileiIO::signal_received=0;
 
-SmileiIO::SmileiIO( PicParams& params, Diagnostic& diag, SmileiMPI* smpi ) : 
+SmileiIO::SmileiIO( Params& params, Diagnostic& diag, SmileiMPI* smpi ) : 
 dump_times(0), 
 fieldsToDump(diag.fieldsToDump),
 time_reference(0.0)
@@ -316,7 +316,7 @@ void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI*
 #endif
 }
 
-bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWindow, PicParams &params) { 
+bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWindow, Params &params) { 
     if (signal_received!=0 ||
         (params.dump_step != 0 && (itime % params.dump_step == 0)) ||
         (params.dump_minutes != 0.0 && time_seconds()/60.0 > smpi->getSize()*(params.dump_minutes*(dump_times+1))) ) {
@@ -326,7 +326,7 @@ bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, std::vector<Spec
     return false;
 }
 
-void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin, PicParams &params) { 
+void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin, Params &params) { 
 	hid_t fid, gid, sid, aid, did, tid;
     
 	ostringstream nameDump("");
@@ -490,7 +490,7 @@ void SmileiIO::dumpMovingWindow(hid_t fid, SimWindow* simWin)
 }
 
 
-void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> &vecSpecies, SmileiMPI* smpi, SimWindow* simWin, PicParams &params) { 
+void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> &vecSpecies, SmileiMPI* smpi, SimWindow* simWin, Params &params) { 
 	
 	string nameDump("");
 	
@@ -661,7 +661,7 @@ double SmileiIO::time_seconds() {
 	return (time_sec-time_reference);
 }
 
-void SmileiIO::initWriteTestParticles(Species* species, int ispec, int time, PicParams& params, SmileiMPI* smpi) {
+void SmileiIO::initWriteTestParticles(Species* species, int ispec, int time, Params& params, SmileiMPI* smpi) {
 
     Particles &cuParticles = species->particles;
     int locNbrParticles = species->getNbrOfParticles();
@@ -723,7 +723,7 @@ void SmileiIO::initWriteTestParticles(Species* species, int ispec, int time, Pic
 
 }
 
-void SmileiIO::writeTestParticles(Species* species, int ispec, int time, PicParams& params, SmileiMPI* smpi) {
+void SmileiIO::writeTestParticles(Species* species, int ispec, int time, Params& params, SmileiMPI* smpi) {
     
     Particles &cuParticles = species->particles;
     int locNbrParticles = species->getNbrOfParticles();

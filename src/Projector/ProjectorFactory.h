@@ -7,14 +7,14 @@
 #include "Projector2D2Order.h"
 #include "Projector2D4Order.h"
 
-#include "PicParams.h"
+#include "Params.h"
 #include "SmileiMPI.h"
 
 #include "Tools.h"
 
 class ProjectorFactory {
 public:
-    static Projector* create(PicParams& params, SmileiMPI* smpi) {
+    static Projector* create(Params& params, SmileiMPI* smpi) {
         Projector* Proj = NULL;
         // ---------------
         // 1d3v simulation

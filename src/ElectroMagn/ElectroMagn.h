@@ -12,7 +12,7 @@
 #include "Profile.h"
 
 
-class PicParams;
+class Params;
 class Species;
 class Projector;
 class Field;
@@ -30,7 +30,7 @@ class ElectroMagn
 
 public:
     //! Constructor for Electromagn
-    ElectroMagn( PicParams &params, SmileiMPI* smpi );
+    ElectroMagn( Params &params, SmileiMPI* smpi );
     
     //! Destructor for Electromagn
     virtual ~ElectroMagn();
@@ -45,10 +45,10 @@ public:
     std::vector<unsigned int> index_bc_min;
     std::vector<unsigned int> index_bc_max;
 
-    //! time-step (from picparams)
+    //! time-step (from Params)
     const double timestep;
     
-    //! cell length (from picparams)
+    //! cell length (from Params)
     const std::vector<double> cell_length;
 
     //! \todo Generalise this to none-cartersian geometry (e.g rz, MG & JD)
@@ -163,7 +163,7 @@ public:
     
     //! \todo check time_dual or time_prim (MG)
     //! method used to solve Maxwell's equation (takes current time and time-step as input parameter)
-    void solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, PicParams &params, SimWindow* simWindow);
+    void solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, Params &params, SimWindow* simWindow);
     virtual void solveMaxwellAmpere() = 0;
     //! Maxwell Faraday Solver
     Solver* MaxwellFaradaySolver_;

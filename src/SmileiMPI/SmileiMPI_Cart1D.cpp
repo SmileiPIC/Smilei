@@ -70,7 +70,7 @@ SmileiMPI_Cart1D::~SmileiMPI_Cart1D()
 // ---------------------------------------------------------------------------------------------------------------------
 // SmileiMPI_Cart1D: create the topology for Smilei MPI environment in 1D cartesian
 // ---------------------------------------------------------------------------------------------------------------------
-void SmileiMPI_Cart1D::createTopology(PicParams& params)
+void SmileiMPI_Cart1D::createTopology(Params& params)
 {
 
     for (unsigned int i=0 ; i<params.nDim_field ; i++) {
@@ -162,7 +162,7 @@ void SmileiMPI_Cart1D::createTopology(PicParams& params)
     
 }
 
-void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, PicParams& params,int tnum, int iDim)
+void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, Params& params,int tnum, int iDim)
 {
     
     Particles &cuParticles = species->particles;

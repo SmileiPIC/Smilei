@@ -5,13 +5,13 @@
 #include "MF_Solver2D_Yee.h"
 #include "MF_Solver2D_Cowan.h"
 
-#include "PicParams.h"
+#include "Params.h"
 
 #include "Tools.h"
 
 class SolverFactory {
 public:
-    static Solver* create(PicParams& params) {
+    static Solver* create(Params& params) {
         Solver* solver = NULL;
         if ( params.geometry == "1d3v" ) {
             solver = new MF_Solver1D_Yee(params);

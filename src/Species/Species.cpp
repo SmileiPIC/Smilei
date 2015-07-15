@@ -36,7 +36,7 @@ using namespace std;
 // Creator for Species
 // input: simulation parameters & Species index
 // ---------------------------------------------------------------------------------------------------------------------
-Species::Species(PicParams& params, int ispec, SmileiMPI* smpi) :
+Species::Species(Params& params, int ispec, SmileiMPI* smpi) :
 speciesNumber(ispec),
 clrw(params.clrw),
 oversize(params.oversize),
@@ -384,7 +384,7 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
 //   - increment the currents (projection)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfields, Interpolator* Interp,
-                       Projector* Proj, SmileiMPI *smpi, PicParams &params, SimWindow* simWindow)
+                       Projector* Proj, SmileiMPI *smpi, Params &params, SimWindow* simWindow)
 {
     Interpolator* LocInterp = InterpolatorFactory::create(params, smpi);
     
@@ -660,7 +660,7 @@ void Species::sort_part()
     }
 }
 
-void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi, PicParams& params)
+void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi, Params& params)
 {
     // Update BC positions
     partBoundCond->moveWindow_x( shift*cell_length[0], smpi );
@@ -697,7 +697,7 @@ void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi, PicParams& par
     
 }
 
-void Species::defineNewCells(unsigned int shift, SmileiMPI *smpi, PicParams& params)
+void Species::defineNewCells(unsigned int shift, SmileiMPI *smpi, Params& params)
 {
     // does a loop over all cells in the simulation
     // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
@@ -723,7 +723,7 @@ void Species::defineNewCells(unsigned int shift, SmileiMPI *smpi, PicParams& par
 }
 
 
-int Species::createParticles(vector<unsigned int> n_space_to_create, vector<double> cell_index, int new_bin_idx, PicParams& params  )
+int Species::createParticles(vector<unsigned int> n_space_to_create, vector<double> cell_index, int new_bin_idx, Params& params  )
 {
     // ---------------------------------------------------------
     // Calculate density and number of particles for the species

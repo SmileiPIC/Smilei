@@ -3,7 +3,7 @@
 #include <limits>
 #include <iostream>
 
-#include "PicParams.h"
+#include "Params.h"
 #include "Species.h"
 #include "Projector.h"
 #include "Field.h"
@@ -19,7 +19,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for the virtual class ElectroMagn
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn::ElectroMagn(PicParams &params, SmileiMPI* smpi) :
+ElectroMagn::ElectroMagn(Params &params, SmileiMPI* smpi) :
 laser_params(params),
 extfield_params(params),
 timestep(params.timestep),
@@ -148,7 +148,7 @@ ElectroMagn::~ElectroMagn()
  boundaryConditions(time_dual, smpi);
  
  }*/
-void ElectroMagn::solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, PicParams &params, SimWindow* simWindow)
+void ElectroMagn::solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, Params &params, SimWindow* simWindow)
 {
 #pragma omp parallel
 {

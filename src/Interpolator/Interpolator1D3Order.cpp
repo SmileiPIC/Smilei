@@ -10,7 +10,7 @@
 
 using namespace std;
 
-Interpolator1D3Order::Interpolator1D3Order(PicParams &params, SmileiMPI *smpi) : Interpolator1D(params, smpi)
+Interpolator1D3Order::Interpolator1D3Order(Params &params, SmileiMPI *smpi) : Interpolator1D(params, smpi)
 {
     dx_inv_   = 1.0/params.cell_length[0];
 

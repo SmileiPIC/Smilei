@@ -1,6 +1,6 @@
 #include "Ionization.h"
 
-Ionization::Ionization(PicParams& params, int ispec) {
+Ionization::Ionization(Params& params, int ispec) {
 
     wavelength_SI        = params.wavelength_SI;
 

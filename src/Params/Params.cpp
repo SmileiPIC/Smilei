@@ -1,4 +1,4 @@
-#include "PicParams.h"
+#include "Params.h"
 #include <cmath>
 #include "Tools.h"
 #include "PyTools.h"
@@ -13,9 +13,9 @@
 using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
-// PicParams : open & parse the input data file, test that parameters are coherent
+// Params : open & parse the input data file, test that parameters are coherent
 // ---------------------------------------------------------------------------------------------------------------------
-PicParams::PicParams(SmileiMPI* smpi, std::vector<std::string> namelistsFiles) :
+Params::Params(SmileiMPI* smpi, std::vector<std::string> namelistsFiles) :
 namelist("")
 {
     //init Python
@@ -193,10 +193,10 @@ namelist("")
     
 }
 
-PicParams::~PicParams() {
+Params::~Params() {
     PyTools::closePython();
 }
-void PicParams::initPython(SmileiMPI *smpi, std::vector<std::string> namelistsFiles){
+void Params::initPython(SmileiMPI *smpi, std::vector<std::string> namelistsFiles){
     // here we add the rank, in case some script need it
     PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_rank", smpi->getRank());
     
@@ -251,7 +251,7 @@ void PicParams::initPython(SmileiMPI *smpi, std::vector<std::string> namelistsFi
 }
 
 
-void PicParams::readSpecies() {
+void Params::readSpecies() {
     bool ok;
     for (unsigned int ispec = 0; ispec < PyTools::nComponents("Species"); ispec++) {
         SpeciesStructure tmpSpec;
@@ -365,7 +365,7 @@ void PicParams::readSpecies() {
     }
 }
 
-bool PicParams::extractProfile(PyObject *mypy, ProfileStructure &P)
+bool Params::extractProfile(PyObject *mypy, ProfileStructure &P)
 {
     double val;
     // If the profile is only a double, then convert to a constant function
@@ -386,13 +386,13 @@ bool PicParams::extractProfile(PyObject *mypy, ProfileStructure &P)
     return false;
 }
 
-bool PicParams::extractOneProfile(string varname, ProfileStructure &P, int ispec) {
+bool Params::extractOneProfile(string varname, ProfileStructure &P, int ispec) {
     PyObject *mypy = PyTools::extract_py(varname, "Species", ispec);
     if( !extractProfile(mypy, P) ) return false;
     return true;
 }
 
-void PicParams::extractVectorOfProfiles(string varname, vector<ProfileStructure*> &Pvec, int ispec)
+void Params::extractVectorOfProfiles(string varname, vector<ProfileStructure*> &Pvec, int ispec)
 {
     Pvec.resize(3);
     vector<PyObject*> pvec = PyTools::extract_pyVec(varname, "Species", ispec);
@@ -418,7 +418,7 @@ void PicParams::extractVectorOfProfiles(string varname, vector<ProfileStructure*
 // ---------------------------------------------------------------------------------------------------------------------
 // Compute useful values (normalisation, time/space step, etc...)
 // ---------------------------------------------------------------------------------------------------------------------
-void PicParams::compute()
+void Params::compute()
 {
     // time-related parameters
     // -----------------------
@@ -473,7 +473,7 @@ void PicParams::compute()
 // ---------------------------------------------------------------------------------------------------------------------
 // Compute useful values for Species-related quantities
 // ---------------------------------------------------------------------------------------------------------------------
-void PicParams::computeSpecies()
+void Params::computeSpecies()
 {
     
     // Loop on all species
@@ -500,7 +500,7 @@ void PicParams::computeSpecies()
 // ---------------------------------------------------------------------------------------------------------------------
 // Set dimensions according to geometry
 // ---------------------------------------------------------------------------------------------------------------------
-void PicParams::setDimensions()
+void Params::setDimensions()
 {
     if (geometry=="1d3v") {
         nDim_particle=1;
@@ -524,7 +524,7 @@ void PicParams::setDimensions()
 // ---------------------------------------------------------------------------------------------------------------------
 // Printing out the data at initialisation
 // ---------------------------------------------------------------------------------------------------------------------
-void PicParams::print()
+void Params::print()
 {
     
     // Numerical parameters
@@ -557,7 +557,7 @@ void PicParams::print()
 // Returns an array of the numbers of the requested species.
 // Note that there might be several species that have the same "name" or "type"
 //  so that we have to search for all possibilities.
-vector<unsigned int> PicParams::FindSpecies( vector<string> requested_species)
+vector<unsigned int> Params::FindSpecies( vector<string> requested_species)
 {
     bool species_found;
     vector<unsigned int> result;
@@ -597,7 +597,7 @@ vector<unsigned int> PicParams::FindSpecies( vector<string> requested_species)
 }
 
 //! Run string as python script and add to namelist
-void PicParams::pyRunScript(string command, string name) {
+void Params::pyRunScript(string command, string name) {
     PyTools::checkPyError();
     namelist+=command;
     if (name.size()>0)  MESSAGE(1,"Passing to python " << name);
@@ -611,7 +611,7 @@ void PicParams::pyRunScript(string command, string name) {
 }
 
 //! run the python functions cleanup (user defined) and _keep_python_running (in pycontrol.py)
-void PicParams::cleanup() {
+void Params::cleanup() {
     
     // call cleanup function from the user namelist (it can be used to free some memory 
     // from the python side) while keeping the interpreter running

@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string>
 
-#include "PicParams.h"
+#include "Params.h"
 #include "SmileiMPI.h"
 #include "ElectroMagn.h"
 #include "Field2D.h"
@@ -13,7 +13,7 @@
 
 using namespace std;
 
-ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( PicParams &params, LaserParams &laser_params )
+ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, LaserParams &laser_params )
     : ElectroMagnBC( params, laser_params )
 {
     // conversion factor from degree to radian

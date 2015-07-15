@@ -7,8 +7,7 @@ using namespace std;
 // Applies to profiles for species (density, velocity and temperature profiles)
 Profile::Profile(ProfileStructure & pp, string geometry) :
 profile_param(pp)
-{
-    
+{    
     // Launch the initialization
     init(profile_param, geometry);
     

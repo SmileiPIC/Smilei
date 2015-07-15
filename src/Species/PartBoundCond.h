@@ -8,7 +8,7 @@
 #ifndef PARTBOUNDCOND_H
 #define PARTBOUNDCOND_H
 
-#include "PicParams.h"
+#include "Params.h"
 #include "Particles.h"
 #include "tabulatedFunctions.h"
 
@@ -20,7 +20,7 @@ class SmileiMPI;
 class PartBoundCond {
 public:
     //! partBoundCond creator, (default no MPI set)
-    PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi );
+    PartBoundCond( Params& params, int ispec, SmileiMPI* smpi );
     //! partBoundCond destructor
     ~PartBoundCond();
 

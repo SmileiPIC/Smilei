@@ -4,7 +4,7 @@
 #include "Pusher.h"
 #include "PusherBoris.h"
 
-#include "PicParams.h"
+#include "Params.h"
 
 #include "Tools.h"
 
@@ -19,7 +19,7 @@ public:
     //! \param ispec SpeciesId
     //! \param params Parameters
     //  --------------------------------------------------------------------------------------------------------------------
-    static Pusher* create(PicParams& params, int ispec) {
+    static Pusher* create(Params& params, int ispec) {
         Pusher* Push = NULL;
 
         // assign the correct Pusher to Push

@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string>
 
-#include "PicParams.h"
+#include "Params.h"
 #include "SmileiMPI.h"
 #include "ElectroMagn.h"
 #include "Field1D.h"
@@ -13,7 +13,7 @@
 
 using namespace std;
 
-ElectroMagnBC1D_SM::ElectroMagnBC1D_SM( PicParams &params, LaserParams &laser_params )
+ElectroMagnBC1D_SM::ElectroMagnBC1D_SM( Params &params, LaserParams &laser_params )
 : ElectroMagnBC( params, laser_params )
 {
     // number of nodes of the primal-grid

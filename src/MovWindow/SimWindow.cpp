@@ -1,6 +1,6 @@
 
 #include "SimWindow.h"
-#include "PicParams.h"
+#include "Params.h"
 #include "Species.h"
 #include "ElectroMagn.h"
 #include "Interpolator.h"
@@ -8,7 +8,7 @@
 #include "SmileiMPI.h"
 using namespace std;
 
-SimWindow::SimWindow(PicParams& params)
+SimWindow::SimWindow(Params& params)
 {
     nspace_win_x_ = params.nspace_win_x;
     cell_length_x_   = params.cell_length[0];
@@ -21,7 +21,7 @@ SimWindow::~SimWindow()
 {
 }
 
-void SimWindow::operate(vector<Species*> vecSpecies, ElectroMagn* EMfields, Interpolator* Interp, Projector* Proj, SmileiMPI* smpi, PicParams& params)
+void SimWindow::operate(vector<Species*> vecSpecies, ElectroMagn* EMfields, Interpolator* Interp, Projector* Proj, SmileiMPI* smpi, Params& params)
 {
 
     unsigned int clrw;

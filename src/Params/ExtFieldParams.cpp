@@ -4,7 +4,7 @@
 
 using namespace std;
 
-ExtFieldParams::ExtFieldParams(PicParams& params) :
+ExtFieldParams::ExtFieldParams(Params& params) :
 geometry(params.geometry)
 {
 

@@ -5,10 +5,10 @@
 #include <string>
 
 #include "Particles.h"
-#include "PicParams.h"
+#include "Params.h"
 #include "Pusher.h"
 //#include "PartBoundCond.h"
-#include "PicParams.h"
+#include "Params.h"
 #include "SmileiMPI.h"
 #include "Pusher.h"
 #include "Ionization.h"
@@ -27,7 +27,7 @@ class Species
 {
 public:
     //! Species creator
-    Species(PicParams&, int, SmileiMPI*);
+    Species(Params&, int, SmileiMPI*);
 
     //! Species destructor
     virtual ~Species();
@@ -55,7 +55,7 @@ public:
 
     //! Method calculating the Particle dynamics (interpolation, pusher, projection)
     virtual void dynamics(double time, unsigned int ispec, ElectroMagn* EMfields, Interpolator* interp,
-                          Projector* proj, SmileiMPI *smpi, PicParams &params, SimWindow* simWindow);
+                          Projector* proj, SmileiMPI *smpi, Params &params, SimWindow* simWindow);
 
     //! Method used to initialize the Particle position in a given cell
     void initPosition(unsigned int, unsigned int, double *, unsigned int, std::vector<double>, std::string);
@@ -78,8 +78,8 @@ public:
     //! Method used to sort particles
     void sort_part();
 
-    void movingWindow_x(unsigned int shift, SmileiMPI *smpi, PicParams& param);
-    void defineNewCells(unsigned int shift, SmileiMPI *smpi, PicParams& param);
+    void movingWindow_x(unsigned int shift, SmileiMPI *smpi, Params& param);
+    void defineNewCells(unsigned int shift, SmileiMPI *smpi, Params& param);
     void updateMvWinLimits(double x_moved);
 
     //! Vector containing all Particles of the considered Species
@@ -97,10 +97,10 @@ public:
     //! first and last index of each particle bin
     std::vector<int> bmin, bmax;
 
-    //! Oversize (copy from picparams)
+    //! Oversize (copy from Params)
     std::vector<unsigned int> oversize;
 
-    //! Cell_length (copy from picparams)
+    //! Cell_length (copy from Params)
     std::vector<double> cell_length;
 
     inline void clearExchList(int tid) {
@@ -111,7 +111,7 @@ public:
     }
     std::vector< std::vector<int> > indexes_of_particles_to_exchange_per_thd;
 
-    //Copy of the species parameters from picparams
+    //Copy of the species parameters from Params
     SpeciesStructure species_param;
 
     //! Method to know if we have to project this species or not.
@@ -180,7 +180,7 @@ private:
     Pusher* Push;
 
     //! Method to create new particles.
-    int  createParticles(std::vector<unsigned int> n_space_to_create, std::vector<double> cell_index, int new_bin_idx,  PicParams& param);
+    int  createParticles(std::vector<unsigned int> n_space_to_create, std::vector<double> cell_index, int new_bin_idx,  Params& param);
 
     //! Accumulate nrj lost with bc
     double nrj_bc_lost;

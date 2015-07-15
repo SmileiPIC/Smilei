@@ -6,7 +6,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // LASER CONSTRUCTOR
 // ---------------------------------------------------------------------------------------------------------------------
-LaserProfile::LaserProfile( PicParams &params, LaserParams &laser_params, unsigned int n_laser) :
+LaserProfile::LaserProfile( Params &params, LaserParams &laser_params, unsigned int n_laser) :
 laser_struct(laser_params.laser_param[n_laser])
 {
     

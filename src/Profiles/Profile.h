@@ -2,7 +2,7 @@
 #define Profile_H
 
 #include <cmath>
-#include "PicParams.h"
+#include "Params.h"
 #include "ExtFieldParams.h"
 #include "PyTools.h"
 #include "SmileiMPI.h"

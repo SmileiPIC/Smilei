@@ -6,7 +6,7 @@
 #include <iostream>
 #include <sstream>
 
-#include "PicParams.h"
+#include "Params.h"
 #include "Tools.h"
 
 #include "ElectroMagn.h"
@@ -68,7 +68,7 @@ void SmileiMPI::bcast( string& val )
 
 }
 
-void SmileiMPI::init( PicParams& params )
+void SmileiMPI::init( Params& params )
 {
     oversize.resize(params.nDim_field, 0);
     cell_starting_global_index.resize(params.nDim_field, 0);

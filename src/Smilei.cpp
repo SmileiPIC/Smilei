@@ -22,7 +22,7 @@
 #include <iostream>
 #include <iomanip>
 
-#include "PicParams.h"
+#include "Params.h"
 
 #include "SmileiMPIFactory.h"
 #include "SmileiIOFactory.h"
@@ -74,7 +74,7 @@ int main (int argc, char* argv[])
     TITLE("Input data info");
     
     // Read simulation & diagnostics parameters
-    PicParams params(smpiData,namelists);
+    Params params(smpiData,namelists);
     smpiData->init(params);
     smpiData->barrier();
     if ( smpiData->isMaster() ) params.print();

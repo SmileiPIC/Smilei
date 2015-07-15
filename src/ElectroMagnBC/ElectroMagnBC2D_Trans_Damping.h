@@ -4,12 +4,12 @@
 
 #include "ElectroMagnBC.h" 
 
-class PicParams;
+class Params;
 class ElectroMagn;
 
 class ElectroMagnBC2D_Trans_Damping : public ElectroMagnBC {
 public:
-    ElectroMagnBC2D_Trans_Damping( PicParams &params, LaserParams &laser_params );
+    ElectroMagnBC2D_Trans_Damping( Params &params, LaserParams &laser_params );
     ~ElectroMagnBC2D_Trans_Damping();
 
     virtual void apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi);

@@ -12,7 +12,7 @@ class MF_Solver2D_Yee : public Solver2D
 
 public:
     //! Creator for MF_Solver2D_Yee
-    MF_Solver2D_Yee(PicParams &params);
+    MF_Solver2D_Yee(Params &params);
     virtual ~MF_Solver2D_Yee();
 
     //! Overloading of () operator

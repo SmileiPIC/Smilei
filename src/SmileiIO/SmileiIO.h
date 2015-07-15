@@ -13,7 +13,7 @@
 #include <hdf5.h>
 #include <Tools.h>
 
-class PicParams;
+class Params;
 class Diagnostic;
 class SmileiMPI;
 class SimWindow;
@@ -31,7 +31,7 @@ public:
     //! Create // HDF5 environment
     //! @see global_file_id_ 
     //! @see global_file_id_avg
-    SmileiIO( PicParams& params, Diagnostic &diag, SmileiMPI* smpi );
+    SmileiIO( Params& params, Diagnostic &diag, SmileiMPI* smpi );
     //! Destructor for SmileiIO
     virtual ~SmileiIO();
 
@@ -77,7 +77,7 @@ public:
     virtual void write( Field* field ) = 0;
 
     //! restart everything to file per processor
-    void restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> &vecSpecies, SmileiMPI* smpi, SimWindow* simWin, PicParams &params);
+    void restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> &vecSpecies, SmileiMPI* smpi, SimWindow* simWin, Params &params);
 
     //! restart field per proc
     void restartFieldsPerProc(hid_t fid, Field* field);
@@ -86,10 +86,10 @@ public:
     void restartMovingWindow(hid_t fid, SimWindow* simWindow);
 	
     //! test before writing everything to file per processor
-    bool dump(ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  PicParams &params);
+    bool dump(ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  Params &params);
 
-    void initWriteTestParticles(Species* species, int ispec, int itime, PicParams& params, SmileiMPI* smpi);
-    void writeTestParticles(Species* species, int ispec, int itime, PicParams& params, SmileiMPI* smpi);
+    void initWriteTestParticles(Species* species, int ispec, int itime, Params& params, SmileiMPI* smpi);
+    void writeTestParticles(Species* species, int ispec, int itime, Params& params, SmileiMPI* smpi);
 
     template <class T> void appendTestParticles(hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type );
 
@@ -112,7 +112,7 @@ private:
     unsigned int dump_times;
     	
     //! dump everything to file per processor
-    void dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  PicParams &params);
+    void dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  Params &params);
 	
     //! dump field per proc
     void dumpFieldsPerProc(hid_t fid, Field* field);

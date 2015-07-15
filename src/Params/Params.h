@@ -1,12 +1,12 @@
-/*! @file PicParams.h
+/*! @file Params.h
  
- @brief PicParams.h is the class that hold the simulation parameters and can read from a file the namelist
+ @brief Params.h is the class that hold the simulation parameters and can read from a file the namelist
  
  @date 2013-02-15
  */
 
-#ifndef PICPARAMS_H
-#define PICPARAMS_H
+#ifndef Params_H
+#define Params_H
 
 #include <PyTools.h>
 #include <vector>
@@ -139,16 +139,16 @@ struct SpeciesStructure {
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! PicParams class: holds all the properties of the simulation that are read from the input file
+//! Params class: holds all the properties of the simulation that are read from the input file
 // ---------------------------------------------------------------------------------------------------------------------
-class PicParams {
+class Params {
     
 public:
-    //! Creator for PicParams
-    PicParams(SmileiMPI*, std::vector<std::string>);
+    //! Creator for Params
+    Params(SmileiMPI*, std::vector<std::string>);
     
     //! destructor
-    ~PicParams();
+    ~Params();
     
     //! extract profiles
     bool extractProfile         (PyObject *, ProfileStructure &);

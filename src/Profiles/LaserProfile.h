@@ -3,14 +3,14 @@
 
 #include <cmath>
 
-#include "PicParams.h"
+#include "Params.h"
 #include "LaserParams.h"
 
 
 class LaserProfile {
 public:
 
-    LaserProfile( PicParams &params, LaserParams &laser_params, unsigned int );
+    LaserProfile( Params &params, LaserParams &laser_params, unsigned int );
 
     LaserStructure laser_struct;
 

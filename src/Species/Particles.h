@@ -9,7 +9,7 @@
 
 #include "Tools.h"
 
-class PicParams;
+class Params;
 class SmileiMPI;
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -25,8 +25,8 @@ public:
     virtual ~Particles();
 
     //! Create nParticles null particles of nDim size
-    void initialize( int nParticles, PicParams &params );
-    void initialize( int nParticles, PicParams &params, int speciesNumber );
+    void initialize( int nParticles, Params &params );
+    void initialize( int nParticles, Params &params, int speciesNumber );
     //! Set capacity of Particles vectors
     void reserve( unsigned int n_part_max, int nDim );
 

@@ -13,7 +13,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for Interpolator2D2Order
 // ---------------------------------------------------------------------------------------------------------------------
-Interpolator2D2Order::Interpolator2D2Order(PicParams &params, SmileiMPI *smpi) : Interpolator2D(params, smpi)
+Interpolator2D2Order::Interpolator2D2Order(Params &params, SmileiMPI *smpi) : Interpolator2D(params, smpi)
 {
 
     dx_inv_ = 1.0/params.cell_length[0];

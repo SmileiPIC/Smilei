@@ -5,7 +5,7 @@
 #include <iomanip>
 #include <sstream>
 
-#include "PicParams.h"
+#include "Params.h"
 #include "SmileiMPI.h"
 #include "SmileiMPI_Cart1D.h"
 #include "SmileiMPI_Cart2D.h"

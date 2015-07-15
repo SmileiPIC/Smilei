@@ -4,7 +4,7 @@
 
 #include <vector>
 
-class PicParams;
+class Params;
 class LaserParams;
 class SmileiMPI;
 class ElectroMagn;
@@ -13,7 +13,7 @@ class Field;
 
 class ElectroMagnBC {
 public:
-    ElectroMagnBC( PicParams &params,  LaserParams &laser_params );
+    ElectroMagnBC( Params &params,  LaserParams &laser_params );
     ~ElectroMagnBC();
 
     virtual void apply_xmin(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi) = 0;

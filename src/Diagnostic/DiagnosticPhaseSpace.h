@@ -18,7 +18,7 @@
 
 #include "DiagnosticPhase.h"
 
-class PicParams;
+class Params;
 class ElectroMagn;
 
 //! mother class of all the DiagnosticPhase* it creates all the sub-diagnostics and creates and fills the hdf5 file

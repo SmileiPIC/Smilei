@@ -14,7 +14,7 @@
 
 using namespace std;
 
-PartBoundCond::PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi )
+PartBoundCond::PartBoundCond( Params& params, int ispec, SmileiMPI* smpi )
 {
     // number of dimensions for the particle
     //!\todo (MG to JD) isn't it always 3?

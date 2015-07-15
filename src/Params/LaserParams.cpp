@@ -6,7 +6,7 @@
 
 using namespace std;
 
-LaserParams::LaserParams(PicParams& params) {
+LaserParams::LaserParams(Params& params) {
 	
     // -----------------
     // Lasers properties

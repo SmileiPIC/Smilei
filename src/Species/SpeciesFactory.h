@@ -5,14 +5,14 @@
 #include "Species_norm.h"
 #include "Species_rrll.h"
 
-#include "PicParams.h"
+#include "Params.h"
 #include "SmileiMPI.h"
 
 #include "Tools.h"
 
 class SpeciesFactory {
 public:
-    static Species* create(PicParams& params, int ispec, SmileiMPI* smpi) {
+    static Species* create(Params& params, int ispec, SmileiMPI* smpi) {
         Species* sp = NULL;
         if (params.species_param[ispec].dynamics_type=="norm") {
             // Species with Boris dynamics
@@ -47,7 +47,7 @@ public:
         return sp;
     }
 
-    static std::vector<Species*> createVector(PicParams& params, SmileiMPI* smpi) {
+    static std::vector<Species*> createVector(Params& params, SmileiMPI* smpi) {
         std::vector<Species*> vecSpecies;
         vecSpecies.resize(params.species_param.size());
 

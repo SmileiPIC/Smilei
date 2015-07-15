@@ -13,7 +13,7 @@ using namespace std;
 
 
 // Constructor
-Collisions::Collisions(PicParams& param, vector<Species*>& vecSpecies, SmileiMPI* smpi,
+Collisions::Collisions(Params& param, vector<Species*>& vecSpecies, SmileiMPI* smpi,
                        unsigned int n_collisions, 
                        vector<unsigned int> species_group1, 
                        vector<unsigned int> species_group2, 
@@ -76,7 +76,7 @@ Collisions::~Collisions()
 }
 
 // Reads the input file and creates the Collisions objects accordingly
-vector<Collisions*> Collisions::create(PicParams& params, vector<Species*>& vecSpecies, SmileiMPI* smpi)
+vector<Collisions*> Collisions::create(Params& params, vector<Species*>& vecSpecies, SmileiMPI* smpi)
 {
     vector<Collisions*> vecCollisions;
     
@@ -170,7 +170,7 @@ vector<double>     Collisions::debye_length_squared;
 
 // Calculates the debye length squared in each cluster
 // The formula for the inverse debye length squared is sumOverSpecies(density*charge^2/temperature)
-void Collisions::calculate_debye_length(PicParams& params, vector<Species*>& vecSpecies)
+void Collisions::calculate_debye_length(Params& params, vector<Species*>& vecSpecies)
 {
 
     // get info on particle binning
@@ -245,7 +245,7 @@ void Collisions::calculate_debye_length(PicParams& params, vector<Species*>& vec
 
 
 // Calculates the collisions for a given Collisions object
-void Collisions::collide(PicParams& params, vector<Species*>& vecSpecies, int itime)
+void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime)
 {
 
     unsigned int nbins = vecSpecies[0]->bmin.size(); // number of bins

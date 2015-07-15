@@ -17,7 +17,7 @@
 #include "DiagnosticParticles.h"
 #include "Timer.h"
 
-class PicParams;
+class Params;
 class SmileiMPI;
 class ElectroMagn;
 class Species;
@@ -28,7 +28,7 @@ class Diagnostic {
 
 public:
     //! creator called from main
-    Diagnostic(PicParams&, SmileiMPI *smpi);
+    Diagnostic(Params&, SmileiMPI *smpi);
     
     //! destructor
     ~Diagnostic(){};
@@ -55,13 +55,13 @@ public:
 	
     std::vector<DiagnosticParticles*> vecDiagnosticParticles;
         
-    void initScalars(PicParams&, SmileiMPI *smpi);
+    void initScalars(Params&, SmileiMPI *smpi);
     
-    void initProbes(PicParams&, SmileiMPI *);
+    void initProbes(Params&, SmileiMPI *);
     
-    void initPhases(PicParams&, SmileiMPI *);
+    void initPhases(Params&, SmileiMPI *);
     
-    void initParticles(PicParams&);
+    void initParticles(Params&);
     
     //! field dump output
     unsigned int fieldDump_every;

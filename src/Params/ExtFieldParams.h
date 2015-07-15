@@ -11,7 +11,7 @@
 #include <vector>
 #include <string>
 
-#include "PicParams.h"
+#include "Params.h"
 
 class ExtFieldProfile;
 
@@ -30,11 +30,11 @@ struct ExtFieldStructure : ProfileStructure {
 class ExtFieldParams {
 
 public:
-    //! we copy this from picparams
+    //! we copy this from Params
     std::string geometry;
     
     //! Creator for ExtFieldParams
-    ExtFieldParams(PicParams&);
+    ExtFieldParams(Params&);
 
     //! external fields parameters the key string is the name of the field and the value is a vector of ExtFieldStructure
     std::vector<ExtFieldStructure> structs;

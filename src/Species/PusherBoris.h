@@ -16,7 +16,7 @@
 class PusherBoris : public Pusher {
 public:
     //! Creator for Pusher
-    PusherBoris(PicParams& params, int ispec);
+    PusherBoris(Params& params, int ispec);
     ~PusherBoris();
     //! Overloading of () operator
     virtual void operator() (Particles &particles, int ipart, LocalFields Epart, LocalFields Bpart, double& gf);

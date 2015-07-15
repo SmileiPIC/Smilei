@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string>
 
-#include "PicParams.h"
+#include "Params.h"
 #include "SmileiMPI.h"
 #include "ElectroMagn2D.h"
 #include "Field2D.h"
@@ -13,7 +13,7 @@
 
 using namespace std;
 
-ElectroMagnBC2D_Trans_Damping::ElectroMagnBC2D_Trans_Damping( PicParams &params, LaserParams &laser_params )
+ElectroMagnBC2D_Trans_Damping::ElectroMagnBC2D_Trans_Damping( Params &params, LaserParams &laser_params )
     : ElectroMagnBC( params, laser_params )
 {
     // number of nodes of the primal and dual grid in the x-direction

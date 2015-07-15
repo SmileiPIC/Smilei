@@ -4,7 +4,7 @@
 #include "ElectroMagn.h"
 #include "Field1D.h"
 
-MF_Solver1D_Yee::MF_Solver1D_Yee(PicParams &params)
+MF_Solver1D_Yee::MF_Solver1D_Yee(Params &params)
     : Solver1D(params)
 {
 }

@@ -6,10 +6,10 @@
 
 #include <mpi.h>
 
-#include "PicParams.h"
+#include "Params.h"
 #include "Tools.h"
 
-class PicParams;
+class Params;
 class Species;
 class Particles;
 
@@ -39,20 +39,20 @@ public:
     //! @see min_local
     //! @see max_local
     //! @see n_space_global
-    void init( PicParams& params );
+    void init( Params& params );
 
     //! Create MPI communicator
-    virtual void createTopology( PicParams& params ) {};
+    virtual void createTopology( Params& params ) {};
     //! Echanges particles of Species, list of particles comes frome Species::dynamics
     //! See child classes
-    virtual void exchangeParticles(Species* species, int ispec, PicParams& params, int tnum, int iDim) {};
+    virtual void exchangeParticles(Species* species, int ispec, Params& params, int tnum, int iDim) {};
 
     //virtual MPI_Datatype createMPIparticles( Particles* particles, int nbrOfProp ) {MPI_Datatype type ; return type; }
     virtual MPI_Datatype createMPIparticles( Particles* particles, int nbrOfProp ) {return NULL;}
 
     //! Create MPI_Datatype to exchange/sum fields on ghost data
     //! See child classes
-    virtual void createType( PicParams& params ) {};
+    virtual void createType( Params& params ) {};
 
     //! Exchange all electric fields on borders
     void exchangeE( ElectroMagn* EMfields );

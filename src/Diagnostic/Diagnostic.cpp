@@ -5,7 +5,7 @@
 
 #include <hdf5.h>
 
-#include "PicParams.h"
+#include "Params.h"
 #include "SmileiMPI.h"
 #include "ElectroMagn.h"
 #include "Species.h"
@@ -16,7 +16,7 @@
 
 using namespace std;
 
-Diagnostic::Diagnostic(PicParams& params, SmileiMPI *smpi) :
+Diagnostic::Diagnostic(Params& params, SmileiMPI *smpi) :
 dtimer(4)
 {
     // defining default values & reading diagnostic every-parameter
@@ -113,7 +113,7 @@ void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Specie
 
 }
 
-void Diagnostic::initScalars(PicParams& params, SmileiMPI *smpi) {
+void Diagnostic::initScalars(Params& params, SmileiMPI *smpi) {
     //open file scalars.txt
     scalars.openFile(smpi);
     
@@ -143,7 +143,7 @@ void Diagnostic::initScalars(PicParams& params, SmileiMPI *smpi) {
     scalars.cell_volume=params.cell_volume;
 }
 
-void Diagnostic::initProbes(PicParams& params, SmileiMPI *smpi) {
+void Diagnostic::initProbes(Params& params, SmileiMPI *smpi) {
     bool ok;
     
     // loop all "diagnostic probe" groups in the input file
@@ -333,7 +333,7 @@ void Diagnostic::initProbes(PicParams& params, SmileiMPI *smpi) {
     }
 }
 
-void Diagnostic::initPhases(PicParams& params, SmileiMPI *smpi) {
+void Diagnostic::initPhases(Params& params, SmileiMPI *smpi) {
     
     //! create the particle structure
     phases.ndim=params.nDim_particle;    
@@ -584,7 +584,7 @@ void Diagnostic::initPhases(PicParams& params, SmileiMPI *smpi) {
 }
 
 
-void Diagnostic::initParticles(PicParams& params) {
+void Diagnostic::initParticles(Params& params) {
     unsigned int every, time_average;
     string output;
     vector<string> species;

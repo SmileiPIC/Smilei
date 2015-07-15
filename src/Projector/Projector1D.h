@@ -2,7 +2,7 @@
 #define PROJECTOR1D_H
 
 #include "Projector.h"
-#include "PicParams.h"
+#include "Params.h"
 
 
 
@@ -14,7 +14,7 @@ class Projector1D : public Projector
 
 public:
     //! Constructor for Projector1D
-    Projector1D(PicParams& params, SmileiMPI* smpi) : Projector(params, smpi) {};
+    Projector1D(Params& params, SmileiMPI* smpi) : Projector(params, smpi) {};
     virtual ~Projector1D() {};
     virtual void mv_win(unsigned int shift) { index_domain_begin+=shift; }
     virtual void setMvWinLimits(unsigned int shift) {index_domain_begin = shift;}

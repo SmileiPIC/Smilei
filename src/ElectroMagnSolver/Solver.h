@@ -1,7 +1,7 @@
 #ifndef SOLVER_H
 #define SOLVER_H
 
-#include "PicParams.h"
+#include "Params.h"
 
 class ElectroMagn;
 
@@ -13,7 +13,7 @@ class Solver
 
 public:
     //! Creator for Solver
-    Solver(PicParams &params) {};
+    Solver(Params &params) {};
     virtual ~Solver() {};
 
     //! Overloading of () operator
