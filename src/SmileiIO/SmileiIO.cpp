@@ -32,7 +32,7 @@ time_reference(0.0)
     //particleSize = nDim_particle + 3 + 1;
     
     // registering signal handler
-    if (SIG_ERR == signal(SIGUSR1, SmileiIO::signal_callback_handler)) {
+/*    if (SIG_ERR == signal(SIGUSR1, SmileiIO::signal_callback_handler)) {
         WARNING("Cannot catch signal SIGUSR1");
     }
     if (SIG_ERR == signal(SIGUSR2, SmileiIO::signal_callback_handler)) {
@@ -48,6 +48,7 @@ time_reference(0.0)
     if (SIG_ERR == signal(SIGINT, SmileiIO::signal_callback_handler)) {
         WARNING("Cannot catch signal SIGINT");
     }
+*/
 
 #ifdef _IO_PARTICLE
     particleSize = nDim_particle + 3 + 1;
