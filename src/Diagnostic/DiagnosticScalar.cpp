@@ -234,35 +234,36 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
     ///////////////////////////////////////////////////////////////////////////////////////////
     // POYNTING STUFF
     ///////////////////////////////////////////////////////////////////////////////////////////
-    double poyTot=0.0;
-    for (unsigned int j=0; j<2;j++) {
-        for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {
+	double poyTot=0.0;
+	for (unsigned int j=0; j<2;j++) {
+	    for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {
 
-            double poy[2]={EMfields->poynting[j][i],EMfields->poynting_inst[j][i]};
+		double poy[2]={EMfields->poynting[j][i],EMfields->poynting_inst[j][i]};
 
-            //MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:poy, poy, 2, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+		//MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:poy, poy, 2, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
-            //if (isMaster) {
+		//if (isMaster) {
                 string name("Poy");
                 switch (i) { // dimension
-                    case 0:
-                        name+=(j==0?"East":"West");
-                        break;
-                    case 1:
-                        name+=(j==0?"South":"North");
-                        break;
-                    case 2:
-                        name+=(j==0?"Bottom":"Top");
-                        break;
-                    default:
-                        break;
-			//}
-                append(name,poy[0]);
-                append(name+"Inst",poy[1]);
+		case 0:
+		    name+=(j==0?"East":"West");
+		    break;
+		case 1:
+		    name+=(j==0?"South":"North");
+		    break;
+		case 2:
+		    name+=(j==0?"Bottom":"Top");
+		    break;
+		default:
+		    break;
+		}//i
 
-                poyTot+=poy[0];
+		append(name,poy[0]);
+		append(name+"Inst",poy[1]);
 
-            }
+		poyTot+=poy[0];
+
+		//}
 
             
         }
