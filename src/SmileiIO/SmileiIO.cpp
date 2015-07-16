@@ -671,7 +671,7 @@ void SmileiIO::initWriteTestParticles(Species* species, int ispec, int time, Pic
     if ( smpi->isMaster() && true ) {
 
 	ostringstream nameDump("");
-	nameDump << species->species_param.species_type  << ".h5" ;
+	nameDump << "TestParticles_" << species->species_param.species_type  << ".h5" ;
 	hid_t fid = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
 
@@ -777,7 +777,7 @@ void SmileiIO::writeTestParticles(Species* species, int ispec, int time, PicPara
     if ( smpi->isMaster() && true ) {
 
 	ostringstream nameDump("");
-	nameDump << species->species_param.species_type  << ".h5" ;
+	nameDump << "TestParticles_" << species->species_param.species_type  << ".h5" ;
 	hid_t fid = H5Fopen( nameDump.str().c_str(), H5F_ACC_RDWR, H5P_DEFAULT);			
 
 	ostringstream attr("");
