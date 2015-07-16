@@ -384,7 +384,7 @@ int main (int argc, char* argv[])
 	    // Computes Ex_, Ey_, Ez_ on all points. E is already synchronized because J has been synchronized before.
 	    vecPatches(ipatch)->EMfields->solveMaxwellAmpere();
 	}
-	vecPatches.exchangeE();
+	//vecPatches.exchangeE();
         #pragma omp for schedule(static)
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
 	    // Computes Bx_, By_, Bz_ at time n+1 on interior points.

@@ -483,6 +483,68 @@ void ElectroMagn2D::solvePoisson(SmileiMPI* smpi)
 #endif    
 }//END solvePoisson
 
+void ElectroMagn2D::initE(Patch *patch)
+{
+    Field2D* Ex2D  = static_cast<Field2D*>(Ex_);
+    Field2D* Ey2D  = static_cast<Field2D*>(Ey_);
+    Field2D* rho2D = static_cast<Field2D*>(rho_);
+
+    // ------------------------------------------
+    // Compute the electrostatic fields Ex and Ey
+    // ------------------------------------------
+    
+    // Ex
+    DEBUG(2, "Computing Ex from scalar potential");
+    for (unsigned int i=1; i<nx_d-1; i++) {
+        for (unsigned int j=0; j<ny_p; j++) {
+            (*Ex2D)(i,j) = ((*phi_)(i-1,j)-(*phi_)(i,j))/dx;
+        }
+    }
+    // Ey
+    DEBUG(2, "Computing Ey from scalar potential");
+    for (unsigned int i=0; i<nx_p; i++) {
+        for (unsigned int j=1; j<ny_d-1; j++) {
+            (*Ey2D)(i,j) = ((*phi_)(i,j-1)-(*phi_)(i,j))/dy;
+        }
+    }
+
+    // Apply BC on Ex and Ey
+    // ---------------------
+    // Ex / West
+    if (patch->isWestern()) {
+        DEBUG(2, "Computing Western BC on Ex");
+        for (unsigned int j=0; j<ny_p; j++) {
+            (*Ex2D)(0,j) = (*Ex2D)(1,j) + ((*Ey2D)(0,j+1)-(*Ey2D)(0,j))*dx/dy  - dx*(*rho2D)(0,j);
+        }
+    }
+    // Ex / East
+    if (patch->isEastern()) {
+        DEBUG(2, "Computing Eastern BC on Ex");
+        for (unsigned int j=0; j<ny_p; j++) {
+            (*Ex2D)(nx_d-1,j) = (*Ex2D)(nx_d-2,j) - ((*Ey2D)(nx_p-1,j+1)-(*Ey2D)(nx_p-1,j))*dx/dy + dx*(*rho2D)(nx_p-1,j);
+        }
+    }
+
+}
+
+
+void ElectroMagn2D::centeringE( std::vector<double> E_Add )
+{
+    Field2D* Ex2D  = static_cast<Field2D*>(Ex_);
+    Field2D* Ey2D  = static_cast<Field2D*>(Ey_);
+
+    // Centering electrostatic fields
+    for (unsigned int i=0; i<nx_d; i++) {
+	for (unsigned int j=0; j<ny_p; j++) {
+	    (*Ex2D)(i,j) += E_Add[0];
+	}
+    }
+    for (unsigned int i=0; i<nx_p; i++) {
+	for (unsigned int j=0; j<ny_d; j++) {
+	    (*Ey2D)(i,j) += E_Add[1];
+	}
+    }
+}
 
 
 void ElectroMagn2D::initPoisson(Patch *patch)

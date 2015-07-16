@@ -162,7 +162,13 @@ public:
     virtual double compute_pAp() = 0;
     virtual void update_pand_r(double r_dot_r, double p_dot_Ap) = 0;
     virtual void update_p(double rnew_dot_rnew, double r_dot_r) = 0;
+    virtual void initE(Patch *patch) = 0;
+    virtual void centeringE( std::vector<double> E_Add ) = 0;
 
+    virtual double getEx_WestNorth() = 0;
+    virtual double getEy_WestNorth() = 0;
+    virtual double getEx_EastSouth() = 0;
+    virtual double getEy_EastSouth() = 0;
 
     std::vector<unsigned int> index_min_p_;
     std::vector<unsigned int> index_max_p_;
