@@ -7,6 +7,7 @@
 #include "Projector.h"
 #include "SmileiMPI.h"
 #include "VectorPatch.h"
+#include "Diagnostic.h"
 #include "Hilbert_functions.h"
 #include <iostream>
 #include <omp.h>
@@ -77,7 +78,10 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
     int nDim_Parts( vecPatches(0)->vecSpecies[0]->particles->dimension() );
     vector<int> nbrOfPartsSend(nSpecies,0);
     vector<int> nbrOfPartsRecv(nSpecies,0);
-    std::vector<Patch*> send_patches_, recv_patches_;
+    vector < vector<int> > store_npart_recv;
+    std::vector<Patch*> send_patches_;
+    MPI_Request srequest[8+3*nSpecies];//Number of calls made to MPI_Isend for each patch exchanged.
+    vector <MPI_Request*> srequests;
 
     #pragma omp single
     {
@@ -85,7 +89,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
             patch_to_be_created[i].clear();
         }
         vecPatches_old.resize(vecPatches.size());
-        recv_patches_.resize(0);
     }
 
 
@@ -116,19 +119,24 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
                 for (int ispec=0 ; ispec<nSpecies ; ispec++) {
 	            nbrOfPartsSend[ispec] = mypatch->vecSpecies[ispec]->getNbrOfParticles();
 	        }
+                store_npart_recv.push_back(nbrOfPartsSend);
                 //Left neighbour to which the patch should be sent to.
                 Lneighbor = mypatch->MPI_neighborhood_[3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)];
                 //Sends the number of particles first
-	        smpi->send( nbrOfPartsSend, Lneighbor, tag );
+                srequests.push_back(srequest);
+	        smpi->send( store_npart_recv.back(), Lneighbor, tag, &srequests.back()[0] );
                 //Then sends the patch
-	        smpi->send( mypatch, Lneighbor, tag );
+	        smpi->send( mypatch, Lneighbor, tag, &srequests.back()[1] );
             } else {
             //Erase my data right away. Data of sent patches will be erased later (after the receive has been completed)
-            for (unsigned int ispec=0 ; ispec<mypatch->vecSpecies.size(); ispec++) delete (mypatch->vecSpecies[ispec]);
-	    mypatch->vecSpecies.clear();
-            delete (mypatch->EMfields);
-            delete (mypatch->Interp);
-            delete (mypatch->Proj);
+                //mypatch->Diags->probes.setFile(0);
+                //mypatch->sio->setFiles(0,0);
+                //delete (mypatch);
+                for (unsigned int ispec=0 ; ispec<mypatch->vecSpecies.size(); ispec++) delete (mypatch->vecSpecies[ispec]);
+	        mypatch->vecSpecies.clear();
+                delete (mypatch->EMfields);
+                delete (mypatch->Interp);
+                delete (mypatch->Proj);
             }
         } else { //In case my left neighbor does belong to me:
             // I become my left neighbor.
@@ -194,6 +202,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
          for (unsigned int i=0; i<nthds; i++){
              for (unsigned int j=0; j< patch_to_be_created[i].size(); j++){
                  vecPatches.patches_[patch_to_be_created[i][j]] = new Patch(params, diag_params, laser_params, smpi, h0 + patch_to_be_created[i][j], n_moved);
+                 //stores all indices of patch_to_be_created in a single vector.
                  if (i>0) patch_to_be_created[0].push_back(patch_to_be_created[i][j]);
              }
          }
@@ -215,12 +224,17 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
     } 
 
     //Each thread erases data of sent patches
-    for (unsigned int j=0; j< send_patches_.size(); j++){
-        for (unsigned int ispec=0 ; ispec<send_patches_[j]->vecSpecies.size(); ispec++) delete (send_patches_[j]->vecSpecies[ispec]);
-        send_patches_[j]->vecSpecies.clear();
-        delete (send_patches_[j]->EMfields);
-        delete (send_patches_[j]->Interp);
-        delete (send_patches_[j]->Proj);
+    for (int j= send_patches_.size()-1; j>=0; j--){
+        mypatch = send_patches_[j];
+        for (unsigned int ispec=0 ; ispec<mypatch->vecSpecies.size(); ispec++) delete (mypatch->vecSpecies[ispec]);
+	mypatch->vecSpecies.clear();
+        delete (mypatch->EMfields);
+        delete (mypatch->Interp);
+        delete (mypatch->Proj);
+        
+        //send_patches_[j]->Diags->probes.setFile(0);
+        //send_patches_[j]->sio->setFiles(0,0);
+        //delete send_patches_[j];
     }
 }
 

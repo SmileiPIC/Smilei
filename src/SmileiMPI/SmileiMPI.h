@@ -103,20 +103,27 @@ public:
     // ------------- PATCH EXCHANGE METHODS -------------
     // --------------------------------------------------
     void send(Patch* patch, int to  , int hindex);
+    void send(Patch* patch, int to  , int hindex, MPI_Request* request);
     void recv(Patch* patch, int from, int hindex);
 
     void send(Species* species, int to  , int hindex);
+    void send(Species* species, int to  , int hindex, MPI_Request* request);
     void recv(Species* species, int from, int hindex);
     void send(Particles* particles, int to   , int hindex);
+    void send(Particles* particles, int to   , int hindex, MPI_Request* request);
     void recv(Particles* partictles, int from, int hindex);
     void send(std::vector<int> vec, int to  , int hindex);
+    void send(std::vector<int> vec, int to  , int hindex, MPI_Request* request);
     void recv(std::vector<int> *vec, int from, int hindex);
 
     void send(ElectroMagn* fields, int to  , int hindex);
+    void send(ElectroMagn* fields, int to  , int hindex, MPI_Request* request);
     void recv(ElectroMagn* fields, int from, int hindex);
     void send(Field* field, int to  , int hindex);
+    void send(Field* field, int to  , int hindex, MPI_Request* request);
     void recv(Field* field, int from, int hindex);
     void send( Diagnostic* diags, int to  , int hindex );
+    void send( Diagnostic* diags, int to  , int hindex, MPI_Request* request );
     void recv( Diagnostic* diags, int from, int hindex );
     // --------------------------------------------------
     // ------ END OF PATCH EXCHANGE METHODS -------------

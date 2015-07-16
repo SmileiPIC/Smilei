@@ -11,6 +11,7 @@ class ElectroMagn;
 class Interpolator;
 class Projector;
 class SmileiMPI;
+class Diagnostic;
 
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class SimWindow

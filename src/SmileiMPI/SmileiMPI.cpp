@@ -606,6 +606,16 @@ void SmileiMPI::send(Patch* patch, int to, int hindex)
     send( patch->Diags, to, hindex );
 
 }
+void SmileiMPI::send(Patch* patch, int to, int hindex, MPI_Request* request)
+{
+    for (int ispec=0 ; ispec<patch->vecSpecies.size() ; ispec++)
+	send( patch->vecSpecies[ispec], to, hindex, request );
+
+    send( patch->EMfields, to, hindex, request+3*patch->vecSpecies.size() );
+
+    send( patch->Diags, to, hindex, request+3*patch->vecSpecies.size()+6 );
+
+}
 
 void SmileiMPI::recv(Patch* patch, int from, int hindex)
 {
@@ -626,12 +636,30 @@ void SmileiMPI::send(Species* species, int to, int hindex)
     send( species->bmax, to, hindex );
 }
 
+void SmileiMPI::send(Species* species, int to, int hindex, MPI_Request* request)
+{
+    if ( species->getNbrOfParticles() )
+	send( species->particles, to, hindex, request );
+    send( species->bmin, to, hindex, request+1 );
+    send( species->bmax, to, hindex, request+2 );
+}
+
 void SmileiMPI::recv(Species* species, int from, int hindex)
 {
     if ( species->getNbrOfParticles() )
 	recv( species->particles, from, hindex );
     recv( &species->bmin, from, hindex );
     recv( &species->bmax, from, hindex );
+}
+
+void SmileiMPI::send(Particles* particles, int to, int hindex, MPI_Request* request)
+{
+    // Number of properties per particles = nDim_Particles + 3 + 1 + 1
+    int nbrOfProp( 7 );
+    MPI_Datatype typePartSend = createMPIparticles( particles, nbrOfProp );
+    MPI_Isend( &(particles->position(0,0)), 1, typePartSend, to, hindex, MPI_COMM_WORLD, request );
+    MPI_Type_free( &typePartSend );
+
 }
 
 void SmileiMPI::send(Particles* particles, int to, int hindex)
@@ -663,6 +691,13 @@ void SmileiMPI::send(std::vector<int> vec, int to, int hindex)
 
 }
 
+// Assuming vec.size() is known (number of species). Asynchronous.
+void SmileiMPI::send(std::vector<int> vec, int to, int hindex, MPI_Request* request)
+{
+    MPI_Isend( &(vec[0]), vec.size(), MPI_INT, to, hindex, MPI_COMM_WORLD, request );
+
+}
+
 void SmileiMPI::recv(std::vector<int> *vec, int from, int tag)
 {
     MPI_Status status;
@@ -680,6 +715,16 @@ void SmileiMPI::send(ElectroMagn* fields, int to, int hindex)
     send( fields->Bz_, to, hindex );
 }
 
+void SmileiMPI::send(ElectroMagn* fields, int to, int hindex, MPI_Request* request)
+{
+    send( fields->Ex_, to, hindex, request+0 );
+    send( fields->Ey_, to, hindex, request+1 );
+    send( fields->Ez_, to, hindex, request+2 );
+    send( fields->Bx_, to, hindex, request+3 );
+    send( fields->By_, to, hindex, request+4 );
+    send( fields->Bz_, to, hindex, request+5 );
+}
+
 void SmileiMPI::recv(ElectroMagn* fields, int from, int hindex)
 {
     recv( fields->Ex_, from, hindex );
@@ -695,6 +740,11 @@ void SmileiMPI::send(Field* field, int to, int hindex)
     MPI_Send( &((*field)(0)),field->globalDims_, MPI_DOUBLE, to, hindex, MPI_COMM_WORLD );
 }
 
+void SmileiMPI::send(Field* field, int to, int hindex, MPI_Request* request)
+{
+    MPI_Isend( &((*field)(0)),field->globalDims_, MPI_DOUBLE, to, hindex, MPI_COMM_WORLD, request );
+}
+
 void SmileiMPI::recv(Field* field, int from, int hindex)
 {
     MPI_Status status;
@@ -705,6 +755,11 @@ void SmileiMPI::recv(Field* field, int from, int hindex)
 void SmileiMPI::send( Diagnostic* diags, int to, int hindex )
 {
     send( diags->probes.probesStart, to, hindex );
+}
+
+void SmileiMPI::send( Diagnostic* diags, int to, int hindex, MPI_Request* request )
+{
+    send( diags->probes.probesStart, to, hindex, request );
 }
 
 void SmileiMPI::recv( Diagnostic* diags, int from, int hindex )

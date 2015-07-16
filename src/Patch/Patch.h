@@ -21,6 +21,7 @@
 
 class Diagnostic;
 class DiagnosticScalar;
+class SimWindow;
 
 //! Class Patch : sub MPI domain 
 //!     Collection of patch = MPI domain

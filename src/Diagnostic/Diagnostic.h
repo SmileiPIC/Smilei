@@ -22,12 +22,14 @@ class Patch;
 class VectorPatch;
 class ElectroMagn;
 class Species;
+class SimWindow;
 
 
 //! class holder for all the diagnostics: scalars, probes(0D, 1D, 2D and 3D) and phase-space
 class Diagnostic {
     friend class SmileiMPI;
     friend class VectorPatch;
+    friend class SimWindow;
 public:
     //! creator called from main
     Diagnostic(PicParams &params,  DiagParams &dParams, SmileiMPI* smpi, Patch* patch);
