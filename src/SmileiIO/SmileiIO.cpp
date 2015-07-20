@@ -32,7 +32,7 @@ time_reference(0.0)
     //particleSize = nDim_particle + 3 + 1;
     
     // registering signal handler
-    if (SIG_ERR == signal(SIGUSR1, SmileiIO::signal_callback_handler)) {
+/*    if (SIG_ERR == signal(SIGUSR1, SmileiIO::signal_callback_handler)) {
         WARNING("Cannot catch signal SIGUSR1");
     }
     if (SIG_ERR == signal(SIGUSR2, SmileiIO::signal_callback_handler)) {
@@ -48,6 +48,7 @@ time_reference(0.0)
     if (SIG_ERR == signal(SIGINT, SmileiIO::signal_callback_handler)) {
         WARNING("Cannot catch signal SIGINT");
     }
+*/
 
 #ifdef _IO_PARTICLE
     particleSize = nDim_particle + 3 + 1;
@@ -671,7 +672,7 @@ void SmileiIO::initWriteTestParticles(Species* species, int ispec, int time, Pic
     if ( smpi->isMaster() && true ) {
 
 	ostringstream nameDump("");
-	nameDump << species->species_param.species_type  << ".h5" ;
+	nameDump << "TestParticles_" << species->species_param.species_type  << ".h5" ;
 	hid_t fid = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
 
@@ -777,7 +778,7 @@ void SmileiIO::writeTestParticles(Species* species, int ispec, int time, PicPara
     if ( smpi->isMaster() && true ) {
 
 	ostringstream nameDump("");
-	nameDump << species->species_param.species_type  << ".h5" ;
+	nameDump << "TestParticles_" << species->species_param.species_type  << ".h5" ;
 	hid_t fid = H5Fopen( nameDump.str().c_str(), H5F_ACC_RDWR, H5P_DEFAULT);			
 
 	ostringstream attr("");
@@ -831,5 +832,6 @@ void SmileiIO::appendTestParticles( hid_t fid, string name, std::vector<T> prope
 
     H5Sclose(partMemSpace);
     H5Dclose(did);
+    H5Fflush( fid, H5F_SCOPE_GLOBAL );
 
 }

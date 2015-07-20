@@ -336,6 +336,8 @@ class Smilei(object):
 			diag.plot()
 		"""
 		return ParticleDiagnostic(self, *args, **kwargs)
+	def TestParticles(self, *args, **kwargs):
+		return TestParticles(self, *args, **kwargs)
 	
 	
 class Options(object):
@@ -349,6 +351,7 @@ class Options(object):
 		self.ymax   = None
 		self.vmin   = None
 		self.vmax   = None
+		self.skipAnimation = False
 		self.figure0 = {}
 		self.figure1 = {"facecolor":"w"}
 		self.axes = {}
@@ -369,6 +372,7 @@ class Options(object):
 		self.ymax     = kwargs.pop("ymax"   ,self.ymax  )
 		self.vmin     = kwargs.pop("vmin"   ,kwargs.pop("data_min",self.vmin))
 		self.vmax     = kwargs.pop("vmax"   ,kwargs.pop("data_max",self.vmax))
+		self.skipAnimation = kwargs.pop("skipAnimation", self.skipAnimation)
 		# Second, we manage all the other arguments that are directly the ones of matplotlib
 		for kwa in kwargs:
 			val = kwargs[kwa]
@@ -409,7 +413,7 @@ class Diagnostic(object):
 	# the parent `Smilei` object
 	def __init__(self, results_path=None, *args, **kwargs):
 		self.valid = False
-		self._previousdata = None
+		self._tmpdata = None
 		# if string, try to use it as a results_path
 		if type(results_path) is str:
 			self.Smilei = Smilei(results_path)
@@ -530,7 +534,7 @@ class Diagnostic(object):
 	def limits(self):
 		l = []
 		for i in range(len(self._plot_shape)):
-			l.append([min(self._plot_centers[0]), max(self._plot_centers[0])])
+			l.append([min(self._plot_centers[i]), max(self._plot_centers[i])])
 		return l
 	
 	# Method to get only the arrays of data
@@ -565,20 +569,25 @@ class Diagnostic(object):
 		ax = fig.add_subplot(1,1,1)
 		# Animation if several dimensions
 		if len(self._plot_shape) > 0:
+			# possible to skip animation
+			if self.options.skipAnimation:
+				self._animateOnAxes(ax, self.times[-1])
+				fig.canvas.draw()
+				self._plt.show()
+				return
 			# Loop times
 			for timeindex in range(self.times.size):
 				time = self.times[timeindex]
 				print "timestep "+str(time)+ "   -   t = "+str(time*self._coeff_time)+self._time_units
 				# plot
 				ax.cla()
-				artist = self._animateOnAxes(ax, time)
+				if self._animateOnAxes(ax, time) is None: return
 				fig.canvas.draw()
 				self._plt.show()
-			#return artist
 		# Static plot if 0 dimensions
 		else:
 			ax.cla()
-			artist = self._plotVsTime(ax)
+			self._plotVsTime(ax)
 	
 	# Method to set limits to a plot
 	def _setLimits(self, ax, xmin=None, xmax=None, ymin=None, ymax=None):
@@ -594,12 +603,12 @@ class Diagnostic(object):
 		A = self._getDataAtTime(t)
 		# plot
 		if A.ndim == 0: # as a function of time
-			if self._previousdata is None:
-				self._previousdata = self._np.zeros(self.times.size)
+			if self._tmpdata is None:
+				self._tmpdata = self._np.zeros(self.times.size)
 				for i, t in enumerate(self.times):
-					self._previousdata[i] = self._getDataAtTime(t)
+					self._tmpdata[i] = self._getDataAtTime(t)
 			times = self.times[self.times<=t]
-			A     = self._previousdata[self.times<=t]
+			A     = self._tmpdata[self.times<=t]
 			im, = ax.plot(times*self._coeff_time, A, **self.options.plot)
 			ax.set_xlabel('Time ['+self._time_units+' ]')
 			self._setLimits(ax, xmax=self.times[-1]*self._coeff_time, ymin=self.options.vmin, ymax=self.options.vmax)
@@ -1954,6 +1963,292 @@ class Probe(Diagnostic):
 
 
 
+
+# -------------------------------------------------------------------
+# Class for test particles diagnostics
+# -------------------------------------------------------------------
+class TestParticles(Diagnostic):
+
+	# This is the constructor, which creates the object
+	def _init(self, species=None, select="", axes=[], timesteps=None,
+				 units="code", **kwargs):
+		
+		if not self.Smilei.valid: return None
+		
+		# If argument 'species' not provided, then print available species and leave
+		if species is None:
+			species = self.getTestSpecies()
+			if len(species)>0:
+				print "Printing available test species:"
+				print "--------------------------------"
+				for s in species: print s
+			else:
+				print "No test particle files found in '"+self._results_path+"'"
+			return None
+		
+		# 1 - Get info from the namelist and prepare units
+		# -------------------------------------------------------------------
+		try:
+			ndim               = self._read_ndim()
+			ncels, cell_length = self._read_ncels_cell_length(ndim)
+			self.timestep      = self._read_timestep()
+		except:
+			return None
+		if units == "nice":
+			try   : wavelength_SI = self._read_wavelength_SI()
+			except: return None
+			coeff_distance = 1e2*wavelength_SI/(2.*self._np.pi) # in cm
+			self._coeff_time = self.timestep * wavelength_SI/3.e8 # in seconds
+			self._time_units = " s"
+		elif units == "code":
+			coeff_distance = 1 # in c/w
+			self._coeff_time = self.timestep # in 1/w
+			self._time_units = " $1/\omega$"
+		else:
+			print "Units not understood"
+			return
+		
+		# 2 - Get info from the hdf5 files + verifications
+		# -------------------------------------------------------------------
+		self.species  = species
+		self._file = self._results_path+"/TestParticles_"+species+".h5"
+		f = self._h5py.File(self._file, 'r')
+		self._h5items = f.values()
+		
+		# Get available times in the hdf5 file
+		self.times = self.getAvailableTimesteps()
+		if self.times.size == 0:
+			print "No test particles found in "+self._file
+			return
+		alltimes = self.times
+		# If specific timesteps requested, narrow the selection
+		if timesteps is not None:
+			try:
+				ts = self._np.array(self._np.double(timesteps),ndmin=1)
+				if ts.size==2:
+					# get all times in between bounds
+					self.times = self.times[ (self.times>=ts[0]) * (self.times<=ts[1]) ]
+				elif ts.size==1:
+					# get nearest time
+					self.times = self._np.array([self.times[(self._np.abs(self.times-ts)).argmin()]])
+				else:
+					raise
+			except:
+				print "Argument `timesteps` must be one or two non-negative integers"
+				return
+		# Need at least one timestep
+		if self.times.size < 1:
+			print "Timesteps not found"
+			return
+		
+		# Get available properties ("x", "y", etc.)
+		self._properties = {}
+		translateProperties = {"Id":"Id", "x":"Position-0", "y":"Position-1", "z":"Position-2",
+							"px":"Momentum-0", "py":"Momentum-1", "pz":"Momentum-2"}
+		availableProperties = f.keys()
+		for k,v in translateProperties.iteritems():
+			try:
+				i = availableProperties.index(v)
+				self._properties.update({ k:i })
+			except:
+				pass
+		
+		# Get number of particles
+		self.nParticles = self._h5items[0].shape[1]
+		
+		# 3 - Select particles
+		# -------------------------------------------------------------------
+		if type(select) is not str:
+			print "Error: the argument 'select' must be a string"
+			return
+		def findClosingCharacter(string, character, start=0):
+			i = start
+			stack = []
+			associatedBracket = {")":"(", "]":"[", "}":"{"}
+			while i < len(string):
+				if string[i] == character and len(stack)==0: return i
+				if string[i] in ["(", "[", "{"]:
+					stack.append(string[i])
+				if string[i] in [")", "]", "}"]:
+					if len(stack)==0:
+						raise Exception("Error in selector syntax: missing `"+character+"`")
+					if stack[-1]!=associatedBracket[string[i]]:
+						raise Exception("Error in selector syntax: missing closing parentheses or brackets")
+					del stack[-1]
+				i+=1
+			raise Exception("Error in selector syntax: missing `"+character+"`")
+		i = 0
+		stack = []
+		operation = ""
+		while i < len(select):
+			if i+4<len(select):
+				if select[i:i+4] == "any(" or select[i:i+4] == "all(":
+					if select[i:i+4] == "any(": function = self._np.logical_or
+					if select[i:i+4] == "all(": function = self._np.logical_and
+					comma = findClosingCharacter(select, ",", i+4)
+					parenthesis = findClosingCharacter(select, ")", comma+1)
+					timeSelector = select[i+4:comma]
+					try:
+						s = self._re.sub(r"\bt\b","alltimes",timeSelector)
+						times = alltimes[eval(s)]
+					except:
+						raise Exception("Error in selector syntax: time selector not understood in "+select[i:i+3]+"()")
+					try:
+						particleSelector = select[comma+1:parenthesis]
+						for prop in self._properties.keys():
+							particleSelector = self._re.sub(r"\b"+prop+r"\b", "self._np.double(self._h5items["+str(self._properties[prop])+"][t,:])", particleSelector)
+					except:
+						raise Exception("Error in selector syntax: not understood: "+select[i:parenthesis+1])
+					if select[i:i+4] == "any(": selection = self._np.array([False]*self.nParticles)
+					if select[i:i+4] == "all(": selection = self._np.array([True]*self.nParticles)
+					try:
+						for t in times:
+							selection = function(selection, eval(particleSelector))
+					except:
+						raise Exception("Error in selector syntax: not understood: "+select[i:parenthesis+1])
+					stack.append(selection)
+					operation += "stack["+str(len(stack)-1)+"]"
+					i = parenthesis+1
+					continue
+			operation += select[i]
+			i+=1
+		if len(operation)==0.:
+			self.selectedParticles = self._np.arange(self.nParticles)
+		else:
+			self.selectedParticles = eval(operation).nonzero()[0]
+		
+		
+		# 4 - Manage axes
+		# -------------------------------------------------------------------
+		if type(axes) is not list:
+			print "Error: Argument 'axes' must be a list"
+			return
+		if len(axes)==0:
+			print "Error: must define at least one axis."
+			return
+		self.axes = axes
+		self._axesIndex = []
+		for axis in axes:
+			if axis not in self._properties.keys():
+				print "Error: Argument 'axes' has item '"+str(axis)+"' unknown."
+				print "       Available axes are: "+(", ".join(sorted(self._properties.keys())))
+				return
+			self._axesIndex.append( self._properties[axis] ) # axesIndex contains the index in the hdf5 file
+		# The following variables are not very relevant for test particles
+		#  but they are needed for plotting functions
+		self._plot_shape = [0]*len(axes)
+		self._plot_type = self.axes
+		self._plot_centers = []
+		self._plot_label = []
+		self._plot_log = []
+		for i, axis in enumerate(self.axes):
+			axisi = self._axesIndex[i]
+			vals = self._np.double(self._h5items[axisi])
+			coeff = 1.
+			if axis in ["x", "y", "z"]: coeff = coeff_distance
+			axisunits = ""
+			if axis != "Id":
+				axisunits = " [code units]"
+				if units == "nice":
+					if axis in ["x" , "y" , "z" ]: axisunits = " [cm]"
+					if axis in ["px", "py", "pz"]: axisunits = " [m c]"
+			self._plot_centers.append([vals.min(), vals.max()])
+			self._plot_log.append(False)
+			self._plot_label.append( axis+axisunits )
+		self._title = "Test particles '"+species+"'"
+		
+		# Finish constructor
+		self.valid = True
+	
+	# Method to print info on included probe
+	def info(self):
+		if not self._validate(): return
+		print "Test particles: species '"+self.species+"' containing "+str(self.nParticles)+" particles"
+		print "                but selection of "+str(len(self.selectedParticles))+" particles"
+	
+	# get all available test species
+	def getTestSpecies(self):
+		files = self._glob(self._results_path+"/TestParticles_*.h5")
+		species = []
+		for file in files:
+			species.append(self._re.search("TestParticles_(.*).h5",file).groups()[0])
+		return species
+	
+	# get all available timesteps
+	def getAvailableTimesteps(self):
+		try:
+			ntimes = self._h5items[0].len()
+		except:
+			print "Unable to find test particle data in file "+self._file
+			return self._np.array([])
+		return self._np.arange(ntimes)
+	
+	# We override the get and getData methods
+	def getData(self):
+		if not self._validate(): return
+		data = {}
+		for i, axis in enumerate(self.axes):
+			axisi = self._axesIndex[i]
+			A = self._np.double(self._h5items[axisi])[self.times,:]
+			A = A[:,self.selectedParticles]
+			data.update({ axis:A })
+		return data
+	def get(self):
+		return self.getData()
+	
+	# We override the plotting methods
+	def _plotVsTime(self, ax):
+		pass
+	def _animateOnAxes(self, ax, t):
+		if not self._validate(): return None
+		# Check number of axes
+		if len(self.axes)>2:
+			print "Error: Cannot print test particles on more than 2-D"
+			return None
+		# Get data
+		if self._tmpdata is None:
+			A = self.getData()
+			self._tmpdata = []
+			for axis in self.axes: self._tmpdata.append( A[axis] )
+		# Plot at time t
+		if len(self.axes) == 1:
+			times = self.times[self.times<=t]
+			A     = self._tmpdata[0][self.times<=t,:]
+			if times.size == 1:
+				times = self._np.double([times, times]).squeeze()
+				A = self._np.double([A, A]).squeeze()
+			ax.plot(times*self._coeff_time, A, **self.options.plot)
+			ax.set_xlabel('Time ['+self._time_units+' ]')
+			ax.set_ylabel(self._plot_label[0])
+			self._setLimits(ax, xmax=self.times[-1]*self._coeff_time, ymin=self.options.vmin, ymax=self.options.vmax)
+		elif len(self.axes) == 2:
+			x = self._tmpdata[0][self.times<=t,:]
+			y = self._tmpdata[1][self.times<=t,:]
+			ax.plot(x, y, **self.options.plot)
+			ax.set_xlabel(self._plot_label[0])
+			ax.set_ylabel(self._plot_label[1])
+			self._setLimits(ax, ymin=self.options.vmin, ymax=self.options.vmax)
+			self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax)
+		if self._title is not None: ax.set_title(self._title)
+		ax.set(**self.options.axes)
+		try:
+			if len(self.options.xtick)>0: ax.ticklabel_format(axis="x",**self.options.xtick)
+		except:
+			print "Cannot format x ticks (typically happens with log-scale)"
+			self.options.xtick = []
+		try:
+			if len(self.options.ytick)>0: ax.ticklabel_format(axis="y",**self.options.ytick)
+		except:
+			print "Cannot format y ticks (typically happens with log-scale)"
+			self.options.ytick = []
+		return 1
+
+
+
+
+
+
+
 def multiPlot(*Diags, **kwargs):
 	""" multiplot(Diag1, Diag2, ..., figure=1, shape=None)
 	
@@ -1981,6 +2276,9 @@ def multiPlot(*Diags, **kwargs):
 		for Diag in Diags:
 			if Diag.dim()==0 and Diags[0].dim()==0:
 				continue
+			if type(Diag) is TestParticles:
+				sameAxes = False
+				break
 			if Diag.dim()!=1 or Diag._plot_type!=Diags[0]._plot_type:
 				sameAxes = False
 				break

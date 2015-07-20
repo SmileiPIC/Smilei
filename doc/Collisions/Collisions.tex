@@ -20,7 +20,7 @@
 
 % yellow box for code, full line
 \usepackage{listings}
-\lstset{backgroundcolor=\color{yellow!15}, basicstyle=\ttfamily, columns=fullflexible, keepspaces=true,escapeinside={§}{§}}
+\lstset{backgroundcolor=\color{yellow!15}, basicstyle=\ttfamily, columns=fullflexible, keepspaces=true,escapeinside={<>}{<>}}
 
 
 \newlength{\tmp}
@@ -33,9 +33,10 @@
 \date{March 23, 2015}
 \maketitle
 
-
-Relativistic binary collisions between particles have been implemented in SMILEI with the same scheme as the one developed for the
-code CALDER. The following references describe the physics and numerics of this implementation.
+\vfill
+Relativistic binary collisions between particles have been implemented in SMILEI with the
+same scheme as the one developed for thecode CALDER. The following references describe
+the physics and numerics of this implementation.
 \\*
 
 Ref. [1] gives an overview of the technique.\\*
@@ -50,59 +51,15 @@ Following Refs. provide additional information.\\*
 \item \href{http://dx.doi.org/10.1063/1.864744}{Y. T. Lee and R. M. More, Phys. Fluids \textbf{27}, 1273 (1984)}
 \item \href{http://dx.doi.org/10.1143/JPSJ.67.4084}{N. E. Frankel, K. C. Hines, and R. L. Dewar, Phys. Rev. A \textbf{20}, 2120 (1979)}
 \end{enumerate}
+\vfill
+
+Please refer to the adequate documentation for an explanation of how to add collisions in the namelist file.
 
 \vfill
 \setcounter{tocdepth}{1}
 \tableofcontents
 \vfill
 
-\clearpage
-
-\section{How to add collisions in the input file}
-
-\vspace{1cm}
-To have binary collisions in SMILEI, add one or several copies of the following block in the input file:
-
-\begin{lstlisting}
-Collisions(
-	species1 = §["\textit{species\_name}",  "\textit{species\_name}",  ...]§,
-	species2 = §["\textit{species\_name}",  "\textit{species\_name}",  ...]§,
-	§\blue{coulomb\_log = \textit{ln}$\Lambda$}§,
-	§\blue{debug\_every = \textit{every}}§
-)
-\end{lstlisting}
-\vfill
-Each \val{species\_name} must be the name of an existing species. This name can be
-found in the input file inside any block \code{Species(...)} under the keyword \code{species\_type}.\\*
-
-The collisions will occur between (1) all species under the group \code{species1} and (2) all species under the group \code{species2}.
-For instance, to have collisions between \code{electrons1} and \code{ions1} , use
-\begin{lstlisting}
-	species1 = ["electrons1"],
-	species2 = ["ions1"]
-\end{lstlisting}
-Other example:
-\begin{lstlisting}
-	species1 = ["electrons1", "electrons2"],
-	species2 = ["ions"]
-\end{lstlisting}
-will collide all electrons with ions.\\*
-\textbf{WARNING: this does not make \code{electrons1} collide with \code{electrons2}.}\\*
-
-The two group of species have to be \underline{completely different} OR \underline{exactly equal}.\\*
-In other words, if \code{species1} is not equal to \code{species2}, then they cannot have any common species.
-If the two groups are exactly equal, we call this situation ``intra-collisions''.
-
-\vfill
-The \blue{optional} value \val{ln$\Lambda$} must be a float.
-\begin{itemize}
-	\item If \val{ln$\Lambda$} $=0$, the Coulomb logarithm is automatically computed for each collision (default).
-	\item If \val{ln$\Lambda$} $>0$, the Coulomb logarithm is equal to this value.
-\end{itemize}
-
-\vfill
-The \blue{optional} value \val{debug\_every} must be an integer: the number of timesteps between each output of
-information about collisions. If absent or zero, there will be no outputs. See section \ref{sec:debug}
 \clearpage
 
 

@@ -30,6 +30,7 @@ PicParams::PicParams(InputData &ifile) {
     ifile.extract("restart", restart);
     if (restart) MESSAGE("Code running from restart"); //! \todo Give info on restart properties
     
+    //!\todo MG is this still used ?? I cannot find it anywhere
     check_stop_file=false;
     ifile.extract("check_stop_file", check_stop_file);
     
@@ -131,7 +132,6 @@ PicParams::PicParams(InputData &ifile) {
             bc_em_type_z.resize(2); bc_em_type_z[1]=bc_em_type_z[0];
         }
     }
-
     
     // ------------------------
     // Moving window parameters
@@ -181,7 +181,7 @@ void PicParams::readSpecies(InputData &ifile) {
     bool ok;
     for (unsigned int ispec = 0; ispec < ifile.nComponents("Species"); ispec++) {
         SpeciesStructure tmpSpec;
-
+        
         ifile.extract("species_type",tmpSpec.species_type,"Species",ispec);
         if(tmpSpec.species_type.empty()) {
             ERROR("For species #" << ispec << " empty species_type");
