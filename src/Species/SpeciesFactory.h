@@ -31,7 +31,7 @@ public:
 		nParticles =  allNbrParticles[0];
 		for (int irk=1 ; irk<smpi->getSize() ; irk++){
 		    allNbrParticles[irk] += nParticles;
-		    nParticles += allNbrParticles[irk];
+		    nParticles = allNbrParticles[irk];
 		}
 		for (int irk=smpi->getSize()-1 ; irk>0 ; irk--){
 		    allNbrParticles[irk] = allNbrParticles[irk-1];

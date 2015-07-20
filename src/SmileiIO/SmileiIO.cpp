@@ -832,5 +832,6 @@ void SmileiIO::appendTestParticles( hid_t fid, string name, std::vector<T> prope
 
     H5Sclose(partMemSpace);
     H5Dclose(did);
+    H5Fflush( fid, H5F_SCOPE_GLOBAL );
 
 }

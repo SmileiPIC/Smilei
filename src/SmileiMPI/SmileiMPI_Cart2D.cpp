@@ -584,7 +584,9 @@ MPI_Datatype SmileiMPI_Cart2D::createMPIparticles( Particles* particles, int nbr
 	disp[i] = address[i] - address[0];
     for (int i=0 ; i<nbrOfProp2 ; i++)
 	partDataType[i] = MPI_DOUBLE;
-    partDataType[nbrOfProp2-1] = MPI_SHORT;
+    partDataType[nbrOfProp-1] = MPI_SHORT;
+    if (particles->isTestParticles)
+	partDataType[nbrOfProp2-1] = MPI_SHORT;
 
     MPI_Type_struct( nbrOfProp2, &(nbr_parts[0]), &(disp[0]), &(partDataType[0]), &typeParticlesMPI);
     MPI_Type_commit( &typeParticlesMPI );
