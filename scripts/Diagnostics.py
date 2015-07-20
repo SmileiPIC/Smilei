@@ -557,7 +557,7 @@ class Diagnostic(object):
 		return result
 	
 	# Method to plot the current diagnostic
-	def plot(self, **kwargs):
+	def plot(self, movie="", fps=15, dpi=200, **kwargs):
 		if not self._validate(): return
 		self.set(**kwargs)
 		self.info()
@@ -567,6 +567,7 @@ class Diagnostic(object):
 		fig.set(**self.options.figure1)
 		fig.clf()
 		ax = fig.add_subplot(1,1,1)
+		
 		# Animation if several dimensions
 		if len(self._plot_shape) > 0:
 			# possible to skip animation
@@ -575,16 +576,23 @@ class Diagnostic(object):
 				fig.canvas.draw()
 				self._plt.show()
 				return
+			
+			# Movie requested ?
+			mov = Movie(fig, movie, fps, dpi)
+			if mov.writer is None: return
 			# Loop times
 			for timeindex in range(self.times.size):
 				time = self.times[timeindex]
 				print "timestep "+str(time)+ "   -   t = "+str(time*self._coeff_time)+self._time_units
 				# plot
 				ax.cla()
-				if self._animateOnAxes(ax, time) is None: return
+				if self._animateOnAxes(ax, time, movie=mov) is None: return
 				fig.canvas.draw()
 				self._plt.show()
-		# Static plot if 0 dimensions
+			# Movie ?
+			mov.finish()
+		
+		# Plot vs time if 0 dimensions
 		else:
 			ax.cla()
 			self._plotVsTime(ax)
@@ -597,7 +605,7 @@ class Diagnostic(object):
 		if ymax is not None: ax.set_ylim(ymax=ymax)
 	
 	# Method to plot the data when axes are made
-	def _animateOnAxes(self, ax, t):
+	def _animateOnAxes(self, ax, t, movie=None):
 		if not self._validate(): return None
 		# get data
 		A = self._getDataAtTime(t)
@@ -642,6 +650,7 @@ class Diagnostic(object):
 		except:
 			print "Cannot format y ticks (typically happens with log-scale)"
 			self.xtickkwargs = []
+		if movie is not None: movie.grab_frame()
 		return im
 	
 	# Special case: 2D plot
@@ -659,7 +668,7 @@ class Diagnostic(object):
 		if len(self._plot_shape) > 0:
 			print "To plot vs. time, it is necessary to slice all axes in order to obtain a 0-D array"
 			return None
-		# Loop times to gather data
+		# Gather data
 		A = self._np.squeeze(self.getData())
 		im, = ax.plot(self.times*self._coeff_time, A, **self.options.plot)
 		ax.set_xlabel('Time ['+self._time_units+' ]')
@@ -2199,7 +2208,7 @@ class TestParticles(Diagnostic):
 	# We override the plotting methods
 	def _plotVsTime(self, ax):
 		pass
-	def _animateOnAxes(self, ax, t):
+	def _animateOnAxes(self, ax, t, movie=None):
 		if not self._validate(): return None
 		# Check number of axes
 		if len(self.axes)>2:
@@ -2241,11 +2250,47 @@ class TestParticles(Diagnostic):
 		except:
 			print "Cannot format y ticks (typically happens with log-scale)"
 			self.options.ytick = []
+		if movie is not None: movie.grab_frame()
 		return 1
 
 
 
 
+
+class Movie:
+	
+	def __init__(self, fig, movie="", fps=15, dpi=200):
+		import os.path as ospath
+		self.writer = None
+		if type(movie) is not str:
+			print "ERROR: argument 'movie' must be a filename"
+			return
+		if len(movie)>0:
+			if ospath.isfile(movie):
+				print "ERROR: file '"+movie+"' already exists. Please choose another name"
+				return
+			if ospath.isdir(movie):
+				print "ERROR: '"+movie+"' is a path, not a file"
+				return
+			try:
+				import matplotlib.animation as anim
+			except:
+				print "ERROR: it looks like your version of matplotlib is too old for movies"
+				return
+			try:
+				self.writer = anim.writers['ffmpeg'](fps=fps)
+			except:
+				print "ERROR: you need the 'ffmpeg' software to make movies"
+				return
+			self.writer.setup(fig, movie, dpi)
+	
+	def finish(self):
+		if self.writer is not None:
+			self.writer.finish()
+	
+	def grab_frame(self):
+		if self.writer is not None:
+			self.writer.grab_frame()
 
 
 
@@ -2269,6 +2314,9 @@ def multiPlot(*Diags, **kwargs):
 	alltimes = np.unique(np.concatenate([Diag.times*Diag.timestep for Diag in Diags]))
 	# Get keyword arguments
 	shape  = kwargs.pop("shape" , None)
+	movie  = kwargs.pop("movie" , ""  )
+	fps    = fps   .pop("fps"   , 15  )
+	dpi    = kwargs.pop("dpi"   , 200 )
 	# Determine whether to plot all cases on the same axes
 	sameAxes = False
 	if shape is None or shape == [1,1]:
@@ -2326,6 +2374,8 @@ def multiPlot(*Diags, **kwargs):
 		plt.show()
 	# Animated plot
 	else:
+		mov = Movie(fig, movie, fps, dpi)
+		if mov.writer is None: return
 		# Loop all times
 		for time in alltimes:
 			for Diag in Diags:
@@ -2340,6 +2390,7 @@ def multiPlot(*Diags, **kwargs):
 						Diag._ax.set_xlim(xmin,xmax)
 			fig.canvas.draw()
 			plt.show()
+		mov.finish()
 		return
 	
 
