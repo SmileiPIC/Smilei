@@ -53,11 +53,13 @@ public:
     //! Insert particle iPart at dest_id in dest_parts
     void cp_particle(int ipart, Particles &dest_parts, int dest_id );
 
-    //! Insert first iPart particles at position dest_id in dest_parts
-    void cp_particles(int nPart, Particles &dest_parts, int dest_id );
+    //! Insert nPart particles starting at ipart to dest_id in dest_parts
+    void cp_particles(int iPart, int nPart, Particles &dest_parts, int dest_id );
 
     //! Suppress particle iPart
     void erase_particle(int iPart );
+    //! Suppress nPart particles from iPart 
+    void erase_particle(int iPart, int nPart );
 
     //! Suppress all particles from iPart to the end of particle array 
     void erase_particle_trail(int iPart );

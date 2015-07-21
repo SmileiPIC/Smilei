@@ -133,20 +133,20 @@ void Particles::cp_particle(int ipart, Particles &dest_parts, int dest_id )
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Insert first nPart particles at dest_id in dest_parts
+// Insert nPart particles starting at ipart to dest_id in dest_parts
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::cp_particles(int nPart, Particles &dest_parts, int dest_id )
+void Particles::cp_particles(int iPart, int nPart, Particles &dest_parts, int dest_id )
 {
     for (unsigned int i=0; i<Position.size(); i++) {
-        dest_parts.Position[i].insert( dest_parts.Position[i].begin() + dest_id, Position[i].begin(), Position[i].begin()+nPart );
-        dest_parts.Position_old[i].insert( dest_parts.Position_old[i].begin() + dest_id, Position_old[i].begin(), Position_old[i].begin()+nPart );
+        dest_parts.Position[i].insert( dest_parts.Position[i].begin() + dest_id, Position[i].begin()+iPart, Position[i].begin()+iPart+nPart );
+        dest_parts.Position_old[i].insert( dest_parts.Position_old[i].begin() + dest_id, Position_old[i].begin()+iPart, Position_old[i].begin()+iPart+nPart );
     }
 
     for (unsigned int i=0; i<3; i++) {
-        dest_parts.Momentum[i].insert( dest_parts.Momentum[i].begin() + dest_id, Momentum[i].begin(), Momentum[i].begin()+nPart );
+        dest_parts.Momentum[i].insert( dest_parts.Momentum[i].begin() + dest_id, Momentum[i].begin()+iPart, Momentum[i].begin()+iPart+nPart );
     }
-    dest_parts.Weight.insert( dest_parts.Weight.begin() + dest_id, Weight.begin(), Weight.begin()+nPart );
-    dest_parts.Charge.insert( dest_parts.Charge.begin() + dest_id, Charge.begin(), Charge.begin()+nPart );
+    dest_parts.Weight.insert( dest_parts.Weight.begin() + dest_id, Weight.begin()+iPart, Weight.begin()+iPart+nPart );
+    dest_parts.Charge.insert( dest_parts.Charge.begin() + dest_id, Charge.begin()+iPart, Charge.begin()+iPart+nPart );
 
 }
 
@@ -183,6 +183,22 @@ void Particles::erase_particle_trail(int ipart)
     }
     Weight.erase( Weight.begin()+ipart,Weight.end() );
     Charge.erase( Charge.begin()+ipart,Charge.end() );
+}
+// ---------------------------------------------------------------------------------------------------------------------
+// Suppress npart particles from ipart  
+// ---------------------------------------------------------------------------------------------------------------------
+void Particles::erase_particle(int ipart, int npart)
+{
+    for (unsigned int i=0; i<Position.size(); i++) {
+        Position[i].erase(Position[i].begin()+ipart,Position[i].begin()+ipart+npart );
+        Position_old[i].erase(Position_old[i].begin()+ipart,Position_old[i].begin()+ipart+npart );
+    }
+
+    for (unsigned int i=0; i<3; i++) {
+        Momentum[i].erase( Momentum[i].begin()+ipart,Momentum[i].begin()+ipart+npart );
+    }
+    Weight.erase( Weight.begin()+ipart,Weight.begin()+ipart+npart );
+    Charge.erase( Charge.begin()+ipart,Charge.begin()+ipart+npart );
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

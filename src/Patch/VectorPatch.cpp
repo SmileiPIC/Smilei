@@ -21,6 +21,180 @@ VectorPatch::~VectorPatch()
 {
 }
 
+void VectorPatch::exchangeParticles(int ispec, PicParams &params)
+{
+    Patch* mypatch, *lpatch;
+    Particles* my_particles, *lparticles;
+    int lshift(0), rshift(0), nlshift, nrshift, lpatch_indice, ii, iPart;
+    int nmove, lmove, n_particles;
+    int nbins((*this)(0)->vecSpecies[ispec]->bmax.size());
+    int bin_shift[nbins+1];
+    std::vector<int>* cubmax;
+    std::vector<int>* cubmin;
+    double dbin = params.cell_length[0]*params.clrw; //width of a bin.
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+        mypatch =  (*this)(ipatch);
+        mypatch->lost_particles[0].clear();
+        mypatch->lost_particles[1].clear();
+    }
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+        //Exchange along direction 0. Is optimized because we can use bin structure.
+        mypatch =  (*this)(ipatch);
+        my_particles = mypatch->vecSpecies[ispec]->particles;
+        lpatch_indice = mypatch->patch_neighborhood_[3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)] - refHindex_ ;
+        lpatch =  (*this)(lpatch_indice);
+        lparticles = lpatch->vecSpecies[ispec]->particles;
+        //Take particles from my right neighbour and push_them back on me
+        if (mypatch->MPI_neighborhood_[2+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)] == mypatch->MPI_neighborhood_[1+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)]) {
+            lpatch_indice = mypatch->patch_neighborhood_[2+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)] - refHindex_ ;
+            lpatch =  (*this)(lpatch_indice);
+            lparticles = lpatch->vecSpecies[ispec]->particles;
+            //Explore the first bin of my right neighbour where all particles possibly going to the left are located and put them at the end of my particle vector.
+            for(unsigned int ipart = lpatch->vecSpecies[ispec]->bmin[0]; ipart < lpatch->vecSpecies[ispec]->bmax[0]  ; ipart++){
+                if ( lparticles->position(0,ipart) < lpatch->min_local[0] ){
+                    lparticles->cp_particle(ipart, *my_particles);
+                    lpatch->lost_particles[0].push_back(ipart);
+                }
+            }
+         }
+         //Take particles from my left neighbour and push_them back on me
+        if (mypatch->MPI_neighborhood_[3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)] == mypatch->MPI_neighborhood_[1+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)]) {
+            //Explore the last bin of my left neighbour where all particles possibly going to the right are located and put them at the end of my particle vector.
+            for(unsigned int ipart = lpatch->vecSpecies[ispec]->bmin.back(); ipart < lpatch->vecSpecies[ispec]->bmax.back()  ; ipart++){
+                if ( lparticles->position(0,ipart) >= lpatch->max_local[0] ){
+                    lparticles->cp_particle(ipart, *my_particles);
+                    lpatch->lost_particles[1].push_back(ipart);
+                }
+            }
+        }
+    }//Sync
+    //Lost particles are erased, received particles from left and right are now put in place, bmin bmax are adjusted.
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+        mypatch =  (*this)(ipatch);
+        my_particles = mypatch->vecSpecies[ispec]->particles;
+        cubmax = (&mypatch->vecSpecies[ispec]->bmax);
+        cubmin = (&mypatch->vecSpecies[ispec]->bmin);
+
+        //Gather lost particles list in one vector and sort it.
+        mypatch->lost_particles[0].insert(mypatch->lost_particles[0].end(), mypatch->lost_particles[1].begin(),mypatch->lost_particles[1].end());
+        std::sort(mypatch->lost_particles[0].begin(),mypatch->lost_particles[0].end());
+
+        //Clean up lost particles.
+        mypatch->cleanup_sent_particles(ispec, &mypatch->lost_particles[0]);
+        //Compute number of particles received from left and right.
+        if (mypatch->MPI_neighborhood_[2+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)] == mypatch->MPI_neighborhood_[1+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)]) {
+              lpatch_indice = mypatch->patch_neighborhood_[2+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)] - refHindex_ ;
+              lpatch =  (*this)(lpatch_indice);
+              nrshift = lpatch->lost_particles[0].size();
+         }else{
+              nrshift = 0;
+         }
+         nlshift = my_particles->size()-((*cubmax).back()+nrshift);
+
+         //copy the nlshift last particles of my_particles (particles coming from the left, to bin 0.
+         my_particles->cp_particles((*cubmax).back()+nrshift,nlshift, *my_particles, (*cubmax)[0]);
+         (*cubmax)[0] += nlshift;
+         for (unsigned int ibin = 1 ; ibin < (*cubmax).size() ; ibin++ ){
+            (*cubmax)[ibin] += nlshift;
+            (*cubmin)[ibin] += nlshift;
+         }
+         (*cubmax).back() += nrshift;
+         my_particles->erase_particle_trail((*cubmax).back());
+      
+    }//Sync
+    //Now redo the operation for north-south comm.
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+        mypatch =  (*this)(ipatch);
+        mypatch->lost_particles[0].clear();
+        mypatch->lost_particles[1].clear();
+    }
+
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+        for(unsigned int i=0; i< nbins+1; i++) bin_shift[i] = 0;
+        //Take particles from my south neighbour and push_them back on me
+        if (mypatch->MPI_neighborhood_[1+9*(params.nDim_field == 3)] == mypatch->MPI_neighborhood_[1+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)]) {
+            lpatch_indice = mypatch->patch_neighborhood_[1+9*(params.nDim_field == 3)] - refHindex_ ;
+            lpatch =  (*this)(lpatch_indice);
+            lparticles = lpatch->vecSpecies[ispec]->particles;
+            //Explore the all bins of my south neighbour and put them at the end of my particle vector.
+            for(unsigned int ipart = lpatch->vecSpecies[ispec]->bmin[0]; ipart < lpatch->vecSpecies[ispec]->bmax.back()  ; ipart++){
+                if ( lparticles->position(0,ipart) >= lpatch->max_local[1] ){
+                    lparticles->cp_particle(ipart, *my_particles);
+                    lpatch->lost_particles[0].push_back(ipart);
+	            ii = int((lparticles->position(0,ipart)-mypatch->min_local[0])/dbin);//bin in which the particle goes.
+	            bin_shift[ii+1]++; // It makes the next bins shift.
+                }
+            }
+        }
+        //Take particles from my north neighbour and push_them back on me
+        if (mypatch->MPI_neighborhood_[7+9*(params.nDim_field == 3)] == mypatch->MPI_neighborhood_[1+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)]) {
+            lpatch_indice = mypatch->patch_neighborhood_[7+9*(params.nDim_field == 3)] - refHindex_ ;
+            lpatch =  (*this)(lpatch_indice);
+            lparticles = lpatch->vecSpecies[ispec]->particles;
+            //Explore the all bins of my north neighbour and put them at the end of my particle vector.
+            for(unsigned int ipart = lpatch->vecSpecies[ispec]->bmin[0]; ipart < lpatch->vecSpecies[ispec]->bmax.back()  ; ipart++){
+                if ( lparticles->position(0,ipart) >= lpatch->max_local[1] ){
+                    lparticles->cp_particle(ipart, *my_particles);
+                    lpatch->lost_particles[1].push_back(ipart);
+	            ii = int((lparticles->position(0,ipart)-mypatch->min_local[0])/dbin);//bin in which the particle goes.
+	            bin_shift[ii+1]++; // It makes the next bins shift.
+                }
+            }
+        }
+    } //sync.
+    //Lost particles are erased, received particles from north and south are now put in place, bmin bmax are adjusted. 
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+        mypatch =  (*this)(ipatch);
+        my_particles = mypatch->vecSpecies[ispec]->particles;
+        cubmax = (&mypatch->vecSpecies[ispec]->bmax);
+        cubmin = (&mypatch->vecSpecies[ispec]->bmin);
+
+        //Gather lost particles list in one vector and sort it.
+        mypatch->lost_particles[0].insert(mypatch->lost_particles[0].end(), mypatch->lost_particles[1].begin(),mypatch->lost_particles[1].end());
+        std::sort(mypatch->lost_particles[0].begin(),mypatch->lost_particles[0].end());
+
+        //Clean up lost particles.
+        mypatch->cleanup_sent_particles(ispec, &mypatch->lost_particles[0]);
+        //Shift the bins as necessary
+     
+        //Computes the real shift of each bin.
+	for (unsigned int j=1; j<(*cubmax).size()+1;j++){ //bin 0 is not shifted.Last element of shift stores total number of arriving particles.
+	    bin_shift[j] += bin_shift[j-1];
+	}
+	//Make room for new particles
+	my_particles->initialize( my_particles->size()+bin_shift[nbins], my_particles->dimension() );
+        //Move new particles at the end of the larger vector.
+        my_particles->overwrite_part2D((*cubmax).back(), (*cubmax).back()+bin_shift[nbins], bin_shift[nbins]);
+	
+	//Shift bins, must be done sequentially
+	for (unsigned int j=(*cubmax).size()-1; j>=1; j--){
+	    n_particles = (*cubmax)[j]-(*cubmin)[j]; //Nbr of particle in this bin
+	    nmove = min(n_particles,bin_shift[j]); //Nbr of particles to move
+	    lmove = max(n_particles,bin_shift[j]); //How far particles must be shifted
+	    if (nmove>0) my_particles->overwrite_part2D((*cubmin)[j], (*cubmin)[j]+lmove, nmove);
+	    (*cubmin)[j] += bin_shift[j];
+	    (*cubmax)[j] += bin_shift[j];
+	}
+	
+	//Space has been made now to write the arriving particles into the correct bins
+	for (unsigned int j=(*cubmax).back(); j<my_particles->size(); j++){
+	    ii = int((my_particles->position(0,j)-mypatch->min_local[0])/dbin);//bin in which the particle goes.
+            my_particles->overwrite_part2D(j, (*cubmax)[ii]);
+            (*cubmax)[ii] ++ ;
+        }
+
+         my_particles->erase_particle_trail((*cubmax).back());
+      
+    }//Sync
+
+}
+
 void VectorPatch::exchangeParticles(int ispec, PicParams &params, SmileiMPI* smpi)
 {
     int useless(0);

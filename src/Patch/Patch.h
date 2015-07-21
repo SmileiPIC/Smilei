@@ -101,6 +101,9 @@ public:
 
     std::vector< int > MPI_neighborhood_;
     std::vector< int > patch_neighborhood_;
+    std::vector<int> lost_particles[2];
+
+    void cleanup_sent_particles(int ispec, std::vector<int>* indexes_of_particles_to_exchange);
 
     void dynamics(double time_dual, PicParams &params, SimWindow* simWindow, int diag_flag);
 

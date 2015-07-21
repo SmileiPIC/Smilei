@@ -193,7 +193,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
              
         }
 
-    }//End loop on Patches
+    }//End loop on Patches. This barrier matters.
 
     //Creation of new Patches if necessary
     //The "new" operator must be included in a single area otherwise conflicts arise for unknown reasons.
@@ -221,7 +221,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
              smpi->recv( mypatch, Rneighbor, mypatch->Hindex() );
          }
          // And else, nothing to do.
-    } 
+    } //This barrier matters. 
 
     //Each thread erases data of sent patches
     for (int j= send_patches_.size()-1; j>=0; j--){

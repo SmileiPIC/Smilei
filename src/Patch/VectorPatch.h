@@ -37,6 +37,7 @@ class VectorPatch {
     inline Patch* operator()(int ipatch) {return patches_[ipatch];};
 
     void exchangeParticles(int ispec, PicParams &params, SmileiMPI* smpi);
+    void exchangeParticles(int ispec, PicParams &params);
     void sumRhoJ( unsigned int diag_flag );
     void sumRhoJs( int ispec );
     void exchangeE(  );
