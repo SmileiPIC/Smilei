@@ -579,7 +579,6 @@ class Diagnostic(object):
 			
 			# Movie requested ?
 			mov = Movie(fig, movie, fps, dpi)
-			if mov.writer is None: return
 			# Loop times
 			for timeindex in range(self.times.size):
 				time = self.times[timeindex]
@@ -590,7 +589,7 @@ class Diagnostic(object):
 				fig.canvas.draw()
 				self._plt.show()
 			# Movie ?
-			mov.finish()
+			if mov.writer is not None: mov.finish()
 		
 		# Plot vs time if 0 dimensions
 		else:
@@ -2375,7 +2374,6 @@ def multiPlot(*Diags, **kwargs):
 	# Animated plot
 	else:
 		mov = Movie(fig, movie, fps, dpi)
-		if mov.writer is None: return
 		# Loop all times
 		for time in alltimes:
 			for Diag in Diags:
@@ -2390,7 +2388,7 @@ def multiPlot(*Diags, **kwargs):
 						Diag._ax.set_xlim(xmin,xmax)
 			fig.canvas.draw()
 			plt.show()
-		mov.finish()
+		if mov.writer is not None: mov.finish()
 		return
 	
 
