@@ -98,7 +98,7 @@ PicParams::PicParams(InputData &ifile) {
     }
     dtCFL=1.0/sqrt(res_space2);
     if ( timestep>dtCFL ) {
-        ERROR("Possible CFL problem: timestep=" << timestep << " should be smaller than " << dtCFL);
+        ERROR("CFL problem: timestep=" << timestep << " should be smaller than " << dtCFL);
     }
     
     
