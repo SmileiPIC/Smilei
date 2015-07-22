@@ -35,6 +35,7 @@ class VectorPatch {
     int size() const {return patches_.size();};
 
     inline Patch* operator()(int ipatch) {return patches_[ipatch];};
+    inline void set_refHindex() {refHindex_ = patches_[0]->Hindex();};
 
     void exchangeParticles(int ispec, PicParams &params, SmileiMPI* smpi);
     void exchangeParticles(int ispec, PicParams &params);
