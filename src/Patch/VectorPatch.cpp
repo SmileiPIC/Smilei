@@ -218,40 +218,47 @@ void VectorPatch::exchangeParticles(int ispec, PicParams &params, SmileiMPI* smp
 void VectorPatch::sumRhoJ(unsigned int diag_flag )
 {
 
-    Jx_.resize(0);
-    Jy_.resize(0);
-    Jz_.resize(0);
-    rho_.resize(0);
-    for (int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	Jx_.push_back( (*this)(ipatch)->EMfields->Jx_ );
-	Jy_.push_back( (*this)(ipatch)->EMfields->Jy_ );
-	Jz_.push_back( (*this)(ipatch)->EMfields->Jz_ );
-	rho_.push_back( (*this)(ipatch)->EMfields->rho_ );
+    #pragma omp single
+    {
+        Jx_.resize(0);
+        Jy_.resize(0);
+        Jz_.resize(0);
+        rho_.resize(0);
+        for (int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            Jx_.push_back( (*this)(ipatch)->EMfields->Jx_ );
+            Jy_.push_back( (*this)(ipatch)->EMfields->Jy_ );
+            Jz_.push_back( (*this)(ipatch)->EMfields->Jz_ );
+            rho_.push_back( (*this)(ipatch)->EMfields->rho_ );
+        }
     }
-
     sum( Jx_ );
     sum( Jy_ );
     sum( Jz_ );
     if(diag_flag) sum( rho_ );
 
-    Jx_.clear();
-    Jy_.clear();
-    Jz_.clear();
-    rho_.clear();
-
+    #pragma omp single
+    {
+        Jx_.clear();
+        Jy_.clear();
+        Jz_.clear();
+        rho_.clear();
+    }
 }
 
 void VectorPatch::sumRhoJs( int ispec )
 {
-    Jx_.resize(0);
-    Jy_.resize(0);
-    Jz_.resize(0);
-    rho_.resize(0);
-    for (int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	Jx_.push_back( (*this)(ipatch)->EMfields->Jx_s[ispec] );
-	Jy_.push_back( (*this)(ipatch)->EMfields->Jy_s[ispec] );
-	Jz_.push_back( (*this)(ipatch)->EMfields->Jz_s[ispec] );
-	rho_.push_back( (*this)(ipatch)->EMfields->rho_s[ispec] );
+    #pragma omp single
+    {
+        Jx_.resize(0);
+        Jy_.resize(0);
+        Jz_.resize(0);
+        rho_.resize(0);
+        for (int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            Jx_.push_back( (*this)(ipatch)->EMfields->Jx_s[ispec] );
+            Jy_.push_back( (*this)(ipatch)->EMfields->Jy_s[ispec] );
+            Jz_.push_back( (*this)(ipatch)->EMfields->Jz_s[ispec] );
+            rho_.push_back( (*this)(ipatch)->EMfields->rho_s[ispec] );
+        }
     }
 
     sum( Jx_ );
@@ -259,51 +266,65 @@ void VectorPatch::sumRhoJs( int ispec )
     sum( Jz_ );
     sum( rho_ );
 
-    Jx_.clear();
-    Jy_.clear();
-    Jz_.clear();
-    rho_.clear();
-    
+    #pragma omp single
+    {
+        Jx_.clear();
+        Jy_.clear();
+        Jz_.clear();
+        rho_.clear();
+    } 
 }
 
 void VectorPatch::exchangeE( )
 {
-    Ex_.resize(0);
-    Ey_.resize(0);
-    Ez_.resize(0);
-    for (int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	Ex_.push_back( (*this)(ipatch)->EMfields->Ex_ );
-	Ey_.push_back( (*this)(ipatch)->EMfields->Ey_ );
-	Ez_.push_back( (*this)(ipatch)->EMfields->Ez_ );
+    #pragma omp single
+    {
+        Ex_.resize(0);
+        Ey_.resize(0);
+        Ez_.resize(0);
+        for (int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            Ex_.push_back( (*this)(ipatch)->EMfields->Ex_ );
+            Ey_.push_back( (*this)(ipatch)->EMfields->Ey_ );
+            Ez_.push_back( (*this)(ipatch)->EMfields->Ez_ );
+        }
     }
 
     exchange( Ex_ );
     exchange( Ey_ );
     exchange( Ez_ );
 
-    Ex_.clear();
-    Ey_.clear();
-    Ez_.clear();
+    #pragma omp single
+    {
+        Ex_.clear();
+        Ey_.clear();
+        Ez_.clear();
+    }
 }
 
 void VectorPatch::exchangeB( )
 {
-    Bx_.resize(0);
-    By_.resize(0);
-    Bz_.resize(0);
-    for (int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	Bx_.push_back( (*this)(ipatch)->EMfields->Bx_ );
-	By_.push_back( (*this)(ipatch)->EMfields->By_ );
-	Bz_.push_back( (*this)(ipatch)->EMfields->Bz_ );
+    #pragma omp single
+    {
+        Bx_.resize(0);
+        By_.resize(0);
+        Bz_.resize(0);
+        for (int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            Bx_.push_back( (*this)(ipatch)->EMfields->Bx_ );
+            By_.push_back( (*this)(ipatch)->EMfields->By_ );
+            Bz_.push_back( (*this)(ipatch)->EMfields->Bz_ );
+        }
     }
     
     exchange1( Bx_ );
     exchange0( By_  );
     exchange ( Bz_ );
 
-    Bx_.clear();
-    By_.clear();
-    Bz_.clear();
+    #pragma omp single
+    {
+        Bx_.clear();
+        By_.clear();
+        Bz_.clear();
+    }
 
 }
 
