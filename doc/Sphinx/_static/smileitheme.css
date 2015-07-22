@@ -1,0 +1,34 @@
+.blue {
+	color:blue;
+}
+
+.red {
+	color:red;
+}
+
+table.docutils {
+	white-space: nowrap;
+}
+
+img.logo {
+	width:160px;
+}
+
+div.lablogos {
+	border:0px solid #555;
+}
+
+div.lablogos > br.clear {
+	clear:both;
+}
+
+div.lablogos > div {
+	padding:5px;
+	float:left;
+}
+
+table.docutils.citation, table.docutils.citation * {
+	-moz-box-shadow: none;
+	-webkit-box-shadow: none;
+	box-shadow: none;
+}
