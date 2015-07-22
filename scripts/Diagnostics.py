@@ -2116,7 +2116,7 @@ class TestParticles(Diagnostic):
 						selectionAtTimeT = eval(particleSelector) # array of True or False
 						self._Id.read_direct(ID, source_sel=self._np.s_[t,:], dest_sel=self._np.s_[:]) # read the particle Ids
 						selectionAtTimeT = selectionAtTimeT[ID>0] # remove zeros, which are dead particles
-						id = ID[ID>0] # remove zeros, which are dead particles
+						id = ID[ID>0]-1 # remove zeros, which are dead particles
 						selection[id] = function( selection[id], selectionAtTimeT)
 					#except:
 					#	raise Exception("Error in selector syntax: not understood: "+select[i:parenthesis+1])
@@ -2131,6 +2131,7 @@ class TestParticles(Diagnostic):
 		else:
 			self.selectedParticles = eval(operation).nonzero()[0]
 		self.selectedParticles.sort()
+		self.selectedParticles += 1
 		self.nselectedParticles = len(self.selectedParticles)
 		
 		# 4 - Manage axes
