@@ -728,77 +728,75 @@ void SmileiIO::writeTestParticles(Species* species, int ispec, int time, PicPara
     
     Particles &cuParticles = species->particles;
     int locNbrParticles = species->getNbrOfParticles();
-
-
+    
+    
     // Collect all test particles :
     int* allNbrParticles = new int[smpi->smilei_sz];
     MPI_Gather( &locNbrParticles, 1, MPI_INTEGER, allNbrParticles, 1, MPI_INTEGER, 0, smpi->SMILEI_COMM_WORLD );
     int nParticles(0);
     if (smpi->isMaster()) {
-	for (int irk=0 ; irk<smpi->getSize() ; irk++)
-	    nParticles += allNbrParticles[irk];
+        for (int irk=0 ; irk<smpi->getSize() ; irk++)
+            nParticles += allNbrParticles[irk];
     }
-
+    
     Particles testParticles;
     int nTestparticles(0);
     testParticles.initialize( 0, params, ispec);
-
+    
     if ( smpi->isMaster() ) {
-	MPI_Status status;
-	cuParticles.cp_particles( allNbrParticles[0], testParticles , 0);
-	nTestparticles+=allNbrParticles[0];
-	for (int irk=1 ; irk<smpi->getSize() ; irk++) {
-	    if (allNbrParticles[irk]!=0) {
-		Particles partVectorRecv;
-		partVectorRecv.initialize( allNbrParticles[irk], params, ispec );
-		MPI_Datatype typePartRecv = smpi->createMPIparticles( &partVectorRecv, params.nDim_particle + 3 + 1 + 1 );
-		MPI_Recv( &(partVectorRecv.position(0,0)), 1, typePartRecv,  irk, irk, smpi->SMILEI_COMM_WORLD, &status );
-		MPI_Type_free( &typePartRecv );
-		// cp in testParticles
-		partVectorRecv.cp_particles( allNbrParticles[irk], testParticles ,nTestparticles );
-		nTestparticles+=allNbrParticles[irk];
-	    }
-	}
-		    
+        MPI_Status status;
+        cuParticles.cp_particles( allNbrParticles[0], testParticles , 0);
+        nTestparticles+=allNbrParticles[0];
+        for (int irk=1 ; irk<smpi->getSize() ; irk++) {
+            if (allNbrParticles[irk]!=0) {
+                Particles partVectorRecv;
+                partVectorRecv.initialize( allNbrParticles[irk], params, ispec );
+                MPI_Datatype typePartRecv = smpi->createMPIparticles( &partVectorRecv, params.nDim_particle + 3 + 1 + 1 );
+                MPI_Recv( &(partVectorRecv.position(0,0)), 1, typePartRecv,  irk, irk, smpi->SMILEI_COMM_WORLD, &status );
+                MPI_Type_free( &typePartRecv );
+                // cp in testParticles
+                partVectorRecv.cp_particles( allNbrParticles[irk], testParticles ,nTestparticles );
+                nTestparticles+=allNbrParticles[irk];
+            }
+        }
     }
     else if ( locNbrParticles ) {
-	MPI_Datatype typePartSend = smpi->createMPIparticles( &cuParticles, params.nDim_particle + 3 + 1 + 1 );
-	MPI_Send( &(cuParticles.position(0,0)), 1, typePartSend,  0, smpi->getRank(), smpi->SMILEI_COMM_WORLD );
-	MPI_Type_free( &typePartSend );
-		  
+        MPI_Datatype typePartSend = smpi->createMPIparticles( &cuParticles, params.nDim_particle + 3 + 1 + 1 );
+        MPI_Send( &(cuParticles.position(0,0)), 1, typePartSend,  0, smpi->getRank(), smpi->SMILEI_COMM_WORLD );
+        MPI_Type_free( &typePartSend );
     }
     delete [] allNbrParticles;
-
+    
     // Sort test particles before dump
     if ( smpi->isMaster()  ) {
-	testParticles.sortById();
+        testParticles.sortById();
     }
-
-
+    
+    
     if ( smpi->isMaster() && true ) {
-
-	ostringstream nameDump("");
-	nameDump << "TestParticles_" << species->species_param.species_type  << ".h5" ;
-	hid_t fid = H5Fopen( nameDump.str().c_str(), H5F_ACC_RDWR, H5P_DEFAULT);			
-
-	ostringstream attr("");
-	for (int idim=0 ; idim<params.nDim_particle ; idim++) {
-	    attr.str("");
-	    attr << "Position-" << idim;
-	    appendTestParticles( fid, attr.str(), testParticles.position(idim), nParticles, H5T_NATIVE_DOUBLE );
-	}
-	for (int idim=0 ; idim<3 ; idim++) {
-	    attr.str("");
-	    attr << "Momentum-" << idim;
-	    appendTestParticles( fid, attr.str(), testParticles.momentum(idim), nParticles, H5T_NATIVE_DOUBLE );
-	}
-	appendTestParticles( fid, "Weight", testParticles.weight(), nParticles, H5T_NATIVE_DOUBLE );
-	appendTestParticles( fid, "Charge", testParticles.charge(), nParticles, H5T_NATIVE_SHORT );
-	if (species->particles.isTestParticles)
-	    appendTestParticles( fid, "Id", testParticles.id(), nParticles, H5T_NATIVE_SHORT );
-
-	H5Fclose( fid );
-
+        
+        ostringstream nameDump("");
+        nameDump << "TestParticles_" << species->species_param.species_type  << ".h5" ;
+        hid_t fid = H5Fopen( nameDump.str().c_str(), H5F_ACC_RDWR, H5P_DEFAULT);                        
+        
+        ostringstream attr("");
+        for (int idim=0 ; idim<params.nDim_particle ; idim++) {
+            attr.str("");
+            attr << "Position-" << idim;
+            appendTestParticles( fid, attr.str(), testParticles.position(idim), nParticles, H5T_NATIVE_DOUBLE );
+        }
+        for (int idim=0 ; idim<3 ; idim++) {
+            attr.str("");
+            attr << "Momentum-" << idim;
+            appendTestParticles( fid, attr.str(), testParticles.momentum(idim), nParticles, H5T_NATIVE_DOUBLE );
+        }
+        appendTestParticles( fid, "Weight", testParticles.weight(), nParticles, H5T_NATIVE_DOUBLE );
+        appendTestParticles( fid, "Charge", testParticles.charge(), nParticles, H5T_NATIVE_SHORT );
+        if (species->particles.isTestParticles)
+            appendTestParticles( fid, "Id", testParticles.id(), nParticles, H5T_NATIVE_SHORT );
+        
+        H5Fclose( fid );
+        
     }
     smpi->barrier();
 

@@ -2058,6 +2058,7 @@ class TestParticles(Diagnostic):
 			try:
 				i = availableProperties.index(v)
 				self._properties.update({ k:i })
+				if k == "Id": self._Id = self._h5items[i]
 			except:
 				pass
 		
@@ -2109,11 +2110,16 @@ class TestParticles(Diagnostic):
 						raise Exception("Error in selector syntax: not understood: "+select[i:parenthesis+1])
 					if select[i:i+4] == "any(": selection = self._np.array([False]*self.nParticles)
 					if select[i:i+4] == "all(": selection = self._np.array([True]*self.nParticles)
-					try:
-						for t in times:
-							selection = function(selection, eval(particleSelector))
-					except:
-						raise Exception("Error in selector syntax: not understood: "+select[i:parenthesis+1])
+					#try:
+					ID = self._np.zeros((self.nParticles,), dtype=self._np.int16)
+					for t in times:
+						selectionAtTimeT = eval(particleSelector) # array of True or False
+						self._Id.read_direct(ID, source_sel=self._np.s_[t,:], dest_sel=self._np.s_[:]) # read the particle Ids
+						selectionAtTimeT = selectionAtTimeT[ID>0] # remove zeros, which are dead particles
+						id = ID[ID>0] # remove zeros, which are dead particles
+						selection[id] = function( selection[id], selectionAtTimeT)
+					#except:
+					#	raise Exception("Error in selector syntax: not understood: "+select[i:parenthesis+1])
 					stack.append(selection)
 					operation += "stack["+str(len(stack)-1)+"]"
 					i = parenthesis+1
@@ -2124,7 +2130,8 @@ class TestParticles(Diagnostic):
 			self.selectedParticles = self._np.arange(self.nParticles)
 		else:
 			self.selectedParticles = eval(operation).nonzero()[0]
-		
+		self.selectedParticles.sort()
+		self.nselectedParticles = len(self.selectedParticles)
 		
 		# 4 - Manage axes
 		# -------------------------------------------------------------------
@@ -2194,12 +2201,26 @@ class TestParticles(Diagnostic):
 	# We override the get and getData methods
 	def getData(self):
 		if not self._validate(): return
+		# create empty dictionary
 		data = {}
-		for i, axis in enumerate(self.axes):
-			axisi = self._axesIndex[i]
-			A = self._np.double(self._h5items[axisi])[self.times,:]
-			A = A[:,self.selectedParticles]
-			data.update({ axis:A })
+		for axis in self.axes:
+			data.update({ axis:self._np.zeros((len(self.times), self.nselectedParticles)) })
+			data[axis].fill(self._np.nan)
+		# loop times and fill up the data
+		ID = self._np.zeros((self.nParticles,), dtype=self._np.int16)
+		B = self._np.zeros((self.nParticles,))
+		for t in self.times:
+			self._Id.read_direct(ID, source_sel=self._np.s_[t,:], dest_sel=self._np.s_[:]) # read the particle Ids
+			indices = self._np.argwhere(self._np.in1d(ID, self.selectedParticles)).squeeze() # find indexes of selected particles at time t
+			indices = self._np.array(indices, ndmin=1)
+			if len(indices)>0:
+				id = ID[indices] # get their ids
+				order = id.argsort()
+				indices = indices[order] # sort indices so that ids would be sorted
+			for i, axis in enumerate(self.axes):
+				axisi = self._axesIndex[i]
+				self._h5items[axisi].read_direct(B, source_sel=self._np.s_[t,:], dest_sel=self._np.s_[:])
+				data[axis][t, :] = B[indices].squeeze()
 		return data
 	def get(self):
 		return self.getData()

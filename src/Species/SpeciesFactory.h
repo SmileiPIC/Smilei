@@ -41,7 +41,7 @@ public:
 	    }
 	    int offset(0);
 	    MPI_Scatter(allNbrParticles, 1 , MPI_INTEGER, &offset, 1, MPI_INTEGER, 0, MPI_COMM_WORLD );
-	    sp->particles.setIds(offset);
+	    sp->particles.addIdOffsets(offset);
 	}
 
         return sp;

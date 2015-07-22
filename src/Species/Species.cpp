@@ -12,7 +12,7 @@
 #include "IonizationFactory.h"
 
 #include "PartBoundCond.h"
-#include "BoundaryConditionType.h"
+//#include "BoundaryConditionType.h"
 
 #include "ElectroMagn.h"
 #include "Interpolator.h"
@@ -47,6 +47,8 @@ temperatureProfile(3,NULL),
 ndim(params.nDim_particle),
 min_loc(smpi->getDomainLocalMin(0))
 {
+    
+    particles.species_number = speciesNumber;
     
     densityProfileType = species_param.density_type;
     chargeProfile         = new Profile(species_param.charge_profile, params.geometry);
