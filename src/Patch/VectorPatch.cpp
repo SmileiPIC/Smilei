@@ -43,9 +43,6 @@ void VectorPatch::exchangeParticles(int ispec, PicParams &params)
         //Exchange along direction 0. Is optimized because we can use bin structure.
         mypatch =  (*this)(ipatch);
         my_particles = mypatch->vecSpecies[ispec]->particles;
-        lpatch_indice = mypatch->patch_neighborhood_[3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)] - refHindex_ ;
-        lpatch =  (*this)(lpatch_indice);
-        lparticles = lpatch->vecSpecies[ispec]->particles;
         //Take particles from my right neighbour and push_them back on me
         if (mypatch->MPI_neighborhood_[2+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)] == mypatch->MPI_neighborhood_[1+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)]) {
             lpatch_indice = mypatch->patch_neighborhood_[2+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)] - refHindex_ ;
@@ -61,6 +58,9 @@ void VectorPatch::exchangeParticles(int ispec, PicParams &params)
          }
          //Take particles from my left neighbour and push_them back on me
         if (mypatch->MPI_neighborhood_[3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)] == mypatch->MPI_neighborhood_[1+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)]) {
+            lpatch_indice = mypatch->patch_neighborhood_[3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)] - refHindex_ ;
+            lpatch =  (*this)(lpatch_indice);
+            lparticles = lpatch->vecSpecies[ispec]->particles;
             //Explore the last bin of my left neighbour where all particles possibly going to the right are located and put them at the end of my particle vector.
             for(unsigned int ipart = lpatch->vecSpecies[ispec]->bmin.back(); ipart < lpatch->vecSpecies[ispec]->bmax.back()  ; ipart++){
                 if ( lparticles->position(0,ipart) >= lpatch->max_local[0] ){
@@ -81,6 +81,8 @@ void VectorPatch::exchangeParticles(int ispec, PicParams &params)
         //Gather lost particles list in one vector and sort it.
         mypatch->lost_particles[0].insert(mypatch->lost_particles[0].end(), mypatch->lost_particles[1].begin(),mypatch->lost_particles[1].end());
         std::sort(mypatch->lost_particles[0].begin(),mypatch->lost_particles[0].end());
+
+        //if (mypatch->lost_particles[0].size() > 0) cout <<" Particles are lost X " << endl; 
 
         //Clean up lost particles.
         mypatch->cleanup_sent_particles(ispec, &mypatch->lost_particles[0]);
@@ -123,7 +125,7 @@ void VectorPatch::exchangeParticles(int ispec, PicParams &params)
             lparticles = lpatch->vecSpecies[ispec]->particles;
             //Explore the all bins of my south neighbour and put them at the end of my particle vector.
             for(unsigned int ipart = lpatch->vecSpecies[ispec]->bmin[0]; ipart < lpatch->vecSpecies[ispec]->bmax.back()  ; ipart++){
-                if ( lparticles->position(0,ipart) >= lpatch->max_local[1] ){
+                if ( lparticles->position(1,ipart) >= lpatch->max_local[1] ){
                     lparticles->cp_particle(ipart, *my_particles);
                     lpatch->lost_particles[0].push_back(ipart);
 	            ii = int((lparticles->position(0,ipart)-mypatch->min_local[0])/dbin);//bin in which the particle goes.
@@ -138,7 +140,7 @@ void VectorPatch::exchangeParticles(int ispec, PicParams &params)
             lparticles = lpatch->vecSpecies[ispec]->particles;
             //Explore the all bins of my north neighbour and put them at the end of my particle vector.
             for(unsigned int ipart = lpatch->vecSpecies[ispec]->bmin[0]; ipart < lpatch->vecSpecies[ispec]->bmax.back()  ; ipart++){
-                if ( lparticles->position(0,ipart) >= lpatch->max_local[1] ){
+                if ( lparticles->position(1,ipart) < lpatch->min_local[1] ){
                     lparticles->cp_particle(ipart, *my_particles);
                     lpatch->lost_particles[1].push_back(ipart);
 	            ii = int((lparticles->position(0,ipart)-mypatch->min_local[0])/dbin);//bin in which the particle goes.
@@ -159,6 +161,7 @@ void VectorPatch::exchangeParticles(int ispec, PicParams &params)
         mypatch->lost_particles[0].insert(mypatch->lost_particles[0].end(), mypatch->lost_particles[1].begin(),mypatch->lost_particles[1].end());
         std::sort(mypatch->lost_particles[0].begin(),mypatch->lost_particles[0].end());
 
+        //if (mypatch->lost_particles[0].size() > 0) cout <<" Particles are lost Y " << endl; 
         //Clean up lost particles.
         mypatch->cleanup_sent_particles(ispec, &mypatch->lost_particles[0]);
         //Shift the bins as necessary
