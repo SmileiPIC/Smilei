@@ -18,3 +18,9 @@ src/smilei
 *.orig
 *.pyh
 PostProcessing.pdf
+*.doctree
+environment.pickle
+*.
+.buildinfo
+*.html
+doc/Sphinx/_build
