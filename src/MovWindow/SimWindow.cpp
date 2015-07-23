@@ -227,8 +227,8 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
 
     return;
 
-#pragma omp master
-{
+
+
     int xcall, ycall, h0;
     Patch* mypatch;
     int tid(0), nthds(1), tag, Rneighbor, Lneighbor;
@@ -249,7 +249,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
     MPI_Request srequest[8+3*nSpecies];//Number of calls made to MPI_Isend for each patch exchanged.
     vector <MPI_Request*> srequests;
 
-    //#pragma omp single
+    #pragma omp single
     {
         for (unsigned int i=0; i< nthds; i++){
             patch_to_be_created[i].clear();
@@ -258,23 +258,22 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
     }
 
 
-    //#pragma omp for schedule(static)
+    #pragma omp for schedule(static)
     for (unsigned int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++) {
         vecPatches_old[ipatch] = vecPatches(ipatch);
     } //Barrier at the end of this omp for is important to prevent an update of x_moved before resolution of isMoving in the main loop.
-    //#pragma omp single
+    #pragma omp single
     {
         x_moved += cell_length_x_*params.n_space[0];
         n_moved += params.n_space[0];
     }
 
-    //#pragma omp for schedule(runtime)
+    #pragma omp for schedule(runtime)
     for (unsigned int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++) {
          mypatch = vecPatches_old[ipatch];
 
         //If my right neighbor does not belong to me ...
-        if (mypatch->MPI_neighborhood_[2+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)] != mypatch->MPI_neighborhood_[1+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)])  
-            patch_to_be_created[tid].push_back( ipatch );// Store it as a patch to be created later.
+        if (mypatch->MPI_neighborhood_[2+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)] != mypatch->MPI_neighborhood_[1+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)])  patch_to_be_created[tid].push_back(ipatch);// Store it as a patch to be created later.
 
         //If my left neighbor does not belong to me ...
         if (mypatch->MPI_neighborhood_[3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)] != mypatch->MPI_neighborhood_[1+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)]) {
@@ -360,11 +359,11 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
              
         }
 
-    }//End loop on Patches
+    }//End loop on Patches. This barrier matters.
 
     //Creation of new Patches if necessary
     //The "new" operator must be included in a single area otherwise conflicts arise for unknown reasons.
-    //#pragma omp single
+    #pragma omp single
     {
          for (unsigned int i=0; i<nthds; i++){
              for (unsigned int j=0; j< patch_to_be_created[i].size(); j++){
@@ -376,7 +375,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
     } // This barrier is important.
 
     //Initialization of new Patches if necessary.
-    //#pragma omp for schedule(runtime)
+    #pragma omp for schedule(runtime)
     for (unsigned int ipatch = 0 ; ipatch < patch_to_be_created[0].size() ; ipatch++) {
          mypatch = vecPatches(patch_to_be_created[0][ipatch]);
          Rneighbor = mypatch->MPI_neighborhood_[2+3*(params.nDim_field >= 2)+9*(params.nDim_field == 3)];
@@ -388,7 +387,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
              smpi->recv( mypatch, Rneighbor, mypatch->Hindex() );
          }
          // And else, nothing to do.
-    } 
+    } //This barrier matters. 
+
+    //Each thread erases data of sent patches
     for (int j= send_patches_.size()-1; j>=0; j--){
         mypatch = send_patches_[j];
         for (unsigned int ispec=0 ; ispec<mypatch->vecSpecies.size(); ispec++) delete (mypatch->vecSpecies[ispec]);
@@ -401,7 +402,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
         //send_patches_[j]->sio->setFiles(0,0);
         //delete send_patches_[j];
     }
-}
 }
 
 

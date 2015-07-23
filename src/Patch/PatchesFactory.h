@@ -44,6 +44,7 @@ public:
         for (unsigned int ipatch = 0 ; ipatch < npatches ; ipatch++) {
 	    vecPatches.patches_[ipatch] = PatchesFactory::create(params, diag_params, laser_params, smpi, firstpatch + ipatch);
         }
+        vecPatches.set_refHindex() ;
 
         return vecPatches;
     }

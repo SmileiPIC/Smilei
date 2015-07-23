@@ -330,7 +330,13 @@ int main (int argc, char* argv[])
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 		vecPatches(ipatch)->dynamics(time_dual, params, simWindow, diag_flag); // include test
 	    }
+            //cout << "Done dynamics" << endl;
 	    // Inter Patch exchange
+                //for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
+	        //    if ( vecPatches(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
+	        //        vecPatches.exchangeParticles(ispec, params); 
+                //    }
+                //}
                 for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 	            if ( vecPatches(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
 	                vecPatches.exchangeParticles(ispec, params, smpiData ); // Included sort_part
