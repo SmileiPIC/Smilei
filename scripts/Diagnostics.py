@@ -2332,13 +2332,17 @@ def multiPlot(*Diags, **kwargs):
 	if nDiags == 0: return
 	for Diag in Diags:
 		if not Diag.valid: return
-	# Gather all times
-	alltimes = np.unique(np.concatenate([Diag.times*Diag.timestep for Diag in Diags]))
 	# Get keyword arguments
 	shape  = kwargs.pop("shape" , None)
 	movie  = kwargs.pop("movie" , ""  )
 	fps    = kwargs.pop("fps"   , 15  )
 	dpi    = kwargs.pop("dpi"   , 200 )
+	skipAnimation = kwargs.pop("skipAnimation", False )
+	# Gather all times
+	if skipAnimation:
+		alltimes = np.unique([Diag.times[-1]*Diag.timestep for Diag in Diags])
+	else:
+		alltimes = np.unique(np.concatenate([Diag.times*Diag.timestep for Diag in Diags]))
 	# Determine whether to plot all cases on the same axes
 	sameAxes = False
 	if shape is None or shape == [1,1]:
@@ -2396,8 +2400,8 @@ def multiPlot(*Diags, **kwargs):
 		plt.show()
 	# Animated plot
 	else:
-		mov = Movie(fig, movie, fps, dpi)
 		# Loop all times
+		mov = Movie(fig, movie, fps, dpi)
 		for time in alltimes:
 			for Diag in Diags:
 				t = np.round(time/Diag.timestep) # convert time to timestep
