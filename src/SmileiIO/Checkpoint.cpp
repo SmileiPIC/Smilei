@@ -233,6 +233,13 @@ void Checkpoint::dumpMovingWindow(hid_t fid, SimWindow* simWin)
     H5Sclose(sid);
     H5Aclose(aid);
 
+    unsigned int n_moved = simWin->getNmoved();
+    sid = H5Screate(H5S_SCALAR);	
+    aid = H5Acreate(fid, "n_moved", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
+    H5Awrite(aid, H5T_NATIVE_UINT, &n_moved);
+    H5Sclose(sid);
+    H5Aclose(aid);
+
 }
 
 void Checkpoint::restartAll( VectorPatch &vecPatches, unsigned int &itime,  SmileiMPI* smpi, SimWindow* simWin, PicParams &params, InputData& input_data )
@@ -411,7 +418,13 @@ void Checkpoint::restartMovingWindow(hid_t fid, SimWindow* simWin)
     H5Aread(aid, H5T_NATIVE_DOUBLE, &x_moved);	
     H5Aclose(aid);
 
+    aid = H5Aopen(fid, "n_moved", H5T_NATIVE_UINT);
+    unsigned int n_moved=0;
+    H5Aread(aid, H5T_NATIVE_UINT, &n_moved);	
+    H5Aclose(aid);
+    
     simWin->setXmoved(x_moved);
+    simWin->setNmoved(n_moved);
 
 }
 

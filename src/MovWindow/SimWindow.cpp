@@ -411,15 +411,21 @@ bool SimWindow::isMoving(double time_dual)
     return ( (nspace_win_x_) && ((time_dual - t_move_win_)*vx_win_ > x_moved) );
 }
 
-void SimWindow::setOperators(vector<Species*> vecSpecies, Interpolator* Interp, Projector* Proj, SmileiMPI* smpi)
+void SimWindow::setOperators(VectorPatch& vecPatches, SmileiMPI* smpi)
 {
-    smpi->updateMvWinLimits( x_moved, round(x_moved/cell_length_x_) );
 
-    for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
-	vecSpecies[ispec]->updateMvWinLimits(x_moved);
+    for (unsigned int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++) {
+
+	vecPatches(ipatch)->updateMvWinLimits( x_moved, n_moved );
+
+	for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++) {
+	    vecPatches(ipatch)->vecSpecies[ispec]->updateMvWinLimits(x_moved);
+	}
+
+	vecPatches(ipatch)->Interp->setMvWinLimits( vecPatches(ipatch)->getCellStartingGlobalIndex(0) );
+	vecPatches(ipatch)->Proj->setMvWinLimits  ( vecPatches(ipatch)->getCellStartingGlobalIndex(0) );
+
     }
 
-    Interp->setMvWinLimits( smpi->getCellStartingGlobalIndex(0) );
-    Proj->setMvWinLimits  ( smpi->getCellStartingGlobalIndex(0) );
 
 }

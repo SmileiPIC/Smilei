@@ -176,7 +176,18 @@ public:
 	// MPI & local
 	return( (corner_neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (MPI_corner_neighbor_[iDim][iNeighbor]!=MPI_neighborhood_[4]) );
     }
- 
+
+    //! Set geometry data in case of moving window restart
+    //! \param x_moved difference on coordinates regarding t0 geometry
+    //! \param idx_moved number of displacement of the window
+    inline void updateMvWinLimits(double x_moved, int idx_moved) {
+        min_local[0] += x_moved;
+        max_local[0] += x_moved;
+        //cell_starting_global_index[0] = (idx_moved-oversize[0]);
+        cell_starting_global_index[0] += (idx_moved);
+    }
+
+
 
 protected:
     //!Hilbert index of the patch. Number of the patch along the Hilbert curve.

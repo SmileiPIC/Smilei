@@ -42,9 +42,11 @@ class SimWindow {
     double getNspace_win_x() {return nspace_win_x_;}
     //! Set total length the window has moved (restart case)
     void   setXmoved(double new_val) {x_moved = new_val;}
+    //! Set total number of cells the window has moved (restart case)
+    void   setNmoved(int new_val) {n_moved = new_val;}
 
     //! Set the simulation window (particles, fields, MPI environment & operator related to the grid) in restart case
-    void setOperators(std::vector<Species*> vecSpecies, Interpolator* Interp, Projector* Proj, SmileiMPI* smpi);
+    void setOperators(VectorPatch& vecPatches, SmileiMPI* smpi);
     
 
  private:

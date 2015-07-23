@@ -172,11 +172,14 @@ int main (int argc, char* argv[])
         checkpoint.restartAll( vecPatches, stepStart, smpiData, simWindow, params, input_data);
 
         double restart_time_dual = (stepStart +0.5) * params.timestep;
+	time_dual = restart_time_dual;
         // A revoir !
-	//if ( simWindow && ( simWindow->isMoving(restart_time_dual) ) ) {
-	//    simWindow->setOperators(vecSpecies, Interp, Proj, smpiData);
-	//    simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpiData , params);
-	//}
+	if ( simWindow ) {
+	    simWindow->setOperators(vecPatches, smpiData);
+	    if ( simWindow->isMoving(restart_time_dual) ) {
+	        simWindow->operate(vecPatches, smpiData, params, diag_params, laser_params);
+	    }
+	}
         //smpiData->recompute_patch_count( params, vecPatches, restart_time_dual );
 	
     } else {
@@ -444,28 +447,28 @@ int main (int argc, char* argv[])
 	// ----------------------------------------------------------------------
 	// Validate restart  : to do
 	// Restart patched moving window : to do
-        //if  (smpiData->isMaster()){
-	//    if (!todump && checkpoint.dump( itime, MPI_Wtime() - starttime, params ) ){
-        //        // Send the action to perform at next iteration
-        //        itime2dump = itime + 1; 
-        //        for (unsigned int islave=0; islave < mpisize; islave++) 
-        //            MPI_Isend(&itime2dump,1,MPI_INT,islave,0,MPI_COMM_WORLD,&action_srequests[islave]);
-        //        todump = 1;
-        //    }
-        //} else {
-        //    MPI_Iprobe(0,0,MPI_COMM_WORLD,&todump,&action_status[0]); // waiting for a control message from master (rank=0)
-        //    //Receive action
-        //    if( todump ){
-        //        MPI_Recv(&itime2dump,1,MPI_INT,0,0,MPI_COMM_WORLD,&action_status[1]);
-        //        todump = 0;
-        //    }
-        //}
+        if  (smpiData->isMaster()){
+	    if (!todump && checkpoint.dump( itime, MPI_Wtime() - starttime, params ) ){
+                // Send the action to perform at next iteration
+                itime2dump = itime + 1; 
+                for (unsigned int islave=0; islave < mpisize; islave++) 
+                    MPI_Isend(&itime2dump,1,MPI_INT,islave,0,MPI_COMM_WORLD,&action_srequests[islave]);
+                todump = 1;
+            }
+        } else {
+            MPI_Iprobe(0,0,MPI_COMM_WORLD,&todump,&action_status[0]); // waiting for a control message from master (rank=0)
+            //Receive action
+            if( todump ){
+                MPI_Recv(&itime2dump,1,MPI_INT,0,0,MPI_COMM_WORLD,&action_status[1]);
+                todump = 0;
+            }
+        }
 
-        //if(itime==itime2dump){
-        //    checkpoint.dumpAll( vecPatches, itime, smpiData, simWindow, params, input_data);
-        //    todump = 0;
-        //    if (params.exit_after_dump ) break;
-        //}
+        if(itime==itime2dump){
+            checkpoint.dumpAll( vecPatches, itime, smpiData, simWindow, params, input_data);
+            todump = 0;
+            if (params.exit_after_dump ) break;
+        }
 	// ----------------------------------------------------------------------        
 
 		
