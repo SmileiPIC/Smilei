@@ -2336,7 +2336,7 @@ def multiPlot(*Diags, **kwargs):
 	# Get keyword arguments
 	shape  = kwargs.pop("shape" , None)
 	movie  = kwargs.pop("movie" , ""  )
-	fps    = fps   .pop("fps"   , 15  )
+	fps    = kwargs.pop("fps"   , 15  )
 	dpi    = kwargs.pop("dpi"   , 200 )
 	# Determine whether to plot all cases on the same axes
 	sameAxes = False
