@@ -2210,7 +2210,7 @@ class TestParticles(Diagnostic):
 		# loop times and fill up the data
 		ID = self._np.zeros((self.nParticles,), dtype=self._np.int16)
 		B = self._np.zeros((self.nParticles,))
-		for t in self.times:
+		for ti, t in enumerate(self.times):
 			self._Id.read_direct(ID, source_sel=self._np.s_[t,:], dest_sel=self._np.s_[:]) # read the particle Ids
 			indices = self._np.argwhere(self._np.in1d(ID, self.selectedParticles)).squeeze() # find indexes of selected particles at time t
 			indices = self._np.array(indices, ndmin=1)
@@ -2221,7 +2221,8 @@ class TestParticles(Diagnostic):
 			for i, axis in enumerate(self.axes):
 				axisi = self._axesIndex[i]
 				self._h5items[axisi].read_direct(B, source_sel=self._np.s_[t,:], dest_sel=self._np.s_[:])
-				data[axis][t, :] = B[indices].squeeze()
+				data[axis][ti, :] = B[indices].squeeze()
+		data.update({ "times":self.times })
 		return data
 	def get(self):
 		return self.getData()
