@@ -657,16 +657,16 @@ Checkout the :doc:`post-processing` documentation as well.
 taken at the location of the PIC grid, both as instantaneous values and averaged values.
 This is done with the following instructions in the namelist:
 
-.. py:data:: every
+.. py:data:: fieldDump_every
   
   The number of timesteps between each output of the instantaneous fields.
 
 
-.. py:data:: every_avg
+.. py:data:: avgfieldDump_every
   
   The number of timesteps between each output of the time-averaged fields.
 
-.. py:data:: t_avg
+.. py:data:: ntime_step_avg
   
   The number of timesteps for time-averaging.
 
