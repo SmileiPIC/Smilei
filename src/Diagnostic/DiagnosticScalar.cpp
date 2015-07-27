@@ -33,16 +33,16 @@ void DiagnosticScalar::close() {
 }
 
 // wrapper of the methods
-void DiagnosticScalar::run(int timestep, ElectroMagn* EMfields, vector<Species*>& vecSpecies, SmileiMPI *smpi) {
+void DiagnosticScalar::run(int timestep, ElectroMagn* EMfields, vector<Species*>& vecSpecies) {
     if (timestep==0) {
-        compute(EMfields,vecSpecies,smpi);
+        compute(EMfields,vecSpecies);
         Energy_time_zero  = getScalar("Etot");
         EnergyUsedForNorm = Energy_time_zero;
     }
     if (every) {
         EMfields->computePoynting(); // This must be called everytime        
         if (timestep % every == 0) {
-            compute(EMfields,vecSpecies,smpi);
+            compute(EMfields,vecSpecies);
             //write(timestep); -> Done after synch / patch  & MPI, Diagnostic*::run are becoming local
         }
     }
@@ -51,7 +51,7 @@ void DiagnosticScalar::run(int timestep, ElectroMagn* EMfields, vector<Species*>
 
 // it contains all to manage the communication of data. It is "transparent" to the user.
 // local_compute
-void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpecies, SmileiMPI *smpi) {
+void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpecies) {
     out_list.clear();
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -74,38 +74,29 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
             ener_tot*=vecSpecies[ispec]->species_param.mass;
         }
 
-        /*MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&charge_tot, &charge_tot, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&ener_tot, &ener_tot, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&nPart, &nPart, 1, MPI_UNSIGNED, MPI_SUM, 0, MPI_COMM_WORLD);*/
-
 	// nrj lost witb boundary conditions
         double ener_lost=0.0;
 	ener_lost = vecSpecies[ispec]->getLostNrjBC();
-        //MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&ener_lost, &ener_lost, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
 	// nrj lost with moving window
 	double ener_lost_mw=0.0;
 	ener_lost_mw = vecSpecies[ispec]->getLostNrjMW();
-        //MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&ener_lost_mw, &ener_lost_mw, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
 	// nrj added with moving window
 	double ener_added_mw=0.0;
 	ener_added_mw = vecSpecies[ispec]->getNewParticlesNRJ();
-        //MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&ener_added_mw, &ener_added_mw, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
-        //if (isMaster) {
-            if (nPart!=0) charge_tot /= nPart;
-            string nameSpec=vecSpecies[ispec]->species_param.species_type;
-            append("Z_"+nameSpec,charge_tot);
-            append("E_"+nameSpec,ener_tot);
-            append("N_"+nameSpec,nPart);
-            Etot_part+=ener_tot;
+	if (nPart!=0) charge_tot /= nPart;
+	string nameSpec=vecSpecies[ispec]->species_param.species_type;
+	append("Z_"+nameSpec,charge_tot);
+	append("E_"+nameSpec,ener_tot);
+	append("N_"+nameSpec,nPart);
+	Etot_part+=ener_tot;
 
-	    Elost_part += cell_volume*ener_lost;
+	Elost_part += cell_volume*ener_lost;
 
-	    Emw_lost += cell_volume*ener_lost_mw;
-	    Emw_part += cell_volume*ener_added_mw;
-	    //}
+	Emw_lost += cell_volume*ener_lost_mw;
+	Emw_part += cell_volume*ener_added_mw;
 
 	vecSpecies[ispec]->reinitDiags();
     }
@@ -148,26 +139,17 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
             }
         }
         Etot*=0.5*cell_volume;
-        //MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&Etot, &Etot, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        //if (isMaster) {
-            append((*field)->name+"_U",Etot);
-            Etot_fields+=Etot;
-	    //}
+	append((*field)->name+"_U",Etot);
+	Etot_fields+=Etot;
     }
 
     // nrj lost with moving window (fields)
     double Emw_lost_fields = EMfields->getLostNrjMW();
-    //MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&Emw_lost_fields, &Emw_lost_fields, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    //if (isMaster) {
-	Emw_lost_fields *= 0.5*cell_volume;
-	//}
+    Emw_lost_fields *= 0.5*cell_volume;
 
     // nrj created with moving window (fields)
     double Emw_fields=EMfields->getNewFieldsNRJ();
-    //MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&Emw_fields, &Emw_fields, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    //if (isMaster) {
-	Emw_fields *= 0.5*cell_volume;
-	//}
+    Emw_fields *= 0.5*cell_volume;
     EMfields->reinitDiags();
 
     // now we add currents and density
@@ -212,24 +194,18 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
         maxis.push_back(maxVal);
     }
 
-    //MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&minis[0], &minis[0], minis.size(), MPI_DOUBLE_INT, MPI_MINLOC, 0, MPI_COMM_WORLD);
-    //MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&maxis[0], &maxis[0], maxis.size(), MPI_DOUBLE_INT, MPI_MAXLOC, 0, MPI_COMM_WORLD);
+    if (minis.size() == maxis.size() && minis.size() == fields.size()) {
+      unsigned int i=0;
+      for (vector<Field*>::iterator field=fields.begin(); field!=fields.end() && i<minis.size(); field++, i++) {
 
-    //if (isMaster) {
-        if (minis.size() == maxis.size() && minis.size() == fields.size()) {
-            unsigned int i=0;
-            for (vector<Field*>::iterator field=fields.begin(); field!=fields.end() && i<minis.size(); field++, i++) {
+	append((*field)->name+"Min",minis[i].val);
+	append((*field)->name+"MinCell",minis[i].index);
 
-                append((*field)->name+"Min",minis[i].val);
-                append((*field)->name+"MinCell",minis[i].index);
+	append((*field)->name+"Max",maxis[i].val);
+	append((*field)->name+"MaxCell",maxis[i].index);
 
-                append((*field)->name+"Max",maxis[i].val);
-                append((*field)->name+"MaxCell",maxis[i].index);
-
-            }
-        }
-
-	//}
+      }
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // POYNTING STUFF
@@ -240,9 +216,6 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
 
 		double poy[2]={EMfields->poynting[j][i],EMfields->poynting_inst[j][i]};
 
-		//MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:poy, poy, 2, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-
-		//if (isMaster) {
                 string name("Poy");
                 switch (i) { // dimension
 		case 0:
@@ -262,9 +235,6 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
 		append(name+"Inst",poy[1]);
 
 		poyTot+=poy[0];
-
-		//}
-
             
         }
     }

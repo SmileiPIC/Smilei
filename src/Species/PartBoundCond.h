@@ -21,8 +21,7 @@ class PartBoundCond {
 public:
     //! partBoundCond creator, (default no MPI set)
     PartBoundCond( PicParams& params, int ispec, Patch* patch );
-    PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi );
-  //! partBoundCond destructor
+    //! partBoundCond destructor
     ~PartBoundCond();
 
     //! West particles boundary conditions pointers (same prototypes for all conditions)
@@ -96,14 +95,11 @@ public:
         return keep_part;
     };
 
-    //! Move the condition window, not for simulation limits but for MPI exchange conditions
-    void moveWindow_x(double shift, SmileiMPI* smpi );
-
-    //! Set the condition window if restart
+    //! Set the condition window if restart (patch position not read)
     inline void updateMvWinLimits( double x_moved ) {
-	x_min += x_moved;
-	x_max += x_moved;
-    }
+  	x_min += x_moved;
+  	x_max += x_moved;
+      }
 
 private:
     //! Min value of the x coordinate of particles on the current processor

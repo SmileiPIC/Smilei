@@ -8,7 +8,6 @@
 #include "Projector2D4Order.h"
 
 #include "PicParams.h"
-#include "SmileiMPI.h"
 #include "Patch.h" 
 
 #include "Tools.h"

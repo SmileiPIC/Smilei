@@ -102,9 +102,6 @@ public:
     //! Create nParticles new particles
     void create_particles(int nParticles);
 
-    //! Test if ipart is in the local MPI subdomain
-    bool is_part_in_domain(int ipart, SmileiMPI* smpi);
-
     //! Test if ipart is in the local patch
     bool is_part_in_domain(int ipart, Patch* patch);
 

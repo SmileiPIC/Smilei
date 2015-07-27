@@ -46,7 +46,7 @@ class SimWindow {
     void   setNmoved(int new_val) {n_moved = new_val;}
 
     //! Set the simulation window (particles, fields, MPI environment & operator related to the grid) in restart case
-    void setOperators(VectorPatch& vecPatches, SmileiMPI* smpi);
+    void setOperators(VectorPatch& vecPatches);
     
 
  private:

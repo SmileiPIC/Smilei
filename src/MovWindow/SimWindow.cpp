@@ -411,7 +411,7 @@ bool SimWindow::isMoving(double time_dual)
     return ( (nspace_win_x_) && ((time_dual - t_move_win_)*vx_win_ > x_moved) );
 }
 
-void SimWindow::setOperators(VectorPatch& vecPatches, SmileiMPI* smpi)
+void SimWindow::setOperators(VectorPatch& vecPatches)
 {
 
     for (unsigned int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++) {

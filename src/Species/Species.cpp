@@ -22,7 +22,6 @@
 
 #include "Projector.h"
 
-#include "SmileiMPI.h"
 #include "SimWindow.h"
 #include "Patch.h"
 
@@ -34,48 +33,6 @@
 
 using namespace std;
 
-//Obsolete
-Species::Species(PicParams& params, int ispec, SmileiMPI* smpi) :
-densityProfile(DensityFactory::create(params, ispec)),
-speciesNumber(ispec),
-cell_length(params.cell_length),
-oversize(params.oversize),
-ndim(params.nDim_particle),
-min_loc(smpi->getDomainLocalMin(0)),
-min_loc_vec(smpi->getDomainLocalMin()),
-clrw(params.clrw),
-species_param(params.species_param[ispec]),
-particles(&particles_sorted[0])
-//i_domain_begin( smpi->getCellStartingGlobalIndex(0) ),
-//j_domain_begin( smpi->getCellStartingGlobalIndex(1) )
-{
-    specMPI.init();
-    
-    initSpecies(params);
-    initCluster(params);
-
-    if (!params.restart) {
-        unsigned int npart_effective=0;
-        
-        // Create particles in a space starting at cell_index
-        vector<double> cell_index(3,0);
-        for (unsigned int i=0 ; i<params.nDim_field ; i++) {
-            if (cell_length[i]!=0)
-	        cell_index[i] = smpi->getDomainLocalMin(i);
-        }
-        
-        int starting_bin_idx = 0;
-        // does a loop over all cells in the simulation
-        // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
-        npart_effective = createParticles(params.n_space, cell_index, starting_bin_idx, params );
-        
-        //PMESSAGE( 1, smpi->getRank(),"Species "<< speciesNumber <<" # part "<< npart_effective );
-    }
-	
-    // define limits for BC and functions applied and for domain decomposition
-    partBoundCond = new PartBoundCond( params, ispec, smpi );
-
-}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for Species
@@ -92,12 +49,7 @@ min_loc_vec(patch->getDomainLocalMin()),
 clrw(params.clrw),
 species_param(params.species_param[ispec]),
 particles(&particles_sorted[0])
-
-//i_domain_begin( patch->getCellStartingGlobalIndex(0) ),
-//j_domain_begin( patch->getCellStartingGlobalIndex(1) )
-
 {
-	
 	
     initSpecies(params);
     initCluster(params);
@@ -120,20 +72,6 @@ particles(&particles_sorted[0])
         
         //PMESSAGE( 1, smpi->getRank(),"Species "<< speciesNumber <<" # part "<< npart_effective );
     }
-    /*double part_min[2], part_max[2];
-    for ( int iDim = 0 ; iDim < 2 ; iDim++ ) {
-	part_min[iDim] = 1000000.;
-	part_max[iDim] = -1.;
-	for ( int iPart = 0; iPart < getNbrOfParticles() ; iPart++ ) {
-	    if ( particles->Position[iDim][iPart] < part_min[iDim] )
-		part_min[iDim] = particles->Position[iDim][iPart];
-	    if ( particles->Position[iDim][iPart] > part_max[iDim] )
-		part_max[iDim] = particles->Position[iDim][iPart];
-	}
-	if (getNbrOfParticles()>0)
-	    cout << " iDim = " << iDim << "\t" << part_min[iDim] << "\t" << part_max[iDim] << endl;
-    }*/
-
 	
 	
     // define limits for BC and functions applied and for domain decomposition
@@ -454,17 +392,8 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     // -------------------------------
     if (time_dual>species_param.time_frozen) { // moving particle
 
-	//Allocate buffer for projection  *****************************
-	// *4 accounts for Jy, Jz and rho. * nthds accounts for each thread.
-	//b_Jx = (double *) malloc(4 * size_proj_buffer * sizeof(double));
-	//Point buffers of each thread to the correct position
-	//b_Jy = b_Jx + size_proj_buffer ;
-	//b_Jz = b_Jy + size_proj_buffer ;
-	//b_rho = b_Jz + size_proj_buffer ;
-
         for (ibin = 0 ; ibin < bmin.size() ; ibin++) {
 
-            //memset( &(b_Jx[0]), 0, 4*size_proj_buffer*sizeof(double)); 
             if (diag_flag == 0){
 	        b_Jx =  &(*EMfields->Jx_ )(ibin*clrw*f_dim1);
 	        b_Jy =  &(*EMfields->Jy_ )(ibin*clrw*(f_dim1+1));
@@ -514,16 +443,6 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 
             }//iPart
 
-                //for (i = 0; i < b_dim0 ; i++) {
-                //    iloc = ibin*clrw + i ;
-                //    //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
-                //    for (j = 0; j < b_dim1 ; j++) {
-                //        (*EMfields->Jx_s[ispec]) (iloc*(f_dim1  )+j) +=  b_Jx[i*b_dim1+j];   //  primal along y
-                //        (*EMfields->Jy_s[ispec]) (iloc*(f_dim1+1)+j) +=  b_Jy[i*b_dim1+j];   //+1 because dual along y
-                //        (*EMfields->Jz_s[ispec]) (iloc*(f_dim1  )+j) +=  b_Jz[i*b_dim1+j];   // primal along y
-                //        (*EMfields->rho_s[ispec])(iloc*(f_dim1  )+j) += b_rho[i*b_dim1+j];   // primal along y
-                //    }
-                //}
         }// ibin
         //free(b_Jx);
 
@@ -558,7 +477,6 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     }
     else { // immobile particle (at the moment only project density)
         if (diag_flag == 1){
-	    //b_rho = (double *) malloc(size_proj_buffer * sizeof(double));
 
             for (ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
 
@@ -573,7 +491,6 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                     (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_lastdim);
                 } //End loop on particles
             }//End loop on bins
-	    //free(b_rho);
         }
     }//END if time vs. time_frozen
     //delete LocInterp;
@@ -728,69 +645,6 @@ for (ip=0; ip < npart; ip++) {
 
 particles = &particles_sorted[token] ;
 
-}
-
-
-//Obsolete
-void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi, PicParams& params)
-{
-    //i_domain_begin+=shift;
-    // Update BC positions
-    partBoundCond->moveWindow_x( shift*cell_length[0], smpi );
-    // Set for bin managment
-    //min_loc += shift*cell_length[0];
-    
-    // Send particles of first bin on process rank-1
-    // If no rank-1 -> particles deleted
-    //clearExchList(0);
-    //for (unsigned int ibin = 0 ; ibin < 1 ; ibin++)
-    //    for (unsigned int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
-    //        addPartInExchList( 0, iPart );
-    //        nrj_mw_lost += (*particles).weight(iPart)*((*particles).lor_fac(iPart)-1.0);
-    //    }
-    //
-    //// bin 0 empty
-    //// Shifts all the bins by 1. 
-    //bmin.erase( bmin.begin() );
-    //bmax.erase( bmax.begin() );
-    //// Create new bin at the end
-    //// Update last values of bmin and bmax to handle correctly received particles
-    //bmin.push_back( bmax[bmax.size()-1] );
-    //bmax.push_back( bmax[bmax.size()-1] );
-    //bmin[0] = 0;
-
-    //int iDim(0);    
-    //smpi->exchangeParticles( this, speciesNumber,params, 0, iDim );
-    //
-    //// Create new particles
-    //if (smpi->isEastern() ) {
-    //    defineNewCells(shift, smpi, params);
-    //}
-    
-}
-
-void Species::defineNewCells(unsigned int shift, SmileiMPI *smpi, PicParams& params)
-{
-    // does a loop over all cells in the simulation
-    // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
-    vector<double> cell_index(3,0);
-    for (unsigned int i=0 ; i<params.nDim_field ; i++) {
-        if (cell_length[i]!=0) {
-            cell_index[i] = smpi->getDomainLocalMin(i);
-        }
-    }
-    // cell_index[0] goes to end of the domain minus cell to create
-    cell_index[0] = smpi->getDomainLocalMax(0) - shift*cell_length[0];
-    
-    // Next bin to create
-    int new_bin_idx = bmin.size() - 1;
-    
-    vector<unsigned int> n_space_created(3,0);
-    n_space_created[0] = shift;
-    n_space_created[1] = params.n_space[1];
-    n_space_created[2] = params.n_space[2];
-    
-    unsigned int npart_effective = createParticles(n_space_created, cell_index, new_bin_idx, params );
 }
 
 
@@ -953,13 +807,21 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
 
     return npart_effective;
     
-}
+} // End createParticles
 
-// Obsolete ...
-void Species::updateMvWinLimits(double x_moved) {
+
+// ------------------------------------------------
+// Set position when using restart & moving window
+// patch are initialized with t0 position
+// ------------------------------------------------
+void Species::updateMvWinLimits(double x_moved)
+{
     partBoundCond->updateMvWinLimits(x_moved);
     min_loc += x_moved;
-}
+
+} // End updateMvWinLimits
+
+
 //Do we have to project this species ?
  bool Species::isProj(double time_dual, SimWindow* simWindow) {
     bool isproj;

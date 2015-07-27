@@ -9,7 +9,6 @@
 #include "Pusher.h"
 //#include "PartBoundCond.h"
 #include "PicParams.h"
-#include "SmileiMPI.h"
 #include "Pusher.h"
 #include "Ionization.h"
 #include "ElectroMagn.h"
@@ -33,7 +32,6 @@ public:
 
     //! Species creator
     Species(PicParams&, int, Patch*);
-    Species(PicParams&, int, SmileiMPI*);
 
     void initCluster(PicParams&);
     void initSpecies(PicParams&);
@@ -85,8 +83,6 @@ public:
     void sort_part();
     void count_sort_part(PicParams& param);
 
-    void movingWindow_x(unsigned int shift, SmileiMPI *smpi, PicParams& param);
-    void defineNewCells(unsigned int shift, SmileiMPI *smpi, PicParams& param);
     void updateMvWinLimits(double x_moved);
 
     //! Vector containing all Particles of the considered Species
@@ -151,7 +147,6 @@ private:
     //! 2 times pi
     double PI2;
     double dx_inv_, dy_inv_;
-    //int i_domain_begin, j_domain_begin;
     
     //! Number of steps for Maxwell-Juettner cumulative function integration
     //! \todo{Put in a code constant class}

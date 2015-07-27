@@ -6,7 +6,6 @@
 #include <sstream>
 
 #include "PicParams.h"
-#include "SmileiMPI.h"
 #include "Patch.h"
 #include "ElectroMagn.h"
 #include "Field1D.h"

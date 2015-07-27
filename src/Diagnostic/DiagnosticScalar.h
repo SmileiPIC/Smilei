@@ -42,10 +42,10 @@ public:
     void close();
 
     //! calls the compute_proc_gather, compute and write
-    void run(int timestep, ElectroMagn* EMfields, std::vector<Species*>&, SmileiMPI *smpi);
+    void run(int timestep, ElectroMagn* EMfields, std::vector<Species*>&);
 
     //! ask to each processor to compute the scalars and gather them in the map mpi_spec_scalars[cpu][species]
-    void compute(ElectroMagn* EMfields, std::vector<Species*>&, SmileiMPI *smpi);
+    void compute(ElectroMagn* EMfields, std::vector<Species*>&);
 
     //! write the out_list data onto a file
     void write(int timestep);
@@ -58,7 +58,7 @@ public:
     std::vector<std::pair<std::string,double> >::iterator itDiagScalar;
 
 private:
-    //! check if proc is master (from smpi)
+    //! check if patch is master (from patch)
     const bool isMaster;
     
     //! initial energy (kinetic + EM)

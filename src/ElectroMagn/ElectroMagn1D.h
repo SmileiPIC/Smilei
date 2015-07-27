@@ -87,10 +87,10 @@ public:
     void computePoynting();
 
 private:
-    //! from smpi is west
+    //! from patch is west
     const bool isWestern;
     
-    //! from smpi is east
+    //! from patch is east
     const bool isEastern;
 };
 

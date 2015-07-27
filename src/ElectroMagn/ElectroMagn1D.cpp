@@ -86,22 +86,7 @@ isEastern(patch->isEastern())
         rho_s[ispec] = new Field1D(dimPrim, ("Rho_"+params.species_param[ispec].species_type).c_str());
     }
     
-//    ostringstream file_name("");
-//    for (unsigned int ispec=0; ispec<n_species; ispec++) {
-//        file_name.str("");
-//        file_name << "Jx_s" << ispec;
-//        Jx_s[ispec]  = new Field1D(dimPrim, 0, false, file_name.str().c_str());
-//        file_name.str("");
-//        file_name << "Jy_s" << ispec;
-//        Jy_s[ispec]  = new Field1D(dimPrim, 1, false, file_name.str().c_str());
-//        file_name.str("");
-//        file_name << "Jz_s" << ispec;
-//        Jz_s[ispec]  = new Field1D(dimPrim, 2, false, file_name.str().c_str());
-//        file_name.str("");
-//        file_name << "rho_s" << ispec;
-//        rho_s[ispec] = new Field1D(dimPrim, file_name.str().c_str());
-//    }
-    
+
     // ----------------------------------------------------------------
     // Definition of the min and max index according to chosen oversize
     // ----------------------------------------------------------------
@@ -147,7 +132,7 @@ isEastern(patch->isEastern())
 			    bufsize[i][isDual]--;
 		    }
                 
-		} // if ( smpi2D->getNbrOfProcs(i)!=1 )
+		} // if ( params.number_of_patches[i]!=1 )
 	    } // for (int isDual=0 ; isDual
 	} // for (unsigned int i=0 ; i<nDim_field 
     

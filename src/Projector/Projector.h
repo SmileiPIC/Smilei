@@ -4,7 +4,6 @@
 #include "Field.h"
 
 class PicParams;
-class SmileiMPI;
 class Patch;
 
 class ElectroMagn;

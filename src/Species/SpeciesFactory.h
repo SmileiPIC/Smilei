@@ -6,7 +6,6 @@
 #include "Species_rrll.h"
 
 #include "PicParams.h"
-#include "SmileiMPI.h"
 #include "Patch.h"
 
 #include "Tools.h"

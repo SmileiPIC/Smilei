@@ -46,9 +46,7 @@ int main (int argc, char* argv[])
 {
     std::cout.setf( std::ios::fixed, std:: ios::floatfield ); // floatfield set to fixed
     
-    // Define 2 MPI environments :
-    //  - smpiData : to broadcast input data, unknown geometry
-    //  - smpi (defined later) : to compute/exchange data, specific to a geometry
+    // Define MPI environment :
     SmileiMPI *smpiData= new SmileiMPI(&argc, &argv );
     
     // -------------------------
@@ -93,7 +91,6 @@ int main (int argc, char* argv[])
     MESSAGE("----------------------------------------------");
     MESSAGE("Creating MPI & IO environments");
     MESSAGE("----------------------------------------------");
-    SmileiMPI* smpi = NULL;
     Checkpoint checkpoint(params, diag_params);
 
 #ifdef _OPENMP
@@ -175,7 +172,7 @@ int main (int argc, char* argv[])
 	time_dual = restart_time_dual;
         // A revoir !
 	if ( simWindow ) {
-	    simWindow->setOperators(vecPatches, smpiData);
+	    simWindow->setOperators(vecPatches);
 	    if ( simWindow->isMoving(restart_time_dual) ) {
 	        simWindow->operate(vecPatches, smpiData, params, diag_params, laser_params);
 	    }
@@ -204,11 +201,10 @@ int main (int argc, char* argv[])
  
 #ifdef _PATCHINGROGRESS
         // Init electric field (Ex/1D, + Ey/2D)
-	/*if (!EMfields->isRhoNull(smpi)) {
+	/*if (!EMfields->isRhoNull(smpiData)) {
 	    MESSAGE("----------------------------------------------");
 	    MESSAGE("Solving Poisson at time t = 0");
 	    MESSAGE("----------------------------------------------");    
-	    EMfields->solvePoisson(smpi);
 	}*/
 	vecPatches.solvePoisson( params, smpiData );
 #endif
@@ -219,7 +215,7 @@ int main (int argc, char* argv[])
         MESSAGE("----------------------------------------------");
         // run diagnostics at time-step 0	
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-	    vecPatches(ipatch)->Diags->runAllDiags(0, vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, vecPatches(ipatch)->Interp, smpi);
+	    vecPatches(ipatch)->Diags->runAllDiags(0, vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, vecPatches(ipatch)->Interp);
 	vecPatches.computeGlobalDiags(0);
 	smpiData->computeGlobalDiags( vecPatches(0)->Diags, 0);
 	
@@ -438,7 +434,7 @@ int main (int argc, char* argv[])
         // run all diagnostics
         timer[3].restart();
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-	    vecPatches(ipatch)->Diags->runAllDiags(itime, vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, vecPatches(ipatch)->Interp, smpiData);
+	    vecPatches(ipatch)->Diags->runAllDiags(itime, vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, vecPatches(ipatch)->Interp);
 	vecPatches.computeGlobalDiags(itime); // Only scalars reduction for now 
 	smpiData->computeGlobalDiags( vecPatches(0)->Diags, itime); // Only scalars reduction for now 
 	timer[3].update();
@@ -570,7 +566,6 @@ int main (int argc, char* argv[])
     MESSAGE("END " << namelist);
     MESSAGE("-----------------------------------------------------------------------------------------------------");
 
-    if (smpi) delete smpi;
     delete smpiData;
     if (params.nspace_win_x)
         delete simWindow;

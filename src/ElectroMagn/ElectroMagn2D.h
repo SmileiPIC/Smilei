@@ -17,7 +17,7 @@ public:
     ~ElectroMagn2D();
 
    //! Method used for initializing Maxwell solver
-    void solvePoisson(SmileiMPI* smpi);
+    void solvePoisson(SmileiMPI* smpi) { };// To be deleted
     
     // --------------------------------------
     //  --------- PATCH IN PROGRESS ---------

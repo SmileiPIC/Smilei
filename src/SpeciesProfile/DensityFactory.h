@@ -6,7 +6,6 @@
 #include "DensityProfile2D.h"
 
 #include "PicParams.h"
-#include "SmileiMPI.h"
 
 #include "Tools.h"
 
