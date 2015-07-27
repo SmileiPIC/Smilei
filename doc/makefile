@@ -1,6 +1,6 @@
 VERSION:="$(shell git describe 2>/dev/null || echo '??')-$(shell git rev-parse --abbrev-ref HEAD || echo '??')"
 
-TEXFILES=Collisions/Collisions.tex Namelist/Namelist.tex PostProcessing/PostProcessing.tex
+TEXFILES=
 
 PDFS:=$(TEXFILES:.tex=.pdf)
 
