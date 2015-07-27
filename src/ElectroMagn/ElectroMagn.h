@@ -5,13 +5,13 @@
 #include <string>
 #include <map>
 
+#include "Field.h"
 #include "Tools.h"
 #include "LaserParams.h"
 
 class PicParams;
 class Species;
 class Projector;
-class Field;
 class Laser;
 class SmileiMPI;
 class ElectroMagnBC;
@@ -207,8 +207,10 @@ public:
     //same as above but instantaneous
     std::vector<double> poynting_inst[2];
 
-    //! Check if norm of charge denisty is not null
-    bool isRhoNull(SmileiMPI* smpi);
+    //! Compute local square norm of charge denisty is not null
+    inline double computeRhoNorm2() {
+	return rho_->norm2(istart, bufsize);
+    }
 
     double computeNRJ(unsigned int shift, SmileiMPI *smpi);
     double getLostNrjMW() const {return nrj_mw_lost;}

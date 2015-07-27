@@ -66,8 +66,7 @@ public:
         return data_3D[i];
     };*/
 
-    //virtual double computeNRJ(unsigned int shift, unsigned int** istart, unsigned int** bufsize) {return 0.;};
-    virtual double computeNRJ(unsigned int shift, unsigned int istart[3][2], unsigned int bufsize[3][2]);
+    virtual double norm2(unsigned int istart[3][2], unsigned int bufsize[3][2]);
 
 private:
     //!\todo{Comment what are these stuffs (MG for JD)}

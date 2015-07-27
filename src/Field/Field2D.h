@@ -70,8 +70,7 @@ public:
     //! this will present the data as a 2d matrix
     double **data_2D;
 
-    //virtual double computeNRJ(unsigned int shift, unsigned int** istart, unsigned int** bufsize) {return 0.;};
-    virtual double computeNRJ(unsigned int shift, unsigned int istart[3][2], unsigned int bufsize[3][2]);
+    virtual double norm2(unsigned int istart[3][2], unsigned int bufsize[3][2]);
 
 private:
     //!\todo{Comment what are these stuffs (MG for JD)}

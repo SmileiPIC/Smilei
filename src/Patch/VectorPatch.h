@@ -60,6 +60,7 @@ class VectorPatch {
 
 
     void solvePoisson( PicParams &params, SmileiMPI* smpi );
+    bool isRhoNull( SmileiMPI* smpi );
 
     void exchange( std::vector<Field*> fields );
     void exchange0( std::vector<Field*> fields );

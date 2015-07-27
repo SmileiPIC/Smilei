@@ -774,6 +774,18 @@ void VectorPatch::solvePoisson( PicParams &params, SmileiMPI* smpi )
 
 }
 
+bool VectorPatch::isRhoNull( SmileiMPI* smpi )
+{
+    double norm2(0.);
+    double locnorm2(0.);
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	locnorm2 += (*this)(ipatch)->EMfields->computeRhoNorm2();
+
+    MPI_Allreduce(&locnorm2, &norm2, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+    return (norm2<=0.);
+}
+
 
 void VectorPatch::exchange( std::vector<Field*> fields )
 {

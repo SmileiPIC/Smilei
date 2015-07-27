@@ -224,22 +224,6 @@ void ElectroMagn::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
     // For nrj balance
     nrj_mw_lost += computeNRJ(shift, smpi);
 
-    smpi->exchangeE( this, shift );
-
-    smpi->exchangeB( this, shift );
-    
-    smpi->exchangeBm( this, shift );
-
-    if (Ex_avg!=NULL) {
-        Ex_avg->shift_x(shift);
-        Ey_avg->shift_x(shift);
-        Ez_avg->shift_x(shift);
-        Bx_avg->shift_x(shift);
-        By_avg->shift_x(shift);
-        Bz_avg->shift_x(shift);
-        smpi->exchangeAvg( this );
-    }
-
     // For now, fields introduced with moving window set to 0 
     nrj_new_fields =+ 0.;
 
@@ -251,45 +235,15 @@ double ElectroMagn::computeNRJ(unsigned int shift, SmileiMPI *smpi) {
     double nrj(0.);
 
     if ( smpi->isWestern() ) {
-	nrj += Ex_->computeNRJ(shift, istart, bufsize);
-	nrj += Ey_->computeNRJ(shift, istart, bufsize);
-	nrj += Ez_->computeNRJ(shift, istart, bufsize);
+	nrj += Ex_->norm2(istart, bufsize);
+	nrj += Ey_->norm2(istart, bufsize);
+	nrj += Ez_->norm2(istart, bufsize);
 
-	nrj += Bx_m->computeNRJ(shift, istart, bufsize);
-	nrj += By_m->computeNRJ(shift, istart, bufsize);
-	nrj += Bz_m->computeNRJ(shift, istart, bufsize);
+	nrj += Bx_m->norm2(istart, bufsize);
+	nrj += By_m->norm2(istart, bufsize);
+	nrj += Bz_m->norm2(istart, bufsize);
 
     }
 
     return nrj;
-}
-
-bool ElectroMagn::isRhoNull(SmileiMPI* smpi)
-{
-    double norm2(0.);
-    double locnorm2(0.);
-
-    // rho_->isDual(i) = 0 for all i
-    // istart[i][0] & bufsize[i][0]
-
-    vector<unsigned int> iFieldStart(3,0), iFieldEnd(3,1), iFieldGlobalSize(3,1);
-    for (unsigned int i=0 ; i<rho_->isDual_.size() ; i++ ) {
-	iFieldStart[i] = istart[i][0];
-	iFieldEnd [i] = iFieldStart[i] + bufsize[i][0];
-	iFieldGlobalSize [i] = rho_->dims_[i];
-    }
-
-    for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
-	for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
-	    for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
-		unsigned int ii=k+ j*iFieldGlobalSize[2] +i*iFieldGlobalSize[1]*iFieldGlobalSize[2];
-		locnorm2 += (*rho_)(ii)*(*rho_)(ii);
-	    }
-	}
-    }
-
-    MPI_Allreduce(&locnorm2, &norm2, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-
-    return (norm2<=0.);
-
 }

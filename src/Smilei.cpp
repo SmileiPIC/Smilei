@@ -199,15 +199,13 @@ int main (int argc, char* argv[])
         diag_flag = 0;
 
  
-#ifdef _PATCHINGROGRESS
         // Init electric field (Ex/1D, + Ey/2D)
-	/*if (!EMfields->isRhoNull(smpiData)) {
+	if (!vecPatches.isRhoNull(smpiData)) {
 	    MESSAGE("----------------------------------------------");
 	    MESSAGE("Solving Poisson at time t = 0");
 	    MESSAGE("----------------------------------------------");    
-	}*/
-	vecPatches.solvePoisson( params, smpiData );
-#endif
+	    vecPatches.solvePoisson( params, smpiData );
+	}
   
 	
         MESSAGE("----------------------------------------------");
