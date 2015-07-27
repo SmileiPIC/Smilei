@@ -7,6 +7,7 @@
 #define H5_H
 
 #include <hdf5.h>
+#include <string>
 
 //! HDF5 help functions
 class H5 {
