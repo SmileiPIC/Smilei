@@ -1705,8 +1705,8 @@ class Probe(Diagnostic):
 		# -------------------------------------------------------------------
 		# fill the "data" dictionary with indices to the data arrays
 		self._data = {}
-		for i,t in enumerate(self.times):
-			self._data.update({ t : i })
+		for t in self.times:
+			self._data.update({ t : "%010i"%t })
 		# If timesteps is None, then keep all timesteps otherwise, select timesteps
 		if timesteps is not None:
 			try:
@@ -1934,19 +1934,16 @@ class Probe(Diagnostic):
 			print "Timestep "+t+" not found in this diagnostic"
 			return []
 		# Get arrays from requested field
-		# Open file
-		f = self._h5py.File(self._file, 'r')
 		# get data
 		index = self._data[t]
 		C = {}
 		op = "A=" + self.operation
 		for n in reversed(self._fieldn): # for each field in operation
-			B = self._np.double(self._h5items[self.probeNumber].values()[index][:,n]) # get array
+			B = self._np.double(self._h5items[self.probeNumber].get(index)[:,n]) # get array
 			B = self._np.reshape(B, self._shape) # reshape array because it is flattened in the file
 			B *= self._unitscoeff[n]
 			C.update({ n:B })
 			op = op.replace("#"+str(n), "C["+str(n)+"]")
-		f.close()
 		# Calculate the operation
 		exec op in None
 		# Apply the slicing
