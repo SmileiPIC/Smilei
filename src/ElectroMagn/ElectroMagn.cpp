@@ -215,14 +215,14 @@ void ElectroMagn::initRhoJ(vector<Species*>& vecSpecies, Projector* Proj)
 }
 
 
-void ElectroMagn::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
+void ElectroMagn::movingWindow_x(unsigned int shift)
 {
     //! \todo{ Why the if test ? Remove it ? (AB for JD)}
     if (emBoundCond[0]!=NULL)
         emBoundCond[0]->laserDisabled();
 
     // For nrj balance
-    nrj_mw_lost += computeNRJ(shift, smpi);
+    //nrj_mw_lost += computeNRJ(); // Integreated in SimWindow::operate
 
     // For now, fields introduced with moving window set to 0 
     nrj_new_fields =+ 0.;
@@ -231,19 +231,16 @@ void ElectroMagn::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
     //Here you might want to apply some new boundary conditions on the +x boundary. For the moment, all fields are set to 0.
 }
 
-double ElectroMagn::computeNRJ(unsigned int shift, SmileiMPI *smpi) {
+double ElectroMagn::computeNRJ() {
     double nrj(0.);
 
-    if ( smpi->isWestern() ) {
-	nrj += Ex_->norm2(istart, bufsize);
-	nrj += Ey_->norm2(istart, bufsize);
-	nrj += Ez_->norm2(istart, bufsize);
+    nrj += Ex_->norm2(istart, bufsize);
+    nrj += Ey_->norm2(istart, bufsize);
+    nrj += Ez_->norm2(istart, bufsize);
 
-	nrj += Bx_m->norm2(istart, bufsize);
-	nrj += By_m->norm2(istart, bufsize);
-	nrj += Bz_m->norm2(istart, bufsize);
-
-    }
+    nrj += Bx_m->norm2(istart, bufsize);
+    nrj += By_m->norm2(istart, bufsize);
+    nrj += Bz_m->norm2(istart, bufsize);
 
     return nrj;
 }

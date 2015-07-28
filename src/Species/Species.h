@@ -138,6 +138,14 @@ public:
 	nrj_mw_lost = 0;
 	nrj_new_particles = 0;
     }
+    inline void storeNRJlost( double nrj ) { nrj_mw_lost = nrj; };
+
+    inline double computeNRJ() {
+	double nrj(0.);
+	for ( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ )
+	    nrj += (*particles).weight(iPart)*((*particles).lor_fac(iPart)-1.0);
+	return nrj;
+    }
 
 private:
     

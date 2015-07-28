@@ -81,10 +81,19 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
 
 
     // Delete western patch
+    double energy_field_lost(0.);
+    vector<double> energy_part_lost( vecPatches(0)->vecSpecies.size(), 0. );
+
     for ( int ipatch = nPatches-1 ; ipatch >= 0 ; ipatch--) {
 
         // Patch à supprimer
         if ( vecPatches(ipatch)->isWestern() ) {
+
+	    // Compute energy lost 
+	    energy_field_lost += vecPatches(ipatch)->EMfields->computeNRJ();
+	    for ( int ispec=0 ; ispec<vecPatches(0)->vecSpecies.size() ; ispec++ )
+		energy_part_lost[ispec] += vecPatches(ipatch)->vecSpecies[ispec]->computeNRJ();
+
             vecPatches(ipatch)->Diags->probes.setFile(0);
             vecPatches(ipatch)->sio->setFiles(0,0);
             delete  vecPatches.patches_[ipatch];
@@ -93,8 +102,13 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
 
         }
     }
-    nPatches = vecPatches.size();
+    // Sync / Patches done for these diags -> Store in patch master 
+    vecPatches(0)->EMfields->storeNRJlost( energy_field_lost );
+    for ( int ispec=0 ; ispec<vecPatches(0)->vecSpecies.size() ; ispec++ )
+	vecPatches(0)->vecSpecies[ispec]->storeNRJlost( energy_part_lost[ispec] );
 
+
+    nPatches = vecPatches.size();
 
     // slide the  curve, new patches will be created directly with their good patchid
     for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {

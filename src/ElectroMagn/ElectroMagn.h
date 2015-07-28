@@ -191,7 +191,7 @@ public:
     virtual void centerMagneticFields() = 0;
     void boundaryConditions(int itime, double time_dual, Patch* patch, PicParams &params, SimWindow* simWindow);
 
-    void movingWindow_x(unsigned int shift, SmileiMPI *smpi);
+    void movingWindow_x(unsigned int shift);
     
     virtual void incrementAvgFields(unsigned int time_step, unsigned int ntime_step_avg) = 0;
         
@@ -212,7 +212,7 @@ public:
 	return rho_->norm2(istart, bufsize);
     }
 
-    double computeNRJ(unsigned int shift, SmileiMPI *smpi);
+    double computeNRJ();
     double getLostNrjMW() const {return nrj_mw_lost;}
     
     double getNewFieldsNRJ() const {return nrj_new_fields;}
@@ -220,6 +220,8 @@ public:
 	nrj_mw_lost = 0.;
 	nrj_new_fields = 0.;
     }
+
+    inline void storeNRJlost( double nrj ) { nrj_mw_lost = nrj; }
 
 private:
     
