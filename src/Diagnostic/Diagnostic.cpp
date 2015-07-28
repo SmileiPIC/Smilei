@@ -25,14 +25,16 @@ dtimer(4)
     ifile.extract("print_every", print_every);
     
     fieldDump_every=0;
-    if (!ifile.extract("fieldDump_every", fieldDump_every)) fieldDump_every=params.global_every;
-    
     if (!ifile.extract("fieldDump_every", fieldDump_every)) {
+        fieldDump_every=params.global_every;
         DEBUG("activating all fields to dump");
     }    
     
     avgfieldDump_every=params.res_time*10;
     if (!ifile.extract("avgfieldDump_every", avgfieldDump_every)) avgfieldDump_every=params.global_every;
+    
+    fieldsToDump.resize(0);
+    ifile.extract("fieldsToDump", fieldsToDump);
     
     //!\todo Define default behaviour : 0 or params.res_time
     //ntime_step_avg=params.res_time;

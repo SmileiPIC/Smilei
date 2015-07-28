@@ -14,6 +14,12 @@ class H5 {
     
     public:
     
+    //! Make an empty group
+    // Returns the group ID
+    static hid_t group(hid_t locationId, std::string group_name) {
+        return H5Gcreate(locationId, group_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    }
+    
     //! write a string as an attribute
     static void attr(hid_t locationId, std::string attribute_name, std::string attribute_value) {
         hid_t atype = H5Tcopy(H5T_C_S1);

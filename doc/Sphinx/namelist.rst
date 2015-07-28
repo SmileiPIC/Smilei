@@ -81,76 +81,82 @@ Stop and restart
 Spatial and temporal scales
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-
 .. py:data:: geometry
-
+  
   The geometry of the simulation: ``"1d3v"`` or ``"2d3v"``.
-
+  
   ``1d`` or ``2d`` correspond to the number of spatial dimensions.
   ``3v`` indicates the number of dimensions for velocities.
 
 
 .. py:data:: interpolation_order
-
+  
   :default: 2
-
+  
   Interpolation order. To this day, only ``2`` is available.
 
 
 .. py:data:: timestep
-
+  
   Duration of one timestep in units of :math:`T_0`.
 
 
 .. py:data:: sim_time
-
+  
   Duration of the simulation in units of :math:`T_0`.
 
 
 .. py:data:: cell_length
-
+  
   A list of floats: dimensions of one cell in units of :math`L_0`.
   The number of elements of this list must be the same as the dimension of the simulation.
 
 
 .. py:data:: sim_length
-
+  
   A list of floats: dimensions of the simulations in units of :math:`L_0`.
   The number of elements of this list must be the same as the dimension of the simulation.
 
 
-.. py:data:: time_fields_frozen
-
+.. py:data:: clrw
+  
   :default: 0.
+  
+  Cluster width.
+  :red:`to do`
 
-  Time, at the beginning of the simulation, during which fields are frozen.
 
+.. py:data:: wavelength_SI
+  
+  The value of the wavelength :math:`\lambda_0` in SI units
+  (**only required if collisions or ionization are requested**).
+  The wavelength is related to the normalization length according to :math:`2\pi L_0 = \lambda_0`.
+
+.. py:data:: print_every
+  
+  Number of timesteps between each info output on screen. By default, 10 outputs per
+  simulation.
+
+
+Electromagnetic fields
+^^^^^^^^^^^^^^^^^^^^^^
 
 .. py:data:: bc_em_type_x
              bc_em_type_y
   
   :type: lists of two strings: ``[bc_min, bc_max]``
   :default: ``["periodic", "periodic"]``
-
+  
   The boundary conditions for the electromagnetic fields.
   The strings ``bc_min`` and ``bc_max`` must be one of the following choices:
   ``"periodic"``, ``"silver-muller"``, or ``"reflective"``.
-  
-  
-.. py:data:: clrw
+
+
+.. py:data:: time_fields_frozen
   
   :default: 0.
-
-  Cluster width.
-  :red:`to do`
-
-
-.. py:data:: wavelength_SI
-
-  The value of the wavelength :math:`\lambda_0` in SI units
-  (**only required if collisions or ionization are requested**).
-  The wavelength is related to the normalization length according to :math:`2\pi L_0 = \lambda_0`.
-
+  
+  Time, at the beginning of the simulation, during which fields are frozen.
 
 
 
@@ -197,14 +203,14 @@ Each species has to be defined in a ``Species`` block, for instance::
 All the possible variables inside this block are explained here:
 
 .. py:data:: species_type
-
+  
   :type: str
-
+  
   The name you want to give to this species.
 
 
 .. py:data:: initPosition_type
-
+  
    The initialization of particle positions:
    
    * ``"regular"`` for regularly spaced
@@ -212,7 +218,7 @@ All the possible variables inside this block are explained here:
 
 
 .. py:data:: initMomentum_type
-
+  
   The initialization of particle momenta:
   
   * ``"maxwell-juettner"`` for a relativistic maxwellian
@@ -223,7 +229,7 @@ All the possible variables inside this block are explained here:
 
 
 .. py:data:: mass
-
+  
   The mass of particles, in units of the electron mass :math:`m_e`.
 
 
@@ -235,39 +241,39 @@ All the possible variables inside this block are explained here:
 
 .. py:data:: nb_density
              charge_density
-
+  
   :type: float or *python* function (see section :ref:`profiles`)
-
+  
   The absolute value of the number density or charge density (choose one only)
   of the particle distribution, in units of the critical density 
   :math:`n_c=\varepsilon_0 m_e/(e^2 T_0^2)`.
 
 
 .. py:data:: charge
-
+  
   :type: float or *python* function (see section :ref:`profiles`)
-
+  
   The particle charge, in units of the electron charge $e$.
 
 
 .. py:data:: mean_velocity
-
+  
   :type: a list of 3 floats or *python* functions (see section :ref:`profiles`)
-
+  
   The initial drift velocity of the particles, in units of the speed of light $c$.
 
 
 .. py:data:: temperature
-
+  
   :type: a list of 3 floats or *python* functions (see section :ref:`profiles`)
-
+  
   The initial temperature of the particles, in units of :math:`m_ec^2`.
 
 
 .. py:data:: n_part_per_cell
-
+  
   :type: float or *python* function (see section :ref:`profiles`)
-
+  
   The number of particles per cell.
 
 
@@ -275,48 +281,48 @@ All the possible variables inside this block are explained here:
              bc_part_type_east
              bc_part_type_south
              bc_part_type_north
-
+  
   The boundary condition for particles: ``"none"`` means periodic.
   
   :red:`to do`
 
 
 .. py:data:: time_frozen
-
+  
   :default: 0.
-
+  
   The time during which the particle positions are not updated, in units of :math:`T_0`.
 
 
 .. py:data:: ionization_model
-
+  
   :default: ``"none"``
-
+  
   :red:`to do`
 
 
 .. py:data:: radiating
-
+  
   :default: ``False``
-
+  
   :red:`to do`
 
 
 .. py:data:: isTest
-
+  
   :default: ``False``
-
+  
   Flag for test particles. If ``True``, this species will contain only test particles
   which do not participate in the charge and currents.
 
 
 .. py:data:: c_part_max
-
+  
   :red:`to do`
 
 
 .. py:data:: dynamics_type
-
+  
   :red:`to do`
 
 
@@ -334,13 +340,13 @@ All the possible variables inside this block are explained here:
 
 
 .. py:data:: field
-
+  
   The name of the field: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"`` or ``"Bz"``.
 
 .. py:data:: profile
-
+  
   :type: float or *python* function (see section :ref:`profiles`)
-
+  
   The initial spatial profile of the applied field.
   The units are the natural normalization units for fields,
   i.e., :math:`B_0=m_e /(eT_0)` for magnetic fields, and :math:`E_0=m_e c/(eT_0)` for electric fields.
@@ -554,7 +560,7 @@ All the possible variables inside this block are explained here:
 
 
 .. py:data:: debug_every
-
+  
   :default: 0
   
   | Number of timesteps between each output of information about collisions.
@@ -573,8 +579,9 @@ For more details about the collision scheme in :program:`Smilei`, see :doc:`coll
 This is done by including the block ``DiagScalar()`` in the namelist, for instance::
 
   DiagScalar( every = 10 ,
-              tmin  = 0.1,
-              tmax  = 1.   )
+              time_range = [0.1, 1.],
+              vars = ["Utot", "Ukin", "Uelm"]
+            )
 
 All the possible variables inside this block are explained here:
 
@@ -583,12 +590,12 @@ All the possible variables inside this block are explained here:
   Number of timesteps between each output.
 
 
-.. py:data:: tmin
-             tmax
+.. py:data:: time_range
   
-  :default: ``None``
+  :default: ``[]``
   
-  Minimum and maximum times that will be used (omit for all times).
+  | List of two values: minimum and maximum times that will be used.
+  | Omit this argument to include all times.
 
 
 .. py:data:: precision
@@ -597,10 +604,15 @@ All the possible variables inside this block are explained here:
   
   Number of digits of the outputs.
 
+.. py:data:: vars
+  
+  :default: ``[]``
+  
+  | List of scalars that will be actually output. Note that all scalars are computed anyways.
+  | Omit this argument to include all scalars.
+
 
 The full list of scalars that are saved by this diagnostic:
-
-.. tabularcolumns:: |R|l|
 
 +----------------+---------------------------------------------------------------------------+
 | **Global energies**                                                                        |
@@ -661,7 +673,6 @@ This is done with the following instructions in the namelist:
   
   The number of timesteps between each output of the instantaneous fields.
 
-
 .. py:data:: avgfieldDump_every
   
   The number of timesteps between each output of the time-averaged fields.
@@ -669,6 +680,12 @@ This is done with the following instructions in the namelist:
 .. py:data:: ntime_step_avg
   
   The number of timesteps for time-averaging.
+
+.. py:data:: fieldsToDump
+  
+  :default: ``[]``
+  
+  List of field names that are saved. By default, they all are.
 
 
 The full list of fields that are saved by this diagnostic:

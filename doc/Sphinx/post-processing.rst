@@ -418,7 +418,7 @@ a drift velocity of :math:`0.05c`.
 
 .. _Tuto1:
 
-.. figure:: ../PostProcessing/ParticleDiagTutorial1.png
+.. figure:: _static/ParticleDiagTutorial1.png
   :width: 7cm
   
   Phase-space of electrons at :math:`t=0`.
@@ -432,7 +432,7 @@ This results in the plot in :numref:`Tuto2`. The ions have a zero average veloci
 
 .. _Tuto2:
 
-.. figure:: ../PostProcessing/ParticleDiagTutorial2.png
+.. figure:: _static/ParticleDiagTutorial2.png
   :width: 7cm
   
   Phase-space of ions at :math:`t=0`.
@@ -453,7 +453,7 @@ We can see that the peak is located at :math:`v_x=0.05c`, as we have already fou
 
 .. _Tuto3:
 
-.. figure:: ../PostProcessing/ParticleDiagTutorial3.png
+.. figure:: _static/ParticleDiagTutorial3.png
   :width: 7cm
   
   :math:`v_x` -distribution of electrons contained between :math:`x=3` and 4, at :math:`t=0`.
@@ -471,7 +471,7 @@ which is what was chosen in the input file.
 
 .. _Tuto4:
 
-.. figure:: ../PostProcessing/ParticleDiagTutorial4.png
+.. figure:: _static/ParticleDiagTutorial4.png
   :width: 7cm
   
   :math:`x` -distribution of electrons contained between :math:`v_x=-0.1` and :math:`0.1`, at :math:`t=0`.
@@ -508,7 +508,7 @@ A snapshot of this double plot is given in :numref:`Tuto5`.
 
 .. _Tuto5:
 
-.. figure:: ../PostProcessing/ParticleDiagTutorial5.png
+.. figure:: _static/ParticleDiagTutorial5.png
   :width: 10cm
   
   Two plots on the same figure.
@@ -524,7 +524,7 @@ This is shown in :numref:`Tuto6` where you can see the two curves in blue and gr
 
 .. _Tuto6:
 
-.. figure:: ../PostProcessing/ParticleDiagTutorial6.png
+.. figure:: _static/ParticleDiagTutorial6.png
   :width: 6cm
   
   Two curves in the same axes.
@@ -544,7 +544,7 @@ In our case, use::
 
 .. _Tuto7:
 
-.. figure:: ../PostProcessing/ParticleDiagTutorial7.png
+.. figure:: _static/ParticleDiagTutorial7.png
   :width: 6.5cm
   
   Blue: total density *vs* time. Green: density of slow electrons *vs* time.
@@ -584,7 +584,7 @@ because :math:`\left<p_x\right>` varies with :math:`v_x`.
 
 .. _Tuto8:
 
-.. figure:: ../PostProcessing/ParticleDiagTutorial8.png
+.. figure:: _static/ParticleDiagTutorial8.png
   :width: 8cm
   
   :math:`\left<p_x\right>` as a function of :math:`x` and :math:`v_x`.}
@@ -598,7 +598,7 @@ This value oscillates, as we have seen previously.
 
 .. _Tuto9:
 
-.. figure:: ../PostProcessing/ParticleDiagTutorial9.png
+.. figure:: _static/ParticleDiagTutorial9.png
   :width: 7.5cm
   
   :math:`\left<p_x\right>` as a function of time.
