@@ -235,6 +235,10 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
         vecPatches(ipatch)->updateMPIenv(smpi);
     }
 
+    for (int ipatch=0 ; ipatch<nPatches ; ipatch++ )
+	vecPatches(ipatch)->EMfields->laserDisabled();
+
+
     vecPatches.definePatchDiagsMaster();
 
     }

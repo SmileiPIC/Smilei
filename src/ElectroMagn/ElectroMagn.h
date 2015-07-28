@@ -222,6 +222,7 @@ public:
     }
 
     inline void storeNRJlost( double nrj ) { nrj_mw_lost = nrj; }
+    void laserDisabled();
 
 private:
     

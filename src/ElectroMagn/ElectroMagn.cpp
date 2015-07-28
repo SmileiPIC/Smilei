@@ -244,3 +244,10 @@ double ElectroMagn::computeNRJ() {
 
     return nrj;
 }
+
+void ElectroMagn::laserDisabled()
+{
+    if ( emBoundCond.size() )
+	emBoundCond[0]->laserDisabled();
+}
+
