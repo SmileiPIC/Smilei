@@ -7,7 +7,6 @@
 #include <sstream>
 
 #include "PicParams.h"
-#include "DiagParams.h"
 #include "Tools.h"
 
 #include "ElectroMagn.h"
@@ -53,20 +52,6 @@ SmileiMPI::~SmileiMPI()
     MPI_Finalized( &status );
     if (!status) MPI_Finalize();
 
-}
-
-void SmileiMPI::bcast( InputData& input_data )
-{
-    DEBUG(10,"broadcast namelist");
-    bcast(input_data.namelist);    
-
-    input_data.parseStream();
-    
-    // Randomization
-    unsigned long seedTime=0;
-    input_data.extract("random_seed",seedTime);
-    srand(seedTime+getRank());
-    
 }
 
 void SmileiMPI::bcast( string& val )

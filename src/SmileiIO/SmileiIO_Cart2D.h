@@ -17,7 +17,7 @@
 class SmileiIO_Cart2D : public SmileiIO {
 public:
     //! Create // HDF5 environment
-    SmileiIO_Cart2D( PicParams& params, DiagParams &diagParams, SmileiMPI* smpi );
+    SmileiIO_Cart2D( PicParams& params, Diagnostic& diag, SmileiMPI* smpi );
     //! Destructor for SmileiIO
     ~SmileiIO_Cart2D();
 

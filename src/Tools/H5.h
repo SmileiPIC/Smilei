@@ -7,13 +7,14 @@
 #define H5_H
 
 #include <hdf5.h>
+#include <string>
 
-
+//! HDF5 help functions
 class H5 {
     
     public:
     
-    // write a string as an attribute
+    //! write a string as an attribute
     static void attr(hid_t locationId, std::string attribute_name, std::string attribute_value) {
         hid_t atype = H5Tcopy(H5T_C_S1);
         H5Tset_size(atype, attribute_value.size());
@@ -24,19 +25,19 @@ class H5 {
         H5Tclose(atype);
     }
     
-    // write an unsigned int as an attribute
+    //! write an unsigned int as an attribute
     static void attr(hid_t locationId, std::string attribute_name, unsigned int attribute_value) {
         attr(locationId, attribute_name, attribute_value, H5T_NATIVE_UINT);}
     
-    // write an int as an attribute
+    //! write an int as an attribute
     static void attr(hid_t locationId, std::string attribute_name, int attribute_value) {
         attr(locationId, attribute_name, attribute_value, H5T_NATIVE_INT);}
     
-    // write a double as an attribute
+    //! write a double as an attribute
     static void attr(hid_t locationId, std::string attribute_name, double attribute_value) {
         attr(locationId, attribute_name, attribute_value, H5T_NATIVE_DOUBLE);}
     
-    // write anything as an attribute
+    //! write anything as an attribute
     template<class T>
     static void attr(hid_t locationId, std::string attribute_name, T & attribute_value, hid_t type) {
         hid_t sid = H5Screate(H5S_SCALAR);
@@ -46,25 +47,25 @@ class H5 {
         H5Aclose(aid);
     }
     
-    // write a vector of unsigned ints
-    // v is the vector
-    // size is the number of elements in the vector
+    //! write a vector of unsigned ints
+    //! v is the vector
+    //! size is the number of elements in the vector
     static void vector(hid_t locationId, std::string name, unsigned int& v, int size) {
         vector(locationId, name, v, size, H5T_NATIVE_UINT);
     }
     
-    // write a vector of ints
+    //! write a vector of ints
     static void vector(hid_t locationId, std::string name, int& v, int size) {
         vector(locationId, name, v, size, H5T_NATIVE_INT);
     }
     
-    // write a vector of doubles
+    //! write a vector of doubles
     static void vector(hid_t locationId, std::string name, double& v, int size) {
         vector(locationId, name, v, size, H5T_NATIVE_DOUBLE);
     }
     
-    // write any vector
-    // type is the h5 type (H5T_NATIVE_DOUBLE, H5T_NATIVE_INT, etc.)
+    //! write any vector
+    //! type is the h5 type (H5T_NATIVE_DOUBLE, H5T_NATIVE_INT, etc.)
     template<class T>
     static void vector(hid_t locationId, std::string name, T & v, int size, hid_t type) {
         // create dataspace for 1D array with good number of elements
@@ -83,11 +84,11 @@ class H5 {
     
     
     
-    // write a 2-D array of doubles in parallel (several MPI nodes)
-    // m is the matrix (2D array)
-    // sizex, sizey is the number of elements in both axes of the matrix
-    // offset is the x-location where the current node will start to write
-    // numel  is the x-number of elements for the current node
+    //! write a 2-D array of doubles in parallel (several MPI nodes)
+    //! m is the matrix (2D array)
+    //! sizex, sizey is the number of elements in both axes of the matrix
+    //! offset is the x-location where the current node will start to write
+    //! numel  is the x-number of elements for the current node
     static void matrix_MPI(hid_t locationId, std::string name, double& m,
                            int sizex, int sizey, int offset, int numel    ) {
         // Create a HDF5 memory space to hold the data

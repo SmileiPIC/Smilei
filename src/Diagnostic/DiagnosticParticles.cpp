@@ -5,7 +5,7 @@
 #include <cmath>
 
 #include "PicParams.h"
-#include "DiagParams.h"
+#include "H5.h"
 
 using namespace std;
 
@@ -34,14 +34,14 @@ DiagnosticParticles::DiagnosticParticles(unsigned int ID, string output_, unsign
     ostringstream mystream("");
     mystream.str("");
     mystream << species[0];
-    for(int i=0; i<species.size(); i++)
-        mystream << "," << diagnostic_id;
-    MESSAGE("Created particle diagnostic #" << ID << ": species " << mystream.str());
+    for(int i=1; i<species.size(); i++)
+        mystream << "," << species[i];
+    MESSAGE(2,"Created particle diagnostic #" << ID << ": species " << mystream.str());
     DiagnosticParticlesAxis *a;
     for(int i=0; i<axes.size(); i++) {
         a = axes[i];
         mystream.str("");
-        mystream << "    Axis " << a->type << " from " << a->min << " to " << a->max << " in " << a->nbins << " steps";
+        mystream << "\t\t\tAxis " << a->type << " from " << a->min << " to " << a->max << " in " << a->nbins << " steps";
         if( a->logscale       ) mystream << " [LOGSCALE] ";
         if( a->edge_inclusive ) mystream << " [EDGE INCLUSIVE]";
         MESSAGE(mystream.str());
@@ -53,36 +53,11 @@ DiagnosticParticles::~DiagnosticParticles()
 {
 }
 
-
-
-// Declare static variables here
-vector<DiagnosticParticles*> DiagnosticParticles::vecDiagnosticParticles;
-
-// close all the files
-void DiagnosticParticles::closeAll()
-{
-    
-    int n = vecDiagnosticParticles.size();
-    for (int i=0; i<n; i++) // loop all particle diagnostics
-        vecDiagnosticParticles[i]->close();
-    
-}
-
 // close the hdf file
 void DiagnosticParticles::close()
 {
     
     if (fileId != 0) H5Fclose(fileId);
-    
-}
-
-// run all the particle diagnostics
-void DiagnosticParticles::runAll(int timestep, vector<Species*> &vecSpecies, SmileiMPI* smpi)
-{
-    
-    int n = vecDiagnosticParticles.size();
-    for (int i=0; i<n; i++) // loop all particle diagnostics
-        vecDiagnosticParticles[i]->run(timestep, vecSpecies, smpi);
     
 }
 
@@ -340,6 +315,18 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
                 for (int ipart = bmin ; ipart < bmax ; ipart++)
                     data_array[ipart] = mass * (*w)[ipart] * (*pz)[ipart];
             
+            else if (output == "pxvx_density")
+                for (int ipart = bmin ; ipart < bmax ; ipart++)
+                    data_array[ipart] = mass * (*w)[ipart] * pow((*px)[ipart],2)/ sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
+            
+            else if (output == "pyvy_density")
+                for (int ipart = bmin ; ipart < bmax ; ipart++)
+                    data_array[ipart] = mass * (*w)[ipart] * pow((*py)[ipart],2)/ sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
+            
+            else if (output == "pzvz_density")
+                for (int ipart = bmin ; ipart < bmax ; ipart++)
+                    data_array[ipart] = mass * (*w)[ipart] * pow((*pz)[ipart],2)/ sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
+            
             // 3 - sum the data into the data_sum according to the indexes
             // ---------------------------------------------------------------
             for (int ipart = bmin ; ipart < bmax ; ipart++) {
@@ -372,6 +359,7 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
             mystream << "timestep" << setw(8) << setfill('0') << timestep;
             // write the array
             H5::vector(fileId, mystream.str(), data_sum[0], output_size);
+            H5Fflush(fileId, H5F_SCOPE_GLOBAL);
         }
         
     }

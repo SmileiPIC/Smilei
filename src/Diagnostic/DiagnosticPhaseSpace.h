@@ -19,8 +19,6 @@
 #include "DiagnosticPhase.h"
 
 class PicParams;
-class SmileiMPI;
-class DiagParams;
 class ElectroMagn;
 
 //! mother class of all the DiagnosticPhase* it creates all the sub-diagnostics and creates and fills the hdf5 file
@@ -28,14 +26,13 @@ class DiagnosticPhaseSpace {
 
 public:
 
-    DiagnosticPhaseSpace(PicParams &params, DiagParams &diagParams, SmileiMPI* smpi);
+    DiagnosticPhaseSpace();
     ~DiagnosticPhaseSpace();
 
 	void run(int timestep, std::vector<Species*>& vecSpecies);
 	
 	void close();
-private:
-    
+
     //! this vector will hold all the diagnostics created
 	std::vector<DiagnosticPhase*> vecDiagPhase;
 	

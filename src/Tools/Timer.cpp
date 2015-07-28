@@ -14,6 +14,7 @@ Timer::Timer()
 {
     smpi_ = NULL;
     name_ = "";
+    time_acc_=0.0;
 }
 
 Timer::~Timer()

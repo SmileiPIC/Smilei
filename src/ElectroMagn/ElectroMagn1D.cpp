@@ -12,8 +12,10 @@
 #include "SmileiMPI.h"
 #include "SmileiMPI_Cart1D.h"
 
-#include "ExtFieldProfile1D.h"
+#include "Profile.h"
 #include "MF_Solver1D_Yee.h"
+
+#include "ElectroMagnBC.h"
 
 using namespace std;
 
@@ -21,8 +23,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn1D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn1D::ElectroMagn1D(PicParams &params,  LaserParams &laser_params, SmileiMPI* smpi)
-: ElectroMagn(params, laser_params, smpi),
+ElectroMagn1D::ElectroMagn1D(PicParams &params, InputData &input_data, SmileiMPI* smpi)
+: ElectroMagn(params, input_data, smpi),
 isWestern(smpi->isWestern()),
 isEastern(smpi->isEastern())
 {
@@ -67,15 +69,15 @@ isEastern(smpi->isEastern())
     Bz_m = new Field1D(dimPrim, 2, true,  "Bz_m");
     
     // for (unsigned int i=0 ; i<nx_d ; i++) {
-//         double x = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i-0.5) )*params.cell_length[0];
-//         (*By_)(i) = 0.001 * sin(x * 2.0*M_PI/params.sim_length[0] * 40.0);
-//     }
-//     smpi1D->exchangeField(By_);
-//     for (unsigned int i=0 ; i<nx_d ; i++) {
-// //        double x = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i-0.5) )*params.cell_length[0];
-//         (*By_m)(i) = (*By_)(i);
-//     }
-//     
+    //         double x = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i-0.5) )*params.cell_length[0];
+    //         (*By_)(i) = 0.001 * sin(x * 2.0*M_PI/params.sim_length[0] * 40.0);
+    //     }
+    //     smpi1D->exchangeField(By_);
+    //     for (unsigned int i=0 ; i<nx_d ; i++) {
+    // //        double x = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i-0.5) )*params.cell_length[0];
+    //         (*By_m)(i) = (*By_)(i);
+    //     }
+    //     
     // Allocation of time-averaged EM fields
     Ex_avg  = new Field1D(dimPrim, 0, false, "Ex_avg");
     Ey_avg  = new Field1D(dimPrim, 1, false, "Ey_avg");
@@ -91,7 +93,7 @@ isEastern(smpi->isEastern())
     rho_  = new Field1D(dimPrim, "Rho" );
     
     // Charge currents currents and density for each species
-
+    
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
         Jx_s[ispec]  = new Field1D(dimPrim, 0, false, ("Jx_"+params.species_param[ispec].species_type).c_str());
         Jy_s[ispec]  = new Field1D(dimPrim, 1, false, ("Jy_"+params.species_param[ispec].species_type).c_str());
@@ -99,21 +101,21 @@ isEastern(smpi->isEastern())
         rho_s[ispec] = new Field1D(dimPrim, ("Rho_"+params.species_param[ispec].species_type).c_str());
     }
     
-//    ostringstream file_name("");
-//    for (unsigned int ispec=0; ispec<n_species; ispec++) {
-//        file_name.str("");
-//        file_name << "Jx_s" << ispec;
-//        Jx_s[ispec]  = new Field1D(dimPrim, 0, false, file_name.str().c_str());
-//        file_name.str("");
-//        file_name << "Jy_s" << ispec;
-//        Jy_s[ispec]  = new Field1D(dimPrim, 1, false, file_name.str().c_str());
-//        file_name.str("");
-//        file_name << "Jz_s" << ispec;
-//        Jz_s[ispec]  = new Field1D(dimPrim, 2, false, file_name.str().c_str());
-//        file_name.str("");
-//        file_name << "rho_s" << ispec;
-//        rho_s[ispec] = new Field1D(dimPrim, file_name.str().c_str());
-//    }
+    //    ostringstream file_name("");
+    //    for (unsigned int ispec=0; ispec<n_species; ispec++) {
+    //        file_name.str("");
+    //        file_name << "Jx_s" << ispec;
+    //        Jx_s[ispec]  = new Field1D(dimPrim, 0, false, file_name.str().c_str());
+    //        file_name.str("");
+    //        file_name << "Jy_s" << ispec;
+    //        Jy_s[ispec]  = new Field1D(dimPrim, 1, false, file_name.str().c_str());
+    //        file_name.str("");
+    //        file_name << "Jz_s" << ispec;
+    //        Jz_s[ispec]  = new Field1D(dimPrim, 2, false, file_name.str().c_str());
+    //        file_name.str("");
+    //        file_name << "rho_s" << ispec;
+    //        rho_s[ispec] = new Field1D(dimPrim, file_name.str().c_str());
+    //    }
     
     // ----------------------------------------------------------------
     // Definition of the min and max index according to chosen oversize
@@ -132,6 +134,7 @@ isEastern(smpi->isEastern())
     for (unsigned int i=0 ; i<3 ; i++)
         for (unsigned int isDual=0 ; isDual<2 ; isDual++)
             istart[i][isDual] = 0;
+    
     for (unsigned int i=0 ; i<nDim_field ; i++) {
         for (unsigned int isDual=0 ; isDual<2 ; isDual++) {
             istart[i][isDual] = oversize[i];
@@ -190,7 +193,7 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
     
     double       dx_sq          = dx*dx;
     unsigned int nx_p_global    = smpi1D->n_space_global[0] + 1;
-//    unsigned int smilei_sz      = smpi1D->smilei_sz;
+    //    unsigned int smilei_sz      = smpi1D->smilei_sz;
     unsigned int smilei_rk      = smpi1D->smilei_rk;
     
     // Min and max indices for calculation of the scalar product (for primal & dual grid)
@@ -549,20 +552,20 @@ void ElectroMagn1D::restartRhoJs(int ispec, bool currents)
     Field1D* Jy1D_s  = static_cast<Field1D*>(Jy_s[ispec]);
     Field1D* Jz1D_s  = static_cast<Field1D*>(Jz_s[ispec]);
     Field1D* rho1D_s = static_cast<Field1D*>(rho_s[ispec]);
-
-    #pragma omp for schedule(static) 
+    
+#pragma omp for schedule(static) 
     for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
         (*rho1D_s)(ix) = 0.0;
     }
     if (currents){
         // put longitudinal current to zero on the dual grid
-        #pragma omp for schedule(static) 
+#pragma omp for schedule(static) 
         for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
             (*Jx1D_s)(ix)  = 0.0;
         }
-        #pragma omp for schedule(static) 
+#pragma omp for schedule(static) 
         for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
-        // all fields are defined on the primal grid
+            // all fields are defined on the primal grid
             (*Jy1D_s)(ix)  = 0.0;
             (*Jz1D_s)(ix)  = 0.0;
         }
@@ -601,7 +604,12 @@ void ElectroMagn1D::computeTotalRhoJ()
     }//END loop on species ispec
 }
 
+// --------------------------------------------------------------------------
+// Compute Poynting (return the electromagnetic energy injected at the border
+// --------------------------------------------------------------------------
 void ElectroMagn1D::computePoynting() {
+    
+    // Western border (Energy injected = +Poynting)
     if (isWestern) {
         unsigned int iEy=istart[0][Ey_->isDual(0)];
         unsigned int iBz=istart[0][Bz_m->isDual(0)];
@@ -611,7 +619,9 @@ void ElectroMagn1D::computePoynting() {
         poynting_inst[0][0]=0.5*timestep*((*Ey_)(iEy) * ((*Bz_m)(iBz) + (*Bz_m)(iBz+1)) -
                                           (*Ez_)(iEz) * ((*By_m)(iBy) + (*By_m)(iBy+1)));
         poynting[0][0] += poynting_inst[0][0];
-    } 
+    }
+    
+    // Eastern border (Energy injected = -Poynting)
     if (isEastern) {
         unsigned int iEy=istart[0][Ey_->isDual(0)]  + bufsize[0][Ey_->isDual(0)]-1;
         unsigned int iBz=istart[0][Bz_m->isDual(0)] + bufsize[0][Bz_m->isDual(0)]-1;
@@ -625,18 +635,21 @@ void ElectroMagn1D::computePoynting() {
     }    
 }
 
-void ElectroMagn1D::applyExternalField(Field* my_field,  ExtFieldProfile *my_profile, SmileiMPI* smpi) {
-    
+void ElectroMagn1D::applyExternalField(Field* my_field,  Profile *profile, SmileiMPI* smpi) {
+
+    MESSAGE(1,"Applying External field to " << my_field->name);
     Field1D* field1D=static_cast<Field1D*>(my_field);
-    ExtFieldProfile1D* profile=static_cast<ExtFieldProfile1D*> (my_profile);
     SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
     
     vector<double> x(1,0);
     for (int i=0 ; i<field1D->dims()[0] ; i++) {
-        x[0] = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i +(field1D->isDual(0)?-0.5:0)) )*dx;
-        (*field1D)(i) = (*field1D)(i) + (*profile)(x);
+         x[0] = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i +(field1D->isDual(0)?-0.5:0)) )*dx;
+         (*field1D)(i) = (*field1D)(i) + profile->valueAt(x);
     }
+    
+    if(emBoundCond[0]) emBoundCond[0]->save_fields_BC1D(my_field);
 }
 
-    
+
+
 

@@ -50,6 +50,7 @@ public:
     Field( std::vector<unsigned int> dims, std::string name_in ) : name(name_in) {
         ;
     } ;
+    
     //! Constructor for Field: isPrimal define if mainDim is Primal or Dual
     Field( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name_in ) : name(name_in) {
         ;
@@ -142,6 +143,7 @@ public:
     }
 
     //virtual double computeNRJ(unsigned int shift, unsigned int** istart, unsigned int** bufsize) = 0;
+    //! \todo should't this be a method of electromagn?
     virtual double computeNRJ(unsigned int shift, unsigned int istart[3][2], unsigned int bufsize[3][2]) = 0;
 
 protected:
