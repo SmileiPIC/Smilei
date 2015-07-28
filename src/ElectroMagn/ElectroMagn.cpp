@@ -150,7 +150,7 @@ ElectroMagn::~ElectroMagn()
  }*/
 void ElectroMagn::solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, PicParams &params, SimWindow* simWindow)
 {
-#pragma omp parallel
+//#pragma omp parallel
 {
     // saving magnetic fields (to compute centered fields used in the particle pusher)
     saveMagneticFields();
