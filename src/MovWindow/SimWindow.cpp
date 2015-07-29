@@ -12,6 +12,7 @@
 #include "PatchesFactory.h"
 #include <iostream>
 #include <omp.h>
+#include <fstream>
 
 using namespace std;
 
@@ -83,6 +84,17 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
     // Delete western patch
     double energy_field_lost(0.);
     vector<double> energy_part_lost( vecPatches(0)->vecSpecies.size(), 0. );
+
+    hid_t fphases;
+    vector<hid_t> dset;
+    if (smpi->isMaster()) {
+	// Get scalars/phaseSpace patch 
+	vecPatches(0)->Diags->scalars.close();
+	fphases = vecPatches(0)->Diags->phases.fileId;
+	for ( int iphase=0 ; iphase<vecPatches(0)->Diags->phases.vecDiagPhase.size() ; iphase++ ) {
+	    dset.push_back( vecPatches(0)->Diags->phases.vecDiagPhase[iphase]->dataId );
+	}
+    }
 
     for ( int ipatch = nPatches-1 ; ipatch >= 0 ; ipatch--) {
 
@@ -241,7 +253,17 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
 
     vecPatches.definePatchDiagsMaster();
 
+    if (smpi->isMaster()) {
+	// Set scalars/phaseSpace patch master
+	vecPatches(0)->Diags->scalars.open();
+	vecPatches(0)->Diags->phases.fileId = fphases;
+	for ( int iphase=0 ; iphase<vecPatches(0)->Diags->phases.vecDiagPhase.size() ; iphase++ ) {
+	    vecPatches(0)->Diags->phases.vecDiagPhase[iphase]->dataId = dset[ iphase ];
+	}
     }
+
+
+    } // End pragma omp master
 
     return;
 

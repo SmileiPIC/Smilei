@@ -5,7 +5,7 @@
 #include <iomanip>
 
 #include "PicParams.h"
-#include "SmileiMPI.h"
+#include "Patch.h"
 #include "ElectroMagn.h"
 #include "Field1D.h"
 #include "Field.h"
@@ -28,14 +28,14 @@ void DiagnosticPhaseSpace::close() {
 
 
 
-DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams &params, DiagParams &diagParams, SmileiMPI* smpi) : fileId(0), ndim(params.nDim_particle) {
+DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams &params, DiagParams &diagParams, Patch* patch) : fileId(0), ndim(params.nDim_particle) {
     //! create the particle structure
     my_part.pos.resize(ndim);
     my_part.mom.resize(3);
 
 	for (unsigned int i = 0 ; i < diagParams.vecPhase.size(); i++) {
         hid_t gidParent=0;
-        if (smpi->isMaster() ) {
+        if (patch->isMaster() ) {
             if (i==0) {
                 ostringstream file_name("");
                 file_name<<"PhaseSpace.h5";
@@ -154,7 +154,7 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams &params, DiagParams &diagPa
             }
             
             if (diagPhase) {
-                if (smpi->isMaster()) {
+                if (patch->isMaster()) {
                     //! create a group for each species of this diag and keep track of its ID.
                     
                     hsize_t dims[3] = {0,diagPhase->my_data.dims()[0],diagPhase->my_data.dims()[1]};
@@ -201,7 +201,7 @@ DiagnosticPhaseSpace::DiagnosticPhaseSpace(PicParams &params, DiagParams &diagPa
                 vecDiagPhase.push_back(diagPhase);	
             }
         }
-        if (smpi->isMaster() ) {
+        if (patch->isMaster() ) {
             H5Gclose(gidParent);
         }
 	}
@@ -215,10 +215,12 @@ void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) 
 	}
 	
 	if (vecDiagPhaseActiveTimestep.size()>0) {
+	    vecDiagPhaseToRun.clear();
+
         for (vector<Species*>::const_iterator mySpec=vecSpecies.begin(); mySpec!= vecSpecies.end(); mySpec++) {
 			
 			//! check which diagnosticPhase to run for the species 
-			vector<DiagnosticPhase*> vecDiagPhaseToRun;
+			//vector<DiagnosticPhase*> vecDiagPhaseToRun;
             for (vector<DiagnosticPhase*>::const_iterator diag=vecDiagPhaseActiveTimestep.begin() ; diag != vecDiagPhaseActiveTimestep.end(); diag++) {
 				if(find((*diag)->my_species.begin(), (*diag)->my_species.end(), (*mySpec)->species_param.species_type) != (*diag)->my_species.end()) { 
 					vecDiagPhaseToRun.push_back(*diag);
@@ -246,9 +248,10 @@ void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) 
 				}
 			}
 		}
+	/*
         //! and finally write the data (reduce data on 1 proc, write it and clear memory for future usage)
         for (vector<DiagnosticPhase*>::const_iterator diag=vecDiagPhaseActiveTimestep.begin() ; diag != vecDiagPhaseActiveTimestep.end(); diag++) {
             (*diag)->writeData();
-        }
+        }*/
 	}
 }

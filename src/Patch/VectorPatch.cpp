@@ -310,7 +310,7 @@ void VectorPatch::computeGlobalDiags(int timestep)
     
     computeScalarsDiags(timestep);
     //computeGlobalDiags(probes); // HDF5 write done per patch in DiagProbes::*
-    //computeGlobalDiags(phases);
+    computePhaseSpace();
 }
 
 void VectorPatch::computeScalarsDiags(int timestep)
@@ -381,6 +381,31 @@ void VectorPatch::computeScalarsDiags(int timestep)
     //(*this)(0)->Diags->scalars.write(timestep);
 
 }
+
+void VectorPatch::computePhaseSpace()
+{
+    // A définir : DiagPhaseSpace::itDiagPhase
+
+    int nDiags( (*this)(0)->Diags->phases.vecDiagPhaseToRun.size() );
+
+    // Initialize scalars iterator on 1st diag
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->Diags->phases.itDiagPhase =  (*this)(ipatch)->Diags->phases.vecDiagPhaseToRun.begin();
+    
+    for (int idiags = 0 ; idiags<nDiags ; idiags++) {
+	vector<unsigned int> diagSize = (*(*this)(0)->Diags->phases.itDiagPhase)->my_data.dims_;
+	for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++) {
+	    for (int i=0 ; i<diagSize[0] ; i++)
+		for (int j=0 ; j<diagSize[1] ; j++)
+		    (*(*this)(0)->Diags->phases.itDiagPhase)->my_data(i,j) += (*(*this)(ipatch)->Diags->phases.itDiagPhase)->my_data(i,j);
+	    (*this)(ipatch)->Diags->phases.itDiagPhase++;
+	} // for ipatch
+	(*this)(0)->Diags->phases.itDiagPhase++;
+
+    } // for idiags
+
+}
+
 
 void VectorPatch::initProbesDiags(PicParams& params, DiagParams &diag_params, int timestep)
 {

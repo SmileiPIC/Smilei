@@ -32,6 +32,13 @@ void DiagnosticScalar::close() {
     }
 }
 
+void DiagnosticScalar::open() {
+  isMaster = true;
+  fout.open("scalars.txt");
+  if (!fout.is_open()) ERROR("can't open scalar file");
+
+}
+
 // wrapper of the methods
 void DiagnosticScalar::run(int timestep, ElectroMagn* EMfields, vector<Species*>& vecSpecies) {
     if (timestep==0) {

@@ -150,7 +150,7 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 	Interp     = InterpolatorFactory::create(params, this);               // + patchId -> idx_domain_begin (now = ref smpi)
 	Proj       = ProjectorFactory::create(params, this);                  // + patchId -> idx_domain_begin (now = ref smpi)
 
-	Diags = new Diagnostic(params,diag_params, smpi, this);
+	Diags = new Diagnostic(params,diag_params, this);
 
 	sio = SmileiIOFactory::create(params, diag_params, this);
 	

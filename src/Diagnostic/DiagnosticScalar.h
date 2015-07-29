@@ -32,6 +32,7 @@ struct val_index
 class DiagnosticScalar {
     friend class VectorPatch;
     friend class SmileiMPI;
+    friend class SimWindow;
 public:
     //! creator (called from Diagnostic)
     DiagnosticScalar(PicParams &params, DiagParams &diagParams, Patch* patch);
@@ -40,6 +41,9 @@ public:
     
     //! close the file
     void close();
+
+    //! close the file
+    void open();
 
     //! calls the compute_proc_gather, compute and write
     void run(int timestep, ElectroMagn* EMfields, std::vector<Species*>&);
@@ -59,7 +63,7 @@ public:
 
 private:
     //! check if patch is master (from patch)
-    const bool isMaster;
+    bool isMaster;
     
     //! initial energy (kinetic + EM)
     double Energy_time_zero;
@@ -72,9 +76,6 @@ private:
     
     //! every step to calculate scalars
     const unsigned int every;
-    
-    //! output stream
-    std::ofstream fout;
     
     //! copied from params
     double cell_volume;
@@ -96,6 +97,10 @@ private:
 
     //! check if key is allowed
     bool allowedKey(std::string);
+
+protected :    
+    //! output stream
+    std::ofstream fout;
 
 };
 

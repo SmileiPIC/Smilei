@@ -32,7 +32,7 @@ class Diagnostic {
     friend class SimWindow;
 public:
     //! creator called from main
-    Diagnostic(PicParams &params,  DiagParams &dParams, SmileiMPI* smpi, Patch* patch);
+    Diagnostic(PicParams &params,  DiagParams &dParams, Patch* patch);
     
     //! destructor
     ~Diagnostic();

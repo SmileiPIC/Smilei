@@ -12,10 +12,10 @@
 
 using namespace std;
 
-Diagnostic::Diagnostic( PicParams &picParams, DiagParams &dParams , SmileiMPI* smpi, Patch* patch) :
+Diagnostic::Diagnostic( PicParams &picParams, DiagParams &dParams , Patch* patch) :
 scalars(picParams, dParams, patch),
 probes(picParams, dParams, patch),
-phases(picParams, dParams, smpi)
+phases(picParams, dParams, patch)
 {
 }
 
