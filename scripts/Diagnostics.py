@@ -1615,6 +1615,8 @@ class Probe(Diagnostic):
 				 units="code", data_log=False, **kwargs):
 		
 		if not self.Smilei.valid: return None
+		
+		# If no probeNumber, print available probes
 		if probeNumber is None:
 			probes = self.getProbes()
 			if len(probes)>0:
@@ -1625,17 +1627,35 @@ class Probe(Diagnostic):
 			else:
 				print "No probes found in '"+self._results_path+"'"
 			return None
-		if field is None:
-			print "Printing available fields for probes:"
-			print "-------------------------------------"
-			print "Ex Ey Ez Bx By Bz Jx Jy Jz Rho"
-			return None
 		
-		
+		# Try to get the probe from the hdf5 file
 		self.probeNumber  = probeNumber
 		self._file = self._results_path+"/Probes.h5"
 		f = self._h5py.File(self._file, 'r')
-		self._h5items = f.values()
+		self._h5probe = None
+		for key in f.keys():
+			if key[0] != "p": continue
+			if int(key.strip("p"))==probeNumber:
+				self._h5probe = f.get(key)
+				break
+		if self._h5probe is None:
+			print "Cannot find probe "+str(probeNumber)+" in file "+file
+			f.close()
+			return None
+		
+		# Extract available fields
+		fields = self._h5probe.attrs["fields"].split(",")
+		if len(fields) == 0:
+			print "Probe #"+probeNumber+" is empty"
+			f.close()
+			return None
+		# If no field, print available fields
+		if field is None:
+			print "Printing available fields for probe #"+str(probeNumber)+":"
+			print "----------------------------------------"
+			print ", ".join(fields)
+			f.close()
+			return None
 		
 		# Get info from the input file and prepare units
 		try:
@@ -1668,13 +1688,10 @@ class Probe(Diagnostic):
 			print "No probes found in Probes.h5"
 			return
 		
-		# Get available fields
-		fields = ["Ex","Ey","Ez","Bx","By","Bz","Jx","Jy","Jz","Rho"]
-		sortedfields = reversed(sorted(fields, key = len))
-		
 		# 1 - verifications, initialization
 		# -------------------------------------------------------------------
 		# Parse the `field` argument
+		sortedfields = reversed(sorted(fields, key = len))
 		self.operation = field
 		for f in sortedfields:
 			i = fields.index(f)
@@ -1852,7 +1869,7 @@ class Probe(Diagnostic):
 	@staticmethod
 	def _printInfo(info):
 		print ("Probe #"+str(info["probeNumber"])+": "+str(info["dimension"])+"-dimensional,"
-			+" every "+str(info["every"])+" timesteps")
+			+" every "+str(info["every"])+" timesteps, with fields "+info["fields"])
 		i = 0
 		while "p"+str(i) in info:
 			print "p"+str(i)+" = "+" ".join(info["p"+str(i)].astype(str).tolist())
@@ -1868,23 +1885,22 @@ class Probe(Diagnostic):
 		except:
 			print "Cannot open file "+file
 			return {}
-		try:
-			probes = [int(key.strip("p")) for key in f.keys()]
-			k = probes.index(probeNumber)
-			probe = f.values()[k]
-		except:
+		for key in f.iterkeys():
+			if key[0] != "p": continue
+			if int(key.strip("p"))==probeNumber:
+				probe = f[key]
+		if probe is None:
 			print "Cannot find probe "+str(probeNumber)+" in file "+file
 			return {}
 		out = {}
 		out.update({"probeNumber":probeNumber, "dimension":probe.attrs["dimension"],
-			"every":probe.attrs["every"]})
+			"every":probe.attrs["every"], "shape":self._np.array(probe["number"]),
+			"fields":probe.attrs["fields"] })
 		i = 0
 		while "p"+str(i) in probe.keys():
 			k = probe.keys().index("p"+str(i))
 			out.update({ "p"+str(i):self._np.array(probe.values()[k]) })
 			i += 1
-		k = probe.keys().index("number")
-		out.update({ "shape":self._np.array(probe.values()[k]) })
 		f.close()
 		return out
 	def _getMyInfo(self):
@@ -1899,7 +1915,7 @@ class Probe(Diagnostic):
 			print "Cannot open file "+file
 			return []
 		try:
-			probes = [int(key.strip("p")) for key in f.keys()] # list of probes
+			probes = [int(key.strip("p")) for key in f.iterkeys()] # list of probes
 		except:
 			probes = []
 		f.close()
@@ -1912,15 +1928,8 @@ class Probe(Diagnostic):
 		except:
 			print "Cannot open file "+self._file
 			return self._np.array([])
-		try:
-			probes = [int(key.strip("p")) for key in f.keys()]
-			k = probes.index(self.probeNumber)
-			probe = f.values()[k]
-		except:
-			print "Cannot find probe "+str(self.probeNumber)+" in file "+file
-			return self._np.array([])
 		times = []
-		for key in probe.keys():
+		for key in self._h5probe.iterkeys():
 			try   : times.append( int(key) )
 			except: pass
 		f.close()
@@ -1939,7 +1948,7 @@ class Probe(Diagnostic):
 		C = {}
 		op = "A=" + self.operation
 		for n in reversed(self._fieldn): # for each field in operation
-			B = self._np.double(self._h5items[self.probeNumber].get(index)[:,n]) # get array
+			B = self._np.double(self._h5probe[index][n,:]) # get array
 			B = self._np.reshape(B, self._shape) # reshape array because it is flattened in the file
 			B *= self._unitscoeff[n]
 			C.update({ n:B })

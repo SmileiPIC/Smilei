@@ -780,12 +780,14 @@ There are several ways to do it:
 
 **Notes**
 
-* Probes output the EM fields, the total current and the total density.
+* There is an extra argument ``fields``, a list of fields among ``"Ex"``, ``"Ey"``, ``"Ez"``,
+  ``"Bx"``, ``"By"``, ``"Bz"``, ``"Jx"``, ``"Jy"``, ``"Jz"`` and ``"Rho"``. Only these
+  fields will be saved. Use, for example, ``fields=["Bz"]`` if you are only interested
+  in :math:`B_z`. Note that it does NOT speed up calculation much, but it saves disk space.
 * The dimension of the probe is decided only by the instruction ``number``:
   without it, the probe is 0-D, with ``number = [n1]``, the probe is 1-D,
   and with ``number =  [n1, n2]``, the probe is 2-D.
 * You can have several probes in the input file.
-
 
 **Examples of probe diagnostics**
 

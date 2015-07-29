@@ -141,9 +141,10 @@ DiagScalar(every = 1)
 DiagProbe(
 	every = 1,
 	time_range = [0.1 *L0, 0.4*L0],
-	number = [10],
+	number = [40],
 	pos = [0.1*L0],
-	pos_first = [0.9*L0]
+	pos_first = [0.9*L0],
+	fields = []
 )
 
 # DIAGNOSTICS ON PARTICLES - project the particles on a N-D arbitrary grid

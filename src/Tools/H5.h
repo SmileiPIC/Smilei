@@ -102,21 +102,21 @@ class H5 {
         chunk_parts[0] = numel;
         chunk_parts[1] = sizey;
         hid_t memspace = H5Screate_simple(2, chunk_parts, NULL);
-        // Create the corresponding HDF5 filespace
-        hsize_t dimsf[2], offs[2], stride[2], count[2];
-        dimsf[0] = sizex;
-        dimsf[1] = sizey;
+        // Create the HDF5 filespace
+        hsize_t dimsf[2];
+        dimsf[1] = sizex;
+        dimsf[0] = sizey;
         hid_t filespace = H5Screate_simple(2, dimsf, NULL);
-        offs[0] = offset;
-        offs[1] = 0;
+        // Choose the hyperslab, which is the region where the current node will write
+        hsize_t offs[2], stride[2], count[2], block[2];
+        offs[1] = offset;
+        offs[0] = 0;
         stride[0] = 1;
         stride[1] = 1;
         count[0] = 1;
         count[1] = 1;
-        // Choose the hyperslab, which is the region where the current node will write
-        hsize_t block[2];
-        block[0] = numel;
-        block[1] = sizey;
+        block[1] = numel;
+        block[0] = sizey;
         H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offs, stride, count, block);
         // Open the pre-existing group and write the data inside
         hid_t write_plist = H5Pcreate(H5P_DATASET_XFER);
@@ -129,7 +129,7 @@ class H5 {
         H5Pclose( write_plist );
         H5Sclose(filespace);
         H5Sclose(memspace);
-    }   
+    }
     
 };
 

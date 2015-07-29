@@ -120,6 +120,7 @@ class DiagProbe(SmileiComponent):
     pos_first = []
     pos_second = []
     pos_third = []
+    fields = []
 
 class DiagParticles(SmileiComponent):
     """Diagnostic particles"""
