@@ -63,17 +63,17 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
     // ------------------------
     // SPECIES-related energies
     // ------------------------
-    double Ukin=0;              // total (kinetic) energy carried by particles (test-particles do not contribute)
-    double Ukin_bnd=0;          // total energy lost by particles due to boundary conditions
-    double Ukin_out_mvw=0;      // total energy lost due to particles being suppressed by the moving-window
-    double Ukin_inj_mvw=0;      // total energy added due to particles created by the moving-window
+    double Ukin=0.;             // total (kinetic) energy carried by particles (test-particles do not contribute)
+    double Ukin_bnd=0.;         // total energy lost by particles due to boundary conditions
+    double Ukin_out_mvw=0.;     // total energy lost due to particles being suppressed by the moving-window
+    double Ukin_inj_mvw=0.;     // total energy added due to particles created by the moving-window
     
     // Compute scalars for each species
     for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
-        if (!vecSpecies[ispec]->particles.isTestParticles) continue; // No scalar diagnostic for test particles
+        if (vecSpecies[ispec]->particles.isTestParticles) continue;    // No scalar diagnostic for test particles
         
-        double charge_avg=0.0;      // average charge of current species ispec
-        double ener_tot=0.0;        // total kinetic energy of current species ispec
+        double charge_avg=0.0;  // average charge of current species ispec
+        double ener_tot=0.0;    // total kinetic energy of current species ispec
 
         unsigned int nPart=vecSpecies[ispec]->getNbrOfParticles(); // number of particles
         if (nPart>0) {
