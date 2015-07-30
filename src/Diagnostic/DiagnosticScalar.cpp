@@ -4,7 +4,6 @@
 #include <iomanip>
 
 #include "PicParams.h"
-#include "SmileiMPI.h"
 #include "ElectroMagn.h"
 #include "DiagParams.h"
 #include "Patch.h" 

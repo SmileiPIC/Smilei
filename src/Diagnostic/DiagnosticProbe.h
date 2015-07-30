@@ -17,7 +17,6 @@
 #include "Particles.h"
 
 class PicParams;
-class SmileiMPI;
 class Patch;
 class DiagParams;
 class ElectroMagn;
@@ -25,10 +24,9 @@ class Field2D;
 
 //! this class holds the point probe
 class DiagnosticProbe {
-    
-public:
     friend class SmileiMPI;
-    
+ 
+public:
     //! the creator need both sim parameters params and the diagnostic parameter diagParams
     DiagnosticProbe(PicParams &params, DiagParams &diagParams, Patch* patch);
 

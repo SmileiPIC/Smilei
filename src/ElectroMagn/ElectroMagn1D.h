@@ -18,21 +18,18 @@ public:
     //! Oversize
     unsigned int oversize_;
 
-    //! Method used for initializing Maxwell solver
-    void solvePoisson(SmileiMPI* smpi);
-    
     // --------------------------------------
     //  --------- PATCH IN PROGRESS ---------
     // --------------------------------------
-    void initPoisson(Patch *patch) {};
-    double compute_r() {return 0.;};
-    void compute_Ap(Patch *patch) {};
+    void initPoisson(Patch *patch);
+    double compute_r();
+    void compute_Ap(Patch *patch);
     //Access to Ap
-    double compute_pAp() {return 0.;};
-    void update_pand_r(double r_dot_r, double p_dot_Ap) {};
-    void update_p(double rnew_dot_rnew, double r_dot_r) {};
-    void initE(Patch *patch) {};
-    void centeringE( std::vector<double> E_Add ) {};
+    double compute_pAp();
+    void update_pand_r(double r_dot_r, double p_dot_Ap);
+    void update_p(double rnew_dot_rnew, double r_dot_r);
+    void initE(Patch *patch);
+    void centeringE( std::vector<double> E_Add );
 
     double getEx_WestNorth() { return 0.; }
     double getEy_WestNorth() { return 0.; }

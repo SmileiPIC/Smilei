@@ -3,8 +3,6 @@
 
 #include "DiagnosticPhase.h"
 
-class SmileiMPI;
-
 //! class projection on the plane position-Lorentz_factor
 //! the component of the position (0,1,2) is chosen at construction
 class DiagnosticPhasePosLor : public DiagnosticPhase {

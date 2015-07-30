@@ -3,8 +3,6 @@
 
 #include "DiagnosticPhase.h"
 
-class SmileiMPI;
-
 //! class projection on the plane momentum-momentum
 class DiagnosticPhaseMomMom : public DiagnosticPhase {
     

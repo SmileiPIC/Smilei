@@ -6,7 +6,6 @@
 #include "ElectroMagn2D.h"
 
 #include "PicParams.h"
-#include "SmileiMPI.h"
 #include "Patch.h"
 
 #include "Tools.h"

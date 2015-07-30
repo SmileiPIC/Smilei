@@ -60,7 +60,7 @@ public:
     };
 
     //! \todo What is this? (MG)
-    //! \todo private/friend/modify SmileiMPI* (JD)
+    //! \todo private/friend/modify (JD)
     // 
     //! Now in Field, all arrays may be viewed as a 1D array
     //double* data_;

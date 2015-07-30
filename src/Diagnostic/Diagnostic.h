@@ -17,7 +17,6 @@
 #include "DiagnosticPhaseSpace.h"
 
 class PicParams;
-class SmileiMPI;
 class Patch;
 class VectorPatch;
 class ElectroMagn;

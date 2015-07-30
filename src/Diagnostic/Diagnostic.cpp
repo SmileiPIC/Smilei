@@ -5,7 +5,6 @@
 #include <hdf5.h>
 
 #include "PicParams.h"
-#include "SmileiMPI.h"
 #include "Patch.h"
 #include "ElectroMagn.h"
 #include "Species.h"

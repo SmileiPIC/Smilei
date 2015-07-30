@@ -15,7 +15,6 @@
 class PicParams;
 class DiagParams;
 class InputData;
-class SmileiMPI;
 class Patch;
 class SimWindow;
 class ElectroMagn;
@@ -46,10 +45,6 @@ public:
     
     //! Basic Write of a field in the specified group of the global file
     virtual void writeFieldsSingleFileTime( Field* field, hid_t group_id ) = 0;
-
-    //! Each MPI process writes is particles in its own file
-    //! Disabled for now, replaced by dump (used for restart)
-    void writePlasma( std::vector<Species*> vecSpecies, double time, SmileiMPI* smpi );
 
     //! Id of "Fields.h5", contains all fields per timestep
     hid_t global_file_id_;

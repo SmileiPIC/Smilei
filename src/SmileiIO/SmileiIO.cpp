@@ -13,7 +13,6 @@
 
 #include "PicParams.h"
 #include "DiagParams.h"
-#include "SmileiMPI.h"
 #include "Patch.h"
 #include "SimWindow.h"
 #include "ElectroMagn.h"

@@ -27,8 +27,6 @@ struct LocalFields
 //! Class Field: generic class allowing to define vectors
 class Field
 {
-    friend class SmileiMPI ;
-
 public:
     SpeciesMPI specMPI;
 
@@ -77,7 +75,7 @@ public:
     virtual void shift_x(unsigned int delta) = 0;
 
     //! vector containing the dimensions of the Field
-    //! \todo private/friend/modify SmileiMPI* (JD)
+    //! \todo private/friend/modify (JD)
     std::vector<unsigned int> dims_;
     
     //! keep track ofwich direction of the Field is dual

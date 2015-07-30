@@ -3,8 +3,6 @@
 #include <sstream>
 #include <iomanip>
 
-#include "SmileiMPI.h"
-
 using namespace std;
 
 

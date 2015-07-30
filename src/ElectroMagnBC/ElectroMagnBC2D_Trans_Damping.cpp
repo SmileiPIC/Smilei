@@ -6,7 +6,6 @@
 #include <string>
 
 #include "PicParams.h"
-#include "SmileiMPI.h"
 #include "ElectroMagn2D.h"
 #include "Field2D.h"
 #include "Laser.h"

@@ -9,7 +9,6 @@
 #include "Field2D.h"
 #include "Laser.h"
 
-#include "SmileiMPI.h"
 #include "Patch.h"
 
 using namespace std;

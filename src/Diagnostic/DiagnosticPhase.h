@@ -7,7 +7,6 @@
 #include "Field2D.h"
 
 class PicParams;
-class SmileiMPI;
 class DiagParams;
 class ElectroMagn;
 

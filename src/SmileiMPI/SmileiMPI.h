@@ -14,6 +14,7 @@ class PicParams;
 class DiagParams;
 class Diagnostic;
 class DiagnosticScalar;
+class DiagnosticPhaseSpace;
 class DiagnosticProbe;
 class Species;
 class VectorPatch;
@@ -131,6 +132,7 @@ public:
 
     void computeGlobalDiags(Diagnostic* diags, int timestep);
     void computeGlobalDiags(DiagnosticScalar& scalars, int timestep);
+    void computeGlobalDiags(DiagnosticPhaseSpace& phases, int timestep);
 
     //! Method to identify the rank 0 MPI process
     inline bool isMaster() {

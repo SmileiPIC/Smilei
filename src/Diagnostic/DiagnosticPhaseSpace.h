@@ -27,6 +27,7 @@ class ElectroMagn;
 class DiagnosticPhaseSpace {
     friend class VectorPatch;
     friend class SimWindow;
+    friend class SmileiMPI;
 public:
 
     DiagnosticPhaseSpace(PicParams &params, DiagParams &diagParams, Patch* patch);

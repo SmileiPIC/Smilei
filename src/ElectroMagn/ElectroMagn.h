@@ -13,7 +13,6 @@ class PicParams;
 class Species;
 class Projector;
 class Laser;
-class SmileiMPI;
 class ElectroMagnBC;
 class SimWindow;
 class Patch;
@@ -149,9 +148,6 @@ public:
     //! Method used to sum all species densities and currents to compute the total charge density and currents
     virtual void computeTotalRhoJ() = 0;
 
-    //! Method used to initialize the Maxwell solver
-    virtual void solvePoisson(SmileiMPI* smpi) = 0;
-
     // --------------------------------------
     //  --------- PATCH IN PROGRESS ---------
     // --------------------------------------
@@ -165,10 +161,10 @@ public:
     virtual void initE(Patch *patch) = 0;
     virtual void centeringE( std::vector<double> E_Add ) = 0;
 
-    virtual double getEx_WestNorth() = 0;
-    virtual double getEy_WestNorth() = 0;
-    virtual double getEx_EastSouth() = 0;
-    virtual double getEy_EastSouth() = 0;
+    virtual double getEx_WestNorth() = 0; // 1D !!!
+    virtual double getEy_WestNorth() = 0; // 1D !!!
+    virtual double getEx_EastSouth() = 0; // 1D !!!
+    virtual double getEy_EastSouth() = 0; // 1D !!!
 
     std::vector<unsigned int> index_min_p_;
     std::vector<unsigned int> index_max_p_;

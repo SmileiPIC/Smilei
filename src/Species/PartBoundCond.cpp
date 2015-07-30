@@ -7,7 +7,6 @@
 
 #include "Particles.h"
 #include "BoundaryConditionType.h"
-#include "SmileiMPI.h"
 #include "Patch.h"
 #include "Tools.h"
 

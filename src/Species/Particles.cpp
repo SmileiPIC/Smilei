@@ -4,7 +4,6 @@
 #include <iostream>
 
 #include "PicParams.h"
-#include "SmileiMPI.h"
 #include "Patch.h"
 
 using namespace std;

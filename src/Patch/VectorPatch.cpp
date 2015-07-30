@@ -787,7 +787,26 @@ void VectorPatch::solvePoisson( PicParams &params, SmileiMPI* smpi )
 
     MPI_Bcast(&Ex_EastSouth, 1, MPI_DOUBLE, rank_EastSouth, MPI_COMM_WORLD);
     MPI_Bcast(&Ey_EastSouth, 1, MPI_DOUBLE, rank_EastSouth, MPI_COMM_WORLD);
+
+    /*
+    double Ex_West = 0.0;
+    double Ex_East = 0.0;
     
+    unsigned int rankWest = smpi1D->extrem_ranks[0][0];
+    if (smpi1D->isWestern()) {
+        if (smilei_rk != smpi1D->extrem_ranks[0][0]) ERROR("western process not well defined");
+        Ex_West = (*Ex1D)(index_bc_min[0]);
+    }
+    MPI_Bcast(&Ex_West, 1, MPI_DOUBLE, rankWest, MPI_COMM_WORLD);
+    
+    unsigned int rankEast = smpi1D->extrem_ranks[0][1];
+    if (smpi1D->isEastern()) {
+        if (smilei_rk != smpi1D->extrem_ranks[0][1]) ERROR("eastern process not well defined");
+        Ex_East = (*Ex1D)(index_bc_max[0]);
+    }
+    MPI_Bcast(&Ex_East, 1, MPI_DOUBLE, rankEast, MPI_COMM_WORLD);
+    double Ex_Add = -0.5*(Ex_West+Ex_East);
+    */
 
     vector<double> E_Add(2,0.);
     E_Add[0] = -0.5*(Ex_WestNorth+Ex_EastSouth);

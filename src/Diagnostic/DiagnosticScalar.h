@@ -10,9 +10,8 @@
 #include "Species.h"
 
 class PicParams;
-class SmileiMPI;
-class DiagParams;
 class ElectroMagn;
+class DiagParams;
 class Patch;
 
 

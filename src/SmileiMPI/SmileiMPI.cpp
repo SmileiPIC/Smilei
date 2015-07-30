@@ -28,6 +28,7 @@
 #include "DiagParams.h"
 #include "Diagnostic.h"
 #include "DiagnosticProbe.h"
+#include "DiagnosticPhaseSpace.h"
 #include "Tools.h"
 
 #include "ElectroMagn.h"
@@ -532,7 +533,7 @@ void SmileiMPI::computeGlobalDiags(Diagnostic* diags, int timestep)
 {
     if (timestep % diags->scalars.every == 0) computeGlobalDiags(diags->scalars, timestep);
     //computeGlobalDiags(probes); // HDF5 write done per patch in DiagProbes::*
-    //computeGlobalDiags(phases);
+    computeGlobalDiags(diags->phases, timestep);
 }
 
 void SmileiMPI::computeGlobalDiags(DiagnosticScalar& scalars, int timestep)
@@ -595,6 +596,15 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar& scalars, int timestep)
     scalars.write(timestep);
 
 }
+
+void SmileiMPI::computeGlobalDiags(DiagnosticPhaseSpace& phases, int timestep)
+{
+    int nDiags( phases.vecDiagPhaseToRun.size() );
+    for (vector<DiagnosticPhase*>::const_iterator diag=phases.vecDiagPhaseToRun.begin() ; diag != phases.vecDiagPhaseToRun.end(); diag++) 
+	(*diag)->writeData();
+
+}
+
 
 void SmileiMPI::send(Patch* patch, int to, int hindex)
 {
