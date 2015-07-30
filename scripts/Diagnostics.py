@@ -352,6 +352,7 @@ class Options(object):
 		self.vmin   = None
 		self.vmax   = None
 		self.skipAnimation = False
+		self.streakPlot = False
 		self.figure0 = {}
 		self.figure1 = {"facecolor":"w"}
 		self.axes = {}
@@ -373,6 +374,7 @@ class Options(object):
 		self.vmin     = kwargs.pop("vmin"   ,kwargs.pop("data_min",self.vmin))
 		self.vmax     = kwargs.pop("vmax"   ,kwargs.pop("data_max",self.vmax))
 		self.skipAnimation = kwargs.pop("skipAnimation", self.skipAnimation)
+		self.streakPlot    = kwargs.pop("streakPlot"   , self.streakPlot   )
 		# Second, we manage all the other arguments that are directly the ones of matplotlib
 		for kwa in kwargs:
 			val = kwargs[kwa]
@@ -568,20 +570,62 @@ class Diagnostic(object):
 		fig.clf()
 		ax = fig.add_subplot(1,1,1)
 		
-		# Animation if several dimensions
+		# If several dimensions
 		if len(self._plot_shape) > 0:
-			# possible to skip animation
+			# Case of a streakPlot (no animation)
+			if self.options.streakPlot:
+				# Require several times
+				if len(self.times) < 2:
+					print "ERROR: a streak plot requires at least 2 times"
+					return
+				# Require function _getDataAtTime
+				if not hasattr(self,"_getDataAtTime"):
+					print "ERROR: this diagnostic cannot do a streak plot"
+					return
+				# Require dimension = 1
+				if self._getDataAtTime(self.times[0]).ndim != 1:
+					print "ERROR: Diagnostic must be 1-D for a streak plot"
+				# Warning if uneven times
+				if not (self._np.diff(self.times)==self.times[1]-self.times[0]).all():
+					print "WARNING: times are not evenly spaced. Time-scale not plotted"
+					ylabel = "Unevenly-spaced times"
+				else:
+					ylabel = "Time [code units]"
+				# Loop times and accumulate data
+				A = []
+				for time in self.times: A.append(self._getDataAtTime(time))
+				A = self._np.double(A)
+				# Plot
+				ax.cla()
+				extent = [self._plot_centers[0][0], self._plot_centers[0][-1], self.times[0], self.times[-1]]
+				if self._plot_log[0]: extent[0:2] = [self._np.log10(self._plot_centers[0][0]), self._np.log10(self._plot_centers[0][-1])]
+				im = ax.imshow(A, vmin = self.options.vmin, vmax = self.options.vmax, extent=extent, **self.options.image)
+				if (self._plot_log[0]): ax.set_xlabel("Log[ "+self._plot_label[0]+" ]")
+				else:                   ax.set_xlabel(        self._plot_label[0]     )
+				ax.set_ylabel(ylabel)
+				self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
+				try: # if colorbar exists
+					ax.cax.cla()
+					self._plt.colorbar(mappable=im, cax=ax.cax, **self.options.colorbar)
+				except AttributeError:
+					ax.cax = self._plt.colorbar(mappable=im, ax=ax, **self.options.colorbar).ax
+				self._setSomeOptions(ax)
+				fig.canvas.draw()
+				self._plt.show()
+				return
+			
+			# Possible to skip animation
 			if self.options.skipAnimation:
 				self._animateOnAxes(ax, self.times[-1])
 				fig.canvas.draw()
 				self._plt.show()
 				return
 			
+			# Otherwise, animation
 			# Movie requested ?
 			mov = Movie(fig, movie, fps, dpi)
-			# Loop times
-			for timeindex in range(self.times.size):
-				time = self.times[timeindex]
+			# Loop times for animation
+			for time in self.times:
 				print "timestep "+str(time)+ "   -   t = "+str(time*self._coeff_time)+self._time_units
 				# plot
 				ax.cla()
@@ -636,6 +680,22 @@ class Diagnostic(object):
 				self._plt.colorbar(mappable=im, cax=ax.cax, **self.options.colorbar)
 			except AttributeError:
 				ax.cax = self._plt.colorbar(mappable=im, ax=ax, **self.options.colorbar).ax
+		self._setSomeOptions(ax)
+		if movie is not None: movie.grab_frame()
+		return im
+	
+	# Special case: 2D plot
+	# This is overloaded by class "Probe" because it requires to replace imshow
+	def _animateOnAxes_2D(self, ax, A):
+		extent = [self._plot_centers[0][0], self._plot_centers[0][-1], self._plot_centers[1][0], self._plot_centers[1][-1]]
+		if self._plot_log[0]: extent[0:2] = [self._np.log10(self._plot_centers[0][0]), self._np.log10(self._plot_centers[0][-1])]
+		if self._plot_log[1]: extent[2:4] = [self._np.log10(self._plot_centers[1][0]), self._np.log10(self._plot_centers[1][-1])]
+		im = ax.imshow( self._np.flipud(A.transpose()),
+			vmin = self.options.vmin, vmax = self.options.vmax, extent=extent, **self.options.image)
+		return im
+	
+	# set options during animation
+	def _setSomeOptions(self, ax):
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax)
 		if self._title is not None: ax.set_title(self._title)
 		ax.set(**self.options.axes)
@@ -649,18 +709,6 @@ class Diagnostic(object):
 		except:
 			print "Cannot format y ticks (typically happens with log-scale)"
 			self.xtickkwargs = []
-		if movie is not None: movie.grab_frame()
-		return im
-	
-	# Special case: 2D plot
-	# This is overloaded by class "Probe" because it requires to replace imshow
-	def _animateOnAxes_2D(self, ax, A):
-		extent = [self._plot_centers[0][0], self._plot_centers[0][-1], self._plot_centers[1][0], self._plot_centers[1][-1]]
-		if self._plot_log[0]: extent[0:2] = [self._np.log10(self._plot_centers[0][0]), self._np.log10(self._plot_centers[0][-1])]
-		if self._plot_log[1]: extent[2:4] = [self._np.log10(self._plot_centers[1][0]), self._np.log10(self._plot_centers[1][-1])]
-		im = ax.imshow( self._np.flipud(A.transpose()),
-			vmin = self.options.vmin, vmax = self.options.vmax, extent=extent, **self.options.image)
-		return im
 	
 	# If the sliced data has 0 dimension, this function can plot it 
 	def _plotVsTime(self, ax):
@@ -1168,9 +1216,11 @@ class Field(Diagnostic):
 				print "Printing available fields:"
 				print "--------------------------"
 				l = (len(fields)/3) * 3
+				maxlength = str(self._np.max([len(f) for f in fields])+4)
+				fields = [('%'+maxlength+'s')%f for f in fields]
 				if l>0:
-					print '\n'.join(['\t\t'.join(list(i)) for i in self._np.reshape(fields[:l],(-1,3))])
-				print '\t\t'.join(fields[l:])
+					print '\n'.join([''.join(list(i)) for i in self._np.reshape(fields[:l],(-1,3))])
+				print ''.join(list(fields[l:]))
 			else:
 				print "No fields found in '"+self._results_path+"'"
 			return None
@@ -1213,17 +1263,13 @@ class Field(Diagnostic):
 		# -------------------------------------------------------------------
 		# Parse the `field` argument
 		self.operation = field
+		self._operation = "A="+self.operation
+		self._fieldname = []
 		for f in sortedfields:
-			i = fields.index(f)
-			self.operation = self.operation.replace(f,"#"+str(i))
-		requested_fields = self._re.findall("#\d+",self.operation)
-		if len(requested_fields) == 0:
-			print "Could not find any existing field in `"+field+"`"
-			return None
-		self._fieldn = [ int(f[1:]) for f in requested_fields ] # indexes of the requested fields
-		self._fieldn = list(set(self._fieldn))
-		self._fieldname = [ fields[i] for i in self._fieldn ] # names of the requested fields
-	
+			if f in self._operation:
+				self._operation = self._operation.replace(f,"C['"+f+"']")
+				self._fieldname.append(f)
+		
 		# Check slice is a dict
 		if slice is not None  and  type(slice) is not dict:
 			print "Argument `slice` must be a dictionary"
@@ -1238,10 +1284,10 @@ class Field(Diagnostic):
 		self._file = self._results_path+'/Fields.h5'
 		f = self._h5py.File(self._file, 'r')
 		self._h5items = f.values()
-		self._shape = self._np.double(self._h5items[0].values()[0]).shape
-		for n in self._fieldn:
-			s = self._np.double(self._h5items[0].values()[n]).shape
-			self._shape = self._np.min((self._shape, s), axis=0)
+		iterfields = self._h5items[0].itervalues();
+		self._shape = iterfields.next().shape;
+		for fd in iterfields:
+			self._shape = self._np.min((self._shape, fd.shape), axis=0)
 		
 		
 		# 2 - Manage timesteps
@@ -1331,25 +1377,25 @@ class Field(Diagnostic):
 		self._fieldunits = {}
 		self._unitscoeff = {}
 		for f in self._fieldname:
-			i = fields.index(f)
-			self._fieldunits.update({ i:"??" })
-			self._unitscoeff.update({ i:1 })
-			self._titles    .update({ i:"??" })
+			self._fieldunits.update({ f:"??" })
+			self._unitscoeff.update({ f:1 })
+			self._titles    .update({ f:"??" })
 			if units == "nice":
-				self._fieldunits[i] = " ("+{"B":"T"  ,"E":"V/m"  ,"J":"A/cm$^2$"   ,"R":"e/cm$^3$"   }[f[0]]+")"
-				self._unitscoeff[i] =      {"B":10710,"E":3.21e12,"J":coeff_current,"R":coeff_density}[f[0]]
-				self._titles    [i] = f
+				self._fieldunits[f] = " ("+{"B":"T"  ,"E":"V/m"  ,"J":"A/cm$^2$"   ,"R":"e/cm$^3$"   }[f[0]]+")"
+				self._unitscoeff[f] =      {"B":10710,"E":3.21e12,"J":coeff_current,"R":coeff_density}[f[0]]
+				self._titles    [f] = f
 			else:
-				self._fieldunits[i] = " in units of "+{"B":"$m_e\omega/e$","E":"$m_ec\omega/e$","J":"$ecn_c$"    ,"R":"$n_c$"      }[f[0]]
-				self._unitscoeff[i] =                 {"B":1              ,"E":1               ,"J":coeff_current,"R":coeff_density}[f[0]]
-				self._titles    [i] = f
+				self._fieldunits[f] = " in units of "+{"B":"$m_e\omega/e$","E":"$m_ec\omega/e$","J":"$ecn_c$"    ,"R":"$n_c$"      }[f[0]]
+				self._unitscoeff[f] =                 {"B":1              ,"E":1               ,"J":coeff_current,"R":coeff_density}[f[0]]
+				self._titles    [f] = f
 		# finish title creation
 		if len(self._fieldname) == 1:
-			self._title = self._titles[self._fieldn[0]] + self._fieldunits[self._fieldn[0]]
+			f = self._fieldname[0]
+			self._title = self._titles[f] + self._fieldunits[f]
 		else:
 			self._title = self.operation
-			for n in self._fieldn:
-				self._title = self._title.replace("#"+str(n), self._titles[n])
+			for f in self._fieldname:
+				self._title = self._title.replace(f, self._titles[f])
 	
 		# Finish constructor
 		self.valid = True
@@ -1370,7 +1416,7 @@ class Field(Diagnostic):
 			print "Cannot open file "+file
 			return []
 		try:
-			fields = f.values()[0].keys() # list of fields
+			fields = f.itervalues().next().keys() # list of fields
 		except:
 			fields = []
 		f.close()
@@ -1400,17 +1446,16 @@ class Field(Diagnostic):
 		# get data
 		index = self._data[t]
 		C = {}
-		op = "A=" + self.operation
-		for n in reversed(self._fieldn): # for each field in operation
-			B = self._np.double(self._h5items[index].values()[n]) # get array
-			B *= self._unitscoeff[n]
+		h5item = self._h5items[index]
+		for field in self._fieldname: # for each field in operation
+			B = self._np.double(h5item.get(field)) # get array
+			B *= self._unitscoeff[field]
 			for axis, size in enumerate(self._shape):
 				l = self._np.arange(size, B.shape[axis])
 				B = self._np.delete(B, l, axis=axis) # remove extra cells if necessary
-			C.update({ n:B })
-			op = op.replace("#"+str(n), "C["+str(n)+"]")
+			C.update({ field:B })
 		# Calculate the operation
-		exec op in None
+		exec self._operation in None
 		# Apply the slicing
 		for iaxis in range(self._naxes):
 			if self._slices[iaxis] is None: continue
@@ -2266,18 +2311,7 @@ class TestParticles(Diagnostic):
 			ax.set_ylabel(self._plot_label[1])
 			self._setLimits(ax, ymin=self.options.vmin, ymax=self.options.vmax)
 			self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax)
-		if self._title is not None: ax.set_title(self._title)
-		ax.set(**self.options.axes)
-		try:
-			if len(self.options.xtick)>0: ax.ticklabel_format(axis="x",**self.options.xtick)
-		except:
-			print "Cannot format x ticks (typically happens with log-scale)"
-			self.options.xtick = []
-		try:
-			if len(self.options.ytick)>0: ax.ticklabel_format(axis="y",**self.options.ytick)
-		except:
-			print "Cannot format y ticks (typically happens with log-scale)"
-			self.options.ytick = []
+		self._setSomeOptions(ax)
 		if movie is not None: movie.grab_frame()
 		return 1
 

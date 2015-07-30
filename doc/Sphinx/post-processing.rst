@@ -60,7 +60,7 @@ and :ref:`particles <DiagParticles>`.
   Diag = S.Scalar("Utot")
 
 
-.. py:method:: Smilei.Field(field=None, timesteps=None, slice=None, units="code", data_log=False)
+.. py:method:: Smilei.Field(field=None, timesteps=None, slice=None, units="code", data_log=False, streakPlot=False)
   
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``field``: The name of a field (``"Ex"``, ``"Ey"``, etc.)
@@ -76,6 +76,8 @@ and :ref:`particles <DiagParticles>`.
      | - With syntax 2, only the bin closest to ``location`` is kept.
      | - With syntax 3, an average is performed between ``begin`` and ``end``.
      | Example: ``slice = {"x":[4,5]}`` will average for :math:`x` within [4,5].
+  * ``streakPlot``: when ``True``, the :py:func:`plot` will not be an animation, but will
+    have time on the vertical axis instead.
 
   **Example**
 
@@ -86,9 +88,9 @@ and :ref:`particles <DiagParticles>`.
 
 
 
-.. py:method:: Smilei.Probe(probeNumber=None, field=None, timesteps=None, slice=None, units="code", data_log=False)
+.. py:method:: Smilei.Probe(probeNumber=None, field=None, timesteps=None, slice=None, units="code", data_log=False, streakPlot=False)
   
-  * ``timesteps``, ``units``, ``data_log``: same as before.
+  * ``timesteps``, ``units``, ``data_log``, ``streakPlot``: same as before.
   * ``probeNumber``: number of the probe (the first one has number 0).
      | If not given, a list of available probes is printed.
   * ``field``: name of the field (``"Bx"``, ``"By"``, ``"Bz"``, ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Jx"``, ``"Jy"``, ``"Jz"`` or ``"Rho"``).
@@ -106,9 +108,9 @@ and :ref:`particles <DiagParticles>`.
 
 
 
-.. py:method:: Smilei.ParticleDiagnostic(diagNumber=None, timesteps=None, slice=None, units="code", data_log=False)
+.. py:method:: Smilei.ParticleDiagnostic(diagNumber=None, timesteps=None, slice=None, units="code", data_log=False, streakPlot=False)
   
-  * ``timesteps``, ``units``, ``data_log``: same as before.
+  * ``timesteps``, ``units``, ``data_log``, ``streakPlot``: same as before.
   * ``diagNumber``: number of the particle diagnostic (the first one has number 0).
      | If not given, a list of available particle diagnostics is printed.
      | It can also be an operation between several particle diagnostics.
