@@ -1,4 +1,3 @@
-
 #include "VectorPatch.h"
 
 #include <cstdlib>
@@ -202,19 +201,38 @@ void VectorPatch::exchangeParticles(int ispec, PicParams &params, SmileiMPI* smp
 {
     int useless(0);
 
+#ifndef _MANAGE_CORNERS
     #pragma omp for
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	(*this)(ipatch)->initExchParticles(smpi, ispec, params, useless, useless);
+	(*this)(ipatch)->initExchParticles(smpi, ispec, params, useless);
     }
     #pragma omp for
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	(*this)(ipatch)->initCommParticles(smpi, ispec, params, useless, useless);
+	(*this)(ipatch)->initCommParticles(smpi, ispec, params, useless);
     }
     #pragma omp for
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	(*this)(ipatch)->finalizeCommParticles(smpi, ispec, params, useless, useless);
+	(*this)(ipatch)->finalizeCommParticles(smpi, ispec, params, useless);
 	(*this)(ipatch)->vecSpecies[ispec]->sort_part();
     }
+#else
+    // Per direction
+    for (unsigned int iDim=0 ; iDim<2 ; iDim++) {
+	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	    (*this)(ipatch)->initExchParticles(smpi, ispec, params, useless, iDim);
+	}
+	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	    (*this)(ipatch)->initCommParticles(smpi, ispec, params, useless, iDim);
+	}
+	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	    (*this)(ipatch)->finalizeCommParticles(smpi, ispec, params, useless, iDim);
+	}  
+    }
+
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->vecSpecies[ispec]->sort_part();
+
+#endif
 
 }
 

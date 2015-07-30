@@ -108,11 +108,20 @@ public:
     void dynamics(double time_dual, PicParams &params, SimWindow* simWindow, int diag_flag);
 
     //! manage Idx of particles from per thread to per direction, init comm / nbr of particles
+    virtual void initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, int tnum);
+    //! finalize comm / nbr of particles, init exch / particles
+    virtual void initCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int tnum);
+    //! finalize exch / particles, manage particles suppr/introduce
+    virtual void finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int tnum);
+
+
+    //! manage Idx of particles from per thread to per direction, init comm / nbr of particles
     virtual void initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, int tnum, int iDim);
     //! finalize comm / nbr of particles, init exch / particles
     virtual void initCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int tnum, int iDim);
     //! finalize exch / particles, manage particles suppr/introduce
     virtual void finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int tnum, int iDim);
+
 
     //void initSumRhoJ( ElectroMagn* EMfields, unsigned int diag_flag );
     //void finalizeSumRhoJ( ElectroMagn* EMfields, unsigned int diag_flag );
@@ -213,6 +222,8 @@ private:
     //!     - concerns ghost data
     //!     - "- oversize" on rank 0
     std::vector<int> cell_starting_global_index;
+
+    Particles diagonalParticles;
 
 };
 
