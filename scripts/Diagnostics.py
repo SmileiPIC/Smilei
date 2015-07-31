@@ -1,167 +1,8 @@
 # -----------------------------------------------------------------------
-# HOW TO VIEW DIAGNOSTICS                -    F. Perez - 03/2015
+# HOW TO VIEW DIAGNOSTICS                -    F. Perez - 2015
 # -----------------------------------------------------------------------
-# >>>>>> Requirements
-#   python2.7 with the following packages: numpy, matplotlib, pylab, h5py
-#
-# >>>>>> First step: invoke python and load this file
-#      $ python -i Diagnostics.py
-#
-#
-#  +---------------------------+
-#  | 1 . Particle diagnostics  |
-#  +---------------------------+
-# >>>>>> What can be done
-#   During the simulation, each particle diagnostic collects the data from particles
-#   into a N-dimensional histogram.
-#   Each histogram axis can be: x, y, z, px, py, pz, p, gamma, ekin, vx, vy, vz, v or charge.
-#   In each bin of the histogram, several things may be summed: the weights (density), 
-#     weight*charge (charge density), weight*charge*velocity (current density),
-#     or weight*momentum (momentum density)
-#   Examples:
-#       +----------+------------+---------------------+
-#       |   Rank   |   type     |         Axes        |
-#       +----------+------------+---------------------+
-#       |   1-D    |  density   |        'ekin'       | => energy distribution.
-#       |   2-D    |  density   |     'x' and 'y'     | => density map.
-#       |   2-D    |  x-current |     'x' and 'y'     | => x-current map.
-#       |   2-D    |  density   |     'x' and 'px'    | => phase space.
-#       |   3-D    |  density   | 'x', 'y' and 'ekin' | => density map for several energy ranges.
-#       +----------+------------+---------------------+
-#
-# >>>>>> In the python shell, use the class "ParticleDiagnostic"
-#        to create a ParticleDiagnostic object
-#
-# ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None,
-#                    units="code", data_log=False):
-#
-#      results_path = _string_
-#                     Path to the directory where the outputs are stored
-#                     (Also, this has to contain one and only one input file *.in)
-#
-#        diagNumber = _int_   (optional)
-#                     Number of the diagnostic. `0` is the first diagnostic.
-#                     If not given, then a list of available diagnostics is printed.
-#
-#         timesteps = _int_            (optional)
-#         timesteps = [_int_, _int_]   (optional)
-#                     If omitted, all timesteps are used.
-#                     If one number  given, the nearest timestep available is used.
-#                     If two numbers given, all the timesteps in between are used.
-#
-#             slice = { "axis" : "all", ... }                 (optional)
-#             slice = { "axis" : _double_, ... }              (optional)
-#             slice = { "axis" : [_double_, _double_], ... }  (optional)
-#                     This parameter is used to reduce the number of dimensions of the array.
-#                     If the `axis` key is present, then any axis of the same name will be removed.
-#                     `axis` must be x, y, z, px, py, pz, p, gamma, ekin, vx, vy, vz, v or charge.
-#                      - If the value is "all", then a sum is performed over all the axis.
-#                      - If the value is _double_, then only the bin closest to the value is kept.
-#                      - If the value is [_double_,_double_], then a sum is performed between the two values.
-#                     Example: {"x":[4,5]} will sum all the data for x in the range [4,5].
-#
-#             units = ("code") or "nice"    (optional)
-#                     If "nice" is chosen, then units are converted into usual units.
-#                     Distances in microns, density in 1/cm^3, energy in MeV.
-#
-#          data_log = True or (False)       (optional)
-#                     If True, then log10 is applied to the output array before plotting.
-#
-#
-# >>>>>> To plot the data, use the following method.
-#
-# ParticleDiagnostic(..., figure=1, vmin=None, vmax=None,
-#                         xmin=None, xmax=None, ymin=None, ymax=None) .plot()
-#
-#            figure = _int_       (optional)
-#                     The figure number that is passed to matplotlib.
-#                     If absent, figure 1 is used.
-#
-#              vmin = _double_    (optional)
-#              vmax = _double_    (optional)
-#                     If present, output is rescaled before plotting.
-#
-#              xmin = _double_    (optional)
-#              xmax = _double_    (optional)
-#              ymin = _double_    (optional)
-#              ymax = _double_    (optional)
-#                     If present, axes are rescaled before plotting.
-#
-#
-# >>>>>> Instead of plotting, you can obtain the data as an array.
-#        Note that only the first requested timestep is given.
-#
-# ParticleDiagnostic(...).getData()
-#   This method returns only a list of the data arrays (for each timestep requested).
-#
-# ParticleDiagnostic(...).get()
-#   This method returns a dictionary containing the data, the list of timesteps and the axes scales.
-#
-#
-# >>>>>> Examples:
-#    ParticleDiagnostic('../test', diagNumber=1, slice={"y":"all"}, units="nice").plot(figure=1, vmin=0, vmax=3e14)
-#
-#
-#  +---------------------------+
-#  | 2 . Fields                |
-#  +---------------------------+
-#
-# You can view fields with a similar procedure:
-#
-# Field(results_path, field=None, timesteps=None, slice=None, units="code", data_log=False)
-#
-# This works almost the same way as ParticleDiagnostic(...), with some exceptions:
-#
-# - `field` must be one of "Bx_m", "By_m", "Bz_m", "Ex", "Ey", "Ez", "Jx", "Jy", "Jz",
-#   "Jx_[species]", "Jy_[species]", "Jz_[species]", "Rho" or "Rho_[species]"
-#   where [species] is the name of one of the existing species.
-#   If you omit the argument `field`, the list of available fields will be displayed.
-#   Additionally, you can write an operation instead of just one field. For instance,
-#   you can have "Jx+Jy".
-#
-# - `slice` can only accept three axes: "x", "y", "z".
-#   For instance, slice={"x":"all"}.
-#   Note that the slice does NOT calculate the sum of the axis, but the AVERAGE.
-#
-#
-#
-#  +---------------------------+
-#  | 3 . Scalars               |
-#  +---------------------------+
-#
-# For scalars, this is almost the same:
-#
-# Scalar(results_path, scalar=None, timesteps=None, units="code", data_log=False)
-#
-# - `scalar` must be an available scalar name. To get a list of available scalars, 
-#    simply omit this argument.
-#
-# - there is no more `slice` argument of course!
-#
-#
-#  +---------------------------+
-#  | 4 . Multiple diagnostics  |
-#  +---------------------------+
-# To simultaneously plot multiple diagnostics in the same figure:
-#
-# multiPlot(diag1, diag2, ... , figure=1, shape=None, **kwargs)
-#
-#              diag1 = diagnostic prepared by ParticleDiagnostic(), Field() or Scalar()
-#              diag2 = diagnostic prepared by ParticleDiagnostic(), Field() or Scalar()
-#                      ...
-#
-#            figure = _int_             (optional)
-#                     The figure number that is passed to matplotlib.
-#                     If absent, figure 1 is used.
-#
-#             shape = [_int_ , _int_]   (optional)
-#                     The arrangement of plots inside the figure.
-#                     For instance, [2, 1] makes two plots stacked vertically,
-#                      and [1, 2] makes two plots stacked horizontally.
-#                     If absent, stacks plots vertically.
-#
-#            kwargs = many other keyword-arguments can be used -> refer to the doc.
-
+# Check out the documentation in the doc/Sphinx directory.
+# It must be compiled with the Sphinx software (sphinx-doc.org).
 
 class Smilei(object):
 	""" Smilei(results_path=".")
@@ -337,6 +178,45 @@ class Smilei(object):
 		"""
 		return ParticleDiagnostic(self, *args, **kwargs)
 	def TestParticles(self, *args, **kwargs):
+		""" TestParticles(species=None, select="", axes=[], timesteps=None, units="code", skipAnimation=False)
+		
+		Import and analyze test particles from a Smilei simulation
+		
+		Parameters:
+		-----------
+		species : name of a test species. (optional)
+			To get a list of available test species, simply omit this argument.
+		select: Instructions for selecting particles among those available.
+			Syntax 1: select="any(times, condition)"
+			Syntax 2: select="all(times, condition)"
+			`times` is a selection of timesteps t, for instance `t>50`.
+			`condition` is a condition on particles properties (x, y, z, px, py, pz), for instance `px>0`.
+			Syntax 1 selects particles satisfying `condition` for at least one of the `times`.
+			Syntax 2 selects particles satisfying `condition` at all `times`.
+			Example: select="all(t<40, px<0.1)" selects particles that kept px<0.1 until timestep 40.
+			Example: select="any(t>0, px>1.)" selects particles that reached px>1 at some point.
+			It is possible to make logical operations: + is OR; * is AND; - is NOT.
+			Example: select="any((t>30)*(t<60), px>1) + all(t>0, (x>1)*(x<2))"
+		timesteps : int or [int, int] (optional)
+			If omitted, all timesteps are used.
+			If one number  given, the nearest timestep available is used.
+			If two numbers given, all the timesteps in between are used.
+		units : "code" or "nice"    (optional)
+			If "nice" is chosen, then units are converted into usual units:
+			distances in microns, density in 1/cm^3, energy in MeV.
+		axes: A list of axes for plotting the trajectories.
+			Each axis is "x", "y", "z", "px", "py" or "pz".
+			Example: axes = ["x"] corresponds to x versus time.
+			Example: axes = ["x","y"] correspond to 2-D trajectories.
+			Example: axes = ["x","px"] correspond to phase-space trajectories.
+		skipAnimation: when True, the plot() will directly show the full trajectory.
+		
+		Usage:
+		------
+			diag = S.ParticleDiagnostic(...) # S is a Smilei object
+			diag.get()
+			diag.plot()
+		"""
 		return TestParticles(self, *args, **kwargs)
 	
 	

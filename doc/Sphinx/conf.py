@@ -158,8 +158,8 @@ html_static_path = ['_static']
 # Custom sidebar templates, maps document names to template names.
 html_sidebars = {
     '**': [
-    	'localtoc.html',
-        'searchbox.html',
+    	'navigation1.html',
+        'searchbox1.html',
         'lablogos.html'
     ]}
 
@@ -301,3 +301,4 @@ rst_prolog = """
 .. role:: red
    :class: red
 """
+

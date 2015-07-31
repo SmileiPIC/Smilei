@@ -33,8 +33,6 @@ html:
 	
 	
 clean:
-	@if [ "$(TEXFILES)" != "" ]; then\
-		for fname in $(TEXFILES); do latexmk -cd -C $$fname; done;\
-	fi
+	for fname in $(TEXFILES); do latexmk -cd -C $$fname; done;
 	rm -rf html smilei_warn.log
-	rm -rf doc/Sphinx/_build
+	rm -rf Sphinx/_build

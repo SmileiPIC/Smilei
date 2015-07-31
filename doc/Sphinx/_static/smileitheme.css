@@ -32,3 +32,16 @@ table.docutils.citation, table.docutils.citation * {
 	-webkit-box-shadow: none;
 	box-shadow: none;
 }
+
+div.toctree-smilei > ul > li > a {
+    font-size: 100%;
+    font-weight: bold;
+    text-decoration: none;
+    color: #0672ba;
+    border:0;
+}
+
+div.toctree-smilei > ul, div.toctree-smilei > li {
+    margin: 0;
+    padding: 0;
+}
