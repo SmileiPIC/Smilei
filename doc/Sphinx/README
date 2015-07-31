@@ -32,6 +32,8 @@ Go to the Smilei/doc/Sphinx folder in the command line.
 * On Unix systems, type::
 
   make html
+  
+  (You can also go in the root Smilei directory and type ``make doc``)
 
 * On Window, launch the executable `make.bat`
 
