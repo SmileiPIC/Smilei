@@ -219,13 +219,13 @@ void VectorPatch::exchangeParticles(int ispec, PicParams &params, SmileiMPI* smp
     // Per direction
     for (unsigned int iDim=0 ; iDim<2 ; iDim++) {
 	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	    (*this)(ipatch)->initExchParticles(smpi, ispec, params, useless, iDim);
+	  (*this)(ipatch)->initExchParticles(smpi, ispec, params, useless, iDim, this);
 	}
 	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	    (*this)(ipatch)->initCommParticles(smpi, ispec, params, useless, iDim);
+	    (*this)(ipatch)->initCommParticles(smpi, ispec, params, useless, iDim, this);
 	}
 	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	    (*this)(ipatch)->finalizeCommParticles(smpi, ispec, params, useless, iDim);
+	    (*this)(ipatch)->finalizeCommParticles(smpi, ispec, params, useless, iDim, this);
 	}  
     }
 

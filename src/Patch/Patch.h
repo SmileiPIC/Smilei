@@ -116,11 +116,11 @@ public:
 
 
     //! manage Idx of particles from per thread to per direction, init comm / nbr of particles
-    virtual void initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, int tnum, int iDim);
+    virtual void initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, int tnum, int iDim, VectorPatch* vecPatch);
     //! finalize comm / nbr of particles, init exch / particles
-    virtual void initCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int tnum, int iDim);
+    virtual void initCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int tnum, int iDim, VectorPatch* vecPatch);
     //! finalize exch / particles, manage particles suppr/introduce
-    virtual void finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int tnum, int iDim);
+    virtual void finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int tnum, int iDim, VectorPatch* vecPatch);
 
 
     //void initSumRhoJ( ElectroMagn* EMfields, unsigned int diag_flag );
