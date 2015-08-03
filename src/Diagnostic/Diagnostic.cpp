@@ -19,6 +19,7 @@ using namespace std;
 Diagnostic::Diagnostic(PicParams& params, InputData &ifile, SmileiMPI *smpi) :
 dtimer(4)
 {
+    
     // defining default values & reading diagnostic every-parameter
     // ------------------------------------------------------------
     print_every=params.n_time/10;
