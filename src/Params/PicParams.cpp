@@ -249,7 +249,7 @@ void PicParams::readSpecies(InputData &ifile) {
             thermTisDefined=ifile.extract("thermT",tmpSpec.thermT,"Species",ispec);
             if (!thermTisDefined) ERROR("thermT needs to be defined for species " <<ispec<< " due to x-BC thermalize");
         }
-        if ( (nDim_particle=2) && (!thermTisDefined) &&
+        if ( (nDim_particle==2) && (!thermTisDefined) &&
              (tmpSpec.bc_part_type_south=="thermalize" || tmpSpec.bc_part_type_north=="thermalize") ) {
             thermTisDefined=ifile.extract("thermT",tmpSpec.thermT,"Species",ispec);
             if (!thermTisDefined) ERROR("thermT needs to be defined for species " <<ispec<< " due to y-BC thermalize");
@@ -260,6 +260,10 @@ void PicParams::readSpecies(InputData &ifile) {
                 for (unsigned int i=1; i<3;i++)
                     tmpSpec.thermT[i]=tmpSpec.thermT[0];
             }
+        } else {
+            tmpSpec.thermT.resize(3);
+            for (unsigned int i=0; i<3;i++)
+                tmpSpec.thermT[i]=0.0;
         }
         
         
@@ -428,7 +432,6 @@ void PicParams::compute()
 // ---------------------------------------------------------------------------------------------------------------------
 void PicParams::computeSpecies()
 {
-    
     // Loop on all species
     for (unsigned int ispec=0; ispec< species_param.size(); ispec++) {
         
