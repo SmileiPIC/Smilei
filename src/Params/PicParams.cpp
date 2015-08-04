@@ -243,6 +243,26 @@ void PicParams::readSpecies(InputData &ifile) {
                 ERROR("For species #" << ispec << ", bc_part_type_north not defined");
         }
         
+        // for thermalizing BCs on particles check if thermT is correctly defined
+        bool thermTisDefined=false;
+        if ( (tmpSpec.bc_part_type_west=="thermalize") || (tmpSpec.bc_part_type_east=="thermalize") ){
+            thermTisDefined=ifile.extract("thermT",tmpSpec.thermT,"Species",ispec);
+            if (!thermTisDefined) ERROR("thermT needs to be defined for species " <<ispec<< " due to x-BC thermalize");
+        }
+        if ( (nDim_particle=2) && (!thermTisDefined) &&
+             (tmpSpec.bc_part_type_south=="thermalize" || tmpSpec.bc_part_type_north=="thermalize") ) {
+            thermTisDefined=ifile.extract("thermT",tmpSpec.thermT,"Species",ispec);
+            if (!thermTisDefined) ERROR("thermT needs to be defined for species " <<ispec<< " due to y-BC thermalize");
+        }
+        if (thermTisDefined) {
+            if (tmpSpec.thermT.size()==1) {
+                tmpSpec.thermT.resize(3);
+                for (unsigned int i=1; i<3;i++)
+                    tmpSpec.thermT[i]=tmpSpec.thermT[0];
+            }
+        }
+        
+        
         tmpSpec.ionization_model = "none"; // default value
         ifile.extract("ionization_model", tmpSpec.ionization_model, "Species",ispec);
         
@@ -268,18 +288,22 @@ void PicParams::readSpecies(InputData &ifile) {
         if( !ok1 && !ok2 ) ERROR("For species #" << ispec << ", must define `nb_density` or `charge_density`.");
         if( ok1 ) tmpSpec.density_type = "nb";
         if( ok2 ) tmpSpec.density_type = "charge";
+        
         // Number of particles per cell
         if( !extractOneProfile(ifile, "n_part_per_cell", tmpSpec.ppc_profile, ispec) )
             ERROR("For species #" << ispec << ", n_part_per_cell not found or not understood");
+        
         // Charge
         if( !extractOneProfile(ifile, "charge", tmpSpec.charge_profile, ispec) )
             ERROR("For species #" << ispec << ", charge not found or not understood");
+        
         // Mean velocity
         vector<ProfileStructure*> vecMvel;
         extractVectorOfProfiles(ifile, "mean_velocity", vecMvel, ispec);
         tmpSpec.mvel_x_profile = *(vecMvel[0]);
         tmpSpec.mvel_y_profile = *(vecMvel[1]);
         tmpSpec.mvel_z_profile = *(vecMvel[2]);
+        
         // Temperature
         vector<ProfileStructure*> vecTemp;
         extractVectorOfProfiles(ifile, "temperature", vecTemp, ispec);
@@ -287,6 +311,9 @@ void PicParams::readSpecies(InputData &ifile) {
         tmpSpec.temp_y_profile = *(vecTemp[1]);
         tmpSpec.temp_z_profile = *(vecTemp[2]);
         
+        
+        // Save the Species params
+        // -----------------------
         species_param.push_back(tmpSpec);
     }
 }
@@ -412,10 +439,8 @@ void PicParams::computeSpecies()
         species_param[ispec].thermalVelocity.resize(3);
         species_param[ispec].thermalMomentum.resize(3);
         for (unsigned int i=0; i<3; i++) {
-            //!\todo MG, This line is problematic because it uses temperature, which is a python function
-            // species_param[ispec].thermalVelocity[i] = sqrt( 2.0 *species_param[ispec].temperature[i]/species_param[ispec].mass );
-            species_param[ispec].thermalVelocity[i] = 0.;
-            species_param[ispec].thermalMomentum[i] = species_param[ispec].mass * species_param[ispec].thermalVelocity[i];
+            species_param[ispec].thermalVelocity[i]=sqrt(2.0*species_param[ispec].thermT[i]/species_param[ispec].mass);
+            species_param[ispec].thermalMomentum[i]=species_param[ispec].mass * species_param[ispec].thermalVelocity[i];
         }
         
     }//end loop on all species (ispec)
