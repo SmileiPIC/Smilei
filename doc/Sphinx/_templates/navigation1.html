@@ -1,7 +1,7 @@
 
 
 {# Extract the toctree and remove html #}
-{% set theTocTree = toctree()
+{% set theTocTree = toctree(includehidden=True)
     | replace("</a>", "")
     | replace(" href=\"", "></a>")
     | replace("</li>", "</li>;")

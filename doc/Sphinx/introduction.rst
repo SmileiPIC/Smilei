@@ -27,6 +27,7 @@ Dynamical load balancing will also be developed within the next months.
 :program:`Smilei` is therefore designed to run on massively parallel machines,
 and its flexibility should allow one to benefit from the newest and futures HPC architectures.
 
+----
 
 Release 1.0
 ^^^^^^^^^^^
@@ -45,9 +46,14 @@ for "logiciels libres".
 
 **Download**: :download:`Smilei v1.0 <_download/smilei-v1.0.tar.gz>`
 
+.. warning::
+  This version does not have associated documentation.
+  Please refer to the examples.
 
-Release 2.0
-^^^^^^^^^^^
+----
+
+Release 2.0a
+^^^^^^^^^^^^
 A second release is in preparation. Great improvements have already been done:
 
 * full *python* namelist, allowing for complex, user-friendly input
@@ -71,6 +77,10 @@ your modifications, please contact:
 * julien.derouillat@cea.fr
 * arnaud.beck@llr.in2p3.fr
 
+**Download**: :download:`Smilei v2.0a  <_download/smilei-v2.0a.tar.gz>`
+
+
+----
 
 Example : Electron Acceleration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -85,6 +95,7 @@ A hotspot of electron is created behind the bubble.
     <source src="_static/Rho_electron1long.ogg" type="video/ogg" />
     </video>
 
+----
 
 Scalability
 ^^^^^^^^^^^
@@ -110,5 +121,19 @@ a good scaling at very large scale.
 
 .. image:: _static/SMILEI_Scaling.png
     :width: 500px
+
+----
+
+References
+^^^^^^^^^^
+
+.. [Nuter2014] Nuter *et al.*, Eur. J. Phys. D **68**, Issue 6 (2014)
+
+.. [Esirkepov2001] Esirkepov, Comp. Phys. Comm. **135**, 144 (2001)
+
+.. [Lobet2013] Lobet *et al.*, arXiv:1311.1107 (2013), Plasma Phys. Control. Fusion
+  
+
+
 
 

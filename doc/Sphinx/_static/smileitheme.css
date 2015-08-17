@@ -1,38 +1,46 @@
+/* --------------------------------------------------------------------*/
+/* Color styles that are used in tags :red: or :blue: */
 .blue {
 	color:blue;
 }
-
 .red {
 	color:red;
 }
 
+/* --------------------------------------------------------------------*/
+/* Prevent tables to wrap lines */
 table.docutils {
 	white-space: nowrap;
 }
+/* Remove bottom margin in table cells with line-blocks */
+table.docutils div.line-block {
+	margin-bottom:0;
+}
 
+/* --------------------------------------------------------------------*/
+/* Main logo */
 img.logo {
 	width:160px;
 }
+div.sphinxsidebarwrapper p.logo {
+	text-align: left;
+}
 
+/* --------------------------------------------------------------------*/
+/* Styles for the lab logos container */
 div.lablogos {
 	border:0px solid #555;
 }
-
 div.lablogos > br.clear {
 	clear:both;
 }
-
 div.lablogos > div {
 	padding:5px;
 	float:left;
 }
 
-table.docutils.citation, table.docutils.citation * {
-	-moz-box-shadow: none;
-	-webkit-box-shadow: none;
-	box-shadow: none;
-}
-
+/* --------------------------------------------------------------------*/
+/* Nice blue menu on the sidebar */ 
 div.toctree-smilei > ul > li > a {
     font-size: 100%;
     font-weight: bold;
@@ -40,8 +48,85 @@ div.toctree-smilei > ul > li > a {
     color: #0672ba;
     border:0;
 }
-
 div.toctree-smilei > ul, div.toctree-smilei > li {
     margin: 0;
     padding: 0;
+}
+/* Adjust the sidebar color for small screens */ 
+@media screen and (max-width: 875px) {
+    div.sphinxsidebar {
+        background: #EAF4FD;
+        padding: 10px 30px;
+        width: 100%;
+    }
+    div.sphinxsidebar h3, div.sphinxsidebar h4, div.sphinxsidebar p, div.sphinxsidebar h3 a {
+    	color: #444;
+    }
+    div.sphinxsidebar a {
+    	color: #444;
+    }
+}
+
+/* --------------------------------------------------------------------*/
+/* Some tricks for the citations */
+/* Remove the weird shadows */
+table.docutils.citation, table.docutils.citation * {
+	-moz-box-shadow: none;
+	-webkit-box-shadow: none;
+	box-shadow: none;
+}
+/* Remove the back-reference links when there are several back-references */
+table.citation td.label + td > em {
+	display:none;
+}
+table.citation td.label + td ol {
+	margin-top: 0 !important;
+}
+/* Remove the back-reference link when there is one back-reference */
+table.citation td.label a {
+	pointer-events: none;
+    cursor: default;
+    text-decoration: none;
+    color: inherit;
+}
+
+/* --------------------------------------------------------------------*/
+/* Adjust code blocks */
+dl pre, blockquote pre, li pre {
+	margin-left:0;
+}
+div.highlight > pre {
+	padding-left:0.3em;
+}
+
+/* --------------------------------------------------------------------*/
+/* Adjust horizontal lines */
+hr {
+	margin-top:3em;
+	margin-bottom:-1em;
+	border-color: #0672ba;
+}
+
+/* --------------------------------------------------------------------*/
+/* Color for titles */
+h1, h2, h3, h4, h5, h6 {
+	color: #0672ba;
+	font-weight:bold !important;
+}
+
+/* --------------------------------------------------------------------*/
+/* Smaller admonition box */
+div.admonition {
+	padding:7px;
+	margin:0px 30px;
+	background-color: #EAF4FD;
+	border: 1px solid #0672BA;
+}
+div.admonition p.admonition-title {
+	font-size: 18px;
+	font-weight: bold;
+	margin:0;
+}
+div.admonition p {
+	margin:5px 0;
 }

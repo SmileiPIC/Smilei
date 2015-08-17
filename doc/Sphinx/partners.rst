@@ -9,6 +9,8 @@ Labs involved
 * `Institut du developpement et des ressources en informatique scientifique <http://www.idris.fr>`_ (IDRIS), UPS 851
 * `Laboratoire de Physique des Gaz et des Plasmas <http://www.lpgp.u-psud.fr/modeles/ind.php>`_ (LPGP), UMR 8578
 
+----
+
 Acknowledgments
 ^^^^^^^^^^^^^^^
 
@@ -26,6 +28,7 @@ Financial support from the *Laboratoires d’Excellence*:
     :width: 200px
 
 
+----
 
 Contacts
 ^^^^^^^^

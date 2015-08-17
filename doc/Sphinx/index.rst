@@ -47,11 +47,12 @@ Links
 =====
 
 * `GitLab project page <https://llrgit.in2p3.fr/groups/smilei>`_
+* `Partners <partners.html>`_
 
 .. toctree::
    :maxdepth: 1
+   :hidden:
    
    partners
-   references
    
 

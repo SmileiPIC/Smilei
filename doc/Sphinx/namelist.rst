@@ -7,6 +7,7 @@ It is thus recommended to know the basics of *python*.
 To create a namelist, we suggest you copy one existing file in the folder *benchmarks*.
 All namelists have the extension *.py*.
 
+----
 
 General rules
 ^^^^^^^^^^^^^
@@ -18,17 +19,16 @@ General rules
 * The *python* syntax requires special indentation of each line.
   You begin with no indentation, but you have to **add four spaces at the
   beginning of lines inside a group**, and so on.
-  For instance
-  
-.. code-block:: python
+  For instance::
     
-  if a == 0:
-      timestep = 0.1
-      if b == 1:
-          timestep = 0.2
-  else:
-      timestep = 0.3
+    if a == 0:
+        timestep = 0.1
+        if b == 1:
+            timestep = 0.2
+    else:
+        timestep = 0.3
   
+
 * You will need to use *lists*, which are series of things in *python*,
   defined between brackets ``[]`` and separated by commas.
   For example, ``mean_velocity = [0., 1.1, 3.]``.
@@ -41,6 +41,7 @@ General rules
   All lengths and times defined in the namelist are given in units of
   :math:`L_0` and :math:`T_0`.
 
+----
 
 Stop and restart
 ^^^^^^^^^^^^^^^^
@@ -77,6 +78,7 @@ Stop and restart
   
   :red:`to do`
   
+----
 
 Spatial and temporal scales
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -137,6 +139,7 @@ Spatial and temporal scales
   Number of timesteps between each info output on screen. By default, 10 outputs per
   simulation.
 
+----
 
 Electromagnetic fields
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -159,6 +162,7 @@ Electromagnetic fields
   Time, at the beginning of the simulation, during which fields are frozen.
 
 
+----
 
 Moving window
 ^^^^^^^^^^^^^
@@ -183,6 +187,7 @@ Moving window
   :red:`to do`
 
 
+----
 
 Species
 ^^^^^^^
@@ -326,6 +331,7 @@ All the possible variables inside this block are explained here:
   :red:`to do`
 
 
+----
 
 External fields
 ^^^^^^^^^^^^^^^
@@ -351,6 +357,8 @@ All the possible variables inside this block are explained here:
   The units are the natural normalization units for fields,
   i.e., :math:`B_0=m_e /(eT_0)` for magnetic fields, and :math:`E_0=m_e c/(eT_0)` for electric fields.
 
+
+----
 
 .. _profiles:
 
@@ -391,24 +399,22 @@ There are many ways to define a profile.
 
   Any *python* function can be a profile. You must have basic *python* knowledge to build these functions.
   
-  Examples:
+  Examples::
   
-.. code-block:: python
+    def f(x):
+        if x<1.: return 0.
+        else: return 1.
   
-  def f(x):
-      if x<1.: return 0.
-      else: return 1.
-
-.. code-block:: python
+  .. code-block:: python
   
-  def f(x,y):    # two variables for 2D simulation
-      import math
-      twoPI = 2.* math.pi
-      return math.cos(  twoPI * x/3.2 )
-
-.. code-block:: python
+    def f(x,y):    # two variables for 2D simulation
+        import math
+        twoPI = 2.* math.pi
+        return math.cos(  twoPI * x/3.2 )
   
-  f = lambda x: x**2 - 1
+  .. code-block:: python
+    
+    f = lambda x: x**2 - 1
   
 ..
 
@@ -473,13 +479,11 @@ There are many ways to define a profile.
     :param phi: phase offset`
     :param xnumber: number of periods within ``xlength``
   
-  **Example**:
-  
-.. code-block:: python
-  
-  Species( ... ,
-      density = gaussian(10., xfwhm=0.3, xcenter=0.8),
-  ... )
+  **Example**::
+    
+    Species( ... ,
+        density = gaussian(10., xfwhm=0.3, xcenter=0.8),
+    ... )
 
 ..
   
@@ -488,6 +492,7 @@ There are many ways to define a profile.
   .. image:: _static/pythonprofiles.png
   
 
+----
 
 Lasers
 ^^^^^^
@@ -495,6 +500,8 @@ Lasers
 :red:`to do`
 
 
+
+----
 
 .. _Collisions:
 
@@ -525,19 +532,15 @@ All the possible variables inside this block are explained here:
     1. all species under the list ``species1``
     2. and all species under the group ``species2``
   
-  For instance, to have collisions between ``electrons1`` and ``ions1`` , use:
-  
-.. code-block:: python
-  
-  species1 = ["electrons1"], species2 = ["ions1"]
+  For instance, to have collisions between ``electrons1`` and ``ions1`` , use::
+    
+    species1 = ["electrons1"], species2 = ["ions1"]
 
 ..
 
-  Other example, to collide all electrons with ions:
-  
-.. code-block:: python
-  
-  species1 = ["electrons1", "electrons2"], species2 = ["ions"]
+  Other example, to collide all electrons with ions::
+    
+    species1 = ["electrons1", "electrons2"], species2 = ["ions"]
 
 ..
 
@@ -569,6 +572,8 @@ All the possible variables inside this block are explained here:
 
 For more details about the collision scheme in :program:`Smilei`, see :doc:`collisions`
 
+
+----
 
 .. _DiagScalar:
 
@@ -660,6 +665,8 @@ The full list of scalars that are saved by this diagnostic:
 
 Checkout the :doc:`post-processing` documentation as well.
 
+----
+
 .. _DiagFields:
 
 *Fields* diagnostics
@@ -712,6 +719,8 @@ The full list of fields that are saved by this diagnostic:
 +----------------+-------------------------------------------------------+
 
 
+----
+
 .. _DiagProbe:
 
 *Probe* diagnostics
@@ -728,16 +737,13 @@ To add one probe diagnostic, include the block ``DiagProbe()`` in the namelist.
 There are several ways to do it:
 
 **1. For only one point (zero-dimensional probe)**
-
-.. code-block:: python
-
-  DiagProbe(
-      every      = ... , # a number
-      pos        = [x0, y0, z0]
-  )
-
-..
-
+  ::
+    
+    DiagProbe(
+        every      = ... , # a number
+        pos        = [x0, y0, z0]
+    )
+  
   * ``every`` is the number of timesteps between each output.
   * ``x0 [, y0 [, z0]]`` is the position of the point where to interpolate the fields.
   
@@ -745,36 +751,30 @@ There are several ways to do it:
 
 
 **2. For a series of points arranged in a line (one-dimensional probe)**
-
-.. code-block:: python
-
-  DiagProbe(
-      every      = ... , # a number
-      pos        = [x0, y0, z0],
-      pos_first  = [x1, y1, z1],
-      number     = [n1]
-  )
-
-..
-
+  ::
+    
+    DiagProbe(
+        every      = ... , # a number
+        pos        = [x0, y0, z0],
+        pos_first  = [x1, y1, z1],
+        number     = [n1]
+    )
+  
   * ``x0 [, y0 [, z0]]`` is the position of the starting point of the line.
   * ``x1 [, y1 [, z1]]`` is the position of the ending point of the line.
   * ``n1`` is the number of points along this line.
 
 **3. For a series of points arranged in a mesh (two-dimensional probe)**
-
-.. code-block:: python
-
-  DiagProbe(
-      every      = ... , # a number
-      pos        = [x0, y0, z0],
-      pos_first  = [x1, y1, z1],
-      pos_second = [x2, y2, z2],
-      number     = [n1, n2]
-  )
-
-..
-
+  ::
+    
+    DiagProbe(
+        every      = ... , # a number
+        pos        = [x0, y0, z0],
+        pos_first  = [x1, y1, z1],
+        pos_second = [x2, y2, z2],
+        number     = [n1, n2]
+    )
+  
   In this case, the three points define three vertices of a paralellogram.
 
 
@@ -791,41 +791,47 @@ There are several ways to do it:
 
 **Examples of probe diagnostics**
 
-0-D probe in 1-D simulation::
-  
-  DiagProbe(
-      every = 1,
-      pos   = [1.2]
-  )
+* 0-D probe in 1-D simulation
+  ::
+    
+    DiagProbe(
+        every = 1,
+        pos   = [1.2]
+    )
 
-1-D probe in 1-D simulation::
-  
-  DiagProbe(
-      every = 1,
-      pos       = [1.2],
-      pos_first = [5.6],
-      number    = [100]
-  )
+* 1-D probe in 1-D simulation
+  ::
+    
+    DiagProbe(
+        every = 1,
+        pos       = [1.2],
+        pos_first = [5.6],
+        number    = [100]
+    )
 
-1-D probe in 2-D simulation::
-  
-  DiagProbe(
-      every = 1,
-      pos       = [1.2,  4.],
-      pos_first = [5.6,  4.],
-      number    = [100]
-  )
+* 1-D probe in 2-D simulation
+  ::
+    
+    DiagProbe(
+        every = 1,
+        pos       = [1.2,  4.],
+        pos_first = [5.6,  4.],
+        number    = [100]
+    )
 
-2-D probe in 2-D simulation::
-  
-  DiagProbe(
-      every = 1,
-      pos        = [0. ,   0.],
-      pos_first  = [10. ,  0.],
-      pos_second = [0.,    10.],
-      number     = [100,   100]
-  )
+* 2-D probe in 2-D simulation
+  ::
+    
+    DiagProbe(
+        every = 1,
+        pos        = [0. ,   0.],
+        pos_first  = [10. ,  0.],
+        pos_second = [0.,    10.],
+        number     = [100,   100]
+    )
 
+
+----
 
 .. _DiagParticles:
 
@@ -912,82 +918,88 @@ All the possible variables inside this block are explained here:
 
 **Examples of particle diagnostics**
 
-Variation of the density of species ``electron1``
-from :math:`x=0` to 1, every 5 time-steps, without time-averaging::
-  
-  DiagParticles(
-  	output = "density",
-  	every = 5,
-  	time_average = 1,
-  	species = ["electron1"],
-  	axes = [ ["x",    0.,    1.,    30] ]
-  )
+* Variation of the density of species ``electron1``
+  from :math:`x=0` to 1, every 5 time-steps, without time-averaging
+  ::
+    
+    DiagParticles(
+    	output = "density",
+    	every = 5,
+    	time_average = 1,
+    	species = ["electron1"],
+    	axes = [ ["x",    0.,    1.,    30] ]
+    )
 
-Density map from :math:`x=0` to 1, :math:`y=0` to 1::
-  
-  DiagParticles(
-  	output = "density",
-  	every = 5,
-  	time_average = 1,
-  	species = ["electron1"],
-  	axes = [ ["x",    0.,    1.,    30],
-  	         ["y",    0.,    1.,    30] ]
-  )
+* Density map from :math:`x=0` to 1, :math:`y=0` to 1
+  ::
+    
+    DiagParticles(
+    	output = "density",
+    	every = 5,
+    	time_average = 1,
+    	species = ["electron1"],
+    	axes = [ ["x",    0.,    1.,    30],
+    	         ["y",    0.,    1.,    30] ]
+    )
 
-Velocity distribution from :math:`v_x = -0.1` to :math:`0.1`::
-  
-  DiagParticles(
-  	output = "density",
-  	every = 5,
-  	time_average = 1,
-  	species = ["electron1"],
-  	axes = [ ["vx",   -0.1,    0.1,    100] ]
-  )
+* Velocity distribution from :math:`v_x = -0.1` to :math:`0.1`
+  ::
+    
+    DiagParticles(
+    	output = "density",
+    	every = 5,
+    	time_average = 1,
+    	species = ["electron1"],
+    	axes = [ ["vx",   -0.1,    0.1,    100] ]
+    )
 
-Phase space from :math:`x=0` to 1 and from :math:`px=-1` to 1::
-  
-  DiagParticles(
-  	output = "density",
-  	every = 5,
-  	time_average = 1,
-  	species = ["electron1"],
-  	axes = [ ["x",    0.,    1.,    30],
-  	         ["px",   -1.,   1.,    100] ]
-  )
+* Phase space from :math:`x=0` to 1 and from :math:`px=-1` to 1
+  ::
+    
+    DiagParticles(
+    	output = "density",
+    	every = 5,
+    	time_average = 1,
+    	species = ["electron1"],
+    	axes = [ ["x",    0.,    1.,    30],
+    	         ["px",   -1.,   1.,    100] ]
+    )
 
-Energy distribution from 0.01 to 1 MeV in logarithmic scale.
-Note that the input units are :math:`m_ec^2 \sim 0.5` MeV::
-  
-  DiagParticles(
-  	output = "density",
-  	every = 5,
-  	time_average = 1,
-  	species = ["electron1"],
-  	axes = [ ["ekin",    0.02,    2.,   100, "logscale"] ]
-  )
+* Energy distribution from 0.01 to 1 MeV in logarithmic scale.
+  Note that the input units are :math:`m_ec^2 \sim 0.5` MeV
+  ::
+    
+    DiagParticles(
+    	output = "density",
+    	every = 5,
+    	time_average = 1,
+    	species = ["electron1"],
+    	axes = [ ["ekin",    0.02,    2.,   100, "logscale"] ]
+    )
 
-:math:`x`-:math:`y` density maps for three bands of energy: :math:`[0,1]`, :math:`[1,2]`, :math:`[2,\infty]`.
-Note the use of ``edge_inclusive`` to reach energies up to :math:`\infty`::
-  
-  DiagParticles(
-  	output = "density",
-  	every = 5,
-  	time_average = 1,
-  	species = ["electron1"],
-  	axes = [ ["x",    0.,    1.,    30],
-  	         ["y",    0.,    1.,    30],
-  	         ["ekin", 0.,    6.,    3,  "edge_inclusive"] ]
-  )
+* :math:`x`-:math:`y` density maps for three bands of energy: :math:`[0,1]`, :math:`[1,2]`, :math:`[2,\infty]`.
+  Note the use of ``edge_inclusive`` to reach energies up to :math:`\infty`
+  ::
+    
+    DiagParticles(
+    	output = "density",
+    	every = 5,
+    	time_average = 1,
+    	species = ["electron1"],
+    	axes = [ ["x",    0.,    1.,    30],
+    	         ["y",    0.,    1.,    30],
+    	         ["ekin", 0.,    6.,    3,  "edge_inclusive"] ]
+    )
 
-Charge distribution from :math:`Z^\star =0` to 10::
-  
-  DiagParticles(
-  	output = "density",
-  	every = 5,
-  	time_average = 1,
-  	species = ["electron1"],
-  	axes = [ ["charge",    -0.5,   10.5,   11] ]
-  )
-
+* Charge distribution from :math:`Z^\star =0` to 10
+  ::
+    
+    DiagParticles(
+    	output = "density",
+    	every = 5,
+    	time_average = 1,
+    	species = ["electron1"],
+    	axes = [ ["charge",    -0.5,   10.5,   11] ]
+    )
 
 

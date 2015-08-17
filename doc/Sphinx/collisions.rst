@@ -7,20 +7,14 @@ Relativistic binary collisions between particles have been implemented in
 code :program:`Calder`. The following references describe the physics
 and numerics of this implementation.
 
-| Ref. [1] gives an overview of the technique.
-| Refs. [2] and [3] give the original technique from which Ref. [1] was developed.
-| Following Refs. provide additional information.
-
-| [1] F. Pérez *et al.*, `Phys. Plasmas <http://dx.doi.org/10.1063/1.4742167>`_ **19**, 083104 (2012)
-| [2] K. Nanbu, `Phys. Rev. E <http://dx.doi.org/10.1103/PhysRevE.55.4642>`_ **55**, 4642 (1997)
-| [3] K. Nanbu and S. Yonemura, `J. Comput. Phys. <http://dx.doi.org/10.1006/jcph.1998.6049>`_ **145**, 639 (1998)
-| [4] Y. Sentoku and A. J. Kemp, `J. Comput. Phys. <http://dx.doi.org/10.1016/j.jcp.2008.03.043>`_ **227**, 6846 (2008)
-| [5] Y. T. Lee and R. M. More, `Phys. Fluids <http://dx.doi.org/10.1063/1.864744>`_ **27**, 1273 (1984)
-| [6] N. E. Frankel, K. C. Hines, and R. L. Dewar, `Phys. Rev. A <http://dx.doi.org/10.1143/JPSJ.67.4084>`_ **20**, 2120 (1979)
+| [Perez2012]_ gives an overview of the technique.
+| [Nanbu1997]_ and [Nanbu1998]_ give the original technique from which [Perez2012]_ was developed.
+| [Sentoku2008]_, [Lee1984]_ and [Frankel1979]_ provide additional information.
 
 Please refer to :ref:`that doc <Collisions>` for an explanation of how to add collisions in the namelist file.
 
 
+----
 
 The binary collision scheme
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -41,24 +35,25 @@ For each collision block (given in the input file):
       
       | Create two arrays of indices pointing to all particles of each species group.
       | Shuffle the largest array. The other array is not shuffled.
-      | => The two resulting arrays represent pairs of particles (see algorithm in Ref. [3]).
+      | => The two resulting arrays represent pairs of particles (see algorithm in [Nanbu1998]_).
     
     Calculate a few intermediate quantities:
       
       | Particle density :math:`n_1` of group 1.
       | Particle density :math:`n_2`  of group 2.
-      | *Crossed* particle density :math:`n_{12}` (see Ref. [1]).
+      | *Crossed* particle density :math:`n_{12}` (see [Perez2012]_).
       | Other constants.
     
     For each pair of particles:
     
       | Calculate the momenta in the center-of-mass (COM) frame.
-      | Calculate the coulomb log if requested (see Ref. [1]).
-      | Calculate the parameter :math:`s` and its correction at low temperature (see Ref. [1]).
-      | Pick the deflection angle (see Ref. [2]).
+      | Calculate the coulomb log if requested (see [Perez2012]_).
+      | Calculate the parameter :math:`s` and its correction at low temperature (see [Perez2012]_).
+      | Pick the deflection angle (see [Nanbu1997]_).
       | Deflect particles in the COM frame and go back to the laboratory frame.
 
 
+----
 
 Test cases
 ^^^^^^^^^^
@@ -195,7 +190,7 @@ as shown in :numref:`stoppingpower`.
   :width: 10cm
   
   Stopping power of test electrons into a background electron population.
-  Each point is one simulation. The black line is Frankel's theory (Ref. [6]).
+  Each point is one simulation. The black line is Frankel's theory [Frankel1979]_.
 
 
 .. rubric:: 6. Conductivity
@@ -205,7 +200,7 @@ e-i collisions. An electric field of :math:`E=3.2` GV/m (0.001 in code units) is
 applied using two charged layers on each side of the solid Cu.
 The electron velocity increases until a limit value :math:`v_f`.
 The resulting conductivity :math:`\sigma=en_ev_f/E` is compared in
-:numref:`conductivity` to the models in Refs. [5] and [1].
+:numref:`conductivity` to the models in [Lee1984]_ and [Perez2012]_.
 
 .. _conductivity:
 
@@ -215,6 +210,7 @@ The resulting conductivity :math:`\sigma=en_ev_f/E` is compared in
   Conductivity of colid-density copper. Each point is one simulation.
 
 
+----
 
 Collisions debugging
 ^^^^^^^^^^^^^^^^^^^^
@@ -230,7 +226,7 @@ The *hdf5* files are structured as follows:
 
 The available arrays are:
 
-  * ``s``: defined in Ref. [1]: :math:`s=N\left<\theta^2\right>`, where :math:`N` is
+  * ``s``: defined in [Perez2012]_: :math:`s=N\left<\theta^2\right>`, where :math:`N` is
     the typical number of real collisions during a timestep, and
     :math:`\left<\theta^2\right>` is the average square deviation of individual 
     real collisions. This quantity somewhat represents the typical amount of angular
@@ -242,5 +238,21 @@ The available arrays are:
 The arrays are all one-dimensional: they are in the same order as the *clusters* or *patches*.
 You have to figure out by yourself how to convert that to (x, y, z) !
 
+----
+
+References
+^^^^^^^^^^
+
+.. [Perez2012] `F. Pérez et al., Phys. Plasmas 19, 083104 (2012) <http://dx.doi.org/10.1063/1.4742167>`_
+
+.. [Nanbu1997] `K. Nanbu, Phys. Rev. E 55, 4642 (1997) <http://dx.doi.org/10.1103/PhysRevE.55.4642>`_
+
+.. [Nanbu1998] `K. Nanbu and S. Yonemura, J. Comput. Phys. 145, 639 (1998) <http://dx.doi.org/10.1006/jcph.1998.6049>`_
+
+.. [Sentoku2008] `Y. Sentoku and A. J. Kemp, J. Comput. Phys. 227, 6846 (2008) <http://dx.doi.org/10.1016/j.jcp.2008.03.043>`_
+
+.. [Lee1984] `Y. T. Lee and R. M. More, Phys. Fluids 27, 1273 (1984) <http://dx.doi.org/10.1063/1.864744>`_
+
+.. [Frankel1979] `N. E. Frankel, K. C. Hines, and R. L. Dewar, Phys. Rev. A 20, 2120 (1979) <http://dx.doi.org/10.1143/JPSJ.67.4084>`_
 
 

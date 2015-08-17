@@ -9,6 +9,7 @@ First, run python and include the script: ``python -i scripts/Diagnostics.py``
 
 Alternately, include this file into your own script: ``execfile("scripts/Diagnostics.py")``
 
+----
 
 Select a simulation
 ^^^^^^^^^^^^^^^^^^^
@@ -25,6 +26,7 @@ You can store this to a variable for later, for instance::
   S = Smilei("path/to/my/results")
 
 
+----
 
 Select a diagnostic
 ^^^^^^^^^^^^^^^^^^^
@@ -52,12 +54,10 @@ and :ref:`particles <DiagParticles>`.
   * ``data_log``:
      | If ``True``, then :math:`\log_{10}` is applied to the output.
 
-  **Example**
-
-.. code-block:: python
-  
-  S = Smilei("path/to/my/results")
-  Diag = S.Scalar("Utot")
+  **Example**::
+    
+    S = Smilei("path/to/my/results")
+    Diag = S.Scalar("Utot")
 
 
 .. py:method:: Smilei.Field(field=None, timesteps=None, slice=None, units="code", data_log=False, streakPlot=False)
@@ -79,12 +79,10 @@ and :ref:`particles <DiagParticles>`.
   * ``streakPlot``: when ``True``, the :py:func:`plot` will not be an animation, but will
     have time on the vertical axis instead.
 
-  **Example**
-
-.. code-block:: python
-  
-  S = Smilei("path/to/my/results")
-  Diag = S.Field("Ex", slice = {"x":[4,5]})
+  **Example**::
+    
+    S = Smilei("path/to/my/results")
+    Diag = S.Field("Ex", slice = {"x":[4,5]})
 
 
 
@@ -99,12 +97,9 @@ and :ref:`particles <DiagParticles>`.
   * ``slice`` is very similar to that of :py:meth:`Field`, but it can only accept two axes: ``"axis1"``, ``"axis2"``.
      | For instance, ``slice={"axis1":"all"}``. Note that ``"axis1"`` and ``"axis2"`` are not necessarily :math:`x` or :math:`y` because the probe mesh may be rotated.
 
-  **Example**
-
-.. code-block:: python
-  
-  S = Smilei("path/to/my/results")
-  Diag = S.Probe(0, "Ex")
+  **Example**::
+    S = Smilei("path/to/my/results")
+    Diag = S.Probe(0, "Ex")
 
 
 
@@ -128,12 +123,10 @@ and :ref:`particles <DiagParticles>`.
      | - With syntax 3, a **sum** is performed between ``begin`` and ``end``.
      | Example: ``slice={"x":[4,5]``} will sum all the data for x within [4,5].
 
-  **Example**
-
-.. code-block:: python
-  
-  S = Smilei("path/to/my/results")
-  Diag = S.ParticleDiagnostic(1)
+  **Example**::
+    
+    S = Smilei("path/to/my/results")
+    Diag = S.ParticleDiagnostic(1)
 
 
 
@@ -162,15 +155,14 @@ and :ref:`particles <DiagParticles>`.
      | **Example:** ``axes = ["x","px"]`` correspond to phase-space trajectories.
   * ``skipAnimation``: when ``True``, the :py:func:`plot` will directly show the full trajectory.
 
-  **Example**
-
-.. code-block:: python
-  
-  S = Smilei("path/to/my/results")
-  Diag = S.TestParticles("electrons", axes=["px","py"])
+  **Example**::
+    
+    S = Smilei("path/to/my/results")
+    Diag = S.TestParticles("electrons", axes=["px","py"])
 
 
 
+----
 
 Obtain the data as an array
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -195,11 +187,11 @@ Obtain the data as an array
   * ``get()[myaxis]`` gives the locations of the axis bins. For instance ``get()["x"]``.
 
 
-**Example**::
-  
-  S = Smilei("path/to/my/results")
-  Diag = S.ParticleDiagnostic(diagNumber=3, slice={"ekin":[1,10]})
-  result = Diag.get()
+  **Example**::
+    
+    S = Smilei("path/to/my/results")
+    Diag = S.ParticleDiagnostic(diagNumber=3, slice={"ekin":[1,10]})
+    result = Diag.get()
 
 ..
 
@@ -208,6 +200,7 @@ Obtain the data as an array
   The data can be accessed with ``result["data"]``.
   If one of the axes is ``"x"``, you can access the locations of the bins with ``result["x"]``. 
 
+----
 
 Plot the data
 ^^^^^^^^^^^^^
@@ -241,15 +234,16 @@ Plot the data
   * ``fps``: number of frames per second (only if movie requested)
   * ``dpi``: number of dots per inch (only if movie requested)
 
-**Example**::
-  
-  S = Smilei("path/to/my/results")
-  S.ParticleDiagnostic(1, figure=1, vmin=0, vmax=1e14 ).plot()
+  **Example**::
+    
+    S = Smilei("path/to/my/results")
+    S.ParticleDiagnostic(1, figure=1, vmin=0, vmax=1e14 ).plot()
 
 ..
 
   This takes the particle diagnostic #1 and plots the resulting array in figure 1 from 0 to 3e14.
 
+----
 
 Simultaneous plotting of multiple diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -262,19 +256,19 @@ Simultaneous plotting of multiple diagnostics
   * ``shape``: The arrangement of plots inside the figure.
      | For instance, ``[2, 1]`` makes two plots stacked vertically, and ``[1, 2]`` makes two plots stacked horizontally.
      | If absent, stacks plots vertically.
-
-
-**Example**::
   
-  S = Smilei("path/to/my/results")
-  A = S.Probe(probeNumber=0, field="Ex")
-  B = S.ParticleDiagnostic(diagNumber=1)
-  multiPlot( A, B, figure=1 )
+  **Example**::
+    
+    S = Smilei("path/to/my/results")
+    A = S.Probe(probeNumber=0, field="Ex")
+    B = S.ParticleDiagnostic(diagNumber=1)
+    multiPlot( A, B, figure=1 )
 
 ..
 
   This plots a probe and a particle diagnostic on the same figure, and makes an animation for all available timesteps.
 
+----
 
 Advanced plotting options
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -312,17 +306,16 @@ Options for the tick labels: ``style_x``, ``scilimits_x``, ``useOffset_x``, ``st
 
 **Example**:
 
-  To choose a gray colormap of the image, use ``cmap="gray"``.
-
-.. code-block:: python
-  
-  S = Smilei("path/to/my/results")
-  S.ParticleDiagnostic(0, figure=1, cmap="gray") .plot()
+  To choose a gray colormap of the image, use ``cmap="gray"``::
+    
+    S = Smilei("path/to/my/results")
+    S.ParticleDiagnostic(0, figure=1, cmap="gray") .plot()
 
 ..
 
   Many colormaps are available from the *matplotlib* package. With ``cmap=""``, you will get a list of available colormaps.
 
+----
 
 Update the plotting options
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -335,18 +328,19 @@ updates the plotting options.
                Smilei.Probe.set(*args)
                Smilei.ParticleDiagnostic.set(*args)
   
-
-**Example**::
-
-  S = Smilei("path/to/my/results")
-  A = ParticleDiagnostic(diagNumber=0, figure=1, vmax=1)
-  A.plot( figure=2 )
-  A.set( vmax=2 )
-  A.plot()
-
-
+  
+  **Example**::
+    
+    S = Smilei("path/to/my/results")
+    A = ParticleDiagnostic(diagNumber=0, figure=1, vmax=1)
+    A.plot( figure=2 )
+    A.set( vmax=2 )
+    A.plot()
 
 
+
+
+----
 
 Tutorial
 ^^^^^^^^
