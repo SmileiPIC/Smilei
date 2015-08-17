@@ -8,6 +8,16 @@
 }
 
 /* --------------------------------------------------------------------*/
+/* Style for the "In progress" block */
+.inprogress {
+	text-align:center;
+	padding:5px;
+	margin:0 30%;
+	background-color: #EAF4FD;
+	border: 1px solid #0672BA;
+}
+
+/* --------------------------------------------------------------------*/
 /* Prevent tables to wrap lines */
 table.docutils {
 	white-space: nowrap;
@@ -129,4 +139,22 @@ div.admonition p.admonition-title {
 }
 div.admonition p {
 	margin:5px 0;
+}
+
+/* --------------------------------------------------------------------*/
+/* Adjust figure */
+.figure {
+	text-align:center;
+}
+.caption-number {
+	margin-right:8px;
+	padding-right:4px;
+	border-right:1px solid #BBB;
+}
+.caption {
+	margin-top:0;
+	margin-bottom:0;
+}
+.image-reference {
+	border-bottom:0 !important;
 }

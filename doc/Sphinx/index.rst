@@ -1,3 +1,5 @@
+.. title:: Home
+
 
 Welcome
 #######
@@ -40,13 +42,15 @@ Understand :program:`Smilei`
 .. toctree::
    :maxdepth: 1
    
+   algorithms
+   parallelization
    collisions
 
 
 Links
 =====
 
-* `GitLab project page <https://llrgit.in2p3.fr/groups/smilei>`_
+* `GitLab project page <https://llrgit.in2p3.fr/groups/smilei>`_ (restricted access)
 * `Partners <partners.html>`_
 
 .. toctree::

@@ -10,6 +10,10 @@ The requirements for installing and running :program:`Smilei` are:
 
 The installation steps depend on your system.
 
+.. rst-class:: inprogress
+  
+  In progress ...
+
 
 ----
 

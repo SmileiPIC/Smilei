@@ -69,9 +69,8 @@ More improvements are on the way:
 * 3D cartesian geometry
 
 We greatly appreciate external users trying this code and giving feedback.
-At the moment, developer rights are still restricted, but the branch smilei-open
-is accessible by everybody. To become a developer and be allowed to push
-your modifications, please contact:
+At the moment, developer rights are still restricted.
+To become a developer, please contact:
 
 * mickael.grech@polytechnique.edu
 * julien.derouillat@cea.fr
@@ -100,7 +99,9 @@ A hotspot of electron is created behind the bubble.
 Scalability
 ^^^^^^^^^^^
 
-In progress ...
+.. rst-class:: inprogress
+  
+  In progress ...
 
 .. rubric :: 1. OpenMP: Electron Acceleration
 

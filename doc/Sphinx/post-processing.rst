@@ -98,6 +98,7 @@ and :ref:`particles <DiagParticles>`.
      | For instance, ``slice={"axis1":"all"}``. Note that ``"axis1"`` and ``"axis2"`` are not necessarily :math:`x` or :math:`y` because the probe mesh may be rotated.
 
   **Example**::
+    
     S = Smilei("path/to/my/results")
     Diag = S.Probe(0, "Ex")
 
@@ -345,11 +346,7 @@ updates the plotting options.
 Tutorial
 ^^^^^^^^
 
-If you don't know how to run :program:`smilei`, please refer to the appropriate
-documentation first. The commands can vary depending on your system and
-installation. A typical example of the command to run :program:`smilei` is:
-``mpiexec -np 1 smilei mycase.py``
-
+Before you start this tutorial, :ref:`learn how to run Smilei <run>`.
 
 .. rubric:: 1. Running the test case
 
@@ -435,7 +432,7 @@ This results in the plot in :numref:`Tuto2`. The ions have a zero average veloci
 
 
 
-.. rubric:: 4. Plot sections ("*slices*") of the array}
+.. rubric:: 4. Plot sections ("slices") of the array
 
 The diagnostic #0 that we plotted in :numref:`Tuto1` is the electron phase-space.
 Let us say we want to sum over the data that is contained between :math:`x=3` and 4,
@@ -583,7 +580,7 @@ because :math:`\left<p_x\right>` varies with :math:`v_x`.
 .. figure:: _static/ParticleDiagTutorial8.png
   :width: 8cm
   
-  :math:`\left<p_x\right>` as a function of :math:`x` and :math:`v_x`.}
+  :math:`\left<p_x\right>` as a function of :math:`x` and :math:`v_x`.
 
 To have something nicer, let us slice all axes with::
   
