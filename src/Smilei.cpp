@@ -88,7 +88,7 @@ int main (int argc, char* argv[])
     // Geometry known, MPI environment specified
     TITLE("General MPI environement");
     SmileiMPI* smpi = SmileiMPIFactory::create(params, smpiData);
-
+    
     // Create diagnostics
     TITLE("Creating Diagnostics");
     Diagnostic Diags(params, input_data, smpi);
@@ -205,8 +205,7 @@ int main (int argc, char* argv[])
             sio->writeAllFieldsSingleFileTime( &(EMfields->allFields_avg), 0, 1 );
         // temporary particle dump at time 0
         sio->writePlasma( vecSpecies, 0., smpi );
-
-
+        
         for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
             if ( (vecSpecies[ispec]->particles.isTestParticles) ) {
                 sio->initWriteTestParticles(vecSpecies[ispec], ispec, 0, params, smpi);
@@ -253,7 +252,7 @@ int main (int argc, char* argv[])
     //                     HERE STARTS THE PIC LOOP
     // ------------------------------------------------------------------
     TITLE("Time-Loop is started: number of time-steps n_time = " << params.n_time);
-    	
+    
     for (unsigned int itime=stepStart+1 ; itime <= stepStop ; itime++) {
         
         // calculate new times
@@ -264,7 +263,7 @@ int main (int argc, char* argv[])
         // send message at given time-steps
         // --------------------------------
         timer[0].update();
-            
+        
         if ( (itime % Diags.print_every == 0) &&  ( smpi->isMaster() ) ) {
             
             MESSAGE(1,"t = "          << setw(7) << setprecision(2)   << time_dual

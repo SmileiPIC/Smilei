@@ -9,6 +9,15 @@
 
 using namespace std;
 
+//! constructor (called from Diagnostic)
+DiagnosticScalar::DiagnosticScalar() {
+    out_width.resize(0);
+}
+
+//! destructor
+DiagnosticScalar::~DiagnosticScalar(){}
+
+
 // file open 
 void DiagnosticScalar::openFile(SmileiMPI* smpi) {
     if (smpi->isMaster()) {
@@ -39,7 +48,8 @@ void DiagnosticScalar::run(int timestep, ElectroMagn* EMfields, vector<Species*>
     double time = (double)timestep * dt;
     // check that every is defined for scalar & that tmin <= time <= tmax
     if ( (every) && (time >= tmin) && (time <= tmax) ) {
-
+        
+        //! \todo (MG) Is it really necessary when the user does not request Poynting?
         EMfields->computePoynting(); // Poynting must be calculated & incremented at every timesteps
         
         if (timestep % every == 0) { // other scalars are calculated only at timestep \propto every
@@ -58,7 +68,8 @@ void DiagnosticScalar::run(int timestep, ElectroMagn* EMfields, vector<Species*>
 // Contains all to manage the communication of data. It is "transparent" to the user.
 // ---------------------------------------------------------------------------------------------------------------------
 void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpecies, SmileiMPI *smpi) {
-    out_list.clear();
+    out_key  .clear();
+    out_value.clear();
     
     // ------------------------
     // SPECIES-related energies
@@ -74,7 +85,7 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
         
         double charge_avg=0.0;  // average charge of current species ispec
         double ener_tot=0.0;    // total kinetic energy of current species ispec
-
+        
         unsigned int nPart=vecSpecies[ispec]->getNbrOfParticles(); // number of particles
         if (nPart>0) {
             for (unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
@@ -197,7 +208,7 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
     // ---------------------------------------------------------------------------------------
     // ALL FIELDS-RELATED SCALARS: Compute all min/max-related scalars (defined on all fields)
     // ---------------------------------------------------------------------------------------
-
+    
     // add currents and density to fields
     fields.push_back(EMfields->Jx_);
     fields.push_back(EMfields->Jy_);
@@ -314,7 +325,7 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
         
         // energy used for normalization
         EnergyUsedForNorm = Utot;
-
+        
         // normalized energy balance
         double Ubal_norm(0.);
         if (EnergyUsedForNorm>0.)
@@ -341,79 +352,86 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
         prepend("Uexp",Uexp);
         prepend("Utot",Utot);
         
+        // Final thing to do: calculate the maximum size of the scalars names
+        if (out_width.empty()) { // Only first time
+            unsigned int k, l, s=out_key.size();
+            out_width.resize(s);
+            for(k=0; k<s; k++) {
+                l = out_key[k].length();
+                out_width[k] = 2 + max(l,precision+8); // The +8 accounts for the dot and exponent in decimal representation
+            }
+        }
     }
     
 }
 
 
-bool DiagnosticScalar::allowedKey(string my_var) {
+bool DiagnosticScalar::allowedKey(string key) {
     int s=vars.size();
     if (s==0) return true;
     for( int i=0; i<s; i++) {
-        if( my_var==vars[i] ) return true;
+        if( key==vars[i] ) return true;
     }
     return false;
 }
 
 
-void DiagnosticScalar::prepend(std::string my_var, double val) {
-    out_list.insert(out_list.begin(),make_pair(my_var,val));
-    
+void DiagnosticScalar::prepend(std::string key, double value) {
+    out_key  .insert(out_key  .begin(), key  );
+    out_value.insert(out_value.begin(), value);
 }
 
 
-void DiagnosticScalar::append(std::string my_var, double val) {
-    out_list.push_back(make_pair(my_var,val));
+void DiagnosticScalar::append(std::string key, double value) {
+    out_key  .push_back(key  );
+    out_value.push_back(value);
 }
 
 
 void DiagnosticScalar::write(int itime) {
-    unsigned int added_length = 15; //! \todo (MG) might be better to compute it to make sure it works for all species name
-    fout << std::scientific;
-    fout.precision(precision);
-    if (fout.tellp()==ifstream::pos_type(0)) {
+    unsigned int k, s=out_key.size();
+    fout << std::scientific << setprecision(precision);
+    // At the beginning of the file, we write some headers
+    if (fout.tellp()==ifstream::pos_type(0)) { // file beginning
+        // First header: list of scalars, one by line
         fout << "# " << 1 << " time" << endl;
         unsigned int i=2;
-        for(vector<pair<string,double> >::iterator iter = out_list.begin(); iter !=out_list.end(); iter++) {
-            if (allowedKey((*iter).first) == true) {
-                fout << "# " << i << " " << (*iter).first << endl;
+        for(k=0; k<s; k++) {
+            if (allowedKey(out_key[k])) {
+                fout << "# " << i << " " << out_key[k] << endl;
                 i++;
             }
         }
-        
-        fout << "#\n#" << setw(precision+added_length) << "time";
-        for(vector<pair<string,double> >::iterator iter = out_list.begin(); iter !=out_list.end(); iter++) {
-            if (allowedKey((*iter).first) == true) {
-                fout << setw(precision+added_length) << (*iter).first;
-            }
-        }
-        fout << setw(precision+added_length) << itime/res_time;
-        for(vector<pair<string,double> >::iterator iter = out_list.begin(); iter !=out_list.end(); iter++) {
-            if (allowedKey((*iter).first) == true) {
-                fout << setw(precision+added_length) << (*iter).second;
+        // Second header: list of scalars, but all in one line
+        fout << "#\n#" << setw(precision+9) << "time";
+        for(k=0; k<s; k++) {
+            if (allowedKey(out_key[k])) {
+                fout << setw(out_width[k]) << out_key[k];
             }
         }
         fout << endl;
     }
-    fout << setw(precision+9) << itime/res_time;
-    for(vector<pair<string,double> >::iterator iter = out_list.begin(); iter !=out_list.end(); iter++) {
-        if (allowedKey((*iter).first) == true) {
-            fout << setw(precision+9) << (*iter).second;
+    // Each requested timestep, the following writes the values of the scalars
+    fout << setw(precision+10) << itime/res_time;
+    for(k=0; k<s; k++) {
+        if (allowedKey(out_key[k])) {
+            fout << setw(out_width[k]) << out_value[k];
         }
     }
     fout << endl;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Method used to return the (double) scalar defined as "my_var"
+// Method used to return the (double) scalar "key"
 // ---------------------------------------------------------------------------------------------------------------------
-double DiagnosticScalar::getScalar(string my_var){
-    for (unsigned int i=0; i< out_list.size(); i++) {
-        if (out_list[i].first==my_var) {
-            return out_list[i].second;
+double DiagnosticScalar::getScalar(string key){
+    unsigned int k, s=out_key.size();
+    for(k=0; k<s; k++) {
+        if (out_key[k]==key) {
+            return out_value[k];
         }
     }
-    DEBUG("key not found " << my_var);
+    DEBUG("key not found " << key);
     return 0.0;
 }
 
