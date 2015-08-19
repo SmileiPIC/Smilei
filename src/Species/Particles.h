@@ -174,8 +174,6 @@ public:
         return sqrt(1+pow(momentum(0,ipart),2)+pow(momentum(1,ipart),2)+pow(momentum(2,ipart),2));
     }
     
-    
-    
     //! array containing the particle position
     std::vector< std::vector<double> > Position;
     
@@ -196,10 +194,10 @@ public:
     // Test particle parameters
     bool isTestParticles;
     void setIds() {
-        for (int iPart=0;iPart<Id.size();iPart++) Id[iPart] = iPart+1;
+        for (unsigned int iPart=0;iPart<Id.size();iPart++) Id[iPart] = iPart+1;
     }
     void addIdOffsets(int startingId) {
-        for (int iPart=0;iPart<Id.size();iPart++) Id[iPart] += startingId;
+        for (unsigned int iPart=0;iPart<Id.size();iPart++) Id[iPart] += startingId;
     }
     //! Id of the particle
     std::vector<short> Id;

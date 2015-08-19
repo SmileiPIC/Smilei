@@ -90,8 +90,8 @@ void SmileiMPI_Cart2D::createTopology(Params& params)
         for (unsigned int i=0 ; i<params.nDim_field ; i++)
             number_of_procs[i] = params.number_of_procs[i];
         if (number_of_procs[0]*number_of_procs[1]!=smilei_sz) {
-            DEBUG(3,"Domain decomposition specified in the namelist don't match with the number of MPI process");
-            DEBUG(3,"\tit will be computed to be as square as possible");
+            DEBUG("Domain decomposition specified in the namelist don't match with the number of MPI process");
+            DEBUG("\tit will be computed to be as square as possible");
             for (unsigned int i=0 ; i<params.nDim_field ; i++)
                 params.number_of_procs[i] = 0;
         }

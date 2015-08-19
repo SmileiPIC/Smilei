@@ -279,7 +279,7 @@ void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime
         // Create H5 group for the current timestep
         name.str("");
         name << "t" << setfill('0') << setw(8) << itime;
-        did = H5Gcreate(fileId, name.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        did = H5::group(fileId, name.str());
         // Prepare storage arrays
         vector<unsigned int> outsize(2); outsize[0]=nbins; outsize[1]=1;
         smean       = new Field2D(outsize);

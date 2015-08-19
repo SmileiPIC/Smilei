@@ -18,8 +18,7 @@ using namespace std;
 Params::Params(SmileiMPI* smpi, std::vector<std::string> namelistsFiles) :
 namelist("")
 {
-    //init Python
-    PyTools::openPython();
+    //init Python    
     initPython(smpi,namelistsFiles);
     
     unsigned int random_seed=0;
@@ -27,7 +26,6 @@ namelist("")
         random_seed = time(NULL);
     }
     srand(random_seed);
-    
     
     dump_step=0;
     PyTools::extract("dump_step", dump_step);
@@ -196,7 +194,9 @@ namelist("")
 Params::~Params() {
     PyTools::closePython();
 }
+
 void Params::initPython(SmileiMPI *smpi, std::vector<std::string> namelistsFiles){
+    PyTools::openPython();
     // here we add the rank, in case some script need it
     PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_rank", smpi->getRank());
     

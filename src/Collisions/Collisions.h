@@ -56,11 +56,11 @@ public:
     //! Coulomb logarithm (zero or negative means automatic)
     double coulomb_log;
     
-    //! Number of timesteps between each dump of collisions debugging
-    int debug_every;
-    
     //! True if collisions inside a group of species, False if collisions between different groups of species
     bool intra_collisions;
+    
+    //! Number of timesteps between each dump of collisions debugging
+    int debug_every;
     
     //! Method to calculate the Debye length in each cluster
     static void calculate_debye_length(Params&,std::vector<Species*>&);

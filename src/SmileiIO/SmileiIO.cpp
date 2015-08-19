@@ -56,8 +56,6 @@ time_reference(0.0)
     ostringstream name("");
     name << "particles-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
     
-    hid_t attribute_id;
-    
     // Create 1 file containing 1 dataset per Species
     partFile_id = H5Fcreate( name.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     
@@ -88,13 +86,9 @@ time_reference(0.0)
         
         hid_t tmp_space = H5Screate(H5S_SCALAR);
         
-        attribute_id = H5Acreate (partDataset_id[ispec], "Mass", H5T_IEEE_F64BE, tmp_space,H5P_DEFAULT, H5P_DEFAULT);
-        H5Awrite(attribute_id, H5T_NATIVE_DOUBLE, &params.species_param[ispec].mass);
-        H5Aclose(attribute_id);
+        H5::attr(partDataset_id[ispec], "Mass", params.species_param[ispec].mass));
         
-        attribute_id = H5Acreate (partDataset_id[ispec], "Charge", H5T_IEEE_F64BE, tmp_space,H5P_DEFAULT, H5P_DEFAULT);
-        H5Awrite(attribute_id, H5T_NATIVE_DOUBLE, &params.species_param[ispec].charge);
-        H5Aclose(attribute_id);
+        H5::attr(partDataset_id[ispec], "Charge",params.species_param[ispec].charge);
         
         H5Sclose(tmp_space);
     }
@@ -124,35 +118,11 @@ time_reference(0.0)
     
     // Create property list for collective dataset write: for Fields.h5
     
-    hid_t sid  = H5Screate(H5S_SCALAR);
-    hid_t aid = H5Acreate (global_file_id_, "res_time", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, write_plist);
-    H5Awrite(aid, H5T_NATIVE_DOUBLE, &(params.res_time));
-    H5Sclose(sid);
-    H5Aclose(aid);
-    
-    sid  = H5Screate(H5S_SCALAR);
-    aid = H5Acreate (global_file_id_, "every", H5T_NATIVE_UINT, sid, H5P_DEFAULT, write_plist);
-    H5Awrite(aid, H5T_NATIVE_UINT, &(diag.fieldDump_every));
-    H5Sclose(sid);
-    H5Aclose(aid);
-    
-    hsize_t dimsPos = params.res_space.size();
-    sid = H5Screate_simple(1, &dimsPos, NULL);
-    aid = H5Acreate (global_file_id_, "res_space", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, write_plist);
-    H5Awrite(aid, H5T_NATIVE_DOUBLE, &(params.res_space[0]));
-    H5Aclose(aid);
-    H5Sclose(sid);
-    
-    dimsPos = params.sim_length.size();
-    sid = H5Screate_simple(1, &dimsPos, NULL);
-    vector<double> sim_length_norm=params.sim_length;
-    
-    aid = H5Acreate (global_file_id_, "sim_length", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, write_plist);
-    H5Awrite(aid, H5T_NATIVE_DOUBLE, &(sim_length_norm[0]));
-    H5Aclose(aid);
-    H5Sclose(sid);
-    
-    
+    H5::attr(global_file_id_, "res_time", params.res_time);
+    H5::attr(global_file_id_, "every", diag.fieldDump_every);
+    H5::attr(global_file_id_, "res_space", params.res_space);
+    H5::attr(global_file_id_, "sim_length", params.sim_length);
+        
     // Fields_avg.h5
     // -------------
     global_file_id_avg = 0;
@@ -160,33 +130,10 @@ time_reference(0.0)
         global_file_id_avg = H5Fcreate( "Fields_avg.h5", H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
         
         // Create property list for collective dataset write: for Fields.h5
-        hid_t sid  = H5Screate(H5S_SCALAR);
-        hid_t aid = H5Acreate (global_file_id_avg, "res_time", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, write_plist);
-        H5Awrite(aid, H5T_NATIVE_DOUBLE, &(params.res_time));
-        H5Sclose(sid);
-        H5Aclose(aid);
-        
-        sid  = H5Screate(H5S_SCALAR);
-        aid = H5Acreate (global_file_id_avg, "every", H5T_NATIVE_UINT, sid, H5P_DEFAULT, write_plist);
-        H5Awrite(aid, H5T_NATIVE_UINT, &(diag.fieldDump_every));
-        H5Sclose(sid);
-        H5Aclose(aid);
-        
-        hsize_t dimsPos = params.res_space.size();
-        sid = H5Screate_simple(1, &dimsPos, NULL);
-        aid = H5Acreate (global_file_id_avg, "res_space", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, write_plist);
-        H5Awrite(aid, H5T_NATIVE_DOUBLE, &(params.res_space[0]));
-        H5Aclose(aid);
-        H5Sclose(sid);
-        
-        dimsPos = params.sim_length.size();
-        sid = H5Screate_simple(1, &dimsPos, NULL);
-        vector<double> sim_length_norm=params.sim_length;
-        
-        aid = H5Acreate (global_file_id_avg, "sim_length", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, write_plist);
-        H5Awrite(aid, H5T_NATIVE_DOUBLE, &(sim_length_norm[0]));
-        H5Aclose(aid);
-        H5Sclose(sid);
+        H5::attr(global_file_id_avg, "res_time", params.res_time);
+        H5::attr(global_file_id_avg, "every", diag.fieldDump_every);
+        H5::attr(global_file_id_avg, "res_space", params.res_space);
+        H5::attr(global_file_id_avg, "sim_length", params.sim_length);
     }
     
     H5Pclose(plist_id);
@@ -222,7 +169,7 @@ void SmileiIO::writeAllFieldsSingleFileTime( std::vector<Field*> * fields, int t
     ostringstream name_t;
     name_t.str("");
     name_t << "/" << setfill('0') << setw(10) << time;
-    DEBUG(10,"[hdf] GROUP _________________________________ " << name_t.str());
+    DEBUG("[hdf] GROUP _________________________________ " << name_t.str());
     
     // Create group inside HDF5 file
     hid_t file_id;
@@ -303,30 +250,15 @@ bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, std::vector<Spec
 }
 
 void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin, Params &params) { 
-    hid_t fid, gid, sid, aid, did, tid;
-    
     ostringstream nameDump("");
     nameDump << "dump-" << setfill('0') << setw(4) << dump_times%params.dump_file_sequence << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
-    fid = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    hid_t fid = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     dump_times++;
     
     MESSAGEALL("Step " << itime << " : DUMP fields and particles " << nameDump.str());    
     
-    sid  = H5Screate(H5S_SCALAR);
-    tid = H5Tcopy(H5T_C_S1);
-    H5Tset_size(tid, params.namelist.size());
-    H5Tset_strpad(tid,H5T_STR_NULLTERM);
-    aid = H5Acreate(fid, "Namelist", tid, sid, H5P_DEFAULT, H5P_DEFAULT);
-    H5Awrite(aid, tid, params.namelist.c_str());	
-    H5Aclose(aid);
-    H5Sclose(sid);
-    H5Tclose(tid);
-    
-    sid = H5Screate(H5S_SCALAR);    
-    aid = H5Acreate(fid, "dump_step", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
-    H5Awrite(aid, H5T_NATIVE_UINT, &itime);
-    H5Sclose(sid);
-    H5Aclose(aid);
+    H5::attr(fid, "Namelist", params.namelist);
+    H5::attr(fid, "dump_step", itime);
     
     
     dumpFieldsPerProc(fid, EMfields->Ex_);
@@ -346,90 +278,40 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
     
     H5Fflush( fid, H5F_SCOPE_GLOBAL );
     
-    sid = H5Screate(H5S_SCALAR);
-    aid = H5Acreate(fid, "species", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
-    unsigned int vecSpeciesSize=vecSpecies.size();
-    H5Awrite(aid, H5T_NATIVE_UINT, &vecSpeciesSize);
-    H5Aclose(aid);
-    H5Sclose(sid);
     
+    H5::attr(fid, "species", vecSpecies.size());    
     
     for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
         ostringstream name("");
         name << setfill('0') << setw(2) << ispec;
         string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->species_param.species_type;
-        gid = H5Gcreate(fid, groupName.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        hid_t gid = H5::group(fid, groupName);
         
-        sid = H5Screate(H5S_SCALAR);
-        aid = H5Acreate(gid, "partCapacity", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
-        unsigned int partCapacity=vecSpecies[ispec]->particles.capacity();
-        H5Awrite(aid, H5T_NATIVE_UINT, &partCapacity);
-        H5Aclose(aid);
-        H5Sclose(sid);
+        H5::attr(gid, "partCapacity", vecSpecies[ispec]->particles.capacity());
+        H5::attr(gid, "partSize", vecSpecies[ispec]->particles.size());
         
-        sid = H5Screate(H5S_SCALAR);
-        aid = H5Acreate(gid, "partSize", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
-        unsigned int partSize=vecSpecies[ispec]->particles.size();
-        H5Awrite(aid, H5T_NATIVE_UINT, &partSize);
-        H5Aclose(aid);
-        H5Sclose(sid);
-        
-        if (partSize>0) {
-            hsize_t dimsPart[1] = {vecSpecies[ispec]->getNbrOfParticles()};
-            
+        if (vecSpecies[ispec]->particles.size()>0) {            
             for (unsigned int i=0; i<vecSpecies[ispec]->particles.Position.size(); i++) {
-                ostringstream namePos("");
-                namePos << "Position-" << i;
-                sid = H5Screate_simple(1, dimsPart, NULL);
-                did = H5Dcreate(gid, namePos.str().c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-                H5Dwrite(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Position[i][0]);
-                H5Dclose(did);
-                H5Sclose(sid);
+                ostringstream my_name("");
+                my_name << "Position-" << i;
+                H5::vector(gid,my_name.str(), vecSpecies[ispec]->particles.Position[i]);
             }
             
             for (unsigned int i=0; i<vecSpecies[ispec]->particles.Momentum.size(); i++) {
-                ostringstream namePos("");
-                namePos << "Momentum-" << i;
-                sid = H5Screate_simple(1, dimsPart, NULL);
-                did = H5Dcreate(gid, namePos.str().c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-                H5Dwrite(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Momentum[i][0]);
-                H5Dclose(did);
-                H5Sclose(sid);
+                ostringstream my_name("");
+                my_name << "Momentum-" << i;
+                H5::vector(gid,my_name.str(), vecSpecies[ispec]->particles.Momentum[i]);
             }
             
-            sid = H5Screate_simple(1, dimsPart, NULL);
-            did = H5Dcreate(gid, "Weight", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            H5Dwrite(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Weight[0]);
-            H5Dclose(did);
-            H5Sclose(sid);
-            
-            sid = H5Screate_simple(1, dimsPart, NULL);
-            did = H5Dcreate(gid, "Charge", H5T_NATIVE_SHORT, sid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            H5Dwrite(did, H5T_NATIVE_SHORT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Charge[0]);
-            H5Dclose(did);
-            H5Sclose(sid);
+            H5::vector(gid,"Weight", vecSpecies[ispec]->particles.Weight);
+            H5::vector(gid,"Charge", vecSpecies[ispec]->particles.Charge);
             
             if (vecSpecies[ispec]->particles.isTestParticles) {
-                sid = H5Screate_simple(1, dimsPart, NULL);
-                did = H5Dcreate(gid, "Id", H5T_NATIVE_SHORT, sid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-                H5Dwrite(did, H5T_NATIVE_SHORT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Id[0]);
-                H5Dclose(did);
-                H5Sclose(sid);
+                H5::vector(gid,"Id", vecSpecies[ispec]->particles.Id);
             }
             
-            hsize_t dimsbmin[1] = {vecSpecies[ispec]->bmin.size()};
-            sid = H5Screate_simple(1, dimsbmin, NULL);
-            did = H5Dcreate(gid, "bmin", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            H5Dwrite(did, H5T_NATIVE_UINT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->bmin[0]);
-            H5Dclose(did);
-            H5Sclose(sid);
-            
-            hsize_t dimsbmax[1] = {vecSpecies[ispec]->bmax.size()};
-            sid = H5Screate_simple(1, dimsbmax, NULL);
-            did = H5Dcreate(gid, "bmax", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            H5Dwrite(did, H5T_NATIVE_UINT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->bmax[0]);
-            H5Dclose(did);
-            H5Sclose(sid);
+            H5::vector(gid,"bmin", vecSpecies[ispec]->bmin);
+            H5::vector(gid,"bmax", vecSpecies[ispec]->bmax);
             
         }
         H5Gclose(gid);
@@ -437,7 +319,7 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
     
     // Dump moving window status
     if (simWin!=NULL)
-        dumpMovingWindow(fid, simWin);
+        H5::attr(fid, "x_moved", simWin->getXmoved());
     
     H5Fclose( fid );
     
@@ -452,19 +334,6 @@ void SmileiIO::dumpFieldsPerProc(hid_t fid, Field* field)
     H5Dclose (did);    
     H5Sclose(sid);
 }
-
-void SmileiIO::dumpMovingWindow(hid_t fid, SimWindow* simWin)
-{  
-    double x_moved = simWin->getXmoved();
-    
-    hid_t sid = H5Screate(H5S_SCALAR);    
-    hid_t aid = H5Acreate(fid, "x_moved", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT);
-    H5Awrite(aid, H5T_NATIVE_DOUBLE, &x_moved);
-    H5Sclose(sid);
-    H5Aclose(aid);
-    
-}
-
 
 void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> &vecSpecies, SmileiMPI* smpi, SimWindow* simWin, Params &params) { 
     
@@ -755,7 +624,7 @@ void SmileiIO::writeTestParticles(Species* species, int ispec, int time, Params&
         hid_t fid = H5Fopen( nameDump.str().c_str(), H5F_ACC_RDWR, H5P_DEFAULT);                        
         
         ostringstream attr("");
-        for (int idim=0 ; idim<params.nDim_particle ; idim++) {
+        for (unsigned int idim=0 ; idim<params.nDim_particle ; idim++) {
             attr.str("");
             attr << "Position-" << idim;
             appendTestParticles( fid, attr.str(), testParticles.position(idim), nParticles, H5T_NATIVE_DOUBLE );

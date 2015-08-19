@@ -180,7 +180,7 @@ Species::~Species()
     for (unsigned int i=0; i<temperatureProfile.size(); i++)
         delete temperatureProfile[i];
     
-    DEBUG(10,"Species deleted ");
+    DEBUG("Species deleted");
 }
 
 

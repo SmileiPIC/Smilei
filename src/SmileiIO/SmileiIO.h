@@ -113,17 +113,14 @@ private:
     //! dump field per proc
     void dumpFieldsPerProc(hid_t fid, Field* field);
 
-    //! dump moving window parameters
-    void dumpMovingWindow(hid_t fid, SimWindow* simWindow);
-
+    //! name of the fields to dump
+    std::vector<std::string> fieldsToDump; 
+	
     //! time of the constructor
     double time_reference;
 	
     //! function that returns elapsed time from creator (uses private var time_reference)
     double time_seconds();
-	
-    //! name of the fields to dump
-    std::vector<std::string> fieldsToDump; 
 	
     
 };

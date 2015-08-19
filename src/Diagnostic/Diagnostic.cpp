@@ -225,18 +225,35 @@ void Diagnostic::initProbes(Params& params, SmileiMPI *smpi) {
         // (positions of the vertices of the grid)
         vector< vector<double> > allPos;
         vector<double> pos;
-        PyTools::extract("pos",pos,"DiagProbe",n_probe);
-        if (pos.size()>0) allPos.push_back(pos);
+
+        if (PyTools::extract("pos",pos,"DiagProbe",n_probe)) {
+            if (pos.size()!=ndim) {
+                ERROR("Probe #"<<n_probe<<": pos size(" << pos.size() << ") != ndim(" << ndim<< ")");
+            }
+            allPos.push_back(pos);
+        }
         
-        PyTools::extract("pos_first",pos,"DiagProbe",n_probe);
-        if (pos.size()>0) allPos.push_back(pos);
+        if (PyTools::extract("pos_first",pos,"DiagProbe",n_probe)) {
+            if (pos.size()!=ndim) {
+                ERROR("Probe #"<<n_probe<<": pos_first size(" << pos.size() << ") != ndim(" << ndim<< ")");
+            }
+            allPos.push_back(pos);
+        }
         
-        PyTools::extract("pos_second",pos,"DiagProbe",n_probe);
-        if (pos.size()>0) allPos.push_back(pos);
-        
-        PyTools::extract("pos_third",pos,"DiagProbe",n_probe);
-        if (pos.size()>0) allPos.push_back(pos);
-        
+        if (PyTools::extract("pos_second",pos,"DiagProbe",n_probe)) {
+            if (pos.size()!=ndim) {
+                ERROR("Probe #"<<n_probe<<": pos_second size(" << pos.size() << ") != ndim(" << ndim<< ")");
+            }
+            allPos.push_back(pos);
+        }
+
+        if (PyTools::extract("pos_third",pos,"DiagProbe",n_probe)) {
+            if (pos.size()!=ndim) {
+                ERROR("Probe #"<<n_probe<<": pos_third size(" << pos.size() << ") != ndim(" << ndim<< ")");
+            }
+            allPos.push_back(pos);
+        }
+                
         // Extract the list of requested fields
         vector<string> fs;
         if(!PyTools::extract("fields",fs,"DiagProbe",n_probe)) {
@@ -338,7 +355,7 @@ void Diagnostic::initProbes(Params& params, SmileiMPI *smpi) {
         // Create group for the current probe
         ostringstream prob_name("");
         prob_name << "p" << setfill('0') << setw(4) << n_probe;
-        hid_t did = H5Gcreate(probes.fileId, prob_name.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        hid_t did = H5::group(probes.fileId, prob_name.str());
         
         // Create an array to hold the positions of local probe particles
         double posArray [nPart_local][ndim];
@@ -356,11 +373,11 @@ void Diagnostic::initProbes(Params& params, SmileiMPI *smpi) {
         for (unsigned int iDimProbe=0; iDimProbe<=dimProbe; iDimProbe++) {
             pk.str("");
             pk << "p" << iDimProbe;
-            H5::vector(did, pk.str(), allPos[iDimProbe][0], ndim);
+            H5::vector(did, pk.str(), allPos[iDimProbe]);
         }
         
         // Add array "number" to the current group
-        H5::vector(did, "number", vecNumber[0], dimProbe);
+        H5::vector(did, "number", vecNumber);
         
         // Add attribute every to the current group
         H5::attr(did, "every", every);
@@ -463,30 +480,14 @@ void Diagnostic::initPhases(Params& params, SmileiMPI *smpi) {
             ostringstream file_name("");
             file_name<<"PhaseSpace.h5";
             phases.fileId = H5Fcreate( file_name.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-            string ver(__VERSION);
-            
             // write version
-            hid_t aid3  = H5Screate(H5S_SCALAR);
-            hid_t atype = H5Tcopy(H5T_C_S1);
-            H5Tset_size(atype, ver.size());
-            H5Tset_strpad(atype,H5T_STR_NULLTERM);
-            hid_t attr3 = H5Acreate(phases.fileId, "Version", atype, aid3, H5P_DEFAULT, H5P_DEFAULT);
-            
-            H5Awrite(attr3, atype, ver.c_str());
-            
-            H5Aclose(attr3);
-            H5Sclose(aid3);
-            H5Tclose(atype);            
-            
+            H5::attr(phases.fileId, "Version", string(__VERSION));
+                        
             ostringstream groupName("");
             groupName << "ps" << setw(4) << setfill('0') << n_phase;
-            gidParent = H5Gcreate(phases.fileId, groupName.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT); 
+            gidParent = H5::group(phases.fileId, groupName.str()); 
             
-            hid_t sid = H5Screate(H5S_SCALAR);	
-            hid_t aid = H5Acreate(gidParent, "every", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
-            H5Awrite(aid, H5T_NATIVE_UINT, &my_phase.every);
-            H5Sclose(sid);
-            H5Aclose(aid);
+            H5::attr(gidParent, "every",my_phase.every);
         }
         
         
@@ -600,18 +601,13 @@ void Diagnostic::initPhases(Params& params, SmileiMPI *smpi) {
                         namediag+=my_phase.species[k]+" ";
                     }
                     namediag=namediag.substr(0, namediag.size()-1);
-                    sid = H5Screate(H5S_SCALAR);
-                    hid_t tid = H5Tcopy(H5T_C_S1);
-                    H5Tset_size(tid, namediag.size());
-                    H5Tset_strpad(tid,H5T_STR_NULLTERM);
-                    hid_t aid = H5Acreate(gidParent, "species", tid, sid, H5P_DEFAULT, H5P_DEFAULT);
-                    H5Awrite(aid, tid, namediag.c_str());
                     
-                    
+                    H5::attr(gidParent,"species",namediag);
+                                        
                     // write attribute extent of the phaseSpace
                     hsize_t dimsPos[2] = {2,2};
                     sid = H5Screate_simple(2, dimsPos, NULL);
-                    aid = H5Acreate (gidParent, "extents", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT);
+                    hid_t aid = H5Acreate (gidParent, "extents", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT);
                     double tmp[4] = {diagPhase->firstmin, diagPhase->firstmax, diagPhase->secondmin, diagPhase->secondmax};
                     H5Awrite(aid, H5T_NATIVE_DOUBLE, tmp);
                     H5Aclose(aid);

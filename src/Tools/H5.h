@@ -30,10 +30,14 @@ class H5 {
         
         H5Tclose(atype);
     }
-    
+        
     //! write an unsigned int as an attribute
     static void attr(hid_t locationId, std::string attribute_name, unsigned int attribute_value) {
         attr(locationId, attribute_name, attribute_value, H5T_NATIVE_UINT);}
+    
+    //! write size_t as an attribute
+    static void attr(hid_t locationId, std::string attribute_name, size_t attribute_value) {
+        attr(locationId, attribute_name, (unsigned int) attribute_value);}
     
     //! write an int as an attribute
     static void attr(hid_t locationId, std::string attribute_name, int attribute_value) {
@@ -53,22 +57,53 @@ class H5 {
         H5Aclose(aid);
     }
     
+    
+    //! write a vector<anything> as an attribute
+    template<class T>
+    static void attr(hid_t locationId, std::string attribute_name, std::vector<T>& attribute_value, hid_t type) {
+        hsize_t dims = attribute_value.size();
+        hid_t sid = H5Screate_simple(1, &dims, NULL);
+        hid_t aid = H5Acreate (locationId, attribute_name.c_str(), type, sid, H5P_DEFAULT, H5P_DEFAULT);
+        H5Awrite(aid, type, &(attribute_value[0]));
+        H5Aclose(aid);
+        H5Sclose(sid);        
+    }
+    
+    //! write an vector<unsigned int> as an attribute
+    static void attr(hid_t locationId, std::string attribute_name, std::vector<unsigned int> attribute_value) {
+        attr(locationId, attribute_name, attribute_value, H5T_NATIVE_UINT);
+    }
+    
+    //! write an vector<double> as an attribute
+    static void attr(hid_t locationId, std::string attribute_name, std::vector<double> attribute_value) {
+        attr(locationId, attribute_name, attribute_value, H5T_NATIVE_DOUBLE);
+    }
+    
+    
     //! write a vector of unsigned ints
     //! v is the vector
     //! size is the number of elements in the vector
-    static void vector(hid_t locationId, std::string name, unsigned int& v, int size) {
-        vector(locationId, name, v, size, H5T_NATIVE_UINT);
+    
+    //! write a vector<int>
+    static void vector(hid_t locationId, std::string name, std::vector<int> v) {
+        vector(locationId, name, v[0], v.size(), H5T_NATIVE_INT);
     }
     
-    //! write a vector of ints
-    static void vector(hid_t locationId, std::string name, int& v, int size) {
-        vector(locationId, name, v, size, H5T_NATIVE_INT);
+    //! write a vector<unsigned int>
+    static void vector(hid_t locationId, std::string name, std::vector<unsigned int> v) {
+        vector(locationId, name, v[0], v.size(), H5T_NATIVE_UINT);
     }
     
-    //! write a vector of doubles
-    static void vector(hid_t locationId, std::string name, double& v, int size) {
-        vector(locationId, name, v, size, H5T_NATIVE_DOUBLE);
+    //! write a vector<short int>
+    static void vector(hid_t locationId, std::string name, std::vector<short int> v) {
+        vector(locationId, name, v[0], v.size(), H5T_NATIVE_SHORT);
     }
+    
+    //! write a vector<doubles>
+    static void vector(hid_t locationId, std::string name, std::vector<double> v) {
+        vector(locationId, name, v[0], v.size(), H5T_NATIVE_DOUBLE);
+    }
+    
     
     //! write any vector
     //! type is the h5 type (H5T_NATIVE_DOUBLE, H5T_NATIVE_INT, etc.)
