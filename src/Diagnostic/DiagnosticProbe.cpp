@@ -18,8 +18,7 @@
 using namespace std;
 
 DiagnosticProbe::DiagnosticProbe():
-fileId(0) ,
-probeSize(10)
+fileId(0)
 {
 }
 
@@ -55,22 +54,22 @@ void DiagnosticProbe::run(unsigned int timestep, ElectroMagn* EMfields, Interpol
             
             // Loop probe ("fake") particles
             unsigned int nPart_local = probeParticles[np].size();
-            for (int iprob=0; iprob<nPart_local; iprob++) {               
+            for (int iprob=0; iprob<nPart_local; iprob++) {
                 
                 // Interpolate fields at the location of the fake particles
                 (*interp)(EMfields,probeParticles[np],iprob,&Eloc_fields,&Bloc_fields,&Jloc_fields,&Rloc_fields);
                 
                 //! here we fill the probe data!!!
-                probesArray[np]->data_2D[iprob][0]=Eloc_fields.x;
-                probesArray[np]->data_2D[iprob][1]=Eloc_fields.y;
-                probesArray[np]->data_2D[iprob][2]=Eloc_fields.z;
-                probesArray[np]->data_2D[iprob][3]=Bloc_fields.x;
-                probesArray[np]->data_2D[iprob][4]=Bloc_fields.y;
-                probesArray[np]->data_2D[iprob][5]=Bloc_fields.z;
-                probesArray[np]->data_2D[iprob][6]=Jloc_fields.x;
-                probesArray[np]->data_2D[iprob][7]=Jloc_fields.y;
-                probesArray[np]->data_2D[iprob][8]=Jloc_fields.z;
-                probesArray[np]->data_2D[iprob][9]=Rloc_fields;
+                probesArray[np]->data_2D[fieldlocation[np][0]][iprob]=Eloc_fields.x;
+                probesArray[np]->data_2D[fieldlocation[np][1]][iprob]=Eloc_fields.y;
+                probesArray[np]->data_2D[fieldlocation[np][2]][iprob]=Eloc_fields.z;
+                probesArray[np]->data_2D[fieldlocation[np][3]][iprob]=Bloc_fields.x;
+                probesArray[np]->data_2D[fieldlocation[np][4]][iprob]=Bloc_fields.y;
+                probesArray[np]->data_2D[fieldlocation[np][5]][iprob]=Bloc_fields.z;
+                probesArray[np]->data_2D[fieldlocation[np][6]][iprob]=Jloc_fields.x;
+                probesArray[np]->data_2D[fieldlocation[np][7]][iprob]=Jloc_fields.y;
+                probesArray[np]->data_2D[fieldlocation[np][8]][iprob]=Jloc_fields.z;
+                probesArray[np]->data_2D[fieldlocation[np][9]][iprob]=Rloc_fields;
                 
             }
             
@@ -82,7 +81,7 @@ void DiagnosticProbe::run(unsigned int timestep, ElectroMagn* EMfields, Interpol
             // Open the existing HDF5 group for that probe
             hid_t did = H5Gopen2(fileId, probeName(np).c_str(), H5P_DEFAULT);
             // Write the positions array into the current HDF5 group
-            H5::matrix_MPI(did, name_t.str(), probesArray[np]->data_2D[0][0], nPart_total[np], probeSize, probesStart[np], nPart_local);
+            H5::matrix_MPI(did, name_t.str(), probesArray[np]->data_2D[0][0], nPart_total[np], nFields[np], probesStart[np], nPart_local);
             // Close the group
             H5Gclose(did);
             

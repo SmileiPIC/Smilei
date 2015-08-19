@@ -1,12 +1,12 @@
 VERSION:="$(shell git describe 2>/dev/null || echo '??')-$(shell git rev-parse --abbrev-ref HEAD || echo '??')"
 
-TEXFILES=Collisions/Collisions.tex Diagnostics/Diagnostics.tex Profiles/Profiles.tex
+TEXFILES=
 
 PDFS:=$(TEXFILES:.tex=.pdf)
 
 .PHONY: html
 
-default: $(PDFS) 
+default: all
 
 all: $(PDFS) html
 
@@ -15,11 +15,24 @@ all: $(PDFS) html
 
 html:
 #	convert -resize 100x100 doc/smileiLogo/smileiLogo.png doc/logo.png
-	cd doc; (echo "PROJECT_NUMBER=${VERSION}"; cat smilei.dox) | doxygen -
+	@echo "-------------";
+	@if type "doxygen" >/dev/null 2>&1; then\
+		(echo "PROJECT_NUMBER=${VERSION}"; cat smilei.dox) | doxygen - ;\
+	else \
+		echo "Cannot build doxygen doc because doxygen is not installed";\
+	fi	
+	@echo "-------------";
 #   pdf generation is buggy... dropped
 #	latexmk -cd -pdf latex/refman.tex && latexmk -cd -c latex/refman.tex
+	@if type "sphinx-build" >/dev/null 2>&1; then\
+		cd Sphinx; make html;\
+	else \
+		echo "Cannot build Sphinx doc because Sphinx is not installed";\
+	fi
+	@echo "-------------";
+	
 	
 clean:
-	for fname in $(TEXFILES); do latexmk -cd -C $$fname; done
+	for fname in $(TEXFILES); do latexmk -cd -C $$fname; done;
 	rm -rf html smilei_warn.log
-
+	rm -rf Sphinx/_build

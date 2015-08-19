@@ -46,11 +46,8 @@ inline int stop_particle( Particles &particles, int ipart, int direction, double
 }
 
 //!\todo (MG) at the moment the particle is thermalize whether or not there is a plasma initially at the boundary.
-// Also this works only for species with an isotropic maxwellian distribution.
-// Actually now it does not work at all because temperature is not a scalar (a python function)
+// ATTENTION: here the thermalization assumes a Maxwellian distribution, maybe we should add some checks on thermT (MG)!
 inline int thermalize_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart) {
-    
-    ERROR("Thermalizing boundary condition does not work yet.");
     
     // checking the particle's velocity compared to the thermal one
     double p2 = 0.;
@@ -64,7 +61,7 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
     
     // Apply bcs depending on the particle velocity
     // --------------------------------------------
-    if ( v>3.0*params.thermalVelocity[0] ) { //IF VELOCITY > 3*THERMAL VELOCITY THEN THERMALIZE IT
+    if ( v>3.0*params.thermalVelocity[0] ) {    //IF VELOCITY > 3*THERMAL VELOCITY THEN THERMALIZE IT
 
         // velocity of the particle after reflection (unchanged in the directions that are not resolved in the simulations)
         for (unsigned int i=0; i<params.nDim_fields; i++) {
@@ -86,7 +83,7 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
             
         }//i
 
-    } else { // IF VELOCITY < 3*THERMAL SIMPLY REFLECT IT
+    } else {                                    // IF VELOCITY < 3*THERMAL SIMPLY REFLECT IT
         //
         particles.position(direction, ipart) = limit_pos - particles.position(direction, ipart);
         particles.momentum(direction, ipart) = -particles.momentum(direction, ipart);

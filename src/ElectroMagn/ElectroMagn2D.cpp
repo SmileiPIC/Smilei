@@ -972,6 +972,8 @@ void ElectroMagn2D::applyExternalField(Field* my_field,  Profile *profile, Smile
     }//i
     
     if (emBoundCond[0]!=0) emBoundCond[0]->save_fields_BC2D_Long(my_field);
-    if (emBoundCond[1]!=0) emBoundCond[1]->save_fields_BC2D_Trans(my_field);
+    if (emBoundCond[1]!=0) emBoundCond[1]->save_fields_BC2D_Long(my_field);
+    if (emBoundCond[2]!=0) emBoundCond[2]->save_fields_BC2D_Trans(my_field);
+    if (emBoundCond[3]!=0) emBoundCond[3]->save_fields_BC2D_Trans(my_field);
     
 }

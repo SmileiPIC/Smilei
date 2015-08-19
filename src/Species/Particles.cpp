@@ -197,7 +197,7 @@ void Particles::erase_particle(int ipart )
     Charge.erase( Charge.begin()+ipart );
 
     if (isTestParticles)
-	Id.erase( Charge.begin()+ipart );
+	Id.erase( Id.begin()+ipart );
 
 }
 

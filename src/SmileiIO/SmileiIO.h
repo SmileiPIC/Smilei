@@ -36,11 +36,7 @@ public:
     virtual ~SmileiIO();
 
     //! Write all fields (E, B, J, rho, per species ; 10 + 4 x nspecies fields) of all time step in the same file
-    void writeAllFieldsSingleFileTime( ElectroMagn* EMfields, int itime );
-    
-    //! Write time-averaged fields E, B) of all time step in the same file
-    //! @see global_file_id_avg
-    void writeAvgFieldsSingleFileTime( ElectroMagn* EMfields, int itime );
+    void writeAllFieldsSingleFileTime( std::vector<Field*> *, int, bool );
     
     //! Basic Write of a field in the specified group of the global file
     virtual void writeFieldsSingleFileTime( Field* field, hid_t group_id ) = 0;

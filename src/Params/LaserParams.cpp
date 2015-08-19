@@ -94,8 +94,7 @@ LaserParams::LaserParams(Params& params) {
                 tmpLaser.profile_transv.int_params[0] = 3;
             }
             
-            
-            if ( !delayExists ) {
+            if ( tmpLaser.delay==0. ) {
                 tmpLaser.profile_transv.double_params.resize(1);
                 double theta   = tmpLaser.angle * M_PI/180.0;
                 double xfoc    = tmpLaser.focus[0];

@@ -85,6 +85,8 @@ struct SpeciesStructure {
     //! atomic number
     unsigned int atomic_number;
     
+    //! thermalizing temperature [\f$m_e c^2\f$]
+    std::vector<double> thermT;
     //! thermal velocity [\f$c\f$]
     std::vector<double> thermalVelocity;
     //! thermal momentum [\f$m_e c\f$]

@@ -1,0 +1,46 @@
+How to build the Sphinx doc
+---------------------------
+
+
+1. Install Sphinx
+=================
+
+* On Unix systems, find out what the best install is. Usually::
+
+  pip install Sphinx
+
+* On Mac, you may try::
+
+  sudo port install py-sphinx
+
+* On Windows, you can try this: http://stackoverflow.com/a/23523802
+
+
+2. Check installation
+=====================
+
+Make sure that Sphinx is installed using::
+
+  sphinx-build --version
+
+
+3. Build the doc
+================
+
+Go to the Smilei/doc/Sphinx folder in the command line.
+
+* On Unix systems, type::
+
+  make html
+  
+  (You can also go in the root Smilei directory and type ``make doc``)
+
+* On Window, launch the executable `make.bat`
+
+
+4. Open the doc
+===============
+
+Open `Smilei/doc/Sphinx/_build/html/index.html` in your web browser.
+
+

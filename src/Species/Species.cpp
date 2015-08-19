@@ -12,7 +12,7 @@
 #include "IonizationFactory.h"
 
 #include "PartBoundCond.h"
-#include "BoundaryConditionType.h"
+//#include "BoundaryConditionType.h"
 
 #include "ElectroMagn.h"
 #include "Interpolator.h"
@@ -47,6 +47,8 @@ temperatureProfile(3,NULL),
 ndim(params.nDim_particle),
 min_loc(smpi->getDomainLocalMin(0))
 {
+    
+    particles.species_number = speciesNumber;
     
     densityProfileType = species_param.density_type;
     chargeProfile         = new Profile(species_param.charge_profile, params.geometry);
@@ -535,10 +537,12 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 	    } // if (!particles.isTestParticles)
         }// ibin
         free(b_Jx);
-        
-        for (int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
-            nrj_bc_lost += nrj_lost_per_thd[tid];
-        
+
+#pragma omp master
+{
+	for (int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
+	    nrj_bc_lost += nrj_lost_per_thd[tid];
+}        
         if (Ionize && electron_species) {
             for (unsigned int i=0; i < (unsigned int)Ionize->new_electrons.size(); i++) {
                 // electron_species->particles.push_back(Ionize->new_electrons[i]);

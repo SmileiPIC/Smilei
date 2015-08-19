@@ -17,3 +17,4 @@ src/smilei
 *.toc
 *.orig
 *.pyh
+doc/Sphinx/_build/*

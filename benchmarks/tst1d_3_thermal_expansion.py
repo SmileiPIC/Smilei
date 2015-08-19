@@ -98,8 +98,8 @@ Species(
     mass = mi, 
     charge = 1.0,
     nb_density = trapezoidal(1., xplateau=20.*Ld),
-    temperature = 1.e-6,
-    #time_frozen = 2.*tsim,
+    temperature = [1.e-6],
+	thermT = [1.e-6],
     bc_part_type_west = 'thermalize',
     bc_part_type_east = 'refl'
 )
@@ -112,6 +112,7 @@ Species(
     charge = -1.0,
     nb_density = trapezoidal(1., xplateau=20.*Ld),
     temperature = [Te],
+    thermT = [Te],
     bc_part_type_west = 'thermalize',
     bc_part_type_east = 'refl'
 )

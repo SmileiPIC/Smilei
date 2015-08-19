@@ -120,6 +120,7 @@ class DiagProbe(SmileiComponent):
     pos_first = []
     pos_second = []
     pos_third = []
+    fields = []
 
 class DiagParticles(SmileiComponent):
     """Diagnostic particles"""
@@ -157,7 +158,7 @@ dump_file_sequence = 2
 sim_units = ""
 wavelength_SI = 0.
 dim = ""
-interpolation_order = None
+interpolation_order = 2
 res_time = None
 res_space = []
 timestep = None

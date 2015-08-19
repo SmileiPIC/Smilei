@@ -124,8 +124,14 @@ public:
     
     std::vector<int> probesStart;
 
-    //! memory size of a probe should be 6 = Exyz + Bxyz
-    const int probeSize;
+    //! Number of fields to save
+    std::vector<int> nFields;
+    
+    //! List of fields to save
+    std::vector<std::vector<std::string>> fieldname;
+    
+    //! Indices in the output array where each field goes
+    std::vector<std::vector<int>> fieldlocation;
     
 protected:
     //! E local fields for the projector

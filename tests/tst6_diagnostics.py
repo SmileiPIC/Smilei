@@ -94,6 +94,24 @@ Species(
 	bc_part_type_east = "none"
 )
 
+Species(
+	species_type = "test",
+	initPosition_type = "random",
+	initMomentum_type = "maxwell-juettner",
+	n_part_per_cell= 1,
+	mass = 1.0,
+	charge = -1.0,
+	nb_density = 10.,
+	mean_velocity = [0.05, 0., 0.],
+	temperature = [0.00002],
+	time_frozen = 0.0,
+	bc_part_type_west = "none",
+	bc_part_type_east = "none",
+	isTest = True
+)
+
+
+
 # ---------------------
 # DIAGNOSTIC PARAMETERS
 # ---------------------
@@ -123,9 +141,10 @@ DiagScalar(every = 1)
 DiagProbe(
 	every = 1,
 	time_range = [0.1 *L0, 0.4*L0],
-	number = [10],
+	number = [40],
 	pos = [0.1*L0],
-	pos_first = [0.9*L0]
+	pos_first = [0.9*L0],
+	fields = []
 )
 
 # DIAGNOSTICS ON PARTICLES - project the particles on a N-D arbitrary grid

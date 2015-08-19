@@ -19,20 +19,23 @@ using namespace std;
 Diagnostic::Diagnostic(Params& params, SmileiMPI *smpi) :
 dtimer(4)
 {
+    
     // defining default values & reading diagnostic every-parameter
     // ------------------------------------------------------------
     print_every=params.n_time/10;
     PyTools::extract("print_every", print_every);
     
     fieldDump_every=0;
-    if (!PyTools::extract("fieldDump_every", fieldDump_every)) fieldDump_every=params.global_every;
-    
     if (!PyTools::extract("fieldDump_every", fieldDump_every)) {
+        fieldDump_every=params.global_every;
         DEBUG("activating all fields to dump");
-    }    
+    }
     
     avgfieldDump_every=params.res_time*10;
     if (!PyTools::extract("avgfieldDump_every", avgfieldDump_every)) avgfieldDump_every=params.global_every;
+    
+    fieldsToDump.resize(0);
+    PyTools::extract("fieldsToDump", fieldsToDump);
     
     //!\todo Define default behaviour : 0 or params.res_time
     //ntime_step_avg=params.res_time;
@@ -169,6 +172,9 @@ void Diagnostic::initProbes(Params& params, SmileiMPI *smpi) {
             probes.nPart_total   .resize(0);
             probes.probesArray   .resize(0);
             probes.probesStart   .resize(0);
+            probes.fieldname     .resize(0);
+            probes.fieldlocation .resize(0);
+            probes.nFields       .resize(0);
         }
         
         
@@ -200,7 +206,7 @@ void Diagnostic::initProbes(Params& params, SmileiMPI *smpi) {
         // Dimension of the probe grid
         unsigned int dimProbe=vecNumber.size();
         if (dimProbe > params.nDim_particle) {
-            ERROR("probe dimension is greater than simulation dimension")
+            ERROR("Probe #"<<n_probe<<": probe dimension is greater than simulation dimension")
         }
         
         // If there is no "number" argument provided, then it corresponds to
@@ -231,6 +237,40 @@ void Diagnostic::initProbes(Params& params, SmileiMPI *smpi) {
         PyTools::extract("pos_third",pos,"DiagProbe",n_probe);
         if (pos.size()>0) allPos.push_back(pos);
         
+        // Extract the list of requested fields
+        vector<string> fs;
+        if(!PyTools::extract("fields",fs,"DiagProbe",n_probe)) {
+            fs.resize(10);
+            fs[0]="Ex"; fs[1]="Ey"; fs[2]="Ez";
+            fs[3]="Bx"; fs[4]="By"; fs[5]="Bz";
+            fs[6]="Jx"; fs[7]="Jy"; fs[8]="Jz"; fs[9]="Rho";
+        }
+        vector<int> locations;
+        locations.resize(10);
+        for( int i=0; i<10; i++) locations[i] = fs.size();
+        for( int i=0; i<fs.size(); i++) {
+            for( int j=0; j<i; j++) {
+                if( fs[i]==fs[j] ) {
+                    ERROR("Probe #"<<n_probe<<": field "<<fs[i]<<" appears twice");
+                }
+            }
+            if     ( fs[i]=="Ex" ) locations[0] = i;
+            else if( fs[i]=="Ey" ) locations[1] = i;
+            else if( fs[i]=="Ez" ) locations[2] = i;
+            else if( fs[i]=="Bx" ) locations[3] = i;
+            else if( fs[i]=="By" ) locations[4] = i;
+            else if( fs[i]=="Bz" ) locations[5] = i;
+            else if( fs[i]=="Jx" ) locations[6] = i;
+            else if( fs[i]=="Jy" ) locations[7] = i;
+            else if( fs[i]=="Jz" ) locations[8] = i;
+            else if( fs[i]=="Rho") locations[9] = i;
+            else {
+                ERROR("Probe #"<<n_probe<<": unknown field "<<fs[i]);
+            }
+        }
+        probes.fieldlocation.push_back(locations);
+        probes.fieldname.push_back(fs);
+        probes.nFields.push_back(fs.size());
         
         // Calculate the total number of points in the grid
         // Each point is actually a "fake" macro-particle
@@ -280,8 +320,8 @@ void Diagnostic::initProbes(Params& params, SmileiMPI *smpi) {
         // Make the array that will contain the data
         // probesArray : 10 x nPart_tot
         vector<unsigned int> probesArraySize(2);
-        probesArraySize[0] = nPart_local; // number of particles
-        probesArraySize[1] = probes.probeSize; // number of fields (Ex, Ey, etc)
+        probesArraySize[1] = nPart_local; // number of particles
+        probesArraySize[0] = probes.nFields[n_probe] + 1; // number of fields (Ex, Ey, etc) +1 for garbage
         Field2D *myfield = new Field2D(probesArraySize);
         probes.probesArray.push_back(myfield);
         
@@ -326,6 +366,12 @@ void Diagnostic::initProbes(Params& params, SmileiMPI *smpi) {
         H5::attr(did, "every", every);
         // Add attribute "dimension" to the current group
         H5::attr(did, "dimension", dim);
+        
+        // Add "fields" to the current group
+        ostringstream fields("");
+        fields << fs[0];
+        for( int i=1; i<fs.size(); i++) fields << "," << fs[i];
+        H5::attr(did, "fields", fields.str());
         
         // Close current group
         H5Gclose(did);

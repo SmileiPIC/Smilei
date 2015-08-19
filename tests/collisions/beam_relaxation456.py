@@ -94,7 +94,7 @@ for path in ["beam_relaxation4","beam_relaxation5","beam_relaxation6"]:
 	ax.set_ylim(0.,velocity_electron)
 	ax.set_xlabel('time in fs')
 	ax.set_ylabel('$v_x / c$')
-	if not ax.legend_: ax.legend()
+	if not ax.legend_: ax.legend(loc='lower right')
 	
 	plt.show()
 	

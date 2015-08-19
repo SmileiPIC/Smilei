@@ -1,167 +1,8 @@
 # -----------------------------------------------------------------------
-# HOW TO VIEW DIAGNOSTICS                -    F. Perez - 03/2015
+# HOW TO VIEW DIAGNOSTICS                -    F. Perez - 2015
 # -----------------------------------------------------------------------
-# >>>>>> Requirements
-#   python2.7 with the following packages: numpy, matplotlib, pylab, h5py
-#
-# >>>>>> First step: invoke python and load this file
-#      $ python -i Diagnostics.py
-#
-#
-#  +---------------------------+
-#  | 1 . Particle diagnostics  |
-#  +---------------------------+
-# >>>>>> What can be done
-#   During the simulation, each particle diagnostic collects the data from particles
-#   into a N-dimensional histogram.
-#   Each histogram axis can be: x, y, z, px, py, pz, p, gamma, ekin, vx, vy, vz, v or charge.
-#   In each bin of the histogram, several things may be summed: the weights (density), 
-#     weight*charge (charge density), weight*charge*velocity (current density),
-#     or weight*momentum (momentum density)
-#   Examples:
-#       +----------+------------+---------------------+
-#       |   Rank   |   type     |         Axes        |
-#       +----------+------------+---------------------+
-#       |   1-D    |  density   |        'ekin'       | => energy distribution.
-#       |   2-D    |  density   |     'x' and 'y'     | => density map.
-#       |   2-D    |  x-current |     'x' and 'y'     | => x-current map.
-#       |   2-D    |  density   |     'x' and 'px'    | => phase space.
-#       |   3-D    |  density   | 'x', 'y' and 'ekin' | => density map for several energy ranges.
-#       +----------+------------+---------------------+
-#
-# >>>>>> In the python shell, use the class "ParticleDiagnostic"
-#        to create a ParticleDiagnostic object
-#
-# ParticleDiagnostic(results_path, diagNumber=None, timesteps=None, slice=None,
-#                    units="code", data_log=False):
-#
-#      results_path = _string_
-#                     Path to the directory where the outputs are stored
-#                     (Also, this has to contain one and only one input file *.in)
-#
-#        diagNumber = _int_   (optional)
-#                     Number of the diagnostic. `0` is the first diagnostic.
-#                     If not given, then a list of available diagnostics is printed.
-#
-#         timesteps = _int_            (optional)
-#         timesteps = [_int_, _int_]   (optional)
-#                     If omitted, all timesteps are used.
-#                     If one number  given, the nearest timestep available is used.
-#                     If two numbers given, all the timesteps in between are used.
-#
-#             slice = { "axis" : "all", ... }                 (optional)
-#             slice = { "axis" : _double_, ... }              (optional)
-#             slice = { "axis" : [_double_, _double_], ... }  (optional)
-#                     This parameter is used to reduce the number of dimensions of the array.
-#                     If the `axis` key is present, then any axis of the same name will be removed.
-#                     `axis` must be x, y, z, px, py, pz, p, gamma, ekin, vx, vy, vz, v or charge.
-#                      - If the value is "all", then a sum is performed over all the axis.
-#                      - If the value is _double_, then only the bin closest to the value is kept.
-#                      - If the value is [_double_,_double_], then a sum is performed between the two values.
-#                     Example: {"x":[4,5]} will sum all the data for x in the range [4,5].
-#
-#             units = ("code") or "nice"    (optional)
-#                     If "nice" is chosen, then units are converted into usual units.
-#                     Distances in microns, density in 1/cm^3, energy in MeV.
-#
-#          data_log = True or (False)       (optional)
-#                     If True, then log10 is applied to the output array before plotting.
-#
-#
-# >>>>>> To plot the data, use the following method.
-#
-# ParticleDiagnostic(..., figure=1, vmin=None, vmax=None,
-#                         xmin=None, xmax=None, ymin=None, ymax=None) .plot()
-#
-#            figure = _int_       (optional)
-#                     The figure number that is passed to matplotlib.
-#                     If absent, figure 1 is used.
-#
-#              vmin = _double_    (optional)
-#              vmax = _double_    (optional)
-#                     If present, output is rescaled before plotting.
-#
-#              xmin = _double_    (optional)
-#              xmax = _double_    (optional)
-#              ymin = _double_    (optional)
-#              ymax = _double_    (optional)
-#                     If present, axes are rescaled before plotting.
-#
-#
-# >>>>>> Instead of plotting, you can obtain the data as an array.
-#        Note that only the first requested timestep is given.
-#
-# ParticleDiagnostic(...).getData()
-#   This method returns only a list of the data arrays (for each timestep requested).
-#
-# ParticleDiagnostic(...).get()
-#   This method returns a dictionary containing the data, the list of timesteps and the axes scales.
-#
-#
-# >>>>>> Examples:
-#    ParticleDiagnostic('../test', diagNumber=1, slice={"y":"all"}, units="nice").plot(figure=1, vmin=0, vmax=3e14)
-#
-#
-#  +---------------------------+
-#  | 2 . Fields                |
-#  +---------------------------+
-#
-# You can view fields with a similar procedure:
-#
-# Field(results_path, field=None, timesteps=None, slice=None, units="code", data_log=False)
-#
-# This works almost the same way as ParticleDiagnostic(...), with some exceptions:
-#
-# - `field` must be one of "Bx_m", "By_m", "Bz_m", "Ex", "Ey", "Ez", "Jx", "Jy", "Jz",
-#   "Jx_[species]", "Jy_[species]", "Jz_[species]", "Rho" or "Rho_[species]"
-#   where [species] is the name of one of the existing species.
-#   If you omit the argument `field`, the list of available fields will be displayed.
-#   Additionally, you can write an operation instead of just one field. For instance,
-#   you can have "Jx+Jy".
-#
-# - `slice` can only accept three axes: "x", "y", "z".
-#   For instance, slice={"x":"all"}.
-#   Note that the slice does NOT calculate the sum of the axis, but the AVERAGE.
-#
-#
-#
-#  +---------------------------+
-#  | 3 . Scalars               |
-#  +---------------------------+
-#
-# For scalars, this is almost the same:
-#
-# Scalar(results_path, scalar=None, timesteps=None, units="code", data_log=False)
-#
-# - `scalar` must be an available scalar name. To get a list of available scalars, 
-#    simply omit this argument.
-#
-# - there is no more `slice` argument of course!
-#
-#
-#  +---------------------------+
-#  | 4 . Multiple diagnostics  |
-#  +---------------------------+
-# To simultaneously plot multiple diagnostics in the same figure:
-#
-# multiPlot(diag1, diag2, ... , figure=1, shape=None, **kwargs)
-#
-#              diag1 = diagnostic prepared by ParticleDiagnostic(), Field() or Scalar()
-#              diag2 = diagnostic prepared by ParticleDiagnostic(), Field() or Scalar()
-#                      ...
-#
-#            figure = _int_             (optional)
-#                     The figure number that is passed to matplotlib.
-#                     If absent, figure 1 is used.
-#
-#             shape = [_int_ , _int_]   (optional)
-#                     The arrangement of plots inside the figure.
-#                     For instance, [2, 1] makes two plots stacked vertically,
-#                      and [1, 2] makes two plots stacked horizontally.
-#                     If absent, stacks plots vertically.
-#
-#            kwargs = many other keyword-arguments can be used -> refer to the doc.
-
+# Check out the documentation in the doc/Sphinx directory.
+# It must be compiled with the Sphinx software (sphinx-doc.org).
 
 class Smilei(object):
 	""" Smilei(results_path=".")
@@ -336,6 +177,47 @@ class Smilei(object):
 			diag.plot()
 		"""
 		return ParticleDiagnostic(self, *args, **kwargs)
+	def TestParticles(self, *args, **kwargs):
+		""" TestParticles(species=None, select="", axes=[], timesteps=None, units="code", skipAnimation=False)
+		
+		Import and analyze test particles from a Smilei simulation
+		
+		Parameters:
+		-----------
+		species : name of a test species. (optional)
+			To get a list of available test species, simply omit this argument.
+		select: Instructions for selecting particles among those available.
+			Syntax 1: select="any(times, condition)"
+			Syntax 2: select="all(times, condition)"
+			`times` is a selection of timesteps t, for instance `t>50`.
+			`condition` is a condition on particles properties (x, y, z, px, py, pz), for instance `px>0`.
+			Syntax 1 selects particles satisfying `condition` for at least one of the `times`.
+			Syntax 2 selects particles satisfying `condition` at all `times`.
+			Example: select="all(t<40, px<0.1)" selects particles that kept px<0.1 until timestep 40.
+			Example: select="any(t>0, px>1.)" selects particles that reached px>1 at some point.
+			It is possible to make logical operations: + is OR; * is AND; - is NOT.
+			Example: select="any((t>30)*(t<60), px>1) + all(t>0, (x>1)*(x<2))"
+		timesteps : int or [int, int] (optional)
+			If omitted, all timesteps are used.
+			If one number  given, the nearest timestep available is used.
+			If two numbers given, all the timesteps in between are used.
+		units : "code" or "nice"    (optional)
+			If "nice" is chosen, then units are converted into usual units:
+			distances in microns, density in 1/cm^3, energy in MeV.
+		axes: A list of axes for plotting the trajectories.
+			Each axis is "x", "y", "z", "px", "py" or "pz".
+			Example: axes = ["x"] corresponds to x versus time.
+			Example: axes = ["x","y"] correspond to 2-D trajectories.
+			Example: axes = ["x","px"] correspond to phase-space trajectories.
+		skipAnimation: when True, the plot() will directly show the full trajectory.
+		
+		Usage:
+		------
+			diag = S.ParticleDiagnostic(...) # S is a Smilei object
+			diag.get()
+			diag.plot()
+		"""
+		return TestParticles(self, *args, **kwargs)
 	
 	
 class Options(object):
@@ -349,6 +231,8 @@ class Options(object):
 		self.ymax   = None
 		self.vmin   = None
 		self.vmax   = None
+		self.skipAnimation = False
+		self.streakPlot = False
 		self.figure0 = {}
 		self.figure1 = {"facecolor":"w"}
 		self.axes = {}
@@ -369,6 +253,8 @@ class Options(object):
 		self.ymax     = kwargs.pop("ymax"   ,self.ymax  )
 		self.vmin     = kwargs.pop("vmin"   ,kwargs.pop("data_min",self.vmin))
 		self.vmax     = kwargs.pop("vmax"   ,kwargs.pop("data_max",self.vmax))
+		self.skipAnimation = kwargs.pop("skipAnimation", self.skipAnimation)
+		self.streakPlot    = kwargs.pop("streakPlot"   , self.streakPlot   )
 		# Second, we manage all the other arguments that are directly the ones of matplotlib
 		for kwa in kwargs:
 			val = kwargs[kwa]
@@ -409,7 +295,7 @@ class Diagnostic(object):
 	# the parent `Smilei` object
 	def __init__(self, results_path=None, *args, **kwargs):
 		self.valid = False
-		self._previousdata = None
+		self._tmpdata = None
 		# if string, try to use it as a results_path
 		if type(results_path) is str:
 			self.Smilei = Smilei(results_path)
@@ -530,7 +416,7 @@ class Diagnostic(object):
 	def limits(self):
 		l = []
 		for i in range(len(self._plot_shape)):
-			l.append([min(self._plot_centers[0]), max(self._plot_centers[0])])
+			l.append([min(self._plot_centers[i]), max(self._plot_centers[i])])
 		return l
 	
 	# Method to get only the arrays of data
@@ -553,7 +439,7 @@ class Diagnostic(object):
 		return result
 	
 	# Method to plot the current diagnostic
-	def plot(self, **kwargs):
+	def plot(self, movie="", fps=15, dpi=200, **kwargs):
 		if not self._validate(): return
 		self.set(**kwargs)
 		self.info()
@@ -563,22 +449,76 @@ class Diagnostic(object):
 		fig.set(**self.options.figure1)
 		fig.clf()
 		ax = fig.add_subplot(1,1,1)
-		# Animation if several dimensions
+		
+		# If several dimensions
 		if len(self._plot_shape) > 0:
-			# Loop times
-			for timeindex in range(self.times.size):
-				time = self.times[timeindex]
+			# Case of a streakPlot (no animation)
+			if self.options.streakPlot:
+				# Require several times
+				if len(self.times) < 2:
+					print "ERROR: a streak plot requires at least 2 times"
+					return
+				# Require function _getDataAtTime
+				if not hasattr(self,"_getDataAtTime"):
+					print "ERROR: this diagnostic cannot do a streak plot"
+					return
+				# Require dimension = 1
+				if self._getDataAtTime(self.times[0]).ndim != 1:
+					print "ERROR: Diagnostic must be 1-D for a streak plot"
+				# Warning if uneven times
+				if not (self._np.diff(self.times)==self.times[1]-self.times[0]).all():
+					print "WARNING: times are not evenly spaced. Time-scale not plotted"
+					ylabel = "Unevenly-spaced times"
+				else:
+					ylabel = "Time [code units]"
+				# Loop times and accumulate data
+				A = []
+				for time in self.times: A.append(self._getDataAtTime(time))
+				A = self._np.double(A)
+				# Plot
+				ax.cla()
+				extent = [self._plot_centers[0][0], self._plot_centers[0][-1], self.times[0], self.times[-1]]
+				if self._plot_log[0]: extent[0:2] = [self._np.log10(self._plot_centers[0][0]), self._np.log10(self._plot_centers[0][-1])]
+				im = ax.imshow(A, vmin = self.options.vmin, vmax = self.options.vmax, extent=extent, **self.options.image)
+				if (self._plot_log[0]): ax.set_xlabel("Log[ "+self._plot_label[0]+" ]")
+				else:                   ax.set_xlabel(        self._plot_label[0]     )
+				ax.set_ylabel(ylabel)
+				self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
+				try: # if colorbar exists
+					ax.cax.cla()
+					self._plt.colorbar(mappable=im, cax=ax.cax, **self.options.colorbar)
+				except AttributeError:
+					ax.cax = self._plt.colorbar(mappable=im, ax=ax, **self.options.colorbar).ax
+				self._setSomeOptions(ax)
+				fig.canvas.draw()
+				self._plt.show()
+				return
+			
+			# Possible to skip animation
+			if self.options.skipAnimation:
+				self._animateOnAxes(ax, self.times[-1])
+				fig.canvas.draw()
+				self._plt.show()
+				return
+			
+			# Otherwise, animation
+			# Movie requested ?
+			mov = Movie(fig, movie, fps, dpi)
+			# Loop times for animation
+			for time in self.times:
 				print "timestep "+str(time)+ "   -   t = "+str(time*self._coeff_time)+self._time_units
 				# plot
 				ax.cla()
-				artist = self._animateOnAxes(ax, time)
+				if self._animateOnAxes(ax, time, movie=mov) is None: return
 				fig.canvas.draw()
 				self._plt.show()
-			#return artist
-		# Static plot if 0 dimensions
+			# Movie ?
+			if mov.writer is not None: mov.finish()
+		
+		# Plot vs time if 0 dimensions
 		else:
 			ax.cla()
-			artist = self._plotVsTime(ax)
+			self._plotVsTime(ax)
 	
 	# Method to set limits to a plot
 	def _setLimits(self, ax, xmin=None, xmax=None, ymin=None, ymax=None):
@@ -588,18 +528,18 @@ class Diagnostic(object):
 		if ymax is not None: ax.set_ylim(ymax=ymax)
 	
 	# Method to plot the data when axes are made
-	def _animateOnAxes(self, ax, t):
+	def _animateOnAxes(self, ax, t, movie=None):
 		if not self._validate(): return None
 		# get data
 		A = self._getDataAtTime(t)
 		# plot
 		if A.ndim == 0: # as a function of time
-			if self._previousdata is None:
-				self._previousdata = self._np.zeros(self.times.size)
+			if self._tmpdata is None:
+				self._tmpdata = self._np.zeros(self.times.size)
 				for i, t in enumerate(self.times):
-					self._previousdata[i] = self._getDataAtTime(t)
+					self._tmpdata[i] = self._getDataAtTime(t)
 			times = self.times[self.times<=t]
-			A     = self._previousdata[self.times<=t]
+			A     = self._tmpdata[self.times<=t]
 			im, = ax.plot(times*self._coeff_time, A, **self.options.plot)
 			ax.set_xlabel('Time ['+self._time_units+' ]')
 			self._setLimits(ax, xmax=self.times[-1]*self._coeff_time, ymin=self.options.vmin, ymax=self.options.vmax)
@@ -620,6 +560,22 @@ class Diagnostic(object):
 				self._plt.colorbar(mappable=im, cax=ax.cax, **self.options.colorbar)
 			except AttributeError:
 				ax.cax = self._plt.colorbar(mappable=im, ax=ax, **self.options.colorbar).ax
+		self._setSomeOptions(ax)
+		if movie is not None: movie.grab_frame()
+		return im
+	
+	# Special case: 2D plot
+	# This is overloaded by class "Probe" because it requires to replace imshow
+	def _animateOnAxes_2D(self, ax, A):
+		extent = [self._plot_centers[0][0], self._plot_centers[0][-1], self._plot_centers[1][0], self._plot_centers[1][-1]]
+		if self._plot_log[0]: extent[0:2] = [self._np.log10(self._plot_centers[0][0]), self._np.log10(self._plot_centers[0][-1])]
+		if self._plot_log[1]: extent[2:4] = [self._np.log10(self._plot_centers[1][0]), self._np.log10(self._plot_centers[1][-1])]
+		im = ax.imshow( self._np.flipud(A.transpose()),
+			vmin = self.options.vmin, vmax = self.options.vmax, extent=extent, **self.options.image)
+		return im
+	
+	# set options during animation
+	def _setSomeOptions(self, ax):
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax)
 		if self._title is not None: ax.set_title(self._title)
 		ax.set(**self.options.axes)
@@ -633,24 +589,13 @@ class Diagnostic(object):
 		except:
 			print "Cannot format y ticks (typically happens with log-scale)"
 			self.xtickkwargs = []
-		return im
-	
-	# Special case: 2D plot
-	# This is overloaded by class "Probe" because it requires to replace imshow
-	def _animateOnAxes_2D(self, ax, A):
-		extent = [self._plot_centers[0][0], self._plot_centers[0][-1], self._plot_centers[1][0], self._plot_centers[1][-1]]
-		if self._plot_log[0]: extent[0:2] = [self._np.log10(self._plot_centers[0][0]), self._np.log10(self._plot_centers[0][-1])]
-		if self._plot_log[1]: extent[2:4] = [self._np.log10(self._plot_centers[1][0]), self._np.log10(self._plot_centers[1][-1])]
-		im = ax.imshow( self._np.flipud(A.transpose()),
-			vmin = self.options.vmin, vmax = self.options.vmax, extent=extent, **self.options.image)
-		return im
 	
 	# If the sliced data has 0 dimension, this function can plot it 
 	def _plotVsTime(self, ax):
 		if len(self._plot_shape) > 0:
 			print "To plot vs. time, it is necessary to slice all axes in order to obtain a 0-D array"
 			return None
-		# Loop times to gather data
+		# Gather data
 		A = self._np.squeeze(self.getData())
 		im, = ax.plot(self.times*self._coeff_time, A, **self.options.plot)
 		ax.set_xlabel('Time ['+self._time_units+' ]')
@@ -1151,9 +1096,11 @@ class Field(Diagnostic):
 				print "Printing available fields:"
 				print "--------------------------"
 				l = (len(fields)/3) * 3
+				maxlength = str(self._np.max([len(f) for f in fields])+4)
+				fields = [('%'+maxlength+'s')%f for f in fields]
 				if l>0:
-					print '\n'.join(['\t\t'.join(list(i)) for i in self._np.reshape(fields[:l],(-1,3))])
-				print '\t\t'.join(fields[l:])
+					print '\n'.join([''.join(list(i)) for i in self._np.reshape(fields[:l],(-1,3))])
+				print ''.join(list(fields[l:]))
 			else:
 				print "No fields found in '"+self._results_path+"'"
 			return None
@@ -1196,17 +1143,13 @@ class Field(Diagnostic):
 		# -------------------------------------------------------------------
 		# Parse the `field` argument
 		self.operation = field
+		self._operation = "A="+self.operation
+		self._fieldname = []
 		for f in sortedfields:
-			i = fields.index(f)
-			self.operation = self.operation.replace(f,"#"+str(i))
-		requested_fields = self._re.findall("#\d+",self.operation)
-		if len(requested_fields) == 0:
-			print "Could not find any existing field in `"+field+"`"
-			return None
-		self._fieldn = [ int(f[1:]) for f in requested_fields ] # indexes of the requested fields
-		self._fieldn = list(set(self._fieldn))
-		self._fieldname = [ fields[i] for i in self._fieldn ] # names of the requested fields
-	
+			if f in self._operation:
+				self._operation = self._operation.replace(f,"C['"+f+"']")
+				self._fieldname.append(f)
+		
 		# Check slice is a dict
 		if slice is not None  and  type(slice) is not dict:
 			print "Argument `slice` must be a dictionary"
@@ -1221,10 +1164,10 @@ class Field(Diagnostic):
 		self._file = self._results_path+'/Fields.h5'
 		f = self._h5py.File(self._file, 'r')
 		self._h5items = f.values()
-		self._shape = self._np.double(self._h5items[0].values()[0]).shape
-		for n in self._fieldn:
-			s = self._np.double(self._h5items[0].values()[n]).shape
-			self._shape = self._np.min((self._shape, s), axis=0)
+		iterfields = self._h5items[0].itervalues();
+		self._shape = iterfields.next().shape;
+		for fd in iterfields:
+			self._shape = self._np.min((self._shape, fd.shape), axis=0)
 		
 		
 		# 2 - Manage timesteps
@@ -1314,25 +1257,25 @@ class Field(Diagnostic):
 		self._fieldunits = {}
 		self._unitscoeff = {}
 		for f in self._fieldname:
-			i = fields.index(f)
-			self._fieldunits.update({ i:"??" })
-			self._unitscoeff.update({ i:1 })
-			self._titles    .update({ i:"??" })
+			self._fieldunits.update({ f:"??" })
+			self._unitscoeff.update({ f:1 })
+			self._titles    .update({ f:"??" })
 			if units == "nice":
-				self._fieldunits[i] = " ("+{"B":"T"  ,"E":"V/m"  ,"J":"A/cm$^2$"   ,"R":"e/cm$^3$"   }[f[0]]+")"
-				self._unitscoeff[i] =      {"B":10710,"E":3.21e12,"J":coeff_current,"R":coeff_density}[f[0]]
-				self._titles    [i] = f
+				self._fieldunits[f] = " ("+{"B":"T"  ,"E":"V/m"  ,"J":"A/cm$^2$"   ,"R":"e/cm$^3$"   }[f[0]]+")"
+				self._unitscoeff[f] =      {"B":10710,"E":3.21e12,"J":coeff_current,"R":coeff_density}[f[0]]
+				self._titles    [f] = f
 			else:
-				self._fieldunits[i] = " in units of "+{"B":"$m_e\omega/e$","E":"$m_ec\omega/e$","J":"$ecn_c$"    ,"R":"$n_c$"      }[f[0]]
-				self._unitscoeff[i] =                 {"B":1              ,"E":1               ,"J":coeff_current,"R":coeff_density}[f[0]]
-				self._titles    [i] = f
+				self._fieldunits[f] = " in units of "+{"B":"$m_e\omega/e$","E":"$m_ec\omega/e$","J":"$ecn_c$"    ,"R":"$n_c$"      }[f[0]]
+				self._unitscoeff[f] =                 {"B":1              ,"E":1               ,"J":coeff_current,"R":coeff_density}[f[0]]
+				self._titles    [f] = f
 		# finish title creation
 		if len(self._fieldname) == 1:
-			self._title = self._titles[self._fieldn[0]] + self._fieldunits[self._fieldn[0]]
+			f = self._fieldname[0]
+			self._title = self._titles[f] + self._fieldunits[f]
 		else:
 			self._title = self.operation
-			for n in self._fieldn:
-				self._title = self._title.replace("#"+str(n), self._titles[n])
+			for f in self._fieldname:
+				self._title = self._title.replace(f, self._titles[f])
 	
 		# Finish constructor
 		self.valid = True
@@ -1353,7 +1296,7 @@ class Field(Diagnostic):
 			print "Cannot open file "+file
 			return []
 		try:
-			fields = f.values()[0].keys() # list of fields
+			fields = f.itervalues().next().keys() # list of fields
 		except:
 			fields = []
 		f.close()
@@ -1383,17 +1326,16 @@ class Field(Diagnostic):
 		# get data
 		index = self._data[t]
 		C = {}
-		op = "A=" + self.operation
-		for n in reversed(self._fieldn): # for each field in operation
-			B = self._np.double(self._h5items[index].values()[n]) # get array
-			B *= self._unitscoeff[n]
+		h5item = self._h5items[index]
+		for field in self._fieldname: # for each field in operation
+			B = self._np.double(h5item.get(field)) # get array
+			B *= self._unitscoeff[field]
 			for axis, size in enumerate(self._shape):
 				l = self._np.arange(size, B.shape[axis])
 				B = self._np.delete(B, l, axis=axis) # remove extra cells if necessary
-			C.update({ n:B })
-			op = op.replace("#"+str(n), "C["+str(n)+"]")
+			C.update({ field:B })
 		# Calculate the operation
-		exec op in None
+		exec self._operation in None
 		# Apply the slicing
 		for iaxis in range(self._naxes):
 			if self._slices[iaxis] is None: continue
@@ -1598,6 +1540,8 @@ class Probe(Diagnostic):
 				 units="code", data_log=False, **kwargs):
 		
 		if not self.Smilei.valid: return None
+		
+		# If no probeNumber, print available probes
 		if probeNumber is None:
 			probes = self.getProbes()
 			if len(probes)>0:
@@ -1608,17 +1552,35 @@ class Probe(Diagnostic):
 			else:
 				print "No probes found in '"+self._results_path+"'"
 			return None
-		if field is None:
-			print "Printing available fields for probes:"
-			print "-------------------------------------"
-			print "Ex Ey Ez Bx By Bz Jx Jy Jz Rho"
-			return None
 		
-		
+		# Try to get the probe from the hdf5 file
 		self.probeNumber  = probeNumber
 		self._file = self._results_path+"/Probes.h5"
 		f = self._h5py.File(self._file, 'r')
-		self._h5items = f.values()
+		self._h5probe = None
+		for key in f.keys():
+			if key[0] != "p": continue
+			if int(key.strip("p"))==probeNumber:
+				self._h5probe = f.get(key)
+				break
+		if self._h5probe is None:
+			print "Cannot find probe "+str(probeNumber)+" in file "+file
+			f.close()
+			return None
+		
+		# Extract available fields
+		fields = self._h5probe.attrs["fields"].split(",")
+		if len(fields) == 0:
+			print "Probe #"+probeNumber+" is empty"
+			f.close()
+			return None
+		# If no field, print available fields
+		if field is None:
+			print "Printing available fields for probe #"+str(probeNumber)+":"
+			print "----------------------------------------"
+			print ", ".join(fields)
+			f.close()
+			return None
 		
 		# Get info from the input file and prepare units
 		try:
@@ -1651,13 +1613,10 @@ class Probe(Diagnostic):
 			print "No probes found in Probes.h5"
 			return
 		
-		# Get available fields
-		fields = ["Ex","Ey","Ez","Bx","By","Bz","Jx","Jy","Jz","Rho"]
-		sortedfields = reversed(sorted(fields, key = len))
-		
 		# 1 - verifications, initialization
 		# -------------------------------------------------------------------
 		# Parse the `field` argument
+		sortedfields = reversed(sorted(fields, key = len))
 		self.operation = field
 		for f in sortedfields:
 			i = fields.index(f)
@@ -1688,8 +1647,8 @@ class Probe(Diagnostic):
 		# -------------------------------------------------------------------
 		# fill the "data" dictionary with indices to the data arrays
 		self._data = {}
-		for i,t in enumerate(self.times):
-			self._data.update({ t : i })
+		for t in self.times:
+			self._data.update({ t : "%010i"%t })
 		# If timesteps is None, then keep all timesteps otherwise, select timesteps
 		if timesteps is not None:
 			try:
@@ -1835,7 +1794,7 @@ class Probe(Diagnostic):
 	@staticmethod
 	def _printInfo(info):
 		print ("Probe #"+str(info["probeNumber"])+": "+str(info["dimension"])+"-dimensional,"
-			+" every "+str(info["every"])+" timesteps")
+			+" every "+str(info["every"])+" timesteps, with fields "+info["fields"])
 		i = 0
 		while "p"+str(i) in info:
 			print "p"+str(i)+" = "+" ".join(info["p"+str(i)].astype(str).tolist())
@@ -1851,23 +1810,22 @@ class Probe(Diagnostic):
 		except:
 			print "Cannot open file "+file
 			return {}
-		try:
-			probes = [int(key.strip("p")) for key in f.keys()]
-			k = probes.index(probeNumber)
-			probe = f.values()[k]
-		except:
+		for key in f.iterkeys():
+			if key[0] != "p": continue
+			if int(key.strip("p"))==probeNumber:
+				probe = f[key]
+		if probe is None:
 			print "Cannot find probe "+str(probeNumber)+" in file "+file
 			return {}
 		out = {}
 		out.update({"probeNumber":probeNumber, "dimension":probe.attrs["dimension"],
-			"every":probe.attrs["every"]})
+			"every":probe.attrs["every"], "shape":self._np.array(probe["number"]),
+			"fields":probe.attrs["fields"] })
 		i = 0
 		while "p"+str(i) in probe.keys():
 			k = probe.keys().index("p"+str(i))
 			out.update({ "p"+str(i):self._np.array(probe.values()[k]) })
 			i += 1
-		k = probe.keys().index("number")
-		out.update({ "shape":self._np.array(probe.values()[k]) })
 		f.close()
 		return out
 	def _getMyInfo(self):
@@ -1882,7 +1840,7 @@ class Probe(Diagnostic):
 			print "Cannot open file "+file
 			return []
 		try:
-			probes = [int(key.strip("p")) for key in f.keys()] # list of probes
+			probes = [int(key.strip("p")) for key in f.iterkeys()] # list of probes
 		except:
 			probes = []
 		f.close()
@@ -1895,15 +1853,8 @@ class Probe(Diagnostic):
 		except:
 			print "Cannot open file "+self._file
 			return self._np.array([])
-		try:
-			probes = [int(key.strip("p")) for key in f.keys()]
-			k = probes.index(self.probeNumber)
-			probe = f.values()[k]
-		except:
-			print "Cannot find probe "+str(self.probeNumber)+" in file "+file
-			return self._np.array([])
 		times = []
-		for key in probe.keys():
+		for key in self._h5probe.iterkeys():
 			try   : times.append( int(key) )
 			except: pass
 		f.close()
@@ -1917,19 +1868,16 @@ class Probe(Diagnostic):
 			print "Timestep "+t+" not found in this diagnostic"
 			return []
 		# Get arrays from requested field
-		# Open file
-		f = self._h5py.File(self._file, 'r')
 		# get data
 		index = self._data[t]
 		C = {}
 		op = "A=" + self.operation
 		for n in reversed(self._fieldn): # for each field in operation
-			B = self._np.double(self._h5items[self.probeNumber].values()[index][:,n]) # get array
+			B = self._np.double(self._h5probe[index][n,:]) # get array
 			B = self._np.reshape(B, self._shape) # reshape array because it is flattened in the file
 			B *= self._unitscoeff[n]
 			C.update({ n:B })
 			op = op.replace("#"+str(n), "C["+str(n)+"]")
-		f.close()
 		# Calculate the operation
 		exec op in None
 		# Apply the slicing
@@ -1954,6 +1902,340 @@ class Probe(Diagnostic):
 
 
 
+
+# -------------------------------------------------------------------
+# Class for test particles diagnostics
+# -------------------------------------------------------------------
+class TestParticles(Diagnostic):
+
+	# This is the constructor, which creates the object
+	def _init(self, species=None, select="", axes=[], timesteps=None,
+				 units="code", **kwargs):
+		
+		if not self.Smilei.valid: return None
+		
+		# If argument 'species' not provided, then print available species and leave
+		if species is None:
+			species = self.getTestSpecies()
+			if len(species)>0:
+				print "Printing available test species:"
+				print "--------------------------------"
+				for s in species: print s
+			else:
+				print "No test particle files found in '"+self._results_path+"'"
+			return None
+		
+		# 1 - Get info from the namelist and prepare units
+		# -------------------------------------------------------------------
+		try:
+			ndim               = self._read_ndim()
+			ncels, cell_length = self._read_ncels_cell_length(ndim)
+			self.timestep      = self._read_timestep()
+		except:
+			return None
+		if units == "nice":
+			try   : wavelength_SI = self._read_wavelength_SI()
+			except: return None
+			coeff_distance = 1e2*wavelength_SI/(2.*self._np.pi) # in cm
+			self._coeff_time = self.timestep * wavelength_SI/3.e8 # in seconds
+			self._time_units = " s"
+		elif units == "code":
+			coeff_distance = 1 # in c/w
+			self._coeff_time = self.timestep # in 1/w
+			self._time_units = " $1/\omega$"
+		else:
+			print "Units not understood"
+			return
+		
+		# 2 - Get info from the hdf5 files + verifications
+		# -------------------------------------------------------------------
+		self.species  = species
+		self._file = self._results_path+"/TestParticles_"+species+".h5"
+		f = self._h5py.File(self._file, 'r')
+		self._h5items = f.values()
+		
+		# Get available times in the hdf5 file
+		self.times = self.getAvailableTimesteps()
+		if self.times.size == 0:
+			print "No test particles found in "+self._file
+			return
+		alltimes = self.times
+		# If specific timesteps requested, narrow the selection
+		if timesteps is not None:
+			try:
+				ts = self._np.array(self._np.double(timesteps),ndmin=1)
+				if ts.size==2:
+					# get all times in between bounds
+					self.times = self.times[ (self.times>=ts[0]) * (self.times<=ts[1]) ]
+				elif ts.size==1:
+					# get nearest time
+					self.times = self._np.array([self.times[(self._np.abs(self.times-ts)).argmin()]])
+				else:
+					raise
+			except:
+				print "Argument `timesteps` must be one or two non-negative integers"
+				return
+		# Need at least one timestep
+		if self.times.size < 1:
+			print "Timesteps not found"
+			return
+		
+		# Get available properties ("x", "y", etc.)
+		self._properties = {}
+		translateProperties = {"Id":"Id", "x":"Position-0", "y":"Position-1", "z":"Position-2",
+							"px":"Momentum-0", "py":"Momentum-1", "pz":"Momentum-2"}
+		availableProperties = f.keys()
+		for k,v in translateProperties.iteritems():
+			try:
+				i = availableProperties.index(v)
+				self._properties.update({ k:i })
+				if k == "Id": self._Id = self._h5items[i]
+			except:
+				pass
+		
+		# Get number of particles
+		self.nParticles = self._h5items[0].shape[1]
+		
+		# 3 - Select particles
+		# -------------------------------------------------------------------
+		if type(select) is not str:
+			print "Error: the argument 'select' must be a string"
+			return
+		def findClosingCharacter(string, character, start=0):
+			i = start
+			stack = []
+			associatedBracket = {")":"(", "]":"[", "}":"{"}
+			while i < len(string):
+				if string[i] == character and len(stack)==0: return i
+				if string[i] in ["(", "[", "{"]:
+					stack.append(string[i])
+				if string[i] in [")", "]", "}"]:
+					if len(stack)==0:
+						raise Exception("Error in selector syntax: missing `"+character+"`")
+					if stack[-1]!=associatedBracket[string[i]]:
+						raise Exception("Error in selector syntax: missing closing parentheses or brackets")
+					del stack[-1]
+				i+=1
+			raise Exception("Error in selector syntax: missing `"+character+"`")
+		i = 0
+		stack = []
+		operation = ""
+		while i < len(select):
+			if i+4<len(select):
+				if select[i:i+4] == "any(" or select[i:i+4] == "all(":
+					if select[i:i+4] == "any(": function = self._np.logical_or
+					if select[i:i+4] == "all(": function = self._np.logical_and
+					comma = findClosingCharacter(select, ",", i+4)
+					parenthesis = findClosingCharacter(select, ")", comma+1)
+					timeSelector = select[i+4:comma]
+					try:
+						s = self._re.sub(r"\bt\b","alltimes",timeSelector)
+						times = alltimes[eval(s)]
+					except:
+						raise Exception("Error in selector syntax: time selector not understood in "+select[i:i+3]+"()")
+					try:
+						particleSelector = select[comma+1:parenthesis]
+						for prop in self._properties.keys():
+							particleSelector = self._re.sub(r"\b"+prop+r"\b", "self._np.double(self._h5items["+str(self._properties[prop])+"][t,:])", particleSelector)
+					except:
+						raise Exception("Error in selector syntax: not understood: "+select[i:parenthesis+1])
+					if select[i:i+4] == "any(": selection = self._np.array([False]*self.nParticles)
+					if select[i:i+4] == "all(": selection = self._np.array([True]*self.nParticles)
+					#try:
+					ID = self._np.zeros((self.nParticles,), dtype=self._np.int16)
+					for t in times:
+						selectionAtTimeT = eval(particleSelector) # array of True or False
+						self._Id.read_direct(ID, source_sel=self._np.s_[t,:], dest_sel=self._np.s_[:]) # read the particle Ids
+						selectionAtTimeT = selectionAtTimeT[ID>0] # remove zeros, which are dead particles
+						id = ID[ID>0]-1 # remove zeros, which are dead particles
+						selection[id] = function( selection[id], selectionAtTimeT)
+					#except:
+					#	raise Exception("Error in selector syntax: not understood: "+select[i:parenthesis+1])
+					stack.append(selection)
+					operation += "stack["+str(len(stack)-1)+"]"
+					i = parenthesis+1
+					continue
+			operation += select[i]
+			i+=1
+		if len(operation)==0.:
+			self.selectedParticles = self._np.arange(self.nParticles)
+		else:
+			self.selectedParticles = eval(operation).nonzero()[0]
+		self.selectedParticles.sort()
+		self.selectedParticles += 1
+		self.nselectedParticles = len(self.selectedParticles)
+		
+		# 4 - Manage axes
+		# -------------------------------------------------------------------
+		if type(axes) is not list:
+			print "Error: Argument 'axes' must be a list"
+			return
+		if len(axes)==0:
+			print "Error: must define at least one axis."
+			return
+		self.axes = axes
+		self._axesIndex = []
+		for axis in axes:
+			if axis not in self._properties.keys():
+				print "Error: Argument 'axes' has item '"+str(axis)+"' unknown."
+				print "       Available axes are: "+(", ".join(sorted(self._properties.keys())))
+				return
+			self._axesIndex.append( self._properties[axis] ) # axesIndex contains the index in the hdf5 file
+		# The following variables are not very relevant for test particles
+		#  but they are needed for plotting functions
+		self._plot_shape = [0]*len(axes)
+		self._plot_type = self.axes
+		self._plot_centers = []
+		self._plot_label = []
+		self._plot_log = []
+		for i, axis in enumerate(self.axes):
+			axisi = self._axesIndex[i]
+			vals = self._np.double(self._h5items[axisi])
+			coeff = 1.
+			if axis in ["x", "y", "z"]: coeff = coeff_distance
+			axisunits = ""
+			if axis != "Id":
+				axisunits = " [code units]"
+				if units == "nice":
+					if axis in ["x" , "y" , "z" ]: axisunits = " [cm]"
+					if axis in ["px", "py", "pz"]: axisunits = " [m c]"
+			self._plot_centers.append([vals.min(), vals.max()])
+			self._plot_log.append(False)
+			self._plot_label.append( axis+axisunits )
+		self._title = "Test particles '"+species+"'"
+		
+		# Finish constructor
+		self.valid = True
+	
+	# Method to print info on included probe
+	def info(self):
+		if not self._validate(): return
+		print "Test particles: species '"+self.species+"' containing "+str(self.nParticles)+" particles"
+		print "                but selection of "+str(len(self.selectedParticles))+" particles"
+	
+	# get all available test species
+	def getTestSpecies(self):
+		files = self._glob(self._results_path+"/TestParticles_*.h5")
+		species = []
+		for file in files:
+			species.append(self._re.search("TestParticles_(.*).h5",file).groups()[0])
+		return species
+	
+	# get all available timesteps
+	def getAvailableTimesteps(self):
+		try:
+			ntimes = self._h5items[0].len()
+		except:
+			print "Unable to find test particle data in file "+self._file
+			return self._np.array([])
+		return self._np.arange(ntimes)
+	
+	# We override the get and getData methods
+	def getData(self):
+		if not self._validate(): return
+		# create empty dictionary
+		data = {}
+		for axis in self.axes:
+			data.update({ axis:self._np.zeros((len(self.times), self.nselectedParticles)) })
+			data[axis].fill(self._np.nan)
+		# loop times and fill up the data
+		ID = self._np.zeros((self.nParticles,), dtype=self._np.int16)
+		B = self._np.zeros((self.nParticles,))
+		for ti, t in enumerate(self.times):
+			self._Id.read_direct(ID, source_sel=self._np.s_[t,:], dest_sel=self._np.s_[:]) # read the particle Ids
+			indices = self._np.argwhere(self._np.in1d(ID, self.selectedParticles)).squeeze() # find indexes of selected particles at time t
+			indices = self._np.array(indices, ndmin=1)
+			if len(indices)>0:
+				id = ID[indices] # get their ids
+				order = id.argsort()
+				indices = indices[order] # sort indices so that ids would be sorted
+			for i, axis in enumerate(self.axes):
+				axisi = self._axesIndex[i]
+				self._h5items[axisi].read_direct(B, source_sel=self._np.s_[t,:], dest_sel=self._np.s_[:])
+				data[axis][ti, :] = B[indices].squeeze()
+		data.update({ "times":self.times })
+		return data
+	def get(self):
+		return self.getData()
+	
+	# We override the plotting methods
+	def _plotVsTime(self, ax):
+		pass
+	def _animateOnAxes(self, ax, t, movie=None):
+		if not self._validate(): return None
+		# Check number of axes
+		if len(self.axes)>2:
+			print "Error: Cannot print test particles on more than 2-D"
+			return None
+		# Get data
+		if self._tmpdata is None:
+			A = self.getData()
+			self._tmpdata = []
+			for axis in self.axes: self._tmpdata.append( A[axis] )
+		# Plot at time t
+		if len(self.axes) == 1:
+			times = self.times[self.times<=t]
+			A     = self._tmpdata[0][self.times<=t,:]
+			if times.size == 1:
+				times = self._np.double([times, times]).squeeze()
+				A = self._np.double([A, A]).squeeze()
+			ax.plot(times*self._coeff_time, A, **self.options.plot)
+			ax.set_xlabel('Time ['+self._time_units+' ]')
+			ax.set_ylabel(self._plot_label[0])
+			self._setLimits(ax, xmax=self.times[-1]*self._coeff_time, ymin=self.options.vmin, ymax=self.options.vmax)
+		elif len(self.axes) == 2:
+			x = self._tmpdata[0][self.times<=t,:]
+			y = self._tmpdata[1][self.times<=t,:]
+			ax.plot(x, y, **self.options.plot)
+			ax.set_xlabel(self._plot_label[0])
+			ax.set_ylabel(self._plot_label[1])
+			self._setLimits(ax, ymin=self.options.vmin, ymax=self.options.vmax)
+			self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax)
+		self._setSomeOptions(ax)
+		if movie is not None: movie.grab_frame()
+		return 1
+
+
+
+
+
+class Movie:
+	
+	def __init__(self, fig, movie="", fps=15, dpi=200):
+		import os.path as ospath
+		self.writer = None
+		if type(movie) is not str:
+			print "ERROR: argument 'movie' must be a filename"
+			return
+		if len(movie)>0:
+			if ospath.isfile(movie):
+				print "ERROR: file '"+movie+"' already exists. Please choose another name"
+				return
+			if ospath.isdir(movie):
+				print "ERROR: '"+movie+"' is a path, not a file"
+				return
+			try:
+				import matplotlib.animation as anim
+			except:
+				print "ERROR: it looks like your version of matplotlib is too old for movies"
+				return
+			try:
+				self.writer = anim.writers['ffmpeg'](fps=fps)
+			except:
+				print "ERROR: you need the 'ffmpeg' software to make movies"
+				return
+			self.writer.setup(fig, movie, dpi)
+	
+	def finish(self):
+		if self.writer is not None:
+			self.writer.finish()
+	
+	def grab_frame(self):
+		if self.writer is not None:
+			self.writer.grab_frame()
+
+
+
 def multiPlot(*Diags, **kwargs):
 	""" multiplot(Diag1, Diag2, ..., figure=1, shape=None)
 	
@@ -1970,10 +2252,17 @@ def multiPlot(*Diags, **kwargs):
 	if nDiags == 0: return
 	for Diag in Diags:
 		if not Diag.valid: return
-	# Gather all times
-	alltimes = np.unique(np.concatenate([Diag.times*Diag.timestep for Diag in Diags]))
 	# Get keyword arguments
 	shape  = kwargs.pop("shape" , None)
+	movie  = kwargs.pop("movie" , ""  )
+	fps    = kwargs.pop("fps"   , 15  )
+	dpi    = kwargs.pop("dpi"   , 200 )
+	skipAnimation = kwargs.pop("skipAnimation", False )
+	# Gather all times
+	if skipAnimation:
+		alltimes = np.unique([Diag.times[-1]*Diag.timestep for Diag in Diags])
+	else:
+		alltimes = np.unique(np.concatenate([Diag.times*Diag.timestep for Diag in Diags]))
 	# Determine whether to plot all cases on the same axes
 	sameAxes = False
 	if shape is None or shape == [1,1]:
@@ -1981,6 +2270,9 @@ def multiPlot(*Diags, **kwargs):
 		for Diag in Diags:
 			if Diag.dim()==0 and Diags[0].dim()==0:
 				continue
+			if type(Diag) is TestParticles:
+				sameAxes = False
+				break
 			if Diag.dim()!=1 or Diag._plot_type!=Diags[0]._plot_type:
 				sameAxes = False
 				break
@@ -2029,6 +2321,7 @@ def multiPlot(*Diags, **kwargs):
 	# Animated plot
 	else:
 		# Loop all times
+		mov = Movie(fig, movie, fps, dpi)
 		for time in alltimes:
 			for Diag in Diags:
 				t = np.round(time/Diag.timestep) # convert time to timestep
@@ -2042,6 +2335,7 @@ def multiPlot(*Diags, **kwargs):
 						Diag._ax.set_xlim(xmin,xmax)
 			fig.canvas.draw()
 			plt.show()
+		if mov.writer is not None: mov.finish()
 		return
 	
 
