@@ -255,7 +255,7 @@ void Collisions::collide(PicParams& params, vector<Species*>& vecSpecies, int it
     unsigned int npairs; // number of pairs of macro-particles
     vector<unsigned int> np1, np2; // numbers of macro-particles in each species, in each group
     double n1, n2, n12, n123, n223; // densities of particles
-    unsigned int i1, i2, ispec1, ispec2, ntot;
+    unsigned int i1, i2, ispec1, ispec2;
     Species   *s1, *s2;
     Particles *p1, *p2;
     double m1, m2, m12, W1, W2, qqm, qqm2, gamma1, gamma2, gamma12, gamma12_inv,
@@ -265,7 +265,7 @@ void Collisions::collide(PicParams& params, vector<Species*>& vecSpecies, int it
            logL, bmin, s, vrel, smax,
            cosX, sinX, phi, sinXcosPhi, sinXsinPhi, p_perp, inv_p_perp, 
            newpx_COM, newpy_COM, newpz_COM, U, vcp;
-    Field2D *smean, *logLmean, *temperature, *ncol;
+    Field2D *smean, *logLmean, *ncol;//, *temperature
     ostringstream name;
     hid_t did;
     

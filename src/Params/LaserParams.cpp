@@ -79,7 +79,8 @@ LaserParams::LaserParams(PicParams& params, InputData &ifile) {
             }
         }//geometry
         
-        bool delayExists = ifile.extract("delay",tmpLaser.delay ,"Laser",ilaser);
+        //! \todo FP to MG : should we remove this now ? I commented it out because it is not used.
+        //bool delayExists = ifile.extract("delay",tmpLaser.delay ,"Laser",ilaser);
         
         // -----------------------------------------------------------------
         // tests on the laser parameters (when arbitrary focus or incidence)

@@ -69,18 +69,18 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi )
     }
     
     // Check for inconsistencies between EM and particle BCs
-    if ( (params.bc_em_type_x[0]=="periodic")&&(params.species_param[ispec].bc_part_type_west!="none")
-     ||  (params.bc_em_type_x[1]=="periodic")&&(params.species_param[ispec].bc_part_type_east!="none") ) {
+    if ( ((params.bc_em_type_x[0]=="periodic")&&(params.species_param[ispec].bc_part_type_west!="none"))
+     ||  ((params.bc_em_type_x[1]=="periodic")&&(params.species_param[ispec].bc_part_type_east!="none")) ) {
         ERROR("For species #" << ispec << ", periodic EM boundary conditions require x particle BCs to be periodic.");
     }
     if ( nDim_particle > 1 ) {
-        if ( (params.bc_em_type_y[0]=="periodic")&&(params.species_param[ispec].bc_part_type_south!="none")
-         ||  (params.bc_em_type_y[1]=="periodic")&&(params.species_param[ispec].bc_part_type_north!="none") ) {
+        if ( ((params.bc_em_type_y[0]=="periodic")&&(params.species_param[ispec].bc_part_type_south!="none"))
+         ||  ((params.bc_em_type_y[1]=="periodic")&&(params.species_param[ispec].bc_part_type_north!="none")) ) {
             ERROR("For species #" << ispec << ", periodic EM boundary conditions require y particle BCs to be periodic.");
         }
         if ( nDim_particle > 2 ) {
-            if ( (params.bc_em_type_z[0]=="periodic")&&(params.species_param[ispec].bc_part_type_bottom!="none")
-             ||  (params.bc_em_type_z[1]=="periodic")&&(params.species_param[ispec].bc_part_type_up!="none") ) {
+            if ( ((params.bc_em_type_z[0]=="periodic")&&(params.species_param[ispec].bc_part_type_bottom!="none"))
+             ||  ((params.bc_em_type_z[1]=="periodic")&&(params.species_param[ispec].bc_part_type_up!="none"    )) ) {
                 ERROR("For species #" << ispec << ", periodic EM boundary conditions require z particle BCs to be periodic.");
             }
         }

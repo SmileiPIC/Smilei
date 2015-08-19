@@ -325,7 +325,7 @@ int main (int argc, char* argv[])
 #pragma omp barrier
                 if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
                     // Loop on dims to manage exchange in corners
-                    for ( int iDim = 0 ; iDim<params.nDim_particle ; iDim++ )
+                    for ( int iDim = 0 ; iDim<(int)params.nDim_particle ; iDim++ )
                         smpi->exchangeParticles(vecSpecies[ispec], ispec, params, tid, iDim);
 #pragma omp barrier
                         vecSpecies[ispec]->sort_part(); // Should we sort test particles ?? (JD)
@@ -334,26 +334,26 @@ int main (int argc, char* argv[])
         }
         timer[1].update();
         
+        
+        //!\todo To simplify : sum global and per species densities
+        timer[4].restart();
+        smpi->sumRhoJ( EMfields );
+        for (unsigned int ispec=0 ; ispec<params.species_param.size(); ispec++) {
+            if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ) smpi->sumRhoJs(EMfields, ispec, time_dual > params.species_param[ispec].time_frozen);
+        }
+        EMfields->computeTotalRhoJ();
+        timer[4].update();
+        
+        // solve Maxwell's equations
         if( time_dual > params.time_fields_frozen ) {
-            
-            //!\todo To simplify : sum global and per species densities
-            timer[4].restart();
-            smpi->sumRhoJ( EMfields );
-            for (unsigned int ispec=0 ; ispec<params.species_param.size(); ispec++) { // if (!isTestParticles)
-                if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ) smpi->sumRhoJs(EMfields, ispec, time_dual > params.species_param[ispec].time_frozen);
-            }
-            EMfields->computeTotalRhoJ(); // if (!isTestParticles)
-            timer[4].update();
-            
-            // solve Maxwell's equations
             timer[2].restart();
             EMfields->solveMaxwell(itime, time_dual, smpi, params, simWindow);
             timer[2].update();
-            
-            // incrementing averaged electromagnetic fields
-            if (Diags.ntime_step_avg) EMfields->incrementAvgFields(itime, Diags.ntime_step_avg);
-            
         }
+        
+        // incrementing averaged electromagnetic fields
+        if (Diags.ntime_step_avg) EMfields->incrementAvgFields(itime, Diags.ntime_step_avg);
+        
         
         // call the various diagnostics
         // ----------------------------
@@ -416,15 +416,15 @@ int main (int argc, char* argv[])
     //if ( smpi->isMaster() ) MESSAGE("Time in time loop : " << timElapsed );
     timer[0].update();
     TITLE("Time profiling :");
-
+    
     double coverage(0.);
-    for (int i=1 ; i<timer.size() ; i++) coverage += timer[i].getTime();
+    for (unsigned int i=1 ; i<timer.size() ; i++) coverage += timer[i].getTime();
     MESSAGE("Time in time loop :\t" << timer[0].getTime() << "\t("<<coverage/timer[0].getTime()*100.<< "% coverage)" );
     if ( smpi->isMaster() )
-        for (int i=1 ; i<timer.size() ; i++) timer[i].print(timer[0].getTime());
+        for (unsigned int i=1 ; i<timer.size() ; i++) timer[i].print(timer[0].getTime());
     
     Diags.printTimers(smpi,timer[3].getTime());
-
+    
     
     // ------------------------------------------------------------------
     //                      Temporary validation diagnostics
@@ -449,13 +449,13 @@ int main (int argc, char* argv[])
     delete Proj;
     delete Interp;
     delete EMfields;
-    for(int i=0; i<vecCollisions.size(); i++) delete vecCollisions[i];
+    for(unsigned int i=0; i<vecCollisions.size(); i++) delete vecCollisions[i];
     vecCollisions.clear();
     Diags.closeAll(smpi);
     
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
     vecSpecies.clear();
-
+    
     if (params.nspace_win_x)
         delete simWindow;
     

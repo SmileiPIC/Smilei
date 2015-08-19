@@ -179,7 +179,7 @@ PicParams::PicParams(InputData &ifile) {
 
 void PicParams::readSpecies(InputData &ifile) {
     bool ok;
-    for (unsigned int ispec = 0; ispec < ifile.nComponents("Species"); ispec++) {
+    for (int ispec = 0; ispec < ifile.nComponents("Species"); ispec++) {
         SpeciesStructure tmpSpec;
         
         ifile.extract("species_type",tmpSpec.species_type,"Species",ispec);

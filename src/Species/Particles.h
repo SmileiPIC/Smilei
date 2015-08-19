@@ -43,7 +43,7 @@ public:
         return Weight.capacity();
     }
     
-        //! Get dimension of particules
+    //! Get dimension of particules
     inline int dimension() const {
         return Position.size();
     }
@@ -196,24 +196,26 @@ public:
     // Test particle parameters
     bool isTestParticles;
     void setIds() {
-        for (int iPart=0;iPart<Id.size();iPart++) Id[iPart] = iPart+1;
+        unsigned int s = Id.size();
+        for (unsigned int iPart=0; iPart<s; iPart++) Id[iPart] = iPart+1;
     }
     void addIdOffsets(int startingId) {
-        for (int iPart=0;iPart<Id.size();iPart++) Id[iPart] += startingId;
+        unsigned int s = Id.size();
+        for (unsigned int iPart=0; iPart<s; iPart++) Id[iPart] += startingId;
     }
     //! Id of the particle
-    std::vector<short> Id;
+    std::vector<unsigned int> Id;
     
     //! Method used to get the Particle Id
-    inline short  id(int ipart) const {
+    inline unsigned int id(int ipart) const {
         return Id[ipart];
     }
     //! Method used to set the Particle Id
-    inline short&  id(int ipart) {
+    inline unsigned int& id(int ipart) {
         return Id[ipart];
     }
-    //! Method used to get the Particle Id
-    inline std::vector<short>  id() const {
+    //! Method used to get the Particle Ids
+    inline std::vector<unsigned int> id() const {
         return Id;
     }
     void sortById();

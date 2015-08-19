@@ -23,7 +23,7 @@ DiagnosticParticles::DiagnosticParticles(unsigned int ID, string output_, unsign
     
     // calculate the total size of the output array
     output_size = 1;
-    for (int iaxis=0 ; iaxis < axes.size() ; iaxis++)
+    for (unsigned int iaxis=0 ; iaxis < axes.size() ; iaxis++)
         output_size *= axes[iaxis]->nbins;
     
     // if necessary, resize the output array
@@ -34,11 +34,11 @@ DiagnosticParticles::DiagnosticParticles(unsigned int ID, string output_, unsign
     ostringstream mystream("");
     mystream.str("");
     mystream << species[0];
-    for(int i=1; i<species.size(); i++)
+    for(unsigned int i=1; i<species.size(); i++)
         mystream << "," << species[i];
     MESSAGE(2,"Created particle diagnostic #" << ID << ": species " << mystream.str());
     DiagnosticParticlesAxis *a;
-    for(int i=0; i<axes.size(); i++) {
+    for(unsigned int i=0; i<axes.size(); i++) {
         a = axes[i];
         mystream.str("");
         mystream << "\t\t\tAxis " << a->type << " from " << a->min << " to " << a->max << " in " << a->nbins << " steps";
@@ -91,11 +91,11 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
         H5::attr(fileId, "time_average"  , time_average);
         // write all species
         mystream.str(""); // clear
-        for (int i=0 ; i < species.size() ; i++)
+        for (unsigned int i=0 ; i < species.size() ; i++)
             mystream << species[i] << " ";
         H5::attr(fileId, "species", mystream.str().c_str());
         // write each axis
-        for (int iaxis=0 ; iaxis < axes.size() ; iaxis++) {
+        for (unsigned int iaxis=0 ; iaxis < axes.size() ; iaxis++) {
             mystream.str(""); // clear
             mystream << "axis" << iaxis;
             str1 = mystream.str();
@@ -119,7 +119,7 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
         fill(data_sum.begin(), data_sum.end(), 0.);
     
     // loop species
-    for (int ispec=0 ; ispec < species.size() ; ispec++) {
+    for (unsigned int ispec=0 ; ispec < species.size() ; ispec++) {
         
         // make shortcuts
         s = vecSpecies[species[ispec]]; // current species
@@ -149,7 +149,7 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
             
             // 1 - loop on the different axes requested and compute the output index of each particle
             // --------------------------------------------------------------------------------------
-            for (int iaxis=0 ; iaxis < axes.size() ; iaxis++) {
+            for (unsigned int iaxis=0 ; iaxis < axes.size() ; iaxis++) {
                 
                 axismin  = axes[iaxis]->min;
                 axismax  = axes[iaxis]->max;

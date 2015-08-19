@@ -49,7 +49,6 @@ void DiagnosticScalar::run(int timestep, ElectroMagn* EMfields, vector<Species*>
     // check that every is defined for scalar & that tmin <= time <= tmax
     if ( (every) && (time >= tmin) && (time <= tmax) ) {
         
-        //! \todo (MG) Is it really necessary when the user does not request Poynting?
         EMfields->computePoynting(); // Poynting must be calculated & incremented at every timesteps
         
         if (timestep % every == 0) { // other scalars are calculated only at timestep \propto every

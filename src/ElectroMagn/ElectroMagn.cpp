@@ -42,7 +42,7 @@ oversize(params.oversize)
     }
     
     if (n_space.size() != 3) ERROR("this should not happend");
-
+    
     Ex_=NULL;
     Ey_=NULL;
     Ez_=NULL;
@@ -75,7 +75,7 @@ oversize(params.oversize)
         Jz_s[ispec]  = NULL;
         rho_s[ispec] = NULL;
     }
-
+    
     
     for (unsigned int i=0; i<3; i++) {
         for (unsigned int j=0; j<2; j++) {
@@ -83,7 +83,7 @@ oversize(params.oversize)
             bufsize[i][j]=0;
         }
     }    
-
+    
     emBoundCond = ElectroMagnBC_Factory::create(params, laser_params);
     
     MaxwellFaradaySolver_ = SolverFactory::create(params);
@@ -110,7 +110,7 @@ ElectroMagn::~ElectroMagn()
     delete Jy_;
     delete Jz_;
     delete rho_;
-
+    
     if (Ex_avg!=NULL) {
         delete Ex_avg;
         delete Ey_avg;
@@ -119,18 +119,18 @@ ElectroMagn::~ElectroMagn()
         delete By_avg;
         delete Bz_avg;
     }
-
+    
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
       delete Jx_s[ispec];
       delete Jy_s[ispec];
       delete Jz_s[ispec];
       delete rho_s[ispec];
     }
-  
+    
     int nBC = emBoundCond.size();
     for ( int i=0 ; i<nBC ;i++ )
-      if (emBoundCond[i]!=NULL) delete emBoundCond[i];
-
+        if (emBoundCond[i]!=NULL) delete emBoundCond[i];
+    
     delete MaxwellFaradaySolver_;
 
 }//END Destructer

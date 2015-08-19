@@ -64,7 +64,7 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
     if ( v>3.0*params.thermalVelocity[0] ) {    //IF VELOCITY > 3*THERMAL VELOCITY THEN THERMALIZE IT
 
         // velocity of the particle after reflection (unchanged in the directions that are not resolved in the simulations)
-        for (unsigned int i=0; i<params.nDim_fields; i++) {
+        for (int i=0; i<params.nDim_fields; i++) {
             
             if (i==direction) {
                 // change of velocity in the direction normal to the reflection plane
