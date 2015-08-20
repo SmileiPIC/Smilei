@@ -260,7 +260,6 @@ void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI*
 
 bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWindow, Params &params) { 
     if (dump_minutes != 0.0) {
-        MPI_Request request;
         // master checks whenever we passed the time limit
         if (smpi->isMaster() && time_dump_step==0) {
             double elapsed_time = (MPI_Wtime() - time_reference)/60.;
@@ -268,12 +267,18 @@ bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, std::vector<Spec
                 time_dump_step = itime+1; // we will dump at next timestep (in case non-master already passed)
                 MESSAGE("Reached time limit : " << elapsed_time << " minutes. Dump timestep : " << time_dump_step );
                 // master does a non-blocking send
-                for (unsigned int dest=1; dest < smpi->getSize(); dest++) {
+                MPI_Request request;
+                for (unsigned int dest=0; dest < smpi->getSize(); dest++) {
                     MPI_Isend(&time_dump_step,1,MPI_UNSIGNED,dest,SMILEI_COMM_DUMP_TIME,smpi->SMILEI_COMM_WORLD,&request);
                 }
             }
         } else { // non master nodes receive the time_dump_step (non-blocking)
-            MPI_Irecv(&time_dump_step,1,MPI_UNSIGNED,0,SMILEI_COMM_DUMP_TIME,smpi->SMILEI_COMM_WORLD,&request);
+            int todump=0;
+            MPI_Status status;
+            MPI_Iprobe(0,SMILEI_COMM_DUMP_TIME,MPI_COMM_WORLD,&todump,&status);
+            if (todump) {
+                MPI_Recv(&time_dump_step,1,MPI_UNSIGNED,0,SMILEI_COMM_DUMP_TIME,smpi->SMILEI_COMM_WORLD,&status);
+            }
         }
     }
     

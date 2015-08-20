@@ -219,6 +219,13 @@ class Smilei(object):
 		"""
 		return TestParticles(self, *args, **kwargs)
 	
+	def exportXdmf(self, outputfile=None):
+	    """ create xdmf file """  
+	    if outputfile is None:
+	        outputfile=self._results_path+"/smilei.dmf"
+
+	    print "hereIam", outputfile
+	
 	
 class Options(object):
 	""" Class to contain matplotlib plotting options """
