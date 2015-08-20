@@ -131,7 +131,7 @@ public:
     std::vector<std::vector<std::string>> fieldname;
     
     //! Indices in the output array where each field goes
-    std::vector<std::vector<int>> fieldlocation;
+    std::vector<std::vector<unsigned int>> fieldlocation;
     
 protected:
     //! E local fields for the projector

@@ -154,7 +154,7 @@ void ElectroMagnBC2D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Smi
     if ( smpi->isWestern() ) {
         
         // Static cast of the fields
-        Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
+        //Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
         Field2D* Ey2D = static_cast<Field2D*>(EMfields->Ey_);
         Field2D* Ez2D = static_cast<Field2D*>(EMfields->Ez_);
         Field2D* Bx2D = static_cast<Field2D*>(EMfields->Bx_);
@@ -252,7 +252,7 @@ void ElectroMagnBC2D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Smi
     if ( smpi->isEastern() ) {
         
         // Static cast of the fields
-        Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
+        //Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
         Field2D* Ey2D = static_cast<Field2D*>(EMfields->Ey_);
         Field2D* Ez2D = static_cast<Field2D*>(EMfields->Ez_);
         Field2D* Bx2D = static_cast<Field2D*>(EMfields->Bx_);
@@ -322,7 +322,7 @@ void ElectroMagnBC2D_SM::apply_ymin(ElectroMagn* EMfields, double time_dual, Smi
         
         // Static cast of the fields
         Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
-        Field2D* Ey2D = static_cast<Field2D*>(EMfields->Ey_);
+        //Field2D* Ey2D = static_cast<Field2D*>(EMfields->Ey_);
         Field2D* Ez2D = static_cast<Field2D*>(EMfields->Ez_);
         Field2D* Bx2D = static_cast<Field2D*>(EMfields->Bx_);
         Field2D* By2D = static_cast<Field2D*>(EMfields->By_);
@@ -363,7 +363,7 @@ void ElectroMagnBC2D_SM::apply_ymax(ElectroMagn* EMfields, double time_dual, Smi
         
         // Static cast of the fields
         Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
-        Field2D* Ey2D = static_cast<Field2D*>(EMfields->Ey_);
+        //Field2D* Ey2D = static_cast<Field2D*>(EMfields->Ey_);
         Field2D* Ez2D = static_cast<Field2D*>(EMfields->Ez_);
         Field2D* Bx2D = static_cast<Field2D*>(EMfields->Bx_);
         Field2D* By2D = static_cast<Field2D*>(EMfields->By_);

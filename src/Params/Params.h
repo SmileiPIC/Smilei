@@ -203,7 +203,6 @@ public:
     //! local simulation box size in \f$2\pi/k_N \f$
     std::vector<double> sim_length;
     
-    //!\todo (MG to FP) Check here if one cannot limit time_fields_frozen to solve_maxwell only (so that one can plot the density & currents)
     //! time during which the Maxwell's equations are not solved
     double time_fields_frozen;
     

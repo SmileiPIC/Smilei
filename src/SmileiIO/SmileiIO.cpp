@@ -25,8 +25,8 @@ int SmileiIO::signal_received=0;
 
 SmileiIO::SmileiIO( Params& params, Diagnostic& diag, SmileiMPI* smpi ) : 
 dump_times(0), 
-fieldsToDump(diag.fieldsToDump),
-time_reference(0.0)
+time_reference(0.0),
+fieldsToDump(diag.fieldsToDump)
 {
     nDim_particle=params.nDim_particle;
     //particleSize = nDim_particle + 3 + 1;
@@ -629,7 +629,7 @@ void SmileiIO::writeTestParticles(Species* species, int ispec, int time, Params&
             attr << "Position-" << idim;
             appendTestParticles( fid, attr.str(), testParticles.position(idim), nParticles, H5T_NATIVE_DOUBLE );
         }
-        for (int idim=0 ; idim<3 ; idim++) {
+        for (unsigned int idim=0 ; idim<3 ; idim++) {
             attr.str("");
             attr << "Momentum-" << idim;
             appendTestParticles( fid, attr.str(), testParticles.momentum(idim), nParticles, H5T_NATIVE_DOUBLE );

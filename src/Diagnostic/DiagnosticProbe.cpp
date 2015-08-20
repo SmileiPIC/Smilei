@@ -25,7 +25,7 @@ fileId(0)
 
 DiagnosticProbe::~DiagnosticProbe()
 {
-    for ( int np=0 ; np < probesArray.size() ; np++ )
+    for (unsigned int np=0 ; np < probesArray.size() ; np++ )
     delete probesArray[np];
 }
 
@@ -54,7 +54,7 @@ void DiagnosticProbe::run(unsigned int timestep, ElectroMagn* EMfields, Interpol
             
             // Loop probe ("fake") particles
             unsigned int nPart_local = probeParticles[np].size();
-            for (int iprob=0; iprob<nPart_local; iprob++) {
+            for (unsigned int iprob=0; iprob<nPart_local; iprob++) {
                 
                 // Interpolate fields at the location of the fake particles
                 (*interp)(EMfields,probeParticles[np],iprob,&Eloc_fields,&Bloc_fields,&Jloc_fields,&Rloc_fields);

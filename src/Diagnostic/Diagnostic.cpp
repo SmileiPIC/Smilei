@@ -70,7 +70,7 @@ void Diagnostic::closeAll (SmileiMPI* smpi) {
     probes.close();
     phases.close();
     
-    for (int i=0; i<vecDiagnosticParticles.size(); i++) // loop all particle diagnostics
+    for (unsigned int i=0; i<vecDiagnosticParticles.size(); i++) // loop all particle diagnostics
         vecDiagnosticParticles[i]->close();
     
 }
@@ -79,13 +79,13 @@ void Diagnostic::printTimers (SmileiMPI *smpi, double tottime) {
     
     double coverage(0.);
     if ( smpi->isMaster() ) {
-        for (int i=0 ; i<dtimer.size() ; i++) {
+        for (unsigned int i=0 ; i<dtimer.size() ; i++) {
             coverage += dtimer[i].getTime();
         }
     }
     MESSAGE(0, "\nTime in diagnostics : \t"<< tottime <<"\t(" << coverage/tottime*100. << "% coverage)" );    
     if ( smpi->isMaster() ) {
-        for (int i=0 ; i<dtimer.size() ; i++) {
+        for (unsigned int i=0 ; i<dtimer.size() ; i++) {
             dtimer[i].print(tottime) ;
         }
     }
@@ -110,7 +110,7 @@ void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Specie
     
     // run all the particle diagnostics
     dtimer[3].restart();
-    for (int i=0; i<vecDiagnosticParticles.size(); i++) // loop all particle diagnostics
+    for (unsigned int i=0; i<vecDiagnosticParticles.size(); i++) // loop all particle diagnostics
         vecDiagnosticParticles[i]->run(timestep, vecSpecies, smpi);
     dtimer[3].update();
 
@@ -262,11 +262,11 @@ void Diagnostic::initProbes(Params& params, SmileiMPI *smpi) {
             fs[3]="Bx"; fs[4]="By"; fs[5]="Bz";
             fs[6]="Jx"; fs[7]="Jy"; fs[8]="Jz"; fs[9]="Rho";
         }
-        vector<int> locations;
+        vector<unsigned int> locations;
         locations.resize(10);
-        for( int i=0; i<10; i++) locations[i] = fs.size();
-        for( int i=0; i<fs.size(); i++) {
-            for( int j=0; j<i; j++) {
+        for( unsigned int i=0; i<10; i++) locations[i] = fs.size();
+        for( unsigned int i=0; i<fs.size(); i++) {
+            for( unsigned int j=0; j<i; j++) {
                 if( fs[i]==fs[j] ) {
                     ERROR("Probe #"<<n_probe<<": field "<<fs[i]<<" appears twice");
                 }
@@ -387,7 +387,7 @@ void Diagnostic::initProbes(Params& params, SmileiMPI *smpi) {
         // Add "fields" to the current group
         ostringstream fields("");
         fields << fs[0];
-        for( int i=1; i<fs.size(); i++) fields << "," << fs[i];
+        for( unsigned int i=1; i<fs.size(); i++) fields << "," << fs[i];
         H5::attr(did, "fields", fields.str());
         
         // Close current group

@@ -14,7 +14,7 @@ class Field;
 class ElectroMagnBC {
 public:
     ElectroMagnBC( Params &params,  LaserParams &laser_params );
-    ~ElectroMagnBC();
+    virtual ~ElectroMagnBC();
 
     virtual void apply_xmin(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi) = 0;
     virtual void apply_xmax(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi) = 0;

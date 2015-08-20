@@ -61,7 +61,7 @@ void ElectroMagnBC1D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Smi
 {
     if ( smpi->isWestern() ) {
         
-        Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
+        //Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
         Field1D* Ey1D   = static_cast<Field1D*>(EMfields->Ey_);
         Field1D* Ez1D   = static_cast<Field1D*>(EMfields->Ez_);
         Field1D* By1D   = static_cast<Field1D*>(EMfields->By_);
@@ -101,7 +101,7 @@ void ElectroMagnBC1D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Smi
 {
     
     if ( smpi->isEastern() ) {
-        Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
+        //Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
         Field1D* Ey1D   = static_cast<Field1D*>(EMfields->Ey_);
         Field1D* Ez1D   = static_cast<Field1D*>(EMfields->Ez_);
         Field1D* By1D   = static_cast<Field1D*>(EMfields->By_);

@@ -30,11 +30,8 @@ struct val_index
 class DiagnosticScalar {
 
 public:
-    //! creator (called from Diagnostic)
-    DiagnosticScalar(){};
-    //! destructor
-    ~DiagnosticScalar(){};
-    
+    DiagnosticScalar();
+    ~DiagnosticScalar();
 
     void openFile(SmileiMPI* smpi);
     //! close the file
@@ -65,9 +62,12 @@ public:
     //! write precision
     unsigned int precision;
     
-    //! this is a list to keep variable name and value
-    std::vector<std::pair<std::string,double> > out_list;
-    
+    //! these are lists to keep variable names and values
+    std::vector<std::string> out_key;
+    std::vector<double>      out_value;
+    //! width of each field
+    std::vector<unsigned int> out_width;
+
     //! list of keys for scalars to be written
     std::vector<std::string> vars;
     
@@ -93,7 +93,7 @@ private:
 
     //! check if key is allowed
     bool allowedKey(std::string);
-
+    
 };
 
 #endif

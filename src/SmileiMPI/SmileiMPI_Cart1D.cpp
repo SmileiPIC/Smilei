@@ -116,7 +116,7 @@ void SmileiMPI_Cart1D::createTopology(Params& params)
             params.n_space[i] = params.nspace_win_x / number_of_procs[i];
             cell_starting_global_index[i] = coords_[i]*(params.nspace_win_x / number_of_procs[i]);
             
-            if ( (unsigned int) (number_of_procs[i]*params.n_space[i]) != params.nspace_win_x ) {
+            if ( number_of_procs[i]*(int)params.n_space[i] != params.nspace_win_x ) {
                 // Correction on the last MPI process of the direction to use the wished number of cells
                 if (coords_[i]==number_of_procs[i]-1) {
                     params.n_space[i] = params.nspace_win_x - params.n_space[i]*(number_of_procs[i]-1);
@@ -207,7 +207,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, Params& pa
             memcpy(&indexes_of_particles_to_exchange[k], &((*indexes_of_particles_to_exchange_per_thd)[tid])[0],((*indexes_of_particles_to_exchange_per_thd)[tid]).size()*sizeof(int));
             k += ((*indexes_of_particles_to_exchange_per_thd)[tid]).size();   
         }
-       // All threads together (doesn't work)
+        // All threads together (doesn't work)
         /*if (((*indexes_of_particles_to_exchange_per_thd)[tnum]).size() > 0){
          //cout << "tmp = "<<tmp << endl;
          //cout << "tnum = "<< tnum << endl;
@@ -276,7 +276,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, Params& pa
         /********************************************************************************/
         // Proceed to effective Particles' communications
         /********************************************************************************/
-
+        
         //Number of properties per particles = nDim_Particles + 3 + 1 + 1
         int nbrOfProp( 6 );
         MPI_Datatype typePartSend, typePartRecv;
@@ -286,55 +286,53 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, Params& pa
             n_part_recv = buff_index_recv_sz[(iNeighbor+1)%2];
             if ( (neighbor_[0][0]!=MPI_PROC_NULL) && (neighbor_[0][1]!=MPI_PROC_NULL) && (n_part_send!=0) && (n_part_recv!=0) ) {
                 //Send-receive
-		double x_max = params.cell_length[0]*( params.n_space_global[0] );
-		int iDim = 0; // Cp from 2D
+                double x_max = params.cell_length[0]*( params.n_space_global[0] );
                 for (int iPart=0 ; iPart<n_part_send ; iPart++) {
-		    // Enabled periodicity in X
-		    if ( ( iNeighbor==0 ) &&  (coords_[0] == 0 ) &&( cuParticles.position(0,buff_index_send[iNeighbor][iPart]) < 0. ) ) {
-			cuParticles.position(0,buff_index_send[iNeighbor][iPart])     += x_max;
-		    }
-		    else if ( ( iNeighbor==1 ) &&  (coords_[0] == number_of_procs[0]-1 ) && ( cuParticles.position(0,buff_index_send[iNeighbor][iPart]) >= x_max ) ) {
-			cuParticles.position(0,buff_index_send[iNeighbor][iPart])     -= x_max;
-		    }
+                    // Enabled periodicity in X
+                    if ( ( iNeighbor==0 ) &&  (coords_[0] == 0 ) &&( cuParticles.position(0,buff_index_send[iNeighbor][iPart]) < 0. ) ) {
+                        cuParticles.position(0,buff_index_send[iNeighbor][iPart])     += x_max;
+                    }
+                    else if ( ( iNeighbor==1 ) &&  (coords_[0] == number_of_procs[0]-1 ) && ( cuParticles.position(0,buff_index_send[iNeighbor][iPart]) >= x_max ) ) {
+                        cuParticles.position(0,buff_index_send[iNeighbor][iPart])     -= x_max;
+                    }
                     cuParticles.cp_particle(buff_index_send[iNeighbor][iPart], partVectorSend[0][iNeighbor]);
                 }
-
-  	        typePartSend = createMPIparticles( &(partVectorSend[0][iNeighbor]), nbrOfProp );
-
+                
+                typePartSend = createMPIparticles( &(partVectorSend[0][iNeighbor]), nbrOfProp );
+                
                 partVectorRecv[0][(iNeighbor+1)%2].initialize( n_part_recv, params, ispec );
-	        typePartRecv = createMPIparticles( &(partVectorRecv[0][(iNeighbor+1)%2]), nbrOfProp );
-
-	        MPI_Sendrecv(&((partVectorSend[0][iNeighbor      ]).position(0,0)),	1, typePartSend, neighbor_[0][iNeighbor      ], 0,
-		             &((partVectorRecv[0][(iNeighbor+1)%2]).position(0,0)),	1, typePartRecv, neighbor_[0][(iNeighbor+1)%2], 0, SMILEI_COMM_1D, &Stat);
-	        MPI_Type_free( &typePartSend );
-	        MPI_Type_free( &typePartRecv );
-
+                typePartRecv = createMPIparticles( &(partVectorRecv[0][(iNeighbor+1)%2]), nbrOfProp );
+                
+                MPI_Sendrecv(&((partVectorSend[0][iNeighbor      ]).position(0,0)),        1, typePartSend, neighbor_[0][iNeighbor      ], 0,
+                             &((partVectorRecv[0][(iNeighbor+1)%2]).position(0,0)),        1, typePartRecv, neighbor_[0][(iNeighbor+1)%2], 0, SMILEI_COMM_1D, &Stat);
+                MPI_Type_free( &typePartSend );
+                MPI_Type_free( &typePartRecv );
+                
             } else if ( (neighbor_[0][iNeighbor]!=MPI_PROC_NULL) && (n_part_send!=0) ) {
                 //Send
                 partVectorSend[0][iNeighbor].reserve(n_part_send, 1);
-		double x_max = params.cell_length[0]*( params.n_space_global[0] );
-		int iDim = 0; // Cp from 2D
+                double x_max = params.cell_length[0]*( params.n_space_global[0] );
                 for (int iPart=0 ; iPart<n_part_send ; iPart++) {
-		    // Enabled periodicity in X
-		    if ( ( iNeighbor==0 ) &&  (coords_[0] == 0 ) &&( cuParticles.position(0,buff_index_send[iNeighbor][iPart]) < 0. ) ) {
-			cuParticles.position(0,buff_index_send[iNeighbor][iPart])     += x_max;
-		    }
-		    else if ( ( iNeighbor==1 ) &&  (coords_[0] == number_of_procs[0]-1 ) && ( cuParticles.position(0,buff_index_send[iNeighbor][iPart]) >= x_max ) ) {
-			cuParticles.position(0,buff_index_send[iNeighbor][iPart])     -= x_max;
-		    }
+                    // Enabled periodicity in X
+                    if ( ( iNeighbor==0 ) &&  (coords_[0] == 0 ) &&( cuParticles.position(0,buff_index_send[iNeighbor][iPart]) < 0. ) ) {
+                        cuParticles.position(0,buff_index_send[iNeighbor][iPart])     += x_max;
+                    }
+                    else if ( ( iNeighbor==1 ) &&  (coords_[0] == number_of_procs[0]-1 ) && ( cuParticles.position(0,buff_index_send[iNeighbor][iPart]) >= x_max ) ) {
+                        cuParticles.position(0,buff_index_send[iNeighbor][iPart])     -= x_max;
+                    }
                     cuParticles.cp_particle(buff_index_send[iNeighbor][iPart], partVectorSend[0][iNeighbor]);
                 }
-	        typePartSend = createMPIparticles( &(partVectorSend[0][iNeighbor]), nbrOfProp );
-	        MPI_Send( &((partVectorSend[0][iNeighbor]).position(0,0)), 1, typePartSend, neighbor_[0][iNeighbor], 0, SMILEI_COMM_1D);
-	        MPI_Type_free( &typePartSend );
-
+                typePartSend = createMPIparticles( &(partVectorSend[0][iNeighbor]), nbrOfProp );
+                MPI_Send( &((partVectorSend[0][iNeighbor]).position(0,0)), 1, typePartSend, neighbor_[0][iNeighbor], 0, SMILEI_COMM_1D);
+                MPI_Type_free( &typePartSend );
+                
             } else if ( (neighbor_[0][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
                 //Receive
-		partVectorRecv[0][(iNeighbor+1)%2].initialize( buff_index_recv_sz[(iNeighbor+1)%2], params, ispec );
-	        typePartRecv = createMPIparticles( &(partVectorRecv[0][(iNeighbor+1)%2]), nbrOfProp );
+                partVectorRecv[0][(iNeighbor+1)%2].initialize( buff_index_recv_sz[(iNeighbor+1)%2], params, ispec );
+                typePartRecv = createMPIparticles( &(partVectorRecv[0][(iNeighbor+1)%2]), nbrOfProp );
                 MPI_Recv( &((partVectorRecv[0][(iNeighbor+1)%2]).position(0,0)), 1, typePartRecv,  neighbor_[0][(iNeighbor+1)%2], 0, SMILEI_COMM_1D, &Stat );
-	        MPI_Type_free( &typePartRecv );
-
+                MPI_Type_free( &typePartRecv );
+                
             }
         }
         
@@ -444,12 +442,12 @@ MPI_Datatype SmileiMPI_Cart1D::createMPIparticles( Particles* particles, int nbr
     MPI_Datatype partDataType[nbrOfProp2];
 
     for (int i=0 ; i<nbrOfProp2 ; i++)
-	nbr_parts[i] = particles->size();
+        nbr_parts[i] = particles->size();
     disp[0] = 0;
     for (int i=1 ; i<nbrOfProp2 ; i++)
-	disp[i] = address[i] - address[0];
+        disp[i] = address[i] - address[0];
     for (int i=0 ; i<nbrOfProp2 ; i++)
-	partDataType[i] = MPI_DOUBLE;
+        partDataType[i] = MPI_DOUBLE;
     partDataType[nbrOfProp-1] = MPI_SHORT;
     if (particles->isTestParticles)
         partDataType[nbrOfProp2-1] = MPI_SHORT;
