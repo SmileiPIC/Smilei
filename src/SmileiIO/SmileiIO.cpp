@@ -411,8 +411,8 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
             
             if (vecSpecies[ispec]->particles.isTestParticles) {
                 sid = H5Screate_simple(1, dimsPart, NULL);
-                did = H5Dcreate(gid, "Id", H5T_NATIVE_SHORT, sid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-                H5Dwrite(did, H5T_NATIVE_SHORT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Id[0]);
+                did = H5Dcreate(gid, "Id", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+                H5Dwrite(did, H5T_NATIVE_UINT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Id[0]);
                 H5Dclose(did);
                 H5Sclose(sid);
             }
@@ -573,7 +573,7 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
             
             if (vecSpecies[ispec]->particles.isTestParticles) {
                 did = H5Dopen(gid, "Id", H5P_DEFAULT);
-                H5Dread(did, H5T_NATIVE_SHORT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Id[0]);
+                H5Dread(did, H5T_NATIVE_UINT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Id[0]);
                 H5Dclose(did);
             }
             
@@ -686,7 +686,7 @@ void SmileiIO::initWriteTestParticles(Species* species, int ispec, int time, Pic
     
     
     if (cuParticles.isTestParticles) {
-        did = H5Dcreate(fid, "Id", H5T_NATIVE_SHORT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
+        did = H5Dcreate(fid, "Id", H5T_NATIVE_UINT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
         H5Dclose(did);
     }
     
@@ -729,6 +729,7 @@ void SmileiIO::writeTestParticles(Species* species, int ispec, int time, PicPara
                 nTestParticles+=allNbrParticles[irk];
             }
         }
+        
     }
     // Other procs send their test particles to Master
     else if ( locNbrParticles ) {
