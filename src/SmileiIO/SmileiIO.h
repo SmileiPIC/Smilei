@@ -90,7 +90,7 @@ public:
     template <class T> void appendTestParticles(hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type );
 
 	
-    //! this static variable is deined (in the .cpp) as false but becomes true when
+    //! this static variable is defined (in the .cpp) as false but becomes true when
     //! the signal SIGUSR1 is captured by the signal_callback_handler fnction
     static int signal_received;
     
@@ -119,10 +119,21 @@ private:
     //! time of the constructor
     double time_reference;
 	
-    //! function that returns elapsed time from creator (uses private var time_reference)
-    double time_seconds();
-	
+    //! vector containing the stea at which perform a dump in case time_dump returns true
+    unsigned int time_dump_step;
     
+    //! Timestep to dump everything
+    unsigned int dump_step;
+    
+    //! Human minutes to dump everything
+    double dump_minutes;
+    
+    //! exit once dump done
+    bool exit_after_dump;
+    
+    //! keep the last dump_file_sequence dump files
+    unsigned int dump_file_sequence;
+        
 };
 
 #endif /* SMILEI_OUTPUT_H_ */

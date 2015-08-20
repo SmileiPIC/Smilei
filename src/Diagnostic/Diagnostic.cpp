@@ -373,11 +373,11 @@ void Diagnostic::initProbes(Params& params, SmileiMPI *smpi) {
         for (unsigned int iDimProbe=0; iDimProbe<=dimProbe; iDimProbe++) {
             pk.str("");
             pk << "p" << iDimProbe;
-            H5::vector(did, pk.str(), allPos[iDimProbe]);
+            H5::vect(did, pk.str(), allPos[iDimProbe]);
         }
         
         // Add array "number" to the current group
-        H5::vector(did, "number", vecNumber);
+        H5::vect(did, "number", vecNumber);
         
         // Add attribute every to the current group
         H5::attr(did, "every", every);

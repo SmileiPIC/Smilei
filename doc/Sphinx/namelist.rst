@@ -74,9 +74,9 @@ Stop and restart
 
 .. py:data:: dump_file_sequence
 
-  :default: ?
+  :default: 2
   
-  :red:`to do`
+  This tells :program:`Smilei` to keep the last ``n`` dumps for a later restart 2 is the default option in case the code is stopped (or crashes) during a dump write leading to a unreadable dump file.
   
 ----
 

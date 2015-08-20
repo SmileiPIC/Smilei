@@ -85,30 +85,30 @@ class H5 {
     //! size is the number of elements in the vector
     
     //! write a vector<int>
-    static void vector(hid_t locationId, std::string name, std::vector<int> v) {
-        vector(locationId, name, v[0], v.size(), H5T_NATIVE_INT);
+    static void vect(hid_t locationId, std::string name, std::vector<int> v) {
+        vect(locationId, name, v[0], v.size(), H5T_NATIVE_INT);
     }
     
     //! write a vector<unsigned int>
-    static void vector(hid_t locationId, std::string name, std::vector<unsigned int> v) {
-        vector(locationId, name, v[0], v.size(), H5T_NATIVE_UINT);
+    static void vect(hid_t locationId, std::string name, std::vector<unsigned int> v) {
+        vect(locationId, name, v[0], v.size(), H5T_NATIVE_UINT);
     }
     
     //! write a vector<short int>
-    static void vector(hid_t locationId, std::string name, std::vector<short int> v) {
-        vector(locationId, name, v[0], v.size(), H5T_NATIVE_SHORT);
+    static void vect(hid_t locationId, std::string name, std::vector<short int> v) {
+        vect(locationId, name, v[0], v.size(), H5T_NATIVE_SHORT);
     }
     
     //! write a vector<doubles>
-    static void vector(hid_t locationId, std::string name, std::vector<double> v) {
-        vector(locationId, name, v[0], v.size(), H5T_NATIVE_DOUBLE);
+    static void vect(hid_t locationId, std::string name, std::vector<double> v) {
+        vect(locationId, name, v[0], v.size(), H5T_NATIVE_DOUBLE);
     }
     
     
     //! write any vector
     //! type is the h5 type (H5T_NATIVE_DOUBLE, H5T_NATIVE_INT, etc.)
     template<class T>
-    static void vector(hid_t locationId, std::string name, T & v, int size, hid_t type) {
+    static void vect(hid_t locationId, std::string name, T & v, int size, hid_t type) {
         // create dataspace for 1D array with good number of elements
         hsize_t dims = size;
         hid_t sid = H5Screate_simple(1, &dims, NULL);

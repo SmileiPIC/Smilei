@@ -27,15 +27,6 @@ namelist("")
     }
     srand(random_seed);
     
-    dump_step=0;
-    PyTools::extract("dump_step", dump_step);
-    
-    dump_minutes=0.0;
-    PyTools::extract("dump_minutes", dump_minutes);
-    
-    exit_after_dump=true;
-    PyTools::extract("exit_after_dump", exit_after_dump);
-    
     // --------------
     // Stop & Restart
     // --------------   
@@ -43,15 +34,7 @@ namelist("")
     restart=false;
     PyTools::extract("restart", restart);
     if (restart) MESSAGE("Code running from restart"); //! \todo Give info on restart properties
-    
-    //!\todo MG is this still used ?? I cannot find it anywhere
-    check_stop_file=false;
-    PyTools::extract("check_stop_file", check_stop_file);
-    
-    dump_file_sequence=2;
-    PyTools::extract("dump_file_sequence", dump_file_sequence);
-    dump_file_sequence=std::max((unsigned int)1,dump_file_sequence);
-    
+        
     
     // ---------------------
     // Normalisation & units

@@ -25,20 +25,41 @@ int SmileiIO::signal_received=0;
 
 SmileiIO::SmileiIO( Params& params, Diagnostic& diag, SmileiMPI* smpi ) : 
 dump_times(0), 
-time_reference(0.0),
-fieldsToDump(diag.fieldsToDump)
+time_reference(MPI_Wtime()),
+fieldsToDump(diag.fieldsToDump),
+time_dump_step(0)
 {
+    dump_step=0;
+    if (PyTools::extract("dump_step", dump_step)) {
+        MESSAGE(1,"Code will stop after " << dump_step << " steps");
+    }
+    
+    dump_minutes=0.0;
+    if (PyTools::extract("dump_minutes", dump_minutes)) {
+        MESSAGE(1,"Code will stop after " << dump_minutes << " minutes");
+    }
+    
+    exit_after_dump=true;
+    if (PyTools::extract("exit_after_dump", exit_after_dump)) {
+        MESSAGE(1,"Code will exit after dump");
+    }
+    
+    dump_file_sequence=2;
+    PyTools::extract("dump_file_sequence", dump_file_sequence);
+    dump_file_sequence=std::max((unsigned int)1,dump_file_sequence);
+    
+    
     nDim_particle=params.nDim_particle;
     //particleSize = nDim_particle + 3 + 1;
     
     // registering signal handler
-/*    if (SIG_ERR == signal(SIGUSR1, SmileiIO::signal_callback_handler)) {
+    if (SIG_ERR == signal(SIGUSR1, SmileiIO::signal_callback_handler)) {
         WARNING("Cannot catch signal SIGUSR1");
     }
     if (SIG_ERR == signal(SIGUSR2, SmileiIO::signal_callback_handler)) {
         WARNING("Cannot catch signal SIGUSR2");
     }
-    // one of these below should be the soft linit signal for loadlever
+/*    // one of these below should be the soft linit signal for loadlever
     if (SIG_ERR == signal(SIGXCPU, SmileiIO::signal_callback_handler)) {
         WARNING("Cannot catch signal SIGXCPU");
     }
@@ -138,8 +159,6 @@ fieldsToDump(diag.fieldsToDump)
     
     H5Pclose(plist_id);
     
-    time_reference=time_seconds();
-    
 }
 
 SmileiIO::~SmileiIO()
@@ -169,7 +188,7 @@ void SmileiIO::writeAllFieldsSingleFileTime( std::vector<Field*> * fields, int t
     ostringstream name_t;
     name_t.str("");
     name_t << "/" << setfill('0') << setw(10) << time;
-    DEBUG("[hdf] GROUP _________________________________ " << name_t.str());
+//    DEBUG("[hdf] GROUP _________________________________ " << name_t.str());
     
     // Create group inside HDF5 file
     hid_t file_id;
@@ -240,26 +259,42 @@ void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI*
 }
 
 bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWindow, Params &params) { 
+    if (dump_minutes != 0.0) {
+        MPI_Request request;
+        // master checks whenever we passed the time limit
+        if (smpi->isMaster() && time_dump_step==0) {
+            double elapsed_time = (MPI_Wtime() - time_reference)/60.;
+            if (elapsed_time > dump_minutes*(dump_times+1)) {
+                time_dump_step = itime+1; // we will dump at next timestep (in case non-master already passed)
+                MESSAGE("Reached time limit : " << elapsed_time << " minutes. Dump timestep : " << time_dump_step );
+                // master does a non-blocking send
+                for (unsigned int dest=1; dest < smpi->getSize(); dest++) {
+                    MPI_Isend(&time_dump_step,1,MPI_UNSIGNED,dest,SMILEI_COMM_DUMP_TIME,smpi->SMILEI_COMM_WORLD,&request);
+                }
+            }
+        } else { // non master nodes receive the time_dump_step (non-blocking)
+            MPI_Irecv(&time_dump_step,1,MPI_UNSIGNED,0,SMILEI_COMM_DUMP_TIME,smpi->SMILEI_COMM_WORLD,&request);
+        }
+    }
+    
     if (signal_received!=0 ||
-        (params.dump_step != 0 && (itime % params.dump_step == 0)) ||
-        (params.dump_minutes != 0.0 && time_seconds()/60.0 > smpi->getSize()*(params.dump_minutes*(dump_times+1))) ) {
+        (dump_step != 0 && (itime % dump_step == 0)) ||
+        (time_dump_step!=0 && itime==time_dump_step)) {
         dumpAll( EMfields, itime,  vecSpecies, smpi, simWindow, params);
-        if ((signal_received != SIGUSR2) || params.exit_after_dump)	return true;
+        if (exit_after_dump || ((signal_received!=0) && (signal_received != SIGUSR2))) return true;
     }
     return false;
 }
 
 void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin, Params &params) { 
     ostringstream nameDump("");
-    nameDump << "dump-" << setfill('0') << setw(4) << dump_times%params.dump_file_sequence << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
+    nameDump << "dump-" << setfill('0') << setw(4) << dump_times%dump_file_sequence << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
     hid_t fid = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     dump_times++;
     
     MESSAGEALL("Step " << itime << " : DUMP fields and particles " << nameDump.str());    
     
-    H5::attr(fid, "Namelist", params.namelist);
     H5::attr(fid, "dump_step", itime);
-    
     
     dumpFieldsPerProc(fid, EMfields->Ex_);
     dumpFieldsPerProc(fid, EMfields->Ey_);
@@ -294,24 +329,24 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
             for (unsigned int i=0; i<vecSpecies[ispec]->particles.Position.size(); i++) {
                 ostringstream my_name("");
                 my_name << "Position-" << i;
-                H5::vector(gid,my_name.str(), vecSpecies[ispec]->particles.Position[i]);
+                H5::vect(gid,my_name.str(), vecSpecies[ispec]->particles.Position[i]);
             }
             
             for (unsigned int i=0; i<vecSpecies[ispec]->particles.Momentum.size(); i++) {
                 ostringstream my_name("");
                 my_name << "Momentum-" << i;
-                H5::vector(gid,my_name.str(), vecSpecies[ispec]->particles.Momentum[i]);
+                H5::vect(gid,my_name.str(), vecSpecies[ispec]->particles.Momentum[i]);
             }
             
-            H5::vector(gid,"Weight", vecSpecies[ispec]->particles.Weight);
-            H5::vector(gid,"Charge", vecSpecies[ispec]->particles.Charge);
+            H5::vect(gid,"Weight", vecSpecies[ispec]->particles.Weight);
+            H5::vect(gid,"Charge", vecSpecies[ispec]->particles.Charge);
             
             if (vecSpecies[ispec]->particles.isTestParticles) {
-                H5::vector(gid,"Id", vecSpecies[ispec]->particles.Id);
+                H5::vect(gid,"Id", vecSpecies[ispec]->particles.Id);
             }
             
-            H5::vector(gid,"bmin", vecSpecies[ispec]->bmin);
-            H5::vector(gid,"bmax", vecSpecies[ispec]->bmax);
+            H5::vect(gid,"bmin", vecSpecies[ispec]->bmin);
+            H5::vect(gid,"bmax", vecSpecies[ispec]->bmax);
             
         }
         H5Gclose(gid);
@@ -340,7 +375,7 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
     string nameDump("");
     
     // This will open both dumps and pick the last one
-    for (unsigned int i=0;i<params.dump_file_sequence; i++) {
+    for (unsigned int i=0;i<dump_file_sequence; i++) {
         ostringstream nameDumpTmp("");
         nameDumpTmp << "dump-" << setfill('0') << setw(4) << i << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
         ifstream f(nameDumpTmp.str().c_str());
@@ -499,13 +534,6 @@ void SmileiIO::restartMovingWindow(hid_t fid, SimWindow* simWin)
     
 }
 
-double SmileiIO::time_seconds() {
-    double time_temp = MPI_Wtime();    
-    double time_sec=0;
-    MPI_Allreduce(&time_temp,&time_sec,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-    return (time_sec-time_reference);
-}
-
 void SmileiIO::initWriteTestParticles(Species* species, int ispec, int time, Params& params, SmileiMPI* smpi) {
 
     Particles &cuParticles = species->particles;
@@ -515,55 +543,55 @@ void SmileiIO::initWriteTestParticles(Species* species, int ispec, int time, Par
     
     if ( smpi->isMaster() && true ) {
     
-    ostringstream nameDump("");
-    nameDump << "TestParticles_" << species->species_param.species_type  << ".h5" ;
-    hid_t fid = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-    
-    
-    hsize_t dimsPart[2] = {0, nParticles};
-    hsize_t maxDimsPart[2] = {H5S_UNLIMITED, nParticles};
-    
-    hid_t file_space = H5Screate_simple(2, dimsPart, maxDimsPart);
-    
-    
-    hid_t plist = H5Pcreate(H5P_DATASET_CREATE);
-    H5Pset_layout(plist, H5D_CHUNKED);
-    hsize_t chunk_dims[2] = {1, nParticles};
-    H5Pset_chunk(plist, 2, chunk_dims);
-    
-    
-    hid_t did;
-    for (unsigned int i=0; i<cuParticles.Position.size(); i++) {
-        ostringstream namePos("");
-        namePos << "Position-" << i;
-        did = H5Dcreate(fid, namePos.str().c_str(), H5T_NATIVE_DOUBLE, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
+        ostringstream nameDump("");
+        nameDump << "TestParticles_" << species->species_param.species_type  << ".h5" ;
+        hid_t fid = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+        
+        
+        hsize_t dimsPart[2] = {0, nParticles};
+        hsize_t maxDimsPart[2] = {H5S_UNLIMITED, nParticles};
+        
+        hid_t file_space = H5Screate_simple(2, dimsPart, maxDimsPart);
+        
+        
+        hid_t plist = H5Pcreate(H5P_DATASET_CREATE);
+        H5Pset_layout(plist, H5D_CHUNKED);
+        hsize_t chunk_dims[2] = {1, nParticles};
+        H5Pset_chunk(plist, 2, chunk_dims);
+        
+        
+        hid_t did;
+        for (unsigned int i=0; i<cuParticles.Position.size(); i++) {
+            ostringstream namePos("");
+            namePos << "Position-" << i;
+            did = H5Dcreate(fid, namePos.str().c_str(), H5T_NATIVE_DOUBLE, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
+            H5Dclose(did);
+        }
+        
+        for (unsigned int i=0; i<cuParticles.Momentum.size(); i++) {
+            ostringstream namePos("");
+            namePos << "Momentum-" << i;
+            did = H5Dcreate(fid, namePos.str().c_str(), H5T_NATIVE_DOUBLE, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
+            H5Dclose(did);
+        }
+        
+        did = H5Dcreate(fid, "Weight", H5T_NATIVE_DOUBLE, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
         H5Dclose(did);
-    }
-    
-    for (unsigned int i=0; i<cuParticles.Momentum.size(); i++) {
-        ostringstream namePos("");
-        namePos << "Momentum-" << i;
-        did = H5Dcreate(fid, namePos.str().c_str(), H5T_NATIVE_DOUBLE, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
+        
+        did = H5Dcreate(fid, "Charge", H5T_NATIVE_SHORT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
         H5Dclose(did);
-    }
-    
-    did = H5Dcreate(fid, "Weight", H5T_NATIVE_DOUBLE, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
-    H5Dclose(did);
-    
-    did = H5Dcreate(fid, "Charge", H5T_NATIVE_SHORT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
-    H5Dclose(did);
-    
-    
-    if (cuParticles.isTestParticles) {
-        did = H5Dcreate(fid, "Id", H5T_NATIVE_SHORT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
-        H5Dclose(did);
-    }
-    
-    H5Pclose(plist);
-    H5Sclose(file_space);
-    
-    
-    H5Fclose( fid );
+        
+        
+        if (cuParticles.isTestParticles) {
+            did = H5Dcreate(fid, "Id", H5T_NATIVE_SHORT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
+            H5Dclose(did);
+        }
+        
+        H5Pclose(plist);
+        H5Sclose(file_space);
+        
+        
+        H5Fclose( fid );
     }
 
 }

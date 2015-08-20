@@ -153,7 +153,6 @@ dump_step = 0
 dump_minutes = 0.0
 exit_after_dump = True
 restart = False
-check_stop_file = False
 dump_file_sequence = 2
 sim_units = ""
 wavelength_SI = 0.

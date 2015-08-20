@@ -258,21 +258,6 @@ public:
     //! Oversize domain to exchange less particles
     std::vector<unsigned int> oversize;
     
-    //! Timestep to dump everything
-    unsigned int dump_step;
-    
-    //! Human minutes to dump everything
-    double dump_minutes;
-    
-    //! exit once dump done
-    bool exit_after_dump;
-    
-    //! check for file named "stop"
-    bool check_stop_file;
-    
-    //! keep the last dump_file_sequence dump files
-    unsigned int dump_file_sequence;
-    
     //! restart namelist
     bool restart;
     
