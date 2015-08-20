@@ -27,7 +27,8 @@ SmileiIO::SmileiIO( Params& params, Diagnostic& diag, SmileiMPI* smpi ) :
 dump_times(0), 
 time_reference(MPI_Wtime()),
 fieldsToDump(diag.fieldsToDump),
-time_dump_step(0)
+time_dump_step(0),
+dump_request(smpi->getSize())
 {
     dump_step=0;
     if (PyTools::extract("dump_step", dump_step)) {
@@ -259,6 +260,8 @@ void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI*
 }
 
 bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWindow, Params &params) { 
+
+    // check for excedeed time 
     if (dump_minutes != 0.0) {
         // master checks whenever we passed the time limit
         if (smpi->isMaster() && time_dump_step==0) {
@@ -267,17 +270,15 @@ bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, std::vector<Spec
                 time_dump_step = itime+1; // we will dump at next timestep (in case non-master already passed)
                 MESSAGE("Reached time limit : " << elapsed_time << " minutes. Dump timestep : " << time_dump_step );
                 // master does a non-blocking send
-                MPI_Request request;
                 for (unsigned int dest=0; dest < smpi->getSize(); dest++) {
-                    MPI_Isend(&time_dump_step,1,MPI_UNSIGNED,dest,SMILEI_COMM_DUMP_TIME,smpi->SMILEI_COMM_WORLD,&request);
+                    MPI_Isend(&time_dump_step,1,MPI_UNSIGNED,dest,SMILEI_COMM_DUMP_TIME,smpi->SMILEI_COMM_WORLD,&dump_request[dest]);
                 }
             }
         } else { // non master nodes receive the time_dump_step (non-blocking)
             int todump=0;
-            MPI_Status status;
-            MPI_Iprobe(0,SMILEI_COMM_DUMP_TIME,MPI_COMM_WORLD,&todump,&status);
+            MPI_Iprobe(0,SMILEI_COMM_DUMP_TIME,MPI_COMM_WORLD,&todump,&dump_status_prob);
             if (todump) {
-                MPI_Recv(&time_dump_step,1,MPI_UNSIGNED,0,SMILEI_COMM_DUMP_TIME,smpi->SMILEI_COMM_WORLD,&status);
+                MPI_Recv(&time_dump_step,1,MPI_UNSIGNED,0,SMILEI_COMM_DUMP_TIME,smpi->SMILEI_COMM_WORLD,&dump_status_recv);
             }
         }
     }

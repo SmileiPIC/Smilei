@@ -134,6 +134,10 @@ private:
     //! keep the last dump_file_sequence dump files
     unsigned int dump_file_sequence;
         
+    std::vector<MPI_Request> dump_request;
+    MPI_Status dump_status_prob;
+    MPI_Status dump_status_recv;
+    
 };
 
 #endif /* SMILEI_OUTPUT_H_ */
