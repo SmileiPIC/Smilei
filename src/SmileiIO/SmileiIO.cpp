@@ -701,27 +701,22 @@ void SmileiIO::initWriteTestParticles(Species* species, int ispec, int time, Pic
 
 void SmileiIO::writeTestParticles(Species* species, int ispec, int time, PicParams& params, SmileiMPI* smpi) {
     
+    // Master gathers the number of test particles
     Particles &cuParticles = species->particles;
     int locNbrParticles = species->getNbrOfParticles();
-    
-    
-    // Collect all test particles :
     int* allNbrParticles = new int[smpi->smilei_sz];
     MPI_Gather( &locNbrParticles, 1, MPI_INTEGER, allNbrParticles, 1, MPI_INTEGER, 0, smpi->SMILEI_COMM_WORLD );
-    int nParticles(0);
-    if (smpi->isMaster()) {
-        for (int irk=0 ; irk<smpi->getSize() ; irk++)
-            nParticles += allNbrParticles[irk];
-    }
     
+    // Create temporary Particles object
     Particles testParticles;
-    int nTestparticles(0);
+    int nTestParticles(0);
     testParticles.initialize( 0, params, ispec);
     
+    // Master gathers the test particles from all procs in testParticles
     if ( smpi->isMaster() ) {
         MPI_Status status;
         cuParticles.cp_particles( allNbrParticles[0], testParticles , 0);
-        nTestparticles+=allNbrParticles[0];
+        nTestParticles+=allNbrParticles[0];
         for (int irk=1 ; irk<smpi->getSize() ; irk++) {
             if (allNbrParticles[irk]!=0) {
                 Particles partVectorRecv;
@@ -730,11 +725,12 @@ void SmileiIO::writeTestParticles(Species* species, int ispec, int time, PicPara
                 MPI_Recv( &(partVectorRecv.position(0,0)), 1, typePartRecv,  irk, irk, smpi->SMILEI_COMM_WORLD, &status );
                 MPI_Type_free( &typePartRecv );
                 // cp in testParticles
-                partVectorRecv.cp_particles( allNbrParticles[irk], testParticles ,nTestparticles );
-                nTestparticles+=allNbrParticles[irk];
+                partVectorRecv.cp_particles( allNbrParticles[irk], testParticles ,nTestParticles );
+                nTestParticles+=allNbrParticles[irk];
             }
         }
     }
+    // Other procs send their test particles to Master
     else if ( locNbrParticles ) {
         MPI_Datatype typePartSend = smpi->createMPIparticles( &cuParticles, params.nDim_particle + 3 + 1 + 1 );
         MPI_Send( &(cuParticles.position(0,0)), 1, typePartSend,  0, smpi->getRank(), smpi->SMILEI_COMM_WORLD );
@@ -742,13 +738,11 @@ void SmileiIO::writeTestParticles(Species* species, int ispec, int time, PicPara
     }
     delete [] allNbrParticles;
     
-    // Sort test particles before dump
+    // Master writes the particles
     if ( smpi->isMaster()  ) {
+        
+        // Sort test particles before dump
         testParticles.sortById();
-    }
-    
-    
-    if ( smpi->isMaster() && true ) {
         
         ostringstream nameDump("");
         nameDump << "TestParticles_" << species->species_param.species_type  << ".h5" ;
@@ -758,17 +752,17 @@ void SmileiIO::writeTestParticles(Species* species, int ispec, int time, PicPara
         for (int idim=0 ; idim<(int)params.nDim_particle ; idim++) {
             attr.str("");
             attr << "Position-" << idim;
-            appendTestParticles( fid, attr.str(), testParticles.position(idim), nParticles, H5T_NATIVE_DOUBLE );
+            appendTestParticles( fid, attr.str(), testParticles.position(idim), nTestParticles, H5T_NATIVE_DOUBLE );
         }
         for (int idim=0 ; idim<3 ; idim++) {
             attr.str("");
             attr << "Momentum-" << idim;
-            appendTestParticles( fid, attr.str(), testParticles.momentum(idim), nParticles, H5T_NATIVE_DOUBLE );
+            appendTestParticles( fid, attr.str(), testParticles.momentum(idim), nTestParticles, H5T_NATIVE_DOUBLE );
         }
-        appendTestParticles( fid, "Weight", testParticles.weight(), nParticles, H5T_NATIVE_DOUBLE );
-        appendTestParticles( fid, "Charge", testParticles.charge(), nParticles, H5T_NATIVE_SHORT );
+        appendTestParticles( fid, "Weight", testParticles.weight(), nTestParticles, H5T_NATIVE_DOUBLE );
+        appendTestParticles( fid, "Charge", testParticles.charge(), nTestParticles, H5T_NATIVE_SHORT );
         if (species->particles.isTestParticles)
-            appendTestParticles( fid, "Id", testParticles.id(), nParticles, H5T_NATIVE_SHORT );
+            appendTestParticles( fid, "Id", testParticles.id(), nTestParticles, H5T_NATIVE_UINT );
         
         H5Fclose( fid );
         
