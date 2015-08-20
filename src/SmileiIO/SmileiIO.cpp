@@ -462,7 +462,7 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
             sid = H5Dget_space(did);
             H5Sget_simple_extent_dims(sid,&dims[0],NULL);
             
-            vecSpecies[ispec]->bmin.resize(dims[0]);
+            vecSpecies[ispec]->bmax.resize(dims[0]);
             H5Dread(did, H5T_NATIVE_UINT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->bmax[0]);
             H5Dclose(did);
             H5Sclose(sid);
