@@ -220,7 +220,7 @@ int main (int argc, char* argv[])
 	
         for (unsigned int ispec=0 ; ispec<params.n_species; ispec++)
 	  MESSAGE(1,"Species " << ispec << " (" << params.species_param[ispec].species_type << ") created with " << (int)vecPatches(0)->Diags->getScalar("N_"+params.species_param[ispec].species_type) << " particles" );
-#ifdef _DEBUGPATCH
+#ifdefDEBUGPATCH
 	for (int ipatch = 0 ; ipatch<vecPatches.size() ; ipatch++)
 	    cout << (int)vecPatches(ipatch)->vecSpecies[0]->getNbrOfParticles() << " particles on " << vecPatches(ipatch)->Hindex() << endl;
 #endif
@@ -310,7 +310,7 @@ int main (int argc, char* argv[])
 	/*******************************************/
 	/********** Move particles *****************/
 	/*******************************************/
-#pragma omp parallel shared (EMfields,time_dual,smpi,params, vecPatches, simWindow)
+#pragma omp parallel shared (EMfields,time_dual,smpiData,params, vecPatches, simWindow)
         {
 	    timer[1].restart();
             if (diag_flag){
@@ -461,7 +461,8 @@ int main (int argc, char* argv[])
         if(itime==itime2dump){
             checkpoint.dumpAll( vecPatches, itime, smpiData, simWindow, params, input_data);
             todump = 0;
-            if (params.exit_after_dump ) break;
+	    // Warning: you can not use a break to exit an openMP structure. We have to find another way to implement the following.
+            //if (params.exit_after_dump ) break;
         }
 	// ----------------------------------------------------------------------        
 
