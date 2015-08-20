@@ -52,6 +52,8 @@ for "logiciels libres".
 
 ----
 
+.. _latestVersion:
+
 Release 2.0a
 ^^^^^^^^^^^^
 A second release is in preparation. Great improvements have already been done:
