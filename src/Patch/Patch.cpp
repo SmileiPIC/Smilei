@@ -74,7 +74,6 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
         ycall = Pcoordinates[1];
 	if (params.bc_em_type_long=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
 	neighbor_[0][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
-        if (xcall == -1) cout << "neighbour00 = " << neighbor_[0][0] << endl;
 #ifdef _PATCH_DEBUG
         cout << xcall << " " << ycall << " " << neighbor_[0][0] << endl;
 #endif
