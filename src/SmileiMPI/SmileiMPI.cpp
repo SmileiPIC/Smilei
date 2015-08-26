@@ -616,27 +616,22 @@ void SmileiMPI::send(Patch* patch, int to, int tag)
     send( patch->Diags, to, tag+3*patch->vecSpecies.size()+6 );
 
 }
-void SmileiMPI::send(Patch* patch, int to, int tag, MPI_Request* request)
+void SmileiMPI::isend(Patch* patch, int to, int tag)
 {
-    for (int ispec=0 ; ispec<patch->vecSpecies.size() ; ispec++)
-	send( patch->vecSpecies[ispec], to, tag+3*ispec, request+3*ispec );
+    int nbrOfProp = 7;
+    MPI_Request request;
 
-    send( patch->EMfields, to, tag+3*patch->vecSpecies.size(), request+3*patch->vecSpecies.size() );
-
-    send( patch->Diags, to, tag+3*patch->vecSpecies.size()+6, request+3*patch->vecSpecies.size()+6 );
-
+    for (int ispec=0 ; ispec<patch->vecSpecies.size() ; ispec++){
+        isend( &(patch->vecSpecies[ispec]->bmax), to, tag+3*ispec+2 );
+        if ( patch->vecSpecies[ispec]->getNbrOfParticles() > 0 ){
+            patch->vecSpecies[ispec]->typePartSend = createMPIparticles( patch->vecSpecies[ispec]->particles, nbrOfProp );
+            isend( patch->vecSpecies[ispec]->particles, to, tag+3*ispec, patch->vecSpecies[ispec]->typePartSend );
+        }
+    }
+    isend( patch->EMfields, to, tag+3*patch->vecSpecies.size() );
+    isend( patch->Diags, to, tag+3*patch->vecSpecies.size()+6 );
 }
 
-//void SmileiMPI::recv(Patch* patch, int from, int hindex)
-//{
-//    for (int ispec=0 ; ispec<patch->vecSpecies.size() ; ispec++)
-//	recv( patch->vecSpecies[ispec], from, hindex );
-//
-//    recv( patch->EMfields, from, hindex );
-//
-//    recv( patch->Diags, from, hindex );
-//
-//}
 void SmileiMPI::recv(Patch* patch, int from, int tag)
 {
     for (int ispec=0 ; ispec<patch->vecSpecies.size() ; ispec++)
@@ -644,6 +639,31 @@ void SmileiMPI::recv(Patch* patch, int from, int tag)
 
     recv( patch->EMfields, from, tag+3*patch->vecSpecies.size() );
 
+    recv( patch->Diags, from, tag+3*patch->vecSpecies.size()+6 );
+
+}
+void SmileiMPI::new_recv(Patch* patch, int from, int tag, int ndim)
+{
+    int nbrOfProp = 7;
+    int nbrOfPartsRecv;
+
+    for (int ispec=0 ; ispec<patch->vecSpecies.size() ; ispec++){
+        //Receive bmax
+        recv( &patch->vecSpecies[ispec]->bmax, from, tag+3*ispec+2 );
+        //Reconstruct bmin from bmax
+        memcpy(&(patch->vecSpecies[ispec]->bmin[1]), &(patch->vecSpecies[ispec]->bmax[0]), (patch->vecSpecies[ispec]->bmax.size()-1)*sizeof(int) );
+        patch->vecSpecies[ispec]->bmin[0]=0;
+        //Prepare patch for receiving particles
+        nbrOfPartsRecv = patch->vecSpecies[ispec]->bmax.back(); 
+        cout << "Receiving " << nbrOfPartsRecv << " particles." << endl;
+        patch->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv, ndim );
+        patch->vecSpecies[ispec]->typePartSend = createMPIparticles( patch->vecSpecies[ispec]->particles, nbrOfProp );
+        //Receive particles
+        if ( nbrOfPartsRecv > 0 )
+    	    new_recv( patch->vecSpecies[ispec]->particles, from, tag+3*ispec, patch->vecSpecies[ispec]->typePartSend );
+    }
+   
+    recv( patch->EMfields, from, tag+3*patch->vecSpecies.size() );
     recv( patch->Diags, from, tag+3*patch->vecSpecies.size()+6 );
 
 }
@@ -655,22 +675,25 @@ void SmileiMPI::send(Species* species, int to, int tag)
     send( species->bmin, to, tag+1 );
     send( species->bmax, to, tag+2 );
 }
+//void SmileiMPI::new_send(Species* species, int to, int tag)
+//{
+//    int nbrOfProp = 7;
+//    send( species->bmin, to, tag+1 );
+//    send( species->bmax, to, tag+2 );
+//    if ( species->getNbrOfParticles() > 0 ){
+//        species->typePartSend = createMPIparticles( species->particles, nbrOfProp );
+//	new_send( species->particles, to, tag, species->typePartSend );
+//    }
+//}
 
-void SmileiMPI::send(Species* species, int to, int tag, MPI_Request* request)
-{
-    if ( species->getNbrOfParticles() )
-	send( species->particles, to, tag, request );
-    send( species->bmin, to, tag+1, request+1 );
-    send( species->bmax, to, tag+2, request+2 );
-}
-
-//void SmileiMPI::recv(Species* species, int from, int hindex)
+//void SmileiMPI::isend(Species* species, int to, int tag)
 //{
 //    if ( species->getNbrOfParticles() )
-//	recv( species->particles, from, hindex );
-//    recv( &species->bmin, from, hindex );
-//    recv( &species->bmax, from, hindex );
+//	isend( species->particles, to, tag );
+//    isend( &(species->bmin), to, tag+1 );
+//    isend( &(species->bmax), to, tag+2 );
 //}
+
 void SmileiMPI::recv(Species* species, int from, int tag)
 {
     if ( species->getNbrOfParticles() )
@@ -678,25 +701,44 @@ void SmileiMPI::recv(Species* species, int from, int tag)
     recv( &species->bmin, from, tag+1 );
     recv( &species->bmax, from, tag+2 );
 }
+//void SmileiMPI::new_recv(Species* species, int from, int tag, int ndim)
+//{
+//    int nbrOfProp = 7;
+//    recv( &species->bmin, from, tag+1 );
+//    recv( &species->bmax, from, tag+2 );
+//    int nbrOfPartsRecv = species->bmax.back(); 
+//    cout << "Receiving " << nbrOfPartsRecv << " particles." << endl;
+//    species->particles->initialize( nbrOfPartsRecv, ndim );
+//    species->typePartSend = createMPIparticles( species->particles, nbrOfProp );
+//    if ( nbrOfPartsRecv > 0 )
+//	new_recv( species->particles, from, tag, species->typePartSend );
+//}
 
-void SmileiMPI::send(Particles* particles, int to, int tag, MPI_Request* request)
+//void SmileiMPI::isend(Particles* particles, int to, int tag)
+//{
+//    MPI_Request request;
+//    // Number of properties per particles = nDim_Particles + 3 + 1 + 1
+//    int nbrOfProp( 7 );
+//    MPI_Datatype typePartSend = createMPIparticles( particles, nbrOfProp );
+//    MPI_Isend( &(particles->position(0,0)), 1, typePartSend, to, tag, MPI_COMM_WORLD, &request );
+//    // Problem is free before send is executed ?
+//    MPI_Type_free( &typePartSend );
+//
+//}
+
+void SmileiMPI::send(Particles* particles, int to, int tag)
 {
     // Number of properties per particles = nDim_Particles + 3 + 1 + 1
     int nbrOfProp( 7 );
     MPI_Datatype typePartSend = createMPIparticles( particles, nbrOfProp );
-    MPI_Isend( &(particles->position(0,0)), 1, typePartSend, to, tag, MPI_COMM_WORLD, request );
+    MPI_Send( &(particles->position(0,0)), 1, typePartSend, to, tag, MPI_COMM_WORLD );
     MPI_Type_free( &typePartSend );
 
 }
-
-void SmileiMPI::send(Particles* particles, int to, int hindex)
+void SmileiMPI::isend(Particles* particles, int to, int tag, MPI_Datatype typePartSend)
 {
-    // Number of properties per particles = nDim_Particles + 3 + 1 + 1
-    int nbrOfProp( 7 );
-    MPI_Datatype typePartSend = createMPIparticles( particles, nbrOfProp );
-    MPI_Send( &(particles->position(0,0)), 1, typePartSend, to, hindex, MPI_COMM_WORLD );
-    MPI_Type_free( &typePartSend );
-
+    MPI_Request request ;
+    MPI_Isend( &(particles->position(0,0)), 1, typePartSend, to, tag, MPI_COMM_WORLD, &request );
 }
 
 void SmileiMPI::recv(Particles* particles, int from, int tag)
@@ -710,6 +752,11 @@ void SmileiMPI::recv(Particles* particles, int from, int tag)
     MPI_Type_free( &typePartRecv );
 
 }
+void SmileiMPI::new_recv(Particles* particles, int to, int tag, MPI_Datatype typePartRecv)
+{
+    MPI_Status status;
+    MPI_Recv( &(particles->position(0,0)), 1, typePartRecv, to, tag, MPI_COMM_WORLD, &status );
+}
 
 // Assuming vec.size() is known (number of species)
 void SmileiMPI::send(std::vector<int> vec, int to, int hindex)
@@ -719,9 +766,10 @@ void SmileiMPI::send(std::vector<int> vec, int to, int hindex)
 }
 
 // Assuming vec.size() is known (number of species). Asynchronous.
-void SmileiMPI::send(std::vector<int> vec, int to, int tag, MPI_Request* request)
+void SmileiMPI::isend(std::vector<int>* vec, int to, int tag)
 {
-    MPI_Isend( &(vec[0]), vec.size(), MPI_INT, to, tag, MPI_COMM_WORLD, request );
+    MPI_Request request; 
+    MPI_Isend( &((*vec)[0]), (*vec).size(), MPI_INT, to, tag, MPI_COMM_WORLD, &request );
 
 }
 
@@ -742,14 +790,15 @@ void SmileiMPI::send(ElectroMagn* fields, int to, int tag)
     send( fields->Bz_, to, tag+5 );
 }
 
-void SmileiMPI::send(ElectroMagn* fields, int to, int tag, MPI_Request* request)
+void SmileiMPI::isend(ElectroMagn* fields, int to, int tag)
 {
-    send( fields->Ex_, to, tag+0, request+0 );
-    send( fields->Ey_, to, tag+1, request+1 );
-    send( fields->Ez_, to, tag+2, request+2 );
-    send( fields->Bx_, to, tag+3, request+3 );
-    send( fields->By_, to, tag+4, request+4 );
-    send( fields->Bz_, to, tag+5, request+5 );
+
+    isend( fields->Ex_, to, tag+0);
+    isend( fields->Ey_, to, tag+1);
+    isend( fields->Ez_, to, tag+2);
+    isend( fields->Bx_, to, tag+3);
+    isend( fields->By_, to, tag+4);
+    isend( fields->Bz_, to, tag+5);
 }
 
 void SmileiMPI::recv(ElectroMagn* fields, int from, int tag)
@@ -767,9 +816,10 @@ void SmileiMPI::send(Field* field, int to, int hindex)
     MPI_Send( &((*field)(0)),field->globalDims_, MPI_DOUBLE, to, hindex, MPI_COMM_WORLD );
 }
 
-void SmileiMPI::send(Field* field, int to, int hindex, MPI_Request* request)
+void SmileiMPI::isend(Field* field, int to, int hindex)
 {
-    MPI_Isend( &((*field)(0)),field->globalDims_, MPI_DOUBLE, to, hindex, MPI_COMM_WORLD, request );
+    MPI_Request request;
+    MPI_Isend( &((*field)(0)),field->globalDims_, MPI_DOUBLE, to, hindex, MPI_COMM_WORLD, &request );
 }
 
 void SmileiMPI::recv(Field* field, int from, int hindex)
@@ -779,17 +829,17 @@ void SmileiMPI::recv(Field* field, int from, int hindex)
 
 }
 
-void SmileiMPI::send( Diagnostic* diags, int to, int hindex )
+void SmileiMPI::send( Diagnostic* diags, int to, int tag )
 {
-    send( diags->probes.probesStart, to, hindex );
+    send( diags->probes.probesStart, to, tag );
 }
 
-void SmileiMPI::send( Diagnostic* diags, int to, int hindex, MPI_Request* request )
+void SmileiMPI::isend( Diagnostic* diags, int to, int tag )
 {
-    send( diags->probes.probesStart, to, hindex, request );
+    isend( &(diags->probes.probesStart), to, tag );
 }
 
-void SmileiMPI::recv( Diagnostic* diags, int from, int hindex )
+void SmileiMPI::recv( Diagnostic* diags, int from, int tag )
 {
-    recv( &(diags->probes.probesStart), from, hindex );
+    recv( &(diags->probes.probesStart), from, tag );
 }

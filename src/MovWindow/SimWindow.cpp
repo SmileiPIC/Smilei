@@ -65,8 +65,6 @@ SimWindow::~SimWindow()
 
 void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& params, DiagParams &diag_params, LaserParams& laser_params)
 {
-    vector <MPI_Request> srequests(0);
-
     #pragma omp master
     {
 
@@ -82,7 +80,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
     int nSpecies  ( vecPatches(0)->vecSpecies.size() );
     int nDim_Parts( vecPatches(0)->vecSpecies[0]->particles->dimension() );
     int nmessage = 8+3*nSpecies;
-    int count = 0 ;
+    vector<int> nbrOfPartsSend(nSpecies,0);
+    vector<int> nbrOfPartsRecv(nSpecies,0);
+    vector < vector<int>* > store_npart_sent;
 
 
     // Delete western patch
@@ -158,54 +158,25 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
         jpatch--;
     } while(jpatch>=0);
 
-    //Trick for this specific case.
-    for (int parity = 0 ; parity < 2 ; parity++){
-
-    if (smpi->smilei_rk%2 == parity){
-    // Patch à envoyer
-    for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
-
-        //if my MPI left neighbor is not me AND I'm not a newly created patch, send me !
-        if ( vecPatches(ipatch)->MPI_neighborhood_[4] != vecPatches(ipatch)->MPI_neighborhood_[3] && vecPatches(ipatch)->hindex == vecPatches(ipatch)->neighbor_[0][0] ) {
-            
-            srequests.resize(srequests.size()+nmessage);
-            vector<int> nbrOfPartsSend(nSpecies,0);
-            for (int ispec=0 ; ispec<nSpecies ; ispec++) {
-                nbrOfPartsSend[ispec] = vecPatches(ipatch)->vecSpecies[ispec]->getNbrOfParticles();
+            // Patch à envoyer
+            for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
+                //if my MPI left neighbor is not me AND I'm not a newly created patch, send me !
+                if ( vecPatches(ipatch)->MPI_neighborhood_[4] != vecPatches(ipatch)->MPI_neighborhood_[3] && vecPatches(ipatch)->hindex == vecPatches(ipatch)->neighbor_[0][0] ) {
+                    smpi->isend( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighborhood_[3], vecPatches(ipatch)->hindex*nmessage+1 );
+                    cout << "rank " << smpi->smilei_rk << " done sent patch of ipatch " << ipatch<< " hindex = " <<  vecPatches(ipatch)->hindex << endl;
+                }
             }
-            smpi->send( nbrOfPartsSend, vecPatches(ipatch)->MPI_neighborhood_[3], vecPatches(ipatch)->hindex*nmessage );
-	  //smpi->send( nbrOfPartsSend, vecPatches(ipatch)->MPI_neighborhood_[3], vecPatches(ipatch)->hindex*nmessage, &(srequests[count]) );
-            cout << "rank " << smpi->smilei_rk << " done sent nbr particles of ipatch " << ipatch<< " hindex = " <<  vecPatches(ipatch)->hindex << endl;
-            smpi->send( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighborhood_[3], vecPatches(ipatch)->hindex*nmessage+1 );
-          //smpi->send( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighborhood_[3], vecPatches(ipatch)->hindex*nmessage+1, &(srequests[count+1]) );
-            cout << "rank " << smpi->smilei_rk << " done sent patch of ipatch " << ipatch<< " hindex = " <<  vecPatches(ipatch)->hindex << endl;
-            count += nmessage;
-
-        }
-    }
-    cout << "rank " << smpi->smilei_rk << " all sends done " << endl;
-    } else {
-    // Patch à recevoir
-    for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
-
-        if ( ( vecPatches(ipatch)->MPI_neighborhood_[4] != vecPatches(ipatch)->MPI_neighborhood_[5] ) && ( vecPatches(ipatch)->MPI_neighborhood_[5] != MPI_PROC_NULL )  && (vecPatches(ipatch)->neighbor_[0][0] != vecPatches(ipatch)->hindex) ){
-            int patchid = vecPatches(ipatch)->hindex;
-
-            vector<int> nbrOfPartsRecv(nSpecies,0);
-          //smpi->recv( &nbrOfPartsRecv, vecPatches(ipatch)->MPI_neighborhood_[5], patchid );
-            smpi->recv( &nbrOfPartsRecv, vecPatches(ipatch)->MPI_neighborhood_[5], patchid*nmessage );
-            cout << "rank " << smpi->smilei_rk << " done recv nbr particles of ipatch " << ipatch << " hindex = " <<  vecPatches(ipatch)->hindex << endl;
-            for (int ispec=0 ; ispec<nSpecies ; ispec++)
-                vecPatches(ipatch)->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv[ispec], nDim_Parts );
-            smpi->recv( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighborhood_[5], patchid*nmessage+1 );
-            cout << "rank " << smpi->smilei_rk << " done recv patch of ipatch " << ipatch<< " hindex = " <<  vecPatches(ipatch)->hindex << endl;
-	        
-        }
-    }
-    }
-    }
+            cout << "rank " << smpi->smilei_rk << " all sends done " << endl;
+            // Patch à recevoir
+            for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
+                if ( ( vecPatches(ipatch)->MPI_neighborhood_[4] != vecPatches(ipatch)->MPI_neighborhood_[5] ) && ( vecPatches(ipatch)->MPI_neighborhood_[5] != MPI_PROC_NULL )  && (vecPatches(ipatch)->neighbor_[0][0] != vecPatches(ipatch)->hindex) ){
+                    smpi->new_recv( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighborhood_[5], vecPatches(ipatch)->hindex*nmessage+1, nDim_Parts );
+                    cout << "rank " << smpi->smilei_rk << " done recv patch of ipatch " << ipatch<< " hindex = " <<  vecPatches(ipatch)->hindex << endl;
+                }
+            }
     cout << "rank " << smpi->smilei_rk << " all patch exchanges done " << endl;
 
+    //Wait for all send to be completed by the receivers too.
     MPI_Barrier(MPI_COMM_WORLD);
 
     // Suppress after exchange to not distrub patch position during exchange
@@ -286,6 +257,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
 	}
     }
 
+    for (unsigned int i = 0 ; i < store_npart_sent.size() ; i++) {
+        delete store_npart_sent[i];
+    }
 
     } // End pragma omp master
     #pragma omp barrier

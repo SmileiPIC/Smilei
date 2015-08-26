@@ -109,6 +109,9 @@ public:
     //! Oversize (copy from picparams)
     std::vector<unsigned int> oversize;
 
+    //! MPI structure to exchange particles
+    MPI_Datatype typePartSend ;
+
     //! Cell_length (copy from picparams)
     std::vector<double> cell_length;
     //! min_loc_vec (copy from picparams)
