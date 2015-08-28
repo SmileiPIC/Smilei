@@ -9,6 +9,7 @@
 #include "Species.h"
 #include "Particles.h"
 #include "SmileiIOFactory.h"
+#include <cstring>
 
 using namespace std;
 
@@ -783,22 +784,43 @@ void VectorPatch::solvePoisson( PicParams &params, SmileiMPI* smpi )
     double Ex_EastSouth = 0.0;
     double Ey_EastSouth = 0.0;
 
-    int rank_WestNorth(0), rank_EastSouth(0);
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+    //The NorthWest patch has Patch coordinates X=0, Y=2^m1-1= number_of_patches[1]-1.
+    //Its hindex is
+    int patch_NorthWest = generalhilbertindex(params.mi[0], params.mi[1], 0,  params.number_of_patches[1]-1);
+    //The MPI rank owning it is
+    int rank_WestNorth = smpi->hrank(patch_NorthWest);
+    //The SouthEast patch has Patch coordinates X=2^m0-1= number_of_patches[0]-1, Y=0.
+    //Its hindex is
+    int patch_SouthEast = generalhilbertindex(params.mi[0], params.mi[1], params.number_of_patches[0]-1, 0);
+    //The MPI rank owning it is
+    int rank_EastSouth = smpi->hrank(patch_SouthEast);
+
+
+    //cout << params.mi[0] << " " << params.mi[1] << " " << params.number_of_patches[0] << " " << params.number_of_patches[1] << endl;
+    //cout << patch_NorthWest << " " << rank_WestNorth << " " << patch_SouthEast << " " << rank_EastSouth << endl;
+
+    //int rank_WestNorth(0), rank_EastSouth(0);
+    //for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
 	// West-North corner
-	if ( ((*this)(ipatch)->isWestern()) && ((*this)(ipatch)->isNorthern()) ) {
-	    Ex_WestNorth = (*this)(ipatch)->EMfields->getEx_WestNorth();
-	    Ey_WestNorth = (*this)(ipatch)->EMfields->getEy_WestNorth();
-	    rank_WestNorth = (*this)(ipatch)->MPI_neighborhood_[4]; 
+	//if ( ((*this)(ipatch)->isWestern()) && ((*this)(ipatch)->isNorthern()) ) {
+	if ( smpi->smilei_rk == rank_WestNorth ) {
+	    Ex_WestNorth = (*this)(patch_NorthWest-((*this).refHindex_))->EMfields->getEx_WestNorth();
+	    Ey_WestNorth = (*this)(patch_NorthWest-((*this).refHindex_))->EMfields->getEy_WestNorth();
+	    //Ex_WestNorth = (*this)(ipatch)->EMfields->getEx_WestNorth();
+	    //Ey_WestNorth = (*this)(ipatch)->EMfields->getEy_WestNorth();
+	    //rank_WestNorth = (*this)(ipatch)->MPI_neighborhood_[4]; 
 	}
     
 	// East-South corner
-	if ( ((*this)(ipatch)->isEastern() ) && ((*this)(ipatch)->isSouthern()) ) {
-	    Ex_EastSouth = (*this)(ipatch)->EMfields->getEx_EastSouth();
-	    Ey_EastSouth = (*this)(ipatch)->EMfields->getEy_EastSouth();
-	    rank_EastSouth = (*this)(ipatch)->MPI_neighborhood_[4];
+	//if ( ((*this)(ipatch)->isEastern() ) && ((*this)(ipatch)->isSouthern()) ) {
+	if ( smpi->smilei_rk == rank_EastSouth ) {
+	    Ex_EastSouth = (*this)(patch_SouthEast-((*this).refHindex_))->EMfields->getEx_EastSouth();
+	    Ey_EastSouth = (*this)(patch_SouthEast-((*this).refHindex_))->EMfields->getEy_EastSouth();
+	    //Ex_EastSouth = (*this)(ipatch)->EMfields->getEx_EastSouth();
+	    //Ey_EastSouth = (*this)(ipatch)->EMfields->getEy_EastSouth();
+	    //rank_EastSouth = (*this)(ipatch)->MPI_neighborhood_[4];
 	}
-    }
+    //}
 
     MPI_Bcast(&Ex_WestNorth, 1, MPI_DOUBLE, rank_WestNorth, MPI_COMM_WORLD);
     MPI_Bcast(&Ey_WestNorth, 1, MPI_DOUBLE, rank_WestNorth, MPI_COMM_WORLD);

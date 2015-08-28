@@ -4,6 +4,8 @@
 #include <fcntl.h>
 #include <iomanip>
 #include <unistd.h>
+#include <cstring>
+#include <stdio.h>
 
 void Tools::printMemFootPrint(std::string tag) {
 

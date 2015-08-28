@@ -10,6 +10,7 @@
 #include "Laser.h"
 
 #include "Patch.h"
+#include <cstring>
 
 using namespace std;
 
