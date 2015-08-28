@@ -163,18 +163,14 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
                 //if my MPI left neighbor is not me AND I'm not a newly created patch, send me !
                 if ( vecPatches(ipatch)->MPI_neighborhood_[4] != vecPatches(ipatch)->MPI_neighborhood_[3] && vecPatches(ipatch)->hindex == vecPatches(ipatch)->neighbor_[0][0] ) {
                     smpi->isend( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighborhood_[3], vecPatches(ipatch)->hindex*nmessage+1 );
-                    cout << "rank " << smpi->smilei_rk << " done sent patch of ipatch " << ipatch<< " hindex = " <<  vecPatches(ipatch)->hindex << endl;
                 }
             }
-            cout << "rank " << smpi->smilei_rk << " all sends done " << endl;
             // Patch à recevoir
             for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
                 if ( ( vecPatches(ipatch)->MPI_neighborhood_[4] != vecPatches(ipatch)->MPI_neighborhood_[5] ) && ( vecPatches(ipatch)->MPI_neighborhood_[5] != MPI_PROC_NULL )  && (vecPatches(ipatch)->neighbor_[0][0] != vecPatches(ipatch)->hindex) ){
                     smpi->new_recv( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighborhood_[5], vecPatches(ipatch)->hindex*nmessage+1, nDim_Parts );
-                    cout << "rank " << smpi->smilei_rk << " done recv patch of ipatch " << ipatch<< " hindex = " <<  vecPatches(ipatch)->hindex << endl;
                 }
             }
-    cout << "rank " << smpi->smilei_rk << " all patch exchanges done " << endl;
 
     //Wait for all send to be completed by the receivers too.
     MPI_Barrier(MPI_COMM_WORLD);

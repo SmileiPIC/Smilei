@@ -162,17 +162,18 @@ void SmileiMPI::init_patch_count( PicParams& params)
     //Load of a frozen particle = coef_frozen*load of a particle.
     double coef_cell, coef_frozen; 
 
-    coef_cell = 0.1;
+    coef_cell = 100;
     coef_frozen = 0.1;
  
     mincell.resize(params.n_species*3);
     maxcell.resize(params.n_species*3);
     capabilities.resize(smilei_sz, 1); //Capabilities of devices hosting the different mpi processes. All capabilities are assumed to be equal for the moment.
+    //Compute total capability: Tcapabilities
     Tcapabilities = 0;
     for (unsigned int i = 0; i < smilei_sz; i++)
         Tcapabilities += capabilities[i];
 
-    //Compute total Load
+    //Compute target load: Tload = Total load * local capability / Total capability.
     
     Tload = 0.;
     Npatches = params.number_of_patches[0];
@@ -204,7 +205,7 @@ void SmileiMPI::init_patch_count( PicParams& params)
         }
         Tload += local_load; //Particle contribution to the load
     }
-    Tload += Npatches*ncells_perpatch*coef_cell ; // We assume the load of one cell to be equal to be coef_cell and account for ghost cells.
+    Tload += Npatches*ncells_perpatch*coef_cell ; // We assume the load of one cell to be equal to coef_cell and account for ghost cells.
     if (isMaster()) cout << "Total load = " << Tload << endl;
     Tload /= Tcapabilities; //Target load for each mpi process.
     Tcur = Tload * capabilities[0];  //Init.
@@ -268,7 +269,7 @@ void SmileiMPI::recompute_patch_count( PicParams& params, VectorPatch& vecpatche
     std::vector<double> Lp,Lp_global;
     int recv_counts[smilei_sz];
 
-    coef_cell = 0.1;
+    coef_cell = 100;
     coef_frozen = 0.1;
 
     Npatches = params.number_of_patches[0];
@@ -344,12 +345,12 @@ void SmileiMPI::recompute_patch_count( PicParams& params, VectorPatch& vecpatche
 
 
     // ------------- target patch count
-#ifdef _TESTPATCHEXCH
-    for (int irk=0;irk<smilei_sz;irk++) {
-	patch_count[irk] = 2;
-	//if (irk==4) patch_count[irk] = 29;
-    }
-#endif
+//#ifdef _TESTPATCHEXCH
+//    for (int irk=0;irk<smilei_sz;irk++) {
+//	patch_count[irk] = 2;
+//	//if (irk==4) patch_count[irk] = 29;
+//    }
+//#endif
     // ------------- target patch count
 
         //Make sure the new patch_count is not too different from the previous one.
@@ -387,7 +388,7 @@ void SmileiMPI::recompute_patch_count( PicParams& params, VectorPatch& vecpatche
 
 	if (smilei_rk==0)
 	    for (int irk=0;irk<smilei_sz;irk++)
-		cout << " patch_count[" << irk << "]" << patch_count[irk] << endl;
+		cout << " patch_count[" << irk << "]" << patch_count[irk] << " target patch_count = "<< target_patch_count[irk] << endl;
 
     return;
 }
@@ -655,7 +656,6 @@ void SmileiMPI::new_recv(Patch* patch, int from, int tag, int ndim)
         patch->vecSpecies[ispec]->bmin[0]=0;
         //Prepare patch for receiving particles
         nbrOfPartsRecv = patch->vecSpecies[ispec]->bmax.back(); 
-        cout << "Receiving " << nbrOfPartsRecv << " particles." << endl;
         patch->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv, ndim );
         patch->vecSpecies[ispec]->typePartSend = createMPIparticles( patch->vecSpecies[ispec]->particles, nbrOfProp );
         //Receive particles
@@ -686,13 +686,6 @@ void SmileiMPI::send(Species* species, int to, int tag)
 //    }
 //}
 
-//void SmileiMPI::isend(Species* species, int to, int tag)
-//{
-//    if ( species->getNbrOfParticles() )
-//	isend( species->particles, to, tag );
-//    isend( &(species->bmin), to, tag+1 );
-//    isend( &(species->bmax), to, tag+2 );
-//}
 
 void SmileiMPI::recv(Species* species, int from, int tag)
 {
@@ -701,30 +694,6 @@ void SmileiMPI::recv(Species* species, int from, int tag)
     recv( &species->bmin, from, tag+1 );
     recv( &species->bmax, from, tag+2 );
 }
-//void SmileiMPI::new_recv(Species* species, int from, int tag, int ndim)
-//{
-//    int nbrOfProp = 7;
-//    recv( &species->bmin, from, tag+1 );
-//    recv( &species->bmax, from, tag+2 );
-//    int nbrOfPartsRecv = species->bmax.back(); 
-//    cout << "Receiving " << nbrOfPartsRecv << " particles." << endl;
-//    species->particles->initialize( nbrOfPartsRecv, ndim );
-//    species->typePartSend = createMPIparticles( species->particles, nbrOfProp );
-//    if ( nbrOfPartsRecv > 0 )
-//	new_recv( species->particles, from, tag, species->typePartSend );
-//}
-
-//void SmileiMPI::isend(Particles* particles, int to, int tag)
-//{
-//    MPI_Request request;
-//    // Number of properties per particles = nDim_Particles + 3 + 1 + 1
-//    int nbrOfProp( 7 );
-//    MPI_Datatype typePartSend = createMPIparticles( particles, nbrOfProp );
-//    MPI_Isend( &(particles->position(0,0)), 1, typePartSend, to, tag, MPI_COMM_WORLD, &request );
-//    // Problem is free before send is executed ?
-//    MPI_Type_free( &typePartSend );
-//
-//}
 
 void SmileiMPI::send(Particles* particles, int to, int tag)
 {

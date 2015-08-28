@@ -208,38 +208,43 @@ int main (int argc, char* argv[])
 	}
   
 	
-        MESSAGE("----------------------------------------------");
-        MESSAGE("Running diags at time t = 0");
-        MESSAGE("----------------------------------------------");
-        // run diagnostics at time-step 0	
-	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-	    vecPatches(ipatch)->Diags->runAllDiags(0, vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, vecPatches(ipatch)->Interp);
-	vecPatches.computeGlobalDiags(0);
-	smpiData->computeGlobalDiags( vecPatches(0)->Diags, 0);
-	
-	
-        for (unsigned int ispec=0 ; ispec<params.n_species; ispec++)
-	  MESSAGE(1,"Species " << ispec << " (" << params.species_param[ispec].species_type << ") created with " << (int)vecPatches(0)->Diags->getScalar("N_"+params.species_param[ispec].species_type) << " particles" );
-#ifdefDEBUGPATCH
-	for (int ipatch = 0 ; ipatch<vecPatches.size() ; ipatch++)
-	    cout << (int)vecPatches(ipatch)->vecSpecies[0]->getNbrOfParticles() << " particles on " << vecPatches(ipatch)->Hindex() << endl;
-#endif
-	
-        // temporary EM fields dump in Fields.h5
-	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	    if (ipatch==0) vecPatches(ipatch)->sio->createTimeStepInSingleFileTime( 0, diag_params );
-	    vecPatches(ipatch)->sio->writeAllFieldsSingleFileTime( vecPatches(ipatch)->EMfields, 0 );
-	    // temporary EM fields dump in Fields_avg.h5
-	    if (diag_params.ntime_step_avg!=0)
-		vecPatches(ipatch)->sio->writeAvgFieldsSingleFileTime( vecPatches(ipatch)->EMfields, 0 );
-	    vecPatches(ipatch)->EMfields->restartRhoJs();
-	}
+        //MESSAGE("----------------------------------------------");
+        //MESSAGE("Running diags at time t = 0");
+        //MESSAGE("----------------------------------------------");
+        //// run diagnostics at time-step 0	
+	//for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	//    vecPatches(ipatch)->Diags->runAllDiags(0, vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, vecPatches(ipatch)->Interp);
+	//vecPatches.computeGlobalDiags(0);
+	//smpiData->computeGlobalDiags( vecPatches(0)->Diags, 0);
+	//
+	//
+        //for (unsigned int ispec=0 ; ispec<params.n_species; ispec++)
+	//  MESSAGE(1,"Species " << ispec << " (" << params.species_param[ispec].species_type << ") created with " << (int)vecPatches(0)->Diags->getScalar("N_"+params.species_param[ispec].species_type) << " particles" );
+//#ifdef _DEBUGPATCH
+	//for (int ipatch = 0 ; ipatch<vecPatches.size() ; ipatch++)
+	//    cout << (int)vecPatches(ipatch)->vecSpecies[0]->getNbrOfParticles() << " particles on " << vecPatches(ipatch)->Hindex() << endl;
+//#endif
+	//
+        //// temporary EM fields dump in Fields.h5
+	//for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	//    if (ipatch==0) vecPatches(ipatch)->sio->createTimeStepInSingleFileTime( 0, diag_params );
+	//    vecPatches(ipatch)->sio->writeAllFieldsSingleFileTime( vecPatches(ipatch)->EMfields, 0 );
+	//    // temporary EM fields dump in Fields_avg.h5
+	//    if (diag_params.ntime_step_avg!=0)
+	//	vecPatches(ipatch)->sio->writeAvgFieldsSingleFileTime( vecPatches(ipatch)->EMfields, 0 );
+	//    vecPatches(ipatch)->EMfields->restartRhoJs();
+	//}
 	diag_flag = 0 ;
     }
 
+#ifdef _TESTPATCHEXCH
+int partperMPI;
+int balancing_freq = 250;
+int npatchmoy=0, npartmoy=0;
+#endif
 	
     // Count timer
-    int ntimer(7);
+    int ntimer(10);
     Timer timer[ntimer];
     timer[0].init(smpiData, "global");
     timer[1].init(smpiData, "particles");
@@ -248,6 +253,9 @@ int main (int argc, char* argv[])
     timer[4].init(smpiData, "densities");
     timer[5].init(smpiData, "Mov window");
     timer[6].init(smpiData, "diag fields");
+    timer[7].init(smpiData, "load balacing");
+    timer[8].init(smpiData, "Sync Particles");
+    timer[9].init(smpiData, "Sync Fields");
 
     // Action to send to other MPI procs when an action is required
     int mpisize,itime2dump(-1),todump(0); 
@@ -334,6 +342,9 @@ int main (int argc, char* argv[])
 	        //        vecPatches.exchangeParticles(ispec, params); 
                 //    }
                 //}
+	    timer[1].update();
+
+	    timer[8].restart();
                 for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 	            if ( vecPatches(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
 	                vecPatches.exchangeParticles(ispec, params, smpiData ); // Included sort_part
@@ -343,8 +354,8 @@ int main (int argc, char* argv[])
                             //}
 	            }
 	        }
+	    timer[8].update();
 
-	    timer[1].update();
 
 
 	/*******************************************/
@@ -359,6 +370,8 @@ int main (int argc, char* argv[])
         }
         //cout << "End computeTrho" << endl;
         //Synchronize J and posisbly Rho between patches.
+        timer[4].update();
+        timer[9].restart();
 	vecPatches.sumRhoJ( diag_flag ); // MPI
 	#pragma omp master
         {
@@ -370,7 +383,7 @@ int main (int argc, char* argv[])
             }
         }
         //cout << "End sumrho" << endl;
-        timer[4].update();
+	timer[9].update();
 
 
 	/*******************************************/
@@ -396,7 +409,11 @@ int main (int argc, char* argv[])
 	    vecPatches(ipatch)->EMfields->boundaryConditions(itime, time_dual, vecPatches(ipatch), params, simWindow);
         }
         //Synchronize B fields between patches.
+        timer[2].update();
+        timer[9].restart();
 	vecPatches.exchangeB();
+	timer[9].update();
+        timer[2].restart();
         // Computes B at time n+1/2 using B and B_m.
         #pragma omp for schedule(static)
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
@@ -467,7 +484,6 @@ int main (int argc, char* argv[])
 	// ----------------------------------------------------------------------        
 
 		
-//#ifdef _INPROGRESS
         timer[5].restart();
         if ( simWindow && simWindow->isMoving(time_dual) ) {
             start_moving++;
@@ -477,23 +493,27 @@ int main (int argc, char* argv[])
             simWindow->operate(vecPatches, smpiData, params, diag_params, laser_params);
         }
         timer[5].update();
-//#endif
 
 
         } //End omp parallel region
 
 #ifdef _TESTPATCHEXCH
-	if (itime==61) {
+	if (itime%balancing_freq == 0) {
+            timer[7].restart();
+            partperMPI = 0;
+            //cout << "balancing freq = " << balancing_freq << endl;
+	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
+                for (unsigned int ispec=0 ; ispec < 2 ; ispec++)
+                    partperMPI += vecPatches(ipatch)->vecSpecies[ispec]->getNbrOfParticles();
+            }
+            cout << smpiData->getRank() << "npatch before = " << vecPatches.size() << " Total part before balancing = " << partperMPI << endl;
+            partperMPI = 0;
 	    /*if (smpiData->getRank()==0)
 		vecPatches.send_patch_id_.push_back(3);
 	    else if (smpiData->getRank()==1) 
 	    vecPatches.recv_patch_id_.push_back(3);*/
 
-	    //smpiData->patch_count[0] = 5;
-	    //smpiData->patch_count[1] = 3;
 	    smpiData->recompute_patch_count( params, vecPatches, 0. );
-	    smpiData->patch_count[0] = 5;
-	    smpiData->patch_count[1] = 3;
 
 
 	    //cout << "patch_count modified" << endl;
@@ -504,8 +524,14 @@ int main (int argc, char* argv[])
 	    vecPatches.exchangePatches(smpiData);
 	    //cout << "data exchanged" << endl;
 
-	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-		cout << smpiData->getRank() << " run patchId = " << vecPatches(ipatch)->Hindex() << endl;
+	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
+                for (unsigned int ispec=0 ; ispec < 2 ; ispec++)
+                    partperMPI += vecPatches(ipatch)->vecSpecies[ispec]->getNbrOfParticles();
+            }
+            npatchmoy += vecPatches.size();
+            npartmoy += partperMPI;
+            cout << smpiData->getRank()<< "npatch after = " << vecPatches.size()  << " Total part after balancing = " << partperMPI << endl;
+            timer[7].update();
 	    
 	}
 #endif
@@ -523,9 +549,9 @@ int main (int argc, char* argv[])
     //if ( smpiData->isMaster() ) MESSAGE(0, "Time in time loop : " << timElapsed );
     timer[0].update();
     MESSAGE(0, "Time in time loop : " << timer[0].getTime() );
-    if ( smpiData->isMaster() )
+    //if ( smpiData->isMaster() )
         for (int i=1 ; i<ntimer ; i++) timer[i].print(timer[0].getTime());
-    
+        cout << "npart moy = " << npartmoy << " npatch moy = " << npatchmoy << endl;
     double coverage(0.);
     for (int i=1 ; i<ntimer ; i++) coverage += timer[i].getTime();
     MESSAGE(0, "\t" << setw(12) << "Coverage\t" << coverage/timer[0].getTime()*100. << " %" );

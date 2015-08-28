@@ -8,7 +8,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 Laser::Laser( PicParams &params, LaserParams &laser_params, unsigned int n_laser) {
     
-    MESSAGE(1,"Creating laser " << n_laser);
+    //MESSAGE(1,"Creating laser " << n_laser);
              
     double sim_time= params.sim_time;
     vector<double> sim_length= params.sim_length;
