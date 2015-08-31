@@ -264,8 +264,9 @@ int npatchmoy=0, npartmoy=0;
     MPI_Request action_srequests[mpisize];
     MPI_Request action_rrequests;
     MPI_Status action_status[2];
+
     
-	// ------------------------------------------------------------------
+    // ------------------------------------------------------------------
     //                     HERE STARTS THE PIC LOOP
     // ------------------------------------------------------------------
     MESSAGE("-----------------------------------------------------------------------------------------------------");
@@ -330,12 +331,18 @@ int npatchmoy=0, npartmoy=0;
             for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	      vecPatches(ipatch)->EMfields->restartRhoJ();
 
-            //cout << "Starting dynamics" << endl;
+        #pragma omp single
+        {
+            cout << "Starting dynamics" << endl;
+        }
             #pragma omp for schedule(runtime)
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 		vecPatches(ipatch)->dynamics(time_dual, params, simWindow, diag_flag); // include test
 	    }
-            //cout << "Done dynamics" << endl;
+        #pragma omp single
+        {
+            cout << "Done dynamics" << endl;
+        }
 	    // Inter Patch exchange
                 //for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
 	        //    if ( vecPatches(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
@@ -368,7 +375,10 @@ int npatchmoy=0, npartmoy=0;
 	        vecPatches(ipatch)->EMfields->computeTotalRhoJ(); // Per species in global, Attention if output -> Sync / per species fields
 	    }
         }
-        //cout << "End computeTrho" << endl;
+        #pragma omp single
+        {
+        cout << "End computeTrho" << endl;
+        }
         //Synchronize J and posisbly Rho between patches.
         timer[4].update();
         timer[9].restart();

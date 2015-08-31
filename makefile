@@ -13,6 +13,9 @@ openmpgnu:
 openmpintel:
 	make -C src openmp=intel
 
+openmpintelmpi:
+	make -C src openmp=intelmpi
+
 debug:
 	make -C src config=debug
 
