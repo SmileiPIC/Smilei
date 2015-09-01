@@ -799,28 +799,16 @@ void VectorPatch::solvePoisson( PicParams &params, SmileiMPI* smpi )
     //cout << params.mi[0] << " " << params.mi[1] << " " << params.number_of_patches[0] << " " << params.number_of_patches[1] << endl;
     //cout << patch_NorthWest << " " << rank_WestNorth << " " << patch_SouthEast << " " << rank_EastSouth << endl;
 
-    //int rank_WestNorth(0), rank_EastSouth(0);
-    //for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	// West-North corner
-	//if ( ((*this)(ipatch)->isWestern()) && ((*this)(ipatch)->isNorthern()) ) {
-	if ( smpi->smilei_rk == rank_WestNorth ) {
-	    Ex_WestNorth = (*this)(patch_NorthWest-((*this).refHindex_))->EMfields->getEx_WestNorth();
-	    Ey_WestNorth = (*this)(patch_NorthWest-((*this).refHindex_))->EMfields->getEy_WestNorth();
-	    //Ex_WestNorth = (*this)(ipatch)->EMfields->getEx_WestNorth();
-	    //Ey_WestNorth = (*this)(ipatch)->EMfields->getEy_WestNorth();
-	    //rank_WestNorth = (*this)(ipatch)->MPI_neighborhood_[4]; 
-	}
+    if ( smpi->smilei_rk == rank_WestNorth ) {
+        Ex_WestNorth = (*this)(patch_NorthWest-((*this).refHindex_))->EMfields->getEx_WestNorth();
+        Ey_WestNorth = (*this)(patch_NorthWest-((*this).refHindex_))->EMfields->getEy_WestNorth();
+    }
     
-	// East-South corner
-	//if ( ((*this)(ipatch)->isEastern() ) && ((*this)(ipatch)->isSouthern()) ) {
-	if ( smpi->smilei_rk == rank_EastSouth ) {
-	    Ex_EastSouth = (*this)(patch_SouthEast-((*this).refHindex_))->EMfields->getEx_EastSouth();
-	    Ey_EastSouth = (*this)(patch_SouthEast-((*this).refHindex_))->EMfields->getEy_EastSouth();
-	    //Ex_EastSouth = (*this)(ipatch)->EMfields->getEx_EastSouth();
-	    //Ey_EastSouth = (*this)(ipatch)->EMfields->getEy_EastSouth();
-	    //rank_EastSouth = (*this)(ipatch)->MPI_neighborhood_[4];
-	}
-    //}
+    // East-South corner
+    if ( smpi->smilei_rk == rank_EastSouth ) {
+        Ex_EastSouth = (*this)(patch_SouthEast-((*this).refHindex_))->EMfields->getEx_EastSouth();
+        Ey_EastSouth = (*this)(patch_SouthEast-((*this).refHindex_))->EMfields->getEy_EastSouth();
+    }
 
     MPI_Bcast(&Ex_WestNorth, 1, MPI_DOUBLE, rank_WestNorth, MPI_COMM_WORLD);
     MPI_Bcast(&Ey_WestNorth, 1, MPI_DOUBLE, rank_WestNorth, MPI_COMM_WORLD);
@@ -848,6 +836,7 @@ void VectorPatch::solvePoisson( PicParams &params, SmileiMPI* smpi )
     double Ex_Add = -0.5*(Ex_West+Ex_East);
     */
 
+    //This correction is always done, independantly of the periodicity. Is this correct ?
     vector<double> E_Add(2,0.);
     E_Add[0] = -0.5*(Ex_WestNorth+Ex_EastSouth);
     E_Add[1] = -0.5*(Ey_WestNorth+Ey_EastSouth);
