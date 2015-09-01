@@ -1147,7 +1147,7 @@ class Field(Diagnostic):
 		self._fieldname = []
 		for f in sortedfields:
 			if f in self._operation:
-				self._operation = self._operation.replace(f,"C['"+f+"']")
+				self._operation = self._re.sub(r"\b"+f+r"\b","C['"+f+"']",self._operation)
 				self._fieldname.append(f)
 		
 		# Check slice is a dict

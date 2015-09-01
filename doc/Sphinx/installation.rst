@@ -1,61 +1,21 @@
-Requirements and installation
------------------------------
+Install
+-------
 
 The requirements for installing and running :program:`Smilei` are:
 
-* A C++ compiler with MPI.
-* The HDF5 libraries compatible with your version of MPI.
+* A C++ compiler (:red:`minimum version?`) with MPI (:red:`minimum version?`).
+* The HDF5 libraries (:red:`minimum version?`) compatible with your version of MPI.
 * Python 2.7.
 
 Optional dependencies are:
 
-* OpenMP.
-* The *Sphinx* documentation generator.
+* OpenMP (:red:`minimum version?`).
+* The *Sphinx* documentation generator .
 * Other python packages: h5py, numpy, matplotlib, pylab.
 * ffmpeg.
 
-The installation steps depend on your system.
-On a large cluster, refer to the administrator to install the requirements above.
-If you want to install :program:`Smilei` on your personal computer, refer to the section
-:ref:`Mac <installMac>` or :ref:`Ubuntu <installUbuntu>`.
-
-
-----
-
-Downloading and compiling
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Before you compile :program:`Smilei`, make sure you have the dependencies stated above.
-
-#. Download the latest tarball :ref:`here <latestVersion>`.
-
-#. Extract the tarball at the location of your choice.
-   Here we suppose it is located in your home directory ``~/Smilei/``.
-
-#. :red:`setting PATH or other environment variables ?`
-
-#. In a terminal, go to that location and compile::
-     
-     $ cd ~/Smilei
-     $ make
-   
-   Alternates:
-     
-   * ``make debug`` to have debugging output (slow).
-   * ``make -j4`` to compile with 4 processors.
-   * ``make doc`` to compile the documentation.
-
-
-----
-
-Running
-^^^^^^^
-
-.. rst-class:: inprogress
-  
-  In progress ...
-
-
+On a large cluster, refer to the administrator to install these requirements.
+If you want to install :program:`Smilei` on your personal computer, refer to the following sections.
 
 ----
 
@@ -72,24 +32,18 @@ It is also possible to install all dependencies manually.
 #. In a terminal, run the following command to install the C++ compiler with MPI::
      
      $ sudo port install openmpi-gcc48
-   
-   :red:`to be confirmed` ... 
-   
-   Do **not** use ``mpich`` instead of ``openmpi``.
-   
+      
    :red:`mpi-select or something like that ?` ... 
-
-   It may take a while.
    
-   You may change the version of GCC but it is not guaranteed to work with MPI or HDF5.
-
 #. To install HDF5, run::
      
      $ sudo port install hdf5 +gcc48+openmpi
-  
-   :red:`to be confirmed` ... 
-   
+      
    :red:`select a variant ?` ... 
+   
+#. To install openMP, 
+   
+   :red:`to do`
    
 #. Edit your ``.bash_profile`` hidden file located in your home folder::
    
@@ -99,8 +53,10 @@ It is also possible to install all dependencies manually.
      
    .. code-block:: bash
 
-     export SMILEICXX=mpicxx # This might require another executable
-     export HDF5_ROOT_DIR=/opt/local     
+     export SMILEICXX=mpicxx
+     export HDF5_ROOT_DIR=/opt/local
+     
+   Depending on your system, you might need to use ``mpic++`` instead of ``mpicxx``.
   
 #. Python should be already installed by default, but in case you need
    a specific version, run::
@@ -125,11 +81,36 @@ It is also possible to install all dependencies manually.
 
 ----
 
-.. _installUbuntu:
-
 Install dependencies on Ubuntu
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. rst-class:: inprogress
+  
+  In progress ...
+
+
+
+
+----
+
+Download and compile
+^^^^^^^^^^^^^^^^^^^^
+
+#. Download the latest tarball :ref:`here <latestVersion>`.
+
+#. Extract the tarball at the location of your choice.
+   Let us assume it is located in your home directory ``~/Smilei/``.
+
+#. In a terminal, go to that location and compile::
+     
+     $ cd ~/Smilei
+     $ make
+   
+   Alternates:
+     
+   * ``make debug`` to have debugging output (slow).
+   * ``make -j4`` to compile with 4 processors.
+   * ``make doc`` to compile the documentation.
 
 
 

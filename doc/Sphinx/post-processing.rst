@@ -31,11 +31,9 @@ You can store this to a variable for later, for instance::
 Select a diagnostic
 ^^^^^^^^^^^^^^^^^^^
 
-Once your simulation is selected, several methods are available
-to select various diagnostics.
+Once a simulation is selected, several methods are available to choose various diagnostics.
 
-Checkout the corresponding documentation
-to find out which diagnostics are included in Smilei:
+Checkout the namelist documentation to find out which diagnostics are included in Smilei:
 :ref:`scalars <DiagScalar>`, :ref:`fields <DiagFields>`, :ref:`probes <DiagProbe>`
 and :ref:`particles <DiagParticles>`.
 
