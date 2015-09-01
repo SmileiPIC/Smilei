@@ -143,6 +143,18 @@ void SmileiIO_Cart2D::createPattern( PicParams& params, Patch* patch )
 } // END createPattern
 
 
+void SmileiIO_Cart2D::updatePattern( PicParams& params, Patch* patch )
+{
+    for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
+        for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {
+	    H5Sclose( memspace_ [ ix_isPrim ][ iy_isPrim ] );
+	    H5Sclose( filespace_[ ix_isPrim ][ iy_isPrim ] );
+	}
+    }
+    createPattern( params, patch );
+}
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 // For time iteration "itime", write current field in the time step dataset of the global file
 // ---------------------------------------------------------------------------------------------------------------------

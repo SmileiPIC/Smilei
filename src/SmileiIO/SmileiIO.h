@@ -57,6 +57,7 @@ public:
 
     //! Basic write field on its own file (debug)
     virtual void write( Field* field ) = 0;
+    virtual void updatePattern( PicParams& params, Patch* patch ) = 0;
 
 private:
    	

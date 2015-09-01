@@ -627,6 +627,7 @@ void SmileiMPI::isend(Patch* patch, int to, int tag)
         if ( patch->vecSpecies[ispec]->getNbrOfParticles() > 0 ){
             patch->vecSpecies[ispec]->typePartSend = createMPIparticles( patch->vecSpecies[ispec]->particles, nbrOfProp );
             isend( patch->vecSpecies[ispec]->particles, to, tag+3*ispec, patch->vecSpecies[ispec]->typePartSend );
+	    MPI_Type_free( &(patch->vecSpecies[ispec]->typePartSend) );
         }
     }
     isend( patch->EMfields, to, tag+3*patch->vecSpecies.size() );
@@ -657,10 +658,12 @@ void SmileiMPI::new_recv(Patch* patch, int from, int tag, int ndim)
         //Prepare patch for receiving particles
         nbrOfPartsRecv = patch->vecSpecies[ispec]->bmax.back(); 
         patch->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv, ndim );
-        patch->vecSpecies[ispec]->typePartSend = createMPIparticles( patch->vecSpecies[ispec]->particles, nbrOfProp );
         //Receive particles
-        if ( nbrOfPartsRecv > 0 )
+        if ( nbrOfPartsRecv > 0 ) {
+	    patch->vecSpecies[ispec]->typePartSend = createMPIparticles( patch->vecSpecies[ispec]->particles, nbrOfProp );
     	    new_recv( patch->vecSpecies[ispec]->particles, from, tag+3*ispec, patch->vecSpecies[ispec]->typePartSend );
+	    MPI_Type_free( &(patch->vecSpecies[ispec]->typePartSend) );
+	}
     }
    
     recv( patch->EMfields, from, tag+3*patch->vecSpecies.size() );

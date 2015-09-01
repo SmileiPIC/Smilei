@@ -25,6 +25,7 @@ public:
 
     //! Build memory and file space for // HDF5 write/read
     void createPattern( PicParams& params, Patch* patch );
+    void updatePattern( PicParams& params, Patch* patch );
 
     //! Basic write current field in specified group of the global file
     void writeFieldsSingleFileTime( Field* field, hid_t group_id );

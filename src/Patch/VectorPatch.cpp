@@ -674,6 +674,14 @@ void VectorPatch::definePatchDiagsMaster()
 
 }
 
+void VectorPatch::updatePatchFieldDump( PicParams& params )
+{
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	(*this)(ipatch)->sio->updatePattern( params, (*this)(ipatch) );
+    }
+    
+}
+
 
 void VectorPatch::solvePoisson( PicParams &params, SmileiMPI* smpi )
 {
