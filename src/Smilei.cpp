@@ -208,32 +208,32 @@ int main (int argc, char* argv[])
 	}
   
 	
-        MESSAGE("----------------------------------------------");
-        MESSAGE("Running diags at time t = 0");
-        MESSAGE("----------------------------------------------");
-        // run diagnostics at time-step 0	
-	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-	    vecPatches(ipatch)->Diags->runAllDiags(0, vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, vecPatches(ipatch)->Interp);
-	vecPatches.computeGlobalDiags(0);
-	smpiData->computeGlobalDiags( vecPatches(0)->Diags, 0);
-	
-	
-        for (unsigned int ispec=0 ; ispec<params.n_species; ispec++)
-	  MESSAGE(1,"Species " << ispec << " (" << params.species_param[ispec].species_type << ") created with " << (int)vecPatches(0)->Diags->getScalar("N_"+params.species_param[ispec].species_type) << " particles" );
-#ifdef _DEBUGPATCH
-	for (int ipatch = 0 ; ipatch<vecPatches.size() ; ipatch++)
-	    cout << (int)vecPatches(ipatch)->vecSpecies[0]->getNbrOfParticles() << " particles on " << vecPatches(ipatch)->Hindex() << endl;
-#endif
-	
-        // temporary EM fields dump in Fields.h5
-	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	    if (ipatch==0) vecPatches(ipatch)->sio->createTimeStepInSingleFileTime( 0, diag_params );
-	    vecPatches(ipatch)->sio->writeAllFieldsSingleFileTime( vecPatches(ipatch)->EMfields, 0 );
-	    // temporary EM fields dump in Fields_avg.h5
-	    if (diag_params.ntime_step_avg!=0)
-		vecPatches(ipatch)->sio->writeAvgFieldsSingleFileTime( vecPatches(ipatch)->EMfields, 0 );
-	    vecPatches(ipatch)->EMfields->restartRhoJs();
-	}
+//        MESSAGE("----------------------------------------------");
+//        MESSAGE("Running diags at time t = 0");
+//        MESSAGE("----------------------------------------------");
+//        // run diagnostics at time-step 0	
+//	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+//	    vecPatches(ipatch)->Diags->runAllDiags(0, vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, vecPatches(ipatch)->Interp);
+//	vecPatches.computeGlobalDiags(0);
+//	smpiData->computeGlobalDiags( vecPatches(0)->Diags, 0);
+//	
+//	
+//        for (unsigned int ispec=0 ; ispec<params.n_species; ispec++)
+//	  MESSAGE(1,"Species " << ispec << " (" << params.species_param[ispec].species_type << ") created with " << (int)vecPatches(0)->Diags->getScalar("N_"+params.species_param[ispec].species_type) << " particles" );
+//#ifdef _DEBUGPATCH
+//	for (int ipatch = 0 ; ipatch<vecPatches.size() ; ipatch++)
+//	    cout << (int)vecPatches(ipatch)->vecSpecies[0]->getNbrOfParticles() << " particles on " << vecPatches(ipatch)->Hindex() << endl;
+//#endif
+//	
+//        // temporary EM fields dump in Fields.h5
+//	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+//	    if (ipatch==0) vecPatches(ipatch)->sio->createTimeStepInSingleFileTime( 0, diag_params );
+//	    vecPatches(ipatch)->sio->writeAllFieldsSingleFileTime( vecPatches(ipatch)->EMfields, 0 );
+//	    // temporary EM fields dump in Fields_avg.h5
+//	    if (diag_params.ntime_step_avg!=0)
+//		vecPatches(ipatch)->sio->writeAvgFieldsSingleFileTime( vecPatches(ipatch)->EMfields, 0 );
+//	    vecPatches(ipatch)->EMfields->restartRhoJs();
+//	}
 	diag_flag = 0 ;
     }
 
@@ -493,9 +493,13 @@ int npatchmoy=0, npartmoy=0;
 		
         timer[5].restart();
         if ( simWindow && simWindow->isMoving(time_dual) ) {
+            #pragma omp single
+            {
             start_moving++;
             if ((start_moving==1) && (smpiData->isMaster()) ) {
 		MESSAGE(">>> Window starts moving");
+            }
+            cout << "start moving = " << start_moving << endl;
             }
             simWindow->operate(vecPatches, smpiData, params, diag_params, laser_params);
         }
@@ -520,14 +524,15 @@ int npatchmoy=0, npartmoy=0;
 	    else if (smpiData->getRank()==1) 
 	    vecPatches.recv_patch_id_.push_back(3);*/
 
-	    //smpiData->recompute_patch_count( params, vecPatches, 0. );
+	    smpiData->recompute_patch_count( params, vecPatches, 0. );
 
 
 	    //cout << "patch_count modified" << endl;
-	    //vecPatches.createPatches(params, diag_params, laser_params, smpiData, simWindow);
+	    vecPatches.createPatches(params, diag_params, laser_params, smpiData, simWindow);
 	    //cout << "patch created" << endl;
 	    //vecPatches.setNbrParticlesToExch(smpiData);
 	    //cout << "nbr particles exchanged" << endl;
+	    vecPatches.exchangePatches_new(smpiData);
 	    //vecPatches.exchangePatches(smpiData);
 	    //cout << "data exchanged" << endl;
 
