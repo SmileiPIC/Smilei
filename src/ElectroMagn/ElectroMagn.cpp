@@ -384,7 +384,6 @@ void ElectroMagn::applyAntennas(SmileiMPI* smpi, double time) {
     my_fields.push_back(Jx_);
     my_fields.push_back(Jy_);
     my_fields.push_back(Jz_);
-    bool found=false;
     for (vector<Field*>::iterator field=my_fields.begin(); field!=my_fields.end(); field++) {
         if (*field) {
             for (vector<ExtFieldStructure>::iterator antenna=extfield_params.antennas.begin(); antenna!=extfield_params.antennas.end(); antenna++ ) {
@@ -393,7 +392,6 @@ void ElectroMagn::applyAntennas(SmileiMPI* smpi, double time) {
                     for (vector<string>::iterator fieldName=(*antenna).fields.begin();fieldName!=(*antenna).fields.end();fieldName++) {
                         if (LowerCase((*field)->name)==LowerCase(*fieldName)) {
                             applyAntenna(*field,my_antenna, smpi, time);
-                            found=true;
                         }
                     }
                     delete my_antenna;
@@ -402,10 +400,5 @@ void ElectroMagn::applyAntennas(SmileiMPI* smpi, double time) {
                 }
             }
         }
-    }
-    if (found) {
-        MESSAGE(1,"Finish");
-    } else {
-        MESSAGE(1,"Nothing to do");
     }
 }
