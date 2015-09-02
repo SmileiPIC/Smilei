@@ -63,7 +63,10 @@ public:
 
     //! Method used to impose external fields
     void applyExternalField(Field*, Profile*, SmileiMPI*);
-        
+    
+    //! Method used to impose external current
+    void applyAntenna(Field*, Profile*, SmileiMPI*, double time);
+    
 private:
     //! from smpi is west
     const bool isWestern;

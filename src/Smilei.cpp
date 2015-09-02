@@ -178,6 +178,9 @@ int main (int argc, char* argv[])
             smpi->sumRhoJs(EMfields, ispec, true);  // only if !isTestParticles
         }
         
+        TITLE("Applying antennas at time t = " << 0.5 * params.timestep);
+        EMfields->applyAntennas(smpi, 0.5 * params.timestep);
+        
         if (!EMfields->isRhoNull(smpi))  {
             // Init electric field (Ex/1D, + Ey/2D)
             TITLE("Solving Poisson at time t = 0");
@@ -191,7 +194,7 @@ int main (int argc, char* argv[])
         
         TITLE("Applying external fields at time t = 0");
         EMfields->applyExternalFields(smpi);
-        
+
         TITLE("Running diags at time t = 0");
         Diags.runAllDiags(0, EMfields, vecSpecies, Interp, smpi);        
         // temporary EM fields dump in Fields.h5
@@ -287,7 +290,9 @@ int main (int argc, char* argv[])
         // ---------------------------------------------------
         EMfields->restartRhoJ();
         
-        
+        // apply currents from antennas
+        EMfields->applyAntennas(smpi, time_dual);
+
         timer[8].restart();
         // apply collisions if requested
         // -----------------------------

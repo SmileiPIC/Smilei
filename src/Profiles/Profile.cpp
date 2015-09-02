@@ -50,6 +50,21 @@ double Profile::valueAt (vector<double> x_cell) {
         return PyTools::runPyFunction(profile_param.py_profile, x_cell[0]);
     } else if ( dim == 2 ) {
         return PyTools::runPyFunction(profile_param.py_profile, x_cell[0], x_cell[1]);
+    } else if ( dim == 3 ) {
+        return PyTools::runPyFunction(profile_param.py_profile, x_cell[0], x_cell[1], x_cell[2]);
+    }
+    
+    return 0;
+};
+
+double Profile::valueAt (double t, vector<double> x_cell) {
+    
+    if        ( dim == 1 ) {
+        return PyTools::runPyFunction(profile_param.py_profile, t, x_cell[0]);
+    } else if ( dim == 2 ) {
+        return PyTools::runPyFunction(profile_param.py_profile, t, x_cell[0], x_cell[1]);
+    } else if ( dim == 3 ) {
+        return PyTools::runPyFunction(profile_param.py_profile, t, x_cell[0], x_cell[1], x_cell[1]);
     }
     
     return 0;

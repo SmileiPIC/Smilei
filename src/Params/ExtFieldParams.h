@@ -21,7 +21,6 @@ class ExtFieldProfile;
 struct ExtFieldStructure : ProfileStructure {
     //! fields to which apply the exeternal field
     std::vector<std::string> fields;
-
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -38,6 +37,9 @@ public:
 
     //! external fields parameters the key string is the name of the field and the value is a vector of ExtFieldStructure
     std::vector<ExtFieldStructure> structs;
+    
+    //! Antenna
+    std::vector<ExtFieldStructure> antennas;
     
 };
 

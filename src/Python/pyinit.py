@@ -147,6 +147,12 @@ class ExtField(SmileiComponent):
     field = []
     profile = None
 
+# external current (antenna)
+class Antenna(SmileiComponent):
+    """Antenna"""
+    field = []
+    profile = None
+
 # default simulation values
 output_script = "smilei.py"
 dump_step = 0

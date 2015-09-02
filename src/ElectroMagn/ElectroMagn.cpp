@@ -377,4 +377,35 @@ void ElectroMagn::applyExternalFields(SmileiMPI* smpi) {
     Bx_m->copyFrom(Bx_);
     By_m->copyFrom(By_);
     Bz_m->copyFrom(Bz_);
-}    
+}
+
+void ElectroMagn::applyAntennas(SmileiMPI* smpi, double time) {
+    vector<Field*> my_fields;
+    my_fields.push_back(Jx_);
+    my_fields.push_back(Jy_);
+    my_fields.push_back(Jz_);
+    bool found=false;
+    for (vector<Field*>::iterator field=my_fields.begin(); field!=my_fields.end(); field++) {
+        if (*field) {
+            for (vector<ExtFieldStructure>::iterator antenna=extfield_params.antennas.begin(); antenna!=extfield_params.antennas.end(); antenna++ ) {
+                Profile *my_antenna = new Profile(*antenna, extfield_params.geometry);
+                if (my_antenna) {
+                    for (vector<string>::iterator fieldName=(*antenna).fields.begin();fieldName!=(*antenna).fields.end();fieldName++) {
+                        if (LowerCase((*field)->name)==LowerCase(*fieldName)) {
+                            applyAntenna(*field,my_antenna, smpi, time);
+                            found=true;
+                        }
+                    }
+                    delete my_antenna;
+                } else{
+                    ERROR("Could not initialize external field Profile");
+                }
+            }
+        }
+    }
+    if (found) {
+        MESSAGE(1,"Finish");
+    } else {
+        MESSAGE(1,"Nothing to do");
+    }
+}

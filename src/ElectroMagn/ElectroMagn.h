@@ -195,7 +195,12 @@ public:
     //! Method used to impose external fields (apply to a given Field)
     virtual void applyExternalField(Field*, Profile*, SmileiMPI*) = 0 ;
     
-    
+    //! Method used to impose external currents (aka antennas)
+    void applyAntennas(SmileiMPI*, double time);
+
+    //! Method used to impose one external current
+    virtual void applyAntenna(Field*, Profile*, SmileiMPI*, double time) = 0 ;
+
     double computeNRJ(unsigned int shift, SmileiMPI *smpi);
     double getLostNrjMW() const {return nrj_mw_lost;}
     

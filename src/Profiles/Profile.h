@@ -32,6 +32,9 @@ public:
     //! Function to get the value of the profile at some location
     double valueAt(std::vector<double>);
     
+    //! Function to get the value of the profile at certain time and at some location
+    double valueAt(double, std::vector<double>);
+    
 private:
     int dim;
     

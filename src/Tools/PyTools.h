@@ -204,6 +204,14 @@ public:
         return retval;
     }
     
+    //! get python function four variables
+    template <typename T=double>
+    static T runPyFunction(PyObject *pyFunction, double x1, double x2, double x3, double x4) {
+        PyObject *pyresult = PyObject_CallFunction(pyFunction, const_cast<char *>("dddd"), x1, x2, x3, x4);
+        T retval = (T) get_py_result(pyresult);
+        Py_XDECREF(pyresult);
+        return retval;
+    }
     
     //! get T from python
     template< typename T>

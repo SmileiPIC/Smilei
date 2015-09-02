@@ -977,3 +977,19 @@ void ElectroMagn2D::applyExternalField(Field* my_field,  Profile *profile, Smile
     if (emBoundCond[3]!=0) emBoundCond[3]->save_fields_BC2D_Trans(my_field);
     
 }
+
+void ElectroMagn2D::applyAntenna(Field* my_field,  Profile *profile, SmileiMPI* smpi, double time) {
+    
+    Field2D* field2D=static_cast<Field2D*>(my_field);
+    SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
+    
+    vector<double> pos(2,0);
+    for (unsigned int i=0 ; i<field2D->dims()[0] ; i++) {
+        pos[0] = ( (double)(smpi2D->getCellStartingGlobalIndex(0)+i +(field2D->isDual(0)?-0.5:0)) )*dx;
+        for (unsigned int j=0 ; j<field2D->dims()[1] ; j++) {
+            pos[1] = ( (double)(smpi2D->getCellStartingGlobalIndex(1)+j +(field2D->isDual(1)?-0.5:0)) )*dy;
+            (*field2D)(i,j) = (*field2D)(i,j) + profile->valueAt(time, pos);
+        }//j
+    }//i
+        
+}

@@ -636,18 +636,32 @@ void ElectroMagn1D::computePoynting() {
 }
 
 void ElectroMagn1D::applyExternalField(Field* my_field,  Profile *profile, SmileiMPI* smpi) {
-
+    
     MESSAGE(1,"Applying External field to " << my_field->name);
     Field1D* field1D=static_cast<Field1D*>(my_field);
     SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
     
     vector<double> x(1,0);
     for (unsigned int i=0 ; i<field1D->dims()[0] ; i++) {
-         x[0] = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i +(field1D->isDual(0)?-0.5:0)) )*dx;
-         (*field1D)(i) = (*field1D)(i) + profile->valueAt(x);
+        x[0] = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i +(field1D->isDual(0)?-0.5:0)) )*dx;
+        (*field1D)(i) = (*field1D)(i) + profile->valueAt(x);
     }
     
     if(emBoundCond[0]) emBoundCond[0]->save_fields_BC1D(my_field);
+}
+
+void ElectroMagn1D::applyAntenna(Field* my_field,  Profile *profile, SmileiMPI* smpi, double time) {
+    
+    MESSAGE(1,"Applying antenna to " << my_field->name);
+    Field1D* field1D=static_cast<Field1D*>(my_field);
+    SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
+    
+    vector<double> x(1,0);
+    for (unsigned int i=0 ; i<field1D->dims()[0] ; i++) {
+        x[0] = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i +(field1D->isDual(0)?-0.5:0)) )*dx;
+        (*field1D)(i) = (*field1D)(i) + profile->valueAt(time, x);
+    }
+    
 }
 
 

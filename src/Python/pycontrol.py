@@ -33,6 +33,9 @@ def _keep_python_running():
     for las in Laser:
         for prof in (las.time_profile, las.transv_profile):
             if callable(prof): return True
+    for ant in Antenna:
+        if callable(ant.prof): return True
+
     return False
 
 # Prevent creating new components (by mistake)
