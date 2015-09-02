@@ -81,16 +81,20 @@ public:
 
     //! load moving window parameters
     void restartMovingWindow(hid_t fid, SimWindow* simWindow);
-	
+    
     //! test before writing everything to file per processor
     bool dump(ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  PicParams &params, InputData& input_data);
 
     void initWriteTestParticles(Species* species, int ispec, int itime, PicParams& params, SmileiMPI* smpi);
     void writeTestParticles(Species* species, int ispec, int itime, PicParams& params, SmileiMPI* smpi);
-
-    template <class T> void appendTestParticles(hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type );
-
-	
+    template <class T> void appendTestParticles(hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type, SmileiMPI* smpi, hsize_t * locator);
+    hid_t TestParticles_file_access;
+    hid_t TestParticles_mem_space;
+    hsize_t TestParticles_dims[2];
+    void initWriteTestParticles0(Species* species, int ispec, int itime, PicParams& params, SmileiMPI* smpi);
+    void writeTestParticles0(Species* species, int ispec, int itime, PicParams& params, SmileiMPI* smpi);
+    template <class T> void appendTestParticles0(hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type);
+    
     //! this static variable is deined (in the .cpp) as false but becomes true when
     //! the signal SIGUSR1 is captured by the signal_callback_handler fnction
     static int signal_received;

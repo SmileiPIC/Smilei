@@ -18,6 +18,7 @@
 #include "ElectroMagn.h"
 #include "Species.h"
 
+
 using namespace std;
 
 // static varable must be defined and initialized here
@@ -639,6 +640,142 @@ double SmileiIO::time_seconds() {
 
 void SmileiIO::initWriteTestParticles(Species* species, int ispec, int time, PicParams& params, SmileiMPI* smpi) {
 
+    Particles * particles = &(species->particles);
+    int locNbrParticles = species->getNbrOfParticles();
+    hsize_t nParticles = (hsize_t) smpi->globalNbrParticles(species, locNbrParticles);
+    
+    // Define the initial array dimensions
+    int n = nParticles;
+    smpi->bcast(n);
+    TestParticles_dims[0] = 0;
+    TestParticles_dims[1] = n;
+    
+    // The master proc creates the HDF5 file and defines the dataspaces
+    if ( smpi->isMaster() ) {
+        
+        ostringstream nameDump("");
+        nameDump << "TestParticles_" << species->species_param.species_type  << ".h5" ;
+        hid_t fid = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+        
+        hsize_t maxDimsPart[2] = {H5S_UNLIMITED, nParticles};
+        hid_t file_space = H5Screate_simple(2, TestParticles_dims, maxDimsPart);
+        
+        hid_t plist = H5Pcreate(H5P_DATASET_CREATE);
+        H5Pset_layout(plist, H5D_CHUNKED);
+        hsize_t chunk_dims[2] = {1, nParticles};
+        H5Pset_chunk(plist, 2, chunk_dims);
+        
+        hid_t did;
+        unsigned int nPosition = particles->Position.size();
+        for (unsigned int i=0; i<nPosition; i++) {
+            ostringstream namePos("");
+            namePos << "Position-" << i;
+            did = H5Dcreate(fid, namePos.str().c_str(), H5T_NATIVE_DOUBLE, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
+            H5Dclose(did);
+        }
+        
+        unsigned int nMomentum = particles->Momentum.size();
+        for (unsigned int i=0; i<nMomentum; i++) {
+            ostringstream namePos("");
+            namePos << "Momentum-" << i;
+            did = H5Dcreate(fid, namePos.str().c_str(), H5T_NATIVE_DOUBLE, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
+            H5Dclose(did);
+        }
+        
+        did = H5Dcreate(fid, "Weight", H5T_NATIVE_DOUBLE, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
+        H5Dclose(did);
+        
+        did = H5Dcreate(fid, "Charge", H5T_NATIVE_SHORT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
+        H5Dclose(did);
+        
+        did = H5Dcreate(fid, "Id", H5T_NATIVE_UINT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
+        H5Dclose(did);
+        
+        H5Pclose(plist);
+        H5Sclose(file_space);
+        H5Fclose( fid );
+    }
+    
+    // Define the MPI file access for future opening of the HDF5 file
+    TestParticles_file_access = H5Pcreate(H5P_FILE_ACCESS);
+    H5Pset_fapl_mpio( TestParticles_file_access, MPI_COMM_WORLD, MPI_INFO_NULL );
+    
+
+}
+
+void SmileiIO::writeTestParticles(Species* species, int ispec, int time, PicParams& params, SmileiMPI* smpi) {
+    
+    Particles * particles = &(species->particles);
+    int locNbrParticles = species->getNbrOfParticles();
+    
+    // Set the new dimension of the arrays
+    TestParticles_dims[0] ++;
+    
+    // Create the locator (gives positions to store particles in the file)
+    hsize_t * locator = new hsize_t[locNbrParticles*2];
+    for(int i=0; i<locNbrParticles; i++) {
+        locator[i*2  ] = TestParticles_dims[0]-1;
+        locator[i*2+1] = particles->id(i)-1;
+    }
+    
+    // Specify the memory dataspace: particles array shape
+    hsize_t count[2] = {1, (hsize_t)locNbrParticles};
+    TestParticles_mem_space = H5Screate_simple(2, count, NULL);
+    
+    ostringstream filename("");
+    filename << "TestParticles_" << species->species_param.species_type  << ".h5" ;
+    hid_t fid = H5Fopen( filename.str().c_str(), H5F_ACC_RDWR, TestParticles_file_access);
+    
+    ostringstream attr("");
+    for (int idim=0 ; idim<(int)params.nDim_particle ; idim++) {
+        attr.str("");
+        attr << "Position-" << idim;
+        appendTestParticles( fid, attr.str(), particles->position(idim), locNbrParticles, H5T_NATIVE_DOUBLE, smpi, locator );
+    }
+    for (int idim=0 ; idim<3 ; idim++) {
+        attr.str("");
+        attr << "Momentum-" << idim;
+        appendTestParticles( fid, attr.str(), particles->momentum(idim), locNbrParticles, H5T_NATIVE_DOUBLE, smpi, locator );
+    }
+    appendTestParticles( fid, "Weight", particles->weight(), locNbrParticles, H5T_NATIVE_DOUBLE, smpi, locator );
+    appendTestParticles( fid, "Charge", particles->charge(), locNbrParticles, H5T_NATIVE_SHORT, smpi, locator );
+    appendTestParticles( fid, "Id", particles->id(), locNbrParticles, H5T_NATIVE_UINT, smpi, locator );
+    
+    smpi->barrier();
+    H5Fflush( fid, H5F_SCOPE_GLOBAL );
+    H5Fclose( fid );
+
+}
+
+
+template <class T>
+void SmileiIO::appendTestParticles( hid_t fid, string name, std::vector<T> property, int nParticles, hid_t type, SmileiMPI* smpi, hsize_t * locator) {
+    
+    // Open existing dataset
+    hid_t did = H5Dopen( fid, name.c_str(), H5P_DEFAULT );
+    H5Dset_extent(did, TestParticles_dims);
+    
+    // Get the extended space
+    hid_t file_space = H5Dget_space(did);
+    
+    hsize_t dims[2];
+    H5Sget_simple_extent_dims(file_space, dims, NULL );
+    
+    // Select locations that this proc will write
+    H5Sselect_elements( file_space, H5S_SELECT_SET, nParticles, locator );
+    
+    // Write
+    H5Dwrite( did, type, TestParticles_mem_space , file_space , H5P_DEFAULT, &(property[0]) );
+    
+    // Close stuff
+    H5Sclose(file_space);
+    H5Dclose(did);
+    
+}
+
+
+void SmileiIO::initWriteTestParticles0(Species* species, int ispec, int time, PicParams& params, SmileiMPI* smpi) {
+
     Particles &cuParticles = species->particles;
     int locNbrParticles = species->getNbrOfParticles();
     
@@ -699,7 +836,7 @@ void SmileiIO::initWriteTestParticles(Species* species, int ispec, int time, Pic
 
 }
 
-void SmileiIO::writeTestParticles(Species* species, int ispec, int time, PicParams& params, SmileiMPI* smpi) {
+void SmileiIO::writeTestParticles0(Species* species, int ispec, int time, PicParams& params, SmileiMPI* smpi) {
     
     // Master gathers the number of test particles
     Particles &cuParticles = species->particles;
@@ -753,17 +890,17 @@ void SmileiIO::writeTestParticles(Species* species, int ispec, int time, PicPara
         for (int idim=0 ; idim<(int)params.nDim_particle ; idim++) {
             attr.str("");
             attr << "Position-" << idim;
-            appendTestParticles( fid, attr.str(), testParticles.position(idim), nTestParticles, H5T_NATIVE_DOUBLE );
+            appendTestParticles0( fid, attr.str(), testParticles.position(idim), nTestParticles, H5T_NATIVE_DOUBLE );
         }
         for (int idim=0 ; idim<3 ; idim++) {
             attr.str("");
             attr << "Momentum-" << idim;
-            appendTestParticles( fid, attr.str(), testParticles.momentum(idim), nTestParticles, H5T_NATIVE_DOUBLE );
+            appendTestParticles0( fid, attr.str(), testParticles.momentum(idim), nTestParticles, H5T_NATIVE_DOUBLE );
         }
-        appendTestParticles( fid, "Weight", testParticles.weight(), nTestParticles, H5T_NATIVE_DOUBLE );
-        appendTestParticles( fid, "Charge", testParticles.charge(), nTestParticles, H5T_NATIVE_SHORT );
+        appendTestParticles0( fid, "Weight", testParticles.weight(), nTestParticles, H5T_NATIVE_DOUBLE );
+        appendTestParticles0( fid, "Charge", testParticles.charge(), nTestParticles, H5T_NATIVE_SHORT );
         if (species->particles.isTestParticles)
-            appendTestParticles( fid, "Id", testParticles.id(), nTestParticles, H5T_NATIVE_UINT );
+            appendTestParticles0( fid, "Id", testParticles.id(), nTestParticles, H5T_NATIVE_UINT );
         
         H5Fclose( fid );
         
@@ -774,7 +911,7 @@ void SmileiIO::writeTestParticles(Species* species, int ispec, int time, PicPara
 
 
 template <class T>
-void SmileiIO::appendTestParticles( hid_t fid, string name, std::vector<T> property, int nParticles, hid_t type) {
+void SmileiIO::appendTestParticles0( hid_t fid, string name, std::vector<T> property, int nParticles, hid_t type) {
 
     hsize_t count[2] = {1, (hsize_t)nParticles};
     hid_t partMemSpace = H5Screate_simple(2, count, NULL);

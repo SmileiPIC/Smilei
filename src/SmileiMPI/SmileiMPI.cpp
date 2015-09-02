@@ -68,6 +68,11 @@ void SmileiMPI::bcast( string& val )
 
 }
 
+void SmileiMPI::bcast( int& val )
+{
+    MPI_Bcast(&val, 1, MPI_INT, 0, SMILEI_COMM_WORLD);
+}
+
 void SmileiMPI::init( PicParams& params )
 {
     oversize.resize(params.nDim_field, 0);

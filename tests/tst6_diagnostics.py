@@ -98,9 +98,9 @@ Species(
 	species_type = "test",
 	initPosition_type = "random",
 	initMomentum_type = "maxwell-juettner",
-	n_part_per_cell= 1,
+	n_part_per_cell= 20,
 	mass = 1.0,
-	charge = -1.0,
+	charge = 0,
 	nb_density = 10.,
 	mean_velocity = [0.05, 0., 0.],
 	temperature = [0.00002],
@@ -120,15 +120,15 @@ Species(
 print_every = 10
 
 # DIAGNOSTICS ON FIELDS
-fieldDump_every    = 5
-avgfieldDump_every = 5
+fieldDump_every    = 5000000000
+avgfieldDump_every = 5000000000
 ntime_step_avg     = 1
 
 # DIAGNOSTICS ON SCALARS
 # every = integer, number of time-steps between each output
 # tmin and tmax = floats, min and max times that will be used
 # precision = integer, number of digits of the outputs. Default = 10
-DiagScalar(every = 1)
+DiagScalar(every = 1000000000000)
 
 # PROBE DIAGNOSTICS - interpolate the fields on a N-D arbitrary grid
 # ---------------------------------------------------------------------------------
@@ -138,14 +138,14 @@ DiagScalar(every = 1)
 # pos          = N floats, position of the reference point
 # pos_first    = N floats, optional, position of the first point
 # pos_second   = N floats, optional, position of the second point
-DiagProbe(
-	every = 1,
-	time_range = [0.1 *L0, 0.4*L0],
-	number = [40],
-	pos = [0.1*L0],
-	pos_first = [0.9*L0],
-	fields = []
-)
+#DiagProbe(
+#	every = 1,
+#	time_range = [0.1 *L0, 0.4*L0],
+#	number = [40],
+#	pos = [0.1*L0],
+#	pos_first = [0.9*L0],
+#	fields = []
+#)
 
 # DIAGNOSTICS ON PARTICLES - project the particles on a N-D arbitrary grid
 # ------------------------------------------------------------------------
@@ -165,45 +165,45 @@ DiagProbe(
 #   Example : axes = [["x", 0, 1, 30]]
 #   Example : axes =[["px", -1, 1, 100, "edge_inclusive"]]
 
-DiagParticles(
-	output = "density",
-	every = 4,
-	time_average = 2,
-	species = ["electron1"],
-	axes = [
-		["x", 0.*L0, 1.*L0, 100],
-		["vx", -0.1, 0.1, 100]
-	]
-)
-
-DiagParticles(
-	output = "density",
-	every = 4,
-	time_average = 1,
-	species = ["ion1"],
-	axes = [
-		("x", 0.*L0, 1.*L0, 100),
-		("vx", -0.001, 0.001, 100)
-	]
-)
-
-DiagParticles(
-	output = "px_density",
-	every = 4,
-	time_average = 2,
-	species = ["electron1"],
-	axes = [
-		["x", 0.*L0, 1.*L0, 100],
-		["vx", -0.1, 0.1, 100]
-	]
-)
-
-DiagParticles(
-	output = "density",
-	every = 1,
-	time_average = 1,
-	species = ["electron1"],
-	axes = [
-		["ekin", 0.0001, 0.1, 100, "logscale", "edge_inclusive"]
-	]
-)
+#DiagParticles(
+#	output = "density",
+#	every = 4,
+#	time_average = 2,
+#	species = ["electron1"],
+#	axes = [
+#		["x", 0.*L0, 1.*L0, 100],
+#		["vx", -0.1, 0.1, 100]
+#	]
+#)
+#
+#DiagParticles(
+#	output = "density",
+#	every = 4,
+#	time_average = 1,
+#	species = ["ion1"],
+#	axes = [
+#		("x", 0.*L0, 1.*L0, 100),
+#		("vx", -0.001, 0.001, 100)
+#	]
+#)
+#
+#DiagParticles(
+#	output = "px_density",
+#	every = 4,
+#	time_average = 2,
+#	species = ["electron1"],
+#	axes = [
+#		["x", 0.*L0, 1.*L0, 100],
+#		["vx", -0.1, 0.1, 100]
+#	]
+#)
+#
+#DiagParticles(
+#	output = "density",
+#	every = 1,
+#	time_average = 1,
+#	species = ["electron1"],
+#	axes = [
+#		["ekin", 0.0001, 0.1, 100, "logscale", "edge_inclusive"]
+#	]
+#)

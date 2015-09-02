@@ -172,6 +172,8 @@ public:
 
     // Broadcast a string in current communicator
     void bcast( std::string& val );
+    // Broadcast an int in current communicator
+    void bcast( int& val );
 
 protected:
     //! Global MPI Communicator
