@@ -1349,43 +1349,43 @@ class Field(Diagnostic):
 
 
 	def toDMF(self, outputfile=None):
-	    """ create xdmf file """  
+		""" create xdmf file """  
 		
-	    if outputfile is None:
-	        outputfile=self._results_path+"/smilei.xdmf"
-
-		from jinja2 import Template	
+		if outputfile is None:
+			outputfile=self._results_path+"/smilei.xdmf"
+		
+		from jinja2 import Template
 		print self.times
 		print self.timestep
 		
-        tmpl = Template("""
-        <?xml version="1.0" ?>
-        <!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" []>
-        <Xdmf xmlns:xi="http://www.w3.org/2003/XInclude" Version="2.1">
-            <Domain>
-                <Grid CollectionType="Temporal" GridType="Collection">
-
-                    {% for idx in range(d.shape[0]) %}
-                    <Grid Name="Mesh" GridType="Uniform">
-                        <Time Value="{{t[idx]}}" />
-                        <Topology TopologyType="2DSMesh" Dimensions="{{d.shape[1]}} {{d.shape[2]}}"/>
-                        <Geometry GeometryType="X_Y_Z">
-                            <DataItem NumberType="Float" Precision="8" Dimensions="{{d.shape[1]}} {{d.shape[2]}}" Format="HDF">{{filename}}.h5:/X/frame_{{'%04d' % idx}}</DataItem>
-                            <DataItem NumberType="Float" Precision="8" Dimensions="{{d.shape[1]}} {{d.shape[2]}}" Format="HDF">{{filename}}.h5:/Y/frame_{{'%04d' % idx}}</DataItem>
-                            <DataItem NumberType="Float" Precision="8" Dimensions="{{d.shape[1]}} {{d.shape[2]}}" Format="HDF">{{filename}}.h5:/Z/frame_{{'%04d' % idx}}</DataItem>
-                        </Geometry>
-                        {% for el in var -%}
-                        <Attribute Name="{{el.name}}" AttributeType="{{el.attr_type}}" Center="{{el.center}}">
-                            <DataItem NumberType="Float" Precision="8" Dimensions="{% if not el.dim %}{{(d.shape[1]-1)}} {{(d.shape[2]-1)}}{% else %}{{(d.shape[1])}} {{(d.shape[2])}} 2{% endif %}" Format="HDF">{{filename}}.h5:/{{el.key}}/frame_{{'%04d' % idx}}</DataItem>
-                        </Attribute>
-                        {% endfor -%}
-                    </Grid>
-                    {% endfor %}
-
-                </Grid>
-          </Domain>
-        </Xdmf>
-        """)
+		tmpl = Template("""
+		<?xml version="1.0" ?>
+		<!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" []>
+		<Xdmf xmlns:xi="http://www.w3.org/2003/XInclude" Version="2.1">
+			<Domain>
+				<Grid CollectionType="Temporal" GridType="Collection">
+					
+					{% for idx in range(d.shape[0]) %}
+					<Grid Name="Mesh" GridType="Uniform">
+						<Time Value="{{t[idx]}}" />
+						<Topology TopologyType="2DSMesh" Dimensions="{{d.shape[1]}} {{d.shape[2]}}"/>
+						<Geometry GeometryType="X_Y_Z">
+							<DataItem NumberType="Float" Precision="8" Dimensions="{{d.shape[1]}} {{d.shape[2]}}" Format="HDF">{{filename}}.h5:/X/frame_{{'%04d' % idx}}</DataItem>
+							<DataItem NumberType="Float" Precision="8" Dimensions="{{d.shape[1]}} {{d.shape[2]}}" Format="HDF">{{filename}}.h5:/Y/frame_{{'%04d' % idx}}</DataItem>
+							<DataItem NumberType="Float" Precision="8" Dimensions="{{d.shape[1]}} {{d.shape[2]}}" Format="HDF">{{filename}}.h5:/Z/frame_{{'%04d' % idx}}</DataItem>
+						</Geometry>
+						{% for el in var -%}
+						<Attribute Name="{{el.name}}" AttributeType="{{el.attr_type}}" Center="{{el.center}}">
+							<DataItem NumberType="Float" Precision="8" Dimensions="{% if not el.dim %}{{(d.shape[1]-1)}} {{(d.shape[2]-1)}}{% else %}{{(d.shape[1])}} {{(d.shape[2])}} 2{% endif %}" Format="HDF">{{filename}}.h5:/{{el.key}}/frame_{{'%04d' % idx}}</DataItem>
+						</Attribute>
+						{% endfor -%}
+					</Grid>
+					{% endfor %}
+					
+				</Grid>
+			</Domain>
+		</Xdmf>
+		""")
 # 
 #         var_dict = [dict(key=el[0],name=el[1], attr_type=el[2] and 'Vector' or 'Scalar',
 #                         dim=el[2], center= (el[0]=='vel') and 'Node' or 'Cell') for el in [
