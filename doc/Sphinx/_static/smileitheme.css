@@ -158,3 +158,8 @@ div.admonition p {
 .image-reference {
 	border-bottom:0 !important;
 }
+
+
+div.related {
+    display: none;
+}
