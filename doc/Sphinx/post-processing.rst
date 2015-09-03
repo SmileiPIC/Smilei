@@ -58,7 +58,7 @@ and :ref:`particles <DiagParticles>`.
     Diag = S.Scalar("Utot")
 
 
-.. py:method:: Smilei.Field(field=None, timesteps=None, slice=None, units="code", data_log=False, streakPlot=False)
+.. py:method:: Smilei.Field(field=None, timesteps=None, slice=None, units="code", data_log=False)
   
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``field``: The name of a field (``"Ex"``, ``"Ey"``, etc.)
@@ -74,8 +74,6 @@ and :ref:`particles <DiagParticles>`.
      | - With syntax 2, only the bin closest to ``location`` is kept.
      | - With syntax 3, an average is performed between ``begin`` and ``end``.
      | Example: ``slice = {"x":[4,5]}`` will average for :math:`x` within [4,5].
-  * ``streakPlot``: when ``True``, the :py:func:`plot` will not be an animation, but will
-    have time on the vertical axis instead.
 
   **Example**::
     
@@ -84,9 +82,9 @@ and :ref:`particles <DiagParticles>`.
 
 
 
-.. py:method:: Smilei.Probe(probeNumber=None, field=None, timesteps=None, slice=None, units="code", data_log=False, streakPlot=False)
+.. py:method:: Smilei.Probe(probeNumber=None, field=None, timesteps=None, slice=None, units="code", data_log=False)
   
-  * ``timesteps``, ``units``, ``data_log``, ``streakPlot``: same as before.
+  * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``probeNumber``: number of the probe (the first one has number 0).
      | If not given, a list of available probes is printed.
   * ``field``: name of the field (``"Bx"``, ``"By"``, ``"Bz"``, ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Jx"``, ``"Jy"``, ``"Jz"`` or ``"Rho"``).
@@ -102,9 +100,9 @@ and :ref:`particles <DiagParticles>`.
 
 
 
-.. py:method:: Smilei.ParticleDiagnostic(diagNumber=None, timesteps=None, slice=None, units="code", data_log=False, streakPlot=False)
+.. py:method:: Smilei.ParticleDiagnostic(diagNumber=None, timesteps=None, slice=None, units="code", data_log=False)
   
-  * ``timesteps``, ``units``, ``data_log``, ``streakPlot``: same as before.
+  * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``diagNumber``: number of the particle diagnostic (the first one has number 0).
      | If not given, a list of available particle diagnostics is printed.
      | It can also be an operation between several particle diagnostics.
@@ -213,7 +211,8 @@ Plot the data
   All these methods have the same arguments described below.
 
 .. py:function:: plot(figure=1, vmin=None, vmax=None, xmin=None, xmax=None, \
-                      ymin=None, ymax=None, movie="", fps=10, dpi=100)
+                      ymin=None, ymax=None, streakPlot=False, \
+                      movie="", fps=10, dpi=100, saveAs=None)
   
   Displays the data. All arguments of this method can be supplied to :py:meth:`Scalar`,
   :py:meth:`Field`, :py:meth:`Probe`, :py:meth:`ParticleDiagnostic` or 
@@ -228,15 +227,21 @@ Plot the data
      | If present, output value is rescaled before plotting.
   * ``xmin``, ``xmax``, ``ymin``, ``ymax``: plotting limits.
      | If present, axes are rescaled before plotting.
+  * ``streakPlot``: when ``True``, will not be an animation, but will
+    have time on the vertical axis instead (only for 1D data).
   * ``movie``: name of a file to create a movie, such as ``"movie.avi"``
      | If ``movie=""`` no movie is created.
-  * ``fps``: number of frames per second (only if movie requested)
-  * ``dpi``: number of dots per inch (only if movie requested)
+  * ``fps``: number of frames per second (only if movie requested).
+  * ``dpi``: number of dots per inch (only if movie requested).
+  * ``saveAs``: name of a directory where to save each frame as figures.
+    You can even specify a filename such as ``mydir/prefix.png`` and it will automatically
+    make successive files showing the timestep: ``mydir/prefix0.png``, ``mydir/prefix1.png``,
+    etc.
 
   **Example**::
     
     S = Smilei("path/to/my/results")
-    S.ParticleDiagnostic(1, figure=1, vmin=0, vmax=1e14 ).plot()
+    S.ParticleDiagnostic(1).plot(vmin=0, vmax=1e14)
 
 ..
 
