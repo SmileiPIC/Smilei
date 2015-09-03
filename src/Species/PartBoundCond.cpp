@@ -204,13 +204,14 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi )
         
     }//nDim_particle>1
     
-    
+    /* NOT USED ANYMORE AS WE USE THE ERFINV FCT FROM TOOLS/USERFUNCTIONS
     // ---------------------------------------------------------------------
     // Compute the tabulated inverse error function used in thermalizing bcs
     // ---------------------------------------------------------------------
     if ( thermCond ) {
         erfinv::instance().prepare();
     }//thermCond
+     */
     
 }
 
