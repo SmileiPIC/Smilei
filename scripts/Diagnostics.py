@@ -538,12 +538,13 @@ class Diagnostic(object):
 					print "WARNING: "+file[1]
 					print "         Will not save figures to files"
 					file = False
-				supportedTypes=self._plt.matplotlib.backend_bases.FigureCanvasBase(fig).get_supported_filetypes();
-				if file[1].strip(".") not in supportedTypes.iterkeys():
-					print "WARNING: file format not supported, will not save figures to files"
-					print "         Supported formats: "+",".join(supportedTypes.iterkeys())
-					file = False
-					
+				else:
+					supportedTypes=self._plt.matplotlib.backend_bases.FigureCanvasBase(fig).get_supported_filetypes();
+					if file[1].strip(".") not in supportedTypes.iterkeys():
+						print "WARNING: file format not supported, will not save figures to files"
+						print "         Supported formats: "+",".join(supportedTypes.iterkeys())
+						file = False
+						
 			# Loop times for animation
 			for time in self.times:
 				print "timestep "+str(time)+ "   -   t = "+str(time*self._coeff_time)+self._time_units
@@ -553,7 +554,7 @@ class Diagnostic(object):
 				fig.canvas.draw()
 				self._plt.show()
 				# save to file
-				if file: fig.savefig(str(int(time)).join(file))
+				if file: fig.savefig(("%010d"%int(time)).join(file))
 			# Movie ?
 			if mov.writer is not None: mov.finish()
 		
