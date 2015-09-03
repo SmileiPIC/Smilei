@@ -677,7 +677,8 @@ void VectorPatch::definePatchDiagsMaster()
 void VectorPatch::updatePatchFieldDump( PicParams& params )
 {
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	(*this)(ipatch)->sio->updatePattern( params, (*this)(ipatch) );
+	if ( (*this)(ipatch)->Pcoordinates[0]!=params.number_of_patches[0]-1 )
+	    (*this)(ipatch)->sio->updatePattern( params, (*this)(ipatch) );
     }
     
 }
