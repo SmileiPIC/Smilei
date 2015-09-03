@@ -32,16 +32,16 @@ It is also possible to install all dependencies manually.
 #. In a terminal, run the following command to install the C++ compiler with MPI::
      
      $ sudo port install openmpi-gcc48
-      
-   :red:`mpi-select or something like that ?` ... 
+     
+   Then, to make this the default::
+     
+     $ sudo port select --set mpi openmpi-gcc48-fortran
    
 #. To install HDF5, run::
      
      $ sudo port install hdf5 +gcc48+openmpi
-      
-   :red:`select a variant ?` ... 
-   
-#. To install openMP, 
+       
+#. Optionally, to install openMP, 
    
    :red:`to do`
    
@@ -63,8 +63,11 @@ It is also possible to install all dependencies manually.
    
      $ sudo port install python27
    
-   (follow the instructions on screen to make this version default).
-   
+   Then, to make this the default::
+     
+     $ sudo port select --set python python27
+     $ sudo port select --set python2 python27
+
 #. If you wish to run the Python post-processing scripts provided in :program:`Smilei`,
    you need several modules (numpy, matplotlib, pylab, h5py). We recommend to install
    :program:`IPython` which includes some of these::
