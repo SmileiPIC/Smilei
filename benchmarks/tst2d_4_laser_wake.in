@@ -96,7 +96,7 @@ species
 	initialization_type = regular
         species_geometry = trapezoidal
         vacuum_length   = 0.0  0.0 
-        dens_length_x = 2000 20 
+        dens_length_x = 6000 20 
         dens_length_y = 2000 0 
 	n_part_per_cell = 10
 	c_part_max = 1.0

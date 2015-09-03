@@ -56,6 +56,7 @@ class VectorPatch {
     void createPatches(PicParams& params, DiagParams& diag_params, LaserParams& laser_params, SmileiMPI* smpi, SimWindow* simWindow);
     void setNbrParticlesToExch(SmileiMPI* smpi);
     void exchangePatches(SmileiMPI* smpi);
+    void exchangePatches_new(SmileiMPI* smpi);
     
     void initDumpFields(PicParams& params, DiagParams &diag_params, int timestep);
     void finalizeDumpFields(PicParams& params, DiagParams &diag_params, int timestep);

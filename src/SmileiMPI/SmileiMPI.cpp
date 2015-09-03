@@ -610,11 +610,11 @@ void SmileiMPI::computeGlobalDiags(DiagnosticPhaseSpace& phases, int timestep)
 void SmileiMPI::send(Patch* patch, int to, int tag)
 {
     for (int ispec=0 ; ispec<patch->vecSpecies.size() ; ispec++)
-	send( patch->vecSpecies[ispec], to, tag+3*ispec );
+	send( patch->vecSpecies[ispec], to, tag+2*ispec );
 
-    send( patch->EMfields, to, tag+3*patch->vecSpecies.size() );
+    send( patch->EMfields, to, tag+2*patch->vecSpecies.size() );
 
-    send( patch->Diags, to, tag+3*patch->vecSpecies.size()+6 );
+    send( patch->Diags, to, tag+2*patch->vecSpecies.size()+6 );
 
 }
 void SmileiMPI::isend(Patch* patch, int to, int tag)
@@ -623,25 +623,25 @@ void SmileiMPI::isend(Patch* patch, int to, int tag)
     MPI_Request request;
 
     for (int ispec=0 ; ispec<patch->vecSpecies.size() ; ispec++){
-        isend( &(patch->vecSpecies[ispec]->bmax), to, tag+3*ispec+2 );
+        isend( &(patch->vecSpecies[ispec]->bmax), to, tag+2*ispec+1 );
         if ( patch->vecSpecies[ispec]->getNbrOfParticles() > 0 ){
             patch->vecSpecies[ispec]->typePartSend = createMPIparticles( patch->vecSpecies[ispec]->particles, nbrOfProp );
-            isend( patch->vecSpecies[ispec]->particles, to, tag+3*ispec, patch->vecSpecies[ispec]->typePartSend );
+            isend( patch->vecSpecies[ispec]->particles, to, tag+2*ispec, patch->vecSpecies[ispec]->typePartSend );
 	    MPI_Type_free( &(patch->vecSpecies[ispec]->typePartSend) );
         }
     }
-    isend( patch->EMfields, to, tag+3*patch->vecSpecies.size() );
-    isend( patch->Diags, to, tag+3*patch->vecSpecies.size()+6 );
+    isend( patch->EMfields, to, tag+2*patch->vecSpecies.size() );
+    isend( patch->Diags, to, tag+2*patch->vecSpecies.size()+6 );
 }
 
 void SmileiMPI::recv(Patch* patch, int from, int tag)
 {
     for (int ispec=0 ; ispec<patch->vecSpecies.size() ; ispec++)
-	recv( patch->vecSpecies[ispec], from, tag+3*ispec );
+	recv( patch->vecSpecies[ispec], from, tag+2*ispec );
 
-    recv( patch->EMfields, from, tag+3*patch->vecSpecies.size() );
+    recv( patch->EMfields, from, tag+2*patch->vecSpecies.size() );
 
-    recv( patch->Diags, from, tag+3*patch->vecSpecies.size()+6 );
+    recv( patch->Diags, from, tag+2*patch->vecSpecies.size()+6 );
 
 }
 void SmileiMPI::new_recv(Patch* patch, int from, int tag, int ndim)
@@ -651,7 +651,7 @@ void SmileiMPI::new_recv(Patch* patch, int from, int tag, int ndim)
 
     for (int ispec=0 ; ispec<patch->vecSpecies.size() ; ispec++){
         //Receive bmax
-        recv( &patch->vecSpecies[ispec]->bmax, from, tag+3*ispec+2 );
+        recv( &patch->vecSpecies[ispec]->bmax, from, tag+2*ispec+1 );
         //Reconstruct bmin from bmax
         memcpy(&(patch->vecSpecies[ispec]->bmin[1]), &(patch->vecSpecies[ispec]->bmax[0]), (patch->vecSpecies[ispec]->bmax.size()-1)*sizeof(int) );
         patch->vecSpecies[ispec]->bmin[0]=0;
@@ -661,13 +661,13 @@ void SmileiMPI::new_recv(Patch* patch, int from, int tag, int ndim)
         //Receive particles
         if ( nbrOfPartsRecv > 0 ) {
 	    patch->vecSpecies[ispec]->typePartSend = createMPIparticles( patch->vecSpecies[ispec]->particles, nbrOfProp );
-    	    new_recv( patch->vecSpecies[ispec]->particles, from, tag+3*ispec, patch->vecSpecies[ispec]->typePartSend );
+    	    new_recv( patch->vecSpecies[ispec]->particles, from, tag+2*ispec, patch->vecSpecies[ispec]->typePartSend );
 	    MPI_Type_free( &(patch->vecSpecies[ispec]->typePartSend) );
 	}
     }
    
-    recv( patch->EMfields, from, tag+3*patch->vecSpecies.size() );
-    recv( patch->Diags, from, tag+3*patch->vecSpecies.size()+6 );
+    recv( patch->EMfields, from, tag+2*patch->vecSpecies.size() );
+    recv( patch->Diags, from, tag+2*patch->vecSpecies.size()+6 );
 
 }
 

@@ -79,7 +79,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
     int nPatches( vecPatches.size() );
     int nSpecies  ( vecPatches(0)->vecSpecies.size() );
     int nDim_Parts( vecPatches(0)->vecSpecies[0]->particles->dimension() );
-    int nmessage = 8+3*nSpecies;
+    int nmessage = 7+2*nSpecies;
     vector<int> nbrOfPartsSend(nSpecies,0);
     vector<int> nbrOfPartsRecv(nSpecies,0);
     vector < vector<int>* > store_npart_sent;
@@ -162,13 +162,13 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
             for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
                 //if my MPI left neighbor is not me AND I'm not a newly created patch, send me !
                 if ( vecPatches(ipatch)->MPI_neighborhood_[4] != vecPatches(ipatch)->MPI_neighborhood_[3] && vecPatches(ipatch)->hindex == vecPatches(ipatch)->neighbor_[0][0] ) {
-                    smpi->isend( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighborhood_[3], vecPatches(ipatch)->hindex*nmessage+1 );
+                    smpi->isend( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighborhood_[3], vecPatches(ipatch)->hindex*nmessage );
                 }
             }
             // Patch à recevoir
             for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
                 if ( ( vecPatches(ipatch)->MPI_neighborhood_[4] != vecPatches(ipatch)->MPI_neighborhood_[5] ) && ( vecPatches(ipatch)->MPI_neighborhood_[5] != MPI_PROC_NULL )  && (vecPatches(ipatch)->neighbor_[0][0] != vecPatches(ipatch)->hindex) ){
-                    smpi->new_recv( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighborhood_[5], vecPatches(ipatch)->hindex*nmessage+1, nDim_Parts );
+                    smpi->new_recv( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighborhood_[5], vecPatches(ipatch)->hindex*nmessage, nDim_Parts );
                 }
             }
 
