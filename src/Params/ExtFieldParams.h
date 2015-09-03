@@ -23,6 +23,11 @@ struct ExtFieldStructure : ProfileStructure {
     std::vector<std::string> fields;
 };
 
+struct AntennaStructure : ProfileStructure {
+    //! fields to which apply the exeternal field
+    std::string field;
+};
+
 // ---------------------------------------------------------------------------------------------------------------------
 //! ExtFieldParams class: holds all the properties of the lasers that are read from the input file
 // ---------------------------------------------------------------------------------------------------------------------
@@ -39,7 +44,7 @@ public:
     std::vector<ExtFieldStructure> structs;
     
     //! Antenna
-    std::vector<ExtFieldStructure> antennas;
+    std::vector<AntennaStructure> antennas;
     
 };
 

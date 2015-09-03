@@ -44,11 +44,12 @@ geometry(params.geometry)
     
     unsigned int numAntenna=PyTools::nComponents("Antenna");
     for (unsigned int n_antenna = 0; n_antenna < numAntenna; n_antenna++) {
-        ExtFieldStructure tmpProf;
-        if( !PyTools::extract("field",tmpProf.fields,"Antenna",n_antenna)) {
+        AntennaStructure tmpProf;
+        if( !PyTools::extract("field",tmpProf.field,"Antenna",n_antenna)) {
             ERROR("ExtField #"<<n_antenna<<": parameter 'field' not provided'");
         }
-        WARNING("add a check HERE if it just contains J{x,y,z}");
+        if (tmpProf.field != "Jx" && tmpProf.field != "Jy" && tmpProf.field != "Jz")
+            ERROR("Antenna field must be one of J{x,y,z}");
         
         // If profile is a float
         if( PyTools::extract("profile", tmpProf.profile, "Antenna", n_antenna) ) {

@@ -22,6 +22,9 @@ public:
     
     //! Alternate constructor (for external fields profiles)
     Profile(ExtFieldStructure&, std::string);
+
+    //! Alternate constructor (for antenna profiles)
+    Profile(AntennaStructure&, std::string);
     
     //! Default destructor
     ~Profile();

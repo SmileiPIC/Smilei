@@ -26,6 +26,16 @@ Profile::Profile(ExtFieldStructure & pp, string geometry)
     
 }
 
+Profile::Profile(AntennaStructure & pp, string geometry)
+{
+    // Convert ExtFieldStructure in ProfileStructure
+    profile_param = static_cast<ProfileStructure> (pp);
+    
+    // Launch the initialization
+    init(profile_param, geometry);
+    
+}
+
 
 void Profile::init(ProfileStructure & pp, string geometry)
 {

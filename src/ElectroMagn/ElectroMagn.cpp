@@ -386,13 +386,11 @@ void ElectroMagn::applyAntennas(SmileiMPI* smpi, double time) {
     my_fields.push_back(Jz_);
     for (vector<Field*>::iterator field=my_fields.begin(); field!=my_fields.end(); field++) {
         if (*field) {
-            for (vector<ExtFieldStructure>::iterator antenna=extfield_params.antennas.begin(); antenna!=extfield_params.antennas.end(); antenna++ ) {
+            for (vector<AntennaStructure>::iterator antenna=extfield_params.antennas.begin(); antenna!=extfield_params.antennas.end(); antenna++ ) {
                 Profile *my_antenna = new Profile(*antenna, extfield_params.geometry);
                 if (my_antenna) {
-                    for (vector<string>::iterator fieldName=(*antenna).fields.begin();fieldName!=(*antenna).fields.end();fieldName++) {
-                        if (LowerCase((*field)->name)==LowerCase(*fieldName)) {
-                            applyAntenna(*field,my_antenna, smpi, time);
-                        }
+                    if (LowerCase((*field)->name)==LowerCase((*antenna).field)) {
+                        applyAntenna(*field,my_antenna, smpi, time);
                     }
                     delete my_antenna;
                 } else{

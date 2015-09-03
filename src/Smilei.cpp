@@ -290,9 +290,6 @@ int main (int argc, char* argv[])
         // ---------------------------------------------------
         EMfields->restartRhoJ();
         
-        // apply currents from antennas
-        EMfields->applyAntennas(smpi, time_dual);
-
         timer[8].restart();
         // apply collisions if requested
         // -----------------------------
@@ -301,7 +298,6 @@ int main (int argc, char* argv[])
         for (unsigned int icoll=0 ; icoll<vecCollisions.size(); icoll++)
             vecCollisions[icoll]->collide(params,vecSpecies,itime);
         timer[8].update();
-        
         
         // apply the PIC method
         // --------------------
@@ -335,7 +331,6 @@ int main (int argc, char* argv[])
         }
         timer[1].update();
         
-        
         //!\todo To simplify : sum global and per species densities
         timer[4].restart();
         smpi->sumRhoJ( EMfields );
@@ -343,6 +338,10 @@ int main (int argc, char* argv[])
             if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ) smpi->sumRhoJs(EMfields, ispec, time_dual > params.species_param[ispec].time_frozen);
         }
         EMfields->computeTotalRhoJ();
+
+        // apply currents from antennas
+        EMfields->applyAntennas(smpi, time_dual);
+        
         timer[4].update();
         
         // solve Maxwell's equations
