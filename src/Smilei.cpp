@@ -208,8 +208,8 @@ int main (int argc, char* argv[])
         
         for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
             if ( (vecSpecies[ispec]->particles.isTestParticles) ) {
-                sio->initWriteTestParticles0(vecSpecies[ispec], ispec, 0, params, smpi);
-                sio->writeTestParticles0(vecSpecies[ispec], ispec, 0, params, smpi);
+                sio->initWriteTestParticles(vecSpecies[ispec], ispec, 0, params, smpi);
+                sio->writeTestParticles(vecSpecies[ispec], ispec, 0, params, smpi);
                 //MPI_Finalize();
                 //return 0;
             }
@@ -362,7 +362,7 @@ int main (int argc, char* argv[])
         timer[3].restart();
         for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
             if ( (vecSpecies[ispec]->particles.isTestParticles)  )
-                sio->writeTestParticles0(vecSpecies[ispec], ispec, itime, params, smpi);
+                sio->writeTestParticles(vecSpecies[ispec], ispec, itime, params, smpi);
         }
         
         

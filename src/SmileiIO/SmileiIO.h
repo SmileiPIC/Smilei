@@ -89,6 +89,7 @@ public:
     void writeTestParticles(Species* species, int ispec, int itime, PicParams& params, SmileiMPI* smpi);
     template <class T> void appendTestParticles(hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type, SmileiMPI* smpi, hsize_t * locator);
     hid_t TestParticles_file_access;
+    hid_t TestParticles_transfer;
     hid_t TestParticles_mem_space;
     hsize_t TestParticles_dims[2];
     void initWriteTestParticles0(Species* species, int ispec, int itime, PicParams& params, SmileiMPI* smpi);

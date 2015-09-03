@@ -700,6 +700,8 @@ void SmileiIO::initWriteTestParticles(Species* species, int ispec, int time, Pic
     TestParticles_file_access = H5Pcreate(H5P_FILE_ACCESS);
     H5Pset_fapl_mpio( TestParticles_file_access, MPI_COMM_WORLD, MPI_INFO_NULL );
     
+    TestParticles_transfer = H5Pcreate(H5P_DATASET_XFER);
+    H5Pset_dxpl_mpio( TestParticles_transfer, H5FD_MPIO_COLLECTIVE);
 
 }
 
@@ -744,6 +746,8 @@ void SmileiIO::writeTestParticles(Species* species, int ispec, int time, PicPara
     smpi->barrier();
     H5Fflush( fid, H5F_SCOPE_GLOBAL );
     H5Fclose( fid );
+    
+    delete [] locator;
 
 }
 
@@ -765,7 +769,10 @@ void SmileiIO::appendTestParticles( hid_t fid, string name, std::vector<T> prope
     H5Sselect_elements( file_space, H5S_SELECT_SET, nParticles, locator );
     
     // Write
-    H5Dwrite( did, type, TestParticles_mem_space , file_space , H5P_DEFAULT, &(property[0]) );
+    H5Dwrite( did, type, TestParticles_mem_space , file_space , TestParticles_transfer, &(property[0]) );
+    H5D_mpio_actual_io_mode_t actual_io_mode;
+    H5Pget_mpio_actual_io_mode(TestParticles_transfer, &actual_io_mode);
+    MESSAGE(actual_io_mode);
     
     // Close stuff
     H5Sclose(file_space);
