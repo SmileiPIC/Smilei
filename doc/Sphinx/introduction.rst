@@ -44,7 +44,8 @@ You can download it from the `GitLab <https://llrgit.in2p3.fr/groups/smilei>`_ h
 It is protected by a "licence CeCILL", the french equivalent to the Gnu GPL license
 for "logiciels libres".
 
-**Download**: :download:`Smilei v1.0 <_download/smilei-v1.0.tar.gz>`
+**Download**:
+:download:`Smilei v1.0 <_downloads/smilei-v1.0.tar.gz>`
 
 .. warning::
   This version does not have associated documentation.
