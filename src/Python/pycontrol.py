@@ -34,7 +34,7 @@ def _keep_python_running():
         for prof in (las.time_profile, las.transv_profile):
             if callable(prof): return True
     for ant in Antenna:
-        if callable(ant.profile): return True
+        if callable(ant.time_profile): return True
 
     return False
 

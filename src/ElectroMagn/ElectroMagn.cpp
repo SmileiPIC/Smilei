@@ -132,6 +132,13 @@ ElectroMagn::~ElectroMagn()
         if (emBoundCond[i]!=NULL) delete emBoundCond[i];
     
     delete MaxwellFaradaySolver_;
+    
+    //antenna cleanup
+    for (vector<AntennaStructure>::iterator antenna=extfield_params.antennas.begin(); antenna!=extfield_params.antennas.end(); antenna++ ) {
+        delete antenna->my_field;
+        antenna->my_field=NULL;
+    }
+    
 
 }//END Destructer
 
@@ -384,17 +391,17 @@ void ElectroMagn::applyAntennas(SmileiMPI* smpi, double time) {
     my_fields.push_back(Jx_);
     my_fields.push_back(Jy_);
     my_fields.push_back(Jz_);
-    for (vector<Field*>::iterator field=my_fields.begin(); field!=my_fields.end(); field++) {
-        if (*field) {
-            for (vector<AntennaStructure>::iterator antenna=extfield_params.antennas.begin(); antenna!=extfield_params.antennas.end(); antenna++ ) {
-                Profile *my_antenna = new Profile(*antenna, extfield_params.geometry);
-                if (my_antenna) {
-                    if (LowerCase((*field)->name)==LowerCase((*antenna).field)) {
-                        applyAntenna(*field,my_antenna, smpi, time);
+    
+    for (vector<AntennaStructure>::iterator antenna=extfield_params.antennas.begin(); antenna!=extfield_params.antennas.end(); antenna++ ) {
+        double intensity = PyTools::runPyFunction(antenna->time_profile.py_profile, time);
+        if (antenna->my_field) {
+            for (vector<Field*>::iterator field=my_fields.begin(); field!=my_fields.end(); field++) {
+                if ((*field)->name==antenna->my_field->name) {
+                    if (antenna->my_field->globalDims_ == (*field)->globalDims_) {
+                        for (unsigned int i=0; i< (*field)->globalDims_ ; i++) {
+                            (**field)(i)=(**field)(i) + intensity * (*antenna->my_field)(i);
+                        }
                     }
-                    delete my_antenna;
-                } else{
-                    ERROR("Could not initialize external field Profile");
                 }
             }
         }

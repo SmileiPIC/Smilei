@@ -174,6 +174,21 @@ isNorthern(smpi->isNorthern())
         } // for (int isDual=0 ; isDual
     } // for (unsigned int i=0 ; i<nDim_field 
     
+    // Fillng the space profiles of antennas
+    for (vector<AntennaStructure>::iterator antenna=extfield_params.antennas.begin(); antenna!=extfield_params.antennas.end(); antenna++ ) {
+        if (antenna->field == "Jx")
+            antenna->my_field = new Field2D(dimPrim, 0, false, "Jx");
+        else if (antenna->field == "Jy")
+            antenna->my_field = new Field2D(dimPrim, 1, false, "Jy");
+        else if (antenna->field == "Jz")
+            antenna->my_field = new Field2D(dimPrim, 2, false, "Jz");
+        
+        if (antenna->my_field) {
+            Profile my_spaceProfile(antenna->space_profile, params.geometry);
+            applyExternalField(antenna->my_field,&my_spaceProfile, smpi);
+        }
+    }
+    
 }//END constructor Electromagn2D
 
 
@@ -250,7 +265,7 @@ void ElectroMagn2D::solvePoisson(SmileiMPI* smpi)
     
     // Initialization of the variables
     // -------------------------------
-    DEBUG(1,"Initialisation for the iterative CG method started");
+    DEBUG("Initialisation for the iterative CG method started");
     unsigned int iteration=0;
     
     Field2D phi(dimPrim);    // scalar potential
@@ -279,17 +294,17 @@ void ElectroMagn2D::solvePoisson(SmileiMPI* smpi)
     // compute control parameter
     double ctrl = rnew_dot_rnew / (double)(nx_p2_global);
     
-    DEBUG(1,"Initialisation for the iterative CG method done");
+    DEBUG("Initialisation for the iterative CG method done");
     
     
     // ---------------------------------------------------------
     // Starting iterative loop for the conjugate gradient method
     // ---------------------------------------------------------
-    DEBUG(1,"Starting iterative loop for CG method");
+    DEBUG("Starting iterative loop for CG method");
     while ( (ctrl > error_max) && (iteration<iteration_max) ) {
         
         iteration++;
-        DEBUG(5,"iteration " << iteration << " started with control parameter ctrl = " << ctrl*1.e14 << " x 1e-14");
+        DEBUG("iteration " << iteration << " started with control parameter ctrl = " << ctrl*1.e14 << " x 1e-14");
         
         // scalar product of the residual
         double r_dot_r = rnew_dot_rnew;
@@ -367,7 +382,7 @@ void ElectroMagn2D::solvePoisson(SmileiMPI* smpi)
             }
         }
         MPI_Allreduce(&rnew_dot_rnew_local, &rnew_dot_rnew, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-        DEBUG(10,"new residual norm: rnew_dot_rnew = " << rnew_dot_rnew);
+        DEBUG("new residual norm: rnew_dot_rnew = " << rnew_dot_rnew);
         
         // compute new direction
         double beta_k = rnew_dot_rnew/r_dot_r;
@@ -379,7 +394,7 @@ void ElectroMagn2D::solvePoisson(SmileiMPI* smpi)
         
         // compute control parameter
         ctrl = rnew_dot_rnew / (double)(nx_p2_global);
-        DEBUG(10,"iteration " << iteration << " done, exiting with control parameter ctrl = " << ctrl);
+        DEBUG("iteration " << iteration << " done, exiting with control parameter ctrl = " << ctrl);
         
     }//End of the iterative loop
     
@@ -404,14 +419,14 @@ void ElectroMagn2D::solvePoisson(SmileiMPI* smpi)
     // ------------------------------------------
     
     // Ex
-    DEBUG(2, "Computing Ex from scalar potential");
+    DEBUG("Computing Ex from scalar potential");
     for (unsigned int i=1; i<nx_d-1; i++) {
         for (unsigned int j=0; j<ny_p; j++) {
             (*Ex2D)(i,j) = (phi(i-1,j)-phi(i,j))/dx;
         }
     }
     // Ey
-    DEBUG(2, "Computing Ey from scalar potential");
+    DEBUG("Computing Ey from scalar potential");
     for (unsigned int i=0; i<nx_p; i++) {
         for (unsigned int j=1; j<ny_d-1; j++) {
             (*Ey2D)(i,j) = (phi(i,j-1)-phi(i,j))/dy;
@@ -423,14 +438,14 @@ void ElectroMagn2D::solvePoisson(SmileiMPI* smpi)
     // ---------------------
     // Ex / West
     if (smpi2D->isWestern()) {
-        DEBUG(2, "Computing Western BC on Ex");
+        DEBUG("Computing Western BC on Ex");
         for (unsigned int j=0; j<ny_p; j++) {
             (*Ex2D)(0,j) = (*Ex2D)(1,j) + ((*Ey2D)(0,j+1)-(*Ey2D)(0,j))*dx/dy  - dx*(*rho2D)(0,j);
         }
     }
     // Ex / East
     if (smpi2D->isEastern()) {
-        DEBUG(2, "Computing Eastern BC on Ex");
+        DEBUG("Computing Eastern BC on Ex");
         for (unsigned int j=0; j<ny_p; j++) {
             (*Ex2D)(nx_d-1,j) = (*Ex2D)(nx_d-2,j) - ((*Ey2D)(nx_p-1,j+1)-(*Ey2D)(nx_p-1,j))*dx/dy + dx*(*rho2D)(nx_p-1,j);
         }
@@ -958,11 +973,13 @@ void ElectroMagn2D::computePoynting() {
 
 void ElectroMagn2D::applyExternalField(Field* my_field,  Profile *profile, SmileiMPI* smpi) {
     
+    HEREIAM("");
     Field2D* field2D=static_cast<Field2D*>(my_field);
     SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
 
     vector<double> pos(2,0);
     
+    HEREIAM("");
     for (unsigned int i=0 ; i<field2D->dims()[0] ; i++) {
         pos[0] = ( (double)(smpi2D->getCellStartingGlobalIndex(0)+i +(field2D->isDual(0)?-0.5:0)) )*dx;
         for (unsigned int j=0 ; j<field2D->dims()[1] ; j++) {
@@ -970,26 +987,11 @@ void ElectroMagn2D::applyExternalField(Field* my_field,  Profile *profile, Smile
             (*field2D)(i,j) = (*field2D)(i,j) + profile->valueAt(pos);
         }//j
     }//i
+    HEREIAM("");
     
     if (emBoundCond[0]!=0) emBoundCond[0]->save_fields_BC2D_Long(my_field);
     if (emBoundCond[1]!=0) emBoundCond[1]->save_fields_BC2D_Long(my_field);
     if (emBoundCond[2]!=0) emBoundCond[2]->save_fields_BC2D_Trans(my_field);
     if (emBoundCond[3]!=0) emBoundCond[3]->save_fields_BC2D_Trans(my_field);
     
-}
-
-void ElectroMagn2D::applyAntenna(Field* my_field,  Profile *profile, SmileiMPI* smpi, double time) {
-    
-    Field2D* field2D=static_cast<Field2D*>(my_field);
-    SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
-    
-    vector<double> pos(2,0);
-    for (unsigned int i=0 ; i<field2D->dims()[0] ; i++) {
-        pos[0] = ( (double)(smpi2D->getCellStartingGlobalIndex(0)+i +(field2D->isDual(0)?-0.5:0)) )*dx;
-        for (unsigned int j=0 ; j<field2D->dims()[1] ; j++) {
-            pos[1] = ( (double)(smpi2D->getCellStartingGlobalIndex(1)+j +(field2D->isDual(1)?-0.5:0)) )*dy;
-            (*field2D)(i,j) = (*field2D)(i,j) + profile->valueAt(time, pos);
-        }//j
-    }//i
-        
 }

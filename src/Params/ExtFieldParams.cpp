@@ -37,38 +37,36 @@ geometry(params.geometry)
         } else{
             ERROR(" ExtField #"<<n_extfield<<": parameter 'profile' not understood");
         }
-        
         structs.push_back(tmpExtField);
     }
 
     
     unsigned int numAntenna=PyTools::nComponents("Antenna");
     for (unsigned int n_antenna = 0; n_antenna < numAntenna; n_antenna++) {
+        HEREIAM(n_antenna);
+        
         AntennaStructure tmpProf;
+        tmpProf.my_field = NULL;
         if( !PyTools::extract("field",tmpProf.field,"Antenna",n_antenna)) {
             ERROR("ExtField #"<<n_antenna<<": parameter 'field' not provided'");
         }
         if (tmpProf.field != "Jx" && tmpProf.field != "Jy" && tmpProf.field != "Jz")
             ERROR("Antenna field must be one of J{x,y,z}");
         
-        // If profile is a float
-        if( PyTools::extract("profile", tmpProf.profile, "Antenna", n_antenna) ) {
-            string txyz = "t,x";
-            if(geometry=="2d3v") txyz = "t,x,y";
-            if(geometry=="3d3v") txyz = "t,x,y,z";
-            // redefine the profile as a constant function instead of float
-            PyTools::checkPyError();
-            ostringstream command;
-            command.str("");
-            command << "ExtField["<<n_antenna<<"].profile=lambda "<<txyz<<":" << tmpProf.profile;
-            if( !PyRun_SimpleString(command.str().c_str()) ) PyTools::checkPyError();
-        }
-        // Now import the profile as a python function
-        PyObject *mypy = PyTools::extract_py("profile","Antenna",n_antenna);
+        // Now import the space profile as a python function
+        PyObject *mypy = PyTools::extract_py("space_profile","Antenna",n_antenna);
         if (mypy && PyCallable_Check(mypy)) {
-            tmpProf.py_profile=mypy;
+            tmpProf.space_profile.py_profile=mypy;
         } else{
-            ERROR(" ExtField #"<<n_antenna<<": parameter 'profile' not understood");
+            ERROR(" Antenna #"<<n_antenna<<": parameter 'space_profile' not understood");
+        }
+
+        // Now import the time profile as a python function
+        PyObject *mytpy = PyTools::extract_py("time_profile","Antenna",n_antenna);
+        if (mytpy && PyCallable_Check(mytpy)) {
+            tmpProf.time_profile.py_profile=mytpy;
+        } else{
+            ERROR(" Antenna #"<<n_antenna<<": parameter 'time_profile' not understood");
         }
         
         antennas.push_back(tmpProf);

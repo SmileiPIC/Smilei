@@ -14,6 +14,7 @@
 #include "Params.h"
 
 class ExtFieldProfile;
+class Field;
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each ExtField
@@ -26,6 +27,12 @@ struct ExtFieldStructure : ProfileStructure {
 struct AntennaStructure : ProfileStructure {
     //! fields to which apply the exeternal field
     std::string field;
+
+    ProfileStructure time_profile;
+    ProfileStructure space_profile;
+    
+    Field* my_field;
+
 };
 
 // ---------------------------------------------------------------------------------------------------------------------

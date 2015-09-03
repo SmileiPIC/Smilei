@@ -25,8 +25,8 @@ int SmileiIO::signal_received=0;
 
 SmileiIO::SmileiIO( Params& params, Diagnostic& diag, SmileiMPI* smpi ) : 
 dump_times(0), 
-time_reference(MPI_Wtime()),
 fieldsToDump(diag.fieldsToDump),
+time_reference(MPI_Wtime()),
 time_dump_step(0),
 dump_request(smpi->getSize())
 {
@@ -270,7 +270,7 @@ bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, std::vector<Spec
                 time_dump_step = itime+1; // we will dump at next timestep (in case non-master already passed)
                 MESSAGE("Reached time limit : " << elapsed_time << " minutes. Dump timestep : " << time_dump_step );
                 // master does a non-blocking send
-                for (unsigned int dest=0; dest < smpi->getSize(); dest++) {
+                for (unsigned int dest=0; dest < (unsigned int) smpi->getSize(); dest++) {
                     MPI_Isend(&time_dump_step,1,MPI_UNSIGNED,dest,SMILEI_COMM_DUMP_TIME,smpi->SMILEI_COMM_WORLD,&dump_request[dest]);
                 }
             }

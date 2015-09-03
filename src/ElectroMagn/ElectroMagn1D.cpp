@@ -167,6 +167,24 @@ isEastern(smpi->isEastern())
         } // for (int isDual=0 ; isDual
     } // for (unsigned int i=0 ; i<nDim_field
     
+    
+    
+    // Fillng the space profiles of antennas
+    for (vector<AntennaStructure>::iterator antenna=extfield_params.antennas.begin(); antenna!=extfield_params.antennas.end(); antenna++ ) {
+        if (antenna->field == "Jx")
+            antenna->my_field = new Field1D(dimPrim, 0, false, "Jx");
+        else if (antenna->field == "Jy")
+            antenna->my_field = new Field1D(dimPrim, 1, false, "Jy");
+        else if (antenna->field == "Jz")
+            antenna->my_field = new Field1D(dimPrim, 2, false, "Jz");
+        
+        if (antenna->my_field) {
+            Profile my_spaceProfile(antenna->space_profile, params.geometry);
+            applyExternalField(antenna->my_field,&my_spaceProfile, smpi);
+        }
+    }
+
+
 }//END constructor Electromagn1D
 
 
@@ -232,7 +250,7 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
     // -------------------------------
     // Initialization of the variables
     // -------------------------------
-    DEBUG(1,"Initialize variables");
+    DEBUG("Initialize variables");
     
     unsigned int iteration = 0;
     
@@ -259,12 +277,12 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
     // ---------------------------------------------------------
     // Starting iterative loop for the conjugate gradient method
     // ---------------------------------------------------------
-    DEBUG(1,"Starting iterative loop");
+    DEBUG("Starting iterative loop");
     while ( (iteration<5) || ((ctrl > error_max) && (iteration<iteration_max)) ) {
         //  NB: forced at least 5 iterations to avoid problem when initial fields are small
         
         iteration++;
-        DEBUG(5,"iteration " << iteration << " started with control parameter ctrl = " << ctrl*1.e14 << " x 1e-14");
+        DEBUG("iteration " << iteration << " started with control parameter ctrl = " << ctrl*1.e14 << " x 1e-14");
         
         double r_dot_r = rnew_dot_rnew;
         
@@ -374,8 +392,7 @@ void ElectroMagn1D::solvePoisson(SmileiMPI* smpi)
     //!\todo Reduce to find global max
     if (smpi1D->isMaster())
         MESSAGE(1,"Poisson equation solved. Maximum error = " << deltaPoisson_max << " at i= " << i_deltaPoisson_max);
-    
-    
+
     
 }//END solvePoisson
 
@@ -649,21 +666,6 @@ void ElectroMagn1D::applyExternalField(Field* my_field,  Profile *profile, Smile
     
     if(emBoundCond[0]) emBoundCond[0]->save_fields_BC1D(my_field);
 }
-
-void ElectroMagn1D::applyAntenna(Field* my_field,  Profile *profile, SmileiMPI* smpi, double time) {
-    
-    MESSAGE(1,"Applying antenna to " << my_field->name);
-    Field1D* field1D=static_cast<Field1D*>(my_field);
-    SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
-    
-    vector<double> x(1,0);
-    for (unsigned int i=0 ; i<field1D->dims()[0] ; i++) {
-        x[0] = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i +(field1D->isDual(0)?-0.5:0)) )*dx;
-        (*field1D)(i) = (*field1D)(i) + profile->valueAt(time, x);
-    }
-    
-}
-
 
 
 

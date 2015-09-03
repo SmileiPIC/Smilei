@@ -18,7 +18,7 @@ ElectroMagnBC::ElectroMagnBC( Params &params, LaserParams &laser_params )
     laser_.resize(laser_params.n_laser);
     
     for (unsigned int i=0; i<laser_.size(); i++) {
-        DEBUG(5,"Initializing Laser "<<i);        
+        DEBUG("Initializing Laser "<<i);        
         laser_[i] = new LaserProfile(params,laser_params, i);
     }
 
