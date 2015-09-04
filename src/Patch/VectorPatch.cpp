@@ -499,14 +499,15 @@ void VectorPatch::createPatches(PicParams& params, DiagParams& diag_params, Lase
     nPatches_now = this->size() ;
 
 
-    std::vector<int> tmp(0);
+    //std::vector<int> tmp(0);
     //Loop on current patches...
     //for (unsigned int ipatch=0 ; ipatch<send_patch_id_.size() ; ipatch++)
     for (unsigned int ipatch=0 ; ipatch < nPatches_now ; ipatch++)
       //if        current hindex        <  future refHindex  OR current hindex > future last hindex...
 	if ( ( refHindex_+ipatch < recv_patch_id_[0] ) || ( refHindex_+ipatch > recv_patch_id_.back() ) )
       //    put this patch in tmp. We will have to send it away.
-	    tmp.push_back( ipatch );
+	    //tmp.push_back( ipatch );
+	    send_patch_id_.push_back( ipatch );
 
     //  nPatches <- future number of patches owned.
     nPatches = recv_patch_id_.size() ;
@@ -521,7 +522,7 @@ void VectorPatch::createPatches(PicParams& params, DiagParams& diag_params, Lase
 	}
     }
 
-    send_patch_id_ = tmp;
+    //send_patch_id_ = tmp;
 
     if (simWindow) n_moved = simWindow->getNmoved(); 
     // Store in local vector future patches

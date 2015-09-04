@@ -162,7 +162,7 @@ void SmileiMPI::init_patch_count( PicParams& params)
     //Load of a frozen particle = coef_frozen*load of a particle.
     double coef_cell, coef_frozen; 
 
-    coef_cell = 0.1;
+    coef_cell = 50;
     coef_frozen = 0.1;
  
     mincell.resize(params.n_species*3);
@@ -269,7 +269,7 @@ void SmileiMPI::recompute_patch_count( PicParams& params, VectorPatch& vecpatche
     std::vector<double> Lp,Lp_global;
     int recv_counts[smilei_sz];
 
-    coef_cell = 0.1;
+    coef_cell = 50;
     coef_frozen = 0.1;
 
     Npatches = params.number_of_patches[0];
