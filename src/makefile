@@ -5,7 +5,7 @@ HDF5_ROOT_DIR ?= ${HDF5HOME}
 
 VERSION:="$(shell git describe 2>/dev/null || echo '??')"
 
-CFLAGS += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include
+CFLAGS += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include #-D_TESTPATCHEXCH
 LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5
 
 ifneq (,$(findstring poincare,$(HOSTNAME)))
