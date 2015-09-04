@@ -217,11 +217,6 @@ int main (int argc, char* argv[])
     }
     
     
-    // ------------------------------------------------------------------------
-    // check here if we can close the python interpreter
-    // ------------------------------------------------------------------------
-    TITLE("Cleaning up python runtime environement");
-    params.cleanup();
     
     
     // ------------------------------------------------------------------------
@@ -411,6 +406,13 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     MESSAGE("End time loop, time dual = " << time_dual);
     MESSAGE("-----------------------------------------------------------------------------------------------------");
+    
+    // ------------------------------------------------------------------------
+    // check here if we can close the python interpreter
+    // ------------------------------------------------------------------------
+    TITLE("Cleaning up python runtime environement");
+    params.cleanup();
+    
     
     //double timElapsed=smpiData->time_seconds();
     //if ( smpi->isMaster() ) MESSAGE("Time in time loop : " << timElapsed );
