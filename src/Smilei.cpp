@@ -499,7 +499,6 @@ int npatchmoy=0, npartmoy=0;
             if ((start_moving==1) && (smpiData->isMaster()) ) {
 		MESSAGE(">>> Window starts moving");
             }
-            cout << "start moving = " << start_moving << endl;
             }
             simWindow->operate(vecPatches, smpiData, params, diag_params, laser_params);
         }
@@ -517,7 +516,7 @@ int npatchmoy=0, npartmoy=0;
                 for (unsigned int ispec=0 ; ispec < 2 ; ispec++)
                     partperMPI += vecPatches(ipatch)->vecSpecies[ispec]->getNbrOfParticles();
             }
-            cout << smpiData->getRank() << "npatch before = " << vecPatches.size() << " Total part before balancing = " << partperMPI << endl;
+            //cout << smpiData->getRank() << "npatch before = " << vecPatches.size() << " Total part before balancing = " << partperMPI << endl;
             partperMPI = 0;
 	    /*if (smpiData->getRank()==0)
 		vecPatches.send_patch_id_.push_back(3);
@@ -542,7 +541,7 @@ int npatchmoy=0, npartmoy=0;
             }
             npatchmoy += vecPatches.size();
             npartmoy += partperMPI;
-            cout << smpiData->getRank()<< "npatch after = " << vecPatches.size()  << " Total part after balancing = " << partperMPI << endl;
+            //cout << smpiData->getRank()<< "npatch after = " << vecPatches.size()  << " Total part after balancing = " << partperMPI << endl;
             timer[7].update();
 	    
 	}
