@@ -130,8 +130,6 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 	    cell_starting_global_index[i] += Pcoordinates[i]*params.n_space[i];
 	    cell_starting_global_index[i] -= params.oversize[i];
 	}
-	// Before update of nmoved
-	sio = SmileiIOFactory::create(params, diag_params, this);
 
 	cell_starting_global_index[0] += n_moved;
 	min_local[0] += n_moved*params.cell_length[0];
@@ -154,7 +152,7 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 
 	Diags = new Diagnostic(params,diag_params, this);
 
-	//sio = SmileiIOFactory::create(params, diag_params, this);
+	sio = SmileiIOFactory::create(params, diag_params, this);
 	
 };
 

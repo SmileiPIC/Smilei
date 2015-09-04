@@ -239,7 +239,7 @@ int main (int argc, char* argv[])
 
 #ifdef _TESTPATCHEXCH
 int partperMPI;
-int balancing_freq = 250;
+int balancing_freq = 150;
 int npatchmoy=0, npartmoy=0;
 #endif
 	

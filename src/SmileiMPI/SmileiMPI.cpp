@@ -162,7 +162,7 @@ void SmileiMPI::init_patch_count( PicParams& params)
     //Load of a frozen particle = coef_frozen*load of a particle.
     double coef_cell, coef_frozen; 
 
-    coef_cell = 100;
+    coef_cell = 0.1;
     coef_frozen = 0.1;
  
     mincell.resize(params.n_species*3);
@@ -269,7 +269,7 @@ void SmileiMPI::recompute_patch_count( PicParams& params, VectorPatch& vecpatche
     std::vector<double> Lp,Lp_global;
     int recv_counts[smilei_sz];
 
-    coef_cell = 100;
+    coef_cell = 0.1;
     coef_frozen = 0.1;
 
     Npatches = params.number_of_patches[0];
@@ -760,7 +760,9 @@ void SmileiMPI::send(ElectroMagn* fields, int to, int tag)
     send( fields->Bx_, to, tag+3 );
     send( fields->By_, to, tag+4 );
     send( fields->Bz_, to, tag+5 );
-}
+    send( fields->Bx_m, to, tag+6);
+    send( fields->By_m, to, tag+7);
+    send( fields->Bz_m, to, tag+8);}
 
 void SmileiMPI::isend(ElectroMagn* fields, int to, int tag)
 {
@@ -771,6 +773,9 @@ void SmileiMPI::isend(ElectroMagn* fields, int to, int tag)
     isend( fields->Bx_, to, tag+3);
     isend( fields->By_, to, tag+4);
     isend( fields->Bz_, to, tag+5);
+    isend( fields->Bx_m, to, tag+6);
+    isend( fields->By_m, to, tag+7);
+    isend( fields->Bz_m, to, tag+8);
 }
 
 void SmileiMPI::recv(ElectroMagn* fields, int from, int tag)
@@ -781,6 +786,9 @@ void SmileiMPI::recv(ElectroMagn* fields, int from, int tag)
     recv( fields->Bx_, from, tag+3 );
     recv( fields->By_, from, tag+4 );
     recv( fields->Bz_, from, tag+5 );
+    recv( fields->Bx_m, from, tag+6 );
+    recv( fields->By_m, from, tag+7 );
+    recv( fields->Bz_m, from, tag+8 );
 }
 
 void SmileiMPI::send(Field* field, int to, int hindex)

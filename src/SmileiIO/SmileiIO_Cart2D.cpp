@@ -125,8 +125,8 @@ void SmileiIO_Cart2D::createPattern( PicParams& params, Patch* patch )
             //
             // Select hyperslab in the file.
             //
-            offset[0] = patch->getCellStartingGlobalIndex(0)+istart[0];
-            offset[1] = patch->getCellStartingGlobalIndex(1)+istart[1];
+	    offset[0] = patch->Pcoordinates[0]*params.n_space[0] - params.oversize[0]+istart[0];
+	    offset[1] = patch->Pcoordinates[1]*params.n_space[1] - params.oversize[1]+istart[1];
             stride[0] = 1;
             stride[1] = 1;
             count[0] = 1;
