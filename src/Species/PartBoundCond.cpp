@@ -40,14 +40,14 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, Patch* patch )
     bc_up     = NULL;
 
     // Define limits of local domain
-    //if (!params.nspace_win_x) {
+    if (!params.nspace_win_x) {
         x_min = max( x_min_global, patch->getDomainLocalMin(0) );
         x_max = min( x_max_global, patch->getDomainLocalMax(0) );
-    //}
-    //else {
-    //    x_min = patch->getDomainLocalMin(0);
-    //    x_max = patch->getDomainLocalMax(0);
-    //}
+    }
+    else {
+        x_min = patch->getDomainLocalMin(0);
+        x_max = patch->getDomainLocalMax(0);
+    }
 
     if ( nDim_particle > 1 ) {
 	if (params.bc_em_type_trans=="periodic") {
