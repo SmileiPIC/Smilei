@@ -153,6 +153,11 @@ class Antenna(SmileiComponent):
     field = []
     profile = None
 
+# Particle wall
+class PartWall(SmileiComponent):
+    """Particle Wall"""
+    kind="none"
+
 # default simulation values
 output_script = "smilei.py"
 dump_step = 0

@@ -20,6 +20,7 @@ class Pusher;
 class Interpolator;
 class Projector;
 class PartBoundCond;
+class PartWall;
 class Field3D;
 
 //! class Species
@@ -175,7 +176,10 @@ private:
 
     //! Method used to apply boundary-condition for the Particles of the considered Species
     PartBoundCond* partBoundCond;
-
+    
+    //! Wall for particles (1D: point, 2D: line, 3D: plane)
+    PartWall* partWall;
+    
     //! Method used to Push the particles (change momentum & change position)
     Pusher* Push;
 

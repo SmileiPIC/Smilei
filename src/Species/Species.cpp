@@ -12,6 +12,7 @@
 #include "IonizationFactory.h"
 
 #include "PartBoundCond.h"
+#include "PartWall.h"
 //#include "BoundaryConditionType.h"
 
 #include "ElectroMagn.h"
@@ -45,7 +46,9 @@ species_param(params.species_param[ispec]),
 velocityProfile(3,NULL),
 temperatureProfile(3,NULL),
 ndim(params.nDim_particle),
-min_loc(smpi->getDomainLocalMin(0))
+min_loc(smpi->getDomainLocalMin(0)),
+partBoundCond(NULL),
+partWall(NULL)
 {
     
     particles.species_number = speciesNumber;
@@ -148,6 +151,16 @@ min_loc(smpi->getDomainLocalMin(0))
     // define limits for BC and functions applied and for domain decomposition
     partBoundCond = new PartBoundCond( params, ispec, smpi);
     
+    // define wall for particles
+    if (PyTools::nComponents("PartWall")) {
+        partWall = new PartWall(params, smpi);
+        // delete if it doesn't belong to ths processor
+        if (!partWall->is_here) {
+            delete partWall;
+            partWall=NULL;
+        }
+    }
+    
     unsigned int nthds(1);
 #pragma omp parallel shared(nthds) 
     {
@@ -173,6 +186,7 @@ Species::~Species()
     delete Push;
     if (Ionize) delete Ionize;
     if (partBoundCond) delete partBoundCond;
+    if (partWall) delete partWall;
     if (chargeProfile) delete chargeProfile;
     if (densityProfile) delete densityProfile;
     for (unsigned int i=0; i<velocityProfile.size(); i++)
@@ -456,6 +470,14 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 
                 // Push the particle
                 (*Push)(particles, iPart, Epart, Bpart, gf);
+                
+                // Apply wall condition
+                if (partWall) {
+                    if ( !partWall->apply(particles, iPart, params.species_param[ispec], ener_iPart)) {
+                        nrj_lost_per_thd[tid] += params.species_param[ispec].mass * ener_iPart;
+                    }
+                }
+                
                 
                 // Apply boundary condition on the particles
                 // Boundary Condition may be physical or due to domain decomposition
