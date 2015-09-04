@@ -219,13 +219,6 @@ int main (int argc, char* argv[])
     
     
     // ------------------------------------------------------------------------
-    // check here if we can close the python interpreter
-    // ------------------------------------------------------------------------
-    TITLE("Cleaning up python runtime environement");
-    input_data.cleanup();
-    
-    
-    // ------------------------------------------------------------------------
     // Initialize the simulation times time_prim at n=0 and time_dual at n=+1/2
     // ------------------------------------------------------------------------
     
@@ -411,6 +404,13 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     MESSAGE("End time loop, time dual = " << time_dual);
     MESSAGE("-----------------------------------------------------------------------------------------------------");
+    
+    // ------------------------------------------------------------------------
+    // check here if we can close the python interpreter
+    // ------------------------------------------------------------------------
+    TITLE("Cleaning up python runtime environement");
+    input_data.cleanup();
+    
     
     //double timElapsed=smpiData->time_seconds();
     //if ( smpi->isMaster() ) MESSAGE("Time in time loop : " << timElapsed );
