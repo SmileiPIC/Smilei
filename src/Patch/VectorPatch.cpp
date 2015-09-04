@@ -679,7 +679,7 @@ void VectorPatch::exchangePatches_new(SmileiMPI* smpi)
     newMPIrank = smpi->smilei_rk -1;
     oldMPIrank = smpi->smilei_rk -1;
     int istart( 0 );
-    int nmessage = 2*nSpecies+7;
+    int nmessage = 2*nSpecies+10;
     for (int irk=0 ; irk<smpi->getRank() ; irk++) istart += smpi->patch_count[irk];
     // Send part
     // Send particles

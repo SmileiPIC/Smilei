@@ -79,7 +79,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
     int nPatches( vecPatches.size() );
     int nSpecies  ( vecPatches(0)->vecSpecies.size() );
     int nDim_Parts( vecPatches(0)->vecSpecies[0]->particles->dimension() );
-    int nmessage = 7+2*nSpecies;
+    int nmessage = 10+2*nSpecies;
     vector<int> nbrOfPartsSend(nSpecies,0);
     vector<int> nbrOfPartsRecv(nSpecies,0);
     vector < vector<int>* > store_npart_sent;
