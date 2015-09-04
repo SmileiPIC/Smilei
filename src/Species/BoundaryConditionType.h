@@ -85,11 +85,9 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
         }//i
 
     } else {                                    // IF VELOCITY < 3*THERMAL SIMPLY REFLECT IT
-        //
-        particles.position(direction, ipart) = limit_pos - particles.position(direction, ipart);
         particles.momentum(direction, ipart) = -particles.momentum(direction, ipart);
         
-    }
+    }// endif on v vs. thermalVelocity
     
     // position of the particle after reflection
     particles.position(direction, ipart) = limit_pos - particles.position(direction, ipart);
