@@ -9,6 +9,7 @@
 #define Params_H
 
 #include <PyTools.h>
+#include "Profile.h"
 #include <vector>
 #include <string>
 #include <cstdlib>
@@ -22,19 +23,6 @@
 #include <iterator>
 
 class SmileiMPI;
-
-// ---------------------------------------------------------------------------------------------------------------------
-//! This structure contains the properties of each Profile
-// ---------------------------------------------------------------------------------------------------------------------
-struct ProfileStructure {
-    
-    //! Magnitude of the profile if constant profile
-    double profile; 
-    
-    //! in case profile is give in Python
-    PyObject *py_profile;
-    
-};
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each Laser Profile

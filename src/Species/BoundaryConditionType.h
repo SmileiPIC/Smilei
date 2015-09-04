@@ -13,6 +13,7 @@
 #include "Particles.h"
 #include "Params.h"
 #include "tabulatedFunctions.h"
+#include "userFunctions.h"
 
 //!
 //! int function( Particles &particles, int ipart, int direction, double limit_pos )
@@ -77,8 +78,8 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
                 // change of momentum in the direction(s) along the reflection plane
                 double sign_rnd = (double)rand() / RAND_MAX - 0.5; sign_rnd = (sign_rnd)/std::abs(sign_rnd);
                 particles.momentum(i,ipart) = sign_rnd * params.thermalMomentum[i]
-                *                             erfinv::instance().call( (double)rand() / RAND_MAX );
-                //*                           erfinv( (double)rand() / RAND_MAX  );
+                *                               userFunctions::erfinv( (double)rand() / RAND_MAX );
+                //*                             erfinv::instance().call( (double)rand() / RAND_MAX );
             }//if
             
         }//i

@@ -175,7 +175,7 @@ isNorthern(smpi->isNorthern())
     } // for (unsigned int i=0 ; i<nDim_field 
     
     // Fillng the space profiles of antennas
-    for (vector<AntennaStructure>::iterator antenna=extfield_params.antennas.begin(); antenna!=extfield_params.antennas.end(); antenna++ ) {
+    for (vector<AntennaStructure>::iterator antenna=antennas.begin(); antenna!=antennas.end(); antenna++ ) {
         if (antenna->field == "Jx")
             antenna->my_field = new Field2D(dimPrim, 0, false, "Jx");
         else if (antenna->field == "Jy")
@@ -972,14 +972,11 @@ void ElectroMagn2D::computePoynting() {
 }
 
 void ElectroMagn2D::applyExternalField(Field* my_field,  Profile *profile, SmileiMPI* smpi) {
-    
-    HEREIAM("");
     Field2D* field2D=static_cast<Field2D*>(my_field);
     SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
 
     vector<double> pos(2,0);
     
-    HEREIAM("");
     for (unsigned int i=0 ; i<field2D->dims()[0] ; i++) {
         pos[0] = ( (double)(smpi2D->getCellStartingGlobalIndex(0)+i +(field2D->isDual(0)?-0.5:0)) )*dx;
         for (unsigned int j=0 ; j<field2D->dims()[1] ; j++) {

@@ -287,6 +287,27 @@ class Options(object):
 			self.colorbar.update({"aspect":kwargs["cbaspect"]})
 
 
+def _smartChooseFile(file, default_extension=""):
+	"""
+	Smartly splits a folder or file in two parts (prefix+suffix).
+	"""
+	import os.path as p
+	from os import sep as sep
+	if len(file)==0 or file[0].isalnum(): file = "./"+file
+	if p.isdir(file):
+		return [ p.normpath(file)+sep, default_extension]
+	else:
+		path, base = p.split(file)
+		if p.isdir(path):
+			basesplit = base.rsplit(".",1)
+			prefix = basesplit[0]
+			suffix = ""
+			if len(basesplit)>1: suffix = "."+basesplit[1]
+			return [ path+sep+prefix, suffix]
+		else:
+			return [False, "`"+path+"` is not a directory"]
+
+
 # -------------------------------------------------------------------
 # Mother class for all diagnostics
 # -------------------------------------------------------------------
@@ -404,6 +425,11 @@ class Diagnostic(object):
 	
 	# Method to verify everything was ok during initialization
 	def _validate(self):
+		try:
+			self.Smilei
+		except:
+			print "No valid Smilei simulation selected"
+			return False
 		if not self.Smilei.valid or not self.valid:
 			print "Diagnostic is invalid"
 			return False
@@ -440,7 +466,7 @@ class Diagnostic(object):
 		return result
 	
 	# Method to plot the current diagnostic
-	def plot(self, movie="", fps=15, dpi=200, **kwargs):
+	def plot(self, movie="", fps=15, dpi=200, saveAs=None, **kwargs):
 		if not self._validate(): return
 		self.set(**kwargs)
 		self.info()
@@ -505,6 +531,21 @@ class Diagnostic(object):
 			# Otherwise, animation
 			# Movie requested ?
 			mov = Movie(fig, movie, fps, dpi)
+			# Save to file requested ?
+			file = False
+			if type(saveAs) is str:
+				file = _smartChooseFile(saveAs, ".png")
+				if not file[0]:
+					print "WARNING: "+file[1]
+					print "         Will not save figures to files"
+					file = False
+				else:
+					supportedTypes=self._plt.matplotlib.backend_bases.FigureCanvasBase(fig).get_supported_filetypes();
+					if file[1].strip(".") not in supportedTypes.iterkeys():
+						print "WARNING: file format not supported, will not save figures to files"
+						print "         Supported formats: "+",".join(supportedTypes.iterkeys())
+						file = False
+						
 			# Loop times for animation
 			for time in self.times:
 				print "timestep "+str(time)+ "   -   t = "+str(time*self._coeff_time)+self._time_units
@@ -513,6 +554,8 @@ class Diagnostic(object):
 				if self._animateOnAxes(ax, time, movie=mov) is None: return
 				fig.canvas.draw()
 				self._plt.show()
+				# save to file
+				if file: fig.savefig(("%010d"%int(time)).join(file))
 			# Movie ?
 			if mov.writer is not None: mov.finish()
 		
@@ -1148,7 +1191,7 @@ class Field(Diagnostic):
 		self._fieldname = []
 		for f in sortedfields:
 			if f in self._operation:
-				self._operation = self._operation.replace(f,"C['"+f+"']")
+				self._operation = self._re.sub(r"\b"+f+r"\b","C['"+f+"']",self._operation)
 				self._fieldname.append(f)
 		
 		# Check slice is a dict

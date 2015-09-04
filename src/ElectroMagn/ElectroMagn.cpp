@@ -21,7 +21,6 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn::ElectroMagn(Params &params, SmileiMPI* smpi) :
 laser_params(params),
-extfield_params(params),
 timestep(params.timestep),
 cell_length(params.cell_length),
 n_species(params.species_param.size()),
@@ -88,6 +87,72 @@ oversize(params.oversize)
     
     MaxwellFaradaySolver_ = SolverFactory::create(params);
 
+    
+    
+    // -----------------
+    // ExtFields properties
+    // -----------------
+    unsigned int numExtFields=PyTools::nComponents("ExtField");
+    for (unsigned int n_extfield = 0; n_extfield < numExtFields; n_extfield++) {
+        ExtFieldStructure tmpExtField;
+        if( !PyTools::extract("field",tmpExtField.fields,"ExtField",n_extfield)) {
+            ERROR("ExtField #"<<n_extfield<<": parameter 'field' not provided'");
+        }
+        
+        // If profile is a float
+        if( PyTools::extract("profile", tmpExtField.profile, "ExtField", n_extfield) ) {
+            string xyz = "x";
+            if(params.geometry=="2d3v") xyz = "x,y";
+            if(params.geometry=="3d3v") xyz = "x,y,z";
+            // redefine the profile as a constant function instead of float
+            PyTools::checkPyError();
+            ostringstream command;
+            command.str("");
+            command << "ExtField["<<n_extfield<<"].profile=lambda "<<xyz<<":" << tmpExtField.profile;
+            if( !PyRun_SimpleString(command.str().c_str()) ) PyTools::checkPyError();
+        }
+        // Now import the profile as a python function
+        PyObject *mypy = PyTools::extract_py("profile","ExtField",n_extfield);
+        if (mypy && PyCallable_Check(mypy)) {
+            tmpExtField.py_profile=mypy;
+        } else{
+            ERROR(" ExtField #"<<n_extfield<<": parameter 'profile' not understood");
+        }
+        ext_field_structs.push_back(tmpExtField);
+    }
+    
+    
+    unsigned int numAntenna=PyTools::nComponents("Antenna");
+    for (unsigned int n_antenna = 0; n_antenna < numAntenna; n_antenna++) {
+        HEREIAM(n_antenna);
+        
+        AntennaStructure tmpProf;
+        tmpProf.my_field = NULL;
+        if( !PyTools::extract("field",tmpProf.field,"Antenna",n_antenna)) {
+            ERROR("ExtField #"<<n_antenna<<": parameter 'field' not provided'");
+        }
+        if (tmpProf.field != "Jx" && tmpProf.field != "Jy" && tmpProf.field != "Jz")
+            ERROR("Antenna field must be one of J{x,y,z}");
+        
+        // Now import the space profile as a python function
+        PyObject *mypy = PyTools::extract_py("space_profile","Antenna",n_antenna);
+        if (mypy && PyCallable_Check(mypy)) {
+            tmpProf.space_profile.py_profile=mypy;
+        } else{
+            ERROR(" Antenna #"<<n_antenna<<": parameter 'space_profile' not understood");
+        }
+        
+        // Now import the time profile as a python function
+        PyObject *mytpy = PyTools::extract_py("time_profile","Antenna",n_antenna);
+        if (mytpy && PyCallable_Check(mytpy)) {
+            tmpProf.time_profile.py_profile=mytpy;
+        } else{
+            ERROR(" Antenna #"<<n_antenna<<": parameter 'time_profile' not understood");
+        }
+        
+        antennas.push_back(tmpProf);
+    }
+
 }
 
 
@@ -134,7 +199,7 @@ ElectroMagn::~ElectroMagn()
     delete MaxwellFaradaySolver_;
     
     //antenna cleanup
-    for (vector<AntennaStructure>::iterator antenna=extfield_params.antennas.begin(); antenna!=extfield_params.antennas.end(); antenna++ ) {
+    for (vector<AntennaStructure>::iterator antenna=antennas.begin(); antenna!=antennas.end(); antenna++ ) {
         delete antenna->my_field;
         antenna->my_field=NULL;
     }
@@ -360,8 +425,8 @@ void ElectroMagn::applyExternalFields(SmileiMPI* smpi) {
     bool found=false;
     for (vector<Field*>::iterator field=my_fields.begin(); field!=my_fields.end(); field++) {
         if (*field) {
-            for (vector<ExtFieldStructure>::iterator extfield=extfield_params.structs.begin(); extfield!=extfield_params.structs.end(); extfield++ ) {
-                Profile *my_ExtFieldProfile = new Profile(*extfield, extfield_params.geometry);
+            for (vector<ExtFieldStructure>::iterator extfield=ext_field_structs.begin(); extfield!=ext_field_structs.end(); extfield++ ) {
+                Profile *my_ExtFieldProfile = new Profile(*extfield, nDim_field);
                 if (my_ExtFieldProfile) {
                     for (vector<string>::iterator fieldName=(*extfield).fields.begin();fieldName!=(*extfield).fields.end();fieldName++) {
                         if (LowerCase((*field)->name)==LowerCase(*fieldName)) {
@@ -392,7 +457,7 @@ void ElectroMagn::applyAntennas(SmileiMPI* smpi, double time) {
     my_fields.push_back(Jy_);
     my_fields.push_back(Jz_);
     
-    for (vector<AntennaStructure>::iterator antenna=extfield_params.antennas.begin(); antenna!=extfield_params.antennas.end(); antenna++ ) {
+    for (vector<AntennaStructure>::iterator antenna=antennas.begin(); antenna!=antennas.end(); antenna++ ) {
         double intensity = PyTools::runPyFunction(antenna->time_profile.py_profile, time);
         if (antenna->my_field) {
             for (vector<Field*>::iterator field=my_fields.begin(); field!=my_fields.end(); field++) {

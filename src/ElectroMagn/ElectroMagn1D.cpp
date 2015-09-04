@@ -170,7 +170,7 @@ isEastern(smpi->isEastern())
     
     
     // Fillng the space profiles of antennas
-    for (vector<AntennaStructure>::iterator antenna=extfield_params.antennas.begin(); antenna!=extfield_params.antennas.end(); antenna++ ) {
+    for (vector<AntennaStructure>::iterator antenna=antennas.begin(); antenna!=antennas.end(); antenna++ ) {
         if (antenna->field == "Jx")
             antenna->my_field = new Field1D(dimPrim, 0, false, "Jx");
         else if (antenna->field == "Jy")
