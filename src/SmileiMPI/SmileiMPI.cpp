@@ -614,7 +614,7 @@ void SmileiMPI::send(Patch* patch, int to, int tag)
 
     send( patch->EMfields, to, tag+2*patch->vecSpecies.size() );
 
-    send( patch->Diags, to, tag+2*patch->vecSpecies.size()+6 );
+    send( patch->Diags, to, tag+2*patch->vecSpecies.size()+9 );
 
 }
 void SmileiMPI::isend(Patch* patch, int to, int tag)
@@ -631,7 +631,7 @@ void SmileiMPI::isend(Patch* patch, int to, int tag)
         }
     }
     isend( patch->EMfields, to, tag+2*patch->vecSpecies.size() );
-    isend( patch->Diags, to, tag+2*patch->vecSpecies.size()+6 );
+    isend( patch->Diags, to, tag+2*patch->vecSpecies.size()+9 );
 }
 
 void SmileiMPI::recv(Patch* patch, int from, int tag)
@@ -641,7 +641,7 @@ void SmileiMPI::recv(Patch* patch, int from, int tag)
 
     recv( patch->EMfields, from, tag+2*patch->vecSpecies.size() );
 
-    recv( patch->Diags, from, tag+2*patch->vecSpecies.size()+6 );
+    recv( patch->Diags, from, tag+2*patch->vecSpecies.size()+9 );
 
 }
 void SmileiMPI::new_recv(Patch* patch, int from, int tag, int ndim)
@@ -667,7 +667,7 @@ void SmileiMPI::new_recv(Patch* patch, int from, int tag, int ndim)
     }
    
     recv( patch->EMfields, from, tag+2*patch->vecSpecies.size() );
-    recv( patch->Diags, from, tag+2*patch->vecSpecies.size()+6 );
+    recv( patch->Diags, from, tag+2*patch->vecSpecies.size()+9 );
 
 }
 
