@@ -662,6 +662,7 @@ void SmileiIO::initWriteTestParticles(Species* species, int ispec, int time, Pic
         
         hid_t plist = H5Pcreate(H5P_DATASET_CREATE);
         H5Pset_layout(plist, H5D_CHUNKED);
+        H5Pset_alloc_time(plist, H5D_ALLOC_TIME_EARLY); // necessary for collective dump
         hsize_t chunk_dims[2] = {1, nParticles};
         H5Pset_chunk(plist, 2, chunk_dims);
         
@@ -715,10 +716,14 @@ void SmileiIO::writeTestParticles(Species* species, int ispec, int time, PicPara
     
     // Create the locator (gives positions to store particles in the file)
     hsize_t * locator = new hsize_t[locNbrParticles*2];
+    //ostringstream t("");
+    //t << smpi->getRank() << " - ";
     for(int i=0; i<locNbrParticles; i++) {
         locator[i*2  ] = TestParticles_dims[0]-1;
         locator[i*2+1] = particles->id(i)-1;
+        //t<<locator[i*2+1]<<" ";
     }
+    //cout<<t.str()<<endl;
     
     // Specify the memory dataspace: particles array shape
     hsize_t count[2] = {1, (hsize_t)locNbrParticles};
@@ -762,17 +767,17 @@ void SmileiIO::appendTestParticles( hid_t fid, string name, std::vector<T> prope
     // Get the extended space
     hid_t file_space = H5Dget_space(did);
     
-    hsize_t dims[2];
-    H5Sget_simple_extent_dims(file_space, dims, NULL );
+    //hsize_t dims[2];
+    //H5Sget_simple_extent_dims(file_space, dims, NULL );
     
     // Select locations that this proc will write
     H5Sselect_elements( file_space, H5S_SELECT_SET, nParticles, locator );
     
     // Write
     H5Dwrite( did, type, TestParticles_mem_space , file_space , TestParticles_transfer, &(property[0]) );
-    H5D_mpio_actual_io_mode_t actual_io_mode;
-    H5Pget_mpio_actual_io_mode(TestParticles_transfer, &actual_io_mode);
-    MESSAGE(actual_io_mode);
+    //H5D_mpio_actual_io_mode_t actual_io_mode;
+    //H5Pget_mpio_actual_io_mode(TestParticles_transfer, &actual_io_mode);
+    //MESSAGE(actual_io_mode);
     
     // Close stuff
     H5Sclose(file_space);
