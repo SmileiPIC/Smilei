@@ -263,25 +263,24 @@ int main (int argc, char* argv[])
         timer[0].update();
         
         if ( (itime % Diags.print_every == 0) &&  ( smpi->isMaster() ) ) {
+            ostringstream my_msg;
+            my_msg << "t = "          << scientific << setprecision(3)   << time_dual <<
+            "   it = "     << setw(log10(params.n_time)+1) << itime <<
+            "   sec = "    << scientific << setprecision(3)   << timer[0].getTime() <<
+            "   Utot = "   << scientific << setprecision(4)<< Diags.getScalar("Utot") <<
+            "   Uelm = "   << scientific << setprecision(4)<< Diags.getScalar("Uelm") <<
+            "   Ukin = "   << scientific << setprecision(4)<< Diags.getScalar("Ukin") <<
+            "   Ubal(%) = "<< scientific << fixed << setprecision(2) << 100.0*Diags.getScalar("Ubal_norm");
             
-            MESSAGE(1,"t = "          << setw(7) << setprecision(2)   << time_dual
-                    << "   it = "     << setw(log10(params.n_time)+1) << itime  << "/" << params.n_time
-                    << "   sec = "    << setw(7) << setprecision(2)   << timer[0].getTime()
-                    << "   Utot = "   << scientific << setprecision(4)<< Diags.getScalar("Utot")
-                    << "   Uelm = "   << scientific << setprecision(4)<< Diags.getScalar("Uelm")
-                    << "   Ukin = "   << scientific << setprecision(4)<< Diags.getScalar("Ukin")
-                    << "   Ubal(%) = "<< setw(6) << fixed << setprecision(2) << 100.0*Diags.getScalar("Ubal_norm")
-                    );
-            
-            //!\todo (MG to JD/AD) We should clear this. Either not print it OR add it to the former stream
             if (simWindow) {
                 double Uinj_mvw = Diags.getScalar("Uelm_inj_mvw") + Diags.getScalar("Ukin_inj_mvw");
                 double Uout_mvw = Diags.getScalar("Uelm_out_mvw") + Diags.getScalar("Ukin_out_mvw");
-                MESSAGE(1, "\t\t Uinj_mvw = " << scientific << setprecision(4) << Uinj_mvw
-                        << "     Uout_mvw = " << scientific << setprecision(4) << Uout_mvw
-                        );
+                my_msg << "   Uinj_mvw = " << scientific << setprecision(4) << Uinj_mvw <<
+                "   Uout_mvw = " << scientific << setprecision(4) << Uout_mvw;
+
             }//simWindow
-            
+
+            MESSAGE(my_msg.str());
         }//itime
         
         

@@ -44,9 +44,9 @@ PartWall::PartWall( short direction, string kind, double position )
 // Reads the input file and creates the ParWall objects accordingly
 vector<PartWall*> PartWall::create(Params& params, SmileiMPI* smpi)
 {
-    PartWall* partwall;
+    // This will be returned
     vector<PartWall*> vecPartWall;
-    
+
     // Loop over each wall component and parse info
     unsigned int numpartwall=PyTools::nComponents("PartWall");
     for (unsigned int iwall = 0; iwall < numpartwall; iwall++) {
@@ -76,23 +76,18 @@ vector<PartWall*> PartWall::create(Params& params, SmileiMPI* smpi)
         }
         
         // Find out wether this proc has the wall or not
-        bool is_here = (  position > smpi->getDomainLocalMin(direction)
-                       && position < smpi->getDomainLocalMax(direction));
-        // Skip this wall if the proc does not contain it
-        if (!is_here) continue;
-        
-        // Ewtract the kind of wall
-        string kind("");
-        PyTools::extract("kind",kind,"PartWall",iwall);
-        if (kind.empty() || (kind!="refl" && kind!="supp" && kind!="stop" && kind!="thermalize")) {
-            ERROR("For PartWall #" << iwall << ", `kind` must be one of refl, supp, stop, thermalize");
+        if (  position > smpi->getDomainLocalMin(direction) && position < smpi->getDomainLocalMax(direction)) {
+            // Ewtract the kind of wall
+            string kind("");
+            PyTools::extract("kind",kind,"PartWall",iwall);
+            if (kind=="refl" || kind=="supp" || kind=="stop" || kind=="thermalize") {
+                // Create new wall
+                vecPartWall.push_back(new PartWall(direction, kind, position));
+            } else {
+                ERROR("For PartWall #" << iwall << ", `kind` must be one of refl, supp, stop, thermalize");
+            }
         }
-        
-        // Create new wall
-        vecPartWall.push_back(new PartWall(direction, kind, position));
-        
     }
-    
     return vecPartWall;
 }
 

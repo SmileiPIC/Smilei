@@ -122,10 +122,11 @@ oversize(params.oversize)
     }
     
     
+    // -----------------
+    // Antenna properties
+    // -----------------
     unsigned int numAntenna=PyTools::nComponents("Antenna");
     for (unsigned int n_antenna = 0; n_antenna < numAntenna; n_antenna++) {
-        HEREIAM(n_antenna);
-        
         AntennaStructure tmpProf;
         tmpProf.my_field = NULL;
         if( !PyTools::extract("field",tmpProf.field,"Antenna",n_antenna)) {

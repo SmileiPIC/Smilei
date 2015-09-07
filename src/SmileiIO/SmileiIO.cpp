@@ -32,17 +32,20 @@ dump_request(smpi->getSize())
 {
     dump_step=0;
     if (PyTools::extract("dump_step", dump_step)) {
-        MESSAGE(1,"Code will stop after " << dump_step << " steps");
+        if (dump_step)
+            MESSAGE(1,"Code will stop after " << dump_step << " steps");
     }
     
     dump_minutes=0.0;
     if (PyTools::extract("dump_minutes", dump_minutes)) {
-        MESSAGE(1,"Code will stop after " << dump_minutes << " minutes");
+        if (dump_minutes>0)
+            MESSAGE(1,"Code will stop after " << dump_minutes << " minutes");
     }
     
     exit_after_dump=true;
     if (PyTools::extract("exit_after_dump", exit_after_dump)) {
-        MESSAGE(1,"Code will exit after dump");
+        if (dump_step || dump_minutes>0)
+            MESSAGE(1,"Code will exit after dump");
     }
     
     dump_file_sequence=2;
