@@ -467,7 +467,7 @@ void VectorPatch::finalizeDumpFields(PicParams& params, DiagParams &diag_params,
 
 void VectorPatch::createPatches(PicParams& params, DiagParams& diag_params, LaserParams& laser_params, SmileiMPI* smpi, SimWindow* simWindow)
 {
-    unsigned int n_moved(0), nPatches, nPatches_now;
+    unsigned int n_moved(0), nPatches_now;
     recv_patches_.resize(0);
 
     // Set Index of the 1st patch of the vector yet on current MPI rank
@@ -510,9 +510,8 @@ void VectorPatch::createPatches(PicParams& params, DiagParams& diag_params, Lase
 	    send_patch_id_.push_back( ipatch );
 
     //  nPatches <- future number of patches owned.
-    nPatches = recv_patch_id_.size() ;
     // Backward loop on future patches...
-    for ( int ipatch=nPatches-1 ; ipatch>=0 ; ipatch--) {
+    for ( int ipatch=recv_patch_id_.size()-1 ; ipatch>=0 ; ipatch--) {
       //if      future patch hindex  >= current refHindex             AND    future patch hindex <= current last hindex
 	//if ( ( recv_patch_id_[ipatch]>=refHindex_+send_patch_id_[0] ) && ( recv_patch_id_[ipatch]<=refHindex_+send_patch_id_[send_patch_id_.size()-1] ) ) {
 	//                                          send_patch_id_[0] should be equal to 0 ??
@@ -527,7 +526,7 @@ void VectorPatch::createPatches(PicParams& params, DiagParams& diag_params, Lase
     if (simWindow) n_moved = simWindow->getNmoved(); 
     // Store in local vector future patches
     // Loop on the patches I have to receive and do not already own.
-    for (unsigned int ipatch=0 ; ipatch < nPatches ; ipatch++) {
+    for (unsigned int ipatch=0 ; ipatch < recv_patch_id_.size() ; ipatch++) {
 	// density profile is initializes as if t = 0 !
 	// Species will be cleared when, nbr of particles will be known
         //Creation of a new patch, ready to receive its content from MPI neighbours.
