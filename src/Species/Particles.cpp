@@ -65,12 +65,11 @@ void Particles::initialize( int nParticles, PicParams &params)
 void Particles::initialize( int nParticles, PicParams &params, int speciesNumber)
 {
     initialize( nParticles, params );
-    
     if (params.species_param[speciesNumber].isTest) {
         isTestParticles = true;
         Id.resize(nParticles, 0);
+        test_dump_every = params.species_param[speciesNumber].test_dump_every;
     }
-
 }
 
 

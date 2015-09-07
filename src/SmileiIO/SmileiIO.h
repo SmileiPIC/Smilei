@@ -35,30 +35,30 @@ public:
     SmileiIO( PicParams& params, Diagnostic &diag, SmileiMPI* smpi );
     //! Destructor for SmileiIO
     virtual ~SmileiIO();
-
+    
     //! Write all fields (E, B, J, rho, per species ; 10 + 4 x nspecies fields) of all time step in the same file
     void writeAllFieldsSingleFileTime( std::vector<Field*> *, int, bool );
     
     //! Basic Write of a field in the specified group of the global file
     virtual void writeFieldsSingleFileTime( Field* field, hid_t group_id ) = 0;
-
+    
     //! Each MPI process writes is particles in its own file
     //! Disabled for now, replaced by dump (used for restart)
     void writePlasma( std::vector<Species*> vecSpecies, double time, SmileiMPI* smpi );
-
+    
     //! Id of "Fields.h5", contains all fields per timestep
     hid_t global_file_id_;
     
     //! Id of "Fields_avg.h5", contains time-averaged fields per timestep
     hid_t global_file_id_avg;
-
+    
     //! Property list for collective dataset write, set for // IO.
     hid_t write_plist;
-
+    
     //! Id of "particles-mpirank.h5", contains particles of current mpirank
     //! Disabled for now
     hid_t  partFile_id;
-
+    
 #ifdef _IO_PARTICLE
     //! Particles output in progress
     std::vector<hid_t> partDataset_id;
@@ -66,32 +66,25 @@ public:
     hid_t partMemSpace;
     int particleSize;
 #endif
-	
+    
     //! Space dimension of a particle
     unsigned int nDim_particle;
-
+    
     //! Basic write field on its own file (debug)
     virtual void write( Field* field ) = 0;
-
+    
     //! restart everything to file per processor
     void restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> &vecSpecies, SmileiMPI* smpi, SimWindow* simWin, PicParams &params, InputData& input_data);
-
+    
     //! restart field per proc
     void restartFieldsPerProc(hid_t fid, Field* field);
-
+    
     //! load moving window parameters
     void restartMovingWindow(hid_t fid, SimWindow* simWindow);
     
     //! test before writing everything to file per processor
     bool dump(ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  PicParams &params, InputData& input_data);
-
-    void initWriteTestParticles(Species* species, int ispec, int itime, PicParams& params, SmileiMPI* smpi);
-    void writeTestParticles(Species* species, int ispec, int itime, PicParams& params, SmileiMPI* smpi);
-    template <class T> void appendTestParticles(hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type, SmileiMPI* smpi, hsize_t * locator);
-    hid_t TestParticles_file_access;
-    hid_t TestParticles_transfer;
-    hid_t TestParticles_mem_space;
-    hsize_t TestParticles_dims[2];
+    
     void initWriteTestParticles0(Species* species, int ispec, int itime, PicParams& params, SmileiMPI* smpi);
     void writeTestParticles0(Species* species, int ispec, int itime, PicParams& params, SmileiMPI* smpi);
     template <class T> void appendTestParticles0(hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type);
@@ -112,26 +105,26 @@ public:
 private:
     //! incremental number of times we've done a dump
     unsigned int dump_times;
-    	
+    
     //! dump everything to file per processor
     void dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  PicParams &params, InputData& input_data);
-	
+    
     //! dump field per proc
     void dumpFieldsPerProc(hid_t fid, Field* field);
-
+    
     //! dump moving window parameters
     void dumpMovingWindow(hid_t fid, SimWindow* simWindow);
-
+    
     //! time of the constructor
     double time_reference;
-	
+    
     //! function that returns elapsed time from creator (uses private var time_reference)
     double time_seconds();
-	
+    
     //! name of the fields to dump
     std::vector<std::string> fieldsToDump; 
-	
+    
     
 };
 
-#endif /* SMILEI_OUTPUT_H_ */
+#endif

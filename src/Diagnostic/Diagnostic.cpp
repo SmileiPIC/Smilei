@@ -17,7 +17,7 @@
 using namespace std;
 
 Diagnostic::Diagnostic(PicParams& params, InputData &ifile, SmileiMPI *smpi) :
-dtimer(4)
+dtimer(5)
 {
     
     // defining default values & reading diagnostic every-parameter
@@ -54,13 +54,17 @@ dtimer(4)
     dtimer[1].init(smpi, "probes");
     initProbes(params,ifile,smpi);
     
-    // phasespaces initialization    
+    // phasespaces initialization
     dtimer[2].init(smpi, "phases");
     initPhases(params,ifile,smpi);
     
-    // particles initialization    
+    // particles initialization
     dtimer[3].init(smpi, "particles");
     initParticles(params,ifile);
+    
+    // test particles initialization
+    dtimer[4].init(smpi, "testparticles");
+    initTestParticles(params);
     
 }
 
@@ -110,9 +114,15 @@ void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Specie
     
     // run all the particle diagnostics
     dtimer[3].restart();
-    for (unsigned int i=0; i<vecDiagnosticParticles.size(); i++) // loop all particle diagnostics
+    for (unsigned int i=0; i<vecDiagnosticParticles.size(); i++)
         vecDiagnosticParticles[i]->run(timestep, vecSpecies, smpi);
     dtimer[3].update();
+    
+    // run all the test particle diagnostics
+    dtimer[4].restart();
+    for (unsigned int i=0; i<vecDiagnosticTestParticles.size(); i++)
+        vecDiagnosticTestParticles[i]->run(timestep, smpi);
+    dtimer[4].update();
 
 }
 
@@ -744,6 +754,22 @@ void Diagnostic::initParticles(PicParams& params, InputData &ifile) {
         // add this object to the list
         vecDiagnosticParticles.push_back(tmpDiagParticles);
     }
+}
+
+void Diagnostic::initTestParticles(PicParams& params) {
+    DiagnosticTestParticles * tmpDiagTestParticles;
+    int n_diag_testparticles=0;
+    
+    // loop species and make a new diag if test particles
+    int nspecies = params.species_param.size();
+    for(int i=0; i<nspecies; i++) {
+        if (params.species_param[i].isTest) {
+            tmpDiagTestParticles = new DiagnosticTestParticles(n_diag_testparticles, i, params);
+            vecDiagnosticTestParticles.push_back(tmpDiagTestParticles);
+            n_diag_testparticles++;
+        }
+    }
+    
 }
 
 

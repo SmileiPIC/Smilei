@@ -130,6 +130,10 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------------------------
     vector<Collisions*> vecCollisions = Collisions::create(params, input_data, vecSpecies, smpi);
     
+    // Test particles need initialization now (after vecSpecies has been created)
+    for (unsigned int i=0 ; i<Diags.vecDiagnosticTestParticles.size(); i++)
+        Diags.vecDiagnosticTestParticles[i]->init(vecSpecies, smpi);
+    
     // ----------------------------------------------------------------------------
     // Define Moving Window & restart
     // ----------------------------------------------------------------------------
@@ -197,7 +201,7 @@ int main (int argc, char* argv[])
         EMfields->applyExternalFields(smpi);
         
         TITLE("Running diags at time t = 0");
-        Diags.runAllDiags(0, EMfields, vecSpecies, Interp, smpi);        
+        Diags.runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
         // temporary EM fields dump in Fields.h5
         sio->writeAllFieldsSingleFileTime( &(EMfields->allFields), 0, 0 );
         // temporary EM fields dump in Fields_avg.h5
@@ -206,14 +210,14 @@ int main (int argc, char* argv[])
         // temporary particle dump at time 0
         sio->writePlasma( vecSpecies, 0., smpi );
         
-        for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
-            if ( (vecSpecies[ispec]->particles.isTestParticles) ) {
-                sio->initWriteTestParticles(vecSpecies[ispec], ispec, 0, params, smpi);
-                sio->writeTestParticles(vecSpecies[ispec], ispec, 0, params, smpi);
-                //MPI_Finalize();
-                //return 0;
-            }
-        }
+        //for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
+        //    if ( (vecSpecies[ispec]->particles.isTestParticles) ) {
+        //        sio->initWriteTestParticles0(vecSpecies[ispec], ispec, 0, params, smpi);
+        //        sio->writeTestParticles0(vecSpecies[ispec], ispec, 0, params, smpi);
+        //        //MPI_Finalize();
+        //        //return 0;
+        //    }
+        //}
         
     }
     
@@ -360,10 +364,11 @@ int main (int argc, char* argv[])
         
         // run all diagnostics
         timer[3].restart();
-        for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
-            if ( (vecSpecies[ispec]->particles.isTestParticles)  )
-                sio->writeTestParticles(vecSpecies[ispec], ispec, itime, params, smpi);
-        }
+        //for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
+        //    if ( vecSpecies[ispec]->particles.isTestParticles ) {
+        //        sio->writeTestParticles0(vecSpecies[ispec], params, smpi);
+        //    }
+        //}
         
         
         Diags.runAllDiags(itime, EMfields, vecSpecies, Interp, smpi);

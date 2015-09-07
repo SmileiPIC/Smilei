@@ -275,11 +275,19 @@ void PicParams::readSpecies(InputData &ifile) {
             ERROR("For species #" << ispec << ", `atomic_number` not found => required for the ionization model .");
         }
         
-        tmpSpec.isTest = false; // default value
+        // Define a test species
+        tmpSpec.isTest = false;
         ifile.extract("isTest",tmpSpec.isTest ,"Species",ispec);
         if (tmpSpec.ionization_model!="none" && (!tmpSpec.isTest)) {
-            ERROR("Disabled for now : test & ionized");
+            ERROR("For species #" << ispec << ", disabled for now : test & ionized");
         }
+        // Define the number of timesteps for dumping test particles
+        tmpSpec.test_dump_every = 1;
+        if (ifile.extract("dump_every",tmpSpec.test_dump_every ,"Species",ispec)) {
+            if (tmpSpec.test_dump_every>1 && !tmpSpec.isTest)
+                WARNING("For species #" << ispec << ", dump_every discarded because not test particles");
+        }
+        
         
         // Species geometry
         // ----------------

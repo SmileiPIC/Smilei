@@ -23,7 +23,7 @@ interpolation_order = 2
 # SIMULATION TIME 
 # timestep = float, time steps`
 # sim_time = float, duration of the simulation
-timestep = 0.004 * L0
+timestep = 0.005 * L0
 sim_time  = 0.5 * L0
 
 #  optional parameter time_fields_frozen, during which fields are not updated
@@ -33,7 +33,7 @@ time_fields_frozen = 0.
 # SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
 # cell_length = cell length`
 # sim_length  = length of the simulation
-cell_length = [0.005 * L0]
+cell_length = [0.01 * L0]
 sim_length  = [1. * L0]
 
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
@@ -98,16 +98,17 @@ Species(
 	species_type = "test",
 	initPosition_type = "random",
 	initMomentum_type = "maxwell-juettner",
-	n_part_per_cell= 20,
+	n_part_per_cell= 2,
 	mass = 1.0,
-	charge = 0,
-	nb_density = 10.,
+	charge = -1.,
+	nb_density = constant(10., xvacuum=0.4*L0),
 	mean_velocity = [0.05, 0., 0.],
 	temperature = [0.00002],
 	time_frozen = 0.0,
 	bc_part_type_west = "none",
 	bc_part_type_east = "none",
-	isTest = True
+	isTest = True,
+	dump_every = 4
 )
 
 
