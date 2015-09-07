@@ -127,6 +127,15 @@ public:
 	nrj_new_particles = 0;
     }
 
+    inline int getMemFootPrint() {
+	int speciesSize  = ( 2*ndim + 3 + 1 )*sizeof(double) + sizeof(short);
+	if ( particles.isTestParticles )
+	    speciesSize += sizeof ( unsigned int );
+	//speciesSize *= getNbrOfParticles();
+	speciesSize *= getParticlesCapacity();
+	return speciesSize;
+    }
+
 private:
     
     //! Type of density profile ("nb" or "charge")

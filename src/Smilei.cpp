@@ -153,7 +153,6 @@ int main (int argc, char* argv[])
     
     // projection operator (virtual)
     Projector* Proj = ProjectorFactory::create(params, smpi);
-    
     smpi->barrier();
     
     unsigned int stepStart=0, stepStop=params.n_time;
@@ -216,6 +215,22 @@ int main (int argc, char* argv[])
         }
         
     }
+
+    // ------------------------------------------------------------------------
+    // Check memory consumption
+    // ------------------------------------------------------------------------
+    TITLE("Memory consumption");
+    int particlesMem(0);
+    for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++)
+	particlesMem += vecSpecies[ispec]->getMemFootPrint();
+    MESSAGE( "Species part = " << (int)( (double)particlesMem / 1024./1024.) << " Mo" );
+
+    // fieldsMem contains field per species
+    int fieldsMem = EMfields->getMemFootPrint();
+    MESSAGE( "Fields part = " << (int)( (double)fieldsMem / 1024./1024.) << " Mo" );
+    // Read value in /proc/pid/status
+    //Tools::printMemFootPrint( "End Initialization" );
+
     
     
     // ------------------------------------------------------------------------

@@ -69,7 +69,7 @@ void Field3D::allocateDims(std::vector<unsigned int> dims ) {
 
     data_ = new double[dims_[0]*dims_[1]*dims_[2]];
     //! \todo{check row major order!!!}
-    data_3D= new double**[dims_[0]*dims_[1]];
+    data_3D= new double**[dims_[0]];
     for (unsigned int i=0; i<dims_[0]; i++)
     {
         data_3D[i]= new double*[dims_[1]];

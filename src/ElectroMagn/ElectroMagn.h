@@ -206,6 +206,35 @@ public:
         nrj_new_fields = 0.;
     }
 
+    inline int getMemFootPrint() {
+
+	// Size of temporary arrays in Species::createParticles
+	/*
+	int N1(1), N2(1);
+	if (nDim_field>1) {
+	    N1 = dimPrim[1];
+	    if (nDim_field>2) N2 = dimPrim[2];
+	}
+	int tmpArrayInit = (dimPrim[0]*N1*N2)*sizeof(double) //
+	    + dimPrim[0]*sizeof(double**)
+	    + dimPrim[0] * N1 * sizeof(double*);
+	tmpArrayInit *= 9;
+	std::cout << tmpArrayInit  << std::endl;
+	*/
+
+	int emSize = 9+4; // 3 x (E, B, Bm) + 3 x J, rho
+	if (true) // For now, no test to compute or not per species
+	    emSize += n_species * 4; // 3 x J, rho
+	if (true) // For now, no test to compute or not average
+	    emSize += 6; // 3 x (E, B)
+
+	for (size_t i=0 ; i<nDim_field ; i++)
+	    emSize *= dimPrim[i];
+
+	emSize *= sizeof(double);
+	return emSize;
+    }
+
 
 protected:
     //! Vector of boundary-condition per side for the fields
