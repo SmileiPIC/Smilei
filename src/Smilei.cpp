@@ -29,6 +29,7 @@
 
 #include "SpeciesFactory.h"
 #include "Collisions.h"
+#include "PartWall.h"
 #include "ElectroMagnFactory.h"
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
@@ -125,6 +126,9 @@ int main (int argc, char* argv[])
     // Initialize the collisions (vector of collisions)
     // ------------------------------------------------------------------------------------
     vector<Collisions*> vecCollisions = Collisions::create(params, vecSpecies, smpi);
+    
+    // Initialize the particle walls
+    vector<PartWall*> vecPartWall = PartWall::create(params, smpi);
     
     // ----------------------------------------------------------------------------
     // Define Moving Window & restart
@@ -310,7 +314,7 @@ int main (int argc, char* argv[])
             for (unsigned int ispec=0 ; ispec<params.species_param.size(); ispec++) {
                 if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
                     EMfields->restartRhoJs(ispec, time_dual > params.species_param[ispec].time_frozen); // if (!isTestParticles)
-                    vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow);
+                    vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow, vecPartWall);
                 }
             }
             for (unsigned int ispec=0 ; ispec<params.species_param.size(); ispec++) {

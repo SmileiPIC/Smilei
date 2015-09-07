@@ -47,8 +47,7 @@ velocityProfile(3,NULL),
 temperatureProfile(3,NULL),
 ndim(params.nDim_particle),
 min_loc(smpi->getDomainLocalMin(0)),
-partBoundCond(NULL),
-partWall(NULL)
+partBoundCond(NULL)
 {
     
     particles.species_number = speciesNumber;
@@ -151,16 +150,6 @@ partWall(NULL)
     // define limits for BC and functions applied and for domain decomposition
     partBoundCond = new PartBoundCond( params, ispec, smpi);
     
-    // define wall for particles
-    if (PyTools::nComponents("PartWall")) {
-        partWall = new PartWall(params, smpi);
-        // delete if it doesn't belong to ths processor
-        if (!partWall->is_here) {
-            delete partWall;
-            partWall=NULL;
-        }
-    }
-    
     unsigned int nthds(1);
 #pragma omp parallel shared(nthds) 
     {
@@ -186,7 +175,6 @@ Species::~Species()
     delete Push;
     if (Ionize) delete Ionize;
     if (partBoundCond) delete partBoundCond;
-    if (partWall) delete partWall;
     if (chargeProfile) delete chargeProfile;
     if (densityProfile) delete densityProfile;
     for (unsigned int i=0; i<velocityProfile.size(); i++)
@@ -400,7 +388,7 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
 //   - increment the currents (projection)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfields, Interpolator* Interp,
-                       Projector* Proj, SmileiMPI *smpi, Params &params, SimWindow* simWindow)
+                       Projector* Proj, SmileiMPI *smpi, Params &params, SimWindow* simWindow, vector<PartWall*> vecPartWall)
 {
     Interpolator* LocInterp = InterpolatorFactory::create(params, smpi);
     
@@ -446,6 +434,8 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
         b_Jz = b_Jy + size_proj_buffer ;
         b_rho = b_Jz + size_proj_buffer ;
         
+        int nPartWall = vecPartWall.size();
+        
 #pragma omp for schedule(runtime)
         for (ibin = 0 ; ibin < (unsigned int)bmin.size() ; ibin++) {
             
@@ -472,12 +462,11 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 (*Push)(particles, iPart, Epart, Bpart, gf);
                 
                 // Apply wall condition
-                if (partWall) {
-                    if ( !partWall->apply(particles, iPart, params.species_param[ispec], ener_iPart)) {
+                for(int iwall=0; iwall<nPartWall; iwall++) {
+                    if ( !(vecPartWall[iwall]->*vecPartWall[iwall]->apply)(particles, iPart, params.species_param[ispec], ener_iPart)) {
                         nrj_lost_per_thd[tid] += params.species_param[ispec].mass * ener_iPart;
                     }
                 }
-                
                 
                 // Apply boundary condition on the particles
                 // Boundary Condition may be physical or due to domain decomposition

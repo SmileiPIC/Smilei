@@ -56,7 +56,8 @@ public:
 
     //! Method calculating the Particle dynamics (interpolation, pusher, projection)
     virtual void dynamics(double time, unsigned int ispec, ElectroMagn* EMfields, Interpolator* interp,
-                          Projector* proj, SmileiMPI *smpi, Params &params, SimWindow* simWindow);
+                          Projector* proj, SmileiMPI *smpi, Params &params, SimWindow* simWindow,
+                          std::vector<PartWall*> vecPartWall);
 
     //! Method used to initialize the Particle position in a given cell
     void initPosition(unsigned int, unsigned int, double *, unsigned int, std::vector<double>, std::string);
@@ -176,9 +177,6 @@ private:
 
     //! Method used to apply boundary-condition for the Particles of the considered Species
     PartBoundCond* partBoundCond;
-    
-    //! Wall for particles (1D: point, 2D: line, 3D: plane)
-    PartWall* partWall;
     
     //! Method used to Push the particles (change momentum & change position)
     Pusher* Push;
