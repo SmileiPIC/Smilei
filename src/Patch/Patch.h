@@ -5,6 +5,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <iomanip>
+#include <limits.h>
 
 #include "SpeciesFactory.h"
 #include "ElectroMagnFactory.h"
@@ -232,9 +233,9 @@ inline int buildtag(int commid, int send, int recv) {
     // + flag / orientation
     std::stringstream stag("");
     stag << commid << send  << recv;
-    int tag(0);
+    long long int tag(0);
     stag >> tag; // Should had ispec ?
-    return tag;
+    return (int)(tag%INT_MAX);
 }
 
 
