@@ -1,10 +1,3 @@
-/*! @file Pusher.h
-
-  @brief Pusher.h  generic class for the particle pusher
-
-  @date 2013-02-15
-*/
-
 #ifndef PARTBOUNDCOND_H
 #define PARTBOUNDCOND_H
 
