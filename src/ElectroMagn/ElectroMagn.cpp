@@ -129,10 +129,10 @@ oversize(params.oversize)
         AntennaStructure tmpProf;
         tmpProf.my_field = NULL;
         if( !PyTools::extract("field",tmpProf.field,"Antenna",n_antenna)) {
-            ERROR("ExtField #"<<n_antenna<<": parameter 'field' not provided'");
+            ERROR("Antenna #"<<n_antenna<<": parameter 'field' not provided'");
         }
         if (tmpProf.field != "Jx" && tmpProf.field != "Jy" && tmpProf.field != "Jz")
-            ERROR("Antenna field must be one of J{x,y,z}");
+            ERROR("Antenna #"<<n_antenna<<": parameter 'field' must be one of Jx, Jy, Jz");
         
         // Now import the space profile as a python function
         PyObject *mypy = PyTools::extract_py("space_profile","Antenna",n_antenna);
@@ -300,7 +300,6 @@ void ElectroMagn::dump()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn::initRhoJ(vector<Species*>& vecSpecies, Projector* Proj)
 {
-    //! \todo Check that one uses only none-test particles
     // number of (none-test) used in the simulation
     //! \todo fix this: n_species is already a member of electromagn, is it this confusing? what happens if n_species grows (i.e. with ionization)?
     unsigned int n_species = vecSpecies.size();
@@ -311,13 +310,12 @@ void ElectroMagn::initRhoJ(vector<Species*>& vecSpecies, Projector* Proj)
         unsigned int n_particles = vecSpecies[iSpec]->getNbrOfParticles();
         
         DEBUG(n_particles<<" species "<<iSpec);
-	if (!cuParticles.isTestParticles) {
-	    for (unsigned int iPart=0 ; iPart<n_particles; iPart++ ) {
-		// project charge & current densities
-		(*Proj)(Jx_s[iSpec], Jy_s[iSpec], Jz_s[iSpec], rho_s[iSpec], cuParticles, iPart,
-			cuParticles.lor_fac(iPart));
-	    }
-	}
+        if (!cuParticles.isTestParticles) {
+            for (unsigned int iPart=0 ; iPart<n_particles; iPart++ ) {
+                // project charge & current densities
+                (*Proj)(Jx_s[iSpec], Jy_s[iSpec], Jz_s[iSpec], rho_s[iSpec], cuParticles, iPart, cuParticles.lor_fac(iPart));
+            }
+        }
         
     }//iSpec
     DEBUG("before computeTotalRhoJ");    
@@ -365,14 +363,13 @@ double ElectroMagn::computeNRJ(unsigned int shift, SmileiMPI *smpi) {
     double nrj(0.);
 
     if ( smpi->isWestern() ) {
-	nrj += Ex_->computeNRJ(shift, istart, bufsize);
-	nrj += Ey_->computeNRJ(shift, istart, bufsize);
-	nrj += Ez_->computeNRJ(shift, istart, bufsize);
-
-	nrj += Bx_m->computeNRJ(shift, istart, bufsize);
-	nrj += By_m->computeNRJ(shift, istart, bufsize);
-	nrj += Bz_m->computeNRJ(shift, istart, bufsize);
-
+        nrj += Ex_->computeNRJ(shift, istart, bufsize);
+        nrj += Ey_->computeNRJ(shift, istart, bufsize);
+        nrj += Ez_->computeNRJ(shift, istart, bufsize);
+        
+        nrj += Bx_m->computeNRJ(shift, istart, bufsize);
+        nrj += By_m->computeNRJ(shift, istart, bufsize);
+        nrj += Bz_m->computeNRJ(shift, istart, bufsize);
     }
 
     return nrj;
@@ -388,18 +385,18 @@ bool ElectroMagn::isRhoNull(SmileiMPI* smpi)
 
     vector<unsigned int> iFieldStart(3,0), iFieldEnd(3,1), iFieldGlobalSize(3,1);
     for (unsigned int i=0 ; i<rho_->isDual_.size() ; i++ ) {
-	iFieldStart[i] = istart[i][0];
-	iFieldEnd [i] = iFieldStart[i] + bufsize[i][0];
-	iFieldGlobalSize [i] = rho_->dims_[i];
+        iFieldStart[i] = istart[i][0];
+        iFieldEnd [i] = iFieldStart[i] + bufsize[i][0];
+        iFieldGlobalSize [i] = rho_->dims_[i];
     }
 
     for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
-	for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
-	    for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
-		unsigned int ii=k+ j*iFieldGlobalSize[2] +i*iFieldGlobalSize[1]*iFieldGlobalSize[2];
-		locnorm2 += (*rho_)(ii)*(*rho_)(ii);
-	    }
-	}
+        for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
+            for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
+                unsigned int ii=k+ j*iFieldGlobalSize[2] +i*iFieldGlobalSize[1]*iFieldGlobalSize[2];
+                locnorm2 += (*rho_)(ii)*(*rho_)(ii);
+            }
+        }
     }
 
     MPI_Allreduce(&locnorm2, &norm2, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);

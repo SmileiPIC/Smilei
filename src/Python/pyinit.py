@@ -151,7 +151,8 @@ class ExtField(SmileiComponent):
 class Antenna(SmileiComponent):
     """Antenna"""
     field = []
-    profile = None
+    time_profile  = None
+    space_profile = None
 
 # Particle wall
 class PartWall(SmileiComponent):

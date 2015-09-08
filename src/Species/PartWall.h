@@ -1,10 +1,3 @@
-/*! @file Pusher.h
-
-  @brief Pusher.h  generic class for the particle pusher
-
-  @date 2013-02-15
-*/
-
 #ifndef PartWall_H
 #define PartWall_H
 
@@ -40,7 +33,6 @@ private:
     double direction;
 
 };
-
 
 #endif
 
