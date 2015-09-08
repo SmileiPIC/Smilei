@@ -15,10 +15,6 @@ Tsim = 30.*t0		# duration of the simulation
 resx = 50.		# nb of cells in on laser wavelength
 rest = 75.		# time of timestep in one optical cycle 
 
-fp = trapezoidal(1., xvacuum=l0, xplateau=10.*l0)
-fm = trapezoidal(1., xvacuum=11.*l0, xplateau=28.5*l0)
-
-
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
 #      2d3v = cartesian grid with 2d in space + 3d in velocity
@@ -77,6 +73,9 @@ random_seed = 0
 # temperature        = list of floats or functions, temperature in units of m_e c^2
 # Predefined functions: constant, trapezoidal, gaussian, polygonal, cosine
 #
+fp = trapezoidal(1., xvacuum=l0, xplateau=10.*l0)
+fm = trapezoidal(1., xvacuum=11.*l0, xplateau=28.5*l0)
+
 Species(
 	species_type = 'pon1',
 	initPosition_type = 'regular',
@@ -88,7 +87,7 @@ Species(
 	charge = 1.0,
 	nb_density = fp,
 	mean_velocity = [0.,0.,0.],
-	temperature = 0.001,
+	temperature = [0.001],
 	time_frozen = 100000000.0,
 	bc_part_type_west  = 'stop',
 	bc_part_type_east  = 'refl',
@@ -106,7 +105,7 @@ Species(
 	charge = -1.0,
 	nb_density = fp,
 	mean_velocity = [0.,0.,0.],
-	temperature = 0.001,
+	temperature = [0.001],
 	time_frozen = 0.0,
 	bc_part_type_west  = 'stop',
 	bc_part_type_east  = 'refl',
@@ -124,7 +123,7 @@ Species(
 	charge = 1.0,
 	nb_density = fm,
 	mean_velocity = [-0.5,0.,0.],
-	temperature = 0.001,
+	temperature = [0.001],
 	time_frozen = 0.0,
 	bc_part_type_west  = 'stop',
 	bc_part_type_east  = 'refl',
@@ -142,7 +141,7 @@ Species(
 	charge = -1.0,
 	nb_density = fm,
 	mean_velocity = [-0.5,0.,0.],
-	temperature = 0.001,
+	temperature = [0.001],
 	time_frozen = 0.0,
 	bc_part_type_west  = 'stop',
 	bc_part_type_east  = 'refl',

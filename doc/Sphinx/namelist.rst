@@ -139,52 +139,6 @@ Spatial and temporal scales
   Number of timesteps between each info output on screen. By default, 10 outputs per
   simulation.
 
-----
-
-Electromagnetic fields
-^^^^^^^^^^^^^^^^^^^^^^
-
-.. py:data:: bc_em_type_x
-             bc_em_type_y
-  
-  :type: lists of two strings: ``[bc_min, bc_max]``
-  :default: ``["periodic", "periodic"]``
-  
-  The boundary conditions for the electromagnetic fields.
-  The strings ``bc_min`` and ``bc_max`` must be one of the following choices:
-  ``"periodic"``, ``"silver-muller"``, or ``"reflective"``.
-
-
-.. py:data:: time_fields_frozen
-  
-  :default: 0.
-  
-  Time, at the beginning of the simulation, during which fields are frozen.
-
-
-----
-
-Moving window
-^^^^^^^^^^^^^
-.. py:data:: nspace_win_x
-
-  :default: 0
-  
-  :red:`to do`
-
-
-.. py:data:: t_move_win
-
-  :default: 0.
-  
-  :red:`to do`
-
-
-.. py:data:: vx_win
-
-  :default: 0.
-  
-  :red:`to do`
 
 
 ----
@@ -258,14 +212,14 @@ All the possible variables inside this block are explained here:
   
   :type: float or *python* function (see section :ref:`profiles`)
   
-  The particle charge, in units of the electron charge $e$.
+  The particle charge, in units of the electron charge :math:`e`.
 
 
 .. py:data:: mean_velocity
   
   :type: a list of 3 floats or *python* functions (see section :ref:`profiles`)
   
-  The initial drift velocity of the particles, in units of the speed of light $c$.
+  The initial drift velocity of the particles, in units of the speed of light :math:`c`.
 
 
 .. py:data:: temperature
@@ -338,6 +292,38 @@ All the possible variables inside this block are explained here:
   :red:`to do`
 
 
+
+----
+
+Electromagnetic fields
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:data:: bc_em_type_x
+             bc_em_type_y
+  
+  :type: lists of two strings: ``[bc_min, bc_max]``
+  :default: ``["periodic", "periodic"]``
+  
+  The boundary conditions for the electromagnetic fields.
+  The strings ``bc_min`` and ``bc_max`` must be one of the following choices:
+  ``"periodic"``, ``"silver-muller"``, or ``"reflective"``.
+
+
+.. py:data:: time_fields_frozen
+  
+  :default: 0.
+  
+  Time, at the beginning of the simulation, during which fields are frozen.
+
+
+----
+
+Lasers
+^^^^^^
+
+:red:`to do`
+
+
 ----
 
 External fields
@@ -367,42 +353,72 @@ All the possible variables inside this block are explained here:
 
 ----
 
+Antennas
+^^^^^^^^
+An antenna is an extra current applied during the whole simulation.
+It is applied using an ``Antenna()`` block, for instance::
+
+  Antenna(
+      field = "Jz",
+      spatial_profile = gaussian(0.01),
+      time_profile = cosine(base=0., xlength=1., xnumber=100)
+  )
+
+All the possible variables inside this block are explained here:
+
+
+.. py:data:: field
+  
+  The name of the current: ``"Jx"``, ``"Jy"`` or ``"Jz"``.
+
+.. py:data:: spatial_profile
+  
+  :type: float or *python* function (see section :ref:`profiles`)
+  
+  The initial spatial profile of the applied antenna.
+  The units are the natural normalization units for currents,
+  i.e., :math:`J_0=e c n_c`.
+
+.. py:data:: time_profile
+  
+  :type: float or *python* function (see section :ref:`profiles`)
+  
+  The temporal profile of the applied antenna. It multiplies ``spatial_profile``.
+
+
+----
+
 .. _profiles:
 
-Spatial profiles
-^^^^^^^^^^^^^^^^
+Profiles
+^^^^^^^^
 
-Several quantities require the input of a spatial profile:
+Several quantities require the input of a profile: particle charge, particle density,
+external fields, etc. Depending on the case, they can be *spatial* or *temporal*
+profiles.
 
-* The average particle charge.
-* The charge density or number density.
-* The drift velocity.
-* The temperature (only for distributions which require a temperature value).
-* The number of particles per cell.
-* Any external field.
+.. rubric:: 1. Constant profiles
 
-There are many ways to define a profile.
+* ``Species( ... , charge = -3., ... )`` defines a species with charge :math:`Z^\star=3`.
 
-1. Constant profiles
+* ``Species( ... , nb_density = 10., ... )`` defines a species with density :math:`10\,n_c`.
+  You can choose ``nb_density`` (*number density*) or ``charge_density``
 
-  * ``Species( ... , charge = -3., ... )`` defines a species with charge :math:`Z^\star=3`.
-  
-  * ``Species( ... , nb_density = 10., ... )`` defines a species with density :math:`10\,n_c`.
-    You can choose ``nb_density`` (*number density*) or ``charge_density``
-  
-  * ``Species( ... , mean_velocity = [0.05, 0., 0.], ... )`` defines a species
-    with drift velocity :math:`v_x = 0.05\,c` over the whole box.
-  
-  * ``Species(..., initMomentum_type="maxwell-juettner", temperature=[1e-5], ...)`` defines
-    a species with a Maxwell-Jüttner distribution of temperature :math:`T = 10^{-5}\,m_ec^2` over the whole box.
-    Note that the temperature may be anisotropic: ``temperature=[1e-5, 2e-5, 2e-5]``.
-  
-  * ``Species( ... , n_part_per_cell = 10., ... )`` defines a species with 10 particles per cell.
-  
-  * ``ExtField( field="Bx", profile=0.1 )`` defines a constant external field :math:`B_x = 0.1 B_0`.
-  
+* ``Species( ... , mean_velocity = [0.05, 0., 0.], ... )`` defines a species
+  with drift velocity :math:`v_x = 0.05\,c` over the whole box.
 
-2. *Python* profiles
+* ``Species(..., initMomentum_type="maxwell-juettner", temperature=[1e-5], ...)`` defines
+  a species with a Maxwell-Jüttner distribution of temperature :math:`T = 10^{-5}\,m_ec^2` over the whole box.
+  Note that the temperature may be anisotropic: ``temperature=[1e-5, 2e-5, 2e-5]``.
+
+* ``Species( ... , n_part_per_cell = 10., ... )`` defines a species with 10 particles per cell.
+
+* ``ExtField( field="Bx", profile=0.1 )`` defines a constant external field :math:`B_x = 0.1 B_0`.
+
+
+.. rubric:: 2. *Python* profiles
+
+..
 
   Any *python* function can be a profile. You must have basic *python* knowledge to build these functions.
   
@@ -423,27 +439,20 @@ There are many ways to define a profile.
     
     f = lambda x: x**2 - 1
   
+  
+  
+  Once the function is created, you have to include it in the block you want,
+  for example::
+  
+    Species( ... , charge = f, ... )
+    
+    Species( ... , mean_velocity = [f, 0, 0], ... )
+  
+
+.. rubric:: 3. Pre-defined *spatial* profiles
+
 ..
 
-  Once the function is created, you have to include it in the block you want:
-  
-  * ``Species( ... , charge = f, ... )``
-  
-  * ``Species( ... , nb_density = f, ... )``
-  
-  * ``Species( ... , mean_velocity = [f, f, f], ... )``
-  
-  * ``Species( ... , temperature = [f, f, f], ... )``
-  
-  * ``Species( ... , n_part_per_cell = f, ... )``
-  
-  * ``ExtField( ... , profile = f, ... )``
-
-
-3. Built-in *python* functions
-
-  :program:`Smilei` provides some *python* functions to help you build your profiles.
-  
   .. py:function:: constant(value, xvacuum=0., yvacuum=0.)
   
     :param value: the magnitude
@@ -483,28 +492,114 @@ There are many ways to define a profile.
     :param amplitude: amplitude of the cosine
     :param xvacuum: empty length before starting the profile
     :param xlength: length of the profile (default is :py:data:`sim_length` :math:`-` ``xvacuum``)
-    :param phi: phase offset`
+    :param phi: phase offset
     :param xnumber: number of periods within ``xlength``
   
   **Example**::
     
-    Species( ... ,
-        density = gaussian(10., xfwhm=0.3, xcenter=0.8),
-    ... )
-
+    Species( ... , density = gaussian(10., xfwhm=0.3, xcenter=0.8), ... )
+  
 ..
   
-  **Illustration of the built-in profiles**
+  **Illustration of the pre-defined spatial profiles**
   
   .. image:: _static/pythonprofiles.png
+
+
+.. rubric:: 4. Pre-defined *temporal* profiles
+
+..
+
+  .. py:function:: tconstant(start=0.)
   
+    :param start: starting time
+  
+  .. py:function:: ttrapezoidal(start=0., plateau=None, slope1=0., slope2=0.)
+  
+    :param start: starting time
+    :param plateau: duration of the plateau (default is :py:data:`sim_time` :math:`-` ``start``)
+    :param slope1: duration of the ramp up
+    :param slope2: duration of the ramp down
+  
+  .. py:function:: tgaussian(start=0., duration=None, fwhm=None, center=None, order=2)
+  
+    :param start: starting time
+    :param duration: duration of the profile (default is :py:data:`sim_time` :math:`-` ``start``)
+    :param fwhm: gaussian FWHM (default is ``duration/3.``)
+    :param center: gaussian center time (default is in the middle of ``duration``)
+    :param order: order of the gaussian
+  
+  .. py:function:: tpolygonal( points=[], values=[] )
+  
+    :param points: list of times
+    :param values: list of the values at each time
+  
+  .. py:function:: tcosine( base=0., amplitude=1., start=0., duration=None, phi=0., freq=1. )
+  
+    :param base: offset of the profile value
+    :param amplitude: amplitude of the cosine
+    :param start: starting time
+    :param duration: duration of the profile (default is :py:data:`sim_time` :math:`-` ``start``)
+    :param phi: phase offset
+    :param freq: frequency
+  
+  **Example**::
+    
+    Antenna( ... , time_profile = tcosine(freq=0.01), ... )
+
 
 ----
 
-Lasers
-^^^^^^
+Walls
+^^^^^
+Walls can be introduced using a ``PartWall()`` block in order to
+reflect, stop, thermalize or kill particles which reach it.
+For instance::
 
-:red:`to do`
+  PartWall(
+      kind = "refl",
+      x = 20.
+  )
+
+All the possible variables inside this block are explained here:
+
+.. py:data:: kind
+  
+  The kind of wall: ``"refl"``, ``"stop"``, ``"thermalize"`` or ``"supp"``;
+  corresponding to a *reflective*, *stopping*, *thermalizing* or *suppressing* wall,
+  respectively.
+  
+.. py:data:: x
+             y
+             z
+  
+  Position of the wall in the desired direction. Use only one of ``x``, ``y`` or ``z``.
+
+
+
+----
+
+Moving window
+^^^^^^^^^^^^^
+.. py:data:: nspace_win_x
+
+  :default: 0
+  
+  :red:`to do`
+
+
+.. py:data:: t_move_win
+
+  :default: 0.
+  
+  :red:`to do`
+
+
+.. py:data:: vx_win
+
+  :default: 0.
+  
+  :red:`to do`
 
 
 
@@ -531,9 +626,7 @@ All the possible variables inside this block are explained here:
 .. py:data:: species1
              species2
   
-  :type: list of strings
-  
-  List of species names (see :py:data:`species_type`).
+  Lists of species names (see :py:data:`species_type`).
   
   The collisions will occur between
     1. all species under the list ``species1``
