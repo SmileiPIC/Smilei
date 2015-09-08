@@ -94,6 +94,8 @@ struct SpeciesStructure {
 
     //! logical true if particles radiate
     bool isTest;
+    //! int, number of timesteps between each dump (test particles only)
+    int test_dump_every;
     
     //! nDim_fields
     int nDim_fields;

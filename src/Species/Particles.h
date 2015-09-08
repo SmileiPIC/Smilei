@@ -195,6 +195,7 @@ public:
     
     // Test particle parameters
     bool isTestParticles;
+    int test_dump_every;
     void setIds() {
         unsigned int s = Id.size();
         for (unsigned int iPart=0; iPart<s; iPart++) Id[iPart] = iPart+1;

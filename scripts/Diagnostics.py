@@ -1996,6 +1996,7 @@ class TestParticles(Diagnostic):
 		self._file = self._results_path+"/TestParticles_"+species+".h5"
 		f = self._h5py.File(self._file, 'r')
 		self._h5items = f.values()
+		self._every = f.attrs["every"]
 		
 		# Get available times in the hdf5 file
 		self.times = self.getAvailableTimesteps()
@@ -2171,12 +2172,12 @@ class TestParticles(Diagnostic):
 		except:
 			print "Unable to find test particle data in file "+self._file
 			return self._np.array([])
-		return self._np.arange(ntimes)
+		return self._np.arange(0,ntimes*self._every,self._every)
 	
 	# We override the get and getData methods
 	def getData(self):
 		if not self._validate(): return
-		# create empty dictionary
+		# create dictionary with info on the axes
 		data = {}
 		for axis in self.axes:
 			data.update({ axis:self._np.zeros((len(self.times), self.nselectedParticles)) })
@@ -2184,17 +2185,14 @@ class TestParticles(Diagnostic):
 		# loop times and fill up the data
 		ID = self._np.zeros((self.nParticles,), dtype=self._np.int16)
 		B = self._np.zeros((self.nParticles,))
-		for ti, t in enumerate(self.times):
-			self._Id.read_direct(ID, source_sel=self._np.s_[t,:], dest_sel=self._np.s_[:]) # read the particle Ids
-			indices = self._np.argwhere(self._np.in1d(ID, self.selectedParticles)).squeeze() # find indexes of selected particles at time t
-			indices = self._np.array(indices, ndmin=1)
-			if len(indices)>0:
-				id = ID[indices] # get their ids
-				order = id.argsort()
-				indices = indices[order] # sort indices so that ids would be sorted
+		indices = self.selectedParticles - 1
+		for ti in range(len(self.times)):
+			self._Id.read_direct(ID, source_sel=self._np.s_[ti,:], dest_sel=self._np.s_[:]) # read the particle Ids
+			deadParticles = (ID==0).nonzero()
 			for i, axis in enumerate(self.axes):
 				axisi = self._axesIndex[i]
-				self._h5items[axisi].read_direct(B, source_sel=self._np.s_[t,:], dest_sel=self._np.s_[:])
+				self._h5items[axisi].read_direct(B, source_sel=self._np.s_[ti,:], dest_sel=self._np.s_[:])
+				B[deadParticles]=self._np.nan
 				data[axis][ti, :] = B[indices].squeeze()
 		data.update({ "times":self.times })
 		return data

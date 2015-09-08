@@ -1,45 +1,59 @@
 #!/bin/bash
 
-MPIEXEC=mpiexec
+MPIEXEC=mpirun
 
-H=$PWD
-smilei=$PWD/src/smilei
+H=$PWD # current dir
+DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd ) # dir of this script
+smilei=$DIR/src/smilei # path to the smilei executable
+script=$0 # name of this script
 
-if [ "$#" -lt 1 ]; then
-    echo "usage: $0 [proc numbers] namelist [namelist] ..."
+# Function to which check that there are arguments remaining
+check () {
+  if [ "$#" -lt 1 ]; then
+    echo "usage: $script [proc numbers] namelist [outdir]"
     exit 1
-fi
+  fi
+}
 
-if [[ $1 = [[:digit:]] ]]; then
+# Check that at least one argument provided
+check $@
+
+# If first argument is a number, this is the number of procs
+if [[ $1 =~ ^[0-9]+$ ]]; then
     proc=$1
-    suffix="_$proc"
     shift
 else
-    suffix=""
     proc=1
 fi
 
-#outDirs=""
+# Check there are arguments remaining
+check $@
 
-for nml in $@
-do
-    base="`basename $nml .py`"
-    dir=`dirname $nml`/"${base}${suffix}"
-    #outDirs="${outDirs} ${dir}"
-    
-    if [ -d $dir ]; then
-    	echo "*   "
-    	echo "*   ERROR: Directory $dir already exists. Please remove it first."
-    	echo "*   "
-    	exit 1
-    fi
-    #rm -rf $dir
-    
-    mkdir -p $dir
-    cp $nml $dir
-    cd $dir
-    $MPIEXEC -np $proc $smilei `basename $nml`
-    cd $H
-done
-# echo ${outDirs}
-# $DIRSMILEI/../scripts/TPUPMC/smileiQt.py ${outDirs}
+# Next argument is the path to the namelist
+nml=$1
+base="`basename $nml .py`" # strip directory and extension
+shift
+
+# Next argument, if exists, is the outdir 
+outdir=`dirname $nml`/$base # by default, the outdir is same as namelist
+if [ "$#" -gt 0 ]; then
+outdir=`dirname $nml`/$base # by default, the outdir is same as namelist
+  outdir=$1/$base # otherwise, provided as argument
+  shift
+fi
+
+# If outdir already exist, error
+if [ -d $outdir ]; then
+  echo "*   "
+  echo "*   ERROR: Directory $outdir already exists. Please remove it first."
+  echo "*   "
+  exit 1
+fi
+
+# Make new directory, go there, and run
+mkdir -p $outdir
+cp $nml $outdir
+cd $outdir
+$MPIEXEC -mca btl tcp,sm,self -np $proc $smilei `basename $nml`
+cd $H
+

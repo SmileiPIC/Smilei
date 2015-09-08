@@ -320,6 +320,13 @@ All the possible variables inside this block are explained here:
   Flag for test particles. If ``True``, this species will contain only test particles
   which do not participate in the charge and currents.
 
+.. py:data:: dump_every
+  
+  :default: 1
+  
+  Number of timesteps between each dump of test-particle information.
+  Only active when ``isTest == True``
+
 
 .. py:data:: c_part_max
   

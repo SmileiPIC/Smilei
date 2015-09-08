@@ -18,6 +18,7 @@
 #include "ElectroMagn.h"
 #include "Species.h"
 
+
 using namespace std;
 
 // static varable must be defined and initialized here
@@ -637,7 +638,8 @@ double SmileiIO::time_seconds() {
     return (time_sec-time_reference);
 }
 
-void SmileiIO::initWriteTestParticles(Species* species, int ispec, int time, PicParams& params, SmileiMPI* smpi) {
+
+void SmileiIO::initWriteTestParticles0(Species* species, int ispec, int time, PicParams& params, SmileiMPI* smpi) {
 
     Particles &cuParticles = species->particles;
     int locNbrParticles = species->getNbrOfParticles();
@@ -699,7 +701,7 @@ void SmileiIO::initWriteTestParticles(Species* species, int ispec, int time, Pic
 
 }
 
-void SmileiIO::writeTestParticles(Species* species, int ispec, int time, PicParams& params, SmileiMPI* smpi) {
+void SmileiIO::writeTestParticles0(Species* species, int ispec, int time, PicParams& params, SmileiMPI* smpi) {
     
     // Master gathers the number of test particles
     Particles &cuParticles = species->particles;
@@ -753,17 +755,17 @@ void SmileiIO::writeTestParticles(Species* species, int ispec, int time, PicPara
         for (int idim=0 ; idim<(int)params.nDim_particle ; idim++) {
             attr.str("");
             attr << "Position-" << idim;
-            appendTestParticles( fid, attr.str(), testParticles.position(idim), nTestParticles, H5T_NATIVE_DOUBLE );
+            appendTestParticles0( fid, attr.str(), testParticles.position(idim), nTestParticles, H5T_NATIVE_DOUBLE );
         }
         for (int idim=0 ; idim<3 ; idim++) {
             attr.str("");
             attr << "Momentum-" << idim;
-            appendTestParticles( fid, attr.str(), testParticles.momentum(idim), nTestParticles, H5T_NATIVE_DOUBLE );
+            appendTestParticles0( fid, attr.str(), testParticles.momentum(idim), nTestParticles, H5T_NATIVE_DOUBLE );
         }
-        appendTestParticles( fid, "Weight", testParticles.weight(), nTestParticles, H5T_NATIVE_DOUBLE );
-        appendTestParticles( fid, "Charge", testParticles.charge(), nTestParticles, H5T_NATIVE_SHORT );
+        appendTestParticles0( fid, "Weight", testParticles.weight(), nTestParticles, H5T_NATIVE_DOUBLE );
+        appendTestParticles0( fid, "Charge", testParticles.charge(), nTestParticles, H5T_NATIVE_SHORT );
         if (species->particles.isTestParticles)
-            appendTestParticles( fid, "Id", testParticles.id(), nTestParticles, H5T_NATIVE_UINT );
+            appendTestParticles0( fid, "Id", testParticles.id(), nTestParticles, H5T_NATIVE_UINT );
         
         H5Fclose( fid );
         
@@ -774,7 +776,7 @@ void SmileiIO::writeTestParticles(Species* species, int ispec, int time, PicPara
 
 
 template <class T>
-void SmileiIO::appendTestParticles( hid_t fid, string name, std::vector<T> property, int nParticles, hid_t type) {
+void SmileiIO::appendTestParticles0( hid_t fid, string name, std::vector<T> property, int nParticles, hid_t type) {
 
     hsize_t count[2] = {1, (hsize_t)nParticles};
     hid_t partMemSpace = H5Screate_simple(2, count, NULL);

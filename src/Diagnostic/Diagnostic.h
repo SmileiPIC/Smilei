@@ -15,6 +15,7 @@
 #include "DiagnosticProbe.h"
 #include "DiagnosticPhaseSpace.h"
 #include "DiagnosticParticles.h"
+#include "DiagnosticTestParticles.h"
 #include "Timer.h"
 
 class PicParams;
@@ -48,20 +49,16 @@ public:
     std::vector<Timer> dtimer;
     
     DiagnosticScalar scalars;
-
     DiagnosticProbe probes;
-
 	DiagnosticPhaseSpace phases;
-	
     std::vector<DiagnosticParticles*> vecDiagnosticParticles;
+    std::vector<DiagnosticTestParticles*> vecDiagnosticTestParticles;
         
     void initScalars(PicParams&, InputData&, SmileiMPI *smpi);
-    
     void initProbes(PicParams&, InputData&, SmileiMPI *);
-    
     void initPhases(PicParams&, InputData&, SmileiMPI *);
-    
     void initParticles(PicParams&, InputData&);
+    void initTestParticles(PicParams&);
     
     //! field dump output
     unsigned int fieldDump_every;

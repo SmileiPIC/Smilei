@@ -83,6 +83,7 @@ class Species(SmileiComponent):
     ionization_model = "none"
     atomic_number = None
     isTest = False
+    dump_every = 1
 
 
 class Laser(SmileiComponent):
