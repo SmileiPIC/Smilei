@@ -209,6 +209,7 @@ void SmileiMPI::init_patch_count( PicParams& params)
     if (isMaster()) cout << "Total load = " << Tload << endl;
     Tload /= Tcapabilities; //Target load for each mpi process.
     Tcur = Tload * capabilities[0];  //Init.
+    //Tcur = 0;  //Init.
 
     //Loop over all patches
     for(unsigned int hindex=0; hindex < Npatches; hindex++){
@@ -240,14 +241,15 @@ void SmileiMPI::init_patch_count( PicParams& params)
                 if(above_target > below_target) { // If we're closer to target without the current patch...
                     patch_count[r] = Ncur-1;      // ... include patches up to current one.
                     Ncur = 1;
-                    Lcur = local_load;
+                    //Lcur = local_load;
                 } else {                          //Else ...
                     patch_count[r] = Ncur;        //...assign patches including the current one.
                     Ncur = 0;
-                    Lcur = 0.;
+                    //Lcur = 0.;
                 }
                 r++; //Move on to the next rank.
-                Tcur = Tload * capabilities[r];  //Target load for current rank r.
+                //Tcur = Tload * capabilities[r];  //Target load for current rank r.
+                Tcur += Tload * capabilities[r];  //Target load for current rank r.
             } 
         }// End if on r.
         if (hindex == Npatches-1){
@@ -312,6 +314,7 @@ void SmileiMPI::recompute_patch_count( PicParams& params, VectorPatch& vecpatche
     for(unsigned int hindex=0; hindex < Npatches; hindex++) Tload += Lp_global[hindex];
     Tload /= Tcapabilities; //Target load for each mpi process.
     Tcur = Tload * capabilities[0];  //Init.
+    //Tcur = 0;  //Init.
 
 
     //Loop over all patches
@@ -328,14 +331,15 @@ void SmileiMPI::recompute_patch_count( PicParams& params, VectorPatch& vecpatche
                 if(above_target > below_target) { // If we're closer to target without the current patch...
                     target_patch_count[r] = Ncur-1;      // ... include patches up to current one.
                     Ncur = 1;
-                    Lcur = Lp_global[hindex];
+                    //Lcur = Lp_global[hindex];
                 } else {                          //Else ...
                     target_patch_count[r] = Ncur;        //...assign patches including the current one.
                     Ncur = 0;
-                    Lcur = 0;
+                    //Lcur = 0;
                 }
                 r++; //Move on to the next rank.
-                Tcur = Tload * capabilities[r];  //Target load for current rank r.
+                Tcur += Tload * capabilities[r];  //Target load for current rank r.
+                //Tcur = Tload * capabilities[r];  //Target load for current rank r.
             } 
         }// End if on r.
         if (hindex == Npatches-1){
