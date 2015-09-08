@@ -14,32 +14,6 @@
 
 using namespace std;
 
-PartWall::PartWall( short direction, string kind, double position )
-{
-    pos = position;
-    
-    // Define the "apply" function pointer
-    if( direction==0 ) {
-        apply = &PartWall::apply_x;
-    } else if( direction == 1 ) {
-        apply = &PartWall::apply_y;
-    } else if( direction == 2 ) {
-        apply = &PartWall::apply_z;
-    }
-    
-    // Define the "wall" function pointer
-    bool thermCond = false;
-    if (kind == "refl" ) {
-        wall = &refl_particle;
-    } else if (kind == "supp" ) {
-        wall = &supp_particle;
-    } else if (kind == "stop" ) {
-        wall = &stop_particle;
-    } else if (kind == "thermalize" ) {
-        thermCond = true;
-        wall = &thermalize_particle;
-    }
-}
 
 // Reads the input file and creates the ParWall objects accordingly
 vector<PartWall*> PartWall::create(Params& params, SmileiMPI* smpi)
@@ -89,13 +63,40 @@ vector<PartWall*> PartWall::create(Params& params, SmileiMPI* smpi)
         }
         
         // Create new wall
-        vecPartWall.push_back(new PartWall(direction, kind, position));
+        PartWall * tmpWall = new PartWall();
+        
+        // Set position and direction
+        tmpWall->position = position;
+        tmpWall->direction = direction;
+        
+        // Define the "wall" function pointer
+        bool thermCond = false;
+        if (kind == "refl" ) {
+            tmpWall->wall = &refl_particle;
+        } else if (kind == "supp" ) {
+            tmpWall->wall = &supp_particle;
+        } else if (kind == "stop" ) {
+            tmpWall->wall = &stop_particle;
+        } else if (kind == "thermalize" ) {
+            thermCond = true;
+            tmpWall->wall = &thermalize_particle;
+        }
+        
+        vecPartWall.push_back(tmpWall);
         
     }
     
     return vecPartWall;
 }
 
+int PartWall::apply( Particles &particles, int ipart, SpeciesStructure &params, double &nrj_iPart) {
+    if( (position-particles.position_old(direction, ipart))
+       *(position-particles.position    (direction, ipart))<0.) {
+        return (*wall)( particles, ipart, direction, 2.*position, params, nrj_iPart );
+    } else {
+        return 1;
+    }
+}
 
 
 
