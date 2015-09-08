@@ -463,7 +463,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 
                 // Apply wall condition
                 for(int iwall=0; iwall<nPartWall; iwall++) {
-                    if ( !(vecPartWall[iwall]->*vecPartWall[iwall]->apply)(particles, iPart, params.species_param[ispec], ener_iPart)) {
+                    if ( !vecPartWall[iwall]->apply(particles, iPart, params.species_param[ispec], ener_iPart)) {
                         nrj_lost_per_thd[tid] += params.species_param[ispec].mass * ener_iPart;
                     }
                 }
