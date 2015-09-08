@@ -184,7 +184,7 @@ isNorthern(smpi->isNorthern())
             antenna->my_field = new Field2D(dimPrim, 2, false, "Jz");
         
         if (antenna->my_field) {
-            Profile my_spaceProfile(antenna->space_profile, params.geometry);
+            Profile my_spaceProfile(antenna->space_profile, nDim_field);
             applyExternalField(antenna->my_field,&my_spaceProfile, smpi);
         }
     }

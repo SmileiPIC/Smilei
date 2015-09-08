@@ -25,6 +25,7 @@ def trapezoidal(max,
             return max*(1. - ( x - (xvacuum+xslope1+xslope2) ) / xslope2)
         # beyond the plasma
         else: return 0.0
+    if dim == "1d3v": return fx
     def fy(y):
         # vacuum region
         if y < yvacuum: return 0.
@@ -37,7 +38,6 @@ def trapezoidal(max,
             return 1. - ( y - (yvacuum+yslope1+yslope2) ) / yslope2
         # beyond
         else: return 0.0
-    if dim == "1d3v": return fx
     if dim == "2d3v": return lambda x,y: fx(x)*fy(y)
 
 def gaussian(max,
@@ -63,6 +63,7 @@ def gaussian(max,
         elif x < xvacuum+xlength: return max*math.exp( -(x-xcenter)**xorder / sigmax )
         # beyond
         else: return 0.0
+    if dim == "1d3v": return fx
     sigmay = (0.5*yfwhm)**yorder/math.log(2.0)
     def fy(y):
         if yorder == 0: return 1.
@@ -72,7 +73,6 @@ def gaussian(max,
         elif y < yvacuum+ylength: return math.exp( -(y-ycenter)**yorder / sigmay )
         # beyond
         else: return 0.0
-    if dim == "1d3v": return fx
     if dim == "2d3v": return lambda x,y: fx(x)*fy(y)
 
 def polygonal(xpoints=[], xvalues=[]):

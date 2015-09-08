@@ -2,6 +2,7 @@
 #define Profile_H
 
 #include <cmath>
+#include <vector>
 #include "PyTools.h"
 #include "SmileiMPI.h"
 #include "Tools.h"
@@ -29,19 +30,24 @@ class Profile
 {
 public:
     //! Default constructor (for species profiles)
-    Profile(ProfileStructure& , std::string);
+    Profile(ProfileStructure& , int);
     
     //! Alternate constructor (for external fields profiles)
     Profile(ExtFieldStructure&, int);
-
+    
     //! Default destructor
     ~Profile(){};
+    
+    //! Some initialization
+    void init();
         
     //! Function to get the value of the profile at some location
     double valueAt(std::vector<double>);
     
 private:
-    int dim;
+    int nvariables;
+    
+    double (*Evaluate)(PyObject *, std::vector<double>);
     
 protected:
     ProfileStructure  profile_param;

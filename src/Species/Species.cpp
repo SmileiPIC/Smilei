@@ -53,19 +53,19 @@ partBoundCond(NULL)
     particles.species_number = speciesNumber;
     
     densityProfileType = species_param.density_type;
-    chargeProfile         = new Profile(species_param.charge_profile, params.geometry);
-    densityProfile        = new Profile(species_param.dens_profile  , params.geometry);
+    chargeProfile         = new Profile(species_param.charge_profile, params.nDim_particle);
+    densityProfile        = new Profile(species_param.dens_profile  , params.nDim_particle);
     
-    velocityProfile[0]    = new Profile(species_param.mvel_x_profile, params.geometry);
-    velocityProfile[1]    = new Profile(species_param.mvel_y_profile, params.geometry);
-    velocityProfile[2]    = new Profile(species_param.mvel_z_profile, params.geometry);
+    velocityProfile[0]    = new Profile(species_param.mvel_x_profile, params.nDim_particle);
+    velocityProfile[1]    = new Profile(species_param.mvel_y_profile, params.nDim_particle);
+    velocityProfile[2]    = new Profile(species_param.mvel_z_profile, params.nDim_particle);
     
-    temperatureProfile[0] = new Profile(species_param.temp_x_profile, params.geometry);
-    temperatureProfile[1] = new Profile(species_param.temp_y_profile, params.geometry);
-    temperatureProfile[2] = new Profile(species_param.temp_z_profile, params.geometry);
+    temperatureProfile[0] = new Profile(species_param.temp_x_profile, params.nDim_particle);
+    temperatureProfile[1] = new Profile(species_param.temp_y_profile, params.nDim_particle);
+    temperatureProfile[2] = new Profile(species_param.temp_z_profile, params.nDim_particle);
     
     // ppc means "particles per cell"
-    ppcProfile            = new Profile(species_param.ppc_profile   , params.geometry);
+    ppcProfile            = new Profile(species_param.ppc_profile   , params.nDim_particle);
     
     // -------------------
     // Variable definition
