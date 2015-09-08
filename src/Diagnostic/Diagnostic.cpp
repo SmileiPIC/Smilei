@@ -5,7 +5,7 @@
 
 #include <hdf5.h>
 
-#include "PicParams.h"
+#include "Params.h"
 #include "SmileiMPI.h"
 #include "ElectroMagn.h"
 #include "Species.h"
@@ -16,51 +16,51 @@
 
 using namespace std;
 
-Diagnostic::Diagnostic(PicParams& params, InputData &ifile, SmileiMPI *smpi) :
+Diagnostic::Diagnostic(Params& params, SmileiMPI *smpi) :
 dtimer(5)
 {
     
     // defining default values & reading diagnostic every-parameter
     // ------------------------------------------------------------
     print_every=params.n_time/10;
-    ifile.extract("print_every", print_every);
+    PyTools::extract("print_every", print_every);
     
     fieldDump_every=0;
-    if (!ifile.extract("fieldDump_every", fieldDump_every)) {
+    if (!PyTools::extract("fieldDump_every", fieldDump_every)) {
         fieldDump_every=params.global_every;
         DEBUG("activating all fields to dump");
     }
     
     avgfieldDump_every=params.res_time*10;
-    if (!ifile.extract("avgfieldDump_every", avgfieldDump_every)) avgfieldDump_every=params.global_every;
+    if (!PyTools::extract("avgfieldDump_every", avgfieldDump_every)) avgfieldDump_every=params.global_every;
     
     fieldsToDump.resize(0);
-    ifile.extract("fieldsToDump", fieldsToDump);
+    PyTools::extract("fieldsToDump", fieldsToDump);
     
     //!\todo Define default behaviour : 0 or params.res_time
     //ntime_step_avg=params.res_time;
     ntime_step_avg=0;
-    ifile.extract("ntime_step_avg", ntime_step_avg);
+    PyTools::extract("ntime_step_avg", ntime_step_avg);
     
     particleDump_every=0;
-    if (ifile.extract("particleDump_every", particleDump_every))
+    if (PyTools::extract("particleDump_every", particleDump_every))
         WARNING("Option particleDump_every disabled");
     
     // scalars initialization
     dtimer[0].init(smpi, "scalars");
-    initScalars(params,ifile, smpi);
+    initScalars(params, smpi);
     
     // probes initialization
     dtimer[1].init(smpi, "probes");
-    initProbes(params,ifile,smpi);
+    initProbes(params,smpi);
     
     // phasespaces initialization
     dtimer[2].init(smpi, "phases");
-    initPhases(params,ifile,smpi);
+    initPhases(params,smpi);
     
     // particles initialization
     dtimer[3].init(smpi, "particles");
-    initParticles(params,ifile);
+    initParticles(params);
     
     // test particles initialization
     dtimer[4].init(smpi, "testparticles");
@@ -126,17 +126,17 @@ void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Specie
 
 }
 
-void Diagnostic::initScalars(PicParams& params, InputData &ifile, SmileiMPI *smpi) {
+void Diagnostic::initScalars(Params& params, SmileiMPI *smpi) {
     //open file scalars.txt
     scalars.openFile(smpi);
     
     scalars.every=0;
-    bool ok=ifile.extract("every",scalars.every,"DiagScalar");
+    bool ok=PyTools::extract("every",scalars.every,"DiagScalar");
     if (!ok) scalars.every=params.global_every;
     
     vector<double> scalar_time_range(2,0.);
     
-    ok=ifile.extract("time_range",scalar_time_range,"DiagScalar");        
+    ok=PyTools::extract("time_range",scalar_time_range,"DiagScalar");        
     if (!ok) { 
         scalars.tmin = 0.;
         scalars.tmax = params.sim_time;
@@ -147,8 +147,8 @@ void Diagnostic::initScalars(PicParams& params, InputData &ifile, SmileiMPI *smp
     }
     
     scalars.precision=10;
-    ifile.extract("precision",scalars.precision,"DiagScalar");
-    ifile.extract("vars",scalars.vars,"DiagScalar");
+    PyTools::extract("precision",scalars.precision,"DiagScalar");
+    PyTools::extract("vars",scalars.vars,"DiagScalar");
     
     // copy from params remaining stuff
     scalars.res_time=params.res_time;
@@ -156,11 +156,11 @@ void Diagnostic::initScalars(PicParams& params, InputData &ifile, SmileiMPI *smp
     scalars.cell_volume=params.cell_volume;
 }
 
-void Diagnostic::initProbes(PicParams& params, InputData &ifile, SmileiMPI *smpi) {
+void Diagnostic::initProbes(Params& params, SmileiMPI *smpi) {
     bool ok;
     
     // loop all "diagnostic probe" groups in the input file
-    unsigned  numProbes=ifile.nComponents("DiagProbe");
+    unsigned  numProbes=PyTools::nComponents("DiagProbe");
     for (unsigned int n_probe = 0; n_probe < numProbes; n_probe++) {
         
         if (n_probe==0) {
@@ -190,14 +190,14 @@ void Diagnostic::initProbes(PicParams& params, InputData &ifile, SmileiMPI *smpi
         
         // Extract "every" (number of timesteps between each output)
         unsigned int every=0;
-        ok=ifile.extract("every",every,"DiagProbe",n_probe);        
+        ok=PyTools::extract("every",every,"DiagProbe",n_probe);        
         if (!ok) every=params.global_every;
         probes.every.push_back(every);
         
         // Extract "time_range" (tmin and tmax of the outputs)
         vector<double> time_range(2,0.);
         double tmin,tmax;
-        ok=ifile.extract("time_range",time_range,"DiagProbe",n_probe);        
+        ok=PyTools::extract("time_range",time_range,"DiagProbe",n_probe);        
         if (!ok) {
             tmin = 0.;
             tmax = params.sim_time;
@@ -211,7 +211,7 @@ void Diagnostic::initProbes(PicParams& params, InputData &ifile, SmileiMPI *smpi
         // Extract "number" (number of points you have in each dimension of the probe,
         // which must be smaller than the code dimensions)
         vector<unsigned int> vecNumber; 
-        ifile.extract("number",vecNumber,"DiagProbe",n_probe);
+        PyTools::extract("number",vecNumber,"DiagProbe",n_probe);
         
         // Dimension of the probe grid
         unsigned int dimProbe=vecNumber.size();
@@ -235,23 +235,38 @@ void Diagnostic::initProbes(PicParams& params, InputData &ifile, SmileiMPI *smpi
         // (positions of the vertices of the grid)
         vector< vector<double> > allPos;
         vector<double> pos;
-        ifile.extract("pos",pos,"DiagProbe",n_probe);
-        if (pos.size()>0) allPos.push_back(pos);
+
+        if (PyTools::extract("pos",pos,"DiagProbe",n_probe)) {
+            if (pos.size()!=ndim) {
+                ERROR("Probe #"<<n_probe<<": pos size(" << pos.size() << ") != ndim(" << ndim<< ")");
+            }
+            allPos.push_back(pos);
+        }
         
-        ifile.extract("pos_first",pos,"DiagProbe",n_probe);
-        if (pos.size()>0) allPos.push_back(pos);
+        if (PyTools::extract("pos_first",pos,"DiagProbe",n_probe)) {
+            if (pos.size()!=ndim) {
+                ERROR("Probe #"<<n_probe<<": pos_first size(" << pos.size() << ") != ndim(" << ndim<< ")");
+            }
+            allPos.push_back(pos);
+        }
         
-        ifile.extract("pos_second",pos,"DiagProbe",n_probe);
-        if (pos.size()>0) allPos.push_back(pos);
-        
-        ifile.extract("pos_third",pos,"DiagProbe",n_probe);
-        if (pos.size()>0) allPos.push_back(pos);
-        
+        if (PyTools::extract("pos_second",pos,"DiagProbe",n_probe)) {
+            if (pos.size()!=ndim) {
+                ERROR("Probe #"<<n_probe<<": pos_second size(" << pos.size() << ") != ndim(" << ndim<< ")");
+            }
+            allPos.push_back(pos);
+        }
+
+        if (PyTools::extract("pos_third",pos,"DiagProbe",n_probe)) {
+            if (pos.size()!=ndim) {
+                ERROR("Probe #"<<n_probe<<": pos_third size(" << pos.size() << ") != ndim(" << ndim<< ")");
+            }
+            allPos.push_back(pos);
+        }
+                
         // Extract the list of requested fields
         vector<string> fs;
-        fs.resize(0);
-        ifile.extract("fields",fs,"DiagProbe",n_probe);
-        if(fs.size()==0) {
+        if(!PyTools::extract("fields",fs,"DiagProbe",n_probe)) {
             fs.resize(10);
             fs[0]="Ex"; fs[1]="Ey"; fs[2]="Ez";
             fs[3]="Bx"; fs[4]="By"; fs[5]="Bz";
@@ -350,7 +365,7 @@ void Diagnostic::initProbes(PicParams& params, InputData &ifile, SmileiMPI *smpi
         // Create group for the current probe
         ostringstream prob_name("");
         prob_name << "p" << setfill('0') << setw(4) << n_probe;
-        hid_t did = H5Gcreate(probes.fileId, prob_name.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        hid_t did = H5::group(probes.fileId, prob_name.str());
         
         // Create an array to hold the positions of local probe particles
         double posArray [nPart_local][ndim];
@@ -368,11 +383,11 @@ void Diagnostic::initProbes(PicParams& params, InputData &ifile, SmileiMPI *smpi
         for (unsigned int iDimProbe=0; iDimProbe<=dimProbe; iDimProbe++) {
             pk.str("");
             pk << "p" << iDimProbe;
-            H5::vector(did, pk.str(), allPos[iDimProbe][0], ndim);
+            H5::vect(did, pk.str(), allPos[iDimProbe]);
         }
         
         // Add array "number" to the current group
-        H5::vector(did, "number", vecNumber[0], dimProbe);
+        H5::vect(did, "number", vecNumber);
         
         // Add attribute every to the current group
         H5::attr(did, "every", every);
@@ -391,7 +406,7 @@ void Diagnostic::initProbes(PicParams& params, InputData &ifile, SmileiMPI *smpi
     }
 }
 
-void Diagnostic::initPhases(PicParams& params, InputData &ifile, SmileiMPI *smpi) {
+void Diagnostic::initPhases(Params& params, SmileiMPI *smpi) {
     
     //! create the particle structure
     phases.ndim=params.nDim_particle;    
@@ -400,13 +415,13 @@ void Diagnostic::initPhases(PicParams& params, InputData &ifile, SmileiMPI *smpi
     
     bool ok;
     
-    unsigned int numPhases=ifile.nComponents("DiagPhase");
+    unsigned int numPhases=PyTools::nComponents("DiagPhase");
     for (unsigned int n_phase = 0; n_phase < numPhases; n_phase++) {
         
         phaseStructure my_phase;
         
         my_phase.every=0;
-        ok=ifile.extract("every",my_phase.every,"DiagPhase",n_phase);
+        ok=PyTools::extract("every",my_phase.every,"DiagPhase",n_phase);
         if (!ok) {
             //            if (n_probephase>0) {
             //                my_phase.every=phases.vecDiagPhase.end()->every;
@@ -416,7 +431,7 @@ void Diagnostic::initPhases(PicParams& params, InputData &ifile, SmileiMPI *smpi
         }
         
         vector<string> kind;
-        ifile.extract("kind",kind,"DiagPhase",n_phase);        
+        PyTools::extract("kind",kind,"DiagPhase",n_phase);        
         for (vector<string>::iterator it=kind.begin(); it!=kind.end();it++) {
             if (std::find(kind.begin(), it, *it) == it) {
                 my_phase.kind.push_back(*it); 
@@ -426,7 +441,7 @@ void Diagnostic::initPhases(PicParams& params, InputData &ifile, SmileiMPI *smpi
         }
         
         vector<double> time_range(2,0.);
-        ok=ifile.extract("time_range",time_range,"DiagPhase",n_phase);        
+        ok=PyTools::extract("time_range",time_range,"DiagPhase",n_phase);        
         
         if (!ok) { 
             my_phase.tmin = 0.;
@@ -438,10 +453,10 @@ void Diagnostic::initPhases(PicParams& params, InputData &ifile, SmileiMPI *smpi
         }
         
         
-        ifile.extract("species",my_phase.species,"DiagPhase",n_phase);
+        PyTools::extract("species",my_phase.species,"DiagPhase",n_phase);
         
         my_phase.deflate=0;
-        ifile.extract("deflate",my_phase.deflate,"DiagPhase",n_phase);
+        PyTools::extract("deflate",my_phase.deflate,"DiagPhase",n_phase);
         
         if (my_phase.species.size()==0) {
             WARNING("adding all species to the \"DiagPhase\" " << n_phase);
@@ -450,9 +465,9 @@ void Diagnostic::initPhases(PicParams& params, InputData &ifile, SmileiMPI *smpi
             }
         }
         
-        ifile.extract("pos_min",my_phase.pos_min,"DiagPhase",n_phase);
-        ifile.extract("pos_max",my_phase.pos_max,"DiagPhase",n_phase);
-        ifile.extract("pos_num",my_phase.pos_num,"DiagPhase",n_phase);
+        PyTools::extract("pos_min",my_phase.pos_min,"DiagPhase",n_phase);
+        PyTools::extract("pos_max",my_phase.pos_max,"DiagPhase",n_phase);
+        PyTools::extract("pos_num",my_phase.pos_num,"DiagPhase",n_phase);
         for (unsigned int i=0; i<my_phase.pos_min.size(); i++) {
             if (my_phase.pos_min[i]==my_phase.pos_max[i]) {
                 my_phase.pos_min[i] = 0.0;
@@ -461,13 +476,13 @@ void Diagnostic::initPhases(PicParams& params, InputData &ifile, SmileiMPI *smpi
         }
         
         
-        ifile.extract("mom_min",my_phase.mom_min,"DiagPhase",n_phase);
-        ifile.extract("mom_max",my_phase.mom_max,"DiagPhase",n_phase);
-        ifile.extract("mom_num",my_phase.mom_num,"DiagPhase",n_phase);
+        PyTools::extract("mom_min",my_phase.mom_min,"DiagPhase",n_phase);
+        PyTools::extract("mom_max",my_phase.mom_max,"DiagPhase",n_phase);
+        PyTools::extract("mom_num",my_phase.mom_num,"DiagPhase",n_phase);
         
-        ifile.extract("lor_min",my_phase.lor_min,"DiagPhase",n_phase);
-        ifile.extract("lor_max",my_phase.lor_max,"DiagPhase",n_phase);
-        ifile.extract("lor_num",my_phase.lor_num,"DiagPhase",n_phase);
+        PyTools::extract("lor_min",my_phase.lor_min,"DiagPhase",n_phase);
+        PyTools::extract("lor_max",my_phase.lor_max,"DiagPhase",n_phase);
+        PyTools::extract("lor_num",my_phase.lor_num,"DiagPhase",n_phase);
         
         
         hid_t gidParent=0;
@@ -475,30 +490,14 @@ void Diagnostic::initPhases(PicParams& params, InputData &ifile, SmileiMPI *smpi
             ostringstream file_name("");
             file_name<<"PhaseSpace.h5";
             phases.fileId = H5Fcreate( file_name.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-            string ver(__VERSION);
-            
             // write version
-            hid_t aid3  = H5Screate(H5S_SCALAR);
-            hid_t atype = H5Tcopy(H5T_C_S1);
-            H5Tset_size(atype, ver.size());
-            H5Tset_strpad(atype,H5T_STR_NULLTERM);
-            hid_t attr3 = H5Acreate(phases.fileId, "Version", atype, aid3, H5P_DEFAULT, H5P_DEFAULT);
-            
-            H5Awrite(attr3, atype, ver.c_str());
-            
-            H5Aclose(attr3);
-            H5Sclose(aid3);
-            H5Tclose(atype);            
-            
+            H5::attr(phases.fileId, "Version", string(__VERSION));
+                        
             ostringstream groupName("");
             groupName << "ps" << setw(4) << setfill('0') << n_phase;
-            gidParent = H5Gcreate(phases.fileId, groupName.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT); 
+            gidParent = H5::group(phases.fileId, groupName.str()); 
             
-            hid_t sid = H5Screate(H5S_SCALAR);	
-            hid_t aid = H5Acreate(gidParent, "every", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
-            H5Awrite(aid, H5T_NATIVE_UINT, &my_phase.every);
-            H5Sclose(sid);
-            H5Aclose(aid);
+            H5::attr(gidParent, "every",my_phase.every);
         }
         
         
@@ -612,18 +611,13 @@ void Diagnostic::initPhases(PicParams& params, InputData &ifile, SmileiMPI *smpi
                         namediag+=my_phase.species[k]+" ";
                     }
                     namediag=namediag.substr(0, namediag.size()-1);
-                    sid = H5Screate(H5S_SCALAR);
-                    hid_t tid = H5Tcopy(H5T_C_S1);
-                    H5Tset_size(tid, namediag.size());
-                    H5Tset_strpad(tid,H5T_STR_NULLTERM);
-                    hid_t aid = H5Acreate(gidParent, "species", tid, sid, H5P_DEFAULT, H5P_DEFAULT);
-                    H5Awrite(aid, tid, namediag.c_str());
                     
-                    
+                    H5::attr(gidParent,"species",namediag);
+                                        
                     // write attribute extent of the phaseSpace
                     hsize_t dimsPos[2] = {2,2};
                     sid = H5Screate_simple(2, dimsPos, NULL);
-                    aid = H5Acreate (gidParent, "extents", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT);
+                    hid_t aid = H5Acreate (gidParent, "extents", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT);
                     double tmp[4] = {diagPhase->firstmin, diagPhase->firstmax, diagPhase->secondmin, diagPhase->secondmax};
                     H5Awrite(aid, H5T_NATIVE_DOUBLE, tmp);
                     H5Aclose(aid);
@@ -642,7 +636,7 @@ void Diagnostic::initPhases(PicParams& params, InputData &ifile, SmileiMPI *smpi
 }
 
 
-void Diagnostic::initParticles(PicParams& params, InputData &ifile) {
+void Diagnostic::initParticles(Params& params) {
     unsigned int every, time_average;
     string output;
     vector<string> species;
@@ -654,31 +648,31 @@ void Diagnostic::initParticles(PicParams& params, InputData &ifile) {
     
     bool ok;
     
-    unsigned int numDiagParticles=ifile.nComponents("DiagParticles");
+    unsigned int numDiagParticles=PyTools::nComponents("DiagParticles");
     for (unsigned int n_diag_particles = 0; n_diag_particles < numDiagParticles; n_diag_particles++) {
         
         // get parameter "output" that determines the quantity to sum in the output array
         output = "";
-        ok = ifile.extract("output",output,"DiagParticles",n_diag_particles);
+        ok = PyTools::extract("output",output,"DiagParticles",n_diag_particles);
         if (!ok)
             ERROR("Diagnotic Particles #" << n_diag_particles << ": parameter `output` required");
         
         // get parameter "every" which is the period (in timesteps) for getting the outputs
         every = 0;
-        ok = ifile.extract("every",every,"DiagParticles",n_diag_particles);
+        ok = PyTools::extract("every",every,"DiagParticles",n_diag_particles);
         if (!ok)
             ERROR("Diagnotic Particles #" << n_diag_particles << ": parameter `every` required");
         
         // get parameter "time_average" that determines the number of timestep to average the outputs
         time_average = 1;
-        ifile.extract("time_average",time_average,"DiagParticles",n_diag_particles);
+        PyTools::extract("time_average",time_average,"DiagParticles",n_diag_particles);
         if (time_average > every)
             ERROR("Diagnotic Particles #" << n_diag_particles << ": `time_average` cannot be larger than `every`");
         if (time_average < 1) time_average=1;
         
         // get parameter "species" that determines the species to use (can be a list of species)
         species.resize(0);
-        ok = ifile.extract("species",species,"DiagParticles",n_diag_particles);
+        ok = PyTools::extract("species",species,"DiagParticles",n_diag_particles);
         if (!ok)
             ERROR("Diagnotic Particles #" << n_diag_particles << ": parameter `species` required");
         // verify that the species exist, remove duplicates and sort by number
@@ -688,7 +682,7 @@ void Diagnostic::initParticles(PicParams& params, InputData &ifile) {
         // get parameter "axes" that adds axes to the diagnostic
         // Each axis should contain several items:
         //      requested quantity, min value, max value ,number of bins, log (optional), edge_inclusive (optional)
-        allAxes=ifile.extract_pyVec("axes","DiagParticles",n_diag_particles);
+        allAxes=PyTools::extract_pyVec("axes","DiagParticles",n_diag_particles);
         
         if (allAxes.size() == 0)
             ERROR("Diagnotic Particles #" << n_diag_particles << ": axes must contain something");
@@ -756,7 +750,7 @@ void Diagnostic::initParticles(PicParams& params, InputData &ifile) {
     }
 }
 
-void Diagnostic::initTestParticles(PicParams& params) {
+void Diagnostic::initTestParticles(Params& params) {
     DiagnosticTestParticles * tmpDiagTestParticles;
     int n_diag_testparticles=0;
     

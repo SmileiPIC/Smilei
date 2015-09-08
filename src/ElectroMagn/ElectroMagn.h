@@ -8,11 +8,10 @@
 #include "Tools.h"
 #include "LaserProfile.h"
 #include "LaserParams.h"
-#include "ExtFieldParams.h"
 #include "Profile.h"
 
 
-class PicParams;
+class Params;
 class Species;
 class Projector;
 class Field;
@@ -23,21 +22,41 @@ class SimWindow;
 class ExtFieldProfile;
 class Solver;
 
-//! class ElectroMagn: generic class containing all information on the electromagnetic fields and currents
 
+// ---------------------------------------------------------------------------------------------------------------------
+//! This structure contains the properties of each ExtField
+// ---------------------------------------------------------------------------------------------------------------------
+struct ExtFieldStructure : ProfileStructure {
+    //! fields to which apply the exeternal field
+    std::vector<std::string> fields;
+};
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! This structure contains the properties of each Antenna
+// ---------------------------------------------------------------------------------------------------------------------
+struct AntennaStructure : ProfileStructure {
+    //! fields to which apply the exeternal field
+    std::string field;
+    
+    ProfileStructure time_profile;
+    ProfileStructure space_profile;
+    
+    Field* my_field;
+    
+};
+
+//! class ElectroMagn: generic class containing all information on the electromagnetic fields and currents
 class ElectroMagn
 {
 
 public:
     //! Constructor for Electromagn
-    ElectroMagn( PicParams &params, InputData &input_data, SmileiMPI* smpi );
+    ElectroMagn( Params &params, SmileiMPI* smpi );
     
     //! Destructor for Electromagn
     virtual ~ElectroMagn();
     
     LaserParams laser_params;
-    ExtFieldParams extfield_params;
-
     
     std::vector<unsigned int> dimPrim;
     std::vector<unsigned int> dimDual;
@@ -45,10 +64,10 @@ public:
     std::vector<unsigned int> index_bc_min;
     std::vector<unsigned int> index_bc_max;
 
-    //! time-step (from picparams)
+    //! time-step (from Params)
     const double timestep;
     
-    //! cell length (from picparams)
+    //! cell length (from Params)
     const std::vector<double> cell_length;
 
     //! \todo Generalise this to none-cartersian geometry (e.g rz, MG & JD)
@@ -163,7 +182,7 @@ public:
     
     //! \todo check time_dual or time_prim (MG)
     //! method used to solve Maxwell's equation (takes current time and time-step as input parameter)
-    void solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, PicParams &params, SimWindow* simWindow);
+    void solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, Params &params, SimWindow* simWindow);
     virtual void solveMaxwellAmpere() = 0;
     //! Maxwell Faraday Solver
     Solver* MaxwellFaradaySolver_;
@@ -189,13 +208,22 @@ public:
     //! Check if norm of charge denisty is not null
     bool isRhoNull(SmileiMPI* smpi);
     
+    //! external fields parameters the key string is the name of the field and the value is a vector of ExtFieldStructure
+    std::vector<ExtFieldStructure> ext_field_structs;
+    
     //! Method used to impose external fields (apply to all Fields)
     void applyExternalFields(SmileiMPI*);
     
     //! Method used to impose external fields (apply to a given Field)
     virtual void applyExternalField(Field*, Profile*, SmileiMPI*) = 0 ;
     
+    //! Antenna
+    std::vector<AntennaStructure> antennas;
     
+    //! Method used to impose external currents (aka antennas)
+    void applyAntennas(SmileiMPI*, double time);
+
+
     double computeNRJ(unsigned int shift, SmileiMPI *smpi);
     double getLostNrjMW() const {return nrj_mw_lost;}
     
@@ -234,7 +262,6 @@ public:
 	emSize *= sizeof(double);
 	return emSize;
     }
-
 
 protected:
     //! Vector of boundary-condition per side for the fields

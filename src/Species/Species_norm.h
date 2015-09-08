@@ -7,7 +7,7 @@ class ElectroMagn;
 class Pusher;
 class Interpolator;
 class Projector;
-class PicParams;
+class Params;
 
 //! class Species_norm (Species for which the dynamics is governed by the Lorentz force (Boris pusher))
 class Species_norm : public Species
@@ -15,7 +15,7 @@ class Species_norm : public Species
 
 public:
     //! Creator for Species_norm
-    Species_norm(PicParams&, int, SmileiMPI*);
+    Species_norm(Params&, int, SmileiMPI*);
     //! Destructor for Species_norm
     ~Species_norm();
 

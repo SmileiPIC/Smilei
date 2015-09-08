@@ -79,7 +79,7 @@ SmileiMPI_Cart2D::~SmileiMPI_Cart2D()
 // ---------------------------------------------------------------------------------------------------------------------
 // SmileiMPI_Cart2D: create the topology for Smilei MPI environment in 2D cartesian geometry
 // ---------------------------------------------------------------------------------------------------------------------
-void SmileiMPI_Cart2D::createTopology(PicParams& params)
+void SmileiMPI_Cart2D::createTopology(Params& params)
 {
     for (unsigned int i=0 ; i<params.nDim_field ; i++) {
         params.n_space_global[i] = round(params.sim_length[i]/params.cell_length[i]);
@@ -90,8 +90,8 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
         for (unsigned int i=0 ; i<params.nDim_field ; i++)
             number_of_procs[i] = params.number_of_procs[i];
         if (number_of_procs[0]*number_of_procs[1]!=smilei_sz) {
-            DEBUG(3,"Domain decomposition specified in the namelist don't match with the number of MPI process");
-            DEBUG(3,"\tit will be computed to be as square as possible");
+            DEBUG("Domain decomposition specified in the namelist don't match with the number of MPI process");
+            DEBUG("\tit will be computed to be as square as possible");
             for (unsigned int i=0 ; i<params.nDim_field ; i++)
                 params.number_of_procs[i] = 0;
         }
@@ -221,7 +221,7 @@ void SmileiMPI_Cart2D::createTopology(PicParams& params)
     
 }
 
-void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, PicParams& params, int tnum, int iDim)
+void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, Params& params, int tnum, int iDim)
 {
     Particles &cuParticles = species->particles;
     std::vector<int>* cubmin = &species->bmin;
@@ -594,7 +594,7 @@ MPI_Datatype SmileiMPI_Cart2D::createMPIparticles( Particles* particles, int nbr
     return typeParticlesMPI;
 } // END createMPIparticles
 
-void SmileiMPI_Cart2D::createType( PicParams& params )
+void SmileiMPI_Cart2D::createType( Params& params )
 {
     int nx0 = params.n_space[0] + 1 + 2*params.oversize[0];
     int ny0 = params.n_space[1] + 1 + 2*params.oversize[1];

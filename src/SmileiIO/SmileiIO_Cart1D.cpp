@@ -6,13 +6,13 @@
 
 #include "SmileiIO_Cart1D.h"
 
-#include "PicParams.h"
+#include "Params.h"
 #include "SmileiMPI_Cart1D.h"
 #include "Field1D.h"
 
 using namespace std;
 
-SmileiIO_Cart1D::SmileiIO_Cart1D( PicParams& params, Diagnostic& diag, SmileiMPI* smpi )
+SmileiIO_Cart1D::SmileiIO_Cart1D( Params& params, Diagnostic& diag, SmileiMPI* smpi )
     : SmileiIO( params, diag, smpi )
 {
     createPattern(params,smpi);
@@ -22,7 +22,7 @@ SmileiIO_Cart1D::~SmileiIO_Cart1D()
 {
 }
 
-void SmileiIO_Cart1D::createPattern( PicParams& params, SmileiMPI* smpi )
+void SmileiIO_Cart1D::createPattern( Params& params, SmileiMPI* smpi )
 {
     SmileiMPI_Cart1D* smpi1D =  static_cast<SmileiMPI_Cart1D*>(smpi);
 

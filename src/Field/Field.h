@@ -116,6 +116,13 @@ public:
             for (unsigned int i=0; i<globalDims_; i++) data_[i] = val;
     }
     
+    //! method used to put all entry of a field at a given value val
+    inline void multiply(double val)
+    {
+        if (data_)
+            for (unsigned int i=0; i<globalDims_; i++) data_[i] *= val;
+    }
+    
 
     //! 2D reference access to the linearized array (with check in DEBUG mode)
     inline double& operator () (unsigned int i,unsigned int j)

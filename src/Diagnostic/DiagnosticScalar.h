@@ -9,7 +9,7 @@
 #include "Tools.h"
 #include "Species.h"
 
-class PicParams;
+class Params;
 class SmileiMPI;
 class ElectroMagn;
 

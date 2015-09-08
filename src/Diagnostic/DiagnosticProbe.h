@@ -79,7 +79,7 @@ end
 #include "Interpolator.h"
 #include "Particles.h"
 
-class PicParams;
+class Params;
 class SmileiMPI;
 class ElectroMagn;
 class Field2D;

@@ -6,20 +6,20 @@
 #include "ElectroMagn1D.h"
 #include "ElectroMagn2D.h"
 
-#include "PicParams.h"
+#include "Params.h"
 #include "SmileiMPI.h"
 
 #include "Tools.h"
 
 class ElectroMagnFactory {
 public:
-    static ElectroMagn* create(PicParams& params,  InputData &input_data,  SmileiMPI* smpi) {
+    static ElectroMagn* create(Params& params,  SmileiMPI* smpi) {
         ElectroMagn* EMfields = NULL;
         if ( params.geometry == "1d3v" ) {
-            EMfields = new ElectroMagn1D(params, input_data, smpi);
+            EMfields = new ElectroMagn1D(params, smpi);
         }
         else if ( params.geometry == "2d3v" ) {
-            EMfields = new ElectroMagn2D(params, input_data, smpi);
+            EMfields = new ElectroMagn2D(params, smpi);
         }
         else {
             ERROR( "Unknwon geometry : " << params.geometry );

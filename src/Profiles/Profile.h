@@ -2,14 +2,25 @@
 #define Profile_H
 
 #include <cmath>
-#include "PicParams.h"
-#include "ExtFieldParams.h"
 #include "PyTools.h"
 #include "SmileiMPI.h"
 #include "Tools.h"
 
 
+// ---------------------------------------------------------------------------------------------------------------------
+//! This structure contains the properties of each Profile
+// ---------------------------------------------------------------------------------------------------------------------
+struct ProfileStructure {
+    
+    //! Magnitude of the profile if constant profile
+    double profile;
+    
+    //! in case profile is give in Python
+    PyObject *py_profile;
+    
+};
 
+struct ExtFieldStructure;
 
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class Profile
@@ -21,14 +32,11 @@ public:
     Profile(ProfileStructure& , std::string);
     
     //! Alternate constructor (for external fields profiles)
-    Profile(ExtFieldStructure&, std::string);
-    
+    Profile(ExtFieldStructure&, int);
+
     //! Default destructor
-    ~Profile();
-    
-    //! Complementary function to all constructors
-    void init(ProfileStructure& , std::string);
-    
+    ~Profile(){};
+        
     //! Function to get the value of the profile at some location
     double valueAt(std::vector<double>);
     

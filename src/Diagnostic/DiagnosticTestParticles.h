@@ -11,7 +11,7 @@ TEST PARTICLE DIAGNOSTICS
 
 #include <cmath>
 
-#include "PicParams.h"
+#include "Params.h"
 #include "Species.h"
 #include "Particles.h"
 #include "SmileiMPI.h"
@@ -23,7 +23,7 @@ class DiagnosticTestParticles {
 
 public:
 
-    DiagnosticTestParticles(unsigned int, int, PicParams&);
+    DiagnosticTestParticles(unsigned int, int, Params&);
     
     ~DiagnosticTestParticles();
     
@@ -38,7 +38,7 @@ public:
     
     //! Runs the diag (writes to file) at each timestep
     void run( int, SmileiMPI* );
-    
+
 private:
     
     //! HDF5 file transfer protocol

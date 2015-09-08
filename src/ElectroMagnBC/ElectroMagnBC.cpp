@@ -1,6 +1,6 @@
 #include "ElectroMagnBC.h"
 
-#include "PicParams.h"
+#include "Params.h"
 #include "LaserParams.h"
 #include "LaserProfile.h"
 #include "Tools.h"
@@ -12,13 +12,13 @@
 using namespace std;
 
 // Constructor for ElectromagnBC
-ElectroMagnBC::ElectroMagnBC( PicParams &params, LaserParams &laser_params )
+ElectroMagnBC::ElectroMagnBC( Params &params, LaserParams &laser_params )
 {
     // check for laser conditions
     laser_.resize(laser_params.n_laser);
     
     for (unsigned int i=0; i<laser_.size(); i++) {
-        DEBUG(5,"Initializing Laser "<<i);        
+        DEBUG("Initializing Laser "<<i);        
         laser_[i] = new LaserProfile(params,laser_params, i);
     }
 

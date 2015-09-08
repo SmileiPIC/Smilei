@@ -4,7 +4,7 @@
 #include "ElectroMagn.h"
 #include "Field2D.h"
 
-MF_Solver2D_Cowan::MF_Solver2D_Cowan(PicParams &params)
+MF_Solver2D_Cowan::MF_Solver2D_Cowan(Params &params)
     : Solver2D(params)
 {
 }

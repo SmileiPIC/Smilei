@@ -4,14 +4,14 @@
 #include "Ionization.h"
 #include "IonizationTunnel.h"
 
-#include "PicParams.h"
+#include "Params.h"
 
 #include "Tools.h"
 
 //! this class create and associate the right ionization model to species
 class IonizationFactory {
 public:
-    static Ionization* create(PicParams& params, int ispec, double max_charge) {
+    static Ionization* create(Params& params, int ispec, double max_charge) {
         Ionization* Ionize = NULL;
         std::string model=params.species_param[ispec].ionization_model;
 

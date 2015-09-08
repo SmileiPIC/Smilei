@@ -4,13 +4,13 @@
 #include <ostream>
 #include <cmath>
 
-#include "PicParams.h"
 #include "H5.h"
+#include "Params.h"
 
 using namespace std;
 
 // constructor
-DiagnosticTestParticles::DiagnosticTestParticles(unsigned int ID, int ispec, PicParams& params )
+DiagnosticTestParticles::DiagnosticTestParticles(unsigned int ID, int ispec, Params& params )
 {
     
     diagnostic_id = ID;

@@ -13,7 +13,7 @@ using namespace std;
 
 
 // Constructor
-Collisions::Collisions(PicParams& param, vector<Species*>& vecSpecies, SmileiMPI* smpi,
+Collisions::Collisions(Params& param, vector<Species*>& vecSpecies, SmileiMPI* smpi,
                        unsigned int n_collisions, 
                        vector<unsigned int> species_group1, 
                        vector<unsigned int> species_group2, 
@@ -76,7 +76,7 @@ Collisions::~Collisions()
 }
 
 // Reads the input file and creates the Collisions objects accordingly
-vector<Collisions*> Collisions::create(PicParams& params, InputData &ifile, vector<Species*>& vecSpecies, SmileiMPI* smpi)
+vector<Collisions*> Collisions::create(Params& params, vector<Species*>& vecSpecies, SmileiMPI* smpi)
 {
     vector<Collisions*> vecCollisions;
     
@@ -88,7 +88,7 @@ vector<Collisions*> Collisions::create(PicParams& params, InputData &ifile, vect
     ostringstream mystream;
     
     // Loop over each binary collisions group and parse info
-    unsigned int numcollisions=ifile.nComponents("Collisions");
+    unsigned int numcollisions=PyTools::nComponents("Collisions");
     for (unsigned int n_collisions = 0; n_collisions < numcollisions; n_collisions++) {
         
         MESSAGE("Parameters for collisions #" << n_collisions << " :");
@@ -97,8 +97,8 @@ vector<Collisions*> Collisions::create(PicParams& params, InputData &ifile, vect
         // which are the names of the two species that will collide
         sg1.resize(0);
         sg2.resize(0);
-        ifile.extract("species1",sg1,"Collisions",n_collisions);
-        ifile.extract("species2",sg2,"Collisions",n_collisions);
+        PyTools::extract("species1",sg1,"Collisions",n_collisions);
+        PyTools::extract("species2",sg2,"Collisions",n_collisions);
         
         // Obtain the lists of species numbers from the lists of species names.
         sgroup1 = params.FindSpecies(sg1);
@@ -125,12 +125,12 @@ vector<Collisions*> Collisions::create(PicParams& params, InputData &ifile, vect
         
         // Coulomb logarithm (if negative or unset, then automatically computed)
         clog = 0.; // default
-        ifile.extract("coulomb_log",clog,"Collisions",n_collisions);
+        PyTools::extract("coulomb_log",clog,"Collisions",n_collisions);
         if (clog <= 0.) debye_length_required = true; // auto coulomb log requires debye length
         
         // Number of timesteps between each debug output (if 0 or unset, no debug)
         debug_every = 0; // default
-        ifile.extract("debug_every",debug_every,"Collisions",n_collisions);
+        PyTools::extract("debug_every",debug_every,"Collisions",n_collisions);
         
         // Print collisions parameters
         mystream.str(""); // clear
@@ -170,7 +170,7 @@ vector<double>     Collisions::debye_length_squared;
 
 // Calculates the debye length squared in each cluster
 // The formula for the inverse debye length squared is sumOverSpecies(density*charge^2/temperature)
-void Collisions::calculate_debye_length(PicParams& params, vector<Species*>& vecSpecies)
+void Collisions::calculate_debye_length(Params& params, vector<Species*>& vecSpecies)
 {
 
     // get info on particle binning
@@ -245,7 +245,7 @@ void Collisions::calculate_debye_length(PicParams& params, vector<Species*>& vec
 
 
 // Calculates the collisions for a given Collisions object
-void Collisions::collide(PicParams& params, vector<Species*>& vecSpecies, int itime)
+void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime)
 {
 
     unsigned int nbins = vecSpecies[0]->bmin.size(); // number of bins
@@ -279,7 +279,7 @@ void Collisions::collide(PicParams& params, vector<Species*>& vecSpecies, int it
         // Create H5 group for the current timestep
         name.str("");
         name << "t" << setfill('0') << setw(8) << itime;
-        did = H5Gcreate(fileId, name.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        did = H5::group(fileId, name.str());
         // Prepare storage arrays
         vector<unsigned int> outsize(2); outsize[0]=nbins; outsize[1]=1;
         smean       = new Field2D(outsize);

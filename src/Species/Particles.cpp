@@ -3,7 +3,7 @@
 #include <cstring>
 #include <iostream>
 
-#include "PicParams.h"
+#include "Params.h"
 #include "SmileiMPI.h"
 
 using namespace std;
@@ -31,7 +31,7 @@ Particles::~Particles()
 // ---------------------------------------------------------------------------------------------------------------------
 // Create nParticles null particles of nDim size
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::initialize( int nParticles, PicParams &params)
+void Particles::initialize( int nParticles, Params &params)
 {
     //if (nParticles > Weight.capacity()) {
     //    WARNING("You should increase c_part_max in specie namelist");
@@ -62,7 +62,7 @@ void Particles::initialize( int nParticles, PicParams &params)
 // ---------------------------------------------------------------------------------------------------------------------
 // Create nParticles null particles of nDim size
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::initialize( int nParticles, PicParams &params, int speciesNumber)
+void Particles::initialize( int nParticles, Params &params, int speciesNumber)
 {
     initialize( nParticles, params );
     if (params.species_param[speciesNumber].isTest) {

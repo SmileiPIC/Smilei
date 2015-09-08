@@ -8,9 +8,10 @@
 
 
 #include <Python.h>
+#include <vector>
 #include "Tools.h"
 
-//! tools to convert python values to C++ values and vectors
+//! tools to query python nemlist and get back C++ values and vectors
 class PyTools {
 private:
     //! convert Python object to bool
@@ -90,6 +91,18 @@ private:
     }
 
 public:
+
+    static void openPython() {
+        if (!Py_IsInitialized())
+            Py_Initialize();
+    }
+    
+    static void closePython() {
+        if (Py_IsInitialized())
+            Py_Finalize();
+    }
+    
+    
     //! convert Python object to C++ value
     template <typename T>
     static bool convert(PyObject* py_vec, T &val) {
@@ -137,6 +150,7 @@ public:
         }
     }
     
+    //! run python function
     static void runPyFunction(std::string name) {
         PyObject* myFunction = PyObject_GetAttrString(PyImport_AddModule("__main__"),name.c_str());
         if (myFunction) {
@@ -189,6 +203,96 @@ public:
         Py_XDECREF(pyresult);
         return retval;
     }
+    
+    //! get python function four variables
+    template <typename T=double>
+    static T runPyFunction(PyObject *pyFunction, double x1, double x2, double x3, double x4) {
+        PyObject *pyresult = PyObject_CallFunction(pyFunction, const_cast<char *>("dddd"), x1, x2, x3, x4);
+        T retval = (T) get_py_result(pyresult);
+        Py_XDECREF(pyresult);
+        return retval;
+    }
+    
+    //! get T from python
+    template< typename T>
+    static bool extract(std::string name, T &val, std::string component=std::string(""), int nComponent=0) {
+        PyObject* py_val = extract_py(name,component,nComponent);
+        PyTools::checkPyError();        
+        return PyTools::convert(py_val,val);
+    }
+    
+    //! extract vectors
+    template< typename T>
+    static bool extract(std::string name, std::vector<T> &val, std::string component=std::string(""), int nComponent=0) {
+        std::vector<PyObject*> py_val = extract_pyVec(name,component,nComponent);
+        if (py_val.size())
+            return PyTools::convert(py_val,val);
+        return false;
+    }
+    
+    //! retrieve python object
+    static PyObject* extract_py(std::string name, std::string component=std::string(""), int nComponent=0) {
+        if (name.find(" ")!= std::string::npos || component.find(" ")!= std::string::npos) {
+            WARNING("asking for [" << name << "] [" << component << "] : it has whitespace inside: please fix the code");
+        }
+        if (!Py_IsInitialized()) ERROR("Python not initialized: this should not happend");
+        PyObject *py_obj=PyImport_AddModule("__main__");
+        // If component requested
+        if (!component.empty()) {
+            // Get the selected component (e.g. "Species" or "Laser")
+            py_obj = PyObject_GetAttrString(py_obj,component.c_str());
+            PyTools::checkPyError();
+            // Error if not found
+            if (!py_obj) ERROR("Component "<<component<<" not found in namelist");
+            // If successfully found
+            int len = PyObject_Length(py_obj);
+            if (len > nComponent) {
+                py_obj = PySequence_GetItem(py_obj, nComponent);
+            } else {
+                ERROR("Requested " << component << " #" <<nComponent<< ", but only "<<len<<" available");
+            }
+        }
+        PyObject *py_return=PyObject_GetAttrString(py_obj,name.c_str());
+        PyTools::checkPyError();
+        return py_return;
+        
+    }
+    
+    //! retrieve a vector of python objects
+    static std::vector<PyObject*> extract_pyVec(std::string name, std::string component=std::string(""), int nComponent=0) {
+        std::vector<PyObject*> retvec;
+        PyObject* py_obj = extract_py(name,component,nComponent);
+        if (py_obj) {
+            if (!PyTuple_Check(py_obj) && !PyList_Check(py_obj)) {
+                retvec.push_back(py_obj);
+                WARNING(name << " should be a list or tuple, not a scalar : fix it");
+            } else {
+                PyObject* seq = PySequence_Fast(py_obj, "expected a sequence");
+                int len = PySequence_Size(py_obj);
+                retvec.resize(len);
+                for (int i = 0; i < len; i++) {
+                    PyObject* item = PySequence_Fast_GET_ITEM(seq, i);
+                    retvec[i]=item;
+                }
+                Py_DECREF(seq);
+            }
+        }
+        PyTools::checkPyError();
+        return retvec;
+    }
+    
+    //! return the number of components (see pyinit.py)
+    static int nComponents(std::string componentName) {
+        // Get the selected component (e.g. "Species" or "Laser")
+        if (!Py_IsInitialized()) ERROR("Python not initialized: this should not happend");
+        PyObject *py_obj = PyObject_GetAttrString(PyImport_AddModule("__main__"),componentName.c_str());
+        PyTools::checkPyError();
+        int retval = PyObject_Length(py_obj);
+        HEREIAM(componentName << " " << retval);
+        return retval;
+    }
+    
+    
 };
 
 #endif

@@ -4,12 +4,12 @@
 
 #include "ElectroMagnBC.h"
 
-class PicParams;
+class Params;
 class ElectroMagn;
 
 class ElectroMagnBC2D_refl : public ElectroMagnBC {
 public:
-    ElectroMagnBC2D_refl( PicParams &params, LaserParams &laser_params );
+    ElectroMagnBC2D_refl( Params &params, LaserParams &laser_params );
     ~ElectroMagnBC2D_refl();
     
     virtual void apply_xmin(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi);

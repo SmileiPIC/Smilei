@@ -11,7 +11,7 @@ class Solver2D : public Solver
 
 public:
     //! Creator for Solver
-    Solver2D(PicParams &params) : Solver(params) {
+    Solver2D(Params &params) : Solver(params) {
 	nx_p = params.n_space[0]+1+2*params.oversize[0];
 	nx_d = params.n_space[0]+2+2*params.oversize[0];
 	ny_p = params.n_space[1]+1+2*params.oversize[1];

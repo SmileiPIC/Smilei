@@ -1,31 +1,28 @@
-/*! @file PicParams.h
+/*! @file Params.h
  
- @brief PicParams.h is the class that hold the simulation parameters and can read from a file the namelist
+ @brief Params.h is the class that hold the simulation parameters and can read from a file the namelist
  
  @date 2013-02-15
  */
 
-#ifndef PICPARAMS_H
-#define PICPARAMS_H
+#ifndef Params_H
+#define Params_H
 
-#include <Python.h>
+#include <PyTools.h>
+#include "Profile.h"
 #include <vector>
 #include <string>
+#include <cstdlib>
 
-class InputData;
+#include <fstream>
+#include <sstream>
+#include <map>
+#include <iostream>
+#include <ostream>
+#include <algorithm>
+#include <iterator>
 
-// ---------------------------------------------------------------------------------------------------------------------
-//! This structure contains the properties of each Profile
-// ---------------------------------------------------------------------------------------------------------------------
-struct ProfileStructure {
-    
-    //! Magnitude of the profile if constant profile
-    double profile; 
-    
-    //! in case profile is give in Python
-    PyObject *py_profile;
-    
-};
+class SmileiMPI;
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each Laser Profile
@@ -134,24 +131,27 @@ struct SpeciesStructure {
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! PicParams class: holds all the properties of the simulation that are read from the input file
+//! Params class: holds all the properties of the simulation that are read from the input file
 // ---------------------------------------------------------------------------------------------------------------------
-class PicParams {
+class Params {
     
 public:
-    //! Creator for PicParams
-    PicParams(InputData &);
+    //! Creator for Params
+    Params(SmileiMPI*, std::vector<std::string>);
+    
+    //! destructor
+    ~Params();
     
     //! extract profiles
-    bool extractProfile         (InputData &, PyObject *, ProfileStructure &);
-    bool extractOneProfile      (InputData &, std::string, ProfileStructure &, int);
-    void extractVectorOfProfiles(InputData &, std::string, std::vector<ProfileStructure*> &, int);
+    bool extractProfile         (PyObject *, ProfileStructure &);
+    bool extractOneProfile      (std::string, ProfileStructure &, int);
+    void extractVectorOfProfiles(std::string, std::vector<ProfileStructure*> &, int);
     
     //! compute grid-related parameters & apply normalization
     void compute();
     
     //! read species
-    void readSpecies(InputData &);
+    void readSpecies();
     
     //! compute species-related parameters & apply normalization
     void computeSpecies();
@@ -248,21 +248,6 @@ public:
     //! Oversize domain to exchange less particles
     std::vector<unsigned int> oversize;
     
-    //! Timestep to dump everything
-    unsigned int dump_step;
-    
-    //! Human minutes to dump everything
-    double dump_minutes;
-    
-    //! exit once dump done
-    bool exit_after_dump;
-    
-    //! check for file named "stop"
-    bool check_stop_file;
-    
-    //! keep the last dump_file_sequence dump files
-    unsigned int dump_file_sequence;
-    
     //! restart namelist
     bool restart;
     
@@ -277,6 +262,24 @@ public:
     
     //! Method to find the numbers of requested species, sorted, and duplicates removed
     std::vector<unsigned int> FindSpecies(std::vector<std::string>);
+    
+    //! string containing the whole clean namelist
+    std::string namelist;
+    
+    //! call the python cleanup function and 
+    //! check if python can be closed (e.g. there is no laser python profile)
+    //! by calling the _keep_python_running python function (part of pycontrol.pyh)
+    void cleanup();
+    
+    //! close Python
+    static void closePython();
+    
+private:
+    //! init python RTE
+    void initPython(SmileiMPI*, std::vector<std::string>);
+    
+    //! passing named command to python
+    void pyRunScript(std::string command, std::string name=std::string(""));
     
 };
 

@@ -3,14 +3,14 @@
 
 #include "ElectroMagn.h"
 
-class PicParams;
+class Params;
 
 //! class ElectroMagn2D containing all information on the electromagnetic fields & currents for 2d3v simulations
 class ElectroMagn2D : public ElectroMagn
 {
 public:
     //! Constructor for ElectroMagn2D
-    ElectroMagn2D(PicParams &params, InputData &input_data, SmileiMPI* smpi);
+    ElectroMagn2D(Params &params, SmileiMPI* smpi);
 
     //! Destructor for ElectroMagn2D
     ~ElectroMagn2D();

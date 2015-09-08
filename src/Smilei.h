@@ -92,7 +92,7 @@
  <li> Here are inserted all the files specified in the command line
  <li> <tt> pycontrol.py </tt> contains some internal function to test if the namelist is self-consistent and a routine to internally check if the python interpeter can be switched off after the initalization
  </ol>
- These files are read in InputData.cpp
+ These files are read in Params.cpp
  
  */
 
@@ -106,13 +106,6 @@
 #include <string>
 
 #include "Tools.h"
-
-//! verbosity level use verbose keyword in data parameter
-#ifdef  __DEBUG
-int debug_level = 10;
-#else
-int debug_level = 0;
-#endif
 
 
 //! main function

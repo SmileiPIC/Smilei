@@ -4,7 +4,7 @@
 #include "ElectroMagn.h"
 #include "Field2D.h"
 
-MF_Solver2D_Yee::MF_Solver2D_Yee(PicParams &params)
+MF_Solver2D_Yee::MF_Solver2D_Yee(Params &params)
     : Solver2D(params)
 {
 }

@@ -12,6 +12,7 @@
 #include "IonizationFactory.h"
 
 #include "PartBoundCond.h"
+#include "PartWall.h"
 //#include "BoundaryConditionType.h"
 
 #include "ElectroMagn.h"
@@ -36,7 +37,7 @@ using namespace std;
 // Creator for Species
 // input: simulation parameters & Species index
 // ---------------------------------------------------------------------------------------------------------------------
-Species::Species(PicParams& params, int ispec, SmileiMPI* smpi) :
+Species::Species(Params& params, int ispec, SmileiMPI* smpi) :
 speciesNumber(ispec),
 clrw(params.clrw),
 oversize(params.oversize),
@@ -45,7 +46,8 @@ species_param(params.species_param[ispec]),
 velocityProfile(3,NULL),
 temperatureProfile(3,NULL),
 ndim(params.nDim_particle),
-min_loc(smpi->getDomainLocalMin(0))
+min_loc(smpi->getDomainLocalMin(0)),
+partBoundCond(NULL)
 {
     
     particles.species_number = speciesNumber;
@@ -180,7 +182,7 @@ Species::~Species()
     for (unsigned int i=0; i<temperatureProfile.size(); i++)
         delete temperatureProfile[i];
     
-    DEBUG(10,"Species deleted ");
+    DEBUG("Species deleted");
 }
 
 
@@ -386,7 +388,7 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
 //   - increment the currents (projection)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfields, Interpolator* Interp,
-                       Projector* Proj, SmileiMPI *smpi, PicParams &params, SimWindow* simWindow)
+                       Projector* Proj, SmileiMPI *smpi, Params &params, SimWindow* simWindow, vector<PartWall*> vecPartWall)
 {
     Interpolator* LocInterp = InterpolatorFactory::create(params, smpi);
     
@@ -432,6 +434,8 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
         b_Jz = b_Jy + size_proj_buffer ;
         b_rho = b_Jz + size_proj_buffer ;
         
+        int nPartWall = vecPartWall.size();
+        
 #pragma omp for schedule(runtime)
         for (ibin = 0 ; ibin < (unsigned int)bmin.size() ; ibin++) {
             
@@ -456,6 +460,13 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 
                 // Push the particle
                 (*Push)(particles, iPart, Epart, Bpart, gf);
+                
+                // Apply wall condition
+                for(int iwall=0; iwall<nPartWall; iwall++) {
+                    if ( !(vecPartWall[iwall]->*vecPartWall[iwall]->apply)(particles, iPart, params.species_param[ispec], ener_iPart)) {
+                        nrj_lost_per_thd[tid] += params.species_param[ispec].mass * ener_iPart;
+                    }
+                }
                 
                 // Apply boundary condition on the particles
                 // Boundary Condition may be physical or due to domain decomposition
@@ -663,7 +674,7 @@ void Species::sort_part()
     }
 }
 
-void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi, PicParams& params)
+void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi, Params& params)
 {
     // Update BC positions
     partBoundCond->moveWindow_x( shift*cell_length[0], smpi );
@@ -700,7 +711,7 @@ void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi, PicParams& par
     
 }
 
-void Species::defineNewCells(unsigned int shift, SmileiMPI *smpi, PicParams& params)
+void Species::defineNewCells(unsigned int shift, SmileiMPI *smpi, Params& params)
 {
     // does a loop over all cells in the simulation
     // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
@@ -726,7 +737,7 @@ void Species::defineNewCells(unsigned int shift, SmileiMPI *smpi, PicParams& par
 }
 
 
-int Species::createParticles(vector<unsigned int> n_space_to_create, vector<double> cell_index, int new_bin_idx, PicParams& params  )
+int Species::createParticles(vector<unsigned int> n_space_to_create, vector<double> cell_index, int new_bin_idx, Params& params  )
 {
     // ---------------------------------------------------------
     // Calculate density and number of particles for the species

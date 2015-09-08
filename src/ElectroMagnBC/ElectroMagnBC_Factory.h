@@ -8,7 +8,7 @@
 #include "ElectroMagnBC2D_SM.h"
 #include "ElectroMagnBC2D_refl.h"
 
-#include "PicParams.h"
+#include "Params.h"
 
 
 //  --------------------------------------------------------------------------------------------------------------------
@@ -18,7 +18,7 @@ class ElectroMagnBC_Factory {
     
 public:
     
-    static std::vector<ElectroMagnBC*> create(PicParams& params, LaserParams &laser_params) {
+    static std::vector<ElectroMagnBC*> create(Params& params, LaserParams &laser_params) {
         
         std::vector<ElectroMagnBC*> emBoundCond;
         

@@ -12,7 +12,7 @@ class MF_Solver2D_Cowan : public Solver2D
 
 public:
     //! Creator for MF_Solver2D_Cowan
-    MF_Solver2D_Cowan(PicParams &params);
+    MF_Solver2D_Cowan(Params &params);
     virtual ~MF_Solver2D_Cowan();
 
     //! Overloading of () operator

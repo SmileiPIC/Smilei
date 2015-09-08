@@ -15,7 +15,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Projector2D2Order
 // ---------------------------------------------------------------------------------------------------------------------
-Projector2D2Order::Projector2D2Order (PicParams& params, SmileiMPI* smpi) : Projector2D(params, smpi)
+Projector2D2Order::Projector2D2Order (Params& params, SmileiMPI* smpi) : Projector2D(params, smpi)
 {
     SmileiMPI_Cart2D* smpi2D = static_cast<SmileiMPI_Cart2D*>(smpi);
 

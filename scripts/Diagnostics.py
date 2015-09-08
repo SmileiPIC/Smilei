@@ -21,7 +21,7 @@ class Smilei(object):
 		import numpy as np
 		import os.path, glob, re, sys
 		import matplotlib.pyplot
-		import pylab
+		import matplotlib.pylab as pylab
 		pylab.ion()
 		# Transfer packages to local attributes
 		self._results_path = results_path
@@ -218,6 +218,7 @@ class Smilei(object):
 			diag.plot()
 		"""
 		return TestParticles(self, *args, **kwargs)
+
 	
 	
 class Options(object):
@@ -1390,7 +1391,69 @@ class Field(Diagnostic):
 		return A
 
 
-
+	def toDMF(self, outputfile=None):
+		""" create xdmf file """  
+		
+		if outputfile is None:
+			outputfile=self._results_path+"/smilei.xdmf"
+		
+		from jinja2 import Template
+		print self.times
+		print self.timestep
+		
+		tmpl = Template("""
+		<?xml version="1.0" ?>
+		<!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" []>
+		<Xdmf xmlns:xi="http://www.w3.org/2003/XInclude" Version="2.1">
+			<Domain>
+				<Grid CollectionType="Temporal" GridType="Collection">
+					
+					{% for idx in range(d.shape[0]) %}
+					<Grid Name="Mesh" GridType="Uniform">
+						<Time Value="{{t[idx]}}" />
+						<Topology TopologyType="2DSMesh" Dimensions="{{d.shape[1]}} {{d.shape[2]}}"/>
+						<Geometry GeometryType="X_Y_Z">
+							<DataItem NumberType="Float" Precision="8" Dimensions="{{d.shape[1]}} {{d.shape[2]}}" Format="HDF">{{filename}}.h5:/X/frame_{{'%04d' % idx}}</DataItem>
+							<DataItem NumberType="Float" Precision="8" Dimensions="{{d.shape[1]}} {{d.shape[2]}}" Format="HDF">{{filename}}.h5:/Y/frame_{{'%04d' % idx}}</DataItem>
+							<DataItem NumberType="Float" Precision="8" Dimensions="{{d.shape[1]}} {{d.shape[2]}}" Format="HDF">{{filename}}.h5:/Z/frame_{{'%04d' % idx}}</DataItem>
+						</Geometry>
+						{% for el in var -%}
+						<Attribute Name="{{el.name}}" AttributeType="{{el.attr_type}}" Center="{{el.center}}">
+							<DataItem NumberType="Float" Precision="8" Dimensions="{% if not el.dim %}{{(d.shape[1]-1)}} {{(d.shape[2]-1)}}{% else %}{{(d.shape[1])}} {{(d.shape[2])}} 2{% endif %}" Format="HDF">{{filename}}.h5:/{{el.key}}/frame_{{'%04d' % idx}}</DataItem>
+						</Attribute>
+						{% endfor -%}
+					</Grid>
+					{% endfor %}
+					
+				</Grid>
+			</Domain>
+		</Xdmf>
+		""")
+# 
+#         var_dict = [dict(key=el[0],name=el[1], attr_type=el[2] and 'Vector' or 'Scalar',
+#                         dim=el[2], center= (el[0]=='vel') and 'Node' or 'Cell') for el in [
+#                   ( 'dens'  , 'dens'            , 0 )  ,
+#                   ( 'vel'   , 'Velocity'        , 1 )  ,
+#                   ( 'tele'  , 'tele'            , 0 )  ,
+#                   ( 'tion'  , 'tion'            , 0 )  ,
+#                   ( 'trad'  , 'trad'            , 0 )  ,
+#                   ( 'zbar' , 'zbar'           , 0 )  ,
+#                   ( 'pres'  , 'pres'            , 0 )  ,
+#                   ( 'pion'  , 'pion'            , 0 )  ,
+#                   ( 'pele'  , 'pele'            , 0 )  ,
+#                   ( 'eint'  , 'eint'            , 0 )  ,
+#                   ( 'eion'  , 'eion'            , 0 )  ,
+#                   ( 'eele'  , 'eele'            , 0 )  ,
+#                   ( 'Ne'    , 'ne'              , 0 )  ,
+#                   ( 'Ni'    , 'ni'              , 0 )  ,
+#                   ( 'densN' , 'dens normalised' , 0 )  ,
+#                   ( 'Mass'  , 'cell mass'       , 0 )  ,
+#             ]]
+#             # var name, var name long, (0:scalar, 1:vector)
+# 
+# 
+#         with open(outputfile,'w') as f:
+#             f.write(tmpl.render(d=d[...,0], filename=self._file, var=var_dict, t= d[:,0,0,-1]))
 
 # -------------------------------------------------------------------
 # Class for scalars

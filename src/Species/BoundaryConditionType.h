@@ -11,8 +11,8 @@
 #include <cstdlib>
 
 #include "Particles.h"
-#include "PicParams.h"
-//#include "tabulatedFunctions.h"
+#include "Params.h"
+#include "tabulatedFunctions.h"
 #include "userFunctions.h"
 
 //!

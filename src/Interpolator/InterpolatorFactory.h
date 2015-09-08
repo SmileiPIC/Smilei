@@ -8,14 +8,14 @@
 #include "Interpolator2D2Order.h"
 #include "Interpolator2D4Order.h"
 
-#include "PicParams.h"
+#include "Params.h"
 #include "SmileiMPI.h"
 
 #include "Tools.h"
 
 class InterpolatorFactory {
 public:
-    static Interpolator* create(PicParams& params, SmileiMPI *smpi) {
+    static Interpolator* create(Params& params, SmileiMPI *smpi) {
         Interpolator* Interp = NULL;
         // ---------------
         // 1d3v simulation

@@ -3,14 +3,14 @@
 
 #include "ElectroMagn.h"
 
-class PicParams;
+class Params;
 
 //! class ElectroMagn1D containing all information on the electromagnetic fields & currents for 1d3v simulations
 class ElectroMagn1D : public ElectroMagn
 {
 public:
     //! Constructor for ElectroMagn1D
-    ElectroMagn1D(PicParams &params, InputData &input_data, SmileiMPI* smpi);
+    ElectroMagn1D(Params &params, SmileiMPI* smpi);
 
     //! Destructor for ElectroMagn1D
     ~ElectroMagn1D();
@@ -63,7 +63,7 @@ public:
 
     //! Method used to impose external fields
     void applyExternalField(Field*, Profile*, SmileiMPI*);
-        
+    
 private:
     //! from smpi is west
     const bool isWestern;

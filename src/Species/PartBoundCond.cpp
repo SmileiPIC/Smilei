@@ -14,7 +14,7 @@
 
 using namespace std;
 
-PartBoundCond::PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi )
+PartBoundCond::PartBoundCond( Params& params, int ispec, SmileiMPI* smpi )
 {
     // number of dimensions for the particle
     //!\todo (MG to JD) isn't it always 3?
@@ -109,7 +109,7 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi )
         if (smpi->isWestern()) bc_west = &thermalize_particle;
     }
     else if ( params.species_param[ispec].bc_part_type_west == "none" ) {
-        WARNING( "West boundary condition for species " << ispec << " is 'none', which means the same as fields");
+        MESSAGE( "West boundary condition for species " << ispec << " is 'none', which means the same as fields");
     }
     else {
         ERROR( "West boundary condition undefined" );
@@ -130,7 +130,7 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi )
         if (smpi->isEastern()) bc_east = &thermalize_particle;
     }
     else if ( params.species_param[ispec].bc_part_type_east == "none" ) {
-        WARNING( "East boundary condition for species " << ispec << " is 'none', which means the same as fields");
+        MESSAGE( "East boundary condition for species " << ispec << " is 'none', which means the same as fields");
     }
     else {
         ERROR( "East boundary condition undefined" );
@@ -153,7 +153,7 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi )
             if (smpi->isSouthern()) bc_south = &thermalize_particle;
         }
         else if ( params.species_param[ispec].bc_part_type_south == "none" ) {
-            WARNING( "South boundary condition for species " << ispec << " is 'none', which means the same as fields");
+            MESSAGE( "South boundary condition for species " << ispec << " is 'none', which means the same as fields");
         }
         else {
             ERROR( "South boundary condition undefined : " << params.species_param[ispec].bc_part_type_south  );
@@ -174,7 +174,7 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, SmileiMPI* smpi )
             if (smpi->isNorthern()) bc_north = &thermalize_particle;
         }
         else if ( params.species_param[ispec].bc_part_type_north == "none" ) {
-            WARNING( "North boundary condition for species " << ispec << " is 'none', which means the same as fields");
+            MESSAGE( "North boundary condition for species " << ispec << " is 'none', which means the same as fields");
         }
         else {
             ERROR( "North boundary condition undefined : " << params.species_param[ispec].bc_part_type_north  );

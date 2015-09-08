@@ -11,8 +11,7 @@
 #include <vector>
 #include <string>
 
-#include "InputData.h"
-#include "PicParams.h"
+#include "Params.h"
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each Laser
@@ -62,7 +61,7 @@ class LaserParams {
 
 public:
     //! Creator for LaserParams
-    LaserParams(PicParams&, InputData &);
+    LaserParams(Params&);
 
     //! initial number of laser pulses
     unsigned int n_laser;

@@ -8,13 +8,13 @@
 
 #include <sstream>
 
-#include "PicParams.h"
+#include "Params.h"
 #include "SmileiMPI_Cart2D.h"
 #include "Field2D.h"
 
 using namespace std;
 
-SmileiIO_Cart2D::SmileiIO_Cart2D( PicParams& params, Diagnostic& diag, SmileiMPI* smpi )
+SmileiIO_Cart2D::SmileiIO_Cart2D( Params& params, Diagnostic& diag, SmileiMPI* smpi )
 : SmileiIO( params, diag, smpi )
 {
     createPattern(params,smpi);
@@ -24,7 +24,7 @@ SmileiIO_Cart2D::~SmileiIO_Cart2D()
 {
 }
 
-void SmileiIO_Cart2D::createPattern( PicParams& params, SmileiMPI* smpi )
+void SmileiIO_Cart2D::createPattern( Params& params, SmileiMPI* smpi )
 {
     SmileiMPI_Cart2D* smpi2D =  static_cast<SmileiMPI_Cart2D*>(smpi);
 

@@ -5,7 +5,7 @@
 #include "SmileiMPI_Cart1D.h"
 #include "SmileiMPI_Cart2D.h"
 
-#include "PicParams.h"
+#include "Params.h"
 
 #include "Tools.h"
 
@@ -19,7 +19,7 @@ public:
     //! \param params : Parameters
     //! \param smpiData : Initial MPI environment (data broadcast)
     //  --------------------------------------------------------------------------------------------------------------------
-    static SmileiMPI* create(PicParams& params, SmileiMPI* smpiData) {
+    static SmileiMPI* create(Params& params, SmileiMPI* smpiData) {
         SmileiMPI* smpi = NULL;
         MESSAGE(1, "Geometry:" << params.geometry);
         if ( params.geometry == "1d3v" ) {

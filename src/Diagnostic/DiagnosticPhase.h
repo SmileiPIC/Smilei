@@ -5,7 +5,7 @@
 #include "Tools.h"
 #include "Field2D.h"
 
-class PicParams;
+class Params;
 class SmileiMPI;
 class ElectroMagn;
 

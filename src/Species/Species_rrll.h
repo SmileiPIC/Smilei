@@ -7,7 +7,7 @@ class ElectroMagn;
 class Pusher;
 class Interpolator;
 class Projector;
-class PicParams;
+class Params;
 
 //! class Species_rrll
 //! Species for which the dynamics is governed by the Lorentz force and the classical radiation reaction force:
@@ -16,7 +16,7 @@ class Species_rrll : public Species
 {
 public:
     //! Creator for Species_rrLL
-    Species_rrll(PicParams&, int, SmileiMPI*);
+    Species_rrll(Params&, int, SmileiMPI*);
     //! Destructor for Species_rrLL
     ~Species_rrll();
 

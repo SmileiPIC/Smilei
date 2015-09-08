@@ -4,7 +4,7 @@
 #include <string>
 #include <iomanip>
 
-#include "PicParams.h"
+#include "Params.h"
 #include "SmileiMPI.h"
 #include "ElectroMagn.h"
 #include "Field1D.h"

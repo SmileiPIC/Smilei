@@ -1,7 +1,7 @@
 #ifndef PROJECTOR_H
 #define PROJECTOR_H
 
-#include "PicParams.h"
+#include "Params.h"
 #include "SmileiMPI.h"
 #include "Field.h"
 
@@ -17,7 +17,7 @@ class Projector {
 
 public:
     //! Creator for the Projector
-    Projector(PicParams&, SmileiMPI*) {};
+    Projector(Params&, SmileiMPI*) {};
     virtual ~Projector() {};
     virtual void mv_win(unsigned int shift) = 0;
     virtual void setMvWinLimits(unsigned int shift) = 0;

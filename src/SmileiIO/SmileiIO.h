@@ -13,9 +13,8 @@
 #include <hdf5.h>
 #include <Tools.h>
 
-class PicParams;
+class Params;
 class Diagnostic;
-class InputData;
 class SmileiMPI;
 class SimWindow;
 class ElectroMagn;
@@ -32,7 +31,7 @@ public:
     //! Create // HDF5 environment
     //! @see global_file_id_ 
     //! @see global_file_id_avg
-    SmileiIO( PicParams& params, Diagnostic &diag, SmileiMPI* smpi );
+    SmileiIO( Params& params, Diagnostic &diag, SmileiMPI* smpi );
     //! Destructor for SmileiIO
     virtual ~SmileiIO();
     
@@ -74,8 +73,8 @@ public:
     virtual void write( Field* field ) = 0;
     
     //! restart everything to file per processor
-    void restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> &vecSpecies, SmileiMPI* smpi, SimWindow* simWin, PicParams &params, InputData& input_data);
-    
+    void restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> &vecSpecies, SmileiMPI* smpi, SimWindow* simWin, Params &params);
+
     //! restart field per proc
     void restartFieldsPerProc(hid_t fid, Field* field);
     
@@ -83,13 +82,16 @@ public:
     void restartMovingWindow(hid_t fid, SimWindow* simWindow);
     
     //! test before writing everything to file per processor
-    bool dump(ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  PicParams &params, InputData& input_data);
-    
-    void initWriteTestParticles0(Species* species, int ispec, int itime, PicParams& params, SmileiMPI* smpi);
-    void writeTestParticles0(Species* species, int ispec, int itime, PicParams& params, SmileiMPI* smpi);
-    template <class T> void appendTestParticles0(hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type);
-    
-    //! this static variable is deined (in the .cpp) as false but becomes true when
+    bool dump(ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  Params &params);
+
+    void initWriteTestParticles(Species* species, int ispec, int itime, Params& params, SmileiMPI* smpi);
+    void writeTestParticles(Species* species, int ispec, int itime, Params& params, SmileiMPI* smpi);
+
+    template <class T> void appendTestParticles(hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type );
+
+    template <class T> void appendTestParticles0( hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type);
+        
+    //! this static variable is defined (in the .cpp) as false but becomes true when
     //! the signal SIGUSR1 is captured by the signal_callback_handler fnction
     static int signal_received;
     
@@ -107,24 +109,39 @@ private:
     unsigned int dump_times;
     
     //! dump everything to file per processor
-    void dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  PicParams &params, InputData& input_data);
+    void dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  Params &params);
     
     //! dump field per proc
     void dumpFieldsPerProc(hid_t fid, Field* field);
+    
+    //! name of the fields to dump
+    std::vector<std::string> fieldsToDump;
     
     //! dump moving window parameters
     void dumpMovingWindow(hid_t fid, SimWindow* simWindow);
     
     //! time of the constructor
     double time_reference;
+	
+    //! vector containing the stea at which perform a dump in case time_dump returns true
+    unsigned int time_dump_step;
     
-    //! function that returns elapsed time from creator (uses private var time_reference)
-    double time_seconds();
+    //! Timestep to dump everything
+    unsigned int dump_step;
     
-    //! name of the fields to dump
-    std::vector<std::string> fieldsToDump; 
+    //! Human minutes to dump everything
+    double dump_minutes;
     
+    //! exit once dump done
+    bool exit_after_dump;
     
+    //! keep the last dump_file_sequence dump files
+    unsigned int dump_file_sequence;
+        
+    std::vector<MPI_Request> dump_request;
+    MPI_Status dump_status_prob;
+    MPI_Status dump_status_recv;
+
 };
 
 #endif

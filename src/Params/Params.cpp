@@ -1,50 +1,47 @@
-#include "PicParams.h"
+#include "Params.h"
 #include <cmath>
 #include "Tools.h"
 #include "PyTools.h"
-#include "InputData.h"
+#include "SmileiMPI.h"
+
+#include "pyinit.pyh"
+#include "pyprofiles.pyh"
+#include "pycontrol.pyh"
 
 #include <algorithm>
 
 using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
-// PicParams : open & parse the input data file, test that parameters are coherent
+// Params : open & parse the input data file, test that parameters are coherent
 // ---------------------------------------------------------------------------------------------------------------------
-PicParams::PicParams(InputData &ifile) {
+Params::Params(SmileiMPI* smpi, std::vector<std::string> namelistsFiles) :
+namelist("")
+{
+    //init Python    
+    initPython(smpi,namelistsFiles);
     
+    unsigned int random_seed=0;
+    if (!PyTools::extract("random_seed", random_seed)) {
+        random_seed = time(NULL);
+    }
+    srand(random_seed);
     
     // --------------
     // Stop & Restart
     // --------------   
-    dump_step=0;
-    ifile.extract("dump_step", dump_step);
-    
-    dump_minutes=0.0;
-    ifile.extract("dump_minutes", dump_minutes);
-    
-    exit_after_dump=true;
-    ifile.extract("exit_after_dump", exit_after_dump);
     
     restart=false;
-    ifile.extract("restart", restart);
+    PyTools::extract("restart", restart);
     if (restart) MESSAGE("Code running from restart"); //! \todo Give info on restart properties
-    
-    //!\todo MG is this still used ?? I cannot find it anywhere
-    check_stop_file=false;
-    ifile.extract("check_stop_file", check_stop_file);
-    
-    dump_file_sequence=2;
-    ifile.extract("dump_file_sequence", dump_file_sequence);
-    dump_file_sequence=std::max((unsigned int)1,dump_file_sequence);
-    
+        
     
     // ---------------------
     // Normalisation & units
     // ---------------------
     
     wavelength_SI = 0.;
-    ifile.extract("wavelength_SI",wavelength_SI);
+    PyTools::extract("wavelength_SI",wavelength_SI);
     
     
     // -------------------
@@ -52,14 +49,14 @@ PicParams::PicParams(InputData &ifile) {
     // -------------------
     
     // geometry of the simulation
-    ifile.extract("dim", geometry);
+    PyTools::extract("dim", geometry);
     if (geometry!="1d3v" && geometry!="2d3v") {
         ERROR("Geometry " << geometry << " does not exist");
     }
     setDimensions();
     
     // interpolation order
-    ifile.extract("interpolation_order", interpolation_order);
+    PyTools::extract("interpolation_order", interpolation_order);
     if (interpolation_order!=2 && interpolation_order!=4) {
         ERROR("Interpolation/projection order " << interpolation_order << " not defined");
     }
@@ -69,16 +66,16 @@ PicParams::PicParams(InputData &ifile) {
     
     //!\todo (MG to JD) Please check if this parameter should still appear here
     // Disabled, not compatible for now with particles sort
-    // if ( !ifile.extract("exchange_particles_each", exchange_particles_each) )
+    // if ( !PyTools::extract("exchange_particles_each", exchange_particles_each) )
     exchange_particles_each = 1;
     
     
     // TIME & SPACE RESOLUTION/TIME-STEPS
     
     // reads timestep & cell_length
-    ifile.extract("timestep", timestep);
+    PyTools::extract("timestep", timestep);
     res_time = 1.0/timestep;
-    ifile.extract("cell_length",cell_length);
+    PyTools::extract("cell_length",cell_length);
     if (cell_length.size()!=nDim_field) {
         ERROR("Dimension of cell_length ("<< cell_length.size() << ") != " << nDim_field << " for geometry " << geometry);
     }
@@ -88,7 +85,7 @@ PicParams::PicParams(InputData &ifile) {
     }
     
     time_fields_frozen=0.0;
-    ifile.extract("time_fields_frozen", time_fields_frozen);
+    PyTools::extract("time_fields_frozen", time_fields_frozen);
     
     // testing the CFL condition
     //!\todo (MG) CFL cond. depends on the Maxwell solv. ==> Move this computation to the ElectroMagn Solver
@@ -103,30 +100,30 @@ PicParams::PicParams(InputData &ifile) {
     
     
     // simulation duration & length
-    ifile.extract("sim_time", sim_time);
+    PyTools::extract("sim_time", sim_time);
     
-    ifile.extract("sim_length",sim_length);
+    PyTools::extract("sim_length",sim_length);
     if (sim_length.size()!=nDim_field) {
         ERROR("Dimension of sim_length ("<< sim_length.size() << ") != " << nDim_field << " for geometry " << geometry);
     }
     
     
     //! Boundary conditions for ElectroMagnetic Fields
-    if ( !ifile.extract("bc_em_type_x", bc_em_type_x)  ) {
+    if ( !PyTools::extract("bc_em_type_x", bc_em_type_x)  ) {
         ERROR("Electromagnetic boundary condition type (bc_em_type_x) not defined" );
     }
     if (bc_em_type_x.size()==1) { // if just one type is specified, then take the same bc type in a given dimension
         bc_em_type_x.resize(2); bc_em_type_x[1]=bc_em_type_x[0];
     }
     if ( geometry == "2d3v" || geometry == "3d3v" ) {
-        if ( !ifile.extract("bc_em_type_y", bc_em_type_y) )
+        if ( !PyTools::extract("bc_em_type_y", bc_em_type_y) )
             ERROR("Electromagnetic boundary condition type (bc_em_type_y) not defined" );
         if (bc_em_type_y.size()==1) { // if just one type is specified, then take the same bc type in a given dimension
             bc_em_type_y.resize(2); bc_em_type_y[1]=bc_em_type_y[0];
         }
     }
     if ( geometry == "3d3v" ) {
-        if ( !ifile.extract("bc_em_type_z", bc_em_type_z) )
+        if ( !PyTools::extract("bc_em_type_z", bc_em_type_z) )
             ERROR("Electromagnetic boundary condition type (bc_em_type_z) not defined" );
         if (bc_em_type_z.size()==1) { // if just one type is specified, then take the same bc type in a given dimension
             bc_em_type_z.resize(2); bc_em_type_z[1]=bc_em_type_z[0];
@@ -136,19 +133,19 @@ PicParams::PicParams(InputData &ifile) {
     // ------------------------
     // Moving window parameters
     // ------------------------
-    if (!ifile.extract("nspace_win_x",nspace_win_x)) {
+    if (!PyTools::extract("nspace_win_x",nspace_win_x)) {
         nspace_win_x = 0;
     }
     
-    if (!ifile.extract("t_move_win",t_move_win)) {
+    if (!PyTools::extract("t_move_win",t_move_win)) {
         t_move_win = 0.0;
     }
     
-    if (!ifile.extract("vx_win",vx_win)) {
+    if (!PyTools::extract("vx_win",vx_win)) {
         vx_win = 1.;
     }
     
-    if (!ifile.extract("clrw",clrw)) {
+    if (!PyTools::extract("clrw",clrw)) {
         clrw = 1;
     }
     
@@ -156,16 +153,16 @@ PicParams::PicParams(InputData &ifile) {
     // ------------------
     // Species properties
     // ------------------
-    readSpecies(ifile);
+    readSpecies();
     
     global_every=0;
     
-    ifile.extract("every",global_every);
+    PyTools::extract("every",global_every);
     
     // --------------------
     // Number of processors
     // --------------------
-    if ( !ifile.extract("number_of_procs", number_of_procs) )
+    if ( !PyTools::extract("number_of_procs", number_of_procs) )
         number_of_procs.resize(nDim_field, 0);
     
     // -------------------------------------------------------
@@ -177,23 +174,82 @@ PicParams::PicParams(InputData &ifile) {
     
 }
 
-void PicParams::readSpecies(InputData &ifile) {
+Params::~Params() {
+    PyTools::closePython();
+}
+
+void Params::initPython(SmileiMPI *smpi, std::vector<std::string> namelistsFiles){
+    PyTools::openPython();
+    // here we add the rank, in case some script need it
+    PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_rank", smpi->getRank());
+    
+    // First, we tell python to filter the ctrl-C kill command (or it would prevent to kill the code execution).
+    // This is done separately from other scripts because we don't want it in the concatenated python namelist.
+    PyTools::checkPyError();
+    string command = "import signal\nsignal.signal(signal.SIGINT, signal.SIG_DFL)";
+    if( !PyRun_SimpleString(command.c_str()) ) PyTools::checkPyError();
+    
+    // Running pyinit.py
+    pyRunScript(string(reinterpret_cast<const char*>(Python_pyinit_py), Python_pyinit_py_len), "pyinit.py");
+    
+    // Running pyfunctons.py
+    pyRunScript(string(reinterpret_cast<const char*>(Python_pyprofiles_py), Python_pyprofiles_py_len), "pyprofiles.py");
+    
+    // Running the namelists
+    pyRunScript("############### BEGIN USER NAMELISTS ###############\n");
+    for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {
+        MESSAGE(1,"Reading file " << *it);
+        string strNamelist="";
+        if (smpi->isMaster()) {
+            ifstream istr(it->c_str());
+            if (istr.is_open()) {
+                string oneLine;
+                while (getline(istr, oneLine)) {
+                    strNamelist += oneLine + "\n";
+                }
+            } else {
+                ERROR("File " << (*it) << " does not exists");
+            }
+            strNamelist +="\n";
+        }
+        smpi->bcast(strNamelist);
+        pyRunScript(strNamelist,(*it));
+    }
+    pyRunScript("################ END USER NAMELISTS ################\n");    
+    // Running pycontrol.py
+    pyRunScript(string(reinterpret_cast<const char*>(Python_pycontrol_py), Python_pycontrol_py_len),"pycontrol.py");
+    
+    PyTools::runPyFunction("_smilei_check");
+    
+    
+    // Now the string "namelist" contains all the python files concatenated
+    // It is written as a file: smilei.py
+    if (smpi->isMaster()) {
+        ofstream out_namelist("smilei.py");
+        if (out_namelist.is_open()) {
+            out_namelist << namelist;
+            out_namelist.close();
+        }
+    }
+}
+
+
+void Params::readSpecies() {
     bool ok;
-    for (int ispec = 0; ispec < ifile.nComponents("Species"); ispec++) {
+    for (unsigned int ispec = 0; ispec < PyTools::nComponents("Species"); ispec++) {
         SpeciesStructure tmpSpec;
-        
-        ifile.extract("species_type",tmpSpec.species_type,"Species",ispec);
+        PyTools::extract("species_type",tmpSpec.species_type,"Species",ispec);
         if(tmpSpec.species_type.empty()) {
             ERROR("For species #" << ispec << " empty species_type");
         }
-        ifile.extract("initPosition_type",tmpSpec.initPosition_type ,"Species",ispec);
+        PyTools::extract("initPosition_type",tmpSpec.initPosition_type ,"Species",ispec);
         if (tmpSpec.initPosition_type.empty()) {
             ERROR("For species #" << ispec << " empty initPosition_type");
         } else if ( (tmpSpec.initPosition_type!="regular")&&(tmpSpec.initPosition_type!="random") ) {
             ERROR("For species #" << ispec << " bad definition of initPosition_type " << tmpSpec.initPosition_type);
         }
         
-        ifile.extract("initMomentum_type",tmpSpec.initMomentum_type ,"Species",ispec);
+        PyTools::extract("initMomentum_type",tmpSpec.initMomentum_type ,"Species",ispec);
         if ( (tmpSpec.initMomentum_type=="mj") || (tmpSpec.initMomentum_type=="maxj") ) {
             tmpSpec.initMomentum_type="maxwell-juettner";
         }
@@ -204,54 +260,54 @@ void PicParams::readSpecies(InputData &ifile) {
         }
         
         tmpSpec.c_part_max = 1.0;// default value
-        ifile.extract("c_part_max",tmpSpec.c_part_max,"Species",ispec);
+        PyTools::extract("c_part_max",tmpSpec.c_part_max,"Species",ispec);
         
-        if( !ifile.extract("mass",tmpSpec.mass ,"Species",ispec) ) {
+        if( !PyTools::extract("mass",tmpSpec.mass ,"Species",ispec) ) {
             ERROR("For species #" << ispec << ", mass not defined.");
         }
         
         tmpSpec.dynamics_type = "norm"; // default value
-        if (!ifile.extract("dynamics_type",tmpSpec.dynamics_type ,"Species",ispec) )
+        if (!PyTools::extract("dynamics_type",tmpSpec.dynamics_type ,"Species",ispec) )
             WARNING("For species #" << ispec << ", dynamics_type not defined: assumed = 'norm'.");
         if (tmpSpec.dynamics_type!="norm"){
             ERROR("dynamics_type different than norm not yet implemented");
         }
         
         tmpSpec.time_frozen = 0.0; // default value
-        ifile.extract("time_frozen",tmpSpec.time_frozen ,"Species",ispec);
+        PyTools::extract("time_frozen",tmpSpec.time_frozen ,"Species",ispec);
         if (tmpSpec.time_frozen > 0 && \
             tmpSpec.initMomentum_type!="cold") {
             WARNING("For species #" << ispec << " possible conflict between time-frozen & not cold initialization");
         }
         
         tmpSpec.radiating = false; // default value
-        ifile.extract("radiating",tmpSpec.radiating ,"Species",ispec);
+        PyTools::extract("radiating",tmpSpec.radiating ,"Species",ispec);
         if (tmpSpec.dynamics_type=="rrll" && (!tmpSpec.radiating)) {
             WARNING("For species #" << ispec << ", dynamics_type='rrll' forcing radiating=True");
             tmpSpec.radiating=true;
         }
         
-        if (!ifile.extract("bc_part_type_west",tmpSpec.bc_part_type_west,"Species",ispec) )
+        if (!PyTools::extract("bc_part_type_west",tmpSpec.bc_part_type_west,"Species",ispec) )
             ERROR("For species #" << ispec << ", bc_part_type_west not defined");
-        if (!ifile.extract("bc_part_type_east",tmpSpec.bc_part_type_east,"Species",ispec) )
+        if (!PyTools::extract("bc_part_type_east",tmpSpec.bc_part_type_east,"Species",ispec) )
             ERROR("For species #" << ispec << ", bc_part_type_east not defined");
         
         if (nDim_particle>1) {
-            if (!ifile.extract("bc_part_type_south",tmpSpec.bc_part_type_south,"Species",ispec) )
+            if (!PyTools::extract("bc_part_type_south",tmpSpec.bc_part_type_south,"Species",ispec) )
                 ERROR("For species #" << ispec << ", bc_part_type_south not defined");
-            if (!ifile.extract("bc_part_type_north",tmpSpec.bc_part_type_north,"Species",ispec) )
+            if (!PyTools::extract("bc_part_type_north",tmpSpec.bc_part_type_north,"Species",ispec) )
                 ERROR("For species #" << ispec << ", bc_part_type_north not defined");
         }
         
         // for thermalizing BCs on particles check if thermT is correctly defined
         bool thermTisDefined=false;
         if ( (tmpSpec.bc_part_type_west=="thermalize") || (tmpSpec.bc_part_type_east=="thermalize") ){
-            thermTisDefined=ifile.extract("thermT",tmpSpec.thermT,"Species",ispec);
+            thermTisDefined=PyTools::extract("thermT",tmpSpec.thermT,"Species",ispec);
             if (!thermTisDefined) ERROR("thermT needs to be defined for species " <<ispec<< " due to x-BC thermalize");
         }
         if ( (nDim_particle==2) && (!thermTisDefined) &&
              (tmpSpec.bc_part_type_south=="thermalize" || tmpSpec.bc_part_type_north=="thermalize") ) {
-            thermTisDefined=ifile.extract("thermT",tmpSpec.thermT,"Species",ispec);
+            thermTisDefined=PyTools::extract("thermT",tmpSpec.thermT,"Species",ispec);
             if (!thermTisDefined) ERROR("thermT needs to be defined for species " <<ispec<< " due to y-BC thermalize");
         }
         if (thermTisDefined) {
@@ -268,22 +324,21 @@ void PicParams::readSpecies(InputData &ifile) {
         
         
         tmpSpec.ionization_model = "none"; // default value
-        ifile.extract("ionization_model", tmpSpec.ionization_model, "Species",ispec);
+        PyTools::extract("ionization_model", tmpSpec.ionization_model, "Species",ispec);
         
-        ok = ifile.extract("atomic_number", tmpSpec.atomic_number, "Species",ispec);
+        ok = PyTools::extract("atomic_number", tmpSpec.atomic_number, "Species",ispec);
         if( !ok && tmpSpec.ionization_model!="none" ) {
             ERROR("For species #" << ispec << ", `atomic_number` not found => required for the ionization model .");
         }
         
-        // Define a test species
-        tmpSpec.isTest = false;
-        ifile.extract("isTest",tmpSpec.isTest ,"Species",ispec);
+        tmpSpec.isTest = false; // default value
+        PyTools::extract("isTest",tmpSpec.isTest ,"Species",ispec);
         if (tmpSpec.ionization_model!="none" && (!tmpSpec.isTest)) {
             ERROR("For species #" << ispec << ", disabled for now : test & ionized");
         }
         // Define the number of timesteps for dumping test particles
         tmpSpec.test_dump_every = 1;
-        if (ifile.extract("dump_every",tmpSpec.test_dump_every ,"Species",ispec)) {
+        if (PyTools::extract("dump_every",tmpSpec.test_dump_every ,"Species",ispec)) {
             if (tmpSpec.test_dump_every>1 && !tmpSpec.isTest)
                 WARNING("For species #" << ispec << ", dump_every discarded because not test particles");
         }
@@ -294,31 +349,31 @@ void PicParams::readSpecies(InputData &ifile) {
         
         // Density
         bool ok1, ok2;
-        ok1 = extractOneProfile(ifile, "nb_density"    , tmpSpec.dens_profile, ispec);
-        ok2 = extractOneProfile(ifile, "charge_density", tmpSpec.dens_profile, ispec);
+        ok1 = extractOneProfile("nb_density"    , tmpSpec.dens_profile, ispec);
+        ok2 = extractOneProfile("charge_density", tmpSpec.dens_profile, ispec);
         if(  ok1 &&  ok2 ) ERROR("For species #" << ispec << ", cannot define both `nb_density` and `charge_density`.");
         if( !ok1 && !ok2 ) ERROR("For species #" << ispec << ", must define `nb_density` or `charge_density`.");
         if( ok1 ) tmpSpec.density_type = "nb";
         if( ok2 ) tmpSpec.density_type = "charge";
         
         // Number of particles per cell
-        if( !extractOneProfile(ifile, "n_part_per_cell", tmpSpec.ppc_profile, ispec) )
+        if( !extractOneProfile("n_part_per_cell", tmpSpec.ppc_profile, ispec) )
             ERROR("For species #" << ispec << ", n_part_per_cell not found or not understood");
         
         // Charge
-        if( !extractOneProfile(ifile, "charge", tmpSpec.charge_profile, ispec) )
+        if( !extractOneProfile("charge", tmpSpec.charge_profile, ispec) )
             ERROR("For species #" << ispec << ", charge not found or not understood");
         
         // Mean velocity
         vector<ProfileStructure*> vecMvel;
-        extractVectorOfProfiles(ifile, "mean_velocity", vecMvel, ispec);
+        extractVectorOfProfiles("mean_velocity", vecMvel, ispec);
         tmpSpec.mvel_x_profile = *(vecMvel[0]);
         tmpSpec.mvel_y_profile = *(vecMvel[1]);
         tmpSpec.mvel_z_profile = *(vecMvel[2]);
         
         // Temperature
         vector<ProfileStructure*> vecTemp;
-        extractVectorOfProfiles(ifile, "temperature", vecTemp, ispec);
+        extractVectorOfProfiles("temperature", vecTemp, ispec);
         tmpSpec.temp_x_profile = *(vecTemp[0]);
         tmpSpec.temp_y_profile = *(vecTemp[1]);
         tmpSpec.temp_z_profile = *(vecTemp[2]);
@@ -330,13 +385,13 @@ void PicParams::readSpecies(InputData &ifile) {
     }
 }
 
-bool PicParams::extractProfile(InputData &ifile, PyObject *mypy, ProfileStructure &P)
+bool Params::extractProfile(PyObject *mypy, ProfileStructure &P)
 {
     double val;
     // If the profile is only a double, then convert to a constant function
     if( PyTools::convert(mypy, val) ) {
         // Extract the function "constant"
-        PyObject* constantFunction = ifile.extract_py("constant");
+        PyObject* constantFunction = PyTools::extract_py("constant");
         // Create the argument which has the value of the profile
         PyObject* arg = PyTuple_New(1);
         PyTuple_SET_ITEM(arg, 0, PyFloat_FromDouble(val));
@@ -351,26 +406,26 @@ bool PicParams::extractProfile(InputData &ifile, PyObject *mypy, ProfileStructur
     return false;
 }
 
-bool PicParams::extractOneProfile(InputData &ifile, string varname, ProfileStructure &P, int ispec) {
-    PyObject *mypy = ifile.extract_py(varname, "Species", ispec);
-    if( !extractProfile(ifile, mypy, P) ) return false;
+bool Params::extractOneProfile(string varname, ProfileStructure &P, int ispec) {
+    PyObject *mypy = PyTools::extract_py(varname, "Species", ispec);
+    if( !extractProfile(mypy, P) ) return false;
     return true;
 }
 
-void PicParams::extractVectorOfProfiles(InputData &ifile, string varname, vector<ProfileStructure*> &Pvec, int ispec)
+void Params::extractVectorOfProfiles(string varname, vector<ProfileStructure*> &Pvec, int ispec)
 {
     Pvec.resize(3);
-    vector<PyObject*> pvec = ifile.extract_pyVec(varname, "Species", ispec);
+    vector<PyObject*> pvec = PyTools::extract_pyVec(varname, "Species", ispec);
     int len = pvec.size();
     if( len==3 ) {
         for(int i=0; i<len; i++) {
             Pvec[i] = new ProfileStructure();
-            if( !extractProfile(ifile, pvec[i], *(Pvec[i])) )
+            if( !extractProfile(pvec[i], *(Pvec[i])) )
                 ERROR("For species #" << ispec << ", "<<varname<<"["<<i<<"] not understood");
         }
     } else if ( len==1 ) {
         Pvec[0] = new ProfileStructure();
-        if( !extractProfile(ifile, pvec[0], *(Pvec[0])) )
+        if( !extractProfile(pvec[0], *(Pvec[0])) )
             ERROR("For species #" << ispec << ", "<<varname<<" not understood");
         Pvec[1] = Pvec[0];
         Pvec[2] = Pvec[0];
@@ -383,7 +438,7 @@ void PicParams::extractVectorOfProfiles(InputData &ifile, string varname, vector
 // ---------------------------------------------------------------------------------------------------------------------
 // Compute useful values (normalisation, time/space step, etc...)
 // ---------------------------------------------------------------------------------------------------------------------
-void PicParams::compute()
+void Params::compute()
 {
     // time-related parameters
     // -----------------------
@@ -438,7 +493,7 @@ void PicParams::compute()
 // ---------------------------------------------------------------------------------------------------------------------
 // Compute useful values for Species-related quantities
 // ---------------------------------------------------------------------------------------------------------------------
-void PicParams::computeSpecies()
+void Params::computeSpecies()
 {
     // Loop on all species
     for (unsigned int ispec=0; ispec< species_param.size(); ispec++) {
@@ -462,7 +517,7 @@ void PicParams::computeSpecies()
 // ---------------------------------------------------------------------------------------------------------------------
 // Set dimensions according to geometry
 // ---------------------------------------------------------------------------------------------------------------------
-void PicParams::setDimensions()
+void Params::setDimensions()
 {
     if (geometry=="1d3v") {
         nDim_particle=1;
@@ -486,7 +541,7 @@ void PicParams::setDimensions()
 // ---------------------------------------------------------------------------------------------------------------------
 // Printing out the data at initialisation
 // ---------------------------------------------------------------------------------------------------------------------
-void PicParams::print()
+void Params::print()
 {
     
     // Numerical parameters
@@ -519,7 +574,7 @@ void PicParams::print()
 // Returns an array of the numbers of the requested species.
 // Note that there might be several species that have the same "name" or "type"
 //  so that we have to search for all possibilities.
-vector<unsigned int> PicParams::FindSpecies( vector<string> requested_species)
+vector<unsigned int> Params::FindSpecies( vector<string> requested_species)
 {
     bool species_found;
     vector<unsigned int> result;
@@ -556,6 +611,42 @@ vector<unsigned int> PicParams::FindSpecies( vector<string> requested_species)
     }
 	
     return result;
+}
+
+//! Run string as python script and add to namelist
+void Params::pyRunScript(string command, string name) {
+    PyTools::checkPyError();
+    namelist+=command;
+    if (name.size()>0)  MESSAGE(1,"Passing to python " << name);
+    DEBUG(">>>>>>>>>>>>>>> passing this to python:\n" <<command);
+    int retval=PyRun_SimpleString(command.c_str());
+    DEBUG("<<<<<<<<<<<<<<< from " << name);
+    if (retval==-1) {
+        ERROR("error parsing "<< name);
+        PyTools::checkPyError();
+    }
+}
+
+//! run the python functions cleanup (user defined) and _keep_python_running (in pycontrol.py)
+void Params::cleanup() {
+    
+    // call cleanup function from the user namelist (it can be used to free some memory 
+    // from the python side) while keeping the interpreter running
+    MESSAGE(1,"Checking for cleanup() function:");
+    PyTools::runPyFunction("cleanup");
+    // this will reset error in python in case cleanup doesn't exists
+    PyErr_Clear();
+    
+    // this function is defined in the Python/pyontrol.py file and should return false if we can close
+    // the python interpreter
+    MESSAGE(1,"Calling python _keep_python_running() :");    
+    if (PyTools::runPyFunction<bool>("_keep_python_running")) {
+        MESSAGE(2,"Keeping Python interpreter alive");
+    } else {
+        MESSAGE(2,"Closing Python");
+        PyErr_Print();
+        Py_Finalize();
+    }
 }
 
 

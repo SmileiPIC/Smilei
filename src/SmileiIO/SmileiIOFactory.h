@@ -5,7 +5,7 @@
 #include "SmileiIO_Cart1D.h"
 #include "SmileiIO_Cart2D.h"
 
-#include "PicParams.h"
+#include "Params.h"
 #include "SmileiMPI.h"
 
 #include "Tools.h"
@@ -21,7 +21,7 @@ public:
     //! \param diag : Diagnostics
     //! \param smpi : MPI environment
     //  --------------------------------------------------------------------------------------------------------------------
-    static SmileiIO* create(PicParams& params, Diagnostic& diag, SmileiMPI* smpi) {
+    static SmileiIO* create(Params& params, Diagnostic& diag, SmileiMPI* smpi) {
         MESSAGE(1, "Geometry:" << params.geometry);
         SmileiIO* sio = NULL;
         if ( params.geometry == "1d3v" ) {

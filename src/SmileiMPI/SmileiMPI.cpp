@@ -6,7 +6,7 @@
 #include <iostream>
 #include <sstream>
 
-#include "PicParams.h"
+#include "Params.h"
 #include "Tools.h"
 
 #include "ElectroMagn.h"
@@ -61,7 +61,7 @@ void SmileiMPI::bcast( string& val )
     MPI_Bcast(&charSize, 1, MPI_INT, 0, SMILEI_COMM_WORLD);
 
     char tmp[charSize];
-    strcpy(tmp, val.c_str());
+    if (isMaster()) strcpy(tmp, val.c_str());
     MPI_Bcast(&tmp, charSize, MPI_CHAR, 0, SMILEI_COMM_WORLD);
 
     if (!isMaster()) val=tmp;
@@ -73,7 +73,7 @@ void SmileiMPI::bcast( int& val )
     MPI_Bcast(&val, 1, MPI_INT, 0, SMILEI_COMM_WORLD);
 }
 
-void SmileiMPI::init( PicParams& params )
+void SmileiMPI::init( Params& params )
 {
     oversize.resize(params.nDim_field, 0);
     cell_starting_global_index.resize(params.nDim_field, 0);

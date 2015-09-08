@@ -148,13 +148,26 @@ class ExtField(SmileiComponent):
     field = []
     profile = None
 
+# external current (antenna)
+class Antenna(SmileiComponent):
+    """Antenna"""
+    field = []
+    profile = None
+
+# Particle wall
+class PartWall(SmileiComponent):
+    """Particle Wall"""
+    kind = "none"
+    x = None
+    y = None
+    z = None
+
 # default simulation values
 output_script = "smilei.py"
 dump_step = 0
 dump_minutes = 0.0
 exit_after_dump = True
 restart = False
-check_stop_file = False
 dump_file_sequence = 2
 sim_units = ""
 wavelength_SI = 0.
