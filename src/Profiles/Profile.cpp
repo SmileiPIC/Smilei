@@ -40,8 +40,8 @@ double Evaluate3var(PyObject * fun, std::vector<double> x_cell) {
 void Profile::init()
 {
     if      ( nvariables == 1 ) Evaluate = &Evaluate1var;
-    else if ( nvariables == 2 ) Evaluate = &Evaluate1var;
-    else if ( nvariables == 3 ) Evaluate = &Evaluate1var;
+    else if ( nvariables == 2 ) Evaluate = &Evaluate2var;
+    else if ( nvariables == 3 ) Evaluate = &Evaluate3var;
     else {
         ERROR("A profile has been defined with unsupported number of variables");
     }
