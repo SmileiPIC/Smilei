@@ -235,7 +235,7 @@ inline int buildtag(int commid, int send, int recv) {
     stag << commid << send  << recv;
     long long int tag(0);
     stag >> tag; // Should had ispec ?
-    return (int)(tag%INT_MAX);
+    return (int)(tag%USHRT_MAX);
 }
 
 
