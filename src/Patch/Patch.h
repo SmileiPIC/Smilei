@@ -229,13 +229,18 @@ private:
 };
 
 
+//inline int buildtag(int commid, int send, int recv) {
+//  commid : patch hindex sender
+//  send : idir
+//  recv : ineighboor
 inline int buildtag(int commid, int send, int recv) {
     // + flag / orientation
     std::stringstream stag("");
     stag << commid << send  << recv;
     long long int tag(0);
     stag >> tag; // Should had ispec ?
-    return (int)(tag%USHRT_MAX);
+    //return (int)(tag%USHRT_MAX);
+    return (int)(tag);
 }
 
 
