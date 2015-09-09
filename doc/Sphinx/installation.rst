@@ -57,6 +57,7 @@ It is also possible to install all dependencies manually.
      export HDF5_ROOT_DIR=/opt/local
      
    Depending on your system, you might need to use ``mpic++`` instead of ``mpicxx``.
+   Default for `SMILEICXX`  is `mpic++`, `HDF5_ROOT_DIR` is empty.
   
 #. Python should be already installed by default, but in case you need
    a specific version, run::
@@ -112,8 +113,10 @@ Download and compile
    Alternates:
      
    * ``make debug`` to have debugging output (slow).
+   * ``make openmp`` to activate OpenMP support
    * ``make -j4`` to compile with 4 processors.
    * ``make doc`` to compile the documentation.
+   
 
 
 

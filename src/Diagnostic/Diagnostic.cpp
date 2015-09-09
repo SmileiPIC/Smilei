@@ -368,13 +368,15 @@ void Diagnostic::initProbes(Params& params, SmileiMPI *smpi) {
         hid_t did = H5::group(probes.fileId, prob_name.str());
         
         // Create an array to hold the positions of local probe particles
-        double posArray [nPart_local][ndim];
+        Field2D fieldPosProbe;
+        fieldPosProbe.allocateDims(nPart_local,ndim);
+        
         for (unsigned int ipb=0 ; ipb<nPart_local ; ipb++)
             for (unsigned int idim=0 ; idim<ndim  ; idim++)
-                posArray[ipb][idim] = probeParticles.position(idim,ipb);
+                fieldPosProbe(ipb,idim) = probeParticles.position(idim,ipb);
         
         // Add array "positions" into the current HDF5 group
-        H5::matrix_MPI(did, "positions", posArray[0][0], nPart_total, ndim, probesStart, nPart_local);
+        H5::matrix_MPI(did, "positions", fieldPosProbe.data_2D[0][0], nPart_total, ndim, probesStart, nPart_local);
         
         probes.probesStart.push_back(probesStart);
         

@@ -30,28 +30,26 @@ class Profile
 {
 public:
     //! Default constructor (for species profiles)
-    Profile(ProfileStructure& , int);
+    Profile(ProfileStructure& , unsigned int);
     
     //! Alternate constructor (for external fields profiles)
-    Profile(ExtFieldStructure&, int);
+    Profile(ExtFieldStructure&, unsigned int);
     
     //! Default destructor
     ~Profile(){};
     
     //! Some initialization
-    void init();
+    void init(unsigned int);
         
     //! Function to get the value of the profile at some location
     double valueAt(std::vector<double>);
     
-private:
-    int nvariables;
-    
-    double (*Evaluate)(PyObject *, std::vector<double>);
-    
 protected:
     ProfileStructure  profile_param;
-        
+    
+private:
+    double (*Evaluate)(PyObject *, std::vector<double>);
+    
 };//END class
 
 #endif

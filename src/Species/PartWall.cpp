@@ -14,22 +14,28 @@
 
 using namespace std;
 
+PartWall::PartWall(double pos, unsigned short dir) :
+position(pos),
+direction(dir) {}
 
 // Reads the input file and creates the ParWall objects accordingly
 vector<PartWall*> PartWall::create(Params& params, SmileiMPI* smpi)
 {
-    PartWall* partwall;
     vector<PartWall*> vecPartWall;
     
+    MESSAGE(1,"Adding particle walls:");
+
     // Loop over each wall component and parse info
     unsigned int numpartwall=PyTools::nComponents("PartWall");
     for (unsigned int iwall = 0; iwall < numpartwall; iwall++) {
-        
+    
         // Extract the direction of the wall
         short direction = -1;
         double position;
+        string dirstring;
         if (PyTools::extract("x",position,"PartWall",iwall)) {
             direction=0;
+            dirstring="x";
         }
         if (PyTools::extract("y",position,"PartWall",iwall)) {
             if (direction>=0)
@@ -37,6 +43,7 @@ vector<PartWall*> PartWall::create(Params& params, SmileiMPI* smpi)
             if (params.nDim_particle < 2)
                 ERROR("PartWall #" << iwall << " cannot have y-location in 1D");
             direction=1;
+            dirstring="y";
         }
         if (PyTools::extract("z",position,"PartWall",iwall)) {
             if (direction>=0)
@@ -44,13 +51,14 @@ vector<PartWall*> PartWall::create(Params& params, SmileiMPI* smpi)
             if (params.nDim_particle < 3)
                 ERROR("PartWall #" << iwall << " cannot have z-location y in 1D or 2D");
             direction=2;
+            dirstring="z";
         }
         if( direction < 0 ) {
             ERROR("PartWall #" << iwall << " must have one location (x, y or z)");
         }
         
         // Find out wether this proc has the wall or not
-       if ( position > smpi->getDomainLocalMin(direction) && position < smpi->getDomainLocalMax(direction)) {
+        if ( position > smpi->getDomainLocalMin(direction) && position < smpi->getDomainLocalMax(direction)) {
             
             // Ewtract the kind of wall
             string kind("");
@@ -60,11 +68,7 @@ vector<PartWall*> PartWall::create(Params& params, SmileiMPI* smpi)
             }
             
             // Create new wall
-            PartWall * tmpWall = new PartWall();
-            
-            // Set position and direction
-            tmpWall->position = position;
-            tmpWall->direction = direction;
+            PartWall * tmpWall = new PartWall(position, direction);
             
             // Define the "wall" function pointer
             bool thermCond = false;
@@ -79,9 +83,13 @@ vector<PartWall*> PartWall::create(Params& params, SmileiMPI* smpi)
                 tmpWall->wall = &thermalize_particle;
             }
             
+            MESSAGE(2,"Adding a wall at " << position << " in " <<  dirstring << " direction kind:" << kind << (thermCond? "thermCond" : ""));
             vecPartWall.push_back(tmpWall);
         }
         
+    }
+    if (!vecPartWall.size()) {
+        MESSAGE(2,"Nothing to do");
     }
     
     return vecPartWall;

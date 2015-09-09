@@ -95,6 +95,8 @@ public:
     unsigned int globalDims_;
     //! pointer to the linearized array
     double* data_;
+    
+    inline double* data() {return data_;}
     //! reference access to the linearized array (with check in DEBUG mode)
     inline double& operator () (unsigned int i)
     {

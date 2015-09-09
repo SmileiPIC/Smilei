@@ -288,7 +288,6 @@ public:
         PyObject *py_obj = PyObject_GetAttrString(PyImport_AddModule("__main__"),componentName.c_str());
         PyTools::checkPyError();
         int retval = PyObject_Length(py_obj);
-        HEREIAM(componentName << " " << retval);
         return retval;
     }
     

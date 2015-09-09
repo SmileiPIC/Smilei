@@ -2,7 +2,23 @@ SMILEICXX     ?= mpic++
 HDF5_ROOT_DIR ?=
 
 PYTHONCONFIG ?= python-config
-##################################################
+
+EXEC = smilei
+
+default: $(EXEC)
+
+help: 
+	@echo 'Usage: make [clean] [config=OPTIONS]'
+	@echo '		OPTIONS is a string composed of one or more of:'
+	@echo '	        debug    : to compile in debug mode (code runs really slow)'
+	@echo '	        openmp   : to compile with openmp enabled'
+	@echo '         scalasca : to compile using scalasca'
+	@echo ' e.g. make config="debug openmp"'
+	@echo ''
+	@echo 'Environment variables : SMILEICXX (c++ compiler) HDF5_ROOT_DIR (HDF5 dir with /include and /lib)'
+
+
+####################################################
 DESCRIBE:=$(shell git describe 2>/dev/null || echo '??')
 BRANCH:=$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '??')
 COMMITDATE:=$(shell git show -s --pretty="%ci" 2>/dev/null || echo '??')
@@ -22,32 +38,6 @@ DIRS = $(shell find * -type d)
 #add include directives for subdirs
 CFLAGS += $(DIRS:%=-I%)
 
-EXEC = smilei
-
-default: $(EXEC)
-
-help: 
-	@echo 'Usage                 : make [clean] [openmp={gnu|intel}] [config=debug]'
-	@echo 'Environment variables : SMILEICXX (c++ compiler) HDF5_ROOT_DIR (HDF5 dir with /include and /lib)'
-
-
-# these are kept for backward compatibility and might be removed (see make help)
-release:
-	make
-
-openmpgnu:
-	make openmp=gnu
-
-openmpintel:
-	make openmp=intel
-
-debug:
-	make config=debug
-
-scalasca: 
-	make config=scalasca
-
-
 PYSCRIPTS := $(shell find Python -name \*.py)
 PYHEADERS := $(PYSCRIPTS:.py=.pyh)
 
@@ -56,26 +46,27 @@ SRCS := $(shell find . -name \*.cpp)
 OBJS := $(SRCS:.cpp=.o)
 DEPS := $(SRCS:.cpp=.d)
 
-
 CFLAGS+=$(shell $(PYTHONCONFIG) --includes)
 LDFLAGS+=$(shell $(PYTHONCONFIG) --ldflags)
 
 
-ifeq ($(config),debug)
+# check for variable config
+ifneq (,$(findstring debug,$(config)))
 	CFLAGS += -g -pg -Wall -D__DEBUG -O0# -shared-intel 
 else
 	CFLAGS += -O3#  -xHost -ipo
 endif
 
-ifeq ($(openmp),gnu)
-	CFLAGS += -fopenmp -D_OMP
-else ifeq ($(openmp),intel)
-	CFLAGS += -openmp -D_OMP
+ifneq (,$(findstring scalasca,$(config)))
+    SMILEICXX = scalasca -instrument mpic++
 endif
 
-ifeq ($(config),scalasca)
-	CFLAGS += -openmp -D_OMP
-    SMILEICXX = scalasca -instrument mpic++
+ifneq (,$(findstring openmp,$(config)))
+    ifneq (,$(findstring icpc,$(shell $(SMILEICXX) --showme:command)))
+        CFLAGS += -openmp -D_OMP
+    else
+        CFLAGS += -fopenmp -D_OMP
+    endif
 endif
 
 clean:
@@ -104,5 +95,20 @@ endif
 
 $(EXEC): $(PYHEADERS) $(OBJS)
 	$(SMILEICXX) $(CFLAGS) -o $(EXEC) $(OBJS) $(LDFLAGS)
+
+# these are kept for backward compatibility and might be removed (see make help)
+
+obsolete:
+	@echo "[WARNING] Please consider using make config=\"$(MAKECMDGOALS)\""
+
+debug: obsolete
+	make config=debug
+
+openmp: obsolete
+	make config=openmp
+
+scalasca: obsolete
+	make config=scalasca
+
 
 # DO NOT DELETE

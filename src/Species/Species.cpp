@@ -434,8 +434,6 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
         b_Jz = b_Jy + size_proj_buffer ;
         b_rho = b_Jz + size_proj_buffer ;
         
-        int nPartWall = vecPartWall.size();
-        
 #pragma omp for schedule(runtime)
         for (ibin = 0 ; ibin < (unsigned int)bmin.size() ; ibin++) {
             
@@ -462,7 +460,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 (*Push)(particles, iPart, Epart, Bpart, gf);
                 
                 // Apply wall condition
-                for(int iwall=0; iwall<nPartWall; iwall++) {
+                for(unsigned int iwall=0; iwall<vecPartWall.size(); iwall++) {
                     if ( !vecPartWall[iwall]->apply(particles, iPart, params.species_param[ispec], ener_iPart)) {
                         nrj_lost_per_thd[tid] += params.species_param[ispec].mass * ener_iPart;
                     }

@@ -7,21 +7,18 @@ struct ExtFieldStructure;
 
 // Default constructor.
 // Applies to profiles for species (density, velocity and temperature profiles)
-Profile::Profile(ProfileStructure & pp, int nvar) :
-profile_param(pp),
-nvariables(nvar)
-{
-    init();
+Profile::Profile(ProfileStructure & pp, unsigned int nvar) :
+profile_param(pp){
+    init(nvar);
 }
 
 
 // Special constructor.
 // Applies to external field profiles
-Profile::Profile(ExtFieldStructure & pp, int nvar):
-profile_param(static_cast<ProfileStructure> (pp)),
-nvariables(nvar)
+Profile::Profile(ExtFieldStructure & pp, unsigned int nvar):
+profile_param(static_cast<ProfileStructure> (pp))
 {
-    init();
+    init(nvar);
 }
 
 // Preliminary functions
@@ -37,7 +34,7 @@ double Evaluate3var(PyObject * fun, std::vector<double> x_cell) {
 }
 
 
-void Profile::init()
+void Profile::init(unsigned int nvariables)
 {
     if      ( nvariables == 1 ) Evaluate = &Evaluate1var;
     else if ( nvariables == 2 ) Evaluate = &Evaluate2var;

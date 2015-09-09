@@ -13,7 +13,7 @@ class SmileiMPI;
 class PartWall {
 public:
     //! PartWall creator
-    PartWall(){};
+    PartWall(double, unsigned short);
     //! PartWall destructor
     ~PartWall(){};
     
@@ -30,7 +30,7 @@ public:
 private:
     //! position of a wall in its direction
     double position;
-    double direction;
+    unsigned short direction;
 
 };
 

@@ -7,11 +7,8 @@ default: release
 release:
 	make -C src
 
-openmpgnu:
-	make -C src openmp=gnu
-
-openmpintel:
-	make -C src openmp=intel
+openmp:
+	make -C src config=openmp
 
 debug:
 	make -C src config=debug
@@ -26,3 +23,6 @@ clean:
 doc:
 	make -C doc all
 
+tar:
+	git archive -o smilei-$(VERSION).tgz --prefix smilei-$(VERSION)/ HEAD
+	

@@ -236,7 +236,7 @@ void Params::initPython(SmileiMPI *smpi, std::vector<std::string> namelistsFiles
 
 void Params::readSpecies() {
     bool ok;
-    for (unsigned int ispec = 0; ispec < PyTools::nComponents("Species"); ispec++) {
+    for (unsigned int ispec = 0; ispec < (unsigned int) PyTools::nComponents("Species"); ispec++) {
         SpeciesStructure tmpSpec;
         PyTools::extract("species_type",tmpSpec.species_type,"Species",ispec);
         if(tmpSpec.species_type.empty()) {

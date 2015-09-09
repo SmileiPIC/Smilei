@@ -36,6 +36,9 @@ def _keep_python_running():
     for ant in Antenna:
         if callable(ant.time_profile): return True
 
+    if not nspace_win_x == 0:
+        return True
+
     return False
 
 # Prevent creating new components (by mistake)
