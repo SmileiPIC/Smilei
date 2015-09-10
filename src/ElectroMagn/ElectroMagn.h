@@ -19,30 +19,29 @@ class Laser;
 class SmileiMPI;
 class ElectroMagnBC;
 class SimWindow;
-class ExtFieldProfile;
 class Solver;
 
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each ExtField
 // ---------------------------------------------------------------------------------------------------------------------
-struct ExtFieldStructure : ProfileStructure {
+struct ExtFieldStructure {
     //! fields to which apply the exeternal field
     std::vector<std::string> fields;
+    PyObject *py_profile;
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each Antenna
 // ---------------------------------------------------------------------------------------------------------------------
-struct AntennaStructure : ProfileStructure {
+struct AntennaStructure {
     //! fields to which apply the exeternal field
     std::string field;
     
-    ProfileStructure time_profile;
-    ProfileStructure space_profile;
+    PyObject *time_profile;
+    PyObject *space_profile;
     
     Field* my_field;
-    
 };
 
 //! class ElectroMagn: generic class containing all information on the electromagnetic fields and currents

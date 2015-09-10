@@ -984,7 +984,6 @@ void ElectroMagn2D::applyExternalField(Field* my_field,  Profile *profile, Smile
             (*field2D)(i,j) = (*field2D)(i,j) + profile->valueAt(pos);
         }//j
     }//i
-    HEREIAM("");
     
     if (emBoundCond[0]!=0) emBoundCond[0]->save_fields_BC2D_Long(my_field);
     if (emBoundCond[1]!=0) emBoundCond[1]->save_fields_BC2D_Long(my_field);

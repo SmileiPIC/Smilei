@@ -258,6 +258,32 @@ public:
         
     }
     
+    static void toProfile(PyObject*& myPy) {
+        double val;
+        // If the profile is only a double, then convert to a constant function
+        if( PyTools::convert(myPy, val) ) {
+            HEREIAM(val);
+            // Extract the function "constant"
+            PyObject* constantFunction = PyTools::extract_py("constant");
+            // Create the argument which has the value of the profile
+            PyObject* arg = PyTuple_New(1);
+            PyTuple_SET_ITEM(arg, 0, PyFloat_FromDouble(val));
+            // Create the constant anonymous function
+            myPy = PyObject_Call(constantFunction, arg, NULL);
+            PyTools::checkPyError();
+        }
+    }
+
+    static bool extract_pyProfile(std::string name, PyObject*& myPy, std::string component=std::string(""), int nComponent=0) {
+        PyObject* myPytmp=extract_py(name,component,nComponent);
+        toProfile(myPytmp);
+        if (PyCallable_Check(myPytmp)) {
+            myPy=myPytmp;
+            return true;
+        }
+        return false;
+    }
+    
     //! retrieve a vector of python objects
     static std::vector<PyObject*> extract_pyVec(std::string name, std::string component=std::string(""), int nComponent=0) {
         std::vector<PyObject*> retvec;
@@ -281,6 +307,15 @@ public:
         return retvec;
     }
     
+    //! retrieve a vector of python objects
+    static std::vector<PyObject*> extract_pyVecProfile(std::string name, std::string component=std::string(""), int nComponent=0) {
+        std::vector<PyObject*> py_obj = extract_pyVec(name,component,nComponent);
+        for (unsigned int i=0;i<py_obj.size();i++) {
+            toProfile(py_obj[i]);
+        }
+        return py_obj;
+    }
+
     //! return the number of components (see pyinit.py)
     static int nComponents(std::string componentName) {
         // Get the selected component (e.g. "Species" or "Laser")

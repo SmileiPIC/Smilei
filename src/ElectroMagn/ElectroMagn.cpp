@@ -99,23 +99,8 @@ oversize(params.oversize)
             ERROR("ExtField #"<<n_extfield<<": parameter 'field' not provided'");
         }
         
-        // If profile is a float
-        if( PyTools::extract("profile", tmpExtField.profile, "ExtField", n_extfield) ) {
-            string xyz = "x";
-            if(params.geometry=="2d3v") xyz = "x,y";
-            if(params.geometry=="3d3v") xyz = "x,y,z";
-            // redefine the profile as a constant function instead of float
-            PyTools::checkPyError();
-            ostringstream command;
-            command.str("");
-            command << "ExtField["<<n_extfield<<"].profile=lambda "<<xyz<<":" << tmpExtField.profile;
-            if( !PyRun_SimpleString(command.str().c_str()) ) PyTools::checkPyError();
-        }
         // Now import the profile as a python function
-        PyObject *mypy = PyTools::extract_py("profile","ExtField",n_extfield);
-        if (mypy && PyCallable_Check(mypy)) {
-            tmpExtField.py_profile=mypy;
-        } else{
+        if (!PyTools::extract_pyProfile("profile",tmpExtField.py_profile,"ExtField",n_extfield)) {
             ERROR(" ExtField #"<<n_extfield<<": parameter 'profile' not understood");
         }
         ext_field_structs.push_back(tmpExtField);
@@ -136,20 +121,12 @@ oversize(params.oversize)
             ERROR("Antenna #"<<n_antenna<<": parameter 'field' must be one of Jx, Jy, Jz");
         
         // Now import the space profile as a python function
-        PyObject *mypy = PyTools::extract_py("space_profile","Antenna",n_antenna);
-        if (mypy && PyCallable_Check(mypy)) {
-            tmpProf.space_profile.py_profile=mypy;
-        } else{
+        if (!PyTools::extract_pyProfile("space_profile",tmpProf.space_profile,"Antenna",n_antenna))
             ERROR(" Antenna #"<<n_antenna<<": parameter 'space_profile' not understood");
-        }
         
         // Now import the time profile as a python function
-        PyObject *mytpy = PyTools::extract_py("time_profile","Antenna",n_antenna);
-        if (mytpy && PyCallable_Check(mytpy)) {
-            tmpProf.time_profile.py_profile=mytpy;
-        } else{
+        if (!PyTools::extract_pyProfile("time_profile",tmpProf.time_profile,"Antenna",n_antenna))
             ERROR(" Antenna #"<<n_antenna<<": parameter 'time_profile' not understood");
-        }
         
         antennas.push_back(tmpProf);
     }
@@ -424,7 +401,7 @@ void ElectroMagn::applyExternalFields(SmileiMPI* smpi) {
     for (vector<Field*>::iterator field=my_fields.begin(); field!=my_fields.end(); field++) {
         if (*field) {
             for (vector<ExtFieldStructure>::iterator extfield=ext_field_structs.begin(); extfield!=ext_field_structs.end(); extfield++ ) {
-                Profile *my_ExtFieldProfile = new Profile(*extfield, nDim_field);
+                Profile *my_ExtFieldProfile = new Profile(extfield->py_profile, nDim_field);
                 if (my_ExtFieldProfile) {
                     for (vector<string>::iterator fieldName=(*extfield).fields.begin();fieldName!=(*extfield).fields.end();fieldName++) {
                         if (LowerCase((*field)->name)==LowerCase(*fieldName)) {
@@ -456,7 +433,7 @@ void ElectroMagn::applyAntennas(SmileiMPI* smpi, double time) {
     my_fields.push_back(Jz_);
     
     for (vector<AntennaStructure>::iterator antenna=antennas.begin(); antenna!=antennas.end(); antenna++ ) {
-        double intensity = PyTools::runPyFunction(antenna->time_profile.py_profile, time);
+        double intensity = PyTools::runPyFunction(antenna->time_profile, time);
         if (antenna->my_field) {
             for (vector<Field*>::iterator field=my_fields.begin(); field!=my_fields.end(); field++) {
                 if ((*field)->name==antenna->my_field->name) {

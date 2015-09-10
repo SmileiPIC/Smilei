@@ -109,22 +109,22 @@ struct SpeciesStructure {
     std::string ionization_model;
     
     //! density profile
-    ProfileStructure dens_profile;
-    ProfileStructure charge_profile;
+    PyObject *dens_profile;
+    PyObject *charge_profile;
     std::string density_type;
     
     //! velocity profile
-    ProfileStructure mvel_x_profile;
-    ProfileStructure mvel_y_profile;
-    ProfileStructure mvel_z_profile;
+    PyObject *mvel_x_profile;
+    PyObject *mvel_y_profile;
+    PyObject *mvel_z_profile;
     
     
     //! temperature profile
-    ProfileStructure temp_x_profile;
-    ProfileStructure temp_y_profile;
-    ProfileStructure temp_z_profile;
+    PyObject *temp_x_profile;
+    PyObject *temp_y_profile;
+    PyObject *temp_z_profile;
     
-    ProfileStructure ppc_profile;
+    PyObject *ppc_profile;
     
 };
 
@@ -142,10 +142,7 @@ public:
     //! destructor
     ~Params();
     
-    //! extract profiles
-    bool extractProfile         (PyObject *, ProfileStructure &);
-    bool extractOneProfile      (std::string, ProfileStructure &, int);
-    void extractVectorOfProfiles(std::string, std::vector<ProfileStructure*> &, int);
+    void extractVectorOfProfiles(std::string, std::vector<PyObject*> &, int);
     
     //! compute grid-related parameters & apply normalization
     void compute();

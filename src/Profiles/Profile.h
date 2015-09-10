@@ -8,44 +8,23 @@
 #include "Tools.h"
 
 
-// ---------------------------------------------------------------------------------------------------------------------
-//! This structure contains the properties of each Profile
-// ---------------------------------------------------------------------------------------------------------------------
-struct ProfileStructure {
-    
-    //! Magnitude of the profile if constant profile
-    double profile;
-    
-    //! in case profile is give in Python
-    PyObject *py_profile;
-    
-};
-
-struct ExtFieldStructure;
-
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class Profile
 //  --------------------------------------------------------------------------------------------------------------------
 class Profile
 {
 public:
-    //! Default constructor (for species profiles)
-    Profile(ProfileStructure& , unsigned int);
-    
-    //! Alternate constructor (for external fields profiles)
-    Profile(ExtFieldStructure&, unsigned int);
-    
+    //! Default constructor
+    Profile(PyObject* , unsigned int);
+
     //! Default destructor
     ~Profile(){};
     
-    //! Some initialization
-    void init(unsigned int);
-        
     //! Function to get the value of the profile at some location
     double valueAt(std::vector<double>);
     
 protected:
-    ProfileStructure  profile_param;
+    PyObject *py_profile;
     
 private:
     double (*Evaluate)(PyObject *, std::vector<double>);

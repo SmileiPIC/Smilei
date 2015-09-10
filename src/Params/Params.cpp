@@ -349,34 +349,35 @@ void Params::readSpecies() {
         
         // Density
         bool ok1, ok2;
-        ok1 = extractOneProfile("nb_density"    , tmpSpec.dens_profile, ispec);
-        ok2 = extractOneProfile("charge_density", tmpSpec.dens_profile, ispec);
+        ok1 = PyTools::extract_pyProfile("nb_density"    , tmpSpec.dens_profile, "Species", ispec);
+        ok2 = PyTools::extract_pyProfile("charge_density", tmpSpec.dens_profile, "Species", ispec);
+        
         if(  ok1 &&  ok2 ) ERROR("For species #" << ispec << ", cannot define both `nb_density` and `charge_density`.");
         if( !ok1 && !ok2 ) ERROR("For species #" << ispec << ", must define `nb_density` or `charge_density`.");
         if( ok1 ) tmpSpec.density_type = "nb";
         if( ok2 ) tmpSpec.density_type = "charge";
         
         // Number of particles per cell
-        if( !extractOneProfile("n_part_per_cell", tmpSpec.ppc_profile, ispec) )
+        if( !PyTools::extract_pyProfile("n_part_per_cell"    , tmpSpec.ppc_profile, "Species", ispec))
             ERROR("For species #" << ispec << ", n_part_per_cell not found or not understood");
         
         // Charge
-        if( !extractOneProfile("charge", tmpSpec.charge_profile, ispec) )
+        if( !PyTools::extract_pyProfile("charge"    , tmpSpec.charge_profile, "Species", ispec))
             ERROR("For species #" << ispec << ", charge not found or not understood");
         
         // Mean velocity
-        vector<ProfileStructure*> vecMvel;
+        vector<PyObject*> vecMvel;
         extractVectorOfProfiles("mean_velocity", vecMvel, ispec);
-        tmpSpec.mvel_x_profile = *(vecMvel[0]);
-        tmpSpec.mvel_y_profile = *(vecMvel[1]);
-        tmpSpec.mvel_z_profile = *(vecMvel[2]);
+        tmpSpec.mvel_x_profile = vecMvel[0];
+        tmpSpec.mvel_y_profile = vecMvel[1];
+        tmpSpec.mvel_z_profile = vecMvel[2];
         
         // Temperature
-        vector<ProfileStructure*> vecTemp;
+        vector<PyObject*> vecTemp;
         extractVectorOfProfiles("temperature", vecTemp, ispec);
-        tmpSpec.temp_x_profile = *(vecTemp[0]);
-        tmpSpec.temp_y_profile = *(vecTemp[1]);
-        tmpSpec.temp_z_profile = *(vecTemp[2]);
+        tmpSpec.temp_x_profile = vecTemp[0];
+        tmpSpec.temp_y_profile = vecTemp[1];
+        tmpSpec.temp_z_profile = vecTemp[2];
         
         
         // Save the Species params
@@ -385,51 +386,14 @@ void Params::readSpecies() {
     }
 }
 
-bool Params::extractProfile(PyObject *mypy, ProfileStructure &P)
+void Params::extractVectorOfProfiles(string varname, vector<PyObject*> &pvec, int ispec)
 {
-    double val;
-    // If the profile is only a double, then convert to a constant function
-    if( PyTools::convert(mypy, val) ) {
-        // Extract the function "constant"
-        PyObject* constantFunction = PyTools::extract_py("constant");
-        // Create the argument which has the value of the profile
-        PyObject* arg = PyTuple_New(1);
-        PyTuple_SET_ITEM(arg, 0, PyFloat_FromDouble(val));
-        // Create the constant anonymous function
-        PyObject * tmp = PyObject_Call(constantFunction, arg, NULL);
-        P.py_profile = tmp;
-        return true;
-    } else if (mypy && PyCallable_Check(mypy)) {
-        P.py_profile=mypy;
-        return true;
+    pvec = PyTools::extract_pyVecProfile(varname, "Species", ispec);
+    if ( pvec.size()==1 ) {
+        pvec.resize(3,pvec[0]);
     }
-    return false;
-}
-
-bool Params::extractOneProfile(string varname, ProfileStructure &P, int ispec) {
-    PyObject *mypy = PyTools::extract_py(varname, "Species", ispec);
-    if( !extractProfile(mypy, P) ) return false;
-    return true;
-}
-
-void Params::extractVectorOfProfiles(string varname, vector<ProfileStructure*> &Pvec, int ispec)
-{
-    Pvec.resize(3);
-    vector<PyObject*> pvec = PyTools::extract_pyVec(varname, "Species", ispec);
-    int len = pvec.size();
-    if( len==3 ) {
-        for(int i=0; i<len; i++) {
-            Pvec[i] = new ProfileStructure();
-            if( !extractProfile(pvec[i], *(Pvec[i])) )
-                ERROR("For species #" << ispec << ", "<<varname<<"["<<i<<"] not understood");
-        }
-    } else if ( len==1 ) {
-        Pvec[0] = new ProfileStructure();
-        if( !extractProfile(pvec[0], *(Pvec[0])) )
-            ERROR("For species #" << ispec << ", "<<varname<<" not understood");
-        Pvec[1] = Pvec[0];
-        Pvec[2] = Pvec[0];
-    } else {
+    
+    if (pvec.size()!=3) {
         ERROR("For species #" << ispec << ", "<<varname<<" needs 1 or 3 components.");
     }
 }
@@ -618,9 +582,7 @@ void Params::pyRunScript(string command, string name) {
     PyTools::checkPyError();
     namelist+=command;
     if (name.size()>0)  MESSAGE(1,"Passing to python " << name);
-    DEBUG(">>>>>>>>>>>>>>> passing this to python:\n" <<command);
     int retval=PyRun_SimpleString(command.c_str());
-    DEBUG("<<<<<<<<<<<<<<< from " << name);
     if (retval==-1) {
         ERROR("error parsing "<< name);
         PyTools::checkPyError();
