@@ -239,7 +239,15 @@ inline int buildtag(int commid, int send, int recv) {
     stag << commid << send  << recv;
     long long int tag(0);
     stag >> tag; // Should had ispec ?
-    //return (int)(tag%USHRT_MAX);
+    return (int)(tag);
+}
+
+
+inline int buildtag(int diag, int commid, int send, int recv) {
+    std::stringstream stag("");
+    stag << diag << commid << send  << recv;
+    long long int tag(0);
+    stag >> tag; // Should had ispec ?
     return (int)(tag);
 }
 

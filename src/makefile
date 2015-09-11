@@ -1,11 +1,12 @@
 SMILEICXX     ?= mpic++
+SMILEICXX     = mpiicpc
 HDF5_ROOT_DIR ?= ${HDF5HOME}
 
 ##################################################
 
 VERSION:="$(shell git describe 2>/dev/null || echo '??')"
 
-CFLAGS += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include -D_MANAGE_CORNERS #-D_TESTPATCHEXCH
+CFLAGS += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include -DMPICH_IGNORE_CXX_SEEK #-D_TESTPATCHEXCH
 LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5
 
 ifneq (,$(findstring poincare,$(HOSTNAME)))

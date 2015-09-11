@@ -100,9 +100,26 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
 	}
     }
 
+
+    // slide the  curve, new patches will be created directly with their good patchid
+    for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
+	vecPatches(ipatch)->neighbor_[0][1] = vecPatches(ipatch)->hindex;
+        vecPatches(ipatch)->hindex = vecPatches(ipatch)->neighbor_[0][0];
+    }
+    // Init new patches (really new and received)
+    for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
+
+        if ( vecPatches(ipatch)->MPI_neighborhood_[4] != vecPatches(ipatch)->MPI_neighborhood_[5] ) {
+            int patchid = vecPatches(ipatch)->neighbor_[0][1];
+            Patch* newPatch = PatchesFactory::create(params, diag_params, laser_params, smpi, patchid, n_moved );
+            vecPatches.patches_.push_back( newPatch );
+        }
+    }
+
     for ( int ipatch = nPatches-1 ; ipatch >= 0 ; ipatch--) {
 
         // Patch à supprimer
+	//if ( vecPatches(ipatch)->neighbor_[0][0]==MPI_PROC_NULL) {
         if ( vecPatches(ipatch)->isWestern() ) {
 
 	    // Compute energy lost 
@@ -118,29 +135,11 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
 
         }
     }
+
     // Sync / Patches done for these diags -> Store in patch master 
     vecPatches(0)->EMfields->storeNRJlost( energy_field_lost );
     for ( int ispec=0 ; ispec<vecPatches(0)->vecSpecies.size() ; ispec++ )
 	vecPatches(0)->vecSpecies[ispec]->storeNRJlost( energy_part_lost[ispec] );
-
-
-    nPatches = vecPatches.size();
-
-    // slide the  curve, new patches will be created directly with their good patchid
-    for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
-	vecPatches(ipatch)->neighbor_[0][1] = vecPatches(ipatch)->hindex;
-        vecPatches(ipatch)->hindex = vecPatches(ipatch)->neighbor_[0][0];
-    }
-
-    // Init new patches (really new and received)
-    for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
-
-        if ( vecPatches(ipatch)->MPI_neighborhood_[4] != vecPatches(ipatch)->MPI_neighborhood_[5] ) {
-            int patchid = vecPatches(ipatch)->neighbor_[0][1];
-            Patch* newPatch = PatchesFactory::create(params, diag_params, laser_params, smpi, patchid, n_moved );
-            vecPatches.patches_.push_back( newPatch );
-        }
-    }
 
     nPatches = vecPatches.size();
 
