@@ -94,6 +94,7 @@ oversize(params.oversize)
     // -----------------
     unsigned int numExtFields=PyTools::nComponents("ExtField");
     for (unsigned int n_extfield = 0; n_extfield < numExtFields; n_extfield++) {
+        MESSAGE("ExtField " << n_extfield);
         ExtFieldStructure tmpExtField;
         if( !PyTools::extract("field",tmpExtField.fields,"ExtField",n_extfield)) {
             ERROR("ExtField #"<<n_extfield<<": parameter 'field' not provided'");

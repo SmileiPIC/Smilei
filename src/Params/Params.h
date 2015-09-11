@@ -142,7 +142,8 @@ public:
     //! destructor
     ~Params();
     
-    void extractVectorOfProfiles(std::string, std::vector<PyObject*> &, int);
+    // extract 3 profiles from namelist (used for part mean velocity and temperature)
+    void extract3Profiles(std::string, int, PyObject*&, PyObject*&, PyObject*&);
     
     //! compute grid-related parameters & apply normalization
     void compute();

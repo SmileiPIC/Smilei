@@ -366,18 +366,10 @@ void Params::readSpecies() {
             ERROR("For species #" << ispec << ", charge not found or not understood");
         
         // Mean velocity
-        vector<PyObject*> vecMvel;
-        extractVectorOfProfiles("mean_velocity", vecMvel, ispec);
-        tmpSpec.mvel_x_profile = vecMvel[0];
-        tmpSpec.mvel_y_profile = vecMvel[1];
-        tmpSpec.mvel_z_profile = vecMvel[2];
+        extract3Profiles("mean_velocity", ispec, tmpSpec.mvel_x_profile, tmpSpec.mvel_y_profile, tmpSpec.mvel_z_profile);
         
         // Temperature
-        vector<PyObject*> vecTemp;
-        extractVectorOfProfiles("temperature", vecTemp, ispec);
-        tmpSpec.temp_x_profile = vecTemp[0];
-        tmpSpec.temp_y_profile = vecTemp[1];
-        tmpSpec.temp_z_profile = vecTemp[2];
+        extract3Profiles("temperature", ispec, tmpSpec.temp_x_profile, tmpSpec.temp_y_profile, tmpSpec.temp_z_profile);
         
         
         // Save the Species params
@@ -386,14 +378,19 @@ void Params::readSpecies() {
     }
 }
 
-void Params::extractVectorOfProfiles(string varname, vector<PyObject*> &pvec, int ispec)
+void Params::extract3Profiles(string varname, int ispec, PyObject*& profx, PyObject*& profy, PyObject*& profz )
 {
-    pvec = PyTools::extract_pyVecProfile(varname, "Species", ispec);
-    if ( pvec.size()==1 ) {
-        pvec.resize(3,pvec[0]);
+    vector<PyObject*> pvec = PyTools::extract_pyVec(varname,"Species",ispec);
+    for (unsigned int i=0;i<pvec.size();i++) {
+        PyTools::toProfile(pvec[i]);
     }
-    
-    if (pvec.size()!=3) {
+    if ( pvec.size()==1 ) {
+        profx =  profy =  profz = pvec[0];
+    } else if (pvec.size()==3) {
+        profx = pvec[0];
+        profy = pvec[1];
+        profz = pvec[2];
+    } else {
         ERROR("For species #" << ispec << ", "<<varname<<" needs 1 or 3 components.");
     }
 }
