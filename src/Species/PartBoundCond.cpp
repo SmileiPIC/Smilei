@@ -92,8 +92,6 @@ PartBoundCond::PartBoundCond( Params& params, int ispec, SmileiMPI* smpi )
     // Define the kind of applied boundary conditions
     // ----------------------------------------------
     
-    bool thermCond = false;
-    
     // West
     if ( params.species_param[ispec].bc_part_type_west == "refl" ) {
         if (smpi->isWestern()) bc_west = &refl_particle;
@@ -105,7 +103,6 @@ PartBoundCond::PartBoundCond( Params& params, int ispec, SmileiMPI* smpi )
         if (smpi->isWestern()) bc_west = &stop_particle;
     }
     else if ( params.species_param[ispec].bc_part_type_west == "thermalize" ) {
-        thermCond = true;
         if (smpi->isWestern()) bc_west = &thermalize_particle;
     }
     else if ( params.species_param[ispec].bc_part_type_west == "none" ) {
@@ -126,7 +123,6 @@ PartBoundCond::PartBoundCond( Params& params, int ispec, SmileiMPI* smpi )
         if (smpi->isEastern()) bc_east = &stop_particle;
     }
     else if ( params.species_param[ispec].bc_part_type_east == "thermalize" ) {
-        thermCond = true;
         if (smpi->isEastern()) bc_east = &thermalize_particle;
     }
     else if ( params.species_param[ispec].bc_part_type_east == "none" ) {
@@ -149,7 +145,6 @@ PartBoundCond::PartBoundCond( Params& params, int ispec, SmileiMPI* smpi )
             if (smpi->isSouthern()) bc_south = &stop_particle;
         }
         else if ( params.species_param[ispec].bc_part_type_south == "thermalize" ) {
-            thermCond = true;
             if (smpi->isSouthern()) bc_south = &thermalize_particle;
         }
         else if ( params.species_param[ispec].bc_part_type_south == "none" ) {
@@ -170,7 +165,6 @@ PartBoundCond::PartBoundCond( Params& params, int ispec, SmileiMPI* smpi )
             if (smpi->isNorthern()) bc_north = &stop_particle;
         }
         else if ( params.species_param[ispec].bc_part_type_north == "thermalize" ) {
-            thermCond = true;
             if (smpi->isNorthern()) bc_north = &thermalize_particle;
         }
         else if ( params.species_param[ispec].bc_part_type_north == "none" ) {
@@ -206,14 +200,6 @@ PartBoundCond::PartBoundCond( Params& params, int ispec, SmileiMPI* smpi )
         
     }//nDim_particle>1
     
-    /* NOT USED ANYMORE AS WE USE THE ERFINV FCT FROM TOOLS/USERFUNCTIONS
-    // ---------------------------------------------------------------------
-    // Compute the tabulated inverse error function used in thermalizing bcs
-    // ---------------------------------------------------------------------
-    if ( thermCond ) {
-        erfinv::instance().prepare();
-    }//thermCond
-     */
     
 }
 
