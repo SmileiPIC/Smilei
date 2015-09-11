@@ -12,8 +12,8 @@ l0 = 2.0*math.pi	# laser wavelength
 t0 = l0			# optical cicle
 Lsim = [40.*l0,5.*l0]	# length of the simulation
 Tsim = 30.*t0		# duration of the simulation
-resx = 20.		# nb of cells in on laser wavelength
-rest = 50.		# time of timestep in one optical cycle 
+resx = 50.		# nb of cells in on laser wavelength
+rest = 75.		# time of timestep in one optical cycle 
 
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
