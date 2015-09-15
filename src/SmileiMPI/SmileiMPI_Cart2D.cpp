@@ -268,7 +268,7 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, Params& pa
 
 
         Particles diagonalParticles;
-        diagonalParticles.initialize(0,params,ispec);     
+        diagonalParticles.initialize(0,params);
         
         for (int i=0 ; i<n_part_send ; i++) {
             iPart = indexes_of_particles_to_exchange[i];
@@ -288,11 +288,11 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, Params& pa
         } // END for iPart = f(i)
         
         Particles partVectorSend[2];
-        partVectorSend[0].initialize(0,params,ispec);
-        partVectorSend[1].initialize(0,params,ispec);
+        partVectorSend[0].initialize(0,params);
+        partVectorSend[1].initialize(0,params);
         Particles partVectorRecv[2];
-        partVectorRecv[0].initialize(0,params,ispec);
-        partVectorRecv[1].initialize(0,params,ispec);
+        partVectorRecv[0].initialize(0,params);
+        partVectorRecv[1].initialize(0,params);
         
         /********************************************************************************/
         // Exchange particles
@@ -332,7 +332,7 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, Params& pa
             if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
                 MPI_Wait( &(rrequest[(iNeighbor+1)%2]), &(rstat[(iNeighbor+1)%2]) );
                 if (buff_index_recv_sz[(iNeighbor+1)%2]!=0) {
-                  partVectorRecv[(iNeighbor+1)%2].initialize( buff_index_recv_sz[(iNeighbor+1)%2], params, ispec);
+                  partVectorRecv[(iNeighbor+1)%2].initialize( buff_index_recv_sz[(iNeighbor+1)%2], params);
                 }
             }
         }
@@ -501,7 +501,7 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, Params& pa
         }
         //Make room for new particles
         //cuParticles.create_particles(shift[(*cubmax).size()]);
-        cuParticles.initialize( cuParticles.size()+shift[(*cubmax).size()], params, ispec );
+        cuParticles.initialize( cuParticles.size()+shift[(*cubmax).size()], params);
         
         //Shift bins, must be done sequentially
         for (unsigned int j=(*cubmax).size()-1; j>=1; j--){

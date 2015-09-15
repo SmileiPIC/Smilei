@@ -1,4 +1,5 @@
 #include "Params.h"
+#include "Species.h"
 #include <cmath>
 #include "Tools.h"
 #include "PyTools.h"
@@ -149,12 +150,6 @@ namelist("")
         clrw = 1;
     }
     
-    
-    // ------------------
-    // Species properties
-    // ------------------
-    readSpecies();
-    
     global_every=0;
     
     PyTools::extract("every",global_every);
@@ -170,7 +165,6 @@ namelist("")
     // also defines defaults values for the species lengths
     // -------------------------------------------------------
     compute();
-    computeSpecies();
     
 }
 
@@ -233,169 +227,6 @@ void Params::initPython(SmileiMPI *smpi, std::vector<std::string> namelistsFiles
     }
 }
 
-
-void Params::readSpecies() {
-    bool ok;
-    for (unsigned int ispec = 0; ispec < (unsigned int) PyTools::nComponents("Species"); ispec++) {
-        SpeciesStructure tmpSpec;
-        PyTools::extract("species_type",tmpSpec.species_type,"Species",ispec);
-        if(tmpSpec.species_type.empty()) {
-            ERROR("For species #" << ispec << " empty species_type");
-        }
-        PyTools::extract("initPosition_type",tmpSpec.initPosition_type ,"Species",ispec);
-        if (tmpSpec.initPosition_type.empty()) {
-            ERROR("For species #" << ispec << " empty initPosition_type");
-        } else if ( (tmpSpec.initPosition_type!="regular")&&(tmpSpec.initPosition_type!="random") ) {
-            ERROR("For species #" << ispec << " bad definition of initPosition_type " << tmpSpec.initPosition_type);
-        }
-        
-        PyTools::extract("initMomentum_type",tmpSpec.initMomentum_type ,"Species",ispec);
-        if ( (tmpSpec.initMomentum_type=="mj") || (tmpSpec.initMomentum_type=="maxj") ) {
-            tmpSpec.initMomentum_type="maxwell-juettner";
-        }
-        if (   (tmpSpec.initMomentum_type!="cold")
-            && (tmpSpec.initMomentum_type!="maxwell-juettner")
-            && (tmpSpec.initMomentum_type!="rectangular") ) {
-            ERROR("For species #" << ispec << " bad definition of initMomentum_type");
-        }
-        
-        tmpSpec.c_part_max = 1.0;// default value
-        PyTools::extract("c_part_max",tmpSpec.c_part_max,"Species",ispec);
-        
-        if( !PyTools::extract("mass",tmpSpec.mass ,"Species",ispec) ) {
-            ERROR("For species #" << ispec << ", mass not defined.");
-        }
-        
-        tmpSpec.dynamics_type = "norm"; // default value
-        if (!PyTools::extract("dynamics_type",tmpSpec.dynamics_type ,"Species",ispec) )
-            WARNING("For species #" << ispec << ", dynamics_type not defined: assumed = 'norm'.");
-        if (tmpSpec.dynamics_type!="norm"){
-            ERROR("dynamics_type different than norm not yet implemented");
-        }
-        
-        tmpSpec.time_frozen = 0.0; // default value
-        PyTools::extract("time_frozen",tmpSpec.time_frozen ,"Species",ispec);
-        if (tmpSpec.time_frozen > 0 && \
-            tmpSpec.initMomentum_type!="cold") {
-            WARNING("For species #" << ispec << " possible conflict between time-frozen & not cold initialization");
-        }
-        
-        tmpSpec.radiating = false; // default value
-        PyTools::extract("radiating",tmpSpec.radiating ,"Species",ispec);
-        if (tmpSpec.dynamics_type=="rrll" && (!tmpSpec.radiating)) {
-            WARNING("For species #" << ispec << ", dynamics_type='rrll' forcing radiating=True");
-            tmpSpec.radiating=true;
-        }
-        
-        if (!PyTools::extract("bc_part_type_west",tmpSpec.bc_part_type_west,"Species",ispec) )
-            ERROR("For species #" << ispec << ", bc_part_type_west not defined");
-        if (!PyTools::extract("bc_part_type_east",tmpSpec.bc_part_type_east,"Species",ispec) )
-            ERROR("For species #" << ispec << ", bc_part_type_east not defined");
-        
-        if (nDim_particle>1) {
-            if (!PyTools::extract("bc_part_type_south",tmpSpec.bc_part_type_south,"Species",ispec) )
-                ERROR("For species #" << ispec << ", bc_part_type_south not defined");
-            if (!PyTools::extract("bc_part_type_north",tmpSpec.bc_part_type_north,"Species",ispec) )
-                ERROR("For species #" << ispec << ", bc_part_type_north not defined");
-        }
-        
-        // for thermalizing BCs on particles check if thermT is correctly defined
-        bool thermTisDefined=false;
-        if ( (tmpSpec.bc_part_type_west=="thermalize") || (tmpSpec.bc_part_type_east=="thermalize") ){
-            thermTisDefined=PyTools::extract("thermT",tmpSpec.thermT,"Species",ispec);
-            if (!thermTisDefined) ERROR("thermT needs to be defined for species " <<ispec<< " due to x-BC thermalize");
-        }
-        if ( (nDim_particle==2) && (!thermTisDefined) &&
-             (tmpSpec.bc_part_type_south=="thermalize" || tmpSpec.bc_part_type_north=="thermalize") ) {
-            thermTisDefined=PyTools::extract("thermT",tmpSpec.thermT,"Species",ispec);
-            if (!thermTisDefined) ERROR("thermT needs to be defined for species " <<ispec<< " due to y-BC thermalize");
-        }
-        if (thermTisDefined) {
-            if (tmpSpec.thermT.size()==1) {
-                tmpSpec.thermT.resize(3);
-                for (unsigned int i=1; i<3;i++)
-                    tmpSpec.thermT[i]=tmpSpec.thermT[0];
-            }
-        } else {
-            tmpSpec.thermT.resize(3);
-            for (unsigned int i=0; i<3;i++)
-                tmpSpec.thermT[i]=0.0;
-        }
-        
-        
-        tmpSpec.ionization_model = "none"; // default value
-        PyTools::extract("ionization_model", tmpSpec.ionization_model, "Species",ispec);
-        
-        ok = PyTools::extract("atomic_number", tmpSpec.atomic_number, "Species",ispec);
-        if( !ok && tmpSpec.ionization_model!="none" ) {
-            ERROR("For species #" << ispec << ", `atomic_number` not found => required for the ionization model .");
-        }
-        
-        tmpSpec.isTest = false; // default value
-        PyTools::extract("isTest",tmpSpec.isTest ,"Species",ispec);
-        if (tmpSpec.ionization_model!="none" && (!tmpSpec.isTest)) {
-            ERROR("For species #" << ispec << ", disabled for now : test & ionized");
-        }
-        // Define the number of timesteps for dumping test particles
-        tmpSpec.test_dump_every = 1;
-        if (PyTools::extract("dump_every",tmpSpec.test_dump_every ,"Species",ispec)) {
-            if (tmpSpec.test_dump_every>1 && !tmpSpec.isTest)
-                WARNING("For species #" << ispec << ", dump_every discarded because not test particles");
-        }
-        
-        
-        // Species geometry
-        // ----------------
-        
-        // Density
-        bool ok1, ok2;
-        ok1 = PyTools::extract_pyProfile("nb_density"    , tmpSpec.dens_profile, "Species", ispec);
-        ok2 = PyTools::extract_pyProfile("charge_density", tmpSpec.dens_profile, "Species", ispec);
-        
-        if(  ok1 &&  ok2 ) ERROR("For species #" << ispec << ", cannot define both `nb_density` and `charge_density`.");
-        if( !ok1 && !ok2 ) ERROR("For species #" << ispec << ", must define `nb_density` or `charge_density`.");
-        if( ok1 ) tmpSpec.density_type = "nb";
-        if( ok2 ) tmpSpec.density_type = "charge";
-        
-        // Number of particles per cell
-        if( !PyTools::extract_pyProfile("n_part_per_cell"    , tmpSpec.ppc_profile, "Species", ispec))
-            ERROR("For species #" << ispec << ", n_part_per_cell not found or not understood");
-        
-        // Charge
-        if( !PyTools::extract_pyProfile("charge"    , tmpSpec.charge_profile, "Species", ispec))
-            ERROR("For species #" << ispec << ", charge not found or not understood");
-        
-        // Mean velocity
-        extract3Profiles("mean_velocity", ispec, tmpSpec.mvel_x_profile, tmpSpec.mvel_y_profile, tmpSpec.mvel_z_profile);
-        
-        // Temperature
-        extract3Profiles("temperature", ispec, tmpSpec.temp_x_profile, tmpSpec.temp_y_profile, tmpSpec.temp_z_profile);
-        
-        
-        // Save the Species params
-        // -----------------------
-        species_param.push_back(tmpSpec);
-    }
-}
-
-void Params::extract3Profiles(string varname, int ispec, PyObject*& profx, PyObject*& profy, PyObject*& profz )
-{
-    vector<PyObject*> pvec = PyTools::extract_pyVec(varname,"Species",ispec);
-    for (unsigned int i=0;i<pvec.size();i++) {
-        PyTools::toProfile(pvec[i]);
-    }
-    if ( pvec.size()==1 ) {
-        profx =  profy =  profz = pvec[0];
-    } else if (pvec.size()==3) {
-        profx = pvec[0];
-        profy = pvec[1];
-        profz = pvec[2];
-    } else {
-        ERROR("For species #" << ispec << ", "<<varname<<" needs 1 or 3 components.");
-    }
-}
-
-
 // ---------------------------------------------------------------------------------------------------------------------
 // Compute useful values (normalisation, time/space step, etc...)
 // ---------------------------------------------------------------------------------------------------------------------
@@ -452,30 +283,6 @@ void Params::compute()
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Compute useful values for Species-related quantities
-// ---------------------------------------------------------------------------------------------------------------------
-void Params::computeSpecies()
-{
-    // Loop on all species
-    for (unsigned int ispec=0; ispec< species_param.size(); ispec++) {
-        
-        // here I save the dimension of the pb (to use in BoundaryConditionType.h)
-        species_param[ispec].nDim_fields = nDim_field;
-        
-        // define thermal velocity as \sqrt{T/m}
-        species_param[ispec].thermalVelocity.resize(3);
-        species_param[ispec].thermalMomentum.resize(3);
-        for (unsigned int i=0; i<3; i++) {
-            species_param[ispec].thermalVelocity[i]=sqrt(2.0*species_param[ispec].thermT[i]/species_param[ispec].mass);
-            species_param[ispec].thermalMomentum[i]=species_param[ispec].mass * species_param[ispec].thermalVelocity[i];
-        }
-        
-    }//end loop on all species (ispec)
-    
-}
-
-
-// ---------------------------------------------------------------------------------------------------------------------
 // Set dimensions according to geometry
 // ---------------------------------------------------------------------------------------------------------------------
 void Params::setDimensions()
@@ -504,7 +311,6 @@ void Params::setDimensions()
 // ---------------------------------------------------------------------------------------------------------------------
 void Params::print()
 {
-    
     // Numerical parameters
     // ---------------------
     MESSAGE("Numerical parameters");
@@ -520,14 +326,6 @@ void Params::print()
         MESSAGE(1,"            - (n_space,  cell_length) : " << "(" << n_space[i] << ", " << cell_length[i] << ")");
     }
     
-    // Plasma related parameters
-    // -------------------------
-    MESSAGE("Plasma related parameters");
-    MESSAGE(1,"n_species       : " << species_param.size());
-    for ( unsigned int i=0 ; i<species_param.size() ; i++ ) {
-        MESSAGE(1,"            species_type : "<< species_param[i].species_type);
-    }
-    
     
 }
 
@@ -535,7 +333,7 @@ void Params::print()
 // Returns an array of the numbers of the requested species.
 // Note that there might be several species that have the same "name" or "type"
 //  so that we have to search for all possibilities.
-vector<unsigned int> Params::FindSpecies( vector<string> requested_species)
+vector<unsigned int> Params::FindSpecies(vector<Species*>& vecSpecies, vector<string> requested_species)
 {
     bool species_found;
     vector<unsigned int> result;
@@ -544,8 +342,8 @@ vector<unsigned int> Params::FindSpecies( vector<string> requested_species)
     
     // Make an array of the existing species names
     existing_species.resize(0);
-    for (unsigned int ispec=0 ; ispec<species_param.size() ; ispec++) {
-        existing_species.push_back( species_param[ispec].species_type );
+    for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
+        existing_species.push_back( vecSpecies[ispec]->sparams.species_type );
     }
     
     // Loop over group of requested species
@@ -570,9 +368,10 @@ vector<unsigned int> Params::FindSpecies( vector<string> requested_species)
         if (!species_found)
             ERROR("Species `" << requested_species[rs] << "` was not found.");
     }
-	
+    
     return result;
 }
+
 
 //! Run string as python script and add to namelist
 void Params::pyRunScript(string command, string name) {

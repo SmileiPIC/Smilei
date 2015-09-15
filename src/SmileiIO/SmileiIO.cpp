@@ -94,14 +94,14 @@ dump_request(smpi->getSize())
     hsize_t chunk_dims[2] = {1, particleSize};
     H5Pset_chunk(plist, 2, chunk_dims);
     
-    for (unsigned int ispec=0 ; ispec<params.species_param.size() ; ispec++) {
+    for (unsigned int ispec=0 ; ispec<params.params.size() ; ispec++) {
         ostringstream speciesName("");
-        speciesName << params.species_param[ispec].species_type;
+        speciesName << params.params[ispec].type;
         
         //here we check for the presence of multiple ccurence of the same particle name... Souldn't we add a tag for each species?
         unsigned int occurrence=0;
         for (unsigned int iocc=0 ; iocc<ispec ; iocc++) {
-            if (params.species_param[ispec].species_type == params.species_param[iocc].species_type)
+            if (params.params[ispec].type == params.params[iocc].type)
                 occurrence++;
         }
         if (occurrence>0) 
@@ -112,9 +112,9 @@ dump_request(smpi->getSize())
         
         hid_t tmp_space = H5Screate(H5S_SCALAR);
         
-        H5::attr(partDataset_id[ispec], "Mass", params.species_param[ispec].mass));
+        H5::attr(partDataset_id[ispec], "Mass", params.params[ispec].mass));
         
-        H5::attr(partDataset_id[ispec], "Charge",params.species_param[ispec].charge);
+        H5::attr(partDataset_id[ispec], "Charge",params.params[ispec].charge);
         
         H5Sclose(tmp_space);
     }
@@ -332,7 +332,7 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
     for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
         ostringstream name("");
         name << setfill('0') << setw(2) << ispec;
-        string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->species_param.species_type;
+        string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->sparams.species_type;
         hid_t gid = H5::group(fid, groupName);
         
         H5::attr(gid, "partCapacity", vecSpecies[ispec]->particles.capacity());
@@ -393,11 +393,9 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
         nameDumpTmp << "dump-" << setfill('0') << setw(4) << i << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
         ifstream f(nameDumpTmp.str().c_str());
         if (f.good()) {
-            hid_t fid = H5Fopen( nameDumpTmp.str().c_str(), H5F_ACC_RDWR, H5P_DEFAULT);            
-            hid_t aid = H5Aopen(fid, "dump_step", H5T_NATIVE_UINT);
-            unsigned int itimeTmp=0;
-            H5Aread(aid, H5T_NATIVE_UINT, &itimeTmp);    
-            H5Aclose(aid);
+            hid_t fid = H5Fopen( nameDumpTmp.str().c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+            unsigned int itimeTmp;
+            H5::getAttr(fid, "dump_step", itimeTmp);
             H5Fclose(fid);
             if (itimeTmp>itime) {
                 itime=itimeTmp;
@@ -413,20 +411,12 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
     MESSAGE(2, "RESTARTING fields and particles " << nameDump);
     
     hid_t fid = H5Fopen( nameDump.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+    if (fid < 0) ERROR(nameDump << " is not a valid HDF5 file");
+        
     
-    hid_t aid, gid, did, sid;
-    
-    aid = H5Aopen(fid, "dump_step", H5T_NATIVE_UINT);
-    H5Aread(aid, H5T_NATIVE_UINT, &itime);
-    H5Aclose(aid);
-    
-    aid = H5Aopen(fid, "Energy_time_zero", H5T_NATIVE_DOUBLE);
-    H5Aread(aid, H5T_NATIVE_DOUBLE, &(diags.scalars.Energy_time_zero));
-    H5Aclose(aid);
-
-    aid = H5Aopen(fid, "EnergyUsedForNorm", H5T_NATIVE_DOUBLE);
-    H5Aread(aid, H5T_NATIVE_DOUBLE, &(diags.scalars.EnergyUsedForNorm));
-    H5Aclose(aid);
+    H5::getAttr(fid, "dump_step", itime);
+    H5::getAttr(fid, "Energy_time_zero", diags.scalars.Energy_time_zero);
+    H5::getAttr(fid, "EnergyUsedForNorm", diags.scalars.EnergyUsedForNorm);
 
     restartFieldsPerProc(fid, EMfields->Ex_);
     restartFieldsPerProc(fid, EMfields->Ey_);
@@ -443,32 +433,28 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
         restartFieldsPerProc(fid, EMfields->Bz_avg);
     }
     
-    aid = H5Aopen(fid, "species", H5T_NATIVE_UINT);
     unsigned int vecSpeciesSize=0;
-    H5Aread(aid, H5T_NATIVE_UINT, &vecSpeciesSize);
-    H5Aclose(aid);    
+    H5::getAttr(fid, "species", vecSpeciesSize);
     if (vecSpeciesSize != vecSpecies.size()) {
         ERROR("Number of species differs between dump (" << vecSpeciesSize << ") and namelist ("<<vecSpecies.size()<<")");
     }
     
     
     for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
+        hid_t did, sid;
+    
         ostringstream name("");
         name << setfill('0') << setw(2) << ispec;
-        string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->species_param.species_type;
-        gid = H5Gopen(fid, groupName.c_str(),H5P_DEFAULT);
+        string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->sparams.species_type;
+        hid_t gid = H5Gopen(fid, groupName.c_str(),H5P_DEFAULT);
         
-        aid = H5Aopen(gid, "partCapacity", H5T_NATIVE_UINT);
         unsigned int partCapacity=0;
-        H5Aread(aid, H5T_NATIVE_UINT, &partCapacity);
-        H5Aclose(aid);
+        H5::getAttr(fid, "partCapacity", partCapacity);
         vecSpecies[ispec]->particles.reserve(partCapacity,params.nDim_particle);
         
-        aid = H5Aopen(gid, "partSize", H5T_NATIVE_UINT);
         unsigned int partSize=0;
-        H5Aread(aid, H5T_NATIVE_UINT, &partSize);
-        H5Aclose(aid);    
-        vecSpecies[ispec]->particles.initialize(partSize,params,ispec);        
+        H5::getAttr(fid, "partSize", partSize);
+        vecSpecies[ispec]->particles.initialize(partSize,params);
         
         
         if (partSize>0) {
@@ -546,11 +532,8 @@ void SmileiIO::restartFieldsPerProc(hid_t fid, Field* field)
 
 void SmileiIO::restartMovingWindow(hid_t fid, SimWindow* simWin)
 {  
-    hid_t aid = H5Aopen(fid, "x_moved", H5T_NATIVE_DOUBLE);
     double x_moved=0.;
-    H5Aread(aid, H5T_NATIVE_DOUBLE, &x_moved);    
-    H5Aclose(aid);
-    
+    H5::getAttr(fid, "x_moved", x_moved);
     simWin->setXmoved(x_moved);
     
 }
@@ -565,7 +548,7 @@ void SmileiIO::initWriteTestParticles(Species* species, int ispec, int time, Par
     if ( smpi->isMaster() && true ) {
     
         ostringstream nameDump("");
-        nameDump << "TestParticles_" << species->species_param.species_type  << ".h5" ;
+        nameDump << "TestParticles_" << species->sparams.species_type  << ".h5" ;
         hid_t fid = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         
         
@@ -636,7 +619,7 @@ void SmileiIO::writeTestParticles(Species* species, int ispec, int time, Params&
     // Create temporary Particles object
     Particles testParticles;
     int nTestParticles(0);
-    testParticles.initialize( 0, params, ispec);
+    testParticles.initialize( 0, params);
     
     // Master gathers the test particles from all procs in testParticles
     if ( smpi->isMaster() ) {
@@ -646,7 +629,7 @@ void SmileiIO::writeTestParticles(Species* species, int ispec, int time, Params&
         for (int irk=1 ; irk<smpi->getSize() ; irk++) {
             if (allNbrParticles[irk]!=0) {
                 Particles partVectorRecv;
-                partVectorRecv.initialize( allNbrParticles[irk], params, ispec );
+                partVectorRecv.initialize( allNbrParticles[irk], params );
                 MPI_Datatype typePartRecv = smpi->createMPIparticles( &partVectorRecv, params.nDim_particle + 3 + 1 + 1 );
                 MPI_Recv( &(partVectorRecv.position(0,0)), 1, typePartRecv,  irk, irk, smpi->SMILEI_COMM_WORLD, &status );
                 MPI_Type_free( &typePartRecv );
@@ -672,7 +655,7 @@ void SmileiIO::writeTestParticles(Species* species, int ispec, int time, Params&
         testParticles.sortById();
         
         ostringstream nameDump("");
-        nameDump << "TestParticles_" << species->species_param.species_type  << ".h5" ;
+        nameDump << "TestParticles_" << species->sparams.species_type  << ".h5" ;
         hid_t fid = H5Fopen( nameDump.str().c_str(), H5F_ACC_RDWR, H5P_DEFAULT);                        
         
         ostringstream attr("");

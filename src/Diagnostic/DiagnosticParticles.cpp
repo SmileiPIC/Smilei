@@ -132,7 +132,7 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
         pz = &(p->Momentum[2]);         // -+
         q  = &(p->Charge);              // charge
         w  = &(p->Weight);              // weight
-        mass = s->species_param.mass;   // mass
+        mass = s->sparams.mass;   // mass
         
         axis_array .resize(p->size()); // array to store particle axis data
         index_array.resize(p->size()); // array to store particle output index

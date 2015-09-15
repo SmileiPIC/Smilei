@@ -19,11 +19,11 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for the virtual class ElectroMagn
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn::ElectroMagn(Params &params, SmileiMPI* smpi) :
+ElectroMagn::ElectroMagn(Params &params, vector<Species*>& vecSpecies, SmileiMPI* smpi) :
 laser_params(params),
 timestep(params.timestep),
 cell_length(params.cell_length),
-n_species(params.species_param.size()),
+n_species(vecSpecies.size()),
 nDim_field(params.nDim_field),
 cell_volume(params.cell_volume),
 n_space(params.n_space),

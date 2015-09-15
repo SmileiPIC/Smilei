@@ -20,8 +20,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn2D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn2D::ElectroMagn2D(Params &params, SmileiMPI* smpi) : 
-ElectroMagn(params, smpi),
+ElectroMagn2D::ElectroMagn2D(Params &params, vector<Species*>& vecSpecies, SmileiMPI* smpi) :
+ElectroMagn(params, vecSpecies, smpi),
 isWestern(smpi->isWestern()),
 isEastern(smpi->isEastern()),
 isSouthern(smpi->isSouthern()),
@@ -97,10 +97,10 @@ isNorthern(smpi->isNorthern())
     
     // Charge currents currents and density for each species
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
-        Jx_s[ispec]  = new Field2D(dimPrim, 0, false, ("Jx_"+params.species_param[ispec].species_type).c_str());
-        Jy_s[ispec]  = new Field2D(dimPrim, 1, false, ("Jy_"+params.species_param[ispec].species_type).c_str());
-        Jz_s[ispec]  = new Field2D(dimPrim, 2, false, ("Jz_"+params.species_param[ispec].species_type).c_str());
-        rho_s[ispec] = new Field2D(dimPrim, ("Rho_"+params.species_param[ispec].species_type).c_str());
+        Jx_s[ispec]  = new Field2D(dimPrim, 0, false, ("Jx_"+vecSpecies[ispec]->sparams.species_type).c_str());
+        Jy_s[ispec]  = new Field2D(dimPrim, 1, false, ("Jy_"+vecSpecies[ispec]->sparams.species_type).c_str());
+        Jz_s[ispec]  = new Field2D(dimPrim, 2, false, ("Jz_"+vecSpecies[ispec]->sparams.species_type).c_str());
+        rho_s[ispec] = new Field2D(dimPrim, ("Rho_"+vecSpecies[ispec]->sparams.species_type).c_str());
     }
 
     

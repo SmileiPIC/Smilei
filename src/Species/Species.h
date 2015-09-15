@@ -6,7 +6,7 @@
 
 #include "Particles.h"
 #include "Params.h"
-#include "Pusher.h"
+//#include "Pusher.h"
 //#include "PartBoundCond.h"
 #include "Params.h"
 #include "SmileiMPI.h"
@@ -22,19 +22,100 @@ class Projector;
 class PartBoundCond;
 class PartWall;
 class Field3D;
+class SimWindow;
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! This structure contains the properties of each species
+// ---------------------------------------------------------------------------------------------------------------------
+struct SpeciesStructure {
+    
+    //! number of species
+    unsigned int speciesNumber;
+    
+    //! kind of species possible values: "ion" "eon" "test"
+    std::string species_type;
+    
+    //! position initialization type, possible values: "regular" or "random"
+    std::string initPosition_type;
+    
+    //! momentum initialization type, possible values: "cold" or "maxwell-juettner"
+    std::string initMomentum_type;
+    
+    //! coefficient on the maximum number of particles for the species
+    double c_part_max;
+    
+    //! mass [electron mass]
+    double mass;
+    
+    //! atomic number
+    unsigned int atomic_number;
+    
+    //! thermalizing temperature [\f$m_e c^2\f$]
+    std::vector<double> thermT;
+    //! thermal velocity [\f$c\f$]
+    std::vector<double> thermalVelocity;
+    //! thermal momentum [\f$m_e c\f$]
+    std::vector<double> thermalMomentum;
+    
+    //! dynamics type. Possible values: "Norm" "Radiation Reaction"
+    std::string dynamics_type;
+    
+    //! Time for which the species is frozen
+    double time_frozen;
+    
+    //! logical true if particles radiate
+    bool radiating;
+    
+    //! logical true if particles radiate
+    bool isTest;
+    
+    //! dump every for test particles
+    unsigned int test_dump_every;
+    
+    //! nDim_fields
+    int nDim_fields;
+    
+    //! Boundary conditions for particules
+    std::string bc_part_type_west;
+    std::string bc_part_type_east;
+    std::string bc_part_type_south;
+    std::string bc_part_type_north;
+    std::string bc_part_type_bottom;
+    std::string bc_part_type_up;
+    
+    //! Ionization model per Specie (tunnel)
+    std::string ionization_model;
+    
+    //! density profile
+    PyObject *dens_profile;
+    PyObject *charge_profile;
+    std::string density_type;
+    
+    //! velocity profile
+    PyObject *mvel_x_profile;
+    PyObject *mvel_y_profile;
+    PyObject *mvel_z_profile;
+    
+    
+    //! temperature profile
+    PyObject *temp_x_profile;
+    PyObject *temp_y_profile;
+    PyObject *temp_z_profile;
+    
+    PyObject *ppc_profile;
+    
+};
 
 //! class Species
 class Species
 {
 public:
     //! Species creator
-    Species(Params&, int, SmileiMPI*);
+    Species(Params&, SpeciesStructure&, SmileiMPI*);
 
     //! Species destructor
     virtual ~Species();
-
-    //! Species index
-    unsigned int speciesNumber;
 
     //! Method returning the Particle list for the considered Species
     inline Particles getParticlesList() const {
@@ -66,10 +147,10 @@ public:
     void initMomentum(unsigned int, unsigned int, double *, double *, std::string, std::vector<double>&);
 
     //! Method used to initialize the Particle weight (equivalent to a charge density) in a given cell
-    void initWeight(unsigned int, unsigned int, unsigned int, double);
+    void initWeight(unsigned int,  unsigned int, double);
 
     //! Method used to initialize the Particle charge
-    void initCharge(unsigned int, unsigned int, unsigned int, double);
+    void initCharge(unsigned int, unsigned int, double);
     
     //! Maximum charge at initialization
     double max_charge;
@@ -114,15 +195,15 @@ public:
     std::vector< std::vector<int> > indexes_of_particles_to_exchange_per_thd;
 
     //Copy of the species parameters from Params
-    SpeciesStructure species_param;
+    SpeciesStructure sparams;
 
     //! Method to know if we have to project this species or not.
     bool  isProj(double time_dual, SimWindow* simWindow);
 
-    double getLostNrjBC() const {return species_param.mass*nrj_bc_lost;}
-    double getLostNrjMW() const {return species_param.mass*nrj_mw_lost;}
+    double getLostNrjBC() const {return sparams.mass*nrj_bc_lost;}
+    double getLostNrjMW() const {return sparams.mass*nrj_mw_lost;}
 
-    double getNewParticlesNRJ() const {return species_param.mass*nrj_new_particles;}
+    double getNewParticlesNRJ() const {return sparams.mass*nrj_new_particles;}
     void reinitDiags() { 
 	nrj_bc_lost = 0;
 	nrj_mw_lost = 0;

@@ -10,13 +10,13 @@
 using namespace std;
 
 // constructor
-DiagnosticTestParticles::DiagnosticTestParticles(unsigned int ID, int ispec, Params& params )
+DiagnosticTestParticles::DiagnosticTestParticles(unsigned int ID, int ispec, Params& params, std::vector<Species*>& vecSpecies )
 {
     
     diagnostic_id = ID;
     species_number = ispec;
     nDim_particle = params.nDim_particle;
-    every = params.species_param[ispec].test_dump_every;
+    every = vecSpecies[ispec]->sparams.test_dump_every;
 }
 
 // destructor
@@ -43,7 +43,7 @@ void DiagnosticTestParticles::init(vector<Species*> vecSpecies, SmileiMPI* smpi)
         
         // Create HDF5 file
         ostringstream filename("");
-        filename << "TestParticles_" << species->species_param.species_type  << ".h5" ;
+        filename << "TestParticles_" << species->sparams.species_type  << ".h5" ;
         hid_t fid = H5Fcreate( filename.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         
         // Write attribute: dump_every
@@ -125,7 +125,7 @@ void DiagnosticTestParticles::run(int time, SmileiMPI* smpi) {
     
     // Open the HDF5 file
     ostringstream filename("");
-    filename << "TestParticles_" << species->species_param.species_type  << ".h5" ;
+    filename << "TestParticles_" << species->sparams.species_type  << ".h5" ;
     hid_t fid = H5Fopen( filename.str().c_str(), H5F_ACC_RDWR, file_access);
     
     // For each dataspace (x, y, z, px, py, pz, weight, charge and ID), add the local

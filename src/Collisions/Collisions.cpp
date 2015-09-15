@@ -13,13 +13,14 @@ using namespace std;
 
 
 // Constructor
-Collisions::Collisions(Params& param, vector<Species*>& vecSpecies, SmileiMPI* smpi,
-                       unsigned int n_collisions, 
+Collisions::Collisions(SmileiMPI* smpi,
+                       unsigned int n_collisions,
                        vector<unsigned int> species_group1, 
                        vector<unsigned int> species_group2, 
                        double coulomb_log, 
                        bool intra_collisions,
-                       int debug_every) :
+                       int debug_every,
+                       unsigned int nbins) :
 n_collisions    (n_collisions    ),
 species_group1  (species_group1  ),
 species_group2  (species_group2  ),
@@ -30,7 +31,6 @@ start           (0               )
 {
     
     // Calculate total number of bins
-    int nbins = vecSpecies[0]->bmin.size();
     totbins = nbins;
     MPI_Allreduce( smpi->isMaster()?MPI_IN_PLACE:&totbins, &totbins, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD);
     
@@ -46,8 +46,7 @@ start           (0               )
         fileId = H5Fcreate(mystream.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid);
         H5Pclose(pid);
         // write all parameters as HDF5 attributes
-        string ver(__VERSION);
-        H5::attr(fileId, "Version", ver);
+        H5::attr(fileId, "Version", string(__VERSION));
         mystream.str("");
         mystream << species_group1[0];
         for(unsigned int i=1; i<species_group1.size(); i++) mystream << "," << species_group1[i];
@@ -101,8 +100,8 @@ vector<Collisions*> Collisions::create(Params& params, vector<Species*>& vecSpec
         PyTools::extract("species2",sg2,"Collisions",n_collisions);
         
         // Obtain the lists of species numbers from the lists of species names.
-        sgroup1 = params.FindSpecies(sg1);
-        sgroup2 = params.FindSpecies(sg2);
+        sgroup1 =params.FindSpecies(vecSpecies, sg1);
+        sgroup2 = params.FindSpecies(vecSpecies, sg2);
         
         // Each group of species sgroup1 and sgroup2 must not be empty
         if (sgroup1.size()==0) ERROR("No valid `species1` requested in collisions #" << n_collisions);
@@ -146,7 +145,7 @@ vector<Collisions*> Collisions::create(Params& params, vector<Species*>& vecSpec
         MESSAGE(1,"Debug                   : " << (debug_every<=0?"No debug":mystream.str()));
         
         // Add new Collisions objects to vector
-        vecCollisions.push_back( new Collisions(params,vecSpecies,smpi,n_collisions,sgroup1,sgroup2,clog,intra,debug_every) );
+        vecCollisions.push_back( new Collisions(smpi,n_collisions,sgroup1,sgroup2,clog,intra,debug_every, vecSpecies[0]->bmin.size()));
         
     }
     
@@ -211,7 +210,7 @@ void Collisions::calculate_debye_length(Params& params, vector<Species*>& vecSpe
             }
             if (density <= 0.) continue;
             charge /= density; // average charge
-            temperature *= (s->species_param.mass) / (3.*density); // Te in units of me*c^2
+            temperature *= (s->sparams.mass) / (3.*density); // Te in units of me*c^2
             density /= params.n_cell_per_cluster; // density in units of critical density
             // compute inverse debye length squared
             if (temperature>0.) debye_length_squared[ibin] += density*charge*charge/temperature;
@@ -418,7 +417,7 @@ void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime
             
             s1 = vecSpecies[(*sg1)[ispec1]]; s2 = vecSpecies[(*sg2)[ispec2]];
             p1 = &(s1->particles);           p2 = &(s2->particles);
-            m1 = s1->species_param.mass;     m2 = s2->species_param.mass;
+            m1 = s1->sparams.mass;           m2 = s2->sparams.mass;
             W1 = p1->weight(i1);             W2 = p2->weight(i2);
             
             // Calculate stuff
@@ -589,6 +588,7 @@ inline double Collisions::cos_chi(double s)
     return 2.*U - 1.;
     
 }
+
 
 
 

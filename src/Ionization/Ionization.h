@@ -8,13 +8,15 @@
 #include "Field.h"
 #include "Particles.h"
 
+
+struct SpeciesStructure;
 //! Class Ionization: generic class allowing to define Ionization physics
 class Ionization
 {
 
 public:
     //! Constructor for Ionization
-    Ionization(Params& params, int ispec);
+    Ionization(Params& params, SpeciesStructure& sparams);
     virtual ~Ionization();
 
     //! Overloading of () operator

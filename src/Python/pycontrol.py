@@ -17,15 +17,15 @@ def _smilei_check():
         except:
             raise Exception("ERROR in the namelist: it seems that the name `"+CheckClassName+"` has been overriden")
     
-    # Check species for undefined/duplicate species_type
+    # Check species for undefined/duplicate type
     all_species=[]
     for spec in Species:
-        if spec.species_type == None:
-            raise Exception("ERROR in the namelist: there is a species without species_type")
-        elif spec.species_type in all_species:
-            raise Exception("ERROR in the namelist: there is duplicate species_type")
+        if spec.type == None:
+            raise Exception("ERROR in the namelist: there is a species without type")
+        elif spec.type in all_species:
+            raise Exception("ERROR in the namelist: there is duplicate type")
         else:
-            all_species.append(spec.species_type)
+            all_species.append(spec.type)
     
 # this function will be called after initialising the simulation, just before entering the time loop
 # if it returns false, the code will call a Py_Finalize();

@@ -23,7 +23,7 @@ class DiagnosticTestParticles {
 
 public:
 
-    DiagnosticTestParticles(unsigned int, int, Params&);
+    DiagnosticTestParticles(unsigned int, int, Params&, std::vector<Species*>&);
     
     ~DiagnosticTestParticles();
     

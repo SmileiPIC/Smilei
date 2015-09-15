@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "Params.h"
+#include "Species.h"
 #include "SmileiMPI.h"
 
 using namespace std;
@@ -13,19 +14,13 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Particle
 // ---------------------------------------------------------------------------------------------------------------------
-Particles::Particles()
+Particles::Particles(bool istest) :
+isTestParticles(istest)
 {
     Position.resize(0);
     Position_old.resize(0);
     Momentum.resize(0);
     isTestParticles = false;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Destructor for Particle
-// ---------------------------------------------------------------------------------------------------------------------
-Particles::~Particles()
-{
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -39,7 +34,7 @@ void Particles::initialize( int nParticles, Params &params)
     
     if (Weight.size()==0) {
         float c_part_max = 1.0;
-        //reserve( round( params->species_param[speciesNumber].c_part_max * nParticles ), params.nDim );
+        //reserve( round( params->params[speciesNumber].c_part_max * nParticles ), params.nDim );
         reserve( round( c_part_max * nParticles ), params.nDim_particle );
     }
     
@@ -56,21 +51,12 @@ void Particles::initialize( int nParticles, Params &params)
     Weight.resize(nParticles, 0.);
     Charge.resize(nParticles, 0);
 
-}
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Create nParticles null particles of nDim size
-// ---------------------------------------------------------------------------------------------------------------------
-void Particles::initialize( int nParticles, Params &params, int speciesNumber)
-{
-    initialize( nParticles, params );
-    if (params.species_param[speciesNumber].isTest) {
-        isTestParticles = true;
+    if (isTestParticles)
         Id.resize(nParticles, 0);
-        test_dump_every = params.species_param[speciesNumber].test_dump_every;
-    }
+
 }
+
+
 
 
 // ---------------------------------------------------------------------------------------------------------------------

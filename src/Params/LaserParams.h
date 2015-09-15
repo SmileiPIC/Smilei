@@ -14,6 +14,26 @@
 #include "Params.h"
 
 // ---------------------------------------------------------------------------------------------------------------------
+//! This structure contains the properties of each Laser Profile
+// ---------------------------------------------------------------------------------------------------------------------
+struct LaserProfileStructure {
+    
+    //! Profile profile
+    std::string profile;
+    
+    //! in case profile is give in Python
+    PyObject *py_profile;
+    
+    //! int vector for profile parameters
+    std::vector<int> int_params;
+    
+    //! double vector for profile parameters
+    std::vector<double> double_params;
+    
+};
+
+
+// ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each Laser
 // ---------------------------------------------------------------------------------------------------------------------
 struct LaserStructure {

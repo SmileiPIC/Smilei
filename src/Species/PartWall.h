@@ -2,6 +2,7 @@
 #define PartWall_H
 
 #include "Params.h"
+#include "Species.h"
 #include "Particles.h"
 #include "tabulatedFunctions.h"
 

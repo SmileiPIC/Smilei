@@ -86,9 +86,18 @@ int main (int argc, char* argv[])
     TITLE("General MPI environement");
     SmileiMPI* smpi = SmileiMPIFactory::create(params, smpiData);
     
+    // ---------------------------
+    // Initialize Species
+    // ---------------------------
+    TITLE("Initializing species");
+    
+    // Initialize the vecSpecies vector containing all information of the different Species
+    // ------------------------------------------------------------------------------------
+    vector<Species*> vecSpecies = SpeciesFactory::createVector(params, smpi);
+
     // Create diagnostics
     TITLE("Creating Diagnostics");
-    Diagnostic diags(params, smpi);
+    Diagnostic diags(params, vecSpecies, smpi);
     
     //Create mpi i/o environment
     TITLE("MPI input output environment");
@@ -113,16 +122,10 @@ int main (int argc, char* argv[])
     // -------------------------------------------
     
     // ---------------------------
-    // Initialize Species & Fields
+    // Initialize Fields
     // ---------------------------
-    TITLE("Initializing particles, fields & moving-window");
-    
-    // Initialize the vecSpecies object containing all information of the different Species
-    // ------------------------------------------------------------------------------------
-    
-    // vector of Species (virtual)
-    vector<Species*> vecSpecies = SpeciesFactory::createVector(params, smpi);
-    
+    TITLE("Initializing fields & moving-window");
+
     // Initialize the collisions (vector of collisions)
     // ------------------------------------------------------------------------------------
     vector<Collisions*> vecCollisions = Collisions::create(params, vecSpecies, smpi);
@@ -150,7 +153,7 @@ int main (int argc, char* argv[])
     // ----------------------------------------------------------------------------
     
     // object containing the electromagnetic fields (virtual)
-    ElectroMagn* EMfields = ElectroMagnFactory::create(params, smpi);
+    ElectroMagn* EMfields = ElectroMagnFactory::create(params, vecSpecies, smpi);
     
     // interpolation operator (virtual)
     Interpolator* Interp = InterpolatorFactory::create(params, smpi);
@@ -181,7 +184,7 @@ int main (int argc, char* argv[])
         
         // Sum rho and J on ghost domains
         smpi->sumRhoJ( EMfields );
-        for (unsigned int ispec=0 ; ispec<params.species_param.size(); ispec++) {
+        for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
             smpi->sumRhoJs(EMfields, ispec, true);  // only if !isTestParticles
         }
         
@@ -333,19 +336,19 @@ int main (int argc, char* argv[])
         // (2) move the particle
         // (3) calculate the currents (charge conserving method)
         timer[1].restart();
-#pragma omp parallel shared (EMfields,time_dual,vecSpecies,smpi,params)
+#pragma omp parallel shared (EMfields,time_dual,smpi,params)
         {
             int tid(0);
 #ifdef _OMP
             tid = omp_get_thread_num();
 #endif
-            for (unsigned int ispec=0 ; ispec<params.species_param.size(); ispec++) {
+            for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
                 if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
-                    EMfields->restartRhoJs(ispec, time_dual > params.species_param[ispec].time_frozen); // if (!isTestParticles)
+                    EMfields->restartRhoJs(ispec, time_dual > vecSpecies[ispec]->sparams.time_frozen); // if (!isTestParticles)
                     vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow, vecPartWall);
                 }
             }
-            for (unsigned int ispec=0 ; ispec<params.species_param.size(); ispec++) {
+            for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
 #pragma omp barrier
                 if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
                     // Loop on dims to manage exchange in corners
@@ -361,8 +364,8 @@ int main (int argc, char* argv[])
         //!\todo To simplify : sum global and per species densities
         timer[4].restart();
         smpi->sumRhoJ( EMfields );
-        for (unsigned int ispec=0 ; ispec<params.species_param.size(); ispec++) {
-            if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ) smpi->sumRhoJs(EMfields, ispec, time_dual > params.species_param[ispec].time_frozen);
+        for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
+            if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ) smpi->sumRhoJs(EMfields, ispec, time_dual > vecSpecies[ispec]->sparams.time_frozen);
         }
         EMfields->computeTotalRhoJ();
 
@@ -487,7 +490,6 @@ int main (int argc, char* argv[])
     diags.closeAll(smpi);
     
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
-    vecSpecies.clear();
     
     if (params.nspace_win_x)
         delete simWindow;

@@ -3,12 +3,14 @@
 #include <iostream>
 #include <cmath>
 
+#include "Species.h"
+
 #include "Particles.h"
 
 using namespace std;
 
-PusherBoris::PusherBoris(Params& params, int ispec)
-    : Pusher(params, ispec)
+PusherBoris::PusherBoris(Params& params, SpeciesStructure& sparams)
+    : Pusher(params, sparams)
 {
 }
 

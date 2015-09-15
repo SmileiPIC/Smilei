@@ -19,14 +19,14 @@ class Particles {
 public:
     
     //! Constructor for Particle
-    Particles();
+    Particles(bool=false);
     
     //! Destructor for Particle
-    virtual ~Particles();
+    virtual ~Particles(){};
     
     //! Create nParticles null particles of nDim size
     void initialize( int nParticles, Params &params );
-    void initialize( int nParticles, Params &params, int speciesNumber );
+    
     //! Set capacity of Particles vectors
     void reserve( unsigned int n_part_max, int nDim );
     

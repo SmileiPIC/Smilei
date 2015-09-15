@@ -9,7 +9,6 @@
 #define Params_H
 
 #include <PyTools.h>
-#include "Profile.h"
 #include <vector>
 #include <string>
 #include <cstdlib>
@@ -23,111 +22,7 @@
 #include <iterator>
 
 class SmileiMPI;
-
-// ---------------------------------------------------------------------------------------------------------------------
-//! This structure contains the properties of each Laser Profile
-// ---------------------------------------------------------------------------------------------------------------------
-struct LaserProfileStructure {
-    
-    //! Constructor
-    LaserProfileStructure() {
-        profile="";
-    }
-    
-    //! Profile profile
-    std::string profile;
-    
-    //! in case profile is give in Python
-    PyObject *py_profile;
-    
-    //! int vector for profile parameters
-    std::vector<int> int_params;
-    
-    //! double vector for profile parameters
-    std::vector<double> double_params;
-    
-};
-
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-//! This structure contains the properties of each species
-// ---------------------------------------------------------------------------------------------------------------------
-struct SpeciesStructure {
-
-    //! kind of species possible values: "ion" "eon" "test"
-    std::string species_type;
-    
-    //! position initialization type, possible values: "regular" or "random"
-    std::string initPosition_type;
-    
-    //! momentum initialization type, possible values: "cold" or "maxwell-juettner"
-    std::string initMomentum_type;
-    
-    //! coefficient on the maximum number of particles for the species
-    double c_part_max;
-    
-    //! mass [electron mass]
-    double mass;
-    
-    //! atomic number
-    unsigned int atomic_number;
-    
-    //! thermalizing temperature [\f$m_e c^2\f$]
-    std::vector<double> thermT;
-    //! thermal velocity [\f$c\f$]
-    std::vector<double> thermalVelocity;
-    //! thermal momentum [\f$m_e c\f$]
-    std::vector<double> thermalMomentum;
-    
-    //! dynamics type. Possible values: "Norm" "Radiation Reaction"
-    std::string dynamics_type;
-    
-    //! Time for which the species is frozen
-    double time_frozen;
-    
-    //! logical true if particles radiate
-    bool radiating;
-
-    //! logical true if particles radiate
-    bool isTest;
-    //! int, number of timesteps between each dump (test particles only)
-    int test_dump_every;
-    
-    //! nDim_fields
-    int nDim_fields;
-    
-    //! Boundary conditions for particules
-    std::string bc_part_type_west;
-    std::string bc_part_type_east;
-    std::string bc_part_type_south;
-    std::string bc_part_type_north;
-    std::string bc_part_type_bottom;
-    std::string bc_part_type_up;
-    
-    //! Ionization model per Specie (tunnel)
-    std::string ionization_model;
-    
-    //! density profile
-    PyObject *dens_profile;
-    PyObject *charge_profile;
-    std::string density_type;
-    
-    //! velocity profile
-    PyObject *mvel_x_profile;
-    PyObject *mvel_y_profile;
-    PyObject *mvel_z_profile;
-    
-    
-    //! temperature profile
-    PyObject *temp_x_profile;
-    PyObject *temp_y_profile;
-    PyObject *temp_z_profile;
-    
-    PyObject *ppc_profile;
-    
-};
-
+class Species;
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -142,17 +37,8 @@ public:
     //! destructor
     ~Params();
     
-    // extract 3 profiles from namelist (used for part mean velocity and temperature)
-    void extract3Profiles(std::string, int, PyObject*&, PyObject*&, PyObject*&);
-    
     //! compute grid-related parameters & apply normalization
     void compute();
-    
-    //! read species
-    void readSpecies();
-    
-    //! compute species-related parameters & apply normalization
-    void computeSpecies();
     
     //! print a summary of the values in txt
     void print();
@@ -207,14 +93,12 @@ public:
     //! Velocity of the moving window along x in c.
     double vx_win;
     
+    
     //! Clusters width
     //unsigned int clrw;
     int clrw;
     //! Number of cells per cluster
     int n_cell_per_cluster;
-    
-    //! parameters of the species
-    std::vector<SpeciesStructure> species_param;
     
     //! initial number of particles
     unsigned int n_particles;
@@ -258,9 +142,6 @@ public:
     //! global number of time exits (it will be used if not specified in various diags/fields)
     unsigned int global_every;
     
-    //! Method to find the numbers of requested species, sorted, and duplicates removed
-    std::vector<unsigned int> FindSpecies(std::vector<std::string>);
-    
     //! string containing the whole clean namelist
     std::string namelist;
     
@@ -272,6 +153,11 @@ public:
     //! close Python
     static void closePython();
     
+    
+    //! Method to find the numbers of requested species, sorted, and duplicates removed
+    static std::vector<unsigned int> FindSpecies(std::vector<Species*>&, std::vector<std::string>);
+    
+
 private:
     //! init python RTE
     void initPython(SmileiMPI*, std::vector<std::string>);

@@ -16,7 +16,7 @@
 
 using namespace std;
 
-Diagnostic::Diagnostic(Params& params, SmileiMPI *smpi) :
+Diagnostic::Diagnostic(Params& params, vector<Species*>& vecSpecies, SmileiMPI *smpi) :
 dtimer(5)
 {
     
@@ -56,15 +56,15 @@ dtimer(5)
     
     // phasespaces initialization
     dtimer[2].init(smpi, "phases");
-    initPhases(params,smpi);
+    initPhases(params,vecSpecies, smpi);
     
     // particles initialization
     dtimer[3].init(smpi, "particles");
-    initParticles(params);
+    initParticles(params,vecSpecies);
     
     // test particles initialization
     dtimer[4].init(smpi, "testparticles");
-    initTestParticles(params);
+    initTestParticles(params,vecSpecies);
     
 }
 
@@ -408,7 +408,7 @@ void Diagnostic::initProbes(Params& params, SmileiMPI *smpi) {
     }
 }
 
-void Diagnostic::initPhases(Params& params, SmileiMPI *smpi) {
+void Diagnostic::initPhases(Params& params, std::vector<Species*>& vecSpecies, SmileiMPI *smpi) {
     
     //! create the particle structure
     phases.ndim=params.nDim_particle;    
@@ -462,8 +462,8 @@ void Diagnostic::initPhases(Params& params, SmileiMPI *smpi) {
         
         if (my_phase.species.size()==0) {
             WARNING("adding all species to the \"DiagPhase\" " << n_phase);
-            for (unsigned int i=0;i<params.species_param.size(); i++) {
-                my_phase.species.push_back(params.species_param[i].species_type);
+            for (unsigned int i=0;i<vecSpecies.size(); i++) {
+                my_phase.species.push_back(vecSpecies[i]->sparams.species_type);
             }
         }
         
@@ -638,7 +638,7 @@ void Diagnostic::initPhases(Params& params, SmileiMPI *smpi) {
 }
 
 
-void Diagnostic::initParticles(Params& params) {
+void Diagnostic::initParticles(Params& params, vector<Species*> &vecSpecies) {
     unsigned int every, time_average;
     string output;
     vector<string> species;
@@ -678,7 +678,7 @@ void Diagnostic::initParticles(Params& params) {
         if (!ok)
             ERROR("Diagnotic Particles #" << n_diag_particles << ": parameter `species` required");
         // verify that the species exist, remove duplicates and sort by number
-        species_numbers = params.FindSpecies(species);
+        species_numbers = params.FindSpecies(vecSpecies, species);
         
         
         // get parameter "axes" that adds axes to the diagnostic
@@ -739,12 +739,7 @@ void Diagnostic::initParticles(Params& params) {
                 Py_DECREF(seq);
             }
             
-            
-            HEREIAM(iaxis);
         }
-        
-        
-        
         // create new diagnostic object
         tmpDiagParticles = new DiagnosticParticles(n_diag_particles, output, every, time_average, species_numbers, tmpAxes);
         // add this object to the list
@@ -752,15 +747,14 @@ void Diagnostic::initParticles(Params& params) {
     }
 }
 
-void Diagnostic::initTestParticles(Params& params) {
+void Diagnostic::initTestParticles(Params& params, std::vector<Species*>& vecSpecies) {
     DiagnosticTestParticles * tmpDiagTestParticles;
     int n_diag_testparticles=0;
     
     // loop species and make a new diag if test particles
-    int nspecies = params.species_param.size();
-    for(int i=0; i<nspecies; i++) {
-        if (params.species_param[i].isTest) {
-            tmpDiagTestParticles = new DiagnosticTestParticles(n_diag_testparticles, i, params);
+    for(unsigned int i=0; i<vecSpecies.size(); i++) {
+        if (vecSpecies[i]->sparams.isTest) {
+            tmpDiagTestParticles = new DiagnosticTestParticles(n_diag_testparticles, i, params, vecSpecies);
             vecDiagnosticTestParticles.push_back(tmpDiagTestParticles);
             n_diag_testparticles++;
         }

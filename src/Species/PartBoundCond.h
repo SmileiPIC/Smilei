@@ -2,6 +2,7 @@
 #define PARTBOUNDCOND_H
 
 #include "Params.h"
+#include "Species.h"
 #include "Particles.h"
 #include "tabulatedFunctions.h"
 
@@ -13,7 +14,7 @@ class SmileiMPI;
 class PartBoundCond {
 public:
     //! partBoundCond creator, (default no MPI set)
-    PartBoundCond( Params& params, int ispec, SmileiMPI* smpi );
+    PartBoundCond( Params& params, SpeciesStructure& sparams, SmileiMPI* smpi );
     //! partBoundCond destructor
     ~PartBoundCond();
 

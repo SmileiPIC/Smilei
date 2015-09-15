@@ -79,6 +79,23 @@ class H5 {
         attr(locationId, attribute_name, attribute_value, H5T_NATIVE_DOUBLE);
     }
     
+    //! retrieve a double as an attribute
+    static void getAttr(hid_t locationId, std::string attribute_name, double &attribute_value) {
+        getAttr(locationId, attribute_name, attribute_value, H5T_NATIVE_DOUBLE);
+    }
+    
+    //! retrieve a unsigned int as an attribute
+    static void getAttr(hid_t locationId, std::string attribute_name, unsigned int &attribute_value) {
+        getAttr(locationId, attribute_name, attribute_value, H5T_NATIVE_UINT);
+    }
+    
+    template<class T>
+    static void getAttr(hid_t locationId, std::string attribute_name, T &attribute_value, hid_t type) {
+        hid_t aid = H5Aopen(locationId, attribute_name.c_str(), type);
+        H5Aread(aid, type, &(attribute_value));
+        H5Aclose(aid);
+        H5Aclose(aid);
+    }
     
     //! write a vector of unsigned ints
     //! v is the vector

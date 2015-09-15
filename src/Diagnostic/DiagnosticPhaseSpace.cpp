@@ -40,7 +40,7 @@ void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) 
 		//! check which diagnosticPhase to run for the species 
 		vector<DiagnosticPhase*> vecDiagPhaseToRun;
 		for (vector<DiagnosticPhase*>::const_iterator diag=vecDiagPhaseActiveTimestep.begin() ; diag != vecDiagPhaseActiveTimestep.end(); diag++) {
-		    if(find((*diag)->my_species.begin(), (*diag)->my_species.end(), (*mySpec)->species_param.species_type) != (*diag)->my_species.end()) { 
+		    if(find((*diag)->my_species.begin(), (*diag)->my_species.end(), (*mySpec)->sparams.species_type) != (*diag)->my_species.end()) {
 			vecDiagPhaseToRun.push_back(*diag);
 		    }
 		}

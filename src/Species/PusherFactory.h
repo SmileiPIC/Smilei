@@ -5,6 +5,7 @@
 #include "PusherBoris.h"
 
 #include "Params.h"
+#include "Species.h"
 
 #include "Tools.h"
 
@@ -19,14 +20,14 @@ public:
     //! \param ispec SpeciesId
     //! \param params Parameters
     //  --------------------------------------------------------------------------------------------------------------------
-    static Pusher* create(Params& params, int ispec) {
+    static Pusher* create(Params& params, SpeciesStructure& sparams) {
         Pusher* Push = NULL;
 
         // assign the correct Pusher to Push
-        if ( params.species_param[ispec].dynamics_type == "norm" )
-            Push = new PusherBoris( params, ispec );
+        if ( sparams.dynamics_type == "norm" )
+            Push = new PusherBoris( params, sparams );
         else
-            ERROR( "Unknown dynamics : " << params.species_param[ispec].dynamics_type );
+            ERROR( "For species " << sparams.species_type << ": unknown dynamics_type `" << sparams.dynamics_type);
 
         return Push;
     }

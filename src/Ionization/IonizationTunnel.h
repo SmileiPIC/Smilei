@@ -9,6 +9,7 @@
 #include "Tools.h"
 
 class Particles;
+struct SpeciesStructure;
 
 //! calculate the particle tunnel ionization
 class IonizationTunnel : public Ionization
@@ -16,7 +17,7 @@ class IonizationTunnel : public Ionization
 
 public:
     //! Constructor for IonizationTunnel: with no input argument
-    IonizationTunnel(Params& params, int ispec);
+    IonizationTunnel(Params& params, SpeciesStructure& sparams);
 
     //! apply the Tunnel Ionization model to the species (without ionization current)
     virtual void operator() (Particles &particles, int ipart, LocalFields Epart);

@@ -5,6 +5,7 @@
 #include "Field.h"
 
 class Particles;
+struct SpeciesStructure;
 
 
 //  --------------------------------------------------------------------------------------------------------------------
@@ -15,7 +16,7 @@ class Pusher
 
 public:
     //! Creator for Pusher
-    Pusher(Params& params, int ispec);
+    Pusher(Params& params, SpeciesStructure& sparams);
     virtual ~Pusher();
 
     //! Overloading of () operator

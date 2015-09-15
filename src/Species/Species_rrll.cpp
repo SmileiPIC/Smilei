@@ -12,10 +12,10 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for Species_rrLL
 // ---------------------------------------------------------------------------------------------------------------------
-Species_rrll::Species_rrll( Params& params, int ispec, SmileiMPI* smpi)
-    : Species( params, ispec, smpi )
+Species_rrll::Species_rrll( Params& params,  SpeciesStructure& sparams, SmileiMPI* smpi)
+    : Species( params, sparams, smpi )
 {
-    DEBUG("Species " << ispec << "created as rrLL");
+    DEBUG("Species " << sparams.species_type << "created as rrLL");
 }
 
 

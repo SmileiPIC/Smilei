@@ -262,7 +262,6 @@ public:
         double val;
         // If the profile is only a double, then convert to a constant function
         if( PyTools::convert(myPy, val) ) {
-            HEREIAM(val);
             // Extract the function "constant"
             PyObject* constantFunction = PyTools::extract_py("constant");
             // Create the argument which has the value of the profile
@@ -307,6 +306,24 @@ public:
         return retvec;
     }
     
+    // extract 3 profiles from namelist (used for part mean velocity and temperature)
+    static void extract3Profiles(std::string varname, int ispec, PyObject*& profx, PyObject*& profy, PyObject*& profz )
+    {
+        std::vector<PyObject*> pvec = PyTools::extract_pyVec(varname,"Species",ispec);
+        for (unsigned int i=0;i<pvec.size();i++) {
+            PyTools::toProfile(pvec[i]);
+        }
+        if ( pvec.size()==1 ) {
+            profx =  profy =  profz = pvec[0];
+        } else if (pvec.size()==3) {
+            profx = pvec[0];
+            profy = pvec[1];
+            profz = pvec[2];
+        } else {
+            ERROR("For species #" << ispec << ", "<<varname<<" needs 1 or 3 components.");
+        }
+    }
+
     //! return the number of components (see pyinit.py)
     static int nComponents(std::string componentName) {
         // Get the selected component (e.g. "Species" or "Laser")

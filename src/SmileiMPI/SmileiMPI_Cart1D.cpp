@@ -231,11 +231,11 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, Params& pa
         } // END for iPart = f(i)
         
         Particles partVectorSend[1][2];
-        partVectorSend[0][0].initialize(0, params, ispec);
-        partVectorSend[0][1].initialize(0, params, ispec);
+        partVectorSend[0][0].initialize(0, params);
+        partVectorSend[0][1].initialize(0, params);
         Particles partVectorRecv[1][2];
-        partVectorRecv[0][0].initialize(0, params, ispec);
-        partVectorRecv[0][1].initialize(0, params, ispec);
+        partVectorRecv[0][0].initialize(0, params);
+        partVectorRecv[0][1].initialize(0, params);
         
         /********************************************************************************/
         // Exchange particles
@@ -300,7 +300,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, Params& pa
                 
                 typePartSend = createMPIparticles( &(partVectorSend[0][iNeighbor]), nbrOfProp );
                 
-                partVectorRecv[0][(iNeighbor+1)%2].initialize( n_part_recv, params, ispec );
+                partVectorRecv[0][(iNeighbor+1)%2].initialize( n_part_recv, params );
                 typePartRecv = createMPIparticles( &(partVectorRecv[0][(iNeighbor+1)%2]), nbrOfProp );
                 
                 MPI_Sendrecv(&((partVectorSend[0][iNeighbor      ]).position(0,0)),        1, typePartSend, neighbor_[0][iNeighbor      ], 0,
@@ -328,7 +328,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, Params& pa
                 
             } else if ( (neighbor_[0][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
                 //Receive
-                partVectorRecv[0][(iNeighbor+1)%2].initialize( buff_index_recv_sz[(iNeighbor+1)%2], params, ispec );
+                partVectorRecv[0][(iNeighbor+1)%2].initialize( buff_index_recv_sz[(iNeighbor+1)%2], params );
                 typePartRecv = createMPIparticles( &(partVectorRecv[0][(iNeighbor+1)%2]), nbrOfProp );
                 MPI_Recv( &((partVectorRecv[0][(iNeighbor+1)%2]).position(0,0)), 1, typePartRecv,  neighbor_[0][(iNeighbor+1)%2], 0, SMILEI_COMM_1D, &Stat );
                 MPI_Type_free( &typePartRecv );

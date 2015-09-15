@@ -12,10 +12,10 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for Species_norm
 // ---------------------------------------------------------------------------------------------------------------------
-Species_norm::Species_norm( Params& params, int ispec, SmileiMPI* smpi)
-    : Species( params, ispec, smpi )
+Species_norm::Species_norm( Params& params,  SpeciesStructure& sparams, SmileiMPI* smpi)
+    : Species( params, sparams, smpi )
 {
-    DEBUG("Species " << ispec << "created as norm");
+    DEBUG("Species " << sparams.species_type << "created as norm");
 }
 
 

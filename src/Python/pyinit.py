@@ -28,7 +28,7 @@ class SmileiComponentType(type):
     def __getitem__(self, key):
         if self.__name__ == "Species" and type(key) is str:
             for obj in self._list:
-                if obj.species_type == key:
+                if obj.type == key:
                     return obj
         else:
             return self._list[key]
@@ -64,7 +64,7 @@ class SmileiComponent(object):
 
 class Species(SmileiComponent):
     """Species parameters"""
-    species_type = None
+    type = None
     initPosition_type = None
     initMomentum_type = ""
     n_part_per_cell = None
