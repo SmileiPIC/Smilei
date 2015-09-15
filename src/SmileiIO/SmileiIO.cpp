@@ -29,33 +29,33 @@ dump_times(0),
 fieldsToDump(diag.fieldsToDump),
 time_reference(MPI_Wtime()),
 time_dump_step(0),
+dump_step(0),
+dump_minutes(0.0),
+exit_after_dump(true),
+dump_file_sequence(2),
 dump_request(smpi->getSize())
 {
-    dump_step=0;
     if (PyTools::extract("dump_step", dump_step)) {
         if (dump_step)
-            MESSAGE(1,"Code will stop after " << dump_step << " steps");
+            MESSAGE(1,"Code will dump after " << dump_step << " steps");
     }
     
-    dump_minutes=0.0;
     if (PyTools::extract("dump_minutes", dump_minutes)) {
         if (dump_minutes>0)
             MESSAGE(1,"Code will stop after " << dump_minutes << " minutes");
     }
     
-    exit_after_dump=true;
-    if (PyTools::extract("exit_after_dump", exit_after_dump)) {
-        if (dump_step || dump_minutes>0)
-            MESSAGE(1,"Code will exit after dump");
-    }
-    
-    dump_file_sequence=2;
     PyTools::extract("dump_file_sequence", dump_file_sequence);
     dump_file_sequence=std::max((unsigned int)1,dump_file_sequence);
     
-    
-    nDim_particle=params.nDim_particle;
-    //particleSize = nDim_particle + 3 + 1;
+    PyTools::extract("exit_after_dump", exit_after_dump);
+    if (dump_step || dump_minutes>0) {
+        if (exit_after_dump) {
+            MESSAGE(1,"Code will exit after dump");
+        } else {
+            MESSAGE(1,"Code will continue every " << dump_step << " steps, keeping " << dump_file_sequence << " dumps");
+        }
+    }
     
     // registering signal handler
     if (SIG_ERR == signal(SIGUSR1, SmileiIO::signal_callback_handler)) {
@@ -77,7 +77,7 @@ dump_request(smpi->getSize())
 */
 
 #ifdef _IO_PARTICLE
-    particleSize = nDim_particle + 3 + 1;
+    particleSize = params.nDim_particle + 3 + 1;
     
     ostringstream name("");
     name << "particles-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
@@ -263,7 +263,7 @@ void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI*
 #endif
 }
 
-bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWindow, Params &params) { 
+bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWindow, Params &params, Diagnostic &diags) {
 
     // check for excedeed time 
     if (dump_minutes != 0.0) {
@@ -290,13 +290,13 @@ bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, std::vector<Spec
     if (signal_received!=0 ||
         (dump_step != 0 && (itime % dump_step == 0)) ||
         (time_dump_step!=0 && itime==time_dump_step)) {
-        dumpAll( EMfields, itime,  vecSpecies, smpi, simWindow, params);
+        dumpAll( EMfields, itime,  vecSpecies, smpi, simWindow, params, diags);
         if (exit_after_dump || ((signal_received!=0) && (signal_received != SIGUSR2))) return true;
     }
     return false;
 }
 
-void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin, Params &params) { 
+void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin, Params &params, Diagnostic &diags) { 
     ostringstream nameDump("");
     nameDump << "dump-" << setfill('0') << setw(4) << dump_times%dump_file_sequence << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
     hid_t fid = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
@@ -305,6 +305,9 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
     MESSAGEALL("Step " << itime << " : DUMP fields and particles " << nameDump.str());    
     
     H5::attr(fid, "dump_step", itime);
+    
+    H5::attr(fid, "Energy_time_zero", diags.scalars.Energy_time_zero);
+    H5::attr(fid, "EnergyUsedForNorm", diags.scalars.EnergyUsedForNorm);
     
     dumpFieldsPerProc(fid, EMfields->Ex_);
     dumpFieldsPerProc(fid, EMfields->Ey_);
@@ -380,7 +383,7 @@ void SmileiIO::dumpFieldsPerProc(hid_t fid, Field* field)
     H5Sclose(sid);
 }
 
-void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> &vecSpecies, SmileiMPI* smpi, SimWindow* simWin, Params &params) { 
+void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> &vecSpecies, SmileiMPI* smpi, SimWindow* simWin, Params &params, Diagnostic &diags) {
     
     string nameDump("");
     
@@ -414,9 +417,17 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
     hid_t aid, gid, did, sid;
     
     aid = H5Aopen(fid, "dump_step", H5T_NATIVE_UINT);
-    H5Aread(aid, H5T_NATIVE_UINT, &itime);    
+    H5Aread(aid, H5T_NATIVE_UINT, &itime);
     H5Aclose(aid);
     
+    aid = H5Aopen(fid, "Energy_time_zero", H5T_NATIVE_DOUBLE);
+    H5Aread(aid, H5T_NATIVE_DOUBLE, &(diags.scalars.Energy_time_zero));
+    H5Aclose(aid);
+
+    aid = H5Aopen(fid, "EnergyUsedForNorm", H5T_NATIVE_DOUBLE);
+    H5Aread(aid, H5T_NATIVE_DOUBLE, &(diags.scalars.EnergyUsedForNorm));
+    H5Aclose(aid);
+
     restartFieldsPerProc(fid, EMfields->Ex_);
     restartFieldsPerProc(fid, EMfields->Ey_);
     restartFieldsPerProc(fid, EMfields->Ez_);
@@ -451,7 +462,7 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
         unsigned int partCapacity=0;
         H5Aread(aid, H5T_NATIVE_UINT, &partCapacity);
         H5Aclose(aid);
-        vecSpecies[ispec]->particles.reserve(partCapacity,nDim_particle);        
+        vecSpecies[ispec]->particles.reserve(partCapacity,params.nDim_particle);
         
         aid = H5Aopen(gid, "partSize", H5T_NATIVE_UINT);
         unsigned int partSize=0;

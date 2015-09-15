@@ -88,11 +88,11 @@ int main (int argc, char* argv[])
     
     // Create diagnostics
     TITLE("Creating Diagnostics");
-    Diagnostic Diags(params, smpi);
+    Diagnostic diags(params, smpi);
     
     //Create mpi i/o environment
     TITLE("MPI input output environment");
-    SmileiIO*  sio  = SmileiIOFactory::create(params, Diags, smpi);
+    SmileiIO*  sio  = SmileiIOFactory::create(params, diags, smpi);
     
     // setup OpenMP
     TITLE("OpenMP");
@@ -131,8 +131,8 @@ int main (int argc, char* argv[])
     vector<PartWall*> vecPartWall = PartWall::create(params, smpi);
     
     // Test particles need initialization now (after vecSpecies has been created)
-    for (unsigned int i=0 ; i<Diags.vecDiagnosticTestParticles.size(); i++)
-        Diags.vecDiagnosticTestParticles[i]->init(vecSpecies, smpi);
+    for (unsigned int i=0 ; i<diags.vecDiagnosticTestParticles.size(); i++)
+        diags.vecDiagnosticTestParticles[i]->init(vecSpecies, smpi);
     
     // ----------------------------------------------------------------------------
     // Define Moving Window & restart
@@ -165,7 +165,11 @@ int main (int argc, char* argv[])
     if (params.restart) {
         MESSAGE(1, "READING fields and particles for restart");
         DEBUG(vecSpecies.size());
-        sio->restartAll( EMfields,  stepStart, vecSpecies, smpi, simWindow, params);
+        sio->restartAll( EMfields,  stepStart, vecSpecies, smpi, simWindow, params, diags);
+        
+        HEREIAM(diags.scalars.EnergyUsedForNorm);
+        HEREIAM(diags.scalars.Energy_time_zero);
+        
         
         double restart_time_dual = (stepStart +0.5) * params.timestep;
         if ( simWindow && ( simWindow->isMoving(restart_time_dual) ) ) {
@@ -203,11 +207,11 @@ int main (int argc, char* argv[])
         EMfields->applyExternalFields(smpi);
 
         TITLE("Running diags at time t = 0");
-        Diags.runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
+        diags.runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
         // temporary EM fields dump in Fields.h5
         sio->writeAllFieldsSingleFileTime( &(EMfields->allFields), 0, 0 );
         // temporary EM fields dump in Fields_avg.h5
-        if (Diags.ntime_step_avg!=0)
+        if (diags.ntime_step_avg!=0)
             sio->writeAllFieldsSingleFileTime( &(EMfields->allFields_avg), 0, 1 );
         // temporary particle dump at time 0
         sio->writePlasma( vecSpecies, 0., smpi );
@@ -287,19 +291,19 @@ int main (int argc, char* argv[])
         // --------------------------------
         timer[0].update();
         
-        if ( (itime % Diags.print_every == 0) &&  ( smpi->isMaster() ) ) {
+        if ( (itime % diags.print_every == 0) &&  ( smpi->isMaster() ) ) {
             ostringstream my_msg;
             my_msg << "t = "          << scientific << setprecision(3)   << time_dual <<
             "   it = "     << setw(log10(params.n_time)+1) << itime <<
             "   sec = "    << scientific << setprecision(3)   << timer[0].getTime() <<
-            "   Utot = "   << scientific << setprecision(4)<< Diags.getScalar("Utot") <<
-            "   Uelm = "   << scientific << setprecision(4)<< Diags.getScalar("Uelm") <<
-            "   Ukin = "   << scientific << setprecision(4)<< Diags.getScalar("Ukin") <<
-            "   Ubal(%) = "<< scientific << fixed << setprecision(2) << 100.0*Diags.getScalar("Ubal_norm");
+            "   Utot = "   << scientific << setprecision(4)<< diags.getScalar("Utot") <<
+            "   Uelm = "   << scientific << setprecision(4)<< diags.getScalar("Uelm") <<
+            "   Ukin = "   << scientific << setprecision(4)<< diags.getScalar("Ukin") <<
+            "   Ubal(%) = "<< scientific << fixed << setprecision(2) << 100.0*diags.getScalar("Ubal_norm");
             
             if (simWindow) {
-                double Uinj_mvw = Diags.getScalar("Uelm_inj_mvw") + Diags.getScalar("Ukin_inj_mvw");
-                double Uout_mvw = Diags.getScalar("Uelm_out_mvw") + Diags.getScalar("Ukin_out_mvw");
+                double Uinj_mvw = diags.getScalar("Uelm_inj_mvw") + diags.getScalar("Ukin_inj_mvw");
+                double Uout_mvw = diags.getScalar("Uelm_out_mvw") + diags.getScalar("Ukin_out_mvw");
                 my_msg << "   Uinj_mvw = " << scientific << setprecision(4) << Uinj_mvw <<
                 "   Uout_mvw = " << scientific << setprecision(4) << Uout_mvw;
 
@@ -375,7 +379,7 @@ int main (int argc, char* argv[])
         }
         
         // incrementing averaged electromagnetic fields
-        if (Diags.ntime_step_avg) EMfields->incrementAvgFields(itime, Diags.ntime_step_avg);
+        if (diags.ntime_step_avg) EMfields->incrementAvgFields(itime, diags.ntime_step_avg);
         
         
         // call the various diagnostics
@@ -390,31 +394,31 @@ int main (int argc, char* argv[])
         //}
         
         
-        Diags.runAllDiags(itime, EMfields, vecSpecies, Interp, smpi);
+        diags.runAllDiags(itime, EMfields, vecSpecies, Interp, smpi);
         timer[3].update();
         
         timer[6].restart();
         // temporary EM fields dump in Fields.h5
-        if  ((Diags.fieldDump_every != 0) && (itime % Diags.fieldDump_every == 0))
+        if  ((diags.fieldDump_every != 0) && (itime % diags.fieldDump_every == 0))
             sio->writeAllFieldsSingleFileTime( &(EMfields->allFields), itime, 0 );
         timer[6].update();
         
         timer[7].restart();
         // temporary EM fields dump in Fields_avg.h5
-        if  ((Diags.ntime_step_avg!=0) &&
-             (Diags.avgfieldDump_every != 0) && 
-             (itime % Diags.avgfieldDump_every == 0)) {
+        if  ((diags.ntime_step_avg!=0) &&
+             (diags.avgfieldDump_every != 0) && 
+             (itime % diags.avgfieldDump_every == 0)) {
             sio->writeAllFieldsSingleFileTime( &(EMfields->allFields_avg), itime, 1 );
         }
         timer[7].update();
         
 #ifdef _IO_PARTICLE
         // temporary particles dump (1 HDF5 file per process)
-        if  ((Diags.particleDump_every != 0) && (itime % Diags.particleDump_every == 0))
+        if  ((diags.particleDump_every != 0) && (itime % diags.particleDump_every == 0))
             sio->writePlasma( vecSpecies, time_dual, smpi );
 #endif
         
-        if (sio->dump(EMfields, itime, vecSpecies, smpi, simWindow, params)) break;
+        if (sio->dump(EMfields, itime, vecSpecies, smpi, simWindow, params, diags)) break;
         
         timer[5].restart();
         if ( simWindow && simWindow->isMoving(time_dual) ) {
@@ -447,7 +451,7 @@ int main (int argc, char* argv[])
     if ( smpi->isMaster() )
         for (unsigned int i=1 ; i<timer.size() ; i++) timer[i].print(timer[0].getTime());
     
-    Diags.printTimers(smpi,timer[3].getTime());
+    diags.printTimers(smpi,timer[3].getTime());
     
     
     // ------------------------------------------------------------------
@@ -455,15 +459,15 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     
     // temporary EM fields dump in Fields.h5
-    if  ( (Diags.fieldDump_every != 0) && (params.n_time % Diags.fieldDump_every != 0) )
+    if  ( (diags.fieldDump_every != 0) && (params.n_time % diags.fieldDump_every != 0) )
         sio->writeAllFieldsSingleFileTime( &(EMfields->allFields), params.n_time, 0 );
     // temporary time-averaged EM fields dump in Fields_avg.h5
-    if  (Diags.ntime_step_avg!=0)
-        if  ( (Diags.avgfieldDump_every != 0) && (params.n_time % Diags.avgfieldDump_every != 0) )
+    if  (diags.ntime_step_avg!=0)
+        if  ( (diags.avgfieldDump_every != 0) && (params.n_time % diags.avgfieldDump_every != 0) )
             sio->writeAllFieldsSingleFileTime( &(EMfields->allFields_avg), params.n_time, 1 );
 #ifdef _IO_PARTICLE
     // temporary particles dump (1 HDF5 file per process)
-    if  ( (Diags.particleDump_every != 0) && (params.n_time % Diags.particleDump_every != 0) )
+    if  ( (diags.particleDump_every != 0) && (params.n_time % diags.particleDump_every != 0) )
         sio->writePlasma( vecSpecies, time_dual, smpi );
 #endif    
     
@@ -476,7 +480,7 @@ int main (int argc, char* argv[])
     for(unsigned int i=0; i<vecCollisions.size(); i++) delete vecCollisions[i];
     vecCollisions.clear();
     
-    Diags.closeAll(smpi);
+    diags.closeAll(smpi);
     
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
     vecSpecies.clear();

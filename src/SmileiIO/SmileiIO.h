@@ -66,14 +66,11 @@ public:
     int particleSize;
 #endif
     
-    //! Space dimension of a particle
-    unsigned int nDim_particle;
-    
     //! Basic write field on its own file (debug)
     virtual void write( Field* field ) = 0;
     
     //! restart everything to file per processor
-    void restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> &vecSpecies, SmileiMPI* smpi, SimWindow* simWin, Params &params);
+    void restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> &vecSpecies, SmileiMPI* smpi, SimWindow* simWin, Params &params, Diagnostic &diags);
 
     //! restart field per proc
     void restartFieldsPerProc(hid_t fid, Field* field);
@@ -82,7 +79,7 @@ public:
     void restartMovingWindow(hid_t fid, SimWindow* simWindow);
     
     //! test before writing everything to file per processor
-    bool dump(ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  Params &params);
+    bool dump(ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  Params &params, Diagnostic &diags);
 
     void initWriteTestParticles(Species* species, int ispec, int itime, Params& params, SmileiMPI* smpi);
     void writeTestParticles(Species* species, int ispec, int itime, Params& params, SmileiMPI* smpi);
@@ -109,7 +106,7 @@ private:
     unsigned int dump_times;
     
     //! dump everything to file per processor
-    void dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  Params &params);
+    void dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  Params &params, Diagnostic &diags);
     
     //! dump field per proc
     void dumpFieldsPerProc(hid_t fid, Field* field);

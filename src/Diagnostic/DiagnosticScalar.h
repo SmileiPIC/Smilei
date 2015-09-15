@@ -74,14 +74,13 @@ public:
     //! copied from params
     double cell_volume;
     
-private:    
     //! initial energy (kinetic + EM)
     double Energy_time_zero;
     
     //! energy used for the normalization of energy balance (former total energy)
     double EnergyUsedForNorm;
     
-    
+private:    
     //! output stream
     std::ofstream fout;
     
