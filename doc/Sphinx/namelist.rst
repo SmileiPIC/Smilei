@@ -45,7 +45,7 @@ General rules
 
 Stop and restart
 ^^^^^^^^^^^^^^^^
-.. py:data:: dump_step 
+.. py:data:: dump_step
 
   :default: 0
 
@@ -162,8 +162,6 @@ Each species has to be defined in a ``Species`` block, for instance::
 All the possible variables inside this block are explained here:
 
 .. py:data:: species_type
-  
-  :type: str
   
   The name you want to give to this species.
 
@@ -498,12 +496,6 @@ profiles.
   **Example**::
     
     Species( ... , density = gaussian(10., xfwhm=0.3, xcenter=0.8), ... )
-  
-..
-  
-  **Illustration of the pre-defined spatial profiles**
-  
-  .. image:: _static/pythonprofiles.png
 
 
 .. rubric:: 4. Pre-defined *temporal* profiles
@@ -546,6 +538,16 @@ profiles.
   **Example**::
     
     Antenna( ... , time_profile = tcosine(freq=0.01), ... )
+
+..
+  
+  **Illustrations of the pre-defined spatial and temporal profiles**
+  
+  .. image:: _static/pythonprofiles.png
+  
+| 
+  
+  .. image:: _static/pythonprofiles_t.png
 
 
 ----

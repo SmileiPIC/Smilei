@@ -27,6 +27,13 @@ table.docutils div.line-block {
 	margin-bottom:0;
 }
 
+table.noborder, table.noborder td {
+	border:0 !important;
+	-moz-box-shadow: none;
+	-webkit-box-shadow: none;
+	box-shadow: none;
+}
+
 /* --------------------------------------------------------------------*/
 /* Main logo */
 img.logo {
@@ -155,7 +162,7 @@ div.admonition p {
 	margin-top:0;
 	margin-bottom:0;
 }
-.image-reference {
+.image-reference, table.noborder td > .reference {
 	border-bottom:0 !important;
 }
 

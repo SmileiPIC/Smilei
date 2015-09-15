@@ -1,8 +1,6 @@
 Partners
 --------
 
-Labs involved
-^^^^^^^^^^^^^
 * `Maison de la Simulation <http://www.maisondelasimulation.fr/>`_ (MdlS), USR 3441
 * `Laboratoire d’Utilisation des Lasers Intenses <http://www.luli.polytechnique.fr>`_ (LULI), UMR 7605
 * `Laboratoire Leprince-Ringuet <http://polywww.in2p3.fr>`_ (LLR), UMR 7638
@@ -16,17 +14,28 @@ Acknowledgments
 
 Financial support from the *Laboratoires d’Excellence*:
 
-`Plas@Par <http://www.plasapar.com>`_, providing grants for 2 PhD thesis.
-
-  .. image:: _static/labs/plasapar.png
-    :width: 200px
+.. |plasapar| image:: _static/labs/plasapar.png
+  :width: 130px
+  :align: middle
   
+.. |palm| image:: _static/labs/palm.png
+  :width: 130px
+  :align: middle
 
-`PALM <http://www.labex-palm.fr>`_, through the **SimPLE** project.
-	
-  .. image:: _static/labs/palm.png
-    :width: 200px
 
+.. rst-class:: noborder
+
++------------+-----------------------------------------------------------------------------+
+| |plasapar| | |                                                                           |
+|            | | `Plas@Par <http://www.plasapar.com>`_, providing grants for 2 PhD thesis. |
++------------+-----------------------------------------------------------------------------+
+
+.. rst-class:: noborder
+
++------------+-----------------------------------------------------------------------------+
+| |palm|     | |                                                                           |
+|            | | `PALM <http://www.labex-palm.fr>`_, through the **SimPLE** project.       |
++------------+-----------------------------------------------------------------------------+
 
 ----
 
