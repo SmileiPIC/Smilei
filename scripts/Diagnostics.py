@@ -4,22 +4,41 @@
 # Check out the documentation in the doc/Sphinx directory.
 # It must be compiled with the Sphinx software (sphinx-doc.org).
 
+
+def setMatplotLibBackend(show=True):
+	import matplotlib, sys
+	usingAgg = (matplotlib.get_backend().lower() == "agg")
+	if not show and not usingAgg:
+		if "matplotlib.pyplot" in sys.modules:
+			print "WARNING: 'show=False' requires you restart python."
+		else:
+			matplotlib.use("Agg")
+	if show and usingAgg:
+		if "matplotlib.pyplot" in sys.modules:
+			print "WARNING: 'show=False' was set earlier. Restart python if you want figures to appear."
+	print matplotlib.get_backend()
+
+
 class Smilei(object):
-	""" Smilei(results_path=".")
+	""" Smilei(results_path=".", show=True)
 	
 	Import Smilei simulation information.
 	
-	The argument `results_path` specifies where the simulation results are located.
+	* `results_path` specifies where the simulation results are located.
 	Omit this argument if you are already in the results path.
+	
+	* `show` can be set to False to prevent figures to actually appear on screen.
+	
 	"""
 	
 	valid = False
 	
-	def __init__(self, results_path="."):
+	def __init__(self, results_path=".", show=True):
 		# Import packages
 		import h5py
 		import numpy as np
 		import os.path, glob, re, sys
+		setMatplotLibBackend(show=show)
 		import matplotlib.pyplot
 		import matplotlib.pylab as pylab
 		pylab.ion()
@@ -287,27 +306,6 @@ class Options(object):
 			self.colorbar.update({"aspect":kwargs["cbaspect"]})
 
 
-def _smartChooseFile(file, default_extension=""):
-	"""
-	Smartly splits a folder or file in two parts (prefix+suffix).
-	"""
-	import os.path as p
-	from os import sep as sep
-	if len(file)==0 or file[0].isalnum(): file = "./"+file
-	if p.isdir(file):
-		return [ p.normpath(file)+sep, default_extension]
-	else:
-		path, base = p.split(file)
-		if p.isdir(path):
-			basesplit = base.rsplit(".",1)
-			prefix = basesplit[0]
-			suffix = ""
-			if len(basesplit)>1: suffix = "."+basesplit[1]
-			return [ path+sep+prefix, suffix]
-		else:
-			return [False, "`"+path+"` is not a directory"]
-
-
 # -------------------------------------------------------------------
 # Mother class for all diagnostics
 # -------------------------------------------------------------------
@@ -532,20 +530,7 @@ class Diagnostic(object):
 			# Movie requested ?
 			mov = Movie(fig, movie, fps, dpi)
 			# Save to file requested ?
-			file = False
-			if type(saveAs) is str:
-				file = _smartChooseFile(saveAs, ".png")
-				if not file[0]:
-					print "WARNING: "+file[1]
-					print "         Will not save figures to files"
-					file = False
-				else:
-					supportedTypes=self._plt.matplotlib.backend_bases.FigureCanvasBase(fig).get_supported_filetypes();
-					if file[1].strip(".") not in supportedTypes.iterkeys():
-						print "WARNING: file format not supported, will not save figures to files"
-						print "         Supported formats: "+",".join(supportedTypes.iterkeys())
-						file = False
-						
+			save = SaveAs(saveAs, fig, self._plt)
 			# Loop times for animation
 			for time in self.times:
 				print "timestep "+str(time)+ "   -   t = "+str(time*self._coeff_time)+self._time_units
@@ -555,7 +540,7 @@ class Diagnostic(object):
 				fig.canvas.draw()
 				self._plt.show()
 				# save to file
-				if file: fig.savefig(("%010d"%int(time)).join(file))
+				save.frame(time)
 			# Movie ?
 			if mov.writer is not None: mov.finish()
 		
@@ -2340,14 +2325,66 @@ class Movie:
 
 
 
+class SaveAs:
+	
+	def __init__(self, smartPath, fig, plt):
+		import os.path as p
+		from os import sep as sep
+		default_extension = ".png"
+		self.figure = fig
+		
+		self.prefix = False
+		if type(smartPath) is str:
+			path = smartPath
+			if len(smartPath)==0 or smartPath[0].isalnum():
+				path = "."+sep+path
+			if p.isdir(path):
+				self.prefix = p.normpath(path)+sep
+				self.suffix = default_extension
+			else:
+				path, base = p.split(path)
+				if p.isdir(path):
+					basesplit = base.rsplit(".",1)
+					self.prefix = path+sep+basesplit[0]
+					self.suffix = ""
+					if len(basesplit)>1: self.suffix = "."+basesplit[1]
+				else:
+					self.prefix = False
+					self.suffix = "`"+path+"` is not a directory"
+		else:
+			return
+		
+		if not self.prefix:
+			print "WARNING: "+self.suffix
+			print "         Will not save figures to files"
+		
+		# For some reason, the following freezes the animation; removed temporarily
+		#else:
+		#	supportedTypes=plt.matplotlib.backend_bases.FigureCanvasBase(fig).get_supported_filetypes()
+		#	if self.suffix.strip(".") not in supportedTypes.iterkeys():
+		#		print "WARNING: file format not supported, will not save figures to files"
+		#		print "         Supported formats: "+",".join(supportedTypes.iterkeys())
+		#		self.prefix = False
+	
+	def frame(self, id):
+		if self.prefix:
+			self.figure.savefig(self.prefix + "%010d"%int(id) + self.suffix)
+
+
 def multiPlot(*Diags, **kwargs):
-	""" multiplot(Diag1, Diag2, ..., figure=1, shape=None)
+	""" multiplot(Diag1, Diag2, ..., shape=None, movie="", fps=15, dpi=200, saveAs=None)
 	
 	Plots simultaneously several diagnostics.
 	
 	Parameters:
 	-----------
-	Diag1, Diag2, ... : Several objects of classes 'Scalar', 'Field', 'Probe' or 'ParticleDiagnostic' 
+	Diag1, Diag2, ... : Several objects of classes 'Scalar', 'Field', 'Probe' or 'ParticleDiagnostic'
+	shape : 2D list giving the number of figures in x and y.
+	movie : filename to create a movie.
+	fps : frames per second for the movie.
+	dpi : resolution of the movie.
+	saveAs : path where to store individual frames as pictures.
+	skipAnimation : toggle going directly to the last frame.
 	"""
 	import numpy as np
 	import matplotlib.pyplot as plt
@@ -2361,6 +2398,7 @@ def multiPlot(*Diags, **kwargs):
 	movie  = kwargs.pop("movie" , ""  )
 	fps    = kwargs.pop("fps"   , 15  )
 	dpi    = kwargs.pop("dpi"   , 200 )
+	saveAs = kwargs.pop("saveAs", None)
 	skipAnimation = kwargs.pop("skipAnimation", False )
 	# Gather all times
 	if skipAnimation:
@@ -2426,7 +2464,8 @@ def multiPlot(*Diags, **kwargs):
 	else:
 		# Loop all times
 		mov = Movie(fig, movie, fps, dpi)
-		for time in alltimes:
+		save = SaveAs(saveAs, fig, plt)
+		for i,time in enumerate(alltimes):
 			for Diag in Diags:
 				t = np.round(time/Diag.timestep) # convert time to timestep
 				if t in Diag.times:
@@ -2439,7 +2478,9 @@ def multiPlot(*Diags, **kwargs):
 						Diag._ax.set_xlim(xmin,xmax)
 			fig.canvas.draw()
 			plt.show()
-		if mov.writer is not None: mov.finish()
+			mov.grab_frame()
+			save.frame(i)
+		mov.finish()
 		return
-	
+
 
