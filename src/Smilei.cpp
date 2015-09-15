@@ -274,6 +274,10 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     //                     HERE STARTS THE PIC LOOP
     // ------------------------------------------------------------------
+    
+    // save latestTimeStep (used to test if we are at the latest timestep when running diagnostics at run's end)
+    unsigned int latestTimeStep=stepStart;
+    
     TITLE("Time-Loop is started: number of time-steps n_time = " << params.n_time);
     
     for (unsigned int itime=stepStart+1 ; itime <= stepStop ; itime++) {
@@ -426,6 +430,8 @@ int main (int argc, char* argv[])
         }
         timer[5].update();
         
+        latestTimeStep = itime;
+        
     }//END of the time loop
     
     smpi->barrier();
@@ -454,18 +460,22 @@ int main (int argc, char* argv[])
     //                      Temporary validation diagnostics
     // ------------------------------------------------------------------
     
-    // temporary EM fields dump in Fields.h5
-    if  ( (Diags.fieldDump_every != 0) && (params.n_time % Diags.fieldDump_every != 0) )
-        sio->writeAllFieldsSingleFileTime( &(EMfields->allFields), params.n_time, 0 );
-    // temporary time-averaged EM fields dump in Fields_avg.h5
-    if  (Diags.ntime_step_avg!=0)
-        if  ( (Diags.avgfieldDump_every != 0) && (params.n_time % Diags.avgfieldDump_every != 0) )
-            sio->writeAllFieldsSingleFileTime( &(EMfields->allFields_avg), params.n_time, 1 );
+    if (latestTimeStep==params.n_time) {
+        
+        // temporary EM fields dump in Fields.h5
+        if  ( (Diags.fieldDump_every != 0) && (params.n_time % Diags.fieldDump_every != 0) )
+            sio->writeAllFieldsSingleFileTime( &(EMfields->allFields), params.n_time, 0 );
+        // temporary time-averaged EM fields dump in Fields_avg.h5
+        if  (Diags.ntime_step_avg!=0)
+            if  ( (Diags.avgfieldDump_every != 0) && (params.n_time % Diags.avgfieldDump_every != 0) )
+                sio->writeAllFieldsSingleFileTime( &(EMfields->allFields_avg), params.n_time, 1 );
 #ifdef _IO_PARTICLE
-    // temporary particles dump (1 HDF5 file per process)
-    if  ( (Diags.particleDump_every != 0) && (params.n_time % Diags.particleDump_every != 0) )
-        sio->writePlasma( vecSpecies, time_dual, smpi );
-#endif    
+        // temporary particles dump (1 HDF5 file per process)
+        if  ( (Diags.particleDump_every != 0) && (params.n_time % Diags.particleDump_every != 0) )
+            sio->writePlasma( vecSpecies, time_dual, smpi );
+#endif  
+        
+    }//latestTimeStep
     
     // ------------------------------
     //  Cleanup & End the simulation
