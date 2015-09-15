@@ -22,21 +22,24 @@
 //!         1 otherwise
 //!
 
-inline int refl_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart) {
+inline int refl_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params,
+                         double &nrj_iPart) {
     nrj_iPart = 0.;     // no energy loss during reflection
     particles.position(direction, ipart) = limit_pos - particles.position(direction, ipart);
     particles.momentum(direction, ipart) = -particles.momentum(direction, ipart);
     return 1;
 }
 
-inline int supp_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart) {
+inline int supp_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params,
+                         double &nrj_iPart) {
     nrj_iPart = particles.weight(ipart)*(particles.lor_fac(ipart)-1.0); // energy lost
     particles.position(direction, ipart) = particles.position_old(direction, ipart);
     particles.charge(ipart) = 0;
     return 0;
 }
 
-inline int stop_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart) {
+inline int stop_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params,
+                         double &nrj_iPart) {
     nrj_iPart = particles.weight(ipart)*(particles.lor_fac(ipart)-1.0); // energy lost
     particles.position(direction, ipart) = particles.position_old(direction, ipart);
     particles.momentum(0, ipart) = 0.;
@@ -48,12 +51,13 @@ inline int stop_particle( Particles &particles, int ipart, int direction, double
 
 //!\todo (MG) at the moment the particle is thermalize whether or not there is a plasma initially at the boundary.
 // ATTENTION: here the thermalization assumes a Maxwellian distribution, maybe we should add some checks on thermT (MG)!
-inline int thermalize_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart) {
+inline int thermalize_particle( Particles &particles, int ipart, int direction, double limit_pos,
+                               SpeciesStructure &params, double &nrj_iPart) {
     
     // checking the particle's velocity compared to the thermal one
     double p2 = 0.;
     for (unsigned int i=0; i<3; i++) {
-        p2 += pow( particles.momentum(i,ipart) , 2);
+        p2 += particles.momentum(i,ipart)*particles.momentum(i,ipart);
     }
     double v = sqrt(p2)/particles.lor_fac(ipart);
     
@@ -64,7 +68,7 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
     // --------------------------------------------
     if ( v>3.0*params.thermalVelocity[0] ) {    //IF VELOCITY > 3*THERMAL VELOCITY THEN THERMALIZE IT
 
-        // velocity of the particle after reflection (unchanged in the directions that are not resolved in the simulations)
+        // velocity of the particle after thermalization/reflection 
         for (int i=0; i<params.nDim_fields; i++) {
             
             if (i==direction) {
@@ -72,14 +76,13 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
                 double sign_vel = -(particles.position(direction, ipart)-0.5*limit_pos)
                 /          std::abs(particles.position(direction, ipart)-0.5*limit_pos);
                 particles.momentum(i,ipart) = sign_vel * params.thermalMomentum[i]
-                *                             std::sqrt( -std::log(1.0-((double)rand() / RAND_MAX)) );
+                *                             std::sqrt( -std::log(1.0-((double)rand() / ((double)RAND_MAX+0.1)) ) );
                 
             } else {
                 // change of momentum in the direction(s) along the reflection plane
                 double sign_rnd = (double)rand() / RAND_MAX - 0.5; sign_rnd = (sign_rnd)/std::abs(sign_rnd);
                 particles.momentum(i,ipart) = sign_rnd * params.thermalMomentum[i]
-                *                               userFunctions::erfinv( (double)rand() / RAND_MAX );
-                //*                             erfinv::instance().call( (double)rand() / RAND_MAX );
+                *                               userFunctions::erfinv( (double)rand() / ((double)RAND_MAX+0.1) );
             }//if
             
         }//i
