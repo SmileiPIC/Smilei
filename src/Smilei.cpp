@@ -166,11 +166,7 @@ int main (int argc, char* argv[])
         MESSAGE(1, "READING fields and particles for restart");
         DEBUG(vecSpecies.size());
         sio->restartAll( EMfields,  stepStart, vecSpecies, smpi, simWindow, params, diags);
-        
-        HEREIAM(diags.scalars.EnergyUsedForNorm);
-        HEREIAM(diags.scalars.Energy_time_zero);
-        
-        
+                
         double restart_time_dual = (stepStart +0.5) * params.timestep;
         if ( simWindow && ( simWindow->isMoving(restart_time_dual) ) ) {
             simWindow->setOperators(vecSpecies, Interp, Proj, smpi);
