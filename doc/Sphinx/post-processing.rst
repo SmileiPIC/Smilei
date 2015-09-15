@@ -17,9 +17,11 @@ Select a simulation
 In a *python* command line (or script), invoke the following class to select
 your :program:`Smilei` simulation.
 
-.. py:class:: Smilei(results_path)
+.. py:class:: Smilei(results_path, show=True)
 
   * ``results_path``: Path to the directory where the results of the simulation are stored.
+  
+  * ``show``: ``True``/``False`` toggles whether the figures will actually plot on screen.
 
 You can store this to a variable for later, for instance::
 
@@ -252,14 +254,21 @@ Plot the data
 Simultaneous plotting of multiple diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:function:: multiPlot(diag1, diag2, ... , figure=1, shape=None)
+.. py:function:: multiPlot(diag1, diag2, ... , figure=1, shape=None, movie="", \
+                           fps=15, dpi=200, saveAs=None, skipAnimation=False)
   
   * ``diag1``, ``diag2``, etc.
      | Diagnostics prepared by ``Scalar()``, ``Field()``, ``Probe()`` or ``ParticleDiagnostic()``
   * ``figure``: The figure number that is passed to matplotlib.
   * ``shape``: The arrangement of plots inside the figure.
-     | For instance, ``[2, 1]`` makes two plots stacked vertically, and ``[1, 2]`` makes two plots stacked horizontally.
-     | If absent, stacks plots vertically.
+     | For instance, ``[2, 1]`` makes two plots stacked vertically, and ``[1, 2]`` makes two plots stacked horizontally. If absent, stacks plots vertically.
+  * ``movie`` : filename to create a movie.
+  * ``fps`` : frames per second for the movie.
+  * ``dpi`` : resolution of the movie.
+  * ``saveAs``: name of a directory where to save each frame as figures.
+    You can even specify a filename such as ``mydir/prefix.png`` and it will automatically
+    make successive files showing the timestep: ``mydir/prefix0.png``, ``mydir/prefix1.png``, etc.
+  * ``skipAnimation`` : True/False toggles going directly to the last frame.
   
   **Example**::
     
