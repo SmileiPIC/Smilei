@@ -64,6 +64,7 @@ else ifeq ($(openmp),intel)
 	CFLAGS += -openmp -xHost -ipo -D_TESTPATCHEXCH
 else ifeq ($(openmp),intelmpi)
 	CFLAGS += -openmp -xHost -DMPICH_IGNORE_CXX_SEEK -mt_mpi -D_TESTPATCHEXCH
+	#CFLAGS += -openmp -xHost -DMPICH_IGNORE_CXX_SEEK -mt_mpi -D_MANAGE_CORNERS -D_TESTPATCHEXCH
         LDFLAGS += -lmpi_mt -lz
         SMILEICXX = mpiicpc
 endif
