@@ -391,7 +391,7 @@ void Params::extract3Profiles(string varname, int ispec, PyObject*& profx, PyObj
         profy = pvec[1];
         profz = pvec[2];
     } else {
-        ERROR("For species #" << ispec << ", "<<varname<<" needs 1 or 3 components.");
+        ERROR("For species #" << ispec << ", "<<varname<<" needs 1 or 3 components");
     }
 }
 
@@ -479,7 +479,10 @@ void Params::computeSpecies()
             species_param[ispec].thermalVelocity[i] = sqrt(2.*species_param[ispec].thermT[0]/species_param[ispec].mass);
             species_param[ispec].thermalMomentum[i] = species_param[ispec].thermalVelocity[i];
         }
-        
+        WARNING("Using thermT[0] for species ispec=" << ispec << " in all directions");
+        if (species_param[ispec].thermalVelocity[0]>0.3) {
+            ERROR("for Species#"<<ispec<<" thermalising BCs require ThermT[0]="<<species_param[ispec].thermT[0]<<"<<"<<species_param[ispec].mass);
+        }
     }//end loop on all species (ispec)
     
 }
