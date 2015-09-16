@@ -17,6 +17,7 @@ class H5 {
     //! Make an empty group
     // Returns the group ID
     static hid_t group(hid_t locationId, std::string group_name) {
+        
         return H5Gcreate(locationId, group_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     }
     
@@ -79,24 +80,52 @@ class H5 {
         attr(locationId, attribute_name, attribute_value, H5T_NATIVE_DOUBLE);
     }
     
-    //! retrieve a double as an attribute
+    
+    //READ ATTRIBUTES
+    
+    //! retrieve a double attribute
     static void getAttr(hid_t locationId, std::string attribute_name, double &attribute_value) {
         getAttr(locationId, attribute_name, attribute_value, H5T_NATIVE_DOUBLE);
     }
     
-    //! retrieve a unsigned int as an attribute
+    //! retrieve a unsigned int attribute
     static void getAttr(hid_t locationId, std::string attribute_name, unsigned int &attribute_value) {
         getAttr(locationId, attribute_name, attribute_value, H5T_NATIVE_UINT);
     }
     
-    template<class T>
-    static void getAttr(hid_t locationId, std::string attribute_name, T &attribute_value, hid_t type) {
-        hid_t aid = H5Aopen(locationId, attribute_name.c_str(), type);
-        H5Aread(aid, type, &(attribute_value));
-        H5Aclose(aid);
-        H5Aclose(aid);
+    //! retrieve a string attribute
+    static void getAttr(hid_t locationId, std::string attribute_name, std::string &attribute_value) {
+        if (H5Aexists(locationId,attribute_name.c_str())>0) {
+            hid_t attr_id = H5Aopen_name(locationId, attribute_name.c_str());
+            hid_t filetype = H5Aget_type(attr_id);
+            int sdim = H5Tget_size(filetype)+1;
+            hid_t memtype = H5Tcopy(H5T_C_S1);
+            H5Tset_size(memtype, sdim);
+            char *tmpchar = new char(sdim);
+            if (H5Aread(attr_id, memtype, tmpchar) < 0) {
+                WARNING("Can't read string "<< attribute_name);
+            } else {
+                attribute_value = std::string(tmpchar);
+            }
+            delete tmpchar;
+            H5Tclose(memtype);
+            H5Tclose(filetype);
+            H5Aclose(attr_id);
+        } else {
+            WARNING("Cannot find attribute " << attribute_name);
+        }
     }
     
+    template<class T>
+    static void getAttr(hid_t locationId, std::string attribute_name, T &attribute_value, hid_t type) {
+        if (H5Aexists(locationId,attribute_name.c_str())>0) {
+            hid_t aid = H5Aopen(locationId, attribute_name.c_str(), type);
+            H5Aread(aid, type, &(attribute_value));
+            H5Aclose(aid);
+        } else {
+            WARNING("Cannot find attribute " << attribute_name);
+        }
+    }
     //! write a vector of unsigned ints
     //! v is the vector
     //! size is the number of elements in the vector

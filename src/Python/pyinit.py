@@ -64,7 +64,7 @@ class SmileiComponent(object):
 
 class Species(SmileiComponent):
     """Species parameters"""
-    type = None
+    species_type = None
     initPosition_type = None
     initMomentum_type = ""
     n_part_per_cell = None

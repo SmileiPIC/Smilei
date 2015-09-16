@@ -228,7 +228,9 @@ void SmileiIO::writePlasma( vector<Species*> vecSpecies, double time, SmileiMPI*
 {
     
 #ifdef _IO_PARTICLE
-    if (smpi->isMaster()) DEBUG("write species disabled");
+    if (smpi->isMaster()) {
+        DEBUG("write species disabled");
+    }
     return;
     
     for (int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
@@ -303,6 +305,9 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
     dump_times++;
     
     MESSAGEALL("Step " << itime << " : DUMP fields and particles " << nameDump.str());    
+    
+    H5::attr(fid, "Version", string(__VERSION));
+    H5::attr(fid, "CommitDate", string(__COMMITDATE));
     
     H5::attr(fid, "dump_step", itime);
     
@@ -412,7 +417,17 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
     
     hid_t fid = H5Fopen( nameDump.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
     if (fid < 0) ERROR(nameDump << " is not a valid HDF5 file");
-        
+    
+    string dump_version;
+    H5::getAttr(fid, "Version", dump_version);
+    
+    string dump_date;
+    H5::getAttr(fid, "CommitDate", dump_date);
+
+    if ((dump_version != string(__VERSION)) || (dump_date != string(__COMMITDATE))) {
+        WARNING ("The code version that dumped the file is " << dump_version << " of " << dump_date);
+        WARNING ("                while running version is " << string(__VERSION) << " of " << string(__COMMITDATE));
+    }
     
     H5::getAttr(fid, "dump_step", itime);
     H5::getAttr(fid, "Energy_time_zero", diags.scalars.Energy_time_zero);
@@ -449,11 +464,11 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
         hid_t gid = H5Gopen(fid, groupName.c_str(),H5P_DEFAULT);
         
         unsigned int partCapacity=0;
-        H5::getAttr(fid, "partCapacity", partCapacity);
+        H5::getAttr(gid, "partCapacity", partCapacity);
         vecSpecies[ispec]->particles.reserve(partCapacity,params.nDim_particle);
         
         unsigned int partSize=0;
-        H5::getAttr(fid, "partSize", partSize);
+        H5::getAttr(gid, "partSize", partSize);
         vecSpecies[ispec]->particles.initialize(partSize,params);
         
         

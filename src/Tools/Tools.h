@@ -71,7 +71,6 @@ if (__i==__rk) {std::cout << "Proc [" << __i << "] " <<__txt << std::endl;} MPI_
 
 #define WARNING(__txt) {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); if (__rk==0) {__header("WARNING", __txt);}}
 
-
 #define DEBUG(__txt) {__header("DEBUG", __txt);}
 
 #define ERROR(__txt) {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); __header("ERROR proc "<<__rk, __txt); MPI_Finalize(); raise(SIGSEGV);}
@@ -81,9 +80,9 @@ if (__i==__rk) {std::cout << "Proc [" << __i << "] " <<__txt << std::endl;} MPI_
 
 #define HEREIAM(__txt) {const int __num_minus=40; int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); for(int __i=0;__i<__num_minus;__i++) {std::cout << "-";}; std::cout << "> " << __rk << " " << __FILE__ << ":" << __LINE__ << " (" << __FUNCTION__ << ") " << __txt << " <" ; for(int __i=0;__i<__num_minus;__i++) {std::cout << "-";}; std::cout << std::endl; }
 
-#else // not __DEBUG
+#else // not DEBUG
 
-#define WARNING(__txt) {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); if (__rk==0) {std::cout << "\t[" << "WARNING" << "] " << __txt << std::endl;}}
+#define WARNING(__txt) {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); if (__rk==0) {std::cout << "\t[WARNING] " << __txt << std::endl;}}
 
 #define DEBUG(...)
 #define DEBUGEXEC(...)
