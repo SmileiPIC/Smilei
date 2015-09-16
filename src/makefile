@@ -40,6 +40,12 @@ CFLAGS += $(DIRS:%=-I%)
 
 PYSCRIPTS := $(shell find Python -name \*.py)
 PYHEADERS := $(PYSCRIPTS:.py=.pyh)
+# this is an hack fot force regenerating the .pyh found on
+# http://stackoverflow.com/questions/10726321/how-to-ensure-a-target-is-run-before-all-the-other-build-rules-in-a-makefile
+-include generator-task
+.PHONY : generator-task
+generator-task : $(PYHEADERS)
+
 
 #collect all cpp files
 SRCS := $(shell find . -name \*.cpp)
@@ -85,15 +91,15 @@ endif
 	@ echo "Creating binary char for $< : $@"
 	@ xxd -i $< > $@
 
-%.d: %.cpp $(PYHEADERS) 
+%.d: %.cpp
 	@ echo "Checking dependencies for $<"
 # create and modify dependecy file .d to take into account the location subdir
 	@ $(SMILEICXX) $(CFLAGS) -MM $< 2>/dev/null | sed -e "s@\(^.*\)\.o:@$(shell  dirname $<)/\1.d $(shell  dirname $<)/\1.o:@" > $@  
 
-%.o : %.cpp %.d
+%.o : %.cpp
 	$(SMILEICXX) $(CFLAGS) -c $< -o $@
 
-$(EXEC): $(PYHEADERS) $(OBJS)
+$(EXEC): $(OBJS)
 	$(SMILEICXX) $(CFLAGS) -o $(EXEC) $(OBJS) $(LDFLAGS)
 
 # these are kept for backward compatibility and might be removed (see make help)
