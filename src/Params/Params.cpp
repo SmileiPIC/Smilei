@@ -465,9 +465,19 @@ void Params::computeSpecies()
         // define thermal velocity as \sqrt{T/m}
         species_param[ispec].thermalVelocity.resize(3);
         species_param[ispec].thermalMomentum.resize(3);
+        
+/*        double gamma=1.+species_param[ispec].thermT[0]/species_param[ispec].mass;
+        
         for (unsigned int i=0; i<3; i++) {
-            species_param[ispec].thermalVelocity[i]=sqrt(2.0*species_param[ispec].thermT[i]/species_param[ispec].mass);
-            species_param[ispec].thermalMomentum[i]=species_param[ispec].mass * species_param[ispec].thermalVelocity[i];
+            species_param[ispec].thermalVelocity[i] = sqrt( 1.-1./gamma*gamma );
+            species_param[ispec].thermalMomentum[i] = gamma*species_param[ispec].thermalVelocity[i];
+        }
+        
+        double gamma=1.+species_param[ispec].thermT[0]/species_param[ispec].mass;
+*/
+        for (unsigned int i=0; i<3; i++) {
+            species_param[ispec].thermalVelocity[i] = sqrt(2.*species_param[ispec].thermT[0]/species_param[ispec].mass);
+            species_param[ispec].thermalMomentum[i] = species_param[ispec].thermalVelocity[i];
         }
         
     }//end loop on all species (ispec)
