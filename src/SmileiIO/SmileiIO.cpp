@@ -411,9 +411,12 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
         f.close();
     }
     
-    if (nameDump.empty()) ERROR("Cannot find a valid restart file");
+
+    if (nameDump.empty()) {
+        ERROR("Cannot find a valid restart file");
+    }
     
-    MESSAGE(2, "RESTARTING fields and particles " << nameDump);
+    MESSAGE(2, "RESTARTING fields and particles " << nameDump << " step=" << itime);
     
     hid_t fid = H5Fopen( nameDump.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
     if (fid < 0) ERROR(nameDump << " is not a valid HDF5 file");

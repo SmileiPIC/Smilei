@@ -163,12 +163,31 @@ public:
             
             // CALCULATE USEFUL VALUES
             
-            // define thermal velocity as \sqrt{T/m}
+            
+            // here I save the dimension of the pb (to use in BoundaryConditionType.h)
+            spec_struct.nDim_fields = params.nDim_field;
+            
+            /*        double gamma=1.+spec_struct.thermT[0]/spec_struct.mass;
+             
+             for (unsigned int i=0; i<3; i++) {
+             spec_struct.thermalVelocity[i] = sqrt( 1.-1./gamma*gamma );
+             spec_struct.thermalMomentum[i] = gamma*spec_struct.thermalVelocity[i];
+             }
+             
+             double gamma=1.+spec_struct.thermT[0]/spec_struct.mass;
+             */
+            
             spec_struct.thermalVelocity.resize(3);
             spec_struct.thermalMomentum.resize(3);
+
+            
+            WARNING("Using thermT[0] for species ispec=" << ispec << " in all directions");
+            if (spec_struct.thermalVelocity[0]>0.3) {
+                ERROR("for Species#"<<ispec<<" thermalising BCs require ThermT[0]="<<spec_struct.thermT[0]<<"<<"<<spec_struct.mass);
+            }
             for (unsigned int i=0; i<3; i++) {
-                spec_struct.thermalVelocity[i]=sqrt(2.0*spec_struct.thermT[i]/spec_struct.mass);
-                spec_struct.thermalMomentum[i]=spec_struct.mass * spec_struct.thermalVelocity[i];
+                spec_struct.thermalVelocity[i] = sqrt(2.*spec_struct.thermT[0]/spec_struct.mass);
+                spec_struct.thermalMomentum[i] = spec_struct.thermalVelocity[i];
             }
 
             // create species
