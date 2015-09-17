@@ -8,10 +8,12 @@
 #ifndef LaserParams_H
 #define LaserParams_H
 
+#include "PyTools.h"
+
 #include <vector>
 #include <string>
 
-#include "Params.h"
+class Params;
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each Laser Profile

@@ -1,8 +1,8 @@
+#include "PyTools.h"
 #include "Params.h"
 #include "Species.h"
 #include <cmath>
 #include "Tools.h"
-#include "PyTools.h"
 #include "SmileiMPI.h"
 
 #include "pyinit.pyh"

@@ -8,7 +8,6 @@
 #ifndef Params_H
 #define Params_H
 
-#include <PyTools.h>
 #include <vector>
 #include <string>
 #include <cstdlib>
