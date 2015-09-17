@@ -9,7 +9,8 @@
 #            normalized = input data are put in code (relativistic) units
 #
 sim_units = wavelength
-
+#number_of_procs = 1 16
+#
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
 #      2d3v = cartesian grid with 2d in space + 3d in velocity
@@ -77,7 +78,8 @@ species
 	vacuum_length   = 1.0 0.0 
 	dens_length_x   = 1.0 
 	dens_length_y   = 4.0
-	initialization_type = cold
+	initPosition_type = random
+	initMomentum_type = cold
 	ionization_model = none
 	n_part_per_cell = 2
 	c_part_max = 1.0
@@ -101,7 +103,8 @@ species
 	vacuum_length   = 1.0 0.0 
 	dens_length_x   = 1.0 
 	dens_length_y   = 4.0
-	initialization_type = maxwell-juettner
+	initPosition_type = random
+	initMomentum_type = maxwell-juettner
 	n_part_per_cell=2
 	c_part_max=1.0
 	mass = 1.0

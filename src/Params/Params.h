@@ -254,6 +254,9 @@ public:
     
     //! Number of MPI process per direction (default : as square as possible)
     std::vector<int> number_of_procs;
+
+    //! define if smilei write a single file or 1 file per process
+    bool global_output_file;
     
     //! global number of time exits (it will be used if not specified in various diags/fields)
     unsigned int global_every;

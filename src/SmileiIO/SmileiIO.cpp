@@ -132,15 +132,25 @@ dump_request(smpi->getSize())
     // ----------------------------
     MPI_Info info  = MPI_INFO_NULL;
     hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
-    H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, info);
-    
-    write_plist = H5Pcreate(H5P_DATASET_XFER);
-    H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);
-    
     
     // Fields.h5
     // ---------
-    global_file_id_  = H5Fcreate( "Fields.h5",     H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+    global_output_file_ = params.global_output_file;
+    ostringstream name_t;
+    name_t.str("");
+    if (global_output_file_) { // 1 file
+        name_t << "Fields.h5";
+	write_plist = H5Pcreate(H5P_DATASET_XFER);
+        H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_COLLECTIVE);
+	H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, info);
+    }
+    else { // 1 file per process
+	name_t << "Fields_" << setfill('0') << setw(10) << smpi->getRank() << ".h5";
+	write_plist = H5Pcreate(H5P_DATASET_XFER);
+	// Added some attributes 
+    }
+    global_file_id_    = H5Fcreate( name_t.str().c_str(),     H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+
     
     // Create property list for collective dataset write: for Fields.h5
     
@@ -193,6 +203,7 @@ void SmileiIO::writeAllFieldsSingleFileTime( std::vector<Field*> * fields, int t
     ostringstream name_t;
     name_t.str("");
     name_t << "/" << setfill('0') << setw(10) << time;
+
 //    DEBUG("[hdf] GROUP _________________________________ " << name_t.str());
     
     // Create group inside HDF5 file
@@ -213,8 +224,30 @@ void SmileiIO::writeAllFieldsSingleFileTime( std::vector<Field*> * fields, int t
                 if ((*fields)[i]->name==fieldsToDump[j])
                     writeFieldsSingleFileTime( (*fields)[i], group_id );
     
+    if (!global_output_file_) {
+#ifdef _ONE_FILE_TURING_TEST
+	writeOneFieldSingleFileTime( EMfields->Ex_, group_id );
+	writeOneFieldSingleFileTime( EMfields->Ey_, group_id );
+	writeOneFieldSingleFileTime( EMfields->Ez_, group_id );
+	writeOneFieldSingleFileTime( EMfields->Bx_m, group_id );
+	writeOneFieldSingleFileTime( EMfields->By_m, group_id );
+	writeOneFieldSingleFileTime( EMfields->Bz_m, group_id );
+	writeOneFieldSingleFileTime( EMfields->Jx_, group_id );
+	writeOneFieldSingleFileTime( EMfields->Jy_, group_id );
+	writeOneFieldSingleFileTime( EMfields->Jz_, group_id );
+	writeOneFieldSingleFileTime( EMfields->rho_, group_id );
+	// for all species related quantities
+	for (unsigned int ispec=0; ispec<EMfields->n_species; ispec++) {
+	    writeOneFieldSingleFileTime( EMfields->rho_s[ispec], group_id );
+	    writeOneFieldSingleFileTime( EMfields->Jx_s[ispec],  group_id );
+	    writeOneFieldSingleFileTime( EMfields->Jy_s[ispec],  group_id );
+	    writeOneFieldSingleFileTime( EMfields->Jz_s[ispec],  group_id );
+	}
+#endif
+    }
+
     H5Gclose(group_id);
-    
+
     H5Fflush( global_file_id_, H5F_SCOPE_GLOBAL );
     
 }
@@ -293,6 +326,7 @@ bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, std::vector<Spec
         dumpAll( EMfields, itime,  vecSpecies, smpi, simWindow, params, diags);
         if (exit_after_dump || ((signal_received!=0) && (signal_received != SIGUSR2))) return true;
     }
+
     return false;
 }
 
@@ -446,12 +480,11 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
     aid = H5Aopen(fid, "species", H5T_NATIVE_UINT);
     unsigned int vecSpeciesSize=0;
     H5Aread(aid, H5T_NATIVE_UINT, &vecSpeciesSize);
-    H5Aclose(aid);    
+    H5Aclose(aid);	
     if (vecSpeciesSize != vecSpecies.size()) {
-        ERROR("Number of species differs between dump (" << vecSpeciesSize << ") and namelist ("<<vecSpecies.size()<<")");
+	ERROR("Number of species differs between dump (" << vecSpeciesSize << ") and namelist ("<<vecSpecies.size()<<")");
     }
-    
-    
+	
     for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
         ostringstream name("");
         name << setfill('0') << setw(2) << ispec;

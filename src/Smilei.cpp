@@ -205,12 +205,18 @@ int main (int argc, char* argv[])
         TITLE("Running diags at time t = 0");
         diags.runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
         // temporary EM fields dump in Fields.h5
+        Timer iotimer[1];
+	iotimer[0].init(smpi, "WriteAllFields");
+	iotimer[0].restart();
         sio->writeAllFieldsSingleFileTime( &(EMfields->allFields), 0, 0 );
+	iotimer[0].update();
+	iotimer[0].print(iotimer[0].getTime());
         // temporary EM fields dump in Fields_avg.h5
         if (diags.ntime_step_avg!=0)
             sio->writeAllFieldsSingleFileTime( &(EMfields->allFields_avg), 0, 1 );
+        
         // temporary particle dump at time 0
-        sio->writePlasma( vecSpecies, 0., smpi );
+        //sio->writePlasma( vecSpecies, 0., smpi );
         
         //for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
         //    if ( (vecSpecies[ispec]->particles.isTestParticles) ) {
@@ -220,7 +226,7 @@ int main (int argc, char* argv[])
         //        //return 0;
         //    }
         //}
-        
+
     }
 
     // ------------------------------------------------------------------------
@@ -259,6 +265,10 @@ int main (int argc, char* argv[])
     
     // Count timer
     vector<Timer> timer(9);
+// IDRIS
+//    Timer timer[ntimer];
+    // -> celui là Timer timer[8];
+// IDRIS
     
     timer[0].init(smpi, "Global");
     timer[1].init(smpi, "Particles");
@@ -269,7 +279,6 @@ int main (int argc, char* argv[])
     timer[6].init(smpi, "Fields");
     timer[7].init(smpi, "AvgFields");
     timer[8].init(smpi, "Collisions");
-    
     
     // ------------------------------------------------------------------
     //                     HERE STARTS THE PIC LOOP

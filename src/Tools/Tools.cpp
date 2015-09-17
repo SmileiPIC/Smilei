@@ -1,11 +1,11 @@
 
+#include <cstring>
+#include <stdio.h>
 #include "Tools.h"
 
 #include <fcntl.h>
 #include <iomanip>
 #include <unistd.h>
-#include <cstring>
-#include <stdio.h>
 
 void Tools::printMemFootPrint(std::string tag) {
 
@@ -17,7 +17,6 @@ void Tools::printMemFootPrint(std::string tag) {
     int fd, num_read;
     long lmem;
     pid_t numpro;
-    pid_t getpid(void);
 
     numpro = getpid();
 
@@ -34,7 +33,8 @@ void Tools::printMemFootPrint(std::string tag) {
     val[2] = atoi(S);
 
     std::cout << "=== Mem usage === " <<  std::setw(20) << tag << "\t=== " << std::setw(6)
-              << "\t VmRSS  << " <<  (int)((double)val[1]/1024.) << " Mo" << std::endl;
+              << "\t VmRSS  << " <<  (int)((double)val[1]/1024.) << " Mo"
+              << "\t VmSize << " <<  (int)((double)val[2]/1024.) << " Mo" << std::endl;
 
 }
 

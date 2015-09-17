@@ -27,6 +27,7 @@ public:
     //! Create nParticles null particles of nDim size
     void initialize( int nParticles, Params &params );
     void initialize( int nParticles, Params &params, int speciesNumber );
+
     //! Set capacity of Particles vectors
     void reserve( unsigned int n_part_max, int nDim );
     

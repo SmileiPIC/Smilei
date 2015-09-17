@@ -101,9 +101,12 @@ void SmileiIO_Cart2D::createPattern( Params& params, SmileiMPI* smpi )
                         bufsize[1] -= 1;
                 }
             }
-            count[0] = bufsize[0];
-            count[1] = bufsize[1];
-            H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset, stride, count, NULL);
+            count[0] = 1;
+            count[1] = 1;
+            hsize_t     block[2];
+            block[0] = bufsize[0];
+            block[1] = bufsize[1];
+            H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset, stride, count, block);
             memspace_ [ ix_isPrim ][ iy_isPrim ] = memspace;
 
 
@@ -132,7 +135,6 @@ void SmileiIO_Cart2D::createPattern( Params& params, SmileiMPI* smpi )
             stride[1] = 1;
             count[0] = 1;
             count[1] = 1;
-            hsize_t     block[2];
             block[0] = bufsize[0];
             block[1] = bufsize[1];
             H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, stride, count, block);
@@ -176,6 +178,32 @@ void SmileiIO_Cart2D::writeFieldsSingleFileTime( Field* field, hid_t group_id )
 
 
 } // END writeFieldsSingleFileTime
+
+
+void SmileiIO_Cart2D::writeOneFieldSingleFileTime( Field* field, hid_t group_id )
+{
+    std::vector<unsigned int> isDual = field->isDual_;
+    Field2D* f2D =  static_cast<Field2D*>(field);
+
+    
+    //hid_t memspace  = memspace_ [ isDual[0] ][ isDual[1] ];   
+    hsize_t     chunk_dims[2];
+    chunk_dims[0] = field->dims_[0];
+    chunk_dims[1] = field->dims_[1];
+    hid_t memspace  = H5Screate_simple(2, chunk_dims, NULL);
+    hid_t filespace = H5Screate_simple(2, chunk_dims, NULL);
+
+    hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
+
+    hid_t dset_id = H5Dcreate(group_id, (field->name).c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+
+    H5Pclose(plist_id);
+
+    H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &(f2D->data_2D[0][0]) );
+    H5Dclose(dset_id);
+
+
+} // END writeOneFieldSingleFileTime
 
 
 //! this method writes a field on an hdf5 file should be used just for debug

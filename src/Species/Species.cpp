@@ -8,6 +8,9 @@
 
 #include <omp.h>
 
+// IDRIS
+#include <cstring>
+// IDRIS
 #include "PusherFactory.h"
 #include "IonizationFactory.h"
 
@@ -43,8 +46,9 @@ clrw(params.clrw),
 oversize(params.oversize),
 cell_length(params.cell_length),
 species_param(params.species_param[ispec]),
-velocityProfile(3,NULL),
-temperatureProfile(3,NULL),
+velocityProfile(3,,(Profile * )NULL),
+temperatureProfile(3,(Profile * )NULL),
+densityProfile(DensityFactory::create(params, ispec)),
 ndim(params.nDim_particle),
 min_loc(smpi->getDomainLocalMin(0)),
 partBoundCond(NULL)
@@ -545,6 +549,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             } // if (!particles.isTestParticles)
         }// ibin
         free(b_Jx);
+
         
 #pragma omp master
 {
@@ -824,7 +829,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
     
     int n_existing_particles = particles.size();
     particles.initialize(n_existing_particles+npart_effective, params, speciesNumber);
-    
+
     
     // define Maxwell-Juettner related quantities
     // ------------------------------------------
