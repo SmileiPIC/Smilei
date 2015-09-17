@@ -40,7 +40,7 @@ void Particles::initialize( int nParticles, Params &params)
     //}
     
     if (Weight.size()==0) {
-	float c_part_max = params.species_param[iSpec].c_part_ma;
+	float c_part_max = params.species_param[0].c_part_max;
 	//reserve( round( params->species_param[speciesNumber].c_part_max * nParticles ), nDim );
 	reserve( round( c_part_max * nParticles ), nDim );
     }
@@ -48,37 +48,6 @@ void Particles::initialize( int nParticles, Params &params)
     Position.resize(params.nDim_particle);
     Position_old.resize(params.nDim_particle);
     for (unsigned int i=0 ; i< params.nDim_particle ; i++) {
-        Position[i].resize(nParticles, 0.);
-        Position_old[i].resize(nParticles, 0.);
-    }
-    Momentum.resize(3);
-    for (int i=0 ; i< 3 ; i++) {
-        Momentum[i].resize(nParticles, 0.);
-    }
-    Weight.resize(nParticles, 0.);
-    Charge.resize(nParticles, 0);
-
-}
-// ---------------------------------------------------------------------------------------------------------------------
-// Create nParticles null particles of nDim size
-// ---------------------------------------------------------------------------------------------------------------------
-void Particles::initialize( int nParticles, int iSpec, Params &params )
-{
-    int nDim = params.nDim_particle;
-
-	//if (nParticles > Weight.capacity()) {
-	//	WARNING("You should increase c_part_max in specie namelist");
-	//}
-
-    if (Weight.size()==0) {
-	float c_part_max = params.species_param[iSpec].c_part_max;
-	//reserve( round( params->species_param[speciesNumber].c_part_max * nParticles ), nDim );
-	reserve( round( c_part_max * nParticles ), nDim );
-    }
-
-	Position.resize(nDim);
-    Position_old.resize(nDim);
-    for (int i=0 ; i< nDim ; i++) {
         Position[i].resize(nParticles, 0.);
         Position_old[i].resize(nParticles, 0.);
     }

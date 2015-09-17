@@ -1,9 +1,9 @@
 #ifndef Profile_H
 #define Profile_H
 
+#include "PyTools.h"
 #include <cmath>
 #include <vector>
-#include "PyTools.h"
 #include "SmileiMPI.h"
 #include "Tools.h"
 

@@ -69,7 +69,7 @@ int main (int argc, char* argv[])
     MESSAGE(" ___           _  | |        _  \\ \\    ");
     MESSAGE("/ __|  _ __   (_) | |  ___  (_)  | |");
     MESSAGE("\\__ \\ | '  \\   _  | | / -_)  _   | |   Version  : " << __VERSION);
-    MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  | |   Date     : " << __COMMITDATE);
+    MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  | |   Date     : " ); //<< __COMMITDATE);
     MESSAGE("                                /_/    ");
     
     TITLE("Input data info");
