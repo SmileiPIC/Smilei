@@ -33,7 +33,9 @@ dump_step(0),
 dump_minutes(0.0),
 exit_after_dump(true),
 dump_file_sequence(2),
-dump_request(smpi->getSize())
+dump_request(smpi->getSize()),
+dump_dir(""),
+restart_dir("")
 {
     if (PyTools::extract("dump_step", dump_step)) {
         if (dump_step)
@@ -49,6 +51,13 @@ dump_request(smpi->getSize())
     dump_file_sequence=std::max((unsigned int)1,dump_file_sequence);
     
     PyTools::extract("exit_after_dump", exit_after_dump);
+
+    if (PyTools::extract("dump_dir", dump_dir))
+        dump_dir+="/";
+    
+    if (PyTools::extract("restart_dir", restart_dir))
+        restart_dir+="/";
+    
     if (dump_step || dump_minutes>0) {
         if (exit_after_dump) {
             MESSAGE(1,"Code will exit after dump");
@@ -56,7 +65,7 @@ dump_request(smpi->getSize())
             MESSAGE(1,"Code will continue every " << dump_step << " steps, keeping " << dump_file_sequence << " dumps");
         }
     }
-    
+
     // registering signal handler
     if (SIG_ERR == signal(SIGUSR1, SmileiIO::signal_callback_handler)) {
         WARNING("Cannot catch signal SIGUSR1");
@@ -300,7 +309,7 @@ bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, std::vector<Spec
 
 void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin, Params &params, Diagnostic &diags) { 
     ostringstream nameDump("");
-    nameDump << "dump-" << setfill('0') << setw(4) << dump_times%dump_file_sequence << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
+    nameDump << dump_dir << "dump-" << setfill('0') << setw(4) << dump_times%dump_file_sequence << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
     hid_t fid = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     dump_times++;
     
@@ -392,10 +401,10 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
     
     string nameDump("");
     
-    // This will open both dumps and pick the last one
+    // This will open all sequential dumps and pick the last one
     for (unsigned int i=0;i<dump_file_sequence; i++) {
         ostringstream nameDumpTmp("");
-        nameDumpTmp << "dump-" << setfill('0') << setw(4) << i << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
+        nameDumpTmp << restart_dir << "dump-" << setfill('0') << setw(4) << i << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
         ifstream f(nameDumpTmp.str().c_str());
         if (f.good()) {
             hid_t fid = H5Fopen( nameDumpTmp.str().c_str(), H5F_ACC_RDWR, H5P_DEFAULT);

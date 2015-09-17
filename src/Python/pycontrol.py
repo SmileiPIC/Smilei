@@ -5,6 +5,8 @@
 import gc 
 gc.collect()
 
+import os
+
 def _smilei_check():
     """Do checks over the script"""
     
@@ -26,7 +28,18 @@ def _smilei_check():
             raise Exception("ERROR in the namelist: there is duplicate type")
         else:
             all_species.append(spec.species_type)
-    
+
+    if restart and dump_dir:
+        if not os.path.exists(dump_dir):
+            try:
+                os.makedirs(dump_dir)
+            except OSError as exception:
+                raise Exception("ERROR in the namelist: dump_dir "+dump_dir+" does not exists and cannto be created")
+        elif not os.path.isdir(dump_dir):
+                raise Exception("ERROR in the namelist: dump_dir "+dump_dir+" exists and is not a dir")
+
+
+
 # this function will be called after initialising the simulation, just before entering the time loop
 # if it returns false, the code will call a Py_Finalize();
 def _keep_python_running():

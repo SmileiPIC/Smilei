@@ -134,7 +134,13 @@ private:
     
     //! keep the last dump_file_sequence dump files
     unsigned int dump_file_sequence;
-        
+    
+    //! write dump drectory
+    std::string dump_dir;
+    
+    //! write dump drectory
+    std::string restart_dir;
+    
     std::vector<MPI_Request> dump_request;
     MPI_Status dump_status_prob;
     MPI_Status dump_status_recv;
