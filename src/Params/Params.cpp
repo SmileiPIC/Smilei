@@ -1,7 +1,7 @@
+#include "PyTools.h"
 #include "Params.h"
 #include <cmath>
 #include "Tools.h"
-#include "PyTools.h"
 #include "SmileiMPI.h"
 
 #include "pyinit.pyh"
@@ -391,7 +391,7 @@ void Params::extract3Profiles(string varname, int ispec, PyObject*& profx, PyObj
         profy = pvec[1];
         profz = pvec[2];
     } else {
-        ERROR("For species #" << ispec << ", "<<varname<<" needs 1 or 3 components.");
+        ERROR("For species #" << ispec << ", "<<varname<<" needs 1 or 3 components");
     }
 }
 
@@ -465,11 +465,24 @@ void Params::computeSpecies()
         // define thermal velocity as \sqrt{T/m}
         species_param[ispec].thermalVelocity.resize(3);
         species_param[ispec].thermalMomentum.resize(3);
+        
+/*        double gamma=1.+species_param[ispec].thermT[0]/species_param[ispec].mass;
+        
         for (unsigned int i=0; i<3; i++) {
-            species_param[ispec].thermalVelocity[i]=sqrt(2.0*species_param[ispec].thermT[i]/species_param[ispec].mass);
-            species_param[ispec].thermalMomentum[i]=species_param[ispec].mass * species_param[ispec].thermalVelocity[i];
+            species_param[ispec].thermalVelocity[i] = sqrt( 1.-1./gamma*gamma );
+            species_param[ispec].thermalMomentum[i] = gamma*species_param[ispec].thermalVelocity[i];
         }
         
+        double gamma=1.+species_param[ispec].thermT[0]/species_param[ispec].mass;
+*/
+        for (unsigned int i=0; i<3; i++) {
+            species_param[ispec].thermalVelocity[i] = sqrt(2.*species_param[ispec].thermT[0]/species_param[ispec].mass);
+            species_param[ispec].thermalMomentum[i] = species_param[ispec].thermalVelocity[i];
+        }
+        WARNING("Using thermT[0] for species ispec=" << ispec << " in all directions");
+        if (species_param[ispec].thermalVelocity[0]>0.3) {
+            ERROR("for Species#"<<ispec<<" thermalising BCs require ThermT[0]="<<species_param[ispec].thermT[0]<<"<<"<<species_param[ispec].mass);
+        }
     }//end loop on all species (ispec)
     
 }
