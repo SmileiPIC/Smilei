@@ -19,7 +19,7 @@ class Particles {
 public:
     
     //! Constructor for Particle
-    Particles(bool=false);
+    Particles();
     
     //! Destructor for Particle
     virtual ~Particles(){};

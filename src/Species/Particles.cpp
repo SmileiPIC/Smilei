@@ -14,8 +14,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Particle
 // ---------------------------------------------------------------------------------------------------------------------
-Particles::Particles(bool istest) :
-isTestParticles(istest)
+Particles::Particles()
 {
     Position.resize(0);
     Position_old.resize(0);

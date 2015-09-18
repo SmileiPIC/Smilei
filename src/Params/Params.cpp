@@ -343,7 +343,7 @@ vector<unsigned int> Params::FindSpecies(vector<Species*>& vecSpecies, vector<st
     // Make an array of the existing species names
     existing_species.resize(0);
     for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
-        existing_species.push_back( vecSpecies[ispec]->sparams.species_type );
+        existing_species.push_back( vecSpecies[ispec]->species_type );
     }
     
     // Loop over group of requested species

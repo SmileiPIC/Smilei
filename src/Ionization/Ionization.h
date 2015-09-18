@@ -9,14 +9,13 @@
 #include "Particles.h"
 
 
-struct SpeciesStructure;
 //! Class Ionization: generic class allowing to define Ionization physics
 class Ionization
 {
 
 public:
     //! Constructor for Ionization
-    Ionization(Params& params, SpeciesStructure& sparams);
+    Ionization(Params& params, Species * species);
     virtual ~Ionization();
 
     //! Overloading of () operator

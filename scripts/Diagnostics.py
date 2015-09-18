@@ -16,7 +16,7 @@ def setMatplotLibBackend(show=True):
 	if show and usingAgg:
 		if "matplotlib.pyplot" in sys.modules:
 			print "WARNING: 'show=False' was set earlier. Restart python if you want figures to appear."
-	print matplotlib.get_backend()
+#	print matplotlib.get_backend()
 
 
 class Smilei(object):

@@ -95,10 +95,10 @@ isEastern(smpi->isEastern())
     // Charge currents currents and density for each species
     
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
-        Jx_s[ispec]  = new Field1D(dimPrim, 0, false, ("Jx_"+vecSpecies[ispec]->sparams.species_type).c_str());
-        Jy_s[ispec]  = new Field1D(dimPrim, 1, false, ("Jy_"+vecSpecies[ispec]->sparams.species_type).c_str());
-        Jz_s[ispec]  = new Field1D(dimPrim, 2, false, ("Jz_"+vecSpecies[ispec]->sparams.species_type).c_str());
-        rho_s[ispec] = new Field1D(dimPrim, ("Rho_"+vecSpecies[ispec]->sparams.species_type).c_str());
+        Jx_s[ispec]  = new Field1D(dimPrim, 0, false, ("Jx_"+vecSpecies[ispec]->species_type).c_str());
+        Jy_s[ispec]  = new Field1D(dimPrim, 1, false, ("Jy_"+vecSpecies[ispec]->species_type).c_str());
+        Jz_s[ispec]  = new Field1D(dimPrim, 2, false, ("Jz_"+vecSpecies[ispec]->species_type).c_str());
+        rho_s[ispec] = new Field1D(dimPrim, ("Rho_"+vecSpecies[ispec]->species_type).c_str());
     }
     
     //    ostringstream file_name("");

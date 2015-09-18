@@ -8,7 +8,7 @@ using namespace std;
 
 
 
-IonizationTunnel::IonizationTunnel(Params& params, SpeciesStructure& sparams) : Ionization(params, sparams) {
+IonizationTunnel::IonizationTunnel(Params& params, Species * species) : Ionization(params, species) {
     DEBUG("Creating the Tunnel Ionizaton class");
 
     one_third = 1.0/3.0;

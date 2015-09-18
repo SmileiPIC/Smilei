@@ -92,7 +92,7 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
                 ener_tot   += cell_volume * vecSpecies[ispec]->particles.weight(iPart)
                 *             (vecSpecies[ispec]->particles.lor_fac(iPart)-1.0);
             }
-            ener_tot*=vecSpecies[ispec]->sparams.mass;
+            ener_tot*=vecSpecies[ispec]->mass;
         }//if
         
         MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&charge_avg, &charge_avg, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -117,7 +117,7 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
         // appending scalar output
         if (smpi->isMaster()) {
             if (nPart!=0) charge_avg /= nPart;
-            string nameSpec=vecSpecies[ispec]->sparams.species_type;
+            string nameSpec=vecSpecies[ispec]->species_type;
             append("Ntot_"+nameSpec,nPart);
             append("Zavg_"+nameSpec,charge_avg);
             append("Ukin_"+nameSpec,ener_tot);

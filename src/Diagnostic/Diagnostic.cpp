@@ -463,7 +463,7 @@ void Diagnostic::initPhases(Params& params, std::vector<Species*>& vecSpecies, S
         if (my_phase.species.size()==0) {
             WARNING("adding all species to the \"DiagPhase\" " << n_phase);
             for (unsigned int i=0;i<vecSpecies.size(); i++) {
-                my_phase.species.push_back(vecSpecies[i]->sparams.species_type);
+                my_phase.species.push_back(vecSpecies[i]->species_type);
             }
         }
         
@@ -753,7 +753,7 @@ void Diagnostic::initTestParticles(Params& params, std::vector<Species*>& vecSpe
     
     // loop species and make a new diag if test particles
     for(unsigned int i=0; i<vecSpecies.size(); i++) {
-        if (vecSpecies[i]->sparams.isTest) {
+        if (vecSpecies[i]->isTest) {
             tmpDiagTestParticles = new DiagnosticTestParticles(n_diag_testparticles, i, params, vecSpecies);
             vecDiagnosticTestParticles.push_back(tmpDiagTestParticles);
             n_diag_testparticles++;

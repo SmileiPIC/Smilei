@@ -166,45 +166,45 @@ DiagScalar(every = 1000000000000)
 #   Example : axes = [["x", 0, 1, 30]]
 #   Example : axes =[["px", -1, 1, 100, "edge_inclusive"]]
 
-#DiagParticles(
-#	output = "density",
-#	every = 4,
-#	time_average = 2,
-#	species = ["electron1"],
-#	axes = [
-#		["x", 0.*L0, 1.*L0, 100],
-#		["vx", -0.1, 0.1, 100]
-#	]
-#)
-#
-#DiagParticles(
-#	output = "density",
-#	every = 4,
-#	time_average = 1,
-#	species = ["ion1"],
-#	axes = [
-#		("x", 0.*L0, 1.*L0, 100),
-#		("vx", -0.001, 0.001, 100)
-#	]
-#)
-#
-#DiagParticles(
-#	output = "px_density",
-#	every = 4,
-#	time_average = 2,
-#	species = ["electron1"],
-#	axes = [
-#		["x", 0.*L0, 1.*L0, 100],
-#		["vx", -0.1, 0.1, 100]
-#	]
-#)
-#
-#DiagParticles(
-#	output = "density",
-#	every = 1,
-#	time_average = 1,
-#	species = ["electron1"],
-#	axes = [
-#		["ekin", 0.0001, 0.1, 100, "logscale", "edge_inclusive"]
-#	]
-#)
+DiagParticles(
+	output = "density",
+	every = 4,
+	time_average = 2,
+	species = ["electron1"],
+	axes = [
+		["x", 0.*L0, 1.*L0, 100],
+		["vx", -0.1, 0.1, 100]
+	]
+)
+
+DiagParticles(
+	output = "density",
+	every = 4,
+	time_average = 1,
+	species = ["ion1"],
+	axes = [
+		("x", 0.*L0, 1.*L0, 100),
+		("vx", -0.001, 0.001, 100)
+	]
+)
+
+DiagParticles(
+	output = "px_density",
+	every = 4,
+	time_average = 2,
+	species = ["electron1"],
+	axes = [
+		["x", 0.*L0, 1.*L0, 100],
+		["vx", -0.1, 0.1, 100]
+	]
+)
+
+DiagParticles(
+	output = "density",
+	every = 1,
+	time_average = 1,
+	species = ["electron1"],
+	axes = [
+		["ekin", 0.0001, 0.1, 100, "logscale", "edge_inclusive"]
+	]
+)

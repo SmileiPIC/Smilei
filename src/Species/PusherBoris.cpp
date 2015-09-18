@@ -9,8 +9,8 @@
 
 using namespace std;
 
-PusherBoris::PusherBoris(Params& params, SpeciesStructure& sparams)
-    : Pusher(params, sparams)
+PusherBoris::PusherBoris(Params& params, Species *species)
+    : Pusher(params, species)
 {
 }
 

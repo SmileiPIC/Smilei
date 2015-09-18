@@ -346,7 +346,7 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
     for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
         ostringstream name("");
         name << setfill('0') << setw(2) << ispec;
-        string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->sparams.species_type;
+        string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->species_type;
         hid_t gid = H5::group(fid, groupName);
         
         H5::attr(gid, "partCapacity", vecSpecies[ispec]->particles.capacity());
@@ -472,7 +472,7 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
     
         ostringstream name("");
         name << setfill('0') << setw(2) << ispec;
-        string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->sparams.species_type;
+        string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->species_type;
         hid_t gid = H5Gopen(fid, groupName.c_str(),H5P_DEFAULT);
         
         unsigned int partCapacity=0;
@@ -565,177 +565,3 @@ void SmileiIO::restartMovingWindow(hid_t fid, SimWindow* simWin)
     
 }
 
-void SmileiIO::initWriteTestParticles(Species* species, int ispec, int time, Params& params, SmileiMPI* smpi) {
-
-    Particles &cuParticles = species->particles;
-    int locNbrParticles = species->getNbrOfParticles();
-    
-    hsize_t nParticles = (hsize_t) smpi->globalNbrParticles(species, locNbrParticles);
-    
-    if ( smpi->isMaster() && true ) {
-    
-        ostringstream nameDump("");
-        nameDump << "TestParticles_" << species->sparams.species_type  << ".h5" ;
-        hid_t fid = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-        
-        
-        hsize_t dimsPart[2] = {0, nParticles};
-        hsize_t maxDimsPart[2] = {H5S_UNLIMITED, nParticles};
-        
-        hid_t file_space = H5Screate_simple(2, dimsPart, maxDimsPart);
-        
-        
-        hid_t plist = H5Pcreate(H5P_DATASET_CREATE);
-        H5Pset_layout(plist, H5D_CHUNKED);
-        hsize_t chunk_dims[2] = {1, nParticles};
-        H5Pset_chunk(plist, 2, chunk_dims);
-        
-        
-        hid_t did;
-        for (unsigned int i=0; i<cuParticles.Position.size(); i++) {
-            ostringstream namePos("");
-            namePos << "Position-" << i;
-            did = H5Dcreate(fid, namePos.str().c_str(), H5T_NATIVE_DOUBLE, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
-            H5Dclose(did);
-        }
-        
-        for (unsigned int i=0; i<cuParticles.Momentum.size(); i++) {
-            ostringstream namePos("");
-            namePos << "Momentum-" << i;
-            did = H5Dcreate(fid, namePos.str().c_str(), H5T_NATIVE_DOUBLE, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
-            H5Dclose(did);
-        }
-        
-        did = H5Dcreate(fid, "Weight", H5T_NATIVE_DOUBLE, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
-        H5Dclose(did);
-    
-        did = H5Dcreate(fid, "Weight", H5T_NATIVE_DOUBLE, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
-        H5Dclose(did);
-        
-        did = H5Dcreate(fid, "Charge", H5T_NATIVE_SHORT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
-        H5Dclose(did);
-        
-        
-        if (cuParticles.isTestParticles) {
-            did = H5Dcreate(fid, "Id", H5T_NATIVE_UINT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
-            H5Dclose(did);
-            
-            
-            if (cuParticles.isTestParticles) {
-                did = H5Dcreate(fid, "Id", H5T_NATIVE_SHORT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
-                H5Dclose(did);
-            }
-            
-            H5Pclose(plist);
-            H5Sclose(file_space);
-            
-            
-            H5Fclose( fid );
-        }
-    }
-}
-
-void SmileiIO::writeTestParticles(Species* species, int ispec, int time, Params& params, SmileiMPI* smpi) {
-    
-    // Master gathers the number of test particles
-    Particles &cuParticles = species->particles;
-    int locNbrParticles = species->getNbrOfParticles();
-    int* allNbrParticles = new int[smpi->smilei_sz];
-    MPI_Gather( &locNbrParticles, 1, MPI_INTEGER, allNbrParticles, 1, MPI_INTEGER, 0, smpi->SMILEI_COMM_WORLD );
-    
-    // Create temporary Particles object
-    Particles testParticles;
-    int nTestParticles(0);
-    testParticles.initialize( 0, params);
-    
-    // Master gathers the test particles from all procs in testParticles
-    if ( smpi->isMaster() ) {
-        MPI_Status status;
-        cuParticles.cp_particles( allNbrParticles[0], testParticles , 0);
-        nTestParticles+=allNbrParticles[0];
-        for (int irk=1 ; irk<smpi->getSize() ; irk++) {
-            if (allNbrParticles[irk]!=0) {
-                Particles partVectorRecv;
-                partVectorRecv.initialize( allNbrParticles[irk], params );
-                MPI_Datatype typePartRecv = smpi->createMPIparticles( &partVectorRecv, params.nDim_particle + 3 + 1 + 1 );
-                MPI_Recv( &(partVectorRecv.position(0,0)), 1, typePartRecv,  irk, irk, smpi->SMILEI_COMM_WORLD, &status );
-                MPI_Type_free( &typePartRecv );
-                // cp in testParticles
-                partVectorRecv.cp_particles( allNbrParticles[irk], testParticles ,nTestParticles );
-                nTestParticles+=allNbrParticles[irk];
-            }
-        }
-        
-    }
-    // Other procs send their test particles to Master
-    else if ( locNbrParticles ) {
-        MPI_Datatype typePartSend = smpi->createMPIparticles( &cuParticles, params.nDim_particle + 3 + 1 + 1 );
-        MPI_Send( &(cuParticles.position(0,0)), 1, typePartSend,  0, smpi->getRank(), smpi->SMILEI_COMM_WORLD );
-        MPI_Type_free( &typePartSend );
-    }
-    delete [] allNbrParticles;
-    
-    // Master writes the particles
-    if ( smpi->isMaster()  ) {
-        
-        // Sort test particles before dump
-        testParticles.sortById();
-        
-        ostringstream nameDump("");
-        nameDump << "TestParticles_" << species->sparams.species_type  << ".h5" ;
-        hid_t fid = H5Fopen( nameDump.str().c_str(), H5F_ACC_RDWR, H5P_DEFAULT);                        
-        
-        ostringstream attr("");
-        for (unsigned int idim=0 ; idim<params.nDim_particle ; idim++) {
-            attr.str("");
-            attr << "Position-" << idim;
-            appendTestParticles0( fid, attr.str(), testParticles.position(idim), nTestParticles, H5T_NATIVE_DOUBLE );
-        }
-        for (unsigned int idim=0 ; idim<3 ; idim++) {
-            attr.str("");
-            attr << "Momentum-" << idim;
-            appendTestParticles0( fid, attr.str(), testParticles.momentum(idim), nTestParticles, H5T_NATIVE_DOUBLE );
-        }
-        appendTestParticles0( fid, "Weight", testParticles.weight(), nTestParticles, H5T_NATIVE_DOUBLE );
-        appendTestParticles0( fid, "Charge", testParticles.charge(), nTestParticles, H5T_NATIVE_SHORT );
-        if (species->particles.isTestParticles)
-            appendTestParticles0( fid, "Id", testParticles.id(), nTestParticles, H5T_NATIVE_UINT );
-        
-        H5Fclose( fid );
-        
-    }
-    smpi->barrier();
-
-}
-
-
-template <class T>
-void SmileiIO::appendTestParticles0( hid_t fid, string name, std::vector<T> property, int nParticles, hid_t type) {
-
-    hsize_t count[2] = {1, (hsize_t)nParticles};
-    hid_t partMemSpace = H5Screate_simple(2, count, NULL);
-    
-    hid_t did = H5Dopen( fid, name.c_str(), H5P_DEFAULT );
-    
-    hid_t file_space = H5Dget_space(did);
-    hsize_t dimsO[2];
-    H5Sget_simple_extent_dims(file_space, dimsO, NULL);
-    H5Sclose(file_space);
-    hsize_t dims[2];
-    dims[0] = dimsO[0]+1;
-    dims[1] = dimsO[1];
-    H5Dset_extent(did, dims);
-    file_space = H5Dget_space(did);
-    hsize_t start[2];
-    start[0] = dimsO[0];
-    start[1] = 0;
-    H5Sselect_hyperslab(file_space, H5S_SELECT_SET, start, NULL, count, NULL);
-    H5Dwrite( did, type, partMemSpace, file_space, H5P_DEFAULT, &(property[0]) );
-    H5Sclose(file_space);
-    
-    
-    H5Sclose(partMemSpace);
-    H5Dclose(did);
-    H5Fflush( fid, H5F_SCOPE_GLOBAL );
-
-}

@@ -20,14 +20,14 @@ public:
     //! \param ispec SpeciesId
     //! \param params Parameters
     //  --------------------------------------------------------------------------------------------------------------------
-    static Pusher* create(Params& params, SpeciesStructure& sparams) {
+    static Pusher* create(Params& params, Species * species) {
         Pusher* Push = NULL;
 
         // assign the correct Pusher to Push
-        if ( sparams.dynamics_type == "norm" )
-            Push = new PusherBoris( params, sparams );
+        if ( species->dynamics_type == "norm" )
+            Push = new PusherBoris( params, species );
         else
-            ERROR( "For species " << sparams.species_type << ": unknown dynamics_type `" << sparams.dynamics_type);
+            ERROR( "For species " << species->species_type << ": unknown dynamics_type `" << species->dynamics_type << "`");
 
         return Push;
     }

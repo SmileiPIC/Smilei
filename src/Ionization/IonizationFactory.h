@@ -13,18 +13,18 @@
 //! this class create and associate the right ionization model to species
 class IonizationFactory {
 public:
-    static Ionization* create(Params& params, SpeciesStructure& sparams, double max_charge) {
+    static Ionization* create(Params& params, Species * species) {
         Ionization* Ionize = NULL;
-        std::string model=sparams.ionization_model;
+        std::string model=species->ionization_model;
 
         if ( model == "tunnel" ) {
-            if (max_charge > (int)sparams.atomic_number)
-                ERROR( "Charge > atomic_number for species " << sparams.species_type );
+            if (species->max_charge > (int)species->atomic_number)
+                ERROR( "Charge > atomic_number for species " << species->species_type );
 
-            Ionize = new IonizationTunnel( params, sparams );
+            Ionize = new IonizationTunnel( params, species );
 
         } else if ( model != "none" ) {
-            WARNING( "For species " << sparams.species_type << ": unknown ionization model `" << model << "` ... assuming no ionization");
+            WARNING( "For species " << species->species_type << ": unknown ionization model `" << model << "` ... assuming no ionization");
         }
         return Ionize;
     }

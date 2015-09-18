@@ -215,15 +215,6 @@ int main (int argc, char* argv[])
         // temporary particle dump at time 0
         sio->writePlasma( vecSpecies, 0., smpi );
         
-        //for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
-        //    if ( (vecSpecies[ispec]->particles.isTestParticles) ) {
-        //        sio->initWriteTestParticles0(vecSpecies[ispec], ispec, 0, params, smpi);
-        //        sio->writeTestParticles0(vecSpecies[ispec], ispec, 0, params, smpi);
-        //        //MPI_Finalize();
-        //        //return 0;
-        //    }
-        //}
-        
     }
 
     // ------------------------------------------------------------------------
@@ -344,7 +335,7 @@ int main (int argc, char* argv[])
 #endif
             for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
                 if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
-                    EMfields->restartRhoJs(ispec, time_dual > vecSpecies[ispec]->sparams.time_frozen); // if (!isTestParticles)
+                    EMfields->restartRhoJs(ispec, time_dual > vecSpecies[ispec]->time_frozen); // if (!isTestParticles)
                     vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow, vecPartWall);
                 }
             }
@@ -365,10 +356,10 @@ int main (int argc, char* argv[])
         timer[4].restart();
         smpi->sumRhoJ( EMfields );
         for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
-            if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ) smpi->sumRhoJs(EMfields, ispec, time_dual > vecSpecies[ispec]->sparams.time_frozen);
+            if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ) smpi->sumRhoJs(EMfields, ispec, time_dual > vecSpecies[ispec]->time_frozen);
         }
         EMfields->computeTotalRhoJ();
-
+        
         // apply currents from antennas
         EMfields->applyAntennas(smpi, time_dual);
         
@@ -390,11 +381,6 @@ int main (int argc, char* argv[])
         
         // run all diagnostics
         timer[3].restart();
-        //for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
-        //    if ( vecSpecies[ispec]->particles.isTestParticles ) {
-        //        sio->writeTestParticles0(vecSpecies[ispec], params, smpi);
-        //    }
-        //}
         
         
         diags.runAllDiags(itime, EMfields, vecSpecies, Interp, smpi);

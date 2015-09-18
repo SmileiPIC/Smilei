@@ -210,7 +210,7 @@ void Collisions::calculate_debye_length(Params& params, vector<Species*>& vecSpe
             }
             if (density <= 0.) continue;
             charge /= density; // average charge
-            temperature *= (s->sparams.mass) / (3.*density); // Te in units of me*c^2
+            temperature *= (s->mass) / (3.*density); // Te in units of me*c^2
             density /= params.n_cell_per_cluster; // density in units of critical density
             // compute inverse debye length squared
             if (temperature>0.) debye_length_squared[ibin] += density*charge*charge/temperature;
@@ -417,7 +417,7 @@ void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime
             
             s1 = vecSpecies[(*sg1)[ispec1]]; s2 = vecSpecies[(*sg2)[ispec2]];
             p1 = &(s1->particles);           p2 = &(s2->particles);
-            m1 = s1->sparams.mass;           m2 = s2->sparams.mass;
+            m1 = s1->mass;                   m2 = s2->mass;
             W1 = p1->weight(i1);             W2 = p2->weight(i2);
             
             // Calculate stuff

@@ -10,7 +10,6 @@
 
 #include "PusherFactory.h"
 #include "IonizationFactory.h"
-
 #include "PartBoundCond.h"
 #include "PartWall.h"
 //#include "BoundaryConditionType.h"
@@ -34,40 +33,19 @@
 using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Creator for Species
+// Constructor for Species
 // input: simulation parameters & Species index
 // ---------------------------------------------------------------------------------------------------------------------
-Species::Species(Params& params, SpeciesStructure& speciesparam, SmileiMPI* smpi) :
+Species::Species(Params& params, SmileiMPI* smpi) :
 clrw(params.clrw),
 oversize(params.oversize),
 cell_length(params.cell_length),
-sparams(speciesparam),
 velocityProfile(3,NULL),
 temperatureProfile(3,NULL),
 ndim(params.nDim_particle),
 min_loc(smpi->getDomainLocalMin(0)),
-partBoundCond(NULL),
-particles(speciesparam.isTest)
+partBoundCond(NULL)
 {
-    // add itself to params.species (NOT VERY CLEAN...)
-//    params.species.push_back(this);
-    
-    particles.species_number = sparams.speciesNumber;
-    
-    densityProfileType = sparams.density_type;
-    chargeProfile         = new Profile(sparams.charge_profile, ndim);
-    densityProfile        = new Profile(sparams.dens_profile  , ndim);
-    
-    velocityProfile[0]    = new Profile(sparams.mvel_x_profile, ndim);
-    velocityProfile[1]    = new Profile(sparams.mvel_y_profile, ndim);
-    velocityProfile[2]    = new Profile(sparams.mvel_z_profile, ndim);
-    
-    temperatureProfile[0] = new Profile(sparams.temp_x_profile, ndim);
-    temperatureProfile[1] = new Profile(sparams.temp_y_profile, ndim);
-    temperatureProfile[2] = new Profile(sparams.temp_z_profile, ndim);
-    
-    // ppc means "particles per cell"
-    ppcProfile            = new Profile(sparams.ppc_profile   , ndim);
     
     // -------------------
     // Variable definition
@@ -75,8 +53,6 @@ particles(speciesparam.isTest)
     PI2 = 2.0 * M_PI;
     
     electron_species = NULL;
-    
-    // atomic number
     
     // Width of clusters:
     if (params.n_space[0]%clrw != 0)
@@ -119,44 +95,11 @@ particles(speciesparam.isTest)
     
     size_proj_buffer = b_dim0*b_dim1*b_dim2;
     
-    
-    if (!params.restart) {
-    
-    // unsigned int npart_effective=0;
-        
-        // Create particles in a space starting at cell_index
-        vector<double> cell_index(3,0);
-        for (unsigned int i=0 ; i<params.nDim_field ; i++) {
-            if (cell_length[i]!=0)
-                cell_index[i] = smpi->getDomainLocalMin(i);
-        }
-        
-        int starting_bin_idx = 0;
-        // does a loop over all cells in the simulation
-        // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
-        /*npart_effective = */
-        createParticles(params.n_space, cell_index, starting_bin_idx, params );
-        
-        //PMESSAGE( 1, smpi->getRank(),"Species "<< speciesNumber <<" # part "<< npart_effective );
-    }
-    
-    // assign the correct Pusher to Push
-    Push = PusherFactory::create(params, sparams);
-    
-    // assign the Ionization model (if needed) to Ionize
-    Ionize = IonizationFactory::create( params, sparams, max_charge);
-    if (Ionize) {
-        DEBUG("Species " << sparams.species_type << " can be ionized!");
-    }
-    
-    // define limits for BC and functions applied and for domain decomposition
-    partBoundCond = new PartBoundCond( params, sparams, smpi);
-    
     unsigned int nthds(1);
 #pragma omp parallel shared(nthds) 
     {
 #ifdef _OMP
-        nthds = omp_get_num_threads();	  
+        nthds = omp_get_num_threads();
 #endif
     }
     indexes_of_particles_to_exchange_per_thd.resize(nthds);
@@ -165,9 +108,8 @@ particles(speciesparam.isTest)
     nrj_bc_lost = 0.;
     nrj_mw_lost = 0.;
     nrj_new_particles = 0.;
-
    
-}//END Species creator
+}//END Species Constructor
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -232,7 +174,7 @@ void Species::initCharge(unsigned int nPart, unsigned int iPart, double q)
         }
         diff = ((double)nPart)*q - (double)tot; // missing charge
         if (diff != 0.) {
-            WARNING("Could not match exactly charge="<<q<<" for species "<< sparams.species_type <<" (difference of "<<diff<<"). Try to add particles.");
+            WARNING("Could not match exactly charge="<<q<<" for species "<< species_type <<" (difference of "<<diff<<"). Try to add particles.");
         }
     }
 }
@@ -244,8 +186,7 @@ void Species::initCharge(unsigned int nPart, unsigned int iPart, double q)
 //   - either using regular distribution in the mesh (initPosition_type = regular)
 //   - or using uniform random distribution (initPosition_type = random)
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::initPosition(unsigned int nPart, unsigned int iPart, double *indexes, unsigned int ndim,
-                           std::vector<double> cell_length, string initPosition_type)
+void Species::initPosition(unsigned int nPart, unsigned int iPart, double *indexes, unsigned int ndim )
 {
     for (unsigned  p= iPart; p<iPart+nPart; p++) {
         for (unsigned  i=0; i<ndim ; i++) {
@@ -268,8 +209,7 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
 //   - at zero (init_momentum_type = cold)
 //   - using random distribution (init_momentum_type = maxwell-juettner)
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp, double *vel, string initMomentum_type,
-                           vector<double>& max_jutt_cumul)
+void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp, double *vel, vector<double>& max_jutt_cumul)
 {
     
     // average mean-momentum (used to center the distribution)
@@ -335,9 +275,9 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
     } else if (initMomentum_type == "rectangular") {
         
         for (unsigned int p= iPart; p<iPart+nPart; p++) {
-            particles.momentum(0,p) = (2.*(double)rand() / RAND_MAX - 1.) * sqrt(temp[0]/sparams.mass);
-            particles.momentum(1,p) = (2.*(double)rand() / RAND_MAX - 1.) * sqrt(temp[1]/sparams.mass);
-            particles.momentum(2,p) = (2.*(double)rand() / RAND_MAX - 1.) * sqrt(temp[2]/sparams.mass);
+            particles.momentum(0,p) = (2.*(double)rand() / RAND_MAX - 1.) * sqrt(temp[0]/mass);
+            particles.momentum(1,p) = (2.*(double)rand() / RAND_MAX - 1.) * sqrt(temp[1]/mass);
+            particles.momentum(2,p) = (2.*(double)rand() / RAND_MAX - 1.) * sqrt(temp[2]/mass);
         }
     }//END if initMomentum_type
     
@@ -427,7 +367,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
-    if (time_dual>sparams.time_frozen) { // moving particle
+    if (time_dual>time_frozen) { // moving particle
         double gf = 1.0;
         //Allocate buffer for projection  *****************************
         // *4 accounts for Jy, Jz and rho. * nthds accounts for each thread.
@@ -449,7 +389,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 (*LocInterp)(EMfields, particles, iPart, &Epart, &Bpart);
                 
                 // Do the ionization (!for testParticles)
-                if (Ionize && particles.charge(iPart) < (int) sparams.atomic_number) {
+                if (Ionize && particles.charge(iPart) < (int) atomic_number) {
                     //!\todo Check if it is necessary to put to 0 or if LocalFields ensures it
                     Jion.x=0.0;
                     Jion.y=0.0;
@@ -464,8 +404,8 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 
                 // Apply wall condition
                 for(unsigned int iwall=0; iwall<vecPartWall.size(); iwall++) {
-                    if ( !vecPartWall[iwall]->apply(particles, iPart, sparams, ener_iPart)) {
-                        nrj_lost_per_thd[tid] += sparams.mass * ener_iPart;
+                    if ( !vecPartWall[iwall]->apply(particles, iPart, this, ener_iPart)) {
+                        nrj_lost_per_thd[tid] += mass * ener_iPart;
                     }
                 }
                 
@@ -473,9 +413,9 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 // Boundary Condition may be physical or due to domain decomposition
                 // apply returns 0 if iPart is no more in the domain local
                 // if omp, create a list per thread
-                if ( !partBoundCond->apply( particles, iPart, sparams, ener_iPart ) ) {
+                if ( !partBoundCond->apply( particles, iPart, this, ener_iPart ) ) {
                     addPartInExchList( tid, iPart );
-                    nrj_lost_per_thd[tid] += sparams.mass * ener_iPart;
+                    nrj_lost_per_thd[tid] += mass * ener_iPart;
                 }
                 
                 if (!particles.isTestParticles) {
@@ -703,7 +643,7 @@ void Species::movingWindow_x(unsigned int shift, SmileiMPI *smpi, Params& params
     bmin[0] = 0;
     
     int iDim(0);
-    smpi->exchangeParticles( this, sparams.speciesNumber,params, 0, iDim );
+    smpi->exchangeParticles( this, speciesNumber,params, 0, iDim );
     
     // Create new particles
     if (smpi->isEastern() ) {
@@ -821,7 +761,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
     //     particles.create_particles(npart_effective);
     // else {
     //    // reserve included in initialize if particles emty
-    //    particles.reserve(round( params->sparams[speciesNumber].c_part_max * npart_effective ), ndim);
+    //    particles.reserve(round( c_part_max * npart_effective ), ndim);
     //    particles.initialize(n_existing_particles+npart_effective, params_->nDim_particle);
     // }
     
@@ -836,14 +776,14 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
     std::vector<double> max_jutt_cumul;
     
     /*
-    if (sparams.initMomentum_type=="maxwell-juettner") {
+    if (initMomentum_type=="maxwell-juettner") {
         //! \todo{Pass this parameters in a code constants class (MG)}
         nE     = 20000;
         muEmax = 20.0;
         
         max_jutt_cumul.resize(nE);
-        double mu=sparams.mass/sparams.temperature[0];
-        //double mu=sparams.mass/temperature[m](i,j,k);
+        double mu=mass/temperature[0];
+        //double mu=mass/temperature[m](i,j,k);
         double Emax=muEmax/mu;
         dE=Emax/nE;
         
@@ -882,14 +822,13 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
                 // initialize particles in meshes where the density is non-zero
                 if (density(i,j,k)>0) {
                     
-                    if (sparams.initMomentum_type=="maxwell-juettner") {
+                    if (initMomentum_type=="maxwell-juettner") {
                         //! \todo{Pass this parameters in a code constants class (MG)}
                         nE     = 20000;
                         muEmax = 20.0;
                         
                         max_jutt_cumul.resize(nE);
-                        //double mu=sparams.mass/sparams.temperature[0];
-                        double mu=sparams.mass/temperature[0](i,j,k); // For Temperature profile
+                        double mu=mass/temperature[0](i,j,k); // For Temperature profile
                         double Emax=muEmax/mu;
                         dE=Emax/nE;
                         
@@ -921,11 +860,9 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
                         }//ndim > 2
                     }//ndim > 1
                     
-                    initPosition(nPart, iPart, indexes, ndim,
-                                 cell_length, sparams.initPosition_type);
+                    initPosition(nPart, iPart, indexes, ndim);
                     
-                    initMomentum(nPart,iPart, temp, vel,
-                                 sparams.initMomentum_type, max_jutt_cumul);
+                    initMomentum(nPart,iPart, temp, vel, max_jutt_cumul);
                     
                     initWeight(nPart, iPart, density(i,j,k));
                     initCharge(nPart, iPart, charge(i,j,k));
@@ -953,8 +890,8 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
     }
     
     if (particles.isTestParticles)
-	particles.setIds();
-
+        particles.setIds();
+    
     return npart_effective;
     
 }
@@ -968,5 +905,5 @@ void Species::updateMvWinLimits(double x_moved) {
  bool Species::isProj(double time_dual, SimWindow* simWindow) {
     //Recompute frozen particles density if
     //moving window is activated, actually moving at this time step, and we are not in a density slope.
-    return time_dual > sparams.time_frozen  || (simWindow && simWindow->isMoving(time_dual)) ;
+    return time_dual > time_frozen  || (simWindow && simWindow->isMoving(time_dual)) ;
 }

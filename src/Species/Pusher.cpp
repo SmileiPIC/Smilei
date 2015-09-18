@@ -2,9 +2,9 @@
 #include "Params.h"
 #include "Species.h"
 
-Pusher::Pusher(Params& params, SpeciesStructure& sparams)
+Pusher::Pusher(Params& params, Species *species)
 {
-    mass_          = sparams.mass;
+    mass_          = species->mass;
     one_over_mass_ = 1.0/mass_;
     dt             = params.timestep;
     dts2           = params.timestep/2.;
