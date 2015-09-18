@@ -40,12 +40,6 @@ CFLAGS += $(DIRS:%=-I%)
 
 PYSCRIPTS := $(shell find Python -name \*.py)
 PYHEADERS := $(PYSCRIPTS:.py=.pyh)
-# this is an hack fot force regenerating the .pyh found on
-# http://stackoverflow.com/questions/10726321/how-to-ensure-a-target-is-run-before-all-the-other-build-rules-in-a-makefile
--include generator-task
-.PHONY : generator-task
-generator-task : $(PYHEADERS)
-
 
 #collect all cpp files
 SRCS := $(shell find . -name \*.cpp)
@@ -82,7 +76,9 @@ distclean: clean
 	rm -f $(EXEC)
 	
 ifneq ($(MAKECMDGOALS),clean)
--include $(DEPS)
+-include $(DEPS) pygenerator
+.PHONY : pygenerator
+pygenerator : $(PYHEADERS)
 endif
 
 # this generates a .h file containing a char[] with the python script in binary then

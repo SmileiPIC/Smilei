@@ -122,7 +122,7 @@ public:
             
             spec_struct.isTest = false; // default value
             PyTools::extract("isTest",spec_struct.isTest ,"Species",ispec);
-            if (spec_struct.ionization_model!="none" && (!spec_struct.isTest)) {
+            if (spec_struct.ionization_model!="none" && spec_struct.isTest) {
                 ERROR("For species #" << ispec << ", disabled for now : test & ionized");
             }
             // Define the number of timesteps for dumping test particles

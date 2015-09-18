@@ -28,7 +28,7 @@ class SmileiComponentType(type):
     def __getitem__(self, key):
         if self.__name__ == "Species" and type(key) is str:
             for obj in self._list:
-                if obj.type == key:
+                if obj.species_type == key:
                     return obj
         else:
             return self._list[key]
@@ -133,6 +133,17 @@ class DiagParticles(SmileiComponent):
 
 class DiagPhase(SmileiComponent):
     """Diagnostic phase"""
+    every=None
+    pos_min=None
+    pos_max=None
+    pos_num=1
+    lor_min=None
+    lor_max=None
+    lor_num=1
+    mom_min=None
+    mom_max=None
+    mom_num=1
+    time_range = []
     pass
 
 class DiagScalar(SmileiComponent):
@@ -196,3 +207,4 @@ avgfieldDump_every = None
 ntime_step_avg = 0
 particleDump_every = None # for backwards-compatibility
 time_fields_frozen = 0.
+random_seed = None
