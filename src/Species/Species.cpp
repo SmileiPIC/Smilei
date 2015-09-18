@@ -46,7 +46,8 @@ velocityProfile(3,NULL),
 temperatureProfile(3,NULL),
 ndim(params.nDim_particle),
 min_loc(smpi->getDomainLocalMin(0)),
-partBoundCond(NULL)
+partBoundCond(NULL),
+particles(speciesparam.isTest)
 {
     // add itself to params.species (NOT VERY CLEAN...)
 //    params.species.push_back(this);

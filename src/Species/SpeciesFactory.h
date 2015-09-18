@@ -181,15 +181,17 @@ public:
             spec_struct.thermalMomentum.resize(3);
 
             
-            WARNING("Using thermT[0] for species ispec=" << ispec << " in all directions");
-            if (spec_struct.thermalVelocity[0]>0.3) {
-                ERROR("for Species#"<<ispec<<" thermalising BCs require ThermT[0]="<<spec_struct.thermT[0]<<"<<"<<spec_struct.mass);
+            if (thermTisDefined) {
+                WARNING("Using thermT[0] for species ispec=" << ispec << " in all directions");
+                if (spec_struct.thermalVelocity[0]>0.3) {
+                    ERROR("for Species#"<<ispec<<" thermalising BCs require ThermT[0]="<<spec_struct.thermT[0]<<"<<"<<spec_struct.mass);
+                }
+                for (unsigned int i=0; i<3; i++) {
+                    spec_struct.thermalVelocity[i] = sqrt(2.*spec_struct.thermT[0]/spec_struct.mass);
+                    spec_struct.thermalMomentum[i] = spec_struct.thermalVelocity[i];
+                }
             }
-            for (unsigned int i=0; i<3; i++) {
-                spec_struct.thermalVelocity[i] = sqrt(2.*spec_struct.thermT[0]/spec_struct.mass);
-                spec_struct.thermalMomentum[i] = spec_struct.thermalVelocity[i];
-            }
-
+            
             // create species
             Species *thisSpecies=NULL;
             

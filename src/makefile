@@ -75,12 +75,7 @@ clean:
 distclean: clean
 	rm -f $(EXEC)
 	
-ifneq ($(MAKECMDGOALS),clean)
--include $(DEPS) pygenerator
-.PHONY : pygenerator
-pygenerator : $(PYHEADERS)
-endif
-
+	
 # this generates a .h file containing a char[] with the python script in binary then
 #you can just include this file to get the contents
 %.pyh: %.py
@@ -111,6 +106,16 @@ openmp: obsolete
 
 scalasca: obsolete
 	make config=scalasca
+
+ifneq ($(MAKECMDGOALS),clean)
+# Let's try to make the next lines clear: we include $(DEPS) and pygenerator
+-include $(DEPS) pygenerator
+# we specify that pygenerator is not a file
+.PHONY : pygenerator
+# and pygenerator will create all the $(PYHEADERS) (which are files)
+pygenerator : $(PYHEADERS)
+endif
+
 
 
 # DO NOT DELETE
