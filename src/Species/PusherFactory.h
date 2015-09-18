@@ -3,6 +3,7 @@
 
 #include "Pusher.h"
 #include "PusherBoris.h"
+#include "PusherRRLL.h"
 
 #include "Params.h"
 
@@ -23,10 +24,13 @@ public:
         Pusher* Push = NULL;
 
         // assign the correct Pusher to Push
-        if ( params.species_param[ispec].dynamics_type == "norm" )
+        if ( params.species_param[ispec].dynamics_type == "norm" ) {
             Push = new PusherBoris( params, ispec );
-        else
+        } else if ( params.species_param[ispec].dynamics_type == "rrll" ) {
+            Push = new PusherRRLL( params, ispec );
+        } else {
             ERROR( "Unknown dynamics : " << params.species_param[ispec].dynamics_type );
+        }
 
         return Push;
     }

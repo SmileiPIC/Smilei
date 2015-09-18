@@ -268,10 +268,12 @@ void Params::readSpecies() {
         
         tmpSpec.dynamics_type = "norm"; // default value
         if (!PyTools::extract("dynamics_type",tmpSpec.dynamics_type ,"Species",ispec) )
-            WARNING("For species #" << ispec << ", dynamics_type not defined: assumed = 'norm'.");
-        if (tmpSpec.dynamics_type!="norm"){
-            ERROR("dynamics_type different than norm not yet implemented");
+            WARNING("For species #" << ispec << ", dynamics_type not defined: use default = 'norm'.");
+        
+        if (tmpSpec.dynamics_type!="norm" && tmpSpec.dynamics_type!="rrll"){
+            ERROR("dynamics_type different than 'norm' or 'rrll' not yet implemented");
         }
+        
         
         tmpSpec.time_frozen = 0.0; // default value
         PyTools::extract("time_frozen",tmpSpec.time_frozen ,"Species",ispec);

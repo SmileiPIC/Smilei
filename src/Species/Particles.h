@@ -99,6 +99,7 @@ public:
     
     //! Create new particle
     void create_particle();
+    
     //! Create nParticles new particles
     void create_particles(int nParticles);
     
@@ -168,10 +169,9 @@ public:
     }
     
     
-    
     //! Method used to get the Particle Lorentz factor
     inline double lor_fac(int ipart) {
-        return sqrt(1+pow(momentum(0,ipart),2)+pow(momentum(1,ipart),2)+pow(momentum(2,ipart),2));
+        return sqrt(1.+pow(momentum(0,ipart),2)+pow(momentum(1,ipart),2)+pow(momentum(2,ipart),2));
     }
     
     //! array containing the particle position
@@ -191,7 +191,8 @@ public:
     
     
     
-    // Test particle parameters
+    // TEST PARTICLE PARAMETERS
+    
     bool isTestParticles;
     int test_dump_every;
     void setIds() {
@@ -218,6 +219,28 @@ public:
         return Id;
     }
     void sortById();
+    
+    
+    // PARAMETERS FOR PARTICLES THAT ARE SUBMITTED TO A RADIATION REACTION FORCE (CED or QED)
+    
+    bool isRadReaction;
+    
+    //! containing the particle weight: equivalent to a charge density
+    std::vector<double> Chi;
+    
+    //! Method used to get the Particle chi factor
+    inline double  chi(int ipart) const {
+        return Chi[ipart];
+    }
+    //! Method used to set a new value to the Particle chi factor
+    inline double& chi(int ipart)       {
+        return Chi[ipart];
+    }
+    //! Method used to get the Particle chi factor
+    inline std::vector<double>  chi() const {
+        return Chi;
+    }
+    
     
     int species_number;
 
