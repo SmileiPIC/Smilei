@@ -558,8 +558,13 @@ MPI_Datatype SmileiMPI_Cart2D::createMPIparticles( Particles* particles, int nbr
 
     int nbrOfProp2(nbrOfProp);
     if (particles->isTestParticles) nbrOfProp2++;
+    if (particles->isRadReaction)   nbrOfProp2++;
 
     MPI_Aint address[nbrOfProp2];
+    int nbr_parts[nbrOfProp2];
+    MPI_Aint disp[nbrOfProp2];
+    MPI_Datatype partDataType[nbrOfProp2];
+
     MPI_Get_address( &(particles->position(0,0)), &(address[0]) );
     MPI_Get_address( &(particles->position(1,0)), &(address[1]) );
     //MPI_Get_address( &(particles->position_old(0,0)), &(address[2]) );
@@ -571,22 +576,28 @@ MPI_Datatype SmileiMPI_Cart2D::createMPIparticles( Particles* particles, int nbr
     MPI_Get_address( &(particles->charge(0)),     &(address[6]) );
 
     if (particles->isTestParticles)
-        MPI_Get_address( &(particles->id(0)),     &(address[nbrOfProp2-1]) );
+        MPI_Get_address( &(particles->id(0)),     &(address[nbrOfProp]) );
+    if (particles->isRadReaction)
+        MPI_Get_address( &(particles->chi(0)),    &(address[nbrOfProp2-1]) );
 
-    int nbr_parts[nbrOfProp2];
-    MPI_Aint disp[nbrOfProp2];
-    MPI_Datatype partDataType[nbrOfProp2];
-
+    // number of elements per property
     for (int i=0 ; i<nbrOfProp2 ; i++)
         nbr_parts[i] = particles->size();
+
+    // displacement between 2 properties
     disp[0] = 0;
     for (int i=1 ; i<nbrOfProp2 ; i++)
         disp[i] = address[i] - address[0];
+
+    // define MPI type of each property, default is DOUBLE
     for (int i=0 ; i<nbrOfProp2 ; i++)
         partDataType[i] = MPI_DOUBLE;
+    // nbrOfProp-1 // charge
     partDataType[nbrOfProp-1] = MPI_SHORT;
+    // if isTest -> nbrOfProp // Id
     if (particles->isTestParticles)
-        partDataType[nbrOfProp2-1] = MPI_UNSIGNED;
+        partDataType[nbrOfProp] = MPI_UNSIGNED;
+
 
     MPI_Type_struct( nbrOfProp2, &(nbr_parts[0]), &(disp[0]), &(partDataType[0]), &typeParticlesMPI);
     MPI_Type_commit( &typeParticlesMPI );
