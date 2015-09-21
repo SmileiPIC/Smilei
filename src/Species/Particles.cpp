@@ -20,6 +20,11 @@ Particles::Particles()
     Momentum.resize(0);
     isTestParticles = false;
     isRadReaction = false;
+
+    double_prop.resize(0);
+    short_prop.resize(0);
+    uint_prop.resize(0);
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -57,6 +62,15 @@ void Particles::initialize( int nParticles, Params &params)
     Weight.resize(nParticles, 0.);
     Charge.resize(nParticles, 0);
 
+    if ( double_prop.empty() ) {
+	for (int i=0 ; i< params.nDim_particle ; i++)
+	    double_prop.push_back( &(Position[i]) );
+	for (int i=0 ; i< 3 ; i++) 
+	    double_prop.push_back( &(Momentum[i]) );
+	double_prop.push_back( &Weight );
+	short_prop.push_back( &Charge );
+    }
+
 }
 
 
@@ -72,13 +86,16 @@ void Particles::initialize( int nParticles, Params &params, int speciesNumber)
         isTestParticles = true;
         Id.resize(nParticles, 0);
         test_dump_every = params.species_param[speciesNumber].test_dump_every;
+        uint_prop.push_back( &Id );
     }
     
     // if radiation reaction then add chi
     if (params.species_param[speciesNumber].dynamics_type == "rrll") {
         isRadReaction = true;
         Chi.resize(nParticles, 0.);
+        double_prop.push_back( &Chi );
     }
+
 }
 
 

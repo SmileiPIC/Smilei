@@ -173,7 +173,9 @@ public:
     inline double lor_fac(int ipart) {
         return sqrt(1.+pow(momentum(0,ipart),2)+pow(momentum(1,ipart),2)+pow(momentum(2,ipart),2));
     }
-    
+
+    //! Partiles properties, respect type order : all double, all short, all unsigned int
+
     //! array containing the particle position
     std::vector< std::vector<double> > Position;
     
@@ -185,11 +187,16 @@ public:
     
     //! containing the particle weight: equivalent to a charge density
     std::vector<double> Weight;
+
+    //! containing the particle weight: equivalent to a charge density
+    std::vector<double> Chi;
+
     
     //! charge state of the particle (multiples of e>0)
     std::vector<short> Charge;
     
-    
+    //! Id of the particle
+    std::vector<unsigned int> Id;    
     
     // TEST PARTICLE PARAMETERS
     
@@ -203,8 +210,7 @@ public:
         unsigned int s = Id.size();
         for (unsigned int iPart=0; iPart<s; iPart++) Id[iPart] += startingId;
     }
-    //! Id of the particle
-    std::vector<unsigned int> Id;
+
     
     //! Method used to get the Particle Id
     inline unsigned int id(int ipart) const {
@@ -225,8 +231,6 @@ public:
     
     bool isRadReaction;
     
-    //! containing the particle weight: equivalent to a charge density
-    std::vector<double> Chi;
     
     //! Method used to get the Particle chi factor
     inline double  chi(int ipart) const {
@@ -243,6 +247,10 @@ public:
     
     
     int species_number;
+
+    std::vector< std::vector<double>* >       double_prop;
+    std::vector< std::vector<short>* >        short_prop;
+    std::vector< std::vector<unsigned int>* > uint_prop;
 
 private:
 
