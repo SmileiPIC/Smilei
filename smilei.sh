@@ -4,7 +4,7 @@ MPIEXEC=mpirun
 
 H=$PWD # current dir
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd ) # dir of this script
-smilei=$DIR/src/smilei # path to the smilei executable
+smilei=$DIR/smilei # path to the smilei executable
 script=$0 # name of this script
 
 # Function to which check that there are arguments remaining

@@ -3,20 +3,9 @@ HDF5_ROOT_DIR ?=
 
 PYTHONCONFIG ?= python-config
 
-EXEC = smilei
+EXEC = ../smilei
 
 default: $(EXEC)
-
-help: 
-	@echo 'Usage: make [clean] [config=OPTIONS]'
-	@echo '		OPTIONS is a string composed of one or more of:'
-	@echo '	        debug    : to compile in debug mode (code runs really slow)'
-	@echo '	        openmp   : to compile with openmp enabled'
-	@echo '         scalasca : to compile using scalasca'
-	@echo ' e.g. make config="debug openmp"'
-	@echo ''
-	@echo 'Environment variables : SMILEICXX (c++ compiler) HDF5_ROOT_DIR (HDF5 dir with /include and /lib)'
-
 
 ####################################################
 DESCRIBE:=$(shell git describe 2>/dev/null || echo '??')
@@ -38,13 +27,16 @@ DIRS = $(shell find * -type d)
 #add include directives for subdirs
 CFLAGS += $(DIRS:%=-I%)
 
-PYSCRIPTS := $(shell find Python -name \*.py)
-PYHEADERS := $(PYSCRIPTS:.py=.pyh)
+BUILD ?= ../build
+	
 
 #collect all cpp files
-SRCS := $(shell find . -name \*.cpp)
-OBJS := $(SRCS:.cpp=.o)
-DEPS := $(SRCS:.cpp=.d)
+SRCS := $(shell find * -name \*.cpp)
+OBJS := $(addprefix $(BUILD)/, $(SRCS:.cpp=.o))
+DEPS := $(addprefix $(BUILD)/, $(SRCS:.cpp=.d))
+PYSCRIPTS := $(shell find Python -name \*.py)
+CFLAGS += -I$(BUILD)/Python
+PYHEADERS := $(addprefix $(BUILD)/, $(PYSCRIPTS:.py=.pyh))
 
 CFLAGS+=$(shell $(PYTHONCONFIG) --includes)
 LDFLAGS+=$(shell $(PYTHONCONFIG) --ldflags)
@@ -63,14 +55,16 @@ endif
 
 ifneq (,$(findstring openmp,$(config)))
     ifneq (,$(findstring icpc,$(shell $(SMILEICXX) --showme:command)))
-        CFLAGS += -openmp -D_OMP
+        CFLAGS += -openmp
     else
-        CFLAGS += -fopenmp -D_OMP
+        CFLAGS += -fopenmp 
     endif
+    CFLAGS += -D_OMP
 endif
 
 clean:
 	rm -f $(OBJS) $(DEPS) $(PYHEADERS)
+	rm -rf $(BUILD) 
 	
 distclean: clean
 	rm -f $(EXEC)
@@ -78,23 +72,23 @@ distclean: clean
 	
 # this generates a .h file containing a char[] with the python script in binary then
 #you can just include this file to get the contents
-%.pyh: %.py
+$(BUILD)/%.pyh: %.py
 	@ echo "Creating binary char for $< : $@"
-	@ xxd -i $< > $@
+	@ mkdir -p $(@D)
+	@ cd $(<D) && xxd -i $(<F) > ../$@
 
-%.d: %.cpp
+$(BUILD)/%.d: %.cpp
 	@ echo "Checking dependencies for $<"
 # create and modify dependecy file .d to take into account the location subdir
-	@ $(SMILEICXX) $(CFLAGS) -MM $< 2>/dev/null | sed -e "s@\(^.*\)\.o:@$(shell  dirname $<)/\1.d $(shell  dirname $<)/\1.o:@" > $@  
+	@ $(SMILEICXX) $(CFLAGS) -MM $< 2>/dev/null | sed -e "s@\(^.*\)\.o:@$(BUILD)/$(shell  dirname $<)/\1.d $(BUILD)/$(shell  dirname $<)/\1.o:@" > $@  
 
-%.o : %.cpp
+$(BUILD)/%.o : %.cpp
 	$(SMILEICXX) $(CFLAGS) -c $< -o $@
 
 $(EXEC): $(OBJS)
-	$(SMILEICXX) $(CFLAGS) -o $(EXEC) $(OBJS) $(LDFLAGS)
+	$(SMILEICXX) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS)
 
 # these are kept for backward compatibility and might be removed (see make help)
-
 obsolete:
 	@echo "[WARNING] Please consider using make config=\"$(MAKECMDGOALS)\""
 
@@ -107,13 +101,18 @@ openmp: obsolete
 scalasca: obsolete
 	make config=scalasca
 
-ifneq ($(MAKECMDGOALS),clean)
+
+ifeq ($(filter clean,$(MAKECMDGOALS)),) 
 # Let's try to make the next lines clear: we include $(DEPS) and pygenerator
 -include $(DEPS) pygenerator
 # we specify that pygenerator is not a file
 .PHONY : pygenerator
+# create the tree to store .d .o .pyh files
+buildtree:
+	@echo "Creating build dirtree in $(BUILD)"
+	@mkdir -p $(addprefix $(BUILD)/, $(DIRS))
 # and pygenerator will create all the $(PYHEADERS) (which are files)
-pygenerator : $(PYHEADERS)
+pygenerator : buildtree $(PYHEADERS)
 endif
 
 

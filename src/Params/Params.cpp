@@ -184,10 +184,10 @@ void Params::initPython(SmileiMPI *smpi, std::vector<std::string> namelistsFiles
     if( !PyRun_SimpleString(command.c_str()) ) PyTools::checkPyError();
     
     // Running pyinit.py
-    pyRunScript(string(reinterpret_cast<const char*>(Python_pyinit_py), Python_pyinit_py_len), "pyinit.py");
+    pyRunScript(string(reinterpret_cast<const char*>(pyinit_py), pyinit_py_len), "pyinit.py");
     
     // Running pyfunctons.py
-    pyRunScript(string(reinterpret_cast<const char*>(Python_pyprofiles_py), Python_pyprofiles_py_len), "pyprofiles.py");
+    pyRunScript(string(reinterpret_cast<const char*>(pyprofiles_py), pyprofiles_py_len), "pyprofiles.py");
     
     // Running the namelists
     pyRunScript("############### BEGIN USER NAMELISTS ###############\n");
@@ -211,7 +211,7 @@ void Params::initPython(SmileiMPI *smpi, std::vector<std::string> namelistsFiles
     }
     pyRunScript("################ END USER NAMELISTS ################\n");    
     // Running pycontrol.py
-    pyRunScript(string(reinterpret_cast<const char*>(Python_pycontrol_py), Python_pycontrol_py_len),"pycontrol.py");
+    pyRunScript(string(reinterpret_cast<const char*>(pycontrol_py), pycontrol_py_len),"pycontrol.py");
     
     PyTools::runPyFunction("_smilei_check");
     
