@@ -165,6 +165,7 @@ class PartWall(SmileiComponent):
 
 # default simulation values
 output_script = "smilei.py"
+smilei_mpi_rank = 0
 dump_step = 0
 dump_minutes = 0.0
 exit_after_dump = True
