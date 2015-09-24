@@ -16,7 +16,7 @@ def setMatplotLibBackend(show=True):
 	if show and usingAgg:
 		if "matplotlib.pyplot" in sys.modules:
 			print "WARNING: 'show=False' was set earlier. Restart python if you want figures to appear."
-	print matplotlib.get_backend()
+	#print matplotlib.get_backend()
 
 
 class Smilei(object):
@@ -2466,6 +2466,7 @@ def multiPlot(*Diags, **kwargs):
 		mov = Movie(fig, movie, fps, dpi)
 		save = SaveAs(saveAs, fig, plt)
 		for i,time in enumerate(alltimes):
+			t = None
 			for Diag in Diags:
 				t = np.round(time/Diag.timestep) # convert time to timestep
 				if t in Diag.times:
@@ -2479,7 +2480,7 @@ def multiPlot(*Diags, **kwargs):
 			fig.canvas.draw()
 			plt.show()
 			mov.grab_frame()
-			save.frame(i)
+			if t is not None: save.frame(int(t))
 		mov.finish()
 		return
 
