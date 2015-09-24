@@ -70,7 +70,7 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
     Species *s;
     Particles *p;
     vector<int> index_array;
-    vector<double> *x, *y, *z, *px, *py, *pz, *w, axis_array, data_array;
+    vector<double> *x, *y, *z, *px, *py, *pz, *w, *chi, axis_array, data_array;
     vector<short> *q;
     int nbins = vecSpecies[0]->bmin.size(); // number of bins in the particles binning (openMP)
     int bmin, bmax, axissize, ind;
@@ -122,17 +122,20 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
     for (unsigned int ispec=0 ; ispec < species.size() ; ispec++) {
         
         // make shortcuts
-        s = vecSpecies[species[ispec]]; // current species
-        p = &(s->particles);            // current particles array
-        x  = &(p->Position[0]);         // -+
-        y  = &(p->Position[1]);         //  |- position
-        z  = &(p->Position[2]);         // -+
-        px = &(p->Momentum[0]);         // -+
-        py = &(p->Momentum[1]);         //  |- momentum
-        pz = &(p->Momentum[2]);         // -+
-        q  = &(p->Charge);              // charge
-        w  = &(p->Weight);              // weight
-        mass = s->mass;   // mass
+        s    = vecSpecies[species[ispec]];  // current species
+        p    = &(s->particles);             // current particles array
+        x    = &(p->Position[0]);           // -+
+        y    = &(p->Position[1]);           //  |- position
+        z    = &(p->Position[2]);           // -+
+        px   = &(p->Momentum[0]);           // -+
+        py   = &(p->Momentum[1]);           //  |- momentum
+        pz   = &(p->Momentum[2]);           // -+
+        q    = &(p->Charge);                // charge
+        w    = &(p->Weight);                // weight
+        if (s->dynamics_type == "rrll")
+            chi  = &(p->Chi);               // chi (for rad reaction particles particles)
+        mass = s->mass;       // mass
+
         
         axis_array .resize(p->size()); // array to store particle axis data
         index_array.resize(p->size()); // array to store particle output index
@@ -217,6 +220,10 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
                 else if (axistype == "charge")
                     for (int ipart = bmin ; ipart < bmax ; ipart++)
                         axis_array[ipart] = (double) (*q)[ipart];
+                
+                else if (axistype == "chi")
+                    for (int ipart = bmin ; ipart < bmax ; ipart++)
+                        axis_array[ipart] = (double) (*chi)[ipart];
                 
                 else    ERROR("In particle diagnostics, axis `" << axistype << "` unknown");
                 

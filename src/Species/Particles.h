@@ -99,6 +99,7 @@ public:
     
     //! Create new particle
     void create_particle();
+    
     //! Create nParticles new particles
     void create_particles(int nParticles);
     
@@ -168,12 +169,13 @@ public:
     }
     
     
-    
     //! Method used to get the Particle Lorentz factor
     inline double lor_fac(int ipart) {
-        return sqrt(1+pow(momentum(0,ipart),2)+pow(momentum(1,ipart),2)+pow(momentum(2,ipart),2));
+        return sqrt(1.+pow(momentum(0,ipart),2)+pow(momentum(1,ipart),2)+pow(momentum(2,ipart),2));
     }
-    
+
+    //! Partiles properties, respect type order : all double, all short, all unsigned int
+
     //! array containing the particle position
     std::vector< std::vector<double> > Position;
     
@@ -185,13 +187,19 @@ public:
     
     //! containing the particle weight: equivalent to a charge density
     std::vector<double> Weight;
+
+    //! containing the particle weight: equivalent to a charge density
+    std::vector<double> Chi;
+
     
     //! charge state of the particle (multiples of e>0)
     std::vector<short> Charge;
     
+    //! Id of the particle
+    std::vector<unsigned int> Id;    
     
+    // TEST PARTICLE PARAMETERS
     
-    // Test particle parameters
     bool isTestParticles;
     int test_dump_every;
     void setIds() {
@@ -202,8 +210,7 @@ public:
         unsigned int s = Id.size();
         for (unsigned int iPart=0; iPart<s; iPart++) Id[iPart] += startingId;
     }
-    //! Id of the particle
-    std::vector<unsigned int> Id;
+
     
     //! Method used to get the Particle Id
     inline unsigned int id(int ipart) const {
@@ -219,7 +226,31 @@ public:
     }
     void sortById();
     
+    
+    // PARAMETERS FOR PARTICLES THAT ARE SUBMITTED TO A RADIATION REACTION FORCE (CED or QED)
+    
+    bool isRadReaction;
+    
+    
+    //! Method used to get the Particle chi factor
+    inline double  chi(int ipart) const {
+        return Chi[ipart];
+    }
+    //! Method used to set a new value to the Particle chi factor
+    inline double& chi(int ipart)       {
+        return Chi[ipart];
+    }
+    //! Method used to get the Particle chi factor
+    inline std::vector<double>  chi() const {
+        return Chi;
+    }
+    
+    
     int species_number;
+
+    std::vector< std::vector<double>* >       double_prop;
+    std::vector< std::vector<short>* >        short_prop;
+    std::vector< std::vector<unsigned int>* > uint_prop;
 
 private:
 

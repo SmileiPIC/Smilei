@@ -32,7 +32,7 @@ public:
             std::string dynamics_type = "norm"; // default value
             if (!PyTools::extract("dynamics_type", dynamics_type ,"Species",ispec) )
                 WARNING("For species #" << ispec << ", dynamics_type not defined: assumed = 'norm'.");
-            if (dynamics_type!="norm"){
+            if (dynamics_type!="norm" && dynamics_type!="rrll"){
                 ERROR("dynamics_type different than norm not yet implemented");
             }
             

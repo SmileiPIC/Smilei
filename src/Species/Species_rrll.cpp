@@ -15,6 +15,8 @@ using namespace std;
 Species_rrll::Species_rrll( Params& params, SmileiMPI* smpi)
     : Species( params, smpi )
 {
+    particles.isRadReaction=true;
+
     DEBUG("Species is being created as rrLL");
 }
 
