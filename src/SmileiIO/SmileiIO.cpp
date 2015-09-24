@@ -33,9 +33,9 @@ dump_step(0),
 dump_minutes(0.0),
 exit_after_dump(true),
 dump_file_sequence(2),
-dump_request(smpi->getSize()),
 dump_dir(""),
-restart_dir("")
+restart_dir(""),
+dump_request(smpi->getSize())
 {
     if (PyTools::extract("dump_step", dump_step)) {
         if (dump_step)
@@ -196,7 +196,7 @@ SmileiIO::~SmileiIO()
 // ---------------------------------------------------------------------------------------------------------------------
 // Write all fields of all time step in the same file
 // ---------------------------------------------------------------------------------------------------------------------
-void SmileiIO::writeAllFieldsSingleFileTime( std::vector<Field*> * fields, int time, bool avg )
+void SmileiIO::writeAllFieldsSingleFileTime( std::vector<Field*> &fields, int time, bool avg )
 {
     // Make group name: "/0000000000", etc.
     ostringstream name_t;
@@ -210,17 +210,16 @@ void SmileiIO::writeAllFieldsSingleFileTime( std::vector<Field*> * fields, int t
     else      file_id = global_file_id_;
     hid_t group_id = H5::group(file_id, name_t.str());
     
-    int nFields = fields->size();
-    int nFieldsToDump = fieldsToDump.size();
-    
-    if (!nFieldsToDump)
-        for (int i=0; i<nFields; i++)
-            writeFieldsSingleFileTime( (*fields)[i], group_id );
-    else
-        for (int i=0; i<nFields; i++)
-            for (int j=0; j<nFieldsToDump; j++)
-                if ((*fields)[i]->name==fieldsToDump[j])
-                    writeFieldsSingleFileTime( (*fields)[i], group_id );
+    for (unsigned int i=0; i<fields.size(); i++) {
+        if (!fieldsToDump.size()==0) {
+            writeFieldsSingleFileTime(fields[i], group_id );
+        } else {
+            for (unsigned int j=0; j<fieldsToDump.size(); j++) {
+                if (fields[i]->name==fieldsToDump[j])
+                    writeFieldsSingleFileTime( fields[i], group_id );
+            }
+        }
+    }
     
     H5Gclose(group_id);
     
@@ -341,7 +340,8 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
     H5Fflush( fid, H5F_SCOPE_GLOBAL );
     
     
-    H5::attr(fid, "species", vecSpecies.size());    
+    unsigned int vecSpeciesSize=vecSpecies.size();
+    H5::attr(fid, "species", vecSpeciesSize);
     
     for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
         ostringstream name("");
@@ -400,7 +400,7 @@ void SmileiIO::dumpFieldsPerProc(hid_t fid, Field* field)
 void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> &vecSpecies, SmileiMPI* smpi, SimWindow* simWin, Params &params, Diagnostic &diags) {
     
     string nameDump("");
-    
+
     // This will open all sequential dumps and pick the last one
     for (unsigned int i=0;i<dump_file_sequence; i++) {
         ostringstream nameDumpTmp("");
@@ -408,26 +408,27 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
         ifstream f(nameDumpTmp.str().c_str());
         if (f.good()) {
             hid_t fid = H5Fopen( nameDumpTmp.str().c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
-            unsigned int itimeTmp;
-            H5::getAttr(fid, "dump_step", itimeTmp);
-            H5Fclose(fid);
-            if (itimeTmp>itime) {
-                itime=itimeTmp;
-                nameDump=nameDumpTmp.str();
-                dump_times=i;
+            if (fid >=0) {
+                unsigned int itimeTmp;
+                H5::getAttr(fid, "dump_step", itimeTmp);
+                H5Fclose(fid);
+                if (itimeTmp>itime) {
+                    itime=itimeTmp;
+                    nameDump=nameDumpTmp.str();
+                    dump_times=i;
+                }
             }
         }
         f.close();
     }
     
-
     if (nameDump.empty()) {
         ERROR("Cannot find a valid restart file");
     }
     
-    MESSAGE(2, "RESTARTING fields and particles " << nameDump << " step=" << itime);
+    MESSAGEALL(2, " : Restarting fields and particles " << nameDump << " step=" << itime);
     
-    hid_t fid = H5Fopen( nameDump.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+    hid_t fid = H5Fopen( nameDump.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
     if (fid < 0) ERROR(nameDump << " is not a valid HDF5 file");
     
     string dump_version;
@@ -441,16 +442,17 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
         WARNING ("                while running version is " << string(__VERSION) << " of " << string(__COMMITDATE));
     }
     
-    H5::getAttr(fid, "dump_step", itime);
     H5::getAttr(fid, "Energy_time_zero", diags.scalars.Energy_time_zero);
     H5::getAttr(fid, "EnergyUsedForNorm", diags.scalars.EnergyUsedForNorm);
-
+    
+    
     restartFieldsPerProc(fid, EMfields->Ex_);
     restartFieldsPerProc(fid, EMfields->Ey_);
     restartFieldsPerProc(fid, EMfields->Ez_);
     restartFieldsPerProc(fid, EMfields->Bx_);
     restartFieldsPerProc(fid, EMfields->By_);
     restartFieldsPerProc(fid, EMfields->Bz_);
+    
     if (EMfields->Ex_avg!=NULL) {
         restartFieldsPerProc(fid, EMfields->Ex_avg);
         restartFieldsPerProc(fid, EMfields->Ey_avg);
@@ -465,7 +467,6 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
     if (vecSpeciesSize != vecSpecies.size()) {
         ERROR("Number of species differs between dump (" << vecSpeciesSize << ") and namelist ("<<vecSpecies.size()<<")");
     }
-    
     
     for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
         hid_t did, sid;
@@ -482,7 +483,6 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
         unsigned int partSize=0;
         H5::getAttr(gid, "partSize", partSize);
         vecSpecies[ispec]->particles.initialize(partSize,params);
-        
         
         if (partSize>0) {
             for (unsigned int i=0; i<vecSpecies[ispec]->particles.Position.size(); i++) {
@@ -504,7 +504,7 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
             did = H5Dopen(gid, "Weight", H5P_DEFAULT);
             H5Dread(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Weight[0]);
             H5Dclose(did);
-            
+
             did = H5Dopen(gid, "Charge", H5P_DEFAULT);
             H5Dread(did, H5T_NATIVE_SHORT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Charge[0]);
             H5Dclose(did);
@@ -522,14 +522,26 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
             vector<hsize_t> dims(ndims);
             H5Sget_simple_extent_dims(sid,&dims[0],NULL);
             
+            if (ndims != 1) {
+                ERROR("dimension of dumped bmin");
+            }
+            
             vecSpecies[ispec]->bmin.resize(dims[0]);
+            
             H5Dread(did, H5T_NATIVE_UINT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->bmin[0]);
             H5Dclose(did);
             H5Sclose(sid);
             
             did = H5Dopen(gid, "bmax", H5P_DEFAULT);
             sid = H5Dget_space(did);
+            ndims=H5Sget_simple_extent_ndims(sid);
+            dims.resize(ndims);
             H5Sget_simple_extent_dims(sid,&dims[0],NULL);
+            
+            if (ndims != 1) {
+                ERROR("dimension of dumped bmax");
+            }
+
             
             vecSpecies[ispec]->bmax.resize(dims[0]);
             H5Dread(did, H5T_NATIVE_UINT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->bmax[0]);
@@ -543,18 +555,29 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
     // load window status
     if (simWin!=NULL)
         restartMovingWindow(fid, simWin);
+
     
     H5Fclose( fid );
 };
 
 void SmileiIO::restartFieldsPerProc(hid_t fid, Field* field)
 {
-    hsize_t dims[1]={field->globalDims_};
-    hid_t sid = H5Screate_simple (1, dims, NULL);
     hid_t did = H5Dopen (fid, field->name.c_str(),H5P_DEFAULT);
-    H5Dread(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &field->data_[0]);
-    H5Dclose (did);
-    H5Sclose(sid);
+    hid_t my_sid = H5Dget_space(did);
+    int datasize=H5Sget_simple_extent_ndims(my_sid);
+    if (datasize != 1)
+        ERROR("Data is not 1D " << datasize);
+
+    vector<hsize_t> mydims(datasize);
+    H5Sget_simple_extent_dims(my_sid,&mydims[0],NULL);
+    
+    if (mydims[0] != field->globalDims_)
+        ERROR("Field " << field->name << " size do not match with dump " << mydims[0]  << " != " << field->globalDims_);
+
+    H5Dread(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, field->data_);
+
+    H5Sclose(my_sid);
+    H5Dclose(did);
 }
 
 void SmileiIO::restartMovingWindow(hid_t fid, SimWindow* simWin)

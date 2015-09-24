@@ -97,19 +97,18 @@ class H5 {
     static void getAttr(hid_t locationId, std::string attribute_name, std::string &attribute_value) {
         if (H5Aexists(locationId,attribute_name.c_str())>0) {
             hid_t attr_id = H5Aopen_name(locationId, attribute_name.c_str());
-            hid_t filetype = H5Aget_type(attr_id);
-            int sdim = H5Tget_size(filetype)+1;
-            hid_t memtype = H5Tcopy(H5T_C_S1);
-            H5Tset_size(memtype, sdim);
-            char *tmpchar = new char(sdim);
-            if (H5Aread(attr_id, memtype, tmpchar) < 0) {
+            hid_t attr_type = H5Aget_type(attr_id);
+            int sdim = H5Tget_size(attr_type)+1;
+            hid_t mem_type = H5Tcopy(H5T_C_S1);
+            H5Tset_size(mem_type, sdim);
+            std::vector<char> tmpchar(sdim+1);
+            if (H5Aread(attr_id, mem_type, &tmpchar[0]) < 0) {
                 WARNING("Can't read string "<< attribute_name);
             } else {
-                attribute_value = std::string(tmpchar);
+                attribute_value = std::string(tmpchar.begin(),tmpchar.end());
             }
-            delete tmpchar;
-            H5Tclose(memtype);
-            H5Tclose(filetype);
+            H5Tclose(mem_type);
+            H5Tclose(attr_type);
             H5Aclose(attr_id);
         } else {
             WARNING("Cannot find attribute " << attribute_name);

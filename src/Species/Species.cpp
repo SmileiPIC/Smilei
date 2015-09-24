@@ -37,14 +37,14 @@ using namespace std;
 // input: simulation parameters & Species index
 // ---------------------------------------------------------------------------------------------------------------------
 Species::Species(Params& params, SmileiMPI* smpi) :
+velocityProfile(3,NULL),
+temperatureProfile(3,NULL),
 clrw(params.clrw),
 oversize(params.oversize),
 cell_length(params.cell_length),
-velocityProfile(3,NULL),
-temperatureProfile(3,NULL),
+partBoundCond(NULL),
 ndim(params.nDim_particle),
-min_loc(smpi->getDomainLocalMin(0)),
-partBoundCond(NULL)
+min_loc(smpi->getDomainLocalMin(0))
 {
     
     // -------------------

@@ -29,7 +29,7 @@ def _smilei_check():
         else:
             all_species.append(spec.species_type)
 
-    if restart and dump_dir:
+    if dump_step and dump_dir:
         if not os.path.exists(dump_dir):
             try:
                 os.makedirs(dump_dir)
@@ -37,6 +37,10 @@ def _smilei_check():
                 raise Exception("ERROR in the namelist: dump_dir "+dump_dir+" does not exists and cannto be created")
         elif not os.path.isdir(dump_dir):
                 raise Exception("ERROR in the namelist: dump_dir "+dump_dir+" exists and is not a dir")
+
+    if restart and restart_dir:
+        if not os.path.isdir(restart_dir):
+            raise Exception("ERROR in the namelist: restart_dir "+restart_dir+" is not a dir")
 
 
 

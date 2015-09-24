@@ -36,7 +36,7 @@ public:
     virtual ~SmileiIO();
     
     //! Write all fields (E, B, J, rho, per species ; 10 + 4 x nspecies fields) of all time step in the same file
-    void writeAllFieldsSingleFileTime( std::vector<Field*> *, int, bool );
+    void writeAllFieldsSingleFileTime( std::vector<Field*> &, int, bool );
     
     //! Basic Write of a field in the specified group of the global file
     virtual void writeFieldsSingleFileTime( Field* field, hid_t group_id ) = 0;

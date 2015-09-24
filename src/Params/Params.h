@@ -157,10 +157,7 @@ public:
     static std::vector<unsigned int> FindSpecies(std::vector<Species*>&, std::vector<std::string>);
     
 
-private:
-    //! init python RTE
-    void initPython(SmileiMPI*, std::vector<std::string>);
-    
+private:    
     //! passing named command to python
     void pyRunScript(std::string command, std::string name=std::string(""));
     

@@ -166,7 +166,7 @@ public:
     //! get python function without arguments
     template <typename T=double>
     static T runPyFunction(std::string name) {
-        T retval;
+        T retval(0);
         PyObject* myFunction = PyObject_GetAttrString(PyImport_AddModule("__main__"),name.c_str());
         if (myFunction) {
             PyObject *pyresult = PyObject_CallFunction(myFunction, const_cast<char *>(""));

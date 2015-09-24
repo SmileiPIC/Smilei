@@ -37,7 +37,7 @@ public:
             }
             
             // Create species object
-            Species * thisSpecies;
+            Species * thisSpecies=NULL;
             if (dynamics_type=="norm") {
                 // Species with Boris dynamics
                 thisSpecies = new Species_norm(params, smpi);

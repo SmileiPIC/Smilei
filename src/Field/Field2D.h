@@ -41,7 +41,7 @@ public:
 
     //! Overloading of the () operator allowing to set a new value for the (i,j) element of a Field2D
     inline double& operator () (unsigned int i,unsigned int j) {
-        DEBUGEXEC(if (i>=dims_[0] || j>=dims_[1]) ERROR(name << "Out of limits & "<< i << " " << j));
+        DEBUGEXEC(if (i>=dims_[0] || j>=dims_[1]) ERROR(name << "Out of limits ("<< i << "," << j << ")  > (" <<dims_[0] << "," <<dims_[1] << ")" ));
         DEBUGEXEC(if (!std::isfinite(data_2D[i][j])) ERROR(name << " Not finite "<< i << "," << j << " = " << data_2D[i][j]));
         return data_2D[i][j];
     };

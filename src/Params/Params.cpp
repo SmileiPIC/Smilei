@@ -19,8 +19,59 @@ using namespace std;
 Params::Params(SmileiMPI* smpi, std::vector<std::string> namelistsFiles) :
 namelist("")
 {
-    //init Python    
-    initPython(smpi,namelistsFiles);
+    //init Python
+    PyTools::openPython();
+    // here we add the rank, in case some script need it
+    PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_rank", smpi->getRank());
+    
+    // First, we tell python to filter the ctrl-C kill command (or it would prevent to kill the code execution).
+    // This is done separately from other scripts because we don't want it in the concatenated python namelist.
+    PyTools::checkPyError();
+    string command = "import signal\nsignal.signal(signal.SIGINT, signal.SIG_DFL)";
+    if( !PyRun_SimpleString(command.c_str()) ) PyTools::checkPyError();
+    
+    // Running pyinit.py
+    pyRunScript(string(reinterpret_cast<const char*>(pyinit_py), pyinit_py_len), "pyinit.py");
+    
+    // Running pyfunctons.py
+    pyRunScript(string(reinterpret_cast<const char*>(pyprofiles_py), pyprofiles_py_len), "pyprofiles.py");
+    
+    // Running the namelists
+    pyRunScript("############### BEGIN USER NAMELISTS ###############\n");
+    for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {
+        MESSAGE(1,"Reading file " << *it);
+        string strNamelist="";
+        if (smpi->isMaster()) {
+            ifstream istr(it->c_str());
+            if (istr.is_open()) {
+                string oneLine;
+                while (getline(istr, oneLine)) {
+                    strNamelist += oneLine + "\n";
+                }
+            } else {
+                ERROR("File " << (*it) << " does not exists");
+            }
+            strNamelist +="\n";
+        }
+        smpi->bcast(strNamelist);
+        pyRunScript(strNamelist,(*it));
+    }
+    pyRunScript("################ END USER NAMELISTS ################\n");
+    // Running pycontrol.py
+    pyRunScript(string(reinterpret_cast<const char*>(pycontrol_py), pycontrol_py_len),"pycontrol.py");
+    
+    PyTools::runPyFunction("_smilei_check");
+    
+    
+    // Now the string "namelist" contains all the python files concatenated
+    // It is written as a file: smilei.py
+    if (smpi->isMaster()) {
+        ofstream out_namelist("smilei.py");
+        if (out_namelist.is_open()) {
+            out_namelist << namelist;
+            out_namelist.close();
+        }
+    }
     
     unsigned int random_seed=0;
     if (!PyTools::extract("random_seed", random_seed)) {
@@ -170,61 +221,6 @@ namelist("")
 
 Params::~Params() {
     PyTools::closePython();
-}
-
-void Params::initPython(SmileiMPI *smpi, std::vector<std::string> namelistsFiles){
-    PyTools::openPython();
-    // here we add the rank, in case some script need it
-    PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_rank", smpi->getRank());
-    
-    // First, we tell python to filter the ctrl-C kill command (or it would prevent to kill the code execution).
-    // This is done separately from other scripts because we don't want it in the concatenated python namelist.
-    PyTools::checkPyError();
-    string command = "import signal\nsignal.signal(signal.SIGINT, signal.SIG_DFL)";
-    if( !PyRun_SimpleString(command.c_str()) ) PyTools::checkPyError();
-    
-    // Running pyinit.py
-    pyRunScript(string(reinterpret_cast<const char*>(pyinit_py), pyinit_py_len), "pyinit.py");
-    
-    // Running pyfunctons.py
-    pyRunScript(string(reinterpret_cast<const char*>(pyprofiles_py), pyprofiles_py_len), "pyprofiles.py");
-    
-    // Running the namelists
-    pyRunScript("############### BEGIN USER NAMELISTS ###############\n");
-    for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {
-        MESSAGE(1,"Reading file " << *it);
-        string strNamelist="";
-        if (smpi->isMaster()) {
-            ifstream istr(it->c_str());
-            if (istr.is_open()) {
-                string oneLine;
-                while (getline(istr, oneLine)) {
-                    strNamelist += oneLine + "\n";
-                }
-            } else {
-                ERROR("File " << (*it) << " does not exists");
-            }
-            strNamelist +="\n";
-        }
-        smpi->bcast(strNamelist);
-        pyRunScript(strNamelist,(*it));
-    }
-    pyRunScript("################ END USER NAMELISTS ################\n");    
-    // Running pycontrol.py
-    pyRunScript(string(reinterpret_cast<const char*>(pycontrol_py), pycontrol_py_len),"pycontrol.py");
-    
-    PyTools::runPyFunction("_smilei_check");
-    
-    
-    // Now the string "namelist" contains all the python files concatenated
-    // It is written as a file: smilei.py
-    if (smpi->isMaster()) {
-        ofstream out_namelist("smilei.py");
-        if (out_namelist.is_open()) {
-            out_namelist << namelist;
-            out_namelist.close();
-        }
-    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -387,7 +383,6 @@ void Params::pyRunScript(string command, string name) {
 
 //! run the python functions cleanup (user defined) and _keep_python_running (in pycontrol.py)
 void Params::cleanup() {
-    
     // call cleanup function from the user namelist (it can be used to free some memory 
     // from the python side) while keeping the interpreter running
     MESSAGE(1,"Checking for cleanup() function:");

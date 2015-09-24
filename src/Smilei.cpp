@@ -208,10 +208,10 @@ int main (int argc, char* argv[])
         TITLE("Running diags at time t = 0");
         diags.runAllDiags(0, EMfields, vecSpecies, Interp, smpi);
         // temporary EM fields dump in Fields.h5
-        sio->writeAllFieldsSingleFileTime( &(EMfields->allFields), 0, 0 );
+        sio->writeAllFieldsSingleFileTime(EMfields->allFields, 0, 0 );
         // temporary EM fields dump in Fields_avg.h5
         if (diags.ntime_step_avg!=0)
-            sio->writeAllFieldsSingleFileTime( &(EMfields->allFields_avg), 0, 1 );
+            sio->writeAllFieldsSingleFileTime(EMfields->allFields_avg, 0, 1 );
         // temporary particle dump at time 0
         sio->writePlasma( vecSpecies, 0., smpi );
         
@@ -375,21 +375,19 @@ int main (int argc, char* argv[])
         // incrementing averaged electromagnetic fields
         if (diags.ntime_step_avg) EMfields->incrementAvgFields(itime, diags.ntime_step_avg);
         
-        
         // call the various diagnostics
         // ----------------------------
         
         // run all diagnostics
         timer[3].restart();
-        
-        
         diags.runAllDiags(itime, EMfields, vecSpecies, Interp, smpi);
         timer[3].update();
         
         timer[6].restart();
         // temporary EM fields dump in Fields.h5
-        if  ((diags.fieldDump_every != 0) && (itime % diags.fieldDump_every == 0))
-            sio->writeAllFieldsSingleFileTime( &(EMfields->allFields), itime, 0 );
+        if  ((diags.fieldDump_every != 0) && (itime % diags.fieldDump_every == 0)) {
+            sio->writeAllFieldsSingleFileTime( EMfields->allFields, itime, 0 );
+        }
         timer[6].update();
         
         timer[7].restart();
@@ -397,7 +395,7 @@ int main (int argc, char* argv[])
         if  ((diags.ntime_step_avg!=0) &&
              (diags.avgfieldDump_every != 0) && 
              (itime % diags.avgfieldDump_every == 0)) {
-            sio->writeAllFieldsSingleFileTime( &(EMfields->allFields_avg), itime, 1 );
+            sio->writeAllFieldsSingleFileTime(EMfields->allFields_avg, itime, 1 );
         }
         timer[7].update();
         
@@ -452,11 +450,11 @@ int main (int argc, char* argv[])
     if (latestTimeStep==params.n_time) {
     // temporary EM fields dump in Fields.h5
     if  ( (diags.fieldDump_every != 0) && (params.n_time % diags.fieldDump_every != 0) )
-        sio->writeAllFieldsSingleFileTime( &(EMfields->allFields), params.n_time, 0 );
+        sio->writeAllFieldsSingleFileTime(EMfields->allFields, params.n_time, 0 );
     // temporary time-averaged EM fields dump in Fields_avg.h5
     if  (diags.ntime_step_avg!=0)
         if  ( (diags.avgfieldDump_every != 0) && (params.n_time % diags.avgfieldDump_every != 0) )
-            sio->writeAllFieldsSingleFileTime( &(EMfields->allFields_avg), params.n_time, 1 );
+            sio->writeAllFieldsSingleFileTime(EMfields->allFields_avg, params.n_time, 1 );
 #ifdef _IO_PARTICLE
     // temporary particles dump (1 HDF5 file per process)
     if  ( (diags.particleDump_every != 0) && (params.n_time % diags.particleDump_every != 0) )

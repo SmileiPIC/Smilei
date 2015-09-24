@@ -77,6 +77,18 @@ Stop and restart
   :default: 2
   
   This tells :program:`Smilei` to keep the last ``n`` dumps for a later restart 2 is the default option in case the code is stopped (or crashes) during a dump write leading to a unreadable dump file.
+
+.. py:data:: dump_dir
+
+  :default: ""
+  
+  This tells :program:`Smilei` where to write dump files
+
+.. py:data:: restart_dir
+
+  :default: ""
+  
+  This tells :program:`Smilei` where to find dump files for restart
   
 ----
 

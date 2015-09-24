@@ -55,11 +55,13 @@ endif
 
 ifneq (,$(findstring openmp,$(config)))
     ifneq (,$(findstring icpc,$(shell $(SMILEICXX) --showme:command)))
-        CFLAGS += -openmp
+        OPENMPFLAGS = -openmp
     else
-        CFLAGS += -fopenmp 
+        OPENMPFLAGS = -fopenmp 
     endif
-    CFLAGS += -D_OMP
+    OPENMPFLAGS += -D_OMP
+    LDFLAGS += $(OPENMPFLAGS)
+    CFLAGS += $(OPENMPFLAGS)
 endif
 
 clean:
@@ -86,7 +88,7 @@ $(BUILD)/%.o : %.cpp
 	$(SMILEICXX) $(CFLAGS) -c $< -o $@
 
 $(EXEC): $(OBJS)
-	$(SMILEICXX) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS)
+	$(SMILEICXX) $(LDFLAGS) -o $@ $(OBJS) 
 
 # these are kept for backward compatibility and might be removed (see make help)
 obsolete:
