@@ -21,8 +21,6 @@ namelist("")
 {
     //init Python
     PyTools::openPython();
-    // here we add the rank, in case some script need it
-    PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_rank", smpi->getRank());
     
     // First, we tell python to filter the ctrl-C kill command (or it would prevent to kill the code execution).
     // This is done separately from other scripts because we don't want it in the concatenated python namelist.
@@ -32,6 +30,8 @@ namelist("")
     
     // Running pyinit.py
     pyRunScript(string(reinterpret_cast<const char*>(pyinit_py), pyinit_py_len), "pyinit.py");
+    // here we add the rank, in case some script need it
+    PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_rank", smpi->getRank());
     
     // Running pyfunctons.py
     pyRunScript(string(reinterpret_cast<const char*>(pyprofiles_py), pyprofiles_py_len), "pyprofiles.py");
@@ -382,13 +382,15 @@ void Params::pyRunScript(string command, string name) {
 }
 
 //! run the python functions cleanup (user defined) and _keep_python_running (in pycontrol.py)
-void Params::cleanup() {
+void Params::cleanup(SmileiMPI* smpi) {
     // call cleanup function from the user namelist (it can be used to free some memory 
     // from the python side) while keeping the interpreter running
     MESSAGE(1,"Checking for cleanup() function:");
     PyTools::runPyFunction("cleanup");
     // this will reset error in python in case cleanup doesn't exists
     PyErr_Clear();
+    
+    smpi->barrier();
     
     // this function is defined in the Python/pyontrol.py file and should return false if we can close
     // the python interpreter
@@ -400,6 +402,7 @@ void Params::cleanup() {
         PyErr_Print();
         Py_Finalize();
     }
+    smpi->barrier();
 }
 
 

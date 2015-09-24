@@ -98,10 +98,12 @@ class H5 {
         if (H5Aexists(locationId,attribute_name.c_str())>0) {
             hid_t attr_id = H5Aopen_name(locationId, attribute_name.c_str());
             hid_t attr_type = H5Aget_type(attr_id);
-            int sdim = H5Tget_size(attr_type)+1;
+            int sdim = H5Tget_size(attr_type);
             hid_t mem_type = H5Tcopy(H5T_C_S1);
             H5Tset_size(mem_type, sdim);
-            std::vector<char> tmpchar(sdim+1);
+            std::vector<char> tmpchar(sdim);
+            // line below would crash (don't know why)
+            // char* tmpchar= new char(sdim);
             if (H5Aread(attr_id, mem_type, &tmpchar[0]) < 0) {
                 WARNING("Can't read string "<< attribute_name);
             } else {

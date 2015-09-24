@@ -34,7 +34,7 @@ def _smilei_check():
             try:
                 os.makedirs(dump_dir)
             except OSError as exception:
-                raise Exception("ERROR in the namelist: dump_dir "+dump_dir+" does not exists and cannto be created")
+                raise Exception("ERROR in the namelist: dump_dir "+dump_dir+" does not exists and cannot be created")
         elif not os.path.isdir(dump_dir):
                 raise Exception("ERROR in the namelist: dump_dir "+dump_dir+" exists and is not a dir")
 
