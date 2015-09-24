@@ -6,8 +6,15 @@
 #ifndef PYHelper_H
 #define PYHelper_H
 
+#ifdef _POSIX_C_SOURCE
+#warning check for fix here: https://bugs.python.org/issue17120
 #undef _POSIX_C_SOURCE
+#endif
+
+#ifdef _XOPEN_SOURCE
+#warning check for fix here: https://bugs.python.org/issue17120
 #undef _XOPEN_SOURCE
+#endif
 
 #include <Python.h>
 #include <vector>

@@ -37,26 +37,25 @@ namelist("")
     pyRunScript(string(reinterpret_cast<const char*>(pyprofiles_py), pyprofiles_py_len), "pyprofiles.py");
     
     // Running the namelists
-    pyRunScript("############### BEGIN USER NAMELISTS ###############\n");
+    pyRunScript("############### BEGIN USER NAMELISTS/COMMANDS ###############\n");
     for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {
-        MESSAGE(1,"Reading file " << *it);
         string strNamelist="";
         if (smpi->isMaster()) {
             ifstream istr(it->c_str());
             if (istr.is_open()) {
-                string oneLine;
-                while (getline(istr, oneLine)) {
-                    strNamelist += oneLine + "\n";
-                }
+                MESSAGE(1,"Reading file " << *it);
+                std::stringstream buffer;
+                buffer << istr.rdbuf();
+                strNamelist+=buffer.str();
             } else {
-                ERROR("File " << (*it) << " does not exists");
+                strNamelist= (*it);
             }
             strNamelist +="\n";
         }
         smpi->bcast(strNamelist);
         pyRunScript(strNamelist,(*it));
     }
-    pyRunScript("################ END USER NAMELISTS ################\n");
+    pyRunScript("################ END USER NAMELISTS/COMMANDS  ################\n");
     // Running pycontrol.py
     pyRunScript(string(reinterpret_cast<const char*>(pycontrol_py), pycontrol_py_len),"pycontrol.py");
     
