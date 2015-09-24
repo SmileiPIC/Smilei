@@ -6,6 +6,8 @@
 #ifndef PYHelper_H
 #define PYHelper_H
 
+#undef _POSIX_C_SOURCE
+#undef _XOPEN_SOURCE
 
 #include <Python.h>
 #include <vector>
