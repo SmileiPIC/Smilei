@@ -205,135 +205,135 @@ void Patch::dynamics(double time_dual, PicParams &params, SimWindow* simWindow, 
 
 }
 
-void Patch::initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, int tnum)
-{
-    Particles &cuParticles = (*vecSpecies[ispec]->particles);
-    
-    std::vector< std::vector<int> >* indexes_of_particles_to_exchange_per_thd = &vecSpecies[ispec]->indexes_of_particles_to_exchange_per_thd;
-    std::vector<int>*                indexes_of_particles_to_exchange         = &vecSpecies[ispec]->indexes_of_particles_to_exchange;
-    
-    /********************************************************************************/
-    // Build lists of indexes of particle to exchange per neighbor
-    // Computed from indexes_of_particles_to_exchange computed during particles' BC
-    /********************************************************************************/
-    (*indexes_of_particles_to_exchange).clear();
-        
-    int tmp = 0;
-    for (int tid=0 ; tid < (int)indexes_of_particles_to_exchange_per_thd->size() ; tid++)
-	tmp += ((*indexes_of_particles_to_exchange_per_thd)[tid]).size();
-    (*indexes_of_particles_to_exchange).resize( tmp );
-        
-    int k=0;
-    for (int tid=0 ; tid < (int)indexes_of_particles_to_exchange_per_thd->size() ; tid++) {
-	for (int ipart = 0 ; ipart < (int) ((*indexes_of_particles_to_exchange_per_thd)[tid]).size() ; ipart++ ) {
-	    (*indexes_of_particles_to_exchange)[k] =  (*indexes_of_particles_to_exchange_per_thd)[tid][ipart] ;
-	    k++;
-	}
-	((*indexes_of_particles_to_exchange_per_thd))[tid].clear();
-    }
-    sort( (*indexes_of_particles_to_exchange).begin(), (*indexes_of_particles_to_exchange).end() );
-        
-    int n_part_send = (*indexes_of_particles_to_exchange).size();
-    int n_part_recv;
-        
-    int iPart;
-    int n_particles;
-
-    // Define where particles are going 
-    for (int i=0 ; i<n_part_send ; i++) {
-	iPart = (*indexes_of_particles_to_exchange)[i];
-
-	if ( cuParticles.position(0,iPart) < min_local[0]) { 
-	    if ( cuParticles.position(1,iPart) < min_local[1]) {
-		vecSpecies[ispec]->specMPI.corner_buff_index_send[0][0].push_back( iPart );
-	    }
-	    else if ( cuParticles.position(1,iPart) >= max_local[1]) {
-		vecSpecies[ispec]->specMPI.corner_buff_index_send[0][1].push_back( iPart );
-	    }
-	    else {
-		vecSpecies[ispec]->specMPI.patch_buff_index_send[0][0].push_back( iPart );
-	    }
-	}
-	else if ( cuParticles.position(0,iPart) >= max_local[0]) { 
-	    if ( cuParticles.position(1,iPart) < min_local[1]) {
-		vecSpecies[ispec]->specMPI.corner_buff_index_send[1][0].push_back( iPart );
-	    }
-	    else if ( cuParticles.position(1,iPart) >= max_local[1]) {
-		vecSpecies[ispec]->specMPI.corner_buff_index_send[1][1].push_back( iPart );
-	    }
-	    else {
-		vecSpecies[ispec]->specMPI.patch_buff_index_send[0][1].push_back( iPart );
-	    }
-	}
-	else {
-	    if ( cuParticles.position(1,iPart) < min_local[1]) {
-		vecSpecies[ispec]->specMPI.patch_buff_index_send[1][0].push_back( iPart );
-	    }
-	    else if ( cuParticles.position(1,iPart) >= max_local[1]) {
-		vecSpecies[ispec]->specMPI.patch_buff_index_send[1][1].push_back( iPart );
-	    }
-	    else {
-		//If partciles is in but here, to be suppressed (= supp BC)
-	    }
-	}
-    }
-        
-    /********************************************************************************/
-    // Exchange number of particles to exchange to establish or not a communication
-    /********************************************************************************/
-    for (int iDim=0 ; iDim<2 ; iDim++) {
-	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-	    if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
-		//n_part_send = (vecSpecies[ispec]->specMPI.patch_buff_index_send[iDim][iNeighbor]).size();
-		vecSpecies[ispec]->specMPI.patch_buff_index_send_sz[iDim][iNeighbor] = (vecSpecies[ispec]->specMPI.patch_buff_index_send[iDim][iNeighbor]).size();
-		//int tag = buildtag( 1, hindex, neighbor_[iDim][iNeighbor]);
-		int tag = buildtag( hindex, iDim+1, iNeighbor+3 );
-		//MPI_Isend( &(vecSpecies[ispec]->specMPI.patch_buff_index_send_sz[iDim][iNeighbor]), 1, MPI_INT, 0, tag, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.patch_srequest[iDim][iNeighbor]) );
-		MPI_Isend( &(vecSpecies[ispec]->specMPI.patch_buff_index_send_sz[iDim][iNeighbor]), 1, MPI_INT, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(vecSpecies[ispec]->specMPI.patch_srequest[iDim][iNeighbor]) );
-		//cout << hindex << " will sent " << n_part_send << " to " << neighbor_[iDim][iNeighbor] << " with tag " << tag << endl;
-	    } // END of Send
-	    else
-		n_part_send = 0;
-	    if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
-		vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2] = 0;
-		//int tag = buildtag( 1, neighbor_[iDim][(iNeighbor+1)%2], hindex);
-		int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim+1, iNeighbor+3 );
-		//MPI_Irecv( &(vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2]), 1, MPI_INT, 0, tag, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]) );
-		MPI_Irecv( &(vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2]), 1, MPI_INT, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(vecSpecies[ispec]->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]) );
-		//cout << hindex << " will recv from " << neighbor_[iDim][(iNeighbor+1)%2] << " with tag " << tag << endl;
-	    }
-	    else 
-		vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2] = 0;
-	}
-    }
-
-    for (int iDim=0 ; iDim<2 ; iDim++) {
-	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-	    if (corner_neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
-		//n_part_send = (vecSpecies[ispec]->specMPI.corner_buff_index_send[iDim][iNeighbor]).size();
-		vecSpecies[ispec]->specMPI.corner_buff_index_send_sz[iDim][iNeighbor] = (vecSpecies[ispec]->specMPI.corner_buff_index_send[iDim][iNeighbor]).size();
-		//int tag = buildtag( 1, hindex, corner_neighbor_[iDim][iNeighbor]);
-		int tag = buildtag( 1, hindex, iDim+5, iNeighbor+7 );
-		//MPI_Isend( &(vecSpecies[ispec]->specMPI.corner_buff_index_send_sz[iDim][iNeighbor]), 1, MPI_INT, 0, tag, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.corner_srequest[iDim][iNeighbor]) );
-		MPI_Isend( &(vecSpecies[ispec]->specMPI.corner_buff_index_send_sz[iDim][iNeighbor]), 1, MPI_INT, MPI_corner_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(vecSpecies[ispec]->specMPI.corner_srequest[iDim][iNeighbor]) );
-		//cout << hindex << " will sent " << n_part_send << " to " << corner_neighbor_[iDim][iNeighbor] << " with tag " << tag << endl;
-	    } // END of Send
-	    else
-		n_part_send = 0;
-	    if (corner_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
-		vecSpecies[ispec]->specMPI.corner_buff_index_recv_sz[iDim][(iNeighbor+1)%2] = 0;
-		//int tag = buildtag( 1, corner_neighbor_[iDim][(iNeighbor+1)%2], hindex);
-		int tag = buildtag( 1, corner_neighbor_[iDim][(iNeighbor+1)%2], (iDim+1)%2+5, iNeighbor+7 );
-		//MPI_Irecv( &(vecSpecies[ispec]->specMPI.corner_buff_index_recv_sz[iDim][(iNeighbor+1)%2]), 1, MPI_INT, 0, tag, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.corner_rrequest[iDim][(iNeighbor+1)%2]) );
-		MPI_Irecv( &(vecSpecies[ispec]->specMPI.corner_buff_index_recv_sz[iDim][(iNeighbor+1)%2]), 1, MPI_INT, MPI_corner_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(vecSpecies[ispec]->specMPI.corner_rrequest[iDim][(iNeighbor+1)%2]) );
-		//cout << hindex << " will recv from " << corner_neighbor_[iDim][(iNeighbor+1)%2] << " with tag " << tag << endl;
-	    }
-	    else 
-		vecSpecies[ispec]->specMPI.corner_buff_index_recv_sz[iDim][(iNeighbor+1)%2] = 0;
-	}
-    }
-
-} // initExchParticles
+//void Patch::initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, int tnum)
+//{
+//    Particles &cuParticles = (*vecSpecies[ispec]->particles);
+//    
+//    std::vector< std::vector<int> >* indexes_of_particles_to_exchange_per_thd = &vecSpecies[ispec]->indexes_of_particles_to_exchange_per_thd;
+//    std::vector<int>*                indexes_of_particles_to_exchange         = &vecSpecies[ispec]->indexes_of_particles_to_exchange;
+//    
+//    /********************************************************************************/
+//    // Build lists of indexes of particle to exchange per neighbor
+//    // Computed from indexes_of_particles_to_exchange computed during particles' BC
+//    /********************************************************************************/
+//    (*indexes_of_particles_to_exchange).clear();
+//        
+//    int tmp = 0;
+//    for (int tid=0 ; tid < (int)indexes_of_particles_to_exchange_per_thd->size() ; tid++)
+//	tmp += ((*indexes_of_particles_to_exchange_per_thd)[tid]).size();
+//    (*indexes_of_particles_to_exchange).resize( tmp );
+//        
+//    int k=0;
+//    for (int tid=0 ; tid < (int)indexes_of_particles_to_exchange_per_thd->size() ; tid++) {
+//	for (int ipart = 0 ; ipart < (int) ((*indexes_of_particles_to_exchange_per_thd)[tid]).size() ; ipart++ ) {
+//	    (*indexes_of_particles_to_exchange)[k] =  (*indexes_of_particles_to_exchange_per_thd)[tid][ipart] ;
+//	    k++;
+//	}
+//	((*indexes_of_particles_to_exchange_per_thd))[tid].clear();
+//    }
+//    sort( (*indexes_of_particles_to_exchange).begin(), (*indexes_of_particles_to_exchange).end() );
+//        
+//    int n_part_send = (*indexes_of_particles_to_exchange).size();
+//    int n_part_recv;
+//        
+//    int iPart;
+//    int n_particles;
+//
+//    // Define where particles are going 
+//    for (int i=0 ; i<n_part_send ; i++) {
+//	iPart = (*indexes_of_particles_to_exchange)[i];
+//
+//	if ( cuParticles.position(0,iPart) < min_local[0]) { 
+//	    if ( cuParticles.position(1,iPart) < min_local[1]) {
+//		vecSpecies[ispec]->specMPI.corner_buff_index_send[0][0].push_back( iPart );
+//	    }
+//	    else if ( cuParticles.position(1,iPart) >= max_local[1]) {
+//		vecSpecies[ispec]->specMPI.corner_buff_index_send[0][1].push_back( iPart );
+//	    }
+//	    else {
+//		vecSpecies[ispec]->specMPI.patch_buff_index_send[0][0].push_back( iPart );
+//	    }
+//	}
+//	else if ( cuParticles.position(0,iPart) >= max_local[0]) { 
+//	    if ( cuParticles.position(1,iPart) < min_local[1]) {
+//		vecSpecies[ispec]->specMPI.corner_buff_index_send[1][0].push_back( iPart );
+//	    }
+//	    else if ( cuParticles.position(1,iPart) >= max_local[1]) {
+//		vecSpecies[ispec]->specMPI.corner_buff_index_send[1][1].push_back( iPart );
+//	    }
+//	    else {
+//		vecSpecies[ispec]->specMPI.patch_buff_index_send[0][1].push_back( iPart );
+//	    }
+//	}
+//	else {
+//	    if ( cuParticles.position(1,iPart) < min_local[1]) {
+//		vecSpecies[ispec]->specMPI.patch_buff_index_send[1][0].push_back( iPart );
+//	    }
+//	    else if ( cuParticles.position(1,iPart) >= max_local[1]) {
+//		vecSpecies[ispec]->specMPI.patch_buff_index_send[1][1].push_back( iPart );
+//	    }
+//	    else {
+//		//If partciles is in but here, to be suppressed (= supp BC)
+//	    }
+//	}
+//    }
+//        
+//    /********************************************************************************/
+//    // Exchange number of particles to exchange to establish or not a communication
+//    /********************************************************************************/
+//    for (int iDim=0 ; iDim<2 ; iDim++) {
+//	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+//	    if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
+//		//n_part_send = (vecSpecies[ispec]->specMPI.patch_buff_index_send[iDim][iNeighbor]).size();
+//		vecSpecies[ispec]->specMPI.patch_buff_index_send_sz[iDim][iNeighbor] = (vecSpecies[ispec]->specMPI.patch_buff_index_send[iDim][iNeighbor]).size();
+//		//int tag = buildtag( 1, hindex, neighbor_[iDim][iNeighbor]);
+//		int tag = buildtag( hindex, iDim+1, iNeighbor+3 );
+//		//MPI_Isend( &(vecSpecies[ispec]->specMPI.patch_buff_index_send_sz[iDim][iNeighbor]), 1, MPI_INT, 0, tag, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.patch_srequest[iDim][iNeighbor]) );
+//		MPI_Isend( &(vecSpecies[ispec]->specMPI.patch_buff_index_send_sz[iDim][iNeighbor]), 1, MPI_INT, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(vecSpecies[ispec]->specMPI.patch_srequest[iDim][iNeighbor]) );
+//		//cout << hindex << " will sent " << n_part_send << " to " << neighbor_[iDim][iNeighbor] << " with tag " << tag << endl;
+//	    } // END of Send
+//	    else
+//		n_part_send = 0;
+//	    if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+//		vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2] = 0;
+//		//int tag = buildtag( 1, neighbor_[iDim][(iNeighbor+1)%2], hindex);
+//		int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim+1, iNeighbor+3 );
+//		//MPI_Irecv( &(vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2]), 1, MPI_INT, 0, tag, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]) );
+//		MPI_Irecv( &(vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2]), 1, MPI_INT, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(vecSpecies[ispec]->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]) );
+//		//cout << hindex << " will recv from " << neighbor_[iDim][(iNeighbor+1)%2] << " with tag " << tag << endl;
+//	    }
+//	    else 
+//		vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2] = 0;
+//	}
+//    }
+//
+//    for (int iDim=0 ; iDim<2 ; iDim++) {
+//	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+//	    if (corner_neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
+//		//n_part_send = (vecSpecies[ispec]->specMPI.corner_buff_index_send[iDim][iNeighbor]).size();
+//		vecSpecies[ispec]->specMPI.corner_buff_index_send_sz[iDim][iNeighbor] = (vecSpecies[ispec]->specMPI.corner_buff_index_send[iDim][iNeighbor]).size();
+//		//int tag = buildtag( 1, hindex, corner_neighbor_[iDim][iNeighbor]);
+//		int tag = buildtag( 1, hindex, iDim+5, iNeighbor+7 );
+//		//MPI_Isend( &(vecSpecies[ispec]->specMPI.corner_buff_index_send_sz[iDim][iNeighbor]), 1, MPI_INT, 0, tag, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.corner_srequest[iDim][iNeighbor]) );
+//		MPI_Isend( &(vecSpecies[ispec]->specMPI.corner_buff_index_send_sz[iDim][iNeighbor]), 1, MPI_INT, MPI_corner_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(vecSpecies[ispec]->specMPI.corner_srequest[iDim][iNeighbor]) );
+//		//cout << hindex << " will sent " << n_part_send << " to " << corner_neighbor_[iDim][iNeighbor] << " with tag " << tag << endl;
+//	    } // END of Send
+//	    else
+//		n_part_send = 0;
+//	    if (corner_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+//		vecSpecies[ispec]->specMPI.corner_buff_index_recv_sz[iDim][(iNeighbor+1)%2] = 0;
+//		//int tag = buildtag( 1, corner_neighbor_[iDim][(iNeighbor+1)%2], hindex);
+//		int tag = buildtag( 1, corner_neighbor_[iDim][(iNeighbor+1)%2], (iDim+1)%2+5, iNeighbor+7 );
+//		//MPI_Irecv( &(vecSpecies[ispec]->specMPI.corner_buff_index_recv_sz[iDim][(iNeighbor+1)%2]), 1, MPI_INT, 0, tag, MPI_COMM_SELF, &(vecSpecies[ispec]->specMPI.corner_rrequest[iDim][(iNeighbor+1)%2]) );
+//		MPI_Irecv( &(vecSpecies[ispec]->specMPI.corner_buff_index_recv_sz[iDim][(iNeighbor+1)%2]), 1, MPI_INT, MPI_corner_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(vecSpecies[ispec]->specMPI.corner_rrequest[iDim][(iNeighbor+1)%2]) );
+//		//cout << hindex << " will recv from " << corner_neighbor_[iDim][(iNeighbor+1)%2] << " with tag " << tag << endl;
+//	    }
+//	    else 
+//		vecSpecies[ispec]->specMPI.corner_buff_index_recv_sz[iDim][(iNeighbor+1)%2] = 0;
+//	}
+//    }
+//
+//} // initExchParticles
 
 
 void Patch::initCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int tnum)
@@ -505,7 +505,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params,
     Particles &cuParticles = (*vecSpecies[ispec]->particles);
 
 
-    std::vector< std::vector<int> >* indexes_of_particles_to_exchange_per_thd = &vecSpecies[ispec]->indexes_of_particles_to_exchange_per_thd;
+    //std::vector< std::vector<int> >* indexes_of_particles_to_exchange_per_thd = &vecSpecies[ispec]->indexes_of_particles_to_exchange_per_thd;
     std::vector<int>*                indexes_of_particles_to_exchange         = &vecSpecies[ispec]->indexes_of_particles_to_exchange;
 
     std::vector<int>* cubmin = &vecSpecies[ispec]->bmin;
@@ -727,30 +727,61 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, int
     }
 
     
-    std::vector< std::vector<int> >* indexes_of_particles_to_exchange_per_thd = &vecSpecies[ispec]->indexes_of_particles_to_exchange_per_thd;
+    //std::vector< std::vector<int> >* indexes_of_particles_to_exchange_per_thd = &vecSpecies[ispec]->indexes_of_particles_to_exchange_per_thd;
     std::vector<int>*                indexes_of_particles_to_exchange         = &vecSpecies[ispec]->indexes_of_particles_to_exchange;
+    //std::vector<int>*                new_indexes_of_particles_to_exchange         = &vecSpecies[ispec]->new_indexes_of_particles_to_exchange;
+
+    //Test new addpart in exchlist
+    //if ( ((*indexes_of_particles_to_exchange_per_thd)[0]).size() != (*new_indexes_of_particles_to_exchange).size() ) {
+    //    cout << "per thd sizes are not the same " << ((*indexes_of_particles_to_exchange_per_thd)[0]).size() << " " << (*new_indexes_of_particles_to_exchange).size() << endl;
+    //}  
+    //for (int ipart = 0 ; ipart < (int) ((*indexes_of_particles_to_exchange_per_thd)[0]).size() ; ipart++ ) {
+    //    if ( ((*indexes_of_particles_to_exchange_per_thd)[0])[ipart] != (*new_indexes_of_particles_to_exchange)[ipart]) {
+    //        cout << "per thd parts are not the same " << (*indexes_of_particles_to_exchange_per_thd)[0][ipart] << " " << (*new_indexes_of_particles_to_exchange)[ipart] << endl;
+    //    }
+    //}
+    //***********************************
     
     /********************************************************************************/
     // Build lists of indexes of particle to exchange per neighbor
     // Computed from indexes_of_particles_to_exchange computed during particles' BC
     /********************************************************************************/
-    (*indexes_of_particles_to_exchange).clear();
+    //(*indexes_of_particles_to_exchange).clear();
         
-    int tmp = 0;
-    for (int tid=0 ; tid < (int)indexes_of_particles_to_exchange_per_thd->size() ; tid++)
-	tmp += ((*indexes_of_particles_to_exchange_per_thd)[tid]).size();
-    (*indexes_of_particles_to_exchange).resize( tmp );
+    //int tmp = 0;
+    //for (int tid=0 ; tid < (int)indexes_of_particles_to_exchange_per_thd->size() ; tid++)
+    //    tmp += ((*indexes_of_particles_to_exchange_per_thd)[tid]).size();
+    //(*indexes_of_particles_to_exchange).resize( tmp );
+    //(*indexes_of_particles_to_exchange).resize( (*new_indexes_of_particles_to_exchange).size() );
         
-    int k=0;
-    for (int tid=0 ; tid < (int)indexes_of_particles_to_exchange_per_thd->size() ; tid++) {
-	for (int ipart = 0 ; ipart < (int) ((*indexes_of_particles_to_exchange_per_thd)[tid]).size() ; ipart++ ) {
-	    (*indexes_of_particles_to_exchange)[k] =  (*indexes_of_particles_to_exchange_per_thd)[tid][ipart] ;
-	    k++;
-	}
-	((*indexes_of_particles_to_exchange_per_thd))[tid].clear();
-    }
+    //int k=0;
+    //for (int tid=0 ; tid < (int)indexes_of_particles_to_exchange_per_thd->size() ; tid++) {
+    //    for (int ipart = 0 ; ipart < (int) ((*indexes_of_particles_to_exchange_per_thd)[tid]).size() ; ipart++ ) {
+    //        (*indexes_of_particles_to_exchange)[k] =  (*indexes_of_particles_to_exchange_per_thd)[tid][ipart] ;
+    //        k++;
+    //    }
+    //    //((*indexes_of_particles_to_exchange_per_thd))[tid].clear();
+    //}
+    //for (int ipart = 0 ; ipart < (int) ((*new_indexes_of_particles_to_exchange)).size() ; ipart++ ) {
+    //    (*indexes_of_particles_to_exchange)[k] =  (*new_indexes_of_particles_to_exchange)[ipart] ;
+    //    k++;
+    //}
+    //(*new_indexes_of_particles_to_exchange).clear();
     sort( (*indexes_of_particles_to_exchange).begin(), (*indexes_of_particles_to_exchange).end() );
-        
+    //Test New indexes
+    //sort( (*new_indexes_of_particles_to_exchange).begin(), (*new_indexes_of_particles_to_exchange).end() );
+    //   
+    //if ( (*indexes_of_particles_to_exchange).size() != (*new_indexes_of_particles_to_exchange).size() ) {
+    //    cout << "sizes are not the same " << (*indexes_of_particles_to_exchange).size() << " " << (*new_indexes_of_particles_to_exchange).size() << endl;
+    //}  
+    //for (int ipart = 0 ; ipart < (int) ((*indexes_of_particles_to_exchange)).size() ; ipart++ ) {
+    //    if ( (*indexes_of_particles_to_exchange)[ipart] != (*new_indexes_of_particles_to_exchange)[ipart]) {
+    //        cout << "parts are not the same " << (*indexes_of_particles_to_exchange)[ipart] << " " << (*new_indexes_of_particles_to_exchange)[ipart] << endl;
+    //    }
+    //}
+    //**********************
+
+ 
     int n_part_send = (*indexes_of_particles_to_exchange).size();
     int n_part_recv;
         
@@ -915,8 +946,9 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params,
     Particles &cuParticles = (*vecSpecies[ispec]->particles);
 
 
-    std::vector< std::vector<int> >* indexes_of_particles_to_exchange_per_thd = &vecSpecies[ispec]->indexes_of_particles_to_exchange_per_thd;
+    //std::vector< std::vector<int> >* indexes_of_particles_to_exchange_per_thd = &vecSpecies[ispec]->indexes_of_particles_to_exchange_per_thd;
     std::vector<int>*                indexes_of_particles_to_exchange         = &vecSpecies[ispec]->indexes_of_particles_to_exchange;
+    //std::vector<int>*                new_indexes_of_particles_to_exchange         = &vecSpecies[ispec]->new_indexes_of_particles_to_exchange;
 
     std::vector<int>* cubmin = &vecSpecies[ispec]->bmin;
     std::vector<int>* cubmax = &vecSpecies[ispec]->bmax;
@@ -977,6 +1009,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params,
     // Delete Particles included in buff_send/buff_recv
     /********************************************************************************/
     cleanup_sent_particles(ispec, indexes_of_particles_to_exchange);
+    (*indexes_of_particles_to_exchange).clear();
 
 
     // Delete useless Particles
@@ -1062,7 +1095,8 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params,
     //if (iDim==cuParticles.dimension()-1) cout << "Number of diag particles " << diagonalParticles.size() << endl;
     for (int iPart = 0 ; iPart<diagonalParticles.size() ; iPart++) {
 	diagonalParticles.cp_particle(iPart, cuParticles);
-	(*indexes_of_particles_to_exchange_per_thd)[0].push_back(cuParticles.size()-1);
+	//(*indexes_of_particles_to_exchange_per_thd)[0].push_back(cuParticles.size()-1);
+	(*indexes_of_particles_to_exchange).push_back(cuParticles.size()-1);
 	(*cubmax)[(*cubmax).size()-1]++;
     }
 

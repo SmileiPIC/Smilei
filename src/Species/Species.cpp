@@ -110,7 +110,7 @@ void Species::initSpecies(PicParams& params)
 //        nthds = omp_get_num_threads();	  
 //#endif
 //    }
-    indexes_of_particles_to_exchange_per_thd.resize(nthds);
+    //indexes_of_particles_to_exchange_per_thd.resize(nthds);
     
     //ener_tot = 0.;
     nrj_bc_lost = 0.;
@@ -381,7 +381,8 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 //    int nthds = omp_get_num_threads();
 //    nrj_lost_per_thd.resize(nthds, 0.);
 //#endif
-    clearExchList(tid);
+    //clearExchList(tid);
+    clearExchList();
     	
     //ener_tot  = 0.;
     //ener_lost = 0.;
@@ -431,7 +432,8 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 // apply returns 0 if iPart is no more in the domain local
                 //	if omp, create a list per thread
                 if ( !partBoundCond->apply( *particles, iPart, params.species_param[ispec], ener_iPart ) ) {
-                    addPartInExchList( tid, iPart );
+                    //addPartInExchList( tid, iPart );
+                    addPartInExchList( iPart );
 		    nrj_lost_per_thd[tid] += ener_iPart;
                 }
 

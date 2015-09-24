@@ -109,7 +109,7 @@ public:
     void dynamics(double time_dual, PicParams &params, SimWindow* simWindow, int diag_flag);
 
     //! manage Idx of particles from per thread to per direction, init comm / nbr of particles
-    virtual void initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, int tnum);
+    //virtual void initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, int tnum);
     //! finalize comm / nbr of particles, init exch / particles
     virtual void initCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int tnum);
     //! finalize exch / particles, manage particles suppr/introduce
