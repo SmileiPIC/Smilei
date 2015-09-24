@@ -221,14 +221,15 @@ void VectorPatch::exchangeParticles(int ispec, PicParams &params, SmileiMPI* smp
     //smpi->barrier();
 #else
     // Per direction
+    //
+    #pragma omp for
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+      (*this)(ipatch)->initExchParticles(smpi, ispec, params, useless, this);
+    }
+
     #pragma omp single
     {
-    //
     for (unsigned int iDim=0 ; iDim<2 ; iDim++) {
-        //#pragma omp for
-	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	  (*this)(ipatch)->initExchParticles(smpi, ispec, params, useless, iDim, this);
-	}
         //cout << "initExchParticles done for " << iDim << endl;
         //#pragma omp for
 	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {

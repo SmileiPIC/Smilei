@@ -117,7 +117,7 @@ public:
 
 
     //! manage Idx of particles from per thread to per direction, init comm / nbr of particles
-    virtual void initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, int tnum, int iDim, VectorPatch* vecPatch);
+    virtual void initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, int tnum, VectorPatch* vecPatch);
     //! finalize comm / nbr of particles, init exch / particles
     virtual void initCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int tnum, int iDim, VectorPatch* vecPatch);
     //! finalize exch / particles, manage particles suppr/introduce
