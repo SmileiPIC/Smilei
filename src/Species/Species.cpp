@@ -432,7 +432,6 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 // apply returns 0 if iPart is no more in the domain local
                 //	if omp, create a list per thread
                 if ( !partBoundCond->apply( *particles, iPart, params.species_param[ispec], ener_iPart ) ) {
-                    //addPartInExchList( tid, iPart );
                     addPartInExchList( iPart );
 		    nrj_lost_per_thd[tid] += ener_iPart;
                 }

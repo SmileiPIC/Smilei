@@ -727,60 +727,10 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, int
     }
 
     
-    //std::vector< std::vector<int> >* indexes_of_particles_to_exchange_per_thd = &vecSpecies[ispec]->indexes_of_particles_to_exchange_per_thd;
-    std::vector<int>*                indexes_of_particles_to_exchange         = &vecSpecies[ispec]->indexes_of_particles_to_exchange;
-    //std::vector<int>*                new_indexes_of_particles_to_exchange         = &vecSpecies[ispec]->new_indexes_of_particles_to_exchange;
+     std::vector<int>*                indexes_of_particles_to_exchange         = &vecSpecies[ispec]->indexes_of_particles_to_exchange;
 
-    //Test new addpart in exchlist
-    //if ( ((*indexes_of_particles_to_exchange_per_thd)[0]).size() != (*new_indexes_of_particles_to_exchange).size() ) {
-    //    cout << "per thd sizes are not the same " << ((*indexes_of_particles_to_exchange_per_thd)[0]).size() << " " << (*new_indexes_of_particles_to_exchange).size() << endl;
-    //}  
-    //for (int ipart = 0 ; ipart < (int) ((*indexes_of_particles_to_exchange_per_thd)[0]).size() ; ipart++ ) {
-    //    if ( ((*indexes_of_particles_to_exchange_per_thd)[0])[ipart] != (*new_indexes_of_particles_to_exchange)[ipart]) {
-    //        cout << "per thd parts are not the same " << (*indexes_of_particles_to_exchange_per_thd)[0][ipart] << " " << (*new_indexes_of_particles_to_exchange)[ipart] << endl;
-    //    }
-    //}
-    //***********************************
-    
-    /********************************************************************************/
-    // Build lists of indexes of particle to exchange per neighbor
-    // Computed from indexes_of_particles_to_exchange computed during particles' BC
-    /********************************************************************************/
-    //(*indexes_of_particles_to_exchange).clear();
-        
-    //int tmp = 0;
-    //for (int tid=0 ; tid < (int)indexes_of_particles_to_exchange_per_thd->size() ; tid++)
-    //    tmp += ((*indexes_of_particles_to_exchange_per_thd)[tid]).size();
-    //(*indexes_of_particles_to_exchange).resize( tmp );
-    //(*indexes_of_particles_to_exchange).resize( (*new_indexes_of_particles_to_exchange).size() );
-        
-    //int k=0;
-    //for (int tid=0 ; tid < (int)indexes_of_particles_to_exchange_per_thd->size() ; tid++) {
-    //    for (int ipart = 0 ; ipart < (int) ((*indexes_of_particles_to_exchange_per_thd)[tid]).size() ; ipart++ ) {
-    //        (*indexes_of_particles_to_exchange)[k] =  (*indexes_of_particles_to_exchange_per_thd)[tid][ipart] ;
-    //        k++;
-    //    }
-    //    //((*indexes_of_particles_to_exchange_per_thd))[tid].clear();
-    //}
-    //for (int ipart = 0 ; ipart < (int) ((*new_indexes_of_particles_to_exchange)).size() ; ipart++ ) {
-    //    (*indexes_of_particles_to_exchange)[k] =  (*new_indexes_of_particles_to_exchange)[ipart] ;
-    //    k++;
-    //}
-    //(*new_indexes_of_particles_to_exchange).clear();
-    sort( (*indexes_of_particles_to_exchange).begin(), (*indexes_of_particles_to_exchange).end() );
-    //Test New indexes
-    //sort( (*new_indexes_of_particles_to_exchange).begin(), (*new_indexes_of_particles_to_exchange).end() );
-    //   
-    //if ( (*indexes_of_particles_to_exchange).size() != (*new_indexes_of_particles_to_exchange).size() ) {
-    //    cout << "sizes are not the same " << (*indexes_of_particles_to_exchange).size() << " " << (*new_indexes_of_particles_to_exchange).size() << endl;
-    //}  
-    //for (int ipart = 0 ; ipart < (int) ((*indexes_of_particles_to_exchange)).size() ; ipart++ ) {
-    //    if ( (*indexes_of_particles_to_exchange)[ipart] != (*new_indexes_of_particles_to_exchange)[ipart]) {
-    //        cout << "parts are not the same " << (*indexes_of_particles_to_exchange)[ipart] << " " << (*new_indexes_of_particles_to_exchange)[ipart] << endl;
-    //    }
-    //}
-    //**********************
-
+     sort( (*indexes_of_particles_to_exchange).begin(), (*indexes_of_particles_to_exchange).end() );
+ 
  
     int n_part_send = (*indexes_of_particles_to_exchange).size();
     int n_part_recv;
@@ -801,7 +751,7 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, int
 	}
 	else if ( !(cuParticles.is_part_in_domain(iPart, this) ) ) {
 	    // at the end of exchangeParticles, diagonalParticles will be reinjected 
-	    // at the end of cuParticles & indexes_of_particles_to_exchange_per_thd[0] for next iDim
+	    // at the end of cuParticles & indexes_of_particles_to_exchange for next iDim
 	    cuParticles.cp_particle(iPart, diagonalParticles);
 	}
 	else { // particle will be deleted, if supp_particle particles still in the domain
@@ -946,9 +896,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params,
     Particles &cuParticles = (*vecSpecies[ispec]->particles);
 
 
-    //std::vector< std::vector<int> >* indexes_of_particles_to_exchange_per_thd = &vecSpecies[ispec]->indexes_of_particles_to_exchange_per_thd;
     std::vector<int>*                indexes_of_particles_to_exchange         = &vecSpecies[ispec]->indexes_of_particles_to_exchange;
-    //std::vector<int>*                new_indexes_of_particles_to_exchange         = &vecSpecies[ispec]->new_indexes_of_particles_to_exchange;
 
     std::vector<int>* cubmin = &vecSpecies[ispec]->bmin;
     std::vector<int>* cubmax = &vecSpecies[ispec]->bmax;
@@ -1095,7 +1043,6 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params,
     //if (iDim==cuParticles.dimension()-1) cout << "Number of diag particles " << diagonalParticles.size() << endl;
     for (int iPart = 0 ; iPart<diagonalParticles.size() ; iPart++) {
 	diagonalParticles.cp_particle(iPart, cuParticles);
-	//(*indexes_of_particles_to_exchange_per_thd)[0].push_back(cuParticles.size()-1);
 	(*indexes_of_particles_to_exchange).push_back(cuParticles.size()-1);
 	(*cubmax)[(*cubmax).size()-1]++;
     }

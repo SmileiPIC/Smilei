@@ -511,29 +511,17 @@ int npatchmoy=0, npartmoy=0;
 	if (itime%balancing_freq == 0) {
             timer[7].restart();
             partperMPI = 0;
-            //cout << "balancing freq = " << balancing_freq << endl;
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
                 for (unsigned int ispec=0 ; ispec < 2 ; ispec++)
                     partperMPI += vecPatches(ipatch)->vecSpecies[ispec]->getNbrOfParticles();
             }
-            //cout << smpiData->getRank() << "npatch before = " << vecPatches.size() << " Total part before balancing = " << partperMPI << endl;
             partperMPI = 0;
-	    /*if (smpiData->getRank()==0)
-		vecPatches.send_patch_id_.push_back(3);
-	    else if (smpiData->getRank()==1) 
-	    vecPatches.recv_patch_id_.push_back(3);*/
 
 	    smpiData->recompute_patch_count( params, vecPatches, 0. );
 
 
-	    //cout << "patch_count modified" << endl;
 	    vecPatches.createPatches(params, diag_params, laser_params, smpiData, simWindow);
-	    //cout << "patch created" << endl;
-	    //vecPatches.setNbrParticlesToExch(smpiData);
-	    //cout << "nbr particles exchanged" << endl;
 	    vecPatches.exchangePatches_new(smpiData);
-	    //vecPatches.exchangePatches(smpiData);
-	    //cout << "data exchanged" << endl;
 
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
                 for (unsigned int ispec=0 ; ispec < 2 ; ispec++)
@@ -541,7 +529,6 @@ int npatchmoy=0, npartmoy=0;
             }
             npatchmoy += vecPatches.size();
             npartmoy += partperMPI;
-            //cout << smpiData->getRank()<< "npatch after = " << vecPatches.size()  << " Total part after balancing = " << partperMPI << endl;
             timer[7].update();
 	    
 	}
