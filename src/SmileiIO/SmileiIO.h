@@ -138,6 +138,9 @@ private:
     //! write dump drectory
     std::string dump_dir;
     
+    //! int deflate dump value
+    int dump_deflate;
+    
     //! write dump drectory
     std::string restart_dir;
     

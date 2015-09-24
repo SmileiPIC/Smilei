@@ -143,6 +143,7 @@ class DiagPhase(SmileiComponent):
     mom_max=None
     mom_num=1
     time_range = []
+    deflate = 0
     pass
 
 class DiagScalar(SmileiComponent):
@@ -182,6 +183,7 @@ exit_after_dump = True
 restart = False
 dump_file_sequence = 2
 dump_dir = "."
+dump_deflate = 0
 restart_dir = "."
 sim_units = ""
 wavelength_SI = 0.

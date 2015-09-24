@@ -34,6 +34,7 @@ dump_minutes(0.0),
 exit_after_dump(true),
 dump_file_sequence(2),
 dump_dir(""),
+dump_deflate(0),
 restart_dir(""),
 dump_request(smpi->getSize())
 {
@@ -55,6 +56,8 @@ dump_request(smpi->getSize())
     if (PyTools::extract("dump_dir", dump_dir))
         dump_dir+="/";
     
+    PyTools::extract("dump_deflate", dump_deflate);
+
     if (PyTools::extract("restart_dir", restart_dir))
         restart_dir+="/";
     
@@ -356,24 +359,24 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
             for (unsigned int i=0; i<vecSpecies[ispec]->particles.Position.size(); i++) {
                 ostringstream my_name("");
                 my_name << "Position-" << i;
-                H5::vect(gid,my_name.str(), vecSpecies[ispec]->particles.Position[i]);
+                H5::vect(gid,my_name.str(), vecSpecies[ispec]->particles.Position[i],dump_deflate);
             }
             
             for (unsigned int i=0; i<vecSpecies[ispec]->particles.Momentum.size(); i++) {
                 ostringstream my_name("");
                 my_name << "Momentum-" << i;
-                H5::vect(gid,my_name.str(), vecSpecies[ispec]->particles.Momentum[i]);
+                H5::vect(gid,my_name.str(), vecSpecies[ispec]->particles.Momentum[i],dump_deflate);
             }
             
-            H5::vect(gid,"Weight", vecSpecies[ispec]->particles.Weight);
-            H5::vect(gid,"Charge", vecSpecies[ispec]->particles.Charge);
+            H5::vect(gid,"Weight", vecSpecies[ispec]->particles.Weight,dump_deflate);
+            H5::vect(gid,"Charge", vecSpecies[ispec]->particles.Charge,dump_deflate);
             
             if (vecSpecies[ispec]->particles.isTestParticles) {
-                H5::vect(gid,"Id", vecSpecies[ispec]->particles.Id);
+                H5::vect(gid,"Id", vecSpecies[ispec]->particles.Id,dump_deflate);
             }
             
-            H5::vect(gid,"bmin", vecSpecies[ispec]->bmin);
-            H5::vect(gid,"bmax", vecSpecies[ispec]->bmax);
+            H5::vect(gid,"bmin", vecSpecies[ispec]->bmin,dump_deflate);
+            H5::vect(gid,"bmax", vecSpecies[ispec]->bmax,dump_deflate);
             
         }
         H5Gclose(gid);
@@ -469,7 +472,6 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
     }
     
     for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
-        hid_t did, sid;
     
         ostringstream name("");
         name << setfill('0') << setw(2) << ispec;
@@ -488,75 +490,32 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
             for (unsigned int i=0; i<vecSpecies[ispec]->particles.Position.size(); i++) {
                 ostringstream namePos("");
                 namePos << "Position-" << i;
-                did = H5Dopen(gid, namePos.str().c_str(), H5P_DEFAULT);
-                H5Dread(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Position[i][0]);
-                H5Dclose(did);
+                H5::getVect(gid, namePos.str(), vecSpecies[ispec]->particles.Position[i]);
             }
-            
             for (unsigned int i=0; i<vecSpecies[ispec]->particles.Momentum.size(); i++) {
                 ostringstream namePos("");
                 namePos << "Momentum-" << i;
-                did = H5Dopen(gid, namePos.str().c_str(), H5P_DEFAULT);
-                H5Dread(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Momentum[i][0]);
-                H5Dclose(did);
+                H5::getVect(gid, namePos.str(), vecSpecies[ispec]->particles.Momentum[i]);
             }
-            
-            did = H5Dopen(gid, "Weight", H5P_DEFAULT);
-            H5Dread(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Weight[0]);
-            H5Dclose(did);
-
-            did = H5Dopen(gid, "Charge", H5P_DEFAULT);
-            H5Dread(did, H5T_NATIVE_SHORT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Charge[0]);
-            H5Dclose(did);
-            
+            H5::getVect(gid, "Weight", vecSpecies[ispec]->particles.Weight);
+            H5::getVect(gid, "Charge", vecSpecies[ispec]->particles.Charge);
             if (vecSpecies[ispec]->particles.isTestParticles) {
-                did = H5Dopen(gid, "Id", H5P_DEFAULT);
-                H5Dread(did, H5T_NATIVE_UINT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles.Id[0]);
-                H5Dclose(did);
+                H5::getVect(gid, "Id", vecSpecies[ispec]->particles.Id);
             }
-            
-            did = H5Dopen(gid, "bmin", H5P_DEFAULT);
-            sid = H5Dget_space(did);
-            
-            int ndims=H5Sget_simple_extent_ndims(sid);
-            vector<hsize_t> dims(ndims);
-            H5Sget_simple_extent_dims(sid,&dims[0],NULL);
-            
-            if (ndims != 1) {
-                ERROR("dimension of dumped bmin");
-            }
-            
-            vecSpecies[ispec]->bmin.resize(dims[0]);
-            
-            H5Dread(did, H5T_NATIVE_UINT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->bmin[0]);
-            H5Dclose(did);
-            H5Sclose(sid);
-            
-            did = H5Dopen(gid, "bmax", H5P_DEFAULT);
-            sid = H5Dget_space(did);
-            ndims=H5Sget_simple_extent_ndims(sid);
-            dims.resize(ndims);
-            H5Sget_simple_extent_dims(sid,&dims[0],NULL);
-            
-            if (ndims != 1) {
-                ERROR("dimension of dumped bmax");
-            }
-
-            
-            vecSpecies[ispec]->bmax.resize(dims[0]);
-            H5Dread(did, H5T_NATIVE_UINT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->bmax[0]);
-            H5Dclose(did);
-            H5Sclose(sid);
+            H5::getVect(gid, "bmin", vecSpecies[ispec]->bmin);
+            H5::getVect(gid, "bmax", vecSpecies[ispec]->bmax);
         }
         
         H5Gclose(gid);
     }
     
     // load window status
-    if (simWin!=NULL)
-        restartMovingWindow(fid, simWin);
+    if (simWin!=NULL) {
+        double x_moved=0.;
+        H5::getAttr(fid, "x_moved", x_moved);
+        simWin->setXmoved(x_moved);
+    }
 
-    
     H5Fclose( fid );
 };
 
@@ -578,13 +537,5 @@ void SmileiIO::restartFieldsPerProc(hid_t fid, Field* field)
 
     H5Sclose(my_sid);
     H5Dclose(did);
-}
-
-void SmileiIO::restartMovingWindow(hid_t fid, SimWindow* simWin)
-{  
-    double x_moved=0.;
-    H5::getAttr(fid, "x_moved", x_moved);
-    simWin->setXmoved(x_moved);
-    
 }
 

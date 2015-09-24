@@ -132,35 +132,41 @@ class H5 {
     //! size is the number of elements in the vector
     
     //! write a vector<int>
-    static void vect(hid_t locationId, std::string name, std::vector<int> v) {
-        vect(locationId, name, v[0], v.size(), H5T_NATIVE_INT);
+    static void vect(hid_t locationId, std::string name, std::vector<int> v, int deflate=0) {
+        vect(locationId, name, v[0], v.size(), H5T_NATIVE_INT, deflate);
     }
     
     //! write a vector<unsigned int>
-    static void vect(hid_t locationId, std::string name, std::vector<unsigned int> v) {
-        vect(locationId, name, v[0], v.size(), H5T_NATIVE_UINT);
+    static void vect(hid_t locationId, std::string name, std::vector<unsigned int> v, int deflate=0) {
+        vect(locationId, name, v[0], v.size(), H5T_NATIVE_UINT, deflate);
     }
     
     //! write a vector<short int>
-    static void vect(hid_t locationId, std::string name, std::vector<short int> v) {
-        vect(locationId, name, v[0], v.size(), H5T_NATIVE_SHORT);
+    static void vect(hid_t locationId, std::string name, std::vector<short int> v, int deflate=0) {
+        vect(locationId, name, v[0], v.size(), H5T_NATIVE_SHORT, deflate);
     }
     
     //! write a vector<doubles>
-    static void vect(hid_t locationId, std::string name, std::vector<double> v) {
-        vect(locationId, name, v[0], v.size(), H5T_NATIVE_DOUBLE);
+    static void vect(hid_t locationId, std::string name, std::vector<double> v, int deflate=0) {
+        vect(locationId, name, v[0], v.size(), H5T_NATIVE_DOUBLE, deflate);
     }
     
     
     //! write any vector
     //! type is the h5 type (H5T_NATIVE_DOUBLE, H5T_NATIVE_INT, etc.)
     template<class T>
-    static void vect(hid_t locationId, std::string name, T & v, int size, hid_t type) {
+    static void vect(hid_t locationId, std::string name, T & v, int size, hid_t type, int deflate=0) {
         // create dataspace for 1D array with good number of elements
         hsize_t dims = size;
         hid_t sid = H5Screate_simple(1, &dims, NULL);
         hid_t pid = H5Pcreate(H5P_DATASET_CREATE); // property list
-        // create dataset 
+        
+        if (deflate>0) {
+            H5Pset_chunk(pid, 1, &dims);
+            H5Pset_deflate (pid, std::min(9,deflate));
+        }
+        
+        // create dataset
         hid_t did = H5Dcreate(locationId, name.c_str(), type, sid, H5P_DEFAULT, pid, H5P_DEFAULT);
         // write vector in dataset
         H5Dwrite(did, type, sid, sid, H5P_DEFAULT, &v);
@@ -171,6 +177,46 @@ class H5 {
     }
     
     
+    
+    //! retrieve a double vector
+    static void getVect(hid_t locationId, std::string vect_name,  std::vector<double> &vect) {
+        getVect(locationId, vect_name, vect, H5T_NATIVE_DOUBLE);
+    }
+    
+    //! retrieve an unsigned int vector
+    static void getVect(hid_t locationId, std::string vect_name,  std::vector<unsigned int> &vect) {
+        getVect(locationId, vect_name, vect, H5T_NATIVE_UINT);
+    }
+    
+    //! retrieve a int vector
+    static void getVect(hid_t locationId, std::string vect_name,  std::vector<int> &vect) {
+        getVect(locationId, vect_name, vect, H5T_NATIVE_INT);
+    }
+    
+    //! retrieve a short int vector
+    static void getVect(hid_t locationId, std::string vect_name,  std::vector<short> &vect) {
+        getVect(locationId, vect_name, vect, H5T_NATIVE_SHORT);
+    }
+    
+    //! template to read generic 1d vector
+    template<class T>
+    static void getVect(hid_t locationId, std::string vect_name, std::vector<T> &vect, hid_t type) {
+        hid_t did = H5Dopen(locationId, vect_name.c_str(), H5P_DEFAULT);
+        hid_t sid = H5Dget_space(did);
+        int sdim = H5Sget_simple_extent_ndims(sid);
+        if (sdim!=1) {
+            ERROR("Reading vector " << vect_name << " is not 1D but " <<sdim << "D");
+        }
+        hsize_t dim[1];
+        H5Sget_simple_extent_dims(sid,dim,NULL);
+        if (dim[0] != vect.size()) {
+            ERROR("Reading vector " << vect_name << " mismatch " << vect.size() << " != " << dim);
+        }
+        H5Sclose(sid);
+        H5Dread(did, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vect[0]);
+        H5Dclose(did);
+    }
+
     
     //! write a 2-D array of doubles in parallel (several MPI nodes)
     //! m is the matrix (2D array)
