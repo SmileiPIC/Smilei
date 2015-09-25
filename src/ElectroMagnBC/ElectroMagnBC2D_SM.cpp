@@ -21,10 +21,10 @@ ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, LaserParams &laser_param
     
     // number of nodes of the primal and dual grid in the x-direction
     nx_p = params.n_space[0]+1+2*params.oversize[0];
-    nx_d = params.n_space[0]+2+2*params.oversize[0];
+    nx_d = nx_p+1;
     // number of nodes of the primal and dual grid in the y-direction
     ny_p = params.n_space[1]+1+2*params.oversize[1];
-    ny_d = params.n_space[1]+2+2*params.oversize[1];
+    ny_d = ny_p+1;
     
     // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the x-direction)
     dx       = params.cell_length[0];
@@ -36,20 +36,22 @@ ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, LaserParams &laser_param
     dt_ov_dy = dt/dy;
     dy_ov_dt = 1.0/dt_ov_dy;
     
-    // BCs in x-direction
-    Bz_xvalmin_Long.resize(ny_p);
-    Bz_xvalmax_Long.resize(ny_p);
-    By_xvalmin_Long.resize(ny_p);
+    // BCs at the x-border
+    Bx_xvalmin_Long.resize(ny_d); // dual in the y-direction
+    Bx_xvalmax_Long.resize(ny_d);
+    By_xvalmin_Long.resize(ny_p); // primal in the y-direction
     By_xvalmax_Long.resize(ny_p);
-    Bx_xvalmin_Long.resize(ny_p+1);
-    Bx_xvalmax_Long.resize(ny_p+1);
-    // BCs in y-direction
-    Bz_yvalmin_Trans.resize(nx_p);
-    Bz_yvalmax_Trans.resize(nx_p);
-    By_yvalmin_Trans.resize(nx_p+1);
-    By_yvalmax_Trans.resize(nx_p+1);
-    Bx_yvalmin_Trans.resize(nx_p);
+    Bz_xvalmin_Long.resize(ny_d); // dual in the y-direction
+    Bz_xvalmax_Long.resize(ny_d);
+    
+    // BCs in the y-border
+    Bx_yvalmin_Trans.resize(nx_p); // primal in the x-direction
     Bx_yvalmax_Trans.resize(nx_p);
+    By_yvalmin_Trans.resize(nx_d); // dual in the x-direction
+    By_yvalmax_Trans.resize(nx_d);
+    Bz_yvalmin_Trans.resize(nx_d); // dual in the x-direction
+    Bz_yvalmax_Trans.resize(nx_d);
+    
     
     // -----------------------------------------------------
     // Parameters for the Silver-Mueller boundary conditions
@@ -100,47 +102,57 @@ ElectroMagnBC2D_SM::~ElectroMagnBC2D_SM()
 void ElectroMagnBC2D_SM::save_fields_BC2D_Long(Field* my_field) {
     Field2D* field2D=static_cast<Field2D*>(my_field);
     
-    for (unsigned int j=0 ; j<ny_p ; j++) {
-        if (field2D->name=="Bz"){
-            Bz_xvalmin_Long[j]=(*field2D)(0,j);
-            Bz_xvalmax_Long[j]=(*field2D)(nx_d-1,j);
-        }
-        if (field2D->name=="By"){
-            By_xvalmin_Long[j]=(*field2D)(0,j);
-            By_xvalmax_Long[j]=(*field2D)(nx_d-1,j);
-        }
-        if (field2D->name=="Bx"){
+    if (field2D->name=="Bx"){
+        // (Bx)^(pd)
+        for (unsigned int j=0; j<ny_d; j++) {
             Bx_xvalmin_Long[j]=(*field2D)(0,j);
             Bx_xvalmax_Long[j]=(*field2D)(nx_p-1,j);
         }
     }
-   	if (field2D->name=="Bx"){
-        Bx_xvalmax_Long[ny_p]=(*field2D)(nx_p-1,ny_p);
+    
+    if (field2D->name=="By"){
+        // (By)^(dp)
+        for (unsigned int j=0; j<ny_p; j++) {
+            By_xvalmin_Long[j]=(*field2D)(0,j);
+            By_xvalmax_Long[j]=(*field2D)(nx_d-1,j);
+        }
+    }
+    
+    if (field2D->name=="Bz"){
+        // (By)^(dd)
+        for (unsigned int j=0; j<ny_d; j++) {
+            Bz_xvalmin_Long[j]=(*field2D)(0,j);
+            Bz_xvalmax_Long[j]=(*field2D)(nx_d-1,j);
+        }
     }
     
 }
 
 void ElectroMagnBC2D_SM::save_fields_BC2D_Trans(Field* my_field) {
     Field2D* field2D=static_cast<Field2D*>(my_field);
-    
-    for (unsigned int j=0 ;  j<nx_p ; j++) {
-        if (field2D->name=="Bz"){
-            Bz_yvalmin_Trans[j]=(*field2D)(j,0);
-            Bz_yvalmax_Trans[j]=(*field2D)(j,ny_d-1);
-        }
-        
-        if (field2D->name=="By"){
-            By_yvalmin_Trans[j]=(*field2D)(j,0);
-            By_yvalmax_Trans[j]=(*field2D)(j,ny_p-1);
-        }
-        
-        if (field2D->name=="Bx"){
-            Bx_yvalmin_Trans[j]=(*field2D)(j,0);
-            Bx_yvalmax_Trans[j]=(*field2D)(j,ny_d-1);
+  
+    if (field2D->name=="Bx"){
+        // (Bx)^(pd)
+        for (unsigned int i=0; i<nx_p; i++) {
+            Bx_xvalmin_Long[i]=(*field2D)(i,0);
+            Bx_xvalmax_Long[i]=(*field2D)(i,ny_d-1);
         }
     }
+    
     if (field2D->name=="By"){
-        By_yvalmax_Trans[nx_p]=(*field2D)(nx_p,ny_p-1);
+        // (By)^(dp)
+        for (unsigned int i=0; i<nx_d; i++) {
+            By_xvalmin_Long[i]=(*field2D)(i,0);
+            By_xvalmax_Long[i]=(*field2D)(i,ny_p-1);
+        }
+    }
+    
+    if (field2D->name=="Bz"){
+        // (By)^(dd)
+        for (unsigned int i=0; i<nx_d; i++) {
+            Bz_xvalmin_Long[i]=(*field2D)(i,0);
+            Bz_xvalmax_Long[i]=(*field2D)(i,ny_d-1);
+        }
     }
     
 }

@@ -45,16 +45,16 @@ LDFLAGS+=$(PY_LDFLAGS)
 
 # check for variable config
 ifneq (,$(findstring debug,$(config)))
-	CFLAGS += -g -pg -Wall -D__DEBUG -O0# -shared-intel 
+	CFLAGS += -g -pg -Wall -D__DEBUG -O0 # -shared-intel 
 else
-	CFLAGS += -O3#  -xHost -ipo
+	CFLAGS += -O3 # -xHost -ipo
 endif
 
 ifneq (,$(findstring scalasca,$(config)))
     SMILEICXX = scalasca -instrument mpic++
 endif
 
-ifneq (,$(findstring openmp,$(config)))
+ifeq (,$(findstring noopenmp,$(config)))
 	SMILEI_COMPILER:=$(shell $(SMILEICXX) --showme:command)
     ifneq (,$(findstring icpc,$(SMILEI_COMPILER)))
         OPENMPFLAGS = -openmp
@@ -77,7 +77,7 @@ distclean: clean
 	
 	
 # this generates a .h file containing a char[] with the python script in binary then
-#you can just include this file to get the contents
+# you can just include this file to get the contents (in Params/Params.cpp)
 $(BUILD_DIR)/%.pyh: %.py
 	@ echo "Creating binary char for $< : $@"
 	@ mkdir -p "$(@D)" 
@@ -101,9 +101,6 @@ obsolete:
 
 debug: obsolete
 	make config=debug
-
-openmp: obsolete
-	make config=openmp
 
 scalasca: obsolete
 	make config=scalasca
@@ -135,11 +132,12 @@ help:
 	@echo 'Usage: make config=OPTIONS'
 	@echo '	    OPTIONS is a string composed of one or more of:'
 	@echo '	        debug      : to compile in debug mode (code runs really slow)'
-	@echo '	        openmp     : to compile with openmp enabled'
 	@echo '         scalasca   : to compile using scalasca'
+	@echo '         noopenmp   : to compile without openmp'
 	@echo ' examples:'
-	@echo '     make config="openmp"'
-	@echo '     make config="openmp debug"'
+	@echo '     make config=debug'
+	@echo '     make config=noopenmp'
+	@echo '     make config="debug noopenmp"'
 	@echo 
 	@echo 'Environment variables :'
 	@echo '     SMILEICXX     : mpi c++ compiler'
@@ -148,5 +146,5 @@ help:
 	@echo 
 	@echo '      make doc     : builds the documentation'
 	@echo '      make tar     : creates an archive of the sources'
-	@echo '       make clean   : remove build'
+	@echo '      make clean   : remove build'
 

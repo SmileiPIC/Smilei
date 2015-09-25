@@ -48,7 +48,7 @@ namelist("")
                 buffer << istr.rdbuf();
                 strNamelist+=buffer.str();
             } else {
-                strNamelist= (*it);
+                strNamelist = "# Smilei:) From command line :\n" + (*it);
             }
             strNamelist +="\n";
         }

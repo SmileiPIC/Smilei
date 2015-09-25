@@ -62,9 +62,9 @@ void Particles::initialize( int nParticles, Params &params)
     }
     
     if ( double_prop.empty() ) {
-        for (int i=0 ; i< params.nDim_particle ; i++)
+        for (unsigned int i=0 ; i< params.nDim_particle ; i++)
             double_prop.push_back( &(Position[i]) );
-        for (int i=0 ; i< 3 ; i++)
+        for (unsigned int i=0 ; i< 3 ; i++)
             double_prop.push_back( &(Momentum[i]) );
         double_prop.push_back( &Weight );
         short_prop.push_back( &Charge );
