@@ -238,19 +238,22 @@ class Smilei(object):
 		"""
 		return TestParticles(self, *args, **kwargs)
 
-	
-	
+
+
 class Options(object):
 	""" Class to contain matplotlib plotting options """
 	
 	def __init__(self, **kwargs):
-		self.figure = 1
-		self.xmin   = None
-		self.xmax   = None
-		self.ymin   = None
-		self.ymax   = None
-		self.vmin   = None
-		self.vmax   = None
+		self.figure  = 1
+		self.xfactor = None
+		self.xmin    = None
+		self.xmax    = None
+		self.yfactor = None
+		self.ymin    = None
+		self.ymax    = None
+		self.vfactor = None
+		self.vmin    = None
+		self.vmax    = None
 		self.skipAnimation = False
 		self.streakPlot = False
 		self.figure0 = {}
@@ -267,17 +270,19 @@ class Options(object):
 	def set(self, **kwargs):
 		# First, we manage the main optional arguments
 		self.figure0.update({ "num":kwargs.pop("figure",self.figure) })
+		self.xfactor  = kwargs.pop("xfactor",self.xfactor  )
 		self.xmin     = kwargs.pop("xmin"   ,self.xmin  )
 		self.xmax     = kwargs.pop("xmax"   ,self.xmax  )
+		self.yfactor  = kwargs.pop("yfactor",self.yfactor  )
 		self.ymin     = kwargs.pop("ymin"   ,self.ymin  )
 		self.ymax     = kwargs.pop("ymax"   ,self.ymax  )
+		self.vfactor  = kwargs.pop("vfactor",self.vfactor  )
 		self.vmin     = kwargs.pop("vmin"   ,kwargs.pop("data_min",self.vmin))
 		self.vmax     = kwargs.pop("vmax"   ,kwargs.pop("data_max",self.vmax))
 		self.skipAnimation = kwargs.pop("skipAnimation", self.skipAnimation)
 		self.streakPlot    = kwargs.pop("streakPlot"   , self.streakPlot   )
 		# Second, we manage all the other arguments that are directly the ones of matplotlib
-		for kwa in kwargs:
-			val = kwargs[kwa]
+		for kwa, val in kwargs.iteritems():
 			if kwa in ["figsize"]:
 				self.figure0.update({kwa:val})
 			if kwa in ["dpi","facecolor","edgecolor"]:
@@ -316,6 +321,7 @@ class Diagnostic(object):
 	def __init__(self, results_path=None, *args, **kwargs):
 		self.valid = False
 		self._tmpdata = None
+		self._animateOnAxes = None
 		# if string, try to use it as a results_path
 		if type(results_path) is str:
 			self.Smilei = Smilei(results_path)
@@ -340,6 +346,7 @@ class Diagnostic(object):
 		self.options = Options(**kwargs)
 		# Call the '_init' function of the child class
 		self._init(*args, **kwargs)
+	
 	
 	# When no action is performed on the object, this is what appears
 	def __repr__(self):
@@ -370,13 +377,8 @@ class Diagnostic(object):
 			cell_length = self._np.double( self.namelist.cell_length )
 			if cell_length.size==0: raise
 		except:
-			try:
-				res_space = self._np.double( self.namelist.res_space )
-				cell_length = 1./res_space
-				if cell_length.size==0: raise
-			except:
-				print "Could not extract 'cell_length' or 'res_space' from the input file"
-				raise
+			print "Could not extract 'cell_length' from the input file"
+			raise
 		if   ndim == 1:
 			sim_length  = sim_length[0]
 			cell_length = cell_length[0]
@@ -394,7 +396,7 @@ class Diagnostic(object):
 			if cell_length.size == 1: cell_length = self._np.array([cell_length,cell_length,cell_length])
 			elif cell_length.size >2: cell_length = cell_length[0:3]
 			else:
-				print "In the input file, 'cell_length' or 'res_space' should have 1 or 3 arguments for a 3d simulation"
+				print "In the input file, 'cell_length' should have 1 or 3 arguments for a 3d simulation"
 				raise
 		sim_length  = self._np.array(sim_length ,ndmin=1)
 		cell_length = self._np.array(cell_length,ndmin=1)
@@ -405,13 +407,8 @@ class Diagnostic(object):
 			timestep = self._np.double(self.namelist.timestep)
 			if not self._np.isfinite(timestep): raise 
 		except:
-			try:
-				res_time = self._np.double(self.namelist.res_time)
-				timestep = 1./res_time
-				if not self._np.isfinite(timestep): raise 
-			except:
-				print "Could not extract 'timestep' or 'res_time' from the input file"
-				raise
+			print "Could not extract 'timestep' from the input file"
+			raise
 		return timestep
 	def _read_wavelength_SI(self):
 		try:
@@ -432,7 +429,7 @@ class Diagnostic(object):
 			print "Diagnostic is invalid"
 			return False
 		return True
-		
+	
 	# Method to set optional plotting arguments
 	def set(self, **kwargs):
 		self.options.set(**kwargs)
@@ -468,6 +465,7 @@ class Diagnostic(object):
 		if not self._validate(): return
 		self.set(**kwargs)
 		self.info()
+		self._preparePlot()
 		
 		# Make figure
 		fig = self._plt.figure(**self.options.figure0)
@@ -475,79 +473,107 @@ class Diagnostic(object):
 		fig.clf()
 		ax = fig.add_subplot(1,1,1)
 		
-		# If several dimensions
-		if len(self._plot_shape) > 0:
-			# Case of a streakPlot (no animation)
-			if self.options.streakPlot:
-				# Require several times
-				if len(self.times) < 2:
-					print "ERROR: a streak plot requires at least 2 times"
-					return
-				# Require function _getDataAtTime
-				if not hasattr(self,"_getDataAtTime"):
-					print "ERROR: this diagnostic cannot do a streak plot"
-					return
-				# Require dimension = 1
-				if self._getDataAtTime(self.times[0]).ndim != 1:
-					print "ERROR: Diagnostic must be 1-D for a streak plot"
-				# Warning if uneven times
-				if not (self._np.diff(self.times)==self.times[1]-self.times[0]).all():
-					print "WARNING: times are not evenly spaced. Time-scale not plotted"
-					ylabel = "Unevenly-spaced times"
-				else:
-					ylabel = "Time [code units]"
-				# Loop times and accumulate data
-				A = []
-				for time in self.times: A.append(self._getDataAtTime(time))
-				A = self._np.double(A)
-				# Plot
-				ax.cla()
-				extent = [self._plot_centers[0][0], self._plot_centers[0][-1], self.times[0], self.times[-1]]
-				if self._plot_log[0]: extent[0:2] = [self._np.log10(self._plot_centers[0][0]), self._np.log10(self._plot_centers[0][-1])]
-				im = ax.imshow(A, vmin = self.options.vmin, vmax = self.options.vmax, extent=extent, **self.options.image)
-				if (self._plot_log[0]): ax.set_xlabel("Log[ "+self._plot_label[0]+" ]")
-				else:                   ax.set_xlabel(        self._plot_label[0]     )
-				ax.set_ylabel(ylabel)
-				self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
-				try: # if colorbar exists
-					ax.cax.cla()
-					self._plt.colorbar(mappable=im, cax=ax.cax, **self.options.colorbar)
-				except AttributeError:
-					ax.cax = self._plt.colorbar(mappable=im, ax=ax, **self.options.colorbar).ax
-				self._setSomeOptions(ax)
-				fig.canvas.draw()
-				self._plt.show()
+		# Case of a streakPlot (no animation)
+		if self.options.streakPlot:
+			# Require several times
+			if len(self.times) < 2:
+				print "ERROR: a streak plot requires at least 2 times"
 				return
-			
-			# Possible to skip animation
-			if self.options.skipAnimation:
-				self._animateOnAxes(ax, self.times[-1])
-				fig.canvas.draw()
-				self._plt.show()
+			# Require function _getDataAtTime
+			if not hasattr(self,"_getDataAtTime"):
+				print "ERROR: this diagnostic cannot do a streak plot"
 				return
-			
-			# Otherwise, animation
-			# Movie requested ?
-			mov = Movie(fig, movie, fps, dpi)
-			# Save to file requested ?
-			save = SaveAs(saveAs, fig, self._plt)
-			# Loop times for animation
-			for time in self.times:
-				print "timestep "+str(time)+ "   -   t = "+str(time*self._coeff_time)+self._time_units
-				# plot
-				ax.cla()
-				if self._animateOnAxes(ax, time, movie=mov) is None: return
-				fig.canvas.draw()
-				self._plt.show()
-				# save to file
-				save.frame(time)
-			# Movie ?
-			if mov.writer is not None: mov.finish()
-		
-		# Plot vs time if 0 dimensions
-		else:
+			# Require dimension = 1
+			if len(self._plot_shape) != 1:
+				print "ERROR: Diagnostic must be 1-D for a streak plot"
+			# Warning if uneven times
+			if not (self._np.diff(self.times)==self.times[1]-self.times[0]).all():
+				print "WARNING: times are not evenly spaced. Time-scale not plotted"
+				ylabel = "Unevenly-spaced times"
+			else:
+				ylabel = "Time [code units]"
+			# Loop times and accumulate data
+			A = []
+			for time in self.times: A.append(self._getDataAtTime(time))
+			A = self._np.double(A)
+			# Plot
 			ax.cla()
-			self._plotVsTime(ax)
+			extent = [self._plot_centers[0][0], self._plot_centers[0][-1], self.times[0], self.times[-1]]
+			if self._plot_log[0]: extent[0:2] = [self._np.log10(self._plot_centers[0][0]), self._np.log10(self._plot_centers[0][-1])]
+			im = ax.imshow(A, vmin = self.options.vmin, vmax = self.options.vmax, extent=extent, **self.options.image)
+			ax.set_xlabel(self._xlabel)
+			ax.set_ylabel(ylabel)
+			self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
+			try: # if colorbar exists
+				ax.cax.cla()
+				self._plt.colorbar(mappable=im, cax=ax.cax, **self.options.colorbar)
+			except AttributeError:
+				ax.cax = self._plt.colorbar(mappable=im, ax=ax, **self.options.colorbar).ax
+			self._setSomeOptions(ax)
+			fig.canvas.draw()
+			self._plt.show()
+			return
+		
+		# Possible to skip animation
+		if self.options.skipAnimation:
+			self._animateOnAxes(ax, self.times[-1])
+			fig.canvas.draw()
+			self._plt.show()
+			return
+		
+		# Otherwise, animation
+		# Movie requested ?
+		mov = Movie(fig, movie, fps, dpi)
+		# Save to file requested ?
+		save = SaveAs(saveAs, fig, self._plt)
+		# Loop times for animation
+		for time in self.times:
+			print "timestep "+str(time)+ "   -   t = "+str(time*self._coeff_time)+self._time_units
+			# plot
+			ax.cla()
+			if self._animateOnAxes(ax, time) is None: return
+			fig.canvas.draw()
+			self._plt.show()
+			mov.grab_frame()
+			save.frame(time)
+		# Movie ?
+		if mov.writer is not None: mov.finish()
+	
+	
+	# Method to prepare plot
+	def _preparePlot(self):
+		plotdim = len(self._plot_shape)
+		# prepare the animating function
+		if not self._animateOnAxes:
+			if   plotdim == 0: self._animateOnAxes = self._animateOnAxes_0D
+			elif plotdim == 1: self._animateOnAxes = self._animateOnAxes_1D
+			elif plotdim == 2: self._animateOnAxes = self._animateOnAxes_2D
+			else:
+				print "Cannot plot with more than 2 dimensions !"
+				return
+		# prepare the labels
+		if   plotdim == 0:
+			self._xlabel = self._time_units
+			if self.options.xfactor: self._xlabel += "/"+str(self.options.xfactor)
+			self._xlabel = 'Time ( '+self._xlabel+' )'
+		elif plotdim == 1:
+			self._xlabel = self._plot_units[0]
+			if self.options.xfactor: self._xlabel += "/"+str(self.options.xfactor)
+			self._xlabel = self._plot_label[0] + " (" + self._xlabel + ")"
+		elif plotdim == 2:
+			self._xlabel = self._plot_units[0]
+			if self.options.xfactor: self._xlabel += "/"+str(self.options.xfactor)
+			self._xlabel = self._plot_label[0] + " (" + self._xlabel + ")"
+			if self._plot_log[0]: self._xlabel = "Log[ "+self._xlabel+" ]"
+			self._ylabel = self._plot_units[1]
+			if self.options.yfactor: self._ylabel += "/"+str(self.options.yfactor)
+			self._ylabel = self._plot_label[1] + " (" + self._ylabel + ")"
+			if self._plot_log[1]: self._ylabel = "Log[ "+self._ylabel+" ]"
+			xfactor = self.options.xfactor or 1.
+			yfactor = self.options.yfactor or 1.
+			self._extent = [xfactor*self._plot_centers[0][0], xfactor*self._plot_centers[0][-1], yfactor*self._plot_centers[1][0], yfactor*self._plot_centers[1][-1]]
+			if self._plot_log[0]: self._extent[0:2] = [self._np.log10(self._plot_centers[0][0]), self._np.log10(self._plot_centers[0][-1])]
+			if self._plot_log[1]: self._extent[2:4] = [self._np.log10(self._plot_centers[1][0]), self._np.log10(self._plot_centers[1][-1])]
 	
 	# Method to set limits to a plot
 	def _setLimits(self, ax, xmin=None, xmax=None, ymin=None, ymax=None):
@@ -556,56 +582,53 @@ class Diagnostic(object):
 		if ymin is not None: ax.set_ylim(ymin=ymin)
 		if ymax is not None: ax.set_ylim(ymax=ymax)
 	
-	# Method to plot the data when axes are made
-	def _animateOnAxes(self, ax, t, movie=None):
-		if not self._validate(): return None
-		# get data
+	# Methods to plot the data when axes are made
+	def _animateOnAxes_0D(self, ax, t):
 		A = self._getDataAtTime(t)
-		# plot
-		if A.ndim == 0: # as a function of time
-			if self._tmpdata is None:
-				self._tmpdata = self._np.zeros(self.times.size)
-				for i, t in enumerate(self.times):
-					self._tmpdata[i] = self._getDataAtTime(t)
-			times = self.times[self.times<=t]
-			A     = self._tmpdata[self.times<=t]
-			im, = ax.plot(times*self._coeff_time, A, **self.options.plot)
-			ax.set_xlabel('Time ['+self._time_units+' ]')
-			self._setLimits(ax, xmax=self.times[-1]*self._coeff_time, ymin=self.options.vmin, ymax=self.options.vmax)
-		elif A.ndim == 1:
-			im, = ax.plot(self._plot_centers[0], A, **self.options.plot)
-			if self._plot_log[0]: ax.set_xscale("log")
-			ax.set_xlabel(self._plot_label[0])
-			self._setLimits(ax, ymin=self.options.vmin, ymax=self.options.vmax)
-		elif A.ndim == 2:
-			im = self._animateOnAxes_2D(ax, A)
-			if (self._plot_log[0]): ax.set_xlabel("Log[ "+self._plot_label[0]+" ]")
-			else:                   ax.set_xlabel(        self._plot_label[0]     )
-			if (self._plot_log[1]): ax.set_ylabel("Log[ "+self._plot_label[1]+" ]")
-			else:                   ax.set_ylabel(        self._plot_label[1]     )
-			self._setLimits(ax, ymin=self.options.ymin, ymax=self.options.ymax)
-			try: # if colorbar exists
-				ax.cax.cla()
-				self._plt.colorbar(mappable=im, cax=ax.cax, **self.options.colorbar)
-			except AttributeError:
-				ax.cax = self._plt.colorbar(mappable=im, ax=ax, **self.options.colorbar).ax
+		xfactor = self.options.xfactor or 1.
+		if self._tmpdata is None:
+			self._tmpdata = self._np.zeros(self.times.size)
+			for i, t in enumerate(self.times):
+				self._tmpdata[i] = self._getDataAtTime(t)
+		times = self.times[self.times<=t]
+		A     = self._tmpdata[self.times<=t]
+		im, = ax.plot(xfactor*times*self._coeff_time, A, **self.options.plot)
+		ax.set_xlabel(self._xlabel)
+		self._setLimits(ax, xmax=xfactor*self.times[-1]*self._coeff_time, ymin=self.options.vmin, ymax=self.options.vmax)
 		self._setSomeOptions(ax)
-		if movie is not None: movie.grab_frame()
+		return im
+	def _animateOnAxes_1D(self, ax, t):
+		A = self._getDataAtTime(t)
+		xfactor = self.options.xfactor or 1.
+		im, = ax.plot(xfactor*self._plot_centers[0], A, **self.options.plot)
+		if self._plot_log[0]: ax.set_xscale("log")
+		ax.set_xlabel(self._xlabel)
+		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.vmin, ymax=self.options.vmax)
+		self._setSomeOptions(ax)
+		return im
+	def _animateOnAxes_2D(self, ax, t):
+		A = self._getDataAtTime(t)
+		im = self._animateOnAxes_2D_(ax, A)
+		ax.set_xlabel(self._xlabel)
+		ax.set_ylabel(self._ylabel)
+		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
+		try: # if colorbar exists
+			ax.cax.cla()
+			self._plt.colorbar(mappable=im, cax=ax.cax, **self.options.colorbar)
+		except AttributeError:
+			ax.cax = self._plt.colorbar(mappable=im, ax=ax, **self.options.colorbar).ax
+		self._setSomeOptions(ax)
 		return im
 	
 	# Special case: 2D plot
 	# This is overloaded by class "Probe" because it requires to replace imshow
-	def _animateOnAxes_2D(self, ax, A):
-		extent = [self._plot_centers[0][0], self._plot_centers[0][-1], self._plot_centers[1][0], self._plot_centers[1][-1]]
-		if self._plot_log[0]: extent[0:2] = [self._np.log10(self._plot_centers[0][0]), self._np.log10(self._plot_centers[0][-1])]
-		if self._plot_log[1]: extent[2:4] = [self._np.log10(self._plot_centers[1][0]), self._np.log10(self._plot_centers[1][-1])]
+	def _animateOnAxes_2D_(self, ax, A):
 		im = ax.imshow( self._np.flipud(A.transpose()),
-			vmin = self.options.vmin, vmax = self.options.vmax, extent=extent, **self.options.image)
+			vmin = self.options.vmin, vmax = self.options.vmax, extent=self._extent, **self.options.image)
 		return im
 	
 	# set options during animation
 	def _setSomeOptions(self, ax):
-		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax)
 		if self._title is not None: ax.set_title(self._title)
 		ax.set(**self.options.axes)
 		try:
@@ -618,23 +641,6 @@ class Diagnostic(object):
 		except:
 			print "Cannot format y ticks (typically happens with log-scale)"
 			self.xtickkwargs = []
-	
-	# If the sliced data has 0 dimension, this function can plot it 
-	def _plotVsTime(self, ax):
-		if len(self._plot_shape) > 0:
-			print "To plot vs. time, it is necessary to slice all axes in order to obtain a 0-D array"
-			return None
-		# Gather data
-		A = self._np.squeeze(self.getData())
-		im, = ax.plot(self.times*self._coeff_time, A, **self.options.plot)
-		ax.set_xlabel('Time ['+self._time_units+' ]')
-		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.vmin, ymax=self.options.vmax)
-		if self._title is not None: ax.set_title(self._title)
-		ax.set(**self.options.axes)
-		ax.ticklabel_format(axis="x",**self.options.xtick)
-		ax.ticklabel_format(axis="y",**self.options.ytick)
-		return im
-	
 	
 	def dim(self):
 		return len(self._plot_shape)
@@ -665,7 +671,6 @@ class ParticleDiagnostic(Diagnostic):
 		# Get info from the input file and prepare units
 		try:
 			ndim               = self._read_ndim()
-			
 			ncels, cell_length = self._read_ncels_cell_length(ndim)
 			self.timestep      = self._read_timestep()
 			cell_size = {"x":cell_length[0]}
@@ -805,6 +810,7 @@ class ParticleDiagnostic(Diagnostic):
 		# Fabricate all axes values for all diags
 		self._plot_shape = []; self._plot_type = []; plot_diff = []
 		self._plot_label = []; self._plot_centers = []; self._plot_log = []
+		self._plot_units = []
 		units_coeff = 1.
 		unitsa = [0,0,0,0]
 		spatialaxes = {"x":False, "y":False, "z":False}
@@ -827,21 +833,21 @@ class ParticleDiagnostic(Diagnostic):
 			overall_min = "-inf"; overall_max = "inf"
 			axis_units = ""; axis_coeff = 1.
 			if   axis["type"] in ["x","y","z"]:
-				axis_units = " [ wavelength / 2Pi ]"
+				axis_units = "wavelength / 2Pi"
 				if units == "nice":
-					axis_units = " [ microns ]"
+					axis_units = "microns"
 					axis_coeff = 1e6*wavelength_SI/(2.*self._np.pi)
 				spatialaxes[axis["type"]] = True
 			elif axis["type"] in ["px","py","pz","p"]:
-				axis_units = " [ m c ]"
+				axis_units = "m c"
 			elif axis["type"] in ["vx","vy","vz","v"]:
-				axis_units = " [ c ]"
+				axis_units = "c"
 			elif axis["type"] == "gamma":
 				overall_min = "1"
 			elif axis["type"] == "ekin":
-				axis_units = " [ m c^2 ]"
+				axis_units = "m c^2"
 				if units == "nice":
-					axis_units = " [ MeV ]"
+					axis_units = "MeV"
 					axis_coeff = 0.511
 				overall_min = "0"
 			elif axis["type"] == "charge":
@@ -895,7 +901,8 @@ class ParticleDiagnostic(Diagnostic):
 				self._plot_shape  .append(axis["size"])
 				self._plot_centers.append(centers*axis_coeff)
 				self._plot_log    .append(axis["log"])
-				self._plot_label  .append(axis["type"]+axis_units)
+				self._plot_label  .append(axis["type"])
+				self._plot_units  .append(axis_units)
 				plot_diff.append(self._np.diff(edges))
 				if   axis["type"] in ["x","y","z"]:
 					units_coeff *= cell_size[axis["type"]]
@@ -949,7 +956,7 @@ class ParticleDiagnostic(Diagnostic):
 				if unitsa[2]>1: unitss += "$^"+str(unitsa[2])+"$"
 				if unitsa[3]>0: unitss += "/(mc$^2$)"
 				if unitsa[3]>1: unitss += "$^"+str(unitsa[3])+"$"
-			self._units[d] = " [ "+unitss+" ]"
+			self._units[d] = unitss+""
 		# finish title creation
 		if len(self._diags) == 1:
 			self._title = self._titles[self._diags[0]] + self._units[self._diags[0]]
@@ -958,13 +965,13 @@ class ParticleDiagnostic(Diagnostic):
 			for d in self._diags:
 				self._title = self._title.replace("#"+str(d), self._titles[d])
 		if self._data_log: self._title = "Log[ "+self._title+" ]"
-	
+		
 		# If any spatial dimension did not appear, then count it for calculating the correct density
 		if ndim>=1 and not spatialaxes["x"]: units_coeff /= ncels[0]
 		if ndim>=2 and not spatialaxes["y"]: units_coeff /= ncels[1]
 		if ndim==3 and not spatialaxes["z"]: units_coeff /= ncels[2]
 		units_coeff *= coeff_density
-	
+		
 		# Calculate the array that represents the bins sizes in order to get units right.
 		# This array will be the same size as the plotted array
 		if len(plot_diff)==0:
@@ -1021,18 +1028,18 @@ class ParticleDiagnostic(Diagnostic):
 	@staticmethod
 	def _printInfo(info):
 		if info==False: return
-	
+		
 		# 1 - diag number, type and list of species
 		species = ""
 		for i in range(len(info["species"])): species += str(info["species"][i])+" " # reconstitute species string
 		print "Diag#"+str(info["#"])+" - "+info["output"]+" of species # "+species
-	
+		
 		# 2 - period and time-averaging
 		tavg = "no time-averaging"
 		if (info["tavg"] > 1):
 			tavg = "averaging over "+str(info["tavg"])+" timesteps"
 		print "    Every "+ str(info["every"]) + " timesteps, "+tavg
-	
+		
 		# 3 - axes
 		for i in range(len(info["axes"])):
 			axis = info["axes"][i];
@@ -1040,7 +1047,7 @@ class ParticleDiagnostic(Diagnostic):
 			edges    = "" if not axis["edges_included"] else " [ INCLUDING EDGES ] "
 			print ("    "+axis["type"]+" from "+str(axis["min"])+" to "+str(axis["max"])
 				   +" in "+str(axis["size"])+" steps "+logscale+edges)
-			   
+		
 		return True
 	
 	# Method to print info on all included diags
@@ -1052,7 +1059,7 @@ class ParticleDiagnostic(Diagnostic):
 		for ax in self._axes:
 			if "sliceInfo" in ax: print ax["sliceInfo"]
 		return
-
+	
 	# get all available timesteps for a given diagnostic
 	def getAvailableTimesteps(self, diagNumber=None):
 		# if argument "diagNumber" not provided, return the times calculated in __init__
@@ -1236,13 +1243,14 @@ class Field(Diagnostic):
 		self._plot_centers = []
 		self._plot_shape = []
 		self._plot_log   = []
+		self._plot_units = []
 		self._sliceinfo = {}
 		self._slices = [None]*ndim
 		for iaxis in range(self._naxes):
 			centers = self._np.linspace(0., self._shape[iaxis]*cell_length[iaxis], self._shape[iaxis])
 			label = {0:"x", 1:"y", 2:"z"}[iaxis]
-			axisunits = "[code units]"
-			if units == "nice": axisunits = "[cm]"
+			axisunits = "code units"
+			if units == "nice": axisunits = "cm"
 		
 			if label in slice:
 				# if slice is "all", then all the axis has to be summed
@@ -1274,7 +1282,8 @@ class Field(Diagnostic):
 				self._plot_type   .append(label)
 				self._plot_shape  .append(self._shape[iaxis])
 				self._plot_centers.append(centers)
-				self._plot_label  .append(label+" "+axisunits)
+				self._plot_label  .append(label)
+				self._plot_units  .append(axisunits)
 				self._plot_log    .append(False)
 		
 		if len(self._plot_centers) > 2:
@@ -1553,6 +1562,7 @@ class Scalar(Diagnostic):
 		self._naxes = 0
 		self._plot_type = []
 		self._plot_label = []
+		self._plot_units = []
 		self._plot_centers = []
 		self._plot_shape = []
 		self._plot_log   = []
@@ -1768,6 +1778,7 @@ class Probe(Diagnostic):
 		self._naxes = self._shape.size
 		self._plot_type = []
 		self._plot_label = []
+		self._plot_units = []
 		self._plot_centers = []
 		self._plot_shape = []
 		self._plot_log   = []
@@ -1784,8 +1795,8 @@ class Probe(Diagnostic):
 			centers *= coeff_distance
 		
 			label = {0:"axis1", 1:"axis2", 2:"axis3"}[iaxis]
-			axisunits = "[code units]"
-			if units == "nice": axisunits = "[cm]"
+			axisunits = "code units"
+			if units == "nice": axisunits = "cm"
 		
 			if label in slice:
 				# if slice is "all", then all the axis has to be summed
@@ -1817,7 +1828,8 @@ class Probe(Diagnostic):
 				self._plot_type   .append(label)
 				self._plot_shape  .append(self._shape[iaxis])
 				self._plot_centers.append(centers)
-				self._plot_label  .append(label+" "+axisunits)
+				self._plot_label  .append(label)
+				self._plot_units  .append(axisunits)
 				self._plot_log    .append(False)
 			
 		
@@ -1846,7 +1858,8 @@ class Probe(Diagnostic):
 				X[:,i] = p1[:,0] + p2[i,0]-p2[0,0]
 				Y[:,i] = p1[:,1] + p2[i,1]-p2[0,1]
 			self._plot_edges = [X, Y]
-			self._plot_label = ["x "+axisunits, "y "+axisunits]
+			self._plot_label = ["x", "y"]
+			self._plot_units = [axisunits, axisunits]
 		
 		
 		# Build units
@@ -1982,12 +1995,14 @@ class Probe(Diagnostic):
 		return A
 	
 	# Overloading a plotting function in order to use pcolormesh instead of imshow
-	def _animateOnAxes_2D(self, ax, A):
+	def _animateOnAxes_2D_(self, ax, A):
 		# first, we remove kwargs that are not supported by pcolormesh
 		kwargs = dict(self.options.image)
 		for kwarg in self.options.image:
 			if kwarg not in ["cmap"]: del kwargs[kwarg]
-		im = ax.pcolormesh(self._plot_edges[0], self._plot_edges[1], self._np.flipud(A.transpose()),
+		xfactor = self.options.xfactor or 1.
+		yfactor = self.options.yfactor or 1.
+		im = ax.pcolormesh(xfactor*self._plot_edges[0], yfactor*self._plot_edges[1], self._np.flipud(A.transpose()),
 			vmin = self.options.vmin, vmax = self.options.vmax, **kwargs)
 		return im
 
@@ -2179,6 +2194,7 @@ class TestParticles(Diagnostic):
 		self._plot_type = self.axes
 		self._plot_centers = []
 		self._plot_label = []
+		self._plot_units = []
 		self._plot_log = []
 		for i, axis in enumerate(self.axes):
 			axisi = self._axesIndex[i]
@@ -2187,13 +2203,14 @@ class TestParticles(Diagnostic):
 			if axis in ["x", "y", "z"]: coeff = coeff_distance
 			axisunits = ""
 			if axis != "Id":
-				axisunits = " [code units]"
+				axisunits = "code units"
 				if units == "nice":
-					if axis in ["x" , "y" , "z" ]: axisunits = " [cm]"
-					if axis in ["px", "py", "pz"]: axisunits = " [m c]"
+					if axis in ["x" , "y" , "z" ]: axisunits = "cm"
+					if axis in ["px", "py", "pz"]: axisunits = "m c"
 			self._plot_centers.append([vals.min(), vals.max()])
 			self._plot_log.append(False)
-			self._plot_label.append( axis+axisunits )
+			self._plot_label.append( axis )
+			self._plot_units.append( axisunits )
 		self._title = "Test particles '"+species+"'"
 		
 		# Finish constructor
@@ -2248,40 +2265,44 @@ class TestParticles(Diagnostic):
 		return self.getData()
 	
 	# We override the plotting methods
-	def _plotVsTime(self, ax):
+	def _animateOnAxes_0D(self, ax, t):
 		pass
-	def _animateOnAxes(self, ax, t, movie=None):
-		if not self._validate(): return None
-		# Check number of axes
-		if len(self.axes)>2:
-			print "Error: Cannot print test particles on more than 2-D"
-			return None
+	def _animateOnAxes_1D(self, ax, t):
 		# Get data
 		if self._tmpdata is None:
 			A = self.getData()
 			self._tmpdata = []
 			for axis in self.axes: self._tmpdata.append( A[axis] )
+		xfactor = self.options.xfactor or 1.
+		yfactor = self.options.yfactor or 1.
 		# Plot at time t
-		if len(self.axes) == 1:
-			times = self.times[self.times<=t]
-			A     = self._tmpdata[0][self.times<=t,:]
-			if times.size == 1:
-				times = self._np.double([times, times]).squeeze()
-				A = self._np.double([A, A]).squeeze()
-			ax.plot(times*self._coeff_time, A, **self.options.plot)
-			ax.set_xlabel('Time ['+self._time_units+' ]')
-			ax.set_ylabel(self._plot_label[0])
-			self._setLimits(ax, xmax=self.times[-1]*self._coeff_time, ymin=self.options.vmin, ymax=self.options.vmax)
-		elif len(self.axes) == 2:
-			x = self._tmpdata[0][self.times<=t,:]
-			y = self._tmpdata[1][self.times<=t,:]
-			ax.plot(x, y, **self.options.plot)
-			ax.set_xlabel(self._plot_label[0])
-			ax.set_ylabel(self._plot_label[1])
-			self._setLimits(ax, ymin=self.options.vmin, ymax=self.options.vmax)
-			self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax)
+		times = self.times[self.times<=t]
+		A     = self._tmpdata[0][self.times<=t,:]
+		if times.size == 1:
+			times = self._np.double([times, times]).squeeze()
+			A = self._np.double([A, A]).squeeze()
+		ax.plot(xfactor*times*self._coeff_time, yfactor*A, **self.options.plot)
+		ax.set_xlabel('Time [ '+self._time_units+' ]')
+		ax.set_ylabel(self._xlabel)
+		self._setLimits(ax, xmax=self.times[-1]*self._coeff_time, ymin=self.options.vmin, ymax=self.options.vmax)
 		self._setSomeOptions(ax)
-		if movie is not None: movie.grab_frame()
+		return 1
+	def _animateOnAxes_2D(self, ax, t):
+		# Get data
+		if self._tmpdata is None:
+			A = self.getData()
+			self._tmpdata = []
+			for axis in self.axes: self._tmpdata.append( A[axis] )
+		xfactor = self.options.xfactor or 1.
+		yfactor = self.options.yfactor or 1.
+		# Plot at time t
+		x = self._tmpdata[0][self.times<=t,:]
+		y = self._tmpdata[1][self.times<=t,:]
+		ax.plot(xfactor*x, yfactor*y, **self.options.plot)
+		ax.set_xlabel(self._xlabel)
+		ax.set_ylabel(self._ylabel)
+		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
+		self._setSomeOptions(ax)
 		return 1
 
 
@@ -2454,10 +2475,11 @@ def multiPlot(*Diags, **kwargs):
 			pass
 		if "color" not in Diag.options.plot:
 			Diag.options.plot.update({ "color":c[i%len(c)] })
+		Diag._preparePlot()
 	# Static plot
 	if sameAxes and len(Diags[0]._plot_shape)==0:
 		for Diag in Diags:
-			Diag._artist = Diag._plotVsTime(Diag._ax)
+			Diag._artist = Diag._animateOnAxes(Diag._ax, Diag.times[-1])
 		fig.canvas.draw()
 		plt.show()
 	# Animated plot
