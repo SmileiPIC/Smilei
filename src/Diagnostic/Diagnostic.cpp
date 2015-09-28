@@ -34,9 +34,6 @@ dtimer(5)
     avgfieldDump_every=params.res_time*10;
     if (!PyTools::extract("avgfieldDump_every", avgfieldDump_every)) avgfieldDump_every=params.global_every;
     
-    fieldsToDump.resize(0);
-    PyTools::extract("fieldsToDump", fieldsToDump);
-    
     //!\todo Define default behaviour : 0 or params.res_time
     //ntime_step_avg=params.res_time;
     ntime_step_avg=0;
@@ -171,8 +168,8 @@ void Diagnostic::initProbes(Params& params, SmileiMPI *smpi) {
             H5Pclose(pid);
             
             // Write the version of the code as an attribute
-            string ver(__VERSION);
-            H5::attr(probes.fileId, "Version", ver);
+            H5::attr(probes.fileId, "Version", string(__VERSION));
+            H5::attr(probes.fileId, "CommitDate", string(__COMMITDATE));
             
             probes.dt = params.timestep;
             probes.every         .resize(0);
@@ -365,18 +362,18 @@ void Diagnostic::initProbes(Params& params, SmileiMPI *smpi) {
         // Create group for the current probe
         ostringstream prob_name("");
         prob_name << "p" << setfill('0') << setw(4) << n_probe;
-        hid_t did = H5::group(probes.fileId, prob_name.str());
+        hid_t gid = H5::group(probes.fileId, prob_name.str());
         
         // Create an array to hold the positions of local probe particles
         Field2D fieldPosProbe;
-        fieldPosProbe.allocateDims(nPart_local,ndim);
+        fieldPosProbe.allocateDims(ndim,nPart_local);
         
         for (unsigned int ipb=0 ; ipb<nPart_local ; ipb++)
             for (unsigned int idim=0 ; idim<ndim  ; idim++)
-                fieldPosProbe(ipb,idim) = probeParticles.position(idim,ipb);
+                fieldPosProbe(idim,ipb) = probeParticles.position(idim,ipb);
         
         // Add array "positions" into the current HDF5 group
-        H5::matrix_MPI(did, "positions", fieldPosProbe.data_2D[0][0], nPart_total, ndim, probesStart, nPart_local);
+        H5::matrix_MPI(gid, "positions", fieldPosProbe.data_2D[0][0], nPart_total, ndim, probesStart, nPart_local);
         
         probes.probesStart.push_back(probesStart);
         
@@ -385,25 +382,25 @@ void Diagnostic::initProbes(Params& params, SmileiMPI *smpi) {
         for (unsigned int iDimProbe=0; iDimProbe<=dimProbe; iDimProbe++) {
             pk.str("");
             pk << "p" << iDimProbe;
-            H5::vect(did, pk.str(), allPos[iDimProbe]);
+            H5::vect(gid, pk.str(), allPos[iDimProbe]);
         }
         
         // Add array "number" to the current group
-        H5::vect(did, "number", vecNumber);
+        H5::vect(gid, "number", vecNumber);
         
         // Add attribute every to the current group
-        H5::attr(did, "every", every);
+        H5::attr(gid, "every", every);
         // Add attribute "dimension" to the current group
-        H5::attr(did, "dimension", dim);
+        H5::attr(gid, "dimension", dim);
         
         // Add "fields" to the current group
         ostringstream fields("");
         fields << fs[0];
         for( unsigned int i=1; i<fs.size(); i++) fields << "," << fs[i];
-        H5::attr(did, "fields", fields.str());
+        H5::attr(gid, "fields", fields.str());
         
         // Close current group
-        H5Gclose(did);
+        H5Gclose(gid);
         
     }
 }

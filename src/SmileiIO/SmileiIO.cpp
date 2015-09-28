@@ -26,7 +26,6 @@ int SmileiIO::signal_received=0;
 
 SmileiIO::SmileiIO( Params& params, Diagnostic& diag, SmileiMPI* smpi ) : 
 dump_times(0), 
-fieldsToDump(diag.fieldsToDump),
 time_reference(MPI_Wtime()),
 time_dump_step(0),
 dump_step(0),
@@ -38,6 +37,9 @@ dump_deflate(0),
 restart_dir(""),
 dump_request(smpi->getSize())
 {
+    fieldsToDump.resize(0);
+    PyTools::extract("fieldsToDump", fieldsToDump);
+    
     if (PyTools::extract("dump_step", dump_step)) {
         if (dump_step)
             MESSAGE(1,"Code will dump after " << dump_step << " steps");
@@ -158,7 +160,9 @@ dump_request(smpi->getSize())
     
     H5::attr(global_file_id_, "res_time", params.res_time);
     H5::attr(global_file_id_, "every", diag.fieldDump_every);
-    H5::attr(global_file_id_, "res_space", params.res_space);
+    vector<double> my_cell_length=params.cell_length;
+    my_cell_length.resize(params.nDim_field);
+    H5::attr(global_file_id_, "cell_length", my_cell_length);
     H5::attr(global_file_id_, "sim_length", params.sim_length);
         
     // Fields_avg.h5
@@ -170,7 +174,7 @@ dump_request(smpi->getSize())
         // Create property list for collective dataset write: for Fields.h5
         H5::attr(global_file_id_avg, "res_time", params.res_time);
         H5::attr(global_file_id_avg, "every", diag.fieldDump_every);
-        H5::attr(global_file_id_avg, "res_space", params.res_space);
+        H5::attr(global_file_id_avg, "cell_length", params.cell_length);
         H5::attr(global_file_id_avg, "sim_length", params.sim_length);
     }
     
@@ -214,7 +218,7 @@ void SmileiIO::writeAllFieldsSingleFileTime( std::vector<Field*> &fields, int ti
     hid_t group_id = H5::group(file_id, name_t.str());
     
     for (unsigned int i=0; i<fields.size(); i++) {
-        if (!fieldsToDump.size()==0) {
+        if (fieldsToDump.size()==0) {
             writeFieldsSingleFileTime(fields[i], group_id );
         } else {
             for (unsigned int j=0; j<fieldsToDump.size(); j++) {
