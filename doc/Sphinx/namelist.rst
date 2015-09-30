@@ -729,8 +729,10 @@ The full list of scalars that are saved by this diagnostic:
 | | Uexp         | | Expected value (Initial energy :math:`-` lost :math:`+` gained)         |
 | | Ubal         | | Energy balance (Utot :math:`-` Uexp)                                    |
 | | Ubal_norm    | | Normalized energy balance (Ubal :math:`/` Utot)                         |
+| | Uelm_Ex      | | Energy in Ex field (:math:`\int E_x^2 dV /2`)                           |
+| |              | |  ... and idem for fields Ey, Ez, Bx_m, By_m and Bz_m                    |
 +----------------+---------------------------------------------------------------------------+
-| **Energies lost/gained at boundaries due to moving window**                                |
+| **Energies lost/gained at boundaries**                                                     |
 +----------------+---------------------------------------------------------------------------+
 | | Ukin_bnd     | | Kinetic energy exchanged at the boundaries during the timestep          |
 | | Uelm_bnd     | | EM energy exchanged at boundaries during the timestep                   |
@@ -739,26 +741,19 @@ The full list of scalars that are saved by this diagnostic:
 | | Uelm_out_mvw | | EM energy lost during the timestep due to the moving window             |
 | | Uelm_inj_mvw | | EM energy injected during the timestep due to the moving window         |
 +----------------+---------------------------------------------------------------------------+
-| **Energies lost/gained at boundaries  due to moving window**                               |
+| **Species information**                                                                    |
 +----------------+---------------------------------------------------------------------------+
-| | Ebal_norm    | | Ebalance :math:`/` Etot                                                 |
-| | Ebalance     | | Current energy :math:`-` initial total energy                           |
-| | Elost        | | Lost particle energy during last timestep                               |
-| | Poynting     | | Accumulated Poyting flux through all boundaries                         |
+| | Zavg_abc     | | Average charge of species "abc"                                         |
+| | Ukin_abc     | |  ... their kinetic energy                                               |
+| | Ntot_abc     | |  ... and number of particles                                            |
 +----------------+---------------------------------------------------------------------------+
-| | Z_abc        | | Average charge of species "abc"                                         |
-| | E_abc        | |  ... their kinetic energy                                               |
-| | N_abc        | |  ... and number of particles                                            |
-+----------------+---------------------------------------------------------------------------+
-| | Ex_U         | | :math:`\int E_x^2 dV /2`                                                |
-| |              | |  ... and similar for fields Ey, Ez, Bx_m, By_m and Bz_m                 |
+| **Fields information**                                                                     |
 +----------------+---------------------------------------------------------------------------+
 | | ExMin        | | Minimum of :math:`E_x`                                                  |
 | | ExMinCell    | |  ... and its location (cell index)                                      |
 | | ExMax        | | Maximum of :math:`E_x`                                                  |
 | | ExMaxCell    | |  ... and its location (cell index)                                      |
 | |              | | ... same for fields Ey Ez Bx_m By_m Bz_m Jx Jy Jz Rho                   |
-+----------------+---------------------------------------------------------------------------+
 | | PoyEast      | | Accumulated Poynting flux through eastern boundary                      |
 | | PoyEastInst  | | Current Poynting flux through eastern boundary                          |
 | |              | |  ... same for boundaries West South North Bottom Top                    |
