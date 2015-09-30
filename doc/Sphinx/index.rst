@@ -42,6 +42,7 @@ Understand :program:`Smilei`
 .. toctree::
    :maxdepth: 1
    
+   units
    algorithms
    parallelization
    collisions
