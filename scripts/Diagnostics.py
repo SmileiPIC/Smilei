@@ -355,7 +355,7 @@ class Units(object):
 			return val.magnitude or 1., str(u"{0.units:P}".format(val))
 		return 1., ""
 	
-	def prepare(self, wavelength_SI=None, xunits="", yunits="", vunits=""):
+	def prepare(self, wavelength_SI=None, xunits="", yunits="", vunits="", tunits=""):
 		if self.UnitRegistry:
 			if wavelength_SI:
 				# Load pint's default unit registry
@@ -386,6 +386,7 @@ class Units(object):
 			self.xcoeff, self.xname = self._convert(xunits, self.requestedX)
 			self.ycoeff, self.yname = self._convert(yunits, self.requestedY)
 			self.vcoeff, self.vname = self._convert(vunits, self.requestedV)
+			self.tcoeff, self.tname = self._convert("T_r", None)
 
 
 # -------------------------------------------------------------------
@@ -451,9 +452,8 @@ class Diagnostic(object):
 			try:    wavelength_SI = self.namelist.wavelength_SI
 			except: wavelength_SI = None
 			yunits = None
-			if self._dim == 0: xunits = "T_r"
-			if self._dim >  0: xunits = self._units[0]
-			if self._dim >  1: yunits = self._units[1]
+			if self._dim > 0: xunits = self._units[0]
+			if self._dim > 1: yunits = self._units[1]
 			self.units.prepare(wavelength_SI, xunits, yunits, self._vunits)
 	
 	# When no action is performed on the object, this is what appears
@@ -577,19 +577,15 @@ class Diagnostic(object):
 		
 		# Case of a streakPlot (no animation)
 		if self.options.streakPlot:
-			# Require several times
 			if len(self.times) < 2:
 				print "ERROR: a streak plot requires at least 2 times"
 				return
-			# Require function _getDataAtTime
 			if not hasattr(self,"_getDataAtTime"):
 				print "ERROR: this diagnostic cannot do a streak plot"
 				return
-			# Require dimension = 1
 			if len(self._shape) != 1:
 				print "ERROR: Diagnostic must be 1-D for a streak plot"
 				return
-			# Warning if uneven times
 			if not (self._np.diff(self.times)==self.times[1]-self.times[0]).all():
 				print "WARNING: times are not evenly spaced. Time-scale not plotted"
 				ylabel = "Unevenly-spaced times"
@@ -657,6 +653,7 @@ class Diagnostic(object):
 		self._xfactor = (self.options.xfactor or 1.) * self.units.xcoeff
 		self._yfactor = (self.options.yfactor or 1.) * self.units.ycoeff
 		self._vfactor = self.units.vcoeff
+		self._tfactor = (self.options.xfactor or 1.) * self.units.tcoeff
 	def _prepare2(self):
 		# prepare the animating function
 		if not self._animateOnAxes:
@@ -666,20 +663,23 @@ class Diagnostic(object):
 			else:
 				print "Cannot plot with more than 2 dimensions !"
 				return
+		# prepare t label
+		self._tlabel = self.units.tname
+		if self.options.xfactor: self._tlabel += "/"+str(self.options.xfactor)
+		self._tlabel = 'Time ( '+self._tlabel+' )'
 		# prepare x label
-		self._xlabel = self.units.xname
-		if self.options.xfactor: self._xlabel += "/"+str(self.options.xfactor)
-		if self._dim == 0:
-			self._xlabel = 'Time ( '+self._xlabel+' )'
-		else:
+		if self._dim > 0:
+			self._xlabel = self.units.xname
+			if self.options.xfactor: self._xlabel += "/"+str(self.options.xfactor)
 			self._xlabel = self._label[0] + " (" + self._xlabel + ")"
 			if self._log[0]: self._xlabel = "Log[ "+self._xlabel+" ]"
 		# prepare y label
-		if self._dim == 2:
+		if self._dim > 1:
 			self._ylabel = self.units.yname
 			if self.options.yfactor: self._ylabel += "/"+str(self.options.yfactor)
 			self._ylabel = self._label[1] + " (" + self._ylabel + ")"
 			if self._log[1]: self._ylabel = "Log[ "+self._ylabel+" ]"
+			# prepare extent for 2d plots
 			self._extent = [self._xfactor*self._centers[0][0], self._xfactor*self._centers[0][-1], self._yfactor*self._centers[1][0], self._yfactor*self._centers[1][-1]]
 			if self._log[0]:
 				self._extent[0] = self._np.log10(self._extent[0])
@@ -711,9 +711,9 @@ class Diagnostic(object):
 	def _animateOnAxes_0D(self, ax, t):
 		times = self.times[self.times<=t]
 		A     = self._tmpdata[self.times<=t]
-		im, = ax.plot(self._xfactor*times, self._vfactor*A, **self.options.plot)
-		ax.set_xlabel(self._xlabel)
-		self._setLimits(ax, xmax=self._xfactor*self.times[-1], ymin=self.options.vmin, ymax=self.options.vmax)
+		im, = ax.plot(self._tfactor*times, self._vfactor*A, **self.options.plot)
+		ax.set_xlabel(self._tlabel)
+		self._setLimits(ax, xmax=self._tfactor*self.times[-1], ymin=self.options.vmin, ymax=self.options.vmax)
 		self._setSomeOptions(ax)
 		return im
 	def _animateOnAxes_1D(self, ax, t):
@@ -2114,12 +2114,10 @@ class TestParticles(Diagnostic):
 			self._label.append( axis )
 			self._units.append( axisunits )
 		self._title = "Test particles '"+species+"'"
-		if   len(axes)==1:
-			self._shape = []
-			self._vunits = self._units[0]
-		elif len(axes)==2:
-			self._shape = [0, 0]
-			self._vunits = ""
+		self._shape = [0]*len(axes)
+		# Hack to have vfactor working with 1 axis
+		if len(axes)==1: self._vunits = self._units[0]
+		else: self._vunits = ""
 		
 		# Finish constructor
 		self.valid = True
@@ -2183,20 +2181,20 @@ class TestParticles(Diagnostic):
 	
 	# We override the plotting methods
 	def _animateOnAxes_0D(self, ax, t):
+		pass
+	def _animateOnAxes_1D(self, ax, t):
 		times = self.times[self.times<=t]
 		A     = self._tmpdata[0][self.times<=t,:]
 		if times.size == 1:
 			times = self._np.double([times, times]).squeeze()
 			A = self._np.double([A, A]).squeeze()
-		ax.plot(self._xfactor*times, self._vfactor*A, **self.options.plot)
-		ax.set_xlabel(self._xlabel)
-		ax.set_ylabel(self.axes[0]+" ("+self.units.vname+")") # hack
-		self._setLimits(ax, xmax=self._xfactor*self.times[-1], ymin=self.options.vmin, ymax=self.options.vmax)
+		ax.plot(self._tfactor*times, self._vfactor*A, **self.options.plot)
+		ax.set_xlabel(self._tlabel)
+		ax.set_ylabel(self.axes[0]+" ("+self.units.vname+")")
+		self._setLimits(ax, xmax=self._tfactor*self.times[-1], ymin=self.options.vmin, ymax=self.options.vmax)
 		self._setSomeOptions(ax)
 		ax.set_title(self._title) # override title
 		return 1
-	def _animateOnAxes_1D(self, ax, t):
-		pass
 	def _animateOnAxes_2D(self, ax, t):
 		x = self._tmpdata[0][self.times<=t,:]
 		y = self._tmpdata[1][self.times<=t,:]

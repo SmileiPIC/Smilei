@@ -126,6 +126,10 @@ Spatial and temporal scales
   Cluster width.
   :red:`to do`
 
+.. py:data:: number_of_procs
+  
+  :red:`to do`
+
 
 .. _wavelength_SI:
 
@@ -1098,4 +1102,14 @@ All the possible variables inside this block are explained here:
     	axes = [ ["charge",    -0.5,   10.5,   11] ]
     )
 
+
+
+----
+
+Miscellaneous
+^^^^^^^^^^^^^
+
+.. py:data:: random_seed
+
+  The value of the random seed. If not defined, the machine clock is used.
 
