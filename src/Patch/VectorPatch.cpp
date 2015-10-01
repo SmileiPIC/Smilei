@@ -227,7 +227,7 @@ void VectorPatch::exchangeParticles(int ispec, PicParams &params, SmileiMPI* smp
       (*this)(ipatch)->initExchParticles(smpi, ispec, params, useless, this);
     }
 
-    cout << "init exch done" << endl;
+    //cout << "init exch done" << endl;
 
     #pragma omp single
     {
@@ -237,13 +237,13 @@ void VectorPatch::exchangeParticles(int ispec, PicParams &params, SmileiMPI* smp
             for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
                 (*this)(ipatch)->initCommParticles(smpi, ispec, params, useless, iDim, this);
             }
-            cout << "init comm done for dim " << iDim << endl;
+            //cout << "init comm done for dim " << iDim << endl;
             //cout << "initCommParticles done for " << iDim << endl;
             //#pragma omp for
             for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
                 (*this)(ipatch)->finalizeCommParticles(smpi, ispec, params, useless, iDim, this);
             }
-            cout << "final comm done for dim " << iDim << endl;
+            //cout << "final comm done for dim " << iDim << endl;
             //cout << "finalizeCommParticles done for " << iDim << endl;
         }
 
