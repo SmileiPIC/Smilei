@@ -358,7 +358,7 @@ It is applied using an ``Antenna()`` block, for instance::
   Antenna(
       field = "Jz",
       spatial_profile = gaussian(0.01),
-      time_profile = cosine(base=0., xlength=1., xnumber=100)
+      time_profile = tcosine(base=0., duration=1., freq=0.1)
   )
 
 All the possible variables inside this block are explained here:
@@ -759,7 +759,7 @@ The full list of scalars that are saved by this diagnostic:
 | |              | |  ... same for boundaries West South North Bottom Top                    |
 +----------------+---------------------------------------------------------------------------+
 
-Checkout the :doc:`post-processing` documentation as well.
+Checkout the :doc:`post-processing <post-processing>` documentation as well.
 
 ----
 

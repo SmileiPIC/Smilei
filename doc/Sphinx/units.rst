@@ -26,7 +26,7 @@ From this reference frequency :math:`\omega_r`, we define:
 * a reference length :math:`L_r = c/\omega_r` 
 * a reference electric field :math:`E_r = m_e c \omega_r / e`
 * a reference magnetic field :math:`B_r = m_e \omega_r / e`
-* a reference charge density :math:`N_r = \varepsilon_0 m_e \omega_r^2 /e^2`
+* a reference particle density :math:`N_r = \varepsilon_0 m_e \omega_r^2 /e^2`
 * a reference current :math:`J_r = c\, e\, N_r`
 
 Normalizing all quantities to these references is convenient for resolving Maxwell's equations,
