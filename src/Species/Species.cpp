@@ -103,7 +103,10 @@ void Species::initSpecies(PicParams& params)
     Ionize = IonizationFactory::create( params, speciesNumber );
     if (Ionize) DEBUG("Species " << speciesNumber << " can be ionized!");
 
-    unsigned int nthds(1);
+    //Initialize specMPI
+    //specMPI.init();
+
+//    unsigned int nthds(1);
 //#pragma omp parallel shared(nthds) 
 //    {
 //#ifdef _OPENMP
