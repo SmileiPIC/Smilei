@@ -659,7 +659,8 @@ void ElectroMagn1D::applyExternalField(Field* my_field,  Profile *profile, Smile
     SmileiMPI_Cart1D* smpi1D = static_cast<SmileiMPI_Cart1D*>(smpi);
     
     vector<double> x(1,0);
-    for (unsigned int i=0 ; i<field1D->dims()[0] ; i++) {
+    //for (unsigned int i=0 ; i<field1D->dims()[0] ; i++) { // USING UNSIGNED INT CREATES PB WITH PERIODIC BCs
+    for (int i=0 ; i<field1D->dims()[0] ; i++) {
         x[0] = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i +(field1D->isDual(0)?-0.5:0)) )*dx;
         (*field1D)(i) = (*field1D)(i) + profile->valueAt(x);
     }

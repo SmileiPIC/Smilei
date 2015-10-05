@@ -2,8 +2,8 @@
 
 def constant(value, xvacuum=0., yvacuum=0.):
     global dim, sim_length
-    if dim == "1d3v": return lambda x: value if x>=xvacuum else 0.
-    if dim == "2d3v": return lambda x,y: value if (x>=xvacuum and y>=yvacuum) else 0.
+    if dim == "1d3v": return lambda x: value #if x>=xvacuum else 0.
+    if dim == "2d3v": return lambda x,y: value #if (x>=xvacuum and y>=yvacuum) else 0.
 
 def trapezoidal(max,
                 xvacuum=0., xplateau=None, xslope1=0., xslope2=0.,
