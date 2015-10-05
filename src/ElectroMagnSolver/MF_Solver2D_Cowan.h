@@ -17,10 +17,17 @@ public:
 
     //! Overloading of () operator
     virtual void operator()( ElectroMagn* fields);
+ 
+    // Parameters for the Maxwell-Faraday solver
+    double dx;
+    double dy;
+    double beta_x;
+    double beta_y;
+    double Beta_x;
+    double Beta_y;
 
 protected:
 
 };//END class
 
 #endif
-
