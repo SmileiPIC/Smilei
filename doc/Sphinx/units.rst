@@ -48,23 +48,27 @@ From this reference frequency :math:`\omega_r`, we define:
 * a reference particle density :math:`N_r = \varepsilon_0 m_e \omega_r^2 /e^2`
 * a reference current :math:`J_r = c\, e\, N_r`
 
+.. warning::
+  
+  Counter-intuitively, the reference density :math:`N_r` is **not equal** to :math:`L_r^{-3}`.
+
 Normalizing all quantities to these references is convenient for resolving Maxwell's equations,
-as it converts them into a dimension-less set of equations.
-Indeed, if the let us write :math:`\mathcal{E}=E/E_r`, :math:`\mathcal{B}=B/B_r`,
-:math:`\mathcal{J}=j/J_r` and :math:`\mathcal{R}=\rho/N_r/Q_r`, the normalized
-electric field, magnetic field, current and density, respectively. We obtain the following
-form of Maxwell's equations:
+as it converts them into a dimension-less set of equations:
 
 .. math::
   
-  \nabla\cdot\mathcal{E} = \mathcal{R}
+  \mathbf{\nabla}\cdot\mathbf{E} = \rho
   \quad\quad
-  \nabla\cdot\mathcal{B} = 0
-  
-  \nabla\times\mathcal{E} = - \partial_t \mathcal{B}
+  \nabla\cdot\mathbf{B} = 0
+
+  \nabla\times\mathbf{E} = - \partial_t \mathbf{B}
   \quad\quad
-  \nabla\times\mathcal{B} = \mathcal{J} + \partial_t \mathcal{E}
-  
+  \nabla\times\mathbf{B} = \mathbf{j} + \partial_t \mathbf{E}
+
+where :math:`\mathbf{E}`, :math:`\mathbf{B}`, :math:`\mathbf{j}` and :math:`\mathbf{\rho}`
+are the electric field, magnetic field, current density and charge density, normalized to
+:math:`E_r`, :math:`B_r`, :math:`J_r` and :math:`Q_r N_r`, respectively. Note that the
+temporal and spatial derivatives are also normalized to :math:`T_r` and :math:`L_r`, respectively.
 
 ----
 

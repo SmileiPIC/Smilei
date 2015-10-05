@@ -1,11 +1,11 @@
-Namelist syntax
----------------
+Write a namelist
+----------------
 
-In :program:`Smilei`, the input file (*namelist*) is written in the *python* language.
-It is thus recommended to know the basics of *python*.
+Before you run :program:`Smilei`, you need a *namelist* (an input file). The namelist
+is written in the *python* language. It is thus recommended to know the basics of *python*.
 
 To create a namelist, we suggest you copy one existing file in the folder *benchmarks*.
-All namelists have the extension *.py*.
+All namelists have the extension ``.py``.
 
 ----
 
@@ -29,16 +29,17 @@ General rules
         timestep = 0.3
   
 
-* You will need to use *lists*, which are series of things in *python*,
+* You will need to use `lists <https://docs.python.org/2/tutorial/introduction.html#lists>`_,
+  which are series of things in *python*,
   defined between brackets ``[]`` and separated by commas.
   For example, ``mean_velocity = [0., 1.1, 3.]``.
 
 * You are free to import any *python* package into the namelist.
   For instance, you may obtain :math:`\pi` using ``from math import pi``.
 
-* **Important note**: :program:`Smilei` normalizes all quantities to arbitrary values.
-  The distance and time units are denoted by :math:`d_r` and :math:`t_r`, respectively.
-  They are related through :math:`t_r = d_r/c`. For more information, see :doc:`units`.
+* All quantities are normalized to arbitrary values.
+  The distance and time units are denoted by :math:`L_r` and :math:`T_r`, respectively.
+  They are related through :math:`T_r = L_r/c`. For more information, see :doc:`units`.
 
 ----
 
@@ -99,23 +100,23 @@ Spatial and temporal scales
 
 .. py:data:: timestep
   
-  Duration of one timestep in units of :math:`t_r`.
+  Duration of one timestep in units of :math:`T_r`.
 
 
 .. py:data:: sim_time
   
-  Duration of the simulation in units of :math:`t_r`.
+  Duration of the simulation in units of :math:`T_r`.
 
 
 .. py:data:: cell_length
   
-  A list of floats: dimensions of one cell in units of :math:`d_r`.
+  A list of floats: dimensions of one cell in units of :math:`L_r`.
   The number of elements of this list must be the same as the dimension of the simulation.
 
 
 .. py:data:: sim_length
   
-  A list of floats: dimensions of the simulations in units of :math:`d_r`.
+  A list of floats: dimensions of the simulations in units of :math:`L_r`.
   The number of elements of this list must be the same as the dimension of the simulation.
 
 
@@ -137,7 +138,7 @@ Spatial and temporal scales
   
   The value of the reference wavelength :math:`\lambda_r` in SI units
   (**only required if collisions or ionization are requested**).
-  This wavelength is related to the normalization length according to :math:`2\pi d_r = \lambda_r`.
+  This wavelength is related to the normalization length according to :math:`2\pi L_r = \lambda_r`.
 
 .. py:data:: print_every
   
@@ -252,7 +253,7 @@ All the possible variables inside this block are explained here:
   
   :default: 0.
   
-  The time during which the particle positions are not updated, in units of :math:`t_r`.
+  The time during which the particle positions are not updated, in units of :math:`T_r`.
 
 
 .. py:data:: ionization_model

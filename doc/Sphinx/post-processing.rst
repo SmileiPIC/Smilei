@@ -1,5 +1,5 @@
-Post-process your diagnostics
------------------------------
+Post-process
+------------
 
 
 A python script *Diagnostics.py* is provided to view or extract data from all the diagnostics.

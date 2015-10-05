@@ -3,13 +3,13 @@ Install
 
 The requirements for installing and running :program:`Smilei` are:
 
-* A C++ compiler (v4.8 or later recommended) with MPI (*openmpi* is preferred)
-* The HDF5 libraries compatible with your versions of C++ and MPI
+* A C++ compiler (v4.8 or later recommended), optionally implementing openMP
+* MPI libraries (*openmpi* recommended)
+* HDF5 libraries compatible with your versions of C++ and MPI
 * Python 2.7
 
 Optional dependencies are:
 
-* OpenMP
 * Doxygen
 * Python modules: sphinx, h5py, numpy, matplotlib, pylab, pint
 * ffmpeg
@@ -46,11 +46,7 @@ It is also possible to install all dependencies manually.
    .. code-block:: bash
 
      $ sudo port install hdf5 +gcc48+openmpi
-       
-#. Optionally, to install openMP
-   
-   :red:`to do`
-   
+
 #. Edit your ``.bash_profile`` hidden file located in your home folder:
    
    .. code-block:: bash
@@ -65,7 +61,6 @@ It is also possible to install all dependencies manually.
      export HDF5_ROOT_DIR=/opt/local
      
    Depending on your system, you might need to use ``mpic++`` instead of ``mpicxx``.
-   Default for `SMILEICXX`  is `mpic++`, `HDF5_ROOT_DIR` is empty.
 
 #. Python should be already installed by default, but in case you need
    a specific version, run:
@@ -88,9 +83,9 @@ It is also possible to install all dependencies manually.
    .. code-block:: bash
 
      $ sudo port install py27-ipython
-     $ sudo port install py27-h5py
-     $ sudo port install py27-sphinx # only for building the doc
-     $ sudo port install py27-pint   # only for auto unit conversion
+     $ sudo port install py27-h5py    # mandatory for opening any HDF5 file
+     $ sudo port install py27-sphinx  # only for building the doc
+     $ sudo port install py27-pint    # only for auto unit conversion
 
 
 ----
@@ -115,17 +110,21 @@ Download and compile
 #. Extract the tarball at the location of your choice.
    Let us assume it is located in your home directory ``~/Smilei/``.
 
-#. In a terminal, go to that location and compile::
+#. In a terminal, go to that location and compile:
      
-     $ cd ~/Smilei
-     $ make
+     .. code-block:: bash
+       
+       $ cd ~/Smilei
+       $ make
    
    Alternates:
      
-   * ``make debug`` to have debugging output (slow).
-   * ``make openmp`` to activate OpenMP support
-   * ``make -j4`` to compile with 4 processors.
-   * ``make doc`` to compile the documentation.
+     .. code-block:: bash
+       
+       $ make debug  # to have debugging output (slow).
+       $ make openmp # to activate OpenMP support
+       $ make -j4    # to compile with 4 processors.
+       $ make doc    # to compile the documentation.
    
 
 

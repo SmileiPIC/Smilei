@@ -31,8 +31,8 @@ Run and analyze your simulation
 .. toctree::
    :maxdepth: 1
    
-   run
    namelist
+   run
    post-processing
 
 

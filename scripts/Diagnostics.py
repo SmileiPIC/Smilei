@@ -392,6 +392,12 @@ class Units(object):
 			self.ycoeff, self.yname = self._convert(yunits, self.requestedY)
 			self.vcoeff, self.vname = self._convert(vunits, self.requestedV)
 			self.tcoeff, self.tname = self._convert("T_r", None)
+		else:
+			self.xcoeff, self.xname = 1., "code units"
+			self.ycoeff, self.yname = 1., "code units"
+			self.vcoeff, self.vname = 1., "code units"
+			self.tcoeff, self.tname = 1., "code units"
+
 
 
 # -------------------------------------------------------------------
@@ -450,7 +456,7 @@ class Diagnostic(object):
 		if type(self.units) in [list, tuple]: self.units = Units(*self.units)
 		if type(self.units) is dict         : self.units = Units(**self.units)
 		if type(self.units) is not Units:
-			print "Could not understance the 'units' argument"
+			print "Could not understand the 'units' argument"
 			return
 		
 		# Get some info on the simulation
