@@ -31,9 +31,8 @@ class Smilei(object):
 	
 	"""
 	
-	valid = False
-	
 	def __init__(self, results_path=".", show=True):
+		self.valid = False
 		# Import packages
 		import h5py
 		import numpy as np
@@ -50,16 +49,20 @@ class Smilei(object):
 		self._glob = glob.glob
 		self._re = re
 		self._plt = matplotlib.pyplot
+		self.reload()
+	
+	def reload(self):
+		self.valid = False
 		# Verify that results_path is valid
-		if not self._ospath.isdir(results_path):
-			print "Could not find directory "+results_path
+		if not self._ospath.isdir(self._results_path):
+			print "Could not find directory "+self._results_path
 			return
-		if len(self._glob(results_path+"/smilei.py"))==0:
-			print "Could not find an input file in directory "+results_path
+		if len(self._glob(self._results_path+"/smilei.py"))==0:
+			print "Could not find an input file in directory "+self._results_path
 			return
 		# Fetch the python namelist
 		namespace={}
-		execfile(results_path+'/smilei.py',namespace) # execute the namelist into an empty namespace
+		execfile(self._results_path+'/smilei.py',namespace) # execute the namelist into an empty namespace
 		class Namelist: pass # empty class to store the namelist variables
 		self.namelist = Namelist() # create new empty object
 		for key, value in namespace.iteritems(): # transfer all variables to this object
@@ -336,22 +339,24 @@ class Units(object):
 			return
 		self.UnitRegistry = UnitRegistry
 	
+	def _divide(self,units1, units2):
+		division = self.ureg("("+units1+") / ("+units2+")").to_base_units()
+		if not division.dimensionless: raise
+		return division.magnitude or 1., units2
+	
 	def _convert(self, knownUnits, requestedUnits):
 		if knownUnits:
-			val = self.ureg(knownUnits)
 			if requestedUnits:
 				try:
-					val = val.to(requestedUnits)
-					return val.magnitude or 1., requestedUnits
+					return self._divide(knownUnits,requestedUnits)
 				except:
 					print "WARNING: cannot convert units to <"+requestedUnits+">"
 					print "       : Conversion discarded."
 			else:
 				for units in self.requestedUnits:
-					try:
-						val = val.to(units)
-						return val.magnitude or 1., units
+					try   : return self._divide(knownUnits,units)
 					except: pass
+			val = self.ureg(knownUnits)
 			return val.magnitude or 1., str(u"{0.units:P}".format(val))
 		return 1., ""
 	
@@ -360,28 +365,28 @@ class Units(object):
 			if wavelength_SI:
 				# Load pint's default unit registry
 				self.ureg = self.UnitRegistry()
-				self.ureg.define("L_r = "+str(wavelength_SI)+"/2/pi*meter") # length
 				# Define code units
 				self.ureg.define("V_r = speed_of_light"                   ) # velocity
-				self.ureg.define("T_r = L_r / V_r"                        ) # time
+				self.ureg.define("W_r = 2*pi*V_r/("+str(wavelength_SI)+"*meter)") # frequency
 				self.ureg.define("M_r = electron_mass"                    ) # mass
 				self.ureg.define("Q_r = 1.602176565e-19 * coulomb"        ) # charge
 			else:
+				# Make blank unit registry
 				self.ureg = self.UnitRegistry(None)
-				self.ureg.define("L_r = [code_length]"                    ) # length
-				self.ureg.define("T_r = [code_time]"                      ) # time
-				self.ureg.define("V_r = L_r / T_r"                        ) # velocity
+				self.ureg.define("V_r = [code_velocity]"                  ) # velocity
+				self.ureg.define("W_r = [code_frequency]"                 ) # frequency
 				self.ureg.define("M_r = [code_mass]"                      ) # mass
 				self.ureg.define("Q_r = [code_charge]"                    ) # charge
-				self.ureg.define("epsilon_0 = 1."                         )
-				self.ureg.define("mu_0 = 1."                              )
+				self.ureg.define("epsilon_0 = 1")
+			self.ureg.define("L_r = V_r / W_r"                        ) # length
+			self.ureg.define("T_r = 1   / W_r"                        ) # time
 			self.ureg.define("P_r = M_r * V_r"                        ) # momentum
 			self.ureg.define("K_r = M_r * V_r**2"                     ) # energy
-			self.ureg.define("N_r = epsilon_0 * K_r / L_r**2 / Q_r**2") # density
+			self.ureg.define("N_r = epsilon_0 * M_r * W_r**2 / Q_r**2") # density
 			self.ureg.define("J_r = V_r * Q_r * N_r"                  ) # current
-			self.ureg.define("B_r =  M_r / Q_r / T_r"                 ) # magnetic field
-			self.ureg.define("E_r =  B_r * V_r"                       ) # electric field
-			self.ureg.define("S_r =  E_r * B_r / mu_0"                ) # poynting
+			self.ureg.define("B_r = M_r * W_r / Q_r "                 ) # magnetic field
+			self.ureg.define("E_r = B_r * V_r"                        ) # electric field
+			self.ureg.define("S_r = K_r * V_r * N_r"                  ) # poynting
 			# Convert units if possible
 			self.xcoeff, self.xname = self._convert(xunits, self.requestedX)
 			self.ycoeff, self.yname = self._convert(yunits, self.requestedY)
@@ -407,17 +412,26 @@ class Diagnostic(object):
 		self._units = []
 		self._log = []
 		self._data_log = False
-		# if string, try to use it as a results_path
+		
+		# if results_path is string, try to use it as a results_path
 		if type(results_path) is str:
 			self.Smilei = Smilei(results_path)
 		# if given a Smilei object, use it directly
 		elif type(results_path) is Smilei:
 			self.Smilei = results_path
+		# if the Smilei object is outdated, reload
+		elif hasattr(results_path,"_results_path") and hasattr(results_path,"reload") \
+				and callable(getattr(results_path,"reload")):
+			self.Smilei = results_path
+			self.Smilei.reload()
 		# Otherwise, error
 		else:
 			print "Could not find information on the Smilei simulation"
 			return
-		if not self.Smilei.valid: return
+		if not self.Smilei.valid:
+			print "Invalid Smilei simulation"
+			return
+		
 		# pass packages to each diagnostic
 		self._results_path = self.Smilei._results_path
 		self._h5py = self.Smilei._h5py
@@ -427,8 +441,10 @@ class Diagnostic(object):
 		self._re = self.Smilei._re
 		self._plt = self.Smilei._plt
 		self.namelist = self.Smilei.namelist
+		
 		# Make the Options object
 		self.options = Options(**kwargs)
+		
 		# Make or retrieve the Units object
 		self.units = kwargs.pop("units", [""])
 		if type(self.units) in [list, tuple]: self.units = Units(*self.units)
@@ -436,21 +452,40 @@ class Diagnostic(object):
 		if type(self.units) is not Units:
 			print "Could not understance the 'units' argument"
 			return
+		
 		# Get some info on the simulation
 		try:
-			self._ndim = self._read_ndim()
-			self._ncels, self._cell_length = self._read_ncels_cell_length(self._ndim)
-			self.timestep = self._read_timestep()
+			# get number of dimensions
+			error = "Error extracting 'dim' from the input file"
+			self._ndim = int(self.namelist.dim[0])
+			if self._ndim not in [1,2,3]: raise
+			# get box size
+			error = "Error extracting 'sim_length' from the input file"
+			sim_length = self._np.double( self.namelist.sim_length )
+			if sim_length.size != self._ndim: raise
+			# get cell size
+			error = "Error extracting 'cell_length' from the input file"
+			self._cell_length = self._np.double( self.namelist.cell_length )
+			if self._cell_length.size != self._ndim: raise
+			# calculate number of cells in each dimension
+			self._ncels = sim_length/self._cell_length
+			# extract time-step
+			error = "Error extracting 'timestep' from the input file"
+			self.timestep = self._np.double(self.namelist.timestep)
+			if not self._np.isfinite(self.timestep): raise
 		except:
-			print "Problems while reading the simulation namelist"
+			print error
 			return None
+		
 		# Call the '_init' function of the child class
 		self._init(*args, **kwargs)
+		
 		# Prepare units
 		self._dim = len(self._shape)
 		if self.valid:
 			try:    wavelength_SI = self.namelist.wavelength_SI
 			except: wavelength_SI = None
+			xunits = None
 			yunits = None
 			if self._dim > 0: xunits = self._units[0]
 			if self._dim > 1: yunits = self._units[1]
@@ -461,63 +496,6 @@ class Diagnostic(object):
 		if not self.valid: return ""
 		self.info()
 		return ""
-	
-	# Various methods to extract stuff from the input file
-	def _read_ndim(self):
-		try:
-			dim = self.namelist.dim
-			ndim = int(dim[0])
-		except:
-			print "Could not extract 'dim' from the input file"
-			raise
-		if ndim not in [1,2,3]:
-			print "Could not understand simulation dimension 'dim="+dim+"' from the input file"
-			raise
-		return ndim
-	def _read_ncels_cell_length(self, ndim):
-		try:
-			sim_length = self._np.double( self.namelist.sim_length )
-			if sim_length.size==0: raise
-		except:
-			print "Could not extract 'sim_length' from the input file"
-			raise
-		try:
-			cell_length = self._np.double( self.namelist.cell_length )
-			if cell_length.size==0: raise
-		except:
-			print "Could not extract 'cell_length' from the input file"
-			raise
-		if   ndim == 1:
-			sim_length  = sim_length[0]
-			cell_length = cell_length[0]
-		elif ndim == 2:
-			if sim_length.size  == 1: sim_length  = self._np.array([sim_length,sim_length])
-			else                    : sim_length  = sim_length[0:2]
-			if cell_length.size == 1: cell_length = self._np.array([cell_length,cell_length])
-			else                    : cell_length = cell_length[0:2]
-		elif ndim == 3:
-			if sim_length.size == 1: sim_length = self._np.array([sim_length,sim_length,sim_length])
-			elif sim_length.size >2: sim_length = sim_length[0:3]
-			else:
-				print "In the input file, 'sim_length' should have 1 or 3 arguments for a 3d simulation"
-				raise
-			if cell_length.size == 1: cell_length = self._np.array([cell_length,cell_length,cell_length])
-			elif cell_length.size >2: cell_length = cell_length[0:3]
-			else:
-				print "In the input file, 'cell_length' should have 1 or 3 arguments for a 3d simulation"
-				raise
-		sim_length  = self._np.array(sim_length ,ndmin=1)
-		cell_length = self._np.array(cell_length,ndmin=1)
-		ncels = sim_length/cell_length
-		return ncels, cell_length
-	def _read_timestep(self):
-		try:
-			timestep = self._np.double(self.namelist.timestep)
-			if not self._np.isfinite(timestep): raise 
-		except:
-			print "Could not extract 'timestep' from the input file"
-			raise
-		return timestep
 	
 	# Method to verify everything was ok during initialization
 	def _validate(self):
@@ -653,7 +631,7 @@ class Diagnostic(object):
 		self._xfactor = (self.options.xfactor or 1.) * self.units.xcoeff
 		self._yfactor = (self.options.yfactor or 1.) * self.units.ycoeff
 		self._vfactor = self.units.vcoeff
-		self._tfactor = (self.options.xfactor or 1.) * self.units.tcoeff
+		self._tfactor = (self.options.xfactor or 1.) * self.units.tcoeff * self.timestep
 	def _prepare2(self):
 		# prepare the animating function
 		if not self._animateOnAxes:
