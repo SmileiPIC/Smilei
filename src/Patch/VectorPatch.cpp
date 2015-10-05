@@ -202,24 +202,7 @@ void VectorPatch::exchangeParticles(int ispec, PicParams &params, SmileiMPI* smp
 {
     int useless(0);
 
-#ifndef _MANAGE_CORNERS
-    #pragma omp for
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	(*this)(ipatch)->initExchParticles(smpi, ispec, params, useless);
-    }
-    smpi->barrier();
-    #pragma omp for
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	(*this)(ipatch)->initCommParticles(smpi, ispec, params, useless);
-    }
-    smpi->barrier();
-    #pragma omp for
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	(*this)(ipatch)->finalizeCommParticles(smpi, ispec, params, useless);
-	(*this)(ipatch)->vecSpecies[ispec]->sort_part();
-    }
-    smpi->barrier();
-#else
+
     // Per direction
     #pragma omp single
     {
@@ -247,7 +230,6 @@ void VectorPatch::exchangeParticles(int ispec, PicParams &params, SmileiMPI* smp
 	(*this)(ipatch)->vecSpecies[ispec]->sort_part();
     }
 
-#endif
 
 }
 

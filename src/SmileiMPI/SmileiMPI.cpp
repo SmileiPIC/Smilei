@@ -157,7 +157,7 @@ void SmileiMPI::init_patch_count( PicParams& params)
     unsigned int Npatches, r,Ncur,Pcoordinates[3],ncells_perpatch, Tcapabilities;
     double Tload,Tcur, Lcur, local_load, local_load_temp, above_target, below_target;
     std::vector<unsigned int> mincell,maxcell,capabilities; //Min and max values of non empty cells for each species and in each dimension.
-    double density_length[3];
+    vector<double> density_length(params.nDim_field,0.);
     //Load of a cell = coef_cell*load of a particle.
     //Load of a frozen particle = coef_frozen*load of a particle.
     double coef_cell, coef_frozen; 
@@ -190,10 +190,13 @@ void SmileiMPI::init_patch_count( PicParams& params)
 
 
     for (unsigned int ispecies = 0; ispecies < params.n_species; ispecies++){
-        density_length[0] = params.species_param[ispecies].dens_length_x[0];
-        density_length[1] = params.species_param[ispecies].dens_length_y[0];
         //Needs to be updated when dens_lenth is a vector in params.
-        //density_length[2] = params.species_param[ispecies].dens_length_z[0];
+        density_length[0] = params.species_param[ispecies].dens_length_x[0];
+	if (params.nDim_field>1) {
+	    density_length[1] = params.species_param[ispecies].dens_length_y[0];
+	    if (params.nDim_field>2)
+		density_length[2] = params.species_param[ispecies].dens_length_z[0];
+	}
 
         local_load = params.species_param[ispecies].n_part_per_cell ;
         if(params.species_param[ispecies].time_frozen > 0.) local_load *= coef_frozen; // Assumes time_dual = 0. Might be false at restart !

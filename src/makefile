@@ -1,5 +1,5 @@
 SMILEICXX     ?= mpic++
-SMILEICXX     = mpiicpc
+#SMILEICXX     = mpiicpc
 HDF5_ROOT_DIR ?= ${HDF5HOME}
 
 ##################################################
@@ -61,10 +61,9 @@ endif
 ifeq ($(openmp),gnu)
 	CFLAGS += -fopenmp -D_PATCH
 else ifeq ($(openmp),intel)
-	CFLAGS += -openmp -xHost -ipo -D_TESTPATCHEXCH
+	CFLAGS += -openmp -xHost -D_TESTPATCHEXCH -g
 else ifeq ($(openmp),intelmpi)
 	CFLAGS += -openmp -xHost -DMPICH_IGNORE_CXX_SEEK -mt_mpi -D_TESTPATCHEXCH
-	#CFLAGS += -openmp -xHost -DMPICH_IGNORE_CXX_SEEK -mt_mpi -D_MANAGE_CORNERS -D_TESTPATCHEXCH
         LDFLAGS += -lmpi_mt -lz
         SMILEICXX = mpiicpc
 endif
