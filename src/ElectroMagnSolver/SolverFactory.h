@@ -17,10 +17,10 @@ public:
             solver = new MF_Solver1D_Yee(params);
         }
         else if ( params.geometry == "2d3v" ) {
-	    //if ()
-            solver = new MF_Solver2D_Yee(params);
-	    //elseif()
-	    //solver = new MF_Solver1D_Cowan(params);
+	    if (params.maxwell_sol == "Cowan")
+            solver = new MF_Solver2D_Cowan(params);
+	    else 
+	    solver = new MF_Solver2D_Yee(params);
         }
         else {
             ERROR( "Unknwon geometry : " << params.geometry );
@@ -31,4 +31,3 @@ public:
 };
 
 #endif
-
