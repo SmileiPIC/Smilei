@@ -1229,7 +1229,7 @@ class Field(Diagnostic):
 		
 		# Put data_log as object's variable
 		self._data_log = data_log
-	
+		
 		# Get the shape of fields
 		self._file = self._results_path+'/Fields.h5'
 		f = self._h5py.File(self._file, 'r')
@@ -1261,12 +1261,12 @@ class Field(Diagnostic):
 			except:
 				print "Argument `timesteps` must be one or two non-negative integers"
 				return None
-	
+		
 		# Need at least one timestep
 		if self.times.size < 1:
 			print "Timesteps not found"
 			return None
-	
+		
 		
 		# 3 - Manage axes
 		# -------------------------------------------------------------------
@@ -2115,7 +2115,7 @@ class TestParticles(Diagnostic):
 			self._units.append( axisunits )
 		self._title = "Test particles '"+species+"'"
 		self._shape = [0]*len(axes)
-		# Hack to have vfactor working with 1 axis
+		# Hack to work with 1 axis
 		if len(axes)==1: self._vunits = self._units[0]
 		else: self._vunits = ""
 		
