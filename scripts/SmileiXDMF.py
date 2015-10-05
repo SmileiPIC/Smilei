@@ -122,12 +122,9 @@ def probesXDMF():
                 <Grid Name="Mesh" GridType="Uniform">
                     <Time Value="{{time}}"/>
                     <Topology TopologyType="2dSMesh" Dimensions="{{size[1]}} {{size[0]}}"/>
-                    <Geometry GeometryType="X_Y">
-                        <DataItem Format="XML" NumberType="float" Dimensions="{{size[0]*size[1]}}">
-                        {% for posx,posy in pos -%} {{posx}} {% endfor -%}
-                        </DataItem>
-                        <DataItem Format="XML" NumberType="float" Dimensions="{{size[0]*size[1]}}">
-                        {% for posx,posy in pos -%} {{posy}} {% endfor -%}
+                    <Geometry GeometryType="XY">
+                        <DataItem Format="XML" NumberType="float" Dimensions="{{size[0]*size[1]}} 2">
+                        {% for i in range(prob[1].get("positions").shape[1]) -%}{{prob[1].get("positions").value[0][i]}} {{prob[1].get("positions").value[1][i]}} {% endfor %}
                         </DataItem>
                     </Geometry>
                     {% for i in range(10) -%}
@@ -139,7 +136,7 @@ def probesXDMF():
                                 {{size[0]*size[1]}} 1
                             </DataItem>
                             <DataItem Format="HDF" NumberType="Float" Precision="8" Dimensions="{{size[0]*size[1]}} 10">
-                                ./Probes.h5:/{{probe_name}}/{{step}}
+                                ./Probes.h5:/{{prob[0]}}/{{step}}
                             </DataItem>
                         </DataItem>
                     </Attribute>
@@ -187,9 +184,6 @@ def probesXDMF():
         else:
             raise "Error dimension not supported"
 
-        positions=probe[1].get("positions").value
-        mypos=zip(positions[0],positions[1])
-        
         times = []
         timesstr = []
         for key in probe[1].iterkeys():
@@ -199,25 +193,15 @@ def probesXDMF():
             except: pass
 
         my_steps_times=zip(timesstr,times)
+        
         with open(out_dir+'/Probe_'+probe[0]+'.xdmf','w') as fout:
             render=my_tmpl.render(
-                probe_name=probe[0],
+                prob=probe,
                 steps_times=my_steps_times,
-                pos=mypos,
                 size=my_shape,
                 conv = ["Ex","Ey","Ez","Bx","By","Bz","Jx","Jy","Jz","Rho"])
 
             fout.write(render)
-#             render=my_tmpl.render(
-#                 filename=fh5.file.filename,
-#                 steps_times=my_steps_times,
-#                 orig=origin*celllength,
-#                 field=myfield,
-#                 size=sizes,
-#                 cell_length=celllength,
-#                 sim_length=fh5.attrs['sim_length'])
-# 
-#             fout.write(render)
             fout.close()
                     
 

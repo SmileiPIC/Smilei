@@ -122,7 +122,7 @@ Spatial and temporal scales
 
 .. py:data:: cell_length
   
-  A list of floats: dimensions of one cell in units of :math`L_0`.
+  A list of floats: dimensions of one cell in units of :math:`L_0`.
   The number of elements of this list must be the same as the dimension of the simulation.
 
 

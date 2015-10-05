@@ -231,13 +231,13 @@ void Params::compute()
     // -----------------------
     
     // number of time-steps
-    n_time   = (int)(res_time*sim_time);
+    n_time   = (int)(sim_time/timestep);
     
-    //!\todo MG Is this really necessary now ?
     // simulation time & time-step value
-    timestep = 1.0/res_time;
+    double entered_sim_time = sim_time;
     sim_time = (double)(n_time) * timestep;
-    
+    if (sim_time!=entered_sim_time)
+        WARNING("sim_time has been redefined from " << entered_sim_time << " to " << sim_time << " to match nxtimestep");
     
     
     // grid/cell-related parameters
@@ -249,10 +249,11 @@ void Params::compute()
         
         // compute number of cells & normalized lengths
         for (unsigned int i=0; i<nDim_field; i++) {
-            //!\todo MG Is this really necessary now ?
-            cell_length[i] = 1.0/res_space[i];
-            n_space[i]     = round(sim_length[i]/cell_length[i]);
-            sim_length[i]  = (double)(n_space[i])*cell_length[i]; // ensure that nspace = sim_length/cell_length
+            n_space[i]         = round(sim_length[i]/cell_length[i]);
+            double entered_sim_length = sim_length[i];
+            sim_length[i]      = (double)(n_space[i])*cell_length[i]; // ensure that nspace = sim_length/cell_length
+            if (sim_length[i]!=entered_sim_length)
+                WARNING("sim_length[" << i << "] has been redefined from " << entered_sim_length << " to " << sim_length[i] << " to match n x cell_length");
             cell_volume   *= cell_length[i];
         }
         // create a 3d equivalent of n_space & cell_length
@@ -324,6 +325,7 @@ void Params::print()
     
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
 // Finds requested species in the list of existing species.
 // Returns an array of the numbers of the requested species.
 // Note that there might be several species that have the same "name" or "type"

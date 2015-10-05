@@ -40,7 +40,7 @@ Checkout the namelist documentation to find out which diagnostics are included i
 and :ref:`particles <DiagParticles>`.
 
 
-.. py:method:: Smilei.Scalar(scalar=None, timesteps=None, units="code", data_log=False)
+.. py:method:: Smilei.Scalar(scalar=None, timesteps=None, units="code", data_log=False, **kwargs)
   
   * ``scalar``: The name of the scalar.
      | If not given, then a list of available scalars is printed.
@@ -53,6 +53,7 @@ and :ref:`particles <DiagParticles>`.
      | Distances in microns, density in cm, energy in MeV.
   * ``data_log``:
      | If ``True``, then :math:`\log_{10}` is applied to the output.
+  * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
   **Example**::
     
@@ -60,7 +61,7 @@ and :ref:`particles <DiagParticles>`.
     Diag = S.Scalar("Utot")
 
 
-.. py:method:: Smilei.Field(field=None, timesteps=None, slice=None, units="code", data_log=False)
+.. py:method:: Smilei.Field(field=None, timesteps=None, slice=None, units="code", data_log=False, **kwargs)
   
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``field``: The name of a field (``"Ex"``, ``"Ey"``, etc.)
@@ -76,6 +77,7 @@ and :ref:`particles <DiagParticles>`.
      | - With syntax 2, only the bin closest to ``location`` is kept.
      | - With syntax 3, an average is performed between ``begin`` and ``end``.
      | Example: ``slice = {"x":[4,5]}`` will average for :math:`x` within [4,5].
+  * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
   **Example**::
     
@@ -84,7 +86,7 @@ and :ref:`particles <DiagParticles>`.
 
 
 
-.. py:method:: Smilei.Probe(probeNumber=None, field=None, timesteps=None, slice=None, units="code", data_log=False)
+.. py:method:: Smilei.Probe(probeNumber=None, field=None, timesteps=None, slice=None, units="code", data_log=False, **kwargs)
   
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``probeNumber``: number of the probe (the first one has number 0).
@@ -94,6 +96,7 @@ and :ref:`particles <DiagParticles>`.
      | The string can also be an operation between several fields, such as ``"Jx+Jy"``.
   * ``slice`` is very similar to that of :py:meth:`Field`, but it can only accept two axes: ``"axis1"``, ``"axis2"``.
      | For instance, ``slice={"axis1":"all"}``. Note that ``"axis1"`` and ``"axis2"`` are not necessarily :math:`x` or :math:`y` because the probe mesh may be rotated.
+  * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
   **Example**::
     
@@ -102,7 +105,7 @@ and :ref:`particles <DiagParticles>`.
 
 
 
-.. py:method:: Smilei.ParticleDiagnostic(diagNumber=None, timesteps=None, slice=None, units="code", data_log=False)
+.. py:method:: Smilei.ParticleDiagnostic(diagNumber=None, timesteps=None, slice=None, units="code", data_log=False, **kwargs)
   
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``diagNumber``: number of the particle diagnostic (the first one has number 0).
@@ -121,6 +124,7 @@ and :ref:`particles <DiagParticles>`.
      | - With syntax 2, only the bin closest to ``location`` is kept.
      | - With syntax 3, a **sum** is performed between ``begin`` and ``end``.
      | Example: ``slice={"x":[4,5]``} will sum all the data for x within [4,5].
+  * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
   **Example**::
     
@@ -131,7 +135,7 @@ and :ref:`particles <DiagParticles>`.
 
 
 .. py:method:: Smilei.TestParticles(species=None, select="", axes=[], timesteps=None, units="code",\
-                                    skipAnimation=False)
+                                    skipAnimation=False, **kwargs)
   
   * ``timesteps``, ``units``: same as before.
   * ``species``: the name of a test-particle species.
@@ -153,6 +157,7 @@ and :ref:`particles <DiagParticles>`.
      | **Example:** ``axes = ["x","y"]`` correspond to 2-D trajectories. 
      | **Example:** ``axes = ["x","px"]`` correspond to phase-space trajectories.
   * ``skipAnimation``: when ``True``, the :py:func:`plot` will directly show the full trajectory.
+  * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
   **Example**::
     
@@ -213,7 +218,7 @@ Plot the data
   All these methods have the same arguments described below.
 
 .. py:function:: plot(figure=1, vmin=None, vmax=None, xmin=None, xmax=None, \
-                      ymin=None, ymax=None, streakPlot=False, \
+                      ymin=None, ymax=None, xfactor=None, yfactor=None, streakPlot=False, \
                       movie="", fps=10, dpi=100, saveAs=None)
   
   Displays the data. All arguments of this method can be supplied to :py:meth:`Scalar`,
@@ -225,10 +230,9 @@ Plot the data
   | If the data is 0D, it is plotted as a **curve** as function of time.
   
   * ``figure``: The figure number that is passed to matplotlib.
-  * ``vmin``, ``vmax``: plotting limits.
-     | If present, output value is rescaled before plotting.
-  * ``xmin``, ``xmax``, ``ymin``, ``ymax``: plotting limits.
-     | If present, axes are rescaled before plotting.
+  * ``vmin``, ``vmax``: data value limits.
+  * ``xmin``, ``xmax``, ``ymin``, ``ymax``: axes limits.
+  * ``xfactor``, ``yfactor``: factors to rescale axes.
   * ``streakPlot``: when ``True``, will not be an animation, but will
     have time on the vertical axis instead (only for 1D data).
   * ``movie``: name of a file to create a movie, such as ``"movie.avi"``
