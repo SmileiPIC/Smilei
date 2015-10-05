@@ -146,7 +146,7 @@ namelist("")
     }
     dtCFL=1.0/sqrt(res_space2);
     if ( timestep>dtCFL ) {
-        ERROR("CFL problem: timestep=" << timestep << " should be smaller than " << dtCFL);
+        WARNING("CFL problem: timestep=" << timestep << " should be smaller than " << dtCFL);
     }
     
     
@@ -181,6 +181,13 @@ namelist("")
         }
     }
     
+    // 2D Maxwell Solver 
+    if ( geometry == "2d3v" ){
+	PyTools::extract("maxwell_sol", maxwell_sol);
+    } 
+
+
+
     // ------------------------
     // Moving window parameters
     // ------------------------

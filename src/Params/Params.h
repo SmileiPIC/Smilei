@@ -84,7 +84,10 @@ public:
     std::vector<std::string> bc_em_type_y;
     std::vector<std::string> bc_em_type_z;
     
-    
+   
+    // 2D Maxwell Solver  
+    std::string maxwell_sol; 
+ 
     //! window simulation box size in number of cells
     int nspace_win_x;
     //! Time at which the moving window starts.

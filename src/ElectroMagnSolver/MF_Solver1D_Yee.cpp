@@ -29,6 +29,6 @@ void MF_Solver1D_Yee::operator() ( ElectroMagn* fields )
     for (int ix=1 ; ix<nx_d-1 ; ix++) {
         (*By1D)(ix)= (*By1D)(ix) + dt_ov_dx * ( (*Ez1D)(ix) - (*Ez1D)(ix-1)) ;
         (*Bz1D)(ix)= (*Bz1D)(ix) - dt_ov_dx * ( (*Ey1D)(ix) - (*Ey1D)(ix-1)) ;
-    }
+    } 
 }
 
