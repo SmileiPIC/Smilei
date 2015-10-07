@@ -31,8 +31,8 @@ Run and analyze your simulation
 .. toctree::
    :maxdepth: 1
    
-   run
    namelist
+   run
    post-processing
 
 
@@ -42,6 +42,7 @@ Understand :program:`Smilei`
 .. toctree::
    :maxdepth: 1
    
+   units
    algorithms
    parallelization
    collisions

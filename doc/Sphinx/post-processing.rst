@@ -1,13 +1,18 @@
-Post-process your diagnostics
------------------------------
+Post-process
+------------
 
 
 A python script *Diagnostics.py* is provided to view or extract data from all the diagnostics.
-To run this script, you will need *python2.7* with the following packages: numpy, matplotlib, pylab, h5py.
+To use this script, you will need *python2.7* with some packages
+(follow the :doc:`installation instructions <installation>`).
 
-First, run python and include the script: ``python -i scripts/Diagnostics.py``
+For an interactive mode, we recommend installing and running *ipython*::
+  
+  ipython -i scripts/Diagnostics.py
 
-Alternately, include this file into your own script: ``execfile("scripts/Diagnostics.py")``
+Otherwise, you can add the following command in your own script::
+  
+  execfile("scripts/Diagnostics.py")
 
 ----
 
@@ -40,7 +45,7 @@ Checkout the namelist documentation to find out which diagnostics are included i
 and :ref:`particles <DiagParticles>`.
 
 
-.. py:method:: Smilei.Scalar(scalar=None, timesteps=None, units="code", data_log=False, **kwargs)
+.. py:method:: Smilei.Scalar(scalar=None, timesteps=None, units=[""], data_log=False, **kwargs)
   
   * ``scalar``: The name of the scalar.
      | If not given, then a list of available scalars is printed.
@@ -48,9 +53,7 @@ and :ref:`particles <DiagParticles>`.
      | If omitted, all timesteps are used.
      | If one number  given, the nearest timestep available is used.
      | If two numbers given, all the timesteps in between are used.
-  * ``units``: Type of output units.
-     | If ``"nice"`` is chosen, then units are converted into *usual* units.
-     | Distances in microns, density in cm, energy in MeV.
+  * ``units``: A unit specification (see :ref:`units`)
   * ``data_log``:
      | If ``True``, then :math:`\log_{10}` is applied to the output.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
@@ -61,7 +64,7 @@ and :ref:`particles <DiagParticles>`.
     Diag = S.Scalar("Utot")
 
 
-.. py:method:: Smilei.Field(field=None, timesteps=None, slice=None, units="code", data_log=False, **kwargs)
+.. py:method:: Smilei.Field(field=None, timesteps=None, slice=None, units=[""], data_log=False, **kwargs)
   
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``field``: The name of a field (``"Ex"``, ``"Ey"``, etc.)
@@ -86,7 +89,7 @@ and :ref:`particles <DiagParticles>`.
 
 
 
-.. py:method:: Smilei.Probe(probeNumber=None, field=None, timesteps=None, slice=None, units="code", data_log=False, **kwargs)
+.. py:method:: Smilei.Probe(probeNumber=None, field=None, timesteps=None, slice=None, units=[""], data_log=False, **kwargs)
   
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``probeNumber``: number of the probe (the first one has number 0).
@@ -105,7 +108,7 @@ and :ref:`particles <DiagParticles>`.
 
 
 
-.. py:method:: Smilei.ParticleDiagnostic(diagNumber=None, timesteps=None, slice=None, units="code", data_log=False, **kwargs)
+.. py:method:: Smilei.ParticleDiagnostic(diagNumber=None, timesteps=None, slice=None, units=[""], data_log=False, **kwargs)
   
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``diagNumber``: number of the particle diagnostic (the first one has number 0).
@@ -134,8 +137,7 @@ and :ref:`particles <DiagParticles>`.
 
 
 
-.. py:method:: Smilei.TestParticles(species=None, select="", axes=[], timesteps=None, units="code",\
-                                    skipAnimation=False, **kwargs)
+.. py:method:: Smilei.TestParticles(species=None, select="", axes=[], timesteps=None, units=[""], skipAnimation=False, **kwargs)
   
   * ``timesteps``, ``units``: same as before.
   * ``species``: the name of a test-particle species.
@@ -164,6 +166,37 @@ and :ref:`particles <DiagParticles>`.
     S = Smilei("path/to/my/results")
     Diag = S.TestParticles("electrons", axes=["px","py"])
 
+
+
+----
+
+.. _units:
+
+Specifying units
+^^^^^^^^^^^^^^^^
+
+By default, all the diagnostics data is in code units (see :doc:`units`).
+
+To change the units, all the methods :py:meth:`Scalar`, :py:meth:`Field`, :py:meth:`Probe`,
+:py:meth:`ParticleDiagnostic` and :py:meth:`TestParticles` support a ``units`` argument.
+It has three different syntaxes:
+
+1. **A list**, for example ``units = ["um/ns", "feet", "W/cm^2"]``
+   
+   In this case, any quantity found to be of the same dimension as one of these units
+   will be converted.
+
+2. **A dictionary**, for example ``units = {"x":"um", "y":"um", "v":"Joule"}``
+   
+   In this case, we specify the units separately for axes ``x`` and ``y``, and for the
+   data values ``v``.
+
+3. **A** ``Units`` **object**, for example ``units = Units("um/ns", "feet", x="um")``
+   
+   This version combines the two previous ones.
+
+.. warning::
+  Changing units requires the `Pint module <https://pypi.python.org/pypi/Pint/>`_ .
 
 
 ----
