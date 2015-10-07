@@ -357,7 +357,7 @@ class Units(object):
 					try   : return self._divide(knownUnits,units)
 					except: pass
 			val = self.ureg(knownUnits)
-			return val.magnitude or 1., str(u"{0.units:P}".format(val))
+			return val.magnitude or 1., u"{0.units:P}".format(val)
 		return 1., ""
 	
 	def prepare(self, wavelength_SI=None, xunits="", yunits="", vunits="", tunits=""):
@@ -595,15 +595,15 @@ class Diagnostic(object):
 			except AttributeError:
 				ax.cax = self._plt.colorbar(mappable=im, ax=ax, **self.options.colorbar).ax
 			self._setSomeOptions(ax)
-			fig.canvas.draw()
-			self._plt.show()
+			self._plt.draw()
+			self._plt.pause(0.00001)
 			return
 		
 		# Possible to skip animation
 		if self.options.skipAnimation:
 			self._animateOnAxes(ax, self.times[-1])
-			fig.canvas.draw()
-			self._plt.show()
+			self._plt.draw()
+			self._plt.pause(0.00001)
 			return
 		
 		# Otherwise, animation
@@ -617,8 +617,8 @@ class Diagnostic(object):
 			# plot
 			ax.cla()
 			if self._animateOnAxes(ax, time) is None: return
-			fig.canvas.draw()
-			self._plt.show()
+			self._plt.draw()
+			self._plt.pause(0.00001)
 			mov.grab_frame()
 			save.frame(time)
 		# Movie ?
@@ -994,12 +994,15 @@ class ParticleDiagnostic(Diagnostic):
 			elif output == "charge_density":
 				titles[d] = "Charge density"
 				val_units = "N_r * Q_r"
-			elif output[:-1] == "current_density_":
-				titles[d] = "J"+output[-1]
+			elif output[0] == "j":
+				titles[d] = "J"+output[1]
 				val_units = "J_r"
 			elif output[0]=="p" and output[-8:] == "_density":
 				titles[d] = "P"+output[1].strip("_")+" density"
 				val_units = "N_r * P_r"
+			elif output[:8]=="pressure":
+				titles[d] = "Pressure "+output[-2]
+				val_units = "N_r * K_r"
 			axes_units = [unit for unit in self._units if unit!="L_r"]
 			units[d] = val_units
 			if len(axes_units)>0: units[d] += " / ( " + " * ".join(axes_units) + " )"
@@ -2361,8 +2364,8 @@ def multiPlot(*Diags, **kwargs):
 	if sameAxes and len(Diags[0]._shape)==0:
 		for Diag in Diags:
 			Diag._artist = Diag._animateOnAxes(Diag._ax, Diag.times[-1])
-		fig.canvas.draw()
-		plt.show()
+			plt.draw()
+			plt.pause(0.00001)
 	# Animated plot
 	else:
 		# Loop all times
@@ -2380,8 +2383,8 @@ def multiPlot(*Diags, **kwargs):
 					Diag._artist = Diag._animateOnAxes(Diag._ax, t)
 					if sameAxes:
 						Diag._ax.set_xlim(xmin,xmax)
-			fig.canvas.draw()
-			plt.show()
+			plt.draw()
+			plt.pause(0.00001)
 			mov.grab_frame()
 			if t is not None: save.frame(int(t))
 		mov.finish()

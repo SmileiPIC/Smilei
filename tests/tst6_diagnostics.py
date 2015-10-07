@@ -150,7 +150,7 @@ DiagProbe(
 
 # DIAGNOSTICS ON PARTICLES - project the particles on a N-D arbitrary grid
 # ------------------------------------------------------------------------
-# output       = string: "density", "charge_density" or "current_density_[xyz]"
+# output       = string: "density", "charge_density" or "jx_density"
 #                parameter that describes what quantity is obtained 
 # every        = integer > 0: number of time-steps between each output
 # time_average = integer > 0: number of time-steps to average
@@ -167,7 +167,7 @@ DiagProbe(
 #   Example : axes =[["px", -1, 1, 100, "edge_inclusive"]]
 
 DiagParticles(
-	output = "density",
+	output = "pressure_xz",
 	every = 4,
 	time_average = 2,
 	species = ["electron1"],

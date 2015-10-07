@@ -24,7 +24,7 @@ for path in ["conductivity1","conductivity2","conductivity3"]:
 	sim = Smilei(path)
 
 	ncases = 0
-	while sim.namelist.DiagParticles[ncases].output == "current_density_x":
+	while sim.namelist.DiagParticles[ncases].output == "jx_density":
 		ncases += 1
 	if ncases == 0: continue
 

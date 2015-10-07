@@ -979,8 +979,9 @@ All the possible variables inside this block are explained here:
   
   * with ``"density"``, the weights are summed.
   * with ``"charge_density"``, the weights :math:`\times` charge are summed.
-  * with ``"current_density_x"``, the weights :math:`\times` charge :math:`\times\; v_x` are summed (same with :math:`y` and :math:`z`).
-  * with ``"p_density"``, the weights :math:`\times\; p` are summed (same with :math:`px`, :math:`py` and :math:`pz`)
+  * with ``"jx_density"``, the weights :math:`\times` charge :math:`\times\; v_x` are summed (same with :math:`y` and :math:`z`).
+  * with ``"p_density"``, the weights :math:`\times\; p` are summed (same with :math:`px`, :math:`py` and :math:`pz`).
+  * with ``"pressure_xx"``, the weights :math:`\times\; v \times p` are summed (same with yy, zz, xy, yz and xz).
 
 
 .. py:data:: every
