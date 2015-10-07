@@ -37,9 +37,7 @@ General rules
 * You are free to import any *python* package into the namelist.
   For instance, you may obtain :math:`\pi` using ``from math import pi``.
 
-* All quantities are normalized to arbitrary values.
-  The distance and time units are denoted by :math:`L_r` and :math:`T_r`, respectively.
-  They are related through :math:`T_r = L_r/c`. For more information, see :doc:`units`.
+* All quantities are normalized to arbitrary values: see :doc:`units`.
 
 ----
 
@@ -208,7 +206,7 @@ All the possible variables inside this block are explained here:
   :type: float or *python* function (see section :ref:`profiles`)
   
   The absolute value of the number density or charge density (choose one only)
-  of the particle distribution, in units of the reference density :math:`n_r` (see :doc:`units`).
+  of the particle distribution, in units of the reference density :math:`N_r` (see :doc:`units`).
 
 
 .. py:data:: charge
@@ -403,7 +401,7 @@ profiles.
 
 * ``Species( ... , charge = -3., ... )`` defines a species with charge :math:`Z^\star=3`.
 
-* ``Species( ... , nb_density = 10., ... )`` defines a species with density :math:`10\,n_r`.
+* ``Species( ... , nb_density = 10., ... )`` defines a species with density :math:`10\,N_r`.
   You can choose ``nb_density`` (*number density*) or ``charge_density``
 
 * ``Species( ... , mean_velocity = [0.05, 0., 0.], ... )`` defines a species

@@ -3,11 +3,16 @@ Post-process
 
 
 A python script *Diagnostics.py* is provided to view or extract data from all the diagnostics.
-To run this script, you will need *python2.7* with the following packages: numpy, matplotlib, pylab, h5py.
+To use this script, you will need *python2.7* with some packages
+(follow the :doc:`installation instructions <installation>`).
 
-First, run python and include the script: ``python -i scripts/Diagnostics.py``
+For an interactive mode, we recommend installing and running *ipython*::
+  
+  ipython -i scripts/Diagnostics.py
 
-Alternately, include this file into your own script: ``execfile("scripts/Diagnostics.py")``
+Otherwise, you can add the following command in your own script::
+  
+  execfile("scripts/Diagnostics.py")
 
 ----
 
