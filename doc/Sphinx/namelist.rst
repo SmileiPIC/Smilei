@@ -1,11 +1,11 @@
-Namelist syntax
----------------
+Write a namelist
+----------------
 
-In :program:`Smilei`, the input file (*namelist*) is written in the *python* language.
-It is thus recommended to know the basics of *python*.
+Before you run :program:`Smilei`, you need a *namelist* (an input file). The namelist
+is written in the *python* language. It is thus recommended to know the basics of *python*.
 
 To create a namelist, we suggest you copy one existing file in the folder *benchmarks*.
-All namelists have the extension *.py*.
+All namelists have the extension ``.py``.
 
 ----
 
@@ -29,17 +29,15 @@ General rules
         timestep = 0.3
   
 
-* You will need to use *lists*, which are series of things in *python*,
+* You will need to use `lists <https://docs.python.org/2/tutorial/introduction.html#lists>`_,
+  which are series of things in *python*,
   defined between brackets ``[]`` and separated by commas.
   For example, ``mean_velocity = [0., 1.1, 3.]``.
 
 * You are free to import any *python* package into the namelist.
   For instance, you may obtain :math:`\pi` using ``from math import pi``.
 
-* **Important note**: :program:`Smilei` normalizes lengths and times to arbitrary values
-  :math:`L_0` and :math:`T_0 = L_0/c`.
-  All lengths and times defined in the namelist are given in units of
-  :math:`L_0` and :math:`T_0`.
+* All quantities are normalized to arbitrary values: see :doc:`units`.
 
 ----
 
@@ -112,23 +110,23 @@ Spatial and temporal scales
 
 .. py:data:: timestep
   
-  Duration of one timestep in units of :math:`T_0`.
+  Duration of one timestep in units of :math:`T_r`.
 
 
 .. py:data:: sim_time
   
-  Duration of the simulation in units of :math:`T_0`.
+  Duration of the simulation in units of :math:`T_r`.
 
 
 .. py:data:: cell_length
   
-  A list of floats: dimensions of one cell in units of :math:`L_0`.
+  A list of floats: dimensions of one cell in units of :math:`L_r`.
   The number of elements of this list must be the same as the dimension of the simulation.
 
 
 .. py:data:: sim_length
   
-  A list of floats: dimensions of the simulations in units of :math:`L_0`.
+  A list of floats: dimensions of the simulations in units of :math:`L_r`.
   The number of elements of this list must be the same as the dimension of the simulation.
 
 
@@ -139,12 +137,18 @@ Spatial and temporal scales
   Cluster width.
   :red:`to do`
 
+.. py:data:: number_of_procs
+  
+  :red:`to do`
+
+
+.. _wavelength_SI:
 
 .. py:data:: wavelength_SI
   
-  The value of the wavelength :math:`\lambda_0` in SI units
+  The value of the reference wavelength :math:`\lambda_r` in SI units
   (**only required if collisions or ionization are requested**).
-  The wavelength is related to the normalization length according to :math:`2\pi L_0 = \lambda_0`.
+  This wavelength is related to the normalization length according to :math:`2\pi L_r = \lambda_r`.
 
 .. py:data:: print_every
   
@@ -214,8 +218,7 @@ All the possible variables inside this block are explained here:
   :type: float or *python* function (see section :ref:`profiles`)
   
   The absolute value of the number density or charge density (choose one only)
-  of the particle distribution, in units of the critical density 
-  :math:`n_c=\varepsilon_0 m_e/(e^2 T_0^2)`.
+  of the particle distribution, in units of the reference density :math:`N_r` (see :doc:`units`).
 
 
 .. py:data:: charge
@@ -260,7 +263,7 @@ All the possible variables inside this block are explained here:
   
   :default: 0.
   
-  The time during which the particle positions are not updated, in units of :math:`T_0`.
+  The time during which the particle positions are not updated, in units of :math:`T_r`.
 
 
 .. py:data:: ionization_model
@@ -357,8 +360,7 @@ All the possible variables inside this block are explained here:
   :type: float or *python* function (see section :ref:`profiles`)
   
   The initial spatial profile of the applied field.
-  The units are the natural normalization units for fields,
-  i.e., :math:`B_0=m_e /(eT_0)` for magnetic fields, and :math:`E_0=m_e c/(eT_0)` for electric fields.
+  Refer to :doc:`units` to understand the units of this field.
 
 
 ----
@@ -371,7 +373,7 @@ It is applied using an ``Antenna()`` block, for instance::
   Antenna(
       field = "Jz",
       spatial_profile = gaussian(0.01),
-      time_profile = cosine(base=0., xlength=1., xnumber=100)
+      time_profile = tcosine(base=0., duration=1., freq=0.1)
   )
 
 All the possible variables inside this block are explained here:
@@ -386,8 +388,8 @@ All the possible variables inside this block are explained here:
   :type: float or *python* function (see section :ref:`profiles`)
   
   The initial spatial profile of the applied antenna.
-  The units are the natural normalization units for currents,
-  i.e., :math:`J_0=e c n_c`.
+  Refer to :doc:`units` to understand the units of this current.
+
 
 .. py:data:: time_profile
   
@@ -411,7 +413,7 @@ profiles.
 
 * ``Species( ... , charge = -3., ... )`` defines a species with charge :math:`Z^\star=3`.
 
-* ``Species( ... , nb_density = 10., ... )`` defines a species with density :math:`10\,n_c`.
+* ``Species( ... , nb_density = 10., ... )`` defines a species with density :math:`10\,N_r`.
   You can choose ``nb_density`` (*number density*) or ``charge_density``
 
 * ``Species( ... , mean_velocity = [0.05, 0., 0.], ... )`` defines a species
@@ -423,7 +425,7 @@ profiles.
 
 * ``Species( ... , n_part_per_cell = 10., ... )`` defines a species with 10 particles per cell.
 
-* ``ExtField( field="Bx", profile=0.1 )`` defines a constant external field :math:`B_x = 0.1 B_0`.
+* ``ExtField( field="Bx", profile=0.1 )`` defines a constant external field :math:`B_x = 0.1 B_r`.
 
 
 .. rubric:: 2. *Python* profiles
@@ -742,8 +744,10 @@ The full list of scalars that are saved by this diagnostic:
 | | Uexp         | | Expected value (Initial energy :math:`-` lost :math:`+` gained)         |
 | | Ubal         | | Energy balance (Utot :math:`-` Uexp)                                    |
 | | Ubal_norm    | | Normalized energy balance (Ubal :math:`/` Utot)                         |
+| | Uelm_Ex      | | Energy in Ex field (:math:`\int E_x^2 dV /2`)                           |
+| |              | |  ... and idem for fields Ey, Ez, Bx_m, By_m and Bz_m                    |
 +----------------+---------------------------------------------------------------------------+
-| **Energies lost/gained at boundaries due to moving window**                                |
+| **Energies lost/gained at boundaries**                                                     |
 +----------------+---------------------------------------------------------------------------+
 | | Ukin_bnd     | | Kinetic energy exchanged at the boundaries during the timestep          |
 | | Uelm_bnd     | | EM energy exchanged at boundaries during the timestep                   |
@@ -752,32 +756,25 @@ The full list of scalars that are saved by this diagnostic:
 | | Uelm_out_mvw | | EM energy lost during the timestep due to the moving window             |
 | | Uelm_inj_mvw | | EM energy injected during the timestep due to the moving window         |
 +----------------+---------------------------------------------------------------------------+
-| **Energies lost/gained at boundaries  due to moving window**                               |
+| **Species information**                                                                    |
 +----------------+---------------------------------------------------------------------------+
-| | Ebal_norm    | | Ebalance :math:`/` Etot                                                 |
-| | Ebalance     | | Current energy :math:`-` initial total energy                           |
-| | Elost        | | Lost particle energy during last timestep                               |
-| | Poynting     | | Accumulated Poyting flux through all boundaries                         |
+| | Zavg_abc     | | Average charge of species "abc"                                         |
+| | Ukin_abc     | |  ... their kinetic energy                                               |
+| | Ntot_abc     | |  ... and number of particles                                            |
 +----------------+---------------------------------------------------------------------------+
-| | Z_abc        | | Average charge of species "abc"                                         |
-| | E_abc        | |  ... their kinetic energy                                               |
-| | N_abc        | |  ... and number of particles                                            |
-+----------------+---------------------------------------------------------------------------+
-| | Ex_U         | | :math:`\int E_x^2 dV /2`                                                |
-| |              | |  ... and similar for fields Ey, Ez, Bx_m, By_m and Bz_m                 |
+| **Fields information**                                                                     |
 +----------------+---------------------------------------------------------------------------+
 | | ExMin        | | Minimum of :math:`E_x`                                                  |
 | | ExMinCell    | |  ... and its location (cell index)                                      |
 | | ExMax        | | Maximum of :math:`E_x`                                                  |
 | | ExMaxCell    | |  ... and its location (cell index)                                      |
 | |              | | ... same for fields Ey Ez Bx_m By_m Bz_m Jx Jy Jz Rho                   |
-+----------------+---------------------------------------------------------------------------+
 | | PoyEast      | | Accumulated Poynting flux through eastern boundary                      |
 | | PoyEastInst  | | Current Poynting flux through eastern boundary                          |
 | |              | |  ... same for boundaries West South North Bottom Top                    |
 +----------------+---------------------------------------------------------------------------+
 
-Checkout the :doc:`post-processing` documentation as well.
+Checkout the :doc:`post-processing <post-processing>` documentation as well.
 
 ----
 
@@ -994,8 +991,9 @@ All the possible variables inside this block are explained here:
   
   * with ``"density"``, the weights are summed.
   * with ``"charge_density"``, the weights :math:`\times` charge are summed.
-  * with ``"current_density_x"``, the weights :math:`\times` charge :math:`\times\; v_x` are summed (same with :math:`y` and :math:`z`).
-  * with ``"p_density"``, the weights :math:`\times\; p` are summed (same with :math:`px`, :math:`py` and :math:`pz`)
+  * with ``"jx_density"``, the weights :math:`\times` charge :math:`\times\; v_x` are summed (same with :math:`y` and :math:`z`).
+  * with ``"p_density"``, the weights :math:`\times\; p` are summed (same with :math:`px`, :math:`py` and :math:`pz`).
+  * with ``"pressure_xx"``, the weights :math:`\times\; v \times p` are summed (same with yy, zz, xy, yz and xz).
 
 
 .. py:data:: every
@@ -1116,4 +1114,14 @@ All the possible variables inside this block are explained here:
     	axes = [ ["charge",    -0.5,   10.5,   11] ]
     )
 
+
+
+----
+
+Miscellaneous
+^^^^^^^^^^^^^
+
+.. py:data:: random_seed
+
+  The value of the random seed. If not defined, the machine clock is used.
 

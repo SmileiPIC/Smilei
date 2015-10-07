@@ -293,21 +293,21 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
                 for (int ipart = bmin ; ipart < bmax ; ipart++)
                     data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]);
             
-            else if (output == "current_density_x")
+            else if (output == "jx_density")
                 for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]) * (*px)[ipart] / sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
+                    data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]) * (*px)[ipart] / sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
             
-            else if (output == "current_density_y")
+            else if (output == "jy_density")
                 for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]) * (*py)[ipart] / sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
+                    data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]) * (*py)[ipart] / sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
             
-            else if (output == "current_density_z")
+            else if (output == "jz_density")
                 for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]) * (*pz)[ipart] / sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
+                    data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]) * (*pz)[ipart] / sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
             
             else if (output == "p_density")
                 for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = mass * (*w)[ipart] * sqrt(pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2));
+                    data_array[ipart] = mass * (*w)[ipart] * sqrt((*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart]);
             
             else if (output == "px_density")
                 for (int ipart = bmin ; ipart < bmax ; ipart++)
@@ -321,17 +321,29 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
                 for (int ipart = bmin ; ipart < bmax ; ipart++)
                     data_array[ipart] = mass * (*w)[ipart] * (*pz)[ipart];
             
-            else if (output == "pxvx_density")
+            else if (output == "pressure_xx")
                 for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = mass * (*w)[ipart] * pow((*px)[ipart],2)/ sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
+                    data_array[ipart] = mass * (*w)[ipart] * (*px)[ipart]*(*px)[ipart]/ sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
             
-            else if (output == "pyvy_density")
+            else if (output == "pressure_yy")
                 for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = mass * (*w)[ipart] * pow((*py)[ipart],2)/ sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
+                    data_array[ipart] = mass * (*w)[ipart] * (*py)[ipart]*(*py)[ipart]/ sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
             
-            else if (output == "pzvz_density")
+            else if (output == "pressure_zz")
                 for (int ipart = bmin ; ipart < bmax ; ipart++)
-                    data_array[ipart] = mass * (*w)[ipart] * pow((*pz)[ipart],2)/ sqrt( 1. + pow((*px)[ipart],2) + pow((*py)[ipart],2) + pow((*pz)[ipart],2) );
+                    data_array[ipart] = mass * (*w)[ipart] * (*pz)[ipart]*(*pz)[ipart]/ sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
+            
+            else if (output == "pressure_xy")
+                for (int ipart = bmin ; ipart < bmax ; ipart++)
+                    data_array[ipart] = mass * (*w)[ipart] * (*px)[ipart]*(*py)[ipart]/ sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
+            
+            else if (output == "pressure_xz")
+                for (int ipart = bmin ; ipart < bmax ; ipart++)
+                    data_array[ipart] = mass * (*w)[ipart] * (*px)[ipart]*(*pz)[ipart]/ sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
+            
+            else if (output == "pressure_yz")
+                for (int ipart = bmin ; ipart < bmax ; ipart++)
+                    data_array[ipart] = mass * (*w)[ipart] * (*py)[ipart]*(*pz)[ipart]/ sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
             
             // 3 - sum the data into the data_sum according to the indexes
             // ---------------------------------------------------------------
