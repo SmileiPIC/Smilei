@@ -237,11 +237,9 @@ int main (int argc, char* argv[])
 	diag_flag = 0 ;
     }
 
-#ifdef _TESTPATCHEXCH
 int partperMPI;
 int balancing_freq = 150;
 int npatchmoy=0, npartmoy=0;
-#endif
 	
     // Count timer
     int ntimer(10);
@@ -507,7 +505,6 @@ int npatchmoy=0, npartmoy=0;
 
         } //End omp parallel region
 
-#ifdef _TESTPATCHEXCH
 	if (itime%balancing_freq == 0) {
             timer[7].restart();
             partperMPI = 0;
@@ -532,7 +529,6 @@ int npatchmoy=0, npartmoy=0;
             timer[7].update();
 	    
 	}
-#endif
     }//END of the time loop
     
     smpiData->barrier();
@@ -547,11 +543,8 @@ int npatchmoy=0, npartmoy=0;
     //if ( smpiData->isMaster() ) MESSAGE(0, "Time in time loop : " << timElapsed );
     timer[0].update();
     MESSAGE(0, "Time in time loop : " << timer[0].getTime() );
-    //if ( smpiData->isMaster() )
-#ifdef _TESTPATCHEXCH
-        for (int i=1 ; i<ntimer ; i++) timer[i].print(timer[0].getTime());
-        cout << "npart moy = " << npartmoy << " npatch moy = " << npatchmoy << endl;
-#endif
+    for (int i=1 ; i<ntimer ; i++) timer[i].print(timer[0].getTime());
+    cout << "npart moy = " << npartmoy << " npatch moy = " << npatchmoy << endl;
     double coverage(0.);
     for (int i=1 ; i<ntimer ; i++) coverage += timer[i].getTime();
     MESSAGE(0, "\t" << setw(12) << "Coverage\t" << coverage/timer[0].getTime()*100. << " %" );
