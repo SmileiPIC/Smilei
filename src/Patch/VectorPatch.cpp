@@ -202,36 +202,34 @@ void VectorPatch::exchangeParticles(int ispec, PicParams &params, SmileiMPI* smp
 {
     int useless(0);
 
-    #pragma omp for
+    #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
       (*this)(ipatch)->initExchParticles(smpi, ispec, params, useless, this);
     }
 
     //cout << "init exch done" << endl;
 
-    #pragma omp single
-    {
-        // Per direction
-        for (unsigned int iDim=0 ; iDim<2 ; iDim++) {
-            //cout << "initExchParticles done for " << iDim << endl;
-            //#pragma omp for
-            for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-                (*this)(ipatch)->initCommParticles(smpi, ispec, params, useless, iDim, this);
-            }
-            for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-                (*this)(ipatch)->CommParticles(smpi, ispec, params, useless, iDim, this);
-            }
-            //cout << "init comm done for dim " << iDim << endl;
-            //cout << "initCommParticles done for " << iDim << endl;
-            //#pragma omp for
-            for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-                (*this)(ipatch)->finalizeCommParticles(smpi, ispec, params, useless, iDim, this);
-            }
-            //cout << "final comm done for dim " << iDim << endl;
+    // Per direction
+    for (unsigned int iDim=0 ; iDim<2 ; iDim++) {
+        //cout << "initExchParticles done for " << iDim << endl;
+        #pragma omp for schedule(runtime)
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            (*this)(ipatch)->initCommParticles(smpi, ispec, params, useless, iDim, this);
         }
-
+        #pragma omp for schedule(runtime)
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            (*this)(ipatch)->CommParticles(smpi, ispec, params, useless, iDim, this);
+        }
+        //cout << "init comm done for dim " << iDim << endl;
+        //cout << "initCommParticles done for " << iDim << endl;
+        #pragma omp for schedule(runtime)
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            (*this)(ipatch)->finalizeCommParticles(smpi, ispec, params, useless, iDim, this);
+        }
+        //cout << "final comm done for dim " << iDim << endl;
     }
-    #pragma omp for
+
+    #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
         (*this)(ipatch)->vecSpecies[ispec]->sort_part();
 
