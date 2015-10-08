@@ -140,7 +140,11 @@ public:
             }
             
             if (thisSpecies->species_type=="electron") {
-                electron_species=thisSpecies;
+                if (electron_species) {
+                    WARNING("Two species are named electron");
+                } else {
+                    electron_species=thisSpecies;
+                }
             }
             
             
@@ -217,7 +221,7 @@ public:
             thisSpecies->particles.isTestParticles = thisSpecies->isTest;
             
             // Verify they don't ionize
-            if (thisSpecies->ionization_model!="none" && thisSpecies->isTest) {
+            if (thisSpecies->ionization_model!="none" && (!thisSpecies->isTest)) {
                 ERROR("For species #" << ispec << ", disabled for now : test & ionized");
             }
             

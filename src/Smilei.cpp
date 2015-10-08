@@ -162,15 +162,15 @@ int main (int argc, char* argv[])
     Projector* Proj = ProjectorFactory::create(params, smpi);
     smpi->barrier();
     
-    unsigned int stepStart=0, stepStop=params.n_time;
+    unsigned int stepStop=params.n_time;
     
     // reading from dumped file the restart values
     if (params.restart) {
         MESSAGE(1, "READING fields and particles for restart");
         DEBUG(vecSpecies.size());
-        sio->restartAll( EMfields,  stepStart, vecSpecies, smpi, simWindow, params, diags);
+        sio->restartAll( EMfields, vecSpecies, smpi, simWindow, params, diags);
                 
-        double restart_time_dual = (stepStart +0.5) * params.timestep;
+        double restart_time_dual = (sio->this_run_start_step +0.5) * params.timestep;
         if ( simWindow && ( simWindow->isMoving(restart_time_dual) ) ) {
             simWindow->setOperators(vecSpecies, Interp, Proj, smpi);
             simWindow->operate(vecSpecies, EMfields, Interp, Proj, smpi , params);
@@ -247,9 +247,9 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------------
     
     // time at integer time-steps (primal grid)
-    double time_prim = stepStart * params.timestep;
+    double time_prim = sio->this_run_start_step * params.timestep;
     // time at half-integer time-steps (dual grid)
-    double time_dual = (stepStart +0.5) * params.timestep;
+    double time_dual = (sio->this_run_start_step +0.5) * params.timestep;
     
     // Count timer
     vector<Timer> timer(9);
@@ -270,11 +270,11 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     
     // save latestTimeStep (used to test if we are at the latest timestep when running diagnostics at run's end)
-    unsigned int latestTimeStep=stepStart;
+    unsigned int latestTimeStep=sio->this_run_start_step;
     
     TITLE("Time-Loop is started: number of time-steps n_time = " << params.n_time);
     
-    for (unsigned int itime=stepStart+1 ; itime <= stepStop ; itime++) {
+    for (unsigned int itime=sio->this_run_start_step+1 ; itime <= stepStop ; itime++) {
         
         // calculate new times
         // -------------------

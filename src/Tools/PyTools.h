@@ -6,15 +6,17 @@
 #ifndef PYHelper_H
 #define PYHelper_H
 
-#ifdef _POSIX_C_SOURCE
+
+#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
 #warning check for fix here: https://bugs.python.org/issue17120
+#ifdef _POSIX_C_SOURCE
 #undef _POSIX_C_SOURCE
 #endif
-
 #ifdef _XOPEN_SOURCE
-#warning check for fix here: https://bugs.python.org/issue17120
 #undef _XOPEN_SOURCE
 #endif
+#endif
+
 
 #include <Python.h>
 #include <vector>

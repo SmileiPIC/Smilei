@@ -70,7 +70,7 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
     Species *s;
     Particles *p;
     vector<int> index_array;
-    vector<double> *x, *y, *z, *px, *py, *pz, *w, *chi, axis_array, data_array;
+    vector<double> *x, *y, *z, *px, *py, *pz, *w, *chi=NULL, axis_array, data_array;
     vector<short> *q;
     int nbins = vecSpecies[0]->bmin.size(); // number of bins in the particles binning (openMP)
     int bmin, bmax, axissize, ind;

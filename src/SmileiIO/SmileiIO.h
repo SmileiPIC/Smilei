@@ -70,7 +70,7 @@ public:
     virtual void write( Field* field ) = 0;
     
     //! restart everything to file per processor
-    void restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> &vecSpecies, SmileiMPI* smpi, SimWindow* simWin, Params &params, Diagnostic &diags);
+    void restartAll( ElectroMagn* EMfields,  std::vector<Species*> &vecSpecies, SmileiMPI* smpi, SimWindow* simWin, Params &params, Diagnostic &diags);
 
     //! restart field per proc
     void restartFieldsPerProc(hid_t fid, Field* field);
@@ -101,10 +101,16 @@ public:
             signal_received = signum;
     }
     
+    //! start step of this run: zero if a first run, otherwise the number of the restart step
+    unsigned int this_run_start_step;
+    
 private:
+    //! get dump name based on number and rank
+    std::string dumpName(unsigned int num, SmileiMPI *smpi);
+
     //! incremental number of times we've done a dump
     unsigned int dump_times;
-    
+
     //! dump everything to file per processor
     void dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  Params &params, Diagnostic &diags);
     
@@ -120,7 +126,7 @@ private:
     //! time of the constructor
     double time_reference;
 	
-    //! vector containing the stea at which perform a dump in case time_dump returns true
+    //! vector containing the step at which perform a dump in case time_dump returns true
     unsigned int time_dump_step;
     
     //! Timestep to dump everything

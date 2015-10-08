@@ -16,7 +16,7 @@ COMMITDATE:=$(shell git show -s --pretty="%ci" 2>/dev/null || echo '??')
 
 VERSION="$(DESCRIBE)-$(BRANCH)"
 
-CFLAGS += -D__VERSION=\"$(VERSION)\" -D__COMMITDATE=\""$(COMMITDATE)"\" -I${HDF5_ROOT_DIR}/include -std=c++0x 
+CXXFLAGS += -D__VERSION=\"$(VERSION)\" -D__COMMITDATE=\""$(COMMITDATE)"\" -I${HDF5_ROOT_DIR}/include -std=c++0x 
 LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5 -lz
 
 
@@ -27,31 +27,36 @@ endif
 #add subdirs
 DIRS := $(shell find src -type d)
 #add include directives for subdirs
-CFLAGS += $(DIRS:%=-I%)
+CXXFLAGS += $(DIRS:%=-I%)
 
 #collect all cpp files
 SRCS := $(shell find src/* -name \*.cpp)
 OBJS := $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.o))
 DEPS := $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.d))
 PYSCRIPTS := $(shell find src/Python -name \*.py)
-CFLAGS += -I$(BUILD_DIR)/src/Python
+CXXFLAGS += -I$(BUILD_DIR)/src/Python
 PYHEADERS := $(addprefix $(BUILD_DIR)/, $(PYSCRIPTS:.py=.pyh))
 
-PY_CFLAGS:=$(shell $(PYTHONCONFIG) --includes)
-CFLAGS+=$(PY_CFLAGS)
+PY_CXXFLAGS:=$(shell $(PYTHONCONFIG) --includes)
+CXXFLAGS+=$(PY_CXXFLAGS)
 PY_LDFLAGS:=$(shell $(PYTHONCONFIG) --ldflags)
 LDFLAGS+=$(PY_LDFLAGS)
 
 
 # check for variable config
 ifneq (,$(findstring debug,$(config)))
-	CFLAGS += -g -pg -Wall -D__DEBUG -O0 # -shared-intel 
+	CXXFLAGS += -g -pg -Wall -D__DEBUG -O0 # -shared-intel 
 else
-	CFLAGS += -O3 # -xHost -ipo
+	CXXFLAGS += -O3 # -xHost -ipo
 endif
 
 ifneq (,$(findstring scalasca,$(config)))
     SMILEICXX = scalasca -instrument mpic++
+endif
+
+ifneq (,$(findstring turing,$(config)))
+	CXXFLAGS += -I$(BG_PYTHONHOME)/include/python2.7 -qlanglvl=extended0x
+	LDFLAGS  += -qnostaticlink -L(BG_PYTHONHOME)/lib64 -lpython2.7 -lutil
 endif
 
 ifeq (,$(findstring noopenmp,$(config)))
@@ -63,7 +68,7 @@ ifeq (,$(findstring noopenmp,$(config)))
     endif
     OPENMPFLAGS += -D_OMP
     LDFLAGS += $(OPENMPFLAGS)
-    CFLAGS += $(OPENMPFLAGS)
+    CXXFLAGS += $(OPENMPFLAGS)
 endif
 
 clean:
@@ -87,10 +92,10 @@ $(BUILD_DIR)/%.pyh: %.py
 $(BUILD_DIR)/%.d: %.cpp
 	@ echo "Checking dependencies for $<"
 # create and modify dependecy file .d to take into account the location subdir
-	@ $(SMILEICXX) $(CFLAGS) -MM $< 2>/dev/null | sed -e "s@\(^.*\)\.o:@$(BUILD_DIR)/$(shell  dirname $<)/\1.d $(BUILD_DIR)/$(shell  dirname $<)/\1.o:@" > $@  
+	@ $(SMILEICXX) $(CXXFLAGS) -MM $< 2>/dev/null | sed -e "s@\(^.*\)\.o:@$(BUILD_DIR)/$(shell  dirname $<)/\1.d $(BUILD_DIR)/$(shell  dirname $<)/\1.o:@" > $@  
 
 $(BUILD_DIR)/%.o : %.cpp
-	$(SMILEICXX) $(CFLAGS) -c $< -o $@
+	$(SMILEICXX) $(CXXFLAGS) -c $< -o $@
 
 $(EXEC): $(OBJS)
 	$(SMILEICXX) $(LDFLAGS) $(OBJS) -o $@ 

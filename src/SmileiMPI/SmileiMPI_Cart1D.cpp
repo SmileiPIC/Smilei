@@ -103,7 +103,6 @@ void SmileiMPI_Cart1D::createTopology(Params& params)
             
             params.n_space[i] = params.n_space_global[i] / number_of_procs[i];
             cell_starting_global_index[i] = coords_[i]*(params.n_space_global[i] / number_of_procs[i]);
-            
             if ( number_of_procs[i]*params.n_space[i] != params.n_space_global[i] ) {
                 // Correction on the last MPI process of the direction to use the wished number of cells
                 if (coords_[i]==number_of_procs[i]-1) {
@@ -124,6 +123,7 @@ void SmileiMPI_Cart1D::createTopology(Params& params)
             }
         }
         
+
         oversize[i] = params.oversize[i] = params.interpolation_order + (params.exchange_particles_each-1);
         if ( params.n_space[i] <= 2*oversize[i] ) {
             WARNING ( "Increase space resolution or reduce number of MPI process in direction " << i );
@@ -136,6 +136,8 @@ void SmileiMPI_Cart1D::createTopology(Params& params)
         
         cell_starting_global_index[i] -= params.oversize[i];
         
+        HEREIAM("cell_starting_global_index[" <<i << "]=" <<cell_starting_global_index[i] );
+
     }
     
     //DEBUG(3, smilei_rk, "n_space = " << params.n_space[0] );
@@ -423,11 +425,11 @@ MPI_Datatype SmileiMPI_Cart1D::createMPIparticles( Particles* particles, int nbr
     
     int nbrOfProp2 = particles->double_prop.size() + particles->short_prop.size() + particles->uint_prop.size();
     MPI_Aint address[nbrOfProp2];
-    for ( int iprop=0 ; iprop<particles->double_prop.size() ; iprop++ )
+    for (unsigned int iprop=0 ; iprop<particles->double_prop.size() ; iprop++ )
 	MPI_Get_address( &( (*(particles->double_prop[iprop]))[0] ), &(address[iprop]) );
-    for ( int iprop=0 ; iprop<particles->short_prop.size() ; iprop++ )
+    for (unsigned int iprop=0 ; iprop<particles->short_prop.size() ; iprop++ )
         MPI_Get_address( &( (*(particles->short_prop[iprop]))[0] ), &(address[particles->double_prop.size()+iprop]) );
-    for ( int iprop=0 ; iprop<particles->uint_prop.size() ; iprop++ )
+    for (unsigned int iprop=0 ; iprop<particles->uint_prop.size() ; iprop++ )
         MPI_Get_address( &( (*(particles->uint_prop[iprop]))[0] ), &(address[particles->double_prop.size()+particles->short_prop.size()+iprop]) );
 
     int nbr_parts[nbrOfProp2];
@@ -443,11 +445,11 @@ MPI_Datatype SmileiMPI_Cart1D::createMPIparticles( Particles* particles, int nbr
 
     MPI_Datatype partDataType[nbrOfProp2];
     // define MPI type of each property, default is DOUBLE
-    for (int i=0 ; i<particles->double_prop.size() ; i++)
+    for (unsigned int i=0 ; i<particles->double_prop.size() ; i++)
         partDataType[i] = MPI_DOUBLE;
-    for ( int iprop=0 ; iprop<particles->short_prop.size() ; iprop++ )
+    for (unsigned int iprop=0 ; iprop<particles->short_prop.size() ; iprop++ )
         partDataType[ particles->double_prop.size()+iprop] = MPI_SHORT;
-    for ( int iprop=0 ; iprop<particles->uint_prop.size() ; iprop++ )
+    for (unsigned int iprop=0 ; iprop<particles->uint_prop.size() ; iprop++ )
         partDataType[ particles->double_prop.size()+particles->short_prop.size()+iprop] = MPI_UNSIGNED;
 
     MPI_Datatype typeParticlesMPI;

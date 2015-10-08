@@ -264,9 +264,9 @@ void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime
            logL, bmin, s, vrel, smax,
            cosX, sinX, phi, sinXcosPhi, sinXsinPhi, p_perp, inv_p_perp, 
            newpx_COM, newpy_COM, newpz_COM, U, vcp;
-    Field2D *smean, *logLmean, *ncol;//, *temperature
+    Field2D *smean=NULL, *logLmean=NULL, *ncol=NULL;//, *temperature
     ostringstream name;
-    hid_t did;
+    hid_t did(0);
     
     sg1 = &species_group1;
     sg2 = &species_group2;

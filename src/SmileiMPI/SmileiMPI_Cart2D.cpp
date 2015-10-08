@@ -559,11 +559,11 @@ MPI_Datatype SmileiMPI_Cart2D::createMPIparticles( Particles* particles, int nbr
     int nbrOfProp2 = particles->double_prop.size() + particles->short_prop.size() + particles->uint_prop.size();
 
     MPI_Aint address[nbrOfProp2];
-    for ( int iprop=0 ; iprop<particles->double_prop.size() ; iprop++ )
+    for (unsigned int iprop=0 ; iprop<particles->double_prop.size() ; iprop++ )
 	MPI_Get_address( &( (*(particles->double_prop[iprop]))[0] ), &(address[iprop]) );
-    for ( int iprop=0 ; iprop<particles->short_prop.size() ; iprop++ )
+    for (unsigned int iprop=0 ; iprop<particles->short_prop.size() ; iprop++ )
         MPI_Get_address( &( (*(particles->short_prop[iprop]))[0] ), &(address[particles->double_prop.size()+iprop]) );
-    for ( int iprop=0 ; iprop<particles->uint_prop.size() ; iprop++ )
+    for (unsigned int iprop=0 ; iprop<particles->uint_prop.size() ; iprop++ )
         MPI_Get_address( &( (*(particles->uint_prop[iprop]))[0] ), &(address[particles->double_prop.size()+particles->short_prop.size()+iprop]) );
 
     int nbr_parts[nbrOfProp2];
@@ -579,11 +579,11 @@ MPI_Datatype SmileiMPI_Cart2D::createMPIparticles( Particles* particles, int nbr
 
     MPI_Datatype partDataType[nbrOfProp2];
     // define MPI type of each property, default is DOUBLE
-    for (int i=0 ; i<particles->double_prop.size() ; i++)
+    for (unsigned int i=0 ; i<particles->double_prop.size() ; i++)
         partDataType[i] = MPI_DOUBLE;
-    for ( int iprop=0 ; iprop<particles->short_prop.size() ; iprop++ )
+    for (unsigned int iprop=0 ; iprop<particles->short_prop.size() ; iprop++ )
         partDataType[ particles->double_prop.size()+iprop] = MPI_SHORT;
-    for ( int iprop=0 ; iprop<particles->uint_prop.size() ; iprop++ )
+    for (unsigned int iprop=0 ; iprop<particles->uint_prop.size() ; iprop++ )
         partDataType[ particles->double_prop.size()+particles->short_prop.size()+iprop] = MPI_UNSIGNED;
 
     MPI_Datatype typeParticlesMPI;

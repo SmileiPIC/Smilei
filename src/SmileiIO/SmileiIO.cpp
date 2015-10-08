@@ -24,7 +24,8 @@ using namespace std;
 // static varable must be defined and initialized here
 int SmileiIO::signal_received=0;
 
-SmileiIO::SmileiIO( Params& params, Diagnostic& diag, SmileiMPI* smpi ) : 
+SmileiIO::SmileiIO( Params& params, Diagnostic& diag, SmileiMPI* smpi ) :
+this_run_start_step(0),
 dump_times(0), 
 time_reference(MPI_Wtime()),
 time_dump_step(0),
@@ -305,7 +306,7 @@ bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, std::vector<Spec
     }
     
     if (signal_received!=0 ||
-        (dump_step != 0 && (itime % dump_step == 0)) ||
+        (dump_step != 0 && ((itime-this_run_start_step) % dump_step == 0)) ||
         (time_dump_step!=0 && itime==time_dump_step)) {
         dumpAll( EMfields, itime,  vecSpecies, smpi, simWindow, params, diags);
         if (exit_after_dump || ((signal_received!=0) && (signal_received != SIGUSR2))) return true;
@@ -313,13 +314,16 @@ bool SmileiIO::dump( ElectroMagn* EMfields, unsigned int itime, std::vector<Spec
     return false;
 }
 
-void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin, Params &params, Diagnostic &diags) { 
-    ostringstream nameDump("");
-    nameDump << dump_dir << "dump-" << setfill('0') << setw(4) << dump_times%dump_file_sequence << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
-    hid_t fid = H5Fcreate( nameDump.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin, Params &params, Diagnostic &diags) {
+
+    unsigned int num_dump=dump_times%dump_file_sequence;
+    
+    string dump_name=dumpName(num_dump,smpi);
+    
+    hid_t fid = H5Fcreate( dump_name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     dump_times++;
     
-    MESSAGEALL("Step " << itime << " : DUMP fields and particles " << nameDump.str());    
+    MESSAGEALL("Step " << itime << " : DUMP fields and particles " << dump_name);
     
     H5::attr(fid, "Version", string(__VERSION));
     H5::attr(fid, "CommitDate", string(__COMMITDATE));
@@ -404,25 +408,30 @@ void SmileiIO::dumpFieldsPerProc(hid_t fid, Field* field)
     H5Sclose(sid);
 }
 
-void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> &vecSpecies, SmileiMPI* smpi, SimWindow* simWin, Params &params, Diagnostic &diags) {
+string SmileiIO::dumpName(unsigned int num, SmileiMPI *smpi) {
+    ostringstream nameDumpTmp("");
+    nameDumpTmp << restart_dir << "dump-" << setfill('0') << setw(1+log10(dump_file_sequence)) << num << "-" << setfill('0') << setw(1+log10(smpi->getSize())) << smpi->getRank() << ".h5" ;
+    return nameDumpTmp.str();
+}
+
+void SmileiIO::restartAll( ElectroMagn* EMfields, std::vector<Species*> &vecSpecies, SmileiMPI* smpi, SimWindow* simWin, Params &params, Diagnostic &diags) {
     
     string nameDump("");
 
     // This will open all sequential dumps and pick the last one
-    for (unsigned int i=0;i<dump_file_sequence; i++) {
-        ostringstream nameDumpTmp("");
-        nameDumpTmp << restart_dir << "dump-" << setfill('0') << setw(4) << i << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
-        ifstream f(nameDumpTmp.str().c_str());
+    for (unsigned int num_dump=0;num_dump<dump_file_sequence; num_dump++) {
+        string dump_name=dumpName(num_dump,smpi);
+        ifstream f(dump_name.c_str());
         if (f.good()) {
-            hid_t fid = H5Fopen( nameDumpTmp.str().c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+            hid_t fid = H5Fopen( dump_name.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
             if (fid >=0) {
                 unsigned int itimeTmp;
                 H5::getAttr(fid, "dump_step", itimeTmp);
                 H5Fclose(fid);
-                if (itimeTmp>itime) {
-                    itime=itimeTmp;
-                    nameDump=nameDumpTmp.str();
-                    dump_times=i;
+                if (itimeTmp>this_run_start_step) {
+                    this_run_start_step=itimeTmp;
+                    nameDump=dump_name;
+                    dump_times=num_dump;
                 }
             }
         }
@@ -433,7 +442,7 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vec
         ERROR("Cannot find a valid restart file");
     }
     
-    MESSAGEALL(2, " : Restarting fields and particles " << nameDump << " step=" << itime);
+    MESSAGEALL(2, " : Restarting fields and particles " << nameDump << " step=" << this_run_start_step);
     
     hid_t fid = H5Fopen( nameDump.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
     if (fid < 0) ERROR(nameDump << " is not a valid HDF5 file");
