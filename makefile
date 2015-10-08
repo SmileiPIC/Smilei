@@ -12,11 +12,12 @@ default: $(EXEC)
 ####################################################
 DESCRIBE:=$(shell git describe 2>/dev/null || echo '??')
 BRANCH:=$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '??')
-COMMITDATE:=$(shell git show -s --pretty="%ci" 2>/dev/null || echo '??')
-
 VERSION="$(DESCRIBE)-$(BRANCH)"
+COMMITDATE:="$(shell git show -s --pretty="%ci" 2>/dev/null || echo '??')"
 
-CXXFLAGS += -D__VERSION=\"$(VERSION)\" -D__COMMITDATE=\""$(COMMITDATE)"\" -I${HDF5_ROOT_DIR}/include -std=c++0x 
+CXXFLAGS += -D__VERSION=\"$(VERSION)\" -D__COMMITDATE=\"$(COMMITDATE)\" -D__CONFIG=\""$(config)"\"
+
+CXXFLAGS += -I${HDF5_ROOT_DIR}/include -std=c++0x 
 LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5 -lz
 
 

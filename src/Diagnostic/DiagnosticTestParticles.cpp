@@ -104,7 +104,7 @@ void DiagnosticTestParticles::run(int time, SmileiMPI* smpi) {
     
     int locNbrParticles = species->getNbrOfParticles();
     
-    cout << smpi->getRank() << " Test " << locNbrParticles << endl;
+    HEREIAM(" Test " << locNbrParticles);
     
     // We increase the array size for the new timestep (new chunk)
     // It is not applied to the HDF5 file yet
