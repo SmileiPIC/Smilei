@@ -737,7 +737,7 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, int
 
     
      //??
-     sort( (*indexes_of_particles_to_exchange).begin(), (*indexes_of_particles_to_exchange).end() );
+     //sort( (*indexes_of_particles_to_exchange).begin(), (*indexes_of_particles_to_exchange).end() );
  
  
     int n_part_send = (*indexes_of_particles_to_exchange).size();
