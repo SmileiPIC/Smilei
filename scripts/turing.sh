@@ -13,10 +13,9 @@
 # @ queue
 
 
-#module load hdf5/mpi/1.8.9
-#make openmpintel
+module load hdf5/mpi/1.8.14 python
 
 mkdir OUT_$JOBID
 cd OUT_$JOBID
-runjob --ranks-per-node 16 --envs "OMP_NUM_THREADS=4" --envs "OMP_SCHEDULE=dynamic" --np 32768 : ../../src/smilei ../../tests/GC_sbs.in
+runjob --ranks-per-node 16 --envs "OMP_NUM_THREADS=4" --envs "OMP_SCHEDULE=dynamic" --envs LD_LIBRARY_PATH=$BG_LD_LIBRARY_PATH PYTHONHOME=$BG_PYTHONHOME PYTHONPATH=$BG_PYTHONPATH --np 32768 : ../../src/smilei ../../tests/GC_sbs.in
 
