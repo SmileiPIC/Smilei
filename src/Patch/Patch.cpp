@@ -339,8 +339,8 @@ void Patch::CommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int iDi
 	n_part_send = (vecSpecies[ispec]->specMPI.patch_buff_index_send[iDim][iNeighbor]).size();
 	if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (n_part_send!=0) ) {
             // Enabled periodicity
-	    for (int iPart=0 ; iPart<n_part_send ; iPart++) {
-		if (smpi->periods_[iDim]==1) {
+            if (smpi->periods_[iDim]==1) {
+	        for (int iPart=0 ; iPart<n_part_send ; iPart++) {
 		    if ( ( iNeighbor==0 ) &&  (Pcoordinates[iDim] == 0 ) &&( cuParticles.position(iDim,vecSpecies[ispec]->specMPI.patch_buff_index_send[iDim][iNeighbor][iPart]) < 0. ) ) {
 			cuParticles.position(iDim,vecSpecies[ispec]->specMPI.patch_buff_index_send[iDim][iNeighbor][iPart])     += x_max;
 		    }
