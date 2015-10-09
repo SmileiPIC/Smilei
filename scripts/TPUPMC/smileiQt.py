@@ -184,7 +184,6 @@ class smileiQtPlot(QWidget):
         fname=os.path.join(self.dirName, "Fields.h5")
         if isinstance(self.fieldFile,tb.file.File):
             self.fieldFile.close()
-            print "here"
         if os.path.isfile(fname) :
             self.fieldFile=tb.openFile(fname)
             for group in self.fieldFile.listNodes("/", classname='Group'):
@@ -258,7 +257,6 @@ class smileiQtPlot(QWidget):
             self.pauseSignal.emit()
 
     def preparePlots(self):
-        log.info("here")
         self.someCheckBoxChanged=False
         
         self.scalarDict=dict()
@@ -451,6 +449,7 @@ class smileiQtPlot(QWidget):
             
         
     def doPlots(self):
+    
         if len(self.fieldSteps) == 0 : return
 
         if self.someCheckBoxChanged==True:

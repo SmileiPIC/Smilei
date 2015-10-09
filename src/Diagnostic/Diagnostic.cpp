@@ -25,10 +25,9 @@ dtimer(5)
     print_every=params.n_time/10;
     PyTools::extract("print_every", print_every);
     
-    fieldDump_every=0;
     if (!PyTools::extract("fieldDump_every", fieldDump_every)) {
         fieldDump_every=params.global_every;
-        DEBUG("activating all fields to dump");
+        MESSAGE(1,"Activating all fields to dump");
     }
     
     avgfieldDump_every=params.res_time*10;

@@ -133,15 +133,15 @@ class DiagParticles(SmileiComponent):
 class DiagPhase(SmileiComponent):
     """Diagnostic phase"""
     every=None
-    pos_min=None
-    pos_max=None
-    pos_num=1
-    lor_min=None
-    lor_max=None
-    lor_num=1
-    mom_min=None
-    mom_max=None
-    mom_num=1
+    pos_min=[]
+    pos_max=[]
+    pos_num=[]
+    lor_min=[]
+    lor_max=[]
+    lor_num=[]
+    mom_min=[]
+    mom_max=[]
+    mom_num=[]
     time_range = []
     deflate = 0
     pass
@@ -203,7 +203,7 @@ clrw = 1
 every = 0
 number_of_procs = [None]
 print_every = None
-fieldDump_every = 0
+fieldDump_every = None
 fieldsToDump = []
 avgfieldDump_every = None
 ntime_step_avg = 0
