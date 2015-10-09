@@ -91,7 +91,7 @@ namelist("")
     //!\todo (MG) CFL cond. depends on the Maxwell solv. ==> Move this computation to the ElectroMagn Solver
     double res_space2=0;
     for (unsigned int i=0; i<nDim_field; i++) {
-        res_space2 += res_space[i]*res_space[i];
+        res_space2 += 1./(cell_length[i]*cell_length[i]);
     }
     dtCFL=1.0/sqrt(res_space2);
     if ( timestep>dtCFL ) {
@@ -180,9 +180,7 @@ Params::~Params() {
 
 void Params::initPython(SmileiMPI *smpi, std::vector<std::string> namelistsFiles){
     PyTools::openPython();
-    // here we add the rank, in case some script need it
-    PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_rank", smpi->getRank());
-    
+
     // First, we tell python to filter the ctrl-C kill command (or it would prevent to kill the code execution).
     // This is done separately from other scripts because we don't want it in the concatenated python namelist.
     PyTools::checkPyError();
@@ -194,6 +192,9 @@ void Params::initPython(SmileiMPI *smpi, std::vector<std::string> namelistsFiles
     
     // Running pyfunctons.py
     pyRunScript(string(reinterpret_cast<const char*>(Python_pyprofiles_py), Python_pyprofiles_py_len), "pyprofiles.py");
+    
+    // here we add the rank, in case some script need it
+    PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_rank", smpi->getRank());
     
     // Running the namelists
     pyRunScript("############### BEGIN USER NAMELISTS ###############\n");
@@ -405,13 +406,13 @@ void Params::compute()
     // -----------------------
     
     // number of time-steps
-    n_time   = (int)(res_time*sim_time);
+    n_time   = (int)(sim_time/timestep);
     
-    //!\todo MG Is this really necessary now ?
     // simulation time & time-step value
-    timestep = 1.0/res_time;
+    double entered_sim_time = sim_time;
     sim_time = (double)(n_time) * timestep;
-    
+    if (sim_time!=entered_sim_time)
+        WARNING("sim_time has been redefined from " << entered_sim_time << " to " << sim_time << " to match nxtimestep");
     
     
     // grid/cell-related parameters
@@ -423,10 +424,11 @@ void Params::compute()
         
         // compute number of cells & normalized lengths
         for (unsigned int i=0; i<nDim_field; i++) {
-            //!\todo MG Is this really necessary now ?
-            cell_length[i] = 1.0/res_space[i];
-            n_space[i]     = round(sim_length[i]/cell_length[i]);
-            sim_length[i]  = (double)(n_space[i])*cell_length[i]; // ensure that nspace = sim_length/cell_length
+            n_space[i]         = round(sim_length[i]/cell_length[i]);
+            double entered_sim_length = sim_length[i];
+            sim_length[i]      = (double)(n_space[i])*cell_length[i]; // ensure that nspace = sim_length/cell_length
+            if (sim_length[i]!=entered_sim_length)
+                WARNING("sim_length[" << i << "] has been redefined from " << entered_sim_length << " to " << sim_length[i] << " to match n x cell_length");
             cell_volume   *= cell_length[i];
         }
         // create a 3d equivalent of n_space & cell_length
@@ -465,20 +467,12 @@ void Params::computeSpecies()
         // define thermal velocity as \sqrt{T/m}
         species_param[ispec].thermalVelocity.resize(3);
         species_param[ispec].thermalMomentum.resize(3);
-        
-/*        double gamma=1.+species_param[ispec].thermT[0]/species_param[ispec].mass;
-        
-        for (unsigned int i=0; i<3; i++) {
-            species_param[ispec].thermalVelocity[i] = sqrt( 1.-1./gamma*gamma );
-            species_param[ispec].thermalMomentum[i] = gamma*species_param[ispec].thermalVelocity[i];
-        }
-        
-        double gamma=1.+species_param[ispec].thermT[0]/species_param[ispec].mass;
-*/
+    
         for (unsigned int i=0; i<3; i++) {
             species_param[ispec].thermalVelocity[i] = sqrt(2.*species_param[ispec].thermT[0]/species_param[ispec].mass);
             species_param[ispec].thermalMomentum[i] = species_param[ispec].thermalVelocity[i];
         }
+        
         WARNING("Using thermT[0] for species ispec=" << ispec << " in all directions");
         if (species_param[ispec].thermalVelocity[0]>0.3) {
             ERROR("for Species#"<<ispec<<" thermalising BCs require ThermT[0]="<<species_param[ispec].thermT[0]<<"<<"<<species_param[ispec].mass);
@@ -544,10 +538,12 @@ void Params::print()
     
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
 // Finds requested species in the list of existing species.
 // Returns an array of the numbers of the requested species.
-// Note that there might be several species that have the same "name" or "type"
-//  so that we have to search for all possibilities.
+// Note that there might be several species that have the same "name" or "type" so that we have to search for all
+// possibilities.
+// ---------------------------------------------------------------------------------------------------------------------
 vector<unsigned int> Params::FindSpecies( vector<string> requested_species)
 {
     bool species_found;

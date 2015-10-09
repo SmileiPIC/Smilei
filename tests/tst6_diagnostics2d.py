@@ -6,8 +6,8 @@
 #           DiagScalar, DiagPhase or ExtField
 
 import math
-L0 = 2.*math.pi # conversion from normalization length to wavelength
 
+L0 = 2.*math.pi
 wavelength_SI = 1.e-6
 
 # dim: Geometry of the simulation
@@ -15,28 +15,26 @@ wavelength_SI = 1.e-6
 #      2d3v = cartesian grid with 2d in space + 3d in velocity
 #      3d3v = cartesian grid with 3d in space + 3d in velocity
 #      2drz = cylindrical (r,z) grid with 3d3v particles
-dim = "1d3v"
+dim = "2d3v"
 
 # order of interpolation
 interpolation_order = 2
 
 # SIMULATION TIME 
-# timestep = float, time steps
+# timestep = float, time steps`
 # sim_time = float, duration of the simulation
-timestep = 0.0002 * L0
-sim_time  = 0.02 * L0
-
+timestep = 0.01 * L0
+sim_time  = 0.5 * L0
 
 #  optional parameter time_fields_frozen, during which fields are not updated
-time_fields_frozen = 100000000000.
+time_fields_frozen = 0.
+
 
 # SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
-# either use the resolution (res_space) or cell-length (cell_length)
-# res_space   = list of integers, number of cells in one unit of space (`sim_units`)
-# sim_length  = length of the simulation in units of `sim_units`
-# cell_length = cell length  in units of `sim_units`
-cell_length = [2.*L0]
-sim_length  = [100.*L0]
+# cell_length = cell length`
+# sim_length  = length of the simulation
+cell_length = [0.05 * L0]*2
+sim_length  = [1. * L0]*2
 
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
 # bc_em_type_x : two strings, x boundary conditions for EM fields 
@@ -44,10 +42,12 @@ sim_length  = [100.*L0]
 #                'periodic'      : periodic BC (using MPI topology)
 #                'silver-muller' : injecting/absorbing
 bc_em_type_x  = ["periodic"]
+bc_em_type_y  = ["periodic"]
 
 
 # RANDOM seed used to randomize the random number generator
 random_seed = 0
+
 
 # DEFINE ALL SPECIES
 # species_type       = string, given name to the species (e.g. ion, electron, positron, test ...)
@@ -65,48 +65,60 @@ random_seed = 0
 # mean_velocity      = list of floats or functions, mean velocity in units of the speed of light
 # temperature        = list of floats or functions, temperature in units of m_e c^2
 # Predefined functions: constant, trapezoidal, gaussian, polygonal, cosine
+
 Species(
 	species_type = "ion1",
-	initPosition_type = "regular",
+	initPosition_type = "random",
 	initMomentum_type = "maxwell-juettner",
-	n_part_per_cell = 1000,
-	mass = 10., #1836.0,
-	charge = 3.0,
-	charge_density = 10.,
-	mean_velocity = [0., 0., 0.],
+	n_part_per_cell = 2000,
+	mass = 1836.0,
+	charge = 1.0,
+	nb_density = 10.,
 	temperature = [0.00002],
-	time_frozen = 100000000.0,
+	time_frozen = 0.0,
 	bc_part_type_west = "none",
-	bc_part_type_east = "none"
+	bc_part_type_east = "none",
+	bc_part_type_south = "none",
+	bc_part_type_north = "none"
 )
 
 Species(
 	species_type = "electron1",
-	vacuum_length   = [0.],
-	dens_length_x   = [1000., 1000., 1000.],
-	initPosition_type = "regular",
+	initPosition_type = "random",
 	initMomentum_type = "maxwell-juettner",
-	n_part_per_cell= 100,
+	n_part_per_cell= 2000,
 	mass = 1.0,
 	charge = -1.0,
-	charge_density = 10.,
-	mean_velocity = [0.01, 0., 0.],
-	temperature = [0.0000002],
-	time_frozen = 100000000.0,
+	nb_density = 10.,
+	mean_velocity = [0.05, 0., 0.],
+	temperature = [0.00002],
+	time_frozen = 0.0,
 	bc_part_type_west = "none",
-	bc_part_type_east = "none"
+	bc_part_type_east = "none",
+	bc_part_type_south = "none",
+	bc_part_type_north = "none"
 )
 
-# COLLISIONS
-# species1    = list of strings, the names of the first species that collide
-# species2    = list of strings, the names of the second species that collide
-#               (can be the same as species1)
-# coulomb_log = float, Coulomb logarithm. If negative or zero, then automatically computed.
-Collisions(
-	species1 = ["electron1"],
-	species2 = ["ion1"],
-	coulomb_log = 3
+Species(
+	species_type = "test",
+	initPosition_type = "random",
+	initMomentum_type = "maxwell-juettner",
+	n_part_per_cell= 2,
+	mass = 1.0,
+	charge = -1.,
+	nb_density = constant(10., xvacuum=0.4*L0),
+	mean_velocity = [0.05, 0., 0.],
+	temperature = [0.00002],
+	time_frozen = 0.0,
+	bc_part_type_west = "none",
+	bc_part_type_east = "none",
+	bc_part_type_south = "none",
+	bc_part_type_north = "none",
+	isTest = True,
+	dump_every = 4
 )
+
+
 
 # ---------------------
 # DIAGNOSTIC PARAMETERS
@@ -116,17 +128,33 @@ Collisions(
 print_every = 10
 
 # DIAGNOSTICS ON FIELDS
-fieldDump_every    = 1
-avgfieldDump_every = 1
+fieldDump_every    = 10
+avgfieldDump_every = 5000000000
 ntime_step_avg     = 1
-
 
 # DIAGNOSTICS ON SCALARS
 # every = integer, number of time-steps between each output
-DiagScalar(
-	every = 1
-)
+# tmin and tmax = floats, min and max times that will be used
+# precision = integer, number of digits of the outputs. Default = 10
+DiagScalar(every = 1)
 
+# PROBE DIAGNOSTICS - interpolate the fields on a N-D arbitrary grid
+# ---------------------------------------------------------------------------------
+# every        = an integer, number of time-steps between each output
+# time_range   = two floats, optional, min and max times to output (all times if omitted)
+# number       = N floats, optional, number of grid points in each dimension
+# pos          = N floats, position of the reference point
+# pos_first    = N floats, optional, position of the first point
+# pos_second   = N floats, optional, position of the second point
+DiagProbe(
+	every = 1,
+	time_range = [0.1 *L0, 0.4*L0],
+	number = [10, 10],
+	pos = [0.1*L0]*2,
+	pos_first = [0.9*L0, 0],
+	pos_second = [0. , 0.9*L0],
+	fields = []
+)
 
 # DIAGNOSTICS ON PARTICLES - project the particles on a N-D arbitrary grid
 # ------------------------------------------------------------------------
@@ -143,49 +171,48 @@ DiagScalar(
 #   The optional "logscale" sets the scale to logarithmic
 #   The optional "edge_inclusive" forces the particles that are outside (_min_,_max_)
 #     to be counted in the extrema bins
-#   Example : axes = ("x", 0, 1, 30)
-#   Example : axes = ("px", -1, 1, 100, "edge_inclusive")
+#   Example : axes = [["x", 0, 1, 30]]
+#   Example : axes =[["px", -1, 1, 100, "edge_inclusive"]]
 
 DiagParticles(
 	output = "density",
-	every = 2,
-	time_average = 1,
+	every = 4,
+	time_average = 2,
 	species = ["electron1"],
 	axes = [
-		 ["x",    0*L0,    100.*L0,   10],
-		 ["vx",  -0.1,  0.1,    1000]
+		["x", 0.*L0, 1.*L0, 100],
+		["vx", -0.1, 0.1, 100]
 	]
 )
 
 DiagParticles(
 	output = "density",
-	every = 2,
-	time_average = 1,
-	species = ["electron1"],
-	axes = [
-		 ["x",    0*L0,    100.*L0,   10],
-		 ["vperp2",  0,  0.0002,  4000]
-	]
-)
-
-DiagParticles(
-	output = "density",
-	every = 2,
+	every = 4,
 	time_average = 1,
 	species = ["ion1"],
 	axes = [
-		 ["x",    0*L0,    100.*L0,   10],
-		 ["vx",  -0.1,  0.1,  100]
+		("x", 0.*L0, 1.*L0, 100),
+		("vx", -0.001, 0.001, 100)
+	]
+)
+
+DiagParticles(
+	output = "px_density",
+	every = 4,
+	time_average = 2,
+	species = ["electron1"],
+	axes = [
+		["x", 0.*L0, 1.*L0, 100],
+		["vx", -0.1, 0.1, 100]
 	]
 )
 
 DiagParticles(
 	output = "density",
-	every = 10,
+	every = 1,
 	time_average = 1,
 	species = ["electron1"],
 	axes = [
-		 ["ekin",  0.0001,  0.1, 100, "logscale"]
+		["ekin", 0.0001, 0.1, 100, "logscale", "edge_inclusive"]
 	]
 )
-

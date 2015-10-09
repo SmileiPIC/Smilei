@@ -1,13 +1,18 @@
-Post-process your diagnostics
------------------------------
+Post-process
+------------
 
 
 A python script *Diagnostics.py* is provided to view or extract data from all the diagnostics.
-To run this script, you will need *python2.7* with the following packages: numpy, matplotlib, pylab, h5py.
+To use this script, you will need *python2.7* with some packages
+(follow the :doc:`installation instructions <installation>`).
 
-First, run python and include the script: ``python -i scripts/Diagnostics.py``
+For an interactive mode, we recommend installing and running *ipython*::
+  
+  ipython -i scripts/Diagnostics.py
 
-Alternately, include this file into your own script: ``execfile("scripts/Diagnostics.py")``
+Otherwise, you can add the following command in your own script::
+  
+  execfile("scripts/Diagnostics.py")
 
 ----
 
@@ -40,7 +45,7 @@ Checkout the namelist documentation to find out which diagnostics are included i
 and :ref:`particles <DiagParticles>`.
 
 
-.. py:method:: Smilei.Scalar(scalar=None, timesteps=None, units="code", data_log=False)
+.. py:method:: Smilei.Scalar(scalar=None, timesteps=None, units=[""], data_log=False, **kwargs)
   
   * ``scalar``: The name of the scalar.
      | If not given, then a list of available scalars is printed.
@@ -48,11 +53,10 @@ and :ref:`particles <DiagParticles>`.
      | If omitted, all timesteps are used.
      | If one number  given, the nearest timestep available is used.
      | If two numbers given, all the timesteps in between are used.
-  * ``units``: Type of output units.
-     | If ``"nice"`` is chosen, then units are converted into *usual* units.
-     | Distances in microns, density in cm, energy in MeV.
+  * ``units``: A unit specification (see :ref:`units`)
   * ``data_log``:
      | If ``True``, then :math:`\log_{10}` is applied to the output.
+  * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
   **Example**::
     
@@ -60,7 +64,7 @@ and :ref:`particles <DiagParticles>`.
     Diag = S.Scalar("Utot")
 
 
-.. py:method:: Smilei.Field(field=None, timesteps=None, slice=None, units="code", data_log=False)
+.. py:method:: Smilei.Field(field=None, timesteps=None, slice=None, units=[""], data_log=False, **kwargs)
   
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``field``: The name of a field (``"Ex"``, ``"Ey"``, etc.)
@@ -76,6 +80,7 @@ and :ref:`particles <DiagParticles>`.
      | - With syntax 2, only the bin closest to ``location`` is kept.
      | - With syntax 3, an average is performed between ``begin`` and ``end``.
      | Example: ``slice = {"x":[4,5]}`` will average for :math:`x` within [4,5].
+  * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
   **Example**::
     
@@ -84,7 +89,7 @@ and :ref:`particles <DiagParticles>`.
 
 
 
-.. py:method:: Smilei.Probe(probeNumber=None, field=None, timesteps=None, slice=None, units="code", data_log=False)
+.. py:method:: Smilei.Probe(probeNumber=None, field=None, timesteps=None, slice=None, units=[""], data_log=False, **kwargs)
   
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``probeNumber``: number of the probe (the first one has number 0).
@@ -94,6 +99,7 @@ and :ref:`particles <DiagParticles>`.
      | The string can also be an operation between several fields, such as ``"Jx+Jy"``.
   * ``slice`` is very similar to that of :py:meth:`Field`, but it can only accept two axes: ``"axis1"``, ``"axis2"``.
      | For instance, ``slice={"axis1":"all"}``. Note that ``"axis1"`` and ``"axis2"`` are not necessarily :math:`x` or :math:`y` because the probe mesh may be rotated.
+  * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
   **Example**::
     
@@ -102,7 +108,7 @@ and :ref:`particles <DiagParticles>`.
 
 
 
-.. py:method:: Smilei.ParticleDiagnostic(diagNumber=None, timesteps=None, slice=None, units="code", data_log=False)
+.. py:method:: Smilei.ParticleDiagnostic(diagNumber=None, timesteps=None, slice=None, units=[""], data_log=False, **kwargs)
   
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``diagNumber``: number of the particle diagnostic (the first one has number 0).
@@ -121,6 +127,7 @@ and :ref:`particles <DiagParticles>`.
      | - With syntax 2, only the bin closest to ``location`` is kept.
      | - With syntax 3, a **sum** is performed between ``begin`` and ``end``.
      | Example: ``slice={"x":[4,5]``} will sum all the data for x within [4,5].
+  * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
   **Example**::
     
@@ -130,8 +137,7 @@ and :ref:`particles <DiagParticles>`.
 
 
 
-.. py:method:: Smilei.TestParticles(species=None, select="", axes=[], timesteps=None, units="code",\
-                                    skipAnimation=False)
+.. py:method:: Smilei.TestParticles(species=None, select="", axes=[], timesteps=None, units=[""], skipAnimation=False, **kwargs)
   
   * ``timesteps``, ``units``: same as before.
   * ``species``: the name of a test-particle species.
@@ -153,12 +159,44 @@ and :ref:`particles <DiagParticles>`.
      | **Example:** ``axes = ["x","y"]`` correspond to 2-D trajectories. 
      | **Example:** ``axes = ["x","px"]`` correspond to phase-space trajectories.
   * ``skipAnimation``: when ``True``, the :py:func:`plot` will directly show the full trajectory.
+  * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
   **Example**::
     
     S = Smilei("path/to/my/results")
     Diag = S.TestParticles("electrons", axes=["px","py"])
 
+
+
+----
+
+.. _units:
+
+Specifying units
+^^^^^^^^^^^^^^^^
+
+By default, all the diagnostics data is in code units (see :doc:`units`).
+
+To change the units, all the methods :py:meth:`Scalar`, :py:meth:`Field`, :py:meth:`Probe`,
+:py:meth:`ParticleDiagnostic` and :py:meth:`TestParticles` support a ``units`` argument.
+It has three different syntaxes:
+
+1. **A list**, for example ``units = ["um/ns", "feet", "W/cm^2"]``
+   
+   In this case, any quantity found to be of the same dimension as one of these units
+   will be converted.
+
+2. **A dictionary**, for example ``units = {"x":"um", "y":"um", "v":"Joule"}``
+   
+   In this case, we specify the units separately for axes ``x`` and ``y``, and for the
+   data values ``v``.
+
+3. **A** ``Units`` **object**, for example ``units = Units("um/ns", "feet", x="um")``
+   
+   This version combines the two previous ones.
+
+.. warning::
+  Changing units requires the `Pint module <https://pypi.python.org/pypi/Pint/>`_ .
 
 
 ----
@@ -213,7 +251,7 @@ Plot the data
   All these methods have the same arguments described below.
 
 .. py:function:: plot(figure=1, vmin=None, vmax=None, xmin=None, xmax=None, \
-                      ymin=None, ymax=None, streakPlot=False, \
+                      ymin=None, ymax=None, xfactor=None, yfactor=None, streakPlot=False, \
                       movie="", fps=10, dpi=100, saveAs=None)
   
   Displays the data. All arguments of this method can be supplied to :py:meth:`Scalar`,
@@ -225,10 +263,9 @@ Plot the data
   | If the data is 0D, it is plotted as a **curve** as function of time.
   
   * ``figure``: The figure number that is passed to matplotlib.
-  * ``vmin``, ``vmax``: plotting limits.
-     | If present, output value is rescaled before plotting.
-  * ``xmin``, ``xmax``, ``ymin``, ``ymax``: plotting limits.
-     | If present, axes are rescaled before plotting.
+  * ``vmin``, ``vmax``: data value limits.
+  * ``xmin``, ``xmax``, ``ymin``, ``ymax``: axes limits.
+  * ``xfactor``, ``yfactor``: factors to rescale axes.
   * ``streakPlot``: when ``True``, will not be an animation, but will
     have time on the vertical axis instead (only for 1D data).
   * ``movie``: name of a file to create a movie, such as ``"movie.avi"``

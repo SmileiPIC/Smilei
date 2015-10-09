@@ -39,6 +39,8 @@ Financial support from the *Laboratoires d’Excellence*:
 
 ----
 
+.. _contacts:
+
 Contacts
 ^^^^^^^^
 

@@ -12,18 +12,19 @@ particle pushers, and different orders of interpolation/projection. Note that
 Maxwell's equations are solved on the so-called Yee-mesh with centered electric
 and magnetic fields using the finite-difference time-domain (FDTD) method
 or related methods [Nuter2014]_\ . Moreover, charge deposition is computed
-following the charge conservation scheme proposed by see [Esirkepov2001]_\ . 
+following a charge-conservation scheme [Esirkepov2001]_\ . 
 
-Finally, Monte-Carlo routines are currently under development to account for
+:doc:`Binary collisions <collisions>` have been implemented and
+Monte-Carlo routines are currently under development to account for
 (i) high-energy (gamma) photon emission and its back-reaction on the electron 
 dynamics, as well as (ii) electron-positron pair creation. These developments are
 undertaken in collaboration with the team that has introduced similar routines
 in the PIC code :program:`Calder` see [Lobet2013]_\ . Such routines will be of
 particular importance for the modelling of strongly relativistic astrophysical scenarii.
 
-On the parallelisation side, :program:`Smilei` benefits from a state-of-the-art
+On the performance side, :program:`Smilei` benefits from a state-of-the-art
 hybrid **MPI/OpenMP parallelization**, and an original particle sorting algorithm.
-Dynamical load balancing will also be developed within the next months.
+Development of dynamical load balancing is also well advanced and will be described soon.
 :program:`Smilei` is therefore designed to run on massively parallel machines,
 and its flexibility should allow one to benefit from the newest and futures HPC architectures.
 
@@ -31,21 +32,20 @@ and its flexibility should allow one to benefit from the newest and futures HPC 
 
 Release 1.0
 ^^^^^^^^^^^
+
+**Download**: :download:`Smilei v1.0 <_downloads/smilei-v1.0.tar.gz>`
+
 After nearly two years of development, :program:`Smilei` v1.0 offers some nice features:
 
-* 1D & 2D cartesian geometries, 
+* 1D & 2D cartesian geometries
 * moving-window
-* hybrid MPI-OpenMP parallelization, 
+* hybrid MPI-OpenMP parallelization
 * field ionization
-* some python diagnostics 
+* some python diagnostics
 * open-source
 
-You can download it from the `GitLab <https://llrgit.in2p3.fr/groups/smilei>`_ hosted at LLR.
 It is protected by a "licence CeCILL", the french equivalent to the Gnu GPL license
 for "logiciels libres".
-
-**Download**:
-:download:`Smilei v1.0 <_downloads/smilei-v1.0.tar.gz>`
 
 .. warning::
   This version does not have associated documentation.
@@ -55,31 +55,28 @@ for "logiciels libres".
 
 .. _latestVersion:
 
-Release 2.0a
-^^^^^^^^^^^^
-A second release is in preparation. Great improvements have already been done:
+Release 2.0
+^^^^^^^^^^^
+
+**Download**: :download:`Smilei v2.0 (pre-release) <_downloads/smilei-v2.0.tar.gz>`
+
+A second release is **in preparation**. Great improvements have already been done:
 
 * full *python* namelist, allowing for complex, user-friendly input
-* external fields
+* external fields and antennas
 * binary collisions
 * new diagnostics
-* *python* scripts for all required post-processing
+* *python* scripts for post-processing
 * various improvements on stability and error management
 
 More improvements are on the way:
 
-* **state-of-the-art** load balancing with MPI-OpenMP parallelization
+* **state-of-the-art** dynamic load balancing
 * 3D cartesian geometry
 
 We greatly appreciate external users trying this code and giving feedback.
-At the moment, developer rights are still restricted.
-To become a developer, please contact:
-
-* mickael.grech@polytechnique.edu
-* julien.derouillat@cea.fr
-* arnaud.beck@llr.in2p3.fr
-
-**Download**: :download:`Smilei v2.0a  <_download/smilei-v2.0a.tar.gz>`
+At the moment, developer rights are still restricted,
+but you can :ref:`contact us <contacts>` to become a developer.
 
 
 ----
@@ -120,7 +117,7 @@ OpenMP permits to smooth this phenomenon by balancing macro-particles between th
 .. rubric :: 2. MPI: SBS Amplification
 
 In the completely opposite context of a very homogeneous plasma, we oberve during a
-"Grand challegne" on `Occigen <https://www.cines.fr/calcul/materiels/occigen>`_,
+"Grand challenge" on `Occigen <https://www.cines.fr/calcul/materiels/occigen>`_,
 a good scaling at very large scale.
 
 .. image:: _static/SMILEI_Scaling.png
