@@ -77,9 +77,6 @@ public:
     //! dump every for test particles
     unsigned int test_dump_every;
     
-    //! nDim_fields
-    int nDim_fields;
-    
     //! Boundary conditions for particules
     std::string bc_part_type_west;
     std::string bc_part_type_east;
@@ -218,10 +215,7 @@ public:
     //! Particles pusher (change momentum & change position)
     Pusher* Push;
 
-private:
-    //! 2 times pi
-    double PI2;
-    
+private:    
     //! Number of steps for Maxwell-Juettner cumulative function integration
     //! \todo{Put in a code constant class}
     unsigned int nE;

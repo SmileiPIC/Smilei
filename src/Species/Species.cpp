@@ -37,8 +37,16 @@ using namespace std;
 // input: simulation parameters & Species index
 // ---------------------------------------------------------------------------------------------------------------------
 Species::Species(Params& params, SmileiMPI* smpi) :
+c_part_max(1),
+dynamics_type("norm"),
+time_frozen(0),
+radiating(false),
+isTest(false),
+test_dump_every(1),
+ionization_model("none"),
 velocityProfile(3,NULL),
 temperatureProfile(3,NULL),
+electron_species(NULL),
 clrw(params.clrw),
 oversize(params.oversize),
 cell_length(params.cell_length),
@@ -50,10 +58,7 @@ min_loc(smpi->getDomainLocalMin(0))
     // -------------------
     // Variable definition
     // -------------------
-    PI2 = 2.0 * M_PI;
-    
-    electron_species = NULL;
-    
+
     // Width of clusters:
     if (params.n_space[0]%clrw != 0)
         ERROR("clrw should divide n_space[0] = " << params.n_space[0] );

@@ -15,9 +15,6 @@ laser_struct(laser_params.laser_param[n_laser])
     double sim_time= params.sim_time;
     vector<double> sim_length= params.sim_length;
         
-    pi_ov_2 = 0.5 * M_PI;
-    PI2     = 2.0 * M_PI;
-
     omega0_                = laser_struct.omega0;
     tchirp_                = laser_struct.tchirp;
     
@@ -193,7 +190,7 @@ double LaserProfile::time_profile(double time_dual) {
         }
         // sin2 rise
         else if (time_dual<=t0+T) {
-            return abs( sin(pi_ov_2*(time_dual-t0)/T) );
+            return abs( sin(M_PI_2*(time_dual-t0)/T) );
         }
         // plateau
         else if (time_dual<=t0+T+tp) {
@@ -201,7 +198,7 @@ double LaserProfile::time_profile(double time_dual) {
         }
         // sin2 fall
         else if (time_dual<=t0+T+tp+T) {
-            return abs( cos(pi_ov_2*(time_dual-(t0+T+tp))/T) );
+            return abs( cos(M_PI_2*(time_dual-(t0+T+tp))/T) );
         }
         // after the pulse
         else {

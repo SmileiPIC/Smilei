@@ -25,16 +25,13 @@ public:
         Species *electron_species=NULL;
         
         // read from python namelist
-        bool ok;
-        for (unsigned int ispec = 0; ispec < (unsigned int) PyTools::nComponents("Species"); ispec++) {
+        unsigned int tot_species_number = PyTools::nComponents("Species");
+        for (unsigned int ispec = 0; ispec < tot_species_number; ispec++) {
             
             // Extract type of species dynamics from namelist
             std::string dynamics_type = "norm"; // default value
             if (!PyTools::extract("dynamics_type", dynamics_type ,"Species",ispec) )
                 WARNING("For species #" << ispec << ", dynamics_type not defined: assumed = 'norm'.");
-            if (dynamics_type!="norm" && dynamics_type!="rrll"){
-                ERROR("dynamics_type different than norm not yet implemented");
-            }
             
             // Create species object
             Species * thisSpecies=NULL;
@@ -52,10 +49,12 @@ public:
             thisSpecies->speciesNumber = ispec;
             
             // Extract various parameters from the namelist
-            
             PyTools::extract("species_type",thisSpecies->species_type,"Species",ispec);
             if(thisSpecies->species_type.empty()) {
-                ERROR("For species #" << ispec << ", parameter species_type required");
+                std::ostringstream name("");
+                name << "species" << std::setfill('0') << std::setw(log10(tot_species_number)+1) << ispec;
+                thisSpecies->species_type=name.str();
+                MESSAGE("For species #" << ispec << ", parameter species_type will be " << thisSpecies->species_type);
             }
             
             PyTools::extract("initPosition_type",thisSpecies->initPosition_type ,"Species",ispec);
@@ -75,20 +74,17 @@ public:
                 ERROR("For species #" << ispec << " bad definition of initMomentum_type");
             }
             
-            thisSpecies->c_part_max = 1.0; // default value
             PyTools::extract("c_part_max",thisSpecies->c_part_max,"Species",ispec);
             
             if( !PyTools::extract("mass",thisSpecies->mass ,"Species",ispec) ) {
                 ERROR("For species #" << ispec << ", mass not defined.");
             }
             
-            thisSpecies->time_frozen = 0.0; // default value
             PyTools::extract("time_frozen",thisSpecies->time_frozen ,"Species",ispec);
             if (thisSpecies->time_frozen > 0 && thisSpecies->initMomentum_type!="cold") {
                 WARNING("For species #" << ispec << " possible conflict between time-frozen & not cold initialization");
             }
             
-            thisSpecies->radiating = false; // default value
             PyTools::extract("radiating",thisSpecies->radiating ,"Species",ispec);
             if (thisSpecies->dynamics_type=="rrll" && (!thisSpecies->radiating)) {
                 WARNING("For species #" << ispec << ", dynamics_type='rrll' forcing radiating=True");
@@ -130,12 +126,9 @@ public:
                     thisSpecies->thermT[i]=0.0;
             }
             
-            
-            thisSpecies->ionization_model = "none"; // default value
             PyTools::extract("ionization_model", thisSpecies->ionization_model, "Species",ispec);
             
-            ok = PyTools::extract("atomic_number", thisSpecies->atomic_number, "Species",ispec);
-            if( !ok && thisSpecies->ionization_model!="none" ) {
+            if (thisSpecies->ionization_model != "none" && !PyTools::extract("atomic_number", thisSpecies->atomic_number, "Species",ispec)) {
                 ERROR("For species #" << ispec << ", `atomic_number` not found => required for the ionization model .");
             }
             
@@ -187,9 +180,6 @@ public:
             
             // CALCULATE USEFUL VALUES
             
-            // here I save the dimension of the pb (to use in BoundaryConditionType.h)
-            thisSpecies->nDim_fields = params.nDim_field;
-            
             /*        double gamma=1.+thisSpecies->thermT[0]/thisSpecies->mass;
              
              for (unsigned int i=0; i<3; i++) {
@@ -216,7 +206,6 @@ public:
             
             
             // Extract test Species flag
-            thisSpecies->isTest = false; // default value
             PyTools::extract("isTest",thisSpecies->isTest ,"Species",ispec);
             thisSpecies->particles.isTestParticles = thisSpecies->isTest;
             
@@ -226,7 +215,6 @@ public:
             }
             
             // Define the number of timesteps for dumping test particles
-            thisSpecies->test_dump_every = 1;
             if (PyTools::extract("dump_every",thisSpecies->test_dump_every ,"Species",ispec)) {
                 if (thisSpecies->test_dump_every>1 && !thisSpecies->isTest)
                     WARNING("For species #" << ispec << ", dump_every discarded because not test particles");
@@ -256,8 +244,8 @@ public:
             // Need to be placed after createParticles()
             if (thisSpecies->isTest) {
                 int locNbrParticles = thisSpecies->getNbrOfParticles();
-                int* allNbrParticles = new int[smpi->smilei_sz];
-                MPI_Gather( &locNbrParticles, 1, MPI_INTEGER, allNbrParticles, 1, MPI_INTEGER, 0, MPI_COMM_WORLD );
+                std::vector<int> allNbrParticles(smpi->smilei_sz);
+                MPI_Gather( &locNbrParticles, 1, MPI_INTEGER, &allNbrParticles[0], 1, MPI_INTEGER, 0, MPI_COMM_WORLD );
                 int nParticles(0);
                 if (smpi->isMaster()) {
                     nParticles =  allNbrParticles[0];
@@ -271,7 +259,7 @@ public:
                     allNbrParticles[0] = 0;
                 }
                 int offset(0);
-                MPI_Scatter(allNbrParticles, 1 , MPI_INTEGER, &offset, 1, MPI_INTEGER, 0, MPI_COMM_WORLD );
+                MPI_Scatter(&allNbrParticles[0], 1 , MPI_INTEGER, &offset, 1, MPI_INTEGER, 0, MPI_COMM_WORLD );
                 thisSpecies->particles.addIdOffsets(offset);
             }
             
@@ -302,7 +290,7 @@ public:
             if (retSpecies[i]->Ionize)  {
                 if (electron_species) {
                     retSpecies[i]->electron_species=electron_species;
-                    PMESSAGE(2,smpi->getRank(),"Added electron species to species " << retSpecies[i]->species_type);
+                    MESSAGE("Added electron species to species " << retSpecies[i]->species_type);
                 } else {
                     ERROR("Ionization needs a species called \"electron\" to be defined");
                 }

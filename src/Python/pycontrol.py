@@ -22,10 +22,8 @@ def _smilei_check():
     # Check species for undefined/duplicate type
     all_species=[]
     for spec in Species:
-        if spec.species_type == None:
-            raise Exception("ERROR in the namelist: there is a species without type")
-        elif spec.species_type in all_species:
-            raise Exception("ERROR in the namelist: there is duplicate type")
+        if spec.species_type in all_species:
+            raise Exception("ERROR in the namelist: there is duplicate species_type")
         else:
             all_species.append(spec.species_type)
 
