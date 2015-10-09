@@ -135,7 +135,7 @@ dump_request(smpi->getSize())
     
     // Fields.h5
     // ---------
-    global_output_file_ = params.global_output_file;
+    global_output_file_ = true;//params.global_output_file;
     ostringstream name_t;
     name_t.str("");
     if (global_output_file_) { // 1 file
