@@ -127,33 +127,36 @@ void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Specie
 }
 
 void Diagnostic::initScalars(Params& params, SmileiMPI *smpi) {
-    //open file scalars.txt
-    scalars.openFile(smpi);
+    if (PyTools::nComponents("DiagScalar") > 0) {
+
+        //open file scalars.txt
+        scalars.openFile(smpi);
     
-    scalars.every=0;
-    bool ok=PyTools::extract("every",scalars.every,"DiagScalar");
-    if (!ok) scalars.every=params.global_every;
+        scalars.every=0;
+        bool ok=PyTools::extract("every",scalars.every,"DiagScalar");
+        if (!ok) scalars.every=params.global_every;
     
-    vector<double> scalar_time_range(2,0.);
+        vector<double> scalar_time_range(2,0.);
     
-    ok=PyTools::extract("time_range",scalar_time_range,"DiagScalar");        
-    if (!ok) { 
-        scalars.tmin = 0.;
-        scalars.tmax = params.sim_time;
+        ok=PyTools::extract("time_range",scalar_time_range,"DiagScalar");        
+        if (!ok) { 
+            scalars.tmin = 0.;
+            scalars.tmax = params.sim_time;
+        }
+        else {
+            scalars.tmin = scalar_time_range[0];
+            scalars.tmax = scalar_time_range[1];
+        }
+    
+        scalars.precision=10;
+        PyTools::extract("precision",scalars.precision,"DiagScalar");
+        PyTools::extract("vars",scalars.vars,"DiagScalar");
+    
+        // copy from params remaining stuff
+        scalars.res_time=params.res_time;
+        scalars.dt=params.timestep;
+        scalars.cell_volume=params.cell_volume;
     }
-    else {
-        scalars.tmin = scalar_time_range[0];
-        scalars.tmax = scalar_time_range[1];
-    }
-    
-    scalars.precision=10;
-    PyTools::extract("precision",scalars.precision,"DiagScalar");
-    PyTools::extract("vars",scalars.vars,"DiagScalar");
-    
-    // copy from params remaining stuff
-    scalars.res_time=params.res_time;
-    scalars.dt=params.timestep;
-    scalars.cell_volume=params.cell_volume;
 }
 
 void Diagnostic::initProbes(Params& params, SmileiMPI *smpi) {
