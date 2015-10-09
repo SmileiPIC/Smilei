@@ -164,7 +164,7 @@ void SmileiMPI_Cart1D::createTopology(Params& params)
     
 }
 
-void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, Params& params,int tnum, int iDim)
+void SmileiMPI_Cart1D::exchangeParticles(Species* species, Params& params,int tnum, int iDim)
 {
     
     Particles &cuParticles = species->particles;
@@ -416,7 +416,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, int ispec, Params& pa
             }
         }
     } // END omp master 
-    //DEBUG( 2, "\tProcess " << smilei_rk << " : " << species->getNbrOfParticles() << " Particles of species " << ispec );
+
 } // END exchangeParticles
 
 

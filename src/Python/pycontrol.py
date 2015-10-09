@@ -19,14 +19,6 @@ def _smilei_check():
         except:
             raise Exception("ERROR in the namelist: it seems that the name `"+CheckClassName+"` has been overriden")
     
-    # Check species for undefined/duplicate type
-    all_species=[]
-    for spec in Species:
-        if spec.species_type in all_species:
-            raise Exception("ERROR in the namelist: there is duplicate species_type")
-        else:
-            all_species.append(spec.species_type)
-
     if dump_step and dump_dir:
         if not os.path.exists(dump_dir):
             try:

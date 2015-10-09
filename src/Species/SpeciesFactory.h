@@ -21,8 +21,6 @@ public:
         // this will be returned
         std::vector<Species*> retSpecies;
         
-        // Define later ... needed for ionization
-        Species *electron_species=NULL;
         
         // read from python namelist
         unsigned int tot_species_number = PyTools::nComponents("Species");
@@ -131,15 +129,6 @@ public:
             if (thisSpecies->ionization_model != "none" && !PyTools::extract("atomic_number", thisSpecies->atomic_number, "Species",ispec)) {
                 ERROR("For species #" << ispec << ", `atomic_number` not found => required for the ionization model .");
             }
-            
-            if (thisSpecies->species_type=="electron") {
-                if (electron_species) {
-                    WARNING("Two species are named electron");
-                } else {
-                    electron_species=thisSpecies;
-                }
-            }
-            
             
             // Species geometry
             // ----------------
@@ -268,11 +257,16 @@ public:
             
             // Assign the Ionization model (if needed) to Ionize
             //  Needs to be placed after createParticles() because requires the knowledge of max_charge
+            // \todo pay attention to restart
             thisSpecies->Ionize = IonizationFactory::create( params, thisSpecies);
             if (thisSpecies->Ionize) {
                 DEBUG("Species " << thisSpecies->species_type << " can be ionized!");
             }
-            
+
+            if (thisSpecies->Ionize && thisSpecies->species_type=="electron") {
+                ERROR("Species " << thisSpecies->species_type << " can be ionized but species_type='electron'");
+            }
+
             // define limits for BC and functions applied and for domain decomposition
             thisSpecies->partBoundCond = new PartBoundCond( params, thisSpecies, smpi);
             
@@ -288,6 +282,29 @@ public:
         // we cycle again to fix electron species for ionizable species
         for (unsigned int i=0; i<retSpecies.size(); i++) {
             if (retSpecies[i]->Ionize)  {
+                Species *electron_species=NULL;
+                for (unsigned int ispec=0; ispec<retSpecies.size(); ispec++) {
+                    if (retSpecies[ispec]->species_type=="electron") {
+                        if (electron_species) {
+                            WARNING("Two species named electron : " << retSpecies[ispec]->speciesNumber << " and " << electron_species->speciesNumber);
+                        } else {
+                            electron_species=retSpecies[ispec];
+                        }
+                    }
+                }
+                if (!electron_species) {
+                    for (unsigned int ispec=0; ispec<retSpecies.size(); ispec++) {
+                        double charge=0;
+                        PyTools::extract("charge",charge ,"Species",ispec);
+                        if (retSpecies[ispec]->mass==1 && charge==-1) {
+                            if (electron_species) {
+                                WARNING("Two electron species: " << retSpecies[ispec]->species_type << " and " << electron_species->species_type);
+                            } else {
+                                electron_species=retSpecies[ispec];
+                            }
+                        }
+                    }
+                }
                 if (electron_species) {
                     retSpecies[i]->electron_species=electron_species;
                     MESSAGE("Added electron species to species " << retSpecies[i]->species_type);

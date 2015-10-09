@@ -126,7 +126,7 @@ public:
     }
     
     //! Method calculating the Particle dynamics (interpolation, pusher, projection)
-    virtual void dynamics(double time, unsigned int ispec, ElectroMagn* EMfields, Interpolator* interp,
+    virtual void dynamics(double time, ElectroMagn* EMfields, Interpolator* interp,
                           Projector* proj, SmileiMPI *smpi, Params &params, SimWindow* simWindow,
                           std::vector<PartWall*> vecPartWall);
     

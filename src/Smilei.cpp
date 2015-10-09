@@ -335,7 +335,7 @@ int main (int argc, char* argv[])
             for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
                 if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
                     EMfields->restartRhoJs(ispec, time_dual > vecSpecies[ispec]->time_frozen); // if (!isTestParticles)
-                    vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, smpi, params, simWindow, vecPartWall);
+                    vecSpecies[ispec]->dynamics(time_dual, EMfields, Interp, Proj, smpi, params, simWindow, vecPartWall);
                 }
             }
             for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
@@ -343,7 +343,7 @@ int main (int argc, char* argv[])
                 if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
                     // Loop on dims to manage exchange in corners
                     for ( int iDim = 0 ; iDim<(int)params.nDim_particle ; iDim++ )
-                        smpi->exchangeParticles(vecSpecies[ispec], ispec, params, tid, iDim);
+                        smpi->exchangeParticles(vecSpecies[ispec], params, tid, iDim);
 #pragma omp barrier
                         vecSpecies[ispec]->sort_part(); // Should we sort test particles ?? (JD)
                 }

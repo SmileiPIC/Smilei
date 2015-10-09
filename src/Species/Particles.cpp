@@ -39,7 +39,6 @@ void Particles::initialize( int nParticles, Params &params)
     
     if (Weight.size()==0) {
         float c_part_max = 1.0;
-        //reserve( round( params->params[speciesNumber].c_part_max * nParticles ), params.nDim );
         reserve( round( c_part_max * nParticles ), params.nDim_particle );
     }
     
