@@ -2,22 +2,9 @@
 
 using namespace std;
 
-DiagnosticPhasePosLor::DiagnosticPhasePosLor(phaseStructure phaseStruct, const unsigned int directionPosition) : 
-DiagnosticPhase(phaseStruct), 
+DiagnosticPhasePosLor::DiagnosticPhasePosLor(Params &params, unsigned int n_phase, const unsigned int directionPosition) :
+DiagnosticPhase(params, n_phase),
 my_dirPos(directionPosition) {
-    
-	if (phaseStruct.pos_num.size() >0 && phaseStruct.lor_num.size() >0) {
-		my_data.allocateDims(phaseStruct.pos_num[0],phaseStruct.lor_num[0]);
-	} else {
-		ERROR("must define pos_ and lor_ stuff");
-	}
-	//!\todo add more checks here (TV MC MG)
-	firstmin = phaseStruct.pos_min[0];
-	firstmax = phaseStruct.pos_max[0];
-	firstnum = phaseStruct.pos_num[0];
-	secondmin = phaseStruct.lor_min[0];
-	secondmax = phaseStruct.lor_max[0];
-	secondnum = phaseStruct.lor_num[0];    
 }
 
 void DiagnosticPhasePosLor::run(partStruct& my_part) {

@@ -60,7 +60,7 @@ private:
     int every;
     
     //! Adds one row in a HDF5 file, within a given dataspace
-    template <class T> void append(hid_t, std::string, std::vector<T>, int, hid_t, SmileiMPI*, hsize_t *);
+    template <class T> void append(hid_t, std::string, std::vector<T>, int, hid_t, SmileiMPI*, std::vector<hsize_t>&);
     
 };
 

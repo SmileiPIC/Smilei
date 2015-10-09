@@ -56,7 +56,7 @@ public:
         
     void initScalars(Params&, SmileiMPI *smpi);
     void initProbes(Params&, SmileiMPI *);
-    void initPhases(Params&, std::vector<Species*>&, SmileiMPI *);
+    void initPhases(Params&, SmileiMPI *);
     void initParticles(Params&, std::vector<Species*>& vecSpecies);
     void initTestParticles(Params&, std::vector<Species*>&);
     
@@ -87,9 +87,6 @@ public:
     
     //! every for the standard pic timeloop output
     unsigned int print_every;
-	
-	//! vector containing phase1D structures
-	std::vector<phaseStructure> vecPhase;
 	
 };
 

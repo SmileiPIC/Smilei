@@ -50,7 +50,7 @@ void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) 
 		    for (unsigned int ibin = 0 ; ibin < (*mySpec)->bmin.size() ; ibin++) {
 			for (int iPart=(*mySpec)->bmin[ibin] ; iPart<(*mySpec)->bmax[ibin]; iPart++ ) {
 			    //! fill the my_part structure
-			    for(unsigned int k=0;k<ndim;k++) {
+			    for(unsigned int k=0;k<my_part.pos.size();k++) {
 				my_part.pos[k]=(*mySpec)->particles.position(k,iPart);
 			    }
 			    for(unsigned int k=0;k<3;k++) {

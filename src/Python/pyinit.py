@@ -133,15 +133,8 @@ class DiagParticles(SmileiComponent):
 class DiagPhase(SmileiComponent):
     """Diagnostic phase"""
     every=None
-    pos_min=[]
-    pos_max=[]
-    pos_num=[]
-    lor_min=[]
-    lor_max=[]
-    lor_num=[]
-    mom_min=[]
-    mom_max=[]
-    mom_num=[]
+    first=[]
+    second=[]
     time_range = []
     deflate = 0
     pass

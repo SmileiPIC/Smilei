@@ -1118,6 +1118,54 @@ All the possible variables inside this block are explained here:
 
 ----
 
+.. _DiagPhase:
+
+*DiagPhase* : phase space diagnostics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+A *phase space diagnostic*: it collects data from the macro-particles and processes them 
+during runtime. It is similar but less powerful than *particle diagnostics* but should be faster.
+
+  :red:`to do TV,FP: we should test the above statement`
+
+All diagnostics will be written in the file 'PhaseSpace.h5'
+::
+
+    DiagPhase (
+        kind    = ['xpx', 'xpy'],
+        species = ['eon', 'ion'],
+ 
+        first = [0,1.0, 50],
+        second = [-0.002, 0.002, 50],
+    
+        deflate=5
+    )
+
+All the possible variables inside this block are explained here:
+
+.. py:data:: kind
+
+    this is a list of projections to be done possible values are 'xpx' 'xpy' 'xpz' 'pxpy' 'pxpz' 'pypz' 'xlor'
+    in addition for 2D simulations there are 'ypx' 'ypy' 'ypz' 'ylor'
+    in addition for 3D simulations there are 'zpx' 'zpy' 'zpz' 'zlor'
+    
+.. py:data:: species
+
+    list of species to apply the projector 
+    
+.. py:data:: first
+
+    this is a triplet describing the first axis binning int the form [min, max, num]    
+    
+.. py:data:: second
+
+    this is a triplet describing the second axis binning int the form [min, max, num]    
+    
+.. py:data:: deflate
+
+    data compression in the HDF5 file    
+
+----
+
 Miscellaneous
 ^^^^^^^^^^^^^
 

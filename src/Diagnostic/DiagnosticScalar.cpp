@@ -21,7 +21,7 @@ DiagnosticScalar::~DiagnosticScalar(){}
 
 // file open 
 void DiagnosticScalar::openFile(SmileiMPI* smpi) {
-    if (smpi->isMaster()) {
+    if (smpi->isMaster() && every>0) {
         fout.open("scalars.txt");
         if (!fout.is_open()) ERROR("Can't open scalar file");
     }

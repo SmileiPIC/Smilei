@@ -3,6 +3,8 @@
 #include <sstream>
 #include <iomanip>
 
+#include "PyTools.h"
+
 #include "SmileiMPI.h"
 
 using namespace std;
@@ -12,14 +14,56 @@ DiagnosticPhase::~DiagnosticPhase(){
     if(dataId) H5Dclose(dataId);
 };
 
-DiagnosticPhase::DiagnosticPhase(phaseStructure phaseStruct) :
-every(phaseStruct.every),
-my_species(phaseStruct.species),
-dataId(0),
-tmin(phaseStruct.tmin),
-tmax(phaseStruct.tmax)
+DiagnosticPhase::DiagnosticPhase(Params &params, unsigned int n_phase) :
+every(0),
+dataId(0)
 {
+    
+    if (!PyTools::extract("every",every,"DiagPhase",n_phase)) {
+        every=params.global_every;
+    }
+        
+    vector<double> time_range(2,0.);
+    if (!PyTools::extract("time_range",time_range,"DiagPhase",n_phase)) {
+        time_range[0]=0.;
+        time_range[1]=params.sim_time;
+    }
+    tmin = time_range[0];
+    tmax = time_range[1];
+
+    
+    PyTools::extract("species",my_species,"DiagPhase",n_phase);
+    
+    vector<double> min_max_n;
+    
+    PyTools::extract("first",min_max_n,"DiagPhase",n_phase);
+    if (min_max_n.size()!=3) {
+        ERROR("DiagPhase "<< n_phase << " first must have 3 components: [min, max, num]" );
+    }
+    if (min_max_n[2] != (int) min_max_n[2]) {
+        ERROR("DiagPhase "<< n_phase << " first: third component must be integer" );
+    }
+
+    firstmin = min_max_n[0];
+    firstmax = min_max_n[1];
+    firstnum = (unsigned int) min_max_n[2];
+
+    PyTools::extract("second",min_max_n,"DiagPhase",n_phase);
+    if (min_max_n.size()!=3) {
+        ERROR("DiagPhase "<< n_phase << " second must have 3 components: [min, max, num]" );
+    }
+    if (min_max_n[2] != (int) min_max_n[2]) {
+        ERROR("DiagPhase "<< n_phase << " second : third component must be integer" );
+    }
+
+    secondmin = min_max_n[0];
+    secondmax = min_max_n[1];
+    secondnum = (unsigned int) min_max_n[2];
+    
 	if (every==0) ERROR("every cannot be zero");
+    
+    my_data.allocateDims(firstnum,secondnum);
+
 }
 
 void DiagnosticPhase::writeData() {

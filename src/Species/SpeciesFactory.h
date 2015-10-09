@@ -276,7 +276,7 @@ public:
             // Print info
             unsigned int nPart = thisSpecies->getNbrOfParticles();
             MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&nPart, &nPart, 1, MPI_UNSIGNED, MPI_SUM, 0, MPI_COMM_WORLD);
-            MESSAGE(1,"Species " << ispec << " (" << thisSpecies->species_type << ") created with " << nPart << " particles" );
+            MESSAGE("Species " << ispec << " (" << thisSpecies->species_type << ") created with " << nPart << " particles" );
         }
         
         // we cycle again to fix electron species for ionizable species
@@ -313,16 +313,6 @@ public:
                 }
             }
         }
-        
-        
-        // Plasma related parameters
-        // -------------------------
-        MESSAGE("Plasma related parameters");
-        MESSAGE(1,"n_species       : " << retSpecies.size());
-        for ( unsigned int i=0 ; i<retSpecies.size() ; i++ ) {
-            MESSAGE(1,"            type : "<< retSpecies[i]->species_type);
-        }
-        
         return retSpecies;
     }
 

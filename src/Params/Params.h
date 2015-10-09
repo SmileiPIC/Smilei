@@ -162,7 +162,7 @@ public:
 
 private:    
     //! passing named command to python
-    void pyRunScript(std::string command, std::string name=std::string(""));
+    void runScript(std::string command, std::string name=std::string(""));
     
 };
 

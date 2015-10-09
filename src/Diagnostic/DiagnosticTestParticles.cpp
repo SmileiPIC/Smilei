@@ -111,7 +111,7 @@ void DiagnosticTestParticles::run(int time, SmileiMPI* smpi) {
     dims[0] ++;
     
     // Create the locator (gives locations where to store particles in the file)
-    hsize_t * locator = new hsize_t[locNbrParticles*2];
+    vector<hsize_t> locator (locNbrParticles*2);
     for(int i=0; i<locNbrParticles; i++) {
         locator[i*2  ] = dims[0]-1;
         locator[i*2+1] = particles->id(i)-1;
@@ -145,22 +145,23 @@ void DiagnosticTestParticles::run(int time, SmileiMPI* smpi) {
         append( fid, nameMom.str(), particles->momentum(idim), locNbrParticles, H5T_NATIVE_DOUBLE, smpi, locator );
     }
     append( fid, "Weight", particles->weight(), locNbrParticles, H5T_NATIVE_DOUBLE, smpi, locator );
-    append( fid, "Charge", particles->charge(), locNbrParticles, H5T_NATIVE_SHORT, smpi, locator );
-    append( fid, "Id", particles->id(), locNbrParticles, H5T_NATIVE_UINT, smpi, locator );
+    append( fid, "Charge", particles->charge(), locNbrParticles, H5T_NATIVE_SHORT , smpi, locator );
+    append( fid, "Id"    , particles->id()    , locNbrParticles, H5T_NATIVE_UINT  , smpi, locator );
     
     smpi->barrier(); // sometimes needed because all procs must not close the file too early
     H5Fflush( fid, H5F_SCOPE_GLOBAL );
     H5Pclose( file_access );
     H5Fclose( fid );
-    
-    delete [] locator;
-
 }
 
 
 template <class T>
-void DiagnosticTestParticles::append( hid_t fid, string name, std::vector<T> property, int nParticles, hid_t type, SmileiMPI* smpi, hsize_t * locator) {
+void DiagnosticTestParticles::append( hid_t fid, string name, std::vector<T> property, int nParticles, hid_t type, SmileiMPI* smpi, vector<hsize_t> &locator) {
     
+    HEREIAM(name);
+    for(int i=0; i<nParticles; i++) {
+        HEREIAM(i << " " << locator[i]);
+    }
     // Open existing dataset
     hid_t did = H5Dopen( fid, name.c_str(), H5P_DEFAULT );
     // Increase the size of the array with the previously defined size
@@ -170,7 +171,7 @@ void DiagnosticTestParticles::append( hid_t fid, string name, std::vector<T> pro
     
     // Select locations that this proc will write
     if(nParticles>0)
-        H5Sselect_elements( file_space, H5S_SELECT_SET, nParticles, locator );
+        H5Sselect_elements( file_space, H5S_SELECT_SET, nParticles, &locator[0] );
     else
         H5Sselect_none(file_space);
     
@@ -179,5 +180,6 @@ void DiagnosticTestParticles::append( hid_t fid, string name, std::vector<T> pro
     
     H5Sclose(file_space);
     H5Dclose(did);
+    HEREIAM(name);
 }
 

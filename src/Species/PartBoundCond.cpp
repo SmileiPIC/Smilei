@@ -106,10 +106,10 @@ PartBoundCond::PartBoundCond( Params& params, Species * species, SmileiMPI* smpi
         if (smpi->isWestern()) bc_west = &thermalize_particle;
     }
     else if ( species->bc_part_type_west == "none" ) {
-        MESSAGE( "West boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
+        MESSAGE(2,"West boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
     }
     else {
-        ERROR( "West boundary condition undefined" );
+        ERROR("West boundary condition undefined" );
     }
     
     // East
@@ -126,7 +126,7 @@ PartBoundCond::PartBoundCond( Params& params, Species * species, SmileiMPI* smpi
         if (smpi->isEastern()) bc_east = &thermalize_particle;
     }
     else if ( species->bc_part_type_east == "none" ) {
-        MESSAGE( "East boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
+        MESSAGE(2,"East boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
     }
     else {
         ERROR( "East boundary condition undefined" );
@@ -148,7 +148,7 @@ PartBoundCond::PartBoundCond( Params& params, Species * species, SmileiMPI* smpi
             if (smpi->isSouthern()) bc_south = &thermalize_particle;
         }
         else if ( species->bc_part_type_south == "none" ) {
-            MESSAGE( "South boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
+            MESSAGE(2,"South boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
         }
         else {
             ERROR( "South boundary condition undefined : " << species->bc_part_type_south  );
@@ -168,7 +168,7 @@ PartBoundCond::PartBoundCond( Params& params, Species * species, SmileiMPI* smpi
             if (smpi->isNorthern()) bc_north = &thermalize_particle;
         }
         else if ( species->bc_part_type_north == "none" ) {
-            MESSAGE( "North boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
+            MESSAGE(2,"North boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
         }
         else {
             ERROR( "North boundary condition undefined : " << species->bc_part_type_north  );

@@ -52,7 +52,7 @@ dtimer(5)
     
     // phasespaces initialization
     dtimer[2].init(smpi, "phases");
-    initPhases(params,vecSpecies, smpi);
+    initPhases(params, smpi);
     
     // particles initialization
     dtimer[3].init(smpi, "particles");
@@ -83,7 +83,7 @@ void Diagnostic::printTimers (SmileiMPI *smpi, double tottime) {
             coverage += dtimer[i].getTime();
         }
     }
-    MESSAGE(0, "\nTime in diagnostics : \t"<< tottime <<"\t(" << coverage/tottime*100. << "% coverage)" );    
+    MESSAGE(0, "\nTime in diagnostics : \t"<< tottime <<"\t(" << coverage/tottime*100. << "% coverage)" );
     if ( smpi->isMaster() ) {
         for (unsigned int i=0 ; i<dtimer.size() ; i++) {
             dtimer[i].print(tottime) ;
@@ -119,35 +119,31 @@ void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Specie
     for (unsigned int i=0; i<vecDiagnosticTestParticles.size(); i++)
         vecDiagnosticTestParticles[i]->run(timestep, smpi);
     dtimer[4].update();
-
+    
 }
 
 void Diagnostic::initScalars(Params& params, SmileiMPI *smpi) {
     if (PyTools::nComponents("DiagScalar") > 0) {
 
+        if (!PyTools::extract("every",scalars.every,"DiagScalar")) scalars.every=params.global_every;
+        
         //open file scalars.txt
         scalars.openFile(smpi);
-    
-        scalars.every=0;
-        bool ok=PyTools::extract("every",scalars.every,"DiagScalar");
-        if (!ok) scalars.every=params.global_every;
-    
+
         vector<double> scalar_time_range(2,0.);
-    
-        ok=PyTools::extract("time_range",scalar_time_range,"DiagScalar");        
-        if (!ok) { 
+        
+        if (!PyTools::extract("time_range",scalar_time_range,"DiagScalar")) {
             scalars.tmin = 0.;
             scalars.tmax = params.sim_time;
-        }
-        else {
+        } else {
             scalars.tmin = scalar_time_range[0];
             scalars.tmax = scalar_time_range[1];
         }
-    
+        
         scalars.precision=10;
         PyTools::extract("precision",scalars.precision,"DiagScalar");
         PyTools::extract("vars",scalars.vars,"DiagScalar");
-    
+        
         // copy from params remaining stuff
         scalars.res_time=params.res_time;
         scalars.dt=params.timestep;
@@ -189,14 +185,14 @@ void Diagnostic::initProbes(Params& params, SmileiMPI *smpi) {
         
         // Extract "every" (number of timesteps between each output)
         unsigned int every=0;
-        ok=PyTools::extract("every",every,"DiagProbe",n_probe);        
+        ok=PyTools::extract("every",every,"DiagProbe",n_probe);
         if (!ok) every=params.global_every;
         probes.every.push_back(every);
         
         // Extract "time_range" (tmin and tmax of the outputs)
         vector<double> time_range(2,0.);
         double tmin,tmax;
-        ok=PyTools::extract("time_range",time_range,"DiagProbe",n_probe);        
+        ok=PyTools::extract("time_range",time_range,"DiagProbe",n_probe);
         if (!ok) {
             tmin = 0.;
             tmax = params.sim_time;
@@ -209,7 +205,7 @@ void Diagnostic::initProbes(Params& params, SmileiMPI *smpi) {
         
         // Extract "number" (number of points you have in each dimension of the probe,
         // which must be smaller than the code dimensions)
-        vector<unsigned int> vecNumber; 
+        vector<unsigned int> vecNumber;
         PyTools::extract("number",vecNumber,"DiagProbe",n_probe);
         
         // Dimension of the probe grid
@@ -234,7 +230,7 @@ void Diagnostic::initProbes(Params& params, SmileiMPI *smpi) {
         // (positions of the vertices of the grid)
         vector< vector<double> > allPos;
         vector<double> pos;
-
+        
         if (PyTools::extract("pos",pos,"DiagProbe",n_probe)) {
             if (pos.size()!=ndim) {
                 ERROR("Probe #"<<n_probe<<": pos size(" << pos.size() << ") != ndim(" << ndim<< ")");
@@ -255,14 +251,14 @@ void Diagnostic::initProbes(Params& params, SmileiMPI *smpi) {
             }
             allPos.push_back(pos);
         }
-
+        
         if (PyTools::extract("pos_third",pos,"DiagProbe",n_probe)) {
             if (pos.size()!=ndim) {
                 ERROR("Probe #"<<n_probe<<": pos_third size(" << pos.size() << ") != ndim(" << ndim<< ")");
             }
             allPos.push_back(pos);
         }
-                
+        
         // Extract the list of requested fields
         vector<string> fs;
         if(!PyTools::extract("fields",fs,"DiagProbe",n_probe)) {
@@ -407,85 +403,20 @@ void Diagnostic::initProbes(Params& params, SmileiMPI *smpi) {
     }
 }
 
-void Diagnostic::initPhases(Params& params, std::vector<Species*>& vecSpecies, SmileiMPI *smpi) {
-    
+void Diagnostic::initPhases(Params& params, SmileiMPI *smpi) {
     //! create the particle structure
-    phases.ndim=params.nDim_particle;    
     phases.my_part.pos.resize(params.nDim_particle);
     phases.my_part.mom.resize(3);
-    
-    bool ok;
     
     unsigned int numPhases=PyTools::nComponents("DiagPhase");
     for (unsigned int n_phase = 0; n_phase < numPhases; n_phase++) {
         
-        phaseStructure my_phase;
-        
-        my_phase.every=0;
-        ok=PyTools::extract("every",my_phase.every,"DiagPhase",n_phase);
-        if (!ok) {
-            //            if (n_probephase>0) {
-            //                my_phase.every=phases.vecDiagPhase.end()->every;
-            //            } else {
-            my_phase.every=params.global_every;
-            //            }
-        }
-        
         vector<string> kind;
-        PyTools::extract("kind",kind,"DiagPhase",n_phase);        
-        for (vector<string>::iterator it=kind.begin(); it!=kind.end();it++) {
-            if (std::find(kind.begin(), it, *it) == it) {
-                my_phase.kind.push_back(*it); 
-            } else {
-                WARNING("removed duplicate " << *it << " in \"DiagPhase\" " << n_phase);
-            }
+        if (!PyTools::extract("kind",kind,"DiagPhase",n_phase)) {
+            ERROR("For DiagPhase " <<n_phase << " missing kind");
         }
-        
-        vector<double> time_range(2,0.);
-        ok=PyTools::extract("time_range",time_range,"DiagPhase",n_phase);        
-        
-        if (!ok) { 
-            my_phase.tmin = 0.;
-            my_phase.tmax = params.sim_time;
-        }
-        else {
-            my_phase.tmin = time_range[0];
-            my_phase.tmax = time_range[1];
-        }
-        
-        
-        PyTools::extract("species",my_phase.species,"DiagPhase",n_phase);
-        
-        my_phase.deflate=0;
-        PyTools::extract("deflate",my_phase.deflate,"DiagPhase",n_phase);
-        
-        if (my_phase.species.size()==0) {
-            WARNING("adding all species to the \"DiagPhase\" " << n_phase);
-            for (unsigned int i=0;i<vecSpecies.size(); i++) {
-                my_phase.species.push_back(vecSpecies[i]->species_type);
-            }
-        }
-        
-        PyTools::extract("pos_min",my_phase.pos_min,"DiagPhase",n_phase);
-        PyTools::extract("pos_max",my_phase.pos_max,"DiagPhase",n_phase);
-        PyTools::extract("pos_num",my_phase.pos_num,"DiagPhase",n_phase);
-        for (unsigned int i=0; i<my_phase.pos_min.size(); i++) {
-            if (my_phase.pos_min[i]==my_phase.pos_max[i]) {
-                my_phase.pos_min[i] = 0.0;
-                my_phase.pos_max[i] = params.sim_length[i];
-            }
-        }
-        
-        
-        PyTools::extract("mom_min",my_phase.mom_min,"DiagPhase",n_phase);
-        PyTools::extract("mom_max",my_phase.mom_max,"DiagPhase",n_phase);
-        PyTools::extract("mom_num",my_phase.mom_num,"DiagPhase",n_phase);
-        
-        PyTools::extract("lor_min",my_phase.lor_min,"DiagPhase",n_phase);
-        PyTools::extract("lor_max",my_phase.lor_max,"DiagPhase",n_phase);
-        PyTools::extract("lor_num",my_phase.lor_num,"DiagPhase",n_phase);
-        
-        
+        sort( kind.begin(), kind.end() );
+        kind.erase( unique( kind.begin(), kind.end() ), kind.end() );
         hid_t gidParent=0;
         if (n_phase == 0 && smpi->isMaster()) {
             ostringstream file_name("");
@@ -493,142 +424,104 @@ void Diagnostic::initPhases(Params& params, std::vector<Species*>& vecSpecies, S
             phases.fileId = H5Fcreate( file_name.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
             // write version
             H5::attr(phases.fileId, "Version", string(__VERSION));
-                        
+            
             ostringstream groupName("");
             groupName << "ps" << setw(4) << setfill('0') << n_phase;
-            gidParent = H5::group(phases.fileId, groupName.str()); 
-            
-            H5::attr(gidParent, "every",my_phase.every);
+            gidParent = H5::group(phases.fileId, groupName.str());
         }
         
         
-        for (unsigned int ii=0 ; ii < my_phase.kind.size(); ii++) {
+        for (unsigned int ii=0 ; ii < kind.size(); ii++) {
             DiagnosticPhase *diagPhase=NULL;
             
             // create DiagnosticPhase
-            if (params.geometry == "1d3v") {
-                if (my_phase.kind[ii] == "xpx") {
-                    diagPhase =  new DiagnosticPhasePosMom(my_phase,0,0);
-                } else if (my_phase.kind[ii] == "xpy") {
-                    diagPhase =  new DiagnosticPhasePosMom(my_phase,0,1);
-                } else if (my_phase.kind[ii] == "xpz") {
-                    diagPhase =  new DiagnosticPhasePosMom(my_phase,0,2);
-                } else if (my_phase.kind[ii] == "xlor") {
-                    diagPhase =  new DiagnosticPhasePosLor(my_phase,0);
-                } else if (my_phase.kind[ii] == "pxpy") {
-                    diagPhase =  new DiagnosticPhaseMomMom(my_phase,0,1);
-                } else if (my_phase.kind[ii] == "pxpz") {
-                    diagPhase =  new DiagnosticPhaseMomMom(my_phase,0,2);
-                } else if (my_phase.kind[ii] == "pypz") {
-                    diagPhase =  new DiagnosticPhaseMomMom(my_phase,1,2);
-                } else {
-                    ERROR("kind " << my_phase.kind[ii] << " not implemented for geometry " << params.geometry);
-                }
-            } else if (params.geometry == "2d3v") {
-                if (my_phase.kind[ii] == "xpx") {
-                    diagPhase =  new DiagnosticPhasePosMom(my_phase,0,0);
-                } else if (my_phase.kind[ii] == "xpy") {
-                    diagPhase =  new DiagnosticPhasePosMom(my_phase,0,1);
-                } else if (my_phase.kind[ii] == "xpz") {
-                    diagPhase =  new DiagnosticPhasePosMom(my_phase,0,2);
-                } else if (my_phase.kind[ii] == "ypx") {
-                    diagPhase =  new DiagnosticPhasePosMom(my_phase,1,0);
-                } else if (my_phase.kind[ii] == "ypy") {
-                    diagPhase =  new DiagnosticPhasePosMom(my_phase,1,1);
-                } else if (my_phase.kind[ii] == "ypz") {
-                    diagPhase =  new DiagnosticPhasePosMom(my_phase,1,2);
-                } else if (my_phase.kind[ii] == "pxpy") {
-                    diagPhase =  new DiagnosticPhaseMomMom(my_phase,0,1);
-                } else if (my_phase.kind[ii] == "pxpz") {
-                    diagPhase =  new DiagnosticPhaseMomMom(my_phase,0,2);
-                } else if (my_phase.kind[ii] == "pypz") {
-                    diagPhase =  new DiagnosticPhaseMomMom(my_phase,1,2);                    
-                } else if (my_phase.kind[ii] == "xlor") {
-                    diagPhase =  new DiagnosticPhasePosLor(my_phase,0);
-                } else if (my_phase.kind[ii] == "ylor") {
-                    diagPhase =  new DiagnosticPhasePosLor(my_phase,1);
-                } else {
-                    ERROR("kind " << my_phase.kind[ii] << " not implemented for geometry " << params.geometry);
-                }
-            } else if (params.geometry == "3d3v") {
-                if (my_phase.kind[ii] == "xpx") {
-                    diagPhase =  new DiagnosticPhasePosMom(my_phase,0,0);
-                } else if (my_phase.kind[ii] == "xpy") {
-                    diagPhase =  new DiagnosticPhasePosMom(my_phase,0,1);
-                } else if (my_phase.kind[ii] == "xpz") {
-                    diagPhase =  new DiagnosticPhasePosMom(my_phase,0,2);
-                } else if (my_phase.kind[ii] == "ypx") {
-                    diagPhase =  new DiagnosticPhasePosMom(my_phase,1,0);
-                } else if (my_phase.kind[ii] == "ypy") {
-                    diagPhase =  new DiagnosticPhasePosMom(my_phase,1,1);
-                } else if (my_phase.kind[ii] == "ypz") {
-                    diagPhase =  new DiagnosticPhasePosMom(my_phase,1,2);
-                } else if (my_phase.kind[ii] == "zpx") {
-                    diagPhase =  new DiagnosticPhasePosMom(my_phase,2,0);
-                } else if (my_phase.kind[ii] == "zpy") {
-                    diagPhase =  new DiagnosticPhasePosMom(my_phase,2,1);
-                } else if (my_phase.kind[ii] == "zpz") {
-                    diagPhase =  new DiagnosticPhasePosMom(my_phase,2,2);
-                } else if (my_phase.kind[ii] == "pxpy") {
-                    diagPhase =  new DiagnosticPhaseMomMom(my_phase,0,1);
-                } else if (my_phase.kind[ii] == "pxpz") {
-                    diagPhase =  new DiagnosticPhaseMomMom(my_phase,0,2);
-                } else if (my_phase.kind[ii] == "pypz") {
-                    diagPhase =  new DiagnosticPhaseMomMom(my_phase,1,2);                    
-                } else if (my_phase.kind[ii] == "xlor") {
-                    diagPhase =  new DiagnosticPhasePosLor(my_phase,0);
-                } else if (my_phase.kind[ii] == "ylor") {
-                    diagPhase =  new DiagnosticPhasePosLor(my_phase,1);
-                } else if (my_phase.kind[ii] == "zlor") {
-                    diagPhase =  new DiagnosticPhasePosLor(my_phase,2);
-                } else {
-                    ERROR("kind " << my_phase.kind[ii] << " not implemented for geometry " << params.geometry);
-                }                
-            } else {
-                ERROR("DiagnosticPhase not implemented for geometry " << params.geometry);
+            if (kind[ii] == "xpx") {
+                diagPhase =  new DiagnosticPhasePosMom(params,n_phase,0,0);
+            } else if (kind[ii] == "xpy") {
+                diagPhase =  new DiagnosticPhasePosMom(params,n_phase,0,1);
+            } else if (kind[ii] == "xpz") {
+                diagPhase =  new DiagnosticPhasePosMom(params,n_phase,0,2);
+            } else if (kind[ii] == "xlor") {
+                diagPhase =  new DiagnosticPhasePosLor(params,n_phase,0);
+            } else if (kind[ii] == "pxpy") {
+                diagPhase =  new DiagnosticPhaseMomMom(params,n_phase,0,1);
+            } else if (kind[ii] == "pxpz") {
+                diagPhase =  new DiagnosticPhaseMomMom(params,n_phase,0,2);
+            } else if (kind[ii] == "pypz") {
+                diagPhase =  new DiagnosticPhaseMomMom(params,n_phase,1,2);
             }
+
+            if (params.geometry == "2d3v" || params.geometry == "3d3v") {
+                if (kind[ii] == "ypx") {
+                    diagPhase =  new DiagnosticPhasePosMom(params,n_phase,1,0);
+                } else if (kind[ii] == "ypy") {
+                    diagPhase =  new DiagnosticPhasePosMom(params,n_phase,1,1);
+                } else if (kind[ii] == "ypz") {
+                    diagPhase =  new DiagnosticPhasePosMom(params,n_phase,1,2);
+                } else if (kind[ii] == "ylor") {
+                    diagPhase =  new DiagnosticPhasePosLor(params,n_phase,1);
+                }
+            }
+            
+            if (params.geometry == "3d3v") {
+                if (kind[ii] == "zpx") {
+                    diagPhase =  new DiagnosticPhasePosMom(params,n_phase,2,0);
+                } else if (kind[ii] == "zpy") {
+                    diagPhase =  new DiagnosticPhasePosMom(params,n_phase,2,1);
+                } else if (kind[ii] == "zpz") {
+                    diagPhase =  new DiagnosticPhasePosMom(params,n_phase,2,2);
+                } else if (kind[ii] == "zlor") {
+                    diagPhase =  new DiagnosticPhasePosLor(params,n_phase,2);
+                }
+            }
+            
             if (diagPhase) {
+                phases.vecDiagPhase.push_back(diagPhase);
+
                 if (smpi->isMaster()) {
-                    //! create a group for each species of this diag and keep track of its ID.
+                    //! create data for each species of this diag and keep track of its ID.
                     
                     hsize_t dims[3] = {0,diagPhase->my_data.dims()[0],diagPhase->my_data.dims()[1]};
                     hsize_t max_dims[3] = {H5S_UNLIMITED,diagPhase->my_data.dims()[0],diagPhase->my_data.dims()[1]};
                     hsize_t chunk_dims[3] = {1,diagPhase->my_data.dims()[0],diagPhase->my_data.dims()[1]};
                     
-                    hid_t sid = H5Screate_simple (3, dims, max_dims);	
+                    hid_t sid = H5Screate_simple (3, dims, max_dims);
                     hid_t pid = H5Pcreate(H5P_DATASET_CREATE);
                     H5Pset_layout(pid, H5D_CHUNKED);
                     H5Pset_chunk(pid, 3, chunk_dims);
                     
-                    H5Pset_deflate (pid, std::min((unsigned int)9,my_phase.deflate));
+                    unsigned int deflate;
+                    PyTools::extract("deflate",deflate,"DiagPhase",n_phase);
                     
-                    diagPhase->dataId = H5Dcreate (gidParent, my_phase.kind[ii].c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, pid,H5P_DEFAULT);
-                    H5Pclose (pid);	
+                    H5Pset_deflate(pid, std::min((unsigned int)9,deflate));
+                    
+                    diagPhase->dataId = H5Dcreate (gidParent, kind[ii].c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, pid,H5P_DEFAULT);
+                    H5Pclose (pid);
                     H5Sclose (sid);
                     
                     // write attribute of species present in the phaseSpace
                     string namediag;
-                    for (unsigned int k=0; k<my_phase.species.size(); k++) {
-                        namediag+=my_phase.species[k]+" ";
+                    for (unsigned int k=0; k<diagPhase->my_species.size(); k++) {
+                        namediag+=diagPhase->my_species[k]+" ";
                     }
                     namediag=namediag.substr(0, namediag.size()-1);
+                    H5::attr(diagPhase->dataId,"species",namediag);
                     
-                    H5::attr(gidParent,"species",namediag);
-                                        
                     // write attribute extent of the phaseSpace
                     hsize_t dimsPos[2] = {2,2};
                     sid = H5Screate_simple(2, dimsPos, NULL);
-                    hid_t aid = H5Acreate (gidParent, "extents", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT);
+                    hid_t aid = H5Acreate (diagPhase->dataId, "extents", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, H5P_DEFAULT);
                     double tmp[4] = {diagPhase->firstmin, diagPhase->firstmax, diagPhase->secondmin, diagPhase->secondmax};
                     H5Awrite(aid, H5T_NATIVE_DOUBLE, tmp);
                     H5Aclose(aid);
                     H5Sclose(sid);
                     
                 }
-                phases.vecDiagPhase.push_back(diagPhase);	
+            } else {
+                ERROR("DiagnosticPhase not implemented for geometry " << params.geometry);
             }
             
-        } 
+        }
         
         if (smpi->isMaster() ) {
             H5Gclose(gidParent);

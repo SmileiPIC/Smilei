@@ -29,15 +29,15 @@ namelist("")
     if( !PyRun_SimpleString(command.c_str()) ) PyTools::checkPyError();
     
     // Running pyinit.py
-    pyRunScript(string(reinterpret_cast<const char*>(pyinit_py), pyinit_py_len), "pyinit.py");
+    runScript(string(reinterpret_cast<const char*>(pyinit_py), pyinit_py_len), "pyinit.py");
     // here we add the rank, in case some script need it
     PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_rank", smpi->getRank());
     
     // Running pyfunctons.py
-    pyRunScript(string(reinterpret_cast<const char*>(pyprofiles_py), pyprofiles_py_len), "pyprofiles.py");
+    runScript(string(reinterpret_cast<const char*>(pyprofiles_py), pyprofiles_py_len), "pyprofiles.py");
     
     // Running the namelists
-    pyRunScript("############### BEGIN USER NAMELISTS/COMMANDS ###############\n");
+    runScript("############### BEGIN USER NAMELISTS/COMMANDS ###############\n");
     for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {
         string strNamelist="";
         if (smpi->isMaster()) {
@@ -53,11 +53,11 @@ namelist("")
             strNamelist +="\n";
         }
         smpi->bcast(strNamelist);
-        pyRunScript(strNamelist,(*it));
+        runScript(strNamelist,(*it));
     }
-    pyRunScript("################ END USER NAMELISTS/COMMANDS  ################\n");
+    runScript("################ END USER NAMELISTS/COMMANDS  ################\n");
     // Running pycontrol.py
-    pyRunScript(string(reinterpret_cast<const char*>(pycontrol_py), pycontrol_py_len),"pycontrol.py");
+    runScript(string(reinterpret_cast<const char*>(pycontrol_py), pycontrol_py_len),"pycontrol.py");
     
     PyTools::runPyFunction("_smilei_check");
     
@@ -378,7 +378,7 @@ vector<unsigned int> Params::FindSpecies(vector<Species*>& vecSpecies, vector<st
 
 
 //! Run string as python script and add to namelist
-void Params::pyRunScript(string command, string name) {
+void Params::runScript(string command, string name) {
     PyTools::checkPyError();
     namelist+=command;
     if (name.size()>0)  MESSAGE(1,"Passing to python " << name);

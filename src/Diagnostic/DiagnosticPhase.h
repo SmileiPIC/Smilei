@@ -4,6 +4,7 @@
 #include <hdf5.h>
 #include "Tools.h"
 #include "Field2D.h"
+#include "Params.h"
 
 class Params;
 class SmileiMPI;
@@ -26,55 +27,12 @@ struct partStruct {
     }
 };
 
-struct phaseStructure {
-	//!string defining the kind oh phase projections
-    std::vector<std::string> kind;
-    
-    //! phase output every (every phase diagnostic must have this)
-    unsigned int every;
-    
-    //! phase output from tmin
-    double tmin;
-    
-    //! phase output to tmin
-    double tmax;
-    
-    //! compression level using zlib [0-9] (0 deactvate compression)
-    unsigned int deflate;
-    
-	//! vector of pointer to species on which the phase diag will be applied (if omitted, it will be for all)
-	std::vector<std::string> species;
-	
-    //! minimum position
-	std::vector<double> pos_min;
-    //! max position
-	std::vector<double> pos_max;
-    //! number of positions
-	std::vector <unsigned int> pos_num;
-    
-    //! minimum momentum
-	std::vector<double> mom_min;
-    //! max momentum
-	std::vector<double> mom_max;
-    //! number of momenta
-	std::vector <unsigned int> mom_num;
-	
-    //! minimum Lorentz factor
-	std::vector<double> lor_min;
-    //! max Lorentz factor
-	std::vector<double> lor_max;
-    //! number of Lorentz factors
-	std::vector <unsigned int> lor_num;
-	
-};
-
-
 //! this class holds all the phase projections that can be represented as 2d matrix
 class DiagnosticPhase {
 
 public:
     //! creator
-    DiagnosticPhase(phaseStructure phaseStruct);
+    DiagnosticPhase(Params &params, unsigned int n_phase);
     ~DiagnosticPhase();
 
     //! this will write the internal Field to the file
