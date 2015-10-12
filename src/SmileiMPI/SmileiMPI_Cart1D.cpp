@@ -136,8 +136,6 @@ void SmileiMPI_Cart1D::createTopology(Params& params)
         
         cell_starting_global_index[i] -= params.oversize[i];
         
-        HEREIAM("cell_starting_global_index[" <<i << "]=" <<cell_starting_global_index[i] );
-
     }
     
     //DEBUG(3, smilei_rk, "n_space = " << params.n_space[0] );
@@ -178,7 +176,7 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, Params& params,int tn
     int k=0;
     int i,ii, iPart;
     int n_part_recv, n_part_send;
-    
+
     // ------------------------------------------------------------------------------
     // Build lists of indexes of particle to exchange per neighbor
     // Computed from indexes_of_particles_to_exchange computed during particles' BC
@@ -233,11 +231,11 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, Params& params,int tn
         } // END for iPart = f(i)
         
         Particles partVectorSend[1][2];
-        partVectorSend[0][0].initialize(0, params);
-        partVectorSend[0][1].initialize(0, params);
+        partVectorSend[0][0].initialize(0, species->particles);
+        partVectorSend[0][1].initialize(0, species->particles);
         Particles partVectorRecv[1][2];
-        partVectorRecv[0][0].initialize(0, params);
-        partVectorRecv[0][1].initialize(0, params);
+        partVectorRecv[0][0].initialize(0, species->particles);
+        partVectorRecv[0][1].initialize(0, species->particles);
         
         /********************************************************************************/
         // Exchange particles
@@ -279,8 +277,6 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, Params& params,int tn
         // Proceed to effective Particles' communications
         /********************************************************************************/
         
-        //Number of properties per particles = nDim_Particles + 3 + 1 + 1
-        int nbrOfProp( 6 );
         MPI_Datatype typePartSend, typePartRecv;
         
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
@@ -299,11 +295,10 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, Params& params,int tn
                     }
                     cuParticles.cp_particle(buff_index_send[iNeighbor][iPart], partVectorSend[0][iNeighbor]);
                 }
+                typePartSend = createMPIparticles( &(partVectorSend[0][iNeighbor]) );
                 
-                typePartSend = createMPIparticles( &(partVectorSend[0][iNeighbor]), nbrOfProp );
-                
-                partVectorRecv[0][(iNeighbor+1)%2].initialize( n_part_recv, params );
-                typePartRecv = createMPIparticles( &(partVectorRecv[0][(iNeighbor+1)%2]), nbrOfProp );
+                partVectorRecv[0][(iNeighbor+1)%2].initialize( n_part_recv, params.nDim_particle );
+                typePartRecv = createMPIparticles( &(partVectorRecv[0][(iNeighbor+1)%2]) );
                 
                 MPI_Sendrecv(&((partVectorSend[0][iNeighbor      ]).position(0,0)),        1, typePartSend, neighbor_[0][iNeighbor      ], 0,
                              &((partVectorRecv[0][(iNeighbor+1)%2]).position(0,0)),        1, typePartRecv, neighbor_[0][(iNeighbor+1)%2], 0, SMILEI_COMM_1D, &Stat);
@@ -324,14 +319,14 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, Params& params,int tn
                     }
                     cuParticles.cp_particle(buff_index_send[iNeighbor][iPart], partVectorSend[0][iNeighbor]);
                 }
-                typePartSend = createMPIparticles( &(partVectorSend[0][iNeighbor]), nbrOfProp );
+                typePartSend = createMPIparticles( &(partVectorSend[0][iNeighbor]) );
                 MPI_Send( &((partVectorSend[0][iNeighbor]).position(0,0)), 1, typePartSend, neighbor_[0][iNeighbor], 0, SMILEI_COMM_1D);
                 MPI_Type_free( &typePartSend );
                 
             } else if ( (neighbor_[0][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
                 //Receive
-                partVectorRecv[0][(iNeighbor+1)%2].initialize( buff_index_recv_sz[(iNeighbor+1)%2], params );
-                typePartRecv = createMPIparticles( &(partVectorRecv[0][(iNeighbor+1)%2]), nbrOfProp );
+                partVectorRecv[0][(iNeighbor+1)%2].initialize( buff_index_recv_sz[(iNeighbor+1)%2], params.nDim_particle );
+                typePartRecv = createMPIparticles( &(partVectorRecv[0][(iNeighbor+1)%2]) );
                 MPI_Recv( &((partVectorRecv[0][(iNeighbor+1)%2]).position(0,0)), 1, typePartRecv,  neighbor_[0][(iNeighbor+1)%2], 0, SMILEI_COMM_1D, &Stat );
                 MPI_Type_free( &typePartRecv );
                 
@@ -420,11 +415,10 @@ void SmileiMPI_Cart1D::exchangeParticles(Species* species, Params& params,int tn
 } // END exchangeParticles
 
 
-MPI_Datatype SmileiMPI_Cart1D::createMPIparticles( Particles* particles, int nbrOfProp )
+MPI_Datatype SmileiMPI_Cart1D::createMPIparticles(Particles* particles)
 {
-    
-    int nbrOfProp2 = particles->double_prop.size() + particles->short_prop.size() + particles->uint_prop.size();
-    MPI_Aint address[nbrOfProp2];
+    int nbrOfProp = particles->double_prop.size() + particles->short_prop.size() + particles->uint_prop.size();
+    MPI_Aint address[nbrOfProp];
     for (unsigned int iprop=0 ; iprop<particles->double_prop.size() ; iprop++ )
 	MPI_Get_address( &( (*(particles->double_prop[iprop]))[0] ), &(address[iprop]) );
     for (unsigned int iprop=0 ; iprop<particles->short_prop.size() ; iprop++ )
@@ -432,18 +426,18 @@ MPI_Datatype SmileiMPI_Cart1D::createMPIparticles( Particles* particles, int nbr
     for (unsigned int iprop=0 ; iprop<particles->uint_prop.size() ; iprop++ )
         MPI_Get_address( &( (*(particles->uint_prop[iprop]))[0] ), &(address[particles->double_prop.size()+particles->short_prop.size()+iprop]) );
 
-    int nbr_parts[nbrOfProp2];
+    int nbr_parts[nbrOfProp];
     // number of elements per property
-    for (int i=0 ; i<nbrOfProp2 ; i++)
+    for (int i=0 ; i<nbrOfProp ; i++)
         nbr_parts[i] = particles->size();
 
-    MPI_Aint disp[nbrOfProp2];
+    MPI_Aint disp[nbrOfProp];
     // displacement between 2 properties
     disp[0] = 0;
-    for (int i=1 ; i<nbrOfProp2 ; i++)
+    for (int i=1 ; i<nbrOfProp ; i++)
         disp[i] = address[i] - address[0];
 
-    MPI_Datatype partDataType[nbrOfProp2];
+    MPI_Datatype partDataType[nbrOfProp];
     // define MPI type of each property, default is DOUBLE
     for (unsigned int i=0 ; i<particles->double_prop.size() ; i++)
         partDataType[i] = MPI_DOUBLE;
@@ -453,7 +447,7 @@ MPI_Datatype SmileiMPI_Cart1D::createMPIparticles( Particles* particles, int nbr
         partDataType[ particles->double_prop.size()+particles->short_prop.size()+iprop] = MPI_UNSIGNED;
 
     MPI_Datatype typeParticlesMPI;
-    MPI_Type_struct( nbrOfProp2, &(nbr_parts[0]), &(disp[0]), &(partDataType[0]), &typeParticlesMPI);
+    MPI_Type_struct( nbrOfProp, &(nbr_parts[0]), &(disp[0]), &(partDataType[0]), &typeParticlesMPI);
     MPI_Type_commit( &typeParticlesMPI );
     
     return typeParticlesMPI;

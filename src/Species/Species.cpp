@@ -768,7 +768,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
     // }
     
     int n_existing_particles = particles.size();
-    particles.initialize(n_existing_particles+npart_effective, params);
+    particles.initialize(n_existing_particles+npart_effective, params.nDim_particle);
     
     
     // define Maxwell-Juettner related quantities

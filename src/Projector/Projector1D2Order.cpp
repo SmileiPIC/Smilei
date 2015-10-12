@@ -23,9 +23,6 @@ Projector1D2Order::Projector1D2Order (Params& params, SmileiMPI* smpi) : Project
     dx_ov_dt = params.cell_length[0] / params.timestep;
 
     index_domain_begin = smpi1D->getCellStartingGlobalIndex(0);
-    HEREIAM("index_domain_begin=" <<index_domain_begin);
-    DEBUG("cell_length "<< params.cell_length[0]);
-
 }
 
 Projector1D2Order::~Projector1D2Order()

@@ -36,7 +36,7 @@ public:
     void createType( Params& params ) {};
 
     //! Create MPI_Datatype to exchange all properties of particle in 1 communication
-    MPI_Datatype createMPIparticles( Particles* particles, int nbrOfProp );
+    MPI_Datatype createMPIparticles( Particles* particles );
 
 
     //! Basic method to exchange a field,

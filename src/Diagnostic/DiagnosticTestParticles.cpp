@@ -104,8 +104,6 @@ void DiagnosticTestParticles::run(int time, SmileiMPI* smpi) {
     
     int locNbrParticles = species->getNbrOfParticles();
     
-    HEREIAM(" Test " << locNbrParticles);
-    
     // We increase the array size for the new timestep (new chunk)
     // It is not applied to the HDF5 file yet
     dims[0] ++;
@@ -116,6 +114,7 @@ void DiagnosticTestParticles::run(int time, SmileiMPI* smpi) {
         locator[i*2  ] = dims[0]-1;
         locator[i*2+1] = particles->id(i)-1;
     }
+    
     
     // Define the HDF5 MPI file access
     hid_t file_access = H5Pcreate(H5P_FILE_ACCESS);
@@ -158,10 +157,6 @@ void DiagnosticTestParticles::run(int time, SmileiMPI* smpi) {
 template <class T>
 void DiagnosticTestParticles::append( hid_t fid, string name, std::vector<T> property, int nParticles, hid_t type, SmileiMPI* smpi, vector<hsize_t> &locator) {
     
-    HEREIAM(name);
-    for(int i=0; i<nParticles; i++) {
-        HEREIAM(i << " " << locator[i]);
-    }
     // Open existing dataset
     hid_t did = H5Dopen( fid, name.c_str(), H5P_DEFAULT );
     // Increase the size of the array with the previously defined size
@@ -180,6 +175,5 @@ void DiagnosticTestParticles::append( hid_t fid, string name, std::vector<T> pro
     
     H5Sclose(file_space);
     H5Dclose(did);
-    HEREIAM(name);
 }
 

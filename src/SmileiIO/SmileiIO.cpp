@@ -497,7 +497,7 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, std::vector<Species*> &vecSpec
         
         unsigned int partSize=0;
         H5::getAttr(gid, "partSize", partSize);
-        vecSpecies[ispec]->particles.initialize(partSize,params);
+        vecSpecies[ispec]->particles.initialize(partSize,params.nDim_particle);
         
         if (partSize>0) {
             for (unsigned int i=0; i<vecSpecies[ispec]->particles.Position.size(); i++) {

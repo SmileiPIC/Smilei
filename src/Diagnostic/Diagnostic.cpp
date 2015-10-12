@@ -170,16 +170,16 @@ void Diagnostic::initProbes(Params& params, SmileiMPI *smpi) {
             H5::attr(probes.fileId, "CommitDate", string(__COMMITDATE));
             
             probes.dt = params.timestep;
-            probes.every         .resize(0);
-            probes.tmin          .resize(0);
-            probes.tmax          .resize(0);
-            probes.probeParticles.resize(0);
-            probes.nPart_total   .resize(0);
-            probes.probesArray   .resize(0);
-            probes.probesStart   .resize(0);
-            probes.fieldname     .resize(0);
-            probes.fieldlocation .resize(0);
-            probes.nFields       .resize(0);
+            probes.every         .clear();
+            probes.tmin          .clear();
+            probes.tmax          .clear();
+            probes.probeParticles.clear();
+            probes.nPart_total   .clear();
+            probes.probesArray   .clear();
+            probes.probesStart   .clear();
+            probes.fieldname     .clear();
+            probes.fieldlocation .clear();
+            probes.nFields       .clear();
         }
         
         
@@ -305,7 +305,7 @@ void Diagnostic::initProbes(Params& params, SmileiMPI *smpi) {
         
         // Initialize the list of "fake" particles just as actual macro-particles
         Particles probeParticles;
-        probeParticles.initialize(nPart_total, params);
+        probeParticles.initialize(nPart_total, params.nDim_particle);
         
         // For each grid point, calculate its position and assign that position to the particle
         // The particle position is a linear combination of the `pos` with `pos_first` or `pos_second`, etc.
@@ -565,7 +565,7 @@ void Diagnostic::initParticles(Params& params, vector<Species*> &vecSpecies) {
         if (time_average < 1) time_average=1;
         
         // get parameter "species" that determines the species to use (can be a list of species)
-        species.resize(0);
+        species.clear();
         ok = PyTools::extract("species",species,"DiagParticles",n_diag_particles);
         if (!ok)
             ERROR("Diagnotic Particles #" << n_diag_particles << ": parameter `species` required");
@@ -581,7 +581,7 @@ void Diagnostic::initParticles(Params& params, vector<Species*> &vecSpecies) {
         if (allAxes.size() == 0)
             ERROR("Diagnotic Particles #" << n_diag_particles << ": axes must contain something");
         
-        tmpAxes.resize(0);
+        tmpAxes.clear();
         for (unsigned int iaxis=0; iaxis<allAxes.size(); iaxis++ ) {
             tmpAxis = new DiagnosticParticlesAxis();
             PyObject *oneAxis=allAxes[iaxis];

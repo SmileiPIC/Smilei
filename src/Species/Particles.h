@@ -25,8 +25,11 @@ public:
     virtual ~Particles(){};
     
     //! Create nParticles null particles of nDim size
-    void initialize( int nParticles, Params &params );
-    
+    void initialize(unsigned int nParticles, unsigned int nDim );
+
+    //! Create nParticles null particles of nDim size
+    void initialize(unsigned int nParticles, Particles &part );
+
     //! Set capacity of Particles vectors
     void reserve( unsigned int n_part_max, int nDim );
     

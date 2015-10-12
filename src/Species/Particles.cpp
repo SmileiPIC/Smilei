@@ -31,20 +31,20 @@ Particles::Particles()
 // ---------------------------------------------------------------------------------------------------------------------
 // Create nParticles null particles of nDim size
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::initialize( int nParticles, Params &params)
+void Particles::initialize(unsigned int nParticles, unsigned int nDim)
 {
     //if (nParticles > Weight.capacity()) {
     //    WARNING("You should increase c_part_max in specie namelist");
     //}
-    
     if (Weight.size()==0) {
         float c_part_max = 1.0;
-        reserve( round( c_part_max * nParticles ), params.nDim_particle );
+        reserve( round( c_part_max * nParticles ), nDim);
     }
     
-    Position.resize(params.nDim_particle);
-    Position_old.resize(params.nDim_particle);
-    for (unsigned int i=0 ; i< params.nDim_particle ; i++) {
+    Position.resize(nDim);
+    
+    Position_old.resize(Position.size());
+    for (unsigned int i=0 ; i< Position.size() ; i++) {
         Position[i].resize(nParticles, 0.);
         Position_old[i].resize(nParticles, 0.);
     }
@@ -54,26 +54,35 @@ void Particles::initialize( int nParticles, Params &params)
     }
     Weight.resize(nParticles, 0.);
     Charge.resize(nParticles, 0);
-
+    
     if (isTestParticles) {
         Id.resize(nParticles, 0);
         uint_prop.push_back( &Id );
     }
     
     if ( double_prop.empty() ) {
-        for (unsigned int i=0 ; i< params.nDim_particle ; i++)
+        for (unsigned int i=0 ; i< Position.size() ; i++)
             double_prop.push_back( &(Position[i]) );
         for (unsigned int i=0 ; i< 3 ; i++)
             double_prop.push_back( &(Momentum[i]) );
         double_prop.push_back( &Weight );
         short_prop.push_back( &Charge );
     }
-
+    
     if (isRadReaction) {
         Chi.resize(nParticles, 0.);
         double_prop.push_back( &Chi );
     }
-
+    
+}
+                        
+                        
+void Particles::initialize(unsigned int nParticles, Particles &part)
+{
+    isTestParticles=part.isTestParticles;
+    isRadReaction=part.isRadReaction;
+    
+    initialize(nParticles, part.Position.size());
 }
 
 
@@ -361,10 +370,10 @@ void Particles::overwrite_part2D(int part1, int part2)
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::overwrite_part2D(int part1, int part2, int N)
 {
-    unsigned int sizepart,sizecharge;
-    sizepart = N*sizeof(Position[0][0]);
-    sizecharge = N*sizeof(Charge[0]);
-    
+    unsigned int sizepart = N*sizeof(Position[0][0]);
+    unsigned int sizecharge = N*sizeof(Charge[0]);
+    unsigned int sizeid = N*sizeof(Id[0]);
+
     memcpy( &Position    [0][part2] , &Position    [0][part1] , sizepart  );
     memcpy( &Position    [1][part2] , &Position    [1][part1] , sizepart  );
     memcpy( &Position_old[0][part2] , &Position_old[0][part1] , sizepart  );
@@ -376,7 +385,7 @@ void Particles::overwrite_part2D(int part1, int part2, int N)
     memcpy( &Weight         [part2] , &Weight         [part1] , sizepart  );
       
     if (isTestParticles)
-        memcpy(&Id[part2]          ,  &Id[part1]              , sizecharge);
+        memcpy(&Id[part2]          ,  &Id[part1]              , sizeid);
     
     if (isRadReaction)
         memcpy(&Chi[part2]          ,  &Chi[part1]              , sizepart);
@@ -409,9 +418,9 @@ void Particles::overwrite_part2D(int part1, Particles &dest_parts, int part2)
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::overwrite_part2D(int part1, Particles &dest_parts, int part2, int N)
 {
-    unsigned int sizepart,sizecharge;
-    sizepart = N*sizeof(Position[0][0]);
-    sizecharge = N*sizeof(Charge[0]);
+    unsigned int sizepart = N*sizeof(Position[0][0]);
+    unsigned int sizecharge = N*sizeof(Charge[0]);
+    unsigned int sizeid = N*sizeof(Id[0]);
     
     memcpy( &dest_parts.Position    [0][part2] , &Position    [0][part1] , sizepart  );
     memcpy( &dest_parts.Position    [1][part2] , &Position    [1][part1] , sizepart  );
@@ -424,7 +433,7 @@ void Particles::overwrite_part2D(int part1, Particles &dest_parts, int part2, in
     memcpy( &dest_parts.Weight         [part2] , &Weight         [part1] , sizepart  );
     
     if (isTestParticles)
-        memcpy(&dest_parts.Id[part2],  &Id[part1], sizecharge);
+        memcpy(&dest_parts.Id[part2],  &Id[part1], sizeid);
     
     if (isRadReaction)
         memcpy(&dest_parts.Chi[part2],  &Chi[part1], sizepart);
@@ -484,10 +493,10 @@ void Particles::overwrite_part1D(int part1, Particles &dest_parts, int part2, in
 void Particles::swap_part(int part1, int part2, int N)
 {
     double* buffer[N];
-    unsigned int sizepart,sizecharge;
     
-    sizepart = N*sizeof(Position[0][0]);
-    sizecharge = N*sizeof(Charge[0]);
+    unsigned int sizepart = N*sizeof(Position[0][0]);
+    unsigned int sizecharge = N*sizeof(Charge[0]);
+    unsigned int sizeid = N*sizeof(Id[0]);
     
     for (unsigned int i=0; i<Position.size(); i++) {
         memcpy(buffer,&Position[i][part1], sizepart);
@@ -512,9 +521,9 @@ void Particles::swap_part(int part1, int part2, int N)
     memcpy(&Weight[part2],buffer, sizepart);
     
     if (isTestParticles) {
-        memcpy(buffer,&Id[part1], sizecharge);
-        memcpy(&Id[part1],&Id[part2], sizecharge);
-        memcpy(&Id[part2],buffer, sizecharge);
+        memcpy(buffer,&Id[part1], sizeid);
+        memcpy(&Id[part1],&Id[part2], sizeid);
+        memcpy(&Id[part2],buffer, sizeid);
     }
     
     if (isRadReaction) {
