@@ -33,7 +33,7 @@ and its flexibility should allow one to benefit from the newest and futures HPC 
 Release 1.0
 ^^^^^^^^^^^
 
-**Download**: :download:`Smilei v1.0 <_downloads/smilei-v1.0.tar.gz>`
+**Download**: `Smilei v1.0 <_downloads/smilei-v1.0.tar.gz>`_
 
 After nearly two years of development, :program:`Smilei` v1.0 offers some nice features:
 
@@ -58,7 +58,7 @@ for "logiciels libres".
 Release 2.0
 ^^^^^^^^^^^
 
-**Download**: :download:`Smilei v2.0 (pre-release) <_downloads/smilei-v2.0.tar.gz>`
+**Download**: `Smilei v2.0 (pre-release) <_downloads/smilei-v2.0.tar.gz>`_
 
 A second release is **in preparation**. Great improvements have already been done:
 
