@@ -10,12 +10,12 @@ class SmileiComponentType(type):
     def __init__(self, name, bases, attrs):
         self._list = []
         self.verify = True
-        self.current = 0
         # Run standard metaclass init
         super(SmileiComponentType, self).__init__(name, bases, attrs)
     
     # Functions to define the iterator
     def __iter__(self):
+        self.current = 0
         return self
     def next(self):
         if self.current >= len(self._list):
