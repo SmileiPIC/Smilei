@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "Particles.h"
+#include "Species.h"
 
 using namespace std;
 
@@ -25,7 +26,7 @@ IonizationTunnel::IonizationTunnel(Params& params, Species * species) : Ionizati
         gamma_tunnel[Z] = 2.0 * pow(2.0*Potential[Z],1.5);
     }
 
-    new_electrons.initialize( 0, params.nDim_particle );
+    new_electrons.initialize(0, params.nDim_particle );
     DEBUG("Finished Creating the Tunnel Ionizaton class");
 
 }
@@ -33,6 +34,10 @@ IonizationTunnel::IonizationTunnel(Params& params, Species * species) : Ionizati
 
 
 void IonizationTunnel::operator() (Particles &particles, int ipart, LocalFields Epart) {
+    HEREIAM(particles.size());
+    for (unsigned int i=0; i< particles.size(); i++) {
+        particles.print(i);
+    }
 
     // Charge state of the ion (particle)
     unsigned int Z = (unsigned int)(particles.charge(ipart));
@@ -228,9 +233,12 @@ void IonizationTunnel::operator() (Particles &particles, int ipart, LocalFields 
             for (int i=0; i<new_electrons.dimension(); i++) {
                 new_electrons.position(i,idNew)=particles.position(i, ipart);
                 new_electrons.position_old(i,idNew)=particles.position(i, ipart);
+                DEBUG(idNew << " pos" << i << " " << new_electrons.position_old(i,idNew))
+                DEBUG(idNew << " poo" << i << " " << new_electrons.position(i,idNew))
             }
             for (unsigned int i=0; i<3; i++) {
                 new_electrons.momentum(i,idNew) = particles.momentum(i, ipart)/ionized_species_mass;
+                DEBUG(idNew << " mom" << i << " " << new_electrons.momentum(i,idNew))
             }
             new_electrons.weight(idNew)=double(k_times)*particles.weight(ipart);
             new_electrons.charge(idNew)=-1;

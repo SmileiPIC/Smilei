@@ -144,12 +144,8 @@ DiagPhase(
 	every	= every,
  	kind    = 'xpx',
  	species = ['eon1','eon2'],
- 	pos_min = 0.,
- 	pos_max = 0.,
- 	pos_num = 50,
- 	mom_min = -0.4,
- 	mom_max = 0.4,
- 	mom_num = 100,
+ 	first = [0., 0., 50],
+ 	second = [-0.4, 0.4, 100],
  	deflate=5
 )
 

@@ -307,7 +307,7 @@ public:
                 }
                 if (electron_species) {
                     retSpecies[i]->electron_species=electron_species;
-                    MESSAGE("Added electron species to species " << retSpecies[i]->species_type);
+                    MESSAGE(1,"Ionization: Added " << electron_species->species_type << " species to species " << retSpecies[i]->species_type);
                 } else {
                     ERROR("Ionization needs a species called \"electron\" to be defined");
                 }

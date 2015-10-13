@@ -34,7 +34,7 @@ void Tools::printMemFootPrint(std::string tag) {
     val[2] = atoi(S);
 
     std::cout << "=== Mem usage === " <<  std::setw(20) << tag << "\t=== " << std::setw(6)
-              << "\t VmRSS  << " <<  (int)((double)val[1]/1024.) << " Mo" << std::endl;
+              << "\t VmRSS  << " <<  (int)((double)val[1]/1024.) << " Mb" << std::endl;
 
 }
 

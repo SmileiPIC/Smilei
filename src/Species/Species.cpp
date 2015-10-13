@@ -338,6 +338,8 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
 void Species::dynamics(double time_dual, ElectroMagn* EMfields, Interpolator* Interp,
                        Projector* Proj, SmileiMPI *smpi, Params &params, SimWindow* simWindow, vector<PartWall*> vecPartWall)
 {
+    
+    HEREIAM(omp_get_thread_num() << " Inside " << time_dual << " " << speciesNumber);
     Interpolator* LocInterp = InterpolatorFactory::create(params, smpi);
     
     // Electric field at the particle position
@@ -500,7 +502,8 @@ void Species::dynamics(double time_dual, ElectroMagn* EMfields, Interpolator* In
             nrj_bc_lost += nrj_lost_per_thd[ithd];
 }
         if (Ionize && electron_species) {
-            for (unsigned int i=0; i < (unsigned int)Ionize->new_electrons.size(); i++) {
+            HEREIAM(omp_get_thread_num() << " Ionize electron " << Ionize->new_electrons.size() << " of " << Ionize->new_electrons.capacity());
+            for (unsigned int i=0; i < Ionize->new_electrons.size(); i++) {
                 // electron_species->particles.push_back(Ionize->new_electrons[i]);
                 
                 int ibin = (int) ((Ionize->new_electrons).position(0,i) / cell_length[0]) - ( smpi->getCellStartingGlobalIndex(0) + oversize[0] );
@@ -518,11 +521,13 @@ void Species::dynamics(double time_dual, ElectroMagn* EMfields, Interpolator* In
             
             // if (Ionize->new_electrons.size())
             //      DEBUG("number of electrons " << electron_species->particles.size() << " " << );
+            HEREIAM(omp_get_thread_num());
             Ionize->new_electrons.clear();
+            HEREIAM(omp_get_thread_num());
         }
     }
     else if (!particles.isTestParticles) { // immobile particle (at the moment only project density)
-//#pragma omp for schedule (runtime) 
+//#pragma omp for schedule (runtime)
 #pragma omp master
 {
         for (iPart=0 ; iPart<nParticles; iPart++ ) {
@@ -530,9 +535,12 @@ void Species::dynamics(double time_dual, ElectroMagn* EMfields, Interpolator* In
         }
 }
     }//END if time vs. time_frozen
+
 #pragma omp barrier
     delete LocInterp;
     
+    HEREIAM(omp_get_thread_num() << " Outside " << time_dual << " " << speciesNumber);
+
 }//END dynamic
 
 

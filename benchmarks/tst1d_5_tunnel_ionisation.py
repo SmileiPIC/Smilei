@@ -15,8 +15,8 @@ l0 = 2.0*math.pi	# wavelength in normalized units
 t0 = l0				# optical cycle in normalized units
 rest = 200.0		# nb of timestep in 1 optical cycle
 resx = 100.0		# nb cells in 1 wavelength
-Lsim = 2.0*l0		# simulation length
-Tsim = 10.0*t0		# duration of the simulation
+Lsim = l0		# simulation length
+Tsim = 5.0*t0		# duration of the simulation
 
 
 # wavelength_SI: used by Fred Diags. (MG: should be removed at some point)
@@ -78,16 +78,18 @@ random_seed = 0
 # temperature        = list of floats or functions, temperature in units of m_e c^2
 # Predefined functions: constant, trapezoidal, gaussian, polygonal, cosine
 #
+fieldDump_every=1
+
 Species(
 	species_type = 'helium',
 	ionization_model = 'tunnel',
 	atomic_number = 2,
 	initPosition_type = 'regular',
 	initMomentum_type = 'cold',
-	n_part_per_cell = 1000,
+	n_part_per_cell = 100,
 	mass = 1836.0,
 	charge = 0.0,
-	nb_density = trapezoidal(1.0,xvacuum=0.99*l0,xplateau=0.02*l0),
+	nb_density = trapezoidal(1.0,xvacuum=0.49*l0,xplateau=0.02*l0),
 	bc_part_type_west = 'none',
 	bc_part_type_east = 'none'
 )
@@ -138,15 +140,15 @@ DiagScalar(every = 10)
 # random_seed = 13121977
 
 
+print_every=1
 
-
-DiagParticles(
-	output = "density",
-	every = 50,
-	species = ["electron"],
-	axes = [
-		["x",  0.45*Lsim, 0.55*Lsim, 200],
-		["px", -0.1, 0.1, 200]
-	]
-)
-
+# DiagParticles(
+# 	output = "density",
+# 	every = 50,
+# 	species = ["electron"],
+# 	axes = [
+# 		["x",  0.45*Lsim, 0.55*Lsim, 200],
+# 		["px", -0.1, 0.1, 200]
+# 	]
+# )
+# 

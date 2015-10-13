@@ -37,12 +37,12 @@ public:
     void clear();
     
     //! Get number of particules
-    inline int size() const {
+    inline unsigned int size() const {
         return Weight.size();
     }
     
     //! Get number of particules
-    inline int capacity() const {
+    inline unsigned int capacity() const {
         return Weight.capacity();
     }
     
