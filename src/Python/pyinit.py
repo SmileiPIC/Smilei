@@ -171,7 +171,6 @@ dump_minutes = 0.0
 exit_after_dump = True
 restart = False
 dump_file_sequence = 2
-sim_units = ""
 wavelength_SI = 0.
 dim = ""
 interpolation_order = 2

@@ -31,7 +31,7 @@ time_fields_frozen = 0.
 
 
 # SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
-# cell_length = cell length`
+# cell_length = cell length
 # sim_length  = length of the simulation
 cell_length = [0.01 * L0]
 sim_length  = [1. * L0]

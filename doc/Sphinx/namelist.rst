@@ -147,8 +147,11 @@ Spatial and temporal scales
 
 ----
 
+.. _Species:
+
 Species
 ^^^^^^^
+
 Each species has to be defined in a ``Species`` block, for instance::
 
   Species(
@@ -327,8 +330,11 @@ Lasers
 
 ----
 
+.. _ExtField:
+
 External fields
 ^^^^^^^^^^^^^^^
+
 External fields can be applied using a ``ExtField()`` block, for instance::
 
   ExtField(
@@ -355,6 +361,7 @@ All the possible variables inside this block are explained here:
 
 Antennas
 ^^^^^^^^
+
 An antenna is an extra current applied during the whole simulation.
 It is applied using an ``Antenna()`` block, for instance::
 
