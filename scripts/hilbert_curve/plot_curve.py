@@ -6,13 +6,15 @@ import scipy
 import matplotlib.pyplot as plt
 
 #   USer defined parameters
-nmpi = 15
+nmpi = 24
 npatchx = 32
-npatchy = 8
+npatchy = 32
 ###########################
 
 mat = scipy.fromfile("data.txt",sep=" ",dtype=int)
 mat=mat.reshape(-1,3)
+x=mat[:,1]
+y=mat[:,2]
 
 mat_plot = scipy.zeros((npatchx,npatchy))
 patch_count = scipy.zeros((nmpi))
@@ -46,5 +48,9 @@ for j in range(nmpi):
     for i in scipy.arange(patch_count[j])+patch_count[:j].sum():
         mat_plot[mat[i,1],mat[i,2]] = j
 
+print "rank 7 has patches from ", patch_count[:7].sum(), " to ", patch_count[:8].sum()-1
+
+
 plt.matshow(mat_plot,aspect="auto")
+plt.plot(x,y,color='black',lw=2)
 plt.show()
