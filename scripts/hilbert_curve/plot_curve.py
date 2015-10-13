@@ -10,6 +10,7 @@ nmpi = 24
 npatchx = 32
 npatchy = 32
 ###########################
+Ndpi=1000
 
 mat = scipy.fromfile("data.txt",sep=" ",dtype=int)
 mat=mat.reshape(-1,3)
@@ -50,7 +51,9 @@ for j in range(nmpi):
 
 print "rank 7 has patches from ", patch_count[:7].sum(), " to ", patch_count[:8].sum()-1
 
-
+plt.figure(figsize=(20,20))
 plt.matshow(mat_plot,aspect="auto")
-plt.plot(x,y,color='black',lw=2)
-plt.show()
+plt.plot(x,y,color='black',lw=1)
+plt.axis('off')
+plt.savefig("Hilbert_curve.eps",format='eps',dpi=Ndpi,bbox_inches='tight')
+#plt.show()
