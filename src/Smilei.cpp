@@ -223,11 +223,20 @@ int main (int argc, char* argv[])
     int particlesMem(0);
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++)
 	particlesMem += vecSpecies[ispec]->getMemFootPrint();
-    MESSAGE( "Species part = " << (int)( (double)particlesMem / 1024./1024.) << " Mo" );
+    MESSAGE( "(Master) Species part = " << (int)( (double)particlesMem / 1024./1024.) << " Mo" );
 
+    double dParticlesMem = (double)particlesMem / 1024./1024./1024.;
+    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dParticlesMem, &dParticlesMem, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+    MESSAGE( setprecision(3) << "Global Species part = " << dParticlesMem << " Go" );
+    
     // fieldsMem contains field per species
     int fieldsMem = EMfields->getMemFootPrint();
-    MESSAGE( "Fields part = " << (int)( (double)fieldsMem / 1024./1024.) << " Mo" );
+    MESSAGE( "(Master) Fields part = " << (int)( (double)fieldsMem / 1024./1024.) << " Mo" );
+
+    double dFieldsMem = (double)fieldsMem / 1024./1024./1024.;
+    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dFieldsMem, &dFieldsMem, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+    MESSAGE( setprecision(3) << "Global Fields part = " << dFieldsMem << " Go" );
+
     // Read value in /proc/pid/status
     //Tools::printMemFootPrint( "End Initialization" );
 
@@ -441,7 +450,7 @@ int main (int argc, char* argv[])
     
     double coverage(0.);
     for (unsigned int i=1 ; i<timer.size() ; i++) coverage += timer[i].getTime();
-    MESSAGE("Time in time loop :\t" << timer[0].getTime() << "\t("<<coverage/timer[0].getTime()*100.<< "% coverage)" );
+    MESSAGE("Time in time loop :\t" << timer[0].getTime() << "\t"<<coverage/timer[0].getTime()*100.<< "% coverage" );
     if ( smpi->isMaster() )
         for (unsigned int i=1 ; i<timer.size() ; i++) timer[i].print(timer[0].getTime());
     
