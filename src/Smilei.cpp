@@ -271,8 +271,8 @@ int main (int argc, char* argv[])
     // save latestTimeStep (used to test if we are at the latest timestep when running diagnostics at run's end)
     unsigned int latestTimeStep=sio->this_run_start_step;
     
-    TITLE("Time-Loop is started: number of time-steps n_time = " << params.n_time);
-    
+    TITLE("Time-Loop started: number of time-steps n_time = " << params.n_time);
+    double old_print_time=timer[0].getTime();
     for (unsigned int itime=sio->this_run_start_step+1 ; itime <= stepStop ; itime++) {
         
         // calculate new times
@@ -285,20 +285,27 @@ int main (int argc, char* argv[])
         timer[0].update();
         
         if ( (itime % diags.print_every == 0) &&  ( smpi->isMaster() ) ) {
+            
+            double this_print_time=timer[0].getTime();
+
             ostringstream my_msg;
-            my_msg << "t = "          << scientific << setprecision(3)   << time_dual <<
-            "   it = "     << setw(log10(params.n_time)+1) << itime <<
-            "   sec = "    << scientific << setprecision(3)   << timer[0].getTime() <<
-            "   Utot = "   << scientific << setprecision(4)<< diags.getScalar("Utot") <<
-            "   Uelm = "   << scientific << setprecision(4)<< diags.getScalar("Uelm") <<
-            "   Ukin = "   << scientific << setprecision(4)<< diags.getScalar("Ukin") <<
-            "   Ubal(%) = "<< scientific << fixed << setprecision(2) << 100.0*diags.getScalar("Ubal_norm");
+            my_msg << setw(log10(params.n_time)+1) << itime <<
+            "/"     << setw(log10(params.n_time)+1) << params.n_time <<
+            "  t "          << scientific << setprecision(3)   << time_dual <<
+            "  sec "    << scientific << setprecision(1)   << this_print_time <<
+            "("    << scientific << setprecision(3)   << this_print_time - old_print_time << ")" <<
+            "  Utot "   << scientific << setprecision(4)<< diags.getScalar("Utot") <<
+            "  Uelm "   << scientific << setprecision(4)<< diags.getScalar("Uelm") <<
+            "  Ukin "   << scientific << setprecision(4)<< diags.getScalar("Ukin") <<
+            "  Ubal "<< scientific << fixed << setprecision(2) << 100.0*diags.getScalar("Ubal_norm") << "%";
+            
+            old_print_time=this_print_time;
             
             if (simWindow) {
                 double Uinj_mvw = diags.getScalar("Uelm_inj_mvw") + diags.getScalar("Ukin_inj_mvw");
                 double Uout_mvw = diags.getScalar("Uelm_out_mvw") + diags.getScalar("Ukin_out_mvw");
-                my_msg << "   Uinj_mvw = " << scientific << setprecision(4) << Uinj_mvw <<
-                "   Uout_mvw = " << scientific << setprecision(4) << Uout_mvw;
+                my_msg << " Uinj_mvw " << scientific << setprecision(4) << Uinj_mvw <<
+                " Uout_mvw " << scientific << setprecision(4) << Uout_mvw;
 
             }//simWindow
 
@@ -425,8 +432,7 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     //                      HERE ENDS THE PIC LOOP
     // ------------------------------------------------------------------
-    MESSAGE("End time loop, time dual = " << time_dual);
-    MESSAGE("-----------------------------------------------------------------------------------------------------");
+    TITLE("End time loop, time dual = " << time_dual);
     
     //double timElapsed=smpiData->time_seconds();
     //if ( smpi->isMaster() ) MESSAGE("Time in time loop : " << timElapsed );

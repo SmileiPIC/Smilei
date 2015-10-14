@@ -339,7 +339,7 @@ void Species::dynamics(double time_dual, ElectroMagn* EMfields, Interpolator* In
                        Projector* Proj, SmileiMPI *smpi, Params &params, SimWindow* simWindow, vector<PartWall*> vecPartWall)
 {
     
-    HEREIAM(omp_get_thread_num() << " Inside " << time_dual << " " << speciesNumber);
+//    HEREIAM("Inside " << time_dual << " " << speciesNumber);
     Interpolator* LocInterp = InterpolatorFactory::create(params, smpi);
     
     // Electric field at the particle position
@@ -502,28 +502,32 @@ void Species::dynamics(double time_dual, ElectroMagn* EMfields, Interpolator* In
             nrj_bc_lost += nrj_lost_per_thd[ithd];
 }
         if (Ionize && electron_species) {
-            HEREIAM(omp_get_thread_num() << " Ionize electron " << Ionize->new_electrons.size() << " of " << Ionize->new_electrons.capacity());
+#pragma omp master // looks like this is needed for openmp to be che    cked
+            {
+                if (Ionize->new_electrons.size()) {
+                    HEREIAM("Ionize electron " << Ionize->new_electrons.size() << " of " << Ionize->new_electrons.capacity());
+                }
             for (unsigned int i=0; i < Ionize->new_electrons.size(); i++) {
                 // electron_species->particles.push_back(Ionize->new_electrons[i]);
                 
-                int ibin = (int) ((Ionize->new_electrons).position(0,i) / cell_length[0]) - ( smpi->getCellStartingGlobalIndex(0) + oversize[0] );
+                unsigned int ibin = (int) ((Ionize->new_electrons).position(0,i) / cell_length[0]) - ( smpi->getCellStartingGlobalIndex(0) + oversize[0] );
                 // Copy Ionize->new_electrons(i) in electron_species->particles at position electron_species->bmin[ibin]
                 Ionize->new_electrons.cp_particle(i, electron_species->particles, electron_species->bmin[ibin] );
                 
                 // Update bins status
                 // (ugly update, memory is allocated anywhere, OK with vectors per particles parameters)
                 electron_species->bmax[ibin]++;
-                for (int i=(int)ibin+1; i<(int)bmin.size(); i++) {
-                    electron_species->bmin[i]++;
-                    electron_species->bmax[i]++;
+                DEBUG("e- " << i << " to bin " << ibin << " (" <<bmin.size() << "," <<bmax.size()<<")" );
+                for (unsigned int ii=ibin+1; ii<bmin.size(); ii++) {
+                    electron_species->bmin[ii]++;
+                    electron_species->bmax[ii]++;
                 }
             }
             
             // if (Ionize->new_electrons.size())
             //      DEBUG("number of electrons " << electron_species->particles.size() << " " << );
-            HEREIAM(omp_get_thread_num());
             Ionize->new_electrons.clear();
-            HEREIAM(omp_get_thread_num());
+            }
         }
     }
     else if (!particles.isTestParticles) { // immobile particle (at the moment only project density)
@@ -539,7 +543,7 @@ void Species::dynamics(double time_dual, ElectroMagn* EMfields, Interpolator* In
 #pragma omp barrier
     delete LocInterp;
     
-    HEREIAM(omp_get_thread_num() << " Outside " << time_dual << " " << speciesNumber);
+//    HEREIAM("Outside " << time_dual << " " << speciesNumber);
 
 }//END dynamic
 
@@ -551,7 +555,7 @@ void Species::dynamics(double time_dual, ElectroMagn* EMfields, Interpolator* In
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::dump(std::ofstream& ofile)
 {
-    for (unsigned int i=0; i<(unsigned int)particles.size(); i++ )
+    for (unsigned int i=0; i<particles.size(); i++ )
     {
         ofile << i ;
         for (unsigned int m=0; m<ndim; m++) ofile << "\t" << particles.position(m,i);

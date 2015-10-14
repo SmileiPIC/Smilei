@@ -567,27 +567,27 @@ void Particles::create_particle()
 // ---------------------------------------------------------------------------------------------------------------------
 // Create nParticles new particles at the end of vectors
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::create_particles(int nAdditionalParticles )
-{
-    int nParticles = size();
-    for (unsigned int i=0; i<Position.size(); i++) {
-        Position[i].resize(nParticles+nAdditionalParticles,0.);
-        Position_old[i].resize(nParticles+nAdditionalParticles,0.);
-    }
-    
-    for (unsigned int i=0; i<3; i++) {
-        Momentum[i].resize(nParticles+nAdditionalParticles,0.);
-    }
-    Weight.resize(nParticles+nAdditionalParticles,0.);
-    Charge.resize(nParticles+nAdditionalParticles,0);
-    
-    if (isTestParticles)
-        Id.resize(nParticles+nAdditionalParticles,0);
-    
-    if (isRadReaction)
-        Chi.resize(nParticles+nAdditionalParticles,0.);
-
-}
+//void Particles::create_particles(int nAdditionalParticles )
+//{
+//    int nParticles = size();
+//    for (unsigned int i=0; i<Position.size(); i++) {
+//        Position[i].resize(nParticles+nAdditionalParticles,0.);
+//        Position_old[i].resize(nParticles+nAdditionalParticles,0.);
+//    }
+//    
+//    for (unsigned int i=0; i<3; i++) {
+//        Momentum[i].resize(nParticles+nAdditionalParticles,0.);
+//    }
+//    Weight.resize(nParticles+nAdditionalParticles,0.);
+//    Charge.resize(nParticles+nAdditionalParticles,0);
+//    
+//    if (isTestParticles)
+//        Id.resize(nParticles+nAdditionalParticles,0);
+//    
+//    if (isRadReaction)
+//        Chi.resize(nParticles+nAdditionalParticles,0.);
+//
+//}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Test if ipart is in the local MPI subdomain

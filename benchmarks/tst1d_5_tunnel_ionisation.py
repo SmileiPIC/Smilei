@@ -129,7 +129,6 @@ Laser(
 # tmin & tmax = floats, min & max times between which scalars are computed (optional)
 # precision   = integer, nb of digits for the outputs (default=10)
 DiagScalar(every = 10)
-#print_every=10000000
  
 # --------- 
 # DUMP INFO
@@ -139,16 +138,13 @@ DiagScalar(every = 10)
 # dump_minutes = 1
 # random_seed = 13121977
 
+DiagParticles(
+	output = "density",
+	every = 50,
+	species = ["electron"],
+	axes = [
+		["x",  0.45*Lsim, 0.55*Lsim, 200],
+		["px", -0.1, 0.1, 200]
+	]
+)
 
-print_every=1
-
-# DiagParticles(
-# 	output = "density",
-# 	every = 50,
-# 	species = ["electron"],
-# 	axes = [
-# 		["x",  0.45*Lsim, 0.55*Lsim, 200],
-# 		["px", -0.1, 0.1, 200]
-# 	]
-# )
-# 

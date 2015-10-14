@@ -46,6 +46,6 @@ void Timer::restart()
 void Timer::print(double tot)
 {
     if ((time_acc_>0.) && (name_!=""))
-        MESSAGE(0, "\t" << setw(13) << name_ << "\t" << time_acc_  << "\t(" << 100.0*time_acc_/tot << "%)");
+        MESSAGE(0, "\t" << setw(13) << name_ << "\t" << time_acc_  << "\t" << 100.0*time_acc_/tot << "%");
 }
 

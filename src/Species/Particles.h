@@ -103,8 +103,8 @@ public:
     //! Create new particle
     void create_particle();
     
-    //! Create nParticles new particles
-    void create_particles(int nParticles);
+//    //! Create nParticles new particles
+//    void create_particles(int nParticles);
     
     //! Test if ipart is in the local MPI subdomain
     bool is_part_in_domain(int ipart, SmileiMPI* smpi);
