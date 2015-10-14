@@ -34,10 +34,10 @@ private:
         return false;
     }
     
-    //! convert Python object to short int
-    static bool pyconvert(PyObject* py_val, short int &val) {
+    //! convert Python object to short
+    static bool pyconvert(PyObject* py_val, short &val) {
         if (py_val && PyInt_Check(py_val)) {
-            val=(short int) PyInt_AsLong(py_val);
+            val=(short) PyInt_AsLong(py_val);
             return true;
         }
         return false;

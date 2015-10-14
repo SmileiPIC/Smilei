@@ -141,8 +141,8 @@ class H5 {
         vect(locationId, name, v[0], v.size(), H5T_NATIVE_UINT, deflate);
     }
     
-    //! write a vector<short int>
-    static void vect(hid_t locationId, std::string name, std::vector<short int> v, int deflate=0) {
+    //! write a vector<short>
+    static void vect(hid_t locationId, std::string name, std::vector<short> v, int deflate=0) {
         vect(locationId, name, v[0], v.size(), H5T_NATIVE_SHORT, deflate);
     }
     
@@ -193,7 +193,7 @@ class H5 {
         getVect(locationId, vect_name, vect, H5T_NATIVE_INT);
     }
     
-    //! retrieve a short int vector
+    //! retrieve a short vector
     static void getVect(hid_t locationId, std::string vect_name,  std::vector<short> &vect) {
         getVect(locationId, vect_name, vect, H5T_NATIVE_SHORT);
     }

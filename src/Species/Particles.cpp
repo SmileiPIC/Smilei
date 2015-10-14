@@ -557,11 +557,12 @@ void Particles::create_particle()
     Weight.push_back(0.);
     Charge.push_back(0);
     
-    if (isTestParticles)
+    if (isTestParticles) {
         Id.push_back(0);
-    
-    if (isRadReaction)
+    }
+    if (isRadReaction) {
         Chi.push_back(0.);
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
