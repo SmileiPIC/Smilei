@@ -83,7 +83,7 @@ void Diagnostic::printTimers (SmileiMPI *smpi, double tottime) {
             coverage += dtimer[i].getTime();
         }
     }
-    MESSAGE(0, "\nTime in diagnostics : \t"<< tottime <<"\t(" << coverage/tottime*100. << "% coverage)" );
+    MESSAGE(0, "\n Time in diagnostics : \t"<< tottime <<"\t" << coverage/tottime*100. << "% coverage" );
     if ( smpi->isMaster() ) {
         for (unsigned int i=0 ; i<dtimer.size() ; i++) {
             dtimer[i].print(tottime) ;

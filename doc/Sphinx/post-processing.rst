@@ -35,6 +35,38 @@ You can store this to a variable for later, for instance::
 
 ----
 
+Extract namelist information
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Once a simulation is selected as shown above, you can access the content of the namelist
+using the variable ``namelist``::
+  
+  S = Smilei("path/to/my/results") # select a simulation
+  print S.namelist.timestep        # print the timestep
+  print S.namelist.dim             # print the simulation dimensions
+
+All the variables defined in the original file are copied into this variable.
+
+Concerning components like :ref:`Species`, :ref:`ExtField` or :ref:`DiagProbe`, of which
+several instances may exist, you can directly iterate over them::
+  
+  for species in S.namelist.Species:
+      print "species "+species.species_type+" has mass "+str(species.mass)
+
+You can also access to a specific component by referencing its number::
+  
+  F = S.namelist.ExtField[0]  # get the first external field
+  print "An external field "+F.field+" was applied"
+
+In the case of the species, you can also obtain a given species by its name (or 
+``species_type``)::
+  
+  species = S.namelist.Species["electron1"]
+  print "species "+species.species_type+" has mass "+str(species.mass)
+
+
+----
+
 Select a diagnostic
 ^^^^^^^^^^^^^^^^^^^
 

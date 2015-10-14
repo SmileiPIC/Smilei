@@ -60,6 +60,7 @@ output_script='my_test.py'
 #
 
 sim_units = 'wavelength'
+raise Exception("TODO : modify the input file without sim_units")
 
 
 # dim: Geometry of the simulation
