@@ -31,10 +31,6 @@ sim_time  = 0.1 * L0
 time_fields_frozen = 100000000000.
 
 # SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
-# either use the resolution (res_space) or cell-length (cell_length)
-# res_space   = list of integers, number of cells in one unit of space (`sim_units`)
-# sim_length  = length of the simulation in units of `sim_units`
-# cell_length = cell length  in units of `sim_units`
 cell_length = [2.*L0]
 sim_length  = [100.*L0]
 

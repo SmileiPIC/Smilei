@@ -467,11 +467,11 @@ class Diagnostic(object):
 			if self._ndim not in [1,2,3]: raise
 			# get box size
 			error = "Error extracting 'sim_length' from the input file"
-			sim_length = self._np.double( self.namelist.sim_length )
+			sim_length = self._np.atleast_1d(self._np.double(self.namelist.sim_length))
 			if sim_length.size != self._ndim: raise
 			# get cell size
 			error = "Error extracting 'cell_length' from the input file"
-			self._cell_length = self._np.double( self.namelist.cell_length )
+			self._cell_length = self._np.atleast_1d(self._np.double(self.namelist.cell_length))
 			if self._cell_length.size != self._ndim: raise
 			# calculate number of cells in each dimension
 			self._ncels = sim_length/self._cell_length

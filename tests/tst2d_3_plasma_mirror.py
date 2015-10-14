@@ -35,7 +35,7 @@ def profile_dens(x,y):
 #
 
 sim_units = 'wavelength'
-
+raise Exception("TODO : modify the input file without sim_units")
 
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity

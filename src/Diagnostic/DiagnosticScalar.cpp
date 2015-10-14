@@ -10,7 +10,8 @@
 using namespace std;
 
 //! constructor (called from Diagnostic)
-DiagnosticScalar::DiagnosticScalar() {
+DiagnosticScalar::DiagnosticScalar() :
+every(0) {
     out_width.resize(0);
 }
 
