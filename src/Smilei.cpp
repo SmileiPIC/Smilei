@@ -241,6 +241,9 @@ int main (int argc, char* argv[])
     double dParticlesMem = (double)particlesMem / 1024./1024./1024.;
     MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dParticlesMem, &dParticlesMem, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
     MESSAGE( setprecision(3) << "Global Species part = " << dParticlesMem << " Go" );
+
+    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&particlesMem, &particlesMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
+    MESSAGE( "Max Species part = " << (int)( (double)particlesMem / 1024./1024.) << " Mo" );
     
     // fieldsMem contains field per species
     int fieldsMem = EMfields->getMemFootPrint();
@@ -249,6 +252,9 @@ int main (int argc, char* argv[])
     double dFieldsMem = (double)fieldsMem / 1024./1024./1024.;
     MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dFieldsMem, &dFieldsMem, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
     MESSAGE( setprecision(3) << "Global Fields part = " << dFieldsMem << " Go" );
+
+    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&fieldsMem, &fieldsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
+    MESSAGE( "Max Fields part = " << (int)( (double)fieldsMem / 1024./1024.) << " Mo" );
 
     // Read value in /proc/pid/status
     //Tools::printMemFootPrint( "End Initialization" );
