@@ -41,7 +41,6 @@ py_profile(pp) {
     PyObject *arglist = PyTuple_GetItem(tuple,0);
     int size = PyObject_Size(arglist);
     if (size != (int)nvariables) {
-        WARNING ("Profile takes "<< size <<" variables but it is crated with " << nvariables);
         string args("");
         for (int i=0; i<size; i++){
             PyObject *arg=PyList_GetItem(arglist,i);
@@ -50,7 +49,7 @@ py_profile(pp) {
             args+=string(PyString_AsString(repr))+" ";
             Py_XDECREF(repr);
         }
-        MESSAGE("Profile vars: "<<args);
+        WARNING ("Profile takes "<< size <<" variables (" << args << ") but it is created with " << nvariables);
     }
     
     

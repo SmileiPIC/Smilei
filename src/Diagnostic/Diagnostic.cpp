@@ -410,6 +410,7 @@ void Diagnostic::initPhases(Params& params, SmileiMPI *smpi) {
     
     unsigned int numPhases=PyTools::nComponents("DiagPhase");
     for (unsigned int n_phase = 0; n_phase < numPhases; n_phase++) {
+        MESSAGE("DiagPhase " << n_phase);
         
         vector<string> kind;
         if (!PyTools::extract("kind",kind,"DiagPhase",n_phase)) {
@@ -424,11 +425,12 @@ void Diagnostic::initPhases(Params& params, SmileiMPI *smpi) {
             phases.fileId = H5Fcreate( file_name.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
             // write version
             H5::attr(phases.fileId, "Version", string(__VERSION));
-            
-            ostringstream groupName("");
-            groupName << "ps" << setw(4) << setfill('0') << n_phase;
-            gidParent = H5::group(phases.fileId, groupName.str());
         }
+        
+        ostringstream groupName("");
+        groupName << "ps" << setw(4) << setfill('0') << n_phase;
+        gidParent = H5::group(phases.fileId, groupName.str());
+
         
         
         for (unsigned int ii=0 ; ii < kind.size(); ii++) {
@@ -494,7 +496,7 @@ void Diagnostic::initPhases(Params& params, SmileiMPI *smpi) {
                     PyTools::extract("deflate",deflate,"DiagPhase",n_phase);
                     
                     H5Pset_deflate(pid, std::min((unsigned int)9,deflate));
-                    
+                    HEREIAM("");
                     diagPhase->dataId = H5Dcreate (gidParent, kind[ii].c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, pid,H5P_DEFAULT);
                     H5Pclose (pid);
                     H5Sclose (sid);

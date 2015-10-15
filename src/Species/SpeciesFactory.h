@@ -26,10 +26,19 @@ public:
         unsigned int tot_species_number = PyTools::nComponents("Species");
         for (unsigned int ispec = 0; ispec < tot_species_number; ispec++) {
             
+            std::string species_type("");
+            PyTools::extract("species_type",species_type,"Species",ispec);
+            if(species_type.empty()) {
+                std::ostringstream name("");
+                name << "species" << std::setfill('0') << std::setw(log10(tot_species_number)+1) << ispec;
+                species_type=name.str();
+                MESSAGE("For species #" << ispec << ", parameter species_type will be " << species_type);
+            }
+            
             // Extract type of species dynamics from namelist
             std::string dynamics_type = "norm"; // default value
             if (!PyTools::extract("dynamics_type", dynamics_type ,"Species",ispec) )
-                WARNING("For species #" << ispec << ", dynamics_type not defined: assumed = 'norm'.");
+                WARNING("For species '" << species_type << "' dynamics_type not defined: assumed = 'norm'.");
             
             // Create species object
             Species * thisSpecies=NULL;
@@ -43,23 +52,18 @@ public:
                 ERROR("For species #" << ispec << ", dynamics_type must be either 'norm' or 'rrll'")
             }
             
+            thisSpecies->species_type = species_type;
             thisSpecies->dynamics_type = dynamics_type;
             thisSpecies->speciesNumber = ispec;
             
             // Extract various parameters from the namelist
-            PyTools::extract("species_type",thisSpecies->species_type,"Species",ispec);
-            if(thisSpecies->species_type.empty()) {
-                std::ostringstream name("");
-                name << "species" << std::setfill('0') << std::setw(log10(tot_species_number)+1) << ispec;
-                thisSpecies->species_type=name.str();
-                MESSAGE("For species #" << ispec << ", parameter species_type will be " << thisSpecies->species_type);
-            }
+            
             
             PyTools::extract("initPosition_type",thisSpecies->initPosition_type ,"Species",ispec);
             if (thisSpecies->initPosition_type.empty()) {
-                ERROR("For species #" << ispec << " empty initPosition_type");
+                ERROR("For species '" << species_type << "' empty initPosition_type");
             } else if ( (thisSpecies->initPosition_type!="regular")&&(thisSpecies->initPosition_type!="random") ) {
-                ERROR("For species #" << ispec << " bad definition of initPosition_type " << thisSpecies->initPosition_type);
+                ERROR("For species '" << species_type << "' bad definition of initPosition_type " << thisSpecies->initPosition_type);
             }
             
             PyTools::extract("initMomentum_type",thisSpecies->initMomentum_type ,"Species",ispec);
@@ -69,36 +73,36 @@ public:
             if (   (thisSpecies->initMomentum_type!="cold")
                 && (thisSpecies->initMomentum_type!="maxwell-juettner")
                 && (thisSpecies->initMomentum_type!="rectangular") ) {
-                ERROR("For species #" << ispec << " bad definition of initMomentum_type");
+                ERROR("For species '" << species_type << "' bad definition of initMomentum_type");
             }
             
             PyTools::extract("c_part_max",thisSpecies->c_part_max,"Species",ispec);
             
             if( !PyTools::extract("mass",thisSpecies->mass ,"Species",ispec) ) {
-                ERROR("For species #" << ispec << ", mass not defined.");
+                ERROR("For species '" << species_type << "' mass not defined.");
             }
             
             PyTools::extract("time_frozen",thisSpecies->time_frozen ,"Species",ispec);
             if (thisSpecies->time_frozen > 0 && thisSpecies->initMomentum_type!="cold") {
-                WARNING("For species #" << ispec << " possible conflict between time-frozen & not cold initialization");
+                WARNING("For species '" << species_type << "' possible conflict between time-frozen & not cold initialization");
             }
             
             PyTools::extract("radiating",thisSpecies->radiating ,"Species",ispec);
             if (thisSpecies->dynamics_type=="rrll" && (!thisSpecies->radiating)) {
-                WARNING("For species #" << ispec << ", dynamics_type='rrll' forcing radiating=True");
+                WARNING("For species '" << species_type << "', dynamics_type='rrll' forcing radiating=True");
                 thisSpecies->radiating=true;
             }
             
             if (!PyTools::extract("bc_part_type_west",thisSpecies->bc_part_type_west,"Species",ispec) )
-                ERROR("For species #" << ispec << ", bc_part_type_west not defined");
+                ERROR("For species '" << species_type << "', bc_part_type_west not defined");
             if (!PyTools::extract("bc_part_type_east",thisSpecies->bc_part_type_east,"Species",ispec) )
-                ERROR("For species #" << ispec << ", bc_part_type_east not defined");
+                ERROR("For species '" << species_type << "', bc_part_type_east not defined");
             
             if (params.nDim_particle>1) {
                 if (!PyTools::extract("bc_part_type_south",thisSpecies->bc_part_type_south,"Species",ispec) )
-                    ERROR("For species #" << ispec << ", bc_part_type_south not defined");
+                    ERROR("For species '" << species_type << "', bc_part_type_south not defined");
                 if (!PyTools::extract("bc_part_type_north",thisSpecies->bc_part_type_north,"Species",ispec) )
-                    ERROR("For species #" << ispec << ", bc_part_type_north not defined");
+                    ERROR("For species '" << species_type << "', bc_part_type_north not defined");
             }
             
             // for thermalizing BCs on particles check if thermT is correctly defined
@@ -127,7 +131,7 @@ public:
             PyTools::extract("ionization_model", thisSpecies->ionization_model, "Species",ispec);
             
             if (thisSpecies->ionization_model != "none" && !PyTools::extract("atomic_number", thisSpecies->atomic_number, "Species",ispec)) {
-                ERROR("For species #" << ispec << ", `atomic_number` not found => required for the ionization model .");
+                ERROR("For species '" << species_type << "', `atomic_number` not found => required for the ionization model .");
             }
             
             // Species geometry
@@ -138,20 +142,20 @@ public:
             PyObject *profile1, *profile2, *profile3;
             ok1 = PyTools::extract_pyProfile("nb_density"    , profile1, "Species", ispec);
             ok2 = PyTools::extract_pyProfile("charge_density", profile1, "Species", ispec);
-            if(  ok1 &&  ok2 ) ERROR("For species #" << ispec << ", cannot define both `nb_density` and `charge_density`.");
-            if( !ok1 && !ok2 ) ERROR("For species #" << ispec << ", must define `nb_density` or `charge_density`.");
+            if(  ok1 &&  ok2 ) ERROR("For species '" << species_type << "', cannot define both `nb_density` and `charge_density`.");
+            if( !ok1 && !ok2 ) ERROR("For species '" << species_type << "', must define `nb_density` or `charge_density`.");
             if( ok1 ) thisSpecies->densityProfileType = "nb";
             if( ok2 ) thisSpecies->densityProfileType = "charge";
             thisSpecies->densityProfile = new Profile(profile1, params.nDim_particle);
             
             // Number of particles per cell
             if( !PyTools::extract_pyProfile("n_part_per_cell", profile1, "Species", ispec))
-                ERROR("For species #" << ispec << ", n_part_per_cell not found or not understood");
+                ERROR("For species '" << species_type << "', n_part_per_cell not found or not understood");
             thisSpecies->ppcProfile = new Profile(profile1, params.nDim_particle);
             
             // Charge
             if( !PyTools::extract_pyProfile("charge", profile1, "Species", ispec))
-                ERROR("For species #" << ispec << ", charge not found or not understood");
+                ERROR("For species '" << species_type << "', charge not found or not understood");
             thisSpecies->chargeProfile = new Profile(profile1, params.nDim_particle);
             
             // Mean velocity
@@ -200,13 +204,13 @@ public:
             
             // Verify they don't ionize
             if (thisSpecies->ionization_model!="none" && thisSpecies->isTest) {
-                ERROR("For species #" << ispec << ", disabled for now : test & ionized");
+                ERROR("For species '" << species_type << "', disabled for now : test & ionized");
             }
             
             // Define the number of timesteps for dumping test particles
             if (PyTools::extract("dump_every",thisSpecies->test_dump_every ,"Species",ispec)) {
                 if (thisSpecies->test_dump_every>1 && !thisSpecies->isTest)
-                    WARNING("For species #" << ispec << ", dump_every discarded because not test particles");
+                    WARNING("For species '" << species_type << "', dump_every discarded because not test particles");
             }
             
             // Create the particles
@@ -260,11 +264,11 @@ public:
             // \todo pay attention to restart
             thisSpecies->Ionize = IonizationFactory::create( params, thisSpecies);
             if (thisSpecies->Ionize) {
-                DEBUG("Species " << thisSpecies->species_type << " can be ionized!");
+                DEBUG("Species " << species_type << " can be ionized!");
             }
 
-            if (thisSpecies->Ionize && thisSpecies->species_type=="electron") {
-                ERROR("Species " << thisSpecies->species_type << " can be ionized but species_type='electron'");
+            if (thisSpecies->Ionize && species_type=="electron") {
+                ERROR("Species " << species_type << " can be ionized but species_type='electron'");
             }
 
             // define limits for BC and functions applied and for domain decomposition
@@ -276,7 +280,7 @@ public:
             // Print info
             unsigned int nPart = thisSpecies->getNbrOfParticles();
             MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&nPart, &nPart, 1, MPI_UNSIGNED, MPI_SUM, 0, MPI_COMM_WORLD);
-            MESSAGE("Species " << ispec << " (" << thisSpecies->species_type << ") created with " << nPart << " particles" );
+            MESSAGE("Species " << ispec << " (" << species_type << ") created with " << nPart << " particles" );
         }
         
         // we cycle again to fix electron species for ionizable species
