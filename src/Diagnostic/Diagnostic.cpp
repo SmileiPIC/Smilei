@@ -410,7 +410,7 @@ void Diagnostic::initPhases(Params& params, SmileiMPI *smpi) {
     
     unsigned int numPhases=PyTools::nComponents("DiagPhase");
     for (unsigned int n_phase = 0; n_phase < numPhases; n_phase++) {
-        MESSAGE("DiagPhase " << n_phase);
+        MESSAGE(1,"Activating DiagPhase " << n_phase);
         
         vector<string> kind;
         if (!PyTools::extract("kind",kind,"DiagPhase",n_phase)) {
