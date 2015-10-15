@@ -529,6 +529,7 @@ void Diagnostic::initPhases(Params& params, SmileiMPI *smpi) {
             H5Gclose(gidParent);
         }
     }
+    MESSAGE(phases.vecDiagPhase.size());
 }
 
 
