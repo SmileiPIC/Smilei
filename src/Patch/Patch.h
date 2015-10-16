@@ -196,7 +196,7 @@ protected:
     unsigned int hindex;
 
 private:
-
+    int nDim_fields_;
 
     int nbNeighbors_;
 

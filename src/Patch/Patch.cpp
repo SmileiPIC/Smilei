@@ -31,9 +31,13 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 #ifdef _DEBUGPATCH
 	std::cout << smpi->getRank() << ", mypatch is : " << hindex << std::endl;        
 #endif
+	//int nDims = params.nDim_field;
+        nDim_fields_ = params.nDim_field;
+        int nDims = 2;
+        Pcoordinates.resize(nDims);
         if ( params.geometry == "1d3v" ) {
-            Pcoordinates.resize(1);
             Pcoordinates[0] = hindex;
+            Pcoordinates[1] = 0;
 	    MPI_neighborhood_.resize(3);
 	    patch_neighborhood_.resize(3);
         }
@@ -57,12 +61,12 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 
 	//std::cout << "Coordonnées de " << ipatch << " : " << Pcoordinates[0] << " " << Pcoordinates[1] << std::endl;
 	nbNeighbors_ = 2;
-	neighbor_.resize(params.nDim_field);
-	for ( int iDim = 0 ; iDim < params.nDim_field ; iDim++ ) {
+	neighbor_.resize(nDims);
+	for ( int iDim = 0 ; iDim < nDims ; iDim++ ) {
 	    neighbor_[iDim].resize(2,MPI_PROC_NULL);
 	}
-	MPI_neighbor_.resize(params.nDim_field);
-	for ( int iDim = 0 ; iDim < params.nDim_field ; iDim++ ) {
+	MPI_neighbor_.resize(nDims);
+	for ( int iDim = 0 ; iDim < nDims ; iDim++ ) {
 	    MPI_neighbor_[iDim].resize(2,MPI_PROC_NULL);
 	}
 
@@ -85,11 +89,18 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 	neighbor_[1][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
 
 
-        patch_neighborhood_[1] = neighbor_[1][0];
-        patch_neighborhood_[3] = neighbor_[0][0];
-        patch_neighborhood_[4] = hindex;
-        patch_neighborhood_[5] = neighbor_[0][1];
-        patch_neighborhood_[7] = neighbor_[1][1];
+	if ( params.geometry == "2d3v" ) {
+            patch_neighborhood_[1] = neighbor_[1][0];
+	    patch_neighborhood_[3] = neighbor_[0][0];
+	    patch_neighborhood_[4] = hindex;
+	    patch_neighborhood_[5] = neighbor_[0][1];
+	    patch_neighborhood_[7] = neighbor_[1][1];
+	}
+	else if ( params.geometry == "1d3v" ) {
+	    patch_neighborhood_[0] = neighbor_[0][0];
+	    patch_neighborhood_[1] = hindex;
+	    patch_neighborhood_[2] = neighbor_[0][1];
+	}
 
 	updateMPIenv(smpi);
 
@@ -136,8 +147,8 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 
 void Patch::updateMPIenv(SmileiMPI* smpi)
 {
-	for ( int z = 0 ; z < 1+2*(2 == 3) ; z++ ) {
-	    for ( int y = 0 ; y < 1+2*(2 >= 2) ; y++ ) {
+	for ( int z = 0 ; z < 1+2*(nDim_fields_ == 3) ; z++ ) {
+	    for ( int y = 0 ; y < 1+2*(nDim_fields_ >= 2) ; y++ ) {
 	        for ( int x = 0 ; x < 3 ; x++ ) {
 		    MPI_neighborhood_[z*9+y*3+x] = smpi->hrank(patch_neighborhood_[z*9+y*3+x]);
                 }
@@ -155,19 +166,21 @@ void Patch::updateMPIenv(SmileiMPI* smpi)
 #endif
 
 	// Redundant temporary solution, to introduce, MPI-Patched features
-	MPI_neighbor_[0][0] = MPI_neighborhood_[3];
-	MPI_neighbor_[0][1] = MPI_neighborhood_[5];
-	MPI_neighbor_[1][0] = MPI_neighborhood_[1];
-	MPI_neighbor_[1][1] = MPI_neighborhood_[7];
-	MPI_corner_neighbor_[0][0] = MPI_neighborhood_[0];
-	MPI_corner_neighbor_[0][1] = MPI_neighborhood_[6];
-	MPI_corner_neighbor_[1][0] = MPI_neighborhood_[2];
-	MPI_corner_neighbor_[1][1] = MPI_neighborhood_[8];
+	if (nDim_fields_==2) {
+	    MPI_neighbor_[0][0] = MPI_neighborhood_[3];
+	    MPI_neighbor_[0][1] = MPI_neighborhood_[5];
+	    MPI_neighbor_[1][0] = MPI_neighborhood_[1];
+	    MPI_neighbor_[1][1] = MPI_neighborhood_[7];
+        }
+	else if (nDim_fields_==1) {
+	    MPI_neighbor_[0][0] = MPI_neighborhood_[0];
+	    MPI_neighbor_[0][1] = MPI_neighborhood_[2];
+        }
 
 #ifdef _PATCH_DEBUG
-	cout << "\n\tMPI Corner decomp : " << MPI_corner_neighbor_[0][1] << "\t" << MPI_neighbor_[1][1]  << "\t" << MPI_corner_neighbor_[1][1] << endl;
+	cout << "\n\tMPI Corner decomp : " << "MPI_COMM_NULL" << "\t" << MPI_neighbor_[1][1]  << "\t" << "MPI_COMM_NULL" << endl;
 	cout << "\tMPI Corner decomp : " << MPI_neighbor_[0][0] << "\t" << smpi->getRank() << "\t" << MPI_neighbor_[0][1] << endl;
-	cout << "\tMPI Corner decomp : " << MPI_corner_neighbor_[0][0] << "\t" << MPI_neighbor_[1][0]  << "\t" << MPI_corner_neighbor_[1][0] << endl;
+	cout << "\tMPI Corner decomp : " << "MPI_COMM_NULL" << "\t" << MPI_neighbor_[1][0]  << "\t" << "MPI_COMM_NULL" << endl;
 #endif
 
 }
