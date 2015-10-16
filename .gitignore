@@ -8,7 +8,7 @@ run*
 Run*
 RUN*
 Validation*
-src/smilei
+*smilei
 *.aux
 *.dvi
 *.log

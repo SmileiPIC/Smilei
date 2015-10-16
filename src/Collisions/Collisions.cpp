@@ -164,7 +164,58 @@ vector<Collisions*> Collisions::create(Params& params, vector<Species*>& vecSpec
 // Declare other static variables here
 bool               Collisions::debye_length_required;
 vector<double>     Collisions::debye_length_squared;
-
+constexpr const double* Collisions::ionizationEnergy[];
+constexpr const double* Collisions::bindingEnergy[];
+constexpr double Collisions::I_1[], Collisions::I_2[], Collisions::I_3[], Collisions::I_4[],
+	Collisions::I_5[], Collisions::I_6[], Collisions::I_7[], Collisions::I_8[],
+	Collisions::I_9[], Collisions::I_10[], Collisions::I_11[], Collisions::I_12[],
+	Collisions::I_13[], Collisions::I_14[], Collisions::I_15[], Collisions::I_16[],
+	Collisions::I_17[], Collisions::I_18[], Collisions::I_19[], Collisions::I_20[],
+	Collisions::I_21[], Collisions::I_22[], Collisions::I_23[], Collisions::I_24[],
+	Collisions::I_25[], Collisions::I_26[], Collisions::I_27[], Collisions::I_28[],
+	Collisions::I_29[], Collisions::I_30[], Collisions::I_31[], Collisions::I_32[],
+	Collisions::I_33[], Collisions::I_34[], Collisions::I_35[], Collisions::I_36[],
+	Collisions::I_37[], Collisions::I_38[], Collisions::I_39[], Collisions::I_40[],
+	Collisions::I_41[], Collisions::I_42[], Collisions::I_43[], Collisions::I_44[],
+	Collisions::I_45[], Collisions::I_46[], Collisions::I_47[], Collisions::I_48[],
+	Collisions::I_49[], Collisions::I_50[], Collisions::I_51[], Collisions::I_52[],
+	Collisions::I_53[], Collisions::I_54[], Collisions::I_55[], Collisions::I_56[],
+	Collisions::I_57[], Collisions::I_58[], Collisions::I_59[], Collisions::I_60[],
+	Collisions::I_61[], Collisions::I_62[], Collisions::I_63[], Collisions::I_64[],
+	Collisions::I_65[], Collisions::I_66[], Collisions::I_67[], Collisions::I_68[],
+	Collisions::I_69[], Collisions::I_70[], Collisions::I_71[], Collisions::I_72[],
+	Collisions::I_73[], Collisions::I_74[], Collisions::I_75[], Collisions::I_76[],
+	Collisions::I_77[], Collisions::I_78[], Collisions::I_79[], Collisions::I_80[],
+	Collisions::I_81[], Collisions::I_82[], Collisions::I_83[], Collisions::I_84[],
+	Collisions::I_85[], Collisions::I_86[], Collisions::I_87[], Collisions::I_88[],
+	Collisions::I_89[], Collisions::I_90[], Collisions::I_91[], Collisions::I_92[],
+	Collisions::I_93[], Collisions::I_94[], Collisions::I_95[], Collisions::I_96[],
+	Collisions::I_97[], Collisions::I_98[], Collisions::I_99[], Collisions::I_100[];
+constexpr double Collisions::B_1[], Collisions::B_2[], Collisions::B_3[], Collisions::B_4[],
+	Collisions::B_5[], Collisions::B_6[], Collisions::B_7[], Collisions::B_8[],
+	Collisions::B_9[], Collisions::B_10[], Collisions::B_11[], Collisions::B_12[],
+	Collisions::B_13[], Collisions::B_14[], Collisions::B_15[], Collisions::B_16[],
+	Collisions::B_17[], Collisions::B_18[], Collisions::B_19[], Collisions::B_20[],
+	Collisions::B_21[], Collisions::B_22[], Collisions::B_23[], Collisions::B_24[],
+	Collisions::B_25[], Collisions::B_26[], Collisions::B_27[], Collisions::B_28[],
+	Collisions::B_29[], Collisions::B_30[], Collisions::B_31[], Collisions::B_32[],
+	Collisions::B_33[], Collisions::B_34[], Collisions::B_35[], Collisions::B_36[],
+	Collisions::B_37[], Collisions::B_38[], Collisions::B_39[], Collisions::B_40[],
+	Collisions::B_41[], Collisions::B_42[], Collisions::B_43[], Collisions::B_44[],
+	Collisions::B_45[], Collisions::B_46[], Collisions::B_47[], Collisions::B_48[],
+	Collisions::B_49[], Collisions::B_50[], Collisions::B_51[], Collisions::B_52[],
+	Collisions::B_53[], Collisions::B_54[], Collisions::B_55[], Collisions::B_56[],
+	Collisions::B_57[], Collisions::B_58[], Collisions::B_59[], Collisions::B_60[],
+	Collisions::B_61[], Collisions::B_62[], Collisions::B_63[], Collisions::B_64[],
+	Collisions::B_65[], Collisions::B_66[], Collisions::B_67[], Collisions::B_68[],
+	Collisions::B_69[], Collisions::B_70[], Collisions::B_71[], Collisions::B_72[],
+	Collisions::B_73[], Collisions::B_74[], Collisions::B_75[], Collisions::B_76[],
+	Collisions::B_77[], Collisions::B_78[], Collisions::B_79[], Collisions::B_80[],
+	Collisions::B_81[], Collisions::B_82[], Collisions::B_83[], Collisions::B_84[],
+	Collisions::B_85[], Collisions::B_86[], Collisions::B_87[], Collisions::B_88[],
+	Collisions::B_89[], Collisions::B_90[], Collisions::B_91[], Collisions::B_92[],
+	Collisions::B_93[], Collisions::B_94[], Collisions::B_95[], Collisions::B_96[],
+	Collisions::B_97[], Collisions::B_98[], Collisions::B_99[], Collisions::B_100[];
 
 
 // Calculates the debye length squared in each cluster
@@ -589,6 +640,15 @@ inline double Collisions::cos_chi(double s)
     
 }
 
+
+// Gets the k-th binding energy in any neutral or ionized atom with atomic number Z and charge Zstar
+double Collisions::binding_energy(int Z, int Zstar, int k) {
+    const double * I = ionizationEnergy[Z-1]; // table of ionization energies for this atom
+    const double * B = bindingEnergy   [Z-1]; // table of neutral binding energies for this atom
+    
+    // We use the formula by Carlson et al., At. Data Nucl. Data Tables 2, 63 (1970)
+    return I[Zstar] - B[Z-Zstar] + B[k];
+}
 
 
 
