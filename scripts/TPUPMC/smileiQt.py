@@ -348,7 +348,7 @@ class smileiQtPlot(QWidget):
                     cax = divider.new_horizontal(size="2%", pad=0.05)
                     self.fig.add_axes(cax)
 
-                    im=ax.imshow([[0]],extent=node._v_parent._v_attrs.extents.reshape(4).tolist(),aspect='auto',origin='lower')
+                    im=ax.imshow([[0]],extent=node._v_attrs.extents.reshape(4).tolist(),aspect='auto',origin='lower')
                     im.set_interpolation('nearest')
                     cb=plt.colorbar(im, cax=cax)
 
