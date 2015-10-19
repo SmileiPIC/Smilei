@@ -85,9 +85,6 @@ public:
     //! Creator for LaserParams
     LaserParams(Params&);
 
-    //! initial number of laser pulses
-    unsigned int n_laser;
-    
     //! laser parameters
     std::vector<LaserStructure> laser_param;
     

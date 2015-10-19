@@ -20,6 +20,7 @@
 
 #include <Python.h>
 #include <vector>
+#include <sstream>
 #include "Tools.h"
 
 //! tools to query python nemlist and get back C++ values and vectors
@@ -301,7 +302,11 @@ public:
         if (py_obj) {
             if (!PyTuple_Check(py_obj) && !PyList_Check(py_obj)) {
                 retvec.push_back(py_obj);
-                WARNING(name << " should be a list or tuple, not a scalar : fix it");
+                std::ostringstream ss("");
+                if (component!="") {
+                    ss << "In " << component << " #" << nComponent << " ";
+                }
+                ERROR( ss.str() << name << " should be a list not a scalar: use [...]");
             } else {
                 PyObject* seq = PySequence_Fast(py_obj, "expected a sequence");
                 int len = PySequence_Size(py_obj);
