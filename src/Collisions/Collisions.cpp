@@ -20,7 +20,9 @@ Collisions::Collisions(SmileiMPI* smpi,
                        double coulomb_log, 
                        bool intra_collisions,
                        int debug_every,
-                       unsigned int nbins) :
+                       unsigned int nbins,
+                       int Z_ionization,
+                       double wavelength_SI    ) :
 n_collisions    (n_collisions    ),
 species_group1  (species_group1  ),
 species_group2  (species_group2  ),
@@ -67,6 +69,12 @@ start           (0               )
         if (smpi->getRank()!=smpi->getSize()-1) MPI_Send( &end, 1, MPI_INTEGER, smpi->getRank()+1, 0, MPI_COMM_WORLD );
     }
     
+    // Handle ionization
+    if( Z_ionization>0 ) { // if ionizing collisions
+        
+        ionize = new CollisionalIonization(Z_ionization, wavelength_SI);
+        
+    }
 }
 
 Collisions::~Collisions()
@@ -80,14 +88,20 @@ vector<Collisions*> Collisions::create(Params& params, vector<Species*>& vecSpec
     vector<Collisions*> vecCollisions;
     
     vector<string> sg1, sg2;
-    vector<unsigned int> sgroup1, sgroup2;
+    vector<vector<unsigned int>> sgroup;
     double clog;
-    bool intra, debye_length_required = false;
-    int debug_every;
+    bool intra, debye_length_required = false, ionizing;
+    int debug_every, Z, Z0, Z1;
     ostringstream mystream;
+    Species *s0, *s;
+    
+    // Needs wavelength_SI to be defined
+    unsigned int numcollisions=PyTools::nComponents("Collisions");
+    if (numcollisions > 0)
+        if (params.wavelength_SI <= 0.)
+            ERROR("The parameter `wavelength_SI` needs to be defined and positive in order to compute collisions");
     
     // Loop over each binary collisions group and parse info
-    unsigned int numcollisions=PyTools::nComponents("Collisions");
     for (unsigned int n_collisions = 0; n_collisions < numcollisions; n_collisions++) {
         
         MESSAGE("Parameters for collisions #" << n_collisions << " :");
@@ -100,21 +114,21 @@ vector<Collisions*> Collisions::create(Params& params, vector<Species*>& vecSpec
         PyTools::extract("species2",sg2,"Collisions",n_collisions);
         
         // Obtain the lists of species numbers from the lists of species names.
-        sgroup1 =params.FindSpecies(vecSpecies, sg1);
-        sgroup2 = params.FindSpecies(vecSpecies, sg2);
+        sgroup.resize(2);
+        sgroup[0] = params.FindSpecies(vecSpecies, sg1);
+        sgroup[1] = params.FindSpecies(vecSpecies, sg2);
         
-        // Each group of species sgroup1 and sgroup2 must not be empty
-        if (sgroup1.size()==0) ERROR("No valid `species1` requested in collisions #" << n_collisions);
-        if (sgroup2.size()==0) ERROR("No valid `species2` requested in collisions #" << n_collisions);
+        // Each group of species sgroup[0] and sgroup[1] must not be empty
+        if (sgroup[0].size()==0) ERROR("In collisions #" << n_collisions << ": No valid `species1`");
+        if (sgroup[1].size()==0) ERROR("In collisions #" << n_collisions << ": No valid `species2`");
         
-        // sgroup1 and sgroup2 can be equal, but cannot have common species if they are not equal
-        if (sgroup1 != sgroup2) {
-            for (unsigned int i1=0; i1<sgroup1.size(); i1++) {
-                for (unsigned int i2=0; i2<sgroup2.size(); i2++) {
-                    if (sgroup1[i1] == sgroup2[i2])
-                        ERROR("Unauthorized species (#" << sgroup1[i1]
-                              << ") in collisions #" << n_collisions
-                              << " (inter-collisions must not have a species colliding with itself)");
+        // sgroup[0] and sgroup[1] can be equal, but cannot have common species if they are not equal
+        if (sgroup[0] != sgroup[1]) {
+            for (unsigned int i0=0; i0<sgroup[0].size(); i0++) {
+                for (unsigned int i1=0; i1<sgroup[1].size(); i1++) {
+                    if (sgroup[0][i0] == sgroup[1][i1])
+                        ERROR("In collisions #" << n_collisions << ": species #" << sgroup[0][i0]
+                            << " cannot collide with itself");
                 }
             }
             intra = false;
@@ -131,28 +145,59 @@ vector<Collisions*> Collisions::create(Params& params, vector<Species*>& vecSpec
         debug_every = 0; // default
         PyTools::extract("debug_every",debug_every,"Collisions",n_collisions);
         
+        // Collisional ionization
+        ionizing = false; Z = 0; // default
+        PyTools::extract("ionizing",ionizing,"Collisions",n_collisions);
+        if( ionizing ) {
+            if( intra )
+                ERROR("In collisions #" << n_collisions << ": cannot ionize with intra-collisions");
+            
+            for (int g=0; g<2; g++) { // do sgroup[0], then sgroup[1]
+                s0 = vecSpecies[sgroup[g][0]]; // first species of this group
+                for (unsigned int i=1; i<sgroup[g].size(); i++) { // loop other species of same group
+                    s = vecSpecies[sgroup[g][i]]; // current species
+                    if( s->mass != s0->mass )
+                        ERROR("In collisions #" << n_collisions << ": species in group `species"
+                            << g+1 << "` must all have same masses for ionization");
+                    
+                    if( s->atomic_number != s0->atomic_number ) {
+                        if( s->atomic_number * s0->atomic_number ==0 ) {
+                            ERROR("In collisions #" << n_collisions << ": species in group `species"
+                            << g+1 << "` cannot be mixed electrons and ions for ionization");
+                        } else {
+                            ERROR("In collisions #" << n_collisions << ": species in group `species"
+                            << g+1 << "` must all have same atomic_number for ionization");
+                        }
+                    }
+                }
+            }
+            // atomic number
+            Z0 = vecSpecies[sgroup[0][0]]->atomic_number;
+            Z1 = vecSpecies[sgroup[1][0]]->atomic_number;
+            Z = (int) ( Z0>Z1 ? Z0 : Z1 );
+        }
+        
         // Print collisions parameters
         mystream.str(""); // clear
-        for (unsigned int rs=0 ; rs<sgroup1.size() ; rs++) mystream << " #" << sgroup1[rs];
-        MESSAGE(1,"First  group of species :" << mystream.str());
+        mystream << "(" << sgroup[0][0];
+        for (unsigned int rs=1 ; rs<sgroup[0].size() ; rs++) mystream << " " << sgroup[0][rs];
+        if( intra ) {
+            MESSAGE(1,"Intra collisions within species " << mystream.str() << ")");
+        } else {
+            mystream << ") and (" << sgroup[1][0];
+            for (unsigned int rs=1 ; rs<sgroup[1].size() ; rs++) mystream << " " << sgroup[1][rs];
+            MESSAGE(1,"Collisions between species " << mystream.str() << ")");
+        }
+        MESSAGE(1,"Coulomb logarithm: " << clog);
+        if( debug_every>0 ) MESSAGE(1,"Debug every " << debug_every << " timesteps");
         mystream.str(""); // clear
-        for (unsigned int rs=0 ; rs<sgroup2.size() ; rs++) mystream << " #" << sgroup2[rs];
-        MESSAGE(1,"Second group of species :" << mystream.str());
-        MESSAGE(1,"Coulomb logarithm       : " << clog);
-        MESSAGE(1,"Intra collisions        : " << (intra?"True":"False"));
-        mystream.str(""); // clear
-        mystream << "Every " << debug_every << " timesteps";
-        MESSAGE(1,"Debug                   : " << (debug_every<=0?"No debug":mystream.str()));
+        if( ionizing>0 ) MESSAGE(1,"Collisional ionization with atomic number "<<Z);
         
         // Add new Collisions objects to vector
-        vecCollisions.push_back( new Collisions(smpi,n_collisions,sgroup1,sgroup2,clog,intra,debug_every, vecSpecies[0]->bmin.size()));
+        vecCollisions.push_back( new Collisions(smpi,n_collisions,sgroup[0],sgroup[1],clog,intra,
+            debug_every, vecSpecies[0]->bmin.size(),Z, params.wavelength_SI) );
         
     }
-    
-    // Needs wavelength_SI to be defined
-    if (numcollisions > 0)
-        if (params.wavelength_SI <= 0.)
-            ERROR("The parameter `wavelength_SI` needs to be defined and positive in order to compute collisions");
     
     // pass the variable "debye_length_required" into the Collision class
     Collisions::debye_length_required = debye_length_required;
@@ -164,59 +209,6 @@ vector<Collisions*> Collisions::create(Params& params, vector<Species*>& vecSpec
 // Declare other static variables here
 bool               Collisions::debye_length_required;
 vector<double>     Collisions::debye_length_squared;
-constexpr const double* Collisions::ionizationEnergy[];
-constexpr const double* Collisions::bindingEnergy[];
-constexpr double Collisions::I_1[], Collisions::I_2[], Collisions::I_3[], Collisions::I_4[],
-	Collisions::I_5[], Collisions::I_6[], Collisions::I_7[], Collisions::I_8[],
-	Collisions::I_9[], Collisions::I_10[], Collisions::I_11[], Collisions::I_12[],
-	Collisions::I_13[], Collisions::I_14[], Collisions::I_15[], Collisions::I_16[],
-	Collisions::I_17[], Collisions::I_18[], Collisions::I_19[], Collisions::I_20[],
-	Collisions::I_21[], Collisions::I_22[], Collisions::I_23[], Collisions::I_24[],
-	Collisions::I_25[], Collisions::I_26[], Collisions::I_27[], Collisions::I_28[],
-	Collisions::I_29[], Collisions::I_30[], Collisions::I_31[], Collisions::I_32[],
-	Collisions::I_33[], Collisions::I_34[], Collisions::I_35[], Collisions::I_36[],
-	Collisions::I_37[], Collisions::I_38[], Collisions::I_39[], Collisions::I_40[],
-	Collisions::I_41[], Collisions::I_42[], Collisions::I_43[], Collisions::I_44[],
-	Collisions::I_45[], Collisions::I_46[], Collisions::I_47[], Collisions::I_48[],
-	Collisions::I_49[], Collisions::I_50[], Collisions::I_51[], Collisions::I_52[],
-	Collisions::I_53[], Collisions::I_54[], Collisions::I_55[], Collisions::I_56[],
-	Collisions::I_57[], Collisions::I_58[], Collisions::I_59[], Collisions::I_60[],
-	Collisions::I_61[], Collisions::I_62[], Collisions::I_63[], Collisions::I_64[],
-	Collisions::I_65[], Collisions::I_66[], Collisions::I_67[], Collisions::I_68[],
-	Collisions::I_69[], Collisions::I_70[], Collisions::I_71[], Collisions::I_72[],
-	Collisions::I_73[], Collisions::I_74[], Collisions::I_75[], Collisions::I_76[],
-	Collisions::I_77[], Collisions::I_78[], Collisions::I_79[], Collisions::I_80[],
-	Collisions::I_81[], Collisions::I_82[], Collisions::I_83[], Collisions::I_84[],
-	Collisions::I_85[], Collisions::I_86[], Collisions::I_87[], Collisions::I_88[],
-	Collisions::I_89[], Collisions::I_90[], Collisions::I_91[], Collisions::I_92[],
-	Collisions::I_93[], Collisions::I_94[], Collisions::I_95[], Collisions::I_96[],
-	Collisions::I_97[], Collisions::I_98[], Collisions::I_99[], Collisions::I_100[];
-constexpr double Collisions::B_1[], Collisions::B_2[], Collisions::B_3[], Collisions::B_4[],
-	Collisions::B_5[], Collisions::B_6[], Collisions::B_7[], Collisions::B_8[],
-	Collisions::B_9[], Collisions::B_10[], Collisions::B_11[], Collisions::B_12[],
-	Collisions::B_13[], Collisions::B_14[], Collisions::B_15[], Collisions::B_16[],
-	Collisions::B_17[], Collisions::B_18[], Collisions::B_19[], Collisions::B_20[],
-	Collisions::B_21[], Collisions::B_22[], Collisions::B_23[], Collisions::B_24[],
-	Collisions::B_25[], Collisions::B_26[], Collisions::B_27[], Collisions::B_28[],
-	Collisions::B_29[], Collisions::B_30[], Collisions::B_31[], Collisions::B_32[],
-	Collisions::B_33[], Collisions::B_34[], Collisions::B_35[], Collisions::B_36[],
-	Collisions::B_37[], Collisions::B_38[], Collisions::B_39[], Collisions::B_40[],
-	Collisions::B_41[], Collisions::B_42[], Collisions::B_43[], Collisions::B_44[],
-	Collisions::B_45[], Collisions::B_46[], Collisions::B_47[], Collisions::B_48[],
-	Collisions::B_49[], Collisions::B_50[], Collisions::B_51[], Collisions::B_52[],
-	Collisions::B_53[], Collisions::B_54[], Collisions::B_55[], Collisions::B_56[],
-	Collisions::B_57[], Collisions::B_58[], Collisions::B_59[], Collisions::B_60[],
-	Collisions::B_61[], Collisions::B_62[], Collisions::B_63[], Collisions::B_64[],
-	Collisions::B_65[], Collisions::B_66[], Collisions::B_67[], Collisions::B_68[],
-	Collisions::B_69[], Collisions::B_70[], Collisions::B_71[], Collisions::B_72[],
-	Collisions::B_73[], Collisions::B_74[], Collisions::B_75[], Collisions::B_76[],
-	Collisions::B_77[], Collisions::B_78[], Collisions::B_79[], Collisions::B_80[],
-	Collisions::B_81[], Collisions::B_82[], Collisions::B_83[], Collisions::B_84[],
-	Collisions::B_85[], Collisions::B_86[], Collisions::B_87[], Collisions::B_88[],
-	Collisions::B_89[], Collisions::B_90[], Collisions::B_91[], Collisions::B_92[],
-	Collisions::B_93[], Collisions::B_94[], Collisions::B_95[], Collisions::B_96[],
-	Collisions::B_97[], Collisions::B_98[], Collisions::B_99[], Collisions::B_100[];
-
 
 // Calculates the debye length squared in each cluster
 // The formula for the inverse debye length squared is sumOverSpecies(density*charge^2/temperature)
@@ -638,16 +630,6 @@ inline double Collisions::cos_chi(double s)
     }
     return 2.*U - 1.;
     
-}
-
-
-// Gets the k-th binding energy in any neutral or ionized atom with atomic number Z and charge Zstar
-double Collisions::binding_energy(int Z, int Zstar, int k) {
-    const double * I = ionizationEnergy[Z-1]; // table of ionization energies for this atom
-    const double * B = bindingEnergy   [Z-1]; // table of neutral binding energies for this atom
-    
-    // We use the formula by Carlson et al., At. Data Nucl. Data Tables 2, 63 (1970)
-    return I[Zstar] - B[Z-Zstar] + B[k];
 }
 
 
