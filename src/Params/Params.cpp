@@ -2,6 +2,7 @@
 #include "Params.h"
 #include "Species.h"
 #include <cmath>
+#include <iomanip>
 #include "Tools.h"
 #include "SmileiMPI.h"
 
@@ -19,6 +20,10 @@ using namespace std;
 Params::Params(SmileiMPI* smpi, std::vector<std::string> namelistsFiles) :
 namelist("")
 {
+    string commandLineStr("");
+    for (int i=0;i<namelistsFiles.size();i++) commandLineStr+=namelistsFiles[i]+" ";
+    MESSAGE(1,commandLineStr);
+    
     //init Python
     PyTools::openPython();
     
@@ -181,11 +186,8 @@ namelist("")
         }
     }
     
-    // 2D Maxwell Solver 
-    if ( geometry == "2d3v" ){
+    // Maxwell Solver 
 	PyTools::extract("maxwell_sol", maxwell_sol);
-    } 
-
 
 
     // ------------------------
@@ -244,7 +246,7 @@ void Params::compute()
     double entered_sim_time = sim_time;
     sim_time = (double)(n_time) * timestep;
     if (sim_time!=entered_sim_time)
-        WARNING("sim_time has been redefined from " << entered_sim_time << " to " << sim_time << " to match nxtimestep");
+        WARNING("sim_time has been redefined from " << entered_sim_time << " to " << sim_time << " to match nxtimestep (" << scientific << setprecision(4) << sim_time - entered_sim_time<< ")" );
     
     
     // grid/cell-related parameters
@@ -260,7 +262,7 @@ void Params::compute()
             double entered_sim_length = sim_length[i];
             sim_length[i]      = (double)(n_space[i])*cell_length[i]; // ensure that nspace = sim_length/cell_length
             if (sim_length[i]!=entered_sim_length)
-                WARNING("sim_length[" << i << "] has been redefined from " << entered_sim_length << " to " << sim_length[i] << " to match n x cell_length");
+                WARNING("sim_length[" << i << "] has been redefined from " << entered_sim_length << " to " << sim_length[i] << " to match n x cell_length (" << scientific << setprecision(4) << sim_length[i]-entered_sim_length <<")");
             cell_volume   *= cell_length[i];
         }
         // create a 3d equivalent of n_space & cell_length
@@ -316,8 +318,7 @@ void Params::print()
 {
     // Numerical parameters
     // ---------------------
-    MESSAGE("Numerical parameters");
-    MESSAGE(1,"Geometry : " << geometry)
+    TITLE("Geometry: " << geometry);
     MESSAGE(1,"(nDim_particle, nDim_field) : (" << nDim_particle << ", "<< nDim_field << ")");
     MESSAGE(1,"Interpolation_order : " <<  interpolation_order);
     MESSAGE(1,"(res_time, sim_time) : (" << res_time << ", " << sim_time << ")");

@@ -37,7 +37,6 @@ shift
 # Next argument, if exists, is the outdir 
 outdir=`dirname $nml`/$base # by default, the outdir is same as namelist
 if [ "$#" -gt 0 ]; then
-outdir=`dirname $nml`/$base # by default, the outdir is same as namelist
   outdir=$1/$base # otherwise, provided as argument
   shift
 fi
