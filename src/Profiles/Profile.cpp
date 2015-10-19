@@ -28,7 +28,7 @@ py_profile(pp) {
     DEBUG(string(PyString_AsString(repr)));
     Py_XDECREF(repr);
 
-    
+    // here we check how the profiles looks like
     repr=PyObject_Str(py_profile);
     DEBUG(string(PyString_AsString(repr)));
     Py_XDECREF(repr);

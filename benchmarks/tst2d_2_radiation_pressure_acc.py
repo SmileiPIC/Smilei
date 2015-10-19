@@ -118,7 +118,7 @@ Species(
 	mass = 1.0,
 	charge = -1.0,
 	nb_density = trapezoidal(100.0,xvacuum=l0,xplateau=0.44*l0),
-	temperature = 0.001,
+	temperature = [0.001],
 	bc_part_type_west = 'refl',
 	bc_part_type_east = 'refl',
 	bc_part_type_south = 'none',
