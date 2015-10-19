@@ -19,14 +19,13 @@ class ElectroMagnBC_Factory {
 public:
     
     static std::vector<ElectroMagnBC*> create(Params& params, LaserParams &laser_params) {
-        HEREIAM(params.geometry);
+
         std::vector<ElectroMagnBC*> emBoundCond;
         
         // -----------------
         // x direction: all geometries
         // -----------------
         for (unsigned int i=0;i<2;i++) {
-            HEREIAM(params.bc_em_type_x[i]);
             // reflective bcs
             if ( params.bc_em_type_x[i] == "periodic" ) {
                 emBoundCond.push_back(NULL);
@@ -48,10 +47,8 @@ public:
         // -----------------
         // y direction: 2d3v and 3d3v
         // -----------------
-        if ( params.geometry == "2d3v" || params.geometry == "3d3v") {
-            HEREIAM("");
+        if ( params.nDim_field > 1 ) {
             for (unsigned int i=0;i<2;i++) {
-                HEREIAM(params.bc_em_type_y[i]);
                 if ( params.bc_em_type_x[i] == "periodic" ) {
                     emBoundCond.push_back(NULL);
                 }
@@ -72,12 +69,15 @@ public:
         // -----------------
         // z direction: 3d3v
         // -----------------
-        if ( params.geometry == "3d3v") {
+        if ( params.nDim_field > 1 ) {
             //Write here the 3d part...
         }
         
-        HEREIAM(emBoundCond.size());
-
+        // check if everything went fine
+        if (emBoundCond.size() != 2*params.nDim_field) {
+            ERROR("Coldn't create the right number of ElectroMagnBC");
+        }
+        
         return emBoundCond;
     }
     
