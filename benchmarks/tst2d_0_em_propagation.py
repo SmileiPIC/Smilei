@@ -72,9 +72,9 @@ Laser(
 	angle=20.0, 
 	delta=0.0,              
 	time_profile = 'sin2',
-	double_params = 5.*t0,
+	double_params = [5.*t0],
 	transv_profile = 'focused',
-	double_params_transv = 5.0*l0
+	double_params_transv = [5.0*l0]
 )
 
 # ---------------------

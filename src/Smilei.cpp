@@ -59,10 +59,6 @@ int main (int argc, char* argv[])
     // Simulation Initialization
     // ------------------------- 
     
-    // Check for namelists (input files)
-    vector<string> namelists(argv + 1, argv + argc);
-    if (namelists.size()==0) ERROR("No namelists given!");
-    
     // Send information on current simulation
     MESSAGE("                   _            _");
     MESSAGE(" ___           _  | |        _  \\ \\    ");
@@ -72,6 +68,10 @@ int main (int argc, char* argv[])
     MESSAGE("                                /_/    ");
     
     TITLE("Input data info");
+    
+    // Check for namelists (input files)
+    vector<string> namelists(argv + 1, argv + argc);
+    if (namelists.size()==0) ERROR("No namelists given!");
     
     // Read simulation & diagnostics parameters
     Params params(smpiData,namelists);

@@ -142,7 +142,7 @@ fieldsToDump = ('Ex','Ey','Ez','By_m','Bz_m');
 #
 DiagPhase(
 	every	= every,
- 	kind    = 'xpx',
+ 	kind    = ['xpx'],
  	species = ['eon1','eon2'],
  	first = [0., 0., 50],
  	second = [-0.4, 0.4, 100],

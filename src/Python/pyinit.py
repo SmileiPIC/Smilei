@@ -186,6 +186,7 @@ timestep = None
 cell_length = []
 sim_time = None
 sim_length = []
+maxwell_sol = 'Yee'
 bc_em_type_x = []
 bc_em_type_y = []
 time_fields_frozen = 0.0

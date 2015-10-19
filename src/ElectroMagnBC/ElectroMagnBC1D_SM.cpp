@@ -39,17 +39,19 @@ ElectroMagnBC1D_SM::~ElectroMagnBC1D_SM()
 
 void ElectroMagnBC1D_SM::save_fields_BC1D(Field* my_field) {
     Field1D* field1D=static_cast<Field1D*>(my_field);
-    if (field1D->name=="Bz"){
-        //MESSAGE(" BC : " << field1D->name)
-        Bz_xvalmin=(*field1D)(0);
-        Bz_xvalmax=(*field1D)(field1D->dims()[0]-1);
-        //By_xvalmin = 0.;
-        //By_xvalmax = 0.;
-    }
+    // Bx^(p) is not saved as it is defined on the primal grid and thus can be computed
+    // we save only the field By and Bz that are computed on the dual grid
+    
     if (field1D->name=="By"){
         By_xvalmin=(*field1D)(0);
         By_xvalmax=(*field1D)(field1D->dims()[0]-1);
     }
+    
+    if (field1D->name=="Bz"){
+        Bz_xvalmin=(*field1D)(0);
+        Bz_xvalmax=(*field1D)(field1D->dims()[0]-1);
+    }
+
 }
 
 

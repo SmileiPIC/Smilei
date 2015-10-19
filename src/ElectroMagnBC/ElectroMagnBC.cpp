@@ -15,7 +15,7 @@ using namespace std;
 ElectroMagnBC::ElectroMagnBC( Params &params, LaserParams &laser_params )
 {
     // check for laser conditions
-    laser_.resize(laser_params.n_laser);
+    laser_.resize(laser_params.laser_param.size());
     
     for (unsigned int i=0; i<laser_.size(); i++) {
         DEBUG("Initializing Laser "<<i);        

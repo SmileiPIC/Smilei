@@ -9,7 +9,6 @@ import os
 
 def _smilei_check():
     """Do checks over the script"""
-    
     # Verify classes were not overriden
     for CheckClassName,CheckClass in {"SmileiComponent":SmileiComponent,"Species":Species,
             "Laser":Laser,"Collisions":Collisions,"DiagProbe":DiagProbe,"DiagParticles":DiagParticles,

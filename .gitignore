@@ -1,9 +1,8 @@
-*.o
+build/*
 .*.swp
 \#*\#
 *~
 .depend
-*.d
 run*
 Run*
 RUN*
@@ -18,3 +17,4 @@ Validation*
 *.orig
 *.pyh
 doc/Sphinx/_build/*
+
