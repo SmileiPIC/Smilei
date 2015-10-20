@@ -188,7 +188,7 @@ public:
             thisSpecies->thermalMomentum.resize(3);
             
             if (thermTisDefined) {
-                WARNING("Using thermT[0] for species ispec=" << ispec << " in all directions");
+                WARNING("Using thermT[0] for species " << species_type << " in all directions");
                 if (thisSpecies->thermalVelocity[0]>0.3) {
                     ERROR("for Species#"<<ispec<<" thermalising BCs require ThermT[0]="<<thisSpecies->thermT[0]<<"<<"<<thisSpecies->mass);
                 }

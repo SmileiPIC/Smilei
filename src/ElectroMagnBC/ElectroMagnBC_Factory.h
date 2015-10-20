@@ -26,11 +26,11 @@ public:
         // x direction: all geometries
         // -----------------
         for (unsigned int i=0;i<2;i++) {
-            // reflective bcs
+            // periodic bcs
             if ( params.bc_em_type_x[i] == "periodic" ) {
                 emBoundCond.push_back(NULL);
             }
-            // reflective bcs
+            // absorbing bcs
             else if ( params.bc_em_type_x[i] == "silver-muller" ) {
                 emBoundCond.push_back(new ElectroMagnBC1D_SM(params, laser_params));
             }
@@ -40,7 +40,7 @@ public:
             }
             // else: error
             else {
-                ERROR( "Unknwon boundary condition at x[" << i << "]" << params.bc_em_type_x[i] );
+                ERROR( "Unknwon boundary condition at x[" << i << "] " << params.bc_em_type_x[i] );
             }
         }
     
@@ -49,9 +49,11 @@ public:
         // -----------------
         if ( params.nDim_field > 1 ) {
             for (unsigned int i=0;i<2;i++) {
-                if ( params.bc_em_type_x[i] == "periodic" ) {
+                // periodic bcs
+                if ( params.bc_em_type_y[i] == "periodic" ) {
                     emBoundCond.push_back(NULL);
                 }
+                // absorbing bcs
                 else if ( params.bc_em_type_y[i] == "silver-muller" ) {
                     emBoundCond.push_back(new ElectroMagnBC2D_SM(params, laser_params));
                 }
@@ -61,7 +63,7 @@ public:
                 }
                 // else: error
                 else {
-                    ERROR( "Unknwon boundary condition at y[" << i << "]" << params.bc_em_type_y[i] );
+                    ERROR( "Unknwon boundary condition at y[" << i << "] " << params.bc_em_type_y[i] );
                 }
             }
         }//
