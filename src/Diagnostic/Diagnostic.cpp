@@ -497,7 +497,6 @@ void Diagnostic::initPhases(Params& params, SmileiMPI *smpi) {
                     PyTools::extract("deflate",deflate,"DiagPhase",n_phase);
                     
                     H5Pset_deflate(pid, std::min((unsigned int)9,deflate));
-                    HEREIAM("");
                     diagPhase->dataId = H5Dcreate (gidParent, kind[ii].c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, pid,H5P_DEFAULT);
                     H5Pclose (pid);
                     H5Sclose (sid);

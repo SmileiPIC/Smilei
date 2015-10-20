@@ -96,7 +96,7 @@ Species(
 	n_part_per_cell = 10,
 	mass = 1.0,
 	charge = -1.0,
-	nb_density = cosine(0.5,amplitude=dn,xlength=L),
+	nb_density = cosine(0.5,xamplitude=dn,xlength=L),
 	mean_velocity = [-0.1,0.0,0.0],
 	bc_part_type_west = "none",
 	bc_part_type_east = "none"
@@ -108,7 +108,7 @@ Species(
 	n_part_per_cell = 10,
 	mass = 1.0,
 	charge = -1.0,
-	nb_density = cosine(0.5,amplitude=dn,xlength=L),
+	nb_density = cosine(0.5,xamplitude=dn,xlength=L),
 	mean_velocity = [0.1,0.0,0.0],
 	bc_part_type_west = "none",
 	bc_part_type_east = "none"

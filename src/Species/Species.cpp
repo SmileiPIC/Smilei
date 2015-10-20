@@ -339,7 +339,6 @@ void Species::dynamics(double time_dual, ElectroMagn* EMfields, Interpolator* In
                        Projector* Proj, SmileiMPI *smpi, Params &params, SimWindow* simWindow, vector<PartWall*> vecPartWall)
 {
     
-//    HEREIAM("Inside " << time_dual << " " << speciesNumber);
     Interpolator* LocInterp = InterpolatorFactory::create(params, smpi);
     
     // Electric field at the particle position
@@ -504,9 +503,6 @@ void Species::dynamics(double time_dual, ElectroMagn* EMfields, Interpolator* In
         if (Ionize && electron_species) {
 #pragma omp master // looks like this is needed for openmp to be che    cked
             {
-                if (Ionize->new_electrons.size()) {
-                    HEREIAM("Ionize electron " << Ionize->new_electrons.size() << " of " << Ionize->new_electrons.capacity());
-                }
             for (unsigned int i=0; i < Ionize->new_electrons.size(); i++) {
                 // electron_species->particles.push_back(Ionize->new_electrons[i]);
                 
@@ -542,8 +538,6 @@ void Species::dynamics(double time_dual, ElectroMagn* EMfields, Interpolator* In
 
 #pragma omp barrier
     delete LocInterp;
-    
-//    HEREIAM("Outside " << time_dual << " " << speciesNumber);
 
 }//END dynamic
 
