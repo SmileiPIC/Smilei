@@ -420,19 +420,19 @@ void Diagnostic::initPhases(Params& params, SmileiMPI *smpi) {
         sort( kind.begin(), kind.end() );
         kind.erase( unique( kind.begin(), kind.end() ), kind.end() );
         hid_t gidParent=0;
-        if (n_phase == 0 && smpi->isMaster()) {
-            ostringstream file_name("");
-            file_name<<"PhaseSpace.h5";
-            phases.fileId = H5Fcreate( file_name.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-            // write version
-            H5::attr(phases.fileId, "Version", string(__VERSION));
+        if (smpi->isMaster()) {
+            if (n_phase == 0) {
+                ostringstream file_name("");
+                file_name<<"PhaseSpace.h5";
+                phases.fileId = H5Fcreate( file_name.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+                // write version
+                H5::attr(phases.fileId, "Version", string(__VERSION));
+            }
+            
+            ostringstream groupName("");
+            groupName << "ps" << setw(4) << setfill('0') << n_phase;
+            gidParent = H5::group(phases.fileId, groupName.str());
         }
-        
-        ostringstream groupName("");
-        groupName << "ps" << setw(4) << setfill('0') << n_phase;
-        gidParent = H5::group(phases.fileId, groupName.str());
-
-        
         
         for (unsigned int ii=0 ; ii < kind.size(); ii++) {
             DiagnosticPhase *diagPhase=NULL;
