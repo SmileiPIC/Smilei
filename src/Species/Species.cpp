@@ -394,16 +394,30 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 
         for (ibin = 0 ; ibin < bmin.size() ; ibin++) {
 
-            if (diag_flag == 0){
-	        b_Jx =  &(*EMfields->Jx_ )(ibin*clrw*f_dim1);
-	        b_Jy =  &(*EMfields->Jy_ )(ibin*clrw*(f_dim1+1));
-	        b_Jz =  &(*EMfields->Jz_ )(ibin*clrw*f_dim1);
+            if (params.nDim_field==2) {
+                if (diag_flag == 0) {
+	            b_Jx =  &(*EMfields->Jx_ )(ibin*clrw*f_dim1);
+	            b_Jy =  &(*EMfields->Jy_ )(ibin*clrw*(f_dim1+1));
+	            b_Jz =  &(*EMfields->Jz_ )(ibin*clrw*f_dim1);
+                } else { 
+	            b_Jx =  &(*EMfields->Jx_s[ispec] )(ibin*clrw*f_dim1);
+	            b_Jy =  &(*EMfields->Jy_s[ispec] )(ibin*clrw*(f_dim1+1));
+	            b_Jz =  &(*EMfields->Jz_s[ispec] )(ibin*clrw*f_dim1);
+	            b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1);
+                }
+            }
+            else if (params.nDim_field==1) {
+                if (diag_flag == 0) {
+                    b_Jx =  &(*EMfields->Jx_ )(ibin*clrw);
+                    b_Jy =  &(*EMfields->Jy_ )(ibin*clrw);
+                    b_Jz =  &(*EMfields->Jz_ )(ibin*clrw);
+                } else {
+                    b_Jx =  &(*EMfields->Jx_s[ispec] )(ibin*clrw);
+                    b_Jy =  &(*EMfields->Jy_s[ispec] )(ibin*clrw);
+                    b_Jz =  &(*EMfields->Jz_s[ispec] )(ibin*clrw);
+                    b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw);
+                }
 
-            } else { 
-	        b_Jx =  &(*EMfields->Jx_s[ispec] )(ibin*clrw*f_dim1);
-	        b_Jy =  &(*EMfields->Jy_s[ispec] )(ibin*clrw*(f_dim1+1));
-	        b_Jz =  &(*EMfields->Jz_s[ispec] )(ibin*clrw*f_dim1);
-	        b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1);
             }
 
             for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
@@ -480,7 +494,11 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 
             for (ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
 
-		b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1);    
+                if (params.nDim_field==2)
+		    b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1);    
+                else if (params.nDim_field==1)
+		    b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw);    
+		//memset( &(b_rho[0]), 0, size_proj_buffer*sizeof(double)); 
 		//memset( &(b_rho[0]), 0, size_proj_buffer*sizeof(double)); 
                 for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
                     //Update position_old because it is required for the Projection.

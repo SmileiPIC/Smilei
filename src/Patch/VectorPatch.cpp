@@ -1122,10 +1122,11 @@ void VectorPatch::sum( std::vector<Field*> fields )
     n_space[1] = (*this)(0)->EMfields->n_space[1];
     
     nx_ = fields[0]->dims_[0];
-    ny_ = fields[0]->dims_[1];
+    ny_ = 1;
+    if (fields[0]->dims_.size()>1)
+        ny_ = fields[0]->dims_[1];
     
     gsp[0] = 1+2*oversize[0]+fields[0]->isDual_[0]; //Ghost size primal
-    gsp[1] = 1+2*oversize[1]+fields[0]->isDual_[1]; //Ghost size primal
 
     #pragma omp for schedule(dynamic) private(pt1,pt2)
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
@@ -1154,32 +1155,35 @@ void VectorPatch::sum( std::vector<Field*> fields )
 	}
     }
 
-    #pragma omp for schedule(dynamic) private(pt1,pt2)
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+    if (fields[0]->dims_.size()>1) {
+	gsp[1] = 1+2*oversize[1]+fields[0]->isDual_[1]; //Ghost size primal
+        #pragma omp for schedule(dynamic) private(pt1,pt2)
+	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
 
-        if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[1]){
-	    //The patch below me belongs to the same MPI process than I.
-	    pt1 = &(*fields[(*this)(ipatch)->patch_neighborhood_[1]-h0])(n_space[1]);
-	    pt2 = &(*fields[ipatch])(0);
-	    for (unsigned int j = 0; j < nx_ ; j++){
-		for (unsigned int i = 0; i < gsp[1] ; i++) pt1[i] += pt2[i];
-		memcpy( pt2, pt1, gsp[1]*sizeof(double)); 
-		pt1 += ny_;
-		pt2 += ny_;
+	    if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[1]){
+		//The patch below me belongs to the same MPI process than I.
+		pt1 = &(*fields[(*this)(ipatch)->patch_neighborhood_[1]-h0])(n_space[1]);
+		pt2 = &(*fields[ipatch])(0);
+		for (unsigned int j = 0; j < nx_ ; j++){
+		    for (unsigned int i = 0; i < gsp[1] ; i++) pt1[i] += pt2[i];
+		    memcpy( pt2, pt1, gsp[1]*sizeof(double)); 
+		    pt1 += ny_;
+		    pt2 += ny_;
+		}
 	    }
+
 	}
 
-    }
+        #pragma omp master
+	{
+	    for (int iDim=1;iDim<2;iDim++) {
+		for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+		    (*this)(ipatch)->initSumField( fields[ipatch], iDim ); // initialize
+		}
 
-    #pragma omp master
-    {
-	for (int iDim=1;iDim<2;iDim++) {
-	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-		(*this)(ipatch)->initSumField( fields[ipatch], iDim ); // initialize
-	    }
-
-	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-		(*this)(ipatch)->finalizeSumField( fields[ipatch], iDim ); // finalize (waitall + sum)
+		for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+		    (*this)(ipatch)->finalizeSumField( fields[ipatch], iDim ); // finalize (waitall + sum)
+		}
 	    }
 	}
     }
