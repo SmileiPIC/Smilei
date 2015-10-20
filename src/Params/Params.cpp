@@ -21,7 +21,7 @@ Params::Params(SmileiMPI* smpi, std::vector<std::string> namelistsFiles) :
 namelist("")
 {
     string commandLineStr("");
-    for (int i=0;i<namelistsFiles.size();i++) commandLineStr+=namelistsFiles[i]+" ";
+    for (int i=0;i<namelistsFiles.size();i++) commandLineStr+="\""+namelistsFiles[i]+"\" ";
     MESSAGE(1,commandLineStr);
     
     //init Python
@@ -35,11 +35,12 @@ namelist("")
     
     // Running pyinit.py
     runScript(string(reinterpret_cast<const char*>(pyinit_py), pyinit_py_len), "pyinit.py");
-    // here we add the rank, in case some script need it
-    PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_rank", smpi->getRank());
-    
+
     // Running pyfunctons.py
     runScript(string(reinterpret_cast<const char*>(pyprofiles_py), pyprofiles_py_len), "pyprofiles.py");
+    
+    // here we add the rank, in case some script need it
+    PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_rank", smpi->getRank());
     
     // Running the namelists
     runScript("############### BEGIN USER NAMELISTS/COMMANDS ###############\n");

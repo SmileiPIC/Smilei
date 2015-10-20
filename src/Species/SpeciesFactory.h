@@ -146,29 +146,30 @@ public:
             if( !ok1 && !ok2 ) ERROR("For species '" << species_type << "', must define `nb_density` or `charge_density`.");
             if( ok1 ) thisSpecies->densityProfileType = "nb";
             if( ok2 ) thisSpecies->densityProfileType = "charge";
-            thisSpecies->densityProfile = new Profile(profile1, params.nDim_particle);
+            
+            thisSpecies->densityProfile = new Profile(profile1, params.nDim_particle, thisSpecies->densityProfileType+"_density "+species_type);
             
             // Number of particles per cell
             if( !PyTools::extract_pyProfile("n_part_per_cell", profile1, "Species", ispec))
                 ERROR("For species '" << species_type << "', n_part_per_cell not found or not understood");
-            thisSpecies->ppcProfile = new Profile(profile1, params.nDim_particle);
+            thisSpecies->ppcProfile = new Profile(profile1, params.nDim_particle, "n_part_per_cell "+species_type);
             
             // Charge
             if( !PyTools::extract_pyProfile("charge", profile1, "Species", ispec))
                 ERROR("For species '" << species_type << "', charge not found or not understood");
-            thisSpecies->chargeProfile = new Profile(profile1, params.nDim_particle);
+            thisSpecies->chargeProfile = new Profile(profile1, params.nDim_particle, "charge "+species_type);
             
             // Mean velocity
             PyTools::extract3Profiles("mean_velocity", ispec, profile1, profile2, profile3);
-            thisSpecies->velocityProfile[0] = new Profile(profile1, params.nDim_particle);
-            thisSpecies->velocityProfile[1] = new Profile(profile2, params.nDim_particle);
-            thisSpecies->velocityProfile[2] = new Profile(profile3, params.nDim_particle);
+            thisSpecies->velocityProfile[0] = new Profile(profile1, params.nDim_particle, "mean_velocity[0] "+species_type);
+            thisSpecies->velocityProfile[1] = new Profile(profile2, params.nDim_particle, "mean_velocity[1] "+species_type);
+            thisSpecies->velocityProfile[2] = new Profile(profile3, params.nDim_particle, "mean_velocity[2] "+species_type);
             
             // Temperature
             PyTools::extract3Profiles("temperature", ispec, profile1, profile2, profile3);
-            thisSpecies->temperatureProfile[0] = new Profile(profile1, params.nDim_particle);
-            thisSpecies->temperatureProfile[1] = new Profile(profile2, params.nDim_particle);
-            thisSpecies->temperatureProfile[2] = new Profile(profile3, params.nDim_particle);
+            thisSpecies->temperatureProfile[0] = new Profile(profile1, params.nDim_particle, "temperature[0] "+species_type);
+            thisSpecies->temperatureProfile[1] = new Profile(profile2, params.nDim_particle, "temperature[1] "+species_type);
+            thisSpecies->temperatureProfile[2] = new Profile(profile3, params.nDim_particle, "temperature[2] "+species_type);
             
             
             // CALCULATE USEFUL VALUES

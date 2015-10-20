@@ -404,6 +404,7 @@ void Diagnostic::initProbes(Params& params, SmileiMPI *smpi) {
 }
 
 void Diagnostic::initPhases(Params& params, SmileiMPI *smpi) {
+    
     //! create the particle structure
     phases.my_part.pos.resize(params.nDim_particle);
     phases.my_part.mom.resize(3);
@@ -529,7 +530,6 @@ void Diagnostic::initPhases(Params& params, SmileiMPI *smpi) {
             H5Gclose(gidParent);
         }
     }
-    MESSAGE(phases.vecDiagPhase.size());
 }
 
 

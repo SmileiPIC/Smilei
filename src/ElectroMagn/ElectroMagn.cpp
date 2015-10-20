@@ -402,7 +402,7 @@ void ElectroMagn::applyExternalFields(SmileiMPI* smpi) {
     for (vector<Field*>::iterator field=my_fields.begin(); field!=my_fields.end(); field++) {
         if (*field) {
             for (vector<ExtFieldStructure>::iterator extfield=ext_field_structs.begin(); extfield!=ext_field_structs.end(); extfield++ ) {
-                Profile *my_ExtFieldProfile = new Profile(extfield->py_profile, nDim_field);
+                Profile *my_ExtFieldProfile = new Profile(extfield->py_profile, nDim_field, "extfield "+(*field)->name);
                 if (my_ExtFieldProfile) {
                     for (vector<string>::iterator fieldName=(*extfield).fields.begin();fieldName!=(*extfield).fields.end();fieldName++) {
                         if (LowerCase((*field)->name)==LowerCase(*fieldName)) {
