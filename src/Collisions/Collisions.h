@@ -42,7 +42,7 @@ class Collisions
 
 public:
     //! Constructor for Collisions between two species
-    Collisions(SmileiMPI*, unsigned int, std::vector<unsigned int>, std::vector<unsigned int>, double, bool, int, unsigned int, int, double);
+    Collisions(SmileiMPI*, unsigned int, std::vector<unsigned int>, std::vector<unsigned int>, double, bool, int, unsigned int, int);
     ~Collisions();
     
     //! Method that creates a vector of Collisions objects: one for each group in the input file.
@@ -85,8 +85,10 @@ private:
     int totbins;
     int start;
     
+    int atomic_number;
+    
     //! CollisionalIonization object, created if ionization required
-    CollisionalIonization * ionize;
+    CollisionalIonization * Ionization;
 };
 
 

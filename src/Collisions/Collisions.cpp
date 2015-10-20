@@ -21,15 +21,15 @@ Collisions::Collisions(SmileiMPI* smpi,
                        bool intra_collisions,
                        int debug_every,
                        unsigned int nbins,
-                       int Z_ionization,
-                       double wavelength_SI    ) :
+                       int Z ) :
 n_collisions    (n_collisions    ),
 species_group1  (species_group1  ),
 species_group2  (species_group2  ),
 coulomb_log     (coulomb_log     ),
 intra_collisions(intra_collisions),
 debug_every     (debug_every     ),
-start           (0               )
+start           (0               ),
+atomic_number   (Z               )
 {
     
     // Calculate total number of bins
@@ -67,13 +67,6 @@ start           (0               )
         // Send the location where to end to the next node
         int end = start+nbins;
         if (smpi->getRank()!=smpi->getSize()-1) MPI_Send( &end, 1, MPI_INTEGER, smpi->getRank()+1, 0, MPI_COMM_WORLD );
-    }
-    
-    // Handle ionization
-    if( Z_ionization>0 ) { // if ionizing collisions
-        
-        ionize = new CollisionalIonization(Z_ionization, wavelength_SI);
-        
     }
 }
 
@@ -175,6 +168,10 @@ vector<Collisions*> Collisions::create(Params& params, vector<Species*>& vecSpec
             Z0 = vecSpecies[sgroup[0][0]]->atomic_number;
             Z1 = vecSpecies[sgroup[1][0]]->atomic_number;
             Z = (int) ( Z0>Z1 ? Z0 : Z1 );
+            if( Z0*Z1!=0 )
+                ERROR("In collisions #" << n_collisions << ": ionization requires electrons (no or null atomic_number)");
+            if( Z==0 )
+                ERROR("In collisions #" << n_collisions << ": ionization requires ions (atomic_number>0)");
         }
         
         // Print collisions parameters
@@ -195,8 +192,25 @@ vector<Collisions*> Collisions::create(Params& params, vector<Species*>& vecSpec
         
         // Add new Collisions objects to vector
         vecCollisions.push_back( new Collisions(smpi,n_collisions,sgroup[0],sgroup[1],clog,intra,
-            debug_every, vecSpecies[0]->bmin.size(),Z, params.wavelength_SI) );
+            debug_every, vecSpecies[0]->bmin.size(), Z) );
         
+        // Create the ionization object
+        if( ionizing ) {
+            vecCollisions[n_collisions]->Ionization = NULL;
+            // But do not duplicate if ionization already existing with same Z
+            for( int i=0; i<n_collisions; i++ ) {
+                if( Z == vecCollisions[i]->atomic_number ) {
+                    vecCollisions[n_collisions]->Ionization = vecCollisions[i]->Ionization;
+                    break;
+                }
+            }
+            // Otherwise, create new
+            if( vecCollisions[n_collisions]->Ionization == NULL)
+                vecCollisions[n_collisions]->Ionization = new CollisionalIonization(Z, params.wavelength_SI);
+        } else {
+            // If no ionization, create 'empty' ionization object
+            vecCollisions[n_collisions]->Ionization = new CollisionalNoIonization();
+        }
     }
     
     // pass the variable "debye_length_required" into the Collision class
@@ -378,57 +392,54 @@ void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime
             npairs = (int) ceil(((double)npart1)/2.); // half as many pairs as macro-particles
             index2.resize(npairs);
             for (unsigned int i=0; i<npairs; i++) index2[i] = index1[i+npart1-npairs]; // index2 is second half
-            index1.resize(npairs); // index2 is first half
+            index1.resize(npairs); // index1 is first half
         } else { // In the case of collisions between two species
             npairs = npart1; // as many pairs as macro-particles in group 1 (most numerous)
             index2.resize(npairs);
             for (unsigned int i=0; i<npart1; i++) index2[i] = i % npart2;
         }
         
-        // Calculate density of group 1
-        n1 = 0.;
-        for (ispec1=0 ; ispec1<nspec1 ; ispec1++)
-            for (unsigned int iPart=bmin1[ispec1] ; iPart<bmax1[ispec1] ; iPart++)
-                n1 += vecSpecies[(*sg1)[ispec1]]->particles.weight(iPart);
-        n1 /= params.n_cell_per_cluster;
+        // Prepare the ionization
+        Ionization->prepare1(vecSpecies[(*sg1)[0]]->atomic_number);
         
-        // Calculate density of group 2
-        n2 = 0.;
-        for (ispec2=0 ; ispec2<nspec2 ; ispec2++)
-            for (unsigned int iPart=bmin2[ispec2] ; iPart<bmax2[ispec2] ; iPart++)
-                n2 += vecSpecies[(*sg2)[ispec2]]->particles.weight(iPart);
-        n2 /= params.n_cell_per_cluster;
-        
-        // Calculate the "hybrid" density
-        n12 = 0.;
+        // Calculate the densities
+        n1  = 0.; // density of group 1
+        n2  = 0.; // density of group 2
+        n12 = 0.; // "hybrid" density
         for (unsigned int i=0; i<npairs; i++) { // for each pair of particles
             // find species and index i1 of particle "1"
             i1 = index1[i];
-            for (ispec1=0 ; ispec1<nspec1 ; ispec1++) {
-                if (i1 < np1[ispec1]) break;
-                i1 -= np1[ispec1];
-            }
+            for (ispec1=0 ; i1>=np1[ispec1]; ispec1++) i1 -= np1[ispec1];
             i1 += bmin1[ispec1];
             // find species and index i2 of particle "2"
             i2 = index2[i];
-            for (ispec2=0 ; ispec2<nspec2 ; ispec2++) {
-                if (i2 < np2[ispec2]) break;
-                i2 -= np2[ispec2];
-            }
+            for (ispec2=0 ; i2>=np2[ispec2]; ispec2++) i2 -= np2[ispec2];
             i2 += bmin2[ispec2];
+            // Pointers to particles
+            p1 = &(vecSpecies[(*sg1)[ispec1]]->particles);
+            p2 = &(vecSpecies[(*sg2)[ispec2]]->particles);
             // sum weights
-            n12 += min( vecSpecies[(*sg1)[ispec1]]->particles.weight(i1)
-                       ,vecSpecies[(*sg2)[ispec2]]->particles.weight(i2) );
+            n1  += p1->weight(i1);
+            n2  += p2->weight(i2);
+            n12 += min( p1->weight(i1), p2->weight(i2) );
+            // Same for ionization
+            Ionization->prepare2(p1, i1, p2, i2);
         }
+        if( intra_collisions ) { n1 += n2; n2 = n1; }
+        n1  /= params.n_cell_per_cluster;
+        n2  /= params.n_cell_per_cluster;
         n12 /= params.n_cell_per_cluster;
         
         // Pre-calculate some numbers before the big loop
         n123 = pow(n1,2./3.); n223 = pow(n2,2./3.);
         twoPi = 2. * M_PI;
         coeff1 = M_PI*6.62606957e-34/(9.10938215e-31*299792458.*params.wavelength_SI); // h/(2*me*c*normLength) = pi*h/(me*c*wavelength)
-        coeff2 = 2*M_PI*2.817940327e-15/params.wavelength_SI; // re/normLength = 2*pi*re/wavelength
+        coeff2 = 2.*M_PI*2.817940327e-15/params.wavelength_SI; // re/normLength = 2*pi*re/wavelength
         coeff3 = coeff2 * params.timestep * n1*n2/n12;
         coeff4 = pow( 3.*coeff2 , -1./3. ) * params.timestep * n1*n2/n12;
+        
+        // Prepare the ionization
+        Ionization->prepare3(params.timestep, params.n_cell_per_cluster);
         
         if( debug ) {
             smean      ->data_2D[ibin][0] = 0.;
@@ -445,17 +456,11 @@ void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime
         
             // find species and index i1 of particle "1"
             i1 = index1[i];
-            for (ispec1=0 ; ispec1<nspec1 ; ispec1++) {
-                if (i1 < np1[ispec1]) break;
-                i1 -= np1[ispec1];
-            }
+            for (ispec1=0 ; i1>=np1[ispec1]; ispec1++) i1 -= np1[ispec1];
             i1 += bmin1[ispec1];
             // find species and index i2 of particle "2"
             i2 = index2[i];
-            for (ispec2=0 ; ispec2<nspec2 ; ispec2++) {
-                if (i2 < np2[ispec2]) break;
-                i2 -= np2[ispec2];
-            }
+            for (ispec2=0 ; i2>=np2[ispec2]; ispec2++) i2 -= np2[ispec2];
             i2 += bmin2[ispec2];
             
             s1 = vecSpecies[(*sg1)[ispec1]]; s2 = vecSpecies[(*sg2)[ispec2]];
@@ -560,6 +565,9 @@ void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime
                 p2->momentum(1,i2) = -m12 * newpy_COM + COM_vy * term6;
                 p2->momentum(2,i2) = -m12 * newpz_COM + COM_vz * term6;
             }
+            
+            // Handle ionization
+            Ionization->apply(p1, i1, p2, i2, vrel);
             
             if( debug ) {
                 smean      ->data_2D[ibin][0] += s;

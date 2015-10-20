@@ -8,12 +8,12 @@ using namespace std;
 
 // Coefficients used for energy interpolation
 // The list of energies has to be in logarithmic scale,
-//  with Emin=1eV, Emax=1GeV and npoints=100.
-const int CollisionalIonization::npoints = 100;
-const double CollisionalIonization::a1 = 1.956951e-6 ; // = me*c^2/Emin
-const double CollisionalIonization::a2 = 4.777239 ;    // = (npoints-1) * ln( Emax/Emin )
+//  with Emin=1eV, Emax=10MeV and npoints=100.
+const int    CollisionalIonization::npoints = 100;
+const double CollisionalIonization::a1 = 510998.9 ; // = me*c^2/Emin
+const double CollisionalIonization::a2 = 6.142165 ; // = (npoints-1) / ln( Emax/Emin )
 
-
+// Constructor
 CollisionalIonization::CollisionalIonization(int Z, double wavelength_SI)
 {
 
@@ -27,16 +27,13 @@ CollisionalIonization::CollisionalIonization(int Z, double wavelength_SI)
     double e, ep, bp, up, ep2, betae2, betab2, betau2, s0, A1, A2, A3, sk, wk, ek;
     int N; // occupation number
     double coeff = 3.141593 * 2.81794e-15 / wavelength_SI; // pi * r_e / lambda
-    for( int Zstar=0; Zstar<Z; Zstar++) { // For each ionization state
-        crossSection     [Zstar].resize(npoints);
-        transferredEnergy[Zstar].resize(npoints);
-        lostEnergy       [Zstar].resize(npoints);
+    for( int Zstar=0; Zstar<Z; Zstar++ ) { // For each ionization state
+        crossSection     [Zstar].resize(npoints, 0.);
+        transferredEnergy[Zstar].resize(npoints, 0.);
+        lostEnergy       [Zstar].resize(npoints, 0.);
         for( int i=0; i<npoints; i++) { // For each incident electron energy
             ep = exp( double(i)/a2 ) / a1; // = incident electron energy
             N = 1;
-            crossSection     [Zstar][i] = 0.;
-            transferredEnergy[Zstar][i] = 0.;
-            lostEnergy       [Zstar][i] = 0.;
             for( int k=0; k<Z-Zstar; k++ ) { // For each orbital
                 bp = binding_energy(Zstar, k);
                 // If next orbital is on same level, then continue directly to next
@@ -48,42 +45,92 @@ CollisionalIonization::CollisionalIonization(int Z, double wavelength_SI)
                 }
                 // If electron energy below the ionization energy, then skip to next level
                 e = ep/bp;
-                if( e<=1. ) continue;
-                // Otherwise, we do the calculation
-                up = bp; // we assume up=bp because we don't have exact tables
-                betae2 = 1. - 1./((1.+ep)*(1.+ep)); betae2 *= betae2;
-                betab2 = 1. - 1./((1.+bp)*(1.+bp)); betab2 *= betab2;
-                betau2 = 1. - 1./((1.+up)*(1.+up)); betau2 *= betau2;
-                s0 = coeff * N /( bp * betae2 * betab2 * betau2 );
-                ep2 = 1./(1.+ep*0.5); ep2 *= ep2;
-                A1 = (1.+2.*ep)/(1.+e)*ep2;
-                A2 = (e-1.)*bp*bp*0.5*ep2;
-                A3 = log(betae2/(1.-betae2)) - betae2 - log(2.*bp);
-                sk = s0*( 0.5*A3*(1.-1./(e*e)) + 1. - 1./e + A2 - A1*log(e) );
-                wk = s0 * ( 0.5*A3*(e-1.)*(e-1.)/e/(e+1.)  + 2.*log((e+1.)/2.) - log(e)
-                            + 0.25*A2*(e-1.) - A1*(log(e)-(e+1.)*log((e+1.)/2.)) );
-                ek = wk + sk;
-                // Sum these data to the total ones
-                crossSection     [Zstar][i] += sk;
-                transferredEnergy[Zstar][i] += wk * bp;
-                lostEnergy       [Zstar][i] += ek * bp;
+                if( e>1. ) {
+                    up = bp; // we assume up=bp because we don't have exact tables
+                    betae2 = 1. - 1./((1.+ep)*(1.+ep));
+                    betab2 = 1. - 1./((1.+bp)*(1.+bp));
+                    betau2 = 1. - 1./((1.+up)*(1.+up));
+                    s0 = coeff * N /( bp * (betae2 + betab2 + betau2) );
+                    ep2 = 1./(1.+ep*0.5); ep2 *= ep2;
+                    A1 = (1.+2.*ep)/(1.+e)*ep2;
+                    A2 = (e-1.)*bp*bp*0.5*ep2;
+                    A3 = log(betae2/(1.-betae2)) - betae2 - log(2.*bp);
+                    sk = s0*( 0.5*A3*(1.-1./(e*e)) + 1. - 1./e + A2 - A1*log(e) );
+                    wk = s0 * ( 0.5*A3*(e-1.)*(e-1.)/e/(e+1.)  + 2.*log(0.5*(e+1.)) - log(e)
+                                + 0.25*A2*(e-1.) - A1*(e*log(e)-(e+1.)*log(0.5*(e+1.))) );
+                    ek = wk + sk;
+                    // Sum these data to the total ones
+                    crossSection     [Zstar][i] += sk;
+                    transferredEnergy[Zstar][i] += wk * bp;
+                    lostEnergy       [Zstar][i] += ek * bp;
+                    ///if(Zstar==0 && k<2) {MESSAGE(ep<<" "<<sk);}
+                }
                 // Reset occupation number for next level
                 N = 1;
             }
-            transferredEnergy[Zstar][i] /= crossSection[Zstar][i];
-            lostEnergy       [Zstar][i] /= crossSection[Zstar][i];
+            if( crossSection[Zstar][i]>0. ) { 
+                transferredEnergy[Zstar][i] /= crossSection[Zstar][i];
+                lostEnergy       [Zstar][i] /= crossSection[Zstar][i];
+            }
         }
     }
 }
 
+
+// Methods to prepare the ionization or not
+void CollisionalIonization::prepare2(Particles *p1, int i1, Particles *p2, int i2)
+{
+    static double E; // electron energy
+    static int Zstar; // ion charge
+    static double We; // electron weight
+    static double Wi; // ion weight
+    static double cs; // cross section
+    if( electronFirst ) {
+        E = sqrt(1. + pow(p1->momentum(0,i1),2)+pow(p1->momentum(1,i1),2)+pow(p1->momentum(2,i1),2))-1.;
+        Zstar = p2->charge(i2);
+        We = p1->weight(i1);
+        Wi = p2->weight(i2);
+    } else {
+        E = sqrt(1. + pow(p2->momentum(0,i2),2)+pow(p2->momentum(1,i2),2)+pow(p2->momentum(2,i2),2))-1.;
+        Zstar = p1->charge(i1);
+        Wi = p1->weight(i1);
+        We = p2->weight(i2);
+    }
+    cs = crossSection[Zstar][ int(a2*log(a1*E)) ]; // retrieve cross section
+    ni += Wi;
+    if( cs>0. ) {
+        ne  += We;
+        nei += We<Wi ? We : Wi;
+    }
+}
+void CollisionalIonization::prepare3(double timestep, int n_cell_per_cluster)
+{
+    coeff = ne*ni/nei * timestep / (double)n_cell_per_cluster;
+}
+// Methods to apply the ionization or not
+void CollisionalIonization::apply(Particles *p1, int i1, Particles *p2, int i2, double vrel)
+{
+    
+}
+
 // Gets the k-th binding energy in any neutral or ionized atom with atomic number Z and charge Zstar
 // We use the formula by Carlson et al., At. Data Nucl. Data Tables 2, 63 (1970)
-double CollisionalIonization::binding_energy(int Zstar, int k) {
+double CollisionalIonization::binding_energy(int Zstar, int k)
+{
     return (  ionizationEnergy[atomic_number-1][Zstar]
-            - bindingEnergy   [atomic_number-1][atomic_number-Zstar]
+            - bindingEnergy   [atomic_number-1][atomic_number-Zstar-1]
             + bindingEnergy   [atomic_number-1][k]
            )/510998.9; // converted to mc^2
 }
+
+
+CollisionalNoIonization::CollisionalNoIonization():
+CollisionalIonization(0,1.)
+{
+    crossSection     .resize(0);
+    transferredEnergy.resize(0);
+    lostEnergy       .resize(0);
+};
 
 
 // Here start the databases
