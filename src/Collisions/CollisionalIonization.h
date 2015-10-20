@@ -30,7 +30,8 @@ public:
     virtual void prepare2(Particles *p1, int i1, Particles *p2, int i2);
     virtual void prepare3(double timestep, int n_cell_per_cluster);
     //! Method to apply the ionization
-    virtual void apply(Particles *p1, int i1, Particles *p2, int i2, double vrel);
+    virtual void apply(double vrel, double gamma1_COM, double gamma2_COM,
+        Particles *p1, int i1, Particles *p2, int i2);
     
     //! Table of integrated cross-section
     std::vector<std::vector<double> > crossSection;
@@ -61,18 +62,26 @@ private:
     //! Coefficient for the ionization frequency
     double coeff;
     
+    //! Method to interpolate the tables at a given energy
+    void interpolateTables();
+    
+    //! Quantities used during computation
+    double cs, w, e; // cross section, transferred energy, lost energy
+    double x;  // electron energy index in tables
+    int Zstar; // ion charge
 };
 
 //! Class to make empty ionization objects
 class CollisionalNoIonization : public CollisionalIonization
 {
 public:
-    CollisionalNoIonization();
+    CollisionalNoIonization() : CollisionalIonization(0,1.) {};
     ~CollisionalNoIonization(){};
     
     void prepare2(Particles *p1, int i1, Particles *p2, int i2){};
     void prepare3(double timestep, int n_cell_per_cluster){};
-    void apply(Particles *p1, int i1, Particles *p2, int i2, double vrel){};
+    void apply(double vrel, double gamma1_COM, double gamma2_COM,
+        Particles *p1, int i1, Particles *p2, int i2){};
 };
 
 #endif

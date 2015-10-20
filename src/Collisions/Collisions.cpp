@@ -567,7 +567,7 @@ void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime
             }
             
             // Handle ionization
-            Ionization->apply(p1, i1, p2, i2, vrel);
+            Ionization->apply(vrel, gamma1_COM, gamma2_COM, p1, i1, p2, i2);
             
             if( debug ) {
                 smean      ->data_2D[ibin][0] += s;

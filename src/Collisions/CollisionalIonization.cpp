@@ -27,7 +27,7 @@ CollisionalIonization::CollisionalIonization(int Z, double wavelength_SI)
     double e, ep, bp, up, ep2, betae2, betab2, betau2, s0, A1, A2, A3, sk, wk, ek;
     int N; // occupation number
     double coeff = 3.141593 * 2.81794e-15 / wavelength_SI; // pi * r_e / lambda
-    for( int Zstar=0; Zstar<Z; Zstar++ ) { // For each ionization state
+    for( Zstar=0; Zstar<Z; Zstar++ ) { // For each ionization state
         crossSection     [Zstar].resize(npoints, 0.);
         transferredEnergy[Zstar].resize(npoints, 0.);
         lostEnergy       [Zstar].resize(npoints, 0.);
@@ -63,7 +63,6 @@ CollisionalIonization::CollisionalIonization(int Z, double wavelength_SI)
                     crossSection     [Zstar][i] += sk;
                     transferredEnergy[Zstar][i] += wk * bp;
                     lostEnergy       [Zstar][i] += ek * bp;
-                    ///if(Zstar==0 && k<2) {MESSAGE(ep<<" "<<sk);}
                 }
                 // Reset occupation number for next level
                 N = 1;
@@ -81,10 +80,7 @@ CollisionalIonization::CollisionalIonization(int Z, double wavelength_SI)
 void CollisionalIonization::prepare2(Particles *p1, int i1, Particles *p2, int i2)
 {
     static double E; // electron energy
-    static int Zstar; // ion charge
-    static double We; // electron weight
-    static double Wi; // ion weight
-    static double cs; // cross section
+    static double We, Wi; // weights
     if( electronFirst ) {
         E = sqrt(1. + pow(p1->momentum(0,i1),2)+pow(p1->momentum(1,i1),2)+pow(p1->momentum(2,i1),2))-1.;
         Zstar = p2->charge(i2);
@@ -96,6 +92,7 @@ void CollisionalIonization::prepare2(Particles *p1, int i1, Particles *p2, int i
         Wi = p1->weight(i1);
         We = p2->weight(i2);
     }
+    if( Zstar>=atomic_number ) return;
     cs = crossSection[Zstar][ int(a2*log(a1*E)) ]; // retrieve cross section
     ni += Wi;
     if( cs>0. ) {
@@ -108,9 +105,76 @@ void CollisionalIonization::prepare3(double timestep, int n_cell_per_cluster)
     coeff = ne*ni/nei * timestep / (double)n_cell_per_cluster;
 }
 // Methods to apply the ionization or not
-void CollisionalIonization::apply(Particles *p1, int i1, Particles *p2, int i2, double vrel)
+void CollisionalIonization::apply(double vrel, double gamma1_COM, double gamma2_COM,
+    Particles *p1, int i1, Particles *p2, int i2)
 {
+    static double We, Wi; // weights
+    static double U; // random number
+    static double gamma; // electron lorentz factor
+    static double coeff;
+    if( electronFirst ) {
+        Zstar = p2->charge(i2);
+        if( Zstar>=atomic_number ) return; // if already fully ionized, do nothing
+        gamma = gamma1_COM;
+        x = a2*log(a1*(gamma-1.));
+        if( x<0. ) return; // if energy below Emin, do nothing
+        interpolateTables();
+        U = ((double)rand() / RAND_MAX);
+        We = p1->weight(i1); Wi = p2->weight(i2);
+        // lose electron energy
+        if( U>Wi/We ) {
+            coeff = sqrt((pow(gamma-e,2)-1.)/(pow(gamma,2)-1.));
+            p1->momentum(0,i1) *= coeff;
+            p1->momentum(1,i1) *= coeff;
+            p1->momentum(2,i1) *= coeff;
+        }
+        if( U>We/Wi ) {
+            // Ionize the atom and create electron
+            p2->charge(i2)++;
+            ///// ADD A NEW ELECTRON HERE -> WAIT FOR PATCHES ?
+        }
+    } else {
+        Zstar = p1->charge(i1);
+        if( Zstar>=atomic_number ) return; // if already fully ionized, do nothing
+        gamma = gamma2_COM;
+        x = a2*log(a1*(gamma-1.));
+        if( x<0. ) return; // if energy below Emin, do nothing
+        interpolateTables();
+        U = ((double)rand() / RAND_MAX);
+        We = p2->weight(i2); Wi = p1->weight(i1);
+        // lose electron energy
+        if( U>Wi/We ) {
+            coeff = sqrt((pow(gamma-e,2)-1.)/(pow(gamma,2)-1.));
+            p2->momentum(0,i2) *= coeff;
+            p2->momentum(1,i2) *= coeff;
+            p2->momentum(2,i2) *= coeff;
+        }
+        if( U>We/Wi ) {
+            // Ionize the atom and create electron
+            p1->charge(i1)++;
+            ///// ADD A NEW ELECTRON HERE -> WAIT FOR PATCHES ?
+        }
+    }
     
+}
+
+// Method to interpolate the tables at a given energy
+void CollisionalIonization::interpolateTables() {
+    static int i;
+    static double a;
+    const double N = (double)(npoints-1);
+    if( x<N ) { // if energy within table range, interpolate
+        i = int(x);
+        a = x - (double)i;
+        cs = (crossSection     [Zstar][i+1]-crossSection     [Zstar][i])*a + crossSection     [Zstar][i];
+        w  = (transferredEnergy[Zstar][i+1]-transferredEnergy[Zstar][i])*a + transferredEnergy[Zstar][i];
+        e  = (lostEnergy       [Zstar][i+1]-lostEnergy       [Zstar][i])*a + lostEnergy       [Zstar][i];
+    } else { // if energy above table range, special formula
+        a = x - N;
+        cs = (crossSection[Zstar][N]-crossSection[Zstar][N-1])*a + crossSection[Zstar][N];
+        w  = transferredEnergy[Zstar][N];
+        e  = lostEnergy       [Zstar][N];
+    }
 }
 
 // Gets the k-th binding energy in any neutral or ionized atom with atomic number Z and charge Zstar
@@ -122,16 +186,6 @@ double CollisionalIonization::binding_energy(int Zstar, int k)
             + bindingEnergy   [atomic_number-1][k]
            )/510998.9; // converted to mc^2
 }
-
-
-CollisionalNoIonization::CollisionalNoIonization():
-CollisionalIonization(0,1.)
-{
-    crossSection     .resize(0);
-    transferredEnergy.resize(0);
-    lostEnergy       .resize(0);
-};
-
 
 // Here start the databases
 //
