@@ -1185,6 +1185,14 @@ class Field(Diagnostic):
 				print "No fields found in '"+self._results_path+"'"
 			return None
 		
+		try:
+			self._file = self._results_path+'/Fields.h5'
+			self._f = self._h5py.File(self._file, 'r')
+		except:
+			print "Cannot open file "+file
+			return
+		self._h5items = self._f.values()
+		
 		# Get available times
 		self.times = self.getAvailableTimesteps()
 		if self.times.size == 0:
@@ -1217,9 +1225,6 @@ class Field(Diagnostic):
 		self._data_log = data_log
 		
 		# Get the shape of fields
-		self._file = self._results_path+'/Fields.h5'
-		f = self._h5py.File(self._file, 'r')
-		self._h5items = f.values()
 		iterfields = self._h5items[0].itervalues();
 		self._ishape = iterfields.next().shape;
 		for fd in iterfields:
@@ -1324,27 +1329,13 @@ class Field(Diagnostic):
 	
 	# get all available fields, sorted by name length
 	def getFields(self):
-		try:
-			file = self._results_path+'/Fields.h5'
-			f = self._h5py.File(file, 'r')
-		except:
-			print "Cannot open file "+file
-			return []
-		try:    fields = f.itervalues().next().keys() # list of fields
+		try:    fields = self._f.itervalues().next().keys() # list of fields
 		except: fields = []
-		f.close()
 		return fields
 	
 	# get all available timesteps
 	def getAvailableTimesteps(self):
-		try:
-			file = self._results_path+'/Fields.h5'
-			f = self._h5py.File(file, 'r')
-		except:
-			print "Cannot open file "+file
-			return self._np.array([])
-		times = self._np.double(f.keys())
-		f.close()
+		times = self._np.double(self._f.keys())
 		return times
 	
 	# Method to obtain the data only
