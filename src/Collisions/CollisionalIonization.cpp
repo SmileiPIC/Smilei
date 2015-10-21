@@ -76,11 +76,12 @@ CollisionalIonization::CollisionalIonization(int Z, double wavelength_SI)
 }
 
 
-// Methods to prepare the ionization or not
+// Methods to prepare the ionization
 void CollisionalIonization::prepare2(Particles *p1, int i1, Particles *p2, int i2)
 {
     static double E; // electron energy
     static double We, Wi; // weights
+    static double cs;
     if( electronFirst ) {
         E = sqrt(1. + pow(p1->momentum(0,i1),2)+pow(p1->momentum(1,i1),2)+pow(p1->momentum(2,i1),2))-1.;
         Zstar = p2->charge(i2);
@@ -94,8 +95,9 @@ void CollisionalIonization::prepare2(Particles *p1, int i1, Particles *p2, int i
     }
     if( Zstar>=atomic_number ) return;
     cs = crossSection[Zstar][ int(a2*log(a1*E)) ]; // retrieve cross section
+    // Calculate densities
     ni += Wi;
-    if( cs>0. ) {
+    if( cs>0. ) { // only pairs that can ionize
         ne  += We;
         nei += We<Wi ? We : Wi;
     }
@@ -104,65 +106,37 @@ void CollisionalIonization::prepare3(double timestep, int n_cell_per_cluster)
 {
     coeff = ne*ni/nei * timestep / (double)n_cell_per_cluster;
 }
-// Methods to apply the ionization or not
+
+// Method to apply the ionization
 void CollisionalIonization::apply(double vrel, double gamma1_COM, double gamma2_COM,
     Particles *p1, int i1, Particles *p2, int i2)
 {
-    static double We, Wi; // weights
-    static double U; // random number
-    static double gamma; // electron lorentz factor
-    static double coeff;
     if( electronFirst ) {
-        Zstar = p2->charge(i2);
-        if( Zstar>=atomic_number ) return; // if already fully ionized, do nothing
-        gamma = gamma1_COM;
-        x = a2*log(a1*(gamma-1.));
-        if( x<0. ) return; // if energy below Emin, do nothing
-        interpolateTables();
-        U = ((double)rand() / RAND_MAX);
-        We = p1->weight(i1); Wi = p2->weight(i2);
-        // lose electron energy
-        if( U>Wi/We ) {
-            coeff = sqrt((pow(gamma-e,2)-1.)/(pow(gamma,2)-1.));
-            p1->momentum(0,i1) *= coeff;
-            p1->momentum(1,i1) *= coeff;
-            p1->momentum(2,i1) *= coeff;
-        }
-        if( U>We/Wi ) {
-            // Ionize the atom and create electron
-            p2->charge(i2)++;
-            ///// ADD A NEW ELECTRON HERE -> WAIT FOR PATCHES ?
-        }
+        calculate(vrel, gamma1_COM, p1, i1, p2, i2);
     } else {
-        Zstar = p1->charge(i1);
-        if( Zstar>=atomic_number ) return; // if already fully ionized, do nothing
-        gamma = gamma2_COM;
-        x = a2*log(a1*(gamma-1.));
-        if( x<0. ) return; // if energy below Emin, do nothing
-        interpolateTables();
-        U = ((double)rand() / RAND_MAX);
-        We = p2->weight(i2); Wi = p1->weight(i1);
-        // lose electron energy
-        if( U>Wi/We ) {
-            coeff = sqrt((pow(gamma-e,2)-1.)/(pow(gamma,2)-1.));
-            p2->momentum(0,i2) *= coeff;
-            p2->momentum(1,i2) *= coeff;
-            p2->momentum(2,i2) *= coeff;
-        }
-        if( U>We/Wi ) {
-            // Ionize the atom and create electron
-            p1->charge(i1)++;
-            ///// ADD A NEW ELECTRON HERE -> WAIT FOR PATCHES ?
-        }
+        calculate(vrel, gamma2_COM, p2, i2, p1, i1);
     }
-    
 }
 
-// Method to interpolate the tables at a given energy
-void CollisionalIonization::interpolateTables() {
+// Method used by ::apply so that we are sure that electrons are the first species
+void CollisionalIonization::calculate(double vrel, double gammae,
+    Particles *pe, int ie, Particles *pi, int ii)
+{
+    static double We, Wi; // weights
+    static double U; // random number
+    static double a, x, cs, w, e, pr;
     static int i;
-    static double a;
     const double N = (double)(npoints-1);
+    
+    // Get ion charge
+    Zstar = pi->charge(ii);
+    if( Zstar>=atomic_number ) return; // if already fully ionized, do nothing
+    
+    // Calculate the location x in the databases
+    x = a2*log(a1*(gammae-1.));
+    
+    // Interpolate the databases at location x
+    if( x<0. ) return; // if energy below Emin, do nothing
     if( x<N ) { // if energy within table range, interpolate
         i = int(x);
         a = x - (double)i;
@@ -175,7 +149,29 @@ void CollisionalIonization::interpolateTables() {
         w  = transferredEnergy[Zstar][N];
         e  = lostEnergy       [Zstar][N];
     }
+    
+    // Make a random number to choose if ionization or not
+    U = ((double)rand() / RAND_MAX);
+    if( U > exp(-vrel*coeff*cs) ) return;
+    
+    // Now we really do the ionization
+    U = ((double)rand() / RAND_MAX);
+    We = pe->weight(ie); Wi = pi->weight(ii);
+    // lose electron energy
+    if( U>Wi/We ) {
+        pr = sqrt((pow(gammae-e,2)-1.)/(pow(gammae,2)-1.));
+        pe->momentum(0,ie) *= pr;
+        pe->momentum(1,ie) *= pr;
+        pe->momentum(2,ie) *= pr;
+    }
+    if( U>We/Wi ) {
+        // Ionize the atom and create electron
+        pi->charge(ii)++;
+        ///// ADD A NEW ELECTRON HERE -> WAIT FOR PATCHES ?
+    }
+    
 }
+
 
 // Gets the k-th binding energy in any neutral or ionized atom with atomic number Z and charge Zstar
 // We use the formula by Carlson et al., At. Data Nucl. Data Tables 2, 63 (1970)

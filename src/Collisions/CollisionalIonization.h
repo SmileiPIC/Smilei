@@ -62,12 +62,10 @@ private:
     //! Coefficient for the ionization frequency
     double coeff;
     
-    //! Method to interpolate the tables at a given energy
-    void interpolateTables();
+    //! Method called by ::apply to calculate the ionization, being sure that electrons are the first species
+    void calculate(double vrel, double gammae, Particles *pe, int ie, Particles *pi, int ii);
     
     //! Quantities used during computation
-    double cs, w, e; // cross section, transferred energy, lost energy
-    double x;  // electron energy index in tables
     int Zstar; // ion charge
 };
 
