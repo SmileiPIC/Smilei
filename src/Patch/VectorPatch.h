@@ -38,7 +38,9 @@ class VectorPatch {
     inline void set_refHindex() {refHindex_ = patches_[0]->Hindex();};
 
     void exchangeParticles(int ispec, PicParams &params, SmileiMPI* smpi);
+#ifdef _NOTFORNOW
     void exchangeParticles(int ispec, PicParams &params);
+#endif
     void sumRhoJ( unsigned int diag_flag );
     void sumRhoJs( int ispec );
     void exchangeE(  );

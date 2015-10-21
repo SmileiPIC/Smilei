@@ -21,6 +21,7 @@ VectorPatch::~VectorPatch()
 {
 }
 
+#ifdef _NOTFORNOW
 void VectorPatch::exchangeParticles(int ispec, PicParams &params)
 {
     Patch* mypatch, *lpatch;
@@ -197,6 +198,7 @@ void VectorPatch::exchangeParticles(int ispec, PicParams &params)
     }//Sync
 
 }
+#endif
 
 void VectorPatch::exchangeParticles(int ispec, PicParams &params, SmileiMPI* smpi)
 {
@@ -207,7 +209,7 @@ void VectorPatch::exchangeParticles(int ispec, PicParams &params, SmileiMPI* smp
     #pragma omp single
     {
     //
-    for (unsigned int iDim=0 ; iDim<2 ; iDim++) {
+    for (unsigned int iDim=0 ; iDim<params.nDim_field ; iDim++) {
         //#pragma omp for
 	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
 	  (*this)(ipatch)->initExchParticles(smpi, ispec, params, useless, iDim, this);
@@ -313,10 +315,16 @@ void VectorPatch::exchangeB( )
         By_[ipatch]= (*this)(ipatch)->EMfields->By_ ;
         Bz_[ipatch]= (*this)(ipatch)->EMfields->Bz_ ;
     }
-    
-    exchange1( Bx_ );
-    exchange0( By_  );
-    exchange ( Bz_ );
+
+    if ( Bx_[0]->dims_.size()>1 ) {
+	exchange1( Bx_ );
+	exchange0( By_  );
+	exchange ( Bz_ );
+    }
+    else if (Bx_[0]->dims_.size()==1) {
+	exchange0( By_  );
+	exchange0( Bz_ );
+    }
 
 }
 
@@ -883,69 +891,72 @@ void VectorPatch::solvePoisson( PicParams &params, SmileiMPI* smpi )
     
     // Centering of the electrostatic fields
     // -------------------------------------
+
+    vector<double> E_Add(Ex_[0]->dims_.size(),0.);
+    if ( Ex_[0]->dims_.size()>1 ) {
+	double Ex_WestNorth = 0.0;
+	double Ey_WestNorth = 0.0;
+	double Ex_EastSouth = 0.0;
+	double Ey_EastSouth = 0.0;
+
+	//The NorthWest patch has Patch coordinates X=0, Y=2^m1-1= number_of_patches[1]-1.
+	//Its hindex is
+	int patch_NorthWest = generalhilbertindex(params.mi[0], params.mi[1], 0,  params.number_of_patches[1]-1);
+	//The MPI rank owning it is
+	int rank_WestNorth = smpi->hrank(patch_NorthWest);
+	//The SouthEast patch has Patch coordinates X=2^m0-1= number_of_patches[0]-1, Y=0.
+	//Its hindex is
+	int patch_SouthEast = generalhilbertindex(params.mi[0], params.mi[1], params.number_of_patches[0]-1, 0);
+	//The MPI rank owning it is
+	int rank_EastSouth = smpi->hrank(patch_SouthEast);
+
+
+	//cout << params.mi[0] << " " << params.mi[1] << " " << params.number_of_patches[0] << " " << params.number_of_patches[1] << endl;
+	//cout << patch_NorthWest << " " << rank_WestNorth << " " << patch_SouthEast << " " << rank_EastSouth << endl;
+
+	if ( smpi->smilei_rk == rank_WestNorth ) {
+	    Ex_WestNorth = (*this)(patch_NorthWest-((*this).refHindex_))->EMfields->getEx_WestNorth();
+	    Ey_WestNorth = (*this)(patch_NorthWest-((*this).refHindex_))->EMfields->getEy_WestNorth();
+	}
     
-    double Ex_WestNorth = 0.0;
-    double Ey_WestNorth = 0.0;
-    double Ex_EastSouth = 0.0;
-    double Ey_EastSouth = 0.0;
+	// East-South corner
+	if ( smpi->smilei_rk == rank_EastSouth ) {
+	    Ex_EastSouth = (*this)(patch_SouthEast-((*this).refHindex_))->EMfields->getEx_EastSouth();
+	    Ey_EastSouth = (*this)(patch_SouthEast-((*this).refHindex_))->EMfields->getEy_EastSouth();
+	}
 
-    //The NorthWest patch has Patch coordinates X=0, Y=2^m1-1= number_of_patches[1]-1.
-    //Its hindex is
-    int patch_NorthWest = generalhilbertindex(params.mi[0], params.mi[1], 0,  params.number_of_patches[1]-1);
-    //The MPI rank owning it is
-    int rank_WestNorth = smpi->hrank(patch_NorthWest);
-    //The SouthEast patch has Patch coordinates X=2^m0-1= number_of_patches[0]-1, Y=0.
-    //Its hindex is
-    int patch_SouthEast = generalhilbertindex(params.mi[0], params.mi[1], params.number_of_patches[0]-1, 0);
-    //The MPI rank owning it is
-    int rank_EastSouth = smpi->hrank(patch_SouthEast);
+	MPI_Bcast(&Ex_WestNorth, 1, MPI_DOUBLE, rank_WestNorth, MPI_COMM_WORLD);
+	MPI_Bcast(&Ey_WestNorth, 1, MPI_DOUBLE, rank_WestNorth, MPI_COMM_WORLD);
 
+	MPI_Bcast(&Ex_EastSouth, 1, MPI_DOUBLE, rank_EastSouth, MPI_COMM_WORLD);
+	MPI_Bcast(&Ey_EastSouth, 1, MPI_DOUBLE, rank_EastSouth, MPI_COMM_WORLD);
 
-    //cout << params.mi[0] << " " << params.mi[1] << " " << params.number_of_patches[0] << " " << params.number_of_patches[1] << endl;
-    //cout << patch_NorthWest << " " << rank_WestNorth << " " << patch_SouthEast << " " << rank_EastSouth << endl;
-
-    if ( smpi->smilei_rk == rank_WestNorth ) {
-        Ex_WestNorth = (*this)(patch_NorthWest-((*this).refHindex_))->EMfields->getEx_WestNorth();
-        Ey_WestNorth = (*this)(patch_NorthWest-((*this).refHindex_))->EMfields->getEy_WestNorth();
+	//This correction is always done, independantly of the periodicity. Is this correct ?
+	E_Add[0] = -0.5*(Ex_WestNorth+Ex_EastSouth);
+	E_Add[1] = -0.5*(Ey_WestNorth+Ey_EastSouth);
+    
     }
+    else if( Ex_[0]->dims_.size()==1 ) {
+	double Ex_West = 0.0;
+	double Ex_East = 0.0;
     
-    // East-South corner
-    if ( smpi->smilei_rk == rank_EastSouth ) {
-        Ex_EastSouth = (*this)(patch_SouthEast-((*this).refHindex_))->EMfields->getEx_EastSouth();
-        Ey_EastSouth = (*this)(patch_SouthEast-((*this).refHindex_))->EMfields->getEy_EastSouth();
+	unsigned int rankWest = 0;
+	if ( smpi->smilei_rk == 0 ) {
+	    //Ex_West = (*Ex1D)(index_bc_min[0]);
+	    Ex_West = (*this)( (0)-((*this).refHindex_))->EMfields->getEx_West();
+	}
+	MPI_Bcast(&Ex_West, 1, MPI_DOUBLE, rankWest, MPI_COMM_WORLD);
+    
+	unsigned int rankEast = smpi->smilei_sz-1;
+	if ( smpi->smilei_rk == smpi->smilei_sz-1 ) {
+	    //Ex_East = (*Ex1D)(index_bc_max[0]);
+	    Ex_East = (*this)( (params.number_of_patches[0]-1)-((*this).refHindex_))->EMfields->getEx_East();
+	}
+	MPI_Bcast(&Ex_East, 1, MPI_DOUBLE, rankEast, MPI_COMM_WORLD);
+	E_Add[0] = -0.5*(Ex_West+Ex_East);
+
     }
 
-    MPI_Bcast(&Ex_WestNorth, 1, MPI_DOUBLE, rank_WestNorth, MPI_COMM_WORLD);
-    MPI_Bcast(&Ey_WestNorth, 1, MPI_DOUBLE, rank_WestNorth, MPI_COMM_WORLD);
-
-    MPI_Bcast(&Ex_EastSouth, 1, MPI_DOUBLE, rank_EastSouth, MPI_COMM_WORLD);
-    MPI_Bcast(&Ey_EastSouth, 1, MPI_DOUBLE, rank_EastSouth, MPI_COMM_WORLD);
-
-    /*
-    double Ex_West = 0.0;
-    double Ex_East = 0.0;
-    
-    unsigned int rankWest = smpi1D->extrem_ranks[0][0];
-    if (smpi1D->isWestern()) {
-        if (smilei_rk != smpi1D->extrem_ranks[0][0]) ERROR("western process not well defined");
-        Ex_West = (*Ex1D)(index_bc_min[0]);
-    }
-    MPI_Bcast(&Ex_West, 1, MPI_DOUBLE, rankWest, MPI_COMM_WORLD);
-    
-    unsigned int rankEast = smpi1D->extrem_ranks[0][1];
-    if (smpi1D->isEastern()) {
-        if (smilei_rk != smpi1D->extrem_ranks[0][1]) ERROR("eastern process not well defined");
-        Ex_East = (*Ex1D)(index_bc_max[0]);
-    }
-    MPI_Bcast(&Ex_East, 1, MPI_DOUBLE, rankEast, MPI_COMM_WORLD);
-    double Ex_Add = -0.5*(Ex_West+Ex_East);
-    */
-
-    //This correction is always done, independantly of the periodicity. Is this correct ?
-    vector<double> E_Add(2,0.);
-    E_Add[0] = -0.5*(Ex_WestNorth+Ex_EastSouth);
-    E_Add[1] = -0.5*(Ey_WestNorth+Ey_EastSouth);
-    
     // Centering electrostatic fields
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
 	(*this)(ipatch)->EMfields->centeringE( E_Add );
@@ -978,29 +989,33 @@ void VectorPatch::exchange( std::vector<Field*> fields )
     n_space[1] = (*this)(0)->EMfields->n_space[1];
 
     nx_ = fields[0]->dims_[0];
-    ny_ = fields[0]->dims_[1];
+    ny_ = 1;
+    if (fields[0]->dims_.size()>1)
+      ny_ = fields[0]->dims_[1];
 
     gsp[0] = 2*oversize[0]+fields[0]->isDual_[0]; //Ghost size primal
-    gsp[1] = 2*oversize[1]+fields[0]->isDual_[1]; //Ghost size primal
 
     #pragma omp for schedule(dynamic) private(pt1,pt2)
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
 
-	if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[3]){
-	    pt1 = &(*fields[(*this)(ipatch)->patch_neighborhood_[3]-h0])((n_space[0])*ny_);
+	if ((*this)(ipatch)->MPI_me_ == (*this)(ipatch)->MPI_neighbor_[0][0]){
+	    pt1 = &(*fields[(*this)(ipatch)->neighbor_[0][0]-h0])((n_space[0])*ny_);
 	    pt2 = &(*fields[ipatch])(0);
 	    memcpy( pt2, pt1, ny_*sizeof(double)); 
 	    memcpy( pt1+gsp[0]*ny_, pt2+gsp[0]*ny_, ny_*sizeof(double)); 
-	} // End if ( MPI_neighborhood_[4] == MPI_neighborhood_[3] ) 
+	} // End if ( MPI_me_ == MPI_neighbor_[0][0] ) 
 
-	if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[1]){
-	    pt1 = &(*fields[(*this)(ipatch)->patch_neighborhood_[1]-h0])(n_space[1]);
-	    pt2 = &(*fields[ipatch])(0);
-	    for (unsigned int i = 0 ; i < nx_*ny_ ; i += ny_){
-		pt2[i] = pt1[i] ;
-		pt1[i+gsp[1]] = pt2[i+gsp[1]] ;
-	    } 
-	} // End if ( MPI_neighborhood_[4] == MPI_neighborhood_[1] ) 
+	if (fields[0]->dims_.size()>1) {
+	    gsp[1] = 2*oversize[1]+fields[0]->isDual_[1]; //Ghost size primal
+	    if ((*this)(ipatch)->MPI_me_ == (*this)(ipatch)->MPI_neighbor_[1][0]){
+		pt1 = &(*fields[(*this)(ipatch)->neighbor_[1][0]-h0])(n_space[1]);
+		pt2 = &(*fields[ipatch])(0);
+		for (unsigned int i = 0 ; i < nx_*ny_ ; i += ny_){
+		    pt2[i] = pt1[i] ;
+		    pt1[i+gsp[1]] = pt2[i+gsp[1]] ;
+		} 
+	    } // End if ( MPI_me_ == MPI_neighbor_[1][0] ) 
+	}
 
     } // End for( ipatch )
 
@@ -1012,15 +1027,15 @@ void VectorPatch::exchange( std::vector<Field*> fields )
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
 	(*this)(ipatch)->finalizeExchange( fields[ipatch], 0 );
 
+    if (fields[0]->dims_.size()>1) {
+        #pragma omp for
+	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	    (*this)(ipatch)->initExchange( fields[ipatch], 1 );
 
-    #pragma omp for
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-	(*this)(ipatch)->initExchange( fields[ipatch], 1 );
-
-    #pragma omp for
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-	(*this)(ipatch)->finalizeExchange( fields[ipatch], 1 );
-
+        #pragma omp for
+	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+	    (*this)(ipatch)->finalizeExchange( fields[ipatch], 1 );
+    }
 
 }
 
@@ -1037,20 +1052,21 @@ void VectorPatch::exchange0( std::vector<Field*> fields )
     n_space[1] = (*this)(0)->EMfields->n_space[1];
 
     nx_ = fields[0]->dims_[0];
-    ny_ = fields[0]->dims_[1];
+    ny_ = 1;
+    if (fields[0]->dims_.size()>1)
+	ny_ = fields[0]->dims_[1];
 
     gsp[0] = 2*oversize[0]+fields[0]->isDual_[0]; //Ghost size primal
-    gsp[1] = 2*oversize[1]+fields[0]->isDual_[1]; //Ghost size primal
 
     #pragma omp for schedule(dynamic) private(pt1,pt2)
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
 
-	if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[3]){
-	    pt1 = &(*fields[(*this)(ipatch)->patch_neighborhood_[3]-h0])((n_space[0])*ny_);
+	if ((*this)(ipatch)->MPI_me_ == (*this)(ipatch)->MPI_neighbor_[0][0]){
+	    pt1 = &(*fields[(*this)(ipatch)->neighbor_[0][0]-h0])((n_space[0])*ny_);
 	    pt2 = &(*fields[ipatch])(0);
 	    memcpy( pt2, pt1, ny_*sizeof(double)); 
 	    memcpy( pt1+gsp[0]*ny_, pt2+gsp[0]*ny_, ny_*sizeof(double)); 
-	} // End if ( MPI_neighborhood_[4] == MPI_neighborhood_[3] ) 
+	} // End if ( MPI_me_ == MPI_neighbor_[0][0] ) 
 
 
     } // End for( ipatch )
@@ -1087,14 +1103,14 @@ void VectorPatch::exchange1( std::vector<Field*> fields )
     #pragma omp for schedule(dynamic) private(pt1,pt2)
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
 
-	if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[1]){
-	    pt1 = &(*fields[(*this)(ipatch)->patch_neighborhood_[1]-h0])(n_space[1]);
+	if ((*this)(ipatch)->MPI_me_ == (*this)(ipatch)->MPI_neighbor_[1][0]){
+	    pt1 = &(*fields[(*this)(ipatch)->neighbor_[1][0]-h0])(n_space[1]);
 	    pt2 = &(*fields[ipatch])(0);
 	    for (unsigned int i = 0 ; i < nx_*ny_ ; i += ny_){
 		pt2[i] = pt1[i] ;
 		pt1[i+gsp[1]] = pt2[i+gsp[1]] ;
 	    } 
-	} // End if ( MPI_neighborhood_[4] == MPI_neighborhood_[1] ) 
+	} // End if ( MPI_me_ == MPI_neighbor_[1][0] ) 
 
     } // End for( ipatch )
 
@@ -1131,9 +1147,9 @@ void VectorPatch::sum( std::vector<Field*> fields )
     #pragma omp for schedule(dynamic) private(pt1,pt2)
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
 
-        if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[3]){
+        if ((*this)(ipatch)->MPI_me_ == (*this)(ipatch)->MPI_neighbor_[0][0]){
 	    //The patch on my left belongs to the same MPI process than I.
-	    pt1 = &(*fields[(*this)(ipatch)->patch_neighborhood_[3]-h0])(n_space[0]*ny_);
+	    pt1 = &(*fields[(*this)(ipatch)->neighbor_[0][0]-h0])(n_space[0]*ny_);
 	    pt2 = &(*fields[ipatch])(0);
 	    for (unsigned int i = 0; i < gsp[0]* ny_ ; i++) pt1[i] += pt2[i];
 	    memcpy( pt2, pt1, gsp[0]*ny_*sizeof(double)); 
@@ -1160,9 +1176,9 @@ void VectorPatch::sum( std::vector<Field*> fields )
         #pragma omp for schedule(dynamic) private(pt1,pt2)
 	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
 
-	    if ((*this)(ipatch)->MPI_neighborhood_[4] == (*this)(ipatch)->MPI_neighborhood_[1]){
+	    if ((*this)(ipatch)->MPI_me_ == (*this)(ipatch)->MPI_neighbor_[1][0]){
 		//The patch below me belongs to the same MPI process than I.
-		pt1 = &(*fields[(*this)(ipatch)->patch_neighborhood_[1]-h0])(n_space[1]);
+		pt1 = &(*fields[(*this)(ipatch)->neighbor_[1][0]-h0])(n_space[1]);
 		pt2 = &(*fields[ipatch])(0);
 		for (unsigned int j = 0; j < nx_ ; j++){
 		    for (unsigned int i = 0; i < gsp[1] ; i++) pt1[i] += pt2[i];

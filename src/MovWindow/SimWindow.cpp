@@ -109,7 +109,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
     // Init new patches (really new and received)
     for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
 
-        if ( vecPatches(ipatch)->MPI_neighborhood_[4] != vecPatches(ipatch)->MPI_neighborhood_[5] ) {
+        if ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][1] ) {
             int patchid = vecPatches(ipatch)->neighbor_[0][1];
             Patch* newPatch = PatchesFactory::create(params, diag_params, laser_params, smpi, patchid, n_moved );
             vecPatches.patches_.push_back( newPatch );
@@ -160,14 +160,14 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
             // Patch à envoyer
             for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
                 //if my MPI left neighbor is not me AND I'm not a newly created patch, send me !
-                if ( vecPatches(ipatch)->MPI_neighborhood_[4] != vecPatches(ipatch)->MPI_neighborhood_[3] && vecPatches(ipatch)->hindex == vecPatches(ipatch)->neighbor_[0][0] ) {
-                    smpi->isend( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighborhood_[3], vecPatches(ipatch)->hindex*nmessage );
+                if ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][0] && vecPatches(ipatch)->hindex == vecPatches(ipatch)->neighbor_[0][0] ) {
+                    smpi->isend( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighbor_[0][0], vecPatches(ipatch)->hindex*nmessage );
                 }
             }
             // Patch à recevoir
             for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
-                if ( ( vecPatches(ipatch)->MPI_neighborhood_[4] != vecPatches(ipatch)->MPI_neighborhood_[5] ) && ( vecPatches(ipatch)->MPI_neighborhood_[5] != MPI_PROC_NULL )  && (vecPatches(ipatch)->neighbor_[0][0] != vecPatches(ipatch)->hindex) ){
-                    smpi->new_recv( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighborhood_[5], vecPatches(ipatch)->hindex*nmessage, nDim_Parts );
+                if ( ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][0] ) && ( vecPatches(ipatch)->MPI_neighbor_[0][0] != MPI_PROC_NULL )  && (vecPatches(ipatch)->neighbor_[0][0] != vecPatches(ipatch)->hindex) ){
+                    smpi->new_recv( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighbor_[0][0], vecPatches(ipatch)->hindex*nmessage, nDim_Parts );
                 }
             }
 
@@ -176,7 +176,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
 
     // Suppress after exchange to not distrub patch position during exchange
     for ( int ipatch = nPatches-1 ; ipatch >= 0 ; ipatch--) {
-        if ( vecPatches(ipatch)->MPI_neighborhood_[4] != vecPatches(ipatch)->MPI_neighborhood_[3] && vecPatches(ipatch)->hindex == vecPatches(ipatch)->neighbor_[0][0] ) {
+        if ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][0] && vecPatches(ipatch)->hindex == vecPatches(ipatch)->neighbor_[0][0] ) {
 
             vecPatches(ipatch)->Diags->probes.setFile(0);
             vecPatches(ipatch)->sio->setFiles(0,0);
@@ -210,27 +210,13 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
 	int ycall = vecPatches(ipatch)->Pcoordinates[1]-1;
 	if (params.bc_em_type_long=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
 	if (params.bc_em_type_trans=="periodic" && ycall <0) ycall += (1<<params.mi[1]);
-	vecPatches(ipatch)->patch_neighborhood_[0] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, ycall);
+	vecPatches(ipatch)->corner_neighbor_[0][0] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, ycall);
 	ycall = vecPatches(ipatch)->Pcoordinates[1];
-	vecPatches(ipatch)->patch_neighborhood_[3] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, vecPatches(ipatch)->Pcoordinates[1]);
+	vecPatches(ipatch)->neighbor_[0][0] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, vecPatches(ipatch)->Pcoordinates[1]);
 	ycall = vecPatches(ipatch)->Pcoordinates[1]+1;
 	if (params.bc_em_type_trans=="periodic" && ycall >= 1<<params.mi[1]) ycall -= (1<<params.mi[1]);
-	vecPatches(ipatch)->patch_neighborhood_[6] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, ycall);
+	vecPatches(ipatch)->corner_neighbor_[0][1] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, ycall);
 	
-	vecPatches(ipatch)->corner_neighbor_[0][0]= vecPatches(ipatch)->patch_neighborhood_[0] ;
-	vecPatches(ipatch)->neighbor_[0][0]       = vecPatches(ipatch)->patch_neighborhood_[3] ;
-	vecPatches(ipatch)->corner_neighbor_[0][1]= vecPatches(ipatch)->patch_neighborhood_[6] ;
-
-
-        //For now also need to update neighbor_, corner_neighbor and their MPI counterparts even if these will be obsolete eventually.
-	vecPatches(ipatch)->patch_neighborhood_[1] = vecPatches(ipatch)->neighbor_[1][0];
-        vecPatches(ipatch)->patch_neighborhood_[2] = vecPatches(ipatch)->corner_neighbor_[1][0];
-        vecPatches(ipatch)->patch_neighborhood_[4] = vecPatches(ipatch)->hindex;
-        vecPatches(ipatch)->patch_neighborhood_[5] = vecPatches(ipatch)->neighbor_[0][1];
-        vecPatches(ipatch)->patch_neighborhood_[7] = vecPatches(ipatch)->neighbor_[1][1];
-        vecPatches(ipatch)->patch_neighborhood_[8] = vecPatches(ipatch)->corner_neighbor_[1][1];
-
-
     }
 
     for (int ipatch=0 ; ipatch<nPatches ; ipatch++ ) {
@@ -261,6 +247,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
 
     return;
 
+#ifdef _MANAGE_UPDATE_USING_TMP_STRUCT
 
 
     int xcall, ycall, h0;
@@ -383,10 +370,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
 	   mypatch->MPI_neighbor_[0][1] = mypatch->MPI_neighborhood_[5];
 	   mypatch->MPI_neighbor_[1][0] = mypatch->MPI_neighborhood_[1];
 	   mypatch->MPI_neighbor_[1][1] = mypatch->MPI_neighborhood_[7];
-	   mypatch->MPI_corner_neighbor_[0][0] = mypatch->MPI_neighborhood_[0];
-	   mypatch->MPI_corner_neighbor_[0][1] = mypatch->MPI_neighborhood_[6];
-	   mypatch->MPI_corner_neighbor_[1][0] = mypatch->MPI_neighborhood_[2];
-	   mypatch->MPI_corner_neighbor_[1][1] = mypatch->MPI_neighborhood_[8];
 
             //And finally put the patch at the correct rank in vecPatches.
             vecPatches.patches_[mypatch->hindex - h0 ] = mypatch ; 
@@ -436,6 +419,10 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
         //send_patches_[j]->sio->setFiles(0,0);
         //delete send_patches_[j];
     }
+#else
+	 MESSAGE( "Attention !!!" );
+#endif
+
 }
 
 

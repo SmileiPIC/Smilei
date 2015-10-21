@@ -161,6 +161,9 @@ public:
     virtual void initE(Patch *patch) = 0;
     virtual void centeringE( std::vector<double> E_Add ) = 0;
 
+    virtual double getEx_West() = 0; // 2D !!!
+    virtual double getEx_East() = 0; // 2D !!!
+
     virtual double getEx_WestNorth() = 0; // 1D !!!
     virtual double getEy_WestNorth() = 0; // 1D !!!
     virtual double getEx_EastSouth() = 0; // 1D !!!

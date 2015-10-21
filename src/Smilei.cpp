@@ -204,7 +204,7 @@ int main (int argc, char* argv[])
 	    MESSAGE("----------------------------------------------");
 	    MESSAGE("Solving Poisson at time t = 0");
 	    MESSAGE("----------------------------------------------");    
-	    //vecPatches.solvePoisson( params, smpiData );
+	    vecPatches.solvePoisson( params, smpiData );
 	}
   
 	

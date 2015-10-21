@@ -3,13 +3,20 @@
 
 #include "VectorPatch.h"
 #include "Patch.h"
+#include "Patch1D.h"
 
 #include "Tools.h"
 
 class PatchesFactory {
 public:
     static Patch* create(PicParams& params, DiagParams& diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int  ipatch) {
-	Patch* patch = new Patch(params, diag_params, laser_params, smpi, ipatch, 0);
+	Patch* patch;
+	if (params.geometry == "1d3v")
+	    patch = new Patch1D(params, diag_params, laser_params, smpi, ipatch, 0);
+	else if (params.geometry == "2d3v" )
+	    patch = new Patch(params, diag_params, laser_params, smpi, ipatch, 0);
+	else 
+	    ERROR( "Unknwon parameters : " << params.geometry );
         return patch;
     }
 
