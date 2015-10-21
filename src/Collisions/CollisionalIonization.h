@@ -12,14 +12,14 @@ class CollisionalIonization
 
 public:
     //! Constructor
-    CollisionalIonization(int, double);
+    CollisionalIonization(int, double,SmileiMPI*);
     virtual ~CollisionalIonization() {};
     
     //! Gets the k-th binding energy of any neutral or ionized atom with atomic number Z and charge Zstar
     double binding_energy(int Zstar, int k);
     
     //! Coefficients used for interpolating the energy over a given initial list
-    static const double a1, a2;
+    static const double a1, a2, npointsm1;
     static const int npoints;
     
     //! Methods to prepare the ionization
@@ -40,6 +40,10 @@ public:
     //! Table of average incident electron energy lost
     std::vector<std::vector<double> > lostEnergy;
     
+    //! Temporary stuff before patches arrive
+    Particles new_electrons;
+    virtual void finish(Species *s1, Species *s2, Params&);
+    SmileiMPI* smpi;
     
 private:
     
@@ -67,19 +71,23 @@ private:
     
     //! Quantities used during computation
     int Zstar; // ion charge
+    
 };
 
 //! Class to make empty ionization objects
 class CollisionalNoIonization : public CollisionalIonization
 {
 public:
-    CollisionalNoIonization() : CollisionalIonization(0,1.) {};
+    CollisionalNoIonization() : CollisionalIonization(0,1.,NULL) {};
     ~CollisionalNoIonization(){};
     
     void prepare2(Particles *p1, int i1, Particles *p2, int i2){};
     void prepare3(double timestep, int n_cell_per_cluster){};
     void apply(double vrel, double gamma1_COM, double gamma2_COM,
         Particles *p1, int i1, Particles *p2, int i2){};
+    
+    //! Temporary stuff before patches arrive
+    void finish(Species *s1, Species *s2, Params&) {};
 };
 
 #endif

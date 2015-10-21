@@ -205,8 +205,10 @@ vector<Collisions*> Collisions::create(Params& params, vector<Species*>& vecSpec
                 }
             }
             // Otherwise, create new
-            if( vecCollisions[n_collisions]->Ionization == NULL)
-                vecCollisions[n_collisions]->Ionization = new CollisionalIonization(Z, params.wavelength_SI);
+            if( vecCollisions[n_collisions]->Ionization == NULL){
+                vecCollisions[n_collisions]->Ionization = new CollisionalIonization(Z, params.wavelength_SI, smpi);
+                vecCollisions[n_collisions]->Ionization->new_electrons.initialize(0, params.nDim_particle );// temporary TO BE REMOVED
+            }
         } else {
             // If no ionization, create 'empty' ionization object
             vecCollisions[n_collisions]->Ionization = new CollisionalNoIonization();
@@ -584,6 +586,9 @@ void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime
         }
         
     } // end loop on bins
+    
+    // temporary to be removed
+    Ionization->finish(vecSpecies[(*sg1)[0]], vecSpecies[(*sg2)[0]], params);
     
     if( debug ) {
         name.str("");

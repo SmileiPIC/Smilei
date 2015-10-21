@@ -212,6 +212,29 @@ The resulting conductivity :math:`\sigma=en_ev_f/E` is compared in
 
 ----
 
+.. _CollIonization:
+
+Collisional ionization
+^^^^^^^^^^^^^^^^^^^^^^
+
+The binary collisions can also be ionizing if they are **electron-ion** collisions.
+The approach is the same as that provided in [Perez2012]_.
+
+When ionization is requested by setting ``ionizing=True``, a few additional operations
+are executed:
+
+* At the beginning of the run, cross-sections are calculated from tabulated binding
+  energies (available for ions up to atomic number 100). These cross-sections are then
+  tabulated for each requested ion species.
+* Each timestep, the particle densities :math:`n_e`, :math:`n_i` and :math:`n_{ei}`
+  (similar to the densities above for collisions) are calculated.
+* During each collision, a probability for ionization is computed. If successful, 
+  the ion charge is increased, the incident electron is slowed down, and a new electron
+  is created.
+
+
+----
+
 Collisions debugging
 ^^^^^^^^^^^^^^^^^^^^
 
