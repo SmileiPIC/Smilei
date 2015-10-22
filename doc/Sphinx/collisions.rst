@@ -78,21 +78,21 @@ ratios of particle weights: 0.1, 1, and 10.
 .. _beam1:
 
 .. figure:: _static/beam_relaxation123.png
-  :width: 12cm
+  :width: 10cm
   
   Relaxation of an electron beam. Initial velocity = 0.05, ion charge = 1.
   
 .. _beam2:
 
 .. figure:: _static/beam_relaxation456.png
-  :width: 12cm
+  :width: 10cm
   
   Relaxation of an electron beam. Initial velocity = 0.01, ion charge = 1.
 
 .. _beam3:
 
 .. figure:: _static/beam_relaxation789.png
-  :width: 12cm
+  :width: 10cm
   
   Relaxation of an electron beam. Initial velocity = 0.01, ion charge = 3.
 
@@ -261,6 +261,29 @@ right electron energy. The discrepancy at late time is due to the changing veloc
 distributions and to the next level starting to ionize.
 
 
+.. rubric:: 2. Inelastic stopping power
+
+A cold, non-ionized Al plasma is set with density :math:`n_e=10^{21} \mathrm{cm}^{-3}`.
+Electrons of various initial velocities are slowed down by ionizing collisions and their
+energy loss is recorded as a function of time.
+
+A few examples are given in the left graph of :numref:`IonizationStoppinPower`.
+The theoretical curve is obtained from [Rohrlich1954]_. Note that this theory does not
+work below a certain average ionization energy, in our case :math:`\sim 200` eV.
+
+.. _IonizationStoppinPower:
+
+.. figure:: _static/ionization_stopping_power.png
+  :width: 14cm
+  
+  Left: ionization slowing down versus time, for electrons injected at various
+  initial energies into cold Al. Right: corresponding stopping power versus initial
+  electron energy.
+  
+In the same figure, the graph on the right-hand-side provides the stopping power value
+in the same context, at different electron energies. It is compared to the same theory.
+
+
 ----
 
 Collisions debugging
@@ -305,5 +328,7 @@ References
 .. [Lee1984] `Y. T. Lee and R. M. More, Phys. Fluids 27, 1273 (1984) <http://dx.doi.org/10.1063/1.864744>`_
 
 .. [Frankel1979] `N. E. Frankel, K. C. Hines, and R. L. Dewar, Phys. Rev. A 20, 2120 (1979) <http://dx.doi.org/10.1143/JPSJ.67.4084>`_
+
+.. [Rohrlich1954] `F. Rohrlich and B. C. Carlson, Phys. Rev. 93, 38 (1954) <http://journals.aps.org/pr/abstract/10.1103/PhysRev.93.38>`_
 
 
