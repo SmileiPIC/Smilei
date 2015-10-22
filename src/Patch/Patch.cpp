@@ -31,11 +31,13 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 #ifdef _DEBUGPATCH
 	std::cout << smpi->getRank() << ", mypatch is : " << hindex << std::endl;        
 #endif
+	//int nDims = params.nDim_field;
+        nDim_fields_ = params.nDim_field;
+        int nDims = 2;
+        Pcoordinates.resize(nDims);
         if ( params.geometry == "1d3v" ) {
-            Pcoordinates.resize(1);
             Pcoordinates[0] = hindex;
-	    MPI_neighborhood_.resize(3);
-	    patch_neighborhood_.resize(3);
+            Pcoordinates[1] = 0;
         }
         else if ( params.geometry == "2d3v" ) {
             Pcoordinates.resize(2);
@@ -45,77 +47,59 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 	    //  Define local domain
 	    /////////////////////////////////////
 
-	    MPI_neighborhood_.resize(9);
-	    patch_neighborhood_.resize(9);
         }
         else {
             Pcoordinates.resize(3);
             generalhilbertindexinv(params.mi[0], params.mi[1], params.mi[2], &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
-	    MPI_neighborhood_.resize(27);
-	    patch_neighborhood_.resize(27);
         }
 
 	//std::cout << "Coordonnées de " << ipatch << " : " << Pcoordinates[0] << " " << Pcoordinates[1] << std::endl;
 	nbNeighbors_ = 2;
-	neighbor_.resize(params.nDim_field);
+	neighbor_.resize(nDim_fields_);
 	corner_neighbor_.resize(params.nDim_field);
-	for ( int iDim = 0 ; iDim < params.nDim_field ; iDim++ ) {
+	for ( int iDim = 0 ; iDim < nDim_fields_ ; iDim++ ) {
 	    neighbor_[iDim].resize(2,MPI_PROC_NULL);
 	    corner_neighbor_[iDim].resize(2,MPI_PROC_NULL);
 	}
-	MPI_neighbor_.resize(params.nDim_field);
-	MPI_corner_neighbor_.resize(params.nDim_field);
-	for ( int iDim = 0 ; iDim < params.nDim_field ; iDim++ ) {
+	MPI_neighbor_.resize(nDim_fields_);
+	for ( int iDim = 0 ; iDim < nDim_fields_; iDim++ ) {
 	    MPI_neighbor_[iDim].resize(2,MPI_PROC_NULL);
-	    MPI_corner_neighbor_[iDim].resize(2,MPI_PROC_NULL);
 	}
 
         xcall = Pcoordinates[0]-1;
         ycall = Pcoordinates[1];
 	if (params.bc_em_type_long=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
 	neighbor_[0][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
-#ifdef _PATCH_DEBUG
-        cout << xcall << " " << ycall << " " << neighbor_[0][0] << endl;
-#endif
         xcall = Pcoordinates[0]+1;
 	if (params.bc_em_type_long=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
 	neighbor_[0][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
-        xcall = Pcoordinates[0];
-        ycall = Pcoordinates[1]-1;
-	if (params.bc_em_type_trans=="periodic" && ycall < 0) ycall += (1<<params.mi[1]);
-	neighbor_[1][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
-        ycall = Pcoordinates[1]+1;
-	if (params.bc_em_type_trans=="periodic" && ycall >= (1<<params.mi[1])) ycall -= (1<<params.mi[1]);
-	neighbor_[1][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
 
+	if (params.nDim_field>1) {
+	    xcall = Pcoordinates[0];
+	    ycall = Pcoordinates[1]-1;
+	    if (params.bc_em_type_trans=="periodic" && ycall < 0) ycall += (1<<params.mi[1]);
+	    neighbor_[1][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
+	    ycall = Pcoordinates[1]+1;
+	    if (params.bc_em_type_trans=="periodic" && ycall >= (1<<params.mi[1])) ycall -= (1<<params.mi[1]);
+	    neighbor_[1][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
 
-        xcall = Pcoordinates[0]+1;
-	if (params.bc_em_type_long=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
-	corner_neighbor_[1][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
-        xcall = Pcoordinates[0]-1;
-	if (params.bc_em_type_long=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
-	corner_neighbor_[0][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
-        ycall = Pcoordinates[1]-1;
-	if (params.bc_em_type_trans=="periodic" && ycall < 0) ycall += (1<<params.mi[1]);
-	corner_neighbor_[0][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
-        xcall = Pcoordinates[0]+1;
-	if (params.bc_em_type_long=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
-	corner_neighbor_[1][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
-
-
-        patch_neighborhood_[0] = corner_neighbor_[0][0];
-        patch_neighborhood_[1] = neighbor_[1][0];
-        patch_neighborhood_[2] = corner_neighbor_[1][0];
-        patch_neighborhood_[3] = neighbor_[0][0];
-        patch_neighborhood_[4] = hindex;
-        patch_neighborhood_[5] = neighbor_[0][1];
-        patch_neighborhood_[6] = corner_neighbor_[0][1];
-        patch_neighborhood_[7] = neighbor_[1][1];
-        patch_neighborhood_[8] = corner_neighbor_[1][1];
+	    xcall = Pcoordinates[0]+1;
+	    if (params.bc_em_type_long=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
+	    corner_neighbor_[1][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
+	    xcall = Pcoordinates[0]-1;
+	    if (params.bc_em_type_long=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
+	    corner_neighbor_[0][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
+	    ycall = Pcoordinates[1]-1;
+	    if (params.bc_em_type_trans=="periodic" && ycall < 0) ycall += (1<<params.mi[1]);
+	    corner_neighbor_[0][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
+	    xcall = Pcoordinates[0]+1;
+	    if (params.bc_em_type_long=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
+	    corner_neighbor_[1][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
+	}
 
 	updateMPIenv(smpi);
 
-	createType(params);
+	//createType(params);
 
 	
 	//std::cout << "Voisin dir 0 : " << ipatch << " : " <<  neighbor_[0][0] << " " <<  neighbor_[0][1] << std::endl;
@@ -158,38 +142,20 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 
 void Patch::updateMPIenv(SmileiMPI* smpi)
 {
-	for ( int z = 0 ; z < 1+2*(2 == 3) ; z++ ) {
-	    for ( int y = 0 ; y < 1+2*(2 >= 2) ; y++ ) {
-	        for ( int x = 0 ; x < 3 ; x++ ) {
-		    MPI_neighborhood_[z*9+y*3+x] = smpi->hrank(patch_neighborhood_[z*9+y*3+x]);
-                }
-            }
-        }
+    for (int iDim = 0 ; iDim < nDim_fields_ ; iDim++)
+	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++)
+	    MPI_neighbor_[iDim][iNeighbor] = smpi->hrank(neighbor_[iDim][iNeighbor]);
+    MPI_me_ = smpi->smilei_rk;
+
 
 #ifdef _PATCH_DEBUG
 	cout << "\n\tPatch Corner decomp : " << corner_neighbor_[0][1] << "\t" << neighbor_[1][1]  << "\t" << corner_neighbor_[1][1] << endl;
 	cout << "\tPatch Corner decomp : " << neighbor_[0][0] << "\t" << hindex << "\t" << neighbor_[0][1] << endl;
 	cout << "\tPatch Corner decomp : " << corner_neighbor_[0][0] << "\t" << neighbor_[1][0]  << "\t" << corner_neighbor_[1][0] << endl;
 
-	cout << "\n\tMPI Corner decomp : " << MPI_neighborhood_[6] << "\t" << MPI_neighborhood_[7]  << "\t" << MPI_neighborhood_[8] << endl;
-	cout << "\tMPI Corner decomp : " << MPI_neighborhood_[3] << "\t" << MPI_neighborhood_[4] << "\t" << MPI_neighborhood_[5] << endl;
-	cout << "\tMPI Corner decomp : " << MPI_neighborhood_[0] << "\t" << MPI_neighborhood_[1]  << "\t" << MPI_neighborhood_[2] << endl;
-#endif
-
-	// Redundant temporary solution, to introduce, MPI-Patched features
-	MPI_neighbor_[0][0] = MPI_neighborhood_[3];
-	MPI_neighbor_[0][1] = MPI_neighborhood_[5];
-	MPI_neighbor_[1][0] = MPI_neighborhood_[1];
-	MPI_neighbor_[1][1] = MPI_neighborhood_[7];
-	MPI_corner_neighbor_[0][0] = MPI_neighborhood_[0];
-	MPI_corner_neighbor_[0][1] = MPI_neighborhood_[6];
-	MPI_corner_neighbor_[1][0] = MPI_neighborhood_[2];
-	MPI_corner_neighbor_[1][1] = MPI_neighborhood_[8];
-
-#ifdef _PATCH_DEBUG
-	cout << "\n\tMPI Corner decomp : " << MPI_corner_neighbor_[0][1] << "\t" << MPI_neighbor_[1][1]  << "\t" << MPI_corner_neighbor_[1][1] << endl;
+	cout << "\n\tMPI Corner decomp : " << "MPI_PROC_NULL" << "\t" << MPI_neighbor_[1][1]  << "\t" << "MPI_PROC_NULL" << endl;
 	cout << "\tMPI Corner decomp : " << MPI_neighbor_[0][0] << "\t" << smpi->getRank() << "\t" << MPI_neighbor_[0][1] << endl;
-	cout << "\tMPI Corner decomp : " << MPI_corner_neighbor_[0][0] << "\t" << MPI_neighbor_[1][0]  << "\t" << MPI_corner_neighbor_[1][0] << endl;
+	cout << "\tMPI Corner decomp : " << "MPI_PROC_NULL" << "\t" << MPI_neighbor_[1][0]  << "\t" << "MPI_PROC_NULL" << endl;
 #endif
 
 }
@@ -216,8 +182,8 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, Vec
     for (int iDim=0 ; iDim < ndim ; iDim++){
         xmax[iDim] = params.cell_length[iDim]*( params.n_space_global[iDim] );
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-            vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][iNeighbor].initialize(0,2);
-            vecSpecies[ispec]->specMPI.patchVectorSend[iDim][iNeighbor].initialize(0,2);
+            vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][iNeighbor].initialize(0,cuParticles.dimension());
+            vecSpecies[ispec]->specMPI.patchVectorSend[iDim][iNeighbor].initialize(0,cuParticles.dimension());
 	    vecSpecies[ispec]->specMPI.patch_buff_index_send[iDim][iNeighbor].resize(0);
 	    vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][iNeighbor] = 0;
         }
@@ -497,7 +463,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params,
         shift[1] += vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[0][0];//Particles coming from south all go to bin 0 and shift all the other bins.
         shift[(*cubmax).size()] += vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[0][1];//Used only to count the total number of particles arrived.
         //idim>0
-        for (idim == 1; idim < ndim; idim++){
+        for (idim = 1; idim < ndim; idim++){
             for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
                 n_part_recv = vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[idim][iNeighbor];
                 for (unsigned int j=0; j<n_part_recv ;j++){
@@ -521,7 +487,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params,
             n_particles = (*cubmax)[j]-(*cubmin)[j]; //Nbr of particle in this bin
             nmove = min(n_particles,shift[j]); //Nbr of particles to move
             lmove = max(n_particles,shift[j]); //How far particles must be shifted
-            if (nmove>0) cuParticles.overwrite_part2D((*cubmin)[j], (*cubmin)[j]+lmove, nmove);
+            if (nmove>0) cuParticles.overwrite_part((*cubmin)[j], (*cubmin)[j]+lmove, nmove);
             (*cubmin)[j] += shift[j];
             (*cubmax)[j] += shift[j];
         }
@@ -532,7 +498,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params,
             n_part_recv = vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[0][iNeighbor];
             if ( (neighbor_[0][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
                 ii = iNeighbor*((*cubmax).size()-1);//0 if iNeighbor=0(particles coming from West) and (*cubmax).size()-1 otherwise.
-                vecSpecies[ispec]->specMPI.patchVectorRecv[0][iNeighbor].overwrite_part2D(0, cuParticles,(*cubmax)[ii],n_part_recv);
+                vecSpecies[ispec]->specMPI.patchVectorRecv[0][iNeighbor].overwrite_part(0, cuParticles,(*cubmax)[ii],n_part_recv);
                 (*cubmax)[ii] += n_part_recv ;
             }
         }
@@ -543,7 +509,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params,
                 if ( (neighbor_[idim][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
             	    for(unsigned int j=0; j<n_part_recv; j++){
             	        ii = int((vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][iNeighbor].position(0,j)-min_local[0])/dbin);//bin in which the particle goes.
-            	        vecSpecies[ispec]->specMPI.patchVectorRecv[idim][iNeighbor].overwrite_part2D(j, cuParticles,(*cubmax)[ii]);
+            	        vecSpecies[ispec]->specMPI.patchVectorRecv[idim][iNeighbor].overwrite_part(j, cuParticles,(*cubmax)[ii]);
             	        (*cubmax)[ii] ++ ;
             	    }
                 }
@@ -553,441 +519,6 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params,
 
 } // finalizeCommParticles(... iDim)
 
-
-void Patch::createType( PicParams& params )
-{
-    int nx0 = params.n_space[0] + 1 + 2*params.oversize[0];
-    int ny0 = params.n_space[1] + 1 + 2*params.oversize[1];
-    unsigned int clrw = params.clrw;
-    
-    // MPI_Datatype ntype_[nDim][primDual][primDual]
-    int nx, ny;
-    int nline, ncol;
-
-    int corner_nx, corner_ny;
-    for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
-        nx = nx0 + ix_isPrim;
-	corner_nx = 1 + 2*params.oversize[0] + ix_isPrim;
-        for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {
-            ny = ny0 + iy_isPrim;
-	    corner_ny = 1 + 2*params.oversize[1] + iy_isPrim;
-
-	    // Standard Type
-            ntype_[0][ix_isPrim][iy_isPrim] = NULL;
-            MPI_Type_contiguous(ny, MPI_DOUBLE, &(ntype_[0][ix_isPrim][iy_isPrim]));    //line
-            MPI_Type_commit( &(ntype_[0][ix_isPrim][iy_isPrim]) );
-            ntype_[1][ix_isPrim][iy_isPrim] = NULL;
-            MPI_Type_vector(nx, 1, ny, MPI_DOUBLE, &(ntype_[1][ix_isPrim][iy_isPrim])); // column
-            MPI_Type_commit( &(ntype_[1][ix_isPrim][iy_isPrim]) );
-            ntype_[2][ix_isPrim][iy_isPrim] = NULL;
-            MPI_Type_contiguous(ny*clrw, MPI_DOUBLE, &(ntype_[2][ix_isPrim][iy_isPrim]));   //clrw lines
-            MPI_Type_commit( &(ntype_[2][ix_isPrim][iy_isPrim]) );
-
-            ntypeSum_[0][ix_isPrim][iy_isPrim] = NULL;
-            nline = 1 + 2*params.oversize[0] + ix_isPrim;
-            MPI_Type_contiguous(nline, ntype_[0][ix_isPrim][iy_isPrim], &(ntypeSum_[0][ix_isPrim][iy_isPrim]));    //line
-            MPI_Type_commit( &(ntypeSum_[0][ix_isPrim][iy_isPrim]) );
-            ntypeSum_[1][ix_isPrim][iy_isPrim] = NULL;
-            ncol  = 1 + 2*params.oversize[1] + iy_isPrim;
-            MPI_Type_vector(nx, ncol, ny, MPI_DOUBLE, &(ntypeSum_[1][ix_isPrim][iy_isPrim])); // column
-            MPI_Type_commit( &(ntypeSum_[1][ix_isPrim][iy_isPrim]) );
-
-	    // Corner Types
-            corner_ntype_[0][ix_isPrim][iy_isPrim] = NULL;
-            MPI_Type_contiguous(corner_ny, MPI_DOUBLE, &(corner_ntype_[0][ix_isPrim][iy_isPrim]));    //line
-	    MPI_Type_commit( &(corner_ntype_[0][ix_isPrim][iy_isPrim]) );
-            corner_ntype_[1][ix_isPrim][iy_isPrim] = NULL;
-            MPI_Type_vector(corner_nx, 1, ny, MPI_DOUBLE, &(corner_ntype_[1][ix_isPrim][iy_isPrim])); // column
-	    MPI_Type_commit( &(corner_ntype_[1][ix_isPrim][iy_isPrim]) );
-	    // clrw slide don't use corners
-	    //corner_ntype_[2][ix_isPrim][iy_isPrim] = NULL;
-            //MPI_Type_contiguous(ny*clrw, MPI_DOUBLE, &(ntype_[2][ix_isPrim][iy_isPrim]));   //clrw lines
-	    //MPI_Type_commit( &(ntype_[2][ix_isPrim][iy_isPrim]) );
-
-            corner_ntypeSum_[0][ix_isPrim][iy_isPrim] = NULL;
-            nline = 1 + 2*params.oversize[0] + ix_isPrim;
-	    MPI_Type_vector( nline, corner_ny, ny, MPI_DOUBLE, &(corner_ntypeSum_[0][ix_isPrim][iy_isPrim])); // column
-	    MPI_Type_commit( &(corner_ntypeSum_[0][ix_isPrim][iy_isPrim]) );
-            corner_ntypeSum_[1][ix_isPrim][iy_isPrim] = NULL;
-	    ncol  = 1 + 2*params.oversize[1] + iy_isPrim;
-	    MPI_Type_vector(corner_nx, ncol, ny, MPI_DOUBLE, &(corner_ntypeSum_[1][ix_isPrim][iy_isPrim])); // column
-	    MPI_Type_commit( &(corner_ntypeSum_[1][ix_isPrim][iy_isPrim]) );
-
-            
-        }
-    }
-    
-} //END createType
-
-//Useless function ?
-//void Patch::initSumRhoJ( ElectroMagn* EMfields, unsigned int diag_flag )
-//{
-//    // sum total charge density and currents
-//
-//    if (diag_flag) initSumField( EMfields->rho_ );
-//    initSumField( EMfields->Jx_ );
-//    initSumField( EMfields->Jy_ );
-//    initSumField( EMfields->Jz_ );
-//
-//}
-
-void Patch::initSumField( Field* field, int iDim )
-{
-    int patch_ndims_(2);
-    int patch_nbNeighbors_(2);
-    vector<unsigned int> patch_oversize(2,2);
-    
-    
-    std::vector<unsigned int> n_elem = field->dims_;
-    std::vector<unsigned int> isDual = field->isDual_;
-    Field2D* f2D =  static_cast<Field2D*>(field);
-   
-    // Use a buffer per direction to exchange data before summing
-    //Field2D buf[patch_ndims_][patch_nbNeighbors_];
-    //Field2D corner_buf[patch_ndims_][patch_nbNeighbors_];
-    // Size buffer is 2 oversize (1 inside & 1 outside of the current subdomain)
-    std::vector<unsigned int> oversize2 = patch_oversize;
-    oversize2[0] *= 2;
-    oversize2[0] += 1 + f2D->isDual_[0];
-    oversize2[1] *= 2;
-    oversize2[1] += 1 + f2D->isDual_[1];
-    
-    //for (int iDim=0 ; iDim<patch_ndims_ ; iDim++) {
-        for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
-            std::vector<unsigned int> tmp(patch_ndims_,0);
-            tmp[0] =    iDim  * n_elem[0] + (1-iDim) * oversize2[0];
-            tmp[1] = (1-iDim) * n_elem[1] +    iDim  * oversize2[1];
-            buf[iDim][iNeighbor].allocateDims( tmp );
-        }
-	//}
-    /* for (int iDim=0 ; iDim<patch_ndims_ ; iDim++) {
-        for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
-            std::vector<unsigned int> tmp(patch_ndims_,0);
-            tmp[0] = 1 + 2 * patch_oversize[0] + isDual[0];
-            tmp[1] = 1 + 2 * patch_oversize[1] + isDual[1];
-            corner_buf[iDim][iNeighbor].allocateDims( tmp );
-        }
-    }*/
-     
-    int istart, ix, iy;
-    /********************************************************************************/
-    // Send/Recv in a buffer data to sum
-    /********************************************************************************/
-    //for (int iDim=0 ; iDim<2 ; iDim++) {
-        
-	MPI_Datatype ntype = ntypeSum_[iDim][isDual[0]][isDual[1]];
-	MPI_Request srequest[patch_ndims_][2];
-	MPI_Request rrequest[patch_ndims_][2];
-        
-	for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
-            
-	    if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
-		istart = iNeighbor * ( n_elem[iDim]- oversize2[iDim] ) + (1-iNeighbor) * ( 0 );
-		ix = (1-iDim)*istart;
-		iy =    iDim *istart;
-		//int tag = buildtag( 3, hindex, neighbor_[iDim][iNeighbor]);
-		int tag = buildtag( hindex, iDim, iNeighbor );
-		//cout << hindex << " send to " << neighbor_[iDim][iNeighbor] << endl;
-		//MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.patch_srequest[iDim][iNeighbor]) );
-		MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f2D->specMPI.patch_srequest[iDim][iNeighbor]) );
-	    } // END of Send
-            
-	    if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
-		int tmp_elem = (buf[iDim][(iNeighbor+1)%2]).dims_[0]*(buf[iDim][(iNeighbor+1)%2]).dims_[1];
-		//int tag = buildtag( 3, neighbor_[iDim][(iNeighbor+1)%2], hindex);
-		int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor );
-		//cout << hindex << " recv from " << neighbor_[iDim][(iNeighbor+1)%2] << " ; n_elements = " << tmp_elem << endl;
-		//MPI_Irecv( &( (buf[iDim][(iNeighbor+1)%2]).data_2D[0][0] ), tmp_elem, MPI_DOUBLE, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]) );
-		MPI_Irecv( &( (buf[iDim][(iNeighbor+1)%2]).data_2D[0][0] ), tmp_elem, MPI_DOUBLE, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]) );
-	    } // END of Recv
-            
-	} // END for iNeighbor
-	//}
-
-    /*for (int iDim=0 ; iDim<2 ; iDim++) {
-	
-	MPI_Datatype ntype = corner_ntypeSum_[0][isDual[0]][isDual[1]]; // 1st dimension useless
-      
-	for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
-            
-	    if ( is_a_corner_MPI_neighbor( iDim, iNeighbor ) ) {
-		ix = iDim      * ( n_elem[0]     - oversize2[0]      ) + (1-iDim     ) * ( 0 );
-		iy = iNeighbor * ( n_elem[1]- oversize2[1] ) + (1-iNeighbor) * ( 0 );
-		int tag = buildtag( 3, hindex, corner_neighbor_[iDim][iNeighbor]);
-		int tabsize(0);
-		MPI_Type_size( ntype, &tabsize );
-		//cout << hindex << " send in diagonal to " << corner_neighbor_[iDim][iNeighbor] << " from " << ix << " " << iy << " " << tabsize <<  endl;
-		//MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.corner_srequest[iDim][iNeighbor]) );
-		MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, MPI_corner_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f2D->specMPI.corner_srequest[iDim][iNeighbor]) );
-	    } // END of Send
-            
-	    if ( is_a_corner_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
-		int tmp_elem = (corner_buf[iDim][(iNeighbor+1)%2]).dims_[0]*(corner_buf[iDim][(iNeighbor+1)%2]).dims_[1];
-		int tag = buildtag( 3, corner_neighbor_[iDim][(iNeighbor+1)%2], hindex);
-		//cout << hindex << " recv from " << corner_neighbor_[iDim][(iNeighbor+1)%2] << " ; n_elements = " << tmp_elem << endl;
-		//MPI_Irecv( &( (corner_buf[iDim][(iNeighbor+1)%2]).data_2D[0][0] ), tmp_elem, MPI_DOUBLE, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.corner_rrequest[iDim][(iNeighbor+1)%2]) );
-		MPI_Irecv( &( (corner_buf[iDim][(iNeighbor+1)%2]).data_2D[0][0] ), tmp_elem, MPI_DOUBLE, MPI_corner_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(f2D->specMPI.corner_rrequest[iDim][(iNeighbor+1)%2]) );
-	    } // END of Recv
-            
-	} // END for iNeighbor
-    }*/
-
-} // END initSumField
-
-//Useless function ?
-//void Patch::finalizeSumRhoJ( ElectroMagn* EMfields, unsigned int diag_flag )
-//{
-//    // sum total charge density and currents
-//    if (diag_flag) finalizeSumField( EMfields->rho_ );
-//    finalizeSumField( EMfields->Jx_ );
-//    finalizeSumField( EMfields->Jy_ );
-//    finalizeSumField( EMfields->Jz_ );
-//
-//}
-
-void Patch::finalizeSumField( Field* field, int iDim )
-{
-    int patch_ndims_(2);
-    int patch_nbNeighbors_(2);
-    vector<unsigned int> patch_oversize(2,2);
-    std::vector<unsigned int> n_elem = field->dims_;
-    std::vector<unsigned int> isDual = field->isDual_;
-    Field2D* f2D =  static_cast<Field2D*>(field);
-   
-    // Use a buffer per direction to exchange data before summing
-    //Field2D buf[patch_ndims_][patch_nbNeighbors_];
-    //Field2D corner_buf[patch_ndims_][patch_nbNeighbors_];
-    // Size buffer is 2 oversize (1 inside & 1 outside of the current subdomain)
-    std::vector<unsigned int> oversize2 = patch_oversize;
-    oversize2[0] *= 2;
-    oversize2[0] += 1 + f2D->isDual_[0];
-    oversize2[1] *= 2;
-    oversize2[1] += 1 + f2D->isDual_[1];
-    
-    int istart, ix, iy;
-    /********************************************************************************/
-    // Send/Recv in a buffer data to sum
-    /********************************************************************************/
-
-    //for (int iDim=0 ; iDim<2 ; iDim++) {
- 
-        MPI_Datatype ntype = ntypeSum_[iDim][isDual[0]][isDual[1]];
-        MPI_Status sstat    [patch_ndims_][2];
-        MPI_Status rstat    [patch_ndims_][2];
-	
-        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-	    if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
-		//cout << hindex << " is waiting for send at " << neighbor_[iDim][iNeighbor] << endl;
-                MPI_Wait( &(f2D->specMPI.patch_srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
-            }
-	    if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
-		//cout << hindex << " is waiting for recv from " << neighbor_[iDim][(iNeighbor+1)%2] << endl;	
-                MPI_Wait( &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
-            }
-        }
-	//}
-
-    /*for (int iDim=0 ; iDim<2 ; iDim++) {
- 
-        MPI_Datatype ntype = corner_ntypeSum_[0][isDual[0]][isDual[1]];; // 1st dimension useless
-        MPI_Status corner_sstat    [patch_ndims_][2];
-        MPI_Status corner_rstat    [patch_ndims_][2];
-	
-        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-	    if ( is_a_corner_MPI_neighbor( iDim, iNeighbor ) ) {
-		//cout << hindex << " is waiting for corner send at " << corner_neighbor_[iDim][iNeighbor] << endl;
-                MPI_Wait( &(f2D->specMPI.corner_srequest[iDim][iNeighbor]), &(corner_sstat[iDim][iNeighbor]) );
-		//cout << hindex << " is waiting for corner send at " << corner_neighbor_[iDim][iNeighbor] << " ACHIEVED" << endl;
-            }
-	    if ( is_a_corner_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
-		//cout << hindex << " is waiting for corner recv from " << corner_neighbor_[iDim][(iNeighbor+1)%2] << endl;	
-                MPI_Wait( &(f2D->specMPI.corner_rrequest[iDim][(iNeighbor+1)%2]), &(corner_rstat[iDim][(iNeighbor+1)%2]) );
-            }
-        }
-    }*/
-
-    /********************************************************************************/
-    // Sum data on each process, same operation on both side
-    /********************************************************************************/
-    //for (int iDim=0 ; iDim<2 ; iDim++) {
-       
-        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-            istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim]- oversize2[iDim] ) + (1-(iNeighbor+1)%2) * ( 0 );
-            int ix0 = (1-iDim)*istart;
-            int iy0 =    iDim *istart;
-	    if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
-                for (unsigned int ix=0 ; ix< (buf[iDim][(iNeighbor+1)%2]).dims_[0] ; ix++) {
-                    for (unsigned int iy=0 ; iy< (buf[iDim][(iNeighbor+1)%2]).dims_[1] ; iy++)
-                        f2D->data_2D[ix0+ix][iy0+iy] += (buf[iDim][(iNeighbor+1)%2])(ix,iy);
-                }
-            } // END if
-            
-        } // END for iNeighbor
-	//}
-        
-    /*for (int iDim=0 ; iDim<2 ; iDim++) {
-       
-        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-	    int ix0 = iDim      * ( n_elem[0]     - oversize2[0]      ) + (1-iDim     ) * ( 0 );
-	    int iy0 = iNeighbor * ( n_elem[1]- oversize2[1] ) + (1-iNeighbor) * ( 0 );
-	    if ( is_a_corner_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
-                for (unsigned int ix=0 ; ix< (corner_buf[iDim][(iNeighbor+1)%2]).dims_[0] ; ix++) {
-                    for (unsigned int iy=0 ; iy< (corner_buf[iDim][(iNeighbor+1)%2]).dims_[1] ; iy++)
-                        f2D->data_2D[ix0+ix][iy0+iy] += (corner_buf[iDim][(iNeighbor+1)%2])(ix,iy);
-                }
-            } // END if
-            
-        } // END for iNeighbor
-    } */      
-
-    //for (int iDim=0 ; iDim<patch_ndims_ ; iDim++) {
-        for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
-	    buf[iDim][iNeighbor].deallocateDims();
-        }
-	//}
-    /*for (int iDim=0 ; iDim<patch_ndims_ ; iDim++) {
-        for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
-	    corner_buf[iDim][iNeighbor].deallocateDims();
-        }
-    }*/
-
-} // END finalizeSumField
-
-void Patch::initExchange( Field* field )
-{
-    int patch_ndims_(2);
-    int patch_nbNeighbors_(2);
-    vector<unsigned int> patch_oversize(2,2);
-
-    std::vector<unsigned int> n_elem   = field->dims_;
-    std::vector<unsigned int> isDual = field->isDual_;
-    Field2D* f2D =  static_cast<Field2D*>(field);
-
-    int istart, ix, iy;
-
-    // Loop over dimField
-    for (int iDim=0 ; iDim<patch_ndims_ ; iDim++) {
-
-        MPI_Datatype ntype = ntype_[iDim][isDual[0]][isDual[1]];
-        for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
-
-	    if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
-
-                istart = iNeighbor * ( n_elem[iDim]- (2*patch_oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( 2*patch_oversize[iDim] + isDual[iDim] );
-                ix = (1-iDim)*istart;
-                iy =    iDim *istart;
-		//int tag = buildtag( 4, hindex, neighbor_[iDim][iNeighbor]);
-		int tag = buildtag( hindex, iDim, iNeighbor );
-                //MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.patch_srequest[iDim][iNeighbor]) );
-                MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f2D->specMPI.patch_srequest[iDim][iNeighbor]) );
-
-            } // END of Send
-
-	    if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
-
-                istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - 1 ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
-                ix = (1-iDim)*istart;
-                iy =    iDim *istart;
- 		//int tag = buildtag( 4, neighbor_[iDim][(iNeighbor+1)%2], hindex);
- 		int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor );
-		//MPI_Irecv( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]));
-		MPI_Irecv( &(f2D->data_2D[ix][iy]), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]));
-
-            } // END of Recv
-
-        } // END for iNeighbor
-
-    } // END for iDim
-
-}
-void Patch::initExchange( Field* field, int iDim )
-{
-    int patch_ndims_(2);
-    int patch_nbNeighbors_(2);
-    vector<unsigned int> patch_oversize(2,2);
-
-    std::vector<unsigned int> n_elem   = field->dims_;
-    std::vector<unsigned int> isDual = field->isDual_;
-    Field2D* f2D =  static_cast<Field2D*>(field);
-
-    int istart, ix, iy;
-
-    MPI_Datatype ntype = ntype_[iDim][isDual[0]][isDual[1]];
-    for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
-
-	if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
-
-	    istart = iNeighbor * ( n_elem[iDim]- (2*patch_oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( 2*patch_oversize[iDim] + isDual[iDim] );
-	    ix = (1-iDim)*istart;
-	    iy =    iDim *istart;
-	    int tag = buildtag( hindex, iDim, iNeighbor );
-	    //MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.patch_srequest[iDim][iNeighbor]) );
-	    MPI_Isend( &(f2D->data_2D[ix][iy]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f2D->specMPI.patch_srequest[iDim][iNeighbor]) );
-
-	} // END of Send
-
-	if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
-
-	    istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - 1 ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
-	    ix = (1-iDim)*istart;
-	    iy =    iDim *istart;
-	    int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor );
-	    //MPI_Irecv( &(f2D->data_2D[ix][iy]), 1, ntype, 0, tag, MPI_COMM_SELF, &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]));
-	    MPI_Irecv( &(f2D->data_2D[ix][iy]), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]));
-
-	} // END of Recv
-
-    } // END for iNeighbor
-
-
-}
-
-
-void Patch::finalizeExchange( Field* field )
-{
-    int patch_ndims_(2);
-    int patch_nbNeighbors_(2);
-
-    Field2D* f2D =  static_cast<Field2D*>(field);
-
-    MPI_Status sstat    [patch_ndims_][2];
-    MPI_Status rstat    [patch_ndims_][2];
-
-    // Loop over dimField
-    for (int iDim=0 ; iDim<patch_ndims_ ; iDim++) {
-
-        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-	    if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
-                MPI_Wait( &(f2D->specMPI.patch_srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
-            }
- 	    if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
-               MPI_Wait( &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
-            }
-        }
-
-    } // END for iDim
-}
-
-void Patch::finalizeExchange( Field* field, int iDim )
-{
-    int patch_ndims_(2);
-    int patch_nbNeighbors_(2);
-
-    Field2D* f2D =  static_cast<Field2D*>(field);
-
-    MPI_Status sstat    [patch_ndims_][2];
-    MPI_Status rstat    [patch_ndims_][2];
-
-    for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-	if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
-	    MPI_Wait( &(f2D->specMPI.patch_srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
-	}
-	if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
-	    MPI_Wait( &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
-	}
-    }
-
-}
 
 void Patch::cleanup_sent_particles(int ispec, std::vector<int>* indexes_of_particles_to_exchange)
 {
@@ -1015,13 +546,13 @@ void Patch::cleanup_sent_particles(int ispec, std::vector<int>* indexes_of_parti
 		iPart = (*indexes_of_particles_to_exchange)[ii];
 	    }
 	    while (iPart >= (*cubmin)[ibin] && ii > 0) {
-		cuParticles.overwrite_part2D((*cubmax)[ibin]-1, iPart );
+		cuParticles.overwrite_part((*cubmax)[ibin]-1, iPart );
 		(*cubmax)[ibin]--;
 		ii--;
 		iPart = (*indexes_of_particles_to_exchange)[ii];
 	    }
 	    if (iPart >= (*cubmin)[ibin] && iPart < (*cubmax)[ibin]) { //On traite la dernière particule (qui peut aussi etre la premiere)
-		cuParticles.overwrite_part2D((*cubmax)[ibin]-1, iPart );
+		cuParticles.overwrite_part((*cubmax)[ibin]-1, iPart );
 		(*cubmax)[ibin]--;
 	    }
 	}
@@ -1033,7 +564,7 @@ void Patch::cleanup_sent_particles(int ispec, std::vector<int>* indexes_of_parti
     for (int unsigned ibin = 1 ; ibin < (*cubmax).size() ; ibin++ ) { //First bin don't need to be shifted
 	ii = (*cubmin)[ibin]-(*cubmax)[ibin-1]; // Shift the bin in memory by ii slots.
 	iPart = min(ii,(*cubmax)[ibin]-(*cubmin)[ibin]); // Number of particles we have to shift = min (Nshift, Nparticle in the bin)
-	if(iPart > 0) cuParticles.overwrite_part2D((*cubmax)[ibin]-iPart,(*cubmax)[ibin-1],iPart);
+	if(iPart > 0) cuParticles.overwrite_part((*cubmax)[ibin]-iPart,(*cubmax)[ibin-1],iPart);
 	(*cubmax)[ibin] -= ii;
 	(*cubmin)[ibin] = (*cubmax)[ibin-1];
     }

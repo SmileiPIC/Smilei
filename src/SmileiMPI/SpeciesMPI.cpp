@@ -7,10 +7,13 @@ SpeciesMPI::SpeciesMPI()
 
 void SpeciesMPI::init()
 {
-    int ndims_ = 2;
+    // resize correctly arrays 
+    // suppress corner object
+
+    int ndims = 2;
     int nbNeighbors_ = 2;
 
-    for (int iDir=0 ; iDir<ndims_ ; iDir++) {
+    for (int iDir=0 ; iDir<ndims ; iDir++) {
 	for (int i=0 ; i<nbNeighbors_ ; i++) {
 	    patch_buff_index_send[iDir][i].resize(0);
 	    patch_buff_index_recv_sz[iDir][i] = 0;
@@ -21,13 +24,16 @@ void SpeciesMPI::init()
 	}
     }
 
-    for (int iDim=0 ; iDim<2 ; iDim++) {
+    // ------------------------
+    // Particles dimensions !!!
+    // ------------------------
+    for (int iDim=0 ; iDim<ndims ; iDim++) {
 	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-	    patchVectorRecv[iDim][iNeighbor].initialize(0,2);
-	    patchVectorSend[iDim][iNeighbor].initialize(0,2);
+	    patchVectorRecv[iDim][iNeighbor].initialize(0,ndims);
+	    patchVectorSend[iDim][iNeighbor].initialize(0,ndims);
 	    // Globalize IP (store in SmileiMPI_Cart2D, OK while init+init+finalize / dir)
-	    //cornerVectorRecv[iDim][iNeighbor].initialize(0,2);
-	    //cornerVectorSend[iDim][iNeighbor].initialize(0,2);
+	    //cornerVectorRecv[iDim][iNeighbor].initialize(0,ndims);
+	    //cornerVectorSend[iDim][iNeighbor].initialize(0,ndims);
 	}
     }
 }

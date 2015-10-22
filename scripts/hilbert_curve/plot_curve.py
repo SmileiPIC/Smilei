@@ -6,13 +6,16 @@ import scipy
 import matplotlib.pyplot as plt
 
 #   USer defined parameters
-nmpi = 15
+nmpi = 24
 npatchx = 32
-npatchy = 8
+npatchy = 32
 ###########################
+Ndpi=1000
 
 mat = scipy.fromfile("data.txt",sep=" ",dtype=int)
 mat=mat.reshape(-1,3)
+x=mat[:,1]
+y=mat[:,2]
 
 mat_plot = scipy.zeros((npatchx,npatchy))
 patch_count = scipy.zeros((nmpi))
@@ -46,5 +49,11 @@ for j in range(nmpi):
     for i in scipy.arange(patch_count[j])+patch_count[:j].sum():
         mat_plot[mat[i,1],mat[i,2]] = j
 
+print "rank 7 has patches from ", patch_count[:7].sum(), " to ", patch_count[:8].sum()-1
+
+plt.figure(figsize=(20,20))
 plt.matshow(mat_plot,aspect="auto")
-plt.show()
+plt.plot(x,y,color='black',lw=1)
+plt.axis('off')
+plt.savefig("Hilbert_curve.eps",format='eps',dpi=Ndpi,bbox_inches='tight')
+#plt.show()

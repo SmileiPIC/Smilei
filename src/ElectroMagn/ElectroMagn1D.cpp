@@ -181,10 +181,10 @@ void ElectroMagn1D::initPoisson(Patch *patch)
         index_max_p_[0] = nx_p-1;
     }
 
-    phi_ = new Field2D(dimPrim);    // scalar potential
-    r_   = new Field2D(dimPrim);    // residual vector
-    p_   = new Field2D(dimPrim);    // direction vector
-    Ap_  = new Field2D(dimPrim);    // A*p vector
+    phi_ = new Field1D(dimPrim);    // scalar potential
+    r_   = new Field1D(dimPrim);    // residual vector
+    p_   = new Field1D(dimPrim);    // direction vector
+    Ap_  = new Field1D(dimPrim);    // A*p vector
 
     double       dx_sq          = dx*dx;
 

@@ -31,6 +31,9 @@ public:
     void initE(Patch *patch);
     void centeringE( std::vector<double> E_Add );
 
+    double getEx_West() { return (*Ex_)(index_bc_min[0]);}//(*Ex_)     (0); }
+    double getEx_East() { return (*Ex_)(index_bc_max[0]);}//(*Ex_)(nx_d-1); }
+
     double getEx_WestNorth() { return 0.; }
     double getEy_WestNorth() { return 0.; }
     double getEx_EastSouth() { return 0.; }

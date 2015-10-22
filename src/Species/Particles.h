@@ -73,25 +73,16 @@ public:
     void swap_part(int part1,int part2, int N);
 
     //! Overwrite particle part1 into part2 memory location. Erasing part2
-    void overwrite_part1D(int part1,int part2);
+    void overwrite_part(int part1,int part2);
 
     //! Overwrite particle part1->part1+N into part2->part2+N memory location. Erasing part2->part2+N
-    void overwrite_part1D(int part1,int part2,int N);
+    void overwrite_part(int part1,int part2,int N);
 
     //! Overwrite particle part1->part1+N into part2->part2+N of dest_parts memory location. Erasing part2->part2+N
-    void overwrite_part1D(int part1, Particles &dest_parts, int part2,int N);
-
-    //! Overwrite particle part1 into part2 memory location. Erasing part2
-    void overwrite_part2D(int part1,int part2);
-
-    //! Overwrite particle part1->part1+N into part2->part2+N memory location. Erasing part2->part2+N
-    void overwrite_part2D(int part1,int part2,int N);
+    void overwrite_part(int part1, Particles &dest_parts, int part2,int N);
 
     //! Overwrite particle part1 into part2 of dest_parts memory location. Erasing part2
-    void overwrite_part2D(int part1, Particles &dest_parts, int part2);
-
-    //! Overwrite particle part1->part1+N into part2->part2+N of dest_parts memory location. Erasing part2->part2+N
-    void overwrite_part2D(int part1, Particles &dest_parts, int part2,int N);
+    void overwrite_part(int part1, Particles &dest_parts, int part2);
 
     //! Move iPart at the end of vectors
     void push_to_end(int iPart );
@@ -155,6 +146,8 @@ public:
         return sqrt(1+pow(momentum(0,ipart),2)+pow(momentum(1,ipart),2)+pow(momentum(2,ipart),2));
     }
 
+    //! Partiles properties, respect type order : all double, all short, all unsigned int
+
     //! array containing the particle position
     std::vector< std::vector<double> > Position;
 
@@ -169,6 +162,10 @@ public:
 
     //! charge state of the particle (multiples of e>0)
     std::vector<short> Charge;
+
+    std::vector< std::vector<double>* >       double_prop;
+    std::vector< std::vector<short>* >        short_prop;
+    std::vector< std::vector<unsigned int>* > uint_prop;
 
 private:
 

@@ -58,7 +58,7 @@ public:
 
     SmileiIO* sio;
 
-    //!Cartesian coordinates of the patch. X,Y,Z of the Patch according to its Hilbert index.
+   //!Cartesian coordinates of the patch. X,Y,Z of the Patch according to its Hilbert index.
     std::vector<unsigned int> Pcoordinates;
 
 
@@ -100,8 +100,6 @@ public:
     }
 
 
-    std::vector< int > MPI_neighborhood_;
-    std::vector< int > patch_neighborhood_;
     std::vector<int> lost_particles[2];
 
     void cleanup_sent_particles(int ispec, std::vector<int>* indexes_of_particles_to_exchange);
@@ -117,28 +115,24 @@ public:
     //! finalize exch / particles, manage particles suppr/introduce
     virtual void finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int iDim, VectorPatch* vecPatch);
 
-
     //void initSumRhoJ( ElectroMagn* EMfields, unsigned int diag_flag );
     //void finalizeSumRhoJ( ElectroMagn* EMfields, unsigned int diag_flag );
-    virtual void initSumField( Field* field, int iDim );
-    virtual void finalizeSumField( Field* field, int iDim );
+    virtual void initSumField( Field* field, int iDim ) = 0;
+    virtual void finalizeSumField( Field* field, int iDim ) = 0;
 
-    virtual void initExchange( Field* field );
-    virtual void finalizeExchange( Field* field );
-    virtual void initExchange( Field* field, int iDim );
-    virtual void finalizeExchange( Field* field, int iDim );
+    virtual void initExchange( Field* field ) = 0;
+    virtual void finalizeExchange( Field* field ) = 0;
+    virtual void initExchange( Field* field, int iDim ) = 0;
+    virtual void finalizeExchange( Field* field, int iDim ) = 0;
 
-    void createType( PicParams& params );
+    virtual void createType( PicParams& params ) = 0;
     //! MPI_Datatype to exchange [ndims_][iDim=0 prim/dial][iDim=1 prim/dial]
-    MPI_Datatype ntypeSum_[2][2][2];
-    MPI_Datatype corner_ntypeSum_[2][2][2];
+    /*MPI_Datatype ntypeSum_[2][2][2];
 
     MPI_Datatype ntype_[3][2][2];
-    MPI_Datatype corner_ntype_[2][2][2];
     
     // Use a buffer per direction to exchange data before summing
-    Field2D buf[2][2];
-    Field2D corner_buf[2][2];
+    Field2D buf[2][2];*/
 
     inline bool isWestern()  { return locateOnBorders(0, 0); }
     inline bool isEastern()  { return locateOnBorders(0, 1); }
@@ -172,13 +166,7 @@ public:
 	// all MPI
 	//return( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) );
 	// MPI & local
-	return( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (MPI_neighbor_[iDim][iNeighbor]!=MPI_neighborhood_[4]) );
-    }
-    inline bool is_a_corner_MPI_neighbor(int iDim, int iNeighbor) {
-	// all MPI 
-	//return( (corner_neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) );
-	// MPI & local
-	return( (corner_neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (MPI_corner_neighbor_[iDim][iNeighbor]!=MPI_neighborhood_[4]) );
+	return( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (MPI_neighbor_[iDim][iNeighbor]!=MPI_me_) );
     }
 
     //! Set geometry data in case of moving window restart
@@ -193,20 +181,19 @@ public:
 
 
 
-protected:
     //!Hilbert index of the patch. Number of the patch along the Hilbert curve.
     unsigned int hindex;
 
-private:
-
+protected:
+    int nDim_fields_;
 
     int nbNeighbors_;
 
     std::vector< std::vector<int> > neighbor_;
-    std::vector< std::vector<int> > corner_neighbor_;
+    std::vector< std::vector<int> > corner_neighbor_; // Kept for Moving Windows
 
     std::vector< std::vector<int> > MPI_neighbor_;
-    std::vector< std::vector<int> > MPI_corner_neighbor_;
+    int MPI_me_;
 
     //! "Real" min limit of local sub-subdomain (ghost data not concerned)
     //!     - "0." on rank 0
@@ -218,6 +205,7 @@ private:
     //!     - "- oversize" on rank 0
     std::vector<int> cell_starting_global_index;
 
+private:
     Particles diagonalParticles;
 
 };
