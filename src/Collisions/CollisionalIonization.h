@@ -28,7 +28,7 @@ public:
         ne = 0.; ni = 0.; nei = 0.;
         };
     virtual void prepare2(Particles *p1, int i1, Particles *p2, int i2);
-    virtual void prepare3(double timestep, int n_cell_per_cluster);
+    virtual void prepare3(double, int, unsigned int, unsigned int);
     //! Method to apply the ionization
     virtual void apply(double vrel, double gamma1_COM, double gamma2_COM,
         Particles *p1, int i1, Particles *p2, int i2);
@@ -82,7 +82,7 @@ public:
     ~CollisionalNoIonization(){};
     
     void prepare2(Particles *p1, int i1, Particles *p2, int i2){};
-    void prepare3(double timestep, int n_cell_per_cluster){};
+    void prepare3(double, int, unsigned int, unsigned int){};
     void apply(double vrel, double gamma1_COM, double gamma2_COM,
         Particles *p1, int i1, Particles *p2, int i2){};
     

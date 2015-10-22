@@ -101,18 +101,36 @@ void CollisionalIonization::prepare2(Particles *p1, int i1, Particles *p2, int i
     if( x<0. ) x = 0.;
     if( x>npointsm1 ) x = npointsm1;
     cs = crossSection[Zstar][ int(x) ];
-    // Calculate densities
-    ni += Wi;
-    if( cs>0. ) { // only pairs that can ionize
+    // Calculate hybrid density
+    if( cs>0. ) {
+        ni += Wi;
         ne  += We;
-        nei += We<Wi ? We : Wi;
+        nei += We<Wi ? We : Wi; // only pairs that can ionize
     }
 }
-void CollisionalIonization::prepare3(double timestep, int n_cell_per_cluster)
+void CollisionalIonization::prepare3(double timestep, int n_cell_per_cluster,
+    unsigned int npart1, unsigned int npart2)
 {
-    coeff = ne*ni/nei * timestep / (double)n_cell_per_cluster;
+    // Finish calculating densities
+    double NeNi;
+    if( electronFirst ) {
+        NeNi = (double)npart1 / (double)npart2;
+    } else {
+        NeNi = (double)npart2 / (double)npart1;
+    }
+    // correction for uneven number of particles
+    if( NeNi<1. ) { ne *= NeNi; }
+    else          { ni /= NeNi; }
     
+    // Calculate the coeff used later for ionization probability
+    if( nei<=0. || n_cell_per_cluster==0 ) {
+        coeff = 0.;
+    } else {
+        coeff = ne*ni/nei * timestep / (double)n_cell_per_cluster;
+    }
 }
+
+// Method to find out whether a 
 
 // Method to apply the ionization
 void CollisionalIonization::apply(double vrel, double gamma1_COM, double gamma2_COM,
@@ -172,6 +190,7 @@ void CollisionalIonization::calculate(double vrel, double gammae,
         new_electrons.Momentum[0].back() *= pr;
         new_electrons.Momentum[1].back() *= pr;
         new_electrons.Momentum[2].back() *= pr;
+        new_electrons.Weight.back() = Wi;
     }
     // Lose incident electron energy
     if( U<Wi/We ) {

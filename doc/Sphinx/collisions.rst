@@ -55,8 +55,8 @@ For each collision block (given in the input file):
 
 ----
 
-Test cases
-^^^^^^^^^^
+Test cases for collisions
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. rubric:: 1. Beam relaxation
 
@@ -231,6 +231,34 @@ are executed:
 * During each collision, a probability for ionization is computed. If successful, 
   the ion charge is increased, the incident electron is slowed down, and a new electron
   is created.
+
+Note that this scheme does not account for recombination, which would balance ionization
+over long time scales.
+
+
+----
+
+Test cases for ionization
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. rubric:: 1. Ionization rate
+
+A cold plasma of :math:`\mathrm{Al}^{3+}` is set with density :math:`n_e=10^{21} \mathrm{cm}^{-3}`
+and with all electrons drifting at a velocity :math:`v_e=0.03\,c`. The charge state of ions
+versus time is shown in :numref:`IonizationRate` where the three dotted curves correspond
+to three different weight ratios between electrons and ions.
+
+.. _IonizationRate:
+
+.. figure:: _static/ionization_rate.png
+  :width: 10cm
+  
+  Ionization of an aluminium plasma by drifting electrons.
+  
+The theoretical curve (in black) corresponds to :math:`1-\exp\left(v_en_e\sigma t\right)`
+where :math:`\sigma` is the ionization cross section of :math:`\mathrm{Al}^{3+}` at the
+right electron energy. The discrepancy at late time is due to the changing velocity
+distributions and to the next level starting to ionize.
 
 
 ----
