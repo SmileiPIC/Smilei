@@ -750,6 +750,8 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
                         temperature[m](i,j,k) = temperatureProfile[m]->valueAt(x_cell);
                         //MESSAGE("temp 1 :" <<  temperature[m](i,j,k))
                         velocity[m](i,j,k) = velocityProfile[m]->valueAt(x_cell);
+                        // If the velocity is too small, put some limit to prevent overflows
+                        if( abs(velocity[m](i,j,k))<1e-100 ) velocity[m](i,j,k)=0.;
                     }
                     
                     // increment the effective number of particle by n_part_in_cell(i,j,k)
