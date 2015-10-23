@@ -116,22 +116,22 @@ public:
 
     //void initSumRhoJ( ElectroMagn* EMfields, unsigned int diag_flag );
     //void finalizeSumRhoJ( ElectroMagn* EMfields, unsigned int diag_flag );
-    virtual void initSumField( Field* field, int iDim );
-    virtual void finalizeSumField( Field* field, int iDim );
+    virtual void initSumField( Field* field, int iDim ) = 0;
+    virtual void finalizeSumField( Field* field, int iDim ) = 0;
 
-    virtual void initExchange( Field* field );
-    virtual void finalizeExchange( Field* field );
-    virtual void initExchange( Field* field, int iDim );
-    virtual void finalizeExchange( Field* field, int iDim );
+    virtual void initExchange( Field* field ) = 0;
+    virtual void finalizeExchange( Field* field ) = 0;
+    virtual void initExchange( Field* field, int iDim ) = 0;
+    virtual void finalizeExchange( Field* field, int iDim ) = 0;
 
-    virtual void createType( PicParams& params );
+    virtual void createType( PicParams& params ) = 0;
     //! MPI_Datatype to exchange [ndims_][iDim=0 prim/dial][iDim=1 prim/dial]
-    MPI_Datatype ntypeSum_[2][2][2];
+    /*MPI_Datatype ntypeSum_[2][2][2];
 
     MPI_Datatype ntype_[3][2][2];
     
     // Use a buffer per direction to exchange data before summing
-    Field2D buf[2][2];
+    Field2D buf[2][2];*/
 
     inline bool isWestern()  { return locateOnBorders(0, 0); }
     inline bool isEastern()  { return locateOnBorders(0, 1); }
