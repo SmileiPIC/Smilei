@@ -30,8 +30,7 @@ public:
     virtual void prepare2(Particles *p1, int i1, Particles *p2, int i2);
     virtual void prepare3(double, int, unsigned int, unsigned int);
     //! Method to apply the ionization
-    virtual void apply(double vrel, double gamma1_COM, double gamma2_COM,
-        Particles *p1, int i1, Particles *p2, int i2);
+    virtual void apply(double, double, Particles *p1, int i1, Particles *p2, int i2);
     
     //! Table of integrated cross-section
     std::vector<std::vector<double> > crossSection;
@@ -67,7 +66,7 @@ private:
     double coeff;
     
     //! Method called by ::apply to calculate the ionization, being sure that electrons are the first species
-    void calculate(double vrel, double gammae, Particles *pe, int ie, Particles *pi, int ii);
+    void calculate(double, double, Particles *pe, int ie, Particles *pi, int ii);
     
     //! Quantities used during computation
     int Zstar; // ion charge
@@ -81,13 +80,12 @@ public:
     CollisionalNoIonization() : CollisionalIonization(0,1.,NULL) {};
     ~CollisionalNoIonization(){};
     
-    void prepare2(Particles *p1, int i1, Particles *p2, int i2){};
+    void prepare2(Particles*, int, Particles*, int){};
     void prepare3(double, int, unsigned int, unsigned int){};
-    void apply(double vrel, double gamma1_COM, double gamma2_COM,
-        Particles *p1, int i1, Particles *p2, int i2){};
+    void apply(double, double, Particles*, int, Particles*, int){};
     
     //! Temporary stuff before patches arrive
-    void finish(Species *s1, Species *s2, Params&) {};
+    void finish(Species*, Species*, Params&) {};
 };
 
 #endif

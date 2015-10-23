@@ -106,7 +106,7 @@ for i in range(npoints):
 ax = fig.add_axes([0.57, 0.19, 0.37,  0.77])
 ax.loglog(energy, Qsmilei, 'ok', label="Smilei", markersize=4)
 # Plot theory
-E = np.logspace(-1,6,1000)
+E = np.logspace(-1,10,1000)
 ax.loglog(E, RohrlichStoppingPower(Zi,E)/mass,'-k', label="Rohrlich & Carlson")
 # Make nicer plot
 ax.set_ylim(1.,3e2)
@@ -116,5 +116,5 @@ ax.xaxis.labelpad = 0
 ax.yaxis.labelpad = 0
 ax.set_xlabel("Incident electron energy (keV)")
 ax.set_ylabel("Stopping power (Mev cm$^2$/g)")
-
+ax.set_xticks([1e-2, 1e0, 1e2, 1e4, 1e6, 1e8, 1e10])
 

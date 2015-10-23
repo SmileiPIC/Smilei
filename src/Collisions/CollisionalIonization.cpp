@@ -130,21 +130,30 @@ void CollisionalIonization::prepare3(double timestep, int n_cell_per_cluster,
     }
 }
 
-// Method to find out whether a 
-
 // Method to apply the ionization
-void CollisionalIonization::apply(double vrel, double gamma1_COM, double gamma2_COM,
+void CollisionalIonization::apply(double gamma1, double gamma2,
     Particles *p1, int i1, Particles *p2, int i2)
 {
+    static double gamma, Kve;
+    gamma1 = p1->lor_fac(i1);
+    gamma2 = p2->lor_fac(i2);
+    // Calculate lorentz factor in the frame of ion
+    gamma = gamma1*gamma2 
+        - p1->momentum(0,i1)*p2->momentum(0,i2)
+        - p1->momentum(1,i1)*p2->momentum(1,i2)
+        - p1->momentum(2,i1)*p2->momentum(2,i2);
+    // Calculate coefficient (1-ve.vi)*ve' where ve' is in ion frame
+    Kve = sqrt(gamma*gamma-1.)/gamma1/gamma2;
+    // Calculate the rest of the stuff
     if( electronFirst ) {
-        calculate(vrel, gamma1_COM, p1, i1, p2, i2);
+        calculate(gamma, Kve, p1, i1, p2, i2);
     } else {
-        calculate(vrel, gamma2_COM, p2, i2, p1, i1);
+        calculate(gamma, Kve, p2, i2, p1, i1);
     }
 }
 
 // Method used by ::apply so that we are sure that electrons are the first species
-void CollisionalIonization::calculate(double vrel, double gammae,
+void CollisionalIonization::calculate(double gamma, double Kve, 
     Particles *pe, int ie, Particles *pi, int ii)
 {
     static double We, Wi; // weights
@@ -157,7 +166,7 @@ void CollisionalIonization::calculate(double vrel, double gammae,
     if( Zstar>=atomic_number ) return; // if already fully ionized, do nothing
     
     // Calculate the location x in the databases
-    x = a2*log(a1*(gammae-1.));
+    x = a2*log(a1*(gamma-1.));
     
     // Interpolate the databases at location x
     if( x<0. ) return; // if energy below Emin, do nothing
@@ -176,30 +185,41 @@ void CollisionalIonization::calculate(double vrel, double gammae,
     
     // Make a random number to choose if ionization or not
     U = ((double)rand() / RAND_MAX);
-    if( U < exp(-vrel*coeff*cs) ) return;
+    if( U < exp(-coeff*Kve*cs) ) return;
     
     // Now we really do the ionization
     U = ((double)rand() / RAND_MAX);
     We = pe->weight(ie); Wi = pi->weight(ii);
-    p2 = gammae*gammae - 1.;
+    p2 = gamma*gamma - 1.;
     // Ionize the atom and create electron
     if( U<We/Wi ) {
-        pi->charge(ii)++;
-        pe->cp_particle(ie, new_electrons); // copy electron
-        pr = sqrt(w*(w+2.)/p2); // momentum ratio
+        pi->charge(ii)++; // increase ion charge
+        pe->cp_particle(ie, new_electrons); // duplicate electron
+        new_electrons.Weight.back() = Wi; // new electron has ion weight
+        // Calculate the new electron momentum
+        pr = sqrt(w*(w+2.)/p2);
         new_electrons.Momentum[0].back() *= pr;
         new_electrons.Momentum[1].back() *= pr;
         new_electrons.Momentum[2].back() *= pr;
-        new_electrons.Weight.back() = Wi;
+        // Correction for moving back to the frame of the ion
+        pr = w+1. - pr*gamma;
+        new_electrons.Momentum[0].back() += pr * pi->momentum(0,ii);
+        new_electrons.Momentum[1].back() += pr * pi->momentum(1,ii);
+        new_electrons.Momentum[2].back() += pr * pi->momentum(2,ii);
     }
     // Lose incident electron energy
     if( U<Wi/We ) {
-        pr = sqrt((pow(gammae-e,2)-1.)/p2); // momentum ratio
+        // Calculate the new electron momentum
+        pr = sqrt((pow(gamma-e,2)-1.)/p2);
         pe->momentum(0,ie) *= pr;
         pe->momentum(1,ie) *= pr;
         pe->momentum(2,ie) *= pr;
+        // Correction for moving back to the frame of the ion
+        pr = (1.-pr)*gamma - e;
+        pe->momentum(0,ie) += pr * pi->momentum(0,ii);
+        pe->momentum(1,ie) += pr * pi->momentum(1,ii);
+        pe->momentum(2,ie) += pr * pi->momentum(2,ii);
     }
-    
 }
 
 

@@ -19,38 +19,35 @@ Please refer to :ref:`that doc <Collisions>` for an explanation of how to add co
 The binary collision scheme
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Collisions are calculated at each timestep.
+Collisions are calculated at each timestep and for each collision block
+given in the input file.
 
-For each collision block (given in the input file):
+If *intra-collisions*:
   
-  For each particle cluster:
-    
-    If *intra-collisions*:
-      
-      | Create one array of indices pointing to all particles of the species group.
-      | Shuffle the array.
-      | Split the array in two halves.
-    
-    If *inter-collisions*:
-      
-      | Create two arrays of indices pointing to all particles of each species group.
-      | Shuffle the largest array. The other array is not shuffled.
-      | => The two resulting arrays represent pairs of particles (see algorithm in [Nanbu1998]_).
-    
-    Calculate a few intermediate quantities:
-      
-      | Particle density :math:`n_1` of group 1.
-      | Particle density :math:`n_2`  of group 2.
-      | *Crossed* particle density :math:`n_{12}` (see [Perez2012]_).
-      | Other constants.
-    
-    For each pair of particles:
-    
-      | Calculate the momenta in the center-of-mass (COM) frame.
-      | Calculate the coulomb log if requested (see [Perez2012]_).
-      | Calculate the parameter :math:`s` and its correction at low temperature (see [Perez2012]_).
-      | Pick the deflection angle (see [Nanbu1997]_).
-      | Deflect particles in the COM frame and go back to the laboratory frame.
+  | Create one array of indices pointing to all particles of the species group.
+  | Shuffle the array.
+  | Split the array in two halves.
+
+If *inter-collisions*:
+  
+  | Create two arrays of indices pointing to all particles of each species group.
+  | Shuffle the largest array. The other array is not shuffled.
+  | => The two resulting arrays represent pairs of particles (see algorithm in [Nanbu1998]_).
+
+Calculate a few intermediate quantities:
+  
+  | Particle density :math:`n_1` of group 1.
+  | Particle density :math:`n_2`  of group 2.
+  | *Crossed* particle density :math:`n_{12}` (see [Perez2012]_).
+  | Other constants.
+
+For each pair of particles:
+
+  | Calculate the momenta in the center-of-mass (COM) frame.
+  | Calculate the coulomb log if requested (see [Perez2012]_).
+  | Calculate the parameter :math:`s` and its correction at low temperature (see [Perez2012]_).
+  | Pick the deflection angle (see [Nanbu1997]_).
+  | Deflect particles in the COM frame and go back to the laboratory frame.
 
 
 ----
@@ -218,7 +215,7 @@ Collisional ionization
 ^^^^^^^^^^^^^^^^^^^^^^
 
 The binary collisions can also be ionizing if they are **electron-ion** collisions.
-The approach is the same as that provided in [Perez2012]_.
+The approach is almost the same as that provided in [Perez2012]_.
 
 When ionization is requested by setting ``ionizing=True``, a few additional operations
 are executed:
@@ -226,14 +223,45 @@ are executed:
 * At the beginning of the run, cross-sections are calculated from tabulated binding
   energies (available for ions up to atomic number 100). These cross-sections are then
   tabulated for each requested ion species.
-* Each timestep, the particle densities :math:`n_e`, :math:`n_i` and :math:`n_{ei}`
-  (similar to the densities above for collisions) are calculated.
+* Each timestep, the particle density :math:`n = n_e n_i/n_{ei}`
+  (similar to the densities above for collisions) is calculated.
 * During each collision, a probability for ionization is computed. If successful, 
   the ion charge is increased, the incident electron is slowed down, and a new electron
   is created.
 
-Note that this scheme does not account for recombination, which would balance ionization
+This scheme does not account for recombination, which would balance ionization
 over long time scales.
+
+.. rubric:: Modifications
+
+A modification has been added to the theory of [Perez2012]_ in order to account for the
+laboratory frame being different from the ion frame. Considering :math:`\overrightarrow{p_e}`
+and :math:`\overrightarrow{p_i}` the electron and ion momenta in the laboratory frame, 
+and their associated Lorentz factors :math:`\gamma_1` and :math:`\gamma_2`, we can derive
+the Lorentz factor of the electron in the ion frame with
+:math:`\gamma_e^\star=\gamma_e\gamma_i-\overrightarrow{p_e}\cdot\overrightarrow{p_i}`.
+The probability for ionization reads:
+
+.. math::
+  
+  P = 1-\exp\left( - v_e \sigma n \Delta t \right) = 1-\exp\left( -V^\star \sigma^\star n \Delta t \right)
+
+where :math:`\sigma` is the cross-section in the laboratory frame, :math:`\sigma^\star`
+is the cross-section in the ion frame, and 
+:math:`V^\star=\sqrt{\gamma_e^{\star\,2}-1}/(\gamma_e\gamma_i)`.
+
+The loss of energy :math:`E_e` of the incident electron translates into a change in momentum
+:math:`{p_e^\star}' = \alpha_e p_e^\star` in the ion frame, with
+:math:`\alpha_e=\sqrt{(\gamma_e^\star-E_e)^2-1}/\sqrt{\gamma_e^{\star2}-1}`.
+In the laboratory frame, it becomes
+:math:`\overrightarrow{p_e'}=\alpha_e\overrightarrow{p_e}+((1-\alpha_e)\gamma_e^\star-E_e)\overrightarrow{p_i}`.
+
+A similar operation is done for defining the momentum of the new electron in the lab frame.
+It is created with energy :math:`E_w` and its momentum is
+:math:`p_w^\star = \alpha_w p_e^\star` in the ion frame, with
+:math:`\alpha_w=\sqrt{E_w(E_w+2)}/\sqrt{\gamma_e^{\star2}-1}`.
+In the laboratory frame, it becomes
+:math:`\overrightarrow{p_w}=\alpha_w\overrightarrow{p_e}+(E_w+1-\alpha_w\gamma_e^\star)\overrightarrow{p_i}`.
 
 
 ----

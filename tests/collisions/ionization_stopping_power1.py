@@ -24,7 +24,7 @@ interpolation_order = 2
 # timestep = float, time steps
 # sim_time = float, duration of the simulation
 timestep = 0.01 * L0
-sim_time  = 1 * L0
+sim_time  = 10 * L0
 
 
 #  optional parameter time_fields_frozen, during which fields are not updated
@@ -65,7 +65,7 @@ random_seed = 0
 electrons = []
 energy = []
 emin = 1e-2 #keV
-emax = 1e6
+emax = 1e10
 npoints = 20
 for i in range(npoints):
 	el = "electron"+str(i)
@@ -78,7 +78,7 @@ for i in range(npoints):
 		species_type = el,
 		initPosition_type = "regular",
 		initMomentum_type = "maxwell-juettner",
-		n_part_per_cell= 100,
+		n_part_per_cell= 10,
 		mass = 1.0,
 		charge = -1.0,
 		charge_density = 1e-9,
@@ -128,7 +128,7 @@ Collisions(
 # ---------------------
 
 # print_every (on screen text output) 
-print_every = 10
+print_every = 100
 
 # DIAGNOSTICS ON FIELDS
 fieldDump_every    = 1
