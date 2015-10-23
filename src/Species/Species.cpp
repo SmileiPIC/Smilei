@@ -288,15 +288,14 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
     
     // Adding the mean velocity (using relativistic composition)
     // ---------------------------------------------------------
-    if ( (vel[0]!=0.0) || (vel[1]!=0.0) || (vel[2]!=0.0) ){
+    double vx, vy, vz, v2, g, gm1, Lxx, Lyy, Lzz, Lxy, Lxz, Lyz, gp, px, py, pz;
+    // mean-velocity
+    vx  = -vel[0];
+    vy  = -vel[1];
+    vz  = -vel[2];
+    v2  = vx*vx + vy*vy + vz*vz;
+    if ( v2>0. ){
         
-        double vx, vy, vz, v2, g, gm1, Lxx, Lyy, Lzz, Lxy, Lxz, Lyz, gp, px, py, pz;
-        
-        // mean-velocity
-        vx  = -vel[0];
-        vy  = -vel[1];
-        vz  = -vel[2];
-        v2  = vx*vx + vy*vy + vz*vz;
         g   = 1.0/sqrt(1.0-v2);
         gm1 = g - 1.0;
         
@@ -750,8 +749,6 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
                         temperature[m](i,j,k) = temperatureProfile[m]->valueAt(x_cell);
                         //MESSAGE("temp 1 :" <<  temperature[m](i,j,k))
                         velocity[m](i,j,k) = velocityProfile[m]->valueAt(x_cell);
-                        // If the velocity is too small, put some limit to prevent overflows
-                        if( abs(velocity[m](i,j,k))<1e-100 ) velocity[m](i,j,k)=0.;
                     }
                     
                     // increment the effective number of particle by n_part_in_cell(i,j,k)
