@@ -1,12 +1,14 @@
 SMILEICXX     ?= mpic++
 #SMILEICXX     = mpiicpc
-HDF5_ROOT_DIR ?= ${HDF5HOME}
+
+#HDF5_ROOT_DIR ?= ${HDF5HOME}
+HDF5_ROOT_DIR ?= ${HDF5_ROOT_DIR}
 
 ##################################################
 
 VERSION:="$(shell git describe 2>/dev/null || echo '??')"
 
-CFLAGS += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include -DMPICH_IGNORE_CXX_SEEK #-D_TESTPATCHEXCH
+CFLAGS += -D__VERSION=\"$(VERSION)\" -I${HDF5_ROOT_DIR}/include
 LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5
 
 ifneq (,$(findstring poincare,$(HOSTNAME)))
@@ -61,9 +63,16 @@ endif
 ifeq ($(openmp),gnu)
 	CFLAGS += -fopenmp -D_PATCH
 else ifeq ($(openmp),intel)
+<<<<<<< HEAD
 	CFLAGS += -openmp -xHost -D_TESTPATCHEXCH -g
 else ifeq ($(openmp),intelmpi)
 	CFLAGS += -openmp -xHost -DMPICH_IGNORE_CXX_SEEK -mt_mpi -D_TESTPATCHEXCH
+=======
+	CFLAGS += -openmp -xHost -ipo 
+else ifeq ($(openmp),intelmpi)
+	CFLAGS += -openmp -xHost -DMPICH_IGNORE_CXX_SEEK -mt_mpi
+	#CFLAGS += -openmp -xHost -DMPICH_IGNORE_CXX_SEEK -mt_mpi
+>>>>>>> develop_beck
         LDFLAGS += -lmpi_mt -lz
         SMILEICXX = mpiicpc
 endif

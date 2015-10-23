@@ -18,9 +18,9 @@ void SpeciesMPI::init()
 	    patch_buff_index_send[iDir][i].resize(0);
 	    patch_buff_index_recv_sz[iDir][i] = 0;
 	    patch_buff_index_send_sz[iDir][i] = 0;
-	    corner_buff_index_send[iDir][i].resize(0);
-	    corner_buff_index_recv_sz[iDir][i] = 0;
-	    corner_buff_index_send_sz[iDir][i] = 0;
+	    //corner_buff_index_send[iDir][i].resize(0);
+	    //corner_buff_index_recv_sz[iDir][i] = 0;
+	    //corner_buff_index_send_sz[iDir][i] = 0;
 	}
     }
 
@@ -32,8 +32,8 @@ void SpeciesMPI::init()
 	    patchVectorRecv[iDim][iNeighbor].initialize(0,ndims);
 	    patchVectorSend[iDim][iNeighbor].initialize(0,ndims);
 	    // Globalize IP (store in SmileiMPI_Cart2D, OK while init+init+finalize / dir)
-	    cornerVectorRecv[iDim][iNeighbor].initialize(0,ndims);
-	    cornerVectorSend[iDim][iNeighbor].initialize(0,ndims);
+	    //cornerVectorRecv[iDim][iNeighbor].initialize(0,ndims);
+	    //cornerVectorSend[iDim][iNeighbor].initialize(0,ndims);
 	}
     }
 }
