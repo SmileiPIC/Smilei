@@ -210,7 +210,8 @@ unsigned int generalhilbertindex(unsigned int m0, unsigned int m1, int x, int y)
 
     if( (x<0) || (x>=(1<<m0)) || (y<0) || (y>=(1<<m1)) )return MPI_PROC_NULL ;
 
-    unsigned int h,mmin,mmax,l,localx,localy,*target,einit,dinit;
+    unsigned int h,l,localx,localy,*target,einit,dinit;
+    int mmin, mmax;
     h=0;
     dinit=0;
     einit=0;
@@ -232,7 +233,7 @@ unsigned int generalhilbertindex(unsigned int m0, unsigned int m1, int x, int y)
        *target -= l*(1<<i);
     }
     if (mmin > 0) {
-        h += hilbertindex(mmin,localx,localy,&einit,&dinit);
+      h += hilbertindex((unsigned int)mmin,localx,localy,&einit,&dinit);
     }
 return h;
 }

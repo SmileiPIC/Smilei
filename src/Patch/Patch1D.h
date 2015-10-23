@@ -26,7 +26,7 @@ public:
     virtual void initExchange( Field* field, int iDim );
     virtual void finalizeExchange( Field* field, int iDim );
 
-    void createType( PicParams& params );
+    virtual void createType( PicParams& params );
     //! MPI_Datatype to exchange [ndims_][iDim=0 prim/dial]
     MPI_Datatype ntypeSum_[2][2];
 

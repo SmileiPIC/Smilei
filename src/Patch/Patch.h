@@ -58,7 +58,7 @@ public:
 
     SmileiIO* sio;
 
-    //!Cartesian coordinates of the patch. X,Y,Z of the Patch according to its Hilbert index.
+   //!Cartesian coordinates of the patch. X,Y,Z of the Patch according to its Hilbert index.
     std::vector<unsigned int> Pcoordinates;
 
 
@@ -124,7 +124,7 @@ public:
     virtual void initExchange( Field* field, int iDim );
     virtual void finalizeExchange( Field* field, int iDim );
 
-    void createType( PicParams& params );
+    virtual void createType( PicParams& params );
     //! MPI_Datatype to exchange [ndims_][iDim=0 prim/dial][iDim=1 prim/dial]
     MPI_Datatype ntypeSum_[2][2][2];
 

@@ -17,6 +17,7 @@ public:
 	    patch = new Patch(params, diag_params, laser_params, smpi, ipatch, 0);
 	else 
 	    ERROR( "Unknwon parameters : " << params.geometry );
+	patch->createType(params);
         return patch;
     }
 

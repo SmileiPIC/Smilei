@@ -86,6 +86,7 @@ void Patch1D::initSumField( Field* field, int iDim )
 	    ix = (1-iDim)*istart;
 	    int tag = buildtag( hindex, iDim, iNeighbor );
 	    MPI_Isend( &(f1D->data_[ix]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f1D->specMPI.patch_srequest[iDim][iNeighbor]) );
+	    //MPI_Isend( &(f1D->data_[ix]), iDim  * n_elem[0] + (1-iDim) * oversize2[0], MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f1D->specMPI.patch_srequest[iDim][iNeighbor]) );
 	} // END of Send
             
 	if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {

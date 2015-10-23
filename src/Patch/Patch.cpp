@@ -99,7 +99,7 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 
 	updateMPIenv(smpi);
 
-	createType(params);
+	//createType(params);
 
 	
 	//std::cout << "Voisin dir 0 : " << ipatch << " : " <<  neighbor_[0][0] << " " <<  neighbor_[0][1] << std::endl;
@@ -145,6 +145,7 @@ void Patch::updateMPIenv(SmileiMPI* smpi)
     for (int iDim = 0 ; iDim < nDim_fields_ ; iDim++)
 	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++)
 	    MPI_neighbor_[iDim][iNeighbor] = smpi->hrank(neighbor_[iDim][iNeighbor]);
+    MPI_me_ = smpi->smilei_rk;
 
 
 #ifdef _PATCH_DEBUG
@@ -175,8 +176,8 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, int
     Particles &cuParticles = (*vecSpecies[ispec]->particles);
 
     for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-	vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][iNeighbor].initialize(0,2);
-	vecSpecies[ispec]->specMPI.patchVectorSend[iDim][iNeighbor].initialize(0,2);
+	vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][iNeighbor].initialize(0,cuParticles.dimension());
+	vecSpecies[ispec]->specMPI.patchVectorSend[iDim][iNeighbor].initialize(0,cuParticles.dimension());
     }
 
     
@@ -480,7 +481,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params,
 	n_particles = (*cubmax)[j]-(*cubmin)[j]; //Nbr of particle in this bin
 	nmove = min(n_particles,shift[j]); //Nbr of particles to move
 	lmove = max(n_particles,shift[j]); //How far particles must be shifted
-	if (nmove>0) cuParticles.overwrite_part2D((*cubmin)[j], (*cubmin)[j]+lmove, nmove);
+	if (nmove>0) cuParticles.overwrite_part((*cubmin)[j], (*cubmin)[j]+lmove, nmove);
 	(*cubmin)[j] += shift[j];
 	(*cubmax)[j] += shift[j];
     }
@@ -492,7 +493,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params,
 	    n_part_recv = vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][iNeighbor];
 	    if ( (neighbor_[0][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
 		ii = iNeighbor*((*cubmax).size()-1);//0 if iNeighbor=0(particles coming from West) and (*cubmax).size()-1 otherwise.
-		vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][iNeighbor].overwrite_part2D(0, cuParticles,(*cubmax)[ii],n_part_recv);
+		vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][iNeighbor].overwrite_part(0, cuParticles,(*cubmax)[ii],n_part_recv);
 		(*cubmax)[ii] += n_part_recv ;
 	    }
 	}
@@ -504,7 +505,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params,
 	    if ( (neighbor_[1][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
 		for(unsigned int j=0; j<n_part_recv; j++){
 		    ii = int((vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][iNeighbor].position(0,j)-min_local[0])/dbin);//bin in which the particle goes.
-		    vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][iNeighbor].overwrite_part2D(j, cuParticles,(*cubmax)[ii]);
+		    vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][iNeighbor].overwrite_part(j, cuParticles,(*cubmax)[ii]);
 		    (*cubmax)[ii] ++ ;
 		}
 	    }
@@ -877,13 +878,13 @@ void Patch::cleanup_sent_particles(int ispec, std::vector<int>* indexes_of_parti
 		iPart = (*indexes_of_particles_to_exchange)[ii];
 	    }
 	    while (iPart >= (*cubmin)[ibin] && ii > 0) {
-		cuParticles.overwrite_part2D((*cubmax)[ibin]-1, iPart );
+		cuParticles.overwrite_part((*cubmax)[ibin]-1, iPart );
 		(*cubmax)[ibin]--;
 		ii--;
 		iPart = (*indexes_of_particles_to_exchange)[ii];
 	    }
 	    if (iPart >= (*cubmin)[ibin] && iPart < (*cubmax)[ibin]) { //On traite la dernière particule (qui peut aussi etre la premiere)
-		cuParticles.overwrite_part2D((*cubmax)[ibin]-1, iPart );
+		cuParticles.overwrite_part((*cubmax)[ibin]-1, iPart );
 		(*cubmax)[ibin]--;
 	    }
 	}
@@ -895,7 +896,7 @@ void Patch::cleanup_sent_particles(int ispec, std::vector<int>* indexes_of_parti
     for (int unsigned ibin = 1 ; ibin < (*cubmax).size() ; ibin++ ) { //First bin don't need to be shifted
 	ii = (*cubmin)[ibin]-(*cubmax)[ibin-1]; // Shift the bin in memory by ii slots.
 	iPart = min(ii,(*cubmax)[ibin]-(*cubmin)[ibin]); // Number of particles we have to shift = min (Nshift, Nparticle in the bin)
-	if(iPart > 0) cuParticles.overwrite_part2D((*cubmax)[ibin]-iPart,(*cubmax)[ibin-1],iPart);
+	if(iPart > 0) cuParticles.overwrite_part((*cubmax)[ibin]-iPart,(*cubmax)[ibin-1],iPart);
 	(*cubmax)[ibin] -= ii;
 	(*cubmin)[ibin] = (*cubmax)[ibin-1];
     }

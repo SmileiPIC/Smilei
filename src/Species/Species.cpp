@@ -657,7 +657,7 @@ for (ip=0; ip < npart; ip++) {
 
     ixy = iy + ix*params.n_space[1];
 
-    (*particles).overwrite_part2D(ip, particles_sorted[token] , indices[ixy]);
+    (*particles).overwrite_part(ip, particles_sorted[token] , indices[ixy]);
     indices[ixy]++;
 }
 

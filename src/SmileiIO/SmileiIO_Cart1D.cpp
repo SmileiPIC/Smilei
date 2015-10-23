@@ -67,7 +67,7 @@ void SmileiIO_Cart1D::createPattern( PicParams& params, Patch* patch )
 
         if (params.number_of_patches[0] != 1) {
             if ( ix_isPrim == 0 ) {
-                if (patch->Pcoordinates[0]==0)
+                if (patch->Pcoordinates[0]!=0)
                     bufsize[0]--;
             }
             else {
@@ -94,7 +94,8 @@ void SmileiIO_Cart1D::createPattern( PicParams& params, Patch* patch )
         //
         // Select hyperslab in the file.
         //
-        offset[0] = patch->getCellStartingGlobalIndex(0)+istart[0];
+        //offset[0] = patch->getCellStartingGlobalIndex(0)+istart[0];
+	offset[0] = patch->Pcoordinates[0]*params.n_space[0] - params.oversize[0]+istart[0];
         stride[0] = 1;
         count[0] = 1;
         hsize_t     block[1];
@@ -141,7 +142,14 @@ void SmileiIO_Cart1D::writeFieldsSingleFileTime( Field* field, hid_t group_id )
     //chunk_dims[0] = ???;
     //H5Pset_chunk(plist_id, 2, chunk_dims); // Problem different dims for each process
     //hid_t dset_id = H5Dcreate(file_id, (field->name).c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
-    hid_t dset_id = H5Dcreate(group_id, (field->name).c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+    //hid_t dset_id = H5Dcreate(group_id, (field->name).c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+    hid_t dset_id;
+    htri_t status = H5Lexists( group_id, (field->name).c_str(), H5P_DEFAULT ); 
+    if (!status)
+	dset_id  = H5Dcreate(group_id, (field->name).c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+    else
+	dset_id = H5Dopen(group_id, (field->name).c_str(), H5P_DEFAULT);		
+
 
     H5Pclose(plist_id);
 

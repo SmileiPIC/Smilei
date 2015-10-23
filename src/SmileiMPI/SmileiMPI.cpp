@@ -483,42 +483,44 @@ void SmileiMPI::exchangeAvg( ElectroMagn* EMfields )
     exchangeField( EMfields->Bz_avg );
 }
 
-// ! Attention 1D
 MPI_Datatype SmileiMPI::createMPIparticles( Particles* particles, int nbrOfProp )
 {
-    if (particles->Position.size()!=2)
-	cout << "1D Particles not managed" << endl;
+    int nbrOfProp2 = particles->double_prop.size() + particles->short_prop.size() + particles->uint_prop.size();
+
+    MPI_Aint address[nbrOfProp2];
+    for ( int iprop=0 ; iprop<particles->double_prop.size() ; iprop++ )
+	MPI_Get_address( &( (*(particles->double_prop[iprop]))[0] ), &(address[iprop]) );
+    for ( int iprop=0 ; iprop<particles->short_prop.size() ; iprop++ )
+        MPI_Get_address( &( (*(particles->short_prop[iprop]))[0] ), &(address[particles->double_prop.size()+iprop]) );
+    for ( int iprop=0 ; iprop<particles->uint_prop.size() ; iprop++ )
+        MPI_Get_address( &( (*(particles->uint_prop[iprop]))[0] ), &(address[particles->double_prop.size()+particles->short_prop.size()+iprop]) );
+
+    int nbr_parts[nbrOfProp2];
+    // number of elements per property
+    for (int i=0 ; i<nbrOfProp2 ; i++)
+        nbr_parts[i] = particles->size();
+
+    MPI_Aint disp[nbrOfProp2];
+    // displacement between 2 properties
+    disp[0] = 0;
+    for (int i=1 ; i<nbrOfProp2 ; i++)
+        disp[i] = address[i] - address[0];
+
+    MPI_Datatype partDataType[nbrOfProp2];
+    // define MPI type of each property, default is DOUBLE
+    for (int i=0 ; i<particles->double_prop.size() ; i++)
+        partDataType[i] = MPI_DOUBLE;
+    for ( int iprop=0 ; iprop<particles->short_prop.size() ; iprop++ )
+        partDataType[ particles->double_prop.size()+iprop] = MPI_SHORT;
+    for ( int iprop=0 ; iprop<particles->uint_prop.size() ; iprop++ )
+        partDataType[ particles->double_prop.size()+particles->short_prop.size()+iprop] = MPI_UNSIGNED;
 
     MPI_Datatype typeParticlesMPI;
-
-    MPI_Aint address[nbrOfProp];
-    MPI_Get_address( &(particles->position(0,0)), &(address[0]) );
-    MPI_Get_address( &(particles->position(1,0)), &(address[1]) );
-    //MPI_Get_address( &(particles->position_old(0,0)), &(address[2]) );
-    //MPI_Get_address( &(particles->position_old(1,0)), &(address[3]) );
-    MPI_Get_address( &(particles->momentum(0,0)), &(address[2]) );
-    MPI_Get_address( &(particles->momentum(1,0)), &(address[3]) );
-    MPI_Get_address( &(particles->momentum(2,0)), &(address[4]) );
-    MPI_Get_address( &(particles->weight(0)),     &(address[5]) );
-    MPI_Get_address( &(particles->charge(0)),     &(address[6]) );
-
-    int nbr_parts[nbrOfProp];
-    MPI_Aint disp[nbrOfProp];
-    MPI_Datatype partDataType[nbrOfProp];
-
-    for (int i=0 ; i<nbrOfProp ; i++)
-	nbr_parts[i] = particles->size();
-    disp[0] = 0;
-    for (int i=1 ; i<nbrOfProp ; i++)
-	disp[i] = address[i] - address[0];
-    for (int i=0 ; i<nbrOfProp ; i++)
-	partDataType[i] = MPI_DOUBLE;
-    partDataType[nbrOfProp-1] = MPI_SHORT;
-
-    MPI_Type_struct( nbrOfProp, &(nbr_parts[0]), &(disp[0]), &(partDataType[0]), &typeParticlesMPI);
+    MPI_Type_struct( nbrOfProp2, &(nbr_parts[0]), &(disp[0]), &(partDataType[0]), &typeParticlesMPI);
     MPI_Type_commit( &typeParticlesMPI );
-
+    
     return typeParticlesMPI;
+
 } // END createMPIparticles
 
 
