@@ -36,15 +36,15 @@ DiagnosticParticles::DiagnosticParticles(unsigned int ID, string output_, unsign
     mystream << species[0];
     for(unsigned int i=1; i<species.size(); i++)
         mystream << "," << species[i];
-    MESSAGE(2,"Created particle diagnostic #" << ID << ": species " << mystream.str());
+    MESSAGE(1,"Created particle diagnostic #" << ID << ": species " << mystream.str());
     DiagnosticParticlesAxis *a;
     for(unsigned int i=0; i<axes.size(); i++) {
         a = axes[i];
         mystream.str("");
-        mystream << "\t\t\tAxis " << a->type << " from " << a->min << " to " << a->max << " in " << a->nbins << " steps";
+        mystream << "Axis " << a->type << " from " << a->min << " to " << a->max << " in " << a->nbins << " steps";
         if( a->logscale       ) mystream << " [LOGSCALE] ";
         if( a->edge_inclusive ) mystream << " [EDGE INCLUSIVE]";
-        MESSAGE(mystream.str());
+        MESSAGE(2,mystream.str());
     }
     
     
