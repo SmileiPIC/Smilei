@@ -503,7 +503,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params,
             }
         }
         //idim > 0; this is the difficult case, when particles can arrive in any bin.
-        for (idim == 1; idim < ndim; idim++){
+        for (idim = 1; idim < ndim; idim++){
             for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
                 n_part_recv = vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[idim][iNeighbor];
                 if ( (neighbor_[idim][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
