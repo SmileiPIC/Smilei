@@ -87,6 +87,40 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
             }//if
             
         }//i
+        
+        // Adding the mean velocity (using relativistic composition)
+        // ---------------------------------------------------------
+
+        double vx, vy, vz, v2, g, gm1, Lxx, Lyy, Lzz, Lxy, Lxz, Lyz, gp, px, py, pz;
+        // mean-velocity
+        vx  = -species->thermVelocity[0];
+        vy  = -species->thermVelocity[1];
+        vz  = -species->thermVelocity[2];
+        v2  = vx*vx + vy*vy + vz*vz;
+        if ( v2>0. ){
+            
+            g   = 1.0/sqrt(1.0-v2);
+            gm1 = g - 1.0;
+            
+            // compute the different component of the Matrix block of the Lorentz transformation
+            Lxx = 1.0 + gm1 * vx*vx/v2;
+            Lyy = 1.0 + gm1 * vy*vy/v2;
+            Lzz = 1.0 + gm1 * vz*vz/v2;
+            Lxy = gm1 * vx*vy/v2;
+            Lxz = gm1 * vx*vz/v2;
+            Lyz = gm1 * vy*vz/v2;
+            
+            // Lorentz transformation of the momentum
+            gp = sqrt(1.0 + pow(particles.momentum(0,ipart),2) + pow(particles.momentum(1,ipart),2)
+                      + pow(particles.momentum(2,ipart),2));
+            px = -gp*g*vx + Lxx * particles.momentum(0,ipart) + Lxy * particles.momentum(1,ipart) + Lxz * particles.momentum(2,ipart);
+            py = -gp*g*vy + Lxy * particles.momentum(0,ipart) + Lyy * particles.momentum(1,ipart) + Lyz * particles.momentum(2,ipart);
+            pz = -gp*g*vz + Lxz * particles.momentum(0,ipart) + Lyz * particles.momentum(1,ipart) + Lzz * particles.momentum(2,ipart);
+            particles.momentum(0,ipart) = px;
+            particles.momentum(1,ipart) = py;
+            particles.momentum(2,ipart) = pz;
+            
+        }//ENDif vel != 0
 
     } else {                                    // IF VELOCITY < 3*THERMAL SIMPLY REFLECT IT
         particles.momentum(direction, ipart) = -particles.momentum(direction, ipart);

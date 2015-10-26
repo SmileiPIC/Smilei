@@ -107,14 +107,19 @@ public:
             
             // for thermalizing BCs on particles check if thermT is correctly defined
             bool thermTisDefined=false;
+            bool thermVisDefined=false;
             if ( (thisSpecies->bc_part_type_west=="thermalize") || (thisSpecies->bc_part_type_east=="thermalize") ){
                 thermTisDefined=PyTools::extract("thermT",thisSpecies->thermT,"Species",ispec);
                 if (!thermTisDefined) ERROR("thermT needs to be defined for species " <<ispec<< " due to x-BC thermalize");
+                thermVisDefined=PyTools::extract("thermVelocity",thisSpecies->thermVelocity,"Species",ispec);
+                if (!thermVisDefined) ERROR("thermVelocity needs to be defined for species " <<ispec<< " due to x-BC thermalize");
             }
-            if ( (params.nDim_particle==2) && (!thermTisDefined) &&
+            if ( (params.nDim_particle==2) && (!thermTisDefined) && (!thermVisDefined) &&
                 (thisSpecies->bc_part_type_south=="thermalize" || thisSpecies->bc_part_type_north=="thermalize") ) {
                 thermTisDefined=PyTools::extract("thermT",thisSpecies->thermT,"Species",ispec);
                 if (!thermTisDefined) ERROR("thermT needs to be defined for species " <<ispec<< " due to y-BC thermalize");
+                thermVisDefined=PyTools::extract("thermVelocity",thisSpecies->thermVelocity,"Species",ispec);
+                if (!thermTisDefined) ERROR("thermVelocity needs to be defined for species " <<ispec<< " due to y-BC thermalize");
             }
             if (thermTisDefined) {
                 if (thisSpecies->thermT.size()==1) {
@@ -126,6 +131,9 @@ public:
                 thisSpecies->thermT.resize(3);
                 for (unsigned int i=0; i<3;i++)
                     thisSpecies->thermT[i]=0.0;
+                thisSpecies->thermVelocity.resize(3);
+                for (unsigned int i=0; i<3;i++)
+                    thisSpecies->thermVelocity[i]=0.0;
             }
             
             PyTools::extract("ionization_model", thisSpecies->ionization_model, "Species",ispec);

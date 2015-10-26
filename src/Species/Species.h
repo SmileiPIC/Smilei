@@ -55,8 +55,11 @@ public:
     //! atomic number
     unsigned int atomic_number;
     
-    //! thermalizing temperature [\f$m_e c^2\f$]
+    //! thermalizing temperature for thermalizing BCs [\f$m_e c^2\f$]
     std::vector<double> thermT;
+    //! mean velocity used when thermalizing BCs are used [\f$c\f$]
+    std::vector<double> thermVelocity;
+    
     //! thermal velocity [\f$c\f$]
     std::vector<double> thermalVelocity;
     //! thermal momentum [\f$m_e c\f$]
