@@ -38,7 +38,7 @@ public:
                     emBoundCond[ii] = new ElectroMagnBC1D_SM(params, laser_params);
                 }
                 // reflective bcs
-                else if ( params.bc_em_type_x[i] == "reflective" ) {
+                else if ( params.bc_em_type_x[ii] == "reflective" ) {
                     emBoundCond[ii] = new ElectroMagnBC1D_refl(params, laser_params);
                 }
                 // else: error
@@ -65,7 +65,7 @@ public:
                     emBoundCond[ii] = new ElectroMagnBC2D_SM(params, laser_params);
                 }
                 // reflective bcs
-                else if ( params.   [i] == "reflective" ) {
+                else if ( params.bc_em_type_x[ii] == "reflective" ) {
                     emBoundCond[ii] = new ElectroMagnBC2D_refl(params, laser_params);
                 }
                 // else: error
@@ -75,15 +75,15 @@ public:
 
                 // Y DIRECTION
                 // silver-muller bcs (injecting/absorbin)
-                if ( params.bc_em_type_y[0] == "silver-muller" ) {
+                if ( params.bc_em_type_y[ii] == "silver-muller" ) {
                     emBoundCond[ii+2] = new ElectroMagnBC2D_SM(params, laser_params);
                 }
                 // reflective bcs
-                else if ( params.bc_em_type_y[0] == "reflective" ) {
+                else if ( params.bc_em_type_y[ii] == "reflective" ) {
                     emBoundCond[ii+2] = new ElectroMagnBC2D_refl(params, laser_params);
                 }
                 // else: error
-                else if ( params.bc_em_type_y[0] != "periodic" ) {
+                else if ( params.bc_em_type_y[ii] != "periodic" ) {
                     ERROR( "Unknwon boundary bc_em_type_y[" << ii << "]");
                 }
             }

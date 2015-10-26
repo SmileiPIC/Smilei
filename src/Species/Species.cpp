@@ -288,15 +288,14 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
     
     // Adding the mean velocity (using relativistic composition)
     // ---------------------------------------------------------
-    if ( (vel[0]!=0.0) || (vel[1]!=0.0) || (vel[2]!=0.0) ){
+    double vx, vy, vz, v2, g, gm1, Lxx, Lyy, Lzz, Lxy, Lxz, Lyz, gp, px, py, pz;
+    // mean-velocity
+    vx  = -vel[0];
+    vy  = -vel[1];
+    vz  = -vel[2];
+    v2  = vx*vx + vy*vy + vz*vz;
+    if ( v2>0. ){
         
-        double vx, vy, vz, v2, g, gm1, Lxx, Lyy, Lzz, Lxy, Lxz, Lyz, gp, px, py, pz;
-        
-        // mean-velocity
-        vx  = -vel[0];
-        vy  = -vel[1];
-        vz  = -vel[2];
-        v2  = vx*vx + vy*vy + vz*vz;
         g   = 1.0/sqrt(1.0-v2);
         gm1 = g - 1.0;
         

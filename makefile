@@ -18,7 +18,7 @@ COMMITDATE:="$(shell git show -s --pretty="%ci" 2>/dev/null || echo '??')"
 CXXFLAGS += -D__VERSION=\"$(VERSION)\" -D__COMMITDATE=\"$(COMMITDATE)\" -D__CONFIG=\""$(config)"\"
 
 CXXFLAGS += -I${HDF5_ROOT_DIR}/include -std=c++0x 
-LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5 -lz
+LDFLAGS += -L${HDF5_ROOT_DIR}/lib -lhdf5 -lz
 
 
 ifneq (,$(findstring poincare,$(HOSTNAME)))
@@ -66,6 +66,7 @@ ifeq (,$(findstring noopenmp,$(config)))
         OPENMPFLAGS = -openmp
     else
         OPENMPFLAGS = -fopenmp 
+	LDFLAGS += -lm
     endif
     OPENMPFLAGS += -D_OMP
     LDFLAGS += $(OPENMPFLAGS)
@@ -99,7 +100,7 @@ $(BUILD_DIR)/%.o : %.cpp
 	$(SMILEICXX) $(CXXFLAGS) -c $< -o $@
 
 $(EXEC): $(OBJS)
-	$(SMILEICXX) $(OBJS) -o $(BUILD_DIR)/$@  $(LDFLAGS)
+	$(SMILEICXX) $(LDFLAGS) $(OBJS) -o $(BUILD_DIR)/$@ 
 	cp $(BUILD_DIR)/$@ $@
 
 # these are kept for backward compatibility and might be removed (see make help)

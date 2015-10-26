@@ -210,6 +210,9 @@ html_show_copyright = False
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'Smileidoc'
 
+# Select charset that is compatible with maisondelasimulation.fr
+html_output_encoding = 'ISO-8859-1'
+
 # -- Options for LaTeX output ---------------------------------------------
 
 latex_elements = {
