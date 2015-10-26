@@ -505,11 +505,11 @@ int npatchmoy=0, npartmoy=0;
 
         } //End omp parallel region
 
-	if (itime%balancing_freq == 0) {
+	if ((itime%balancing_freq == 0)&&(smpiData->smilei_sz!=1)) {
             timer[7].restart();
             partperMPI = 0;
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
-                for (unsigned int ispec=0 ; ispec < 2 ; ispec++)
+                for (unsigned int ispec=0 ; ispec < params.n_species ; ispec++)
                     partperMPI += vecPatches(ipatch)->vecSpecies[ispec]->getNbrOfParticles();
             }
             partperMPI = 0;
@@ -521,7 +521,7 @@ int npatchmoy=0, npartmoy=0;
 	    vecPatches.exchangePatches_new(smpiData);
 
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
-                for (unsigned int ispec=0 ; ispec < 2 ; ispec++)
+                for (unsigned int ispec=0 ; ispec < params.n_species ; ispec++)
                     partperMPI += vecPatches(ipatch)->vecSpecies[ispec]->getNbrOfParticles();
             }
             npatchmoy += vecPatches.size();
