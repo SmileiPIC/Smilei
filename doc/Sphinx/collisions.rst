@@ -233,39 +233,43 @@ are executed:
 
 * This scheme does not account for recombination, which would balance ionization
   over long time scales.
-* At this time, only single ionization is implemented. Consequently, energy loss or 
-  number secondary electrons could be underestimated if the timestep is too large.
+* At this time, only single ionization is implemented (only one event per ion per timestep).
+  Consequently, the energy loss of the incident electron, the number of new electrons,
+  or the ion charge can be underestimated when the timestep is too large.
 
 .. rubric:: Relativistic change of frame
 
 A modification has been added to the theory of [Perez2012]_ in order to account for the
 laboratory frame being different from the ion frame. Considering :math:`\overrightarrow{p_e}`
 and :math:`\overrightarrow{p_i}` the electron and ion momenta in the laboratory frame, 
-and their associated Lorentz factors :math:`\gamma_1` and :math:`\gamma_2`, we can derive
-the Lorentz factor of the electron in the ion frame with
-:math:`\gamma_e^\star=\gamma_e\gamma_i-\overrightarrow{p_e}\cdot\overrightarrow{p_i}`.
+and their associated Lorentz factors :math:`\gamma_e` and :math:`\gamma_i`, we define
+:math:`\overrightarrow{q_e}=\overrightarrow{p_e}/(m_e c)` and
+:math:`\overrightarrow{q_i}=\overrightarrow{p_i}/(m_i c)`.
+The Lorentz factor of the electron in the ion frame is 
+:math:`\gamma_e^\star=\gamma_e\gamma_i-\overrightarrow{q_e}\cdot\overrightarrow{q_i}`.
 The probability for ionization reads:
 
 .. math::
   
   P = 1-\exp\left( - v_e \sigma n \Delta t \right) = 1-\exp\left( -V^\star \sigma^\star n \Delta t \right)
 
-where :math:`\sigma` is the cross-section in the laboratory frame, :math:`\sigma^\star`
+where :math:`v_e` is the electron velocity in the laboratory frame,
+:math:`\sigma` is the cross-section in the laboratory frame, :math:`\sigma^\star`
 is the cross-section in the ion frame, and 
 :math:`V^\star=\sqrt{\gamma_e^{\star\,2}-1}/(\gamma_e\gamma_i)`.
 
 The loss of energy :math:`E_e` of the incident electron translates into a change in momentum
-:math:`{p_e^\star}' = \alpha_e p_e^\star` in the ion frame, with
+:math:`{q_e^\star}' = \alpha_e q_e^\star` in the ion frame, with
 :math:`\alpha_e=\sqrt{(\gamma_e^\star-E_e)^2-1}/\sqrt{\gamma_e^{\star2}-1}`.
 In the laboratory frame, it becomes
-:math:`\overrightarrow{p_e'}=\alpha_e\overrightarrow{p_e}+((1-\alpha_e)\gamma_e^\star-E_e)\overrightarrow{p_i}`.
+:math:`\overrightarrow{q_e'}=\alpha_e\overrightarrow{q_e}+((1-\alpha_e)\gamma_e^\star-E_e)\overrightarrow{q_i}`.
 
 A similar operation is done for defining the momentum of the new electron in the lab frame.
 It is created with energy :math:`E_w` and its momentum is
-:math:`p_w^\star = \alpha_w p_e^\star` in the ion frame, with
+:math:`q_w^\star = \alpha_w q_e^\star` in the ion frame, with
 :math:`\alpha_w=\sqrt{E_w(E_w+2)}/\sqrt{\gamma_e^{\star2}-1}`.
 In the laboratory frame, it becomes
-:math:`\overrightarrow{p_w}=\alpha_w\overrightarrow{p_e}+(E_w+1-\alpha_w\gamma_e^\star)\overrightarrow{p_i}`.
+:math:`\overrightarrow{q_w}=\alpha_w\overrightarrow{q_e}+(E_w+1-\alpha_w\gamma_e^\star)\overrightarrow{q_i}`.
 
 
 ----
@@ -359,7 +363,7 @@ from [Desjarlais2001]_.
   Final charge state of various plasmas at various temperatures.
 
 The model does not account for detailed ionization potentials. It provides a rough
-approximation, and is particularly questionable for at low temperatures or high-Z.
+approximation, and is particularly questionable for low temperatures or high Z.
 We observe that Smilei's approach for impact ionization provides decent estimates
 of the ionization state. Detailed comparison to atomic codes has not been done yet.
 
