@@ -993,6 +993,9 @@ class ParticleDiagnostic(Diagnostic):
 			elif output == "charge_density":
 				titles[d] = "Charge density"
 				val_units = "N_r * Q_r"
+			elif output=="ekin_density":
+				titles[d] = "Energy density"
+				val_units = "N_r * K_r"
 			elif output[0] == "j":
 				titles[d] = "J"+output[1]
 				val_units = "J_r"

@@ -204,7 +204,7 @@ The resulting conductivity :math:`\sigma=en_ev_f/E` is compared in
 .. figure:: _static/conductivity.png
   :width: 10cm
   
-  Conductivity of colid-density copper. Each point is one simulation.
+  Conductivity of solid-density copper. Each point is one simulation.
 
 
 ----
@@ -229,10 +229,14 @@ are executed:
   the ion charge is increased, the incident electron is slowed down, and a new electron
   is created.
 
-This scheme does not account for recombination, which would balance ionization
-over long time scales.
+.. rubric:: Warnings
 
-.. rubric:: Modifications
+* This scheme does not account for recombination, which would balance ionization
+  over long time scales.
+* At this time, only single ionization is implemented. Consequently, energy loss or 
+  number secondary electrons could be underestimated if the timestep is too large.
+
+.. rubric:: Relativistic change of frame
 
 A modification has been added to the theory of [Perez2012]_ in order to account for the
 laboratory frame being different from the ion frame. Considering :math:`\overrightarrow{p_e}`
@@ -312,6 +316,54 @@ In the same figure, the graph on the right-hand-side provides the stopping power
 in the same context, at different electron energies. It is compared to the same theory.
 
 
+.. rubric:: 3. Effect of neglecting multiple ionization
+
+If the timestep is too large, we may be underestimating the ionization because we only 
+allow one ionization per timestep. Multiple ionization can be important for cold high-Z
+material and for high-energy electrons. To test the potential error made with large timesteps,
+we ran simulations of electrons at 1 MeV incident on cold atoms. The evolution of the
+secondary electron density is monitored versus time in :numref:`IonizationMultiple`.
+
+.. _IonizationMultiple:
+
+.. figure:: _static/ionization_multiple.png
+  :width: 10cm
+  
+  Secondary electron density *vs* time, for cold plasmas traversed by a 1 MeV electron beam.
+
+The solid lines correspond to a very-well resolved ionization, whereas the dashed lines
+correspond to a large timestep. The difference is large at early stages, but decreases
+quickly as the subsequent ionization cross-sections become lower. This shows that 
+multiple ionization can be ignored in many cases, as long as the plasma continues to ionize.
+However, if the timing of the early ionization rate is critical, then a small timestep 
+is required. Otherwise, multiple ionization would have to be implemented in Smilei.
+
+
+.. rubric:: 3. Effect of neglecting recombination
+
+As recombination is not accounted for, we can expect excess ionization to occur indefinitely
+without being balanced to equilibrium. However, in many cases, the recombination rate
+is small and can be neglected over the duration of the simulation. We provide an example
+that is relevant to picosecond-scale laser-plasma interaction. Plasmas initially at
+a density of 10 times the critical density are given various initial temperatures.
+Ionization initially increases while the temperature decreases, until, after a while,
+their charge state stagnates (it still increases, but very slowly).
+In :numref:`IonizationRecombination`, these results are compared to a Thomas-Fermi model
+from [Desjarlais2001]_.
+
+.. _IonizationRecombination:
+
+.. figure:: _static/ionization_recombination.png
+  :width: 12cm
+  
+  Final charge state of various plasmas at various temperatures.
+
+The model does not account for detailed ionization potentials. It provides a rough
+approximation, and is particularly questionable for at low temperatures or high-Z.
+We observe that Smilei's approach for impact ionization provides decent estimates
+of the ionization state. Detailed comparison to atomic codes has not been done yet.
+
+
 ----
 
 Collisions debugging
@@ -359,4 +411,5 @@ References
 
 .. [Rohrlich1954] `F. Rohrlich and B. C. Carlson, Phys. Rev. 93, 38 (1954) <http://journals.aps.org/pr/abstract/10.1103/PhysRev.93.38>`_
 
+.. [Desjarlais2001] `M. Desjarlais, Contrib. Plasma Phys. 41, 267 (2001) <http://dx.doi.org/10.1002/1521-3986%28200103%2941%3A2%2F3%3C267%3A%3AAID-CTPP267%3E3.0.CO%3B2-P>`_
 

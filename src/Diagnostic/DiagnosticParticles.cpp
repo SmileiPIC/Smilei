@@ -305,6 +305,10 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
                 for (int ipart = bmin ; ipart < bmax ; ipart++)
                     data_array[ipart] = (*w)[ipart] * (double)((*q)[ipart]) * (*pz)[ipart] / sqrt( 1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart] );
             
+            else if (output == "ekin_density")
+                for (int ipart = bmin ; ipart < bmax ; ipart++)
+                    data_array[ipart] = mass * (*w)[ipart] * (sqrt(1. + (*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart]) - 1.);
+            
             else if (output == "p_density")
                 for (int ipart = bmin ; ipart < bmax ; ipart++)
                     data_array[ipart] = mass * (*w)[ipart] * sqrt((*px)[ipart]*(*px)[ipart] + (*py)[ipart]*(*py)[ipart] + (*pz)[ipart]*(*pz)[ipart]);

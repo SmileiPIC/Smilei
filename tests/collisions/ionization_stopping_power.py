@@ -46,7 +46,7 @@ for sim in sims:
 	ni = np.double(S.namelist.Species["ion1"].nb_density) * 1.11e21 # cm^-3
 	Ee = S.namelist.E * 511. # electron energy in keV
 	vel = S.namelist.vel * 3e10 # electron velocity in cm/s
-	dt = 1e-15 * S.namelist.timestep*2. # in s
+	dt = 1e-15 * S.namelist.timestep*4. # in s
 	t = 0.
 	energy = []
 	time = []

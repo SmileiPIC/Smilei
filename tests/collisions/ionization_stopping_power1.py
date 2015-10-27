@@ -131,15 +131,15 @@ Collisions(
 print_every = 100
 
 # DIAGNOSTICS ON FIELDS
-fieldDump_every    = 1
-avgfieldDump_every = 1
-ntime_step_avg     = 1
+fieldDump_every    = 1000000
+avgfieldDump_every = 1000000
+ntime_step_avg     = 1000000
 
 
 # DIAGNOSTICS ON SCALARS
 # every = integer, number of time-steps between each output
 DiagScalar(
-	every = 1
+	every = 1000000000
 )
 
 

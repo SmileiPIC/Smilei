@@ -23,8 +23,8 @@ interpolation_order = 2
 # SIMULATION TIME 
 # timestep = float, time steps
 # sim_time = float, duration of the simulation
-timestep = 2. * L0
-sim_time  = 80000 * L0
+timestep = 1. * L0
+sim_time  = 170000 * L0
 
 
 #  optional parameter time_fields_frozen, during which fields are not updated
@@ -122,18 +122,18 @@ Collisions(
 # ---------------------
 
 # print_every (on screen text output) 
-print_every = 100
+print_every = 10000
 
 # DIAGNOSTICS ON FIELDS
-fieldDump_every    = 1
-avgfieldDump_every = 1
-ntime_step_avg     = 1
+fieldDump_every    = 1000000
+avgfieldDump_every = 1000000
+ntime_step_avg     = 1000000
 
 
 # DIAGNOSTICS ON SCALARS
 # every = integer, number of time-steps between each output
 DiagScalar(
-	every = 1
+	every = 1000000000
 )
 
 
@@ -157,7 +157,7 @@ DiagScalar(
 
 DiagParticles(
 	output = "px_density",
-	every = 100,
+	every = 1000,
 	species = [el],
 	axes = [
 		 ["x",    0.,    sim_length[0],   1]
@@ -165,7 +165,7 @@ DiagParticles(
 )
 DiagParticles(
 	output = "density",
-	every = 100,
+	every = 1000,
 	species = [el],
 	axes = [
 		 ["x",    0.,    sim_length[0],   1]
