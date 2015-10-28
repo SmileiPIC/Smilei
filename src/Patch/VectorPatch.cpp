@@ -599,82 +599,82 @@ void VectorPatch::setNbrParticlesToExch(SmileiMPI* smpi)
 }
 
 
+//void VectorPatch::exchangePatches(SmileiMPI* smpi)
+//{
+//    int nSpecies( (*this)(0)->vecSpecies.size() );
+//
+//    // Send part
+//    for (unsigned int ipatch=0 ; ipatch<send_patch_id_.size() ; ipatch++) {
+//
+//	int newMPIrank(0);
+//	// locate rank which owns send_patch_id_[ipatch]
+//	int tmp( smpi->patch_count[newMPIrank] );
+//	while ( tmp <= send_patch_id_[ipatch]+refHindex_ ) {
+//	    newMPIrank++;
+//	    tmp += smpi->patch_count[newMPIrank];
+//	}
+//#ifdef _DEBUGPATCH
+//	cout << smpi->getRank() << " send to " << newMPIrank << " with tag " << send_patch_id_[ipatch] << endl;
+//#endif
+//	smpi->send( (*this)(send_patch_id_[ipatch]), newMPIrank, refHindex_+send_patch_id_[ipatch] );
+//
+//    }
+//
+//
+//    // Recv part
+//    // recv_patch_id_ must be sorted !
+//    // Loop / This, check this->hindex is/not recv_patch_id
+//    for (unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++) {
+//	int oldMPIrank(0); // Comparing recv_patch_id_[ipatch] to 1st yet on current MPI rank
+//	if ( recv_patch_id_[ipatch] > refHindex_ )
+//	    oldMPIrank = smpi->getRank()+1;
+//	else
+//	    oldMPIrank = smpi->getRank()-1;
+//#ifdef _DEBUGPATCH
+//	cout << smpi->getRank() << " recv from " << oldMPIrank << " with tag " << recv_patch_id_[ipatch] << endl;
+//#endif
+//	smpi->recv( recv_patches_[ipatch], oldMPIrank, recv_patch_id_[ipatch] );
+//    }
+//
+//    //Synchro, send/recv must be non-blocking !!!
+//
+//    /*for (unsigned int ipatch=0 ; ipatch<send_patch_id_.size() ; ipatch++) {
+//	delete (*this)(send_patch_id_[ipatch]-refHindex_);
+//	patches_[ send_patch_id_[ipatch]-refHindex_ ] = NULL;
+//	patches_.erase( patches_.begin() + send_patch_id_[ipatch] - refHindex_ );
+//	
+//    }*/
+//    int nPatchSend(send_patch_id_.size());
+//    for (int ipatch=nPatchSend-1 ; ipatch>=0 ; ipatch--) {
+//	//Ok while at least 1 old patch stay inon current CPU
+//	(*this)(send_patch_id_[ipatch])->Diags->probes.setFile(0);
+//	(*this)(send_patch_id_[ipatch])->sio->setFiles(0,0);
+//	delete (*this)(send_patch_id_[ipatch]);
+//	patches_[ send_patch_id_[ipatch] ] = NULL;
+//	patches_.erase( patches_.begin() + send_patch_id_[ipatch] );
+//	
+//    }
+//
+//    for (unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++) {
+//	if ( recv_patch_id_[ipatch] > refHindex_ )
+//	    patches_.push_back( recv_patches_[ipatch] );
+//	else
+//	    patches_.insert( patches_.begin()+ipatch, recv_patches_[ipatch] );
+//    }
+//    recv_patches_.clear();
+//
+//#ifdef _DEBUGPATCH
+//    cout << smpi->getRank() << " number of patches " << this->size() << endl;
+//#endif
+//    for (int ipatch=0 ; ipatch<patches_.size() ; ipatch++ ) { 
+//	(*this)(ipatch)->updateMPIenv(smpi);
+//    }
+//
+//    definePatchDiagsMaster();
+//
+//}
+
 void VectorPatch::exchangePatches(SmileiMPI* smpi)
-{
-    int nSpecies( (*this)(0)->vecSpecies.size() );
-
-    // Send part
-    for (unsigned int ipatch=0 ; ipatch<send_patch_id_.size() ; ipatch++) {
-
-	int newMPIrank(0);
-	// locate rank which owns send_patch_id_[ipatch]
-	int tmp( smpi->patch_count[newMPIrank] );
-	while ( tmp <= send_patch_id_[ipatch]+refHindex_ ) {
-	    newMPIrank++;
-	    tmp += smpi->patch_count[newMPIrank];
-	}
-#ifdef _DEBUGPATCH
-	cout << smpi->getRank() << " send to " << newMPIrank << " with tag " << send_patch_id_[ipatch] << endl;
-#endif
-	smpi->send( (*this)(send_patch_id_[ipatch]), newMPIrank, refHindex_+send_patch_id_[ipatch] );
-
-    }
-
-
-    // Recv part
-    // recv_patch_id_ must be sorted !
-    // Loop / This, check this->hindex is/not recv_patch_id
-    for (unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++) {
-	int oldMPIrank(0); // Comparing recv_patch_id_[ipatch] to 1st yet on current MPI rank
-	if ( recv_patch_id_[ipatch] > refHindex_ )
-	    oldMPIrank = smpi->getRank()+1;
-	else
-	    oldMPIrank = smpi->getRank()-1;
-#ifdef _DEBUGPATCH
-	cout << smpi->getRank() << " recv from " << oldMPIrank << " with tag " << recv_patch_id_[ipatch] << endl;
-#endif
-	smpi->recv( recv_patches_[ipatch], oldMPIrank, recv_patch_id_[ipatch] );
-    }
-
-    //Synchro, send/recv must be non-blocking !!!
-
-    /*for (unsigned int ipatch=0 ; ipatch<send_patch_id_.size() ; ipatch++) {
-	delete (*this)(send_patch_id_[ipatch]-refHindex_);
-	patches_[ send_patch_id_[ipatch]-refHindex_ ] = NULL;
-	patches_.erase( patches_.begin() + send_patch_id_[ipatch] - refHindex_ );
-	
-    }*/
-    int nPatchSend(send_patch_id_.size());
-    for (int ipatch=nPatchSend-1 ; ipatch>=0 ; ipatch--) {
-	//Ok while at least 1 old patch stay inon current CPU
-	(*this)(send_patch_id_[ipatch])->Diags->probes.setFile(0);
-	(*this)(send_patch_id_[ipatch])->sio->setFiles(0,0);
-	delete (*this)(send_patch_id_[ipatch]);
-	patches_[ send_patch_id_[ipatch] ] = NULL;
-	patches_.erase( patches_.begin() + send_patch_id_[ipatch] );
-	
-    }
-
-    for (unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++) {
-	if ( recv_patch_id_[ipatch] > refHindex_ )
-	    patches_.push_back( recv_patches_[ipatch] );
-	else
-	    patches_.insert( patches_.begin()+ipatch, recv_patches_[ipatch] );
-    }
-    recv_patches_.clear();
-
-#ifdef _DEBUGPATCH
-    cout << smpi->getRank() << " number of patches " << this->size() << endl;
-#endif
-    for (int ipatch=0 ; ipatch<patches_.size() ; ipatch++ ) { 
-	(*this)(ipatch)->updateMPIenv(smpi);
-    }
-
-    definePatchDiagsMaster();
-
-}
-
-void VectorPatch::exchangePatches_new(SmileiMPI* smpi)
 {
     int nSpecies( (*this)(0)->vecSpecies.size() );
     int newMPIrank, oldMPIrank;

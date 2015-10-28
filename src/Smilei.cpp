@@ -518,7 +518,7 @@ int npatchmoy=0, npartmoy=0;
 
 
 	    vecPatches.createPatches(params, diag_params, laser_params, smpiData, simWindow);
-	    vecPatches.exchangePatches_new(smpiData);
+	    vecPatches.exchangePatches(smpiData);
 
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
                 for (unsigned int ispec=0 ; ispec < params.n_species ; ispec++)

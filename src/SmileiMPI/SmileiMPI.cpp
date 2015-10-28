@@ -629,7 +629,7 @@ void SmileiMPI::send(Patch* patch, int to, int tag)
 void SmileiMPI::isend(Patch* patch, int to, int tag)
 {
     int nbrOfProp = 7;
-    MPI_Request request;
+    //MPI_Request request;
 
     for (int ispec=0 ; ispec<patch->vecSpecies.size() ; ispec++){
         isend( &(patch->vecSpecies[ispec]->bmax), to, tag+2*ispec+1 );
