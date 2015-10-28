@@ -63,16 +63,10 @@ endif
 ifeq ($(openmp),gnu)
 	CFLAGS += -fopenmp -D_PATCH
 else ifeq ($(openmp),intel)
-<<<<<<< HEAD
-	CFLAGS += -openmp -xHost -D_TESTPATCHEXCH -g
-else ifeq ($(openmp),intelmpi)
-	CFLAGS += -openmp -xHost -DMPICH_IGNORE_CXX_SEEK -mt_mpi -D_TESTPATCHEXCH
-=======
 	CFLAGS += -openmp -xHost -ipo 
 else ifeq ($(openmp),intelmpi)
 	CFLAGS += -openmp -xHost -DMPICH_IGNORE_CXX_SEEK -mt_mpi
 	#CFLAGS += -openmp -xHost -DMPICH_IGNORE_CXX_SEEK -mt_mpi
->>>>>>> develop_beck
         LDFLAGS += -lmpi_mt -lz
         SMILEICXX = mpiicpc
 endif
