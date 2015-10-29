@@ -6,8 +6,8 @@ import scipy
 import matplotlib.pyplot as plt
 
 #   USer defined parameters
-nmpi = 7
-npatchx = 32
+nmpi = 12
+npatchx = 256
 npatchy = 32
 ###########################
 Ndpi=1000
@@ -17,7 +17,7 @@ mat=mat.reshape(-1,3)
 x=mat[:,1]
 y=mat[:,2]
 
-mat_plot = scipy.zeros((npatchx,npatchy),dtype=int)
+mat_plot = scipy.zeros((npatchy,npatchx),dtype=int)
 patch_count = scipy.zeros((nmpi),dtype=int)
 
 total_patches = npatchx*npatchy
@@ -53,14 +53,14 @@ for j in range(nmpi):
 fig, ax1 = plt.subplots(figsize=(3.48,3.543),dpi=200)
 #plt.matshow(mat_plot,aspect="auto")
 #ax1.axis('off')
-ax1.plot(x,y,color='black',lw=0.4,marker='o',markersize=1.)
-image=plt.imshow(mat_plot, origin=0, interpolation='nearest',cmap="gray", vmin=-2, vmax=mat_plot.max()+2 )
+ax1.plot(x,y,color='black',lw=0.1,marker='o',markersize=1.)
+image=plt.imshow(mat_plot, origin=0, aspect='auto',interpolation='nearest',cmap="gray", vmin=-2, vmax=mat_plot.max()+2 )
 #ax1.set_position([0.05,0.05,0.85,0.85])
 #ax1.axes.set_visible(False)
 ax1.xaxis.set_tick_params(direction='out',labelsize=7)
 ax1.yaxis.set_tick_params(direction='out',labelsize=7)
-ax1.yaxis.set_ticks([0.,8.,16.,24.,31.])
-ax1.xaxis.set_ticks([0.,8.,16.,24.,31.])
+#ax1.yaxis.set_ticks([0.,8.,16.,24.,31.])
+#ax1.xaxis.set_ticks([0.,8.,16.,24.,31.])
 ax1.set_ylabel(r'$\rm Patches\ Y\ coordinate$',fontsize=8)
 ax1.set_xlabel(r'$\rm Patches\ X\ coordinate$',fontsize=8)
 
