@@ -673,6 +673,22 @@ void VectorPatch::setNbrParticlesToExch(SmileiMPI* smpi)
 //    definePatchDiagsMaster();
 //
 //}
+void VectorPatch::output_exchanges(SmileiMPI* smpi)
+{
+    int newMPIrank, oldMPIrank;
+    newMPIrank = smpi->smilei_rk -1;
+    oldMPIrank = smpi->smilei_rk -1;
+    int istart( 0 );
+    for (int irk=0 ; irk<smpi->getRank() ; irk++) istart += smpi->patch_count[irk];
+    for (unsigned int ipatch=0 ; ipatch < send_patch_id_.size() ; ipatch++) {
+        if(send_patch_id_[ipatch]+refHindex_ > istart ) newMPIrank = smpi->smilei_rk + 1;
+        cout << "Rank " << smpi->smilei_rk << " sending patch " << send_patch_id_[ipatch]+refHindex_ << " to " << newMPIrank << endl; 
+    }
+    for (unsigned int ipatch=0 ; ipatch < recv_patch_id_.size() ; ipatch++) {
+        if(recv_patch_id_[ipatch] > refHindex_ ) oldMPIrank = smpi->smilei_rk + 1;
+        cout << "Rank " << smpi->smilei_rk << " receiving patch " << recv_patch_id_[ipatch] << " from " << oldMPIrank << endl; 
+    }
+}
 
 void VectorPatch::exchangePatches(SmileiMPI* smpi)
 {

@@ -516,9 +516,19 @@ int npatchmoy=0, npartmoy=0;
 
 	    smpiData->recompute_patch_count( params, vecPatches, 0. );
 
+            smpiData->barrier();
+
 
 	    vecPatches.createPatches(params, diag_params, laser_params, smpiData, simWindow);
 	    vecPatches.exchangePatches(smpiData);
+            smpiData->barrier();
+            for (unsigned int irank=0 ; irank<smpiData->smilei_sz ; irank++){
+                if(smpiData->smilei_rk == irank){
+                    vecPatches.output_exchanges(smpiData);
+                }
+                smpiData->barrier();
+            }
+
 
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
                 for (unsigned int ispec=0 ; ispec < params.n_species ; ispec++)
