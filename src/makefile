@@ -1,8 +1,7 @@
 SMILEICXX     ?= mpic++
 #SMILEICXX     = mpiicpc
 
-#HDF5_ROOT_DIR ?= ${HDF5HOME}
-HDF5_ROOT_DIR ?= ${HDF5_ROOT_DIR}
+HDF5_ROOT_DIR ?= ${HDF5HOME}
 
 ##################################################
 
@@ -53,20 +52,19 @@ OBJS := $(SRCS:.cpp=.o)
 DEPS := $(OBJS:.o=.d)
 
 ifeq ($(config),debug)
-	CFLAGS += -g -pg -Wall -D__DEBUG -O0 -D_PATCH
-	#CFLAGS += -g -pg -Wall -D__DEBUG -O0 -shared-intel -D_PATCH
+	CFLAGS += -g -pg -Wall -D__DEBUG -O0
+	#CFLAGS += -g -pg -Wall -D__DEBUG -O0 -shared-intel
 
 else
-	CFLAGS += -O3 -D_PATCH
+	CFLAGS += -O3
 endif
 
 ifeq ($(openmp),gnu)
-	CFLAGS += -fopenmp -D_PATCH
+	CFLAGS += -fopenmp 
 else ifeq ($(openmp),intel)
 	CFLAGS += -openmp -xHost -ipo 
 else ifeq ($(openmp),intelmpi)
 	CFLAGS += -openmp -xHost -DMPICH_IGNORE_CXX_SEEK -mt_mpi
-	#CFLAGS += -openmp -xHost -DMPICH_IGNORE_CXX_SEEK -mt_mpi
         LDFLAGS += -lmpi_mt -lz
         SMILEICXX = mpiicpc
 endif
