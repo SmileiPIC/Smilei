@@ -1170,6 +1170,15 @@ class Field(Diagnostic):
 	def _init(self, field=None, timesteps=None, slice=None, data_log=False, **kwargs):
 		
 		if not self.Smilei.valid: return None
+		
+		try:
+			self._file = self._results_path+'/Fields.h5'
+			self._f = self._h5py.File(self._file, 'r')
+		except:
+			print "Cannot open file "+file
+			return
+		self._h5items = self._f.values()
+
 		if field is None:
 			fields = self.getFields()
 			if len(fields)>0:
@@ -1185,13 +1194,7 @@ class Field(Diagnostic):
 				print "No fields found in '"+self._results_path+"'"
 			return None
 		
-		try:
-			self._file = self._results_path+'/Fields.h5'
-			self._f = self._h5py.File(self._file, 'r')
-		except:
-			print "Cannot open file "+file
-			return
-		self._h5items = self._f.values()
+
 		
 		# Get available times
 		self.times = self.getAvailableTimesteps()
