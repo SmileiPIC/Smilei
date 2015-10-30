@@ -674,6 +674,7 @@ void VectorPatch::setNbrParticlesToExch(SmileiMPI* smpi)
 //
 //}
 
+
 void VectorPatch::exchangePatches(SmileiMPI* smpi)
 {
     int nSpecies( (*this)(0)->vecSpecies.size() );
@@ -693,7 +694,7 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi)
 	// Once all patches supposed to be sent to the left are done, we send the rest to the right.
       //if   hindex of patch to be sent              >  future hindex of the first patch owned by this process 
         if(send_patch_id_[ipatch]+refHindex_ > istart ) newMPIrank = smpi->smilei_rk + 1;
-        cout << "Rank " << smpi->smilei_rk << " sending patch " << send_patch_id_[ipatch]+refHindex_ << " to " << newMPIrank << endl; 
+        //cout << "Rank " << smpi->smilei_rk << " sending patch " << send_patch_id_[ipatch]+refHindex_ << " to " << newMPIrank << endl; 
 	//newMPIrankbis = 0 ;
 	//tmp = smpi->patch_count[newMPIrankbis];
 	//while ( tmp <= send_patch_id_[ipatch]+refHindex_ ) {
@@ -712,7 +713,7 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi)
     for (unsigned int ipatch=0 ; ipatch < recv_patch_id_.size() ; ipatch++) {
       //if   hindex of patch to be received > first hindex actually owned, that means it comes from the next MPI process and not from the previous anymore. 
         if(recv_patch_id_[ipatch] > refHindex_ ) oldMPIrank = smpi->smilei_rk + 1;
-        cout << "Rank " << smpi->smilei_rk << " receiving patch " << recv_patch_id_[ipatch] << " from " << oldMPIrank << endl; 
+        //cout << "Rank " << smpi->smilei_rk << " receiving patch " << recv_patch_id_[ipatch] << " from " << oldMPIrank << endl; 
 	//oldMPIrankbis = 0 ; // Comparing recv_patch_id_[ipatch] to 1st yet on current MPI rank
 	//if ( recv_patch_id_[ipatch] > refHindex_ )
 	//    oldMPIrankbis = smpi->getRank()+1;
