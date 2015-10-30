@@ -39,11 +39,11 @@ for ifile in range(len(directories)):
     
     datafile.close()
     
-    print nline, "lines were read, ", len(patchcountarray), " times were collected."
+    print nline, "lines were read, ", len(patchcountarray), " mpi processes were detected."
     
     patchcountarray = scipy.array(patchcountarray)
 
-
+print "Number of patches per MPI processes"
 print patchcountarray 
 
 nmpi = len(patchcountarray)
@@ -69,12 +69,10 @@ for ifile in range(len(directories)):
     
     datafile.close()
 
-print create_mat
-
 for i in range(nmpi):
     senttoi = send_mat[:,i].sum()
     if senttoi != create_mat[i]:
-        print "error, ", sentoi, " patches are sent to ",i, "only ", create_mat[i]," patches are created"
+        print "error, ", senttoi, " patches are sent to ",i, "only ", create_mat[i]," patches are created"
     for j in range(nmpi):
         if send_mat[i,j] != recv_mat[j,i]:
             print "error, ",i, " sends ",send_mat[i,j], "to ",j
