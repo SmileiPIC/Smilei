@@ -1171,11 +1171,11 @@ class Field(Diagnostic):
 		
 		if not self.Smilei.valid: return None
 		
+		self._file = self._results_path+'/Fields.h5'
 		try:
-			self._file = self._results_path+'/Fields.h5'
 			self._f = self._h5py.File(self._file, 'r')
 		except:
-			print "Cannot open file "+file
+			print "Cannot open file "+self._file
 			return
 		self._h5items = self._f.values()
 
