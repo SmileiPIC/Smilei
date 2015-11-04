@@ -100,7 +100,7 @@ $(BUILD_DIR)/%.o : %.cpp
 	$(SMILEICXX) $(CXXFLAGS) -c $< -o $@
 
 $(EXEC): $(OBJS)
-	$(SMILEICXX) $(LDFLAGS) $(OBJS) -o $(BUILD_DIR)/$@ 
+	$(SMILEICXX) $(OBJS) -o $(BUILD_DIR)/$@ $(LDFLAGS) 
 	cp $(BUILD_DIR)/$@ $@
 
 # these are kept for backward compatibility and might be removed (see make help)
