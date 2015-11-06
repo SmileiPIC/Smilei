@@ -769,6 +769,8 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi)
     }
 
     definePatchDiagsMaster();
+    refHindex_ = (*this)(0)->Hindex();
+   
 
 }
 
