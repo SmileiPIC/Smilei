@@ -256,20 +256,20 @@ The probability for ionization reads:
 where :math:`v_e` is the electron velocity in the laboratory frame,
 :math:`\sigma` is the cross-section in the laboratory frame, :math:`\sigma^\star`
 is the cross-section in the ion frame, and 
-:math:`V^\star=\sqrt{\gamma_e^{\star\,2}-1}/(\gamma_e\gamma_i)`.
+:math:`V^\star=c\sqrt{\gamma_e^{\star\,2}-1}/(\gamma_e\gamma_i)`.
 
-The loss of energy :math:`E_e` of the incident electron translates into a change in momentum
+The loss of energy :math:`m_ec^2 \delta\gamma` of the incident electron translates into a change in momentum
 :math:`{q_e^\star}' = \alpha_e q_e^\star` in the ion frame, with
-:math:`\alpha_e=\sqrt{(\gamma_e^\star-E_e)^2-1}/\sqrt{\gamma_e^{\star2}-1}`.
+:math:`\alpha_e=\sqrt{(\gamma_e^\star-\delta\gamma)^2-1}/\sqrt{\gamma_e^{\star2}-1}`.
 In the laboratory frame, it becomes
-:math:`\overrightarrow{q_e'}=\alpha_e\overrightarrow{q_e}+((1-\alpha_e)\gamma_e^\star-E_e)\overrightarrow{q_i}`.
+:math:`\overrightarrow{q_e'}=\alpha_e\overrightarrow{q_e}+((1-\alpha_e)\gamma_e^\star-\delta\gamma)\overrightarrow{q_i}`.
 
 A similar operation is done for defining the momentum of the new electron in the lab frame.
-It is created with energy :math:`E_w` and its momentum is
+It is created with energy :math:`m_ec^2 (\gamma_w-1)` and its momentum is
 :math:`q_w^\star = \alpha_w q_e^\star` in the ion frame, with
-:math:`\alpha_w=\sqrt{E_w(E_w+2)}/\sqrt{\gamma_e^{\star2}-1}`.
+:math:`\alpha_w=\sqrt{\gamma_w^2-1}/\sqrt{\gamma_e^{\star 2}-1}`.
 In the laboratory frame, it becomes
-:math:`\overrightarrow{q_w}=\alpha_w\overrightarrow{q_e}+(E_w+1-\alpha_w\gamma_e^\star)\overrightarrow{q_i}`.
+:math:`\overrightarrow{q_w}=\alpha_w\overrightarrow{q_e}+(\gamma_w-\alpha_w\gamma_e^\star)\overrightarrow{q_i}`.
 
 
 ----
