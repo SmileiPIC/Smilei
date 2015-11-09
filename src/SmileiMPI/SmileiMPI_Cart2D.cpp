@@ -541,7 +541,7 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, Params& params, int t
         
         // Inject corner particles at the end of the list, update bmax
         //if (iDim==cuParticles.dimension()-1) cout << "Number of diag particles " << diagonalParticles.size() << endl;
-        for (int iPart = 0 ; iPart<diagonalParticles.size() ; iPart++) {
+        for (unsigned int iPart = 0 ; iPart<diagonalParticles.size() ; iPart++) {
             diagonalParticles.cp_particle(iPart, cuParticles);
             (*indexes_of_particles_to_exchange_per_thd)[0].push_back(cuParticles.size()-1);
             (*cubmax)[(*cubmax).size()-1]++;

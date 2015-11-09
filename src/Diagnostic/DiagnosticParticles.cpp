@@ -10,40 +10,117 @@
 using namespace std;
 
 // constructor
-DiagnosticParticles::DiagnosticParticles(unsigned int ID, string output_, unsigned int every_, unsigned int time_average_, vector<unsigned int> species_, vector<DiagnosticParticlesAxis*> axes_) :
-    fileId(0)
+DiagnosticParticles::DiagnosticParticles(unsigned int n_diag_particles, Params& params, std::vector<Species*>& vecSpecies) :
+    fileId(0),
+diagnostic_id(n_diag_particles),
+output(""),
+every(0)
 {
-
-    diagnostic_id = ID;
-    output = output_;
-    every = every_;
-    time_average = time_average_;
-    species = species_;
-    axes = axes_;
     
+    bool ok;
+    
+    // get parameter "output" that determines the quantity to sum in the output array
+    if (!PyTools::extract("output",output,"DiagParticles",n_diag_particles))
+        ERROR("Diagnotic Particles #" << n_diag_particles << ": parameter `output` required");
+    
+    // get parameter "every" which is the period (in timesteps) for getting the outputs
+    if (!PyTools::extract("every",every,"DiagParticles",n_diag_particles))
+        every=params.global_every;
+    
+    // get parameter "time_average" that determines the number of timestep to average the outputs
+    time_average = 1;
+    PyTools::extract("time_average",time_average,"DiagParticles",n_diag_particles);
+    if (time_average > every)
+        ERROR("Diagnotic Particles #" << n_diag_particles << ": `time_average` cannot be larger than `every`");
+    if (time_average < 1) time_average=1;
+    
+    // get parameter "species" that determines the species to use (can be a list of species)
+    vector<string> species_names;
+    if (!PyTools::extract("species",species_names,"DiagParticles",n_diag_particles))
+        ERROR("Diagnotic Particles #" << n_diag_particles << ": parameter `species` required");
+    // verify that the species exist, remove duplicates and sort by number
+    species = params.FindSpecies(vecSpecies, species_names);
+    
+    
+    // get parameter "axes" that adds axes to the diagnostic
+    // Each axis should contain several items:
+    //      requested quantity, min value, max value ,number of bins, log (optional), edge_inclusive (optional)
+    vector<PyObject*> allAxes=PyTools::extract_pyVec("axes","DiagParticles",n_diag_particles);
+    
+    if (allAxes.size() == 0)
+        ERROR("Diagnotic Particles #" << n_diag_particles << ": axes must contain something");
+    
+    for (unsigned int iaxis=0; iaxis<allAxes.size(); iaxis++ ) {
+        DiagnosticParticlesAxis tmpAxis;
+        PyObject *oneAxis=allAxes[iaxis];
+        if (PyTuple_Check(oneAxis) || PyList_Check(oneAxis)) {
+            PyObject* seq = PySequence_Fast(oneAxis, "expected a sequence");
+            unsigned int lenAxisArgs=PySequence_Size(seq);
+            if (lenAxisArgs<4)
+                ERROR("Diagnotic Particles #" << n_diag_particles << ": axis #" << iaxis << " contain at least 4 arguments");
+            
+            if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 0),tmpAxis.type)) {
+                ERROR("Diag Particles #" << n_diag_particles << ", axis #" << iaxis << ": First item must be a string (axis type)");
+            } else {
+                if (   (tmpAxis.type == "z" && params.nDim_particle <3)
+                    || (tmpAxis.type == "y" && params.nDim_particle <2) )
+                    ERROR("Diagnotic Particles #" << n_diag_particles << ": axis " << tmpAxis.type << " cannot exist in " << params.nDim_particle << "D");
+            }
+            
+            if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 1),tmpAxis.min)) {
+                ERROR("Diag Particles #" << n_diag_particles << ", axis #" << iaxis << ": Second item must be a double (axis min)");
+            }
+            
+            if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 2),tmpAxis.max)) {
+                ERROR("Diag Particles #" << n_diag_particles << ", axis #" << iaxis << ": Third item must be a double (axis max)");
+            }
+            
+            
+            if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 3),tmpAxis.nbins)) {
+                ERROR("Diag Particles #" << n_diag_particles << ", axis #" << iaxis << ": Fourth item must be an int (number of bins)");
+            }
+            
+            // 5 - Check for  other keywords such as "logscale" and "edge_inclusive"
+            tmpAxis.logscale = false;
+            tmpAxis.edge_inclusive = false;
+            for(unsigned int i=4; i<lenAxisArgs; i++) {
+                string my_str("");
+                PyTools::convert(PySequence_Fast_GET_ITEM(seq, i),my_str);
+                if(my_str=="logscale" ||  my_str=="log_scale" || my_str=="log")
+                    tmpAxis.logscale = true;
+                else if(my_str=="edges" ||  my_str=="edge" ||  my_str=="edge_inclusive" ||  my_str=="edges_inclusive")
+                    tmpAxis.edge_inclusive = true;
+                else
+                    ERROR("Diagnotic Particles #" << n_diag_particles << ": keyword `" << my_str << "` not understood");
+            }
+            
+            axes.push_back(tmpAxis);
+            
+            Py_DECREF(seq);
+        }
+    }
+
     // calculate the total size of the output array
     output_size = 1;
     for (unsigned int iaxis=0 ; iaxis < axes.size() ; iaxis++)
-        output_size *= axes[iaxis]->nbins;
-    
+        output_size *= axes[iaxis].nbins;
+
     // if necessary, resize the output array
     if (time_average>1)
         data_sum.resize(output_size);
-    
+
     // Output info on diagnostics
     ostringstream mystream("");
     mystream.str("");
-    mystream << species[0];
-    for(unsigned int i=1; i<species.size(); i++)
-        mystream << "," << species[i];
-    MESSAGE(1,"Created particle diagnostic #" << ID << ": species " << mystream.str());
-    DiagnosticParticlesAxis *a;
+    mystream << species_names[0];
+    for(unsigned int i=1; i<species_names.size(); i++)
+        mystream << "," << species_names[i];
+    MESSAGE(1,"Created particle diagnostic #" << diagnostic_id << ": species " << mystream.str());
     for(unsigned int i=0; i<axes.size(); i++) {
-        a = axes[i];
         mystream.str("");
-        mystream << "Axis " << a->type << " from " << a->min << " to " << a->max << " in " << a->nbins << " steps";
-        if( a->logscale       ) mystream << " [LOGSCALE] ";
-        if( a->edge_inclusive ) mystream << " [EDGE INCLUSIVE]";
+        mystream << "Axis " << axes[i].type << " from " << axes[i].min << " to " << axes[i].max << " in " << axes[i].nbins << " steps";
+        if( axes[i].logscale       ) mystream << " [LOGSCALE] ";
+        if( axes[i].edge_inclusive ) mystream << " [EDGE INCLUSIVE]";
         MESSAGE(2,mystream.str());
     }
     
@@ -66,7 +143,6 @@ void DiagnosticParticles::close()
 // run one particle diagnostic
 void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, SmileiMPI* smpi)
 {
-    
     Species *s;
     Particles *p;
     vector<int> index_array;
@@ -78,14 +154,13 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
     string axistype, str1, str2;
     ostringstream mystream("");
     
-    // init HFD files (by master, only if it doesn't yet exist)
+    // init HDF files (by master, only if it doesn't yet exist)
     if (smpi->isMaster() && !fileId) {
         mystream.str("");
         mystream << "ParticleDiagnostic" << diagnostic_id << ".h5";
         fileId = H5Fcreate( mystream.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         // write all parameters as HDF5 attributes
-        string ver(__VERSION);
-        H5::attr(fileId, "Version", ver);
+        H5::attr(fileId, "Version", string(__VERSION));
         H5::attr(fileId, "output" , output);
         H5::attr(fileId, "every"  , every);
         H5::attr(fileId, "time_average"  , time_average);
@@ -93,15 +168,15 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
         mystream.str(""); // clear
         for (unsigned int i=0 ; i < species.size() ; i++)
             mystream << species[i] << " ";
-        H5::attr(fileId, "species", mystream.str().c_str());
+        H5::attr(fileId, "species", mystream.str());
         // write each axis
         for (unsigned int iaxis=0 ; iaxis < axes.size() ; iaxis++) {
             mystream.str(""); // clear
             mystream << "axis" << iaxis;
             str1 = mystream.str();
             mystream.str(""); // clear
-            mystream << axes[iaxis]->type << " " << axes[iaxis]->min << " " << axes[iaxis]->max << " "
-            << axes[iaxis]->nbins << " " << axes[iaxis]->logscale << " " << axes[iaxis]->edge_inclusive;
+            mystream << axes[iaxis].type << " " << axes[iaxis].min << " " << axes[iaxis].max << " "
+            << axes[iaxis].nbins << " " << axes[iaxis].logscale << " " << axes[iaxis].edge_inclusive;
             str2 = mystream.str();
             H5::attr(fileId, str1, str2);
         }
@@ -154,10 +229,10 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
             // --------------------------------------------------------------------------------------
             for (unsigned int iaxis=0 ; iaxis < axes.size() ; iaxis++) {
                 
-                axismin  = axes[iaxis]->min;
-                axismax  = axes[iaxis]->max;
-                axissize = axes[iaxis]->nbins;
-                axistype = axes[iaxis]->type;
+                axismin  = axes[iaxis].min;
+                axismax  = axes[iaxis].max;
+                axissize = axes[iaxis].nbins;
+                axistype = axes[iaxis].type;
                 
                 // first loop on particles to store the indexing (axis) quantity
                 
@@ -230,7 +305,7 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
                 // Now, axis_array points to the array that contains the particles data (for indexing)
                 
                 // if log scale
-                if (axes[iaxis]->logscale) {
+                if (axes[iaxis].logscale) {
                     // then loop again and convert to log
                     for (int ipart = bmin ; ipart < bmax ; ipart++)
                         axis_array[ipart] = log10(axis_array[ipart]);
@@ -250,7 +325,7 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
                 // loop again on the particles and calculate index
                 // This is separated in two cases: edge_inclusive and edge_exclusive
                 coeff = ((double)axissize)/(axismax-axismin);
-                if (!axes[iaxis]->edge_inclusive) { // if the particles out of the "box" must be excluded
+                if (!axes[iaxis].edge_inclusive) { // if the particles out of the "box" must be excluded
                     
                     for (int ipart = bmin ; ipart < bmax ; ipart++) {
                         // skip already discarded particles

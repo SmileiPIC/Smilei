@@ -14,16 +14,16 @@ void Tools::printMemFootPrint(std::string tag) {
     char filename[80];
     char sbuf[1024];
     char* S;
-    int fd, num_read;
-    long lmem;
+    //long lmem;
     pid_t numpro;
     pid_t getpid(void);
 
     numpro = getpid();
 
     sprintf(filename, "/proc/%ld/status", (long)numpro);
-    fd = open(filename, O_RDONLY, 0);
-    num_read=read(fd,sbuf,(sizeof sbuf)-1);
+    int fd = open(filename, O_RDONLY, 0);
+    //int num_read=read(fd,sbuf,(sizeof sbuf)-1);
+    read(fd,sbuf,(sizeof sbuf)-1);
     close(fd);
 
     // Peak resident set size

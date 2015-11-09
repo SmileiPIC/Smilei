@@ -10,13 +10,13 @@
 using namespace std;
 
 // constructor
-DiagnosticTestParticles::DiagnosticTestParticles(unsigned int ID, int ispec, Params& params, std::vector<Species*>& vecSpecies )
+DiagnosticTestParticles::DiagnosticTestParticles(unsigned int ID, Params& params, Species* species )
 {
     
     diagnostic_id = ID;
-    species_number = ispec;
+    species_number = species->speciesNumber;
     nDim_particle = params.nDim_particle;
-    every = vecSpecies[ispec]->test_dump_every;
+    every = species->test_dump_every;
 }
 
 // destructor

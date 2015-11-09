@@ -79,10 +79,8 @@ DiagParticles(
 #include "H5.h"
 
 // Class for each axis of the particle diags
-class DiagnosticParticlesAxis {
+struct DiagnosticParticlesAxis {
 
-public:
-    
     //! quantity of the axis (e.g. 'x', 'px', ...)
     std::string type;
     
@@ -107,7 +105,7 @@ class DiagnosticParticles {
 
 public:
 
-    DiagnosticParticles(unsigned int, std::string, unsigned int, unsigned int, std::vector<unsigned int>, std::vector<DiagnosticParticlesAxis*>);
+    DiagnosticParticles(unsigned int, Params& params, std::vector<Species*>& vecSpecies);
     
     ~DiagnosticParticles();
     
@@ -135,7 +133,7 @@ private:
     std::vector<unsigned int> species;
     
     //! vector of axes
-    std::vector<DiagnosticParticlesAxis*> axes;
+    std::vector<DiagnosticParticlesAxis> axes;
     
     //! vector for saving the output array for time-averaging
     std::vector<double> data_sum;

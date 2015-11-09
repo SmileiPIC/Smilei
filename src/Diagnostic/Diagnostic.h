@@ -53,9 +53,6 @@ public:
 	DiagnosticPhaseSpace phases;
     std::vector<DiagnosticParticles*> vecDiagnosticParticles;
     std::vector<DiagnosticTestParticles*> vecDiagnosticTestParticles;
-        
-    void initParticles(Params&, std::vector<Species*>& vecSpecies);
-    void initTestParticles(Params&, std::vector<Species*>&);
     
     //! field dump output
     unsigned int fieldDump_every;

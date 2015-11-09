@@ -23,7 +23,7 @@ class DiagnosticTestParticles {
 
 public:
 
-    DiagnosticTestParticles(unsigned int, int, Params&, std::vector<Species*>&);
+    DiagnosticTestParticles(unsigned int, Params&, Species*);
     
     ~DiagnosticTestParticles();
     
@@ -31,7 +31,7 @@ public:
     int diagnostic_id;
     
     //! number of the test species used
-    int species_number;
+    unsigned int species_number;
     
     //! Initializes the diag (creates HDF5 file), after all species have been created
     void init( std::vector<Species*>, SmileiMPI* );

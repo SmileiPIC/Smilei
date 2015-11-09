@@ -100,7 +100,7 @@ vector<Collisions*> Collisions::create(Params& params, vector<Species*>& vecSpec
         PyTools::extract("species2",sg2,"Collisions",n_collisions);
         
         // Obtain the lists of species numbers from the lists of species names.
-        sgroup1 =params.FindSpecies(vecSpecies, sg1);
+        sgroup1 = params.FindSpecies(vecSpecies, sg1);
         sgroup2 = params.FindSpecies(vecSpecies, sg2);
         
         // Each group of species sgroup1 and sgroup2 must not be empty

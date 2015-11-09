@@ -341,12 +341,15 @@ public:
     }
 
     //! return the number of components (see pyinit.py)
-    static int nComponents(std::string componentName) {
+    static unsigned int nComponents(std::string componentName) {
         // Get the selected component (e.g. "Species" or "Laser")
         if (!Py_IsInitialized()) ERROR("Python not initialized: this should not happend");
         PyObject *py_obj = PyObject_GetAttrString(PyImport_AddModule("__main__"),componentName.c_str());
         PyTools::checkPyError();
-        int retval = PyObject_Length(py_obj);
+        Py_ssize_t retval = PyObject_Length(py_obj);
+        if (retval < 0) {
+            ERROR("Problem searching for component " << componentName);
+        }
         return retval;
     }
     
