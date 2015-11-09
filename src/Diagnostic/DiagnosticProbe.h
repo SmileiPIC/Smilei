@@ -90,9 +90,9 @@ class DiagnosticProbe {
 public:
     
     //! the creator
-    DiagnosticProbe();
+    DiagnosticProbe(Params& params, SmileiMPI *smpi);
     
-    ~DiagnosticProbe();//{};
+    ~DiagnosticProbe();
     
     //! run all probes
     void run(unsigned int timestep, ElectroMagn* EMfields, Interpolator* interp);

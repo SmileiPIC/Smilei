@@ -49,7 +49,6 @@ namelist("")
         if (smpi->isMaster()) {
             ifstream istr(it->c_str());
             if (istr.is_open()) {
-                MESSAGE(1,"Reading file " << *it);
                 std::stringstream buffer;
                 buffer << istr.rdbuf();
                 strNamelist+=buffer.str();
@@ -383,7 +382,7 @@ vector<unsigned int> Params::FindSpecies(vector<Species*>& vecSpecies, vector<st
 void Params::runScript(string command, string name) {
     PyTools::checkPyError();
     namelist+=command;
-    if (name.size()>0)  MESSAGE(1,"Passing to python " << name);
+    if (name.size()>0)  MESSAGE(1,"Parsing " << name);
     int retval=PyRun_SimpleString(command.c_str());
     if (retval==-1) {
         ERROR("error parsing "<< name);

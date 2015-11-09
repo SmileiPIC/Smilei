@@ -10,21 +10,41 @@
 using namespace std;
 
 //! constructor (called from Diagnostic)
-DiagnosticScalar::DiagnosticScalar() :
+DiagnosticScalar::DiagnosticScalar(Params& params, SmileiMPI *smpi) :
 every(0) {
     out_width.resize(0);
-}
+    
+    
+    if (PyTools::nComponents("DiagScalar") > 0) {
+        
+        if (!PyTools::extract("every",every,"DiagScalar")) every=params.global_every;
+        
+        //open file scalars.txt
+        if (smpi->isMaster() && every>0) {
+            fout.open("scalars.txt");
+            if (!fout.is_open()) ERROR("Can't open scalar file");
+        }
 
-//! destructor
-DiagnosticScalar::~DiagnosticScalar(){}
-
-
-// file open 
-void DiagnosticScalar::openFile(SmileiMPI* smpi) {
-    if (smpi->isMaster() && every>0) {
-        fout.open("scalars.txt");
-        if (!fout.is_open()) ERROR("Can't open scalar file");
+        vector<double> scalar_time_range(2,0.);
+        
+        if (!PyTools::extract("time_range",scalar_time_range,"DiagScalar")) {
+            tmin = 0.;
+            tmax = params.sim_time;
+        } else {
+            tmin = scalar_time_range[0];
+            tmax = scalar_time_range[1];
+        }
+        
+        precision=10;
+        PyTools::extract("precision",precision,"DiagScalar");
+        PyTools::extract("vars",vars,"DiagScalar");
+        
+        // copy from params remaining stuff
+        res_time=params.res_time;
+        dt=params.timestep;
+        cell_volume=params.cell_volume;
     }
+    
 }
 
 void DiagnosticScalar::closeFile(SmileiMPI* smpi) {

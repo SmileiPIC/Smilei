@@ -54,9 +54,6 @@ public:
     std::vector<DiagnosticParticles*> vecDiagnosticParticles;
     std::vector<DiagnosticTestParticles*> vecDiagnosticTestParticles;
         
-    void initScalars(Params&, SmileiMPI *smpi);
-    void initProbes(Params&, SmileiMPI *);
-    void initPhases(Params&, SmileiMPI *);
     void initParticles(Params&, std::vector<Species*>& vecSpecies);
     void initTestParticles(Params&, std::vector<Species*>&);
     

@@ -33,7 +33,7 @@ public:
     // Damping coefficient
     double cdamp; 
     // array of coefficient per layer
-    double* coeff;
+    std::vector<double> coeff;
 
     
 };
