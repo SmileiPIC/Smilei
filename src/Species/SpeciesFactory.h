@@ -208,10 +208,10 @@ public:
             
             
             // Extract test Species flag
-            PyTools::extract("isTest",thisSpecies->isTest ,"Species",ispec);
+            PyTools::extract("isTest",thisSpecies->particles.isTest ,"Species",ispec);
             
             // Verify they don't ionize
-            if (thisSpecies->ionization_model!="none" && thisSpecies->isTest) {
+            if (thisSpecies->ionization_model!="none" && thisSpecies->particles.isTest) {
                 ERROR("For species '" << species_type << "', disabled for now : test & ionized");
             }
             
@@ -237,7 +237,7 @@ public:
             
             // Communicate some stuff if this is a test species
             // Need to be placed after createParticles()
-            if (thisSpecies->isTest) {
+            if (thisSpecies->particles.isTest) {
                 int locNbrParticles = thisSpecies->getNbrOfParticles();
                 std::vector<int> allNbrParticles(smpi->smilei_sz);
                 MPI_Gather( &locNbrParticles, 1, MPI_INTEGER, &allNbrParticles[0], 1, MPI_INTEGER, 0, MPI_COMM_WORLD );

@@ -41,7 +41,6 @@ c_part_max(1),
 dynamics_type("norm"),
 time_frozen(0),
 radiating(false),
-isTest(false),
 ionization_model("none"),
 velocityProfile(3,NULL),
 temperatureProfile(3,NULL),
@@ -422,7 +421,7 @@ void Species::dynamics(double time_dual, ElectroMagn* EMfields, Interpolator* In
                     nrj_lost_per_thd[tid] += mass * ener_iPart;
                 }
                 
-                if (!particles.isTestParticles) {
+                if (!particles.isTest) {
                     if (ndim <= 2) {
                         (*Proj)(b_Jx, b_Jy, b_Jz, b_rho, particles, iPart, gf, ibin*clrw, b_lastdim);
                     } else {
@@ -433,7 +432,7 @@ void Species::dynamics(double time_dual, ElectroMagn* EMfields, Interpolator* In
             }//iPart
             
             // Copy buffer back to the global array and free buffer****************
-            if (!particles.isTestParticles) {
+            if (!particles.isTest) {
                 // this part is dimension dependant !! this is for dim = 1
                 if (ndim == 1) {
                     for (i = 0; i < b_dim0 ; i++) {
@@ -489,7 +488,7 @@ void Species::dynamics(double time_dual, ElectroMagn* EMfields, Interpolator* In
                         }
                     }
                 } // End if (ndim == 2)
-            } // if (!particles.isTestParticles)
+            } // if (!particles.isTest)
         }// ibin
         free(b_Jx);
         
@@ -524,7 +523,7 @@ void Species::dynamics(double time_dual, ElectroMagn* EMfields, Interpolator* In
             }
         }
     }
-    else if (!particles.isTestParticles) { // immobile particle (at the moment only project density)
+    else if (!particles.isTest) { // immobile particle (at the moment only project density)
 //#pragma omp for schedule (runtime)
 #pragma omp master
 {
@@ -895,7 +894,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
         nrj_new_particles += particles.weight(iPart)*(particles.lor_fac(iPart)-1.0);
     }
     
-    if (particles.isTestParticles)
+    if (particles.isTest)
         particles.setIds();
 
     return npart_effective;

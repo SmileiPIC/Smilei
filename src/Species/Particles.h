@@ -203,7 +203,7 @@ public:
     
     // TEST PARTICLE PARAMETERS
     
-    bool isTestParticles;
+    bool isTest;
 
     void setIds() {
         unsigned int s = Id.size();
@@ -217,6 +217,7 @@ public:
     
     //! Method used to get the Particle Id
     inline unsigned int id(int ipart) const {
+        DEBUG(ipart << " of " << Id.size());
         return Id[ipart];
     }
     //! Method used to set the Particle Id

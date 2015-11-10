@@ -61,7 +61,7 @@ phases(params,smpi)
     dtimer[4].init(smpi, "testparticles");
     // loop species and make a new diag if test particles
     for(unsigned int i=0; i<vecSpecies.size(); i++) {
-        if (vecSpecies[i]->isTest) {
+        if (vecSpecies[i]->particles.isTest) {
             vecDiagnosticTestParticles.push_back(new DiagnosticTestParticles(params, smpi, vecSpecies[i]));
         }
     }

@@ -21,14 +21,12 @@ using namespace std;
 DiagnosticPhaseSpace::DiagnosticPhaseSpace(Params& params, SmileiMPI *smpi) :
 fileId(0)
 {
-    HEREIAM("");
     //! create the particle structure
     my_part.pos.resize(params.nDim_particle);
     my_part.mom.resize(3);
     
     unsigned int numPhases=PyTools::nComponents("DiagPhase");
     for (unsigned int n_phase = 0; n_phase < numPhases; n_phase++) {
-        HEREIAM("");
         MESSAGE(1,"Activating DiagPhase " << n_phase);
         
         vector<string> kind;
@@ -166,7 +164,7 @@ void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) 
     
     if (vecDiagPhaseActiveTimestep.size()>0) {
         for (vector<Species*>::const_iterator mySpec=vecSpecies.begin(); mySpec!= vecSpecies.end(); mySpec++) {
-            if (!(*mySpec)->particles.isTestParticles) {
+            if (!(*mySpec)->particles.isTest) {
                 
                 //! check which diagnosticPhase to run for the species
                 vector<DiagnosticPhase*> vecDiagPhaseToRun;

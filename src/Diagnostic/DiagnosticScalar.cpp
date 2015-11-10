@@ -101,7 +101,7 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
     
     // Compute scalars for each species
     for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
-        if (vecSpecies[ispec]->particles.isTestParticles) continue;    // No scalar diagnostic for test particles
+        if (vecSpecies[ispec]->particles.isTest) continue;    // No scalar diagnostic for test particles
         
         double charge_avg=0.0;  // average charge of current species ispec
         double ener_tot=0.0;    // total kinetic energy of current species ispec

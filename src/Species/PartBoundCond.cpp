@@ -69,7 +69,7 @@ PartBoundCond::PartBoundCond( Params& params, Species * species, SmileiMPI* smpi
     }
     
     // Check for inconsistencies between EM and particle BCs
-    if (! species->isTest) {
+    if (! species->particles.isTest) {
         if ( ((params.bc_em_type_x[0]=="periodic")&&(species->bc_part_type_west!="none"))
          ||  ((params.bc_em_type_x[1]=="periodic")&&(species->bc_part_type_east!="none")) ) {
             ERROR("For species " << species->species_type << ", periodic EM boundary conditions require x particle BCs to be periodic.");

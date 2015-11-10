@@ -74,9 +74,6 @@ public:
     //! logical true if particles radiate
     bool radiating;
     
-    //! logical true if particles radiate
-    bool isTest;
-    
     //! Boundary conditions for particules
     std::string bc_part_type_west;
     std::string bc_part_type_east;
@@ -199,7 +196,7 @@ public:
     
     inline int getMemFootPrint() {
         int speciesSize  = ( 2*ndim + 3 + 1 )*sizeof(double) + sizeof(short);
-        if ( particles.isTestParticles )
+        if ( particles.isTest )
             speciesSize += sizeof ( unsigned int );
         //speciesSize *= getNbrOfParticles();
         speciesSize *= getParticlesCapacity();

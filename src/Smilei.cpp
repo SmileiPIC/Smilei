@@ -180,7 +180,7 @@ int main (int argc, char* argv[])
         // Sum rho and J on ghost domains
         smpi->sumRhoJ( EMfields );
         for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
-            smpi->sumRhoJs(EMfields, ispec, true);  // only if !isTestParticles
+            smpi->sumRhoJs(EMfields, ispec, true);  // only if !isTest
         }
         
         TITLE("Applying antennas at time t = " << 0.5 * params.timestep);
@@ -349,7 +349,7 @@ int main (int argc, char* argv[])
 #endif
             for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
                 if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
-                    EMfields->restartRhoJs(ispec, time_dual > vecSpecies[ispec]->time_frozen); // if (!isTestParticles)
+                    EMfields->restartRhoJs(ispec, time_dual > vecSpecies[ispec]->time_frozen); // if (!isTest)
                     vecSpecies[ispec]->dynamics(time_dual, EMfields, Interp, Proj, smpi, params, simWindow, vecPartWall);
                 }
             }

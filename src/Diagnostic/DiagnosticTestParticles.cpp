@@ -20,6 +20,7 @@ every(params.global_every)
     PyTools::extract("dump_every", every, "Species", species->speciesNumber);
     
     particles = &(species->particles);
+    
     int locNbrParticles = species->getNbrOfParticles();
     hsize_t nParticles = (hsize_t) smpi->globalNbrParticles(species, locNbrParticles);
     
@@ -93,7 +94,7 @@ every(params.global_every)
 void DiagnosticTestParticles::run(int time, SmileiMPI* smpi) {
     
     if ( time % every != 0) return;
-    
+
     int locNbrParticles = species->getNbrOfParticles();
     
     // We increase the array size for the new timestep (new chunk)
@@ -107,7 +108,6 @@ void DiagnosticTestParticles::run(int time, SmileiMPI* smpi) {
         locator[i*2+1] = particles->id(i)-1;
     }
     
-    
     // Define the HDF5 MPI file access
     hid_t file_access = H5Pcreate(H5P_FILE_ACCESS);
     H5Pset_fapl_mpio( file_access, MPI_COMM_WORLD, MPI_INFO_NULL );
@@ -120,7 +120,7 @@ void DiagnosticTestParticles::run(int time, SmileiMPI* smpi) {
     ostringstream filename("");
     filename << "TestParticles_" << species->species_type  << ".h5" ;
     hid_t fid = H5Fopen( filename.str().c_str(), H5F_ACC_RDWR, file_access);
-    
+
     // For each dataspace (x, y, z, px, py, pz, weight, charge and ID), add the local
     // array to the HDF5 file -> see function appendTestParticles()
     ostringstream namePos("");
@@ -143,6 +143,7 @@ void DiagnosticTestParticles::run(int time, SmileiMPI* smpi) {
     H5Fflush( fid, H5F_SCOPE_GLOBAL );
     H5Pclose( file_access );
     H5Fclose( fid );
+    
 }
 
 

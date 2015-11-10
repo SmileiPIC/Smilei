@@ -379,7 +379,7 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
             H5::vect(gid,"Weight", vecSpecies[ispec]->particles.Weight,dump_deflate);
             H5::vect(gid,"Charge", vecSpecies[ispec]->particles.Charge,dump_deflate);
             
-            if (vecSpecies[ispec]->particles.isTestParticles) {
+            if (vecSpecies[ispec]->particles.isTest) {
                 H5::vect(gid,"Id", vecSpecies[ispec]->particles.Id,dump_deflate);
             }
             
@@ -512,7 +512,7 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, std::vector<Species*> &vecSpec
             }
             H5::getVect(gid, "Weight", vecSpecies[ispec]->particles.Weight);
             H5::getVect(gid, "Charge", vecSpecies[ispec]->particles.Charge);
-            if (vecSpecies[ispec]->particles.isTestParticles) {
+            if (vecSpecies[ispec]->particles.isTest) {
                 H5::getVect(gid, "Id", vecSpecies[ispec]->particles.Id);
             }
             H5::getVect(gid, "bmin", vecSpecies[ispec]->bmin);
