@@ -1119,7 +1119,7 @@ void VectorPatch::exchange1( std::vector<Field*> fields )
     gsp[0] = 2*oversize[0]+fields[0]->isDual_[0]; //Ghost size primal
     gsp[1] = 2*oversize[1]+fields[0]->isDual_[1]; //Ghost size primal
 
-    #pragma omp for schedule(dynamic) private(pt1,pt2)
+    #pragma omp for schedule(runtime) private(pt1,pt2)
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
 
 	if ((*this)(ipatch)->MPI_me_ == (*this)(ipatch)->MPI_neighbor_[1][0]){
@@ -1133,11 +1133,11 @@ void VectorPatch::exchange1( std::vector<Field*> fields )
 
     } // End for( ipatch )
 
-    #pragma omp for
+    #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
 	(*this)(ipatch)->initExchange( fields[ipatch], 1 );
 
-    #pragma omp for
+    #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
 	(*this)(ipatch)->finalizeExchange( fields[ipatch], 1 );
 
@@ -1163,7 +1163,8 @@ void VectorPatch::sum( std::vector<Field*> fields )
     
     gsp[0] = 1+2*oversize[0]+fields[0]->isDual_[0]; //Ghost size primal
 
-    #pragma omp for schedule(dynamic) private(pt1,pt2)
+
+    #pragma omp for schedule(runtime) private(pt1,pt2)
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
 
         if ((*this)(ipatch)->MPI_me_ == (*this)(ipatch)->MPI_neighbor_[0][0]){
@@ -1177,22 +1178,22 @@ void VectorPatch::sum( std::vector<Field*> fields )
 
     }
     
-    #pragma omp master
-    {
-	for (int iDim=0;iDim<1;iDim++) {
-	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-		(*this)(ipatch)->initSumField( fields[ipatch], iDim ); // initialize
-	    }
-
-	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-		(*this)(ipatch)->finalizeSumField( fields[ipatch], iDim ); // finalize (waitall + sum)
-	    }
-	}
+    for (int iDim=0;iDim<1;iDim++) {
+        #pragma omp for schedule(runtime)
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+    	(*this)(ipatch)->initSumField( fields[ipatch], iDim ); // initialize
+        }
+    
+        #pragma omp for schedule(runtime)
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+    	(*this)(ipatch)->finalizeSumField( fields[ipatch], iDim ); // finalize (waitall + sum)
+        }
     }
+
 
     if (fields[0]->dims_.size()>1) {
 	gsp[1] = 1+2*oversize[1]+fields[0]->isDual_[1]; //Ghost size primal
-        #pragma omp for schedule(dynamic) private(pt1,pt2)
+        #pragma omp for schedule(runtime) private(pt1,pt2)
 	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
 
 	    if ((*this)(ipatch)->MPI_me_ == (*this)(ipatch)->MPI_neighbor_[1][0]){
@@ -1206,22 +1207,19 @@ void VectorPatch::sum( std::vector<Field*> fields )
 		    pt2 += ny_;
 		}
 	    }
-
 	}
 
-        #pragma omp master
-	{
-	    for (int iDim=1;iDim<2;iDim++) {
-		for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-		    (*this)(ipatch)->initSumField( fields[ipatch], iDim ); // initialize
-		}
+	for (int iDim=1;iDim<2;iDim++) {
+            #pragma omp for schedule(runtime)
+	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	        (*this)(ipatch)->initSumField( fields[ipatch], iDim ); // initialize
+	    }
 
-		for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-		    (*this)(ipatch)->finalizeSumField( fields[ipatch], iDim ); // finalize (waitall + sum)
-		}
+            #pragma omp for schedule(runtime)
+	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	        (*this)(ipatch)->finalizeSumField( fields[ipatch], iDim ); // finalize (waitall + sum)
 	    }
 	}
     }
-
 }
 
