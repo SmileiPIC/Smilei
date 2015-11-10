@@ -82,7 +82,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
     int nmessage = 10+2*nSpecies;
     vector<int> nbrOfPartsSend(nSpecies,0);
     vector<int> nbrOfPartsRecv(nSpecies,0);
-    vector < vector<int>* > store_npart_sent;
+    //vector < vector<int>* > store_npart_sent;
 
 
     // Delete western patch
@@ -172,7 +172,8 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
             }
 
     //Wait for all send to be completed by the receivers too.
-    MPI_Barrier(MPI_COMM_WORLD);
+    //MPI_Barrier(MPI_COMM_WORLD);
+    smpi->barrier();
 
     // Suppress after exchange to not distrub patch position during exchange
     for ( int ipatch = nPatches-1 ; ipatch >= 0 ; ipatch--) {
@@ -238,9 +239,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
 	}
     }
 
-    for (unsigned int i = 0 ; i < store_npart_sent.size() ; i++) {
-        delete store_npart_sent[i];
-    }
+    //for (unsigned int i = 0 ; i < store_npart_sent.size() ; i++) {
+    //    delete store_npart_sent[i];
+    //}
 
     //} // End pragma omp master
     //#pragma omp barrier
