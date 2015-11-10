@@ -65,8 +65,8 @@ SimWindow::~SimWindow()
 
 void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& params, DiagParams &diag_params, LaserParams& laser_params)
 {
-    #pragma omp master
-    {
+    //#pragma omp master
+    //{
 
 
     {
@@ -242,8 +242,8 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
         delete store_npart_sent[i];
     }
 
-    } // End pragma omp master
-    #pragma omp barrier
+    //} // End pragma omp master
+    //#pragma omp barrier
 
     return;
 
