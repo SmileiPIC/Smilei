@@ -209,17 +209,10 @@ public:
             
             // Extract test Species flag
             PyTools::extract("isTest",thisSpecies->isTest ,"Species",ispec);
-            thisSpecies->particles.isTestParticles = thisSpecies->isTest;
             
             // Verify they don't ionize
             if (thisSpecies->ionization_model!="none" && thisSpecies->isTest) {
                 ERROR("For species '" << species_type << "', disabled for now : test & ionized");
-            }
-            
-            // Define the number of timesteps for dumping test particles
-            if (PyTools::extract("dump_every",thisSpecies->test_dump_every ,"Species",ispec)) {
-                if (thisSpecies->test_dump_every>1 && !thisSpecies->isTest)
-                    WARNING("For species '" << species_type << "', dump_every discarded because not test particles");
             }
             
             // Create the particles

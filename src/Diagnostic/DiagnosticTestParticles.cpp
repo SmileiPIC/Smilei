@@ -10,24 +10,15 @@
 using namespace std;
 
 // constructor
-DiagnosticTestParticles::DiagnosticTestParticles(unsigned int ID, Params& params, Species* species )
+DiagnosticTestParticles::DiagnosticTestParticles(Params& params, SmileiMPI* smpi, Species* my_species) :
+species(my_species),
+nDim_particle(params.nDim_particle),
+every(params.global_every)
 {
+
+    // Define the number of timesteps for dumping test particles
+    PyTools::extract("dump_every", every, "Species", species->speciesNumber);
     
-    diagnostic_id = ID;
-    species_number = species->speciesNumber;
-    nDim_particle = params.nDim_particle;
-    every = species->test_dump_every;
-}
-
-// destructor
-DiagnosticTestParticles::~DiagnosticTestParticles()
-{
-}
-
-
-void DiagnosticTestParticles::init(vector<Species*> vecSpecies, SmileiMPI* smpi) {
-    
-    species = vecSpecies[species_number];
     particles = &(species->particles);
     int locNbrParticles = species->getNbrOfParticles();
     hsize_t nParticles = (hsize_t) smpi->globalNbrParticles(species, locNbrParticles);
@@ -98,6 +89,7 @@ void DiagnosticTestParticles::init(vector<Species*> vecSpecies, SmileiMPI* smpi)
 
 }
 
+
 void DiagnosticTestParticles::run(int time, SmileiMPI* smpi) {
     
     if ( time % every != 0) return;
@@ -135,17 +127,17 @@ void DiagnosticTestParticles::run(int time, SmileiMPI* smpi) {
     for (int idim=0 ; idim<nDim_particle ; idim++) {
         namePos.str("");
         namePos << "Position-" << idim;
-        append( fid, namePos.str(), particles->position(idim), locNbrParticles, H5T_NATIVE_DOUBLE, smpi, locator );
+        append( fid, namePos.str(), particles->position(idim), locNbrParticles, H5T_NATIVE_DOUBLE, locator );
     }
     ostringstream nameMom("");
     for (int idim=0 ; idim<3 ; idim++) {
         nameMom.str("");
         nameMom << "Momentum-" << idim;
-        append( fid, nameMom.str(), particles->momentum(idim), locNbrParticles, H5T_NATIVE_DOUBLE, smpi, locator );
+        append( fid, nameMom.str(), particles->momentum(idim), locNbrParticles, H5T_NATIVE_DOUBLE, locator );
     }
-    append( fid, "Weight", particles->weight(), locNbrParticles, H5T_NATIVE_DOUBLE, smpi, locator );
-    append( fid, "Charge", particles->charge(), locNbrParticles, H5T_NATIVE_SHORT , smpi, locator );
-    append( fid, "Id"    , particles->id()    , locNbrParticles, H5T_NATIVE_UINT  , smpi, locator );
+    append( fid, "Weight", particles->weight(), locNbrParticles, H5T_NATIVE_DOUBLE, locator );
+    append( fid, "Charge", particles->charge(), locNbrParticles, H5T_NATIVE_SHORT , locator );
+    append( fid, "Id"    , particles->id()    , locNbrParticles, H5T_NATIVE_UINT  , locator );
     
     smpi->barrier(); // sometimes needed because all procs must not close the file too early
     H5Fflush( fid, H5F_SCOPE_GLOBAL );
@@ -155,7 +147,7 @@ void DiagnosticTestParticles::run(int time, SmileiMPI* smpi) {
 
 
 template <class T>
-void DiagnosticTestParticles::append( hid_t fid, string name, std::vector<T> property, int nParticles, hid_t type, SmileiMPI* smpi, vector<hsize_t> &locator) {
+void DiagnosticTestParticles::append( hid_t fid, string name, std::vector<T> property, int nParticles, hid_t type, vector<hsize_t> &locator) {
     
     // Open existing dataset
     hid_t did = H5Dopen( fid, name.c_str(), H5P_DEFAULT );

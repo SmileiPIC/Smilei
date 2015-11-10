@@ -54,20 +54,17 @@ phases(params,smpi)
     dtimer[3].init(smpi, "particles");
     for (unsigned int n_diag_particles = 0; n_diag_particles < PyTools::nComponents("DiagParticles"); n_diag_particles++) {
         // append new diagnostic object to the list
-        vecDiagnosticParticles.push_back(new DiagnosticParticles(n_diag_particles, params, vecSpecies));
+        vecDiagnosticParticles.push_back(new DiagnosticParticles(n_diag_particles, params, smpi, vecSpecies));
     }
         
     // test particles initialization
     dtimer[4].init(smpi, "testparticles");
-    unsigned int n_diag_testparticles=0;
     // loop species and make a new diag if test particles
     for(unsigned int i=0; i<vecSpecies.size(); i++) {
         if (vecSpecies[i]->isTest) {
-            vecDiagnosticTestParticles.push_back(new DiagnosticTestParticles(n_diag_testparticles, params, vecSpecies[i]));
-            n_diag_testparticles++;
+            vecDiagnosticTestParticles.push_back(new DiagnosticTestParticles(params, smpi, vecSpecies[i]));
         }
     }
-    
 }
 
 void Diagnostic::closeAll (SmileiMPI* smpi) {
@@ -117,7 +114,7 @@ void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Specie
     // run all the particle diagnostics
     dtimer[3].restart();
     for (unsigned int i=0; i<vecDiagnosticParticles.size(); i++)
-        vecDiagnosticParticles[i]->run(timestep, vecSpecies, smpi);
+        vecDiagnosticParticles[i]->run(timestep, vecSpecies);
     dtimer[3].update();
     
     // run all the test particle diagnostics

@@ -23,18 +23,9 @@ class DiagnosticTestParticles {
 
 public:
 
-    DiagnosticTestParticles(unsigned int, Params&, Species*);
+    DiagnosticTestParticles(Params&, SmileiMPI* smpi, Species*);
     
-    ~DiagnosticTestParticles();
-    
-    //! ID of this diagnostic
-    int diagnostic_id;
-    
-    //! number of the test species used
-    unsigned int species_number;
-    
-    //! Initializes the diag (creates HDF5 file), after all species have been created
-    void init( std::vector<Species*>, SmileiMPI* );
+    ~DiagnosticTestParticles(){};
     
     //! Runs the diag (writes to file) at each timestep
     void run( int, SmileiMPI* );
@@ -51,7 +42,7 @@ private:
     //! Pointer to the test species used
     Species* species;
     //! Pointer to the test particles used
-    Particles * particles;
+    Particles *particles;
     
     //! Number of spatial dimensions
     int nDim_particle;
@@ -60,7 +51,7 @@ private:
     int every;
     
     //! Adds one row in a HDF5 file, within a given dataspace
-    template <class T> void append(hid_t, std::string, std::vector<T>, int, hid_t, SmileiMPI*, std::vector<hsize_t>&);
+    template <class T> void append(hid_t, std::string, std::vector<T>, int, hid_t, std::vector<hsize_t>&);
     
 };
 

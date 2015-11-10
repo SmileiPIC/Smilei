@@ -10,15 +10,11 @@
 using namespace std;
 
 // constructor
-DiagnosticParticles::DiagnosticParticles(unsigned int n_diag_particles, Params& params, std::vector<Species*>& vecSpecies) :
-    fileId(0),
-diagnostic_id(n_diag_particles),
+DiagnosticParticles::DiagnosticParticles(unsigned int n_diag_particles, Params& params, SmileiMPI *smpi, std::vector<Species*>& vecSpecies) :
+fileId(0),
 output(""),
 every(0)
 {
-    
-    bool ok;
-    
     // get parameter "output" that determines the quantity to sum in the output array
     if (!PyTools::extract("output",output,"DiagParticles",n_diag_particles))
         ERROR("Diagnotic Particles #" << n_diag_particles << ": parameter `output` required");
@@ -115,7 +111,7 @@ every(0)
     mystream << species_names[0];
     for(unsigned int i=1; i<species_names.size(); i++)
         mystream << "," << species_names[i];
-    MESSAGE(1,"Created particle diagnostic #" << diagnostic_id << ": species " << mystream.str());
+    MESSAGE(1,"Created particle diagnostic #" << n_diag_particles << ": species " << mystream.str());
     for(unsigned int i=0; i<axes.size(); i++) {
         mystream.str("");
         mystream << "Axis " << axes[i].type << " from " << axes[i].min << " to " << axes[i].max << " in " << axes[i].nbins << " steps";
@@ -124,7 +120,34 @@ every(0)
         MESSAGE(2,mystream.str());
     }
     
-    
+    // init HDF files (by master, only if it doesn't yet exist)
+    if (smpi->isMaster()) {
+        mystream.str("");
+        mystream << "ParticleDiagnostic" << n_diag_particles << ".h5";
+        fileId = H5Fcreate( mystream.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+        // write all parameters as HDF5 attributes
+        H5::attr(fileId, "Version", string(__VERSION));
+        H5::attr(fileId, "output" , output);
+        H5::attr(fileId, "every"  , every);
+        H5::attr(fileId, "time_average"  , time_average);
+        // write all species
+        mystream.str(""); // clear
+        for (unsigned int i=0 ; i < species.size() ; i++)
+            mystream << species[i] << " ";
+        H5::attr(fileId, "species", mystream.str());
+        // write each axis
+        for (unsigned int iaxis=0 ; iaxis < axes.size() ; iaxis++) {
+            mystream.str(""); // clear
+            mystream << "axis" << iaxis;
+            string str1 = mystream.str();
+            mystream.str(""); // clear
+            mystream << axes[iaxis].type << " " << axes[iaxis].min << " " << axes[iaxis].max << " "
+            << axes[iaxis].nbins << " " << axes[iaxis].logscale << " " << axes[iaxis].edge_inclusive;
+            string str2 = mystream.str();
+            H5::attr(fileId, str1, str2);
+        }
+    }
+
 }
 
 // destructor
@@ -141,7 +164,7 @@ void DiagnosticParticles::close()
 }
 
 // run one particle diagnostic
-void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, SmileiMPI* smpi)
+void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies)
 {
     Species *s;
     Particles *p;
@@ -151,36 +174,8 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
     int nbins = vecSpecies[0]->bmin.size(); // number of bins in the particles binning (openMP)
     int bmin, bmax, axissize, ind;
     double axismin, axismax, mass, coeff;
-    string axistype, str1, str2;
+    string axistype;
     ostringstream mystream("");
-    
-    // init HDF files (by master, only if it doesn't yet exist)
-    if (smpi->isMaster() && !fileId) {
-        mystream.str("");
-        mystream << "ParticleDiagnostic" << diagnostic_id << ".h5";
-        fileId = H5Fcreate( mystream.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-        // write all parameters as HDF5 attributes
-        H5::attr(fileId, "Version", string(__VERSION));
-        H5::attr(fileId, "output" , output);
-        H5::attr(fileId, "every"  , every);
-        H5::attr(fileId, "time_average"  , time_average);
-        // write all species
-        mystream.str(""); // clear
-        for (unsigned int i=0 ; i < species.size() ; i++)
-            mystream << species[i] << " ";
-        H5::attr(fileId, "species", mystream.str());
-        // write each axis
-        for (unsigned int iaxis=0 ; iaxis < axes.size() ; iaxis++) {
-            mystream.str(""); // clear
-            mystream << "axis" << iaxis;
-            str1 = mystream.str();
-            mystream.str(""); // clear
-            mystream << axes[iaxis].type << " " << axes[iaxis].min << " " << axes[iaxis].max << " "
-            << axes[iaxis].nbins << " " << axes[iaxis].logscale << " " << axes[iaxis].edge_inclusive;
-            str2 = mystream.str();
-            H5::attr(fileId, str1, str2);
-        }
-    }
     
     // skip the routine if the timestep is not the good one
     if (timestep % every >= time_average) return;
@@ -437,8 +432,8 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies, Smilei
     // if needed now, store result to hdf file
     if (timestep % every == time_average-1) {
         
-        // sum the outputs from each MPI partition
-        MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&data_sum[0], &data_sum[0], output_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        // sum the outputs from each MPI partition (fileId>0 only for master)
+        MPI_Reduce(fileId>0?MPI_IN_PLACE:&data_sum[0], &data_sum[0], output_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
         
         if (fileId > 0) { // only the master has fileId>0
             // if time_average, then we need to divide by the number of timesteps

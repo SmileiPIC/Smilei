@@ -142,8 +142,8 @@ fieldsToDump = ('Ex','Ey','Ez','By_m','Bz_m');
 #
 DiagPhase(
 	every	= every,
- 	kind    = ['xpx'],
  	species = ['eon1','eon2'],
+ 	kind    = ['xpx'],
  	first = [0., 0., 50],
  	second = [-0.4, 0.4, 100],
  	deflate=5

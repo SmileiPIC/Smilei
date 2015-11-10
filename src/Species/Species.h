@@ -77,9 +77,6 @@ public:
     //! logical true if particles radiate
     bool isTest;
     
-    //! dump every for test particles
-    unsigned int test_dump_every;
-    
     //! Boundary conditions for particules
     std::string bc_part_type_west;
     std::string bc_part_type_east;
