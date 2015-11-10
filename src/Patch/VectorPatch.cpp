@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <iomanip>
+#include <fstream>
 
 #include "Hilbert_functions.h"
 #include "PatchesFactory.h"
@@ -10,6 +11,7 @@
 #include "Particles.h"
 #include "SmileiIOFactory.h"
 #include <cstring>
+//#include <string>
 
 using namespace std;
 
@@ -675,6 +677,10 @@ void VectorPatch::setNbrParticlesToExch(SmileiMPI* smpi)
 //}
 void VectorPatch::output_exchanges(SmileiMPI* smpi)
 {
+    ofstream output_file;
+    ostringstream name("");
+    name << "debug_output"<<smpi->smilei_rk<<".txt" ;
+    output_file.open(name.str().c_str(), std::ofstream::out | std::ofstream::app);
     int newMPIrank, oldMPIrank;
     newMPIrank = smpi->smilei_rk -1;
     oldMPIrank = smpi->smilei_rk -1;
@@ -682,12 +688,14 @@ void VectorPatch::output_exchanges(SmileiMPI* smpi)
     for (int irk=0 ; irk<smpi->getRank() ; irk++) istart += smpi->patch_count[irk];
     for (unsigned int ipatch=0 ; ipatch < send_patch_id_.size() ; ipatch++) {
         if(send_patch_id_[ipatch]+refHindex_ > istart ) newMPIrank = smpi->smilei_rk + 1;
-        cout << "Rank " << smpi->smilei_rk << " sending patch " << send_patch_id_[ipatch]+refHindex_ << " to " << newMPIrank << endl; 
+        output_file << "Rank " << smpi->smilei_rk << " sending patch " << send_patch_id_[ipatch]+refHindex_ << " to " << newMPIrank << endl; 
     }
     for (unsigned int ipatch=0 ; ipatch < recv_patch_id_.size() ; ipatch++) {
         if(recv_patch_id_[ipatch] > refHindex_ ) oldMPIrank = smpi->smilei_rk + 1;
-        cout << "Rank " << smpi->smilei_rk << " receiving patch " << recv_patch_id_[ipatch] << " from " << oldMPIrank << endl; 
+        output_file << "Rank " << smpi->smilei_rk << " receiving patch " << recv_patch_id_[ipatch] << " from " << oldMPIrank << endl; 
     }
+    output_file << "NEXT" << endl;
+    output_file.close();
 }
 
 
