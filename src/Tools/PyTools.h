@@ -117,8 +117,8 @@ public:
     
     //! convert Python object to C++ value
     template <typename T>
-    static bool convert(PyObject* py_vec, T &val) {
-        bool retval=pyconvert(py_vec, val);
+    static bool convert(PyObject* py_val, T &val) {
+        bool retval=pyconvert(py_val, val);
         return retval;
     }
     

@@ -191,15 +191,15 @@ class Smilei(object):
 			diag.plot()
 		"""
 		return ParticleDiagnostic(self, *args, **kwargs)
-	def TestParticles(self, *args, **kwargs):
-		""" TestParticles(species=None, select="", axes=[], timesteps=None, units=[""], skipAnimation=False)
+	def TrackParticles(self, *args, **kwargs):
+		""" TrackParticles(species=None, select="", axes=[], timesteps=None, units=[""], skipAnimation=False)
 		
-		Import and analyze test particles from a Smilei simulation
+		Import and analyze tracked particles from a Smilei simulation
 		
 		Parameters:
 		-----------
-		species : name of a test species. (optional)
-			To get a list of available test species, simply omit this argument.
+		species : name of a tracked species. (optional)
+			To get a list of available tracked species, simply omit this argument.
 		select: Instructions for selecting particles among those available.
 			Syntax 1: select="any(times, condition)"
 			Syntax 2: select="all(times, condition)"
@@ -229,7 +229,7 @@ class Smilei(object):
 			diag.get()
 			diag.plot()
 		"""
-		return TestParticles(self, *args, **kwargs)
+		return TrackParticles(self, *args, **kwargs)
 
 
 class Options(object):
@@ -1862,9 +1862,9 @@ class Probe(Diagnostic):
 
 
 # -------------------------------------------------------------------
-# Class for test particles diagnostics
+# Class for tracked particles diagnostics
 # -------------------------------------------------------------------
-class TestParticles(Diagnostic):
+class TrackParticles(Diagnostic):
 
 	# This is the constructor, which creates the object
 	def _init(self, species=None, select="", axes=[], timesteps=None, **kwargs):
@@ -1873,19 +1873,19 @@ class TestParticles(Diagnostic):
 		
 		# If argument 'species' not provided, then print available species and leave
 		if species is None:
-			species = self.getTestSpecies()
+			species = self.getTrackSpecies()
 			if len(species)>0:
-				print "Printing available test species:"
-				print "--------------------------------"
+				print "Printing available tracked species:"
+				print "-----------------------------------"
 				for s in species: print s
 			else:
-				print "No test particle files found in '"+self._results_path+"'"
+				print "No tracked particles files found in '"+self._results_path+"'"
 			return None
 		
 		# Get info from the hdf5 files + verifications
 		# -------------------------------------------------------------------
 		self.species  = species
-		self._file = self._results_path+"/TestParticles_"+species+".h5"
+		self._file = self._results_path+"/TrackParticles_"+species+".h5"
 		f = self._h5py.File(self._file, 'r')
 		self._h5items = f.values()
 		self._every = f.attrs["every"]
@@ -1893,7 +1893,7 @@ class TestParticles(Diagnostic):
 		# Get available times in the hdf5 file
 		self.times = self.getAvailableTimesteps()
 		if self.times.size == 0:
-			print "No test particles found in "+self._file
+			print "No tracked particles found in "+self._file
 			return
 		alltimes = self.times
 		# If specific timesteps requested, narrow the selection
@@ -2029,7 +2029,7 @@ class TestParticles(Diagnostic):
 			self._log.append( False )
 			self._label.append( axis )
 			self._units.append( axisunits )
-		self._title = "Test particles '"+species+"'"
+		self._title = "Track particles '"+species+"'"
 		self._shape = [0]*len(axes)
 		# Hack to work with 1 axis
 		if len(axes)==1: self._vunits = self._units[0]
@@ -2041,16 +2041,16 @@ class TestParticles(Diagnostic):
 	# Method to print info on included probe
 	def info(self):
 		if not self._validate(): return
-		print "Test particles: species '"+self.species+"' containing "+str(self.nParticles)+" particles"
+		print "Track particles: species '"+self.species+"' containing "+str(self.nParticles)+" particles"
 		if len(self.selectedParticles) != self.nParticles:
 			print "                with selection of "+str(len(self.selectedParticles))+" particles"
 	
-	# get all available test species
-	def getTestSpecies(self):
-		files = self._glob(self._results_path+"/TestParticles_*.h5")
+	# get all available tracked species
+	def getTrackSpecies(self):
+		files = self._glob(self._results_path+"/TrackParticles_*.h5")
 		species = []
 		for file in files:
-			species.append(self._re.search("TestParticles_(.*).h5",file).groups()[0])
+			species.append(self._re.search("TrackParticles_(.*).h5",file).groups()[0])
 		return species
 	
 	# get all available timesteps
@@ -2058,7 +2058,7 @@ class TestParticles(Diagnostic):
 		try:
 			ntimes = self._h5items[0].len()
 		except:
-			print "Unable to find test particle data in file "+self._file
+			print "Unable to find tracked particle data in file "+self._file
 			return self._np.array([])
 		return self._np.arange(0,ntimes*self._every,self._every)
 	
@@ -2244,7 +2244,7 @@ def multiPlot(*Diags, **kwargs):
 	if shape is None or shape == [1,1]:
 		sameAxes = True
 		for Diag in Diags:
-			if type(Diag) is TestParticles:
+			if type(Diag) is TrackParticles:
 				sameAxes = False
 				break
 			if Diag.dim()==0 and Diags[0].dim()==0:

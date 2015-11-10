@@ -292,10 +292,9 @@ All the possible variables inside this block are explained here:
 
 .. py:data:: dump_every
   
-  :default: 1
+  :default: 0 (1 for if ``isTest=True``)
   
-  Number of timesteps between each dump of test-particle information.
-  Only active when ``isTest == True``
+  Number of timesteps between each dump of particles (Note that if != 0 particles will be tracked i.e. a label will be added to each particle).
 
 
 .. py:data:: c_part_max

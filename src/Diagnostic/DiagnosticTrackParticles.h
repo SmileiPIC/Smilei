@@ -1,13 +1,13 @@
 /*
 -----------------------------------------------------------------------
-TEST PARTICLE DIAGNOSTICS
+WRITE PARTICLE DIAGNOSTICS
 -----------------------------------------------------------------------
 */
 
 
 
-#ifndef DiagnosticTestParticles_H
-#define DiagnosticTestParticles_H
+#ifndef DiagnosticTrackParticles_H
+#define DiagnosticTrackParticles_H
 
 #include <cmath>
 
@@ -18,14 +18,14 @@ TEST PARTICLE DIAGNOSTICS
 #include "H5.h"
 
 
-// Class for the test-particles diagnostics
-class DiagnosticTestParticles {
+// Class for the writable particles diagnostics
+class DiagnosticTrackParticles {
 
 public:
 
-    DiagnosticTestParticles(Params&, SmileiMPI* smpi, Species*);
+    DiagnosticTrackParticles(Params&, SmileiMPI* smpi, Species*);
     
-    ~DiagnosticTestParticles(){};
+    ~DiagnosticTrackParticles(){};
     
     //! Runs the diag (writes to file) at each timestep
     void run( int, SmileiMPI* );
@@ -39,16 +39,11 @@ private:
     //! HDF5 file space (dimensions of the array in file)
     hsize_t dims[2];
     
-    //! Pointer to the test species used
+    //! Pointer to the species used
     Species* species;
-    //! Pointer to the test particles used
-    Particles *particles;
     
     //! Number of spatial dimensions
     int nDim_particle;
-    
-    //! Number of  timesteps between each output
-    int every;
     
     //! Adds one row in a HDF5 file, within a given dataspace
     template <class T> void append(hid_t, std::string, std::vector<T>, int, hid_t, std::vector<hsize_t>&);

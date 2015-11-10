@@ -82,8 +82,7 @@ class Species(SmileiComponent):
     ionization_model = "none"
     atomic_number = None
     isTest = False
-    dump_every = 1
-
+    dump_every = 0
 
 class Laser(SmileiComponent):
     """Laser parameters"""
@@ -201,6 +200,5 @@ fieldDump_every = None
 fieldsToDump = []
 avgfieldDump_every = None
 ntime_step_avg = 0
-particleDump_every = None # for backwards-compatibility
 time_fields_frozen = 0.
 random_seed = None

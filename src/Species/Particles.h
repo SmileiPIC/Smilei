@@ -202,8 +202,10 @@ public:
     std::vector<unsigned int> Id;    
     
     // TEST PARTICLE PARAMETERS
-    
     bool isTest;
+    
+    // dump every means taht particles have to be written
+    unsigned int dump_every;
 
     void setIds() {
         unsigned int s = Id.size();
@@ -249,9 +251,6 @@ public:
         return Chi;
     }
     
-    
-    int species_number;
-
     std::vector< std::vector<double>* >       double_prop;
     std::vector< std::vector<short>* >        short_prop;
     std::vector< std::vector<unsigned int>* > uint_prop;

@@ -37,10 +37,6 @@ phases(params,smpi)
     ntime_step_avg=0;
     PyTools::extract("ntime_step_avg", ntime_step_avg);
     
-    particleDump_every=0;
-    if (PyTools::extract("particleDump_every", particleDump_every))
-        WARNING("Option particleDump_every disabled");
-    
     // scalars initialization
     dtimer[0].init(smpi, "scalars");
     
@@ -57,12 +53,12 @@ phases(params,smpi)
         vecDiagnosticParticles.push_back(new DiagnosticParticles(n_diag_particles, params, smpi, vecSpecies));
     }
         
-    // test particles initialization
-    dtimer[4].init(smpi, "testparticles");
-    // loop species and make a new diag if test particles
+    // writable particles initialization
+    dtimer[4].init(smpi, "dump particles");
+    // loop species and make a new diag if particles have to be dumped
     for(unsigned int i=0; i<vecSpecies.size(); i++) {
-        if (vecSpecies[i]->particles.isTest) {
-            vecDiagnosticTestParticles.push_back(new DiagnosticTestParticles(params, smpi, vecSpecies[i]));
+        if (vecSpecies[i]->particles.dump_every > 0) {
+            vecDiagnosticTrackParticles.push_back(new DiagnosticTrackParticles(params, smpi, vecSpecies[i]));
         }
     }
 }
@@ -117,10 +113,10 @@ void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Specie
         vecDiagnosticParticles[i]->run(timestep, vecSpecies);
     dtimer[3].update();
     
-    // run all the test particle diagnostics
+    // run all the write particle diagnostics
     dtimer[4].restart();
-    for (unsigned int i=0; i<vecDiagnosticTestParticles.size(); i++)
-        vecDiagnosticTestParticles[i]->run(timestep, smpi);
+    for (unsigned int i=0; i<vecDiagnosticTrackParticles.size(); i++)
+        vecDiagnosticTrackParticles[i]->run(timestep, smpi);
     dtimer[4].update();
     
 }

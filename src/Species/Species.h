@@ -128,7 +128,7 @@ public:
                           std::vector<PartWall*> vecPartWall);
     
     //! Method used to initialize the Particle position in a given cell
-    void initPosition(unsigned int, unsigned int, double *, unsigned int);
+    void initPosition(unsigned int, unsigned int, double *);
     
     //! Method used to initialize the Particle 3d momentum in a given cell
     void initMomentum(unsigned int, unsigned int, double *, double *, std::vector<double>&);
@@ -195,7 +195,7 @@ public:
     }
     
     inline int getMemFootPrint() {
-        int speciesSize  = ( 2*ndim + 3 + 1 )*sizeof(double) + sizeof(short);
+        int speciesSize  = ( 2*nDim_particle + 3 + 1 )*sizeof(double) + sizeof(short);
         if ( particles.isTest )
             speciesSize += sizeof ( unsigned int );
         //speciesSize *= getNbrOfParticles();
@@ -204,7 +204,7 @@ public:
     }
     
     //! Method to create new particles.
-    int  createParticles(std::vector<unsigned int> n_space_to_create, std::vector<double> cell_index, int new_bin_idx,  Params& param);
+    int  createParticles(std::vector<unsigned int> n_space_to_create, std::vector<double> cell_index, int new_bin_idx);
     
     //! Boundary condition for the Particles of the considered Species
     PartBoundCond* partBoundCond;
@@ -224,7 +224,7 @@ private:
     double dE;
     
     //! Number of spatial dimension for the particles
-    unsigned int ndim;
+    unsigned int nDim_particle;
     
     //! Local minimum of MPI domain
     double min_loc;

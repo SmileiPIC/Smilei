@@ -114,7 +114,7 @@ scalasca: obsolete
 	make config=scalasca
 
 
-ifeq ($(filter clean help doc,$(MAKECMDGOALS)),) 
+ifeq ($(filter clean help doc tar,$(MAKECMDGOALS)),) 
 # Let's try to make the next lines clear: we include $(DEPS) and pygenerator
 -include $(DEPS) pygenerator
 # we specify that pygenerator is not a file

@@ -65,9 +65,6 @@ DiagParticles(
 
 */
 
-
-
-
 #ifndef DiagnosticParticles_H
 #define DiagnosticParticles_H
 
