@@ -488,22 +488,22 @@ int npatchmoy=0, npartmoy=0;
         }
 	// ----------------------------------------------------------------------        
 
+        } //End omp parallel region
 		
         timer[5].restart();
         if ( simWindow && simWindow->isMoving(time_dual) ) {
-            #pragma omp single
-            {
+            //#pragma omp single
+            //{
             start_moving++;
             if ((start_moving==1) && (smpiData->isMaster()) ) {
 		MESSAGE(">>> Window starts moving");
             }
-            }
+            //}
             simWindow->operate(vecPatches, smpiData, params, diag_params, laser_params);
         }
         timer[5].update();
 
 
-        } //End omp parallel region
 
 	if ((itime%balancing_freq == 0)&&(smpiData->smilei_sz!=1)) {
             timer[7].restart();

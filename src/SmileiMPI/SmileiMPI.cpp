@@ -395,7 +395,7 @@ void SmileiMPI::recompute_patch_count( PicParams& params, VectorPatch& vecpatche
 
 	if (smilei_rk==0)
 	    for (int irk=0;irk<smilei_sz;irk++)
-		cout << " patch_count[" << irk << "]" << patch_count[irk] << " target patch_count = "<< target_patch_count[irk] << endl;
+		cout << " patch_count[" << irk << "] = " << patch_count[irk] << " target patch_count = "<< target_patch_count[irk] << endl;
 
     return;
 }
