@@ -20,6 +20,9 @@ using namespace std;
 Params::Params(SmileiMPI* smpi, std::vector<std::string> namelistsFiles) :
 namelist("")
 {
+    
+    if (namelistsFiles.size()==0) ERROR("No namelists given!");
+
     string commandLineStr("");
     for (unsigned int i=0;i<namelistsFiles.size();i++) commandLineStr+="\""+namelistsFiles[i]+"\" ";
     MESSAGE(1,commandLineStr);
@@ -41,6 +44,12 @@ namelist("")
     
     // here we add the rank, in case some script need it
     PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_rank", smpi->getRank());
+    
+    // here we add the MPI size, in case some script need it
+    PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_size", smpi->getSize());
+    
+    // here we add the larget int, important to get a valid seed for randomization
+    PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_rand_max", RAND_MAX);
     
     // Running the namelists
     runScript("############### BEGIN USER NAMELISTS/COMMANDS ###############\n");
@@ -64,6 +73,8 @@ namelist("")
     // Running pycontrol.py
     runScript(string(reinterpret_cast<const char*>(pycontrol_py), pycontrol_py_len),"pycontrol.py");
     
+    smpi->barrier();
+    
     PyTools::runPyFunction("_smilei_check");
     
     
@@ -81,6 +92,7 @@ namelist("")
     if (!PyTools::extract("random_seed", random_seed)) {
         random_seed = time(NULL);
     }
+    
     srand(random_seed);
     
     // --------------

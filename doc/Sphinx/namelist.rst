@@ -7,6 +7,7 @@ is written in the *python* language. It is thus recommended to know the basics o
 To create a namelist, we suggest you copy one existing file in the folder *benchmarks*.
 All namelists have the extension ``.py``.
 
+  
 ----
 
 General rules
@@ -34,10 +35,53 @@ General rules
   defined between brackets ``[]`` and separated by commas.
   For example, ``mean_velocity = [0., 1.1, 3.]``.
 
-* You are free to import any *python* package into the namelist.
+* You are free to import any installed *python* package into the namelist. 
   For instance, you may obtain :math:`\pi` using ``from math import pi``.
 
 * All quantities are normalized to arbitrary values: see :doc:`units`.
+
+----
+
+Python workflow and impact
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Python is started at the beginning of the simulation (there will be a python interpreter for each MPI node)
+* Two files (``src/Python/pyinit.py`` and ``src/Python/pyprofiles.py``) are passed to the python interpreter
+* These ``smilei`` variables are passed to python interpreter
+
+  * MPI rank as :py:data:`smilei_mpi_rank`
+  * MPI size as :py:data:`smilei_mpi_size`
+  * maximum random value as :py:data:`smilei_rand_max`
+  
+  
+* Then the command line arguments are passed to python and for each argument:
+
+  * if the argument is a file, it is read, broadcasted to every node and executed
+  * if the argument is *not* a file, it is executed as python command
+  
+* One more file (``src/Python/pycontrol.py``) is passed to python and
+
+  * checks if a function called :py:data:`cleanup()` has been defined in your command line arguments and runs it.
+  * runs the :py:data:`_keep_python_running()` function defined in ``pycontrol.py`` which checks if the python interpreter 
+    is required during the simulation (i.e. a python-defined laser profile or an :py:data:`Antenna`) and closes 
+    the Python interpreter if this function returns :py:data:`True`
+  
+* The MPI master (rank 0) will write a file named ``smilei.py`` as a concatenation of everything that python interpreted
+  
+.. note::
+
+   * if your simulation does not have time-dependent profiles (which requires the Python interpreter) Python will be closed
+
+   * otherwise, as mentioned above, you can implement a function called :py:data:`cleanup()` that can be used 
+     to unload unused modules, free part of the memory by deleting no more needed variables etc...
+
+So the program can be launched as
+
+.. code-block:: bash
+  
+  mpirun -n 4 ./smilei my_sim.py "fieldDump_every=10"
+
+
 
 ----
 
@@ -1175,7 +1219,30 @@ All the possible variables inside this block are explained here:
 Miscellaneous
 ^^^^^^^^^^^^^
 
+.. py:data:: smilei_mpi_rank
+    
+  This is a variable defined from ``smilei`` and is the MPI rank of the CPU
+
+.. py:data:: smilei_mpi_size
+    
+  This is a variable defined from ``smilei`` and is the MPI total number of CPUs
+
+.. py:data:: smilei_rand_max
+
+  This is a variable defined from ``smilei`` and is the largest C random value 
+
 .. py:data:: random_seed
 
   The value of the random seed. If not defined, the machine clock is used.
+  Note that to create a per processor ``random_seed`` you can use the variable ``smilei_mpi_rank`` 
+  
+
+::
+
+    import random, math
+    # reshuffle python random generator
+    random.seed(random.random()*smilei_mpi_rank)
+    # get 32bit integer to be passed to smilei
+    random_seed = random.randint(0,smilei_rand_max)
+  
 

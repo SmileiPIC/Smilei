@@ -133,6 +133,8 @@ endif
 doc:
 	make -C doc all
 
+sphinx:
+	make -C doc/Sphinx html
 tar:
 	git archive -o smilei-$(VERSION).tgz --prefix smilei-$(VERSION)/ HEAD
 	

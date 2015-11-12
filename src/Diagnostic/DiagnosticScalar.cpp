@@ -14,8 +14,11 @@ DiagnosticScalar::DiagnosticScalar(Params& params, SmileiMPI *smpi) :
 every(0) {
     out_width.resize(0);
     
+    if (PyTools::nComponents("DiagScalar") > 1) {
+        ERROR("Only one DiagScalar can be specified");
+    }
     
-    if (PyTools::nComponents("DiagScalar") > 0) {
+    if (PyTools::nComponents("DiagScalar") > 0 ) {
         
         if (!PyTools::extract("every",every,"DiagScalar")) every=params.global_every;
         
@@ -31,8 +34,12 @@ every(0) {
             tmin = 0.;
             tmax = params.sim_time;
         } else {
-            tmin = scalar_time_range[0];
-            tmax = scalar_time_range[1];
+            if (scalar_time_range.size() == 2) {
+                tmin = scalar_time_range[0];
+                tmax = scalar_time_range[1];
+            } else {
+                ERROR("in DiagScalar time_range");
+            }
         }
         
         precision=10;

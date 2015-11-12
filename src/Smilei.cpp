@@ -69,12 +69,8 @@ int main (int argc, char* argv[])
     
     TITLE("Input data info");
     
-    // Check for namelists (input files)
-    vector<string> namelists(argv + 1, argv + argc);
-    if (namelists.size()==0) ERROR("No namelists given!");
-    
     // Read simulation & diagnostics parameters
-    Params params(smpiData,namelists);
+    Params params(smpiData,vector<string>(argv + 1, argv + argc));
     smpiData->init(params);
     smpiData->barrier();
     if ( smpiData->isMaster() ) params.print();
