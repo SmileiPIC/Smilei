@@ -201,20 +201,24 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params)
 	iPart = (*indexes_of_particles_to_exchange)[i];
         check = 0;
         idim = 0;
-
         //Put indexes of particles in the first direction they will be exchanged and correct their position according to periodicity for the first exchange only.
         while (check == 0 && idim<ndim){
-	    if ( cuParticles.position(idim,iPart) < min_local[idim] && neighbor_[idim][0]!=MPI_PROC_NULL) { 
-	        vecSpecies[ispec]->specMPI.patch_buff_index_send[idim][0].push_back( iPart );
-		if (smpi->periods_[idim]==1 && Pcoordinates[idim] == 0) {
-	            cuParticles.position(idim,iPart)     += xmax[idim];
+	    if ( cuParticles.position(idim,iPart) < min_local[idim]){
+                if ( neighbor_[idim][0]!=MPI_PROC_NULL) { 
+	            vecSpecies[ispec]->specMPI.patch_buff_index_send[idim][0].push_back( iPart );
+		    if (smpi->periods_[idim]==1 && Pcoordinates[idim] == 0) {
+	                cuParticles.position(idim,iPart)     += xmax[idim];
+                    }
                 }
+                //If particle is outside of the global domain (has no neighbor), it will not be put in a send buffer and will simply be deleted.
                 check = 1;
 	    }
-	    else if ( cuParticles.position(idim,iPart) >= max_local[idim] && neighbor_[idim][1]!=MPI_PROC_NULL) { 
-	        vecSpecies[ispec]->specMPI.patch_buff_index_send[idim][1].push_back( iPart );
-		if (smpi->periods_[idim]==1 && Pcoordinates[idim] == params.number_of_patches[idim]-1) {
-	            cuParticles.position(idim,iPart)     -= xmax[idim];
+	    else if ( cuParticles.position(idim,iPart) >= max_local[idim]){
+                if( neighbor_[idim][1]!=MPI_PROC_NULL) { 
+	            vecSpecies[ispec]->specMPI.patch_buff_index_send[idim][1].push_back( iPart );
+		    if (smpi->periods_[idim]==1 && Pcoordinates[idim] == params.number_of_patches[idim]-1) {
+	                cuParticles.position(idim,iPart)     -= xmax[idim];
+                    }
                 }
                 check = 1;
 	    }
@@ -473,13 +477,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params,
                 for (unsigned int j=0; j<n_part_recv ;j++){
                     //We first evaluate how many particles arrive in each bin.
             	    ii = int((vecSpecies[ispec]->specMPI.patchVectorRecv[idim][iNeighbor].position(0,j)-min_local[0])/dbin);//bin in which the particle goes.
-                    //DEBUG
-                    if (ii < 0 || ii >= (*cubmax).size()){
-                        cout << "not good ii = " << ii << endl;
-                    } else {
-                    //////////////////////////
-            	        shift[ii+1]++; // It makes the next bins shift.
-                    }
+                    shift[ii+1]++; // It makes the next bins shift.
                 }
             }
         }
@@ -506,9 +504,6 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params,
         //idim == 0  is the easy case, when particles arrive either in first or last bin.
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
             n_part_recv = vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[0][iNeighbor];
-            //DEBUG
-            if(n_part_recv != (vecSpecies[ispec]->specMPI.patchVectorRecv[0][iNeighbor]).size() ) cout << "error size dim=0"<<endl;
-            /////////////////
             if ( (neighbor_[0][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
                 ii = iNeighbor*((*cubmax).size()-1);//0 if iNeighbor=0(particles coming from West) and (*cubmax).size()-1 otherwise.
                 vecSpecies[ispec]->specMPI.patchVectorRecv[0][iNeighbor].overwrite_part(0, cuParticles,(*cubmax)[ii],n_part_recv);
@@ -519,9 +514,6 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params,
         for (idim = 1; idim < ndim; idim++){
             for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
                 n_part_recv = vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[idim][iNeighbor];
-                //DEBUG
-                if(n_part_recv != vecSpecies[ispec]->specMPI.patchVectorRecv[idim][iNeighbor].size() ) cout <<"error size dim="<<idim<<endl;
-                /////////////////
                 if ( (neighbor_[idim][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
             	    for(unsigned int j=0; j<n_part_recv; j++){
             	        ii = int((vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][iNeighbor].position(0,j)-min_local[0])/dbin);//bin in which the particle goes.
@@ -532,7 +524,6 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params,
             }
         }
     }//End Recv_buffers ==> particles
-    if(vecSpecies[ispec]->getNbrOfParticles() != (*cubmax).back()) cout << "discrepancy" << endl;
 
 } // finalizeCommParticles(... iDim)
 
