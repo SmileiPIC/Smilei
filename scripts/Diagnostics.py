@@ -1558,10 +1558,10 @@ class Probe(Diagnostic):
 		for key in f.keys():
 			if key[0] != "p": continue
 			if int(key.strip("p"))==probeNumber:
-				self._h5probe = f.get(key)
+				self._h5probe = f[key]
 				break
 		if self._h5probe is None:
-			print "Cannot find probe "+str(probeNumber)+" in file "+file
+			print "Cannot find probe "+str(probeNumber)+" in file "+self._file
 			f.close()
 			return None
 		
@@ -1614,6 +1614,7 @@ class Probe(Diagnostic):
 		# Get the shape of the probe
 		self._info = self._getMyInfo()
 		self._ishape = self._info["shape"]
+		if self._ishape.prod()==1: self._ishape=self._np.array([])
 		
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
@@ -1765,10 +1766,12 @@ class Probe(Diagnostic):
 		except:
 			print "Cannot open file "+file
 			return {}
+		probe = None
 		for key in f.iterkeys():
 			if key[0] != "p": continue
 			if int(key.strip("p"))==probeNumber:
 				probe = f[key]
+				break
 		if probe is None:
 			print "Cannot find probe "+str(probeNumber)+" in file "+file
 			return {}
