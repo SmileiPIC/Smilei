@@ -206,7 +206,7 @@ void VectorPatch::exchangeParticles(int ispec, PicParams &params, SmileiMPI* smp
 {
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-      (*this)(ipatch)->initExchParticles(smpi, ispec, params, this);
+      (*this)(ipatch)->initExchParticles(smpi, ispec, params);
     }
 
     //cout << "init exch done" << endl;

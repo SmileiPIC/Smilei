@@ -171,7 +171,7 @@ void Patch::dynamics(double time_dual, PicParams &params, SimWindow* simWindow, 
 
 }
 
-void Patch::initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, VectorPatch * vecPatch)
+void Patch::initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params)
 {
     Particles &cuParticles = (*vecSpecies[ispec]->particles);
     int ndim = params.nDim_field;
