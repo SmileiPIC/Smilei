@@ -221,9 +221,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
 	
     }
 
-    //DEBUG
-    if(nPatches_start != nPatches) cout << "error number of patches" << endl;
-
     for (int ipatch=0 ; ipatch<nPatches ; ipatch++ ) {
         vecPatches(ipatch)->updateMPIenv(smpi);
     }

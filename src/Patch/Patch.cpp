@@ -407,33 +407,37 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params,
                     idim = iDim+1;//We check next dimension
                     while (check == 0 && idim<ndim){
                         //If particle not in the domain...
-	                if ( (vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2]).position(idim,iPart) < min_local[idim] && neighbor_[idim][0]!=MPI_PROC_NULL) { 
-                            //...Deal with periodicity...
-	            	    if (smpi->periods_[idim]==1 && Pcoordinates[idim] == 0) {
-	                        (vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2]).position(idim,iPart)     += xmax[idim];
+	                if ( (vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2]).position(idim,iPart) < min_local[idim] ){  
+                            if (neighbor_[idim][0]!=MPI_PROC_NULL){ //if neighbour exists
+                                //...Deal with periodicity...
+	            	        if (smpi->periods_[idim]==1 && Pcoordinates[idim] == 0) {
+	                            (vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2]).position(idim,iPart)     += xmax[idim];
+                                }
+                                //... copy it at the back of the local particle vector ...
+                                (vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2]).cp_particle(iPart, cuParticles);
+                                //...adjust bmax ...
+                                (*cubmax)[(*cubmax).size()-1]++;
+                                //... and add its index to the particles to be sent later...
+	                        vecSpecies[ispec]->specMPI.patch_buff_index_send[idim][0].push_back( cuParticles.size()-1 );
+                                //..without forgeting to add it to the list of particles to clean.
+	                        vecSpecies[ispec]->addPartInExchList(cuParticles.size()-1);
                             }
-                            //... copy it at the back of the local particle vector ...
-                            (vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2]).cp_particle(iPart, cuParticles);
-                            //...adjust bmax ...
-                            (*cubmax)[(*cubmax).size()-1]++;
-                            //... and add its index to the particles to be sent later...
-	                    vecSpecies[ispec]->specMPI.patch_buff_index_send[idim][0].push_back( cuParticles.size()-1 );
-                            //... without forgeting to add it to the exchange list for later cleaning...
-	                    vecSpecies[ispec]->addPartInExchList(cuParticles.size()-1);
-                            //... and removing it from receive buffer.
+                            //Remove it from receive buffer.
 	                    (vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2]).erase_particle(iPart);
 	                    vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2]--;
                             check = 1;
 	                }
                         //Other side of idim
-	                else if ( (vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2]).position(idim,iPart) >= max_local[idim] && neighbor_[idim][1]!=MPI_PROC_NULL) { 
-	            	    if (smpi->periods_[idim]==1 && Pcoordinates[idim] == params.number_of_patches[idim]-1) {
-	                        (vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2]).position(idim,iPart)     -= xmax[idim];
+	                else if ( (vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2]).position(idim,iPart) >= max_local[idim]) { 
+                            if (neighbor_[idim][1]!=MPI_PROC_NULL){ //if neighbour exists
+	            	        if (smpi->periods_[idim]==1 && Pcoordinates[idim] == params.number_of_patches[idim]-1) {
+	                            (vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2]).position(idim,iPart)     -= xmax[idim];
+                                }
+                                (vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2]).cp_particle(iPart, cuParticles);
+                                (*cubmax)[(*cubmax).size()-1]++;
+	                        vecSpecies[ispec]->specMPI.patch_buff_index_send[idim][1].push_back( cuParticles.size()-1 );
+	                        vecSpecies[ispec]->addPartInExchList(cuParticles.size()-1);
                             }
-                            (vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2]).cp_particle(iPart, cuParticles);
-                            (*cubmax)[(*cubmax).size()-1]++;
-	                    vecSpecies[ispec]->specMPI.patch_buff_index_send[idim][1].push_back( cuParticles.size()-1 );
-	                    vecSpecies[ispec]->addPartInExchList(cuParticles.size()-1);
 	                    (vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2]).erase_particle(iPart);
 	                    vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2]--;
                             check = 1;
