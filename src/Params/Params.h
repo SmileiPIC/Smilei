@@ -144,7 +144,10 @@ public:
     //! string containing the whole clean namelist
     std::string namelist;
     
-    //! call the python cleanup function and 
+    //! outut directory where to store all files
+    std::string output_dir;
+    
+    //! call the python cleanup function and
     //! check if python can be closed (e.g. there is no laser python profile)
     //! by calling the _keep_python_running python function (part of pycontrol.pyh)
     void cleanup(SmileiMPI*);

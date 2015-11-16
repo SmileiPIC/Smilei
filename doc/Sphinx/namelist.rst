@@ -122,13 +122,13 @@ Stop and restart
 
 .. py:data:: dump_dir
 
-  :default: ""
+  :default: output_dir
   
   This tells :program:`Smilei` where to write dump files
 
 .. py:data:: restart_dir
 
-  :default: ""
+  :default: dump_dir
   
   This tells :program:`Smilei` where to find dump files for restart
   
@@ -194,13 +194,23 @@ Spatial and temporal scales
   (**only required if collisions or ionization are requested**).
   This wavelength is related to the normalization length according to :math:`2\pi L_r = \lambda_r`.
 
+
+----
+
+Input / Output
+^^^^^^^^^^^^^^
+
 .. py:data:: print_every
   
   Number of timesteps between each info output on screen. By default, 10 outputs per
   simulation.
 
+.. py:data:: output_dir
 
-
+  Output directory for the simulation.
+  
+  :default: "."
+  
 ----
 
 .. _Species:

@@ -167,6 +167,7 @@ class PartWall(SmileiComponent):
     z = None
 
 # default simulation values
+output_dir="."
 output_script = "smilei.py"
 smilei_mpi_rank = 0
 smilei_mpi_size = 1
@@ -176,9 +177,9 @@ dump_minutes = 0.0
 exit_after_dump = True
 restart = False
 dump_file_sequence = 2
-dump_dir = "."
+dump_dir = None
 dump_deflate = 0
-restart_dir = "."
+restart_dir = None
 sim_units = ""
 wavelength_SI = 0.
 dim = ""

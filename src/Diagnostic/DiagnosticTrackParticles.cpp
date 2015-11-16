@@ -29,7 +29,7 @@ nDim_particle(params.nDim_particle)
         
         // Create HDF5 file
         ostringstream filename("");
-        filename << "TrackParticles_" << species->species_type  << ".h5" ;
+        filename << params.output_dir << "/TrackParticles_" << species->species_type  << ".h5" ;
         hid_t fid = H5Fcreate( filename.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         
         // Write attribute: dump_every

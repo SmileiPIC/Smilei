@@ -39,7 +39,7 @@ fileId(0)
         if (smpi->isMaster()) {
             if (n_phase == 0) {
                 ostringstream file_name("");
-                file_name<<"PhaseSpace.h5";
+                file_name << params.output_dir << "/PhaseSpace.h5";
                 fileId = H5Fcreate( file_name.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
                 // write version
                 H5::attr(fileId, "Version", string(__VERSION));

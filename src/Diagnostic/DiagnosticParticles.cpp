@@ -123,7 +123,7 @@ every(0)
     // init HDF files (by master, only if it doesn't yet exist)
     if (smpi->isMaster()) {
         mystream.str("");
-        mystream << "ParticleDiagnostic" << n_diag_particles << ".h5";
+        mystream << params.output_dir << "/ParticleDiagnostic" << n_diag_particles << ".h5";
         fileId = H5Fcreate( mystream.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         // write all parameters as HDF5 attributes
         H5::attr(fileId, "Version", string(__VERSION));

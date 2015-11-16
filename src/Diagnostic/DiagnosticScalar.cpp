@@ -24,7 +24,7 @@ every(0) {
         
         //open file scalars.txt
         if (smpi->isMaster() && every>0) {
-            fout.open("scalars.txt");
+            fout.open(params.output_dir+"/scalars.txt");
             if (!fout.is_open()) ERROR("Can't open scalar file");
         }
 

@@ -129,13 +129,13 @@ private:
     //! keep the last dump_file_sequence dump files
     unsigned int dump_file_sequence;
     
-    //! write dump drectory
+    //! write dump directory (default: params.output_dir)
     std::string dump_dir;
     
     //! int deflate dump value
     int dump_deflate;
     
-    //! write dump drectory
+    //! restart dump directory (default: dump_dir)
     std::string restart_dir;
     
     std::vector<MPI_Request> dump_request;

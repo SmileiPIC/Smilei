@@ -54,7 +54,7 @@ phases(params,smpi)
     }
         
     // writable particles initialization
-    dtimer[4].init(smpi, "dump particles");
+    dtimer[4].init(smpi, "track particles");
     // loop species and make a new diag if particles have to be dumped
     for(unsigned int i=0; i<vecSpecies.size(); i++) {
         if (vecSpecies[i]->particles.dump_every > 0) {

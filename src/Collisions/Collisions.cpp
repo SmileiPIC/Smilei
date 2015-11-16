@@ -13,7 +13,7 @@ using namespace std;
 
 
 // Constructor
-Collisions::Collisions(SmileiMPI* smpi,
+Collisions::Collisions(Params& params, SmileiMPI* smpi,
                        unsigned int n_collisions,
                        vector<unsigned int> species_group1, 
                        vector<unsigned int> species_group2, 
@@ -39,7 +39,7 @@ start           (0               )
     if( debug_every>0 ) {
         ostringstream mystream;
         mystream.str("");
-        mystream << "Collisions" << n_collisions << ".h5";
+        mystream << params.output_dir << "/Collisions" << n_collisions << ".h5";
         // Create the HDF5 file 
         hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
         H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
@@ -145,7 +145,7 @@ vector<Collisions*> Collisions::create(Params& params, vector<Species*>& vecSpec
         MESSAGE(1,"Debug                   : " << (debug_every<=0?"No debug":mystream.str()));
         
         // Add new Collisions objects to vector
-        vecCollisions.push_back( new Collisions(smpi,n_collisions,sgroup1,sgroup2,clog,intra,debug_every, vecSpecies[0]->bmin.size()));
+        vecCollisions.push_back( new Collisions(params, smpi,n_collisions,sgroup1,sgroup2,clog,intra,debug_every, vecSpecies[0]->bmin.size()));
         
     }
     

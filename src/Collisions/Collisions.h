@@ -41,7 +41,7 @@ class Collisions
 
 public:
     //! Constructor for Collisions between two species
-    Collisions(SmileiMPI*, unsigned int, std::vector<unsigned int>, std::vector<unsigned int>, double, bool, int, unsigned int);
+    Collisions(Params&, SmileiMPI*, unsigned int, std::vector<unsigned int>, std::vector<unsigned int>, double, bool, int, unsigned int);
     ~Collisions();
     
     //! Method that creates a vector of Collisions objects: one for each group in the input file.

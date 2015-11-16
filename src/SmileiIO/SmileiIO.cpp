@@ -56,13 +56,18 @@ dump_request(smpi->getSize())
     
     PyTools::extract("exit_after_dump", exit_after_dump);
 
-    if (PyTools::extract("dump_dir", dump_dir))
-        dump_dir+="/";
+    PyTools::extract("dump_dir", dump_dir);
+    
+    if (dump_dir.empty()) {
+        dump_dir=params.output_dir;
+    }
     
     PyTools::extract("dump_deflate", dump_deflate);
 
-    if (PyTools::extract("restart_dir", restart_dir))
-        restart_dir+="/";
+    PyTools::extract("restart_dir", restart_dir);
+    if (restart_dir.empty()) {
+        restart_dir=dump_dir;
+    }
     
     if (dump_step || dump_minutes>0) {
         if (exit_after_dump) {
@@ -79,17 +84,6 @@ dump_request(smpi->getSize())
     if (SIG_ERR == signal(SIGUSR2, SmileiIO::signal_callback_handler)) {
         WARNING("Cannot catch signal SIGUSR2");
     }
-/*    // one of these below should be the soft linit signal for loadlever
-    if (SIG_ERR == signal(SIGXCPU, SmileiIO::signal_callback_handler)) {
-        WARNING("Cannot catch signal SIGXCPU");
-    }
-    if (SIG_ERR == signal(SIGTERM, SmileiIO::signal_callback_handler)) {
-        WARNING("Cannot catch signal SIGTERM");
-    }
-    if (SIG_ERR == signal(SIGINT, SmileiIO::signal_callback_handler)) {
-        WARNING("Cannot catch signal SIGINT");
-    }
-*/
     
     // ----------------------------
     // Management of global IO file
@@ -104,7 +98,8 @@ dump_request(smpi->getSize())
     
     // Fields.h5
     // ---------
-    global_file_id_  = H5Fcreate( "Fields.h5",     H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+    string fname=params.output_dir + "/Fields.h5";
+    global_file_id_  = H5Fcreate( fname.c_str(),     H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
     
     // Create property list for collective dataset write: for Fields.h5
     
@@ -119,7 +114,9 @@ dump_request(smpi->getSize())
     // -------------
     global_file_id_avg = 0;
     if  (diag.ntime_step_avg!=0) {
-        global_file_id_avg = H5Fcreate( "Fields_avg.h5", H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+        string fname=params.output_dir + "/Fields_avg.h5";
+
+        global_file_id_avg = H5Fcreate( fname.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
         
         // Create property list for collective dataset write: for Fields.h5
         H5::attr(global_file_id_avg, "res_time", params.res_time);
@@ -215,7 +212,7 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
 
     unsigned int num_dump=dump_times%dump_file_sequence;
     
-    string dump_name=dumpName(num_dump,smpi);
+    string dump_name=dump_dir+dumpName(num_dump,smpi);
     
     hid_t fid = H5Fcreate( dump_name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     dump_times++;
@@ -297,17 +294,12 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
 
 void SmileiIO::dumpFieldsPerProc(hid_t fid, Field* field)
 {
-    hsize_t dims[1]={field->globalDims_};
-    hid_t sid = H5Screate_simple (1, dims, NULL);    
-    hid_t did = H5Dcreate (fid, field->name.c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
-    H5Dwrite(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &field->data_[0]);
-    H5Dclose (did);    
-    H5Sclose(sid);
+    H5::vect(fid, field->name, field->data_[0], field->globalDims_, H5T_NATIVE_DOUBLE, dump_deflate);
 }
 
 string SmileiIO::dumpName(unsigned int num, SmileiMPI *smpi) {
     ostringstream nameDumpTmp("");
-    nameDumpTmp << restart_dir << "dump-" << setfill('0') << setw(1+log10(dump_file_sequence)) << num << "-" << setfill('0') << setw(1+log10(smpi->getSize())) << smpi->getRank() << ".h5" ;
+    nameDumpTmp << "/dump-" << setfill('0') << setw(1+log10(dump_file_sequence)) << num << "-" << setfill('0') << setw(1+log10(smpi->getSize())) << smpi->getRank() << ".h5" ;
     return nameDumpTmp.str();
 }
 
@@ -317,7 +309,8 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, std::vector<Species*> &vecSpec
 
     // This will open all sequential dumps and pick the last one
     for (unsigned int num_dump=0;num_dump<dump_file_sequence; num_dump++) {
-        string dump_name=dumpName(num_dump,smpi);
+        string dump_name=restart_dir+dumpName(num_dump,smpi);
+        DEBUG("Looking for restart: " << dump_name);
         ifstream f(dump_name.c_str());
         if (f.good()) {
             hid_t fid = H5Fopen( dump_name.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
