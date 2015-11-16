@@ -105,15 +105,13 @@ public:
     DiagnosticParticles(unsigned int, Params& params, SmileiMPI *smpi, std::vector<Species*>& vecSpecies);
     
     ~DiagnosticParticles();
-    
-    void close();
-    
+        
     void run(int, std::vector<Species*>&);
         
 private:
     
-     //! this is the hdf5 file id (we need to keep it to close at the right time)
-    hid_t fileId;
+     //! this is the hdf5 file name
+    std::string filename;
     
     //! quantity to be summed into the output array
     std::string output;

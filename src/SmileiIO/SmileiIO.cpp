@@ -33,7 +33,6 @@ dump_step(0),
 dump_minutes(0.0),
 exit_after_dump(true),
 dump_file_sequence(2),
-dump_dir(""),
 dump_deflate(0),
 restart_dir(""),
 dump_request(smpi->getSize())
@@ -55,19 +54,14 @@ dump_request(smpi->getSize())
     dump_file_sequence=std::max((unsigned int)1,dump_file_sequence);
     
     PyTools::extract("exit_after_dump", exit_after_dump);
-
-    PyTools::extract("dump_dir", dump_dir);
-    
-    if (dump_dir.empty()) {
-        dump_dir=params.output_dir;
-    }
     
     PyTools::extract("dump_deflate", dump_deflate);
 
-    PyTools::extract("restart_dir", restart_dir);
-    if (restart_dir.empty()) {
-        restart_dir=dump_dir;
+    if (PyTools::extract("restart_dir", restart_dir) && restart_dir.back()!='/') {
+        restart_dir+="/";
     }
+    
+    
     
     if (dump_step || dump_minutes>0) {
         if (exit_after_dump) {
@@ -98,8 +92,7 @@ dump_request(smpi->getSize())
     
     // Fields.h5
     // ---------
-    string fname=params.output_dir + "/Fields.h5";
-    global_file_id_  = H5Fcreate( fname.c_str(),     H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+    global_file_id_  = H5Fcreate( "Fields.h5",     H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
     
     // Create property list for collective dataset write: for Fields.h5
     
@@ -114,9 +107,7 @@ dump_request(smpi->getSize())
     // -------------
     global_file_id_avg = 0;
     if  (diag.ntime_step_avg!=0) {
-        string fname=params.output_dir + "/Fields_avg.h5";
-
-        global_file_id_avg = H5Fcreate( fname.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+        global_file_id_avg = H5Fcreate( "Fields_avg.h5", H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
         
         // Create property list for collective dataset write: for Fields.h5
         H5::attr(global_file_id_avg, "res_time", params.res_time);
@@ -212,12 +203,10 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
 
     unsigned int num_dump=dump_times%dump_file_sequence;
     
-    string dump_name=dump_dir+dumpName(num_dump,smpi);
-    
-    hid_t fid = H5Fcreate( dump_name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    hid_t fid = H5Fcreate( dumpName(num_dump,smpi).c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     dump_times++;
     
-    MESSAGEALL("Step " << itime << " : DUMP fields and particles " << dump_name);
+    MESSAGEALL("Step " << itime << " : DUMP fields and particles " << dumpName(num_dump,smpi));
     
     H5::attr(fid, "Version", string(__VERSION));
     H5::attr(fid, "CommitDate", string(__COMMITDATE));
@@ -273,7 +262,7 @@ void SmileiIO::dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<
             H5::vect(gid,"Weight", vecSpecies[ispec]->particles.Weight,dump_deflate);
             H5::vect(gid,"Charge", vecSpecies[ispec]->particles.Charge,dump_deflate);
             
-            if (vecSpecies[ispec]->particles.dump_every) {
+            if (vecSpecies[ispec]->particles.track_every) {
                 H5::vect(gid,"Id", vecSpecies[ispec]->particles.Id,dump_deflate);
             }
             
@@ -299,7 +288,7 @@ void SmileiIO::dumpFieldsPerProc(hid_t fid, Field* field)
 
 string SmileiIO::dumpName(unsigned int num, SmileiMPI *smpi) {
     ostringstream nameDumpTmp("");
-    nameDumpTmp << "/dump-" << setfill('0') << setw(1+log10(dump_file_sequence)) << num << "-" << setfill('0') << setw(1+log10(smpi->getSize())) << smpi->getRank() << ".h5" ;
+    nameDumpTmp << "dump-" << setfill('0') << setw(1+log10(dump_file_sequence)) << num << "-" << setfill('0') << setw(1+log10(smpi->getSize())) << smpi->getRank() << ".h5" ;
     return nameDumpTmp.str();
 }
 
@@ -402,7 +391,7 @@ void SmileiIO::restartAll( ElectroMagn* EMfields, std::vector<Species*> &vecSpec
             }
             H5::getVect(gid, "Weight", vecSpecies[ispec]->particles.Weight);
             H5::getVect(gid, "Charge", vecSpecies[ispec]->particles.Charge);
-            if (vecSpecies[ispec]->particles.dump_every) {
+            if (vecSpecies[ispec]->particles.track_every) {
                 H5::getVect(gid, "Id", vecSpecies[ispec]->particles.Id);
             }
             H5::getVect(gid, "bmin", vecSpecies[ispec]->bmin);

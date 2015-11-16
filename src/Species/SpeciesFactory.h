@@ -211,14 +211,14 @@ public:
             PyTools::extract("isTest", thisSpecies->particles.isTest, "Species", ispec);
             if (thisSpecies->particles.isTest) {
                 // activate dump (might be changed below)
-                thisSpecies->particles.dump_every=1;
+                thisSpecies->particles.track_every=1;
             }
             
             // check if particles have to be written and thus have to be labelled (Id property)
-            PyTools::extract("dump_every",thisSpecies->particles.dump_every ,"Species",ispec);
+            PyTools::extract("track_every",thisSpecies->particles.track_every ,"Species",ispec);
             
-            if (thisSpecies->particles.isTest && thisSpecies->particles.dump_every == 0) {
-                ERROR("For Species " << species_type << " isTest=True but dump_every=0");
+            if (thisSpecies->particles.isTest && thisSpecies->particles.track_every == 0) {
+                ERROR("For Species " << species_type << " isTest=True but track_every=0");
             }
             
             // Verify they don't ionize
@@ -248,7 +248,7 @@ public:
             
             // Communicate some stuff if this is a species that has to be dumped (particles have Id)
             // Need to be placed after createParticles()
-            if (thisSpecies->particles.dump_every) {
+            if (thisSpecies->particles.track_every) {
                 int locNbrParticles = thisSpecies->getNbrOfParticles();
                 std::vector<int> allNbrParticles(smpi->smilei_sz);
                 MPI_Gather( &locNbrParticles, 1, MPI_INTEGER, &allNbrParticles[0], 1, MPI_INTEGER, 0, MPI_COMM_WORLD );

@@ -66,6 +66,8 @@ Python workflow and impact
     is required during the simulation (i.e. a python-defined laser profile or an :py:data:`Antenna`) and closes 
     the Python interpreter if this function returns :py:data:`True`
   
+* The code will change its current working directory to the value of ``output_dir`` variable value.
+
 * The MPI master (rank 0) will write a file named ``smilei.py`` as a concatenation of everything that python interpreted
   
 .. note::
@@ -120,17 +122,13 @@ Stop and restart
   
   This tells :program:`Smilei` to keep the last ``n`` dumps for a later restart 2 is the default option in case the code is stopped (or crashes) during a dump write leading to a unreadable dump file.
 
-.. py:data:: dump_dir
-
-  :default: output_dir
-  
-  This tells :program:`Smilei` where to write dump files
-
 .. py:data:: restart_dir
 
-  :default: dump_dir
+  :default: None
   
-  This tells :program:`Smilei` where to find dump files for restart
+  This tells :program:`Smilei` where to find dump files for restart.
+  
+  **WARNING: this path must either absolute or be relative to** ``output_dir``
   
 ----
 
@@ -209,8 +207,9 @@ Input / Output
 
   Output directory for the simulation.
   
-  :default: "."
+  :default: current working directory
   
+
 ----
 
 .. _Species:
@@ -344,11 +343,13 @@ All the possible variables inside this block are explained here:
   Flag for test particles. If ``True``, this species will contain only test particles
   which do not participate in the charge and currents.
 
-.. py:data:: dump_every
+.. py:data:: track_every
   
-  :default: 0 (1 for if ``isTest=True``)
+  :default: 0 (1 if ``isTest=True``)
   
+  This flag will activate the particle tracking for this species.
   Number of timesteps between each dump of particles (Note that if != 0 particles will be tracked i.e. a label will be added to each particle).
+  A file named ``TrackParticles_AAA.h5`` (where ``AAA`` is the ``species_type``) will be created.
 
 
 .. py:data:: c_part_max
@@ -1229,6 +1230,19 @@ All the possible variables inside this block are explained here:
 Miscellaneous
 ^^^^^^^^^^^^^
 
+.. py:data:: random_seed
+
+  The value of the random seed. If not defined, the machine clock is used.
+  Note that to create a per processor ``random_seed`` you can use the variable ``smilei_mpi_rank`` (see below)
+  
+
+----
+
+Smilei defined variables
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+These are variable defined in smilei and passed to the python interpreter for commodity reason
+
 .. py:data:: smilei_mpi_rank
     
   This is a variable defined from ``smilei`` and is the MPI rank of the CPU
@@ -1241,18 +1255,14 @@ Miscellaneous
 
   This is a variable defined from ``smilei`` and is the largest C random value 
 
-.. py:data:: random_seed
 
-  The value of the random seed. If not defined, the machine clock is used.
-  Note that to create a per processor ``random_seed`` you can use the variable ``smilei_mpi_rank`` 
-  
-
+As example of their use, here is a scipt to randomize both the python interpreter and the 
 ::
 
     import random, math
     # reshuffle python random generator
     random.seed(random.random()*smilei_mpi_rank)
-    # get 32bit integer to be passed to smilei
+    # get 32bit pseudo random integer to be passed to smilei
     random_seed = random.randint(0,smilei_rand_max)
   
 

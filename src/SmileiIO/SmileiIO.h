@@ -50,10 +50,6 @@ public:
     //! Property list for collective dataset write, set for // IO.
     hid_t write_plist;
     
-    //! Id of "particles-mpirank.h5", contains particles of current mpirank
-    //! Disabled for now
-    hid_t  partFile_id;
-    
     //! Basic write field on its own file (debug)
     virtual void write( Field* field ) = 0;
     
@@ -129,13 +125,10 @@ private:
     //! keep the last dump_file_sequence dump files
     unsigned int dump_file_sequence;
     
-    //! write dump directory (default: params.output_dir)
-    std::string dump_dir;
-    
     //! int deflate dump value
     int dump_deflate;
     
-    //! restart dump directory (default: dump_dir)
+    //! restart dump directory (default: .)
     std::string restart_dir;
     
     std::vector<MPI_Request> dump_request;

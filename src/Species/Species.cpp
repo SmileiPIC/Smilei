@@ -894,7 +894,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
         nrj_new_particles += particles.weight(iPart)*(particles.lor_fac(iPart)-1.0);
     }
     
-    if (particles.dump_every)
+    if (particles.track_every)
         particles.setIds();
 
     return npart_effective;

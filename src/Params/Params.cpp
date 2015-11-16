@@ -18,8 +18,7 @@ using namespace std;
 // Params : open & parse the input data file, test that parameters are coherent
 // ---------------------------------------------------------------------------------------------------------------------
 Params::Params(SmileiMPI* smpi, std::vector<std::string> namelistsFiles) :
-namelist(""),
-output_dir(".")
+namelist("")
 {
     
     if (namelistsFiles.size()==0) ERROR("No namelists given!");
@@ -77,25 +76,24 @@ output_dir(".")
     smpi->barrier();
 
     // output dir: we force this to be the same on all mpi nodes
-    if (smpi->isMaster()) {
-        PyTools::extract("output_dir", output_dir);
-    }
-    smpi->bcast(output_dir);
-    smpi->barrier();
-    
-    if (output_dir.empty())
-        ERROR("output_dir empty");
-    
+    string output_dir("");
+    PyTools::extract("output_dir", output_dir);
     
     // CHECK namelist on python side
     PyTools::runPyFunction("_smilei_check");
     smpi->barrier();
-    
+
+    if (!output_dir.empty()) {
+        if (chdir(output_dir.c_str()) != 0) {
+            WARNING("Could not chdir to output_dir = " << output_dir);
+        }
+    }
+
     
     // Now the string "namelist" contains all the python files concatenated
     // It is written as a file: smilei.py
     if (smpi->isMaster()) {
-        ofstream out_namelist(output_dir+"/smilei.py");
+        ofstream out_namelist("smilei.py");
         if (out_namelist.is_open()) {
             out_namelist << namelist;
             out_namelist.close();

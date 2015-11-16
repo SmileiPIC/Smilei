@@ -100,15 +100,9 @@ public:
     //! return name of the probe based on its number
     std::string probeName(int p);
 
-    //! function to close the file
-    void close();
-
     //! vector containing the timesteps at which calculate each probe
     std::vector<unsigned int> every;
 
-    //! hdf5 file ID
-    hid_t fileId;
-    
     std::vector<double> tmin;
     std::vector<double> tmax;
     double dt;

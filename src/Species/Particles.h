@@ -204,8 +204,8 @@ public:
     // TEST PARTICLE PARAMETERS
     bool isTest;
     
-    // dump every means taht particles have to be written
-    unsigned int dump_every;
+    // steps between each write of particles (this will activate a DiagnosticTrackParticles)
+    unsigned int track_every;
 
     void setIds() {
         unsigned int s = Id.size();

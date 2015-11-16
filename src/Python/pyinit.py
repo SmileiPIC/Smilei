@@ -82,7 +82,7 @@ class Species(SmileiComponent):
     ionization_model = "none"
     atomic_number = None
     isTest = False
-    dump_every = 0
+    track_every = 0
 
 class Laser(SmileiComponent):
     """Laser parameters"""
@@ -167,8 +167,7 @@ class PartWall(SmileiComponent):
     z = None
 
 # default simulation values
-output_dir="."
-output_script = "smilei.py"
+output_dir = None
 smilei_mpi_rank = 0
 smilei_mpi_size = 1
 smilei_rand_max = 2**31-1
@@ -177,7 +176,6 @@ dump_minutes = 0.0
 exit_after_dump = True
 restart = False
 dump_file_sequence = 2
-dump_dir = None
 dump_deflate = 0
 restart_dir = None
 sim_units = ""

@@ -57,7 +57,7 @@ phases(params,smpi)
     dtimer[4].init(smpi, "track particles");
     // loop species and make a new diag if particles have to be dumped
     for(unsigned int i=0; i<vecSpecies.size(); i++) {
-        if (vecSpecies[i]->particles.dump_every > 0) {
+        if (vecSpecies[i]->particles.track_every > 0) {
             vecDiagnosticTrackParticles.push_back(new DiagnosticTrackParticles(params, smpi, vecSpecies[i]));
         }
     }
@@ -66,11 +66,7 @@ phases(params,smpi)
 void Diagnostic::closeAll (SmileiMPI* smpi) {
     
     scalars.closeFile(smpi);
-    probes.close();
     phases.close();
-    
-    for (unsigned int i=0; i<vecDiagnosticParticles.size(); i++) // loop all particle diagnostics
-        vecDiagnosticParticles[i]->close();
     
 }
 

@@ -41,8 +41,8 @@ class Collisions
 
 public:
     //! Constructor for Collisions between two species
-    Collisions(Params&, SmileiMPI*, unsigned int, std::vector<unsigned int>, std::vector<unsigned int>, double, bool, int, unsigned int);
-    ~Collisions();
+    Collisions(SmileiMPI*, unsigned int, std::vector<unsigned int>, std::vector<unsigned int>, double, bool, int, unsigned int);
+    ~Collisions(){};
     
     //! Method that creates a vector of Collisions objects: one for each group in the input file.
     static std::vector<Collisions*> create(Params&, std::vector<Species*>&, SmileiMPI*);
@@ -78,12 +78,12 @@ private:
     
     static double cos_chi(double);
     
-    //! Hdf5 file id
-    hid_t fileId;
-    
     int totbins;
     int start;
 
+    //! Hdf5 file name
+    std::string filename;
+    
 };
 
 

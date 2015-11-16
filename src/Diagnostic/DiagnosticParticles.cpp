@@ -11,7 +11,7 @@ using namespace std;
 
 // constructor
 DiagnosticParticles::DiagnosticParticles(unsigned int n_diag_particles, Params& params, SmileiMPI *smpi, std::vector<Species*>& vecSpecies) :
-fileId(0),
+filename(""),
 output(""),
 every(0)
 {
@@ -123,8 +123,9 @@ every(0)
     // init HDF files (by master, only if it doesn't yet exist)
     if (smpi->isMaster()) {
         mystream.str("");
-        mystream << params.output_dir << "/ParticleDiagnostic" << n_diag_particles << ".h5";
-        fileId = H5Fcreate( mystream.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+        mystream << "ParticleDiagnostic" << n_diag_particles << ".h5";
+        filename = mystream.str();
+        hid_t fileId = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         // write all parameters as HDF5 attributes
         H5::attr(fileId, "Version", string(__VERSION));
         H5::attr(fileId, "output" , output);
@@ -146,6 +147,8 @@ every(0)
             string str2 = mystream.str();
             H5::attr(fileId, str1, str2);
         }
+        
+        H5Fclose(fileId);
     }
 
 }
@@ -153,14 +156,6 @@ every(0)
 // destructor
 DiagnosticParticles::~DiagnosticParticles()
 {
-}
-
-// close the hdf file
-void DiagnosticParticles::close()
-{
-    
-    if (fileId != 0) H5Fclose(fileId);
-    
 }
 
 // run one particle diagnostic
@@ -432,10 +427,10 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies)
     // if needed now, store result to hdf file
     if (timestep % every == time_average-1) {
         
-        // sum the outputs from each MPI partition (fileId>0 only for master)
-        MPI_Reduce(fileId>0?MPI_IN_PLACE:&data_sum[0], &data_sum[0], output_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        // sum the outputs from each MPI partition (filename.size()>0 only for master)
+        MPI_Reduce(filename.size()?MPI_IN_PLACE:&data_sum[0], &data_sum[0], output_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
         
-        if (fileId > 0) { // only the master has fileId>0
+        if (filename.size()) { // only the master has filename.size()>0
             // if time_average, then we need to divide by the number of timesteps
             if (time_average > 1) {
                 coeff = 1./((double)time_average);
@@ -446,8 +441,9 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies)
             mystream.str("");
             mystream << "timestep" << setw(8) << setfill('0') << timestep;
             // write the array
+            hid_t fileId = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
             H5::vect(fileId, mystream.str(), data_sum);
-            H5Fflush(fileId, H5F_SCOPE_GLOBAL);
+            H5Fclose(fileId);
         }
         
     }

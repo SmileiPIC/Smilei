@@ -29,11 +29,11 @@ nDim_particle(params.nDim_particle)
         
         // Create HDF5 file
         ostringstream filename("");
-        filename << params.output_dir << "/TrackParticles_" << species->species_type  << ".h5" ;
+        filename << "TrackParticles_" << species->species_type  << ".h5" ;
         hid_t fid = H5Fcreate( filename.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         
-        // Write attribute: dump_every
-        H5::attr(fid, "every", species->particles.dump_every);
+        // Write attribute: track_every
+        H5::attr(fid, "every", species->particles.track_every);
         
         // Define maximum size
         hsize_t maxDimsPart[2] = {H5S_UNLIMITED, nParticles};
@@ -87,7 +87,7 @@ nDim_particle(params.nDim_particle)
 
 void DiagnosticTrackParticles::run(int time, SmileiMPI* smpi) {
     
-    if ( time % species->particles.dump_every != 0) return;
+    if ( time % species->particles.track_every != 0) return;
 
     int locNbrParticles = species->getNbrOfParticles();
     
