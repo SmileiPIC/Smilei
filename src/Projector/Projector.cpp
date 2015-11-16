@@ -1,9 +1,9 @@
 #include "Projector.h"
 
-#include "PicParams.h"
+#include "Params.h"
 #include "Patch.h"
 
-Projector::Projector(PicParams &params, Patch* patch)
+Projector::Projector(Params &params, Patch* patch)
 {
 }
 

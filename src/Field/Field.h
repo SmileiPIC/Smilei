@@ -51,6 +51,7 @@ public:
     Field( std::vector<unsigned int> dims, std::string name_in ) : name(name_in) {
         specMPI.init();
     } ;
+    
     //! Constructor for Field: isPrimal define if mainDim is Primal or Dual
     Field( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name_in ) : name(name_in) {
        specMPI.init() ;
@@ -96,6 +97,8 @@ public:
     unsigned int globalDims_;
     //! pointer to the linearized array
     double* data_;
+    
+    inline double* data() {return data_;}
     //! reference access to the linearized array (with check in DEBUG mode)
     inline double& operator () (unsigned int i)
     {
@@ -115,6 +118,13 @@ public:
     {
         if (data_)
             for (unsigned int i=0; i<globalDims_; i++) data_[i] = val;
+    }
+    
+    //! method used to put all entry of a field at a given value val
+    inline void multiply(double val)
+    {
+        if (data_)
+            for (unsigned int i=0; i<globalDims_; i++) data_[i] *= val;
     }
     
 
@@ -142,6 +152,14 @@ public:
 	for (int i=0;i<globalDims_;i++) sum+= data_[i]*data_[i];
 	return sum;
     }
+    
+    inline void copyFrom(Field *from_field) {
+        DEBUGEXEC(if (globalDims_!=from_field->globalDims_) ERROR("Field size do not match "<< name << " " << from_field->name));
+        for (unsigned int i=0;i< globalDims_; i++) {
+            (*this)(i)=(*from_field)(i);
+        }
+    }
+
 
 protected:
 

@@ -24,11 +24,7 @@
 #include <iostream>
 #include <sstream>
 
-#include "PicParams.h"
-#include "DiagParams.h"
-#include "Diagnostic.h"
-#include "DiagnosticProbe.h"
-#include "DiagnosticPhaseSpace.h"
+#include "Params.h"
 #include "Tools.h"
 
 #include "ElectroMagn.h"
@@ -81,20 +77,6 @@ SmileiMPI::~SmileiMPI()
 
 }
 
-void SmileiMPI::bcast( InputData& input_data )
-{
-    DEBUG(10,"broadcast namelist");
-    bcast(input_data.namelist);    
-
-    input_data.parseStream();
-    
-    // Randomization
-    unsigned long seedTime=0;
-    input_data.extract("random_seed",seedTime);
-    srand(seedTime+getRank());
-    
-}
-
 void SmileiMPI::bcast( string& val )
 {
     int charSize=0;
@@ -102,14 +84,19 @@ void SmileiMPI::bcast( string& val )
     MPI_Bcast(&charSize, 1, MPI_INT, 0, SMILEI_COMM_WORLD);
 
     char tmp[charSize];
-    strcpy(tmp, val.c_str());
+    if (isMaster()) strcpy(tmp, val.c_str());
     MPI_Bcast(&tmp, charSize, MPI_CHAR, 0, SMILEI_COMM_WORLD);
 
     if (!isMaster()) val=tmp;
 
 }
 
-void SmileiMPI::init( PicParams& params )
+void SmileiMPI::bcast( int& val )
+{
+    MPI_Bcast(&val, 1, MPI_INT, 0, SMILEI_COMM_WORLD);
+}
+
+void SmileiMPI::init( Params& params )
 {
 
 
@@ -121,27 +108,27 @@ void SmileiMPI::init( PicParams& params )
     patch_count.resize(smilei_sz, 0);
     target_patch_count.resize(smilei_sz, 0);
 
-    interParticles.initialize(0,params.nDim_particle); 
+    interParticles.initialize(0,params); 
  
     init_patch_count(params);
 
     periods_  = new int[params.nDim_field];
     for (int i=0 ; i<params.nDim_field ; i++) periods_[i] = 0;
     // Geometry periodic in x
-    if (params.bc_em_type_long=="periodic") {
+    if (params.bc_em_type_x[0]=="periodic") {
         periods_[0] = 1;
         MESSAGE(1,"applied topology for periodic BCs in x-direction");
     }
     if (params.nDim_field>1) {
 	// Geometry periodic in y
-	if (params.bc_em_type_trans=="periodic") {
+	if (params.bc_em_type_y[0]=="periodic") {
 	    periods_[1] = 1;
 	    MESSAGE(2,"applied topology for periodic BCs in y-direction");
 	}
     }
 }
 
-void SmileiMPI::init_patch_count( PicParams& params)
+void SmileiMPI::init_patch_count( Params& params)
 {
 #ifdef _NOTBALANCED
     bool use_load_balancing(true);
@@ -154,6 +141,11 @@ void SmileiMPI::init_patch_count( PicParams& params)
 	return;
     }
 #endif
+
+#ifndef _PY_PATCH_COUNT
+    MESSAGE( "Plasma not defined, may used python" );
+#else
+
     unsigned int Npatches, r,Ncur,Pcoordinates[3],ncells_perpatch, Tcapabilities;
     double Tload,Tcur, Lcur, local_load, local_load_temp, above_target, below_target;
     std::vector<unsigned int> mincell,maxcell,capabilities; //Min and max values of non empty cells for each species and in each dimension.
@@ -165,8 +157,9 @@ void SmileiMPI::init_patch_count( PicParams& params)
     coef_cell = 50;
     coef_frozen = 0.1;
  
-    mincell.resize(params.n_species*3);
-    maxcell.resize(params.n_species*3);
+    mincell.resize(params.species_param.size()*3);
+    maxcell.resize(params.species_param.size()*3);
+                     
     capabilities.resize(smilei_sz, 1); //Capabilities of devices hosting the different mpi processes. All capabilities are assumed to be equal for the moment.
     //Compute total capability: Tcapabilities
     Tcapabilities = 0;
@@ -189,14 +182,16 @@ void SmileiMPI::init_patch_count( PicParams& params)
     Lcur = 0.; //Load assigned to current rank r.
 
 
-    for (unsigned int ispecies = 0; ispecies < params.n_species; ispecies++){
+    for (unsigned int ispecies = 0; ispecies < params.species_param.size(); ispecies++){
         //Needs to be updated when dens_lenth is a vector in params.
+
         density_length[0] = params.species_param[ispecies].dens_length_x[0];
 	if (params.nDim_field>1) {
 	    density_length[1] = params.species_param[ispecies].dens_length_y[0];
 	    if (params.nDim_field>2)
 		density_length[2] = params.species_param[ispecies].dens_length_z[0];
 	}
+	
 
         local_load = params.species_param[ispecies].n_part_per_cell ;
         if(params.species_param[ispecies].time_frozen > 0.) local_load *= coef_frozen; // Assumes time_dual = 0. Might be false at restart !
@@ -221,7 +216,7 @@ void SmileiMPI::init_patch_count( PicParams& params)
             Pcoordinates[idim] *= params.n_space[idim]; //Compute patch cells coordinates
         }
         local_load = 0.; //Accumulate load of the current patch
-        for (unsigned int ispecies = 0; ispecies < params.n_species; ispecies++){
+        for (unsigned int ispecies = 0; ispecies < params.species_param.size(); ispecies++){
             local_load_temp = params.species_param[ispecies].n_part_per_cell; //Accumulate load of the current species.
             if(params.species_param[ispecies].time_frozen > 0.) local_load_temp *= coef_frozen;
             for (unsigned int idim = 0; idim < params.nDim_field; idim++){
@@ -260,11 +255,17 @@ void SmileiMPI::init_patch_count( PicParams& params)
         }
     }// End loop on patches.
     if (isMaster()) for (unsigned int i=0; i<smilei_sz; i++) cout << "patch count = " << patch_count[i]<<endl;
+#endif 
 
 }
 
-void SmileiMPI::recompute_patch_count( PicParams& params, VectorPatch& vecpatches, double time_dual )
+void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, double time_dual )
 {
+
+#ifndef _PY_PATCH_COUNT
+    MESSAGE( "Plasma not defined, may used python" );
+#else
+
     unsigned int Npatches, r,Ncur,Pcoordinates[3],ncells_perpatch, Tcapabilities, Lmin, Lmintemp;
     double Tload,Tcur, Lcur, above_target, below_target;
     std::vector<unsigned int> mincell,maxcell,capabilities; //Min and max values of non empty cells for each species and in each dimension.
@@ -285,8 +286,8 @@ void SmileiMPI::recompute_patch_count( PicParams& params, VectorPatch& vecpatche
     for (unsigned int idim = 1; idim < params.nDim_field; idim++)
         ncells_perpatch *= params.n_space[idim]+2*params.oversize[idim];
  
-    mincell.resize(params.n_species*3);
-    maxcell.resize(params.n_species*3);
+    mincell.resize(params.species_param.size()*3);
+    maxcell.resize(params.species_param.size()*3);
     capabilities.resize(smilei_sz, 1); //Capabilities of devices hosting the different mpi processes. All capabilities are assumed to be equal for the moment.
     Tcapabilities = 0;
     for (unsigned int i = 0; i < smilei_sz; i++)
@@ -301,8 +302,9 @@ void SmileiMPI::recompute_patch_count( PicParams& params, VectorPatch& vecpatche
 
     //Compute Local Loads of each Patch (Lp)
     for(unsigned int hindex=0; hindex < patch_count[smilei_rk]; hindex++){
-        for (unsigned int ispecies = 0; ispecies < params.n_species; ispecies++)
-            Lp[hindex] += params.species_param[ispecies].n_part_per_cell*vecpatches(hindex)->vecSpecies[ispecies]->getNbrOfParticles()*(1+(coef_frozen-1)*(time_dual > params.species_param[ispecies].time_frozen)) ;
+        for (unsigned int ispecies = 0; ispecies < params.species_param.size(); ispecies++) {
+	    Lp[hindex] += params.species_param[ispecies].ppc_profile*vecpatches(hindex)->vecSpecies[ispecies]->getNbrOfParticles()*(1+(coef_frozen-1)*(time_dual > params.species_param[ispecies].time_frozen)) ;
+	}
         Lp[hindex] += ncells_perpatch*coef_cell ;
     }
 
@@ -398,6 +400,7 @@ void SmileiMPI::recompute_patch_count( PicParams& params, VectorPatch& vecpatche
 		cout << " patch_count[" << irk << "]" << patch_count[irk] << " target patch_count = "<< target_patch_count[irk] << endl;
 
     return;
+#endif
 }
 
 
@@ -653,7 +656,7 @@ void SmileiMPI::recv(Patch* patch, int from, int tag)
     recv( patch->Diags, from, tag+2*patch->vecSpecies.size()+9 );
 
 }
-void SmileiMPI::new_recv(Patch* patch, int from, int tag, int ndim)
+void SmileiMPI::new_recv(Patch* patch, int from, int tag, Params& params)
 {
     int nbrOfProp = 7;
     int nbrOfPartsRecv;
@@ -666,7 +669,7 @@ void SmileiMPI::new_recv(Patch* patch, int from, int tag, int ndim)
         patch->vecSpecies[ispec]->bmin[0]=0;
         //Prepare patch for receiving particles
         nbrOfPartsRecv = patch->vecSpecies[ispec]->bmax.back(); 
-        patch->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv, ndim );
+        patch->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv, params );
         //Receive particles
         if ( nbrOfPartsRecv > 0 ) {
 	    patch->vecSpecies[ispec]->typePartSend = createMPIparticles( patch->vecSpecies[ispec]->particles, nbrOfProp );

@@ -5,7 +5,7 @@
 
 class Projector1D4Order : public Projector1D {
 public:
-    Projector1D4Order(PicParams&, Patch* patch);
+    Projector1D4Order(Params&, Patch* patch);
     ~Projector1D4Order();
 
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_)

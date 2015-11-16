@@ -7,21 +7,19 @@
 #include <iomanip>
 #include <limits.h>
 
-#include "SpeciesFactory.h"
 #include "ElectroMagnFactory.h"
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
 
-#include "DiagParams.h"
-#include "PicParams.h"
+#include "Params.h"
 #include "LaserParams.h"
 #include "SmileiMPI.h"
 #include "SimWindow.h"
 #include "Diagnostic.h"
 #include "SmileiIO.h"
+#include "PartWall.h"
 
 class Diagnostic;
-class DiagnosticScalar;
 class SimWindow;
 
 //! Class Patch : sub MPI domain 
@@ -33,10 +31,13 @@ class Patch
     friend class SimWindow;
 public:
     //! Constructor for Patch
-  Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
+    Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
 
     //! Destructor for Patch
     ~Patch() {
+
+	for (unsigned int iwall=0 ; iwall<vecPartWall.size(); iwall++) delete vecPartWall[iwall];
+	vecPartWall.clear();	
 
 	delete Diags;
 	delete Proj;
@@ -57,6 +58,7 @@ public:
     Diagnostic* Diags;
 
     SmileiIO* sio;
+    std::vector<PartWall*> vecPartWall;
 
    //!Cartesian coordinates of the patch. X,Y,Z of the Patch according to its Hilbert index.
     std::vector<unsigned int> Pcoordinates;
@@ -104,16 +106,16 @@ public:
 
     void cleanup_sent_particles(int ispec, std::vector<int>* indexes_of_particles_to_exchange);
 
-    void dynamics(double time_dual, PicParams &params, SimWindow* simWindow, int diag_flag);
+    void dynamics(double time_dual, Params &params, SimWindow* simWindow, int diag_flag);
 
     //! manage Idx of particles per direction, 
-    virtual void initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, VectorPatch* vecPatch);
+    virtual void initExchParticles(SmileiMPI* smpi, int ispec, Params& params, VectorPatch* vecPatch);
     //!init comm  nbr of particles/
-    virtual void initCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int iDim, VectorPatch* vecPatch);
+    virtual void initCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
     //! finalize comm / nbr of particles, init exch / particles
-    virtual void CommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int iDim, VectorPatch* vecPatch);
+    virtual void CommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
     //! finalize exch / particles, manage particles suppr/introduce
-    virtual void finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int iDim, VectorPatch* vecPatch);
+    virtual void finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
 
     //void initSumRhoJ( ElectroMagn* EMfields, unsigned int diag_flag );
     //void finalizeSumRhoJ( ElectroMagn* EMfields, unsigned int diag_flag );
@@ -125,7 +127,7 @@ public:
     virtual void initExchange( Field* field, int iDim ) = 0;
     virtual void finalizeExchange( Field* field, int iDim ) = 0;
 
-    virtual void createType( PicParams& params ) = 0;
+    virtual void createType( Params& params ) = 0;
     //! MPI_Datatype to exchange [ndims_][iDim=0 prim/dial][iDim=1 prim/dial]
     /*MPI_Datatype ntypeSum_[2][2][2];
 

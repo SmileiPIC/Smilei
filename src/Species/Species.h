@@ -5,22 +5,23 @@
 #include <string>
 
 #include "Particles.h"
-#include "PicParams.h"
+#include "Params.h"
 #include "Pusher.h"
 //#include "PartBoundCond.h"
-#include "PicParams.h"
+
+#include "Params.h"
 #include "Pusher.h"
 #include "Ionization.h"
 #include "ElectroMagn.h"
-#include "DensityProfile.h"
+#include "Profile.h"
 #include "SpeciesMPI.h"
-
 
 class ElectroMagn;
 class Pusher;
 class Interpolator;
 class Projector;
 class PartBoundCond;
+class PartWall;
 class Field3D;
 class Patch;
 
@@ -31,10 +32,10 @@ public:
     SpeciesMPI specMPI;
 
     //! Species creator
-    Species(PicParams&, int, Patch*);
+    Species(Params&, int, Patch*);
 
-    void initCluster(PicParams&);
-    void initSpecies(PicParams&);
+    void initCluster(Params&);
+    void initSpecies(Params&);
 
     //! Species destructor
     virtual ~Species();
@@ -62,7 +63,8 @@ public:
 
     //! Method calculating the Particle dynamics (interpolation, pusher, projection)
     virtual void dynamics(double time, unsigned int ispec, ElectroMagn* EMfields, Interpolator* interp,
-                          Projector* proj, PicParams &params, int diag_flag);
+                          Projector* proj, Params &params, int diag_flag,
+			  std::vector<PartWall*> vecPartWall, Patch* patch);
 
     //! Method used to initialize the Particle position in a given cell
     void initPosition(unsigned int, unsigned int, double *, unsigned int, std::vector<double>, std::string);
@@ -71,17 +73,17 @@ public:
     void initMomentum(unsigned int, unsigned int, double *, double *, std::string, std::vector<double>&);
 
     //! Method used to initialize the Particle weight (equivalent to a charge density) in a given cell
-    void initWeight(PicParams*, unsigned int, unsigned int, double);
+    void initWeight(unsigned int, unsigned int, unsigned int, double);
 
     //! Method used to initialize the Particle charge
-    void initCharge(PicParams*, unsigned int, unsigned int, double);
-
-    //! Method used to save all Particles properties for the considered Species
-    void dump(std::ofstream&);
+    void initCharge(unsigned int, unsigned int, unsigned int, double);
+    
+    //! Maximum charge at initialization
+    double max_charge;
 
     //! Method used to sort particles
     void sort_part();
-    void count_sort_part(PicParams& param);
+    void count_sort_part(Params& param);
 
     void updateMvWinLimits(double x_moved);
 
@@ -106,13 +108,13 @@ public:
     //! Size of the projection buffer
     unsigned int size_proj_buffer;
 
-    //! Oversize (copy from picparams)
+    //! Oversize (copy from Params)
     std::vector<unsigned int> oversize;
 
     //! MPI structure to exchange particles
     MPI_Datatype typePartSend ;
 
-    //! Cell_length (copy from picparams)
+    //! Cell_length (copy from Params)
     std::vector<double> cell_length;
     //! min_loc_vec (copy from picparams)
     std::vector<double> min_loc_vec;
@@ -133,7 +135,7 @@ public:
     std::vector<int>                indexes_of_particles_to_exchange;
     //std::vector<int>                new_indexes_of_particles_to_exchange;
 
-    //Copy of the species parameters from picparams
+    //Copy of the species parameters from Params
     SpeciesStructure species_param;
 
     //! Method to know if we have to project this species or not.
@@ -157,10 +159,33 @@ public:
 	return nrj;
     }
 
+    inline int getMemFootPrint() {
+	int speciesSize  = ( 2*ndim + 3 + 1 )*sizeof(double) + sizeof(short);
+	if ( particles->isTestParticles )
+	    speciesSize += sizeof ( unsigned int );
+	//speciesSize *= getNbrOfParticles();
+	speciesSize *= getParticlesCapacity();
+	return speciesSize;
+    }
+
 private:
     
-    //! vector of density (one per species)
-    DensityProfile *densityProfile;
+    //! Type of density profile ("nb" or "charge")
+    std::string densityProfileType;
+    
+    //! charge profile
+    Profile *chargeProfile;
+    
+    //! density profile
+    Profile *densityProfile;
+    
+    //! vector of velocity profiles (vx, vy, vz)
+    std::vector<Profile *> velocityProfile;
+    
+    //! vector of temperature profiles (Tx, Ty, Tz)
+    std::vector<Profile *> temperatureProfile;
+    
+    Profile *ppcProfile;
     
     //! 2 times pi
     double PI2;
@@ -188,12 +213,12 @@ private:
 
     //! Method used to apply boundary-condition for the Particles of the considered Species
     PartBoundCond* partBoundCond;
-
+    
     //! Method used to Push the particles (change momentum & change position)
     Pusher* Push;
 
     //! Method to create new particles.
-    int  createParticles(std::vector<unsigned int> n_space_to_create, std::vector<double> cell_index, int new_bin_idx,  PicParams& param);
+    int  createParticles(std::vector<unsigned int> n_space_to_create, std::vector<double> cell_index, int new_bin_idx,  Params& param);
 
     //! Accumulate nrj lost with bc
     double nrj_bc_lost;

@@ -3,12 +3,12 @@
 #include <cmath>
 #include <iostream>
 
-#include "PicParams.h"
+#include "Params.h"
 #include "Patch.h"
 
 using namespace std;
 
-Interpolator::Interpolator(PicParams &params, Patch* patch)
+Interpolator::Interpolator(Params &params, Patch* patch)
 {
 }
 

@@ -15,7 +15,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Projector1D2Order
 // ---------------------------------------------------------------------------------------------------------------------
-Projector1D2Order::Projector1D2Order (PicParams& params, Patch* patch) : Projector1D(params, patch)
+Projector1D2Order::Projector1D2Order (Params& params, Patch* patch) : Projector1D(params, patch)
 {
     dx_inv_  = 1.0/params.cell_length[0];
     dx_ov_dt = params.cell_length[0] / params.timestep;

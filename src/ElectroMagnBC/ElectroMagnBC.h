@@ -6,24 +6,32 @@
 
 #include "Patch.h"
 
-class PicParams;
+class Params;
 class LaserParams;
 class Patch;
 class ElectroMagn;
-class Laser;
+class LaserProfile;
+class Field;
 
 class ElectroMagnBC {
 public:
-    ElectroMagnBC( PicParams &params,  LaserParams &laser_params );
-    ~ElectroMagnBC();
+    ElectroMagnBC( Params &params,  LaserParams &laser_params );
+    virtual ~ElectroMagnBC();
 
-    virtual void apply(ElectroMagn* EMfields, double time_dual, Patch* patch) = 0;
+    virtual void apply_xmin(ElectroMagn* EMfields, double time_dual, Patch* patch) = 0;
+    virtual void apply_xmax(ElectroMagn* EMfields, double time_dual, Patch* patch) = 0;
+    virtual void apply_ymin(ElectroMagn* EMfields, double time_dual, Patch* patch) = 0;
+    virtual void apply_ymax(ElectroMagn* EMfields, double time_dual, Patch* patch) = 0;
     void laserDisabled();
 
+    virtual void save_fields_BC1D(Field*) {};
+    virtual void save_fields_BC2D_Long(Field*) {};
+    virtual void save_fields_BC2D_Trans(Field*) {};
+    
  protected:
 
     //! Vector for the various lasers
-    std::vector<Laser*> laser_;
+    std::vector<LaserProfile*> laser_;
     
     //! time-step
     double dt;

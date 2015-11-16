@@ -9,31 +9,31 @@
 
 class PatchesFactory {
 public:
-    static Patch* create(PicParams& params, DiagParams& diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int  ipatch) {
+    static Patch* create(Params& params, SmileiMPI* smpi, unsigned int  ipatch) {
 	Patch* patch;
 	if (params.geometry == "1d3v")
-	    patch = new Patch1D(params, diag_params, laser_params, smpi, ipatch, 0);
+	    patch = new Patch1D(params, smpi, ipatch, 0);
 	else if (params.geometry == "2d3v" )
-	    patch = new Patch2D(params, diag_params, laser_params, smpi, ipatch, 0);
+	    patch = new Patch2D(params, smpi, ipatch, 0);
 	else 
 	    ERROR( "Unknwon parameters : " << params.geometry );
 	patch->createType(params);
         return patch;
     }
 
-    static Patch* create(PicParams& params, DiagParams& diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int  ipatch, unsigned int n_moved) {
+    static Patch* create(Params& params, SmileiMPI* smpi, unsigned int  ipatch, unsigned int n_moved) {
 	Patch* patch;
 	if (params.geometry == "1d3v")
-	    patch = new Patch1D(params, diag_params, laser_params, smpi, ipatch, n_moved);
+	    patch = new Patch1D(params, smpi, ipatch, n_moved);
 	else if (params.geometry == "2d3v" )
-	    patch = new Patch2D(params, diag_params, laser_params, smpi, ipatch, n_moved);
+	    patch = new Patch2D(params, smpi, ipatch, n_moved);
 	else 
 	    ERROR( "Unknwon parameters : " << params.geometry );
 	patch->createType(params);
         return patch;
     }
 
-    static VectorPatch createVector(PicParams& params, DiagParams& diag_params, LaserParams& laser_params, SmileiMPI* smpi) {
+    static VectorPatch createVector(Params& params, SmileiMPI* smpi) {
         VectorPatch vecPatches;
 
 	// Compute npatches (1 is std MPI behavior)
@@ -57,9 +57,10 @@ public:
         // create species
         vecPatches.resize(npatches);
         for (unsigned int ipatch = 0 ; ipatch < npatches ; ipatch++) {
-	    vecPatches.patches_[ipatch] = PatchesFactory::create(params, diag_params, laser_params, smpi, firstpatch + ipatch);
+	    vecPatches.patches_[ipatch] = PatchesFactory::create(params, smpi, firstpatch + ipatch);
         }
         vecPatches.set_refHindex() ;
+	vecPatches.Diags = vecPatches(0)->Diags;
 
         return vecPatches;
     }

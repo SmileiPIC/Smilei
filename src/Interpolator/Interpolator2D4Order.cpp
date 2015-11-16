@@ -13,7 +13,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for Interpolator2D4Order
 // ---------------------------------------------------------------------------------------------------------------------
-Interpolator2D4Order::Interpolator2D4Order(PicParams &params, Patch *patch) : Interpolator2D(params, patch)
+Interpolator2D4Order::Interpolator2D4Order(Params &params, Patch *patch) : Interpolator2D(params, patch)
 {
 
     dx_inv_ = 1.0/params.cell_length[0];
@@ -157,7 +157,7 @@ void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particl
 
     // Static cast of the electromagnetic fields
     Field2D* Jx2D = static_cast<Field2D*>(EMfields->Jx_);
-    Field2D* Jy2D = static_cast<Field2D*>(EMfields->Jy_);
+//    Field2D* Jy2D = static_cast<Field2D*>(EMfields->Jy_);
     Field2D* Jz2D = static_cast<Field2D*>(EMfields->Jz_);
     
     Field2D* Rho2D= static_cast<Field2D*>(EMfields->rho_);

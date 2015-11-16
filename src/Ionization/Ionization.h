@@ -4,7 +4,7 @@
 #include <map>
 
 #include "Tools.h"
-#include "PicParams.h"
+#include "Params.h"
 #include "Field.h"
 #include "Particles.h"
 
@@ -14,7 +14,7 @@ class Ionization
 
 public:
     //! Constructor for Ionization
-    Ionization(PicParams& params, int ispec);
+    Ionization(Params& params, int ispec);
     virtual ~Ionization();
 
     //! Overloading of () operator

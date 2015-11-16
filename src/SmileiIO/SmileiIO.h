@@ -11,15 +11,18 @@
 #include <vector>
 
 #include <hdf5.h>
+#include <Tools.h>
 
-class PicParams;
-class DiagParams;
-class InputData;
+class Params;
 class Patch;
+class SmileiMPI;
+class Diagnostic;
 class SimWindow;
 class ElectroMagn;
 class Field;
 class Species;
+
+#include <csignal>
 
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class SmileiIO
@@ -29,19 +32,16 @@ public:
     //! Create // HDF5 environment
     //! @see global_file_id_ 
     //! @see global_file_id_avg
-    SmileiIO( PicParams& params, DiagParams &diagParams, Patch* patch );
-    void createFiles( PicParams& params, DiagParams &diagParams, Patch* patch );
+    SmileiIO( Params& params, Diagnostic* diag, Patch* patch );
+    void createFiles( Params& params, Patch* patch );
     void setFiles( hid_t masterFileId, hid_t masterFileIdAvg );
     //! Destructor for SmileiIO
     virtual ~SmileiIO();
 
+    
     //! Write all fields (E, B, J, rho, per species ; 10 + 4 x nspecies fields) of all time step in the same file
-    void writeAllFieldsSingleFileTime( ElectroMagn* EMfields, int itime );
-    void createTimeStepInSingleFileTime( int time,  DiagParams &diagParams );
-
-    //! Write time-averaged fields E, B) of all time step in the same file
-    //! @see global_file_id_avg
-    void writeAvgFieldsSingleFileTime( ElectroMagn* EMfields, int itime );
+    void createTimeStepInSingleFileTime( int time,  Diagnostic* diag );
+    void writeAllFieldsSingleFileTime( std::vector<Field*> *, int, bool );
     
     //! Basic Write of a field in the specified group of the global file
     virtual void writeFieldsSingleFileTime( Field* field, hid_t group_id ) = 0;
@@ -51,17 +51,33 @@ public:
     
     //! Id of "Fields_avg.h5", contains time-averaged fields per timestep
     hid_t global_file_id_avg;
-
+    
     //! Property list for collective dataset write, set for // IO.
     hid_t write_plist;
+    
+    virtual void updatePattern( Params& params, Patch* patch ) = 0;
 
+    //! Id of "particles-mpirank.h5", contains particles of current mpirank
+    //! Disabled for now
+    hid_t  partFile_id;
+        
     //! Basic write field on its own file (debug)
     virtual void write( Field* field ) = 0;
-    virtual void updatePattern( PicParams& params, Patch* patch ) = 0;
+    
+    void initWriteTestParticles(Species* species, int ispec, int itime, Params& params, SmileiMPI* smpi);
+    void writeTestParticles(Species* species, int ispec, int itime, Params& params, SmileiMPI* smpi);
 
+    template <class T> void appendTestParticles(hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type );
+
+    template <class T> void appendTestParticles0( hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type);
+        
+    
 private:
-   	
-	
+    
+    //! name of the fields to dump
+    std::vector<std::string> fieldsToDump;
+    
+
 };
 
-#endif /* SMILEI_OUTPUT_H_ */
+#endif

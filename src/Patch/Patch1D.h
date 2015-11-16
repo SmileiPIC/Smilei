@@ -13,7 +13,7 @@ class Patch1D : public Patch
 {
 public:
     //! Constructor for Patch
-    Patch1D(PicParams& params, DiagParams &diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
+    Patch1D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
 
     //! Destructor for Patch
     virtual ~Patch1D() {};
@@ -26,7 +26,7 @@ public:
     virtual void initExchange( Field* field, int iDim );
     virtual void finalizeExchange( Field* field, int iDim );
 
-    virtual void createType( PicParams& params );
+    virtual void createType( Params& params );
     //! MPI_Datatype to exchange [ndims_][iDim=0 prim/dial]
     MPI_Datatype ntypeSum_[2][2];
 

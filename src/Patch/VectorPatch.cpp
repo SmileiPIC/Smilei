@@ -22,7 +22,7 @@ VectorPatch::~VectorPatch()
 }
 
 #ifdef _NOTFORNOW
-void VectorPatch::exchangeParticles(int ispec, PicParams &params)
+void VectorPatch::exchangeParticles(int ispec, Params &params)
 {
     Patch* mypatch, *lpatch;
     Particles* my_particles, *lparticles;
@@ -200,7 +200,7 @@ void VectorPatch::exchangeParticles(int ispec, PicParams &params)
 }
 #endif
 
-void VectorPatch::exchangeParticles(int ispec, PicParams &params, SmileiMPI* smpi)
+void VectorPatch::exchangeParticles(int ispec, Params &params, SmileiMPI* smpi)
 {
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
@@ -430,22 +430,22 @@ void VectorPatch::computePhaseSpace()
 }
 
 
-void VectorPatch::initProbesDiags(PicParams& params, DiagParams &diag_params, int timestep)
+void VectorPatch::initProbesDiags(Params& params, int timestep)
 {
-    (*this)(0)->Diags->probes.createFile(diag_params);
+    (*this)(0)->Diags->probes.createFile();
     // Start at 0, cause of setFile set probesStart (locate writing point in h5 file)
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	(*this)(ipatch)->Diags->probes.setFile( (*this)(0)->Diags->probes.fileId, (*this)(ipatch), params, diag_params );
+	(*this)(ipatch)->Diags->probes.setFile( (*this)(0)->Diags->probes.fileId, (*this)(ipatch), params );
     }
     //cout << " File created " << endl;
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
 	//cout << "Data written for " << ipatch << endl;
-	(*this)(ipatch)->Diags->probes.writePositionIn(params, diag_params);
+	(*this)(ipatch)->Diags->probes.writePositionIn(params);
 	//cout << "End of Data written for " << ipatch << endl;
     }
 }
 
-void VectorPatch::finalizeProbesDiags(PicParams& params, DiagParams &diag_params, int timestep)
+void VectorPatch::finalizeProbesDiags(Params& params, int timestep)
 {
     for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++) {
 	(*this)(ipatch)->Diags->probes.setFile( 0 );
@@ -453,15 +453,15 @@ void VectorPatch::finalizeProbesDiags(PicParams& params, DiagParams &diag_params
 
 }
 
-void VectorPatch::initDumpFields(PicParams& params, DiagParams &diag_params, int timestep)
+void VectorPatch::initDumpFields(Params& params, int timestep)
 {
-    (*this)(0)->sio->createFiles(params, diag_params, (*this)(0));
+    (*this)(0)->sio->createFiles(params, (*this)(0));
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
 	(*this)(ipatch)->sio->setFiles( (*this)(0)->sio->global_file_id_, (*this)(0)->sio->global_file_id_avg );
     }
 }
 
-void VectorPatch::finalizeDumpFields(PicParams& params, DiagParams &diag_params, int timestep)
+void VectorPatch::finalizeDumpFields(Params& params, int timestep)
 {
     for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++) {
 	(*this)(ipatch)->sio->setFiles( 0, 0 );
@@ -469,7 +469,7 @@ void VectorPatch::finalizeDumpFields(PicParams& params, DiagParams &diag_params,
 
 }
 
-void VectorPatch::createPatches(PicParams& params, DiagParams& diag_params, LaserParams& laser_params, SmileiMPI* smpi, SimWindow* simWindow)
+void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simWindow)
 {
     unsigned int n_moved(0), nPatches_now;
     recv_patches_.resize(0);
@@ -534,14 +534,14 @@ void VectorPatch::createPatches(PicParams& params, DiagParams& diag_params, Lase
 	// density profile is initializes as if t = 0 !
 	// Species will be cleared when, nbr of particles will be known
         //Creation of a new patch, ready to receive its content from MPI neighbours.
-	Patch* newPatch = PatchesFactory::create(params, diag_params, laser_params, smpi, recv_patch_id_[ipatch], n_moved );
+	Patch* newPatch = PatchesFactory::create(params, smpi, recv_patch_id_[ipatch], n_moved );
         //Store pointers to newly created patch in recv_patches_.
 	recv_patches_.push_back( newPatch );
     }
 
 }
 
-void VectorPatch::setNbrParticlesToExch(SmileiMPI* smpi)
+void VectorPatch::setNbrParticlesToExch(SmileiMPI* smpi, Params& params)
 {
     int nSpecies( (*this)(0)->vecSpecies.size() );
     int nDim_Parts( (*this)(0)->vecSpecies[0]->particles->dimension() );
@@ -591,7 +591,7 @@ void VectorPatch::setNbrParticlesToExch(SmileiMPI* smpi)
 	  cout << "n part recv = " << nbrOfPartsRecv[ispec] << endl;
 #endif
 	for (int ispec=0 ; ispec<nSpecies ; ispec++)
-	    recv_patches_[ipatch]->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv[ispec], nDim_Parts );
+	    recv_patches_[ipatch]->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv[ispec], params );
     }
 
     //Synchro, send/recv must be non-blocking !!!
@@ -674,7 +674,7 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi)
 
 }
 
-void VectorPatch::exchangePatches_new(SmileiMPI* smpi)
+void VectorPatch::exchangePatches_new(SmileiMPI* smpi, Params& params)
 {
     int nSpecies( (*this)(0)->vecSpecies.size() );
     int newMPIrank, oldMPIrank;
@@ -723,7 +723,7 @@ void VectorPatch::exchangePatches_new(SmileiMPI* smpi)
         //    cout << "oldMIPrank problem ! " << oldMPIrank << endl;
         //    oldMPIrank = oldMPIrankbis ;
         //}
-        smpi->new_recv( recv_patches_[ipatch], oldMPIrank, recv_patch_id_[ipatch]*nmessage, nDim_Parts );
+        smpi->new_recv( recv_patches_[ipatch], oldMPIrank, recv_patch_id_[ipatch]*nmessage, params );
     }
 
     smpi->barrier();
@@ -778,7 +778,7 @@ void VectorPatch::definePatchDiagsMaster()
 
 }
 
-void VectorPatch::updatePatchFieldDump( PicParams& params )
+void VectorPatch::updatePatchFieldDump( Params& params )
 {
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
 	if ( (*this)(ipatch)->Pcoordinates[0]!=params.number_of_patches[0]-1 )
@@ -788,7 +788,7 @@ void VectorPatch::updatePatchFieldDump( PicParams& params )
 }
 
 
-void VectorPatch::solvePoisson( PicParams &params, SmileiMPI* smpi )
+void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
 {
     unsigned int nx_p2_global = (params.n_space_global[0]+1) * (params.n_space_global[1]+1);
 
@@ -960,6 +960,25 @@ void VectorPatch::solvePoisson( PicParams &params, SmileiMPI* smpi )
     // Centering electrostatic fields
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
 	(*this)(ipatch)->EMfields->centeringE( E_Add );
+
+
+    // Compute error on the Poisson equation
+    double deltaPoisson_max = 0.0;
+    int i_deltaPoisson_max  = -1;
+
+#ifdef _A_FINALISER
+    for (unsigned int i=0; i<nx_p; i++) {
+        double deltaPoisson = abs( ((*Ex1D)(i+1)-(*Ex1D)(i))/dx - (*rho1D)(i) );
+        if (deltaPoisson > deltaPoisson_max) {
+            deltaPoisson_max   = deltaPoisson;
+            i_deltaPoisson_max = i;
+        }
+    }
+#endif
+    
+    //!\todo Reduce to find global max
+    if (smpi->isMaster())
+        MESSAGE(1,"Poisson equation solved. Maximum error = " << deltaPoisson_max << " at i= " << i_deltaPoisson_max);
 
 }
 

@@ -7,7 +7,7 @@
 
 using namespace std;
 
-PusherBoris::PusherBoris(PicParams& params, int ispec)
+PusherBoris::PusherBoris(Params& params, int ispec)
     : Pusher(params, ispec)
 {
 }

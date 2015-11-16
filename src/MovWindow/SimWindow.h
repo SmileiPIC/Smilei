@@ -5,7 +5,7 @@
 #include <vector>
 #include "Patch.h"
 
-class PicParams;
+class Params;
 class Species;
 class ElectroMagn;
 class Interpolator;
@@ -20,12 +20,11 @@ class SimWindow {
     
  public:
     //! SimWindow creator
-    SimWindow(PicParams& params);
+    SimWindow(Params& params);
     //! SimWindow destructor
     ~SimWindow();
     //! Move the simulation window (particles, fields, MPI environment & operator related to the grid)
- //   void operate(std::vector<Species*> vecSpecies, ElectroMagn* EMfields, Interpolator* Interp, Projector* Proj, SmileiMPI* smpi, PicParams& param);
-    void operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& param, DiagParams &diag_params, LaserParams& laser_params);
+    void operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& param);
 
     //! Returns a boolean : True if the window should be moved, False if it should not.
     //! Warning : Actually moving the window (function operate) changes the value of x_moved so the returned value of isMoving changes

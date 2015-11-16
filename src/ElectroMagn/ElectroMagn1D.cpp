@@ -6,11 +6,15 @@
 #include <string>
 #include <iostream>
 
-#include "PicParams.h"
+#include "Params.h"
 #include "Field1D.h"
-#include "Laser.h"
 
 #include "Patch.h"
+
+#include "Profile.h"
+#include "MF_Solver1D_Yee.h"
+
+#include "ElectroMagnBC.h"
 
 using namespace std;
 
@@ -18,14 +22,11 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn1D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn1D::ElectroMagn1D(PicParams &params,  LaserParams &laser_params, Patch* patch)
-  : ElectroMagn(params, laser_params, patch),
+ElectroMagn1D::ElectroMagn1D(Params &params, Patch* patch)
+  : ElectroMagn(params, patch),
 isWestern(patch->isWestern()),
 isEastern(patch->isEastern())
 {
-    // local dt to store
-    int sizeprojbuffer ;
-    
     oversize_ = oversize[0];
     
     // spatial-step and ratios time-step by spatial-step & spatial-step by time-step
@@ -62,6 +63,16 @@ isEastern(patch->isEastern())
     By_m = new Field1D(dimPrim, 1, true,  "By_m");
     Bz_m = new Field1D(dimPrim, 2, true,  "Bz_m");
     
+    // for (unsigned int i=0 ; i<nx_d ; i++) {
+    //         double x = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i-0.5) )*params.cell_length[0];
+    //         (*By_)(i) = 0.001 * sin(x * 2.0*M_PI/params.sim_length[0] * 40.0);
+    //     }
+    //     smpi1D->exchangeField(By_);
+    //     for (unsigned int i=0 ; i<nx_d ; i++) {
+    // //        double x = ( (double)(smpi1D->getCellStartingGlobalIndex(0)+i-0.5) )*params.cell_length[0];
+    //         (*By_m)(i) = (*By_)(i);
+    //     }
+    //     
     // Allocation of time-averaged EM fields
     Ex_avg  = new Field1D(dimPrim, 0, false, "Ex_avg");
     Ey_avg  = new Field1D(dimPrim, 1, false, "Ey_avg");
@@ -77,7 +88,7 @@ isEastern(patch->isEastern())
     rho_  = new Field1D(dimPrim, "Rho" );
     
     // Charge currents currents and density for each species
-
+    
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
         Jx_s[ispec]  = new Field1D(dimPrim, 0, false, ("Jx_"+params.species_param[ispec].species_type).c_str());
         Jy_s[ispec]  = new Field1D(dimPrim, 1, false, ("Jy_"+params.species_param[ispec].species_type).c_str());
@@ -85,7 +96,6 @@ isEastern(patch->isEastern())
         rho_s[ispec] = new Field1D(dimPrim, ("Rho_"+params.species_param[ispec].species_type).c_str());
     }
     
-
     // ----------------------------------------------------------------
     // Definition of the min and max index according to chosen oversize
     // ----------------------------------------------------------------
@@ -100,41 +110,59 @@ isEastern(patch->isEastern())
     // Define limits of non duplicated elements
     // (by construction 1 (prim) or 2 (dual) elements shared between per MPI process)
     // istart
-	for (unsigned int i=0 ; i<3 ; i++)
-	    for (unsigned int isDual=0 ; isDual<2 ; isDual++)
-		istart[i][isDual] = 0;
-	for (unsigned int i=0 ; i<nDim_field ; i++) {
-	    for (unsigned int isDual=0 ; isDual<2 ; isDual++) {
-		istart[i][isDual] = oversize[i];
-		if (patch->Pcoordinates[i]!=0) istart[i][isDual]+=1;
-	    }
+    for (unsigned int i=0 ; i<3 ; i++)
+	for (unsigned int isDual=0 ; isDual<2 ; isDual++)
+	    istart[i][isDual] = 0;
+    for (unsigned int i=0 ; i<nDim_field ; i++) {
+	for (unsigned int isDual=0 ; isDual<2 ; isDual++) {
+	    istart[i][isDual] = oversize[i];
+	    if (patch->Pcoordinates[i]!=0) istart[i][isDual]+=1;
 	}
+    }
     
-	// bufsize = nelements
-	for (unsigned int i=0 ; i<3 ; i++) 
-	    for (unsigned int isDual=0 ; isDual<2 ; isDual++)
-		bufsize[i][isDual] = 1;
+    // bufsize = nelements
+    for (unsigned int i=0 ; i<3 ; i++) 
+	for (unsigned int isDual=0 ; isDual<2 ; isDual++)
+	    bufsize[i][isDual] = 1;
     
-	for (unsigned int i=0 ; i<nDim_field ; i++) {
-	    for (int isDual=0 ; isDual<2 ; isDual++)
-		bufsize[i][isDual] = n_space[i] + 1;
-        
-	    for (int isDual=0 ; isDual<2 ; isDual++) {
-		bufsize[i][isDual] += isDual; 
-		if ( params.number_of_patches[i]!=1 ) {                
+    for (unsigned int i=0 ; i<nDim_field ; i++) {
+	for (int isDual=0 ; isDual<2 ; isDual++)
+	    bufsize[i][isDual] = n_space[i] + 1;
 
-		    if ( ( !isDual ) && (patch->Pcoordinates[i]!=0) )
+        
+	for (int isDual=0 ; isDual<2 ; isDual++) {
+	    bufsize[i][isDual] += isDual; 
+	    if ( params.number_of_patches[i]!=1 ) {                
+
+		if ( ( !isDual ) && (patch->Pcoordinates[i]!=0) )
+		    bufsize[i][isDual]--;
+		else if  (isDual) {
+		    bufsize[i][isDual]--;
+		    if ( (patch->Pcoordinates[i]!=0) && (patch->Pcoordinates[i]!=params.number_of_patches[i]-1) ) 
 			bufsize[i][isDual]--;
-		    else if  (isDual) {
-			bufsize[i][isDual]--;
-			if ( (patch->Pcoordinates[i]!=0) && (patch->Pcoordinates[i]!=params.number_of_patches[i]-1) ) 
-			    bufsize[i][isDual]--;
-		    }
+		}
                 
-		} // if ( params.number_of_patches[i]!=1 )
-	    } // for (int isDual=0 ; isDual
-	} // for (unsigned int i=0 ; i<nDim_field 
+	    } // if ( params.number_of_patches[i]!=1 )
+	} // for (int isDual=0 ; isDual
+    } // for (unsigned int i=0 ; i<nDim_field 
     
+    
+    // Fillng the space profiles of antennas
+    for (vector<AntennaStructure>::iterator antenna=antennas.begin(); antenna!=antennas.end(); antenna++ ) {
+        if (antenna->field == "Jx")
+            antenna->my_field = new Field1D(dimPrim, 0, false, "Jx");
+        else if (antenna->field == "Jy")
+            antenna->my_field = new Field1D(dimPrim, 1, false, "Jy");
+        else if (antenna->field == "Jz")
+            antenna->my_field = new Field1D(dimPrim, 2, false, "Jz");
+        
+        if (antenna->my_field) {
+            Profile my_spaceProfile(antenna->space_profile, nDim_field);
+            applyExternalField(antenna->my_field,&my_spaceProfile, patch);
+        }
+    }
+
+
 }//END constructor Electromagn1D
 
 
@@ -258,7 +286,6 @@ void ElectroMagn1D::initE(Patch *patch)
     if (patch->isWestern()) (*Ex1D)(0)      = (*Ex1D)(1)      - dx*(*rho1D)(0);
     if (patch->isEastern()) (*Ex1D)(nx_d-1) = (*Ex1D)(nx_d-2) + dx*(*rho1D)(nx_p-1);
     
-    
     delete phi_;
     delete r_;
     delete p_;
@@ -334,30 +361,6 @@ void ElectroMagn1D::solveMaxwellAmpere()
     for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
         (*Ey1D)(ix)= (*Ey1D)(ix) - dt_ov_dx * ( (*Bz1D)(ix+1) - (*Bz1D)(ix)) - timestep * (*Jy1D)(ix) ;
         (*Ez1D)(ix)= (*Ez1D)(ix) + dt_ov_dx * ( (*By1D)(ix+1) - (*By1D)(ix)) - timestep * (*Jz1D)(ix) ;
-    }
-    
-}
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Maxwell solver using the FDTD scheme
-// ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn1D::solveMaxwellFaraday()
-{
-    Field1D* Ey1D   = static_cast<Field1D*>(Ey_);
-    Field1D* Ez1D   = static_cast<Field1D*>(Ez_);
-    Field1D* By1D   = static_cast<Field1D*>(By_);
-    Field1D* Bz1D   = static_cast<Field1D*>(Bz_);
-    
-    // ---------------------
-    // Solve Maxwell-Faraday
-    // ---------------------
-    // NB: bx is given in 1d and defined when initializing the fields (here put to 0)
-    // Transverse fields  by & bz are defined on the dual grid
-    //for (unsigned int ix=1 ; ix<nx_p ; ix++) {
-    for (unsigned int ix=1 ; ix<dimDual[0]-1 ; ix++) {
-        (*By1D)(ix)= (*By1D)(ix) + dt_ov_dx * ( (*Ez1D)(ix) - (*Ez1D)(ix-1)) ;
-        (*Bz1D)(ix)= (*Bz1D)(ix) - dt_ov_dx * ( (*Ey1D)(ix) - (*Ey1D)(ix-1)) ;
     }
     
 }
@@ -481,6 +484,7 @@ void ElectroMagn1D::restartRhoJs()
         for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
             (*rho1D_s)(ix) = 0.0;
         }
+
         // put longitudinal current to zero on the dual grid
         #pragma omp for schedule(static) 
         for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
@@ -488,7 +492,7 @@ void ElectroMagn1D::restartRhoJs()
         }
         #pragma omp for schedule(static) 
         for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
-        // all fields are defined on the primal grid
+            // all fields are defined on the primal grid
             (*Jy1D_s)(ix)  = 0.0;
             (*Jz1D_s)(ix)  = 0.0;
         }
@@ -528,7 +532,12 @@ void ElectroMagn1D::computeTotalRhoJ()
     }//END loop on species ispec
 }
 
+// --------------------------------------------------------------------------
+// Compute Poynting (return the electromagnetic energy injected at the border
+// --------------------------------------------------------------------------
 void ElectroMagn1D::computePoynting() {
+    
+    // Western border (Energy injected = +Poynting)
     if (isWestern) {
         unsigned int iEy=istart[0][Ey_->isDual(0)];
         unsigned int iBz=istart[0][Bz_m->isDual(0)];
@@ -538,7 +547,9 @@ void ElectroMagn1D::computePoynting() {
         poynting_inst[0][0]=0.5*timestep*((*Ey_)(iEy) * ((*Bz_m)(iBz) + (*Bz_m)(iBz+1)) -
                                           (*Ez_)(iEz) * ((*By_m)(iBy) + (*By_m)(iBy+1)));
         poynting[0][0] += poynting_inst[0][0];
-    } 
+    }
+    
+    // Eastern border (Energy injected = -Poynting)
     if (isEastern) {
         unsigned int iEy=istart[0][Ey_->isDual(0)]  + bufsize[0][Ey_->isDual(0)]-1;
         unsigned int iBz=istart[0][Bz_m->isDual(0)] + bufsize[0][Bz_m->isDual(0)]-1;
@@ -551,3 +562,21 @@ void ElectroMagn1D::computePoynting() {
         
     }    
 }
+
+void ElectroMagn1D::applyExternalField(Field* my_field,  Profile *profile, Patch* patch) {
+    
+    MESSAGE(1,"Applying External field to " << my_field->name);
+    Field1D* field1D=static_cast<Field1D*>(my_field);
+    
+    vector<double> x(1,0);
+    //for (unsigned int i=0 ; i<field1D->dims()[0] ; i++) { // USING UNSIGNED INT CREATES PB WITH PERIODIC BCs
+    for (int i=0 ; i<field1D->dims()[0] ; i++) {
+        x[0] = ( (double)(patch->getCellStartingGlobalIndex(0)+i +(field1D->isDual(0)?-0.5:0)) )*dx;
+        (*field1D)(i) = (*field1D)(i) + profile->valueAt(x);
+    }
+    
+    if(emBoundCond[0]) emBoundCond[0]->save_fields_BC1D(my_field);
+}
+
+
+

@@ -10,7 +10,7 @@
 class Interpolator1D : public Interpolator
 {
 public:
-    Interpolator1D(PicParams &params, Patch *patch) ;
+    Interpolator1D(Params &params, Patch *patch) ;
 
     virtual ~Interpolator1D() {};
     virtual void mv_win(unsigned int shift) {index_domain_begin += shift;}

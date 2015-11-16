@@ -8,14 +8,14 @@
 #include "Interpolator2D2Order.h"
 #include "Interpolator2D4Order.h"
 
-#include "PicParams.h"
+#include "Params.h"
 #include "Patch.h"
 
 #include "Tools.h"
 
 class InterpolatorFactory {
 public:
-  static Interpolator* create(PicParams& params, Patch *patch) {
+    static Interpolator* create(Params& params, Patch *patch) {
         Interpolator* Interp = NULL;
         // ---------------
         // 1d3v simulation

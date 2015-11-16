@@ -13,7 +13,9 @@ DiagnosticPhase::~DiagnosticPhase(){
 DiagnosticPhase::DiagnosticPhase(phaseStructure phaseStruct) :
 every(phaseStruct.every),
 my_species(phaseStruct.species),
-dataId(0)
+dataId(0),
+tmin(phaseStruct.tmin),
+tmax(phaseStruct.tmax)
 {
 	if (every==0) ERROR("every cannot be zero");
 }

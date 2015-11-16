@@ -7,7 +7,7 @@
 
 #include "Hilbert_functions.h"
 #include "PatchesFactory.h"
-#include "Species.h"
+#include "SpeciesFactory.h"
 #include "Particles.h"
 #include "SmileiIOFactory.h"
 
@@ -15,7 +15,7 @@ using namespace std;
 
 //int buildtag(int send, int recv);
 
-Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved) {
+Patch::Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved) {
 
 
 //Neighborhood definition in 2D:
@@ -68,32 +68,32 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 
         xcall = Pcoordinates[0]-1;
         ycall = Pcoordinates[1];
-	if (params.bc_em_type_long=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
+	if (params.bc_em_type_x[0]=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
 	neighbor_[0][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
         xcall = Pcoordinates[0]+1;
-	if (params.bc_em_type_long=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
+	if (params.bc_em_type_x[0]=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
 	neighbor_[0][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
 
 	if (params.nDim_field>1) {
 	    xcall = Pcoordinates[0];
 	    ycall = Pcoordinates[1]-1;
-	    if (params.bc_em_type_trans=="periodic" && ycall < 0) ycall += (1<<params.mi[1]);
+	    if (params.bc_em_type_y[0]=="periodic" && ycall < 0) ycall += (1<<params.mi[1]);
 	    neighbor_[1][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
 	    ycall = Pcoordinates[1]+1;
-	    if (params.bc_em_type_trans=="periodic" && ycall >= (1<<params.mi[1])) ycall -= (1<<params.mi[1]);
+	    if (params.bc_em_type_y[0]=="periodic" && ycall >= (1<<params.mi[1])) ycall -= (1<<params.mi[1]);
 	    neighbor_[1][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
 
 	    xcall = Pcoordinates[0]+1;
-	    if (params.bc_em_type_long=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
+	    if (params.bc_em_type_x[0]=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
 	    corner_neighbor_[1][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
 	    xcall = Pcoordinates[0]-1;
-	    if (params.bc_em_type_long=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
+	    if (params.bc_em_type_x[0]=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
 	    corner_neighbor_[0][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
 	    ycall = Pcoordinates[1]-1;
-	    if (params.bc_em_type_trans=="periodic" && ycall < 0) ycall += (1<<params.mi[1]);
+	    if (params.bc_em_type_y[0]=="periodic" && ycall < 0) ycall += (1<<params.mi[1]);
 	    corner_neighbor_[0][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
 	    xcall = Pcoordinates[0]+1;
-	    if (params.bc_em_type_long=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
+	    if (params.bc_em_type_x[0]=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
 	    corner_neighbor_[1][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
 	}
 
@@ -127,16 +127,18 @@ Patch::Patch(PicParams& params, DiagParams &diag_params, LaserParams& laser_para
 	// create Pos : OK
 
 	// -> partBoundCond : min/max_loc (smpi)
-	EMfields   = ElectroMagnFactory::create(params, laser_params, this);
+	EMfields   = ElectroMagnFactory::create(params, this);
 	// + patchId + new n_space (now = params by smpi) + BC
 	// -> Neighbors to define !!
 	
 	Interp     = InterpolatorFactory::create(params, this);               // + patchId -> idx_domain_begin (now = ref smpi)
 	Proj       = ProjectorFactory::create(params, this);                  // + patchId -> idx_domain_begin (now = ref smpi)
 
-	Diags = new Diagnostic(params,diag_params, this);
+	Diags = new Diagnostic(params,this);
 
-	sio = SmileiIOFactory::create(params, diag_params, this);
+	sio = SmileiIOFactory::create(params, Diags, this);
+
+	vecPartWall = PartWall::create(params, smpi);
 	
 };
 
@@ -161,17 +163,17 @@ void Patch::updateMPIenv(SmileiMPI* smpi)
 }
 
 
-void Patch::dynamics(double time_dual, PicParams &params, SimWindow* simWindow, int diag_flag)
+void Patch::dynamics(double time_dual, Params &params, SimWindow* simWindow, int diag_flag)
 {
-    for (unsigned int ispec=0 ; ispec<params.n_species; ispec++) {
+    for (unsigned int ispec=0 ; ispec<params.species_param.size() ; ispec++) {
 	if ( vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ){    
-	    vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, params, diag_flag);
+	    vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, params, diag_flag, vecPartWall, this);
 	}
     }
 
 }
 
-void Patch::initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, VectorPatch * vecPatch)
+void Patch::initExchParticles(SmileiMPI* smpi, int ispec, Params& params, VectorPatch * vecPatch)
 {
     Particles &cuParticles = (*vecSpecies[ispec]->particles);
     int ndim = params.nDim_field;
@@ -182,8 +184,8 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, Vec
     for (int iDim=0 ; iDim < ndim ; iDim++){
         xmax[iDim] = params.cell_length[iDim]*( params.n_space_global[iDim] );
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-            vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][iNeighbor].initialize(0,cuParticles.dimension());
-            vecSpecies[ispec]->specMPI.patchVectorSend[iDim][iNeighbor].initialize(0,cuParticles.dimension());
+            vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][iNeighbor].initialize(0,params);
+            vecSpecies[ispec]->specMPI.patchVectorSend[iDim][iNeighbor].initialize(0,params);
 	    vecSpecies[ispec]->specMPI.patch_buff_index_send[iDim][iNeighbor].resize(0);
 	    vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][iNeighbor] = 0;
         }
@@ -225,7 +227,7 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, PicParams& params, Vec
 
 } // initExchParticles(... iDim)
 
-void Patch::initCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int iDim, VectorPatch * vecPatch)
+void Patch::initCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch * vecPatch)
 {
 
     Particles &cuParticles = (*vecSpecies[ispec]->particles);
@@ -263,7 +265,7 @@ void Patch::initCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int
 
 } // initCommParticles(... iDim)
 
-void Patch::CommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int iDim, VectorPatch * vecPatch)
+void Patch::CommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch * vecPatch)
 {
     int nbrOfProp( 7 );
     MPI_Datatype typePartSend, typePartRecv;
@@ -288,7 +290,7 @@ void Patch::CommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int iDi
 		MPI_Wait( &(vecSpecies[ispec]->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[(iNeighbor+1)%2]) );
 		if (vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2]!=0) {
                     //If I receive particles over MPI, I initialize my receive buffer with the appropriate size.
-		    vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2].initialize( vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2], cuParticles.dimension());
+		    vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2].initialize( vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2], params);
 		}
 	    }
 	}
@@ -349,7 +351,7 @@ void Patch::CommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int iDi
 
 }
 
-void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params, int iDim, VectorPatch * vecPatch)
+void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch * vecPatch)
 {
 
     int ndim = params.nDim_field;
@@ -480,7 +482,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, PicParams& params,
             shift[j]+=shift[j-1];
         }
         //Make room for new particles
-        cuParticles.initialize( cuParticles.size()+shift[(*cubmax).size()], cuParticles.dimension() );
+        cuParticles.initialize( cuParticles.size()+shift[(*cubmax).size()], params );
             
         //Shift bins, must be done sequentially
         for (unsigned int j=(*cubmax).size()-1; j>=1; j--){

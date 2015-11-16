@@ -1,7 +1,7 @@
 #include "Pusher.h"
-#include "PicParams.h"
+#include "Params.h"
 
-Pusher::Pusher(PicParams& params, int ispec)
+Pusher::Pusher(Params& params, int ispec)
 {
     mass_          = params.species_param[ispec].mass;
     one_over_mass_ = 1.0/mass_;

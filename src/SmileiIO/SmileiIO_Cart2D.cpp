@@ -8,14 +8,14 @@
 
 #include <sstream>
 
-#include "PicParams.h"
+#include "Params.h"
 #include "Patch.h"
 #include "Field2D.h"
 
 using namespace std;
 
-SmileiIO_Cart2D::SmileiIO_Cart2D( PicParams& params, DiagParams &diagParams, Patch* patch )
-: SmileiIO( params, diagParams, patch )
+SmileiIO_Cart2D::SmileiIO_Cart2D( Params& params, Diagnostic *diag, Patch* patch )
+: SmileiIO( params, diag, patch )
 {
     createPattern(params,patch);
 }
@@ -24,7 +24,7 @@ SmileiIO_Cart2D::~SmileiIO_Cart2D()
 {
 }
 
-void SmileiIO_Cart2D::createPattern( PicParams& params, Patch* patch )
+void SmileiIO_Cart2D::createPattern( Params& params, Patch* patch )
 {
 
     std::vector<unsigned int> istart;
@@ -143,7 +143,7 @@ void SmileiIO_Cart2D::createPattern( PicParams& params, Patch* patch )
 } // END createPattern
 
 
-void SmileiIO_Cart2D::updatePattern( PicParams& params, Patch* patch )
+void SmileiIO_Cart2D::updatePattern( Params& params, Patch* patch )
 {
     for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
         for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {

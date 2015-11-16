@@ -1,7 +1,7 @@
 #ifndef PUSHER_H
 #define PUSHER_H
 
-#include "PicParams.h"
+#include "Params.h"
 #include "Field.h"
 
 class Particles;
@@ -15,7 +15,7 @@ class Pusher
 
 public:
     //! Creator for Pusher
-    Pusher(PicParams& params, int ispec);
+    Pusher(Params& params, int ispec);
     virtual ~Pusher();
 
     //! Overloading of () operator

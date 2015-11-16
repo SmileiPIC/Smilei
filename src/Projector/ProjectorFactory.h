@@ -7,14 +7,14 @@
 #include "Projector2D2Order.h"
 #include "Projector2D4Order.h"
 
-#include "PicParams.h"
+#include "Params.h"
 #include "Patch.h" 
 
 #include "Tools.h"
 
 class ProjectorFactory {
 public:
-  static Projector* create(PicParams& params, Patch* patch) {
+  static Projector* create(Params& params, Patch* patch) {
         Projector* Proj = NULL;
         // ---------------
         // 1d3v simulation

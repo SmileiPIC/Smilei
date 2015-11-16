@@ -4,17 +4,23 @@
 
 #include "ElectroMagnBC.h" 
 
-class PicParams;
+class Params;
 class ElectroMagn;
 
 class ElectroMagnBC1D_SM : public ElectroMagnBC {
 public:
-    ElectroMagnBC1D_SM( PicParams &param, LaserParams &laser_params);
+    ElectroMagnBC1D_SM( Params &param, LaserParams &laser_params);
     ~ElectroMagnBC1D_SM();
 
-    virtual void apply(ElectroMagn* EMfields, double time_dual, Patch* patch);
-
+    virtual void apply_xmin(ElectroMagn* EMfields, double time_dual, Patch* patch);
+    virtual void apply_xmax(ElectroMagn* EMfields, double time_dual, Patch* patch);
+    virtual void apply_ymin(ElectroMagn* EMfields, double time_dual, Patch* patch);
+    virtual void apply_ymax(ElectroMagn* EMfields, double time_dual, Patch* patch);
+    virtual void save_fields_BC1D(Field*);
  private:
+    
+    double Bz_xvalmin,Bz_xvalmax,By_xvalmin,By_xvalmax;
+    
     //! Number of nodes on the primal grid
     unsigned int nx_p;
 

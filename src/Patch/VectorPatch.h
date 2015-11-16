@@ -11,8 +11,7 @@
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
 
-#include "DiagParams.h"
-#include "PicParams.h"
+#include "Params.h"
 #include "LaserParams.h"
 #include "SmileiMPI.h"
 #include "SimWindow.h"
@@ -37,9 +36,9 @@ class VectorPatch {
     inline Patch* operator()(int ipatch) {return patches_[ipatch];};
     inline void set_refHindex() {refHindex_ = patches_[0]->Hindex();};
 
-    void exchangeParticles(int ispec, PicParams &params, SmileiMPI* smpi);
+    void exchangeParticles(int ispec, Params &params, SmileiMPI* smpi);
 #ifdef _NOTFORNOW
-    void exchangeParticles(int ispec, PicParams &params);
+    void exchangeParticles(int ispec, Params &params);
 #endif
     void sumRhoJ( unsigned int diag_flag );
     void sumRhoJs( int ispec );
@@ -50,21 +49,21 @@ class VectorPatch {
     void computeScalarsDiags(int timestep);
     void computePhaseSpace();
 
-    void initProbesDiags(PicParams& params, DiagParams &diag_params, int timestep);
-    void finalizeProbesDiags(PicParams& params, DiagParams &diag_params, int timestep);
+    void initProbesDiags(Params& params, int timestep);
+    void finalizeProbesDiags(Params& params, int timestep);
     void definePatchDiagsMaster();
-    void updatePatchFieldDump( PicParams& params );
+    void updatePatchFieldDump( Params& params );
 
-    void createPatches(PicParams& params, DiagParams& diag_params, LaserParams& laser_params, SmileiMPI* smpi, SimWindow* simWindow);
-    void setNbrParticlesToExch(SmileiMPI* smpi);
+    void createPatches(Params& params, SmileiMPI* smpi, SimWindow* simWindow);
+    void setNbrParticlesToExch(SmileiMPI* smpi, Params& params);
     void exchangePatches(SmileiMPI* smpi);
-    void exchangePatches_new(SmileiMPI* smpi);
+    void exchangePatches_new(SmileiMPI* smpi, Params& params);
     
-    void initDumpFields(PicParams& params, DiagParams &diag_params, int timestep);
-    void finalizeDumpFields(PicParams& params, DiagParams &diag_params, int timestep);
+    void initDumpFields(Params& params, int timestep);
+    void finalizeDumpFields(Params& params, int timestep);
 
 
-    void solvePoisson( PicParams &params, SmileiMPI* smpi );
+    void solvePoisson( Params &params, SmileiMPI* smpi );
     bool isRhoNull( SmileiMPI* smpi );
 
     void exchange( std::vector<Field*> fields );
@@ -79,7 +78,9 @@ class VectorPatch {
     std::vector<Patch*> recv_patches_;
 
     std::vector<int> recv_patch_id_;
-    std::vector<int> send_patch_id_;    
+    std::vector<int> send_patch_id_;
+
+    Diagnostic* Diags;
 
  private :
     // 1st patch index of patches_ (stored for balancing op)

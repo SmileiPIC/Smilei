@@ -1,6 +1,6 @@
 #include "Ionization.h"
 
-Ionization::Ionization(PicParams& params, int ispec) {
+Ionization::Ionization(Params& params, int ispec) {
 
     wavelength_SI        = params.wavelength_SI;
 
@@ -89,7 +89,7 @@ Ionization::Ionization(PicParams& params, int ispec) {
     }
 
     for (unsigned int i=0; i<atomic_number_; i++) {
-        DEBUG(5,"i " << i << " potential: " << Potential[i] << " Az.q.num: " << Azimuthal_quantum_number[i]);
+        DEBUG("ioniz: i " << i << " potential: " << Potential[i] << " Az.q.num: " << Azimuthal_quantum_number[i]);
     }
 }
 

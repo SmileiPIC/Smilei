@@ -6,26 +6,28 @@
 
 #include <mpi.h>
 
-#include "PicParams.h"
+#include "Params.h"
 #include "Tools.h"
 #include "Particles.h"
 
-class PicParams;
-class DiagParams;
-class Diagnostic;
-class DiagnosticScalar;
-class DiagnosticPhaseSpace;
-class DiagnosticProbe;
+class Params;
 class Species;
 class VectorPatch;
 
 class ElectroMagn;
 class Field;
+class Diagnostic;
+class DiagnosticScalar;
+class DiagnosticPhaseSpace;
+
+#define SMILEI_COMM_DUMP_TIME 1312
 
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class SmileiMPI
 //  --------------------------------------------------------------------------------------------------------------------
 class SmileiMPI {
+    friend class SmileiIO;
+    friend class Checkpoint;
 public:
     friend class Patch;
 
@@ -46,27 +48,26 @@ public:
     //! @see min_local
     //! @see max_local
     //! @see n_space_global
-    void init( PicParams& params );
+    void init( Params& params );
     // Initialize the patch_count vector. Patches are distributed in order to balance the load between MPI processes.
-    void init_patch_count( PicParams& params );
+    void init_patch_count( Params& params );
     // Recompute the patch_count vector. Browse patches and redistribute them in order to balance the load between MPI processes.
-    void recompute_patch_count( PicParams& params, VectorPatch& vecpatches, double time_dual );
-    //! Broadcast to all process
-    //! \param idata read data
-    void bcast( InputData& idata );
+    void recompute_patch_count( Params& params, VectorPatch& vecpatches, double time_dual );
 
     //! Create MPI communicator
-    virtual void createTopology( PicParams& params ) {};
+    virtual void createTopology( Params& params ) {};
     //! Echanges particles of Species, list of particles comes frome Species::dynamics
     //! See child classes
-    virtual void exchangeParticles(Species* species, int ispec, PicParams& params, int tnum, int iDim) {};
+    virtual void exchangeParticles(Species* species, int ispec, Params& params, int tnum, int iDim) {};
+
+    //virtual MPI_Datatype createMPIparticles( Particles* particles, int nbrOfProp ) {MPI_Datatype type ; return type; }
 
     MPI_Datatype createMPIparticles( Particles* particles, int nbrOfProp );
 
 
     //! Create MPI_Datatype to exchange/sum fields on ghost data
     //! See child classes
-    virtual void createType( PicParams& params ) {};
+    virtual void createType( Params& params ) {};
 
     //! Exchange all electric fields on borders
     void exchangeE( ElectroMagn* EMfields );
@@ -106,7 +107,7 @@ public:
     void send(Patch* patch, int to  , int hindex);
     void isend(Patch* patch, int to  , int hindex);
     void recv(Patch* patch, int from, int hindex);
-    void new_recv(Patch* patch, int from, int hindex, int ndim);
+    void new_recv(Patch* patch, int from, int hindex, Params& params);
 
     void send(Species* species, int to  , int hindex);
     void recv(Species* species, int from, int hindex);
@@ -224,6 +225,17 @@ public:
     std::vector<int>  patch_count, target_patch_count;  //Number of patches owned by each mpi process.
     int hrank(int h); // Returns the rank of the MPI process currently owning patch h.
 
+    inline int globalNbrParticles(Species* species, int locNbrParticles) {
+	int nParticles(0);
+	MPI_Reduce( &locNbrParticles, &nParticles, 1, MPI_INT, MPI_SUM, 0, SMILEI_COMM_WORLD );
+	return nParticles;
+    }
+
+    // Broadcast a string in current communicator
+    void bcast( std::string& val );
+    // Broadcast an int in current communicator
+    void bcast( int& val );
+
 protected:
     //! Global MPI Communicator
     MPI_Comm SMILEI_COMM_WORLD;
@@ -250,10 +262,6 @@ protected:
     std::vector<double> min_local;
     //! "Real" max limit of local domain (ghost data not concerned)
     std::vector<double> max_local;
-
-private:
-    // Broadcast a string in current communicator
-    void bcast( std::string& val );
 
 };
 

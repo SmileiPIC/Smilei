@@ -13,14 +13,14 @@
 
 using namespace std;
 
-Patch2D::Patch2D(PicParams& params, DiagParams &diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved)
-  : Patch( params, diag_params, laser_params, smpi, ipatch, n_moved)
+Patch2D::Patch2D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved)
+  : Patch( params, smpi, ipatch, n_moved)
 {
 	
 };
 
 
-void Patch2D::createType( PicParams& params )
+void Patch2D::createType( Params& params )
 {
     int nx0 = params.n_space[0] + 1 + 2*params.oversize[0];
     int ny0 = params.n_space[1] + 1 + 2*params.oversize[1];

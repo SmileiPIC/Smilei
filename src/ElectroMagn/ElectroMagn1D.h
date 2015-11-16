@@ -3,14 +3,14 @@
 
 #include "ElectroMagn.h"
 
-class PicParams;
+class Params;
 
 //! class ElectroMagn1D containing all information on the electromagnetic fields & currents for 1d3v simulations
 class ElectroMagn1D : public ElectroMagn
 {
 public:
     //! Constructor for ElectroMagn1D
-    ElectroMagn1D(PicParams &params,  LaserParams &laser_params, Patch* patch);
+    ElectroMagn1D(Params &params, Patch* patch);
 
     //! Destructor for ElectroMagn1D
     ~ElectroMagn1D();
@@ -45,9 +45,6 @@ public:
     
     //! Method used to solve Maxwell-Ampere equation
     void solveMaxwellAmpere();
-
-    //! Method used to solve Maxwell-Faraday equation
-    void solveMaxwellFaraday();
 
     //! Method used to save the Magnetic fields (used to center them)
     void saveMagneticFields();
@@ -86,6 +83,9 @@ public:
     //! compute Poynting on borders
     void computePoynting();
 
+    //! Method used to impose external fields
+    void applyExternalField(Field*, Profile*, Patch*);
+    
 private:
     //! from patch is west
     const bool isWestern;

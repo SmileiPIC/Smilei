@@ -6,14 +6,14 @@
 
 #include "SmileiIO_Cart1D.h"
 
-#include "PicParams.h"
+#include "Params.h"
 #include "Patch.h"
 #include "Field1D.h"
 
 using namespace std;
 
-SmileiIO_Cart1D::SmileiIO_Cart1D( PicParams& params, DiagParams &diagParams, Patch* patch )
-    : SmileiIO( params, diagParams, patch )
+SmileiIO_Cart1D::SmileiIO_Cart1D( Params& params, Diagnostic *diag, Patch* patch )
+    : SmileiIO( params, diag, patch )
 {
     createPattern(params,patch);
 }
@@ -22,7 +22,7 @@ SmileiIO_Cart1D::~SmileiIO_Cart1D()
 {
 }
 
-void SmileiIO_Cart1D::createPattern( PicParams& params, Patch* patch )
+void SmileiIO_Cart1D::createPattern( Params& params, Patch* patch )
 {
     std::vector<unsigned int> istart;
     istart = params.oversize;
@@ -109,7 +109,7 @@ void SmileiIO_Cart1D::createPattern( PicParams& params, Patch* patch )
 
 
 
-void SmileiIO_Cart1D::updatePattern( PicParams& params, Patch* patch )
+void SmileiIO_Cart1D::updatePattern( Params& params, Patch* patch )
 {
     for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
       H5Sclose( memspace_ [ ix_isPrim ] );

@@ -1,6 +1,6 @@
 
 #include "SimWindow.h"
-#include "PicParams.h"
+#include "Params.h"
 #include "Species.h"
 #include "ElectroMagn.h"
 #include "Interpolator.h"
@@ -16,7 +16,7 @@
 
 using namespace std;
 
-SimWindow::SimWindow(PicParams& params)
+SimWindow::SimWindow(Params& params)
 {
     nspace_win_x_ = params.nspace_win_x;
     cell_length_x_   = params.cell_length[0];
@@ -63,7 +63,7 @@ SimWindow::~SimWindow()
 //
 //}
 
-void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& params, DiagParams &diag_params, LaserParams& laser_params)
+void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params)
 {
     #pragma omp master
     {
@@ -93,7 +93,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
     vector<hid_t> dset;
     if (smpi->isMaster()) {
 	// Get scalars/phaseSpace patch 
-	vecPatches(0)->Diags->scalars.close();
+	vecPatches(0)->Diags->scalars.closeFile();
 	fphases = vecPatches(0)->Diags->phases.fileId;
 	for ( int iphase=0 ; iphase<vecPatches(0)->Diags->phases.vecDiagPhase.size() ; iphase++ ) {
 	    dset.push_back( vecPatches(0)->Diags->phases.vecDiagPhase[iphase]->dataId );
@@ -111,7 +111,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
 
         if ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][1] ) {
             int patchid = vecPatches(ipatch)->neighbor_[0][1];
-            Patch* newPatch = PatchesFactory::create(params, diag_params, laser_params, smpi, patchid, n_moved );
+            Patch* newPatch = PatchesFactory::create(params, smpi, patchid, n_moved );
             vecPatches.patches_.push_back( newPatch );
         }
     }
@@ -167,7 +167,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
             // Patch à recevoir
             for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
                 if ( ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][0] ) && ( vecPatches(ipatch)->MPI_neighbor_[0][0] != MPI_PROC_NULL )  && (vecPatches(ipatch)->neighbor_[0][0] != vecPatches(ipatch)->hindex) ){
-                    smpi->new_recv( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighbor_[0][0], vecPatches(ipatch)->hindex*nmessage, nDim_Parts );
+                    smpi->new_recv( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighbor_[0][0], vecPatches(ipatch)->hindex*nmessage, params );
                 }
             }
 
@@ -208,13 +208,13 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
 
 	int xcall = vecPatches(ipatch)->Pcoordinates[0]-1;
 	int ycall = vecPatches(ipatch)->Pcoordinates[1]-1;
-	if (params.bc_em_type_long=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
-	if (params.bc_em_type_trans=="periodic" && ycall <0) ycall += (1<<params.mi[1]);
+	if (params.bc_em_type_x[0]=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
+	if (params.bc_em_type_y[0]=="periodic" && ycall <0) ycall += (1<<params.mi[1]);
 	vecPatches(ipatch)->corner_neighbor_[0][0] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, ycall);
 	ycall = vecPatches(ipatch)->Pcoordinates[1];
 	vecPatches(ipatch)->neighbor_[0][0] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, vecPatches(ipatch)->Pcoordinates[1]);
 	ycall = vecPatches(ipatch)->Pcoordinates[1]+1;
-	if (params.bc_em_type_trans=="periodic" && ycall >= 1<<params.mi[1]) ycall -= (1<<params.mi[1]);
+	if (params.bc_em_type_y[0]=="periodic" && ycall >= 1<<params.mi[1]) ycall -= (1<<params.mi[1]);
 	vecPatches(ipatch)->corner_neighbor_[0][1] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, ycall);
 	
     }
@@ -344,12 +344,12 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
             //Compute missing part of the new neighborhood tables.
             xcall = mypatch->Pcoordinates[0]-1;
             ycall = mypatch->Pcoordinates[1]-1;
-            if (params.bc_em_type_long=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
-            if (params.bc_em_type_trans=="periodic" && ycall <0) ycall += (1<<params.mi[1]);
+            if (params.bc_em_type_x[0]=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
+            if (params.bc_em_type_y[0]=="periodic" && ycall <0) ycall += (1<<params.mi[1]);
 	    mypatch->patch_neighborhood_[0] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, ycall);
 	    mypatch->patch_neighborhood_[3] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, mypatch->Pcoordinates[1]);
             ycall = mypatch->Pcoordinates[1]+1;
-            if (params.bc_em_type_trans=="periodic" && ycall >= 1<<params.mi[1]) ycall -= (1<<params.mi[1]);
+            if (params.bc_em_type_y[0]=="periodic" && ycall >= 1<<params.mi[1]) ycall -= (1<<params.mi[1]);
 	    mypatch->patch_neighborhood_[6] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, ycall);
 	    for ( int y = 0 ; y < 1+2*(params.nDim_field >= 2) ; y++ ) {
 	        for ( int z = 0 ; z < 1+2*(params.nDim_field == 3) ; z++ ) {
@@ -384,7 +384,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, PicParams& par
     {
          for (unsigned int i=0; i<nthds; i++){
              for (unsigned int j=0; j< patch_to_be_created[i].size(); j++){
-                 vecPatches.patches_[patch_to_be_created[i][j]] = new Patch(params, diag_params, laser_params, smpi, h0 + patch_to_be_created[i][j], n_moved);
+                 vecPatches.patches_[patch_to_be_created[i][j]] = new Patch(params, laser_params, smpi, h0 + patch_to_be_created[i][j], n_moved);
                  //stores all indices of patch_to_be_created in a single vector.
                  if (i>0) patch_to_be_created[0].push_back(patch_to_be_created[i][j]);
              }

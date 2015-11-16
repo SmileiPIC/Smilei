@@ -10,3 +10,12 @@ RUN*
 Validation*
 src/smilei
 src/smilei.*
+*.aux
+*.dvi
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.orig
+*.pyh
+doc/Sphinx/_build/*

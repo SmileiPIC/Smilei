@@ -18,9 +18,8 @@
 
 #include "DiagnosticPhase.h"
 
-class PicParams;
+class Params;
 class Patch;
-class DiagParams;
 class ElectroMagn;
 
 //! mother class of all the DiagnosticPhase* it creates all the sub-diagnostics and creates and fills the hdf5 file
@@ -30,16 +29,21 @@ class DiagnosticPhaseSpace {
     friend class SmileiMPI;
 public:
 
-    DiagnosticPhaseSpace(PicParams &params, DiagParams &diagParams, Patch* patch);
+    DiagnosticPhaseSpace(Params &params, Patch* patch);
     ~DiagnosticPhaseSpace();
 
-	void run(int timestep, std::vector<Species*>& vecSpecies);
+    void run(int timestep, std::vector<Species*>& vecSpecies);
 	
-	void close();
-private:
-    
+    void close();
+
+    //! this vector will hold all the diagnostics created
+    std::vector<DiagnosticPhase*> vecDiagPhase;
+	
+    //! this is the hdf5 file id (we need to keep it to close at the right time)
+    hid_t fileId;
+
     //! this is always handy to know (number of particle dimension)
-	unsigned int ndim;
+    unsigned int ndim;
     
     partStruct my_part;
 
@@ -49,11 +53,5 @@ protected :
 
     std::vector<DiagnosticPhase*>::iterator itDiagPhase;
 
-    //! this vector will hold all the diagnostics created
-    std::vector<DiagnosticPhase*> vecDiagPhase;
-	
-    //! this is the hdf5 file id (we need to keep it to close at the right time)
-    hid_t fileId;
-	
 };
 #endif

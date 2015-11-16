@@ -1,6 +1,7 @@
 #ifndef PROJECTOR_H
 #define PROJECTOR_H
 
+#include "Params.h"
 #include "Field.h"
 
 class PicParams;
@@ -18,7 +19,7 @@ class Projector {
 
 public:
     //! Creator for the Projector
-    Projector(PicParams&, Patch*);
+    Projector(Params&, Patch*);
     virtual ~Projector() {};
     virtual void mv_win(unsigned int shift) = 0;
     virtual void setMvWinLimits(unsigned int shift) = 0;

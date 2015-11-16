@@ -5,6 +5,8 @@
 #include <iostream>
 #include <string>
 
+#include <cmath>
+
 #include "Particles.h"
 #include "BoundaryConditionType.h"
 #include "Patch.h"
@@ -12,33 +14,29 @@
 
 using namespace std;
 
-PartBoundCond::PartBoundCond( PicParams& params, int ispec, Patch* patch )
+PartBoundCond::PartBoundCond( Params& params, int ispec, Patch* patch )
 {
+    // number of dimensions for the particle
+    //!\todo (MG to JD) isn't it always 3?
     nDim_particle = params.nDim_particle;
-
-    int n_ord_proj_max = 5;
-    //!\todo define n_ord_proj_max, value from SQUASH
-    if (params.interpolation_order==2) n_ord_proj_max = 5;
-    if (params.interpolation_order==3) n_ord_proj_max = 5;
-
+    
     // Absolute global values
-//    double x_min_global = params.cell_length[0]*n_ord_proj_max;
-//    double x_max_global = params.cell_length[0]*( params.n_space_global[0]-1-n_ord_proj_max );
     double x_min_global = 0;
     double x_max_global = params.cell_length[0]*(params.n_space_global[0]);
-
     double y_min_global = 0;
     double y_max_global = params.cell_length[1]*(params.n_space_global[1]);
     double z_min_global = 0;
     double z_max_global = params.cell_length[2]*(params.n_space_global[2]);
-
-    bc_west  = NULL;
-    bc_east  = NULL;
-    bc_south = NULL;
-    bc_north = NULL;
+    
+    // by default apply no bcs
+    bc_west   = NULL;
+    bc_east   = NULL;
+    bc_south  = NULL;
+    bc_north  = NULL;
     bc_bottom = NULL;
     bc_up     = NULL;
-
+    
+    // -----------------------------
     // Define limits of local domain
     if (!params.nspace_win_x) {
         x_min = max( x_min_global, patch->getDomainLocalMin(0) );
@@ -50,7 +48,7 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, Patch* patch )
     }
 
     if ( nDim_particle > 1 ) {
-	if (params.bc_em_type_trans=="periodic") {
+	if (params.bc_em_type_y[0]=="periodic") {
 	    y_min = patch->getDomainLocalMin(1);
 	    y_max = patch->getDomainLocalMax(1);
 	}
@@ -59,7 +57,7 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, Patch* patch )
 	    y_max = min( y_max_global, patch->getDomainLocalMax(1) );
 	}
         if ( nDim_particle > 2 ) {
-	    if (params.bc_em_type_trans=="periodic") {
+	    if (params.bc_em_type_z[0]=="periodic") {
 		z_min = patch->getDomainLocalMin(2);
 		z_max = patch->getDomainLocalMax(2);
 	    }
@@ -70,7 +68,31 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, Patch* patch )
 	}
     }
 
-    // Define kind of boundary conditions
+    
+    // Check for inconsistencies between EM and particle BCs
+    if (! params.species_param[ispec].isTest) {
+        if ( ((params.bc_em_type_x[0]=="periodic")&&(params.species_param[ispec].bc_part_type_west!="none"))
+         ||  ((params.bc_em_type_x[1]=="periodic")&&(params.species_param[ispec].bc_part_type_east!="none")) ) {
+            ERROR("For species #" << ispec << ", periodic EM boundary conditions require x particle BCs to be periodic.");
+        }
+        if ( nDim_particle > 1 ) {
+            if ( ((params.bc_em_type_y[0]=="periodic")&&(params.species_param[ispec].bc_part_type_south!="none"))
+             ||  ((params.bc_em_type_y[1]=="periodic")&&(params.species_param[ispec].bc_part_type_north!="none")) ) {
+                ERROR("For species #" << ispec << ", periodic EM boundary conditions require y particle BCs to be periodic.");
+            }
+            if ( nDim_particle > 2 ) {
+                if ( ((params.bc_em_type_z[0]=="periodic")&&(params.species_param[ispec].bc_part_type_bottom!="none"))
+                 ||  ((params.bc_em_type_z[1]=="periodic")&&(params.species_param[ispec].bc_part_type_up!="none"    )) ) {
+                    ERROR("For species #" << ispec << ", periodic EM boundary conditions require z particle BCs to be periodic.");
+                }
+            }
+        }
+    }
+    
+    // ----------------------------------------------
+    // Define the kind of applied boundary conditions
+    // ----------------------------------------------
+    
     // West
     if ( params.species_param[ispec].bc_part_type_west == "refl" ) {
 	if (patch->isWestern()) bc_west = &refl_particle;
@@ -81,16 +103,16 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, Patch* patch )
     else if ( params.species_param[ispec].bc_part_type_west == "stop" ) {
 	if (patch->isWestern()) bc_west = &stop_particle;
     }
-    else if ( params.species_param[ispec].bc_part_type_west == "adrien" ) {
-	if (patch->isWestern()) bc_west = &adrien_particle;
+    else if ( params.species_param[ispec].bc_part_type_west == "thermalize" ) {
+	if (patch->isWestern()) bc_west = &thermalize_particle;
     }
     else if ( params.species_param[ispec].bc_part_type_west == "none" ) {
-	WARNING( "No Boundary Condition applied for species in west direction " << ispec );
+        MESSAGE( "West boundary condition for species " << ispec << " is 'none', which means the same as fields");
     }
     else {
-	ERROR( "West boundary condition undefined" );
+        ERROR( "West boundary condition undefined" );
     }
-
+    
     // East
     if ( params.species_param[ispec].bc_part_type_east == "refl" ) {
 	if (patch->isEastern()) bc_east = &refl_particle;
@@ -101,17 +123,17 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, Patch* patch )
     else if ( params.species_param[ispec].bc_part_type_east == "stop" ) {
 	if (patch->isEastern()) bc_east = &stop_particle;
     }
-    else if ( params.species_param[ispec].bc_part_type_east == "adrien" ) {
-	if (patch->isEastern()) bc_east = &adrien_particle;
+    else if ( params.species_param[ispec].bc_part_type_east == "thermalize" ) {
+	if (patch->isEastern()) bc_east = &thermalize_particle;
     }
     else if ( params.species_param[ispec].bc_part_type_east == "none" ) {
-	WARNING( "No Boundary Condition applied for species in east direction " << ispec );
+        MESSAGE( "East boundary condition for species " << ispec << " is 'none', which means the same as fields");
     }
     else {
-	ERROR( "East boundary condition undefined" );
+        ERROR( "East boundary condition undefined" );
     }
-
-
+    
+    
     if ( nDim_particle > 1 ) {
 	// South 
 	if ( params.species_param[ispec].bc_part_type_south == "refl" ) {
@@ -123,11 +145,11 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, Patch* patch )
 	else if ( params.species_param[ispec].bc_part_type_south == "stop" ) {
 	    if (patch->isSouthern()) bc_south = &stop_particle;
 	}	
-	else if ( params.species_param[ispec].bc_part_type_south == "adrien" ) {
-	    if (patch->isSouthern()) bc_south = &adrien_particle;
+	else if ( params.species_param[ispec].bc_part_type_south == "thermalize" ) {
+	    if (patch->isSouthern()) bc_south = &thermalize_particle;
 	}	
 	else if ( params.species_param[ispec].bc_part_type_south == "none" ) {
-	    WARNING( "No Boundary Condition applied for species in south direction " << ispec );
+            MESSAGE( "South boundary condition for species " << ispec << " is 'none', which means the same as fields");
 	}
 	else {
 	    ERROR( "South boundary condition undefined : " << params.species_param[ispec].bc_part_type_south  );
@@ -143,11 +165,11 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, Patch* patch )
 	else if ( params.species_param[ispec].bc_part_type_north == "stop" ) {
 	    if (patch->isNorthern()) bc_north = &stop_particle;
 	}
-	else if ( params.species_param[ispec].bc_part_type_north == "adrien" ) {
-	    if (patch->isNorthern()) bc_north = &adrien_particle;
+	else if ( params.species_param[ispec].bc_part_type_north == "thermalize" ) {
+	    if (patch->isNorthern()) bc_north = &thermalize_particle;
 	}
 	else if ( params.species_param[ispec].bc_part_type_north == "none" ) {
-	    WARNING( "No Boundary Condition applied for species in north direction " << ispec );
+            MESSAGE( "North boundary condition for species " << ispec << " is 'none', which means the same as fields");
 	}
 	else {
 	    ERROR( "North boundary condition undefined : " << params.species_param[ispec].bc_part_type_north  );
@@ -177,10 +199,14 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, Patch* patch )
 	    }
 
 	    //} // else NULL
-	}
-    }
-
+            
+        }//nDim_particle>2
+        
+    }//nDim_particle>1
+    
+    
 }
+
 
 PartBoundCond::~PartBoundCond()
 {

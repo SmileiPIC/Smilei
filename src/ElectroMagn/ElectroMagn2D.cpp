@@ -5,28 +5,28 @@
 #include <iostream>
 #include <sstream>
 
-#include "PicParams.h"
+#include "Params.h"
 #include "Field2D.h"
-#include "Laser.h"
 
 #include "Patch.h"
 #include <cstring>
+
+#include "Profile.h"
+
+#include "ElectroMagnBC.h"
 
 using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn2D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn2D::ElectroMagn2D(PicParams &params, LaserParams &laser_params, Patch* patch) : 
-  ElectroMagn(params, laser_params, patch),
+ElectroMagn2D::ElectroMagn2D(Params &params, Patch* patch) : 
+  ElectroMagn(params, patch),
 isWestern(patch->isWestern()),
 isEastern(patch->isEastern()),
 isNorthern(patch->isNorthern()),
 isSouthern(patch->isSouthern())
-{
-    // local dt to store
-    int sizeprojbuffer ;
-    
+{    
     
     // --------------------------------------------------
     // Calculate quantities related to the simulation box
@@ -152,6 +152,21 @@ isSouthern(patch->isSouthern())
 	    } // for (int isDual=0 ; isDual
 	} // for (unsigned int i=0 ; i<nDim_field 
     
+    // Fillng the space profiles of antennas
+    for (vector<AntennaStructure>::iterator antenna=antennas.begin(); antenna!=antennas.end(); antenna++ ) {
+        if (antenna->field == "Jx")
+            antenna->my_field = new Field2D(dimPrim, 0, false, "Jx");
+        else if (antenna->field == "Jy")
+            antenna->my_field = new Field2D(dimPrim, 1, false, "Jy");
+        else if (antenna->field == "Jz")
+            antenna->my_field = new Field2D(dimPrim, 2, false, "Jz");
+        
+        if (antenna->my_field) {
+            Profile my_spaceProfile(antenna->space_profile, nDim_field);
+            applyExternalField(antenna->my_field,&my_spaceProfile, patch);
+        }
+    }
+    
 }//END constructor Electromagn2D
 
 
@@ -161,7 +176,6 @@ isSouthern(patch->isSouthern())
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn2D::~ElectroMagn2D()
 {
-    
 }//END ElectroMagn2D
 
 
@@ -336,14 +350,14 @@ void ElectroMagn2D::initE(Patch *patch)
     // ------------------------------------------
     
     // Ex
-    DEBUG(2, "Computing Ex from scalar potential");
+    DEBUG("Computing Ex from scalar potential");
     for (unsigned int i=1; i<nx_d-1; i++) {
         for (unsigned int j=0; j<ny_p; j++) {
             (*Ex2D)(i,j) = ((*phi_)(i-1,j)-(*phi_)(i,j))/dx;
         }
     }
     // Ey
-    DEBUG(2, "Computing Ey from scalar potential");
+    DEBUG("Computing Ey from scalar potential");
     for (unsigned int i=0; i<nx_p; i++) {
         for (unsigned int j=1; j<ny_d-1; j++) {
             (*Ey2D)(i,j) = ((*phi_)(i,j-1)-(*phi_)(i,j))/dy;
@@ -487,58 +501,6 @@ void ElectroMagn2D::solveMaxwellAmpere()
 #endif
 
 }//END solveMaxwellAmpere
-
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Solve the Maxwell-Faraday equation
-// ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn2D::solveMaxwellFaraday()
-{
-    
-    // Static-cast of the fields
-    Field2D* Ex2D = static_cast<Field2D*>(Ex_);
-    Field2D* Ey2D = static_cast<Field2D*>(Ey_);
-    Field2D* Ez2D = static_cast<Field2D*>(Ez_);
-    Field2D* Bx2D = static_cast<Field2D*>(Bx_);
-    Field2D* By2D = static_cast<Field2D*>(By_);
-    Field2D* Bz2D = static_cast<Field2D*>(Bz_);
-    
-    // Magnetic field Bx^(p,d)
-//cout << "nx_p,nx_d-1" << nx_p << " " << nx_d-1 ; 
-//#pragma omp parallel
-//{
-//#pragma omp for schedule(static)
-        for (unsigned int j=1 ; j<ny_p ; j++) {
-            (*Bx2D)(0,j) -= dt_ov_dy * ( (*Ez2D)(0,j) - (*Ez2D)(0,j-1) );
-        }
-//    for (unsigned int i=0 ; i<nx_p;  i++) {
-    for (unsigned int i=1 ; i<nx_p;  i++) {
-        for (unsigned int j=1 ; j<ny_p ; j++) {
-            (*Bx2D)(i,j) -= dt_ov_dy * ( (*Ez2D)(i,j) - (*Ez2D)(i,j-1) );
-        }
-//    }
-    
-    // Magnetic field By^(d,p)
-//#pragma omp for schedule(static)
-//    for (unsigned int i=1 ; i<nx_d-1 ; i++) {
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            (*By2D)(i,j) += dt_ov_dx * ( (*Ez2D)(i,j) - (*Ez2D)(i-1,j) );
-        }
-    //}
-    
-    // Magnetic field Bz^(d,d)
-    //for (unsigned int i=1 ; i<nx_d-1 ; i++) {
-        for (unsigned int j=1 ; j<ny_p ; j++) {
-            (*Bz2D)(i,j) += dt_ov_dy * ( (*Ex2D)(i,j) - (*Ex2D)(i,j-1) )
-            -               dt_ov_dx * ( (*Ey2D)(i,j) - (*Ey2D)(i-1,j) );
-        }
-    }
-//}// end parallel
-#ifdef _PATCH_DEBUG
-    cout << "\tBz = "  << Bz_->norm() << endl;
-#endif
-}//END solveMaxwellFaraday
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -846,6 +808,9 @@ void ElectroMagn2D::computeTotalRhoJ()
 }
 
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Compute electromagnetic energy flows vectors on the border of the simulation box
+// ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn2D::computePoynting() {
 
     if (isWestern) {
@@ -940,4 +905,25 @@ void ElectroMagn2D::computePoynting() {
         }
     }//if North
 
+}
+
+void ElectroMagn2D::applyExternalField(Field* my_field,  Profile *profile, Patch* patch) {
+    Field2D* field2D=static_cast<Field2D*>(my_field);
+
+    vector<double> pos(2,0);
+    
+    //for (unsigned int i=0 ; i<field2D->dims()[0] ; i++) { // UNSIGNED INT LEADS TO PB IN PERIODIC BCs
+    for (int i=0 ; i<field2D->dims()[0] ; i++) {
+        pos[0] = ( (double)(patch->getCellStartingGlobalIndex(0)+i +(field2D->isDual(0)?-0.5:0)) )*dx;
+        for (int j=0 ; j<field2D->dims()[1] ; j++) {
+            pos[1] = ( (double)(patch->getCellStartingGlobalIndex(1)+j +(field2D->isDual(1)?-0.5:0)) )*dy;
+            (*field2D)(i,j) = (*field2D)(i,j) + profile->valueAt(pos);
+        }//j
+    }//i
+    
+    if (emBoundCond[0]!=0) emBoundCond[0]->save_fields_BC2D_Long(my_field);
+    if (emBoundCond[1]!=0) emBoundCond[1]->save_fields_BC2D_Long(my_field);
+    if (emBoundCond[2]!=0) emBoundCond[2]->save_fields_BC2D_Trans(my_field);
+    if (emBoundCond[3]!=0) emBoundCond[3]->save_fields_BC2D_Trans(my_field);
+    
 }
