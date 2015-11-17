@@ -27,7 +27,6 @@
 #include "PatchesFactory.h"
 #include "Checkpoint.h"
 
-#include "Collisions.h"
 #include "Solver.h"
 
 #include "SimWindow.h"
@@ -88,24 +87,9 @@ int main (int argc, char* argv[])
     if (smpiData->isMaster()) MESSAGE("Disabled");
 #endif
 
-    TITLE("IO environments");
+    TITLE("Restart environments");
     Checkpoint checkpoint(params, smpiData);
-
-    // -------------------------------------------
-    // Declaration of the main objects & operators
-    // -------------------------------------------
-    
-    // ---------------------------
-    // Initialize Species & Fields
-    // ---------------------------
-    TITLE("Initializing particles, fields & moving-window");
-    
-    // Initialize the vecSpecies object containing all information of the different Species
-    // ------------------------------------------------------------------------------------
-    
-    // vector of Species (virtual)
-    vector<Species*> vecSpecies(0);
-
+        
     // ------------------------------------------------------------------------
     // Initialize the simulation times time_prim at n=0 and time_dual at n=+1/2
     // ------------------------------------------------------------------------
@@ -119,12 +103,9 @@ int main (int argc, char* argv[])
     // Do we initially do diags or not ?
     int diag_flag = 1;
 
-    // Initialize the collisions (vector of collisions)
-    // ------------------------------------------------------------------------------------
-    vector<Collisions*> vecCollisions;// = Collisions::create(params, vecSpecies, smpiData);
-    
-    // Initialize the particle walls
-    vector<PartWall*> vecPartWall;// = PartWall::create(params, smpiData);
+    // -------------------------------------------
+    // Declaration of the main objects & operators
+    // -------------------------------------------
         
     // ----------------------------------------------------------------------------
     // Define Moving Window & restart
@@ -134,24 +115,10 @@ int main (int argc, char* argv[])
     if (params.nspace_win_x)
         simWindow = new SimWindow(params);
     
-    TITLE("Creating EMfields/Interp/Proj");
-    
-    // Initialize the electromagnetic fields and interpolation-projection operators
-    // according to the simulation geometry
-    // ----------------------------------------------------------------------------
-    
-    // object containing the electromagnetic fields (virtual)
-    ElectroMagn* EMfields = NULL;
-    
-    // interpolation operator (virtual)
-    Interpolator* Interp = NULL;
-    
-    // projection operator (virtual)
-    Projector* Proj = NULL;
-    
-    // Create diagnostics
-    Diagnostic *Diags = NULL;
-
+    // ---------------------------
+    // Initialize Species & Fields
+    // ---------------------------
+    TITLE("Initializing particles, fields & moving-window");
     
     VectorPatch vecPatches = PatchesFactory::createVector(params, smpiData);
     vecPatches.initProbesDiags(params, 0);
@@ -161,7 +128,6 @@ int main (int argc, char* argv[])
     // reading from dumped file the restart values
     if (params.restart) {
         MESSAGE(1, "READING fields and particles for restart");
-        DEBUG(vecSpecies.size());
         checkpoint.restartAll( vecPatches, stepStart, smpiData, simWindow, params);
 
         double restart_time_dual = (stepStart +0.5) * params.timestep;
@@ -238,7 +204,7 @@ int main (int argc, char* argv[])
 	// Test particles need initialization now (after vecSpecies has been created)
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    for (unsigned int i=0 ; i<vecPatches(ipatch)->Diags->vecDiagnosticTestParticles.size(); i++)
-		vecPatches(ipatch)->Diags->vecDiagnosticTestParticles[i]->init(vecSpecies, smpiData);
+		vecPatches(ipatch)->Diags->vecDiagnosticTestParticles[i]->init(vecPatches(ipatch)->vecSpecies, smpiData);
 
 
     }
@@ -360,9 +326,11 @@ int npatchmoy=0, npartmoy=0;
         // apply collisions if requested
         // -----------------------------
         if (Collisions::debye_length_required)
-            Collisions::calculate_debye_length(params,vecSpecies);
-        for (unsigned int icoll=0 ; icoll<vecCollisions.size(); icoll++)
-            vecCollisions[icoll]->collide(params,vecSpecies,itime);
+	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+		Collisions::calculate_debye_length(params,vecPatches(ipatch)->vecSpecies);
+	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	    for (unsigned int icoll=0 ; icoll<vecPatches(ipatch)->vecCollisions.size(); icoll++)
+		vecPatches(ipatch)->vecCollisions[icoll]->collide(params,vecPatches(ipatch)->vecSpecies,itime);
         timer[8].update();
         
         // apply the PIC method
@@ -375,7 +343,7 @@ int npatchmoy=0, npartmoy=0;
 	/*******************************************/
 	/********** Move particles *****************/
 	/*******************************************/
-#pragma omp parallel shared (EMfields,time_dual,smpiData,params, vecPatches, simWindow)
+#pragma omp parallel shared (time_dual,smpiData,params, vecPatches, simWindow)
         {
 	    timer[1].restart();
             if (diag_flag){
@@ -449,7 +417,7 @@ int npatchmoy=0, npartmoy=0;
 		    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
 			// Computes Bx_, By_, Bz_ at time n+1 on interior points.
 			//vecPatches(ipatch)->EMfields->solveMaxwellFaraday();
-			(*vecPatches(ipatch)->EMfields->MaxwellFaradaySolver_)(EMfields);
+			(*vecPatches(ipatch)->EMfields->MaxwellFaradaySolver_)(vecPatches(ipatch)->EMfields);
 			// Applies boundary conditions on B
 			vecPatches(ipatch)->EMfields->boundaryConditions(itime, time_dual, vecPatches(ipatch), params, simWindow);
 		    }
@@ -640,18 +608,6 @@ int npatchmoy=0, npartmoy=0;
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) delete vecPatches(ipatch);
     vecPatches.clear();
 
-
-    if (Proj) delete Proj;
-    if (Interp) delete Interp;
-    if (EMfields) delete EMfields;
-    if (Diags) delete Diags;
-
-    for(unsigned int i=0; i<vecCollisions.size(); i++) delete vecCollisions[i];
-    vecCollisions.clear();
-
-    for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
-    vecSpecies.clear();
-    
     if (params.nspace_win_x)
         delete simWindow;
     

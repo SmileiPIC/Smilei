@@ -18,6 +18,7 @@
 #include "Diagnostic.h"
 #include "SmileiIO.h"
 #include "PartWall.h"
+#include "Collisions.h"
 
 class Diagnostic;
 class SimWindow;
@@ -35,6 +36,9 @@ public:
 
     //! Destructor for Patch
     ~Patch() {
+
+	for(unsigned int i=0; i<vecCollisions.size(); i++) delete vecCollisions[i];
+	vecCollisions.clear();
 
 	for (unsigned int iwall=0 ; iwall<vecPartWall.size(); iwall++) delete vecPartWall[iwall];
 	vecPartWall.clear();	
@@ -59,6 +63,7 @@ public:
 
     SmileiIO* sio;
     std::vector<PartWall*> vecPartWall;
+    std::vector<Collisions*> vecCollisions;
 
    //!Cartesian coordinates of the patch. X,Y,Z of the Patch according to its Hilbert index.
     std::vector<unsigned int> Pcoordinates;

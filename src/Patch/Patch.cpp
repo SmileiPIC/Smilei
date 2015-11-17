@@ -119,26 +119,37 @@ Patch::Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int 
 	min_local[0] += n_moved*params.cell_length[0];
 	max_local[0] += n_moved*params.cell_length[0];
 
+	// ---------------------------
+	// Initialize Species & Fields
+	// ---------------------------
+
+
+	// Initialize the vecSpecies object containing all information of the different Species
+	// ------------------------------------------------------------------------------------
+    
+	// vector of Species (virtual)
 	vecSpecies = SpeciesFactory::createVector(params, this);
 
-	/* // + min_loc/cell_index(ref smpi,  & sort) // OK through this */
-	// + new n_space -> in PatchFactory
-	// patchID : ok through coord
-	// create Pos : OK
-
-	// -> partBoundCond : min/max_loc (smpi)
+	// object containing the electromagnetic fields (virtual)
 	EMfields   = ElectroMagnFactory::create(params, this);
-	// + patchId + new n_space (now = params by smpi) + BC
-	// -> Neighbors to define !!
 	
+	// interpolation operator (virtual)
 	Interp     = InterpolatorFactory::create(params, this);               // + patchId -> idx_domain_begin (now = ref smpi)
+	// projection operator (virtual)
 	Proj       = ProjectorFactory::create(params, this);                  // + patchId -> idx_domain_begin (now = ref smpi)
 
+	// Create diagnostics
 	Diags = new Diagnostic(params,this);
 
 	sio = SmileiIOFactory::create(params, Diags, this);
 
+	// Initialize the collisions (vector of collisions)
+	// ------------------------------------------------------------------------------------
+	vecCollisions = Collisions::create(params, vecSpecies, smpi);
+
+	// Initialize the particle walls
 	vecPartWall = PartWall::create(params, smpi);
+
 	
 };
 
