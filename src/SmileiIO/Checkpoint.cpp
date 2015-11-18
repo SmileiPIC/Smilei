@@ -54,11 +54,9 @@ dump_request(smpi->getSize())
 
     PyTools::extract("dump_deflate", dump_deflate);
 
-#ifdef _PBCOMPILING
-    if (PyTools::extract("restart_dir", restart_dir) && restart_dir.back()!='/') {
+    if (PyTools::extract("restart_dir", restart_dir) && restart_dir.at(restart_dir.length()-1)!='/') {
         restart_dir+="/";
     }
-#endif
 
     if (dump_step || dump_minutes>0) {
         if (exit_after_dump) {

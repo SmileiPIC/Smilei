@@ -35,7 +35,6 @@ global_file_id_avg(0)
     H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);
 }
 
-
 void SmileiIO::setFiles( hid_t masterFileId, hid_t masterFileIdAvg )
 {
     global_file_id_ = masterFileId;
