@@ -100,6 +100,7 @@ Species(
     nb_density = trapezoidal(1., xplateau=20.*Ld),
     temperature = [1.e-6],
 	thermT = [1.e-6],
+	thermVelocity = [0.,0.,0.],
     bc_part_type_west = 'thermalize',
     bc_part_type_east = 'refl'
 )
@@ -113,6 +114,7 @@ Species(
     nb_density = trapezoidal(1., xplateau=20.*Ld),
     temperature = [Te],
     thermT = [Te],
+    thermVelocity = [0.,0.,0.],
     bc_part_type_west = 'thermalize',
     bc_part_type_east = 'refl'
 )

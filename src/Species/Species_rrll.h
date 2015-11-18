@@ -16,7 +16,7 @@ class Species_rrll : public Species
 {
 public:
     //! Creator for Species_rrLL
-    Species_rrll(Params&, int, Patch*);
+    Species_rrll(Params&, Patch*);
     //! Destructor for Species_rrLL
     ~Species_rrll();
 

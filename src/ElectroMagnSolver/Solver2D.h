@@ -27,10 +27,10 @@ public:
     virtual void operator()( ElectroMagn* fields) = 0;
 
 protected:
-    int nx_p;
-    int nx_d;
-    int ny_p;
-    int ny_d;
+    unsigned int nx_p;
+    unsigned int nx_d;
+    unsigned int ny_p;
+    unsigned int ny_d;
     double dt_ov_dy;
     double dt_ov_dx;
 

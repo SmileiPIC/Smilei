@@ -12,10 +12,14 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for Species_rrLL
 // ---------------------------------------------------------------------------------------------------------------------
-Species_rrll::Species_rrll( Params& params, int ispec, Patch* patch )
-    : Species( params, ispec, patch)
+Species_rrll::Species_rrll( Params& params, Patch* patch)
+    : Species( params, patch )
 {
-    DEBUG("Species " << ispec << "created as rrLL");
+    particles->isRadReaction=true;
+    
+    ERROR("Creating a RRLL species: this is a work in progress and is still not working. Exiting");
+
+    DEBUG("Species is being created as rrLL");
 }
 
 

@@ -98,25 +98,36 @@ def polygonal(xpoints=[], xvalues=[]):
         return 0.
     return f
 
-def cosine(base, amplitude=1.,
-           xvacuum=0., xlength=None, phi=0., xnumber=1):
+def cosine(base,
+           xamplitude=1., xvacuum=0., xlength=None, xphi=0., xnumber=1,
+           yamplitude=1., yvacuum=0., ylength=None, yphi=0., ynumber=1):
     import math
-    global sim_length
+    global dim, sim_length
     if not dim or not sim_length:
-        raise Exception("cosine profile has been defined before `sim_length`")
+        raise Exception("cosine profile has been defined before `dim` or `sim_length`")
+    
     if len(sim_length)>0 and xlength is None: xlength = sim_length[0]-xvacuum
-    def f(x,y=0.):
+    if len(sim_length)>1 and ylength is None: ylength = sim_length[1]-yvacuum
+    
+    def fx(x):
         #vacuum region
         if x < xvacuum: return 0.
         # profile region
         elif x < xvacuum+xlength:
-            return base + amplitude * math.cos(phi + 2.*math.pi * xnumber * (x-xvacuum)/xlength)
+            return base + xamplitude * math.cos(xphi + 2.*math.pi * xnumber * (x-xvacuum)/xlength)
         # beyond
         else: return 0.
-    return f
+    if dim == "1d3v": return fx
+    def fy(y):
+        #vacuum region
+        if y < yvacuum: return 0.
+        # profile region
+        elif y < yvacuum+ylength:
+            return base + yamplitude * math.cos(yyphi + 2.*math.pi * ynumber * (y-yvacuum)/ylength)
+        # beyond
+        else: return 0.
 
-
-
+    if dim == "2d3v": return lambda x,y: fx(x)*fy(y)
 
 def tconstant(start=0.):
     return lambda t: 1. if t>=start else 0.

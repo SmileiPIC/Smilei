@@ -8,10 +8,32 @@
 #ifndef LaserParams_H
 #define LaserParams_H
 
+#include "PyTools.h"
+
 #include <vector>
 #include <string>
 
-#include "Params.h"
+class Params;
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! This structure contains the properties of each Laser Profile
+// ---------------------------------------------------------------------------------------------------------------------
+struct LaserProfileStructure {
+    
+    //! Profile profile
+    std::string profile;
+    
+    //! in case profile is give in Python
+    PyObject *py_profile;
+    
+    //! int vector for profile parameters
+    std::vector<int> int_params;
+    
+    //! double vector for profile parameters
+    std::vector<double> double_params;
+    
+};
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each Laser
@@ -63,9 +85,6 @@ public:
     //! Creator for LaserParams
     LaserParams(Params&);
 
-    //! initial number of laser pulses
-    unsigned int n_laser;
-    
     //! laser parameters
     std::vector<LaserStructure> laser_param;
     

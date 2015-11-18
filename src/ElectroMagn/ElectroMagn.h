@@ -10,10 +10,10 @@
 #include "LaserProfile.h"
 #include "LaserParams.h"
 #include "Profile.h"
+#include "Species.h"
 
 
 class Params;
-class Species;
 class Projector;
 class Laser;
 class ElectroMagnBC;
@@ -50,7 +50,7 @@ class ElectroMagn
 
 public:
     //! Constructor for Electromagn
-    ElectroMagn( Params &params, Patch* patch );
+    ElectroMagn( Params &params, std::vector<Species*>& vecSpecies, Patch* patch );
     
     //! Destructor for Electromagn
     virtual ~ElectroMagn();

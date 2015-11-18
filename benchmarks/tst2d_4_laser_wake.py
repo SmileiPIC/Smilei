@@ -83,7 +83,7 @@ Species(
 	charge = 1.0,
 	charge_density = 0.000494,
 	mean_velocity = [0.0, 0.0, 0.0],
-	temperature = 0.0,
+	temperature = [0.0],
 	dynamics_type = "norm",
 	time_frozen = 100000.,
 	radiating = False,
@@ -107,7 +107,7 @@ Species(
 	charge = -1.0,
 	charge_density = 0.000494,
 	mean_velocity = [0.0, 0.0, 0.0],
-	temperature = 0.0,
+	temperature = [0.0],
 	dynamics_type = "norm",	
 	time_frozen = 0.0,
 	radiating = False,
@@ -136,10 +136,8 @@ Laser(
 	time_profile =  "gaussian",
         transv_profile = "gaussian",
 	double_params = [7.0, 0.0, 0.0], # gaussian:FWHM in intensity, plateau length, delay (in c/w0 and w0)
-        int_params = 3, # Cut-off of the longitudinal gaussian in number of sigma.
         #double_params_transv = [94.5, 30.8], # distance from axis, transverse FWHM in intensity (in c/w0)
         double_params_transv = [60.0, 30.8], # distance from axis, transverse FWHM in intensity (in c/w0)
-        int_params_transv= 2 # order of the hyper gaussian
 )
 
 # ---------------------
@@ -147,7 +145,7 @@ Laser(
 # ---------------------
 
 # print_every (on screen text output) 
-print_every = 10
+print_every = 100
 
 # every for field dump
 fieldDump_every = 50

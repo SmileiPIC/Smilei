@@ -41,8 +41,8 @@ public:
     
     //! Write all fields (E, B, J, rho, per species ; 10 + 4 x nspecies fields) of all time step in the same file
     void createTimeStepInSingleFileTime( int time,  Diagnostic* diag );
-    void writeAllFieldsSingleFileTime( std::vector<Field*> *, int, bool );
-    
+    void writeAllFieldsSingleFileTime( std::vector<Field*> &, int, bool );
+
     //! Basic Write of a field in the specified group of the global file
     virtual void writeFieldsSingleFileTime( Field* field, hid_t group_id ) = 0;
 
@@ -64,14 +64,11 @@ public:
     //! Basic write field on its own file (debug)
     virtual void write( Field* field ) = 0;
     
-    void initWriteTestParticles(Species* species, int ispec, int itime, Params& params, SmileiMPI* smpi);
-    void writeTestParticles(Species* species, int ispec, int itime, Params& params, SmileiMPI* smpi);
+//    template <class T> void appendTestParticles(hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type );
 
-    template <class T> void appendTestParticles(hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type );
-
-    template <class T> void appendTestParticles0( hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type);
+//    template <class T> void appendTestParticles0( hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type);
         
-    
+        
 private:
     
     //! name of the fields to dump

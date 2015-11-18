@@ -2,23 +2,10 @@
 
 using namespace std;
 
-DiagnosticPhaseMomMom::DiagnosticPhaseMomMom(phaseStructure phaseStruct, const unsigned int directionMomentum1, const unsigned int directionMomentum2) : 
-DiagnosticPhase(phaseStruct), 
+DiagnosticPhaseMomMom::DiagnosticPhaseMomMom(Params &params, unsigned int n_phase, const unsigned int directionMomentum1, const unsigned int directionMomentum2) :
+DiagnosticPhase(params, n_phase),
 my_dirMom1(directionMomentum1), 
 my_dirMom2(directionMomentum2) {
-    
-	if (phaseStruct.mom_num.size() > 1) {
-		my_data.allocateDims(phaseStruct.mom_num[0],phaseStruct.mom_num[1]);
-	} else {
-		ERROR("must define mom_ stuff (2 vals each)");
-	}
-	//!\todo add more checks here (TV MC MG)
-	firstmin = phaseStruct.mom_min[0];
-	firstmax = phaseStruct.mom_max[0];
-	firstnum = phaseStruct.mom_num[0];
-	secondmin = phaseStruct.mom_min[1];
-	secondmax = phaseStruct.mom_max[1];
-	secondnum = phaseStruct.mom_num[1];    
 }
 
 void DiagnosticPhaseMomMom::run(partStruct& my_part) {

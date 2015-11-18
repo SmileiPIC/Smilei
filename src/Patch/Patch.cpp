@@ -131,7 +131,7 @@ Patch::Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int 
 	vecSpecies = SpeciesFactory::createVector(params, this);
 
 	// object containing the electromagnetic fields (virtual)
-	EMfields   = ElectroMagnFactory::create(params, this);
+	EMfields   = ElectroMagnFactory::create(params, vecSpecies, this);
 	
 	// interpolation operator (virtual)
 	Interp     = InterpolatorFactory::create(params, this);               // + patchId -> idx_domain_begin (now = ref smpi)
@@ -139,7 +139,7 @@ Patch::Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int 
 	Proj       = ProjectorFactory::create(params, this);                  // + patchId -> idx_domain_begin (now = ref smpi)
 
 	// Create diagnostics
-	Diags = new Diagnostic(params,this);
+	Diags = new Diagnostic(params,this, smpi);
 
 	sio = SmileiIOFactory::create(params, Diags, this);
 
@@ -176,7 +176,7 @@ void Patch::updateMPIenv(SmileiMPI* smpi)
 
 void Patch::dynamics(double time_dual, Params &params, SimWindow* simWindow, int diag_flag)
 {
-    for (unsigned int ispec=0 ; ispec<params.species_param.size() ; ispec++) {
+    for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
 	if ( vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ){    
 	    vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, params, diag_flag, vecPartWall, this);
 	}
@@ -195,8 +195,8 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, Params& params, Vector
     for (int iDim=0 ; iDim < ndim ; iDim++){
         xmax[iDim] = params.cell_length[iDim]*( params.n_space_global[iDim] );
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-            vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][iNeighbor].initialize(0,params);
-            vecSpecies[ispec]->specMPI.patchVectorSend[iDim][iNeighbor].initialize(0,params);
+            vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][iNeighbor].initialize(0,cuParticles);
+            vecSpecies[ispec]->specMPI.patchVectorSend[iDim][iNeighbor].initialize(0,cuParticles);
 	    vecSpecies[ispec]->specMPI.patch_buff_index_send[iDim][iNeighbor].resize(0);
 	    vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][iNeighbor] = 0;
         }
@@ -301,7 +301,7 @@ void Patch::CommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, 
 		MPI_Wait( &(vecSpecies[ispec]->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[(iNeighbor+1)%2]) );
 		if (vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2]!=0) {
                     //If I receive particles over MPI, I initialize my receive buffer with the appropriate size.
-		    vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2].initialize( vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2], params);
+		    vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2].initialize( vecSpecies[ispec]->specMPI.patch_buff_index_recv_sz[iDim][(iNeighbor+1)%2], cuParticles);
 		}
 	    }
 	}
@@ -493,7 +493,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
             shift[j]+=shift[j-1];
         }
         //Make room for new particles
-        cuParticles.initialize( cuParticles.size()+shift[(*cubmax).size()], params );
+        cuParticles.initialize( cuParticles.size()+shift[(*cubmax).size()], cuParticles );
             
         //Shift bins, must be done sequentially
         for (unsigned int j=(*cubmax).size()-1; j>=1; j--){

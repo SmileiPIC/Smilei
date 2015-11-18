@@ -8,6 +8,7 @@
 
 #include <sstream>
 #include <iomanip>
+#include <string>
 
 #include <mpi.h>
 
@@ -26,6 +27,7 @@ using namespace std;
 int Checkpoint::signal_received=0;
 
 Checkpoint::Checkpoint( Params& params, SmileiMPI* smpi ) : 
+this_run_start_step(0),
 dump_times(0), 
 time_reference(MPI_Wtime()),
 time_dump_step(0),
@@ -49,6 +51,15 @@ dump_request(smpi->getSize())
     dump_file_sequence=std::max((unsigned int)1,dump_file_sequence);
     
     PyTools::extract("exit_after_dump", exit_after_dump);
+
+    PyTools::extract("dump_deflate", dump_deflate);
+
+#ifdef _PBCOMPILING
+    if (PyTools::extract("restart_dir", restart_dir) && restart_dir.back()!='/') {
+        restart_dir+="/";
+    }
+#endif
+
     if (dump_step || dump_minutes>0) {
         if (exit_after_dump) {
             MESSAGE(1,"Code will exit after dump");
@@ -147,6 +158,9 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     dump_times++;
 
     MESSAGEALL("Step " << itime << " : DUMP fields and particles " << nameDump.str());    
+
+    H5::attr(fid, "Version", string(__VERSION));
+    H5::attr(fid, "CommitDate", string(__COMMITDATE));
     
     H5::attr(fid, "dump_step", itime);
     
@@ -202,7 +216,7 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
     for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
 	ostringstream name("");
 	name << setfill('0') << setw(2) << ispec;
-	string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->species_param.species_type;
+	string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->species_type;
 	hid_t gid = H5::group(patch_gid, groupName);
 		
 	sid = H5Screate(H5S_SCALAR);
@@ -233,7 +247,7 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
             H5::vect(gid,"Weight", vecSpecies[ispec]->particles->Weight);
             H5::vect(gid,"Charge", vecSpecies[ispec]->particles->Charge);
 
-            if (vecSpecies[ispec]->particles->isTestParticles) {
+            if (vecSpecies[ispec]->particles->track_every) {
                 H5::vect(gid,"Id", vecSpecies[ispec]->particles->Id);
             }
 
@@ -294,15 +308,32 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, unsigned int &itime,  Smil
 	
      if (nameDump.empty()) ERROR("Cannot find a valid restart file");
 	
-     MESSAGE(2, "RESTARTING fields and particles " << nameDump);
+     MESSAGEALL(2, " : Restarting fields and particles " << nameDump << " step=" << this_run_start_step);
 
      hid_t fid = H5Fopen( nameDump.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+     if (fid < 0) ERROR(nameDump << " is not a valid HDF5 file");
+    
+     string dump_version;
+     H5::getAttr(fid, "Version", dump_version);
+    
+     string dump_date;
+     H5::getAttr(fid, "CommitDate", dump_date);
+
+     if ((dump_version != string(__VERSION)) || (dump_date != string(__COMMITDATE))) {
+         WARNING ("The code version that dumped the file is " << dump_version << " of " << dump_date);
+         WARNING ("                while running version is " << string(__VERSION) << " of " << string(__COMMITDATE));
+     }
+
+     H5::getAttr(fid, "Energy_time_zero", vecPatches.Diags->scalars.Energy_time_zero);
+     H5::getAttr(fid, "EnergyUsedForNorm", vecPatches.Diags->scalars.EnergyUsedForNorm);
 	
      hid_t aid, gid, did, sid;
 	
      aid = H5Aopen(fid, "dump_step", H5T_NATIVE_UINT);
      H5Aread(aid, H5T_NATIVE_UINT, &itime);	
      H5Aclose(aid);
+
+
 
      for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) {
 
@@ -356,7 +387,7 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
     for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
 	ostringstream name("");
 	name << setfill('0') << setw(2) << ispec;
-	string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->species_param.species_type;
+	string groupName="species-"+name.str()+"-"+vecSpecies[ispec]->species_type;
 	gid = H5Gopen(patch_gid, groupName.c_str(),H5P_DEFAULT);
 		
 	aid = H5Aopen(gid, "partCapacity", H5T_NATIVE_UINT);
@@ -369,7 +400,7 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
 	unsigned int partSize=0;
 	H5Aread(aid, H5T_NATIVE_UINT, &partSize);
 	H5Aclose(aid);	
-	vecSpecies[ispec]->particles->initialize(partSize,params);		
+	vecSpecies[ispec]->particles->initialize(partSize,nDim_particle);		
 		
 		
 	if (partSize>0) {
@@ -397,7 +428,7 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
 	    H5Dread(did, H5T_NATIVE_SHORT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles->Charge[0]);
 	    H5Dclose(did);
 	    
-            if (vecSpecies[ispec]->particles->isTestParticles) {
+            if (vecSpecies[ispec]->particles->track_every) {
                 did = H5Dopen(gid, "Id", H5P_DEFAULT);
                 H5Dread(did, H5T_NATIVE_UINT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles->Id[0]);
                 H5Dclose(did);

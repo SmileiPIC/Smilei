@@ -23,8 +23,8 @@ public:
     virtual void operator()( ElectroMagn* fields) = 0;
 
 protected:
-    int nx_p;
-    int nx_d;
+    unsigned int nx_p;
+    unsigned int nx_d;
     double dt_ov_dx;
 
 };//END class

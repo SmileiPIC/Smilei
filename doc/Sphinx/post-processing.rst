@@ -169,11 +169,11 @@ and :ref:`particles <DiagParticles>`.
 
 
 
-.. py:method:: Smilei.TestParticles(species=None, select="", axes=[], timesteps=None, units=[""], skipAnimation=False, **kwargs)
+.. py:method:: Smilei.TrackParticles(species=None, select="", axes=[], timesteps=None, units=[""], skipAnimation=False, **kwargs)
   
   * ``timesteps``, ``units``: same as before.
-  * ``species``: the name of a test-particle species.
-     | If omitted, a list of available test-particle species is printed.
+  * ``species``: the name of a tracked-particle species.
+     | If omitted, a list of available tracked-particle species is printed.
   * ``select``: Instructions for selecting particles among those available.
      | Syntax 1: ``select="any(times, condition)"``
      | Syntax 2: ``select="all(times, condition)"``
@@ -196,7 +196,7 @@ and :ref:`particles <DiagParticles>`.
   **Example**::
     
     S = Smilei("path/to/my/results")
-    Diag = S.TestParticles("electrons", axes=["px","py"])
+    Diag = S.TrackParticles("electrons", axes=["px","py"])
 
 
 
@@ -210,7 +210,7 @@ Specifying units
 By default, all the diagnostics data is in code units (see :doc:`units`).
 
 To change the units, all the methods :py:meth:`Scalar`, :py:meth:`Field`, :py:meth:`Probe`,
-:py:meth:`ParticleDiagnostic` and :py:meth:`TestParticles` support a ``units`` argument.
+:py:meth:`ParticleDiagnostic` and :py:meth:`TrackParticles` support a ``units`` argument.
 It has three different syntaxes:
 
 1. **A list**, for example ``units = ["um/ns", "feet", "W/cm^2"]``
@@ -278,7 +278,7 @@ Plot the data
                Smilei.Field.plot(...)
                Smilei.Probe.plot(...)
                Smilei.ParticleDiagnostic.plot(...)
-               Smilei.TestParticles.plot(...)
+               Smilei.TrackParticles.plot(...)
   
   All these methods have the same arguments described below.
 
@@ -288,7 +288,7 @@ Plot the data
   
   Displays the data. All arguments of this method can be supplied to :py:meth:`Scalar`,
   :py:meth:`Field`, :py:meth:`Probe`, :py:meth:`ParticleDiagnostic` or 
-  :py:meth:`TestParticles` as well.
+  :py:meth:`TrackParticles` as well.
   
   | If the data is 1D, it is plotted as a **curve**, and is animated for all requested timesteps.
   | If the data is 2D, it is plotted as a **map**, and is animated for all requested timesteps.

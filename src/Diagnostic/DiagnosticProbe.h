@@ -96,6 +96,8 @@ public:
     void createFile();
     void setFile(hid_t masterFileId, Patch* patch, Params& params);
     void setFile(hid_t masterFileId);
+    //! function to close the file
+    void close();
 
     void writePositionIn( Params &params );
     void writePositions(int probe_id, int ndim_Particles, int probeDim, hid_t group_id );
@@ -111,11 +113,9 @@ public:
     //! return name of the probe based on its number
     std::string probeName(int p);
 
-    //! function to close the file
-    void close();
-
     //! vector containing the timesteps at which calculate each probe
     std::vector<unsigned int> every;
+
     //! hdf5 file ID
     hid_t fileId;
 

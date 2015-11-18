@@ -75,6 +75,9 @@ public:
             signal_received = signum;
     }
 
+    //! start step of this run: zero if a first run, otherwise the number of the restart step
+    unsigned int this_run_start_step;
+
 private:
     
     //! initialize the time zero of the simulation 

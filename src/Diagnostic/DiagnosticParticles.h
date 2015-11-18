@@ -65,9 +65,6 @@ DiagParticles(
 
 */
 
-
-
-
 #ifndef DiagnosticParticles_H
 #define DiagnosticParticles_H
 
@@ -77,11 +74,11 @@ DiagParticles(
 #include "Particles.h"
 #include "H5.h"
 
-// Class for each axis of the particle diags
-class DiagnosticParticlesAxis {
+class Patch;
 
-public:
-    
+// Class for each axis of the particle diags
+struct DiagnosticParticlesAxis {
+
     //! quantity of the axis (e.g. 'x', 'px', ...)
     std::string type;
     
@@ -106,20 +103,16 @@ class DiagnosticParticles {
 
 public:
 
-    DiagnosticParticles(unsigned int, std::string, unsigned int, unsigned int, std::vector<unsigned int>, std::vector<DiagnosticParticlesAxis*>);
+    DiagnosticParticles(unsigned int, Params& params, Patch* patch, std::vector<Species*>& vecSpecies);
     
     ~DiagnosticParticles();
-    
-    void close();
-    
+        
     void run(int, std::vector<Species*>&);
-    
-    int diagnostic_id;
-    
+        
 private:
     
-     //! this is the hdf5 file id (we need to keep it to close at the right time)
-    hid_t fileId;
+     //! this is the hdf5 file name
+    std::string filename;
     
     //! quantity to be summed into the output array
     std::string output;
@@ -134,7 +127,7 @@ private:
     std::vector<unsigned int> species;
     
     //! vector of axes
-    std::vector<DiagnosticParticlesAxis*> axes;
+    std::vector<DiagnosticParticlesAxis> axes;
     
     //! vector for saving the output array for time-averaging
     std::vector<double> data_sum;

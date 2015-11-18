@@ -23,12 +23,19 @@ SimWindow::SimWindow(Params& params)
     x_moved = 0.;      //The window has not moved at t=0. Warning: not true anymore for restarts.
     n_moved = 0;      //The window has not moved at t=0. Warning: not true anymore for restarts.
     vx_win_ = params.vx_win; 
-    t_move_win_ = params.t_move_win;      
     int nthds(1);
     #ifdef _OPENMP
         nthds = omp_get_max_threads();
     #endif
     patch_to_be_created.resize(nthds);
+
+    t_move_win_ = params.t_move_win;
+    MESSAGE(1,"Moving window is active:");
+    MESSAGE(2,"nspace_win_x_ : " << nspace_win_x_);
+    MESSAGE(2,"cell_length_x_ : " << cell_length_x_);
+    MESSAGE(2,"vx_win_ : " << vx_win_);
+    MESSAGE(2,"t_move_win_ : " << t_move_win_);
+    
 }
 
 SimWindow::~SimWindow()

@@ -102,15 +102,15 @@ public:
     //! reference access to the linearized array (with check in DEBUG mode)
     inline double& operator () (unsigned int i)
     {
-        DEBUGEXEC(if (i>=globalDims_) ERROR("Out of limits & "<< i));
-        DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR("Not finite "<< i << " = " << data_[i]));
+        DEBUGEXEC(if (i>=globalDims_) ERROR(name << " Out of limits "<< i << " < " <<dims_[0] ));
+        DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR(name << " Not finite "<< i << " = " << data_[i]));
         return data_[i];
     };
     //! access to the linearized array (with check in DEBUG mode)
     inline double operator () (unsigned int i) const
     {
-        DEBUGEXEC(if (i>=globalDims_) ERROR("Out of limits "<< i));
-        DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR("Not finite "<< i << " = " << data_[i]));
+        DEBUGEXEC(if (i>=globalDims_) ERROR(name << " Out of limits "<< i));
+        DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR(name << " Not finite "<< i << " = " << data_[i]));
         return data_[i];
     };
     //! method used to put all entry of a field at a given value val

@@ -24,7 +24,7 @@ vector<PartWall*> PartWall::create(Params& params, SmileiMPI* smpi)
     vector<PartWall*> vecPartWall;
     
     MESSAGE(1,"Adding particle walls:");
-
+    
     // Loop over each wall component and parse info
     unsigned int numpartwall=PyTools::nComponents("PartWall");
     for (unsigned int iwall = 0; iwall < numpartwall; iwall++) {
@@ -95,10 +95,10 @@ vector<PartWall*> PartWall::create(Params& params, SmileiMPI* smpi)
     return vecPartWall;
 }
 
-int PartWall::apply( Particles &particles, int ipart, SpeciesStructure &params, double &nrj_iPart) {
+int PartWall::apply( Particles &particles, int ipart, Species * species, double &nrj_iPart) {
     if( (position-particles.position_old(direction, ipart))
        *(position-particles.position    (direction, ipart))<0.) {
-        return (*wall)( particles, ipart, direction, 2.*position, params, nrj_iPart );
+        return (*wall)( particles, ipart, direction, 2.*position, species, nrj_iPart );
     } else {
         return 1;
     }

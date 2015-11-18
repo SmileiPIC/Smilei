@@ -20,11 +20,11 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for the virtual class ElectroMagn
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn::ElectroMagn(Params &params, Patch* patch) :
+ElectroMagn::ElectroMagn(Params &params, vector<Species*>& vecSpecies, Patch* patch) :
 laser_params(params),
 timestep(params.timestep),
 cell_length(params.cell_length),
-n_species(params.species_param.size()),
+n_species(vecSpecies.size()),
 nDim_field(params.nDim_field),
 cell_volume(params.cell_volume),
 n_space(params.n_space),
@@ -262,7 +262,7 @@ void ElectroMagn::initRhoJ(vector<Species*>& vecSpecies, Projector* Proj)
         unsigned int n_particles = vecSpecies[iSpec]->getNbrOfParticles();
         
         DEBUG(n_particles<<" species "<<iSpec);
-        if (!cuParticles.isTestParticles) {
+        if (!cuParticles.isTest) {
             for (unsigned int iPart=0 ; iPart<n_particles; iPart++ ) {
                 // project charge & current densities
                 (*Proj)(Jx_s[iSpec], Jy_s[iSpec], Jz_s[iSpec], rho_s[iSpec], cuParticles, iPart, cuParticles.lor_fac(iPart));
@@ -331,7 +331,7 @@ void ElectroMagn::applyExternalFields(Patch* patch) {
     for (vector<Field*>::iterator field=my_fields.begin(); field!=my_fields.end(); field++) {
         if (*field) {
             for (vector<ExtFieldStructure>::iterator extfield=ext_field_structs.begin(); extfield!=ext_field_structs.end(); extfield++ ) {
-                Profile *my_ExtFieldProfile = new Profile(extfield->py_profile, nDim_field);
+                Profile *my_ExtFieldProfile = new Profile(extfield->py_profile, nDim_field, "extfield "+(*field)->name);
                 if (my_ExtFieldProfile) {
                     for (vector<string>::iterator fieldName=(*extfield).fields.begin();fieldName!=(*extfield).fields.end();fieldName++) {
                         if (LowerCase((*field)->name)==LowerCase(*fieldName)) {

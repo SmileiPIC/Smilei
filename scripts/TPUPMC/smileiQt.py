@@ -135,7 +135,7 @@ class smileiQtPlot(QWidget):
         if os.path.isfile(fname) :
 
             self.fieldFile=tb.openFile(fname)
-            self.res_space=self.fieldFile.root._v_attrs.res_space[0]
+            self.cell_length=self.fieldFile.root._v_attrs.cell_length[0]
             self.res_time=self.fieldFile.root._v_attrs.res_time
             self.sim_length=self.fieldFile.root._v_attrs.sim_length
             self.fieldEvery=self.fieldFile.root._v_attrs.every
@@ -184,7 +184,6 @@ class smileiQtPlot(QWidget):
         fname=os.path.join(self.dirName, "Fields.h5")
         if isinstance(self.fieldFile,tb.file.File):
             self.fieldFile.close()
-            print "here"
         if os.path.isfile(fname) :
             self.fieldFile=tb.openFile(fname)
             for group in self.fieldFile.listNodes("/", classname='Group'):
@@ -258,7 +257,6 @@ class smileiQtPlot(QWidget):
             self.pauseSignal.emit()
 
     def preparePlots(self):
-        log.info("here")
         self.someCheckBoxChanged=False
         
         self.scalarDict=dict()
@@ -319,7 +317,7 @@ class smileiQtPlot(QWidget):
                     if len(self.sim_length) == 1 :
                         ax.set_xlim(0,self.sim_length)
                         ax.set_ylabel(name)
-                        x=np.array(range(len(data[0])))/self.res_space
+                        x=np.array(range(len(data[0])))*self.cell_length
                         y=data[0].read()
                         ax.plot(x,y)
                         self.ax[name]=ax
@@ -350,7 +348,7 @@ class smileiQtPlot(QWidget):
                     cax = divider.new_horizontal(size="2%", pad=0.05)
                     self.fig.add_axes(cax)
 
-                    im=ax.imshow([[0]],extent=node._v_parent._v_attrs.extents.reshape(4).tolist(),aspect='auto',origin='lower')
+                    im=ax.imshow([[0]],extent=node._v_attrs.extents.reshape(4).tolist(),aspect='auto',origin='lower')
                     im.set_interpolation('nearest')
                     cb=plt.colorbar(im, cax=cax)
 
@@ -451,6 +449,7 @@ class smileiQtPlot(QWidget):
             
         
     def doPlots(self):
+    
         if len(self.fieldSteps) == 0 : return
 
         if self.someCheckBoxChanged==True:
@@ -487,7 +486,7 @@ class smileiQtPlot(QWidget):
                 im.set_clim(data.min(),data.max())
                 
                 
-        self.title='Time: %.3f'%time
+        self.title.set_text('Time: %.3f'%time)
         self.canvas.draw()
         if self.ui.saveImages.isChecked():
             fname=self.dirName+'/frame-%06d.png' % self.step

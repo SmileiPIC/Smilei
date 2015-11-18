@@ -6,11 +6,21 @@
 #ifndef PYHelper_H
 #define PYHelper_H
 
+
+#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
+//#warning check for fix here: https://bugs.python.org/issue17120
+#ifdef _POSIX_C_SOURCE
 #undef _POSIX_C_SOURCE
+#endif
+#ifdef _XOPEN_SOURCE
 #undef _XOPEN_SOURCE
+#endif
+#endif
+
 
 #include <Python.h>
 #include <vector>
+#include <sstream>
 #include "Tools.h"
 
 //! tools to query python nemlist and get back C++ values and vectors
@@ -25,10 +35,10 @@ private:
         return false;
     }
     
-    //! convert Python object to short int
-    static bool pyconvert(PyObject* py_val, short int &val) {
+    //! convert Python object to short
+    static bool pyconvert(PyObject* py_val, short &val) {
         if (py_val && PyInt_Check(py_val)) {
-            val=(short int) PyInt_AsLong(py_val);
+            val=(short) PyInt_AsLong(py_val);
             return true;
         }
         return false;
@@ -107,8 +117,8 @@ public:
     
     //! convert Python object to C++ value
     template <typename T>
-    static bool convert(PyObject* py_vec, T &val) {
-        bool retval=pyconvert(py_vec, val);
+    static bool convert(PyObject* py_val, T &val) {
+        bool retval=pyconvert(py_val, val);
         return retval;
     }
     
@@ -168,7 +178,7 @@ public:
     //! get python function without arguments
     template <typename T=double>
     static T runPyFunction(std::string name) {
-        T retval;
+        T retval(0);
         PyObject* myFunction = PyObject_GetAttrString(PyImport_AddModule("__main__"),name.c_str());
         if (myFunction) {
             PyObject *pyresult = PyObject_CallFunction(myFunction, const_cast<char *>(""));
@@ -264,7 +274,6 @@ public:
         double val;
         // If the profile is only a double, then convert to a constant function
         if( PyTools::convert(myPy, val) ) {
-            HEREIAM(val);
             // Extract the function "constant"
             PyObject* constantFunction = PyTools::extract_py("constant");
             // Create the argument which has the value of the profile
@@ -293,7 +302,11 @@ public:
         if (py_obj) {
             if (!PyTuple_Check(py_obj) && !PyList_Check(py_obj)) {
                 retvec.push_back(py_obj);
-                WARNING(name << " should be a list or tuple, not a scalar : fix it");
+                std::ostringstream ss("");
+                if (component!="") {
+                    ss << "In " << component << " #" << nComponent << " ";
+                }
+                ERROR( ss.str() << name << " should be a list not a scalar: use [...]");
             } else {
                 PyObject* seq = PySequence_Fast(py_obj, "expected a sequence");
                 int len = PySequence_Size(py_obj);
@@ -309,13 +322,34 @@ public:
         return retvec;
     }
     
+    // extract 3 profiles from namelist (used for part mean velocity and temperature)
+    static void extract3Profiles(std::string varname, int ispec, PyObject*& profx, PyObject*& profy, PyObject*& profz )
+    {
+        std::vector<PyObject*> pvec = PyTools::extract_pyVec(varname,"Species",ispec);
+        for (unsigned int i=0;i<pvec.size();i++) {
+            PyTools::toProfile(pvec[i]);
+        }
+        if ( pvec.size()==1 ) {
+            profx =  profy =  profz = pvec[0];
+        } else if (pvec.size()==3) {
+            profx = pvec[0];
+            profy = pvec[1];
+            profz = pvec[2];
+        } else {
+            ERROR("For species #" << ispec << ", "<<varname<<" needs 1 or 3 components.");
+        }
+    }
+
     //! return the number of components (see pyinit.py)
-    static int nComponents(std::string componentName) {
+    static unsigned int nComponents(std::string componentName) {
         // Get the selected component (e.g. "Species" or "Laser")
         if (!Py_IsInitialized()) ERROR("Python not initialized: this should not happend");
         PyObject *py_obj = PyObject_GetAttrString(PyImport_AddModule("__main__"),componentName.c_str());
         PyTools::checkPyError();
-        int retval = PyObject_Length(py_obj);
+        Py_ssize_t retval = PyObject_Length(py_obj);
+        if (retval < 0) {
+            ERROR("Problem searching for component " << componentName);
+        }
         return retval;
     }
     

@@ -4,7 +4,7 @@ MPIEXEC=mpirun
 
 H=$PWD # current dir
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd ) # dir of this script
-smilei=$DIR/src/smilei # path to the smilei executable
+smilei=$DIR/smilei # path to the smilei executable
 script=$0 # name of this script
 
 # Function to which check that there are arguments remaining
@@ -37,7 +37,6 @@ shift
 # Next argument, if exists, is the outdir 
 outdir=`dirname $nml`/$base # by default, the outdir is same as namelist
 if [ "$#" -gt 0 ]; then
-outdir=`dirname $nml`/$base # by default, the outdir is same as namelist
   outdir=$1/$base # otherwise, provided as argument
   shift
 fi

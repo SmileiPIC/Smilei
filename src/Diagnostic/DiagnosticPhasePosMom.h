@@ -8,7 +8,7 @@ class DiagnosticPhasePosMom : public DiagnosticPhase {
     
 public:
     //! the component of the position (0,1,2) and the component of the momentum (0,1,2) are chosen at construction
-    DiagnosticPhasePosMom(phaseStructure phaseStruct, const unsigned int directionPosition, const unsigned int directionMomentum);	
+    DiagnosticPhasePosMom(Params &params, unsigned int n_phase, const unsigned int directionPosition, const unsigned int directionMomentum);
 
 	void run(partStruct&);
 private:

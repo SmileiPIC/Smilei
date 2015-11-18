@@ -591,7 +591,7 @@ void VectorPatch::setNbrParticlesToExch(SmileiMPI* smpi, Params& params)
 	  cout << "n part recv = " << nbrOfPartsRecv[ispec] << endl;
 #endif
 	for (int ispec=0 ; ispec<nSpecies ; ispec++)
-	    recv_patches_[ipatch]->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv[ispec], params );
+	    recv_patches_[ipatch]->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv[ispec], (*(*this)(0)->vecSpecies[0]->particles) );
     }
 
     //Synchro, send/recv must be non-blocking !!!

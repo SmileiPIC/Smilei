@@ -1,6 +1,8 @@
 #include "PyTools.h"
 #include "Params.h"
+#include "Species.h"
 #include <cmath>
+#include <iomanip>
 #include "Tools.h"
 #include "SmileiMPI.h"
 
@@ -18,13 +20,93 @@ using namespace std;
 Params::Params(SmileiMPI* smpi, std::vector<std::string> namelistsFiles) :
 namelist("")
 {
-    //init Python    
-    initPython(smpi,namelistsFiles);
     
+    if (namelistsFiles.size()==0) ERROR("No namelists given!");
+
+    string commandLineStr("");
+    for (unsigned int i=0;i<namelistsFiles.size();i++) commandLineStr+="\""+namelistsFiles[i]+"\" ";
+    MESSAGE(1,commandLineStr);
+    
+    //init Python
+    PyTools::openPython();
+    
+    // First, we tell python to filter the ctrl-C kill command (or it would prevent to kill the code execution).
+    // This is done separately from other scripts because we don't want it in the concatenated python namelist.
+    PyTools::checkPyError();
+    string command = "import signal\nsignal.signal(signal.SIGINT, signal.SIG_DFL)";
+    if( !PyRun_SimpleString(command.c_str()) ) PyTools::checkPyError();
+    
+    // Running pyinit.py
+    runScript(string(reinterpret_cast<const char*>(pyinit_py), pyinit_py_len), "pyinit.py");
+
+    // Running pyfunctons.py
+    runScript(string(reinterpret_cast<const char*>(pyprofiles_py), pyprofiles_py_len), "pyprofiles.py");
+    
+    // here we add the rank, in case some script need it
+    PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_rank", smpi->getRank());
+    
+    // here we add the MPI size, in case some script need it
+    PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_size", smpi->getSize());
+    
+    // here we add the larget int, important to get a valid seed for randomization
+    PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_rand_max", RAND_MAX);
+    
+    // Running the namelists
+    runScript("############### BEGIN USER NAMELISTS/COMMANDS ###############\n");
+    for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {
+        string strNamelist="";
+        if (smpi->isMaster()) {
+            ifstream istr(it->c_str());
+            if (istr.is_open()) {
+                std::stringstream buffer;
+                buffer << istr.rdbuf();
+                strNamelist+=buffer.str();
+            } else {
+                strNamelist = "# Smilei:) From command line :\n" + (*it);
+            }
+            strNamelist +="\n";
+        }
+        smpi->bcast(strNamelist);
+        runScript(strNamelist,(*it));
+    }
+    runScript("################ END USER NAMELISTS/COMMANDS  ################\n");
+    // Running pycontrol.py
+    runScript(string(reinterpret_cast<const char*>(pycontrol_py), pycontrol_py_len),"pycontrol.py");
+    
+    smpi->barrier();
+
+    // output dir: we force this to be the same on all mpi nodes
+    string output_dir("");
+    PyTools::extract("output_dir", output_dir);
+    
+    // CHECK namelist on python side
+    PyTools::runPyFunction("_smilei_check");
+    smpi->barrier();
+
+    if (!output_dir.empty()) {
+        if (chdir(output_dir.c_str()) != 0) {
+            WARNING("Could not chdir to output_dir = " << output_dir);
+        }
+    }
+
+    
+    // Now the string "namelist" contains all the python files concatenated
+    // It is written as a file: smilei.py
+    if (smpi->isMaster()) {
+        ofstream out_namelist("smilei.py");
+        if (out_namelist.is_open()) {
+            out_namelist << namelist;
+            out_namelist.close();
+        }
+    }
+    
+    
+    // random seed
     unsigned int random_seed=0;
     if (!PyTools::extract("random_seed", random_seed)) {
         random_seed = time(NULL);
     }
+    
     srand(random_seed);
     
     // --------------
@@ -91,11 +173,11 @@ namelist("")
     //!\todo (MG) CFL cond. depends on the Maxwell solv. ==> Move this computation to the ElectroMagn Solver
     double res_space2=0;
     for (unsigned int i=0; i<nDim_field; i++) {
-        res_space2 += 1./(cell_length[i]*cell_length[i]);
+        res_space2 += res_space[i]*res_space[i];
     }
     dtCFL=1.0/sqrt(res_space2);
     if ( timestep>dtCFL ) {
-        ERROR("CFL problem: timestep=" << timestep << " should be smaller than " << dtCFL);
+        WARNING("CFL problem: timestep=" << timestep << " should be smaller than " << dtCFL);
     }
     
     
@@ -130,6 +212,10 @@ namelist("")
         }
     }
     
+    // Maxwell Solver 
+	PyTools::extract("maxwell_sol", maxwell_sol);
+
+
     // ------------------------
     // Moving window parameters
     // ------------------------
@@ -148,12 +234,6 @@ namelist("")
     if (!PyTools::extract("clrw",clrw)) {
         clrw = 1;
     }
-    
-    
-    // ------------------
-    // Species properties
-    // ------------------
-    readSpecies();
     
     global_every=0;
     
@@ -177,232 +257,12 @@ namelist("")
     // also defines defaults values for the species lengths
     // -------------------------------------------------------
     compute();
-    computeSpecies();
     
 }
 
 Params::~Params() {
     PyTools::closePython();
 }
-
-void Params::initPython(SmileiMPI *smpi, std::vector<std::string> namelistsFiles){
-    PyTools::openPython();
-
-    // First, we tell python to filter the ctrl-C kill command (or it would prevent to kill the code execution).
-    // This is done separately from other scripts because we don't want it in the concatenated python namelist.
-    PyTools::checkPyError();
-    string command = "import signal\nsignal.signal(signal.SIGINT, signal.SIG_DFL)";
-    if( !PyRun_SimpleString(command.c_str()) ) PyTools::checkPyError();
-    
-    // Running pyinit.py
-    pyRunScript(string(reinterpret_cast<const char*>(Python_pyinit_py), Python_pyinit_py_len), "pyinit.py");
-    
-    // Running pyfunctons.py
-    pyRunScript(string(reinterpret_cast<const char*>(Python_pyprofiles_py), Python_pyprofiles_py_len), "pyprofiles.py");
-    
-    // here we add the rank, in case some script need it
-    PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_rank", smpi->getRank());
-    
-    // Running the namelists
-    pyRunScript("############### BEGIN USER NAMELISTS ###############\n");
-    for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {
-        MESSAGE(1,"Reading file " << *it);
-        string strNamelist="";
-        if (smpi->isMaster()) {
-            ifstream istr(it->c_str());
-            if (istr.is_open()) {
-                string oneLine;
-                while (getline(istr, oneLine)) {
-                    strNamelist += oneLine + "\n";
-                }
-            } else {
-                ERROR("File " << (*it) << " does not exists");
-            }
-            strNamelist +="\n";
-        }
-        smpi->bcast(strNamelist);
-        pyRunScript(strNamelist,(*it));
-    }
-    pyRunScript("################ END USER NAMELISTS ################\n");    
-    // Running pycontrol.py
-    pyRunScript(string(reinterpret_cast<const char*>(Python_pycontrol_py), Python_pycontrol_py_len),"pycontrol.py");
-    
-    PyTools::runPyFunction("_smilei_check");
-    
-    
-    // Now the string "namelist" contains all the python files concatenated
-    // It is written as a file: smilei.py
-    if (smpi->isMaster()) {
-        ofstream out_namelist("smilei.py");
-        if (out_namelist.is_open()) {
-            out_namelist << namelist;
-            out_namelist.close();
-        }
-    }
-}
-
-
-void Params::readSpecies() {
-    bool ok;
-    for (unsigned int ispec = 0; ispec < (unsigned int) PyTools::nComponents("Species"); ispec++) {
-        SpeciesStructure tmpSpec;
-        PyTools::extract("species_type",tmpSpec.species_type,"Species",ispec);
-        if(tmpSpec.species_type.empty()) {
-            ERROR("For species #" << ispec << " empty species_type");
-        }
-        PyTools::extract("initPosition_type",tmpSpec.initPosition_type ,"Species",ispec);
-        if (tmpSpec.initPosition_type.empty()) {
-            ERROR("For species #" << ispec << " empty initPosition_type");
-        } else if ( (tmpSpec.initPosition_type!="regular")&&(tmpSpec.initPosition_type!="random") ) {
-            ERROR("For species #" << ispec << " bad definition of initPosition_type " << tmpSpec.initPosition_type);
-        }
-        
-        PyTools::extract("initMomentum_type",tmpSpec.initMomentum_type ,"Species",ispec);
-        if ( (tmpSpec.initMomentum_type=="mj") || (tmpSpec.initMomentum_type=="maxj") ) {
-            tmpSpec.initMomentum_type="maxwell-juettner";
-        }
-        if (   (tmpSpec.initMomentum_type!="cold")
-            && (tmpSpec.initMomentum_type!="maxwell-juettner")
-            && (tmpSpec.initMomentum_type!="rectangular") ) {
-            ERROR("For species #" << ispec << " bad definition of initMomentum_type");
-        }
-        
-        tmpSpec.c_part_max = 1.0;// default value
-        PyTools::extract("c_part_max",tmpSpec.c_part_max,"Species",ispec);
-        
-        if( !PyTools::extract("mass",tmpSpec.mass ,"Species",ispec) ) {
-            ERROR("For species #" << ispec << ", mass not defined.");
-        }
-        
-        tmpSpec.dynamics_type = "norm"; // default value
-        if (!PyTools::extract("dynamics_type",tmpSpec.dynamics_type ,"Species",ispec) )
-            WARNING("For species #" << ispec << ", dynamics_type not defined: assumed = 'norm'.");
-        if (tmpSpec.dynamics_type!="norm"){
-            ERROR("dynamics_type different than norm not yet implemented");
-        }
-        
-        tmpSpec.time_frozen = 0.0; // default value
-        PyTools::extract("time_frozen",tmpSpec.time_frozen ,"Species",ispec);
-        if (tmpSpec.time_frozen > 0 && \
-            tmpSpec.initMomentum_type!="cold") {
-            WARNING("For species #" << ispec << " possible conflict between time-frozen & not cold initialization");
-        }
-        
-        tmpSpec.radiating = false; // default value
-        PyTools::extract("radiating",tmpSpec.radiating ,"Species",ispec);
-        if (tmpSpec.dynamics_type=="rrll" && (!tmpSpec.radiating)) {
-            WARNING("For species #" << ispec << ", dynamics_type='rrll' forcing radiating=True");
-            tmpSpec.radiating=true;
-        }
-        
-        if (!PyTools::extract("bc_part_type_west",tmpSpec.bc_part_type_west,"Species",ispec) )
-            ERROR("For species #" << ispec << ", bc_part_type_west not defined");
-        if (!PyTools::extract("bc_part_type_east",tmpSpec.bc_part_type_east,"Species",ispec) )
-            ERROR("For species #" << ispec << ", bc_part_type_east not defined");
-        
-        if (nDim_particle>1) {
-            if (!PyTools::extract("bc_part_type_south",tmpSpec.bc_part_type_south,"Species",ispec) )
-                ERROR("For species #" << ispec << ", bc_part_type_south not defined");
-            if (!PyTools::extract("bc_part_type_north",tmpSpec.bc_part_type_north,"Species",ispec) )
-                ERROR("For species #" << ispec << ", bc_part_type_north not defined");
-        }
-        
-        // for thermalizing BCs on particles check if thermT is correctly defined
-        bool thermTisDefined=false;
-        if ( (tmpSpec.bc_part_type_west=="thermalize") || (tmpSpec.bc_part_type_east=="thermalize") ){
-            thermTisDefined=PyTools::extract("thermT",tmpSpec.thermT,"Species",ispec);
-            if (!thermTisDefined) ERROR("thermT needs to be defined for species " <<ispec<< " due to x-BC thermalize");
-        }
-        if ( (nDim_particle==2) && (!thermTisDefined) &&
-             (tmpSpec.bc_part_type_south=="thermalize" || tmpSpec.bc_part_type_north=="thermalize") ) {
-            thermTisDefined=PyTools::extract("thermT",tmpSpec.thermT,"Species",ispec);
-            if (!thermTisDefined) ERROR("thermT needs to be defined for species " <<ispec<< " due to y-BC thermalize");
-        }
-        if (thermTisDefined) {
-            if (tmpSpec.thermT.size()==1) {
-                tmpSpec.thermT.resize(3);
-                for (unsigned int i=1; i<3;i++)
-                    tmpSpec.thermT[i]=tmpSpec.thermT[0];
-            }
-        } else {
-            tmpSpec.thermT.resize(3);
-            for (unsigned int i=0; i<3;i++)
-                tmpSpec.thermT[i]=0.0;
-        }
-        
-        
-        tmpSpec.ionization_model = "none"; // default value
-        PyTools::extract("ionization_model", tmpSpec.ionization_model, "Species",ispec);
-        
-        ok = PyTools::extract("atomic_number", tmpSpec.atomic_number, "Species",ispec);
-        if( !ok && tmpSpec.ionization_model!="none" ) {
-            ERROR("For species #" << ispec << ", `atomic_number` not found => required for the ionization model .");
-        }
-        
-        tmpSpec.isTest = false; // default value
-        PyTools::extract("isTest",tmpSpec.isTest ,"Species",ispec);
-        if (tmpSpec.ionization_model!="none" && (!tmpSpec.isTest)) {
-            ERROR("For species #" << ispec << ", disabled for now : test & ionized");
-        }
-        // Define the number of timesteps for dumping test particles
-        tmpSpec.test_dump_every = 1;
-        if (PyTools::extract("dump_every",tmpSpec.test_dump_every ,"Species",ispec)) {
-            if (tmpSpec.test_dump_every>1 && !tmpSpec.isTest)
-                WARNING("For species #" << ispec << ", dump_every discarded because not test particles");
-        }
-        
-        
-        // Species geometry
-        // ----------------
-        
-        // Density
-        bool ok1, ok2;
-        ok1 = PyTools::extract_pyProfile("nb_density"    , tmpSpec.dens_profile, "Species", ispec);
-        ok2 = PyTools::extract_pyProfile("charge_density", tmpSpec.dens_profile, "Species", ispec);
-        
-        if(  ok1 &&  ok2 ) ERROR("For species #" << ispec << ", cannot define both `nb_density` and `charge_density`.");
-        if( !ok1 && !ok2 ) ERROR("For species #" << ispec << ", must define `nb_density` or `charge_density`.");
-        if( ok1 ) tmpSpec.density_type = "nb";
-        if( ok2 ) tmpSpec.density_type = "charge";
-        
-        // Number of particles per cell
-        if( !PyTools::extract_pyProfile("n_part_per_cell"    , tmpSpec.ppc_profile, "Species", ispec))
-            ERROR("For species #" << ispec << ", n_part_per_cell not found or not understood");
-        
-        // Charge
-        if( !PyTools::extract_pyProfile("charge"    , tmpSpec.charge_profile, "Species", ispec))
-            ERROR("For species #" << ispec << ", charge not found or not understood");
-        
-        // Mean velocity
-        extract3Profiles("mean_velocity", ispec, tmpSpec.mvel_x_profile, tmpSpec.mvel_y_profile, tmpSpec.mvel_z_profile);
-        
-        // Temperature
-        extract3Profiles("temperature", ispec, tmpSpec.temp_x_profile, tmpSpec.temp_y_profile, tmpSpec.temp_z_profile);
-        
-        
-        // Save the Species params
-        // -----------------------
-        species_param.push_back(tmpSpec);
-    }
-}
-
-void Params::extract3Profiles(string varname, int ispec, PyObject*& profx, PyObject*& profy, PyObject*& profz )
-{
-    vector<PyObject*> pvec = PyTools::extract_pyVec(varname,"Species",ispec);
-    for (unsigned int i=0;i<pvec.size();i++) {
-        PyTools::toProfile(pvec[i]);
-    }
-    if ( pvec.size()==1 ) {
-        profx =  profy =  profz = pvec[0];
-    } else if (pvec.size()==3) {
-        profx = pvec[0];
-        profy = pvec[1];
-        profz = pvec[2];
-    } else {
-        ERROR("For species #" << ispec << ", "<<varname<<" needs 1 or 3 components");
-    }
-}
-
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Compute useful values (normalisation, time/space step, etc...)
@@ -419,7 +279,7 @@ void Params::compute()
     double entered_sim_time = sim_time;
     sim_time = (double)(n_time) * timestep;
     if (sim_time!=entered_sim_time)
-        WARNING("sim_time has been redefined from " << entered_sim_time << " to " << sim_time << " to match nxtimestep");
+        WARNING("sim_time has been redefined from " << entered_sim_time << " to " << sim_time << " to match nxtimestep (" << scientific << setprecision(4) << sim_time - entered_sim_time<< ")" );
     
     
     // grid/cell-related parameters
@@ -435,7 +295,7 @@ void Params::compute()
             double entered_sim_length = sim_length[i];
             sim_length[i]      = (double)(n_space[i])*cell_length[i]; // ensure that nspace = sim_length/cell_length
             if (sim_length[i]!=entered_sim_length)
-                WARNING("sim_length[" << i << "] has been redefined from " << entered_sim_length << " to " << sim_length[i] << " to match n x cell_length");
+                WARNING("sim_length[" << i << "] has been redefined from " << entered_sim_length << " to " << sim_length[i] << " to match n x cell_length (" << scientific << setprecision(4) << sim_length[i]-entered_sim_length <<")");
             cell_volume   *= cell_length[i];
         }
         // create a 3d equivalent of n_space & cell_length
@@ -456,35 +316,6 @@ void Params::compute()
     
     n_space_global.resize(3, 1);	//! \todo{3 but not real size !!! Pbs in Species::Species}
     oversize.resize(3, 0);
-    
-}
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Compute useful values for Species-related quantities
-// ---------------------------------------------------------------------------------------------------------------------
-void Params::computeSpecies()
-{
-    // Loop on all species
-    for (unsigned int ispec=0; ispec< species_param.size(); ispec++) {
-        
-        // here I save the dimension of the pb (to use in BoundaryConditionType.h)
-        species_param[ispec].nDim_fields = nDim_field;
-        
-        // define thermal velocity as \sqrt{T/m}
-        species_param[ispec].thermalVelocity.resize(3);
-        species_param[ispec].thermalMomentum.resize(3);
-    
-        for (unsigned int i=0; i<3; i++) {
-            species_param[ispec].thermalVelocity[i] = sqrt(2.*species_param[ispec].thermT[0]/species_param[ispec].mass);
-            species_param[ispec].thermalMomentum[i] = species_param[ispec].thermalVelocity[i];
-        }
-        
-        WARNING("Using thermT[0] for species ispec=" << ispec << " in all directions");
-        if (species_param[ispec].thermalVelocity[0]>0.3) {
-            ERROR("for Species#"<<ispec<<" thermalising BCs require ThermT[0]="<<species_param[ispec].thermT[0]<<"<<"<<species_param[ispec].mass);
-        }
-    }//end loop on all species (ispec)
     
 }
 
@@ -518,11 +349,9 @@ void Params::setDimensions()
 // ---------------------------------------------------------------------------------------------------------------------
 void Params::print()
 {
-    
     // Numerical parameters
     // ---------------------
-    MESSAGE("Numerical parameters");
-    MESSAGE(1,"Geometry : " << geometry)
+    TITLE("Geometry: " << geometry);
     MESSAGE(1,"(nDim_particle, nDim_field) : (" << nDim_particle << ", "<< nDim_field << ")");
     MESSAGE(1,"Interpolation_order : " <<  interpolation_order);
     MESSAGE(1,"(res_time, sim_time) : (" << res_time << ", " << sim_time << ")");
@@ -534,24 +363,15 @@ void Params::print()
         MESSAGE(1,"            - (n_space,  cell_length) : " << "(" << n_space[i] << ", " << cell_length[i] << ")");
     }
     
-    // Plasma related parameters
-    // -------------------------
-    MESSAGE("Plasma related parameters");
-    MESSAGE(1,"n_species       : " << species_param.size());
-    for ( unsigned int i=0 ; i<species_param.size() ; i++ ) {
-        MESSAGE(1,"            species_type : "<< species_param[i].species_type);
-    }
-    
     
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Finds requested species in the list of existing species.
 // Returns an array of the numbers of the requested species.
-// Note that there might be several species that have the same "name" or "type" so that we have to search for all
-// possibilities.
-// ---------------------------------------------------------------------------------------------------------------------
-vector<unsigned int> Params::FindSpecies( vector<string> requested_species)
+// Note that there might be several species that have the same "name" or "type"
+//  so that we have to search for all possibilities.
+vector<unsigned int> Params::FindSpecies(vector<Species*>& vecSpecies, vector<string> requested_species)
 {
     bool species_found;
     vector<unsigned int> result;
@@ -560,8 +380,8 @@ vector<unsigned int> Params::FindSpecies( vector<string> requested_species)
     
     // Make an array of the existing species names
     existing_species.resize(0);
-    for (unsigned int ispec=0 ; ispec<species_param.size() ; ispec++) {
-        existing_species.push_back( species_param[ispec].species_type );
+    for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
+        existing_species.push_back( vecSpecies[ispec]->species_type );
     }
     
     // Loop over group of requested species
@@ -586,15 +406,16 @@ vector<unsigned int> Params::FindSpecies( vector<string> requested_species)
         if (!species_found)
             ERROR("Species `" << requested_species[rs] << "` was not found.");
     }
-	
+    
     return result;
 }
 
+
 //! Run string as python script and add to namelist
-void Params::pyRunScript(string command, string name) {
+void Params::runScript(string command, string name) {
     PyTools::checkPyError();
     namelist+=command;
-    if (name.size()>0)  MESSAGE(1,"Passing to python " << name);
+    if (name.size()>0)  MESSAGE(1,"Parsing " << name);
     int retval=PyRun_SimpleString(command.c_str());
     if (retval==-1) {
         ERROR("error parsing "<< name);
@@ -603,14 +424,15 @@ void Params::pyRunScript(string command, string name) {
 }
 
 //! run the python functions cleanup (user defined) and _keep_python_running (in pycontrol.py)
-void Params::cleanup() {
-    
+void Params::cleanup(SmileiMPI* smpi) {
     // call cleanup function from the user namelist (it can be used to free some memory 
     // from the python side) while keeping the interpreter running
     MESSAGE(1,"Checking for cleanup() function:");
     PyTools::runPyFunction("cleanup");
     // this will reset error in python in case cleanup doesn't exists
     PyErr_Clear();
+    
+    smpi->barrier();
     
     // this function is defined in the Python/pyontrol.py file and should return false if we can close
     // the python interpreter
@@ -622,6 +444,7 @@ void Params::cleanup() {
         PyErr_Print();
         Py_Finalize();
     }
+    smpi->barrier();
 }
 
 

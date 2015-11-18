@@ -96,7 +96,7 @@ Species(
 	n_part_per_cell = 10,
 	mass = 1.0,
 	charge = -1.0,
-	nb_density = cosine(0.5,amplitude=dn,xlength=L),
+	nb_density = cosine(0.5,xamplitude=dn,xlength=L),
 	mean_velocity = [-0.1,0.0,0.0],
 	bc_part_type_west = "none",
 	bc_part_type_east = "none"
@@ -108,7 +108,7 @@ Species(
 	n_part_per_cell = 10,
 	mass = 1.0,
 	charge = -1.0,
-	nb_density = cosine(0.5,amplitude=dn,xlength=L),
+	nb_density = cosine(0.5,xamplitude=dn,xlength=L),
 	mean_velocity = [0.1,0.0,0.0],
 	bc_part_type_west = "none",
 	bc_part_type_east = "none"
@@ -142,14 +142,10 @@ fieldsToDump = ('Ex','Ey','Ez','By_m','Bz_m');
 #
 DiagPhase(
 	every	= every,
- 	kind    = 'xpx',
  	species = ['eon1','eon2'],
- 	pos_min = 0.,
- 	pos_max = 0.,
- 	pos_num = 50,
- 	mom_min = -0.4,
- 	mom_max = 0.4,
- 	mom_num = 100,
+ 	kind    = ['xpx'],
+ 	first = [0., 0., 50],
+ 	second = [-0.4, 0.4, 100],
  	deflate=5
 )
 

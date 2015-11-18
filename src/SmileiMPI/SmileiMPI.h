@@ -58,7 +58,7 @@ public:
     virtual void createTopology( Params& params ) {};
     //! Echanges particles of Species, list of particles comes frome Species::dynamics
     //! See child classes
-    virtual void exchangeParticles(Species* species, int ispec, Params& params, int tnum, int iDim) {};
+    virtual void exchangeParticles(Species* species, Params& params, int tnum, int iDim) {};
 
     //virtual MPI_Datatype createMPIparticles( Particles* particles, int nbrOfProp ) {MPI_Datatype type ; return type; }
 

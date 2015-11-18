@@ -9,7 +9,7 @@ class DiagnosticPhasePosLor : public DiagnosticPhase {
     
 public:
     //! the component of the position (0,1,2) is passed by directionPosition
-    DiagnosticPhasePosLor(phaseStructure phaseStruct, const unsigned int directionPosition);	
+    DiagnosticPhasePosLor(Params &params, unsigned int n_phase, const unsigned int directionPosition);	
 
 	void run(partStruct&);
 private:

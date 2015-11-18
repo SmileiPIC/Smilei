@@ -41,8 +41,8 @@ class Collisions
 
 public:
     //! Constructor for Collisions between two species
-    Collisions(Params&,std::vector<Species*>&,SmileiMPI*,unsigned int,std::vector<unsigned int>,std::vector<unsigned int>,double,bool,int);
-    ~Collisions();
+    Collisions(SmileiMPI*, unsigned int, std::vector<unsigned int>, std::vector<unsigned int>, double, bool, int, unsigned int);
+    ~Collisions(){};
     
     //! Method that creates a vector of Collisions objects: one for each group in the input file.
     static std::vector<Collisions*> create(Params&, std::vector<Species*>&, SmileiMPI*);
@@ -63,13 +63,13 @@ public:
     int debug_every;
     
     //! Method to calculate the Debye length in each cluster
-    static void calculate_debye_length(Params&,std::vector<Species*>&);
+    static void calculate_debye_length(Params&, std::vector<Species*>& vecSpecies);
     
     //! is true if any of the collisions objects need automatically-computed coulomb log
     static bool debye_length_required;
     
     //! Method called in the main smilei loop to apply collisions at each timestep
-    void collide(Params&,std::vector<Species*>&,int);
+    void collide(Params&, std::vector<Species*>& vecSpecies,int);
     
 private:
     
@@ -78,12 +78,12 @@ private:
     
     static double cos_chi(double);
     
-    //! Hdf5 file id
-    hid_t fileId;
-    
     int totbins;
     int start;
 
+    //! Hdf5 file name
+    std::string filename;
+    
 };
 
 

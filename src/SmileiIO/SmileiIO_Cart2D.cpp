@@ -197,7 +197,7 @@ void SmileiIO_Cart2D::writeFieldsSingleFileTime( Field* field, hid_t group_id )
 } // END writeFieldsSingleFileTime
 
 
-//! this method writes a field on an hdf5 file should be used just for debug
+//! this method writes a field on an hdf5 file should be used just for debug (doesn't use params.output_dir)
 void SmileiIO_Cart2D::write( Field* field )
 {
     std::vector<unsigned int> isDual = field->isDual_;

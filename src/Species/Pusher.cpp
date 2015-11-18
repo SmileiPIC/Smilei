@@ -1,9 +1,10 @@
 #include "Pusher.h"
 #include "Params.h"
+#include "Species.h"
 
-Pusher::Pusher(Params& params, int ispec)
+Pusher::Pusher(Params& params, Species *species)
 {
-    mass_          = params.species_param[ispec].mass;
+    mass_          = species->mass;
     one_over_mass_ = 1.0/mass_;
     dt             = params.timestep;
     dts2           = params.timestep/2.;

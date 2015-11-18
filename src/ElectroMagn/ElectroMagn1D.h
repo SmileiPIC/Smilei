@@ -10,7 +10,7 @@ class ElectroMagn1D : public ElectroMagn
 {
 public:
     //! Constructor for ElectroMagn1D
-    ElectroMagn1D(Params &params, Patch* patch);
+    ElectroMagn1D(Params &params, std::vector<Species*>& vecSpecies, Patch* patch);
 
     //! Destructor for ElectroMagn1D
     ~ElectroMagn1D();

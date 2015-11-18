@@ -22,8 +22,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn1D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn1D::ElectroMagn1D(Params &params, Patch* patch)
-  : ElectroMagn(params, patch),
+ElectroMagn1D::ElectroMagn1D(Params &params, vector<Species*>& vecSpecies, Patch* patch)
+  : ElectroMagn(params, vecSpecies, patch),
 isWestern(patch->isWestern()),
 isEastern(patch->isEastern())
 {
@@ -90,10 +90,10 @@ isEastern(patch->isEastern())
     // Charge currents currents and density for each species
     
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
-        Jx_s[ispec]  = new Field1D(dimPrim, 0, false, ("Jx_"+params.species_param[ispec].species_type).c_str());
-        Jy_s[ispec]  = new Field1D(dimPrim, 1, false, ("Jy_"+params.species_param[ispec].species_type).c_str());
-        Jz_s[ispec]  = new Field1D(dimPrim, 2, false, ("Jz_"+params.species_param[ispec].species_type).c_str());
-        rho_s[ispec] = new Field1D(dimPrim, ("Rho_"+params.species_param[ispec].species_type).c_str());
+        Jx_s[ispec]  = new Field1D(dimPrim, 0, false, ("Jx_"+vecSpecies[ispec]->species_type).c_str());
+        Jy_s[ispec]  = new Field1D(dimPrim, 1, false, ("Jy_"+vecSpecies[ispec]->species_type).c_str());
+        Jz_s[ispec]  = new Field1D(dimPrim, 2, false, ("Jz_"+vecSpecies[ispec]->species_type).c_str());
+        rho_s[ispec] = new Field1D(dimPrim, ("Rho_"+vecSpecies[ispec]->species_type).c_str());
     }
     
     // ----------------------------------------------------------------
@@ -148,17 +148,19 @@ isEastern(patch->isEastern())
     
     
     // Fillng the space profiles of antennas
-    for (vector<AntennaStructure>::iterator antenna=antennas.begin(); antenna!=antennas.end(); antenna++ ) {
-        if (antenna->field == "Jx")
-            antenna->my_field = new Field1D(dimPrim, 0, false, "Jx");
-        else if (antenna->field == "Jy")
-            antenna->my_field = new Field1D(dimPrim, 1, false, "Jy");
-        else if (antenna->field == "Jz")
-            antenna->my_field = new Field1D(dimPrim, 2, false, "Jz");
+    for (unsigned int i=0; i<antennas.size(); i++) {
+        if (antennas[i].field == "Jx")
+            antennas[i].my_field = new Field1D(dimPrim, 0, false, "Jx");
+        else if (antennas[i].field == "Jy")
+            antennas[i].my_field = new Field1D(dimPrim, 1, false, "Jy");
+        else if (antennas[i].field == "Jz")
+            antennas[i].my_field = new Field1D(dimPrim, 2, false, "Jz");
         
-        if (antenna->my_field) {
-            Profile my_spaceProfile(antenna->space_profile, nDim_field);
-            applyExternalField(antenna->my_field,&my_spaceProfile, patch);
+        if (antennas[i].my_field) {
+            stringstream ss("");
+            ss << "Antenna " << i;
+            Profile my_spaceProfile(antennas[i].space_profile, nDim_field, ss.str());
+            applyExternalField(antennas[i].my_field,&my_spaceProfile, patch);
         }
     }
 
@@ -570,12 +572,13 @@ void ElectroMagn1D::applyExternalField(Field* my_field,  Profile *profile, Patch
     
     vector<double> x(1,0);
     //for (unsigned int i=0 ; i<field1D->dims()[0] ; i++) { // USING UNSIGNED INT CREATES PB WITH PERIODIC BCs
-    for (int i=0 ; i<field1D->dims()[0] ; i++) {
+    for (int i=0 ; i<(int)field1D->dims()[0] ; i++) {
         x[0] = ( (double)(patch->getCellStartingGlobalIndex(0)+i +(field1D->isDual(0)?-0.5:0)) )*dx;
         (*field1D)(i) = (*field1D)(i) + profile->valueAt(x);
     }
     
     if(emBoundCond[0]) emBoundCond[0]->save_fields_BC1D(my_field);
+    if(emBoundCond[1]) emBoundCond[1]->save_fields_BC1D(my_field);
 }
 
 

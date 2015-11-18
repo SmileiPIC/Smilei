@@ -1,15 +1,15 @@
-*.o
+build/*
 .*.swp
 \#*\#
 *~
 .depend
-*.d
 run*
 Run*
 RUN*
 Validation*
 src/smilei
 src/smilei.*
+*smilei
 *.aux
 *.dvi
 *.log
@@ -19,3 +19,4 @@ src/smilei.*
 *.orig
 *.pyh
 doc/Sphinx/_build/*
+

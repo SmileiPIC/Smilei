@@ -108,7 +108,7 @@ void SmileiMPI::init( Params& params )
     patch_count.resize(smilei_sz, 0);
     target_patch_count.resize(smilei_sz, 0);
 
-    interParticles.initialize(0,params); 
+    interParticles.initialize(0,params.nDim_particle); 
  
     init_patch_count(params);
 
@@ -669,7 +669,7 @@ void SmileiMPI::new_recv(Patch* patch, int from, int tag, Params& params)
         patch->vecSpecies[ispec]->bmin[0]=0;
         //Prepare patch for receiving particles
         nbrOfPartsRecv = patch->vecSpecies[ispec]->bmax.back(); 
-        patch->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv, params );
+        patch->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv, params.nDim_particle );
         //Receive particles
         if ( nbrOfPartsRecv > 0 ) {
 	    patch->vecSpecies[ispec]->typePartSend = createMPIparticles( patch->vecSpecies[ispec]->particles, nbrOfProp );

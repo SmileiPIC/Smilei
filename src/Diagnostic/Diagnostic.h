@@ -15,7 +15,7 @@
 #include "DiagnosticProbe.h"
 #include "DiagnosticPhaseSpace.h"
 #include "DiagnosticParticles.h"
-#include "DiagnosticTestParticles.h"
+#include "DiagnosticTrackParticles.h"
 #include "Timer.h"
 
 class Params;
@@ -33,7 +33,7 @@ class Diagnostic {
     friend class SimWindow;
 public:
     //! creator called from main
-    Diagnostic(Params &params, Patch* patch);
+    Diagnostic(Params &params, Patch* patch, SmileiMPI* smpi);
     
     //! destructor
     ~Diagnostic(){};
@@ -49,37 +49,24 @@ public:
  
     //! get a particular scalar
     double getScalar(std::string name);
-    
-    //! name of the fields to dump
-    std::vector<std::string> fieldsToDump;
 
-    //! field dump output
-    unsigned int fieldDump_every;
-    
-    //! number of time-steps for time-averaging of fields
-    unsigned int ntime_step_avg;
+    std::vector<Timer> dtimer;
 
     DiagnosticScalar scalars;
     DiagnosticProbe probes;
     DiagnosticPhaseSpace phases;
 
     std::vector<DiagnosticParticles*> vecDiagnosticParticles;
-    std::vector<DiagnosticTestParticles*> vecDiagnosticTestParticles;
-        
+    std::vector<DiagnosticTrackParticles*> vecDiagnosticTrackParticles;
     
-    void initScalars(Params&, Patch *patch);
-
-    void initProbes(Params&, Patch *);
-    void initPhases(Params&, Patch *);
-    void initParticles(Params&);
-    void initTestParticles(Params&);
-    
+    //! field dump output
+    unsigned int fieldDump_every;
     
     //! time-averaged field dump output
     unsigned int avgfieldDump_every;
     
-    //! particle dump output
-    unsigned int particleDump_every;
+    //! number of time-steps for time-averaging of fields
+    unsigned int ntime_step_avg;
     
     //! scalar output every scalar_every (namelist group "DiagScalar" key "every")
     unsigned int scalar_every;
@@ -96,13 +83,6 @@ public:
     
     //! every for the standard pic timeloop output
     unsigned int print_every;
-	
-	//! vector containing phase1D structures
-	std::vector<phaseStructure> vecPhase;
-
-protected:
-
-    std::vector<Timer> dtimer;
 	
 };
 

@@ -1,14 +1,15 @@
 #include "Ionization.h"
+#include "Species.h"
 
-Ionization::Ionization(Params& params, int ispec) {
+Ionization::Ionization(Params& params, Species * species) {
 
     wavelength_SI        = params.wavelength_SI;
 
     dt                   = params.timestep;
     nDim_field           = params.nDim_field;
     nDim_particle        = params.nDim_particle;
-    atomic_number_       = params.species_param[ispec].atomic_number;
-    ionized_species_mass = params.species_param[ispec].mass;
+    atomic_number_       = species->atomic_number;
+    ionized_species_mass = species->mass;
 
     // Normalization constant from Smilei normalization to/from atomic units
     eV_to_au = 1.0 / 27.2116;

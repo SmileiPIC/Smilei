@@ -5,9 +5,10 @@
 import gc 
 gc.collect()
 
+import os
+
 def _smilei_check():
     """Do checks over the script"""
-    
     # Verify classes were not overriden
     for CheckClassName,CheckClass in {"SmileiComponent":SmileiComponent,"Species":Species,
             "Laser":Laser,"Collisions":Collisions,"DiagProbe":DiagProbe,"DiagParticles":DiagParticles,
@@ -16,17 +17,22 @@ def _smilei_check():
             if not CheckClass.verify: raise
         except:
             raise Exception("ERROR in the namelist: it seems that the name `"+CheckClassName+"` has been overriden")
-    
-    # Check species for undefined/duplicate species_type
-    all_species=[]
-    for spec in Species:
-        if spec.species_type == None:
-            raise Exception("ERROR in the namelist: there is a species without species_type")
-        elif spec.species_type in all_species:
-            raise Exception("ERROR in the namelist: there is duplicate species_type")
-        else:
-            all_species.append(spec.species_type)
-    
+
+    if smilei_mpi_rank == 0 and output_dir:
+        if not os.path.exists(output_dir):
+            try:
+                os.makedirs(output_dir)
+            except OSError as exception:
+                raise Exception("ERROR in the namelist: output_dir "+output_dir+" does not exists and cannot be created")
+        elif not os.path.isdir(output_dir):
+                raise Exception("ERROR in the namelist: output_dir "+output_dir+" exists and is not a dir")
+
+    if restart and restart_dir:
+        if not os.path.isdir(restart_dir):
+            raise Exception("ERROR in the namelist: restart_dir "+restart_dir+" is not a dir")
+
+
+
 # this function will be called after initialising the simulation, just before entering the time loop
 # if it returns false, the code will call a Py_Finalize();
 def _keep_python_running():
