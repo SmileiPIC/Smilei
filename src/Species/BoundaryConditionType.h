@@ -27,9 +27,9 @@ inline int refl_particle( Particles &particles, int ipart, int direction, double
 }
 
 inline int supp_particle( Particles &particles, int ipart, int direction, double limit_pos, SpeciesStructure &params, double &nrj_iPart ) {
-    nrj_iPart = particles.weight(ipart)*(particles.lor_fac(ipart)-1.0);
-    particles.position(direction, ipart) = particles.position_old(direction, ipart);
-    particles.charge(ipart) = 0;
+    //nrj_iPart = particles.weight(ipart)*(particles.lor_fac(ipart)-1.0);
+    //particles.position(direction, ipart) = particles.position_old(direction, ipart);
+    //particles.charge(ipart) = 0;
     return 0;
 }
 

@@ -47,45 +47,45 @@ public:
 
         int keep_part = 1;
         if ( particles.position(0, ipart) <  x_min ) {
-            if (bc_west==NULL) keep_part = 0;
-            else {
+            //if (bc_west==NULL) keep_part = 0;
+            //else {
                 keep_part = (*bc_west)( particles, ipart, 0, 2.*x_min, params,nrj_iPart );
-            }
+            //}
         }
         else if ( particles.position(0, ipart) >= x_max ) {
-            if (bc_east==NULL) keep_part = 0;
-            else {
+            //if (bc_east==NULL) keep_part = 0;
+            //else {
                 keep_part = (*bc_east)( particles, ipart, 0, 2.*x_max, params,nrj_iPart );
-            }
+            //}
         }
         if (nDim_particle >= 2) {
 
             if ( particles.position(1, ipart) <  y_min ) {
-		if (bc_south==NULL) keep_part = 0;
-                else {
+		//if (bc_south==NULL) keep_part = 0;
+                //else {
                     keep_part *= (*bc_south)( particles, ipart, 1, 2.*y_min, params,nrj_iPart );
-                }
+                //}
             }
             else if ( particles.position(1, ipart) >= y_max ) {
-		if (bc_north==NULL) keep_part = 0;
-                else {
+		//if (bc_north==NULL) keep_part = 0;
+                //else {
                     keep_part *= (*bc_north)( particles, ipart, 1, 2.*y_max, params,nrj_iPart );
-                }
+                //}
             }
 
             if (nDim_particle == 3) {
 
                 if ( particles.position(2, ipart) <  z_min ) {
-                    if (bc_bottom==NULL) keep_part = 0;
-                    else {
+                    //if (bc_bottom==NULL) keep_part = 0;
+                    //else {
                         keep_part *= (*bc_bottom)( particles, ipart, 2, 2.*z_min, params,nrj_iPart );
-                    }
+                    //}
                 }
                 else if ( particles.position(2, ipart) >= z_max ) {
-                    if (bc_up==NULL) keep_part = 0;
-                    else {
+                    //if (bc_up==NULL) keep_part = 0;
+                    //else {
 			keep_part *= (*bc_up)( particles, ipart, 2, 2.*z_max, params,nrj_iPart );
-                    }
+                    //}
                 }
             } // end if (nDim_particle == 3)
         } // end if (nDim_particle >= 2)

@@ -32,12 +32,12 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, Patch* patch )
     double z_min_global = 0;
     double z_max_global = params.cell_length[2]*(params.n_space_global[2]);
 
-    bc_west  = NULL;
-    bc_east  = NULL;
-    bc_south = NULL;
-    bc_north = NULL;
-    bc_bottom = NULL;
-    bc_up     = NULL;
+    bc_west  =  &supp_particle ;
+    bc_east  =  &supp_particle ;
+    bc_south =  &supp_particle ;
+    bc_north =  &supp_particle ;
+    bc_bottom = &supp_particle ;
+    bc_up     = &supp_particle ;
 
     // Define limits of local domain
     if (!params.nspace_win_x) {
@@ -76,7 +76,7 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, Patch* patch )
 	if (patch->isWestern()) bc_west = &refl_particle;
     }
     else if ( params.species_param[ispec].bc_part_type_west == "supp" ) {
-	if (patch->isWestern()) bc_west = &supp_particle;
+        if (patch->isWestern()) bc_west = &supp_particle;
     }
     else if ( params.species_param[ispec].bc_part_type_west == "stop" ) {
 	if (patch->isWestern()) bc_west = &stop_particle;
@@ -85,7 +85,7 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, Patch* patch )
 	if (patch->isWestern()) bc_west = &adrien_particle;
     }
     else if ( params.species_param[ispec].bc_part_type_west == "none" ) {
-	WARNING( "No Boundary Condition applied for species in west direction " << ispec );
+	WARNING( "No Boundary Condition applied for species in west direction. Particles will be deleted. " << ispec );
     }
     else {
 	ERROR( "West boundary condition undefined" );
@@ -105,7 +105,7 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, Patch* patch )
 	if (patch->isEastern()) bc_east = &adrien_particle;
     }
     else if ( params.species_param[ispec].bc_part_type_east == "none" ) {
-	WARNING( "No Boundary Condition applied for species in east direction " << ispec );
+	WARNING( "No Boundary Condition applied for species in east direction. Particles will be deleted." << ispec );
     }
     else {
 	ERROR( "East boundary condition undefined" );
@@ -127,7 +127,7 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, Patch* patch )
 	    if (patch->isSouthern()) bc_south = &adrien_particle;
 	}	
 	else if ( params.species_param[ispec].bc_part_type_south == "none" ) {
-	    WARNING( "No Boundary Condition applied for species in south direction " << ispec );
+	    WARNING( "No Boundary Condition applied for species in south direction. Particles will be deleted. " << ispec );
 	}
 	else {
 	    ERROR( "South boundary condition undefined : " << params.species_param[ispec].bc_part_type_south  );
@@ -147,7 +147,7 @@ PartBoundCond::PartBoundCond( PicParams& params, int ispec, Patch* patch )
 	    if (patch->isNorthern()) bc_north = &adrien_particle;
 	}
 	else if ( params.species_param[ispec].bc_part_type_north == "none" ) {
-	    WARNING( "No Boundary Condition applied for species in north direction " << ispec );
+	    WARNING( "No Boundary Condition applied for species in north direction. Particles will be deleted. " << ispec );
 	}
 	else {
 	    ERROR( "North boundary condition undefined : " << params.species_param[ispec].bc_part_type_north  );
