@@ -75,6 +75,7 @@ class VectorPatch {
 
 
     void clear() {patches_.clear();}
+    void resizeFields();
 
     std::vector<Patch*> patches_;
     std::vector<Patch*> recv_patches_;

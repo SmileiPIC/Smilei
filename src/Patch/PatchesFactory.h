@@ -60,6 +60,7 @@ public:
 	    vecPatches.patches_[ipatch] = PatchesFactory::create(params, diag_params, laser_params, smpi, firstpatch + ipatch);
         }
         vecPatches.set_refHindex() ;
+        vecPatches.resizeFields() ;
 
         return vecPatches;
     }

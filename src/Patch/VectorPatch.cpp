@@ -240,13 +240,13 @@ void VectorPatch::exchangeParticles(int ispec, PicParams &params, SmileiMPI* smp
 void VectorPatch::sumRhoJ(unsigned int diag_flag )
 {
 
-    #pragma omp single
-    {
-        Jx_.resize(this->size());
-        Jy_.resize(this->size());
-        Jz_.resize(this->size());
-        rho_.resize(this->size());
-    }
+    //#pragma omp single
+    //{
+    //    Jx_.resize(this->size());
+    //    Jy_.resize(this->size());
+    //    Jz_.resize(this->size());
+    //    rho_.resize(this->size());
+    //}
     #pragma omp for schedule(static)
     for (int ipatch=0 ; ipatch<this->size() ; ipatch++){
         Jx_[ipatch]= (*this)(ipatch)->EMfields->Jx_ ;
@@ -262,13 +262,13 @@ void VectorPatch::sumRhoJ(unsigned int diag_flag )
 
 void VectorPatch::sumRhoJs( int ispec )
 {
-    #pragma omp single
-    {
-        Jx_.resize(this->size());
-        Jy_.resize(this->size());
-        Jz_.resize(this->size());
-        rho_.resize(this->size());
-    }
+    //#pragma omp single
+    //{
+    //    Jx_.resize(this->size());
+    //    Jy_.resize(this->size());
+    //    Jz_.resize(this->size());
+    //    rho_.resize(this->size());
+    //}
     #pragma omp for schedule(static)
     for (int ipatch=0 ; ipatch<this->size() ; ipatch++) {
         Jx_[ipatch]= (*this)(ipatch)->EMfields->Jx_s[ispec] ;
@@ -285,12 +285,12 @@ void VectorPatch::sumRhoJs( int ispec )
 
 void VectorPatch::exchangeE( )
 {
-    #pragma omp single
-    {
-        Ex_.resize(this->size());
-        Ey_.resize(this->size());
-        Ez_.resize(this->size());
-    }
+    //#pragma omp single
+    //{
+    //    Ex_.resize(this->size());
+    //    Ey_.resize(this->size());
+    //    Ez_.resize(this->size());
+    //}
     #pragma omp for schedule(static)
     for (int ipatch=0 ; ipatch<this->size() ; ipatch++) {
         Ex_[ipatch]= (*this)(ipatch)->EMfields->Ex_ ;
@@ -305,12 +305,12 @@ void VectorPatch::exchangeE( )
 
 void VectorPatch::exchangeB( )
 {
-    #pragma omp single
-    {
-        Bx_.resize(this->size());
-        By_.resize(this->size());
-        Bz_.resize(this->size());
-    }
+    //#pragma omp single
+    //{
+    //    Bx_.resize(this->size());
+    //    By_.resize(this->size());
+    //    Bz_.resize(this->size());
+    //}
     #pragma omp for schedule(static)
     for (int ipatch=0 ; ipatch<this->size() ; ipatch++) {
         Bx_[ipatch]= (*this)(ipatch)->EMfields->Bx_ ;
@@ -778,7 +778,7 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi)
 
     definePatchDiagsMaster();
     refHindex_ = (*this)(0)->Hindex();
-   
+    resizeFields();   
 
 }
 
@@ -1231,3 +1231,16 @@ void VectorPatch::sum( std::vector<Field*> fields )
     }
 }
 
+void VectorPatch::resizeFields()
+{
+        Jx_.resize( size());
+        Jy_.resize( size());
+        Jz_.resize( size());
+        rho_.resize(size());
+        Ex_.resize( size());
+        Ey_.resize( size());
+        Ez_.resize( size());
+        Bx_.resize( size());
+        By_.resize( size());
+        Bz_.resize( size());
+}
