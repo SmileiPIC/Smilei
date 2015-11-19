@@ -316,6 +316,15 @@ void Params::compute()
     
     n_space_global.resize(3, 1);	//! \todo{3 but not real size !!! Pbs in Species::Species}
     oversize.resize(3, 0);
+
+    for (unsigned int i=0; i<nDim_field; i++) oversize[i]  = interpolation_order + (exchange_particles_each-1);;
+
+    //n_space_global.resize(nDim_field, 0);
+    for (unsigned int i=0; i<nDim_field; i++){
+        n_space_global[i] = n_space[i];
+        n_space[i] /= number_of_patches[i];
+        if(n_space_global[i]%number_of_patches[i] !=0) ERROR("ERROR in dimension " << i <<" Number of patches = " << number_of_patches[i] << " must divide n_space_global = " << n_space_global[i]);
+    }
     
 }
 

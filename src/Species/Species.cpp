@@ -121,7 +121,7 @@ void Species::initSpecies(Params& params)
     dx_inv_ = 1./cell_length[0];
     dy_inv_ = 1./cell_length[1];
     
-    DEBUG(species_param.species_type);
+    DEBUG(species_type);
     
     electron_species = NULL;
     

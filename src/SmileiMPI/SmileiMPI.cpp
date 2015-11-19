@@ -142,7 +142,7 @@ void SmileiMPI::init_patch_count( Params& params)
     }
 #endif
 
-#ifndef _PY_PATCH_COUNT
+#ifdef _PY_PATCH_COUNT
     MESSAGE( "Plasma not defined, may used python" );
 #else
 
@@ -157,8 +157,9 @@ void SmileiMPI::init_patch_count( Params& params)
     coef_cell = 50;
     coef_frozen = 0.1;
  
-    mincell.resize(params.species_param.size()*3);
-    maxcell.resize(params.species_param.size()*3);
+    unsigned int tot_species_number = PyTools::nComponents("Species");
+    mincell.resize(tot_species_number*3);
+    maxcell.resize(tot_species_number*3);
                      
     capabilities.resize(smilei_sz, 1); //Capabilities of devices hosting the different mpi processes. All capabilities are assumed to be equal for the moment.
     //Compute total capability: Tcapabilities
@@ -182,9 +183,11 @@ void SmileiMPI::init_patch_count( Params& params)
     Lcur = 0.; //Load assigned to current rank r.
 
 
-    for (unsigned int ispecies = 0; ispecies < params.species_param.size(); ispecies++){
+    for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++){
+
         //Needs to be updated when dens_lenth is a vector in params.
 
+#ifdef _OLDSTYLE
         density_length[0] = params.species_param[ispecies].dens_length_x[0];
 	if (params.nDim_field>1) {
 	    density_length[1] = params.species_param[ispecies].dens_length_y[0];
@@ -202,7 +205,44 @@ void SmileiMPI::init_patch_count( Params& params)
             local_load *= (maxcell[ispecies*3+idim]-mincell[ispecies*3+idim]);
         }
         Tload += local_load; //Particle contribution to the load
-    }
+#else
+	// Build profile
+	std::string species_type("");
+	PyTools::extract("species_type",species_type,"Species",ispecies);
+
+	PyObject *profile1;
+        PyTools::extract_pyProfile("nb_density"    , profile1, "Species", ispecies);
+        PyTools::extract_pyProfile("charge_density", profile1, "Species", ispecies);
+	PyTools::extract_pyProfile("n_part_per_cell", profile1, "Species", ispecies);
+	Profile *ppcProfile = new Profile(profile1, params.nDim_particle, "n_part_per_cell "+species_type);
+
+	// Count global number of particles, 
+	for (unsigned int i=0; i<params.n_space_global[0]; i++) {
+	    for (unsigned int j=0; j<params.n_space_global[1]; j++) {
+		for (unsigned int k=0; k<params.n_space_global[2]; k++) {
+		    vector<double> x_cell(3,0);
+		    x_cell[0] = (i+0.5)*params.cell_length[0];
+		    x_cell[1] = (j+0.5)*params.cell_length[1];
+		    x_cell[2] = (k+0.5)*params.cell_length[2];
+
+		    int n_part_in_cell = round(ppcProfile->valueAt(x_cell));
+		    if ( n_part_in_cell<=0. )
+			continue;
+		    else
+			local_load += n_part_in_cell;
+		}
+	    }
+	}
+
+	double time_frozen(0.);
+	PyTools::extract("time_frozen",time_frozen ,"Species",ispecies);
+	if(time_frozen > 0.) local_load *= coef_frozen;
+	Tload += local_load;
+
+	delete ppcProfile;
+#endif
+    } // End for ispecies
+
     Tload += Npatches*ncells_perpatch*coef_cell ; // We assume the load of one cell to be equal to coef_cell and account for ghost cells.
     if (isMaster()) cout << "Total load = " << Tload << endl;
     Tload /= Tcapabilities; //Target load for each mpi process.
@@ -216,7 +256,9 @@ void SmileiMPI::init_patch_count( Params& params)
             Pcoordinates[idim] *= params.n_space[idim]; //Compute patch cells coordinates
         }
         local_load = 0.; //Accumulate load of the current patch
-        for (unsigned int ispecies = 0; ispecies < params.species_param.size(); ispecies++){
+        for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++){
+
+#ifdef _OLDSTYLE
             local_load_temp = params.species_param[ispecies].n_part_per_cell; //Accumulate load of the current species.
             if(params.species_param[ispecies].time_frozen > 0.) local_load_temp *= coef_frozen;
             for (unsigned int idim = 0; idim < params.nDim_field; idim++){
@@ -224,7 +266,44 @@ void SmileiMPI::init_patch_count( Params& params)
                 if (local_load_temp < 0.) local_load_temp = 0.;
             } 
             local_load += local_load_temp; // Accumulate species contribution to the load.
-        }
+#else
+	    // Build profile
+	    std::string species_type("");
+	    PyTools::extract("species_type",species_type,"Species",ispecies);
+
+	    PyObject *profile1;
+	    PyTools::extract_pyProfile("nb_density"    , profile1, "Species", ispecies);
+	    PyTools::extract_pyProfile("charge_density", profile1, "Species", ispecies);
+	    PyTools::extract_pyProfile("n_part_per_cell", profile1, "Species", ispecies);
+	    Profile *ppcProfile = new Profile(profile1, params.nDim_particle, "n_part_per_cell "+species_type);
+
+	    vector<double> cell_index(3,0);
+	    for (unsigned int i=0 ; i<params.nDim_field ; i++) {
+		if (params.cell_length[i]!=0)
+		    cell_index[i] = Pcoordinates[i]*params.cell_length[i];
+	    }
+
+	    // Count global number of particles, 
+	    for (unsigned int i=0; i<params.n_space[0]; i++) {
+		for (unsigned int j=0; j<params.n_space[1]; j++) {
+		    for (unsigned int k=0; k<params.n_space[2]; k++) {
+			vector<double> x_cell(3,0);
+			x_cell[0] = cell_index[0] + (i+0.5)*params.cell_length[0];
+			x_cell[1] = cell_index[1] + (j+0.5)*params.cell_length[1];
+			x_cell[2] = cell_index[2] + (k+0.5)*params.cell_length[2];
+
+			int n_part_in_cell = round(ppcProfile->valueAt(x_cell));
+			if ( n_part_in_cell<=0. )
+			    continue;
+			else
+			    local_load += n_part_in_cell;
+		    }
+		}
+	    }
+	    delete ppcProfile;
+
+#endif
+        } // End for ispecies
 
         local_load += ncells_perpatch*coef_cell; //Add grid contribution to the load.
         Lcur += local_load; //Add grid contribution to the load.
@@ -286,8 +365,10 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     for (unsigned int idim = 1; idim < params.nDim_field; idim++)
         ncells_perpatch *= params.n_space[idim]+2*params.oversize[idim];
  
-    mincell.resize(params.species_param.size()*3);
-    maxcell.resize(params.species_param.size()*3);
+    unsigned int tot_species_number = PyTools::nComponents("Species");
+
+    mincell.resize(tot_species_number*3);
+    maxcell.resize(tot_species_number*3);
     capabilities.resize(smilei_sz, 1); //Capabilities of devices hosting the different mpi processes. All capabilities are assumed to be equal for the moment.
     Tcapabilities = 0;
     for (unsigned int i = 0; i < smilei_sz; i++)
@@ -302,7 +383,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
 
     //Compute Local Loads of each Patch (Lp)
     for(unsigned int hindex=0; hindex < patch_count[smilei_rk]; hindex++){
-        for (unsigned int ispecies = 0; ispecies < params.species_param.size(); ispecies++) {
+        for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++) {
 	    Lp[hindex] += params.species_param[ispecies].ppc_profile*vecpatches(hindex)->vecSpecies[ispecies]->getNbrOfParticles()*(1+(coef_frozen-1)*(time_dual > params.species_param[ispecies].time_frozen)) ;
 	}
         Lp[hindex] += ncells_perpatch*coef_cell ;

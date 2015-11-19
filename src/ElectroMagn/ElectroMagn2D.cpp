@@ -370,14 +370,14 @@ void ElectroMagn2D::initE(Patch *patch)
     // ---------------------
     // Ex / West
     if (patch->isWestern()) {
-        DEBUG(2, "Computing Western BC on Ex");
+        DEBUG("Computing Western BC on Ex");
         for (unsigned int j=0; j<ny_p; j++) {
             (*Ex2D)(0,j) = (*Ex2D)(1,j) + ((*Ey2D)(0,j+1)-(*Ey2D)(0,j))*dx/dy  - dx*(*rho2D)(0,j);
         }
     }
     // Ex / East
     if (patch->isEastern()) {
-        DEBUG(2, "Computing Eastern BC on Ex");
+        DEBUG("Computing Eastern BC on Ex");
         for (unsigned int j=0; j<ny_p; j++) {
             (*Ex2D)(nx_d-1,j) = (*Ex2D)(nx_d-2,j) - ((*Ey2D)(nx_p-1,j+1)-(*Ey2D)(nx_p-1,j))*dx/dy + dx*(*rho2D)(nx_p-1,j);
         }

@@ -123,7 +123,6 @@ int main (int argc, char* argv[])
     // reading from dumped file the restart values
     if (params.restart) {
         MESSAGE(1, "READING fields and particles for restart");
-        DEBUG(vecSpecies.size());
         checkpoint.restartAll( vecPatches, stepStart, smpiData, simWindow, params);
 
 	// time at integer time-steps (primal grid)
@@ -259,7 +258,6 @@ int partperMPI;
 int balancing_freq = 150;
 int npatchmoy=0, npartmoy=0;
 	
-    params.cleanup(smpiData);
     
     // Count timer
     int ntimer(13);

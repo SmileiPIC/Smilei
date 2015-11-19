@@ -815,11 +815,11 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
     // ---------------------------------------------------------
     // Starting iterative loop for the conjugate gradient method
     // ---------------------------------------------------------
-    if (smpi->isMaster()) DEBUG(1,"Starting iterative loop for CG method");
+    if (smpi->isMaster()) DEBUG("Starting iterative loop for CG method");
     while ( (ctrl > error_max) && (iteration<iteration_max) ) {
         
         iteration++;
-        if (smpi->isMaster()) DEBUG(5,"iteration " << iteration << " started with control parameter ctrl = " << ctrl*1.e14 << " x 1e-14");
+        if (smpi->isMaster()) DEBUG("iteration " << iteration << " started with control parameter ctrl = " << ctrl*1.e14 << " x 1e-14");
 
         // scalar product of the residual
         double r_dot_r = rnew_dot_rnew;
@@ -851,7 +851,7 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
 	    rnew_dot_rnew_local += (*this)(ipatch)->EMfields->compute_r();
 	}
 	MPI_Allreduce(&rnew_dot_rnew_local, &rnew_dot_rnew, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-        if (smpi->isMaster()) DEBUG(10,"new residual norm: rnew_dot_rnew = " << rnew_dot_rnew);
+        if (smpi->isMaster()) DEBUG("new residual norm: rnew_dot_rnew = " << rnew_dot_rnew);
 
         // compute new directio
 	for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
@@ -860,7 +860,7 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
 
         // compute control parameter
         ctrl = rnew_dot_rnew / (double)(nx_p2_global);
-        if (smpi->isMaster()) DEBUG(10,"iteration " << iteration << " done, exiting with control parameter ctrl = " << ctrl);
+        if (smpi->isMaster()) DEBUG("iteration " << iteration << " done, exiting with control parameter ctrl = " << ctrl);
 
     }//End of the iterative loop
     

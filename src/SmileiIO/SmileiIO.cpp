@@ -102,7 +102,7 @@ void SmileiIO::createTimeStepInSingleFileTime( int time, Diagnostic* diag )
     name_t.str("");
     name_t << "/" << setfill('0') << setw(10) << time;
 	
-    DEBUG(10,"[hdf] GROUP _________________________________ " << name_t.str());
+    DEBUG("[hdf] GROUP _________________________________ " << name_t.str());
     hid_t group_id = H5Gcreate(global_file_id_, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     H5Gclose(group_id);
 
