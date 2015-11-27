@@ -57,7 +57,7 @@ dump_request(smpi->getSize())
     
     PyTools::extract("dump_deflate", dump_deflate);
 
-    if (PyTools::extract("restart_dir", restart_dir) && restart_dir.at(restart_dir.length()-1)!='/') {
+    if (PyTools::extract("restart_dir", restart_dir) && restart_dir.length()>1 && restart_dir.at(restart_dir.length()-1)!='/') {
         restart_dir+="/";
     }
     
