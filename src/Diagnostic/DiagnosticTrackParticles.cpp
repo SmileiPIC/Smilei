@@ -93,11 +93,9 @@ void DiagnosticTrackParticles::run(int time, SmileiMPI* smpi) {
     
     // Create the locator (gives locations where to store particles in the file)
     vector<hsize_t> locator (locNbrParticles*2);
-    // we need to remove the firstId inc ase it'a a test particle
-    unsigned int test_offset= (species->particles.isTest?1:0);
     for(int i=0; i<locNbrParticles; i++) {
         locator[i*2  ] = dims[0];
-        locator[i*2+1] = species->particles.id(i)-test_offset;
+        locator[i*2+1] = species->particles.id(i)-1; // because particles label Id starts at 1
     }
     // Now we increase the array size for the new timestep (new chunk)
     // It is not applied to the HDF5 file yet
