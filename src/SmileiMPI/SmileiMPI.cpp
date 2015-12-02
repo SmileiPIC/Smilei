@@ -142,10 +142,6 @@ void SmileiMPI::init_patch_count( Params& params)
     }
 #endif
 
-#ifdef _PY_PATCH_COUNT
-    MESSAGE( "Plasma not defined, may used python" );
-#else
-
     unsigned int Npatches, r,Ncur,Pcoordinates[3],ncells_perpatch, Tcapabilities;
     double Tload,Tcur, Lcur, local_load, local_load_temp, above_target, below_target;
     std::vector<unsigned int> mincell,maxcell,capabilities; //Min and max values of non empty cells for each species and in each dimension.
@@ -187,7 +183,7 @@ void SmileiMPI::init_patch_count( Params& params)
 
         //Needs to be updated when dens_lenth is a vector in params.
 
-#ifdef _OLDSTYLE
+#ifdef _BEFORE_PY
         density_length[0] = params.species_param[ispecies].dens_length_x[0];
 	if (params.nDim_field>1) {
 	    density_length[1] = params.species_param[ispecies].dens_length_y[0];
@@ -258,7 +254,7 @@ void SmileiMPI::init_patch_count( Params& params)
         local_load = 0.; //Accumulate load of the current patch
         for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++){
 
-#ifdef _OLDSTYLE
+#ifdef _BEFORE_PY
             local_load_temp = params.species_param[ispecies].n_part_per_cell; //Accumulate load of the current species.
             if(params.species_param[ispecies].time_frozen > 0.) local_load_temp *= coef_frozen;
             for (unsigned int idim = 0; idim < params.nDim_field; idim++){
@@ -334,14 +330,13 @@ void SmileiMPI::init_patch_count( Params& params)
         }
     }// End loop on patches.
     if (isMaster()) for (unsigned int i=0; i<smilei_sz; i++) cout << "patch count = " << patch_count[i]<<endl;
-#endif 
 
 }
 
 void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, double time_dual )
 {
 
-#ifndef _PY_PATCH_COUNT
+#ifdef _PY_PATCH_COUNT
     MESSAGE( "Plasma not defined, may used python" );
 #else
 
@@ -384,7 +379,9 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     //Compute Local Loads of each Patch (Lp)
     for(unsigned int hindex=0; hindex < patch_count[smilei_rk]; hindex++){
         for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++) {
-	    Lp[hindex] += params.species_param[ispecies].ppc_profile*vecpatches(hindex)->vecSpecies[ispecies]->getNbrOfParticles()*(1+(coef_frozen-1)*(time_dual > params.species_param[ispecies].time_frozen)) ;
+	    //Lp[hindex] += params.species_param[ispecies].n_part_per_cell*vecpatches(hindex)->vecSpecies[ispecies]->getNbrOfParticles()*(1+(coef_frozen-1)*(time_dual > params.species_param[ispecies].time_frozen)) ;
+	    //Lp[hindex] += params.species_param[ispecies].ppc_profile*vecpatches(hindex)->vecSpecies[ispecies]->getNbrOfParticles()*(1+(coef_frozen-1)*(time_dual > vecpatches(hindex)->vecSpecies[ispecies]->time_frozen)) ;
+	    Lp[hindex] += vecpatches(hindex)->vecSpecies[ispecies]->getNbrOfParticles()*(1+(coef_frozen-1)*(time_dual > vecpatches(hindex)->vecSpecies[ispecies]->time_frozen)) ;
 	}
         Lp[hindex] += ncells_perpatch*coef_cell ;
     }
@@ -633,54 +630,70 @@ void SmileiMPI::computeGlobalDiags(Diagnostic* diags, int timestep)
 void SmileiMPI::computeGlobalDiags(DiagnosticScalar& scalars, int timestep)
 {
     int nscalars(0);
-    for(vector<pair<string,double> >::iterator iter = scalars.out_list.begin(); iter !=scalars.out_list.end(); iter++) {
-	if ( ( (iter->first).find("Min") == std::string::npos ) && ( (iter->first).find("Max") == std::string::npos ) ) {
-	    MPI_Reduce(isMaster()?MPI_IN_PLACE:&((*iter).second), &((*iter).second), 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+    vector<string>::iterator iterKey = scalars.out_key.begin();
+    for(vector<double>::iterator iter = scalars.out_value.begin(); iter !=scalars.out_value.end(); iter++) {
+	if ( ( (*iterKey).find("Min") == std::string::npos ) && ( (*iterKey).find("Max") == std::string::npos ) ) {
+	    MPI_Reduce(isMaster()?MPI_IN_PLACE:&((*iter)), &((*iter)), 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 	}
-	else if ( (iter->first).find("MinCell") != std::string::npos ) {
-	    vector<pair<string,double> >::iterator iterVal = iter-1;
+	else if ( (*iterKey).find("MinCell") != std::string::npos ) {
+	    vector<double>::iterator iterVal = iter-1;
 	    val_index minVal;
-	    minVal.val   = (*iterVal).second;
-	    minVal.index = (*iter).second;
+	    minVal.val   = (*iterVal);
+	    minVal.index = (*iter);
 	    MPI_Reduce(isMaster()?MPI_IN_PLACE:&minVal, &minVal, 1, MPI_DOUBLE_INT, MPI_MINLOC, 0, MPI_COMM_WORLD);
 	}
-	else if ( (iter->first).find("MaxCell") != std::string::npos ) {
-	    vector<pair<string,double> >::iterator iterVal = iter-1;
+	else if ( (*iterKey).find("MaxCell") != std::string::npos ) {
+	    vector<double>::iterator iterVal = iter-1;
 	    val_index maxVal;
-	    maxVal.val   = (*iterVal).second;
-	    maxVal.index = (*iter).second;
+	    maxVal.val   = (*iterVal);
+	    maxVal.index = (*iter);
 	    MPI_Reduce(isMaster()?MPI_IN_PLACE:&maxVal, &maxVal, 1, MPI_DOUBLE_INT, MPI_MAXLOC, 0, MPI_COMM_WORLD);
 	}
+	iterKey++;
     }
 
     if (isMaster()) {
 
-	double Etot_part = scalars.getScalar("Eparticles");
-	double Etot_fields = scalars.getScalar("EFields");
-	
-	double Energy_time_zero = 0.;//scalars.Energy_time_zero;
-	double poyTot = scalars.getScalar("Poynting");
+	double Ukin = scalars.getScalar("Ukin");
+	double Uelm = scalars.getScalar("Uelm");
 
-	double Elost_part = scalars.getScalar("Elost");
-	double Emw_lost  = scalars.getScalar("Emw_lost");
-	double Emw_lost_fields = scalars.getScalar("Emw_lost_fields");
+	// added & lost energies due to the moving window
+	double Ukin_out_mvw = scalars.getScalar("Ukin_out_mvw");
+	double Ukin_inj_mvw = scalars.getScalar("Ukin_inj_mvw");
+	double Uelm_out_mvw = scalars.getScalar("Uelm_out_mvw");
+	double Uelm_inj_mvw = scalars.getScalar("Uelm_inj_mvw");
+        
+	// added & lost energies at the boundaries
+	double Ukin_bnd = scalars.getScalar("Ukin_bnd");
+	double Uelm_bnd = scalars.getScalar("Uelm_bnd");
 
-	double Total_Energy=Etot_part+Etot_fields;
+	// total energy in the simulation
+	double Utot = Ukin + Uelm;
 
-	double Energy_Balance=Total_Energy-(Energy_time_zero+poyTot)+Elost_part+Emw_lost+Emw_lost_fields;
-	//double Energy_Balance=Total_Energy-(Energy_time_zero);
-	double Energy_Bal_norm(0.);
+	// expected total energy
+	double Uexp = scalars.Energy_time_zero + Uelm_bnd + Ukin_inj_mvw + Uelm_inj_mvw
+	    -           ( Ukin_bnd + Ukin_out_mvw + Uelm_out_mvw );
+        
+	// energy balance
+	double Ubal = Utot - Uexp;
+        
+	// energy used for normalization
+	scalars.EnergyUsedForNorm = Utot;
+        
+	// normalized energy balance
+	double Ubal_norm(0.);
 	if (scalars.EnergyUsedForNorm>0.)
-	    Energy_Bal_norm=Energy_Balance/scalars.EnergyUsedForNorm;
-	scalars.EnergyUsedForNorm = Total_Energy;
+	    Ubal_norm = Ubal / scalars.EnergyUsedForNorm;
 
-	scalars.setScalar("Etot",Total_Energy);
-	scalars.setScalar("Ebalance",Energy_Balance);
-	scalars.setScalar("Ebal_norm",Energy_Bal_norm);
+	scalars.setScalar("Ubal_norm",Ubal_norm);
+	scalars.setScalar("Ubal",Ubal);
+	scalars.setScalar("Uexp",Uexp);
+	scalars.setScalar("Utot",Utot);
 
 	if (timestep==0) {
-	    scalars.Energy_time_zero  = Total_Energy;
-	    scalars.EnergyUsedForNorm = Energy_time_zero;
+	    scalars.Energy_time_zero  = Utot;
+	    scalars.EnergyUsedForNorm = scalars.Energy_time_zero;
 	}
 
 

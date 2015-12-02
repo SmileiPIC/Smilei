@@ -341,60 +341,78 @@ void VectorPatch::computeScalarsDiags(int timestep)
     int scalars_every( (*this)(0)->Diags->scalars.every );
     if (timestep % scalars_every != 0) return;
 
-    int nDiags( (*this)(0)->Diags->scalars.out_list.size() );
+    //std::vector<std::pair<std::string,double> > out_list;
+    //std::vector<std::string> out_key;
+    //std::vector<double>      out_value;
+    //std::vector<unsigned int> out_width;
+    //std::vector<std::pair<std::string,double> >::iterator itDiagScalar;
+
+
+    int nDiags( (*this)(0)->Diags->scalars.out_value.size() );
     // Initialize scalars iterator on 1st diag
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-	(*this)(ipatch)->Diags->scalars.itDiagScalar =  (*this)(ipatch)->Diags->scalars.out_list.begin();
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	(*this)(ipatch)->Diags->scalars.itDiagScalarName  =  (*this)(ipatch)->Diags->scalars.out_key.begin();
+	(*this)(ipatch)->Diags->scalars.itDiagScalarValue =  (*this)(ipatch)->Diags->scalars.out_value.begin();
+    }
 
 
     for (int idiags = 0 ; idiags<nDiags ; idiags++) {
-	string diagName( (*this)(0)->Diags->scalars.itDiagScalar->first );
+	string diagName( *(*this)(0)->Diags->scalars.itDiagScalarName );
 
 	if ( ( diagName.find("Min") == std::string::npos ) && ( diagName.find("Max") == std::string::npos ) ) {
 	    double sum(0.);
 	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-		sum += (*this)(ipatch)->Diags->scalars.itDiagScalar->second;
-		if (ipatch)
-		    (*this)(ipatch)->Diags->scalars.itDiagScalar++;
+		sum += *(*this)(ipatch)->Diags->scalars.itDiagScalarValue;
+		if (ipatch) {
+		    (*this)(ipatch)->Diags->scalars.itDiagScalarName++;
+		    (*this)(ipatch)->Diags->scalars.itDiagScalarValue++;
+		}
 	    }
-	    (*this)(0)->Diags->scalars.itDiagScalar->second = sum;
-	    (*this)(0)->Diags->scalars.itDiagScalar++;
+	    *(*this)(0)->Diags->scalars.itDiagScalarValue = sum;
+	    (*this)(0)->Diags->scalars.itDiagScalarName++;
+	    (*this)(0)->Diags->scalars.itDiagScalarValue++;
 	}
 	else if ( diagName.find("MinCell") != std::string::npos ) {
-	    vector<pair<string,double> >::iterator iterVal    = (*this)(0)->Diags->scalars.itDiagScalar-1;
-	    vector<pair<string,double> >::iterator iterValRef = (*this)(0)->Diags->scalars.itDiagScalar-1;
-	    double min( iterValRef->second );
+	    vector<double>::iterator iterVal    = (*this)(0)->Diags->scalars.itDiagScalarValue-1;
+	    vector<double>::iterator iterValRef = (*this)(0)->Diags->scalars.itDiagScalarValue-1;
+	    double min( *iterValRef );
 
 	    for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++) {
-		if ((*this)(ipatch)->Diags->scalars.itDiagScalar->second < min) {
-		    min = (*this)(ipatch)->Diags->scalars.itDiagScalar->second;
-		    iterVal = (*this)(ipatch)->Diags->scalars.itDiagScalar-1;
+		if ( *(*this)(ipatch)->Diags->scalars.itDiagScalarValue < min ) {
+		    min = *(*this)(ipatch)->Diags->scalars.itDiagScalarValue;
+		    iterVal = (*this)(ipatch)->Diags->scalars.itDiagScalarValue-1;
 		}
-		if (ipatch)
-		    (*this)(ipatch)->Diags->scalars.itDiagScalar++;
+		if (ipatch) {
+		    (*this)(ipatch)->Diags->scalars.itDiagScalarName++;
+		    (*this)(ipatch)->Diags->scalars.itDiagScalarValue++;
+		}
 	    }
-	    (*this)(0)->Diags->scalars.itDiagScalar->second = min;
-	    iterValRef->second = iterVal->second;
+	    *(*this)(0)->Diags->scalars.itDiagScalarValue = min;
+	    iterValRef = iterVal;
 
-	    (*this)(0)->Diags->scalars.itDiagScalar++;	    
+	    (*this)(0)->Diags->scalars.itDiagScalarName++;	    
+	    (*this)(0)->Diags->scalars.itDiagScalarValue++;	    
 	}
 	else if ( diagName.find("MaxCell") != std::string::npos ) {
-	    vector<pair<string,double> >::iterator iterVal    = (*this)(0)->Diags->scalars.itDiagScalar-1;
-	    vector<pair<string,double> >::iterator iterValRef = (*this)(0)->Diags->scalars.itDiagScalar-1;
-	    double max( iterValRef->second );
+	    vector<double>::iterator iterVal    = (*this)(0)->Diags->scalars.itDiagScalarValue-1;
+	    vector<double>::iterator iterValRef = (*this)(0)->Diags->scalars.itDiagScalarValue-1;
+	    double max( *iterValRef );
 
 	    for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++) {
-		if ((*this)(ipatch)->Diags->scalars.itDiagScalar->second > max) {
-		    max = (*this)(ipatch)->Diags->scalars.itDiagScalar->second;
-		    iterVal = (*this)(ipatch)->Diags->scalars.itDiagScalar-1;
+		if ( *(*this)(ipatch)->Diags->scalars.itDiagScalarValue > max ) {
+		    max = *(*this)(ipatch)->Diags->scalars.itDiagScalarValue;
+		    iterVal = (*this)(ipatch)->Diags->scalars.itDiagScalarValue-1;
 		}
-		if (ipatch)
-		    (*this)(ipatch)->Diags->scalars.itDiagScalar++;
+		if (ipatch) {
+		    (*this)(ipatch)->Diags->scalars.itDiagScalarName++;
+		    (*this)(ipatch)->Diags->scalars.itDiagScalarValue++;
+		}
 	    }
-	    (*this)(0)->Diags->scalars.itDiagScalar->second = max;
-	    iterValRef->second = iterVal->second;
+	    *(*this)(0)->Diags->scalars.itDiagScalarValue = max;
+	    iterValRef = iterVal;
 
-	    (*this)(0)->Diags->scalars.itDiagScalar++;	    
+	    (*this)(0)->Diags->scalars.itDiagScalarName++;	    
+	    (*this)(0)->Diags->scalars.itDiagScalarValue++;	    
 	}
 
 	// Go to next diag

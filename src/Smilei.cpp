@@ -247,12 +247,6 @@ int main (int argc, char* argv[])
     // Read value in /proc/pid/status
     //Tools::printMemFootPrint( "End Initialization" );
     
-    // ------------------------------------------------------------------------
-    // check here if we can close the python interpreter
-    // ------------------------------------------------------------------------
-    TITLE("Cleaning up python runtime environement");
-    params.cleanup(smpiData);
-
 
 int partperMPI;
 int balancing_freq = 150;
@@ -409,47 +403,46 @@ int npatchmoy=0, npartmoy=0;
 	    timer[9].update();
 
 	    // apply currents from antennas
-	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
+	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
 		vecPatches(ipatch)->EMfields->applyAntennas(smpiData, time_dual);
         
-		/*******************************************/
-		/*********** Maxwell solver ****************/
-		/*******************************************/
+	    /*******************************************/
+	    /*********** Maxwell solver ****************/
+	    /*******************************************/
         
-		// solve Maxwell's equations
-		if( time_dual > params.time_fields_frozen ) {
-		    timer[2].restart();
-		    // saving magnetic fields (to compute centered fields used in the particle pusher)
-                    #pragma omp for schedule(static)
-		    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
-			//Stores B at time n in B_m.
-			vecPatches(ipatch)->EMfields->saveMagneticFields();
-			// Computes Ex_, Ey_, Ez_ on all points. E is already synchronized because J has been synchronized before.
-			vecPatches(ipatch)->EMfields->solveMaxwellAmpere();
-		    }
-		    //vecPatches.exchangeE();
-                    #pragma omp for schedule(static)
-		    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
-			// Computes Bx_, By_, Bz_ at time n+1 on interior points.
-			//vecPatches(ipatch)->EMfields->solveMaxwellFaraday();
-			(*vecPatches(ipatch)->EMfields->MaxwellFaradaySolver_)(vecPatches(ipatch)->EMfields);
-			// Applies boundary conditions on B
-			vecPatches(ipatch)->EMfields->boundaryConditions(itime, time_dual, vecPatches(ipatch), params, simWindow);
-		    }
-		    //Synchronize B fields between patches.
-		    timer[2].update();
-		    timer[9].restart();
-		    vecPatches.exchangeB();
-		    timer[9].update();
-		    timer[2].restart();
-		    // Computes B at time n+1/2 using B and B_m.
-                    #pragma omp for schedule(static)
-		    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-			vecPatches(ipatch)->EMfields->centerMagneticFields();
-
-		    timer[2].update();
-
+	    // solve Maxwell's equations
+	    if( time_dual > params.time_fields_frozen ) {
+		timer[2].restart();
+		// saving magnetic fields (to compute centered fields used in the particle pusher)
+                #pragma omp for schedule(static)
+		for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
+		    //Stores B at time n in B_m.
+		    vecPatches(ipatch)->EMfields->saveMagneticFields();
+		    // Computes Ex_, Ey_, Ez_ on all points. E is already synchronized because J has been synchronized before.
+		    vecPatches(ipatch)->EMfields->solveMaxwellAmpere();
 		}
+		//vecPatches.exchangeE();
+                #pragma omp for schedule(static)
+		for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
+		    // Computes Bx_, By_, Bz_ at time n+1 on interior points.
+		    //vecPatches(ipatch)->EMfields->solveMaxwellFaraday();
+		    (*vecPatches(ipatch)->EMfields->MaxwellFaradaySolver_)(vecPatches(ipatch)->EMfields);
+		    // Applies boundary conditions on B
+		    vecPatches(ipatch)->EMfields->boundaryConditions(itime, time_dual, vecPatches(ipatch), params, simWindow);
+		}
+		//Synchronize B fields between patches.
+		timer[2].update();
+		timer[9].restart();
+		vecPatches.exchangeB();
+		timer[9].update();
+		timer[2].restart();
+		// Computes B at time n+1/2 using B and B_m.
+                #pragma omp for schedule(static)
+		for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+		    vecPatches(ipatch)->EMfields->centerMagneticFields();
+
+		timer[2].update();
+
 	    }
         
         // incrementing averaged electromagnetic fields
@@ -580,7 +573,13 @@ int npatchmoy=0, npartmoy=0;
     //                      HERE ENDS THE PIC LOOP
     // ------------------------------------------------------------------
     TITLE("End time loop, time dual = " << time_dual);
-    
+
+    // ------------------------------------------------------------------------
+    // check here if we can close the python interpreter
+    // ------------------------------------------------------------------------
+    TITLE("Cleaning up python runtime environement");
+    params.cleanup(smpiData);
+   
     //double timElapsed=smpiData->time_seconds();
     //if ( smpiData->isMaster() ) MESSAGE(0, "Time in time loop : " << timElapsed );
     timer[0].update();

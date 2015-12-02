@@ -59,7 +59,9 @@ public:
     //! get a particular scalar
     void setScalar(std::string name, double value);
 
-    std::vector<std::pair<std::string,double> >::iterator itDiagScalar;
+    //std::vector<std::pair<std::string,double> >::iterator itDiagScalar;
+    std::vector<std::string>::iterator itDiagScalarName;
+    std::vector<double>::iterator itDiagScalarValue;
 
     //! check if patch is master (from patch)
     bool isMaster;
