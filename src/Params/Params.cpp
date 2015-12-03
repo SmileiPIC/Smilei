@@ -243,7 +243,7 @@ namelist("")
     // Number of processors
     // --------------------
     if ( !PyTools::extract("number_of_patches", number_of_patches) )
-        number_of_patches.resize(nDim_field, 0);
+        number_of_patches.resize(nDim_field, 1);
 
     //mi.resize(nDim_field, 0);
     mi.resize(3, 0);

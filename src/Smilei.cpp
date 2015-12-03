@@ -629,7 +629,7 @@ int npatchmoy=0, npartmoy=0;
     PyTools::closePython();
 
     TITLE("END");
-    delete smpiData;
+    //delete smpiData;
     
     return 0;
     
