@@ -493,7 +493,11 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
             shift[j]+=shift[j-1];
         }
         //Make room for new particles
-        cuParticles.initialize( cuParticles.size()+shift[(*cubmax).size()], cuParticles );
+	if (shift[(*cubmax).size()]) {
+	  //! vecor::resize of Charge crashed ! Temporay solution : push_back / Particle
+	  //cuParticles.initialize( cuParticles.size()+shift[(*cubmax).size()], cuParticles.Position.size() );
+	  for (int inewpart=0 ; inewpart<shift[(*cubmax).size()] ; inewpart++) cuParticles.create_particle();
+	}
             
         //Shift bins, must be done sequentially
         for (unsigned int j=(*cubmax).size()-1; j>=1; j--){

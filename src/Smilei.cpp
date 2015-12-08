@@ -249,7 +249,7 @@ int main (int argc, char* argv[])
     
 
 int partperMPI;
-int balancing_freq = 150;
+int balancing_freq = 75000;
 int npatchmoy=0, npartmoy=0;
 	
     
@@ -302,7 +302,7 @@ int npatchmoy=0, npartmoy=0;
         // send message at given time-steps
         // --------------------------------
         timer[0].update();
-        
+
         if ( (itime % vecPatches.Diags->print_every == 0) &&  ( smpiData->isMaster() ) ) {
             double this_print_time=timer[0].getTime();
             ostringstream my_msg;
