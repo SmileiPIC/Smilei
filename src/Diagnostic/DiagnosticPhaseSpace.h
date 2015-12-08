@@ -26,8 +26,8 @@ class DiagnosticPhaseSpace {
 
 public:
 
-    DiagnosticPhaseSpace();
-    ~DiagnosticPhaseSpace();
+    DiagnosticPhaseSpace(Params& params, SmileiMPI *smpi);
+    ~DiagnosticPhaseSpace(){};
 
 	void run(int timestep, std::vector<Species*>& vecSpecies);
 	
@@ -39,9 +39,6 @@ public:
     //! this is the hdf5 file id (we need to keep it to close at the right time)
 	hid_t fileId;
 
-    //! this is always handy to know (number of particle dimension)
-	unsigned int ndim;
-    
     partStruct my_part;
 
 	

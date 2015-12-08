@@ -36,17 +36,13 @@ public:
     virtual ~SmileiIO();
     
     //! Write all fields (E, B, J, rho, per species ; 10 + 4 x nspecies fields) of all time step in the same file
-    void writeAllFieldsSingleFileTime( std::vector<Field*> *, int, bool );
+    void writeAllFieldsSingleFileTime( std::vector<Field*> &, int, bool );
     
     //! Basic Write of a field in the specified group of the global file
     virtual void writeFieldsSingleFileTime( Field* field, hid_t group_id ) = 0;
 
     bool global_output_file_;
-    virtual void writeOneFieldSingleFileTime( Field* field, hid_t group_id ) = 0;
 
-    //! Each MPI process writes is particles in its own file
-    //! Disabled for now, replaced by dump (used for restart)
-    void writePlasma( std::vector<Species*> vecSpecies, double time, SmileiMPI* smpi );
     
     //! Id of "Fields.h5", contains all fields per timestep
     hid_t global_file_id_;
@@ -57,23 +53,11 @@ public:
     //! Property list for collective dataset write, set for // IO.
     hid_t write_plist;
     
-    //! Id of "particles-mpirank.h5", contains particles of current mpirank
-    //! Disabled for now
-    hid_t  partFile_id;
-    
-#ifdef _IO_PARTICLE
-    //! Particles output in progress
-    std::vector<hid_t> partDataset_id;
-    //unsigned int nDatasetSpecies;
-    hid_t partMemSpace;
-    int particleSize;
-#endif
-    
     //! Basic write field on its own file (debug)
     virtual void write( Field* field ) = 0;
     
     //! restart everything to file per processor
-    void restartAll( ElectroMagn* EMfields, unsigned int &itime,  std::vector<Species*> &vecSpecies, SmileiMPI* smpi, SimWindow* simWin, Params &params, Diagnostic &diags);
+    void restartAll( ElectroMagn* EMfields,  std::vector<Species*> &vecSpecies, SmileiMPI* smpi, SimWindow* simWin, Params &params, Diagnostic &diags);
 
     //! restart field per proc
     void restartFieldsPerProc(hid_t fid, Field* field);
@@ -84,12 +68,12 @@ public:
     //! test before writing everything to file per processor
     bool dump(ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  Params &params, Diagnostic &diags);
 
-    void initWriteTestParticles(Species* species, int ispec, int itime, Params& params, SmileiMPI* smpi);
-    void writeTestParticles(Species* species, int ispec, int itime, Params& params, SmileiMPI* smpi);
+//    void initWriteTestParticles(Species* species, int ispec, int itime, Params& params, SmileiMPI* smpi);
+//    void writeTestParticles(Species* species, int ispec, int itime, Params& params, SmileiMPI* smpi);
 
-    template <class T> void appendTestParticles(hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type );
+//    template <class T> void appendTestParticles(hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type );
 
-    template <class T> void appendTestParticles0( hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type);
+//    template <class T> void appendTestParticles0( hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type);
         
     //! this static variable is defined (in the .cpp) as false but becomes true when
     //! the signal SIGUSR1 is captured by the signal_callback_handler fnction
@@ -104,10 +88,16 @@ public:
             signal_received = signum;
     }
     
+    //! start step of this run: zero if a first run, otherwise the number of the restart step
+    unsigned int this_run_start_step;
+    
 private:
+    //! get dump name based on number and rank
+    std::string dumpName(unsigned int num, SmileiMPI *smpi);
+
     //! incremental number of times we've done a dump
     unsigned int dump_times;
-    
+
     //! dump everything to file per processor
     void dumpAll( ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  Params &params, Diagnostic &diags);
     
@@ -123,7 +113,7 @@ private:
     //! time of the constructor
     double time_reference;
 	
-    //! vector containing the stea at which perform a dump in case time_dump returns true
+    //! vector containing the step at which perform a dump in case time_dump returns true
     unsigned int time_dump_step;
     
     //! Timestep to dump everything
@@ -137,7 +127,13 @@ private:
     
     //! keep the last dump_file_sequence dump files
     unsigned int dump_file_sequence;
-        
+    
+    //! int deflate dump value
+    int dump_deflate;
+    
+    //! restart dump directory (default: .)
+    std::string restart_dir;
+    
     std::vector<MPI_Request> dump_request;
     MPI_Status dump_status_prob;
     MPI_Status dump_status_recv;

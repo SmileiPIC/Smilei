@@ -10,21 +10,48 @@
 using namespace std;
 
 //! constructor (called from Diagnostic)
-DiagnosticScalar::DiagnosticScalar() :
+DiagnosticScalar::DiagnosticScalar(Params& params, SmileiMPI *smpi) :
 every(0) {
     out_width.resize(0);
-}
-
-//! destructor
-DiagnosticScalar::~DiagnosticScalar(){}
-
-
-// file open 
-void DiagnosticScalar::openFile(SmileiMPI* smpi) {
-    if (smpi->isMaster()) {
-        fout.open("scalars.txt");
-        if (!fout.is_open()) ERROR("Can't open scalar file");
+    
+    if (PyTools::nComponents("DiagScalar") > 1) {
+        ERROR("Only one DiagScalar can be specified");
     }
+    
+    if (PyTools::nComponents("DiagScalar") > 0 ) {
+        
+        if (!PyTools::extract("every",every,"DiagScalar")) every=params.global_every;
+        
+        //open file scalars.txt
+        if (smpi->isMaster() && every>0) {
+            fout.open("scalars.txt");
+            if (!fout.is_open()) ERROR("Can't open scalar file");
+        }
+
+        vector<double> scalar_time_range(2,0.);
+        
+        if (!PyTools::extract("time_range",scalar_time_range,"DiagScalar")) {
+            tmin = 0.;
+            tmax = params.sim_time;
+        } else {
+            if (scalar_time_range.size() == 2) {
+                tmin = scalar_time_range[0];
+                tmax = scalar_time_range[1];
+            } else {
+                ERROR("in DiagScalar time_range");
+            }
+        }
+        
+        precision=10;
+        PyTools::extract("precision",precision,"DiagScalar");
+        PyTools::extract("vars",vars,"DiagScalar");
+        
+        // copy from params remaining stuff
+        res_time=params.res_time;
+        dt=params.timestep;
+        cell_volume=params.cell_volume;
+    }
+    
 }
 
 void DiagnosticScalar::closeFile(SmileiMPI* smpi) {
@@ -81,7 +108,7 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
     
     // Compute scalars for each species
     for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
-        if (vecSpecies[ispec]->particles.isTestParticles) continue;    // No scalar diagnostic for test particles
+        if (vecSpecies[ispec]->particles.isTest) continue;    // No scalar diagnostic for test particles
         
         double charge_avg=0.0;  // average charge of current species ispec
         double ener_tot=0.0;    // total kinetic energy of current species ispec
@@ -93,7 +120,7 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
                 ener_tot   += cell_volume * vecSpecies[ispec]->particles.weight(iPart)
                 *             (vecSpecies[ispec]->particles.lor_fac(iPart)-1.0);
             }
-            ener_tot*=vecSpecies[ispec]->species_param.mass;
+            ener_tot*=vecSpecies[ispec]->mass;
         }//if
         
         MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&charge_avg, &charge_avg, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -118,7 +145,7 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
         // appending scalar output
         if (smpi->isMaster()) {
             if (nPart!=0) charge_avg /= nPart;
-            string nameSpec=vecSpecies[ispec]->species_param.species_type;
+            string nameSpec=vecSpecies[ispec]->species_type;
             append("Ntot_"+nameSpec,nPart);
             append("Zavg_"+nameSpec,charge_avg);
             append("Ukin_"+nameSpec,ener_tot);

@@ -22,11 +22,13 @@ public:
     Particles();
     
     //! Destructor for Particle
-    virtual ~Particles();
+    virtual ~Particles(){};
     
     //! Create nParticles null particles of nDim size
-    void initialize( int nParticles, Params &params );
-    void initialize( int nParticles, Params &params, int speciesNumber );
+    void initialize(unsigned int nParticles, unsigned int nDim );
+
+    //! Create nParticles null particles of nDim size
+    void initialize(unsigned int nParticles, Particles &part );
 
     //! Set capacity of Particles vectors
     void reserve( unsigned int n_part_max, int nDim );
@@ -35,12 +37,12 @@ public:
     void clear();
     
     //! Get number of particules
-    inline int size() const {
+    inline unsigned int size() const {
         return Weight.size();
     }
     
     //! Get number of particules
-    inline int capacity() const {
+    inline unsigned int capacity() const {
         return Weight.capacity();
     }
     
@@ -100,8 +102,9 @@ public:
     
     //! Create new particle
     void create_particle();
-    //! Create nParticles new particles
-    void create_particles(int nParticles);
+    
+//    //! Create nParticles new particles
+//    void create_particles(int nParticles);
     
     //! Test if ipart is in the local MPI subdomain
     bool is_part_in_domain(int ipart, SmileiMPI* smpi);
@@ -169,12 +172,13 @@ public:
     }
     
     
-    
     //! Method used to get the Particle Lorentz factor
     inline double lor_fac(int ipart) {
-        return sqrt(1+pow(momentum(0,ipart),2)+pow(momentum(1,ipart),2)+pow(momentum(2,ipart),2));
+        return sqrt(1.+pow(momentum(0,ipart),2)+pow(momentum(1,ipart),2)+pow(momentum(2,ipart),2));
     }
-    
+
+    //! Partiles properties, respect type order : all double, all short, all unsigned int
+
     //! array containing the particle position
     std::vector< std::vector<double> > Position;
     
@@ -186,15 +190,23 @@ public:
     
     //! containing the particle weight: equivalent to a charge density
     std::vector<double> Weight;
+
+    //! containing the particle weight: equivalent to a charge density
+    std::vector<double> Chi;
+
     
     //! charge state of the particle (multiples of e>0)
     std::vector<short> Charge;
     
+    //! Id of the particle
+    std::vector<unsigned int> Id;    
     
+    // TEST PARTICLE PARAMETERS
+    bool isTest;
     
-    // Test particle parameters
-    bool isTestParticles;
-    int test_dump_every;
+    // steps between each write of particles (this will activate a DiagnosticTrackParticles)
+    unsigned int track_every;
+
     void setIds() {
         unsigned int s = Id.size();
         for (unsigned int iPart=0; iPart<s; iPart++) Id[iPart] = iPart+1;
@@ -203,11 +215,11 @@ public:
         unsigned int s = Id.size();
         for (unsigned int iPart=0; iPart<s; iPart++) Id[iPart] += startingId;
     }
-    //! Id of the particle
-    std::vector<unsigned int> Id;
+
     
     //! Method used to get the Particle Id
     inline unsigned int id(int ipart) const {
+        DEBUG(ipart << " of " << Id.size());
         return Id[ipart];
     }
     //! Method used to set the Particle Id
@@ -220,7 +232,28 @@ public:
     }
     void sortById();
     
-    int species_number;
+    
+    // PARAMETERS FOR PARTICLES THAT ARE SUBMITTED TO A RADIATION REACTION FORCE (CED or QED)
+    
+    bool isRadReaction;
+    
+    
+    //! Method used to get the Particle chi factor
+    inline double  chi(int ipart) const {
+        return Chi[ipart];
+    }
+    //! Method used to set a new value to the Particle chi factor
+    inline double& chi(int ipart)       {
+        return Chi[ipart];
+    }
+    //! Method used to get the Particle chi factor
+    inline std::vector<double>  chi() const {
+        return Chi;
+    }
+    
+    std::vector< std::vector<double>* >       double_prop;
+    std::vector< std::vector<short>* >        short_prop;
+    std::vector< std::vector<unsigned int>* > uint_prop;
 
 private:
 

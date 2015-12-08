@@ -14,9 +14,6 @@ public:
 
     LaserStructure laser_struct;
 
-    double pi_ov_2;
-    double PI2;
-
     double omega0_;
     double tchirp_;
 

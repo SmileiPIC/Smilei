@@ -100,15 +100,15 @@ public:
     //! reference access to the linearized array (with check in DEBUG mode)
     inline double& operator () (unsigned int i)
     {
-        DEBUGEXEC(if (i>=globalDims_) ERROR("Out of limits & "<< i));
-        DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR("Not finite "<< i << " = " << data_[i]));
+        DEBUGEXEC(if (i>=globalDims_) ERROR(name << " Out of limits "<< i << " < " <<dims_[0] ));
+        DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR(name << " Not finite "<< i << " = " << data_[i]));
         return data_[i];
     };
     //! access to the linearized array (with check in DEBUG mode)
     inline double operator () (unsigned int i) const
     {
-        DEBUGEXEC(if (i>=globalDims_) ERROR("Out of limits "<< i));
-        DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR("Not finite "<< i << " = " << data_[i]));
+        DEBUGEXEC(if (i>=globalDims_) ERROR(name << " Out of limits "<< i));
+        DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR(name << " Not finite "<< i << " = " << data_[i]));
         return data_[i];
     };
     //! method used to put all entry of a field at a given value val
@@ -126,23 +126,23 @@ public:
     }
     
 
-    //! 2D reference access to the linearized array (with check in DEBUG mode)
-    inline double& operator () (unsigned int i,unsigned int j)
-    {
-	int unsigned idx = i*dims_[1]+j;
-        DEBUGEXEC(if (idx>=globalDims_) ERROR("Out of limits & "<< i << " " << j));
-        DEBUGEXEC(if (!std::isfinite(data_[idx])) ERROR("Not finite "<< i << " " << j << " = " << data_[idx]));
-        return data_[idx];
-    };
-    //! 2D access to the linearized array (with check in DEBUG mode)
-    inline double operator () (unsigned int i, unsigned int j) const
-    {
-        unsigned int idx = i*dims_[1]+j;
-        DEBUGEXEC(if (idx>=globalDims_) ERROR("Out of limits "<< i << " " << j));
-        DEBUGEXEC(if (!std::isfinite(data_[idx])) ERROR("Not finite "<< i << " " << j << " = " << data_[idx]));
-        return data_[idx];
-    };
-
+//    //! 2D reference access to the linearized array (with check in DEBUG mode)
+//    inline double& operator () (unsigned int i,unsigned int j)
+//    {
+//	int unsigned idx = i*dims_[1]+j;
+//        DEBUGEXEC(if (idx>=globalDims_) ERROR(name << " Out of limits ("<< i << "," << j << ") < (" << dims_[0] << "," << dims_[1] << ")"));
+//        DEBUGEXEC(if (!std::isfinite(data_[idx])) ERROR(name << " Not finite "<< i << " " << j << " = " << data_[idx]));
+//        return data_[idx];
+//    };
+//    //! 2D access to the linearized array (with check in DEBUG mode)
+//    inline double operator () (unsigned int i, unsigned int j) const
+//    {
+//        unsigned int idx = i*dims_[1]+j;
+//        DEBUGEXEC(if (idx>=globalDims_) ERROR(name << " Out of limits "<< i << " " << j));
+//        DEBUGEXEC(if (!std::isfinite(data_[idx])) ERROR(name << " Not finite "<< i << " " << j << " = " << data_[idx]));
+//        return data_[idx];
+//    };
+//
     
     inline void copyFrom(Field *from_field) {
         DEBUGEXEC(if (globalDims_!=from_field->globalDims_) ERROR("Field size do not match "<< name << " " << from_field->name));

@@ -9,10 +9,10 @@
 #include "LaserProfile.h"
 #include "LaserParams.h"
 #include "Profile.h"
+#include "Species.h"
 
 
 class Params;
-class Species;
 class Projector;
 class Field;
 class Laser;
@@ -50,7 +50,7 @@ class ElectroMagn
 
 public:
     //! Constructor for Electromagn
-    ElectroMagn( Params &params, SmileiMPI* smpi );
+    ElectroMagn( Params &params, std::vector<Species*>& vecSpecies, SmileiMPI* smpi );
     
     //! Destructor for Electromagn
     virtual ~ElectroMagn();

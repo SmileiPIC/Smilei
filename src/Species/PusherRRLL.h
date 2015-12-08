@@ -5,19 +5,19 @@
  @date 2013-02-15
  */
 
-#ifndef PUSHERBORIS_H
-#define PUSHERBORIS_H
+#ifndef PUSHERRRLL_H
+#define PUSHERRRLL_H
 
 #include "Pusher.h"
 
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class PusherBoris
 //  --------------------------------------------------------------------------------------------------------------------
-class PusherBoris : public Pusher {
+class PusherRRLL: public Pusher {
 public:
     //! Creator for Pusher
-    PusherBoris(Params& params, Species *species);
-    ~PusherBoris();
+    PusherRRLL(Params& params, Species*);
+    ~PusherRRLL();
     //! Overloading of () operator
     virtual void operator() (Particles &particles, int ipart, LocalFields Epart, LocalFields Bpart, double& gf);
 

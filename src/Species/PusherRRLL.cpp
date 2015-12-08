@@ -1,27 +1,25 @@
-#include "PusherBoris.h"
+#include "PusherRRLL.h"
 
 #include <iostream>
 #include <cmath>
-
-#include "Species.h"
 
 #include "Particles.h"
 
 using namespace std;
 
-PusherBoris::PusherBoris(Params& params, Species *species)
+PusherRRLL::PusherRRLL(Params& params, Species *species)
     : Pusher(params, species)
 {
 }
 
-PusherBoris::~PusherBoris()
+PusherRRLL::~PusherRRLL()
 {
 }
 
-/***********************************************************************
-	Lorentz Force -- leap-frog (Boris) scheme
-***********************************************************************/
-void PusherBoris::operator() (Particles &particles, int ipart, LocalFields Epart, LocalFields Bpart, double& gf)
+/****************************************************************************
+	Lorentz Force -- leap-frog (Boris) scheme + classical rad. reaction force
+*****************************************************************************/
+void PusherRRLL::operator() (Particles &particles, int ipart, LocalFields Epart, LocalFields Bpart, double& gf)
 {
     // Declaration of local variables
     // ------------------------------
@@ -77,6 +75,8 @@ void PusherBoris::operator() (Particles &particles, int ipart, LocalFields Epart
         particles.position(i, ipart)     += dt*particles.momentum(i, ipart)/gf;
     }
 
+    // COMPUTE Chi
+    particles.chi(ipart)=0.5;
     //DEBUG(5, "\t END "<< particles.position(0, ipart) );
 
 }

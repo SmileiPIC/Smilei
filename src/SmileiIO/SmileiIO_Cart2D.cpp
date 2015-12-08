@@ -180,33 +180,7 @@ void SmileiIO_Cart2D::writeFieldsSingleFileTime( Field* field, hid_t group_id )
 } // END writeFieldsSingleFileTime
 
 
-void SmileiIO_Cart2D::writeOneFieldSingleFileTime( Field* field, hid_t group_id )
-{
-    std::vector<unsigned int> isDual = field->isDual_;
-    Field2D* f2D =  static_cast<Field2D*>(field);
-
-    
-    //hid_t memspace  = memspace_ [ isDual[0] ][ isDual[1] ];   
-    hsize_t     chunk_dims[2];
-    chunk_dims[0] = field->dims_[0];
-    chunk_dims[1] = field->dims_[1];
-    hid_t memspace  = H5Screate_simple(2, chunk_dims, NULL);
-    hid_t filespace = H5Screate_simple(2, chunk_dims, NULL);
-
-    hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
-
-    hid_t dset_id = H5Dcreate(group_id, (field->name).c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
-
-    H5Pclose(plist_id);
-
-    H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &(f2D->data_2D[0][0]) );
-    H5Dclose(dset_id);
-
-
-} // END writeOneFieldSingleFileTime
-
-
-//! this method writes a field on an hdf5 file should be used just for debug
+//! this method writes a field on an hdf5 file should be used just for debug (doesn't use params.output_dir)
 void SmileiIO_Cart2D::write( Field* field )
 {
     std::vector<unsigned int> isDual = field->isDual_;

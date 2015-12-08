@@ -2,18 +2,24 @@
 # 					SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
 # ----------------------------------------------------------------------------------------
 #
-# Remember: never override the following names:
+# CAUTION:  never override the following names:
 #           SmileiComponent, Species, Laser, Collisions, DiagProbe, DiagParticles,
 #           DiagScalar, DiagPhase or ExtField
 #
-import math
 
-l0 = 2.0*math.pi	# laser wavelength
-t0 = l0			# optical cicle
-Lsim = [10.*l0,10.*l0]	# length of the simulation
-Tsim = 10.*t0		# duration of the simulation
-resx = 100.		# nb of cells in on laser wavelength
-rest = 150.		# time of timestep in one optical cycle 
+# MY PYTHON VARIABLES
+# here are defined some useful python variables
+# 
+import math
+# resolution
+resx = 100.0
+rest = 110.0
+# plasma length
+L = 2.0*math.pi
+
+# wavelength_SI: used by Fred Diags. should be removed
+#
+wavelength_SI = 1.e-6
 
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
@@ -21,26 +27,29 @@ rest = 150.		# time of timestep in one optical cycle
 #      3d3v = cartesian grid with 3d in space + 3d in velocity
 #      2drz = cylindrical (r,z) grid with 3d3v particles
 #
-dim = '2d3v'
-
+dim = '1d3v'
+ 
 # order of interpolation
 #
-interpolation_order = 2 
-
+interpolation_order = 2
+ 
 # SIMULATION BOX : for all space directions (use vector)
 # cell_length: length of the cell
 # sim_length: length of the simulation in units of the normalization wavelength 
 #
-cell_length = [l0/resx,l0/resx]
-sim_length  = Lsim
+cell_length = [L/resx]
+sim_length  = [3.0*L]
 
 # SIMULATION TIME
 # timestep: duration of the timestep
 # sim_time: duration of the simulation in units of the normalization period 
 #
-timestep = t0/rest
-sim_time = Tsim
- 
+timestep = L/rest
+sim_time = 10.0 * math.pi
+
+# PARALLELISATION
+clrw = 1
+
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
 # bc_em_type_x/y/z : boundary conditions used for EM fields 
 #                    periodic = periodic BC (using MPI topology)
@@ -48,33 +57,6 @@ sim_time = Tsim
 #                    reflective = consider the ghost-cells as a perfect conductor
 #
 bc_em_type_x = ['silver-muller']
-bc_em_type_y = ['periodic']
-
-# RANDOM seed 
-# this is used to randomize the random number generator
-random_seed = 0
-
-# ----------------
-# LASER PROPERTIES
-# ----------------
-#
-# for each laser define:
-# a0: maximum amplitude of the laser electric field (in units of the normalization field)
-# angle: angle (in degree) at which the laser enters the simulation box
-# delta: polarization parameter, (0:y) (1:z) (0.707106781:circ)
-# time_profile: string defining the time profile
-# double_params: vector of real parameters used by the different time-profiles
-#
-Laser(
-	boxSide = 'west',
-	a0=150.,
-	delta=0.707106781,              
-	time_profile = 'sin2',
-	double_params = [6.*t0],
-	transv_profile = 'gaussian',
-	double_params_transv = [5.0*l0,3.0*l0],
-	int_params_transv = [6]
-)
 
 # RANDOM seed 
 # this is used to randomize the random number generator
@@ -98,57 +80,42 @@ random_seed = 0
 # Predefined functions: constant, trapezoidal, gaussian, polygonal, cosine
 #
 Species(
-	species_type = 'ion',
-	initPosition_type = 'regular',
-	initMomentum_type = 'cold',
-	n_part_per_cell = 2,
+	species_type = "charges",
+	dynamics_type = "rrll",
+	initPosition_type = "random",
+	initMomentum_type = "cold",
+	n_part_per_cell = 100,
 	mass = 1836.0,
 	charge = 1.0,
-	nb_density = trapezoidal(100.0,xvacuum=l0,xplateau=0.44*l0),
-	bc_part_type_west = 'refl',
-	bc_part_type_east = 'refl',
-	bc_part_type_south = 'none',
-	bc_part_type_north = 'none'
+	nb_density = trapezoidal(1., xvacuum=L, xplateau=L),
+	bc_part_type_west = "stop",
+	bc_part_type_east = "stop"
 )
-Species(
-	species_type = 'eon',
-	initPosition_type = 'regular',
-	initMomentum_type = 'mj',
-	n_part_per_cell = 2,
-	mass = 1.0,
-	charge = -1.0,
-	nb_density = trapezoidal(100.0,xvacuum=l0,xplateau=0.44*l0),
-	temperature = [0.001],
-	bc_part_type_west = 'refl',
-	bc_part_type_east = 'refl',
-	bc_part_type_south = 'none',
-	bc_part_type_north = 'none'
-)
-
 
 
 # ---------------------
 # DIAGNOSTIC PARAMETERS
 # ---------------------
-globalEvery = int(rest/2.)
 
-DiagScalar(every=globalEvery)
+print_every=1
+
+globalEvery = int(rest/10.)
+
 fieldDump_every = globalEvery
-fieldsToDump = ('Ex','Ey','Ez','Bx','By','Bz','Rho_ion','Rho_eon')
+fieldsToDump=('Ex','Rho_charges')
 
-# print_every (on screen text output) 
-# print_every = 100
+DiagScalar(
+	every = 1
+)
 
-# every for field dump
-#fieldDump_every = 60
+DiagParticles(
+	output = "density",
+	every = globalEvery,
+	time_average = 1,
+	species = ["charges"],
+	axes = [
+		["chi", 0., 1., 10]
+      ]
+)
 
-# every for particle dump
-# particleDump_every = 5000
 
-# DIAG ON SCALARS
-# every = number of time-steps between each output
-#
-#diagnostic scalar
-#        every = 60
-#end
-	

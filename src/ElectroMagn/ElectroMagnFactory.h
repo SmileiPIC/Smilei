@@ -13,13 +13,13 @@
 
 class ElectroMagnFactory {
 public:
-    static ElectroMagn* create(Params& params,  SmileiMPI* smpi) {
+    static ElectroMagn* create(Params& params, std::vector<Species*>& vecSpecies,  SmileiMPI* smpi) {
         ElectroMagn* EMfields = NULL;
         if ( params.geometry == "1d3v" ) {
-            EMfields = new ElectroMagn1D(params, smpi);
+            EMfields = new ElectroMagn1D(params, vecSpecies, smpi);
         }
         else if ( params.geometry == "2d3v" ) {
-            EMfields = new ElectroMagn2D(params, smpi);
+            EMfields = new ElectroMagn2D(params, vecSpecies, smpi);
         }
         else {
             ERROR( "Unknwon geometry : " << params.geometry );
@@ -41,7 +41,7 @@ public:
         EMfields->allFields.push_back(EMfields->Jz_ );
         EMfields->allFields.push_back(EMfields->rho_);
 
-        for (unsigned int ispec=0; ispec<params.species_param.size(); ispec++) {
+        for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
             EMfields->allFields.push_back(EMfields->Jx_s[ispec] );
             EMfields->allFields.push_back(EMfields->Jy_s[ispec] );
             EMfields->allFields.push_back(EMfields->Jz_s[ispec] );

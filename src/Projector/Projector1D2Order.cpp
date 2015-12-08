@@ -23,9 +23,6 @@ Projector1D2Order::Projector1D2Order (Params& params, SmileiMPI* smpi) : Project
     dx_ov_dt = params.cell_length[0] / params.timestep;
 
     index_domain_begin = smpi1D->getCellStartingGlobalIndex(0);
-
-    DEBUG("cell_length "<< params.cell_length[0]);
-
 }
 
 Projector1D2Order::~Projector1D2Order()
@@ -323,7 +320,7 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     // At the 2nd order, oversize = 2.
     for (unsigned int i=0; i<5; i++) {
         iloc = i + ipo - 2;
-        DEBUGEXEC(int myloc=(i + ipo - 2); if (myloc < 0) { ERROR("i=" << i << " ipo=" << ipo << " iloc=" << myloc << " index_domain_begin=" << index_domain_begin << " bin=" << bin)});
+        DEBUGEXEC(if (iloc < 0) { ERROR("i=" << i << " ipo=" << ipo << " iloc=" << iloc << " index_domain_begin=" << index_domain_begin << " bin=" << bin)};);
         Jx[iloc]  += Jx_p[i];
         Jy[iloc]  += cry_p * Wt[i];
         Jz[iloc]  += crz_p * Wt[i];

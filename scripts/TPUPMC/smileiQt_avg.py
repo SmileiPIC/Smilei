@@ -132,7 +132,7 @@ class smileiQtPlot(QWidget):
         if os.path.isfile(fname) :
 
             self.fieldFile=tb.openFile(fname)
-            self.res_space=self.fieldFile.root._v_attrs.res_space[0]
+            self.cell_length=self.fieldFile.root._v_attrs.cell_length[0]
             self.res_time=self.fieldFile.root._v_attrs.res_time
             self.sim_length=self.fieldFile.root._v_attrs.sim_length
             self.fieldEvery=self.fieldFile.root._v_attrs.every
@@ -297,7 +297,7 @@ class smileiQtPlot(QWidget):
                     if len(self.sim_length) == 1 :
                         ax.set_xlim(0,self.sim_length)
                         ax.set_ylabel(name)
-                        x=np.array(range(len(data[0])))/self.res_space
+                        x=np.array(range(len(data[0])))*self.cell_length
                         y=data[0].read()
                         ax.plot(x,y)
                         self.ax[name]=ax

@@ -15,7 +15,7 @@ class Pusher
 
 public:
     //! Creator for Pusher
-    Pusher(Params& params, int ispec);
+    Pusher(Params& params, Species *species);
     virtual ~Pusher();
 
     //! Overloading of () operator

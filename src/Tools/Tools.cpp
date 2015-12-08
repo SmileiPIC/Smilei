@@ -14,15 +14,15 @@ void Tools::printMemFootPrint(std::string tag) {
     char filename[80];
     char sbuf[1024];
     char* S;
-    int fd, num_read;
-    long lmem;
+    //long lmem;
     pid_t numpro;
 
     numpro = getpid();
 
     sprintf(filename, "/proc/%ld/status", (long)numpro);
-    fd = open(filename, O_RDONLY, 0);
-    num_read=read(fd,sbuf,(sizeof sbuf)-1);
+    int fd = open(filename, O_RDONLY, 0);
+    //int num_read=read(fd,sbuf,(sizeof sbuf)-1);
+    read(fd,sbuf,(sizeof sbuf)-1);
     close(fd);
 
     // Peak resident set size
@@ -33,8 +33,7 @@ void Tools::printMemFootPrint(std::string tag) {
     val[2] = atoi(S);
 
     std::cout << "=== Mem usage === " <<  std::setw(20) << tag << "\t=== " << std::setw(6)
-              << "\t VmRSS  << " <<  (int)((double)val[1]/1024.) << " Mo"
-              << "\t VmSize << " <<  (int)((double)val[2]/1024.) << " Mo" << std::endl;
+              << "\t VmRSS  << " <<  (int)((double)val[1]/1024.) << " Mb" << std::endl;
 
 }
 

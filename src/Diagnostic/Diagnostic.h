@@ -15,7 +15,7 @@
 #include "DiagnosticProbe.h"
 #include "DiagnosticPhaseSpace.h"
 #include "DiagnosticParticles.h"
-#include "DiagnosticTestParticles.h"
+#include "DiagnosticTrackParticles.h"
 #include "Timer.h"
 
 class Params;
@@ -29,7 +29,7 @@ class Diagnostic {
 
 public:
     //! creator called from main
-    Diagnostic(Params&, SmileiMPI *smpi);
+    Diagnostic(Params&, std::vector<Species*>& vecSpecies, SmileiMPI *smpi);
     
     //! destructor
     ~Diagnostic(){};
@@ -52,28 +52,16 @@ public:
     DiagnosticProbe probes;
 	DiagnosticPhaseSpace phases;
     std::vector<DiagnosticParticles*> vecDiagnosticParticles;
-    std::vector<DiagnosticTestParticles*> vecDiagnosticTestParticles;
-        
-    void initScalars(Params&, SmileiMPI *smpi);
-    void initProbes(Params&, SmileiMPI *);
-    void initPhases(Params&, SmileiMPI *);
-    void initParticles(Params&);
-    void initTestParticles(Params&);
+    std::vector<DiagnosticTrackParticles*> vecDiagnosticTrackParticles;
     
     //! field dump output
     unsigned int fieldDump_every;
-    
-    //! name of the fields to dump
-    std::vector<std::string> fieldsToDump;
     
     //! time-averaged field dump output
     unsigned int avgfieldDump_every;
     
     //! number of time-steps for time-averaging of fields
     unsigned int ntime_step_avg;
-    
-    //! particle dump output
-    unsigned int particleDump_every;
     
     //! scalar output every scalar_every (namelist group "DiagScalar" key "every")
     unsigned int scalar_every;
@@ -90,9 +78,6 @@ public:
     
     //! every for the standard pic timeloop output
     unsigned int print_every;
-	
-	//! vector containing phase1D structures
-	std::vector<phaseStructure> vecPhase;
 	
 };
 

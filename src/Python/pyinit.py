@@ -2,7 +2,6 @@
     Definition of Smilei components
 """
 
-
 class SmileiComponentType(type):
     """Metaclass to all Smilei components"""
     
@@ -83,8 +82,7 @@ class Species(SmileiComponent):
     ionization_model = "none"
     atomic_number = None
     isTest = False
-    dump_every = 1
-
+    track_every = 0
 
 class Laser(SmileiComponent):
     """Laser parameters"""
@@ -133,6 +131,11 @@ class DiagParticles(SmileiComponent):
 
 class DiagPhase(SmileiComponent):
     """Diagnostic phase"""
+    every=None
+    first=[]
+    second=[]
+    time_range = []
+    deflate = 0
     pass
 
 class DiagScalar(SmileiComponent):
@@ -164,13 +167,18 @@ class PartWall(SmileiComponent):
     z = None
 
 # default simulation values
-output_script = "smilei.py"
+output_dir = None
 smilei_mpi_rank = 0
+smilei_mpi_size = 1
+smilei_rand_max = 2**31-1
 dump_step = 0
 dump_minutes = 0.0
 exit_after_dump = True
 restart = False
 dump_file_sequence = 2
+dump_deflate = 0
+restart_dir = None
+sim_units = ""
 wavelength_SI = 0.
 dim = ""
 interpolation_order = 2
@@ -178,6 +186,7 @@ timestep = None
 cell_length = []
 sim_time = None
 sim_length = []
+maxwell_sol = 'Yee'
 bc_em_type_x = []
 bc_em_type_y = []
 time_fields_frozen = 0.0
@@ -188,9 +197,9 @@ clrw = 1
 every = 0
 number_of_procs = [None]
 print_every = None
-fieldDump_every = 0
+fieldDump_every = None
 fieldsToDump = []
 avgfieldDump_every = None
 ntime_step_avg = 0
-particleDump_every = None # for backwards-compatibility
 time_fields_frozen = 0.
+random_seed = None

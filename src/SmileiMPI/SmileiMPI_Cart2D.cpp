@@ -221,7 +221,7 @@ void SmileiMPI_Cart2D::createTopology(Params& params)
     
 }
 
-void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, Params& params, int tnum, int iDim)
+void SmileiMPI_Cart2D::exchangeParticles(Species* species, Params& params, int tnum, int iDim)
 {
     Particles &cuParticles = species->particles;
     std::vector<int>* cubmin = &species->bmin;
@@ -268,7 +268,8 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, Params& pa
 
 
         Particles diagonalParticles;
-        diagonalParticles.initialize(0,params,ispec);     
+        diagonalParticles.initialize(0,species->particles);
+
         
         for (int i=0 ; i<n_part_send ; i++) {
             iPart = indexes_of_particles_to_exchange[i];
@@ -288,11 +289,11 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, Params& pa
         } // END for iPart = f(i)
         
         Particles partVectorSend[2];
-        partVectorSend[0].initialize(0,params,ispec);
-        partVectorSend[1].initialize(0,params,ispec);
+        partVectorSend[0].initialize(0,species->particles);
+        partVectorSend[1].initialize(0,species->particles);
         Particles partVectorRecv[2];
-        partVectorRecv[0].initialize(0,params,ispec);
-        partVectorRecv[1].initialize(0,params,ispec);
+        partVectorRecv[0].initialize(0,species->particles);
+        partVectorRecv[1].initialize(0,species->particles);
         
         /********************************************************************************/
         // Exchange particles
@@ -332,7 +333,7 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, Params& pa
             if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
                 MPI_Wait( &(rrequest[(iNeighbor+1)%2]), &(rstat[(iNeighbor+1)%2]) );
                 if (buff_index_recv_sz[(iNeighbor+1)%2]!=0) {
-                  partVectorRecv[(iNeighbor+1)%2].initialize( buff_index_recv_sz[(iNeighbor+1)%2], params, ispec);
+                  partVectorRecv[(iNeighbor+1)%2].initialize( buff_index_recv_sz[(iNeighbor+1)%2], params.nDim_particle);
                 }
             }
         }
@@ -347,8 +348,6 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, Params& pa
         // Proceed to effective Particles' communications
         /********************************************************************************/
 
-        // Number of properties per particles = nDim_Particles + 3 + 1 + 1
-        int nbrOfProp( 7 );
         MPI_Datatype typePartSend, typePartRecv;
 
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
@@ -370,7 +369,7 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, Params& pa
                     cuParticles.cp_particle(buff_index_send[iNeighbor][iPart], partVectorSend[iNeighbor]);
                 }
 
-                typePartSend = createMPIparticles( &(partVectorSend[iNeighbor]), nbrOfProp );
+                typePartSend = createMPIparticles( &(partVectorSend[iNeighbor]) );
                 MPI_Isend( &((partVectorSend[iNeighbor]).position(0,0)), 1, typePartSend, neighbor_[iDim][iNeighbor], 0, SMILEI_COMM_2D, &(srequest[iNeighbor]) );
                 MPI_Type_free( &typePartSend );
 
@@ -378,7 +377,7 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, Params& pa
                 
             n_part_recv = buff_index_recv_sz[(iNeighbor+1)%2];
             if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
-                typePartRecv = createMPIparticles( &(partVectorRecv[(iNeighbor+1)%2]), nbrOfProp );
+                typePartRecv = createMPIparticles( &(partVectorRecv[(iNeighbor+1)%2]) );
                 MPI_Irecv( &((partVectorRecv[(iNeighbor+1)%2]).position(0,0)), 1, typePartRecv,  neighbor_[iDim][(iNeighbor+1)%2], 0, SMILEI_COMM_2D, &(rrequest[(iNeighbor+1)%2]) );
                 MPI_Type_free( &typePartRecv );
 
@@ -501,7 +500,7 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, Params& pa
         }
         //Make room for new particles
         //cuParticles.create_particles(shift[(*cubmax).size()]);
-        cuParticles.initialize( cuParticles.size()+shift[(*cubmax).size()], params, ispec );
+        cuParticles.initialize( cuParticles.size()+shift[(*cubmax).size()], params.nDim_particle);
         
         //Shift bins, must be done sequentially
         for (unsigned int j=(*cubmax).size()-1; j>=1; j--){
@@ -542,7 +541,7 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, Params& pa
         
         // Inject corner particles at the end of the list, update bmax
         //if (iDim==cuParticles.dimension()-1) cout << "Number of diag particles " << diagonalParticles.size() << endl;
-        for (int iPart = 0 ; iPart<diagonalParticles.size() ; iPart++) {
+        for (unsigned int iPart = 0 ; iPart<diagonalParticles.size() ; iPart++) {
             diagonalParticles.cp_particle(iPart, cuParticles);
             (*indexes_of_particles_to_exchange_per_thd)[0].push_back(cuParticles.size()-1);
             (*cubmax)[(*cubmax).size()-1]++;
@@ -552,46 +551,45 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, int ispec, Params& pa
 } // END exchangeParticles
 
 
-MPI_Datatype SmileiMPI_Cart2D::createMPIparticles( Particles* particles, int nbrOfProp )
+MPI_Datatype SmileiMPI_Cart2D::createMPIparticles( Particles* particles )
 {
-    MPI_Datatype typeParticlesMPI;
 
-    int nbrOfProp2(nbrOfProp);
-    if (particles->isTestParticles) nbrOfProp2++;
+    int nbrOfProp = particles->double_prop.size() + particles->short_prop.size() + particles->uint_prop.size();
 
-    MPI_Aint address[nbrOfProp2];
-    MPI_Get_address( &(particles->position(0,0)), &(address[0]) );
-    MPI_Get_address( &(particles->position(1,0)), &(address[1]) );
-    //MPI_Get_address( &(particles->position_old(0,0)), &(address[2]) );
-    //MPI_Get_address( &(particles->position_old(1,0)), &(address[3]) );
-    MPI_Get_address( &(particles->momentum(0,0)), &(address[2]) );
-    MPI_Get_address( &(particles->momentum(1,0)), &(address[3]) );
-    MPI_Get_address( &(particles->momentum(2,0)), &(address[4]) );
-    MPI_Get_address( &(particles->weight(0)),     &(address[5]) );
-    MPI_Get_address( &(particles->charge(0)),     &(address[6]) );
+    MPI_Aint address[nbrOfProp];
+    for (unsigned int iprop=0 ; iprop<particles->double_prop.size() ; iprop++ )
+	MPI_Get_address( &( (*(particles->double_prop[iprop]))[0] ), &(address[iprop]) );
+    for (unsigned int iprop=0 ; iprop<particles->short_prop.size() ; iprop++ )
+        MPI_Get_address( &( (*(particles->short_prop[iprop]))[0] ), &(address[particles->double_prop.size()+iprop]) );
+    for (unsigned int iprop=0 ; iprop<particles->uint_prop.size() ; iprop++ )
+        MPI_Get_address( &( (*(particles->uint_prop[iprop]))[0] ), &(address[particles->double_prop.size()+particles->short_prop.size()+iprop]) );
 
-    if (particles->isTestParticles)
-        MPI_Get_address( &(particles->id(0)),     &(address[nbrOfProp2-1]) );
-
-    int nbr_parts[nbrOfProp2];
-    MPI_Aint disp[nbrOfProp2];
-    MPI_Datatype partDataType[nbrOfProp2];
-
-    for (int i=0 ; i<nbrOfProp2 ; i++)
+    int nbr_parts[nbrOfProp];
+    // number of elements per property
+    for (int i=0 ; i<nbrOfProp ; i++)
         nbr_parts[i] = particles->size();
+
+    MPI_Aint disp[nbrOfProp];
+    // displacement between 2 properties
     disp[0] = 0;
-    for (int i=1 ; i<nbrOfProp2 ; i++)
+    for (int i=1 ; i<nbrOfProp ; i++)
         disp[i] = address[i] - address[0];
-    for (int i=0 ; i<nbrOfProp2 ; i++)
+
+    MPI_Datatype partDataType[nbrOfProp];
+    // define MPI type of each property, default is DOUBLE
+    for (unsigned int i=0 ; i<particles->double_prop.size() ; i++)
         partDataType[i] = MPI_DOUBLE;
-    partDataType[nbrOfProp-1] = MPI_SHORT;
-    if (particles->isTestParticles)
-        partDataType[nbrOfProp2-1] = MPI_UNSIGNED;
+    for (unsigned int iprop=0 ; iprop<particles->short_prop.size() ; iprop++ )
+        partDataType[ particles->double_prop.size()+iprop] = MPI_SHORT;
+    for (unsigned int iprop=0 ; iprop<particles->uint_prop.size() ; iprop++ )
+        partDataType[ particles->double_prop.size()+particles->short_prop.size()+iprop] = MPI_UNSIGNED;
 
-    MPI_Type_struct( nbrOfProp2, &(nbr_parts[0]), &(disp[0]), &(partDataType[0]), &typeParticlesMPI);
+    MPI_Datatype typeParticlesMPI;
+    MPI_Type_struct( nbrOfProp, &(nbr_parts[0]), &(disp[0]), &(partDataType[0]), &typeParticlesMPI);
     MPI_Type_commit( &typeParticlesMPI );
-
+    
     return typeParticlesMPI;
+
 } // END createMPIparticles
 
 void SmileiMPI_Cart2D::createType( Params& params )

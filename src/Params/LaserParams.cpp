@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "Tools.h"
+#include "Params.h"
 
 using namespace std;
 
@@ -11,8 +12,7 @@ LaserParams::LaserParams(Params& params) {
     // -----------------
     // Lasers properties
     // -----------------
-    n_laser=PyTools::nComponents("Laser");
-    for (unsigned int ilaser = 0; ilaser < n_laser; ilaser++) {
+    for (unsigned int ilaser = 0; ilaser < PyTools::nComponents("Laser"); ilaser++) {
         LaserStructure tmpLaser;
         
         // side from which the laser enters the simulation box (only west/east at the moment)
@@ -136,8 +136,13 @@ LaserParams::LaserParams(Params& params) {
     // Printing out laser related parameters
     // -------------------------------------
     MESSAGE("Laser related parameters");
-    MESSAGE(1,"n_laser        : " << n_laser);
-    for ( unsigned int i=0 ; i<n_laser ; i++ ) {
+    if (laser_param.size()) {
+        MESSAGE(1, laser_param.size() << " laser" << (laser_param.size()>1?"s":""));
+    } else {
+        MESSAGE(1, "No laser");
+    }
+    
+    for ( unsigned int i=0 ; i<laser_param.size() ; i++ ) {
         MESSAGE(2,"laser " << i << ": (boxSide, a0) : (" << laser_param[i].boxSide <<  ", " << laser_param[i].a0 <<  ")");
     }
     

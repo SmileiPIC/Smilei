@@ -108,7 +108,7 @@ Species(
 	bc_part_type_west = "none",
 	bc_part_type_east = "none",
 	isTest = True,
-	dump_every = 4
+	track_every = 4
 )
 
 

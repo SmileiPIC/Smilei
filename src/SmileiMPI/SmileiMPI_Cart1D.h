@@ -29,14 +29,14 @@ public:
     //! Create MPI communicator
     virtual void createTopology(Params& params);
     //! Echanges particles of Species, list of particles comes frome Species::dynamics
-    virtual void exchangeParticles(Species* species, int ispec, Params& params, int tnum, int iDim);
+    virtual void exchangeParticles(Species* species, Params& params, int tnum, int iDim);
 
     //! Create MPI_Datatype to exchange/sum fields on ghost data
     //! Useless if 1D, data are contigous
     void createType( Params& params ) {};
 
     //! Create MPI_Datatype to exchange all properties of particle in 1 communication
-    MPI_Datatype createMPIparticles( Particles* particles, int nbrOfProp );
+    MPI_Datatype createMPIparticles( Particles* particles );
 
 
     //! Basic method to exchange a field,
