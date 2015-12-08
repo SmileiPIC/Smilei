@@ -148,9 +148,9 @@ public:
     virtual double norm2(unsigned int istart[3][2], unsigned int bufsize[3][2]) = 0;
 
     inline long double norm() {
-	long double sum(0.); 
-	for (int i=0;i<globalDims_;i++) sum+= data_[i]*data_[i];
-	return sum;
+        long double sum(0.);
+        for (unsigned int i=0;i<globalDims_;i++) sum+= data_[i]*data_[i];
+        return sum;
     }
     
     inline void copyFrom(Field *from_field) {

@@ -372,14 +372,12 @@ void Particles::overwrite_part(int part1, int part2)
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::overwrite_part(int part1, int part2, int N)
 {
-    unsigned int sizepart,sizecharge,sizeid;
-    sizepart = N*sizeof(Position[0][0]);
-    sizecharge = N*sizeof(Charge[0]);
-    sizecharge = N*sizeof(Id[0]);
+    unsigned int sizepart = N*sizeof(Position[0][0]);
+    unsigned int sizecharge = N*sizeof(Charge[0]);
 
     for (unsigned int i=0; i<Position.size(); i++) {
-	memcpy(&Position[i][part2]     ,  &Position[i][part1]     , sizepart)    ;
-	memcpy(&Position_old[i][part2] ,  &Position_old[i][part1] , sizepart)    ;
+        memcpy(&Position[i][part2]     ,  &Position[i][part1]     , sizepart)    ;
+        memcpy(&Position_old[i][part2] ,  &Position_old[i][part1] , sizepart)    ;
     }
     memcpy(&Momentum[0][part2]     ,  &Momentum[0][part1]     , sizepart)    ;
     memcpy(&Momentum[1][part2]     ,  &Momentum[1][part1]     , sizepart)    ;
@@ -387,8 +385,10 @@ void Particles::overwrite_part(int part1, int part2, int N)
     memcpy(&Charge[part2]          ,  &Charge[part1]          , sizecharge)    ;
     memcpy(&Weight[part2]          ,  &Weight[part1]          , sizepart)    ;      
 
-    if (track_every)
+    if (track_every) {
+        unsigned int sizeid = N*sizeof(Id[0]);
         memcpy(&Id[part2]          ,  &Id[part1]              , sizeid);
+    }
     
     if (isRadReaction)
         memcpy(&Chi[part2]          ,  &Chi[part1]              , sizepart);
@@ -421,23 +421,24 @@ void Particles::overwrite_part(int part1, Particles &dest_parts, int part2)
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::overwrite_part(int part1, Particles &dest_parts, int part2, int N)
 {
-    unsigned int sizepart,sizecharge;
-    sizepart = N*sizeof(Position[0][0]);
-    sizecharge = N*sizeof(Charge[0]);
-    unsigned int sizeid = N*sizeof(Id[0]);
+    unsigned int sizepart = N*sizeof(Position[0][0]);
+    unsigned int sizecharge = N*sizeof(Charge[0]);
     
     for (unsigned int i=0; i<Position.size(); i++) {
-	memcpy(&dest_parts.Position[i][part2]     ,  &Position[i][part1]     , sizepart)    ;
-	memcpy(&dest_parts.Position_old[i][part2] ,  &Position_old[i][part1] , sizepart)    ;
+        memcpy(&dest_parts.Position[i][part2]     ,  &Position[i][part1]     , sizepart)    ;
+        memcpy(&dest_parts.Position_old[i][part2] ,  &Position_old[i][part1] , sizepart)    ;
     }
+
     memcpy(&dest_parts.Momentum[0][part2]     ,  &Momentum[0][part1]     , sizepart)    ;
     memcpy(&dest_parts.Momentum[1][part2]     ,  &Momentum[1][part1]     , sizepart)    ;
     memcpy(&dest_parts.Momentum[2][part2]     ,  &Momentum[2][part1]     , sizepart)    ;
     memcpy(&dest_parts.Charge[part2]          ,  &Charge[part1]         , sizecharge)    ;
     memcpy(&dest_parts.Weight[part2]          ,  &Weight[part1]         , sizepart)    ;      
 
-    if (track_every)
+    if (track_every) {
+        unsigned int sizeid = N*sizeof(Id[0]);
         memcpy(&dest_parts.Id[part2],  &Id[part1], sizeid);
+    }
     
     if (isRadReaction)
         memcpy(&dest_parts.Chi[part2],  &Chi[part1], sizepart);
@@ -454,7 +455,6 @@ void Particles::swap_part(int part1, int part2, int N)
     
     unsigned int sizepart = N*sizeof(Position[0][0]);
     unsigned int sizecharge = N*sizeof(Charge[0]);
-    unsigned int sizeid = N*sizeof(Id[0]);
     
     for (unsigned int i=0; i<Position.size(); i++) {
         memcpy(buffer,&Position[i][part1], sizepart);
@@ -479,6 +479,7 @@ void Particles::swap_part(int part1, int part2, int N)
     memcpy(&Weight[part2],buffer, sizepart);
     
     if (track_every) {
+        unsigned int sizeid = N*sizeof(Id[0]);
         memcpy(buffer,&Id[part1], sizeid);
         memcpy(&Id[part1],&Id[part2], sizeid);
         memcpy(&Id[part2],buffer, sizeid);
