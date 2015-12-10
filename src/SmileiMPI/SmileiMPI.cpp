@@ -130,7 +130,7 @@ void SmileiMPI::init( Params& params )
 
 void SmileiMPI::init_patch_count( Params& params)
 {
-#ifdef _NOTBALANCED
+#ifndef _NOTBALANCED
     bool use_load_balancing(true);
     if (!use_load_balancing) {
 	int Npatches = params.number_of_patches[0];
@@ -730,6 +730,7 @@ void SmileiMPI::isend(Patch* patch, int to, int tag)
 
     for (int ispec=0 ; ispec<patch->vecSpecies.size() ; ispec++){
         isend( &(patch->vecSpecies[ispec]->bmax), to, tag+2*ispec+1 );
+	//cout << smilei_rk << " sedn " << patch->vecSpecies[ispec]->getNbrOfParticles() << "(" << patch->vecSpecies[ispec]->bmax[patch->vecSpecies[ispec]->bmax.size()-1] << ")" << endl;
         if ( patch->vecSpecies[ispec]->getNbrOfParticles() > 0 ){
             patch->vecSpecies[ispec]->typePartSend = createMPIparticles( patch->vecSpecies[ispec]->particles, nbrOfProp );
             isend( patch->vecSpecies[ispec]->particles, to, tag+2*ispec, patch->vecSpecies[ispec]->typePartSend );
@@ -763,6 +764,7 @@ void SmileiMPI::new_recv(Patch* patch, int from, int tag, Params& params)
         patch->vecSpecies[ispec]->bmin[0]=0;
         //Prepare patch for receiving particles
         nbrOfPartsRecv = patch->vecSpecies[ispec]->bmax.back(); 
+	//cout << smilei_rk << " recv " << nbrOfPartsRecv << endl;
         patch->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv, params.nDim_particle );
         //Receive particles
         if ( nbrOfPartsRecv > 0 ) {

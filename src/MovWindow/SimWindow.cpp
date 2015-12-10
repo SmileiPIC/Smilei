@@ -107,6 +107,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 	}
     }
 
+    hid_t globalFile    = vecPatches(0)->sio->global_file_id_;
+    hid_t globalFileAvg = vecPatches(0)->sio->global_file_id_avg;
+
 
     // slide the  curve, new patches will be created directly with their good patchid
     for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
@@ -169,12 +172,14 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                 //if my MPI left neighbor is not me AND I'm not a newly created patch, send me !
                 if ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][0] && vecPatches(ipatch)->hindex == vecPatches(ipatch)->neighbor_[0][0] ) {
                     smpi->isend( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighbor_[0][0], vecPatches(ipatch)->hindex*nmessage );
+		    //cout << vecPatches(ipatch)->MPI_me_ << " send : " << vecPatches(ipatch)->vecSpecies[0]->getNbrOfParticles() << " & " << vecPatches(ipatch)->vecSpecies[1]->getNbrOfParticles() << endl;
                 }
             }
             // Patch à recevoir
             for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
-                if ( ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][0] ) && ( vecPatches(ipatch)->MPI_neighbor_[0][0] != MPI_PROC_NULL )  && (vecPatches(ipatch)->neighbor_[0][0] != vecPatches(ipatch)->hindex) ){
+                if ( ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][1] ) && ( vecPatches(ipatch)->MPI_neighbor_[0][1] != MPI_PROC_NULL )  && (vecPatches(ipatch)->neighbor_[0][0] != vecPatches(ipatch)->hindex) ){
                     smpi->new_recv( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighbor_[0][0], vecPatches(ipatch)->hindex*nmessage, params );
+		    //cout << vecPatches(ipatch)->MPI_me_ << " recv : " << vecPatches(ipatch)->vecSpecies[0]->getNbrOfParticles() << " & " << vecPatches(ipatch)->vecSpecies[1]->getNbrOfParticles() << endl;
                 }
             }
 
@@ -233,7 +238,8 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     for (int ipatch=0 ; ipatch<nPatches ; ipatch++ )
 	vecPatches(ipatch)->EMfields->laserDisabled();
 
-    vecPatches.definePatchDiagsMaster();
+    //vecPatches.definePatchDiagsMaster();
+    vecPatches.definePatchDiagsMaster( globalFile, globalFileAvg );
     vecPatches.updatePatchFieldDump( params );
 
     if (smpi->isMaster()) {
@@ -244,6 +250,8 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 	    vecPatches(0)->Diags->phases.vecDiagPhase[iphase]->dataId = dset[ iphase ];
 	}
     }
+    vecPatches.set_refHindex() ;
+    vecPatches.Diags = vecPatches(0)->Diags;
 
     for (unsigned int i = 0 ; i < store_npart_sent.size() ; i++) {
         delete store_npart_sent[i];

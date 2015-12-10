@@ -338,8 +338,11 @@ void VectorPatch::computeGlobalDiags(int timestep)
 
 void VectorPatch::computeScalarsDiags(int timestep)
 {
+    //cout << "In Global Compute Scalar Diags " << (*this)(0)->Diags->scalars.every << " \t timestep = " << timestep << endl;
     int scalars_every( (*this)(0)->Diags->scalars.every );
     if (timestep % scalars_every != 0) return;
+
+    //cout << "In Global Compute Scalar Daigs\n";
 
     //std::vector<std::pair<std::string,double> > out_list;
     //std::vector<std::string> out_key;
@@ -770,6 +773,14 @@ void VectorPatch::exchangePatches_new(SmileiMPI* smpi, Params& params)
     }
 
     definePatchDiagsMaster();
+
+}
+
+void VectorPatch::definePatchDiagsMaster(hid_t globalFile, hid_t globalFileAvg)
+{
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+        (*this)(ipatch)->sio->setFiles( globalFile, globalFileAvg );
+    }
 
 }
 

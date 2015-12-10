@@ -51,6 +51,7 @@ class VectorPatch {
 
     void initProbesDiags(Params& params, int timestep);
     void finalizeProbesDiags(Params& params, int timestep);
+    void definePatchDiagsMaster(hid_t globalFile, hid_t globalFileAvg);
     void definePatchDiagsMaster();
     void updatePatchFieldDump( Params& params );
 

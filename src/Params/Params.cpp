@@ -292,6 +292,9 @@ void Params::compute()
         // compute number of cells & normalized lengths
         for (unsigned int i=0; i<nDim_field; i++) {
             n_space[i]         = round(sim_length[i]/cell_length[i]);
+
+            if (i==0 && nspace_win_x != 0) n_space[i] = nspace_win_x;
+
             double entered_sim_length = sim_length[i];
             sim_length[i]      = (double)(n_space[i])*cell_length[i]; // ensure that nspace = sim_length/cell_length
             if (sim_length[i]!=entered_sim_length)
