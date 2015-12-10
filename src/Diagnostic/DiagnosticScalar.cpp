@@ -73,6 +73,16 @@ void DiagnosticScalar::open() {
 
 }
 
+void DiagnosticScalar::open(bool append) {
+    isMaster = true;
+    if (append )
+	fout.open("scalars.txt", std::ofstream::app);
+    else
+	fout.open("scalars.txt");
+    if (!fout.is_open()) ERROR("can't open scalar file");
+
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Wrapers of the methods
 // ---------------------------------------------------------------------------------------------------------------------

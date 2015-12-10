@@ -44,6 +44,7 @@ public:
 
     //! close the file
     void open();
+    void open(bool append);
 
     //! calls the compute_proc_gather, compute and write
     void run(int timestep, ElectroMagn* EMfields, std::vector<Species*>&);
