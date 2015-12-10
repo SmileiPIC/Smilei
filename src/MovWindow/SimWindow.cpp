@@ -72,8 +72,8 @@ SimWindow::~SimWindow()
 
 void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params)
 {
-    #pragma omp master
-    {
+    //#pragma omp master
+    //{
 
 
     {
@@ -84,12 +84,13 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     // Store current number of patch on current MPI process
     // Don't move during this process
     int nPatches( vecPatches.size() );
+    int nPatches_start( vecPatches.size() );
     int nSpecies  ( vecPatches(0)->vecSpecies.size() );
     int nDim_Parts( vecPatches(0)->vecSpecies[0]->particles->dimension() );
     int nmessage = 10+2*nSpecies;
     vector<int> nbrOfPartsSend(nSpecies,0);
     vector<int> nbrOfPartsRecv(nSpecies,0);
-    vector < vector<int>* > store_npart_sent;
+    //vector < vector<int>* > store_npart_sent;
 
 
     // Delete western patch
@@ -111,7 +112,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     hid_t globalFileAvg = vecPatches(0)->sio->global_file_id_avg;
 
 
-    // slide the  curve, new patches will be created directly with their good patchid
+    // Shift the patches, new patches will be created directly with their good patchid
     for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
 	vecPatches(ipatch)->neighbor_[0][1] = vecPatches(ipatch)->hindex;
         vecPatches(ipatch)->hindex = vecPatches(ipatch)->neighbor_[0][0];
@@ -129,7 +130,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     for ( int ipatch = nPatches-1 ; ipatch >= 0 ; ipatch--) {
 
         // Patch à supprimer
-	//if ( vecPatches(ipatch)->neighbor_[0][0]==MPI_PROC_NULL) {
         if ( vecPatches(ipatch)->isWestern() ) {
 
 	    // Compute energy lost 
@@ -154,14 +154,14 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     nPatches = vecPatches.size();
 
     // Sort patch by hindex (to avoid deadlock)
-    bool stop;
+    //bool stop;
     int jpatch(nPatches-1);
     do {
         for ( int ipatch = 0 ; ipatch<jpatch ; ipatch++  ) {
             if ( vecPatches(ipatch)->hindex > vecPatches(jpatch)->hindex ) {
                 Patch* tmp = vecPatches(ipatch);
                 vecPatches.patches_[ipatch] = vecPatches.patches_[jpatch];
-		vecPatches.patches_[jpatch] = tmp;
+        	vecPatches.patches_[jpatch] = tmp;
             }
         }
         jpatch--;
@@ -177,14 +177,16 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             }
             // Patch à recevoir
             for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
+                //if my MPI right neighbor is not me AND my MPI right neighbor exists AND I am a newly created patch, I receive !
                 if ( ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][1] ) && ( vecPatches(ipatch)->MPI_neighbor_[0][1] != MPI_PROC_NULL )  && (vecPatches(ipatch)->neighbor_[0][0] != vecPatches(ipatch)->hindex) ){
-                    smpi->new_recv( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighbor_[0][0], vecPatches(ipatch)->hindex*nmessage, params );
+                    smpi->new_recv( vecPatches(ipatch), vecPatches(ipatch)->MPI_neighbor_[0][1], vecPatches(ipatch)->hindex*nmessage, params );
 		    //cout << vecPatches(ipatch)->MPI_me_ << " recv : " << vecPatches(ipatch)->vecSpecies[0]->getNbrOfParticles() << " & " << vecPatches(ipatch)->vecSpecies[1]->getNbrOfParticles() << endl;
                 }
             }
 
     //Wait for all send to be completed by the receivers too.
-    MPI_Barrier(MPI_COMM_WORLD);
+    //MPI_Barrier(MPI_COMM_WORLD);
+    smpi->barrier();
 
     // Suppress after exchange to not distrub patch position during exchange
     for ( int ipatch = nPatches-1 ; ipatch >= 0 ; ipatch--) {
@@ -202,7 +204,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     nPatches = vecPatches.size();
 
 
-    // slide the  curve, new patches will be created directly with their good patches
+    // Finish shifting the patches, new patches will be created directly with their good patches
     for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
 	if (vecPatches(ipatch)->neighbor_[0][0] != vecPatches(ipatch)->hindex) continue;
 	    
@@ -243,22 +245,22 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     vecPatches.updatePatchFieldDump( params );
 
     if (smpi->isMaster()) {
-	// Set scalars/phaseSpace patch master
-	vecPatches(0)->Diags->scalars.open();
-	vecPatches(0)->Diags->phases.fileId = fphases;
-	for ( int iphase=0 ; iphase<vecPatches(0)->Diags->phases.vecDiagPhase.size() ; iphase++ ) {
-	    vecPatches(0)->Diags->phases.vecDiagPhase[iphase]->dataId = dset[ iphase ];
-	}
+        // Set scalars/phaseSpace patch master
+        vecPatches(0)->Diags->scalars.open();
+        vecPatches(0)->Diags->phases.fileId = fphases;
+        for ( int iphase=0 ; iphase<vecPatches(0)->Diags->phases.vecDiagPhase.size() ; iphase++ ) {
+            vecPatches(0)->Diags->phases.vecDiagPhase[iphase]->dataId = dset[ iphase ];
+        }
     }
     vecPatches.set_refHindex() ;
     vecPatches.Diags = vecPatches(0)->Diags;
 
-    for (unsigned int i = 0 ; i < store_npart_sent.size() ; i++) {
-        delete store_npart_sent[i];
-    }
+    //for (unsigned int i = 0 ; i < store_npart_sent.size() ; i++) {
+    //    delete store_npart_sent[i];
+    //}
 
-    } // End pragma omp master
-    #pragma omp barrier
+    //} // End pragma omp master
+    //#pragma omp barrier
 
     return;
 

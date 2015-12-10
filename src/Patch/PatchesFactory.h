@@ -61,6 +61,7 @@ public:
         }
         vecPatches.set_refHindex() ;
 	vecPatches.Diags = vecPatches(0)->Diags;
+        vecPatches.resizeFields() ;
 
         return vecPatches;
     }

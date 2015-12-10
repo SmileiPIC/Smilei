@@ -475,7 +475,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
 
 	if (smilei_rk==0)
 	    for (int irk=0;irk<smilei_sz;irk++)
-		cout << " patch_count[" << irk << "]" << patch_count[irk] << " target patch_count = "<< target_patch_count[irk] << endl;
+		cout << " patch_count[" << irk << "] = " << patch_count[irk] << " target patch_count = "<< target_patch_count[irk] << endl;
 
     return;
 #endif
@@ -726,7 +726,7 @@ void SmileiMPI::send(Patch* patch, int to, int tag)
 void SmileiMPI::isend(Patch* patch, int to, int tag)
 {
     int nbrOfProp = 7;
-    MPI_Request request;
+    //MPI_Request request;
 
     for (int ispec=0 ; ispec<patch->vecSpecies.size() ; ispec++){
         isend( &(patch->vecSpecies[ispec]->bmax), to, tag+2*ispec+1 );

@@ -56,9 +56,10 @@ class VectorPatch {
     void updatePatchFieldDump( Params& params );
 
     void createPatches(Params& params, SmileiMPI* smpi, SimWindow* simWindow);
-    void setNbrParticlesToExch(SmileiMPI* smpi, Params& params);
-    void exchangePatches(SmileiMPI* smpi);
-    void exchangePatches_new(SmileiMPI* smpi, Params& params);
+    void setNbrParticlesToExch(SmileiMPI* smpi);
+    //void exchangePatches(SmileiMPI* smpi);
+    void exchangePatches(SmileiMPI* smpi, Params& params);
+    void output_exchanges(SmileiMPI* smpi);
     
     void initDumpFields(Params& params, int timestep);
     void finalizeDumpFields(Params& params, int timestep);
@@ -74,6 +75,7 @@ class VectorPatch {
 
 
     void clear() {patches_.clear();}
+    void resizeFields();
 
     std::vector<Patch*> patches_;
     std::vector<Patch*> recv_patches_;

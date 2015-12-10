@@ -521,22 +521,21 @@ int npatchmoy=0, npartmoy=0;
 	    }*/
 	// ----------------------------------------------------------------------        
 
+        } //End omp parallel region
 		
         timer[5].restart();
         if ( simWindow && simWindow->isMoving(time_dual) ) {
-            #pragma omp single
-            {
+            //#pragma omp single
+            //{
             start_moving++;
             if ((start_moving==1) && (smpiData->isMaster()) ) {
 		MESSAGE(">>> Window starts moving");
-            }
             }
             simWindow->operate(vecPatches, smpiData, params);
         }
         timer[5].update();
 
 
-        } //End omp parallel region
 
 	if ((itime%balancing_freq == 0)&&(smpiData->smilei_sz!=1)) {
             timer[7].restart();
@@ -551,7 +550,14 @@ int npatchmoy=0, npartmoy=0;
 
 
 	    vecPatches.createPatches(params, smpiData, simWindow);
-	    vecPatches.exchangePatches_new(smpiData, params);
+	    vecPatches.exchangePatches(smpiData, params);
+            //for (unsigned int irank=0 ; irank<smpiData->smilei_sz ; irank++){
+            //    if(smpiData->smilei_rk == irank){
+            //        vecPatches.output_exchanges(smpiData);
+            //    }
+            //    smpiData->barrier();
+            //}
+
 
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
                 for (unsigned int ispec=0 ; ispec < vecPatches(0)->vecSpecies.size() ; ispec++)
