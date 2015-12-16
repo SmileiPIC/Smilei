@@ -26,8 +26,8 @@ class DiagnosticPhaseSpace {
 
 public:
 
-    DiagnosticPhaseSpace();
-    ~DiagnosticPhaseSpace();
+    DiagnosticPhaseSpace(Params& params, SmileiMPI *smpi);
+    ~DiagnosticPhaseSpace(){};
 
 	void run(int timestep, std::vector<Species*>& vecSpecies);
 	

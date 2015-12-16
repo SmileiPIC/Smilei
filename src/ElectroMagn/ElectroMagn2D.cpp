@@ -175,18 +175,19 @@ isNorthern(smpi->isNorthern())
         } // for (int isDual=0 ; isDual
     } // for (unsigned int i=0 ; i<nDim_field 
     
-    // Fillng the space profiles of antennas
-    for (vector<AntennaStructure>::iterator antenna=antennas.begin(); antenna!=antennas.end(); antenna++ ) {
-        if (antenna->field == "Jx")
-            antenna->my_field = new Field2D(dimPrim, 0, false, "Jx");
-        else if (antenna->field == "Jy")
-            antenna->my_field = new Field2D(dimPrim, 1, false, "Jy");
-        else if (antenna->field == "Jz")
-            antenna->my_field = new Field2D(dimPrim, 2, false, "Jz");
+    for (unsigned int i=0; i<antennas.size(); i++) {
+        if (antennas[i].field == "Jx")
+            antennas[i].my_field = new Field2D(dimPrim, 0, false, "Jx");
+        else if (antennas[i].field == "Jy")
+            antennas[i].my_field = new Field2D(dimPrim, 1, false, "Jy");
+        else if (antennas[i].field == "Jz")
+            antennas[i].my_field = new Field2D(dimPrim, 2, false, "Jz");
         
-        if (antenna->my_field) {
-            Profile my_spaceProfile(antenna->space_profile, nDim_field);
-            applyExternalField(antenna->my_field,&my_spaceProfile, smpi);
+        if (antennas[i].my_field) {
+            stringstream ss("");
+            ss << "Antenna " << i;
+            Profile my_spaceProfile(antennas[i].space_profile, nDim_field, ss.str());
+            applyExternalField(antennas[i].my_field,&my_spaceProfile, smpi);
         }
     }
     

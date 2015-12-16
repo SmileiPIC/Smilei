@@ -1,4 +1,4 @@
-#include "DiagnosticTestParticles.h"
+#include "DiagnosticTrackParticles.h"
 
 #include <iomanip>
 #include <ostream>
@@ -10,25 +10,11 @@
 using namespace std;
 
 // constructor
-DiagnosticTestParticles::DiagnosticTestParticles(unsigned int ID, int ispec, Params& params, std::vector<Species*>& vecSpecies )
+DiagnosticTrackParticles::DiagnosticTrackParticles(Params& params, SmileiMPI* smpi, Species* my_species) :
+species(my_species),
+nDim_particle(params.nDim_particle)
 {
-    
-    diagnostic_id = ID;
-    species_number = ispec;
-    nDim_particle = params.nDim_particle;
-    every = vecSpecies[ispec]->test_dump_every;
-}
 
-// destructor
-DiagnosticTestParticles::~DiagnosticTestParticles()
-{
-}
-
-
-void DiagnosticTestParticles::init(vector<Species*> vecSpecies, SmileiMPI* smpi) {
-    
-    species = vecSpecies[species_number];
-    particles = &(species->particles);
     int locNbrParticles = species->getNbrOfParticles();
     hsize_t nParticles = (hsize_t) smpi->globalNbrParticles(species, locNbrParticles);
     
@@ -43,11 +29,11 @@ void DiagnosticTestParticles::init(vector<Species*> vecSpecies, SmileiMPI* smpi)
         
         // Create HDF5 file
         ostringstream filename("");
-        filename << "TestParticles_" << species->species_type  << ".h5" ;
+        filename << "TrackParticles_" << species->species_type  << ".h5" ;
         hid_t fid = H5Fcreate( filename.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         
-        // Write attribute: dump_every
-        H5::attr(fid, "every", every);
+        // Write attribute: track_every
+        H5::attr(fid, "every", species->particles.track_every);
         
         // Define maximum size
         hsize_t maxDimsPart[2] = {H5S_UNLIMITED, nParticles};
@@ -62,7 +48,7 @@ void DiagnosticTestParticles::init(vector<Species*> vecSpecies, SmileiMPI* smpi)
         
         // Create the datasets for x, y and z
         hid_t did;
-        unsigned int nPosition = particles->Position.size();
+        unsigned int nPosition = species->particles.Position.size();
         for (unsigned int i=0; i<nPosition; i++) {
             ostringstream namePos("");
             namePos << "Position-" << i;
@@ -71,7 +57,7 @@ void DiagnosticTestParticles::init(vector<Species*> vecSpecies, SmileiMPI* smpi)
         }
         
         // Create the datasets for px, py and pz
-        unsigned int nMomentum = particles->Momentum.size();
+        unsigned int nMomentum = species->particles.Momentum.size();
         for (unsigned int i=0; i<nMomentum; i++) {
             ostringstream nameMom("");
             nameMom << "Momentum-" << i;
@@ -98,23 +84,23 @@ void DiagnosticTestParticles::init(vector<Species*> vecSpecies, SmileiMPI* smpi)
 
 }
 
-void DiagnosticTestParticles::run(int time, SmileiMPI* smpi) {
+
+void DiagnosticTrackParticles::run(int time, SmileiMPI* smpi) {
     
-    if ( time % every != 0) return;
-    
+    if ( time % species->particles.track_every != 0) return;
+
     int locNbrParticles = species->getNbrOfParticles();
-    
-    // We increase the array size for the new timestep (new chunk)
-    // It is not applied to the HDF5 file yet
-    dims[0] ++;
     
     // Create the locator (gives locations where to store particles in the file)
     vector<hsize_t> locator (locNbrParticles*2);
     for(int i=0; i<locNbrParticles; i++) {
-        locator[i*2  ] = dims[0]-1;
-        locator[i*2+1] = particles->id(i)-1;
+        locator[i*2  ] = dims[0];
+        locator[i*2+1] = species->particles.id(i)-1; // because particles label Id starts at 1
     }
-    
+    // Now we increase the array size for the new timestep (new chunk)
+    // It is not applied to the HDF5 file yet
+    dims[0] ++;
+
     
     // Define the HDF5 MPI file access
     hid_t file_access = H5Pcreate(H5P_FILE_ACCESS);
@@ -126,36 +112,37 @@ void DiagnosticTestParticles::run(int time, SmileiMPI* smpi) {
     
     // Open the HDF5 file
     ostringstream filename("");
-    filename << "TestParticles_" << species->species_type  << ".h5" ;
+    filename << "TrackParticles_" << species->species_type  << ".h5" ;
     hid_t fid = H5Fopen( filename.str().c_str(), H5F_ACC_RDWR, file_access);
-    
+
     // For each dataspace (x, y, z, px, py, pz, weight, charge and ID), add the local
-    // array to the HDF5 file -> see function appendTestParticles()
+    // array to the HDF5 file -> see function appendTestParticles() in SmileiIO.h
     ostringstream namePos("");
     for (int idim=0 ; idim<nDim_particle ; idim++) {
         namePos.str("");
         namePos << "Position-" << idim;
-        append( fid, namePos.str(), particles->position(idim), locNbrParticles, H5T_NATIVE_DOUBLE, smpi, locator );
+        append( fid, namePos.str(), species->particles.position(idim), locNbrParticles, H5T_NATIVE_DOUBLE, locator );
     }
     ostringstream nameMom("");
     for (int idim=0 ; idim<3 ; idim++) {
         nameMom.str("");
         nameMom << "Momentum-" << idim;
-        append( fid, nameMom.str(), particles->momentum(idim), locNbrParticles, H5T_NATIVE_DOUBLE, smpi, locator );
+        append( fid, nameMom.str(), species->particles.momentum(idim), locNbrParticles, H5T_NATIVE_DOUBLE, locator );
     }
-    append( fid, "Weight", particles->weight(), locNbrParticles, H5T_NATIVE_DOUBLE, smpi, locator );
-    append( fid, "Charge", particles->charge(), locNbrParticles, H5T_NATIVE_SHORT , smpi, locator );
-    append( fid, "Id"    , particles->id()    , locNbrParticles, H5T_NATIVE_UINT  , smpi, locator );
+    append( fid, "Weight", species->particles.weight(), locNbrParticles, H5T_NATIVE_DOUBLE, locator );
+    append( fid, "Charge", species->particles.charge(), locNbrParticles, H5T_NATIVE_SHORT , locator );
+    append( fid, "Id"    , species->particles.id()    , locNbrParticles, H5T_NATIVE_UINT  , locator );
     
     smpi->barrier(); // sometimes needed because all procs must not close the file too early
     H5Fflush( fid, H5F_SCOPE_GLOBAL );
     H5Pclose( file_access );
     H5Fclose( fid );
+    
 }
 
 
 template <class T>
-void DiagnosticTestParticles::append( hid_t fid, string name, std::vector<T> property, int nParticles, hid_t type, SmileiMPI* smpi, vector<hsize_t> &locator) {
+void DiagnosticTrackParticles::append( hid_t fid, string name, std::vector<T> property, int nParticles, hid_t type, vector<hsize_t> &locator) {
     
     // Open existing dataset
     hid_t did = H5Dopen( fid, name.c_str(), H5P_DEFAULT );

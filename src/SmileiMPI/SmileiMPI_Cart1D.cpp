@@ -461,7 +461,12 @@ void SmileiMPI_Cart1D::sumField( Field* field )
     Field1D* f1D =  static_cast<Field1D*>(field);
     
     // Use a buffer per direction to exchange data before summing
-    Field1D buf[ nbNeighbors_ ];
+    // Modif IDRIS
+    Field1D *buf;
+    buf = new Field1D[nbNeighbors_ ];
+    //  Field1D buf[ nbNeighbors_];
+    // Fin Modif IDRIS
+    //
     // Size buffer is 2 oversize (1 inside & 1 outside of the current subdomain)
     std::vector<unsigned int> oversize2 = oversize;
     oversize2[0] *= 2;
@@ -533,7 +538,8 @@ void SmileiMPI_Cart1D::sumField( Field* field )
                 f1D->data_[istart+i] += (buf[(iNeighbor+1)%2])(i);
         }
     } // END for iNeighbor
-    
+
+    delete [] buf;
     
 } // END sumField
 

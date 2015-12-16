@@ -34,7 +34,6 @@ IonizationTunnel::IonizationTunnel(Params& params, Species * species) : Ionizati
 
 
 void IonizationTunnel::operator() (Particles &particles, int ipart, LocalFields Epart) {
-    HEREIAM(particles.size());
     for (unsigned int i=0; i< particles.size(); i++) {
         particles.print(i);
     }

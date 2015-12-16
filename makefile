@@ -18,7 +18,7 @@ COMMITDATE:="$(shell git show -s --pretty="%ci" 2>/dev/null || echo '??')"
 CXXFLAGS += -D__VERSION=\"$(VERSION)\" -D__COMMITDATE=\"$(COMMITDATE)\" -D__CONFIG=\""$(config)"\"
 
 CXXFLAGS += -I${HDF5_ROOT_DIR}/include -std=c++0x 
-LDFLAGS += -lm -L${HDF5_ROOT_DIR}/lib -lhdf5 -lz
+LDFLAGS += -L${HDF5_ROOT_DIR}/lib -lhdf5 -lz
 
 
 ifneq (,$(findstring poincare,$(HOSTNAME)))
@@ -66,6 +66,7 @@ ifeq (,$(findstring noopenmp,$(config)))
         OPENMPFLAGS = -openmp
     else
         OPENMPFLAGS = -fopenmp 
+	LDFLAGS += -lm
     endif
     OPENMPFLAGS += -D_OMP
     LDFLAGS += $(OPENMPFLAGS)
@@ -99,7 +100,7 @@ $(BUILD_DIR)/%.o : %.cpp
 	$(SMILEICXX) $(CXXFLAGS) -c $< -o $@
 
 $(EXEC): $(OBJS)
-	$(SMILEICXX) $(OBJS) -o $(BUILD_DIR)/$@  $(LDFLAGS)
+	$(SMILEICXX) $(OBJS) -o $(BUILD_DIR)/$@ $(LDFLAGS) 
 	cp $(BUILD_DIR)/$@ $@
 
 # these are kept for backward compatibility and might be removed (see make help)
@@ -113,7 +114,7 @@ scalasca: obsolete
 	make config=scalasca
 
 
-ifeq ($(filter clean help doc,$(MAKECMDGOALS)),) 
+ifeq ($(filter clean help doc tar,$(MAKECMDGOALS)),) 
 # Let's try to make the next lines clear: we include $(DEPS) and pygenerator
 -include $(DEPS) pygenerator
 # we specify that pygenerator is not a file
@@ -132,6 +133,8 @@ endif
 doc:
 	make -C doc all
 
+sphinx:
+	make -C doc/Sphinx html
 tar:
 	git archive -o smilei-$(VERSION).tgz --prefix smilei-$(VERSION)/ HEAD
 	

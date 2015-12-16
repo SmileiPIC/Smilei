@@ -20,8 +20,11 @@ using namespace std;
 Params::Params(SmileiMPI* smpi, std::vector<std::string> namelistsFiles) :
 namelist("")
 {
+    
+    if (namelistsFiles.size()==0) ERROR("No namelists given!");
+
     string commandLineStr("");
-    for (int i=0;i<namelistsFiles.size();i++) commandLineStr+=namelistsFiles[i]+" ";
+    for (unsigned int i=0;i<namelistsFiles.size();i++) commandLineStr+="\""+namelistsFiles[i]+"\" ";
     MESSAGE(1,commandLineStr);
     
     //init Python
@@ -35,11 +38,18 @@ namelist("")
     
     // Running pyinit.py
     runScript(string(reinterpret_cast<const char*>(pyinit_py), pyinit_py_len), "pyinit.py");
+
+    // Running pyfunctons.py
+    runScript(string(reinterpret_cast<const char*>(pyprofiles_py), pyprofiles_py_len), "pyprofiles.py");
+    
     // here we add the rank, in case some script need it
     PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_rank", smpi->getRank());
     
-    // Running pyfunctons.py
-    runScript(string(reinterpret_cast<const char*>(pyprofiles_py), pyprofiles_py_len), "pyprofiles.py");
+    // here we add the MPI size, in case some script need it
+    PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_size", smpi->getSize());
+    
+    // here we add the larget int, important to get a valid seed for randomization
+    PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_rand_max", RAND_MAX);
     
     // Running the namelists
     runScript("############### BEGIN USER NAMELISTS/COMMANDS ###############\n");
@@ -48,7 +58,6 @@ namelist("")
         if (smpi->isMaster()) {
             ifstream istr(it->c_str());
             if (istr.is_open()) {
-                MESSAGE(1,"Reading file " << *it);
                 std::stringstream buffer;
                 buffer << istr.rdbuf();
                 strNamelist+=buffer.str();
@@ -64,8 +73,22 @@ namelist("")
     // Running pycontrol.py
     runScript(string(reinterpret_cast<const char*>(pycontrol_py), pycontrol_py_len),"pycontrol.py");
     
-    PyTools::runPyFunction("_smilei_check");
+    smpi->barrier();
+
+    // output dir: we force this to be the same on all mpi nodes
+    string output_dir("");
+    PyTools::extract("output_dir", output_dir);
     
+    // CHECK namelist on python side
+    PyTools::runPyFunction("_smilei_check");
+    smpi->barrier();
+
+    if (!output_dir.empty()) {
+        if (chdir(output_dir.c_str()) != 0) {
+            WARNING("Could not chdir to output_dir = " << output_dir);
+        }
+    }
+
     
     // Now the string "namelist" contains all the python files concatenated
     // It is written as a file: smilei.py
@@ -77,10 +100,13 @@ namelist("")
         }
     }
     
+    
+    // random seed
     unsigned int random_seed=0;
     if (!PyTools::extract("random_seed", random_seed)) {
         random_seed = time(NULL);
     }
+    
     srand(random_seed);
     
     // --------------
@@ -382,7 +408,7 @@ vector<unsigned int> Params::FindSpecies(vector<Species*>& vecSpecies, vector<st
 void Params::runScript(string command, string name) {
     PyTools::checkPyError();
     namelist+=command;
-    if (name.size()>0)  MESSAGE(1,"Passing to python " << name);
+    if (name.size()>0)  MESSAGE(1,"Parsing " << name);
     int retval=PyRun_SimpleString(command.c_str());
     if (retval==-1) {
         ERROR("error parsing "<< name);

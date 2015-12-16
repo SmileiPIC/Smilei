@@ -32,7 +32,7 @@ Run and analyze your simulation
    :maxdepth: 1
    
    namelist
-   run
+   
    post-processing
 
 

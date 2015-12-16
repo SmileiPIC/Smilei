@@ -8,6 +8,11 @@
 #ifndef Params_H
 #define Params_H
 
+#undef _POSIX_C_SOURCE
+#undef _XOPEN_SOURCE
+
+#include "Profile.h"
+
 #include <vector>
 #include <string>
 #include <cstdlib>
@@ -137,6 +142,9 @@ public:
     
     //! Number of MPI process per direction (default : as square as possible)
     std::vector<int> number_of_procs;
+
+    //! define if smilei write a single file or 1 file per process
+    bool global_output_file;
     
     //! global number of time exits (it will be used if not specified in various diags/fields)
     unsigned int global_every;
@@ -144,7 +152,7 @@ public:
     //! string containing the whole clean namelist
     std::string namelist;
     
-    //! call the python cleanup function and 
+    //! call the python cleanup function and
     //! check if python can be closed (e.g. there is no laser python profile)
     //! by calling the _keep_python_running python function (part of pycontrol.pyh)
     void cleanup(SmileiMPI*);

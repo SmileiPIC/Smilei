@@ -63,18 +63,14 @@ int main (int argc, char* argv[])
     MESSAGE("                   _            _");
     MESSAGE(" ___           _  | |        _  \\ \\    ");
     MESSAGE("/ __|  _ __   (_) | |  ___  (_)  | |   Version : " << __VERSION);
-    MESSAGE("\\__ \\ | '  \\   _  | | / -_)  _   | |   Date    : " << __COMMITDATE);
-    MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  | |   " << (string(__CONFIG).size()? "Config  : ":"") << __CONFIG);
+    MESSAGE("\\__ \\ | '  \\   _  | | / -_)  _   | |   Date    : " );//<< __COMMITDATE);
+    MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  | |   " );//<< (string(__CONFIG).size()? "Config  : ":"") << __CONFIG);
     MESSAGE("                                /_/    ");
     
     TITLE("Input data info");
     
-    // Check for namelists (input files)
-    vector<string> namelists(argv + 1, argv + argc);
-    if (namelists.size()==0) ERROR("No namelists given!");
-    
     // Read simulation & diagnostics parameters
-    Params params(smpiData,namelists);
+    Params params(smpiData,vector<string>(argv + 1, argv + argc));
     smpiData->init(params);
     smpiData->barrier();
     if ( smpiData->isMaster() ) params.print();
@@ -132,10 +128,6 @@ int main (int argc, char* argv[])
     // Initialize the particle walls
     vector<PartWall*> vecPartWall = PartWall::create(params, smpi);
     
-    // Test particles need initialization now (after vecSpecies has been created)
-    for (unsigned int i=0 ; i<diags.vecDiagnosticTestParticles.size(); i++)
-        diags.vecDiagnosticTestParticles[i]->init(vecSpecies, smpi);
-    
     // ----------------------------------------------------------------------------
     // Define Moving Window & restart
     // ----------------------------------------------------------------------------
@@ -184,7 +176,7 @@ int main (int argc, char* argv[])
         // Sum rho and J on ghost domains
         smpi->sumRhoJ( EMfields );
         for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
-            smpi->sumRhoJs(EMfields, ispec, true);  // only if !isTestParticles
+            smpi->sumRhoJs(EMfields, ispec, true);  // only if !isTest
         }
         
         TITLE("Applying antennas at time t = " << 0.5 * params.timestep);
@@ -211,8 +203,6 @@ int main (int argc, char* argv[])
         // temporary EM fields dump in Fields_avg.h5
         if (diags.ntime_step_avg!=0)
             sio->writeAllFieldsSingleFileTime(EMfields->allFields_avg, 0, 1 );
-        // temporary particle dump at time 0
-        sio->writePlasma( vecSpecies, 0., smpi );
         
     }
 
@@ -220,41 +210,38 @@ int main (int argc, char* argv[])
     // Check memory consumption
     // ------------------------------------------------------------------------
     TITLE("Memory consumption");
+    
     int particlesMem(0);
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++)
-	particlesMem += vecSpecies[ispec]->getMemFootPrint();
+        particlesMem += vecSpecies[ispec]->getMemFootPrint();
     MESSAGE( "(Master) Species part = " << (int)( (double)particlesMem / 1024./1024.) << " Mb" );
-
+    
     double dParticlesMem = (double)particlesMem / 1024./1024./1024.;
     MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dParticlesMem, &dParticlesMem, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
     MESSAGE( setprecision(3) << "Global Species part = " << dParticlesMem << " Gb" );
-
+    
     MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&particlesMem, &particlesMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
     MESSAGE( "Max Species part = " << (int)( (double)particlesMem / 1024./1024.) << " Mb" );
     
     // fieldsMem contains field per species
     int fieldsMem = EMfields->getMemFootPrint();
     MESSAGE( "(Master) Fields part = " << (int)( (double)fieldsMem / 1024./1024.) << " Mb" );
-
+    
     double dFieldsMem = (double)fieldsMem / 1024./1024./1024.;
     MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dFieldsMem, &dFieldsMem, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
     MESSAGE( setprecision(3) << "Global Fields part = " << dFieldsMem << " Gb" );
-
+    
     MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&fieldsMem, &fieldsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
     MESSAGE( "Max Fields part = " << (int)( (double)fieldsMem / 1024./1024.) << " Mb" );
 
     // Read value in /proc/pid/status
     //Tools::printMemFootPrint( "End Initialization" );
-
-    
     
     // ------------------------------------------------------------------------
     // check here if we can close the python interpreter
     // ------------------------------------------------------------------------
     TITLE("Cleaning up python runtime environement");
     params.cleanup(smpi);
-    
-
     
     // ------------------------------------------------------------------------
     // Initialize the simulation times time_prim at n=0 and time_dual at n=+1/2
@@ -267,6 +254,10 @@ int main (int argc, char* argv[])
     
     // Count timer
     vector<Timer> timer(9);
+// IDRIS
+//    Timer timer[ntimer];
+    // -> celui là Timer timer[8];
+// IDRIS
     
     timer[0].init(smpi, "Global");
     timer[1].init(smpi, "Particles");
@@ -277,7 +268,6 @@ int main (int argc, char* argv[])
     timer[6].init(smpi, "Fields");
     timer[7].init(smpi, "AvgFields");
     timer[8].init(smpi, "Collisions");
-    
     
     // ------------------------------------------------------------------
     //                     HERE STARTS THE PIC LOOP
@@ -308,7 +298,7 @@ int main (int argc, char* argv[])
             "/"     << setw(log10(params.n_time)+1) << params.n_time <<
             "  t "          << scientific << setprecision(3)   << time_dual <<
             "  sec "    << scientific << setprecision(1)   << this_print_time <<
-            "("    << scientific << setprecision(3)   << this_print_time - old_print_time << ")" <<
+            "("    << scientific << setprecision(1)   << this_print_time - old_print_time << ")" <<
             "  Utot "   << scientific << setprecision(4)<< diags.getScalar("Utot") <<
             "  Uelm "   << scientific << setprecision(4)<< diags.getScalar("Uelm") <<
             "  Ukin "   << scientific << setprecision(4)<< diags.getScalar("Ukin") <<
@@ -356,7 +346,7 @@ int main (int argc, char* argv[])
 #endif
             for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) {
                 if ( vecSpecies[ispec]->isProj(time_dual, simWindow) ){
-                    EMfields->restartRhoJs(ispec, time_dual > vecSpecies[ispec]->time_frozen); // if (!isTestParticles)
+                    EMfields->restartRhoJs(ispec, time_dual > vecSpecies[ispec]->time_frozen); // if (!isTest)
                     vecSpecies[ispec]->dynamics(time_dual, EMfields, Interp, Proj, smpi, params, simWindow, vecPartWall);
                 }
             }
@@ -419,13 +409,7 @@ int main (int argc, char* argv[])
             sio->writeAllFieldsSingleFileTime(EMfields->allFields_avg, itime, 1 );
         }
         timer[7].update();
-        
-#ifdef _IO_PARTICLE
-        // temporary particles dump (1 HDF5 file per process)
-        if  ((diags.particleDump_every != 0) && (itime % diags.particleDump_every == 0))
-            sio->writePlasma( vecSpecies, time_dual, smpi );
-#endif
-        
+                
         if (sio->dump(EMfields, itime, vecSpecies, smpi, simWindow, params, diags)) break;
         
         timer[5].restart();
@@ -475,11 +459,6 @@ int main (int argc, char* argv[])
     if  (diags.ntime_step_avg!=0)
         if  ( (diags.avgfieldDump_every != 0) && (params.n_time % diags.avgfieldDump_every != 0) )
             sio->writeAllFieldsSingleFileTime(EMfields->allFields_avg, params.n_time, 1 );
-#ifdef _IO_PARTICLE
-    // temporary particles dump (1 HDF5 file per process)
-    if  ( (diags.particleDump_every != 0) && (params.n_time % diags.particleDump_every != 0) )
-        sio->writePlasma( vecSpecies, time_dual, smpi );
-#endif    
 }
     
     // ------------------------------
@@ -502,8 +481,8 @@ int main (int argc, char* argv[])
 
     TITLE("END");
     delete sio;
-    delete smpi;
-    delete smpiData;
+    //delete smpi;
+    //delete smpiData;
     
     return 0;
     

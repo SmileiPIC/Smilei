@@ -30,8 +30,8 @@ struct val_index
 class DiagnosticScalar {
 
 public:
-    DiagnosticScalar();
-    ~DiagnosticScalar();
+    DiagnosticScalar(Params& params, SmileiMPI *smpi);
+    ~DiagnosticScalar(){};
 
     void openFile(SmileiMPI* smpi);
     //! close the file

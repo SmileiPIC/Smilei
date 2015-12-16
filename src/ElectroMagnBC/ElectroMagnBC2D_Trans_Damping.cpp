@@ -28,16 +28,16 @@ ElectroMagnBC2D_Trans_Damping::ElectroMagnBC2D_Trans_Damping( Params &params, La
     ny_l = 50;// To be read in file.in
     cdamp = 1.l;// To be read in file.in
 
-    coeff = new double[ny_l];
+    coeff.resize(ny_l);
     coeff[0] = 0.;
 
-    for (unsigned int j=1 ; j<ny_l ; j++)
-	coeff[j] = 1.-cdamp*((double)(ny_l-j)/(double)ny_l)*((double)(ny_l-j)/(double)ny_l);
+    for (unsigned int j=1 ; j<ny_l ; j++) {
+        coeff[j] = 1.-cdamp*pow((ny_l-(double)j)/ny_l,2);
+    }
 }
 
 ElectroMagnBC2D_Trans_Damping::~ElectroMagnBC2D_Trans_Damping()
 {
-    delete [] coeff;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

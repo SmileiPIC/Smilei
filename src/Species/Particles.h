@@ -202,9 +202,11 @@ public:
     std::vector<unsigned int> Id;    
     
     // TEST PARTICLE PARAMETERS
+    bool isTest;
     
-    bool isTestParticles;
-    int test_dump_every;
+    // steps between each write of particles (this will activate a DiagnosticTrackParticles)
+    unsigned int track_every;
+
     void setIds() {
         unsigned int s = Id.size();
         for (unsigned int iPart=0; iPart<s; iPart++) Id[iPart] = iPart+1;
@@ -217,6 +219,7 @@ public:
     
     //! Method used to get the Particle Id
     inline unsigned int id(int ipart) const {
+        DEBUG(ipart << " of " << Id.size());
         return Id[ipart];
     }
     //! Method used to set the Particle Id
@@ -248,9 +251,6 @@ public:
         return Chi;
     }
     
-    
-    int species_number;
-
     std::vector< std::vector<double>* >       double_prop;
     std::vector< std::vector<short>* >        short_prop;
     std::vector< std::vector<unsigned int>* > uint_prop;

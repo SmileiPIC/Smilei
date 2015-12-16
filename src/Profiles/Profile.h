@@ -15,7 +15,7 @@ class Profile
 {
 public:
     //! Default constructor
-    Profile(PyObject* , unsigned int);
+    Profile(PyObject* , unsigned int, std::string);
 
     //! Default destructor
     ~Profile(){};

@@ -541,7 +541,7 @@ void SmileiMPI_Cart2D::exchangeParticles(Species* species, Params& params, int t
         
         // Inject corner particles at the end of the list, update bmax
         //if (iDim==cuParticles.dimension()-1) cout << "Number of diag particles " << diagonalParticles.size() << endl;
-        for (int iPart = 0 ; iPart<diagonalParticles.size() ; iPart++) {
+        for (unsigned int iPart = 0 ; iPart<diagonalParticles.size() ; iPart++) {
             diagonalParticles.cp_particle(iPart, cuParticles);
             (*indexes_of_particles_to_exchange_per_thd)[0].push_back(cuParticles.size()-1);
             (*cubmax)[(*cubmax).size()-1]++;
@@ -638,7 +638,13 @@ void SmileiMPI_Cart2D::sumField( Field* field )
     
     
     // Use a buffer per direction to exchange data before summing
-    Field2D buf[ndims_][ nbNeighbors_ ];
+     // Modifs IDRIS
+    Field2D **buf;
+    buf = new Field2D *[ndims_];
+    for ( int i=0; i<ndims_; i++ )
+      buf[i] = new Field2D[ nbNeighbors_ ];
+    //   Field2D buf[ndims_][ nbNeighbors_ ];
+    //   Fin Modifs IDRIS
     // Size buffer is 2 oversize (1 inside & 1 outside of the current subdomain)
     std::vector<unsigned int> oversize2 = oversize;
     oversize2[0] *= 2;
@@ -721,6 +727,12 @@ void SmileiMPI_Cart2D::sumField( Field* field )
         
     } // END for iDim
     
+
+    for ( int i=0; i<ndims_; i++ )
+        delete [] buf[i];
+    delete [] buf;    
+
+
 } // END sumField
 
 

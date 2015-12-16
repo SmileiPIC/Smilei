@@ -101,9 +101,12 @@ void SmileiIO_Cart2D::createPattern( Params& params, SmileiMPI* smpi )
                         bufsize[1] -= 1;
                 }
             }
-            count[0] = bufsize[0];
-            count[1] = bufsize[1];
-            H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset, stride, count, NULL);
+            count[0] = 1;
+            count[1] = 1;
+            hsize_t     block[2];
+            block[0] = bufsize[0];
+            block[1] = bufsize[1];
+            H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset, stride, count, block);
             memspace_ [ ix_isPrim ][ iy_isPrim ] = memspace;
 
 
@@ -132,7 +135,6 @@ void SmileiIO_Cart2D::createPattern( Params& params, SmileiMPI* smpi )
             stride[1] = 1;
             count[0] = 1;
             count[1] = 1;
-            hsize_t     block[2];
             block[0] = bufsize[0];
             block[1] = bufsize[1];
             H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, stride, count, block);
@@ -178,7 +180,7 @@ void SmileiIO_Cart2D::writeFieldsSingleFileTime( Field* field, hid_t group_id )
 } // END writeFieldsSingleFileTime
 
 
-//! this method writes a field on an hdf5 file should be used just for debug
+//! this method writes a field on an hdf5 file should be used just for debug (doesn't use params.output_dir)
 void SmileiIO_Cart2D::write( Field* field )
 {
     std::vector<unsigned int> isDual = field->isDual_;

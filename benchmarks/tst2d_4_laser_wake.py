@@ -145,7 +145,7 @@ Laser(
 # ---------------------
 
 # print_every (on screen text output) 
-print_every = 10
+print_every = 100
 
 # every for field dump
 fieldDump_every = 500

@@ -107,14 +107,19 @@ public:
             
             // for thermalizing BCs on particles check if thermT is correctly defined
             bool thermTisDefined=false;
+            bool thermVisDefined=false;
             if ( (thisSpecies->bc_part_type_west=="thermalize") || (thisSpecies->bc_part_type_east=="thermalize") ){
                 thermTisDefined=PyTools::extract("thermT",thisSpecies->thermT,"Species",ispec);
                 if (!thermTisDefined) ERROR("thermT needs to be defined for species " <<ispec<< " due to x-BC thermalize");
+                thermVisDefined=PyTools::extract("thermVelocity",thisSpecies->thermVelocity,"Species",ispec);
+                if (!thermVisDefined) ERROR("thermVelocity needs to be defined for species " <<ispec<< " due to x-BC thermalize");
             }
-            if ( (params.nDim_particle==2) && (!thermTisDefined) &&
+            if ( (params.nDim_particle==2) && (!thermTisDefined) && (!thermVisDefined) &&
                 (thisSpecies->bc_part_type_south=="thermalize" || thisSpecies->bc_part_type_north=="thermalize") ) {
                 thermTisDefined=PyTools::extract("thermT",thisSpecies->thermT,"Species",ispec);
                 if (!thermTisDefined) ERROR("thermT needs to be defined for species " <<ispec<< " due to y-BC thermalize");
+                thermVisDefined=PyTools::extract("thermVelocity",thisSpecies->thermVelocity,"Species",ispec);
+                if (!thermTisDefined) ERROR("thermVelocity needs to be defined for species " <<ispec<< " due to y-BC thermalize");
             }
             if (thermTisDefined) {
                 if (thisSpecies->thermT.size()==1) {
@@ -126,6 +131,9 @@ public:
                 thisSpecies->thermT.resize(3);
                 for (unsigned int i=0; i<3;i++)
                     thisSpecies->thermT[i]=0.0;
+                thisSpecies->thermVelocity.resize(3);
+                for (unsigned int i=0; i<3;i++)
+                    thisSpecies->thermVelocity[i]=0.0;
             }
             
             thisSpecies->atomic_number = 0;
@@ -148,29 +156,30 @@ public:
             if( !ok1 && !ok2 ) ERROR("For species '" << species_type << "', must define `nb_density` or `charge_density`.");
             if( ok1 ) thisSpecies->densityProfileType = "nb";
             if( ok2 ) thisSpecies->densityProfileType = "charge";
-            thisSpecies->densityProfile = new Profile(profile1, params.nDim_particle);
+            
+            thisSpecies->densityProfile = new Profile(profile1, params.nDim_particle, thisSpecies->densityProfileType+"_density "+species_type);
             
             // Number of particles per cell
             if( !PyTools::extract_pyProfile("n_part_per_cell", profile1, "Species", ispec))
                 ERROR("For species '" << species_type << "', n_part_per_cell not found or not understood");
-            thisSpecies->ppcProfile = new Profile(profile1, params.nDim_particle);
+            thisSpecies->ppcProfile = new Profile(profile1, params.nDim_particle, "n_part_per_cell "+species_type);
             
             // Charge
             if( !PyTools::extract_pyProfile("charge", profile1, "Species", ispec))
                 ERROR("For species '" << species_type << "', charge not found or not understood");
-            thisSpecies->chargeProfile = new Profile(profile1, params.nDim_particle);
+            thisSpecies->chargeProfile = new Profile(profile1, params.nDim_particle, "charge "+species_type);
             
             // Mean velocity
             PyTools::extract3Profiles("mean_velocity", ispec, profile1, profile2, profile3);
-            thisSpecies->velocityProfile[0] = new Profile(profile1, params.nDim_particle);
-            thisSpecies->velocityProfile[1] = new Profile(profile2, params.nDim_particle);
-            thisSpecies->velocityProfile[2] = new Profile(profile3, params.nDim_particle);
+            thisSpecies->velocityProfile[0] = new Profile(profile1, params.nDim_particle, "mean_velocity[0] "+species_type);
+            thisSpecies->velocityProfile[1] = new Profile(profile2, params.nDim_particle, "mean_velocity[1] "+species_type);
+            thisSpecies->velocityProfile[2] = new Profile(profile3, params.nDim_particle, "mean_velocity[2] "+species_type);
             
             // Temperature
             PyTools::extract3Profiles("temperature", ispec, profile1, profile2, profile3);
-            thisSpecies->temperatureProfile[0] = new Profile(profile1, params.nDim_particle);
-            thisSpecies->temperatureProfile[1] = new Profile(profile2, params.nDim_particle);
-            thisSpecies->temperatureProfile[2] = new Profile(profile3, params.nDim_particle);
+            thisSpecies->temperatureProfile[0] = new Profile(profile1, params.nDim_particle, "temperature[0] "+species_type);
+            thisSpecies->temperatureProfile[1] = new Profile(profile2, params.nDim_particle, "temperature[1] "+species_type);
+            thisSpecies->temperatureProfile[2] = new Profile(profile3, params.nDim_particle, "temperature[2] "+species_type);
             
             
             // CALCULATE USEFUL VALUES
@@ -189,7 +198,7 @@ public:
             thisSpecies->thermalMomentum.resize(3);
             
             if (thermTisDefined) {
-                WARNING("Using thermT[0] for species ispec=" << ispec << " in all directions");
+                WARNING("Using thermT[0] for species " << species_type << " in all directions");
                 if (thisSpecies->thermalVelocity[0]>0.3) {
                     ERROR("for Species#"<<ispec<<" thermalising BCs require ThermT[0]="<<thisSpecies->thermT[0]<<"<<"<<thisSpecies->mass);
                 }
@@ -201,18 +210,22 @@ public:
             
             
             // Extract test Species flag
-            PyTools::extract("isTest",thisSpecies->isTest ,"Species",ispec);
-            thisSpecies->particles.isTestParticles = thisSpecies->isTest;
-            
-            // Verify they don't ionize
-            if (thisSpecies->ionization_model!="none" && thisSpecies->isTest) {
-                ERROR("For species '" << species_type << "', disabled for now : test & ionized");
+            PyTools::extract("isTest", thisSpecies->particles.isTest, "Species", ispec);
+            if (thisSpecies->particles.isTest) {
+                // activate dump (might be changed below)
+                thisSpecies->particles.track_every=1;
             }
             
-            // Define the number of timesteps for dumping test particles
-            if (PyTools::extract("dump_every",thisSpecies->test_dump_every ,"Species",ispec)) {
-                if (thisSpecies->test_dump_every>1 && !thisSpecies->isTest)
-                    WARNING("For species '" << species_type << "', dump_every discarded because not test particles");
+            // check if particles have to be written and thus have to be labelled (Id property)
+            PyTools::extract("track_every",thisSpecies->particles.track_every ,"Species",ispec);
+            
+            if (thisSpecies->particles.isTest && thisSpecies->particles.track_every == 0) {
+                ERROR("For Species " << species_type << " isTest=True but track_every=0");
+            }
+            
+            // Verify they don't ionize
+            if (thisSpecies->ionization_model!="none" && thisSpecies->particles.isTest) {
+                ERROR("For species '" << species_type << "', disabled for now : test & ionized");
             }
             
             // Create the particles
@@ -230,14 +243,14 @@ public:
                 // does a loop over all cells in the simulation
                 // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
                 /*npart_effective = */
-                thisSpecies->createParticles(params.n_space, cell_index, starting_bin_idx, params );
+                thisSpecies->createParticles(params.n_space, cell_index, starting_bin_idx );
                 
                 //PMESSAGE( 1, smpi->getRank(),"Species "<< speciesNumber <<" # part "<< npart_effective );
             }
             
-            // Communicate some stuff if this is a test species
+            // Communicate some stuff if this is a species that has to be dumped (particles have Id)
             // Need to be placed after createParticles()
-            if (thisSpecies->isTest) {
+            if (thisSpecies->particles.track_every) {
                 int locNbrParticles = thisSpecies->getNbrOfParticles();
                 std::vector<int> allNbrParticles(smpi->smilei_sz);
                 MPI_Gather( &locNbrParticles, 1, MPI_INTEGER, &allNbrParticles[0], 1, MPI_INTEGER, 0, MPI_COMM_WORLD );

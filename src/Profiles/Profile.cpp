@@ -17,7 +17,7 @@ double Evaluate3var(PyObject * fun, std::vector<double> x_cell) {
 
 
 // Default constructor.
-Profile::Profile(PyObject* pp, unsigned int nvariables) :
+Profile::Profile(PyObject* pp, unsigned int nvariables, string name) :
 py_profile(pp) {
     
     if (!PyCallable_Check(py_profile)) {
@@ -49,7 +49,7 @@ py_profile(pp) {
             args+=string(PyString_AsString(repr))+" ";
             Py_XDECREF(repr);
         }
-        WARNING ("Profile takes "<< size <<" variables (" << args << ") but it is created with " << nvariables);
+        WARNING ("Profile " << name << " takes "<< size <<" variables (" << args << ") but it is created with " << nvariables);
     }
     
     

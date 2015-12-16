@@ -15,7 +15,7 @@
 #include "DiagnosticProbe.h"
 #include "DiagnosticPhaseSpace.h"
 #include "DiagnosticParticles.h"
-#include "DiagnosticTestParticles.h"
+#include "DiagnosticTrackParticles.h"
 #include "Timer.h"
 
 class Params;
@@ -52,13 +52,7 @@ public:
     DiagnosticProbe probes;
 	DiagnosticPhaseSpace phases;
     std::vector<DiagnosticParticles*> vecDiagnosticParticles;
-    std::vector<DiagnosticTestParticles*> vecDiagnosticTestParticles;
-        
-    void initScalars(Params&, SmileiMPI *smpi);
-    void initProbes(Params&, SmileiMPI *);
-    void initPhases(Params&, SmileiMPI *);
-    void initParticles(Params&, std::vector<Species*>& vecSpecies);
-    void initTestParticles(Params&, std::vector<Species*>&);
+    std::vector<DiagnosticTrackParticles*> vecDiagnosticTrackParticles;
     
     //! field dump output
     unsigned int fieldDump_every;
@@ -68,9 +62,6 @@ public:
     
     //! number of time-steps for time-averaging of fields
     unsigned int ntime_step_avg;
-    
-    //! particle dump output
-    unsigned int particleDump_every;
     
     //! scalar output every scalar_every (namelist group "DiagScalar" key "every")
     unsigned int scalar_every;

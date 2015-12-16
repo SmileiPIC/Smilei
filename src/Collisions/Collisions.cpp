@@ -29,7 +29,8 @@ coulomb_log     (coulomb_log     ),
 intra_collisions(intra_collisions),
 debug_every     (debug_every     ),
 start           (0               ),
-atomic_number   (Z               )
+atomic_number   (Z               ),
+filename("")
 {
     
     // Calculate total number of bins
@@ -37,15 +38,15 @@ atomic_number   (Z               )
     MPI_Allreduce( smpi->isMaster()?MPI_IN_PLACE:&totbins, &totbins, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD);
     
     // if debug requested, prepare hdf5 file
-    fileId = 0;
     if( debug_every>0 ) {
         ostringstream mystream;
         mystream.str("");
         mystream << "Collisions" << n_collisions << ".h5";
-        // Create the HDF5 file 
+        filename = mystream.str();
+        // Create the HDF5 file
         hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
         H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
-        fileId = H5Fcreate(mystream.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid);
+        hid_t fileId = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid);
         H5Pclose(pid);
         // write all parameters as HDF5 attributes
         H5::attr(fileId, "Version", string(__VERSION));
@@ -67,12 +68,9 @@ atomic_number   (Z               )
         // Send the location where to end to the next node
         int end = start+nbins;
         if (smpi->getRank()!=smpi->getSize()-1) MPI_Send( &end, 1, MPI_INTEGER, smpi->getRank()+1, 0, MPI_COMM_WORLD );
+        
+        H5Fclose(fileId);
     }
-}
-
-Collisions::~Collisions()
-{
-    if (fileId != 0) H5Fclose(fileId);
 }
 
 // Reads the input file and creates the Collisions objects accordingly
@@ -334,6 +332,12 @@ void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime
     bool debug = (debug_every > 0 && itime % debug_every == 0); // debug only every N timesteps
     
     if( debug ) {
+        // Open the HDF5 file
+        hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
+        H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
+        hid_t fileId = H5Fopen(filename.c_str(), H5F_ACC_TRUNC, pid);
+        H5Pclose(pid);
+
         // Create H5 group for the current timestep
         name.str("");
         name << "t" << setfill('0') << setw(8) << itime;
@@ -344,6 +348,8 @@ void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime
         logLmean    = new Field2D(outsize);
         //temperature = new Field2D(outsize);
         ncol        = new Field2D(outsize);
+        H5Fclose(fileId);
+
     }
     
     // Loop on bins

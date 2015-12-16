@@ -40,10 +40,9 @@ public:
     
     //! Basic Write of a field in the specified group of the global file
     virtual void writeFieldsSingleFileTime( Field* field, hid_t group_id ) = 0;
-    
-    //! Each MPI process writes is particles in its own file
-    //! Disabled for now, replaced by dump (used for restart)
-    void writePlasma( std::vector<Species*> vecSpecies, double time, SmileiMPI* smpi );
+
+    bool global_output_file_;
+
     
     //! Id of "Fields.h5", contains all fields per timestep
     hid_t global_file_id_;
@@ -53,18 +52,6 @@ public:
     
     //! Property list for collective dataset write, set for // IO.
     hid_t write_plist;
-    
-    //! Id of "particles-mpirank.h5", contains particles of current mpirank
-    //! Disabled for now
-    hid_t  partFile_id;
-    
-#ifdef _IO_PARTICLE
-    //! Particles output in progress
-    std::vector<hid_t> partDataset_id;
-    //unsigned int nDatasetSpecies;
-    hid_t partMemSpace;
-    int particleSize;
-#endif
     
     //! Basic write field on its own file (debug)
     virtual void write( Field* field ) = 0;
@@ -81,12 +68,12 @@ public:
     //! test before writing everything to file per processor
     bool dump(ElectroMagn* EMfields, unsigned int itime,  std::vector<Species*> vecSpecies, SmileiMPI* smpi, SimWindow* simWin,  Params &params, Diagnostic &diags);
 
-    void initWriteTestParticles(Species* species, int ispec, int itime, Params& params, SmileiMPI* smpi);
-    void writeTestParticles(Species* species, int ispec, int itime, Params& params, SmileiMPI* smpi);
+//    void initWriteTestParticles(Species* species, int ispec, int itime, Params& params, SmileiMPI* smpi);
+//    void writeTestParticles(Species* species, int ispec, int itime, Params& params, SmileiMPI* smpi);
 
-    template <class T> void appendTestParticles(hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type );
+//    template <class T> void appendTestParticles(hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type );
 
-    template <class T> void appendTestParticles0( hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type);
+//    template <class T> void appendTestParticles0( hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type);
         
     //! this static variable is defined (in the .cpp) as false but becomes true when
     //! the signal SIGUSR1 is captured by the signal_callback_handler fnction
@@ -141,13 +128,10 @@ private:
     //! keep the last dump_file_sequence dump files
     unsigned int dump_file_sequence;
     
-    //! write dump drectory
-    std::string dump_dir;
-    
     //! int deflate dump value
     int dump_deflate;
     
-    //! write dump drectory
+    //! restart dump directory (default: .)
     std::string restart_dir;
     
     std::vector<MPI_Request> dump_request;

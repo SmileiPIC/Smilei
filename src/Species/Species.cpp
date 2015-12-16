@@ -8,6 +8,9 @@
 
 #include <omp.h>
 
+// IDRIS
+#include <cstring>
+// IDRIS
 #include "PusherFactory.h"
 #include "IonizationFactory.h"
 #include "PartBoundCond.h"
@@ -41,8 +44,6 @@ c_part_max(1),
 dynamics_type("norm"),
 time_frozen(0),
 radiating(false),
-isTest(false),
-test_dump_every(1),
 ionization_model("none"),
 velocityProfile(3,NULL),
 temperatureProfile(3,NULL),
@@ -50,8 +51,11 @@ electron_species(NULL),
 clrw(params.clrw),
 oversize(params.oversize),
 cell_length(params.cell_length),
+//species_param(params.species_param[ispec]),
+//velocityProfile(3,(Profile * )NULL),
+//temperatureProfile(3,(Profile * )NULL),
 partBoundCond(NULL),
-ndim(params.nDim_particle),
+nDim_particle(params.nDim_particle),
 min_loc(smpi->getDomainLocalMin(0))
 {
     
@@ -66,7 +70,7 @@ min_loc(smpi->getDomainLocalMin(0))
     // Arrays of the min and max indices of the particle bins
     bmin.resize(params.n_space[0]/clrw);
     bmax.resize(params.n_space[0]/clrw);
-    if (ndim == 3){
+    if (nDim_particle == 3){
         bmin.resize(params.n_space[0]/clrw*params.n_space[1]);
         bmax.resize(params.n_space[0]/clrw*params.n_space[1]);
     }
@@ -79,19 +83,19 @@ min_loc(smpi->getDomainLocalMin(0))
     f_dim1 =  params.n_space[1] + 2 * oversize[1] +1;
     f_dim2 =  params.n_space[2] + 2 * oversize[2] +1;
     
-    if (ndim == 1){
+    if (nDim_particle == 1){
         b_dim0 =  (1 + clrw) + 2 * oversize[0];
         b_dim1 =  1;
         b_dim2 =  1;
         b_lastdim = b_dim0;
     }
-    if (ndim == 2){
+    if (nDim_particle == 2){
         b_dim0 =  (1 + clrw) + 2 * oversize[0]; // There is a primal number of bins.
         b_dim1 =  f_dim1;
         b_dim2 =  1;
         b_lastdim = b_dim1;
     }
-    if (ndim == 3){
+    if (nDim_particle == 3){
         b_dim0 =  (1 + clrw) + 2 * oversize[0]; // There is a primal number of bins.
         b_dim1 = f_dim1;
         b_dim2 = f_dim2;
@@ -191,10 +195,10 @@ void Species::initCharge(unsigned int nPart, unsigned int iPart, double q)
 //   - either using regular distribution in the mesh (initPosition_type = regular)
 //   - or using uniform random distribution (initPosition_type = random)
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::initPosition(unsigned int nPart, unsigned int iPart, double *indexes, unsigned int ndim )
+void Species::initPosition(unsigned int nPart, unsigned int iPart, double *indexes)
 {
     for (unsigned  p= iPart; p<iPart+nPart; p++) {
-        for (unsigned  i=0; i<ndim ; i++) {
+        for (unsigned  i=0; i<nDim_particle ; i++) {
             
             // define new position (either regular or random)
             if (initPosition_type == "regular") {
@@ -288,15 +292,14 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
     
     // Adding the mean velocity (using relativistic composition)
     // ---------------------------------------------------------
-    if ( (vel[0]!=0.0) || (vel[1]!=0.0) || (vel[2]!=0.0) ){
+    double vx, vy, vz, v2, g, gm1, Lxx, Lyy, Lzz, Lxy, Lxz, Lyz, gp, px, py, pz;
+    // mean-velocity
+    vx  = -vel[0];
+    vy  = -vel[1];
+    vz  = -vel[2];
+    v2  = vx*vx + vy*vy + vz*vz;
+    if ( v2>0. ){
         
-        double vx, vy, vz, v2, g, gm1, Lxx, Lyy, Lzz, Lxy, Lxz, Lyz, gp, px, py, pz;
-        
-        // mean-velocity
-        vx  = -vel[0];
-        vy  = -vel[1];
-        vz  = -vel[2];
-        v2  = vx*vx + vy*vy + vz*vz;
         g   = 1.0/sqrt(1.0-v2);
         gm1 = g - 1.0;
         
@@ -339,7 +342,6 @@ void Species::dynamics(double time_dual, ElectroMagn* EMfields, Interpolator* In
                        Projector* Proj, SmileiMPI *smpi, Params &params, SimWindow* simWindow, vector<PartWall*> vecPartWall)
 {
     
-//    HEREIAM("Inside " << time_dual << " " << speciesNumber);
     Interpolator* LocInterp = InterpolatorFactory::create(params, smpi);
     
     // Electric field at the particle position
@@ -425,8 +427,8 @@ void Species::dynamics(double time_dual, ElectroMagn* EMfields, Interpolator* In
                     nrj_lost_per_thd[tid] += mass * ener_iPart;
                 }
                 
-                if (!particles.isTestParticles) {
-                    if (ndim <= 2) {
+                if (!particles.isTest) {
+                    if (nDim_particle <= 2) {
                         (*Proj)(b_Jx, b_Jy, b_Jz, b_rho, particles, iPart, gf, ibin*clrw, b_lastdim);
                     } else {
                         (*Proj)(EMfields->Jx_s[speciesNumber], EMfields->Jy_s[speciesNumber], EMfields->Jz_s[speciesNumber],
@@ -436,9 +438,9 @@ void Species::dynamics(double time_dual, ElectroMagn* EMfields, Interpolator* In
             }//iPart
             
             // Copy buffer back to the global array and free buffer****************
-            if (!particles.isTestParticles) {
+            if (!particles.isTest) {
                 // this part is dimension dependant !! this is for dim = 1
-                if (ndim == 1) {
+                if (nDim_particle == 1) {
                     for (i = 0; i < b_dim0 ; i++) {
                         //! \todo Should we care about primal - dual sizes here ?
                         iloc = ibin*clrw + i ;
@@ -451,8 +453,8 @@ void Species::dynamics(double time_dual, ElectroMagn* EMfields, Interpolator* In
 #pragma omp atomic
                         (*EMfields->rho_s[speciesNumber])(iloc) += b_rho[i];
                     }
-                } // End if (ndim == 1)
-                if (ndim == 2) {
+                } // End if (nDim_particle == 1)
+                if (nDim_particle == 2) {
                     for (i = 0; i < 2*oversize[0]+1 ; i++) {
                         iloc = ibin*clrw + i ;
                         //! \todo Here b_dim0 is the dual size. Make sure no problems arise when i == b_dim0-1 for primal arrays.
@@ -491,10 +493,11 @@ void Species::dynamics(double time_dual, ElectroMagn* EMfields, Interpolator* In
                             (*EMfields->rho_s[speciesNumber])(iloc*(f_dim1  )+j) += b_rho[i*b_dim1+j];   // primal along y
                         }
                     }
-                } // End if (ndim == 2)
-            } // if (!particles.isTestParticles)
+                } // End if (nDim_particle == 2)
+            } // if (!particles.isTest)
         }// ibin
         free(b_Jx);
+
         
 #pragma omp master
 {
@@ -504,9 +507,6 @@ void Species::dynamics(double time_dual, ElectroMagn* EMfields, Interpolator* In
         if (Ionize && electron_species) {
 #pragma omp master // looks like this is needed for openmp to be che    cked
             {
-                if (Ionize->new_electrons.size()) {
-                    HEREIAM("Ionize electron " << Ionize->new_electrons.size() << " of " << Ionize->new_electrons.capacity());
-                }
             for (unsigned int i=0; i < Ionize->new_electrons.size(); i++) {
                 // electron_species->particles.push_back(Ionize->new_electrons[i]);
                 
@@ -530,7 +530,7 @@ void Species::dynamics(double time_dual, ElectroMagn* EMfields, Interpolator* In
             }
         }
     }
-    else if (!particles.isTestParticles) { // immobile particle (at the moment only project density)
+    else if (!particles.isTest) { // immobile particle (at the moment only project density)
 //#pragma omp for schedule (runtime)
 #pragma omp master
 {
@@ -542,8 +542,6 @@ void Species::dynamics(double time_dual, ElectroMagn* EMfields, Interpolator* In
 
 #pragma omp barrier
     delete LocInterp;
-    
-//    HEREIAM("Outside " << time_dual << " " << speciesNumber);
 
 }//END dynamic
 
@@ -558,7 +556,7 @@ void Species::dump(std::ofstream& ofile)
     for (unsigned int i=0; i<particles.size(); i++ )
     {
         ofile << i ;
-        for (unsigned int m=0; m<ndim; m++) ofile << "\t" << particles.position(m,i);
+        for (unsigned int m=0; m<nDim_particle; m++) ofile << "\t" << particles.position(m,i);
         for (unsigned int m=0; m<3; m++)    ofile << "\t" << particles.momentum(m,i);
         ofile << "\t" << particles.weight(i); //<< "\t" << Push->getMass() << "\t" << Push->getCharge();
         ofile << endl;
@@ -689,11 +687,11 @@ void Species::defineNewCells(unsigned int shift, SmileiMPI *smpi, Params& params
     n_space_created[2] = params.n_space[2];
     
     //unsigned int npart_effective = 
-    createParticles(n_space_created, cell_index, new_bin_idx, params );
+    createParticles(n_space_created, cell_index, new_bin_idx );
 }
 
 
-int Species::createParticles(vector<unsigned int> n_space_to_create, vector<double> cell_index, int new_bin_idx, Params& params  )
+int Species::createParticles(vector<unsigned int> n_space_to_create, vector<double> cell_index, int new_bin_idx)
 {
     // ---------------------------------------------------------
     // Calculate density and number of particles for the species
@@ -775,13 +773,12 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
     //     particles.create_particles(npart_effective);
     // else {
     //    // reserve included in initialize if particles emty
-    //    particles.reserve(round( c_part_max * npart_effective ), ndim);
+    //    particles.reserve(round( c_part_max * npart_effective ), nDim_particle);
     //    particles.initialize(n_existing_particles+npart_effective, params_->nDim_particle);
     // }
     
     int n_existing_particles = particles.size();
-    particles.initialize(n_existing_particles+npart_effective, params.nDim_particle);
-    
+    particles.initialize(n_existing_particles+npart_effective, nDim_particle);
     
     // define Maxwell-Juettner related quantities
     // ------------------------------------------
@@ -819,7 +816,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
     // ------------------------------------------
     unsigned int nPart;
     unsigned int iPart=n_existing_particles;
-    double *indexes=new double[ndim];
+    double *indexes=new double[nDim_particle];
     double *temp=new double[3];
     double *vel=new double[3];
     
@@ -867,14 +864,14 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
                     nPart = n_part_in_cell(i,j,k);
                     
                     indexes[0]=i*cell_length[0]+cell_index[0];
-                    if (ndim > 1) {
+                    if (nDim_particle > 1) {
                         indexes[1]=j*cell_length[1]+cell_index[1];
-                        if (ndim > 2) {
+                        if (nDim_particle > 2) {
                             indexes[2]=k*cell_length[2]+cell_index[2];
-                        }//ndim > 2
-                    }//ndim > 1
+                        }//nDim_particle > 2
+                    }//nDim_particle > 1
                     
-                    initPosition(nPart, iPart, indexes, ndim);
+                    initPosition(nPart, iPart, indexes);
                     
                     initMomentum(nPart,iPart, temp, vel, max_jutt_cumul);
                     
@@ -897,13 +894,13 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
     // Recalculate former position using the particle velocity
     // (necessary to calculate currents at time t=0 using the Esirkepov projection scheme)
     for (int iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++) {
-        /*897 for (int i=0; i<(int)ndim; i++) {
+        /*897 for (int i=0; i<(int)nDim_particle; i++) {
             particles.position_old(i,iPart) -= particles.momentum(i,iPart)/particles.lor_fac(iPart) * params.timestep;
         }897*/
         nrj_new_particles += particles.weight(iPart)*(particles.lor_fac(iPart)-1.0);
     }
     
-    if (particles.isTestParticles)
+    if (particles.track_every)
         particles.setIds();
 
     return npart_effective;

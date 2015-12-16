@@ -55,8 +55,11 @@ public:
     //! atomic number
     unsigned int atomic_number;
     
-    //! thermalizing temperature [\f$m_e c^2\f$]
+    //! thermalizing temperature for thermalizing BCs [\f$m_e c^2\f$]
     std::vector<double> thermT;
+    //! mean velocity used when thermalizing BCs are used [\f$c\f$]
+    std::vector<double> thermVelocity;
+    
     //! thermal velocity [\f$c\f$]
     std::vector<double> thermalVelocity;
     //! thermal momentum [\f$m_e c\f$]
@@ -70,12 +73,6 @@ public:
     
     //! logical true if particles radiate
     bool radiating;
-    
-    //! logical true if particles radiate
-    bool isTest;
-    
-    //! dump every for test particles
-    unsigned int test_dump_every;
     
     //! Boundary conditions for particules
     std::string bc_part_type_west;
@@ -131,7 +128,7 @@ public:
                           std::vector<PartWall*> vecPartWall);
     
     //! Method used to initialize the Particle position in a given cell
-    void initPosition(unsigned int, unsigned int, double *, unsigned int);
+    void initPosition(unsigned int, unsigned int, double *);
     
     //! Method used to initialize the Particle 3d momentum in a given cell
     void initMomentum(unsigned int, unsigned int, double *, double *, std::vector<double>&);
@@ -198,8 +195,8 @@ public:
     }
     
     inline int getMemFootPrint() {
-        int speciesSize  = ( 2*ndim + 3 + 1 )*sizeof(double) + sizeof(short);
-        if ( particles.isTestParticles )
+        int speciesSize  = ( 2*nDim_particle + 3 + 1 )*sizeof(double) + sizeof(short);
+        if ( particles.isTest )
             speciesSize += sizeof ( unsigned int );
         //speciesSize *= getNbrOfParticles();
         speciesSize *= getParticlesCapacity();
@@ -207,7 +204,7 @@ public:
     }
     
     //! Method to create new particles.
-    int  createParticles(std::vector<unsigned int> n_space_to_create, std::vector<double> cell_index, int new_bin_idx,  Params& param);
+    int  createParticles(std::vector<unsigned int> n_space_to_create, std::vector<double> cell_index, int new_bin_idx);
     
     //! Boundary condition for the Particles of the considered Species
     PartBoundCond* partBoundCond;
@@ -227,7 +224,7 @@ private:
     double dE;
     
     //! Number of spatial dimension for the particles
-    unsigned int ndim;
+    unsigned int nDim_particle;
     
     //! Local minimum of MPI domain
     double min_loc;

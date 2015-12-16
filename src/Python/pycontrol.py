@@ -17,15 +17,15 @@ def _smilei_check():
             if not CheckClass.verify: raise
         except:
             raise Exception("ERROR in the namelist: it seems that the name `"+CheckClassName+"` has been overriden")
-    
-    if dump_step and dump_dir:
-        if not os.path.exists(dump_dir):
+
+    if smilei_mpi_rank == 0 and output_dir:
+        if not os.path.exists(output_dir):
             try:
-                os.makedirs(dump_dir)
+                os.makedirs(output_dir)
             except OSError as exception:
-                raise Exception("ERROR in the namelist: dump_dir "+dump_dir+" does not exists and cannot be created")
-        elif not os.path.isdir(dump_dir):
-                raise Exception("ERROR in the namelist: dump_dir "+dump_dir+" exists and is not a dir")
+                raise Exception("ERROR in the namelist: output_dir "+output_dir+" does not exists and cannot be created")
+        elif not os.path.isdir(output_dir):
+                raise Exception("ERROR in the namelist: output_dir "+output_dir+" exists and is not a dir")
 
     if restart and restart_dir:
         if not os.path.isdir(restart_dir):
