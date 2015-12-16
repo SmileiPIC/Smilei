@@ -311,7 +311,7 @@ void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime
     unsigned int npairs; // number of pairs of macro-particles
     vector<unsigned int> np1, np2; // numbers of macro-particles in each species, in each group
     double n1, n2, n12, n123, n223; // densities of particles
-    unsigned int i1, i2, ispec1, ispec2;
+    unsigned int i1, i2, ispec1, ispec2, N2max;
     Species   *s1, *s2;
     Particles *p1, *p2;
     double m1, m2, m12, W1, W2, qqm, qqm2, gamma1, gamma2, gamma12, gamma12_inv,
@@ -320,7 +320,7 @@ void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime
            vcv1, vcv2, px_COM, py_COM, pz_COM, p2_COM, p_COM, gamma1_COM, gamma2_COM,
            logL, bmin, s, vrel, smax,
            cosX, sinX, phi, sinXcosPhi, sinXsinPhi, p_perp, inv_p_perp, 
-           newpx_COM, newpy_COM, newpz_COM, U, vcp;
+           newpx_COM, newpy_COM, newpz_COM, U, vcp, n_cluster_per_cell;
     Field2D *smean=NULL, *logLmean=NULL, *ncol=NULL;//, *temperature
     ostringstream name;
     hid_t did(0);
@@ -337,7 +337,7 @@ void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime
         H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
         hid_t fileId = H5Fopen(filename.c_str(), H5F_ACC_TRUNC, pid);
         H5Pclose(pid);
-
+        
         // Create H5 group for the current timestep
         name.str("");
         name << "t" << setfill('0') << setw(8) << itime;
@@ -349,8 +349,14 @@ void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime
         //temperature = new Field2D(outsize);
         ncol        = new Field2D(outsize);
         H5Fclose(fileId);
-
+        
     }
+    
+    // Initialize some stuff
+    twoPi = 2. * M_PI;
+    coeff1 = M_PI*6.62606957e-34/(9.10938215e-31*299792458.*params.wavelength_SI); // h/(2*me*c*normLength) = pi*h/(me*c*wavelength)
+    coeff2 = twoPi*2.817940327e-15/params.wavelength_SI; // re/normLength = 2*pi*re/wavelength
+    n_cluster_per_cell = 1./((double)params.n_cell_per_cluster);
     
     // Loop on bins
     for (unsigned int ibin=0 ; ibin<nbins ; ibin++) {
@@ -399,12 +405,14 @@ void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime
         if (intra_collisions) { // In the case of collisions within one species
             npairs = (int) ceil(((double)npart1)/2.); // half as many pairs as macro-particles
             index2.resize(npairs);
-            for (unsigned int i=0; i<npairs; i++) index2[i] = index1[i+npart1-npairs]; // index2 is second half
+            for (unsigned int i=0; i<npairs; i++) index2[i] = index1[(i+npairs)%npart1]; // index2 is second half
             index1.resize(npairs); // index1 is first half
+            N2max = npart1 - npairs; // number of not-repeated particles (in group 2 only)
         } else { // In the case of collisions between two species
             npairs = npart1; // as many pairs as macro-particles in group 1 (most numerous)
             index2.resize(npairs);
             for (unsigned int i=0; i<npart1; i++) index2[i] = i % npart2;
+            N2max = npart2; // number of not-repeated particles (in group 2 only)
         }
         
         // Prepare the ionization
@@ -428,26 +436,25 @@ void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime
             p2 = &(vecSpecies[(*sg2)[ispec2]]->particles);
             // sum weights
             n1  += p1->weight(i1);
-            n2  += p2->weight(i2);
+            if( i2<N2max ) n2  += p2->weight(i2); // special case for group 2 to avoid repeated particles
             n12 += min( p1->weight(i1), p2->weight(i2) );
             // Same for ionization
-            Ionization->prepare2(p1, i1, p2, i2);
+            Ionization->prepare2(p1, i1, p2, i2, N2max);
         }
         if( intra_collisions ) { n1 += n2; n2 = n1; }
-        n1  /= params.n_cell_per_cluster;
-        n2  /= params.n_cell_per_cluster;
-        n12 /= params.n_cell_per_cluster;
+        n1  *= n_cluster_per_cell;
+        n2  *= n_cluster_per_cell;
+        n12 *= n_cluster_per_cell;
         
         // Pre-calculate some numbers before the big loop
-        n123 = pow(n1,2./3.); n223 = pow(n2,2./3.);
-        twoPi = 2. * M_PI;
-        coeff1 = M_PI*6.62606957e-34/(9.10938215e-31*299792458.*params.wavelength_SI); // h/(2*me*c*normLength) = pi*h/(me*c*wavelength)
-        coeff2 = 2.*M_PI*2.817940327e-15/params.wavelength_SI; // re/normLength = 2*pi*re/wavelength
-        coeff3 = coeff2 * params.timestep * n1*n2/n12;
-        coeff4 = pow( 3.*coeff2 , -1./3. ) * params.timestep * n1*n2/n12;
+        n123 = pow(n1,2./3.);
+        n223 = pow(n2,2./3.);
+        coeff3 = params.timestep * n1*n2/n12;
+        coeff4 = pow( 3.*coeff2 , -1./3. ) * coeff3;
+        coeff3 *= coeff2;
         
         // Prepare the ionization
-        Ionization->prepare3(params.timestep, params.n_cell_per_cluster, npart1, npart2);
+        Ionization->prepare3(params.timestep, n_cluster_per_cell);
         
         if( debug ) {
             smean      ->data_2D[ibin][0] = 0.;

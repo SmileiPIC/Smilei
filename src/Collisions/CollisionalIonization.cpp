@@ -79,7 +79,7 @@ CollisionalIonization::CollisionalIonization(int Z, double wavelength_SI, Smilei
 
 
 // Methods to prepare the ionization
-void CollisionalIonization::prepare2(Particles *p1, int i1, Particles *p2, int i2)
+void CollisionalIonization::prepare2(Particles *p1, int i1, Particles *p2, int i2, int N2max)
 {
     static double E; // electron energy
     static double We, Wi; // weights
@@ -87,46 +87,39 @@ void CollisionalIonization::prepare2(Particles *p1, int i1, Particles *p2, int i
     if( electronFirst ) {
         E = sqrt(1. + pow(p1->momentum(0,i1),2)+pow(p1->momentum(1,i1),2)+pow(p1->momentum(2,i1),2))-1.;
         Zstar = p2->charge(i2);
-        We = p1->weight(i1);
-        Wi = p2->weight(i2);
     } else {
         E = sqrt(1. + pow(p2->momentum(0,i2),2)+pow(p2->momentum(1,i2),2)+pow(p2->momentum(2,i2),2))-1.;
         Zstar = p1->charge(i1);
-        Wi = p1->weight(i1);
-        We = p2->weight(i2);
     }
     if( Zstar>=atomic_number ) return;
     // retrieve cross section
     x = a2*log(a1*E);
     if( x<0. ) x = 0.;
-    if( x>npointsm1 ) x = npointsm1;
+    else if( x>npointsm1 ) x = npointsm1;
     cs = crossSection[Zstar][ int(x) ];
     // Calculate hybrid density
-    if( cs>0. ) {
-        ni += Wi;
-        ne  += We;
-        nei += We<Wi ? We : Wi; // only pairs that can ionize
+    if( cs>0. ) { // only pairs that can ionize
+        if( electronFirst ) {
+            We = p1->weight(i1);
+            Wi = p2->weight(i2);
+            ne += We;
+            if( i2<N2max ) ni += Wi;
+        } else {
+            Wi = p1->weight(i1);
+            We = p2->weight(i2);
+            ni += Wi;
+            if( i2<N2max ) ne += We;
+        }
+        nei += We<Wi ? We : Wi;
     }
 }
-void CollisionalIonization::prepare3(double timestep, int n_cell_per_cluster,
-    unsigned int npart1, unsigned int npart2)
+void CollisionalIonization::prepare3(double timestep, int n_cluster_per_cell)
 {
-    // Finish calculating densities
-    double NeNi;
-    if( electronFirst ) {
-        NeNi = (double)npart1 / (double)npart2;
-    } else {
-        NeNi = (double)npart2 / (double)npart1;
-    }
-    // correction for uneven number of particles
-    if( NeNi<1. ) { ne *= NeNi; }
-    else          { ni /= NeNi; }
-    
     // Calculate the coeff used later for ionization probability
-    if( nei<=0. || n_cell_per_cluster==0 ) {
+    if( nei<=0. ) {
         coeff = 0.;
     } else {
-        coeff = ne*ni/nei * timestep / (double)n_cell_per_cluster;
+        coeff = ne*ni/nei * timestep * n_cluster_per_cell;
     }
 }
 
