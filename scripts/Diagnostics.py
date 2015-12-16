@@ -332,11 +332,11 @@ class Units(object):
 		self.UnitRegistry = None
 		try:
 			from pint import UnitRegistry
+			self.UnitRegistry = UnitRegistry
 		except:
 			print "WARNING: you do not have the *pint* package, so you cannot modify units."
 			print "       : The results will stay in code units."
 			return
-		self.UnitRegistry = UnitRegistry
 	
 	def _divide(self,units1, units2):
 		division = self.ureg("("+units1+") / ("+units2+")").to_base_units()
@@ -356,7 +356,7 @@ class Units(object):
 					try   : return self._divide(knownUnits,units)
 					except: pass
 			val = self.ureg(knownUnits)
-			return val.magnitude or 1., u"{0.units:P}".format(val)
+			return 1., u"{0.units:P}".format(val)
 		return 1., ""
 	
 	def prepare(self, wavelength_SI=None, xunits="", yunits="", vunits="", tunits=""):
