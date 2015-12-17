@@ -44,10 +44,9 @@ filename("")
         mystream << "Collisions" << n_collisions << ".h5";
         filename = mystream.str();
         // Create the HDF5 file
-        hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
-        H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
-        hid_t fileId = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid);
-        H5Pclose(pid);
+        file_access = H5Pcreate(H5P_FILE_ACCESS);
+        H5Pset_fapl_mpio(file_access, MPI_COMM_WORLD, MPI_INFO_NULL);
+        hid_t fileId = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, file_access);
         // write all parameters as HDF5 attributes
         H5::attr(fileId, "Version", string(__VERSION));
         mystream.str("");
@@ -72,6 +71,12 @@ filename("")
         H5Fclose(fileId);
     }
 }
+
+Collisions::~Collisions()
+{
+    H5Pclose(file_access);
+}
+
 
 // Reads the input file and creates the Collisions objects accordingly
 vector<Collisions*> Collisions::create(Params& params, vector<Species*>& vecSpecies, SmileiMPI* smpi)
@@ -322,8 +327,6 @@ void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime
            cosX, sinX, phi, sinXcosPhi, sinXsinPhi, p_perp, inv_p_perp, 
            newpx_COM, newpy_COM, newpz_COM, U, vcp, n_cluster_per_cell;
     Field2D *smean=NULL, *logLmean=NULL, *ncol=NULL;//, *temperature
-    ostringstream name;
-    hid_t did(0);
     
     sg1 = &species_group1;
     sg2 = &species_group2;
@@ -332,24 +335,12 @@ void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime
     bool debug = (debug_every > 0 && itime % debug_every == 0); // debug only every N timesteps
     
     if( debug ) {
-        // Open the HDF5 file
-        hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
-        H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
-        hid_t fileId = H5Fopen(filename.c_str(), H5F_ACC_TRUNC, pid);
-        H5Pclose(pid);
-        
-        // Create H5 group for the current timestep
-        name.str("");
-        name << "t" << setfill('0') << setw(8) << itime;
-        did = H5::group(fileId, name.str());
         // Prepare storage arrays
         vector<unsigned int> outsize(2); outsize[0]=nbins; outsize[1]=1;
         smean       = new Field2D(outsize);
         logLmean    = new Field2D(outsize);
         //temperature = new Field2D(outsize);
         ncol        = new Field2D(outsize);
-        H5Fclose(fileId);
-        
     }
     
     // Initialize some stuff
@@ -604,15 +595,26 @@ void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime
     Ionization->finish(vecSpecies[(*sg1)[0]], vecSpecies[(*sg2)[0]], params);
     
     if( debug ) {
+        // Open the HDF5 file
+        hid_t fileId = H5Fopen(filename.c_str(), H5F_ACC_RDWR, file_access);
+        // Create H5 group for the current timestep
+        ostringstream name("");
+        name << "t" << setfill('0') << setw(8) << itime;
+        hid_t did(0);
+        did = H5::group(fileId, name.str());
+        // Store the s parameter
         name.str("");
         name << "/t" << setfill('0') << setw(8) << itime << "/s";
         H5::matrix_MPI(did, name.str(), smean      ->data_2D[0][0], (int)totbins, 1, (int)start, (int)nbins);
+        // Store the coulomb logarithm
         name.str("");
         name << "/t" << setfill('0') << setw(8) << itime << "/coulomb_log";
         H5::matrix_MPI(did, name.str(), logLmean   ->data_2D[0][0], (int)totbins, 1, (int)start, (int)nbins);
+        // Store the temperature
         //name.str("");
         //name << "/t" << setfill('0') << setw(8) << itime << "/temperature";
         //H5::matrix_MPI(did, name.str(), temperature->data_2D[0][0], (int)totbins, 1, (int)start, (int)nbins);
+        // Store the debye length
         if(debye_length_squared.size()>0) {
             // We reuse the smean array for the debye length
             for(unsigned int i=0; i<nbins; i++)
@@ -623,6 +625,8 @@ void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime
         }
         // Close the group
         H5Gclose(did);
+        // Close the file
+        H5Fclose(fileId);
     }
 
 }
