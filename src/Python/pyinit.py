@@ -107,6 +107,7 @@ class Collisions(SmileiComponent):
     species2 = None
     coulomb_log = 0.
     debug_every = 0
+    ionizing = False
 
 
 #diagnostics

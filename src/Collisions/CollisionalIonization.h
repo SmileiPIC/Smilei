@@ -27,8 +27,8 @@ public:
         electronFirst = Z_firstgroup==0 ? true : false;
         ne = 0.; ni = 0.; nei = 0.;
         };
-    virtual void prepare2(Particles *p1, int i1, Particles *p2, int i2, int N2max);
-    virtual void prepare3(double, int);
+    virtual void prepare2(Particles *p1, int i1, Particles *p2, int i2, bool);
+    virtual void prepare3(double, int, int, int);
     //! Method to apply the ionization
     virtual void apply(double, double, Particles *p1, int i1, Particles *p2, int i2);
     
@@ -80,8 +80,8 @@ public:
     CollisionalNoIonization() : CollisionalIonization(0,1.,NULL) {};
     ~CollisionalNoIonization(){};
     
-    void prepare2(Particles*, int, Particles*, int, int){};
-    void prepare3(double, int){};
+    void prepare2(Particles*, int, Particles*, int, bool){};
+    void prepare3(double, int, int, int){};
     void apply(double, double, Particles*, int, Particles*, int){};
     
     //! Temporary stuff before patches arrive

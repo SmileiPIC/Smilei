@@ -3,6 +3,7 @@ execfile("../../scripts/Diagnostics.py")
 import numpy as np
 import matplotlib.pyplot as plt
 ln = np.log
+plt.ion()
 
 D = []
 colors = ["k", "r", "g", "b", "m"]

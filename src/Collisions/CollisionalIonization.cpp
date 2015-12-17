@@ -79,7 +79,8 @@ CollisionalIonization::CollisionalIonization(int Z, double wavelength_SI, Smilei
 
 
 // Methods to prepare the ionization
-void CollisionalIonization::prepare2(Particles *p1, int i1, Particles *p2, int i2, int N2max)
+void CollisionalIonization::prepare2(Particles *p1, int i1, Particles *p2, int i2,
+    bool not_duplicated_particle)
 {
     static double E; // electron energy
     static double We, Wi; // weights
@@ -87,9 +88,13 @@ void CollisionalIonization::prepare2(Particles *p1, int i1, Particles *p2, int i
     if( electronFirst ) {
         E = sqrt(1. + pow(p1->momentum(0,i1),2)+pow(p1->momentum(1,i1),2)+pow(p1->momentum(2,i1),2))-1.;
         Zstar = p2->charge(i2);
+        Wi = p2->weight(i2);
+        if( not_duplicated_particle ) ni += Wi;
     } else {
         E = sqrt(1. + pow(p2->momentum(0,i2),2)+pow(p2->momentum(1,i2),2)+pow(p2->momentum(2,i2),2))-1.;
         Zstar = p1->charge(i1);
+        Wi = p1->weight(i1);
+        ni += Wi;
     }
     if( Zstar>=atomic_number ) return;
     // retrieve cross section
@@ -101,19 +106,15 @@ void CollisionalIonization::prepare2(Particles *p1, int i1, Particles *p2, int i
     if( cs>0. ) { // only pairs that can ionize
         if( electronFirst ) {
             We = p1->weight(i1);
-            Wi = p2->weight(i2);
             ne += We;
-            if( i2<N2max ) ni += Wi;
         } else {
-            Wi = p1->weight(i1);
             We = p2->weight(i2);
-            ni += Wi;
-            if( i2<N2max ) ne += We;
+            if( not_duplicated_particle ) ne += We;
         }
         nei += We<Wi ? We : Wi;
     }
 }
-void CollisionalIonization::prepare3(double timestep, int n_cluster_per_cell)
+void CollisionalIonization::prepare3(double timestep, int n_cluster_per_cell, int npart1, int npart2)
 {
     // Calculate the coeff used later for ionization probability
     if( nei<=0. ) {

@@ -74,7 +74,7 @@ filename("")
 
 Collisions::~Collisions()
 {
-    H5Pclose(file_access);
+    if( debug_every>0 ) { H5Pclose(file_access); }
 }
 
 
@@ -326,6 +326,7 @@ void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime
            logL, bmin, s, vrel, smax,
            cosX, sinX, phi, sinXcosPhi, sinXsinPhi, p_perp, inv_p_perp, 
            newpx_COM, newpy_COM, newpz_COM, U, vcp, n_cluster_per_cell;
+    bool not_duplicated_particle;
     Field2D *smean=NULL, *logLmean=NULL, *ncol=NULL;//, *temperature
     
     sg1 = &species_group1;
@@ -419,6 +420,7 @@ void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime
             for (ispec1=0 ; i1>=np1[ispec1]; ispec1++) i1 -= np1[ispec1];
             i1 += bmin1[ispec1];
             // find species and index i2 of particle "2"
+            not_duplicated_particle = (i<N2max);
             i2 = index2[i];
             for (ispec2=0 ; i2>=np2[ispec2]; ispec2++) i2 -= np2[ispec2];
             i2 += bmin2[ispec2];
@@ -427,10 +429,10 @@ void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime
             p2 = &(vecSpecies[(*sg2)[ispec2]]->particles);
             // sum weights
             n1  += p1->weight(i1);
-            if( i2<N2max ) n2  += p2->weight(i2); // special case for group 2 to avoid repeated particles
+            if( not_duplicated_particle ) n2  += p2->weight(i2); // special case for group 2 to avoid repeated particles
             n12 += min( p1->weight(i1), p2->weight(i2) );
             // Same for ionization
-            Ionization->prepare2(p1, i1, p2, i2, N2max);
+            Ionization->prepare2(p1, i1, p2, i2, not_duplicated_particle);
         }
         if( intra_collisions ) { n1 += n2; n2 = n1; }
         n1  *= n_cluster_per_cell;
@@ -445,7 +447,7 @@ void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime
         coeff3 *= coeff2;
         
         // Prepare the ionization
-        Ionization->prepare3(params.timestep, n_cluster_per_cell);
+        Ionization->prepare3(params.timestep, n_cluster_per_cell, npart1, npart2);
         
         if( debug ) {
             smean      ->data_2D[ibin][0] = 0.;

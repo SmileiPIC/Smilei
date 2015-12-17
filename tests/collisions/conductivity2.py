@@ -47,7 +47,7 @@ random_seed = 0
 
 # EXTERNAL FIELDS
 ExtField(
-	field = "Ex",
+	field = ["Ex"],
 	profile = 0.001
 )
 

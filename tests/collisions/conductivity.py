@@ -4,6 +4,7 @@ execfile("resparis.py")
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import erf as erf
+plt.ion()
 
 v0  = { "conductivity1":[-0.00033 ,-0.000185,-0.00011 ],
         "conductivity2":[-0.000088,-0.000108,-0.000135],

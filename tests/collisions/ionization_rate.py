@@ -2,6 +2,7 @@ execfile("../../scripts/Diagnostics.py")
 
 import numpy as np
 import matplotlib.pyplot as plt
+plt.ion()
 
 # Ionization cross section (code units) for Al3+ vs energy (keV)
 cs=np.array([[0.001000,0.000000], [0.001177,0.000000], [0.001385,0.000000],

@@ -2,6 +2,7 @@ execfile("../../scripts/Diagnostics.py")
 
 import numpy as np
 import matplotlib.pyplot as plt
+plt.ion()
 ln = np.log
 
 t0 = 1e-12 # seconds
