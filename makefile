@@ -75,7 +75,7 @@ ifeq (,$(findstring noopenmp,$(config)))
 	LDFLAGS += -lm
     endif
     OPENMPFLAGS += -D_OMP
-    LDFLAGS += $(OPENMPFLAGS) -mt_mpi
+    LDFLAGS += $(OPENMPFLAGS)
     CXXFLAGS += $(OPENMPFLAGS)
 endif
 

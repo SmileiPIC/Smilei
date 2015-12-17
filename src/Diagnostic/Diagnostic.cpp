@@ -97,11 +97,11 @@ void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Specie
     //dtimer[0].update();
     
     //dtimer[1].restart();
-    //probes.run(timestep, EMfields, interp);
+    probes.run(timestep, EMfields, interp);
     //dtimer[1].update();
     
     //dtimer[2].restart();
-    phases.run(timestep, vecSpecies);
+    //phases.run(timestep, vecSpecies);
     //dtimer[2].update();
     
     // run all the particle diagnostics

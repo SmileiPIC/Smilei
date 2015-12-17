@@ -95,6 +95,8 @@ public:
 
     void createFile();
     void setFile(hid_t masterFileId, Patch* patch, Params& params);
+    void waitSetFile(Params& params);
+
     void setFile(hid_t masterFileId);
     //! function to close the file
     void close();
@@ -161,6 +163,8 @@ protected:
     const int probeSize;   
 
 private:
+    std::vector<MPI_Request> rsend;
+    std::vector<MPI_Request> rrecv;
 
 };
 #endif

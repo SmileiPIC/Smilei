@@ -460,7 +460,10 @@ void VectorPatch::initProbesDiags(Params& params, int timestep)
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
 	(*this)(ipatch)->Diags->probes.setFile( (*this)(0)->Diags->probes.fileId, (*this)(ipatch), params );
     }
-    //cout << " File created " << endl;
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+	(*this)(ipatch)->Diags->probes.waitSetFile( params );
+    }    //cout << " File created " << endl;
+
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
 	//cout << "Data written for " << ipatch << endl;
 	(*this)(ipatch)->Diags->probes.writePositionIn(params);

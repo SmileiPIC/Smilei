@@ -371,6 +371,9 @@ void DiagnosticProbe::setFile(hid_t masterFileId, Patch* patch, Params& params)
     for (int iDim=0;iDim<params.nDim_field;iDim++) nPatches*=params.number_of_patches[iDim];
     // probesStart
     unsigned  numProbes=PyTools::nComponents("DiagProbe");
+    rsend.resize(numProbes);
+    rrecv.resize(numProbes);
+
     for (unsigned int np=0; np<numProbes; np++) {
 	probesStart[np] = 0;
 	MPI_Status status;
@@ -380,8 +383,9 @@ void DiagnosticProbe::setFile(hid_t masterFileId, Patch* patch, Params& params)
 	rtag >> tag;
 
 	if (cpuRank>0) {
-	    //cout << patch->Hindex() << " Recv from " << patch->getMPIRank(cpuRank-1) << " with tag " << tag << endl;
-	    MPI_Recv( &(probesStart[np]), 1, MPI_INTEGER, patch->getMPIRank(cpuRank-1), tag, MPI_COMM_WORLD, &status );
+	    cout << patch->Hindex() << " Recv from " << patch->getMPIRank(cpuRank-1) << " with tag " << tag << endl;
+	    //MPI_Recv( &(probesStart[np]), 1, MPI_INTEGER, patch->getMPIRank(cpuRank-1), tag, MPI_COMM_WORLD, &status );
+	    MPI_Irecv( &(probesStart[np]), 1, MPI_INTEGER, patch->getMPIRank(cpuRank-1), tag, MPI_COMM_WORLD, &(rrecv[np]) );
 	}
 	    
 	int probeEnd = probesStart[np]+probeParticles[np].size();
@@ -390,8 +394,9 @@ void DiagnosticProbe::setFile(hid_t masterFileId, Patch* patch, Params& params)
 	tag = 0;
 	stag >> tag;
 	if (cpuRank!=nPatches-1) {
-	    //cout << patch->Hindex() << " Send to " << patch->getMPIRank(cpuRank+1) << " with tag " << tag << endl;
-	    MPI_Send( &probeEnd, 1, MPI_INTEGER, patch->getMPIRank(cpuRank+1), tag, MPI_COMM_WORLD );
+	    cout << patch->Hindex() << " Send to " << patch->getMPIRank(cpuRank+1) << " with tag " << tag << endl;
+	    //MPI_Send( &probeEnd, 1, MPI_INTEGER, patch->getMPIRank(cpuRank+1), tag, MPI_COMM_WORLD );
+	    MPI_Isend( &probeEnd, 1, MPI_INTEGER, patch->getMPIRank(cpuRank+1), tag, MPI_COMM_WORLD, &(rsend[np]) );
 
 	}
     }
@@ -400,6 +405,22 @@ void DiagnosticProbe::setFile(hid_t masterFileId, Patch* patch, Params& params)
     // End file split definition
     // ---------------------------------------------------
 
+}
+
+void DiagnosticProbe::waitSetFile(Params& params)
+{
+    MPI_Status rstat;
+    MPI_Status sstat;
+
+    for (unsigned int np=0; np<rsend.size(); np++) {
+	if (cpuRank>0) 
+	    MPI_Wait( &(rrecv[np]), &rstat );
+
+    int nPatches(1);
+    for (int iDim=0;iDim<params.nDim_field;iDim++) nPatches*=params.number_of_patches[iDim];
+    if (cpuRank!=nPatches-1)
+	MPI_Wait( &(rsend[np]), &sstat );
+    }
 }
 
 void DiagnosticProbe::setFile(hid_t masterFileId)
