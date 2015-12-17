@@ -112,11 +112,8 @@ void Projector1D2Order::operator() (ElectroMagn* EMfields, Particles &particles,
     // 2nd order projection for the total currents & charge density
     for (unsigned int i=0; i<5; i++) {
         iloc = i+ipo-2;
-        //#pragma omp atomic
         (*Jx1D)(iloc) += Jx_p[i];
-        //#pragma omp atomic
         (*Jy1D)(iloc) += cry_p * Wt[i];
-        //#pragma omp atomic
         (*Jz1D)(iloc) += crz_p * Wt[i];
         //(*rho)(iloc)  += rho_p * S1[i];
     }//i
@@ -201,13 +198,9 @@ void Projector1D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Field* rho,
     // 2nd order projection for the currents
     for (unsigned int i=0; i<5; i++) {
         iloc = i+ipo-2;
-        //#pragma omp atomic
         (*Jx1D)(iloc) += Jx_p[i];
-        //#pragma omp atomic
         (*Jy1D)(iloc) += cry_p * Wt[i];
-        //#pragma omp atomic
         (*Jz1D)(iloc) += crz_p * Wt[i];
-        //#pragma omp atomic
         (*rho1D)(iloc)  += charge_weight * S1[i];
     }//i
 
@@ -239,11 +232,8 @@ void Projector1D2Order::operator() (Field* rho, Particles &particles, int ipart)
     i -= index_domain_begin;
 
     // 2nd order projection for the total density
-    //#pragma omp atomic
     (*rho1D)( i-1)  += 0.5 * (xjmxi2-xjmxi+0.25) * rho_j;
-    //#pragma omp atomic
     (*rho1D)( i  )  += (0.75-xjmxi2)             * rho_j ;
-    //#pragma omp atomic
     (*rho1D)( i+1)  += 0.5 * (xjmxi2+xjmxi+0.25) * rho_j;
 
 } // END Project global current charge

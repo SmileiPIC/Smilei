@@ -482,17 +482,14 @@ void ElectroMagn1D::restartRhoJs()
         Field1D* Jz1D_s  = static_cast<Field1D*>(Jz_s[ispec]);
         Field1D* rho1D_s = static_cast<Field1D*>(rho_s[ispec]);
 
-        #pragma omp for schedule(static) 
         for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
             (*rho1D_s)(ix) = 0.0;
         }
 
         // put longitudinal current to zero on the dual grid
-        #pragma omp for schedule(static) 
         for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
             (*Jx1D_s)(ix)  = 0.0;
         }
-        #pragma omp for schedule(static) 
         for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
             // all fields are defined on the primal grid
             (*Jy1D_s)(ix)  = 0.0;
@@ -519,7 +516,6 @@ void ElectroMagn1D::computeTotalRhoJ()
         Field1D* Jz1D_s  = static_cast<Field1D*>(Jz_s[ispec]);
         Field1D* rho1D_s = static_cast<Field1D*>(rho_s[ispec]);
         
-        #pragma omp for schedule(static) nowait
         for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
             (*Jx1D)(ix)  += (*Jx1D_s)(ix);
             (*Jy1D)(ix)  += (*Jy1D_s)(ix);
@@ -527,7 +523,6 @@ void ElectroMagn1D::computeTotalRhoJ()
             (*rho1D)(ix) += (*rho1D_s)(ix);
         }
 
-        #pragma omp single
         {
             (*Jx1D)(dimPrim[0])  += (*Jx1D_s)(dimPrim[0]);
         }

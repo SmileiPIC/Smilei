@@ -1,4 +1,4 @@
-SMILEICXX     ?= mpic++
+SMILEICXX     ?= mpiicpc
 HDF5_ROOT_DIR ?=
 
 BUILD_DIR ?= build
@@ -75,8 +75,7 @@ ifeq (,$(findstring noopenmp,$(config)))
 	LDFLAGS += -lm
     endif
     OPENMPFLAGS += -D_OMP
-    OPENMPFLAGS = ""
-    LDFLAGS += $(OPENMPFLAGS)
+    LDFLAGS += $(OPENMPFLAGS) -mt_mpi
     CXXFLAGS += $(OPENMPFLAGS)
 endif
 
