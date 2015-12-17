@@ -447,7 +447,7 @@ void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime
         coeff3 *= coeff2;
         
         // Prepare the ionization
-        Ionization->prepare3(params.timestep, n_cluster_per_cell, npart1, npart2);
+        Ionization->prepare3(params.timestep, n_cluster_per_cell);
         
         if( debug ) {
             smean      ->data_2D[ibin][0] = 0.;

@@ -114,7 +114,7 @@ void CollisionalIonization::prepare2(Particles *p1, int i1, Particles *p2, int i
         nei += We<Wi ? We : Wi;
     }
 }
-void CollisionalIonization::prepare3(double timestep, int n_cluster_per_cell, int npart1, int npart2)
+void CollisionalIonization::prepare3(double timestep, int n_cluster_per_cell)
 {
     // Calculate the coeff used later for ionization probability
     if( nei<=0. ) {
