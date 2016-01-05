@@ -130,17 +130,17 @@ void SmileiMPI::init( Params& params )
 
 void SmileiMPI::init_patch_count( Params& params)
 {
-#ifndef _NOTBALANCED
-    bool use_load_balancing(true);
-    if (!use_load_balancing) {
-	int Npatches = params.number_of_patches[0];
-	for (unsigned int i = 1; i < params.nDim_field; i++)
-	    Npatches *=  params.number_of_patches[i]; // Total number of patches.
-	if (Npatches!=smilei_sz) ERROR("number of patches abd MPI processes");
-	for (unsigned int i=0; i<smilei_sz; i++) patch_count[i] = 1;
-	return;
-    }
-#endif
+//#ifndef _NOTBALANCED
+//    bool use_load_balancing(true);
+//    if (!use_load_balancing) {
+//	int Npatches = params.number_of_patches[0];
+//	for (unsigned int i = 1; i < params.nDim_field; i++)
+//	    Npatches *=  params.number_of_patches[i]; // Total number of patches.
+//	if (Npatches!=smilei_sz) ERROR("number of patches abd MPI processes");
+//	for (unsigned int i=0; i<smilei_sz; i++) patch_count[i] = 1;
+//	return;
+//    }
+//#endif
 
     unsigned int Npatches, r,Ncur,Pcoordinates[3],ncells_perpatch, Tcapabilities;
     double Tload,Tcur, Lcur, local_load, local_load_temp, above_target, below_target;
@@ -212,6 +212,7 @@ void SmileiMPI::init_patch_count( Params& params)
 	PyTools::extract_pyProfile("n_part_per_cell", profile1, "Species", ispecies);
 	Profile *ppcProfile = new Profile(profile1, params.nDim_particle, "n_part_per_cell "+species_type);
 
+        local_load = 0;
 	// Count global number of particles, 
 	for (unsigned int i=0; i<params.n_space_global[0]; i++) {
 	    for (unsigned int j=0; j<params.n_space_global[1]; j++) {
@@ -261,7 +262,6 @@ void SmileiMPI::init_patch_count( Params& params)
                 local_load_temp *= min (min( (int)(maxcell[ispecies*3+idim]-Pcoordinates[idim]), (int)params.n_space[idim]), min((int)(Pcoordinates[idim]+params.n_space[idim]-mincell[ispecies*3+idim]), (int)params.n_space[idim]));
                 if (local_load_temp < 0.) local_load_temp = 0.;
             } 
-            local_load += local_load_temp; // Accumulate species contribution to the load.
 #else
 	    // Build profile
 	    std::string species_type("");
@@ -278,7 +278,7 @@ void SmileiMPI::init_patch_count( Params& params)
 		if (params.cell_length[i]!=0)
 		    cell_index[i] = Pcoordinates[i]*params.cell_length[i];
 	    }
-
+            local_load_temp = 0; 
 	    // Count global number of particles, 
 	    for (unsigned int i=0; i<params.n_space[0]; i++) {
 		for (unsigned int j=0; j<params.n_space[1]; j++) {
@@ -292,13 +292,17 @@ void SmileiMPI::init_patch_count( Params& params)
 			if ( n_part_in_cell<=0. )
 			    continue;
 			else
-			    local_load += n_part_in_cell;
+			    local_load_temp += n_part_in_cell;
 		    }
 		}
 	    }
 	    delete ppcProfile;
+	    double time_frozen(0.);
+	    PyTools::extract("time_frozen",time_frozen ,"Species",ispecies);
+	    if(time_frozen > 0.) local_load_temp *= coef_frozen;
 
 #endif
+            local_load += local_load_temp; // Accumulate species contribution to the load.
         } // End for ispecies
 
         local_load += ncells_perpatch*coef_cell; //Add grid contribution to the load.

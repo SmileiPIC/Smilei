@@ -724,6 +724,9 @@ void VectorPatch::output_exchanges(SmileiMPI* smpi)
 
 void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
 {
+    hid_t globalFile    = (*this)(0)->sio->global_file_id_;
+    hid_t globalFileAvg = (*this)(0)->sio->global_file_id_avg;
+
     int nSpecies( (*this)(0)->vecSpecies.size() );
     int newMPIrank, oldMPIrank;
     //int newMPIrankbis, oldMPIrankbis, tmp;
@@ -732,6 +735,32 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     oldMPIrank = smpi->smilei_rk -1;
     int istart( 0 );
     int nmessage = 2*nSpecies+10;
+
+
+    std::vector<std::string> out_key;
+    std::vector<double>      out_value;
+    hid_t fphases;
+    vector<hid_t> dset;
+
+    if (smpi->isMaster()) {
+	// Get scalars/phaseSpace patch 
+	(*this)(0)->Diags->scalars.closeFile();
+	fphases = (*this)(0)->Diags->phases.fileId;
+	for ( int iphase=0 ; iphase<(*this)(0)->Diags->phases.vecDiagPhase.size() ; iphase++ ) {
+	    dset.push_back( (*this)(0)->Diags->phases.vecDiagPhase[iphase]->dataId );
+	}
+
+	vector<string>::iterator iterKey = (*this)(0)->Diags->scalars.out_key.begin();
+	for(vector<double>::iterator iter = (*this)(0)->Diags->scalars.out_value.begin(); iter !=(*this)(0)->Diags->scalars.out_value.end(); iter++) {
+	    out_key.push_back( *iterKey );
+	    iterKey++;
+	    out_value.push_back( *iter );
+	}
+
+	
+    }
+
+
     for (int irk=0 ; irk<smpi->getRank() ; irk++) istart += smpi->patch_count[irk];
     // Send part
     // Send particles
@@ -799,8 +828,29 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
 	(*this)(ipatch)->updateMPIenv(smpi);
     }
 
-    definePatchDiagsMaster();
-    refHindex_ = (*this)(0)->Hindex();
+    //definePatchDiagsMaster();
+    definePatchDiagsMaster( globalFile, globalFileAvg );
+    updatePatchFieldDump( params );
+
+    if (smpi->isMaster()) {
+	vector<string>::iterator iterKey = out_key.begin();
+	for(vector<double>::iterator iter = out_value.begin(); iter !=out_value.end(); iter++) {
+	    (*this)(0)->Diags->scalars.out_key.push_back( *iterKey );
+	    iterKey++;
+	    (*this)(0)->Diags->scalars.out_value.push_back( *iter );
+	}
+
+
+        // Set scalars/phaseSpace patch master
+        (*this)(0)->Diags->scalars.open(true);
+        (*this)(0)->Diags->phases.fileId = fphases;
+        for ( int iphase=0 ; iphase<(*this)(0)->Diags->phases.vecDiagPhase.size() ; iphase++ ) {
+            (*this)(0)->Diags->phases.vecDiagPhase[iphase]->dataId = dset[ iphase ];
+        }
+    }
+    (*this).set_refHindex() ;
+    (*this).Diags = (*this)(0)->Diags;
+
     resizeFields();   
 
 }
