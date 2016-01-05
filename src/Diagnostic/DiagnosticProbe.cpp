@@ -508,23 +508,23 @@ void DiagnosticProbe::writePositions(int probe_id, int ndim_Particles, int probe
 
     // memspace OK : 1 block 
     hsize_t     chunk_parts[2];
-    chunk_parts[0] = probeParticles[probe_id].size();
-    chunk_parts[1] = ndim_Particles; 
+    chunk_parts[1] = probeParticles[probe_id].size();
+    chunk_parts[0] = ndim_Particles; 
     hid_t memspace  = H5Screate_simple(2, chunk_parts, NULL);
     // filespace :
     hsize_t dimsf[2], offset[2], stride[2], count[2];
-    dimsf[0] = nPart_total[probe_id];
-    dimsf[1] = ndim_Particles;
+    dimsf[1] = nPart_total[probe_id];
+    dimsf[0] = ndim_Particles;
     hid_t filespace = H5Screate_simple(2, dimsf, NULL);
-    offset[0] = probesStart[probe_id];
-    offset[1] = 0;
+    offset[1] = probesStart[probe_id];
+    offset[0] = 0;
     stride[0] = 1;
     stride[1] = 1;
     count[0] = 1;
     count[1] = 1;
     hsize_t     block[2];
-    block[0] = probeParticles[probe_id].size();
-    block[1] = ndim_Particles;
+    block[1] = probeParticles[probe_id].size();
+    block[0] = ndim_Particles;
     H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, stride, count, block);
 
     //define , write_plist
@@ -633,24 +633,24 @@ void DiagnosticProbe::compute(int probe_id, unsigned int timestep, ElectroMagn* 
 void DiagnosticProbe::write(int probe_id, unsigned int timestep, hid_t group_id) {
     // memspace OK : 1 block 
     hsize_t     chunk_parts[2];
-    chunk_parts[0] = probeParticles[probe_id].size();
-    chunk_parts[1] = probeSize; 
+    chunk_parts[1] = probeParticles[probe_id].size();
+    chunk_parts[0] = probeSize; 
     hid_t memspace  = H5Screate_simple(2, chunk_parts, NULL);
     // filespace :
     hsize_t dimsf[2], offset[2], stride[2], count[2];
-    dimsf[0] = nPart_total[probe_id];
-    dimsf[1] = probeSize;
+    dimsf[1] = nPart_total[probe_id];
+    dimsf[0] = probeSize;
     hid_t filespace = H5Screate_simple(2, dimsf, NULL);
     //cout << " CPU Rank " << cpuRank << " - writing at "  << probesStart[probe_id] << endl;
-    offset[0] = probesStart[probe_id];
-    offset[1] = 0;
+    offset[1] = probesStart[probe_id];
+    offset[0] = 0;
     stride[0] = 1;
     stride[1] = 1;
     count[0] = 1;
     count[1] = 1;
     hsize_t     block[2];
-    block[0] = probeParticles[probe_id].size();
-    block[1] = probeSize;
+    block[1] = probeParticles[probe_id].size();
+    block[0] = probeSize;
     H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, stride, count, block);
 
     // define filespace, memspace
