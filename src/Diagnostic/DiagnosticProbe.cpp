@@ -96,10 +96,10 @@ fileId(0) {
 	// -----------------------------------------------------            
 
 
-#ifdef _NEW_STYLE
+#ifndef _NEW_STYLE
 
             // Dimension of the simulation
-            unsigned int ndim=params.nDim_particle;
+            //unsigned int ndim=params.nDim_particle;
             
             // Extract "pos", "pos_first", "pos_second" and "pos_third"
             // (positions of the vertices of the grid)
@@ -221,7 +221,7 @@ fileId(0) {
             probesArraySize[0] = nFields[n_probe] + 1; // number of fields (Ex, Ey, etc) +1 for garbage
             Field2D *myfield = new Field2D(probesArraySize);
             probesArray.push_back(myfield);
-            
+#ifdef _TOMOVE            
             // Exchange data between MPI cpus so that they can figure out which part
             // of the grid they have to manage
             MPI_Status status;
@@ -243,7 +243,9 @@ fileId(0) {
             for (unsigned int ipb=0 ; ipb<nPart_local ; ipb++)
                 for (unsigned int idim=0 ; idim<ndim  ; idim++)
                     fieldPosProbe(idim,ipb) = my_parts.position(idim,ipb);
+
 #endif
+#else
 
 
 
@@ -285,6 +287,7 @@ fileId(0) {
 	}
 
 	nProbeTot = probeParticles[n_probe].size();
+
 	//cout << " \t Before " << cpuRank << " nprobes : " << probeParticles[0].size() << endl;
 
 	for ( int ipb=nProbeTot-1 ; ipb>=0 ; ipb--) {
@@ -298,11 +301,14 @@ fileId(0) {
 	// End definition of probeParticles (probes positions)
 	// ---------------------------------------------------
 
+
 	// probesArray : n_probe vectors x 10 vectors x probeParticles[n_probe].size() double
 	vector<unsigned int> probesArraySize(2);
 	probesArraySize[0] = probeParticles[n_probe].size();
 	probesArraySize[1] = probeSize;
 	probesArray[n_probe] = new Field2D(probesArraySize);
+
+#endif
 
 
 
@@ -503,12 +509,12 @@ void DiagnosticProbe::writePositions(int probe_id, int ndim_Particles, int probe
     // memspace OK : 1 block 
     hsize_t     chunk_parts[2];
     chunk_parts[0] = probeParticles[probe_id].size();
-    chunk_parts[1] = 2; 
+    chunk_parts[1] = ndim_Particles; 
     hid_t memspace  = H5Screate_simple(2, chunk_parts, NULL);
     // filespace :
     hsize_t dimsf[2], offset[2], stride[2], count[2];
-    dimsf[0] = nProbeTot;
-    dimsf[1] = 2;
+    dimsf[0] = nPart_total[probe_id];
+    dimsf[1] = ndim_Particles;
     hid_t filespace = H5Screate_simple(2, dimsf, NULL);
     offset[0] = probesStart[probe_id];
     offset[1] = 0;
@@ -581,7 +587,6 @@ void DiagnosticProbe::run(unsigned int timestep, ElectroMagn* EMfields, Interpol
     
     // Loop probes
     
-    hid_t fileId=0;
     for (unsigned int np=0; np<every.size(); np++) {
         // skip if current timestep is not requested
         if ( (every[np]  && timestep % every[np] == 0) &&
@@ -610,16 +615,16 @@ void DiagnosticProbe::compute(int probe_id, unsigned int timestep, ElectroMagn* 
 	(*interp)(EMfields,probeParticles[probe_id],iprob,&Eloc_fields,&Bloc_fields,&Jloc_fields,&Rloc_fields);
 
 	//! here we fill the probe data!!!
-	probesArray[probe_id]->data_2D[iprob][0]=Eloc_fields.x;
-	probesArray[probe_id]->data_2D[iprob][1]=Eloc_fields.y;
-	probesArray[probe_id]->data_2D[iprob][2]=Eloc_fields.z;
-	probesArray[probe_id]->data_2D[iprob][3]=Bloc_fields.x;
-	probesArray[probe_id]->data_2D[iprob][4]=Bloc_fields.y;
-	probesArray[probe_id]->data_2D[iprob][5]=Bloc_fields.z;
-	probesArray[probe_id]->data_2D[iprob][6]=Jloc_fields.x;
-	probesArray[probe_id]->data_2D[iprob][7]=Jloc_fields.y;
-	probesArray[probe_id]->data_2D[iprob][8]=Jloc_fields.z;          
-	probesArray[probe_id]->data_2D[iprob][probeSize-1]=Rloc_fields;
+	probesArray[probe_id]->data_2D[fieldlocation[probe_id][0]][iprob]=Eloc_fields.x;
+	probesArray[probe_id]->data_2D[fieldlocation[probe_id][1]][iprob]=Eloc_fields.y;
+	probesArray[probe_id]->data_2D[fieldlocation[probe_id][2]][iprob]=Eloc_fields.z;
+	probesArray[probe_id]->data_2D[fieldlocation[probe_id][3]][iprob]=Bloc_fields.x;
+	probesArray[probe_id]->data_2D[fieldlocation[probe_id][4]][iprob]=Bloc_fields.y;
+	probesArray[probe_id]->data_2D[fieldlocation[probe_id][5]][iprob]=Bloc_fields.z;
+	probesArray[probe_id]->data_2D[fieldlocation[probe_id][6]][iprob]=Jloc_fields.x;
+	probesArray[probe_id]->data_2D[fieldlocation[probe_id][7]][iprob]=Jloc_fields.y;
+	probesArray[probe_id]->data_2D[fieldlocation[probe_id][8]][iprob]=Jloc_fields.z;          
+	probesArray[probe_id]->data_2D[fieldlocation[probe_id][9]][iprob]=Rloc_fields;
         
     } // End for iprob
 
@@ -633,7 +638,7 @@ void DiagnosticProbe::write(int probe_id, unsigned int timestep, hid_t group_id)
     hid_t memspace  = H5Screate_simple(2, chunk_parts, NULL);
     // filespace :
     hsize_t dimsf[2], offset[2], stride[2], count[2];
-    dimsf[0] = nProbeTot;
+    dimsf[0] = nPart_total[probe_id];
     dimsf[1] = probeSize;
     hid_t filespace = H5Screate_simple(2, dimsf, NULL);
     //cout << " CPU Rank " << cpuRank << " - writing at "  << probesStart[probe_id] << endl;
@@ -673,6 +678,7 @@ void DiagnosticProbe::write(int probe_id, unsigned int timestep, hid_t group_id)
     else
 	dset_id = H5Dopen(group_id, name_t.str().c_str(), H5P_DEFAULT);		
 
+    //H5::matrix_MPI(dset_id, name_t.str(), probesArray[np]->data_2D[0][0], nPart_total[np], nFields[np], probesStart[np], nPart_local);
     H5Pclose(plist_id);
     H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &(probesArray[probe_id]->data_2D[0][0]) );
     H5Dclose(dset_id);
