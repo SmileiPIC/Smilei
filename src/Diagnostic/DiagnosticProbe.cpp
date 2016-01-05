@@ -358,6 +358,77 @@ void DiagnosticProbe::createFile()
 	H5Aclose(aid);
 	H5Sclose(sid);
 
+
+	// Extract "pos", "pos_first", "pos_second" and "pos_third"
+	// (positions of the vertices of the grid)
+	vector< vector<double> > allPos;
+	vector<double> pos;
+
+	if (PyTools::extract("pos",pos,"DiagProbe",probe_id)) {
+	    allPos.push_back(pos);
+	}
+            
+	if (PyTools::extract("pos_first",pos,"DiagProbe",probe_id)) {
+	    allPos.push_back(pos);
+	}
+            
+	if (PyTools::extract("pos_second",pos,"DiagProbe",probe_id)) {
+	    allPos.push_back(pos);
+	}
+            
+	if (PyTools::extract("pos_third",pos,"DiagProbe",probe_id)) {
+	    allPos.push_back(pos);
+	}
+
+	// Add arrays "p0", "p1", ... to the current group
+	ostringstream pk;
+	for (unsigned int iDimProbe=0; iDimProbe<=dimProbe; iDimProbe++) {
+	    pk.str("");
+	    pk << "p" << iDimProbe;
+	    H5::vect(group_id, pk.str(), allPos[iDimProbe]);
+	}
+            
+	// Add array "number" to the current group
+	H5::vect(group_id, "number", vecNumber);
+
+
+	vector<string> fs;
+	if(!PyTools::extract("fields",fs,"DiagProbe",probe_id)) {
+	    fs.resize(10);
+	    fs[0]="Ex"; fs[1]="Ey"; fs[2]="Ez";
+	    fs[3]="Bx"; fs[4]="By"; fs[5]="Bz";
+	    fs[6]="Jx"; fs[7]="Jy"; fs[8]="Jz"; fs[9]="Rho";
+	}
+	vector<unsigned int> locations;
+	locations.resize(10);
+	for( unsigned int i=0; i<10; i++) locations[i] = fs.size();
+	for( unsigned int i=0; i<fs.size(); i++) {
+	    for( unsigned int j=0; j<i; j++) {
+		if( fs[i]==fs[j] ) {
+		    ERROR("Probe #"<<probe_id<<": field "<<fs[i]<<" appears twice");
+		}
+	    }
+	    if     ( fs[i]=="Ex" ) locations[0] = i;
+	    else if( fs[i]=="Ey" ) locations[1] = i;
+	    else if( fs[i]=="Ez" ) locations[2] = i;
+	    else if( fs[i]=="Bx" ) locations[3] = i;
+	    else if( fs[i]=="By" ) locations[4] = i;
+	    else if( fs[i]=="Bz" ) locations[5] = i;
+	    else if( fs[i]=="Jx" ) locations[6] = i;
+	    else if( fs[i]=="Jy" ) locations[7] = i;
+	    else if( fs[i]=="Jz" ) locations[8] = i;
+	    else if( fs[i]=="Rho") locations[9] = i;
+	    else {
+		ERROR("Probe #"<<probe_id<<": unknown field "<<fs[i]);
+	    }
+	}
+
+	// Add "fields" to the current group
+	ostringstream fields("");
+	fields << fs[0];
+	for( unsigned int i=1; i<fs.size(); i++) fields << "," << fs[i];
+	H5::attr(group_id, "fields", fields.str());
+
 	// Close the group
 	H5Gclose(group_id);
 
