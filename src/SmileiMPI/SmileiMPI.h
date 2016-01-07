@@ -184,11 +184,11 @@ public:
 	cell_starting_global_index[0] = (idx_moved-oversize[0]);
     }
 
-    inline void dynamics_resize(int ndim_field, int ndim_part, int npart ){
-        dynamics_Epart.resize(ndim_field*npart);
-        dynamics_Bpart.resize(ndim_field*npart);
-        dynamics_gf.resize(npart);
-        dynamics_iold.resize(ndim_part*npart);
+    inline void dynamics_resize(int ithread, int ndim_field, int ndim_part, int npart ){
+        dynamics_Epart[ithread].resize(ndim_field*npart);
+        dynamics_Bpart[ithread].resize(ndim_field*npart);
+        dynamics_gf[ithread].resize(npart);
+        dynamics_iold[ithread].resize(ndim_part*npart);
     }
 
     //! Set global starting index for direction i
@@ -272,13 +272,13 @@ protected:
     std::vector<double> max_local;
 
     //! value of the Efield 
-    std::vector<double> dynamics_Epart;
+    std::vector<std::vector<double>> dynamics_Epart;
     //! value of the Bfield
-    std::vector<double> dynamics_Bpart;
+    std::vector<std::vector<double>> dynamics_Bpart;
     //! gamma factor
-    std::vector<double> dynamics_gf;
+    std::vector<std::vector<double>> dynamics_gf;
     //! old_pos
-    std::vector<int> dynamics_iold;
+    std::vector<std::vector<int>> dynamics_iold;
 
 };
 

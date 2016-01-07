@@ -72,11 +72,11 @@ int main (int argc, char* argv[])
     // setup OpenMP
     TITLE("OpenMP");
 #ifdef _OPENMP
-    int nthds(0);
-#pragma omp parallel shared(nthds)
-    {
-        nthds = omp_get_num_threads();
-    }
+//    int nthds(0);
+//#pragma omp parallel shared(nthds)
+//    {
+//        nthds = omp_get_num_threads();
+//    }
     if (smpiData->isMaster())
 	MESSAGE(1,"Number of thread per MPI process : " << omp_get_max_threads() );
 #else

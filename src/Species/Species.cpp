@@ -430,7 +430,11 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                        Projector* Proj, Params &params, int diag_flag, vector<PartWall*> vecPartWall, Patch* patch, SmileiMPI* smpi)
 {
 
-    smpi->dynamics_resize(3,2,100);
+    #ifdef _OPENMP
+        smpi->dynamics_resize(omp_get_thread_num(),3,2,100);
+    #else
+        smpi->dynamics_resize(0,3,2,100);
+    #endif
 
     // Electric field at the particle position
     LocalFields Epart;

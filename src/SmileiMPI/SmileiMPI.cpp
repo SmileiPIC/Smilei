@@ -108,6 +108,17 @@ void SmileiMPI::init( Params& params )
     n_space_global.resize(params.nDim_field, 0);
     patch_count.resize(smilei_sz, 0);
     target_patch_count.resize(smilei_sz, 0);
+    #ifdef _OPENMP
+        dynamics_Epart.resize(omp_get_max_threads());
+        dynamics_Bpart.resize(omp_get_max_threads());
+        dynamics_gf.resize(omp_get_max_threads());
+        dynamics_iold.resize(omp_get_max_threads());
+    #else
+        dynamics_Epart.resize(1);
+        dynamics_Bpart.resize(1);
+        dynamics_gf.resize(1);
+        dynamics_iold.resize(1);
+    #endif
 
     interParticles.initialize(0,params.nDim_particle); 
  
