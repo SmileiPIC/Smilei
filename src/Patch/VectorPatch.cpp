@@ -450,6 +450,9 @@ void VectorPatch::computePhaseSpace()
 
     } // for idiags
 
+    for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++)
+	(*this)(ipatch)->Diags->phases.vecDiagPhaseToRun.clear();
+
 }
 
 

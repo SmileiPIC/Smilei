@@ -32,7 +32,7 @@ class DiagnosticPhase {
 public:
     //! creator
     DiagnosticPhase(Params &params, unsigned int n_phase);
-    ~DiagnosticPhase();
+    virtual ~DiagnosticPhase();
 
     //! this will write the internal Field to the file
 	void writeData();

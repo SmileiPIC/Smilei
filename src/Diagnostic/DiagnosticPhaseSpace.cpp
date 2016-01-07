@@ -153,9 +153,21 @@ fileId(0)
 }
 
 void DiagnosticPhaseSpace::close() {
+
     //! check if we're on the master (the only one that opened the file)
     if (fileId != 0) {
+	H5Fflush( fileId, H5F_SCOPE_GLOBAL );
+
+	int ndiagphase(vecDiagPhase.size());
+	for (int idiag=ndiagphase-1 ; idiag>=0 ; idiag--) {
+	    if (vecDiagPhase[idiag]->dataId) H5Dclose(vecDiagPhase[idiag]->dataId);
+	}
+	vecDiagPhase.clear();
+	
+	H5Fflush( fileId, H5F_SCOPE_GLOBAL );
+
         H5Fclose(fileId);
+
     }
 }
 
@@ -163,9 +175,10 @@ void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) 
     //! check which diagnosticPhase to run at this timestep
     vector<DiagnosticPhase*> vecDiagPhaseActiveTimestep;
     for (vector<DiagnosticPhase*>::const_iterator diag=vecDiagPhase.begin() ; diag != vecDiagPhase.end(); diag++) {
-        if (timestep % (*diag)->every==0) vecDiagPhaseActiveTimestep.push_back(*diag);
+        if (timestep % (*diag)->every==0)
+	    vecDiagPhaseActiveTimestep.push_back(*diag);
     }
-    
+
     if (vecDiagPhaseActiveTimestep.size()>0) {
 	vecDiagPhaseToRun.clear();
 
@@ -173,7 +186,7 @@ void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) 
             if (!(*mySpec)->particles->isTest) {
                 
                 //! check which diagnosticPhase to run for the species
-                vector<DiagnosticPhase*> vecDiagPhaseToRun;
+                //vector<DiagnosticPhase*> vecDiagPhaseToRun;
                 for (vector<DiagnosticPhase*>::const_iterator diag=vecDiagPhaseActiveTimestep.begin() ; diag != vecDiagPhaseActiveTimestep.end(); diag++) {
                     if(find((*diag)->my_species.begin(), (*diag)->my_species.end(), (*mySpec)->species_type) != (*diag)->my_species.end()) {
                         vecDiagPhaseToRun.push_back(*diag);
@@ -196,7 +209,7 @@ void DiagnosticPhaseSpace::run(int timestep, std::vector<Species*>& vecSpecies) 
                             for (vector<DiagnosticPhase*>::const_iterator diag=vecDiagPhaseToRun.begin() ; diag != vecDiagPhaseToRun.end(); diag++) {
                                 //! do something with each particle
                                 (*diag)->run(my_part);
-                            }						
+			    }					       
                         }
                     }
                 }
