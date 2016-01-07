@@ -1,3 +1,4 @@
+
 // CLOBAL COORDINATES: 
 //                             MPI_minGlobal                                                                        MPI_maxGlobal
 //                      --------<===================================== gs ===================================>------------
@@ -713,7 +714,7 @@ void SmileiMPI::computeGlobalDiags(DiagnosticPhaseSpace& phases, int timestep)
     int nDiags( phases.vecDiagPhaseToRun.size() );
     for (vector<DiagnosticPhase*>::const_iterator diag=phases.vecDiagPhaseToRun.begin() ; diag != phases.vecDiagPhaseToRun.end(); diag++) 
 	(*diag)->writeData();
-
+    phases.vecDiagPhaseToRun.clear();
 }
 
 

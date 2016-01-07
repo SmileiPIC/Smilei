@@ -1,3 +1,4 @@
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////                                                                                                                ////
@@ -625,6 +626,7 @@ int npatchmoy=0, npartmoy=0;
 
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) delete vecPatches(ipatch);
     vecPatches.clear();
+    MPI_Barrier(MPI_COMM_WORLD); // Don't know why but sync needed by HDF5 Phasespace managment
 
     if (params.nspace_win_x)
         delete simWindow;

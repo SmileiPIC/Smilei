@@ -223,6 +223,9 @@ class H5 {
     //! sizex, sizey is the number of elements in both axes of the matrix
     //! offset is the x-location where the current node will start to write
     //! numel  is the x-number of elements for the current node
+
+    //H5::matrix_MPI(did, name_t.str(), probesArray[np]->data_2D[0][0], nPart_total[np], nFields[np], probesStart[np], nPart_local);
+
     static void matrix_MPI(hid_t locationId, std::string name, double& m,
                            int sizex, int sizey, int offset, int numel    ) {
         // Create a HDF5 memory space to hold the data

@@ -43,6 +43,7 @@ public:
 	for (unsigned int iwall=0 ; iwall<vecPartWall.size(); iwall++) delete vecPartWall[iwall];
 	vecPartWall.clear();	
 
+	Diags->closeAll(this);
 	delete Diags;
 	delete Proj;
 	delete Interp;

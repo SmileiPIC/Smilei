@@ -1,3 +1,4 @@
+
 #ifndef DiagnosticPhaseSpace_H
 #define DiagnosticPhaseSpace_H
 
@@ -38,9 +39,6 @@ public:
 
     //! this vector will hold all the diagnostics created
     std::vector<DiagnosticPhase*> vecDiagPhase;
-	
-    //! this is the hdf5 file id (we need to keep it to close at the right time)
-    hid_t fileId;
 
     partStruct my_part;
 
@@ -49,6 +47,9 @@ protected :
     std::vector<DiagnosticPhase*> vecDiagPhaseToRun;
 
     std::vector<DiagnosticPhase*>::iterator itDiagPhase;
+	
+    //! this is the hdf5 file id (we need to keep it to close at the right time)
+    hid_t fileId;
 
 };
 #endif
