@@ -1,4 +1,4 @@
-SMILEICXX     ?= mpiicpc
+SMILEICXX     ?= mpic++
 HDF5_ROOT_DIR ?=
 
 BUILD_DIR ?= build

@@ -9,6 +9,7 @@
 #include "Params.h"
 #include "Tools.h"
 #include "Particles.h"
+#include "Field.h"
 
 class Params;
 class Species;
@@ -183,6 +184,13 @@ public:
 	cell_starting_global_index[0] = (idx_moved-oversize[0]);
     }
 
+    inline void dynamics_resize(int ndim, int npart ){
+        dynamics_Epart.resize(ndim*npart);
+        dynamics_Bpart.resize(ndim*npart);
+        dynamics_gf.resize(ndim*npart);
+        dynamics_iold.resize(ndim*npart);
+    }
+
     //! Set global starting index for direction i
     //! @see cell_starting_global_index
     inline int&    getCellStartingGlobalIndex(int i)  {
@@ -262,6 +270,15 @@ protected:
     std::vector<double> min_local;
     //! "Real" max limit of local domain (ghost data not concerned)
     std::vector<double> max_local;
+
+    //! value of the Efield 
+    std::vector<double> dynamics_Epart;
+    //! value of the Bfield
+    std::vector<double> dynamics_Bpart;
+    //! gamma factor
+    std::vector<double> dynamics_gf;
+    //! old_pos
+    std::vector<int> dynamics_iold;
 
 };
 

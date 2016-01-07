@@ -152,7 +152,7 @@ void SmileiMPI::init_patch_count( Params& params)
 
     coef_cell = 50;
     coef_frozen = 0.1;
- 
+
     unsigned int tot_species_number = PyTools::nComponents("Species");
     mincell.resize(tot_species_number*3);
     maxcell.resize(tot_species_number*3);

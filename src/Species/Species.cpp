@@ -427,8 +427,11 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
 //   - increment the currents (projection)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfields, Interpolator* Interp,
-                       Projector* Proj, Params &params, int diag_flag, vector<PartWall*> vecPartWall, Patch* patch)
+                       Projector* Proj, Params &params, int diag_flag, vector<PartWall*> vecPartWall, Patch* patch, SmileiMPI* smpi)
 {
+
+    smpi->dynamics_resize(2,100);
+
     // Electric field at the particle position
     LocalFields Epart;
     // Magnetic field at the particle position

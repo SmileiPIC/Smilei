@@ -135,16 +135,16 @@ LaserParams::LaserParams(Params& params) {
     // -------------------------------------
     // Printing out laser related parameters
     // -------------------------------------
-    MESSAGE("Laser related parameters");
-    if (laser_param.size()) {
-        MESSAGE(1, laser_param.size() << " laser" << (laser_param.size()>1?"s":""));
-    } else {
-        MESSAGE(1, "No laser");
-    }
-    
-    for ( unsigned int i=0 ; i<laser_param.size() ; i++ ) {
-        MESSAGE(2,"laser " << i << ": (boxSide, a0) : (" << laser_param[i].boxSide <<  ", " << laser_param[i].a0 <<  ")");
-    }
+    //MESSAGE("Laser related parameters");
+    //if (laser_param.size()) {
+    //    MESSAGE(1, laser_param.size() << " laser" << (laser_param.size()>1?"s":""));
+    //} else {
+    //    MESSAGE(1, "No laser");
+    //}
+    //
+    //for ( unsigned int i=0 ; i<laser_param.size() ; i++ ) {
+    //    MESSAGE(2,"laser " << i << ": (boxSide, a0) : (" << laser_param[i].boxSide <<  ", " << laser_param[i].a0 <<  ")");
+    //}
     
 }
 
