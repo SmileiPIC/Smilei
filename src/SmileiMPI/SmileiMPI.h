@@ -184,11 +184,11 @@ public:
 	cell_starting_global_index[0] = (idx_moved-oversize[0]);
     }
 
-    inline void dynamics_resize(int ndim, int npart ){
-        dynamics_Epart.resize(ndim*npart);
-        dynamics_Bpart.resize(ndim*npart);
-        dynamics_gf.resize(ndim*npart);
-        dynamics_iold.resize(ndim*npart);
+    inline void dynamics_resize(int ndim_field, int ndim_part, int npart ){
+        dynamics_Epart.resize(ndim_field*npart);
+        dynamics_Bpart.resize(ndim_field*npart);
+        dynamics_gf.resize(npart);
+        dynamics_iold.resize(ndim_part*npart);
     }
 
     //! Set global starting index for direction i
