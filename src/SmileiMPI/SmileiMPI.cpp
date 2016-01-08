@@ -108,6 +108,7 @@ void SmileiMPI::init( Params& params )
     n_space_global.resize(params.nDim_field, 0);
     patch_count.resize(smilei_sz, 0);
     target_patch_count.resize(smilei_sz, 0);
+    //cout << "gf sized to " << omp_get_max_threads() << endl;
     #ifdef _OPENMP
         dynamics_Epart.resize(omp_get_max_threads());
         dynamics_Bpart.resize(omp_get_max_threads());

@@ -429,18 +429,19 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
 void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfields, Interpolator* Interp,
                        Projector* Proj, Params &params, int diag_flag, vector<PartWall*> vecPartWall, Patch* patch, SmileiMPI* smpi)
 {
-
+    int ithread;
     #ifdef _OPENMP
-        smpi->dynamics_resize(omp_get_thread_num(),3,2,100);
+        ithread = omp_get_thread_num();
     #else
-        smpi->dynamics_resize(0,3,2,100);
+        ithread = 0;
     #endif
+    smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
 
-    // Electric field at the particle position
-    LocalFields Epart;
-    // Magnetic field at the particle position
-    LocalFields Bpart;
-    // Ionization current
+    //// Electric field at the particle position
+    //LocalFields Epart;
+    //// Magnetic field at the particle position
+    //LocalFields Bpart;
+    //// Ionization current
     LocalFields Jion;
     
     int iloc;
@@ -454,7 +455,9 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     
     // Reset list of particles to exchange
     int tid(0);
-    double gf = 1.0;
+    std::vector<double> *gf = &(smpi->dynamics_gf[ithread]);
+    std::vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
+    std::vector<LocalFields> *Bpart = &(smpi->dynamics_Bpart[ithread]);
     std::vector<double> nrj_lost_per_thd(1, 0.);
 
     clearExchList();
@@ -496,53 +499,60 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 
             }
 
+            // Interpolate the fields at the particle position
             for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
-				
-
-                // Interpolate the fields at the particle position
                 //(*LocInterp)(EMfields, *particles, iPart, &Epart, &Bpart);
-                (*Interp)(EMfields, *particles, iPart, &Epart, &Bpart);
-				
-                // Do the ionization (!for testParticles)
-		if (Ionize && (*particles).charge(iPart) < (int) atomic_number) {
-                    //!\todo Check if it is necessary to put to 0 or if LocalFields ensures it
-                    Jion.x=0.0;
-                    Jion.y=0.0;
-                    Jion.z=0.0;
-                    (*Ionize)(*particles, iPart, Epart, Jion);
-                    (*Proj)(EMfields->Jx_, EMfields->Jy_, EMfields->Jz_, *particles, iPart, Jion);
+                (*Interp)(EMfields, *particles, iPart, &(*Epart)[iPart], &(*Bpart)[iPart]);
+            }
+
+            //Ionization
+            if (Ionize){				
+                for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
+                    // Do the ionization (!for testParticles)
+	            if ( (*particles).charge(iPart) < (int) atomic_number) {
+                        //!\todo Check if it is necessary to put to 0 or if LocalFields ensures it
+                        Jion.x=0.0;
+                        Jion.y=0.0;
+                        Jion.z=0.0;
+                        (*Ionize)(*particles, iPart, (*Epart)[iPart], Jion);
+                        (*Proj)(EMfields->Jx_, EMfields->Jy_, EMfields->Jz_, *particles, iPart, Jion);
+                    }
                 }
+            }    
                 
-                
-                // Push the particle
-                (*Push)(*particles, iPart, Epart, Bpart, gf);
-				
-                // Apply wall condition
+            // Push the particle
+            for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
+                (*Push)(*particles, iPart, (*Epart)[iPart], (*Bpart)[iPart] , (*gf)[iPart]);
+	    }			
+
+            // Apply wall and boundary conditions
+            for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
                 for(unsigned int iwall=0; iwall<vecPartWall.size(); iwall++) {
                     if ( !vecPartWall[iwall]->apply(*particles, iPart, this, ener_iPart)) {
                         nrj_lost_per_thd[tid] += mass * ener_iPart;
                     }
                 }
-
-		// Apply boundary condition on the particles
                 // Boundary Condition may be physical or due to domain decomposition
-                // apply returns 0 if iPart is no more in the domain local
+                // apply returns 0 if iPart is not in the local domain anymore
                 //	if omp, create a list per thread
                 if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                     addPartInExchList( iPart );
 		    //nrj_lost_per_thd[tid] += ener_iPart;
                     nrj_lost_per_thd[tid] += mass * ener_iPart;
                 }
+             }
 
-                if (!(*particles).isTest) {
-		    if (diag_flag == 0){ 
-			(*Proj)(b_Jx , b_Jy , b_Jz , *particles,  iPart, gf, ibin*clrw, b_lastdim);
-		    } else {
-			(*Proj)(b_Jx , b_Jy , b_Jz ,b_rho, *particles,  iPart, gf, ibin*clrw, b_lastdim);
-		    }
-                }
+             // Project currents if not a Test species and charges as well if a diag is needed. 
+             if (!(*particles).isTest) {
+                 for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
+	             if (diag_flag == 0){ 
+	     	     (*Proj)(b_Jx , b_Jy , b_Jz , *particles,  iPart, (*gf)[iPart], ibin*clrw, b_lastdim);
+	             } else {
+	     	     (*Proj)(b_Jx , b_Jy , b_Jz ,b_rho, *particles,  iPart, (*gf)[iPart], ibin*clrw, b_lastdim);
+	             }
+                 }
+             }
 
-            }//iPart
         }// ibin
 
 	for (int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)

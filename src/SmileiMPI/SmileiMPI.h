@@ -184,9 +184,18 @@ public:
 	cell_starting_global_index[0] = (idx_moved-oversize[0]);
     }
 
-    inline void dynamics_resize(int ithread, int ndim_field, int ndim_part, int npart ){
-        dynamics_Epart[ithread].resize(ndim_field*npart);
-        dynamics_Bpart[ithread].resize(ndim_field*npart);
+    //! value of the Efield 
+    std::vector<std::vector<LocalFields>> dynamics_Epart;
+    //! value of the Bfield
+    std::vector<std::vector<LocalFields>> dynamics_Bpart;
+    //! gamma factor
+    std::vector<std::vector<double>> dynamics_gf;
+    //! old_pos
+    std::vector<std::vector<int>> dynamics_iold;
+
+    inline void dynamics_resize(int ithread, int ndim_part, int npart ){
+        dynamics_Epart[ithread].resize(npart);
+        dynamics_Bpart[ithread].resize(npart);
         dynamics_gf[ithread].resize(npart);
         dynamics_iold[ithread].resize(ndim_part*npart);
     }
@@ -239,6 +248,7 @@ public:
 	return nParticles;
     }
 
+
     // Broadcast a string in current communicator
     void bcast( std::string& val );
     // Broadcast an int in current communicator
@@ -270,15 +280,6 @@ protected:
     std::vector<double> min_local;
     //! "Real" max limit of local domain (ghost data not concerned)
     std::vector<double> max_local;
-
-    //! value of the Efield 
-    std::vector<std::vector<double>> dynamics_Epart;
-    //! value of the Bfield
-    std::vector<std::vector<double>> dynamics_Bpart;
-    //! gamma factor
-    std::vector<std::vector<double>> dynamics_gf;
-    //! old_pos
-    std::vector<std::vector<int>> dynamics_iold;
 
 };
 
