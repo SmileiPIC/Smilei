@@ -72,11 +72,11 @@ int main (int argc, char* argv[])
     // setup OpenMP
     TITLE("OpenMP");
 #ifdef _OPENMP
-    int nthds(0);
-#pragma omp parallel shared(nthds)
-    {
-        nthds = omp_get_num_threads();
-    }
+//    int nthds(0);
+//#pragma omp parallel shared(nthds)
+//    {
+//        nthds = omp_get_num_threads();
+//    }
     if (smpiData->isMaster())
 	MESSAGE(1,"Number of thread per MPI process : " << omp_get_max_threads() );
 #else
@@ -150,7 +150,7 @@ int main (int argc, char* argv[])
         // Init rho and J by projecting all particles of subdomain
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 	    vecPatches(ipatch)->EMfields->restartRhoJs();
-	    vecPatches(ipatch)->dynamics(time_dual, params, simWindow, diag_flag); //include test
+	    vecPatches(ipatch)->dynamics(time_dual, params, simWindow, diag_flag, smpiData); //include test
 	}
 	for (unsigned int ispec=0 ; ispec<vecPatches(0)->vecSpecies.size(); ispec++) {
 	    if ( vecPatches(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) )
@@ -182,24 +182,24 @@ int main (int argc, char* argv[])
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
 	    vecPatches(ipatch)->EMfields->applyExternalFields( vecPatches(ipatch) ); // Must be patch
 
-        TITLE("Running diags at time t = 0");
-	
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
-	    vecPatches(ipatch)->Diags->runAllDiags(0, vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, vecPatches(ipatch)->Interp);
-	vecPatches.computeGlobalDiags(0);
-	smpiData->computeGlobalDiags( vecPatches(0)->Diags, 0);
+        //TITLE("Running diags at time t = 0");
+	//
+        //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
+	//    vecPatches(ipatch)->Diags->runAllDiags(0, vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, vecPatches(ipatch)->Interp);
+	//vecPatches.computeGlobalDiags(0);
+	//smpiData->computeGlobalDiags( vecPatches(0)->Diags, 0);
  
-	// temporary EM fields dump in Fields.h5
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)  {
-	    if (ipatch==0) vecPatches(ipatch)->sio->createTimeStepInSingleFileTime( 0, vecPatches.Diags );
-	    vecPatches(ipatch)->sio->writeAllFieldsSingleFileTime( vecPatches(ipatch)->EMfields->allFields, 0, 0 );
-	}
-        // temporary EM fields dump in Fields_avg.h5
-        if (vecPatches.Diags->ntime_step_avg!=0)
-            for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-		//if (ipatch==0) vecPatches(ipatch)->sio->createTimeStepInSingleFileTime( vecPatches.Diags );
-		vecPatches(ipatch)->sio->writeAllFieldsSingleFileTime( vecPatches(ipatch)->EMfields->allFields_avg, 0, 1 );
-	    }
+	//// temporary EM fields dump in Fields.h5
+        //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)  {
+	//    if (ipatch==0) vecPatches(ipatch)->sio->createTimeStepInSingleFileTime( 0, vecPatches.Diags );
+	//    vecPatches(ipatch)->sio->writeAllFieldsSingleFileTime( vecPatches(ipatch)->EMfields->allFields, 0, 0 );
+	//}
+        //// temporary EM fields dump in Fields_avg.h5
+        //if (vecPatches.Diags->ntime_step_avg!=0)
+        //    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	//	//if (ipatch==0) vecPatches(ipatch)->sio->createTimeStepInSingleFileTime( vecPatches.Diags );
+	//	vecPatches(ipatch)->sio->writeAllFieldsSingleFileTime( vecPatches(ipatch)->EMfields->allFields_avg, 0, 1 );
+	//    }
 	//for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	//vecPatches(ipatch)->EMfields->restartRhoJs();
 	diag_flag = 0 ;
@@ -250,7 +250,7 @@ int main (int argc, char* argv[])
     
 
 int partperMPI;
-int balancing_freq = 75000;
+int balancing_freq = 150;
 int npatchmoy=0, npartmoy=0;
 	
     
@@ -367,7 +367,7 @@ int npatchmoy=0, npartmoy=0;
 
             #pragma omp for schedule(runtime)
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	      vecPatches(ipatch)->dynamics(time_dual, params, simWindow, diag_flag); // include test -> Add , vecPatches(ipatch)->vecPartWall in call to Species::dynamics
+	      vecPatches(ipatch)->dynamics(time_dual, params, simWindow, diag_flag, smpiData); // include test -> Add , vecPatches(ipatch)->vecPartWall in call to Species::dynamics
 	    }
 	    timer[1].update();
 
@@ -526,8 +526,6 @@ int npatchmoy=0, npartmoy=0;
 		
         timer[5].restart();
         if ( simWindow && simWindow->isMoving(time_dual) ) {
-            //#pragma omp single
-            //{
             start_moving++;
             if ((start_moving==1) && (smpiData->isMaster()) ) {
 		MESSAGE(">>> Window starts moving");
@@ -540,17 +538,17 @@ int npatchmoy=0, npartmoy=0;
 
 	if ((itime%balancing_freq == 0)&&(smpiData->smilei_sz!=1)) {
             timer[7].restart();
-            partperMPI = 0;
-	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
-                for (unsigned int ispec=0 ; ispec < vecPatches(0)->vecSpecies.size() ; ispec++)
-                    partperMPI += vecPatches(ipatch)->vecSpecies[ispec]->getNbrOfParticles();
-            }
-            partperMPI = 0;
+            //partperMPI = 0;
+	    //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
+            //    for (unsigned int ispec=0 ; ispec < vecPatches(0)->vecSpecies.size() ; ispec++)
+            //        partperMPI += vecPatches(ipatch)->vecSpecies[ispec]->getNbrOfParticles();
+            //}
+            //partperMPI = 0;
 
 	    smpiData->recompute_patch_count( params, vecPatches, 0. );
 
-
 	    vecPatches.createPatches(params, smpiData, simWindow);
+
 	    vecPatches.exchangePatches(smpiData, params);
             //for (unsigned int irank=0 ; irank<smpiData->smilei_sz ; irank++){
             //    if(smpiData->smilei_rk == irank){
@@ -560,12 +558,12 @@ int npatchmoy=0, npartmoy=0;
             //}
 
 
-	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
-                for (unsigned int ispec=0 ; ispec < vecPatches(0)->vecSpecies.size() ; ispec++)
-                    partperMPI += vecPatches(ipatch)->vecSpecies[ispec]->getNbrOfParticles();
-            }
-            npatchmoy += vecPatches.size();
-            npartmoy += partperMPI;
+	    //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
+            //    for (unsigned int ispec=0 ; ispec < vecPatches(0)->vecSpecies.size() ; ispec++)
+            //        partperMPI += vecPatches(ipatch)->vecSpecies[ispec]->getNbrOfParticles();
+            //}
+            //npatchmoy += vecPatches.size();
+            //npartmoy += partperMPI;
             timer[7].update();
 	    
 	}
@@ -591,7 +589,6 @@ int npatchmoy=0, npartmoy=0;
     //if ( smpiData->isMaster() ) MESSAGE(0, "Time in time loop : " << timElapsed );
     timer[0].update();
     TITLE("Time profiling :");
-    cout << "npart moy = " << npartmoy << " npatch moy = " << npatchmoy << endl;
     double coverage(0.);
     for (unsigned int i=1 ; i<timer.size() ; i++) coverage += timer[i].getTime();
     MESSAGE("Time in time loop :\t" << timer[0].getTime() << "\t"<<coverage/timer[0].getTime()*100.<< "% coverage" );
@@ -605,21 +602,21 @@ int npatchmoy=0, npartmoy=0;
     //                      Temporary validation diagnostics
     // ------------------------------------------------------------------
     
-    if (latestTimeStep==params.n_time) {
-	if  ( (vecPatches.Diags->fieldDump_every != 0) && (params.n_time % vecPatches.Diags->fieldDump_every != 0) )
-	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-		if (ipatch==0) vecPatches(ipatch)->sio->createTimeStepInSingleFileTime( params.n_time, vecPatches.Diags );
-		vecPatches(ipatch)->sio->writeAllFieldsSingleFileTime( vecPatches(ipatch)->EMfields->allFields, params.n_time, 0 );
-	    }
-	// temporary time-averaged EM fields dump in Fields_avg.h5
-	if  (vecPatches.Diags->ntime_step_avg!=0) {
-	    if  ( (vecPatches.Diags->avgfieldDump_every != 0) && (params.n_time % vecPatches.Diags->avgfieldDump_every != 0) )
-		for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-		    vecPatches(ipatch)->sio->writeAllFieldsSingleFileTime( vecPatches(ipatch)->EMfields->allFields_avg, params.n_time, 1 );
-		}
-	}
+    //if (latestTimeStep==params.n_time) {
+    //    if  ( (vecPatches.Diags->fieldDump_every != 0) && (params.n_time % vecPatches.Diags->fieldDump_every != 0) )
+    //        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+    //    	if (ipatch==0) vecPatches(ipatch)->sio->createTimeStepInSingleFileTime( params.n_time, vecPatches.Diags );
+    //    	vecPatches(ipatch)->sio->writeAllFieldsSingleFileTime( vecPatches(ipatch)->EMfields->allFields, params.n_time, 0 );
+    //        }
+    //    // temporary time-averaged EM fields dump in Fields_avg.h5
+    //    if  (vecPatches.Diags->ntime_step_avg!=0) {
+    //        if  ( (vecPatches.Diags->avgfieldDump_every != 0) && (params.n_time % vecPatches.Diags->avgfieldDump_every != 0) )
+    //    	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+    //    	    vecPatches(ipatch)->sio->writeAllFieldsSingleFileTime( vecPatches(ipatch)->EMfields->allFields_avg, params.n_time, 1 );
+    //    	}
+    //    }
 
-    }
+    //}
 
     // ------------------------------
     //  Cleanup & End the simulation

@@ -177,11 +177,11 @@ void Patch::updateMPIenv(SmileiMPI* smpi)
 }
 
 
-void Patch::dynamics(double time_dual, Params &params, SimWindow* simWindow, int diag_flag)
+void Patch::dynamics(double time_dual, Params &params, SimWindow* simWindow, int diag_flag, SmileiMPI* smpi)
 {
     for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
 	if ( vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ){    
-	    vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, params, diag_flag, vecPartWall, this);
+	    vecSpecies[ispec]->dynamics(time_dual, ispec, EMfields, Interp, Proj, params, diag_flag, vecPartWall, this, smpi);
 	}
     }
 

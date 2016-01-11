@@ -112,7 +112,7 @@ public:
 
     void cleanup_sent_particles(int ispec, std::vector<int>* indexes_of_particles_to_exchange);
 
-    void dynamics(double time_dual, Params &params, SimWindow* simWindow, int diag_flag);
+    void dynamics(double time_dual, Params &params, SimWindow* simWindow, int diag_flag, SmileiMPI* smpi);
 
     //! manage Idx of particles per direction, 
     virtual void initExchParticles(SmileiMPI* smpi, int ispec, Params& params);

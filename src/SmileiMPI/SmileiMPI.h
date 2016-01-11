@@ -9,6 +9,7 @@
 #include "Params.h"
 #include "Tools.h"
 #include "Particles.h"
+#include "Field.h"
 
 class Params;
 class Species;
@@ -185,6 +186,22 @@ public:
 	cell_starting_global_index[0] = (idx_moved-oversize[0]);
     }
 
+    //! value of the Efield 
+    std::vector<std::vector<LocalFields>> dynamics_Epart;
+    //! value of the Bfield
+    std::vector<std::vector<LocalFields>> dynamics_Bpart;
+    //! gamma factor
+    std::vector<std::vector<double>> dynamics_gf;
+    //! old_pos
+    std::vector<std::vector<int>> dynamics_iold;
+
+    inline void dynamics_resize(int ithread, int ndim_part, int npart ){
+        dynamics_Epart[ithread].resize(npart);
+        dynamics_Bpart[ithread].resize(npart);
+        dynamics_gf[ithread].resize(npart);
+        dynamics_iold[ithread].resize(ndim_part*npart);
+    }
+
     //! Set global starting index for direction i
     //! @see cell_starting_global_index
     inline int&    getCellStartingGlobalIndex(int i)  {
@@ -232,6 +249,7 @@ public:
 	MPI_Reduce( &locNbrParticles, &nParticles, 1, MPI_INT, MPI_SUM, 0, SMILEI_COMM_WORLD );
 	return nParticles;
     }
+
 
     // Broadcast a string in current communicator
     void bcast( std::string& val );

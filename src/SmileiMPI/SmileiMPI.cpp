@@ -108,6 +108,18 @@ void SmileiMPI::init( Params& params )
     n_space_global.resize(params.nDim_field, 0);
     patch_count.resize(smilei_sz, 0);
     target_patch_count.resize(smilei_sz, 0);
+    //cout << "gf sized to " << omp_get_max_threads() << endl;
+    #ifdef _OPENMP
+        dynamics_Epart.resize(omp_get_max_threads());
+        dynamics_Bpart.resize(omp_get_max_threads());
+        dynamics_gf.resize(omp_get_max_threads());
+        dynamics_iold.resize(omp_get_max_threads());
+    #else
+        dynamics_Epart.resize(1);
+        dynamics_Bpart.resize(1);
+        dynamics_gf.resize(1);
+        dynamics_iold.resize(1);
+    #endif
 
     interParticles.initialize(0,params.nDim_particle); 
  
@@ -153,7 +165,7 @@ void SmileiMPI::init_patch_count( Params& params)
 
     coef_cell = 50;
     coef_frozen = 0.1;
- 
+
     unsigned int tot_species_number = PyTools::nComponents("Species");
     mincell.resize(tot_species_number*3);
     maxcell.resize(tot_species_number*3);
