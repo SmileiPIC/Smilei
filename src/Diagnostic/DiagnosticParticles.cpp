@@ -121,42 +121,46 @@ every(0)
         MESSAGE(2,mystream.str());
     }
     
-    // init HDF files (by master, only if it doesn't yet exist)
-    if (patch->isMaster()) {
-        mystream.str("");
-        mystream << "ParticleDiagnostic" << n_diag_particles << ".h5";
-        filename = mystream.str();
-        hid_t fileId = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-        // write all parameters as HDF5 attributes
-        H5::attr(fileId, "Version", string(__VERSION));
-        H5::attr(fileId, "output" , output);
-        H5::attr(fileId, "every"  , every);
-        H5::attr(fileId, "time_average"  , time_average);
-        // write all species
-        mystream.str(""); // clear
-        for (unsigned int i=0 ; i < species.size() ; i++)
-            mystream << species[i] << " ";
-        H5::attr(fileId, "species", mystream.str());
-        // write each axis
-        for (unsigned int iaxis=0 ; iaxis < axes.size() ; iaxis++) {
-            mystream.str(""); // clear
-            mystream << "axis" << iaxis;
-            string str1 = mystream.str();
-            mystream.str(""); // clear
-            mystream << axes[iaxis].type << " " << axes[iaxis].min << " " << axes[iaxis].max << " "
-            << axes[iaxis].nbins << " " << axes[iaxis].logscale << " " << axes[iaxis].edge_inclusive;
-            string str2 = mystream.str();
-            H5::attr(fileId, str1, str2);
-        }
-        
-        H5Fclose(fileId);
-    }
 
 }
 
 // destructor
 DiagnosticParticles::~DiagnosticParticles()
 {
+}
+
+// Called only by patch master of process master
+void DiagnosticParticles::createFile( unsigned int n_diag_particles )
+{
+    // init HDF files (by master, only if it doesn't yet exist)
+    ostringstream mystream("");
+    mystream.str("");
+    mystream << "ParticleDiagnostic" << n_diag_particles << ".h5";
+    filename = mystream.str();
+    hid_t fileId = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    // write all parameters as HDF5 attributes
+    H5::attr(fileId, "Version", string(__VERSION));
+    H5::attr(fileId, "output" , output);
+    H5::attr(fileId, "every"  , every);  
+    H5::attr(fileId, "time_average"  , time_average);
+    // write all species
+    mystream.str(""); // clear
+    for (unsigned int i=0 ; i < species.size() ; i++)
+	mystream << species[i] << " ";
+    H5::attr(fileId, "species", mystream.str());
+    // write each axis
+    for (unsigned int iaxis=0 ; iaxis < axes.size() ; iaxis++) {
+	mystream.str(""); // clear
+	mystream << "axis" << iaxis;
+	string str1 = mystream.str();
+	mystream.str(""); // clear
+	mystream << axes[iaxis].type << " " << axes[iaxis].min << " " << axes[iaxis].max << " "
+		 << axes[iaxis].nbins << " " << axes[iaxis].logscale << " " << axes[iaxis].edge_inclusive;
+	string str2 = mystream.str();
+	H5::attr(fileId, str1, str2);
+    }
+        
+    H5Fclose(fileId);
 }
 
 // run one particle diagnostic
@@ -423,35 +427,41 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies)
         
     } // loop species
     
-    // Now the data_sum has been filled
-    
-    // if needed now, store result to hdf file
-    if (timestep % every == time_average-1) {
-        
-        // sum the outputs from each MPI partition (filename.size()>0 only for master)
-        MPI_Reduce(filename.size()?MPI_IN_PLACE:&data_sum[0], &data_sum[0], output_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        
-        if (filename.size()) { // only the master has filename.size()>0
-            // if time_average, then we need to divide by the number of timesteps
-            if (time_average > 1) {
-                coeff = 1./((double)time_average);
-                for (int i=0; i<output_size; i++)
-                    data_sum[i] *= coeff;
-            }
-            // make name of the array
-            mystream.str("");
-            mystream << "timestep" << setw(8) << setfill('0') << timestep;
-            // write the array
-            hid_t fileId = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
-            H5::vect(fileId, mystream.str(), data_sum);
-            H5Fclose(fileId);
-        }
-        
-    }
-    
-    // delete temporary stuff
-    if (time_average == 1) data_sum.resize(0);
-    
 }
 
 
+// Now the data_sum has been filled
+// if needed now, store result to hdf file
+// call by patch master if (timestep % every == time_average-1) 
+// sum the outputs from each MPI partition (filename.size()>0 only for master)
+
+void DiagnosticParticles::write(int timestep)
+{
+    double coeff;
+    if (filename.size()) { // only the master has filename.size()>0
+	// if time_average, then we need to divide by the number of timesteps
+	if (time_average > 1) {
+	    coeff = 1./((double)time_average);
+	    for (int i=0; i<output_size; i++)
+		data_sum[i] *= coeff;
+	}
+	// make name of the array
+	ostringstream mystream("");
+	mystream.str("");
+	mystream << "timestep" << setw(8) << setfill('0') << timestep;
+	// write the array
+	hid_t fileId = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+	H5::vect(fileId, mystream.str(), data_sum);
+	H5Fclose(fileId);
+    }
+        
+}
+
+// delete temporary stuff
+//if (time_average == 1) data_sum.resize(0); 
+// call by all if (time_average==1) 
+
+void DiagnosticParticles::clean()
+{
+    data_sum.resize(0); 
+}
