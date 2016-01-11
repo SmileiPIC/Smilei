@@ -250,7 +250,7 @@ int main (int argc, char* argv[])
     
 
 int partperMPI;
-int balancing_freq = 150;
+int balancing_freq = 1500000;
 int npatchmoy=0, npartmoy=0;
 	
     
