@@ -202,7 +202,6 @@ int main (int argc, char* argv[])
 	//    }
 	//for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	//vecPatches(ipatch)->EMfields->restartRhoJs();
-	diag_flag = 0 ;
 
 #ifdef _TRACKPARTICLES
 	// Test particles need initialization now (after vecSpecies has been created)

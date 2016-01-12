@@ -163,14 +163,14 @@ void Projector1D4Order::operator() (Field* rho, Particles &particles, int ipart)
 
 } // END Project global current charge
 
-void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_dim0)
+void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_dim0, int* iold, double* delta)
 {
 cout << "not yet defined" << endl;
 }
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local current densities (sort)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_dim0)
+void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_dim0, int* iold, double* delta)
 {
     // Declare local variables
     //int ipo, ip, iloc;
@@ -316,4 +316,8 @@ void Projector1D4Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particles &
     WARNING("Projection of ionization current not yet defined for 1D 4th order");
 
 } // END Project global current densities (ionize)
+void Projector1D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, int diag_flag, int b_lastdim, int ispec)
+{
+
+}
 

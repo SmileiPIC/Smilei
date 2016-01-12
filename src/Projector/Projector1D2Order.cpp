@@ -237,7 +237,7 @@ void Projector1D2Order::operator() (Field* rho, Particles &particles, int ipart)
     (*rho1D)( i+1)  += 0.5 * (xjmxi2+xjmxi+0.25) * rho_j;
 
 } // END Project global current charge
-void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_dim0)
+void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_dim0, int* iold, double* delta)
 {
     // The variable bin received is  number of bin * cluster width.
     // Declare local variables
@@ -317,7 +317,7 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local current densities (sort)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_dim0)
+void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_dim0, int* iold, double* delta)
 {
     // The variable bin received is  number of bin * cluster width.
     // Declare local variables
@@ -516,4 +516,8 @@ void Projector1D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particles &
 
 } // END Project global current densities (ionize)
 
+void Projector1D2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, int diag_flag, int b_lastdim, int ispec)
+{
+
+}
 

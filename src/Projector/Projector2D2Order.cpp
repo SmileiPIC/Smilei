@@ -395,7 +395,7 @@ void Projector2D2Order::operator() (Field* rho, Particles &particles, int ipart)
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents (sort)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_dim1)
+void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_dim1, int* iold, double* deltaold)
 {
 
     // -------------------------------------
@@ -433,17 +433,19 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     // --------------------------------------------------------
 
     // locate the particle on the primal grid at former time-step & calculate coeff. S0
-    xpn = particles.position_old(0, ipart) * dx_inv_;
-    int ipo = round(xpn);
-    delta  = xpn - (double)ipo;
+    //xpn = particles.position_old(0, ipart) * dx_inv_;
+    //int ipo = round(xpn);
+    //delta  = xpn - (double)ipo;
+    delta = *deltaold;
     delta2 = delta*delta;
     Sx0[1] = 0.5 * (delta2-delta+0.25);
     Sx0[2] = 0.75-delta2;
     Sx0[3] = 0.5 * (delta2+delta+0.25);
 
-    ypn = particles.position_old(1, ipart) * dy_inv_;
-    int jpo = round(ypn);
-    delta  = ypn - (double)jpo;
+    //ypn = particles.position_old(1, ipart) * dy_inv_;
+    //int jpo = round(ypn);
+    //delta  = ypn - (double)jpo;
+    delta = *(deltaold+1);
     delta2 = delta*delta;
     Sy0[1] = 0.5 * (delta2-delta+0.25);
     Sy0[2] = 0.75-delta2;
@@ -453,21 +455,25 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
     xpn = particles.position(0, ipart) * dx_inv_;
     int ip = round(xpn);
-    int ip_m_ipo = ip-ipo;
+    int ipo = *iold;
+    //int ip_m_ipo = ip-ipo;
+    int ip_m_ipo = ip-ipo-i_domain_begin;
     delta  = xpn - (double)ip;
     delta2 = delta*delta;
-    Sx1[ip_m_ipo+1] = 0.5 * (delta2-delta+0.25);
-    Sx1[ip_m_ipo+2] = 0.75-delta2;
-    Sx1[ip_m_ipo+3] = 0.5 * (delta2+delta+0.25);
+    Sx1[ip_m_ipo] = 0.5 * (delta2-delta+0.25);
+    Sx1[ip_m_ipo+1] = 0.75-delta2;
+    Sx1[ip_m_ipo+2] = 0.5 * (delta2+delta+0.25);
 
     ypn = particles.position(1, ipart) * dy_inv_;
     int jp = round(ypn);
-    int jp_m_jpo = jp-jpo;
+    int jpo = *(iold+1);
+    //int jp_m_jpo = jp-jpo;
+    int jp_m_jpo = jp-jpo-j_domain_begin;
     delta  = ypn - (double)jp;
     delta2 = delta*delta;
-    Sy1[jp_m_jpo+1] = 0.5 * (delta2-delta+0.25);
-    Sy1[jp_m_jpo+2] = 0.75-delta2;
-    Sy1[jp_m_jpo+3] = 0.5 * (delta2+delta+0.25);
+    Sy1[jp_m_jpo] = 0.5 * (delta2-delta+0.25);
+    Sy1[jp_m_jpo+1] = 0.75-delta2;
+    Sy1[jp_m_jpo+2] = 0.5 * (delta2+delta+0.25);
 
     for (unsigned int i=0; i < 5; i++) {
         DSx[i] = Sx1[i] - Sx0[i];
@@ -485,11 +491,10 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     // ---------------------------
     // Calculate the total current
     // ---------------------------
-    ipo -= i_domain_begin + bin;
-    jpo -= j_domain_begin;
+    ipo -= + bin;
     // i =0
     {
-	iloc = (ipo-2)*b_dim1+jpo-2;
+	iloc = (ipo-1)*b_dim1+jpo-1;
 	//jloc = iloc+jpo-2; 
 	tmp2 = 0.5*Sx1[0];
 	tmp3 =     Sx1[0];
@@ -499,14 +504,14 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
 	for (unsigned int j=1 ; j<5 ; j++) {
 	    //jloc = iloc+j+jpo-2; 
 	    tmp -= cry_p * DSy[j-1] * tmpY;
-	    Jy[iloc+j+ipo-2]  += tmp; //Because size of Jy in Y is b_dim1+1.
+	    Jy[iloc+j+ipo-1]  += tmp; //Because size of Jy in Y is b_dim1+1.
 	    Jz[iloc+j]  += crz_p * one_third * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
 	}
 
     }//i
 
     for (unsigned int i=1 ; i<5 ; i++) {
-        iloc = (i+ipo-2)*b_dim1+jpo-2;
+        iloc = (i+ipo-1)*b_dim1+jpo-1;
 	//jloc = iloc+jpo-2; 
 	tmpJx[0] -= crx_p *  DSx[i-1] * (0.5*DSy[0]);
 	Jx[iloc]  += tmpJx[0];
@@ -520,7 +525,7 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
             tmpJx[j] -= crx_p * DSx[i-1] * (Sy0[j] + 0.5*DSy[j]);
 	    Jx[iloc+j]  += tmpJx[j];
 	    tmp -= cry_p * DSy[j-1] * tmpY;
-            Jy[iloc+j+i+ipo-2]  += tmp; //Because size of Jy in Y is b_dim1+1.
+            Jy[iloc+j+i+ipo-1]  += tmp; //Because size of Jy in Y is b_dim1+1.
             Jz[iloc+j]  += crz_p * one_third * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
         }
 
@@ -530,7 +535,7 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local current densities (sort)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_dim1)
+void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_dim1, int* iold, double* deltaold)
 {
 
     // -------------------------------------
@@ -568,17 +573,19 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     // --------------------------------------------------------
 
     // locate the particle on the primal grid at former time-step & calculate coeff. S0
-    xpn = particles.position_old(0, ipart) * dx_inv_;
-    int ipo = round(xpn);
-    delta  = xpn - (double)ipo;
+    //xpn = particles.position_old(0, ipart) * dx_inv_;
+    //int ipo = round(xpn);
+    //delta  = xpn - (double)ipo;
+    delta = *deltaold;
     delta2 = delta*delta;
     Sx0[1] = 0.5 * (delta2-delta+0.25);
     Sx0[2] = 0.75-delta2;
     Sx0[3] = 0.5 * (delta2+delta+0.25);
 
-    ypn = particles.position_old(1, ipart) * dy_inv_;
-    int jpo = round(ypn);
-    delta  = ypn - (double)jpo;
+    //ypn = particles.position_old(1, ipart) * dy_inv_;
+    //int jpo = round(ypn);
+    //delta  = ypn - (double)jpo;
+    delta = *(deltaold+1);
     delta2 = delta*delta;
     Sy0[1] = 0.5 * (delta2-delta+0.25);
     Sy0[2] = 0.75-delta2;
@@ -588,21 +595,24 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
     xpn = particles.position(0, ipart) * dx_inv_;
     int ip = round(xpn);
-    int ip_m_ipo = ip-ipo;
+    //int ipo = *iold+1+i_domain_begin;
+    int ipo = *iold;
+    int ip_m_ipo = ip-ipo-i_domain_begin;
     delta  = xpn - (double)ip;
     delta2 = delta*delta;
-    Sx1[ip_m_ipo+1] = 0.5 * (delta2-delta+0.25);
-    Sx1[ip_m_ipo+2] = 0.75-delta2;
-    Sx1[ip_m_ipo+3] = 0.5 * (delta2+delta+0.25);
+    Sx1[ip_m_ipo] = 0.5 * (delta2-delta+0.25);
+    Sx1[ip_m_ipo+1] = 0.75-delta2;
+    Sx1[ip_m_ipo+2] = 0.5 * (delta2+delta+0.25);
 
     ypn = particles.position(1, ipart) * dy_inv_;
     int jp = round(ypn);
-    int jp_m_jpo = jp-jpo;
+    int jpo = *(iold+1);
+    int jp_m_jpo = jp-jpo-j_domain_begin;
     delta  = ypn - (double)jp;
     delta2 = delta*delta;
-    Sy1[jp_m_jpo+1] = 0.5 * (delta2-delta+0.25);
-    Sy1[jp_m_jpo+2] = 0.75-delta2;
-    Sy1[jp_m_jpo+3] = 0.5 * (delta2+delta+0.25);
+    Sy1[jp_m_jpo] = 0.5 * (delta2-delta+0.25);
+    Sy1[jp_m_jpo+1] = 0.75-delta2;
+    Sy1[jp_m_jpo+2] = 0.5 * (delta2+delta+0.25);
 
     for (unsigned int i=0; i < 5; i++) {
         DSx[i] = Sx1[i] - Sx0[i];
@@ -620,11 +630,11 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     // ---------------------------
     // Calculate the total current
     // ---------------------------
-    ipo -= i_domain_begin + bin;
-    jpo -= j_domain_begin;
-    // i =0
+    ipo -= bin;
+    //jpo -= j_domain_begin;
+    // case i =0
     {
-	iloc = (ipo-2)*b_dim1+jpo-2;
+	iloc = (ipo-1)*b_dim1+jpo-1;
 	//jloc = iloc+jpo-2; 
 	tmp2 = 0.5*Sx1[0];
 	tmp3 =     Sx1[0];
@@ -635,15 +645,16 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
 	for (unsigned int j=1 ; j<5 ; j++) {
 	    //jloc = iloc+j+jpo-2; 
 	    tmp -= cry_p * DSy[j-1] * tmpY;
-	    Jy[iloc+j+ipo-2]  += tmp; //Because size of Jy in Y is b_dim1+1.
+	    Jy[iloc+j+ipo-1]  += tmp; //Because size of Jy in Y is b_dim1+1.
 	    Jz[iloc+j]  += crz_p * one_third * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
 	    rho[iloc+j] += charge_weight * Sx1[0]*Sy1[j];
 	}
 
-    }//i
+    }//end i=0 case
 
+    // case i> 0
     for (unsigned int i=1 ; i<5 ; i++) {
-        iloc = (i+ipo-2)*b_dim1+jpo-2;
+        iloc = (i+ipo-1)*b_dim1+jpo-1;
 	//jloc = iloc+jpo-2; 
 	tmpJx[0] -= crx_p *  DSx[i-1] * (0.5*DSy[0]);
 	Jx[iloc]  += tmpJx[0];
@@ -658,7 +669,7 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
             tmpJx[j] -= crx_p * DSx[i-1] * (Sy0[j] + 0.5*DSy[j]);
 	    Jx[iloc+j]  += tmpJx[j];
 	    tmp -= cry_p * DSy[j-1] * tmpY;
-            Jy[iloc+j+i+ipo-2]  += tmp; //Because size of Jy in Y is b_dim1+1.
+            Jy[iloc+j+i+ipo-1]  += tmp; //Because size of Jy in Y is b_dim1+1.
             Jz[iloc+j]  += crz_p * one_third * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
 	    rho[iloc+j] += charge_weight * Sx1[i]*Sy1[j];
         }
@@ -671,6 +682,7 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
 // ---------------------------------------------------------------------------------------------------------------------
 void Projector2D2Order::operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, unsigned int b_dim1)
 {
+    //Warning : this function is used for frozen species only. It is assumed that position = position_old !!!
 
     // -------------------------------------
     // Variable declaration & initialization
@@ -742,3 +754,29 @@ void Projector2D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particles &
     ERROR("Projection of ionization current not yet defined for 2D 2nd order");
 
 } // END Project global current densities (ionize)
+
+//Wrapper for projection
+void Projector2D2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, int diag_flag, int b_lastdim, int ispec)
+{
+    std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
+    std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
+    std::vector<double> *gf = &(smpi->dynamics_gf[ithread]);
+
+    int dim1 = EMfields->dimPrim[1];
+
+    if (diag_flag == 0){ 
+	double* b_Jx =  &(*EMfields->Jx_ )(ibin*clrw*dim1);
+	double* b_Jy =  &(*EMfields->Jy_ )(ibin*clrw*(dim1+1));
+	double* b_Jz =  &(*EMfields->Jz_ )(ibin*clrw*dim1);
+        for (unsigned int ipart=istart ; ipart<iend; ipart++ )
+    	    (*this)(b_Jx , b_Jy , b_Jz , particles,  ipart, (*gf)[ipart], ibin*clrw, b_lastdim, &(*iold)[2*ipart], &(*delta)[2*ipart]);
+    } else {
+	double* b_Jx =  &(*EMfields->Jx_s[ispec] )(ibin*clrw*dim1);
+	double* b_Jy =  &(*EMfields->Jy_s[ispec] )(ibin*clrw*(dim1+1));
+	double* b_Jz =  &(*EMfields->Jz_s[ispec] )(ibin*clrw*dim1);
+	double* b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*dim1);
+        for (unsigned int ipart=istart ; ipart<iend; ipart++ )
+	    (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*gf)[ipart], ibin*clrw, b_lastdim, &(*iold)[2*ipart], &(*delta)[2*ipart]);
+    }
+
+}

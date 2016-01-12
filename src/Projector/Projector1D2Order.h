@@ -21,12 +21,14 @@ public:
     void operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, unsigned int b_dim0);
 
      //! Project local current densities if particles sorting activated in Species::dynamics
-    void operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_dim0);
-    void operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_dim0);
+    void operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_dim0, int* iold, double* delta);
+    void operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_dim0, int* iold, double* delta);
 
     //! Project global current densities if Ionization in Species::dynamics,
     void operator() (Field* Jx, Field* Jy, Field* Jz, Particles &particles, int ipart, LocalFields Jion);
 
+    //!Wrapper
+    void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, int diag_flag, int b_lastdim, int ispec);
 private:
     double dx_ov_dt;
 };
