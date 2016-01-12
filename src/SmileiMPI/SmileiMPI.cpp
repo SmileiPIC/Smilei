@@ -114,11 +114,13 @@ void SmileiMPI::init( Params& params )
         dynamics_Bpart.resize(omp_get_max_threads());
         dynamics_gf.resize(omp_get_max_threads());
         dynamics_iold.resize(omp_get_max_threads());
+        dynamics_deltaold.resize(omp_get_max_threads());
     #else
         dynamics_Epart.resize(1);
         dynamics_Bpart.resize(1);
         dynamics_gf.resize(1);
         dynamics_iold.resize(1);
+        dynamics_deltaold.resize(1);
     #endif
 
     interParticles.initialize(0,params.nDim_particle); 

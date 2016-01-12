@@ -454,13 +454,20 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     unsigned int nParticles = getNbrOfParticles();
     
     // Reset list of particles to exchange
+    clearExchList();
+
     int tid(0);
+
+    //Point to local thread dedicated buffers
     std::vector<double> *gf = &(smpi->dynamics_gf[ithread]);
     std::vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<LocalFields> *Bpart = &(smpi->dynamics_Bpart[ithread]);
+    //std::vector<int> *iold_pos       = &(smpi->dynamics_iold[ithread]);
+    //std::vector<double> *delta_old_pos       = &(smpi->dynamics_deltaold[ithread]);
+
+
     std::vector<double> nrj_lost_per_thd(1, 0.);
 
-    clearExchList();
     	
     //ener_tot  = 0.;
     //ener_lost = 0.;
@@ -500,10 +507,11 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             }
 
             // Interpolate the fields at the particle position
-            for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
-                //(*LocInterp)(EMfields, *particles, iPart, &Epart, &Bpart);
-                (*Interp)(EMfields, *particles, iPart, &(*Epart)[iPart], &(*Bpart)[iPart]);
-            }
+            //for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
+            //    //(*LocInterp)(EMfields, *particles, iPart, &Epart, &Bpart);
+            //    //(*Interp)(EMfields, *particles, iPart, &(*Epart)[iPart], &(*Bpart)[iPart], smpi);
+            //}
+            (*Interp)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread );
 
             //Ionization
             if (Ionize){				

@@ -17,6 +17,7 @@ public:
     ~Interpolator2D2Order(){};
 
     void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc);
+    void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread);
     void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc);
     inline double compute( double* coeffx, double* coeffy, Field2D* f, int idx, int idy) {
 	double interp_res(0.);
@@ -33,6 +34,8 @@ private:
     int ip_, jp_;
     // Last dual index computed
     int id_, jd_;
+    // Last delta computed
+    double deltax, deltay;
     // Interpolation coefficient on Prim grid
     double coeffxp_[3], coeffyp_[3];
     // Interpolation coefficient on Dual grid

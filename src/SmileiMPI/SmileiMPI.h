@@ -190,14 +190,17 @@ public:
     std::vector<std::vector<LocalFields>> dynamics_Bpart;
     //! gamma factor
     std::vector<std::vector<double>> dynamics_gf;
-    //! old_pos
+    //! iold_pos
     std::vector<std::vector<int>> dynamics_iold;
+    //! delta_old_pos
+    std::vector<std::vector<double>> dynamics_deltaold;
 
     inline void dynamics_resize(int ithread, int ndim_part, int npart ){
         dynamics_Epart[ithread].resize(npart);
         dynamics_Bpart[ithread].resize(npart);
         dynamics_gf[ithread].resize(npart);
         dynamics_iold[ithread].resize(ndim_part*npart);
+        dynamics_deltaold[ithread].resize(ndim_part*npart);
     }
 
     //! Set global starting index for direction i

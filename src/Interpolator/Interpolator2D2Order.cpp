@@ -48,31 +48,32 @@ void Interpolator2D2Order::operator() (ElectroMagn* EMfields, Particles &particl
 
 
     // Declaration and calculation of the coefficient for interpolation
-    double delta, delta2;
+    double delta2;
 
-    delta   = xpn - (double)ip_;
-    delta2  = delta*delta;
-    coeffxp_[0] = 0.5 * (delta2-delta+0.25);
-    coeffxp_[1] = 0.75 - delta2;
-    coeffxp_[2] = 0.5 * (delta2+delta+0.25);
-
-    delta   = xpn - (double)id_ + 0.5;
-    delta2  = delta*delta;
-    coeffxd_[0] = 0.5 * (delta2-delta+0.25);
+    deltax   = xpn - (double)id_ + 0.5;
+    delta2  = deltax*deltax;
+    coeffxd_[0] = 0.5 * (delta2-deltax+0.25);
     coeffxd_[1] = 0.75 - delta2;
-    coeffxd_[2] = 0.5 * (delta2+delta+0.25);
+    coeffxd_[2] = 0.5 * (delta2+deltax+0.25);
 
-    delta   = ypn - (double)jp_;
-    delta2  = delta*delta;
-    coeffyp_[0] = 0.5 * (delta2-delta+0.25);
-    coeffyp_[1] = 0.75 - delta2;
-    coeffyp_[2] = 0.5 * (delta2+delta+0.25);
+    deltax   = xpn - (double)ip_;
+    delta2  = deltax*deltax;
+    coeffxp_[0] = 0.5 * (delta2-deltax+0.25);
+    coeffxp_[1] = 0.75 - delta2;
+    coeffxp_[2] = 0.5 * (delta2+deltax+0.25);
 
-    delta   = ypn - (double)jd_ + 0.5;
-    delta2  = delta*delta;
-    coeffyd_[0] = 0.5 * (delta2-delta+0.25);
+    deltay   = ypn - (double)jd_ + 0.5;
+    delta2  = deltay*deltay;
+    coeffyd_[0] = 0.5 * (delta2-deltay+0.25);
     coeffyd_[1] = 0.75 - delta2;
-    coeffyd_[2] = 0.5 * (delta2+delta+0.25);
+    coeffyd_[2] = 0.5 * (delta2+deltay+0.25);
+
+    deltay   = ypn - (double)jp_;
+    delta2  = deltay*deltay;
+    coeffyp_[0] = 0.5 * (delta2-deltay+0.25);
+    coeffyp_[1] = 0.75 - delta2;
+    coeffyp_[2] = 0.5 * (delta2+deltay+0.25);
+
 
     //!\todo CHECK if this is correct for both primal & dual grids !!!
     // First index for summation
@@ -146,5 +147,25 @@ void Interpolator2D2Order::operator() (ElectroMagn* EMfields, Particles &particl
     // Interpolation of Rho^(p,p)
     // -------------------------
     (*RhoLoc) = compute( coeffxp_, coeffyp_, Rho2D, ip_, jp_);
+
+}
+
+void Interpolator2D2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)
+{
+    std::vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
+    std::vector<LocalFields> *Bpart = &(smpi->dynamics_Bpart[ithread]);
+    std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
+    std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
+
+    //Loop on bin particles
+    for (unsigned int ipart=istart ; ipart<iend; ipart++ ) {
+        //Interpolation on current particle
+        (*this)(EMfields, particles, ipart, &(*Epart)[ipart], &(*Bpart)[ipart]);
+        //Buffering of iol and delta
+        (*iold)[ipart*2] = ip_;
+        (*iold)[ipart*2+1] = jp_;
+        (*delta)[ipart*2] = deltax;
+        (*delta)[ipart*2+1] = deltay;
+    }
 
 }

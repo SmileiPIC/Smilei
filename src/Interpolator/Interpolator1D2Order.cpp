@@ -98,3 +98,9 @@ void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particl
     (*JLoc).x = compute(coeffd_, Jx1D,  id_);  
     
 }
+
+void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)
+{
+
+}
+
