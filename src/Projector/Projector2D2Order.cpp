@@ -707,38 +707,38 @@ void Projector2D2Order::operator() (double* rho, Particles &particles, unsigned 
     // Locate particles & Calculate Esirkepov coef. S, DS and W
     // --------------------------------------------------------
 
-    xpn = particles.position_old(0, ipart) * dx_inv_;
-    int ipo = round(xpn);
-    ypn = particles.position_old(1, ipart) * dy_inv_;
-    int jpo = round(ypn);
+    //xpn = particles.position_old(0, ipart) * dx_inv_;
+    //int ipo = round(xpn);
+    //ypn = particles.position_old(1, ipart) * dy_inv_;
+    //int jpo = round(ypn);
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
     xpn = particles.position(0, ipart) * dx_inv_;
     int ip = round(xpn);
-    int ip_m_ipo = ip-ipo;
+    //int ip_m_ipo = ip-ipo;
     delta  = xpn - (double)ip;
     delta2 = delta*delta;
-    Sx1[ip_m_ipo+1] = 0.5 * (delta2-delta+0.25);
-    Sx1[ip_m_ipo+2] = 0.75-delta2;
-    Sx1[ip_m_ipo+3] = 0.5 * (delta2+delta+0.25);
+    Sx1[1] = 0.5 * (delta2-delta+0.25);
+    Sx1[2] = 0.75-delta2;
+    Sx1[3] = 0.5 * (delta2+delta+0.25);
 
     ypn = particles.position(1, ipart) * dy_inv_;
     int jp = round(ypn);
-    int jp_m_jpo = jp-jpo;
+    //int jp_m_jpo = jp-jpo;
     delta  = ypn - (double)jp;
     delta2 = delta*delta;
-    Sy1[jp_m_jpo+1] = 0.5 * (delta2-delta+0.25);
-    Sy1[jp_m_jpo+2] = 0.75-delta2;
-    Sy1[jp_m_jpo+3] = 0.5 * (delta2+delta+0.25);
+    Sy1[1] = 0.5 * (delta2-delta+0.25);
+    Sy1[2] = 0.75-delta2;
+    Sy1[3] = 0.5 * (delta2+delta+0.25);
 
 
     // ---------------------------
     // Calculate the total current
     // ---------------------------
-    ipo -= i_domain_begin + bin;
-    jpo -= j_domain_begin;
+    ip -= i_domain_begin + bin;
+    jp -= j_domain_begin;
 
     for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = (i+ipo-2)*b_dim1+jpo-2;
+        iloc = (i+ip-2)*b_dim1+jp-2;
         for (unsigned int j=0 ; j<5 ; j++) {
             rho[iloc+j] += charge_weight * Sx1[i]*Sy1[j];
         }

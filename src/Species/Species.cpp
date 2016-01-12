@@ -291,7 +291,7 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
             } else if (initPosition_type == "random") {
                 (*particles).position(i,p)=indexes[i]+(((double)rand() / RAND_MAX))*cell_length[i];
             }
-            (*particles).position_old(i,p) = (*particles).position(i,p);
+            //(*particles).position_old(i,p) = (*particles).position(i,p);
         }// i
     }// p
 }
