@@ -644,6 +644,8 @@ void SmileiMPI::computeGlobalDiags(Diagnostic* diags, int timestep)
     if (timestep % diags->scalars.every == 0) computeGlobalDiags(diags->scalars, timestep);
     //computeGlobalDiags(probes); // HDF5 write done per patch in DiagProbes::*
     computeGlobalDiags(diags->phases, timestep);
+    for (unsigned int i=0; i<diags->vecDiagnosticParticles.size(); i++)
+	computeGlobalDiags(diags->vecDiagnosticParticles[i], timestep);
 }
 
 void SmileiMPI::computeGlobalDiags(DiagnosticScalar& scalars, int timestep)
@@ -731,6 +733,20 @@ void SmileiMPI::computeGlobalDiags(DiagnosticPhaseSpace& phases, int timestep)
     phases.vecDiagPhaseToRun.clear();
 }
 
+
+//for (unsigned int i=0; i<vecDiagnosticParticles.size(); i++)
+//    computeGlobalDiags(diags->vecDiagnosticParticles[i], timestep);
+void SmileiMPI::computeGlobalDiags(DiagnosticParticles* diagParticles, int timestep)
+{
+    if (timestep % diagParticles->every == diagParticles->time_average-1) {
+	MPI_Reduce(diagParticles->filename.size()?MPI_IN_PLACE:&diagParticles->data_sum[0], &diagParticles->data_sum[0], diagParticles->output_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
+	
+	if (smilei_rk==0)
+	    diagParticles->write( timestep );
+    }
+    if (diagParticles->time_average == 1)
+	diagParticles->clean();
+}
 
 void SmileiMPI::send(Patch* patch, int to, int tag)
 {

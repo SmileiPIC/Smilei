@@ -48,6 +48,7 @@ class VectorPatch {
     void computeGlobalDiags(int timestep);
     void computeScalarsDiags(int timestep);
     void computePhaseSpace();
+    void computeParticlesDiags(int timestep);
 
     void initProbesDiags(Params& params, int timestep);
     void finalizeProbesDiags(Params& params, int timestep);

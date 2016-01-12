@@ -336,6 +336,8 @@ void VectorPatch::computeGlobalDiags(int timestep)
     computeScalarsDiags(timestep);
     //computeGlobalDiags(probes); // HDF5 write done per patch in DiagProbes::*
     computePhaseSpace();
+    computeParticlesDiags(timestep);
+    
 }
 
 void VectorPatch::computeScalarsDiags(int timestep)
@@ -455,6 +457,29 @@ void VectorPatch::computePhaseSpace()
 
 }
 
+
+void VectorPatch::computeParticlesDiags(int timestep)
+{
+    int nDiags( (*this)(0)->Diags->vecDiagnosticParticles.size() );
+
+    for (int idiags = 0 ; idiags<nDiags ; idiags++) {
+	if (timestep % (*this)(0)->Diags->vecDiagnosticParticles[idiags]->every != (*this)(0)->Diags->vecDiagnosticParticles[idiags]->time_average-1) continue;
+
+	int output_size = (*this)(0)->Diags->vecDiagnosticParticles[idiags]->output_size;
+	for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++) {
+	    for (int i=0 ; i<output_size ; i++)
+		(*this)(0)->Diags->vecDiagnosticParticles[idiags]->data_sum[i] += (*this)(ipatch)->Diags->vecDiagnosticParticles[idiags]->data_sum[i];
+	} // for ipatch
+
+    } // for idiags
+
+    
+    for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++)
+	for (unsigned int i=0; i<(*this)(ipatch)->Diags->vecDiagnosticParticles.size(); i++)
+	       if ((*this)(ipatch)->Diags->vecDiagnosticParticles[i]->time_average == 1)
+		   (*this)(ipatch)->Diags->vecDiagnosticParticles[i]->clean();
+
+}
 
 void VectorPatch::initProbesDiags(Params& params, int timestep)
 {

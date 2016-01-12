@@ -140,6 +140,9 @@ Patch::Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int 
 
 	// Create diagnostics
 	Diags = new Diagnostic(params,this, smpi);
+	if ( hindex==0 && smpi->isMaster() )
+	    for (unsigned int idiag=0; idiag<Diags->vecDiagnosticParticles.size(); idiag++)
+		Diags->vecDiagnosticParticles[idiag]->createFile(idiag);
 
 	sio = SmileiIOFactory::create(params, Diags, this);
 

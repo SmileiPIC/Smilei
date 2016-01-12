@@ -100,6 +100,8 @@ struct DiagnosticParticlesAxis {
 
 // Class for the particles diagnostics
 class DiagnosticParticles {
+    friend class SmileiMPI;
+    friend class VectorPatch;
 
 public:
 
@@ -108,7 +110,14 @@ public:
     ~DiagnosticParticles();
         
     void run(int, std::vector<Species*>&);
-        
+
+    void createFile( unsigned int n_diag_particles );
+    void write(int timestep);
+    void clean();
+
+protected:
+    
+
 private:
     
      //! this is the hdf5 file name

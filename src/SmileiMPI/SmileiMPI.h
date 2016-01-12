@@ -20,6 +20,7 @@ class Field;
 class Diagnostic;
 class DiagnosticScalar;
 class DiagnosticPhaseSpace;
+class DiagnosticParticles;
 
 #define SMILEI_COMM_DUMP_TIME 1312
 
@@ -136,6 +137,7 @@ public:
     void computeGlobalDiags(Diagnostic* diags, int timestep);
     void computeGlobalDiags(DiagnosticScalar& scalars, int timestep);
     void computeGlobalDiags(DiagnosticPhaseSpace& phases, int timestep);
+    void computeGlobalDiags(DiagnosticParticles* diagParticles, int timestep);
 
     //! Method to identify the rank 0 MPI process
     inline bool isMaster() {
