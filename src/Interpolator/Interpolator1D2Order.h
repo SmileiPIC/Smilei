@@ -29,6 +29,8 @@ private:
     int ip_;
     // Last dual index computed
     int id_;
+    // Last delta computed
+    double xjmxi;
     // Interpolation coefficient on Prim grid
     double coeffp_[3];
     // Interpolation coefficient on Dual grid

@@ -35,7 +35,7 @@ void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particl
 {
 
     // Variable declaration
-    double xjn, xjmxi, xjmxi2, xjmxi3, xjmxi4;
+    double xjn, xjmxi2, xjmxi3, xjmxi4;
 
     // Static cast of the electromagnetic fields
     Field1D* Ex1D     = static_cast<Field1D*>(EMfields->Ex_);
@@ -49,6 +49,27 @@ void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     // Particle position (in units of the spatial-step)
     xjn    = particles.position(0, ipart)*dx_inv_;
 
+    // --------------------------------------------------------
+    // Interpolate the fields from the Dual grid : Ex, By, Bz
+    // --------------------------------------------------------
+    id_      = round(xjn+0.5);  // index of the central point
+    xjmxi  = xjn -(double)id_+0.5;  // normalized distance to the central node
+    xjmxi2 = xjmxi*xjmxi;     // square of the normalized distance to the central node
+    xjmxi3 = xjmxi2*xjmxi;    // cube of the normalized distance to the central node
+    xjmxi4 = xjmxi3*xjmxi;    // 4th power of the normalized distance to the central node
+
+    // coefficients for the 4th order interpolation on 5 nodes
+    coeffd_[0] = dble_1_ov_384   - dble_1_ov_48  * xjmxi  + dble_1_ov_16 * xjmxi2 - dble_1_ov_12 * xjmxi3 + dble_1_ov_24 * xjmxi4;
+    coeffd_[1] = dble_19_ov_96   - dble_11_ov_24 * xjmxi  + dble_1_ov_4 * xjmxi2  + dble_1_ov_6  * xjmxi3 - dble_1_ov_6  * xjmxi4;
+    coeffd_[2] = dble_115_ov_192 - dble_5_ov_8   * xjmxi2 + dble_1_ov_4 * xjmxi4;
+    coeffd_[3] = dble_19_ov_96   + dble_11_ov_24 * xjmxi  + dble_1_ov_4 * xjmxi2  - dble_1_ov_6  * xjmxi3 - dble_1_ov_6  * xjmxi4;
+    coeffd_[4] = dble_1_ov_384   + dble_1_ov_48  * xjmxi  + dble_1_ov_16 * xjmxi2 + dble_1_ov_12 * xjmxi3 + dble_1_ov_24 * xjmxi4;
+
+    id_ -= index_domain_begin;
+
+    (*ELoc).x = compute(coeffd_, Ex1D,   id_);  
+    (*BLoc).y = compute(coeffd_, By1D_m, id_);  
+    (*BLoc).z = compute(coeffd_, Bz1D_m, id_);  
 
     // --------------------------------------------------------
     // Interpolate the fields from the Primal grid : Ey, Ez, Bx
@@ -73,27 +94,6 @@ void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     (*BLoc).x = compute(coeffp_, Bx1D_m, ip_);
 
 
-    // --------------------------------------------------------
-    // Interpolate the fields from the Dual grid : Ex, By, Bz
-    // --------------------------------------------------------
-    id_      = round(xjn+0.5);  // index of the central point
-    xjmxi  = xjn -(double)id_+0.5;  // normalized distance to the central node
-    xjmxi2 = xjmxi*xjmxi;     // square of the normalized distance to the central node
-    xjmxi3 = xjmxi2*xjmxi;    // cube of the normalized distance to the central node
-    xjmxi4 = xjmxi3*xjmxi;    // 4th power of the normalized distance to the central node
-
-    // coefficients for the 4th order interpolation on 5 nodes
-    coeffd_[0] = dble_1_ov_384   - dble_1_ov_48  * xjmxi  + dble_1_ov_16 * xjmxi2 - dble_1_ov_12 * xjmxi3 + dble_1_ov_24 * xjmxi4;
-    coeffd_[1] = dble_19_ov_96   - dble_11_ov_24 * xjmxi  + dble_1_ov_4 * xjmxi2  + dble_1_ov_6  * xjmxi3 - dble_1_ov_6  * xjmxi4;
-    coeffd_[2] = dble_115_ov_192 - dble_5_ov_8   * xjmxi2 + dble_1_ov_4 * xjmxi4;
-    coeffd_[3] = dble_19_ov_96   + dble_11_ov_24 * xjmxi  + dble_1_ov_4 * xjmxi2  - dble_1_ov_6  * xjmxi3 - dble_1_ov_6  * xjmxi4;
-    coeffd_[4] = dble_1_ov_384   + dble_1_ov_48  * xjmxi  + dble_1_ov_16 * xjmxi2 + dble_1_ov_12 * xjmxi3 + dble_1_ov_24 * xjmxi4;
-
-    id_ -= index_domain_begin;
-
-    (*ELoc).x = compute(coeffd_, Ex1D,   id_);  
-    (*BLoc).y = compute(coeffd_, By1D_m, id_);  
-    (*BLoc).z = compute(coeffd_, Bz1D_m, id_);  
 
 }//END Interpolator1D4Order
 
@@ -124,6 +124,19 @@ void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particl
 }
 void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)
 {
-return;
+    std::vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
+    std::vector<LocalFields> *Bpart = &(smpi->dynamics_Bpart[ithread]);
+    std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
+    std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
+
+    //Loop on bin particles
+    for (unsigned int ipart=istart ; ipart<iend; ipart++ ) {
+        //Interpolation on current particle
+        (*this)(EMfields, particles, ipart, &(*Epart)[ipart], &(*Bpart)[ipart]);
+        //Buffering of iol and delta
+        (*iold)[ipart] = ip_;
+        (*delta)[ipart] = xjmxi;
+    }
+
 }
 

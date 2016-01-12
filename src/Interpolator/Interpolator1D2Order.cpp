@@ -20,7 +20,7 @@ void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particl
 {
 
     // Variable declaration
-    double xjn, xjmxi, xjmxi2;
+    double xjn, xjmxi2;
 
     // Static cast of the electromagnetic fields
     Field1D* Ex1D     = static_cast<Field1D*>(EMfields->Ex_);
@@ -34,6 +34,23 @@ void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particl
     // Particle position (in units of the spatial-step)
     xjn    = particles.position(0, ipart)*dx_inv_;
 
+    // --------------------------------------------------------
+    // Interpolate the fields from the Dual grid : Ex, By, Bz
+    // --------------------------------------------------------
+    id_      = round(xjn+0.5);        // index of the central point
+    xjmxi  = xjn - (double)id_ +0.5;  // normalized distance to the central node
+    xjmxi2 = xjmxi*xjmxi;            // square of the normalized distance to the central node
+
+    // 2nd order interpolation on 3 nodes
+    coeffd_[0] = 0.5 * (xjmxi2-xjmxi+0.25);
+    coeffd_[1] = (0.75-xjmxi2);
+    coeffd_[2] = 0.5 * (xjmxi2+xjmxi+0.25);
+
+    id_ -= index_domain_begin;
+
+    (*ELoc).x = compute(coeffd_, Ex1D,   id_);  
+    (*BLoc).y = compute(coeffd_, By1D_m, id_);  
+    (*BLoc).z = compute(coeffd_, Bz1D_m, id_);  
 
     // --------------------------------------------------------
     // Interpolate the fields from the Primal grid : Ey, Ez, Bx
@@ -53,23 +70,6 @@ void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particl
     (*ELoc).z = compute(coeffp_, Ez1D,   ip_);  
     (*BLoc).x = compute(coeffp_, Bx1D_m, ip_);  
 
-    // --------------------------------------------------------
-    // Interpolate the fields from the Dual grid : Ex, By, Bz
-    // --------------------------------------------------------
-    id_      = round(xjn+0.5);        // index of the central point
-    xjmxi  = xjn - (double)id_ +0.5;  // normalized distance to the central node
-    xjmxi2 = pow(xjmxi,2);            // square of the normalized distance to the central node
-
-    // 2nd order interpolation on 3 nodes
-    coeffd_[0] = 0.5 * (xjmxi2-xjmxi+0.25);
-    coeffd_[1] = (0.75-xjmxi2);
-    coeffd_[2] = 0.5 * (xjmxi2+xjmxi+0.25);
-
-    id_ -= index_domain_begin;
-
-    (*ELoc).x = compute(coeffd_, Ex1D,   id_);  
-    (*BLoc).y = compute(coeffd_, By1D_m, id_);  
-    (*BLoc).z = compute(coeffd_, Bz1D_m, id_);  
 
 }//END Interpolator1D2Order
 
@@ -101,6 +101,19 @@ void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particl
 
 void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)
 {
+    std::vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
+    std::vector<LocalFields> *Bpart = &(smpi->dynamics_Bpart[ithread]);
+    std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
+    std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
+
+    //Loop on bin particles
+    for (unsigned int ipart=istart ; ipart<iend; ipart++ ) {
+        //Interpolation on current particle
+        (*this)(EMfields, particles, ipart, &(*Epart)[ipart], &(*Bpart)[ipart]);
+        //Buffering of iol and delta
+        (*iold)[ipart] = ip_;
+        (*delta)[ipart] = xjmxi;
+    }
 
 }
 
