@@ -437,18 +437,11 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     #endif
     smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
 
-    //// Electric field at the particle position
-    //LocalFields Epart;
-    //// Magnetic field at the particle position
-    //LocalFields Bpart;
-    //// Ionization current
+    // Ionization current
     LocalFields Jion;
     
     int iloc;
     unsigned int i,j,ibin,iPart;
-    
-    //! buffers for currents and charge
-    //double *b_Jx,*b_Jy,*b_Jz,*b_rho;
     
     // number of particles for this Species
     unsigned int nParticles = getNbrOfParticles();
@@ -469,10 +462,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     std::vector<double> nrj_lost_per_thd(1, 0.);
 
     	
-    //ener_tot  = 0.;
-    //ener_lost = 0.;
     double ener_iPart(0.);
-    //bool contribute(true);
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
@@ -480,19 +470,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 
         for (ibin = 0 ; ibin < bmin.size() ; ibin++) {
 
-            //if (params.nDim_field==2) {
-            //    if (diag_flag == 0) {
-	    //        b_Jx =  &(*EMfields->Jx_ )(ibin*clrw*f_dim1);
-	    //        b_Jy =  &(*EMfields->Jy_ )(ibin*clrw*(f_dim1+1));
-	    //        b_Jz =  &(*EMfields->Jz_ )(ibin*clrw*f_dim1);
-            //    } else { 
-	    //        b_Jx =  &(*EMfields->Jx_s[ispec] )(ibin*clrw*f_dim1);
-	    //        b_Jy =  &(*EMfields->Jy_s[ispec] )(ibin*clrw*(f_dim1+1));
-	    //        b_Jz =  &(*EMfields->Jz_s[ispec] )(ibin*clrw*f_dim1);
-	    //        b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1);
-            //    }
-            //}
-            //else if (params.nDim_field==1) {
+               //else if (params.nDim_field==1) {
             //    if (diag_flag == 0) {
             //        b_Jx =  &(*EMfields->Jx_ )(ibin*clrw);
             //        b_Jy =  &(*EMfields->Jy_ )(ibin*clrw);
@@ -504,13 +482,8 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             //        b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw);
             //    }
 
-            //}
 
             // Interpolate the fields at the particle position
-            //for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
-            //    //(*LocInterp)(EMfields, *particles, iPart, &Epart, &Bpart);
-            //    //(*Interp)(EMfields, *particles, iPart, &(*Epart)[iPart], &(*Bpart)[iPart], smpi);
-            //}
             (*Interp)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread );
 
             //Ionization
@@ -551,16 +524,8 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
              }
 
              // Project currents if not a Test species and charges as well if a diag is needed. 
-             if (!(*particles).isTest) {
+             if (!(*particles).isTest)
                  (*Proj)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, b_lastdim, ispec );
-	         //if (diag_flag == 0){ 
-                 //    for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ )
-	     	 //        (*Proj)(b_Jx , b_Jy , b_Jz , *particles,  iPart, (*gf)[iPart], ibin*clrw, b_lastdim);
-	         //} else {
-                 //    for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ )
-	     	 //        (*Proj)(b_Jx , b_Jy , b_Jz ,b_rho, *particles,  iPart, (*gf)[iPart], ibin*clrw, b_lastdim);
-                 //}
-             }
 
         }// ibin
 
@@ -604,10 +569,6 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 		    b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw);    
                 for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
                     (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_lastdim);
-                    //Update position_old because it is required for the Projection.
-                    //for ( int i = 0 ; i<nDim_particle ; i++ ) {
-                    //    (*particles).position_old(i, iPart)  = (*particles).position(i, iPart);
-                    //}
                 } //End loop on particles
             }//End loop on bins
             
