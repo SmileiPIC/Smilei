@@ -502,9 +502,8 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             }    
                 
             // Push the particle
-            for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
+            for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) 
                 (*Push)(*particles, iPart, (*Epart)[iPart], (*Bpart)[iPart] , (*gf)[iPart]);
-	    }			
 
             // Apply wall and boundary conditions
             for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {

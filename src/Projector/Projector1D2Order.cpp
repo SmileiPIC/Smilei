@@ -262,9 +262,10 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
 
 
     // Locate particle old position on the primal grid
-    xjn        = particles.position_old(0, ipart) * dx_inv_;
-    ipo        = round(xjn);                          // index of the central node
-    xj_m_xipo  = xjn - (double)ipo;                   // normalized distance to the nearest grid point
+    //xjn        = particles.position_old(0, ipart) * dx_inv_;
+    //ipo        = round(xjn);                          // index of the central node
+    //xj_m_xipo  = xjn - (double)ipo;                   // normalized distance to the nearest grid point
+    xj_m_xipo  = *delta;                   // normalized distance to the nearest grid point
     xj_m_xipo2 = xj_m_xipo*xj_m_xipo;                 // square of the normalized distance to the nearest grid point
 
     // Locate particle new position on the primal grid
@@ -280,7 +281,8 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     S0[3] = 0.5 * (xj_m_xipo2+xj_m_xipo+0.25);
 
     // coefficients 2nd order interpolation on 3 nodes
-    ip_m_ipo = ip-ipo;
+    ipo        = *iold;                          // index of the central node
+    ip_m_ipo = ip-ipo-index_domain_begin;
     S1[ip_m_ipo+1] = 0.5 * (xj_m_xip2-xj_m_xip+0.25);
     S1[ip_m_ipo+2] = (0.75-xj_m_xip2);
     S1[ip_m_ipo+3] = 0.5 * (xj_m_xip2+xj_m_xip+0.25);
@@ -297,7 +299,7 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
         Jx_p[i] = Jx_p[i-1] + crx_p * Wl[i-1];
     }
 
-    ipo -= index_domain_begin + bin ;
+    ipo -= bin ;
     //cout << "\tcoords = " << particles.position(0, ipart) << "\tglobal index = " << ip;
     //ip  -= index_domain_begin;
     //cout << "\tlocal index = " << ip << endl;
@@ -341,9 +343,10 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
 
 
     // Locate particle old position on the primal grid
-    xjn        = particles.position_old(0, ipart) * dx_inv_;
-    ipo        = round(xjn);                          // index of the central node
-    xj_m_xipo  = xjn - (double)ipo;                   // normalized distance to the nearest grid point
+    //xjn        = particles.position_old(0, ipart) * dx_inv_;
+    //ipo        = round(xjn);                          // index of the central node
+    //xj_m_xipo  = xjn - (double)ipo;                   // normalized distance to the nearest grid point
+    xj_m_xipo  = *delta;                   // normalized distance to the nearest grid point
     xj_m_xipo2 = xj_m_xipo*xj_m_xipo;                 // square of the normalized distance to the nearest grid point
 
     // Locate particle new position on the primal grid
@@ -359,7 +362,8 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     S0[3] = 0.5 * (xj_m_xipo2+xj_m_xipo+0.25);
 
     // coefficients 2nd order interpolation on 3 nodes
-    ip_m_ipo = ip-ipo;
+    ipo = *iold;
+    ip_m_ipo = ip-ipo-index_domain_begin;
     S1[ip_m_ipo+1] = 0.5 * (xj_m_xip2-xj_m_xip+0.25);
     S1[ip_m_ipo+2] = (0.75-xj_m_xip2);
     S1[ip_m_ipo+3] = 0.5 * (xj_m_xip2+xj_m_xip+0.25);
@@ -376,7 +380,7 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
         Jx_p[i] = Jx_p[i-1] + crx_p * Wl[i-1];
     }
 
-    ipo -= index_domain_begin + bin ;
+    ipo -= bin ;
     //cout << "\tcoords = " << particles.position(0, ipart) << "\tglobal index = " << ip;
     //ip  -= index_domain_begin;
     //cout << "\tlocal index = " << ip << endl;
@@ -400,13 +404,16 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
 // ---------------------------------------------------------------------------------------------------------------------
 void Projector1D2Order::operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, unsigned int b_dim0)
 {
+
+    //Warning : this function is used for frozen species only. It is assumed that position = position_old !!!
+
     // The variable bin received is  number of bin * cluster width.
     // Declare local variables
     //int ipo, ip, iloc;
-    int ipo, ip;
-    int ip_m_ipo;
+    int ip;
+    //int ip_m_ipo;
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
-    double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;
+    double xjn, xj_m_xip, xj_m_xip2;
     double S1[5];            // arrays used for the Esirkepov projection method
 
     // Initialize variables
@@ -416,10 +423,10 @@ void Projector1D2Order::operator() (double* rho, Particles &particles, unsigned 
 
 
     // Locate particle old position on the primal grid
-    xjn        = particles.position_old(0, ipart) * dx_inv_;
-    ipo        = round(xjn);                          // index of the central node
-    xj_m_xipo  = xjn - (double)ipo;                   // normalized distance to the nearest grid point
-    xj_m_xipo2 = xj_m_xipo*xj_m_xipo;                 // square of the normalized distance to the nearest grid point
+    //xjn        = particles.position_old(0, ipart) * dx_inv_;
+    //ipo        = round(xjn);                          // index of the central node
+    //xj_m_xipo  = xjn - (double)ipo;                   // normalized distance to the nearest grid point
+    //xj_m_xipo2 = xj_m_xipo*xj_m_xipo;                 // square of the normalized distance to the nearest grid point
 
     // Locate particle new position on the primal grid
     xjn       = particles.position(0, ipart) * dx_inv_;
@@ -428,18 +435,18 @@ void Projector1D2Order::operator() (double* rho, Particles &particles, unsigned 
     xj_m_xip2 = xj_m_xip*xj_m_xip;                    // square of the normalized distance to the nearest grid point
 
     // coefficients 2nd order interpolation on 3 nodes
-    ip_m_ipo = ip-ipo;
-    S1[ip_m_ipo+1] = 0.5 * (xj_m_xip2-xj_m_xip+0.25);
-    S1[ip_m_ipo+2] = (0.75-xj_m_xip2);
-    S1[ip_m_ipo+3] = 0.5 * (xj_m_xip2+xj_m_xip+0.25);
+    //ip_m_ipo = ip-ipo;
+    S1[1] = 0.5 * (xj_m_xip2-xj_m_xip+0.25);
+    S1[2] = (0.75-xj_m_xip2);
+    S1[3] = 0.5 * (xj_m_xip2+xj_m_xip+0.25);
 
-    ipo -= index_domain_begin + bin ;
+    ip -= index_domain_begin + bin ;
 
     // 2nd order projection for charge density
     // At the 2nd order, oversize = 2.
     for (unsigned int i=0; i<5; i++) {
         //iloc = i + ipo - 2;
-        rho[i + ipo - 2] += charge_weight * S1[i];
+        rho[i + ip - 2] += charge_weight * S1[i];
     }//i
 
 }
@@ -518,6 +525,24 @@ void Projector1D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particles &
 
 void Projector1D2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, int diag_flag, int b_lastdim, int ispec)
 {
+    std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
+    std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
+    std::vector<double> *gf = &(smpi->dynamics_gf[ithread]);
+
+    if (diag_flag == 0){ 
+	double* b_Jx =  &(*EMfields->Jx_ )(ibin*clrw);
+	double* b_Jy =  &(*EMfields->Jy_ )(ibin*clrw);
+	double* b_Jz =  &(*EMfields->Jz_ )(ibin*clrw);
+        for (unsigned int ipart=istart ; ipart<iend; ipart++ )
+    	    (*this)(b_Jx , b_Jy , b_Jz , particles,  ipart, (*gf)[ipart], ibin*clrw, b_lastdim, &(*iold)[ipart], &(*delta)[ipart]);
+    } else {
+	double* b_Jx =  &(*EMfields->Jx_s[ispec] )(ibin*clrw);
+	double* b_Jy =  &(*EMfields->Jy_s[ispec] )(ibin*clrw);
+	double* b_Jz =  &(*EMfields->Jz_s[ispec] )(ibin*clrw);
+	double* b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw);
+        for (unsigned int ipart=istart ; ipart<iend; ipart++ )
+	    (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*gf)[ipart], ibin*clrw, b_lastdim, &(*iold)[ipart], &(*delta)[ipart]);
+    }
 
 }
 

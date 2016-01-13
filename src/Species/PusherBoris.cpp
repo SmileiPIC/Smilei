@@ -72,10 +72,8 @@ void PusherBoris::operator() (Particles &particles, int ipart, LocalFields Epart
     particles.momentum(2, ipart) = pzsm;
 
     // Move the particle
-    for ( int i = 0 ; i<nDim_ ; i++ ) {
-        //particles.position_old(i, ipart)  = particles.position(i, ipart);
+    for ( int i = 0 ; i<nDim_ ; i++ ) 
         particles.position(i, ipart)     += dt*particles.momentum(i, ipart)/gf;
-    }
 
     //DEBUG(5, "\t END "<< particles.position(0, ipart) );
 
