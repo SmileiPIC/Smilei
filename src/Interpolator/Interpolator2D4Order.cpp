@@ -110,10 +110,10 @@ void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particl
 
     //!\todo CHECK if this is correct for both primal & dual grids !!!
     // First index for summation
-    ip_ = ip_ - 2 - i_domain_begin;
-    id_ = id_ - 2 - i_domain_begin;
-    jp_ = jp_ - 2 - j_domain_begin;
-    jd_ = jd_ - 2 - j_domain_begin;
+    ip_ = ip_ - i_domain_begin;
+    id_ = id_ - i_domain_begin;
+    jp_ = jp_ - j_domain_begin;
+    jd_ = jd_ - j_domain_begin;
 
 
     // -------------------------
@@ -187,14 +187,18 @@ void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particl
 {
     std::vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<LocalFields> *Bpart = &(smpi->dynamics_Bpart[ithread]);
+    std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
+    std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
 
+    //Loop on bin particles
     for (unsigned int ipart=istart ; ipart<iend; ipart++ ) {
+        //Interpolation on current particle
         (*this)(EMfields, particles, ipart, &(*Epart)[ipart], &(*Bpart)[ipart]);
-
-        smpi->dynamics_iold[ithread][ipart*2] = ip_;
-        smpi->dynamics_iold[ithread][ipart*2+1] = jp_;
-        smpi->dynamics_deltaold[ithread][ipart*2] = deltax;
-        smpi->dynamics_deltaold[ithread][ipart*2+1] = deltay;
+        //Buffering of iol and delta
+        (*iold)[ipart*2] = ip_;
+        (*iold)[ipart*2+1] = jp_;
+        (*delta)[ipart*2] = deltax;
+        (*delta)[ipart*2+1] = deltay;
     }
 
 }

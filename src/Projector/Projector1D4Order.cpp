@@ -232,7 +232,7 @@ void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
         Jx_p[i] = Jx_p[i-1] + crx_p * Wl[i-1];
     }
 
-    ipo -= bin ;
+    ipo -= bin + 3 ;
     //cout << "\tcoords = " << particles.position(0, ipart) << "\tglobal index = " << ip;
     //cout << "\tlocal index = " << ip << endl;
 
@@ -240,9 +240,9 @@ void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     // At the 4th order, oversize = 3.
     for (unsigned int i=0; i<7; i++) {
         //iloc = i  + ipo - 3;
-        Jx[i  + ipo - 3]  += Jx_p[i];
-        Jy[i  + ipo - 3]  += cry_p * Wt[i];
-        Jz[i  + ipo - 3]  += crz_p * Wt[i];
+        Jx[i  + ipo]  += Jx_p[i];
+        Jy[i  + ipo]  += cry_p * Wt[i];
+        Jz[i  + ipo]  += crz_p * Wt[i];
     }//i
 
 }
@@ -318,7 +318,7 @@ void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
         Jx_p[i] = Jx_p[i-1] + crx_p * Wl[i-1];
     }
 
-    ipo -= bin ;
+    ipo -= bin + 3;
     //cout << "\tcoords = " << particles.position(0, ipart) << "\tglobal index = " << ip;
     //cout << "\tlocal index = " << ip << endl;
 
@@ -326,10 +326,10 @@ void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     // At the 4th order, oversize = 3.
     for (unsigned int i=0; i<7; i++) {
         //iloc = i  + ipo - 3;
-        Jx[i  + ipo - 3]  += Jx_p[i];
-        Jy[i  + ipo - 3]  += cry_p * Wt[i];
-        Jz[i  + ipo - 3]  += crz_p * Wt[i];
-        rho[i  + ipo - 3] += charge_weight * S1[i];
+        Jx[i  + ipo ]  += Jx_p[i];
+        Jy[i  + ipo ]  += cry_p * Wt[i];
+        Jz[i  + ipo ]  += crz_p * Wt[i];
+        rho[i  + ipo ] += charge_weight * S1[i];
     }//i
 
 }//END Project local current densities (sort)
@@ -381,13 +381,13 @@ void Projector1D4Order::operator() (double* rho, Particles &particles, unsigned 
     S1[4] = dble_19_ov_96   + dble_11_ov_24 * xj_m_xip  + dble_1_ov_4 * xj_m_xip2  - dble_1_ov_6  * xj_m_xip3 - dble_1_ov_6  * xj_m_xip4;
     S1[5] = dble_1_ov_384   + dble_1_ov_48  * xj_m_xip  + dble_1_ov_16 * xj_m_xip2 + dble_1_ov_12 * xj_m_xip3 + dble_1_ov_24 * xj_m_xip4;
 
-    ip -= index_domain_begin + bin ;
+    ip -= index_domain_begin + bin + 3 ;
 
     // 4th order projection for the charge density
     // At the 4th order, oversize = 3.
     for (unsigned int i=0; i<7; i++) {
         //iloc = i  + ipo - 3;
-        rho[i  + ip - 3] += charge_weight * S1[i];
+        rho[i  + ip ] += charge_weight * S1[i];
     }//i
 
 }

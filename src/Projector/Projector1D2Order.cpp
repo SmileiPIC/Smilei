@@ -299,7 +299,7 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
         Jx_p[i] = Jx_p[i-1] + crx_p * Wl[i-1];
     }
 
-    ipo -= bin ;
+    ipo -= bin + 2;
     //cout << "\tcoords = " << particles.position(0, ipart) << "\tglobal index = " << ip;
     //ip  -= index_domain_begin;
     //cout << "\tlocal index = " << ip << endl;
@@ -308,10 +308,10 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     // At the 2nd order, oversize = 2.
     for (unsigned int i=0; i<5; i++) {
         //iloc = i + ipo - 2;
-        DEBUGEXEC(int myloc=(i + ipo - 2); if (myloc < 0) { ERROR("i=" << i << " ipo=" << ipo << " iloc=" << myloc << " index_domain_begin=" << index_domain_begin << " bin=" << bin)});
-        Jx[i + ipo - 2]  += Jx_p[i];
-        Jy[i + ipo - 2]  += cry_p * Wt[i];
-        Jz[i + ipo - 2]  += crz_p * Wt[i];
+        DEBUGEXEC(int myloc=(i + ipo ); if (myloc < 0) { ERROR("i=" << i << " ipo=" << ipo << " iloc=" << myloc << " index_domain_begin=" << index_domain_begin << " bin=" << bin)});
+        Jx[i + ipo ]  += Jx_p[i];
+        Jy[i + ipo ]  += cry_p * Wt[i];
+        Jz[i + ipo ]  += crz_p * Wt[i];
     }//i
 
 
@@ -380,7 +380,7 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
         Jx_p[i] = Jx_p[i-1] + crx_p * Wl[i-1];
     }
 
-    ipo -= bin ;
+    ipo -= bin + 2;
     //cout << "\tcoords = " << particles.position(0, ipart) << "\tglobal index = " << ip;
     //ip  -= index_domain_begin;
     //cout << "\tlocal index = " << ip << endl;
@@ -388,7 +388,7 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     // 2nd order projection for the total currents & charge density
     // At the 2nd order, oversize = 2.
     for (unsigned int i=0; i<5; i++) {
-        iloc = i + ipo - 2;
+        iloc = i + ipo ;
         DEBUGEXEC(if (iloc < 0) { ERROR("i=" << i << " ipo=" << ipo << " iloc=" << iloc << " index_domain_begin=" << index_domain_begin << " bin=" << bin)};);
         Jx[iloc]  += Jx_p[i];
         Jy[iloc]  += cry_p * Wt[i];
@@ -440,13 +440,12 @@ void Projector1D2Order::operator() (double* rho, Particles &particles, unsigned 
     S1[2] = (0.75-xj_m_xip2);
     S1[3] = 0.5 * (xj_m_xip2+xj_m_xip+0.25);
 
-    ip -= index_domain_begin + bin ;
+    ip -= index_domain_begin + bin + 2;
 
     // 2nd order projection for charge density
     // At the 2nd order, oversize = 2.
     for (unsigned int i=0; i<5; i++) {
-        //iloc = i + ipo - 2;
-        rho[i + ip - 2] += charge_weight * S1[i];
+        rho[i + ip ] += charge_weight * S1[i];
     }//i
 
 }

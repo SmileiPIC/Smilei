@@ -21,8 +21,8 @@ public:
     void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc);
     inline double compute( double* coeffx, double* coeffy, Field2D* f, int idx, int idy) {
 	double interp_res(0.);
-	for (int iloc=0 ; iloc<5 ; iloc++) {
-	    for (int jloc=0 ; jloc<5 ; jloc++) {
+	for (int iloc=-2 ; iloc<3 ; iloc++) {
+	    for (int jloc=-2 ; jloc<3 ; jloc++) {
 		interp_res += coeffx[iloc] * coeffy[jloc] * (*f)(idx+iloc,idy+jloc);
 	    }
 	}
