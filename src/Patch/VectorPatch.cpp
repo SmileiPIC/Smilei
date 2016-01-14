@@ -523,6 +523,59 @@ void VectorPatch::finalizeDumpFields(Params& params, int timestep)
 
 }
 
+void VectorPatch::initTrackParticles(Params& params, SmileiMPI* smpi)
+{
+    int nspecies = (*this)(0)->vecSpecies.size();
+    for ( int ispec=0 ; ispec<nspecies ; ispec++) {
+	
+	// Communicate some stuff if this is a species that has to be dumped (particles have Id)
+	// Need to be placed after ALL createParticles()
+	if ((*this)(0)->vecSpecies[ispec]->particles->track_every) {
+
+	    // Internal patches offset
+
+	    std::vector<int> localNbrParticles( this->size(), 0 );
+	    localNbrParticles[0] = (*this)(0)->vecSpecies[ispec]->getNbrOfParticles();
+	    for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++) {
+		// number of particles up to ipatch (including)
+		localNbrParticles[ipatch] += (*this)(ipatch)->vecSpecies[ispec]->getNbrOfParticles() + localNbrParticles[ipatch-1];
+		(*this)(ipatch)->vecSpecies[ispec]->particles->addIdOffsets(localNbrParticles[ipatch-1]);
+	    }
+	    int locNbrParticles = localNbrParticles[this->size()-1];
+
+
+	    // MPI offset
+
+	    //int locNbrParticles = thisSpecies->getNbrOfParticles();
+	    int sz(1);
+	    MPI_Comm_size( MPI_COMM_WORLD, &sz );
+	    std::vector<int> allNbrParticles(sz);
+	    MPI_Gather( &locNbrParticles, 1, MPI_INTEGER, &allNbrParticles[0], 1, MPI_INTEGER, 0, MPI_COMM_WORLD );
+	    int nParticles(0);
+
+	    nParticles =  allNbrParticles[0];
+	    for (int irk=1 ; irk<sz ; irk++){
+		allNbrParticles[irk] += nParticles;
+		nParticles = allNbrParticles[irk];
+	    }
+	    for (int irk=sz-1 ; irk>0 ; irk--){
+		allNbrParticles[irk] = allNbrParticles[irk-1];
+	    }
+	    allNbrParticles[0] = 0;
+
+	    int offset(0);
+	    MPI_Scatter(&allNbrParticles[0], 1 , MPI_INTEGER, &offset, 1, MPI_INTEGER, 0, MPI_COMM_WORLD );
+	    
+	    for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++)
+		(*this)(ipatch)->vecSpecies[ispec]->particles->addIdOffsets(offset);
+
+	} // End if track_every
+
+    } // End for ispec
+
+} // End initTrackParticles
+
+
 void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simWindow)
 {
     unsigned int n_moved(0), nPatches_now;

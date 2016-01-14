@@ -242,32 +242,8 @@ public:
 	    //PMESSAGE( 1, smpi->getRank(),"Species "<< speciesNumber <<" # part "<< npart_effective );
 	}
 
-            
-	// Communicate some stuff if this is a species that has to be dumped (particles have Id)
-	// Need to be placed after createParticles()
-	if (thisSpecies->particles->track_every) {
-	    int locNbrParticles = thisSpecies->getNbrOfParticles();
-	    int sz(1);
-	    MPI_Comm_size( MPI_COMM_WORLD, &sz );
-	    std::vector<int> allNbrParticles(sz);
-	    MPI_Gather( &locNbrParticles, 1, MPI_INTEGER, &allNbrParticles[0], 1, MPI_INTEGER, 0, MPI_COMM_WORLD );
-	    int nParticles(0);
-	    if (patch->isMaster()) {
-		nParticles =  allNbrParticles[0];
-		for (int irk=1 ; irk<sz ; irk++){
-		    allNbrParticles[irk] += nParticles;
-		    nParticles = allNbrParticles[irk];
-		}
-		for (int irk=sz-1 ; irk>0 ; irk--){
-		    allNbrParticles[irk] = allNbrParticles[irk-1];
-		}
-		allNbrParticles[0] = 0;
-	    }
-	    int offset(0);
-	    MPI_Scatter(&allNbrParticles[0], 1 , MPI_INTEGER, &offset, 1, MPI_INTEGER, 0, MPI_COMM_WORLD );
-	    thisSpecies->particles->addIdOffsets(offset);
-
-	}
+	
+	// Global Id setting moved in VectorPatch::initTrackParticle
             
 	// assign the correct Pusher to Push
 	thisSpecies->Push = PusherFactory::create(params, thisSpecies);

@@ -24,6 +24,7 @@ class DiagnosticTrackParticles {
 public:
 
     DiagnosticTrackParticles(Params&, Patch* patch, Species*);
+    void createFile(Params&, Patch* patch, Species*, Diagnostic*);
     
     ~DiagnosticTrackParticles(){};
     

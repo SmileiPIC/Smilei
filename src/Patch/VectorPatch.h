@@ -65,6 +65,7 @@ class VectorPatch {
     void initDumpFields(Params& params, int timestep);
     void finalizeDumpFields(Params& params, int timestep);
 
+    void initTrackParticles(Params& params, SmileiMPI* smpi);
 
     void solvePoisson( Params &params, SmileiMPI* smpi );
     bool isRhoNull( SmileiMPI* smpi );

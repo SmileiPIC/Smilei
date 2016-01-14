@@ -119,7 +119,7 @@ int main (int argc, char* argv[])
     VectorPatch vecPatches = PatchesFactory::createVector(params, smpiData);
     vecPatches.initProbesDiags(params, 0);
     vecPatches.initDumpFields(params, 0);
-
+    vecPatches.initTrackParticles(params, smpiData);
 
     // reading from dumped file the restart values
     if (params.restart) {

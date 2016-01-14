@@ -15,11 +15,19 @@ DiagnosticTrackParticles::DiagnosticTrackParticles(Params& params, Patch* patch,
 species(my_species),
 nDim_particle(params.nDim_particle)
 {
+}
 
+void DiagnosticTrackParticles::createFile(Params& params, Patch* patch, Species* my_species, Diagnostic* diags)
+{
     int locNbrParticles = species->getNbrOfParticles();
     hsize_t nParticles(0);
     int n = nParticles;
+
+    string nameSpec="Ntot_"+species->species_type;
+    nParticles = (hsize_t) diags->getScalar(nameSpec);
+
 #ifdef _MERGE_TODO
+    // Can only know by diagnostics Scalars ?
     hsize_t nParticles = (hsize_t) smpi->globalNbrParticles(species, locNbrParticles);
     int n = nParticles;
     smpi->bcast(n); // necessary to broadcast nParticles because only master has it
