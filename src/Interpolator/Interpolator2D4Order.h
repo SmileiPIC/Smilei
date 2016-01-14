@@ -23,7 +23,7 @@ public:
 	double interp_res(0.);
 	for (int iloc=-2 ; iloc<3 ; iloc++) {
 	    for (int jloc=-2 ; jloc<3 ; jloc++) {
-		interp_res += coeffx[iloc] * coeffy[jloc] * (*f)(idx+iloc,idy+jloc);
+		interp_res += *(coeffx+iloc) * *(coeffy+jloc) * (*f)(idx+iloc,idy+jloc);
 	    }
 	}
 	return interp_res;

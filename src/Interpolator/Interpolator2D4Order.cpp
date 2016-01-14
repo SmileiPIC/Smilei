@@ -119,32 +119,32 @@ void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     // -------------------------
     // Interpolation of Ex^(d,p)
     // -------------------------
-    (*ELoc).x =  compute( coeffxd_, coeffyp_, Ex2D, id_, jp_);
+    (*ELoc).x =  compute( &coeffxd_[2], &coeffyp_[2], Ex2D, id_, jp_);
 
     // -------------------------
     // Interpolation of Ey^(p,d)
     // -------------------------
-    (*ELoc).y = compute( coeffxp_, coeffyd_, Ey2D, ip_, jd_);
+    (*ELoc).y = compute( &coeffxp_[2], &coeffyd_[2], Ey2D, ip_, jd_);
 
     // -------------------------
     // Interpolation of Ez^(p,p)
     // -------------------------
-    (*ELoc).z = compute( coeffxp_, coeffyp_, Ez2D, ip_, jp_);
+    (*ELoc).z = compute( &coeffxp_[2], &coeffyp_[2], Ez2D, ip_, jp_);
 
     // -------------------------
     // Interpolation of Bx^(p,d)
     // -------------------------
-    (*BLoc).x = compute( coeffxp_, coeffyd_, Bx2D, ip_, jd_);
+    (*BLoc).x = compute( &coeffxp_[2], &coeffyd_[2], Bx2D, ip_, jd_);
 
     // -------------------------
     // Interpolation of By^(d,p)
     // -------------------------
-    (*BLoc).y = compute( coeffxd_, coeffyp_, By2D, id_, jp_);
+    (*BLoc).y = compute( &coeffxd_[2], &coeffyp_[2], By2D, id_, jp_);
 
     // -------------------------
     // Interpolation of Bz^(d,d)
     // -------------------------
-    (*BLoc).z = compute( coeffxd_, coeffyd_, Bz2D, id_, jd_);
+    (*BLoc).z = compute( &coeffxd_[2], &coeffyd_[2], Bz2D, id_, jd_);
 
 } // END Interpolator2D4Order
 
@@ -165,22 +165,22 @@ void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     // -------------------------
     // Interpolation of Jx^(d,p)
     // -------------------------
-    (*JLoc).x = compute( coeffxd_, coeffyp_, Jx2D, id_, jp_);
+    (*JLoc).x = compute( &coeffxd_[2], &coeffyp_[2], Jx2D, id_, jp_);
     
     // -------------------------
     // Interpolation of Ey^(p,d)
     // -------------------------
-    (*JLoc).y = compute( coeffxp_, coeffyd_, Jx2D, ip_, jd_);
+    (*JLoc).y = compute( &coeffxp_[2], &coeffyd_[2], Jx2D, ip_, jd_);
     
     // -------------------------
     // Interpolation of Ez^(p,p)
     // -------------------------
-    (*JLoc).z = compute( coeffxp_, coeffyp_, Jz2D, ip_, jp_);
+    (*JLoc).z = compute( &coeffxp_[2], &coeffyp_[2], Jz2D, ip_, jp_);
     
     // -------------------------
     // Interpolation of Rho^(p,p)
     // -------------------------
-    (*RhoLoc) = compute( coeffxp_, coeffyp_, Rho2D, ip_, jp_);
+    (*RhoLoc) = compute( &coeffxp_[2], &coeffyp_[2], Rho2D, ip_, jp_);
     
 }
 void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)

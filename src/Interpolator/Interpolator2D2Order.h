@@ -21,9 +21,10 @@ public:
     void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc);
     inline double compute( double* coeffx, double* coeffy, Field2D* f, int idx, int idy) {
 	double interp_res(0.);
+        //unroll ?
 	for (int iloc=-1 ; iloc<2 ; iloc++) {
 	    for (int jloc=-1 ; jloc<2 ; jloc++) {
-		interp_res += coeffx[iloc] * coeffy[jloc] * (*f)(idx+iloc,idy+jloc);
+                interp_res += *(coeffx+iloc) * *(coeffy+jloc) * (*f)(idx+iloc,idy+jloc);
 	    }
 	}
 	return interp_res;
