@@ -526,10 +526,12 @@ void VectorPatch::finalizeDumpFields(Params& params, int timestep)
 void VectorPatch::initTrackParticles(Params& params, SmileiMPI* smpi)
 {
     int nspecies = (*this)(0)->vecSpecies.size();
+    int idiag(0);
     for ( int ispec=0 ; ispec<nspecies ; ispec++) {
 	
 	// Communicate some stuff if this is a species that has to be dumped (particles have Id)
 	// Need to be placed after ALL createParticles()
+	if (smpi->isMaster())cout << "track_every :"  << (*this)(0)->vecSpecies[ispec]->particles->track_every << endl;
 	if ((*this)(0)->vecSpecies[ispec]->particles->track_every) {
 
 	    // Internal patches offset
@@ -550,7 +552,25 @@ void VectorPatch::initTrackParticles(Params& params, SmileiMPI* smpi)
 	    int sz(1);
 	    MPI_Comm_size( MPI_COMM_WORLD, &sz );
 	    std::vector<int> allNbrParticles(sz);
-	    MPI_Gather( &locNbrParticles, 1, MPI_INTEGER, &allNbrParticles[0], 1, MPI_INTEGER, 0, MPI_COMM_WORLD );
+	    //MPI_Gather( &locNbrParticles, 1, MPI_INTEGER, &allNbrParticles[0], 1, MPI_INTEGER, 0, MPI_COMM_WORLD );
+	    MPI_Allgather( &locNbrParticles, 1, MPI_INTEGER, &allNbrParticles[0], 1, MPI_INTEGER, MPI_COMM_WORLD );
+
+	    int totNbrParts(0);
+	    for (int irk=0 ; irk<sz ; irk++) totNbrParts += allNbrParticles[irk];
+	    cout << "File to be create " << smpi->smilei_rk << endl;
+	    //if (smpi->isMaster()) {
+		cout << (*this)(0)->Diags->vecDiagnosticTrackParticles.size() << " "  << totNbrParts << endl;
+                (*this)(0)->Diags->vecDiagnosticTrackParticles[idiag]->createFile(totNbrParts);
+		idiag++;
+		//}
+	    cout << "File created " << smpi->smilei_rk << endl;
+
+	    // Set HDF5 context for other patches
+	    //if (!smpi->isMaster()) (*this)(0)->Diags->vecDiagnosticTrackParticles[idiag]->setGlobalNbrParticles(totNbrParts);
+	    for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++)
+		(*this)(ipatch)->Diags->vecDiagnosticTrackParticles[idiag]->setGlobalNbrParticles(totNbrParts);
+
+
 	    int nParticles(0);
 
 	    nParticles =  allNbrParticles[0];
@@ -570,6 +590,10 @@ void VectorPatch::initTrackParticles(Params& params, SmileiMPI* smpi)
 		(*this)(ipatch)->vecSpecies[ispec]->particles->addIdOffsets(offset);
 
 	} // End if track_every
+
+	// Count total number of track particles (need to define HDF5 context)
+	
+	//MPI_Bcast();
 
     } // End for ispec
 

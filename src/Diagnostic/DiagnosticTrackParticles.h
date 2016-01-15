@@ -27,7 +27,10 @@ public:
     void createFile(Params&, Patch* patch, Species*, Diagnostic*);
     
     ~DiagnosticTrackParticles(){};
-    
+
+    void createFile(int nParticles);
+    void setGlobalNbrParticles(int nParticles) { dims[1] = nParticles;}
+
     //! Runs the diag (writes to file) at each timestep
     void run( int );
 
