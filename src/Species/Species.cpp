@@ -435,53 +435,34 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     #else
         ithread = 0;
     #endif
-    smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
 
     // Ionization current
     LocalFields Jion;
     
-    int iloc;
-    unsigned int i,j,ibin,iPart;
-    
-    // number of particles for this Species
-    unsigned int nParticles = getNbrOfParticles();
+    unsigned int iPart;
     
     // Reset list of particles to exchange
     clearExchList();
 
     int tid(0);
-
-    //Point to local thread dedicated buffers
-    std::vector<double> *gf = &(smpi->dynamics_gf[ithread]);
-    std::vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
-    std::vector<LocalFields> *Bpart = &(smpi->dynamics_Bpart[ithread]);
-    //std::vector<int> *iold       = &(smpi->dynamics_iold[ithread]);
-    //std::vector<double> *delta       = &(smpi->dynamics_deltaold[ithread]);
-
-
-    std::vector<double> nrj_lost_per_thd(1, 0.);
-
-    	
     double ener_iPart(0.);
+    std::vector<double> nrj_lost_per_thd(1, 0.);
+    	
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
     if (time_dual>time_frozen) { // moving particle
+    
+        smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
 
-        for (ibin = 0 ; ibin < bmin.size() ; ibin++) {
+        //Point to local thread dedicated buffers
+        std::vector<double> *gf = &(smpi->dynamics_gf[ithread]);
+        std::vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
+        std::vector<LocalFields> *Bpart = &(smpi->dynamics_Bpart[ithread]);
+        //std::vector<int> *iold       = &(smpi->dynamics_iold[ithread]);
+        //std::vector<double> *delta       = &(smpi->dynamics_deltaold[ithread]);
 
-               //else if (params.nDim_field==1) {
-            //    if (diag_flag == 0) {
-            //        b_Jx =  &(*EMfields->Jx_ )(ibin*clrw);
-            //        b_Jy =  &(*EMfields->Jy_ )(ibin*clrw);
-            //        b_Jz =  &(*EMfields->Jz_ )(ibin*clrw);
-            //    } else {
-            //        b_Jx =  &(*EMfields->Jx_s[ispec] )(ibin*clrw);
-            //        b_Jy =  &(*EMfields->Jy_s[ispec] )(ibin*clrw);
-            //        b_Jz =  &(*EMfields->Jz_s[ispec] )(ibin*clrw);
-            //        b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw);
-            //    }
-
+        for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
 
             // Interpolate the fields at the particle position
             (*Interp)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread );
@@ -560,7 +541,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     else { // immobile particle (at the moment only project density)
         if ((diag_flag == 1)&&(!(*particles).isTest)){
             double* b_rho;
-            for (ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
+            for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
 
                 if (params.nDim_field==2)
 		    b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1);    
