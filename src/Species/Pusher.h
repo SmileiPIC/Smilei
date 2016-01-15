@@ -20,6 +20,7 @@ public:
 
     //! Overloading of () operator
     virtual void operator() (Particles &particles, int ipart, LocalFields Epart, LocalFields Bpart, double& gf) = 0;
+    virtual void operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread) = 0;
 
 protected:
     double dt, dts2;

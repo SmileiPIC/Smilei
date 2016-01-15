@@ -456,11 +456,8 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
         smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
 
         //Point to local thread dedicated buffers
-        std::vector<double> *gf = &(smpi->dynamics_gf[ithread]);
+        //Still needed for ionization
         std::vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
-        std::vector<LocalFields> *Bpart = &(smpi->dynamics_Bpart[ithread]);
-        //std::vector<int> *iold       = &(smpi->dynamics_iold[ithread]);
-        //std::vector<double> *delta       = &(smpi->dynamics_deltaold[ithread]);
 
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
 
@@ -482,9 +479,10 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 }
             }    
                 
-            // Push the particle
-            for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) 
-                (*Push)(*particles, iPart, (*Epart)[iPart], (*Bpart)[iPart] , (*gf)[iPart]);
+            // Push the particles
+            (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
+            //for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) 
+            //    (*Push)(*particles, iPart, (*Epart)[iPart], (*Bpart)[iPart] , (*gf)[iPart]);
 
             // Apply wall and boundary conditions
             for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
@@ -502,6 +500,8 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                     nrj_lost_per_thd[tid] += mass * ener_iPart;
                 }
              }
+
+            //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
 
              // Project currents if not a Test species and charges as well if a diag is needed. 
              if (!(*particles).isTest)
