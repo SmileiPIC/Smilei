@@ -85,6 +85,7 @@ oversize(params.oversize)
     }    
     
     emBoundCond = ElectroMagnBC_Factory::create(params, laser_params);
+    if (patch->isMaster()) laser_params.print();
     
     MaxwellFaradaySolver_ = SolverFactory::create(params);
 
@@ -347,9 +348,9 @@ void ElectroMagn::applyExternalFields(Patch* patch) {
         }
     }
     if (found) {
-        MESSAGE(1,"Finish");
+	if (patch->isMaster()) MESSAGE(1,"Finish");
     } else {
-        MESSAGE(1,"Nothing to do");
+        if (patch->isMaster()) MESSAGE(1,"Nothing to do");
     }
     Bx_m->copyFrom(Bx_);
     By_m->copyFrom(By_);

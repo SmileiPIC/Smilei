@@ -9,6 +9,9 @@
 #include "PatchesFactory.h"
 #include "SpeciesFactory.h"
 #include "Particles.h"
+#include "ElectroMagnFactory.h"
+#include "InterpolatorFactory.h"
+#include "ProjectorFactory.h"
 #include "SmileiIOFactory.h"
 
 using namespace std;
@@ -151,10 +154,30 @@ Patch::Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int 
 	vecCollisions = Collisions::create(params, vecSpecies, smpi);
 
 	// Initialize the particle walls
-	vecPartWall = PartWall::create(params, smpi);
+	vecPartWall = PartWall::create(params, this);
 
 	
 };
+
+Patch::~Patch() {
+
+    for(unsigned int i=0; i<vecCollisions.size(); i++) delete vecCollisions[i];
+    vecCollisions.clear();
+
+    for (unsigned int iwall=0 ; iwall<vecPartWall.size(); iwall++) delete vecPartWall[iwall];
+    vecPartWall.clear();	
+
+    Diags->closeAll(this);
+    delete Diags;
+    delete Proj;
+    delete Interp;
+    delete EMfields;
+    delete sio;
+    for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
+    vecSpecies.clear();
+	    
+}
+
 
 void Patch::updateMPIenv(SmileiMPI* smpi)
 {

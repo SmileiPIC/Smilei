@@ -9,7 +9,7 @@
 
 #include "Particles.h"
 #include "BoundaryConditionType.h"
-#include "SmileiMPI.h"
+#include "Patch.h"
 #include "Tools.h"
 
 using namespace std;
@@ -19,11 +19,11 @@ position(pos),
 direction(dir) {}
 
 // Reads the input file and creates the ParWall objects accordingly
-vector<PartWall*> PartWall::create(Params& params, SmileiMPI* smpi)
+vector<PartWall*> PartWall::create(Params& params, Patch* patch)
 {
     vector<PartWall*> vecPartWall;
     
-    MESSAGE(1,"Adding particle walls:");
+    if (patch->isMaster()) MESSAGE(1,"Adding particle walls:");
     
     // Loop over each wall component and parse info
     unsigned int numpartwall=PyTools::nComponents("PartWall");
@@ -58,7 +58,7 @@ vector<PartWall*> PartWall::create(Params& params, SmileiMPI* smpi)
         }
         
         // Find out wether this proc has the wall or not
-        if ( position > smpi->getDomainLocalMin(direction) && position < smpi->getDomainLocalMax(direction)) {
+        if ( position > patch->getDomainLocalMin(direction) && position < patch->getDomainLocalMax(direction)) {
             
             // Ewtract the kind of wall
             string kind("");
@@ -83,13 +83,13 @@ vector<PartWall*> PartWall::create(Params& params, SmileiMPI* smpi)
                 tmpWall->wall = &thermalize_particle;
             }
             
-            MESSAGE(2,"Adding a wall at " << position << " in " <<  dirstring << " direction kind:" << kind << (thermCond? "thermCond" : ""));
+            if (patch->isMaster()) MESSAGE(2,"Adding a wall at " << position << " in " <<  dirstring << " direction kind:" << kind << (thermCond? "thermCond" : ""));
             vecPartWall.push_back(tmpWall);
         }
         
     }
     if (!vecPartWall.size()) {
-        MESSAGE(2,"Nothing to do");
+        if (patch->isMaster()) MESSAGE(2,"Nothing to do");
     }
     
     return vecPartWall;

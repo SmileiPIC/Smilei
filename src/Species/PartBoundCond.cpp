@@ -109,7 +109,7 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
         if (patch->isWestern()) bc_west = &thermalize_particle;
     }
     else if ( species->bc_part_type_west == "none" ) {
-        MESSAGE(2,"West boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
+	if (patch->isMaster()) MESSAGE(2,"West boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
     }
     else {
         ERROR("West boundary condition undefined" );
@@ -129,7 +129,7 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
         if (patch->isEastern()) bc_east = &thermalize_particle;
     }
     else if ( species->bc_part_type_east == "none" ) {
-        MESSAGE(2,"East boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
+        if (patch->isMaster()) MESSAGE(2,"East boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
     }
     else {
         ERROR( "East boundary condition undefined" );
@@ -151,7 +151,7 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
             if (patch->isSouthern()) bc_south = &thermalize_particle;
         }
         else if ( species->bc_part_type_south == "none" ) {
-            MESSAGE(2,"South boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
+            if (patch->isMaster()) MESSAGE(2,"South boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
         }
         else {
             ERROR( "South boundary condition undefined : " << species->bc_part_type_south  );
@@ -171,7 +171,7 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
             if (patch->isNorthern()) bc_north = &thermalize_particle;
         }
         else if ( species->bc_part_type_north == "none" ) {
-            MESSAGE(2,"North boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
+            if (patch->isMaster()) MESSAGE(2,"North boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
         }
         else {
             ERROR( "North boundary condition undefined : " << species->bc_part_type_north  );

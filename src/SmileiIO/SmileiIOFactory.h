@@ -22,7 +22,6 @@ public:
     //! \param smpi : MPI environment
     //  --------------------------------------------------------------------------------------------------------------------
     static SmileiIO* create(Params& params, Diagnostic *diag, Patch* patch) {
-        MESSAGE(1, "Geometry:" << params.geometry);
         SmileiIO* sio = NULL;
         if ( params.geometry == "1d3v" ) {
             sio = new  SmileiIO_Cart1D(params, diag, patch);

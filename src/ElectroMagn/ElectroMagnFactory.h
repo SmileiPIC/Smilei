@@ -59,13 +59,13 @@ public:
         for (std::vector<Field*>::iterator iterField=EMfields->allFields.begin(); iterField!=EMfields->allFields.end(); iterField++) {
             ss << (*iterField)->name << " ";
         }
-        MESSAGE(1,"EM fields      : " << ss.str());
+        if (patch->isMaster()) MESSAGE(1,"EM fields      : " << ss.str());
         
         ss.str("");
         for (std::vector<Field*>::iterator iterField=EMfields->allFields_avg.begin(); iterField!=EMfields->allFields_avg.end(); iterField++) {
             ss << (*iterField)->name << " ";
         }
-        MESSAGE(1,"EM avg. fields : " << ss.str());
+        if (patch->isMaster()) MESSAGE(1,"EM avg. fields : " << ss.str());
         
         
         

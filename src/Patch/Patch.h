@@ -7,10 +7,6 @@
 #include <iomanip>
 #include <limits.h>
 
-#include "ElectroMagnFactory.h"
-#include "InterpolatorFactory.h"
-#include "ProjectorFactory.h"
-
 #include "Params.h"
 #include "LaserParams.h"
 #include "SmileiMPI.h"
@@ -35,24 +31,7 @@ public:
     Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
 
     //! Destructor for Patch
-    ~Patch() {
-
-	for(unsigned int i=0; i<vecCollisions.size(); i++) delete vecCollisions[i];
-	vecCollisions.clear();
-
-	for (unsigned int iwall=0 ; iwall<vecPartWall.size(); iwall++) delete vecPartWall[iwall];
-	vecPartWall.clear();	
-
-	Diags->closeAll(this);
-	delete Diags;
-	delete Proj;
-	delete Interp;
-	delete EMfields;
-	delete sio;
-	for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
-	vecSpecies.clear();
-	    
-    };
+    ~Patch();
 
     std::vector<Species*> vecSpecies, vecSpecies_old;
     ElectroMagn* EMfields, *EMfields_old;

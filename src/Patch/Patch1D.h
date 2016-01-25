@@ -2,6 +2,7 @@
 #define PATCH1D_H
 
 #include "Patch.h"
+#include "Field1D.h"
 
 class Diagnostic;
 class DiagnosticScalar;

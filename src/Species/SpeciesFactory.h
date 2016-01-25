@@ -288,6 +288,8 @@ public:
 #ifdef _TO_MANAGE_WITH_PATCH
             MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&nPart, &nPart, 1, MPI_UNSIGNED, MPI_SUM, 0, MPI_COMM_WORLD);
             MESSAGE("Species " << ispec << " (" << species_type << ") created with " << nPart << " particles" );
+#else
+	    if (patch->isMaster()) MESSAGE("Species " << ispec << " (" << thisSpecies->species_type << ") created, check for scalars for the number of particles" );
 #endif
         }
         

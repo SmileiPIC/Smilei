@@ -134,7 +134,7 @@ void Species::initSpecies(Params& params)
 
     // assign the Ionization model (if needed) to Ionize
     // Now in Factory ....
-    MESSAGE( "Set max_charge to 0, Ionize no more defined ???" );
+    //MESSAGE( "Set max_charge to 0, Ionize no more defined ???" );
     //Ionize = IonizationFactory::create( params, speciesNumber, 0 );
     //if (Ionize) DEBUG("Species " << speciesNumber << " can be ionized!");
 

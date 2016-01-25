@@ -131,7 +131,9 @@ LaserParams::LaserParams(Params& params) {
         
         laser_param.push_back(tmpLaser);
     }
-    
+}
+
+void LaserParams::print() {
     // -------------------------------------
     // Printing out laser related parameters
     // -------------------------------------

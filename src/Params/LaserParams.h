@@ -84,6 +84,7 @@ class LaserParams {
 public:
     //! Creator for LaserParams
     LaserParams(Params&);
+    void print();
 
     //! laser parameters
     std::vector<LaserStructure> laser_param;
