@@ -483,8 +483,22 @@ int npatchmoy=0, npartmoy=0;
         //        sio->writeTestParticles0(vecSpecies[ispec], params, smpi);
         //    }
         //}
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	    for (unsigned int i=0 ; i<vecPatches(ipatch)->Diags->vecDiagnosticTrackParticles.size(); i++) {
+		if (ipatch==0)
+		    vecPatches(ipatch)->Diags->vecDiagnosticTrackParticles[i]->open();
+		else
+		    vecPatches(ipatch)->Diags->vecDiagnosticTrackParticles[i]->setFile( vecPatches(0)->Diags->vecDiagnosticTrackParticles[i]->file_access_, vecPatches(0)->Diags->vecDiagnosticTrackParticles[i]->fid_ );
+
+	    }
 	    vecPatches(ipatch)->Diags->runAllDiags(itime, vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, vecPatches(ipatch)->Interp);
+	}
+        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	    for (unsigned int i=0 ; i<vecPatches(ipatch)->Diags->vecDiagnosticTrackParticles.size(); i++)
+		if (ipatch==0) vecPatches(ipatch)->Diags->vecDiagnosticTrackParticles[i]->close();
+
+
+
 	vecPatches.computeGlobalDiags(itime); // Only scalars reduction for now 
 	smpiData->computeGlobalDiags( vecPatches(0)->Diags, itime); // Only scalars reduction for now 
 	timer[3].update();

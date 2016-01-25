@@ -154,6 +154,9 @@ void SmileiMPI::init_patch_count( Params& params)
 //	return;
 //    }
 //#endif
+    /*patch_count[0] = 3;
+    patch_count[1] = 1;
+    return;*/
 
     unsigned int Npatches, r,Ncur,Pcoordinates[3],ncells_perpatch, Tcapabilities;
     double Tload,Tcur, Lcur, local_load, local_load_temp, above_target, below_target;

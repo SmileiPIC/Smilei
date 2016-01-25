@@ -460,7 +460,7 @@ void DiagnosticProbe::setFile(hid_t masterFileId, Patch* patch, Params& params)
 	rtag >> tag;
 
 	if (cpuRank>0) {
-	    cout << patch->Hindex() << " Recv from " << patch->getMPIRank(cpuRank-1) << " with tag " << tag << endl;
+	    //cout << patch->Hindex() << " Recv from " << patch->getMPIRank(cpuRank-1) << " with tag " << tag << endl;
 	    //MPI_Recv( &(probesStart[np]), 1, MPI_INTEGER, patch->getMPIRank(cpuRank-1), tag, MPI_COMM_WORLD, &status );
 	    MPI_Irecv( &(probesStart[np]), 1, MPI_INTEGER, patch->getMPIRank(cpuRank-1), tag, MPI_COMM_WORLD, &(rrecv[np]) );
 	}
@@ -471,7 +471,7 @@ void DiagnosticProbe::setFile(hid_t masterFileId, Patch* patch, Params& params)
 	tag = 0;
 	stag >> tag;
 	if (cpuRank!=nPatches-1) {
-	    cout << patch->Hindex() << " Send to " << patch->getMPIRank(cpuRank+1) << " with tag " << tag << endl;
+	    //cout << patch->Hindex() << " Send to " << patch->getMPIRank(cpuRank+1) << " with tag " << tag << endl;
 	    //MPI_Send( &probeEnd, 1, MPI_INTEGER, patch->getMPIRank(cpuRank+1), tag, MPI_COMM_WORLD );
 	    MPI_Isend( &probeEnd, 1, MPI_INTEGER, patch->getMPIRank(cpuRank+1), tag, MPI_COMM_WORLD, &(rsend[np]) );
 
