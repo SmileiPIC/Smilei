@@ -33,7 +33,8 @@ inline int refl_particle( Particles &particles, int ipart, int direction, double
 inline int supp_particle( Particles &particles, int ipart, int direction, double limit_pos, Species *species,
                          double &nrj_iPart) {
     nrj_iPart = particles.weight(ipart)*(particles.lor_fac(ipart)-1.0); // energy lost
-    particles.position(direction, ipart) = particles.position_old(direction, ipart);
+    //particles.position(direction, ipart) = particles.position_old(direction, ipart);
+    particles.position(direction, ipart) = limit_pos - particles.position(direction, ipart);
     particles.charge(ipart) = 0;
     return 0;
 }
@@ -41,7 +42,8 @@ inline int supp_particle( Particles &particles, int ipart, int direction, double
 inline int stop_particle( Particles &particles, int ipart, int direction, double limit_pos, Species *species,
                          double &nrj_iPart) {
     nrj_iPart = particles.weight(ipart)*(particles.lor_fac(ipart)-1.0); // energy lost
-    particles.position(direction, ipart) = particles.position_old(direction, ipart);
+    //particles.position(direction, ipart) = particles.position_old(direction, ipart);
+    particles.position(direction, ipart) = limit_pos - particles.position(direction, ipart);
     particles.momentum(0, ipart) = 0.;
     particles.momentum(1, ipart) = 0.;
     particles.momentum(2, ipart) = 0.;

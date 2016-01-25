@@ -20,6 +20,7 @@ public:
     ~PusherRRLL();
     //! Overloading of () operator
     virtual void operator() (Particles &particles, int ipart, LocalFields Epart, LocalFields Bpart, double& gf);
+    virtual void operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread);
 
 };
 

@@ -291,7 +291,7 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
             } else if (initPosition_type == "random") {
                 (*particles).position(i,p)=indexes[i]+(((double)rand() / RAND_MAX))*cell_length[i];
             }
-            (*particles).position_old(i,p) = (*particles).position(i,p);
+            //(*particles).position_old(i,p) = (*particles).position(i,p);
         }// i
     }// p
 }
@@ -435,75 +435,34 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     #else
         ithread = 0;
     #endif
-    smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
 
-    //// Electric field at the particle position
-    //LocalFields Epart;
-    //// Magnetic field at the particle position
-    //LocalFields Bpart;
-    //// Ionization current
+    // Ionization current
     LocalFields Jion;
     
-    int iloc;
-    unsigned int i,j,ibin,iPart;
-    
-    //! buffers for currents and charge
-    double *b_Jx,*b_Jy,*b_Jz,*b_rho;
-    
-    // number of particles for this Species
-    unsigned int nParticles = getNbrOfParticles();
+    unsigned int iPart;
     
     // Reset list of particles to exchange
-    int tid(0);
-    std::vector<double> *gf = &(smpi->dynamics_gf[ithread]);
-    std::vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
-    std::vector<LocalFields> *Bpart = &(smpi->dynamics_Bpart[ithread]);
-    std::vector<double> nrj_lost_per_thd(1, 0.);
-
     clearExchList();
-    	
-    //ener_tot  = 0.;
-    //ener_lost = 0.;
+
+    int tid(0);
     double ener_iPart(0.);
-    //bool contribute(true);
+    std::vector<double> nrj_lost_per_thd(1, 0.);
+    	
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
     if (time_dual>time_frozen) { // moving particle
+    
+        smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
 
-        for (ibin = 0 ; ibin < bmin.size() ; ibin++) {
+        //Point to local thread dedicated buffers
+        //Still needed for ionization
+        std::vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
 
-            if (params.nDim_field==2) {
-                if (diag_flag == 0) {
-	            b_Jx =  &(*EMfields->Jx_ )(ibin*clrw*f_dim1);
-	            b_Jy =  &(*EMfields->Jy_ )(ibin*clrw*(f_dim1+1));
-	            b_Jz =  &(*EMfields->Jz_ )(ibin*clrw*f_dim1);
-                } else { 
-	            b_Jx =  &(*EMfields->Jx_s[ispec] )(ibin*clrw*f_dim1);
-	            b_Jy =  &(*EMfields->Jy_s[ispec] )(ibin*clrw*(f_dim1+1));
-	            b_Jz =  &(*EMfields->Jz_s[ispec] )(ibin*clrw*f_dim1);
-	            b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1);
-                }
-            }
-            else if (params.nDim_field==1) {
-                if (diag_flag == 0) {
-                    b_Jx =  &(*EMfields->Jx_ )(ibin*clrw);
-                    b_Jy =  &(*EMfields->Jy_ )(ibin*clrw);
-                    b_Jz =  &(*EMfields->Jz_ )(ibin*clrw);
-                } else {
-                    b_Jx =  &(*EMfields->Jx_s[ispec] )(ibin*clrw);
-                    b_Jy =  &(*EMfields->Jy_s[ispec] )(ibin*clrw);
-                    b_Jz =  &(*EMfields->Jz_s[ispec] )(ibin*clrw);
-                    b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw);
-                }
-
-            }
+        for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
 
             // Interpolate the fields at the particle position
-            for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
-                //(*LocInterp)(EMfields, *particles, iPart, &Epart, &Bpart);
-                (*Interp)(EMfields, *particles, iPart, &(*Epart)[iPart], &(*Bpart)[iPart]);
-            }
+            (*Interp)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread );
 
             //Ionization
             if (Ionize){				
@@ -520,10 +479,10 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 }
             }    
                 
-            // Push the particle
-            for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
-                (*Push)(*particles, iPart, (*Epart)[iPart], (*Bpart)[iPart] , (*gf)[iPart]);
-	    }			
+            // Push the particles
+            (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
+            //for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) 
+            //    (*Push)(*particles, iPart, (*Epart)[iPart], (*Bpart)[iPart] , (*gf)[iPart]);
 
             // Apply wall and boundary conditions
             for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
@@ -542,16 +501,11 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                 }
              }
 
+            //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
+
              // Project currents if not a Test species and charges as well if a diag is needed. 
-             if (!(*particles).isTest) {
-                 for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
-	             if (diag_flag == 0){ 
-	     	     (*Proj)(b_Jx , b_Jy , b_Jz , *particles,  iPart, (*gf)[iPart], ibin*clrw, b_lastdim);
-	             } else {
-	     	     (*Proj)(b_Jx , b_Jy , b_Jz ,b_rho, *particles,  iPart, (*gf)[iPart], ibin*clrw, b_lastdim);
-	             }
-                 }
-             }
+             if (!(*particles).isTest)
+                 (*Proj)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, b_lastdim, ispec );
 
         }// ibin
 
@@ -586,21 +540,14 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     }
     else { // immobile particle (at the moment only project density)
         if ((diag_flag == 1)&&(!(*particles).isTest)){
-
-            for (ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
+            double* b_rho;
+            for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
 
                 if (params.nDim_field==2)
 		    b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1);    
                 else if (params.nDim_field==1)
 		    b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw);    
-		//memset( &(b_rho[0]), 0, size_proj_buffer*sizeof(double)); 
-		//memset( &(b_rho[0]), 0, size_proj_buffer*sizeof(double)); 
                 for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
-                    //Update position_old because it is required for the Projection.
-                    for ( int i = 0 ; i<nDim_particle ; i++ ) {
-                        (*particles).position_old(i, iPart)  = (*particles).position(i, iPart);
-                    }
-
                     (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_lastdim);
                 } //End loop on particles
             }//End loop on bins

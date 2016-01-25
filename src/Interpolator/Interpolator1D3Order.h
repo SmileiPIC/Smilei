@@ -10,6 +10,7 @@ public:
     ~Interpolator1D3Order(){};
 
     void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc);
+    void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread);
     void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc);
     inline double compute( double* coeff, Field1D* f, int idx) {
 	double interp_res =  coeff[0] * (*f)(idx-1)   + coeff[1] * (*f)(idx)   + coeff[2] * (*f)(idx+1) + coeff[3] * (*f)(idx+2);
@@ -24,6 +25,8 @@ private:
     int ip_;
     // Last dual index computed
     int id_;
+    // Last delta computed
+    double xi;
     // Interpolation coefficient on Prim grid
     double coeffp_[4];
     // Interpolation coefficient on Dual grid
