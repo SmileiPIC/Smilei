@@ -37,18 +37,12 @@ import numpy as np
 # DEFAULT VALUES FOR OPTIONS
 OMP = 2
 MPI = 2
+SCALAR_LIST_ARG = [ "Utot" ]
 SCALAR_NAME = "Utot"
 OPT_BENCH = False
 OPT_TIMESTEP = False
 EXECUTION = False
-#
-# CREATING A DICTIONNARY WITH THE LIST OF PRECISION VALUES FOUND IN ./references/precision_values
-precision_d = {}
-with open("../references/precision_values") as f:
-    for line in f:
-       (key, val) = line.split()
-       precision_d[key] = val
-PRECISION = precision_d[SCALAR_NAME]
+OPT_PRECISION = False
 #
 # FUNCTION FOR PARSING OPTIONS
 def usage():
@@ -95,6 +89,7 @@ def scalarValidation(SCALAR_NAME,t):
   return 
 #
 def scalarListValidation(SCALAR_NAME,t) :
+  global PRECISION
   # Test if either you want to choose one scalar in a list, or all the scalars, or a given scalar
   # Check these scalars with the function scalarValidation()
   #
@@ -108,20 +103,32 @@ def scalarListValidation(SCALAR_NAME,t) :
     SCALAR_NAME = raw_input()
     while SCALAR_NAME != "" :
       if SCALAR_NAME in LISTE_SCALARS :                           
+        PRECISION = precision_d[SCALAR_NAME]
         scalarValidation(SCALAR_NAME,it)
         print 'Enter a scalar name from the above list (press <Enter> if no more scalar to check ):'
         SCALAR_NAME = raw_input()
       else :
-        print "Scalar :", SCALAR_NAME,"is not valid. Enter a scalar name again."
+        print "Scalar", SCALAR_NAME,"is not valid. Enter a scalar name again."
         SCALAR_NAME = raw_input()
+        PRECISION = precision_d[SCALAR_NAME]
   elif SCALAR_NAME == "all":
     for SCALAR_NAME in LISTE_SCALARS:
+      PRECISION = precision_d[SCALAR_NAME]
       scalarValidation(SCALAR_NAME,it)
+  elif len(SCALAR_LIST_ARG) > 1 :
+    for SCALAR_NAME in SCALAR_LIST_ARG :
+      if SCALAR_NAME in LISTE_SCALARS :                    
+        PRECISION = precision_d[SCALAR_NAME]
+        scalarValidation(SCALAR_NAME,it)
+      else :
+        print "Scalar", SCALAR_NAME,"is not valid."
   else:
     if SCALAR_NAME in LISTE_SCALARS :                    
+      if not OPT_PRECISION :
+        PRECISION = precision_d[SCALAR_NAME]
       scalarValidation(SCALAR_NAME,it)
     else :
-      print "Scalar :", SCALAR_NAME,"is not valid."
+      print "Scalar", SCALAR_NAME,"is not valid."
       sys.exit(2)
   return
 #
@@ -138,8 +145,12 @@ for opt, arg in options:
         OPT_BENCH = True
     elif opt in ('-s', '--SCALAR'):
         SCALAR_NAME = arg
+        SCALAR_LIST_ARG = arg.split()
+        if len(SCALAR_LIST_ARG) == 1 : 
+          SCALAR_NAME = arg
     elif opt in ('-p', '--PRECISION'):
         PRECISION = arg
+        OPT_PRECISION = True
     elif opt in ('-t', '--TIMESTEP'):
         TIMESTEP = arg
         OPT_TIMESTEP=True
@@ -148,6 +159,7 @@ for opt, arg in options:
         print "     -s scalar_name"
         print "        scalar_name=? : a list of all possible scalars is provided : choose a name in this list and press enter when no more scalar to check"
         print "        scalar_name=all : all the existing scalars inside the file scalars.txt are checked"
+        print "        scalar_name=<\"scalar_name1, scalar_name2, ...\"> : scalars scalar_name1, scalar_name2, ... are checked"
         print "        scalar_name=<scalar_name> : only <scalar_name> is checked"
         print "     DEFAULT : Utot\n"
         print "-t"
@@ -160,7 +172,7 @@ for opt, arg in options:
         print "-p"
         print "     -p precision"
         print "       precision : precision with which <scalar_name> is checked"
-        print "       This option is used only when scalar_name is neither ? nor all."
+        print "       This option is used only when scalar_name is a single scalar name"
         print "     DEFAULT : the precision of this scalar name find in the file references/precision_values\n"
         print "-b"
         print "     -b input_file"
@@ -182,6 +194,17 @@ for opt, arg in options:
         exit()
     elif opt in ('-e', '--EXECUTION'):
         EXECUTION=True
+#
+# CASE PRECISION NOT DEFINED OR MULTIPLE SCALARS REQUIRED : 
+# CREATING A DICTIONNARY WITH THE LIST OF PRECISION VALUES FOUND IN ./references/precision_values
+if OPT_PRECISION and ( SCALAR_NAME == "all"  or  SCALAR_NAME == "?" ) :
+  print "\n WARNING : Precision option ignored since a list of scalars is required."
+if not OPT_PRECISION or  SCALAR_NAME == "all"  or  SCALAR_NAME == "?"  :
+  precision_d = {}
+  with open("../references/precision_values") as f:
+      for line in f:
+         (key, val) = line.split()
+         precision_d[key] = val
 #
 # READ THE INPUT FILE
 if OPT_BENCH == False :
