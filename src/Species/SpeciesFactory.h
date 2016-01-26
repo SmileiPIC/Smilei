@@ -269,6 +269,7 @@ public:
         // this will be returned
         std::vector<Species*> retSpecies;
         
+	if (patch->isMaster()) MESSAGE(1, "Creating Species :" );
         
         // read from python namelist
         unsigned int tot_species_number = PyTools::nComponents("Species");
@@ -287,9 +288,9 @@ public:
             unsigned int nPart = thisSpecies->getNbrOfParticles();
 #ifdef _TO_MANAGE_WITH_PATCH
             MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&nPart, &nPart, 1, MPI_UNSIGNED, MPI_SUM, 0, MPI_COMM_WORLD);
-            MESSAGE("Species " << ispec << " (" << species_type << ") created with " << nPart << " particles" );
+            MESSAGE(2, "Species " << ispec << " (" << species_type << ") created with " << nPart << " particles" );
 #else
-	    if (patch->isMaster()) MESSAGE("Species " << ispec << " (" << thisSpecies->species_type << ") created, check for scalars for the number of particles" );
+	    if (patch->isMaster()) MESSAGE(2, "Species " << ispec << " (" << thisSpecies->species_type << ") created,\t check for scalars for the number of particles" );
 #endif
         }
         

@@ -137,15 +137,15 @@ void LaserParams::print() {
     // -------------------------------------
     // Printing out laser related parameters
     // -------------------------------------
-    MESSAGE("Laser related parameters");
+    MESSAGE(1, "Laser related parameters :");
     if (laser_param.size()) {
-        MESSAGE(1, laser_param.size() << " laser" << (laser_param.size()>1?"s":""));
+        MESSAGE(2, laser_param.size() << " laser" << (laser_param.size()>1?"s":""));
     } else {
-        MESSAGE(1, "No laser");
+        MESSAGE(2, "No laser");
     }
     
     for ( unsigned int i=0 ; i<laser_param.size() ; i++ ) {
-        MESSAGE(2,"laser " << i << ": (boxSide, a0) : (" << laser_param[i].boxSide <<  ", " << laser_param[i].a0 <<  ")");
+        MESSAGE(2, "laser " << i << ": (boxSide, a0) : (" << laser_param[i].boxSide <<  ", " << laser_param[i].a0 <<  ")");
     }
     
 }

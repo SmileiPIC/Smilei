@@ -244,6 +244,8 @@ namelist("")
     // --------------------
     if ( !PyTools::extract("number_of_patches", number_of_patches) )
         number_of_patches.resize(nDim_field, 1);
+    if ( !PyTools::extract("balancing_freq", balancing_freq) )
+        balancing_freq = 1500000;
 
     //mi.resize(nDim_field, 0);
     mi.resize(3, 0);

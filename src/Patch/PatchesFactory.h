@@ -51,8 +51,9 @@ public:
 	//std::cout << "n_space : " << params.n_space[0] << " " << params.n_space[1] << std::endl;
 	//std::cout << "n_patch : " << params.number_of_patches[0] << " " << params.number_of_patches[1] << std::endl;
 
-	if (smpi->isMaster())
-	    std::cout << "Patch : n_space : " << params.n_space[0] << " " << params.n_space[1] << std::endl;	
+	MESSAGE(1, "Patch size :");
+	for (int iDim=0 ; iDim<params.nDim_field ; iDim++) 
+	    MESSAGE(2, "dimension " << iDim << " - n_space : " << params.n_space[iDim] );	
 
         // create species
         vecPatches.resize(npatches);
@@ -62,6 +63,13 @@ public:
         vecPatches.set_refHindex() ;
 	vecPatches.Diags = vecPatches(0)->Diags;
         vecPatches.resizeFields() ;
+
+	// Patch initializations which needs some sync (parallel output, are data distribution)
+	int itime(0);
+	vecPatches.initProbesDiags(params, itime);
+	vecPatches.initDumpFields(params, itime);
+	vecPatches.initTrackParticles(params, smpi);
+	vecPatches.initCollisionDebug();
 
         return vecPatches;
     }

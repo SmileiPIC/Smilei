@@ -1,4 +1,3 @@
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////                                                                                                                ////
@@ -67,21 +66,9 @@ int main (int argc, char* argv[])
     smpiData->barrier();
     if ( smpiData->isMaster() ) params.print();
     smpiData->barrier();
-    
-    
-    // setup OpenMP
-    TITLE("OpenMP");
-#ifdef _OPENMP
-//    int nthds(0);
-//#pragma omp parallel shared(nthds)
-//    {
-//        nthds = omp_get_num_threads();
-//    }
-    if (smpiData->isMaster())
-	MESSAGE(1,"Number of thread per MPI process : " << omp_get_max_threads() );
-#else
-    if (smpiData->isMaster()) MESSAGE("Disabled");
-#endif
+
+    // Print in stdout MPI, OpenMP, patchs parameters
+    print_parallelism_params(params, smpiData);
 
     TITLE("Restart environments");
     Checkpoint checkpoint(params, smpiData);
@@ -106,6 +93,7 @@ int main (int argc, char* argv[])
     // ----------------------------------------------------------------------------
     // Define Moving Window & restart
     // ----------------------------------------------------------------------------
+    TITLE("Moving window");
     SimWindow* simWindow = NULL;
     int start_moving(0);
     if (params.nspace_win_x)
@@ -115,12 +103,8 @@ int main (int argc, char* argv[])
     // Initialize Species & Fields
     // ---------------------------
     TITLE("Initializing particles, fields & moving-window");
-    
     VectorPatch vecPatches = PatchesFactory::createVector(params, smpiData);
-    vecPatches.initProbesDiags(params, 0);
-    vecPatches.initDumpFields(params, 0);
-    vecPatches.initTrackParticles(params, smpiData);
-    vecPatches.initCollisionDebug();
+ 
 
     // reading from dumped file the restart values
     if (params.restart) {
@@ -217,62 +201,15 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------------
     // Check memory consumption
     // ------------------------------------------------------------------------
-    TITLE("Memory consumption");
-    
-    int particlesMem(0);
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-	for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++)
-	    particlesMem += vecPatches(ipatch)->vecSpecies[ispec]->getMemFootPrint();
-    MESSAGE( "(Master) Species part = " << (int)( (double)particlesMem / 1024./1024.) << " Mo" );
+    check_memory_consumption( vecPatches, smpiData );
 
-    double dParticlesMem = (double)particlesMem / 1024./1024./1024.;
-    MPI_Reduce( smpiData->isMaster()?MPI_IN_PLACE:&dParticlesMem, &dParticlesMem, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-    MESSAGE( setprecision(3) << "Global Species part = " << dParticlesMem << " Go" );
-
-    MPI_Reduce( smpiData->isMaster()?MPI_IN_PLACE:&particlesMem, &particlesMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
-    MESSAGE( "Max Species part = " << (int)( (double)particlesMem / 1024./1024.) << " Mb" );
-    
-    // fieldsMem contains field per species
-    int fieldsMem(0);
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-	fieldsMem = vecPatches(ipatch)->EMfields->getMemFootPrint();
-    MESSAGE( "(Master) Fields part = " << (int)( (double)fieldsMem / 1024./1024.) << " Mo" );
-
-    double dFieldsMem = (double)fieldsMem / 1024./1024./1024.;
-    MPI_Reduce( smpiData->isMaster()?MPI_IN_PLACE:&dFieldsMem, &dFieldsMem, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-    MESSAGE( setprecision(3) << "Global Fields part = " << dFieldsMem << " Go" );
-    
-    MPI_Reduce( smpiData->isMaster()?MPI_IN_PLACE:&fieldsMem, &fieldsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
-    MESSAGE( "Max Fields part = " << (int)( (double)fieldsMem / 1024./1024.) << " Mb" );
-
-    // Read value in /proc/pid/status
-    //Tools::printMemFootPrint( "End Initialization" );
-    
-
-int partperMPI;
-int balancing_freq = 1500000;
-int npatchmoy=0, npartmoy=0;
+    // Define for some patch diags
+    int partperMPI;
+    int npatchmoy=0, npartmoy=0;
 	
-    
     // Count timer
-    int ntimer(13);
-    // GC IDRIS : Timer timer[ntimer]; to Timer timer[8];
-    vector<Timer> timer(ntimer);
-    timer[0].init(smpiData, "Global");
-    timer[1].init(smpiData, "Particles");
-    timer[2].init(smpiData, "Maxwell");
-    timer[3].init(smpiData, "Diagnostics");
-    timer[4].init(smpiData, "Densities");
-    timer[5].init(smpiData, "Mov window");
-    timer[6].init(smpiData, "Diag fields");
-    timer[7].init(smpiData, "Load balacing");
-    timer[8].init(smpiData, "Sync Particles");
-    timer[9].init(smpiData, "Sync Fields");
-    timer[10].init(smpiData, "Fields");
-    timer[11].init(smpiData, "AvgFields");
-    timer[12].init(smpiData, "Collisions");
-
-
+    vector<Timer> timer;
+    initialize_timers(timer, smpiData);
 
     // Action to send to other MPI procs when an action is required
     int mpisize,itime2dump(-1),todump(0); 
@@ -552,7 +489,7 @@ int npatchmoy=0, npartmoy=0;
 
 
 
-	if ((itime%balancing_freq == 0)&&(smpiData->smilei_sz!=1)) {
+	if ((itime%params.balancing_freq == 0)&&(smpiData->smilei_sz!=1)) {
             timer[7].restart();
             //partperMPI = 0;
 	    //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
@@ -656,5 +593,90 @@ int npatchmoy=0, npartmoy=0;
     
 }//END MAIN
 
+// ---------------------------------------------------------------------------------------------------------------------
+//                                               END MAIN CODE
+// ---------------------------------------------------------------------------------------------------------------------
 
 
+void print_parallelism_params(Params& params, SmileiMPI* smpi)
+{
+    TITLE("MPI");
+    MESSAGE(1,"Number of MPI process : " << smpi->getSize() );
+    MESSAGE(1,"Number of patches : " );
+    for (int iDim=0 ; iDim<params.nDim_field ; iDim++) 
+	MESSAGE(2, "dimension " << iDim << " - number_of_patches : " << params.number_of_patches[iDim] );
+
+    // setup OpenMP
+    TITLE("OpenMP");
+#ifdef _OPENMP
+    int nthds(0);
+#pragma omp parallel shared(nthds)
+    {
+        nthds = omp_get_num_threads();
+    }
+    if (smpi->isMaster())
+	MESSAGE(1,"Number of thread per MPI process : " << omp_get_max_threads() );
+#else
+    if (smpiData->isMaster()) MESSAGE("Disabled");
+#endif
+
+} // End print_parallelism_params
+
+
+void check_memory_consumption(VectorPatch& vecPatches, SmileiMPI* smpi)
+{
+    TITLE("Memory consumption");
+    
+    int particlesMem(0);
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++)
+	    particlesMem += vecPatches(ipatch)->vecSpecies[ispec]->getMemFootPrint();
+    MESSAGE( 1, "(Master) Species part = " << (int)( (double)particlesMem / 1024./1024.) << " Mo" );
+
+    double dParticlesMem = (double)particlesMem / 1024./1024./1024.;
+    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dParticlesMem, &dParticlesMem, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+    MESSAGE( 1, setprecision(3) << "Global Species part = " << dParticlesMem << " Go" );
+
+    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&particlesMem, &particlesMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
+    MESSAGE( 1, "Max Species part = " << (int)( (double)particlesMem / 1024./1024.) << " Mb" );
+    
+    // fieldsMem contains field per species
+    int fieldsMem(0);
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	fieldsMem = vecPatches(ipatch)->EMfields->getMemFootPrint();
+    MESSAGE( 1, "(Master) Fields part = " << (int)( (double)fieldsMem / 1024./1024.) << " Mo" );
+
+    double dFieldsMem = (double)fieldsMem / 1024./1024./1024.;
+    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dFieldsMem, &dFieldsMem, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+    MESSAGE( 1, setprecision(3) << "Global Fields part = " << dFieldsMem << " Go" );
+    
+    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&fieldsMem, &fieldsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
+    MESSAGE( 1, "Max Fields part = " << (int)( (double)fieldsMem / 1024./1024.) << " Mb" );
+
+    // Read value in /proc/pid/status
+    //Tools::printMemFootPrint( "End Initialization" );
+
+} // End check_memory_consumption
+
+
+void initialize_timers(vector<Timer>& timer, SmileiMPI* smpi)
+{
+    // GC IDRIS : "Timer timer[ntimer];" to "Timer timer[8];"
+    int ntimer(13);
+    timer.resize(ntimer);
+    timer[0].init(smpi, "Global");
+    timer[1].init(smpi, "Particles");
+    timer[2].init(smpi, "Maxwell");
+    timer[3].init(smpi, "Diagnostics");
+    timer[4].init(smpi, "Densities");
+    timer[5].init(smpi, "Mov window");
+    timer[6].init(smpi, "Diag fields");
+    timer[7].init(smpi, "Load balacing");
+    timer[8].init(smpi, "Sync Particles");
+    timer[9].init(smpi, "Sync Fields");
+    timer[10].init(smpi, "Fields");
+    timer[11].init(smpi, "AvgFields");
+    timer[12].init(smpi, "Collisions");
+
+
+} // End initialize_timers

@@ -24,6 +24,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <fstream>
 
 #include "Params.h"
 #include "Tools.h"
@@ -167,6 +168,7 @@ void SmileiMPI::init_patch_count( Params& params)
     //Load of a cell = coef_cell*load of a particle.
     //Load of a frozen particle = coef_frozen*load of a particle.
     double coef_cell, coef_frozen; 
+    ofstream fout;
 
     coef_cell = 50;
     coef_frozen = 0.1;
@@ -259,7 +261,10 @@ void SmileiMPI::init_patch_count( Params& params)
     } // End for ispecies
 
     Tload += Npatches*ncells_perpatch*coef_cell ; // We assume the load of one cell to be equal to coef_cell and account for ghost cells.
-    if (isMaster()) cout << "Total load = " << Tload << endl;
+    if (isMaster()) {
+	fout.open ("patch_load.txt");
+	fout << "Total load = " << Tload << endl;
+    }
     Tload /= Tcapabilities; //Target load for each mpi process.
     Tcur = Tload * capabilities[0];  //Init.
     //Tcur = 0;  //Init.
@@ -351,7 +356,11 @@ void SmileiMPI::init_patch_count( Params& params)
             patch_count[smilei_sz-1] = Ncur; //When we reach the last patch, the last MPI process takes what's left.
         }
     }// End loop on patches.
-    if (isMaster()) for (unsigned int i=0; i<smilei_sz; i++) cout << "patch count = " << patch_count[i]<<endl;
+    if (isMaster()) {
+	for (unsigned int i=0; i<smilei_sz; i++) fout << "patch count = " << patch_count[i]<<endl;
+	fout.close();
+    }
+    
 
 }
 

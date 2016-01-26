@@ -104,13 +104,18 @@
  */
 
 #include <string>
+#include <vector>
 
 #include "Tools.h"
 
+class Params;
+class SmileiMPI;
+class VectorPatch;
+class Timer;
 
 //! main function
 int main (int argc, char* argv[]);
 
-
-
-
+void print_parallelism_params(Params& params, SmileiMPI* smpi);
+void check_memory_consumption(VectorPatch& vecPatches, SmileiMPI* smpi);
+void initialize_timers(std::vector<Timer>& timer, SmileiMPI* smpi);
