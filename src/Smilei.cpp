@@ -55,8 +55,8 @@ int main (int argc, char* argv[])
     MESSAGE("                   _            _");
     MESSAGE(" ___           _  | |        _  \\ \\    ");
     MESSAGE("/ __|  _ __   (_) | |  ___  (_)  | |   Version : " << __VERSION);
-    MESSAGE("\\__ \\ | '  \\   _  | | / -_)  _   | |   Date    : " << __COMMITDATE);
-    MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  | |   " << (string(__CONFIG).size()? "Config  : ":"") << __CONFIG);
+    MESSAGE("\\__ \\ | '  \\   _  | | / -_)  _   | |   Date    : " );//<< __COMMITDATE);
+    MESSAGE("|___/ |_|_|_| |_| |_| \\___| |_|  | |   " );//<< (string(__CONFIG).size()? "Config  : ":"") << __CONFIG);
     MESSAGE("                                /_/    ");
     
     TITLE("Input data info");
@@ -256,6 +256,7 @@ int npatchmoy=0, npartmoy=0;
     
     // Count timer
     int ntimer(13);
+    // GC IDRIS : Timer timer[ntimer]; to Timer timer[8];
     vector<Timer> timer(ntimer);
     timer[0].init(smpiData, "Global");
     timer[1].init(smpiData, "Particles");
@@ -281,7 +282,6 @@ int npatchmoy=0, npartmoy=0;
     MPI_Request action_rrequests;
     MPI_Status action_status[2];
 
-    
     // ------------------------------------------------------------------
     //                     HERE STARTS THE PIC LOOP
     // ------------------------------------------------------------------

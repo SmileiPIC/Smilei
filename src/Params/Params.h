@@ -8,6 +8,11 @@
 #ifndef Params_H
 #define Params_H
 
+#undef _POSIX_C_SOURCE
+#undef _XOPEN_SOURCE
+
+#include "Profile.h"
+
 #include <vector>
 #include <string>
 #include <cstdlib>

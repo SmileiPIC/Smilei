@@ -37,8 +37,10 @@ void Particles::initialize(unsigned int nParticles, unsigned int nDim)
     //    WARNING("You should increase c_part_max in specie namelist");
     //}
     if (Weight.size()==0) {
-        float c_part_max = 1.0;
-        reserve( round( c_part_max * nParticles ), nDim);
+        float c_part_max =1.2;
+	//float c_part_max = part.c_part_max;
+	//float c_part_max = params.species_param[0].c_part_max;
+	reserve( round( c_part_max * nParticles ), nDim );
     }
     
     Position.resize(nDim);
@@ -57,21 +59,27 @@ void Particles::initialize(unsigned int nParticles, unsigned int nDim)
     
     if (track_every) {
         Id.resize(nParticles, 0);
-        uint_prop.push_back( &Id );
     }
     
-    if ( double_prop.empty() ) {
+    if (isRadReaction) {
+        Chi.resize(nParticles, 0.);
+    }
+    
+    if ( double_prop.empty() ) { // do this just once 
         for (unsigned int i=0 ; i< Position.size() ; i++)
             double_prop.push_back( &(Position[i]) );
         for (unsigned int i=0 ; i< 3 ; i++)
             double_prop.push_back( &(Momentum[i]) );
         double_prop.push_back( &Weight );
         short_prop.push_back( &Charge );
-    }
-    
-    if (isRadReaction) {
-        Chi.resize(nParticles, 0.);
-        double_prop.push_back( &Chi );
+        if (track_every) {
+            uint_prop.push_back( &Id );
+        }
+        
+        if (isRadReaction) {
+            double_prop.push_back( &Chi );
+        }
+        
     }
     
 }

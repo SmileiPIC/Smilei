@@ -8,6 +8,9 @@
 
 #include <omp.h>
 
+// IDRIS
+#include <cstring>
+// IDRIS
 #include "PusherFactory.h"
 #include "IonizationFactory.h"
 #include "PartBoundCond.h"
@@ -780,7 +783,6 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
     
     int n_existing_particles = (*particles).size();
     (*particles).initialize(n_existing_particles+npart_effective, nDim_particle);
-    
     
     // define Maxwell-Juettner related quantities
     // ------------------------------------------

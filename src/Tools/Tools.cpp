@@ -1,11 +1,11 @@
 
+#include <cstring>
+#include <stdio.h>
 #include "Tools.h"
 
 #include <fcntl.h>
 #include <iomanip>
 #include <unistd.h>
-#include <cstring>
-#include <stdio.h>
 
 void Tools::printMemFootPrint(std::string tag) {
 
@@ -16,7 +16,6 @@ void Tools::printMemFootPrint(std::string tag) {
     char* S;
     //long lmem;
     pid_t numpro;
-    pid_t getpid(void);
 
     numpro = getpid();
 

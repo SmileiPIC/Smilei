@@ -27,6 +27,7 @@ public:
 
     //! Basic write current field in specified group of the global file
     void writeFieldsSingleFileTime( Field* field, hid_t group_id );
+    void writeOneFieldSingleFileTime( Field* field, hid_t group_id );
 
     //! Basic write field on its own file (debug)
     void write( Field* field );

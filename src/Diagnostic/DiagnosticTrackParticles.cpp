@@ -126,16 +126,16 @@ void DiagnosticTrackParticles::run(int time) {
 
     int locNbrParticles = species->getNbrOfParticles();
     
-    // We increase the array size for the new timestep (new chunk)
-    // It is not applied to the HDF5 file yet
-    dims[0] ++;
-    
     // Create the locator (gives locations where to store particles in the file)
     vector<hsize_t> locator (locNbrParticles*2);
     for(int i=0; i<locNbrParticles; i++) {
         locator[i*2  ] = iter-1;
-        locator[i*2+1] = species->particles->id(i)-1;
+        locator[i*2+1] = species->particles->id(i)-1; // because particles label Id starts at 1
     }
+    // Now we increase the array size for the new timestep (new chunk)
+    // It is not applied to the HDF5 file yet
+    dims[0] ++;
+
     
     // Specify the memory dataspace (the size of the local array)
     hsize_t count[2] = {1, (hsize_t)locNbrParticles};
