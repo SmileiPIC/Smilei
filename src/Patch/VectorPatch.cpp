@@ -414,6 +414,14 @@ void VectorPatch::initTrackParticles(Params& params, SmileiMPI* smpi)
 } // End initTrackParticles
 
 
+
+void VectorPatch::initCollisionDebug()
+{
+    for (unsigned int icoll=0 ; icoll<(*this)(0)->vecCollisions.size(); icoll++)
+	(*this)(0)->vecCollisions[icoll]->createFile();
+
+} // End initCollisionDebug
+
 void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simWindow)
 {
     unsigned int n_moved(0), nPatches_now;

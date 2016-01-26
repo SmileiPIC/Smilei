@@ -262,6 +262,50 @@ class H5 {
         H5Sclose(memspace);
     }
     
+    static void matrix_PBD(hid_t locationId, std::string name, double& m,
+                           int sizex, int sizey, int offset, int numel    ) {
+        // Create a HDF5 memory space to hold the data
+        hsize_t chunk_parts[2];
+        chunk_parts[0] = numel;
+        chunk_parts[1] = sizey;
+        hid_t memspace = H5Screate_simple(2, chunk_parts, NULL);
+        // Create the HDF5 filespace
+        hsize_t dimsf[2];
+        dimsf[1] = sizex;
+        dimsf[0] = sizey;
+        hid_t filespace = H5Screate_simple(2, dimsf, NULL);
+        // Choose the hyperslab, which is the region where the current node will write
+        hsize_t offs[2], stride[2], count[2], block[2];
+        offs[1] = offset;
+        offs[0] = 0;
+        stride[0] = 1;
+        stride[1] = 1;
+        count[0] = 1;
+        count[1] = 1;
+        block[1] = numel;
+        block[0] = sizey;
+        H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offs, stride, count, block);
+        // Open the pre-existing group and write the data inside
+        hid_t write_plist = H5Pcreate(H5P_DATASET_XFER);
+        H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);
+        hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
+
+        //hid_t dset_id  = H5Dcreate(locationId, name.c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+	hid_t dset_id;
+	htri_t status = H5Lexists( locationId, name.c_str(), H5P_DEFAULT ); 
+	if (!status)
+	    dset_id  = H5Dcreate(locationId, name.c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+	else
+	    dset_id = H5Dopen(locationId, name.c_str(), H5P_DEFAULT);		
+
+
+        H5Pclose(plist_id);
+        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &m );
+        H5Dclose(dset_id);
+        H5Pclose( write_plist );
+        H5Sclose(filespace);
+        H5Sclose(memspace);
+    }
 };
 
 #endif

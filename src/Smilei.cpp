@@ -120,6 +120,7 @@ int main (int argc, char* argv[])
     vecPatches.initProbesDiags(params, 0);
     vecPatches.initDumpFields(params, 0);
     vecPatches.initTrackParticles(params, smpiData);
+    vecPatches.initCollisionDebug();
 
     // reading from dumped file the restart values
     if (params.restart) {
@@ -337,6 +338,8 @@ int npatchmoy=0, npartmoy=0;
         if (Collisions::debye_length_required)
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 		Collisions::calculate_debye_length(params,vecPatches(ipatch)->vecSpecies);
+	for (unsigned int icoll=0 ; icoll<vecPatches(0)->vecCollisions.size(); icoll++)
+	    vecPatches(0)->vecCollisions[icoll]->createTimestep(itime);
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
 	    for (unsigned int icoll=0 ; icoll<vecPatches(ipatch)->vecCollisions.size(); icoll++)
 		vecPatches(ipatch)->vecCollisions[icoll]->collide(params,vecPatches(ipatch)->vecSpecies,itime);

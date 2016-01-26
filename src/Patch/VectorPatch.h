@@ -67,6 +67,9 @@ class VectorPatch {
 
     void initTrackParticles(Params& params, SmileiMPI* smpi);
 
+    void initCollisionDebug();
+
+
     void solvePoisson( Params &params, SmileiMPI* smpi );
     bool isRhoNull( SmileiMPI* smpi );
 
