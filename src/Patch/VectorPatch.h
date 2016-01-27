@@ -22,6 +22,7 @@ class Diagnostic;
 class DiagnosticScalar;
 class Field;
 class Timer;
+class SimWindow; 
 
 //! Class Patch : sub MPI domain 
 //!     Collection of patch = MPI domain
@@ -47,6 +48,10 @@ class VectorPatch {
     void exchangeB(  );
 
     void runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, int itime, std::vector<Timer>& timer);
+    void dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow, int* diag_flag, double time_dual, std::vector<Timer>& timer);
+    void sumDensities( int* diag_flag, std::vector<Timer>& timer );
+    void solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual, std::vector<Timer>& timer);
+
 
     void computeGlobalDiags(int timestep);
     void computeScalarsDiags(int timestep);

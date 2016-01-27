@@ -10,6 +10,9 @@
 #include "Species.h"
 #include "Particles.h"
 #include "SmileiIOFactory.h"
+#include "SimWindow.h"
+#include "SolverFactory.h"
+
 #include <cstring>
 //#include <string>
 
@@ -1272,6 +1275,7 @@ void VectorPatch::resizeFields()
         Bz_.resize( size());
 }
 
+// out : files and diag_flag = 0
 void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, int itime, vector<Timer>& timer)
 {
     // Dump Fields
@@ -1342,5 +1346,97 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
     smpi->computeGlobalDiags( (*this)(0)->Diags, itime); // Only scalars reduction for now 
 
     timer[3].update();   
-}
+
+} // END runAllDiags
+
+
+void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow, int* diag_flag, double time_dual, vector<Timer>& timer)
+{
+    timer[1].restart();
+    if (*diag_flag){
+        #pragma omp for schedule(static)
+	for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
+	    (*this)(ipatch)->EMfields->restartRhoJs();
+    }
+    #pragma omp for schedule(static)
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
+	(*this)(ipatch)->EMfields->restartRhoJ();
+
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+	(*this)(ipatch)->dynamics(time_dual, params, simWindow, *diag_flag, smpi); // include test -> Add , (*this)(ipatch)->vecPartWall in call to Species::dynamics
+    }
+    timer[1].update();
+
+    timer[8].restart();
+    for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
+	if ( (*this)(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
+	    (*this).exchangeParticles(ispec, params, smpi ); // Included sort_part
+	}
+    }
+    timer[8].update();
+
+} // END dynamics
+
+
+void VectorPatch::sumDensities( int* diag_flag, vector<Timer>& timer )
+{
+    timer[4].restart();
+    if  (*diag_flag){
+        #pragma omp for
+	for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+	    (*this)(ipatch)->EMfields->computeTotalRhoJ(); // Per species in global, Attention if output -> Sync / per species fields
+	}
+    }
+    timer[4].update();
+
+    timer[9].restart();
+    (*this).sumRhoJ( *diag_flag ); // MPI
+
+    if(*diag_flag){
+	for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
+	    (*this).sumRhoJs( ispec ); // MPI
+	}
+    }
+    //cout << "End sumrho" << endl;
+    timer[9].update();
+
+} // End sumDensities
+
+void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual, vector<Timer>& timer)
+{
+    timer[2].restart();
+    #pragma omp for schedule(static)
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+	// Saving magnetic fields (to compute centered fields used in the particle pusher)
+	// Stores B at time n in B_m.
+	(*this)(ipatch)->EMfields->saveMagneticFields();
+	// Computes Ex_, Ey_, Ez_ on all points. E is already synchronized because J has been synchronized before.
+	(*this)(ipatch)->EMfields->solveMaxwellAmpere();
+    }
+    //(*this).exchangeE();
+
+    #pragma omp for schedule(static)
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+	// Computes Bx_, By_, Bz_ at time n+1 on interior points.
+	// (*this)(ipatch)->EMfields->solveMaxwellFaraday();
+        (*(*this)(ipatch)->EMfields->MaxwellFaradaySolver_)((*this)(ipatch)->EMfields);
+	// Applies boundary conditions on B
+	(*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
+    }
+    //Synchronize B fields between patches.
+    timer[2].update();
+
+    timer[9].restart();
+    (*this).exchangeB();
+    timer[9].update();
+
+    timer[2].restart();
+    // Computes B at time n+1/2 using B and B_m.
+    #pragma omp for schedule(static)
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
+	(*this)(ipatch)->EMfields->centerMagneticFields();
+    timer[2].update();
+
+} // END solveMaxwell
 

@@ -136,21 +136,13 @@ int main (int argc, char* argv[])
 	
         // Initialize the electromagnetic fields
         // -----------------------------------
-        // Init rho and J by projecting all particles of subdomain
-	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	    vecPatches(ipatch)->EMfields->restartRhoJs();
-	    vecPatches(ipatch)->dynamics(time_dual, params, simWindow, diag_flag, smpiData); //include test
-	}
-	for (unsigned int ispec=0 ; ispec<vecPatches(0)->vecSpecies.size(); ispec++) {
-	    if ( vecPatches(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) )
-		vecPatches.exchangeParticles(ispec, params, smpiData ); // Included sort_part
-	}
-	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
-	    vecPatches(ipatch)->EMfields->computeTotalRhoJ(); // Per species in global, Attention if output -> Sync / per species fields
-	vecPatches.sumRhoJ( diag_flag ); // MPI
-	for (unsigned int ispec=0 ; ispec<vecPatches(0)->vecSpecies.size(); ispec++)
-	    vecPatches.sumRhoJs( ispec ); // MPI
-        diag_flag = 0;
+        vecPatches.dynamics(params, smpiData, simWindow, &diag_flag, time_dual, timer);
+	timer[1].reboot();
+	timer[8].reboot();
+
+	vecPatches.sumDensities( &diag_flag, timer );
+	timer[4].reboot();
+	timer[9].reboot();
 
 	TITLE("Applying antennas at time t = " << 0.5 * params.timestep);
 	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
@@ -259,65 +251,23 @@ int main (int argc, char* argv[])
 		vecPatches(ipatch)->vecCollisions[icoll]->collide(params,vecPatches(ipatch)->vecSpecies,itime);
         timer[10].update();
         
-        // apply the PIC method
-        // --------------------
-        // for all particles of all species (see dynamic in Species.cpp)
-        // (1) interpolate the fields at the particle position
-        // (2) move the particle
-        // (3) calculate the currents (charge conserving method)
-
 	/*******************************************/
 	/********** Move particles *****************/
 	/*******************************************/
-#pragma omp parallel shared (time_dual,smpiData,params, vecPatches, simWindow)
+        #pragma omp parallel shared (time_dual,smpiData,params, vecPatches, simWindow)
         {
-	    timer[1].restart();
-            if (diag_flag){
-                #pragma omp for schedule(static)
-                for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-		    vecPatches(ipatch)->EMfields->restartRhoJs();
-            }
-            #pragma omp for schedule(static)
-            for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-		vecPatches(ipatch)->EMfields->restartRhoJ();
-
-            #pragma omp for schedule(runtime)
-	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-		vecPatches(ipatch)->dynamics(time_dual, params, simWindow, diag_flag, smpiData); // include test -> Add , vecPatches(ipatch)->vecPartWall in call to Species::dynamics
-	    }
-	    timer[1].update();
-
-	    timer[8].restart();
-	    for (unsigned int ispec=0 ; ispec<vecPatches(0)->vecSpecies.size(); ispec++) {
-		if ( vecPatches(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
-		    vecPatches.exchangeParticles(ispec, params, smpiData ); // Included sort_part
-		}
-	    }
-	    timer[8].update();
-
+	    // apply the PIC method
+	    // --------------------
+	    // for all particles of all species (see dynamic in Species.cpp)
+	    // (1) interpolate the fields at the particle position
+	    // (2) move the particle
+	    // (3) calculate the currents (charge conserving method)
+	    vecPatches.dynamics(params, smpiData, simWindow, &diag_flag, itime, timer);
 
 	    /*******************************************/
 	    /*********** Sum densities *****************/
 	    /*******************************************/
-	    timer[4].restart();
-	    if  (diag_flag){
-                #pragma omp for
-		for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-		    vecPatches(ipatch)->EMfields->computeTotalRhoJ(); // Per species in global, Attention if output -> Sync / per species fields
-		}
-	    }
-	    timer[4].update();
-
-	    timer[9].restart();
-	    vecPatches.sumRhoJ( diag_flag ); // MPI
-
-            if(diag_flag){
-	        for (unsigned int ispec=0 ; ispec<vecPatches(0)->vecSpecies.size(); ispec++) {
-	            vecPatches.sumRhoJs( ispec ); // MPI
-	        }
-            }
-	    //cout << "End sumrho" << endl;
-	    timer[9].update();
+	    vecPatches.sumDensities( &diag_flag, timer );
 
 	    // apply currents from antennas
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
@@ -328,40 +278,9 @@ int main (int argc, char* argv[])
 	    /*******************************************/
         
 	    // solve Maxwell's equations
-	    if( time_dual > params.time_fields_frozen ) {
-		timer[2].restart();
-		// saving magnetic fields (to compute centered fields used in the particle pusher)
-                #pragma omp for schedule(static)
-		for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
-		    //Stores B at time n in B_m.
-		    vecPatches(ipatch)->EMfields->saveMagneticFields();
-		    // Computes Ex_, Ey_, Ez_ on all points. E is already synchronized because J has been synchronized before.
-		    vecPatches(ipatch)->EMfields->solveMaxwellAmpere();
-		}
-		//vecPatches.exchangeE();
-                #pragma omp for schedule(static)
-		for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
-		    // Computes Bx_, By_, Bz_ at time n+1 on interior points.
-		    //vecPatches(ipatch)->EMfields->solveMaxwellFaraday();
-		    (*vecPatches(ipatch)->EMfields->MaxwellFaradaySolver_)(vecPatches(ipatch)->EMfields);
-		    // Applies boundary conditions on B
-		    vecPatches(ipatch)->EMfields->boundaryConditions(itime, time_dual, vecPatches(ipatch), params, simWindow);
-		}
-		//Synchronize B fields between patches.
-		timer[2].update();
-		timer[9].restart();
-		vecPatches.exchangeB();
-		timer[9].update();
-		timer[2].restart();
-		// Computes B at time n+1/2 using B and B_m.
-                #pragma omp for schedule(static)
-		for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-		    vecPatches(ipatch)->EMfields->centerMagneticFields();
-
-		timer[2].update();
-
-	    }
-        
+	    if( time_dual > params.time_fields_frozen )
+		vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timer );
+		    
         // incrementing averaged electromagnetic fields
         if (vecPatches.Diags->ntime_step_avg)
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
