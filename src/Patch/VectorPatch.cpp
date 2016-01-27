@@ -1271,3 +1271,76 @@ void VectorPatch::resizeFields()
         By_.resize( size());
         Bz_.resize( size());
 }
+
+void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, int itime, vector<Timer>& timer)
+{
+    // Dump Fields
+    // -------------------------------------------
+    timer[6].restart();
+    // diag_flag = 1 if  :
+    // (vecPatches.Diags->fieldDump_every != 0) && (itime % vecPatches.Diags->fieldDump_every == 0)
+    if  (*diag_flag){
+	for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+
+	    // Write EM fields dump in Fields.h5
+	    if (ipatch==0) (*this)(ipatch)->sio->createTimeStepInSingleFileTime( itime, (*this).Diags );
+	    (*this)(ipatch)->sio->writeAllFieldsSingleFileTime( (*this)(ipatch)->EMfields->allFields, itime, 0 );
+
+	    // Check the dedicated fields output write frequency 
+	    if  (((*this).Diags->ntime_step_avg!=0) &&
+		 ((*this).Diags->avgfieldDump_every != 0) && 
+		 (itime % (*this).Diags->avgfieldDump_every == 0)) {
+		// Write EM average fields dump in Fields_avg.h5
+		(*this)(ipatch)->sio->writeAllFieldsSingleFileTime( (*this)(ipatch)->EMfields->allFields_avg, itime, 1 );
+	    }
+	    // Re-init rho, Jxyz per species for next diag timestep
+	    (*this)(ipatch)->EMfields->restartRhoJs();
+	}
+	*diag_flag = 0 ;
+    }
+    timer[6].update();
+ 
+
+    // Diagnostics : compute locally
+    //    Parallel write for Probes, TrackParticles
+    // -------------------------------------------
+    timer[3].restart();
+    hid_t file_access0, fid0;
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+	// Patch master open TrackParticles files, others write directly in
+	for (unsigned int i=0 ; i<(*this)(ipatch)->Diags->vecDiagnosticTrackParticles.size(); i++) {
+	    if (ipatch==0) {
+		(*this)(ipatch)->Diags->vecDiagnosticTrackParticles[i]->open();
+		file_access0 = (*this)(0)->Diags->vecDiagnosticTrackParticles[i]->file_access_;
+		fid0         = (*this)(0)->Diags->vecDiagnosticTrackParticles[i]->fid_;
+	    }
+	    else
+		(*this)(ipatch)->Diags->vecDiagnosticTrackParticles[i]->setFile( file_access0, fid0 );
+
+	}
+
+	// Here is the main computing part !!!
+	(*this)(ipatch)->Diags->runAllDiags(itime, (*this)(ipatch)->EMfields, (*this)(ipatch)->vecSpecies, (*this)(ipatch)->Interp);
+
+    }
+
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+	// Patch master close TrackParticles files
+	for (unsigned int i=0 ; i<(*this)(ipatch)->Diags->vecDiagnosticTrackParticles.size(); i++)
+	    if (ipatch==0) (*this)(ipatch)->Diags->vecDiagnosticTrackParticles[i]->close();
+    }
+
+
+    // Diagnostics : Patches synchro  
+    //     Scalars, PhaseSpace, Particles
+    // -------------------------------------------
+    (*this).computeGlobalDiags(itime); 
+
+    // Diagnostics : MPI synchro (by patch master)
+    //     Scalars, PhaseSpace, Particles
+    // -------------------------------------------
+    smpi->computeGlobalDiags( (*this)(0)->Diags, itime); // Only scalars reduction for now 
+
+    timer[3].update();   
+}
+

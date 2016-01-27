@@ -21,6 +21,7 @@
 class Diagnostic;
 class DiagnosticScalar;
 class Field;
+class Timer;
 
 //! Class Patch : sub MPI domain 
 //!     Collection of patch = MPI domain
@@ -44,6 +45,8 @@ class VectorPatch {
     void sumRhoJs( int ispec );
     void exchangeE(  );
     void exchangeB(  );
+
+    void runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, int itime, std::vector<Timer>& timer);
 
     void computeGlobalDiags(int timestep);
     void computeScalarsDiags(int timestep);

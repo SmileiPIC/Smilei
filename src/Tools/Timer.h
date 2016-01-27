@@ -22,6 +22,8 @@ public:
     void update();
     //! Start a new cumulative period
     void restart();
+    //! Start a new cumulative period
+    void reboot();
     //! Return accumulated time
     double getTime(){return time_acc_;}
     //! Print accumulated time in stdout

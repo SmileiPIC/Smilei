@@ -43,6 +43,12 @@ void Timer::restart()
     last_start_ = MPI_Wtime();
 }
 
+void Timer::reboot()
+{
+    smpi_->barrier();
+    last_start_ = 0.;
+}
+
 void Timer::print(double tot)
 {
     if ((time_acc_>0.) && (name_!="")) {
