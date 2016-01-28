@@ -451,7 +451,9 @@ void DiagnosticParticles::write(int timestep)
 	mystream << "timestep" << setw(8) << setfill('0') << timestep;
 	// write the array
 	hid_t fileId = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
-	H5::vect(fileId, mystream.str(), data_sum);
+	htri_t status = H5Lexists( fileId, mystream.str().c_str(), H5P_DEFAULT ); 
+	if (!status)
+	    H5::vect(fileId, mystream.str(), data_sum);
 	H5Fclose(fileId);
     }
         
