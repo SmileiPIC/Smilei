@@ -43,6 +43,8 @@ interpolation_order = 2
 cell_length = [l0/resx]
 sim_length  = [Lsim]
 
+number_of_patches = [ 1 ] # or 8
+
 # SIMULATION TIME
 # timestep: duration of the timestep
 # sim_time: duration of the simulation in units of the normalization period 

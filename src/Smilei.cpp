@@ -422,7 +422,7 @@ void print_parallelism_params(Params& params, SmileiMPI* smpi)
     if (smpi->isMaster())
 	MESSAGE(1,"Number of thread per MPI process : " << omp_get_max_threads() );
 #else
-    if (smpiData->isMaster()) MESSAGE("Disabled");
+    if (smpi->isMaster()) MESSAGE("Disabled");
 #endif
 
 } // End print_parallelism_params

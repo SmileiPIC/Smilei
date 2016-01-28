@@ -60,6 +60,8 @@ sim_time = tsim
 cell_length = [dx]
 sim_length  = [Lsim]
 
+number_of_patches = [ 1 ] # or 8
+
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
 # bc_em_type_long/trans : boundary conditions used for EM fields 
 #                         in the longitudinal or transverse directions

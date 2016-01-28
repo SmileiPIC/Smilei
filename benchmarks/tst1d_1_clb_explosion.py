@@ -40,6 +40,8 @@ interpolation_order = 2
 cell_length = [L/resx]
 sim_length  = [3.0*L]
 
+number_of_patches = [ 1 ] # or 4
+
 # SIMULATION TIME
 # timestep: duration of the timestep
 # sim_time: duration of the simulation in units of the normalization period 
@@ -48,7 +50,7 @@ timestep = L/rest
 sim_time = 10.0 * math.pi
 
 # PARALLELISATION
-clrw = 10
+clrw = 1
 
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
 # bc_em_type_x/y/z : boundary conditions used for EM fields 

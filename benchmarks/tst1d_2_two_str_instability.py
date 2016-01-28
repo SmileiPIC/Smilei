@@ -39,6 +39,8 @@ interpolation_order = 2
 cell_length = [0.01]
 sim_length  = [L]
 
+number_of_patches = [ 1 ] # n_space_x = 103
+
 # SIMULATION TIME
 # timestep: duration of the timestep
 # sim_time: duration of the simulation in units of the normalization period 
