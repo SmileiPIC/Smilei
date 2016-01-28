@@ -179,15 +179,6 @@ int main (int argc, char* argv[])
     int partperMPI;
     int npatchmoy=0, npartmoy=0;
 
-
-    // Action to send to other MPI procs when an action is required
-    int mpisize,itime2dump(-1),todump(0); 
-    double starttime = MPI_Wtime();
-    MPI_Comm_size(MPI_COMM_WORLD, &mpisize);
-    MPI_Request action_srequests[mpisize];
-    MPI_Request action_rrequests;
-    MPI_Status action_status[2];
-
     // ------------------------------------------------------------------
     //                     HERE STARTS THE PIC LOOP
     // ------------------------------------------------------------------
@@ -281,8 +272,8 @@ int main (int argc, char* argv[])
 	    if( time_dual > params.time_fields_frozen )
 		vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timer );
 		    
-        // incrementing averaged electromagnetic fields
-        if (vecPatches.Diags->ntime_step_avg)
+	    // incrementing averaged electromagnetic fields
+	    if (vecPatches.Diags->ntime_step_avg)
 	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 		vecPatches(ipatch)->EMfields->incrementAvgFields(itime, vecPatches.Diags->ntime_step_avg);
 	    }
@@ -325,7 +316,7 @@ int main (int argc, char* argv[])
             //}
             //partperMPI = 0;
 
-	    smpiData->recompute_patch_count( params, vecPatches, 0. );
+	    smpiData->recompute_patch_count( params, vecPatches, time_dual );
 
 	    vecPatches.createPatches(params, smpiData, simWindow);
 

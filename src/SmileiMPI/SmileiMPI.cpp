@@ -379,6 +379,11 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     double coef_cell, coef_frozen; 
     std::vector<double> Lp,Lp_global;
     int recv_counts[smilei_sz];
+    ofstream fout;
+
+    if (isMaster()) {
+	fout.open ("patch_load.txt", std::ofstream::out | std::ofstream::app);
+    }
 
     coef_cell = 50;
     coef_frozen = 0.1;
@@ -504,9 +509,13 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
         Ncur += patch_count[smilei_sz-2];                  //Ncur = sum n=0..i-1 new patch_count[n]
         patch_count[smilei_sz-1] = Npatches-Ncur;
 
-	if (smilei_rk==0)
+	if (smilei_rk==0) {
+	    //fout << "\tt = " << scientific << setprecision(3) << time_dual << endl;
+	    fout << "\tt = " << time_dual << endl;
 	    for (int irk=0;irk<smilei_sz;irk++)
-		cout << " patch_count[" << irk << "] = " << patch_count[irk] << " target patch_count = "<< target_patch_count[irk] << endl;
+		fout << " patch_count[" << irk << "] = " << patch_count[irk] << " target patch_count = "<< target_patch_count[irk] << endl;
+	    fout.close();
+	}
 
     return;
 #endif
