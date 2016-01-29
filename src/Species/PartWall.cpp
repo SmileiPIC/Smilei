@@ -57,7 +57,7 @@ vector<PartWall*> PartWall::create(Params& params, Patch* patch)
             ERROR("PartWall #" << iwall << " must have one location (x, y or z)");
         }
         // Find out wether this proc has the wall or not
-        if ( position > patch->getDomainLocalMin(direction) && position <= patch->getDomainLocalMax(direction)) {
+        if ( position >= patch->getDomainLocalMin(direction) && position <= patch->getDomainLocalMax(direction)) {
             
             // Ewtract the kind of wall
             string kind("");
