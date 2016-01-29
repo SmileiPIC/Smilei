@@ -9,7 +9,7 @@ class ElectroMagn;
 
 class ElectroMagnBC1D_SM : public ElectroMagnBC {
 public:
-    ElectroMagnBC1D_SM( Params &param, LaserParams &laser_params);
+    ElectroMagnBC1D_SM( Params &param, LaserParams &laser_params, Patch* patch );
     ~ElectroMagnBC1D_SM();
 
     virtual void apply_xmin(ElectroMagn* EMfields, double time_dual, Patch* patch);

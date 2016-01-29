@@ -6,11 +6,12 @@
 #include "Params.h"
 #include "LaserParams.h"
 
+class Patch;
 
 class LaserProfile {
 public:
 
-    LaserProfile( Params &params, LaserParams &laser_params, unsigned int );
+  LaserProfile( Params &params, LaserParams &laser_params, unsigned int, Patch* patch );
 
     LaserStructure laser_struct;
 

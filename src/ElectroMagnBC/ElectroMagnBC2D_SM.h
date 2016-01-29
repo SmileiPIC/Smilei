@@ -17,7 +17,7 @@ class Field;
 class ElectroMagnBC2D_SM : public ElectroMagnBC {
 public:
 
-    ElectroMagnBC2D_SM( Params &params, LaserParams &laser_params );
+    ElectroMagnBC2D_SM( Params &params, LaserParams &laser_params, Patch* patch );
     ~ElectroMagnBC2D_SM();
 
     virtual void apply_xmin(ElectroMagn* EMfields, double time_dual, Patch* patch);

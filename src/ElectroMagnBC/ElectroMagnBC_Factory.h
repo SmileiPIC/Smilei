@@ -18,7 +18,7 @@ class ElectroMagnBC_Factory {
     
 public:
     
-    static std::vector<ElectroMagnBC*> create(Params& params, LaserParams &laser_params) {
+    static std::vector<ElectroMagnBC*> create(Params& params, LaserParams &laser_params, Patch* patch) {
         
         std::vector<ElectroMagnBC*> emBoundCond;
         
@@ -35,11 +35,11 @@ public:
             for (unsigned int ii=0;ii<2;ii++) {
                 // silver-muller (injecting/absorbing bcs)
                 if ( params.bc_em_type_x[ii] == "silver-muller" ) {
-                    emBoundCond[ii] = new ElectroMagnBC1D_SM(params, laser_params);
+		  emBoundCond[ii] = new ElectroMagnBC1D_SM(params, laser_params, patch);
                 }
                 // reflective bcs
                 else if ( params.bc_em_type_x[ii] == "reflective" ) {
-                    emBoundCond[ii] = new ElectroMagnBC1D_refl(params, laser_params);
+		  emBoundCond[ii] = new ElectroMagnBC1D_refl(params, laser_params, patch);
                 }
                 // else: error
                 else if ( params.bc_em_type_x[ii] != "periodic" ) {
@@ -62,11 +62,11 @@ public:
                 // X DIRECTION
                 // silver-muller (injecting/absorbing bcs)
                 if ( params.bc_em_type_x[ii] == "silver-muller" ) {
-                    emBoundCond[ii] = new ElectroMagnBC2D_SM(params, laser_params);
+                    emBoundCond[ii] = new ElectroMagnBC2D_SM(params, laser_params, patch);
                 }
                 // reflective bcs
                 else if ( params.bc_em_type_x[ii] == "reflective" ) {
-                    emBoundCond[ii] = new ElectroMagnBC2D_refl(params, laser_params);
+                    emBoundCond[ii] = new ElectroMagnBC2D_refl(params, laser_params, patch);
                 }
                 // else: error
                 else if ( params.bc_em_type_x[ii] != "periodic" ) {
@@ -76,11 +76,11 @@ public:
                 // Y DIRECTION
                 // silver-muller bcs (injecting/absorbin)
                 if ( params.bc_em_type_y[ii] == "silver-muller" ) {
-                    emBoundCond[ii+2] = new ElectroMagnBC2D_SM(params, laser_params);
+                    emBoundCond[ii+2] = new ElectroMagnBC2D_SM(params, laser_params, patch);
                 }
                 // reflective bcs
                 else if ( params.bc_em_type_y[ii] == "reflective" ) {
-                    emBoundCond[ii+2] = new ElectroMagnBC2D_refl(params, laser_params);
+                    emBoundCond[ii+2] = new ElectroMagnBC2D_refl(params, laser_params, patch);
                 }
                 // else: error
                 else if ( params.bc_em_type_y[ii] != "periodic" ) {

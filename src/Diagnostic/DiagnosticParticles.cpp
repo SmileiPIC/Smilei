@@ -112,13 +112,13 @@ every(0)
     mystream << species_names[0];
     for(unsigned int i=1; i<species_names.size(); i++)
         mystream << "," << species_names[i];
-    MESSAGE(1,"Created particle diagnostic #" << n_diag_particles << ": species " << mystream.str());
+    if ( patch->isMaster() ) MESSAGE(1,"Created particle diagnostic #" << n_diag_particles << ": species " << mystream.str());
     for(unsigned int i=0; i<axes.size(); i++) {
         mystream.str("");
         mystream << "Axis " << axes[i].type << " from " << axes[i].min << " to " << axes[i].max << " in " << axes[i].nbins << " steps";
         if( axes[i].logscale       ) mystream << " [LOGSCALE] ";
         if( axes[i].edge_inclusive ) mystream << " [EDGE INCLUSIVE]";
-        MESSAGE(2,mystream.str());
+        if ( patch->isMaster() )MESSAGE(2,mystream.str());
     }
     
 
@@ -295,7 +295,7 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies)
                     for (int ipart = bmin ; ipart < bmax ; ipart++)
                         axis_array[ipart] = (double) (*chi)[ipart];
                 
-                else    ERROR("In particle diagnostics, axis `" << axistype << "` unknown");
+                else   ERROR("In particle diagnostics, axis `" << axistype << "` unknown");
                 
                 // Now, axis_array points to the array that contains the particles data (for indexing)
                 

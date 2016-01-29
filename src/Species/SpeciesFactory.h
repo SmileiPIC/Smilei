@@ -28,13 +28,13 @@ public:
 	    std::ostringstream name("");
 	    name << "species" << std::setfill('0') << std::setw(log10(tot_species_number)+1) << ispec;
 	    species_type=name.str();
-	    MESSAGE("For species #" << ispec << ", parameter species_type will be " << species_type);
+	    if (patch->isMaster() ) MESSAGE("For species #" << ispec << ", parameter species_type will be " << species_type);
 	}
             
 	// Extract type of species dynamics from namelist
 	std::string dynamics_type = "norm"; // default value
 	if (!PyTools::extract("dynamics_type", dynamics_type ,"Species",ispec) )
-	    WARNING("For species '" << species_type << "' dynamics_type not defined: assumed = 'norm'.");
+	    if ( patch->isMaster() ) WARNING("For species '" << species_type << "' dynamics_type not defined: assumed = 'norm'.");
             
 	// Create species object
 	Species * thisSpecies=NULL;
@@ -80,12 +80,12 @@ public:
             
 	PyTools::extract("time_frozen",thisSpecies->time_frozen ,"Species",ispec);
 	if (thisSpecies->time_frozen > 0 && thisSpecies->initMomentum_type!="cold") {
-	    WARNING("For species '" << species_type << "' possible conflict between time-frozen & not cold initialization");
+	    if ( patch->isMaster() ) WARNING("For species '" << species_type << "' possible conflict between time-frozen & not cold initialization");
 	}
             
 	PyTools::extract("radiating",thisSpecies->radiating ,"Species",ispec);
 	if (thisSpecies->dynamics_type=="rrll" && (!thisSpecies->radiating)) {
-	    WARNING("For species '" << species_type << "', dynamics_type='rrll' forcing radiating=True");
+	    if ( patch->isMaster() ) WARNING("For species '" << species_type << "', dynamics_type='rrll' forcing radiating=True");
 	    thisSpecies->radiating=true;
 	}
             
@@ -192,7 +192,7 @@ public:
 	thisSpecies->thermalMomentum.resize(3);
             
 	if (thermTisDefined) {
-	    WARNING("Using thermT[0] for species " << species_type << " in all directions");
+	    if ( patch->isMaster() ) WARNING("\tUsing thermT[0] for species " << species_type << " in all directions");
 	    if (thisSpecies->thermalVelocity[0]>0.3) {
 		ERROR("for Species#"<<ispec<<" thermalising BCs require ThermT[0]="<<thisSpecies->thermT[0]<<"<<"<<thisSpecies->mass);
 	    }
@@ -301,7 +301,7 @@ public:
                 for (unsigned int ispec=0; ispec<retSpecies.size(); ispec++) {
                     if (retSpecies[ispec]->species_type=="electron") {
                         if (electron_species) {
-                            WARNING("Two species named electron : " << retSpecies[ispec]->speciesNumber << " and " << electron_species->speciesNumber);
+                            if ( patch->isMaster() ) WARNING("Two species named electron : " << retSpecies[ispec]->speciesNumber << " and " << electron_species->speciesNumber);
                         } else {
                             electron_species=retSpecies[ispec];
                         }
@@ -313,7 +313,7 @@ public:
                         PyTools::extract("charge",charge ,"Species",ispec);
                         if (retSpecies[ispec]->mass==1 && charge==-1) {
                             if (electron_species) {
-                                WARNING("Two electron species: " << retSpecies[ispec]->species_type << " and " << electron_species->species_type);
+                                if ( patch->isMaster() )WARNING("Two electron species: " << retSpecies[ispec]->species_type << " and " << electron_species->species_type);
                             } else {
                                 electron_species=retSpecies[ispec];
                             }
@@ -322,9 +322,9 @@ public:
                 }
                 if (electron_species) {
                     retSpecies[i]->electron_species=electron_species;
-                    MESSAGE(1,"Ionization: Added " << electron_species->species_type << " species to species " << retSpecies[i]->species_type);
+                    if (patch->isMaster() ) MESSAGE(1,"Ionization: Added " << electron_species->species_type << " species to species " << retSpecies[i]->species_type);
                 } else {
-                    ERROR("Ionization needs a species called \"electron\" to be defined");
+                    if (patch->isMaster() ) ERROR("Ionization needs a species called \"electron\" to be defined");
                 }
             }
         }

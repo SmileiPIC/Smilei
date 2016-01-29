@@ -84,7 +84,7 @@ oversize(params.oversize)
         }
     }    
     
-    emBoundCond = ElectroMagnBC_Factory::create(params, laser_params);
+    emBoundCond = ElectroMagnBC_Factory::create(params, laser_params, patch);
     if (patch->isMaster()) laser_params.print();
     
     MaxwellFaradaySolver_ = SolverFactory::create(params);

@@ -1,12 +1,14 @@
 #include "LaserProfile.h"
 
+#include "Patch.h"
+
 using namespace std;
 
 
 // ---------------------------------------------------------------------------------------------------------------------
 // LASER CONSTRUCTOR
 // ---------------------------------------------------------------------------------------------------------------------
-LaserProfile::LaserProfile( Params &params, LaserParams &laser_params, unsigned int n_laser) :
+LaserProfile::LaserProfile( Params &params, LaserParams &laser_params, unsigned int n_laser, Patch* patch) :
 laser_struct(laser_params.laser_param[n_laser])
 {
     
@@ -93,7 +95,7 @@ laser_struct(laser_params.laser_param[n_laser])
     else if (type_of_time_profile=="python") {
     }
     else {
-        ERROR("Laser profile " << type_of_time_profile <<  " not defined");
+        if ( patch->isMaster() ) ERROR("Laser profile " << type_of_time_profile <<  " not defined");
     }// ENDIF type_of_time_profile
 
     
@@ -105,7 +107,7 @@ laser_struct(laser_params.laser_param[n_laser])
     
     // Plane-wave (default): no need of double_params_transv & int_params_transv
     if (type_of_transv_profile=="plane-wave") {
-        MESSAGE(2,"Laser is a plane-wave");
+      if ( patch->isMaster() ) MESSAGE(2,"Laser is a plane-wave");
     }
     
     // Gaussian or hyper-Gaussian transverse-profile
@@ -131,7 +133,7 @@ laser_struct(laser_params.laser_param[n_laser])
         if (double_params_transv.size()<1) {
             double_params_transv.resize(1);
             double_params_transv[0] = sim_length[1]/4.0;
-            WARNING("Laser waist redefined to sim_length[1]/4 = " << double_params_transv[0]);
+            if ( patch->isMaster() ) WARNING("Laser waist redefined to sim_length[1]/4 = " << double_params_transv[0]);
         }
     }
     // python function probably empty
@@ -141,7 +143,7 @@ laser_struct(laser_params.laser_param[n_laser])
     // If transverse profile is not defined use the plane-wave as default
     else {
         type_of_transv_profile = "plane-wave";
-        WARNING("Laser had no transverse profile defined: use plane-wave as default");
+        if ( patch->isMaster() ) WARNING("Laser had no transverse profile defined: use plane-wave as default");
     }
 
 }

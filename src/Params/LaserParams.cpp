@@ -147,6 +147,39 @@ void LaserParams::print() {
     for ( unsigned int i=0 ; i<laser_param.size() ; i++ ) {
         MESSAGE(2, "laser " << i << ": (boxSide, a0) : (" << laser_param[i].boxSide <<  ", " << laser_param[i].a0 <<  ")");
     }
+
+    //for ( unsigned int i=0 ; i<laser_param.size() ; i++ ) {
+    //    check_params( i );
+    //}
     
 }
 
+// LaserParams &laser_params, unsigned int n_laser
+// laser_struct = laser_params.laser_param[n_laser]
+void LaserParams::check_params( unsigned int n_laser )
+{
+    if ( ( laser_param[n_laser].profile_time.profile != "constant") 
+	 && ( laser_param[n_laser].profile_time.profile != "sin2"     ) 
+	 && ( laser_param[n_laser].profile_time.profile != "gaussian" )
+	 && ( laser_param[n_laser].profile_time.profile != "python"   ) )
+        ERROR("Laser profile " << laser_param[n_laser].profile_time.profile <<  " not defined");
+    
+    if (laser_param[n_laser].profile_transv.profile=="plane-wave") {
+        MESSAGE(2,"Laser is a plane-wave");
+    }
+    else if (laser_param[n_laser].profile_transv.profile=="focused") {
+        if (laser_param[n_laser].profile_transv.double_params.size()<1) {
+            WARNING("Laser waist redefined to sim_length[1]/4 = " << laser_param[n_laser].profile_transv.double_params[0]);
+        }
+    }
+    else if (laser_param[n_laser].profile_transv.profile=="focused") {
+        if (laser_param[n_laser].profile_transv.double_params.size()<1) {
+            laser_param[n_laser].profile_transv.double_params.resize(1);
+            //profile_transv.double_params[0] = sim_length[1]/4.0;
+            WARNING("Laser waist redefined to sim_length[1]/4 = " << laser_param[n_laser].profile_transv.double_params[0]);
+        }
+    }
+    else {
+        WARNING("Laser had no transverse profile defined: use plane-wave as default");
+    }
+}

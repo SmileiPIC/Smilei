@@ -85,6 +85,7 @@ public:
     //! Creator for LaserParams
     LaserParams(Params&);
     void print();
+    void check_params( unsigned int n_laser );
 
     //! laser parameters
     std::vector<LaserStructure> laser_param;

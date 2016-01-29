@@ -12,8 +12,8 @@
 
 using namespace std;
 
-ElectroMagnBC1D_SM::ElectroMagnBC1D_SM( Params &params, LaserParams &laser_params )
-: ElectroMagnBC( params, laser_params )
+ElectroMagnBC1D_SM::ElectroMagnBC1D_SM( Params &params, LaserParams &laser_params, Patch* patch )
+  : ElectroMagnBC( params, laser_params, patch )
 {
     // number of nodes of the primal-grid
     nx_p = params.n_space[0]+1 + 2*params.oversize[0];

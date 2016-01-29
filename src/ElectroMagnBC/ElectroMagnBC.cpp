@@ -1,25 +1,27 @@
+
+#include <cstdlib>
+#include <iostream>
+#include <string>
+
 #include "ElectroMagnBC.h"
 
 #include "Params.h"
 #include "LaserParams.h"
 #include "LaserProfile.h"
 #include "Tools.h"
-
-#include <cstdlib>
-#include <iostream>
-#include <string>
+#include "Patch.h"
 
 using namespace std;
 
 // Constructor for ElectromagnBC
-ElectroMagnBC::ElectroMagnBC( Params &params, LaserParams &laser_params )
+ElectroMagnBC::ElectroMagnBC( Params &params, LaserParams &laser_params, Patch* patch )
 {
     // check for laser conditions
     laser_.resize(laser_params.laser_param.size());
     
     for (unsigned int i=0; i<laser_.size(); i++) {
         DEBUG("Initializing Laser "<<i);        
-        laser_[i] = new LaserProfile(params,laser_params, i);
+        laser_[i] = new LaserProfile(params,laser_params, i, patch);
     }
 
     // time step

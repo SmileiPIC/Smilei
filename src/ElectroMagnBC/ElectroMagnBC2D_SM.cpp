@@ -13,8 +13,8 @@
 
 using namespace std;
 
-ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, LaserParams &laser_params )
-    : ElectroMagnBC( params, laser_params )
+ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, LaserParams &laser_params, Patch* patch )
+  : ElectroMagnBC( params, laser_params, patch )
 {
     // conversion factor from degree to radian
     conv_deg2rad = M_PI/180.0;
