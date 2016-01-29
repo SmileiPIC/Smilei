@@ -21,7 +21,7 @@ using namespace std;
 // Constructor for the virtual class ElectroMagn
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn::ElectroMagn(Params &params, vector<Species*>& vecSpecies, Patch* patch) :
-laser_params(params),
+laser_params(params, patch->Hindex()==0),
 timestep(params.timestep),
 cell_length(params.cell_length),
 n_species(vecSpecies.size()),

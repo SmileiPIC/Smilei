@@ -83,7 +83,7 @@ class LaserParams {
 
 public:
     //! Creator for LaserParams
-    LaserParams(Params&);
+  LaserParams(Params&, bool);
     void print();
     void check_params( unsigned int n_laser );
 

@@ -7,7 +7,7 @@
 
 using namespace std;
 
-LaserParams::LaserParams(Params& params) {
+LaserParams::LaserParams(Params& params, bool print) {
 	
     // -----------------
     // Lasers properties
@@ -91,7 +91,7 @@ LaserParams::LaserParams(Params& params) {
         if ( (tmpLaser.boxSide=="west") && ((tmpLaser.angle!=0) || (tmpLaser.isFocused)) ){
             
             if ( (tmpLaser.profile_transv.int_params.size()==0) ) {
-                WARNING("A default cut-off (3 sigma) is applied on laser " << ilaser << " transverse profile");
+		if (print) WARNING("A default cut-off (3 sigma) is applied on laser " << ilaser << " transverse profile");
                 tmpLaser.profile_transv.int_params.resize(1);
                 tmpLaser.profile_transv.int_params[0] = 3;
             }
@@ -111,20 +111,21 @@ LaserParams::LaserParams(Params& params) {
                 if (theta<0) {
                     double ylas_max = ylas + waist*sqrt(1.0+pow(tan(theta),2));
                     if (ylas_max > params.sim_length[1])
-                        WARNING("Possible problem (simulation box size) with laser " << ilaser);
+                        if (print) WARNING("Possible problem (simulation box size) with laser " << ilaser);
                     tmpLaser.delay = -ylas_max * sin(theta);
                 } else {
                     double ylas_min = ylas - waist*sqrt(1.0+pow(tan(theta),2));
-                    if (ylas_min < 0.0) WARNING("Possible problem (simulation box size) with laser " << ilaser);
+                    if (ylas_min < 0.0)
+			if (print) WARNING("Possible problem (simulation box size) with laser " << ilaser);
                     tmpLaser.delay = -ylas_min * sin(theta);
                 }
                 // send a warning if delay is introduced
                 if (tmpLaser.delay!=0)
-                    WARNING("Introduction of a time-delay: " << tmpLaser.delay << " (in input units) on laser " << ilaser);
+                    if (print) WARNING("Introduction of a time-delay: " << tmpLaser.delay << " (in input units) on laser " << ilaser);
             }
             
             if ( ((tmpLaser.angle!=0) || (tmpLaser.isFocused)) && (tmpLaser.profile_transv.profile!="focused") ) {
-                WARNING("Laser "<<ilaser<<" transv_profile redefined as focused (Gaussian) and delta = "<<tmpLaser.delta<< " ignored");
+                if (print) WARNING("Laser "<<ilaser<<" transv_profile redefined as focused (Gaussian) and delta = "<<tmpLaser.delta<< " ignored");
                 tmpLaser.profile_transv.profile = "focused";
             }
         }//test on laser focus/angle
