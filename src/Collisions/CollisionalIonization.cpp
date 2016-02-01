@@ -15,6 +15,7 @@ const double CollisionalIonization::a1 = 510998.9 ; // = me*c^2/Emin
 const double CollisionalIonization::a2 = 6.142165 ; // = (npoints-1) / ln( Emax/Emin )
 
 // Constructor
+// Computes the cross-section tables at the beginning of the run
 CollisionalIonization::CollisionalIonization(int Z, double wavelength_SI, SmileiMPI* smpi_)
 {
 
@@ -69,6 +70,7 @@ CollisionalIonization::CollisionalIonization(int Z, double wavelength_SI, Smilei
                 // Reset occupation number for next level
                 N = 1;
             }
+            // The transferred and lost energies are averages over the orbitals
             if( crossSection[Zstar][i]>0. ) { 
                 transferredEnergy[Zstar][i] /= crossSection[Zstar][i];
                 lostEnergy       [Zstar][i] /= crossSection[Zstar][i];
@@ -78,13 +80,16 @@ CollisionalIonization::CollisionalIonization(int Z, double wavelength_SI, Smilei
 }
 
 
-// Methods to prepare the ionization
+// Method to prepare the ionization
+// "not_duplicated_particle" is true if the current particle #2 is already present in
+// another pair of particles
 void CollisionalIonization::prepare2(Particles *p1, int i1, Particles *p2, int i2,
     bool not_duplicated_particle)
 {
     static double E; // electron energy
     static double We, Wi; // weights
     static double cs, x;
+    // Calculates the current electron energy, the ion charge and weight
     if( electronFirst ) {
         E = sqrt(1. + pow(p1->momentum(0,i1),2)+pow(p1->momentum(1,i1),2)+pow(p1->momentum(2,i1),2))-1.;
         Zstar = p2->charge(i2);
@@ -96,13 +101,14 @@ void CollisionalIonization::prepare2(Particles *p1, int i1, Particles *p2, int i
         Wi = p1->weight(i1);
         ni += Wi;
     }
+    // No ionization if fully ionized already
     if( Zstar>=atomic_number ) return;
-    // retrieve cross section
-    x = a2*log(a1*E);
+    // Retrieve the cross section from the database
+    x = a2*log(a1*E); // index in the database, which depends on the electron energy E
     if( x<0. ) x = 0.;
     else if( x>npointsm1 ) x = npointsm1;
     cs = crossSection[Zstar][ int(x) ];
-    // Calculate hybrid density
+    // Calculate hybrid density nei
     if( cs>0. ) { // only pairs that can ionize
         if( electronFirst ) {
             We = p1->weight(i1);
@@ -114,6 +120,8 @@ void CollisionalIonization::prepare2(Particles *p1, int i1, Particles *p2, int i
         nei += We<Wi ? We : Wi;
     }
 }
+
+// Method to prepare the ionization
 void CollisionalIonization::prepare3(double timestep, int n_cluster_per_cell)
 {
     // Calculate the coeff used later for ionization probability
@@ -170,7 +178,7 @@ void CollisionalIonization::calculate(double gamma, double Kve,
         cs = (crossSection     [Zstar][i+1]-crossSection     [Zstar][i])*a + crossSection     [Zstar][i];
         w  = (transferredEnergy[Zstar][i+1]-transferredEnergy[Zstar][i])*a + transferredEnergy[Zstar][i];
         e  = (lostEnergy       [Zstar][i+1]-lostEnergy       [Zstar][i])*a + lostEnergy       [Zstar][i];
-    } else { // if energy above table range, special formula
+    } else { // if energy above table range, extrapolate
         a = x - npointsm1;
         cs = (crossSection[Zstar][npointsm1]-crossSection[Zstar][npointsm1-1])*a + crossSection[Zstar][npointsm1];
         w  = transferredEnergy[Zstar][npointsm1];

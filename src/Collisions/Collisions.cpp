@@ -358,24 +358,20 @@ void Collisions::collide(Params& params, vector<Species*>& vecSpecies, int itime
             nspec1 = sg1->size();
             nspec2 = sg2->size();
             bmin1.resize(nspec1); // bin starting point, for each of species group 1
-            bmax1.resize(nspec1); // bin  ending  point, for each of species group 1
             np1  .resize(nspec1); // number of particles in that bin
             bmin2.resize(nspec2); // bin starting point, for each of species group 2
-            bmax2.resize(nspec2); // bin  ending  point, for each of species group 2
             np2  .resize(nspec2); // number of particles in that bin
             npart1 = 0; npart2 = 0;
             for (ispec1=0 ; ispec1<nspec1 ; ispec1++) {
                 s1 = vecSpecies[(*sg1)[ispec1]];
                 bmin1[ispec1] = s1->bmin[ibin];
-                bmax1[ispec1] = s1->bmax[ibin];
-                np1[ispec1] = bmax1[ispec1] - bmin1[ispec1];
+                np1[ispec1] = s1->bmax[ibin] - bmin1[ispec1];
                 npart1 += np1[ispec1];
             }
             for (ispec2=0 ; ispec2<nspec2 ; ispec2++) {
                 s2 = vecSpecies[(*sg2)[ispec2]];
                 bmin2[ispec2] = s2->bmin[ibin];
-                bmax2[ispec2] = s2->bmax[ibin];
-                np2[ispec2] = bmax2[ispec2] - bmin2[ispec2];
+                np2[ispec2] =  s2->bmax[ibin] - bmin2[ispec2];
                 npart2 += np2[ispec2];
             }
             if (npart2 <= npart1) break; // ok if group1 has more macro-particles
