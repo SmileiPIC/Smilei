@@ -242,8 +242,21 @@ namelist("")
     // --------------------
     // Number of processors
     // --------------------
-    if ( !PyTools::extract("number_of_patches", number_of_patches) )
+    if ( !PyTools::extract("number_of_patches", number_of_patches) ) {
         number_of_patches.resize(nDim_field, 1);
+	simu_is_cartesian = true;
+    }
+    else {
+	int tot_number_of_patches(1);
+        for ( int iDim=0 ; iDim<nDim_field ; iDim++ ) tot_number_of_patches *= number_of_patches[iDim];
+	if ( tot_number_of_patches == smpi->getSize() )
+	    simu_is_cartesian = true;
+	else
+	    simu_is_cartesian = false;
+    }
+    //simu_is_cartesian = false;
+
+
     if ( !PyTools::extract("balancing_freq", balancing_freq) )
         balancing_freq = 1500000;
 

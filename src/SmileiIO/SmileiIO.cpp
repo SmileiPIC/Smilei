@@ -32,7 +32,10 @@ global_file_id_avg(0)
     // Create property list for collective dataset write.
     //
     write_plist = H5Pcreate(H5P_DATASET_XFER);
-    H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);
+    if (params.simu_is_cartesian)
+	H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);
+    else
+	H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_COLLECTIVE);
 }
 
 void SmileiIO::setFiles( hid_t masterFileId, hid_t masterFileIdAvg )

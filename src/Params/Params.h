@@ -144,6 +144,9 @@ public:
     std::vector<int> number_of_patches;
     //! Load balancing frequency
     int balancing_freq;
+    //! Return if number of patch = number of MPI process, to tune IO //ism
+    bool simu_is_cartesian;
+
 
     //! Log2 of the number of patch in the whole simulation box in every direction.
     //! The number of patch in a given direction MUST be a power of 2 and is 2^(mi[i]).
