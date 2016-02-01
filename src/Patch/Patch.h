@@ -26,6 +26,7 @@ class Patch
     friend class SmileiMPI;
     friend class VectorPatch;
     friend class SimWindow;
+    friend class SyncVectorPatch;
 public:
     //! Constructor for Patch
     Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);

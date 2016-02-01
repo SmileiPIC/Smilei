@@ -62,7 +62,6 @@ public:
         }
         vecPatches.set_refHindex() ;
 	vecPatches.Diags = vecPatches(0)->Diags;
-        vecPatches.resizeFields() ;
 
 	// Patch initializations which needs some sync (parallel output, are data distribution)
 	int itime(0);
