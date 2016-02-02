@@ -1,6 +1,6 @@
 #include "Collisions.h"
 #include "Species.h"
-
+#include <iomanip>
 #include <cmath>
 
 using namespace std;
@@ -27,6 +27,8 @@ CollisionalIonization::CollisionalIonization(int Z, double wavelength_SI, Smilei
     crossSection     .resize(Z);
     transferredEnergy.resize(Z);
     lostEnergy       .resize(Z);
+    rate             .resize(Z);
+    prob             .resize(Z);
     double e, ep, bp, up, ep2, betae2, betab2, betau2, s0, A1, A2, A3, sk, wk, ek;
     int N; // occupation number
     double coeff = 3.141593 * 2.81794e-15 / wavelength_SI; // pi * r_e / lambda
@@ -133,94 +135,135 @@ void CollisionalIonization::prepare3(double timestep, int n_cluster_per_cell)
 }
 
 // Method to apply the ionization
-void CollisionalIonization::apply(double gamma1, double gamma2,
-    Particles *p1, int i1, Particles *p2, int i2)
+void CollisionalIonization::apply(Particles *p1, int i1, Particles *p2, int i2)
 {
-    static double gamma, Kve;
+    static double gamma_s, gamma1, gamma2;
     gamma1 = p1->lor_fac(i1);
     gamma2 = p2->lor_fac(i2);
     // Calculate lorentz factor in the frame of ion
-    gamma = gamma1*gamma2 
+    gamma_s = gamma1*gamma2 
         - p1->momentum(0,i1)*p2->momentum(0,i2)
         - p1->momentum(1,i1)*p2->momentum(1,i2)
         - p1->momentum(2,i1)*p2->momentum(2,i2);
-    // Calculate coefficient (1-ve.vi)*ve' where ve' is in ion frame
-    Kve = sqrt(gamma*gamma-1.)/gamma1/gamma2;
     // Calculate the rest of the stuff
     if( electronFirst ) {
-        calculate(gamma, Kve, p1, i1, p2, i2);
+        calculate(gamma_s, gamma1, gamma2, p1, i1, p2, i2);
     } else {
-        calculate(gamma, Kve, p2, i2, p1, i1);
+        calculate(gamma_s, gamma2, gamma1, p2, i2, p1, i1);
     }
 }
 
 // Method used by ::apply so that we are sure that electrons are the first species
-void CollisionalIonization::calculate(double gamma, double Kve, 
+void CollisionalIonization::calculate(double gamma_s, double gammae, double gammai, 
     Particles *pe, int ie, Particles *pi, int ii)
 {
     static double We, Wi; // weights
-    static double U; // random number
-    static double a, x, cs, w, e, pr, p2;
-    static int i;
+    static double U1, U2; // random number
+    static double a, x, cs, w, e, pr, p2, WeWi, WiWe, cum_prob, cp;
+    static int i, j, k, p, kmax;
     
     // Get ion charge
     Zstar = pi->charge(ii);
     if( Zstar>=atomic_number ) return; // if already fully ionized, do nothing
     
-    // Calculate the location x in the databases
-    x = a2*log(a1*(gamma-1.));
+    // Calculate coefficient (1-ve.vi)*ve' where ve' is in ion frame
+    double K = coeff * sqrt(gamma_s*gamma_s-1.)/gammai;
     
-    // Interpolate the databases at location x
-    if( x<0. ) return; // if energy below Emin, do nothing
-    if( x<npointsm1 ) { // if energy within table range, interpolate
-        i = int(x);
-        a = x - (double)i;
-        cs = (crossSection     [Zstar][i+1]-crossSection     [Zstar][i])*a + crossSection     [Zstar][i];
-        w  = (transferredEnergy[Zstar][i+1]-transferredEnergy[Zstar][i])*a + transferredEnergy[Zstar][i];
-        e  = (lostEnergy       [Zstar][i+1]-lostEnergy       [Zstar][i])*a + lostEnergy       [Zstar][i];
-    } else { // if energy above table range, extrapolate
-        a = x - npointsm1;
-        cs = (crossSection[Zstar][npointsm1]-crossSection[Zstar][npointsm1-1])*a + crossSection[Zstar][npointsm1];
-        w  = transferredEnergy[Zstar][npointsm1];
-        e  = lostEnergy       [Zstar][npointsm1];
-    }
+    // Calculate weights
+    We = pe->weight(ie);
+    Wi = pi->weight(ii);
+    WeWi = We/Wi;
+    WiWe = 1./WeWi;
     
     // Make a random number to choose if ionization or not
-    U = ((double)rand() / RAND_MAX);
-    if( U < exp(-coeff*Kve*cs) ) return;
+    U1 = (double)rand() / RAND_MAX;
     
-    // Now we really do the ionization
-    U = ((double)rand() / RAND_MAX);
-    We = pe->weight(ie); Wi = pi->weight(ii);
-    p2 = gamma*gamma - 1.;
-    // Ionize the atom and create electron
-    if( U<We/Wi ) {
-        pi->charge(ii)++; // increase ion charge
-        pe->cp_particle(ie, new_electrons); // duplicate electron
-        new_electrons.Weight.back() = Wi; // new electron has ion weight
-        // Calculate the new electron momentum
-        pr = sqrt(w*(w+2.)/p2);
-        new_electrons.Momentum[0].back() *= pr;
-        new_electrons.Momentum[1].back() *= pr;
-        new_electrons.Momentum[2].back() *= pr;
-        // Correction for moving back to the frame of the ion
-        pr = w+1. - pr*gamma;
-        new_electrons.Momentum[0].back() += pr * pi->momentum(0,ii);
-        new_electrons.Momentum[1].back() += pr * pi->momentum(1,ii);
-        new_electrons.Momentum[2].back() += pr * pi->momentum(2,ii);
-    }
-    // Lose incident electron energy
-    if( U<Wi/We ) {
-        // Calculate the new electron momentum
-        pr = sqrt((pow(gamma-e,2)-1.)/p2);
-        pe->momentum(0,ie) *= pr;
-        pe->momentum(1,ie) *= pr;
-        pe->momentum(2,ie) *= pr;
-        // Correction for moving back to the frame of the ion
-        pr = (1.-pr)*gamma - e;
-        pe->momentum(0,ie) += pr * pi->momentum(0,ii);
-        pe->momentum(1,ie) += pr * pi->momentum(1,ii);
-        pe->momentum(2,ie) += pr * pi->momentum(2,ii);
+    // Loop for multiple ionization
+    // k+1 is the number of ionizations
+    kmax = atomic_number-Zstar-1;
+    for( k = 0; k <= kmax;  k++ ) {
+        
+        // Calculate the location x (~log of energy) in the databases
+        x = a2*log(a1*(gamma_s-1.));
+        
+        // Interpolate the databases at location x
+        if( x<0. ) break; // if energy below Emin, do nothing
+        if( x<npointsm1 ) { // if energy within table range, interpolate
+            i = int(x);
+            a = x - (double)i;
+            cs = (crossSection     [Zstar][i+1]-crossSection     [Zstar][i])*a + crossSection     [Zstar][i];
+            w  = (transferredEnergy[Zstar][i+1]-transferredEnergy[Zstar][i])*a + transferredEnergy[Zstar][i];
+            e  = (lostEnergy       [Zstar][i+1]-lostEnergy       [Zstar][i])*a + lostEnergy       [Zstar][i];
+        } else { // if energy above table range, extrapolate
+            a = x - npointsm1;
+            cs = (crossSection[Zstar][npointsm1]-crossSection[Zstar][npointsm1-1])*a + crossSection[Zstar][npointsm1];
+            w  = transferredEnergy[Zstar][npointsm1];
+            e  = lostEnergy       [Zstar][npointsm1];
+        }
+        if( e > gamma_s-1. ) break;
+        
+        rate[k] = K*cs/gammae  ; // k-th ionization rate
+        prob[k] = exp(-rate[k]); // k-th ionization probability
+        // Calculate the cumulative probability for k-th ionization (Nuter et al, 2011)
+        if( k==0 ) {
+            cum_prob = prob[k];
+        } else if( k<kmax ) {
+            for( p=0; p<k; p++ ) {
+                cp = 1. - rate[k]/rate[p];
+                for( j=0; j<k; j++ )
+                    if( j!=p ) cp *= 1.-rate[p]/rate[j];
+                cum_prob += (prob[k]-prob[p])/cp;
+            }
+        } else {
+            for( p=0; p<k; p++ ) {
+                cp = 1. - rate[k]/rate[p];
+                for( j=0; j<k; j++ )
+                    if( j!=p ) cp *= 1.-rate[p]/rate[j];
+                cum_prob += (1.-prob[k]+rate[k]/rate[p]*(prob[p]-1.))/cp;
+            }
+        }
+        
+        // If no more ionization, leave
+        if( U1 < cum_prob ) break;
+        
+        // Otherwise, we do the ionization
+        U2 = (double)rand() / RAND_MAX;
+        p2 = gamma_s*gamma_s - 1.;
+        // Ionize the atom and create electron
+        if( U2 < WeWi ) {
+            pi->charge(ii)++; // increase ion charge
+            pe->cp_particle(ie, new_electrons); // duplicate electron
+            new_electrons.Weight.back() = Wi; // new electron has ion weight
+            // Calculate the new electron momentum
+            pr = sqrt(w*(w+2.)/p2);
+            new_electrons.Momentum[0].back() *= pr;
+            new_electrons.Momentum[1].back() *= pr;
+            new_electrons.Momentum[2].back() *= pr;
+            // Correction for moving back to the lab frame
+            pr = w+1. - pr*gamma_s;
+            new_electrons.Momentum[0].back() += pr * pi->momentum(0,ii);
+            new_electrons.Momentum[1].back() += pr * pi->momentum(1,ii);
+            new_electrons.Momentum[2].back() += pr * pi->momentum(2,ii);
+        }
+        // Lose incident electron energy
+        if( U2 < WiWe ) {
+            // Calculate the modified electron momentum
+            pr = sqrt((pow(gamma_s-e,2)-1.)/p2);
+            pe->momentum(0,ie) *= pr;
+            pe->momentum(1,ie) *= pr;
+            pe->momentum(2,ie) *= pr;
+            gammae *= pr;
+            K *= pr;
+            // Correction for moving back to the lab frame
+            pr = (1.-pr)*gamma_s - e;
+            pe->momentum(0,ie) += pr * pi->momentum(0,ii);
+            pe->momentum(1,ie) += pr * pi->momentum(1,ii);
+            pe->momentum(2,ie) += pr * pi->momentum(2,ii);
+            gammae += pr * gammai;
+            // Decrease gamma for next ionization
+            gamma_s -= e;
+        }
+    
     }
 }
 

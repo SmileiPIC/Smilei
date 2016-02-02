@@ -30,7 +30,7 @@ public:
     virtual void prepare2(Particles *p1, int i1, Particles *p2, int i2, bool);
     virtual void prepare3(double, int);
     //! Method to apply the ionization
-    virtual void apply(double, double, Particles *p1, int i1, Particles *p2, int i2);
+    virtual void apply(Particles *p1, int i1, Particles *p2, int i2);
     
     //! Table of integrated cross-section
     std::vector<std::vector<double> > crossSection;
@@ -65,8 +65,13 @@ private:
     //! Coefficient for the ionization frequency
     double coeff;
     
+    //! Current ionization rate array (one cell per number of ionization events)
+    std::vector<double> rate;
+    //! Current ionization probability array (one cell per number of ionization events)
+    std::vector<double> prob;
+    
     //! Method called by ::apply to calculate the ionization, being sure that electrons are the first species
-    void calculate(double, double, Particles *pe, int ie, Particles *pi, int ii);
+    void calculate(double, double, double, Particles *pe, int ie, Particles *pi, int ii);
     
     //! Quantities used during computation
     int Zstar; // ion charge
@@ -82,7 +87,7 @@ public:
     
     void prepare2(Particles*, int, Particles*, int, bool){};
     void prepare3(double, int){};
-    void apply(double, double, Particles*, int, Particles*, int){};
+    void apply(Particles*, int, Particles*, int){};
     
     //! Temporary stuff before patches arrive
     void finish(Species*, Species*, Params&) {};
