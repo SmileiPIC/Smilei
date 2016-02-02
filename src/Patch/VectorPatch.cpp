@@ -14,6 +14,7 @@
 #include "SolverFactory.h"
 
 #include "SyncVectorPatch.h"
+#include "DiagsVectorPatch.h"
 
 #include <cstring>
 //#include <string>
@@ -30,156 +31,6 @@ VectorPatch::~VectorPatch()
 
 
 
-void VectorPatch::computeGlobalDiags(int timestep)
-{
-    
-    computeScalarsDiags(timestep);
-    //computeGlobalDiags(probes); // HDF5 write done per patch in DiagProbes::*
-    computePhaseSpace();
-    computeParticlesDiags(timestep);
-    
-}
-
-void VectorPatch::computeScalarsDiags(int timestep)
-{
-    //cout << "In Global Compute Scalar Diags " << (*this)(0)->Diags->scalars.every << " \t timestep = " << timestep << endl;
-    int scalars_every( (*this)(0)->Diags->scalars.every );
-    if (timestep % scalars_every != 0) return;
-
-    //cout << "In Global Compute Scalar Daigs\n";
-
-    //std::vector<std::pair<std::string,double> > out_list;
-    //std::vector<std::string> out_key;
-    //std::vector<double>      out_value;
-    //std::vector<unsigned int> out_width;
-    //std::vector<std::pair<std::string,double> >::iterator itDiagScalar;
-
-
-    int nDiags( (*this)(0)->Diags->scalars.out_value.size() );
-    // Initialize scalars iterator on 1st diag
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-	(*this)(ipatch)->Diags->scalars.itDiagScalarName  =  (*this)(ipatch)->Diags->scalars.out_key.begin();
-	(*this)(ipatch)->Diags->scalars.itDiagScalarValue =  (*this)(ipatch)->Diags->scalars.out_value.begin();
-    }
-
-
-    for (int idiags = 0 ; idiags<nDiags ; idiags++) {
-	string diagName( *(*this)(0)->Diags->scalars.itDiagScalarName );
-
-	if ( ( diagName.find("Min") == std::string::npos ) && ( diagName.find("Max") == std::string::npos ) ) {
-	    double sum(0.);
-	    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-		sum += *(*this)(ipatch)->Diags->scalars.itDiagScalarValue;
-		if (ipatch) {
-		    (*this)(ipatch)->Diags->scalars.itDiagScalarName++;
-		    (*this)(ipatch)->Diags->scalars.itDiagScalarValue++;
-		}
-	    }
-	    *(*this)(0)->Diags->scalars.itDiagScalarValue = sum;
-	    (*this)(0)->Diags->scalars.itDiagScalarName++;
-	    (*this)(0)->Diags->scalars.itDiagScalarValue++;
-	}
-	else if ( diagName.find("MinCell") != std::string::npos ) {
-	    vector<double>::iterator iterVal    = (*this)(0)->Diags->scalars.itDiagScalarValue-1;
-	    vector<double>::iterator iterValRef = (*this)(0)->Diags->scalars.itDiagScalarValue-1;
-	    double min( *iterValRef );
-
-	    for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++) {
-		if ( *(*this)(ipatch)->Diags->scalars.itDiagScalarValue < min ) {
-		    min = *(*this)(ipatch)->Diags->scalars.itDiagScalarValue;
-		    iterVal = (*this)(ipatch)->Diags->scalars.itDiagScalarValue-1;
-		}
-		if (ipatch) {
-		    (*this)(ipatch)->Diags->scalars.itDiagScalarName++;
-		    (*this)(ipatch)->Diags->scalars.itDiagScalarValue++;
-		}
-	    }
-	    *(*this)(0)->Diags->scalars.itDiagScalarValue = min;
-	    iterValRef = iterVal;
-
-	    (*this)(0)->Diags->scalars.itDiagScalarName++;	    
-	    (*this)(0)->Diags->scalars.itDiagScalarValue++;	    
-	}
-	else if ( diagName.find("MaxCell") != std::string::npos ) {
-	    vector<double>::iterator iterVal    = (*this)(0)->Diags->scalars.itDiagScalarValue-1;
-	    vector<double>::iterator iterValRef = (*this)(0)->Diags->scalars.itDiagScalarValue-1;
-	    double max( *iterValRef );
-
-	    for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++) {
-		if ( *(*this)(ipatch)->Diags->scalars.itDiagScalarValue > max ) {
-		    max = *(*this)(ipatch)->Diags->scalars.itDiagScalarValue;
-		    iterVal = (*this)(ipatch)->Diags->scalars.itDiagScalarValue-1;
-		}
-		if (ipatch) {
-		    (*this)(ipatch)->Diags->scalars.itDiagScalarName++;
-		    (*this)(ipatch)->Diags->scalars.itDiagScalarValue++;
-		}
-	    }
-	    *(*this)(0)->Diags->scalars.itDiagScalarValue = max;
-	    iterValRef = iterVal;
-
-	    (*this)(0)->Diags->scalars.itDiagScalarName++;	    
-	    (*this)(0)->Diags->scalars.itDiagScalarValue++;	    
-	}
-
-	// Go to next diag
-    }
-
-    // After MPI sync
-    //(*this)(0)->Diags->scalars.write(timestep);
-
-}
-
-void VectorPatch::computePhaseSpace()
-{
-    // A définir : DiagPhaseSpace::itDiagPhase
-
-    int nDiags( (*this)(0)->Diags->phases.vecDiagPhaseToRun.size() );
-
-    // Initialize scalars iterator on 1st diag
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-	(*this)(ipatch)->Diags->phases.itDiagPhase =  (*this)(ipatch)->Diags->phases.vecDiagPhaseToRun.begin();
-    
-    for (int idiags = 0 ; idiags<nDiags ; idiags++) {
-	vector<unsigned int> diagSize = (*(*this)(0)->Diags->phases.itDiagPhase)->my_data.dims_;
-	for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++) {
-	    for (int i=0 ; i<diagSize[0] ; i++)
-		for (int j=0 ; j<diagSize[1] ; j++)
-		    (*(*this)(0)->Diags->phases.itDiagPhase)->my_data(i,j) += (*(*this)(ipatch)->Diags->phases.itDiagPhase)->my_data(i,j);
-	    (*this)(ipatch)->Diags->phases.itDiagPhase++;
-	} // for ipatch
-	(*this)(0)->Diags->phases.itDiagPhase++;
-
-    } // for idiags
-
-    for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++)
-	(*this)(ipatch)->Diags->phases.vecDiagPhaseToRun.clear();
-
-}
-
-
-void VectorPatch::computeParticlesDiags(int timestep)
-{
-    int nDiags( (*this)(0)->Diags->vecDiagnosticParticles.size() );
-
-    for (int idiags = 0 ; idiags<nDiags ; idiags++) {
-	if (timestep % (*this)(0)->Diags->vecDiagnosticParticles[idiags]->every != (*this)(0)->Diags->vecDiagnosticParticles[idiags]->time_average-1) continue;
-
-	int output_size = (*this)(0)->Diags->vecDiagnosticParticles[idiags]->output_size;
-	for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++) {
-	    for (int i=0 ; i<output_size ; i++)
-		(*this)(0)->Diags->vecDiagnosticParticles[idiags]->data_sum[i] += (*this)(ipatch)->Diags->vecDiagnosticParticles[idiags]->data_sum[i];
-	} // for ipatch
-
-    } // for idiags
-
-    
-    for (unsigned int ipatch=1 ; ipatch<this->size() ; ipatch++)
-	for (unsigned int i=0; i<(*this)(ipatch)->Diags->vecDiagnosticParticles.size(); i++)
-	       if ((*this)(ipatch)->Diags->vecDiagnosticParticles[i]->time_average == 1)
-		   (*this)(ipatch)->Diags->vecDiagnosticParticles[i]->clean();
-
-}
 
 void VectorPatch::initProbesDiags(Params& params, int timestep)
 {
@@ -972,7 +823,7 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
     // Diagnostics : Patches synchro  
     //     Scalars, PhaseSpace, Particles
     // -------------------------------------------
-    (*this).computeGlobalDiags(itime); 
+    DiagsVectorPatch::computeGlobalDiags( *this, itime); 
 
     // Diagnostics : MPI synchro (by patch master)
     //     Scalars, PhaseSpace, Particles
