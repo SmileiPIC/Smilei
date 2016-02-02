@@ -1,6 +1,5 @@
 #include "Collisions.h"
 #include "Species.h"
-#include <iomanip>
 #include <cmath>
 
 using namespace std;
@@ -28,6 +27,7 @@ CollisionalIonization::CollisionalIonization(int Z, double wavelength_SI, Smilei
     transferredEnergy.resize(Z);
     lostEnergy       .resize(Z);
     rate             .resize(Z);
+    irate            .resize(Z);
     prob             .resize(Z);
     double e, ep, bp, up, ep2, betae2, betab2, betau2, s0, A1, A2, A3, sk, wk, ek;
     int N; // occupation number
@@ -182,7 +182,6 @@ void CollisionalIonization::calculate(double gamma_s, double gammae, double gamm
     // k+1 is the number of ionizations
     kmax = atomic_number-Zstar-1;
     for( k = 0; k <= kmax;  k++ ) {
-        
         // Calculate the location x (~log of energy) in the databases
         x = a2*log(a1*(gamma_s-1.));
         
@@ -203,23 +202,25 @@ void CollisionalIonization::calculate(double gamma_s, double gammae, double gamm
         if( e > gamma_s-1. ) break;
         
         rate[k] = K*cs/gammae  ; // k-th ionization rate
+        irate[k] = 1./rate[k]  ; // k-th ionization inverse rate
         prob[k] = exp(-rate[k]); // k-th ionization probability
+        
         // Calculate the cumulative probability for k-th ionization (Nuter et al, 2011)
         if( k==0 ) {
             cum_prob = prob[k];
         } else if( k<kmax ) {
             for( p=0; p<k; p++ ) {
-                cp = 1. - rate[k]/rate[p];
-                for( j=0; j<k; j++ )
-                    if( j!=p ) cp *= 1.-rate[p]/rate[j];
+                cp = 1. - rate[k]*irate[p];
+                for( j=0  ; j<p; j++ ) cp *= 1.-rate[p]*irate[j];
+                for( j=p+1; j<k; j++ ) cp *= 1.-rate[p]*irate[j];
                 cum_prob += (prob[k]-prob[p])/cp;
             }
         } else {
             for( p=0; p<k; p++ ) {
-                cp = 1. - rate[k]/rate[p];
-                for( j=0; j<k; j++ )
-                    if( j!=p ) cp *= 1.-rate[p]/rate[j];
-                cum_prob += (1.-prob[k]+rate[k]/rate[p]*(prob[p]-1.))/cp;
+                cp = 1. - rate[k]*irate[p];
+                for( j=0  ; j<p; j++ ) cp *= 1.-rate[p]*irate[j];
+                for( j=p+1; j<k; j++ ) cp *= 1.-rate[p]*irate[j];
+                cum_prob += (1.-prob[k]+rate[k]*irate[p]*(prob[p]-1.))/cp;
             }
         }
         
@@ -263,6 +264,8 @@ void CollisionalIonization::calculate(double gamma_s, double gammae, double gamm
             // Decrease gamma for next ionization
             gamma_s -= e;
         }
+        
+        Zstar++;
     
     }
 }

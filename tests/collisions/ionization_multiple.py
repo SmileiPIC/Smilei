@@ -20,7 +20,7 @@ for elm in ["C", "Al", "Zn", "Sn", "Au"]:
 	
 	timestep2 = int(np.double(S2.namelist.timestep))
 	D.append( S2.ParticleDiagnostic(0,slice={"ekin":[0,1]},
-		linestyle="--", color=color ) )
+		linestyle="", marker=".", color=color ) )
 
 
 # Plot simulation result
@@ -32,12 +32,12 @@ ax = plt.gca()
 legend = plt.legend( loc=2, prop={'size':10})
 ax.add_artist(legend)
 l1, = plt.plot([0],'-k' , label="$\Delta t="+str(timestep1)+"\;\omega_0^{-1}$")
-l2, = plt.plot([0],'--k', label="$\Delta t="+str(timestep2)+"\;\omega_0^{-1}$")
+l2, = plt.plot([0],linestyle="", marker=".",color="k", label="$\Delta t="+str(timestep2)+"\;\omega_0^{-1}$")
 legend = plt.legend(handles=[l1, l2], loc=9, prop={'size':10})
 for t in legend.texts: t.set_verticalalignment('center')
-ax.xaxis.labelpad = 0
+ax.xaxis.labelpad = 3
 ax.yaxis.labelpad = 0
-ax.set_xlabel("Timesteps")
+ax.set_xlabel("Time /$\omega_0^{-1}$")
 ax.set_ylabel("Density of new electrons /$n_c$")
 ax.set_title("")
 
