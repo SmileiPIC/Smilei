@@ -5,6 +5,8 @@
 #include "Patch1D.h"
 #include "Patch2D.h"
 
+#include "DiagsVectorPatch.h"
+
 #include "Tools.h"
 
 class PatchesFactory {
@@ -65,10 +67,10 @@ public:
 
 	// Patch initializations which needs some sync (parallel output, are data distribution)
 	int itime(0);
-	vecPatches.initProbesDiags(params, itime);
-	vecPatches.initDumpFields(params, itime);
-	vecPatches.initTrackParticles(params, smpi);
-	vecPatches.initCollisionDebug();
+	DiagsVectorPatch::initProbesDiags(vecPatches, params, itime);
+	DiagsVectorPatch::initDumpFields(vecPatches, params, itime);
+	DiagsVectorPatch::initTrackParticles(vecPatches, params, smpi);
+	DiagsVectorPatch::initCollisionDebug(vecPatches);
 
         return vecPatches;
     }

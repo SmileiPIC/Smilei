@@ -1,6 +1,8 @@
 
 #include "DiagsVectorPatch.h"
 #include "VectorPatch.h"
+#include "Params.h"
+#include "SmileiMPI.h"
 
 #include <cstring>
 #include <vector>
@@ -155,4 +157,178 @@ void DiagsVectorPatch::computeParticlesDiags( VectorPatch& vecPatches, int times
 	       if (vecPatches(ipatch)->Diags->vecDiagnosticParticles[i]->time_average == 1)
 		   vecPatches(ipatch)->Diags->vecDiagnosticParticles[i]->clean();
 
+}
+
+
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+
+void DiagsVectorPatch::initProbesDiags(VectorPatch& vecPatches, Params& params, int timestep)
+{
+    vecPatches(0)->Diags->probes.createFile();
+    // Start at 0, cause of setFile set probesStart (locate writing point in h5 file)
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	vecPatches(ipatch)->Diags->probes.setFile( vecPatches(0)->Diags->probes.fileId, vecPatches(ipatch), params );
+    }
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	vecPatches(ipatch)->Diags->probes.waitSetFile( params );
+    }    //cout << " File created " << endl;
+
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	//cout << "Data written for " << ipatch << endl;
+	vecPatches(ipatch)->Diags->probes.writePositionIn(params);
+	//cout << "End of Data written for " << ipatch << endl;
+    }
+}
+
+void DiagsVectorPatch::finalizeProbesDiags(VectorPatch& vecPatches, Params& params, int timestep)
+{
+    for (unsigned int ipatch=1 ; ipatch<vecPatches.size() ; ipatch++) {
+	vecPatches(ipatch)->Diags->probes.setFile( 0 );
+    }
+
+}
+
+void DiagsVectorPatch::initDumpFields(VectorPatch& vecPatches, Params& params, int timestep)
+{
+    vecPatches(0)->sio->createFiles(params, vecPatches(0));
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	vecPatches(ipatch)->sio->setFiles( vecPatches(0)->sio->global_file_id_, vecPatches(0)->sio->global_file_id_avg );
+    }
+}
+
+void DiagsVectorPatch::finalizeDumpFields(VectorPatch& vecPatches, Params& params, int timestep)
+{
+    for (unsigned int ipatch=1 ; ipatch<vecPatches.size() ; ipatch++) {
+	vecPatches(ipatch)->sio->setFiles( 0, 0 );
+    }
+
+}
+
+void DiagsVectorPatch::initTrackParticles(VectorPatch& vecPatches, Params& params, SmileiMPI* smpi)
+{
+    int nspecies = vecPatches(0)->vecSpecies.size();
+    int idiag(0);
+    for ( int ispec=0 ; ispec<nspecies ; ispec++) {
+	
+	// Communicate some stuff if this is a species that has to be dumped (particles have Id)
+	// Need to be placed after ALL createParticles()
+	if (vecPatches(0)->vecSpecies[ispec]->particles->track_every) {
+
+	    // Internal patches offset
+
+	    std::vector<int> localNbrParticles( vecPatches.size(), 0 );
+	    localNbrParticles[0] = vecPatches(0)->vecSpecies[ispec]->getNbrOfParticles();
+	    for (unsigned int ipatch=1 ; ipatch<vecPatches.size() ; ipatch++) {
+		// number of particles up to ipatch (including)
+		localNbrParticles[ipatch] += vecPatches(ipatch)->vecSpecies[ispec]->getNbrOfParticles() + localNbrParticles[ipatch-1];
+		vecPatches(ipatch)->vecSpecies[ispec]->particles->addIdOffsets(localNbrParticles[ipatch-1]);
+	    }
+	    int locNbrParticles = localNbrParticles[vecPatches.size()-1];
+
+
+	    // MPI offset
+
+	    //int locNbrParticles = thisSpecies->getNbrOfParticles();
+	    int sz(1);
+	    MPI_Comm_size( MPI_COMM_WORLD, &sz );
+	    std::vector<int> allNbrParticles(sz);
+	    MPI_Allgather( &locNbrParticles, 1, MPI_INTEGER, &allNbrParticles[0], 1, MPI_INTEGER, MPI_COMM_WORLD );
+
+	    int totNbrParts(0);
+	    for (int irk=0 ; irk<sz ; irk++) totNbrParts += allNbrParticles[irk];
+	    // HDF5 file open by all patch master
+	    vecPatches(0)->Diags->vecDiagnosticTrackParticles[idiag]->createFile(totNbrParts,params);
+
+	    // Set HDF5 context for other patches
+	    for (unsigned int ipatch=1 ; ipatch<vecPatches.size() ; ipatch++)
+		vecPatches(ipatch)->Diags->vecDiagnosticTrackParticles[idiag]->setGlobalNbrParticles(totNbrParts);
+
+	    idiag++; // Considered DiagnosticTrackParticles ordered as Species
+
+	    int nParticles(0);
+
+	    nParticles =  allNbrParticles[0];
+	    for (int irk=1 ; irk<sz ; irk++){
+		allNbrParticles[irk] += nParticles;
+		nParticles = allNbrParticles[irk];
+	    }
+	    for (int irk=sz-1 ; irk>0 ; irk--){
+		allNbrParticles[irk] = allNbrParticles[irk-1];
+	    }
+	    allNbrParticles[0] = 0;
+
+	    int offset(0);
+	    MPI_Scatter(&allNbrParticles[0], 1 , MPI_INTEGER, &offset, 1, MPI_INTEGER, 0, MPI_COMM_WORLD );
+	    
+	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+		vecPatches(ipatch)->vecSpecies[ispec]->particles->addIdOffsets(offset);
+
+	} // End if track_every
+
+	// Count total number of track particles (need to define HDF5 context)
+	
+	//MPI_Bcast();
+
+    } // End for ispec
+
+} // End initTrackParticles
+
+
+
+void DiagsVectorPatch::initCollisionDebug(VectorPatch& vecPatches)
+{
+    for (unsigned int icoll=0 ; icoll<vecPatches(0)->vecCollisions.size(); icoll++)
+	vecPatches(0)->vecCollisions[icoll]->createFile();
+
+} // End initCollisionDebug
+
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+
+
+void DiagsVectorPatch::definePatchDiagsMaster(VectorPatch& vecPatches, hid_t globalFile, hid_t globalFileAvg)
+{
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        vecPatches(ipatch)->sio->setFiles( globalFile, globalFileAvg );
+    }
+
+}
+
+void DiagsVectorPatch::definePatchDiagsMaster(VectorPatch& vecPatches)
+{
+    int patchIdMaster(0);
+    for (patchIdMaster=0 ; patchIdMaster<vecPatches.size() ; patchIdMaster++ )
+	if ( vecPatches(patchIdMaster)->Diags->probes.fileId != 0 ) break;
+
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	if ((ipatch!=patchIdMaster) && (patchIdMaster!=vecPatches.size()) ) { // patchIdMaster!=vecPatches.size() 
+		vecPatches(ipatch)->Diags->probes.setFile( vecPatches(patchIdMaster)->Diags->probes.fileId );
+	}
+    }
+
+    for (patchIdMaster=0 ; patchIdMaster<vecPatches.size() ; patchIdMaster++ )
+	if ( vecPatches(patchIdMaster)->sio->global_file_id_ != 0 ) break;
+
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	if ((ipatch!=patchIdMaster) && (patchIdMaster!=vecPatches.size()) ) { // patchIdMaster!=vecPatches.size() 
+	    vecPatches(ipatch)->sio->setFiles( vecPatches(patchIdMaster)->sio->global_file_id_, vecPatches(patchIdMaster)->sio->global_file_id_avg );
+	}
+    }
+
+}
+
+void DiagsVectorPatch::updatePatchFieldDump( VectorPatch& vecPatches, Params& params )
+{
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	if ( vecPatches(ipatch)->Pcoordinates[0]!=params.number_of_patches[0]-1 )
+	    vecPatches(ipatch)->sio->updatePattern( params, vecPatches(ipatch) );
+    }
+    
 }

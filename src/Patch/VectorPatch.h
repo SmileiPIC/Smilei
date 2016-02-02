@@ -46,16 +46,7 @@ public :
     void solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual, std::vector<Timer>& timer);
 
 
-    void computeGlobalDiags(int timestep);
-    void computeScalarsDiags(int timestep);
-    void computePhaseSpace();
-    void computeParticlesDiags(int timestep);
 
-    void initProbesDiags(Params& params, int timestep);
-    void finalizeProbesDiags(Params& params, int timestep);
-    void definePatchDiagsMaster(hid_t globalFile, hid_t globalFileAvg);
-    void definePatchDiagsMaster();
-    void updatePatchFieldDump( Params& params );
 
     void createPatches(Params& params, SmileiMPI* smpi, SimWindow* simWindow);
     void setNbrParticlesToExch(SmileiMPI* smpi);
@@ -63,12 +54,7 @@ public :
     void exchangePatches(SmileiMPI* smpi, Params& params);
     void output_exchanges(SmileiMPI* smpi);
     
-    void initDumpFields(Params& params, int timestep);
-    void finalizeDumpFields(Params& params, int timestep);
 
-    void initTrackParticles(Params& params, SmileiMPI* smpi);
-
-    void initCollisionDebug();
 
 
     void solvePoisson( Params &params, SmileiMPI* smpi );
@@ -88,6 +74,26 @@ public :
  private :
     // 1st patch index of patches_ (stored for balancing op)
     int refHindex_;
+
+    inline Species* species(int ipatch, int ispec) {
+	return (*this)(ipatch)->vecSpecies[ispec];
+    }
+    
+    inline ElectroMagn* emfields(int ipatch) {
+	return (*this)(ipatch)->EMfields;
+    }
+
+    inline Interpolator* interp(int ipatch){
+	return (*this)(ipatch)->Interp;
+    }
+
+    inline Projector* proj(int ipatch){
+	return (*this)(ipatch)->Proj;
+    }
+
+    inline std::vector<PartWall*> partwalls(int ipatch){
+	return (*this)(ipatch)->vecPartWall;
+    }
 
 
 };
