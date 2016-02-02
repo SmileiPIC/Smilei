@@ -29,52 +29,91 @@ class SimWindow;
 
 class VectorPatch {
 public :
+
     VectorPatch();
     ~VectorPatch();
 
-    void resize(int npatches) {patches_.resize(npatches);};
-    int size() const {return patches_.size();};
+    //! VectorPatch = 
+    //! - std::vector<Patch*>
+    //! - interfaces between main programs & main PIC operators
+    //! - methods to balance computation
+    std::vector<Patch*> patches_;
+    
 
-    inline Patch* operator()(int ipatch) {return patches_[ipatch];};
-    inline void set_refHindex() {refHindex_ = patches_[0]->Hindex();};
+    //! Some vector operations extended to VectorPatch
+    inline void resize(int npatches) {
+	patches_.resize(npatches);
+    }
+    inline int  size() const {
+	return patches_.size();
+    }
+    inline void clear() {
+	patches_.clear();
+    }
+    inline Patch* operator()(int ipatch) {
+	return patches_[ipatch];
+    }
 
- 
+    //! Set Id of the 1st patch stored on the current MPI process
+    //!   used during balancing 
+    inline void set_refHindex() {
+	refHindex_ = patches_[0]->Hindex();
+    }
 
-    void runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, int itime, std::vector<Timer>& timer);
-    void dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow, int* diag_flag, double time_dual, std::vector<Timer>& timer);
+    //! Pointer to patches_[0]->Diags which will drive diag on the current MPI process
+    Diagnostic* Diags;
+
+    
+    // Interfaces between main programs & main PIC operators
+    // -----------------------------------------------------
+
+    //! For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
+    void dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow, int* diag_flag, double time_dual,
+		  std::vector<Timer>& timer);
+
+    //! For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
     void sumDensities( int* diag_flag, std::vector<Timer>& timer );
-    void solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual, std::vector<Timer>& timer);
+
+    //! For all patch, update E and B (Ampere, Faraday, boundary conditions, exchange B and center B)
+    void solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual,
+		      std::vector<Timer>& timer);
+
+    //! For all patch, Compute and Write all diags (Scalars, Probes, Phases, TrackParticles, Fields, Average fields)
+    void runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, int itime, std::vector<Timer>& timer);
+
+    //! Check if rho is null (MPI & patch sync)
+    bool isRhoNull( SmileiMPI* smpi );
+
+    //! Solve Poisson to initialize E
+    void solvePoisson( Params &params, SmileiMPI* smpi );
 
 
+    //  Balancing methods
+    // ------------------
 
-
+    //! Explicits patch movement regarding new patch distribution stored in smpi->patch_count
     void createPatches(Params& params, SmileiMPI* smpi, SimWindow* simWindow);
+
+    //! Prepare patch exchange, exchanging 1st the number of particles per patch (not used)
     void setNbrParticlesToExch(SmileiMPI* smpi);
+
+    //! First implementation of exchangePatches
     //void exchangePatches(SmileiMPI* smpi);
+
+    //! Exchange patches, based on createPatches initialization
     void exchangePatches(SmileiMPI* smpi, Params& params);
+
+    //! Write in a file patches communications
     void output_exchanges(SmileiMPI* smpi);
     
 
-
-
-    void solvePoisson( Params &params, SmileiMPI* smpi );
-    bool isRhoNull( SmileiMPI* smpi );
-
-
-    void clear() {patches_.clear();}
-
-    std::vector<Patch*> patches_;
-    std::vector<Patch*> recv_patches_;
-
-    std::vector<int> recv_patch_id_;
-    std::vector<int> send_patch_id_;
-
-    Diagnostic* Diags;
-
  private :
-    // 1st patch index of patches_ (stored for balancing op)
+    //! 1st patch index of patches_ (stored for balancing op)
     int refHindex_;
 
+    //! Methods to access readably to patch PIC operators.
+    //!   - patches_ should not be access outsied of VectorPatch
+    //!   - for now in SimWindow 
     inline Species* species(int ipatch, int ispec) {
 	return (*this)(ipatch)->vecSpecies[ispec];
     }
@@ -95,7 +134,15 @@ public :
 	return (*this)(ipatch)->vecPartWall;
     }
 
+    //  Internal balancing members
+    // ---------------------------
+    std::vector<Patch*> recv_patches_;
 
+    std::vector<int> recv_patch_id_;
+    std::vector<int> send_patch_id_;
+
+
+    
 };
 
 
