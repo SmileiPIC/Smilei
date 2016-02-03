@@ -276,7 +276,36 @@ multiple ionization in a single timestep. The approach for field ionization in
 [Nuter2011]_ has been adapted to calculate the successive impact ionization probabilities
 when an ion is ionized several times in a row.
 
+Writing the probability to not ionize an ion already ionized :math:`i` times as
+:math:`\bar{P}^i = \exp\left( -W_i\Delta t\right)`, and defining 
+:math:`R^m_n = (1-W_m/W_n)^{-1}`, we can calculate the probability to ionize :math:`k` times
+the ion:
 
+.. math::
+  
+  P^i_k = \left\{
+  \begin{array}{ll}
+  \bar{P}^i
+  &
+  \quad\mathrm{if}\quad k=0
+  \\
+  \sum\limits_{p=0}^{k-1} R^{i+k}_{i+p} \left(\bar{P}^{i+k} - \bar{P}^{i+p}\right)
+  \prod\limits_{j=0,j\ne p}^{k-1} R^{i+p}_{i+j}
+  &
+  \quad\mathrm{if}\quad 0<k<k_\mathrm{max}
+  \\
+  \sum\limits_{p=0}^{k-1} \left[ 1+R^{i+k}_{i+p}\left(\frac{W_{i+k}}{W_{i+p}}\bar{P}^{i+p} - \bar{P}^{i+k}\right) \right]
+  \prod\limits_{j=0,j\ne p}^{k-1} R^{i+p}_{i+j}
+  &
+  \quad\mathrm{if}\quad k=k_\mathrm{max}
+  \end{array}
+  \right.
+
+where :math:`k_\mathrm{max} = Z-Z^\star`.
+
+The cumulative probability :math:`F^i_k = \sum_{j=0}^{k} P^i_j` provides an efficient
+way to pick when the ionization stops: we pick a random number :math:`U\in [0,1]` and
+loop from :math:`k=0` to :math:`k_\mathrm{max}`. We stop ionizing when :math:`F^i_k>U`.
 
 ----
 
