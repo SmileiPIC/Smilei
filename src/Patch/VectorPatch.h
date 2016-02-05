@@ -28,93 +28,121 @@ class SimWindow;
 //!     Collection of patch = MPI domain
 
 class VectorPatch {
- public :
+public :
+
     VectorPatch();
     ~VectorPatch();
 
-    void resize(int npatches) {patches_.resize(npatches);};
-    int size() const {return patches_.size();};
-
-    inline Patch* operator()(int ipatch) {return patches_[ipatch];};
-    inline void set_refHindex() {refHindex_ = patches_[0]->Hindex();};
-
-    void exchangeParticles(int ispec, Params &params, SmileiMPI* smpi);
-#ifdef _NOTFORNOW
-    void exchangeParticles(int ispec, Params &params);
-#endif
-    void sumRhoJ( unsigned int diag_flag );
-    void sumRhoJs( int ispec );
-    void exchangeE(  );
-    void exchangeB(  );
-
-    void runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, int itime, std::vector<Timer>& timer);
-    void dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow, int* diag_flag, double time_dual, std::vector<Timer>& timer);
-    void sumDensities( int* diag_flag, std::vector<Timer>& timer );
-    void solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual, std::vector<Timer>& timer);
-
-
-    void computeGlobalDiags(int timestep);
-    void computeScalarsDiags(int timestep);
-    void computePhaseSpace();
-    void computeParticlesDiags(int timestep);
-
-    void initProbesDiags(Params& params, int timestep);
-    void finalizeProbesDiags(Params& params, int timestep);
-    void definePatchDiagsMaster(hid_t globalFile, hid_t globalFileAvg);
-    void definePatchDiagsMaster();
-    void updatePatchFieldDump( Params& params );
-
-    void createPatches(Params& params, SmileiMPI* smpi, SimWindow* simWindow);
-    void setNbrParticlesToExch(SmileiMPI* smpi);
-    //void exchangePatches(SmileiMPI* smpi);
-    void exchangePatches(SmileiMPI* smpi, Params& params);
-    void output_exchanges(SmileiMPI* smpi);
+    //! VectorPatch = 
+    //! - std::vector<Patch*>
+    //! - interfaces between main programs & main PIC operators
+    //! - methods to balance computation
+    std::vector<Patch*> patches_;
     
-    void initDumpFields(Params& params, int timestep);
-    void finalizeDumpFields(Params& params, int timestep);
 
-    void initTrackParticles(Params& params, SmileiMPI* smpi);
+    //! Some vector operations extended to VectorPatch
+    inline void resize(int npatches) {
+	patches_.resize(npatches);
+    }
+    inline int  size() const {
+	return patches_.size();
+    }
+    inline void clear() {
+	patches_.clear();
+    }
+    inline Patch* operator()(int ipatch) {
+	return patches_[ipatch];
+    }
 
-    void initCollisionDebug();
+    //! Set Id of the 1st patch stored on the current MPI process
+    //!   used during balancing 
+    inline void set_refHindex() {
+	refHindex_ = patches_[0]->Hindex();
+    }
 
+    //! Pointer to patches_[0]->Diags which will drive diag on the current MPI process
+    Diagnostic* Diags;
 
-    void solvePoisson( Params &params, SmileiMPI* smpi );
+    
+    // Interfaces between main programs & main PIC operators
+    // -----------------------------------------------------
+
+    //! For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
+    void dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow, int* diag_flag, double time_dual,
+		  std::vector<Timer>& timer);
+
+    //! For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
+    void sumDensities( int* diag_flag, std::vector<Timer>& timer );
+
+    //! For all patch, update E and B (Ampere, Faraday, boundary conditions, exchange B and center B)
+    void solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual,
+		      std::vector<Timer>& timer);
+
+    //! For all patch, Compute and Write all diags (Scalars, Probes, Phases, TrackParticles, Fields, Average fields)
+    void runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, int itime, std::vector<Timer>& timer);
+
+    //! Check if rho is null (MPI & patch sync)
     bool isRhoNull( SmileiMPI* smpi );
 
-    void exchange( std::vector<Field*> fields );
-    void exchange0( std::vector<Field*> fields );
-    void exchange1( std::vector<Field*> fields );
-    void sum( std::vector<Field*> fields );
+    //! Solve Poisson to initialize E
+    void solvePoisson( Params &params, SmileiMPI* smpi );
 
 
-    void clear() {patches_.clear();}
-    void resizeFields();
+    //  Balancing methods
+    // ------------------
 
-    std::vector<Patch*> patches_;
+    //! Explicits patch movement regarding new patch distribution stored in smpi->patch_count
+    void createPatches(Params& params, SmileiMPI* smpi, SimWindow* simWindow);
+
+    //! Prepare patch exchange, exchanging 1st the number of particles per patch (not used)
+    void setNbrParticlesToExch(SmileiMPI* smpi);
+
+    //! First implementation of exchangePatches
+    //void exchangePatches(SmileiMPI* smpi);
+
+    //! Exchange patches, based on createPatches initialization
+    void exchangePatches(SmileiMPI* smpi, Params& params);
+
+    //! Write in a file patches communications
+    void output_exchanges(SmileiMPI* smpi);
+    
+
+ private :
+    //! 1st patch index of patches_ (stored for balancing op)
+    int refHindex_;
+
+    //! Methods to access readably to patch PIC operators.
+    //!   - patches_ should not be access outsied of VectorPatch
+    //!   - for now in SimWindow 
+    inline Species* species(int ipatch, int ispec) {
+	return (*this)(ipatch)->vecSpecies[ispec];
+    }
+    
+    inline ElectroMagn* emfields(int ipatch) {
+	return (*this)(ipatch)->EMfields;
+    }
+
+    inline Interpolator* interp(int ipatch){
+	return (*this)(ipatch)->Interp;
+    }
+
+    inline Projector* proj(int ipatch){
+	return (*this)(ipatch)->Proj;
+    }
+
+    inline std::vector<PartWall*> partwalls(int ipatch){
+	return (*this)(ipatch)->vecPartWall;
+    }
+
+    //  Internal balancing members
+    // ---------------------------
     std::vector<Patch*> recv_patches_;
 
     std::vector<int> recv_patch_id_;
     std::vector<int> send_patch_id_;
 
-    Diagnostic* Diags;
 
- private :
-    // 1st patch index of patches_ (stored for balancing op)
-    int refHindex_;
-
-    std::vector<Field*> Ap_;
-    std::vector<Field*> Bx_;
-    std::vector<Field*> By_;
-    std::vector<Field*> Bz_;
-    std::vector<Field*> Ex_;
-    std::vector<Field*> Ey_;
-    std::vector<Field*> Ez_;
-
-    std::vector<Field*> Jx_;
-    std::vector<Field*> Jy_;
-    std::vector<Field*> Jz_;
-    std::vector<Field*> rho_;
-
+    
 };
 
 

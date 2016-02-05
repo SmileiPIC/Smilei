@@ -383,8 +383,8 @@ int main (int argc, char* argv[])
     // ------------------------------
     //  Cleanup & End the simulation
     // ------------------------------
-    vecPatches.finalizeProbesDiags(params, stepStop);
-    vecPatches.finalizeDumpFields(params, stepStop);
+    DiagsVectorPatch::finalizeProbesDiags(vecPatches, params, stepStop);
+    DiagsVectorPatch::finalizeDumpFields(vecPatches, params, stepStop);
 
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) delete vecPatches(ipatch);
     vecPatches.clear();

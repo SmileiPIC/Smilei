@@ -10,6 +10,7 @@
 #include "Diagnostic.h"
 #include "Hilbert_functions.h"
 #include "PatchesFactory.h"
+#include "DiagsVectorPatch.h"
 #include <iostream>
 #include <omp.h>
 #include <fstream>
@@ -253,8 +254,8 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 	vecPatches(ipatch)->EMfields->laserDisabled();
 
     //vecPatches.definePatchDiagsMaster();
-    vecPatches.definePatchDiagsMaster( globalFile, globalFileAvg );
-    vecPatches.updatePatchFieldDump( params );
+    DiagsVectorPatch::definePatchDiagsMaster( vecPatches, globalFile, globalFileAvg );
+    DiagsVectorPatch::updatePatchFieldDump( vecPatches, params );
 
     if (smpi->isMaster()) {
 	vector<string>::iterator iterKey = out_key.begin();

@@ -26,6 +26,8 @@ class ElectroMagn;
 //! mother class of all the DiagnosticPhase* it creates all the sub-diagnostics and creates and fills the hdf5 file
 class DiagnosticPhaseSpace {
     friend class VectorPatch;
+    friend class DiagsVectorPatch;
+
     friend class SimWindow;
     friend class SmileiMPI;
 public:

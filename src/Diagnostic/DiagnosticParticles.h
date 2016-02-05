@@ -101,7 +101,7 @@ struct DiagnosticParticlesAxis {
 // Class for the particles diagnostics
 class DiagnosticParticles {
     friend class SmileiMPI;
-    friend class VectorPatch;
+    friend class DiagsVectorPatch;
 
 public:
 
