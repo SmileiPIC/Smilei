@@ -51,7 +51,7 @@ Understand :program:`Smilei`
 Links
 =====
 
-* `GitLab project page <https://llrgit.in2p3.fr/groups/smilei>`_ (restricted access)
+* `GitLab project page <https://llrgit.in2p3.fr/smilei/smilei>`_ (restricted access)
 * `Partners <partners.html>`_
 
 .. toctree::
