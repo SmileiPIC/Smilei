@@ -13,6 +13,12 @@
 
 using namespace std;
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Patch2D constructor :
+//   - Pcoordinates, neighbor_ resized in Patch constructor 
+//   - Call Patch::finalizePatchInit to allocate data structure
+// ---------------------------------------------------------------------------------------------------------------------
 Patch2D::Patch2D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved)
   : Patch( params, smpi, ipatch, n_moved)
 {
@@ -56,50 +62,13 @@ Patch2D::Patch2D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned 
     // Call generic Patch::finalizePatchInit method
     finalizePatchInit( params, smpi, n_moved );
 
-};
+} // End Patch2D::Patch2D
 
 
-void Patch2D::createType( Params& params )
-{
-    int nx0 = params.n_space[0] + 1 + 2*params.oversize[0];
-    int ny0 = params.n_space[1] + 1 + 2*params.oversize[1];
-    unsigned int clrw = params.clrw;
-    
-    // MPI_Datatype ntype_[nDim][primDual][primDual]
-    int nx, ny;
-    int nline, ncol;
-
-    for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
-        nx = nx0 + ix_isPrim;
-        for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {
-            ny = ny0 + iy_isPrim;
-
-	    // Standard Type
-            ntype_[0][ix_isPrim][iy_isPrim] = NULL;
-            MPI_Type_contiguous(ny, MPI_DOUBLE, &(ntype_[0][ix_isPrim][iy_isPrim]));    //line
-            MPI_Type_commit( &(ntype_[0][ix_isPrim][iy_isPrim]) );
-            ntype_[1][ix_isPrim][iy_isPrim] = NULL;
-            MPI_Type_vector(nx, 1, ny, MPI_DOUBLE, &(ntype_[1][ix_isPrim][iy_isPrim])); // column
-            MPI_Type_commit( &(ntype_[1][ix_isPrim][iy_isPrim]) );
-            ntype_[2][ix_isPrim][iy_isPrim] = NULL;
-            MPI_Type_contiguous(ny*clrw, MPI_DOUBLE, &(ntype_[2][ix_isPrim][iy_isPrim]));   //clrw lines
-            MPI_Type_commit( &(ntype_[2][ix_isPrim][iy_isPrim]) );
-
-            ntypeSum_[0][ix_isPrim][iy_isPrim] = NULL;
-            nline = 1 + 2*params.oversize[0] + ix_isPrim;
-            MPI_Type_contiguous(nline, ntype_[0][ix_isPrim][iy_isPrim], &(ntypeSum_[0][ix_isPrim][iy_isPrim]));    //line
-            MPI_Type_commit( &(ntypeSum_[0][ix_isPrim][iy_isPrim]) );
-            ntypeSum_[1][ix_isPrim][iy_isPrim] = NULL;
-            ncol  = 1 + 2*params.oversize[1] + iy_isPrim;
-            MPI_Type_vector(nx, ncol, ny, MPI_DOUBLE, &(ntypeSum_[1][ix_isPrim][iy_isPrim])); // column
-            MPI_Type_commit( &(ntypeSum_[1][ix_isPrim][iy_isPrim]) );
-            
-        }
-    }
-    
-} //END createType
-
-
+// ---------------------------------------------------------------------------------------------------------------------
+// Initialize current patch sum Fields communications through MPI in direction iDim
+// Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
+// ---------------------------------------------------------------------------------------------------------------------
 void Patch2D::initSumField( Field* field, int iDim )
 {
     int patch_ndims_(2);
@@ -168,6 +137,11 @@ void Patch2D::initSumField( Field* field, int iDim )
 } // END initSumField
 
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Finalize current patch sum Fields communications through MPI for direction iDim
+// Proceed to the local reduction
+// Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
+// ---------------------------------------------------------------------------------------------------------------------
 void Patch2D::finalizeSumField( Field* field, int iDim )
 {
     int patch_ndims_(2);
@@ -231,6 +205,11 @@ void Patch2D::finalizeSumField( Field* field, int iDim )
 
 } // END finalizeSumField
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Initialize current patch exhange Fields communications through MPI (includes loop / nDim_fields_)
+// Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
+// ---------------------------------------------------------------------------------------------------------------------
 void Patch2D::initExchange( Field* field )
 {
     int patch_ndims_(2);
@@ -276,8 +255,44 @@ void Patch2D::initExchange( Field* field )
         } // END for iNeighbor
 
     } // END for iDim
-}
+} // END initExchange( Field* field )
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Initialize current patch exhange Fields communications through MPI  (includes loop / nDim_fields_)
+// Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
+// ---------------------------------------------------------------------------------------------------------------------
+void Patch2D::finalizeExchange( Field* field )
+{
+    int patch_ndims_(2);
+    int patch_nbNeighbors_(2);
+
+    Field2D* f2D =  static_cast<Field2D*>(field);
+
+    MPI_Status sstat    [patch_ndims_][2];
+    MPI_Status rstat    [patch_ndims_][2];
+
+    // Loop over dimField
+    for (int iDim=0 ; iDim<patch_ndims_ ; iDim++) {
+
+        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+	    if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
+                MPI_Wait( &(f2D->specMPI.patch_srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
+            }
+ 	    if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
+               MPI_Wait( &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
+            }
+        }
+
+    } // END for iDim
+
+} // END finalizeExchange( Field* field )
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Initialize current patch exhange Fields communications through MPI for direction iDim
+// Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
+// ---------------------------------------------------------------------------------------------------------------------
 void Patch2D::initExchange( Field* field, int iDim )
 {
     int patch_ndims_(2);
@@ -318,34 +333,13 @@ void Patch2D::initExchange( Field* field, int iDim )
     } // END for iNeighbor
 
 
-}
+} // END initExchange( Field* field, int iDim )
 
 
-void Patch2D::finalizeExchange( Field* field )
-{
-    int patch_ndims_(2);
-    int patch_nbNeighbors_(2);
-
-    Field2D* f2D =  static_cast<Field2D*>(field);
-
-    MPI_Status sstat    [patch_ndims_][2];
-    MPI_Status rstat    [patch_ndims_][2];
-
-    // Loop over dimField
-    for (int iDim=0 ; iDim<patch_ndims_ ; iDim++) {
-
-        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-	    if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
-                MPI_Wait( &(f2D->specMPI.patch_srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
-            }
- 	    if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
-               MPI_Wait( &(f2D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
-            }
-        }
-
-    } // END for iDim
-}
-
+// ---------------------------------------------------------------------------------------------------------------------
+// Initialize current patch exhange Fields communications through MPI for direction iDim
+// Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
+// ---------------------------------------------------------------------------------------------------------------------
 void Patch2D::finalizeExchange( Field* field, int iDim )
 {
     int patch_ndims_(2);
@@ -365,7 +359,49 @@ void Patch2D::finalizeExchange( Field* field, int iDim )
 	}
     }
 
+} // END finalizeExchange( Field* field, int iDim )
 
-}
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Create MPI_Datatypes used in initSumField and initExchange
+// ---------------------------------------------------------------------------------------------------------------------
+void Patch2D::createType( Params& params )
+{
+    int nx0 = params.n_space[0] + 1 + 2*params.oversize[0];
+    int ny0 = params.n_space[1] + 1 + 2*params.oversize[1];
+    unsigned int clrw = params.clrw;
+    
+    // MPI_Datatype ntype_[nDim][primDual][primDual]
+    int nx, ny;
+    int nline, ncol;
+
+    for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
+        nx = nx0 + ix_isPrim;
+        for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {
+            ny = ny0 + iy_isPrim;
+
+	    // Standard Type
+            ntype_[0][ix_isPrim][iy_isPrim] = NULL;
+            MPI_Type_contiguous(ny, MPI_DOUBLE, &(ntype_[0][ix_isPrim][iy_isPrim]));    //line
+            MPI_Type_commit( &(ntype_[0][ix_isPrim][iy_isPrim]) );
+            ntype_[1][ix_isPrim][iy_isPrim] = NULL;
+            MPI_Type_vector(nx, 1, ny, MPI_DOUBLE, &(ntype_[1][ix_isPrim][iy_isPrim])); // column
+            MPI_Type_commit( &(ntype_[1][ix_isPrim][iy_isPrim]) );
+            ntype_[2][ix_isPrim][iy_isPrim] = NULL;
+            MPI_Type_contiguous(ny*clrw, MPI_DOUBLE, &(ntype_[2][ix_isPrim][iy_isPrim]));   //clrw lines
+            MPI_Type_commit( &(ntype_[2][ix_isPrim][iy_isPrim]) );
+
+            ntypeSum_[0][ix_isPrim][iy_isPrim] = NULL;
+            nline = 1 + 2*params.oversize[0] + ix_isPrim;
+            MPI_Type_contiguous(nline, ntype_[0][ix_isPrim][iy_isPrim], &(ntypeSum_[0][ix_isPrim][iy_isPrim]));    //line
+            MPI_Type_commit( &(ntypeSum_[0][ix_isPrim][iy_isPrim]) );
+            ntypeSum_[1][ix_isPrim][iy_isPrim] = NULL;
+            ncol  = 1 + 2*params.oversize[1] + iy_isPrim;
+            MPI_Type_vector(nx, ncol, ny, MPI_DOUBLE, &(ntypeSum_[1][ix_isPrim][iy_isPrim])); // column
+            MPI_Type_commit( &(ntypeSum_[1][ix_isPrim][iy_isPrim]) );
+            
+        }
+    }
+    
+} //END createType
 
