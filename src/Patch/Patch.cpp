@@ -16,149 +16,106 @@
 
 using namespace std;
 
-//int buildtag(int send, int recv);
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Patch constructor :
+//   - resize geometrical members
+//   - Called by PatchXD constructor which will finalize initialization
+// ---------------------------------------------------------------------------------------------------------------------
 Patch::Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved) {
 
+    hindex = ipatch;
 
-//Neighborhood definition in 2D:
-//   
-//   Y axis
-//   ^
-//   |   6       7          8
-//   |   3    4(self)       5
-//       0       1          2    --> X axis
-
-        int xcall, ycall;
-        hindex = ipatch;
 #ifdef _DEBUGPATCH
-	std::cout << smpi->getRank() << ", mypatch is : " << hindex << std::endl;        
+    std::cout << smpi->getRank() << ", mypatch is : " << hindex << std::endl;        
 #endif
-	//int nDims = params.nDim_field;
-        nDim_fields_ = params.nDim_field;
-        int nDims = 2;
-        Pcoordinates.resize(nDims);
-        if ( params.geometry == "1d3v" ) {
-            Pcoordinates[0] = hindex;
-            Pcoordinates[1] = 0;
-        }
-        else if ( params.geometry == "2d3v" ) {
-            Pcoordinates.resize(2);
-            generalhilbertindexinv(params.mi[0], params.mi[1], &Pcoordinates[0], &Pcoordinates[1], hindex);
 
-	    /////////////////////////////////////
-	    //  Define local domain
-	    /////////////////////////////////////
+    nDim_fields_ = params.nDim_field;
+    Pcoordinates.resize(nDim_fields_);
 
-        }
-        else {
-            Pcoordinates.resize(3);
-            generalhilbertindexinv(params.mi[0], params.mi[1], params.mi[2], &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
-        }
+    // else if ( params.geometry == "2d3v" ) {
+    //     Pcoordinates.resize(3);
+    //     generalhilbertindexinv(params.mi[0], params.mi[1], params.mi[2], &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
+    // }
 
-	//std::cout << "Coordonnées de " << ipatch << " : " << Pcoordinates[0] << " " << Pcoordinates[1] << std::endl;
-	nbNeighbors_ = 2;
-	neighbor_.resize(nDim_fields_);
-	corner_neighbor_.resize(params.nDim_field);
-	for ( int iDim = 0 ; iDim < nDim_fields_ ; iDim++ ) {
-	    neighbor_[iDim].resize(2,MPI_PROC_NULL);
-	    corner_neighbor_[iDim].resize(2,MPI_PROC_NULL);
-	}
-	MPI_neighbor_.resize(nDim_fields_);
-	for ( int iDim = 0 ; iDim < nDim_fields_; iDim++ ) {
-	    MPI_neighbor_[iDim].resize(2,MPI_PROC_NULL);
-	}
+    nbNeighbors_ = 2;
+    neighbor_.resize(nDim_fields_);
+    corner_neighbor_.resize(params.nDim_field);
+    for ( int iDim = 0 ; iDim < nDim_fields_ ; iDim++ ) {
+	neighbor_[iDim].resize(2,MPI_PROC_NULL);
+	corner_neighbor_[iDim].resize(2,MPI_PROC_NULL);
+    }
+    MPI_neighbor_.resize(nDim_fields_);
+    for ( int iDim = 0 ; iDim < nDim_fields_; iDim++ ) {
+	MPI_neighbor_[iDim].resize(2,MPI_PROC_NULL);
+    }
 
-        xcall = Pcoordinates[0]-1;
-        ycall = Pcoordinates[1];
-	if (params.bc_em_type_x[0]=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
-	neighbor_[0][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
-        xcall = Pcoordinates[0]+1;
-	if (params.bc_em_type_x[0]=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
-	neighbor_[0][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
-
-	if (params.nDim_field>1) {
-	    xcall = Pcoordinates[0];
-	    ycall = Pcoordinates[1]-1;
-	    if (params.bc_em_type_y[0]=="periodic" && ycall < 0) ycall += (1<<params.mi[1]);
-	    neighbor_[1][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
-	    ycall = Pcoordinates[1]+1;
-	    if (params.bc_em_type_y[0]=="periodic" && ycall >= (1<<params.mi[1])) ycall -= (1<<params.mi[1]);
-	    neighbor_[1][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
-
-	    xcall = Pcoordinates[0]+1;
-	    if (params.bc_em_type_x[0]=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
-	    corner_neighbor_[1][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
-	    xcall = Pcoordinates[0]-1;
-	    if (params.bc_em_type_x[0]=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
-	    corner_neighbor_[0][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
-	    ycall = Pcoordinates[1]-1;
-	    if (params.bc_em_type_y[0]=="periodic" && ycall < 0) ycall += (1<<params.mi[1]);
-	    corner_neighbor_[0][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
-	    xcall = Pcoordinates[0]+1;
-	    if (params.bc_em_type_x[0]=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
-	    corner_neighbor_[1][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
-	}
-
-	updateMPIenv(smpi);
-
-	//createType(params);
-
-	
-	//std::cout << "Voisin dir 0 : " << ipatch << " : " <<  neighbor_[0][0] << " " <<  neighbor_[0][1] << std::endl;
-	//std::cout << "Voisin dir 1 : " << ipatch << " : " <<  neighbor_[1][0] << " " <<  neighbor_[1][1] << std::endl;
-
-	min_local.resize(params.nDim_field, 0.);
-	max_local.resize(params.nDim_field, 0.);
-	cell_starting_global_index.resize(params.nDim_field, 0);
-	for (int i = 0 ; i<params.nDim_field ; i++) {
-	    min_local[i] = Pcoordinates[i]*params.n_space[i]*params.cell_length[i];
-	    max_local[i] = min_local[i] + params.n_space[i]*params.cell_length[i];
-	    cell_starting_global_index[i] += Pcoordinates[i]*params.n_space[i];
-	    cell_starting_global_index[i] -= params.oversize[i];
-	}
-
-	cell_starting_global_index[0] += n_moved;
-	min_local[0] += n_moved*params.cell_length[0];
-	max_local[0] += n_moved*params.cell_length[0];
-
-	// ---------------------------
-	// Initialize Species & Fields
-	// ---------------------------
+} // END Patch::Patch
 
 
-	// Initialize the vecSpecies object containing all information of the different Species
-	// ------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
+// Finalize initialization, non-dimensioned instructions
+// ---------------------------------------------------------------------------------------------------------------------
+void Patch::finalizePatchInit( Params& params, SmileiMPI* smpi, unsigned int n_moved ) {
+
+    // Compute MPI neighborood
+    updateMPIenv(smpi);
+
+    // Compute patch boundaries
+    min_local.resize(params.nDim_field, 0.);
+    max_local.resize(params.nDim_field, 0.);
+    cell_starting_global_index.resize(params.nDim_field, 0);
+    for (int i = 0 ; i<params.nDim_field ; i++) {
+	min_local[i] = Pcoordinates[i]*params.n_space[i]*params.cell_length[i];
+	max_local[i] = min_local[i] + params.n_space[i]*params.cell_length[i];
+	cell_starting_global_index[i] += Pcoordinates[i]*params.n_space[i];
+	cell_starting_global_index[i] -= params.oversize[i];
+    }
+
+    cell_starting_global_index[0] += n_moved;
+    min_local[0] += n_moved*params.cell_length[0];
+    max_local[0] += n_moved*params.cell_length[0];
+
+    // ---------------------------
+    // Initialize Species & Fields
+    // ---------------------------
+
+    // Initialize the vecSpecies object containing all information of the different Species
+    // ------------------------------------------------------------------------------------
     
-	// vector of Species (virtual)
-	vecSpecies = SpeciesFactory::createVector(params, this);
+    // vector of Species (virtual)
+    vecSpecies = SpeciesFactory::createVector(params, this);
 
-	// object containing the electromagnetic fields (virtual)
-	EMfields   = ElectroMagnFactory::create(params, vecSpecies, this);
+    // object containing the electromagnetic fields (virtual)
+    EMfields   = ElectroMagnFactory::create(params, vecSpecies, this);
 	
-	// interpolation operator (virtual)
-	Interp     = InterpolatorFactory::create(params, this);               // + patchId -> idx_domain_begin (now = ref smpi)
-	// projection operator (virtual)
-	Proj       = ProjectorFactory::create(params, this);                  // + patchId -> idx_domain_begin (now = ref smpi)
+    // interpolation operator (virtual)
+    Interp     = InterpolatorFactory::create(params, this);               // + patchId -> idx_domain_begin (now = ref smpi)
+    // projection operator (virtual)
+    Proj       = ProjectorFactory::create(params, this);                  // + patchId -> idx_domain_begin (now = ref smpi)
 
-	// Create diagnostics
-	Diags = new Diagnostic(params,this, smpi);
-	if ( hindex==0 && smpi->isMaster() )
-	    for (unsigned int idiag=0; idiag<Diags->vecDiagnosticParticles.size(); idiag++)
-		Diags->vecDiagnosticParticles[idiag]->createFile(idiag);
+    // Create diagnostics
+    Diags = new Diagnostic(params,this, smpi);
+    if ( hindex==0 && smpi->isMaster() )
+	for (unsigned int idiag=0; idiag<Diags->vecDiagnosticParticles.size(); idiag++)
+	    Diags->vecDiagnosticParticles[idiag]->createFile(idiag);
 
-	sio = SmileiIOFactory::create(params, Diags, this);
+    sio = SmileiIOFactory::create(params, Diags, this);
 
-	// Initialize the collisions (vector of collisions)
-	// ------------------------------------------------------------------------------------
-	vecCollisions = Collisions::create(params, vecSpecies, this);
+    // Initialize the collisions (vector of collisions)
+    // ------------------------------------------------------------------------------------
+    vecCollisions = Collisions::create(params, vecSpecies, this);
 
-	// Initialize the particle walls
-	vecPartWall = PartWall::create(params, this);
+    // Initialize the particle walls
+    vecPartWall = PartWall::create(params, this);
 
 	
-};
+} // END finalizePatchInit
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Delete Patch members
+// ---------------------------------------------------------------------------------------------------------------------
 Patch::~Patch() {
 
     for(unsigned int i=0; i<vecCollisions.size(); i++) delete vecCollisions[i];
@@ -169,23 +126,28 @@ Patch::~Patch() {
 
     Diags->closeAll(this);
     delete Diags;
+
     delete Proj;
     delete Interp;
+
     delete EMfields;
     delete sio;
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
     vecSpecies.clear();
 	    
-}
+} // END Patch::~Patch
 
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Compute MPI rank of patch neigbors and current patch
+// ---------------------------------------------------------------------------------------------------------------------
 void Patch::updateMPIenv(SmileiMPI* smpi)
 {
+    MPI_me_ = smpi->smilei_rk;
+
     for (int iDim = 0 ; iDim < nDim_fields_ ; iDim++)
 	for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++)
 	    MPI_neighbor_[iDim][iNeighbor] = smpi->hrank(neighbor_[iDim][iNeighbor]);
-    MPI_me_ = smpi->smilei_rk;
-
 
 #ifdef _PATCH_DEBUG
 	cout << "\n\tPatch Corner decomp : " << corner_neighbor_[0][1] << "\t" << neighbor_[1][1]  << "\t" << corner_neighbor_[1][1] << endl;
@@ -197,15 +159,19 @@ void Patch::updateMPIenv(SmileiMPI* smpi)
 	cout << "\tMPI Corner decomp : " << "MPI_PROC_NULL" << "\t" << MPI_neighbor_[1][0]  << "\t" << "MPI_PROC_NULL" << endl;
 #endif
 
-}
+} // END updateMPIenv
 
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Split particles Id to send in per direction and per patch neighbor dedicated buffers
+// Apply periodicity if necessary
+// ---------------------------------------------------------------------------------------------------------------------
 void Patch::initExchParticles(SmileiMPI* smpi, int ispec, Params& params)
 {
     Particles &cuParticles = (*vecSpecies[ispec]->particles);
     int ndim = params.nDim_field;
     int idim,check;
-    std::vector<int>*                indexes_of_particles_to_exchange         = &vecSpecies[ispec]->indexes_of_particles_to_exchange;
+    std::vector<int>* indexes_of_particles_to_exchange = &vecSpecies[ispec]->indexes_of_particles_to_exchange;
     double xmax[3]; 
     
     for (int iDim=0 ; iDim < ndim ; iDim++){
@@ -258,11 +224,16 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, Params& params)
 
 } // initExchParticles(... iDim)
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+// For direction iDim, start exchange of number of particles 
+//   - vecPatch : used for intra-MPI process comm (direct copy using Particels::cp_particles)
+//   - smpi     : inhereted from previous SmileiMPI::exchangeParticles()
+// ---------------------------------------------------------------------------------------------------------------------
 void Patch::initCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch * vecPatch)
 {
 
     Particles &cuParticles = (*vecSpecies[ispec]->particles);
-    int nbrOfProp( 7 );
     MPI_Datatype typePartSend, typePartRecv;
 
     int n_part_send, n_part_recv;
@@ -296,9 +267,14 @@ void Patch::initCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iD
 
 } // initCommParticles(... iDim)
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+// For direction iDim, finalize receive of number of particles and really send particles
+//   - vecPatch : used for intra-MPI process comm (direct copy using Particels::cp_particles)
+//   - smpi     : used smpi->periods_
+// ---------------------------------------------------------------------------------------------------------------------
 void Patch::CommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch * vecPatch)
 {
-    int nbrOfProp( 7 );
     MPI_Datatype typePartSend, typePartRecv;
     Particles &cuParticles = (*vecSpecies[ispec]->particles);
 
@@ -355,7 +331,7 @@ void Patch::CommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, 
 		    cuParticles.cp_particle(vecSpecies[ispec]->specMPI.patch_buff_index_send[iDim][iNeighbor][iPart], vecSpecies[ispec]->specMPI.patchVectorSend[iDim][iNeighbor]);
                 // Then send particles
 		int tag = buildtag( hindex, iDim+1, iNeighbor+3 );
-		typePartSend = smpi->createMPIparticles( &(vecSpecies[ispec]->specMPI.patchVectorSend[iDim][iNeighbor]), nbrOfProp );
+		typePartSend = smpi->createMPIparticles( &(vecSpecies[ispec]->specMPI.patchVectorSend[iDim][iNeighbor]), 0 );
 		MPI_Isend( &((vecSpecies[ispec]->specMPI.patchVectorSend[iDim][iNeighbor]).position(0,0)), 1, typePartSend, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(vecSpecies[ispec]->specMPI.patch_srequest[iDim][iNeighbor]) );
 		MPI_Type_free( &typePartSend );
 	    }
@@ -370,7 +346,7 @@ void Patch::CommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, 
 	if ( (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
 	    if (is_a_MPI_neighbor(iDim, (iNeighbor+1)%2)) {
                 // If MPI comm, receive particles in the recv buffer previously initialized.
-		typePartRecv = smpi->createMPIparticles( &(vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2]), nbrOfProp );
+		typePartRecv = smpi->createMPIparticles( &(vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2]), 0 );
 		int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim+1 ,iNeighbor+3 );
 		MPI_Irecv( &((vecSpecies[ispec]->specMPI.patchVectorRecv[iDim][(iNeighbor+1)%2]).position(0,0)), 1, typePartRecv, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(vecSpecies[ispec]->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]) );
 		MPI_Type_free( &typePartRecv );
@@ -380,14 +356,21 @@ void Patch::CommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, 
                 
     } // END for iNeighbor
 
-}
+} // END CommParticles(... iDim)
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+// For direction iDim, finalize receive of particles, temporary store particles if diagonalParticles
+// And store recv particles at their definitive place. 
+// Call Patch::cleanup_sent_particles
+//   - vecPatch : used for intra-MPI process comm (direct copy using Particels::cp_particles)
+//   - smpi     : used smpi->periods_
+// ---------------------------------------------------------------------------------------------------------------------
 void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch * vecPatch)
 {
 
     int ndim = params.nDim_field;
     int idim, check;
-    int nbrOfProp( 7 );
     MPI_Datatype typePartSend, typePartRecv;
 
     Particles &cuParticles = (*vecSpecies[ispec]->particles);
@@ -396,7 +379,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
         xmax[idim] = params.cell_length[idim]*( params.n_space_global[idim] );
 
 
-    std::vector<int>*                indexes_of_particles_to_exchange         = &vecSpecies[ispec]->indexes_of_particles_to_exchange;
+    std::vector<int>* indexes_of_particles_to_exchange = &vecSpecies[ispec]->indexes_of_particles_to_exchange;
 
     std::vector<int>* cubmin = &vecSpecies[ispec]->bmin;
     std::vector<int>* cubmax = &vecSpecies[ispec]->bmax;
@@ -561,6 +544,9 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
 } // finalizeCommParticles(... iDim)
 
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Clear vecSpecies[]->indexes_of_particles_to_exchange, suppress particles send and manage memory
+// ---------------------------------------------------------------------------------------------------------------------
 void Patch::cleanup_sent_particles(int ispec, std::vector<int>* indexes_of_particles_to_exchange)
 {
     /********************************************************************************/
@@ -610,4 +596,4 @@ void Patch::cleanup_sent_particles(int ispec, std::vector<int>* indexes_of_parti
 	(*cubmin)[ibin] = (*cubmax)[ibin-1];
     }
 
-}
+} // END cleanup_sent_particles

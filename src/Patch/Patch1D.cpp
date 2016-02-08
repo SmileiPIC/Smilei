@@ -16,8 +16,23 @@ using namespace std;
 Patch1D::Patch1D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved)
   : Patch( params, smpi, ipatch, n_moved)
 {
-	
-};
+    int xcall, ycall;
+
+    Pcoordinates[0] = hindex;
+
+    // 1st direction
+    xcall = Pcoordinates[0]-1;
+    ycall = Pcoordinates[1];
+    if (params.bc_em_type_x[0]=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
+    neighbor_[0][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
+    xcall = Pcoordinates[0]+1;
+    if (params.bc_em_type_x[0]=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
+    neighbor_[0][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
+
+    // Call generic Patch::finalizePatchInit method
+    finalizePatchInit( params, smpi, n_moved );
+
+}
 
 
 void Patch1D::createType( Params& params )
