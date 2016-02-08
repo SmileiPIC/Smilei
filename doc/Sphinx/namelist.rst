@@ -263,9 +263,12 @@ All the possible variables inside this block are explained here:
 
 
 .. py:data:: atomic_number
+  
+  :default: 0
 
-  The atomic number of the particles, required only if ionization is requested.
-  :red:`todo`
+  The atomic number of the particles, required only for ionization.
+  For field ionization, it must be lower than 8. For :ref:`collisional ionization 
+  <CollIonization>`, it must be lower than 101.
 
 
 .. py:data:: nb_density
@@ -705,23 +708,15 @@ All the possible variables inside this block are explained here:
   
   Lists of species names (see :py:data:`species_type`).
   
-  The collisions will occur between
-    1. all species under the list ``species1``
-    2. and all species under the group ``species2``
-  
-  For instance, to have collisions between ``electrons1`` and ``ions1`` , use::
-    
-    species1 = ["electrons1"], species2 = ["ions1"]
-
-..
-
-  Other example, to collide all electrons with ions::
+  The collisions will occur between all species under the group ``species1``
+  and all species under the group ``species2``. For example, to collide all
+  electrons with ions::
     
     species1 = ["electrons1", "electrons2"], species2 = ["ions"]
 
-..
-
-  **WARNING: this does not make** ``electrons1`` **collide with** ``electrons2``.
+  .. warning::
+    
+    This does not make ``electrons1`` collide with ``electrons2``.
   
   The two groups of species have to be *completely different* OR *exactly equal*.
   In other words, if ``species1`` is not equal to ``species2``,
@@ -737,6 +732,15 @@ All the possible variables inside this block are explained here:
   
   * If :math:`= 0`, the Coulomb logarithm is automatically computed for each collision.
   * If :math:`> 0`, the Coulomb logarithm is equal to this value.
+
+
+.. py:data:: ionizing
+  
+  :default: False
+  
+  If ``True``, :ref:`collisional ionization <CollIonization>` will occur. One of the 
+  species groups must be all electrons (:py:data:`mass` = 1), and the other one all ions of the
+  same :py:data:`atomic_number`.
 
 
 .. py:data:: debug_every

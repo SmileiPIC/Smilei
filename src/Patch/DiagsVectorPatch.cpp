@@ -284,7 +284,7 @@ void DiagsVectorPatch::initTrackParticles(VectorPatch& vecPatches, Params& param
 void DiagsVectorPatch::initCollisionDebug(VectorPatch& vecPatches)
 {
     for (unsigned int icoll=0 ; icoll<vecPatches(0)->vecCollisions.size(); icoll++)
-	vecPatches(0)->vecCollisions[icoll]->createFile();
+        vecPatches(0)->vecCollisions[icoll]->createFile();
 
 } // End initCollisionDebug
 

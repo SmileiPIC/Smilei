@@ -23,6 +23,19 @@ for path in ["thermalisation_ei1","thermalisation_ei2","thermalisation_ei3"]:
 	
 	times = sim.ParticleDiagnostic(diagNumber=0).getAvailableTimesteps()
 	
+	electrons0 = sim.ParticleDiagnostic(0,slice={"x":"all"}).get()
+	evx = electrons0["vx"]
+	electrons1 = sim.ParticleDiagnostic(1,slice={"x":"all"}).get()
+	evy = electrons1["vy"]
+	electrons2 = sim.ParticleDiagnostic(2,slice={"x":"all"}).get()
+	evz = electrons2["vz"]
+	ions0 = sim.ParticleDiagnostic(3, slice={"x":"all"}).get()
+	ivx = ions0["vx"]
+	ions1 = sim.ParticleDiagnostic(4, slice={"x":"all"}).get()
+	ivy = ions1["vy"]
+	ions2 = sim.ParticleDiagnostic(5, slice={"x":"all"}).get()
+	ivz = ions2["vz"]
+	
 	e_T_mean = np.zeros(len(times))
 	i_T_mean = np.zeros(len(times))
 	
@@ -31,43 +44,34 @@ for path in ["thermalisation_ei1","thermalisation_ei2","thermalisation_ei3"]:
 	if fig: fig.clf()
 	if fig: ax = fig.add_subplot(1,1,1)
 	for i,t in enumerate(times):
-		electrons = sim.ParticleDiagnostic(0, units="nice", slice={"x":"all"}, timesteps=t).get()
-		vx = electrons["vx"]
-		A = electrons["data"][0]
-		vx0 = (A*vx).sum() / A.sum()
-		e_T_mean[i] = (A*(vx-vx0)**2).sum() / A.sum()
-		electrons = sim.ParticleDiagnostic(1, units="nice", slice={"x":"all"}, timesteps=t).get()
-		vy = electrons["vy"]
-		A = electrons["data"][0]
-		vy0 = (A*vy).sum() / A.sum()
-		e_T_mean[i] += (A*(vy-vy0)**2).sum() / A.sum()
-		electrons = sim.ParticleDiagnostic(2, units="nice", slice={"x":"all"}, timesteps=t).get()
-		vz = electrons["vz"]
-		A = electrons["data"][0]
-		vz0 = (A*vz).sum() / A.sum()
-		e_T_mean[i] += (A*(vz-vz0)**2).sum() / A.sum()
-		if fig:
-			ax.cla()
-			ax.plot(vx,A,'b')
+
+		A = electrons0["data"][i]
+		vx0 = (A*evx).sum() / A.sum()
+		e_T_mean[i] = (A*(evx-vx0)**2).sum() / A.sum()
 		
-		ions = sim.ParticleDiagnostic(3, units="nice", slice={"x":"all"}, timesteps=t).get()
-		vx = ions["vx"]
-		A = ions["data"][0]
-		vx0 = (A*vx).sum() / A.sum()
-		i_T_mean[i] = (A*(vx-vx0)**2).sum() / A.sum()
-		ions = sim.ParticleDiagnostic(4, units="nice", slice={"x":"all"}, timesteps=t).get()
-		vy = ions["vy"]
-		A = ions["data"][0]
-		vy0 = (A*vy).sum() / A.sum()
-		i_T_mean[i] += (A*(vy-vy0)**2).sum() / A.sum()
-		ions = sim.ParticleDiagnostic(5, units="nice", slice={"x":"all"}, timesteps=t).get()
-		vz = ions["vz"]
-		A = ions["data"][0]
-		vz0 = (A*vz).sum() / A.sum()
-		i_T_mean[i] += (A*(vz-vz0)**2).sum() / A.sum()
+		A = electrons1["data"][i]
+		vy0 = (A*evy).sum() / A.sum()
+		e_T_mean[i] += (A*(evy-vy0)**2).sum() / A.sum()
+		
+		A = electrons2["data"][i]
+		vz0 = (A*evz).sum() / A.sum()
+		e_T_mean[i] += (A*(evz-vz0)**2).sum() / A.sum()
 		if fig:
 			ax.cla()
-			ax.plot(vx,A,'b')
+			ax.plot(evx,A,'b')
+		
+		A = ions0["data"][i]
+		vx0 = (A*ivx).sum() / A.sum()
+		i_T_mean[i] = (A*(ivx-vx0)**2).sum() / A.sum()
+		A = ions1["data"][i]
+		vy0 = (A*ivy).sum() / A.sum()
+		i_T_mean[i] += (A*(ivy-vy0)**2).sum() / A.sum()
+		A = ions2["data"][i]
+		vz0 = (A*ivz).sum() / A.sum()
+		i_T_mean[i] += (A*(ivz-vz0)**2).sum() / A.sum()
+		if fig:
+			ax.cla()
+			ax.plot(ivx,A,'b')
 	
 	e_T_mean *= 1./3.
 	i_T_mean *= 1./3.*mass_ion

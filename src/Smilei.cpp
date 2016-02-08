@@ -241,7 +241,7 @@ int main (int argc, char* argv[])
             vecPatches(0)->vecCollisions[icoll]->createTimestep(itime);
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
             for (unsigned int icoll=0 ; icoll<vecPatches(ipatch)->vecCollisions.size(); icoll++)
-                vecPatches(ipatch)->vecCollisions[icoll]->collide(params,vecPatches(ipatch)->vecSpecies,itime);
+                vecPatches(ipatch)->vecCollisions[icoll]->collide(params,vecPatches(ipatch),itime);
         timer[10].update();
         
         /*******************************************/

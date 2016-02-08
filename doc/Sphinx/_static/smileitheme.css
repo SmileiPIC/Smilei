@@ -134,18 +134,21 @@ h1, h2, h3, h4, h5, h6 {
 /* --------------------------------------------------------------------*/
 /* Smaller admonition box */
 div.admonition {
-	padding:7px;
-	margin:0px 30px;
+	padding:7px !important;
+	margin:0px 30px !important;
 	background-color: #EAF4FD;
 	border: 1px solid #0672BA;
+	overflow: hidden;
 }
 div.admonition p.admonition-title {
 	font-size: 18px;
 	font-weight: bold;
 	margin:0;
+	float: inherit;
 }
 div.admonition p {
 	margin:5px 0;
+	float: right;
 }
 
 /* --------------------------------------------------------------------*/

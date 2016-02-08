@@ -27,28 +27,30 @@ for path in ["beam_relaxation4","beam_relaxation5","beam_relaxation6"]:
 	i_vx_mean = np.zeros(len(times))
 	Ti        = np.zeros(len(times))
 	
+	
+	electrons0 = sim.ParticleDiagnostic(0, slice={"x":"all"}).get()
+	electrons1 = sim.ParticleDiagnostic(1, slice={"x":"all"}).get()
+	ions       = sim.ParticleDiagnostic(2, slice={"x":"all"}).get()
+	
 	fig = None
 	#fig = plt.figure(1)
 	if fig: fig.clf()
 	if fig: ax = fig.add_subplot(1,1,1)
 	for i,t in enumerate(times):
-		electrons = sim.ParticleDiagnostic(0, units="nice", slice={"x":"all"}, timesteps=t).get()
-		vx = electrons["vx"]
-		A = electrons["data"][0]
+		vx = electrons0["vx"]
+		A = electrons0["data"][i]
 		e_vx_mean[i] = (A*vx).sum() / A.sum()
 	
 		if fig:
 			ax.cla()
 			ax.plot(vx,A,'b')
 	
-		electrons = sim.ParticleDiagnostic(1, units="nice", slice={"x":"all"}, timesteps=t).get()
-		vperp2 = electrons["vperp2"]
-		A = electrons["data"][0]
+		vperp2 = electrons1["vperp2"]
+		A = electrons1["data"][i]
 		e_vperp2[i] = (A*vperp2).sum() / A.sum()
 	
-		ions = sim.ParticleDiagnostic(2, units="nice", slice={"x":"all"}, timesteps=t).get()
 		vx = ions["vx"]
-		A = ions["data"][0]
+		A = ions["data"][i]
 		i_vx_mean[i] = (A*vx).sum() / A.sum()
 		Ti[i] = (A*(vx-i_vx_mean[i])**2).sum() / A.sum() * mass_ion
 		

@@ -23,16 +23,16 @@ interpolation_order = 2
 # SIMULATION TIME 
 # timestep = float, time steps
 # sim_time = float, duration of the simulation
-timestep = 0.001 * L0
-sim_time  = 0.3 * L0
+timestep = 1 * L0
+sim_time  = 400 * L0
 
 
 #  optional parameter time_fields_frozen, during which fields are not updated
 time_fields_frozen = 100000000000.
 
 # SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
-cell_length = [1*L0]
-sim_length  = [20*L0]
+cell_length = [20.*L0]
+sim_length  = [100.*L0]
 
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
 # bc_em_type_x : two strings, x boundary conditions for EM fields 
@@ -44,12 +44,6 @@ bc_em_type_x  = ["periodic"]
 
 # RANDOM seed used to randomize the random number generator
 random_seed = 0
-
-# EXTERNAL FIELDS
-ExtField(
-	field = ["Ex"],
-	profile = 0.001
-)
 
 # DEFINE ALL SPECIES
 # species_type       = string, given name to the species (e.g. ion, electron, positron, test ...)
@@ -68,132 +62,121 @@ ExtField(
 # temperature        = list of floats or functions, temperature in units of m_e c^2
 # Predefined functions: constant, trapezoidal, gaussian, polygonal, cosine
 
-Species(
-	species_type = "copper1",
-	initPosition_type = "regular",
-	initMomentum_type = "maxwell-juettner",
-	n_part_per_cell = 100000,
-	mass = 115845.,      # =  mass of Cu atom
-	charge = 5.6,
-	charge_density = constant(415.),
-	mean_velocity = [0., 0., 0.],
-	temperature = [0.00004], # 20 eV
-	time_frozen = 0.0,
-	bc_part_type_west = "none",
-	bc_part_type_east = "none"
-)
-Species(
-	species_type = "electron1",
-	initPosition_type = "regular",
-	initMomentum_type = "maxwell-juettner",
-	n_part_per_cell= 100000,
-	mass = 1.0,
-	charge = -1.0,
-	charge_density = constant(415.),
-	mean_velocity = [0., 0., 0.],
-	temperature = [0.00004], # 20 eV
-	time_frozen = 0.0,
-	bc_part_type_west = "none",
-	bc_part_type_east = "none"
-)
+Z = 1
+A = 1
+density = 10.
 
-Species(
-	species_type = "copper2",
-	initPosition_type = "regular",
-	initMomentum_type = "maxwell-juettner",
-	n_part_per_cell = 100000,
-	mass = 115845.,      # =  mass of Cu atom
-	charge = 7.4,
-	charge_density = constant(554.),
-	mean_velocity = [0., 0., 0.],
-	temperature = [0.0001], # 50 eV
-	time_frozen = 0.0,
-	bc_part_type_west = "none",
-	bc_part_type_east = "none"
-)
-Species(
-	species_type = "electron2",
-	initPosition_type = "regular",
-	initMomentum_type = "maxwell-juettner",
-	n_part_per_cell= 100000,
-	mass = 1.0,
-	charge = -1.0,
-	charge_density = constant(554.),
-	mean_velocity = [0., 0., 0.],
-	temperature = [0.0001], # 50 eV
-	time_frozen = 0.0,
-	bc_part_type_west = "none",
-	bc_part_type_east = "none"
-)
+electrons = []
+ions = []
+temperature = []
+Tmin = 0.003 # keV
+Tmax = 0.4
+npoints = 10
 
-Species(
-	species_type = "copper3",
-	initPosition_type = "regular",
-	initMomentum_type = "maxwell-juettner",
-	n_part_per_cell = 100000,
-	mass = 115845.,      # =  mass of Cu atom
-	charge = 10.,
-	charge_density = constant(757.),
-	mean_velocity = [0., 0., 0.],
-	temperature = [0.0002], # 100 eV
-	time_frozen = 0.0,
-	bc_part_type_west = "none",
-	bc_part_type_east = "none"
-)
-Species(
-	species_type = "electron3",
-	initPosition_type = "regular",
-	initMomentum_type = "maxwell-juettner",
-	n_part_per_cell= 100000,
-	mass = 1.0,
-	charge = -1.0,
-	charge_density = constant(757.),
-	mean_velocity = [0., 0., 0.],
-	temperature = [0.0002], # 100 eV
-	time_frozen = 0.0,
-	bc_part_type_west = "none",
-	bc_part_type_east = "none"
-)
-
-
-# COLLISIONS
-# species1    = list of strings, the names of the first species that collide
-# species2    = list of strings, the names of the second species that collide
-#               (can be the same as species1)
-# coulomb_log = float, Coulomb logarithm. If negative or zero, then automatically computed.
-Collisions(
-	species1 = ["copper1"],
-	species2 = ["electron1"],
-	coulomb_log = 2.
-)
-Collisions(
-	species1 = ["copper2"],
-	species2 = ["electron2"],
-	coulomb_log = 2.
-)
-Collisions(
-	species1 = ["copper3"],
-	species2 = ["electron3"],
-	coulomb_log = 2.
-)
+for i in range(npoints):
+	eon = "electron"+str(i)
+	ion = "ion"+str(i)
+	electrons.append(eon)
+	ions.append(ion)
+	
+	T = math.exp(math.log(Tmin) + float(i)/(npoints-1)*math.log(Tmax/Tmin)) #logscale
+	T /= 511.
+	temperature.append(T)
+	
+	Zstar = (Z)*(1.-math.exp(-T/(0.03/511.)))**2
+	if Zstar<0.001: Zstar=0.001
+	
+	Species(
+		species_type = eon,
+		initPosition_type = "regular",
+		initMomentum_type = "maxwell-juettner",
+		n_part_per_cell= 1000,
+		mass = 1.0,
+		charge = -1.0,
+		charge_density = Zstar*density,
+		mean_velocity = [0., 0., 0.],
+		temperature = [T]*3,
+		time_frozen = 100000000.0,
+		bc_part_type_west = "none",
+		bc_part_type_east = "none",
+		bc_part_type_south = "none",
+		bc_part_type_north = "none",
+		c_part_max = 10.
+	)
+	
+	Species(
+		species_type = ion,
+		initPosition_type = "regular",
+		initMomentum_type = "maxwell-juettner",
+		n_part_per_cell= 1000,
+		mass = 1836.0*A,
+		charge = Zstar,
+		nb_density = 10.,
+		mean_velocity = [0., 0., 0.],
+		temperature = [T]*3,
+		time_frozen = 100000000.0,
+		bc_part_type_west = "none",
+		bc_part_type_east = "none",
+		bc_part_type_south = "none",
+		bc_part_type_north = "none",
+		atomic_number = Z
+	)
+	
+	Collisions(
+		species1 = [eon],
+		species2 = [ion],
+		coulomb_log = 0.,
+		ionizing = True
+	)
+	
+	DiagParticles(
+		output = "ekin_density",
+		every = 10,
+		species = [eon],
+		axes = [ ["x", 0, sim_length[0], 1] ]
+	)
+	DiagParticles(
+		output = "density",
+		every = 10,
+		species = [eon],
+		axes = [ ["x", 0, sim_length[0], 1] ]
+	)
+	DiagParticles(
+		output = "charge_density",
+		every = 10,
+		species = [ion],
+		axes = [ ["x", 0, sim_length[0], 1] ]
+	)
+	DiagParticles(
+		output = "density",
+		every = 10,
+		species = [ion],
+		axes = [ ["x", 0, sim_length[0], 1] ]
+	)
+	#DiagParticles(
+	#	output = "density",
+	#	every = 50,
+	#	species = [ion],
+	#	axes = [ ["charge", -0.5, Z+0.5, Z+1] ]
+	#)
 
 # ---------------------
 # DIAGNOSTIC PARAMETERS
 # ---------------------
 
 # print_every (on screen text output) 
-print_every = 10
+print_every = 100
 
 # DIAGNOSTICS ON FIELDS
-fieldDump_every    = 5
-avgfieldDump_every = 5
+fieldDump_every    = 1000000
+avgfieldDump_every = 1000000
 ntime_step_avg     = 1
 
 
 # DIAGNOSTICS ON SCALARS
 # every = integer, number of time-steps between each output
 DiagScalar(
-	every = 1
+	every = 10000000
 )
 
 
@@ -215,59 +198,5 @@ DiagScalar(
 #   Example : axes = ("x", 0, 1, 30)
 #   Example : axes = ("px", -1, 1, 100, "edge_inclusive")
 
-DiagParticles(
-	output = "jx_density",
-	every = 10,
-	time_average = 10,
-	species = ["electron1"],
-	axes = [
-		 ["x",  0, 20*L0, 1]
-	]
-)
-DiagParticles(
-	output = "jx_density",
-	every = 10,
-	time_average = 10,
-	species = ["electron2"],
-	axes = [
-		 ["x",  0, 20*L0, 1]
-	]
-)
-DiagParticles(
-	output = "jx_density",
-	every = 10,
-	time_average = 10,
-	species = ["electron3"],
-	axes = [
-		 ["x",  0, 20*L0, 1]
-	]
-)
 
-DiagParticles(
-	output = "density",
-	every = 10,
-	time_average = 10,
-	species = ["electron1"],
-	axes = [
-		 ["x",  0, 20*L0, 1]
-	]
-)
-DiagParticles(
-	output = "density",
-	every = 10,
-	time_average = 10,
-	species = ["electron2"],
-	axes = [
-		 ["x",  0, 20*L0, 1]
-	]
-)
-DiagParticles(
-	output = "density",
-	every = 10,
-	time_average = 10,
-	species = ["electron3"],
-	axes = [
-		 ["x",  0, 20*L0, 1]
-	]
-)
 

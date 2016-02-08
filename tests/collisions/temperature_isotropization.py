@@ -16,6 +16,12 @@ c = 3e8
 coeff = (2.*np.pi/wavelength)**2*re_*c / (2.*np.sqrt(np.pi))
 
 times = sim.ParticleDiagnostic(diagNumber=0).getAvailableTimesteps()
+electrons0 = sim.ParticleDiagnostic(0,slice={"x":"all"}).get()
+vx = electrons0["vx"]
+electrons1 = sim.ParticleDiagnostic(1, slice={"x":"all"}).get()
+vy = electrons1["vy"]
+electrons2 = sim.ParticleDiagnostic(2, slice={"x":"all"}).get()
+vz = electrons2["vz"]
 
 e_Tpar  = np.zeros(len(times))
 e_Tperp = np.zeros(len(times))
@@ -25,23 +31,18 @@ fig = None
 if fig: fig.clf()
 if fig: ax = fig.add_subplot(1,1,1)
 for i,t in enumerate(times):
-	electrons = sim.ParticleDiagnostic(0, units="nice", slice={"x":"all"}, timesteps=t).get()
-	vx = electrons["vx"]
-	A = electrons["data"][0]
+	A = electrons0["data"][i]
 	vx0 = (A*vx).sum() / A.sum()
 	e_Tpar[i] = (A*(vx-vx0)**2).sum() / A.sum()
 	if fig:
 		ax.cla()
 		ax.plot(vx,A,'b')
 
-	electrons = sim.ParticleDiagnostic(1, units="nice", slice={"x":"all"}, timesteps=t).get()
-	vy = electrons["vy"]
-	A = electrons["data"][0]
+	A = electrons1["data"][i]
 	vy0 = (A*vy).sum() / A.sum()
 	e_Tperp[i] = (A*(vy-vy0)**2).sum() / A.sum()
-	electrons = sim.ParticleDiagnostic(2, units="nice", slice={"x":"all"}, timesteps=t).get()
-	vz = electrons["vz"]
-	A = electrons["data"][0]
+	
+	A = electrons2["data"][i]
 	vz0 = (A*vz).sum() / A.sum()
 	e_Tperp[i] += (A*(vz-vz0)**2).sum() / A.sum()
 	if fig:

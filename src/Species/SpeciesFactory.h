@@ -132,9 +132,12 @@ public:
 		thisSpecies->thermVelocity[i]=0.0;
 	}
             
+    thisSpecies->atomic_number = 0;
+    PyTools::extract("atomic_number", thisSpecies->atomic_number, "Species",ispec);
+    
 	PyTools::extract("ionization_model", thisSpecies->ionization_model, "Species",ispec);
-            
-	if (thisSpecies->ionization_model != "none" && !PyTools::extract("atomic_number", thisSpecies->atomic_number, "Species",ispec)) {
+    
+	if (thisSpecies->ionization_model != "none" && thisSpecies->atomic_number==0) {
 	    ERROR("For species '" << species_type << "', `atomic_number` not found => required for the ionization model .");
 	}
             
