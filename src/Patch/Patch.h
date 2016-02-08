@@ -19,8 +19,10 @@
 class Diagnostic;
 class SimWindow;
 
-//! Class Patch : sub MPI domain 
-//!     Collection of patch = MPI domain
+//! Class Patch :
+//!   - data container
+//!   - sub MPI domain + MPI methods
+//! Collection of patch = MPI domain
 class Patch
 {
     friend class SmileiMPI;
@@ -31,24 +33,120 @@ public:
     //! Constructor for Patch
     Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
 
+    //! Define MPI neighbors, compute boundaries regarding patch coordinates, create main members
+    void finalizePatchInit( Params& params, SmileiMPI* smpi, unsigned int n_moved );
+
     //! Destructor for Patch
     ~Patch();
 
-    std::vector<Species*> vecSpecies, vecSpecies_old;
-    ElectroMagn* EMfields, *EMfields_old;
+    // Main PIC objects : data & operators
+    // -----------------------------------
+    
+    //! Species, Particles, of the current Patch
+    std::vector<Species*> vecSpecies;
+    //! Electromagnetic fields and densities (E, B, J, rho) of the current Patch
+    ElectroMagn* EMfields;
 
-    Interpolator* Interp;
-    Projector* Proj;
-
-    Diagnostic* Diags;
-
-    SmileiIO* sio;
+    //! Optional internal boundary condifion on Particles
     std::vector<PartWall*> vecPartWall;
+    //! Optional binary collisions operators
     std::vector<Collisions*> vecCollisions;
 
-   //!Cartesian coordinates of the patch. X,Y,Z of the Patch according to its Hilbert index.
+    //! Interpolator (used to push particles and for probes)
+    Interpolator* Interp;
+    //! Projector
+    Projector* Proj;
+    //! Diagnostic (wraps Scalar, Probes, PhaseSpace, Particles (new PS), TrackParticles)
+    Diagnostic* Diags;
+    //! SmileiIO = Diag Fields
+    SmileiIO* sio;
+    
+
+    // Geometrical description
+    // -----------------------
+
+    //!Hilbert index of the patch. Number of the patch along the Hilbert curve.
+    unsigned int hindex;
+
+    //!Cartesian coordinates of the patch. X,Y,Z of the Patch according to its Hilbert index.
     std::vector<unsigned int> Pcoordinates;
 
+
+    // MPI exchange/sum methods for particles/fields
+    //   - fields communication specified per geometry (pure virtual)
+    // --------------------------------------------------------------
+
+    //! manage Idx of particles per direction, 
+    void initExchParticles(SmileiMPI* smpi, int ispec, Params& params);
+    //!init comm  nbr of particles/
+    void initCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    //! finalize comm / nbr of particles, init exch / particles
+    void CommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    //! finalize exch / particles, manage particles suppr/introduce
+    void finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    //! delete Particles included in the index of particles to exchange. Assumes indexes are sorted.
+    void cleanup_sent_particles(int ispec, std::vector<int>* indexes_of_particles_to_exchange);
+
+    //! init comm / sum densities
+    virtual void initSumField( Field* field, int iDim ) = 0;
+    //! finalize comm / sum densities
+    virtual void finalizeSumField( Field* field, int iDim ) = 0;
+
+    //! init comm / exchange fields
+    virtual void initExchange( Field* field ) = 0;
+    //! finalize comm / exchange fields
+    virtual void finalizeExchange( Field* field ) = 0;
+    //! init comm / exchange fields in direction iDim only
+    virtual void initExchange( Field* field, int iDim ) = 0;
+    //! finalize comm / exchange fields in direction iDim only
+    virtual void finalizeExchange( Field* field, int iDim ) = 0;
+
+    // Create MPI_Datatype to exchange fields
+    virtual void createType( Params& params ) = 0;
+    
+    // Geometrical methods
+    // --------------------
+
+    //! Return the hibert index of current patch
+    inline unsigned int Hindex() { return  hindex; }
+    
+    //! Method to identify the rank 0 MPI process
+    inline bool isMaster() { return (hindex==0); }
+
+    //! Should be pure virtual, see child classes 
+    inline bool isWestern()  { return locateOnBorders(0, 0); }
+    //! Should be pure virtual, see child classes 
+    inline bool isEastern()  { return locateOnBorders(0, 1); }
+    //! Should be pure virtual, see child classes 
+    inline bool isSouthern() { return locateOnBorders(1, 0); }
+    //! Should be pure virtual, see child classes 
+    inline bool isNorthern() { return locateOnBorders(1, 1); }
+
+    //! Test neighbbor's patch Id to apply ot not a boundary condition
+    inline bool locateOnBorders(int dir, int way) {
+	if ( neighbor_[dir][way] == MPI_PROC_NULL ) 
+	    return true;
+	return false;
+    }
+
+    //! Return MPI rank of this->hrank +/- 1
+    //! Should be replaced by an analytic formula
+    inline int getMPIRank(int hrank_pm1) {
+	if  (hrank_pm1 == neighbor_[0][0]) return MPI_neighbor_[0][0];
+	else if  (hrank_pm1 == neighbor_[0][1]) return MPI_neighbor_[0][1];
+	else if  (hrank_pm1 == neighbor_[1][0]) return MPI_neighbor_[1][0];
+	else if  (hrank_pm1 == neighbor_[1][1]) return MPI_neighbor_[1][1];
+	else
+	    return MPI_PROC_NULL;
+    }
+
+    //! Compute MPI rank of neigbors patch regarding neigbors patch Ids
+    void updateMPIenv(SmileiMPI *smpi);
+
+    // Test who is MPI neighbor of current patch 
+    inline bool is_a_MPI_neighbor(int iDim, int iNeighbor) {
+	return( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (MPI_neighbor_[iDim][iNeighbor]!=MPI_me_) );
+    }
 
     //! Return real (excluding oversize) min coordinates (ex : rank 0 returns 0.) for direction i
     //! @see min_local
@@ -87,74 +185,6 @@ public:
         return min_local;
     }
 
-
-    std::vector<int> lost_particles[2];
-
-    void cleanup_sent_particles(int ispec, std::vector<int>* indexes_of_particles_to_exchange);
-
-    //! manage Idx of particles per direction, 
-    virtual void initExchParticles(SmileiMPI* smpi, int ispec, Params& params);
-    //!init comm  nbr of particles/
-    virtual void initCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
-    //! finalize comm / nbr of particles, init exch / particles
-    virtual void CommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
-    //! finalize exch / particles, manage particles suppr/introduce
-    virtual void finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
-
-    //void initSumRhoJ( ElectroMagn* EMfields, unsigned int diag_flag );
-    //void finalizeSumRhoJ( ElectroMagn* EMfields, unsigned int diag_flag );
-    virtual void initSumField( Field* field, int iDim ) = 0;
-    virtual void finalizeSumField( Field* field, int iDim ) = 0;
-
-    virtual void initExchange( Field* field ) = 0;
-    virtual void finalizeExchange( Field* field ) = 0;
-    virtual void initExchange( Field* field, int iDim ) = 0;
-    virtual void finalizeExchange( Field* field, int iDim ) = 0;
-
-    virtual void createType( Params& params ) = 0;
-    //! MPI_Datatype to exchange [ndims_][iDim=0 prim/dial][iDim=1 prim/dial]
-    /*MPI_Datatype ntypeSum_[2][2][2];
-
-    MPI_Datatype ntype_[3][2][2];
-    
-    // Use a buffer per direction to exchange data before summing
-    Field2D buf[2][2];*/
-
-    inline bool isWestern()  { return locateOnBorders(0, 0); }
-    inline bool isEastern()  { return locateOnBorders(0, 1); }
-    inline bool isSouthern() { return locateOnBorders(1, 0); }
-    inline bool isNorthern() { return locateOnBorders(1, 1); }
-
-    inline bool locateOnBorders(int dir, int way) {
-	if ( neighbor_[dir][way] == MPI_PROC_NULL ) 
-	    return true;
-	return false;
-    };
-
-
-    //! Return MPI rank of this->hrank +/- 1
-    //! Should be replaced by an analytic formula
-    inline int getMPIRank(int hrank_pm1) {
-	if  (hrank_pm1 == neighbor_[0][0]) return MPI_neighbor_[0][0];
-	else if  (hrank_pm1 == neighbor_[0][1]) return MPI_neighbor_[0][1];
-	else if  (hrank_pm1 == neighbor_[1][0]) return MPI_neighbor_[1][0];
-	else if  (hrank_pm1 == neighbor_[1][1]) return MPI_neighbor_[1][1];
-	else
-	    return MPI_PROC_NULL;
-    }
-
-    inline unsigned int Hindex() { return  hindex; }
-    inline bool isMaster() {return (hindex==0);}
-
-    void updateMPIenv(SmileiMPI *smpi);
-
-    inline bool is_a_MPI_neighbor(int iDim, int iNeighbor) {
-	// all MPI
-	//return( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) );
-	// MPI & local
-	return( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (MPI_neighbor_[iDim][iNeighbor]!=MPI_me_) );
-    }
-
     //! Set geometry data in case of moving window restart
     //! \param x_moved difference on coordinates regarding t0 geometry
     //! \param idx_moved number of displacement of the window
@@ -166,19 +196,24 @@ public:
     }
 
 
-
-    //!Hilbert index of the patch. Number of the patch along the Hilbert curve.
-    unsigned int hindex;
-
 protected:
+    // Complementary members for the description of the geometry
+    // ---------------------------------------------------------
+
+    //! Store number of space dimensions for the fields
     int nDim_fields_;
 
+    //! Number of MPI process per direction in the cartesian topology (2)
     int nbNeighbors_;
 
+    //! Hilbert index of neighbors patch
     std::vector< std::vector<int> > neighbor_;
+    //! Hilbert index of corners neighbors patch
     std::vector< std::vector<int> > corner_neighbor_; // Kept for Moving Windows
 
+    //! MPI rank of neighbors patch
     std::vector< std::vector<int> > MPI_neighbor_;
+    //! MPI rank of current patch
     int MPI_me_;
 
     //! "Real" min limit of local sub-subdomain (ghost data not concerned)
@@ -189,33 +224,20 @@ protected:
     //! cell_starting_global_index : index of 1st cell of local sub-subdomain in the global domain.
     //!     - concerns ghost data
     //!     - "- oversize" on rank 0
-    std::vector<int> cell_starting_global_index;
-
-private:
-    Particles diagonalParticles;
+    std::vector<int> cell_starting_global_index;;
 
 };
 
 
-//inline int buildtag(int commid, int send, int recv) {
-//  commid : patch hindex sender
-//  send : idir
-//  recv : ineighboor
-inline int buildtag(int commid, int send, int recv) {
-    // + flag / orientation
+//! Return a unique id to identify all MPI communications
+//!  - 2 MPI process can have several communications in the same direction for the same operation
+//!  - the communication is identientified using :
+//!      - hilbert index of the sender + idir + ineighbor
+inline int buildtag(int hindex, int send, int recv) {
     std::stringstream stag("");
-    stag << commid << send  << recv;
+    stag << hindex << send  << recv;
     long long int tag(0);
-    stag >> tag; // Should had ispec ?
-    return (int)(tag);
-}
-
-
-inline int buildtag(int diag, int commid, int send, int recv) {
-    std::stringstream stag("");
-    stag << diag << commid << send  << recv;
-    long long int tag(0);
-    stag >> tag; // Should had ispec ?
+    stag >> tag;
     return (int)(tag);
 }
 
