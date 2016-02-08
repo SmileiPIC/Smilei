@@ -59,12 +59,6 @@ SmileiMPI::SmileiMPI( SmileiMPI *smpi )
     MPI_Comm_size( SMILEI_COMM_WORLD, &smilei_sz );
     MPI_Comm_rank( SMILEI_COMM_WORLD, &smilei_rk );
 
-    oversize = smpi->oversize;
-    cell_starting_global_index = smpi->cell_starting_global_index;
-    min_local = smpi->min_local;
-    max_local = smpi->max_local;
-
-    n_space_global = smpi->n_space_global;
     patch_count.resize(smilei_sz, 0);
 
 }
@@ -100,13 +94,6 @@ void SmileiMPI::bcast( int& val )
 
 void SmileiMPI::init( Params& params )
 {
-
-
-    oversize.resize(params.nDim_field, 0);
-    cell_starting_global_index.resize(params.nDim_field, 0);
-    min_local.resize(params.nDim_field, 0.);
-    max_local.resize(params.nDim_field, 0.);
-    n_space_global.resize(params.nDim_field, 0);
     patch_count.resize(smilei_sz, 0);
     target_patch_count.resize(smilei_sz, 0);
     //cout << "gf sized to " << omp_get_max_threads() << endl;
@@ -124,8 +111,6 @@ void SmileiMPI::init( Params& params )
         dynamics_deltaold.resize(1);
     #endif
 
-    interParticles.initialize(0,params.nDim_particle); 
- 
     init_patch_count(params);
 
     periods_  = new int[params.nDim_field];
@@ -522,89 +507,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
 }
 
 
-
-void SmileiMPI::sumRho( ElectroMagn* EMfields )
-{
-    sumField( EMfields->rho_ );
-
-}
-
-void SmileiMPI::sumRhoJ( ElectroMagn* EMfields )
-{
-    // sum total charge density and currents
-    //sumField( EMfields->rho_ );
-    sumField( EMfields->Jx_ );
-    sumField( EMfields->Jy_ );
-    sumField( EMfields->Jz_ );
-   
-}
-void SmileiMPI::sumRhoJs( ElectroMagn* EMfields, int ispec, bool currents )
-{
-   // sum density and currents for all species
-   sumField( EMfields->rho_s[ispec] );
-   if(currents){
-       sumField( EMfields->Jx_s[ispec] );
-       sumField( EMfields->Jy_s[ispec] );
-       sumField( EMfields->Jz_s[ispec] );
-   }
-}
-
-void SmileiMPI::exchangeE( ElectroMagn* EMfields )
-{
-    exchangeField( EMfields->Ex_ );
-    exchangeField( EMfields->Ey_ );
-    exchangeField( EMfields->Ez_ );
-
-}
-void SmileiMPI::exchangeE( ElectroMagn* EMfields, unsigned int clrw )
-{
-    exchangeField_movewin( EMfields->Ex_, clrw );
-    exchangeField_movewin( EMfields->Ey_, clrw );
-    exchangeField_movewin( EMfields->Ez_, clrw );
-
-}
-
-void SmileiMPI::exchangeB( ElectroMagn* EMfields )
-{
-    exchangeField( EMfields->Bx_ );
-    exchangeField( EMfields->By_ );
-    exchangeField( EMfields->Bz_ );
-
-}
-void SmileiMPI::exchangeB( ElectroMagn* EMfields, unsigned int clrw )
-{
-    exchangeField_movewin( EMfields->Bx_, clrw );
-    exchangeField_movewin( EMfields->By_, clrw);
-    exchangeField_movewin( EMfields->Bz_, clrw );
-
-}
-
-void SmileiMPI::exchangeBm( ElectroMagn* EMfields )
-{
-    exchangeField( EMfields->Bx_m );
-    exchangeField( EMfields->By_m );
-    exchangeField( EMfields->Bz_m );
-
-}
-void SmileiMPI::exchangeBm( ElectroMagn* EMfields, unsigned int clrw )
-{
-    exchangeField_movewin( EMfields->Bx_m, clrw );
-    exchangeField_movewin( EMfields->By_m, clrw );
-    exchangeField_movewin( EMfields->Bz_m, clrw );
-
-}
-
-void SmileiMPI::exchangeAvg( ElectroMagn* EMfields )
-{
-    exchangeField( EMfields->Ex_avg );
-    exchangeField( EMfields->Ey_avg );
-    exchangeField( EMfields->Ez_avg );
-    exchangeField( EMfields->Bx_avg );
-    exchangeField( EMfields->By_avg );
-    exchangeField( EMfields->Bz_avg );
-}
-
-MPI_Datatype SmileiMPI::createMPIparticles( Particles* particles, int nbrOfProp )
+MPI_Datatype SmileiMPI::createMPIparticles( Particles* particles )
 {
     int nbrOfProp2 = particles->double_prop.size() + particles->short_prop.size() + particles->uint_prop.size();
 
@@ -781,14 +684,13 @@ void SmileiMPI::send(Patch* patch, int to, int tag)
 }
 void SmileiMPI::isend(Patch* patch, int to, int tag)
 {
-    int nbrOfProp = 7;
     //MPI_Request request;
 
     for (int ispec=0 ; ispec<patch->vecSpecies.size() ; ispec++){
         isend( &(patch->vecSpecies[ispec]->bmax), to, tag+2*ispec+1 );
 	//cout << smilei_rk << " sedn " << patch->vecSpecies[ispec]->getNbrOfParticles() << "(" << patch->vecSpecies[ispec]->bmax[patch->vecSpecies[ispec]->bmax.size()-1] << ")" << endl;
         if ( patch->vecSpecies[ispec]->getNbrOfParticles() > 0 ){
-            patch->vecSpecies[ispec]->typePartSend = createMPIparticles( patch->vecSpecies[ispec]->particles, nbrOfProp );
+            patch->vecSpecies[ispec]->typePartSend = createMPIparticles( patch->vecSpecies[ispec]->particles );
             isend( patch->vecSpecies[ispec]->particles, to, tag+2*ispec, patch->vecSpecies[ispec]->typePartSend );
 	    MPI_Type_free( &(patch->vecSpecies[ispec]->typePartSend) );
         }
@@ -809,7 +711,6 @@ void SmileiMPI::recv(Patch* patch, int from, int tag)
 }
 void SmileiMPI::new_recv(Patch* patch, int from, int tag, Params& params)
 {
-    int nbrOfProp = 7;
     int nbrOfPartsRecv;
 
     for (int ispec=0 ; ispec<patch->vecSpecies.size() ; ispec++){
@@ -824,7 +725,7 @@ void SmileiMPI::new_recv(Patch* patch, int from, int tag, Params& params)
         patch->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv, params.nDim_particle );
         //Receive particles
         if ( nbrOfPartsRecv > 0 ) {
-	    patch->vecSpecies[ispec]->typePartSend = createMPIparticles( patch->vecSpecies[ispec]->particles, nbrOfProp );
+	    patch->vecSpecies[ispec]->typePartSend = createMPIparticles( patch->vecSpecies[ispec]->particles );
     	    new_recv( patch->vecSpecies[ispec]->particles, from, tag+2*ispec, patch->vecSpecies[ispec]->typePartSend );
 	    MPI_Type_free( &(patch->vecSpecies[ispec]->typePartSend) );
 	}
@@ -844,11 +745,10 @@ void SmileiMPI::send(Species* species, int to, int tag)
 }
 //void SmileiMPI::new_send(Species* species, int to, int tag)
 //{
-//    int nbrOfProp = 7;
 //    send( species->bmin, to, tag+1 );
 //    send( species->bmax, to, tag+2 );
 //    if ( species->getNbrOfParticles() > 0 ){
-//        species->typePartSend = createMPIparticles( species->particles, nbrOfProp );
+//        species->typePartSend = createMPIparticles( species->particles );
 //	new_send( species->particles, to, tag, species->typePartSend );
 //    }
 //}
@@ -865,8 +765,7 @@ void SmileiMPI::recv(Species* species, int from, int tag)
 void SmileiMPI::send(Particles* particles, int to, int tag)
 {
     // Number of properties per particles = nDim_Particles + 3 + 1 + 1
-    int nbrOfProp( 7 );
-    MPI_Datatype typePartSend = createMPIparticles( particles, nbrOfProp );
+    MPI_Datatype typePartSend = createMPIparticles( particles );
     MPI_Send( &(particles->position(0,0)), 1, typePartSend, to, tag, MPI_COMM_WORLD );
     MPI_Type_free( &typePartSend );
 
@@ -882,8 +781,7 @@ void SmileiMPI::recv(Particles* particles, int from, int tag)
     MPI_Status status;
 
     // Number of properties per particles = nDim_Particles + 3 + 1 + 1
-    int nbrOfProp( 7 );
-    MPI_Datatype typePartRecv = createMPIparticles( particles, nbrOfProp );
+    MPI_Datatype typePartRecv = createMPIparticles( particles );
     MPI_Recv( &(particles->position(0,0)), 1, typePartRecv, from, tag, MPI_COMM_WORLD, &status );
     MPI_Type_free( &typePartRecv );
 
