@@ -17,6 +17,9 @@ wavelength_SI = 1.e-6
 #      2drz = cylindrical (r,z) grid with 3d3v particles
 dim = "1d3v"
 
+# number_of_patches: list of the number of patches in each dimension
+number_of_patches = [ 4 ]
+
 # order of interpolation
 interpolation_order = 2
 

@@ -17,6 +17,9 @@ wavelength_SI = 1.e-6
 #      2drz = cylindrical (r,z) grid with 3d3v particles
 dim = "1d3v"
 
+# number_of_patches: list of the number of patches in each dimension
+number_of_patches = [ 8 ]
+
 # order of interpolation
 interpolation_order = 2
 
@@ -32,7 +35,7 @@ time_fields_frozen = 100000000000.
 
 # SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
 cell_length = [2.*L0]
-sim_length  = [100.*L0]
+sim_length  = [112.*L0]
 
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
 # bc_em_type_x : two strings, x boundary conditions for EM fields 
@@ -146,7 +149,7 @@ DiagParticles(
 	time_average = 1,
 	species = ["electron1"],
 	axes = [
-		 ["x",    0*L0,    100.*L0,   10],
+		 ["x",    0*L0,    sim_length[0],   10],
 		 ["vx",  -0.1,  0.1,    1000]
 	]
 )
@@ -157,7 +160,7 @@ DiagParticles(
 	time_average = 1,
 	species = ["electron1"],
 	axes = [
-		 ["x",    0*L0,    100.*L0,   10],
+		 ["x",    0*L0,    sim_length[0],   10],
 		 ["vperp2",  0,  0.01,    1000]
 	]
 )
@@ -168,7 +171,7 @@ DiagParticles(
 	time_average = 1,
 	species = ["ion1"],
 	axes = [
-		 ["x",    0*L0,    100.*L0,   10],
+		 ["x",    0*L0,    sim_length[0],   10],
 		 ["vx",  -0.1,  0.1,  1000]
 	]
 )

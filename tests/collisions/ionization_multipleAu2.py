@@ -20,6 +20,9 @@ dim = "1d3v"
 # order of interpolation
 interpolation_order = 2
 
+# number_of_patches: list of the number of patches in each dimension
+number_of_patches = [ 4 ]
+
 # SIMULATION TIME 
 # timestep = float, time steps
 # sim_time = float, duration of the simulation
@@ -32,7 +35,7 @@ time_fields_frozen = 100000000000.
 
 # SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
 cell_length = [20.*L0]
-sim_length  = [100.*L0]
+sim_length  = [160.*L0]
 
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
 # bc_em_type_x : two strings, x boundary conditions for EM fields 

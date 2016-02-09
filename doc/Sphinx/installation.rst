@@ -3,8 +3,8 @@ Install
 
 The requirements for installing and running :program:`Smilei` are:
 
-* A C++ compiler (v4.8 or later recommended), optionally implementing openMP
-* MPI libraries (*openmpi* recommended)
+* A C++ compiler, optionally implementing openMP
+* MPI libraries (*openmpi* recommended), supporting `MPI_THREAD_MULTIPLE`
 * HDF5 libraries compatible with your versions of C++ and MPI
 * Python 2.7
 
@@ -34,27 +34,18 @@ This installation procedure relies on the software `MacPorts <https://www.macpor
 
 #. If you do not have it already, `install MacPorts <https://www.macports.org/install.php>`_.
 
-   .. code-block:: bash
-
-     sudo port -v selfupdate
-
 #. In a terminal, run the following command to install the C++ compiler with MPI:
      
    .. code-block:: bash
 
-     sudo port install openmpi-gcc48
-     
-   Then, to make this the default:
-     
-   .. code-block:: bash
-
-     sudo port select --set mpi openmpi-gcc48-fortran
+     sudo port install openmpi-gcc5 +threads
+     sudo port select --set mpi openmpi-gcc5-fortran
    
 #. To install HDF5, run:
      
    .. code-block:: bash
 
-     sudo port install hdf5 +gcc48+openmpi
+     sudo port install hdf5 +openmpi+gcc5+threads
 
 #. Edit your ``.bash_profile`` hidden file located in your home folder:
    
@@ -77,15 +68,8 @@ This installation procedure relies on the software `MacPorts <https://www.macpor
    .. code-block:: bash
 
      sudo port install python27
-   
-   Then, to make this the default:
-     
-   .. code-block:: bash
-
      sudo port select --set python python27
      sudo port select --set python2 python27
-
-#. in a new terminal window (to take into account of the above command) compile :program:`smilei` (see :ref:`compile`)
 
 #. If you wish to run the Python post-processing scripts provided in :program:`Smilei`,
    you need several modules (numpy, matplotlib, pylab, h5py, sphinx, pint).
@@ -105,7 +89,7 @@ Via HomeBrew
 
 This installation procedure has been tested on OS X "El Capitan" 10.11.1
 
-#. `HomeBrew <http://brew.sh>` does not need administrator privileges and can easily installed via:
+#. `HomeBrew <http://brew.sh>`_ does not need administrator privileges and can easily installed via:
 
    .. code-block:: bash
 
@@ -169,19 +153,19 @@ Download and compile
        cd ~/smilei
        make
 
-   To speedup un multiple CPUs:
+   To compile faster using multiple CPUs:
      
      .. code-block:: bash
        
        make -j 4  # compile with 4 processors 
    
-   Help on make alternatives:
+   To get help on make alternatives:
      
      .. code-block:: bash
        
        make help
 
-   examples:
+   Examples:
      
      .. code-block:: bash
        

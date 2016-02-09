@@ -41,12 +41,12 @@ filename("")
         mystream << "Collisions" << n_collisions << ".h5";
         filename = mystream.str();
         // Create the file access protocol for writing in the debug file later
-        //file_access = H5Pcreate(H5P_FILE_ACCESS);
-        //H5Pset_fapl_mpio(file_access, MPI_COMM_WORLD, MPI_INFO_NULL);
+        file_access = H5Pcreate(H5P_FILE_ACCESS);
+        H5Pset_fapl_mpio(file_access, MPI_COMM_WORLD, MPI_INFO_NULL);
     }
 }
 
-// Patch masters create a file at startup, if debug requested
+// MPI master creates a file at startup, if debug requested
 void Collisions::createFile()
 {
     ostringstream mystream;
@@ -67,7 +67,6 @@ void Collisions::createFile()
         H5::attr(fileId, "species2" , mystream.str());
         H5::attr(fileId, "coulomb_log" , coulomb_log);
         H5::attr(fileId, "debug_every"  , debug_every);
-        H5Pclose(file_access);
         H5Fclose(fileId);
 
     }
@@ -314,13 +313,13 @@ void Collisions::createTimestep(int itime)
     bool debug = (debug_every > 0 && itime % debug_every == 0); // debug only every N timesteps
     if( debug ) { // Patch masters create a group
         // Open the HDF5 file
-        hid_t fileId = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
-
+        hid_t fileId = H5Fopen(filename.c_str(), H5F_ACC_RDWR, file_access);
+        
         // Create H5 group for the current timestep
         name.str("");
         name << "t" << setfill('0') << setw(8) << itime;
         hid_t did = H5::group(fileId, name.str());
-
+        
         // Close the group
         H5Gclose(did);
         H5Fclose(fileId);
@@ -358,6 +357,13 @@ void Collisions::collide(Params& params, Patch* patch, int itime)
     
     
     bool debug = (debug_every > 0 && itime % debug_every == 0); // debug only every N timesteps
+    
+    if( debug ) {
+        smean       = 0.;
+        logLmean    = 0.;
+        //temperature = 0.;
+        ncol        = 0.;
+    }
     
     // Initialize some stuff
     twoPi = 2. * M_PI;
@@ -459,14 +465,6 @@ void Collisions::collide(Params& params, Patch* patch, int itime)
         
         // Prepare the ionization
         Ionization->prepare3(params.timestep, n_cluster_per_cell);
-        
-        if( debug ) {
-            smean       = 0.;
-            logLmean    = 0.;
-            //temperature = 0.;
-            ncol        = (double)npairs;
-        }
-        
         
         // Now start the real loop on pairs of particles
         // See equations in http://dx.doi.org/10.1063/1.4742167
@@ -596,13 +594,17 @@ void Collisions::collide(Params& params, Patch* patch, int itime)
             
         } // end loop on pairs of particles
         
-        if( debug && ncol>0.) {
-            smean    /= ncol;
-            logLmean /= ncol;
-            //temperature /= ncol;
+        if( debug ) {
+            ncol += (double) npairs;
         }
         
     } // end loop on bins
+    
+    if( debug && ncol>0.) {
+        smean    /= ncol;
+        logLmean /= ncol;
+        //temperature /= ncol;
+    }
     
     // temporary to be removed
     Ionization->finish(patch->vecSpecies[(*sg1)[0]], patch->vecSpecies[(*sg2)[0]], params);
@@ -611,7 +613,7 @@ void Collisions::collide(Params& params, Patch* patch, int itime)
         const vector<int> local_size(params.number_of_patches.size(), 1);
         
         // Open the HDF5 file
-        hid_t fileId = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+        hid_t fileId = H5Fopen(filename.c_str(), H5F_ACC_RDWR, file_access);
         // Create H5 group for the current timestep
         name.str("");
         name << "t" << setfill('0') << setw(8) << itime;
