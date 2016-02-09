@@ -79,7 +79,7 @@ Collisions::~Collisions()
 
 
 // Reads the input file and creates the Collisions objects accordingly
-vector<Collisions*> Collisions::create(Params& params, vector<Species*>& vecSpecies, Patch* patch)
+vector<Collisions*> Collisions::create(Params& params, vector<Species*>& vecSpecies)
 {
     vector<Collisions*> vecCollisions;
     
@@ -200,19 +200,8 @@ vector<Collisions*> Collisions::create(Params& params, vector<Species*>& vecSpec
         
         // Create the ionization object
         if( ionizing ) {
-            vecCollisions[n_collisions]->Ionization = NULL;
-            // But do not duplicate if ionization already existing with same Z
-            for( int i=0; i<n_collisions; i++ ) {
-                if( Z == vecCollisions[i]->atomic_number ) {
-                    vecCollisions[n_collisions]->Ionization = vecCollisions[i]->Ionization;
-                    break;
-                }
-            }
-            // Otherwise, create new
-            if( vecCollisions[n_collisions]->Ionization == NULL){
-                vecCollisions[n_collisions]->Ionization = new CollisionalIonization(Z, params.wavelength_SI, patch);
-                vecCollisions[n_collisions]->Ionization->new_electrons.initialize(0, params.nDim_particle ); // to be removed if bins removed
-            }
+            vecCollisions[n_collisions]->Ionization = new CollisionalIonization(Z);
+            vecCollisions[n_collisions]->Ionization->new_electrons.initialize(0, params.nDim_particle ); // to be removed if bins removed
         } else {
             // If no ionization, create 'empty' ionization object
             vecCollisions[n_collisions]->Ionization = new CollisionalNoIonization();
@@ -607,7 +596,7 @@ void Collisions::collide(Params& params, Patch* patch, int itime)
     }
     
     // temporary to be removed
-    Ionization->finish(patch->vecSpecies[(*sg1)[0]], patch->vecSpecies[(*sg2)[0]], params);
+    Ionization->finish(patch->vecSpecies[(*sg1)[0]], patch->vecSpecies[(*sg2)[0]], params, patch);
     
     if( debug ) {
         const vector<int> local_size(params.number_of_patches.size(), 1);

@@ -14,8 +14,13 @@ class CollisionalIonization
 
 public:
     //! Constructor
-    CollisionalIonization(int, double, Patch*);
+    CollisionalIonization(int);
     virtual ~CollisionalIonization() {};
+    
+    //! Initializes the arrays in the database and returns the index of these arrays in the DB
+    virtual int createDatabase(double);
+    //! Assigns the correct databases
+    virtual void assignDatabase(int);
     
     //! Gets the k-th binding energy of any neutral or ionized atom with atomic number Z and charge Zstar
     double binding_energy(int Zstar, int k);
@@ -33,19 +38,19 @@ public:
     virtual void prepare3(double, int);
     //! Method to apply the ionization
     virtual void apply(Particles *p1, int i1, Particles *p2, int i2);
+    //! Method to finish the ionization and put new electrons in place
+    virtual void finish(Species *s1, Species *s2, Params&, Patch*);
     
-    //! Table of integrated cross-section
-    std::vector<std::vector<double> > crossSection;
-    //! Table of average secondary electron energy
-    std::vector<std::vector<double> > transferredEnergy;
-    //! Table of average incident electron energy lost
-    std::vector<std::vector<double> > lostEnergy;
+    //! Local table of integrated cross-section
+    std::vector<std::vector<double> > * crossSection;
+    //! Local table of average secondary electron energy
+    std::vector<std::vector<double> > * transferredEnergy;
+    //! Local table of average incident electron energy lost
+    std::vector<std::vector<double> > * lostEnergy;
     
-    //! Temporary stuff before patches arrive
+    //! New electrons temporary species
     Particles new_electrons;
-    virtual void finish(Species *s1, Species *s2, Params&);
-    Patch* patch;
-    
+
 private:
     
     //! Atomic number
@@ -55,6 +60,15 @@ private:
     static const std::vector<std::vector<double> > ionizationEnergy;
     //! Table of binding energies of all electrons in neutral atoms
     static const std::vector<std::vector<double> > bindingEnergy;
+    
+    //! Global table of atomic numbers
+    static std::vector<int> DB_Z;
+    //! Global table of integrated cross-section
+    static std::vector<std::vector<std::vector<double> > > DB_crossSection;
+    //! Global table of average secondary electron energy
+    static std::vector<std::vector<std::vector<double> > > DB_transferredEnergy;
+    //! Global table of average incident electron energy lost
+    static std::vector<std::vector<std::vector<double> > > DB_lostEnergy;
     
     //! True if first group of species is the electron
     bool electronFirst;
@@ -85,15 +99,19 @@ private:
 class CollisionalNoIonization : public CollisionalIonization
 {
 public:
-    CollisionalNoIonization() : CollisionalIonization(0,1.,NULL) {};
+    CollisionalNoIonization() : CollisionalIonization(0) {};
     ~CollisionalNoIonization(){};
+    
+    virtual int  createDatabase(double) {};
+    virtual void assignDatabase(int) {};
     
     void prepare2(Particles*, int, Particles*, int, bool){};
     void prepare3(double, int){};
     void apply(Particles*, int, Particles*, int){};
-    
-    //! Temporary stuff before patches arrive
-    void finish(Species*, Species*, Params&) {};
+    void finish(Species*, Species*, Params&, Patch*) {};
 };
+
+
+//! Class to hold the databases
 
 #endif

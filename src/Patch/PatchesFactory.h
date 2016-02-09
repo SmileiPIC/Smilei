@@ -70,7 +70,7 @@ public:
         DiagsVectorPatch::initProbesDiags(vecPatches, params, itime);
         DiagsVectorPatch::initDumpFields(vecPatches, params, itime);
         DiagsVectorPatch::initTrackParticles(vecPatches, params, smpi);
-        if( smpi->isMaster() ) DiagsVectorPatch::initCollisionDebug(vecPatches);
+        DiagsVectorPatch::initCollisions(vecPatches, params, smpi);
         
         return vecPatches;
     }

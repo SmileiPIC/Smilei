@@ -107,7 +107,7 @@ void Patch::finalizePatchInit( Params& params, SmileiMPI* smpi, unsigned int n_m
 
     // Initialize the collisions (vector of collisions)
     // ------------------------------------------------------------------------------------
-    vecCollisions = Collisions::create(params, vecSpecies, this);
+    vecCollisions = Collisions::create(params, vecSpecies);
 
     // Initialize the particle walls
     vecPartWall = PartWall::create(params, this);

@@ -51,7 +51,7 @@ public:
     ~Collisions();
     
     //! Method that creates a vector of Collisions objects: one for each group in the input file.
-    static std::vector<Collisions*> create(Params&, std::vector<Species*>&, Patch*);
+    static std::vector<Collisions*> create(Params&, std::vector<Species*>&);
     
     //! Identification number of the Collisions object
     int n_collisions;
@@ -77,6 +77,9 @@ public:
     //! Method called in the main smilei loop to apply collisions at each timestep
     void collide(Params&, Patch* ,int);
     
+    //! CollisionalIonization object, created if ionization required
+    CollisionalIonization * Ionization;
+    
 private:
     
     //! Contains the debye length in each cluster, computed each timestep
@@ -85,9 +88,6 @@ private:
     static double cos_chi(double);
     
     int atomic_number;
-    
-    //! CollisionalIonization object, created if ionization required
-    CollisionalIonization * Ionization;
     
     //! Hdf5 file name
     std::string filename;
