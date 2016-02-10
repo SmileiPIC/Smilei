@@ -286,8 +286,6 @@ void DiagsVectorPatch::initCollisions(VectorPatch& vecPatches, Params& params, S
     int index;
     // For each collision
     for (unsigned int icoll=0 ; icoll<vecPatches(0)->vecCollisions.size(); icoll++) {
-        // The master MPI creates the debug file
-        if( smpi->isMaster() ) vecPatches(0)->vecCollisions[icoll]->createFile();
         // All patch masters create arrays in the database for ionization
         index = vecPatches(0)->vecCollisions[icoll]->Ionization->createDatabase(params.wavelength_SI);
         // All patches are assigned the correct arrays in the database

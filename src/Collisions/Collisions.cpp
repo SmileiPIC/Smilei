@@ -15,6 +15,7 @@ using namespace std;
 
 // Constructor
 Collisions::Collisions(
+    Patch* patch,
     unsigned int n_collisions,
     vector<unsigned int> species_group1, 
     vector<unsigned int> species_group2, 
@@ -36,6 +37,7 @@ atomic_number   (Z               ),
 filename("")
 {
     ostringstream mystream;
+    hid_t fileId;
     
     // Create the ionization object
     Ionization = ionizing ? new CollisionalIonization(Z, nDim) : new CollisionalNoIonization();
@@ -49,6 +51,29 @@ filename("")
         // Create the file access protocol for writing in the debug file later
         file_access = H5Pcreate(H5P_FILE_ACCESS);
         H5Pset_fapl_mpio(file_access, MPI_COMM_WORLD, MPI_INFO_NULL);
+        
+        // Create the file (only by patch master of the MPI master)
+        if( patch->isMaster() ) {
+            // Open the file if already exists (this can happen for restarts, or moving window)
+            fileId = H5Fopen( filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT );
+            // Otherwise, create the HDF5 file
+            if( fileId < 0 ) {
+                fileId = H5Fcreate(filename.c_str(), H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
+                // write all parameters as HDF5 attributes
+                H5::attr(fileId, "Version", string(__VERSION));
+                mystream.str("");
+                mystream << species_group1[0];
+                for(unsigned int i=1; i<species_group1.size(); i++) mystream << "," << species_group1[i];
+                H5::attr(fileId, "species1" , mystream.str());
+                mystream.str("");
+                mystream << species_group2[0];
+                for(unsigned int i=1; i<species_group2.size(); i++) mystream << "," << species_group2[i];
+                H5::attr(fileId, "species2" , mystream.str());
+                H5::attr(fileId, "coulomb_log" , coulomb_log);
+                H5::attr(fileId, "debug_every"  , debug_every);
+                H5Fclose(fileId);
+            }
+        }
     }
 }
 
@@ -58,36 +83,8 @@ Collisions::~Collisions()
 }
 
 
-
-// MPI master creates a file at startup, if debug requested
-void Collisions::createFile()
-{
-    ostringstream mystream;
-    
-    // if debug requested, prepare hdf5 file
-    if( debug_every>0 ) {
-        // Create the HDF5 file
-        hid_t fileId = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-        // write all parameters as HDF5 attributes
-        H5::attr(fileId, "Version", string(__VERSION));
-        mystream.str("");
-        mystream << species_group1[0];
-        for(unsigned int i=1; i<species_group1.size(); i++) mystream << "," << species_group1[i];
-        H5::attr(fileId, "species1" , mystream.str());
-        mystream.str("");
-        mystream << species_group2[0];
-        for(unsigned int i=1; i<species_group2.size(); i++) mystream << "," << species_group2[i];
-        H5::attr(fileId, "species2" , mystream.str());
-        H5::attr(fileId, "coulomb_log" , coulomb_log);
-        H5::attr(fileId, "debug_every"  , debug_every);
-        H5Fclose(fileId);
-
-    }
-}
-
-
 // Reads the input file and creates the Collisions objects accordingly
-vector<Collisions*> Collisions::create(Params& params, vector<Species*>& vecSpecies)
+vector<Collisions*> Collisions::create(Params& params, Patch* patch, vector<Species*>& vecSpecies)
 {
     vector<Collisions*> vecCollisions;
     
@@ -203,7 +200,7 @@ vector<Collisions*> Collisions::create(Params& params, vector<Species*>& vecSpec
         
         // Add new Collisions objects to vector
         vecCollisions.push_back(
-            new Collisions(n_collisions, sgroup[0], sgroup[1], clog, intra, debug_every, vecSpecies[0]->bmin.size(), Z, ionizing, params.nDim_particle)
+            new Collisions(patch, n_collisions, sgroup[0], sgroup[1], clog, intra, debug_every, vecSpecies[0]->bmin.size(), Z, ionizing, params.nDim_particle)
         );
     }
     

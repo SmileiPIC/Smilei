@@ -44,14 +44,13 @@ class Collisions
 
 public:
     //! Constructor for Collisions between two species
-    Collisions(unsigned int, std::vector<unsigned int>, std::vector<unsigned int>, double, bool, int, unsigned int, int, bool, int);
-    void createFile();
+    Collisions(Patch*, unsigned int, std::vector<unsigned int>, std::vector<unsigned int>, double, bool, int, unsigned int, int, bool, int);
     void createTimestep(int timestep);
     
     ~Collisions();
     
     //! Method that creates a vector of Collisions objects: one for each group in the input file.
-    static std::vector<Collisions*> create(Params&, std::vector<Species*>&);
+    static std::vector<Collisions*> create(Params&, Patch*, std::vector<Species*>&);
     
     //! Identification number of the Collisions object
     int n_collisions;

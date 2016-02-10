@@ -57,7 +57,7 @@ public:
         for (int iDim=0 ; iDim<params.nDim_field ; iDim++) 
             MESSAGE(2, "dimension " << iDim << " - n_space : " << params.n_space[iDim] );        
         
-        // create species
+        // create patches
         vecPatches.resize(npatches);
         for (unsigned int ipatch = 0 ; ipatch < npatches ; ipatch++) {
             vecPatches.patches_[ipatch] = PatchesFactory::create(params, smpi, firstpatch + ipatch);

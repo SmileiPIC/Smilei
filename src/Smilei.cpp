@@ -60,66 +60,65 @@ int main (int argc, char* argv[])
     
     TITLE("Input data info");
     
-    // Read simulation & diagnostics parameters
+    // Read simulation parameters
     Params params(smpiData,vector<string>(argv + 1, argv + argc));
     smpiData->init(params);
     smpiData->barrier();
     if ( smpiData->isMaster() ) params.print();
     smpiData->barrier();
-
-    // Count timer
+    
+    // Initialize timers timer
     vector<Timer> timer;
     initialize_timers(timer, smpiData);
-
+    
     // Print in stdout MPI, OpenMP, patchs parameters
     print_parallelism_params(params, smpiData);
-
+    
     TITLE("Restart environments");
     Checkpoint checkpoint(params, smpiData);
-        
+    
     // ------------------------------------------------------------------------
     // Initialize the simulation times time_prim at n=0 and time_dual at n=+1/2
     // Update in "if restart" if necessary
     // ------------------------------------------------------------------------
-
+    
     unsigned int stepStart=0, stepStop=params.n_time;
-        
+    
     // time at integer time-steps (primal grid)
     double time_prim = stepStart * params.timestep;
     // time at half-integer time-steps (dual grid)
     double time_dual = (stepStart +0.5) * params.timestep;
     // Do we initially do diags or not ?
     int diag_flag = 1;
-
+    
     // -------------------------------------------
     // Declaration of the main objects & operators
     // -------------------------------------------
-    // ----------------------------------------------------------------------------
-    // Define Moving Window & restart
-    // ----------------------------------------------------------------------------
-    TITLE("Moving window");
+    // --------------------
+    // Define Moving Window
+    // --------------------
+    TITLE("Initializing moving window");
     SimWindow* simWindow = NULL;
     int start_moving(0);
     if (params.nspace_win_x)
         simWindow = new SimWindow(params);
     
-    // ---------------------------
-    // Initialize Species & Fields
-    // ---------------------------
-    TITLE("Initializing particles, fields & moving-window");
+    // ---------------------------------------------------
+    // Initialize patches (including particles and fields)
+    // ---------------------------------------------------
+    TITLE("Initializing particles & fields");
     VectorPatch vecPatches = PatchesFactory::createVector(params, smpiData);
- 
-
+    
     // reading from dumped file the restart values
     if (params.restart) {
         MESSAGE(1, "READING fields and particles for restart");
         checkpoint.restartAll( vecPatches, stepStart, smpiData, simWindow, params);
-
+        
         // time at integer time-steps (primal grid)
         time_prim = checkpoint.this_run_start_step * params.timestep;
         // time at half-integer time-steps (dual grid)
         time_dual = (checkpoint.this_run_start_step +0.5) * params.timestep;
-    
+        
         double restart_time_dual = (checkpoint.this_run_start_step +0.5) * params.timestep;
         time_dual = restart_time_dual;
         // A revoir !
@@ -131,7 +130,6 @@ int main (int argc, char* argv[])
         }
         //smpiData->recompute_patch_count( params, vecPatches, restart_time_dual );
         
-
     } else {
         
         // Initialize the electromagnetic fields
@@ -264,39 +262,39 @@ int main (int argc, char* argv[])
             
             // apply currents from antennas
             #pragma omp master
-	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
-		vecPatches(ipatch)->EMfields->applyAntennas(smpiData, time_dual);
-	    #pragma omp barrier
+            for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
+                vecPatches(ipatch)->EMfields->applyAntennas(smpiData, time_dual);
+            #pragma omp barrier
         
-	    /*******************************************/
-	    /*********** Maxwell solver ****************/
-	    /*******************************************/
+            /*******************************************/
+            /*********** Maxwell solver ****************/
+            /*******************************************/
         
-	    // solve Maxwell's equations
-	    if( time_dual > params.time_fields_frozen )
-		vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timer );
-		    
-	    // incrementing averaged electromagnetic fields
-	    if (vecPatches.Diags->ntime_step_avg)
+            // solve Maxwell's equations
+            if( time_dual > params.time_fields_frozen )
+                vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timer );
+                    
+            // incrementing averaged electromagnetic fields
+            if (vecPatches.Diags->ntime_step_avg)
                 #pragma omp for
-	        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-	            vecPatches(ipatch)->EMfields->incrementAvgFields(itime, vecPatches.Diags->ntime_step_avg);
-	        }
+                for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+                    vecPatches(ipatch)->EMfields->incrementAvgFields(itime, vecPatches.Diags->ntime_step_avg);
+                }
 
         // call the various diagnostics
         // ----------------------------
 
         #pragma omp master
-	vecPatches.runAllDiags(params, smpiData, &diag_flag, itime, timer);
+        vecPatches.runAllDiags(params, smpiData, &diag_flag, itime, timer);
         
 
-	// ----------------------------------------------------------------------
-	// Validate restart  : to do
-	// Restart patched moving window : to do
-	// Break in an OpenMP region
+        // ----------------------------------------------------------------------
+        // Validate restart  : to do
+        // Restart patched moving window : to do
+        // Break in an OpenMP region
         #pragma omp master
-	checkpoint.dump(vecPatches, itime, smpiData, simWindow, params, vecPatches.Diags);
-	// ----------------------------------------------------------------------        
+        checkpoint.dump(vecPatches, itime, smpiData, simWindow, params, vecPatches.Diags);
+        // ----------------------------------------------------------------------        
 
         } //End omp parallel region
                 
