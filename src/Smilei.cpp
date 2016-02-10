@@ -326,6 +326,7 @@ int main (int argc, char* argv[])
 	    vecPatches.createPatches(params, smpiData, simWindow);
 
 	    vecPatches.exchangePatches(smpiData, params);
+
             //for (unsigned int irank=0 ; irank<smpiData->smilei_sz ; irank++){
             //    if(smpiData->smilei_rk == irank){
             //        vecPatches.output_exchanges(smpiData);

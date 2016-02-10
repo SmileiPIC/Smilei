@@ -72,6 +72,8 @@ public:
 	DiagsVectorPatch::initTrackParticles(vecPatches, params, smpi);
 	DiagsVectorPatch::initCollisionDebug(vecPatches);
 
+        vecPatches.update_field_list();
+
         return vecPatches;
     }
 
