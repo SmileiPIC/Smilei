@@ -292,7 +292,7 @@ void DiagsVectorPatch::initCollisions(VectorPatch& vecPatches, Params& params, S
         index = vecPatches(0)->vecCollisions[icoll]->Ionization->createDatabase(params.wavelength_SI);
         // All patches are assigned the correct arrays in the database
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-            vecPatches(0)->vecCollisions[icoll]->Ionization->assignDatabase(index);
+            vecPatches(ipatch)->vecCollisions[icoll]->Ionization->assignDatabase(index);
     }
 
 } // End initCollisions

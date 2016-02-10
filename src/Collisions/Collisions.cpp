@@ -22,7 +22,9 @@ Collisions::Collisions(
     bool intra_collisions,
     int debug_every,
     unsigned int nbins,
-    int Z
+    int Z,
+    bool ionizing,
+    int nDim
 ) :
 n_collisions    (n_collisions    ),
 species_group1  (species_group1  ),
@@ -35,6 +37,10 @@ filename("")
 {
     ostringstream mystream;
     
+    // Create the ionization object
+    Ionization = ionizing ? new CollisionalIonization(Z, nDim) : new CollisionalNoIonization();
+    
+    // If debugging log requested
     if( debug_every>0 ) {
         // Build the file name
         mystream.str("");
@@ -45,6 +51,13 @@ filename("")
         H5Pset_fapl_mpio(file_access, MPI_COMM_WORLD, MPI_INFO_NULL);
     }
 }
+
+Collisions::~Collisions()
+{
+    if( debug_every>0 ) H5Pclose(file_access);
+}
+
+
 
 // MPI master creates a file at startup, if debug requested
 void Collisions::createFile()
@@ -70,11 +83,6 @@ void Collisions::createFile()
         H5Fclose(fileId);
 
     }
-}
-
-Collisions::~Collisions()
-{
-    if( debug_every>0 ) { H5Pclose(file_access); }
 }
 
 
@@ -195,17 +203,8 @@ vector<Collisions*> Collisions::create(Params& params, vector<Species*>& vecSpec
         
         // Add new Collisions objects to vector
         vecCollisions.push_back(
-            new Collisions(n_collisions, sgroup[0], sgroup[1], clog, intra, debug_every, vecSpecies[0]->bmin.size(), Z)
+            new Collisions(n_collisions, sgroup[0], sgroup[1], clog, intra, debug_every, vecSpecies[0]->bmin.size(), Z, ionizing, params.nDim_particle)
         );
-        
-        // Create the ionization object
-        if( ionizing ) {
-            vecCollisions[n_collisions]->Ionization = new CollisionalIonization(Z);
-            vecCollisions[n_collisions]->Ionization->new_electrons.initialize(0, params.nDim_particle ); // to be removed if bins removed
-        } else {
-            // If no ionization, create 'empty' ionization object
-            vecCollisions[n_collisions]->Ionization = new CollisionalNoIonization();
-        }
     }
     
     // pass the variable "debye_length_required" into the Collision class

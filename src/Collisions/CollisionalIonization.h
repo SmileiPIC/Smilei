@@ -6,6 +6,7 @@
 
 #include "Tools.h"
 #include "Species.h"
+#include "Params.h"
 
 class Patch;
 
@@ -14,7 +15,7 @@ class CollisionalIonization
 
 public:
     //! Constructor
-    CollisionalIonization(int);
+    CollisionalIonization(int, int);
     virtual ~CollisionalIonization() {};
     
     //! Initializes the arrays in the database and returns the index of these arrays in the DB
@@ -99,7 +100,7 @@ private:
 class CollisionalNoIonization : public CollisionalIonization
 {
 public:
-    CollisionalNoIonization() : CollisionalIonization(0) {};
+    CollisionalNoIonization() : CollisionalIonization(0,0) {};
     ~CollisionalNoIonization(){};
     
     virtual int  createDatabase(double) {};

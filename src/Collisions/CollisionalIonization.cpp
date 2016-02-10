@@ -15,13 +15,14 @@ const double CollisionalIonization::a2 = 6.142165 ; // = (npoints-1) / ln( Emax/
 
 // Constructor
 // Computes the cross-section tables at the beginning of the run
-CollisionalIonization::CollisionalIonization(int Z)
+CollisionalIonization::CollisionalIonization(int Z, int nDim)
 {
 
     atomic_number = Z;
     rate .resize(Z);
     irate.resize(Z);
     prob .resize(Z);
+    new_electrons.initialize(0, nDim); // to be removed if bins removed
 
 }
 

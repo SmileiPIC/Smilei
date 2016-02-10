@@ -44,7 +44,7 @@ class Collisions
 
 public:
     //! Constructor for Collisions between two species
-    Collisions(unsigned int, std::vector<unsigned int>, std::vector<unsigned int>, double, bool, int, unsigned int, int);
+    Collisions(unsigned int, std::vector<unsigned int>, std::vector<unsigned int>, double, bool, int, unsigned int, int, bool, int);
     void createFile();
     void createTimestep(int timestep);
     
