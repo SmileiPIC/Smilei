@@ -417,6 +417,12 @@ void print_parallelism_params(Params& params, SmileiMPI* smpi)
     for (int iDim=0 ; iDim<params.nDim_field ; iDim++) 
 	MESSAGE(2, "dimension " << iDim << " - number_of_patches : " << params.number_of_patches[iDim] );
 
+    MESSAGE(1, "Patch size :");
+    for (int iDim=0 ; iDim<params.nDim_field ; iDim++) 
+        MESSAGE(2, "dimension " << iDim << " - n_space : " << params.n_space[iDim] << " cells.");	
+
+    MESSAGE(1, "Dynamic load balancing frequency: every " << params.balancing_freq << " iterations." );
+
     // setup OpenMP
     TITLE("OpenMP");
 #ifdef _OPENMP

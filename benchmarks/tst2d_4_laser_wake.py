@@ -32,7 +32,8 @@ bc_em_type_y = ["silver-muller","silver-muller"]
 #Topology:
 #number_of_procs: Number of MPI processes in each direction.
 #clrw: width of a cluster in number of cell. Warning: clrw must divide nspace_win_x.
-number_of_patches = [32, 8] 
+number_of_patches = [128, 8] 
+balancing_freq = 150
 clrw = 1
 
 # PLASMA GEOMETRY
@@ -44,7 +45,7 @@ clrw = 1
 #n_space_win_x: Number of cell in the total computation domain.
 #t_move_win: Starting time of the moving window in 1/w0.
 #vx_win: Velocity of the moving window in c.
-nspace_win_x = 864
+nspace_win_x = 896
 t_move_win = 60.
 vx_win = 0.9997
 
@@ -148,7 +149,7 @@ Laser(
 print_every = 100
 
 # every for field dump
-fieldDump_every = 50
+fieldDump_every = 100
 
 # every for particle dump
 particleDump_every = 10000000
