@@ -278,9 +278,10 @@ int main (int argc, char* argv[])
 		    
 	    // incrementing averaged electromagnetic fields
 	    if (vecPatches.Diags->ntime_step_avg)
-	    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-		vecPatches(ipatch)->EMfields->incrementAvgFields(itime, vecPatches.Diags->ntime_step_avg);
-	    }
+                #pragma omp for
+	        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+	            vecPatches(ipatch)->EMfields->incrementAvgFields(itime, vecPatches.Diags->ntime_step_avg);
+	        }
 
         // call the various diagnostics
         // ----------------------------
