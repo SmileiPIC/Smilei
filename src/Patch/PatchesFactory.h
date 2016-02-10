@@ -53,10 +53,7 @@ public:
         //std::cout << "n_space : " << params.n_space[0] << " " << params.n_space[1] << std::endl;
         //std::cout << "n_patch : " << params.number_of_patches[0] << " " << params.number_of_patches[1] << std::endl;
         
-        MESSAGE(1, "Patch size :");
-        for (int iDim=0 ; iDim<params.nDim_field ; iDim++) 
-            MESSAGE(2, "dimension " << iDim << " - n_space : " << params.n_space[iDim] );        
-        
+
         // create patches
         vecPatches.resize(npatches);
         for (unsigned int ipatch = 0 ; ipatch < npatches ; ipatch++) {
@@ -71,6 +68,8 @@ public:
         DiagsVectorPatch::initDumpFields(vecPatches, params, itime);
         DiagsVectorPatch::initTrackParticles(vecPatches, params, smpi);
         DiagsVectorPatch::initCollisions(vecPatches, params, smpi);
+        
+        vecPatches.update_field_list();
         
         return vecPatches;
     }

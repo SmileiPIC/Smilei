@@ -47,81 +47,40 @@ void SyncVectorPatch::exchangeParticles(VectorPatch& vecPatches, int ispec, Para
 void SyncVectorPatch::sumRhoJ(VectorPatch& vecPatches, unsigned int diag_flag )
 {
 
-    std::vector<Field*> Jx_;
-    std::vector<Field*> Jy_;
-    std::vector<Field*> Jz_;
-    std::vector<Field*> rho_;
-    
-    for (int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-        Jx_.push_back ( vecPatches(ipatch)->EMfields->Jx_  );
-        Jy_.push_back ( vecPatches(ipatch)->EMfields->Jy_  );
-        Jz_.push_back ( vecPatches(ipatch)->EMfields->Jz_  );
-        rho_.push_back( vecPatches(ipatch)->EMfields->rho_ );
-    }
-
-    SyncVectorPatch::sum( Jx_, vecPatches );
-    SyncVectorPatch::sum( Jy_, vecPatches );
-    SyncVectorPatch::sum( Jz_, vecPatches );
-    if(diag_flag) SyncVectorPatch::sum( rho_, vecPatches );
+    SyncVectorPatch::sum( vecPatches.listJx_ , vecPatches );
+    SyncVectorPatch::sum( vecPatches.listJy_ , vecPatches );
+    SyncVectorPatch::sum( vecPatches.listJz_ , vecPatches );
+    if(diag_flag) SyncVectorPatch::sum( vecPatches.listrho_, vecPatches );
 }
 
 void SyncVectorPatch::sumRhoJs(VectorPatch& vecPatches, int ispec )
 {
-    std::vector<Field*> Jx_;
-    std::vector<Field*> Jy_;
-    std::vector<Field*> Jz_;
-    std::vector<Field*> rho_;
-    
-    for (int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-        Jx_.push_back ( vecPatches(ipatch)->EMfields->Jx_s[ispec]  );
-        Jy_.push_back ( vecPatches(ipatch)->EMfields->Jy_s[ispec]  );
-        Jz_.push_back ( vecPatches(ipatch)->EMfields->Jz_s[ispec]  );
-        rho_.push_back( vecPatches(ipatch)->EMfields->rho_s[ispec] );
-    }
 
-    SyncVectorPatch::sum( Jx_,  vecPatches );
-    SyncVectorPatch::sum( Jy_,  vecPatches );
-    SyncVectorPatch::sum( Jz_,  vecPatches );
-    SyncVectorPatch::sum( rho_, vecPatches );
+    SyncVectorPatch::sum( vecPatches.listJxs_,  vecPatches );
+    SyncVectorPatch::sum( vecPatches.listJys_,  vecPatches );
+    SyncVectorPatch::sum( vecPatches.listJzs_,  vecPatches );
+    SyncVectorPatch::sum( vecPatches.listrhos_, vecPatches );
 }
 
 void SyncVectorPatch::exchangeE( VectorPatch& vecPatches )
 {
-    std::vector<Field*> Ex_;
-    std::vector<Field*> Ey_;
-    std::vector<Field*> Ez_;
 
-    for (int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-        Ex_.push_back( vecPatches(ipatch)->EMfields->Ex_ );
-        Ey_.push_back( vecPatches(ipatch)->EMfields->Ey_ );
-        Ez_.push_back( vecPatches(ipatch)->EMfields->Ez_ );
-    }
-
-    SyncVectorPatch::exchange( Ex_, vecPatches );
-    SyncVectorPatch::exchange( Ey_, vecPatches );
-    SyncVectorPatch::exchange( Ez_, vecPatches );
+    SyncVectorPatch::exchange( vecPatches.listEx_, vecPatches );
+    SyncVectorPatch::exchange( vecPatches.listEy_, vecPatches );
+    SyncVectorPatch::exchange( vecPatches.listEz_, vecPatches );
 }
 
 void SyncVectorPatch::exchangeB( VectorPatch& vecPatches )
 {
-    std::vector<Field*> Bx_;
-    std::vector<Field*> By_;
-    std::vector<Field*> Bz_;    
 
-    for (int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-        Bx_.push_back( vecPatches(ipatch)->EMfields->Bx_ );
-        By_.push_back( vecPatches(ipatch)->EMfields->By_ );
-        Bz_.push_back( vecPatches(ipatch)->EMfields->Bz_ );
+    if ( vecPatches.listBx_[0]->dims_.size()>1 ) {
+	SyncVectorPatch::exchange1( vecPatches.listBx_, vecPatches );
+	SyncVectorPatch::exchange0( vecPatches.listBy_, vecPatches );
+	SyncVectorPatch::exchange ( vecPatches.listBz_, vecPatches );
     }
-
-    if ( Bx_[0]->dims_.size()>1 ) {
-	SyncVectorPatch::exchange1( Bx_, vecPatches );
-	SyncVectorPatch::exchange0( By_, vecPatches );
-	SyncVectorPatch::exchange ( Bz_, vecPatches );
-    }
-    else if (Bx_[0]->dims_.size()==1) {
-	SyncVectorPatch::exchange0( By_, vecPatches );
-	SyncVectorPatch::exchange0( Bz_, vecPatches );
+    else if (vecPatches.listBx_[0]->dims_.size()==1) {
+	SyncVectorPatch::exchange0( vecPatches.listBy_, vecPatches );
+	SyncVectorPatch::exchange0( vecPatches.listBz_, vecPatches );
     }
 
 }

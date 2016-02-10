@@ -67,7 +67,7 @@ int main (int argc, char* argv[])
     if ( smpiData->isMaster() ) params.print();
     smpiData->barrier();
     
-    // Initialize timers timer
+    // Initialize timers
     vector<Timer> timer;
     initialize_timers(timer, smpiData);
     
@@ -324,6 +324,7 @@ int main (int argc, char* argv[])
             vecPatches.createPatches(params, smpiData, simWindow);
 
             vecPatches.exchangePatches(smpiData, params);
+            
             //for (unsigned int irank=0 ; irank<smpiData->smilei_sz ; irank++){
             //    if(smpiData->smilei_rk == irank){
             //        vecPatches.output_exchanges(smpiData);
@@ -413,6 +414,12 @@ void print_parallelism_params(Params& params, SmileiMPI* smpi)
     MESSAGE(1,"Number of patches : " );
     for (int iDim=0 ; iDim<params.nDim_field ; iDim++) 
         MESSAGE(2, "dimension " << iDim << " - number_of_patches : " << params.number_of_patches[iDim] );
+
+    MESSAGE(1, "Patch size :");
+    for (int iDim=0 ; iDim<params.nDim_field ; iDim++) 
+        MESSAGE(2, "dimension " << iDim << " - n_space : " << params.n_space[iDim] << " cells.");	
+
+    MESSAGE(1, "Dynamic load balancing frequency: every " << params.balancing_freq << " iterations." );
 
     // setup OpenMP
     TITLE("OpenMP");
