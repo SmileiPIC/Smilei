@@ -46,17 +46,10 @@ void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow
 			   int* diag_flag, double time_dual, vector<Timer>& timer)
 {
     timer[1].restart();
-    if (*diag_flag){
-        #pragma omp for schedule(static)
-	for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
-	    (*this)(ipatch)->EMfields->restartRhoJs();
-    }
-    #pragma omp for schedule(static)
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
-	(*this)(ipatch)->EMfields->restartRhoJ();
 
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+	(*this)(ipatch)->EMfields->restartRhoJ();
 	for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
 	    if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
 		// species(ipatch, ispec) = (*this)(ipatch)->vecSpecies[ispec]
