@@ -384,13 +384,13 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
 	//cout << params.mi[0] << " " << params.mi[1] << " " << params.number_of_patches[0] << " " << params.number_of_patches[1] << endl;
 	//cout << patch_NorthWest << " " << rank_WestNorth << " " << patch_SouthEast << " " << rank_EastSouth << endl;
 
-	if ( smpi->smilei_rk == rank_WestNorth ) {
+	if ( smpi->getRank() == rank_WestNorth ) {
 	    Ex_WestNorth = (*this)(patch_NorthWest-((*this).refHindex_))->EMfields->getEx_WestNorth();
 	    Ey_WestNorth = (*this)(patch_NorthWest-((*this).refHindex_))->EMfields->getEy_WestNorth();
 	}
     
 	// East-South corner
-	if ( smpi->smilei_rk == rank_EastSouth ) {
+	if ( smpi->getRank() == rank_EastSouth ) {
 	    Ex_EastSouth = (*this)(patch_SouthEast-((*this).refHindex_))->EMfields->getEx_EastSouth();
 	    Ey_EastSouth = (*this)(patch_SouthEast-((*this).refHindex_))->EMfields->getEy_EastSouth();
 	}
@@ -411,14 +411,14 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
 	double Ex_East = 0.0;
     
 	unsigned int rankWest = 0;
-	if ( smpi->smilei_rk == 0 ) {
+	if ( smpi->getRank() == 0 ) {
 	    //Ex_West = (*Ex1D)(index_bc_min[0]);
 	    Ex_West = (*this)( (0)-((*this).refHindex_))->EMfields->getEx_West();
 	}
 	MPI_Bcast(&Ex_West, 1, MPI_DOUBLE, rankWest, MPI_COMM_WORLD);
     
-	unsigned int rankEast = smpi->smilei_sz-1;
-	if ( smpi->smilei_rk == smpi->smilei_sz-1 ) {
+	unsigned int rankEast = smpi->getSize()-1;
+	if ( smpi->getRank() == smpi->getSize()-1 ) {
 	    //Ex_East = (*Ex1D)(index_bc_max[0]);
 	    Ex_East = (*this)( (params.number_of_patches[0]-1)-((*this).refHindex_))->EMfields->getEx_East();
 	}
@@ -539,6 +539,7 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
 } // END createPatches
 
 
+#ifdef _NOMOREUSED
 // ---------------------------------------------------------------------------------------------------------------------
 // Prepare patch exchange, exchanging 1st the number of particles per patch
 //   directly done in exchangePatches
@@ -599,7 +600,7 @@ void VectorPatch::setNbrParticlesToExch(SmileiMPI* smpi)
     //Synchro, send/recv must be non-blocking !!!
     smpi->barrier();
 } //END setNbrParticlesToExch
-
+#endif
 
 // ---------------------------------------------------------------------------------------------------------------------
 // First implementation of exchangePatches
@@ -693,8 +694,8 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     int newMPIrank, oldMPIrank;
     //int newMPIrankbis, oldMPIrankbis, tmp;
     int nDim_Parts( (*this)(0)->vecSpecies[0]->particles->dimension() );
-    newMPIrank = smpi->smilei_rk -1;
-    oldMPIrank = smpi->smilei_rk -1;
+    newMPIrank = smpi->getRank() -1;
+    oldMPIrank = smpi->getRank() -1;
     int istart( 0 );
     int nmessage = 2*nSpecies+10;
 
@@ -731,8 +732,8 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
 	// We assume patches are only exchanged with neighbours.
 	// Once all patches supposed to be sent to the left are done, we send the rest to the right.
       //if   hindex of patch to be sent              >  future hindex of the first patch owned by this process 
-        if(send_patch_id_[ipatch]+refHindex_ > istart ) newMPIrank = smpi->smilei_rk + 1;
-        //cout << "Rank " << smpi->smilei_rk << " sending patch " << send_patch_id_[ipatch]+refHindex_ << " to " << newMPIrank << endl; 
+        if(send_patch_id_[ipatch]+refHindex_ > istart ) newMPIrank = smpi->getRank() + 1;
+        //cout << "Rank " << smpi->getRank() << " sending patch " << send_patch_id_[ipatch]+refHindex_ << " to " << newMPIrank << endl; 
 	//newMPIrankbis = 0 ;
 	//tmp = smpi->patch_count[newMPIrankbis];
 	//while ( tmp <= send_patch_id_[ipatch]+refHindex_ ) {
@@ -750,8 +751,8 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
 
     for (unsigned int ipatch=0 ; ipatch < recv_patch_id_.size() ; ipatch++) {
       //if   hindex of patch to be received > first hindex actually owned, that means it comes from the next MPI process and not from the previous anymore. 
-        if(recv_patch_id_[ipatch] > refHindex_ ) oldMPIrank = smpi->smilei_rk + 1;
-        //cout << "Rank " << smpi->smilei_rk << " receiving patch " << recv_patch_id_[ipatch] << " from " << oldMPIrank << endl; 
+        if(recv_patch_id_[ipatch] > refHindex_ ) oldMPIrank = smpi->getRank() + 1;
+        //cout << "Rank " << smpi->getRank() << " receiving patch " << recv_patch_id_[ipatch] << " from " << oldMPIrank << endl; 
 	//oldMPIrankbis = 0 ; // Comparing recv_patch_id_[ipatch] to 1st yet on current MPI rank
 	//if ( recv_patch_id_[ipatch] > refHindex_ )
 	//    oldMPIrankbis = smpi->getRank()+1;
@@ -762,7 +763,7 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
         //    cout << "oldMIPrank problem ! " << oldMPIrank << endl;
         //    oldMPIrank = oldMPIrankbis ;
         //}
-        smpi->new_recv( recv_patches_[ipatch], oldMPIrank, recv_patch_id_[ipatch]*nmessage, params );
+        smpi->recv( recv_patches_[ipatch], oldMPIrank, recv_patch_id_[ipatch]*nmessage, params );
     }
 
     smpi->barrier();
@@ -824,20 +825,20 @@ void VectorPatch::output_exchanges(SmileiMPI* smpi)
 {
     ofstream output_file;
     ostringstream name("");
-    name << "debug_output"<<smpi->smilei_rk<<".txt" ;
+    name << "debug_output"<<smpi->getRank()<<".txt" ;
     output_file.open(name.str().c_str(), std::ofstream::out | std::ofstream::app);
     int newMPIrank, oldMPIrank;
-    newMPIrank = smpi->smilei_rk -1;
-    oldMPIrank = smpi->smilei_rk -1;
+    newMPIrank = smpi->getRank() -1;
+    oldMPIrank = smpi->getRank() -1;
     int istart( 0 );
     for (int irk=0 ; irk<smpi->getRank() ; irk++) istart += smpi->patch_count[irk];
     for (unsigned int ipatch=0 ; ipatch < send_patch_id_.size() ; ipatch++) {
-        if(send_patch_id_[ipatch]+refHindex_ > istart ) newMPIrank = smpi->smilei_rk + 1;
-        output_file << "Rank " << smpi->smilei_rk << " sending patch " << send_patch_id_[ipatch]+refHindex_ << " to " << newMPIrank << endl; 
+        if(send_patch_id_[ipatch]+refHindex_ > istart ) newMPIrank = smpi->getRank() + 1;
+        output_file << "Rank " << smpi->getRank() << " sending patch " << send_patch_id_[ipatch]+refHindex_ << " to " << newMPIrank << endl; 
     }
     for (unsigned int ipatch=0 ; ipatch < recv_patch_id_.size() ; ipatch++) {
-        if(recv_patch_id_[ipatch] > refHindex_ ) oldMPIrank = smpi->smilei_rk + 1;
-        output_file << "Rank " << smpi->smilei_rk << " receiving patch " << recv_patch_id_[ipatch] << " from " << oldMPIrank << endl; 
+        if(recv_patch_id_[ipatch] > refHindex_ ) oldMPIrank = smpi->getRank() + 1;
+        output_file << "Rank " << smpi->getRank() << " receiving patch " << recv_patch_id_[ipatch] << " from " << oldMPIrank << endl; 
     }
     output_file << "NEXT" << endl;
     output_file.close();

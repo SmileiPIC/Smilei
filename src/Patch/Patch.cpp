@@ -1,4 +1,22 @@
 
+// CLOBAL COORDINATES: 
+//                           Patch_minGlobal                                                                      Patch_maxGlobal
+//                      --------<===================================== gs ===================================>------------
+//     GLOBAL INDICES:          0                                  .                                        nspace_global
+//                           ix+oversize                                                                  ix+oversize
+//                      ------------------------------------       .              ------------------------------------
+//                      |   |   |     ...          |   |   |       .              |   |   |   |   ...    |   |   |   |
+//                      |   |   |     ...          |   |   |       .              |   |   |   |   ...    |   |   |   |
+//                      ------------------------------------       .              ------------------------------------
+//                          Patch_minLocal    Patch_maxLocal       .             Patch_minLocal        Patch_maxLocal
+//                                                 ----------------------------------------                 
+//                                                 |   |   |       .              |   |   |
+//                                                 |   |   |       .              |   |   |
+//                                                 ----------------------------------------
+// LOCAL COORDINATES:                             x(0) rlb        x(ix)             rub  x(nspace)
+//                                                 ----<============= length =========>----
+//     LOCAL INDICES:                              0   lb                            ub   nspace
+
 #include "Patch.h"
 
 #include <cstdlib>

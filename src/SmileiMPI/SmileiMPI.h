@@ -30,66 +30,72 @@ class DiagnosticParticles;
 class SmileiMPI {
     friend class SmileiIO;
     friend class Checkpoint;
-public:
+    friend class PatchesFactory;
     friend class Patch;
+    friend class VectorPatch;
+
+public:
 
     //! Create intial MPI environment
     SmileiMPI( int* argc, char*** argv );
-    //! Create MPI environment for the data geometry from 
-    //! \param smpi the initil MPI environment
-    SmileiMPI(SmileiMPI *smpi);
-    //! Default creator for SmileiMPI
-    SmileiMPI() {};
     //! Destructor for SmileiMPI
-    virtual ~SmileiMPI();
+    ~SmileiMPI();
 
-    //! Initialize geometry members dimension from
+    // Broadcast a string in current communicator
+    void bcast( std::string& val );
+    // Broadcast an int in current communicator
+    void bcast( int& val );
+
+    //! Initialize  MPI (per process) environment
     //! \param params Parameters
     void init( Params& params );
+
     // Initialize the patch_count vector. Patches are distributed in order to balance the load between MPI processes.
     void init_patch_count( Params& params );
     // Recompute the patch_count vector. Browse patches and redistribute them in order to balance the load between MPI processes.
     void recompute_patch_count( Params& params, VectorPatch& vecpatches, double time_dual );
+     // Returns the rank of the MPI process currently owning patch h.
+    int hrank(int h);
 
+    // Create MPI type to exchange all particles properties of particles
     MPI_Datatype createMPIparticles( Particles* particles );
 
 
-
-    // --------------------------------------------------
-    // ------------- PATCH EXCHANGE METHODS -------------
-    // --------------------------------------------------
-    void send(Patch* patch, int to  , int hindex);
+    // PATCH SEND / RECV METHODS
+    //     - during load balancing process
+    //     - during moving window
+    // -----------------------------------
     void isend(Patch* patch, int to  , int hindex);
-    void recv(Patch* patch, int from, int hindex);
-    void new_recv(Patch* patch, int from, int hindex, Params& params);
+    void recv(Patch* patch, int from, int hindex, Params& params);
 
-    void send(Species* species, int to  , int hindex);
-    void recv(Species* species, int from, int hindex);
-    void send(Particles* particles, int to   , int hindex);
     void isend(Particles* particles, int to   , int hindex, MPI_Datatype datatype);
-    void recv(Particles* partictles, int from, int hindex);
-    void new_recv(Particles* partictles, int from, int hindex, MPI_Datatype datatype);
-    void send(std::vector<int> vec, int to  , int hindex);
+    void recv(Particles* partictles, int from, int hindex, MPI_Datatype datatype);
     void isend(std::vector<int>* vec, int to  , int hindex);
     void recv(std::vector<int> *vec, int from, int hindex);
 
-    void send(ElectroMagn* fields, int to  , int hindex);
     void isend(ElectroMagn* fields, int to  , int hindex);
     void recv(ElectroMagn* fields, int from, int hindex);
-    void send(Field* field, int to  , int hindex);
     void isend(Field* field, int to  , int hindex);
     void recv(Field* field, int from, int hindex);
-    void send( Diagnostic* diags, int to  , int hindex );
     void isend( Diagnostic* diags, int to  , int hindex );
     void recv( Diagnostic* diags, int from, int hindex );
-    // --------------------------------------------------
-    // ------ END OF PATCH EXCHANGE METHODS -------------
-    // --------------------------------------------------
 
+
+    // DIAGS MPI SYNC 
+    // --------------
+
+    // Wrapper of MPI synchronization of all computing diags
     void computeGlobalDiags(Diagnostic* diags, int timestep);
+    // MPI synchronization of scalars diags
     void computeGlobalDiags(DiagnosticScalar& scalars, int timestep);
+    // MPI synchronization of phasespace diags
     void computeGlobalDiags(DiagnosticPhaseSpace& phases, int timestep);
+    // MPI synchronization of diags particles
     void computeGlobalDiags(DiagnosticParticles* diagParticles, int timestep);
+    
+
+    // MPI basic methods
+    // -----------------
 
     //! Method to identify the rank 0 MPI process
     inline bool isMaster() {
@@ -107,6 +113,7 @@ public:
     inline int getSize() {
         return smilei_sz;
     }
+    
 
     // Global buffers for vectorization of Species::dynamics
     // -----------------------------------------------------
@@ -122,6 +129,7 @@ public:
     //! delta_old_pos
     std::vector<std::vector<double>> dynamics_deltaold;
 
+    // Resize buffers for a given number of particles
     inline void dynamics_resize(int ithread, int ndim_part, int npart ){
         dynamics_Epart[ithread].resize(npart);
         dynamics_Bpart[ithread].resize(npart);
@@ -131,15 +139,9 @@ public:
     }
 
 
-    //! Number of MPI process in the current communicator
-    int smilei_sz;
-    //! MPI process Id in the current communicator
-    int smilei_rk;
-
-    //! For patch decomposition
-    std::vector<int>  patch_count, target_patch_count;  //Number of patches owned by each mpi process.
-    int hrank(int h); // Returns the rank of the MPI process currently owning patch h.
-
+    // Compute global number of particles
+    //     - deprecated with patch introduction
+     //! \todo{Patch managmen}
     inline int globalNbrParticles(Species* species, int locNbrParticles) {
 	int nParticles(0);
 	MPI_Reduce( &locNbrParticles, &nParticles, 1, MPI_INT, MPI_SUM, 0, SMILEI_COMM_WORLD );
@@ -147,16 +149,23 @@ public:
     }
 
 
-    // Broadcast a string in current communicator
-    void bcast( std::string& val );
-    // Broadcast an int in current communicator
-    void bcast( int& val );
-
 protected:
     //! Global MPI Communicator
     MPI_Comm SMILEI_COMM_WORLD;
 
+    //! Number of MPI process in the current communicator
+    int smilei_sz;
+    //! MPI process Id in the current communicator
+    int smilei_rk;
+
+    // Store periodicity (0/1) per direction
+    // Should move in Params : last parameters of this type in this class
     int* periods_;
+
+    //! For patch decomposition
+    //Number of patches owned by each mpi process.
+    std::vector<int>  patch_count, target_patch_count;
+
 
 };
 

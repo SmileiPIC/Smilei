@@ -311,7 +311,7 @@ int main (int argc, char* argv[])
 
 
 
-	if ((itime%params.balancing_freq == 0)&&(smpiData->smilei_sz!=1)) {
+	if ((itime%params.balancing_freq == 0)&&(smpiData->getSize()!=1)) {
             timer[7].restart();
             //partperMPI = 0;
 	    //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
@@ -325,8 +325,8 @@ int main (int argc, char* argv[])
 	    vecPatches.createPatches(params, smpiData, simWindow);
 
 	    vecPatches.exchangePatches(smpiData, params);
-            //for (unsigned int irank=0 ; irank<smpiData->smilei_sz ; irank++){
-            //    if(smpiData->smilei_rk == irank){
+            //for (unsigned int irank=0 ; irank<smpiData->getSize() ; irank++){
+            //    if(smpiData->getRank() == irank){
             //        vecPatches.output_exchanges(smpiData);
             //    }
             //    smpiData->barrier();

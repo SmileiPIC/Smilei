@@ -93,10 +93,10 @@ public :
 
     //! Explicits patch movement regarding new patch distribution stored in smpi->patch_count
     void createPatches(Params& params, SmileiMPI* smpi, SimWindow* simWindow);
-
+#ifdef _NOMOREUSED
     //! Prepare patch exchange, exchanging 1st the number of particles per patch (not used)
     void setNbrParticlesToExch(SmileiMPI* smpi);
-
+#endif
     //! First implementation of exchangePatches
     //void exchangePatches(SmileiMPI* smpi);
 
