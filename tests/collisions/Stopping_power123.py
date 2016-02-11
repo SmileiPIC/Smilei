@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import kv
 from scipy.integrate import quad
+plt.ion()
 
 def tot(p,v1,a):
 	g2 = (p**2+1.)**0.5
@@ -68,25 +69,24 @@ for path in ["Stopping_power1","Stopping_power2","Stopping_power3"]:
 	nx = sim.ParticleDiagnostic(diagNumber=0,timesteps=0).get()["x"].size
 	
 	Ekin = np.zeros((nx,len(times)))
+	electrons = sim.ParticleDiagnostic(0).get()
+	ekin = electrons["ekin"]*0.511
+	dekin = np.diff(ekin)
+	dekin = np.hstack((dekin, dekin[-1]))
 	
 	fig = None
 	#fig = plt.figure(1)
 	if fig: fig.clf()
 	if fig: ax = fig.add_subplot(1,1,1)
 	for i,t in enumerate(times):
-		electrons = sim.ParticleDiagnostic(0, units="nice", timesteps=t).get()
-		x = electrons["x"]
-		ekin = electrons["ekin"]
-		dekin = np.diff(ekin)
-		dekin = np.hstack((dekin, dekin[-1]))
-		A = electrons["data"][0]
+		A = electrons["data"][i]
 		A = A*dekin
 		for k in range(nx): Ekin[k][i] = (A[k,:]*ekin).sum()/A[k,:].sum()
 		
 		if fig:
 			ax.cla()
 			ax.plot(ekin,A[0,:],'b')
-			fig.canvas.draw()
+			plt.draw()
 	
 	
 	times *= 3.33*dt # fs

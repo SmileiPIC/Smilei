@@ -46,17 +46,10 @@ void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow
 			   int* diag_flag, double time_dual, vector<Timer>& timer)
 {
     timer[1].restart();
-    if (*diag_flag){
-        #pragma omp for schedule(static)
-	for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
-	    (*this)(ipatch)->EMfields->restartRhoJs();
-    }
-    #pragma omp for schedule(static)
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
-	(*this)(ipatch)->EMfields->restartRhoJ();
 
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+	(*this)(ipatch)->EMfields->restartRhoJ();
 	for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
 	    if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
 		// species(ipatch, ispec) = (*this)(ipatch)->vecSpecies[ispec]
@@ -105,6 +98,7 @@ void VectorPatch::sumDensities( int* diag_flag, vector<Timer>& timer )
 
     if(*diag_flag){
 	for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
+            update_field_list(ispec);
 	    SyncVectorPatch::sumRhoJs( (*this), ispec ); // MPI
 	}
     }
@@ -539,148 +533,6 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
 } // END createPatches
 
 
-#ifdef _NOMOREUSED
-// ---------------------------------------------------------------------------------------------------------------------
-// Prepare patch exchange, exchanging 1st the number of particles per patch
-//   directly done in exchangePatches
-// ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::setNbrParticlesToExch(SmileiMPI* smpi)
-{
-    int nSpecies( (*this)(0)->vecSpecies.size() );
-    int nDim_Parts( (*this)(0)->vecSpecies[0]->particles->dimension() );
-
-    // Send particles
-    for (unsigned int ipatch=0 ; ipatch<send_patch_id_.size() ; ipatch++) {
-
-	int newMPIrank(0);
-	// locate rank which will own send_patch_id_[ipatch]
-	int tmp( smpi->patch_count[newMPIrank] );
-	while ( tmp <= send_patch_id_[ipatch]+refHindex_ ) {
-	    newMPIrank++;
-	    tmp += smpi->patch_count[newMPIrank];
-	}
-
-	vector<int> nbrOfPartsSend(nSpecies,0);
-	for (int ispec=0 ; ispec<nSpecies ; ispec++) {
-	    nbrOfPartsSend[ispec] = (*this)(send_patch_id_[ipatch])->vecSpecies[ispec]->getNbrOfParticles();
-	}
-#ifdef _DEBUGPATCH
-	cout << smpi->getRank() << " send to " << newMPIrank << " with tag " << refHindex_+send_patch_id_[ipatch] << endl;
-	for (int ispec=0;ispec<nSpecies;ispec++)
-	  cout << "n part send = " << nbrOfPartsSend[ispec] << endl;
-#endif
-	smpi->send( nbrOfPartsSend, newMPIrank, refHindex_+send_patch_id_[ipatch] );
-    }
-
-
-    // Recv part
-    for (unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++) {
-
-	vector<int> nbrOfPartsRecv(nSpecies,0);
-	int oldMPIrank(0); // Comparing recv_patch_id_[ipatch] to 1st yet on current MPI rank
-	if ( recv_patch_id_[ipatch] > refHindex_ )
-	    oldMPIrank = smpi->getRank()+1;
-	else
-	    oldMPIrank = smpi->getRank()-1;
-
-#ifdef _DEBUGPATCH
-	cout << smpi->getRank() << " recv from " << oldMPIrank << " with tag " << recv_patch_id_[ipatch] << endl;
-	for (int ispec=0;ispec<nSpecies;ispec++)
-	  cout << "n part recv = " << nbrOfPartsRecv[ispec] << endl;
-#endif
-	smpi->recv( &nbrOfPartsRecv, oldMPIrank, recv_patch_id_[ipatch] );
-#ifdef _DEBUGPATCH
-	for (int ispec=0;ispec<nSpecies;ispec++)
-	  cout << "n part recv = " << nbrOfPartsRecv[ispec] << endl;
-#endif
-	for (int ispec=0 ; ispec<nSpecies ; ispec++)
-	    recv_patches_[ipatch]->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv[ispec], (*(*this)(0)->vecSpecies[0]->particles) );
-    }
-
-    //Synchro, send/recv must be non-blocking !!!
-    smpi->barrier();
-} //END setNbrParticlesToExch
-#endif
-
-// ---------------------------------------------------------------------------------------------------------------------
-// First implementation of exchangePatches
-// ---------------------------------------------------------------------------------------------------------------------
-//void VectorPatch::exchangePatches(SmileiMPI* smpi)
-//{
-//    int nSpecies( (*this)(0)->vecSpecies.size() );
-//
-//    // Send part
-//    for (unsigned int ipatch=0 ; ipatch<send_patch_id_.size() ; ipatch++) {
-//
-//	int newMPIrank(0);
-//	// locate rank which owns send_patch_id_[ipatch]
-//	int tmp( smpi->patch_count[newMPIrank] );
-//	while ( tmp <= send_patch_id_[ipatch]+refHindex_ ) {
-//	    newMPIrank++;
-//	    tmp += smpi->patch_count[newMPIrank];
-//	}
-//#ifdef _DEBUGPATCH
-//	cout << smpi->getRank() << " send to " << newMPIrank << " with tag " << send_patch_id_[ipatch] << endl;
-//#endif
-//	smpi->send( (*this)(send_patch_id_[ipatch]), newMPIrank, refHindex_+send_patch_id_[ipatch] );
-//
-//    }
-//
-//
-//    // Recv part
-//    // recv_patch_id_ must be sorted !
-//    // Loop / This, check this->hindex is/not recv_patch_id
-//    for (unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++) {
-//	int oldMPIrank(0); // Comparing recv_patch_id_[ipatch] to 1st yet on current MPI rank
-//	if ( recv_patch_id_[ipatch] > refHindex_ )
-//	    oldMPIrank = smpi->getRank()+1;
-//	else
-//	    oldMPIrank = smpi->getRank()-1;
-//#ifdef _DEBUGPATCH
-//	cout << smpi->getRank() << " recv from " << oldMPIrank << " with tag " << recv_patch_id_[ipatch] << endl;
-//#endif
-//	smpi->recv( recv_patches_[ipatch], oldMPIrank, recv_patch_id_[ipatch] );
-//    }
-//
-//    //Synchro, send/recv must be non-blocking !!!
-//
-//    /*for (unsigned int ipatch=0 ; ipatch<send_patch_id_.size() ; ipatch++) {
-//	delete (*this)(send_patch_id_[ipatch]-refHindex_);
-//	patches_[ send_patch_id_[ipatch]-refHindex_ ] = NULL;
-//	patches_.erase( patches_.begin() + send_patch_id_[ipatch] - refHindex_ );
-//	
-//    }*/
-//    int nPatchSend(send_patch_id_.size());
-//    for (int ipatch=nPatchSend-1 ; ipatch>=0 ; ipatch--) {
-//	//Ok while at least 1 old patch stay inon current CPU
-//	(*this)(send_patch_id_[ipatch])->Diags->probes.setFile(0);
-//	(*this)(send_patch_id_[ipatch])->sio->setFiles(0,0);
-//	delete (*this)(send_patch_id_[ipatch]);
-//	patches_[ send_patch_id_[ipatch] ] = NULL;
-//	patches_.erase( patches_.begin() + send_patch_id_[ipatch] );
-//	
-//    }
-//
-//    for (unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++) {
-//	if ( recv_patch_id_[ipatch] > refHindex_ )
-//	    patches_.push_back( recv_patches_[ipatch] );
-//	else
-//	    patches_.insert( patches_.begin()+ipatch, recv_patches_[ipatch] );
-//    }
-//    recv_patches_.clear();
-//
-//#ifdef _DEBUGPATCH
-//    cout << smpi->getRank() << " number of patches " << this->size() << endl;
-//#endif
-//    for (int ipatch=0 ; ipatch<patches_.size() ; ipatch++ ) { 
-//	(*this)(ipatch)->updateMPIenv(smpi);
-//    }
-//
-//    definePatchDiagsMaster();
-//
-//} // END exchangePatches
-
-
 // ---------------------------------------------------------------------------------------------------------------------
 // Exchange patches, based on createPatches initialization
 //   take care of reinitialize patch master and diag file managment
@@ -814,6 +666,8 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     (*this).set_refHindex() ;
     (*this).Diags = (*this)(0)->Diags;
 
+    update_field_list() ;    
+
 } // END exchangePatches
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -843,5 +697,48 @@ void VectorPatch::output_exchanges(SmileiMPI* smpi)
     output_file << "NEXT" << endl;
     output_file.close();
 } // END output_exchanges
+
+    //! Resize vector of field*
+void VectorPatch::update_field_list()
+{
+    listJx_.resize( size() ) ;
+    listJy_.resize( size() ) ;
+    listJz_.resize( size() ) ;
+    listrho_.resize( size() ) ;
+    listEx_.resize( size() ) ;
+    listEy_.resize( size() ) ;
+    listEz_.resize( size() ) ;
+    listBx_.resize( size() ) ;
+    listBy_.resize( size() ) ;
+    listBz_.resize( size() ) ;
+
+    for (int ipatch=0 ; ipatch < size() ; ipatch++) {
+        listJx_[ipatch] = patches_[ipatch]->EMfields->Jx_ ;
+        listJy_[ipatch] = patches_[ipatch]->EMfields->Jy_ ;
+        listJz_[ipatch] = patches_[ipatch]->EMfields->Jz_ ;
+        listrho_[ipatch] =patches_[ipatch]->EMfields->rho_;
+        listEx_[ipatch] = patches_[ipatch]->EMfields->Ex_ ;
+        listEy_[ipatch] = patches_[ipatch]->EMfields->Ey_ ;
+        listEz_[ipatch] = patches_[ipatch]->EMfields->Ez_ ;
+        listBx_[ipatch] = patches_[ipatch]->EMfields->Bx_ ;
+        listBy_[ipatch] = patches_[ipatch]->EMfields->By_ ;
+        listBz_[ipatch] = patches_[ipatch]->EMfields->Bz_ ;
+    }
+}
+void VectorPatch::update_field_list(int ispec)
+{
+    listJxs_.resize( size() ) ;
+    listJys_.resize( size() ) ;
+    listJzs_.resize( size() ) ;
+    listrhos_.resize( size() ) ;
+
+    #pragma omp for
+    for (int ipatch=0 ; ipatch < size() ; ipatch++) {
+        listJxs_[ipatch] = patches_[ipatch]->EMfields->Jx_s[ispec] ;
+        listJys_[ipatch] = patches_[ipatch]->EMfields->Jy_s[ispec] ;
+        listJzs_[ipatch] = patches_[ipatch]->EMfields->Jz_s[ispec] ;
+        listrhos_[ipatch] =patches_[ipatch]->EMfields->rho_s[ispec];
+    }
+}
 
 

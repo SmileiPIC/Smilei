@@ -107,6 +107,7 @@ class Collisions(SmileiComponent):
     species2 = None
     coulomb_log = 0.
     debug_every = 0
+    ionizing = False
 
 
 #diagnostics
@@ -168,6 +169,7 @@ class PartWall(SmileiComponent):
 
 # default simulation values
 output_dir = None
+balancing_freq = None
 smilei_mpi_rank = 0
 smilei_mpi_size = 1
 smilei_rand_max = 2**31-1

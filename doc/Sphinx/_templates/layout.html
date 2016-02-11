@@ -2,6 +2,18 @@
 
 {% set css_files = css_files + ["_static/smileitheme.css"] %}
 
+{%- block extrahead %}
+  <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+      availableFonts: ["TeX"]
+    }
+  });
+  </script>
+  {{ super() }}
+{% endblock %}
+
+
 {%- block footer %}
     <div class="footer">
       {%- if last_updated %}

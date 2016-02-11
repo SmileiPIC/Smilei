@@ -17,6 +17,9 @@ wavelength_SI = 1.e-6
 #      2drz = cylindrical (r,z) grid with 3d3v particles
 dim = "1d3v"
 
+# number_of_patches: list of the number of patches in each dimension
+number_of_patches = [ 4 ]
+
 # order of interpolation
 interpolation_order = 2
 
@@ -31,7 +34,7 @@ sim_time  = 5000 * L0
 time_fields_frozen = 100000000000.
 
 # SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
-cell_length = [5000.*L0]
+cell_length = [2500.*L0]
 sim_length  = [60000.*L0]
 
 # ELECTROMAGNETIC BOUNDARY CONDITIONS

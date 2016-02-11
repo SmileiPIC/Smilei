@@ -59,6 +59,9 @@ public :
     inline void set_refHindex() {
 	refHindex_ = patches_[0]->Hindex();
     }
+    //! Resize vector of field*
+    void update_field_list();
+    void update_field_list(int ispec);
 
     //! Pointer to patches_[0]->Diags which will drive diag on the current MPI process
     Diagnostic* Diags;
@@ -93,18 +96,28 @@ public :
 
     //! Explicits patch movement regarding new patch distribution stored in smpi->patch_count
     void createPatches(Params& params, SmileiMPI* smpi, SimWindow* simWindow);
-#ifdef _NOMOREUSED
-    //! Prepare patch exchange, exchanging 1st the number of particles per patch (not used)
-    void setNbrParticlesToExch(SmileiMPI* smpi);
-#endif
-    //! First implementation of exchangePatches
-    //void exchangePatches(SmileiMPI* smpi);
 
     //! Exchange patches, based on createPatches initialization
     void exchangePatches(SmileiMPI* smpi, Params& params);
 
     //! Write in a file patches communications
     void output_exchanges(SmileiMPI* smpi);
+
+    // Lists of fields
+    std::vector<Field*> listJx_;
+    std::vector<Field*> listJy_;
+    std::vector<Field*> listJz_;
+    std::vector<Field*> listrho_;
+    std::vector<Field*> listJxs_;
+    std::vector<Field*> listJys_;
+    std::vector<Field*> listJzs_;
+    std::vector<Field*> listrhos_;
+    std::vector<Field*> listEx_;
+    std::vector<Field*> listEy_;
+    std::vector<Field*> listEz_;
+    std::vector<Field*> listBx_;
+    std::vector<Field*> listBy_;
+    std::vector<Field*> listBz_;
     
 
  private :
@@ -140,7 +153,6 @@ public :
 
     std::vector<int> recv_patch_id_;
     std::vector<int> send_patch_id_;
-
 
     
 };

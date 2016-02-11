@@ -73,14 +73,9 @@ SimWindow::~SimWindow()
 
 void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params)
 {
-    //#pragma omp master
-    //{
 
-
-    {
         x_moved += cell_length_x_*params.n_space[0];
         n_moved += params.n_space[0];
-    }
 
     // Store current number of patch on current MPI process
     // Don't move during this process
@@ -91,8 +86,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     int nmessage = 10+2*nSpecies;
     vector<int> nbrOfPartsSend(nSpecies,0);
     vector<int> nbrOfPartsRecv(nSpecies,0);
-    //vector < vector<int>* > store_npart_sent;
-
 
     // Delete western patch
     double energy_field_lost(0.);
@@ -275,13 +268,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     }
     vecPatches.set_refHindex() ;
     vecPatches.Diags = vecPatches(0)->Diags;
-
-    //for (unsigned int i = 0 ; i < store_npart_sent.size() ; i++) {
-    //    delete store_npart_sent[i];
-    //}
-
-    //} // End pragma omp master
-    //#pragma omp barrier
+    vecPatches.update_field_list() ;
 
     return;
 
