@@ -197,7 +197,6 @@ t_move_win = 0.0
 vx_win = 1.
 clrw = 1
 every = 0
-number_of_procs = [None]
 print_every = None
 fieldDump_every = None
 fieldsToDump = []

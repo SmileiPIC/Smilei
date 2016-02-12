@@ -15,26 +15,6 @@ at the `CEA/Saclay <http://www-centre-saclay.cea.fr/en>`_ and with strong suppor
 from the `Maison de la Simulation <http://www.maisondelasimulation.fr/>`_ and
 `IDRIS <http://www.idris.fr/>`_ on the numerical side.
 
-First steps
-===========
-
-.. toctree::
-   :maxdepth: 1
-   
-   introduction
-   installation
-   
-
-Run and analyze your simulation
-===============================
-
-.. toctree::
-   :maxdepth: 1
-   
-   namelist
-   
-   post-processing
-
 
 Understand :program:`Smilei` 
 ============================
@@ -42,16 +22,28 @@ Understand :program:`Smilei`
 .. toctree::
    :maxdepth: 1
    
+   introduction
    units
    algorithms
    parallelization
    collisions
 
+Install, run, analyze
+=====================
+
+.. toctree::
+   :maxdepth: 1
+   
+   installation
+   namelist
+   run
+   post-processing
+
 
 Links
 =====
 
-* `GitLab project page <https://llrgit.in2p3.fr/groups/smilei>`_ (restricted access)
+* `GitLab project page <https://llrgit.in2p3.fr/smilei/smilei>`_ (restricted access)
 * `Partners <partners.html>`_
 
 .. toctree::
