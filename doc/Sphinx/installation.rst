@@ -30,23 +30,17 @@ Even if it possible to install all dependencies manually, we recommend a package
 Via Macports
 """"""""""""
 
-This installation procedure relies on the software `MacPorts <https://www.macports.org>`_.
+This installation procedure relies on the software `MacPorts <https://www.macports.org>`_
+that you can install following `these instructions <https://www.macports.org/install.php>`_.
 
-#. If you do not have it already, `install MacPorts <https://www.macports.org/install.php>`_.
-
-#. In a terminal, run the following command to install the C++ compiler with MPI:
+#. In a terminal, run the following command to install the C++ compiler with MPI and HDF5:
      
    .. code-block:: bash
 
      sudo port install openmpi-gcc5 +threads
      sudo port select --set mpi openmpi-gcc5-fortran
-   
-#. To install HDF5, run:
-     
-   .. code-block:: bash
-
      sudo port install hdf5 +openmpi+gcc5+threads
-
+     
 #. Edit your ``.bash_profile`` hidden file located in your home folder:
    
    .. code-block:: bash
@@ -141,7 +135,7 @@ Install dependencies on Ubuntu
 Download and compile
 ^^^^^^^^^^^^^^^^^^^^
 
-#. Download the latest tarball :ref:`here <latestVersion>`.
+#. Download the latest :program:`Smilei` tarball :ref:`here <latestVersion>`.
 
 #. Extract the tarball at the location of your choice.
    Let us assume it is located in your home directory ``~/smilei/``.
@@ -153,27 +147,17 @@ Download and compile
        cd ~/smilei
        make
 
-   To compile faster using multiple CPUs:
+   .. rubric:: Compilation alternatives:
      
-     .. code-block:: bash
-       
-       make -j 4  # compile with 4 processors 
-   
-   To get help on make alternatives:
+   .. code-block:: bash
      
-     .. code-block:: bash
-       
-       make help
-
-   Examples:
-     
-     .. code-block:: bash
-       
-       make config=debug            # to have debugging output (slow)
-       make config=noopenmp         # to deactivate OpenMP support
-       make config="debug noopenmp" # to activate debugging without OpenMP
-       make doc                     # to compile the documentation
-   
-
+     make -j 4                    # compile with 4 processors (fast)  
+     make config=debug            # to have debugging output (slow)
+     make config=noopenmp         # to deactivate OpenMP support
+     make config="debug noopenmp" # to activate debugging without OpenMP
+     make doc                     # to compile the documentation
+     make help                    # to get some help on compilation
+ 
+#. The next step is to :doc:`write a namelist <namelist>`.
 
 

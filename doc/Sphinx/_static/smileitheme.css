@@ -19,7 +19,7 @@
 
 /* --------------------------------------------------------------------*/
 /* Prevent tables to wrap lines */
-table.docutils {
+table.nowrap {
 	white-space: nowrap;
 }
 /* Remove bottom margin in table cells with line-blocks */
@@ -32,6 +32,7 @@ table.noborder, table.noborder td {
 	-moz-box-shadow: none;
 	-webkit-box-shadow: none;
 	box-shadow: none;
+	vertical-align:middle;
 }
 
 /* --------------------------------------------------------------------*/

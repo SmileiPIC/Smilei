@@ -4,18 +4,27 @@ Write a namelist
 Before you run :program:`Smilei`, you need a *namelist* (an input file). The namelist
 is written in the *python* language. It is thus recommended to know the basics of *python*.
 
-To create a namelist, we suggest you copy one existing file in the folder *benchmarks*.
+We suggest you copy one existing namelist from the folder *benchmarks*.
 All namelists have the extension ``.py``.
 
-  
+
 ----
 
 General rules
 ^^^^^^^^^^^^^
 
-* The namelist must define variables that :program:`Smilei` will understand.
+* A namelist is a list of variables that :program:`Smilei` knows.
   For instance, ``timestep = 0.01``.
   All *python* operations are valid. For instance: ``timestep = 40*0.0001``.
+
+* The namelist(s) are provided to :program:`Smilei` as command-line arguments. The
+  *python* instructions can also be provided directly one-by-one in the command-line, as
+  string arguments. For example, you can run your namelist ``my_namelist.py`` and 
+  add an additional instruction ``fieldDump_every=10``:
+  
+  .. code-block:: bash
+    
+    mpirun -n 4 ./smilei  my_namelist.py  "fieldDump_every=10"
 
 * The *python* syntax requires special indentation of each line.
   You begin with no indentation, but you have to **add four spaces at the
@@ -42,98 +51,41 @@ General rules
 
 ----
 
-Python workflow and impact
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Python workflow
+^^^^^^^^^^^^^^^
 
-* Python is started at the beginning of the simulation (there will be a python interpreter for each MPI node)
-* Two files (``src/Python/pyinit.py`` and ``src/Python/pyprofiles.py``) are passed to the python interpreter
-* These ``smilei`` variables are passed to python interpreter
+*Python* is started at the beginning of the simulation (one *python* interpreter
+for each MPI node). The following steps are executed:
 
-  * MPI rank as :py:data:`smilei_mpi_rank`
-  * MPI size as :py:data:`smilei_mpi_size`
-  * maximum random value as :py:data:`smilei_rand_max`
-  
-  
-* Then the command line arguments are passed to python and for each argument:
+#. A few variables from :program:`Smilei` are passed to *python* so that they are
+   available to the user:
+   
+   * The rank of the current MPI node as :py:data:`smilei_mpi_rank`.
+   * The total number of MPI nodes as :py:data:`smilei_mpi_size`.
+   * The maximum random integer as :py:data:`smilei_rand_max`.
 
-  * if the argument is a file, it is read, broadcasted to every node and executed
-  * if the argument is *not* a file, it is executed as python command
-  
-* One more file (``src/Python/pycontrol.py``) is passed to python and
+#. The command line arguments are passed one-by-one to *python*:
+   
+   * files are read, broadcasted to every node and executed.
+   * strings are executed as *python* commands.
 
-  * checks if a function called :py:data:`cleanup()` has been defined in your command line arguments and runs it.
-  * runs the :py:data:`_keep_python_running()` function defined in ``pycontrol.py`` which checks if the python interpreter 
-    is required during the simulation (i.e. a python-defined laser profile or an :py:data:`Antenna`) and closes 
-    the Python interpreter if this function returns :py:data:`True`
-  
-* The code will change its current working directory to the value of ``output_dir`` variable value.
+#. *Python* runs :py:data:`cleanup()` if the user has defined it
+   (this can be a good place to delete unused heavy variables and unload unused modules).
 
-* The MPI master (rank 0) will write a file named ``smilei.py`` as a concatenation of everything that python interpreted
-  
-.. note::
+#. *Python* checks whether the *python* interpreter is needed during the simulation 
+   (e.g. the user has defined a temporal :ref:`profile <profiles>` which requires *python*
+   to calculate it every timestep). Otherwise, *python* is stopped.
 
-   * if your simulation does not have time-dependent profiles (which requires the Python interpreter) Python will be closed
+#. If the  :py:data:`output_dir` variable was defined, the current working directory
+   changes to that value.
 
-   * otherwise, as mentioned above, you can implement a function called :py:data:`cleanup()` that can be used 
-     to unload unused modules, free part of the memory by deleting no more needed variables etc...
-
-So the program can be launched as
-
-.. code-block:: bash
-  
-  mpirun -n 4 ./smilei my_sim.py "fieldDump_every=10"
-
-
+All these instructions are summarized by the MPI master (rank 0) in a file ``smilei.py``,
+so that the user can directly run ``python -i smilei.py`` for post-processing purposes.
 
 ----
 
-Stop and restart
-^^^^^^^^^^^^^^^^
-.. py:data:: dump_step
-
-  :default: 0
-
-  The number of timesteps between each dump of the full simulation.
-  If ``0``, no dump is done.
-  
-.. py:data:: dump_minutes 
-
-  :default: 0.
-
-  The number of minutes between each dump of the full simulation (combines with ``dump_step``).
-  If ``0.``, no dump is done.
-
-.. py:data:: exit_after_dump
-
-  :default: ``True``
-
-  If ``True``, the code stops after the dump.
-
-.. py:data:: restart
-
-  :default: ``False``
-
-  If ``True``, :program:`Smilei` finds the last dump file and loads the corresponding simulation.
-  If the dump file is not found, an error is raised.
-
-.. py:data:: dump_file_sequence
-
-  :default: 2
-  
-  This tells :program:`Smilei` to keep the last ``n`` dumps for a later restart 2 is the default option in case the code is stopped (or crashes) during a dump write leading to a unreadable dump file.
-
-.. py:data:: restart_dir
-
-  :default: None
-  
-  This tells :program:`Smilei` where to find dump files for restart.
-  
-  **WARNING: this path must either absolute or be relative to** ``output_dir``
-  
-----
-
-Spatial and temporal scales
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Geometry
+^^^^^^^^
 
 .. py:data:: geometry
   
@@ -143,21 +95,10 @@ Spatial and temporal scales
   ``3v`` indicates the number of dimensions for velocities.
 
 
-.. py:data:: interpolation_order
+.. py:data:: sim_length
   
-  :default: 2
-  
-  Interpolation order. To this day, only ``2`` is available.
-
-
-.. py:data:: timestep
-  
-  Duration of one timestep in units of :math:`T_r`.
-
-
-.. py:data:: sim_time
-  
-  Duration of the simulation in units of :math:`T_r`.
+  A list of floats: dimensions of the simulations in units of :math:`L_r`.
+  The number of elements of this list must be the same as the dimension of the simulation.
 
 
 .. py:data:: cell_length
@@ -166,10 +107,17 @@ Spatial and temporal scales
   The number of elements of this list must be the same as the dimension of the simulation.
 
 
-.. py:data:: sim_length
+.. py:data:: interpolation_order
   
-  A list of floats: dimensions of the simulations in units of :math:`L_r`.
-  The number of elements of this list must be the same as the dimension of the simulation.
+  :default: 2
+  
+  Interpolation order. To this day, only ``2`` is available.
+
+
+.. py:data:: number_of_patches
+  
+  A list of integers: the number of patches in each dimension. 
+  :red:`to do`
 
 
 .. py:data:: clrw
@@ -177,10 +125,6 @@ Spatial and temporal scales
   :default: 0.
   
   Cluster width.
-  :red:`to do`
-
-.. py:data:: number_of_procs
-  
   :red:`to do`
 
 
@@ -191,6 +135,21 @@ Spatial and temporal scales
   The value of the reference wavelength :math:`\lambda_r` in SI units
   (**only required if collisions or ionization are requested**).
   This wavelength is related to the normalization length according to :math:`2\pi L_r = \lambda_r`.
+
+
+----
+
+Temporal scale
+^^^^^^^^^^^^^^
+
+.. py:data:: timestep
+  
+  Duration of one timestep in units of :math:`T_r`.
+
+
+.. py:data:: sim_time
+  
+  Duration of the simulation in units of :math:`T_r`.
 
 
 ----
@@ -427,6 +386,8 @@ All the possible variables inside this block are explained here:
 
 
 ----
+
+.. _antennas:
 
 Antennas
 ^^^^^^^^
@@ -800,6 +761,9 @@ All the possible variables inside this block are explained here:
 
 The full list of scalars that are saved by this diagnostic:
 
+
+.. rst-class:: nowrap
+
 +----------------+---------------------------------------------------------------------------+
 | **Global energies**                                                                        |
 +----------------+---------------------------------------------------------------------------+
@@ -872,6 +836,9 @@ This is done with the following instructions in the namelist:
 
 
 The full list of fields that are saved by this diagnostic:
+
+
+.. rst-class:: nowrap
 
 +----------------+-------------------------------------------------------+
 | | Bx_m         | |                                                     |
@@ -1229,6 +1196,59 @@ All the possible variables inside this block are explained here:
 
     data compression in the HDF5 file    
 
+
+----
+
+Stop and restart
+^^^^^^^^^^^^^^^^
+
+To restart the simulation from a previous point, a few instructions are needed to 
+tell :program:`Smilei` where to find the restart information, and how often the checkpoint
+dumps are done.
+
+.. py:data:: restart
+
+  :default: ``False``
+
+  If ``True``, :program:`Smilei` finds the last dump file and loads the corresponding simulation.
+  If the dump file is not found, an error is raised.
+
+.. py:data:: restart_dir
+
+  :default: None
+  
+  This tells :program:`Smilei` where to find dump files for restart.
+  
+  **WARNING: this path must either absolute or be relative to** ``output_dir``
+
+.. py:data:: dump_step
+
+  :default: 0
+
+  The number of timesteps between each dump of the full simulation.
+  If ``0``, no dump is done.
+  
+.. py:data:: dump_minutes 
+
+  :default: 0.
+
+  The number of minutes between each dump of the full simulation (combines with ``dump_step``).
+  If ``0.``, no dump is done.
+
+.. py:data:: exit_after_dump
+
+  :default: ``True``
+
+  If ``True``, the code stops after the dump.
+
+.. py:data:: dump_file_sequence
+
+  :default: 2
+  
+  This tells :program:`Smilei` to keep the last ``n`` dumps for a later restart.
+  The default value, 2, saves one extra dump in case of a crash during the file dump.
+  
+
 ----
 
 Miscellaneous
@@ -1236,31 +1256,35 @@ Miscellaneous
 
 .. py:data:: random_seed
 
-  The value of the random seed. If not defined, the machine clock is used.
-  Note that to create a per processor ``random_seed`` you can use the variable ``smilei_mpi_rank`` (see below)
+  :default: the machine clock
+
+  The value of the random seed. To create a per-processor random seed, you may use
+  the variable  :py:data:`smilei_mpi_rank`.
   
 
 ----
 
-Smilei defined variables
-^^^^^^^^^^^^^^^^^^^^^^^^
+Variables defined by Smilei
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-These are variable defined in smilei and passed to the python interpreter for commodity reason
+:program:`Smilei` passes the following variables to the python interpreter for use in the
+namelist. They should not be re-defined by the user!
 
 .. py:data:: smilei_mpi_rank
     
-  This is a variable defined from ``smilei`` and is the MPI rank of the CPU
+  The MPI rank of the current CPU.
 
 .. py:data:: smilei_mpi_size
     
-  This is a variable defined from ``smilei`` and is the MPI total number of CPUs
+  The total number of MPI CPUs.
 
 .. py:data:: smilei_rand_max
 
-  This is a variable defined from ``smilei`` and is the largest C random value 
+  The largest random integer.
 
 
-As example of their use, here is a scipt to randomize both the python interpreter and the 
+As an example of their use, this script randomizes both python's
+and :program:`Smilei`'s random seeds.
 ::
 
     import random, math
