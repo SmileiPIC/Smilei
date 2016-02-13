@@ -105,15 +105,19 @@ public:
                     ERROR("For species '" << species_type << "', bc_part_type_north not defined");
             }
             
-            // for thermalizing BCs on particles check if thermT is correctly defined
+            // for thermalizing BCs on particles check if thermT & thermVelocity is correctly defined
+            // --------------------------------------------------------------------------------------
             bool thermTisDefined=false;
             bool thermVisDefined=false;
+            
+            // 1D: checks west/east bcs
             if ( (thisSpecies->bc_part_type_west=="thermalize") || (thisSpecies->bc_part_type_east=="thermalize") ){
                 thermTisDefined=PyTools::extract("thermT",thisSpecies->thermT,"Species",ispec);
                 if (!thermTisDefined) ERROR("thermT needs to be defined for species " <<ispec<< " due to x-BC thermalize");
                 thermVisDefined=PyTools::extract("thermVelocity",thisSpecies->thermVelocity,"Species",ispec);
                 if (!thermVisDefined) ERROR("thermVelocity needs to be defined for species " <<ispec<< " due to x-BC thermalize");
             }
+            // 2D: checks south/north bcs
             if ( (params.nDim_particle==2) && (!thermTisDefined) && (!thermVisDefined) &&
                 (thisSpecies->bc_part_type_south=="thermalize" || thisSpecies->bc_part_type_north=="thermalize") ) {
                 thermTisDefined=PyTools::extract("thermT",thisSpecies->thermT,"Species",ispec);
@@ -121,13 +125,18 @@ public:
                 thermVisDefined=PyTools::extract("thermVelocity",thisSpecies->thermVelocity,"Species",ispec);
                 if (!thermTisDefined) ERROR("thermVelocity needs to be defined for species " <<ispec<< " due to y-BC thermalize");
             }
+            
             if (thermTisDefined) {
+                // if defined for only one direction thermT is put the same in all 3 directions (isotrop temperature)
                 if (thisSpecies->thermT.size()==1) {
+                    WARNING("Using thermT[0] for species " << species_type << " in all directions");
                     thisSpecies->thermT.resize(3);
                     for (unsigned int i=1; i<3;i++)
                         thisSpecies->thermT[i]=thisSpecies->thermT[0];
                 }
+                
             } else {
+                // if not defined thermT & thermVelocity are put to 0
                 thisSpecies->thermT.resize(3);
                 for (unsigned int i=0; i<3;i++)
                     thisSpecies->thermT[i]=0.0;
@@ -135,6 +144,19 @@ public:
                 for (unsigned int i=0; i<3;i++)
                     thisSpecies->thermVelocity[i]=0.0;
             }
+            
+            // Compute the thermalVelocity & Momentum for thermalizing bcs
+            thisSpecies->thermalVelocity.resize(3);
+            thisSpecies->thermalMomentum.resize(3);
+            
+            for (unsigned int i=0; i<3; i++) {
+                thisSpecies->thermalVelocity[i] = sqrt(2.*thisSpecies->thermT[i]/thisSpecies->mass);
+                thisSpecies->thermalMomentum[i] = thisSpecies->thermalVelocity[i];
+                // Caution: momentum in SMILEI actually correspond to p/m
+                if (thisSpecies->thermalVelocity[i]>0.3) ERROR("Thermalizing BCs for species " << species_type << " require non-relativistic thermT");
+            }
+
+
             
             PyTools::extract("ionization_model", thisSpecies->ionization_model, "Species",ispec);
             
@@ -178,33 +200,6 @@ public:
             thisSpecies->temperatureProfile[0] = new Profile(profile1, params.nDim_particle, "temperature[0] "+species_type);
             thisSpecies->temperatureProfile[1] = new Profile(profile2, params.nDim_particle, "temperature[1] "+species_type);
             thisSpecies->temperatureProfile[2] = new Profile(profile3, params.nDim_particle, "temperature[2] "+species_type);
-            
-            
-            // CALCULATE USEFUL VALUES
-            
-            /*        double gamma=1.+thisSpecies->thermT[0]/thisSpecies->mass;
-             
-             for (unsigned int i=0; i<3; i++) {
-             thisSpecies->thermalVelocity[i] = sqrt( 1.-1./gamma*gamma );
-             thisSpecies->thermalMomentum[i] = gamma*thisSpecies->thermalVelocity[i];
-             }
-             
-             double gamma=1.+thisSpecies->thermT[0]/thisSpecies->mass;
-             */
-            
-            thisSpecies->thermalVelocity.resize(3);
-            thisSpecies->thermalMomentum.resize(3);
-            
-            if (thermTisDefined) {
-                WARNING("Using thermT[0] for species " << species_type << " in all directions");
-                if (thisSpecies->thermalVelocity[0]>0.3) {
-                    ERROR("for Species#"<<ispec<<" thermalising BCs require ThermT[0]="<<thisSpecies->thermT[0]<<"<<"<<thisSpecies->mass);
-                }
-                for (unsigned int i=0; i<3; i++) {
-                    thisSpecies->thermalVelocity[i] = sqrt(2.*thisSpecies->thermT[0]/thisSpecies->mass);
-                    thisSpecies->thermalMomentum[i] = thisSpecies->thermalVelocity[i];
-                }
-            }
             
             
             // Extract test Species flag
