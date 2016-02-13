@@ -124,6 +124,7 @@ public:
                 if (!thermTisDefined) ERROR("thermT needs to be defined for species " <<ispec<< " due to y-BC thermalize");
                 thermVisDefined=PyTools::extract("thermVelocity",thisSpecies->thermVelocity,"Species",ispec);
                 if (!thermTisDefined) ERROR("thermVelocity needs to be defined for species " <<ispec<< " due to y-BC thermalize");
+                if (thisSpecies->thermVelocity.size()!=3) ERROR("thermVelocity needs to have all 3 components  defined for species " <<ispec)
             }
             
             if (thermTisDefined) {
