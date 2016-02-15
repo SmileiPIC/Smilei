@@ -97,13 +97,13 @@ Geometry
 
 .. py:data:: sim_length
   
-  A list of floats: dimensions of the simulations in units of :math:`L_r`.
+  A list of floats: size of the simulation box in units of :math:`L_r`.
   The number of elements of this list must be the same as the dimension of the simulation.
 
 
 .. py:data:: cell_length
   
-  A list of floats: dimensions of one cell in units of :math:`L_r`.
+  A list of floats: size of one cell in units of :math:`L_r`.
   The number of elements of this list must be the same as the dimension of the simulation.
 
 
