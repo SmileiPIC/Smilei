@@ -1,4 +1,12 @@
 SMILEICXX     ?= mpiicpc
+VERSION = $(shell mpirun --version | head -n 1)
+ifneq (,$(findstring "Open MPI",$(MPIVERSION)))
+    SMILEICXX = mpicxx
+else
+    SMILEICXX = mpiicpc
+endif
+
+
 HDF5_ROOT_DIR ?=
 
 BUILD_DIR ?= build
@@ -23,7 +31,7 @@ COMMITDATE:="$(shell git show -s --pretty="%ci" 2>/dev/null || echo '??')"
 CXXFLAGS += -D__VERSION=\"$(VERSION)\" -D__COMMITDATE=\"$(COMMITDATE)\" -D__CONFIG=\""$(config)"\"
 
 CXXFLAGS += -I${HDF5_ROOT_DIR}/include -std=c++0x 
-LDFLAGS += -L${HDF5_ROOT_DIR}/lib -lhdf5 -lz
+LDFLAGS += -L${HDF5_ROOT_DIR}/lib -lhdf5 
 
 
 ifneq (,$(findstring poincare,$(HOSTNAME)))
@@ -67,7 +75,7 @@ ifneq (,$(findstring turing,$(config)))
 endif
 
 ifeq (,$(findstring noopenmp,$(config)))
-	SMILEI_COMPILER:=$(shell $(SMILEICXX) --showme:command)
+	SMILEI_COMPILER:=$(shell $(SMILEICXX) --version|head -n 1)
     ifneq (,$(findstring icpc,$(SMILEI_COMPILER)))
         OPENMPFLAGS = -openmp
     else
@@ -88,7 +96,6 @@ clean:
 
 distclean: clean
 	rm -f $(EXEC)
-
 
 # this generates a .h file containing a char[] with the python script in binary then
 # you can just include this file to get the contents (in Params/Params.cpp)
