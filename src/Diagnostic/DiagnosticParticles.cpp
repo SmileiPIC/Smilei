@@ -6,7 +6,6 @@
 
 #include "Params.h"
 #include "Patch.h"
-#include "H5.h"
 
 using namespace std;
 
@@ -16,25 +15,36 @@ filename(""),
 output(""),
 every(0)
 {
+    ostringstream name("");
+    name << "Diagnotic Particles #" << n_diag_particles;
+    string errorPrefix = name.str();
+    
     // get parameter "output" that determines the quantity to sum in the output array
     if (!PyTools::extract("output",output,"DiagParticles",n_diag_particles))
-        ERROR("Diagnotic Particles #" << n_diag_particles << ": parameter `output` required");
+        ERROR(errorPrefix << ": parameter `output` required");
     
-    // get parameter "every" which is the period (in timesteps) for getting the outputs
+    // get parameter "every" which describes a timestep selection
     if (!PyTools::extract("every",every,"DiagParticles",n_diag_particles))
         every=params.global_every;
+//    timeSelection = new TimeSelection(
+//        PyTools::extract_py("every", "DiagParticles", n_diag_particles),
+//        name.str()
+//    );
     
     // get parameter "time_average" that determines the number of timestep to average the outputs
     time_average = 1;
     PyTools::extract("time_average",time_average,"DiagParticles",n_diag_particles);
     if (time_average > every)
-        ERROR("Diagnotic Particles #" << n_diag_particles << ": `time_average` cannot be larger than `every`");
+        ERROR(errorPrefix << ": `time_average` cannot be larger than `every`");
+//    if ( (timeSelection->repeat==1 && time_average>timeSelection->period )
+//      || (timeSelection->repeat> 1 && time_average>timeSelection->spacing) )
+//        ERROR(errorPrefix << ": `time_average` is incompatible with `every`");
     if (time_average < 1) time_average=1;
     
     // get parameter "species" that determines the species to use (can be a list of species)
     vector<string> species_names;
     if (!PyTools::extract("species",species_names,"DiagParticles",n_diag_particles))
-        ERROR("Diagnotic Particles #" << n_diag_particles << ": parameter `species` required");
+        ERROR(errorPrefix << ": parameter `species` required");
     // verify that the species exist, remove duplicates and sort by number
     species = params.FindSpecies(vecSpecies, species_names);
     
@@ -45,7 +55,7 @@ every(0)
     vector<PyObject*> allAxes=PyTools::extract_pyVec("axes","DiagParticles",n_diag_particles);
     
     if (allAxes.size() == 0)
-        ERROR("Diagnotic Particles #" << n_diag_particles << ": axes must contain something");
+        ERROR(errorPrefix << ": axes must contain something");
     
     for (unsigned int iaxis=0; iaxis<allAxes.size(); iaxis++ ) {
         DiagnosticParticlesAxis tmpAxis;
@@ -54,27 +64,27 @@ every(0)
             PyObject* seq = PySequence_Fast(oneAxis, "expected a sequence");
             unsigned int lenAxisArgs=PySequence_Size(seq);
             if (lenAxisArgs<4)
-                ERROR("Diagnotic Particles #" << n_diag_particles << ": axis #" << iaxis << " contain at least 4 arguments");
+                ERROR(errorPrefix << ": axis #" << iaxis << " contain at least 4 arguments");
             
             if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 0),tmpAxis.type)) {
-                ERROR("Diag Particles #" << n_diag_particles << ", axis #" << iaxis << ": First item must be a string (axis type)");
+                ERROR(errorPrefix << ", axis #" << iaxis << ": First item must be a string (axis type)");
             } else {
                 if (   (tmpAxis.type == "z" && params.nDim_particle <3)
                     || (tmpAxis.type == "y" && params.nDim_particle <2) )
-                    ERROR("Diagnotic Particles #" << n_diag_particles << ": axis " << tmpAxis.type << " cannot exist in " << params.nDim_particle << "D");
+                    ERROR(errorPrefix << ": axis " << tmpAxis.type << " cannot exist in " << params.nDim_particle << "D");
             }
             
             if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 1),tmpAxis.min)) {
-                ERROR("Diag Particles #" << n_diag_particles << ", axis #" << iaxis << ": Second item must be a double (axis min)");
+                ERROR(errorPrefix << ", axis #" << iaxis << ": Second item must be a double (axis min)");
             }
             
             if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 2),tmpAxis.max)) {
-                ERROR("Diag Particles #" << n_diag_particles << ", axis #" << iaxis << ": Third item must be a double (axis max)");
+                ERROR(errorPrefix << ", axis #" << iaxis << ": Third item must be a double (axis max)");
             }
             
             
             if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 3),tmpAxis.nbins)) {
-                ERROR("Diag Particles #" << n_diag_particles << ", axis #" << iaxis << ": Fourth item must be an int (number of bins)");
+                ERROR(errorPrefix << ", axis #" << iaxis << ": Fourth item must be an int (number of bins)");
             }
             
             // 5 - Check for  other keywords such as "logscale" and "edge_inclusive"
@@ -88,7 +98,7 @@ every(0)
                 else if(my_str=="edges" ||  my_str=="edge" ||  my_str=="edge_inclusive" ||  my_str=="edges_inclusive")
                     tmpAxis.edge_inclusive = true;
                 else
-                    ERROR("Diagnotic Particles #" << n_diag_particles << ": keyword `" << my_str << "` not understood");
+                    ERROR(errorPrefix << ": keyword `" << my_str << "` not understood");
             }
             
             axes.push_back(tmpAxis);
@@ -141,25 +151,24 @@ void DiagnosticParticles::createFile( unsigned int n_diag_particles )
     // write all parameters as HDF5 attributes
     H5::attr(fileId, "Version", string(__VERSION));
     H5::attr(fileId, "output" , output);
-    H5::attr(fileId, "every"  , every);  
     H5::attr(fileId, "time_average"  , time_average);
     // write all species
     mystream.str(""); // clear
     for (unsigned int i=0 ; i < species.size() ; i++)
-	mystream << species[i] << " ";
+        mystream << species[i] << " ";
     H5::attr(fileId, "species", mystream.str());
     // write each axis
     for (unsigned int iaxis=0 ; iaxis < axes.size() ; iaxis++) {
-	mystream.str(""); // clear
-	mystream << "axis" << iaxis;
-	string str1 = mystream.str();
-	mystream.str(""); // clear
-	mystream << axes[iaxis].type << " " << axes[iaxis].min << " " << axes[iaxis].max << " "
-		 << axes[iaxis].nbins << " " << axes[iaxis].logscale << " " << axes[iaxis].edge_inclusive;
-	string str2 = mystream.str();
-	H5::attr(fileId, str1, str2);
+        mystream.str(""); // clear
+        mystream << "axis" << iaxis;
+        string str1 = mystream.str();
+        mystream.str(""); // clear
+        mystream << axes[iaxis].type << " " << axes[iaxis].min << " " << axes[iaxis].max << " "
+                 << axes[iaxis].nbins << " " << axes[iaxis].logscale << " " << axes[iaxis].edge_inclusive;
+        string str2 = mystream.str();
+        H5::attr(fileId, str1, str2);
     }
-        
+    
     H5Fclose(fileId);
 }
 
@@ -180,6 +189,12 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies)
     // skip the routine if the timestep is not the good one
     if (timestep % every >= time_average) return;
     
+//    // Get the previous timestep of the time selection
+//    int previousTime = timeSelection.previousTime(timestep);
+//    
+//    // Leave if the timestep is not the good one
+//    if (timestep - previousTime >= time_average) return;
+    
     // Allocate memory for the output array (already done if time-averaging)
     if (time_average <= 1)
         data_sum.resize(output_size);
@@ -187,6 +202,10 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies)
     // if first time, erase output array
     if (timestep % every == 0)
         fill(data_sum.begin(), data_sum.end(), 0.);
+    
+//    // if first time, erase output array
+//    if (timestep == previousTime)
+//        fill(data_sum.begin(), data_sum.end(), 0.);
     
     // loop species
     for (unsigned int ispec=0 ; ispec < species.size() ; ispec++) {
@@ -443,24 +462,24 @@ void DiagnosticParticles::write(int timestep)
 {
     double coeff;
     if (filename.size()) { // only the master has filename.size()>0
-	// if time_average, then we need to divide by the number of timesteps
-	if (time_average > 1) {
-	    coeff = 1./((double)time_average);
-	    for (int i=0; i<output_size; i++)
-		data_sum[i] *= coeff;
-	}
-	// make name of the array
-	ostringstream mystream("");
-	mystream.str("");
-	mystream << "timestep" << setw(8) << setfill('0') << timestep;
-	// write the array
-	hid_t fileId = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
-	htri_t status = H5Lexists( fileId, mystream.str().c_str(), H5P_DEFAULT ); 
-	if (!status)
-	    H5::vect(fileId, mystream.str(), data_sum);
-	H5Fclose(fileId);
+        // if time_average, then we need to divide by the number of timesteps
+        if (time_average > 1) {
+            coeff = 1./((double)time_average);
+            for (int i=0; i<output_size; i++)
+                data_sum[i] *= coeff;
+        }
+        // make name of the array
+        ostringstream mystream("");
+        mystream.str("");
+        mystream << "timestep" << setw(8) << setfill('0') << timestep;
+        // write the array
+        hid_t fileId = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+        htri_t status = H5Lexists( fileId, mystream.str().c_str(), H5P_DEFAULT ); 
+        if (!status)
+            H5::vect(fileId, mystream.str(), data_sum);
+        H5Fclose(fileId);
     }
-        
+    
 }
 
 // delete temporary stuff

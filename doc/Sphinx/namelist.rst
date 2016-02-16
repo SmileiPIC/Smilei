@@ -1159,8 +1159,7 @@ during runtime. It is similar but less powerful than *particle diagnostics* but 
 
   :red:`to do TV,FP: we should test the above statement`
 
-All diagnostics will be written in the file 'PhaseSpace.h5'
-::
+All diagnostics will be written in the file 'PhaseSpace.h5'::
 
     DiagPhase (
         kind    = ['xpx', 'xpy'],
@@ -1196,6 +1195,51 @@ All the possible variables inside this block are explained here:
 
     data compression in the HDF5 file    
 
+
+----
+
+.. _TimeSelections:
+
+Time selections
+^^^^^^^^^^^^^^^
+
+Several components (mainly diagnostics) may require a selection of timesteps to
+be chosen by the user. When one of these timesteps is reached, the diagnostics will
+output data. A time selection is given through the parameter ``every`` and is a list
+of several integers.
+
+You may chose between five different syntaxes::
+  
+  every = [               period                    ] # Syntax 1
+  every = [       start,  period                    ] # Syntax 2
+  every = [ start,  end,  period                    ] # Syntax 3
+  every = [ start,  end,  period,  repeat           ] # Syntax 4
+  every = [ start,  end,  period,  repeat,  spacing ] # Syntax 5
+
+where
+
+* ``start`` is the first timestep of the selection (defaults to 0);
+
+* ``end`` is the last timestep of the selection (defaults to ∞);
+
+* ``period`` is the separation between outputs (defaults to 1);
+
+* ``repeat`` indicates how many outputs to do at each period (defaults to 1);
+
+* ``spacing`` is the separation between each repeat (defaults to 1).
+
+For more clarity, this graph illustrates the five syntaxes for time selections:
+
+.. image:: _static/TimeSelections.png
+  :width: 33em
+  :align: center
+
+..
+
+.. admonition:: Tips
+  
+  * The syntax ``every = period`` is also accepted.
+  * Any value set to ``0`` will be replaced by the default value.
 
 ----
 

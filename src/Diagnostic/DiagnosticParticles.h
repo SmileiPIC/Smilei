@@ -2,67 +2,7 @@
 -----------------------------------------------------------------------
 PARTICLE DIAGNOSTICS                -    F. Perez - 03/2015
 -----------------------------------------------------------------------
-  During the simulation, each particle diagnostic collects the data from particles
-  into a N-dimensional histogram.
-  Each histogram axis can be: x, y, z, px, py, pz, p, gamma, ekin, vx, vy, vz, v or charge.
-  In each bin of the histogram, several things may be summed: the weights (density), 
-    weight*charge (charge density), weight*charge*velocity (current density),
-    or weight*momentum (momentum density)
-  Examples:
-      +----------+------------+---------------------+
-      |   Rank   |   type     |         Axes        |
-      +----------+------------+---------------------+
-      |   1-D    |  density   |        'ekin'       | => energy distribution.
-      |   2-D    |  density   |     'x' and 'y'     | => density map.
-      |   2-D    |  x-current |     'x' and 'y'     | => x-current map.
-      |   2-D    |  density   |     'x' and 'px'    | => phase space.
-      |   3-D    |  density   | 'x', 'y' and 'ekin' | => density map for several energy ranges.
-      +----------+------------+---------------------+
-
-In the input (namelist) file, each diagnostics are provided as follows:
-
-
-# DIAGNOSTICS ON PARTICLES - project the particles on a N-D arbitrary grid
-# ------------------------------------------------------------------------
-# output       = string: "density", "charge_density", etc.
-#                parameter that describes what quantity is obtained 
-# every        = integer > 0: number of time-steps between each output
-# time_average = integer > 0: number of time-steps to average
-# species      = list of strings, one or several species whose data will be used
-# axes         = list of axes
-# Each axis is a list: (_type_ _min_ _max_ _nsteps_ ["logscale"] ["edge_inclusive"])
-#   _type_ is a string, one of the following options:
-#      x, y, z, px, py, pz, p, gamma, ekin, vx, vy, vz, v or charge
-#   The data is discretized for _type_ between _min_ and _max_, in _nsteps_ bins
-#   The optional "logscale" sets the scale to logarithmic
-#   The optional "edge_inclusive" forces the particles that are outside (_min_,_max_)
-#     to be counted in the extrema bins
-#   Example : axes = ("x", 0, 1, 30)
-#   Example : axes = ("px", -1, 1, 100, "edge_inclusive")
-
-# EXAMPLE
-DiagParticles(
-	output = "density",
-	every = 5,
-	time_average = 1,
-	species = ["electron1"],
-	axes = [
-		 ["x", 0,  1, 30],
-		 ["y", 0,  1, 30]
-	]
-)
-
-# EXAMPLE
-DiagParticles(
-	output = "density",
-	every = 5,
-	time_average = 1,
-	species = ["electron1"],
-	axes = [
-		 ["ekin", 0.0001, 0.1, 100, "logscale"]
-	]
-)
-
+  see the doc for instructions and examples
 */
 
 #ifndef DiagnosticParticles_H
@@ -73,6 +13,7 @@ DiagParticles(
 #include "Species.h"
 #include "Particles.h"
 #include "H5.h"
+#include "TimeSelection.h"
 
 class Patch;
 
@@ -128,6 +69,8 @@ private:
     
     //! period (in timesteps) for outputs
     unsigned int every;
+//    //! Time selection
+//    TimeSelection * timeSelection;
     
     //! number of timesteps during which outputs are averaged
     unsigned int time_average;
