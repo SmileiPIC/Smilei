@@ -1,9 +1,9 @@
-SMILEICXX     ?= mpiicpc
-VERSION = $(shell mpirun --version | head -n 1)
-ifneq (,$(findstring "Open MPI",$(MPIVERSION)))
-    SMILEICXX = mpicxx
+
+MPIVERSION = $(shell mpirun --version 2>&1| head -n 1)
+ifneq (,$(findstring Open MPI,$(MPIVERSION)))
+    SMILEICXX=mpicxx
 else
-    SMILEICXX = mpiicpc
+    SMILEICXX=mpiicpc
 endif
 
 
@@ -75,7 +75,7 @@ ifneq (,$(findstring turing,$(config)))
 endif
 
 ifeq (,$(findstring noopenmp,$(config)))
-	SMILEI_COMPILER:=$(shell $(SMILEICXX) --version|head -n 1)
+	SMILEI_COMPILER:=$(shell $(SMILEICXX) --version 2>&1|head -n 1)
     ifneq (,$(findstring icpc,$(SMILEI_COMPILER)))
         OPENMPFLAGS = -openmp
     else
@@ -96,6 +96,9 @@ clean:
 
 distclean: clean
 	rm -f $(EXEC)
+
+env:
+	echo "$(MPIVERSION)"
 
 # this generates a .h file containing a char[] with the python script in binary then
 # you can just include this file to get the contents (in Params/Params.cpp)
