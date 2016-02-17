@@ -103,7 +103,7 @@ public:
     CollisionalNoIonization() : CollisionalIonization(0,0) {};
     ~CollisionalNoIonization(){};
     
-    virtual int  createDatabase(double) {};
+    virtual int  createDatabase(double) { return 0; };
     virtual void assignDatabase(int) {};
     
     void prepare2(Particles*, int, Particles*, int, bool){};
