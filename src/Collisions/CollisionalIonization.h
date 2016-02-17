@@ -58,9 +58,9 @@ private:
     int atomic_number;
     
     //! Table of first ionization energies of ions
-    static const std::vector<std::vector<double> > ionizationEnergy;
+    static const double ionizationEnergy[];
     //! Table of binding energies of all electrons in neutral atoms
-    static const std::vector<std::vector<double> > bindingEnergy;
+    static const double bindingEnergy[];
     
     //! Global table of atomic numbers
     static std::vector<int> DB_Z;

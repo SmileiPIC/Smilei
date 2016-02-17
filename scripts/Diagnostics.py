@@ -1051,7 +1051,6 @@ class ParticleDiagnostic(Diagnostic):
 			name  = attrs[i][0]
 			value = attrs[i][1]
 			if (name == "output"): output = value
-			if (name == "every" ): every  = int(value)
 			if (name == "time_average"): time_average = int(value)
 			if (name == "species"):
 				species = value.strip().split(" ") # get all species numbers
@@ -1069,7 +1068,7 @@ class ParticleDiagnostic(Diagnostic):
 				while len(axes)<n+1: axes.append({}) # extend the array to the adequate size
 				axes[n] = {"type":axistype,"min":axismin,"max":axismax,"size":axissize,"log":logscale,"edges_included":edge_inclusive}
 		f.close()
-		return {"#":diagNumber, "output":output, "every":every, "tavg":time_average, "species":species, "axes":axes}
+		return {"#":diagNumber, "output":output, "tavg":time_average, "species":species, "axes":axes}
 	
 	
 	# Prints the info obtained by the function "getInfo"
@@ -1085,8 +1084,7 @@ class ParticleDiagnostic(Diagnostic):
 		# 2 - period and time-averaging
 		tavg = "no time-averaging"
 		if (info["tavg"] > 1):
-			tavg = "averaging over "+str(info["tavg"])+" timesteps"
-		print "    Every "+ str(info["every"]) + " timesteps, "+tavg
+			print "    Averaging over "+str(info["tavg"])+" timesteps"
 		
 		# 3 - axes
 		for i in range(len(info["axes"])):
