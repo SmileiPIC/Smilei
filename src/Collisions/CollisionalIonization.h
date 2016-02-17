@@ -58,9 +58,9 @@ private:
     int atomic_number;
     
     //! Table of first ionization energies of ions
-    static const std::vector<std::vector<double> > ionizationEnergy;
+    static const double ionizationEnergy[];
     //! Table of binding energies of all electrons in neutral atoms
-    static const std::vector<std::vector<double> > bindingEnergy;
+    static const double bindingEnergy[];
     
     //! Global table of atomic numbers
     static std::vector<int> DB_Z;
@@ -103,7 +103,7 @@ public:
     CollisionalNoIonization() : CollisionalIonization(0,0) {};
     ~CollisionalNoIonization(){};
     
-    virtual int  createDatabase(double) {};
+    virtual int  createDatabase(double) { return 0; };
     virtual void assignDatabase(int) {};
     
     void prepare2(Particles*, int, Particles*, int, bool){};
