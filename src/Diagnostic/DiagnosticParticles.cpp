@@ -12,8 +12,7 @@ using namespace std;
 // constructor
 DiagnosticParticles::DiagnosticParticles(unsigned int n_diag_particles, Params& params, Patch *patch, std::vector<Species*>& vecSpecies) :
 filename(""),
-output(""),
-every(0)
+output("")
 {
     ostringstream name("");
     name << "Diagnotic Particles #" << n_diag_particles;
@@ -24,22 +23,17 @@ every(0)
         ERROR(errorPrefix << ": parameter `output` required");
     
     // get parameter "every" which describes a timestep selection
-    if (!PyTools::extract("every",every,"DiagParticles",n_diag_particles))
-        every=params.global_every;
-//    timeSelection = new TimeSelection(
-//        PyTools::extract_py("every", "DiagParticles", n_diag_particles),
-//        name.str()
-//    );
+    timeSelection = new TimeSelection(
+        PyTools::extract_py("every", "DiagParticles", n_diag_particles),
+        name.str()
+    );
     
     // get parameter "time_average" that determines the number of timestep to average the outputs
     time_average = 1;
     PyTools::extract("time_average",time_average,"DiagParticles",n_diag_particles);
-    if (time_average > every)
-        ERROR(errorPrefix << ": `time_average` cannot be larger than `every`");
-//    if ( (timeSelection->repeat==1 && time_average>timeSelection->period )
-//      || (timeSelection->repeat> 1 && time_average>timeSelection->spacing) )
-//        ERROR(errorPrefix << ": `time_average` is incompatible with `every`");
-    if (time_average < 1) time_average=1;
+    if ( time_average < 1 ) time_average=1;
+    if ( time_average > timeSelection->smallestInterval() )
+        ERROR(errorPrefix << ": `time_average` is incompatible with `every`");
     
     // get parameter "species" that determines the species to use (can be a list of species)
     vector<string> species_names;
@@ -106,32 +100,33 @@ every(0)
             Py_DECREF(seq);
         }
     }
-
+    
     // calculate the total size of the output array
     output_size = 1;
     for (unsigned int iaxis=0 ; iaxis < axes.size() ; iaxis++)
         output_size *= axes[iaxis].nbins;
-
+    
     // if necessary, resize the output array
     if (time_average>1)
         data_sum.resize(output_size);
-
+    
     // Output info on diagnostics
-    ostringstream mystream("");
-    mystream.str("");
-    mystream << species_names[0];
-    for(unsigned int i=1; i<species_names.size(); i++)
-        mystream << "," << species_names[i];
-    if ( patch->isMaster() ) MESSAGE(1,"Created particle diagnostic #" << n_diag_particles << ": species " << mystream.str());
-    for(unsigned int i=0; i<axes.size(); i++) {
+    if ( patch->isMaster() ) {
+        ostringstream mystream("");
         mystream.str("");
-        mystream << "Axis " << axes[i].type << " from " << axes[i].min << " to " << axes[i].max << " in " << axes[i].nbins << " steps";
-        if( axes[i].logscale       ) mystream << " [LOGSCALE] ";
-        if( axes[i].edge_inclusive ) mystream << " [EDGE INCLUSIVE]";
-        if ( patch->isMaster() )MESSAGE(2,mystream.str());
+        mystream << species_names[0];
+        for(unsigned int i=1; i<species_names.size(); i++)
+            mystream << "," << species_names[i];
+        MESSAGE(1,"Created particle diagnostic #" << n_diag_particles << ": species " << mystream.str());
+        for(unsigned int i=0; i<axes.size(); i++) {
+            mystream.str("");
+            mystream << "Axis " << axes[i].type << " from " << axes[i].min << " to " << axes[i].max << " in " << axes[i].nbins << " steps";
+            if( axes[i].logscale       ) mystream << " [LOGSCALE] ";
+            if( axes[i].edge_inclusive ) mystream << " [EDGE INCLUSIVE]";
+            MESSAGE(2,mystream.str());
+        }
     }
     
-
 }
 
 // destructor
@@ -186,26 +181,19 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies)
     string axistype;
     ostringstream mystream("");
     
-    // skip the routine if the timestep is not the good one
-    if (timestep % every >= time_average) return;
+    // Get the previous timestep of the time selection
+    int previousTime = timeSelection->previousTime(timestep);
     
-//    // Get the previous timestep of the time selection
-//    int previousTime = timeSelection.previousTime(timestep);
-//    
-//    // Leave if the timestep is not the good one
-//    if (timestep - previousTime >= time_average) return;
+    // Leave if the timestep is not the good one
+    if (timestep - previousTime >= time_average) return;
     
     // Allocate memory for the output array (already done if time-averaging)
     if (time_average <= 1)
         data_sum.resize(output_size);
     
     // if first time, erase output array
-    if (timestep % every == 0)
+    if (timestep == previousTime)
         fill(data_sum.begin(), data_sum.end(), 0.);
-    
-//    // if first time, erase output array
-//    if (timestep == previousTime)
-//        fill(data_sum.begin(), data_sum.end(), 0.);
     
     // loop species
     for (unsigned int ispec=0 ; ispec < species.size() ; ispec++) {
@@ -455,31 +443,26 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies)
 
 // Now the data_sum has been filled
 // if needed now, store result to hdf file
-// call by patch master if (timestep % every == time_average-1) 
-// sum the outputs from each MPI partition (filename.size()>0 only for master)
-
+// called by MPI master only, when time-average has finished
 void DiagnosticParticles::write(int timestep)
 {
     double coeff;
-    if (filename.size()) { // only the master has filename.size()>0
-        // if time_average, then we need to divide by the number of timesteps
-        if (time_average > 1) {
-            coeff = 1./((double)time_average);
-            for (int i=0; i<output_size; i++)
-                data_sum[i] *= coeff;
-        }
-        // make name of the array
-        ostringstream mystream("");
-        mystream.str("");
-        mystream << "timestep" << setw(8) << setfill('0') << timestep;
-        // write the array
-        hid_t fileId = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
-        htri_t status = H5Lexists( fileId, mystream.str().c_str(), H5P_DEFAULT ); 
-        if (!status)
-            H5::vect(fileId, mystream.str(), data_sum);
-        H5Fclose(fileId);
+    // if time_average, then we need to divide by the number of timesteps
+    if (time_average > 1) {
+        coeff = 1./((double)time_average);
+        for (int i=0; i<output_size; i++)
+            data_sum[i] *= coeff;
     }
-    
+    // make name of the array
+    ostringstream mystream("");
+    mystream.str("");
+    mystream << "timestep" << setw(8) << setfill('0') << timestep;
+    // write the array
+    hid_t fileId = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+    htri_t status = H5Lexists( fileId, mystream.str().c_str(), H5P_DEFAULT ); 
+    if (!status)
+        H5::vect(fileId, mystream.str(), data_sum);
+    H5Fclose(fileId);    
 }
 
 // delete temporary stuff

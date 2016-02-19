@@ -265,11 +265,11 @@ int main (int argc, char* argv[])
             for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
                 vecPatches(ipatch)->EMfields->applyAntennas(smpiData, time_dual);
             #pragma omp barrier
-        
+            
             /*******************************************/
             /*********** Maxwell solver ****************/
             /*******************************************/
-        
+            
             // solve Maxwell's equations
             if( time_dual > params.time_fields_frozen )
                 vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timer );
@@ -280,24 +280,24 @@ int main (int argc, char* argv[])
                 for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
                     vecPatches(ipatch)->EMfields->incrementAvgFields(itime, vecPatches.Diags->ntime_step_avg);
                 }
-
-        // call the various diagnostics
-        // ----------------------------
-
-        #pragma omp master
-        vecPatches.runAllDiags(params, smpiData, &diag_flag, itime, timer);
-        
-
-        // ----------------------------------------------------------------------
-        // Validate restart  : to do
-        // Restart patched moving window : to do
-        // Break in an OpenMP region
-        #pragma omp master
-        checkpoint.dump(vecPatches, itime, smpiData, simWindow, params, vecPatches.Diags);
-        // ----------------------------------------------------------------------        
-
+            
+            // call the various diagnostics
+            // ----------------------------
+            
+            #pragma omp master
+            vecPatches.runAllDiags(params, smpiData, &diag_flag, itime, timer);
+            
+            
+            // ----------------------------------------------------------------------
+            // Validate restart  : to do
+            // Restart patched moving window : to do
+            // Break in an OpenMP region
+            #pragma omp master
+            checkpoint.dump(vecPatches, itime, smpiData, simWindow, params, vecPatches.Diags);
+            // ----------------------------------------------------------------------        
+            
         } //End omp parallel region
-                
+        
         timer[5].restart();
         if ( simWindow && simWindow->isMoving(time_dual) ) {
             start_moving++;

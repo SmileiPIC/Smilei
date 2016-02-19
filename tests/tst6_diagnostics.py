@@ -17,6 +17,8 @@ wavelength_SI = 1.e-6
 #      2drz = cylindrical (r,z) grid with 3d3v particles
 dim = "1d3v"
 
+number_of_patches = [8]
+
 # order of interpolation
 interpolation_order = 2
 
@@ -34,7 +36,7 @@ time_fields_frozen = 0.
 # cell_length = cell length
 # sim_length  = length of the simulation
 cell_length = [0.01 * L0]
-sim_length  = [1. * L0]
+sim_length  = [0.96 * L0]
 
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
 # bc_em_type_x : two strings, x boundary conditions for EM fields 
@@ -94,22 +96,22 @@ Species(
 	bc_part_type_east = "none"
 )
 
-Species(
-	species_type = "test",
-	initPosition_type = "random",
-	initMomentum_type = "maxwell-juettner",
-	n_part_per_cell= 2,
-	mass = 1.0,
-	charge = -1.,
-	nb_density = constant(10., xvacuum=0.4*L0),
-	mean_velocity = [0.05, 0., 0.],
-	temperature = [0.00002],
-	time_frozen = 0.0,
-	bc_part_type_west = "none",
-	bc_part_type_east = "none",
-	isTest = True,
-	track_every = 4
-)
+#Species(
+#	species_type = "test",
+#	initPosition_type = "random",
+#	initMomentum_type = "maxwell-juettner",
+#	n_part_per_cell= 2,
+#	mass = 1.0,
+#	charge = -1.,
+#	nb_density = constant(10., xvacuum=0.4*L0),
+#	mean_velocity = [0.05, 0., 0.],
+#	temperature = [0.00002],
+#	time_frozen = 0.0,
+#	bc_part_type_west = "none",
+#	bc_part_type_east = "none",
+#	isTest = True,
+#	track_every = 4
+#)
 
 
 
@@ -143,8 +145,8 @@ DiagProbe(
 	every = 1,
 	time_range = [0.1 *L0, 0.4*L0],
 	number = [40],
-	pos = [0.1*L0],
-	pos_first = [0.9*L0],
+	pos = [0.1*sim_length[0]],
+	pos_first = [0.9*sim_length[0]],
 	fields = []
 )
 
@@ -172,7 +174,7 @@ DiagParticles(
 	time_average = 2,
 	species = ["electron1"],
 	axes = [
-		["x", 0.*L0, 1.*L0, 100],
+		["x", 0.*L0, sim_length[0], 100],
 		["vx", -0.1, 0.1, 100]
 	]
 )
@@ -183,7 +185,7 @@ DiagParticles(
 	time_average = 1,
 	species = ["ion1"],
 	axes = [
-		("x", 0.*L0, 1.*L0, 100),
+		("x", 0.*L0, sim_length[0], 100),
 		("vx", -0.001, 0.001, 100)
 	]
 )
@@ -194,7 +196,7 @@ DiagParticles(
 	time_average = 2,
 	species = ["electron1"],
 	axes = [
-		["x", 0.*L0, 1.*L0, 100],
+		["x", 0.*L0, sim_length[0], 100],
 		["vx", -0.1, 0.1, 100]
 	]
 )
@@ -206,5 +208,16 @@ DiagParticles(
 	species = ["electron1"],
 	axes = [
 		["ekin", 0.0001, 0.1, 100, "logscale", "edge_inclusive"]
+	]
+)
+
+DiagParticles(
+	output = "density",
+	every = [ 30, 80, 10, 3, 3 ],
+	time_average = 1,
+	species = ["electron1"],
+	axes = [
+		("x", 0.*L0, sim_length[0], 100),
+		("vx", -0.1, 0.1, 100)
 	]
 )

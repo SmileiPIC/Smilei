@@ -67,13 +67,11 @@ private:
     //! quantity to be summed into the output array
     std::string output;
     
-    //! period (in timesteps) for outputs
-    unsigned int every;
-//    //! Time selection
-//    TimeSelection * timeSelection;
+    //! Time selection
+    TimeSelection * timeSelection;
     
     //! number of timesteps during which outputs are averaged
-    unsigned int time_average;
+    int time_average;
     
     //! list of the species that will be accounted for
     std::vector<unsigned int> species;

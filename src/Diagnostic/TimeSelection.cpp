@@ -26,7 +26,7 @@ TimeSelection::TimeSelection(PyObject* timeSelection, string name)
     // If the selection is a list or tuple
     else if( PyTuple_Check(timeSelection) || PyList_Check(timeSelection) ) {
         
-        PyObject* seq = PySequence_Fast(seq, "expected a sequence");
+        PyObject* seq = PySequence_Fast(timeSelection, "expected a sequence");
         int nitems = PySequence_Size(seq);
         
         if ( nitems<1 )
@@ -81,7 +81,7 @@ TimeSelection::TimeSelection(PyObject* timeSelection, string name)
         ERROR(name << ": time selection's repeat must be > 0");
     if( spacing<1 )
         ERROR(name << ": time selection's spacing must be > 0");
-    if( groupWidth >= period )
+    if( groupWidth > period )
         ERROR(name << ": time selection must have repeat*spacing<period");
     
 }
@@ -90,18 +90,15 @@ TimeSelection::TimeSelection(PyObject* timeSelection, string name)
 // Tell whether the current timestep is within the selection
 bool TimeSelection::theTimeIsNow(int timestep)
 {
-    
-    // Not in selection if outside the start/end bounds
-    if( timestep<start || timestep>end ) return false;
-    
-    // Calculate the remainder to the period
-    int r = (timestep - start) % period; 
-    
-    // The time is now if the remainder is a multiple of the spacing, but still inside the group
-    if( r%spacing==0 && r<groupWidth ) return true;
-    
-    return false;
-    
+    TheTimeIsNow = false;
+    // In selection if inside the start/end bounds
+    if( timestep>=start && timestep<=end ) {
+        // Calculate the remainder to the period
+        int r = (timestep - start) % period; 
+        // The time is now if the remainder is a multiple of the spacing, but still inside the group
+        if( r%spacing==0 && r<groupWidth ) TheTimeIsNow = true;
+    }
+    return TheTimeIsNow;
 }
 
 
@@ -109,23 +106,25 @@ bool TimeSelection::theTimeIsNow(int timestep)
 // Returns the same timestep if already within the selection
 int TimeSelection::nextTime(int timestep)
 {
-    
-    if( timestep<=start ) return start;
-    if( timestep>end    ) return maxint;
-    
-    int t = timestep-start; // timestep with offset
-    int p = t / period;     // current period
-    int r = t % period;     // remainder to the current period
-    
-    // If inside a group
-    if( r < groupWidth ) {
-        if( r%spacing==0 ) { return timestep; } // return self if already good timestep
-        else { return p * period + (r/spacing+1)*spacing; } // otherwise, return next good timestep
-    // If after group, return next group's beginning
+    if( timestep<=start ) { 
+        NextTime = start;
+    } else if( timestep>end ) { 
+        NextTime = maxint;
     } else {
-        return (p+1) * period;
+        int t = timestep-start; // timestep with offset
+        int p = t / period;     // current period
+        int r = t % period;     // remainder to the current period
+        
+        // If inside a group
+        if( r < groupWidth ) {
+            if( r%spacing==0 ) { NextTime = timestep; } // return current timestep if good
+            else { NextTime = start + p * period + (r/spacing+1)*spacing; } // otherwise, return next good timestep
+        // If after group, return next group's beginning
+        } else {
+            NextTime = start + (p+1) * period;
+        }
     }
-    
+    return NextTime;
 }
 
 
@@ -133,21 +132,22 @@ int TimeSelection::nextTime(int timestep)
 // Returns the same timestep if already within the selection
 int TimeSelection::previousTime(int timestep)
 {
-    
-    if( timestep<start ) return minint;
-    if( timestep>=end  ) return end;
-    
-    int t = timestep-start; // timestep with offset
-    int p = t / period;     // current period
-    int r = t % period;     // remainder to the current period
-    
-    // If inside a group
-    if( r < groupWidth ) {
-        return p * period + (r/spacing)*spacing; // return previous good timestep
-    // If after group, return next group's beginning
+    if( timestep<start ) {
+        PreviousTime = minint;
+    } else if( timestep>=end ) {
+        PreviousTime = end;
     } else {
-        return p * period + groupWidth - 1;
+        int t = timestep-start; // timestep with offset
+        int p = t / period;     // current period
+        int r = t % period;     // remainder to the current period
+        
+        // If inside a group
+        if( r < groupWidth ) {
+            PreviousTime = start + p * period + (r/spacing)*spacing; // return previous good timestep
+        // If after group, return next group's beginning
+        } else {
+            PreviousTime = start + p * period + groupWidth - 1;
+        }
     }
-    
+    return PreviousTime;
 }
-

@@ -38,8 +38,7 @@ CXXFLAGS += $(DIRS:%=-I%)
 #collect all cpp files
 SRCS := $(shell find src/* -name \*.cpp)
 OBJS := $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.o))
-#DEPS := $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.d))
-DEPS=""
+DEPS := $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.d))
 PYSCRIPTS := $(shell find src/Python -name \*.py)
 CXXFLAGS += -I$(BUILD_DIR)/src/Python
 PYHEADERS := $(addprefix $(BUILD_DIR)/, $(PYSCRIPTS:.py=.pyh))

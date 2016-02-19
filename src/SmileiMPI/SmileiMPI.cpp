@@ -120,11 +120,11 @@ void SmileiMPI::init( Params& params )
         MESSAGE(1,"applied topology for periodic BCs in x-direction");
     }
     if (params.nDim_field>1) {
-	// Geometry periodic in y
-	if (params.bc_em_type_y[0]=="periodic") {
-	    periods_[1] = 1;
-	    MESSAGE(2,"applied topology for periodic BCs in y-direction");
-	}
+        // Geometry periodic in y
+        if (params.bc_em_type_y[0]=="periodic") {
+            periods_[1] = 1;
+            MESSAGE(2,"applied topology for periodic BCs in y-direction");
+        }
     }
 } // END init
 
@@ -138,12 +138,12 @@ void SmileiMPI::init_patch_count( Params& params)
 //#ifndef _NOTBALANCED
 //    bool use_load_balancing(true);
 //    if (!use_load_balancing) {
-//	int Npatches = params.number_of_patches[0];
-//	for (unsigned int i = 1; i < params.nDim_field; i++)
-//	    Npatches *=  params.number_of_patches[i]; // Total number of patches.
-//	if (Npatches!=smilei_sz) ERROR("number of patches abd MPI processes");
-//	for (unsigned int i=0; i<smilei_sz; i++) patch_count[i] = 1;
-//	return;
+//        int Npatches = params.number_of_patches[0];
+//        for (unsigned int i = 1; i < params.nDim_field; i++)
+//            Npatches *=  params.number_of_patches[i]; // Total number of patches.
+//        if (Npatches!=smilei_sz) ERROR("number of patches abd MPI processes");
+//        for (unsigned int i=0; i<smilei_sz; i++) patch_count[i] = 1;
+//        return;
 //    }
 //#endif
 
@@ -189,48 +189,48 @@ void SmileiMPI::init_patch_count( Params& params)
 
         //Needs to be updated when dens_lenth is a vector in params.
 
-	// Build profile
-	std::string species_type("");
-	PyTools::extract("species_type",species_type,"Species",ispecies);
+        // Build profile
+        std::string species_type("");
+        PyTools::extract("species_type",species_type,"Species",ispecies);
 
-	PyObject *profile1;
+        PyObject *profile1;
         PyTools::extract_pyProfile("nb_density"    , profile1, "Species", ispecies);
         PyTools::extract_pyProfile("charge_density", profile1, "Species", ispecies);
-	PyTools::extract_pyProfile("n_part_per_cell", profile1, "Species", ispecies);
-	Profile *ppcProfile = new Profile(profile1, params.nDim_particle, "n_part_per_cell "+species_type);
+        PyTools::extract_pyProfile("n_part_per_cell", profile1, "Species", ispecies);
+        Profile *ppcProfile = new Profile(profile1, params.nDim_particle, "n_part_per_cell "+species_type);
 
         local_load = 0;
-	// Count global number of particles, 
-	for (unsigned int i=0; i<params.n_space_global[0]; i++) {
-	    for (unsigned int j=0; j<params.n_space_global[1]; j++) {
-		for (unsigned int k=0; k<params.n_space_global[2]; k++) {
-		    vector<double> x_cell(3,0);
-		    x_cell[0] = (i+0.5)*params.cell_length[0];
-		    x_cell[1] = (j+0.5)*params.cell_length[1];
-		    x_cell[2] = (k+0.5)*params.cell_length[2];
+        // Count global number of particles, 
+        for (unsigned int i=0; i<params.n_space_global[0]; i++) {
+            for (unsigned int j=0; j<params.n_space_global[1]; j++) {
+                for (unsigned int k=0; k<params.n_space_global[2]; k++) {
+                    vector<double> x_cell(3,0);
+                    x_cell[0] = (i+0.5)*params.cell_length[0];
+                    x_cell[1] = (j+0.5)*params.cell_length[1];
+                    x_cell[2] = (k+0.5)*params.cell_length[2];
 
-		    int n_part_in_cell = round(ppcProfile->valueAt(x_cell));
-		    if ( n_part_in_cell<=0. )
-			continue;
-		    else
-			local_load += n_part_in_cell;
-		}
-	    }
-	}
+                    int n_part_in_cell = round(ppcProfile->valueAt(x_cell));
+                    if ( n_part_in_cell<=0. )
+                        continue;
+                    else
+                        local_load += n_part_in_cell;
+                }
+            }
+        }
 
-	double time_frozen(0.);
-	PyTools::extract("time_frozen",time_frozen ,"Species",ispecies);
-	if(time_frozen > 0.) local_load *= coef_frozen;
-	Tload += local_load;
+        double time_frozen(0.);
+        PyTools::extract("time_frozen",time_frozen ,"Species",ispecies);
+        if(time_frozen > 0.) local_load *= coef_frozen;
+        Tload += local_load;
 
-	delete ppcProfile;
+        delete ppcProfile;
 
     } // End for ispecies
 
     Tload += Npatches*ncells_perpatch*coef_cell ; // We assume the load of one cell to be equal to coef_cell and account for ghost cells.
     if (isMaster()) {
-	fout.open ("patch_load.txt");
-	fout << "Total load = " << Tload << endl;
+        fout.open ("patch_load.txt");
+        fout << "Total load = " << Tload << endl;
     }
     Tload /= Tcapabilities; //Target load for each mpi process.
     Tcur = Tload * capabilities[0];  //Init.
@@ -245,43 +245,43 @@ void SmileiMPI::init_patch_count( Params& params)
         local_load = 0.; //Accumulate load of the current patch
         for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++){
 
-	    // Build profile
-	    std::string species_type("");
-	    PyTools::extract("species_type",species_type,"Species",ispecies);
+            // Build profile
+            std::string species_type("");
+            PyTools::extract("species_type",species_type,"Species",ispecies);
 
-	    PyObject *profile1;
-	    PyTools::extract_pyProfile("nb_density"    , profile1, "Species", ispecies);
-	    PyTools::extract_pyProfile("charge_density", profile1, "Species", ispecies);
-	    PyTools::extract_pyProfile("n_part_per_cell", profile1, "Species", ispecies);
-	    Profile *ppcProfile = new Profile(profile1, params.nDim_particle, "n_part_per_cell "+species_type);
+            PyObject *profile1;
+            PyTools::extract_pyProfile("nb_density"    , profile1, "Species", ispecies);
+            PyTools::extract_pyProfile("charge_density", profile1, "Species", ispecies);
+            PyTools::extract_pyProfile("n_part_per_cell", profile1, "Species", ispecies);
+            Profile *ppcProfile = new Profile(profile1, params.nDim_particle, "n_part_per_cell "+species_type);
 
-	    vector<double> cell_index(3,0);
-	    for (unsigned int i=0 ; i<params.nDim_field ; i++) {
-		if (params.cell_length[i]!=0)
-		    cell_index[i] = Pcoordinates[i]*params.cell_length[i];
-	    }
+            vector<double> cell_index(3,0);
+            for (unsigned int i=0 ; i<params.nDim_field ; i++) {
+                if (params.cell_length[i]!=0)
+                    cell_index[i] = Pcoordinates[i]*params.cell_length[i];
+            }
             local_load_temp = 0; 
-	    // Count global number of particles, 
-	    for (unsigned int i=0; i<params.n_space[0]; i++) {
-		for (unsigned int j=0; j<params.n_space[1]; j++) {
-		    for (unsigned int k=0; k<params.n_space[2]; k++) {
-			vector<double> x_cell(3,0);
-			x_cell[0] = cell_index[0] + (i+0.5)*params.cell_length[0];
-			x_cell[1] = cell_index[1] + (j+0.5)*params.cell_length[1];
-			x_cell[2] = cell_index[2] + (k+0.5)*params.cell_length[2];
+            // Count global number of particles, 
+            for (unsigned int i=0; i<params.n_space[0]; i++) {
+                for (unsigned int j=0; j<params.n_space[1]; j++) {
+                    for (unsigned int k=0; k<params.n_space[2]; k++) {
+                        vector<double> x_cell(3,0);
+                        x_cell[0] = cell_index[0] + (i+0.5)*params.cell_length[0];
+                        x_cell[1] = cell_index[1] + (j+0.5)*params.cell_length[1];
+                        x_cell[2] = cell_index[2] + (k+0.5)*params.cell_length[2];
 
-			int n_part_in_cell = round(ppcProfile->valueAt(x_cell));
-			if ( n_part_in_cell<=0. )
-			    continue;
-			else
-			    local_load_temp += n_part_in_cell;
-		    }
-		}
-	    }
-	    delete ppcProfile;
-	    double time_frozen(0.);
-	    PyTools::extract("time_frozen",time_frozen ,"Species",ispecies);
-	    if(time_frozen > 0.) local_load_temp *= coef_frozen;
+                        int n_part_in_cell = round(ppcProfile->valueAt(x_cell));
+                        if ( n_part_in_cell<=0. )
+                            continue;
+                        else
+                            local_load_temp += n_part_in_cell;
+                    }
+                }
+            }
+            delete ppcProfile;
+            double time_frozen(0.);
+            PyTools::extract("time_frozen",time_frozen ,"Species",ispecies);
+            if(time_frozen > 0.) local_load_temp *= coef_frozen;
 
             local_load += local_load_temp; // Accumulate species contribution to the load.
         } // End for ispecies
@@ -315,8 +315,8 @@ void SmileiMPI::init_patch_count( Params& params)
         }
     }// End loop on patches.
     if (isMaster()) {
-	for (unsigned int i=0; i<smilei_sz; i++) fout << "patch count = " << patch_count[i]<<endl;
-	fout.close();
+        for (unsigned int i=0; i<smilei_sz; i++) fout << "patch count = " << patch_count[i]<<endl;
+        fout.close();
     }
     
 } // END init_patch_count
@@ -339,7 +339,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     ofstream fout;
 
     if (isMaster()) {
-	fout.open ("patch_load.txt", std::ofstream::out | std::ofstream::app);
+        fout.open ("patch_load.txt", std::ofstream::out | std::ofstream::app);
     }
 
     coef_cell = 50;
@@ -372,8 +372,8 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     //Compute Local Loads of each Patch (Lp)
     for(unsigned int hindex=0; hindex < patch_count[smilei_rk]; hindex++){
         for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++) {
-	    Lp[hindex] += vecpatches(hindex)->vecSpecies[ispecies]->getNbrOfParticles()*(1+(coef_frozen-1)*(time_dual > vecpatches(hindex)->vecSpecies[ispecies]->time_frozen)) ;
-	}
+            Lp[hindex] += vecpatches(hindex)->vecSpecies[ispecies]->getNbrOfParticles()*(1+(coef_frozen-1)*(time_dual > vecpatches(hindex)->vecSpecies[ispecies]->time_frozen)) ;
+        }
         Lp[hindex] += ncells_perpatch*coef_cell ;
     }
 
@@ -429,26 +429,26 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     Tcur = target_patch_count[0];  
     Lmintemp = patch_count[0]+1;
     if (Tcur > Lcur ){
-	patch_count[0] = Lcur - Ncur;
+        patch_count[0] = Lcur - Ncur;
     } else {
-	patch_count[0] = target_patch_count[0] - Ncur;
+        patch_count[0] = target_patch_count[0] - Ncur;
     }
 
     //Loop
     for(unsigned int i=1; i< smilei_sz-1; i++){
-	Ncur += patch_count[i-1];                  //Ncur = sum n=0..i-1 new patch_count[n]
-	Tcur += target_patch_count[i];            //Tcur = sum n=0..i target_patch_count[n]
-	Lcur += patch_count[i+1];                  //Lcur = sum n=0..i+1 initial patch_count[n] -1
-	Lmin = Lmintemp;
-	Lmintemp += patch_count[i];
+        Ncur += patch_count[i-1];                  //Ncur = sum n=0..i-1 new patch_count[n]
+        Tcur += target_patch_count[i];            //Tcur = sum n=0..i target_patch_count[n]
+        Lcur += patch_count[i+1];                  //Lcur = sum n=0..i+1 initial patch_count[n] -1
+        Lmin = Lmintemp;
+        Lmintemp += patch_count[i];
  
-	if (Tcur < Lmin){                      
-	    patch_count[i] = Lmin - Ncur;
-	} else if (Tcur > Lcur ){                      
-	    patch_count[i] = Lcur - Ncur;
-	} else {
-	    patch_count[i] = Tcur-Ncur;
-	}
+        if (Tcur < Lmin){                      
+            patch_count[i] = Lmin - Ncur;
+        } else if (Tcur > Lcur ){                      
+            patch_count[i] = Lcur - Ncur;
+        } else {
+            patch_count[i] = Tcur-Ncur;
+        }
     }
 
     //Last patch
@@ -456,11 +456,11 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     patch_count[smilei_sz-1] = Npatches-Ncur;
 
     if (smilei_rk==0) {
-	//fout << "\tt = " << scientific << setprecision(3) << time_dual << endl;
-	fout << "\tt = " << time_dual << endl;
-	for (int irk=0;irk<smilei_sz;irk++)
-	    fout << " patch_count[" << irk << "] = " << patch_count[irk] << " target patch_count = "<< target_patch_count[irk] << endl;
-	fout.close();
+        //fout << "\tt = " << scientific << setprecision(3) << time_dual << endl;
+        fout << "\tt = " << time_dual << endl;
+        for (int irk=0;irk<smilei_sz;irk++)
+            fout << " patch_count[" << irk << "] = " << patch_count[irk] << " target patch_count = "<< target_patch_count[irk] << endl;
+        fout.close();
     }
 
     return;
@@ -495,7 +495,7 @@ MPI_Datatype SmileiMPI::createMPIparticles( Particles* particles )
 
     MPI_Aint address[nbrOfProp];
     for ( int iprop=0 ; iprop<particles->double_prop.size() ; iprop++ )
-	MPI_Get_address( &( (*(particles->double_prop[iprop]))[0] ), &(address[iprop]) );
+        MPI_Get_address( &( (*(particles->double_prop[iprop]))[0] ), &(address[iprop]) );
     for ( int iprop=0 ; iprop<particles->short_prop.size() ; iprop++ )
         MPI_Get_address( &( (*(particles->short_prop[iprop]))[0] ), &(address[particles->double_prop.size()+iprop]) );
     for ( int iprop=0 ; iprop<particles->uint_prop.size() ; iprop++ )
@@ -544,7 +544,7 @@ void SmileiMPI::isend(Patch* patch, int to, int tag)
         if ( patch->vecSpecies[ispec]->getNbrOfParticles() > 0 ){
             patch->vecSpecies[ispec]->typePartSend = createMPIparticles( patch->vecSpecies[ispec]->particles );
             isend( patch->vecSpecies[ispec]->particles, to, tag+2*ispec, patch->vecSpecies[ispec]->typePartSend );
-	    MPI_Type_free( &(patch->vecSpecies[ispec]->typePartSend) );
+            MPI_Type_free( &(patch->vecSpecies[ispec]->typePartSend) );
         }
     }
     isend( patch->EMfields, to, tag+2*patch->vecSpecies.size() );
@@ -565,14 +565,14 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
         patch->vecSpecies[ispec]->bmin[0]=0;
         //Prepare patch for receiving particles
         nbrOfPartsRecv = patch->vecSpecies[ispec]->bmax.back(); 
-	//cout << smilei_rk << " recv " << nbrOfPartsRecv << endl;
+        //cout << smilei_rk << " recv " << nbrOfPartsRecv << endl;
         patch->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv, params.nDim_particle );
         //Receive particles
         if ( nbrOfPartsRecv > 0 ) {
-	    patch->vecSpecies[ispec]->typePartSend = createMPIparticles( patch->vecSpecies[ispec]->particles );
-	    recv( patch->vecSpecies[ispec]->particles, from, tag+2*ispec, patch->vecSpecies[ispec]->typePartSend );
-	    MPI_Type_free( &(patch->vecSpecies[ispec]->typePartSend) );
-	}
+            patch->vecSpecies[ispec]->typePartSend = createMPIparticles( patch->vecSpecies[ispec]->particles );
+            recv( patch->vecSpecies[ispec]->particles, from, tag+2*ispec, patch->vecSpecies[ispec]->typePartSend );
+            MPI_Type_free( &(patch->vecSpecies[ispec]->typePartSend) );
+        }
     }
    
     recv( patch->EMfields, from, tag+2*patch->vecSpecies.size() );
@@ -692,7 +692,7 @@ void SmileiMPI::computeGlobalDiags(Diagnostic* diags, int timestep)
     if (timestep % diags->scalars.every == 0) computeGlobalDiags(diags->scalars, timestep);
     computeGlobalDiags(diags->phases, timestep);
     for (unsigned int i=0; i<diags->vecDiagnosticParticles.size(); i++)
-	computeGlobalDiags(diags->vecDiagnosticParticles[i], timestep);
+        computeGlobalDiags(diags->vecDiagnosticParticles[i], timestep);
 
 } // END computeGlobalDiags(Diagnostic* diags ...)
 
@@ -706,72 +706,72 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar& scalars, int timestep)
 
     vector<string>::iterator iterKey = scalars.out_key.begin();
     for(vector<double>::iterator iter = scalars.out_value.begin(); iter !=scalars.out_value.end(); iter++) {
-	if ( ( (*iterKey).find("Min") == std::string::npos ) && ( (*iterKey).find("Max") == std::string::npos ) ) {
-	    MPI_Reduce(isMaster()?MPI_IN_PLACE:&((*iter)), &((*iter)), 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-	}
-	else if ( (*iterKey).find("MinCell") != std::string::npos ) {
-	    vector<double>::iterator iterVal = iter-1;
-	    val_index minVal;
-	    minVal.val   = (*iterVal);
-	    minVal.index = (*iter);
-	    MPI_Reduce(isMaster()?MPI_IN_PLACE:&minVal, &minVal, 1, MPI_DOUBLE_INT, MPI_MINLOC, 0, MPI_COMM_WORLD);
-	}
-	else if ( (*iterKey).find("MaxCell") != std::string::npos ) {
-	    vector<double>::iterator iterVal = iter-1;
-	    val_index maxVal;
-	    maxVal.val   = (*iterVal);
-	    maxVal.index = (*iter);
-	    MPI_Reduce(isMaster()?MPI_IN_PLACE:&maxVal, &maxVal, 1, MPI_DOUBLE_INT, MPI_MAXLOC, 0, MPI_COMM_WORLD);
-	}
-	iterKey++;
+        if ( ( (*iterKey).find("Min") == std::string::npos ) && ( (*iterKey).find("Max") == std::string::npos ) ) {
+            MPI_Reduce(isMaster()?MPI_IN_PLACE:&((*iter)), &((*iter)), 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        }
+        else if ( (*iterKey).find("MinCell") != std::string::npos ) {
+            vector<double>::iterator iterVal = iter-1;
+            val_index minVal;
+            minVal.val   = (*iterVal);
+            minVal.index = (*iter);
+            MPI_Reduce(isMaster()?MPI_IN_PLACE:&minVal, &minVal, 1, MPI_DOUBLE_INT, MPI_MINLOC, 0, MPI_COMM_WORLD);
+        }
+        else if ( (*iterKey).find("MaxCell") != std::string::npos ) {
+            vector<double>::iterator iterVal = iter-1;
+            val_index maxVal;
+            maxVal.val   = (*iterVal);
+            maxVal.index = (*iter);
+            MPI_Reduce(isMaster()?MPI_IN_PLACE:&maxVal, &maxVal, 1, MPI_DOUBLE_INT, MPI_MAXLOC, 0, MPI_COMM_WORLD);
+        }
+        iterKey++;
     }
 
     if (isMaster()) {
 
-	double Ukin = scalars.getScalar("Ukin");
-	double Uelm = scalars.getScalar("Uelm");
+        double Ukin = scalars.getScalar("Ukin");
+        double Uelm = scalars.getScalar("Uelm");
 
-	// added & lost energies due to the moving window
-	double Ukin_out_mvw = scalars.getScalar("Ukin_out_mvw");
-	double Ukin_inj_mvw = scalars.getScalar("Ukin_inj_mvw");
-	double Uelm_out_mvw = scalars.getScalar("Uelm_out_mvw");
-	double Uelm_inj_mvw = scalars.getScalar("Uelm_inj_mvw");
+        // added & lost energies due to the moving window
+        double Ukin_out_mvw = scalars.getScalar("Ukin_out_mvw");
+        double Ukin_inj_mvw = scalars.getScalar("Ukin_inj_mvw");
+        double Uelm_out_mvw = scalars.getScalar("Uelm_out_mvw");
+        double Uelm_inj_mvw = scalars.getScalar("Uelm_inj_mvw");
         
-	// added & lost energies at the boundaries
-	double Ukin_bnd = scalars.getScalar("Ukin_bnd");
-	double Uelm_bnd = scalars.getScalar("Uelm_bnd");
+        // added & lost energies at the boundaries
+        double Ukin_bnd = scalars.getScalar("Ukin_bnd");
+        double Uelm_bnd = scalars.getScalar("Uelm_bnd");
 
-	// total energy in the simulation
-	double Utot = Ukin + Uelm;
+        // total energy in the simulation
+        double Utot = Ukin + Uelm;
 
-	// expected total energy
-	double Uexp = scalars.Energy_time_zero + Uelm_bnd + Ukin_inj_mvw + Uelm_inj_mvw
-	    -           ( Ukin_bnd + Ukin_out_mvw + Uelm_out_mvw );
+        // expected total energy
+        double Uexp = scalars.Energy_time_zero + Uelm_bnd + Ukin_inj_mvw + Uelm_inj_mvw
+            -           ( Ukin_bnd + Ukin_out_mvw + Uelm_out_mvw );
         
-	// energy balance
-	double Ubal = Utot - Uexp;
+        // energy balance
+        double Ubal = Utot - Uexp;
         
-	// energy used for normalization
-	scalars.EnergyUsedForNorm = Utot;
+        // energy used for normalization
+        scalars.EnergyUsedForNorm = Utot;
         
-	// normalized energy balance
-	double Ubal_norm(0.);
-	if (scalars.EnergyUsedForNorm>0.)
-	    Ubal_norm = Ubal / scalars.EnergyUsedForNorm;
+        // normalized energy balance
+        double Ubal_norm(0.);
+        if (scalars.EnergyUsedForNorm>0.)
+            Ubal_norm = Ubal / scalars.EnergyUsedForNorm;
 
-	scalars.setScalar("Ubal_norm",Ubal_norm);
-	scalars.setScalar("Ubal",Ubal);
-	scalars.setScalar("Uexp",Uexp);
-	scalars.setScalar("Utot",Utot);
+        scalars.setScalar("Ubal_norm",Ubal_norm);
+        scalars.setScalar("Ubal",Ubal);
+        scalars.setScalar("Uexp",Uexp);
+        scalars.setScalar("Utot",Utot);
 
-	if (timestep==0) {
-	    scalars.Energy_time_zero  = Utot;
-	    scalars.EnergyUsedForNorm = scalars.Energy_time_zero;
-	}
+        if (timestep==0) {
+            scalars.Energy_time_zero  = Utot;
+            scalars.EnergyUsedForNorm = scalars.Energy_time_zero;
+        }
 
 
     }
-	
+        
 
     scalars.write(timestep);
 
@@ -785,7 +785,7 @@ void SmileiMPI::computeGlobalDiags(DiagnosticPhaseSpace& phases, int timestep)
 {
     int nDiags( phases.vecDiagPhaseToRun.size() );
     for (vector<DiagnosticPhase*>::const_iterator diag=phases.vecDiagPhaseToRun.begin() ; diag != phases.vecDiagPhaseToRun.end(); diag++) 
-	(*diag)->writeData();
+        (*diag)->writeData();
     phases.vecDiagPhaseToRun.clear();
 
 } // END computeGlobalDiags(DiagnosticPhaseSpace& phases ...)
@@ -796,13 +796,13 @@ void SmileiMPI::computeGlobalDiags(DiagnosticPhaseSpace& phases, int timestep)
 // ---------------------------------------------------------------------------------------------------------------------
 void SmileiMPI::computeGlobalDiags(DiagnosticParticles* diagParticles, int timestep)
 {
-    if (timestep % diagParticles->every == diagParticles->time_average-1) {
-	MPI_Reduce(diagParticles->filename.size()?MPI_IN_PLACE:&diagParticles->data_sum[0], &diagParticles->data_sum[0], diagParticles->output_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
-	
-	if (smilei_rk==0)
-	    diagParticles->write( timestep );
+    if (timestep - diagParticles->timeSelection->previousTime() == diagParticles->time_average-1) {
+        MPI_Reduce(diagParticles->filename.size()?MPI_IN_PLACE:&diagParticles->data_sum[0], &diagParticles->data_sum[0], diagParticles->output_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
+        
+        if (smilei_rk==0)
+            diagParticles->write( timestep );
     }
     if (diagParticles->time_average == 1)
-	diagParticles->clean();
+        diagParticles->clean();
 
 } // END computeGlobalDiags(DiagnosticParticles* diagParticles ...)

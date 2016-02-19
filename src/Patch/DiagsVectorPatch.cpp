@@ -139,24 +139,27 @@ void DiagsVectorPatch::computePhaseSpace( VectorPatch& vecPatches )
 void DiagsVectorPatch::computeParticlesDiags( VectorPatch& vecPatches, int timestep)
 {
     int nDiags( vecPatches(0)->Diags->vecDiagnosticParticles.size() );
-
-    for (int idiags = 0 ; idiags<nDiags ; idiags++) {
-        if (timestep % vecPatches(0)->Diags->vecDiagnosticParticles[idiags]->every != vecPatches(0)->Diags->vecDiagnosticParticles[idiags]->time_average-1) continue;
-
-        int output_size = vecPatches(0)->Diags->vecDiagnosticParticles[idiags]->output_size;
-        for (unsigned int ipatch=1 ; ipatch<vecPatches.size() ; ipatch++) {
-            for (int i=0 ; i<output_size ; i++)
-                vecPatches(0)->Diags->vecDiagnosticParticles[idiags]->data_sum[i] += vecPatches(ipatch)->Diags->vecDiagnosticParticles[idiags]->data_sum[i];
-        } // for ipatch
-
-    } // for idiags
-
+    DiagnosticParticles *diag0, *diag;
     
-    for (unsigned int ipatch=1 ; ipatch<vecPatches.size() ; ipatch++)
-        for (unsigned int i=0; i<vecPatches(ipatch)->Diags->vecDiagnosticParticles.size(); i++)
-               if (vecPatches(ipatch)->Diags->vecDiagnosticParticles[i]->time_average == 1)
-                   vecPatches(ipatch)->Diags->vecDiagnosticParticles[i]->clean();
-
+    // Loop all particle diagnostics
+    for (int idiags = 0 ; idiags<nDiags ; idiags++) {
+        // Diag belonging to patch 0
+        diag0 = vecPatches(0)->Diags->vecDiagnosticParticles[idiags];
+        // If last timestep of the time-averaging, then the patches combine their results
+        if (timestep - diag0->timeSelection->previousTime() == diag0->time_average-1) {
+            int output_size = diag0->output_size;
+            for (unsigned int ipatch=1 ; ipatch<vecPatches.size() ; ipatch++) {
+                diag = vecPatches(ipatch)->Diags->vecDiagnosticParticles[idiags];
+                for (int i=0 ; i<output_size ; i++)
+                    diag0->data_sum[i] += diag->data_sum[i];
+            }
+            // If no time-average, no need to keep the arrays
+            if (diag0->time_average == 1) 
+                for (unsigned int ipatch=1 ; ipatch<vecPatches.size() ; ipatch++)
+                     vecPatches(ipatch)->Diags->vecDiagnosticParticles[idiags]->clean();
+        }
+    } // for idiags
+    
 }
 
 
