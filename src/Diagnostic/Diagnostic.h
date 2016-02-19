@@ -68,8 +68,8 @@ public:
     //! number of time-steps for time-averaging of fields
     unsigned int ntime_step_avg;
     
-    //! scalar output every scalar_every (namelist group "DiagScalar" key "every")
-    unsigned int scalar_every;
+//    //! scalar output every scalar_every (namelist group "DiagScalar" key "every")
+//    unsigned int scalar_every;
     
     double scalar_tmin;
     double scalar_tmax;

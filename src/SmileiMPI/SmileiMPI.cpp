@@ -689,7 +689,7 @@ void SmileiMPI::recv( Diagnostic* diags, int from, int tag )
 // ---------------------------------------------------------------------------------------------------------------------
 void SmileiMPI::computeGlobalDiags(Diagnostic* diags, int timestep)
 {
-    if (timestep % diags->scalars.every == 0) computeGlobalDiags(diags->scalars, timestep);
+    computeGlobalDiags(diags->scalars, timestep);
     computeGlobalDiags(diags->phases, timestep);
     for (unsigned int i=0; i<diags->vecDiagnosticParticles.size(); i++)
         computeGlobalDiags(diags->vecDiagnosticParticles[i], timestep);
@@ -702,6 +702,9 @@ void SmileiMPI::computeGlobalDiags(Diagnostic* diags, int timestep)
 // ---------------------------------------------------------------------------------------------------------------------
 void SmileiMPI::computeGlobalDiags(DiagnosticScalar& scalars, int timestep)
 {
+    
+    if( ! scalars.timeSelection->theTimeIsNow() ) return;
+    
     int nscalars(0);
 
     vector<string>::iterator iterKey = scalars.out_key.begin();

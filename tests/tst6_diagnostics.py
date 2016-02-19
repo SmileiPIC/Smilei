@@ -131,7 +131,7 @@ ntime_step_avg     = 1
 # every = integer, number of time-steps between each output
 # tmin and tmax = floats, min and max times that will be used
 # precision = integer, number of digits of the outputs. Default = 10
-DiagScalar(every = 1)
+DiagScalar(every = [20, 60, 2])
 
 # PROBE DIAGNOSTICS - interpolate the fields on a N-D arbitrary grid
 # ---------------------------------------------------------------------------------

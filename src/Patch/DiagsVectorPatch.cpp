@@ -21,8 +21,11 @@ void DiagsVectorPatch::computeGlobalDiags( VectorPatch& vecPatches, int timestep
 void DiagsVectorPatch::computeScalarsDiags( VectorPatch& vecPatches, int timestep)
 {
     //cout << "In Global Compute Scalar Diags " << vecPatches(0)->Diags->scalars.every << " \t timestep = " << timestep << endl;
-    int scalars_every( vecPatches(0)->Diags->scalars.every );
-    if (timestep % scalars_every != 0) return;
+//    int scalars_every( vecPatches(0)->Diags->scalars.every );
+//    if (timestep % scalars_every != 0) return;
+    
+    
+    if( ! vecPatches(0)->Diags->scalars.timeSelection->theTimeIsNow() ) return;
 
     //cout << "In Global Compute Scalar Daigs\n";
 

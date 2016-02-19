@@ -110,7 +110,7 @@ void Diagnostic::runAllDiags (int timestep, ElectroMagn* EMfields, vector<Specie
         vecDiagnosticParticles[i]->run(timestep, vecSpecies);
     //dtimer[3].update();
 
-    // run all the write particle diagnostics
+    // run all the track particle diagnostics
     //dtimer[4].restart();
     for (unsigned int i=0; i<vecDiagnosticTrackParticles.size(); i++)
         vecDiagnosticTrackParticles[i]->run(timestep);

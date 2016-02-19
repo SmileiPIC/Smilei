@@ -8,8 +8,8 @@
 
 #include "Tools.h"
 #include "Species.h"
+#include "TimeSelection.h"
 
-class Params;
 class Params;
 class ElectroMagn;
 class DiagParams;
@@ -67,14 +67,17 @@ public:
     //! check if patch is master (from patch)
     bool isMaster;
     
-    //! every step to calculate scalars
-    unsigned int every;
+//    //! every step to calculate scalars
+//    unsigned int every;
+
+    //! Time selection
+    TimeSelection * timeSelection;
     
     //! this is copied from params
     double res_time;
     
-    double tmin;
-    double tmax;
+//    double tmin;
+//    double tmax;
     double dt;
 
     //! write precision

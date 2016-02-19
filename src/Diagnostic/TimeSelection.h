@@ -42,6 +42,9 @@ public:
     //! Tell the smallest interval between two selected timesteps
     inline int smallestInterval() { return (repeat==1) ? period : spacing; };
     
+    //! Tell whether the timestep is between start and end
+    inline bool inProgress(int timestep) { return timestep>=start && timestep<=end; };
+    
 private:
     //! Starting timestep
     int start;
