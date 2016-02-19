@@ -136,15 +136,21 @@ DiagScalar(every = 1)
 # PROBE DIAGNOSTICS - interpolate the fields on a N-D arbitrary grid
 # ---------------------------------------------------------------------------------
 # every        = an integer, number of time-steps between each output
-# time_range   = two floats, optional, min and max times to output (all times if omitted)
 # number       = N floats, optional, number of grid points in each dimension
 # pos          = N floats, position of the reference point
 # pos_first    = N floats, optional, position of the first point
 # pos_second   = N floats, optional, position of the second point
 DiagProbe(
 	every = 1,
-	time_range = [0.1 *L0, 0.4*L0],
 	number = [40],
+	pos = [0.1*sim_length[0]],
+	pos_first = [0.9*sim_length[0]],
+	fields = []
+)
+
+DiagProbe(
+	every = [10, 4],
+	number = [20],
 	pos = [0.1*sim_length[0]],
 	pos_first = [0.9*sim_length[0]],
 	fields = []

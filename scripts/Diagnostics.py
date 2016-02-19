@@ -1751,7 +1751,7 @@ class Probe(Diagnostic):
 	@staticmethod
 	def _printInfo(info):
 		print ("Probe #"+str(info["probeNumber"])+": "+str(info["dimension"])+"-dimensional,"
-			+" every "+str(info["every"])+" timesteps, with fields "+info["fields"])
+			+" with fields "+info["fields"])
 		i = 0
 		while "p"+str(i) in info:
 			print "p"+str(i)+" = "+" ".join(info["p"+str(i)].astype(str).tolist())
@@ -1778,8 +1778,7 @@ class Probe(Diagnostic):
 			return {}
 		out = {}
 		out.update({"probeNumber":probeNumber, "dimension":probe.attrs["dimension"],
-			"every":probe.attrs["every"], "shape":self._np.array(probe["number"]),
-			"fields":probe.attrs["fields"] })
+			"shape":self._np.array(probe["number"]),"fields":probe.attrs["fields"] })
 		i = 0
 		while "p"+str(i) in probe.keys():
 			k = probe.keys().index("p"+str(i))

@@ -21,20 +21,17 @@ probeSize(10),
 fileId(0) {
 
     unsigned  numProbes=PyTools::nComponents("DiagProbe");
-    every.resize(numProbes);
-    probeParticles.resize(numProbes);
 
-    probesArray.resize(numProbes);
     probesStart.resize(numProbes);
 
     dt = params.timestep;
-    every         .clear();
-    tmin          .clear();
-    tmax          .clear();
+//    every         .clear();
+//    tmin          .clear();
+//    tmax          .clear();
+    timeSelection .clear();
     probeParticles.clear();
     nPart_total   .clear();
     probesArray   .clear();
-    probesStart   .clear();
     fieldname     .clear();
     fieldlocation .clear();
     nFields       .clear();
@@ -42,27 +39,36 @@ fileId(0) {
     // Loop on all Probes
     for (unsigned int n_probe=0; n_probe<numProbes; n_probe++) {
 
-	bool ok;
+//	bool ok;
+//
+//	// Extract "every" (number of timesteps between each output)
+//	unsigned int my_every=0;
+//	ok=PyTools::extract("every",my_every,"DiagProbe",n_probe);
+//	if (!ok) my_every=params.global_every;
+//	every.push_back(my_every);
+//
+//	// Extract "time_range" (tmin and tmax of the outputs)
+//	vector<double> time_range(2,0.);
+//	double my_tmin,my_tmax;
+//	ok=PyTools::extract("time_range",time_range,"DiagProbe",n_probe);
+//	if (!ok) {
+//	    my_tmin = 0.;
+//	    my_tmax = params.sim_time;
+//	} else {
+//	    my_tmin = time_range[0];
+//	    my_tmax = time_range[1];
+//	}
+//	tmin.push_back(my_tmin);
+//	tmax.push_back(my_tmax);
 
-	// Extract "every" (number of timesteps between each output)
-	unsigned int my_every=0;
-	ok=PyTools::extract("every",my_every,"DiagProbe",n_probe);
-	if (!ok) my_every=params.global_every;
-	every.push_back(my_every);
+        // Extract "every" (time selection)
+        ostringstream name("");
+        name << "Probe #"<<n_probe;
+        timeSelection.push_back( new TimeSelection(
+            PyTools::extract_py("every", "DiagProbe", n_probe),
+            name.str()
+        ) );
 
-	// Extract "time_range" (tmin and tmax of the outputs)
-	vector<double> time_range(2,0.);
-	double my_tmin,my_tmax;
-	ok=PyTools::extract("time_range",time_range,"DiagProbe",n_probe);
-	if (!ok) {
-	    my_tmin = 0.;
-	    my_tmax = params.sim_time;
-	} else {
-	    my_tmin = time_range[0];
-	    my_tmax = time_range[1];
-	}
-	tmin.push_back(my_tmin);
-	tmax.push_back(my_tmax);
 
 	unsigned int ndim=params.nDim_particle;
             
@@ -321,7 +327,8 @@ fileId(0) {
 // Done by patch master only
 void DiagnosticProbe::createFile()
 {
-    if (!every.size())
+//    if (!every.size())
+    if (!timeSelection.size())
 	return;
     
     hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
@@ -334,17 +341,18 @@ void DiagnosticProbe::createFile()
     H5::attr(fileId, "CommitDate", string(__COMMITDATE));
 
     // Loop on all Probes
-    for (unsigned int probe_id=0; probe_id<every.size(); probe_id++) {
+//    for (unsigned int probe_id=0; probe_id<every.size(); probe_id++) {
+    for (unsigned int probe_id=0; probe_id<timeSelection.size(); probe_id++) {
 
 	// Open group de write in	
 	hid_t group_id = H5Gcreate(fileId, probeName(probe_id).c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-	hid_t sid;
-	sid = H5Screate(H5S_SCALAR);	
-	hid_t aid = H5Acreate(group_id, "every", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
-	H5Awrite(aid, H5T_NATIVE_UINT, &every[probe_id]);
-	H5Aclose(aid);
-	H5Sclose(sid);
+	hid_t sid, aid;
+//	sid = H5Screate(H5S_SCALAR);	
+//	aid = H5Acreate(group_id, "every", H5T_NATIVE_UINT, sid, H5P_DEFAULT, H5P_DEFAULT);
+//	H5Awrite(aid, H5T_NATIVE_UINT, &every[probe_id]);
+//	H5Aclose(aid);
+//	H5Sclose(sid);
 
 
         vector<unsigned int> vecNumber; 
@@ -508,7 +516,8 @@ void DiagnosticProbe::setFile(hid_t masterFileId)
 void DiagnosticProbe::writePositionIn( Params &params )
 {
     // Loop on all Probes
-    for (unsigned int probe_id=0; probe_id<every.size(); probe_id++) {
+//    for (unsigned int probe_id=0; probe_id<every.size(); probe_id++) {
+    for (unsigned int probe_id=0; probe_id<timeSelection.size(); probe_id++) {
 
 #ifdef _NEWTYLE
 	hid_t gid = H5::group(fileId, prob_name.str());
@@ -528,8 +537,8 @@ void DiagnosticProbe::writePositionIn( Params &params )
 	// Add array "number" to the current group
 	H5::vect(gid, "number", vecNumber);
             
-	// Add attribute every to the current group
-	H5::attr(gid, "every", my_every);
+//	// Add attribute every to the current group
+//	H5::attr(gid, "every", my_every);
 	// Add attribute "dimension" to the current group
 	H5::attr(gid, "dimension", dim);
             
@@ -657,11 +666,12 @@ void DiagnosticProbe::run(unsigned int timestep, ElectroMagn* EMfields, Interpol
     double time = (double)timestep * dt;
     
     // Loop probes
-    
-    for (unsigned int np=0; np<every.size(); np++) {
+//    for (unsigned int np=0; np<every.size(); np++) {
+    for (unsigned int np=0; np<timeSelection.size(); np++) {
         // skip if current timestep is not requested
-        if ( (every[np]  && timestep % every[np] == 0) &&
-             (time <= tmax[np]) && (time >= tmin[np]) ) {
+//        if ( (every[np]  && timestep % every[np] == 0) &&
+//             (time <= tmax[np]) && (time >= tmin[np]) ) {
+        if ( timeSelection[np]->theTimeIsNow(timestep) ) {
 
             // Open the existing HDF5 group for that probe
 	    hid_t group_id = H5Gopen(fileId, probeName(np).c_str() ,H5P_DEFAULT);
