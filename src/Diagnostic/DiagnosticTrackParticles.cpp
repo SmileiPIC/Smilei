@@ -53,9 +53,9 @@ void DiagnosticTrackParticles::createFile(int nParticles, Params &params) {
     H5::attr(fid_, "every", species->particles->track_every);
         
     // Define maximum size
-    hsize_t maxDimsPart[2] = {H5S_UNLIMITED, nParticles};
+    hsize_t maxDimsPart[2] = {H5S_UNLIMITED, (hsize_t)nParticles};
 
-    dims[0] = params.n_time / species->particles->track_every;
+    dims[0] = params.n_time / species->particles->track_every + 1;
     dims[1] = nParticles;
 
     hid_t file_space = H5Screate_simple(2, dims, NULL);
@@ -64,7 +64,7 @@ void DiagnosticTrackParticles::createFile(int nParticles, Params &params) {
     hid_t plist = H5Pcreate(H5P_DATASET_CREATE);
     //H5Pset_layout(plist, H5D_CHUNKED);
     //H5Pset_alloc_time(plist, H5D_ALLOC_TIME_EARLY); // necessary for collective dump
-    hsize_t chunk_dims[2] = {1, nParticles};
+    hsize_t chunk_dims[2] = {1, (hsize_t)nParticles};
     //H5Pset_chunk(plist, 2, chunk_dims);
     // Create the datasets for x, y and z
     hid_t did;
