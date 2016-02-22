@@ -224,7 +224,8 @@ void DiagsVectorPatch::initTrackParticles(VectorPatch& vecPatches, Params& param
         
         // Communicate some stuff if this is a species that has to be dumped (particles have Id)
         // Need to be placed after ALL createParticles()
-        if (vecPatches(0)->vecSpecies[ispec]->particles->track_every) {
+//        if (vecPatches(0)->vecSpecies[ispec]->particles->track_every) {
+        if (vecPatches(0)->vecSpecies[ispec]->particles->tracked) {
 
             // Internal patches offset
 
@@ -275,7 +276,7 @@ void DiagsVectorPatch::initTrackParticles(VectorPatch& vecPatches, Params& param
             for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
                 vecPatches(ipatch)->vecSpecies[ispec]->particles->addIdOffsets(offset);
 
-        } // End if track_every
+        } // End if tracked
 
         // Count total number of track particles (need to define HDF5 context)
         

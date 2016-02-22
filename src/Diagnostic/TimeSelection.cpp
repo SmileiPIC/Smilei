@@ -22,8 +22,8 @@ TimeSelection::TimeSelection(PyObject* timeSelection, string name)
             ERROR(name << ": time selection must be an integer or a list of integers");
         // If zero, no output, ever
         if( !period ) {
-            period = 1;
             start = maxint;
+            return;
         }
         
     }
@@ -148,10 +148,43 @@ int TimeSelection::previousTime(int timestep)
         // If inside a group
         if( r < groupWidth ) {
             PreviousTime = start + p * period + (r/spacing)*spacing; // return previous good timestep
-        // If after group, return next group's beginning
+        // If after group, return end of that group
         } else {
             PreviousTime = start + p * period + groupWidth - 1;
         }
     }
     return PreviousTime;
 }
+
+
+// Get the number of selected times between min and max timesteps
+int TimeSelection::numberOfEvents(int tmin, int tmax)
+{
+    if( tmin<start ) tmin = start;
+    if( tmin>end   ) tmax = end;
+    if( tmax<start ) tmax = start;
+    if( tmax>end   ) tmax = end;
+    
+    if( tmax<tmin ) return 0;
+    
+    int N = 0;
+    
+    // Work out the period containing tmin
+    tmin -= start; // min timestep with offset
+    int pmin = tmin / period;   // current period
+    int rmin = tmin % period;   // remainder to the current period
+    if( rmin < groupWidth ) N += (groupWidth-rmin-1)/spacing + 1; // Add the times in the current group
+    
+    // Work out the period containing tmax
+    tmax -= start; // timesteps with offset
+    int pmax = tmax / period;   // current period
+    int rmax = tmax % period;   // remainder to the current period
+    if( rmax < groupWidth ) N += rmax/spacing + 1; // Add the times in the current group
+    else                    N += repeat          ; // or add the full group
+    
+    // Add the other periods
+    N += (pmax-pmin-1) * repeat;
+    
+    return N;
+}
+

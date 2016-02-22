@@ -1891,7 +1891,6 @@ class TrackParticles(Diagnostic):
 		self._file = self._results_path+"/TrackParticles_"+species+".h5"
 		f = self._h5py.File(self._file, 'r')
 		self._h5items = f.values()
-		self._every = f.attrs["every"]
 		
 		# Get available times in the hdf5 file
 		self.times = self.getAvailableTimesteps()
@@ -1922,7 +1921,7 @@ class TrackParticles(Diagnostic):
 		# Get available properties ("x", "y", etc.)
 		self._properties = {}
 		translateProperties = {"Id":"Id", "x":"Position-0", "y":"Position-1", "z":"Position-2",
-							"px":"Momentum-0", "py":"Momentum-1", "pz":"Momentum-2"}
+			"px":"Momentum-0", "py":"Momentum-1", "pz":"Momentum-2"}
 		availableProperties = f.keys()
 		for k,v in translateProperties.iteritems():
 			try:
@@ -2063,7 +2062,11 @@ class TrackParticles(Diagnostic):
 		except:
 			print "Unable to find tracked particle data in file "+self._file
 			return self._np.array([])
-		return self._np.arange(0,ntimes*self._every,self._every)
+		for item in self._h5items:
+			if item.name == "/Times":
+				return item.value
+		print "Unable to find the list of timesteps in file "+self._file
+		return self._np.array([])
 	
 	# We override the get and getData methods
 	def getData(self):

@@ -307,11 +307,11 @@ All the possible variables inside this block are explained here:
 
 .. py:data:: track_every
   
-  :default: 0 (1 if ``isTest=True``)
+  :default: 0
   
-  This flag will activate the particle tracking for this species.
-  Number of timesteps between each dump of particles (Note that if != 0 particles will be tracked i.e. a label will be added to each particle).
-  A file named ``TrackParticles_AAA.h5`` (where ``AAA`` is the ``species_type``) will be created.
+  Number of timesteps between each output of particles trajectories, **or** a :ref:`time selection <TimeSelections>`.
+  If non-zero, the particles will be tracked, and a file named ``TrackParticles_abc.h5``
+  (where ``abc`` is :py:data:`species_type`) will be created.
 
 
 .. py:data:: c_part_max

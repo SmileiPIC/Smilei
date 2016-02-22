@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "Tools.h"
+#include "TimeSelection.h"
 
 class Params;
 class Patch;
@@ -198,8 +199,13 @@ public:
     // TEST PARTICLE PARAMETERS
     bool isTest;
     
-    // steps between each write of particles (this will activate a DiagnosticTrackParticles)
-    unsigned int track_every;
+//    // steps between each write of particles (this will activate a DiagnosticTrackParticles)
+//    unsigned int track_every;
+    //! True if tracking the particles (activates one DiagnosticTrackParticles)
+    bool tracked;
+    //! Time selection for tracking particles
+    TimeSelection * track_timeSelection;
+    
 
     void setIds() {
         unsigned int s = Id.size();

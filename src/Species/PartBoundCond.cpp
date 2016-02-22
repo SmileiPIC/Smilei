@@ -72,7 +72,8 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
     // Can be done after parsing 
 
     // Check for inconsistencies between EM and particle BCs
-    if (! species->particles->track_every) {
+//    if (! species->particles->track_every) {
+    if (! species->particles->tracked) {
         if ( ((params.bc_em_type_x[0]=="periodic")&&(species->bc_part_type_west!="none"))
          ||  ((params.bc_em_type_x[1]=="periodic")&&(species->bc_part_type_east!="none")) ) {
             ERROR("For species " << species->species_type << ", periodic EM boundary conditions require x particle BCs to be periodic.");

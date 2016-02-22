@@ -208,18 +208,27 @@ public:
             
 	// Extract test Species flag
 	PyTools::extract("isTest", thisSpecies->particles->isTest, "Species", ispec);
-	if (thisSpecies->particles->isTest) {
-	    // activate dump (might be changed below)
-	    thisSpecies->particles->track_every=1;
-	}
-            
-	// check if particles have to be written and thus have to be labelled (Id property)
-	PyTools::extract("track_every",thisSpecies->particles->track_every ,"Species",ispec);
-            
-	if (thisSpecies->particles->isTest && thisSpecies->particles->track_every == 0) {
-	    ERROR("For Species " << species_type << " isTest=True but track_every=0");
-	}
-            
+//	if (thisSpecies->particles->isTest) {
+//	    // activate dump (might be changed below)
+//	    thisSpecies->particles->track_every=1;
+//	}
+//            
+//	// check if particles have to be written and thus have to be labelled (Id property)
+//	PyTools::extract("track_every",thisSpecies->particles->track_every ,"Species",ispec);
+//            
+//	if (thisSpecies->particles->isTest && thisSpecies->particles->track_every == 0) {
+//	    ERROR("For Species " << species_type << " isTest=True but track_every=0");
+//	}
+    
+    // get parameter "track_every" which describes a timestep selection
+    std::ostringstream name("");
+    name << "Tracking species '" << species_type << "'";
+    thisSpecies->particles->track_timeSelection = new TimeSelection(
+        PyTools::extract_py("track_every", "Species", ispec),
+        name.str()
+    );
+    thisSpecies->particles->tracked = ! thisSpecies->particles->track_timeSelection->isEmpty();
+
 	// Verify they don't ionize
 	if (thisSpecies->ionization_model!="none" && thisSpecies->particles->isTest) {
 	    ERROR("For species '" << species_type << "', disabled for now : test & ionized");

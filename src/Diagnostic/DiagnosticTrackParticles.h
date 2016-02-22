@@ -51,11 +51,14 @@ private:
     //! Pointer to the species used
     Species* species;
     
+    //! Pointer to the time selection (parameter 'track_every')
+    TimeSelection * timeSelection;
+    
     //! Number of spatial dimensions
     int nDim_particle;
     
     //! Adds one row in a HDF5 file, within a given dataspace
-    template <class T> void append(hid_t, std::string, std::vector<T>, hid_t, int, hid_t, std::vector<hsize_t>&);
+    template <class T> void append(hid_t, std::string, T& , hid_t, int, hid_t, std::vector<hsize_t>&);
 
     int iter;
     

@@ -36,6 +36,9 @@ fid_(0)
     //H5Pset_dxpl_mpio( transfer, H5FD_MPIO_COLLECTIVE);
     H5Pset_dxpl_mpio( transfer, H5FD_MPIO_INDEPENDENT);
     iter = 0;
+    
+    // Get the time selection from the particles
+    timeSelection = species->particles->track_timeSelection;
 }
 
 
@@ -49,13 +52,14 @@ void DiagnosticTrackParticles::createFile(int nParticles, Params &params) {
     H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
     fid_ = H5Fcreate( filename.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid);
         
-    // Write attribute: track_every
-    H5::attr(fid_, "every", species->particles->track_every);
+//    // Write attribute: track_every
+//    H5::attr(fid_, "every", species->particles->track_every);
         
     // Define maximum size
     hsize_t maxDimsPart[2] = {H5S_UNLIMITED, (hsize_t)nParticles};
 
-    dims[0] = params.n_time / species->particles->track_every + 1;
+//    dims[0] = params.n_time / species->particles->track_every + 1;
+    dims[0] = timeSelection->numberOfEvents(0, params.n_time);
     dims[1] = nParticles;
 
     hid_t file_space = H5Screate_simple(2, dims, NULL);
@@ -95,6 +99,17 @@ void DiagnosticTrackParticles::createFile(int nParticles, Params &params) {
         
     H5Pclose(plist);
     H5Sclose(file_space);
+    
+    // Create the dataset for the time array
+    plist = H5Pcreate(H5P_DATASET_CREATE);
+    hsize_t ntimes[1] = { dims[0] };
+    file_space = H5Screate_simple(1, ntimes, NULL);
+    did = H5Dcreate(fid_, "Times", H5T_NATIVE_INT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
+    H5Dclose(did);
+    H5Pclose(plist);
+    H5Sclose(file_space);
+    
+
     H5Fclose( fid_ );
 }
 
@@ -121,7 +136,9 @@ void DiagnosticTrackParticles::close() {
 
 void DiagnosticTrackParticles::run(int time) {
     
-    if ( time % species->particles->track_every != 0) return;
+//    if ( time % species->particles->track_every != 0) return;
+    if( ! timeSelection->theTimeIsNow(time) ) return;
+    
     iter ++;
 
     int locNbrParticles = species->getNbrOfParticles();
@@ -147,28 +164,35 @@ void DiagnosticTrackParticles::run(int time) {
     for (int idim=0 ; idim<nDim_particle ; idim++) {
         namePos.str("");
         namePos << "Position-" << idim;
-        append( fid_, namePos.str(), species->particles->position(idim), mem_space, locNbrParticles, H5T_NATIVE_DOUBLE, locator );
+        append( fid_, namePos.str(), species->particles->position(idim)[0], mem_space, locNbrParticles, H5T_NATIVE_DOUBLE, locator );
     }
     ostringstream nameMom("");
     for (int idim=0 ; idim<3 ; idim++) {
         nameMom.str("");
         nameMom << "Momentum-" << idim;
-        append( fid_, nameMom.str(), species->particles->momentum(idim), mem_space, locNbrParticles, H5T_NATIVE_DOUBLE, locator );
+        append( fid_, nameMom.str(), species->particles->momentum(idim)[0], mem_space, locNbrParticles, H5T_NATIVE_DOUBLE, locator );
     }
-    append( fid_, "Weight", species->particles->weight(), mem_space, locNbrParticles, H5T_NATIVE_DOUBLE, locator );
-    append( fid_, "Charge", species->particles->charge(), mem_space, locNbrParticles, H5T_NATIVE_SHORT , locator );
-    append( fid_, "Id"    , species->particles->id()    , mem_space, locNbrParticles, H5T_NATIVE_UINT  , locator );
+    append( fid_, "Weight", species->particles->weight()[0], mem_space, locNbrParticles, H5T_NATIVE_DOUBLE, locator );
+    append( fid_, "Charge", species->particles->charge()[0], mem_space, locNbrParticles, H5T_NATIVE_SHORT , locator );
+    append( fid_, "Id"    , species->particles->id()    [0], mem_space, locNbrParticles, H5T_NATIVE_UINT  , locator );
+    
+    H5Sclose( mem_space );
+    
+    // Write the current timestep
+    locator.resize(1, iter-1);
+    hsize_t onetime[1] = { 1 };
+    mem_space = H5Screate_simple(1, onetime, NULL);
+    append( fid_, "Times", time, mem_space, 1, H5T_NATIVE_INT, locator );
     
     //MPI_Barrier(MPI_COMM_WORLD); // synchro to manage differently
     H5Fflush( fid_, H5F_SCOPE_GLOBAL );
 
-    H5Sclose( mem_space );
 
 }
 
 
 template <class T>
-void DiagnosticTrackParticles::append( hid_t fid, string name, std::vector<T> property,  hid_t  mem_space, int nParticles, hid_t type, vector<hsize_t> &locator) {
+void DiagnosticTrackParticles::append( hid_t fid, string name, T & property,  hid_t  mem_space, int nParticles, hid_t type, vector<hsize_t> &locator) {
     
     // Open existing dataset
     hid_t did = H5Dopen( fid, name.c_str(), H5P_DEFAULT );
@@ -186,7 +210,7 @@ void DiagnosticTrackParticles::append( hid_t fid, string name, std::vector<T> pr
         H5Sselect_none(file_space);
     
     // Write
-    H5Dwrite( did, type, mem_space , file_space , transfer, &(property[0]) );
+    H5Dwrite( did, type, mem_space , file_space , transfer, &property );
     
     H5Sclose(file_space);
     H5Dclose(did);

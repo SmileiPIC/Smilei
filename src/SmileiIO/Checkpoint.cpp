@@ -245,7 +245,8 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
             H5::vect(gid,"Weight", vecSpecies[ispec]->particles->Weight);
             H5::vect(gid,"Charge", vecSpecies[ispec]->particles->Charge);
 
-            if (vecSpecies[ispec]->particles->track_every) {
+//            if (vecSpecies[ispec]->particles->track_every) {
+            if (vecSpecies[ispec]->particles->tracked) {
                 H5::vect(gid,"Id", vecSpecies[ispec]->particles->Id);
             }
 
@@ -426,7 +427,8 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
 	    H5Dread(did, H5T_NATIVE_SHORT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles->Charge[0]);
 	    H5Dclose(did);
 	    
-            if (vecSpecies[ispec]->particles->track_every) {
+//            if (vecSpecies[ispec]->particles->track_every) {
+            if (vecSpecies[ispec]->particles->tracked) {
                 did = H5Dopen(gid, "Id", H5P_DEFAULT);
                 H5Dread(did, H5T_NATIVE_UINT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vecSpecies[ispec]->particles->Id[0]);
                 H5Dclose(did);

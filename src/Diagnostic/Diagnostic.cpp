@@ -63,7 +63,8 @@ phases(params, patch)
     //dtimer[4].init(smpi, "track particles");
     // loop species and make a new diag if particles have to be dumped
     for(unsigned int i=0; i<patch->vecSpecies.size(); i++) {
-        if (patch->vecSpecies[i]->particles->track_every > 0) {
+//        if (patch->vecSpecies[i]->particles->track_every > 0) {
+        if (patch->vecSpecies[i]->particles->tracked) {
             vecDiagnosticTrackParticles.push_back(new DiagnosticTrackParticles(params, patch, patch->vecSpecies[i]));
         }
     }
