@@ -59,11 +59,17 @@ public:
     std::vector<DiagnosticParticles*> vecDiagnosticParticles;
     std::vector<DiagnosticTrackParticles*> vecDiagnosticTrackParticles;
     
-    //! field dump output
-    unsigned int fieldDump_every;
+//    //! field dump output
+//    unsigned int fieldDump_every;
+//    
+//    //! time-averaged field dump output
+//    unsigned int avgfieldDump_every;
     
-    //! time-averaged field dump output
-    unsigned int avgfieldDump_every;
+    //! Time selection for field dumps
+    TimeSelection * field_timeSelection;
+    
+    //! Time selection for average field dumps
+    TimeSelection * avgfield_timeSelection;
     
     //! number of time-steps for time-averaging of fields
     unsigned int ntime_step_avg;

@@ -24,18 +24,24 @@ phases(params, patch)
     print_every=params.n_time/10;
     PyTools::extract("print_every", print_every);
     
-    if (!PyTools::extract("fieldDump_every", fieldDump_every)) {
-        fieldDump_every=params.global_every;
-        MESSAGE(1,"Activating all fields to dump");
-    }
+//    if (!PyTools::extract("fieldDump_every", fieldDump_every)) {
+//        fieldDump_every=params.global_every;
+//        MESSAGE(1,"Activating all fields to dump");
+//    }
+//    
+//    avgfieldDump_every=params.res_time*10;
+//    if (!PyTools::extract("avgfieldDump_every", avgfieldDump_every)) avgfieldDump_every=params.global_every;
+//    
+//    //!\todo Define default behaviour : 0 or params.res_time
+//    //ntime_step_avg=params.res_time;
+//    ntime_step_avg=0;
+//    PyTools::extract("ntime_step_avg", ntime_step_avg);
     
-    avgfieldDump_every=params.res_time*10;
-    if (!PyTools::extract("avgfieldDump_every", avgfieldDump_every)) avgfieldDump_every=params.global_every;
-    
-    //!\todo Define default behaviour : 0 or params.res_time
-    //ntime_step_avg=params.res_time;
+    field_timeSelection = new TimeSelection( PyTools::extract_py("fieldDump_every"), "Fields" );
+    avgfield_timeSelection = new TimeSelection( PyTools::extract_py("avgfieldDump_every"), " Average fields" );
     ntime_step_avg=0;
-    PyTools::extract("ntime_step_avg", ntime_step_avg);
+    if( !PyTools::extract("ntime_step_avg", ntime_step_avg) ) ntime_step_avg=0;
+    
     
     // scalars initialization
     //dtimer[0].init(smpi, "scalars");

@@ -170,9 +170,10 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
             (*this)(ipatch)->sio->writeAllFieldsSingleFileTime( (*this)(ipatch)->EMfields->allFields, itime, 0 );
 
             // Check the dedicated fields output write frequency 
-            if  (((*this).Diags->ntime_step_avg!=0) &&
-                 ((*this).Diags->avgfieldDump_every != 0) && 
-                 (itime % (*this).Diags->avgfieldDump_every == 0)) {
+//            if  (((*this).Diags->ntime_step_avg!=0) &&
+//                 ((*this).Diags->avgfieldDump_every != 0) && 
+//                 (itime % (*this).Diags->avgfieldDump_every == 0)) {
+            if( (*this).Diags->ntime_step_avg!=0 && (*this).Diags->avgfield_timeSelection->theTimeIsNow(itime) ) {
                 // Write EM average fields dump in Fields_avg.h5
                 (*this)(ipatch)->sio->writeAllFieldsSingleFileTime( (*this)(ipatch)->EMfields->allFields_avg, itime, 1 );
             }

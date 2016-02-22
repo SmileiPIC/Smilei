@@ -195,7 +195,8 @@ int main (int argc, char* argv[])
         time_prim += params.timestep;
         time_dual += params.timestep;
         
-        if  ((vecPatches.Diags->fieldDump_every != 0) && (itime % vecPatches.Diags->fieldDump_every == 0)) diag_flag = 1;
+//        if  ((vecPatches.Diags->fieldDump_every != 0) && (itime % vecPatches.Diags->fieldDump_every == 0)) diag_flag = 1;
+        if ( vecPatches.Diags->field_timeSelection->theTimeIsNow(itime) ) diag_flag = 1;
         
         // send message at given time-steps
         // --------------------------------

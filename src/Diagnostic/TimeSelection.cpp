@@ -20,8 +20,12 @@ TimeSelection::TimeSelection(PyObject* timeSelection, string name)
         // Interpret as the period
         if( !PyTools::convert(timeSelection, period) )
             ERROR(name << ": time selection must be an integer or a list of integers");
-        // Default to 1
-        if( !period ) period = 1;
+        // If zero, no output, ever
+        if( !period ) {
+            period = 1;
+            start = maxint;
+        }
+        
     }
     // If the selection is a list or tuple
     else if( PyTuple_Check(timeSelection) || PyList_Check(timeSelection) ) {
@@ -67,7 +71,7 @@ TimeSelection::TimeSelection(PyObject* timeSelection, string name)
         
     } else {
         
-        ERROR(name << ": time selection must be an integer or a list of integers");
+        ERROR(name << ": time selection (`every`) must be an integer or a list of integers");
         
     }
     

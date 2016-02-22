@@ -113,7 +113,7 @@ class Collisions(SmileiComponent):
 #diagnostics
 class DiagProbe(SmileiComponent):
     """Diagnostic probe"""
-    every = 0
+    every = None
     time_range = [None, None]
     number = []
     pos = []

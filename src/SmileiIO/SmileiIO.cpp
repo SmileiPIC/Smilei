@@ -60,7 +60,7 @@ void SmileiIO::createFiles( Params& params, Patch* patch)
 
     // Create property list for collective dataset write: for Fields.h5
     H5::attr(global_file_id_, "res_time", params.res_time);
-    H5::attr(global_file_id_, "every", patch->Diags->fieldDump_every);
+//    H5::attr(global_file_id_, "every", patch->Diags->fieldDump_every);
 
     H5::attr(global_file_id_, "res_space", params.res_space);
     vector<double> my_cell_length=params.cell_length;
@@ -76,7 +76,7 @@ void SmileiIO::createFiles( Params& params, Patch* patch)
         
         // Create property list for collective dataset write: for Fields.h5
         H5::attr(global_file_id_avg, "res_time", params.res_time);
-        H5::attr(global_file_id_avg, "every", patch->Diags->fieldDump_every);
+//        H5::attr(global_file_id_avg, "every", patch->Diags->fieldDump_every);
         H5::attr(global_file_id_avg, "res_space", params.res_space);
         H5::attr(global_file_id_avg, "cell_length", params.cell_length);
         H5::attr(global_file_id_avg, "sim_length", params.sim_length);

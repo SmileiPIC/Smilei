@@ -124,7 +124,7 @@ print_every = 10
 
 # DIAGNOSTICS ON FIELDS
 fieldDump_every    = 10
-avgfieldDump_every = 5000000000
+avgfieldDump_every = 0
 ntime_step_avg     = 1
 
 # DIAGNOSTICS ON SCALARS
