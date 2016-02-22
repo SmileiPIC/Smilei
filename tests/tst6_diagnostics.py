@@ -96,22 +96,22 @@ Species(
 	bc_part_type_east = "none"
 )
 
-#Species(
-#	species_type = "test",
-#	initPosition_type = "random",
-#	initMomentum_type = "maxwell-juettner",
-#	n_part_per_cell= 2,
-#	mass = 1.0,
-#	charge = -1.,
-#	nb_density = constant(10., xvacuum=0.4*L0),
-#	mean_velocity = [0.05, 0., 0.],
-#	temperature = [0.00002],
-#	time_frozen = 0.0,
-#	bc_part_type_west = "none",
-#	bc_part_type_east = "none",
-#	isTest = True,
-#	track_every = 4
-#)
+Species(
+	species_type = "test",
+	initPosition_type = "random",
+	initMomentum_type = "maxwell-juettner",
+	n_part_per_cell= 2,
+	mass = 1.0,
+	charge = -1.,
+	nb_density = constant(10., xvacuum=0.4*L0),
+	mean_velocity = [0.05, 0., 0.],
+	temperature = [0.00002],
+	time_frozen = 0.0,
+	bc_part_type_west = "none",
+	bc_part_type_east = "none",
+	isTest = True,
+	track_every = 4
+)
 
 
 
