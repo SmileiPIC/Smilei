@@ -141,11 +141,11 @@ Download and compile
    Let us assume it is located in your home directory ``~/smilei/``.
 
 #. In a terminal, go to that location and compile:
+   
+   .. code-block:: bash
      
-     .. code-block:: bash
-       
-       cd ~/smilei
-       make
+     cd ~/smilei
+     make
 
    .. rubric:: Compilation alternatives:
      

@@ -719,7 +719,7 @@ For more details about the collision scheme in :program:`Smilei`, see :doc:`coll
 
 .. _DiagScalar:
 
-*Scalars* diagnostics
+*Scalar* diagnostics
 ^^^^^^^^^^^^^^^^^^^^^
 
 :program:`Smilei` can collect various scalar data, such as total particle energy, total field energy, etc.
@@ -734,7 +734,7 @@ All the possible variables inside this block are explained here:
 
 .. py:data:: every
   
-  Number of timesteps between each output.
+  Number of timesteps between each output **or** a :ref:`time selection <TimeSelections>`.
 
 
 .. py:data:: time_range
@@ -818,11 +818,11 @@ This is done with the following instructions in the namelist:
 
 .. py:data:: fieldDump_every
   
-  The number of timesteps between each output of the instantaneous fields.
+  The number of timesteps between each output of the instantaneous fields, **or** a :ref:`time selection <TimeSelections>`.
 
 .. py:data:: avgfieldDump_every
   
-  The number of timesteps between each output of the time-averaged fields.
+  The number of timesteps between each output of the time-averaged fields, **or** a :ref:`time selection <TimeSelections>`.
 
 .. py:data:: ntime_step_avg
   
@@ -887,7 +887,7 @@ There are several ways to do it:
         pos        = [x0, y0, z0]
     )
   
-  * ``every`` is the number of timesteps between each output.
+  * ``every`` is the number of timesteps between each output, **or** a :ref:`time selection <TimeSelections>`.
   * ``x0 [, y0 [, z0]]`` is the position of the point where to interpolate the fields.
   
   **Note**: ``y0`` (or ``z0``) should only be used in the case of a 2-D (or 3-D) simulation.
@@ -1030,7 +1030,7 @@ All the possible variables inside this block are explained here:
 
 .. py:data:: every
   
-  The number of time-steps between each output.
+  The number of time-steps between each output, **or** a :ref:`time selection <TimeSelections>`.
 
 
 .. py:data:: time_average
