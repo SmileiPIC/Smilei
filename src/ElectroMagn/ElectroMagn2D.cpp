@@ -154,19 +154,15 @@ isSouthern(patch->isSouthern())
 	} // for (unsigned int i=0 ; i<nDim_field 
     
     for (unsigned int i=0; i<antennas.size(); i++) {
-        if (antennas[i].field == "Jx")
-            antennas[i].my_field = new Field2D(dimPrim, 0, false, "Jx");
-        else if (antennas[i].field == "Jy")
-            antennas[i].my_field = new Field2D(dimPrim, 1, false, "Jy");
-        else if (antennas[i].field == "Jz")
-            antennas[i].my_field = new Field2D(dimPrim, 2, false, "Jz");
+        if      (antennas[i].fieldName == "Jx")
+            antennas[i].field = new Field2D(dimPrim, 0, false, "Jx");
+        else if (antennas[i].fieldName == "Jy")
+            antennas[i].field = new Field2D(dimPrim, 1, false, "Jy");
+        else if (antennas[i].fieldName == "Jz")
+            antennas[i].field = new Field2D(dimPrim, 2, false, "Jz");
         
-        if (antennas[i].my_field) {
-            stringstream ss("");
-            ss << "Antenna " << i;
-            Profile my_spaceProfile(antennas[i].space_profile, nDim_field, ss.str());
-            applyExternalField(antennas[i].my_field,&my_spaceProfile, patch);
-        }
+        if (antennas[i].field)
+            applyExternalField(antennas[i].field, antennas[i].space_profile, patch);
     }
     
 }//END constructor Electromagn2D

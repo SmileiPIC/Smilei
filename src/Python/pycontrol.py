@@ -17,7 +17,7 @@ def _smilei_check():
             if not CheckClass.verify: raise
         except:
             raise Exception("ERROR in the namelist: it seems that the name `"+CheckClassName+"` has been overriden")
-
+    # Verify the output_dir
     if smilei_mpi_rank == 0 and output_dir:
         if not os.path.exists(output_dir):
             try:
@@ -26,11 +26,32 @@ def _smilei_check():
                 raise Exception("ERROR in the namelist: output_dir "+output_dir+" does not exists and cannot be created")
         elif not os.path.isdir(output_dir):
                 raise Exception("ERROR in the namelist: output_dir "+output_dir+" exists and is not a dir")
-
+    # Verify the restart_dir
     if restart and restart_dir:
         if not os.path.isdir(restart_dir):
             raise Exception("ERROR in the namelist: restart_dir "+restart_dir+" is not a dir")
-
+    # Verify that constant() and tconstant() were not redefined
+    if not hasattr(constant, "_reserved") or not hasattr(tconstant, "_reserved"):
+        raise Exception("Names `constant` and `tconstant` cannot be overriden")
+    # Convert float profiles to constant() or tconstant()
+    def toSpaceProfile(input):
+        try   : return constant(input*1.)
+        except: return input
+    def toTimeProfile(input):
+        try   : return tconstant(input*1.)
+        except: return input
+    for s in Species:
+        s.nb_density      = toSpaceProfile(s.nb_density      )
+        s.charge_density  = toSpaceProfile(s.charge_density  )
+        s.n_part_per_cell = toSpaceProfile(s.n_part_per_cell )
+        s.charge          = toSpaceProfile(s.charge          )
+        s.mean_velocity   = [ toSpaceProfile(p) for p in s.mean_velocity ]
+        s.temperature     = [ toSpaceProfile(p) for p in s.temperature   ]
+    for e in ExtField:
+        e.profile         = toSpaceProfile(e.profile         )
+    for a in Antenna:
+        a.space_profile   = toSpaceProfile(a.space_profile   )
+        a.time_profile    = toTimeProfile (a.time_profile    )
 
 
 # this function will be called after initialising the simulation, just before entering the time loop

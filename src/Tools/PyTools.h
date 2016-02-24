@@ -134,6 +134,32 @@ public:
         return retval;
     }
     
+    //! convert python list to vector of python objects
+    static bool convert(PyObject * py_list, std::vector<PyObject*> & py_vec) {
+        if (py_list) {
+            if (PyTuple_Check(py_list) || PyList_Check(py_list)) {
+                PyObject* seq = PySequence_Fast(py_list, "expected a sequence");
+                int len = PySequence_Size(seq);
+                py_vec.resize(len);
+                for (int i = 0; i < len; i++) {
+                    PyObject* item = PySequence_Fast_GET_ITEM(seq, i);
+                    py_vec[i]=item;
+                }
+                Py_DECREF(seq);
+                return true; // success
+            }
+        }
+        PyTools::checkPyError();
+        return false; // error
+    }
+    
+    //! convert python list to vector of c++ values
+    template <typename T>
+    static bool convert(PyObject * py_list, std::vector<T> & vec) {
+        std::vector<PyObject*> py_vec;
+        return convert(py_list, py_vec) && convert(py_vec, vec);
+    }
+    
     //! check if there has been a python error
     static void checkPyError(bool exitOnError=false) {
         if (PyErr_Occurred()) {
@@ -270,24 +296,22 @@ public:
         
     }
     
-    static void toProfile(PyObject*& myPy) {
-        double val;
-        // If the profile is only a double, then convert to a constant function
-        if( PyTools::convert(myPy, val) ) {
-            // Extract the function "constant"
-            PyObject* constantFunction = PyTools::extract_py("constant");
-            // Create the argument which has the value of the profile
-            PyObject* arg = PyTuple_New(1);
-            PyTuple_SET_ITEM(arg, 0, PyFloat_FromDouble(val));
-            // Create the constant anonymous function
-            myPy = PyObject_Call(constantFunction, arg, NULL);
-            PyTools::checkPyError();
+    //! retrieve a vector of python objects
+    static std::vector<PyObject*> extract_pyVec(std::string name, std::string component=std::string(""), int nComponent=0) {
+        std::vector<PyObject*> retvec;
+        PyObject* py_obj = extract_py(name,component,nComponent);
+        if( ! convert(py_obj, retvec) ) {
+            std::ostringstream ss("");
+            if (component!="") {
+                ss << "In " << component << " #" << nComponent << " ";
+            }
+            ERROR( ss.str() << name << " should be a list not a scalar: use [...]");
         }
+        return retvec;
     }
-
+    
     static bool extract_pyProfile(std::string name, PyObject*& myPy, std::string component=std::string(""), int nComponent=0) {
         PyObject* myPytmp=extract_py(name,component,nComponent);
-        toProfile(myPytmp);
         if (PyCallable_Check(myPytmp)) {
             myPy=myPytmp;
             return true;
@@ -295,43 +319,17 @@ public:
         return false;
     }
     
-    //! retrieve a vector of python objects
-    static std::vector<PyObject*> extract_pyVec(std::string name, std::string component=std::string(""), int nComponent=0) {
-        std::vector<PyObject*> retvec;
-        PyObject* py_obj = extract_py(name,component,nComponent);
-        if (py_obj) {
-            if (!PyTuple_Check(py_obj) && !PyList_Check(py_obj)) {
-                retvec.push_back(py_obj);
-                std::ostringstream ss("");
-                if (component!="") {
-                    ss << "In " << component << " #" << nComponent << " ";
-                }
-                ERROR( ss.str() << name << " should be a list not a scalar: use [...]");
-            } else {
-                PyObject* seq = PySequence_Fast(py_obj, "expected a sequence");
-                int len = PySequence_Size(py_obj);
-                retvec.resize(len);
-                for (int i = 0; i < len; i++) {
-                    PyObject* item = PySequence_Fast_GET_ITEM(seq, i);
-                    retvec[i]=item;
-                }
-                Py_DECREF(seq);
-            }
-        }
-        PyTools::checkPyError();
-        return retvec;
-    }
-    
     // extract 3 profiles from namelist (used for part mean velocity and temperature)
     static void extract3Profiles(std::string varname, int ispec, PyObject*& profx, PyObject*& profy, PyObject*& profz )
     {
         std::vector<PyObject*> pvec = PyTools::extract_pyVec(varname,"Species",ispec);
-        for (unsigned int i=0;i<pvec.size();i++) {
-            PyTools::toProfile(pvec[i]);
-        }
         if ( pvec.size()==1 ) {
+            if( !PyCallable_Check(pvec[0]) )
+                ERROR("For species #" << ispec << ", "<<varname<<" not understood");
             profx =  profy =  profz = pvec[0];
         } else if (pvec.size()==3) {
+            if( !PyCallable_Check(pvec[0]) || !PyCallable_Check(pvec[1]) || !PyCallable_Check(pvec[2]) )
+                ERROR("For species #" << ispec << ", "<<varname<<" not understood");
             profx = pvec[0];
             profy = pvec[1];
             profz = pvec[2];
@@ -339,11 +337,11 @@ public:
             ERROR("For species #" << ispec << ", "<<varname<<" needs 1 or 3 components.");
         }
     }
-
+    
     //! return the number of components (see pyinit.py)
     static unsigned int nComponents(std::string componentName) {
         // Get the selected component (e.g. "Species" or "Laser")
-        if (!Py_IsInitialized()) ERROR("Python not initialized: this should not happend");
+        if (!Py_IsInitialized()) ERROR("Python not initialized: this should not happen");
         PyObject *py_obj = PyObject_GetAttrString(PyImport_AddModule("__main__"),componentName.c_str());
         PyTools::checkPyError();
         Py_ssize_t retval = PyObject_Length(py_obj);
@@ -353,6 +351,17 @@ public:
         return retval;
     }
     
+    //! Get an object's attribute
+    template <typename T>
+    static bool getAttr(PyObject* object, std::string attr_name, T & value) {
+        bool success = false;
+        if( PyObject_HasAttrString(object, attr_name.c_str()) ) {
+            PyObject* py_value = PyObject_GetAttrString(object, attr_name.c_str());
+            success = convert(py_value, value);
+            Py_XDECREF(py_value);
+        }
+        return success;
+    }
     
 };
 

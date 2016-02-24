@@ -25,23 +25,24 @@ class Solver;
 // ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each ExtField
 // ---------------------------------------------------------------------------------------------------------------------
-struct ExtFieldStructure {
-    //! fields to which apply the exeternal field
+struct ExtField {
+    //! fields to which apply the external field
     std::vector<std::string> fields;
-    PyObject *py_profile;
+    
+    Profile * profile;
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each Antenna
 // ---------------------------------------------------------------------------------------------------------------------
-struct AntennaStructure {
-    //! fields to which apply the exeternal field
-    std::string field;
+struct Antenna {
+    //! Jx, Jy or Jz
+    std::string fieldName;
     
-    PyObject *time_profile;
-    PyObject *space_profile;
+    Profile *time_profile;
+    Profile *space_profile;
     
-    Field* my_field;
+    Field* field;
 };
 
 //! class ElectroMagn: generic class containing all information on the electromagnetic fields and currents
@@ -248,8 +249,8 @@ public:
 	return rho_->norm2(istart, bufsize);
     }
     
-    //! external fields parameters the key string is the name of the field and the value is a vector of ExtFieldStructure
-    std::vector<ExtFieldStructure> ext_field_structs;
+    //! external fields parameters the key string is the name of the field and the value is a vector of ExtField
+    std::vector<ExtField> extFields;
     
     //! Method used to impose external fields (apply to all Fields)
     void applyExternalFields(Patch*);
@@ -258,7 +259,7 @@ public:
     virtual void applyExternalField(Field*, Profile*, Patch*) = 0 ;
     
     //! Antenna
-    std::vector<AntennaStructure> antennas;
+    std::vector<Antenna> antennas;
     
     //! Method used to impose external currents (aka antennas)
     void applyAntennas(SmileiMPI*, double time);

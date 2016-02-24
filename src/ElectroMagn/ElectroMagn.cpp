@@ -97,16 +97,20 @@ oversize(params.oversize)
     unsigned int numExtFields=PyTools::nComponents("ExtField");
     for (unsigned int n_extfield = 0; n_extfield < numExtFields; n_extfield++) {
         MESSAGE("ExtField " << n_extfield);
-        ExtFieldStructure tmpExtField;
-        if( !PyTools::extract("field",tmpExtField.fields,"ExtField",n_extfield)) {
+        ExtField extField;
+        PyObject * profile;
+        ostringstream name;
+        if( !PyTools::extract("field",extField.fields,"ExtField",n_extfield))
             ERROR("ExtField #"<<n_extfield<<": parameter 'field' not provided'");
-        }
         
-        // Now import the profile as a python function
-        if (!PyTools::extract_pyProfile("profile",tmpExtField.py_profile,"ExtField",n_extfield)) {
+        // Now import the profile
+        name.str("");
+        name << "ExtField[" << n_extfield <<"].profile";
+        if (!PyTools::extract_pyProfile("profile",profile,"ExtField",n_extfield))
             ERROR(" ExtField #"<<n_extfield<<": parameter 'profile' not understood");
-        }
-        ext_field_structs.push_back(tmpExtField);
+        extField.profile = new Profile(profile, nDim_field, name.str());
+        
+        extFields.push_back(extField);
     }
     
     
@@ -115,23 +119,30 @@ oversize(params.oversize)
     // -----------------
     unsigned int numAntenna=PyTools::nComponents("Antenna");
     for (unsigned int n_antenna = 0; n_antenna < numAntenna; n_antenna++) {
-        AntennaStructure tmpProf;
-        tmpProf.my_field = NULL;
-        if( !PyTools::extract("field",tmpProf.field,"Antenna",n_antenna)) {
+        Antenna antenna;
+        PyObject * profile;
+        ostringstream name;
+        antenna.field = NULL;
+        if( !PyTools::extract("field",antenna.fieldName,"Antenna",n_antenna))
             ERROR("Antenna #"<<n_antenna<<": parameter 'field' not provided'");
-        }
-        if (tmpProf.field != "Jx" && tmpProf.field != "Jy" && tmpProf.field != "Jz")
+        if (antenna.fieldName != "Jx" && antenna.fieldName != "Jy" && antenna.fieldName != "Jz")
             ERROR("Antenna #"<<n_antenna<<": parameter 'field' must be one of Jx, Jy, Jz");
         
-        // Now import the space profile as a python function
-        if (!PyTools::extract_pyProfile("space_profile",tmpProf.space_profile,"Antenna",n_antenna))
+        // Extract the space profile
+        name.str("");
+        name << "Antenna[" << n_antenna <<"].space_profile";
+        if (!PyTools::extract_pyProfile("space_profile",profile,"Antenna",n_antenna))
             ERROR(" Antenna #"<<n_antenna<<": parameter 'space_profile' not understood");
+        antenna.space_profile = new Profile(profile, nDim_field, name.str());
         
-        // Now import the time profile as a python function
-        if (!PyTools::extract_pyProfile("time_profile",tmpProf.time_profile,"Antenna",n_antenna))
+        // Extract the time profile
+        name.str("");
+        name << "Antenna[" << n_antenna <<"].time_profile";
+        if (!PyTools::extract_pyProfile("time_profile" ,profile,"Antenna",n_antenna))
             ERROR(" Antenna #"<<n_antenna<<": parameter 'time_profile' not understood");
+        antenna.time_profile =  new Profile(profile, nDim_field, name.str());
         
-        antennas.push_back(tmpProf);
+        antennas.push_back(antenna);
     }
 
 }
@@ -180,9 +191,9 @@ ElectroMagn::~ElectroMagn()
     delete MaxwellFaradaySolver_;
     
     //antenna cleanup
-    for (vector<AntennaStructure>::iterator antenna=antennas.begin(); antenna!=antennas.end(); antenna++ ) {
-        delete antenna->my_field;
-        antenna->my_field=NULL;
+    for (vector<Antenna>::iterator antenna=antennas.begin(); antenna!=antennas.end(); antenna++ ) {
+        delete antenna->field;
+        antenna->field=NULL;
     }
     
 
@@ -321,36 +332,31 @@ string LowerCase(string in){
 }
 
 void ElectroMagn::applyExternalFields(Patch* patch) {    
-    vector<Field*> my_fields;
-    my_fields.push_back(Ex_);
-    my_fields.push_back(Ey_);
-    my_fields.push_back(Ez_);
-    my_fields.push_back(Bx_);
-    my_fields.push_back(By_);
-    my_fields.push_back(Bz_);
+    Field * field;
     bool found=false;
-    for (vector<Field*>::iterator field=my_fields.begin(); field!=my_fields.end(); field++) {
-        if (*field) {
-            for (vector<ExtFieldStructure>::iterator extfield=ext_field_structs.begin(); extfield!=ext_field_structs.end(); extfield++ ) {
-                Profile *my_ExtFieldProfile = new Profile(extfield->py_profile, nDim_field, "extfield "+(*field)->name);
-                if (my_ExtFieldProfile) {
-                    for (vector<string>::iterator fieldName=(*extfield).fields.begin();fieldName!=(*extfield).fields.end();fieldName++) {
-                        if (LowerCase((*field)->name)==LowerCase(*fieldName)) {
-                            applyExternalField(*field,my_ExtFieldProfile, patch);
-                            found=true;
-                        }
-                    }
-                    delete my_ExtFieldProfile;
-                } else{
-                    ERROR("Could not initialize external field Profile");
-                }
+    for (vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
+        for (vector<string>::iterator fieldName=extfield->fields.begin();fieldName!=extfield->fields.end();fieldName++) {
+            string name = LowerCase(*fieldName);
+            if      ( Ex_ && name==LowerCase(Ex_->name) ) field = Ex_;
+            else if ( Ey_ && name==LowerCase(Ey_->name) ) field = Ey_;
+            else if ( Ez_ && name==LowerCase(Ez_->name) ) field = Ez_;
+            else if ( Bx_ && name==LowerCase(Bx_->name) ) field = Bx_;
+            else if ( By_ && name==LowerCase(By_->name) ) field = By_;
+            else if ( Bz_ && name==LowerCase(Bz_->name) ) field = Bz_;
+            else field = NULL;
+            
+            if( field ) {
+                applyExternalField( field, extfield->profile, patch );
+                found=true;
             }
         }
     }
-    if (found) {
-	if (patch->isMaster()) MESSAGE(1,"Finish");
-    } else {
-        if (patch->isMaster()) MESSAGE(1,"Nothing to do");
+    if (patch->isMaster()) {
+        if (found) {
+            MESSAGE(1,"Finish");
+        } else {
+            MESSAGE(1,"Nothing to do");
+        }
     }
     Bx_m->copyFrom(Bx_);
     By_m->copyFrom(By_);
@@ -358,23 +364,19 @@ void ElectroMagn::applyExternalFields(Patch* patch) {
 }
 
 void ElectroMagn::applyAntennas(SmileiMPI* smpi, double time) {
-    vector<Field*> my_fields;
-    my_fields.push_back(Jx_);
-    my_fields.push_back(Jy_);
-    my_fields.push_back(Jz_);
+    Field * field;
     
-    for (vector<AntennaStructure>::iterator antenna=antennas.begin(); antenna!=antennas.end(); antenna++ ) {
-        double intensity = PyTools::runPyFunction(antenna->time_profile, time);
-        if (antenna->my_field) {
-            for (vector<Field*>::iterator field=my_fields.begin(); field!=my_fields.end(); field++) {
-                if ((*field)->name==antenna->my_field->name) {
-                    if (antenna->my_field->globalDims_ == (*field)->globalDims_) {
-                        for (unsigned int i=0; i< (*field)->globalDims_ ; i++) {
-                            (**field)(i)=(**field)(i) + intensity * (*antenna->my_field)(i);
-                        }
-                    }
-                }
-            }
+    for (vector<Antenna>::iterator antenna=antennas.begin(); antenna!=antennas.end(); antenna++ ) {
+        if (antenna->field) {
+            double intensity = antenna->time_profile->valueAt(time);
+            
+            if     ( antenna->field->name == "Jx" ) field = Jx_;
+            else if( antenna->field->name == "Jy" ) field = Jy_;
+            else if( antenna->field->name == "Jz" ) field = Jz_;
+            
+            if (antenna->field->globalDims_ == field->globalDims_) // to do (TV): is this check really necessary ?
+                for (unsigned int i=0; i< field->globalDims_ ; i++)
+                    (*field)(i) += intensity * (*antenna->field)(i);
         }
     }
 }

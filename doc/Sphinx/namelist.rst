@@ -578,15 +578,12 @@ profiles.
     
     Antenna( ... , time_profile = tcosine(freq=0.01), ... )
 
-..
+
+.. rubric:: Illustrations of the pre-defined spatial and temporal profiles
   
-  **Illustrations of the pre-defined spatial and temporal profiles**
-  
-  .. image:: _static/pythonprofiles.png
-  
-| 
-  
-  .. image:: _static/pythonprofiles_t.png
+.. image:: _static/pythonprofiles.png
+
+.. image:: _static/pythonprofiles_t.png
 
 
 ----
