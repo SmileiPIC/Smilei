@@ -146,18 +146,31 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name)
 }
 
 
-
-
-
 // Functions to evaluate a python function with various numbers of arguments
+// 1D
+double Function_Python1D::valueAt(double time) {
+    return PyTools::runPyFunction(py_profile, time);
+}
 double Function_Python1D::valueAt(vector<double> x_cell) {
     return PyTools::runPyFunction(py_profile, x_cell[0]);
+}
+// 2D
+double Function_Python2D::valueAt(vector<double> x_cell, double time) {
+    return PyTools::runPyFunction(py_profile, x_cell[0], time);
 }
 double Function_Python2D::valueAt(vector<double> x_cell) {
     return PyTools::runPyFunction(py_profile, x_cell[0], x_cell[1]);
 }
+// 3D
+double Function_Python3D::valueAt(vector<double> x_cell, double time) {
+    return PyTools::runPyFunction(py_profile, x_cell[0], x_cell[1], time);
+}
 double Function_Python3D::valueAt(vector<double> x_cell) {
     return PyTools::runPyFunction(py_profile, x_cell[0], x_cell[1], x_cell[2]);
+}
+// 4D
+double Function_Python4D::valueAt(vector<double> x_cell, double time) {
+    return PyTools::runPyFunction(py_profile, x_cell[0], x_cell[1], x_cell[2], time);
 }
 
 // Constant profiles

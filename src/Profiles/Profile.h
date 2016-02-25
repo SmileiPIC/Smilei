@@ -12,8 +12,9 @@ class Function
 public:
     Function(){};
     ~Function(){};
-    virtual double valueAt(std::vector<double>) {return 0.;}; // spatial
-    virtual double valueAt(double             ) {return 0.;}; // temporal
+    virtual double valueAt(std::vector<double>         ) {return 0.;}; // spatial
+    virtual double valueAt(double                      ) {return 0.;}; // temporal
+    virtual double valueAt(std::vector<double>, double ) {return 0.;}; // spatio-temporal
 };
 
 
@@ -24,10 +25,10 @@ class Profile
 {
 public:
     //! Default constructor
-    Profile(PyObject* , unsigned int, std::string);
+    Profile(PyObject*, unsigned int, std::string);
     //! Cloning constructor
     Profile(Profile* profile) : function(profile->function) {};
-
+    
     //! Default destructor
     ~Profile(){};
     
@@ -39,6 +40,10 @@ public:
     inline double valueAt(double time) {
         return function->valueAt(time);
     };
+    //! Get the value of the profile at some location (spatio-temporal)
+    inline double valueAt(std::vector<double> coordinates, double time) {
+        return function->valueAt(coordinates, time);
+    };
     
 private:
     //! Object that holds the information on the profile function
@@ -48,14 +53,14 @@ private:
 
 
 
-
-// Define here various children classes for hard-coded functions
+// Children classes for python functions
 
 class Function_Python1D : public Function
 {
 public:
     Function_Python1D(PyObject *pp) : py_profile(pp) {};
-    double valueAt(std::vector<double>);
+    double valueAt(double); // time
+    double valueAt(std::vector<double>); // space
 private:
     PyObject *py_profile;
 };
@@ -65,7 +70,8 @@ class Function_Python2D : public Function
 {
 public:
     Function_Python2D(PyObject *pp) : py_profile(pp) {};
-    double valueAt(std::vector<double>);
+    double valueAt(std::vector<double>, double); // space + time
+    double valueAt(std::vector<double>); // space
 private:
     PyObject *py_profile;
 };
@@ -75,11 +81,25 @@ class Function_Python3D : public Function
 {
 public:
     Function_Python3D(PyObject *pp) : py_profile(pp) {};
-    double valueAt(std::vector<double>);
+    double valueAt(std::vector<double>, double); // space + time
+    double valueAt(std::vector<double>); // space
 private:
     PyObject *py_profile;
 };
 
+
+class Function_Python4D : public Function
+{
+public:
+    Function_Python4D(PyObject *pp) : py_profile(pp) {};
+    double valueAt(std::vector<double>, double); // space + time
+private:
+    PyObject *py_profile;
+};
+
+
+
+// Children classes for hard-coded functions
 
 class Function_Constant1D : public Function
 {
