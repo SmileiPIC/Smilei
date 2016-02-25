@@ -144,8 +144,9 @@ int main (int argc, char* argv[])
         
         TITLE("Applying antennas at time t = " << 0.5 * params.timestep);
         #pragma omp master
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
-            vecPatches(ipatch)->EMfields->applyAntennas(smpiData, 0.5 * params.timestep); // smpi useless
+        if( vecPatches.hasAntennas )
+            for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
+                vecPatches(ipatch)->EMfields->applyAntennas(smpiData, 0.5 * params.timestep); // smpi useless
         #pragma omp barrier
         
         // Init electric field (Ex/1D, + Ey/2D)
@@ -262,8 +263,9 @@ int main (int argc, char* argv[])
             
             // apply currents from antennas
             #pragma omp master
-            for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
-                vecPatches(ipatch)->EMfields->applyAntennas(smpiData, time_dual);
+            if( vecPatches.hasAntennas )
+                for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
+                    vecPatches(ipatch)->EMfields->applyAntennas(smpiData, time_dual);
             #pragma omp barrier
         
             /*******************************************/

@@ -71,6 +71,9 @@ public:
         
         vecPatches.update_field_list();
         
+        // Figure out if there are antennas
+        vecPatches.hasAntennas = ( vecPatches(0)->EMfields->antennas.size() > 0 );
+        
         return vecPatches;
     }
 
