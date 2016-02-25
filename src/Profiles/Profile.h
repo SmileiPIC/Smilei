@@ -13,7 +13,11 @@ public:
     Function(){};
     ~Function(){};
     virtual double valueAt(std::vector<double>         ) {return 0.;}; // spatial
-    virtual double valueAt(double                      ) {return 0.;}; // temporal
+    virtual double valueAt(double x                    ) {             // temporal
+        std::vector<double> v(1);
+        v[0] = x;
+        return valueAt(v); // just in case someone uses 1D space profile instead of time
+    };
     virtual double valueAt(std::vector<double>, double ) {return 0.;}; // spatio-temporal
 };
 

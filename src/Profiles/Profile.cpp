@@ -106,9 +106,9 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name)
         
     }
     
-    // Otherwise, if the python profile cannot be hard-coded ....
+    // Otherwise (if the python profile cannot be hard-coded) ....
     else {
-        // Check how the profiles looks like (debug only)
+        // Check how the profile looks like (debug only)
         PyObject* repr = PyObject_Repr(py_profile);
         DEBUG(string(PyString_AsString(repr)));
         Py_XDECREF(repr);
@@ -135,7 +135,7 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name)
         Py_XDECREF(tuple);
         Py_XDECREF(inspect);
         
-        // Assign the evaluate function, which depends on the number of arguments
+        // Assign the evaluating function, which depends on the number of arguments
         if      ( nvariables == 1 ) function = new Function_Python1D(py_profile);
         else if ( nvariables == 2 ) function = new Function_Python2D(py_profile);
         else if ( nvariables == 3 ) function = new Function_Python3D(py_profile);
