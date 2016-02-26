@@ -240,7 +240,7 @@ namelist("")
     PyTools::extract("every",global_every);
     
     // --------------------
-    // Number of processors
+    // Number of patches
     // --------------------
     if ( !PyTools::extract("number_of_patches", number_of_patches) ) {
         number_of_patches.resize(nDim_field, 1);
@@ -248,11 +248,16 @@ namelist("")
     }
     else {
 	int tot_number_of_patches(1);
-        for ( int iDim=0 ; iDim<nDim_field ; iDim++ ) tot_number_of_patches *= number_of_patches[iDim];
-	if ( tot_number_of_patches == smpi->getSize() )
+        for ( int iDim=0 ; iDim<nDim_field ; iDim++ ){
+            if( (number_of_patches[iDim] & number_of_patches[iDim]-1) != 0) ERROR("Number of patches in each direction must be a power of 2");
+            tot_number_of_patches *= number_of_patches[iDim];
+        }
+	if ( tot_number_of_patches == smpi->getSize() ){
 	    simu_is_cartesian = true;
-	else
+	} else {
 	    simu_is_cartesian = false;
+            if (tot_number_of_patches < smpi->getSize()) ERROR("The total number of patches must be greater or equal to the number of MPI processes"); 
+        }
     }
     //simu_is_cartesian = false;
 

@@ -28,8 +28,11 @@ class PyTools {
 private:
     //! convert Python object to bool
     static bool pyconvert(PyObject* py_val, bool &val) {
-        if (py_val && PyBool_Check(py_val)) {
-            val=(py_val==Py_True);
+        int result;
+        if (py_val) {
+            result = PyObject_IsTrue(py_val);
+            if( result == -1 ) return false;
+            val = (bool) result;
             return true;
         }
         return false;
@@ -37,8 +40,10 @@ private:
     
     //! convert Python object to short
     static bool pyconvert(PyObject* py_val, short &val) {
-        if (py_val && PyInt_Check(py_val)) {
-            val=(short) PyInt_AsLong(py_val);
+        if (py_val && PyNumber_Check(py_val)) {
+            PyObject * v = PyNumber_Int(py_val);
+            val=(short) PyInt_AsLong(v);
+            Py_XDECREF(v);
             return true;
         }
         return false;
@@ -46,8 +51,10 @@ private:
     
     //! convert Python object to unsigned int
     static bool pyconvert(PyObject* py_val, unsigned int &val) {
-        if (py_val && PyInt_Check(py_val)) {
-            val=(unsigned int) PyInt_AsLong(py_val);
+        if (py_val && PyNumber_Check(py_val)) {
+            PyObject * v = PyNumber_Int(py_val);
+            val=(unsigned int) PyInt_AsLong(v);
+            Py_XDECREF(v);
             return true;
         }
         return false;
@@ -55,8 +62,10 @@ private:
     
     //! convert Python object to int
     static bool pyconvert(PyObject* py_val, int &val) {
-        if (py_val && PyInt_Check(py_val)) {
-            val=(int) PyInt_AsLong(py_val);
+        if (py_val && PyNumber_Check(py_val)) {
+            PyObject * v = PyNumber_Int(py_val);
+            val=(int) PyInt_AsLong(v);
+            Py_XDECREF(v);
             return true;
         }
         return false;
@@ -64,14 +73,11 @@ private:
     
     //! convert Python object to double
     static bool pyconvert(PyObject* py_val, double &val) {
-        if(py_val) {
-            if (PyFloat_Check(py_val)) {
-                val = PyFloat_AsDouble(py_val);
-                return true;
-            } else if (PyInt_Check(py_val)) {
-                val=(double) PyInt_AsLong(py_val);
-                return true;
-            }
+        if (py_val && PyNumber_Check(py_val)) {
+            PyObject * v = PyNumber_Float(py_val);
+            val=(double) PyFloat_AsDouble(v);
+            Py_XDECREF(v);
+            return true;
         }
         return false;
     }

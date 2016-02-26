@@ -119,6 +119,8 @@ public :
     std::vector<Field*> listBy_;
     std::vector<Field*> listBz_;
     
+    //! True if any antennas
+    bool hasAntennas;
 
  private :
     //! 1st patch index of patches_ (stored for balancing op)
