@@ -162,7 +162,7 @@ isSouthern(patch->isSouthern())
             antennas[i].field = new Field2D(dimPrim, 2, false, "Jz");
         
         if (antennas[i].field)
-            applyExternalField(antennas[i].field, antennas[i].space_profile, patch);
+            antennas[i].space_profile->addToField2D(antennas[i].field, patch, dx, dy);
     }
     
 }//END constructor Electromagn2D
@@ -912,18 +912,7 @@ void ElectroMagn2D::computePoynting() {
 }
 
 void ElectroMagn2D::applyExternalField(Field* my_field,  Profile *profile, Patch* patch) {
-    Field2D* field2D=static_cast<Field2D*>(my_field);
-
-    vector<double> pos(2,0);
-    
-    //for (unsigned int i=0 ; i<field2D->dims()[0] ; i++) { // UNSIGNED INT LEADS TO PB IN PERIODIC BCs
-    for (int i=0 ; i<(int)field2D->dims()[0] ; i++) {
-        pos[0] = ( (double)(patch->getCellStartingGlobalIndex(0)+i +(field2D->isDual(0)?-0.5:0)) )*dx;
-        for (int j=0 ; j<(int)field2D->dims()[1] ; j++) {
-            pos[1] = ( (double)(patch->getCellStartingGlobalIndex(1)+j +(field2D->isDual(1)?-0.5:0)) )*dy;
-            (*field2D)(i,j) = (*field2D)(i,j) + profile->valueAt(pos);
-        }//j
-    }//i
+    profile->applyToField2D(my_field, patch, dx, dy);
     
     if (emBoundCond[0]!=0) emBoundCond[0]->save_fields_BC2D_Long(my_field);
     if (emBoundCond[1]!=0) emBoundCond[1]->save_fields_BC2D_Long(my_field);

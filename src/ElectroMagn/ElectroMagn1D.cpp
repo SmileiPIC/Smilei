@@ -157,7 +157,7 @@ isEastern(patch->isEastern())
             antennas[i].field = new Field1D(dimPrim, 2, false, "Jz");
         
         if (antennas[i].field) 
-            applyExternalField(antennas[i].field, antennas[i].space_profile, patch);
+            antennas[i].space_profile->addToField1D(antennas[i].field, patch, dx);
     }
 
 
@@ -559,15 +559,9 @@ void ElectroMagn1D::computePoynting() {
 void ElectroMagn1D::applyExternalField(Field* my_field,  Profile *profile, Patch* patch) {
     
     MESSAGE(1,"Applying External field to " << my_field->name);
-    Field1D* field1D=static_cast<Field1D*>(my_field);
     
-    vector<double> x(1,0);
-    //for (unsigned int i=0 ; i<field1D->dims()[0] ; i++) { // USING UNSIGNED INT CREATES PB WITH PERIODIC BCs
-    for (int i=0 ; i<(int)field1D->dims()[0] ; i++) {
-        x[0] = ( (double)(patch->getCellStartingGlobalIndex(0)+i +(field1D->isDual(0)?-0.5:0)) )*dx;
-        (*field1D)(i) = (*field1D)(i) + profile->valueAt(x);
-    }
-    
+    profile->applyToField1D(my_field, patch, dx, 1.);
+        
     if(emBoundCond[0]) emBoundCond[0]->save_fields_BC1D(my_field);
     if(emBoundCond[1]) emBoundCond[1]->save_fields_BC1D(my_field);
 }

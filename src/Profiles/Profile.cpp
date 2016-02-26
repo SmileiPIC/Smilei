@@ -146,6 +146,52 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name)
 }
 
 
+Profile::~Profile()
+{
+    delete function;
+}
+
+
+
+// Add the profile to a 1D field
+double Profile::applyToField1D(Field *field, Patch *patch, double dx)
+{
+    Field1D* field1D=static_cast<Field1D*>(my_field);
+    
+    vector<double> pos(1);
+    pos[0] = dx* (double)(patch->getCellStartingGlobalIndex(0)+(field1D->isDual(0)?-0.5:0));
+    int N = (int)field1D->dims()[0];
+    
+    // USING UNSIGNED INT CREATES PB WITH PERIODIC BCs
+    for (int i=0 ; i<N ; i++) {
+        pos[0] += dx;
+        (*field1D)(i) += valueAt(pos);
+    }
+}
+
+// Add the profile to a 2D field
+double Profile::applyToField1D(Field *field, Patch *patch, double dx, double dy)
+{
+    Field2D* field2D=static_cast<Field2D*>(my_field);
+
+    vector<double> pos(2,0);
+    pos[0] = (double)(patch->getCellStartingGlobalIndex(0)+(field2D->isDual(0)?-0.5:0));
+    pos[1] = (double)(patch->getCellStartingGlobalIndex(1)+(field2D->isDual(1)?-0.5:0));
+    int N0 = (int)field2D->dims()[0];
+    int N1 = (int)field2D->dims()[1];
+    
+    // UNSIGNED INT LEADS TO PB IN PERIODIC BCs
+    for (int i=0 ; i<N0 ; i++) {
+        pos[0] += dx;
+        for (int j=0 ; j<N1 ; j++) {
+            pos[1] += dy;
+            (*field2D)(i,j) += valueAt(pos);
+        }
+    }
+}
+
+
+
 // Functions to evaluate a python function with various numbers of arguments
 // 1D
 double Function_Python1D::valueAt(double time) {

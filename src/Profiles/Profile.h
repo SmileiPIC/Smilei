@@ -12,13 +12,21 @@ class Function
 public:
     Function(){};
     ~Function(){};
-    virtual double valueAt(std::vector<double>         ) {return 0.;}; // spatial
-    virtual double valueAt(double x                    ) {             // temporal
+    // spatial
+    virtual double valueAt(std::vector<double>         ) {
+        return 0.;
+    };
+    // temporal
+    virtual double valueAt(double x                    ) {
+        // just in case someone uses 1D space profile instead of time
         std::vector<double> v(1);
         v[0] = x;
-        return valueAt(v); // just in case someone uses 1D space profile instead of time
+        return valueAt(v);
     };
-    virtual double valueAt(std::vector<double>, double ) {return 0.;}; // spatio-temporal
+    // spatio-temporal
+    virtual double valueAt(std::vector<double>, double ) {
+        return 0.;
+    };
 };
 
 
@@ -34,7 +42,7 @@ public:
     Profile(Profile* profile) : function(profile->function) {};
     
     //! Default destructor
-    ~Profile(){};
+    ~Profile();
     
     //! Get the value of the profile at some location (spatial)
     inline double valueAt(std::vector<double> coordinates) {
@@ -48,6 +56,11 @@ public:
     inline double valueAt(std::vector<double> coordinates, double time) {
         return function->valueAt(coordinates, time);
     };
+    
+    //! Add the profile to a 1D field
+    double applyToField1D(Field *field, Patch *patch, double dx);
+    //! Add the profile to a 2D field
+    double applyToField1D(Field *field, Patch *patch, double dx, double dy);
     
 private:
     //! Object that holds the information on the profile function
