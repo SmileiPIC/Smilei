@@ -198,9 +198,7 @@ public:
     
     // TEST PARTICLE PARAMETERS
     bool isTest;
-    
-//    // steps between each write of particles (this will activate a DiagnosticTrackParticles)
-//    unsigned int track_every;
+
     //! True if tracking the particles (activates one DiagnosticTrackParticles)
     bool tracked;
     //! Time selection for tracking particles

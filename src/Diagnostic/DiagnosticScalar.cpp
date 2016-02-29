@@ -15,10 +15,7 @@ isMaster(patch->isMaster()),
 res_time(params.res_time),
 cell_volume(params.cell_volume)
 {
-    //every(diagParams.scalar_every);
-    //vars(diagParams.scalar_vars)
 
-//    every = 0;
     out_width.resize(0);
 
     if (PyTools::nComponents("DiagScalar") > 1) {
@@ -26,28 +23,6 @@ cell_volume(params.cell_volume)
     }
     
     if (PyTools::nComponents("DiagScalar") > 0 ) {
-        
-//        if (!PyTools::extract("every",every,"DiagScalar")) every=params.global_every;
-//        
-//        //open file scalars.txt
-//        if (isMaster && every>0) {
-//            fout.open("scalars.txt");
-//            if (!fout.is_open()) ERROR("Can't open scalar file");
-//        }
-//
-//        vector<double> scalar_time_range(2,0.);
-//        
-//        if (!PyTools::extract("time_range",scalar_time_range,"DiagScalar")) {
-//            tmin = 0.;
-//            tmax = params.sim_time;
-//        } else {
-//            if (scalar_time_range.size() == 2) {
-//                tmin = scalar_time_range[0];
-//                tmax = scalar_time_range[1];
-//            } else {
-//                ERROR("in DiagScalar time_range");
-//            }
-//        }
         
         // get parameter "every" which describes a timestep selection
         timeSelection = new TimeSelection(
@@ -106,17 +81,11 @@ void DiagnosticScalar::run(int timestep, ElectroMagn* EMfields, vector<Species*>
         Energy_time_zero  = getScalar("Utot");
         EnergyUsedForNorm = Energy_time_zero;
     }
-
-//    double time = (double)timestep * dt;
-//
-//    // check that every is defined for scalar & that tmin <= time <= tmax
-//    if ( (every) && (time >= tmin) && (time <= tmax) ) {
-
+    
     // If within time-selection overall range
     bool theTimeIsNow = timeSelection->theTimeIsNow(timestep); // must compute this in any case
     if( timeSelection->inProgress(timestep) ) {
         EMfields->computePoynting(); // Poynting must be calculated & incremented at every timesteps
-//        if (timestep % every == 0) {
         if ( theTimeIsNow ) {
             compute(EMfields,vecSpecies);
             //write(timestep); -> Done after synch / patch  & MPI, Diagnostic*::run are becoming local

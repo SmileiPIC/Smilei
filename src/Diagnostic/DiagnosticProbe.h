@@ -63,9 +63,6 @@ public:
     //! return name of the probe based on its number
     std::string probeName(int p);
 
-//    //! vector containing the timesteps at which calculate each probe
-//    std::vector<unsigned int> every;
-
     //! vector containing the time selections at which to calculate each probe
     std::vector<TimeSelection*> timeSelection;
 
@@ -74,9 +71,7 @@ public:
 
     // rank of the cpu (from smpi) -> patch->hindex
     const unsigned int cpuRank;
-
-//    std::vector<double> tmin;
-//    std::vector<double> tmax;
+    
     double dt;
     
     //! fake particles acting as probes

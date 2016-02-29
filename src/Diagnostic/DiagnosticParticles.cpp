@@ -465,10 +465,8 @@ void DiagnosticParticles::write(int timestep)
     H5Fclose(fileId);    
 }
 
-// delete temporary stuff
-//if (time_average == 1) data_sum.resize(0); 
-// call by all if (time_average==1) 
 
+// call by all if (time_average==1) 
 void DiagnosticParticles::clean()
 {
     data_sum.resize(0); 

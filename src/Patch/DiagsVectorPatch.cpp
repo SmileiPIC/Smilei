@@ -20,14 +20,11 @@ void DiagsVectorPatch::computeGlobalDiags( VectorPatch& vecPatches, int timestep
 
 void DiagsVectorPatch::computeScalarsDiags( VectorPatch& vecPatches, int timestep)
 {
-    //cout << "In Global Compute Scalar Diags " << vecPatches(0)->Diags->scalars.every << " \t timestep = " << timestep << endl;
-//    int scalars_every( vecPatches(0)->Diags->scalars.every );
-//    if (timestep % scalars_every != 0) return;
     
     
     if( ! vecPatches(0)->Diags->scalars.timeSelection->theTimeIsNow() ) return;
 
-    //cout << "In Global Compute Scalar Daigs\n";
+    //cout << "In Global Compute Scalar Diags\n";
 
     //std::vector<std::pair<std::string,double> > out_list;
     //std::vector<std::string> out_key;
@@ -224,7 +221,6 @@ void DiagsVectorPatch::initTrackParticles(VectorPatch& vecPatches, Params& param
         
         // Communicate some stuff if this is a species that has to be dumped (particles have Id)
         // Need to be placed after ALL createParticles()
-//        if (vecPatches(0)->vecSpecies[ispec]->particles->track_every) {
         if (vecPatches(0)->vecSpecies[ispec]->particles->tracked) {
 
             // Internal patches offset

@@ -59,12 +59,6 @@ public:
     std::vector<DiagnosticParticles*> vecDiagnosticParticles;
     std::vector<DiagnosticTrackParticles*> vecDiagnosticTrackParticles;
     
-//    //! field dump output
-//    unsigned int fieldDump_every;
-//    
-//    //! time-averaged field dump output
-//    unsigned int avgfieldDump_every;
-    
     //! Time selection for field dumps
     TimeSelection * field_timeSelection;
     
@@ -73,19 +67,6 @@ public:
     
     //! number of time-steps for time-averaging of fields
     unsigned int ntime_step_avg;
-    
-//    //! scalar output every scalar_every (namelist group "DiagScalar" key "every")
-//    unsigned int scalar_every;
-    
-    double scalar_tmin;
-    double scalar_tmax;
-    
-    
-    //! list of vars for scalars to be written (empty means all)
-    std::vector<std::string> scalar_vars;
-    
-    //! scalar output precision
-    unsigned int scalar_precision;
     
     //! every for the standard pic timeloop output
     unsigned int print_every;

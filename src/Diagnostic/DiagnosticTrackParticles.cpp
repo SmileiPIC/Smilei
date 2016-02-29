@@ -51,14 +51,10 @@ void DiagnosticTrackParticles::createFile(int nParticles, Params &params) {
     hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
     H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
     fid_ = H5Fcreate( filename.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid);
-        
-//    // Write attribute: track_every
-//    H5::attr(fid_, "every", species->particles->track_every);
-        
+
     // Define maximum size
     hsize_t maxDimsPart[2] = {H5S_UNLIMITED, (hsize_t)nParticles};
 
-//    dims[0] = params.n_time / species->particles->track_every + 1;
     dims[0] = timeSelection->numberOfEvents(0, params.n_time);
     dims[1] = nParticles;
 
@@ -136,7 +132,6 @@ void DiagnosticTrackParticles::close() {
 
 void DiagnosticTrackParticles::run(int time) {
     
-//    if ( time % species->particles->track_every != 0) return;
     if( ! timeSelection->theTimeIsNow(time) ) return;
     
     iter ++;

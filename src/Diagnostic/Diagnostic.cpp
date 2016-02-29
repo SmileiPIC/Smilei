@@ -24,19 +24,6 @@ phases(params, patch)
     print_every=params.n_time/10;
     PyTools::extract("print_every", print_every);
     
-//    if (!PyTools::extract("fieldDump_every", fieldDump_every)) {
-//        fieldDump_every=params.global_every;
-//        MESSAGE(1,"Activating all fields to dump");
-//    }
-//    
-//    avgfieldDump_every=params.res_time*10;
-//    if (!PyTools::extract("avgfieldDump_every", avgfieldDump_every)) avgfieldDump_every=params.global_every;
-//    
-//    //!\todo Define default behaviour : 0 or params.res_time
-//    //ntime_step_avg=params.res_time;
-//    ntime_step_avg=0;
-//    PyTools::extract("ntime_step_avg", ntime_step_avg);
-    
     field_timeSelection = new TimeSelection( PyTools::extract_py("fieldDump_every"), "Fields" );
     avgfield_timeSelection = new TimeSelection( PyTools::extract_py("avgfieldDump_every"), " Average fields" );
     ntime_step_avg=0;
@@ -63,7 +50,6 @@ phases(params, patch)
     //dtimer[4].init(smpi, "track particles");
     // loop species and make a new diag if particles have to be dumped
     for(unsigned int i=0; i<patch->vecSpecies.size(); i++) {
-//        if (patch->vecSpecies[i]->particles->track_every > 0) {
         if (patch->vecSpecies[i]->particles->tracked) {
             vecDiagnosticTrackParticles.push_back(new DiagnosticTrackParticles(params, patch, patch->vecSpecies[i]));
         }

@@ -66,9 +66,6 @@ public:
 
     //! check if patch is master (from patch)
     bool isMaster;
-    
-//    //! every step to calculate scalars
-//    unsigned int every;
 
     //! Time selection
     TimeSelection * timeSelection;
@@ -76,8 +73,6 @@ public:
     //! this is copied from params
     double res_time;
     
-//    double tmin;
-//    double tmax;
     double dt;
 
     //! write precision
