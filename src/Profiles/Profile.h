@@ -6,7 +6,6 @@
 #include "Tools.h"
 #include "PyTools.h"
 
-
 class Function
 {
 public:
@@ -56,11 +55,6 @@ public:
     inline double valueAt(std::vector<double> coordinates, double time) {
         return function->valueAt(coordinates, time);
     };
-    
-    //! Add the profile to a 1D field
-    double applyToField1D(Field *field, Patch *patch, double dx);
-    //! Add the profile to a 2D field
-    double applyToField1D(Field *field, Patch *patch, double dx, double dy);
     
 private:
     //! Object that holds the information on the profile function
