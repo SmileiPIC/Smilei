@@ -143,11 +143,12 @@ int main (int argc, char* argv[])
         timer[9].reboot();
         
         TITLE("Applying antennas at time t = " << 0.5 * params.timestep);
-        #pragma omp master
+        #pragma omp single
+        {
         if( vecPatches.hasAntennas )
             for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
                 vecPatches(ipatch)->EMfields->applyAntennas(smpiData, 0.5 * params.timestep); // smpi useless
-        #pragma omp barrier
+        }
         
         // Init electric field (Ex/1D, + Ey/2D)
         if (!vecPatches.isRhoNull(smpiData)) {
@@ -263,12 +264,13 @@ int main (int argc, char* argv[])
             vecPatches.sumDensities( &diag_flag, timer );
             
             // apply currents from antennas
-            #pragma omp master
+            #pragma omp single
+            {
             if( vecPatches.hasAntennas )
                 for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
                     vecPatches(ipatch)->EMfields->applyAntennas(smpiData, time_dual);
-            #pragma omp barrier
-            
+            }
+        
             /*******************************************/
             /*********** Maxwell solver ****************/
             /*******************************************/

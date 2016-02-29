@@ -19,13 +19,20 @@ interpolation_order = 2
 timestep = 0.124
 sim_time = 93
 
+#Moving window
+#n_space_win_x: Number of cell in the total computation domain.
+#t_move_win: Starting time of the moving window in 1/w0.
+#vx_win: Velocity of the moving window in c.
+nspace_win_x = 896
+t_move_win = 60.
+vx_win = 0.9997
+
 # SIMULATION BOX : for all space directions (use vector)
 # cell_length: length of one cell in c/w0.
 # sim_length: Total length of the simulation in c/w0 .
 
 cell_length  = [0.125, 3.] 
-sim_length = [600000.,  120.]  
-#sim_length = [600000.,  189.]  
+sim_length = [ cell_length[0]*nspace_win_x,  120.]  
 bc_em_type_x = ["silver-muller","silver-muller"]
 bc_em_type_y = ["silver-muller","silver-muller"]
 
@@ -41,13 +48,6 @@ clrw = 1
 # ***_length: characteristic length for a given geometry.
 #
 
-#Moving window
-#n_space_win_x: Number of cell in the total computation domain.
-#t_move_win: Starting time of the moving window in 1/w0.
-#vx_win: Velocity of the moving window in c.
-nspace_win_x = 896
-t_move_win = 60.
-vx_win = 0.9997
 
 # RANDOM seed 
 # this is used to randomize the random number generator.
@@ -137,7 +137,6 @@ Laser(
 	time_profile =  "gaussian",
         transv_profile = "gaussian",
 	double_params = [7.0, 0.0, 0.0], # gaussian:FWHM in intensity, plateau length, delay (in c/w0 and w0)
-        #double_params_transv = [94.5, 30.8], # distance from axis, transverse FWHM in intensity (in c/w0)
         double_params_transv = [60.0, 30.8], # distance from axis, transverse FWHM in intensity (in c/w0)
 )
 
@@ -149,21 +148,20 @@ Laser(
 print_every = 100
 
 # every for field dump
+fieldsToDump = ['Ex','Ey','Bx','Bz','Rho_electron','Rho_proton','Rho','Jx_electron']
 fieldDump_every = 100
 
-# every for particle dump
-particleDump_every = 10000000
-
 # every for averagefield Dump
-avgfieldDump_every = 10000000
+avgfieldDump_every = 0
 
+#Write a restart file every dump_step iterations. 0 for no dump.
+dump_step = 0
+#Write a restart file every dump_minutes minutes. 0.0 for no dump.
+dump_minutes = 0.0
 
 # DIAG ON SCALARS
 # every = number of time-steps between each output
 #
 DiagScalar(every = 100)
 
-
-dump_step = 10000000
 exit_after_dump = False
-

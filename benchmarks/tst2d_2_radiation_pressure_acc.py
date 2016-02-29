@@ -141,12 +141,6 @@ fieldsToDump = ('Ex','Ey','Ez','Bx','By','Bz','Rho_ion','Rho_eon')
 # print_every (on screen text output) 
 # print_every = 100
 
-# every for field dump
-#fieldDump_every = 60
-
-# every for particle dump
-# particleDump_every = 5000
-
 # DIAG ON SCALARS
 # every = number of time-steps between each output
 #
