@@ -167,40 +167,54 @@ class PartWall(SmileiComponent):
     y = None
     z = None
 
-# default simulation values
-output_dir = None
-balancing_freq = None
+# Smilei-defined
 smilei_mpi_rank = 0
 smilei_mpi_size = 1
 smilei_rand_max = 2**31-1
+
+# Defautl launch, restart, dump
+output_dir = None
+restart_dir = None
+restart = False
 dump_step = 0
 dump_minutes = 0.0
-exit_after_dump = True
-restart = False
 dump_file_sequence = 2
 dump_deflate = 0
-restart_dir = None
-sim_units = ""
-wavelength_SI = 0.
-dim = ""
+exit_after_dump = True
+
+# Default load balancing
+balancing_freq = None
+
+# Default geometry info
 interpolation_order = 2
-timestep = None
+dim = ""
 cell_length = []
-sim_time = None
 sim_length = []
+timestep = None
+sim_time = None
+clrw = 1
+
+# Default electromagnetic stuff
 maxwell_sol = 'Yee'
 bc_em_type_x = []
 bc_em_type_y = []
-time_fields_frozen = 0.0
+time_fields_frozen = 0.
+
+# Default moving window
 nspace_win_x = 0
-t_move_win = 0.0
+t_move_win = 0.
 vx_win = 1.
-clrw = 1
+
+# Default screen print
 every = 0
 print_every = None
-fieldDump_every = None
+
+# Default field diagnostics
+fieldDump_every = 0
 fieldsToDump = []
-avgfieldDump_every = None
+avgfieldDump_every = 0
 ntime_step_avg = 0
-time_fields_frozen = 0.
+
+# Default Misc
+wavelength_SI = 0.
 random_seed = None
