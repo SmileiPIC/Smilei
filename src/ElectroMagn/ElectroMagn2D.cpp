@@ -914,20 +914,21 @@ void ElectroMagn2D::computePoynting() {
 void ElectroMagn2D::applyExternalField(Field* my_field,  Profile *profile, Patch* patch) {
     
     Field2D* field2D=static_cast<Field2D*>(my_field);
-    
+        
     vector<double> pos(2,0);
-    pos[0] = (double)(patch->getCellStartingGlobalIndex(0)+(field2D->isDual(0)?-0.5:0));
-    pos[1] = (double)(patch->getCellStartingGlobalIndex(1)+(field2D->isDual(1)?-0.5:0));
+    pos[0]      = dx*((double)(patch->getCellStartingGlobalIndex(0))+(field2D->isDual(0)?-0.5:0.));
+    double pos1 = dy*((double)(patch->getCellStartingGlobalIndex(1))+(field2D->isDual(1)?-0.5:0.));
     int N0 = (int)field2D->dims()[0];
     int N1 = (int)field2D->dims()[1];
     
     // UNSIGNED INT LEADS TO PB IN PERIODIC BCs
     for (int i=0 ; i<N0 ; i++) {
-        pos[0] += dx;
+        pos[1] = pos1;
         for (int j=0 ; j<N1 ; j++) {
-            pos[1] += dy;
             (*field2D)(i,j) += profile->valueAt(pos);
+            pos[1] += dy;
         }
+        pos[0] += dx;
     }
     
     if (emBoundCond[0]!=0) emBoundCond[0]->save_fields_BC2D_Long(my_field);

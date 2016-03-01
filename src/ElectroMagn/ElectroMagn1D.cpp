@@ -563,13 +563,13 @@ void ElectroMagn1D::applyExternalField(Field* my_field,  Profile *profile, Patch
     Field1D* field1D=static_cast<Field1D*>(my_field);
     
     vector<double> pos(1);
-    pos[0] = dx * (double)(patch->getCellStartingGlobalIndex(0)+(field1D->isDual(0)?-0.5:0));
+    pos[0] = dx * ((double)(patch->getCellStartingGlobalIndex(0))+(field1D->isDual(0)?-0.5:0.));
     int N = (int)field1D->dims()[0];
     
     // USING UNSIGNED INT CREATES PB WITH PERIODIC BCs
     for (int i=0 ; i<N ; i++) {
-        pos[0] += dx;
         (*field1D)(i) += profile->valueAt(pos);
+        pos[0] += dx;
     }
         
     if(emBoundCond[0]) emBoundCond[0]->save_fields_BC1D(my_field);

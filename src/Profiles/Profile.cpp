@@ -280,7 +280,7 @@ double Function_TimeTrapezoidal::valueAt(double time) {
 
 // Time gaussian profile
 double Function_TimeGaussian::valueAt(double time) {
-    if( time < start && time > end) return 0.;
+    if( time < start || time > end) return 0.;
     else                            return exp( -pow(time-center,order) * invsigma );
 }
 
@@ -295,7 +295,7 @@ double Function_TimePolygonal::valueAt(double time) {
 
 // Time cosine profile
 double Function_TimeCosine::valueAt(double time) {
-    if( time > start && time < end ) return 0.;
+    if( time < start || time > end ) return 0.;
     else                             return base + amplitude * cos(phi + freq*(time-start));
 }
 
