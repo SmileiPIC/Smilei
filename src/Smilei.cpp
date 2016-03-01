@@ -142,10 +142,10 @@ int main (int argc, char* argv[])
         timer[4].reboot();
         timer[9].reboot();
         
-        TITLE("Applying antennas at time t = " << 0.5 * params.timestep);
         #pragma omp single
         {
         if( vecPatches.hasAntennas )
+            TITLE("Applying antennas at time t = " << 0.5 * params.timestep);
             for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
                 vecPatches(ipatch)->EMfields->applyAntennas(smpiData, 0.5 * params.timestep); // smpi useless
         }
