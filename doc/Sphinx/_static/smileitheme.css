@@ -36,12 +36,44 @@ table.noborder, table.noborder td {
 }
 
 /* --------------------------------------------------------------------*/
-/* Main logo */
+/* Logos and icons */
 img.logo {
 	width:160px;
 }
 div.sphinxsidebarwrapper p.logo {
 	text-align: left;
+}
+.horizontallogo {
+	display:none;
+	height:5em;
+}
+@media screen and (max-width: 875px) {
+	.horizontallogo {
+		display:block;
+	}
+}
+.icon {
+    display:inline-block;
+    text-align:center;
+    margin:1em;
+    width:100px;
+}
+.icon * {
+    margin:0 auto;
+    display:block;
+}
+.icon img {
+	height:3em;
+}
+.icon, .icon:hover {
+    text-decoration:none;
+    color:#333;
+}
+.icon:hover {
+    background-color:#EAF4FD;
+}
+.icon:active {
+    background-color:#BBDDFA;
 }
 
 /* --------------------------------------------------------------------*/
