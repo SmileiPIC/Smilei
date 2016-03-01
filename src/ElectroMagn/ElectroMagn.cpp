@@ -140,7 +140,7 @@ oversize(params.oversize)
         name << "Antenna[" << n_antenna <<"].time_profile";
         if (!PyTools::extract_pyProfile("time_profile" ,profile,"Antenna",n_antenna))
             ERROR(" Antenna #"<<n_antenna<<": parameter 'time_profile' not understood");
-        antenna.time_profile =  new Profile(profile, nDim_field, name.str());
+        antenna.time_profile =  new Profile(profile, 1, name.str());
         
         antennas.push_back(antenna);
     }
