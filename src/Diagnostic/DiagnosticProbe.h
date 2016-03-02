@@ -29,6 +29,7 @@ See doc for help
 
 class Params;
 class Patch;
+class VectorPatch;
 class ElectroMagn;
 class Field2D;
 
@@ -42,7 +43,7 @@ public:
     //DiagnosticProbe();
 
     void createFile();
-    void setFile(hid_t masterFileId, Patch* patch, Params& params);
+    void setFile(hid_t masterFileId, Patch* patch, Params& params, VectorPatch& vecPatches );
     void waitSetFile(Params& params);
 
     void setFile(hid_t masterFileId);

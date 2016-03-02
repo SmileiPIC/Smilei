@@ -176,7 +176,7 @@ void DiagsVectorPatch::initProbesDiags(VectorPatch& vecPatches, Params& params, 
     vecPatches(0)->Diags->probes.createFile();
     // Start at 0, cause of setFile set probesStart (locate writing point in h5 file)
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-        vecPatches(ipatch)->Diags->probes.setFile( vecPatches(0)->Diags->probes.fileId, vecPatches(ipatch), params );
+      vecPatches(ipatch)->Diags->probes.setFile( vecPatches(0)->Diags->probes.fileId, vecPatches(ipatch), params, vecPatches );
     }
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
         vecPatches(ipatch)->Diags->probes.waitSetFile( params );
