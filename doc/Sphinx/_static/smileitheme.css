@@ -152,8 +152,7 @@ div.highlight > pre {
 /* --------------------------------------------------------------------*/
 /* Adjust horizontal lines */
 hr {
-	margin-top:3em;
-	margin-bottom:-1em;
+	margin-top:1em;
 	border-color: #0672ba;
 }
 

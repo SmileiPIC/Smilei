@@ -21,19 +21,39 @@ Partners
   :width: 100px
   :align: middle
 
+
+----
+
 .. rst-class:: noborder
 
 +------------+---------------------------------------------------------------------------------------------------------+
 | |mdls|     |                                                                                                         |
 |            |   `Maison de la Simulation <http://www.maisondelasimulation.fr/>`_ (MdlS), USR 3441                     |
+|            |                                                                                                         |
 +------------+---------------------------------------------------------------------------------------------------------+
+|            |   * `Julien Dérouillat <julien.derouillat@cea.fr>`_                                                     |
+|            |                                                                                                         |
++------------+---------------------------------------------------------------------------------------------------------+
+
+----
 
 .. rst-class:: noborder
 
 +------------+-------------------------------------------------------------------------------------------------------------+
 | |luli|     |                                                                                                             |
 |            |   `Laboratoire pour l'Utilisation des Lasers Intenses <http://www.luli.polytechnique.fr>`_ (LULI), UMR 7605 |
+|            |                                                                                                             |
 +------------+-------------------------------------------------------------------------------------------------------------+
+|            |   * `Mickael Grech <mickael.grech@polytechnique.edu>`_                                                      |
+|            |   * `Tommaso Vinci <tommaso.vinci@polytechnique.edu>`_                                                      |
+|            |   * `Marco Chiaramello <marco.chiaramello@polytechnique.edu>`_                                              |
+|            |   * `Anna Grassi <anna.grassi@polytechnique.edu>`_                                                          |
+|            |   * `Frédéric Pérez <frederic.perez@polytechnique.edu>`_                                                    |
+|            |   * `Caterina Riconda <caterina.riconda@upmc.fr>`_                                                          |
+|            |                                                                                                             |
++------------+-------------------------------------------------------------------------------------------------------------+
+
+----
 
 .. rst-class:: noborder
 
@@ -41,6 +61,11 @@ Partners
 | |llr|      |                                                                                                         |
 |            |   `Laboratoire Leprince-Ringuet <http://polywww.in2p3.fr>`_ (LLR), UMR 7638                             |
 +------------+---------------------------------------------------------------------------------------------------------+
+|            |                                                                                                         |
+|            |   * `Arnaud Beck <arnaud.beck@llr.in2p3.fr>`_                                                           |
++------------+---------------------------------------------------------------------------------------------------------+
+
+----
 
 .. rst-class:: noborder
 
@@ -48,6 +73,11 @@ Partners
 | |idris|    |                                                                                                                      |
 |            |   `Institut du developpement et des ressources en informatique scientifique <http://www.idris.fr>`_ (IDRIS), UPS 851 |
 +------------+----------------------------------------------------------------------------------------------------------------------+
+|            |                                                                                                                      |
+|            |   * `Marie Flé <marie.fle@idris.fr>`_                                                                                |
++------------+----------------------------------------------------------------------------------------------------------------------+
+
+----
 
 .. rst-class:: noborder
 
@@ -55,6 +85,13 @@ Partners
 | |lpgp|     |                                                                                                                  |
 |            |   `Laboratoire de Physique des Gaz et des Plasmas <http://www.lpgp.u-psud.fr/modeles/ind.php>`_ (LPGP), UMR 8578 |
 +------------+------------------------------------------------------------------------------------------------------------------+
+|            |                                                                                                                  |
+|            |   * `Nicolas Aunai <nicolas.aunai@lpp.polytechnique.fr>`_                                                        |
+|            |   * `Jérémy Dargent <jeremy.dargent@lpp.polytechnique.fr>`_                                                      |
+|            |                                                                                                                  |
++------------+------------------------------------------------------------------------------------------------------------------+
+
+
 
 ----
 
@@ -85,15 +122,4 @@ Financial support from the *Laboratoires d'Excellence*:
 | |palm|     | |                                                                           |
 |            | | `PALM <http://www.labex-palm.fr>`_, through the **SimPLE** project.       |
 +------------+-----------------------------------------------------------------------------+
-
-----
-
-.. _contacts:
-
-Contacts
-^^^^^^^^
-
-* mickael.grech@polytechnique.edu
-* julien.derouillat@cea.fr
-* arnaud.beck@llr.in2p3.fr
 
