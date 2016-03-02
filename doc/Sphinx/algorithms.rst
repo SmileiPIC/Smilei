@@ -40,10 +40,10 @@ fields satisfying Maxwell's equations:
   :label: Maxwell
   
   \begin{eqnarray}
-  \label{eq_BGauss} \nabla \cdot \mathbf{B} &=& 0 \,,\\
-  \label{eq_Poisson} \nabla \cdot \mathbf{E} &=& \rho \,,\\
-  \label{eq_Ampere}\nabla \times \mathbf{B} &=& \mathbf{J} + \partial_t \mathbf{E} \,,\\
-  \label{eq_Faraday}\nabla \times \mathbf{E} &=& -\partial_t \mathbf{B} \,.
+  \nabla \cdot \mathbf{B} &=& 0 \,,\\
+  \nabla \cdot \mathbf{E} &=& \rho \,,\\
+  \nabla \times \mathbf{B} &=& \mathbf{J} + \partial_t \mathbf{E} \,,\\
+  \nabla \times \mathbf{E} &=& -\partial_t \mathbf{B} \,.
   \end{eqnarray}
 
 The Vlasov-Maxwell system of equations :eq:`Vlasov`--:eq:`Maxwell` describes the
@@ -108,8 +108,8 @@ Time and space discretization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Maxwell's equations are solved here using the so-called Finite Difference Time Domain (FDTD)
-approach :ref:`TafloveHagness` as well as refined methods based on this algorithm
-(for a review of these methods see :ref:`Nuter2014`). In these methods, the electromagnetic
+approach [TafloveHagness]_ as well as refined methods based on this algorithm
+(for a review of these methods see [Nuter2014]_). In these methods, the electromagnetic
 fields are discretized onto a staggered grid, the so-called Yee-grid that allows for
 spatial-centering of the discretized curl operators in Maxwell's equations.
 Figure :numref:`fig_Yee` summarizes at which points of the Yee-grid are defined the
@@ -225,7 +225,7 @@ Particle push
 Knowing, for each quasi-particle, the electromagnetic fields at its position, the new
 particle momentum and position are computed using a (second order) leap-frog integrator.
 In :program:`Smilei`, two different schemes have been implemented: the well-known Boris
-pushe :ref:`Boris1970` and the pusher developed by J.-L. Vay :ref:`Vay2008`. 
+pushe [Boris1970]_ and the pusher developed by J.-L. Vay [Vay2008]_. 
 Both schemes compute the new particle momentum and position according to
 
 .. math::
@@ -243,7 +243,7 @@ Current deposition
 """"""""""""""""""
 
 Charge deposition (i.e. charge and current density projection onto the grid) is then
-performed using the charge-conserving algorithm proposed by Esirkepov :ref:`Esirkepov2001`.
+performed using the charge-conserving algorithm proposed by Esirkepov [Esirkepov2001]_.
 The current densities along the dimensions of the grid
 (i.e., the :math:`x`-direction for 1D3V simulations,
 both :math:`x`- and :math:`y`-directions for 2D3V simulations,
@@ -291,7 +291,7 @@ Maxwell solvers
 """""""""""""""
 
 Now that the currents are known at time-step :math:`n+\tfrac{1}{2}`, the electromagnetic
-fields can be advanced solving Maxwell's equations :ref:`eq_Maxwell`.
+fields can be advanced solving Maxwell's equations :eq:`Maxwell`.
 
 First, Maxwell-Ampère is solved, giving the advanced electric fields
 
@@ -311,7 +311,7 @@ It is worth
 noting that computing the two previous equations is sufficient to get a complete description
 of the new electromagnetic fields. Indeed, it can be shown that this conserves a
 divergence-free magnetic field if Gauss' equation is satisfied at time :math:`t=0`.
-Similarly, Poisson's equation :ref:`eq_Poisson` is verified as long as it is satisfied
+Similarly, Poisson's equation is verified as long as it is satisfied
 at time :math:`t=0`, if the charge deposition algorithm fulfills the charge conservation
 equation:
 
@@ -326,5 +326,22 @@ equation:
 
 Boundary conditions
 ^^^^^^^^^^^^^^^^^^^
+
+
+----
+
+References
+^^^^^^^^^^
+
+.. [TafloveHagness] A. Taflove and S. C. Hagness, Computation Electrodynamics: The Finite-Difference Time-Domain Method, 3rd Ed. (Artech House, Norwood, 2005)
+
+.. [Nuter2014] `R. Nuter et al., Eur. Phys. J. D 68, 177 (2014) <https://doi.org/10.1140/epjd/e2014-50162-y>`_
+
+.. [Boris1970] J.P. Boris, Proceeding of the 4th Conference on Numerical Simulation of Plasmas, Naval Res. Lab., Washington DC, pp. 3-67 (1970)
+
+.. [Vay2008] `J.-L. Vay, Phys. Plasmas 15, 056701 (2008) <https://doi.org/10.1063/1.2837054>`_
+
+.. [Esirkepov2001] `T. Zh. Esirkepov, Comp. Phys. Comm. 135, 144 (2001) <https://doi.org/10.1016/S0010-4655(00)00228-9>`_
+
 
 
