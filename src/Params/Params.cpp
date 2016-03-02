@@ -348,7 +348,12 @@ void Params::compute()
         n_space[i] /= number_of_patches[i];
         if(n_space_global[i]%number_of_patches[i] !=0) ERROR("ERROR in dimension " << i <<" Number of patches = " << number_of_patches[i] << " must divide n_space_global = " << n_space_global[i]);
     }
-    
+
+    for (unsigned int i=0; i<nDim_field; i++){
+	if ( n_space[i] <= 2*oversize[i] ) {
+	    ERROR ( "Increase space resolution or reduce number of patch in irection " << i << " "<< n_space[i]); 
+	}
+    }
 }
 
 
