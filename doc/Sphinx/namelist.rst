@@ -1237,6 +1237,7 @@ For more clarity, this graph illustrates the five syntaxes for time selections:
   
   * The syntax ``every = period`` is also accepted.
   * Any value set to ``0`` will be replaced by the default value.
+  * Special case: ``every=0`` means no output.
 
 ----
 
