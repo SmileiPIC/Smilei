@@ -138,7 +138,7 @@ class smileiQtPlot(QWidget):
             self.cell_length=self.fieldFile.root._v_attrs.cell_length[0]
             self.res_time=self.fieldFile.root._v_attrs.res_time
             self.sim_length=self.fieldFile.root._v_attrs.sim_length
-            self.fieldEvery=self.fieldFile.root._v_attrs.every
+            # JDT self.fieldEvery=self.fieldFile.root._v_attrs.every
             
             first=True
             for group in self.fieldFile.listNodes("/", classname='Group'):
@@ -442,7 +442,8 @@ class smileiQtPlot(QWidget):
             self.ui.logger.moveCursor (QTextCursor.End);
             for i in range(len(self.fig.axes)) :
                 if self.fig.axes[i] == event.inaxes:                    
-                    txt = "%d %G %G %G\n" % (i, self.step/self.res_time*self.fieldEvery, event.xdata, event.ydata)
+                    # JDT txt = "%d %G %G %G\n" % (i, self.step/self.res_time*self.fieldEvery, event.xdata, event.ydata)
+                    txt = "%d %G %G\n" % (i, event.xdata, event.ydata)
                     QApplication.clipboard().setText(txt)
                     self.ui.logger.insertPlainText(txt);
                     self.ui.logger.moveCursor (QTextCursor.End);
@@ -459,7 +460,8 @@ class smileiQtPlot(QWidget):
         self.slider.setValue(self.step)
         
         self.ui.spinStep.setValue(self.step)
-        time=float(self.step)/self.res_time*self.fieldEvery
+        # JDT time=float(self.step)/self.res_time*self.fieldEvery
+        time=float(self.step)/self.res_time
         
         for name in self.scalarDict:
             self.ax[name].lines[-1].set_xdata(time)
