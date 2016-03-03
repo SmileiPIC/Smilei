@@ -121,9 +121,10 @@ public :
     //! True if any antennas
     bool hasAntennas;
 
- private :
     //! 1st patch index of patches_ (stored for balancing op)
     int refHindex_;
+
+ private :
 
     //! Methods to access readably to patch PIC operators.
     //!   - patches_ should not be access outsied of VectorPatch

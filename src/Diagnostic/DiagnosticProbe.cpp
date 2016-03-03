@@ -6,7 +6,7 @@
 #include <sstream>
 
 #include "Params.h"
-#include "Patch.h"
+#include "VectorPatch.h"
 #include "ElectroMagn.h"
 #include "Field1D.h"
 #include "Field2D.h"
@@ -413,7 +413,7 @@ void DiagnosticProbe::createFile()
 }
 
 
-void DiagnosticProbe::setFile(hid_t masterFileId, Patch* patch, Params& params)
+void DiagnosticProbe::setFile(hid_t masterFileId, Patch* patch, Params& params, VectorPatch& vecPatches )
 {
     fileId = masterFileId;
 
@@ -436,9 +436,13 @@ void DiagnosticProbe::setFile(hid_t masterFileId, Patch* patch, Params& params)
 	rtag >> tag;
 
 	if (cpuRank>0) {
-	    //cout << patch->Hindex() << " Recv from " << patch->getMPIRank(cpuRank-1) << " with tag " << tag << endl;
-	    //MPI_Recv( &(probesStart[np]), 1, MPI_INTEGER, patch->getMPIRank(cpuRank-1), tag, MPI_COMM_WORLD, &status );
-	    MPI_Irecv( &(probesStart[np]), 1, MPI_INTEGER, patch->getMPIRank(cpuRank-1), tag, MPI_COMM_WORLD, &(rrecv[np]) );
+	    if ( patch->getMPIRank(cpuRank-1) != patch->MPI_me_ ) {
+		MPI_Recv( &(probesStart[np]), 1, MPI_INTEGER, patch->getMPIRank(cpuRank-1), tag, MPI_COMM_WORLD, &status );
+		//cout << patch->Hindex() << " Recv from " << patch->getMPIRank(cpuRank-1) << " with tag " << tag << " - value = " <<  probesStart[np]<< endl;
+	    }
+	    else 
+		probesStart[np] = vecPatches( cpuRank - 1 - vecPatches.refHindex_ )->Diags->probes.probesStart[np]+vecPatches( cpuRank - 1 - vecPatches.refHindex_ )->Diags->probes.probeParticles[np].size();
+	    //MPI_Irecv( &(probesStart[np]), 1, MPI_INTEGER, patch->getMPIRank(cpuRank-1), tag, MPI_COMM_WORLD, &(rrecv[np]) );
 	}
 	    
 	int probeEnd = probesStart[np]+probeParticles[np].size();
@@ -447,11 +451,19 @@ void DiagnosticProbe::setFile(hid_t masterFileId, Patch* patch, Params& params)
 	tag = 0;
 	stag >> tag;
 	if (cpuRank!=nPatches-1) {
-	    //cout << patch->Hindex() << " Send to " << patch->getMPIRank(cpuRank+1) << " with tag " << tag << endl;
-	    //MPI_Send( &probeEnd, 1, MPI_INTEGER, patch->getMPIRank(cpuRank+1), tag, MPI_COMM_WORLD );
-	    MPI_Isend( &probeEnd, 1, MPI_INTEGER, patch->getMPIRank(cpuRank+1), tag, MPI_COMM_WORLD, &(rsend[np]) );
+	    if ( patch->getMPIRank(cpuRank+1) != patch->MPI_me_ ) {
+		//cout << patch->Hindex() << " Send to " << patch->getMPIRank(cpuRank+1) << " with tag " << tag << " - value = " << probeEnd << endl;
+		MPI_Send( &probeEnd, 1, MPI_INTEGER, patch->getMPIRank(cpuRank+1), tag, MPI_COMM_WORLD );
+	    }
+	    /*else {
+		cout << patch->Hindex() << " copy " << 	cpuRank + 1 - vecPatches.refHindex_ << " - value = " << probeEnd << endl;
+		vecPatches( cpuRank + 1 - vecPatches.refHindex_ )->Diags->probes.probesStart[np] = probeEnd;
+		}*/
+		
+	    //MPI_Isend( &probeEnd, 1, MPI_INTEGER, patch->getMPIRank(cpuRank+1), tag, MPI_COMM_WORLD, &(rsend[np]) );
 
 	}
+	//cout << patch->Hindex() << " start " << probesStart[np]  << endl;
     }
 
     // ---------------------------------------------------
@@ -465,15 +477,16 @@ void DiagnosticProbe::waitSetFile(Params& params)
     MPI_Status rstat;
     MPI_Status sstat;
 
-    for (unsigned int np=0; np<rsend.size(); np++) {
+    /*for (unsigned int np=0; np<rsend.size(); np++) {
 	if (cpuRank>0) 
 	    MPI_Wait( &(rrecv[np]), &rstat );
 
-    int nPatches(1);
-    for (int iDim=0;iDim<params.nDim_field;iDim++) nPatches*=params.number_of_patches[iDim];
-    if (cpuRank!=nPatches-1)
-	MPI_Wait( &(rsend[np]), &sstat );
-    }
+	int nPatches(1);
+	for (int iDim=0;iDim<params.nDim_field;iDim++) nPatches*=params.number_of_patches[iDim];
+	cout << "nPatches = " << nPatches << endl;
+	if (cpuRank!=nPatches-1)
+	    MPI_Wait( &(rsend[np]), &sstat );
+    }*/
 }
 
 void DiagnosticProbe::setFile(hid_t masterFileId)

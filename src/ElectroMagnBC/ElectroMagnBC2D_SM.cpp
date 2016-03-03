@@ -179,7 +179,7 @@ void ElectroMagnBC2D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
         for (unsigned int j=0 ; j<ny_p ; j++) {
             
             double byW = 0.;
-            yp[0] = patch->getDomainLocalMin(1) + ((double)j)*dy;
+            yp[0] = patch->getDomainLocalMin(1) + ((double)j-EMfields->oversize[1])*dy;
             
             // Lasers
             for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
@@ -206,7 +206,7 @@ void ElectroMagnBC2D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
         for (unsigned int j=0 ; j<ny_d ; j++) {
             
             double bzW = 0.;
-            yd[0] = patch->getDomainLocalMin(1) + ((double)j-0.5)*dy;
+            yd[0] = patch->getDomainLocalMin(1) + ((double)j-0.5-EMfields->oversize[1])*dy;
             
             // Lasers
             for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
@@ -247,7 +247,7 @@ void ElectroMagnBC2D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Pat
         for (unsigned int j=0 ; j<ny_p ; j++) {
             
             double byE = 0.;
-            yp[0] = patch->getDomainLocalMin(1) + ((double)j)*dy;
+            yp[0] = patch->getDomainLocalMin(1) + ((double)j-EMfields->oversize[1])*dy;
             
             // Lasers
             for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
@@ -274,7 +274,7 @@ void ElectroMagnBC2D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Pat
         for (unsigned int j=0 ; j<ny_d ; j++) {
             
             double bzE = 0.;
-            yd[0] = patch->getDomainLocalMin(1) + ((double)j-0.5)*dy;
+            yd[0] = patch->getDomainLocalMin(1) + ((double)j-0.5-EMfields->oversize[1])*dy;
             
             // Lasers
             for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {

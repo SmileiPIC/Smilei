@@ -290,6 +290,7 @@ int main (int argc, char* argv[])
             
             #pragma omp master
             vecPatches.runAllDiags(params, smpiData, &diag_flag, itime, timer);
+            #pragma omp barrier
             
             
             // ----------------------------------------------------------------------
@@ -298,6 +299,7 @@ int main (int argc, char* argv[])
             // Break in an OpenMP region
             #pragma omp master
             checkpoint.dump(vecPatches, itime, smpiData, simWindow, params, vecPatches.Diags);
+            #pragma omp barrier
             // ----------------------------------------------------------------------        
             
         } //End omp parallel region

@@ -194,6 +194,8 @@ public:
         cell_starting_global_index[0] += (idx_moved);
     }
 
+    //! MPI rank of current patch
+    int MPI_me_;
 
 protected:
     // Complementary members for the description of the geometry
@@ -212,8 +214,6 @@ protected:
 
     //! MPI rank of neighbors patch
     std::vector< std::vector<int> > MPI_neighbor_;
-    //! MPI rank of current patch
-    int MPI_me_;
 
     //! "Real" min limit of local sub-subdomain (ghost data not concerned)
     //!     - "0." on rank 0
