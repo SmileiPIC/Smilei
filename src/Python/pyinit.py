@@ -86,20 +86,11 @@ class Species(SmileiComponent):
 
 class Laser(SmileiComponent):
     """Laser parameters"""
-    boxSide = None
-    a0 = None
-    omega0 = 1.
-    delta = 1.
-    tchirp = 0.
-    focus = []
-    angle = 0.
-    delay = 0.
+    boxSide = "west"
     time_profile = None
-    int_params = []
-    double_params = []
-    transv_profile = None
-    int_params_transv = []
-    double_params_transv = []
+    space_profile = None
+    space_time_profile = None
+    
 
 class Collisions(SmileiComponent):
     """Collisions parameters"""

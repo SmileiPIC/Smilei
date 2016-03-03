@@ -21,7 +21,6 @@ using namespace std;
 // Constructor for the virtual class ElectroMagn
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn::ElectroMagn(Params &params, vector<Species*>& vecSpecies, Patch* patch) :
-laser_params(params, patch->Hindex()==0),
 timestep(params.timestep),
 cell_length(params.cell_length),
 n_species(vecSpecies.size()),
@@ -30,7 +29,7 @@ cell_volume(params.cell_volume),
 n_space(params.n_space),
 oversize(params.oversize)
 {
-
+    
     // initialize poynting vector
     poynting[0].resize(nDim_field,0.0);
     poynting[1].resize(nDim_field,0.0);
@@ -84,8 +83,9 @@ oversize(params.oversize)
         }
     }    
     
-    emBoundCond = ElectroMagnBC_Factory::create(params, laser_params, patch);
-    if (patch->isMaster()) laser_params.print();
+    
+    
+    emBoundCond = ElectroMagnBC_Factory::create(params, patch);
     
     MaxwellFaradaySolver_ = SolverFactory::create(params);
 

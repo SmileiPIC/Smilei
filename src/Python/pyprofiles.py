@@ -186,11 +186,13 @@ def cosine(base,
     f.xnumber     = float(xnumber)
     return f
 
-def tconstant(start=0.):
-    self._reserved = True
-    def f(t): return 1. if t>=start else 0.
+def tconstant(start=0., value=1.):
+    def f(t):
+        return value if t>=start else 0.
     f.profileName = "tconstant"
     f.start       = start
+    f.value       = value
+    return f
 tconstant._reserved = True
 
 def ttrapezoidal(start=0., plateau=None, slope1=0., slope2=0.):
@@ -205,7 +207,7 @@ def ttrapezoidal(start=0., plateau=None, slope1=0., slope2=0.):
         elif t < start+slope1+plateau+slope2:
             return 1. - ( t - (start+slope1+slope2) ) / slope2
         else: return 0.0
-    f.profileName = "tconstant"
+    f.profileName = "ttrapezoidal"
     f.start       = start
     f.plateau     = plateau
     f.slope1      = slope1
@@ -225,7 +227,7 @@ def tgaussian(start=0., duration=None, fwhm=None, center=None, order=2):
         if t < start: return 0.
         elif t < start+duration: return math.exp( -(t-center)**order / sigma )
         else: return 0.0
-    f.profileName = "tconstant"
+    f.profileName = "tgaussian"
     f.start       = start
     f.duration    = duration
     f.sigma       = sigma
@@ -252,7 +254,7 @@ def tpolygonal(points=[], values=[]):
         for i in range(1,N):
             if t<points[i]: return values[i-1] + slopes[i-1] * ( t-points[i-1] )
         return 0.
-    f.profileName = "tconstant"
+    f.profileName = "tpolygonal"
     f.points      = points
     f.values      = values
     f.slopes      = slopes

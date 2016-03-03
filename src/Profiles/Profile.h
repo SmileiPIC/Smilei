@@ -2,6 +2,7 @@
 #define Profile_H
 
 #include <vector>
+#include <string>
 #include "SmileiMPI.h"
 #include "Tools.h"
 #include "PyTools.h"
@@ -56,9 +57,15 @@ public:
         return function->valueAt(coordinates, time);
     };
     
+    //! Get info on the loaded profile, to be printed later
+    inline std::string getInfo() { return info; };
+    
 private:
     //! Object that holds the information on the profile function
     Function * function;
+    
+    //! String containing some info on the profile
+    std::string info;
     
 };//END class Profile
 
@@ -318,10 +325,11 @@ class Function_TimeConstant : public Function
 public:
     Function_TimeConstant ( PyObject *py_profile ) {
         PyTools::getAttr(py_profile, "start", start);
+        PyTools::getAttr(py_profile, "value", value);
     };
     double valueAt(double);
 private:
-    double start;
+    double start, value;
 };
 
 

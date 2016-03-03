@@ -10,6 +10,8 @@ using namespace std;
 // Default constructor.
 Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name)
 {
+    ostringstream info_("");
+    info_ << nvariables << "D";
     
     if (!PyCallable_Check(py_profile)) {
         ERROR("Profile `"<<name<<"`: not a function");
@@ -21,6 +23,8 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name)
         
         string profileName("");
         PyTools::getAttr(py_profile, "profileName", profileName );
+        
+        info_ << " built-in profile `" << profileName << "`" ;
         
         if( profileName == "constant" ) {
         
@@ -142,7 +146,11 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name)
         else {
             ERROR("Profile `"<<name<<"`: defined with unsupported number of variables");
         }
+        
+        info_ << " user-defined function";
     }
+    
+    info = info_.str();
 }
 
 
@@ -269,7 +277,7 @@ double Function_Cosine2D::valueAt(vector<double> x_cell) {
 
 // Time constant profile
 double Function_TimeConstant::valueAt(double time) {
-    if( time > start ) return 1.;
+    if( time > start ) return value;
     else               return 0.;
 }
 

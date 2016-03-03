@@ -37,16 +37,16 @@ interpolation_order = 2
 # sim_length: length of the simulation in units of the normalization wavelength 
 #
 cell_length = [l0/resx]
-sim_length  = [5.0*l0]
+sim_length  = [4.0*l0]
 
-number_of_patches = [ 1 ] # or 4
+number_of_patches = [ 4 ]
 
 # SIMULATION TIME
 # timestep: duration of the timestep
 # sim_time: duration of the simulation in units of the normalization period 
 #
 timestep = t0/rest
-sim_time = 10.0*t0
+sim_time = 4.0*t0
  
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
 # bc_em_type_x/y/z : boundary conditions used for EM fields 
@@ -70,11 +70,8 @@ random_seed = 0
 # double_params: vector of real parameters used by the different time-profiles
 # 
 Laser(
-    a0 = 1.0,
-    boxSide = 'west',
-    delta = 1.0,
-    time_profile = 'constant',
-    double_params = [3.0*t0, 0.]
+    space_profile = constant(1.),
+    time_profile  = [ tcosine(phi=math.pi/2.,freq=2.), 0. ]
 )
  
 # ---------------------
@@ -104,10 +101,10 @@ DiagProbe(
 )
  
 DiagProbe(
-    every = 1,
+    every = 5,
     pos = [0.0],
-    pos_first = [10.0],
-    number = [10]
+    pos_first = sim_length,
+    number = [1000]
 )
  
 # --------- 

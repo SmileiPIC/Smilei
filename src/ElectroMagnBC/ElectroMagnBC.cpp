@@ -6,24 +6,17 @@
 #include "ElectroMagnBC.h"
 
 #include "Params.h"
-#include "LaserParams.h"
-#include "LaserProfile.h"
+#include "Laser.h"
 #include "Tools.h"
 #include "Patch.h"
 
 using namespace std;
 
 // Constructor for ElectromagnBC
-ElectroMagnBC::ElectroMagnBC( Params &params, LaserParams &laser_params, Patch* patch )
+ElectroMagnBC::ElectroMagnBC( Params &params, Patch* patch )
 {
-    // check for laser conditions
-    laser_.resize(laser_params.laser_param.size());
+    vecLaser.resize(0);
     
-    for (unsigned int i=0; i<laser_.size(); i++) {
-        DEBUG("Initializing Laser "<<i);        
-        laser_[i] = new LaserProfile(params,laser_params, i, patch);
-    }
-
     // time step
     dt = params.timestep;
 }
@@ -31,16 +24,16 @@ ElectroMagnBC::ElectroMagnBC( Params &params, LaserParams &laser_params, Patch* 
 // Destructor for ElectromagnBC
 ElectroMagnBC::~ElectroMagnBC()
 {
-    for (unsigned int i=0; i< laser_.size(); i++) {
-        delete laser_[i];
+    for (unsigned int i=0; i< vecLaser.size(); i++) {
+        delete vecLaser[i];
     }
 }
 
 // Disable all lasers when using moving window
 void ElectroMagnBC::laserDisabled()
 {
-    for (unsigned int i=0; i< laser_.size(); i++) {
-        laser_[i]->disabled();
+    for (unsigned int i=0; i< vecLaser.size(); i++) {
+        vecLaser[i]->disable();
     }
 }
 

@@ -13,8 +13,8 @@
 
 using namespace std;
 
-ElectroMagnBC2D_refl::ElectroMagnBC2D_refl( Params &params, LaserParams &laser_params, Patch* patch )
-  : ElectroMagnBC( params, laser_params, patch )
+ElectroMagnBC2D_refl::ElectroMagnBC2D_refl( Params &params, Patch* patch )
+  : ElectroMagnBC( params, patch )
 {
     // oversize
     oversize_ = params.oversize[0];

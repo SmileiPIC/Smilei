@@ -9,7 +9,7 @@ class ElectroMagn;
 
 class ElectroMagnBC2D_Trans_Damping : public ElectroMagnBC {
 public:
-    ElectroMagnBC2D_Trans_Damping( Params &params, LaserParams &laser_params, Patch* patch );
+    ElectroMagnBC2D_Trans_Damping( Params &params, Patch* patch );
     ~ElectroMagnBC2D_Trans_Damping();
 
     virtual void apply(ElectroMagn* EMfields, double time_dual, Patch* patch);

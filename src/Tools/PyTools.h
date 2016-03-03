@@ -344,6 +344,30 @@ public:
         }
     }
     
+    // extract 2 profiles from namelist (used for laser profile)
+    static bool extract2Profiles(std::string varname, int ilaser, std::vector<PyObject*> &profiles )
+    {
+        PyObject* py_obj = extract_py(varname,"Laser",ilaser);
+        // Return false if None
+        if( py_obj==Py_None ) return false;
+        
+        // Error if not list
+        if( ! convert(py_obj, profiles) )
+            ERROR("For laser #" << ilaser << ": " << varname << " must be a list of 2 profiles");
+        
+        if ( profiles.size()==1 ) {
+            if( !PyCallable_Check(profiles[0]) )
+                ERROR("For Laser #" << ilaser << ": "<<varname<<" not understood");
+            profiles.resize(2, NULL);
+        } else if (profiles.size()==2) {
+            if( !PyCallable_Check(profiles[0]) || !PyCallable_Check(profiles[1]) )
+                ERROR("For Laser #" << ilaser << ": "<<varname<<" not understood");
+        } else {
+            ERROR("For Laser #" << ilaser << ": "<<varname<<" needs 1 or 2 profiles.");
+        }
+        return true;
+    }
+    
     //! return the number of components (see pyinit.py)
     static unsigned int nComponents(std::string componentName) {
         // Get the selected component (e.g. "Species" or "Laser")

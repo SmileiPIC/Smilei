@@ -38,7 +38,7 @@ def _smilei_check():
         try   : return constant(input*1.)
         except: return input
     def toTimeProfile(input):
-        try   : return tconstant(input*1.)
+        try   : return tconstant(value=input*1.)
         except: return input
     for s in Species:
         s.nb_density      = toSpaceProfile(s.nb_density      )
@@ -52,13 +52,16 @@ def _smilei_check():
     for a in Antenna:
         a.space_profile   = toSpaceProfile(a.space_profile   )
         a.time_profile    = toTimeProfile (a.time_profile    )
+    for l in Laser:
+        l.space_profile   = toSpaceProfile( l.space_profile )
+        l.time_profile    = [ toTimeProfile(p) for p in l.time_profile ]
 
 
 # this function will be called after initialising the simulation, just before entering the time loop
 # if it returns false, the code will call a Py_Finalize();
 def _keep_python_running():
     for las in Laser:
-        for prof in (las.time_profile, las.transv_profile):
+        for prof in las.time_profile:
             if callable(prof): return True
     for ant in Antenna:
         if callable(ant.time_profile): return True
