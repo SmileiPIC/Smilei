@@ -275,7 +275,7 @@ void ElectroMagnBC2D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Pat
         for (unsigned int j=0 ; j<ny_p ; j++) {
             
             double byE = 0.;
-            double yp     = patch->getDomainLocalMin(1) + ((double)j)     * dy;
+            double yp     = patch->getDomainLocalMin(1) + ((double)j-EMfields->oversize[1])     * dy;
             for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
                 // Incident field (west boundary)
                 if (laser_[ilaser]->laser_struct.boxSide == "east") {
@@ -302,7 +302,7 @@ void ElectroMagnBC2D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Pat
         for (unsigned int j=0 ; j<ny_d ; j++) {
             
             double bzE = 0.;
-            double yd     = patch->getDomainLocalMin(1) + ((double)j-0.5) * dy;
+            double yd     = patch->getDomainLocalMin(1) + ((double)j-EMfields->oversize[1]-0.5) * dy;
             for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
                 if (laser_[ilaser]->laser_struct.boxSide == "east") {
                     // Incident field (east boundary)
