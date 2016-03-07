@@ -367,7 +367,7 @@ def tpolynomial(**kwargs):
     return f
 
 
-def LaserGaussian2D( a0=1., omega=1., focusX=None, focusY=None, waist=3., angle=0.,
+def LaserGaussian2D( boxSide="west", a0=1., omega=1., focusX=None, focusY=None, waist=3., angle=0.,
         polarizationPhi=0., ellipticity=0., time_envelope=tconstant()):
     import math
     # Polarization and amplitude
@@ -411,6 +411,7 @@ def LaserGaussian2D( a0=1., omega=1., focusX=None, focusY=None, waist=3., angle=
         phaseZero = phase(Y2)
     # Create Laser
     Laser(
+        boxSide        = boxSide,
         omega          = omega,
         chirp          = tconstant(),
         time_envelope  = time_envelope,

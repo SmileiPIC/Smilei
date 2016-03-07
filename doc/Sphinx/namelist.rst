@@ -353,7 +353,158 @@ Electromagnetic fields
 Lasers
 ^^^^^^
 
-:red:`to do`
+A laser is introduced using the ``Laser()`` block. It consists in applying
+oscillating boundary conditions for the magnetic field on one of the box sides.
+There are three syntaxes:
+
+.. rubric:: 1. Defining a generic wave
+
+..
+
+  .. code-block:: python
+    
+    Laser(
+        boxSide = "west",
+        space_time_profile = [ By_profile, Bz_profile ]
+    )
+  
+  .. py:data:: boxSide
+    
+    :default: ``"west"``
+    
+    Side of the box from which the laser originates: at the moment, only ``"west"`` and
+    ``"east"`` are supported.
+  
+  .. py:data:: space_time_profile
+    
+    The full wave expression at the chosen box side. It is a list of **two** *python*
+    functions taking several arguments depending on the simulation dimension:
+    :math:`(t)` for a 1-D simulation, :math:`(y,t)` for a 2-D simulation (etc.)
+    The two functions represent :math:`B_y` and :math:`B_z`, respectively.
+  
+
+.. rubric:: 2. Defining the wave envelopes
+
+..
+  
+  .. code-block:: python
+    
+    Laser(
+        boxSide        = "west",
+        omega          = 1.,
+        chirp          = tconstant(),
+        time_envelope  = tgaussian(),
+        space_envelope = [ Bx_profile  , By_profile   ],
+        phase          = [ PhiX_profile, PhiY_profile ]
+    )
+  
+  This implements a wave of the form:
+  
+  .. math::
+    
+    B_y(\mathbf{x}, t) = S_y(\mathbf{x})\; T[t-\phi_y(\mathbf{x})/\omega(t)]
+    \;\sin( \omega(t) t - \phi_y(\mathbf{x}) )
+    
+    B_z(\mathbf{x}, t) = S_z(\mathbf{x})\; T[t-\phi_z(\mathbf{x})/\omega(t)]
+    \;\sin( \omega(t) t - \phi_z(\mathbf{x}) )
+  
+  where :math:`T` is the temporal envelope, :math:`S_y` and :math:`S_y` are the
+  spatial envelopes, :math:`\omega` is the time-varying frequency, and 
+  :math:`\phi_y` and :math:`\phi_z` are the phase envelopes.
+  
+  .. py:data:: omega
+    
+    :default: 1.
+    
+    The laser angular frequency.
+    
+  .. py:data:: chirp
+    
+    :default: ``tconstant()``
+    
+    The variation of :py:data:`omega` over time, such that
+    :math:`\omega(t)=\mathtt{omega}\times\mathtt{chirp}(t)`.
+    This must be a *python* function or a time profile
+    (see section :ref:`profiles`).
+    
+  .. py:data:: time_envelope
+    
+    :default:  ``tconstant()``
+    
+    The temporal envelope: a *python* function or a time profile
+    (see section :ref:`profiles`).
+    
+  .. py:data:: space_envelope
+    
+    :default: ``[ 1., 0. ]``
+    
+    A list of two spatial envelopes (:math:`S_y` and :math:`S_z`).
+    Each must be a *python* function or a spatial profile
+    (see section :ref:`profiles`).
+    
+  .. py:data:: phase
+    
+    :default: ``[ 0., 0. ]``
+    
+    A list of two spatially-varying phases (:math:`\phi_y` and :math:`phi_z`).
+    Each must be a *python* function or a spatial profile
+    (see section :ref:`profiles`).
+
+
+
+.. rubric:: 3. Defining a 2D gaussian wave
+
+..
+
+  For two-dimensional simulations, we have created a simplified laser creator::
+    
+    LaserGaussian2D(
+        boxSide = "west",
+        a0      = 1.,
+        omega   = 1.,
+        focusX  = 50.,
+        focusY  = 40.,
+        waist   = 3.,
+        angle   = 0.,
+        polarizationPhi = 0.,
+        ellipticity     = 0.,
+        time_envelope   = tconstant()
+    )
+    
+  .. py:data:: a0
+  
+    :default: 1.
+    
+    The normalized vector potential
+  
+  .. py:data:: focusX
+               focusY
+    
+    The X and Y positions of the laser focus.
+  
+  .. py:data:: waist
+    
+    The waist value.
+  
+  .. py:data:: angle
+    
+    :default: 0.
+    
+    The angle of the beam relative to the X axis.
+  
+  .. py:data:: polarizationPhi
+    
+    :default: 0.
+    
+    The angle of the polarization ellipse relative to the simulation plane.
+  
+  .. py:data:: ellipticity
+    
+    :default: 0.
+    
+    The polarization ellipticity: 0 for linear and :math:`\pm 1` for circular.
+  
+
 
 
 ----
