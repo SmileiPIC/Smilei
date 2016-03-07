@@ -456,7 +456,7 @@ There are three syntaxes:
 
 ..
 
-  For two-dimensional simulations, we have created a simplified laser creator::
+  For two-dimensional simulations, you may use the simplified laser creator::
     
     LaserGaussian2D(
         boxSide = "west",

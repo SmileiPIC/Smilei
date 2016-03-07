@@ -372,8 +372,8 @@ def LaserGaussian2D( boxSide="west", a0=1., omega=1., focusX=None, focusY=None, 
     import math
     # Polarization and amplitude
     p = (1.-ellipticity**2)*math.sin(2.*polarizationPhi)/2.
-    if p == 0.:
-        if ellipticity**2==1.: polarizationPhi=0.
+    if abs(p) < 1e-10:
+        if abs(ellipticity**2-1.)<1e-10: polarizationPhi=0.
         dephasing = math.pi/2.
         amplitude = a0 * math.sqrt(2./(1.+ellipticity**2))
         amplitudeY = amplitude * (math.cos(polarizationPhi)+math.sin(polarizationPhi)*ellipticity)
@@ -381,6 +381,7 @@ def LaserGaussian2D( boxSide="west", a0=1., omega=1., focusX=None, focusY=None, 
     else:
         dephasing = math.atan(ellipticity/p)
         theta = 0.5 * math.atan( math.tan(2.*polarizationPhi) / math.cos(dephasing) )
+        while theta<0.: theta += math.pi/2.
         amplitudeY = a0 * math.sqrt(2.) * math.cos(theta)
         amplitudeZ = a0 * math.sqrt(2.) * math.sin(theta)
     # Space and phase envelopes
@@ -415,8 +416,8 @@ def LaserGaussian2D( boxSide="west", a0=1., omega=1., focusX=None, focusY=None, 
         omega          = omega,
         chirp          = tconstant(),
         time_envelope  = time_envelope,
-        space_envelope = [ lambda y:amplitudeY*spatial(y), lambda y:amplitudeZ*spatial(y) ],
-        phase          = [ lambda y:phase(y)-phaseZero, lambda y:phase(y)-phaseZero+dephasing ],
+        space_envelope = [ lambda y:amplitudeZ*spatial(y), lambda y:amplitudeY*spatial(y) ],
+        phase          = [ lambda y:phase(y)-phaseZero+dephasing, lambda y:phase(y)-phaseZero ],
     )
 
 

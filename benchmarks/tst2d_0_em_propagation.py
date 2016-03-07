@@ -75,7 +75,7 @@ LaserGaussian2D( a0=1., omega=1., focusX=Lsim[0], focusY=Lsim[1]/2., waist=8., a
 # DIAGNOSTIC PARAMETERS
 # ---------------------
 
-globalEvery = int(rest/2.)
+globalEvery = int(rest)
 
 # DIAG ON SCALARS
 # every = number of time-steps between each output
