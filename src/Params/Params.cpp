@@ -39,7 +39,7 @@ namelist("")
     // Running pyinit.py
     runScript(string(reinterpret_cast<const char*>(pyinit_py), pyinit_py_len), "pyinit.py");
 
-    // Running pyfunctons.py
+    // Running pyprofiles.py
     runScript(string(reinterpret_cast<const char*>(pyprofiles_py), pyprofiles_py_len), "pyprofiles.py");
     
     // here we add the rank, in case some script need it

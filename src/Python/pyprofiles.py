@@ -64,8 +64,8 @@ def trapezoidal(max,
     return f
 
 def gaussian(max,
-             xvacuum=0., xlength=None, xfwhm=None, xcenter=None, xorder=2,
-             yvacuum=0., ylength=None, yfwhm=None, ycenter=None, yorder=2 ):
+             xvacuum=0., xlength=float("inf"), xfwhm=None, xcenter=None, xorder=2,
+             yvacuum=0., ylength=float("inf"), yfwhm=None, ycenter=None, yorder=2 ):
     import math
     global dim, sim_length
     if not dim or not sim_length:
@@ -78,37 +78,37 @@ def gaussian(max,
         if ylength is None: ylength = sim_length[1]-yvacuum
         if yfwhm   is None: yfwhm   = ylength/3.
         if ycenter is None: ycenter = yvacuum + ylength/2.
-    sigmax = (0.5*xfwhm)**xorder/math.log(2.0)
+    xsigma = (0.5*xfwhm)**xorder/math.log(2.0)
     def fx(x):
         # vacuum region
         if x < xvacuum: return 0.
         # gaussian
-        elif x < xvacuum+xlength: return max*math.exp( -(x-xcenter)**xorder / sigmax )
+        elif x < xvacuum+xlength: return max*math.exp( -(x-xcenter)**xorder / xsigma )
         # beyond
         else: return 0.0
     if dim == "1d3v":
         f = fx
     if dim == "2d3v":
-        sigmay = (0.5*yfwhm)**yorder/math.log(2.0)
+        ysigma = (0.5*yfwhm)**yorder/math.log(2.0)
         def fy(y):
             if yorder == 0: return 1.
             # vacuum region
             if y < yvacuum: return 0.
             # gaussian
-            elif y < yvacuum+ylength: return math.exp( -(y-ycenter)**yorder / sigmay )
+            elif y < yvacuum+ylength: return math.exp( -(y-ycenter)**yorder / ysigma )
             # beyond
             else: return 0.0
         f = lambda x,y: fx(x)*fy(y)
         f.yvacuum = yvacuum
         f.ylength = ylength
-        f.sigmay  = sigmay
+        f.ysigma  = ysigma
         f.ycenter = ycenter
         f.yorder  = yorder
     f.profileName = "gaussian"
     f.value   = max
     f.xvacuum = xvacuum
     f.xlength = xlength
-    f.sigmax  = sigmax
+    f.xsigma  = xsigma
     f.xcenter = xcenter
     f.xorder  = xorder
     return f
@@ -186,12 +186,68 @@ def cosine(base,
     f.xnumber     = float(xnumber)
     return f
 
-def tconstant(start=0., value=1.):
+def polynomial(**kwargs):
+    global dim
+    if not dim:
+        raise Exception("polynomial profile has been defined before `dim`")
+    x0 = 0.
+    y0 = 0.
+    coeffs = dict()
+    for k, a in kwargs.iteritems():
+        if   k=="x0":
+            x0 = a
+        elif k=="y0":
+            y0 = a
+        elif k[:5]=="order":
+            if type(a) is not list: a = [a]
+            order = int(k[5:])
+            coeffs[ order ] = a
+            if dim=="1d3v" and len(a)!=1:
+                raise Exception("1D polynomial profile must have one coefficient per order")
+    if dim=="1d3v":
+        def f(x):
+            r = 0.
+            xx0 = x-x0
+            xx = 1.
+            currentOrder = 0
+            for order, c in sorted(coeffs.iteritems()):
+                while currentOrder<order:
+                    currentOrder += 1
+                    xx *= xx0
+                r += c[0] * xx
+            return r
+    if dim=="2d3v":
+        def f(x,y):
+            r = 0.
+            xx0 = x-x0
+            yy0 = y-y0
+            xx = [1.]
+            currentOrder = 0
+            for order, c in sorted(coeffs.iteritems()):
+                while currentOrder<order:
+                    currentOrder += 1
+                    last = xx[-1]*yy0
+                    xx = [ xxx * xx0 for xxx in xx ]
+                    xx.append(last)
+                for i in range(order+1): r += c[i]*xx[i]
+            return r
+    f.profileName = "polynomial"
+    f.x0 = x0
+    f.y0 = y0
+    f.orders = []
+    f.coeffs = []
+    for order, c in sorted(coeffs.iteritems()):
+        f.orders.append( order )
+        f.coeffs.append( c     )
+    return f
+
+
+
+def tconstant(start=0.):
     def f(t):
-        return value if t>=start else 0.
+        return 1. if t>=start else 0.
     f.profileName = "tconstant"
     f.start       = start
-    f.value       = value
     return f
 tconstant._reserved = True
 
@@ -279,3 +335,90 @@ def tcosine(base=0., amplitude=1., start=0., duration=None, phi=0., freq=1.):
     f.phi         = phi
     f.freq        = freq
     return f
+
+def tpolynomial(**kwargs):
+    t0 = 0.
+    coeffs = dict()
+    for k, a in kwargs.iteritems():
+        if   k=="t0":
+            t0 = a
+        elif k[:5]=="order":
+            order = int(k[5:])
+            try: coeffs[ order ] = a*1.
+            except: raise Exception("tpolynomial profile must have one coefficient per order")
+    def f(t):
+        r = 0.
+        tt0 = t-t0
+        tt = 1.
+        currentOrder = 0
+        for order, c in sorted(coeffs.iteritems()):
+            while currentOrder<order:
+                currentOrder += 1
+                tt *= tt0
+            r += c * tt
+        return r
+    f.profileName = "tpolynomial"
+    f.t0 = t0
+    f.orders = []
+    f.coeffs = []
+    for order, c in sorted(coeffs.iteritems()):
+        f.orders.append( order )
+        f.coeffs.append( c     )
+    return f
+
+
+def LaserGaussian2D( a0=1., omega=1., focusX=None, focusY=None, waist=3., angle=0.,
+        polarizationPhi=0., ellipticity=0., time_envelope=tconstant()):
+    import math
+    # Polarization and amplitude
+    p = (1.-ellipticity**2)*math.sin(2.*polarizationPhi)/2.
+    if p == 0.:
+        if ellipticity**2==1.: polarizationPhi=0.
+        dephasing = math.pi/2.
+        amplitude = a0 * math.sqrt(2./(1.+ellipticity**2))
+        amplitudeY = amplitude * (math.cos(polarizationPhi)+math.sin(polarizationPhi)*ellipticity)
+        amplitudeZ = amplitude * (math.sin(polarizationPhi)+math.cos(polarizationPhi)*ellipticity)
+    else:
+        dephasing = math.atan(ellipticity/p)
+        theta = 0.5 * math.atan( math.tan(2.*polarizationPhi) / math.cos(dephasing) )
+        amplitudeY = a0 * math.sqrt(2.) * math.cos(theta)
+        amplitudeZ = a0 * math.sqrt(2.) * math.sin(theta)
+    # Space and phase envelopes
+    Zr = omega * waist**2/2.
+    if angle == 0.:
+        Y1 = focusY
+        w  = math.sqrt(1./(1.+(focusX/Zr)**2))
+        invWaist2 = (w/waist)**2
+        coeff = -omega * focusX * w**2 / (2.*Zr**2)
+        def spatial(y):
+            return w * math.exp( -invWaist2*(y-focusY)**2 )
+        def phase(y):
+            return coeff * (y-focusY)**2
+    else:
+        invZr  = math.sin(angle) / Zr
+        invZr2 = invZr**2
+        invZr3 = (math.cos(angle) / Zr)**2 / 2.
+        invWaist2 = (math.cos(angle) / waist)**2
+        omega_ = omega * math.sin(angle)
+        Y1 = focusY + focusX/math.tan(angle)
+        Y2 = focusY - focusX*math.tan(angle)
+        def spatial(y):
+            w2 = 1./(1. + invZr2*(y-Y1)**2)
+            return math.sqrt(w2) * math.exp( -invWaist2*w2*(y-Y2)**2 )
+        def phase(y):
+            dy = y-Y1
+            return omega_*dy*(1.+ invZr3*(y-Y2)**2/(1.+invZr2*dy**2)) + math.atan(invZr*dy)
+        phaseZero = phase(Y2)
+    # Create Laser
+    Laser(
+        omega          = omega,
+        chirp          = tconstant(),
+        time_envelope  = time_envelope,
+        space_envelope = [ lambda y:amplitudeY*spatial(y), lambda y:amplitudeZ*spatial(y) ],
+        phase          = [ lambda y:phase(y)-phaseZero, lambda y:phase(y)-phaseZero+dephasing ],
+    )
+
+
+
+
+

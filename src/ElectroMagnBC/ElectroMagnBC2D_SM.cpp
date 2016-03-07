@@ -176,14 +176,15 @@ void ElectroMagnBC2D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
         
         // for By^(d,p)
         vector<double> yp(1);
+        yp[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dy;
         for (unsigned int j=0 ; j<ny_p ; j++) {
             
             double byW = 0.;
-            yp[0] = patch->getDomainLocalMin(1) + ((double)j-EMfields->oversize[1])*dy;
+            yp[0] += dy;
             
             // Lasers
             for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
-                byW += vecLaser[ilaser]->getAmplitude0(yp, time_dual);
+                byW += vecLaser[ilaser]->getAmplitude0(yp, time_dual, j);
             }
             
             /*(*By2D)(0,j) = Alpha_SM_W   * (*Ez2D)(0,j)
@@ -203,14 +204,15 @@ void ElectroMagnBC2D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
         
         // for Bz^(d,d)
         vector<double> yd(1);
+        yd[0] = patch->getDomainLocalMin(1) - (0.5+EMfields->oversize[1])*dy;
         for (unsigned int j=0 ; j<ny_d ; j++) {
             
             double bzW = 0.;
-            yd[0] = patch->getDomainLocalMin(1) + ((double)j-0.5-EMfields->oversize[1])*dy;
+            yd[0] += dy;
             
             // Lasers
             for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
-                bzW += vecLaser[ilaser]->getAmplitude1(yd, time_dual);
+                bzW += vecLaser[ilaser]->getAmplitude1(yd, time_dual, j);
             }
             
             /*(*Bz2D)(0,j) = -Alpha_SM_W * (*Ey2D)(0,j)
@@ -244,14 +246,15 @@ void ElectroMagnBC2D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Pat
         
         // for By^(d,p)
         vector<double> yp(1);
+        yp[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dy;
         for (unsigned int j=0 ; j<ny_p ; j++) {
             
             double byE = 0.;
-            yp[0] = patch->getDomainLocalMin(1) + ((double)j-EMfields->oversize[1])*dy;
+            yp[0] += dy;
             
             // Lasers
             for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
-                byE += vecLaser[ilaser]->getAmplitude0(yp, time_dual);
+                byE += vecLaser[ilaser]->getAmplitude0(yp, time_dual, j);
             }
             
             /*(*By2D)(nx_d-1,j) = Alpha_SM_E   * (*Ez2D)(nx_p-1,j)
@@ -271,14 +274,15 @@ void ElectroMagnBC2D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Pat
         
         // for Bz^(d,d)
         vector<double> yd(1);
+        yd[0] = patch->getDomainLocalMin(1) - (0.5+EMfields->oversize[1])*dy;
         for (unsigned int j=0 ; j<ny_d ; j++) {
             
             double bzE = 0.;
-            yd[0] = patch->getDomainLocalMin(1) + ((double)j-0.5-EMfields->oversize[1])*dy;
+            yd[0] += dy;
             
             // Lasers
             for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
-                bzE += vecLaser[ilaser]->getAmplitude1(yd, time_dual);
+                bzE += vecLaser[ilaser]->getAmplitude1(yd, time_dual, j);
             }
             
             /*(*Bz2D)(nx_d-1,j) = -Alpha_SM_E * (*Ey2D)(nx_p-1,j)

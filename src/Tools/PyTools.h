@@ -355,16 +355,16 @@ public:
         if( ! convert(py_obj, profiles) )
             ERROR("For laser #" << ilaser << ": " << varname << " must be a list of 2 profiles");
         
-        if ( profiles.size()==1 ) {
-            if( !PyCallable_Check(profiles[0]) )
-                ERROR("For Laser #" << ilaser << ": "<<varname<<" not understood");
-            profiles.resize(2, NULL);
-        } else if (profiles.size()==2) {
-            if( !PyCallable_Check(profiles[0]) || !PyCallable_Check(profiles[1]) )
-                ERROR("For Laser #" << ilaser << ": "<<varname<<" not understood");
-        } else {
-            ERROR("For Laser #" << ilaser << ": "<<varname<<" needs 1 or 2 profiles.");
+        // Error if wrong size
+        if( profiles.size()!=2 )
+            ERROR("For Laser #" << ilaser << ": "<<varname<<" needs 2 profiles.");
+        
+        // Error if not callable
+        for( int i=0; i<2; i++) {
+            if ( !PyCallable_Check(profiles[i]) )
+                ERROR("For Laser #" << ilaser << ": "<<varname<<"["<<i<<"] not understood");
         }
+        
         return true;
     }
     
@@ -381,7 +381,7 @@ public:
         return retval;
     }
     
-    //! Get an object's attribute
+    //! Get an object's attribute ( int, double, etc.)
     template <typename T>
     static bool getAttr(PyObject* object, std::string attr_name, T & value) {
         bool success = false;
@@ -391,6 +391,38 @@ public:
             Py_XDECREF(py_value);
         }
         return success;
+    }
+    
+    //! Get an object's attribute for lists
+    template <typename T>
+    static bool getAttr(PyObject* object, std::string attr_name, std::vector<T> & vec) {
+        bool success = false;
+        if( PyObject_HasAttrString(object, attr_name.c_str()) ) {
+            PyObject* py_list = PyObject_GetAttrString(object, attr_name.c_str());
+            success = convert(py_list, vec);
+            Py_XDECREF(py_list);
+        }
+        return success;
+    }
+    
+    //! Get an object's attribute for lists of list
+    template <typename T>
+    static bool getAttr(PyObject* object, std::string attr_name, std::vector<std::vector<T> > & vec) {
+        if( PyObject_HasAttrString(object, attr_name.c_str()) ) {
+            // Get the list of lists
+            PyObject* py_list = PyObject_GetAttrString(object, attr_name.c_str());
+            // Convert to vector of lists
+            std::vector<PyObject*> py_vec;
+            if( !convert(py_list, py_vec) ) return false;
+            Py_XDECREF(py_list);
+            // For each list, convert to vector
+            vec.resize(0);
+            std::vector<T> v;
+            for( int i=0; i<py_vec.size(); i++ ) {
+                if( !convert( py_vec[i], v ) ) return false;
+                vec.push_back( v );
+            }
+        }
     }
     
 };

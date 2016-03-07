@@ -14,7 +14,7 @@ public:
 
     virtual void apply(ElectroMagn* EMfields, double time_dual, Patch* patch);
 
- private:
+private:
     //! Number of nodes on the primal grid in the x-direction
     unsigned int nx_p;
 

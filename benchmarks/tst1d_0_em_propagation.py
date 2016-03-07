@@ -60,18 +60,13 @@ bc_em_type_x = ['silver-muller']
 # this is used to randomize the random number generator
 #
 random_seed = 0
- 
+
 # LASER PROPERTIES
-# for each laser define:
-# a0: maximum amplitude of the laser electric field (in units of the normalization field)
-# angle: angle (in degree) at which the laser enters the simulation box
-# delta: polarization parameter, (0:y) (1:z) (0.707106781:circ)
-# time_profile: string defining the time profile
-# double_params: vector of real parameters used by the different time-profiles
-# 
 Laser(
-    space_profile = constant(1.),
-    time_profile  = [ tcosine(phi=math.pi/2.,freq=2.), 0. ]
+    omega = 1.,
+    chirp = tpolynomial(order2=0.005),
+    time_envelope = tgaussian(),
+    space_envelope = [1., 0.],
 )
  
 # ---------------------

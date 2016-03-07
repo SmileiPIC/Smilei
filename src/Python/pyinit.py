@@ -87,10 +87,12 @@ class Species(SmileiComponent):
 class Laser(SmileiComponent):
     """Laser parameters"""
     boxSide = "west"
-    time_profile = None
-    space_profile = None
+    omega = 1.
+    chirp = 1.
+    time_envelope = 1.
+    space_envelope = [1., 0.]
+    phase = [0., 0.]
     space_time_profile = None
-    
 
 class Collisions(SmileiComponent):
     """Collisions parameters"""

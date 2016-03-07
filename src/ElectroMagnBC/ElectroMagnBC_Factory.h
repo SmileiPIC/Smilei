@@ -36,11 +36,11 @@ public:
             for (unsigned int ii=0;ii<2;ii++) {
                 // silver-muller (injecting/absorbing bcs)
                 if ( params.bc_em_type_x[ii] == "silver-muller" ) {
-		  emBoundCond[ii] = new ElectroMagnBC1D_SM(params, patch);
+                    emBoundCond[ii] = new ElectroMagnBC1D_SM(params, patch);
                 }
                 // reflective bcs
                 else if ( params.bc_em_type_x[ii] == "reflective" ) {
-		  emBoundCond[ii] = new ElectroMagnBC1D_refl(params, patch);
+                    emBoundCond[ii] = new ElectroMagnBC1D_refl(params, patch);
                 }
                 // else: error
                 else if ( params.bc_em_type_x[ii] != "periodic" ) {
@@ -58,7 +58,7 @@ public:
             
             // by default use periodic (=NULL) boundary conditions
             emBoundCond.resize(4, NULL);
-
+            
             for (unsigned int ii=0;ii<2;ii++) {
                 // X DIRECTION
                 // silver-muller (injecting/absorbing bcs)
@@ -73,7 +73,7 @@ public:
                 else if ( params.bc_em_type_x[ii] != "periodic" ) {
                     ERROR( "Unknown boundary bc_em_type_x[" << ii << "]");
                 }
-
+                
                 // Y DIRECTION
                 // silver-muller bcs (injecting/absorbin)
                 if ( params.bc_em_type_y[ii] == "silver-muller" ) {
@@ -88,13 +88,13 @@ public:
                     ERROR( "Unknown boundary bc_em_type_y[" << ii << "]");
                 }
             }
-
+            
         }//2d3v
         
         
         // OTHER GEOMETRIES ARE NOT DEFINED ---
         else {
-            ERROR( "Unknwon geometry : " << params.geometry );
+            ERROR( "Unknown geometry : " << params.geometry );
         }
         
         
