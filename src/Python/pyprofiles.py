@@ -367,42 +367,70 @@ def tpolynomial(**kwargs):
     return f
 
 
-def LaserGaussian2D( boxSide="west", a0=1., omega=1., focusX=None, focusY=None, waist=3., angle=0.,
-        polarizationPhi=0., ellipticity=0., time_envelope=tconstant()):
+def transformPolarization(polarizationPhi, ellipticity):
     import math
-    # Polarization and amplitude
     p = (1.-ellipticity**2)*math.sin(2.*polarizationPhi)/2.
     if abs(p) < 1e-10:
         if abs(ellipticity**2-1.)<1e-10: polarizationPhi=0.
         dephasing = math.pi/2.
-        amplitude = a0 * math.sqrt(2./(1.+ellipticity**2))
+        amplitude = math.sqrt(2./(1.+ellipticity**2))
         amplitudeY = amplitude * (math.cos(polarizationPhi)+math.sin(polarizationPhi)*ellipticity)
         amplitudeZ = amplitude * (math.sin(polarizationPhi)+math.cos(polarizationPhi)*ellipticity)
     else:
         dephasing = math.atan(ellipticity/p)
         theta = 0.5 * math.atan( math.tan(2.*polarizationPhi) / math.cos(dephasing) )
         while theta<0.: theta += math.pi/2.
-        amplitudeY = a0 * math.sqrt(2.) * math.cos(theta)
-        amplitudeZ = a0 * math.sqrt(2.) * math.sin(theta)
+        amplitudeY = math.sqrt(2.) * math.cos(theta)
+        amplitudeZ = math.sqrt(2.) * math.sin(theta)
+    return [dephasing, amplitudeY, amplitudeZ]
+
+
+def LaserPlanar1D( boxSide="west", a0=1., omega=1.,
+        polarizationPhi=0., ellipticity=0., time_envelope=tconstant()):
+    import math
+    # Polarization and amplitude
+    [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarizationPhi, ellipticity)
+    amplitudeY *= a0
+    amplitudeZ *= a0
+    # Create Laser
+    Laser(
+        boxSide        = boxSide,
+        omega          = omega,
+        chirp          = tconstant(),
+        time_envelope  = time_envelope,
+        space_envelope = [ amplitudeZ, amplitudeY ],
+        phase          = [ dephasing, 0. ],
+    )
+
+
+
+def LaserGaussian2D( boxSide="west", a0=1., omega=1., focus=None, waist=3., angle=0.,
+        polarizationPhi=0., ellipticity=0., time_envelope=tconstant()):
+    import math
+    # Polarization and amplitude
+    [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarizationPhi, ellipticity)
+    amplitudeY *= a0
+    amplitudeZ *= a0
     # Space and phase envelopes
     Zr = omega * waist**2/2.
+    phaseZero = 0.
     if angle == 0.:
-        Y1 = focusY
-        w  = math.sqrt(1./(1.+(focusX/Zr)**2))
+        Y1 = focus[1]
+        w  = math.sqrt(1./(1.+(focus[0]/Zr)**2))
         invWaist2 = (w/waist)**2
-        coeff = -omega * focusX * w**2 / (2.*Zr**2)
+        coeff = -omega * focus[0] * w**2 / (2.*Zr**2)
         def spatial(y):
-            return w * math.exp( -invWaist2*(y-focusY)**2 )
+            return w * math.exp( -invWaist2*(y-focus[1])**2 )
         def phase(y):
-            return coeff * (y-focusY)**2
+            return coeff * (y-focus[1])**2
     else:
         invZr  = math.sin(angle) / Zr
         invZr2 = invZr**2
         invZr3 = (math.cos(angle) / Zr)**2 / 2.
         invWaist2 = (math.cos(angle) / waist)**2
         omega_ = omega * math.sin(angle)
-        Y1 = focusY + focusX/math.tan(angle)
-        Y2 = focusY - focusX*math.tan(angle)
+        Y1 = focus[1] + focus[0]/math.tan(angle)
+        Y2 = focus[1] - focus[0]*math.tan(angle)
         def spatial(y):
             w2 = 1./(1. + invZr2*(y-Y1)**2)
             return math.sqrt(w2) * math.exp( -invWaist2*w2*(y-Y2)**2 )

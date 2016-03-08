@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------------------
-# 					SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
+#                     SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
 # ----------------------------------------------------------------------------------------
 #
 # Remember: never override the following names:
@@ -8,12 +8,12 @@
 #
 import math
 
-l0 = 2.0*math.pi	# laser wavelength
-t0 = l0			# optical cicle
-Lsim = [10.*l0,10.*l0]	# length of the simulation
-Tsim = 10.*t0		# duration of the simulation
-resx = 100.		# nb of cells in on laser wavelength
-rest = 150.		# time of timestep in one optical cycle 
+l0 = 2.0*math.pi    # laser wavelength
+t0 = l0            # optical cicle
+Lsim = [10.*l0,10.*l0]    # length of the simulation
+Tsim = 10.*t0        # duration of the simulation
+resx = 100.        # nb of cells in on laser wavelength
+rest = 150.        # time of timestep in one optical cycle 
 
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
@@ -59,23 +59,13 @@ random_seed = 0
 # ----------------
 # LASER PROPERTIES
 # ----------------
-#
-# for each laser define:
-# a0: maximum amplitude of the laser electric field (in units of the normalization field)
-# angle: angle (in degree) at which the laser enters the simulation box
-# delta: polarization parameter, (0:y) (1:z) (0.707106781:circ)
-# time_profile: string defining the time profile
-# double_params: vector of real parameters used by the different time-profiles
-#
-Laser(
-	boxSide = 'west',
-	a0=150.,
-	delta=0.707106781,              
-	time_profile = 'sin2',
-	double_params = [6.*t0],
-	transv_profile = 'gaussian',
-	double_params_transv = [5.0*l0,3.0*l0],
-	int_params_transv = [6]
+LaserGaussian2D(
+    boxSide         = "west",
+    a0              = 150.,
+    focus           = [10.*l0, 5.*l0],
+    waist           = 2.0*l0,
+    ellipticity     = 1.,
+    time_envelope   = ttrapezoidal(slope1=t0)
 )
 
 # RANDOM seed 
@@ -100,31 +90,31 @@ random_seed = 0
 # Predefined functions: constant, trapezoidal, gaussian, polygonal, cosine
 #
 Species(
-	species_type = 'ion',
-	initPosition_type = 'regular',
-	initMomentum_type = 'cold',
-	n_part_per_cell = 2,
-	mass = 1836.0,
-	charge = 1.0,
-	nb_density = trapezoidal(100.0,xvacuum=l0,xplateau=0.44*l0),
-	bc_part_type_west = 'refl',
-	bc_part_type_east = 'refl',
-	bc_part_type_south = 'none',
-	bc_part_type_north = 'none'
+    species_type = 'ion',
+    initPosition_type = 'regular',
+    initMomentum_type = 'cold',
+    n_part_per_cell = 2,
+    mass = 1836.0,
+    charge = 1.0,
+    nb_density = trapezoidal(100.0,xvacuum=l0,xplateau=0.44*l0),
+    bc_part_type_west = 'refl',
+    bc_part_type_east = 'refl',
+    bc_part_type_south = 'none',
+    bc_part_type_north = 'none'
 )
 Species(
-	species_type = 'eon',
-	initPosition_type = 'regular',
-	initMomentum_type = 'mj',
-	n_part_per_cell = 2,
-	mass = 1.0,
-	charge = -1.0,
-	nb_density = trapezoidal(100.0,xvacuum=l0,xplateau=0.44*l0),
-	temperature = [0.001],
-	bc_part_type_west = 'refl',
-	bc_part_type_east = 'refl',
-	bc_part_type_south = 'none',
-	bc_part_type_north = 'none'
+    species_type = 'eon',
+    initPosition_type = 'regular',
+    initMomentum_type = 'mj',
+    n_part_per_cell = 2,
+    mass = 1.0,
+    charge = -1.0,
+    nb_density = trapezoidal(100.0,xvacuum=l0,xplateau=0.44*l0),
+    temperature = [0.001],
+    bc_part_type_west = 'refl',
+    bc_part_type_east = 'refl',
+    bc_part_type_south = 'none',
+    bc_part_type_north = 'none'
 )
 
 
@@ -147,4 +137,4 @@ fieldsToDump = ('Ex','Ey','Ez','Bx','By','Bz','Rho_ion','Rho_eon')
 #diagnostic scalar
 #        every = 60
 #end
-	
+    

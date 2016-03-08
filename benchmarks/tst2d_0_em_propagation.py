@@ -68,7 +68,7 @@ random_seed = 0
 # double_params: vector of real parameters used by the different time-profiles
 #
 
-LaserGaussian2D( a0=1., omega=1., focusX=Lsim[0], focusY=Lsim[1]/2., waist=8., angle=0.5,
+LaserGaussian2D( a0=1., omega=1., focus=[Lsim[0], Lsim[1]/2.], waist=8., angle=0.5,
         polarizationPhi=0., ellipticity=0., time_envelope=tgaussian())
 
 # ---------------------

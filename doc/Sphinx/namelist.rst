@@ -374,8 +374,10 @@ There are three syntaxes:
     
     Side of the box from which the laser originates: at the moment, only ``"west"`` and
     ``"east"`` are supported.
-  
+    
   .. py:data:: space_time_profile
+  
+    :type: A list of two *python* functions
     
     The full wave expression at the chosen box side. It is a list of **two** *python*
     functions taking several arguments depending on the simulation dimension:
@@ -402,11 +404,11 @@ There are three syntaxes:
   
   .. math::
     
-    B_y(\mathbf{x}, t) = S_y(\mathbf{x})\; T[t-\phi_y(\mathbf{x})/\omega(t)]
-    \;\sin( \omega(t) t - \phi_y(\mathbf{x}) )
+    B_y(\mathbf{x}, t) = S_y(\mathbf{x})\; T\left[t-\phi_y(\mathbf{x})/\omega(t)\right]
+    \;\sin\left( \omega(t) t - \phi_y(\mathbf{x}) \right)
     
-    B_z(\mathbf{x}, t) = S_z(\mathbf{x})\; T[t-\phi_z(\mathbf{x})/\omega(t)]
-    \;\sin( \omega(t) t - \phi_z(\mathbf{x}) )
+    B_z(\mathbf{x}, t) = S_z(\mathbf{x})\; T\left[t-\phi_z(\mathbf{x})/\omega(t)\right]
+    \;\sin\left( \omega(t) t - \phi_z(\mathbf{x}) \right)
   
   where :math:`T` is the temporal envelope, :math:`S_y` and :math:`S_y` are the
   spatial envelopes, :math:`\omega` is the time-varying frequency, and 
@@ -420,89 +422,103 @@ There are three syntaxes:
     
   .. py:data:: chirp
     
+    :type: a *python* function or a :ref:`time profile <profiles>`
     :default: ``tconstant()``
     
-    The variation of :py:data:`omega` over time, such that
+    The variation of the laser frequency over time, such that
     :math:`\omega(t)=\mathtt{omega}\times\mathtt{chirp}(t)`.
-    This must be a *python* function or a time profile
-    (see section :ref:`profiles`).
     
   .. py:data:: time_envelope
     
+    :type: a *python* function or a :ref:`time profile <profiles>`
     :default:  ``tconstant()``
     
-    The temporal envelope: a *python* function or a time profile
-    (see section :ref:`profiles`).
+    The temporal envelope of the laser.
     
   .. py:data:: space_envelope
     
+    :type: a list of two *python* functions or two :ref:`spatial profiles <profiles>`
     :default: ``[ 1., 0. ]``
     
-    A list of two spatial envelopes (:math:`S_y` and :math:`S_z`).
-    Each must be a *python* function or a spatial profile
-    (see section :ref:`profiles`).
+    The two spatial envelopes :math:`S_y` and :math:`S_z`.
     
   .. py:data:: phase
     
+    :type: a list of two *python* functions or two :ref:`spatial profiles <profiles>`
     :default: ``[ 0., 0. ]``
     
-    A list of two spatially-varying phases (:math:`\phi_y` and :math:`phi_z`).
-    Each must be a *python* function or a spatial profile
-    (see section :ref:`profiles`).
+    The two spatially-varying phases :math:`\phi_y` and :math:`\phi_z`.
 
 
 
-.. rubric:: 3. Defining a 2D gaussian wave
+.. rubric:: 3. Defining a 1D planar wave
+
+..
+
+  For one-dimensional simulations, you may use the simplified laser creator::
+    
+    LaserPlanar1D(
+        boxSide         = "west",
+        a0              = 1.,
+        omega           = 1.,
+        polarizationPhi = 0.,
+        ellipticity     = 0.,
+        time_envelope   = tconstant()
+    )
+  
+  .. py:data:: a0
+  
+    :default: 1.
+    
+    The normalized vector potential
+    
+  .. py:data:: polarizationPhi
+    
+    :default: 0.
+    
+    The angle of the polarization ellipse relative to the simulation plane, in radians.
+    
+  .. py:data:: ellipticity
+    
+    :default: 0.
+    
+    The polarization ellipticity: 0 for linear and :math:`\pm 1` for circular.
+
+
+
+.. rubric:: 4. Defining a 2D gaussian wave
 
 ..
 
   For two-dimensional simulations, you may use the simplified laser creator::
     
     LaserGaussian2D(
-        boxSide = "west",
-        a0      = 1.,
-        omega   = 1.,
-        focusX  = 50.,
-        focusY  = 40.,
-        waist   = 3.,
-        angle   = 0.,
+        boxSide         = "west",
+        a0              = 1.,
+        omega           = 1.,
+        focus           = [50., 40.],
+        waist           = 3.,
+        angle           = 0.,
         polarizationPhi = 0.,
         ellipticity     = 0.,
         time_envelope   = tconstant()
     )
-    
-  .. py:data:: a0
   
-    :default: 1.
+  .. py:data:: focus
     
-    The normalized vector potential
-  
-  .. py:data:: focusX
-               focusY
+    :type: A list of two floats ``[X, Y]``
     
-    The X and Y positions of the laser focus.
-  
+    The ``X`` and ``Y`` positions of the laser focus.
+    
   .. py:data:: waist
     
     The waist value.
-  
+    
   .. py:data:: angle
     
     :default: 0.
     
-    The angle of the beam relative to the X axis.
-  
-  .. py:data:: polarizationPhi
-    
-    :default: 0.
-    
-    The angle of the polarization ellipse relative to the simulation plane.
-  
-  .. py:data:: ellipticity
-    
-    :default: 0.
-    
-    The polarization ellipticity: 0 for linear and :math:`\pm 1` for circular.
+    The angle of the beam relative to the X axis, in radians.
   
 
 
