@@ -103,9 +103,9 @@ public:
         int nlaser = PyTools::nComponents("Laser");
         for (int ilaser = 0; ilaser < nlaser; ilaser++) {
             Laser * laser = new Laser(params, ilaser, patch);
-            if     ( laser->boxSide == "west" )
+            if     ( laser->boxSide == "west" && emBoundCond[0])
                 emBoundCond[0]->vecLaser.push_back( laser );
-            else if( laser->boxSide == "east" )
+            else if( laser->boxSide == "east" && emBoundCond[1])
                 emBoundCond[1]->vecLaser.push_back( laser );
         }
         
