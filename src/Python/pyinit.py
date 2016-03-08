@@ -88,7 +88,7 @@ class Laser(SmileiComponent):
     """Laser parameters"""
     boxSide = "west"
     omega = 1.
-    chirp = 1.
+    chirp_profile = 1.
     time_envelope = 1.
     space_envelope = [1., 0.]
     phase = [0., 0.]

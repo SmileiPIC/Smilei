@@ -63,9 +63,9 @@ random_seed = 0
 
 # LASER PROPERTIES
 Laser(
-    omega = 1.,
-    chirp = tpolynomial(order2=0.005),
-    time_envelope = tgaussian(),
+    omega          = 1.,
+    chirp_profile  = tpolynomial(order2=0.005),
+    time_envelope  = tgaussian(),
     space_envelope = [1., 0.],
 )
  

@@ -65,7 +65,7 @@ LaserGaussian2D(
     a0              = 0.1,
 	focus           = [10.*l0, 25.0*l0],
     waist           = 5.0*l0,
-    angle           = 20./180.*math.pi,
+    incidence_angle = 20./180.*math.pi,
     time_envelope   = tgaussian(fwhm=5.*t0, center=10.*t0)
 )
 

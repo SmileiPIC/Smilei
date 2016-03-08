@@ -353,9 +353,10 @@ Electromagnetic fields
 Lasers
 ^^^^^^
 
-A laser is introduced using the ``Laser()`` block. It consists in applying
-oscillating boundary conditions for the magnetic field on one of the box sides.
-There are three syntaxes:
+A laser consists in applying oscillating boundary conditions for the magnetic
+field on one of the box sides. The only boundary conditions that support lasers
+are ``"silver-muller"`` (see :py:data:`bc_em_type_x`).
+There are several syntaxes to introduce a laser in :program:`Smilei`:
 
 .. rubric:: 1. Defining a generic wave
 
@@ -394,10 +395,10 @@ There are three syntaxes:
     Laser(
         boxSide        = "west",
         omega          = 1.,
-        chirp          = tconstant(),
+        chirp_profile  = tconstant(),
         time_envelope  = tgaussian(),
-        space_envelope = [ Bx_profile  , By_profile   ],
-        phase          = [ PhiX_profile, PhiY_profile ]
+        space_envelope = [ By_profile  , Bz_profile   ],
+        phase          = [ PhiY_profile, PhiZ_profile ]
     )
   
   This implements a wave of the form:
@@ -412,7 +413,7 @@ There are three syntaxes:
   
   where :math:`T` is the temporal envelope, :math:`S_y` and :math:`S_y` are the
   spatial envelopes, :math:`\omega` is the time-varying frequency, and 
-  :math:`\phi_y` and :math:`\phi_z` are the phase envelopes.
+  :math:`\phi_y` and :math:`\phi_z` are the phases.
   
   .. py:data:: omega
     
@@ -420,13 +421,13 @@ There are three syntaxes:
     
     The laser angular frequency.
     
-  .. py:data:: chirp
+  .. py:data:: chirp_profile
     
     :type: a *python* function or a :ref:`time profile <profiles>`
     :default: ``tconstant()``
     
     The variation of the laser frequency over time, such that
-    :math:`\omega(t)=\mathtt{omega}\times\mathtt{chirp}(t)`.
+    :math:`\omega(t)=\mathtt{omega}\times\mathtt{chirp_profile}(t)`.
     
   .. py:data:: time_envelope
     
@@ -476,7 +477,7 @@ There are three syntaxes:
     
     :default: 0.
     
-    The angle of the polarization ellipse relative to the simulation plane, in radians.
+    The angle of the polarization ellipse major axis relative to the X-Y plane, in radians.
     
   .. py:data:: ellipticity
     
@@ -498,7 +499,7 @@ There are three syntaxes:
         omega           = 1.,
         focus           = [50., 40.],
         waist           = 3.,
-        angle           = 0.,
+        incidence_angle = 0.,
         polarizationPhi = 0.,
         ellipticity     = 0.,
         time_envelope   = tconstant()
@@ -514,11 +515,11 @@ There are three syntaxes:
     
     The waist value.
     
-  .. py:data:: angle
+  .. py:data:: incidence_angle
     
     :default: 0.
     
-    The angle of the beam relative to the X axis, in radians.
+    The angle of the laser beam relative to the X axis, in radians.
   
 
 

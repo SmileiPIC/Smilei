@@ -30,7 +30,7 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
     double omega_value;
     Profile *p, *pchirp, *ptime, *pspace1, *pspace2, *pphase1, *pphase2;
     omega      = PyTools::extract("omega",omega_value,"Laser",ilaser);
-    chirp      = PyTools::extract_pyProfile("chirp"             , chirp_profile, "Laser", ilaser);
+    chirp      = PyTools::extract_pyProfile("chirp_profile"     , chirp_profile, "Laser", ilaser);
     time       = PyTools::extract_pyProfile("time_envelope"     , time_profile , "Laser", ilaser);
     space      = PyTools::extract2Profiles ("space_envelope"    , ilaser, space_profile     );
     phase      = PyTools::extract2Profiles ("phase"             , ilaser, phase_profile     );
@@ -43,7 +43,7 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
             name << (time ?"time_envelope ":"")
                  << (space?"space_envelope ":"")
                  << (omega?"omega ":"")
-                 << (chirp?"chirp ":"")
+                 << (chirp?"chirp_profile ":"")
                  << (phase?"phase ":"");
             WARNING(errorPrefix << ": space-time profile defined, dismissing " << name.str() );
         }
@@ -82,7 +82,7 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
         if( !omega )
             ERROR(errorPrefix << ": missing `omega`");
         if( !chirp )
-            ERROR(errorPrefix << ": missing `chirp`");
+            ERROR(errorPrefix << ": missing `chirp_profile`");
         if( !phase )
             ERROR(errorPrefix << ": missing `phase`");
         
@@ -95,9 +95,9 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
         
         // chirp
         name.str("");
-        name << "Laser[" << ilaser <<"].chirp";
+        name << "Laser[" << ilaser <<"].chirp_profile";
         pchirp = new Profile(chirp_profile, 1, name.str());
-        info << "\t\t\tchirp              : " << pchirp->getInfo();
+        info << "\t\t\chirp_profile       : " << pchirp->getInfo();
         
         // time envelope
         name.str("");

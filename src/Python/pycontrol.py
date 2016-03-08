@@ -55,7 +55,7 @@ def _smilei_check():
         a.space_profile   = toSpaceProfile(a.space_profile   )
         a.time_profile    = toTimeProfile (a.time_profile    )
     for l in Laser:
-        l.chirp           = toTimeProfile( l.chirp         )
+        l.chirp_profile   = toTimeProfile( l.chirp_profile )
         l.time_envelope   = toTimeProfile( l.time_envelope )
         l.space_envelope  = [ toSpaceProfile(p) for p in l.space_envelope ]
         l.phase           = [ toSpaceProfile(p) for p in l.phase          ]
@@ -65,7 +65,7 @@ def _smilei_check():
 # if it returns false, the code will call a Py_Finalize();
 def _keep_python_running():
     for las in Laser:
-        for prof in [las.time_envelope, las.chirp]:
+        for prof in [las.time_envelope, las.chirp_profile]:
             if callable(prof) and not hasattr(prof,"profileName"): return True
     for ant in Antenna:
         prof = ant.time_profile

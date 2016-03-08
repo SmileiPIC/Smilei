@@ -396,7 +396,7 @@ def LaserPlanar1D( boxSide="west", a0=1., omega=1.,
     Laser(
         boxSide        = boxSide,
         omega          = omega,
-        chirp          = tconstant(),
+        chirp_profile  = tconstant(),
         time_envelope  = time_envelope,
         space_envelope = [ amplitudeZ, amplitudeY ],
         phase          = [ dephasing, 0. ],
@@ -404,7 +404,7 @@ def LaserPlanar1D( boxSide="west", a0=1., omega=1.,
 
 
 
-def LaserGaussian2D( boxSide="west", a0=1., omega=1., focus=None, waist=3., angle=0.,
+def LaserGaussian2D( boxSide="west", a0=1., omega=1., focus=None, waist=3., incidence_angle=0.,
         polarizationPhi=0., ellipticity=0., time_envelope=tconstant()):
     import math
     # Polarization and amplitude
@@ -414,7 +414,7 @@ def LaserGaussian2D( boxSide="west", a0=1., omega=1., focus=None, waist=3., angl
     # Space and phase envelopes
     Zr = omega * waist**2/2.
     phaseZero = 0.
-    if angle == 0.:
+    if incidence_angle == 0.:
         Y1 = focus[1]
         w  = math.sqrt(1./(1.+(focus[0]/Zr)**2))
         invWaist2 = (w/waist)**2
@@ -424,13 +424,13 @@ def LaserGaussian2D( boxSide="west", a0=1., omega=1., focus=None, waist=3., angl
         def phase(y):
             return coeff * (y-focus[1])**2
     else:
-        invZr  = math.sin(angle) / Zr
+        invZr  = math.sin(incidence_angle) / Zr
         invZr2 = invZr**2
-        invZr3 = (math.cos(angle) / Zr)**2 / 2.
-        invWaist2 = (math.cos(angle) / waist)**2
-        omega_ = omega * math.sin(angle)
-        Y1 = focus[1] + focus[0]/math.tan(angle)
-        Y2 = focus[1] - focus[0]*math.tan(angle)
+        invZr3 = (math.cos(incidence_angle) / Zr)**2 / 2.
+        invWaist2 = (math.cos(incidence_angle) / waist)**2
+        omega_ = omega * math.sin(incidence_angle)
+        Y1 = focus[1] + focus[0]/math.tan(incidence_angle)
+        Y2 = focus[1] - focus[0]*math.tan(incidence_angle)
         def spatial(y):
             w2 = 1./(1. + invZr2*(y-Y1)**2)
             return math.sqrt(w2) * math.exp( -invWaist2*w2*(y-Y2)**2 )
@@ -442,7 +442,7 @@ def LaserGaussian2D( boxSide="west", a0=1., omega=1., focus=None, waist=3., angl
     Laser(
         boxSide        = boxSide,
         omega          = omega,
-        chirp          = tconstant(),
+        chirp_profile  = tconstant(),
         time_envelope  = time_envelope,
         space_envelope = [ lambda y:amplitudeZ*spatial(y), lambda y:amplitudeY*spatial(y) ],
         phase          = [ lambda y:phase(y)-phaseZero+dephasing, lambda y:phase(y)-phaseZero ],
