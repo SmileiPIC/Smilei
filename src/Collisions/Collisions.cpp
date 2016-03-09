@@ -96,11 +96,11 @@ vector<Collisions*> Collisions::create(Params& params, Patch* patch, vector<Spec
     ostringstream mystream;
     Species *s0, *s;
     
-    // Needs wavelength_SI to be defined
+    // Needs referenceAngularFrequency_SI to be defined
     unsigned int numcollisions=PyTools::nComponents("Collisions");
     if (numcollisions > 0)
-        if (params.wavelength_SI <= 0.)
-            ERROR("The parameter `wavelength_SI` needs to be defined and positive in order to compute collisions");
+        if (params.referenceAngularFrequency_SI <= 0.)
+            ERROR("The parameter `referenceAngularFrequency_SI` needs to be defined and positive to compute collisions");
     
     // Loop over each binary collisions group and parse info
     for (unsigned int n_collisions = 0; n_collisions < numcollisions; n_collisions++) {
@@ -229,7 +229,7 @@ void Collisions::calculate_debye_length(Params& params, vector<Species*>& vecSpe
     double p2, density, density_max, charge, temperature, rmin2;
     Species   * s;
     Particles * p;
-    double coeff = params.wavelength_SI/(6.*M_PI*2.8179403267e-15); // normLength/(3*electronRadius) = wavelength/(6*pi*electronRadius)
+    double coeff = 299792458./(3.*params.referenceAngularFrequency_SI*2.8179403267e-15); // c / (3 omega re)
     
     debye_length_squared.resize(nbins);
     
@@ -286,7 +286,7 @@ void Collisions::calculate_debye_length(Params& params, vector<Species*>& vecSpe
         mean_debye_length += sqrt(debye_length_squared[ibin]);
     mean_debye_length /= (double)nbins;
     //DEBUG("Mean Debye length in code length units = " << scientific << setprecision(3) << mean_debye_length);
-    mean_debye_length *= params.wavelength_SI/(2.*M_PI); // switch to SI
+    mean_debye_length *= 299792458./params.referenceAngularFrequency_SI; // switch to SI
     DEBUG("Mean Debye length in meters = " << scientific << setprecision(3) << mean_debye_length );
 #endif
 
@@ -352,8 +352,8 @@ void Collisions::collide(Params& params, Patch* patch, int itime)
     
     // Initialize some stuff
     twoPi = 2. * M_PI;
-    coeff1 = M_PI*6.62606957e-34/(9.10938215e-31*299792458.*params.wavelength_SI); // h/(2*me*c*normLength) = pi*h/(me*c*wavelength)
-    coeff2 = twoPi*2.817940327e-15/params.wavelength_SI; // re/normLength = 2*pi*re/wavelength
+    coeff1 = 4.046650232e-21*params.referenceAngularFrequency_SI; // h*omega/(2*me*c^2)
+    coeff2 = 2.817940327e-15*params.referenceAngularFrequency_SI/299792458.; // re omega / c
     n_cluster_per_cell = 1./((double)params.n_cell_per_cluster);
     
     // Loop on bins
@@ -617,7 +617,7 @@ void Collisions::collide(Params& params, Patch* patch, int itime)
             double dmean = 0.;
             for(unsigned int i=0; i<nbins; i++)
                 dmean += sqrt(debye_length_squared[i]);
-            dmean *=  params.wavelength_SI/(2.*M_PI)/nbins;
+            dmean *=  299792458./params.referenceAngularFrequency_SI/nbins;
             name.str("");
             name << "/t" << setfill('0') << setw(8) << itime << "/debyelength";
             H5::array3D_MPI(did, name.str(), dmean, params.number_of_patches, local_size, patch->Pcoordinates);

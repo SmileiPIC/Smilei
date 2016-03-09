@@ -17,10 +17,6 @@ rest = 110.0
 # plasma length
 L = 2.0*math.pi
 
-# wavelength_SI: used by Fred Diags. should be removed
-#
-wavelength_SI = 1.e-6
-
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
 #      2d3v = cartesian grid with 2d in space + 3d in velocity

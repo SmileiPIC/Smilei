@@ -209,5 +209,5 @@ avgfieldDump_every = 0
 ntime_step_avg = 0
 
 # Default Misc
-wavelength_SI = 0.
+referenceAngularFrequency_SI = 0.
 random_seed = None

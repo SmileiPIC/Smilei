@@ -18,10 +18,6 @@ resx = 100.0		# nb cells in 1 wavelength
 Lsim = l0		# simulation length
 Tsim = 5.0*t0		# duration of the simulation
 
-
-# wavelength_SI: used by Fred Diags. (MG: should be removed at some point)
-wavelength_SI = 1.e-6
-
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
 #      2d3v = cartesian grid with 2d in space + 3d in velocity

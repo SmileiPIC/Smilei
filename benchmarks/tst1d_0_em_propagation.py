@@ -16,10 +16,6 @@ t0 = l0				# optical cycle in normalized units
 rest = 102.0		# nb of timestep in 1 optical cycle
 resx = 100.0		# nb cells in 1 wavelength
 
-# wavelength_SI: used by Fred Diags. (MG: should be removed at some point)
-#
-wavelength_SI = 1.e-6
-
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
 #      2d3v = cartesian grid with 2d in space + 3d in velocity

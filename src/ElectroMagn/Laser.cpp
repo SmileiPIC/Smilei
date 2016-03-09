@@ -97,7 +97,7 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
         name.str("");
         name << "Laser[" << ilaser <<"].chirp_profile";
         pchirp = new Profile(chirp_profile, 1, name.str());
-        info << "\t\t\chirp_profile       : " << pchirp->getInfo();
+        info << "\t\t\tchirp_profile       : " << pchirp->getInfo();
         
         // time envelope
         name.str("");

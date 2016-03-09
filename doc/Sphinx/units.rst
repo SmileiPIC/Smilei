@@ -101,12 +101,12 @@ Sometimes, :program:`Smilei` may be requested to compute other things than Maxwe
 equations. That is the case, for example, for computing :doc:`collisions <collisions>` or ionization.
 In these situations, equations cannot be normalized to dimension-less terms, and
 the code must know the value of :math:`\omega_r` in physical units. This requires
-defining an :ref:`extra variable in the namelist <wavelength_SI>`.
+defining an :ref:`extra parameter in the namelist <referenceAngularFrequency_SI>`.
 
-For instance, ``wavelength_SI = 1e-6`` means that the reference wavelength is one micron,
-or equivalently that :math:`L_r = 1\,\mathrm{\mu m} /(2\pi)`. This information will be used only
-in some specific parts of the code (collisions, ionization, ...) but not in the main 
-PIC algorithms.
+For instance, ``referenceAngularFrequency_SI = 2.*math.pi*3e8/1e-6`` means that
+:math:`L_r = 1\,\mathrm{\mu m} /(2\pi)`.
+This information will be used only in some specific parts of the code (collisions, ionization, ...)
+but not in the main PIC algorithms.
 
 .. warning::
   

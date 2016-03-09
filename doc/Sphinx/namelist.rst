@@ -128,13 +128,14 @@ Geometry
   :red:`to do`
 
 
-.. _wavelength_SI:
+.. _referenceAngularFrequency_SI:
 
-.. py:data:: wavelength_SI
+.. py:data:: referenceAngularFrequency_SI
   
-  The value of the reference wavelength :math:`\lambda_r` in SI units
-  (**only required if collisions or ionization are requested**).
-  This wavelength is related to the normalization length according to :math:`2\pi L_r = \lambda_r`.
+  The value of the reference angular frequency :math:`\omega_r` in SI units,
+  **only needed when collisions or ionization are requested**.
+  This frequency is related to the normalization length according to :math:`L_r\omega_r = c`
+  (see :doc:`units`).
 
 
 ----
@@ -700,6 +701,24 @@ profiles.
     :param phi: phase offset
     :param xnumber: number of periods within ``xlength``
   
+  .. py:function:: polynomial( **kwargs )
+    
+     Creates a polynomial of the form
+     
+     .. math::
+       
+       \begin{eqnarray}
+       &\sum_i a_i(x-x_0)^i & \quad\mathrm{in\, 1D}\\
+       &\sum_i \sum_j a_{ij}(x-x0)^j(y-y0)^{i-j} & \quad\mathrm{in\, 2D}
+       \end{eqnarray}
+       
+     The ``**kwargs`` is a series a keyword-arguments.
+     Keywords are ``x0``, ``y0``, ``order0``, ``order1``, ``order2`` (etc.) where
+     each ``orderi`` is the coefficient(s) associated to the order ``i``.
+     In 1D, there is only one coefficient per order. In 2D, each ``orderi`` is a list
+     of ``i+1`` coefficients. For instance, the second order has three coefficients
+     associated to :math:`x^2`, :math:`xy` and :math:`y^2`, respectively.
+  
   **Example**::
     
     Species( ... , density = gaussian(10., xfwhm=0.3, xcenter=0.8), ... )
@@ -741,6 +760,14 @@ profiles.
     :param duration: duration of the profile (default is :py:data:`sim_time` :math:`-` ``start``)
     :param phi: phase offset
     :param freq: frequency
+  
+  .. py:function:: tpolynomial( **kwargs )
+    
+     Creates a polynomial of the form :math:`\sum_i a_i(t-t_0)^i`.
+     
+     The ``**kwargs`` is a series a keyword-arguments.
+     Keywords are ``t0``, ``order0``, ``order1``, ``order2`` (etc.) where
+     each ``orderi`` is the coefficient associated to the order ``i``.
   
   **Example**::
     

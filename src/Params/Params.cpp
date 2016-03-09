@@ -122,8 +122,12 @@ namelist("")
     // Normalisation & units
     // ---------------------
     
-    wavelength_SI = 0.;
-    PyTools::extract("wavelength_SI",wavelength_SI);
+    referenceAngularFrequency_SI = 0.;
+    if( !PyTools::extract("referenceAngularFrequency_SI",referenceAngularFrequency_SI) ) {
+        if( PyTools::extract("wavelength_SI",referenceAngularFrequency_SI) ) {
+            ERROR("The parameter `wavelength_SI` is deprecated. Use `referenceAngularFrequency_SI` instead.");
+        }
+    }
     
     
     // -------------------

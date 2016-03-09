@@ -15,11 +15,6 @@ L  = 1.03			# wavelength=simulation box length
 dn = 0.001			# amplitude of the perturbation
 
 
-
-# wavelength_SI: used by Fred Diags. (MG: should be removed at some point)
-#
-wavelength_SI = 1.e-6
-
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
 #      2d3v = cartesian grid with 2d in space + 3d in velocity

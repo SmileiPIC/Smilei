@@ -3,7 +3,7 @@
 
 Ionization::Ionization(Params& params, Species * species) {
 
-    wavelength_SI        = params.wavelength_SI;
+    referenceAngularFrequency_SI = params.referenceAngularFrequency_SI;
 
     dt                   = params.timestep;
     nDim_field           = params.nDim_field;
@@ -13,9 +13,9 @@ Ionization::Ionization(Params& params, Species * species) {
 
     // Normalization constant from Smilei normalization to/from atomic units
     eV_to_au = 1.0 / 27.2116;
-    EC_to_au = 6.24381e-6 / wavelength_SI;
-    au_to_w0 = 2.19475e7  * wavelength_SI;  //wavelength_SI / 21.9465e6;
-
+    EC_to_au = 3.314742578e-15 * referenceAngularFrequency_SI; // hbar omega / (me c^2 alpha^3)
+    au_to_w0 = 4.134137172e+16 / referenceAngularFrequency_SI; // alpha^2 me c^2 / (hbar omega)
+    
     // Ionization potential & quantum numbers (all in atomic units 1 au = 27.2116 eV)
     Potential.resize(atomic_number_);
     Azimuthal_quantum_number.resize(atomic_number_);

@@ -8,7 +8,7 @@
 import math
 L0 = 2.*math.pi # conversion from normalization length to wavelength
 
-wavelength_SI = 1.e-6
+referenceAngularFrequency_SI = L0 * 3e8 /1.e-6
 
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
