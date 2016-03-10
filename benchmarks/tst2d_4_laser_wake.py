@@ -106,11 +106,10 @@ Species(
 # ----------------
 LaserGaussian2D(
     boxSide         = "west",
-    a0              = 2.,
+    a0              = 1.41,
     focus           = [0., 60.],
     waist           = 26.16,
-    #time_envelope   = tgaussian(center=17.84, fwhm=19.80)
-    time_envelope   = tgaussian(center=17.84, fwhm=9.90)
+    time_envelope   = tgaussian(center=17.84, fwhm=14.0)
 )
 
 
