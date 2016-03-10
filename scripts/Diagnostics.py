@@ -366,7 +366,7 @@ class Units(object):
 				self.ureg = self.UnitRegistry()
 				# Define code units
 				self.ureg.define("V_r = speed_of_light"                   ) # velocity
-				self.ureg.define("W_r = "+str(referenceAngularFrequency_SI)+"*hertz)") # frequency
+				self.ureg.define("W_r = "+str(referenceAngularFrequency_SI)+"*hertz") # frequency
 				self.ureg.define("M_r = electron_mass"                    ) # mass
 				self.ureg.define("Q_r = 1.602176565e-19 * coulomb"        ) # charge
 			else:
