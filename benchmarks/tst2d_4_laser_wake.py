@@ -107,9 +107,10 @@ Species(
 LaserGaussian2D(
     boxSide         = "west",
     a0              = 2.,
-    focus           = [sim_length[0], 60.],
-    waist           = 30.,
-    time_envelope   = tgaussian(center=10., fwhm=7.)
+    focus           = [0., 60.],
+    waist           = 26.16,
+    #time_envelope   = tgaussian(center=17.84, fwhm=19.80)
+    time_envelope   = tgaussian(center=17.84, fwhm=9.90)
 )
 
 
