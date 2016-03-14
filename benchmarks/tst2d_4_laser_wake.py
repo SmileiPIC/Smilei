@@ -5,7 +5,7 @@
 #      3d3v = cartesian grid with 3d in space + 3d in velocity.
 #      2drz = cylindrical (r,z) grid with 3d3v particles.
 #
-
+import math
 dim = "2d3v"
 
 # order of interpolation
@@ -106,10 +106,10 @@ Species(
 # ----------------
 LaserGaussian2D(
     boxSide         = "west",
-    a0              = 1.41,
+    a0              = 2.,
     focus           = [0., 60.],
     waist           = 26.16,
-    time_envelope   = tgaussian(center=17.84, fwhm=14.0)
+    time_envelope   = tgaussian(center=17.84, fwhm=19.80)
 )
 
 

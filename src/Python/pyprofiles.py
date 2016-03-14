@@ -373,7 +373,7 @@ def transformPolarization(polarizationPhi, ellipticity):
     if abs(p) < 1e-10:
         if abs(ellipticity**2-1.)<1e-10: polarizationPhi=0.
         dephasing = math.pi/2.
-        amplitude = math.sqrt(2./(1.+ellipticity**2))
+        amplitude = math.sqrt(1./(1.+ellipticity**2))
         amplitudeY = amplitude * (math.cos(polarizationPhi)+math.sin(polarizationPhi)*ellipticity)
         amplitudeZ = amplitude * (math.sin(polarizationPhi)+math.cos(polarizationPhi)*ellipticity)
     else:
