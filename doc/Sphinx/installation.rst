@@ -1,7 +1,7 @@
 Install
 -------
 
-The requirements for installing and running :program:`Smilei` are:
+Before installing :program:`Smilei`, you need to install a few dependencies:
 
 * A C++ compiler, optionally implementing openMP
 * MPI libraries (*openmpi* recommended), supporting `MPI_THREAD_MULTIPLE`
@@ -19,12 +19,11 @@ If you want to install :program:`Smilei` on your personal computer, refer to the
 
 ----
 
-.. _installMac:
-
 Install dependencies on Mac
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Even if it possible to install all dependencies manually, we recommend a package manager software.
+Even if it possible to install all dependencies manually, we recommend using a
+package manager software.
 
 
 Via Macports
@@ -119,14 +118,22 @@ This installation procedure has been tested on OS X "El Capitan" 10.11.1
 Install dependencies on Ubuntu
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     
-    Install the following packages from terminal
+Install the following packages from terminal:
 
-   .. code-block:: bash
-     
-     sudo apt-get install git openmpi-bin libhdf5-openmpi-dev build-essential python-dev
+  .. code-block:: bash
+  
+    sudo apt-get install git openmpi-bin libhdf5-openmpi-dev build-essential python-dev
+
+:red:`Need details`
 
 
+----
 
+Install dependencies on other systems
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you have successfully installed these dependencies on other platforms, please
+:doc:`contact us <partners>` and share!
 
 ----
 

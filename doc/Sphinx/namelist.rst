@@ -13,18 +13,13 @@ All namelists have the extension ``.py``.
 General rules
 ^^^^^^^^^^^^^
 
-* A namelist is a list of variables that :program:`Smilei` knows.
-  For instance, ``timestep = 0.01``.
-  All *python* operations are valid. For instance: ``timestep = 40*0.0001``.
-
-* The namelist(s) are provided to :program:`Smilei` as command-line arguments. The
-  *python* instructions can also be provided directly one-by-one in the command-line, as
-  string arguments. For example, you can run your namelist ``my_namelist.py`` and 
-  add an additional instruction ``fieldDump_every=10``:
+* A namelist is a list of *python* instructions to define variables known by
+  :program:`Smilei`. For instance::
   
-  .. code-block:: bash
+    timestep = 0.01         # defines the timestep value
+    sim_length = [10., 20.] # defines the 2D box dimensions
     
-    mpirun -n 4 ./smilei  my_namelist.py  "fieldDump_every=10"
+* All *python* operations are valid. For instance: ``timestep = 40*0.0001``.
 
 * The *python* syntax requires special indentation of each line.
   You begin with no indentation, but you have to **add four spaces at the
@@ -37,7 +32,6 @@ General rules
             timestep = 0.2
     else:
         timestep = 0.3
-  
 
 * You will need to use `lists <https://docs.python.org/2/tutorial/introduction.html#lists>`_,
   which are series of things in *python*,
@@ -64,10 +58,7 @@ for each MPI node). The following steps are executed:
    * The total number of MPI nodes as :py:data:`smilei_mpi_size`.
    * The maximum random integer as :py:data:`smilei_rand_max`.
 
-#. The command line arguments are passed one-by-one to *python*:
-   
-   * files are read, broadcasted to every node and executed.
-   * strings are executed as *python* commands.
+#. The namelist(s) is executed.
 
 #. *Python* runs :py:data:`cleanup()` if the user has defined it
    (this can be a good place to delete unused heavy variables and unload unused modules).
@@ -76,7 +67,7 @@ for each MPI node). The following steps are executed:
    (e.g. the user has defined a temporal :ref:`profile <profiles>` which requires *python*
    to calculate it every timestep). Otherwise, *python* is stopped.
 
-#. If the  :py:data:`output_dir` variable was defined, the current working directory
+#. If the :py:data:`output_dir` variable was defined, the current working directory
    changes to that value.
 
 All these instructions are summarized by the MPI master (rank 0) in a file ``smilei.py``,
@@ -127,6 +118,15 @@ Geometry
   Cluster width.
   :red:`to do`
 
+.. py:data:: timestep
+  
+  Duration of one timestep in units of :math:`T_r`.
+
+
+.. py:data:: sim_time
+  
+  Duration of the simulation in units of :math:`T_r`.
+
 
 .. _referenceAngularFrequency_SI:
 
@@ -136,21 +136,6 @@ Geometry
   **only needed when collisions or ionization are requested**.
   This frequency is related to the normalization length according to :math:`L_r\omega_r = c`
   (see :doc:`units`).
-
-
-----
-
-Temporal scale
-^^^^^^^^^^^^^^
-
-.. py:data:: timestep
-  
-  Duration of one timestep in units of :math:`T_r`.
-
-
-.. py:data:: sim_time
-  
-  Duration of the simulation in units of :math:`T_r`.
 
 
 ----
@@ -428,7 +413,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     :default: ``tconstant()``
     
     The variation of the laser frequency over time, such that
-    :math:`\omega(t)=\mathtt{omega}\times\mathtt{chirp_profile}(t)`.
+    :math:`\omega(t)=\mathtt{omega}\times\mathtt{chirp\_profile}(t)`.
     
   .. py:data:: time_envelope
     
@@ -701,23 +686,27 @@ profiles.
     :param phi: phase offset
     :param xnumber: number of periods within ``xlength``
   
-  .. py:function:: polynomial( **kwargs )
+  .. py:function:: polynomial( x0=0., y0=0., order0=[], order1=[], ... )
     
-     Creates a polynomial of the form
-     
-     .. math::
-       
-       \begin{eqnarray}
-       &\sum_i a_i(x-x_0)^i & \quad\mathrm{in\, 1D}\\
-       &\sum_i \sum_j a_{ij}(x-x0)^j(y-y0)^{i-j} & \quad\mathrm{in\, 2D}
-       \end{eqnarray}
-       
-     The ``**kwargs`` is a series a keyword-arguments.
-     Keywords are ``x0``, ``y0``, ``order0``, ``order1``, ``order2`` (etc.) where
-     each ``orderi`` is the coefficient(s) associated to the order ``i``.
-     In 1D, there is only one coefficient per order. In 2D, each ``orderi`` is a list
-     of ``i+1`` coefficients. For instance, the second order has three coefficients
-     associated to :math:`x^2`, :math:`xy` and :math:`y^2`, respectively.
+    :param x0,y0: The reference position(s)
+    :param order0: Coefficient for the 0th order
+    :param order1: Coefficient for the 1st order (2 coefficients in 2D)
+    :param order2: Coefficient for the 2nd order (3 coefficients in 2D)
+    :param etc:
+    
+    Creates a polynomial of the form
+    
+    .. math::
+      
+      \begin{eqnarray}
+      &\sum_i a_i(x-x_0)^i & \quad\mathrm{in\, 1D}\\
+      &\sum_i \sum_j a_{ij}(x-x0)^j(y-y0)^{i-j} & \quad\mathrm{in\, 2D}
+      \end{eqnarray}
+    
+    Each ``orderi`` is a coefficient (or list of coefficents) associated to the order ``i``.
+    In 1D, there is only one coefficient per order. In 2D, each ``orderi`` is a list
+    of ``i+1`` coefficients. For instance, the second order has three coefficients
+    associated to :math:`x^2`, :math:`xy` and :math:`y^2`, respectively.
   
   **Example**::
     
@@ -761,13 +750,15 @@ profiles.
     :param phi: phase offset
     :param freq: frequency
   
-  .. py:function:: tpolynomial( **kwargs )
+  .. py:function:: tpolynomial( t0=0., order0=[], order1=[], ... )
     
-     Creates a polynomial of the form :math:`\sum_i a_i(t-t_0)^i`.
-     
-     The ``**kwargs`` is a series a keyword-arguments.
-     Keywords are ``t0``, ``order0``, ``order1``, ``order2`` (etc.) where
-     each ``orderi`` is the coefficient associated to the order ``i``.
+    :param t0: The reference position
+    :param order0: Coefficient for the 0th order
+    :param order1: Coefficient for the 1st order
+    :param order2: Coefficient for the 2nd order
+    :param etc:
+    
+    Creates a polynomial of the form :math:`\sum_i a_i(t-t_0)^i`.
   
   **Example**::
     
