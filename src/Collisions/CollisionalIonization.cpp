@@ -141,6 +141,8 @@ void CollisionalIonization::prepare2(Particles *p1, int i1, Particles *p2, int i
         Wi = p1->weight(i1);
         ni += Wi;
     }
+    if( Zstar<0 )
+        ERROR("Collisional ionization requires positively charged ions");
     // No ionization if fully ionized already
     if( Zstar>=atomic_number ) return;
     // Retrieve the cross section from the database

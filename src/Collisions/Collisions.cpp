@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <ostream>
+#include <fstream>
 
 #include "Collisions.h"
 #include "SmileiMPI.h"
@@ -54,10 +55,13 @@ filename("")
         
         // Create the file (only by patch master of the MPI master)
         if( patch->isMaster() ) {
-            // Open the file if already exists (this can happen for restarts, or moving window)
-            fileId = H5Fopen( filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT );
+            ifstream file(filename);
+            // Check if file exists
+            if (file) {
+                // Open the file if already exists (this can happen for restarts, or moving window)
+                fileId = H5Fopen( filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT );
             // Otherwise, create the HDF5 file
-            if( fileId < 0 ) {
+            } else {
                 fileId = H5Fcreate(filename.c_str(), H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
                 // write all parameters as HDF5 attributes
                 H5::attr(fileId, "Version", string(__VERSION));
