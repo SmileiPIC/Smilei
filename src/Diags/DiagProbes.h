@@ -18,7 +18,7 @@ public :
     DiagProbes() {};
     ~DiagProbes();
 
-    virtual void openFile( bool newfile );
+    virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile );
     virtual void closeFile();
 
     virtual void prepare( Patch* patch, int timestep );

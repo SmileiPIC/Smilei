@@ -6,10 +6,6 @@ else
     SMILEICXX=mpiicpc
 endif
 
-#CXXFLAGS += -I/usr/lib/gcc/x86_64-linux-gnu/4.8/include
-#LDFLAGS += -L/usr/lib/gcc/x86_64-linux-gnu/4.8
-
-LDFLAGS += -L$(PYTHONHOME)/lib
 
 HDF5_ROOT_DIR ?=
 
@@ -57,6 +53,10 @@ PYHEADERS := $(addprefix $(BUILD_DIR)/, $(PYSCRIPTS:.py=.pyh))
 
 PY_CXXFLAGS:=$(shell $(PYTHONCONFIG) --includes)
 CXXFLAGS+=$(PY_CXXFLAGS)
+
+
+LDFLAGS+=-L$(PYTHONHOME)/lib
+
 PY_LDFLAGS:=$(shell $(PYTHONCONFIG) --ldflags)
 LDFLAGS+=$(PY_LDFLAGS)
 

@@ -186,7 +186,7 @@ DiagProbes::~DiagProbes()
 }
 
 
-void DiagProbes::openFile( bool newfile )
+void DiagProbes::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile )
 {
     if ( newfile ) {
 	hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
@@ -318,7 +318,7 @@ void DiagProbes::prepare( Patch* patch, int timestep )
 void DiagProbes::run( Patch* patch, int timestep )
 {
     Interpolator* interp;
-    ERROR( "Interp not define !!!" );
+    ERROR( "JDT Interp not define !!!" );
     // skip if current timestep is not requested
     if ( timeSelection->theTimeIsNow(timestep) )
 	compute( timestep, patch->EMfields, interp );
@@ -419,7 +419,7 @@ void DiagProbes::setFile(hid_t masterFileId, Patch* patch, Params& params, Vecto
 	    MPI_Recv( &(probesStart), 1, MPI_INTEGER, patch->getMPIRank(hindex-1), 0, MPI_COMM_WORLD, &status );
 	}
 	else {
-	    ERROR( "Define probesStart inside a vector of patches, outside of the class ?" );
+	    ERROR( "JDT Define probesStart inside a vector of patches, outside of the class ?" );
 	    //probesStart = vecPatches( hindex - 1 - vecPatches.refHindex_ )->Diags->probes.probesStart+vecPatches( hindex - 1 - vecPatches.refHindex_ )->Diags->probes.probeParticles.size();
 	}
     }

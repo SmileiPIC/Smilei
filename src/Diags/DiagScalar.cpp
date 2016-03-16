@@ -42,7 +42,7 @@ DiagScalar::~DiagScalar()
 } // END DiagScalar::#DiagScalar
 
 
-void DiagScalar::openFile( bool newfile )
+void DiagScalar::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile )
 {
     //open file scalars.txt
     if ( newfile )
@@ -65,8 +65,6 @@ void DiagScalar::closeFile()
 
 void DiagScalar::prepare( Patch* patch, int timestep )
 {
-    // Just open in append mode (not new file)
-    openFile( false );
 
 } // END prepare
 

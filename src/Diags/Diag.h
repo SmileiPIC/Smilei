@@ -14,7 +14,7 @@ public :
    Diag() {};
    ~Diag() {};
 
-   virtual void openFile( bool newfile ) = 0;
+   virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile ) = 0;
    virtual void closeFile() = 0;
 
    virtual void prepare( Patch* patch, int timestep ) = 0;

@@ -138,7 +138,7 @@ DiagParticles::~DiagParticles()
 
 
 // Called only by patch master of process master
-void DiagParticles::openFile( bool newfile )
+void DiagParticles::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile )
 {
     if ( newfile ) {
 	fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
