@@ -18,6 +18,10 @@
 #include "Hilbert_functions.h"
 #include "VectorPatch.h"
 
+#include "Diag.h"
+#include "DiagScalar.h"
+#include "DiagParticles.h"
+
 using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -809,3 +813,117 @@ void SmileiMPI::computeGlobalDiags(DiagnosticParticles* diagParticles, int times
         diagParticles->clean();
 
 } // END computeGlobalDiags(DiagnosticParticles* diagParticles ...)
+
+
+void SmileiMPI::computeGlobalDiags(Diag* diag, int timestep)
+{
+    if ( diag->type_ == "Scalar" ) {
+	DiagScalar* scalar = static_cast<DiagScalar*>( diag );
+	computeGlobalDiags(scalar, timestep);
+    }
+    else if ( diag->type_ == "Particles" ) {
+	DiagParticles* particles = static_cast<DiagParticles*>( diag );
+	computeGlobalDiags(particles, timestep);
+    }
+}
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// MPI synchronization of scalars diags
+// ---------------------------------------------------------------------------------------------------------------------
+void SmileiMPI::computeGlobalDiags(DiagScalar* scalars, int timestep)
+{
+    
+    if( ! scalars->timeSelection->theTimeIsNow() ) return;
+    
+    int nscalars(0);
+
+    vector<string>::iterator iterKey = scalars->out_key.begin();
+    for(vector<double>::iterator iter = scalars->out_value.begin(); iter !=scalars->out_value.end(); iter++) {
+        if ( ( (*iterKey).find("Min") == std::string::npos ) && ( (*iterKey).find("Max") == std::string::npos ) ) {
+            MPI_Reduce(isMaster()?MPI_IN_PLACE:&((*iter)), &((*iter)), 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        }
+        else if ( (*iterKey).find("MinCell") != std::string::npos ) {
+            vector<double>::iterator iterVal = iter-1;
+            val_index minVal;
+            minVal.val   = (*iterVal);
+            minVal.index = (*iter);
+            MPI_Reduce(isMaster()?MPI_IN_PLACE:&minVal, &minVal, 1, MPI_DOUBLE_INT, MPI_MINLOC, 0, MPI_COMM_WORLD);
+        }
+        else if ( (*iterKey).find("MaxCell") != std::string::npos ) {
+            vector<double>::iterator iterVal = iter-1;
+            val_index maxVal;
+            maxVal.val   = (*iterVal);
+            maxVal.index = (*iter);
+            MPI_Reduce(isMaster()?MPI_IN_PLACE:&maxVal, &maxVal, 1, MPI_DOUBLE_INT, MPI_MAXLOC, 0, MPI_COMM_WORLD);
+        }
+        iterKey++;
+    }
+
+    if (isMaster()) {
+
+        double Ukin = scalars->getScalar("Ukin");
+        double Uelm = scalars->getScalar("Uelm");
+
+        // added & lost energies due to the moving window
+        double Ukin_out_mvw = scalars->getScalar("Ukin_out_mvw");
+        double Ukin_inj_mvw = scalars->getScalar("Ukin_inj_mvw");
+        double Uelm_out_mvw = scalars->getScalar("Uelm_out_mvw");
+        double Uelm_inj_mvw = scalars->getScalar("Uelm_inj_mvw");
+        
+        // added & lost energies at the boundaries
+        double Ukin_bnd = scalars->getScalar("Ukin_bnd");
+        double Uelm_bnd = scalars->getScalar("Uelm_bnd");
+
+        // total energy in the simulation
+        double Utot = Ukin + Uelm;
+
+        // expected total energy
+        double Uexp = scalars->Energy_time_zero + Uelm_bnd + Ukin_inj_mvw + Uelm_inj_mvw
+            -           ( Ukin_bnd + Ukin_out_mvw + Uelm_out_mvw );
+        
+        // energy balance
+        double Ubal = Utot - Uexp;
+        
+        // energy used for normalization
+        scalars->EnergyUsedForNorm = Utot;
+        
+        // normalized energy balance
+        double Ubal_norm(0.);
+        if (scalars->EnergyUsedForNorm>0.)
+            Ubal_norm = Ubal / scalars->EnergyUsedForNorm;
+
+        scalars->setScalar("Ubal_norm",Ubal_norm);
+        scalars->setScalar("Ubal",Ubal);
+        scalars->setScalar("Uexp",Uexp);
+        scalars->setScalar("Utot",Utot);
+
+        if (timestep==0) {
+            scalars->Energy_time_zero  = Utot;
+            scalars->EnergyUsedForNorm = scalars->Energy_time_zero;
+        }
+
+
+    }
+        
+
+    scalars->write(timestep);
+
+} // END computeGlobalDiags(DiagnosticScalar& scalars ...)
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// MPI synchronization of diags particles
+// ---------------------------------------------------------------------------------------------------------------------
+void SmileiMPI::computeGlobalDiags(DiagParticles* diagParticles, int timestep)
+{
+    if (timestep - diagParticles->timeSelection->previousTime() == diagParticles->time_average-1) {
+        MPI_Reduce(diagParticles->filename.size()?MPI_IN_PLACE:&diagParticles->data_sum[0], &diagParticles->data_sum[0], diagParticles->output_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
+        
+        if (smilei_rk==0)
+            diagParticles->write( timestep );
+    }
+    if (diagParticles->time_average == 1)
+        diagParticles->clean();
+
+} // END computeGlobalDiags(DiagParticles* diagParticles ...)

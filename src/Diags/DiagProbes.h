@@ -28,14 +28,26 @@ public :
     virtual void write(int timestep);
 
 
-    void setFile( hid_t masterFileId, Patch* patch, Params& params, VectorPatch& vecPatches );
+    void setFileSplitting( Patch* patch, Params& params, VectorPatch& vecPatches );
     void setFile( hid_t masterFileId );
     void writePositionIn( Params &params );
     void writePositions( int ndim_Particles, int probeDim, hid_t group_id );
-    void compute(unsigned int timestep, ElectroMagn* EMfields, Interpolator* interp);
+    void compute(unsigned int timestep, ElectroMagn* EMfields);
+
+    int getLastPartId() {
+	return probesStart+probeParticles.size();
+    }
+
+    hid_t getFileId() {
+	return fileId_;
+    }
+
+protected:
+    //! hdf5 file ID
+    hid_t fileId_;
 
 private :
-    int probeId_;
+    //int probeId_;
 
     //! fake particles acting as probes
     Particles probeParticles;
@@ -57,8 +69,6 @@ private :
     //! Indices in the output array where each field goes
     std::vector<unsigned int> fieldlocation;
     
-    //! hdf5 file ID
-    hid_t fileId_;
 
     //! return name of the probe based on its number
     std::string probeName();
@@ -71,6 +81,8 @@ private :
     LocalFields Jloc_fields;
     //! Rho local field for the projector
     double Rloc_fields;
+
+    Interpolator* interp_;
     
 };
 

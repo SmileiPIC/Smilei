@@ -177,12 +177,20 @@ DiagProbes::DiagProbes( Params &params, SmileiMPI* smpi, Patch* patch, int diagI
     Field2D *myfield = new Field2D(probesArraySize);
     probesArray = myfield;
 
+    Interpolator* interp_ = InterpolatorFactory::create(params, patch);
+
+    ostringstream mystream("");
+    mystream << "Probes" << probeId_ << ".h5";
+    filename = mystream.str();
+
+    type_ = "Probes";
 
 } // END DiagProbes::DiagProbes
 
 
 DiagProbes::~DiagProbes()
 {
+    delete interp_;
 }
 
 
@@ -192,9 +200,11 @@ void DiagProbes::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatc
 	hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
 	H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
 
-	fileId_ = H5Fopen( "Probes.h5", H5F_ACC_TRUNC, pid );
+
+
+	fileId_ = H5Fopen( filename.c_str(), H5F_ACC_TRUNC, pid );
 	if  ( fileId_ < 0 ) {
-	    fileId_ = H5Fcreate( "Probes.h5", H5F_ACC_TRUNC, H5P_DEFAULT, pid);
+	    fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid);
         
 	    // Write the version of the code as an attribute
 	    H5::attr(fileId_, "Version", string(__VERSION));
@@ -297,7 +307,7 @@ void DiagProbes::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatc
     else {
 	hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
 	H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
-	fileId_ = H5Fopen( "Probes.h5", H5F_ACC_TRUNC, pid );
+	fileId_ = H5Fopen( filename.c_str(), H5F_ACC_TRUNC, pid );
 	H5Pclose(pid);
     }
 
@@ -317,13 +327,9 @@ void DiagProbes::prepare( Patch* patch, int timestep )
 
 void DiagProbes::run( Patch* patch, int timestep )
 {
-    Interpolator* interp;
-    ERROR( "JDT Interp not define !!!" );
     // skip if current timestep is not requested
     if ( timeSelection->theTimeIsNow(timestep) )
-	compute( timestep, patch->EMfields, interp );
-
- 
+	compute( timestep, patch->EMfields );
 
 }
 
@@ -397,9 +403,8 @@ string DiagProbes::probeName() {
 }
 
 
-void DiagProbes::setFile(hid_t masterFileId, Patch* patch, Params& params, VectorPatch& vecPatches )
+void DiagProbes::setFileSplitting(Patch* patch, Params& params, VectorPatch& vecPatches )
 {
-    fileId_ = masterFileId;
     int hindex = patch->Hindex();
 
     // ---------------------------------------------------
@@ -419,12 +424,12 @@ void DiagProbes::setFile(hid_t masterFileId, Patch* patch, Params& params, Vecto
 	    MPI_Recv( &(probesStart), 1, MPI_INTEGER, patch->getMPIRank(hindex-1), 0, MPI_COMM_WORLD, &status );
 	}
 	else {
-	    ERROR( "JDT Define probesStart inside a vector of patches, outside of the class ?" );
-	    //probesStart = vecPatches( hindex - 1 - vecPatches.refHindex_ )->Diags->probes.probesStart+vecPatches( hindex - 1 - vecPatches.refHindex_ )->Diags->probes.probeParticles.size();
+	    DiagProbes* diag = static_cast<DiagProbes*>( vecPatches( hindex-1-vecPatches.refHindex_ )->localDiags[probeId_] );
+	    probesStart = diag->getLastPartId(); // return  diag->(probesStart + probeParticles.size() );
 	}
     }
 	    
-    int probeEnd = probesStart+probeParticles.size();
+    int probeEnd = getLastPartId();
     if (hindex!=nPatches-1) {
 	if ( patch->getMPIRank(hindex+1) != patch->MPI_me_ ) {
 	    MPI_Send( &probeEnd, 1, MPI_INTEGER, patch->getMPIRank(hindex+1), 0, MPI_COMM_WORLD );
@@ -524,12 +529,12 @@ void DiagProbes::writePositions( int ndim_Particles, int probeDim, hid_t group_i
 }
 
 
-void DiagProbes::compute( unsigned int timestep, ElectroMagn* EMfields, Interpolator* interp)
+void DiagProbes::compute( unsigned int timestep, ElectroMagn* EMfields )
 {
     
     // Loop probe ("fake") particles
     for (int iprob=0; iprob <probeParticles.size(); iprob++) {             
-	(*interp)(EMfields,probeParticles,iprob,&Eloc_fields,&Bloc_fields,&Jloc_fields,&Rloc_fields);
+	(*interp_)(EMfields,probeParticles,iprob,&Eloc_fields,&Bloc_fields,&Jloc_fields,&Rloc_fields);
 
 	//! here we fill the probe data!!!
 	probesArray->data_2D[fieldlocation[0]][iprob]=Eloc_fields.x;

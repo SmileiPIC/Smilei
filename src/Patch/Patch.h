@@ -17,6 +17,7 @@
 #include "Collisions.h"
 
 class Diagnostic;
+class Diag;
 class SimWindow;
 
 //! Class Patch :
@@ -58,6 +59,9 @@ public:
     Projector* Proj;
     //! Diagnostic (wraps Scalar, Probes, PhaseSpace, Particles (new PS), TrackParticles)
     Diagnostic* Diags;
+
+    std::vector<Diag*> localDiags;
+
     //! SmileiIO = Diag Fields
     SmileiIO* sio;
     

@@ -22,6 +22,10 @@ class DiagnosticScalar;
 class DiagnosticPhaseSpace;
 class DiagnosticParticles;
 
+class Diag;
+class DiagScalar;
+class DiagParticles;
+
 #define SMILEI_COMM_DUMP_TIME 1312
 
 //  --------------------------------------------------------------------------------------------------------------------
@@ -92,7 +96,11 @@ public:
     void computeGlobalDiags(DiagnosticPhaseSpace& phases, int timestep);
     // MPI synchronization of diags particles
     void computeGlobalDiags(DiagnosticParticles* diagParticles, int timestep);
-    
+
+    void computeGlobalDiags(Diag*          diag, int timestep);
+    void computeGlobalDiags(DiagScalar*    diag, int timestep);
+    void computeGlobalDiags(DiagParticles* diag, int timestep);
+        
 
     // MPI basic methods
     // -----------------

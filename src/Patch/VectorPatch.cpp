@@ -12,6 +12,7 @@
 #include "SmileiIOFactory.h"
 #include "SimWindow.h"
 #include "SolverFactory.h"
+#include "DiagFactory.h"
 
 #include "SyncVectorPatch.h"
 #include "DiagsVectorPatch.h"
@@ -29,6 +30,14 @@ VectorPatch::VectorPatch()
 
 VectorPatch::~VectorPatch()
 {
+    for (unsigned int idiag=0 ; idiag<globalDiags.size(); idiag++) delete globalDiags[idiag];
+    globalDiags.clear();
+
+}
+
+void VectorPatch::createGlobalDiags(Params& params, SmileiMPI* smpi)
+{
+    globalDiags = DiagFactory::createGlobalDiags(params, smpi, (*this)(0) );
 }
 
 
@@ -150,6 +159,47 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
 } // END solveMaxwell
 
 
+
+void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
+{
+    // globalDiags : scalars + particles
+    for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
+	// For all diags createFile (if global, juste by mpi master, test inside)
+	if ( smpi->isMaster() )
+	    globalDiags[idiag]->openFile( params, smpi, *this, true );
+
+    } // END for globalDiags
+
+
+    // localDiags : probes, track & fields
+    for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
+
+	// track, compute global number of particles + compute global Idx
+	if ( (*this)(0)->localDiags[idiag]->type_ == "Track" ) {
+	    DiagTrack* diagTrack = static_cast<DiagTrack*>( (*this)(0)->localDiags[idiag] );
+	    diagTrack->setFileSize( params, smpi, *this );
+	}
+
+	// For all diags createFile
+	(*this)(0)->localDiags[idiag]->openFile( params, smpi, *this, true );
+
+	if ( (*this)(0)->localDiags[idiag]->type_ == "Probes" ) {
+	    DiagProbes* diagProbes0 = static_cast<DiagProbes*>( (*this)(0)->localDiags[idiag] );
+	    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+
+		DiagProbes* diagProbes = static_cast<DiagProbes*>( (*this)(ipatch)->localDiags[idiag] );
+		diagProbes->setFileSplitting( (*this)(ipatch), params, *this );
+		diagProbes->setFile( diagProbes0->getFileId() );
+		diagProbes->writePositionIn( params );
+	    }// END  ipatch
+
+	} // END if Probes
+
+    } // END for localDiags
+    
+} // END initAllDiags
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 // For all patch, Compute and Write all diags
 //   - Scalars, Probes, Phases, TrackParticles, Fields, Average fields
@@ -186,6 +236,7 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
     //    Parallel write for Probes, TrackParticles
     // -------------------------------------------
     timer[3].restart();
+#ifdef _DIAGS_V0
     hid_t file_access0, fid0;
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         // Patch master open TrackParticles files, others write directly in
@@ -222,7 +273,17 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
     //     Scalars, PhaseSpace, Particles
     // -------------------------------------------
     smpi->computeGlobalDiags( (*this)(0)->Diags, itime); // Only scalars reduction for now 
+#else
+    // globalDiags : scalars + particles
+    for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
+	for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+	    globalDiags[idiag]->run( (*this)(ipatch), itime );
+	}
+	// particles
+	smpi->computeGlobalDiags( globalDiags[idiag], itime);
 
+    } // END for globalDiags
+#endif
     timer[3].update();   
 
 } // END runAllDiags

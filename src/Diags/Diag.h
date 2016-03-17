@@ -28,6 +28,10 @@ public :
 
     //! this is the file name
     std::string filename;
+    std::string type_;
+protected :
+    int probeId_;
+
 
 };
 

@@ -34,6 +34,8 @@ DiagScalar::DiagScalar( Params &params, SmileiMPI* smpi, Patch* patch = NULL, in
         cell_volume=params.cell_volume;
     }    
 
+    type_ = "Scalar";
+
 } // END DiagScalar::DiagScalar
 
 
@@ -44,6 +46,8 @@ DiagScalar::~DiagScalar()
 
 void DiagScalar::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile )
 {
+    if (!smpi->isMaster()) return;
+
     //open file scalars.txt
     if ( newfile )
 	fout.open("scalars.txt");
@@ -58,7 +62,7 @@ void DiagScalar::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatc
 
 void DiagScalar::closeFile()
 {
-    fout.close();
+    if (fout.is_open()) fout.close();
 
 } // END closeFile
 
@@ -127,13 +131,17 @@ void DiagScalar::write(int itime)
     }
     fout << endl;
 
+    for (int iscalar=0 ; iscalar<out_value.size() ; iscalar++)
+	out_value[iscalar] = 0.;
+
 } // END write
 
 
 void DiagScalar::compute( Patch* patch, int timestep )
 {
-    out_key  .clear();
-    out_value.clear();
+    //out_key  .clear();
+    //out_value.clear();
+    // reset after write
 
     ElectroMagn* EMfields = patch->EMfields;
     std::vector<Species*>& vecSpecies = patch->vecSpecies;
@@ -419,16 +427,44 @@ double DiagScalar::getScalar(std::string key)
 } // END getScalar
 
 
+void DiagScalar::setScalar(string my_var, double value){
+    for (unsigned int i=0; i< out_key.size(); i++) {
+        if (out_key[i]==my_var) {
+          out_value[i] = value;
+        }
+    }
+    DEBUG("key not found " << my_var);
+}
+
+
+void DiagScalar::incrementScalar(string my_var, double value){
+    for (unsigned int i=0; i< out_key.size(); i++) {
+        if (out_key[i]==my_var) {
+          out_value[i] += value;
+        }
+    }
+    DEBUG("key not found " << my_var);
+}
+
+
 void DiagScalar::append(std::string key, double value) {
-    out_key  .push_back(key  );
-    out_value.push_back(value);
+    if ( !allowedKey(key) ) {
+	out_key.push_back(key  );
+	out_value.push_back(value);
+    }
+    else
+	incrementScalar(key, value);
 
 }  // END append
 
 
 void DiagScalar::prepend(std::string key, double value) {
-    out_key  .insert(out_key  .begin(), key  );
-    out_value.insert(out_value.begin(), value);
+    if ( !allowedKey(key) ) {
+	out_key  .insert(out_key  .begin(), key  );
+	out_value.insert(out_value.begin(), value);
+    }
+    else
+	incrementScalar(key, value);
 
 } // END prepend
 

@@ -9,6 +9,7 @@
 
 
 class DiagParticles : public Diag {
+    friend class SmileiMPI;
 
 public :
 

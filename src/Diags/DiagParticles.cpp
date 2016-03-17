@@ -6,9 +6,13 @@
 using namespace std;
 
 
-DiagParticles::DiagParticles( Params &params, SmileiMPI* smpi, Patch* patch, int diagId )
+DiagParticles::DiagParticles( Params &params, SmileiMPI* smpi, Patch* patch, int diagId ) :
+fileId_(0)
 {
     int n_diag_particles = diagId;
+
+    // n_diag_particles ...
+
     std::vector<Species*>& vecSpecies = patch->vecSpecies;
 
     ostringstream name("");
@@ -130,6 +134,8 @@ DiagParticles::DiagParticles( Params &params, SmileiMPI* smpi, Patch* patch, int
 	filename = mystream.str();
     }
 
+    type_ = "Particles";
+
 } // END DiagParticles::DiagParticles
 
 DiagParticles::~DiagParticles()
@@ -140,6 +146,8 @@ DiagParticles::~DiagParticles()
 // Called only by patch master of process master
 void DiagParticles::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile )
 {
+    if (!smpi->isMaster()) return;
+
     if ( newfile ) {
 	fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 	// write all parameters as HDF5 attributes
@@ -173,8 +181,10 @@ void DiagParticles::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecP
 
 void DiagParticles::closeFile()
 {
-    H5Fclose(fileId_);
-    fileId_ = 0;
+    if (fileId_!=0) {
+	H5Fclose(fileId_);
+	fileId_ = 0;
+    }
 
 } // END closeFile
 

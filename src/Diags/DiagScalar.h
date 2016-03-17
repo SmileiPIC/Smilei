@@ -9,6 +9,7 @@
 
 
 class DiagScalar : public Diag {
+    friend class SmileiMPI;
 
 public :
 
@@ -32,6 +33,12 @@ private :
 
     //! get a particular scalar
     double getScalar(std::string name);
+
+    //! set a particular scalar
+    void setScalar(std::string name, double value);
+
+    //! increment a particular scalar
+    void incrementScalar(std::string name, double value);
 
     //! append to outlist
     void append(std::string, double);

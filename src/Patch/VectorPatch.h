@@ -38,7 +38,9 @@ public :
     //! - interfaces between main programs & main PIC operators
     //! - methods to balance computation
     std::vector<Patch*> patches_;
-    
+
+    std::vector<Diag*> globalDiags;
+
 
     //! Some vector operations extended to VectorPatch
     inline void resize(int npatches) {
@@ -66,7 +68,8 @@ public :
     //! Pointer to patches_[0]->Diags which will drive diag on the current MPI process
     Diagnostic* Diags;
 
-    
+    void createGlobalDiags(Params& params, SmileiMPI* smpi);
+   
     // Interfaces between main programs & main PIC operators
     // -----------------------------------------------------
 
@@ -83,6 +86,7 @@ public :
 
     //! For all patch, Compute and Write all diags (Scalars, Probes, Phases, TrackParticles, Fields, Average fields)
     void runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, int itime, std::vector<Timer>& timer);
+    void initAllDiags(Params& params, SmileiMPI* smpi);
 
     //! Check if rho is null (MPI & patch sync)
     bool isRhoNull( SmileiMPI* smpi );
