@@ -64,17 +64,21 @@ public:
         
         // Patch initializations which needs some sync (parallel output, are data distribution)
         int itime(0);
+#ifdef _DIAGS_V0
         DiagsVectorPatch::initProbesDiags(vecPatches, params, itime);
+#endif
         DiagsVectorPatch::initDumpFields(vecPatches, params, itime);
         DiagsVectorPatch::initTrackParticles(vecPatches, params, smpi);
+#ifdef _DIAGS_V0
         DiagsVectorPatch::initCollisions(vecPatches, params, smpi);
-        
+#endif        
         vecPatches.update_field_list();
         
         // Figure out if there are antennas
         vecPatches.hasAntennas = ( vecPatches(0)->EMfields->antennas.size() > 0 );
 
 	vecPatches.createGlobalDiags( params, smpi );
+	vecPatches.initAllDiags( params, smpi );
 	  
         return vecPatches;
     }

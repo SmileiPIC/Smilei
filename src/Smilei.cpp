@@ -388,9 +388,12 @@ int main (int argc, char* argv[])
     // ------------------------------
     //  Cleanup & End the simulation
     // ------------------------------
+#ifdef _DIAGS_V0
     DiagsVectorPatch::finalizeProbesDiags(vecPatches, params, stepStop);
     DiagsVectorPatch::finalizeDumpFields(vecPatches, params, stepStop);
+#endif
 
+    vecPatches.closeAllDiags( smpiData );
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) delete vecPatches(ipatch);
     vecPatches.clear();
     MPI_Barrier(MPI_COMM_WORLD); // Don't know why but sync needed by HDF5 Phasespace managment

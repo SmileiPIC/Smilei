@@ -176,8 +176,12 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
 
 	// track, compute global number of particles + compute global Idx
 	if ( (*this)(0)->localDiags[idiag]->type_ == "Track" ) {
-	    DiagTrack* diagTrack = static_cast<DiagTrack*>( (*this)(0)->localDiags[idiag] );
-	    diagTrack->setFileSize( params, smpi, *this );
+	    DiagTrack* diagTrack0 = static_cast<DiagTrack*>( (*this)(0)->localDiags[idiag] );
+	    diagTrack0->setFileSize( params, smpi, *this );
+	    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+		DiagTrack* diagTrack  = static_cast<DiagTrack*>( (*this)(ipatch)->localDiags[idiag] );
+		diagTrack->setFile( diagTrack0->getFileId() );
+	    }
 	}
 
 	// For all diags createFile
@@ -186,7 +190,6 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
 	if ( (*this)(0)->localDiags[idiag]->type_ == "Probes" ) {
 	    DiagProbes* diagProbes0 = static_cast<DiagProbes*>( (*this)(0)->localDiags[idiag] );
 	    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-
 		DiagProbes* diagProbes = static_cast<DiagProbes*>( (*this)(ipatch)->localDiags[idiag] );
 		diagProbes->setFileSplitting( (*this)(ipatch), params, *this );
 		diagProbes->setFile( diagProbes0->getFileId() );
@@ -198,6 +201,19 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
     } // END for localDiags
     
 } // END initAllDiags
+
+
+void VectorPatch::closeAllDiags(SmileiMPI* smpi)
+{
+    for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
+	if ( smpi->isMaster() )
+	    globalDiags[idiag]->closeFile();
+    }    
+    for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
+	(*this)(0)->localDiags[idiag]->closeFile();
+    }    
+
+}
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -283,6 +299,24 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
 	smpi->computeGlobalDiags( globalDiags[idiag], itime);
 
     } // END for globalDiags
+
+
+    // localDiags : probes, track & fields
+    for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
+	    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+		(*this)(ipatch)->localDiags[idiag]->run( (*this)(ipatch), itime );
+	    }
+    }
+
+    /*
+	// track, compute global number of particles + compute global Idx
+	if ( (*this)(0)->localDiags[idiag]->type_ == "Track" ) {
+	    DiagTrack* diagTrack = static_cast<DiagTrack*>( (*this)(0)->localDiags[idiag] );
+	    diagTrack->setFileSize( params, smpi, *this );
+	}
+
+    } // END for localDiags
+    */
 #endif
     timer[3].update();   
 
