@@ -390,8 +390,8 @@ int main (int argc, char* argv[])
     // ------------------------------
 #ifdef _DIAGS_V0
     DiagsVectorPatch::finalizeProbesDiags(vecPatches, params, stepStop);
-    DiagsVectorPatch::finalizeDumpFields(vecPatches, params, stepStop);
 #endif
+    DiagsVectorPatch::finalizeDumpFields(vecPatches, params, stepStop);
 
     vecPatches.closeAllDiags( smpiData );
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) delete vecPatches(ipatch);

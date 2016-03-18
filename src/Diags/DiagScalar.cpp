@@ -101,6 +101,10 @@ void DiagScalar::run( Patch* patch, int timestep )
 void DiagScalar::write(int itime)
 {
     unsigned int k, s=out_key.size();
+
+
+    MESSAGE ( "write : Number of diags = " << out_key.size() ) ;
+
     fout << std::scientific << setprecision(precision);
     // At the beginning of the file, we write some headers
     if (fout.tellp()==ifstream::pos_type(0)) { // file beginning
@@ -409,7 +413,8 @@ void DiagScalar::compute( Patch* patch, int timestep )
 	    out_width[k] = 2 + max(l,precision+8); // The +8 accounts for the dot and exponent in decimal representation
 	}
     }
-    
+    MESSAGE ( "compute : Number of diags = " << out_key.size() ) ;
+
 } // END compute
 
 
