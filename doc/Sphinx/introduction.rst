@@ -49,7 +49,7 @@ A second release is **in preparation** featuring great improvements:
 
 We greatly appreciate external users trying this code and giving feedback.
 At the moment, developer rights are still restricted,
-but you can :ref:`contact us <contacts>` to become a developer.
+but you can :doc:`contact us <partners>` to become a developer.
 
 
 ----
