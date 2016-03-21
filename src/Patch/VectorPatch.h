@@ -10,6 +10,7 @@
 #include "ElectroMagnFactory.h"
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
+#include "DiagFactory.h"
 
 #include "Params.h"
 #include "LaserParams.h"
@@ -69,6 +70,13 @@ public :
     Diagnostic* Diags;
 
     void createGlobalDiags(Params& params, SmileiMPI* smpi);
+
+    //! get a particular scalar
+    inline double getScalar(std::string name) {
+	DiagScalar* diag = static_cast<DiagScalar*>( globalDiags[0] );
+	return diag->getScalar( name );
+    }
+
    
     // Interfaces between main programs & main PIC operators
     // -----------------------------------------------------

@@ -69,7 +69,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 
     std::vector<std::string> out_key;
     std::vector<double>      out_value;
-    if (smpi->isMaster()) {
+    /*if (smpi->isMaster()) {
 	// Get scalars/phaseSpace patch 
 	vecPatches(0)->Diags->scalars.closeFile();
 	fphases = vecPatches(0)->Diags->phases.fileId;
@@ -85,7 +85,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 	}
 
 	
-    }
+	}*/
 
     hid_t globalFile    = vecPatches(0)->sio->global_file_id_;
     hid_t globalFileAvg = vecPatches(0)->sio->global_file_id_avg;
@@ -223,7 +223,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     DiagsVectorPatch::definePatchDiagsMaster( vecPatches, globalFile, globalFileAvg );
     DiagsVectorPatch::updatePatchFieldDump( vecPatches, params );
 
-    if (smpi->isMaster()) {
+    /*if (smpi->isMaster()) {
 	vector<string>::iterator iterKey = out_key.begin();
 	for(vector<double>::iterator iter = out_value.begin(); iter !=out_value.end(); iter++) {
 	    vecPatches(0)->Diags->scalars.out_key.push_back( *iterKey );
@@ -238,7 +238,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         for ( int iphase=0 ; iphase<vecPatches(0)->Diags->phases.vecDiagPhase.size() ; iphase++ ) {
             vecPatches(0)->Diags->phases.vecDiagPhase[iphase]->dataId = dset[ iphase ];
         }
-    }
+	}*/
     vecPatches.set_refHindex() ;
     vecPatches.Diags = vecPatches(0)->Diags;
     vecPatches.update_field_list() ;

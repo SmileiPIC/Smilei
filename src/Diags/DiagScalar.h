@@ -26,13 +26,21 @@ public :
 
     virtual void write(int timestep);
 
+    //! get a particular scalar
+    double getScalar(std::string name);
+
+    // Reset stored values
+    void reset( int timestep ) {
+	 if (  timeSelection->theTimeIsNow(timestep) &&  timeSelection->inProgress(timestep) )
+	     for (int iscalar=0 ; iscalar<out_value.size() ; iscalar++)
+		 out_value[iscalar] = 0.;
+    }
+
 private :
 
     // Specific methods
     void compute( Patch* patch, int timestep );
 
-    //! get a particular scalar
-    double getScalar(std::string name);
 
     //! set a particular scalar
     void setScalar(std::string name, double value);
@@ -49,6 +57,7 @@ private :
     //! check if key is allowed
     bool allowedKey(std::string);
 
+    bool defined(std::string);
 
     //! write precision
     unsigned int precision;

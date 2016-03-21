@@ -903,11 +903,11 @@ void SmileiMPI::computeGlobalDiags(DiagScalar* scalars, int timestep)
             scalars->EnergyUsedForNorm = scalars->Energy_time_zero;
         }
 
+	scalars->write(timestep);
 
     }
         
 
-    scalars->write(timestep);
 
 } // END computeGlobalDiags(DiagnosticScalar& scalars ...)
 

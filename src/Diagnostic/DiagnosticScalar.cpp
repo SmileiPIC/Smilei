@@ -32,7 +32,7 @@ cell_volume(params.cell_volume)
         
         //open file scalars.txt
         if (isMaster) {
-            fout.open("scalars.txt");
+            fout.open("scalars_old.txt");
             if (!fout.is_open()) ERROR("Can't open scalar file");
         }
         
@@ -55,7 +55,7 @@ void DiagnosticScalar::closeFile() {
 
 void DiagnosticScalar::open() {
     isMaster = true;
-    fout.open("scalars.txt");
+    fout.open("scalars_old.txt");
     if (!fout.is_open()) ERROR("can't open scalar file");
 
 }
@@ -63,9 +63,9 @@ void DiagnosticScalar::open() {
 void DiagnosticScalar::open(bool append) {
     isMaster = true;
     if (append )
-	fout.open("scalars.txt", std::ofstream::app);
+	fout.open("scalars_old.txt", std::ofstream::app);
     else
-	fout.open("scalars.txt");
+	fout.open("scalars_old.txt");
     if (!fout.is_open()) ERROR("can't open scalar file");
 
 }

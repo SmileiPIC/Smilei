@@ -38,6 +38,7 @@ VectorPatch::~VectorPatch()
 void VectorPatch::createGlobalDiags(Params& params, SmileiMPI* smpi)
 {
     globalDiags = DiagFactory::createGlobalDiags(params, smpi, (*this)(0) );
+
 }
 
 
@@ -171,6 +172,12 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
     } // END for globalDiags
 
 
+    // Initialize scalars (globalDiags[0], especially energy balance)
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+	globalDiags[0]->run( (*this)(ipatch), 0 );
+    }
+    smpi->computeGlobalDiags( globalDiags[0], 0 );
+
     // localDiags : probes, track & fields
     for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
 
@@ -291,6 +298,7 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
     smpi->computeGlobalDiags( (*this)(0)->Diags, itime); // Only scalars reduction for now 
 #else
     // globalDiags : scalars + particles
+    static_cast<DiagScalar*>( globalDiags[0] )->reset( itime );
     for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
 	for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
 	    globalDiags[idiag]->run( (*this)(ipatch), itime );

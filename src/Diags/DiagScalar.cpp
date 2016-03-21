@@ -76,12 +76,12 @@ void DiagScalar::prepare( Patch* patch, int timestep )
 void DiagScalar::run( Patch* patch, int timestep )
 {
     // at timestep=0 initialize the energies
-    if (timestep==0) {
+    /*if (timestep==0) {
 	//compute( patch->EMfields, patch->vecSpecies );
 	compute( patch, timestep );
         Energy_time_zero  = getScalar("Utot");
         EnergyUsedForNorm = Energy_time_zero;
-    }
+    }*/
     
     // If within time-selection overall range
     bool theTimeIsNow = timeSelection->theTimeIsNow(timestep); // must compute this in any case
@@ -103,7 +103,7 @@ void DiagScalar::write(int itime)
     unsigned int k, s=out_key.size();
 
 
-    MESSAGE ( "write : Number of diags = " << out_key.size() ) ;
+    //MESSAGE ( "write : Number of diags = " << out_key.size() ) ;
 
     fout << std::scientific << setprecision(precision);
     // At the beginning of the file, we write some headers
@@ -135,8 +135,8 @@ void DiagScalar::write(int itime)
     }
     fout << endl;
 
-    for (int iscalar=0 ; iscalar<out_value.size() ; iscalar++)
-	out_value[iscalar] = 0.;
+    /*for (int iscalar=0 ; iscalar<out_value.size() ; iscalar++)
+      out_value[iscalar] = 0.;*/
 
 } // END write
 
@@ -413,7 +413,7 @@ void DiagScalar::compute( Patch* patch, int timestep )
 	    out_width[k] = 2 + max(l,precision+8); // The +8 accounts for the dot and exponent in decimal representation
 	}
     }
-    MESSAGE ( "compute : Number of diags = " << out_key.size() ) ;
+    //MESSAGE ( "compute : Number of diags = " << out_key.size() ) ;
 
 } // END compute
 
@@ -436,6 +436,7 @@ void DiagScalar::setScalar(string my_var, double value){
     for (unsigned int i=0; i< out_key.size(); i++) {
         if (out_key[i]==my_var) {
           out_value[i] = value;
+	  return;
         }
     }
     DEBUG("key not found " << my_var);
@@ -446,6 +447,7 @@ void DiagScalar::incrementScalar(string my_var, double value){
     for (unsigned int i=0; i< out_key.size(); i++) {
         if (out_key[i]==my_var) {
           out_value[i] += value;
+	  return;
         }
     }
     DEBUG("key not found " << my_var);
@@ -453,7 +455,7 @@ void DiagScalar::incrementScalar(string my_var, double value){
 
 
 void DiagScalar::append(std::string key, double value) {
-    if ( !allowedKey(key) ) {
+    if ( !defined(key) ) {
 	out_key.push_back(key  );
 	out_value.push_back(value);
     }
@@ -464,7 +466,7 @@ void DiagScalar::append(std::string key, double value) {
 
 
 void DiagScalar::prepend(std::string key, double value) {
-    if ( !allowedKey(key) ) {
+    if ( !defined(key) ) {
 	out_key  .insert(out_key  .begin(), key  );
 	out_value.insert(out_value.begin(), value);
     }
@@ -482,3 +484,12 @@ bool DiagScalar::allowedKey(string key) {
     }
     return false;
 }
+
+bool DiagScalar::defined(string key) {
+    int s=out_key.size();
+    for( int i=0; i<s; i++) {
+        if( key==out_key[i] ) return true;
+    }
+    return false;
+}
+

@@ -31,6 +31,8 @@
 
 #include "SimWindow.h"
 
+#include "Diag.h"
+
 #include "Timer.h"
 #include <omp.h>
 
@@ -211,14 +213,14 @@ int main (int argc, char* argv[])
             "t = "          << scientific << setprecision(3)   << time_dual <<
             "  sec "    << scientific << setprecision(1)   << this_print_time <<
             "("    << scientific << setprecision(1)   << this_print_time - old_print_time << ")" <<
-            "   Utot = "   << scientific << setprecision(4)<< vecPatches.Diags->getScalar("Utot") <<
-            "   Uelm = "   << scientific << setprecision(4)<< vecPatches.Diags->getScalar("Uelm") <<
-            "   Ukin = "   << scientific << setprecision(4)<< vecPatches.Diags->getScalar("Ukin") <<
-            "   Ubal(%) = "<< scientific << fixed << setprecision(2) << 100.0*vecPatches.Diags->getScalar("Ubal_norm");
+            "   Utot = "   << scientific << setprecision(4)<< vecPatches.getScalar("Utot") <<
+            "   Uelm = "   << scientific << setprecision(4)<< vecPatches.getScalar("Uelm") <<
+            "   Ukin = "   << scientific << setprecision(4)<< vecPatches.getScalar("Ukin") <<
+            "   Ubal(%) = "<< scientific << fixed << setprecision(2) << 100.0*vecPatches.getScalar("Ubal_norm");
             
             if (simWindow) {
-                double Uinj_mvw = vecPatches.Diags->getScalar("Uelm_inj_mvw") + vecPatches.Diags->getScalar("Ukin_inj_mvw");
-                double Uout_mvw = vecPatches.Diags->getScalar("Uelm_out_mvw") + vecPatches.Diags->getScalar("Ukin_out_mvw");
+                double Uinj_mvw = vecPatches.getScalar("Uelm_inj_mvw") + vecPatches.getScalar("Ukin_inj_mvw");
+                double Uout_mvw = vecPatches.getScalar("Uelm_out_mvw") + vecPatches.getScalar("Ukin_out_mvw");
                 my_msg << "   Uinj_mvw = " << scientific << setprecision(4) << Uinj_mvw <<
                 "   Uout_mvw = " << scientific << setprecision(4) << Uout_mvw;
 
