@@ -29,7 +29,6 @@ public:
 
 private:
     double one_third;
-    int     nDim_;
 };
 
 #endif

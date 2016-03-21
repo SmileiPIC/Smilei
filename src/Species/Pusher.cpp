@@ -8,7 +8,6 @@ Pusher::Pusher(Params& params, Species *species)
     one_over_mass_ = 1.0/mass_;
     dt             = params.timestep;
     dts2           = params.timestep/2.;
-    dx             = params.cell_length[0] ;
 
     nDim_          = params.nDim_particle;
 

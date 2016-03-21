@@ -28,8 +28,6 @@ protected:
     double mass_;
     double one_over_mass_;
 
-    int nDim_;
-
 };//END class
 
 #endif

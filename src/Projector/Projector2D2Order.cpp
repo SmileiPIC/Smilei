@@ -23,7 +23,6 @@ Projector2D2Order::Projector2D2Order (Params& params, SmileiMPI* smpi) : Project
     dx_ov_dt  = params.cell_length[0] / params.timestep;
     dy_inv_   = 1.0/params.cell_length[1];
     dy_ov_dt  = params.cell_length[1] / params.timestep;
-    nDim_     = params.nDim_particle;
     
     one_third = 1.0/3.0;
 
@@ -107,11 +106,6 @@ void Projector2D2Order::operator() (ElectroMagn* EMfields, Particles &particles,
     // --------------------------------------------------------
     // Locate particles & Calculate Esirkepov coef. S, DS and W
     // --------------------------------------------------------
-    for ( int i = 0 ; i<nDim_ ; i++ ) {
-        if ( particles.position(i, ipart)-particles.position_old(i, ipart) > 1./dx_inv_)
-        std::cout << "piu di una cella al projector!" << endl;
-    }
-    
 
     // locate the particle on the primal grid at former time-step & calculate coeff. S0
     xpn = particles.position_old(0, ipart) * dx_inv_;

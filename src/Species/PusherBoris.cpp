@@ -77,8 +77,6 @@ void PusherBoris::operator() (Particles &particles, int ipart, LocalFields Epart
     for ( int i = 0 ; i<nDim_ ; i++ ) {
         particles.position_old(i, ipart)  = particles.position(i, ipart);
         particles.position(i, ipart)     += dt*particles.momentum(i, ipart)/gf;
-        if ( particles.position(i, ipart)-particles.position_old(i, ipart) > dx)
-        std::cout << "piu di una cella!" << endl;
     }
 
     //DEBUG(5, "\t END "<< particles.position(0, ipart) );
