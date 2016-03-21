@@ -140,7 +140,7 @@ void DiagnosticParticles::createFile( unsigned int n_diag_particles )
     // init HDF files (by master, only if it doesn't yet exist)
     ostringstream mystream("");
     mystream.str("");
-    mystream << "ParticleDiagnostic" << n_diag_particles << ".h5";
+    mystream << "ParticleDiagnostic_old" << n_diag_particles << ".h5";
     filename = mystream.str();
     hid_t fileId = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     // write all parameters as HDF5 attributes
