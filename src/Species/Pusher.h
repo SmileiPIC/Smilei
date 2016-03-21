@@ -22,7 +22,7 @@ public:
     virtual void operator() (Particles &particles, int ipart, LocalFields Epart, LocalFields Bpart, double& gf) = 0;
 
 protected:
-    double dt, dts2;
+    double dt, dts2,dx;
     //! \todo Move mass_ in Particles_
     // mass_ relative to Species but used in the particle pusher
     double mass_;

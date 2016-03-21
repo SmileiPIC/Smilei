@@ -37,12 +37,14 @@ void PusherBoris::operator() (Particles &particles, int ipart, LocalFields Epart
     // --------------------------------------
     // SOLVE THE PARTICLE EQUATION OF MOTIONS
     // --------------------------------------
+  
 
     // Half-acceleration in the electric field
     umx = particles.momentum(0, ipart) + charge_over_mass_*Epart.x*dts2;
     umy = particles.momentum(1, ipart) + charge_over_mass_*Epart.y*dts2;
     umz = particles.momentum(2, ipart) + charge_over_mass_*Epart.z*dts2;
     gf  = sqrt( 1.0 + umx*umx + umy*umy + umz*umz );
+    
 
     // Rotation in the magnetic field
     alpha = charge_over_mass_*dts2/gf;
@@ -75,6 +77,8 @@ void PusherBoris::operator() (Particles &particles, int ipart, LocalFields Epart
     for ( int i = 0 ; i<nDim_ ; i++ ) {
         particles.position_old(i, ipart)  = particles.position(i, ipart);
         particles.position(i, ipart)     += dt*particles.momentum(i, ipart)/gf;
+        if ( particles.position(i, ipart)-particles.position_old(i, ipart) > dx)
+        std::cout << "piu di una cella!" << endl;
     }
 
     //DEBUG(5, "\t END "<< particles.position(0, ipart) );

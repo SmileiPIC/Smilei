@@ -4,6 +4,7 @@
 #include "MF_Solver1D_Yee.h"
 #include "MF_Solver2D_Yee.h"
 #include "MF_Solver2D_Cowan.h"
+#include "MF_Solver2D_Lehe.h"
 
 #include "Params.h"
 
@@ -24,6 +25,8 @@ public:
                 solver = new MF_Solver2D_Yee(params);
             } else if (params.maxwell_sol == "Cowan") {
                 solver = new MF_Solver2D_Cowan(params);
+            } else if(params.maxwell_sol == "Lehe" ){
+                solver = new MF_Solver2D_Lehe(params);
             }
             
         }

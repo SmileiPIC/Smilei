@@ -25,6 +25,7 @@ public:
     double beta_y;
     double Beta_x;
     double Beta_y;
+    
 
 protected:
 

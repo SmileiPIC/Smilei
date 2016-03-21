@@ -232,7 +232,7 @@ void ElectroMagnBC2D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Smi
                             curvRad = zeta* ( 1.0 + 1.0/z2ovLr2 );
                         double gouyPhs = -0.5 * atan( sqrt(z2ovLr2) );
                         double phi     = -0.5 * pow(rho,2)/curvRad + gouyPhs;
-                        bzW += laser_[ilaser]->laser_struct.a0 * sin(tau+phi) * laser_[ilaser]->time_profile(tau)
+                        bzW += laser_[ilaser]->laser_struct.a0 * sin(tau+phi) * laser_[ilaser]->time_profile(time_dual)
                         *  laser_[ilaser]->transverse_profile2D(time_dual,rho/waist);
                     }
                     else {
