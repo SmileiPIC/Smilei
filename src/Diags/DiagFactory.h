@@ -41,7 +41,7 @@ static std::vector<Diag*> createLocalDiags(Params& params, SmileiMPI* smpi, Patc
 	// loop species and make a new diag if particles have to be dumped
 	for(unsigned int trackIdx=0; trackIdx<patch->vecSpecies.size(); trackIdx++) {
 	    if ( patch->vecSpecies[trackIdx]->particles->tracked ) {
-		vecDiags.push_back( new DiagTrack(params, smpi, patch, trackIdx ) ); // trackIdx not used, no python parsing to init
+	      vecDiags.push_back( new DiagTrack(params, smpi, patch, vecDiags.size() ) ); // trackIdx not used, no python parsing to init
 	    }
 	}
 
