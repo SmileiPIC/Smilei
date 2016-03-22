@@ -23,7 +23,7 @@ particular importance for the modelling of strongly relativistic astrophysical s
 
 On the performance side, :program:`Smilei` benefits from a state-of-the-art
 hybrid **MPI/OpenMP parallelization**, an original particle sorting algorithm,
-and innovative dynamical load balancing.
+and innovative dynamic load balancing.
 :program:`Smilei` is therefore designed to run on massively parallel machines,
 and its flexibility should allow one to benefit from the newest and futures HPC architectures.
 
