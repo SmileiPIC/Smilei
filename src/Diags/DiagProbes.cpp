@@ -400,46 +400,46 @@ string DiagProbes::probeName() {
     return prob_name.str();
 }
 
-
-void DiagProbes::setFileSplitting(Patch* patch, Params& params, VectorPatch& vecPatches )
+void DiagProbes::setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches )
 {
-    int hindex = patch->Hindex();
-
-    // ---------------------------------------------------
-    // Start file split definition
-    // ---------------------------------------------------
     int nPatches(1);
     for (int iDim=0;iDim<params.nDim_field;iDim++) nPatches*=params.number_of_patches[iDim];
-    // probesStart
-    unsigned  numProbes=PyTools::nComponents("DiagProbe");
 
-    int np = probeId_;
-    probesStart = 0;
+    for (unsigned int ipatch=0 ; ipatch < vecPatches.size() ; ipatch++)
+	static_cast<DiagProbes*>(vecPatches(ipatch)->localDiags[probeId_])->probesStart = 0;
+
     MPI_Status status;
+    for (unsigned int ipatch=0 ; ipatch < vecPatches.size() ; ipatch++) {
 
-    if (hindex>0) {
-	if ( patch->getMPIRank(hindex-1) != patch->MPI_me_ ) {
-	    MPI_Recv( &(probesStart), 1, MPI_INTEGER, patch->getMPIRank(hindex-1), 0, MPI_COMM_WORLD, &status );
+	Patch* patch = vecPatches(ipatch);
+	DiagProbes* cuDiag = static_cast<DiagProbes*>(patch->localDiags[probeId_]);
+
+	int hindex = patch->Hindex();
+
+	// probesStart
+	//probesStart = 0;
+
+	if (hindex>0) {
+	    if ( patch->getMPIRank(hindex-1) != patch->MPI_me_ ) {
+		MPI_Recv( &(cuDiag->probesStart), 1, MPI_INTEGER, patch->getMPIRank(hindex-1), 0, MPI_COMM_WORLD, &status );
+	    }
+	    else {
+		DiagProbes* diag = static_cast<DiagProbes*>( vecPatches( hindex-1-vecPatches.refHindex_ )->localDiags[probeId_] );
+		cuDiag->probesStart = diag->getLastPartId(); // return  diag->(probesStart + probeParticles.size() );
+	    }
 	}
-	else {
-	    DiagProbes* diag = static_cast<DiagProbes*>( vecPatches( hindex-1-vecPatches.refHindex_ )->localDiags[probeId_] );
-	    probesStart = diag->getLastPartId(); // return  diag->(probesStart + probeParticles.size() );
-	}
-    }
 	    
-    int probeEnd = getLastPartId();
-    if (hindex!=nPatches-1) {
-	if ( patch->getMPIRank(hindex+1) != patch->MPI_me_ ) {
-	    MPI_Send( &probeEnd, 1, MPI_INTEGER, patch->getMPIRank(hindex+1), 0, MPI_COMM_WORLD );
-	}
+	int probeEnd = cuDiag->getLastPartId();
+	if (hindex!=nPatches-1) {
+	    if ( patch->getMPIRank(hindex+1) != patch->MPI_me_ ) {
+		MPI_Send( &probeEnd, 1, MPI_INTEGER, patch->getMPIRank(hindex+1), 0, MPI_COMM_WORLD );
+	    }
 
+	} // END for ipatch
+      
     }
-
-    // ---------------------------------------------------
-    // End file split definition
-    // ---------------------------------------------------
-
 }
+
 
 void DiagProbes::setFile(hid_t masterFileId)
 {

@@ -239,7 +239,7 @@ void DiagTrack::append( hid_t fid, string name, T & property,  hid_t  mem_space,
 }
 
 
-void DiagTrack::setFileSize( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches )
+void DiagTrack::setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches )
 {
     // Communicate some stuff if this is a species that has to be dumped (particles have Id)
     // Need to be placed after ALL createParticles()
@@ -252,7 +252,7 @@ void DiagTrack::setFileSize( Params& params, SmileiMPI* smpi, VectorPatch& vecPa
 	for (unsigned int ipatch=1 ; ipatch<vecPatches.size() ; ipatch++) {
 	    // number of particles up to ipatch (including)
 	    localNbrParticles[ipatch] += vecPatches(ipatch)->vecSpecies[speciesId_]->getNbrOfParticles() + localNbrParticles[ipatch-1];
-	    //vecPatches(ipatch)->vecSpecies[speciesId_]->particles->addIdOffsets(localNbrParticles[ipatch-1]);
+	    vecPatches(ipatch)->vecSpecies[speciesId_]->particles->addIdOffsets(localNbrParticles[ipatch-1]);
 	}
 	int locNbrParticles = localNbrParticles[vecPatches.size()-1];
 
@@ -292,8 +292,8 @@ void DiagTrack::setFileSize( Params& params, SmileiMPI* smpi, VectorPatch& vecPa
 	int offset(0);
 	MPI_Scatter(&allNbrParticles[0], 1 , MPI_INTEGER, &offset, 1, MPI_INTEGER, 0, MPI_COMM_WORLD );
             
-	/*for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-	  vecPatches(ipatch)->vecSpecies[speciesId_]->particles->addIdOffsets(offset);*/
+	for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+	    vecPatches(ipatch)->vecSpecies[speciesId_]->particles->addIdOffsets(offset);
 
     } // End if tracked
 

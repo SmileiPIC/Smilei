@@ -19,6 +19,7 @@ public :
     ~DiagProbes();
 
     virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile );
+
     virtual void closeFile();
 
     virtual void prepare( Patch* patch, int timestep );
@@ -28,7 +29,7 @@ public :
     virtual void write(int timestep);
 
 
-    void setFileSplitting( Patch* patch, Params& params, VectorPatch& vecPatches );
+    void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches );
     void setFile( hid_t masterFileId );
     void writePositionIn( Params &params );
     void writePositions( int ndim_Particles, int probeDim, hid_t group_id );

@@ -17,7 +17,7 @@ public :
    ~DiagTrack();
 
    virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile );
-   void setFileSize( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches );
+   void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches );
 
    virtual void closeFile();
 

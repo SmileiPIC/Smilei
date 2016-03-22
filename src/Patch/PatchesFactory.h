@@ -68,7 +68,7 @@ public:
         DiagsVectorPatch::initProbesDiags(vecPatches, params, itime);
 #endif
         DiagsVectorPatch::initDumpFields(vecPatches, params, itime);
-        DiagsVectorPatch::initTrackParticles(vecPatches, params, smpi);
+        //DiagsVectorPatch::initTrackParticles(vecPatches, params, smpi);
 #ifdef _DIAGS_V0
         DiagsVectorPatch::initCollisions(vecPatches, params, smpi);
 #endif        

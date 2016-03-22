@@ -184,7 +184,7 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
 	// track, compute global number of particles + compute global Idx
 	if ( (*this)(0)->localDiags[idiag]->type_ == "Track" ) {
 	    DiagTrack* diagTrack0 = static_cast<DiagTrack*>( (*this)(0)->localDiags[idiag] );
-	    diagTrack0->setFileSize( params, smpi, *this );
+	    diagTrack0->setFileSplitting( params, smpi, *this );
 	    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
 		DiagTrack* diagTrack  = static_cast<DiagTrack*>( (*this)(ipatch)->localDiags[idiag] );
 		diagTrack->setFile( diagTrack0->getFileId() );
@@ -196,9 +196,9 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
 
 	if ( (*this)(0)->localDiags[idiag]->type_ == "Probes" ) {
 	    DiagProbes* diagProbes0 = static_cast<DiagProbes*>( (*this)(0)->localDiags[idiag] );
+	    diagProbes0->setFileSplitting( params, smpi, *this );
 	    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
 		DiagProbes* diagProbes = static_cast<DiagProbes*>( (*this)(ipatch)->localDiags[idiag] );
-		diagProbes->setFileSplitting( (*this)(ipatch), params, *this );
 		diagProbes->setFile( diagProbes0->getFileId() );
 		diagProbes->writePositionIn( params );
 	    }// END  ipatch
