@@ -177,7 +177,7 @@ DiagProbes::DiagProbes( Params &params, SmileiMPI* smpi, Patch* patch, int diagI
     Field2D *myfield = new Field2D(probesArraySize);
     probesArray = myfield;
 
-    Interpolator* interp_ = InterpolatorFactory::create(params, patch);
+    interp_ = InterpolatorFactory::create(params, patch);
 
     ostringstream mystream("");
     mystream << "Probes" << probeId_ << ".h5";
@@ -202,14 +202,12 @@ void DiagProbes::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatc
 
 
 
-	fileId_ = H5Fopen( filename.c_str(), H5F_ACC_TRUNC, pid );
-	if  ( fileId_ < 0 ) {
-	    fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid);
+	fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid);
         
-	    // Write the version of the code as an attribute
-	    H5::attr(fileId_, "Version", string(__VERSION));
-	    H5::attr(fileId_, "CommitDate", string(__COMMITDATE));
-	}
+	// Write the version of the code as an attribute
+	H5::attr(fileId_, "Version", string(__VERSION));
+	H5::attr(fileId_, "CommitDate", string(__COMMITDATE));
+	
 	//else file is created ok 
 	H5Pclose(pid);
 

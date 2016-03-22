@@ -315,7 +315,11 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
 		(*this)(ipatch)->localDiags[idiag]->run( (*this)(ipatch), itime );
 	    }
     }
-
+    for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
+	for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+	      (*this)(ipatch)->localDiags[idiag]->write( itime );
+	    }
+    }
     /*
 	// track, compute global number of particles + compute global Idx
 	if ( (*this)(0)->localDiags[idiag]->type_ == "Track" ) {
