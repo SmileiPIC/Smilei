@@ -11,6 +11,7 @@
 
 
 class DiagProbes : public Diag {
+    friend class SmileiMPI;
 
 public :
 

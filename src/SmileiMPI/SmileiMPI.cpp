@@ -552,7 +552,12 @@ void SmileiMPI::isend(Patch* patch, int to, int tag)
         }
     }
     isend( patch->EMfields, to, tag+2*patch->vecSpecies.size() );
-    isend( patch->Diags, to, tag+2*patch->vecSpecies.size()+9 );
+
+    for ( int idiag = 0 ; idiag < patch->localDiags.size() ; idiag++ ) {
+	// just probes (track data = species, managed above, meta-data : H5S_select)
+	if ( patch->localDiags[idiag]->type_ == "Probes" )
+	    isend( static_cast<DiagProbes*>(patch->localDiags[idiag]), to, tag+2*patch->vecSpecies.size()+9+idiag );
+    }
 
 } // END isend( Patch )
 
@@ -580,7 +585,12 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
     }
    
     recv( patch->EMfields, from, tag+2*patch->vecSpecies.size() );
-    recv( patch->Diags, from, tag+2*patch->vecSpecies.size()+9 );
+
+    for ( int idiag = 0 ; idiag < patch->localDiags.size() ; idiag++ ) {
+	// just probes (track data = species, managed above, meta-data : H5S_select)
+	if ( patch->localDiags[idiag]->type_ == "Probes" )
+	    recv( static_cast<DiagProbes*>(patch->localDiags[idiag]), from, tag+2*patch->vecSpecies.size()+9+idiag );
+    }
 
 } // END recv ( Patch )
 
@@ -665,16 +675,19 @@ void SmileiMPI::recv(Field* field, int from, int hindex)
 } // End recv ( Field )
 
 
-void SmileiMPI::isend( Diagnostic* diags, int to, int tag )
+void SmileiMPI::isend( DiagProbes* diags, int to, int tag )
 {
-    isend( &(diags->probes.probesStart), to, tag );
+    MPI_Request request; 
+    MPI_Isend( &(diags->probesStart), 1, MPI_INT, to, tag, MPI_COMM_WORLD, &request );
 
 } // End isend ( Diags )
 
 
-void SmileiMPI::recv( Diagnostic* diags, int from, int tag )
+void SmileiMPI::recv( DiagProbes* diags, int from, int tag )
 {
-    recv( &(diags->probes.probesStart), from, tag );
+    MPI_Status status;
+    MPI_Recv( &(diags->probesStart), 1, MPI_INT, from, tag, MPI_COMM_WORLD, &status );
+
 
 } // End recv ( Diags )
 

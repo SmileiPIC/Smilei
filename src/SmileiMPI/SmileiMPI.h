@@ -17,6 +17,7 @@ class VectorPatch;
 
 class ElectroMagn;
 class Field;
+class DiagProbes;
 class Diagnostic;
 class DiagnosticScalar;
 class DiagnosticPhaseSpace;
@@ -81,8 +82,8 @@ public:
     void recv(ElectroMagn* fields, int from, int hindex);
     void isend(Field* field, int to  , int hindex);
     void recv(Field* field, int from, int hindex);
-    void isend( Diagnostic* diags, int to  , int hindex );
-    void recv( Diagnostic* diags, int from, int hindex );
+    void isend( DiagProbes* diags, int to  , int hindex );
+    void recv( DiagProbes* diags, int from, int hindex );
 
 
     // DIAGS MPI SYNC 
