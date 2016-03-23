@@ -31,6 +31,8 @@ public :
 
     void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches );
     void setFile( hid_t masterFileId );
+    virtual void setFile( Diag* diag );
+
     void writePositionIn( Params &params );
     void writePositions( int ndim_Particles, int probeDim, hid_t group_id );
     void compute(unsigned int timestep, ElectroMagn* EMfields);

@@ -223,6 +223,55 @@ void VectorPatch::closeAllDiags(SmileiMPI* smpi)
 }
 
 
+void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
+{
+    for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
+	// For all diags createFile (if global, juste by mpi master, test inside)
+	if ( smpi->isMaster() )
+	    globalDiags[idiag]->openFile( params, smpi, *this, false );
+
+    } // END for globalDiags
+
+    
+    for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
+	(*this)(0)->localDiags[idiag]->openFile( params, smpi, *this, false );
+
+	if ( (*this)(0)->localDiags[idiag]->type_ == "Track" ) {
+	    DiagTrack* diagTrack0 = static_cast<DiagTrack*>( (*this)(0)->localDiags[idiag] );
+	    // Spli
+	    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+		DiagTrack* diagTrack  = static_cast<DiagTrack*>( (*this)(ipatch)->localDiags[idiag] );
+		diagTrack->setFile( diagTrack0->getFileId() );
+	    }
+	}
+
+	if ( (*this)(0)->localDiags[idiag]->type_ == "Probes" ) {
+	    DiagProbes* diagProbes0 = static_cast<DiagProbes*>( (*this)(0)->localDiags[idiag] );
+	    diagProbes0->setFileSplitting( params, smpi, *this );
+	    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+		DiagProbes* diagProbes = static_cast<DiagProbes*>( (*this)(ipatch)->localDiags[idiag] );
+		diagProbes->setFile( diagProbes0->getFileId() );
+	    }
+	}
+    }
+
+    /*
+    // Should be OK with the implementation below :
+    //   abstract splitting too even if completely non sense for global diags ?
+
+    for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
+	(*this)(0)->localDiags[idiag]->openFile( params, smpi, *this, false );
+	for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
+	    (*this)(ipatch)->localDiags[idiag]->setFile( (*this)(0)->localDiags[idiag] );
+	if ( (*this)(0)->localDiags[idiag]->type_ == "Probes" )
+	    static_cast<DiagProbes*>( (*this)(0)->localDiags[idiag] )->setFileSplitting( params, smpi, *this );
+    }
+    */
+
+
+}
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 // For all patch, Compute and Write all diags
 //   - Scalars, Probes, Phases, TrackParticles, Fields, Average fields
@@ -644,6 +693,8 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
 {
+    (*this).closeAllDiags(smpi);
+
     hid_t globalFile    = (*this)(0)->sio->global_file_id_;
     hid_t globalFileAvg = (*this)(0)->sio->global_file_id_avg;
 
@@ -655,30 +706,6 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     oldMPIrank = smpi->getRank() -1;
     int istart( 0 );
     int nmessage = 2*nSpecies+10;
-
-
-    std::vector<std::string> out_key;
-    std::vector<double>      out_value;
-    hid_t fphases;
-    vector<hid_t> dset;
-
-    if (smpi->isMaster()) {
-        // Get scalars/phaseSpace patch 
-        (*this)(0)->Diags->scalars.closeFile();
-        fphases = (*this)(0)->Diags->phases.fileId;
-        for ( int iphase=0 ; iphase<(*this)(0)->Diags->phases.vecDiagPhase.size() ; iphase++ ) {
-            dset.push_back( (*this)(0)->Diags->phases.vecDiagPhase[iphase]->dataId );
-        }
-
-        vector<string>::iterator iterKey = (*this)(0)->Diags->scalars.out_key.begin();
-        for(vector<double>::iterator iter = (*this)(0)->Diags->scalars.out_value.begin(); iter !=(*this)(0)->Diags->scalars.out_value.end(); iter++) {
-            out_key.push_back( *iterKey );
-            iterKey++;
-            out_value.push_back( *iter );
-        }
-
-        
-    }
 
 
     for (int irk=0 ; irk<smpi->getRank() ; irk++) istart += smpi->patch_count[irk];
@@ -748,26 +775,12 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
         (*this)(ipatch)->updateMPIenv(smpi);
     }
 
+    (*this).openAllDiags(params,smpi);
+
     //definePatchDiagsMaster();
     DiagsVectorPatch::definePatchDiagsMaster( *this, globalFile, globalFileAvg );
     DiagsVectorPatch::updatePatchFieldDump( *this, params );
 
-    if (smpi->isMaster()) {
-        vector<string>::iterator iterKey = out_key.begin();
-        for(vector<double>::iterator iter = out_value.begin(); iter !=out_value.end(); iter++) {
-            (*this)(0)->Diags->scalars.out_key.push_back( *iterKey );
-            iterKey++;
-            (*this)(0)->Diags->scalars.out_value.push_back( *iter );
-        }
-
-
-        // Set scalars/phaseSpace patch master
-        (*this)(0)->Diags->scalars.open(true);
-        (*this)(0)->Diags->phases.fileId = fphases;
-        for ( int iphase=0 ; iphase<(*this)(0)->Diags->phases.vecDiagPhase.size() ; iphase++ ) {
-            (*this)(0)->Diags->phases.vecDiagPhase[iphase]->dataId = dset[ iphase ];
-        }
-    }
     (*this).set_refHindex() ;
     (*this).Diags = (*this)(0)->Diags;
 

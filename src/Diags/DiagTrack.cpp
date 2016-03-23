@@ -140,6 +140,10 @@ void DiagTrack::setFile( hid_t fid )
     fileId_ = fid;
 }
 
+void DiagTrack::setFile( Diag* diag )
+{
+    fileId_ = static_cast<DiagTrack*>(diag)->fileId_;  
+}
 
 void DiagTrack::closeFile()
 {

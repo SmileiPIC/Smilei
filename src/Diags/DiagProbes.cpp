@@ -447,6 +447,12 @@ void DiagProbes::setFile(hid_t masterFileId)
 }
 
 
+void DiagProbes::setFile( Diag* diag )
+{
+    fileId_ = static_cast<DiagProbes*>(diag)->fileId_;  
+}
+
+
 void DiagProbes::writePositionIn( Params &params )
 {
     int probe_id = probeId_;

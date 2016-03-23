@@ -179,6 +179,12 @@ void DiagParticles::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecP
 }
 
 
+void DiagParticles::setFile( Diag* diag )
+{
+    fileId_ = static_cast<DiagParticles*>(diag)->fileId_;  
+}
+
+
 void DiagParticles::closeFile()
 {
     if (fileId_!=0) {

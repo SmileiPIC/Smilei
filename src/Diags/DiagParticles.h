@@ -18,6 +18,8 @@ public :
    ~DiagParticles();
 
    virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile );
+   virtual void setFile( Diag* diag );
+   
    virtual void closeFile();
 
    virtual void prepare( Patch* patch, int timestep );

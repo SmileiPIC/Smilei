@@ -60,6 +60,12 @@ void DiagScalar::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatc
 } // END openFile
 
 
+void DiagScalar::setFile( Diag* diag )
+{
+    ERROR( "Only master can write here ! fout = static_cast<DiagScalar*>(diag)->fout; " );
+}
+
+
 void DiagScalar::closeFile()
 {
     if (fout.is_open()) fout.close();

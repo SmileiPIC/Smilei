@@ -28,6 +28,7 @@ public :
    virtual void write(int timestep);
 
    void setFile( hid_t fid );
+   virtual void setFile( Diag* diag );
 
    void setGlobalNbrParticles(int totNbrParts) {
        nbrParticles_ = totNbrParts;
