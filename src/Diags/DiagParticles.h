@@ -8,6 +8,28 @@
 #include "SmileiMPI.h"
 
 
+// Class for each axis of the particle diags
+struct DiagnosticParticlesAxis {
+
+    //! quantity of the axis (e.g. 'x', 'px', ...)
+    std::string type;
+    
+    //! starting point for the axis binning
+    double min;
+    //! ending point for the axis binning
+    double max;
+    //! number of bins for the axis binning
+    int nbins;
+    
+    //! determines whether linear scale or log scale
+    bool logscale;
+    
+    //! determines whether particles beyond min and max are counted in the first and last bin
+    bool edge_inclusive;
+    
+};
+
+
 class DiagParticles : public Diag {
     friend class SmileiMPI;
 

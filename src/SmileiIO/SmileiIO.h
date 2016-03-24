@@ -12,11 +12,11 @@
 
 #include <hdf5.h>
 #include <Tools.h>
+#include "TimeSelection.h"
 
 class Params;
 class Patch;
 class SmileiMPI;
-class Diagnostic;
 class SimWindow;
 class ElectroMagn;
 class Field;
@@ -32,7 +32,7 @@ public:
     //! Create // HDF5 environment
     //! @see global_file_id_ 
     //! @see global_file_id_avg
-    SmileiIO( Params& params, Diagnostic* diag, Patch* patch );
+    SmileiIO( Params& params, Patch* patch );
     void createFiles( Params& params, Patch* patch );
     void setFiles( hid_t masterFileId, hid_t masterFileIdAvg );
     //! Destructor for SmileiIO
@@ -40,7 +40,7 @@ public:
 
     
     //! Write all fields (E, B, J, rho, per species ; 10 + 4 x nspecies fields) of all time step in the same file
-    void createTimeStepInSingleFileTime( int time,  Diagnostic* diag );
+    void createTimeStepInSingleFileTime( int time );
     void writeAllFieldsSingleFileTime( std::vector<Field*> &, int, bool );
 
     //! Basic Write of a field in the specified group of the global file
@@ -67,7 +67,11 @@ public:
 //    template <class T> void appendTestParticles(hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type );
 
 //    template <class T> void appendTestParticles0( hid_t fid, std::string name, std::vector<T> property, int nParticles, hid_t type);
-        
+
+    bool dumpAvgFields_;
+
+    TimeSelection * field_timeSelection;
+    TimeSelection * avgfield_timeSelection;
         
 private:
     

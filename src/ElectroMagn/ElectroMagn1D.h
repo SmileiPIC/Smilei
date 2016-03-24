@@ -53,7 +53,7 @@ public:
     void centerMagneticFields();
     
     //! Method used to reset/increment the averaged fields
-    void incrementAvgFields(unsigned int time_step, unsigned int ntime_step_avg);
+    void incrementAvgFields(unsigned int time_step);
 
     //! Method used to restart the total charge densities and currents
     void restartRhoJ();

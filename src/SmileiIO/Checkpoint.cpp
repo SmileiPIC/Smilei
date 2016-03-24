@@ -19,7 +19,6 @@
 #include "ElectroMagn.h"
 #include "Species.h"
 #include "VectorPatch.h"
-#include "Diagnostic.h"
 
 using namespace std;
 
@@ -98,7 +97,7 @@ Checkpoint::~Checkpoint()
 
 
 //bool Checkpoint::dump( unsigned int itime, double time, Params &params ) { 
-bool Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* smpi, SimWindow* simWindow, Params &params, Diagnostic* diags ) { 
+bool Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* smpi, SimWindow* simWindow, Params &params ) { 
 
     // check for excedeed time 
     if (dump_minutes != 0.0) {
@@ -125,7 +124,7 @@ bool Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* s
     if (signal_received!=0 ||
         (dump_step != 0 && (itime % dump_step == 0)) ||
         (time_dump_step!=0 && itime==time_dump_step)) {
-        dumpAll( vecPatches, itime,  smpi, simWindow, params, diags);
+        dumpAll( vecPatches, itime,  smpi, simWindow, params);
         if (exit_after_dump || ((signal_received!=0) && (signal_received != SIGUSR2))) return true;
     }
     return false;
@@ -145,7 +144,7 @@ bool Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* s
     return false;*/
 }
 
-void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMPI* smpi, SimWindow* simWin,  Params &params, Diagnostic* diags )
+void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMPI* smpi, SimWindow* simWin,  Params &params )
 {
 
     hid_t fid, sid, aid, tid;
@@ -162,8 +161,8 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     
     H5::attr(fid, "dump_step", itime);
     
-    H5::attr(fid, "Energy_time_zero", diags->scalars.Energy_time_zero);
-    H5::attr(fid, "EnergyUsedForNorm", diags->scalars.EnergyUsedForNorm);
+    H5::attr(fid, "Energy_time_zero",  static_cast<DiagScalar*>(vecPatches.globalDiags[0])->Energy_time_zero );
+    H5::attr(fid, "EnergyUsedForNorm", static_cast<DiagScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
 
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) {
 
@@ -322,8 +321,8 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, unsigned int &itime,  Smil
          WARNING ("                while running version is " << string(__VERSION) << " of " << string(__COMMITDATE));
      }
 
-     H5::getAttr(fid, "Energy_time_zero", vecPatches.Diags->scalars.Energy_time_zero);
-     H5::getAttr(fid, "EnergyUsedForNorm", vecPatches.Diags->scalars.EnergyUsedForNorm);
+     H5::getAttr(fid, "Energy_time_zero",  static_cast<DiagScalar*>(vecPatches.globalDiags[0])->Energy_time_zero );
+     H5::getAttr(fid, "EnergyUsedForNorm", static_cast<DiagScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
 	
      hid_t aid, gid, did, sid;
 	

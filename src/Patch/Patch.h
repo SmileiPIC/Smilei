@@ -11,12 +11,10 @@
 #include "LaserParams.h"
 #include "SmileiMPI.h"
 #include "SimWindow.h"
-#include "Diagnostic.h"
 #include "SmileiIO.h"
 #include "PartWall.h"
 #include "Collisions.h"
 
-class Diagnostic;
 class Diag;
 class SimWindow;
 
@@ -57,8 +55,6 @@ public:
     Interpolator* Interp;
     //! Projector
     Projector* Proj;
-    //! Diagnostic (wraps Scalar, Probes, PhaseSpace, Particles (new PS), TrackParticles)
-    Diagnostic* Diags;
 
     std::vector<Diag*> localDiags;
 

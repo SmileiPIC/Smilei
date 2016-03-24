@@ -34,6 +34,11 @@ DiagScalar::DiagScalar( Params &params, SmileiMPI* smpi, Patch* patch = NULL, in
         cell_volume=params.cell_volume;
     }    
 
+    // defining default values & reading diagnostic every-parameter
+    // ------------------------------------------------------------
+    print_every=params.n_time/10;
+    PyTools::extract("print_every", print_every);
+
     type_ = "Scalar";
 
 } // END DiagScalar::DiagScalar

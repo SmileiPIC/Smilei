@@ -16,11 +16,8 @@
 #include "LaserParams.h"
 #include "SmileiMPI.h"
 #include "SimWindow.h"
-#include "Diagnostic.h"
 #include "SmileiIO.h"
 
-class Diagnostic;
-class DiagnosticScalar;
 class Field;
 class Timer;
 class SimWindow; 
@@ -66,9 +63,6 @@ public :
     void update_field_list();
     void update_field_list(int ispec);
 
-    //! Pointer to patches_[0]->Diags which will drive diag on the current MPI process
-    Diagnostic* Diags;
-
     void createGlobalDiags(Params& params, SmileiMPI* smpi);
 
     //! get a particular scalar
@@ -76,6 +70,21 @@ public :
 	DiagScalar* diag = static_cast<DiagScalar*>( globalDiags[0] );
 	return diag->getScalar( name );
     }
+
+    bool fieldTimeIsNow( int timestep ) {
+	return patches_[0]->sio->field_timeSelection->theTimeIsNow( timestep);
+	//return patches_[0]->localDiags[0]->theTimeIsNow(itime);
+    }
+
+    bool avgFieldTimeIsNow( int timestep ) {
+	return patches_[0]->sio->avgfield_timeSelection->theTimeIsNow( timestep);
+	//return patches_[0]->localDiags[0]->theTimeIsNow(itime);
+    }
+
+    bool printScalars( int timestep ) {
+	return (timestep % static_cast<DiagScalar*>(globalDiags[0])->print_every == 0);
+    }
+
 
    
     // Interfaces between main programs & main PIC operators

@@ -12,8 +12,8 @@
 
 using namespace std;
 
-SmileiIO_Cart1D::SmileiIO_Cart1D( Params& params, Diagnostic *diag, Patch* patch )
-    : SmileiIO( params, diag, patch )
+SmileiIO_Cart1D::SmileiIO_Cart1D( Params& params, Patch* patch )
+    : SmileiIO( params, patch )
 {
     createPattern(params,patch);
 }

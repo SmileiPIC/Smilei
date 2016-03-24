@@ -8,6 +8,16 @@
 #include "SmileiMPI.h"
 
 
+//! double-int structure to communicate min/max and location trough MPI 
+struct val_index
+{
+    //! min/max 
+    double val;
+    //! cell location index
+    int index;
+};
+
+
 class DiagScalar : public Diag {
     friend class SmileiMPI;
 
@@ -37,6 +47,16 @@ public :
 	     for (int iscalar=0 ; iscalar<out_value.size() ; iscalar++)
 		 out_value[iscalar] = 0.;
     }
+
+    //! every for the standard pic timeloop output
+    unsigned int print_every;
+
+    //! initial energy (kinetic + EM)
+    double Energy_time_zero;
+    
+    //! energy used for the normalization of energy balance (former total energy)
+    double EnergyUsedForNorm;
+
 
 private :
 
@@ -84,11 +104,6 @@ private :
     //! output stream
     std::ofstream fout;
 
-    //! initial energy (kinetic + EM)
-    double Energy_time_zero;
-    
-    //! energy used for the normalization of energy balance (former total energy)
-    double EnergyUsedForNorm;
 
 
 

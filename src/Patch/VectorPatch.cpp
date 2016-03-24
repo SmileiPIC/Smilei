@@ -17,6 +17,8 @@
 #include "SyncVectorPatch.h"
 #include "DiagsVectorPatch.h"
 
+#include "Timer.h"
+
 #include <cstring>
 //#include <string>
 
@@ -288,11 +290,11 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
 
             // Write EM fields dump in Fields.h5
-            if (ipatch==0) (*this)(ipatch)->sio->createTimeStepInSingleFileTime( itime, (*this).Diags );
+            if (ipatch==0) (*this)(ipatch)->sio->createTimeStepInSingleFileTime( itime );
             (*this)(ipatch)->sio->writeAllFieldsSingleFileTime( (*this)(ipatch)->EMfields->allFields, itime, 0 );
 
             // Check the dedicated fields output write frequency 
-            if( (*this).Diags->ntime_step_avg!=0 && (*this).Diags->avgfield_timeSelection->theTimeIsNow(itime) ) {
+            if( (*this)(ipatch)->sio->dumpAvgFields_ && avgFieldTimeIsNow(itime) ) {
                 // Write EM average fields dump in Fields_avg.h5
                 (*this)(ipatch)->sio->writeAllFieldsSingleFileTime( (*this)(ipatch)->EMfields->allFields_avg, itime, 1 );
             }
@@ -308,44 +310,6 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
     //    Parallel write for Probes, TrackParticles
     // -------------------------------------------
     timer[3].restart();
-#ifdef _DIAGS_V0
-    hid_t file_access0, fid0;
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-        // Patch master open TrackParticles files, others write directly in
-        for (unsigned int i=0 ; i<(*this)(ipatch)->Diags->vecDiagnosticTrackParticles.size(); i++) {
-            if (ipatch==0) {
-                (*this)(ipatch)->Diags->vecDiagnosticTrackParticles[i]->open();
-                file_access0 = (*this)(0)->Diags->vecDiagnosticTrackParticles[i]->file_access_;
-                fid0         = (*this)(0)->Diags->vecDiagnosticTrackParticles[i]->fid_;
-            }
-            else
-                (*this)(ipatch)->Diags->vecDiagnosticTrackParticles[i]->setFile( file_access0, fid0 );
-
-        }
-
-        // Here is the main computing part !!!
-        (*this)(ipatch)->Diags->runAllDiags(itime, (*this)(ipatch)->EMfields, (*this)(ipatch)->vecSpecies,
-                                            (*this)(ipatch)->Interp);
-
-    }
-
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-        // Patch master close TrackParticles files
-        for (unsigned int i=0 ; i<(*this)(ipatch)->Diags->vecDiagnosticTrackParticles.size(); i++)
-            if (ipatch==0) (*this)(ipatch)->Diags->vecDiagnosticTrackParticles[i]->close();
-    }
-
-
-    // Diagnostics : Patches synchro  
-    //     Scalars, PhaseSpace, Particles
-    // -------------------------------------------
-    DiagsVectorPatch::computeGlobalDiags( *this, itime); 
-
-    // Diagnostics : MPI synchro (by patch master)
-    //     Scalars, PhaseSpace, Particles
-    // -------------------------------------------
-    smpi->computeGlobalDiags( (*this)(0)->Diags, itime); // Only scalars reduction for now 
-#else
     // globalDiags : scalars + particles
     static_cast<DiagScalar*>( globalDiags[0] )->reset( itime );
     for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
@@ -378,7 +342,6 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
 
     } // END for localDiags
     */
-#endif
     timer[3].update();   
 
 } // END runAllDiags
@@ -755,7 +718,6 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     int nPatchSend(send_patch_id_.size());
     for (int ipatch=nPatchSend-1 ; ipatch>=0 ; ipatch--) {
         //Ok while at least 1 old patch stay inon current CPU
-        (*this)(send_patch_id_[ipatch])->Diags->probes.setFile(0);
         (*this)(send_patch_id_[ipatch])->sio->setFiles(0,0);
         delete (*this)(send_patch_id_[ipatch]);
         patches_[ send_patch_id_[ipatch] ] = NULL;
@@ -782,7 +744,6 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     DiagsVectorPatch::updatePatchFieldDump( *this, params );
 
     (*this).set_refHindex() ;
-    (*this).Diags = (*this)(0)->Diags;
 
     update_field_list() ;    
 

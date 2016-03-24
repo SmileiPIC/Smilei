@@ -21,7 +21,6 @@ class ElectroMagn;
 class Field;
 class Species;
 class VectorPatch;
-class Diagnostic;
 
 #include <csignal>
 
@@ -49,11 +48,11 @@ public:
 	
     //! test before writing everything to file per processor
     //bool dump(unsigned int itime, double time, Params &params);
-    bool dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* smpi, SimWindow* simWindow, Params &params, Diagnostic* diags );
+    bool dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* smpi, SimWindow* simWindow, Params &params );
     // OK
 	
     //! dump everything to file per processor
-    void dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMPI* smpi, SimWindow* simWin, Params &params, Diagnostic* diags );
+    void dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMPI* smpi, SimWindow* simWin, Params &params );
     void dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpecies, hid_t patch_gid );
 
     //! incremental number of times we've done a dump

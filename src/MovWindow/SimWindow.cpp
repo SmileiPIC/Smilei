@@ -7,7 +7,6 @@
 #include "Projector.h"
 #include "SmileiMPI.h"
 #include "VectorPatch.h"
-#include "Diagnostic.h"
 #include "Hilbert_functions.h"
 #include "PatchesFactory.h"
 #include "DiagsVectorPatch.h"
@@ -207,7 +206,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     DiagsVectorPatch::updatePatchFieldDump( vecPatches, params );                      // sio
 
     vecPatches.set_refHindex() ;
-    vecPatches.Diags = vecPatches(0)->Diags; // use Diags params in sio
     vecPatches.update_field_list() ;
 
     return;

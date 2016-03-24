@@ -199,13 +199,13 @@ int main (int argc, char* argv[])
         time_prim += params.timestep;
         time_dual += params.timestep;
         
-        if ( vecPatches.Diags->field_timeSelection->theTimeIsNow(itime) ) diag_flag = 1;
+        if ( vecPatches.fieldTimeIsNow(itime) ) diag_flag = 1;
         
         // send message at given time-steps
         // --------------------------------
         timer[0].update();
         
-        if ( (itime % vecPatches.Diags->print_every == 0) &&  ( smpiData->isMaster() ) ) {
+        if ( vecPatches.printScalars( itime ) &&  ( smpiData->isMaster() ) ) {
             double this_print_time=timer[0].getTime();
             ostringstream my_msg;
             my_msg << setw(log10(params.n_time)+1) << itime <<
@@ -281,10 +281,10 @@ int main (int argc, char* argv[])
                 vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timer );
                     
             // incrementing averaged electromagnetic fields
-            if (vecPatches.Diags->ntime_step_avg)
+            if (vecPatches(0)->sio->dumpAvgFields_)
                 #pragma omp for
                 for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-                    vecPatches(ipatch)->EMfields->incrementAvgFields(itime, vecPatches.Diags->ntime_step_avg);
+                    vecPatches(ipatch)->EMfields->incrementAvgFields(itime);
                 }
             
             // call the various diagnostics
@@ -300,7 +300,7 @@ int main (int argc, char* argv[])
             // Restart patched moving window : to do
             // Break in an OpenMP region
             #pragma omp master
-            checkpoint.dump(vecPatches, itime, smpiData, simWindow, params, vecPatches.Diags);
+            checkpoint.dump(vecPatches, itime, smpiData, simWindow, params);
             #pragma omp barrier
             // ----------------------------------------------------------------------        
             
@@ -377,7 +377,7 @@ int main (int argc, char* argv[])
     if ( smpiData->isMaster() )
         for (unsigned int i=1 ; i<timer.size() ; i++) timer[i].print(timer[0].getTime());
     
-    vecPatches.Diags->printTimers(vecPatches(0), timer[3].getTime());
+    //WARNING( "Diabled vecPatches.Diags->printTimers(vecPatches(0), timer[3].getTime());" );
     
     
     // ------------------------------------------------------------------
@@ -390,9 +390,6 @@ int main (int argc, char* argv[])
     // ------------------------------
     //  Cleanup & End the simulation
     // ------------------------------
-#ifdef _DIAGS_V0
-    DiagsVectorPatch::finalizeProbesDiags(vecPatches, params, stepStop);
-#endif
     DiagsVectorPatch::finalizeDumpFields(vecPatches, params, stepStop);
 
     vecPatches.closeAllDiags( smpiData );

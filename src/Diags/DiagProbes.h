@@ -9,6 +9,7 @@
 #include "Patch.h"
 #include "SmileiMPI.h"
 
+#include "Field2D.h"
 
 class DiagProbes : public Diag {
     friend class SmileiMPI;

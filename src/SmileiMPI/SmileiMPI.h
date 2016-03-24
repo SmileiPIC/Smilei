@@ -18,10 +18,6 @@ class VectorPatch;
 class ElectroMagn;
 class Field;
 class DiagProbes;
-class Diagnostic;
-class DiagnosticScalar;
-class DiagnosticPhaseSpace;
-class DiagnosticParticles;
 
 class Diag;
 class DiagScalar;
@@ -90,16 +86,10 @@ public:
     // --------------
 
     // Wrapper of MPI synchronization of all computing diags
-    void computeGlobalDiags(Diagnostic* diags, int timestep);
-    // MPI synchronization of scalars diags
-    void computeGlobalDiags(DiagnosticScalar& scalars, int timestep);
-    // MPI synchronization of phasespace diags
-    void computeGlobalDiags(DiagnosticPhaseSpace& phases, int timestep);
-    // MPI synchronization of diags particles
-    void computeGlobalDiags(DiagnosticParticles* diagParticles, int timestep);
-
     void computeGlobalDiags(Diag*          diag, int timestep);
+    // MPI synchronization of scalars diags
     void computeGlobalDiags(DiagScalar*    diag, int timestep);
+    // MPI synchronization of diags particles
     void computeGlobalDiags(DiagParticles* diag, int timestep);
         
 
