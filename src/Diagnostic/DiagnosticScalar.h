@@ -1,7 +1,7 @@
-#ifndef DIAGSCALAR_H
-#define DIAGSCALAR_H
+#ifndef DIAGNOSTICSCALAR_H
+#define DIAGNOSTICSCALAR_H
 
-#include "Diag.h"
+#include "Diagnostic.h"
 
 #include "Params.h"
 #include "Patch.h"
@@ -18,17 +18,17 @@ struct val_index
 };
 
 
-class DiagScalar : public Diag {
+class DiagnosticScalar : public Diagnostic {
     friend class SmileiMPI;
 
 public :
 
-    DiagScalar( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
-    DiagScalar() {};
-    ~DiagScalar();
+    DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
+    DiagnosticScalar() {};
+    ~DiagnosticScalar();
 
     virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile );
-    virtual void setFile( Diag* diag );
+    virtual void setFile( Diagnostic* diag );
 
     virtual void closeFile();
 

@@ -2,13 +2,13 @@
 #include <string>
 #include <sstream>
 
-#include "DiagTrack.h"
+#include "DiagnosticTrack.h"
 #include "VectorPatch.h"
 
 using namespace std;
 
-DiagTrack::DiagTrack( Params &params, SmileiMPI* smpi, Patch* patch, int diagId ) :
-Diag(params,smpi,patch,diagId),
+DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, int diagId ) :
+Diagnostic(params,smpi,patch,diagId),
 nDim_particle(params.nDim_particle)
 {
     probeId_ = diagId;
@@ -49,12 +49,12 @@ nDim_particle(params.nDim_particle)
 }
 
 
-DiagTrack::~DiagTrack()
+DiagnosticTrack::~DiagnosticTrack()
 {
 }
 
 
-void DiagTrack::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile )
+void DiagnosticTrack::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile )
 {
     
     
@@ -135,28 +135,28 @@ void DiagTrack::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatch
 }
 
 
-void DiagTrack::setFile( hid_t fid )
+void DiagnosticTrack::setFile( hid_t fid )
 {
     fileId_ = fid;
 }
 
-void DiagTrack::setFile( Diag* diag )
+void DiagnosticTrack::setFile( Diagnostic* diag )
 {
-    fileId_ = static_cast<DiagTrack*>(diag)->fileId_;  
+    fileId_ = static_cast<DiagnosticTrack*>(diag)->fileId_;  
 }
 
-void DiagTrack::closeFile()
+void DiagnosticTrack::closeFile()
 {
     H5Fclose( fileId_ );
 }
 
 
-void DiagTrack::prepare( Patch* patch, int timestep )
+void DiagnosticTrack::prepare( Patch* patch, int timestep )
 {
 }
 
 
-void DiagTrack::run( Patch* patch, int timestep )
+void DiagnosticTrack::run( Patch* patch, int timestep )
 {
     int time = timestep;
 
@@ -213,12 +213,12 @@ void DiagTrack::run( Patch* patch, int timestep )
 }
 
 
-void DiagTrack::write(int timestep)
+void DiagnosticTrack::write(int timestep)
 {
 }
 
 template <class T>
-void DiagTrack::append( hid_t fid, string name, T & property,  hid_t  mem_space, int nParticles, hid_t type, vector<hsize_t> &locator) {
+void DiagnosticTrack::append( hid_t fid, string name, T & property,  hid_t  mem_space, int nParticles, hid_t type, vector<hsize_t> &locator) {
     
     // Open existing dataset
     hid_t did = H5Dopen( fid, name.c_str(), H5P_DEFAULT );
@@ -243,7 +243,7 @@ void DiagTrack::append( hid_t fid, string name, T & property,  hid_t  mem_space,
 }
 
 
-void DiagTrack::setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches )
+void DiagnosticTrack::setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches )
 {
     // Communicate some stuff if this is a species that has to be dumped (particles have Id)
     // Need to be placed after ALL createParticles()
@@ -277,7 +277,7 @@ void DiagTrack::setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& 
 
 	// Set HDF5 context for other patches
 	for (unsigned int ipatch=1 ; ipatch<vecPatches.size() ; ipatch++) {
-	    DiagTrack* diag = static_cast<DiagTrack*>( vecPatches(ipatch)->localDiags[probeId_] );
+	    DiagnosticTrack* diag = static_cast<DiagnosticTrack*>( vecPatches(ipatch)->localDiags[probeId_] );
 	    diag->setGlobalNbrParticles(totNbrParts);
 	}
 

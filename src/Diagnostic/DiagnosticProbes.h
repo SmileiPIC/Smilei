@@ -1,9 +1,9 @@
-#ifndef DIAGPROBES_H
-#define DIAGPROBES_H
+#ifndef DIAGNOSTICPROBES_H
+#define DIAGNOSTICPROBES_H
 
 #include <hdf5.h>
 
-#include "Diag.h"
+#include "Diagnostic.h"
 
 #include "Params.h"
 #include "Patch.h"
@@ -11,14 +11,14 @@
 
 #include "Field2D.h"
 
-class DiagProbes : public Diag {
+class DiagnosticProbes : public Diagnostic {
     friend class SmileiMPI;
 
 public :
 
-    DiagProbes( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
-    DiagProbes() {};
-    ~DiagProbes();
+    DiagnosticProbes( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
+    DiagnosticProbes() {};
+    ~DiagnosticProbes();
 
     virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile );
 
@@ -33,7 +33,7 @@ public :
 
     void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches );
     void setFile( hid_t masterFileId );
-    virtual void setFile( Diag* diag );
+    virtual void setFile( Diagnostic* diag );
 
     void writePositionIn( Params &params );
     void writePositions( int ndim_Particles, int probeDim, hid_t group_id );

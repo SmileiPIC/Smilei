@@ -31,7 +31,7 @@
 
 #include "SimWindow.h"
 
-#include "Diag.h"
+#include "Diagnostic.h"
 
 #include "Timer.h"
 #include <omp.h>
@@ -377,7 +377,7 @@ int main (int argc, char* argv[])
     if ( smpiData->isMaster() )
         for (unsigned int i=1 ; i<timer.size() ; i++) timer[i].print(timer[0].getTime());
     
-    //WARNING( "Diabled vecPatches.Diags->printTimers(vecPatches(0), timer[3].getTime());" );
+    //WARNING( "Diabled vecPatches.Diagnostics->printTimers(vecPatches(0), timer[3].getTime());" );
     
     
     // ------------------------------------------------------------------

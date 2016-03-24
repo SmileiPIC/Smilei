@@ -15,7 +15,7 @@
 #include "PartWall.h"
 #include "Collisions.h"
 
-class Diag;
+class Diagnostic;
 class SimWindow;
 
 //! Class Patch :
@@ -56,7 +56,7 @@ public:
     //! Projector
     Projector* Proj;
 
-    std::vector<Diag*> localDiags;
+    std::vector<Diagnostic*> localDiags;
 
     //! SmileiIO = Diag Fields
     SmileiIO* sio;

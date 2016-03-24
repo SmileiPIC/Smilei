@@ -1,14 +1,14 @@
 #include <sstream>
 #include <vector>
 
-#include "DiagProbes.h"
+#include "DiagnosticProbes.h"
 
 #include "VectorPatch.h"
 
 
 using namespace std;
 
-DiagProbes::DiagProbes( Params &params, SmileiMPI* smpi, Patch* patch, int diagId )
+DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, Patch* patch, int diagId )
 {
     int n_probe = diagId;
     probeId_ = diagId;
@@ -185,16 +185,16 @@ DiagProbes::DiagProbes( Params &params, SmileiMPI* smpi, Patch* patch, int diagI
 
     type_ = "Probes";
 
-} // END DiagProbes::DiagProbes
+} // END DiagnosticProbes::DiagnosticProbes
 
 
-DiagProbes::~DiagProbes()
+DiagnosticProbes::~DiagnosticProbes()
 {
     delete interp_;
 }
 
 
-void DiagProbes::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile )
+void DiagnosticProbes::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile )
 {
     if ( newfile ) {
 	hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
@@ -312,18 +312,18 @@ void DiagProbes::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatc
 }
 
 
-void DiagProbes::closeFile()
+void DiagnosticProbes::closeFile()
 {
     H5Fclose(fileId_);
 }
 
 
-void DiagProbes::prepare( Patch* patch, int timestep )
+void DiagnosticProbes::prepare( Patch* patch, int timestep )
 {
 }
 
 
-void DiagProbes::run( Patch* patch, int timestep )
+void DiagnosticProbes::run( Patch* patch, int timestep )
 {
     // skip if current timestep is not requested
     if ( timeSelection->theTimeIsNow(timestep) )
@@ -332,7 +332,7 @@ void DiagProbes::run( Patch* patch, int timestep )
 }
 
 
-void DiagProbes::write( int timestep )
+void DiagnosticProbes::write( int timestep )
 {
     if ( !timeSelection->theTimeIsNow(timestep) ) return;
 
@@ -394,25 +394,25 @@ void DiagProbes::write( int timestep )
 }
 
 
-string DiagProbes::probeName() {
+string DiagnosticProbes::probeName() {
     ostringstream prob_name("");
     prob_name << "p" << setfill('0') << setw(4) << probeId_;
     return prob_name.str();
 }
 
-void DiagProbes::setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches )
+void DiagnosticProbes::setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches )
 {
     int nPatches(1);
     for (int iDim=0;iDim<params.nDim_field;iDim++) nPatches*=params.number_of_patches[iDim];
 
     for (unsigned int ipatch=0 ; ipatch < vecPatches.size() ; ipatch++)
-	static_cast<DiagProbes*>(vecPatches(ipatch)->localDiags[probeId_])->probesStart = 0;
+	static_cast<DiagnosticProbes*>(vecPatches(ipatch)->localDiags[probeId_])->probesStart = 0;
 
     MPI_Status status;
     for (unsigned int ipatch=0 ; ipatch < vecPatches.size() ; ipatch++) {
 
 	Patch* patch = vecPatches(ipatch);
-	DiagProbes* cuDiag = static_cast<DiagProbes*>(patch->localDiags[probeId_]);
+	DiagnosticProbes* cuDiag = static_cast<DiagnosticProbes*>(patch->localDiags[probeId_]);
 
 	int hindex = patch->Hindex();
 
@@ -424,7 +424,7 @@ void DiagProbes::setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch&
 		MPI_Recv( &(cuDiag->probesStart), 1, MPI_INTEGER, patch->getMPIRank(hindex-1), 0, MPI_COMM_WORLD, &status );
 	    }
 	    else {
-		DiagProbes* diag = static_cast<DiagProbes*>( vecPatches( hindex-1-vecPatches.refHindex_ )->localDiags[probeId_] );
+		DiagnosticProbes* diag = static_cast<DiagnosticProbes*>( vecPatches( hindex-1-vecPatches.refHindex_ )->localDiags[probeId_] );
 		cuDiag->probesStart = diag->getLastPartId(); // return  diag->(probesStart + probeParticles.size() );
 	    }
 	}
@@ -441,19 +441,19 @@ void DiagProbes::setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch&
 }
 
 
-void DiagProbes::setFile(hid_t masterFileId)
+void DiagnosticProbes::setFile(hid_t masterFileId)
 {
     fileId_ = masterFileId;  
 }
 
 
-void DiagProbes::setFile( Diag* diag )
+void DiagnosticProbes::setFile( Diagnostic* diag )
 {
-    fileId_ = static_cast<DiagProbes*>(diag)->fileId_;  
+    fileId_ = static_cast<DiagnosticProbes*>(diag)->fileId_;  
 }
 
 
-void DiagProbes::writePositionIn( Params &params )
+void DiagnosticProbes::writePositionIn( Params &params )
 {
     int probe_id = probeId_;
 
@@ -472,7 +472,7 @@ void DiagProbes::writePositionIn( Params &params )
 }
 
 
-void DiagProbes::writePositions( int ndim_Particles, int probeDim, hid_t group_id )
+void DiagnosticProbes::writePositions( int ndim_Particles, int probeDim, hid_t group_id )
 {
 
     vector<unsigned int> posArraySize(2);
@@ -533,7 +533,7 @@ void DiagProbes::writePositions( int ndim_Particles, int probeDim, hid_t group_i
 }
 
 
-void DiagProbes::compute( unsigned int timestep, ElectroMagn* EMfields )
+void DiagnosticProbes::compute( unsigned int timestep, ElectroMagn* EMfields )
 {
     
     // Loop probe ("fake") particles

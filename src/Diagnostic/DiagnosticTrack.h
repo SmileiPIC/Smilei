@@ -1,20 +1,20 @@
-#ifndef DIAGTRACK_H
-#define DIAGTRACK_H
+#ifndef DIAGNOSTICTRACK_H
+#define DIAGNOSTICTRACK_H
 
-#include "Diag.h"
+#include "Diagnostic.h"
 
 #include "Params.h"
 #include "Patch.h"
 #include "SmileiMPI.h"
 
 
-class DiagTrack : public Diag {
+class DiagnosticTrack : public Diagnostic {
 
 public :
 
-   DiagTrack( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
-   DiagTrack() {};
-   ~DiagTrack();
+   DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
+   DiagnosticTrack() {};
+   ~DiagnosticTrack();
 
    virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile );
    void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches );
@@ -28,7 +28,7 @@ public :
    virtual void write(int timestep);
 
    void setFile( hid_t fid );
-   virtual void setFile( Diag* diag );
+   virtual void setFile( Diagnostic* diag );
 
    void setGlobalNbrParticles(int totNbrParts) {
        nbrParticles_ = totNbrParts;

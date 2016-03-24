@@ -12,7 +12,7 @@
 #include "SmileiIOFactory.h"
 #include "SimWindow.h"
 #include "SolverFactory.h"
-#include "DiagFactory.h"
+#include "DiagnosticFactory.h"
 
 #include "SyncVectorPatch.h"
 #include "DiagsVectorPatch.h"
@@ -39,7 +39,7 @@ VectorPatch::~VectorPatch()
 
 void VectorPatch::createGlobalDiags(Params& params, SmileiMPI* smpi)
 {
-    globalDiags = DiagFactory::createGlobalDiags(params, smpi, (*this)(0) );
+    globalDiags = DiagnosticFactory::createGlobalDiagnostics(params, smpi, (*this)(0) );
 
 }
 
@@ -185,10 +185,10 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
 
 	// track, compute global number of particles + compute global Idx
 	if ( (*this)(0)->localDiags[idiag]->type_ == "Track" ) {
-	    DiagTrack* diagTrack0 = static_cast<DiagTrack*>( (*this)(0)->localDiags[idiag] );
+	    DiagnosticTrack* diagTrack0 = static_cast<DiagnosticTrack*>( (*this)(0)->localDiags[idiag] );
 	    diagTrack0->setFileSplitting( params, smpi, *this );
 	    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-		DiagTrack* diagTrack  = static_cast<DiagTrack*>( (*this)(ipatch)->localDiags[idiag] );
+		DiagnosticTrack* diagTrack  = static_cast<DiagnosticTrack*>( (*this)(ipatch)->localDiags[idiag] );
 		diagTrack->setFile( diagTrack0->getFileId() );
 	    }
 	}
@@ -197,10 +197,10 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
 	(*this)(0)->localDiags[idiag]->openFile( params, smpi, *this, true );
 
 	if ( (*this)(0)->localDiags[idiag]->type_ == "Probes" ) {
-	    DiagProbes* diagProbes0 = static_cast<DiagProbes*>( (*this)(0)->localDiags[idiag] );
+	    DiagnosticProbes* diagProbes0 = static_cast<DiagnosticProbes*>( (*this)(0)->localDiags[idiag] );
 	    diagProbes0->setFileSplitting( params, smpi, *this );
 	    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-		DiagProbes* diagProbes = static_cast<DiagProbes*>( (*this)(ipatch)->localDiags[idiag] );
+		DiagnosticProbes* diagProbes = static_cast<DiagnosticProbes*>( (*this)(ipatch)->localDiags[idiag] );
 		diagProbes->setFile( diagProbes0->getFileId() );
 		diagProbes->writePositionIn( params );
 	    }// END  ipatch
@@ -239,19 +239,19 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
 	(*this)(0)->localDiags[idiag]->openFile( params, smpi, *this, false );
 
 	if ( (*this)(0)->localDiags[idiag]->type_ == "Track" ) {
-	    DiagTrack* diagTrack0 = static_cast<DiagTrack*>( (*this)(0)->localDiags[idiag] );
+	    DiagnosticTrack* diagTrack0 = static_cast<DiagnosticTrack*>( (*this)(0)->localDiags[idiag] );
 	    // Spli
 	    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-		DiagTrack* diagTrack  = static_cast<DiagTrack*>( (*this)(ipatch)->localDiags[idiag] );
+		DiagnosticTrack* diagTrack  = static_cast<DiagnosticTrack*>( (*this)(ipatch)->localDiags[idiag] );
 		diagTrack->setFile( diagTrack0->getFileId() );
 	    }
 	}
 
 	if ( (*this)(0)->localDiags[idiag]->type_ == "Probes" ) {
-	    DiagProbes* diagProbes0 = static_cast<DiagProbes*>( (*this)(0)->localDiags[idiag] );
+	    DiagnosticProbes* diagProbes0 = static_cast<DiagnosticProbes*>( (*this)(0)->localDiags[idiag] );
 	    diagProbes0->setFileSplitting( params, smpi, *this );
 	    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-		DiagProbes* diagProbes = static_cast<DiagProbes*>( (*this)(ipatch)->localDiags[idiag] );
+		DiagnosticProbes* diagProbes = static_cast<DiagnosticProbes*>( (*this)(ipatch)->localDiags[idiag] );
 		diagProbes->setFile( diagProbes0->getFileId() );
 	    }
 	}
@@ -266,7 +266,7 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
 	for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
 	    (*this)(ipatch)->localDiags[idiag]->setFile( (*this)(0)->localDiags[idiag] );
 	if ( (*this)(0)->localDiags[idiag]->type_ == "Probes" )
-	    static_cast<DiagProbes*>( (*this)(0)->localDiags[idiag] )->setFileSplitting( params, smpi, *this );
+	    static_cast<DiagnosticProbes*>( (*this)(0)->localDiags[idiag] )->setFileSplitting( params, smpi, *this );
     }
     */
 
@@ -311,7 +311,7 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
     // -------------------------------------------
     timer[3].restart();
     // globalDiags : scalars + particles
-    static_cast<DiagScalar*>( globalDiags[0] )->reset( itime );
+    static_cast<DiagnosticScalar*>( globalDiags[0] )->reset( itime );
     for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
 	for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
 	    globalDiags[idiag]->run( (*this)(ipatch), itime );
@@ -336,7 +336,7 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
     /*
 	// track, compute global number of particles + compute global Idx
 	if ( (*this)(0)->localDiags[idiag]->type_ == "Track" ) {
-	    DiagTrack* diagTrack = static_cast<DiagTrack*>( (*this)(0)->localDiags[idiag] );
+	    DiagnosticTrack* diagTrack = static_cast<DiagnosticTrack*>( (*this)(0)->localDiags[idiag] );
 	    diagTrack->setFileSize( params, smpi, *this );
 	}
 

@@ -1,12 +1,12 @@
 
-#include "DiagParticles.h"
+#include "DiagnosticParticles.h"
 
 #include <iomanip>
 
 using namespace std;
 
 
-DiagParticles::DiagParticles( Params &params, SmileiMPI* smpi, Patch* patch, int diagId ) :
+DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch* patch, int diagId ) :
 fileId_(0)
 {
     int n_diag_particles = diagId;
@@ -136,15 +136,15 @@ fileId_(0)
 
     type_ = "Particles";
 
-} // END DiagParticles::DiagParticles
+} // END DiagnosticParticles::DiagnosticParticles
 
-DiagParticles::~DiagParticles()
+DiagnosticParticles::~DiagnosticParticles()
 {
-} // END DiagParticles::~DiagParticles
+} // END DiagnosticParticles::~DiagnosticParticles
 
 
 // Called only by patch master of process master
-void DiagParticles::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile )
+void DiagnosticParticles::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile )
 {
     if (!smpi->isMaster()) return;
 
@@ -179,13 +179,13 @@ void DiagParticles::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecP
 }
 
 
-void DiagParticles::setFile( Diag* diag )
+void DiagnosticParticles::setFile( Diagnostic* diag )
 {
-    fileId_ = static_cast<DiagParticles*>(diag)->fileId_;  
+    fileId_ = static_cast<DiagnosticParticles*>(diag)->fileId_;  
 }
 
 
-void DiagParticles::closeFile()
+void DiagnosticParticles::closeFile()
 {
     if (fileId_!=0) {
 	H5Fclose(fileId_);
@@ -195,14 +195,14 @@ void DiagParticles::closeFile()
 } // END closeFile
 
 
-void DiagParticles::prepare( Patch* patch, int timestep )
+void DiagnosticParticles::prepare( Patch* patch, int timestep )
 {
 
 } // END prepare
 
 
 // run one particle diagnostic
-void DiagParticles::run( Patch* patch, int timestep )
+void DiagnosticParticles::run( Patch* patch, int timestep )
 {
     // See Fred if it's ok 
     if (time_average == 1) clean();
@@ -484,7 +484,7 @@ void DiagParticles::run( Patch* patch, int timestep )
 // Now the data_sum has been filled
 // if needed now, store result to hdf file
 // called by MPI master only, when time-average has finished
-void DiagParticles::write(int timestep)
+void DiagnosticParticles::write(int timestep)
 {
     double coeff;
     // if time_average, then we need to divide by the number of timesteps
@@ -506,7 +506,7 @@ void DiagParticles::write(int timestep)
 
 
 // call by all if (time_average==1) 
-void DiagParticles::clean()
+void DiagnosticParticles::clean()
 {
     data_sum.resize(0); 
 }

@@ -31,7 +31,7 @@
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
 #include "SmileiIOFactory.h"
-#include "DiagFactory.h"
+#include "DiagnosticFactory.h"
 
 using namespace std;
 
@@ -116,7 +116,7 @@ void Patch::finalizePatchInit( Params& params, SmileiMPI* smpi, unsigned int n_m
     // projection operator (virtual)
     Proj       = ProjectorFactory::create(params, this);                  // + patchId -> idx_domain_begin (now = ref smpi)
 
-    localDiags = DiagFactory::createLocalDiags(params, smpi, this);
+    localDiags = DiagnosticFactory::createLocalDiagnostics(params, smpi, this);
 
     sio = SmileiIOFactory::create(params, this);
 

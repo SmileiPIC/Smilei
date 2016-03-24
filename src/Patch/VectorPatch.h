@@ -10,7 +10,7 @@
 #include "ElectroMagnFactory.h"
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
-#include "DiagFactory.h"
+#include "DiagnosticFactory.h"
 
 #include "Params.h"
 #include "LaserParams.h"
@@ -37,7 +37,7 @@ public :
     //! - methods to balance computation
     std::vector<Patch*> patches_;
 
-    std::vector<Diag*> globalDiags;
+    std::vector<Diagnostic*> globalDiags;
 
 
     //! Some vector operations extended to VectorPatch
@@ -67,7 +67,7 @@ public :
 
     //! get a particular scalar
     inline double getScalar(std::string name) {
-	DiagScalar* diag = static_cast<DiagScalar*>( globalDiags[0] );
+	DiagnosticScalar* diag = static_cast<DiagnosticScalar*>( globalDiags[0] );
 	return diag->getScalar( name );
     }
 
@@ -82,7 +82,7 @@ public :
     }
 
     bool printScalars( int timestep ) {
-	return (timestep % static_cast<DiagScalar*>(globalDiags[0])->print_every == 0);
+	return (timestep % static_cast<DiagnosticScalar*>(globalDiags[0])->print_every == 0);
     }
 
 

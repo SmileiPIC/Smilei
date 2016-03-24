@@ -1,21 +1,21 @@
-#ifndef DIAG_H
-#define DIAG_H
+#ifndef DIAGNOSTIC_H
+#define DIAGNOSTIC_H
 
 #include "Params.h"
 #include "Patch.h"
 #include "SmileiMPI.h"
 
 
-class Diag {
+class Diagnostic {
 
 public :
 
-   Diag( Params &params, SmileiMPI* smpi, Patch* patch, int diagId ) {};
-   Diag() {};
-   ~Diag() {};
+   Diagnostic( Params &params, SmileiMPI* smpi, Patch* patch, int diagId ) {};
+   Diagnostic() {};
+   ~Diagnostic() {};
 
    virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile ) = 0;
-   virtual void setFile( Diag* diag ) = 0;
+   virtual void setFile( Diagnostic* diag ) = 0;
    virtual void closeFile() = 0;
 
    virtual void prepare( Patch* patch, int timestep ) = 0;

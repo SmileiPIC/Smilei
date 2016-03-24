@@ -161,8 +161,8 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     
     H5::attr(fid, "dump_step", itime);
     
-    H5::attr(fid, "Energy_time_zero",  static_cast<DiagScalar*>(vecPatches.globalDiags[0])->Energy_time_zero );
-    H5::attr(fid, "EnergyUsedForNorm", static_cast<DiagScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
+    H5::attr(fid, "Energy_time_zero",  static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->Energy_time_zero );
+    H5::attr(fid, "EnergyUsedForNorm", static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
 
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) {
 
@@ -321,8 +321,8 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, unsigned int &itime,  Smil
          WARNING ("                while running version is " << string(__VERSION) << " of " << string(__COMMITDATE));
      }
 
-     H5::getAttr(fid, "Energy_time_zero",  static_cast<DiagScalar*>(vecPatches.globalDiags[0])->Energy_time_zero );
-     H5::getAttr(fid, "EnergyUsedForNorm", static_cast<DiagScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
+     H5::getAttr(fid, "Energy_time_zero",  static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->Energy_time_zero );
+     H5::getAttr(fid, "EnergyUsedForNorm", static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0])->EnergyUsedForNorm);
 	
      hid_t aid, gid, did, sid;
 	

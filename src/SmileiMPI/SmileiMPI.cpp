@@ -18,9 +18,9 @@
 #include "Hilbert_functions.h"
 #include "VectorPatch.h"
 
-#include "Diag.h"
-#include "DiagScalar.h"
-#include "DiagParticles.h"
+#include "Diagnostic.h"
+#include "DiagnosticScalar.h"
+#include "DiagnosticParticles.h"
 
 using namespace std;
 
@@ -556,7 +556,7 @@ void SmileiMPI::isend(Patch* patch, int to, int tag)
     for ( int idiag = 0 ; idiag < patch->localDiags.size() ; idiag++ ) {
 	// just probes (track data = species, managed above, meta-data : H5S_select)
 	if ( patch->localDiags[idiag]->type_ == "Probes" )
-	    isend( static_cast<DiagProbes*>(patch->localDiags[idiag]), to, tag+2*patch->vecSpecies.size()+9+idiag );
+	    isend( static_cast<DiagnosticProbes*>(patch->localDiags[idiag]), to, tag+2*patch->vecSpecies.size()+9+idiag );
     }
 
 } // END isend( Patch )
@@ -589,7 +589,7 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
     for ( int idiag = 0 ; idiag < patch->localDiags.size() ; idiag++ ) {
 	// just probes (track data = species, managed above, meta-data : H5S_select)
 	if ( patch->localDiags[idiag]->type_ == "Probes" )
-	    recv( static_cast<DiagProbes*>(patch->localDiags[idiag]), from, tag+2*patch->vecSpecies.size()+9+idiag );
+	    recv( static_cast<DiagnosticProbes*>(patch->localDiags[idiag]), from, tag+2*patch->vecSpecies.size()+9+idiag );
     }
 
 } // END recv ( Patch )
@@ -675,21 +675,21 @@ void SmileiMPI::recv(Field* field, int from, int hindex)
 } // End recv ( Field )
 
 
-void SmileiMPI::isend( DiagProbes* diags, int to, int tag )
+void SmileiMPI::isend( DiagnosticProbes* diags, int to, int tag )
 {
     MPI_Request request; 
     MPI_Isend( &(diags->probesStart), 1, MPI_INT, to, tag, MPI_COMM_WORLD, &request );
 
-} // End isend ( Diags )
+} // End isend ( Diagnostics )
 
 
-void SmileiMPI::recv( DiagProbes* diags, int from, int tag )
+void SmileiMPI::recv( DiagnosticProbes* diags, int from, int tag )
 {
     MPI_Status status;
     MPI_Recv( &(diags->probesStart), 1, MPI_INT, from, tag, MPI_COMM_WORLD, &status );
 
 
-} // End recv ( Diags )
+} // End recv ( Diagnostics )
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -705,14 +705,14 @@ void SmileiMPI::recv( DiagProbes* diags, int from, int tag )
 //   - not concern : probes, fields, track particles (each patch write its own data)
 //   - called in VectorPatch::runAllDiags(...) after DiagsVectorPatch::computeGlobalDiags(...)
 // ---------------------------------------------------------------------------------------------------------------------
-void SmileiMPI::computeGlobalDiags(Diag* diag, int timestep)
+void SmileiMPI::computeGlobalDiags(Diagnostic* diag, int timestep)
 {
     if ( diag->type_ == "Scalar" ) {
-	DiagScalar* scalar = static_cast<DiagScalar*>( diag );
+	DiagnosticScalar* scalar = static_cast<DiagnosticScalar*>( diag );
 	computeGlobalDiags(scalar, timestep);
     }
     else if ( diag->type_ == "Particles" ) {
-	DiagParticles* particles = static_cast<DiagParticles*>( diag );
+	DiagnosticParticles* particles = static_cast<DiagnosticParticles*>( diag );
 	computeGlobalDiags(particles, timestep);
     }
 }
@@ -721,7 +721,7 @@ void SmileiMPI::computeGlobalDiags(Diag* diag, int timestep)
 // ---------------------------------------------------------------------------------------------------------------------
 // MPI synchronization of scalars diags
 // ---------------------------------------------------------------------------------------------------------------------
-void SmileiMPI::computeGlobalDiags(DiagScalar* scalars, int timestep)
+void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
 {
     
     if( ! scalars->timeSelection->theTimeIsNow() ) return;
@@ -799,13 +799,13 @@ void SmileiMPI::computeGlobalDiags(DiagScalar* scalars, int timestep)
         
 
 
-} // END computeGlobalDiags(DiagScalar& scalars ...)
+} // END computeGlobalDiags(DiagnosticScalar& scalars ...)
 
 
 // ---------------------------------------------------------------------------------------------------------------------
 // MPI synchronization of diags particles
 // ---------------------------------------------------------------------------------------------------------------------
-void SmileiMPI::computeGlobalDiags(DiagParticles* diagParticles, int timestep)
+void SmileiMPI::computeGlobalDiags(DiagnosticParticles* diagParticles, int timestep)
 {
     if (timestep - diagParticles->timeSelection->previousTime() == diagParticles->time_average-1) {
         MPI_Reduce(diagParticles->filename.size()?MPI_IN_PLACE:&diagParticles->data_sum[0], &diagParticles->data_sum[0], diagParticles->output_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
@@ -816,4 +816,4 @@ void SmileiMPI::computeGlobalDiags(DiagParticles* diagParticles, int timestep)
     if (diagParticles->time_average == 1)
         diagParticles->clean();
 
-} // END computeGlobalDiags(DiagParticles* diagParticles ...)
+} // END computeGlobalDiags(DiagnosticParticles* diagParticles ...)

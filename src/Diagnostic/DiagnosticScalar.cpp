@@ -1,11 +1,11 @@
 
-#include "DiagScalar.h"
+#include "DiagnosticScalar.h"
 
 #include <iomanip>
 
 using namespace std;
 
-DiagScalar::DiagScalar( Params &params, SmileiMPI* smpi, Patch* patch = NULL, int diagId = 0 )
+DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patch = NULL, int diagId = 0 )
 {
     // diagId == 0    else error
     // patch  == NULL else error
@@ -41,15 +41,15 @@ DiagScalar::DiagScalar( Params &params, SmileiMPI* smpi, Patch* patch = NULL, in
 
     type_ = "Scalar";
 
-} // END DiagScalar::DiagScalar
+} // END DiagnosticScalar::DiagnosticScalar
 
 
-DiagScalar::~DiagScalar()
+DiagnosticScalar::~DiagnosticScalar()
 {
-} // END DiagScalar::#DiagScalar
+} // END DiagnosticScalar::#DiagnosticScalar
 
 
-void DiagScalar::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile )
+void DiagnosticScalar::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile )
 {
     if (!smpi->isMaster()) return;
 
@@ -65,26 +65,26 @@ void DiagScalar::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatc
 } // END openFile
 
 
-void DiagScalar::setFile( Diag* diag )
+void DiagnosticScalar::setFile( Diagnostic* diag )
 {
-    ERROR( "Only master can write here ! fout = static_cast<DiagScalar*>(diag)->fout; " );
+    ERROR( "Only master can write here ! fout = static_cast<DiagnosticScalar*>(diag)->fout; " );
 }
 
 
-void DiagScalar::closeFile()
+void DiagnosticScalar::closeFile()
 {
     if (fout.is_open()) fout.close();
 
 } // END closeFile
 
 
-void DiagScalar::prepare( Patch* patch, int timestep )
+void DiagnosticScalar::prepare( Patch* patch, int timestep )
 {
 
 } // END prepare
 
 
-void DiagScalar::run( Patch* patch, int timestep )
+void DiagnosticScalar::run( Patch* patch, int timestep )
 {
     // at timestep=0 initialize the energies
     /*if (timestep==0) {
@@ -109,7 +109,7 @@ void DiagScalar::run( Patch* patch, int timestep )
 } // END run
 
 
-void DiagScalar::write(int itime)
+void DiagnosticScalar::write(int itime)
 {
     unsigned int k, s=out_key.size();
 
@@ -152,7 +152,7 @@ void DiagScalar::write(int itime)
 } // END write
 
 
-void DiagScalar::compute( Patch* patch, int timestep )
+void DiagnosticScalar::compute( Patch* patch, int timestep )
 {
     //out_key  .clear();
     //out_value.clear();
@@ -429,7 +429,7 @@ void DiagScalar::compute( Patch* patch, int timestep )
 } // END compute
 
 
-double DiagScalar::getScalar(std::string key)
+double DiagnosticScalar::getScalar(std::string key)
 {
     unsigned int k, s=out_key.size();
     for(k=0; k<s; k++) {
@@ -443,7 +443,7 @@ double DiagScalar::getScalar(std::string key)
 } // END getScalar
 
 
-void DiagScalar::setScalar(string my_var, double value){
+void DiagnosticScalar::setScalar(string my_var, double value){
     for (unsigned int i=0; i< out_key.size(); i++) {
         if (out_key[i]==my_var) {
           out_value[i] = value;
@@ -454,7 +454,7 @@ void DiagScalar::setScalar(string my_var, double value){
 }
 
 
-void DiagScalar::incrementScalar(string my_var, double value){
+void DiagnosticScalar::incrementScalar(string my_var, double value){
     for (unsigned int i=0; i< out_key.size(); i++) {
         if (out_key[i]==my_var) {
           out_value[i] += value;
@@ -465,7 +465,7 @@ void DiagScalar::incrementScalar(string my_var, double value){
 }
 
 
-void DiagScalar::append(std::string key, double value) {
+void DiagnosticScalar::append(std::string key, double value) {
     if ( !defined(key) ) {
 	out_key.push_back(key  );
 	out_value.push_back(value);
@@ -476,7 +476,7 @@ void DiagScalar::append(std::string key, double value) {
 }  // END append
 
 
-void DiagScalar::prepend(std::string key, double value) {
+void DiagnosticScalar::prepend(std::string key, double value) {
     if ( !defined(key) ) {
 	out_key  .insert(out_key  .begin(), key  );
 	out_value.insert(out_value.begin(), value);
@@ -487,7 +487,7 @@ void DiagScalar::prepend(std::string key, double value) {
 } // END prepend
 
 
-bool DiagScalar::allowedKey(string key) {
+bool DiagnosticScalar::allowedKey(string key) {
     int s=vars.size();
     if (s==0) return true;
     for( int i=0; i<s; i++) {
@@ -496,7 +496,7 @@ bool DiagScalar::allowedKey(string key) {
     return false;
 }
 
-bool DiagScalar::defined(string key) {
+bool DiagnosticScalar::defined(string key) {
     int s=out_key.size();
     for( int i=0; i<s; i++) {
         if( key==out_key[i] ) return true;

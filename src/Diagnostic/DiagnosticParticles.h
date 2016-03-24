@@ -1,7 +1,7 @@
-#ifndef DIAGPARTICLES_H
-#define DIAGPARTICLES_H
+#ifndef DIAGNOSTICPARTICLES_H
+#define DIAGNOSTICPARTICLES_H
 
-#include "Diag.h"
+#include "Diagnostic.h"
 
 #include "Params.h"
 #include "Patch.h"
@@ -30,17 +30,17 @@ struct DiagnosticParticlesAxis {
 };
 
 
-class DiagParticles : public Diag {
+class DiagnosticParticles : public Diagnostic {
     friend class SmileiMPI;
 
 public :
 
-   DiagParticles( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
-   DiagParticles() {};
-   ~DiagParticles();
+   DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
+   DiagnosticParticles() {};
+   ~DiagnosticParticles();
 
    virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile );
-   virtual void setFile( Diag* diag );
+   virtual void setFile( Diagnostic* diag );
    
    virtual void closeFile();
 
