@@ -45,6 +45,17 @@ to support the development of the `Apollon laser <http://cilexsaclay.fr>`_.
   Partners</a>
 
 
+.. raw:: html
+  
+  <a href="material.html" class="icon">
+
+.. image:: _static/paper.svg
+
+.. raw:: html
+  
+  Material</a>
+
+
 
 
 Understand :program:`Smilei` 
@@ -53,11 +64,13 @@ Understand :program:`Smilei`
 .. toctree::
    :maxdepth: 1
    
+   licence
    introduction
    units
    algorithms
    parallelization
    collisions
+
 
 Install, run, analyze
 =====================
@@ -69,5 +82,15 @@ Install, run, analyze
    namelist
    run
    post-processing
+
+
+More information
+================
+
+.. toctree::
+   :maxdepth: 1
+   
+   material
+   partners
 
 
