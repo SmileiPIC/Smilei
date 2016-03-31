@@ -1553,7 +1553,7 @@ class Probe(Diagnostic):
 		
 		# Try to get the probe from the hdf5 file
 		self.probeNumber  = probeNumber
-		self._file = self._results_path+"/Probes.h5"
+		self._file = self._results_path+"/Probes"+str(self.probeNumber)+".h5"
 		f = self._h5py.File(self._file, 'r')
 		self._h5probe = None
 		for key in f.keys():
@@ -1762,7 +1762,7 @@ class Probe(Diagnostic):
 	# Method to get info on a given probe
 	def _getInfo(self, probeNumber):
 		try:
-			file = self._results_path+'/Probes.h5'
+			file = self._file
 			f = self._h5py.File(file, 'r')
 		except:
 			print "Cannot open file "+file
@@ -1792,7 +1792,7 @@ class Probe(Diagnostic):
 	# get all available fields, sorted by name length
 	def getProbes(self):
 		try:
-			file = self._results_path+'/Probes.h5'
+			file = self._file
 			f = self._h5py.File(file, 'r')
 		except:
 			print "Cannot open file "+file
