@@ -31,6 +31,7 @@
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
 #include "SmileiIOFactory.h"
+#include "DiagnosticFactory.h"
 
 using namespace std;
 
@@ -115,13 +116,9 @@ void Patch::finalizePatchInit( Params& params, SmileiMPI* smpi, unsigned int n_m
     // projection operator (virtual)
     Proj       = ProjectorFactory::create(params, this);                  // + patchId -> idx_domain_begin (now = ref smpi)
 
-    // Create diagnostics
-    Diags = new Diagnostic(params,this, smpi);
-    if ( hindex==0 && smpi->isMaster() )
-	for (unsigned int idiag=0; idiag<Diags->vecDiagnosticParticles.size(); idiag++)
-	    Diags->vecDiagnosticParticles[idiag]->createFile(idiag);
+    localDiags = DiagnosticFactory::createLocalDiagnostics(params, smpi, this);
 
-    sio = SmileiIOFactory::create(params, Diags, this);
+    sio = SmileiIOFactory::create(params, this);
 
     // Initialize the collisions (vector of collisions)
     // ------------------------------------------------------------------------------------
@@ -145,8 +142,8 @@ Patch::~Patch() {
     for (unsigned int iwall=0 ; iwall<vecPartWall.size(); iwall++) delete vecPartWall[iwall];
     vecPartWall.clear();        
 
-    Diags->closeAll(this);
-    delete Diags;
+    for (unsigned int idiag=0 ; idiag<localDiags.size(); idiag++) delete localDiags[idiag];
+    localDiags.clear();
 
     delete Proj;
     delete Interp;

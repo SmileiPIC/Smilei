@@ -53,6 +53,10 @@ PYHEADERS := $(addprefix $(BUILD_DIR)/, $(PYSCRIPTS:.py=.pyh))
 
 PY_CXXFLAGS:=$(shell $(PYTHONCONFIG) --includes)
 CXXFLAGS+=$(PY_CXXFLAGS)
+
+
+LDFLAGS+=-L$(PYTHONHOME)/lib
+
 PY_LDFLAGS:=$(shell $(PYTHONCONFIG) --ldflags)
 LDFLAGS+=$(PY_LDFLAGS)
 

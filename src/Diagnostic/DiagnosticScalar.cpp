@@ -1,20 +1,14 @@
+
 #include "DiagnosticScalar.h"
 
-#include <string>
 #include <iomanip>
-
-#include "Params.h"
-#include "ElectroMagn.h"
-#include "Patch.h" 
 
 using namespace std;
 
-// constructor
-DiagnosticScalar::DiagnosticScalar(Params &params, Patch* patch) :
-isMaster(patch->isMaster()),
-res_time(params.res_time),
-cell_volume(params.cell_volume)
+DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patch = NULL, int diagId = 0 )
 {
+    // diagId == 0    else error
+    // patch  == NULL else error
 
     out_width.resize(0);
 
@@ -30,12 +24,6 @@ cell_volume(params.cell_volume)
             "Scalars"
         );
         
-        //open file scalars.txt
-        if (isMaster) {
-            fout.open("scalars.txt");
-            if (!fout.is_open()) ERROR("Can't open scalar file");
-        }
-        
         precision=10;
         PyTools::extract("precision",precision,"DiagScalar");
         PyTools::extract("vars",vars,"DiagScalar");
@@ -45,64 +33,134 @@ cell_volume(params.cell_volume)
         dt=params.timestep;
         cell_volume=params.cell_volume;
     }    
-}
 
-void DiagnosticScalar::closeFile() {
-    if (isMaster) {
-        fout.close();
-    }
-}
+    // defining default values & reading diagnostic every-parameter
+    // ------------------------------------------------------------
+    print_every=params.n_time/10;
+    PyTools::extract("print_every", print_every);
 
-void DiagnosticScalar::open() {
-    isMaster = true;
-    fout.open("scalars.txt");
-    if (!fout.is_open()) ERROR("can't open scalar file");
+    type_ = "Scalar";
 
-}
+} // END DiagnosticScalar::DiagnosticScalar
 
-void DiagnosticScalar::open(bool append) {
-    isMaster = true;
-    if (append )
-	fout.open("scalars.txt", std::ofstream::app);
-    else
+
+DiagnosticScalar::~DiagnosticScalar()
+{
+} // END DiagnosticScalar::#DiagnosticScalar
+
+
+void DiagnosticScalar::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile )
+{
+    if (!smpi->isMaster()) return;
+
+    //open file scalars.txt
+    if ( newfile )
 	fout.open("scalars.txt");
-    if (!fout.is_open()) ERROR("can't open scalar file");
+    else
+	fout.open("scalars.txt", std::ofstream::app);
 
+    if (!fout.is_open())
+	ERROR("Can't open scalar file");
+        
+} // END openFile
+
+
+void DiagnosticScalar::setFile( Diagnostic* diag )
+{
+    ERROR( "Only master can write here ! fout = static_cast<DiagnosticScalar*>(diag)->fout; " );
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
-// Wrapers of the methods
-// ---------------------------------------------------------------------------------------------------------------------
-void DiagnosticScalar::run(int timestep, ElectroMagn* EMfields, vector<Species*>& vecSpecies) {
 
+void DiagnosticScalar::closeFile()
+{
+    if (fout.is_open()) fout.close();
+
+} // END closeFile
+
+
+void DiagnosticScalar::prepare( Patch* patch, int timestep )
+{
+
+} // END prepare
+
+
+void DiagnosticScalar::run( Patch* patch, int timestep )
+{
     // at timestep=0 initialize the energies
-    if (timestep==0) {
-        compute(EMfields,vecSpecies);
+    /*if (timestep==0) {
+	//compute( patch->EMfields, patch->vecSpecies );
+	compute( patch, timestep );
         Energy_time_zero  = getScalar("Utot");
         EnergyUsedForNorm = Energy_time_zero;
-    }
+    }*/
     
     // If within time-selection overall range
     bool theTimeIsNow = timeSelection->theTimeIsNow(timestep); // must compute this in any case
     if( timeSelection->inProgress(timestep) ) {
-        EMfields->computePoynting(); // Poynting must be calculated & incremented at every timesteps
+	// Poynting must be calculated & incremented at every timesteps
+        patch->EMfields->computePoynting(); 
         if ( theTimeIsNow ) {
-            compute(EMfields,vecSpecies);
-            //write(timestep); -> Done after synch / patch  & MPI, Diagnostic*::run are becoming local
+	  //compute( patch-EMfields, patch-vecSpecies);
+            compute( patch, timestep );
         }
         
     }
+
+} // END run
+
+
+void DiagnosticScalar::write(int itime)
+{
+    unsigned int k, s=out_key.size();
+
+
+    //MESSAGE ( "write : Number of diags = " << out_key.size() ) ;
+
+    fout << std::scientific << setprecision(precision);
+    // At the beginning of the file, we write some headers
+    if (fout.tellp()==ifstream::pos_type(0)) { // file beginning
+        // First header: list of scalars, one by line
+        fout << "# " << 1 << " time" << endl;
+        unsigned int i=2;
+        for(k=0; k<s; k++) {
+            if (allowedKey(out_key[k])) {
+                fout << "# " << i << " " << out_key[k] << endl;
+                i++;
+            }
+        }
+        // Second header: list of scalars, but all in one line
+        fout << "#\n#" << setw(precision+9) << "time";
+        for(k=0; k<s; k++) {
+            if (allowedKey(out_key[k])) {
+                fout << setw(out_width[k]) << out_key[k];
+            }
+        }
+        fout << endl;
+    }
+    // Each requested timestep, the following writes the values of the scalars
+    fout << setw(precision+10) << itime/res_time;
+    for(k=0; k<s; k++) {
+        if (allowedKey(out_key[k])) {
+            fout << setw(out_width[k]) << out_value[k];
+        }
+    }
+    fout << endl;
+
+    /*for (int iscalar=0 ; iscalar<out_value.size() ; iscalar++)
+      out_value[iscalar] = 0.;*/
+
+} // END write
+
+
+void DiagnosticScalar::compute( Patch* patch, int timestep )
+{
+    //out_key  .clear();
+    //out_value.clear();
+    // reset after write
+
+    ElectroMagn* EMfields = patch->EMfields;
+    std::vector<Species*>& vecSpecies = patch->vecSpecies;
     
-}
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Contains all to manage the communication of data. It is "transparent" to the user.
-// ---------------------------------------------------------------------------------------------------------------------
-void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpecies) {
-    out_key  .clear();
-    out_value.clear();
-
     // ------------------------
     // SPECIES-related energies
     // ------------------------
@@ -129,25 +187,17 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
             ener_tot*=vecSpecies[ispec]->mass;
         } // if
 
-	// Done after Patch/MPI sync
-        //MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&charge_avg, &charge_avg, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        //MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&ener_tot, &ener_tot, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        //MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&nPart, &nPart, 1, MPI_UNSIGNED, MPI_SUM, 0, MPI_COMM_WORLD);
-
         // particle energy lost due to boundary conditions
         double ener_lost_bcs=0.0;
         ener_lost_bcs = vecSpecies[ispec]->getLostNrjBC();
-        //MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&ener_lost_bcs, &ener_lost_bcs, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
         
         // particle energy lost due to moving window
         double ener_lost_mvw=0.0;
         ener_lost_mvw = vecSpecies[ispec]->getLostNrjMW();
-        //MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&ener_lost_mvw, &ener_lost_mvw, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
         
         // particle energy added due to moving window
         double ener_added_mvw=0.0;
         ener_added_mvw = vecSpecies[ispec]->getNewParticlesNRJ();
-        //MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&ener_added_mvw, &ener_added_mvw, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
         
 
         
@@ -214,7 +264,6 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
         }        
         // Utot = Dx^N/2 * Field^2
         Utot_crtField *= 0.5*cell_volume;
-        //MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&Utot_crtField, &Utot_crtField, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
         
 	append("Uelm_"+(*field)->name,Utot_crtField);
 	Uelm+=Utot_crtField;
@@ -222,12 +271,10 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
     
     // nrj lost with moving window (fields)
     double Uelm_out_mvw = EMfields->getLostNrjMW();
-    //MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&Uelm_out_mvw, &Uelm_out_mvw, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     Uelm_out_mvw *= 0.5*cell_volume;
     
     // nrj added due to moving window (fields)
     double Uelm_inj_mvw=EMfields->getNewFieldsNRJ();
-    //MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&Uelm_inj_mvw, &Uelm_inj_mvw, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     Uelm_inj_mvw *= 0.5*cell_volume;
 
     EMfields->reinitDiags();
@@ -277,9 +324,6 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
         maxis.push_back(maxVal);
     }
 
-    //MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&minis[0], &minis[0], minis.size(), MPI_DOUBLE_INT, MPI_MINLOC, 0, MPI_COMM_WORLD);
-    //MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&maxis[0], &maxis[0], maxis.size(), MPI_DOUBLE_INT, MPI_MAXLOC, 0, MPI_COMM_WORLD);
-
     if (minis.size() == maxis.size() && minis.size() == fields.size()) {
 	unsigned int i=0;
 	for (vector<Field*>::iterator field=fields.begin(); field!=fields.end() && i<minis.size(); field++, i++) {
@@ -304,7 +348,6 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
         for (unsigned int i=0; i<EMfields->poynting[j].size();i++) {
             
             double poy[2]={EMfields->poynting[j][i],EMfields->poynting_inst[j][i]};
-            //MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:poy, poy, 2, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
             
                 string name("Poy");
                 switch (i) { // dimension
@@ -381,8 +424,67 @@ void DiagnosticScalar::compute (ElectroMagn* EMfields, vector<Species*>& vecSpec
 	    out_width[k] = 2 + max(l,precision+8); // The +8 accounts for the dot and exponent in decimal representation
 	}
     }
-    
+    //MESSAGE ( "compute : Number of diags = " << out_key.size() ) ;
+
+} // END compute
+
+
+double DiagnosticScalar::getScalar(std::string key)
+{
+    unsigned int k, s=out_key.size();
+    for(k=0; k<s; k++) {
+        if (out_key[k]==key) {
+            return out_value[k];
+        }
+    }
+    DEBUG("key not found " << key);
+    return 0.0;
+
+} // END getScalar
+
+
+void DiagnosticScalar::setScalar(string my_var, double value){
+    for (unsigned int i=0; i< out_key.size(); i++) {
+        if (out_key[i]==my_var) {
+          out_value[i] = value;
+	  return;
+        }
+    }
+    DEBUG("key not found " << my_var);
 }
+
+
+void DiagnosticScalar::incrementScalar(string my_var, double value){
+    for (unsigned int i=0; i< out_key.size(); i++) {
+        if (out_key[i]==my_var) {
+          out_value[i] += value;
+	  return;
+        }
+    }
+    DEBUG("key not found " << my_var);
+}
+
+
+void DiagnosticScalar::append(std::string key, double value) {
+    if ( !defined(key) ) {
+	out_key.push_back(key  );
+	out_value.push_back(value);
+    }
+    else
+	incrementScalar(key, value);
+
+}  // END append
+
+
+void DiagnosticScalar::prepend(std::string key, double value) {
+    if ( !defined(key) ) {
+	out_key  .insert(out_key  .begin(), key  );
+	out_value.insert(out_value.begin(), value);
+    }
+    else
+	incrementScalar(key, value);
+
+} // END prepend
 
 
 bool DiagnosticScalar::allowedKey(string key) {
@@ -394,72 +496,11 @@ bool DiagnosticScalar::allowedKey(string key) {
     return false;
 }
 
-
-void DiagnosticScalar::prepend(std::string key, double value) {
-    out_key  .insert(out_key  .begin(), key  );
-    out_value.insert(out_value.begin(), value);
-}
-
-
-void DiagnosticScalar::append(std::string key, double value) {
-    out_key  .push_back(key  );
-    out_value.push_back(value);
-}
-
-
-void DiagnosticScalar::write(int itime) {
-    unsigned int k, s=out_key.size();
-    fout << std::scientific << setprecision(precision);
-    // At the beginning of the file, we write some headers
-    if (fout.tellp()==ifstream::pos_type(0)) { // file beginning
-        // First header: list of scalars, one by line
-        fout << "# " << 1 << " time" << endl;
-        unsigned int i=2;
-        for(k=0; k<s; k++) {
-            if (allowedKey(out_key[k])) {
-                fout << "# " << i << " " << out_key[k] << endl;
-                i++;
-            }
-        }
-        // Second header: list of scalars, but all in one line
-        fout << "#\n#" << setw(precision+9) << "time";
-        for(k=0; k<s; k++) {
-            if (allowedKey(out_key[k])) {
-                fout << setw(out_width[k]) << out_key[k];
-            }
-        }
-        fout << endl;
+bool DiagnosticScalar::defined(string key) {
+    int s=out_key.size();
+    for( int i=0; i<s; i++) {
+        if( key==out_key[i] ) return true;
     }
-    // Each requested timestep, the following writes the values of the scalars
-    fout << setw(precision+10) << itime/res_time;
-    for(k=0; k<s; k++) {
-        if (allowedKey(out_key[k])) {
-            fout << setw(out_width[k]) << out_value[k];
-        }
-    }
-    fout << endl;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Method used to return the (double) scalar "key"
-// ---------------------------------------------------------------------------------------------------------------------
-double DiagnosticScalar::getScalar(string key){
-    unsigned int k, s=out_key.size();
-    for(k=0; k<s; k++) {
-        if (out_key[k]==key) {
-            return out_value[k];
-        }
-    }
-    DEBUG("key not found " << key);
-    return 0.0;
-}
-
-void DiagnosticScalar::setScalar(string my_var, double value){
-    for (unsigned int i=0; i< out_key.size(); i++) {
-        if (out_key[i]==my_var) {
-	  out_value[i] = value;
-        }
-    }
-    DEBUG("key not found " << my_var);
+    return false;
 }
 

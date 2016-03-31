@@ -226,7 +226,7 @@ public:
     void movingWindow_x(unsigned int shift);
     void laserDisabled();
     
-    virtual void incrementAvgFields(unsigned int time_step, unsigned int ntime_step_avg) = 0;
+    virtual void incrementAvgFields(unsigned int time_step) = 0;
         
     //! compute Poynting on borders
     virtual void computePoynting() = 0;

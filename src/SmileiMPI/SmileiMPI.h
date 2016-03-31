@@ -17,9 +17,10 @@ class VectorPatch;
 
 class ElectroMagn;
 class Field;
+class DiagnosticProbes;
+
 class Diagnostic;
 class DiagnosticScalar;
-class DiagnosticPhaseSpace;
 class DiagnosticParticles;
 
 #define SMILEI_COMM_DUMP_TIME 1312
@@ -77,22 +78,20 @@ public:
     void recv(ElectroMagn* fields, int from, int hindex);
     void isend(Field* field, int to  , int hindex);
     void recv(Field* field, int from, int hindex);
-    void isend( Diagnostic* diags, int to  , int hindex );
-    void recv( Diagnostic* diags, int from, int hindex );
+    void isend( DiagnosticProbes* diags, int to  , int hindex );
+    void recv( DiagnosticProbes* diags, int from, int hindex );
 
 
     // DIAGS MPI SYNC 
     // --------------
 
     // Wrapper of MPI synchronization of all computing diags
-    void computeGlobalDiags(Diagnostic* diags, int timestep);
+    void computeGlobalDiags(Diagnostic*          diag, int timestep);
     // MPI synchronization of scalars diags
-    void computeGlobalDiags(DiagnosticScalar& scalars, int timestep);
-    // MPI synchronization of phasespace diags
-    void computeGlobalDiags(DiagnosticPhaseSpace& phases, int timestep);
+    void computeGlobalDiags(DiagnosticScalar*    diag, int timestep);
     // MPI synchronization of diags particles
-    void computeGlobalDiags(DiagnosticParticles* diagParticles, int timestep);
-    
+    void computeGlobalDiags(DiagnosticParticles* diag, int timestep);
+        
 
     // MPI basic methods
     // -----------------

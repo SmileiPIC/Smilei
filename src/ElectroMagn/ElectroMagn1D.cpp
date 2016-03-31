@@ -395,7 +395,7 @@ void ElectroMagn1D::centerMagneticFields()
 // ---------------------------------------------------------------------------------------------------------------------
 // Reset/Increment the averaged fields
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn1D::incrementAvgFields(unsigned int time_step, unsigned int ntime_step_avg)
+void ElectroMagn1D::incrementAvgFields(unsigned int time_step)
 {
     // Static cast of the fields
     Field1D* Ex1D     = static_cast<Field1D*>(Ex_);
@@ -410,16 +410,6 @@ void ElectroMagn1D::incrementAvgFields(unsigned int time_step, unsigned int ntim
     Field1D* Bx1D_avg = static_cast<Field1D*>(Bx_avg);
     Field1D* By1D_avg = static_cast<Field1D*>(By_avg);
     Field1D* Bz1D_avg = static_cast<Field1D*>(Bz_avg);
-    
-    // reset the averaged fields for (time_step-1)%ntime_step_avg == 0
-    if ( (time_step-1)%ntime_step_avg==0 ){
-        Ex1D_avg->put_to(0.0);
-        Ey1D_avg->put_to(0.0);
-        Ez1D_avg->put_to(0.0);
-        Bx1D_avg->put_to(0.0);
-        By1D_avg->put_to(0.0);
-        Bz1D_avg->put_to(0.0);
-    }
     
     // for Ey^(p), Ez^(p) & Bx^(p)
     for (unsigned int i=0 ; i<dimPrim[0] ; i++) {

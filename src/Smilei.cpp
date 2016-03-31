@@ -31,6 +31,8 @@
 
 #include "SimWindow.h"
 
+#include "Diagnostic.h"
+
 #include "Timer.h"
 #include <omp.h>
 
@@ -197,13 +199,13 @@ int main (int argc, char* argv[])
         time_prim += params.timestep;
         time_dual += params.timestep;
         
-        if ( vecPatches.Diags->field_timeSelection->theTimeIsNow(itime) ) diag_flag = 1;
+        if ( vecPatches.fieldTimeIsNow(itime) ) diag_flag = 1;
         
         // send message at given time-steps
         // --------------------------------
         timer[0].update();
         
-        if ( (itime % vecPatches.Diags->print_every == 0) &&  ( smpiData->isMaster() ) ) {
+        if ( vecPatches.printScalars( itime ) &&  ( smpiData->isMaster() ) ) {
             double this_print_time=timer[0].getTime();
             ostringstream my_msg;
             my_msg << setw(log10(params.n_time)+1) << itime <<
@@ -211,14 +213,14 @@ int main (int argc, char* argv[])
             "t = "          << scientific << setprecision(3)   << time_dual <<
             "  sec "    << scientific << setprecision(1)   << this_print_time <<
             "("    << scientific << setprecision(1)   << this_print_time - old_print_time << ")" <<
-            "   Utot = "   << scientific << setprecision(4)<< vecPatches.Diags->getScalar("Utot") <<
-            "   Uelm = "   << scientific << setprecision(4)<< vecPatches.Diags->getScalar("Uelm") <<
-            "   Ukin = "   << scientific << setprecision(4)<< vecPatches.Diags->getScalar("Ukin") <<
-            "   Ubal(%) = "<< scientific << fixed << setprecision(2) << 100.0*vecPatches.Diags->getScalar("Ubal_norm");
+            "   Utot = "   << scientific << setprecision(4)<< vecPatches.getScalar("Utot") <<
+            "   Uelm = "   << scientific << setprecision(4)<< vecPatches.getScalar("Uelm") <<
+            "   Ukin = "   << scientific << setprecision(4)<< vecPatches.getScalar("Ukin") <<
+            "   Ubal(%) = "<< scientific << fixed << setprecision(2) << 100.0*vecPatches.getScalar("Ubal_norm");
             
             if (simWindow) {
-                double Uinj_mvw = vecPatches.Diags->getScalar("Uelm_inj_mvw") + vecPatches.Diags->getScalar("Ukin_inj_mvw");
-                double Uout_mvw = vecPatches.Diags->getScalar("Uelm_out_mvw") + vecPatches.Diags->getScalar("Ukin_out_mvw");
+                double Uinj_mvw = vecPatches.getScalar("Uelm_inj_mvw") + vecPatches.getScalar("Ukin_inj_mvw");
+                double Uout_mvw = vecPatches.getScalar("Uelm_out_mvw") + vecPatches.getScalar("Ukin_out_mvw");
                 my_msg << "   Uinj_mvw = " << scientific << setprecision(4) << Uinj_mvw <<
                 "   Uout_mvw = " << scientific << setprecision(4) << Uout_mvw;
 
@@ -279,10 +281,10 @@ int main (int argc, char* argv[])
                 vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timer );
                     
             // incrementing averaged electromagnetic fields
-            if (vecPatches.Diags->ntime_step_avg)
+            if (vecPatches(0)->sio->dumpAvgFields_)
                 #pragma omp for
                 for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-                    vecPatches(ipatch)->EMfields->incrementAvgFields(itime, vecPatches.Diags->ntime_step_avg);
+                    vecPatches(ipatch)->EMfields->incrementAvgFields(itime);
                 }
             
             // call the various diagnostics
@@ -298,7 +300,7 @@ int main (int argc, char* argv[])
             // Restart patched moving window : to do
             // Break in an OpenMP region
             #pragma omp master
-            checkpoint.dump(vecPatches, itime, smpiData, simWindow, params, vecPatches.Diags);
+            checkpoint.dump(vecPatches, itime, smpiData, simWindow, params);
             #pragma omp barrier
             // ----------------------------------------------------------------------        
             
@@ -375,7 +377,7 @@ int main (int argc, char* argv[])
     if ( smpiData->isMaster() )
         for (unsigned int i=1 ; i<timer.size() ; i++) timer[i].print(timer[0].getTime());
     
-    vecPatches.Diags->printTimers(vecPatches(0), timer[3].getTime());
+    //WARNING( "Diabled vecPatches.Diagnostics->printTimers(vecPatches(0), timer[3].getTime());" );
     
     
     // ------------------------------------------------------------------
@@ -388,9 +390,9 @@ int main (int argc, char* argv[])
     // ------------------------------
     //  Cleanup & End the simulation
     // ------------------------------
-    DiagsVectorPatch::finalizeProbesDiags(vecPatches, params, stepStop);
     DiagsVectorPatch::finalizeDumpFields(vecPatches, params, stepStop);
 
+    vecPatches.closeAllDiags( smpiData );
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) delete vecPatches(ipatch);
     vecPatches.clear();
     MPI_Barrier(MPI_COMM_WORLD); // Don't know why but sync needed by HDF5 Phasespace managment

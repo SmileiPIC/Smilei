@@ -4,8 +4,6 @@
 #include "Patch.h"
 #include "Field2D.h"
 
-class Diagnostic;
-class DiagnosticScalar;
 class SimWindow;
 
 //! Class Patch : sub MPI domain 

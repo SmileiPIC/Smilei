@@ -1,76 +1,40 @@
-/*
- * Diagnostic.h
- *
- *  Created on: 3 juil. 2013
- */
+#ifndef DIAGNOSTIC_H
+#define DIAGNOSTIC_H
 
-#ifndef Diagnostic_H
-#define Diagnostic_H
-
-#include <vector>
-#include <fstream>
-
-#include "Interpolator.h"
-#include "DiagnosticScalar.h"
-#include "DiagnosticProbe.h"
-#include "DiagnosticPhaseSpace.h"
-#include "DiagnosticParticles.h"
-#include "DiagnosticTrackParticles.h"
-#include "Timer.h"
-
-class Params;
-class Patch;
-class VectorPatch;
-class ElectroMagn;
-class Species;
-class SimWindow;
+#include "Params.h"
+#include "Patch.h"
+#include "SmileiMPI.h"
 
 
-//! class holder for all the diagnostics: scalars, probes(0D, 1D, 2D and 3D) and phase-space
 class Diagnostic {
-    friend class SmileiMPI;
-    friend class VectorPatch;
-    friend class SimWindow;
-public:
-    //! creator called from main
-    Diagnostic(Params &params, Patch* patch, SmileiMPI* smpi);
-    
-    //! destructor
-    ~Diagnostic(){};
-    
-    //! print timers
-    void printTimers(Patch *patch, double tottime);
-    
-    //! close all diags
-    void closeAll(Patch* patch);
 
-    //! check if at timestep diagnostics must be called
-    void runAllDiags (int timestep, ElectroMagn* EMfields, std::vector<Species*>&, Interpolator *interp);
- 
-    //! get a particular scalar
-    double getScalar(std::string name);
+public :
 
-    std::vector<Timer> dtimer;
+   Diagnostic( Params &params, SmileiMPI* smpi, Patch* patch, int diagId ) {};
+   Diagnostic() {};
+   ~Diagnostic() {};
 
-    DiagnosticScalar scalars;
-    DiagnosticProbe probes;
-    DiagnosticPhaseSpace phases;
+   virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile ) = 0;
+   virtual void setFile( Diagnostic* diag ) = 0;
+   virtual void closeFile() = 0;
 
-    std::vector<DiagnosticParticles*> vecDiagnosticParticles;
-    std::vector<DiagnosticTrackParticles*> vecDiagnosticTrackParticles;
-    
-    //! Time selection for field dumps
-    TimeSelection * field_timeSelection;
-    
-    //! Time selection for average field dumps
-    TimeSelection * avgfield_timeSelection;
-    
-    //! number of time-steps for time-averaging of fields
-    unsigned int ntime_step_avg;
-    
-    //! every for the standard pic timeloop output
-    unsigned int print_every;
-	
+   virtual void prepare( Patch* patch, int timestep ) = 0;
+
+   virtual void run( Patch* patch, int timestep ) = 0;
+
+   virtual void write(int timestep) = 0;
+
+    //! Time selection
+    TimeSelection * timeSelection;
+
+    //! this is the file name
+    std::string filename;
+    std::string type_;
+protected :
+    int probeId_;
+
+
 };
 
 #endif
+

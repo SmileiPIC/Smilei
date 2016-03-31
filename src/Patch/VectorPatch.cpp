@@ -12,9 +12,12 @@
 #include "SmileiIOFactory.h"
 #include "SimWindow.h"
 #include "SolverFactory.h"
+#include "DiagnosticFactory.h"
 
 #include "SyncVectorPatch.h"
 #include "DiagsVectorPatch.h"
+
+#include "Timer.h"
 
 #include <cstring>
 //#include <string>
@@ -29,6 +32,15 @@ VectorPatch::VectorPatch()
 
 VectorPatch::~VectorPatch()
 {
+    for (unsigned int idiag=0 ; idiag<globalDiags.size(); idiag++) delete globalDiags[idiag];
+    globalDiags.clear();
+
+}
+
+void VectorPatch::createGlobalDiags(Params& params, SmileiMPI* smpi)
+{
+    globalDiags = DiagnosticFactory::createGlobalDiagnostics(params, smpi, (*this)(0) );
+
 }
 
 
@@ -150,6 +162,118 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
 } // END solveMaxwell
 
 
+
+void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
+{
+    // globalDiags : scalars + particles
+    for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
+	// For all diags createFile (if global, juste by mpi master, test inside)
+	if ( smpi->isMaster() )
+	    globalDiags[idiag]->openFile( params, smpi, *this, true );
+
+    } // END for globalDiags
+
+
+    // Initialize scalars (globalDiags[0], especially energy balance)
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+	globalDiags[0]->run( (*this)(ipatch), 0 );
+    }
+    smpi->computeGlobalDiags( globalDiags[0], 0 );
+
+    // localDiags : probes, track & fields
+    for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
+
+	// track, compute global number of particles + compute global Idx
+	if ( (*this)(0)->localDiags[idiag]->type_ == "Track" ) {
+	    DiagnosticTrack* diagTrack0 = static_cast<DiagnosticTrack*>( (*this)(0)->localDiags[idiag] );
+	    diagTrack0->setFileSplitting( params, smpi, *this );
+	    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+		DiagnosticTrack* diagTrack  = static_cast<DiagnosticTrack*>( (*this)(ipatch)->localDiags[idiag] );
+		diagTrack->setFile( diagTrack0->getFileId() );
+	    }
+	}
+
+	// For all diags createFile
+	(*this)(0)->localDiags[idiag]->openFile( params, smpi, *this, true );
+
+	if ( (*this)(0)->localDiags[idiag]->type_ == "Probes" ) {
+	    DiagnosticProbes* diagProbes0 = static_cast<DiagnosticProbes*>( (*this)(0)->localDiags[idiag] );
+	    diagProbes0->setFileSplitting( params, smpi, *this );
+	    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+		DiagnosticProbes* diagProbes = static_cast<DiagnosticProbes*>( (*this)(ipatch)->localDiags[idiag] );
+		diagProbes->setFile( diagProbes0->getFileId() );
+		diagProbes->writePositionIn( params );
+	    }// END  ipatch
+
+	} // END if Probes
+
+    } // END for localDiags
+    
+} // END initAllDiags
+
+
+void VectorPatch::closeAllDiags(SmileiMPI* smpi)
+{
+    for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
+	if ( smpi->isMaster() )
+	    globalDiags[idiag]->closeFile();
+    }    
+    for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
+	(*this)(0)->localDiags[idiag]->closeFile();
+    }    
+
+}
+
+
+void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
+{
+    for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
+	// For all diags createFile (if global, juste by mpi master, test inside)
+	if ( smpi->isMaster() )
+	    globalDiags[idiag]->openFile( params, smpi, *this, false );
+
+    } // END for globalDiags
+
+    
+    for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
+	(*this)(0)->localDiags[idiag]->openFile( params, smpi, *this, false );
+
+	if ( (*this)(0)->localDiags[idiag]->type_ == "Track" ) {
+	    DiagnosticTrack* diagTrack0 = static_cast<DiagnosticTrack*>( (*this)(0)->localDiags[idiag] );
+	    // Spli
+	    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+		DiagnosticTrack* diagTrack  = static_cast<DiagnosticTrack*>( (*this)(ipatch)->localDiags[idiag] );
+		diagTrack->setFile( diagTrack0->getFileId() );
+	    }
+	}
+
+	if ( (*this)(0)->localDiags[idiag]->type_ == "Probes" ) {
+	    DiagnosticProbes* diagProbes0 = static_cast<DiagnosticProbes*>( (*this)(0)->localDiags[idiag] );
+	    diagProbes0->setFileSplitting( params, smpi, *this );
+	    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+		DiagnosticProbes* diagProbes = static_cast<DiagnosticProbes*>( (*this)(ipatch)->localDiags[idiag] );
+		diagProbes->setFile( diagProbes0->getFileId() );
+	    }
+	}
+    }
+
+    /*
+    // Should be OK with the implementation below :
+    //   abstract splitting too even if completely non sense for global diags ?
+
+    for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
+	(*this)(0)->localDiags[idiag]->openFile( params, smpi, *this, false );
+	for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
+	    (*this)(ipatch)->localDiags[idiag]->setFile( (*this)(0)->localDiags[idiag] );
+	if ( (*this)(0)->localDiags[idiag]->type_ == "Probes" )
+	    static_cast<DiagnosticProbes*>( (*this)(0)->localDiags[idiag] )->setFileSplitting( params, smpi, *this );
+    }
+    */
+
+
+}
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 // For all patch, Compute and Write all diags
 //   - Scalars, Probes, Phases, TrackParticles, Fields, Average fields
@@ -166,11 +290,11 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
 
             // Write EM fields dump in Fields.h5
-            if (ipatch==0) (*this)(ipatch)->sio->createTimeStepInSingleFileTime( itime, (*this).Diags );
+            if (ipatch==0) (*this)(ipatch)->sio->createTimeStepInSingleFileTime( itime );
             (*this)(ipatch)->sio->writeAllFieldsSingleFileTime( (*this)(ipatch)->EMfields->allFields, itime, 0 );
 
             // Check the dedicated fields output write frequency 
-            if( (*this).Diags->ntime_step_avg!=0 && (*this).Diags->avgfield_timeSelection->theTimeIsNow(itime) ) {
+            if( (*this)(ipatch)->sio->dumpAvgFields_ && avgFieldTimeIsNow(itime) ) {
                 // Write EM average fields dump in Fields_avg.h5
                 (*this)(ipatch)->sio->writeAllFieldsSingleFileTime( (*this)(ipatch)->EMfields->allFields_avg, itime, 1 );
             }
@@ -186,43 +310,38 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
     //    Parallel write for Probes, TrackParticles
     // -------------------------------------------
     timer[3].restart();
-    hid_t file_access0, fid0;
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-        // Patch master open TrackParticles files, others write directly in
-        for (unsigned int i=0 ; i<(*this)(ipatch)->Diags->vecDiagnosticTrackParticles.size(); i++) {
-            if (ipatch==0) {
-                (*this)(ipatch)->Diags->vecDiagnosticTrackParticles[i]->open();
-                file_access0 = (*this)(0)->Diags->vecDiagnosticTrackParticles[i]->file_access_;
-                fid0         = (*this)(0)->Diags->vecDiagnosticTrackParticles[i]->fid_;
-            }
-            else
-                (*this)(ipatch)->Diags->vecDiagnosticTrackParticles[i]->setFile( file_access0, fid0 );
+    // globalDiags : scalars + particles
+    static_cast<DiagnosticScalar*>( globalDiags[0] )->reset( itime );
+    for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
+	for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+	    globalDiags[idiag]->run( (*this)(ipatch), itime );
+	}
+	// particles
+	smpi->computeGlobalDiags( globalDiags[idiag], itime);
 
-        }
+    } // END for globalDiags
 
-        // Here is the main computing part !!!
-        (*this)(ipatch)->Diags->runAllDiags(itime, (*this)(ipatch)->EMfields, (*this)(ipatch)->vecSpecies,
-                                            (*this)(ipatch)->Interp);
 
+    // localDiags : probes, track & fields
+    for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
+	    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+		(*this)(ipatch)->localDiags[idiag]->run( (*this)(ipatch), itime );
+	    }
     }
-
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-        // Patch master close TrackParticles files
-        for (unsigned int i=0 ; i<(*this)(ipatch)->Diags->vecDiagnosticTrackParticles.size(); i++)
-            if (ipatch==0) (*this)(ipatch)->Diags->vecDiagnosticTrackParticles[i]->close();
+    for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
+	for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+	      (*this)(ipatch)->localDiags[idiag]->write( itime );
+	    }
     }
+    /*
+	// track, compute global number of particles + compute global Idx
+	if ( (*this)(0)->localDiags[idiag]->type_ == "Track" ) {
+	    DiagnosticTrack* diagTrack = static_cast<DiagnosticTrack*>( (*this)(0)->localDiags[idiag] );
+	    diagTrack->setFileSize( params, smpi, *this );
+	}
 
-
-    // Diagnostics : Patches synchro  
-    //     Scalars, PhaseSpace, Particles
-    // -------------------------------------------
-    DiagsVectorPatch::computeGlobalDiags( *this, itime); 
-
-    // Diagnostics : MPI synchro (by patch master)
-    //     Scalars, PhaseSpace, Particles
-    // -------------------------------------------
-    smpi->computeGlobalDiags( (*this)(0)->Diags, itime); // Only scalars reduction for now 
-
+    } // END for localDiags
+    */
     timer[3].update();   
 
 } // END runAllDiags
@@ -537,6 +656,8 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
 {
+    (*this).closeAllDiags(smpi);
+
     hid_t globalFile    = (*this)(0)->sio->global_file_id_;
     hid_t globalFileAvg = (*this)(0)->sio->global_file_id_avg;
 
@@ -548,30 +669,6 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     oldMPIrank = smpi->getRank() -1;
     int istart( 0 );
     int nmessage = 2*nSpecies+10;
-
-
-    std::vector<std::string> out_key;
-    std::vector<double>      out_value;
-    hid_t fphases;
-    vector<hid_t> dset;
-
-    if (smpi->isMaster()) {
-        // Get scalars/phaseSpace patch 
-        (*this)(0)->Diags->scalars.closeFile();
-        fphases = (*this)(0)->Diags->phases.fileId;
-        for ( int iphase=0 ; iphase<(*this)(0)->Diags->phases.vecDiagPhase.size() ; iphase++ ) {
-            dset.push_back( (*this)(0)->Diags->phases.vecDiagPhase[iphase]->dataId );
-        }
-
-        vector<string>::iterator iterKey = (*this)(0)->Diags->scalars.out_key.begin();
-        for(vector<double>::iterator iter = (*this)(0)->Diags->scalars.out_value.begin(); iter !=(*this)(0)->Diags->scalars.out_value.end(); iter++) {
-            out_key.push_back( *iterKey );
-            iterKey++;
-            out_value.push_back( *iter );
-        }
-
-        
-    }
 
 
     for (int irk=0 ; irk<smpi->getRank() ; irk++) istart += smpi->patch_count[irk];
@@ -621,7 +718,6 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     int nPatchSend(send_patch_id_.size());
     for (int ipatch=nPatchSend-1 ; ipatch>=0 ; ipatch--) {
         //Ok while at least 1 old patch stay inon current CPU
-        (*this)(send_patch_id_[ipatch])->Diags->probes.setFile(0);
         (*this)(send_patch_id_[ipatch])->sio->setFiles(0,0);
         delete (*this)(send_patch_id_[ipatch]);
         patches_[ send_patch_id_[ipatch] ] = NULL;
@@ -641,28 +737,13 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
         (*this)(ipatch)->updateMPIenv(smpi);
     }
 
+    (*this).openAllDiags(params,smpi);
+
     //definePatchDiagsMaster();
     DiagsVectorPatch::definePatchDiagsMaster( *this, globalFile, globalFileAvg );
     DiagsVectorPatch::updatePatchFieldDump( *this, params );
 
-    if (smpi->isMaster()) {
-        vector<string>::iterator iterKey = out_key.begin();
-        for(vector<double>::iterator iter = out_value.begin(); iter !=out_value.end(); iter++) {
-            (*this)(0)->Diags->scalars.out_key.push_back( *iterKey );
-            iterKey++;
-            (*this)(0)->Diags->scalars.out_value.push_back( *iter );
-        }
-
-
-        // Set scalars/phaseSpace patch master
-        (*this)(0)->Diags->scalars.open(true);
-        (*this)(0)->Diags->phases.fileId = fphases;
-        for ( int iphase=0 ; iphase<(*this)(0)->Diags->phases.vecDiagPhase.size() ; iphase++ ) {
-            (*this)(0)->Diags->phases.vecDiagPhase[iphase]->dataId = dset[ iphase ];
-        }
-    }
     (*this).set_refHindex() ;
-    (*this).Diags = (*this)(0)->Diags;
 
     update_field_list() ;    
 
