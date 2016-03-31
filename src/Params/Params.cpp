@@ -95,6 +95,7 @@ namelist("")
     if (smpi->isMaster()) {
         ofstream out_namelist("smilei.py");
         if (out_namelist.is_open()) {
+            out_namelist << "# coding: utf-8" << endl << endl ;
             out_namelist << namelist;
             out_namelist.close();
         }
