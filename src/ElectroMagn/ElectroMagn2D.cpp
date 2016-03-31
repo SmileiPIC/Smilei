@@ -553,7 +553,7 @@ void ElectroMagn2D::centerMagneticFields()
 // ---------------------------------------------------------------------------------------------------------------------
 // Reset/Increment the averaged fields
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn2D::incrementAvgFields(unsigned int time_step, unsigned int ntime_step_avg)
+void ElectroMagn2D::incrementAvgFields(unsigned int time_step)
 {
     // Static cast of the fields
     Field2D* Ex2D     = static_cast<Field2D*>(Ex_);
@@ -568,16 +568,6 @@ void ElectroMagn2D::incrementAvgFields(unsigned int time_step, unsigned int ntim
     Field2D* Bx2D_avg = static_cast<Field2D*>(Bx_avg);
     Field2D* By2D_avg = static_cast<Field2D*>(By_avg);
     Field2D* Bz2D_avg = static_cast<Field2D*>(Bz_avg);
-    
-    // reset the averaged fields for (time_step-1)%ntime_step_avg == 0
-    if ( (time_step-1)%ntime_step_avg==0 ){
-        Ex2D_avg->put_to(0.0);
-        Ey2D_avg->put_to(0.0);
-        Ez2D_avg->put_to(0.0);
-        Bx2D_avg->put_to(0.0);
-        By2D_avg->put_to(0.0);
-        Bz2D_avg->put_to(0.0);
-    }
     
     // increment the time-averaged fields
     

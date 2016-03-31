@@ -7,7 +7,6 @@
 #include "Projector.h"
 #include "SmileiMPI.h"
 #include "VectorPatch.h"
-#include "Diagnostic.h"
 #include "Hilbert_functions.h"
 #include "PatchesFactory.h"
 #include "DiagsVectorPatch.h"
@@ -64,28 +63,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     double energy_field_lost(0.);
     vector<double> energy_part_lost( vecPatches(0)->vecSpecies.size(), 0. );
 
-    hid_t fphases;
-    vector<hid_t> dset;
 
-    std::vector<std::string> out_key;
-    std::vector<double>      out_value;
-    if (smpi->isMaster()) {
-	// Get scalars/phaseSpace patch 
-	vecPatches(0)->Diags->scalars.closeFile();
-	fphases = vecPatches(0)->Diags->phases.fileId;
-	for ( int iphase=0 ; iphase<vecPatches(0)->Diags->phases.vecDiagPhase.size() ; iphase++ ) {
-	    dset.push_back( vecPatches(0)->Diags->phases.vecDiagPhase[iphase]->dataId );
-	}
+    vecPatches.closeAllDiags(smpi);
 
-	vector<string>::iterator iterKey = vecPatches(0)->Diags->scalars.out_key.begin();
-	for(vector<double>::iterator iter = vecPatches(0)->Diags->scalars.out_value.begin(); iter !=vecPatches(0)->Diags->scalars.out_value.end(); iter++) {
-	    out_key.push_back( *iterKey );
-	    iterKey++;
-	    out_value.push_back( *iter );
-	}
-
-	
-    }
 
     hid_t globalFile    = vecPatches(0)->sio->global_file_id_;
     hid_t globalFileAvg = vecPatches(0)->sio->global_file_id_avg;
@@ -116,7 +96,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 	    for ( int ispec=0 ; ispec<vecPatches(0)->vecSpecies.size() ; ispec++ )
 		energy_part_lost[ispec] += vecPatches(ipatch)->vecSpecies[ispec]->computeNRJ();
 
-            vecPatches(ipatch)->Diags->probes.setFile(0);
             vecPatches(ipatch)->sio->setFiles(0,0);
             delete  vecPatches.patches_[ipatch];
             vecPatches.patches_[ipatch] = NULL;
@@ -171,7 +150,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     for ( int ipatch = nPatches-1 ; ipatch >= 0 ; ipatch--) {
         if ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][0] && vecPatches(ipatch)->hindex == vecPatches(ipatch)->neighbor_[0][0] ) {
 
-            vecPatches(ipatch)->Diags->probes.setFile(0);
             vecPatches(ipatch)->sio->setFiles(0,0);
             delete vecPatches.patches_[ipatch];
             vecPatches.patches_[ipatch] = NULL;
@@ -219,28 +197,15 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     for (int ipatch=0 ; ipatch<nPatches ; ipatch++ )
 	vecPatches(ipatch)->EMfields->laserDisabled();
 
+
+    // 
+    vecPatches.openAllDiags(params,smpi);
+
     //vecPatches.definePatchDiagsMaster();
-    DiagsVectorPatch::definePatchDiagsMaster( vecPatches, globalFile, globalFileAvg );
-    DiagsVectorPatch::updatePatchFieldDump( vecPatches, params );
+    DiagsVectorPatch::definePatchDiagsMaster( vecPatches, globalFile, globalFileAvg ); // sio
+    DiagsVectorPatch::updatePatchFieldDump( vecPatches, params );                      // sio
 
-    if (smpi->isMaster()) {
-	vector<string>::iterator iterKey = out_key.begin();
-	for(vector<double>::iterator iter = out_value.begin(); iter !=out_value.end(); iter++) {
-	    vecPatches(0)->Diags->scalars.out_key.push_back( *iterKey );
-	    iterKey++;
-	    vecPatches(0)->Diags->scalars.out_value.push_back( *iter );
-	}
-
-
-        // Set scalars/phaseSpace patch master
-        vecPatches(0)->Diags->scalars.open(true);
-        vecPatches(0)->Diags->phases.fileId = fphases;
-        for ( int iphase=0 ; iphase<vecPatches(0)->Diags->phases.vecDiagPhase.size() ; iphase++ ) {
-            vecPatches(0)->Diags->phases.vecDiagPhase[iphase]->dataId = dset[ iphase ];
-        }
-    }
     vecPatches.set_refHindex() ;
-    vecPatches.Diags = vecPatches(0)->Diags;
     vecPatches.update_field_list() ;
 
     return;

@@ -1,21 +1,12 @@
-/*
------------------------------------------------------------------------
-PARTICLE DIAGNOSTICS                -    F. Perez - 03/2015
------------------------------------------------------------------------
-  see the doc for instructions and examples
-*/
+#ifndef DIAGNOSTICPARTICLES_H
+#define DIAGNOSTICPARTICLES_H
 
-#ifndef DiagnosticParticles_H
-#define DiagnosticParticles_H
+#include "Diagnostic.h"
 
-#include <cmath>
+#include "Params.h"
+#include "Patch.h"
+#include "SmileiMPI.h"
 
-#include "Species.h"
-#include "Particles.h"
-#include "H5.h"
-#include "TimeSelection.h"
-
-class Patch;
 
 // Class for each axis of the particle diags
 struct DiagnosticParticlesAxis {
@@ -39,37 +30,29 @@ struct DiagnosticParticlesAxis {
 };
 
 
-// Class for the particles diagnostics
-class DiagnosticParticles {
+class DiagnosticParticles : public Diagnostic {
     friend class SmileiMPI;
-    friend class DiagsVectorPatch;
 
-public:
+public :
 
-    DiagnosticParticles(unsigned int, Params& params, Patch* patch, std::vector<Species*>& vecSpecies);
-    
-    ~DiagnosticParticles();
-        
-    void run(int, std::vector<Species*>&);
+   DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
+   DiagnosticParticles() {};
+   ~DiagnosticParticles();
 
-    void createFile( unsigned int n_diag_particles );
-    void write(int timestep);
+   virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile );
+   virtual void setFile( Diagnostic* diag );
+   
+   virtual void closeFile();
+
+   virtual void prepare( Patch* patch, int timestep );
+
+   virtual void run( Patch* patch, int timestep );
+
+   virtual void write(int timestep);
+
+private :
     void clean();
 
-protected:
-    
-
-private:
-    
-     //! this is the hdf5 file name
-    std::string filename;
-    
-    //! quantity to be summed into the output array
-    std::string output;
-    
-    //! Time selection
-    TimeSelection * timeSelection;
-    
     //! number of timesteps during which outputs are averaged
     int time_average;
     
@@ -79,14 +62,17 @@ private:
     //! vector of axes
     std::vector<DiagnosticParticlesAxis> axes;
     
+    //! quantity to be summed into the output array
+    std::string output;
+
     //! vector for saving the output array for time-averaging
     std::vector<double> data_sum;
     
     int output_size;
     
+    hid_t fileId_;
+
 };
 
-
-
-
 #endif
+

@@ -1,24 +1,26 @@
+
 #include "DiagnosticParticles.h"
 
 #include <iomanip>
-#include <ostream>
-#include <cmath>
-
-#include "Params.h"
-#include "Patch.h"
 
 using namespace std;
 
-// constructor
-DiagnosticParticles::DiagnosticParticles(unsigned int n_diag_particles, Params& params, Patch *patch, std::vector<Species*>& vecSpecies) :
-filename(""),
-output("")
+
+DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch* patch, int diagId ) :
+fileId_(0)
 {
+    int n_diag_particles = diagId;
+
+    // n_diag_particles ...
+
+    std::vector<Species*>& vecSpecies = patch->vecSpecies;
+
     ostringstream name("");
     name << "Diagnotic Particles #" << n_diag_particles;
     string errorPrefix = name.str();
     
     // get parameter "output" that determines the quantity to sum in the output array
+    output = "";
     if (!PyTools::extract("output",output,"DiagParticles",n_diag_particles))
         ERROR(errorPrefix << ": parameter `output` required");
     
@@ -111,7 +113,7 @@ output("")
         data_sum.resize(output_size);
     
     // Output info on diagnostics
-    if ( patch->isMaster() ) {
+    if ( smpi->isMaster() ) {
         ostringstream mystream("");
         mystream.str("");
         mystream << species_names[0];
@@ -125,51 +127,89 @@ output("")
             if( axes[i].edge_inclusive ) mystream << " [EDGE INCLUSIVE]";
             MESSAGE(2,mystream.str());
         }
-    }
-    
-}
 
-// destructor
+	// init HDF files (by master, only if it doesn't yet exist)
+	mystream.str(""); // clear
+	mystream << "ParticleDiagnostic" << n_diag_particles << ".h5";
+	filename = mystream.str();
+    }
+
+    type_ = "Particles";
+
+} // END DiagnosticParticles::DiagnosticParticles
+
 DiagnosticParticles::~DiagnosticParticles()
 {
-}
+} // END DiagnosticParticles::~DiagnosticParticles
+
 
 // Called only by patch master of process master
-void DiagnosticParticles::createFile( unsigned int n_diag_particles )
+void DiagnosticParticles::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile )
 {
-    // init HDF files (by master, only if it doesn't yet exist)
-    ostringstream mystream("");
-    mystream.str("");
-    mystream << "ParticleDiagnostic" << n_diag_particles << ".h5";
-    filename = mystream.str();
-    hid_t fileId = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-    // write all parameters as HDF5 attributes
-    H5::attr(fileId, "Version", string(__VERSION));
-    H5::attr(fileId, "output" , output);
-    H5::attr(fileId, "time_average"  , time_average);
-    // write all species
-    mystream.str(""); // clear
-    for (unsigned int i=0 ; i < species.size() ; i++)
-        mystream << species[i] << " ";
-    H5::attr(fileId, "species", mystream.str());
-    // write each axis
-    for (unsigned int iaxis=0 ; iaxis < axes.size() ; iaxis++) {
-        mystream.str(""); // clear
-        mystream << "axis" << iaxis;
-        string str1 = mystream.str();
-        mystream.str(""); // clear
-        mystream << axes[iaxis].type << " " << axes[iaxis].min << " " << axes[iaxis].max << " "
-                 << axes[iaxis].nbins << " " << axes[iaxis].logscale << " " << axes[iaxis].edge_inclusive;
-        string str2 = mystream.str();
-        H5::attr(fileId, str1, str2);
+    if (!smpi->isMaster()) return;
+
+    if ( newfile ) {
+	fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+	// write all parameters as HDF5 attributes
+	H5::attr(fileId_, "Version", string(__VERSION));
+	H5::attr(fileId_, "output" , output);
+	H5::attr(fileId_, "time_average"  , time_average);
+	// write all species
+	ostringstream mystream("");
+	mystream.str(""); // clear
+	for (unsigned int i=0 ; i < species.size() ; i++)
+	    mystream << species[i] << " ";
+	H5::attr(fileId_, "species", mystream.str());
+	// write each axis
+	for (unsigned int iaxis=0 ; iaxis < axes.size() ; iaxis++) {
+	    mystream.str(""); // clear
+	    mystream << "axis" << iaxis;
+	    string str1 = mystream.str();
+	    mystream.str(""); // clear
+	    mystream << axes[iaxis].type << " " << axes[iaxis].min << " " << axes[iaxis].max << " "
+		     << axes[iaxis].nbins << " " << axes[iaxis].logscale << " " << axes[iaxis].edge_inclusive;
+	    string str2 = mystream.str();
+	    H5::attr(fileId_, str1, str2);
+	}
+    }
+    else {
+	fileId_ = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
     }
     
-    H5Fclose(fileId);
 }
 
-// run one particle diagnostic
-void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies)
+
+void DiagnosticParticles::setFile( Diagnostic* diag )
 {
+    fileId_ = static_cast<DiagnosticParticles*>(diag)->fileId_;  
+}
+
+
+void DiagnosticParticles::closeFile()
+{
+    if (fileId_!=0) {
+	H5Fclose(fileId_);
+	fileId_ = 0;
+    }
+
+} // END closeFile
+
+
+void DiagnosticParticles::prepare( Patch* patch, int timestep )
+{
+
+} // END prepare
+
+
+// run one particle diagnostic
+void DiagnosticParticles::run( Patch* patch, int timestep )
+{
+    // See Fred if it's ok 
+    if (time_average == 1) clean();
+
+
+    std::vector<Species*>& vecSpecies = patch->vecSpecies;
+
     Species *s;
     Particles *p;
     vector<int> index_array;
@@ -437,8 +477,8 @@ void DiagnosticParticles::run(int timestep, vector<Species*>& vecSpecies)
         } // loop openMP bins
         
     } // loop species
-    
-}
+
+} // END run
 
 
 // Now the data_sum has been filled
@@ -458,12 +498,11 @@ void DiagnosticParticles::write(int timestep)
     mystream.str("");
     mystream << "timestep" << setw(8) << setfill('0') << timestep;
     // write the array
-    hid_t fileId = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
-    htri_t status = H5Lexists( fileId, mystream.str().c_str(), H5P_DEFAULT ); 
+    htri_t status = H5Lexists( fileId_, mystream.str().c_str(), H5P_DEFAULT ); 
     if (!status)
-        H5::vect(fileId, mystream.str(), data_sum);
-    H5Fclose(fileId);    
-}
+        H5::vect(fileId_, mystream.str(), data_sum);
+
+} // END write
 
 
 // call by all if (time_average==1) 

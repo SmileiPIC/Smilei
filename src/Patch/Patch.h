@@ -11,7 +11,6 @@
 #include "LaserParams.h"
 #include "SmileiMPI.h"
 #include "SimWindow.h"
-#include "Diagnostic.h"
 #include "SmileiIO.h"
 #include "PartWall.h"
 #include "Collisions.h"
@@ -56,8 +55,9 @@ public:
     Interpolator* Interp;
     //! Projector
     Projector* Proj;
-    //! Diagnostic (wraps Scalar, Probes, PhaseSpace, Particles (new PS), TrackParticles)
-    Diagnostic* Diags;
+
+    std::vector<Diagnostic*> localDiags;
+
     //! SmileiIO = Diag Fields
     SmileiIO* sio;
     

@@ -18,6 +18,10 @@
 #include "Hilbert_functions.h"
 #include "VectorPatch.h"
 
+#include "Diagnostic.h"
+#include "DiagnosticScalar.h"
+#include "DiagnosticParticles.h"
+
 using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -548,7 +552,12 @@ void SmileiMPI::isend(Patch* patch, int to, int tag)
         }
     }
     isend( patch->EMfields, to, tag+2*patch->vecSpecies.size() );
-    isend( patch->Diags, to, tag+2*patch->vecSpecies.size()+9 );
+
+    for ( int idiag = 0 ; idiag < patch->localDiags.size() ; idiag++ ) {
+	// just probes (track data = species, managed above, meta-data : H5S_select)
+	if ( patch->localDiags[idiag]->type_ == "Probes" )
+	    isend( static_cast<DiagnosticProbes*>(patch->localDiags[idiag]), to, tag+2*patch->vecSpecies.size()+9+idiag );
+    }
 
 } // END isend( Patch )
 
@@ -576,7 +585,12 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
     }
    
     recv( patch->EMfields, from, tag+2*patch->vecSpecies.size() );
-    recv( patch->Diags, from, tag+2*patch->vecSpecies.size()+9 );
+
+    for ( int idiag = 0 ; idiag < patch->localDiags.size() ; idiag++ ) {
+	// just probes (track data = species, managed above, meta-data : H5S_select)
+	if ( patch->localDiags[idiag]->type_ == "Probes" )
+	    recv( static_cast<DiagnosticProbes*>(patch->localDiags[idiag]), from, tag+2*patch->vecSpecies.size()+9+idiag );
+    }
 
 } // END recv ( Patch )
 
@@ -661,18 +675,21 @@ void SmileiMPI::recv(Field* field, int from, int hindex)
 } // End recv ( Field )
 
 
-void SmileiMPI::isend( Diagnostic* diags, int to, int tag )
+void SmileiMPI::isend( DiagnosticProbes* diags, int to, int tag )
 {
-    isend( &(diags->probes.probesStart), to, tag );
+    MPI_Request request; 
+    MPI_Isend( &(diags->probesStart), 1, MPI_INT, to, tag, MPI_COMM_WORLD, &request );
 
-} // End isend ( Diags )
+} // End isend ( Diagnostics )
 
 
-void SmileiMPI::recv( Diagnostic* diags, int from, int tag )
+void SmileiMPI::recv( DiagnosticProbes* diags, int from, int tag )
 {
-    recv( &(diags->probes.probesStart), from, tag );
+    MPI_Status status;
+    MPI_Recv( &(diags->probesStart), 1, MPI_INT, from, tag, MPI_COMM_WORLD, &status );
 
-} // End recv ( Diags )
+
+} // End recv ( Diagnostics )
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -681,34 +698,38 @@ void SmileiMPI::recv( Diagnostic* diags, int from, int tag )
 // ---------------------------------------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------------------------------------
 
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Wrapper of MPI synchronization of all computing diags
 //   - concerns    : scalars, phasespace, particles
 //   - not concern : probes, fields, track particles (each patch write its own data)
 //   - called in VectorPatch::runAllDiags(...) after DiagsVectorPatch::computeGlobalDiags(...)
 // ---------------------------------------------------------------------------------------------------------------------
-void SmileiMPI::computeGlobalDiags(Diagnostic* diags, int timestep)
+void SmileiMPI::computeGlobalDiags(Diagnostic* diag, int timestep)
 {
-    computeGlobalDiags(diags->scalars, timestep);
-    computeGlobalDiags(diags->phases, timestep);
-    for (unsigned int i=0; i<diags->vecDiagnosticParticles.size(); i++)
-        computeGlobalDiags(diags->vecDiagnosticParticles[i], timestep);
-
-} // END computeGlobalDiags(Diagnostic* diags ...)
+    if ( diag->type_ == "Scalar" ) {
+	DiagnosticScalar* scalar = static_cast<DiagnosticScalar*>( diag );
+	computeGlobalDiags(scalar, timestep);
+    }
+    else if ( diag->type_ == "Particles" ) {
+	DiagnosticParticles* particles = static_cast<DiagnosticParticles*>( diag );
+	computeGlobalDiags(particles, timestep);
+    }
+}
 
 
 // ---------------------------------------------------------------------------------------------------------------------
 // MPI synchronization of scalars diags
 // ---------------------------------------------------------------------------------------------------------------------
-void SmileiMPI::computeGlobalDiags(DiagnosticScalar& scalars, int timestep)
+void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
 {
     
-    if( ! scalars.timeSelection->theTimeIsNow() ) return;
+    if( ! scalars->timeSelection->theTimeIsNow() ) return;
     
     int nscalars(0);
 
-    vector<string>::iterator iterKey = scalars.out_key.begin();
-    for(vector<double>::iterator iter = scalars.out_value.begin(); iter !=scalars.out_value.end(); iter++) {
+    vector<string>::iterator iterKey = scalars->out_key.begin();
+    for(vector<double>::iterator iter = scalars->out_value.begin(); iter !=scalars->out_value.end(); iter++) {
         if ( ( (*iterKey).find("Min") == std::string::npos ) && ( (*iterKey).find("Max") == std::string::npos ) ) {
             MPI_Reduce(isMaster()?MPI_IN_PLACE:&((*iter)), &((*iter)), 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
         }
@@ -731,67 +752,54 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar& scalars, int timestep)
 
     if (isMaster()) {
 
-        double Ukin = scalars.getScalar("Ukin");
-        double Uelm = scalars.getScalar("Uelm");
+        double Ukin = scalars->getScalar("Ukin");
+        double Uelm = scalars->getScalar("Uelm");
 
         // added & lost energies due to the moving window
-        double Ukin_out_mvw = scalars.getScalar("Ukin_out_mvw");
-        double Ukin_inj_mvw = scalars.getScalar("Ukin_inj_mvw");
-        double Uelm_out_mvw = scalars.getScalar("Uelm_out_mvw");
-        double Uelm_inj_mvw = scalars.getScalar("Uelm_inj_mvw");
+        double Ukin_out_mvw = scalars->getScalar("Ukin_out_mvw");
+        double Ukin_inj_mvw = scalars->getScalar("Ukin_inj_mvw");
+        double Uelm_out_mvw = scalars->getScalar("Uelm_out_mvw");
+        double Uelm_inj_mvw = scalars->getScalar("Uelm_inj_mvw");
         
         // added & lost energies at the boundaries
-        double Ukin_bnd = scalars.getScalar("Ukin_bnd");
-        double Uelm_bnd = scalars.getScalar("Uelm_bnd");
+        double Ukin_bnd = scalars->getScalar("Ukin_bnd");
+        double Uelm_bnd = scalars->getScalar("Uelm_bnd");
 
         // total energy in the simulation
         double Utot = Ukin + Uelm;
 
         // expected total energy
-        double Uexp = scalars.Energy_time_zero + Uelm_bnd + Ukin_inj_mvw + Uelm_inj_mvw
+        double Uexp = scalars->Energy_time_zero + Uelm_bnd + Ukin_inj_mvw + Uelm_inj_mvw
             -           ( Ukin_bnd + Ukin_out_mvw + Uelm_out_mvw );
         
         // energy balance
         double Ubal = Utot - Uexp;
         
         // energy used for normalization
-        scalars.EnergyUsedForNorm = Utot;
+        scalars->EnergyUsedForNorm = Utot;
         
         // normalized energy balance
         double Ubal_norm(0.);
-        if (scalars.EnergyUsedForNorm>0.)
-            Ubal_norm = Ubal / scalars.EnergyUsedForNorm;
+        if (scalars->EnergyUsedForNorm>0.)
+            Ubal_norm = Ubal / scalars->EnergyUsedForNorm;
 
-        scalars.setScalar("Ubal_norm",Ubal_norm);
-        scalars.setScalar("Ubal",Ubal);
-        scalars.setScalar("Uexp",Uexp);
-        scalars.setScalar("Utot",Utot);
+        scalars->setScalar("Ubal_norm",Ubal_norm);
+        scalars->setScalar("Ubal",Ubal);
+        scalars->setScalar("Uexp",Uexp);
+        scalars->setScalar("Utot",Utot);
 
         if (timestep==0) {
-            scalars.Energy_time_zero  = Utot;
-            scalars.EnergyUsedForNorm = scalars.Energy_time_zero;
+            scalars->Energy_time_zero  = Utot;
+            scalars->EnergyUsedForNorm = scalars->Energy_time_zero;
         }
 
+	scalars->write(timestep);
 
     }
         
 
-    scalars.write(timestep);
 
 } // END computeGlobalDiags(DiagnosticScalar& scalars ...)
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-// MPI synchronization of phasespace diags
-// ---------------------------------------------------------------------------------------------------------------------
-void SmileiMPI::computeGlobalDiags(DiagnosticPhaseSpace& phases, int timestep)
-{
-    int nDiags( phases.vecDiagPhaseToRun.size() );
-    for (vector<DiagnosticPhase*>::const_iterator diag=phases.vecDiagPhaseToRun.begin() ; diag != phases.vecDiagPhaseToRun.end(); diag++) 
-        (*diag)->writeData();
-    phases.vecDiagPhaseToRun.clear();
-
-} // END computeGlobalDiags(DiagnosticPhaseSpace& phases ...)
 
 
 // ---------------------------------------------------------------------------------------------------------------------

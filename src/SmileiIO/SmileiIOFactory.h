@@ -18,16 +18,15 @@ public:
     //  --------------------------------------------------------------------------------------------------------------------
     //! Create appropriate IO environment for the geometry 
     //! \param params : Parameters
-    //! \param diag : Diagnostics
     //! \param smpi : MPI environment
     //  --------------------------------------------------------------------------------------------------------------------
-    static SmileiIO* create(Params& params, Diagnostic *diag, Patch* patch) {
+    static SmileiIO* create(Params& params, Patch* patch) {
         SmileiIO* sio = NULL;
         if ( params.geometry == "1d3v" ) {
-            sio = new  SmileiIO_Cart1D(params, diag, patch);
+            sio = new  SmileiIO_Cart1D(params, patch);
         }
         else if ( params.geometry == "2d3v" ) {
-            sio = new  SmileiIO_Cart2D(params, diag, patch);
+            sio = new  SmileiIO_Cart2D(params, patch);
         }
         else {
             ERROR( "Geometry " << params.geometry << " not implemented" );

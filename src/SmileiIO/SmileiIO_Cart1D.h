@@ -19,7 +19,7 @@
 class SmileiIO_Cart1D : public SmileiIO {
 public:
     //! Create // HDF5 environment
-    SmileiIO_Cart1D( Params& params, Diagnostic *diag, Patch* patch );
+    SmileiIO_Cart1D( Params& params, Patch* patch );
     //! Destructor for SmileiIO
     ~SmileiIO_Cart1D();
 

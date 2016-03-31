@@ -60,20 +60,20 @@ public:
             vecPatches.patches_[ipatch] = PatchesFactory::create(params, smpi, firstpatch + ipatch);
         }
         vecPatches.set_refHindex() ;
-        vecPatches.Diags = vecPatches(0)->Diags;
         
         // Patch initializations which needs some sync (parallel output, are data distribution)
         int itime(0);
-        DiagsVectorPatch::initProbesDiags(vecPatches, params, itime);
         DiagsVectorPatch::initDumpFields(vecPatches, params, itime);
-        DiagsVectorPatch::initTrackParticles(vecPatches, params, smpi);
         DiagsVectorPatch::initCollisions(vecPatches, params, smpi);
-        
+
         vecPatches.update_field_list();
         
         // Figure out if there are antennas
         vecPatches.hasAntennas = ( vecPatches(0)->EMfields->antennas.size() > 0 );
-        
+
+	vecPatches.createGlobalDiags( params, smpi );
+	vecPatches.initAllDiags( params, smpi );
+	  
         return vecPatches;
     }
 

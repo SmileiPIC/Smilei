@@ -199,7 +199,7 @@ public:
     // TEST PARTICLE PARAMETERS
     bool isTest;
 
-    //! True if tracking the particles (activates one DiagnosticTrackParticles)
+    //! True if tracking the particles (activates one DiagTrack)
     bool tracked;
     //! Time selection for tracking particles
     TimeSelection * track_timeSelection;
