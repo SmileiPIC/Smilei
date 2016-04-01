@@ -226,8 +226,6 @@ public:
             
 	// Create the particles
 	if (!params.restart) {
-	    // unsigned int npart_effective=0;
-                
 	    // Create particles in a space starting at cell_index
 	    std::vector<double> cell_index(3,0);
 	    for (unsigned int i=0 ; i<params.nDim_field ; i++) {
@@ -238,10 +236,8 @@ public:
 	    int starting_bin_idx = 0;
 	    // does a loop over all cells in the simulation
 	    // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
-	    /*npart_effective = */
 	    thisSpecies->createParticles(params.n_space, cell_index, starting_bin_idx );
                 
-	    //PMESSAGE( 1, smpi->getRank(),"Species "<< speciesNumber <<" # part "<< npart_effective );
 	}
 
 	
@@ -287,13 +283,7 @@ public:
             retSpecies.push_back(thisSpecies);
             
             // Print info
-            unsigned int nPart = thisSpecies->getNbrOfParticles();
-#ifdef _TO_MANAGE_WITH_PATCH
-            MPI_Reduce(smpi->isMaster()?MPI_IN_PLACE:&nPart, &nPart, 1, MPI_UNSIGNED, MPI_SUM, 0, MPI_COMM_WORLD);
-            MESSAGE(2, "Species " << ispec << " (" << species_type << ") created with " << nPart << " particles" );
-#else
 	    if (patch->isMaster()) MESSAGE(2, "Species " << ispec << " (" << thisSpecies->species_type << ") created,\t check for scalars for the number of particles" );
-#endif
         }
         
         // we cycle again to fix electron species for ionizable species
