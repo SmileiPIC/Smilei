@@ -110,7 +110,9 @@ void VectorPatch::sumDensities( int* diag_flag, vector<Timer>& timer )
 
     if(*diag_flag){
         for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
+            #pragma omp master
             update_field_list(ispec);
+            #pragma omp barrier
             SyncVectorPatch::sumRhoJs( (*this), ispec ); // MPI
         }
     }
@@ -811,7 +813,7 @@ void VectorPatch::update_field_list(int ispec)
     listJzs_.resize( size() ) ;
     listrhos_.resize( size() ) ;
 
-    #pragma omp for
+    //#pragma omp for
     for (int ipatch=0 ; ipatch < size() ; ipatch++) {
         listJxs_[ipatch] = patches_[ipatch]->EMfields->Jx_s[ispec] ;
         listJys_[ipatch] = patches_[ipatch]->EMfields->Jy_s[ispec] ;
