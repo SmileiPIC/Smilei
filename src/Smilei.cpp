@@ -481,9 +481,8 @@ int main (int argc, char* argv[])
 
     TITLE("END");
     delete sio;
-    //delete smpi;
-    //delete smpiData;
-    
+    delete smpi;
+    delete smpiData;
     return 0;
     
 }//END MAIN
