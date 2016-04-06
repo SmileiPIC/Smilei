@@ -60,24 +60,13 @@ random_seed = 0
 # ----------------
 # LASER PROPERTIES
 # ----------------
-#
-# for each laser define:
-# a0: maximum amplitude of the laser electric field (in units of the normalization field)
-# angle: angle (in degree) at which the laser enters the simulation box
-# delta: polarization parameter, (0:y) (1:z) (0.707106781:circ)
-# time_profile: string defining the time profile
-# double_params: vector of real parameters used by the different time-profiles
-#
-Laser(
-	boxSide = 'west',
-	a0=0.1,
-	focus=[10.*l0, 25.0*l0],
-	angle=20.0, 
-	delta=0.0,              
-	time_profile = 'sin2',
-	double_params = [5.*t0],
-	transv_profile = 'focused',
-	double_params_transv = [5.0*l0]
+LaserGaussian2D(
+    boxSide         = "west",
+    a0              = 0.1,
+	focus           = [10.*l0, 25.0*l0],
+    waist           = 5.0*l0,
+    incidence_angle = 20./180.*math.pi,
+    time_envelope   = tgaussian(fwhm=5.*t0, center=10.*t0)
 )
 
 # DEFINE ALL SPECIES

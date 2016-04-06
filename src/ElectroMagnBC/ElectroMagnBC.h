@@ -7,15 +7,14 @@
 #include "Patch.h"
 
 class Params;
-class LaserParams;
 class Patch;
 class ElectroMagn;
-class LaserProfile;
+class Laser;
 class Field;
 
 class ElectroMagnBC {
 public:
-    ElectroMagnBC( Params &params,  LaserParams &laser_params, Patch* patch );
+    ElectroMagnBC( Params &params, Patch* patch );
     virtual ~ElectroMagnBC();
 
     virtual void apply_xmin(ElectroMagn* EMfields, double time_dual, Patch* patch) = 0;
@@ -28,10 +27,10 @@ public:
     virtual void save_fields_BC2D_Long(Field*) {};
     virtual void save_fields_BC2D_Trans(Field*) {};
     
- protected:
+     //! Vector for the various lasers
+    std::vector<Laser*> vecLaser;
 
-    //! Vector for the various lasers
-    std::vector<LaserProfile*> laser_;
+protected:
     
     //! time-step
     double dt;

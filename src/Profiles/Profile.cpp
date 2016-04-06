@@ -10,6 +10,8 @@ using namespace std;
 // Default constructor.
 Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name)
 {
+    ostringstream info_("");
+    info_ << nvariables << "D";
     
     if (!PyCallable_Check(py_profile)) {
         ERROR("Profile `"<<name<<"`: not a function");
@@ -21,6 +23,8 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name)
         
         string profileName("");
         PyTools::getAttr(py_profile, "profileName", profileName );
+        
+        info_ << " built-in profile `" << profileName << "`" ;
         
         if( profileName == "constant" ) {
         
@@ -67,6 +71,15 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name)
             else
                 ERROR("Profile `"<<name<<"`: cosine() profile defined only in 1D or 2D");
                 
+        } else if( profileName == "polynomial" ){
+        
+            if     ( nvariables == 1 )
+                function = new Function_Polynomial1D(py_profile);
+            else if( nvariables == 2 )
+                function = new Function_Polynomial2D(py_profile);
+            else
+                ERROR("Profile `"<<name<<"`: polynomial() profile defined only in 1D or 2D");
+            
         } else if( profileName == "tconstant" ){
         
             if( nvariables == 1 )
@@ -101,6 +114,13 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name)
                 function = new Function_TimeCosine(py_profile);
             else
                 ERROR("Profile `"<<name<<"`: tcosine() profile is only for time");
+            
+        } else if( profileName == "tpolynomial" ){
+        
+            if( nvariables == 1 )
+                function = new Function_TimePolynomial(py_profile);
+            else
+                ERROR("Profile `"<<name<<"`: tpolynomial() profile is only for time");
             
         }
         
@@ -142,7 +162,11 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name)
         else {
             ERROR("Profile `"<<name<<"`: defined with unsupported number of variables");
         }
+        
+        info_ << " user-defined function";
     }
+    
+    info = info_.str();
 }
 
 
@@ -219,16 +243,16 @@ double Function_Trapezoidal2D::valueAt(vector<double> x_cell) {
 double Function_Gaussian1D::valueAt(vector<double> x_cell) {
     double x = x_cell[0], xfactor=0.;
     if ( x > xvacuum  && x < xvacuum+xlength )
-        xfactor = exp( -pow(x-xcenter, xorder) * invsigmax );
+        xfactor = exp( -pow(x-xcenter, xorder) * invxsigma );
     return value * xfactor;
 }
 double Function_Gaussian2D::valueAt(vector<double> x_cell) {
     double x = x_cell[0], xfactor=0.;
     double y = x_cell[1], yfactor=0.;
     if ( x > xvacuum  && x < xvacuum+xlength )
-        xfactor = exp( -pow(x-xcenter, xorder) * invsigmax );
+        xfactor = exp( -pow(x-xcenter, xorder) * invxsigma );
     if ( y > yvacuum  && y < yvacuum+ylength )
-        yfactor = exp( -pow(y-ycenter, yorder) * invsigmay );
+        yfactor = exp( -pow(y-ycenter, yorder) * invysigma );
     return value * xfactor * yfactor;
 }
 
@@ -267,6 +291,36 @@ double Function_Cosine2D::valueAt(vector<double> x_cell) {
     return xfactor * yfactor;
 }
 
+// Polynomial profiles
+double Function_Polynomial1D::valueAt(vector<double> x_cell) {
+    double r = 0., xx0 = x_cell[0]-x0, xx = 1.;
+    int currentOrder = 0;
+    for( int i=0; i<orders.size(); i++ ) {
+        while( currentOrder<orders[i] ) {
+            currentOrder += 1;
+            xx *= xx0;
+        }
+        r += coeffs[i][0] * xx;
+    }
+    return r;
+}
+double Function_Polynomial2D::valueAt(vector<double> x_cell) {
+    double r = 0., xx0 = x_cell[0]-x0, yy0 = x_cell[1]-y0;
+    vector<double> xx;
+    int currentOrder = 0;
+    xx.resize(orders.back()+1);
+    xx[0] = 1.;
+    for( int i=0; i<orders.size(); i++ ) {
+        while( currentOrder<orders[i] ) {
+            currentOrder += 1;
+            xx[currentOrder] = xx[currentOrder-1] * yy0;
+            for( int j=0; j<currentOrder; j++ ) xx[j] *= xx0;
+        }
+        for( int j=0; j<=orders[i]; j++ ) r += coeffs[i][j] * xx[j];
+    }
+    return r;
+}
+
 // Time constant profile
 double Function_TimeConstant::valueAt(double time) {
     if( time > start ) return 1.;
@@ -299,5 +353,18 @@ double Function_TimeCosine::valueAt(double time) {
     else                             return base + amplitude * cos(phi + freq*(time-start));
 }
 
+// Time polynomial profile
+double Function_TimePolynomial::valueAt(double time) {
+    double r = 0., tt0 = time-t0, tt = 1.;
+    int currentOrder = 0;
+    for( int i=0; i<orders.size(); i++ ) {
+        while( currentOrder<orders[i] ) {
+            currentOrder += 1;
+            tt *= tt0;
+        }
+        r += coeffs[i] * tt;
+    }
+    return r;
+}
 
 

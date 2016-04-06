@@ -12,8 +12,8 @@
 
 using namespace std;
 
-ElectroMagnBC2D_Trans_Damping::ElectroMagnBC2D_Trans_Damping( Params &params, LaserParams &laser_params, Patch* patch )
-  : ElectroMagnBC( params, laser_params, patch )
+ElectroMagnBC2D_Trans_Damping::ElectroMagnBC2D_Trans_Damping( Params &params, Patch* patch )
+  : ElectroMagnBC( params, patch )
 {
     // number of nodes of the primal and dual grid in the x-direction
     nx_p = params.n_space[0]+1+2*params.oversize[0];

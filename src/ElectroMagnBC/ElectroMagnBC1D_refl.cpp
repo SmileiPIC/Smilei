@@ -19,8 +19,8 @@ using namespace std;
 //      - electric fields are put to zero in the ghost cells
 //      - magnetic fields are constant in the ghost cells
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagnBC1D_refl::ElectroMagnBC1D_refl( Params &params, LaserParams &laser_params, Patch* patch )
-  : ElectroMagnBC( params, laser_params, patch )
+ElectroMagnBC1D_refl::ElectroMagnBC1D_refl( Params &params, Patch* patch )
+  : ElectroMagnBC( params, patch )
 {
     
     // oversize

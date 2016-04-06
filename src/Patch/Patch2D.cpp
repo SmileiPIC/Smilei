@@ -107,8 +107,6 @@ void Patch2D::initSumField( Field* field, int iDim )
     /********************************************************************************/
         
     MPI_Datatype ntype = ntypeSum_[iDim][isDual[0]][isDual[1]];
-    MPI_Request srequest[patch_ndims_][2];
-    MPI_Request rrequest[patch_ndims_][2];
         
     for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
             
@@ -160,12 +158,11 @@ void Patch2D::finalizeSumField( Field* field, int iDim )
     oversize2[1] *= 2;
     oversize2[1] += 1 + f2D->isDual_[1];
     
-    int istart, ix, iy;
+    int istart;
     /********************************************************************************/
     // Send/Recv in a buffer data to sum
     /********************************************************************************/
 
-    MPI_Datatype ntype = ntypeSum_[iDim][isDual[0]][isDual[1]];
     MPI_Status sstat    [patch_ndims_][2];
     MPI_Status rstat    [patch_ndims_][2];
 	
@@ -264,11 +261,9 @@ void Patch2D::initExchange( Field* field )
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch2D::finalizeExchange( Field* field )
 {
-    int patch_ndims_(2);
-    int patch_nbNeighbors_(2);
-
     Field2D* f2D =  static_cast<Field2D*>(field);
 
+    int patch_ndims_(2);
     MPI_Status sstat    [patch_ndims_][2];
     MPI_Status rstat    [patch_ndims_][2];
 
@@ -343,7 +338,6 @@ void Patch2D::initExchange( Field* field, int iDim )
 void Patch2D::finalizeExchange( Field* field, int iDim )
 {
     int patch_ndims_(2);
-    int patch_nbNeighbors_(2);
 
     Field2D* f2D =  static_cast<Field2D*>(field);
 

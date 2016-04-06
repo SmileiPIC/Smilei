@@ -74,7 +74,7 @@ void Field1D::allocateDims(std::vector<unsigned int> dims)
 void Field1D::deallocateDims()
 {
     delete [] data_;
-    data_!=NULL;
+    data_=NULL;
 }
 
 

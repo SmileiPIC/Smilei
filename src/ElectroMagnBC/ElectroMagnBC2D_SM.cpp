@@ -10,11 +10,12 @@
 #include "ElectroMagn.h"
 #include "Field2D.h"
 #include "Tools.h"
+#include "Laser.h"
 
 using namespace std;
 
-ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, LaserParams &laser_params, Patch* patch )
-  : ElectroMagnBC( params, laser_params, patch )
+ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, Patch* patch )
+  : ElectroMagnBC( params, patch )
 {
     // conversion factor from degree to radian
     conv_deg2rad = M_PI/180.0;
@@ -174,23 +175,17 @@ void ElectroMagnBC2D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
         Field2D* Bz2D = static_cast<Field2D*>(EMfields->Bz_);
         
         // for By^(d,p)
+        vector<double> yp(1);
+        yp[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dy;
         for (unsigned int j=0 ; j<ny_p ; j++) {
             
             double byW = 0.;
-            double yp     = patch->getDomainLocalMin(1) + ((double)j-EMfields->oversize[1])     * dy;
-            for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
-                if (laser_[ilaser]->laser_struct.boxSide == "west") {
-                    
-                    if ( (laser_[ilaser]->laser_struct.isFocused)||(laser_[ilaser]->laser_struct.angle!=0) ) {
-                        byW += 0.0;
-                    }
-                    else {
-                        byW += laser_[ilaser]->a0_delta_y_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual)
-                        *  laser_[ilaser]->transverse_profile2D(time_dual,yp);
-                    }//isFocused or angle!=0
-                    
-                }
-            }//ilaser
+            yp[0] += dy;
+            
+            // Lasers
+            for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
+                byW += vecLaser[ilaser]->getAmplitude0(yp, time_dual, j);
+            }
             
             /*(*By2D)(0,j) = Alpha_SM_W   * (*Ez2D)(0,j)
             +              Beta_SM_W    * (*By2D)(1,j)
@@ -208,39 +203,17 @@ void ElectroMagnBC2D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
         
         
         // for Bz^(d,d)
+        vector<double> yd(1);
+        yd[0] = patch->getDomainLocalMin(1) - (0.5+EMfields->oversize[1])*dy;
         for (unsigned int j=0 ; j<ny_d ; j++) {
             
             double bzW = 0.;
-            double yd     = patch->getDomainLocalMin(1) + ((double)j-0.5-EMfields->oversize[1]) * dy;
+            yd[0] += dy;
             
-            for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
-                if (laser_[ilaser]->laser_struct.boxSide == "west") {
-                    
-                    if ( (laser_[ilaser]->laser_struct.isFocused) || (laser_[ilaser]->laser_struct.angle!=0) ) {
-                        double delay   = laser_[ilaser]->laser_struct.delay;
-                        double xfoc    = laser_[ilaser]->laser_struct.focus[0];
-                        double yfoc    = laser_[ilaser]->laser_struct.focus[1];
-                        double theta   = laser_[ilaser]->laser_struct.angle * conv_deg2rad;
-                        double zeta    = -xfoc*cos(theta) + (yd-yfoc)*sin(theta);
-                        double rho     =  xfoc*sin(theta) + (yd-yfoc)*cos(theta);
-                        double tau     = time_dual - yd*sin(theta) - delay;
-                        double bwaist  = 0.5/sqrt(log(2.0)) * laser_[ilaser]->laser_struct.profile_transv.double_params[0];
-                        double z2ovLr2 = pow(zeta,2)/pow(bwaist,4);
-                        double waist   = bwaist * sqrt( 1.0 + z2ovLr2 );
-                        double curvRad = 1000.0 * laser_[ilaser]->laser_struct.profile_transv.double_params[0];
-                        if (zeta!=0)
-                            curvRad = zeta* ( 1.0 + 1.0/z2ovLr2 );
-                        double gouyPhs = -0.5 * atan( sqrt(z2ovLr2) );
-                        double phi     = -0.5 * pow(rho,2)/curvRad + gouyPhs;
-                        bzW += laser_[ilaser]->laser_struct.a0 * sin(tau+phi) * laser_[ilaser]->time_profile(tau)
-                        *  laser_[ilaser]->transverse_profile2D(time_dual,rho/waist);
-                    }
-                    else {
-                        bzW += laser_[ilaser]->a0_delta_z_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual)
-                        *  laser_[ilaser]->transverse_profile2D(time_dual,yd);
-                    }//isFocused or angle!=0
-                }
-            }//ilaser
+            // Lasers
+            for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
+                bzW += vecLaser[ilaser]->getAmplitude1(yd, time_dual, j);
+            }
             
             /*(*Bz2D)(0,j) = -Alpha_SM_W * (*Ey2D)(0,j)
             +               Beta_SM_W  * (*Bz2D)(1,j)
@@ -272,16 +245,17 @@ void ElectroMagnBC2D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Pat
         Field2D* Bz2D = static_cast<Field2D*>(EMfields->Bz_);
         
         // for By^(d,p)
+        vector<double> yp(1);
+        yp[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dy;
         for (unsigned int j=0 ; j<ny_p ; j++) {
             
             double byE = 0.;
-            double yp     = patch->getDomainLocalMin(1) + ((double)j-EMfields->oversize[1])     * dy;
-            for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
-                // Incident field (west boundary)
-                if (laser_[ilaser]->laser_struct.boxSide == "east") {
-                    byE += laser_[ilaser]->a0_delta_y_ * cos(time_dual) * laser_[ilaser]->time_profile(time_dual) * laser_[ilaser]->transverse_profile2D(time_dual,yp);
-                }
-            }//ilaser
+            yp[0] += dy;
+            
+            // Lasers
+            for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
+                byE += vecLaser[ilaser]->getAmplitude0(yp, time_dual, j);
+            }
             
             /*(*By2D)(nx_d-1,j) = Alpha_SM_E   * (*Ez2D)(nx_p-1,j)
             +                   Beta_SM_E    * (*By2D)(nx_d-2,j)
@@ -299,16 +273,17 @@ void ElectroMagnBC2D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Pat
         
         
         // for Bz^(d,d)
+        vector<double> yd(1);
+        yd[0] = patch->getDomainLocalMin(1) - (0.5+EMfields->oversize[1])*dy;
         for (unsigned int j=0 ; j<ny_d ; j++) {
             
             double bzE = 0.;
-            double yd     = patch->getDomainLocalMin(1) + ((double)j-EMfields->oversize[1]-0.5) * dy;
-            for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
-                if (laser_[ilaser]->laser_struct.boxSide == "east") {
-                    // Incident field (east boundary)
-                    bzE += laser_[ilaser]->a0_delta_z_ * sin(time_dual) * laser_[ilaser]->time_profile(time_dual) * laser_[ilaser]->transverse_profile2D(time_dual,yd);
-                }
-            }//ilaser
+            yd[0] += dy;
+            
+            // Lasers
+            for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
+                bzE += vecLaser[ilaser]->getAmplitude1(yd, time_dual, j);
+            }
             
             /*(*Bz2D)(nx_d-1,j) = -Alpha_SM_E * (*Ey2D)(nx_p-1,j)
             +                    Beta_SM_E  * (*Bz2D)(nx_d-2,j)

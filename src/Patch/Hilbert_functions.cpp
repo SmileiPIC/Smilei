@@ -243,7 +243,7 @@ unsigned int generalhilbertindex(unsigned int m0, unsigned int m1, unsigned int 
 {
     if( (x<0) || (x>=(1<<m0)) || (y<0) || (y>=(1<<m1)) || (z<0) || (z>=(1<<m2)))return MPI_PROC_NULL ;
 
-    unsigned int h,e,d,*einit,*dinit,dimmin,dimmax,dimmed,l,localx,localy,localz, mi[3],localp[3],tempp[3],mmin;
+    unsigned int h,e,d,*einit,*dinit,dimmin,dimmax,dimmed, mi[3],localp[3],tempp[3];
     h=0;
     e=0;
     d=0;
@@ -327,7 +327,7 @@ void generalhilbertindexinv(unsigned int m0, unsigned int m1, unsigned int* x, u
 //3D version
 void generalhilbertindexinv(unsigned int m0, unsigned int m1, unsigned int m2,  unsigned int* x, unsigned int* y, unsigned int* z, unsigned int h)
 {
-    unsigned int e,d,dimmin,dimmax,dimmed,l,localx,localy,localz, mi[3],*localp[3],tempp[3],localh;
+    unsigned int e,d,dimmin,dimmax,dimmed, mi[3],*localp[3],tempp[3],localh;
     e=0;
     d=0;
     //Store positions and dimensions in arrays

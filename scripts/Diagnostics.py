@@ -359,14 +359,14 @@ class Units(object):
 			return 1., u"{0.units:P}".format(val)
 		return 1., ""
 	
-	def prepare(self, wavelength_SI=None, xunits="", yunits="", vunits="", tunits=""):
+	def prepare(self, referenceAngularFrequency_SI=None, xunits="", yunits="", vunits="", tunits=""):
 		if self.UnitRegistry:
-			if wavelength_SI:
+			if referenceAngularFrequency_SI:
 				# Load pint's default unit registry
 				self.ureg = self.UnitRegistry()
 				# Define code units
 				self.ureg.define("V_r = speed_of_light"                   ) # velocity
-				self.ureg.define("W_r = 2*pi*V_r/("+str(wavelength_SI)+"*meter)") # frequency
+				self.ureg.define("W_r = "+str(referenceAngularFrequency_SI)+"*hertz") # frequency
 				self.ureg.define("M_r = electron_mass"                    ) # mass
 				self.ureg.define("Q_r = 1.602176565e-19 * coulomb"        ) # charge
 			else:
@@ -488,13 +488,13 @@ class Diagnostic(object):
 		# Prepare units
 		self._dim = len(self._shape)
 		if self.valid:
-			try:    wavelength_SI = self.namelist.wavelength_SI
-			except: wavelength_SI = None
+			try:    referenceAngularFrequency_SI = self.namelist.referenceAngularFrequency_SI
+			except: referenceAngularFrequency_SI = None
 			xunits = None
 			yunits = None
 			if self._dim > 0: xunits = self._units[0]
 			if self._dim > 1: yunits = self._units[1]
-			self.units.prepare(wavelength_SI, xunits, yunits, self._vunits)
+			self.units.prepare(referenceAngularFrequency_SI, xunits, yunits, self._vunits)
 	
 	# When no action is performed on the object, this is what appears
 	def __repr__(self):

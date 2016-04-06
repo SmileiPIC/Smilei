@@ -2,6 +2,7 @@
 #define Profile_H
 
 #include <vector>
+#include <string>
 #include "SmileiMPI.h"
 #include "Tools.h"
 #include "PyTools.h"
@@ -56,9 +57,15 @@ public:
         return function->valueAt(coordinates, time);
     };
     
+    //! Get info on the loaded profile, to be printed later
+    inline std::string getInfo() { return info; };
+    
 private:
     //! Object that holds the information on the profile function
     Function * function;
+    
+    //! String containing some info on the profile
+    std::string info;
     
 };//END class Profile
 
@@ -188,18 +195,18 @@ class Function_Gaussian1D : public Function
 {
 public:
     Function_Gaussian1D ( PyObject *py_profile ) {
-        double sigmax;
+        double xsigma;
         PyTools::getAttr(py_profile, "value"   , value    );
         PyTools::getAttr(py_profile, "xvacuum" , xvacuum  );
         PyTools::getAttr(py_profile, "xlength" , xlength  );
-        PyTools::getAttr(py_profile, "sigmax"  , sigmax   );
+        PyTools::getAttr(py_profile, "xsigma"  , xsigma   );
         PyTools::getAttr(py_profile, "xcenter" , xcenter  );
         PyTools::getAttr(py_profile, "xorder"  , xorder   );
-        invsigmax = 1./sigmax;
+        invxsigma = 1./xsigma;
     };
     double valueAt(std::vector<double>);
 private:
-    double value, xvacuum, xlength, invsigmax, xcenter;
+    double value, xvacuum, xlength, invxsigma, xcenter;
     int xorder;
 };
 
@@ -208,26 +215,26 @@ class Function_Gaussian2D : public Function
 {
 public:
     Function_Gaussian2D ( PyObject *py_profile ) {
-        double sigmax, sigmay;
+        double xsigma, ysigma;
         PyTools::getAttr(py_profile, "value"   , value    );
         PyTools::getAttr(py_profile, "xvacuum" , xvacuum  );
         PyTools::getAttr(py_profile, "xlength" , xlength  );
-        PyTools::getAttr(py_profile, "sigmax"  , sigmax   );
+        PyTools::getAttr(py_profile, "xsigma"  , xsigma   );
         PyTools::getAttr(py_profile, "xcenter" , xcenter  );
         PyTools::getAttr(py_profile, "xorder"  , xorder   );
         PyTools::getAttr(py_profile, "yvacuum" , yvacuum  );
         PyTools::getAttr(py_profile, "ylength" , ylength  );
-        PyTools::getAttr(py_profile, "sigmay"  , sigmay   );
+        PyTools::getAttr(py_profile, "ysigma"  , ysigma   );
         PyTools::getAttr(py_profile, "ycenter" , ycenter  );
         PyTools::getAttr(py_profile, "yorder"  , yorder   );
-        invsigmax = 1./sigmax;
-        invsigmay = 1./sigmay;
+        invxsigma = 1./xsigma;
+        invysigma = 1./ysigma;
     };
     double valueAt(std::vector<double>);
 private:
     double value, 
-        xvacuum, xlength, invsigmax, xcenter,
-        yvacuum, ylength, invsigmay, ycenter;
+        xvacuum, xlength, invxsigma, xcenter,
+        yvacuum, ylength, invysigma, ycenter;
     int xorder, yorder;
 };
 
@@ -313,6 +320,42 @@ private:
 };
 
 
+class Function_Polynomial1D : public Function
+{
+public:
+    Function_Polynomial1D ( PyObject *py_profile ) {
+        PyTools::getAttr(py_profile, "orders", orders );
+        PyTools::getAttr(py_profile, "coeffs", coeffs );
+        PyTools::getAttr(py_profile, "x0"    , x0     );
+    };
+    double valueAt(std::vector<double>);
+private:
+    double x0;
+    std::vector<int> orders;
+    std::vector<std::vector<double> > coeffs;
+};
+
+
+class Function_Polynomial2D : public Function
+{
+public:
+    Function_Polynomial2D ( PyObject *py_profile ) {
+        PyTools::getAttr(py_profile, "orders", orders );
+        PyTools::getAttr(py_profile, "coeffs", coeffs );
+        PyTools::getAttr(py_profile, "x0"    , x0     );
+        PyTools::getAttr(py_profile, "y0"    , y0     );
+        for( int i=0; i<orders.size(); i++)
+            if( coeffs[i].size() != orders[i]+1 )
+                ERROR("2D polynomial profile has a wrong number of coefficients for order "<<orders[i]);
+    };
+    double valueAt(std::vector<double>);
+private:
+    double x0, y0;
+    std::vector<int> orders;
+    std::vector<std::vector<double> > coeffs;
+};
+
+
 class Function_TimeConstant : public Function
 {
 public:
@@ -395,6 +438,21 @@ private:
     double base, amplitude, start, end, phi, freq;
 };
 
+
+class Function_TimePolynomial : public Function
+{
+public:
+    Function_TimePolynomial ( PyObject *py_profile ) {
+        PyTools::getAttr(py_profile, "orders", orders );
+        PyTools::getAttr(py_profile, "coeffs", coeffs );
+        PyTools::getAttr(py_profile, "t0"    , t0     );
+    };
+    double valueAt(double);
+private:
+    double t0;
+    std::vector<int> orders;
+    std::vector<double> coeffs;
+};
 
 
 

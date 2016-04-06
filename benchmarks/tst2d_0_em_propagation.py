@@ -12,7 +12,7 @@ l0 = 2.0*math.pi		# laser wavelength
 t0 = l0					# optical cicle
 Lsim = [20.*l0,50.*l0]	# length of the simulation
 Tsim = 50.*t0			# duration of the simulation
-resx = 20.				# nb of cells in on laser wavelength
+resx = 10.				# nb of cells in on laser wavelength
 rest = 30.				# time of timestep in one optical cycle 
 
 # dim: Geometry of the simulation
@@ -34,7 +34,7 @@ interpolation_order = 2
 cell_length = [l0/resx,l0/resx]
 sim_length  = Lsim
 
-number_of_patches = [ 16, 8 ]
+number_of_patches = [ 8, 4 ]
 
 # SIMULATION TIME
 # timestep: duration of the timestep
@@ -59,31 +59,20 @@ random_seed = 0
 # ----------------
 # LASER PROPERTIES
 # ----------------
-#
-# for each laser define:
-# a0: maximum amplitude of the laser electric field (in units of the normalization field)
-# angle: angle (in degree) at which the laser enters the simulation box
-# delta: polarization parameter, (0:y) (1:z) (0.707106781:circ)
-# time_profile: string defining the time profile
-# double_params: vector of real parameters used by the different time-profiles
-#
-Laser(
-	boxSide = 'west',
-	a0=1.0,
-	focus=[20.*l0, 25.0*l0],
-	angle=20.0, 
-	delta=0.0,              
-	time_profile = 'sin2',
-	double_params = [5.*t0],
-	transv_profile = 'focused',
-	double_params_transv = [5.0*l0]
+LaserGaussian2D(
+    a0              = 1.,
+    omega           = 1.,
+    focus           = [Lsim[0], Lsim[1]/2.],
+    waist           = 8.,
+    incidence_angle = 0.5,
+    time_envelope   = tgaussian()
 )
 
 # ---------------------
 # DIAGNOSTIC PARAMETERS
 # ---------------------
 
-globalEvery = int(rest/2.)
+globalEvery = int(rest)
 
 # DIAG ON SCALARS
 # every = number of time-steps between each output
@@ -91,5 +80,5 @@ globalEvery = int(rest/2.)
 DiagScalar(every=globalEvery)
 
 fieldDump_every = globalEvery
-fieldToDump = ('Ex','Ey')
+fieldToDump = ('Ex','Ey','Ez')
 

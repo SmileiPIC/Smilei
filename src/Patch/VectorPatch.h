@@ -13,7 +13,6 @@
 #include "DiagnosticFactory.h"
 
 #include "Params.h"
-#include "LaserParams.h"
 #include "SmileiMPI.h"
 #include "SimWindow.h"
 #include "SmileiIO.h"

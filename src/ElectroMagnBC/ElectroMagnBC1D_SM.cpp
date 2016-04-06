@@ -9,11 +9,12 @@
 #include "ElectroMagn.h"
 #include "Field1D.h"
 #include "Tools.h"
+#include "Laser.h"
 
 using namespace std;
 
-ElectroMagnBC1D_SM::ElectroMagnBC1D_SM( Params &params, LaserParams &laser_params, Patch* patch )
-  : ElectroMagnBC( params, laser_params, patch )
+ElectroMagnBC1D_SM::ElectroMagnBC1D_SM( Params &params, Patch* patch )
+  : ElectroMagnBC( params, patch )
 {
     // number of nodes of the primal-grid
     nx_p = params.n_space[0]+1 + 2*params.oversize[0];
@@ -68,25 +69,14 @@ void ElectroMagnBC1D_SM::apply_xmin(ElectroMagn* EMfields, double time_dual, Pat
         Field1D* By1D   = static_cast<Field1D*>(EMfields->By_);
         Field1D* Bz1D   = static_cast<Field1D*>(EMfields->Bz_);
         
-        // Laser temporal profile
+        // Lasers
         double byL=0.0, bzL=0.0;
-        
-        for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
-            
-            if (laser_[ilaser]->laser_struct.boxSide == "west") {
-                // omega*time
-                double wt = laser_[ilaser]->omega0_ * time_dual
-                *         ( 1.0 + laser_[ilaser]->tchirp_*laser_[ilaser]->omega0_*time_dual );
-                // Incident field (left boundary)
-                byL += laser_[ilaser]->a0_delta_y_ * sin(wt) * laser_[ilaser]->time_profile(time_dual);
-                bzL += laser_[ilaser]->a0_delta_z_ * cos(wt) * laser_[ilaser]->time_profile(time_dual);
-            } else if (laser_[ilaser]->laser_struct.boxSide == "east") {
-                // nothing done (treating only west bnd here)
-            } else {
-                ERROR("Angle not allowed for 1D/2D laser pulse " << ilaser);
-            }
-            
-        }//ilaser
+        vector<double> pos(1);
+        pos[0] = 0.;
+        for (int ilaser=0; ilaser<vecLaser.size(); ilaser++) {
+            byL += vecLaser[ilaser]->getAmplitude0(pos, time_dual, 0);
+            bzL += vecLaser[ilaser]->getAmplitude1(pos, time_dual, 0);
+        }
         
         // Apply Silver-Mueller EM boundary condition at x=xmin
         (*By1D)(0) =  Alpha_SM*(*Ez1D)(0) + Beta_SM*((*By1D)(1)-By_xvalmin) + Gamma_SM*byL+By_xvalmin;
@@ -108,24 +98,14 @@ void ElectroMagnBC1D_SM::apply_xmax(ElectroMagn* EMfields, double time_dual, Pat
         Field1D* By1D   = static_cast<Field1D*>(EMfields->By_);
         Field1D* Bz1D   = static_cast<Field1D*>(EMfields->Bz_);
     
+        // Lasers
         double byR=0.0, bzR=0.0;
-    
-        for (unsigned int ilaser=0; ilaser< laser_.size(); ilaser++) {
-        
-            if (laser_[ilaser]->laser_struct.boxSide == "west") {
-                // nothing done (treating only east bnd here)
-            } else if (laser_[ilaser]->laser_struct.boxSide == "east") {
-                // omega*time
-                double wt = laser_[ilaser]->omega0_ * time_dual
-                * ( 1.0 + laser_[ilaser]->tchirp_*laser_[ilaser]->omega0_*time_dual );
-                // Incident field (right boundary)
-                byR += laser_[ilaser]->a0_delta_y_ * sin(wt) * laser_[ilaser]->time_profile(time_dual);
-                bzR += laser_[ilaser]->a0_delta_z_ * cos(wt) * laser_[ilaser]->time_profile(time_dual);
-            } else {
-                ERROR("Angle not allowed for 1D/2D laser pulse " << ilaser);
-            }
-        
-        }//ilaser
+        vector<double> pos(1);
+        pos[0] = 0.;
+        for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
+            byR += vecLaser[ilaser]->getAmplitude0(pos, time_dual, 0);
+            bzR += vecLaser[ilaser]->getAmplitude1(pos, time_dual, 0);
+        }
     
         // Silver-Mueller boundary conditions (right)
         (*By1D)(nx_d-1) = -Alpha_SM*(*Ez1D)(nx_p-1)+ Beta_SM*((*By1D)(nx_d-2)-By_xvalmax) + Gamma_SM*byR+By_xvalmax;

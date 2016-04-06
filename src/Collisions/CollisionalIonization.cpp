@@ -33,7 +33,7 @@ vector<vector<vector<double> > > CollisionalIonization::DB_transferredEnergy;
 vector<vector<vector<double> > > CollisionalIonization::DB_lostEnergy;
 
 // Initializes the databases (by patch master only)
-int CollisionalIonization::createDatabase(double wavelength_SI)
+int CollisionalIonization::createDatabase(double referenceAngularFrequency_SI)
 {
     // Leave if the database already exists with same atomic number
     for( int i=0; i<DB_Z.size(); i++ ) {
@@ -51,7 +51,7 @@ int CollisionalIonization::createDatabase(double wavelength_SI)
     le.resize(atomic_number);
     double e, ep, bp, up, ep2, betae2, betab2, betau2, s0, A1, A2, A3, sk, wk, ek;
     int N; // occupation number
-    double coeff = 3.141593 * 2.81794e-15 / wavelength_SI; // pi * r_e / lambda
+    double coeff = 2.81794e-15 * referenceAngularFrequency_SI / (2.*299792458.); // r_e omega / 2c
     for( Zstar=0; Zstar<atomic_number; Zstar++ ) { // For each ionization state
         cs[Zstar].resize(npoints, 0.);
         te[Zstar].resize(npoints, 0.);
@@ -141,6 +141,8 @@ void CollisionalIonization::prepare2(Particles *p1, int i1, Particles *p2, int i
         Wi = p1->weight(i1);
         ni += Wi;
     }
+    if( Zstar<0 )
+        ERROR("Collisional ionization requires positively charged ions");
     // No ionization if fully ionized already
     if( Zstar>=atomic_number ) return;
     // Retrieve the cross section from the database

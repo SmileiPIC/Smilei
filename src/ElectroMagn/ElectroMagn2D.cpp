@@ -24,8 +24,8 @@ ElectroMagn2D::ElectroMagn2D(Params &params, vector<Species*>& vecSpecies, Patch
   ElectroMagn(params, vecSpecies, patch),
 isWestern(patch->isWestern()),
 isEastern(patch->isEastern()),
-isNorthern(patch->isNorthern()),
-isSouthern(patch->isSouthern())
+isSouthern(patch->isSouthern()),
+isNorthern(patch->isNorthern())
 {    
     
     // --------------------------------------------------
@@ -667,8 +667,6 @@ void ElectroMagn2D::restartRhoJ()
     
 void ElectroMagn2D::restartRhoJs()
 {
-    unsigned int size_proj_buffer = 2*oversize[0]+clrw + 1 ;
-
     for (unsigned int ispec=0 ; ispec < n_species ; ispec++) {
         // -----------------------------------
         // Species currents and charge density

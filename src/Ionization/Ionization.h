@@ -34,7 +34,7 @@ protected:
     double EC_to_au;
     double au_to_w0;
 
-    double wavelength_SI;
+    double referenceAngularFrequency_SI;
     double dt;
     unsigned int nDim_field;
     unsigned int nDim_particle;

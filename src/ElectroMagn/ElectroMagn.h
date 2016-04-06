@@ -7,8 +7,6 @@
 
 #include "Field.h"
 #include "Tools.h"
-#include "LaserProfile.h"
-#include "LaserParams.h"
 #include "Profile.h"
 #include "Species.h"
 
@@ -55,9 +53,7 @@ public:
     
     //! Destructor for Electromagn
     virtual ~ElectroMagn();
-    
-    LaserParams laser_params;
-    
+        
     std::vector<unsigned int> dimPrim;
     std::vector<unsigned int> dimDual;
 
@@ -168,7 +164,7 @@ public:
     const std::vector<unsigned int> oversize;
 
     //! Constructor for Electromagn
-    ElectroMagn( Params &params, LaserParams &laser_params, Patch* patch );
+    ElectroMagn( Params &params, Patch* patch );
 
     //! Method used to dump data contained in ElectroMagn
     void dump();

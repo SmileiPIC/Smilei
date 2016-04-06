@@ -86,20 +86,13 @@ class Species(SmileiComponent):
 
 class Laser(SmileiComponent):
     """Laser parameters"""
-    boxSide = None
-    a0 = None
-    omega0 = 1.
-    delta = 1.
-    tchirp = 0.
-    focus = []
-    angle = 0.
-    delay = 0.
-    time_profile = None
-    int_params = []
-    double_params = []
-    transv_profile = None
-    int_params_transv = []
-    double_params_transv = []
+    boxSide = "west"
+    omega = 1.
+    chirp_profile = 1.
+    time_envelope = 1.
+    space_envelope = [1., 0.]
+    phase = [0., 0.]
+    space_time_profile = None
 
 class Collisions(SmileiComponent):
     """Collisions parameters"""
@@ -216,5 +209,5 @@ avgfieldDump_every = 0
 ntime_step_avg = 0
 
 # Default Misc
-wavelength_SI = 0.
+referenceAngularFrequency_SI = 0.
 random_seed = None

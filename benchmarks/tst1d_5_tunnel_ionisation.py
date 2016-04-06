@@ -18,10 +18,6 @@ resx = 100.0		# nb cells in 1 wavelength
 Lsim = l0		# simulation length
 Tsim = 5.0*t0		# duration of the simulation
 
-
-# wavelength_SI: used by Fred Diags. (MG: should be removed at some point)
-wavelength_SI = 1.e-6
-
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
 #      2d3v = cartesian grid with 2d in space + 3d in velocity
@@ -41,7 +37,7 @@ interpolation_order = 2
 cell_length = [l0/resx]
 sim_length  = [Lsim]
 
-number_of_patches = [ 1 ] # or 4
+number_of_patches = [ 4 ]
 
 # SIMULATION TIME
 # timestep: duration of the timestep
@@ -108,18 +104,12 @@ Species(
 )
 
 # LASER PROPERTIES
-# for each laser define:
-# a0: maximum amplitude of the laser electric field (in units of the normalization field)
-# angle: angle (in degree) at which the laser enters the simulation box
-# delta: polarization parameter, (0:y) (1:z) (0.707106781:circ)
-# time_profile: string defining the time profile
-# double_params: vector of real parameters used by the different time-profiles
-# 
-Laser(
-    a0 = 0.1,
-    boxSide = 'west',
-    delta = 1.0,
-    time_profile = 'constant'
+LaserPlanar1D(
+	boxSide = 'west',
+	a0 = 0.1,
+    omega = 1.,
+    polarizationPhi = math.pi/2.,
+    time_envelope = tconstant(),
 )
  
 # ---------------------
@@ -142,7 +132,7 @@ DiagScalar(every = 10)
 
 DiagParticles(
 	output = "density",
-	every = 50,
+	every = 10,
 	species = ["electron"],
 	axes = [
 		["x",  0.45*Lsim, 0.55*Lsim, 200],

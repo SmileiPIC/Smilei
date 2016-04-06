@@ -33,7 +33,7 @@ void DiagsVectorPatch::initCollisions(VectorPatch& vecPatches, Params& params, S
     // For each collision
     for (unsigned int icoll=0 ; icoll<vecPatches(0)->vecCollisions.size(); icoll++) {
         // All patch masters create arrays in the database for ionization
-        index = vecPatches(0)->vecCollisions[icoll]->Ionization->createDatabase(params.wavelength_SI);
+        index = vecPatches(0)->vecCollisions[icoll]->Ionization->createDatabase(params.referenceAngularFrequency_SI);
         // All patches are assigned the correct arrays in the database
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
             vecPatches(ipatch)->vecCollisions[icoll]->Ionization->assignDatabase(index);
