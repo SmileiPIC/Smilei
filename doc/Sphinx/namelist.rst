@@ -499,7 +499,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     
   .. py:data:: waist
     
-    The waist value.
+    The waist value. Transverse coordinate at which the field is at 1/e of its maximum value.
     
   .. py:data:: incidence_angle
     
@@ -507,6 +507,9 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     
     The angle of the laser beam relative to the X axis, in radians.
   
+  .. py:data:: time_envelope
+    
+     Time envelope of the field (not intensity).
 
 
 
