@@ -97,7 +97,7 @@ void VectorPatch::sumDensities( int* diag_flag, vector<Timer>& timer )
 {
     timer[4].restart();
     if  (*diag_flag){
-        #pragma omp for
+        #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
              // Per species in global, Attention if output -> Sync / per species fields
             (*this)(ipatch)->EMfields->computeTotalRhoJ();
@@ -110,13 +110,10 @@ void VectorPatch::sumDensities( int* diag_flag, vector<Timer>& timer )
 
     if(*diag_flag){
         for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
-            //#pragma omp master
             update_field_list(ispec);
-            //#pragma omp barrier
             SyncVectorPatch::sumRhoJs( (*this), ispec ); // MPI
         }
     }
-    //cout << "End sumrho" << endl;
     timer[9].update();
 
 } // End sumDensities
@@ -816,7 +813,7 @@ void VectorPatch::update_field_list(int ispec)
         listrhos_.resize( size() ) ;
     }
 
-    #pragma omp for
+    #pragma omp for schedule(static)
     for (int ipatch=0 ; ipatch < size() ; ipatch++) {
         listJxs_[ipatch] = patches_[ipatch]->EMfields->Jx_s[ispec] ;
         listJys_[ipatch] = patches_[ipatch]->EMfields->Jy_s[ispec] ;

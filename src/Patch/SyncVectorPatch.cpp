@@ -185,7 +185,7 @@ void SyncVectorPatch::exchange( std::vector<Field*> fields, VectorPatch& vecPatc
 
     gsp[0] = 2*oversize[0]+fields[0]->isDual_[0]; //Ghost size primal
 
-    #pragma omp for schedule(dynamic) private(pt1,pt2)
+    #pragma omp for schedule(runtime) private(pt1,pt2)
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++) {
 
 	if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[0][0]){
@@ -209,20 +209,20 @@ void SyncVectorPatch::exchange( std::vector<Field*> fields, VectorPatch& vecPatc
 
     } // End for( ipatch )
 
-    #pragma omp for
+    #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
 	vecPatches(ipatch)->initExchange( fields[ipatch], 0 );
 
-    #pragma omp for
+    #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
 	vecPatches(ipatch)->finalizeExchange( fields[ipatch], 0 );
 
     if (fields[0]->dims_.size()>1) {
-        #pragma omp for
+        #pragma omp for schedule(runtime)
 	for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
 	    vecPatches(ipatch)->initExchange( fields[ipatch], 1 );
 
-        #pragma omp for
+        #pragma omp for schedule(runtime)
 	for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
 	    vecPatches(ipatch)->finalizeExchange( fields[ipatch], 1 );
     }
@@ -248,7 +248,7 @@ void SyncVectorPatch::exchange0( std::vector<Field*> fields, VectorPatch& vecPat
 
     gsp[0] = 2*oversize[0]+fields[0]->isDual_[0]; //Ghost size primal
 
-    #pragma omp for schedule(dynamic) private(pt1,pt2)
+    #pragma omp for schedule(runtime) private(pt1,pt2)
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++) {
 
 	if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[0][0]){
@@ -261,11 +261,11 @@ void SyncVectorPatch::exchange0( std::vector<Field*> fields, VectorPatch& vecPat
 
     } // End for( ipatch )
 
-    #pragma omp for
+    #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
 	vecPatches(ipatch)->initExchange( fields[ipatch], 0 );
 
-    #pragma omp for
+    #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
 	vecPatches(ipatch)->finalizeExchange( fields[ipatch], 0 );
 

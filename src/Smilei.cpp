@@ -282,7 +282,7 @@ int main (int argc, char* argv[])
                     
             // incrementing averaged electromagnetic fields
             if (vecPatches(0)->sio->dumpAvgFields_)
-                #pragma omp for
+                #pragma omp for schedule(static)
                 for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
                     vecPatches(ipatch)->EMfields->incrementAvgFields(itime);
                 }
