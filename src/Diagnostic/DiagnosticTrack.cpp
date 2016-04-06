@@ -72,17 +72,24 @@ void DiagnosticTrack::openFile( Params& params, SmileiMPI* smpi, VectorPatch& ve
 	// Define maximum size
 	//hsize_t maxDimsPart[2] = {H5S_UNLIMITED, (hsize_t)nParticles};
 
-	dims[0] = timeSelection->numberOfEvents(0, params.n_time);
+	dims[0] = 0;//timeSelection->numberOfEvents(0, params.n_time);
 	if ( !nbrParticles_ ) {
 	    ERROR("DiagTrack empty or number of Particles in diag is null");
 	}
 	else
 	    dims[1] = nbrParticles_;
 
-	hid_t file_space = H5Screate_simple(2, dims, NULL);
-        
+	//hid_t file_space = H5Screate_simple(2, dims, NULL);
+	// Define maximum size
+        hsize_t maxDimsPart[2] = {H5S_UNLIMITED, nbrParticles_};
+        hid_t file_space = H5Screate_simple(2, dims, maxDimsPart);   
+
 	// Create the overall dataset in the HDF5 file with a new chunk every timestep
 	hid_t plist = H5Pcreate(H5P_DATASET_CREATE);
+        H5Pset_layout(plist, H5D_CHUNKED);
+        H5Pset_alloc_time(plist, H5D_ALLOC_TIME_EARLY); // necessary for collective dump
+        hsize_t chunk_dims[2] = {1, nbrParticles_};
+        H5Pset_chunk(plist, 2, chunk_dims);
 
 	// Create the datasets for x, y and z
 	hid_t did;
@@ -93,7 +100,8 @@ void DiagnosticTrack::openFile( Params& params, SmileiMPI* smpi, VectorPatch& ve
 	    did = H5Dcreate(fileId_, namePos.str().c_str(), H5T_NATIVE_DOUBLE, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
 	    H5Dclose(did);
 	}
-        
+
+
 	// Create the datasets for px, py and pz
 	unsigned int nMomentum = species->particles->Momentum.size();
 	for (unsigned int i=0; i<nMomentum; i++) {
@@ -123,6 +131,7 @@ void DiagnosticTrack::openFile( Params& params, SmileiMPI* smpi, VectorPatch& ve
 	H5Pclose(plist);
 	H5Sclose(file_space);
     
+        H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
 
     }
     else {
@@ -153,6 +162,37 @@ void DiagnosticTrack::closeFile()
 
 void DiagnosticTrack::prepare( Patch* patch, int timestep )
 {
+    int time = timestep;
+
+    if( ! timeSelection->theTimeIsNow(time) ) return;
+
+    dims[0] ++;
+
+    // For all dataspace
+    vector<string> datasets;
+    for (int idim=0 ; idim<nDim_particle ; idim++) {
+        ostringstream namePos("");
+        namePos << "Position-" << idim;
+	datasets.push_back( namePos.str() );
+    }
+    for (int idim=0 ; idim<3 ; idim++) {
+        ostringstream nameMom("");
+        nameMom << "Momentum-" << idim;
+	datasets.push_back( nameMom.str() );
+    }
+    datasets.push_back( "Weight" );
+    datasets.push_back( "Charge" );
+    datasets.push_back( "Id" );
+
+    for (int idsets = 0 ; idsets<datasets.size() ; idsets++) {
+	string name = datasets[idsets];
+	hid_t did = H5Dopen( fileId_, name.c_str(), H5P_DEFAULT );
+	// Increase the size of the array with the previously defined size
+	H5Dset_extent(did, dims);
+	H5Dclose(did);
+    }
+    H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
+
 }
 
 
@@ -174,7 +214,7 @@ void DiagnosticTrack::run( Patch* patch, int timestep )
     }
     // Now we increase the array size for the new timestep (new chunk)
     // It is not applied to the HDF5 file yet
-    dims[0] ++;
+    //dims[0] ++;
 
     
     // Specify the memory dataspace (the size of the local array)
@@ -205,7 +245,7 @@ void DiagnosticTrack::run( Patch* patch, int timestep )
     locator.resize(1, iter-1);
     hsize_t onetime[1] = { 1 };
     mem_space = H5Screate_simple(1, onetime, NULL);
-    append( fileId_, "Times", time, mem_space, 1, H5T_NATIVE_INT, locator );
+    //append( fileId_, "Times", time, mem_space, 1, H5T_NATIVE_INT, locator );
     
     //MPI_Barrier(MPI_COMM_WORLD); // synchro to manage differently
     H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
