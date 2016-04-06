@@ -180,18 +180,18 @@ int main (int argc, char* argv[])
     check_memory_consumption( vecPatches, smpiData );
     
     // Define for some patch diags
-    int partperMPI;
-    int npatchmoy=0, npartmoy=0;
+    //int partperMPI;
+    //int npatchmoy=0, npartmoy=0;
+    double old_print_time(0.), this_print_time;
+
+    // save latestTimeStep (used to test if we are at the latest timestep when running diagnostics at run's end)
+    unsigned int latestTimeStep=checkpoint.this_run_start_step;
     
     // ------------------------------------------------------------------
     //                     HERE STARTS THE PIC LOOP
     // ------------------------------------------------------------------
     
-    // save latestTimeStep (used to test if we are at the latest timestep when running diagnostics at run's end)
-    unsigned int latestTimeStep=checkpoint.this_run_start_step;
-    
     TITLE("Time-Loop started: number of time-steps n_time = " << params.n_time);
-    double old_print_time=timer[0].getTime();
     for (unsigned int itime=checkpoint.this_run_start_step+1 ; itime <= stepStop ; itime++) {
         
         // calculate new times
@@ -206,13 +206,14 @@ int main (int argc, char* argv[])
         timer[0].update();
         
         if ( vecPatches.printScalars( itime ) &&  ( smpiData->isMaster() ) ) {
-            double this_print_time=timer[0].getTime();
+            old_print_time = this_print_time;
+            this_print_time=timer[0].getTime();
             ostringstream my_msg;
             my_msg << setw(log10(params.n_time)+1) << itime <<
             "/"     << setw(log10(params.n_time)+1) << params.n_time <<
             "t = "          << scientific << setprecision(3)   << time_dual <<
             "  sec "    << scientific << setprecision(1)   << this_print_time <<
-            "("    << scientific << setprecision(1)   << this_print_time - old_print_time << ")" <<
+            " ("    << scientific << setprecision(7)   << this_print_time - old_print_time << ")" <<
             "   Utot = "   << scientific << setprecision(4)<< vecPatches.getScalar("Utot") <<
             "   Uelm = "   << scientific << setprecision(4)<< vecPatches.getScalar("Uelm") <<
             "   Ukin = "   << scientific << setprecision(4)<< vecPatches.getScalar("Ukin") <<
