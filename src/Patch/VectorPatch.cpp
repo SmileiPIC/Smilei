@@ -194,9 +194,10 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
 	}
 
 	// For all diags createFile
-	(*this)(0)->localDiags[idiag]->openFile( params, smpi, *this, true );
+	//(*this)(0)->localDiags[idiag]->openFile( params, smpi, *this, true );
 
 	if ( (*this)(0)->localDiags[idiag]->type_ == "Probes" ) {
+	    (*this)(0)->localDiags[idiag]->openFile( params, smpi, *this, true );
 	    DiagnosticProbes* diagProbes0 = static_cast<DiagnosticProbes*>( (*this)(0)->localDiags[idiag] );
 	    diagProbes0->setFileSplitting( params, smpi, *this );
 	    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
@@ -324,7 +325,8 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
 
     // localDiags : probes, track & fields
     for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
-	    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+	(*this)(0)->localDiags[idiag]->prepare( (*this)(0), itime );
+	for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
 		(*this)(ipatch)->localDiags[idiag]->run( (*this)(ipatch), itime );
 	    }
     }
