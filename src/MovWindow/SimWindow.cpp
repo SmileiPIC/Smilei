@@ -52,9 +52,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     // Store current number of patch on current MPI process
     // Don't move during this process
     int nPatches( vecPatches.size() );
-    int nPatches_start( vecPatches.size() );
     int nSpecies  ( vecPatches(0)->vecSpecies.size() );
-    int nDim_Parts( vecPatches(0)->vecSpecies[0]->particles->dimension() );
     int nmessage = 10+2*nSpecies;
     vector<int> nbrOfPartsSend(nSpecies,0);
     vector<int> nbrOfPartsRecv(nSpecies,0);

@@ -42,28 +42,27 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 Species::Species(Params& params, Patch* patch) :
 c_part_max(1),
-dynamics_type("norm"),
-time_frozen(0),
-radiating(false),
+dynamics_type("norm"), 
+time_frozen(0), 
+radiating(false), 
 ionization_model("none"),
-clrw(params.clrw),
-oversize(params.oversize),
-cell_length(params.cell_length),
+particles(&particles_sorted[0]),
+clrw(params.clrw),  
+oversize(params.oversize), 
+cell_length(params.cell_length), 
 velocityProfile(3,NULL),
 temperatureProfile(3,NULL),
 electron_species(NULL),
 nDim_particle(params.nDim_particle),
-min_loc(patch->getDomainLocalMin(0)),
-min_loc_vec(patch->getDomainLocalMin()),
-particles(&particles_sorted[0]),
-partBoundCond(NULL)
+min_loc_vec(patch->getDomainLocalMin()), 
+partBoundCond(NULL),
+min_loc(patch->getDomainLocalMin(0)) 
 {
 	
     initSpecies(params);
     initCluster(params);
 
     if (!params.restart) {
-        unsigned int npart_effective=0;
         
         // Create particles in a space starting at cell_index
         vector<double> cell_index(3,0);
@@ -72,12 +71,13 @@ partBoundCond(NULL)
                 cell_index[i] = patch->getDomainLocalMin(i);
         }
         
-        int starting_bin_idx = 0;
         // does a loop over all cells in the simulation
         // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
 	//cout << "Patch start idx = " << cell_index[0] << "\t" << cell_index[1] << endl;
 	
 	// Now in Factory ....
+        //unsigned int npart_effective=0;
+        //int starting_bin_idx = 0;
         //createParticles(params.n_space, cell_index, starting_bin_idx, params );
         
         //PMESSAGE( 1, smpi->getRank(),"Species "<< speciesNumber <<" # part "<< npart_effective );
@@ -628,7 +628,7 @@ void Species::sort_part()
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::count_sort_part(Params &params)
 {
-    unsigned int ip, npart, ndim,ixy,tot, oc, nxy, bin, token;
+    unsigned int ip, npart, ixy,tot, oc, nxy, token;
     int ix,iy;
     double x,y;
 

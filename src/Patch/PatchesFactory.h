@@ -15,10 +15,8 @@ public:
         Patch* patch;
         if (params.geometry == "1d3v")
             patch = new Patch1D(params, smpi, ipatch, 0);
-        else if (params.geometry == "2d3v" )
-            patch = new Patch2D(params, smpi, ipatch, 0);
         else 
-            ERROR( "Unknwon parameters : " << params.geometry );
+            patch = new Patch2D(params, smpi, ipatch, 0);
         patch->createType(params);
         return patch;
     }
@@ -27,10 +25,8 @@ public:
         Patch* patch;
         if (params.geometry == "1d3v")
             patch = new Patch1D(params, smpi, ipatch, n_moved);
-        else if (params.geometry == "2d3v" )
-            patch = new Patch2D(params, smpi, ipatch, n_moved);
         else 
-            ERROR( "Unknwon parameters : " << params.geometry );
+            patch = new Patch2D(params, smpi, ipatch, n_moved);
         patch->createType(params);
         return patch;
     }
@@ -48,11 +44,6 @@ public:
 #ifdef _DEBUGPATCH
         std::cout << smpi->getRank() << ", nPatch = " << npatches << " - starting at " << firstpatch << std::endl;        
 #endif
-        // Modified to test Patch integration
-        
-        //std::cout << "n_space : " << params.n_space[0] << " " << params.n_space[1] << std::endl;
-        //std::cout << "n_patch : " << params.number_of_patches[0] << " " << params.number_of_patches[1] << std::endl;
-        
 
         // create patches
         vecPatches.resize(npatches);

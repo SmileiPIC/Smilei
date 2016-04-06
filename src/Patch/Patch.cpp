@@ -206,7 +206,6 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, Params& params)
     //int n_part_recv;
         
     int iPart;
-    int n_particles;
 
     // Define where particles are going 
     //Put particles in the send buffer it belongs to. Priority to lower dimensions.
@@ -250,12 +249,6 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, Params& params)
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch::initCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch * vecPatch)
 {
-
-    Particles &cuParticles = (*vecSpecies[ispec]->particles);
-    MPI_Datatype typePartSend, typePartRecv;
-
-    int n_part_send, n_part_recv;
-
     int h0 = (*vecPatch)(0)->hindex;
     /********************************************************************************/
     // Exchange number of particles to exchange to establish or not a communication
@@ -296,7 +289,7 @@ void Patch::CommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, 
     MPI_Datatype typePartSend, typePartRecv;
     Particles &cuParticles = (*vecSpecies[ispec]->particles);
 
-    int n_part_send, n_part_recv, n_particles;
+    int n_part_send, n_part_recv;
     int h0 = (*vecPatch)(0)->hindex;
     double x_max = params.cell_length[iDim]*( params.n_space_global[iDim] );
 
@@ -389,7 +382,6 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
 
     int ndim = params.nDim_field;
     int idim, check;
-    MPI_Datatype typePartSend, typePartRecv;
 
     Particles &cuParticles = (*vecSpecies[ispec]->particles);
     double xmax[3]; 
@@ -407,7 +399,6 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
     double dbin;
         
     dbin = params.cell_length[0]*params.clrw; //width of a bin.
-    int h0 = (*vecPatch)(0)->hindex;
     for (unsigned int j=0; j<(*cubmax).size()+1 ;j++){
       shift[j]=0;
     }
