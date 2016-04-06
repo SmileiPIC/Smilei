@@ -1,7 +1,7 @@
 #!/gpfslocal/pub/python/anaconda/Anaconda-2.1.0/bin/python 
 #
 # This script checks the validity of the results of the execution of smilei defined by :
-# - the input file (default tst1d_0_em_propagation.py) given by the -b option
+# - the bench file (default tst1d_0_em_propagation.py) given by the -b option
 # - the number of OpenMP tasks (default 2) given by the -o option
 # - the number of MPI processus (default 2) given by the -m option
 # 
@@ -15,7 +15,14 @@
 # Then, workdirs will contain :
 #  - smilei binary : "smilei"
 #  - compilation output : "compilation_output"
-#  - a directory wd_<input_file>_<o>_<m>
+#  - a directory wd_<input_file> which contains one <o>_<m> directory 
+#    The <o>_<m> directory contains the output files of the execution of smilei with o OpenMP threads and m MPI processus :
+#    - exec_script.out 
+#    - exec_script.sh  
+#    - Fields.h5  
+#    - scalars.txt  
+#    - smilei_exe.out  
+#    - smilei.py
 #  or
 #  - the compilation errors file : "compilation_errors"
 #
@@ -34,7 +41,7 @@
 #
 # Execution step :
 # +++++++++++++++
-# For the given execution defined by -b, -m, -o options, if the corresponding directory named wd_<input_file>_<o>_<m> does not exist then :
+# For the given execution defined by -b, -m, -o options, if the corresponding directory named wd_<bench_file>_<o>_<m> does not exist then :
 # - it is created.
 # - smilei is executed in this working directory. So, the different output files such as scalars.txt and the standard ouput of this execution are kept 
 #   in this working directory.
@@ -42,8 +49,10 @@
 #
 # Validation step :
 # +++++++++++++++
-# The validity of smilei is obtained by comparing the scalars contained in scalars.txt contained in the working directory "wd_<input_file>_<o>_<m>" 
+# The validity of smilei is obtained by comparing the scalars contained in scalars.txt contained in the working directory "wd_<bench_file>/<o>_<m>" 
 # with those found in "references" with a given precision or a precision value found in the list.
+#
+# Using the -a option, smilei is executed for all the bench files. For every execution all the existing scalars in the scalars.txt file are checked.
 #
 # Using the -s option, you have the choice to check several scalars with their corresponding precision:
 #  - no -s option : scalar Utot is checked with the given precision (-p option, default found in the list of precision values))
@@ -56,7 +65,7 @@
 #  - no -t option : the last time step is considered                                                                                   
 #  - the -t option is a number : smilei is checked only for this time step                                                                               
 #  - the -t option is ? : time steps that you can choose inside a provided list are considered
-#  - the -s option is all : all the time steps are considered
+#  - the -t option is all : all the time steps are considered
 #  In these 2 last cases the list of precision values for all the possible scalars is examined. 
 #
 # Smilei is validated (exit status 0) only in the case where all the scalars are considered (-s all option) 
@@ -94,7 +103,7 @@ else :
   SMILEI_ROOT = os.getcwd()+'/..'
 SMILEI_ROOT = SMILEI_ROOT+'/'
 SMILEI_SCRIPTS = SMILEI_ROOT+"scripts/"
-SMILEI_REFERENCES = SMILEI_ROOT+"references/"
+SMILEI_REFERENCES = SMILEI_ROOT+"validation/references/"
 SMILEI_BENCHS = SMILEI_ROOT+"benchmarks/"
 sys.path.insert(0, SMILEI_SCRIPTS)
 #
@@ -108,12 +117,14 @@ OPT_TIMESTEP = False
 EXECUTION = False
 OPT_PRECISION = False
 VERBOSE = False
+VALID_ALL = False
+BENCH=""
 #
 # FUNCTION FOR PARSING OPTIONS
 def usage():
     print 'Usage: validation.py [-o <nb_OMPThreads> -m <nb_MPIProcs> -b <bench_case> -s <scalar> -p <precision> '
 try:
-  options, remainder = getopt.getopt(sys.argv[1:], 'o:m:b:s:p:t:hv', ['OMP=', 
+  options, remainder = getopt.getopt(sys.argv[1:], 'o:m:b:s:p:t:hva', ['OMP=', 
                                                           'MPI='
                                                           'BENCH='
                                                           'SCALAR='
@@ -121,6 +132,7 @@ try:
                                                           'TIMESTEP='
                                                           'HELP='
                                                           'VERBOSE='
+                                                          'ALL='
                                                          ])
 except getopt.GetoptError as err:
         usage()
@@ -183,8 +195,7 @@ def scalarListValidation(SCALAR_NAME,t) :
         print "Scalar", SCALAR_NAME,"is not valid. Enter a scalar name again."
         SCALAR_NAME = raw_input()
         PRECISION = precision_d[SCALAR_NAME]
-  elif SCALAR_NAME == "all":
-#    import pdb;pdb.set_trace()
+  elif SCALAR_NAME == "all" or VALID_ALL :
     for SCALAR_NAME in LISTE_SCALARS:
       PRECISION = precision_d[SCALAR_NAME]
       VALIDATION = scalarValidation(SCALAR_NAME,it)
@@ -268,41 +279,50 @@ for opt, arg in options:
         exit()
     elif opt in ('-v', '--VERBOSE'):
         VERBOSE = True
+    elif opt in ('-a', '--ALL'):
+        VALID_ALL = True
 #
 # CASE PRECISION NOT DEFINED OR MULTIPLE SCALARS REQUIRED : 
 # CREATING A DICTIONNARY WITH THE LIST OF PRECISION VALUES FOUND IN ./references/precision_values
-if OPT_PRECISION and ( SCALAR_NAME == "all"  or  SCALAR_NAME == "?" ) :
+if OPT_PRECISION and ( SCALAR_NAME == "all"  or  SCALAR_NAME == "?" or VALID_ALL ) :
   print "\n WARNING : Precision option ignored since a list of scalars is required."
-if not OPT_PRECISION or  SCALAR_NAME == "all"  or  SCALAR_NAME == "?"  :
+if not OPT_PRECISION or  SCALAR_NAME == "all"  or  SCALAR_NAME == "?"  or VALID_ALL :
   precision_d = {}
   with open(SMILEI_REFERENCES+"/precision_values") as f:
       for line in f:
          (key, val) = line.split()
          precision_d[key] = val
 #
-# READ THE INPUT FILE
-if OPT_BENCH == False :
-  # IF BENCH NOT IN OPTIONS, SET THE DEFAULT
+# PROCESS THE INPUT FILE
+#
+  #-  Build the list of the input files
+os.chdir(SMILEI_BENCHS)
+list_bench = glob.glob("tst*py")
+if VALID_ALL or BENCH == "all":
+  SMILEI_BENCH_LIST = list_bench 
+elif OPT_BENCH == False :
+  #-  IF BENCH NOT IN OPTIONS, SET THE DEFAULT
   BENCH = "tst1d_0_em_propagation.py"
+  SMILEI_BENCH_LIST = [ BENCH ]
 elif BENCH == "?":
   VERBOSE = True
-  # Build the list of the input files
-  os.chdir(SMILEI_BENCHS)
-  list_bench = glob.glob("tst*py") 
   os.chdir(SMILEI_SCRIPTS)
-  # Propose the list of all the input files
+  #- Propose the list of all the input files
   print '\n'.join(list_bench)
-  # Choose an input file name in the list
+  #- Choose an input file name in the list
   print 'Enter an input file from the above list:'
   BENCH = raw_input()
+  SMILEI_BENCH_LIST = [ BENCH ]
   while not  BENCH in list_bench:
     print "Input file",BENCH,"not valid. Enter an input file name again."
     BENCH = raw_input()
-SMILEI_BENCH = SMILEI_BENCHS+BENCH
-#
-# PRINT INFO           
-if VERBOSE :
- print '\nTesting smilei with', OMP, 'OMP tasks,',MPI, 'MPI processes, case',BENCH,':\n'
+    SMILEI_BENCH_LIST = [ BENCH ]
+elif BENCH in list_bench:
+  SMILEI_BENCH_LIST = [ BENCH ]
+else :
+  if VERBOSE :
+    print "Input file",BENCH,"not valid."
+  sys.exit(4)  
 #
 # COMPILE  SMILEI
 import time
@@ -315,7 +335,7 @@ def date_string(BIN_NAME):
   return date_time.replace(" ","-")
 def workdir_archiv(BIN_NAME) :
   if os.path.exists(SMILEI_W):
-    ARCH_WORKDIR = WORKDIRS+date_string(SMILEI_W)
+    ARCH_WORKDIR = WORKDIRS+'_'+date_string(SMILEI_W)
     os.rename(WORKDIRS,ARCH_WORKDIR)
     os.mkdir(WORKDIRS) 
   return 
@@ -356,93 +376,101 @@ except CalledProcessError,e:
   os.rename(COMPILE_ERRORS,WORKDIRS+'/'+COMPILE_ERRORS)
   if VERBOSE :
     print  "Smilei validation cannot be done : compilation failed." ,e.returncode
-  exit(3)
+  sys.exit(3)
 #
-# CREATE THE WORKDIR CORRESPONDING TO THE INPUT FILE AND GO INTO                
-WORKDIR = WORKDIRS+'/wd_'+BENCH
-if not os.path.exists(WORKDIR) :
-  os.mkdir(WORKDIR)
-os.chdir(WORKDIR)
-WORKDIR = WORKDIR+"/"+str(MPI)+"_"+str(OMP)
-if not os.path.exists(WORKDIR) :
-  os.mkdir(WORKDIR)
-  os.chdir(WORKDIR)
-  EXECUTION = True
-else:
-  os.chdir(WORKDIR)
-  EXECUTION = False
-#
-#  RUN smilei IF EXECUTION IS TRUE
-if EXECUTION :
-  # BUILD THE SMILEI EXECUTION SCRIPT                   
-  EXEC_SCRIPT = 'exec_script.sh'
-  EXEC_SCRIPT_OUT = 'exec_script.out'
-  SMILEI_EXE_OUT = 'smilei_exe.out'
-  exec_script_desc = open(EXEC_SCRIPT, 'w')
-  if VERBOSE :
-    print "Executing smilei, please wait ...\n"
-  exec_script_desc.write( "\
-# environnement \n \
+for BENCH in SMILEI_BENCH_LIST :
+    # PRINT INFO           
+    if VERBOSE :
+     print '\nTesting smilei with', OMP, 'OMP tasks,',MPI, 'MPI processes, case',BENCH,':\n'
+    #
+    SMILEI_BENCH = SMILEI_BENCHS+BENCH
+    VALID_ALL_OK = False
+    # CREATE THE WORKDIR CORRESPONDING TO THE INPUT FILE AND GO INTO                
+    #import pdb;pdb.set_trace()
+    WORKDIR = WORKDIRS+'/wd_'+BENCH
+    if not os.path.exists(WORKDIR) :
+      os.mkdir(WORKDIR)
+    os.chdir(WORKDIR)
+    WORKDIR = WORKDIR+"/"+str(MPI)+"_"+str(OMP)
+    if not os.path.exists(WORKDIR) :
+      os.mkdir(WORKDIR)
+      os.chdir(WORKDIR)
+      EXECUTION = True
+    else:
+      os.chdir(WORKDIR)
+      EXECUTION = False
+    #
+    #  RUN smilei IF EXECUTION IS TRUE
+    if EXECUTION :
+      # BUILD THE SMILEI EXECUTION SCRIPT                   
+      EXEC_SCRIPT = 'exec_script.sh'
+      EXEC_SCRIPT_OUT = 'exec_script.out'
+      SMILEI_EXE_OUT = 'smilei_exe.out'
+      exec_script_desc = open(EXEC_SCRIPT, 'w')
+      if VERBOSE :
+        print "Executing smilei, please wait ...\n"
+      exec_script_desc.write( "\
+    # environnement \n \
 module load intel/15.0.0 openmpi  hdf5/1.8.10_intel_openmpi python\n  \
 # \n \
 # execution \n \
 export OMP_NUM_THREADS="+str(OMP)+"\n \
 mpirun -bind-to-socket -np "+str(MPI)+" "+WORKDIRS+"/smilei "+SMILEI_BENCH+" >"+SMILEI_EXE_OUT+" \n exit $?  ")
-  exec_script_desc.close()
+      exec_script_desc.close()
+    #
+    # RUN  SMILEI
+      COMMANDE = "/bin/bash "+EXEC_SCRIPT+" > "+EXEC_SCRIPT_OUT+" 2>&1"
+      try :
+        check_call(COMMANDE, shell=True)
+      except CalledProcessError,e:
+        # if execution fails, exit with exit status 2
+        os.chdir(WORKDIRS)
+        shutil.rmtree(WORKDIR)
+        if VERBOSE :
+          print  "Smilei validation cannot be done : execution failed."
+        sys.exit(2)
 #
-# RUN  SMILEI
-  COMMANDE = "/bin/bash "+EXEC_SCRIPT+" > "+EXEC_SCRIPT_OUT+" 2>&1"
-  try :
-    check_call(COMMANDE, shell=True)
-  except CalledProcessError,e:
-    pass    
-#
-# Previous line to be deleted and 2 following lines to be uncommented when smilei is debugged
-#    os.chdir(WORKDIRS)
-#    shutil.rmtree(WORKDIR)
-#    if VERBOSE :
-#      print  "Smilei validation cannot be done : execution failed."
-#    exit(2)
-#
-# READ TIME STEPS AND VALIDATE 
-#import pdb;pdb.set_trace()
-if VERBOSE :
-  print "Testing scalars :\n"
-VALID_OK = False
-L=Diagnostics.Scalar(".",scalar="Utot") # scalar argument must be anything except none in order times is defined
-LISTE_TIMESTEPS = L.getAvailableTimesteps()
-if OPT_TIMESTEP == False :
-  # IF TIMESTEP NOT IN OPTIONS, COMPUTE THE LAST TIME STEP               
-  TIMESTEP=LISTE_TIMESTEPS[-1]
-  VALID_OK = scalarListValidation(SCALAR_NAME,TIMESTEP)
-elif TIMESTEP == "?":
-  VERBOSE = True
-  # Test if either you want to choose one time step in a list, or all the time steps, or a given time step
-  # Validate smilei for a list of scalars (scalarListValidation function)
-  #
-  # Propose the list of all the timesteps
-  print LISTE_TIMESTEPS
-  print 'Enter a time step from the above list (press <Enter> if no more time step to check ):'
-  # Test if either you want to choose one scalar in a list, or all the scalars, or a given scalar
-  TIMESTEP_INPUT = raw_input()
-  while TIMESTEP_INPUT != "" :
-    TIMESTEP=TIMESTEP_INPUT     
-    if int(TIMESTEP) in LISTE_TIMESTEPS :
-      VALID = scalarListValidation(SCALAR_NAME,TIMESTEP) 
-    else :
-      print "Time step :", TIMESTEP,"is not valid. Enter a time step name again."
+    # READ TIME STEPS AND VALIDATE 
+    if VERBOSE :
+      print "Testing scalars :\n"
+    VALID_OK = False
+    L=Diagnostics.Scalar(".",scalar="Utot") # scalar argument must be anything except none in order times is defined
+    LISTE_TIMESTEPS = L.getAvailableTimesteps()
+    if OPT_TIMESTEP == False or VALID_ALL:
+      # IF TIMESTEP NOT IN OPTIONS, COMPUTE THE LAST TIME STEP               
+      TIMESTEP=LISTE_TIMESTEPS[-1]
+      VALID_OK = scalarListValidation(SCALAR_NAME,TIMESTEP)
+    elif TIMESTEP == "?":
+      VERBOSE = True
+      # Test if either you want to choose one time step in a list, or all the time steps, or a given time step
+      # Validate smilei for a list of scalars (scalarListValidation function)
+      #
+      # Propose the list of all the timesteps
+      print LISTE_TIMESTEPS
+      print 'Enter a time step from the above list (press <Enter> if no more time step to check ):'
+      # Test if either you want to choose one scalar in a list, or all the scalars, or a given scalar
       TIMESTEP_INPUT = raw_input()
-    print "Enter a time step name again (press <Enter> if no more time step to check ):"
-    TIMESTEP_INPUT = raw_input()
-elif TIMESTEP == "all":
-  for TIMESTEP in LISTE_TIMESTEPS:
-    VALID = scalarListValidation(SCALAR_NAME,TIMESTEP)
-else:
-    VALID = scalarListValidation(SCALAR_NAME,TIMESTEP)
-if VALID_OK :
-  if VERBOSE :
-    print "Smilei is valid for the list of scalars at last timestep, input file "+BENCH+", "+str(OMP)+" OpenMP tasks and "+str(MPI)+" MPI processus"
-  exit(0)
-else :
-  exit(1)
+      while TIMESTEP_INPUT != "" :
+        TIMESTEP=TIMESTEP_INPUT     
+        if int(TIMESTEP) in LISTE_TIMESTEPS :
+          VALID = scalarListValidation(SCALAR_NAME,TIMESTEP) 
+        else :
+          print "Time step :", TIMESTEP,"is not valid. Enter a time step name again."
+          TIMESTEP_INPUT = raw_input()
+        print "Enter a time step name again (press <Enter> if no more time step to check ):"
+        TIMESTEP_INPUT = raw_input()
+    elif TIMESTEP == "all":
+      for TIMESTEP in LISTE_TIMESTEPS:
+        VALID = scalarListValidation(SCALAR_NAME,TIMESTEP)
+    else:
+        VALID = scalarListValidation(SCALAR_NAME,TIMESTEP)
+    if VALID_OK :
+      if VERBOSE :
+        print "Smilei is valid for the list of scalars at last timestep, input file "+BENCH+", "+str(OMP)+" OpenMP tasks and "+str(MPI)+" MPI processus"
+      if VALID_ALL :
+        VALID_ALL_OK = True
+    else :
+      exit(1)
+if VALID_ALL and VALID_ALL_OK  :
+    exit(0)
 
