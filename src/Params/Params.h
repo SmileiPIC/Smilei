@@ -144,6 +144,10 @@ public:
     std::vector<int> number_of_patches;
     //! Load balancing frequency
     int balancing_freq;
+    //! Load coefficient applied to a cell (default = 1)
+    double coef_cell;
+    //! Load coefficient applied to a frozen particle (default = 0.1)
+    double coef_frozen;
     //! Return if number of patch = number of MPI process, to tune IO //ism
     bool simu_is_cartesian;
 

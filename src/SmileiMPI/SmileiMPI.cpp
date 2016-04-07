@@ -157,11 +157,7 @@ void SmileiMPI::init_patch_count( Params& params)
     vector<double> density_length(params.nDim_field,0.);
     //Load of a cell = coef_cell*load of a particle.
     //Load of a frozen particle = coef_frozen*load of a particle.
-    double coef_cell, coef_frozen; 
     ofstream fout;
-
-    coef_cell = 50;
-    coef_frozen = 0.1;
 
     unsigned int tot_species_number = PyTools::nComponents("Species");
     mincell.resize(tot_species_number*3);
@@ -224,14 +220,14 @@ void SmileiMPI::init_patch_count( Params& params)
 
         double time_frozen(0.);
         PyTools::extract("time_frozen",time_frozen ,"Species",ispecies);
-        if(time_frozen > 0.) local_load *= coef_frozen;
+        if(time_frozen > 0.) local_load *= params.coef_frozen;
         Tload += local_load;
 
         delete ppcProfile;
 
     } // End for ispecies
 
-    Tload += Npatches*ncells_perpatch*coef_cell ; // We assume the load of one cell to be equal to coef_cell and account for ghost cells.
+    Tload += Npatches*ncells_perpatch*params.coef_cell ; // We assume the load of one cell to be equal to coef_cell and account for ghost cells.
     if (isMaster()) {
         fout.open ("patch_load.txt");
         fout << "Total load = " << Tload << endl;
@@ -285,12 +281,12 @@ void SmileiMPI::init_patch_count( Params& params)
             delete ppcProfile;
             double time_frozen(0.);
             PyTools::extract("time_frozen",time_frozen ,"Species",ispecies);
-            if(time_frozen > 0.) local_load_temp *= coef_frozen;
+            if(time_frozen > 0.) local_load_temp *= params.coef_frozen;
 
             local_load += local_load_temp; // Accumulate species contribution to the load.
         } // End for ispecies
 
-        local_load += ncells_perpatch*coef_cell; //Add grid contribution to the load.
+        local_load += ncells_perpatch*params.coef_cell; //Add grid contribution to the load.
         Lcur += local_load; //Add grid contribution to the load.
         Ncur++; // Try to assign current patch to rank r.
 
@@ -337,7 +333,6 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     std::vector<unsigned int> mincell,maxcell,capabilities; //Min and max values of non empty cells for each species and in each dimension.
     //Load of a cell = coef_cell*load of a particle.
     //Load of a frozen particle = coef_frozen*load of a particle.
-    double coef_cell, coef_frozen; 
     std::vector<double> Lp,Lp_global;
     int recv_counts[smilei_sz];
     ofstream fout;
@@ -345,9 +340,6 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     if (isMaster()) {
         fout.open ("patch_load.txt", std::ofstream::out | std::ofstream::app);
     }
-
-    coef_cell = 50;
-    coef_frozen = 0.1;
 
     Npatches = params.number_of_patches[0];
     for (unsigned int i = 1; i < params.nDim_field; i++) 
@@ -376,9 +368,9 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     //Compute Local Loads of each Patch (Lp)
     for(unsigned int hindex=0; hindex < patch_count[smilei_rk]; hindex++){
         for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++) {
-            Lp[hindex] += vecpatches(hindex)->vecSpecies[ispecies]->getNbrOfParticles()*(1+(coef_frozen-1)*(time_dual > vecpatches(hindex)->vecSpecies[ispecies]->time_frozen)) ;
+            Lp[hindex] += vecpatches(hindex)->vecSpecies[ispecies]->getNbrOfParticles()*(1+(params.coef_frozen-1)*(time_dual > vecpatches(hindex)->vecSpecies[ispecies]->time_frozen)) ;
         }
-        Lp[hindex] += ncells_perpatch*coef_cell ;
+        Lp[hindex] += ncells_perpatch*params.coef_cell ;
     }
 
     //Allgatherv loads of all patches
