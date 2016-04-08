@@ -21,7 +21,7 @@ Projector2D2Order::Projector2D2Order (Params& params, Patch* patch) : Projector2
     dx_ov_dt  = params.cell_length[0] / params.timestep;
     dy_inv_   = 1.0/params.cell_length[1];
     dy_ov_dt  = params.cell_length[1] / params.timestep;
-
+    
     one_third = 1.0/3.0;
 
     i_domain_begin = patch->getCellStartingGlobalIndex(0);

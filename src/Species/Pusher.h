@@ -27,7 +27,6 @@ protected:
     // mass_ relative to Species but used in the particle pusher
     double mass_;
     double one_over_mass_;
-
     int nDim_;
 
 };//END class

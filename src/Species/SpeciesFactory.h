@@ -119,6 +119,7 @@ public:
 	}
 	if (thermTisDefined) {
 	    if (thisSpecies->thermT.size()==1) {
+		WARNING("Using thermT[0] for species " << species_type << " in all directions");
 		thisSpecies->thermT.resize(3);
 		for (unsigned int i=1; i<3;i++)
 		    thisSpecies->thermT[i]=thisSpecies->thermT[0];
@@ -131,7 +132,21 @@ public:
 	    for (unsigned int i=0; i<3;i++)
 		thisSpecies->thermVelocity[i]=0.0;
 	}
+
+	// Compute the thermalVelocity & Momentum for thermalizing bcs
+	thisSpecies->thermalVelocity.resize(3);
+	thisSpecies->thermalMomentum.resize(3);
             
+	for (unsigned int i=0; i<3; i++) {
+	    thisSpecies->thermalVelocity[i] = sqrt(2.*thisSpecies->thermT[i]/thisSpecies->mass);
+	    thisSpecies->thermalMomentum[i] = thisSpecies->thermalVelocity[i];
+	    // Caution: momentum in SMILEI actually correspond to p/m
+	    if (thisSpecies->thermalVelocity[i]>0.3) ERROR("Thermalizing BCs for species " << species_type << " require non-relativistic thermT");
+	}
+
+
+            
+           
     thisSpecies->atomic_number = 0;
     PyTools::extract("atomic_number", thisSpecies->atomic_number, "Species",ispec);
     
