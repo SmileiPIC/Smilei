@@ -268,7 +268,11 @@ namelist("")
 
 
     if ( !PyTools::extract("balancing_freq", balancing_freq) )
-        balancing_freq = 1500000;
+        balancing_freq = 150;
+    if ( !PyTools::extract("coef_cell", coef_cell) )
+        coef_cell = 1.;
+    if ( !PyTools::extract("coef_frozen", coef_frozen) )
+        coef_frozen = 0.1;
 
     //mi.resize(nDim_field, 0);
     mi.resize(3, 0);
@@ -399,8 +403,11 @@ void Params::print()
         MESSAGE(1,"dimension " << i << " - (res_space, sim_length) : (" << res_space[i] << ", " << sim_length[i] << ")");
         MESSAGE(1,"            - (n_space_global,  cell_length) : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")");
     }
-    
-    
+
+    TITLE("Load Balancing: ");
+    MESSAGE(1,"Load balancing every " << balancing_freq << " iterations.");
+    MESSAGE(1,"Cell load coefficient = " << coef_cell );
+    MESSAGE(1,"Frozen particle load coefficient = " << coef_frozen );
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

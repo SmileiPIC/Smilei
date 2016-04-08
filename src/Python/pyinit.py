@@ -177,6 +177,8 @@ exit_after_dump = True
 
 # Default load balancing
 balancing_freq = None
+coef_cell = 1.0
+coef_frozen = 0.1
 
 # Default geometry info
 interpolation_order = 2
