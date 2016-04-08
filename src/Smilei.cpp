@@ -404,7 +404,7 @@ int main (int argc, char* argv[])
     PyTools::closePython();
 
     TITLE("END");
-    //delete smpiData;
+    delete smpiData;
     
     return 0;
     
