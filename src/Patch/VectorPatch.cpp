@@ -320,6 +320,10 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
 	smpi->computeGlobalDiags( globalDiags[idiag], itime);
 
     } // END for globalDiags
+    
+    // move only scalars write call from SmileiMPI::computeGlobalDiags()
+    // Diagnostic Particles includes dedicated cleaning 
+    globalDiags[0]->write(itime);
 
 
     // localDiags : probes, track & fields
