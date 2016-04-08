@@ -18,6 +18,8 @@ resx = 100.0		# nb cells in 1 wavelength
 Lsim = l0		# simulation length
 Tsim = 5.0*t0		# duration of the simulation
 
+referenceAngularFrequency_SI = 6*math.pi*1e14
+
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
 #      2d3v = cartesian grid with 2d in space + 3d in velocity

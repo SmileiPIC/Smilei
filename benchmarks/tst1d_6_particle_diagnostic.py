@@ -36,6 +36,8 @@ time_fields_frozen = 100000000000.
 cell_length = [0.01 * L0]
 sim_length  = [1. * L0]
 
+number_of_patches = [ 1 ] # or 4
+
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
 # bc_em_type_x : two strings, x boundary conditions for EM fields 
 # bc_em_type_y : two strings, y boundary conditions for EM fields 
