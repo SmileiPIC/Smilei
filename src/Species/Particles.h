@@ -8,9 +8,10 @@
 #include <vector>
 
 #include "Tools.h"
+#include "TimeSelection.h"
 
 class Params;
-class SmileiMPI;
+class Patch;
 
 //----------------------------------------------------------------------------------------------------------------------
 //! Particle class: holds the basic properties of a particle
@@ -53,15 +54,17 @@ public:
     
     //! Copy particle iPart at the end of dest_parts
     void cp_particle(int iPart, Particles &dest_parts );
+
+    //! Insert nPart particles starting at ipart to dest_id in dest_parts
+    void cp_particles(int iPart, int nPart, Particles &dest_parts, int dest_id );
     //! Insert particle iPart at dest_id in dest_parts
     void cp_particle(int ipart, Particles &dest_parts, int dest_id );
-    
-    //! Insert first iPart particles at position dest_id in dest_parts
-    void cp_particles(int nPart, Particles &dest_parts, int dest_id );
-    
+
     //! Suppress particle iPart
     void erase_particle(int iPart );
-    
+    //! Suppress nPart particles from iPart 
+    void erase_particle(int iPart, int nPart );
+
     //! Suppress all particles from iPart to the end of particle array 
     void erase_particle_trail(int iPart );
     
@@ -77,38 +80,30 @@ public:
     void swap_part(int part1,int part2, int N);
     
     //! Overwrite particle part1 into part2 memory location. Erasing part2
-    void overwrite_part1D(int part1,int part2);
-    
+    void overwrite_part(int part1,int part2);
+
     //! Overwrite particle part1->part1+N into part2->part2+N memory location. Erasing part2->part2+N
-    void overwrite_part1D(int part1,int part2,int N);
-    
+    void overwrite_part(int part1,int part2,int N);
+
     //! Overwrite particle part1->part1+N into part2->part2+N of dest_parts memory location. Erasing part2->part2+N
-    void overwrite_part1D(int part1, Particles &dest_parts, int part2,int N);
-    
-    //! Overwrite particle part1 into part2 memory location. Erasing part2
-    void overwrite_part2D(int part1,int part2);
-    
-    //! Overwrite particle part1->part1+N into part2->part2+N memory location. Erasing part2->part2+N
-    void overwrite_part2D(int part1,int part2,int N);
-    
+    void overwrite_part(int part1, Particles &dest_parts, int part2,int N);    
+
     //! Overwrite particle part1 into part2 of dest_parts memory location. Erasing part2
-    void overwrite_part2D(int part1, Particles &dest_parts, int part2);
-    
-    //! Overwrite particle part1->part1+N into part2->part2+N of dest_parts memory location. Erasing part2->part2+N
-    void overwrite_part2D(int part1, Particles &dest_parts, int part2,int N);
+    void overwrite_part(int part1, Particles &dest_parts, int part2);
+
     
     //! Move iPart at the end of vectors
     void push_to_end(int iPart );
     
     //! Create new particle
     void create_particle();
-    
-//    //! Create nParticles new particles
-//    void create_particles(int nParticles);
-    
-    //! Test if ipart is in the local MPI subdomain
-    bool is_part_in_domain(int ipart, SmileiMPI* smpi);
-    
+
+    //! Create nParticles new particles
+    void create_particles(int nParticles);
+
+    //! Test if ipart is in the local patch
+    bool is_part_in_domain(int ipart, Patch* patch);
+
     //! Method used to get the Particle position
     inline double  position( int idim, int ipart ) const {
         return Position[idim][ipart];
@@ -202,9 +197,14 @@ public:
     std::vector<unsigned int> Id;    
     
     // TEST PARTICLE PARAMETERS
+    bool isTest;
+
+    //! True if tracking the particles (activates one DiagTrack)
+    bool tracked;
+    //! Time selection for tracking particles
+    TimeSelection * track_timeSelection;
     
-    bool isTestParticles;
-    int test_dump_every;
+
     void setIds() {
         unsigned int s = Id.size();
         for (unsigned int iPart=0; iPart<s; iPart++) Id[iPart] = iPart+1;
@@ -217,6 +217,7 @@ public:
     
     //! Method used to get the Particle Id
     inline unsigned int id(int ipart) const {
+        DEBUG(ipart << " of " << Id.size());
         return Id[ipart];
     }
     //! Method used to set the Particle Id
@@ -248,12 +249,10 @@ public:
         return Chi;
     }
     
-    
-    int species_number;
-
     std::vector< std::vector<double>* >       double_prop;
     std::vector< std::vector<short>* >        short_prop;
     std::vector< std::vector<unsigned int>* > uint_prop;
+
 
 private:
 

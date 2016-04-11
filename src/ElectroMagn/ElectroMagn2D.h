@@ -2,6 +2,8 @@
 #define ELECTROMAGN2D_H
 
 #include "ElectroMagn.h"
+#include "Field.h"
+#include "Field2D.h"
 
 class Params;
 
@@ -10,14 +12,36 @@ class ElectroMagn2D : public ElectroMagn
 {
 public:
     //! Constructor for ElectroMagn2D
-    ElectroMagn2D(Params &params, std::vector<Species*>& vecSpecies, SmileiMPI* smpi);
+    ElectroMagn2D(Params &params, std::vector<Species*>& vecSpecies, Patch* patch);
 
     //! Destructor for ElectroMagn2D
     ~ElectroMagn2D();
+    
+    // --------------------------------------
+    //  --------- PATCH IN PROGRESS ---------
+    // --------------------------------------
+    void initPoisson(Patch *patch);
+    double compute_r();
+    void compute_Ap(Patch *patch);
+    //Access to Ap
+    double compute_pAp();
+    void update_pand_r(double r_dot_r, double p_dot_Ap);
+    void update_p(double rnew_dot_rnew, double r_dot_r);
+    void initE(Patch *patch);
+    void centeringE( std::vector<double> E_Add );
 
-   //! Method used for initializing Maxwell solver
-    void solvePoisson(SmileiMPI* smpi);
+    double getEx_West() { return 0.; }
+    double getEx_East() { return 0.; }
 
+    double getEx_WestNorth() { return (*Ex_)(0,ny_p-1); }
+    double getEy_WestNorth() { return (*Ey_)(0,ny_d-1); }
+    double getEx_EastSouth() { return (*Ex_)(nx_d-1,0); }
+    double getEy_EastSouth() { return (*Ey_)(nx_p-1,0); }
+
+    // --------------------------------------
+    //  --------- PATCH IN PROGRESS ---------
+    // --------------------------------------
+    
     //! Method used to solve Maxwell-Ampere equation
     void solveMaxwellAmpere();
 
@@ -28,15 +52,20 @@ public:
     void centerMagneticFields();
 
     //! Method used to reset/increment the averaged fields
-    void incrementAvgFields(unsigned int time_step, unsigned int ntime_step_avg);
+    void incrementAvgFields(unsigned int time_step);
     
     //! Method used to initialize the total charge densities and currents
     void restartRhoJ();
     //! Method used to initialize the total charge densities and currents of species
-    void restartRhoJs(int ispec, bool currents);
+    void restartRhoJs();
 
     //! Method used to compute the total charge density and currents by summing over all species
     void computeTotalRhoJ();
+    void addToGlobalRho(int ispec, unsigned int clrw);
+    void computeTotalRhoJs(unsigned int clrw);
+    //! Method used to gather species densities and currents on a single array
+    void synchronizePatch(unsigned int clrw);
+    void finalizePatch(unsigned int clrw);
 
     //! \todo Create properties the laser time-profile (MG & TV)
 
@@ -74,7 +103,7 @@ public:
     void computePoynting();
 
     //! Method used to impose external fields
-    void applyExternalField(Field*, Profile*, SmileiMPI*);
+    void applyExternalField(Field*, Profile*, Patch*);
         
 private:
     

@@ -6,15 +6,15 @@
 #include <string>
 
 #include "Params.h"
-#include "SmileiMPI.h"
+#include "Patch.h"
 #include "ElectroMagn.h"
 #include "Field2D.h"
 #include "Tools.h"
 
 using namespace std;
 
-ElectroMagnBC2D_refl::ElectroMagnBC2D_refl( Params &params, LaserParams &laser_params )
-: ElectroMagnBC( params, laser_params )
+ElectroMagnBC2D_refl::ElectroMagnBC2D_refl( Params &params, Patch* patch )
+  : ElectroMagnBC( params, patch )
 {
     // oversize
     oversize_ = params.oversize[0];
@@ -36,9 +36,9 @@ ElectroMagnBC2D_refl::~ElectroMagnBC2D_refl()
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnBC2D_refl::apply_xmin(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
+void ElectroMagnBC2D_refl::apply_xmin(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
-    if ( smpi->isWestern() ) {
+    if ( patch->isWestern() ) {
         
         // Static cast of the fields
         Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
@@ -100,9 +100,9 @@ void ElectroMagnBC2D_refl::apply_xmin(ElectroMagn* EMfields, double time_dual, S
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnBC2D_refl::apply_xmax(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
+void ElectroMagnBC2D_refl::apply_xmax(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
-    if ( smpi->isEastern() ) {
+    if ( patch->isEastern() ) {
         
         // Static cast of the fields
         Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
@@ -166,9 +166,9 @@ void ElectroMagnBC2D_refl::apply_xmax(ElectroMagn* EMfields, double time_dual, S
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnBC2D_refl::apply_ymin(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
+void ElectroMagnBC2D_refl::apply_ymin(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
-    if ( smpi->isSouthern() ) {
+    if ( patch->isSouthern() ) {
         
         // Static cast of the fields
         //Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
@@ -186,9 +186,9 @@ void ElectroMagnBC2D_refl::apply_ymin(ElectroMagn* EMfields, double time_dual, S
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnBC2D_refl::apply_ymax(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
+void ElectroMagnBC2D_refl::apply_ymax(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
-    if ( smpi->isNorthern() ) {
+    if ( patch->isNorthern() ) {
         
         // Static cast of the fields
         //Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);

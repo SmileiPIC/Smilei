@@ -12,8 +12,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for Species_norm
 // ---------------------------------------------------------------------------------------------------------------------
-Species_norm::Species_norm( Params& params, SmileiMPI* smpi)
-    : Species( params, smpi )
+Species_norm::Species_norm( Params& params, Patch* patch )
+  : Species( params, patch )
 {
     DEBUG("Species is being created as norm");
 }

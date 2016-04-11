@@ -10,6 +10,7 @@
 #include "ElectroMagnBC.h"
 #include "ElectroMagnBC_Factory.h"
 #include "SimWindow.h"
+#include "Patch.h"
 #include "Profile.h"
 #include "SolverFactory.h"
 
@@ -19,8 +20,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for the virtual class ElectroMagn
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn::ElectroMagn(Params &params, vector<Species*>& vecSpecies, SmileiMPI* smpi) :
-laser_params(params),
+ElectroMagn::ElectroMagn(Params &params, vector<Species*>& vecSpecies, Patch* patch) :
 timestep(params.timestep),
 cell_length(params.cell_length),
 n_species(vecSpecies.size()),
@@ -29,6 +29,7 @@ cell_volume(params.cell_volume),
 n_space(params.n_space),
 oversize(params.oversize)
 {
+    
     // initialize poynting vector
     poynting[0].resize(nDim_field,0.0);
     poynting[1].resize(nDim_field,0.0);
@@ -75,7 +76,6 @@ oversize(params.oversize)
         rho_s[ispec] = NULL;
     }
     
-    
     for (unsigned int i=0; i<3; i++) {
         for (unsigned int j=0; j<2; j++) {
             istart[i][j]=0;
@@ -83,7 +83,9 @@ oversize(params.oversize)
         }
     }    
     
-    emBoundCond = ElectroMagnBC_Factory::create(params, laser_params);
+    
+    
+    emBoundCond = ElectroMagnBC_Factory::create(params, patch);
     
     MaxwellFaradaySolver_ = SolverFactory::create(params);
 
@@ -95,16 +97,20 @@ oversize(params.oversize)
     unsigned int numExtFields=PyTools::nComponents("ExtField");
     for (unsigned int n_extfield = 0; n_extfield < numExtFields; n_extfield++) {
         MESSAGE("ExtField " << n_extfield);
-        ExtFieldStructure tmpExtField;
-        if( !PyTools::extract("field",tmpExtField.fields,"ExtField",n_extfield)) {
+        ExtField extField;
+        PyObject * profile;
+        ostringstream name;
+        if( !PyTools::extract("field",extField.fields,"ExtField",n_extfield))
             ERROR("ExtField #"<<n_extfield<<": parameter 'field' not provided'");
-        }
         
-        // Now import the profile as a python function
-        if (!PyTools::extract_pyProfile("profile",tmpExtField.py_profile,"ExtField",n_extfield)) {
+        // Now import the profile
+        name.str("");
+        name << "ExtField[" << n_extfield <<"].profile";
+        if (!PyTools::extract_pyProfile("profile",profile,"ExtField",n_extfield))
             ERROR(" ExtField #"<<n_extfield<<": parameter 'profile' not understood");
-        }
-        ext_field_structs.push_back(tmpExtField);
+        extField.profile = new Profile(profile, nDim_field, name.str());
+        
+        extFields.push_back(extField);
     }
     
     
@@ -113,23 +119,30 @@ oversize(params.oversize)
     // -----------------
     unsigned int numAntenna=PyTools::nComponents("Antenna");
     for (unsigned int n_antenna = 0; n_antenna < numAntenna; n_antenna++) {
-        AntennaStructure tmpProf;
-        tmpProf.my_field = NULL;
-        if( !PyTools::extract("field",tmpProf.field,"Antenna",n_antenna)) {
+        Antenna antenna;
+        PyObject * profile;
+        ostringstream name;
+        antenna.field = NULL;
+        if( !PyTools::extract("field",antenna.fieldName,"Antenna",n_antenna))
             ERROR("Antenna #"<<n_antenna<<": parameter 'field' not provided'");
-        }
-        if (tmpProf.field != "Jx" && tmpProf.field != "Jy" && tmpProf.field != "Jz")
+        if (antenna.fieldName != "Jx" && antenna.fieldName != "Jy" && antenna.fieldName != "Jz")
             ERROR("Antenna #"<<n_antenna<<": parameter 'field' must be one of Jx, Jy, Jz");
         
-        // Now import the space profile as a python function
-        if (!PyTools::extract_pyProfile("space_profile",tmpProf.space_profile,"Antenna",n_antenna))
+        // Extract the space profile
+        name.str("");
+        name << "Antenna[" << n_antenna <<"].space_profile";
+        if (!PyTools::extract_pyProfile("space_profile",profile,"Antenna",n_antenna))
             ERROR(" Antenna #"<<n_antenna<<": parameter 'space_profile' not understood");
+        antenna.space_profile = new Profile(profile, nDim_field, name.str());
         
-        // Now import the time profile as a python function
-        if (!PyTools::extract_pyProfile("time_profile",tmpProf.time_profile,"Antenna",n_antenna))
+        // Extract the time profile
+        name.str("");
+        name << "Antenna[" << n_antenna <<"].time_profile";
+        if (!PyTools::extract_pyProfile("time_profile" ,profile,"Antenna",n_antenna))
             ERROR(" Antenna #"<<n_antenna<<": parameter 'time_profile' not understood");
+        antenna.time_profile =  new Profile(profile, 1, name.str());
         
-        antennas.push_back(tmpProf);
+        antennas.push_back(antenna);
     }
 
 }
@@ -178,9 +191,9 @@ ElectroMagn::~ElectroMagn()
     delete MaxwellFaradaySolver_;
     
     //antenna cleanup
-    for (vector<AntennaStructure>::iterator antenna=antennas.begin(); antenna!=antennas.end(); antenna++ ) {
-        delete antenna->my_field;
-        antenna->my_field=NULL;
+    for (vector<Antenna>::iterator antenna=antennas.begin(); antenna!=antennas.end(); antenna++ ) {
+        delete antenna->field;
+        antenna->field=NULL;
     }
     
 
@@ -189,60 +202,32 @@ ElectroMagn::~ElectroMagn()
 // ---------------------------------------------------------------------------------------------------------------------
 // Maxwell solver using the FDTD scheme
 // ---------------------------------------------------------------------------------------------------------------------
-/*void ElectroMagn::solveMaxwell(double time_dual, SmileiMPI* smpi)
- {
- //solve Maxwell's equations
- solveMaxwellAmpere();
- //smpi->exchangeE( EMfields );
- solveMaxwellFaraday();
- smpi->exchangeB( this );
- boundaryConditions(time_dual, smpi);
- 
- }*/
-void ElectroMagn::solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, Params &params, SimWindow* simWindow)
-{
-//#pragma omp parallel
-{
-    // saving magnetic fields (to compute centered fields used in the particle pusher)
-    saveMagneticFields();
+// In the main program 
+//     - saveMagneticFields
+//     - solveMaxwellAmpere
+//     - solveMaxwellFaraday
+//     - boundaryConditions
+//     - vecPatches::exchangeB (patch & MPI sync)
+//     - centerMagneticFields
 
-    // Compute Ex_, Ey_, Ez_
-    solveMaxwellAmpere();
 
-#pragma omp single
-{
-    // Exchange Ex_, Ey_, Ez_
-    smpi->exchangeE( this );
-}// end single
 
-    // Compute Bx_, By_, Bz_
-    (*MaxwellFaradaySolver_)(this);
-
-#pragma omp single
+void ElectroMagn::boundaryConditions(int itime, double time_dual, Patch* patch, Params &params, SimWindow* simWindow)
 {
     // Compute EM Bcs
     if ( (!simWindow) || (!simWindow->isMoving(time_dual)) ) {
         if (emBoundCond[0]!=NULL) { // <=> if !periodic
-            emBoundCond[0]->apply_xmin(this, time_dual, smpi);
-            emBoundCond[1]->apply_xmax(this, time_dual, smpi);
+            emBoundCond[0]->apply_xmin(this, time_dual, patch);
+            emBoundCond[1]->apply_xmax(this, time_dual, patch);
         }
     }
     if (emBoundCond.size()>2) {
         if (emBoundCond[2]!=NULL) {// <=> if !periodic
-            emBoundCond[2]->apply_ymin(this, time_dual, smpi);
-            emBoundCond[3]->apply_ymax(this, time_dual, smpi);
+            emBoundCond[2]->apply_ymin(this, time_dual, patch);
+            emBoundCond[3]->apply_ymax(this, time_dual, patch);
         }
     }
- 
-    // Exchange Bx_, By_, Bz_
-    smpi->exchangeB( this );
-}// end single
-
-    // Compute Bx_m, By_m, Bz_m
-    centerMagneticFields();
-} // end parallel
 }
-
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Method used to create a dump of the data contained in ElectroMagn
@@ -289,7 +274,7 @@ void ElectroMagn::initRhoJ(vector<Species*>& vecSpecies, Projector* Proj)
         unsigned int n_particles = vecSpecies[iSpec]->getNbrOfParticles();
         
         DEBUG(n_particles<<" species "<<iSpec);
-        if (!cuParticles.isTestParticles) {
+        if (!cuParticles.isTest) {
             for (unsigned int iPart=0 ; iPart<n_particles; iPart++ ) {
                 // project charge & current densities
                 (*Proj)(Jx_s[iSpec], Jy_s[iSpec], Jz_s[iSpec], rho_s[iSpec], cuParticles, iPart, cuParticles.lor_fac(iPart));
@@ -304,32 +289,14 @@ void ElectroMagn::initRhoJ(vector<Species*>& vecSpecies, Projector* Proj)
 }
 
 
-
-
-void ElectroMagn::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
+void ElectroMagn::movingWindow_x(unsigned int shift)
 {
     //! \todo{ Why the if test ? Remove it ? (AB for JD)}
     if (emBoundCond[0]!=NULL)
         emBoundCond[0]->laserDisabled();
 
     // For nrj balance
-    nrj_mw_lost += computeNRJ(shift, smpi);
-
-    smpi->exchangeE( this, shift );
-
-    smpi->exchangeB( this, shift );
-    
-    smpi->exchangeBm( this, shift );
-
-    if (Ex_avg!=NULL) {
-        Ex_avg->shift_x(shift);
-        Ey_avg->shift_x(shift);
-        Ez_avg->shift_x(shift);
-        Bx_avg->shift_x(shift);
-        By_avg->shift_x(shift);
-        Bz_avg->shift_x(shift);
-        smpi->exchangeAvg( this );
-    }
+    //nrj_mw_lost += computeNRJ(); // Integreated in SimWindow::operate
 
     // For now, fields introduced with moving window set to 0 
     nrj_new_fields =+ 0.;
@@ -338,50 +305,24 @@ void ElectroMagn::movingWindow_x(unsigned int shift, SmileiMPI *smpi)
     //Here you might want to apply some new boundary conditions on the +x boundary. For the moment, all fields are set to 0.
 }
 
-double ElectroMagn::computeNRJ(unsigned int shift, SmileiMPI *smpi) {
-    double nrj(0.);
-
-    if ( smpi->isWestern() ) {
-        nrj += Ex_->computeNRJ(shift, istart, bufsize);
-        nrj += Ey_->computeNRJ(shift, istart, bufsize);
-        nrj += Ez_->computeNRJ(shift, istart, bufsize);
-        
-        nrj += Bx_m->computeNRJ(shift, istart, bufsize);
-        nrj += By_m->computeNRJ(shift, istart, bufsize);
-        nrj += Bz_m->computeNRJ(shift, istart, bufsize);
-    }
-
-    return nrj;
+void ElectroMagn::laserDisabled()
+{
+    if ( emBoundCond.size() )
+	emBoundCond[0]->laserDisabled();
 }
 
-bool ElectroMagn::isRhoNull(SmileiMPI* smpi)
-{
-    double norm2(0.);
-    double locnorm2(0.);
+double ElectroMagn::computeNRJ() {
+    double nrj(0.);
 
-    // rho_->isDual(i) = 0 for all i
-    // istart[i][0] & bufsize[i][0]
+    nrj += Ex_->norm2(istart, bufsize);
+    nrj += Ey_->norm2(istart, bufsize);
+    nrj += Ez_->norm2(istart, bufsize);
 
-    vector<unsigned int> iFieldStart(3,0), iFieldEnd(3,1), iFieldGlobalSize(3,1);
-    for (unsigned int i=0 ; i<rho_->isDual_.size() ; i++ ) {
-        iFieldStart[i] = istart[i][0];
-        iFieldEnd [i] = iFieldStart[i] + bufsize[i][0];
-        iFieldGlobalSize [i] = rho_->dims_[i];
-    }
+    nrj += Bx_m->norm2(istart, bufsize);
+    nrj += By_m->norm2(istart, bufsize);
+    nrj += Bz_m->norm2(istart, bufsize);
 
-    for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
-        for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
-            for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
-                unsigned int ii=k+ j*iFieldGlobalSize[2] +i*iFieldGlobalSize[1]*iFieldGlobalSize[2];
-                locnorm2 += (*rho_)(ii)*(*rho_)(ii);
-            }
-        }
-    }
-
-    MPI_Allreduce(&locnorm2, &norm2, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-
-    return (norm2<=0.);
-
+    return nrj;
 }
 
 string LowerCase(string in){
@@ -390,37 +331,32 @@ string LowerCase(string in){
     return out;
 }
 
-void ElectroMagn::applyExternalFields(SmileiMPI* smpi) {    
-    vector<Field*> my_fields;
-    my_fields.push_back(Ex_);
-    my_fields.push_back(Ey_);
-    my_fields.push_back(Ez_);
-    my_fields.push_back(Bx_);
-    my_fields.push_back(By_);
-    my_fields.push_back(Bz_);
+void ElectroMagn::applyExternalFields(Patch* patch) {    
+    Field * field;
     bool found=false;
-    for (vector<Field*>::iterator field=my_fields.begin(); field!=my_fields.end(); field++) {
-        if (*field) {
-            for (vector<ExtFieldStructure>::iterator extfield=ext_field_structs.begin(); extfield!=ext_field_structs.end(); extfield++ ) {
-                Profile *my_ExtFieldProfile = new Profile(extfield->py_profile, nDim_field, "extfield "+(*field)->name);
-                if (my_ExtFieldProfile) {
-                    for (vector<string>::iterator fieldName=(*extfield).fields.begin();fieldName!=(*extfield).fields.end();fieldName++) {
-                        if (LowerCase((*field)->name)==LowerCase(*fieldName)) {
-                            applyExternalField(*field,my_ExtFieldProfile, smpi);
-                            found=true;
-                        }
-                    }
-                    delete my_ExtFieldProfile;
-                } else{
-                    ERROR("Could not initialize external field Profile");
-                }
+    for (vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
+        for (vector<string>::iterator fieldName=extfield->fields.begin();fieldName!=extfield->fields.end();fieldName++) {
+            string name = LowerCase(*fieldName);
+            if      ( Ex_ && name==LowerCase(Ex_->name) ) field = Ex_;
+            else if ( Ey_ && name==LowerCase(Ey_->name) ) field = Ey_;
+            else if ( Ez_ && name==LowerCase(Ez_->name) ) field = Ez_;
+            else if ( Bx_ && name==LowerCase(Bx_->name) ) field = Bx_;
+            else if ( By_ && name==LowerCase(By_->name) ) field = By_;
+            else if ( Bz_ && name==LowerCase(Bz_->name) ) field = Bz_;
+            else field = NULL;
+            
+            if( field ) {
+                applyExternalField( field, extfield->profile, patch );
+                found=true;
             }
         }
     }
-    if (found) {
-        MESSAGE(1,"Finish");
-    } else {
-        MESSAGE(1,"Nothing to do");
+    if (patch->isMaster()) {
+        if (found) {
+            MESSAGE(1,"Finish");
+        } else {
+            MESSAGE(1,"Nothing to do");
+        }
     }
     Bx_m->copyFrom(Bx_);
     By_m->copyFrom(By_);
@@ -428,23 +364,20 @@ void ElectroMagn::applyExternalFields(SmileiMPI* smpi) {
 }
 
 void ElectroMagn::applyAntennas(SmileiMPI* smpi, double time) {
-    vector<Field*> my_fields;
-    my_fields.push_back(Jx_);
-    my_fields.push_back(Jy_);
-    my_fields.push_back(Jz_);
+    Field * field;
     
-    for (vector<AntennaStructure>::iterator antenna=antennas.begin(); antenna!=antennas.end(); antenna++ ) {
-        double intensity = PyTools::runPyFunction(antenna->time_profile, time);
-        if (antenna->my_field) {
-            for (vector<Field*>::iterator field=my_fields.begin(); field!=my_fields.end(); field++) {
-                if ((*field)->name==antenna->my_field->name) {
-                    if (antenna->my_field->globalDims_ == (*field)->globalDims_) {
-                        for (unsigned int i=0; i< (*field)->globalDims_ ; i++) {
-                            (**field)(i)=(**field)(i) + intensity * (*antenna->my_field)(i);
-                        }
-                    }
-                }
-            }
+    for (vector<Antenna>::iterator antenna=antennas.begin(); antenna!=antennas.end(); antenna++ ) {
+        if (antenna->field) {
+            double intensity = antenna->time_profile->valueAt(time);
+            
+            if     ( antenna->field->name == "Jx" ) field = Jx_;
+            else if( antenna->field->name == "Jy" ) field = Jy_;
+            else if( antenna->field->name == "Jz" ) field = Jz_;
+            
+            if (antenna->field->globalDims_ == field->globalDims_) // to do (TV): is this check really necessary ?
+                for (unsigned int i=0; i< field->globalDims_ ; i++)
+                    (*field)(i) += intensity * (*antenna->field)(i);
         }
     }
 }
+

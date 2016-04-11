@@ -1,17 +1,11 @@
 #ifndef DIAGNOSTICSCALAR_H
 #define DIAGNOSTICSCALAR_H
 
-#include <vector>
-#include <string>
-#include <iostream>
-#include <fstream>
+#include "Diagnostic.h"
 
-#include "Tools.h"
-#include "Species.h"
-
-class Params;
-class SmileiMPI;
-class ElectroMagn;
+#include "Params.h"
+#include "Patch.h"
+#include "SmileiMPI.h"
 
 
 //! double-int structure to communicate min/max and location trough MPI 
@@ -24,66 +18,58 @@ struct val_index
 };
 
 
-//! class that calculates scalars and writes them on a file
+class DiagnosticScalar : public Diagnostic {
+    friend class SmileiMPI;
 
-//! the user who wants to implement a scalar diagnostic, can fill the scalars map in species::computeScalar
-class DiagnosticScalar {
+public :
 
-public:
-    DiagnosticScalar();
+    DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
+    DiagnosticScalar() {};
     ~DiagnosticScalar();
 
-    void openFile(SmileiMPI* smpi);
-    //! close the file
-    void closeFile(SmileiMPI* smpi);
+    virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile );
+    virtual void setFile( Diagnostic* diag );
 
-    //! calls the compute_proc_gather, compute and write
-    void run(int timestep, ElectroMagn* EMfields, std::vector<Species*>&, SmileiMPI *smpi);
+    virtual void closeFile();
 
-    //! ask to each processor to compute the scalars and gather them in the map mpi_spec_scalars[cpu][species]
-    void compute(ElectroMagn* EMfields, std::vector<Species*>&, SmileiMPI *smpi);
+    virtual void prepare( Patch* patch, int timestep );
 
-    //! write the out_list data onto a file
-    void write(int timestep);
+    virtual void run( Patch* patch, int timestep );
+
+    virtual void write(int timestep);
 
     //! get a particular scalar
     double getScalar(std::string name);
 
-    //! every step to calculate scalars
-    unsigned int every;
-    
-    //! this is copied from params
-    double res_time;
-    
-    double tmin;
-    double tmax;
-    double dt;
+    // Reset stored values
+    void reset( int timestep ) {
+	 if (  timeSelection->theTimeIsNow(timestep) &&  timeSelection->inProgress(timestep) )
+	     for (int iscalar=0 ; iscalar<out_value.size() ; iscalar++)
+		 out_value[iscalar] = 0.;
+    }
 
-    //! write precision
-    unsigned int precision;
-    
-    //! these are lists to keep variable names and values
-    std::vector<std::string> out_key;
-    std::vector<double>      out_value;
-    //! width of each field
-    std::vector<unsigned int> out_width;
+    //! every for the standard pic timeloop output
+    unsigned int print_every;
 
-    //! list of keys for scalars to be written
-    std::vector<std::string> vars;
-    
-    //! copied from params
-    double cell_volume;
-    
     //! initial energy (kinetic + EM)
     double Energy_time_zero;
     
     //! energy used for the normalization of energy balance (former total energy)
     double EnergyUsedForNorm;
-    
-private:    
-    //! output stream
-    std::ofstream fout;
-    
+
+
+private :
+
+    // Specific methods
+    void compute( Patch* patch, int timestep );
+
+
+    //! set a particular scalar
+    void setScalar(std::string name, double value);
+
+    //! increment a particular scalar
+    void incrementScalar(std::string name, double value);
+
     //! append to outlist
     void append(std::string, double);
 
@@ -92,7 +78,36 @@ private:
 
     //! check if key is allowed
     bool allowedKey(std::string);
+
+    bool defined(std::string);
+
+    //! write precision
+    unsigned int precision;
+
+    //! list of keys for scalars to be written
+    std::vector<std::string> vars;
+
+    //! these are lists to keep variable names and values
+    std::vector<std::string> out_key;
+    std::vector<double>      out_value;
+    //! width of each field
+    std::vector<unsigned int> out_width;
+
+    //! copied from params
+    double cell_volume;
+
+    //! this is copied from params
+    double res_time;
     
+    double dt;
+
+    //! output stream
+    std::ofstream fout;
+
+
+
+
 };
 
 #endif
+

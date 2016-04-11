@@ -86,6 +86,15 @@ void Field2D::allocateDims(std::vector<unsigned int> dims )
 	
 }
 
+void Field2D::deallocateDims()
+{
+    delete [] data_;
+    data_ = NULL;
+    delete [] data_2D;
+    data_2D = NULL;
+        
+}
+
 void Field2D::allocateDims(unsigned int dims1, unsigned int dims2)
 {
 	vector<unsigned int> dims(2);
@@ -149,7 +158,7 @@ void Field2D::shift_x(unsigned int delta)
     
 }
 
-double Field2D::computeNRJ(unsigned int shift, unsigned int istart[3][2], unsigned int bufsize[3][2]) {
+double Field2D::norm2(unsigned int istart[3][2], unsigned int bufsize[3][2]) {
     double nrj(0.);
 
     int idxlocalstart[2];
@@ -158,7 +167,6 @@ double Field2D::computeNRJ(unsigned int shift, unsigned int istart[3][2], unsign
 	idxlocalstart[i] = istart[i][isDual_[i]];
 	idxlocalend[i]   = istart[i][isDual_[i]]+bufsize[i][isDual_[i]];
     }
-    //idxlocalend[0] = istart[0][isDual_[0]]+shift;
     
 
     for ( int i=idxlocalstart[0] ; i<idxlocalend[0] ; i++ ) {

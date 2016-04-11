@@ -9,13 +9,13 @@ class ElectroMagn;
 
 class ElectroMagnBC1D_SM : public ElectroMagnBC {
 public:
-    ElectroMagnBC1D_SM( Params &param, LaserParams &laser_params);
+    ElectroMagnBC1D_SM( Params &param, Patch* patch );
     ~ElectroMagnBC1D_SM();
 
-    virtual void apply_xmin(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi);
-    virtual void apply_xmax(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi);
-    virtual void apply_ymin(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi);
-    virtual void apply_ymax(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi);
+    virtual void apply_xmin(ElectroMagn* EMfields, double time_dual, Patch* patch);
+    virtual void apply_xmax(ElectroMagn* EMfields, double time_dual, Patch* patch);
+    virtual void apply_ymin(ElectroMagn* EMfields, double time_dual, Patch* patch);
+    virtual void apply_ymax(ElectroMagn* EMfields, double time_dual, Patch* patch);
     virtual void save_fields_BC1D(Field*);
  private:
     

@@ -71,6 +71,13 @@ void Field1D::allocateDims(std::vector<unsigned int> dims)
 
 }
 
+void Field1D::deallocateDims()
+{
+    delete [] data_;
+    data_=NULL;
+}
+
+
 void Field1D::allocateDims(unsigned int dims1)
 {
 	vector<unsigned int> dims(1);
@@ -129,10 +136,7 @@ void Field1D::shift_x(unsigned int delta)
 
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
-// Method used to compute the field energy (assuming electromagnetic type)
-// ---------------------------------------------------------------------------------------------------------------------
-double Field1D::computeNRJ(unsigned int shift, unsigned int istart[3][2], unsigned int bufsize[3][2]) {
+double Field1D::norm2(unsigned int istart[3][2], unsigned int bufsize[3][2]) {
     
     double nrj(0.);
     
@@ -142,37 +146,9 @@ double Field1D::computeNRJ(unsigned int shift, unsigned int istart[3][2], unsign
         idxlocalstart[i] = istart[i][isDual_[i]];
         idxlocalend[i]   = istart[i][isDual_[i]]+bufsize[i][isDual_[i]];
     }
-    idxlocalend[0] = istart[0][isDual_[0]]+shift;
-    
-    if (!isDual_[0]) {
-        // the total energy is just the square of all fields
-        for ( int i=idxlocalstart[0] ; i<idxlocalend[0] ; i++ ) {
-            nrj += data_[i]*data_[i];
-        }
-    } else {
-        // the total energy is more complex to compute
-        nrj += 0.5*data_[idxlocalend[0]-1];
-        for ( int i=idxlocalstart[0] ; i<idxlocalend[0]-1 ; i++ ) {
-            nrj += data_[i]*data_[i] + data_[i+1]*data_[i];
-        }
-    }
-    
-    nrj = 1.0;
-    
-    
-    /*
-    int idxlocalstart[1];
-    int idxlocalend[1];
-    for ( int i=0 ; i<1 ; i++ ) {
-        idxlocalstart[i] = istart[i][isDual_[i]];
-        idxlocalend[i]   = istart[i][isDual_[i]]+bufsize[i][isDual_[i]];
-    }
-    idxlocalend[0] = istart[0][isDual_[0]]+shift;
-    
     for ( int i=idxlocalstart[0] ; i<idxlocalend[0] ; i++ ) {
         nrj += data_[i]*data_[i];
     }
-     */
     
     return nrj;
 }

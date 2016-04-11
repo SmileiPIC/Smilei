@@ -9,12 +9,12 @@ class ElectroMagn;
 
 class ElectroMagnBC2D_Trans_Damping : public ElectroMagnBC {
 public:
-    ElectroMagnBC2D_Trans_Damping( Params &params, LaserParams &laser_params );
+    ElectroMagnBC2D_Trans_Damping( Params &params, Patch* patch );
     ~ElectroMagnBC2D_Trans_Damping();
 
-    virtual void apply(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi);
+    virtual void apply(ElectroMagn* EMfields, double time_dual, Patch* patch);
 
- private:
+private:
     //! Number of nodes on the primal grid in the x-direction
     unsigned int nx_p;
 
@@ -33,7 +33,7 @@ public:
     // Damping coefficient
     double cdamp; 
     // array of coefficient per layer
-    double* coeff;
+    std::vector<double> coeff;
 
     
 };

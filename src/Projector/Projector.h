@@ -2,8 +2,10 @@
 #define PROJECTOR_H
 
 #include "Params.h"
-#include "SmileiMPI.h"
 #include "Field.h"
+
+class PicParams;
+class Patch;
 
 class ElectroMagn;
 class Field;
@@ -17,7 +19,7 @@ class Projector {
 
 public:
     //! Creator for the Projector
-    Projector(Params&, SmileiMPI*) {};
+    Projector(Params&, Patch*);
     virtual ~Projector() {};
     virtual void mv_win(unsigned int shift) = 0;
     virtual void setMvWinLimits(unsigned int shift) = 0;
@@ -32,14 +34,18 @@ public:
     //! Project global current charge (EMfields->rho_)
     //! Used in Species::dynamics if time_frozen
     virtual void operator() (Field* rho, Particles &particles, int ipart) = 0;
+    virtual void operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, unsigned int b_dim0) = 0;
 
 
     //! Project local current densities if particles sorting activated in Species::dynamics
-    virtual void operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, int ipart, double gf, unsigned int bin, unsigned int b_dim0) = 0;
+    virtual void operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_lastdim, int* iold, double* delta) = 0;
+    virtual void operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_lastdim, int* iold, double* delta) = 0;
 
     //! Project global current densities if Ionization in Species::dynamics,
     virtual void operator() (Field* Jx, Field* Jy, Field* Jz, Particles &particles, int ipart, LocalFields Jion) = 0;
 
+    //!Wrapper
+    virtual void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, int diag_flag, int b_lastdim, int ispec) = 0;
 private:
 
 };

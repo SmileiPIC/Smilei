@@ -6,7 +6,7 @@
 #include "SmileiIO_Cart2D.h"
 
 #include "Params.h"
-#include "SmileiMPI.h"
+#include "Patch.h"
 
 #include "Tools.h"
 
@@ -18,17 +18,15 @@ public:
     //  --------------------------------------------------------------------------------------------------------------------
     //! Create appropriate IO environment for the geometry 
     //! \param params : Parameters
-    //! \param diag : Diagnostics
     //! \param smpi : MPI environment
     //  --------------------------------------------------------------------------------------------------------------------
-    static SmileiIO* create(Params& params, Diagnostic& diag, SmileiMPI* smpi) {
-        MESSAGE(1, "Geometry:" << params.geometry);
+    static SmileiIO* create(Params& params, Patch* patch) {
         SmileiIO* sio = NULL;
         if ( params.geometry == "1d3v" ) {
-            sio = new  SmileiIO_Cart1D(params, diag, smpi);
+            sio = new  SmileiIO_Cart1D(params, patch);
         }
         else if ( params.geometry == "2d3v" ) {
-            sio = new  SmileiIO_Cart2D(params, diag, smpi);
+            sio = new  SmileiIO_Cart2D(params, patch);
         }
         else {
             ERROR( "Geometry " << params.geometry << " not implemented" );

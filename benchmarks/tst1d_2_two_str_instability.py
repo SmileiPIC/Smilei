@@ -15,11 +15,6 @@ L  = 1.03			# wavelength=simulation box length
 dn = 0.001			# amplitude of the perturbation
 
 
-
-# wavelength_SI: used by Fred Diags. (MG: should be removed at some point)
-#
-wavelength_SI = 1.e-6
-
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
 #      2d3v = cartesian grid with 2d in space + 3d in velocity
@@ -38,6 +33,8 @@ interpolation_order = 2
 #
 cell_length = [0.01]
 sim_length  = [L]
+
+number_of_patches = [ 1 ] # n_space_x = 103
 
 # SIMULATION TIME
 # timestep: duration of the timestep
@@ -142,8 +139,8 @@ fieldsToDump = ('Ex','Ey','Ez','By_m','Bz_m');
 #
 DiagPhase(
 	every	= every,
- 	kind    = ['xpx'],
  	species = ['eon1','eon2'],
+ 	kind    = ['xpx'],
  	first = [0., 0., 50],
  	second = [-0.4, 0.4, 100],
  	deflate=5

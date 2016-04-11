@@ -14,7 +14,7 @@ class Projector2D : public Projector
 
 public:
     //! Constructor for Projector2D
-    Projector2D(Params& params, SmileiMPI* smpi) : Projector(params, smpi) {};
+    Projector2D(Params& params, Patch* patch);
     virtual ~Projector2D() {};
 
     virtual void mv_win(unsigned int shift) { i_domain_begin+=shift; }

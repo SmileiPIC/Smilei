@@ -33,7 +33,8 @@ inline int refl_particle( Particles &particles, int ipart, int direction, double
 inline int supp_particle( Particles &particles, int ipart, int direction, double limit_pos, Species *species,
                          double &nrj_iPart) {
     nrj_iPart = particles.weight(ipart)*(particles.lor_fac(ipart)-1.0); // energy lost
-    particles.position(direction, ipart) = particles.position_old(direction, ipart);
+    //particles.position(direction, ipart) = particles.position_old(direction, ipart);
+    particles.position(direction, ipart) = limit_pos - particles.position(direction, ipart);
     particles.charge(ipart) = 0;
     return 0;
 }
@@ -41,7 +42,8 @@ inline int supp_particle( Particles &particles, int ipart, int direction, double
 inline int stop_particle( Particles &particles, int ipart, int direction, double limit_pos, Species *species,
                          double &nrj_iPart) {
     nrj_iPart = particles.weight(ipart)*(particles.lor_fac(ipart)-1.0); // energy lost
-    particles.position(direction, ipart) = particles.position_old(direction, ipart);
+    //particles.position(direction, ipart) = particles.position_old(direction, ipart);
+    particles.position(direction, ipart) = limit_pos - particles.position(direction, ipart);
     particles.momentum(0, ipart) = 0.;
     particles.momentum(1, ipart) = 0.;
     particles.momentum(2, ipart) = 0.;
@@ -74,8 +76,7 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
             
             if (i==direction) {
                 // change of velocity in the direction normal to the reflection plane
-                double sign_vel = -(particles.position(direction, ipart)-0.5*limit_pos)
-                /          std::abs(particles.position(direction, ipart)-0.5*limit_pos);
+                double sign_vel = -particles.momentum(i,ipart)/std::abs(particles.momentum(i,ipart));
                 particles.momentum(i,ipart) = sign_vel * species->thermalMomentum[i]
                 *                             std::sqrt( -std::log(1.0-((double)rand() / ((double)RAND_MAX+0.1)) ) );
                 
@@ -83,14 +84,12 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
                 // change of momentum in the direction(s) along the reflection plane
                 double sign_rnd = (double)rand() / RAND_MAX - 0.5; sign_rnd = (sign_rnd)/std::abs(sign_rnd);
                 particles.momentum(i,ipart) = sign_rnd * species->thermalMomentum[i]
-                *                               userFunctions::erfinv( (double)rand() / ((double)RAND_MAX+0.1) );
+                *                             userFunctions::erfinv( (double)rand() / ((double)RAND_MAX+0.1) );
             }//if
             
         }//i
         
         // Adding the mean velocity (using relativistic composition)
-        // ---------------------------------------------------------
-
         double vx, vy, vz, v2, g, gm1, Lxx, Lyy, Lzz, Lxy, Lxz, Lyz, gp, px, py, pz;
         // mean-velocity
         vx  = -species->thermVelocity[0];

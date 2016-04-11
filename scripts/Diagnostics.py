@@ -191,15 +191,15 @@ class Smilei(object):
 			diag.plot()
 		"""
 		return ParticleDiagnostic(self, *args, **kwargs)
-	def TestParticles(self, *args, **kwargs):
-		""" TestParticles(species=None, select="", axes=[], timesteps=None, units=[""], skipAnimation=False)
+	def TrackParticles(self, *args, **kwargs):
+		""" TrackParticles(species=None, select="", axes=[], timesteps=None, units=[""], skipAnimation=False)
 		
-		Import and analyze test particles from a Smilei simulation
+		Import and analyze tracked particles from a Smilei simulation
 		
 		Parameters:
 		-----------
-		species : name of a test species. (optional)
-			To get a list of available test species, simply omit this argument.
+		species : name of a tracked species. (optional)
+			To get a list of available tracked species, simply omit this argument.
 		select: Instructions for selecting particles among those available.
 			Syntax 1: select="any(times, condition)"
 			Syntax 2: select="all(times, condition)"
@@ -229,7 +229,7 @@ class Smilei(object):
 			diag.get()
 			diag.plot()
 		"""
-		return TestParticles(self, *args, **kwargs)
+		return TrackParticles(self, *args, **kwargs)
 
 
 class Options(object):
@@ -332,11 +332,11 @@ class Units(object):
 		self.UnitRegistry = None
 		try:
 			from pint import UnitRegistry
+			self.UnitRegistry = UnitRegistry
 		except:
 			print "WARNING: you do not have the *pint* package, so you cannot modify units."
 			print "       : The results will stay in code units."
 			return
-		self.UnitRegistry = UnitRegistry
 	
 	def _divide(self,units1, units2):
 		division = self.ureg("("+units1+") / ("+units2+")").to_base_units()
@@ -356,17 +356,17 @@ class Units(object):
 					try   : return self._divide(knownUnits,units)
 					except: pass
 			val = self.ureg(knownUnits)
-			return val.magnitude or 1., u"{0.units:P}".format(val)
+			return 1., u"{0.units:P}".format(val)
 		return 1., ""
 	
-	def prepare(self, wavelength_SI=None, xunits="", yunits="", vunits="", tunits=""):
+	def prepare(self, referenceAngularFrequency_SI=None, xunits="", yunits="", vunits="", tunits=""):
 		if self.UnitRegistry:
-			if wavelength_SI:
+			if referenceAngularFrequency_SI:
 				# Load pint's default unit registry
 				self.ureg = self.UnitRegistry()
 				# Define code units
 				self.ureg.define("V_r = speed_of_light"                   ) # velocity
-				self.ureg.define("W_r = 2*pi*V_r/("+str(wavelength_SI)+"*meter)") # frequency
+				self.ureg.define("W_r = "+str(referenceAngularFrequency_SI)+"*hertz") # frequency
 				self.ureg.define("M_r = electron_mass"                    ) # mass
 				self.ureg.define("Q_r = 1.602176565e-19 * coulomb"        ) # charge
 			else:
@@ -488,13 +488,13 @@ class Diagnostic(object):
 		# Prepare units
 		self._dim = len(self._shape)
 		if self.valid:
-			try:    wavelength_SI = self.namelist.wavelength_SI
-			except: wavelength_SI = None
+			try:    referenceAngularFrequency_SI = self.namelist.referenceAngularFrequency_SI
+			except: referenceAngularFrequency_SI = None
 			xunits = None
 			yunits = None
 			if self._dim > 0: xunits = self._units[0]
 			if self._dim > 1: yunits = self._units[1]
-			self.units.prepare(wavelength_SI, xunits, yunits, self._vunits)
+			self.units.prepare(referenceAngularFrequency_SI, xunits, yunits, self._vunits)
 	
 	# When no action is performed on the object, this is what appears
 	def __repr__(self):
@@ -993,6 +993,9 @@ class ParticleDiagnostic(Diagnostic):
 			elif output == "charge_density":
 				titles[d] = "Charge density"
 				val_units = "N_r * Q_r"
+			elif output=="ekin_density":
+				titles[d] = "Energy density"
+				val_units = "N_r * K_r"
 			elif output[0] == "j":
 				titles[d] = "J"+output[1]
 				val_units = "J_r"
@@ -1048,7 +1051,6 @@ class ParticleDiagnostic(Diagnostic):
 			name  = attrs[i][0]
 			value = attrs[i][1]
 			if (name == "output"): output = value
-			if (name == "every" ): every  = int(value)
 			if (name == "time_average"): time_average = int(value)
 			if (name == "species"):
 				species = value.strip().split(" ") # get all species numbers
@@ -1066,7 +1068,7 @@ class ParticleDiagnostic(Diagnostic):
 				while len(axes)<n+1: axes.append({}) # extend the array to the adequate size
 				axes[n] = {"type":axistype,"min":axismin,"max":axismax,"size":axissize,"log":logscale,"edges_included":edge_inclusive}
 		f.close()
-		return {"#":diagNumber, "output":output, "every":every, "tavg":time_average, "species":species, "axes":axes}
+		return {"#":diagNumber, "output":output, "tavg":time_average, "species":species, "axes":axes}
 	
 	
 	# Prints the info obtained by the function "getInfo"
@@ -1082,8 +1084,7 @@ class ParticleDiagnostic(Diagnostic):
 		# 2 - period and time-averaging
 		tavg = "no time-averaging"
 		if (info["tavg"] > 1):
-			tavg = "averaging over "+str(info["tavg"])+" timesteps"
-		print "    Every "+ str(info["every"]) + " timesteps, "+tavg
+			print "    Averaging over "+str(info["tavg"])+" timesteps"
 		
 		# 3 - axes
 		for i in range(len(info["axes"])):
@@ -1552,16 +1553,16 @@ class Probe(Diagnostic):
 		
 		# Try to get the probe from the hdf5 file
 		self.probeNumber  = probeNumber
-		self._file = self._results_path+"/Probes.h5"
+		self._file = self._results_path+"/Probes"+str(self.probeNumber)+".h5"
 		f = self._h5py.File(self._file, 'r')
 		self._h5probe = None
 		for key in f.keys():
 			if key[0] != "p": continue
 			if int(key.strip("p"))==probeNumber:
-				self._h5probe = f.get(key)
+				self._h5probe = f[key]
 				break
 		if self._h5probe is None:
-			print "Cannot find probe "+str(probeNumber)+" in file "+file
+			print "Cannot find probe "+str(probeNumber)+" in file "+self._file
 			f.close()
 			return None
 		
@@ -1614,6 +1615,7 @@ class Probe(Diagnostic):
 		# Get the shape of the probe
 		self._info = self._getMyInfo()
 		self._ishape = self._info["shape"]
+		if self._ishape.prod()==1: self._ishape=self._np.array([])
 		
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
@@ -1749,7 +1751,7 @@ class Probe(Diagnostic):
 	@staticmethod
 	def _printInfo(info):
 		print ("Probe #"+str(info["probeNumber"])+": "+str(info["dimension"])+"-dimensional,"
-			+" every "+str(info["every"])+" timesteps, with fields "+info["fields"])
+			+" with fields "+info["fields"])
 		i = 0
 		while "p"+str(i) in info:
 			print "p"+str(i)+" = "+" ".join(info["p"+str(i)].astype(str).tolist())
@@ -1760,22 +1762,23 @@ class Probe(Diagnostic):
 	# Method to get info on a given probe
 	def _getInfo(self, probeNumber):
 		try:
-			file = self._results_path+'/Probes.h5'
+			file = self._file
 			f = self._h5py.File(file, 'r')
 		except:
 			print "Cannot open file "+file
 			return {}
+		probe = None
 		for key in f.iterkeys():
 			if key[0] != "p": continue
 			if int(key.strip("p"))==probeNumber:
 				probe = f[key]
+				break
 		if probe is None:
 			print "Cannot find probe "+str(probeNumber)+" in file "+file
 			return {}
 		out = {}
 		out.update({"probeNumber":probeNumber, "dimension":probe.attrs["dimension"],
-			"every":probe.attrs["every"], "shape":self._np.array(probe["number"]),
-			"fields":probe.attrs["fields"] })
+			"shape":self._np.array(probe["number"]),"fields":probe.attrs["fields"] })
 		i = 0
 		while "p"+str(i) in probe.keys():
 			k = probe.keys().index("p"+str(i))
@@ -1789,7 +1792,7 @@ class Probe(Diagnostic):
 	# get all available fields, sorted by name length
 	def getProbes(self):
 		try:
-			file = self._results_path+'/Probes.h5'
+			file = self._file
 			f = self._h5py.File(file, 'r')
 		except:
 			print "Cannot open file "+file
@@ -1862,9 +1865,9 @@ class Probe(Diagnostic):
 
 
 # -------------------------------------------------------------------
-# Class for test particles diagnostics
+# Class for tracked particles diagnostics
 # -------------------------------------------------------------------
-class TestParticles(Diagnostic):
+class TrackParticles(Diagnostic):
 
 	# This is the constructor, which creates the object
 	def _init(self, species=None, select="", axes=[], timesteps=None, **kwargs):
@@ -1873,27 +1876,26 @@ class TestParticles(Diagnostic):
 		
 		# If argument 'species' not provided, then print available species and leave
 		if species is None:
-			species = self.getTestSpecies()
+			species = self.getTrackSpecies()
 			if len(species)>0:
-				print "Printing available test species:"
-				print "--------------------------------"
+				print "Printing available tracked species:"
+				print "-----------------------------------"
 				for s in species: print s
 			else:
-				print "No test particle files found in '"+self._results_path+"'"
+				print "No tracked particles files found in '"+self._results_path+"'"
 			return None
 		
 		# Get info from the hdf5 files + verifications
 		# -------------------------------------------------------------------
 		self.species  = species
-		self._file = self._results_path+"/TestParticles_"+species+".h5"
+		self._file = self._results_path+"/TrackParticles_"+species+".h5"
 		f = self._h5py.File(self._file, 'r')
 		self._h5items = f.values()
-		self._every = f.attrs["every"]
 		
 		# Get available times in the hdf5 file
 		self.times = self.getAvailableTimesteps()
 		if self.times.size == 0:
-			print "No test particles found in "+self._file
+			print "No tracked particles found in "+self._file
 			return
 		alltimes = self.times
 		# If specific timesteps requested, narrow the selection
@@ -1919,7 +1921,7 @@ class TestParticles(Diagnostic):
 		# Get available properties ("x", "y", etc.)
 		self._properties = {}
 		translateProperties = {"Id":"Id", "x":"Position-0", "y":"Position-1", "z":"Position-2",
-							"px":"Momentum-0", "py":"Momentum-1", "pz":"Momentum-2"}
+			"px":"Momentum-0", "py":"Momentum-1", "pz":"Momentum-2"}
 		availableProperties = f.keys()
 		for k,v in translateProperties.iteritems():
 			try:
@@ -2029,7 +2031,7 @@ class TestParticles(Diagnostic):
 			self._log.append( False )
 			self._label.append( axis )
 			self._units.append( axisunits )
-		self._title = "Test particles '"+species+"'"
+		self._title = "Track particles '"+species+"'"
 		self._shape = [0]*len(axes)
 		# Hack to work with 1 axis
 		if len(axes)==1: self._vunits = self._units[0]
@@ -2041,16 +2043,16 @@ class TestParticles(Diagnostic):
 	# Method to print info on included probe
 	def info(self):
 		if not self._validate(): return
-		print "Test particles: species '"+self.species+"' containing "+str(self.nParticles)+" particles"
+		print "Track particles: species '"+self.species+"' containing "+str(self.nParticles)+" particles"
 		if len(self.selectedParticles) != self.nParticles:
 			print "                with selection of "+str(len(self.selectedParticles))+" particles"
 	
-	# get all available test species
-	def getTestSpecies(self):
-		files = self._glob(self._results_path+"/TestParticles_*.h5")
+	# get all available tracked species
+	def getTrackSpecies(self):
+		files = self._glob(self._results_path+"/TrackParticles_*.h5")
 		species = []
 		for file in files:
-			species.append(self._re.search("TestParticles_(.*).h5",file).groups()[0])
+			species.append(self._re.search("TrackParticles_(.*).h5",file).groups()[0])
 		return species
 	
 	# get all available timesteps
@@ -2058,9 +2060,13 @@ class TestParticles(Diagnostic):
 		try:
 			ntimes = self._h5items[0].len()
 		except:
-			print "Unable to find test particle data in file "+self._file
+			print "Unable to find tracked particle data in file "+self._file
 			return self._np.array([])
-		return self._np.arange(0,ntimes*self._every,self._every)
+		for item in self._h5items:
+			if item.name == "/Times":
+				return item.value
+		print "Unable to find the list of timesteps in file "+self._file
+		return self._np.array([])
 	
 	# We override the get and getData methods
 	def getData(self):
@@ -2244,7 +2250,7 @@ def multiPlot(*Diags, **kwargs):
 	if shape is None or shape == [1,1]:
 		sameAxes = True
 		for Diag in Diags:
-			if type(Diag) is TestParticles:
+			if type(Diag) is TrackParticles:
 				sameAxes = False
 				break
 			if Diag.dim()==0 and Diags[0].dim()==0:

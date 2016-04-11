@@ -10,7 +10,7 @@ class ElectroMagn1D : public ElectroMagn
 {
 public:
     //! Constructor for ElectroMagn1D
-    ElectroMagn1D(Params &params, std::vector<Species*>& vecSpecies, SmileiMPI* smpi);
+    ElectroMagn1D(Params &params, std::vector<Species*>& vecSpecies, Patch* patch);
 
     //! Destructor for ElectroMagn1D
     ~ElectroMagn1D();
@@ -18,9 +18,31 @@ public:
     //! Oversize
     unsigned int oversize_;
 
-    //! Method used for initializing Maxwell solver
-    void solvePoisson(SmileiMPI* smpi);
+    // --------------------------------------
+    //  --------- PATCH IN PROGRESS ---------
+    // --------------------------------------
+    void initPoisson(Patch *patch);
+    double compute_r();
+    void compute_Ap(Patch *patch);
+    //Access to Ap
+    double compute_pAp();
+    void update_pand_r(double r_dot_r, double p_dot_Ap);
+    void update_p(double rnew_dot_rnew, double r_dot_r);
+    void initE(Patch *patch);
+    void centeringE( std::vector<double> E_Add );
 
+    double getEx_West() { return (*Ex_)(index_bc_min[0]);}//(*Ex_)     (0); }
+    double getEx_East() { return (*Ex_)(index_bc_max[0]);}//(*Ex_)(nx_d-1); }
+
+    double getEx_WestNorth() { return 0.; }
+    double getEy_WestNorth() { return 0.; }
+    double getEx_EastSouth() { return 0.; }
+    double getEy_EastSouth() { return 0.; }
+
+    // --------------------------------------
+    //  --------- PATCH IN PROGRESS ---------
+    // --------------------------------------
+    
     //! Method used to solve Maxwell-Ampere equation
     void solveMaxwellAmpere();
 
@@ -31,12 +53,12 @@ public:
     void centerMagneticFields();
     
     //! Method used to reset/increment the averaged fields
-    void incrementAvgFields(unsigned int time_step, unsigned int ntime_step_avg);
+    void incrementAvgFields(unsigned int time_step);
 
     //! Method used to restart the total charge densities and currents
     void restartRhoJ();
     //! Method used to restart the total charge densities and currents
-    void restartRhoJs(int ispec, bool currents);
+    void restartRhoJs();
 
     //! Method used to compute the total charge density and currents by summing over all species
     void computeTotalRhoJ();
@@ -62,13 +84,13 @@ public:
     void computePoynting();
 
     //! Method used to impose external fields
-    void applyExternalField(Field*, Profile*, SmileiMPI*);
+    void applyExternalField(Field*, Profile*, Patch*);
     
 private:
-    //! from smpi is west
+    //! from patch is west
     const bool isWestern;
     
-    //! from smpi is east
+    //! from patch is east
     const bool isEastern;
 };
 

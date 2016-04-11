@@ -9,12 +9,12 @@
 
 #include "Particles.h"
 #include "BoundaryConditionType.h"
-#include "SmileiMPI.h"
+#include "Patch.h"
 #include "Tools.h"
 
 using namespace std;
 
-PartBoundCond::PartBoundCond( Params& params, Species * species, SmileiMPI* smpi )
+PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch )
 {
     // number of dimensions for the particle
     //!\todo (MG to JD) isn't it always 3?
@@ -38,38 +38,41 @@ PartBoundCond::PartBoundCond( Params& params, Species * species, SmileiMPI* smpi
     
     // -----------------------------
     // Define limits of local domain
-    // -----------------------------
-    
-    // 1d3v or 2d3v or 3d3v
-    x_min = max( x_min_global, smpi->getDomainLocalMin(0) );
-    x_max = min( x_max_global, smpi->getDomainLocalMax(0) );
-    
-    // 2d3v or 3d3v
+    if (!params.nspace_win_x) {
+        x_min = max( x_min_global, patch->getDomainLocalMin(0) );
+        x_max = min( x_max_global, patch->getDomainLocalMax(0) );
+    }
+    else {
+        x_min = patch->getDomainLocalMin(0);
+        x_max = patch->getDomainLocalMax(0);
+    }
+
     if ( nDim_particle > 1 ) {
-        if ( (params.bc_em_type_y[0]=="periodic") || (params.bc_em_type_y[1]=="periodic") ) {
-            y_min = smpi->getDomainLocalMin(1);
-            y_max = smpi->getDomainLocalMax(1);
-        }
-        else {
-            y_min = max( y_min_global, smpi->getDomainLocalMin(1) );
-            y_max = min( y_max_global, smpi->getDomainLocalMax(1) );
-        }
+	if (params.bc_em_type_y[0]=="periodic") {
+	    y_min = patch->getDomainLocalMin(1);
+	    y_max = patch->getDomainLocalMax(1);
+	}
+	else {
+	    y_min = max( y_min_global, patch->getDomainLocalMin(1) );
+	    y_max = min( y_max_global, patch->getDomainLocalMax(1) );
+	}
+        if ( nDim_particle > 2 ) {
+	    if (params.bc_em_type_z[0]=="periodic") {
+		z_min = patch->getDomainLocalMin(2);
+		z_max = patch->getDomainLocalMax(2);
+	    }
+	    else {
+		z_min = max( z_min_global, patch->getDomainLocalMin(2) );
+		z_max = min( z_max_global, patch->getDomainLocalMax(2) );
+	    }
+	}
     }
-    
-    // 3d3v
-    if ( nDim_particle > 2 ) {
-        if ( (params.bc_em_type_z[0]=="periodic") || (params.bc_em_type_z[1]=="periodic") ) {
-            z_min = smpi->getDomainLocalMin(2);
-            z_max = smpi->getDomainLocalMax(2);
-        }
-        else {
-            z_min = max( z_min_global, smpi->getDomainLocalMin(2) );
-            z_max = min( z_max_global, smpi->getDomainLocalMax(2) );
-        }
-    }
-    
+
+
+    // Can be done after parsing 
+
     // Check for inconsistencies between EM and particle BCs
-    if (! species->isTest) {
+    if (! species->particles->tracked) {
         if ( ((params.bc_em_type_x[0]=="periodic")&&(species->bc_part_type_west!="none"))
          ||  ((params.bc_em_type_x[1]=="periodic")&&(species->bc_part_type_east!="none")) ) {
             ERROR("For species " << species->species_type << ", periodic EM boundary conditions require x particle BCs to be periodic.");
@@ -94,19 +97,19 @@ PartBoundCond::PartBoundCond( Params& params, Species * species, SmileiMPI* smpi
     
     // West
     if ( species->bc_part_type_west == "refl" ) {
-        if (smpi->isWestern()) bc_west = &refl_particle;
+        if (patch->isWestern()) bc_west = &refl_particle;
     }
     else if ( species->bc_part_type_west == "supp" ) {
-        if (smpi->isWestern()) bc_west = &supp_particle;
+        if (patch->isWestern()) bc_west = &supp_particle;
     }
     else if ( species->bc_part_type_west == "stop" ) {
-        if (smpi->isWestern()) bc_west = &stop_particle;
+        if (patch->isWestern()) bc_west = &stop_particle;
     }
     else if ( species->bc_part_type_west == "thermalize" ) {
-        if (smpi->isWestern()) bc_west = &thermalize_particle;
+        if (patch->isWestern()) bc_west = &thermalize_particle;
     }
     else if ( species->bc_part_type_west == "none" ) {
-        MESSAGE(2,"West boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
+	if (patch->isMaster()) MESSAGE(2,"West boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
     }
     else {
         ERROR("West boundary condition undefined" );
@@ -114,19 +117,19 @@ PartBoundCond::PartBoundCond( Params& params, Species * species, SmileiMPI* smpi
     
     // East
     if ( species->bc_part_type_east == "refl" ) {
-        if (smpi->isEastern()) bc_east = &refl_particle;
+        if (patch->isEastern()) bc_east = &refl_particle;
     }
     else if ( species->bc_part_type_east == "supp" ) {
-        if (smpi->isEastern()) bc_east = &supp_particle;
+        if (patch->isEastern()) bc_east = &supp_particle;
     }
     else if ( species->bc_part_type_east == "stop" ) {
-        if (smpi->isEastern()) bc_east = &stop_particle;
+        if (patch->isEastern()) bc_east = &stop_particle;
     }
     else if ( species->bc_part_type_east == "thermalize" ) {
-        if (smpi->isEastern()) bc_east = &thermalize_particle;
+        if (patch->isEastern()) bc_east = &thermalize_particle;
     }
     else if ( species->bc_part_type_east == "none" ) {
-        MESSAGE(2,"East boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
+        if (patch->isMaster()) MESSAGE(2,"East boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
     }
     else {
         ERROR( "East boundary condition undefined" );
@@ -136,19 +139,19 @@ PartBoundCond::PartBoundCond( Params& params, Species * species, SmileiMPI* smpi
     if ( nDim_particle > 1 ) {
         // South
         if ( species->bc_part_type_south == "refl" ) {
-            if (smpi->isSouthern()) bc_south = &refl_particle;
+            if (patch->isSouthern()) bc_south = &refl_particle;
         }
         else if ( species->bc_part_type_south == "supp" ) {
-            if (smpi->isSouthern()) bc_south = &supp_particle;
+            if (patch->isSouthern()) bc_south = &supp_particle;
         }
         else if ( species->bc_part_type_south == "stop" ) {
-            if (smpi->isSouthern()) bc_south = &stop_particle;
+            if (patch->isSouthern()) bc_south = &stop_particle;
         }
         else if ( species->bc_part_type_south == "thermalize" ) {
-            if (smpi->isSouthern()) bc_south = &thermalize_particle;
+            if (patch->isSouthern()) bc_south = &thermalize_particle;
         }
         else if ( species->bc_part_type_south == "none" ) {
-            MESSAGE(2,"South boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
+            if (patch->isMaster()) MESSAGE(2,"South boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
         }
         else {
             ERROR( "South boundary condition undefined : " << species->bc_part_type_south  );
@@ -156,19 +159,19 @@ PartBoundCond::PartBoundCond( Params& params, Species * species, SmileiMPI* smpi
         
         // North
         if ( species->bc_part_type_north == "refl" ) {
-            if (smpi->isNorthern()) bc_north = &refl_particle;
+            if (patch->isNorthern()) bc_north = &refl_particle;
         }
         else if ( species->bc_part_type_north == "supp" ) {
-            if (smpi->isNorthern()) bc_north = &supp_particle;
+            if (patch->isNorthern()) bc_north = &supp_particle;
         }
         else if ( species->bc_part_type_north == "stop" ) {
-            if (smpi->isNorthern()) bc_north = &stop_particle;
+            if (patch->isNorthern()) bc_north = &stop_particle;
         }
         else if ( species->bc_part_type_north == "thermalize" ) {
-            if (smpi->isNorthern()) bc_north = &thermalize_particle;
+            if (patch->isNorthern()) bc_north = &thermalize_particle;
         }
         else if ( species->bc_part_type_north == "none" ) {
-            MESSAGE(2,"North boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
+            if (patch->isMaster()) MESSAGE(2,"North boundary condition for species " << species->species_type << " is 'none', which means the same as fields");
         }
         else {
             ERROR( "North boundary condition undefined : " << species->bc_part_type_north  );
@@ -208,11 +211,3 @@ PartBoundCond::~PartBoundCond()
 {
 }
 
-
-void PartBoundCond::moveWindow_x(double shift, SmileiMPI* smpi)
-{
-    x_min += shift;
-    x_max += shift;
-    if (smpi->isWestern()) bc_west = &supp_particle;
-    if (smpi->isEastern()) bc_east = &supp_particle;
-}

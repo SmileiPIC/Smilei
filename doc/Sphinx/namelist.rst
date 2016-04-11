@@ -4,17 +4,22 @@ Write a namelist
 Before you run :program:`Smilei`, you need a *namelist* (an input file). The namelist
 is written in the *python* language. It is thus recommended to know the basics of *python*.
 
-To create a namelist, we suggest you copy one existing file in the folder *benchmarks*.
+We suggest you copy one existing namelist from the folder *benchmarks*.
 All namelists have the extension ``.py``.
+
 
 ----
 
 General rules
 ^^^^^^^^^^^^^
 
-* The namelist must define variables that :program:`Smilei` will understand.
-  For instance, ``timestep = 0.01``.
-  All *python* operations are valid. For instance: ``timestep = 40*0.0001``.
+* A namelist is a list of *python* instructions to define variables known by
+  :program:`Smilei`. For instance::
+  
+    timestep = 0.01         # defines the timestep value
+    sim_length = [10., 20.] # defines the 2D box dimensions
+    
+* All *python* operations are valid. For instance: ``timestep = 40*0.0001``.
 
 * The *python* syntax requires special indentation of each line.
   You begin with no indentation, but you have to **add four spaces at the
@@ -27,71 +32,51 @@ General rules
             timestep = 0.2
     else:
         timestep = 0.3
-  
 
 * You will need to use `lists <https://docs.python.org/2/tutorial/introduction.html#lists>`_,
   which are series of things in *python*,
   defined between brackets ``[]`` and separated by commas.
   For example, ``mean_velocity = [0., 1.1, 3.]``.
 
-* You are free to import any *python* package into the namelist.
+* You are free to import any installed *python* package into the namelist. 
   For instance, you may obtain :math:`\pi` using ``from math import pi``.
 
 * All quantities are normalized to arbitrary values: see :doc:`units`.
 
 ----
 
-Stop and restart
-^^^^^^^^^^^^^^^^
-.. py:data:: dump_step
+Python workflow
+^^^^^^^^^^^^^^^
 
-  :default: 0
+*Python* is started at the beginning of the simulation (one *python* interpreter
+for each MPI node). The following steps are executed:
 
-  The number of timesteps between each dump of the full simulation.
-  If ``0``, no dump is done.
-  
-.. py:data:: dump_minutes 
+#. A few variables from :program:`Smilei` are passed to *python* so that they are
+   available to the user:
+   
+   * The rank of the current MPI node as :py:data:`smilei_mpi_rank`.
+   * The total number of MPI nodes as :py:data:`smilei_mpi_size`.
+   * The maximum random integer as :py:data:`smilei_rand_max`.
 
-  :default: 0.
+#. The namelist(s) is executed.
 
-  The number of minutes between each dump of the full simulation (combines with ``dump_step``).
-  If ``0.``, no dump is done.
+#. *Python* runs :py:data:`cleanup()` if the user has defined it
+   (this can be a good place to delete unused heavy variables and unload unused modules).
 
-.. py:data:: exit_after_dump
+#. *Python* checks whether the *python* interpreter is needed during the simulation 
+   (e.g. the user has defined a temporal :ref:`profile <profiles>` which requires *python*
+   to calculate it every timestep). Otherwise, *python* is stopped.
 
-  :default: ``True``
+#. If the :py:data:`output_dir` variable was defined, the current working directory
+   changes to that value.
 
-  If ``True``, the code stops after the dump.
+All these instructions are summarized by the MPI master (rank 0) in a file ``smilei.py``,
+so that the user can directly run ``python -i smilei.py`` for post-processing purposes.
 
-.. py:data:: restart
-
-  :default: ``False``
-
-  If ``True``, :program:`Smilei` finds the last dump file and loads the corresponding simulation.
-  If the dump file is not found, an error is raised.
-
-.. py:data:: dump_file_sequence
-
-  :default: 2
-  
-  This tells :program:`Smilei` to keep the last ``n`` dumps for a later restart 2 is the default option in case the code is stopped (or crashes) during a dump write leading to a unreadable dump file.
-
-.. py:data:: dump_dir
-
-  :default: ""
-  
-  This tells :program:`Smilei` where to write dump files
-
-.. py:data:: restart_dir
-
-  :default: ""
-  
-  This tells :program:`Smilei` where to find dump files for restart
-  
 ----
 
-Spatial and temporal scales
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Geometry
+^^^^^^^^
 
 .. py:data:: geometry
   
@@ -101,12 +86,37 @@ Spatial and temporal scales
   ``3v`` indicates the number of dimensions for velocities.
 
 
+.. py:data:: sim_length
+  
+  A list of floats: size of the simulation box in units of :math:`L_r`.
+  The number of elements of this list must be the same as the dimension of the simulation.
+
+
+.. py:data:: cell_length
+  
+  A list of floats: size of one cell in units of :math:`L_r`.
+  The number of elements of this list must be the same as the dimension of the simulation.
+
+
 .. py:data:: interpolation_order
   
   :default: 2
   
   Interpolation order. To this day, only ``2`` is available.
 
+
+.. py:data:: number_of_patches
+  
+  A list of integers: the number of patches in each dimension. 
+  :red:`to do`
+
+
+.. py:data:: clrw
+  
+  :default: 0.
+  
+  Cluster width.
+  :red:`to do`
 
 .. py:data:: timestep
   
@@ -118,44 +128,32 @@ Spatial and temporal scales
   Duration of the simulation in units of :math:`T_r`.
 
 
-.. py:data:: cell_length
+.. _referenceAngularFrequency_SI:
+
+.. py:data:: referenceAngularFrequency_SI
   
-  A list of floats: dimensions of one cell in units of :math:`L_r`.
-  The number of elements of this list must be the same as the dimension of the simulation.
+  The value of the reference angular frequency :math:`\omega_r` in SI units,
+  **only needed when collisions or ionization are requested**.
+  This frequency is related to the normalization length according to :math:`L_r\omega_r = c`
+  (see :doc:`units`).
 
 
-.. py:data:: sim_length
-  
-  A list of floats: dimensions of the simulations in units of :math:`L_r`.
-  The number of elements of this list must be the same as the dimension of the simulation.
+----
 
-
-.. py:data:: clrw
-  
-  :default: 0.
-  
-  Cluster width.
-  :red:`to do`
-
-.. py:data:: number_of_procs
-  
-  :red:`to do`
-
-
-.. _wavelength_SI:
-
-.. py:data:: wavelength_SI
-  
-  The value of the reference wavelength :math:`\lambda_r` in SI units
-  (**only required if collisions or ionization are requested**).
-  This wavelength is related to the normalization length according to :math:`2\pi L_r = \lambda_r`.
+Input / Output
+^^^^^^^^^^^^^^
 
 .. py:data:: print_every
   
   Number of timesteps between each info output on screen. By default, 10 outputs per
   simulation.
 
+.. py:data:: output_dir
 
+  Output directory for the simulation.
+  
+  :default: current working directory
+  
 
 ----
 
@@ -210,9 +208,12 @@ All the possible variables inside this block are explained here:
 
 
 .. py:data:: atomic_number
+  
+  :default: 0
 
-  The atomic number of the particles, required only if ionization is requested.
-  :red:`todo`
+  The atomic number of the particles, required only for ionization.
+  For field ionization, it must be lower than 8. For :ref:`collisional ionization 
+  <CollIonization>`, it must be lower than 101.
 
 
 .. py:data:: nb_density
@@ -290,12 +291,13 @@ All the possible variables inside this block are explained here:
   Flag for test particles. If ``True``, this species will contain only test particles
   which do not participate in the charge and currents.
 
-.. py:data:: dump_every
+.. py:data:: track_every
   
-  :default: 1
+  :default: 0
   
-  Number of timesteps between each dump of test-particle information.
-  Only active when ``isTest == True``
+  Number of timesteps between each output of particles trajectories, **or** a :ref:`time selection <TimeSelections>`.
+  If non-zero, the particles will be tracked, and a file named ``TrackParticles_abc.h5``
+  (where ``abc`` is :py:data:`species_type`) will be created.
 
 
 .. py:data:: c_part_max
@@ -337,7 +339,178 @@ Electromagnetic fields
 Lasers
 ^^^^^^
 
-:red:`to do`
+A laser consists in applying oscillating boundary conditions for the magnetic
+field on one of the box sides. The only boundary conditions that support lasers
+are ``"silver-muller"`` (see :py:data:`bc_em_type_x`).
+There are several syntaxes to introduce a laser in :program:`Smilei`:
+
+.. rubric:: 1. Defining a generic wave
+
+..
+
+  .. code-block:: python
+    
+    Laser(
+        boxSide = "west",
+        space_time_profile = [ By_profile, Bz_profile ]
+    )
+  
+  .. py:data:: boxSide
+    
+    :default: ``"west"``
+    
+    Side of the box from which the laser originates: at the moment, only ``"west"`` and
+    ``"east"`` are supported.
+    
+  .. py:data:: space_time_profile
+  
+    :type: A list of two *python* functions
+    
+    The full wave expression at the chosen box side. It is a list of **two** *python*
+    functions taking several arguments depending on the simulation dimension:
+    :math:`(t)` for a 1-D simulation, :math:`(y,t)` for a 2-D simulation (etc.)
+    The two functions represent :math:`B_y` and :math:`B_z`, respectively.
+  
+
+.. rubric:: 2. Defining the wave envelopes
+
+..
+  
+  .. code-block:: python
+    
+    Laser(
+        boxSide        = "west",
+        omega          = 1.,
+        chirp_profile  = tconstant(),
+        time_envelope  = tgaussian(),
+        space_envelope = [ By_profile  , Bz_profile   ],
+        phase          = [ PhiY_profile, PhiZ_profile ]
+    )
+  
+  This implements a wave of the form:
+  
+  .. math::
+    
+    B_y(\mathbf{x}, t) = S_y(\mathbf{x})\; T\left[t-\phi_y(\mathbf{x})/\omega(t)\right]
+    \;\sin\left( \omega(t) t - \phi_y(\mathbf{x}) \right)
+    
+    B_z(\mathbf{x}, t) = S_z(\mathbf{x})\; T\left[t-\phi_z(\mathbf{x})/\omega(t)\right]
+    \;\sin\left( \omega(t) t - \phi_z(\mathbf{x}) \right)
+  
+  where :math:`T` is the temporal envelope, :math:`S_y` and :math:`S_y` are the
+  spatial envelopes, :math:`\omega` is the time-varying frequency, and 
+  :math:`\phi_y` and :math:`\phi_z` are the phases.
+  
+  .. py:data:: omega
+    
+    :default: 1.
+    
+    The laser angular frequency.
+    
+  .. py:data:: chirp_profile
+    
+    :type: a *python* function or a :ref:`time profile <profiles>`
+    :default: ``tconstant()``
+    
+    The variation of the laser frequency over time, such that
+    :math:`\omega(t)=\mathtt{omega}\times\mathtt{chirp\_profile}(t)`.
+    
+  .. py:data:: time_envelope
+    
+    :type: a *python* function or a :ref:`time profile <profiles>`
+    :default:  ``tconstant()``
+    
+    The temporal envelope of the laser.
+    
+  .. py:data:: space_envelope
+    
+    :type: a list of two *python* functions or two :ref:`spatial profiles <profiles>`
+    :default: ``[ 1., 0. ]``
+    
+    The two spatial envelopes :math:`S_y` and :math:`S_z`.
+    
+  .. py:data:: phase
+    
+    :type: a list of two *python* functions or two :ref:`spatial profiles <profiles>`
+    :default: ``[ 0., 0. ]``
+    
+    The two spatially-varying phases :math:`\phi_y` and :math:`\phi_z`.
+
+
+
+.. rubric:: 3. Defining a 1D planar wave
+
+..
+
+  For one-dimensional simulations, you may use the simplified laser creator::
+    
+    LaserPlanar1D(
+        boxSide         = "west",
+        a0              = 1.,
+        omega           = 1.,
+        polarizationPhi = 0.,
+        ellipticity     = 0.,
+        time_envelope   = tconstant()
+    )
+  
+  .. py:data:: a0
+  
+    :default: 1.
+    
+    The normalized vector potential
+    
+  .. py:data:: polarizationPhi
+    
+    :default: 0.
+    
+    The angle of the polarization ellipse major axis relative to the X-Y plane, in radians.
+    
+  .. py:data:: ellipticity
+    
+    :default: 0.
+    
+    The polarization ellipticity: 0 for linear and :math:`\pm 1` for circular.
+
+
+
+.. rubric:: 4. Defining a 2D gaussian wave
+
+..
+
+  For two-dimensional simulations, you may use the simplified laser creator::
+    
+    LaserGaussian2D(
+        boxSide         = "west",
+        a0              = 1.,
+        omega           = 1.,
+        focus           = [50., 40.],
+        waist           = 3.,
+        incidence_angle = 0.,
+        polarizationPhi = 0.,
+        ellipticity     = 0.,
+        time_envelope   = tconstant()
+    )
+  
+  .. py:data:: focus
+    
+    :type: A list of two floats ``[X, Y]``
+    
+    The ``X`` and ``Y`` positions of the laser focus.
+    
+  .. py:data:: waist
+    
+    The waist value. Transverse coordinate at which the field is at 1/e of its maximum value.
+    
+  .. py:data:: incidence_angle
+    
+    :default: 0.
+    
+    The angle of the laser beam relative to the X axis, in radians.
+  
+  .. py:data:: time_envelope
+    
+     Time envelope of the field (not intensity).
+
 
 
 ----
@@ -370,6 +543,8 @@ All the possible variables inside this block are explained here:
 
 
 ----
+
+.. _antennas:
 
 Antennas
 ^^^^^^^^
@@ -514,6 +689,28 @@ profiles.
     :param phi: phase offset
     :param xnumber: number of periods within ``xlength``
   
+  .. py:function:: polynomial( x0=0., y0=0., order0=[], order1=[], ... )
+    
+    :param x0,y0: The reference position(s)
+    :param order0: Coefficient for the 0th order
+    :param order1: Coefficient for the 1st order (2 coefficients in 2D)
+    :param order2: Coefficient for the 2nd order (3 coefficients in 2D)
+    :param etc:
+    
+    Creates a polynomial of the form
+    
+    .. math::
+      
+      \begin{eqnarray}
+      &\sum_i a_i(x-x_0)^i & \quad\mathrm{in\, 1D}\\
+      &\sum_i \sum_j a_{ij}(x-x0)^j(y-y0)^{i-j} & \quad\mathrm{in\, 2D}
+      \end{eqnarray}
+    
+    Each ``orderi`` is a coefficient (or list of coefficents) associated to the order ``i``.
+    In 1D, there is only one coefficient per order. In 2D, each ``orderi`` is a list
+    of ``i+1`` coefficients. For instance, the second order has three coefficients
+    associated to :math:`x^2`, :math:`xy` and :math:`y^2`, respectively.
+  
   **Example**::
     
     Species( ... , density = gaussian(10., xfwhm=0.3, xcenter=0.8), ... )
@@ -556,19 +753,26 @@ profiles.
     :param phi: phase offset
     :param freq: frequency
   
+  .. py:function:: tpolynomial( t0=0., order0=[], order1=[], ... )
+    
+    :param t0: The reference position
+    :param order0: Coefficient for the 0th order
+    :param order1: Coefficient for the 1st order
+    :param order2: Coefficient for the 2nd order
+    :param etc:
+    
+    Creates a polynomial of the form :math:`\sum_i a_i(t-t_0)^i`.
+  
   **Example**::
     
     Antenna( ... , time_profile = tcosine(freq=0.01), ... )
 
-..
+
+.. rubric:: Illustrations of the pre-defined spatial and temporal profiles
   
-  **Illustrations of the pre-defined spatial and temporal profiles**
-  
-  .. image:: _static/pythonprofiles.png
-  
-| 
-  
-  .. image:: _static/pythonprofiles_t.png
+.. image:: _static/pythonprofiles.png
+
+.. image:: _static/pythonprofiles_t.png
 
 
 ----
@@ -651,23 +855,15 @@ All the possible variables inside this block are explained here:
   
   Lists of species names (see :py:data:`species_type`).
   
-  The collisions will occur between
-    1. all species under the list ``species1``
-    2. and all species under the group ``species2``
-  
-  For instance, to have collisions between ``electrons1`` and ``ions1`` , use::
-    
-    species1 = ["electrons1"], species2 = ["ions1"]
-
-..
-
-  Other example, to collide all electrons with ions::
+  The collisions will occur between all species under the group ``species1``
+  and all species under the group ``species2``. For example, to collide all
+  electrons with ions::
     
     species1 = ["electrons1", "electrons2"], species2 = ["ions"]
 
-..
-
-  **WARNING: this does not make** ``electrons1`` **collide with** ``electrons2``.
+  .. warning::
+    
+    This does not make ``electrons1`` collide with ``electrons2``.
   
   The two groups of species have to be *completely different* OR *exactly equal*.
   In other words, if ``species1`` is not equal to ``species2``,
@@ -685,6 +881,15 @@ All the possible variables inside this block are explained here:
   * If :math:`> 0`, the Coulomb logarithm is equal to this value.
 
 
+.. py:data:: ionizing
+  
+  :default: False
+  
+  If ``True``, :ref:`collisional ionization <CollIonization>` will occur. One of the 
+  species groups must be all electrons (:py:data:`mass` = 1), and the other one all ions of the
+  same :py:data:`atomic_number`.
+
+
 .. py:data:: debug_every
   
   :default: 0
@@ -700,7 +905,7 @@ For more details about the collision scheme in :program:`Smilei`, see :doc:`coll
 
 .. _DiagScalar:
 
-*Scalars* diagnostics
+*Scalar* diagnostics
 ^^^^^^^^^^^^^^^^^^^^^
 
 :program:`Smilei` can collect various scalar data, such as total particle energy, total field energy, etc.
@@ -715,7 +920,7 @@ All the possible variables inside this block are explained here:
 
 .. py:data:: every
   
-  Number of timesteps between each output.
+  Number of timesteps between each output **or** a :ref:`time selection <TimeSelections>`.
 
 
 .. py:data:: time_range
@@ -741,6 +946,9 @@ All the possible variables inside this block are explained here:
 
 
 The full list of scalars that are saved by this diagnostic:
+
+
+.. rst-class:: nowrap
 
 +----------------+---------------------------------------------------------------------------+
 | **Global energies**                                                                        |
@@ -796,11 +1004,11 @@ This is done with the following instructions in the namelist:
 
 .. py:data:: fieldDump_every
   
-  The number of timesteps between each output of the instantaneous fields.
+  The number of timesteps between each output of the instantaneous fields, **or** a :ref:`time selection <TimeSelections>`.
 
 .. py:data:: avgfieldDump_every
   
-  The number of timesteps between each output of the time-averaged fields.
+  The number of timesteps between each output of the time-averaged fields, **or** a :ref:`time selection <TimeSelections>`.
 
 .. py:data:: ntime_step_avg
   
@@ -814,6 +1022,9 @@ This is done with the following instructions in the namelist:
 
 
 The full list of fields that are saved by this diagnostic:
+
+
+.. rst-class:: nowrap
 
 +----------------+-------------------------------------------------------+
 | | Bx_m         | |                                                     |
@@ -862,7 +1073,7 @@ There are several ways to do it:
         pos        = [x0, y0, z0]
     )
   
-  * ``every`` is the number of timesteps between each output.
+  * ``every`` is the number of timesteps between each output, **or** a :ref:`time selection <TimeSelections>`.
   * ``x0 [, y0 [, z0]]`` is the position of the point where to interpolate the fields.
   
   **Note**: ``y0`` (or ``z0``) should only be used in the case of a 2-D (or 3-D) simulation.
@@ -1005,7 +1216,7 @@ All the possible variables inside this block are explained here:
 
 .. py:data:: every
   
-  The number of time-steps between each output.
+  The number of time-steps between each output, **or** a :ref:`time selection <TimeSelections>`.
 
 
 .. py:data:: time_average
@@ -1134,8 +1345,7 @@ during runtime. It is similar but less powerful than *particle diagnostics* but 
 
   :red:`to do TV,FP: we should test the above statement`
 
-All diagnostics will be written in the file 'PhaseSpace.h5'
-::
+All diagnostics will be written in the file 'PhaseSpace.h5'::
 
     DiagPhase (
         kind    = ['xpx', 'xpy'],
@@ -1171,6 +1381,105 @@ All the possible variables inside this block are explained here:
 
     data compression in the HDF5 file    
 
+
+----
+
+.. _TimeSelections:
+
+Time selections
+^^^^^^^^^^^^^^^
+
+Several components (mainly diagnostics) may require a selection of timesteps to
+be chosen by the user. When one of these timesteps is reached, the diagnostics will
+output data. A time selection is given through the parameter ``every`` and is a list
+of several integers.
+
+You may chose between five different syntaxes::
+  
+  every = [               period                    ] # Syntax 1
+  every = [       start,  period                    ] # Syntax 2
+  every = [ start,  end,  period                    ] # Syntax 3
+  every = [ start,  end,  period,  repeat           ] # Syntax 4
+  every = [ start,  end,  period,  repeat,  spacing ] # Syntax 5
+
+where
+
+* ``start`` is the first timestep of the selection (defaults to 0);
+
+* ``end`` is the last timestep of the selection (defaults to ∞);
+
+* ``period`` is the separation between outputs (defaults to 1);
+
+* ``repeat`` indicates how many outputs to do at each period (defaults to 1);
+
+* ``spacing`` is the separation between each repeat (defaults to 1).
+
+For more clarity, this graph illustrates the five syntaxes for time selections:
+
+.. image:: _static/TimeSelections.png
+  :width: 33em
+  :align: center
+
+..
+
+.. admonition:: Tips
+  
+  * The syntax ``every = period`` is also accepted.
+  * Any value set to ``0`` will be replaced by the default value.
+  * Special case: ``every=0`` means no output.
+
+----
+
+Stop and restart
+^^^^^^^^^^^^^^^^
+
+To restart the simulation from a previous point, a few instructions are needed to 
+tell :program:`Smilei` where to find the restart information, and how often the checkpoint
+dumps are done.
+
+.. py:data:: restart
+
+  :default: ``False``
+
+  If ``True``, :program:`Smilei` finds the last dump file and loads the corresponding simulation.
+  If the dump file is not found, an error is raised.
+
+.. py:data:: restart_dir
+
+  :default: None
+  
+  This tells :program:`Smilei` where to find dump files for restart.
+  
+  **WARNING: this path must either absolute or be relative to** ``output_dir``
+
+.. py:data:: dump_step
+
+  :default: 0
+
+  The number of timesteps between each dump of the full simulation.
+  If ``0``, no dump is done.
+  
+.. py:data:: dump_minutes 
+
+  :default: 0.
+
+  The number of minutes between each dump of the full simulation (combines with ``dump_step``).
+  If ``0.``, no dump is done.
+
+.. py:data:: exit_after_dump
+
+  :default: ``True``
+
+  If ``True``, the code stops after the dump.
+
+.. py:data:: dump_file_sequence
+
+  :default: 2
+  
+  This tells :program:`Smilei` to keep the last ``n`` dumps for a later restart.
+  The default value, 2, saves one extra dump in case of a crash during the file dump.
+  
+
 ----
 
 Miscellaneous
@@ -1178,5 +1487,41 @@ Miscellaneous
 
 .. py:data:: random_seed
 
-  The value of the random seed. If not defined, the machine clock is used.
+  :default: the machine clock
+
+  The value of the random seed. To create a per-processor random seed, you may use
+  the variable  :py:data:`smilei_mpi_rank`.
+  
+
+----
+
+Variables defined by Smilei
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:program:`Smilei` passes the following variables to the python interpreter for use in the
+namelist. They should not be re-defined by the user!
+
+.. py:data:: smilei_mpi_rank
+    
+  The MPI rank of the current CPU.
+
+.. py:data:: smilei_mpi_size
+    
+  The total number of MPI CPUs.
+
+.. py:data:: smilei_rand_max
+
+  The largest random integer.
+
+
+As an example of their use, this script randomizes both python's
+and :program:`Smilei`'s random seeds.
+::
+
+    import random, math
+    # reshuffle python random generator
+    random.seed(random.random()*smilei_mpi_rank)
+    # get 32bit pseudo random integer to be passed to smilei
+    random_seed = random.randint(0,smilei_rand_max)
+  
 

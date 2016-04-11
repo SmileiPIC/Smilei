@@ -31,6 +31,7 @@ public:
 
     //! Method used to allocate a Field1D
     void allocateDims(std::vector<unsigned int> dims);
+    void deallocateDims();
     //! a Field1D can also be initialized win an unsigned int 
 	void allocateDims(unsigned int dims1);
     //! 1D method used to allocate Field, isPrimal define if mainDim is Primal or Dual
@@ -58,13 +59,14 @@ public:
         return data_[i];
     };
 
+    //! \todo What is this? (MG)
+    //! \todo private/friend/modify (JD)
+    // 
+    //! Now in Field, all arrays may be viewed as a 1D array
+    //double* data_;
 
-    //virtual double computeNRJ(unsigned int shift, unsigned int** istart, unsigned int** bufsize) {return 0.;};
-    virtual double computeNRJ(unsigned int shift, unsigned int istart[3][2], unsigned int bufsize[3][2]);
-    
-    
-    //double ExtFieldAt_xmin,ExtFieldAt_xmax;
 
+    virtual double norm2(unsigned int istart[3][2], unsigned int bufsize[3][2]);
 private:
 };
 

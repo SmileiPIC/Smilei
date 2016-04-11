@@ -25,9 +25,6 @@ cs = math.sqrt(Te/mi)    # ion acoustic velocity (normalised to c)
 Uion = 5.*mi*cs*cs       # max. energy used to compute the ion spectrum
 
 
-# wavelength_SI: used by Fred Diags. (MG: should be removed at some point)
-wavelength_SI = 1.e-6
-
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
 #      2d3v = cartesian grid with 2d in space + 3d in velocity
@@ -59,6 +56,8 @@ sim_time = tsim
 #
 cell_length = [dx]
 sim_length  = [Lsim]
+
+number_of_patches = [ 1 ] # or 8
 
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
 # bc_em_type_long/trans : boundary conditions used for EM fields 

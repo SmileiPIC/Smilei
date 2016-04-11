@@ -17,10 +17,6 @@ rest = 110.0
 # plasma length
 L = 2.0*math.pi
 
-# wavelength_SI: used by Fred Diags. should be removed
-#
-wavelength_SI = 1.e-6
-
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
 #      2d3v = cartesian grid with 2d in space + 3d in velocity
@@ -40,6 +36,8 @@ interpolation_order = 2
 cell_length = [L/resx]
 sim_length  = [3.0*L]
 
+number_of_patches = [ 1 ] # or 4
+
 # SIMULATION TIME
 # timestep: duration of the timestep
 # sim_time: duration of the simulation in units of the normalization period 
@@ -48,7 +46,7 @@ timestep = L/rest
 sim_time = 10.0 * math.pi
 
 # PARALLELISATION
-clrw = 10
+clrw = 1
 
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
 # bc_em_type_x/y/z : boundary conditions used for EM fields 

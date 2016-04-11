@@ -6,11 +6,11 @@
 #include "ElectroMagn.h"
 #include "Field1D.h"
 #include "Particles.h"
-#include "SmileiMPI_Cart1D.h"
+#include "Patch.h"
 
 using namespace std;
 
-Interpolator1D3Order::Interpolator1D3Order(Params &params, SmileiMPI *smpi) : Interpolator1D(params, smpi)
+Interpolator1D3Order::Interpolator1D3Order(Params &params, Patch* patch) : Interpolator1D(params, patch)
 {
     dx_inv_   = 1.0/params.cell_length[0];
 
@@ -25,7 +25,7 @@ Interpolator1D3Order::Interpolator1D3Order(Params &params, SmileiMPI *smpi) : In
 ***********************************************************************/
 void Interpolator1D3Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc)
 {
-    double xjn, xi, xi2, xi3;
+    double xjn, xi2, xi3;
 
     //!\todo Julien, can you check that this is indeed the centered B-field which is passed to the pusher?
     Field1D* Ex1D     = static_cast<Field1D*>(EMfields->Ex_);
@@ -40,13 +40,31 @@ void Interpolator1D3Order::operator() (ElectroMagn* EMfields, Particles &particl
     // ----------------------------------
     xjn    = particles.position(0, ipart)*dx_inv_;
 
+    // Dual Grid : Ex, By, Bz
+    // ----------------------
+    id_   = (int)(xjn+0.50);        // position of the 2nd node
+    xi  = xjn - (double)id_ + 0.5;    // normalized distance to the central node
+    xi2 = xi*xi;
+    xi3 = xi*xi2;
+
+    // 3rd order interpolation on 4 nodes
+    coeffd_[0] = (1.0-xi3)*dble_1ov6 - 0.5*(xi-xi2);
+    coeffd_[1]  = dble_2ov3 - xi2 + 0.5*xi3;
+    coeffd_[2]  = dble_1ov6 + 0.5*(xi+xi2-xi3);
+    coeffd_[3]  = xi3*dble_1ov6;
+
+    id_ -= index_domain_begin;
+
+    (*ELoc).x = compute(coeffd_, Ex1D,   id_);  
+    (*BLoc).y = compute(coeffd_, By1D_m, id_);  
+    (*BLoc).z = compute(coeffd_, Bz1D_m, id_);  
 
     // Primal Grid : Ey, Ez, Bx
     // ------------------------
     ip_ = (int)xjn;            // index of the 2nd node
     xi  = xjn - (double)ip_;   //normalized distance to the 2nd node
     xi2 = xi*xi;
-    xi3 = xi*xi*xi;
+    xi3 = xi2*xi;
 
     // 3rd order interpolation on 4 nodes
     coeffp_[0]  = (1.0-xi3)*dble_1ov6 - 0.5*(xi-xi2);
@@ -60,24 +78,6 @@ void Interpolator1D3Order::operator() (ElectroMagn* EMfields, Particles &particl
     (*ELoc).z = compute(coeffp_, Ez1D,   ip_);  
     (*BLoc).x = compute(coeffp_, Bx1D_m, ip_);
 
-    // Dual Grid : Ex, By, Bz
-    // ----------------------
-    id_   = (int)(xjn+0.50);        // position of the 2nd node
-    xi  = xjn - (double)id_ + 0.5;    // normalized distance to the central node
-    xi2 = xi*xi;
-    xi3 = xi*xi3;
-
-    // 3rd order interpolation on 4 nodes
-    coeffd_[0] = (1.0-xi3)*dble_1ov6 - 0.5*(xi-xi2);
-    coeffd_[1]  = dble_2ov3 - xi2 + 0.5*xi3;
-    coeffd_[2]  = dble_1ov6 + 0.5*(xi+xi2-xi3);
-    coeffd_[3]  = xi3*dble_1ov6;
-
-    id_ -= index_domain_begin;
-
-    (*ELoc).x = compute(coeffd_, Ex1D,   id_);  
-    (*BLoc).y = compute(coeffd_, By1D_m, id_);  
-    (*BLoc).z = compute(coeffd_, Bz1D_m, id_);  
 
 }//END Interpolator1D3Order
 
@@ -104,3 +104,21 @@ void Interpolator1D3Order::operator() (ElectroMagn* EMfields, Particles &particl
     (*JLoc).x = compute(coeffd_, Jx1D,  id_);  
     
 }
+void Interpolator1D3Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)
+{
+    std::vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
+    std::vector<LocalFields> *Bpart = &(smpi->dynamics_Bpart[ithread]);
+    std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
+    std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
+
+    //Loop on bin particles
+    for (unsigned int ipart=istart ; ipart<iend; ipart++ ) {
+        //Interpolation on current particle
+        (*this)(EMfields, particles, ipart, &(*Epart)[ipart], &(*Bpart)[ipart]);
+        //Buffering of iol and delta
+        (*iold)[ipart] = ip_;
+        (*delta)[ipart] = xi;
+    }
+
+}
+

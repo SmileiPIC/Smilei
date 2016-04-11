@@ -6,20 +6,20 @@
 #include "ElectroMagn1D.h"
 #include "ElectroMagn2D.h"
 
+#include "Patch.h"
 #include "Params.h"
-#include "SmileiMPI.h"
 
 #include "Tools.h"
 
 class ElectroMagnFactory {
 public:
-    static ElectroMagn* create(Params& params, std::vector<Species*>& vecSpecies,  SmileiMPI* smpi) {
+    static ElectroMagn* create(Params& params, std::vector<Species*>& vecSpecies,  Patch* patch) {
         ElectroMagn* EMfields = NULL;
         if ( params.geometry == "1d3v" ) {
-            EMfields = new ElectroMagn1D(params, vecSpecies, smpi);
+	  EMfields = new ElectroMagn1D(params, vecSpecies, patch);
         }
         else if ( params.geometry == "2d3v" ) {
-            EMfields = new ElectroMagn2D(params, vecSpecies, smpi);
+	  EMfields = new ElectroMagn2D(params, vecSpecies, patch);
         }
         else {
             ERROR( "Unknwon geometry : " << params.geometry );
@@ -59,15 +59,18 @@ public:
         for (std::vector<Field*>::iterator iterField=EMfields->allFields.begin(); iterField!=EMfields->allFields.end(); iterField++) {
             ss << (*iterField)->name << " ";
         }
-        MESSAGE(1,"EM fields      : " << ss.str());
-        
+        if (patch->isMaster()) {
+	    MESSAGE(1,"EM fields dump      :");
+	    MESSAGE(2, ss.str() );
+        }
         ss.str("");
         for (std::vector<Field*>::iterator iterField=EMfields->allFields_avg.begin(); iterField!=EMfields->allFields_avg.end(); iterField++) {
             ss << (*iterField)->name << " ";
         }
-        MESSAGE(1,"EM avg. fields : " << ss.str());
-        
-        
+        if (patch->isMaster()) {
+            MESSAGE(1,"EM avg. fields dump :");
+	    MESSAGE(2, ss.str() );
+        }
         
         return EMfields;
     }

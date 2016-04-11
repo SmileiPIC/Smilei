@@ -30,6 +30,7 @@ public:
 
     //! Method used to allocate a Field2D
     void allocateDims(std::vector<unsigned int> dims );
+    void deallocateDims();
     //! a Field2D can also be initialized win two unsigned int 
     void allocateDims(unsigned int dims1,unsigned int dims2);
     //! allocate dimensions for field2D isPrimal define if mainDim is Primal or Dual
@@ -69,8 +70,7 @@ public:
     //! this will present the data as a 2d matrix
     double **data_2D;
 
-    //virtual double computeNRJ(unsigned int shift, unsigned int** istart, unsigned int** bufsize) {return 0.;};
-    virtual double computeNRJ(unsigned int shift, unsigned int istart[3][2], unsigned int bufsize[3][2]);
+    virtual double norm2(unsigned int istart[3][2], unsigned int bufsize[3][2]);
 
 private:
     //!\todo{Comment what are these stuffs (MG for JD)}

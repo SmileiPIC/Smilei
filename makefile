@@ -1,4 +1,12 @@
-SMILEICXX     ?= mpic++
+
+MPIVERSION = $(shell mpirun --version 2>&1| head -n 1)
+ifneq (,$(findstring Open MPI,$(MPIVERSION)))
+    SMILEICXX=mpicxx
+else
+    SMILEICXX=mpiicpc
+endif
+
+
 HDF5_ROOT_DIR ?=
 
 BUILD_DIR ?= build
@@ -9,6 +17,11 @@ EXEC = smilei
 
 default: $(EXEC)
 
+openmpintelmpi:
+	make -C src openmp=intelmpi
+
+debug:
+	make -C src config=debug
 ####################################################
 DESCRIBE:=$(shell git describe 2>/dev/null || echo '??')
 BRANCH:=$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '??')
@@ -18,7 +31,7 @@ COMMITDATE:="$(shell git show -s --pretty="%ci" 2>/dev/null || echo '??')"
 CXXFLAGS += -D__VERSION=\"$(VERSION)\" -D__COMMITDATE=\"$(COMMITDATE)\" -D__CONFIG=\""$(config)"\"
 
 CXXFLAGS += -I${HDF5_ROOT_DIR}/include -std=c++0x 
-LDFLAGS += -L${HDF5_ROOT_DIR}/lib -lhdf5 -lz
+LDFLAGS += -L${HDF5_ROOT_DIR}/lib -lhdf5 
 
 
 ifneq (,$(findstring poincare,$(HOSTNAME)))
@@ -40,6 +53,10 @@ PYHEADERS := $(addprefix $(BUILD_DIR)/, $(PYSCRIPTS:.py=.pyh))
 
 PY_CXXFLAGS:=$(shell $(PYTHONCONFIG) --includes)
 CXXFLAGS+=$(PY_CXXFLAGS)
+
+
+LDFLAGS+=-L$(PYTHONHOME)/lib
+
 PY_LDFLAGS:=$(shell $(PYTHONCONFIG) --ldflags)
 LDFLAGS+=$(PY_LDFLAGS)
 
@@ -61,7 +78,7 @@ ifneq (,$(findstring turing,$(config)))
 endif
 
 ifeq (,$(findstring noopenmp,$(config)))
-	SMILEI_COMPILER:=$(shell $(SMILEICXX) --showme:command)
+	SMILEI_COMPILER:=$(shell $(SMILEICXX) --version 2>&1|head -n 1)
     ifneq (,$(findstring icpc,$(SMILEI_COMPILER)))
         OPENMPFLAGS = -openmp
     else
@@ -70,6 +87,7 @@ ifeq (,$(findstring noopenmp,$(config)))
     endif
     OPENMPFLAGS += -D_OMP
     LDFLAGS += $(OPENMPFLAGS)
+    #LDFLAGS += -mt_mpi
     CXXFLAGS += $(OPENMPFLAGS)
 endif
 
@@ -78,11 +96,13 @@ clean:
 	rm -rf $(BUILD_DIR) 
 	rm -rf smilei-$(VERSION).tgz
 	make -C doc clean
-	
+
 distclean: clean
 	rm -f $(EXEC)
-	
-	
+
+env:
+	echo "$(MPIVERSION)"
+
 # this generates a .h file containing a char[] with the python script in binary then
 # you can just include this file to get the contents (in Params/Params.cpp)
 $(BUILD_DIR)/%.pyh: %.py
@@ -114,7 +134,7 @@ scalasca: obsolete
 	make config=scalasca
 
 
-ifeq ($(filter clean help doc,$(MAKECMDGOALS)),) 
+ifeq ($(filter clean help doc tar,$(MAKECMDGOALS)),) 
 # Let's try to make the next lines clear: we include $(DEPS) and pygenerator
 -include $(DEPS) pygenerator
 # we specify that pygenerator is not a file
@@ -133,9 +153,11 @@ endif
 doc:
 	make -C doc all
 
+sphinx:
+	make -C doc/Sphinx html
 tar:
 	git archive -o smilei-$(VERSION).tgz --prefix smilei-$(VERSION)/ HEAD
-	
+
 help: 
 	@echo 'Usage: make config=OPTIONS'
 	@echo '	    OPTIONS is a string composed of one or more of:'

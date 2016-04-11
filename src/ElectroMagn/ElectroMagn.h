@@ -5,43 +5,42 @@
 #include <string>
 #include <map>
 
+#include "Field.h"
 #include "Tools.h"
-#include "LaserProfile.h"
-#include "LaserParams.h"
 #include "Profile.h"
 #include "Species.h"
 
 
 class Params;
 class Projector;
-class Field;
 class Laser;
-class SmileiMPI;
 class ElectroMagnBC;
 class SimWindow;
+class Patch;
 class Solver;
 
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each ExtField
 // ---------------------------------------------------------------------------------------------------------------------
-struct ExtFieldStructure {
-    //! fields to which apply the exeternal field
+struct ExtField {
+    //! fields to which apply the external field
     std::vector<std::string> fields;
-    PyObject *py_profile;
+    
+    Profile * profile;
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each Antenna
 // ---------------------------------------------------------------------------------------------------------------------
-struct AntennaStructure {
-    //! fields to which apply the exeternal field
-    std::string field;
+struct Antenna {
+    //! Jx, Jy or Jz
+    std::string fieldName;
     
-    PyObject *time_profile;
-    PyObject *space_profile;
+    Profile *time_profile;
+    Profile *space_profile;
     
-    Field* my_field;
+    Field* field;
 };
 
 //! class ElectroMagn: generic class containing all information on the electromagnetic fields and currents
@@ -50,13 +49,11 @@ class ElectroMagn
 
 public:
     //! Constructor for Electromagn
-    ElectroMagn( Params &params, std::vector<Species*>& vecSpecies, SmileiMPI* smpi );
+    ElectroMagn( Params &params, std::vector<Species*>& vecSpecies, Patch* patch );
     
     //! Destructor for Electromagn
     virtual ~ElectroMagn();
-    
-    LaserParams laser_params;
-    
+        
     std::vector<unsigned int> dimPrim;
     std::vector<unsigned int> dimDual;
 
@@ -140,6 +137,10 @@ public:
     std::vector<Field*> Jy_s;
     std::vector<Field*> Jz_s;
     std::vector<Field*> rho_s;
+    //! Number of bins
+    unsigned int nbin;
+    //! Cluster width
+    unsigned int clrw;
 
     //! nDim_field (from params)
     const unsigned int nDim_field;
@@ -162,13 +163,16 @@ public:
     //! Oversize domain to exchange less particles (from params)
     const std::vector<unsigned int> oversize;
 
+    //! Constructor for Electromagn
+    ElectroMagn( Params &params, Patch* patch );
+
     //! Method used to dump data contained in ElectroMagn
     void dump();
 
     //! Method used to initialize the total charge currents and densities
     virtual void restartRhoJ() = 0;
     //! Method used to initialize the total charge currents and densities of species
-    virtual void restartRhoJs(int ispec, bool currents) = 0;
+    virtual void restartRhoJs() = 0;
 
     //! Method used to initialize the total charge density
     void initRhoJ(std::vector<Species*>& vecSpecies, Projector* Proj);
@@ -176,21 +180,53 @@ public:
     //! Method used to sum all species densities and currents to compute the total charge density and currents
     virtual void computeTotalRhoJ() = 0;
 
-    //! Method used to initialize the Maxwell solver
-    virtual void solvePoisson(SmileiMPI* smpi) = 0;
-    
+    // --------------------------------------
+    //  --------- PATCH IN PROGRESS ---------
+    // --------------------------------------
+    virtual void initPoisson(Patch *patch) = 0;
+    virtual double compute_r() = 0;
+    virtual void compute_Ap(Patch *patch) = 0;
+    //Access to Ap
+    virtual double compute_pAp() = 0;
+    virtual void update_pand_r(double r_dot_r, double p_dot_Ap) = 0;
+    virtual void update_p(double rnew_dot_rnew, double r_dot_r) = 0;
+    virtual void initE(Patch *patch) = 0;
+    virtual void centeringE( std::vector<double> E_Add ) = 0;
+
+    virtual double getEx_West() = 0; // 2D !!!
+    virtual double getEx_East() = 0; // 2D !!!
+
+    virtual double getEx_WestNorth() = 0; // 1D !!!
+    virtual double getEy_WestNorth() = 0; // 1D !!!
+    virtual double getEx_EastSouth() = 0; // 1D !!!
+    virtual double getEy_EastSouth() = 0; // 1D !!!
+
+    std::vector<unsigned int> index_min_p_;
+    std::vector<unsigned int> index_max_p_;
+    Field* phi_;
+    Field* r_;
+    Field* p_;
+    Field* Ap_;
+
+    // --------------------------------------
+    // --------------------------------------
+    //  --------- PATCH IN PROGRESS ---------
+    // --------------------------------------
+
+
     //! \todo check time_dual or time_prim (MG)
     //! method used to solve Maxwell's equation (takes current time and time-step as input parameter)
-    void solveMaxwell(int itime, double time_dual, SmileiMPI* smpi, Params &params, SimWindow* simWindow);
     virtual void solveMaxwellAmpere() = 0;
     //! Maxwell Faraday Solver
     Solver* MaxwellFaradaySolver_;
     virtual void saveMagneticFields() = 0;
     virtual void centerMagneticFields() = 0;
+    void boundaryConditions(int itime, double time_dual, Patch* patch, Params &params, SimWindow* simWindow);
 
-    void movingWindow_x(unsigned int shift, SmileiMPI *smpi);
+    void movingWindow_x(unsigned int shift);
+    void laserDisabled();
     
-    virtual void incrementAvgFields(unsigned int time_step, unsigned int ntime_step_avg) = 0;
+    virtual void incrementAvgFields(unsigned int time_step) = 0;
         
     //! compute Poynting on borders
     virtual void computePoynting() = 0;
@@ -204,26 +240,27 @@ public:
     //same as above but instantaneous
     std::vector<double> poynting_inst[2];
 
-    //! Check if norm of charge denisty is not null
-    bool isRhoNull(SmileiMPI* smpi);
+    //! Compute local square norm of charge denisty is not null
+    inline double computeRhoNorm2() {
+	return rho_->norm2(istart, bufsize);
+    }
     
-    //! external fields parameters the key string is the name of the field and the value is a vector of ExtFieldStructure
-    std::vector<ExtFieldStructure> ext_field_structs;
+    //! external fields parameters the key string is the name of the field and the value is a vector of ExtField
+    std::vector<ExtField> extFields;
     
     //! Method used to impose external fields (apply to all Fields)
-    void applyExternalFields(SmileiMPI*);
+    void applyExternalFields(Patch*);
     
     //! Method used to impose external fields (apply to a given Field)
-    virtual void applyExternalField(Field*, Profile*, SmileiMPI*) = 0 ;
+    virtual void applyExternalField(Field*, Profile*, Patch*) = 0 ;
     
     //! Antenna
-    std::vector<AntennaStructure> antennas;
+    std::vector<Antenna> antennas;
     
     //! Method used to impose external currents (aka antennas)
     void applyAntennas(SmileiMPI*, double time);
 
-
-    double computeNRJ(unsigned int shift, SmileiMPI *smpi);
+    double computeNRJ();
     double getLostNrjMW() const {return nrj_mw_lost;}
     
     double getNewFieldsNRJ() const {return nrj_new_fields;}
@@ -232,6 +269,8 @@ public:
         nrj_mw_lost = 0.;
         nrj_new_fields = 0.;
     }
+
+    inline void storeNRJlost( double nrj ) { nrj_mw_lost = nrj; }
 
     inline int getMemFootPrint() {
 

@@ -19,7 +19,7 @@
 
 /* --------------------------------------------------------------------*/
 /* Prevent tables to wrap lines */
-table.docutils {
+table.nowrap {
 	white-space: nowrap;
 }
 /* Remove bottom margin in table cells with line-blocks */
@@ -32,15 +32,48 @@ table.noborder, table.noborder td {
 	-moz-box-shadow: none;
 	-webkit-box-shadow: none;
 	box-shadow: none;
+	vertical-align:middle;
 }
 
 /* --------------------------------------------------------------------*/
-/* Main logo */
+/* Logos and icons */
 img.logo {
 	width:160px;
 }
 div.sphinxsidebarwrapper p.logo {
 	text-align: left;
+}
+.horizontallogo {
+	display:none;
+	height:5em;
+}
+@media screen and (max-width: 875px) {
+	.horizontallogo {
+		display:block;
+	}
+}
+.icon {
+    display:inline-block;
+    text-align:center;
+    margin:1em;
+    width:100px;
+}
+.icon * {
+    margin:0 auto;
+    display:block;
+}
+.icon img {
+	height:3em;
+}
+.icon, .icon:hover {
+    text-decoration:none;
+    color:#333;
+}
+.icon:hover {
+    background-color:#EAF4FD;
+}
+.icon:active {
+    background-color:#BBDDFA;
 }
 
 /* --------------------------------------------------------------------*/
@@ -119,8 +152,7 @@ div.highlight > pre {
 /* --------------------------------------------------------------------*/
 /* Adjust horizontal lines */
 hr {
-	margin-top:3em;
-	margin-bottom:-1em;
+	margin-top:1em;
 	border-color: #0672ba;
 }
 
@@ -134,18 +166,21 @@ h1, h2, h3, h4, h5, h6 {
 /* --------------------------------------------------------------------*/
 /* Smaller admonition box */
 div.admonition {
-	padding:7px;
-	margin:0px 30px;
+	padding:7px !important;
+	margin:0px 30px !important;
 	background-color: #EAF4FD;
 	border: 1px solid #0672BA;
+	overflow: hidden;
 }
 div.admonition p.admonition-title {
 	font-size: 18px;
 	font-weight: bold;
 	margin:0;
+	float: inherit;
 }
 div.admonition p {
 	margin:5px 0;
+	float: right;
 }
 
 /* --------------------------------------------------------------------*/

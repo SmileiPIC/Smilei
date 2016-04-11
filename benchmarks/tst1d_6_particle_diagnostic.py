@@ -8,7 +8,7 @@
 import math
 
 L0 = 2.*math.pi
-wavelength_SI = 1.e-6
+referenceAngularFrequency_SI = L0 * 3e8 /1.e-6
 
 # dim: Geometry of the simulation
 #      1d3v = cartesian grid with 1d in space + 3d in velocity
@@ -35,6 +35,8 @@ time_fields_frozen = 100000000000.
 # sim_length  = length of the simulation
 cell_length = [0.01 * L0]
 sim_length  = [1. * L0]
+
+number_of_patches = [ 1 ] # or 4
 
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
 # bc_em_type_x : two strings, x boundary conditions for EM fields 

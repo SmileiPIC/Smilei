@@ -8,6 +8,11 @@
 #ifndef Params_H
 #define Params_H
 
+#undef _POSIX_C_SOURCE
+#undef _XOPEN_SOURCE
+
+#include "Profile.h"
+
 #include <vector>
 #include <string>
 #include <cstdlib>
@@ -124,7 +129,7 @@ public:
     double cell_volume;
     
     //! wavelength (in SI units)
-    double wavelength_SI;
+    double referenceAngularFrequency_SI;
     
     //! Oversize domain to exchange less particles
     std::vector<unsigned int> oversize;
@@ -136,7 +141,20 @@ public:
     int exchange_particles_each;
     
     //! Number of MPI process per direction (default : as square as possible)
-    std::vector<int> number_of_procs;
+    std::vector<int> number_of_patches;
+    //! Load balancing frequency
+    int balancing_freq;
+    //! Load coefficient applied to a cell (default = 1)
+    double coef_cell;
+    //! Load coefficient applied to a frozen particle (default = 0.1)
+    double coef_frozen;
+    //! Return if number of patch = number of MPI process, to tune IO //ism
+    bool simu_is_cartesian;
+
+
+    //! Log2 of the number of patch in the whole simulation box in every direction.
+    //! The number of patch in a given direction MUST be a power of 2 and is 2^(mi[i]).
+    std::vector<unsigned int> mi;
     
     //! global number of time exits (it will be used if not specified in various diags/fields)
     unsigned int global_every;
@@ -144,7 +162,7 @@ public:
     //! string containing the whole clean namelist
     std::string namelist;
     
-    //! call the python cleanup function and 
+    //! call the python cleanup function and
     //! check if python can be closed (e.g. there is no laser python profile)
     //! by calling the _keep_python_running python function (part of pycontrol.pyh)
     void cleanup(SmileiMPI*);

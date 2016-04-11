@@ -223,6 +223,7 @@ class H5 {
     //! sizex, sizey is the number of elements in both axes of the matrix
     //! offset is the x-location where the current node will start to write
     //! numel  is the x-number of elements for the current node
+    
     static void matrix_MPI(hid_t locationId, std::string name, double& m,
                            int sizex, int sizey, int offset, int numel    ) {
         // Create a HDF5 memory space to hold the data
@@ -250,14 +251,70 @@ class H5 {
         hid_t write_plist = H5Pcreate(H5P_DATASET_XFER);
         H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);
         hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
-        hid_t dset_id  = H5Dcreate(locationId, name.c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
-        H5Pclose(plist_id);
+        hid_t dset_id;
+        htri_t status = H5Lexists( locationId, name.c_str(), H5P_DEFAULT ); 
+        if (!status)
+            dset_id  = H5Dcreate(locationId, name.c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+        else
+            dset_id = H5Dopen(locationId, name.c_str(), H5P_DEFAULT);
         H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &m );
+        // Close all
+        H5Pclose(plist_id);
         H5Dclose(dset_id);
         H5Pclose( write_plist );
         H5Sclose(filespace);
         H5Sclose(memspace);
     }
+    
+    
+    
+    //! Write an N-D array of doubles in parallel (several MPI nodes)
+    //! locationId : ID of the HDF5 location where to write the array
+    //! name       : name to give to the new (big) array
+    //! A          : the local (small) N-D array which will be inserted in A, at the right place
+    //! total_size : a vector (length N) representing the N-D size of the big array
+    //! local_size : a vector (length N) representing the N-D size of the local (small) array
+    //! offset     : a vector (length N) representing the location where the current node will start to write
+    
+    static void array3D_MPI(hid_t locationId, std::string name, double& A,
+                            std::vector<int> total_size,  std::vector<int> local_size, std::vector<unsigned int> offset ) {
+        int dim = total_size.size(), i;
+        // Create a HDF5 memory space to represent the local array shape
+        hsize_t chunk_parts[dim];
+        for(i=0; i<dim; i++) chunk_parts[i] = local_size[i];
+        hid_t memspace = H5Screate_simple(dim, chunk_parts, NULL);
+        // Create the HDF5 file space to represent the total array shape
+        hsize_t dimsf[dim];
+        for(i=0; i<dim; i++) dimsf[i] = total_size[i];
+        hid_t filespace = H5Screate_simple(dim, dimsf, NULL);
+        // Choose the hyperslab, which is the region where the current node will write
+        hsize_t offs[dim], stride[dim], count[dim], block[dim];
+        for(i=0; i<dim; i++) {
+            offs[i] = offset[i];
+            stride[i] = 1;
+            count[i] = 1;
+            block[i] = local_size[i];
+        }
+        H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offs, stride, count, block);
+        // Open the pre-existing group and write the data inside
+        hid_t write_plist = H5Pcreate(H5P_DATASET_XFER);
+        H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);
+        hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
+        hid_t dset_id;
+        htri_t status = H5Lexists( locationId, name.c_str(), H5P_DEFAULT ); 
+        if (!status)
+            dset_id  = H5Dcreate(locationId, name.c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+        else
+            dset_id = H5Dopen(locationId, name.c_str(), H5P_DEFAULT);
+        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &A );
+        // Close all
+        H5Pclose(plist_id);
+        H5Dclose(dset_id);
+        H5Pclose( write_plist );
+        H5Sclose(filespace);
+        H5Sclose(memspace);
+    }
+    
     
 };
 

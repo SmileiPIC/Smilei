@@ -19,7 +19,7 @@ public:
     virtual ~Pusher();
 
     //! Overloading of () operator
-    virtual void operator() (Particles &particles, int ipart, LocalFields Epart, LocalFields Bpart, double& gf) = 0;
+    virtual void operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread) = 0;
 
 protected:
     double dt, dts2;
@@ -27,7 +27,6 @@ protected:
     // mass_ relative to Species but used in the particle pusher
     double mass_;
     double one_over_mass_;
-
     int nDim_;
 
 };//END class

@@ -20,6 +20,9 @@ using namespace std;
 Params::Params(SmileiMPI* smpi, std::vector<std::string> namelistsFiles) :
 namelist("")
 {
+    
+    if (namelistsFiles.size()==0) ERROR("No namelists given!");
+
     string commandLineStr("");
     for (unsigned int i=0;i<namelistsFiles.size();i++) commandLineStr+="\""+namelistsFiles[i]+"\" ";
     MESSAGE(1,commandLineStr);
@@ -36,11 +39,17 @@ namelist("")
     // Running pyinit.py
     runScript(string(reinterpret_cast<const char*>(pyinit_py), pyinit_py_len), "pyinit.py");
 
-    // Running pyfunctons.py
+    // Running pyprofiles.py
     runScript(string(reinterpret_cast<const char*>(pyprofiles_py), pyprofiles_py_len), "pyprofiles.py");
     
     // here we add the rank, in case some script need it
     PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_rank", smpi->getRank());
+    
+    // here we add the MPI size, in case some script need it
+    PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_mpi_size", smpi->getSize());
+    
+    // here we add the larget int, important to get a valid seed for randomization
+    PyModule_AddIntConstant(PyImport_AddModule("__main__"), "smilei_rand_max", RAND_MAX);
     
     // Running the namelists
     runScript("############### BEGIN USER NAMELISTS/COMMANDS ###############\n");
@@ -49,7 +58,6 @@ namelist("")
         if (smpi->isMaster()) {
             ifstream istr(it->c_str());
             if (istr.is_open()) {
-                MESSAGE(1,"Reading file " << *it);
                 std::stringstream buffer;
                 buffer << istr.rdbuf();
                 strNamelist+=buffer.str();
@@ -65,23 +73,41 @@ namelist("")
     // Running pycontrol.py
     runScript(string(reinterpret_cast<const char*>(pycontrol_py), pycontrol_py_len),"pycontrol.py");
     
-    PyTools::runPyFunction("_smilei_check");
+    smpi->barrier();
+
+    // output dir: we force this to be the same on all mpi nodes
+    string output_dir("");
+    PyTools::extract("output_dir", output_dir);
     
+    // CHECK namelist on python side
+    PyTools::runPyFunction("_smilei_check");
+    smpi->barrier();
+
+    if (!output_dir.empty()) {
+        if (chdir(output_dir.c_str()) != 0) {
+            WARNING("Could not chdir to output_dir = " << output_dir);
+        }
+    }
+
     
     // Now the string "namelist" contains all the python files concatenated
     // It is written as a file: smilei.py
     if (smpi->isMaster()) {
         ofstream out_namelist("smilei.py");
         if (out_namelist.is_open()) {
+            out_namelist << "# coding: utf-8" << endl << endl ;
             out_namelist << namelist;
             out_namelist.close();
         }
     }
     
+    
+    // random seed
     unsigned int random_seed=0;
     if (!PyTools::extract("random_seed", random_seed)) {
         random_seed = time(NULL);
     }
+    
     srand(random_seed);
     
     // --------------
@@ -97,8 +123,12 @@ namelist("")
     // Normalisation & units
     // ---------------------
     
-    wavelength_SI = 0.;
-    PyTools::extract("wavelength_SI",wavelength_SI);
+    referenceAngularFrequency_SI = 0.;
+    if( !PyTools::extract("referenceAngularFrequency_SI",referenceAngularFrequency_SI) ) {
+        if( PyTools::extract("wavelength_SI",referenceAngularFrequency_SI) ) {
+            ERROR("The parameter `wavelength_SI` is deprecated. Use `referenceAngularFrequency_SI` instead.");
+        }
+    }
     
     
     // -------------------
@@ -215,11 +245,42 @@ namelist("")
     PyTools::extract("every",global_every);
     
     // --------------------
-    // Number of processors
+    // Number of patches
     // --------------------
-    if ( !PyTools::extract("number_of_procs", number_of_procs) )
-        number_of_procs.resize(nDim_field, 0);
-    
+    if ( !PyTools::extract("number_of_patches", number_of_patches) ) {
+        number_of_patches.resize(nDim_field, 1);
+	simu_is_cartesian = true;
+    }
+    else {
+	int tot_number_of_patches(1);
+        for ( int iDim=0 ; iDim<nDim_field ; iDim++ ){
+            if( (number_of_patches[iDim] & number_of_patches[iDim]-1) != 0) ERROR("Number of patches in each direction must be a power of 2");
+            tot_number_of_patches *= number_of_patches[iDim];
+        }
+	if ( tot_number_of_patches == smpi->getSize() ){
+	    simu_is_cartesian = true;
+	} else {
+	    simu_is_cartesian = false;
+            if (tot_number_of_patches < smpi->getSize()) ERROR("The total number of patches must be greater or equal to the number of MPI processes"); 
+        }
+    }
+    //simu_is_cartesian = false;
+
+
+    if ( !PyTools::extract("balancing_freq", balancing_freq) )
+        balancing_freq = 150;
+    if ( !PyTools::extract("coef_cell", coef_cell) )
+        coef_cell = 1.;
+    if ( !PyTools::extract("coef_frozen", coef_frozen) )
+        coef_frozen = 0.1;
+
+    //mi.resize(nDim_field, 0);
+    mi.resize(3, 0);
+    while ((number_of_patches[0] >> mi[0]) >1) mi[0]++ ;
+    if (number_of_patches.size()>1)
+	while ((number_of_patches[1] >> mi[1]) >1) mi[1]++ ;
+    else if (number_of_patches.size()>2)
+	while ((number_of_patches[2] >> mi[2]) >1) mi[2]++ ;
     // -------------------------------------------------------
     // Compute usefull quantities and introduce normalizations
     // also defines defaults values for the species lengths
@@ -260,6 +321,9 @@ void Params::compute()
         // compute number of cells & normalized lengths
         for (unsigned int i=0; i<nDim_field; i++) {
             n_space[i]         = round(sim_length[i]/cell_length[i]);
+
+            if (i==0 && nspace_win_x != 0) n_space[i] = nspace_win_x;
+
             double entered_sim_length = sim_length[i];
             sim_length[i]      = (double)(n_space[i])*cell_length[i]; // ensure that nspace = sim_length/cell_length
             if (sim_length[i]!=entered_sim_length)
@@ -284,7 +348,16 @@ void Params::compute()
     
     n_space_global.resize(3, 1);	//! \todo{3 but not real size !!! Pbs in Species::Species}
     oversize.resize(3, 0);
-    
+
+    //n_space_global.resize(nDim_field, 0);
+    for (unsigned int i=0; i<nDim_field; i++){
+        oversize[i]  = interpolation_order + (exchange_particles_each-1);;
+        n_space_global[i] = n_space[i];
+        n_space[i] /= number_of_patches[i];
+        if(n_space_global[i]%number_of_patches[i] !=0) ERROR("ERROR in dimension " << i <<". Number of patches = " << number_of_patches[i] << " must divide n_space_global = " << n_space_global[i]);
+	if ( n_space[i] <= 2*oversize[i] ) ERROR ( "ERROR in dimension " << i <<". Patches length = "<<n_space[i] << " cells must be at least " << 2*oversize[i] +1 << " cells long. Increase number of cells or reduce number of patches in this direction. " );
+    }
+
 }
 
 
@@ -328,10 +401,13 @@ void Params::print()
     
     for ( unsigned int i=0 ; i<sim_length.size() ; i++ ){
         MESSAGE(1,"dimension " << i << " - (res_space, sim_length) : (" << res_space[i] << ", " << sim_length[i] << ")");
-        MESSAGE(1,"            - (n_space,  cell_length) : " << "(" << n_space[i] << ", " << cell_length[i] << ")");
+        MESSAGE(1,"            - (n_space_global,  cell_length) : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")");
     }
-    
-    
+
+    TITLE("Load Balancing: ");
+    MESSAGE(1,"Load balancing every " << balancing_freq << " iterations.");
+    MESSAGE(1,"Cell load coefficient = " << coef_cell );
+    MESSAGE(1,"Frozen particle load coefficient = " << coef_frozen );
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -383,7 +459,7 @@ vector<unsigned int> Params::FindSpecies(vector<Species*>& vecSpecies, vector<st
 void Params::runScript(string command, string name) {
     PyTools::checkPyError();
     namelist+=command;
-    if (name.size()>0)  MESSAGE(1,"Passing to python " << name);
+    if (name.size()>0)  MESSAGE(1,"Parsing " << name);
     int retval=PyRun_SimpleString(command.c_str());
     if (retval==-1) {
         ERROR("error parsing "<< name);

@@ -6,7 +6,7 @@
 #include <string>
 
 #include "Params.h"
-#include "SmileiMPI.h"
+#include "Patch.h"
 #include "ElectroMagn.h"
 #include "Field1D.h"
 #include "Tools.h"
@@ -19,8 +19,8 @@ using namespace std;
 //      - electric fields are put to zero in the ghost cells
 //      - magnetic fields are constant in the ghost cells
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagnBC1D_refl::ElectroMagnBC1D_refl( Params &params, LaserParams &laser_params )
-: ElectroMagnBC( params, laser_params )
+ElectroMagnBC1D_refl::ElectroMagnBC1D_refl( Params &params, Patch* patch )
+  : ElectroMagnBC( params, patch )
 {
     
     // oversize
@@ -41,10 +41,10 @@ ElectroMagnBC1D_refl::~ElectroMagnBC1D_refl()
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Reflective Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnBC1D_refl::apply_xmin(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
+void ElectroMagnBC1D_refl::apply_xmin(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
     
-    if ( smpi->isWestern() ) {
+    if ( patch->isWestern() ) {
         
         Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
         Field1D* Ey1D   = static_cast<Field1D*>(EMfields->Ey_);
@@ -77,10 +77,10 @@ void ElectroMagnBC1D_refl::apply_xmin(ElectroMagn* EMfields, double time_dual, S
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Reflective Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnBC1D_refl::apply_xmax(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
+void ElectroMagnBC1D_refl::apply_xmax(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
     
-    if ( smpi->isEastern() ) {
+    if ( patch->isEastern() ) {
         
         Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
         Field1D* Ey1D   = static_cast<Field1D*>(EMfields->Ey_);
@@ -112,9 +112,9 @@ void ElectroMagnBC1D_refl::apply_xmax(ElectroMagn* EMfields, double time_dual, S
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Reflective Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnBC1D_refl::apply_ymin(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
+void ElectroMagnBC1D_refl::apply_ymin(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
 }
-void ElectroMagnBC1D_refl::apply_ymax(ElectroMagn* EMfields, double time_dual, SmileiMPI* smpi)
+void ElectroMagnBC1D_refl::apply_ymax(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
 }

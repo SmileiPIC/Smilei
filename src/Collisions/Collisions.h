@@ -34,18 +34,23 @@ Several collision types can be defined. For each type, add a group "Collisions()
 #include "Tools.h"
 #include "Params.h"
 #include "Species.h"
+#include "CollisionalIonization.h"
 #include "H5.h"
+
+class Patch;
 
 class Collisions
 {
 
 public:
     //! Constructor for Collisions between two species
-    Collisions(SmileiMPI*, unsigned int, std::vector<unsigned int>, std::vector<unsigned int>, double, bool, int, unsigned int);
+    Collisions(Patch*, unsigned int, std::vector<unsigned int>, std::vector<unsigned int>, double, bool, int, unsigned int, int, bool, int);
+    void createTimestep(int timestep);
+    
     ~Collisions();
     
     //! Method that creates a vector of Collisions objects: one for each group in the input file.
-    static std::vector<Collisions*> create(Params&, std::vector<Species*>&, SmileiMPI*);
+    static std::vector<Collisions*> create(Params&, Patch*, std::vector<Species*>&);
     
     //! Identification number of the Collisions object
     int n_collisions;
@@ -69,7 +74,10 @@ public:
     static bool debye_length_required;
     
     //! Method called in the main smilei loop to apply collisions at each timestep
-    void collide(Params&, std::vector<Species*>& vecSpecies,int);
+    void collide(Params&, Patch* ,int);
+    
+    //! CollisionalIonization object, created if ionization required
+    CollisionalIonization * Ionization;
     
 private:
     
@@ -78,12 +86,12 @@ private:
     
     static double cos_chi(double);
     
-    //! Hdf5 file id
-    hid_t fileId;
+    int atomic_number;
     
-    int totbins;
-    int start;
-
+    //! Hdf5 file name
+    std::string filename;
+    //! Hdf5 file access
+    hid_t file_access;
 };
 
 
