@@ -35,10 +35,12 @@ public:
 
     //! Species creator
     Species(Params&, Patch*);
-
+    
     void initCluster(Params&);
-    void initSpecies(Params&);
-
+    
+    //! Initialize operators (must be separate from parameters init, because of cloning)
+    void initOperators(Params&, Patch*);
+    
     //! Species destructor
     virtual ~Species();
     
