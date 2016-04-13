@@ -9,9 +9,9 @@ DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patc
 {
     // diagId == 0    else error
     // patch  == NULL else error
-
+    
     out_width.resize(0);
-
+    
     if (PyTools::nComponents("DiagScalar") > 1) {
         ERROR("Only one DiagScalar can be specified");
     }
@@ -32,15 +32,15 @@ DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patc
         res_time=params.res_time;
         dt=params.timestep;
         cell_volume=params.cell_volume;
-    }    
-
+    }
+    
     // defining default values & reading diagnostic every-parameter
     // ------------------------------------------------------------
     print_every=params.n_time/10;
     PyTools::extract("print_every", print_every);
-
+    
     type_ = "Scalar";
-
+    
 } // END DiagnosticScalar::DiagnosticScalar
 
 
@@ -52,15 +52,15 @@ DiagnosticScalar::~DiagnosticScalar()
 void DiagnosticScalar::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile )
 {
     if (!smpi->isMaster()) return;
-
+    
     //open file scalars.txt
     if ( newfile )
-	fout.open("scalars.txt");
+        fout.open("scalars.txt");
     else
-	fout.open("scalars.txt", std::ofstream::app);
-
+        fout.open("scalars.txt", std::ofstream::app);
+    
     if (!fout.is_open())
-	ERROR("Can't open scalar file");
+        ERROR("Can't open scalar file");
         
 } // END openFile
 
@@ -88,8 +88,8 @@ void DiagnosticScalar::run( Patch* patch, int timestep )
 {
     // at timestep=0 initialize the energies
     /*if (timestep==0) {
-	//compute( patch->EMfields, patch->vecSpecies );
-	compute( patch, timestep );
+        //compute( patch->EMfields, patch->vecSpecies );
+        compute( patch, timestep );
         Energy_time_zero  = getScalar("Utot");
         EnergyUsedForNorm = Energy_time_zero;
     }*/
@@ -97,10 +97,10 @@ void DiagnosticScalar::run( Patch* patch, int timestep )
     // If within time-selection overall range
     bool theTimeIsNow = timeSelection->theTimeIsNow(timestep); // must compute this in any case
     if( timeSelection->inProgress(timestep) ) {
-	// Poynting must be calculated & incremented at every timesteps
+        // Poynting must be calculated & incremented at every timesteps
         patch->EMfields->computePoynting(); 
         if ( theTimeIsNow ) {
-	  //compute( patch-EMfields, patch-vecSpecies);
+          //compute( patch-EMfields, patch-vecSpecies);
             compute( patch, timestep );
         }
         
@@ -112,10 +112,10 @@ void DiagnosticScalar::run( Patch* patch, int timestep )
 void DiagnosticScalar::write(int itime)
 {
     unsigned int k, s=out_key.size();
-
-
+    
+    
     //MESSAGE ( "write : Number of diags = " << out_key.size() ) ;
-
+    
     fout << std::scientific << setprecision(precision);
     // At the beginning of the file, we write some headers
     if (fout.tellp()==ifstream::pos_type(0)) { // file beginning
@@ -145,7 +145,7 @@ void DiagnosticScalar::write(int itime)
         }
     }
     fout << endl;
-
+    
     /*for (int iscalar=0 ; iscalar<out_value.size() ; iscalar++)
       out_value[iscalar] = 0.;*/
 
@@ -157,7 +157,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     //out_key  .clear();
     //out_value.clear();
     // reset after write
-
+    
     ElectroMagn* EMfields = patch->EMfields;
     std::vector<Species*>& vecSpecies = patch->vecSpecies;
     
@@ -168,7 +168,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     double Ukin_bnd=0.;         // total energy lost by particles due to boundary conditions
     double Ukin_out_mvw=0.;     // total energy lost due to particles being suppressed by the moving-window
     double Ukin_inj_mvw=0.;     // total energy added due to particles created by the moving-window
-
+    
     // Compute scalars for each species
     for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
         if (vecSpecies[ispec]->particles->isTest) continue;    // No scalar diagnostic for test particles
@@ -179,14 +179,14 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
         unsigned int nPart=vecSpecies[ispec]->getNbrOfParticles(); // number of particles
         if (nPart>0) {
             for (unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
-
+                
                 charge_avg += (double)vecSpecies[ispec]->particles->charge(iPart);
                 ener_tot   += cell_volume * vecSpecies[ispec]->particles->weight(iPart)
                 *             (vecSpecies[ispec]->particles->lor_fac(iPart)-1.0);
             }
             ener_tot*=vecSpecies[ispec]->mass;
         } // if
-
+        
         // particle energy lost due to boundary conditions
         double ener_lost_bcs=0.0;
         ener_lost_bcs = vecSpecies[ispec]->getLostNrjBC();
@@ -199,26 +199,26 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
         double ener_added_mvw=0.0;
         ener_added_mvw = vecSpecies[ispec]->getNewParticlesNRJ();
         
-
         
-	if (nPart!=0) charge_avg /= nPart;
-	string nameSpec=vecSpecies[ispec]->species_type;
-
-	append("Ntot_"+nameSpec,nPart);
-	append("Zavg_"+nameSpec,charge_avg);
-	append("Ukin_"+nameSpec,ener_tot);
-	
-	// incremement the total kinetic energy
-	Ukin += ener_tot;
-
-	// increment all energy loss & energy input
-	Ukin_bnd        += cell_volume*ener_lost_bcs;
-	Ukin_out_mvw    += cell_volume*ener_lost_mvw;
-	Ukin_inj_mvw    += cell_volume*ener_added_mvw;
-
-	vecSpecies[ispec]->reinitDiags();
+        
+        if (nPart!=0) charge_avg /= nPart;
+        string nameSpec=vecSpecies[ispec]->species_type;
+        
+        append("Ntot_"+nameSpec,nPart);
+        append("Zavg_"+nameSpec,charge_avg);
+        append("Ukin_"+nameSpec,ener_tot);
+        
+        // incremement the total kinetic energy
+        Ukin += ener_tot;
+        
+        // increment all energy loss & energy input
+        Ukin_bnd        += cell_volume*ener_lost_bcs;
+        Ukin_out_mvw    += cell_volume*ener_lost_mvw;
+        Ukin_inj_mvw    += cell_volume*ener_added_mvw;
+        
+        vecSpecies[ispec]->reinitDiags();
     } // for ispec
-
+    
     
     // --------------------------------
     // ELECTROMAGNETIC-related energies
@@ -265,8 +265,8 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
         // Utot = Dx^N/2 * Field^2
         Utot_crtField *= 0.5*cell_volume;
         
-	append("Uelm_"+(*field)->name,Utot_crtField);
-	Uelm+=Utot_crtField;
+        append("Uelm_"+(*field)->name,Utot_crtField);
+        Uelm+=Utot_crtField;
     }
     
     // nrj lost with moving window (fields)
@@ -276,7 +276,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     // nrj added due to moving window (fields)
     double Uelm_inj_mvw=EMfields->getNewFieldsNRJ();
     Uelm_inj_mvw *= 0.5*cell_volume;
-
+    
     EMfields->reinitDiags();
     
     
@@ -325,18 +325,18 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     }
 
     if (minis.size() == maxis.size() && minis.size() == fields.size()) {
-	unsigned int i=0;
-	for (vector<Field*>::iterator field=fields.begin(); field!=fields.end() && i<minis.size(); field++, i++) {
-                
-	    append((*field)->name+"Min",minis[i].val);
-	    append((*field)->name+"MinCell",minis[i].index);
-                
-	    append((*field)->name+"Max",maxis[i].val);
-	    append((*field)->name+"MaxCell",maxis[i].index);
-                
-	}
+        unsigned int i=0;
+        for (vector<Field*>::iterator field=fields.begin(); field!=fields.end() && i<minis.size(); field++, i++) {
+            
+            append((*field)->name+"Min",minis[i].val);
+            append((*field)->name+"MinCell",minis[i].index);
+            
+            append((*field)->name+"Max",maxis[i].val);
+            append((*field)->name+"MaxCell",maxis[i].index);
+            
+        }
     }
-        
+    
     // ------------------------
     // POYNTING-related scalars
     // ------------------------
@@ -378,35 +378,35 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     
     // total energy in the simulation
     double Utot = Ukin + Uelm;
-
+    
     // expected total energy
     double Uexp = Energy_time_zero + Uelm_bnd + Ukin_inj_mvw + Uelm_inj_mvw
         -           ( Ukin_bnd + Ukin_out_mvw + Uelm_out_mvw );
-        
+    
     // energy balance
     double Ubal = Utot - Uexp;
-        
+    
     // energy used for normalization
     EnergyUsedForNorm = Utot;
-        
+    
     // normalized energy balance
     double Ubal_norm(0.);
     if (EnergyUsedForNorm>0.)
-	Ubal_norm = Ubal / EnergyUsedForNorm;
-        
+        Ubal_norm = Ubal / EnergyUsedForNorm;
+    
     // outputs
     // -------
-        
+    
     // added & lost energies due to the moving window
     prepend("Ukin_out_mvw",Ukin_out_mvw);
     prepend("Ukin_inj_mvw",Ukin_inj_mvw);
     prepend("Uelm_out_mvw",Uelm_out_mvw);
     prepend("Uelm_inj_mvw",Uelm_inj_mvw);
-        
+    
     // added & lost energies at the boundaries
     prepend("Ukin_bnd",Ukin_bnd);
     prepend("Uelm_bnd",Uelm_bnd);
-        
+    
     // total energies & energy balance
     prepend("Ukin",Ukin);
     prepend("Uelm",Uelm);
@@ -414,15 +414,15 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     prepend("Ubal",Ubal);
     prepend("Uexp",Uexp);
     prepend("Utot",Utot);
-        
+    
     // Final thing to do: calculate the maximum size of the scalars names
     if (out_width.empty()) { // Only first time
-	unsigned int k, l, s=out_key.size();
-	out_width.resize(s);
-	for(k=0; k<s; k++) {
-	    l = out_key[k].length();
-	    out_width[k] = 2 + max(l,precision+8); // The +8 accounts for the dot and exponent in decimal representation
-	}
+        unsigned int k, l, s=out_key.size();
+        out_width.resize(s);
+        for(k=0; k<s; k++) {
+            l = out_key[k].length();
+            out_width[k] = 2 + max(l,precision+8); // The +8 accounts for the dot and exponent in decimal representation
+        }
     }
     //MESSAGE ( "compute : Number of diags = " << out_key.size() ) ;
 
@@ -447,7 +447,7 @@ void DiagnosticScalar::setScalar(string my_var, double value){
     for (unsigned int i=0; i< out_key.size(); i++) {
         if (out_key[i]==my_var) {
           out_value[i] = value;
-	  return;
+          return;
         }
     }
     DEBUG("key not found " << my_var);
@@ -458,7 +458,7 @@ void DiagnosticScalar::incrementScalar(string my_var, double value){
     for (unsigned int i=0; i< out_key.size(); i++) {
         if (out_key[i]==my_var) {
           out_value[i] += value;
-	  return;
+          return;
         }
     }
     DEBUG("key not found " << my_var);
@@ -467,22 +467,22 @@ void DiagnosticScalar::incrementScalar(string my_var, double value){
 
 void DiagnosticScalar::append(std::string key, double value) {
     if ( !defined(key) ) {
-	out_key.push_back(key  );
-	out_value.push_back(value);
+        out_key.push_back(key  );
+        out_value.push_back(value);
     }
     else
-	incrementScalar(key, value);
+        incrementScalar(key, value);
 
 }  // END append
 
 
 void DiagnosticScalar::prepend(std::string key, double value) {
     if ( !defined(key) ) {
-	out_key  .insert(out_key  .begin(), key  );
-	out_value.insert(out_value.begin(), value);
+        out_key  .insert(out_key  .begin(), key  );
+        out_value.insert(out_value.begin(), value);
     }
     else
-	incrementScalar(key, value);
+        incrementScalar(key, value);
 
 } // END prepend
 
