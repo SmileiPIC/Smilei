@@ -7,6 +7,8 @@
 #include "Patch.h"
 #include "Species.h"
 
+#include "Particle.h"
+
 using namespace std;
 
 
@@ -591,4 +593,23 @@ void Particles::sortById() {
         jPart++;
     } while(!stop);
     
+}
+
+bool Particles::test_move( int iPartStart, int iPartEnd, Params& params )
+{
+    for ( int iDim = 0 ; iDim < Position.size() ; iDim++ ) {
+	double dx2 = params.cell_length[iDim]*params.cell_length[iDim];
+	for (int iPart = iPartStart ; iPart < iPartEnd ; iPart++ ) {
+	    if ( dist(iPart,iDim) > dx2 ) {
+		ERROR( "Too large displacment for particle : " << iPart << "\t: " << (*this)(iPart) );
+		return false;
+	    }
+	}
+    }
+
+}
+
+Particle Particles::operator()(int iPart)
+{
+    return  Particle( *this, iPart);
 }
