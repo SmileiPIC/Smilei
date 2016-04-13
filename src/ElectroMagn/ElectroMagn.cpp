@@ -88,66 +88,45 @@ oversize(params.oversize)
     emBoundCond = ElectroMagnBC_Factory::create(params, patch);
     
     MaxwellFaradaySolver_ = SolverFactory::create(params);
-
     
-    
-    // -----------------
-    // ExtFields properties
-    // -----------------
-    unsigned int numExtFields=PyTools::nComponents("ExtField");
-    for (unsigned int n_extfield = 0; n_extfield < numExtFields; n_extfield++) {
-        MESSAGE("ExtField " << n_extfield);
-        ExtField extField;
-        PyObject * profile;
-        ostringstream name;
-        if( !PyTools::extract("field",extField.fields,"ExtField",n_extfield))
-            ERROR("ExtField #"<<n_extfield<<": parameter 'field' not provided'");
-        
-        // Now import the profile
-        name.str("");
-        name << "ExtField[" << n_extfield <<"].profile";
-        if (!PyTools::extract_pyProfile("profile",profile,"ExtField",n_extfield))
-            ERROR(" ExtField #"<<n_extfield<<": parameter 'profile' not understood");
-        extField.profile = new Profile(profile, nDim_field, name.str());
-        
-        extFields.push_back(extField);
-    }
-    
-    
-    // -----------------
-    // Antenna properties
-    // -----------------
-    unsigned int numAntenna=PyTools::nComponents("Antenna");
-    for (unsigned int n_antenna = 0; n_antenna < numAntenna; n_antenna++) {
-        Antenna antenna;
-        PyObject * profile;
-        ostringstream name;
-        antenna.field = NULL;
-        if( !PyTools::extract("field",antenna.fieldName,"Antenna",n_antenna))
-            ERROR("Antenna #"<<n_antenna<<": parameter 'field' not provided'");
-        if (antenna.fieldName != "Jx" && antenna.fieldName != "Jy" && antenna.fieldName != "Jz")
-            ERROR("Antenna #"<<n_antenna<<": parameter 'field' must be one of Jx, Jy, Jz");
-        
-        // Extract the space profile
-        name.str("");
-        name << "Antenna[" << n_antenna <<"].space_profile";
-        if (!PyTools::extract_pyProfile("space_profile",profile,"Antenna",n_antenna))
-            ERROR(" Antenna #"<<n_antenna<<": parameter 'space_profile' not understood");
-        antenna.space_profile = new Profile(profile, nDim_field, name.str());
-        
-        // Extract the time profile
-        name.str("");
-        name << "Antenna[" << n_antenna <<"].time_profile";
-        if (!PyTools::extract_pyProfile("time_profile" ,profile,"Antenna",n_antenna))
-            ERROR(" Antenna #"<<n_antenna<<": parameter 'time_profile' not understood");
-        antenna.time_profile =  new Profile(profile, 1, name.str());
-        
-        antennas.push_back(antenna);
-    }
-
 }
 
 
+void ElectroMagn::finishInitialization(int nspecies, Patch* patch)
+{
+
+    initAntennas(patch);
+    
+    // Fill allfields
+    allFields.push_back(Ex_ );
+    allFields.push_back(Ey_ );
+    allFields.push_back(Ez_ );
+    allFields.push_back(Bx_ );
+    allFields.push_back(By_ );
+    allFields.push_back(Bz_ );
+    allFields.push_back(Bx_m);
+    allFields.push_back(By_m);
+    allFields.push_back(Bz_m);
+    allFields.push_back(Jx_ );
+    allFields.push_back(Jy_ );
+    allFields.push_back(Jz_ );
+    allFields.push_back(rho_);
+
+    for (int ispec=0; ispec<nspecies; ispec++) {
+        allFields.push_back(Jx_s[ispec] );
+        allFields.push_back(Jy_s[ispec] );
+        allFields.push_back(Jz_s[ispec] );
+        allFields.push_back(rho_s[ispec]);
+    }
+                
+    allFields_avg.push_back(Ex_avg);
+    allFields_avg.push_back(Ey_avg);
+    allFields_avg.push_back(Ez_avg);
+    allFields_avg.push_back(Bx_avg);
+    allFields_avg.push_back(By_avg);
+    allFields_avg.push_back(Bz_avg);
+    
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Destructor for the virtual class ElectroMagn

@@ -111,56 +111,41 @@ isEastern(patch->isEastern())
     // (by construction 1 (prim) or 2 (dual) elements shared between per MPI process)
     // istart
     for (unsigned int i=0 ; i<3 ; i++)
-	for (unsigned int isDual=0 ; isDual<2 ; isDual++)
-	    istart[i][isDual] = 0;
+        for (unsigned int isDual=0 ; isDual<2 ; isDual++)
+            istart[i][isDual] = 0;
     for (unsigned int i=0 ; i<nDim_field ; i++) {
-	for (unsigned int isDual=0 ; isDual<2 ; isDual++) {
-	    istart[i][isDual] = oversize[i];
-	    if (patch->Pcoordinates[i]!=0) istart[i][isDual]+=1;
-	}
+        for (unsigned int isDual=0 ; isDual<2 ; isDual++) {
+            istart[i][isDual] = oversize[i];
+            if (patch->Pcoordinates[i]!=0) istart[i][isDual]+=1;
+        }
     }
     
     // bufsize = nelements
     for (unsigned int i=0 ; i<3 ; i++) 
-	for (unsigned int isDual=0 ; isDual<2 ; isDual++)
-	    bufsize[i][isDual] = 1;
+        for (unsigned int isDual=0 ; isDual<2 ; isDual++)
+            bufsize[i][isDual] = 1;
     
     for (unsigned int i=0 ; i<nDim_field ; i++) {
-	for (int isDual=0 ; isDual<2 ; isDual++)
-	    bufsize[i][isDual] = n_space[i] + 1;
+        for (int isDual=0 ; isDual<2 ; isDual++)
+            bufsize[i][isDual] = n_space[i] + 1;
 
         
-	for (int isDual=0 ; isDual<2 ; isDual++) {
-	    bufsize[i][isDual] += isDual; 
-	    if ( params.number_of_patches[i]!=1 ) {                
+        for (int isDual=0 ; isDual<2 ; isDual++) {
+            bufsize[i][isDual] += isDual; 
+            if ( params.number_of_patches[i]!=1 ) {                
 
-		if ( ( !isDual ) && (patch->Pcoordinates[i]!=0) )
-		    bufsize[i][isDual]--;
-		else if  (isDual) {
-		    bufsize[i][isDual]--;
-		    if ( (patch->Pcoordinates[i]!=0) && (patch->Pcoordinates[i]!=params.number_of_patches[i]-1) ) 
-			bufsize[i][isDual]--;
-		}
+                if ( ( !isDual ) && (patch->Pcoordinates[i]!=0) )
+                    bufsize[i][isDual]--;
+                else if  (isDual) {
+                    bufsize[i][isDual]--;
+                    if ( (patch->Pcoordinates[i]!=0) && (patch->Pcoordinates[i]!=params.number_of_patches[i]-1) ) 
+                        bufsize[i][isDual]--;
+                }
                 
-	    } // if ( params.number_of_patches[i]!=1 )
-	} // for (int isDual=0 ; isDual
+            } // if ( params.number_of_patches[i]!=1 )
+        } // for (int isDual=0 ; isDual
     } // for (unsigned int i=0 ; i<nDim_field 
     
-    
-    // Filling the space profiles of antennas
-    for (unsigned int i=0; i<antennas.size(); i++) {
-        if      (antennas[i].fieldName == "Jx")
-            antennas[i].field = new Field1D(dimPrim, 0, false, "Jx");
-        else if (antennas[i].fieldName == "Jy")
-            antennas[i].field = new Field1D(dimPrim, 1, false, "Jy");
-        else if (antennas[i].fieldName == "Jz")
-            antennas[i].field = new Field1D(dimPrim, 2, false, "Jz");
-        
-        if (antennas[i].field) 
-            applyExternalField(antennas[i].field, antennas[i].space_profile, patch);
-    }
-
-
 }//END constructor Electromagn1D
 
 
@@ -217,8 +202,8 @@ void ElectroMagn1D::initPoisson(Patch *patch)
     // phi: scalar potential, r: residual and p: direction
     for (unsigned int i=0 ; i<dimPrim[0] ; i++) {
         (*phi_)(i)   = 0.0;
-	(*r_)(i)     = -dx_sq * (*rho1D)(i);
-	(*p_)(i)     = (*r_)(i);
+        (*r_)(i)     = -dx_sq * (*rho1D)(i);
+        (*p_)(i)     = (*r_)(i);
     }
 } // initPoisson
 
@@ -226,7 +211,7 @@ double ElectroMagn1D::compute_r()
 {
     double rnew_dot_rnew_local(0.);
     for (unsigned int i=index_min_p_[0] ; i<=index_max_p_[0] ; i++)
-	rnew_dot_rnew_local += (*r_)(i)*(*r_)(i);
+        rnew_dot_rnew_local += (*r_)(i)*(*r_)(i);
     return rnew_dot_rnew_local;
 } // compute_r
 
@@ -234,7 +219,7 @@ void ElectroMagn1D::compute_Ap(Patch *patch)
 {
     // vector product Ap = A*p
     for (unsigned int i=1 ; i<dimPrim[0]-1 ; i++)
-	(*Ap_)(i) = (*p_)(i-1) - 2.0*(*p_)(i) + (*p_)(i+1);
+        (*Ap_)(i) = (*p_)(i-1) - 2.0*(*p_)(i) + (*p_)(i+1);
         
     // apply BC on Ap
     if (patch->isWestern()) (*Ap_)(0)      = (*p_)(1)      - 2.0*(*p_)(0);
@@ -246,7 +231,7 @@ double ElectroMagn1D::compute_pAp()
 {
     double p_dot_Ap_local = 0.0;
     for (unsigned int i=index_min_p_[0] ; i<=index_max_p_[0] ; i++)
-	p_dot_Ap_local += (*p_)(i)*(*Ap_)(i);
+        p_dot_Ap_local += (*p_)(i)*(*Ap_)(i);
     return p_dot_Ap_local;
 
 } // compute_pAp
@@ -255,8 +240,8 @@ void ElectroMagn1D::update_pand_r(double r_dot_r, double p_dot_Ap)
 {
     double alpha_k = r_dot_r/p_dot_Ap;
     for (unsigned int i=0 ; i<dimPrim[0] ; i++) {
-	(*phi_)(i) += alpha_k * (*p_)(i);
-	(*r_)(i)   -= alpha_k * (*Ap_)(i);
+        (*phi_)(i) += alpha_k * (*p_)(i);
+        (*r_)(i)   -= alpha_k * (*Ap_)(i);
     }
 
 } // update_pand_r
@@ -265,7 +250,7 @@ void ElectroMagn1D::update_p(double rnew_dot_rnew, double r_dot_r)
 {
     double beta_k = rnew_dot_rnew/r_dot_r;
     for (unsigned int i=0 ; i<dimPrim[0] ; i++)
-	(*p_)(i) = (*r_)(i) + beta_k * (*p_)(i);
+        (*p_)(i) = (*r_)(i) + beta_k * (*p_)(i);
 } // update_p
 
 void ElectroMagn1D::initE(Patch *patch)
@@ -278,7 +263,7 @@ void ElectroMagn1D::initE(Patch *patch)
     // ----------------------------------
     
     for (unsigned int i=1; i<nx_d-1; i++)
-	(*Ex1D)(i) = ((*phi_)(i-1)-(*phi_)(i))/dx;
+        (*Ex1D)(i) = ((*phi_)(i-1)-(*phi_)(i))/dx;
     
     // BC on Ex
     if (patch->isWestern()) (*Ex1D)(0)      = (*Ex1D)(1)      - dx*(*rho1D)(0);
@@ -295,7 +280,7 @@ void ElectroMagn1D::centeringE( std::vector<double> E_Add )
 {
     Field1D* Ex1D  = static_cast<Field1D*>(Ex_);
     for (unsigned int i=0; i<nx_d; i++)
-	(*Ex1D)(i) += E_Add[0];
+        (*Ex1D)(i) += E_Add[0];
 
 } // centeringE
 
@@ -567,4 +552,20 @@ void ElectroMagn1D::applyExternalField(Field* my_field,  Profile *profile, Patch
 }
 
 
+void ElectroMagn1D::initAntennas(Patch* patch)
+{
+    
+    // Filling the space profiles of antennas
+    for (unsigned int i=0; i<antennas.size(); i++) {
+        if      (antennas[i].fieldName == "Jx")
+            antennas[i].field = new Field1D(dimPrim, 0, false, "Jx");
+        else if (antennas[i].fieldName == "Jy")
+            antennas[i].field = new Field1D(dimPrim, 1, false, "Jy");
+        else if (antennas[i].fieldName == "Jz")
+            antennas[i].field = new Field1D(dimPrim, 2, false, "Jz");
+        
+        if (antennas[i].field) 
+            applyExternalField(antennas[i].field, antennas[i].space_profile, patch);
+    }
 
+}

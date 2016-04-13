@@ -31,7 +31,10 @@ public:
 //  --------------------------------------------------------------------------------------------------------------------
 class Laser {
 public:
+    //! Normal laser constructor
     Laser(Params &params, int ilaser, Patch* patch);
+    //! Cloning laser constructor
+    Laser(Laser*);
     ~Laser();
     
     //! Gets the amplitude from both time and space profiles (By)
@@ -48,7 +51,7 @@ public:
     
     //! Disables the laser
     void disable();
-
+    
 private:
     //! Space and time profiles (Bx and By)
     std::vector<LaserProfile*> profiles;

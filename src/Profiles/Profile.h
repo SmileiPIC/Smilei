@@ -10,7 +10,9 @@
 class Function
 {
 public:
+    //! Default constructor
     Function(){};
+    //! Default destructor
     ~Function(){};
     // spatial
     virtual double valueAt(std::vector<double>         ) {
@@ -38,9 +40,6 @@ class Profile
 public:
     //! Default constructor
     Profile(PyObject*, unsigned int, std::string);
-    //! Cloning constructor
-    Profile(Profile* profile) : function(profile->function) {};
-    
     //! Default destructor
     ~Profile();
     
