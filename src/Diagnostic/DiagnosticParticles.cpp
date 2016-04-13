@@ -128,10 +128,10 @@ fileId_(0)
             MESSAGE(2,mystream.str());
         }
 
-	// init HDF files (by master, only if it doesn't yet exist)
-	mystream.str(""); // clear
-	mystream << "ParticleDiagnostic" << n_diag_particles << ".h5";
-	filename = mystream.str();
+        // init HDF files (by master, only if it doesn't yet exist)
+        mystream.str(""); // clear
+        mystream << "ParticleDiagnostic" << n_diag_particles << ".h5";
+        filename = mystream.str();
     }
 
     type_ = "Particles";
@@ -149,31 +149,31 @@ void DiagnosticParticles::openFile( Params& params, SmileiMPI* smpi, VectorPatch
     if (!smpi->isMaster()) return;
 
     if ( newfile ) {
-	fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-	// write all parameters as HDF5 attributes
-	H5::attr(fileId_, "Version", string(__VERSION));
-	H5::attr(fileId_, "output" , output);
-	H5::attr(fileId_, "time_average"  , time_average);
-	// write all species
-	ostringstream mystream("");
-	mystream.str(""); // clear
-	for (unsigned int i=0 ; i < species.size() ; i++)
-	    mystream << species[i] << " ";
-	H5::attr(fileId_, "species", mystream.str());
-	// write each axis
-	for (unsigned int iaxis=0 ; iaxis < axes.size() ; iaxis++) {
-	    mystream.str(""); // clear
-	    mystream << "axis" << iaxis;
-	    string str1 = mystream.str();
-	    mystream.str(""); // clear
-	    mystream << axes[iaxis].type << " " << axes[iaxis].min << " " << axes[iaxis].max << " "
-		     << axes[iaxis].nbins << " " << axes[iaxis].logscale << " " << axes[iaxis].edge_inclusive;
-	    string str2 = mystream.str();
-	    H5::attr(fileId_, str1, str2);
-	}
+        fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+        // write all parameters as HDF5 attributes
+        H5::attr(fileId_, "Version", string(__VERSION));
+        H5::attr(fileId_, "output" , output);
+        H5::attr(fileId_, "time_average"  , time_average);
+        // write all species
+        ostringstream mystream("");
+        mystream.str(""); // clear
+        for (unsigned int i=0 ; i < species.size() ; i++)
+            mystream << species[i] << " ";
+        H5::attr(fileId_, "species", mystream.str());
+        // write each axis
+        for (unsigned int iaxis=0 ; iaxis < axes.size() ; iaxis++) {
+            mystream.str(""); // clear
+            mystream << "axis" << iaxis;
+            string str1 = mystream.str();
+            mystream.str(""); // clear
+            mystream << axes[iaxis].type << " " << axes[iaxis].min << " " << axes[iaxis].max << " "
+                     << axes[iaxis].nbins << " " << axes[iaxis].logscale << " " << axes[iaxis].edge_inclusive;
+            string str2 = mystream.str();
+            H5::attr(fileId_, str1, str2);
+        }
     }
     else {
-	fileId_ = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+        fileId_ = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
     }
     
 }
@@ -188,8 +188,8 @@ void DiagnosticParticles::setFile( Diagnostic* diag )
 void DiagnosticParticles::closeFile()
 {
     if (fileId_!=0) {
-	H5Fclose(fileId_);
-	fileId_ = 0;
+        H5Fclose(fileId_);
+        fileId_ = 0;
     }
 
 } // END closeFile

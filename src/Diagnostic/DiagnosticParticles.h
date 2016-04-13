@@ -34,22 +34,22 @@ class DiagnosticParticles : public Diagnostic {
     friend class SmileiMPI;
 
 public :
-
-   DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
-   DiagnosticParticles() {};
-   ~DiagnosticParticles();
-
-   virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile );
-   virtual void setFile( Diagnostic* diag );
-   
-   virtual void closeFile();
-
-   virtual void prepare( Patch* patch, int timestep );
-
-   virtual void run( Patch* patch, int timestep );
-
-   virtual void write(int timestep);
-
+    
+    DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
+    DiagnosticParticles() {};
+    ~DiagnosticParticles();
+    
+    virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile );
+    virtual void setFile( Diagnostic* diag );
+    
+    virtual void closeFile();
+    
+    virtual void prepare( Patch* patch, int timestep );
+    
+    virtual void run( Patch* patch, int timestep );
+    
+    virtual void write(int timestep);
+     
 private :
     void clean();
 
@@ -64,7 +64,7 @@ private :
     
     //! quantity to be summed into the output array
     std::string output;
-
+    
     //! vector for saving the output array for time-averaging
     std::vector<double> data_sum;
     
