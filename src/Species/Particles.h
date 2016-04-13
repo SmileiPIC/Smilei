@@ -10,8 +10,12 @@
 #include "Tools.h"
 #include "TimeSelection.h"
 
+class Particle;
+
 class Params;
 class Patch;
+
+
 
 //----------------------------------------------------------------------------------------------------------------------
 //! Particle class: holds the basic properties of a particle
@@ -254,8 +258,28 @@ public:
     std::vector< std::vector<unsigned int>* > uint_prop;
 
 
+    bool test_move( int iPartStart, int iPartEnd, Params& params );
+
+    inline double dist2( int iPart ) {
+	double dist(0.);
+	for ( int iDim = 0 ; iDim < Position.size() ; iDim++ ) {
+	    double delta = position(iDim,iPart)-position_old(iDim,iPart);
+	    dist += delta*delta;
+	}
+	return dist;
+    }
+    inline double dist( int iPart, int iDim ) {
+	double delta = abs( position(iDim,iPart)-position_old(iDim,iPart) );
+	return delta;
+    }
+
+    Particle operator()(int iPart);
+    
+
 private:
 
 };
+
+
 
 #endif
