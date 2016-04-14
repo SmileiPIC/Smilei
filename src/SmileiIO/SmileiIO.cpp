@@ -26,27 +26,28 @@ global_file_id_(0),
 global_file_id_avg(0)
 {
     fieldsToDump.resize(0);
-    PyTools::extract("fieldsToDump", fieldsToDump);
     //
     // Create property list for collective dataset write.
     //
     write_plist = H5Pcreate(H5P_DATASET_XFER);
     if (!params.simu_is_cartesian)
-	H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);
+        H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);
     else
-	H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_COLLECTIVE);
-
-    int ntime_step_avg(0);
-    if( !PyTools::extract("ntime_step_avg", ntime_step_avg) )
-	dumpAvgFields_ = false;
-    else
-	dumpAvgFields_ = true;
-
-    field_timeSelection    = new TimeSelection( PyTools::extract_py("fieldDump_every"),    "Fields" );
-    avgfield_timeSelection = new TimeSelection( PyTools::extract_py("avgfieldDump_every"), " Average fields" );
-
+        H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_COLLECTIVE);
     
 }
+
+
+// Cloning constructor
+SmileiIO::SmileiIO( SmileiIO* sio )
+{
+    fieldsToDump   = sio->fieldsToDump;
+    write_plist    = sio-> write_plist;
+    dumpAvgFields_ = sio->dumpAvgFields_;
+    field_timeSelection    = new TimeSelection(sio->field_timeSelection);
+    avgfield_timeSelection = new TimeSelection(sio->field_timeSelection);
+}
+
 
 void SmileiIO::setFiles( hid_t masterFileId, hid_t masterFileIdAvg )
 {
@@ -102,7 +103,7 @@ SmileiIO::~SmileiIO()
 
     // Management of global IO file
     if (global_file_id_ != 0)
-	H5Fclose( global_file_id_ );
+        H5Fclose( global_file_id_ );
     // Management of global IO file
     if (global_file_id_avg != 0)
         H5Fclose( global_file_id_avg );
@@ -116,14 +117,14 @@ void SmileiIO::createTimeStepInSingleFileTime( int time )
     ostringstream name_t;
     name_t.str("");
     name_t << "/" << setfill('0') << setw(10) << time;
-	
+        
     DEBUG("[hdf] GROUP _________________________________ " << name_t.str());
     hid_t group_id = H5Gcreate(global_file_id_, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     H5Gclose(group_id);
 
     if (dumpAvgFields_) {
-	group_id = H5Gcreate(global_file_id_avg, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	H5Gclose(group_id);
+        group_id = H5Gcreate(global_file_id_avg, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        H5Gclose(group_id);
     }
  
 }
@@ -149,16 +150,16 @@ void SmileiIO::writeAllFieldsSingleFileTime( std::vector<Field*> &fields, int ti
     
     for (unsigned int i=0; i<fields.size(); i++) {
         if (fieldsToDump.size()==0) {
-	    //MESSAGE( "write all ...");
+            //MESSAGE( "write all ...");
             writeFieldsSingleFileTime(fields[i], group_id );
-	    if (avg) fields[i]->put_to(0.0);
+            if (avg) fields[i]->put_to(0.0);
         } else {
             for (unsigned int j=0; j<fieldsToDump.size(); j++) {
                 if (fields[i]->name==fieldsToDump[j]) {
-		    //MESSAGE( "write " << fields[i]->name);
-		    writeFieldsSingleFileTime( fields[i], group_id );
-		}
-		if (avg) fields[i]->put_to(0.0);
+                    //MESSAGE( "write " << fields[i]->name);
+                    writeFieldsSingleFileTime( fields[i], group_id );
+                }
+                if (avg) fields[i]->put_to(0.0);
             }
         }
     }

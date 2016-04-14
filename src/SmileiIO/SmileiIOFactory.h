@@ -31,9 +31,21 @@ public:
         else {
             ERROR( "Geometry " << params.geometry << " not implemented" );
         }
-
+        
+        PyTools::extract("fieldsToDump", sio->fieldsToDump);
+        
+        int ntime_step_avg(0);
+        if( !PyTools::extract("ntime_step_avg", ntime_step_avg) )
+            sio->dumpAvgFields_ = false;
+        else
+            sio->dumpAvgFields_ = true;
+        
+        sio->field_timeSelection    = new TimeSelection( PyTools::extract_py("fieldDump_every"),    "Fields" );
+        sio->avgfield_timeSelection = new TimeSelection( PyTools::extract_py("avgfieldDump_every"), " Average fields" );
+        
         return sio;
     }
+    
 
 };
 
