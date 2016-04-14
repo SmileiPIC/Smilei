@@ -254,7 +254,7 @@ void DiagnosticProbes::openFile( Params& params, SmileiMPI* smpi, VectorPatch& v
     else {
         hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
         H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
-        fileId_ = H5Fopen( filename.c_str(), H5F_ACC_TRUNC, pid );
+        fileId_ = H5Fopen( filename.c_str(), H5F_ACC_RDWR, pid );
         H5Pclose(pid);
     }
 

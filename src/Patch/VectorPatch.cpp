@@ -244,7 +244,7 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
         
         if ( (*this)(0)->localDiags[idiag]->type_ == "Probes" ) {
             DiagnosticProbes* diagProbes0 = static_cast<DiagnosticProbes*>( (*this)(0)->localDiags[idiag] );
-            diagProbes0->setFileSplitting( params, smpi, *this );
+            //diagProbes0->setFileSplitting( params, smpi, *this );
             for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
                 DiagnosticProbes* diagProbes = static_cast<DiagnosticProbes*>( (*this)(ipatch)->localDiags[idiag] );
                 diagProbes->setFile( diagProbes0->getFileId() );
