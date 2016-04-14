@@ -32,6 +32,8 @@ DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patc
         res_time=params.res_time;
         dt=params.timestep;
         cell_volume=params.cell_volume;
+    } else {
+        timeSelection = NULL;
     }
     
     // defining default values & reading diagnostic every-parameter
@@ -42,6 +44,24 @@ DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patc
     type_ = "Scalar";
     
 } // END DiagnosticScalar::DiagnosticScalar
+
+
+
+// Cloning constructor
+DiagnosticScalar::DiagnosticScalar( DiagnosticScalar * scalar )
+{
+    out_width.resize(0);
+    if( scalar->timeSelection ) {
+        timeSelection = new TimeSelection(scalar->timeSelection);
+        precision     = scalar->precision;
+        res_time      = scalar->res_time;
+        dt            = scalar->dt;
+        cell_volume   = scalar->cell_volume;
+    }
+    print_every = scalar->print_every;
+    type_ = "Scalar";
+};
+
 
 
 DiagnosticScalar::~DiagnosticScalar()

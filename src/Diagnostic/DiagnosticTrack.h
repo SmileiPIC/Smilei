@@ -11,9 +11,11 @@
 class DiagnosticTrack : public Diagnostic {
 
 public :
-    
+    //! Default constructor
     DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
-    DiagnosticTrack() {};
+    //! Cloning constructor
+    DiagnosticTrack(DiagnosticTrack* track);
+    //! Default destructor
     ~DiagnosticTrack();
     
     virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile );

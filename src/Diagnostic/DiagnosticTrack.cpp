@@ -11,7 +11,7 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch,
 Diagnostic(params,smpi,patch,diagId),
 nDim_particle(params.nDim_particle)
 {
-    probeId_ = diagId;
+    probeId_ = diagId; // Warning, not the index of the DiagTrack, but of all local diags
     
     // define speciesId_
     speciesId_ = 0;
@@ -24,14 +24,12 @@ nDim_particle(params.nDim_particle)
     }
     
     // Go to next track species
-    int nTrackable(0); 
-    for (int ispec = 0 ; ispec < patch->vecSpecies.size() ; ispec++ ) {
-        if ( patch->vecSpecies[ispec]->particles->tracked ) {
-            nTrackable++;
-        }
-        if ( nTrackable > nTrack )
-            speciesId_ = ispec;
+    int nTrackable(0), ispec; 
+    for (ispec = 0 ; ispec < patch->vecSpecies.size() ; ispec++ ) {
+        if ( patch->vecSpecies[ispec]->particles->tracked ) nTrackable++;
+        if ( nTrackable > nTrack ) break;
     }
+    speciesId_ = ispec;
     species = patch->vecSpecies[speciesId_];
     
     string nameSpec="Ntot_"+ patch->vecSpecies[speciesId_]->species_type;
@@ -46,6 +44,19 @@ nDim_particle(params.nDim_particle)
     
     type_ = "Track";
 
+}
+
+
+// cloning constructor
+DiagnosticTrack::DiagnosticTrack(DiagnosticTrack* track)
+{
+    nDim_particle = track->nDim_particle;
+    speciesId_    = track->speciesId_;
+    species       = track->species;
+    transfer      = track->transfer;
+    iter          = track->iter;
+    timeSelection = new TimeSelection(track->timeSelection);
+    type_ = "Track";
 }
 
 
