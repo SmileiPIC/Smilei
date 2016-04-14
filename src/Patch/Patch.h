@@ -46,7 +46,7 @@ public:
     ElectroMagn* EMfields;
 
     //! Optional internal boundary condifion on Particles
-    std::vector<PartWall*> vecPartWall;
+    PartWalls * partWalls;
     //! Optional binary collisions operators
     std::vector<Collisions*> vecCollisions;
 

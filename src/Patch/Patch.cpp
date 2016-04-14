@@ -125,7 +125,7 @@ void Patch::finalizePatchInit( Params& params, SmileiMPI* smpi, unsigned int n_m
     vecCollisions = Collisions::create(params, this, vecSpecies);
     
     // Initialize the particle walls
-    vecPartWall = PartWall::create(params, this);
+    partWalls = new PartWalls(params, this);
     
     
 } // END finalizePatchInit
@@ -139,11 +139,10 @@ Patch::~Patch() {
     for(unsigned int i=0; i<vecCollisions.size(); i++) delete vecCollisions[i];
     vecCollisions.clear();
     
-    for (unsigned int iwall=0 ; iwall<vecPartWall.size(); iwall++) delete vecPartWall[iwall];
-    vecPartWall.clear();        
-    
     for (unsigned int idiag=0 ; idiag<localDiags.size(); idiag++) delete localDiags[idiag];
     localDiags.clear();
+    
+    delete partWalls;
     
     delete Proj;
     delete Interp;

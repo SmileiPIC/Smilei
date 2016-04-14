@@ -64,11 +64,6 @@ void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow
         (*this)(ipatch)->EMfields->restartRhoJ();
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
-                // species(ipatch, ispec) = (*this)(ipatch)->vecSpecies[ispec]
-                // emfields(ipatch)       = (*this)(ipatch)->EMfields
-                // interp(ipatch)         = (*this)(ipatch)->Interp
-                // proj(ipatch)           = (*this)(ipatch)->Proj
-                // partwalls(ipatch)      = (*this)(ipatch)->vecPartWall
                 species(ipatch, ispec)->dynamics(time_dual, ispec,
                                                  emfields(ipatch), interp(ipatch), proj(ipatch),
                                                  params, *diag_flag, partwalls(ipatch),

@@ -380,7 +380,7 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
 //   - increment the currents (projection)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfields, Interpolator* Interp,
-                       Projector* Proj, Params &params, int diag_flag, vector<PartWall*> vecPartWall, Patch* patch, SmileiMPI* smpi)
+                       Projector* Proj, Params &params, int diag_flag, PartWalls* partWalls, Patch* patch, SmileiMPI* smpi)
 {
     int ithread;
     #ifdef _OPENMP
@@ -442,8 +442,8 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 
             // Apply wall and boundary conditions
             for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
-                for(unsigned int iwall=0; iwall<vecPartWall.size(); iwall++) {
-                    if ( !vecPartWall[iwall]->apply(*particles, iPart, this, ener_iPart)) {
+                for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
+                    if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, ener_iPart)) {
                         nrj_lost_per_thd[tid] += mass * ener_iPart;
                     }
                 }
