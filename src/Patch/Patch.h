@@ -223,7 +223,9 @@ protected:
     //! cell_starting_global_index : index of 1st cell of local sub-subdomain in the global domain.
     //!     - concerns ghost data
     //!     - "- oversize" on rank 0
-    std::vector<int> cell_starting_global_index;;
+    std::vector<int> cell_starting_global_index;
+
+    std::vector<unsigned int> oversize;
 
 };
 

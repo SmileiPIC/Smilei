@@ -73,7 +73,6 @@ void Patch2D::initSumField( Field* field, int iDim )
 {
     int patch_ndims_(2);
     int patch_nbNeighbors_(2);
-    vector<unsigned int> patch_oversize(2,2);
     
     
     std::vector<unsigned int> n_elem = field->dims_;
@@ -83,7 +82,7 @@ void Patch2D::initSumField( Field* field, int iDim )
     // Use a buffer per direction to exchange data before summing
     //Field2D buf[patch_ndims_][patch_nbNeighbors_];
     // Size buffer is 2 oversize (1 inside & 1 outside of the current subdomain)
-    std::vector<unsigned int> oversize2 = patch_oversize;
+    std::vector<unsigned int> oversize2 = oversize;
     oversize2[0] *= 2;
     oversize2[0] += 1 + f2D->isDual_[0];
     if (field->dims_.size()>1) {
@@ -144,7 +143,6 @@ void Patch2D::finalizeSumField( Field* field, int iDim )
 {
     int patch_ndims_(2);
     int patch_nbNeighbors_(2);
-    vector<unsigned int> patch_oversize(2,2);
     std::vector<unsigned int> n_elem = field->dims_;
     std::vector<unsigned int> isDual = field->isDual_;
     Field2D* f2D =  static_cast<Field2D*>(field);
@@ -152,7 +150,7 @@ void Patch2D::finalizeSumField( Field* field, int iDim )
     // Use a buffer per direction to exchange data before summing
     //Field2D buf[patch_ndims_][patch_nbNeighbors_];
     // Size buffer is 2 oversize (1 inside & 1 outside of the current subdomain)
-    std::vector<unsigned int> oversize2 = patch_oversize;
+    std::vector<unsigned int> oversize2 = oversize;
     oversize2[0] *= 2;
     oversize2[0] += 1 + f2D->isDual_[0];
     oversize2[1] *= 2;
@@ -211,7 +209,6 @@ void Patch2D::initExchange( Field* field )
 {
     int patch_ndims_(2);
     int patch_nbNeighbors_(2);
-    vector<unsigned int> patch_oversize(2,2);
 
     std::vector<unsigned int> n_elem   = field->dims_;
     std::vector<unsigned int> isDual = field->isDual_;
@@ -227,7 +224,7 @@ void Patch2D::initExchange( Field* field )
 
 	    if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
 
-                istart = iNeighbor * ( n_elem[iDim]- (2*patch_oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( 2*patch_oversize[iDim] + isDual[iDim] );
+                istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( 2*oversize[iDim] + isDual[iDim] );
                 ix = (1-iDim)*istart;
                 iy =    iDim *istart;
 		//int tag = buildtag( 4, hindex, neighbor_[iDim][iNeighbor]);
@@ -292,7 +289,6 @@ void Patch2D::initExchange( Field* field, int iDim )
 {
     int patch_ndims_(2);
     int patch_nbNeighbors_(2);
-    vector<unsigned int> patch_oversize(2,2);
 
     std::vector<unsigned int> n_elem   = field->dims_;
     std::vector<unsigned int> isDual = field->isDual_;
@@ -305,7 +301,7 @@ void Patch2D::initExchange( Field* field, int iDim )
 
 	if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
 
-	    istart = iNeighbor * ( n_elem[iDim]- (2*patch_oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( 2*patch_oversize[iDim] + isDual[iDim] );
+	    istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( 2*oversize[iDim] + isDual[iDim] );
 	    ix = (1-iDim)*istart;
 	    iy =    iDim *istart;
 	    int tag = buildtag( hindex, iDim, iNeighbor );
