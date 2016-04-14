@@ -29,6 +29,16 @@ ElectroMagnBC::~ElectroMagnBC()
     }
 }
 
+
+void ElectroMagnBC::clean()
+{
+    for (unsigned int i=0; i<vecLaser.size(); i++) {
+        vecLaser[i]->clean();
+    }
+}
+
+
+
 // Disable all lasers when using moving window
 void ElectroMagnBC::laserDisabled()
 {

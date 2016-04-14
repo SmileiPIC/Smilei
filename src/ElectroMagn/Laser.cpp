@@ -152,17 +152,17 @@ Laser::Laser(Laser* laser)
 
 Laser::~Laser()
 {
-    
+}
+
+void Laser::clean()
+{
     delete profiles[0];
     delete profiles[1];
-    
 }
 
 void Laser::disable()
 {
     
-    delete profiles[0];
-    delete profiles[1];
     profiles[0] = new LaserProfileNULL();
     profiles[1] = new LaserProfileNULL();
     

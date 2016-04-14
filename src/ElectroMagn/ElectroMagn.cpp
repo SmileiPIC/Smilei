@@ -41,7 +41,7 @@ oversize(params.oversize)
         DEBUG("____________________ OVERSIZE: " <<i << " " << oversize[i]);
     }
     
-    if (n_space.size() != 3) ERROR("this should not happend");
+    if (n_space.size() != 3) ERROR("this should not happen");
     
     Ex_=NULL;
     Ey_=NULL;
@@ -81,8 +81,7 @@ oversize(params.oversize)
             istart[i][j]=0;
             bufsize[i][j]=0;
         }
-    }    
-    
+    }
     
     
     emBoundCond = ElectroMagnBC_Factory::create(params, patch);
@@ -146,7 +145,6 @@ ElectroMagn::~ElectroMagn()
     delete Jy_;
     delete Jz_;
     delete rho_;
-    
     if (Ex_avg!=NULL) {
         delete Ex_avg;
         delete Ey_avg;
@@ -175,8 +173,14 @@ ElectroMagn::~ElectroMagn()
         antenna->field=NULL;
     }
     
-
 }//END Destructer
+
+
+void ElectroMagn::clean()
+{
+    for ( int i=0 ; i<emBoundCond.size() ;i++ )
+        if (emBoundCond[i]!=NULL) emBoundCond[i]->clean();
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Maxwell solver using the FDTD scheme

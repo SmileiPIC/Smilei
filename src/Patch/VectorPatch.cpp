@@ -32,9 +32,21 @@ VectorPatch::VectorPatch()
 
 VectorPatch::~VectorPatch()
 {
-    for (unsigned int idiag=0 ; idiag<globalDiags.size(); idiag++) delete globalDiags[idiag];
-    globalDiags.clear();
+}
 
+void VectorPatch::close(SmileiMPI * smpiData)
+{
+    closeAllDiags( smpiData );
+    
+    for (unsigned int idiag=0 ; idiag<globalDiags.size(); idiag++)
+        delete globalDiags[idiag];
+    globalDiags.clear();
+    
+    patches_[0]->EMfields->clean(); // This destructs the laser profiles only once
+    for (unsigned int ipatch=0 ; ipatch<size(); ipatch++)
+        delete patches_[ipatch];
+    
+    patches_.clear();
 }
 
 void VectorPatch::createGlobalDiags(Params& params, SmileiMPI* smpi)

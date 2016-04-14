@@ -65,7 +65,7 @@ public:
         newSio->dumpAvgFields_ = sio->dumpAvgFields_;
         newSio->field_timeSelection    = new TimeSelection(sio->field_timeSelection);
         newSio->avgfield_timeSelection = new TimeSelection(sio->field_timeSelection);
-        return sio;
+        return newSio;
     }
 
 };

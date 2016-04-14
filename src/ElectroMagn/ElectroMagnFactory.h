@@ -131,12 +131,14 @@ public:
         // Clone Lasers properties
         // -----------------
         int nlaser;
+        newEMfields->emBoundCond[0]->vecLaser.resize(0);
         nlaser = EMfields->emBoundCond[0]->vecLaser.size();
         for (int ilaser = 0; ilaser < nlaser; ilaser++) {
             newEMfields->emBoundCond[0]->vecLaser.push_back(
                 new Laser(EMfields->emBoundCond[0]->vecLaser[ilaser])
             );
         }
+        newEMfields->emBoundCond[1]->vecLaser.resize(0);
         nlaser = EMfields->emBoundCond[1]->vecLaser.size();
         for (int ilaser = 0; ilaser < nlaser; ilaser++) {
             newEMfields->emBoundCond[1]->vecLaser.push_back(

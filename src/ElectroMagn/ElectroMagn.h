@@ -55,6 +55,8 @@ public:
     
     //! Destructor for Electromagn
     virtual ~ElectroMagn();
+    
+    void clean();
         
     std::vector<unsigned int> dimPrim;
     std::vector<unsigned int> dimDual;

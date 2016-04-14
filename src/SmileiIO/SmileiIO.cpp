@@ -88,15 +88,14 @@ SmileiIO::~SmileiIO()
 {
     delete field_timeSelection;
     delete avgfield_timeSelection;
-
-
+    
     // Management of global IO file
     if (global_file_id_ != 0)
         H5Fclose( global_file_id_ );
     // Management of global IO file
     if (global_file_id_avg != 0)
         H5Fclose( global_file_id_avg );
-
+    
     H5Pclose( write_plist );
 }
 

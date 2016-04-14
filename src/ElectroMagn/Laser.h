@@ -36,6 +36,7 @@ public:
     //! Cloning laser constructor
     Laser(Laser*);
     ~Laser();
+    void clean();
     
     //! Gets the amplitude from both time and space profiles (By)
     inline double getAmplitude0(std::vector<double> pos, double t, int j) {

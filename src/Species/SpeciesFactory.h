@@ -308,6 +308,7 @@ public:
     static std::vector<Species*> createVector(Params& params, Patch* patch) {
         // this will be returned
         std::vector<Species*> retSpecies;
+        retSpecies.resize(0);
         
         if (patch->isMaster()) MESSAGE(1, "Creating Species :" );
         
@@ -333,6 +334,7 @@ public:
     static std::vector<Species*> cloneVector(std::vector<Species*> vecSpecies, Params& params, Patch* patch)
     {
         std::vector<Species*> retSpecies;
+        retSpecies.resize(0);
         
         for (unsigned int ispec = 0; ispec < vecSpecies.size(); ispec++) {
             Species* newSpecies = SpeciesFactory::clone(vecSpecies[ispec], params, patch);
@@ -340,6 +342,8 @@ public:
         }
         
         chooseElectronSpecies(retSpecies, patch);
+        
+        return retSpecies;
     }
     
     // Method to loop through species and find the electron species for ionization

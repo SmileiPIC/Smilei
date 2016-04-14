@@ -23,7 +23,7 @@ public:
         return patch;
     }
     
-    // Clone one patch
+    // Clone one patch (avoid reading again the namelist)
     static Patch* clone(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved=0) {
         Patch* newPatch;
         if (params.geometry == "1d3v")
@@ -48,19 +48,20 @@ public:
 #ifdef _DEBUGPATCH
         std::cout << smpi->getRank() << ", nPatch = " << npatches << " - starting at " << firstpatch << std::endl;        
 #endif
-
-        // create patches
+        
+        // create patches (create patch#0 then clone it)
         vecPatches.resize(npatches);
-        for (unsigned int ipatch = 0 ; ipatch < npatches ; ipatch++) {
-            vecPatches.patches_[ipatch] = PatchesFactory::create(params, smpi, firstpatch + ipatch);
+        vecPatches.patches_[0] = create(params, smpi, firstpatch);
+        for (unsigned int ipatch = 1 ; ipatch < npatches ; ipatch++) {
+            vecPatches.patches_[ipatch] = clone(vecPatches(0), params, smpi, firstpatch + ipatch);
         }
-        vecPatches.set_refHindex() ;
+        vecPatches.set_refHindex();
         
         // Patch initializations which needs some sync (parallel output, are data distribution)
         int itime(0);
         DiagsVectorPatch::initDumpFields(vecPatches, params, itime);
         DiagsVectorPatch::initCollisions(vecPatches, params, smpi);
-
+        
         vecPatches.update_field_list();
         
         // Figure out if there are antennas

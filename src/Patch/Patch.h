@@ -136,13 +136,9 @@ public:
 
     //! Return MPI rank of this->hrank +/- 1
     //! Should be replaced by an analytic formula
-    inline int getMPIRank(int hrank_pm1) {
-	if  (hrank_pm1 == neighbor_[0][0]) return MPI_neighbor_[0][0];
-	else if  (hrank_pm1 == neighbor_[0][1]) return MPI_neighbor_[0][1];
-	else if  (hrank_pm1 == neighbor_[1][0]) return MPI_neighbor_[1][0];
-	else if  (hrank_pm1 == neighbor_[1][1]) return MPI_neighbor_[1][1];
-	else
-	    return MPI_PROC_NULL;
+    virtual int getMPIRank(int hrank_pm1) {
+        ERROR("Should not happen");
+        return 0;
     }
 
     //! Compute MPI rank of neigbors patch regarding neigbors patch Ids

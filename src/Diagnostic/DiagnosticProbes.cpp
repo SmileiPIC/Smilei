@@ -122,8 +122,9 @@ DiagnosticProbes::DiagnosticProbes( DiagnosticProbes * probe, Params& params, Pa
     fieldlocation  = probe->fieldlocation;
     fieldname      = probe->fieldname    ;
     nFields        = probe->nFields      ;
-    probeParticles = probe->probeParticles;
     filename       = probe->filename;
+    vecNumber      = probe->vecNumber;
+    allPos         = probe->allPos;
     
     timeSelection = new TimeSelection(probe->timeSelection);
     
@@ -352,22 +353,23 @@ string DiagnosticProbes::probeName() {
 void DiagnosticProbes::setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches )
 {
     int nPatches(1);
-    for (int iDim=0;iDim<params.nDim_field;iDim++) nPatches*=params.number_of_patches[iDim];
-
+    for (int iDim=0;iDim<params.nDim_field;iDim++)
+        nPatches*=params.number_of_patches[iDim];
+    
     for (unsigned int ipatch=0 ; ipatch < vecPatches.size() ; ipatch++)
         static_cast<DiagnosticProbes*>(vecPatches(ipatch)->localDiags[probeId_])->probesStart = 0;
-
+    
     MPI_Status status;
     for (unsigned int ipatch=0 ; ipatch < vecPatches.size() ; ipatch++) {
-
+        
         Patch* patch = vecPatches(ipatch);
         DiagnosticProbes* cuDiag = static_cast<DiagnosticProbes*>(patch->localDiags[probeId_]);
-
+        
         int hindex = patch->Hindex();
-
+        
         // probesStart
         //probesStart = 0;
-
+        
         if (hindex>0) {
             if ( patch->getMPIRank(hindex-1) != patch->MPI_me_ ) {
                 MPI_Recv( &(cuDiag->probesStart), 1, MPI_INTEGER, patch->getMPIRank(hindex-1), 0, MPI_COMM_WORLD, &status );
@@ -377,16 +379,15 @@ void DiagnosticProbes::setFileSplitting( Params& params, SmileiMPI* smpi, Vector
                 cuDiag->probesStart = diag->getLastPartId(); // return  diag->(probesStart + probeParticles.size() );
             }
         }
-            
+        
         int probeEnd = cuDiag->getLastPartId();
         if (hindex!=nPatches-1) {
             if ( patch->getMPIRank(hindex+1) != patch->MPI_me_ ) {
                 MPI_Send( &probeEnd, 1, MPI_INTEGER, patch->getMPIRank(hindex+1), 0, MPI_COMM_WORLD );
             }
-
-        } // END for ipatch
-      
-    }
+        }
+        
+    } // END for ipatch
 }
 
 

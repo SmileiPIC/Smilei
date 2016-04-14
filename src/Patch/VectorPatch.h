@@ -29,6 +29,8 @@ public :
 
     VectorPatch();
     ~VectorPatch();
+    
+    void close(SmileiMPI*);
 
     //! VectorPatch = 
     //! - std::vector<Patch*>
@@ -45,9 +47,6 @@ public :
     }
     inline int  size() const {
         return patches_.size();
-    }
-    inline void clear() {
-        patches_.clear();
     }
     inline Patch* operator()(int ipatch) {
         return patches_[ipatch];
