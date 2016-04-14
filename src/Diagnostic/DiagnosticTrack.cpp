@@ -134,9 +134,17 @@ void DiagnosticTrack::openFile( Params& params, SmileiMPI* smpi, VectorPatch& ve
         H5Sclose(file_space);
         
         // Create the dataset for the time array
+        hsize_t ntimes[1] = { 0 };
+        hsize_t maxtimes[1] = { H5S_UNLIMITED };
+        file_space = H5Screate_simple(1, ntimes, maxtimes);
+
+        // Create the overall dataset in the HDF5 file with a new chunk every timestep
         plist = H5Pcreate(H5P_DATASET_CREATE);
-        hsize_t ntimes[1] = { dims[0] };
-        file_space = H5Screate_simple(1, ntimes, NULL);
+        H5Pset_layout(plist, H5D_CHUNKED);
+        H5Pset_alloc_time(plist, H5D_ALLOC_TIME_EARLY); // necessary for collective dump
+        hsize_t tchunk_dims[1] = {1};
+        H5Pset_chunk(plist, 1, tchunk_dims);
+
         did = H5Dcreate(fileId_, "Times", H5T_NATIVE_INT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
         H5Dclose(did);
         H5Pclose(plist);
@@ -202,6 +210,20 @@ void DiagnosticTrack::prepare( Patch* patch, int timestep )
         H5Dset_extent(did, dims);
         H5Dclose(did);
     }
+    
+    hsize_t tdims[1] = { dims[0] };
+    hid_t did = H5Dopen( fileId_, "Times", H5P_DEFAULT );
+    H5Dset_extent(did, tdims);
+    H5Dclose(did);
+
+    // Write the current timestep
+    vector<hsize_t> locator(1, iter);
+    hsize_t onetime[1] = { 1 };
+    hid_t mem_space = H5Screate_simple(1, onetime, NULL);
+    append( fileId_, "Times", time, mem_space, 1, H5T_NATIVE_INT, locator );
+    H5Sclose( mem_space );
+
+
     H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
 
 }
@@ -252,12 +274,7 @@ void DiagnosticTrack::run( Patch* patch, int timestep )
     
     H5Sclose( mem_space );
     
-    // Write the current timestep
-    locator.resize(1, iter-1);
-    hsize_t onetime[1] = { 1 };
-    mem_space = H5Screate_simple(1, onetime, NULL);
-    //append( fileId_, "Times", time, mem_space, 1, H5T_NATIVE_INT, locator );
-    
+
     //MPI_Barrier(MPI_COMM_WORLD); // synchro to manage differently
     H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
 
