@@ -272,7 +272,7 @@ int main (int argc, char* argv[])
                 for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) 
                     vecPatches(ipatch)->EMfields->applyAntennas(smpiData, time_dual);
             }
-        
+            
             /*******************************************/
             /*********** Maxwell solver ****************/
             /*******************************************/
@@ -280,7 +280,7 @@ int main (int argc, char* argv[])
             // solve Maxwell's equations
             if( time_dual > params.time_fields_frozen )
                 vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timer );
-                    
+            
             // incrementing averaged electromagnetic fields
             if (vecPatches(0)->sio->dumpAvgFields_)
                 #pragma omp for schedule(static)
@@ -288,6 +288,17 @@ int main (int argc, char* argv[])
                     vecPatches(ipatch)->EMfields->incrementAvgFields(itime);
                 }
             
+            #pragma omp single
+            {
+            //ostringstream t("");
+            //if(itime%50==0){
+            //for( int i=0; i<vecPatches(0)->EMfields->Ez_->globalDims_;i++){
+            //t<<(*(vecPatches(0)->EMfields->Ez_))(i)-(*(vecPatches(2)->EMfields->Ez_))(i) << " ";
+            //}
+            //MESSAGE(t.str());
+            //}
+            //MESSAGE(vecPatches(0)->isWestern()<<" "<<vecPatches(1)->isWestern()<<" "<<vecPatches(2)->isWestern());
+            }
             // call the various diagnostics
             // ----------------------------
             

@@ -30,13 +30,11 @@ class Patch
 public:
     //! Constructor for Patch
     Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
-    //! Cloning Constructor for Patch
-    Patch(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
-
+    
     //! First initialization step for patches
     void initStep1(Params& params);
     //! Second initialization step for patches
-    virtual void initStep2(Params& params) {};
+    virtual void initStep2(Params& params) = 0;
     //! Third initialization step for patches
     void initStep3(Params& params, SmileiMPI* smpi, unsigned int n_moved);
 

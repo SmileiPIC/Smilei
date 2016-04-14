@@ -53,13 +53,14 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, Patch* patc
     
     // Extract "pos", "pos_first", "pos_second" and "pos_third"
     // (positions of the vertices of the grid)
-    vector<double> pos;
+    allPos.resize(0);
     vector<string> keys(4);
     keys[0] = "pos";
     keys[1] = "pos_first";
     keys[2] = "pos_second";
     keys[3] = "pos_third";
     for( int i=0; i<3; i++) {
+        vector<double> pos;
         if (PyTools::extract(keys[i],pos,"DiagProbe",n_probe)) {
             if (pos.size()!=ndim)
                 ERROR("Probe #"<<n_probe<<": "<<keys[i]<<" size(" << pos.size() << ") != ndim(" << ndim<< ")");
@@ -125,6 +126,7 @@ DiagnosticProbes::DiagnosticProbes( DiagnosticProbes * probe, Params& params, Pa
     filename       = probe->filename;
     vecNumber      = probe->vecNumber;
     allPos         = probe->allPos;
+    dimProbe       = probe->dimProbe;
     
     timeSelection = new TimeSelection(probe->timeSelection);
     
@@ -199,7 +201,6 @@ void DiagnosticProbes::initParticles(Params& params, Patch * patch)
     probesArraySize[0] = nFields + 1; // number of fields (Ex, Ey, etc) +1 for garbage
     Field2D *myfield = new Field2D(probesArraySize);
     probesArray = myfield;
-    
 }
 
 

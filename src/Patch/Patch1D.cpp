@@ -23,16 +23,6 @@ Patch1D::Patch1D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned 
 } // End Patch1D::Patch1D
 
 
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Patch1D cloning constructor
-// ---------------------------------------------------------------------------------------------------------------------
-Patch1D::Patch1D(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved)
-  : Patch( patch, params, smpi, ipatch, n_moved)
-{
-}
-
-
 // ---------------------------------------------------------------------------------------------------------------------
 // Patch1D second initializer :
 //   - Pcoordinates, neighbor_ resized in Patch constructor 
@@ -51,7 +41,6 @@ void Patch1D::initStep2(Params& params)
     xcall = Pcoordinates[0]+1;
     if (params.bc_em_type_x[0]=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
     neighbor_[0][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
-    
 }
 
 

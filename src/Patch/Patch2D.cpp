@@ -24,15 +24,6 @@ Patch2D::Patch2D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned 
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Patch2D cloning constructor
-// ---------------------------------------------------------------------------------------------------------------------
-Patch2D::Patch2D(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved)
-  : Patch( patch, params, smpi, ipatch, n_moved)
-{
-}
-
-
-// ---------------------------------------------------------------------------------------------------------------------
 // Patch2D second initializer :
 //   - Pcoordinates, neighbor_ resized in Patch constructor 
 // ---------------------------------------------------------------------------------------------------------------------
