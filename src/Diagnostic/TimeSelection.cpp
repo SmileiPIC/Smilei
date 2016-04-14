@@ -91,6 +91,21 @@ TimeSelection::TimeSelection(PyObject* timeSelection, string name)
 }
 
 
+// Cloning Constructor
+TimeSelection::TimeSelection(TimeSelection * timeSelection)
+{
+    start        = timeSelection->start       ;
+    end          = timeSelection->end         ;
+    period       = timeSelection->period      ;
+    repeat       = timeSelection->repeat      ;
+    spacing      = timeSelection->spacing     ;
+    groupWidth   = timeSelection->groupWidth  ;
+    TheTimeIsNow = timeSelection->TheTimeIsNow;
+    NextTime     = timeSelection->NextTime    ;
+    PreviousTime = timeSelection->PreviousTime;
+}
+
+
 // Tell whether the current timestep is within the selection
 bool TimeSelection::theTimeIsNow(int timestep)
 {

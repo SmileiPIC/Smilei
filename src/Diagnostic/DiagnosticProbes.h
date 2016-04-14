@@ -15,56 +15,70 @@ class DiagnosticProbes : public Diagnostic {
     friend class SmileiMPI;
 
 public :
-
+    
+    //! Default constructor
     DiagnosticProbes( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
-    DiagnosticProbes() {};
+    //! Cloning constructor
+    DiagnosticProbes(DiagnosticProbes*, Params&, Patch* );
+    //! Default destructor
     ~DiagnosticProbes();
-
+    
+    void initParticles(Params&, Patch *);
+    
     virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile );
-
+    
     virtual void closeFile();
-
+    
     virtual void prepare( Patch* patch, int timestep );
-
+    
     virtual void run( Patch* patch, int timestep );
-
+    
     virtual void write(int timestep);
-
-
+    
+    
     void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches );
     void setFile( hid_t masterFileId );
     virtual void setFile( Diagnostic* diag );
-
+    
     void writePositionIn( Params &params );
     void writePositions( int ndim_Particles, int probeDim, hid_t group_id );
     void compute(unsigned int timestep, ElectroMagn* EMfields);
-
+    
     int getLastPartId() {
-	return probesStart+probeParticles.size();
+        return probesStart+probeParticles.size();
     }
-
+    
     hid_t getFileId() {
-	return fileId_;
+        return fileId_;
     }
-
+    
 protected:
     //! hdf5 file ID
     hid_t fileId_;
 
 private :
     //int probeId_;
-
+    
+    //! Dimension of the probe grid
+    unsigned int dimProbe;
+    
+    //! Number of points in each dimension
+    std::vector<unsigned int> vecNumber; 
+    
+    //! List of the coordinates of the probe vertices
+    std::vector< std::vector<double> > allPos;
+    
     //! fake particles acting as probes
     Particles probeParticles;
-
+    
     //! each probe will write in a buffer
     Field2D* probesArray;
-
+    
     int probesStart;
-
+    
     //! number of fake particles for each probe diagnostic
     unsigned int nPart_total;
-
+    
     //! Number of fields to save
     int nFields;
     
@@ -74,10 +88,10 @@ private :
     //! Indices in the output array where each field goes
     std::vector<unsigned int> fieldlocation;
     
-
+    
     //! return name of the probe based on its number
     std::string probeName();
-
+    
     //! E local fields for the projector
     LocalFields Eloc_fields;
     //! B local fields for the projector
@@ -86,7 +100,7 @@ private :
     LocalFields Jloc_fields;
     //! Rho local field for the projector
     double Rloc_fields;
-
+    
     Interpolator* interp_;
     
 };

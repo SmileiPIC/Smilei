@@ -138,6 +138,35 @@ fileId_(0)
 
 } // END DiagnosticParticles::DiagnosticParticles
 
+
+// Cloning constructor
+DiagnosticParticles::DiagnosticParticles( DiagnosticParticles* diag)
+{
+    
+    output        = diag->output;
+    time_average  = diag->time_average;
+    species       = diag->species ;
+    timeSelection = new TimeSelection(diag->timeSelection);
+    
+    for (unsigned int iaxis=0; iaxis<diag->axes.size(); iaxis++ ) {
+        DiagnosticParticlesAxis tmpAxis;
+        tmpAxis.type           = diag->axes[iaxis].type;
+        tmpAxis.min            = diag->axes[iaxis].min;
+        tmpAxis.max            = diag->axes[iaxis].max;
+        tmpAxis.nbins          = diag->axes[iaxis].nbins;
+        tmpAxis.logscale       = diag->axes[iaxis].logscale;
+        tmpAxis.edge_inclusive = diag->axes[iaxis].edge_inclusive;
+        axes.push_back(tmpAxis);
+    }
+    
+    output_size = diag->output_size;
+    if (time_average>1) data_sum.resize(output_size);
+    
+    type_ = "Particles";
+}
+
+
+
 DiagnosticParticles::~DiagnosticParticles()
 {
 } // END DiagnosticParticles::~DiagnosticParticles

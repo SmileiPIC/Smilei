@@ -18,10 +18,13 @@ class Params;
 class TimeSelection {
 
 public:
-    //! Constructor
+    //! Default Constructor
     TimeSelection(PyObject*, std::string);
     
-    //! Destructor
+    //! Cloning Constructor
+    TimeSelection(TimeSelection*);
+    
+    //! Default Destructor
     ~TimeSelection(){};
     
     //! Tell whether the current timestep is within the selection
