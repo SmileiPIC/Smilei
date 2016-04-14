@@ -16,6 +16,9 @@ class CollisionalIonization
 public:
     //! Constructor
     CollisionalIonization(int, int);
+    //! Cloning Constructor
+    CollisionalIonization(CollisionalIonization*);
+    //! Destructor
     virtual ~CollisionalIonization() {};
     
     //! Initializes the arrays in the database and returns the index of these arrays in the DB
@@ -51,8 +54,14 @@ public:
     
     //! New electrons temporary species
     Particles new_electrons;
+    
+    //! Index of the atomic number in the databases
+    int dataBaseIndex;
 
 private:
+
+    //! Simulation dimension
+    int nDim;
     
     //! Atomic number
     int atomic_number;

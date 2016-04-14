@@ -14,15 +14,29 @@ const double CollisionalIonization::a1 = 510998.9 ; // = me*c^2/Emin
 const double CollisionalIonization::a2 = 6.142165 ; // = (npoints-1) / ln( Emax/Emin )
 
 // Constructor
-// Computes the cross-section tables at the beginning of the run
-CollisionalIonization::CollisionalIonization(int Z, int nDim)
+CollisionalIonization::CollisionalIonization(int Z, int nDim_)
 {
-
+    nDim = nDim_;
     atomic_number = Z;
     rate .resize(Z);
     irate.resize(Z);
     prob .resize(Z);
     new_electrons.initialize(0, nDim); // to be removed if bins removed
+
+}
+
+// Cloning Constructor
+CollisionalIonization::CollisionalIonization(CollisionalIonization* CI)
+{
+
+    nDim          = CI->nDim;
+    atomic_number = CI->atomic_number;
+    rate .resize(atomic_number);
+    irate.resize(atomic_number);
+    prob .resize(atomic_number);
+    new_electrons.initialize(0, nDim); // to be removed if bins removed
+    
+    assignDatabase(CI->dataBaseIndex);
 
 }
 
@@ -114,9 +128,9 @@ int CollisionalIonization::createDatabase(double referenceAngularFrequency_SI)
 void CollisionalIonization::assignDatabase(int index)
 {
 
-  crossSection      = &(DB_crossSection     [index]);
-  transferredEnergy = &(DB_transferredEnergy[index]);
-  lostEnergy        = &(DB_lostEnergy       [index]);
+    crossSection      = &(DB_crossSection     [index]);
+    transferredEnergy = &(DB_transferredEnergy[index]);
+    lostEnergy        = &(DB_lostEnergy       [index]);
 
 }
 
