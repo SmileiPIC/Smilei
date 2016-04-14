@@ -40,6 +40,25 @@ public:
         
         return vecDiagnostics;
     } // END createLocalDiagnostics
+    
+    
+    // Cloning factory for local diags (global don't need cloning)
+    static std::vector<Diagnostic*> cloneLocalDiagnostics(std::vector<Diagnostic*> vecDiagnostics, Params& params, SmileiMPI* smpi, Patch* patch) {
+        std::vector<Diagnostic*> newVecDiagnostics(0);
+        for (int idiag=0; idiag<vecDiagnostics.size(); idiag++) {
+            if (vecDiagnostics[idiag]->type_ == "Probes" ) {
+                newVecDiagnostics.push_back(
+                    new DiagnosticProbes(static_cast<DiagnosticProbes*>(vecDiagnostics[idiag]), params, patch)
+                );
+            } else if (vecDiagnostics[idiag]->type_ == "Track" ) {
+                newVecDiagnostics.push_back(
+                    new DiagnosticTrack(static_cast<DiagnosticTrack*>(vecDiagnostics[idiag]))
+                );
+            }
+        }
+        return newVecDiagnostics;
+    }
+    
 
 };
 
