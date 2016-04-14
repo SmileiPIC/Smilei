@@ -30,9 +30,15 @@ class Patch
 public:
     //! Constructor for Patch
     Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
+    //! Cloning Constructor for Patch
+    Patch(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
 
-    //! Define MPI neighbors, compute boundaries regarding patch coordinates, create main members
-    void finalizePatchInit( Params& params, SmileiMPI* smpi, unsigned int n_moved );
+    //! First initialization step for patches
+    void initStep1(Params& params);
+    //! Second initialization step for patches
+    virtual void initStep2(Params& params) {};
+    //! Third initialization step for patches
+    void initStep3(Params& params, SmileiMPI* smpi, unsigned int n_moved);
 
     //! Destructor for Patch
     ~Patch();

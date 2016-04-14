@@ -41,16 +41,86 @@ using namespace std;
 //   - resize geometrical members
 //   - Called by PatchXD constructor which will finalize initialization
 // ---------------------------------------------------------------------------------------------------------------------
-Patch::Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved) {
+Patch::Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved)
+{
     
     hindex = ipatch;
+    nDim_fields_ = params.nDim_field;
     
 #ifdef _DEBUGPATCH
     std::cout << smpi->getRank() << ", mypatch is : " << hindex << std::endl;        
 #endif
     
-    nDim_fields_ = params.nDim_field;
+    // First, do a series of initializations
+    initStep1(params);
+    initStep2(params); // depends on 1D, 2D, ...
+    initStep3(params, smpi, n_moved);
     
+    // initialize vector of Species (virtual)
+    vecSpecies = SpeciesFactory::createVector(params, this);
+    
+    // initialize the electromagnetic fields (virtual)
+    EMfields   = ElectroMagnFactory::create(params, vecSpecies, this);
+    
+    // interpolation operator (virtual)
+    Interp     = InterpolatorFactory::create(params, this);               // + patchId -> idx_domain_begin (now = ref smpi)
+    // projection operator (virtual)
+    Proj       = ProjectorFactory::create(params, this);                  // + patchId -> idx_domain_begin (now = ref smpi)
+    
+    // Initialize local diags
+    localDiags = DiagnosticFactory::createLocalDiagnostics(params, smpi, this);
+    sio = SmileiIOFactory::create(params, this);
+    
+    // Initialize the collisions
+    vecCollisions = Collisions::create(params, this, vecSpecies);
+    
+    // Initialize the particle walls
+    partWalls = new PartWalls(params, this);
+    
+} // END Patch::Patch
+
+
+
+
+// Cloning patch constructor
+Patch::Patch(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved) {
+    
+    hindex = ipatch;
+    nDim_fields_ = patch->nDim_fields_;
+    
+    // First, do a series of initializations
+    initStep1(params);
+    initStep2(params); // depends on 1D, 2D, ...
+    initStep3(params, smpi, n_moved);
+    
+    // clone vector of Species (virtual)
+    vecSpecies = SpeciesFactory::cloneVector(patch->vecSpecies, params, this);
+    
+    // clone the electromagnetic fields (virtual)
+    EMfields   = ElectroMagnFactory::clone(patch->EMfields, params, vecSpecies, this);
+    
+    // interpolation operator (virtual)
+    Interp     = InterpolatorFactory::create(params, this);
+    // projection operator (virtual)
+    Proj       = ProjectorFactory::create(params, this);
+    
+    // clone local diags
+    localDiags = DiagnosticFactory::cloneLocalDiagnostics(patch->localDiags, params, smpi, this);
+    sio = SmileiIOFactory::clone(patch->sio, params, patch);
+    
+    // clone the collisions
+    vecCollisions = Collisions::clone(patch->vecCollisions, params);
+    
+    // clone the particle walls
+    partWalls = new PartWalls(patch->partWalls, this);
+
+}
+
+
+
+
+void Patch::initStep1(Params& params)
+{
     // for nDim_fields = 1 : bug if Pcoordinates.size = 1 !! 
     //Pcoordinates.resize(nDim_fields_);
     Pcoordinates.resize( 2 );
@@ -71,18 +141,10 @@ Patch::Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int 
     for ( int iDim = 0 ; iDim < nDim_fields_; iDim++ ) {
         MPI_neighbor_[iDim].resize(2,MPI_PROC_NULL);
     }
-
-    oversize.resize( 2 );
-    for ( int iDim = 0 ; iDim < nDim_fields_; iDim++ )
-        oversize[iDim] = params.oversize[iDim];
-
-} // END Patch::Patch
+}
 
 
-// ---------------------------------------------------------------------------------------------------------------------
-// Finalize initialization, non-dimensioned instructions
-// ---------------------------------------------------------------------------------------------------------------------
-void Patch::finalizePatchInit( Params& params, SmileiMPI* smpi, unsigned int n_moved ) {
+void Patch::initStep3( Params& params, SmileiMPI* smpi, unsigned int n_moved ) {
     
     // Compute MPI neighborood
     updateMPIenv(smpi);
@@ -101,38 +163,9 @@ void Patch::finalizePatchInit( Params& params, SmileiMPI* smpi, unsigned int n_m
     cell_starting_global_index[0] += n_moved;
     min_local[0] += n_moved*params.cell_length[0];
     max_local[0] += n_moved*params.cell_length[0];
-    
-    // ---------------------------
-    // Initialize Species & Fields
-    // ---------------------------
-    
-    // Initialize the vecSpecies object containing all information of the different Species
-    // ------------------------------------------------------------------------------------
-    
-    // vector of Species (virtual)
-    vecSpecies = SpeciesFactory::createVector(params, this);
-    
-    // object containing the electromagnetic fields (virtual)
-    EMfields   = ElectroMagnFactory::create(params, vecSpecies, this);
-    
-    // interpolation operator (virtual)
-    Interp     = InterpolatorFactory::create(params, this);               // + patchId -> idx_domain_begin (now = ref smpi)
-    // projection operator (virtual)
-    Proj       = ProjectorFactory::create(params, this);                  // + patchId -> idx_domain_begin (now = ref smpi)
-    
-    localDiags = DiagnosticFactory::createLocalDiagnostics(params, smpi, this);
-    
-    sio = SmileiIOFactory::create(params, this);
-    
-    // Initialize the collisions (vector of collisions)
-    // ------------------------------------------------------------------------------------
-    vecCollisions = Collisions::create(params, this, vecSpecies);
-    
-    // Initialize the particle walls
-    partWalls = new PartWalls(params, this);
-    
-    
-} // END finalizePatchInit
+}
+
+
 
 
 // ---------------------------------------------------------------------------------------------------------------------

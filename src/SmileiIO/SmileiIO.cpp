@@ -38,17 +38,6 @@ global_file_id_avg(0)
 }
 
 
-// Cloning constructor
-SmileiIO::SmileiIO( SmileiIO* sio )
-{
-    fieldsToDump   = sio->fieldsToDump;
-    write_plist    = sio-> write_plist;
-    dumpAvgFields_ = sio->dumpAvgFields_;
-    field_timeSelection    = new TimeSelection(sio->field_timeSelection);
-    avgfield_timeSelection = new TimeSelection(sio->field_timeSelection);
-}
-
-
 void SmileiIO::setFiles( hid_t masterFileId, hid_t masterFileIdAvg )
 {
     global_file_id_ = masterFileId;

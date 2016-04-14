@@ -237,7 +237,7 @@ public:
     }
     
     //! Method to create new particles.
-    int  createParticles(std::vector<unsigned int> n_space_to_create, std::vector<double> cell_index, int new_bin_idx);
+    int  createParticles(std::vector<unsigned int> n_space_to_create, Params& params, Patch * patch, int new_bin_idx);
     
     //! 2 times pi
     double PI2;

@@ -648,8 +648,15 @@ void Species::count_sort_part(Params &params)
 }
 
 
-int Species::createParticles(vector<unsigned int> n_space_to_create, vector<double> cell_index, int new_bin_idx)
+int Species::createParticles(vector<unsigned int> n_space_to_create, Params& params, Patch *patch, int new_bin_idx)
 {
+    // Create particles in a space starting at cell_index
+    vector<double> cell_index(3,0);
+    for (int i=0 ; i<params.nDim_field ; i++) {
+        if (params.cell_length[i]!=0)
+            cell_index[i] = patch->getDomainLocalMin(i);
+    }
+    
     // ---------------------------------------------------------
     // Calculate density and number of particles for the species
     // ---------------------------------------------------------

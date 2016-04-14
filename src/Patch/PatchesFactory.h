@@ -11,17 +11,9 @@
 
 class PatchesFactory {
 public:
-    static Patch* create(Params& params, SmileiMPI* smpi, unsigned int  ipatch) {
-        Patch* patch;
-        if (params.geometry == "1d3v")
-            patch = new Patch1D(params, smpi, ipatch, 0);
-        else 
-            patch = new Patch2D(params, smpi, ipatch, 0);
-        patch->createType(params);
-        return patch;
-    }
     
-    static Patch* create(Params& params, SmileiMPI* smpi, unsigned int  ipatch, unsigned int n_moved) {
+    // Create one patch from scratch
+    static Patch* create(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved=0) {
         Patch* patch;
         if (params.geometry == "1d3v")
             patch = new Patch1D(params, smpi, ipatch, n_moved);
@@ -31,6 +23,18 @@ public:
         return patch;
     }
     
+    // Clone one patch
+    static Patch* clone(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved=0) {
+        Patch* newPatch;
+        if (params.geometry == "1d3v")
+            newPatch = new Patch1D(patch, params, smpi, ipatch, n_moved);
+        else 
+            newPatch = new Patch2D(patch, params, smpi, ipatch, n_moved);
+        newPatch->createType(params);
+        return newPatch;
+    }
+    
+    // Create a vector of patches
     static VectorPatch createVector(Params& params, SmileiMPI* smpi) {
         VectorPatch vecPatches;
         
@@ -61,10 +65,10 @@ public:
         
         // Figure out if there are antennas
         vecPatches.hasAntennas = ( vecPatches(0)->EMfields->antennas.size() > 0 );
-
-	vecPatches.createGlobalDiags( params, smpi );
-	vecPatches.initAllDiags( params, smpi );
-	  
+        
+        vecPatches.createGlobalDiags( params, smpi );
+        vecPatches.initAllDiags( params, smpi );
+        
         return vecPatches;
     }
 

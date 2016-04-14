@@ -13,7 +13,11 @@ class Patch2D : public Patch
 public:
     //! Constructor for Patch
     Patch2D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
+    //! Cloning Constructor for Patch
+    Patch2D(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
 
+    void initStep2(Params& params);
+    
     //! Destructor for Patch
     virtual ~Patch2D() {};
 

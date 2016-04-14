@@ -30,10 +30,8 @@ class Species;
 class SmileiIO {
     friend class SmileiIOFactory;
 public:
-    //! Default constructor
+    //! constructor
     SmileiIO( Params& params, Patch* patch );
-    //! Cloning constructor
-    SmileiIO( SmileiIO * );
     
     void createFiles( Params& params, Patch* patch );
     void setFiles( hid_t masterFileId, hid_t masterFileIdAvg );

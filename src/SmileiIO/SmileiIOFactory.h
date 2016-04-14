@@ -46,6 +46,27 @@ public:
         return sio;
     }
     
+    
+    // Cloning 
+    static SmileiIO* clone( SmileiIO* sio, Params& params, Patch* patch )
+    {
+        SmileiIO* newSio = NULL;
+        if ( params.geometry == "1d3v" ) {
+            newSio = new  SmileiIO_Cart1D(params, patch);
+        }
+        else if ( params.geometry == "2d3v" ) {
+            newSio = new  SmileiIO_Cart2D(params, patch);
+        }
+        else {
+            ERROR( "Geometry " << params.geometry << " not implemented" );
+        }
+        
+        newSio->fieldsToDump   = sio->fieldsToDump;
+        newSio->dumpAvgFields_ = sio->dumpAvgFields_;
+        newSio->field_timeSelection    = new TimeSelection(sio->field_timeSelection);
+        newSio->avgfield_timeSelection = new TimeSelection(sio->field_timeSelection);
+        return sio;
+    }
 
 };
 

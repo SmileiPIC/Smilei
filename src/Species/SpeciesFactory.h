@@ -241,17 +241,9 @@ public:
         
         // Create the particles
         if (!params.restart) {
-            // Create particles in a space starting at cell_index
-            std::vector<double> cell_index(3,0);
-            for (unsigned int i=0 ; i<params.nDim_field ; i++) {
-                if (params.cell_length[i]!=0)
-                    cell_index[i] = patch->getDomainLocalMin(i);
-            }
-                
-            int starting_bin_idx = 0;
             // does a loop over all cells in the simulation
             // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
-            thisSpecies->createParticles(params.n_space, cell_index, starting_bin_idx );
+            thisSpecies->createParticles(params.n_space, params, patch, 0 );
             
         }
         
@@ -271,37 +263,43 @@ public:
             newSpecies = new Species_rrll(params, patch); // Boris + Radiation Reaction
         }
         // Copy members
-        newSpecies->species_type                    =species->species_type;
-        newSpecies->speciesNumber                   =species->speciesNumber;
-        newSpecies->initPosition_type               =species->initPosition_type;
-        newSpecies->initMomentum_type               =species->initMomentum_type;
-        newSpecies->c_part_max                      =species->c_part_max;
-        newSpecies->mass                            =species->mass;
-        newSpecies->time_frozen                     =species->time_frozen;
-        newSpecies->radiating                       =species->radiating;
-        newSpecies->bc_part_type_west               =species->bc_part_type_west;
-        newSpecies->bc_part_type_east               =species->bc_part_type_east;
-        newSpecies->bc_part_type_south              =species->bc_part_type_south;
-        newSpecies->bc_part_type_north              =species->bc_part_type_north;
-        newSpecies->bc_part_type_bottom             =species->bc_part_type_bottom;
-        newSpecies->bc_part_type_up                 =species->bc_part_type_up;
-        newSpecies->thermT                          =species->thermT;
-        newSpecies->thermVelocity                   =species->thermVelocity;
-        newSpecies->thermalVelocity                 =species->thermalVelocity;
-        newSpecies->thermalMomentum                 =species->thermalMomentum;
-        newSpecies->atomic_number                   =species->atomic_number;
-        newSpecies->ionization_model                =species->ionization_model;
-        newSpecies->densityProfileType              =species->densityProfileType;
-        newSpecies->densityProfile                  =species->densityProfile;
-        newSpecies->ppcProfile                      =species->ppcProfile;
-        newSpecies->chargeProfile                   =species->chargeProfile;
-        newSpecies->velocityProfile                 =species->velocityProfile;
-        newSpecies->temperatureProfile              =species->temperatureProfile;
-        newSpecies->particles->isTest               =species->particles->isTest;
-        newSpecies->max_charge                      =species->max_charge;
-        newSpecies->particles                       =species->particles;
-        newSpecies->particles->track_timeSelection  =species->particles->track_timeSelection;
-        newSpecies->particles->tracked              =species->particles->tracked;
+        newSpecies->species_type        = species->species_type;
+        newSpecies->speciesNumber       = species->speciesNumber;
+        newSpecies->initPosition_type   = species->initPosition_type;
+        newSpecies->initMomentum_type   = species->initMomentum_type;
+        newSpecies->c_part_max          = species->c_part_max;
+        newSpecies->mass                = species->mass;
+        newSpecies->time_frozen         = species->time_frozen;
+        newSpecies->radiating           = species->radiating;
+        newSpecies->bc_part_type_west   = species->bc_part_type_west;
+        newSpecies->bc_part_type_east   = species->bc_part_type_east;
+        newSpecies->bc_part_type_south  = species->bc_part_type_south;
+        newSpecies->bc_part_type_north  = species->bc_part_type_north;
+        newSpecies->bc_part_type_bottom = species->bc_part_type_bottom;
+        newSpecies->bc_part_type_up     = species->bc_part_type_up;
+        newSpecies->thermT              = species->thermT;
+        newSpecies->thermVelocity       = species->thermVelocity;
+        newSpecies->thermalVelocity     = species->thermalVelocity;
+        newSpecies->thermalMomentum     = species->thermalMomentum;
+        newSpecies->atomic_number       = species->atomic_number;
+        newSpecies->ionization_model    = species->ionization_model;
+        newSpecies->densityProfileType  = species->densityProfileType;
+        newSpecies->densityProfile      = species->densityProfile;
+        newSpecies->ppcProfile          = species->ppcProfile;
+        newSpecies->chargeProfile       = species->chargeProfile;
+        newSpecies->velocityProfile     = species->velocityProfile;
+        newSpecies->temperatureProfile  = species->temperatureProfile;
+        newSpecies->particles->isTest   = species->particles->isTest;
+        newSpecies->max_charge          = species->max_charge;
+        newSpecies->particles           = species->particles;
+        newSpecies->particles->tracked  = species->particles->tracked;
+        
+        newSpecies->particles->track_timeSelection = new TimeSelection(species->particles->track_timeSelection);
+        
+        // \todo : NOT SURE HOW THIS BEHAVES WITH RESTART
+        if (!params.restart) {
+            newSpecies->createParticles(params.n_space, params, patch, 0 );
+        }
         
         newSpecies->initOperators(params, patch);
     }

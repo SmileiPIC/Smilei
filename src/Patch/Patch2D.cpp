@@ -15,18 +15,34 @@ using namespace std;
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Patch2D constructor :
-//   - Pcoordinates, neighbor_ resized in Patch constructor 
-//   - Call Patch::finalizePatchInit to allocate data structure
+// Patch2D constructor 
 // ---------------------------------------------------------------------------------------------------------------------
 Patch2D::Patch2D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved)
   : Patch( params, smpi, ipatch, n_moved)
 {
-    int xcall, ycall;
+} // End Patch2D::Patch2D
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Patch2D cloning constructor
+// ---------------------------------------------------------------------------------------------------------------------
+Patch2D::Patch2D(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved)
+  : Patch( patch, params, smpi, ipatch, n_moved)
+{
+}
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Patch2D second initializer :
+//   - Pcoordinates, neighbor_ resized in Patch constructor 
+// ---------------------------------------------------------------------------------------------------------------------
+void Patch2D::initStep2(Params& params)
+{
+    int xcall, ycall;
+    
     Pcoordinates.resize(2);
     generalhilbertindexinv(params.mi[0], params.mi[1], &Pcoordinates[0], &Pcoordinates[1], hindex);
-
+    
     // 1st direction
     xcall = Pcoordinates[0]-1;
     ycall = Pcoordinates[1];
@@ -35,7 +51,7 @@ Patch2D::Patch2D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned 
     xcall = Pcoordinates[0]+1;
     if (params.bc_em_type_x[0]=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
     neighbor_[0][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
-
+    
     // 2nd direction
     xcall = Pcoordinates[0];
     ycall = Pcoordinates[1]-1;
@@ -44,7 +60,7 @@ Patch2D::Patch2D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned 
     ycall = Pcoordinates[1]+1;
     if (params.bc_em_type_y[0]=="periodic" && ycall >= (1<<params.mi[1])) ycall -= (1<<params.mi[1]);
     neighbor_[1][1] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
-
+    
     // Corners
     xcall = Pcoordinates[0]+1;
     if (params.bc_em_type_x[0]=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
@@ -58,11 +74,7 @@ Patch2D::Patch2D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned 
     xcall = Pcoordinates[0]+1;
     if (params.bc_em_type_x[0]=="periodic" && xcall >= (1<<params.mi[0])) xcall -= (1<<params.mi[0]);
     corner_neighbor_[1][0] = generalhilbertindex( params.mi[0], params.mi[1], xcall, ycall);
-
-    // Call generic Patch::finalizePatchInit method
-    finalizePatchInit( params, smpi, n_moved );
-
-} // End Patch2D::Patch2D
+}
 
 
 // ---------------------------------------------------------------------------------------------------------------------
