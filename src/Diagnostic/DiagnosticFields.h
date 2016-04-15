@@ -16,7 +16,7 @@ public :
    virtual void setFile( Diagnostic* diag );
    virtual void closeFile();
 
-   virtual void prepare( Patch* patch, int timestep );
+   virtual bool prepare( Patch* patch, int timestep );
 
    virtual void run( Patch* patch, int timestep );
 

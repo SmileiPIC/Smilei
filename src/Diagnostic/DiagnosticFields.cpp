@@ -102,9 +102,9 @@ void DiagnosticFields::closeFile()
 }
 
 
-void DiagnosticFields::prepare( Patch* patch, int timestep )
+bool DiagnosticFields::prepare( Patch* patch, int timestep )
 {
-    if ( !timeSelection->theTimeIsNow(timestep) ) return;
+    if ( !timeSelection->theTimeIsNow(timestep) ) return false;
 
     ostringstream name_t;
     name_t.str("");
@@ -113,7 +113,8 @@ void DiagnosticFields::prepare( Patch* patch, int timestep )
     DEBUG("[hdf] GROUP _________________________________ " << name_t.str());
     hid_t group_id = H5Gcreate(fileId_, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     H5Gclose(group_id);
-
+    
+    return true;
 }
 
 
