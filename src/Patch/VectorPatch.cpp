@@ -213,7 +213,15 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
             }// END  ipatch
         
         } // END if Probes
-    
+
+
+        if ( (*this)(0)->localDiags[idiag]->type_ == "Fields" ) {
+            (*this)(0)->localDiags[idiag]->openFile( params, smpi, *this, true );
+            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+                (*this)(ipatch)->localDiags[idiag]->setFile( (*this)(0)->localDiags[idiag] );
+            }
+        } // END if Fields
+
     } // END for localDiags
     
 } // END initAllDiags
@@ -262,6 +270,13 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
                 diagProbes->setFile( diagProbes0->getFileId() );
             }
         }
+
+        if ( (*this)(0)->localDiags[idiag]->type_ == "Fields" ) {
+            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+                (*this)(ipatch)->localDiags[idiag]->setFile( (*this)(0)->localDiags[idiag] );
+            }
+        } // END if Fields
+
     }
     
     /*
