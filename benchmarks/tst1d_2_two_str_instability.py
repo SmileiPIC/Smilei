@@ -11,7 +11,7 @@
 # here are defined some useful python variables
 # 
 import math
-L  = 1.03			# wavelength=simulation box length
+L  = 1.12			# wavelength=simulation box length
 dn = 0.001			# amplitude of the perturbation
 
 
@@ -34,7 +34,7 @@ interpolation_order = 2
 cell_length = [0.01]
 sim_length  = [L]
 
-number_of_patches = [ 1 ] # n_space_x = 103
+number_of_patches = [ 16 ] # n_space_x = 103
 
 # SIMULATION TIME
 # timestep: duration of the timestep
@@ -132,19 +132,6 @@ DiagScalar(every = every, vars=['Utot','Ubal_norm','Uelm','Ukin'])
 fieldDump_every = every
 fieldsToDump = ('Ex','Ey','Ez','By_m','Bz_m');
 
-
-# PHASE-SPACE DIAGNOSTICS (older version working with TPUPMC/SmileiQt.py)
-# kind of projection: 1D) xPx xPy xPz xLor PxPy PxPz PyPz
-# kind of projection: 2D) xPx xPy xPz xLor yPx yPy yPz yLor PxPy PxPz PyPz
-#
-DiagPhase(
-	every	= every,
- 	species = ['eon1','eon2'],
- 	kind    = ['xpx'],
- 	first = [0., 0., 50],
- 	second = [-0.4, 0.4, 100],
- 	deflate=5
-)
 
 # PHASE-SPACE DIAGNOSTICS (new version from DiagParticles)
 DiagParticles(
