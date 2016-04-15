@@ -20,6 +20,19 @@ using namespace std;
 Patch2D::Patch2D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved)
   : Patch( params, smpi, ipatch, n_moved)
 {
+    initStep2(params);
+    initStep3(params, smpi, n_moved);
+} // End Patch2D::Patch2D
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Patch2D cloning constructor 
+// ---------------------------------------------------------------------------------------------------------------------
+Patch2D::Patch2D(Patch2D* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved)
+  : Patch( patch, params, smpi, ipatch, n_moved)
+{
+    initStep2(params);
+    initStep3(params, smpi, n_moved);
 } // End Patch2D::Patch2D
 
 

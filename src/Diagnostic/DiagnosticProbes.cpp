@@ -160,8 +160,7 @@ void DiagnosticProbes::initParticles(Params& params, Patch * patch)
     nPart_total = my_nPart;
     
     // Initialize the list of "fake" particles just as actual macro-particles
-    Particles my_parts;
-    my_parts.initialize(my_nPart, ndim);
+    probeParticles.initialize(my_nPart, ndim);
     
     // For each grid point, calculate its position and assign that position to the particle
     // The particle position is a linear combination of the `pos` with `pos_first` or `pos_second`, etc.
@@ -181,18 +180,17 @@ void DiagnosticProbes::initParticles(Params& params, Patch * patch)
                 dx = (allPos[iDimProbe+1][iDim]-allPos[0][iDim])/(vecNumber[iDimProbe]-1); // distance between 2 gridpoints
                 partPos += ipartND[iDimProbe] * dx;
             }
-            my_parts.position(iDim,ipart) = partPos;
+            probeParticles.position(iDim,ipart) = partPos;
         }
     }
-            
+    
     // Remove particles out of the domain
     for ( int ipb=my_nPart-1 ; ipb>=0 ; ipb--) {
-        if (!my_parts.is_part_in_domain(ipb, patch))
-            my_parts.erase_particle(ipb);
+        if (!probeParticles.is_part_in_domain(ipb, patch))
+            probeParticles.erase_particle(ipb);
     }
-    probeParticles = my_parts;
     
-    unsigned int nPart_local = my_parts.size(); // number of fake particles for this proc
+    unsigned int nPart_local = probeParticles.size(); // number of fake particles for this proc
     
     // Make the array that will contain the data
     // probesArray : 10 x nPart_tot

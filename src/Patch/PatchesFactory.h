@@ -25,34 +25,7 @@ public:
             patch = new Patch1D(params, smpi, ipatch, n_moved);
         else 
             patch = new Patch2D(params, smpi, ipatch, n_moved);
-        
-        // First, do a series of initializations
-        patch->initStep1(params);
-        patch->initStep2(params); // depends on 1D, 2D, ...
-        patch->initStep3(params, smpi, n_moved);
-        
-        // initialize vector of Species (virtual)
-        patch->vecSpecies = SpeciesFactory::createVector(params, patch);
-        
-        // initialize the electromagnetic fields (virtual)
-        patch->EMfields   = ElectroMagnFactory::create(params, patch->vecSpecies, patch);
-        
-        // interpolation operator (virtual)
-        patch->Interp     = InterpolatorFactory::create(params, patch);               // + patchId -> idx_domain_begin (now = ref smpi)
-        // projection operator (virtual)
-        patch->Proj       = ProjectorFactory::create(params, patch);                  // + patchId -> idx_domain_begin (now = ref smpi)
-        
-        // Initialize local diags
-        patch->localDiags = DiagnosticFactory::createLocalDiagnostics(params, smpi, patch);
-        patch->sio = SmileiIOFactory::create(params, patch);
-        
-        // Initialize the collisions
-        patch->vecCollisions = Collisions::create(params, patch, patch->vecSpecies);
-        
-        // Initialize the particle walls
-        patch->partWalls = new PartWalls(params, patch);
-
-        patch->createType(params);
+        patch->finishCreation(params, smpi);
         return patch;
     }
     
@@ -63,34 +36,7 @@ public:
             newPatch = new Patch1D(params, smpi, ipatch, n_moved);
         else 
             newPatch = new Patch2D(params, smpi, ipatch, n_moved);
-        
-        // First, do a series of initializations
-        newPatch->initStep1(params);
-        newPatch->initStep2(params); // depends on 1D, 2D, ...
-        newPatch->initStep3(params, smpi, n_moved);
-        
-        // clone vector of Species (virtual)
-        newPatch->vecSpecies = SpeciesFactory::cloneVector(patch->vecSpecies, params, newPatch);
-        
-        // clone the electromagnetic fields (virtual)
-        newPatch->EMfields   = ElectroMagnFactory::clone(patch->EMfields, params, newPatch->vecSpecies, newPatch);
-        
-        // interpolation operator (virtual)
-        newPatch->Interp     = InterpolatorFactory::create(params, newPatch);
-        // projection operator (virtual)
-        newPatch->Proj       = ProjectorFactory::create(params, newPatch);
-        
-        // clone local diags
-        newPatch->localDiags = DiagnosticFactory::cloneLocalDiagnostics(patch->localDiags, params, smpi, newPatch);
-        newPatch->sio = SmileiIOFactory::clone(patch->sio, params, newPatch);
-        
-        // clone the collisions
-        newPatch->vecCollisions = Collisions::clone(patch->vecCollisions, params);
-        
-        // clone the particle walls
-        newPatch->partWalls = new PartWalls(patch->partWalls, newPatch);
-        
-        newPatch->createType(params);
+        newPatch->finishCloning(patch, params, smpi);
         return newPatch;
     }
     

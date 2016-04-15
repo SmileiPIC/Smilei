@@ -20,6 +20,18 @@ using namespace std;
 Patch1D::Patch1D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved)
   : Patch( params, smpi, ipatch, n_moved)
 {
+    initStep2(params);
+    initStep3(params, smpi, n_moved);
+} // End Patch1D::Patch1D
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Patch1D cloning constructor
+// ---------------------------------------------------------------------------------------------------------------------
+Patch1D::Patch1D(Patch1D* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved)
+  : Patch( patch, params, smpi, ipatch, n_moved)
+{
+    initStep2(params);
+    initStep3(params, smpi, n_moved);
 } // End Patch1D::Patch1D
 
 
@@ -53,7 +65,7 @@ void Patch1D::initSumField( Field* field, int iDim )
     std::vector<unsigned int> n_elem = field->dims_;
     std::vector<unsigned int> isDual = field->isDual_;
     Field1D* f1D =  static_cast<Field1D*>(field);
-   
+    
     // Use a buffer per direction to exchange data before summing
     // Size buffer is 2 oversize (1 inside & 1 outside of the current subdomain)
     std::vector<unsigned int> oversize2 = oversize;

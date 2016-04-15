@@ -25,15 +25,20 @@
 
 #include "Hilbert_functions.h"
 #include "PatchesFactory.h"
+#include "SpeciesFactory.h"
 #include "Particles.h"
+#include "ElectroMagnFactory.h"
+#include "InterpolatorFactory.h"
+#include "ProjectorFactory.h"
+#include "SmileiIOFactory.h"
+#include "DiagnosticFactory.h"
 
 using namespace std;
 
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Patch constructor :
-//   - resize geometrical members
-//   - Called by PatchXD constructor which will finalize initialization
+//   Called by PatchXD constructor which will finalize initialization
 // ---------------------------------------------------------------------------------------------------------------------
 Patch::Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved)
 {
@@ -41,8 +46,22 @@ Patch::Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int 
     hindex = ipatch;
     nDim_fields_ = params.nDim_field;
     
+    initStep1(params);
+    
 } // END Patch::Patch
 
+
+
+
+// Cloning patch constructor
+Patch::Patch(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved) {
+    
+    hindex = ipatch;
+    nDim_fields_ = patch->nDim_fields_;
+    
+    initStep1(params);
+    
+}
 
 
 void Patch::initStep1(Params& params)
@@ -75,7 +94,6 @@ void Patch::initStep1(Params& params)
 
 
 void Patch::initStep3( Params& params, SmileiMPI* smpi, unsigned int n_moved ) {
-    
     // Compute MPI neighborood
     updateMPIenv(smpi);
     
@@ -96,6 +114,56 @@ void Patch::initStep3( Params& params, SmileiMPI* smpi, unsigned int n_moved ) {
 }
 
 
+void Patch::finishCreation( Params& params, SmileiMPI* smpi ) {
+    // initialize vector of Species (virtual)
+    vecSpecies = SpeciesFactory::createVector(params, this);
+    
+    // initialize the electromagnetic fields (virtual)
+    EMfields   = ElectroMagnFactory::create(params, vecSpecies, this);
+    
+    // interpolation operator (virtual)
+    Interp     = InterpolatorFactory::create(params, this); // + patchId -> idx_domain_begin (now = ref smpi)
+    // projection operator (virtual)
+    Proj       = ProjectorFactory::create(params, this);    // + patchId -> idx_domain_begin (now = ref smpi)
+    
+    // Initialize local diags
+    localDiags = DiagnosticFactory::createLocalDiagnostics(params, smpi, this);
+    sio = SmileiIOFactory::create(params, this);
+    
+    // Initialize the collisions
+    vecCollisions = Collisions::create(params, this, vecSpecies);
+    
+    // Initialize the particle walls
+    partWalls = new PartWalls(params, this);
+    
+    createType(params);
+}
+
+
+void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi ) {
+    // clone vector of Species (virtual)
+    vecSpecies = SpeciesFactory::cloneVector(patch->vecSpecies, params, this);
+    
+    // clone the electromagnetic fields (virtual)
+    EMfields   = ElectroMagnFactory::clone(patch->EMfields, params, vecSpecies, this);
+    
+    // interpolation operator (virtual)
+    Interp     = InterpolatorFactory::create(params, this);
+    // projection operator (virtual)
+    Proj       = ProjectorFactory::create(params, this);
+    
+    // clone local diags
+    localDiags = DiagnosticFactory::cloneLocalDiagnostics(patch->localDiags, params, smpi, this);
+    sio = SmileiIOFactory::clone(patch->sio, params, this);
+    
+    // clone the collisions
+    vecCollisions = Collisions::clone(patch->vecCollisions, params);
+    
+    // clone the particle walls
+    partWalls = new PartWalls(patch->partWalls, this);
+    
+    createType(params);
+}
 
 
 // ---------------------------------------------------------------------------------------------------------------------
