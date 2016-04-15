@@ -37,7 +37,9 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, Patch* patc
     else
 	H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_COLLECTIVE);
 
-     timeSelection    = new TimeSelection( PyTools::extract_py( name_every ), time_name );
+    timeSelection    = new TimeSelection( PyTools::extract_py( name_every ), time_name );
+
+    type_ = "Fields";
 }
 
 
@@ -102,6 +104,8 @@ void DiagnosticFields::closeFile()
 
 void DiagnosticFields::prepare( Patch* patch, int timestep )
 {
+    if ( !timeSelection->theTimeIsNow(timestep) ) return;
+
     ostringstream name_t;
     name_t.str("");
     name_t << "/" << setfill('0') << setw(10) << timestep;
@@ -120,6 +124,8 @@ void DiagnosticFields::run( Patch* patch, int timestep )
 
 void DiagnosticFields::write(int timestep)
 {
+    if ( !timeSelection->theTimeIsNow(timestep) ) return;
+
     // Make group name: "/0000000000", etc.
     ostringstream name_t;
     name_t.str("");
@@ -128,7 +134,6 @@ void DiagnosticFields::write(int timestep)
     // Create group inside HDF5 file
     hid_t group_id = H5Gopen(fileId_, name_t.str().c_str(), H5P_DEFAULT);
 
-    // fields ???
     for (unsigned int i=0; i<fields_.size(); i++) {
 
         if (fieldsToDump.size()==0) { // Write all fields

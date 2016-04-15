@@ -107,8 +107,8 @@ void DiagnosticFields1D::createPattern( Params& params, Patch* patch )
 void DiagnosticFields1D::updatePattern( Params& params, Patch* patch )
 {
     for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
-      H5Sclose( memspace_ [ ix_isPrim ] );
-      H5Sclose( filespace_[ ix_isPrim ] );
+        H5Sclose( memspace_ [ ix_isPrim ] );
+        H5Sclose( filespace_[ ix_isPrim ] );
     }
     createPattern( params, patch );
 }
