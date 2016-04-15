@@ -669,7 +669,6 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     int nSpecies( (*this)(0)->vecSpecies.size() );
     int newMPIrank, oldMPIrank;
     //int newMPIrankbis, oldMPIrankbis, tmp;
-    int nDim_Parts( (*this)(0)->vecSpecies[0]->particles->dimension() );
     newMPIrank = smpi->getRank() -1;
     oldMPIrank = smpi->getRank() -1;
     int istart( 0 );
