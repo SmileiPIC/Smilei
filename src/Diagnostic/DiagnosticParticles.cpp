@@ -108,10 +108,6 @@ fileId_(0)
     for (unsigned int iaxis=0 ; iaxis < axes.size() ; iaxis++)
         output_size *= axes[iaxis].nbins;
     
-    // if necessary, resize the output array
-    if (time_average>1)
-        data_sum.resize(output_size);
-    
     // Output info on diagnostics
     if ( smpi->isMaster() ) {
         ostringstream mystream("");
@@ -139,7 +135,7 @@ fileId_(0)
 } // END DiagnosticParticles::DiagnosticParticles
 
 
-// Cloning constructor
+// Cloning constructor // NOT USED
 DiagnosticParticles::DiagnosticParticles( DiagnosticParticles* diag)
 {
     
@@ -160,7 +156,6 @@ DiagnosticParticles::DiagnosticParticles( DiagnosticParticles* diag)
     }
     
     output_size = diag->output_size;
-    if (time_average>1) data_sum.resize(output_size);
     
     type_ = "Particles";
 }
@@ -169,6 +164,8 @@ DiagnosticParticles::DiagnosticParticles( DiagnosticParticles* diag)
 
 DiagnosticParticles::~DiagnosticParticles()
 {
+    delete timeSelection;
+    
 } // END DiagnosticParticles::~DiagnosticParticles
 
 
@@ -224,18 +221,29 @@ void DiagnosticParticles::closeFile()
 } // END closeFile
 
 
-void DiagnosticParticles::prepare( Patch* patch, int timestep )
+bool DiagnosticParticles::prepare( Patch* patch, int timestep )
 {
-
+    // Get the previous timestep of the time selection
+    int previousTime = timeSelection->previousTime(timestep);
+    
+    // Leave if the timestep is not the good one
+    if (timestep - previousTime >= time_average) return false;
+    
+    // Allocate memory for the output array (already done if time-averaging)
+    data_sum.resize(output_size);
+    
+    // if first time, erase output array
+    if (timestep == previousTime)
+        fill(data_sum.begin(), data_sum.end(), 0.);
+    
+    return true;
+    
 } // END prepare
 
 
 // run one particle diagnostic
 void DiagnosticParticles::run( Patch* patch, int timestep )
 {
-    // See Fred if it's ok 
-    if (time_average == 1) clean();
-
 
     std::vector<Species*>& vecSpecies = patch->vecSpecies;
 
@@ -249,20 +257,6 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
     double axismin, axismax, mass, coeff;
     string axistype;
     ostringstream mystream("");
-    
-    // Get the previous timestep of the time selection
-    int previousTime = timeSelection->previousTime(timestep);
-    
-    // Leave if the timestep is not the good one
-    if (timestep - previousTime >= time_average) return;
-    
-    // Allocate memory for the output array (already done if time-averaging)
-    if (time_average <= 1)
-        data_sum.resize(output_size);
-    
-    // if first time, erase output array
-    if (timestep == previousTime)
-        fill(data_sum.begin(), data_sum.end(), 0.);
     
     // loop species
     for (unsigned int ispec=0 ; ispec < species.size() ; ispec++) {
@@ -281,7 +275,6 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
         if (s->dynamics_type == "rrll")
             chi  = &(p->Chi);               // chi (for rad reaction particles particles)
         mass = s->mass;       // mass
-
         
         axis_array .resize(p->size()); // array to store particle axis data
         index_array.resize(p->size()); // array to store particle output index

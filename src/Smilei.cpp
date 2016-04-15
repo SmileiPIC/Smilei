@@ -288,20 +288,8 @@ int main (int argc, char* argv[])
                     vecPatches(ipatch)->EMfields->incrementAvgFields(itime);
                 }
             
-            #pragma omp single
-            {
-            //ostringstream t("");
-            //if(itime%50==0){
-            //for( int i=0; i<vecPatches(0)->EMfields->Ez_->globalDims_;i++){
-            //t<<(*(vecPatches(0)->EMfields->Ez_))(i)-(*(vecPatches(2)->EMfields->Ez_))(i) << " ";
-            //}
-            //MESSAGE(t.str());
-            //}
-            //MESSAGE(vecPatches(0)->isWestern()<<" "<<vecPatches(1)->isWestern()<<" "<<vecPatches(2)->isWestern());
-            }
             // call the various diagnostics
             // ----------------------------
-            
             #pragma omp master
             vecPatches.runAllDiags(params, smpiData, &diag_flag, itime, timer);
             #pragma omp barrier

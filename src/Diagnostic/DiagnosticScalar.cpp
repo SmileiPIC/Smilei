@@ -98,8 +98,14 @@ void DiagnosticScalar::closeFile()
 } // END closeFile
 
 
-void DiagnosticScalar::prepare( Patch* patch, int timestep )
+bool DiagnosticScalar::prepare( Patch* patch, int timestep )
 {
+    if ( timeSelection->theTimeIsNow(timestep) ) {
+        for (int iscalar=0 ; iscalar<out_value.size() ; iscalar++)
+            out_value[iscalar] = 0.;
+        return true;
+    }
+    return false;
 
 } // END prepare
 

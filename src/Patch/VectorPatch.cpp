@@ -312,20 +312,15 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
     }
     timer[6].update();
     
-    
-    // Diagnostics : compute locally
-    //    Parallel write for Probes, TrackParticles
-    // -------------------------------------------
-    timer[3].restart();
     // globalDiags : scalars + particles
-    static_cast<DiagnosticScalar*>( globalDiags[0] )->reset( itime );
+    timer[3].restart();
     for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-            globalDiags[idiag]->run( (*this)(ipatch), itime );
+        if( globalDiags[idiag]->prepare( (*this)(0), itime ) ) {
+            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+                globalDiags[idiag]->run( (*this)(ipatch), itime );
+            }
+            smpi->computeGlobalDiags( globalDiags[idiag], itime);
         }
-        // particles
-        smpi->computeGlobalDiags( globalDiags[idiag], itime);
-        
     } // END for globalDiags
     
     // move only scalars write call from SmileiMPI::computeGlobalDiags()
@@ -335,15 +330,14 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
     
     // localDiags : probes, track & fields
     for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
-        (*this)(0)->localDiags[idiag]->prepare( (*this)(0), itime );
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+        if( (*this)(0)->localDiags[idiag]->prepare( (*this)(0), itime ) ) {
+            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
                 (*this)(ipatch)->localDiags[idiag]->run( (*this)(ipatch), itime );
             }
-    }
-    for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-              (*this)(ipatch)->localDiags[idiag]->write( itime );
+            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+                (*this)(ipatch)->localDiags[idiag]->write( itime );
             }
+        }
     }
     /*
         // track, compute global number of particles + compute global Idx

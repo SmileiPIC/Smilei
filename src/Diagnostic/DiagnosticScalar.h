@@ -34,7 +34,7 @@ public :
     
     virtual void closeFile();
     
-    virtual void prepare( Patch* patch, int timestep );
+    virtual bool prepare( Patch* patch, int timestep );
     
     virtual void run( Patch* patch, int timestep );
     
@@ -42,13 +42,6 @@ public :
     
     //! get a particular scalar
     double getScalar(std::string name);
-    
-    // Reset stored values
-    void reset( int timestep ) {
-         if (  timeSelection->theTimeIsNow(timestep) &&  timeSelection->inProgress(timestep) )
-             for (int iscalar=0 ; iscalar<out_value.size() ; iscalar++)
-                 out_value[iscalar] = 0.;
-    }
     
     //! every for the standard pic timeloop output
     unsigned int print_every;

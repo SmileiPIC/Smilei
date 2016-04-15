@@ -267,23 +267,22 @@ void DiagnosticProbes::closeFile()
 }
 
 
-void DiagnosticProbes::prepare( Patch* patch, int timestep )
+bool DiagnosticProbes::prepare( Patch* patch, int timestep )
 {
+    return timeSelection->theTimeIsNow(timestep);
 }
 
 
 void DiagnosticProbes::run( Patch* patch, int timestep )
 {
     // skip if current timestep is not requested
-    if ( timeSelection->theTimeIsNow(timestep) )
-        compute( timestep, patch->EMfields );
+    compute( timestep, patch->EMfields );
 
 }
 
 
 void DiagnosticProbes::write( int timestep )
 {
-    if ( !timeSelection->theTimeIsNow(timestep) ) return;
 
     // Write in group_id
     hid_t group_id = H5Gopen(fileId_, probeName().c_str() ,H5P_DEFAULT);

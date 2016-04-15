@@ -716,8 +716,6 @@ void SmileiMPI::computeGlobalDiags(Diagnostic* diag, int timestep)
 void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
 {
     
-    if( ! scalars->timeSelection->theTimeIsNow() ) return;
-    
     int nscalars(0);
 
     vector<string>::iterator iterKey = scalars->out_key.begin();

@@ -179,11 +179,9 @@ void DiagnosticTrack::closeFile()
 }
 
 
-void DiagnosticTrack::prepare( Patch* patch, int timestep )
+bool DiagnosticTrack::prepare( Patch* patch, int timestep )
 {
-    int time = timestep;
-    
-    if( ! timeSelection->theTimeIsNow(time) ) return;
+    if( ! timeSelection->theTimeIsNow(timestep) ) return false;
     
     dims[0] ++;
     
@@ -220,20 +218,18 @@ void DiagnosticTrack::prepare( Patch* patch, int timestep )
     vector<hsize_t> locator(1, iter);
     hsize_t onetime[1] = { 1 };
     hid_t mem_space = H5Screate_simple(1, onetime, NULL);
-    append( fileId_, "Times", time, mem_space, 1, H5T_NATIVE_INT, locator );
+    append( fileId_, "Times", timestep, mem_space, 1, H5T_NATIVE_INT, locator );
     H5Sclose( mem_space );
 
 
     H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
-
+    
+    return true;
 }
 
 
 void DiagnosticTrack::run( Patch* patch, int timestep )
 {
-    int time = timestep;
-    
-    if( ! timeSelection->theTimeIsNow(time) ) return;
     
     iter ++;
     
