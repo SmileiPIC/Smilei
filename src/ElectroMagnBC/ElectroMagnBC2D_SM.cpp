@@ -38,20 +38,20 @@ ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, Patch* patch )
     dy_ov_dt = 1.0/dt_ov_dy;
     
     // BCs at the x-border
-    Bx_xvalmin_Long.resize(ny_d); // dual in the y-direction
-    Bx_xvalmax_Long.resize(ny_d);
-    By_xvalmin_Long.resize(ny_p); // primal in the y-direction
-    By_xvalmax_Long.resize(ny_p);
-    Bz_xvalmin_Long.resize(ny_d); // dual in the y-direction
-    Bz_xvalmax_Long.resize(ny_d);
+    Bx_xvalmin_Long.resize(ny_d,0.); // dual in the y-direction
+    Bx_xvalmax_Long.resize(ny_d,0.);
+    By_xvalmin_Long.resize(ny_p,0.); // primal in the y-direction
+    By_xvalmax_Long.resize(ny_p,0.);
+    Bz_xvalmin_Long.resize(ny_d,0.); // dual in the y-direction
+    Bz_xvalmax_Long.resize(ny_d,0.);
     
     // BCs in the y-border
-    Bx_yvalmin_Trans.resize(nx_p); // primal in the x-direction
-    Bx_yvalmax_Trans.resize(nx_p);
-    By_yvalmin_Trans.resize(nx_d); // dual in the x-direction
-    By_yvalmax_Trans.resize(nx_d);
-    Bz_yvalmin_Trans.resize(nx_d); // dual in the x-direction
-    Bz_yvalmax_Trans.resize(nx_d);
+    Bx_yvalmin_Trans.resize(nx_p,0.); // primal in the x-direction
+    Bx_yvalmax_Trans.resize(nx_p,0.);
+    By_yvalmin_Trans.resize(nx_d,0.); // dual in the x-direction
+    By_yvalmax_Trans.resize(nx_d,0.);
+    Bz_yvalmin_Trans.resize(nx_d,0.); // dual in the x-direction
+    Bz_yvalmax_Trans.resize(nx_d,0.);
     
     
     // -----------------------------------------------------

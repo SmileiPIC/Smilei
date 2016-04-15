@@ -327,7 +327,8 @@ void DiagnosticProbes::write( int timestep )
 
     //H5::matrix_MPI(dset_id, name_t.str(), probesArray->data_2D[0][0], nPart_total, nFields, probesStart, nPart_local);
     H5Pclose(plist_id);
-    H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &(probesArray->data_2D[0][0]) );
+    if (probeParticles.size())
+        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &(probesArray->data_2D[0][0]) );
     H5Dclose(dset_id);
     H5Gclose(did);
     H5Pclose( write_plist );
@@ -463,7 +464,8 @@ void DiagnosticProbes::writePositions( int ndim_Particles, int probeDim, hid_t g
 
 
     H5Pclose(plist_id);
-    H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &(posArray->data_2D[0][0]) );
+    if (probeParticles.size())
+        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &(posArray->data_2D[0][0]) );
     H5Dclose(dset_id);
     H5Pclose( write_plist );
 
