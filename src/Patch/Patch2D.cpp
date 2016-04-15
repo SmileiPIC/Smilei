@@ -22,6 +22,7 @@ Patch2D::Patch2D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned 
 {
     initStep2(params);
     initStep3(params, smpi, n_moved);
+    finishCreation(params, smpi);
 } // End Patch2D::Patch2D
 
 
@@ -33,6 +34,7 @@ Patch2D::Patch2D(Patch2D* patch, Params& params, SmileiMPI* smpi, unsigned int i
 {
     initStep2(params);
     initStep3(params, smpi, n_moved);
+    finishCloning(patch, params, smpi);
 } // End Patch2D::Patch2D
 
 

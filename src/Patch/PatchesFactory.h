@@ -6,12 +6,6 @@
 #include "Patch2D.h"
 
 #include "DiagsVectorPatch.h"
-#include "SpeciesFactory.h"
-#include "ElectroMagnFactory.h"
-#include "InterpolatorFactory.h"
-#include "ProjectorFactory.h"
-#include "SmileiIOFactory.h"
-#include "DiagnosticFactory.h"
 
 #include "Tools.h"
 
@@ -25,7 +19,6 @@ public:
             patch = new Patch1D(params, smpi, ipatch, n_moved);
         else 
             patch = new Patch2D(params, smpi, ipatch, n_moved);
-        patch->finishCreation(params, smpi);
         return patch;
     }
     
@@ -36,7 +29,6 @@ public:
             newPatch = new Patch1D(params, smpi, ipatch, n_moved);
         else 
             newPatch = new Patch2D(params, smpi, ipatch, n_moved);
-        newPatch->finishCloning(patch, params, smpi);
         return newPatch;
     }
     
