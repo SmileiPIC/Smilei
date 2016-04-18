@@ -155,6 +155,11 @@ hr {
 	margin-top:1em;
 	border-color: #0672ba;
 }
+.toctree-smilei hr {
+	margin: 0.2em 0;
+	background: #0672ba !important;
+	width:60% !important;
+}
 
 /* --------------------------------------------------------------------*/
 /* Color for titles */

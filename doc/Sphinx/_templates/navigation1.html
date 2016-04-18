@@ -16,12 +16,17 @@
     {% set el = element.split("%") %}
     {% set url = el[0] | trim | safe %}
     {% set entry = el[1] | trim | safe %}
+    {% if entry in ["Units", "Install", "Material"] %}
+    <hr />
+    {% endif %}
     {% if entry == title %}
         {{ toc }}
     {% else %}
-    <ul><li>
+      <ul>
+      <li>
         <a href="{{ url }}">{{ entry }}</a>
-    </li></ul>
+      </li>
+      </ul>
     {% endif %}
 {% endfor %}
 </div>

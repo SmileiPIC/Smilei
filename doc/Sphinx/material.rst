@@ -1,4 +1,4 @@
-More material
+Material
 -------------
 
 Publications
@@ -21,15 +21,6 @@ Publications
 
 Conferences & Seminars
 ^^^^^^^^^^^^^^^^^^^^^^
-
-.. rst-class:: inprogress
-  
-  In progress ...
-
------
-
-Research highlights
-^^^^^^^^^^^^^^^^^^^
 
 .. rst-class:: inprogress
   

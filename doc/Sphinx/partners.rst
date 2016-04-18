@@ -119,7 +119,6 @@ Financial support from the *Laboratoires d'Excellence*:
 .. rst-class:: noborder
 
 +------------+-----------------------------------------------------------------------------+
-| |palm|     | |                                                                           |
-|            | | `PALM <http://www.labex-palm.fr>`_, through the **SimPLE** project.       |
+| |palm|     | | Smilei was initiated thanks to the SimPLE junior chair                    |
+|            | | granted by the labex `PALM <http://www.labex-palm.fr>`_.                  |
 +------------+-----------------------------------------------------------------------------+
-

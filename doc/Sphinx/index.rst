@@ -14,7 +14,7 @@ to support the development of the `Apollon laser <http://cilexsaclay.fr>`_.
 
 .. raw:: html
   
-  <a href="introduction.html#current-release-2-0" class="icon">
+  <a href="releases.html#current-release-2-0" class="icon">
 
 .. image:: _static/download.svg
 
@@ -56,6 +56,16 @@ to support the development of the `Apollon laser <http://cilexsaclay.fr>`_.
   Material</a>
 
 
+Overview
+========
+
+.. toctree::
+   :maxdepth: 1
+   
+   licence
+   synopsis
+   highlights
+   releases
 
 
 Understand :program:`Smilei` 
@@ -64,8 +74,6 @@ Understand :program:`Smilei`
 .. toctree::
    :maxdepth: 1
    
-   licence
-   introduction
    units
    algorithms
    parallelization
