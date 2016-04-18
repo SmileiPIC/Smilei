@@ -31,6 +31,11 @@ ElectroMagnBC1D_SM::ElectroMagnBC1D_SM( Params &params, Patch* patch )
     Beta_SM  = (dt_ov_dx-1.)/(1.+dt_ov_dx);
     Gamma_SM = 4./(1.+dt_ov_dx);
     
+    
+    Bz_xvalmin = 0.;
+    Bz_xvalmax = 0.;
+    By_xvalmin = 0.;
+    By_xvalmax = 0.;
 }
 
 ElectroMagnBC1D_SM::~ElectroMagnBC1D_SM()

@@ -28,11 +28,11 @@ class Species;
 //! Class SmileiIO
 //  --------------------------------------------------------------------------------------------------------------------
 class SmileiIO {
+    friend class SmileiIOFactory;
 public:
-    //! Create // HDF5 environment
-    //! @see global_file_id_ 
-    //! @see global_file_id_avg
+    //! constructor
     SmileiIO( Params& params, Patch* patch );
+    
     void createFiles( Params& params, Patch* patch );
     void setFiles( hid_t masterFileId, hid_t masterFileIdAvg );
     //! Destructor for SmileiIO

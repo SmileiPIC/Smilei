@@ -29,6 +29,8 @@ public :
 
     VectorPatch();
     ~VectorPatch();
+    
+    void close(SmileiMPI*);
 
     //! VectorPatch = 
     //! - std::vector<Patch*>
@@ -41,22 +43,19 @@ public :
 
     //! Some vector operations extended to VectorPatch
     inline void resize(int npatches) {
-	patches_.resize(npatches);
+        patches_.resize(npatches);
     }
     inline int  size() const {
-	return patches_.size();
-    }
-    inline void clear() {
-	patches_.clear();
+        return patches_.size();
     }
     inline Patch* operator()(int ipatch) {
-	return patches_[ipatch];
+        return patches_[ipatch];
     }
 
     //! Set Id of the 1st patch stored on the current MPI process
     //!   used during balancing 
     inline void set_refHindex() {
-	refHindex_ = patches_[0]->Hindex();
+        refHindex_ = patches_[0]->Hindex();
     }
     //! Resize vector of field*
     void update_field_list();
@@ -66,22 +65,22 @@ public :
 
     //! get a particular scalar
     inline double getScalar(std::string name) {
-	DiagnosticScalar* diag = static_cast<DiagnosticScalar*>( globalDiags[0] );
-	return diag->getScalar( name );
+        DiagnosticScalar* diag = static_cast<DiagnosticScalar*>( globalDiags[0] );
+        return diag->getScalar( name );
     }
 
     bool fieldTimeIsNow( int timestep ) {
-	return patches_[0]->sio->field_timeSelection->theTimeIsNow( timestep);
-	//return patches_[0]->localDiags[0]->theTimeIsNow(itime);
+        return patches_[0]->sio->field_timeSelection->theTimeIsNow( timestep);
+        //return patches_[0]->localDiags[0]->theTimeIsNow(itime);
     }
 
     bool avgFieldTimeIsNow( int timestep ) {
-	return patches_[0]->sio->avgfield_timeSelection->theTimeIsNow( timestep);
-	//return patches_[0]->localDiags[0]->theTimeIsNow(itime);
+        return patches_[0]->sio->avgfield_timeSelection->theTimeIsNow( timestep);
+        //return patches_[0]->localDiags[0]->theTimeIsNow(itime);
     }
 
     bool printScalars( int timestep ) {
-	return (timestep % static_cast<DiagnosticScalar*>(globalDiags[0])->print_every == 0);
+        return (timestep % static_cast<DiagnosticScalar*>(globalDiags[0])->print_every == 0);
     }
 
 
@@ -91,14 +90,14 @@ public :
 
     //! For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
     void dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow, int* diag_flag, double time_dual,
-		  std::vector<Timer>& timer);
+                  std::vector<Timer>& timer);
 
     //! For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
     void sumDensities( int* diag_flag, std::vector<Timer>& timer );
 
     //! For all patch, update E and B (Ampere, Faraday, boundary conditions, exchange B and center B)
     void solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual,
-		      std::vector<Timer>& timer);
+                      std::vector<Timer>& timer);
 
     //! For all patch, Compute and Write all diags (Scalars, Probes, Phases, TrackParticles, Fields, Average fields)
     void runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, int itime, std::vector<Timer>& timer);
@@ -153,23 +152,23 @@ public :
     //!   - patches_ should not be access outsied of VectorPatch
     //!   - for now in SimWindow 
     inline Species* species(int ipatch, int ispec) {
-	return (*this)(ipatch)->vecSpecies[ispec];
+        return (*this)(ipatch)->vecSpecies[ispec];
     }
     
     inline ElectroMagn* emfields(int ipatch) {
-	return (*this)(ipatch)->EMfields;
+        return (*this)(ipatch)->EMfields;
     }
 
     inline Interpolator* interp(int ipatch){
-	return (*this)(ipatch)->Interp;
+        return (*this)(ipatch)->Interp;
     }
 
     inline Projector* proj(int ipatch){
-	return (*this)(ipatch)->Proj;
+        return (*this)(ipatch)->Proj;
     }
 
-    inline std::vector<PartWall*> partwalls(int ipatch){
-	return (*this)(ipatch)->vecPartWall;
+    inline PartWalls* partwalls(int ipatch){
+        return (*this)(ipatch)->partWalls;
     }
 
     //  Internal balancing members

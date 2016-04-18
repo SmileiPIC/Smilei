@@ -30,10 +30,20 @@ class Patch
 public:
     //! Constructor for Patch
     Patch(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
+    //! Cloning Constructor for Patch
+    Patch(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
 
-    //! Define MPI neighbors, compute boundaries regarding patch coordinates, create main members
-    void finalizePatchInit( Params& params, SmileiMPI* smpi, unsigned int n_moved );
-
+    //! First initialization step for patches
+    void initStep1(Params& params);
+    //! Second initialization step for patches
+    virtual void initStep2(Params& params) = 0;
+    //! Third initialization step for patches
+    void initStep3(Params& params, SmileiMPI* smpi, unsigned int n_moved);
+    //! Last creation step
+    void finishCreation( Params& params, SmileiMPI* smpi );
+    //! Last cloning step
+    void finishCloning( Patch* patch, Params& params, SmileiMPI* smpi );
+    
     //! Destructor for Patch
     ~Patch();
 
@@ -46,7 +56,7 @@ public:
     ElectroMagn* EMfields;
 
     //! Optional internal boundary condifion on Particles
-    std::vector<PartWall*> vecPartWall;
+    PartWalls * partWalls;
     //! Optional binary collisions operators
     std::vector<Collisions*> vecCollisions;
 
@@ -130,13 +140,9 @@ public:
 
     //! Return MPI rank of this->hrank +/- 1
     //! Should be replaced by an analytic formula
-    inline int getMPIRank(int hrank_pm1) {
-	if  (hrank_pm1 == neighbor_[0][0]) return MPI_neighbor_[0][0];
-	else if  (hrank_pm1 == neighbor_[0][1]) return MPI_neighbor_[0][1];
-	else if  (hrank_pm1 == neighbor_[1][0]) return MPI_neighbor_[1][0];
-	else if  (hrank_pm1 == neighbor_[1][1]) return MPI_neighbor_[1][1];
-	else
-	    return MPI_PROC_NULL;
+    virtual int getMPIRank(int hrank_pm1) {
+        ERROR("Should not happen");
+        return 0;
     }
 
     //! Compute MPI rank of neigbors patch regarding neigbors patch Ids
@@ -223,7 +229,9 @@ protected:
     //! cell_starting_global_index : index of 1st cell of local sub-subdomain in the global domain.
     //!     - concerns ghost data
     //!     - "- oversize" on rank 0
-    std::vector<int> cell_starting_global_index;;
+    std::vector<int> cell_starting_global_index;
+
+    std::vector<unsigned int> oversize;
 
 };
 

@@ -21,7 +21,7 @@ class Pusher;
 class Interpolator;
 class Projector;
 class PartBoundCond;
-class PartWall;
+class PartWalls;
 class Field3D;
 class Patch;
 class SimWindow;
@@ -35,10 +35,12 @@ public:
 
     //! Species creator
     Species(Params&, Patch*);
-
+    
     void initCluster(Params&);
-    void initSpecies(Params&);
-
+    
+    //! Initialize operators (must be separate from parameters init, because of cloning)
+    void initOperators(Params&, Patch*);
+    
     //! Species destructor
     virtual ~Species();
     
@@ -133,7 +135,7 @@ public:
     //! Method calculating the Particle dynamics (interpolation, pusher, projection)
     virtual void dynamics(double time, unsigned int ispec, ElectroMagn* EMfields, Interpolator* interp,
                           Projector* proj, Params &params, int diag_flag,
-			  std::vector<PartWall*> vecPartWall, Patch* patch, SmileiMPI* smpi);
+                          PartWalls* partWalls, Patch* patch, SmileiMPI* smpi);
 
     //! Method used to initialize the Particle position in a given cell
     void initPosition(unsigned int, unsigned int, double *);
@@ -235,7 +237,7 @@ public:
     }
     
     //! Method to create new particles.
-    int  createParticles(std::vector<unsigned int> n_space_to_create, std::vector<double> cell_index, int new_bin_idx);
+    int  createParticles(std::vector<unsigned int> n_space_to_create, Params& params, Patch * patch, int new_bin_idx);
     
     //! 2 times pi
     double PI2;

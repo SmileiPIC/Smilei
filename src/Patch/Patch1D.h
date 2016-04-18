@@ -13,7 +13,11 @@ class Patch1D : public Patch
 public:
     //! Constructor for Patch
     Patch1D(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
-
+    //! Cloning Constructor for Patch
+    Patch1D(Patch1D* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved);
+    
+    void initStep2(Params& params) override;
+    
     //! Destructor for Patch
     virtual ~Patch1D() {};
 

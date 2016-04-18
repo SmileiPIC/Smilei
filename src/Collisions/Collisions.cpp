@@ -81,6 +81,29 @@ filename("")
     }
 }
 
+
+// Cloning Constructor
+Collisions::Collisions( Collisions* coll, int nDim )
+{
+
+    n_collisions     = coll->n_collisions    ;
+    species_group1   = coll->species_group1  ;
+    species_group2   = coll->species_group2  ;
+    coulomb_log      = coll->coulomb_log     ;
+    intra_collisions = coll->intra_collisions;
+    debug_every      = coll->debug_every     ;
+    atomic_number    = coll->atomic_number   ;
+    filename         = coll->filename        ;
+    
+    Ionization = atomic_number>0 ? new CollisionalIonization(coll->Ionization) : new CollisionalNoIonization();
+    
+    if( debug_every>0 ) {
+        file_access = H5Pcreate(H5P_FILE_ACCESS);
+        H5Pset_fapl_mpio(file_access, MPI_COMM_WORLD, MPI_INFO_NULL);
+    }
+}
+
+
 Collisions::~Collisions()
 {
     if( debug_every>0 ) H5Pclose(file_access);
@@ -212,6 +235,18 @@ vector<Collisions*> Collisions::create(Params& params, Patch* patch, vector<Spec
     Collisions::debye_length_required = debye_length_required;
     
     return vecCollisions;
+}
+
+
+// Clone a vector of Collisions objects
+vector<Collisions*> Collisions::clone(vector<Collisions*> vecCollisions, Params& params)
+{
+    vector<Collisions*> newVecCollisions(0);
+    
+    for( int i=0; i<vecCollisions.size(); i++)
+        newVecCollisions.push_back( new Collisions( vecCollisions[i], params.nDim_particle ) );
+    
+    return newVecCollisions;
 }
 
 

@@ -16,6 +16,7 @@ class ElectroMagnBC {
 public:
     ElectroMagnBC( Params &params, Patch* patch );
     virtual ~ElectroMagnBC();
+    void clean();
 
     virtual void apply_xmin(ElectroMagn* EMfields, double time_dual, Patch* patch) = 0;
     virtual void apply_xmax(ElectroMagn* EMfields, double time_dual, Patch* patch) = 0;

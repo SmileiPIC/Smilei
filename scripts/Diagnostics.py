@@ -1762,7 +1762,7 @@ class Probe(Diagnostic):
 	# Method to get info on a given probe
 	def _getInfo(self, probeNumber):
 		try:
-			file = self._file
+			file = self._results_path+"/Probes"+str(probeNumber)+".h5"
 			f = self._h5py.File(file, 'r')
 		except:
 			print "Cannot open file "+file
@@ -1770,7 +1770,7 @@ class Probe(Diagnostic):
 		probe = None
 		for key in f.iterkeys():
 			if key[0] != "p": continue
-			if int(key.strip("p"))==probeNumber:
+			if int(key.strip("p"))==int(probeNumber):
 				probe = f[key]
 				break
 		if probe is None:
@@ -1791,17 +1791,10 @@ class Probe(Diagnostic):
 	
 	# get all available fields, sorted by name length
 	def getProbes(self):
-		try:
-			file = self._file
-			f = self._h5py.File(file, 'r')
-		except:
-			print "Cannot open file "+file
-			return []
-		try:
-			probes = [int(key.strip("p")) for key in f.iterkeys()] # list of probes
-		except:
-			probes = []
-		f.close()
+		files = self._glob(self._results_path+"/Probes*.h5")
+		probes = []
+		for file in files:
+			probes.append( self._re.findall(r"Probes([0-9]+)[.]h5$",file)[0] )
 		return probes
 	
 	# get all available timesteps

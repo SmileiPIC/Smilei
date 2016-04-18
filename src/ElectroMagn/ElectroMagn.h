@@ -50,9 +50,13 @@ class ElectroMagn
 public:
     //! Constructor for Electromagn
     ElectroMagn( Params &params, std::vector<Species*>& vecSpecies, Patch* patch );
+    //! Extra initialization. Used in ElectroMagnFactory
+    void finishInitialization(int nspecies, Patch* patch);
     
     //! Destructor for Electromagn
     virtual ~ElectroMagn();
+    
+    void clean();
         
     std::vector<unsigned int> dimPrim;
     std::vector<unsigned int> dimDual;
@@ -242,7 +246,7 @@ public:
 
     //! Compute local square norm of charge denisty is not null
     inline double computeRhoNorm2() {
-	return rho_->norm2(istart, bufsize);
+        return rho_->norm2(istart, bufsize);
     }
     
     //! external fields parameters the key string is the name of the field and the value is a vector of ExtField
@@ -259,6 +263,9 @@ public:
     
     //! Method used to impose external currents (aka antennas)
     void applyAntennas(SmileiMPI*, double time);
+    
+    //! Method that fills the initial spatial profile of the antenna
+    virtual void initAntennas(Patch* patch) {};
 
     double computeNRJ();
     double getLostNrjMW() const {return nrj_mw_lost;}
@@ -274,34 +281,33 @@ public:
 
     inline int getMemFootPrint() {
 
-	// Size of temporary arrays in Species::createParticles
-	/*
-	int N1(1), N2(1);
-	if (nDim_field>1) {
-	    N1 = dimPrim[1];
-	    if (nDim_field>2) N2 = dimPrim[2];
-	}
-	int tmpArrayInit = (dimPrim[0]*N1*N2)*sizeof(double) //
-	    + dimPrim[0]*sizeof(double**)
-	    + dimPrim[0] * N1 * sizeof(double*);
-	tmpArrayInit *= 9;
-	std::cout << tmpArrayInit  << std::endl;
-	*/
+        // Size of temporary arrays in Species::createParticles
+        /*
+        int N1(1), N2(1);
+        if (nDim_field>1) {
+            N1 = dimPrim[1];
+            if (nDim_field>2) N2 = dimPrim[2];
+        }
+        int tmpArrayInit = (dimPrim[0]*N1*N2)*sizeof(double) //
+            + dimPrim[0]*sizeof(double**)
+            + dimPrim[0] * N1 * sizeof(double*);
+        tmpArrayInit *= 9;
+        std::cout << tmpArrayInit  << std::endl;
+        */
 
-	int emSize = 9+4; // 3 x (E, B, Bm) + 3 x J, rho
-	if (true) // For now, no test to compute or not per species
-	    emSize += n_species * 4; // 3 x J, rho
-	if (true) // For now, no test to compute or not average
-	    emSize += 6; // 3 x (E, B)
+        int emSize = 9+4; // 3 x (E, B, Bm) + 3 x J, rho
+        if (true) // For now, no test to compute or not per species
+            emSize += n_species * 4; // 3 x J, rho
+        if (true) // For now, no test to compute or not average
+            emSize += 6; // 3 x (E, B)
 
-	for (size_t i=0 ; i<nDim_field ; i++)
-	    emSize *= dimPrim[i];
+        for (size_t i=0 ; i<nDim_field ; i++)
+            emSize *= dimPrim[i];
 
-	emSize *= sizeof(double);
-	return emSize;
+        emSize *= sizeof(double);
+        return emSize;
     }
 
-protected:
     //! Vector of boundary-condition per side for the fields
     std::vector<ElectroMagnBC*> emBoundCond;
 

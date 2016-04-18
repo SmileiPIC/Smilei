@@ -86,6 +86,8 @@ public:
     //! Method used to impose external fields
     void applyExternalField(Field*, Profile*, Patch*);
     
+    void initAntennas(Patch* patch);
+    
 private:
     //! from patch is west
     const bool isWestern;

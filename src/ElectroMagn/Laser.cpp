@@ -142,19 +142,27 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
 }
 
 
+// Cloning constructor
+Laser::Laser(Laser* laser)
+{
+    boxSide  = laser->boxSide;
+    profiles = laser->profiles;
+}
+
+
 Laser::~Laser()
 {
-    
+}
+
+void Laser::clean()
+{
     delete profiles[0];
     delete profiles[1];
-    
 }
 
 void Laser::disable()
 {
     
-    delete profiles[0];
-    delete profiles[1];
     profiles[0] = new LaserProfileNULL();
     profiles[1] = new LaserProfileNULL();
     
@@ -217,4 +225,5 @@ double LaserProfileSeparable::getAmplitude(std::vector<double> pos, double t, in
     return timeProfile->valueAt(t-t0) * (*space_envelope)(j)
            * sin( omega_*t - (*phase)(j) );
 }
+
 

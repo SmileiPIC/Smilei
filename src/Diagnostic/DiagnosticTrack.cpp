@@ -11,7 +11,7 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch,
 Diagnostic(params,smpi,patch,diagId),
 nDim_particle(params.nDim_particle)
 {
-    probeId_ = diagId;
+    probeId_ = diagId; // Warning, not the index of the DiagTrack, but of all local diags
     
     // define speciesId_
     speciesId_ = 0;
@@ -24,14 +24,12 @@ nDim_particle(params.nDim_particle)
     }
     
     // Go to next track species
-    int nTrackable(0); 
-    for (int ispec = 0 ; ispec < patch->vecSpecies.size() ; ispec++ ) {
-        if ( patch->vecSpecies[ispec]->particles->tracked ) {
-            nTrackable++;
-        }
-        if ( nTrackable > nTrack )
-            speciesId_ = ispec;
+    int nTrackable(0), ispec; 
+    for (ispec = 0 ; ispec < patch->vecSpecies.size() ; ispec++ ) {
+        if ( patch->vecSpecies[ispec]->particles->tracked ) nTrackable++;
+        if ( nTrackable > nTrack ) break;
     }
+    speciesId_ = ispec;
     species = patch->vecSpecies[speciesId_];
     
     string nameSpec="Ntot_"+ patch->vecSpecies[speciesId_]->species_type;
@@ -46,6 +44,19 @@ nDim_particle(params.nDim_particle)
     
     type_ = "Track";
 
+}
+
+
+// cloning constructor
+DiagnosticTrack::DiagnosticTrack(DiagnosticTrack* track)
+{
+    nDim_particle = track->nDim_particle;
+    speciesId_    = track->speciesId_;
+    species       = track->species;
+    transfer      = track->transfer;
+    iter          = track->iter;
+    timeSelection = new TimeSelection(track->timeSelection);
+    type_ = "Track";
 }
 
 
@@ -123,9 +134,17 @@ void DiagnosticTrack::openFile( Params& params, SmileiMPI* smpi, VectorPatch& ve
         H5Sclose(file_space);
         
         // Create the dataset for the time array
+        hsize_t ntimes[1] = { 0 };
+        hsize_t maxtimes[1] = { H5S_UNLIMITED };
+        file_space = H5Screate_simple(1, ntimes, maxtimes);
+
+        // Create the overall dataset in the HDF5 file with a new chunk every timestep
         plist = H5Pcreate(H5P_DATASET_CREATE);
-        hsize_t ntimes[1] = { dims[0] };
-        file_space = H5Screate_simple(1, ntimes, NULL);
+        H5Pset_layout(plist, H5D_CHUNKED);
+        H5Pset_alloc_time(plist, H5D_ALLOC_TIME_EARLY); // necessary for collective dump
+        hsize_t tchunk_dims[1] = {1};
+        H5Pset_chunk(plist, 1, tchunk_dims);
+
         did = H5Dcreate(fileId_, "Times", H5T_NATIVE_INT, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
         H5Dclose(did);
         H5Pclose(plist);
@@ -160,11 +179,9 @@ void DiagnosticTrack::closeFile()
 }
 
 
-void DiagnosticTrack::prepare( Patch* patch, int timestep )
+bool DiagnosticTrack::prepare( Patch* patch, int timestep )
 {
-    int time = timestep;
-    
-    if( ! timeSelection->theTimeIsNow(time) ) return;
+    if( ! timeSelection->theTimeIsNow(timestep) ) return false;
     
     dims[0] ++;
     
@@ -191,16 +208,28 @@ void DiagnosticTrack::prepare( Patch* patch, int timestep )
         H5Dset_extent(did, dims);
         H5Dclose(did);
     }
-    H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
+    
+    hsize_t tdims[1] = { dims[0] };
+    hid_t did = H5Dopen( fileId_, "Times", H5P_DEFAULT );
+    H5Dset_extent(did, tdims);
+    H5Dclose(did);
 
+    // Write the current timestep
+    vector<hsize_t> locator(1, iter);
+    hsize_t onetime[1] = { 1 };
+    hid_t mem_space = H5Screate_simple(1, onetime, NULL);
+    append( fileId_, "Times", timestep, mem_space, 1, H5T_NATIVE_INT, locator );
+    H5Sclose( mem_space );
+
+
+    H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
+    
+    return true;
 }
 
 
 void DiagnosticTrack::run( Patch* patch, int timestep )
 {
-    int time = timestep;
-    
-    if( ! timeSelection->theTimeIsNow(time) ) return;
     
     iter ++;
     
@@ -241,12 +270,7 @@ void DiagnosticTrack::run( Patch* patch, int timestep )
     
     H5Sclose( mem_space );
     
-    // Write the current timestep
-    locator.resize(1, iter-1);
-    hsize_t onetime[1] = { 1 };
-    mem_space = H5Screate_simple(1, onetime, NULL);
-    //append( fileId_, "Times", time, mem_space, 1, H5T_NATIVE_INT, locator );
-    
+
     //MPI_Barrier(MPI_COMM_WORLD); // synchro to manage differently
     H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
 

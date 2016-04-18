@@ -35,8 +35,11 @@ class DiagnosticParticles : public Diagnostic {
 
 public :
     
+    //! Default constructor
     DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
-    DiagnosticParticles() {};
+    //! Cloning constructor
+    DiagnosticParticles( DiagnosticParticles* );
+    //! Default destructor
     ~DiagnosticParticles();
     
     virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile );
@@ -44,7 +47,7 @@ public :
     
     virtual void closeFile();
     
-    virtual void prepare( Patch* patch, int timestep );
+    virtual bool prepare( Patch* patch, int timestep );
     
     virtual void run( Patch* patch, int timestep );
     

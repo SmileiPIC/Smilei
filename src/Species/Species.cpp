@@ -58,90 +58,16 @@ min_loc_vec(patch->getDomainLocalMin()),
 partBoundCond(NULL),
 min_loc(patch->getDomainLocalMin(0)) 
 {
-	
-    initSpecies(params);
-    initCluster(params);
-
-    if (!params.restart) {
-        
-        // Create particles in a space starting at cell_index
-        vector<double> cell_index(3,0);
-        for (unsigned int i=0 ; i<params.nDim_field ; i++) {
-            if (cell_length[i]!=0)
-                cell_index[i] = patch->getDomainLocalMin(i);
-        }
-        
-        // does a loop over all cells in the simulation
-        // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
-	//cout << "Patch start idx = " << cell_index[0] << "\t" << cell_index[1] << endl;
-	
-	// Now in Factory ....
-        //unsigned int npart_effective=0;
-        //int starting_bin_idx = 0;
-        //createParticles(params.n_space, cell_index, starting_bin_idx, params );
-        
-        //PMESSAGE( 1, smpi->getRank(),"Species "<< speciesNumber <<" # part "<< npart_effective );
-    }
-	
-	
-    // define limits for BC and functions applied and for domain decomposition
-
-    // Now in factory
-    //partBoundCond = new PartBoundCond( params, ispec, patch);
-
-
-
-}//END Species creator
-
-
-void Species::initSpecies(Params& params)
-{
-    /* 
-    // Now in Factory ....
-    (*particles).species_number = speciesNumber;
+    DEBUG(species_type);
     
-    densityProfileType = species_param.density_type;
-    chargeProfile         = new Profile(species_param.charge_profile, params.nDim_particle);
-    densityProfile        = new Profile(species_param.dens_profile  , params.nDim_particle);
-    
-    velocityProfile[0]    = new Profile(species_param.mvel_x_profile, params.nDim_particle);
-    velocityProfile[1]    = new Profile(species_param.mvel_y_profile, params.nDim_particle);
-    velocityProfile[2]    = new Profile(species_param.mvel_z_profile, params.nDim_particle);
-    
-    temperatureProfile[0] = new Profile(species_param.temp_x_profile, params.nDim_particle);
-    temperatureProfile[1] = new Profile(species_param.temp_y_profile, params.nDim_particle);
-    temperatureProfile[2] = new Profile(species_param.temp_z_profile, params.nDim_particle);
-    
-    // ppc means "particles per cell"
-    ppcProfile            = new Profile(species_param.ppc_profile   , params.nDim_particle);
-    */
-    
-    // -------------------
-    // Variable definition
-    // -------------------
     PI2 = 2.0 * M_PI;
     
     dx_inv_ = 1./cell_length[0];
     dy_inv_ = 1./cell_length[1];
     
-    DEBUG(species_type);
-    
-    electron_species = NULL;
-    
-    // atomic number
+    initCluster(params);
 
-    // assign the correct Pusher to Push
-    // Now in Factory ....
-   
-    //Push = PusherFactory::create( params, speciesNumber );
-
-    // assign the Ionization model (if needed) to Ionize
-    // Now in Factory ....
-    //MESSAGE( "Set max_charge to 0, Ionize no more defined ???" );
-    //Ionize = IonizationFactory::create( params, speciesNumber, 0 );
-    //if (Ionize) DEBUG("Species " << speciesNumber << " can be ionized!");
-
-}
+}//END Species creator
 
 void Species::initCluster(Params& params)
 {
@@ -208,6 +134,30 @@ void Species::initCluster(Params& params)
    
 }//END initCluster
 
+
+// Initialize the operators (Push, Ionize, PartBoundCond)
+// This must be separate from the parameters because the Species cloning copies
+// the parameters but not the operators.
+void Species::initOperators(Params& params, Patch* patch)
+{
+    // assign the correct Pusher to Push
+    Push = PusherFactory::create(params, this);
+    
+    // Assign the Ionization model (if needed) to Ionize
+    //  Needs to be placed after createParticles() because requires the knowledge of max_charge
+    // \todo pay attention to restart
+    Ionize = IonizationFactory::create(params, this);
+    if (Ionize) {
+        DEBUG("Species " << species_type << " can be ionized!");
+    }
+    
+    if (Ionize && species_type=="electron") {
+        ERROR("Species " << species_type << " can be ionized but species_type='electron'");
+    }
+    
+    // define limits for BC and functions applied and for domain decomposition
+    partBoundCond = new PartBoundCond(params, this, patch);
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Destructor for Species
@@ -357,14 +307,14 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
             }
         }//p
 
-	// center the distribution function around pMean
+        // center the distribution function around pMean
         for (unsigned int p= iPart; p<iPart+nPart; p++)
-	    {
-		for (unsigned int i=0; i<3 ; i++) {
-		    (*particles).momentum(i,p) -= pMean[i]/nPart;
-		}
-	    }
-	
+            {
+                for (unsigned int i=0; i<3 ; i++) {
+                    (*particles).momentum(i,p) -= pMean[i]/nPart;
+                }
+            }
+        
         for (unsigned int p= iPart; p<iPart+nPart; p++) {
             (*particles).momentum(1,p) *= sqrt(temp[1]/temp[0]);
             (*particles).momentum(2,p) *= sqrt(temp[2]/temp[0]);
@@ -430,7 +380,7 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
 //   - increment the currents (projection)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfields, Interpolator* Interp,
-                       Projector* Proj, Params &params, int diag_flag, vector<PartWall*> vecPartWall, Patch* patch, SmileiMPI* smpi)
+                       Projector* Proj, Params &params, int diag_flag, PartWalls* partWalls, Patch* patch, SmileiMPI* smpi)
 {
     int ithread;
     #ifdef _OPENMP
@@ -450,7 +400,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
     int tid(0);
     double ener_iPart(0.);
     std::vector<double> nrj_lost_per_thd(1, 0.);
-    	
+            
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
@@ -468,10 +418,10 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             (*Interp)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread );
 
             //Ionization
-            if (Ionize){				
+            if (Ionize){                                
                 for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
                     // Do the ionization (!for testParticles)
-	            if ( (*particles).charge(iPart) < (int) atomic_number) {
+                    if ( (*particles).charge(iPart) < (int) atomic_number) {
                         //!\todo Check if it is necessary to put to 0 or if LocalFields ensures it
                         Jion.x=0.0;
                         Jion.y=0.0;
@@ -487,19 +437,22 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             //for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) 
             //    (*Push)(*particles, iPart, (*Epart)[iPart], (*Bpart)[iPart] , (*gf)[iPart]);
 
+            //particles->test_move( bmin[ibin], bmax[ibin], params );
+
+
             // Apply wall and boundary conditions
             for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
-                for(unsigned int iwall=0; iwall<vecPartWall.size(); iwall++) {
-                    if ( !vecPartWall[iwall]->apply(*particles, iPart, this, ener_iPart)) {
+                for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
+                    if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, ener_iPart)) {
                         nrj_lost_per_thd[tid] += mass * ener_iPart;
                     }
                 }
                 // Boundary Condition may be physical or due to domain decomposition
                 // apply returns 0 if iPart is not in the local domain anymore
-                //	if omp, create a list per thread
+                //        if omp, create a list per thread
                 if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                     addPartInExchList( iPart );
-		    //nrj_lost_per_thd[tid] += ener_iPart;
+                    //nrj_lost_per_thd[tid] += ener_iPart;
                     nrj_lost_per_thd[tid] += mass * ener_iPart;
                 }
              }
@@ -512,20 +465,20 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
 
         }// ibin
 
-	for (int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
-	    nrj_bc_lost += nrj_lost_per_thd[tid];
+        for (int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
+            nrj_bc_lost += nrj_lost_per_thd[tid];
 
         // Needs to be reviewed 
         if (Ionize && electron_species) {
             for (unsigned int i=0; i < Ionize->new_electrons.size(); i++) {
                 // electron_species->(*particles).push_back(Ionize->new_electrons[i]);
-				
+                                
                 int ibin = (int) ((Ionize->new_electrons).position(0,i) / cell_length[0]) - ( patch->getCellStartingGlobalIndex(0) + oversize[0] );
                 DEBUG("here " << ibin << " " << (Ionize->new_electrons).position(0,i)/(2*M_PI));
 
                 // Copy Ionize->new_electrons(i) in electron_species->particles at position electron_species->bmin[ibin]
                 Ionize->new_electrons.cp_particle(i, (*electron_species->particles), electron_species->bmin[ibin] );
-				
+                                
                 // Update bins status
                 // (ugly update, memory is allocated anywhere, OK with vectors per particles parameters)
                 electron_species->bmax[ibin]++;
@@ -535,11 +488,11 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                     electron_species->bmax[ii]++;
                 }
             }
-			
+                        
             // if (Ionize->new_electrons.size())
             //      DEBUG("number of electrons " << electron_species->(*particles).size() << " " << );
             Ionize->new_electrons.clear();
-	}
+        }
     }
     else { // immobile particle (at the moment only project density)
         if ((diag_flag == 1)&&(!(*particles).isTest)){
@@ -547,15 +500,15 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
 
                 if (params.nDim_field==2)
-		    b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1);    
+                    b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1);    
                 else if (params.nDim_field==1)
-		    b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw);    
+                    b_rho = &(*EMfields->rho_s[ispec])(ibin*clrw);    
                 for (iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
                     (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_lastdim);
                 } //End loop on particles
             }//End loop on bins
             
-	}
+        }
     }//END if time vs. time_frozen
 
 }//END dynamic
@@ -644,27 +597,27 @@ void Species::count_sort_part(Params &params)
 
     // first loop counts the # of particles in each cell
     for (ip=0; ip < npart; ip++)
-	{
-	    x = (*particles).position(0,ip)-min_loc;
-	    y = (*particles).position(1,ip)-min_loc_vec[1];
+        {
+            x = (*particles).position(0,ip)-min_loc;
+            y = (*particles).position(1,ip)-min_loc_vec[1];
 
-	    ix = floor(x * dx_inv_) ;
-	    iy = floor(y * dy_inv_) ;
+            ix = floor(x * dx_inv_) ;
+            iy = floor(y * dy_inv_) ;
 
-	    ixy = iy + ix*params.n_space[1];
+            ixy = iy + ix*params.n_space[1];
 
 
-	    indices[ixy] ++;
-	}
+            indices[ixy] ++;
+        }
 
     // second loop convert the count array in cumulative sum
     tot=0;
     for (unsigned int ixy=0; ixy < nxy; ixy++)
-	{
-	    oc = indices[ixy];
-	    indices[ixy] = tot;
-	    tot += oc;
-	}
+        {
+            oc = indices[ixy];
+            indices[ixy] = tot;
+            tot += oc;
+        }
 
     //Bookmarking is not needed if normal sort is called before.
     //bmin[0] = 0;    
@@ -678,16 +631,16 @@ void Species::count_sort_part(Params &params)
 
     // last loop puts the particles and update the count array
     for (ip=0; ip < npart; ip++) {
-	x = (*particles).position(0,ip)-min_loc;
-	y = (*particles).position(1,ip)-min_loc_vec[1];
+        x = (*particles).position(0,ip)-min_loc;
+        y = (*particles).position(1,ip)-min_loc_vec[1];
 
-	ix = floor(x * dx_inv_) ;
-	iy = floor(y * dy_inv_) ;
+        ix = floor(x * dx_inv_) ;
+        iy = floor(y * dy_inv_) ;
 
-	ixy = iy + ix*params.n_space[1];
+        ixy = iy + ix*params.n_space[1];
 
-	(*particles).overwrite_part(ip, particles_sorted[token] , indices[ixy]);
-	indices[ixy]++;
+        (*particles).overwrite_part(ip, particles_sorted[token] , indices[ixy]);
+        indices[ixy]++;
     }
 
     particles = &particles_sorted[token] ;
@@ -695,8 +648,15 @@ void Species::count_sort_part(Params &params)
 }
 
 
-int Species::createParticles(vector<unsigned int> n_space_to_create, vector<double> cell_index, int new_bin_idx)
+int Species::createParticles(vector<unsigned int> n_space_to_create, Params& params, Patch *patch, int new_bin_idx)
 {
+    // Create particles in a space starting at cell_index
+    vector<double> cell_index(3,0);
+    for (int i=0 ; i<params.nDim_field ; i++) {
+        if (params.cell_length[i]!=0)
+            cell_index[i] = patch->getDomainLocalMin(i);
+    }
+    
     // ---------------------------------------------------------
     // Calculate density and number of particles for the species
     // ---------------------------------------------------------
@@ -905,7 +865,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, vector<doub
     }
     
     if ((*particles).tracked)
-	(*particles).setIds();
+        (*particles).setIds();
 
     return npart_effective;
     
@@ -944,6 +904,6 @@ bool Species::isProj(double time_dual, SimWindow* simWindow) {
                     ) 
                 )
             );
-	    return isproj;*/
+            return isproj;*/
     //return time_dual > species_param.time_frozen  || (simWindow && simWindow->isMoving(time_dual)) ;
 }
