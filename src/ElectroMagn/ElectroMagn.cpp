@@ -3,16 +3,16 @@
 #include <limits>
 #include <iostream>
 
-#include "ElectroMagn1D.h"
-#include "PicParams.h"
+#include "Params.h"
 #include "Species.h"
 #include "Projector.h"
-#include "Laser.h"
 #include "Field.h"
 #include "ElectroMagnBC.h"
 #include "ElectroMagnBC_Factory.h"
 #include "SimWindow.h"
 #include "Patch.h"
+#include "Profile.h"
+#include "SolverFactory.h"
 
 using namespace std;
 
@@ -20,16 +20,16 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for the virtual class ElectroMagn
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn::ElectroMagn(PicParams &params, LaserParams &laser_params, Patch* patch) :
+ElectroMagn::ElectroMagn(Params &params, vector<Species*>& vecSpecies, Patch* patch) :
 timestep(params.timestep),
 cell_length(params.cell_length),
+n_species(vecSpecies.size()),
 nDim_field(params.nDim_field),
 cell_volume(params.cell_volume),
-n_species(params.n_species),
 n_space(params.n_space),
 oversize(params.oversize)
 {
-
+    
     // initialize poynting vector
     poynting[0].resize(nDim_field,0.0);
     poynting[1].resize(nDim_field,0.0);
@@ -41,8 +41,8 @@ oversize(params.oversize)
         DEBUG("____________________ OVERSIZE: " <<i << " " << oversize[i]);
     }
     
-    if (n_space.size() != 3) ERROR("this should not happend");
-
+    if (n_space.size() != 3) ERROR("this should not happen");
+    
     Ex_=NULL;
     Ey_=NULL;
     Ez_=NULL;
@@ -81,14 +81,51 @@ oversize(params.oversize)
             istart[i][j]=0;
             bufsize[i][j]=0;
         }
-    }    
-
-    emBoundCond = ElectroMagnBC_Factory::create(params, laser_params);
-    clrw = params.clrw;
-    nbin = n_space[0]/clrw;
+    }
+    
+    
+    emBoundCond = ElectroMagnBC_Factory::create(params, patch);
+    
+    MaxwellFaradaySolver_ = SolverFactory::create(params);
+    
 }
 
 
+void ElectroMagn::finishInitialization(int nspecies, Patch* patch)
+{
+
+    initAntennas(patch);
+    
+    // Fill allfields
+    allFields.push_back(Ex_ );
+    allFields.push_back(Ey_ );
+    allFields.push_back(Ez_ );
+    allFields.push_back(Bx_ );
+    allFields.push_back(By_ );
+    allFields.push_back(Bz_ );
+    allFields.push_back(Bx_m);
+    allFields.push_back(By_m);
+    allFields.push_back(Bz_m);
+    allFields.push_back(Jx_ );
+    allFields.push_back(Jy_ );
+    allFields.push_back(Jz_ );
+    allFields.push_back(rho_);
+
+    for (int ispec=0; ispec<nspecies; ispec++) {
+        allFields.push_back(Jx_s[ispec] );
+        allFields.push_back(Jy_s[ispec] );
+        allFields.push_back(Jz_s[ispec] );
+        allFields.push_back(rho_s[ispec]);
+    }
+                
+    allFields_avg.push_back(Ex_avg);
+    allFields_avg.push_back(Ey_avg);
+    allFields_avg.push_back(Ez_avg);
+    allFields_avg.push_back(Bx_avg);
+    allFields_avg.push_back(By_avg);
+    allFields_avg.push_back(Bz_avg);
+    
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Destructor for the virtual class ElectroMagn
@@ -108,7 +145,6 @@ ElectroMagn::~ElectroMagn()
     delete Jy_;
     delete Jz_;
     delete rho_;
-
     if (Ex_avg!=NULL) {
         delete Ex_avg;
         delete Ey_avg;
@@ -117,19 +153,34 @@ ElectroMagn::~ElectroMagn()
         delete By_avg;
         delete Bz_avg;
     }
-
+    
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
       delete Jx_s[ispec];
       delete Jy_s[ispec];
       delete Jz_s[ispec];
       delete rho_s[ispec];
     }
-  
+    
     int nBC = emBoundCond.size();
     for ( int i=0 ; i<nBC ;i++ )
-      if (emBoundCond[i]!=NULL) delete emBoundCond[i];
-
+        if (emBoundCond[i]!=NULL) delete emBoundCond[i];
+    
+    delete MaxwellFaradaySolver_;
+    
+    //antenna cleanup
+    for (vector<Antenna>::iterator antenna=antennas.begin(); antenna!=antennas.end(); antenna++ ) {
+        delete antenna->field;
+        antenna->field=NULL;
+    }
+    
 }//END Destructer
+
+
+void ElectroMagn::clean()
+{
+    for ( int i=0 ; i<emBoundCond.size() ;i++ )
+        if (emBoundCond[i]!=NULL) emBoundCond[i]->clean();
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Maxwell solver using the FDTD scheme
@@ -143,16 +194,22 @@ ElectroMagn::~ElectroMagn()
 //     - centerMagneticFields
 
 
-void ElectroMagn::boundaryConditions(int itime, double time_dual, Patch* patch, PicParams &params, SimWindow* simWindow)
+
+void ElectroMagn::boundaryConditions(int itime, double time_dual, Patch* patch, Params &params, SimWindow* simWindow)
 {
-    if ((!simWindow) || (!simWindow->isMoving(time_dual)) )
-        if (emBoundCond[0]!=NULL) // <=> if !periodic
-	    emBoundCond[0]->apply(this, time_dual, patch);
-    
-    if ( (emBoundCond.size()>1) )
-        if (emBoundCond[1]!=NULL) // <=> if !periodic
-	    emBoundCond[1]->apply(this, time_dual, patch);
-    
+    // Compute EM Bcs
+    if ( (!simWindow) || (!simWindow->isMoving(time_dual)) ) {
+        if (emBoundCond[0]!=NULL) { // <=> if !periodic
+            emBoundCond[0]->apply_xmin(this, time_dual, patch);
+            emBoundCond[1]->apply_xmax(this, time_dual, patch);
+        }
+    }
+    if (emBoundCond.size()>2) {
+        if (emBoundCond[2]!=NULL) {// <=> if !periodic
+            emBoundCond[2]->apply_ymin(this, time_dual, patch);
+            emBoundCond[3]->apply_ymax(this, time_dual, patch);
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -190,7 +247,6 @@ void ElectroMagn::dump()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn::initRhoJ(vector<Species*>& vecSpecies, Projector* Proj)
 {
-    //! \todo Check that one uses only none-test particles
     // number of (none-test) used in the simulation
     //! \todo fix this: n_species is already a member of electromagn, is it this confusing? what happens if n_species grows (i.e. with ionization)?
     unsigned int n_species = vecSpecies.size();
@@ -201,10 +257,11 @@ void ElectroMagn::initRhoJ(vector<Species*>& vecSpecies, Projector* Proj)
         unsigned int n_particles = vecSpecies[iSpec]->getNbrOfParticles();
         
         DEBUG(n_particles<<" species "<<iSpec);
-        for (unsigned int iPart=0 ; iPart<n_particles; iPart++ ) {
-            // project charge & current densities
-            (*Proj)(Jx_s[iSpec], Jy_s[iSpec], Jz_s[iSpec], rho_s[iSpec], cuParticles, iPart,
-                    cuParticles.lor_fac(iPart));
+        if (!cuParticles.isTest) {
+            for (unsigned int iPart=0 ; iPart<n_particles; iPart++ ) {
+                // project charge & current densities
+                (*Proj)(Jx_s[iSpec], Jy_s[iSpec], Jz_s[iSpec], rho_s[iSpec], cuParticles, iPart, cuParticles.lor_fac(iPart));
+            }
         }
         
     }//iSpec
@@ -231,6 +288,12 @@ void ElectroMagn::movingWindow_x(unsigned int shift)
     //Here you might want to apply some new boundary conditions on the +x boundary. For the moment, all fields are set to 0.
 }
 
+void ElectroMagn::laserDisabled()
+{
+    if ( emBoundCond.size() )
+	emBoundCond[0]->laserDisabled();
+}
+
 double ElectroMagn::computeNRJ() {
     double nrj(0.);
 
@@ -245,9 +308,59 @@ double ElectroMagn::computeNRJ() {
     return nrj;
 }
 
-void ElectroMagn::laserDisabled()
-{
-    if ( emBoundCond.size() )
-	emBoundCond[0]->laserDisabled();
+string LowerCase(string in){
+    string out=in;
+    std::transform(out.begin(), out.end(), out.begin(), ::tolower);
+    return out;
+}
+
+void ElectroMagn::applyExternalFields(Patch* patch) {    
+    Field * field;
+    bool found=false;
+    for (vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
+        for (vector<string>::iterator fieldName=extfield->fields.begin();fieldName!=extfield->fields.end();fieldName++) {
+            string name = LowerCase(*fieldName);
+            if      ( Ex_ && name==LowerCase(Ex_->name) ) field = Ex_;
+            else if ( Ey_ && name==LowerCase(Ey_->name) ) field = Ey_;
+            else if ( Ez_ && name==LowerCase(Ez_->name) ) field = Ez_;
+            else if ( Bx_ && name==LowerCase(Bx_->name) ) field = Bx_;
+            else if ( By_ && name==LowerCase(By_->name) ) field = By_;
+            else if ( Bz_ && name==LowerCase(Bz_->name) ) field = Bz_;
+            else field = NULL;
+            
+            if( field ) {
+                applyExternalField( field, extfield->profile, patch );
+                found=true;
+            }
+        }
+    }
+    if (patch->isMaster()) {
+        if (found) {
+            MESSAGE(1,"Finish");
+        } else {
+            MESSAGE(1,"Nothing to do");
+        }
+    }
+    Bx_m->copyFrom(Bx_);
+    By_m->copyFrom(By_);
+    Bz_m->copyFrom(Bz_);
+}
+
+void ElectroMagn::applyAntennas(SmileiMPI* smpi, double time) {
+    Field * field;
+    
+    for (vector<Antenna>::iterator antenna=antennas.begin(); antenna!=antennas.end(); antenna++ ) {
+        if (antenna->field) {
+            double intensity = antenna->time_profile->valueAt(time);
+            
+            if     ( antenna->field->name == "Jx" ) field = Jx_;
+            else if( antenna->field->name == "Jy" ) field = Jy_;
+            else if( antenna->field->name == "Jz" ) field = Jz_;
+            
+            if (antenna->field->globalDims_ == field->globalDims_) // to do (TV): is this check really necessary ?
+                for (unsigned int i=0; i< field->globalDims_ ; i++)
+                    (*field)(i) += intensity * (*antenna->field)(i);
+        }
+    }
 }
 

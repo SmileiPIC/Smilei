@@ -10,10 +10,11 @@
 
 using namespace std;
 
-Timer::Timer()
+Timer::Timer() :
+time_acc_(0.0),
+name_(""),
+smpi_(NULL)
 {
-    smpi_ = NULL;
-    name_ = "";
 }
 
 Timer::~Timer()
@@ -42,10 +43,23 @@ void Timer::restart()
     last_start_ = MPI_Wtime();
 }
 
+void Timer::reboot()
+{
+    smpi_->barrier();
+    last_start_ = 0.;
+}
+
 void Timer::print(double tot)
 {
-    if ((time_acc_>0.) && (name_!=""))
-        cout << "\t" << setw(12) << name_ << "\t" << time_acc_  << "\t(" << 100.0*time_acc_/tot << "%)" << endl ;
+    if ((time_acc_>0.) && (name_!="")) {
+      //cout << "\t" << setw(12) << name_ << "\t" << time_acc_  << "\t(" << 100.0*time_acc_/tot << "%)" << endl ;
         //MESSAGE(0, "\t" << setw(12) << name_ << "\t" << time_acc_  << "\t(" << 100.0*time_acc_/tot << "%)");
+        double perc=100.0*time_acc_/tot;
+        if (perc<1) {
+            MESSAGE(0, "\t" << setw(13) << name_ << "\t" << time_acc_  << "\t" << "<1%");
+        } else {
+            MESSAGE(0, "\t" << setw(13) << name_ << "\t" << time_acc_  << "\t" << perc << "%");
+        }
+    }
 }
 

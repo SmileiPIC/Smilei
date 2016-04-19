@@ -17,19 +17,14 @@ time.sleep(rank)
 
 ######### INPUT THE FOLLOWING PARAMETERS ############################################
 #directory = "/sps/beck/smilei/tst2d_accelec" #Directory of the simulation data
-directory = "/sps/beck/smilei/benchmark" #Directory of the simulation data
+directory = "." #Directory of the simulation data
 #list_fields=['Ex','Ey','Ez','Bz_m','Rho_electron1','Rho_proton','Jx','Jy','Jz'] #List of the fields you want to extract (Ei,Bi,Ji_sn,Rho,rho_sn, where n is the number of the species and i the direction (x,y,z))
-list_fields=['Ex','Ey','Ez','Bz_m','Bx_m','By_m','Rho_electron','Rho_proton','Jx_electron'] 
-#list_fields=['Ex','Ey','Ez','Bz_m','Bx_m','By_m'] 
-#list_fields=['Rho_electron','Rho_proton'] 
-#list_fields=['Ey','Ex'] 
-#list_fields=['Ex','Ey','Ez','Rho','rho_s1','rho_s0','Jx_s1'] 
-#list_fields=['Bx_m','By_m','Bz_m','Jy_s1','Jz_s1'] 
+list_fields=['Ey','Ex'] 
 first_cycle = 1
-last_cycle = 4032
-cycle_step = 1000 # step between two displayed cycles (minimum is given by outputcyle of the inputfile)
+last_cycle = 750
+cycle_step = 100 # step between two displayed cycles (minimum is given by outputcyle of the inputfile)
 plot_on_axis = 0 # Also plot 1D graph of the quantities on axis if ==1.
-suffix = "benchmark" #Suffix to be added in produced files name.
+suffix = "" #Suffix to be added in produced files name.
 ####################################################################################
 
 filename = directory + "/Fields.h5" # Proc file name
@@ -50,8 +45,6 @@ else:
 list_cycle = list(list_files[Filerange])
 print "cycle", list_cycle
 
-#list_cycle=range(first_cycle,last_cycle+1,cycle_step) 
-
 print h5file.root._f_listNodes
 if (rank==0):
     print h5file.root._f_getChild(repr(list_cycle[0]).rjust(10,"0"))._f_listNodes
@@ -62,18 +55,10 @@ for field in list_fields:
             group = h5file.root._f_getChild(num)
             array = group._f_getChild(field).read()
             print field, cycle, scipy.shape(array)
-            if cycle == list_cycle[0]:
-                v_minl = array.min() #local
-                v_maxl = array.max() #local
-                v_minl = -0.008
-                #v_min = comm.allreduce(v_minl,op=MPI.MIN)
-                #v_max = comm.allreduce(v_maxl,op=MPI.MAX)
-                v_min = comm.bcast(v_minl,root=0)
-                v_max = comm.bcast(v_maxl,root=0)
-            #    print v_minl,"  ",v_min,"  ",v_maxl,"  ",v_max
             pyplot.figure()
-            #pyplot.imshow(array.T , origin=0,vmin=v_min,vmax=v_max,aspect="auto")
             pyplot.imshow(array.T , origin=0, aspect="auto")
+            #pyplot.imshow(array.T , origin=0, aspect="auto",extent=[0., scipy.shape(array)[0]-1,-0.5,scipy.shape(array)[1]-1.5])
+            pyplot.yticks(scipy.arange(scipy.shape(array)[1]+2)-1)
             pyplot.title(field + " " + num)
             pyplot.colorbar()
             pyplot.savefig(directory + "/"+field+num+".png",format="png")

@@ -4,17 +4,17 @@
 
 #include "ElectroMagnBC.h" 
 
-class PicParams;
+class Params;
 class ElectroMagn;
 
 class ElectroMagnBC2D_Trans_Damping : public ElectroMagnBC {
 public:
-    ElectroMagnBC2D_Trans_Damping( PicParams &params, LaserParams &laser_params );
+    ElectroMagnBC2D_Trans_Damping( Params &params, Patch* patch );
     ~ElectroMagnBC2D_Trans_Damping();
 
     virtual void apply(ElectroMagn* EMfields, double time_dual, Patch* patch);
 
- private:
+private:
     //! Number of nodes on the primal grid in the x-direction
     unsigned int nx_p;
 
@@ -29,11 +29,11 @@ public:
 
     
     // number of dumping layers
-    int ny_l;
+    unsigned int ny_l;
     // Damping coefficient
     double cdamp; 
     // array of coefficient per layer
-    double* coeff;
+    std::vector<double> coeff;
 
     
 };

@@ -3,16 +3,17 @@ PROJECT_BRIEF          = "Simulation of Matter Irradiated by Light at Extreme In
 INPUT                  = ../src
 CITE_BIB_FILES         = smilei.bib
 TOC_EXPAND             = YES
-COMPACT_LATEX          = YES
+COMPACT_LATEX          = NO
 OPTIMIZE_OUTPUT_FOR_C  = YES
 BUILTIN_STL_SUPPORT    = YES
 FULL_PATH_NAMES        = NO
 GENERATE_TREEVIEW      = YES
 HTML_TIMESTAMP         = NO
-LATEX_SOURCE_CODE      = YES
+LATEX_SOURCE_CODE      = NO
 SORT_MEMBER_DOCS       = NO
 SOURCE_BROWSER         = YES
 GENERATE_HTML          = YES 
+GENERATE_LATEX         = NO
 HTML_FOOTER            = footer.html
 HTML_STYLESHEET        = stylesheet.css
 HTML_HEADER            = header.html
@@ -22,5 +23,4 @@ WARN_IF_DOC_ERROR      = YES
 WARN_LOGFILE           = smilei_warn.log
 RECURSIVE              = YES
 PROJECT_LOGO           = logo.png
-
-# leave an empty line after this
+IMAGE_PATH             = smileiLogo

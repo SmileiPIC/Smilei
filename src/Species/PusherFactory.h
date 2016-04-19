@@ -3,8 +3,10 @@
 
 #include "Pusher.h"
 #include "PusherBoris.h"
+#include "PusherRRLL.h"
 
-#include "PicParams.h"
+#include "Params.h"
+#include "Species.h"
 
 #include "Tools.h"
 
@@ -19,14 +21,17 @@ public:
     //! \param ispec SpeciesId
     //! \param params Parameters
     //  --------------------------------------------------------------------------------------------------------------------
-    static Pusher* create(PicParams& params, int ispec) {
+    static Pusher* create(Params& params, Species * species) {
         Pusher* Push = NULL;
 
         // assign the correct Pusher to Push
-        if ( params.species_param[ispec].dynamics_type == "norm" )
-            Push = new PusherBoris( params, ispec );
-        else
-            ERROR( "Unknown dynamics : " << params.species_param[ispec].dynamics_type );
+        if ( species->dynamics_type == "norm" ) {
+            Push = new PusherBoris( params, species );
+        } else if ( species->dynamics_type == "rrll" ) {
+            Push = new PusherRRLL( params, species );
+        } else {
+            ERROR( "For species " << species->species_type << ": unknown dynamics_type `" << species->dynamics_type << "`");
+        }
 
         return Push;
     }

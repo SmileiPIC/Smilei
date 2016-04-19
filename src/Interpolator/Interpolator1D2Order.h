@@ -12,10 +12,11 @@ class Interpolator1D2Order : public Interpolator1D
 {
 
 public:
-    Interpolator1D2Order(PicParams&, Patch*);
+    Interpolator1D2Order(Params&, Patch*);
     ~Interpolator1D2Order(){};
 
     void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc);
+    void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread);
     void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc);
 
     inline double compute( double* coeff, Field1D* f, int idx) {
@@ -28,6 +29,8 @@ private:
     int ip_;
     // Last dual index computed
     int id_;
+    // Last delta computed
+    double xjmxi;
     // Interpolation coefficient on Prim grid
     double coeffp_[3];
     // Interpolation coefficient on Dual grid

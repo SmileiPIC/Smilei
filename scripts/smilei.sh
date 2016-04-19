@@ -5,14 +5,14 @@ MPIEXEC=mpiexec
 
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
-  DIRSMILEI="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  DIRSMILEISH="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
   SOURCE="$(readlink "$SOURCE")"
    # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
-  [[ $SOURCE != /* ]] && SOURCE="$DIRSMILEI/$SOURCE"
+  [[ $SOURCE != /* ]] && SOURCE="$DIRSMILEISH/$SOURCE"
 done
-DIRSMILEI="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+DIRSMILEISH="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
-smilei=$DIRSMILEI/../src/smilei
+smilei=$DIRSMILEISH/../smilei
 
 if [ "$#" -lt 1 ]; then
     echo "usage: $0 [proc numbers] namelist [namelist] ..."
@@ -32,7 +32,7 @@ outDirs=""
 
 for nml in $@
 do
-    base="`basename $nml .in`"    
+    base="`basename $nml .py`"    
     dir="${base}${suffix}" 
     outDirs="${outDirs} ${dir}"
     
@@ -43,5 +43,5 @@ do
     $MPIEXEC -np $proc $smilei `basename $nml`
     cd ..
 done
-
-$DIRSMILEI/../scripts/TPUPMC/smileiQt.py ${outDirs}
+# echo ${outDirs}
+# $DIRSMILEISH/../scripts/TPUPMC/smileiQt.py ${outDirs}

@@ -4,60 +4,101 @@
 
 #include "ElectroMagnBC.h"
 #include "ElectroMagnBC1D_SM.h"
-#include "ElectroMagnBC2D_Long_SM.h"
-#include "ElectroMagnBC2D_Trans_SM.h"
-#include "ElectroMagnBC2D_Trans_Damping.h"
+#include "ElectroMagnBC1D_refl.h"
+#include "ElectroMagnBC2D_SM.h"
+#include "ElectroMagnBC2D_refl.h"
 
-#include "PicParams.h"
+#include "Params.h"
 
 
+//  --------------------------------------------------------------------------------------------------------------------
+//! Constructor for the ElectroMagnetic Boundary conditions factory
+//  --------------------------------------------------------------------------------------------------------------------
 class ElectroMagnBC_Factory {
+    
 public:
-    static std::vector<ElectroMagnBC*> create(PicParams& params, LaserParams &laser_params) {
+    
+    static std::vector<ElectroMagnBC*> create(Params& params, Patch* patch) {
+        
         std::vector<ElectroMagnBC*> emBoundCond;
-
+        
+        // -----------------
+        // For 1d3v Geometry
+        // -----------------
         if ( params.geometry == "1d3v" ) {
-            emBoundCond.resize(1, NULL);
-            if ( params.bc_em_type_long == "silver-muller" )
-		emBoundCond[0] = new ElectroMagnBC1D_SM(params, laser_params);
-            else if ( params.bc_em_type_long != "periodic" ) {
-                // If periodic : !applied -> NULL
-                ERROR( "Unknwon boundary condition : " << params.bc_em_type_long );
-            }
-        }
-
-        else if ( params.geometry == "2d3v" ) {
+            
+            // periodic (=NULL) boundary conditions
             emBoundCond.resize(2, NULL);
-
-            if ( params.bc_em_type_long == "silver-muller" ) {
-                //Boundary in the X direction is set to Silver-Muller
-                emBoundCond[0] = new ElectroMagnBC2D_Long_SM(params, laser_params);
+            
+            // AT X = XMIN,XMAX
+            // ----------------
+            for (unsigned int ii=0;ii<2;ii++) {
+                // silver-muller (injecting/absorbing bcs)
+                if ( params.bc_em_type_x[ii] == "silver-muller" ) {
+                    emBoundCond[ii] = new ElectroMagnBC1D_SM(params, patch);
+                }
+                // reflective bcs
+                else if ( params.bc_em_type_x[ii] == "reflective" ) {
+                    emBoundCond[ii] = new ElectroMagnBC1D_refl(params, patch);
+                }
+                // else: error
+                else if ( params.bc_em_type_x[ii] != "periodic" ) {
+                    ERROR( "Unknown boundary bc_em_type_x[" << ii << "]");
+                }
             }
-            else if ( params.bc_em_type_long != "periodic" ) {
-                // If periodic : !applied -> NULL
-                ERROR( "Unknwon boundary condition : " << params.bc_em_type_long );
+            
+        }//1d3v
+        
+        
+        // -----------------
+        // For 2d3v Geometry
+        // -----------------
+        else if ( params.geometry == "2d3v" ) {
+            
+            // by default use periodic (=NULL) boundary conditions
+            emBoundCond.resize(4, NULL);
+            
+            for (unsigned int ii=0;ii<2;ii++) {
+                // X DIRECTION
+                // silver-muller (injecting/absorbing bcs)
+                if ( params.bc_em_type_x[ii] == "silver-muller" ) {
+                    emBoundCond[ii] = new ElectroMagnBC2D_SM(params, patch);
+                }
+                // reflective bcs
+                else if ( params.bc_em_type_x[ii] == "reflective" ) {
+                    emBoundCond[ii] = new ElectroMagnBC2D_refl(params, patch);
+                }
+                // else: error
+                else if ( params.bc_em_type_x[ii] != "periodic" ) {
+                    ERROR( "Unknown boundary bc_em_type_x[" << ii << "]");
+                }
+                
+                // Y DIRECTION
+                // silver-muller bcs (injecting/absorbin)
+                if ( params.bc_em_type_y[ii] == "silver-muller" ) {
+                    emBoundCond[ii+2] = new ElectroMagnBC2D_SM(params, patch);
+                }
+                // reflective bcs
+                else if ( params.bc_em_type_y[ii] == "reflective" ) {
+                    emBoundCond[ii+2] = new ElectroMagnBC2D_refl(params, patch);
+                }
+                // else: error
+                else if ( params.bc_em_type_y[ii] != "periodic" ) {
+                    ERROR( "Unknown boundary bc_em_type_y[" << ii << "]");
+                }
             }
-
-
-            if ( params.bc_em_type_trans == "silver-muller" ) {
-                //Boundary in the Y direction is set to Silver-Muller.
-                emBoundCond[1] = new ElectroMagnBC2D_Trans_SM(params, laser_params);
-            }
-            else if ( params.bc_em_type_trans == "damping" ) {
-                // Boundary in the Y direction is set to damping if they are not periodic. 
-		emBoundCond[1] = new ElectroMagnBC2D_Trans_Damping(params, laser_params); 
-            }
-            else if ( params.bc_em_type_trans != "periodic" ) {
-                // If periodic : !applied -> NULL
-                ERROR( "Unknwon boundary condition : " << params.bc_em_type_trans );
-	    }
-        }
+            
+        }//2d3v
+        
+        
+        // OTHER GEOMETRIES ARE NOT DEFINED ---
         else {
-            ERROR( "Unknwon geometry : " << params.geometry );
+            ERROR( "Unknown geometry : " << params.geometry );
         }
+        
         return emBoundCond;
     }
-
+    
 };
 
 #endif

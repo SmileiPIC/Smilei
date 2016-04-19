@@ -2,8 +2,9 @@
 #define INTERPOLATOR_H
 
 #include "Field.h"
+#include "Params.h"
 
-class PicParams;
+class Params;
 class Patch;
 class ElectroMagn;
 class Particles;
@@ -15,12 +16,13 @@ class Particles;
 class Interpolator
 {
 public:
-    Interpolator(PicParams& params, Patch* patch);
+    Interpolator(Params& params, Patch* patch);
     virtual ~Interpolator() {};
     virtual void mv_win(unsigned int shift) = 0;
     virtual void setMvWinLimits(unsigned int shift) = 0;
 
     virtual void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc) = 0;
+    virtual void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread) = 0;
 
     virtual void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc) = 0;
 

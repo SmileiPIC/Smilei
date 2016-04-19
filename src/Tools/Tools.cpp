@@ -1,11 +1,11 @@
 
+#include <cstring>
+#include <stdio.h>
 #include "Tools.h"
 
 #include <fcntl.h>
 #include <iomanip>
 #include <unistd.h>
-#include <cstring>
-#include <stdio.h>
 
 void Tools::printMemFootPrint(std::string tag) {
 
@@ -14,17 +14,17 @@ void Tools::printMemFootPrint(std::string tag) {
     char filename[80];
     char sbuf[1024];
     char* S;
-    int fd, num_read;
-    long lmem;
+    //long lmem;
     pid_t numpro;
-    pid_t getpid(void);
 
     numpro = getpid();
 
     sprintf(filename, "/proc/%ld/status", (long)numpro);
-    fd = open(filename, O_RDONLY, 0);
-    num_read=read(fd,sbuf,(sizeof sbuf)-1);
+    int fd = open(filename, O_RDONLY, 0);
+    int num_read=read(fd,sbuf,(sizeof sbuf)-1);
     close(fd);
+
+    if (!num_read) return;
 
     // Peak resident set size
     S=strstr(sbuf,"VmRSS:")+8;
@@ -34,8 +34,7 @@ void Tools::printMemFootPrint(std::string tag) {
     val[2] = atoi(S);
 
     std::cout << "=== Mem usage === " <<  std::setw(20) << tag << "\t=== " << std::setw(6)
-              << "\t VmRSS  << " <<  (int)((double)val[1]/1024.) << " Mo"
-              << "\t VmSize << " <<  (int)((double)val[2]/1024.) << " Mo" << std::endl;
+              << "\t VmRSS  << " <<  (int)((double)val[1]/1024.) << " Mb" << std::endl;
 
 }
 

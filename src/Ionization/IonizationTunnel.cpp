@@ -3,12 +3,13 @@
 #include <cmath>
 
 #include "Particles.h"
+#include "Species.h"
 
 using namespace std;
 
 
 
-IonizationTunnel::IonizationTunnel(PicParams& params, int ispec) : Ionization(params, ispec) {
+IonizationTunnel::IonizationTunnel(Params& params, Species * species) : Ionization(params, species) {
     DEBUG("Creating the Tunnel Ionizaton class");
 
     one_third = 1.0/3.0;
@@ -25,7 +26,7 @@ IonizationTunnel::IonizationTunnel(PicParams& params, int ispec) : Ionization(pa
         gamma_tunnel[Z] = 2.0 * pow(2.0*Potential[Z],1.5);
     }
 
-    new_electrons.initialize( 0, params.nDim_particle );
+    new_electrons.initialize(0, params.nDim_particle );
     DEBUG("Finished Creating the Tunnel Ionizaton class");
 
 }
@@ -33,6 +34,9 @@ IonizationTunnel::IonizationTunnel(PicParams& params, int ispec) : Ionization(pa
 
 
 void IonizationTunnel::operator() (Particles &particles, int ipart, LocalFields Epart) {
+    for (unsigned int i=0; i< particles.size(); i++) {
+        particles.print(i);
+    }
 
     // Charge state of the ion (particle)
     unsigned int Z = (unsigned int)(particles.charge(ipart));

@@ -8,14 +8,14 @@
 
 #include <sstream>
 
-#include "PicParams.h"
+#include "Params.h"
 #include "Patch.h"
 #include "Field2D.h"
 
 using namespace std;
 
-SmileiIO_Cart2D::SmileiIO_Cart2D( PicParams& params, DiagParams &diagParams, Patch* patch )
-: SmileiIO( params, diagParams, patch )
+SmileiIO_Cart2D::SmileiIO_Cart2D( Params& params, Patch* patch )
+: SmileiIO( params, patch )
 {
     createPattern(params,patch);
 }
@@ -24,7 +24,7 @@ SmileiIO_Cart2D::~SmileiIO_Cart2D()
 {
 }
 
-void SmileiIO_Cart2D::createPattern( PicParams& params, Patch* patch )
+void SmileiIO_Cart2D::createPattern( Params& params, Patch* patch )
 {
 
     std::vector<unsigned int> istart;
@@ -100,9 +100,12 @@ void SmileiIO_Cart2D::createPattern( PicParams& params, Patch* patch )
                         bufsize[1] -= 1;
                 }
             }
-            count[0] = bufsize[0];
-            count[1] = bufsize[1];
-            H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset, stride, count, NULL);
+            count[0] = 1;
+            count[1] = 1;
+            hsize_t     block[2];
+            block[0] = bufsize[0];
+            block[1] = bufsize[1];
+            H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset, stride, count, block);
             memspace_ [ ix_isPrim ][ iy_isPrim ] = memspace;
 
 
@@ -131,7 +134,6 @@ void SmileiIO_Cart2D::createPattern( PicParams& params, Patch* patch )
             stride[1] = 1;
             count[0] = 1;
             count[1] = 1;
-            hsize_t     block[2];
             block[0] = bufsize[0];
             block[1] = bufsize[1];
             H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, stride, count, block);
@@ -143,7 +145,7 @@ void SmileiIO_Cart2D::createPattern( PicParams& params, Patch* patch )
 } // END createPattern
 
 
-void SmileiIO_Cart2D::updatePattern( PicParams& params, Patch* patch )
+void SmileiIO_Cart2D::updatePattern( Params& params, Patch* patch )
 {
     for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
         for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {
@@ -197,7 +199,7 @@ void SmileiIO_Cart2D::writeFieldsSingleFileTime( Field* field, hid_t group_id )
 } // END writeFieldsSingleFileTime
 
 
-//! this method writes a field on an hdf5 file should be used just for debug
+//! this method writes a field on an hdf5 file should be used just for debug (doesn't use params.output_dir)
 void SmileiIO_Cart2D::write( Field* field )
 {
     std::vector<unsigned int> isDual = field->isDual_;

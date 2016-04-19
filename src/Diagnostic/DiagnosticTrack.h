@@ -1,0 +1,69 @@
+#ifndef DIAGNOSTICTRACK_H
+#define DIAGNOSTICTRACK_H
+
+#include "Diagnostic.h"
+
+#include "Params.h"
+#include "Patch.h"
+#include "SmileiMPI.h"
+
+
+class DiagnosticTrack : public Diagnostic {
+
+public :
+    //! Default constructor
+    DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
+    //! Cloning constructor
+    DiagnosticTrack(DiagnosticTrack* track);
+    //! Default destructor
+    ~DiagnosticTrack();
+    
+    virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile );
+    void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches );
+    
+    virtual void closeFile();
+    
+    virtual bool prepare( Patch* patch, int timestep );
+    
+    virtual void run( Patch* patch, int timestep );
+    
+    virtual void write(int timestep);
+    
+    void setFile( hid_t fid );
+    virtual void setFile( Diagnostic* diag );
+    
+    void setGlobalNbrParticles(int totNbrParts) {
+        nbrParticles_ = totNbrParts;
+    }
+    
+    hid_t getFileId() {
+      return fileId_;
+    }
+    
+private :
+    //! Pointer to the species used
+    Species* species;
+    int speciesId_;
+    
+    //! Size of the diag (number of particles)
+    int nbrParticles_;
+     
+    //! HDF5 file transfer protocol
+    hid_t transfer;
+    //! HDF5 file space (dimensions of the array in file)
+    hsize_t dims[2];
+     
+    //! Number of spatial dimensions
+    int nDim_particle;
+    
+    // iterator for dataset extension
+    int iter;
+    
+    //! hdf5 file ID
+    hid_t fileId_;
+    
+    template <class T> void append( hid_t fid, std::string name, T & property,  hid_t  mem_space, int nParticles, hid_t type, std::vector<hsize_t> &locator);
+};
+
+#endif
+

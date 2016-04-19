@@ -13,7 +13,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for Interpolator2D4Order
 // ---------------------------------------------------------------------------------------------------------------------
-Interpolator2D4Order::Interpolator2D4Order(PicParams &params, Patch *patch) : Interpolator2D(params, patch)
+Interpolator2D4Order::Interpolator2D4Order(Params &params, Patch *patch) : Interpolator2D(params, patch)
 {
 
     dx_inv_ = 1.0/params.cell_length[0];
@@ -64,88 +64,87 @@ void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particl
 
 
     // Declaration and calculation of the coefficient for interpolation
-    double delta, delta2, delta3, delta4;
+    double delta2, delta3, delta4;
 
-    delta   = xpn - (double)ip_;
-    delta2  = delta*delta;
-    delta3  = delta2*delta;
-    delta4  = delta3*delta;
-    coeffxp_[0] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
-    coeffxp_[1] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    coeffxp_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-    coeffxp_[3] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    coeffxp_[4] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
-
-    delta   = xpn - (double)id_ + 0.5;
-    delta2  = delta*delta;
-    delta3  = delta2*delta;
-    delta4  = delta3*delta;
-    coeffxd_[0] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
-    coeffxd_[1] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    deltax   = xpn - (double)id_ + 0.5;
+    delta2  = deltax*deltax;
+    delta3  = delta2*deltax;
+    delta4  = delta3*deltax;
+    coeffxd_[0] = dble_1_ov_384   - dble_1_ov_48  * deltax  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
+    coeffxd_[1] = dble_19_ov_96   - dble_11_ov_24 * deltax  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
     coeffxd_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-    coeffxd_[3] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    coeffxd_[4] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
+    coeffxd_[3] = dble_19_ov_96   + dble_11_ov_24 * deltax  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    coeffxd_[4] = dble_1_ov_384   + dble_1_ov_48  * deltax  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
 
-    delta   = ypn - (double)jp_;
-    delta2  = delta*delta;
-    delta3  = delta2*delta;
-    delta4  = delta3*delta;
-    coeffyp_[0] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
-    coeffyp_[1] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    coeffyp_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-    coeffyp_[3] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    coeffyp_[4] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
+    deltax   = xpn - (double)ip_;
+    delta2  = deltax*deltax;
+    delta3  = delta2*deltax;
+    delta4  = delta3*deltax;
+    coeffxp_[0] = dble_1_ov_384   - dble_1_ov_48  * deltax  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
+    coeffxp_[1] = dble_19_ov_96   - dble_11_ov_24 * deltax  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    coeffxp_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
+    coeffxp_[3] = dble_19_ov_96   + dble_11_ov_24 * deltax  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    coeffxp_[4] = dble_1_ov_384   + dble_1_ov_48  * deltax  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
 
-
-    delta   = ypn - (double)jd_ + 0.5;
-    delta2  = delta*delta;
-    delta2  = delta*delta;
-    delta2  = delta*delta;
-    delta3  = delta2*delta;
-    delta4  = delta3*delta;
-    coeffyd_[0] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
-    coeffyd_[1] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    deltay   = ypn - (double)jd_ + 0.5;
+    delta2  = deltay*deltay;
+    delta3  = delta2*deltay;
+    delta4  = delta3*deltay;
+    coeffyd_[0] = dble_1_ov_384   - dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
+    coeffyd_[1] = dble_19_ov_96   - dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
     coeffyd_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-    coeffyd_[3] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    coeffyd_[4] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
+    coeffyd_[3] = dble_19_ov_96   + dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    coeffyd_[4] = dble_1_ov_384   + dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
+
+    deltay   = ypn - (double)jp_;
+    delta2  = deltay*deltay;
+    delta3  = delta2*deltay;
+    delta4  = delta3*deltay;
+    coeffyp_[0] = dble_1_ov_384   - dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
+    coeffyp_[1] = dble_19_ov_96   - dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    coeffyp_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
+    coeffyp_[3] = dble_19_ov_96   + dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    coeffyp_[4] = dble_1_ov_384   + dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
+
+
 
     //!\todo CHECK if this is correct for both primal & dual grids !!!
     // First index for summation
-    ip_ = ip_ - 2 - i_domain_begin;
-    id_ = id_ - 2 - i_domain_begin;
-    jp_ = jp_ - 2 - j_domain_begin;
-    jd_ = jd_ - 2 - j_domain_begin;
+    ip_ = ip_ - i_domain_begin;
+    id_ = id_ - i_domain_begin;
+    jp_ = jp_ - j_domain_begin;
+    jd_ = jd_ - j_domain_begin;
 
 
     // -------------------------
     // Interpolation of Ex^(d,p)
     // -------------------------
-    (*ELoc).x =  compute( coeffxd_, coeffyp_, Ex2D, id_, jp_);
+    (*ELoc).x =  compute( &coeffxd_[2], &coeffyp_[2], Ex2D, id_, jp_);
 
     // -------------------------
     // Interpolation of Ey^(p,d)
     // -------------------------
-    (*ELoc).y = compute( coeffxp_, coeffyd_, Ey2D, ip_, jd_);
+    (*ELoc).y = compute( &coeffxp_[2], &coeffyd_[2], Ey2D, ip_, jd_);
 
     // -------------------------
     // Interpolation of Ez^(p,p)
     // -------------------------
-    (*ELoc).z = compute( coeffxp_, coeffyp_, Ez2D, ip_, jp_);
+    (*ELoc).z = compute( &coeffxp_[2], &coeffyp_[2], Ez2D, ip_, jp_);
 
     // -------------------------
     // Interpolation of Bx^(p,d)
     // -------------------------
-    (*BLoc).x = compute( coeffxp_, coeffyd_, Bx2D, ip_, jd_);
+    (*BLoc).x = compute( &coeffxp_[2], &coeffyd_[2], Bx2D, ip_, jd_);
 
     // -------------------------
     // Interpolation of By^(d,p)
     // -------------------------
-    (*BLoc).y = compute( coeffxd_, coeffyp_, By2D, id_, jp_);
+    (*BLoc).y = compute( &coeffxd_[2], &coeffyp_[2], By2D, id_, jp_);
 
     // -------------------------
     // Interpolation of Bz^(d,d)
     // -------------------------
-    (*BLoc).z = compute( coeffxd_, coeffyd_, Bz2D, id_, jd_);
+    (*BLoc).z = compute( &coeffxd_[2], &coeffyd_[2], Bz2D, id_, jd_);
 
 } // END Interpolator2D4Order
 
@@ -157,7 +156,7 @@ void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particl
 
     // Static cast of the electromagnetic fields
     Field2D* Jx2D = static_cast<Field2D*>(EMfields->Jx_);
-    Field2D* Jy2D = static_cast<Field2D*>(EMfields->Jy_);
+//    Field2D* Jy2D = static_cast<Field2D*>(EMfields->Jy_);
     Field2D* Jz2D = static_cast<Field2D*>(EMfields->Jz_);
     
     Field2D* Rho2D= static_cast<Field2D*>(EMfields->rho_);
@@ -166,21 +165,40 @@ void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     // -------------------------
     // Interpolation of Jx^(d,p)
     // -------------------------
-    (*JLoc).x = compute( coeffxd_, coeffyp_, Jx2D, id_, jp_);
+    (*JLoc).x = compute( &coeffxd_[2], &coeffyp_[2], Jx2D, id_, jp_);
     
     // -------------------------
     // Interpolation of Ey^(p,d)
     // -------------------------
-    (*JLoc).y = compute( coeffxp_, coeffyd_, Jx2D, ip_, jd_);
+    (*JLoc).y = compute( &coeffxp_[2], &coeffyd_[2], Jx2D, ip_, jd_);
     
     // -------------------------
     // Interpolation of Ez^(p,p)
     // -------------------------
-    (*JLoc).z = compute( coeffxp_, coeffyp_, Jz2D, ip_, jp_);
+    (*JLoc).z = compute( &coeffxp_[2], &coeffyp_[2], Jz2D, ip_, jp_);
     
     // -------------------------
     // Interpolation of Rho^(p,p)
     // -------------------------
-    (*RhoLoc) = compute( coeffxp_, coeffyp_, Rho2D, ip_, jp_);
+    (*RhoLoc) = compute( &coeffxp_[2], &coeffyp_[2], Rho2D, ip_, jp_);
     
+}
+void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)
+{
+    std::vector<LocalFields> *Epart = &(smpi->dynamics_Epart[ithread]);
+    std::vector<LocalFields> *Bpart = &(smpi->dynamics_Bpart[ithread]);
+    std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
+    std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
+
+    //Loop on bin particles
+    for (unsigned int ipart=istart ; ipart<iend; ipart++ ) {
+        //Interpolation on current particle
+        (*this)(EMfields, particles, ipart, &(*Epart)[ipart], &(*Bpart)[ipart]);
+        //Buffering of iol and delta
+        (*iold)[ipart*2] = ip_;
+        (*iold)[ipart*2+1] = jp_;
+        (*delta)[ipart*2] = deltax;
+        (*delta)[ipart*2+1] = deltay;
+    }
+
 }

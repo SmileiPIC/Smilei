@@ -51,6 +51,7 @@ public:
     Field( std::vector<unsigned int> dims, std::string name_in ) : name(name_in) {
         specMPI.init();
     } ;
+    
     //! Constructor for Field: isPrimal define if mainDim is Primal or Dual
     Field( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name_in ) : name(name_in) {
        specMPI.init() ;
@@ -96,18 +97,20 @@ public:
     unsigned int globalDims_;
     //! pointer to the linearized array
     double* data_;
+    
+    inline double* data() {return data_;}
     //! reference access to the linearized array (with check in DEBUG mode)
     inline double& operator () (unsigned int i)
     {
-        DEBUGEXEC(if (i>=globalDims_) ERROR("Out of limits & "<< i));
-        DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR("Not finite "<< i << " = " << data_[i]));
+        DEBUGEXEC(if (i>=globalDims_) ERROR(name << " Out of limits "<< i << " < " <<dims_[0] ));
+        DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR(name << " Not finite "<< i << " = " << data_[i]));
         return data_[i];
     };
     //! access to the linearized array (with check in DEBUG mode)
     inline double operator () (unsigned int i) const
     {
-        DEBUGEXEC(if (i>=globalDims_) ERROR("Out of limits "<< i));
-        DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR("Not finite "<< i << " = " << data_[i]));
+        DEBUGEXEC(if (i>=globalDims_) ERROR(name << " Out of limits "<< i));
+        DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR(name << " Not finite "<< i << " = " << data_[i]));
         return data_[i];
     };
     //! method used to put all entry of a field at a given value val
@@ -115,6 +118,13 @@ public:
     {
         if (data_)
             for (unsigned int i=0; i<globalDims_; i++) data_[i] = val;
+    }
+    
+    //! method used to put all entry of a field at a given value val
+    inline void multiply(double val)
+    {
+        if (data_)
+            for (unsigned int i=0; i<globalDims_; i++) data_[i] *= val;
     }
     
 
@@ -138,10 +148,18 @@ public:
     virtual double norm2(unsigned int istart[3][2], unsigned int bufsize[3][2]) = 0;
 
     inline long double norm() {
-	long double sum(0.); 
-	for (int i=0;i<globalDims_;i++) sum+= data_[i]*data_[i];
-	return sum;
+        long double sum(0.);
+        for (unsigned int i=0;i<globalDims_;i++) sum+= data_[i]*data_[i];
+        return sum;
     }
+    
+    inline void copyFrom(Field *from_field) {
+        DEBUGEXEC(if (globalDims_!=from_field->globalDims_) ERROR("Field size do not match "<< name << " " << from_field->name));
+        for (unsigned int i=0;i< globalDims_; i++) {
+            (*this)(i)=(*from_field)(i);
+        }
+    }
+
 
 protected:
 

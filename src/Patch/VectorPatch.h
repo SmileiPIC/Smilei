@@ -10,96 +10,175 @@
 #include "ElectroMagnFactory.h"
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
+#include "DiagnosticFactory.h"
 
-#include "DiagParams.h"
-#include "PicParams.h"
-#include "LaserParams.h"
+#include "Params.h"
 #include "SmileiMPI.h"
 #include "SimWindow.h"
-#include "Diagnostic.h"
 #include "SmileiIO.h"
 
-class Diagnostic;
-class DiagnosticScalar;
 class Field;
+class Timer;
+class SimWindow; 
 
 //! Class Patch : sub MPI domain 
 //!     Collection of patch = MPI domain
 
 class VectorPatch {
- public :
+public :
+
     VectorPatch();
     ~VectorPatch();
-
-    void resize(int npatches) {patches_.resize(npatches);};
-    int size() const {return patches_.size();};
-
-    inline Patch* operator()(int ipatch) {return patches_[ipatch];};
-    inline void set_refHindex() {refHindex_ = patches_[0]->Hindex();};
-
-    void exchangeParticles(int ispec, PicParams &params, SmileiMPI* smpi);
-#ifdef _NOTFORNOW
-    void exchangeParticles(int ispec, PicParams &params);
-#endif
-    void sumRhoJ( unsigned int diag_flag );
-    void sumRhoJs( int ispec );
-    void exchangeE(  );
-    void exchangeB(  );
-
-    void computeGlobalDiags(int timestep);
-    void computeScalarsDiags(int timestep);
-    void computePhaseSpace();
-
-    void initProbesDiags(PicParams& params, DiagParams &diag_params, int timestep);
-    void finalizeProbesDiags(PicParams& params, DiagParams &diag_params, int timestep);
-    void definePatchDiagsMaster();
-    void updatePatchFieldDump( PicParams& params );
-
-    void createPatches(PicParams& params, DiagParams& diag_params, LaserParams& laser_params, SmileiMPI* smpi, SimWindow* simWindow);
-    void setNbrParticlesToExch(SmileiMPI* smpi);
-    //void exchangePatches(SmileiMPI* smpi);
-    void exchangePatches(SmileiMPI* smpi);
-    void output_exchanges(SmileiMPI* smpi);
     
-    void initDumpFields(PicParams& params, DiagParams &diag_params, int timestep);
-    void finalizeDumpFields(PicParams& params, DiagParams &diag_params, int timestep);
+    void close(SmileiMPI*);
+
+    //! VectorPatch = 
+    //! - std::vector<Patch*>
+    //! - interfaces between main programs & main PIC operators
+    //! - methods to balance computation
+    std::vector<Patch*> patches_;
+
+    std::vector<Diagnostic*> globalDiags;
 
 
-    void solvePoisson( PicParams &params, SmileiMPI* smpi );
+    //! Some vector operations extended to VectorPatch
+    inline void resize(int npatches) {
+        patches_.resize(npatches);
+    }
+    inline int  size() const {
+        return patches_.size();
+    }
+    inline Patch* operator()(int ipatch) {
+        return patches_[ipatch];
+    }
+
+    //! Set Id of the 1st patch stored on the current MPI process
+    //!   used during balancing 
+    inline void set_refHindex() {
+        refHindex_ = patches_[0]->Hindex();
+    }
+    //! Resize vector of field*
+    void update_field_list();
+    void update_field_list(int ispec);
+
+    void createGlobalDiags(Params& params, SmileiMPI* smpi);
+
+    //! get a particular scalar
+    inline double getScalar(std::string name) {
+        DiagnosticScalar* diag = static_cast<DiagnosticScalar*>( globalDiags[0] );
+        return diag->getScalar( name );
+    }
+
+    bool fieldTimeIsNow( int timestep ) {
+        return patches_[0]->sio->field_timeSelection->theTimeIsNow( timestep);
+        //return patches_[0]->localDiags[0]->theTimeIsNow(itime);
+    }
+
+    bool avgFieldTimeIsNow( int timestep ) {
+        return patches_[0]->sio->avgfield_timeSelection->theTimeIsNow( timestep);
+        //return patches_[0]->localDiags[0]->theTimeIsNow(itime);
+    }
+
+    bool printScalars( int timestep ) {
+        return (timestep % static_cast<DiagnosticScalar*>(globalDiags[0])->print_every == 0);
+    }
+
+
+   
+    // Interfaces between main programs & main PIC operators
+    // -----------------------------------------------------
+
+    //! For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
+    void dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow, int* diag_flag, double time_dual,
+                  std::vector<Timer>& timer);
+
+    //! For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
+    void sumDensities( int* diag_flag, std::vector<Timer>& timer );
+
+    //! For all patch, update E and B (Ampere, Faraday, boundary conditions, exchange B and center B)
+    void solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual,
+                      std::vector<Timer>& timer);
+
+    //! For all patch, Compute and Write all diags (Scalars, Probes, Phases, TrackParticles, Fields, Average fields)
+    void runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, int itime, std::vector<Timer>& timer);
+    void initAllDiags(Params& params, SmileiMPI* smpi);
+    void closeAllDiags(SmileiMPI* smpi);
+    void openAllDiags(Params& params, SmileiMPI* smpi);
+
+    //! Check if rho is null (MPI & patch sync)
     bool isRhoNull( SmileiMPI* smpi );
 
-    void exchange( std::vector<Field*> fields );
-    void exchange0( std::vector<Field*> fields );
-    void exchange1( std::vector<Field*> fields );
-    void sum( std::vector<Field*> fields );
+    //! Solve Poisson to initialize E
+    void solvePoisson( Params &params, SmileiMPI* smpi );
 
 
-    void clear() {patches_.clear();}
-    void resizeFields();
+    //  Balancing methods
+    // ------------------
 
-    std::vector<Patch*> patches_;
+    //! Explicits patch movement regarding new patch distribution stored in smpi->patch_count
+    void createPatches(Params& params, SmileiMPI* smpi, SimWindow* simWindow);
+
+    //! Exchange patches, based on createPatches initialization
+    void exchangePatches(SmileiMPI* smpi, Params& params);
+
+    //! Write in a file patches communications
+    void output_exchanges(SmileiMPI* smpi);
+
+    // Lists of fields
+    std::vector<Field*> listJx_;
+    std::vector<Field*> listJy_;
+    std::vector<Field*> listJz_;
+    std::vector<Field*> listrho_;
+    std::vector<Field*> listJxs_;
+    std::vector<Field*> listJys_;
+    std::vector<Field*> listJzs_;
+    std::vector<Field*> listrhos_;
+    std::vector<Field*> listEx_;
+    std::vector<Field*> listEy_;
+    std::vector<Field*> listEz_;
+    std::vector<Field*> listBx_;
+    std::vector<Field*> listBy_;
+    std::vector<Field*> listBz_;
+    
+    //! True if any antennas
+    bool hasAntennas;
+
+    //! 1st patch index of patches_ (stored for balancing op)
+    int refHindex_;
+
+ private :
+
+    //! Methods to access readably to patch PIC operators.
+    //!   - patches_ should not be access outsied of VectorPatch
+    //!   - for now in SimWindow 
+    inline Species* species(int ipatch, int ispec) {
+        return (*this)(ipatch)->vecSpecies[ispec];
+    }
+    
+    inline ElectroMagn* emfields(int ipatch) {
+        return (*this)(ipatch)->EMfields;
+    }
+
+    inline Interpolator* interp(int ipatch){
+        return (*this)(ipatch)->Interp;
+    }
+
+    inline Projector* proj(int ipatch){
+        return (*this)(ipatch)->Proj;
+    }
+
+    inline PartWalls* partwalls(int ipatch){
+        return (*this)(ipatch)->partWalls;
+    }
+
+    //  Internal balancing members
+    // ---------------------------
     std::vector<Patch*> recv_patches_;
 
     std::vector<int> recv_patch_id_;
-    std::vector<int> send_patch_id_;    
+    std::vector<int> send_patch_id_;
 
- private :
-    // 1st patch index of patches_ (stored for balancing op)
-    int refHindex_;
-
-    std::vector<Field*> Ap_;
-    std::vector<Field*> Bx_;
-    std::vector<Field*> By_;
-    std::vector<Field*> Bz_;
-    std::vector<Field*> Ex_;
-    std::vector<Field*> Ey_;
-    std::vector<Field*> Ez_;
-
-    std::vector<Field*> Jx_;
-    std::vector<Field*> Jy_;
-    std::vector<Field*> Jz_;
-    std::vector<Field*> rho_;
-
+    
 };
 
 

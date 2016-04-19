@@ -74,7 +74,7 @@ void Field1D::allocateDims(std::vector<unsigned int> dims)
 void Field1D::deallocateDims()
 {
     delete [] data_;
-    data_!=NULL;
+    data_=NULL;
 }
 
 
@@ -132,22 +132,22 @@ void Field1D::shift_x(unsigned int delta)
 {
     memmove( &(data_[0]), &(data_[delta]), (dims_[0]-delta)*sizeof(double) );
     //memset ( &(data_[dims_[0]-delta]), 0, delta*sizeof(double));
-    for (int i=dims_[0]-delta;i<dims_[0];i++) data_[i] = 0.;
+    for (int i=dims_[0]-delta;i<(int)dims_[0];i++) data_[i] = 0.;
 
 }
 
 double Field1D::norm2(unsigned int istart[3][2], unsigned int bufsize[3][2]) {
+    
     double nrj(0.);
-
+    
     int idxlocalstart[1];
     int idxlocalend[1];
     for ( int i=0 ; i<1 ; i++ ) {
-	idxlocalstart[i] = istart[i][isDual_[i]];
-	idxlocalend[i]   = istart[i][isDual_[i]]+bufsize[i][isDual_[i]];
+        idxlocalstart[i] = istart[i][isDual_[i]];
+        idxlocalend[i]   = istart[i][isDual_[i]]+bufsize[i][isDual_[i]];
     }
-
     for ( int i=idxlocalstart[0] ; i<idxlocalend[0] ; i++ ) {
-	nrj += data_[i]*data_[i];
+        nrj += data_[i]*data_[i];
     }
     
     return nrj;

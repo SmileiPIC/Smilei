@@ -6,14 +6,14 @@
 
 #include "SmileiIO_Cart1D.h"
 
-#include "PicParams.h"
+#include "Params.h"
 #include "Patch.h"
 #include "Field1D.h"
 
 using namespace std;
 
-SmileiIO_Cart1D::SmileiIO_Cart1D( PicParams& params, DiagParams &diagParams, Patch* patch )
-    : SmileiIO( params, diagParams, patch )
+SmileiIO_Cart1D::SmileiIO_Cart1D( Params& params, Patch* patch )
+    : SmileiIO( params, patch )
 {
     createPattern(params,patch);
 }
@@ -22,7 +22,7 @@ SmileiIO_Cart1D::~SmileiIO_Cart1D()
 {
 }
 
-void SmileiIO_Cart1D::createPattern( PicParams& params, Patch* patch )
+void SmileiIO_Cart1D::createPattern( Params& params, Patch* patch )
 {
     std::vector<unsigned int> istart;
     istart = params.oversize;
@@ -109,7 +109,7 @@ void SmileiIO_Cart1D::createPattern( PicParams& params, Patch* patch )
 
 
 
-void SmileiIO_Cart1D::updatePattern( PicParams& params, Patch* patch )
+void SmileiIO_Cart1D::updatePattern( Params& params, Patch* patch )
 {
     for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
       H5Sclose( memspace_ [ ix_isPrim ] );
@@ -159,7 +159,7 @@ void SmileiIO_Cart1D::writeFieldsSingleFileTime( Field* field, hid_t group_id )
 
 } // END writeFieldsSingleFileTime
 
-//! this method writes a fild on an hdf5 file should be used just for debug
+//! this method writes a field on an hdf5 file should be used just for debug (doesn't use params.output_dir)
 void SmileiIO_Cart1D::write( Field* field )
 {
     std::vector<unsigned int> isDual = field->isDual_;

@@ -5,16 +5,15 @@
 #include <iostream>
 #include <string>
 
-#include "PicParams.h"
+#include "Params.h"
 #include "ElectroMagn2D.h"
 #include "Field2D.h"
-#include "Laser.h"
 #include "Tools.h"
 
 using namespace std;
 
-ElectroMagnBC2D_Trans_Damping::ElectroMagnBC2D_Trans_Damping( PicParams &params, LaserParams &laser_params )
-    : ElectroMagnBC( params, laser_params )
+ElectroMagnBC2D_Trans_Damping::ElectroMagnBC2D_Trans_Damping( Params &params, Patch* patch )
+  : ElectroMagnBC( params, patch )
 {
     // number of nodes of the primal and dual grid in the x-direction
     nx_p = params.n_space[0]+1+2*params.oversize[0];
@@ -28,16 +27,16 @@ ElectroMagnBC2D_Trans_Damping::ElectroMagnBC2D_Trans_Damping( PicParams &params,
     ny_l = 50;// To be read in file.in
     cdamp = 1.l;// To be read in file.in
 
-    coeff = new double[ny_l];
+    coeff.resize(ny_l);
     coeff[0] = 0.;
 
-    for (unsigned int j=1 ; j<ny_l ; j++)
-	coeff[j] = 1.-cdamp*((double)(ny_l-j)/(double)ny_l)*((double)(ny_l-j)/(double)ny_l);
+    for (unsigned int j=1 ; j<ny_l ; j++) {
+        coeff[j] = 1.-cdamp*pow((ny_l-(double)j)/ny_l,2);
+    }
 }
 
 ElectroMagnBC2D_Trans_Damping::~ElectroMagnBC2D_Trans_Damping()
 {
-    delete [] coeff;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -47,10 +46,10 @@ void ElectroMagnBC2D_Trans_Damping::apply(ElectroMagn* EMfields, double time_dua
 {
     // Static cast of the fields
     Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
-    Field2D* Ey2D = static_cast<Field2D*>(EMfields->Ey_);
+//    Field2D* Ey2D = static_cast<Field2D*>(EMfields->Ey_);
     Field2D* Ez2D = static_cast<Field2D*>(EMfields->Ez_);
     Field2D* Bx2D = static_cast<Field2D*>(EMfields->Bx_);
-    Field2D* By2D = static_cast<Field2D*>(EMfields->By_);
+//    Field2D* By2D = static_cast<Field2D*>(EMfields->By_);
     Field2D* Bz2D = static_cast<Field2D*>(EMfields->Bz_);
 
 

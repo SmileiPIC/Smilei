@@ -5,63 +5,69 @@
 #include "Patch1D.h"
 #include "Patch2D.h"
 
+#include "DiagsVectorPatch.h"
+
 #include "Tools.h"
 
 class PatchesFactory {
 public:
-    static Patch* create(PicParams& params, DiagParams& diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int  ipatch) {
-	Patch* patch;
-	if (params.geometry == "1d3v")
-	    patch = new Patch1D(params, diag_params, laser_params, smpi, ipatch, 0);
-	else if (params.geometry == "2d3v" )
-	    patch = new Patch2D(params, diag_params, laser_params, smpi, ipatch, 0);
-	else 
-	    ERROR( "Unknwon parameters : " << params.geometry );
-	patch->createType(params);
+    
+    // Create one patch from scratch
+    static Patch* create(Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved=0) {
+        Patch* patch;
+        if (params.geometry == "1d3v")
+            patch = new Patch1D(params, smpi, ipatch, n_moved);
+        else 
+            patch = new Patch2D(params, smpi, ipatch, n_moved);
         return patch;
     }
-
-    static Patch* create(PicParams& params, DiagParams& diag_params, LaserParams& laser_params, SmileiMPI* smpi, unsigned int  ipatch, unsigned int n_moved) {
-	Patch* patch;
-	if (params.geometry == "1d3v")
-	    patch = new Patch1D(params, diag_params, laser_params, smpi, ipatch, n_moved);
-	else if (params.geometry == "2d3v" )
-	    patch = new Patch2D(params, diag_params, laser_params, smpi, ipatch, n_moved);
-	else 
-	    ERROR( "Unknwon parameters : " << params.geometry );
-	patch->createType(params);
-        return patch;
+    
+    // Clone one patch (avoid reading again the namelist)
+    static Patch* clone(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved=0) {
+        Patch* newPatch;
+        if (params.geometry == "1d3v")
+            newPatch = new Patch1D(params, smpi, ipatch, n_moved);
+        else 
+            newPatch = new Patch2D(params, smpi, ipatch, n_moved);
+        return newPatch;
     }
-
-    static VectorPatch createVector(PicParams& params, DiagParams& diag_params, LaserParams& laser_params, SmileiMPI* smpi) {
+    
+    // Create a vector of patches
+    static VectorPatch createVector(Params& params, SmileiMPI* smpi) {
         VectorPatch vecPatches;
-
-	// Compute npatches (1 is std MPI behavior)
-	unsigned int npatches, firstpatch;
+        
+        // Compute npatches (1 is std MPI behavior)
+        unsigned int npatches, firstpatch;
         npatches = smpi->patch_count[smpi->getRank()];// Number of patches owned by current MPI process.
         firstpatch = 0;
         for (unsigned int impi = 0 ; impi < smpi->getRank() ; impi++) {
             firstpatch += smpi->patch_count[impi];
         }
 #ifdef _DEBUGPATCH
-	std::cout << smpi->getRank() << ", nPatch = " << npatches << " - starting at " << firstpatch << std::endl;        
+        std::cout << smpi->getRank() << ", nPatch = " << npatches << " - starting at " << firstpatch << std::endl;        
 #endif
-	// Modified to test Patch integration
-
-	//std::cout << "n_space : " << params.n_space[0] << " " << params.n_space[1] << std::endl;
-	//std::cout << "n_patch : " << params.number_of_patches[0] << " " << params.number_of_patches[1] << std::endl;
-
-	if (smpi->isMaster())
-	    std::cout << "Patch : n_space : " << params.n_space[0] << " " << params.n_space[1] << std::endl;	
-
-        // create species
+        
+        // create patches (create patch#0 then clone it)
         vecPatches.resize(npatches);
-        for (unsigned int ipatch = 0 ; ipatch < npatches ; ipatch++) {
-	    vecPatches.patches_[ipatch] = PatchesFactory::create(params, diag_params, laser_params, smpi, firstpatch + ipatch);
+        vecPatches.patches_[0] = create(params, smpi, firstpatch);
+        for (unsigned int ipatch = 1 ; ipatch < npatches ; ipatch++) {
+            vecPatches.patches_[ipatch] = clone(vecPatches(0), params, smpi, firstpatch + ipatch);
         }
-        vecPatches.set_refHindex() ;
-        vecPatches.resizeFields() ;
-
+        vecPatches.set_refHindex();
+        
+        // Patch initializations which needs some sync (parallel output, are data distribution)
+        int itime(0);
+        DiagsVectorPatch::initDumpFields(vecPatches, params, itime);
+        DiagsVectorPatch::initCollisions(vecPatches, params, smpi );
+        
+        vecPatches.update_field_list();
+        
+        // Figure out if there are antennas
+        vecPatches.hasAntennas = ( vecPatches(0)->EMfields->antennas.size() > 0 );
+        
+        vecPatches.createGlobalDiags( params, smpi );
+        vecPatches.initAllDiags( params, smpi );
+        
         return vecPatches;
     }
 

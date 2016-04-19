@@ -22,10 +22,14 @@ public:
     void update();
     //! Start a new cumulative period
     void restart();
+    //! Start a new cumulative period
+    void reboot();
     //! Return accumulated time
     double getTime(){return time_acc_;}
     //! Print accumulated time in stdout
     void print(double tot);
+    //! name of the timer
+    inline std::string name() {return name_;}
 private:
     //! Accumulated time in current timer
     double time_acc_;

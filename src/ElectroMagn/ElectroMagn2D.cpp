@@ -5,28 +5,28 @@
 #include <iostream>
 #include <sstream>
 
-#include "PicParams.h"
+#include "Params.h"
 #include "Field2D.h"
-#include "Laser.h"
 
 #include "Patch.h"
 #include <cstring>
+
+#include "Profile.h"
+
+#include "ElectroMagnBC.h"
 
 using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn2D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn2D::ElectroMagn2D(PicParams &params, LaserParams &laser_params, Patch* patch) : 
-  ElectroMagn(params, laser_params, patch),
+ElectroMagn2D::ElectroMagn2D(Params &params, vector<Species*>& vecSpecies, Patch* patch) : 
+  ElectroMagn(params, vecSpecies, patch),
 isWestern(patch->isWestern()),
 isEastern(patch->isEastern()),
-isNorthern(patch->isNorthern()),
-isSouthern(patch->isSouthern())
-{
-    // local dt to store
-    int sizeprojbuffer ;
-    
+isSouthern(patch->isSouthern()),
+isNorthern(patch->isNorthern())
+{    
     
     // --------------------------------------------------
     // Calculate quantities related to the simulation box
@@ -67,6 +67,7 @@ isSouthern(patch->isSouthern())
     ny_d = n_space[1]+2+2*oversize[1];
     
     // Allocation of the EM fields
+
     Ex_  = new Field2D(dimPrim, 0, false, "Ex");
     Ey_  = new Field2D(dimPrim, 1, false, "Ey");
     Ez_  = new Field2D(dimPrim, 2, false, "Ez");
@@ -93,10 +94,10 @@ isSouthern(patch->isSouthern())
     
     // Charge currents currents and density for each species
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
-        Jx_s[ispec]  = new Field2D(dimPrim, 0, false, ("Jx_"+params.species_param[ispec].species_type).c_str());
-        Jy_s[ispec]  = new Field2D(dimPrim, 1, false, ("Jy_"+params.species_param[ispec].species_type).c_str());
-        Jz_s[ispec]  = new Field2D(dimPrim, 2, false, ("Jz_"+params.species_param[ispec].species_type).c_str());
-        rho_s[ispec] = new Field2D(dimPrim, ("Rho_"+params.species_param[ispec].species_type).c_str());
+        Jx_s[ispec]  = new Field2D(dimPrim, 0, false, ("Jx_"+vecSpecies[ispec]->species_type).c_str());
+        Jy_s[ispec]  = new Field2D(dimPrim, 1, false, ("Jy_"+vecSpecies[ispec]->species_type).c_str());
+        Jz_s[ispec]  = new Field2D(dimPrim, 2, false, ("Jz_"+vecSpecies[ispec]->species_type).c_str());
+        rho_s[ispec] = new Field2D(dimPrim, ("Rho_"+vecSpecies[ispec]->species_type).c_str());
     }
 
     // ----------------------------------------------------------------
@@ -117,40 +118,40 @@ isSouthern(patch->isSouthern())
     // Define limits of non duplicated elements
     // (by construction 1 (prim) or 2 (dual) elements shared between per MPI process)
     // istart 
-	for (unsigned int i=0 ; i<3 ; i++)
-	    for (unsigned int isDual=0 ; isDual<2 ; isDual++)
-		istart[i][isDual] = 0;
-	for (unsigned int i=0 ; i<nDim_field ; i++) {
-	    for (unsigned int isDual=0 ; isDual<2 ; isDual++) {
-		istart[i][isDual] = oversize[i];
-		if (patch->Pcoordinates[i]!=0) istart[i][isDual]+=1;
-	    }
-	}
+        for (unsigned int i=0 ; i<3 ; i++)
+            for (unsigned int isDual=0 ; isDual<2 ; isDual++)
+                istart[i][isDual] = 0;
+        for (unsigned int i=0 ; i<nDim_field ; i++) {
+            for (unsigned int isDual=0 ; isDual<2 ; isDual++) {
+                istart[i][isDual] = oversize[i];
+                if (patch->Pcoordinates[i]!=0) istart[i][isDual]+=1;
+            }
+        }
     
-	// bufsize = nelements
-	for (unsigned int i=0 ; i<3 ; i++) 
-	    for (unsigned int isDual=0 ; isDual<2 ; isDual++)
-		bufsize[i][isDual] = 1;
+        // bufsize = nelements
+        for (unsigned int i=0 ; i<3 ; i++) 
+            for (unsigned int isDual=0 ; isDual<2 ; isDual++)
+                bufsize[i][isDual] = 1;
     
-	for (unsigned int i=0 ; i<nDim_field ; i++) {
-	    for (int isDual=0 ; isDual<2 ; isDual++)
-		bufsize[i][isDual] = n_space[i] + 1;
+        for (unsigned int i=0 ; i<nDim_field ; i++) {
+            for (int isDual=0 ; isDual<2 ; isDual++)
+                bufsize[i][isDual] = n_space[i] + 1;
         
-	    for (int isDual=0 ; isDual<2 ; isDual++) {
-		bufsize[i][isDual] += isDual; 
-		if ( params.number_of_patches[i]!=1 ) {                
+            for (int isDual=0 ; isDual<2 ; isDual++) {
+                bufsize[i][isDual] += isDual; 
+                if ( params.number_of_patches[i]!=1 ) {                
 
-		    if ( ( !isDual ) && (patch->Pcoordinates[i]!=0) )
-			bufsize[i][isDual]--;
-		    else if  (isDual) {
-			bufsize[i][isDual]--;
-			if ( (patch->Pcoordinates[i]!=0) && (patch->Pcoordinates[i]!=params.number_of_patches[i]-1) ) 
-			    bufsize[i][isDual]--;
-		    }
+                    if ( ( !isDual ) && (patch->Pcoordinates[i]!=0) )
+                        bufsize[i][isDual]--;
+                    else if  (isDual) {
+                        bufsize[i][isDual]--;
+                        if ( (patch->Pcoordinates[i]!=0) && (patch->Pcoordinates[i]!=params.number_of_patches[i]-1) ) 
+                            bufsize[i][isDual]--;
+                    }
                 
-		} // if ( params.number_of_patches[i]!=1 )
-	    } // for (int isDual=0 ; isDual
-	} // for (unsigned int i=0 ; i<nDim_field 
+                } // if ( params.number_of_patches[i]!=1 )
+            } // for (int isDual=0 ; isDual
+        } // for (unsigned int i=0 ; i<nDim_field
     
 }//END constructor Electromagn2D
 
@@ -161,7 +162,6 @@ isSouthern(patch->isSouthern())
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn2D::~ElectroMagn2D()
 {
-    
 }//END ElectroMagn2D
 
 
@@ -239,31 +239,31 @@ void ElectroMagn2D::compute_Ap(Patch* patch)
     
     // vector product Ap = A*p
     for (unsigned int i=1; i<nx_p-1; i++) {
-	for (unsigned int j=1; j<ny_p-1; j++) {
-	    (*Ap_)(i,j) = one_ov_dx_sq*((*p_)(i-1,j)+(*p_)(i+1,j))
-		+ one_ov_dy_sq*((*p_)(i,j-1)+(*p_)(i,j+1))
-		- two_ov_dx2dy2*(*p_)(i,j);
-	}//j
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            (*Ap_)(i,j) = one_ov_dx_sq*((*p_)(i-1,j)+(*p_)(i+1,j))
+                + one_ov_dy_sq*((*p_)(i,j-1)+(*p_)(i,j+1))
+                - two_ov_dx2dy2*(*p_)(i,j);
+        }//j
     }//i
         
         
     // Western BC
     if ( patch->isWestern() ) {
-	for (unsigned int j=1; j<ny_p-1; j++) {
-	    //Ap_(0,j)      = one_ov_dx_sq*(pWest[j]+p_(1,j))
-	    (*Ap_)(0,j)      = one_ov_dx_sq*((*p_)(1,j))
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            //Ap_(0,j)      = one_ov_dx_sq*(pWest[j]+p_(1,j))
+            (*Ap_)(0,j)      = one_ov_dx_sq*((*p_)(1,j))
                 +              one_ov_dy_sq*((*p_)(0,j-1)+(*p_)(0,j+1))
                 -              two_ov_dx2dy2*(*p_)(0,j);
-	}
-	// at corners
-	//Ap_(0,0)           = one_ov_dx_sq*(pWest[0]+p_(1,0))               // West/South
+        }
+        // at corners
+        //Ap_(0,0)           = one_ov_dx_sq*(pWest[0]+p_(1,0))               // West/South
         //    +                   one_ov_dy_sq*(pSouth[0]+p_(0,1))
-	(*Ap_)(0,0)           = one_ov_dx_sq*((*p_)(1,0))               // West/South
+        (*Ap_)(0,0)           = one_ov_dx_sq*((*p_)(1,0))               // West/South
             +                   one_ov_dy_sq*((*p_)(0,1))
             -                   two_ov_dx2dy2*(*p_)(0,0);
-	//Ap_(0,ny_p-1)      = one_ov_dx_sq*(pWest[ny_p-1]+p_(1,ny_p-1))     // West/North
+        //Ap_(0,ny_p-1)      = one_ov_dx_sq*(pWest[ny_p-1]+p_(1,ny_p-1))     // West/North
         //    +                   one_ov_dy_sq*(p_(0,ny_p-2)+pNorth[0])
-	(*Ap_)(0,ny_p-1)      = one_ov_dx_sq*((*p_)(1,ny_p-1))     // West/North
+        (*Ap_)(0,ny_p-1)      = one_ov_dx_sq*((*p_)(1,ny_p-1))     // West/North
             +                   one_ov_dy_sq*((*p_)(0,ny_p-2))
             -                   two_ov_dx2dy2*(*p_)(0,ny_p-1);
     }
@@ -271,21 +271,21 @@ void ElectroMagn2D::compute_Ap(Patch* patch)
     // Eastern BC
     if ( patch->isEastern() ) {
             
-	for (unsigned int j=1; j<ny_p-1; j++) {
-	    //Ap_(nx_p-1,j) = one_ov_dx_sq*(p_(nx_p-2,j)+pEast[j])
-	    (*Ap_)(nx_p-1,j) = one_ov_dx_sq*((*p_)(nx_p-2,j))
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            //Ap_(nx_p-1,j) = one_ov_dx_sq*(p_(nx_p-2,j)+pEast[j])
+            (*Ap_)(nx_p-1,j) = one_ov_dx_sq*((*p_)(nx_p-2,j))
                 +              one_ov_dy_sq*((*p_)(nx_p-1,j-1)+(*p_)(nx_p-1,j+1))
                 -              two_ov_dx2dy2*(*p_)(nx_p-1,j);
-	}
-	// at corners
-	//Ap_(nx_p-1,0)      = one_ov_dx_sq*(p_(nx_p-2,0)+pEast[0])                 // East/South
+        }
+        // at corners
+        //Ap_(nx_p-1,0)      = one_ov_dx_sq*(p_(nx_p-2,0)+pEast[0])                 // East/South
         //    +                   one_ov_dy_sq*(pSouth[nx_p-1]+p_(nx_p-1,1))
-	(*Ap_)(nx_p-1,0)      = one_ov_dx_sq*((*p_)(nx_p-2,0))                 // East/South
+        (*Ap_)(nx_p-1,0)      = one_ov_dx_sq*((*p_)(nx_p-2,0))                 // East/South
             +                   one_ov_dy_sq*((*p_)(nx_p-1,1))
             -                   two_ov_dx2dy2*(*p_)(nx_p-1,0);
-	//Ap_(nx_p-1,ny_p-1) = one_ov_dx_sq*(p_(nx_p-2,ny_p-1)+pEast[ny_p-1])       // East/North
+        //Ap_(nx_p-1,ny_p-1) = one_ov_dx_sq*(p_(nx_p-2,ny_p-1)+pEast[ny_p-1])       // East/North
         //    +                   one_ov_dy_sq*(p_(nx_p-1,ny_p-2)+pNorth[nx_p-1])
-	(*Ap_)(nx_p-1,ny_p-1) = one_ov_dx_sq*((*p_)(nx_p-2,ny_p-1))       // East/North
+        (*Ap_)(nx_p-1,ny_p-1) = one_ov_dx_sq*((*p_)(nx_p-2,ny_p-1))       // East/North
             +                   one_ov_dy_sq*((*p_)(nx_p-1,ny_p-2))
             -                   two_ov_dx2dy2*(*p_)(nx_p-1,ny_p-1);
     }
@@ -296,9 +296,9 @@ double ElectroMagn2D::compute_pAp()
 {
     double p_dot_Ap_local = 0.0;
     for (unsigned int i=index_min_p_[0]; i<=index_max_p_[0]; i++) {
-	for (unsigned int j=index_min_p_[1]; j<=index_max_p_[1]; j++) {
-	    p_dot_Ap_local += (*p_)(i,j)*(*Ap_)(i,j);
-	}
+        for (unsigned int j=index_min_p_[1]; j<=index_max_p_[1]; j++) {
+            p_dot_Ap_local += (*p_)(i,j)*(*Ap_)(i,j);
+        }
     }
     return p_dot_Ap_local;
 } // compute_pAp
@@ -307,10 +307,10 @@ void ElectroMagn2D::update_pand_r(double r_dot_r, double p_dot_Ap)
 {
     double alpha_k = r_dot_r/p_dot_Ap;
     for(unsigned int i=0; i<nx_p; i++) {
-	for(unsigned int j=0; j<ny_p; j++) {
-	    (*phi_)(i,j) += alpha_k * (*p_)(i,j);
-	    (*r_)(i,j)   -= alpha_k * (*Ap_)(i,j);
-	}
+        for(unsigned int j=0; j<ny_p; j++) {
+            (*phi_)(i,j) += alpha_k * (*p_)(i,j);
+            (*r_)(i,j)   -= alpha_k * (*Ap_)(i,j);
+        }
     }
 
 } // update_pand_r
@@ -319,9 +319,9 @@ void ElectroMagn2D::update_p(double rnew_dot_rnew, double r_dot_r)
 {
     double beta_k = rnew_dot_rnew/r_dot_r;
     for (unsigned int i=0; i<nx_p; i++) {
-	for(unsigned int j=0; j<ny_p; j++) {
-	    (*p_)(i,j) = (*r_)(i,j) + beta_k * (*p_)(i,j);
-	}
+        for(unsigned int j=0; j<ny_p; j++) {
+            (*p_)(i,j) = (*r_)(i,j) + beta_k * (*p_)(i,j);
+        }
     }
 } // update_p
 
@@ -336,14 +336,14 @@ void ElectroMagn2D::initE(Patch *patch)
     // ------------------------------------------
     
     // Ex
-    DEBUG(2, "Computing Ex from scalar potential");
+    DEBUG("Computing Ex from scalar potential");
     for (unsigned int i=1; i<nx_d-1; i++) {
         for (unsigned int j=0; j<ny_p; j++) {
             (*Ex2D)(i,j) = ((*phi_)(i-1,j)-(*phi_)(i,j))/dx;
         }
     }
     // Ey
-    DEBUG(2, "Computing Ey from scalar potential");
+    DEBUG("Computing Ey from scalar potential");
     for (unsigned int i=0; i<nx_p; i++) {
         for (unsigned int j=1; j<ny_d-1; j++) {
             (*Ey2D)(i,j) = ((*phi_)(i,j-1)-(*phi_)(i,j))/dy;
@@ -354,14 +354,14 @@ void ElectroMagn2D::initE(Patch *patch)
     // ---------------------
     // Ex / West
     if (patch->isWestern()) {
-        DEBUG(2, "Computing Western BC on Ex");
+        DEBUG("Computing Western BC on Ex");
         for (unsigned int j=0; j<ny_p; j++) {
             (*Ex2D)(0,j) = (*Ex2D)(1,j) + ((*Ey2D)(0,j+1)-(*Ey2D)(0,j))*dx/dy  - dx*(*rho2D)(0,j);
         }
     }
     // Ex / East
     if (patch->isEastern()) {
-        DEBUG(2, "Computing Eastern BC on Ex");
+        DEBUG("Computing Eastern BC on Ex");
         for (unsigned int j=0; j<ny_p; j++) {
             (*Ex2D)(nx_d-1,j) = (*Ex2D)(nx_d-2,j) - ((*Ey2D)(nx_p-1,j+1)-(*Ey2D)(nx_p-1,j))*dx/dy + dx*(*rho2D)(nx_p-1,j);
         }
@@ -382,14 +382,14 @@ void ElectroMagn2D::centeringE( std::vector<double> E_Add )
 
     // Centering electrostatic fields
     for (unsigned int i=0; i<nx_d; i++) {
-	for (unsigned int j=0; j<ny_p; j++) {
-	    (*Ex2D)(i,j) += E_Add[0];
-	}
+        for (unsigned int j=0; j<ny_p; j++) {
+            (*Ex2D)(i,j) += E_Add[0];
+        }
     }
     for (unsigned int i=0; i<nx_p; i++) {
-	for (unsigned int j=0; j<ny_d; j++) {
-	    (*Ey2D)(i,j) += E_Add[1];
-	}
+        for (unsigned int j=0; j<ny_d; j++) {
+            (*Ey2D)(i,j) += E_Add[1];
+        }
     }
 } // centeringE
 
@@ -458,7 +458,6 @@ void ElectroMagn2D::solveMaxwellAmpere()
     Field2D* Jx2D = static_cast<Field2D*>(Jx_);
     Field2D* Jy2D = static_cast<Field2D*>(Jy_);
     Field2D* Jz2D = static_cast<Field2D*>(Jz_);
-    
     // Electric field Ex^(d,p)
     for (unsigned int i=0 ; i<nx_d ; i++) {
         for (unsigned int j=0 ; j<ny_p ; j++) {
@@ -487,58 +486,6 @@ void ElectroMagn2D::solveMaxwellAmpere()
 #endif
 
 }//END solveMaxwellAmpere
-
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Solve the Maxwell-Faraday equation
-// ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn2D::solveMaxwellFaraday()
-{
-    
-    // Static-cast of the fields
-    Field2D* Ex2D = static_cast<Field2D*>(Ex_);
-    Field2D* Ey2D = static_cast<Field2D*>(Ey_);
-    Field2D* Ez2D = static_cast<Field2D*>(Ez_);
-    Field2D* Bx2D = static_cast<Field2D*>(Bx_);
-    Field2D* By2D = static_cast<Field2D*>(By_);
-    Field2D* Bz2D = static_cast<Field2D*>(Bz_);
-    
-    // Magnetic field Bx^(p,d)
-//cout << "nx_p,nx_d-1" << nx_p << " " << nx_d-1 ; 
-//#pragma omp parallel
-//{
-//#pragma omp for schedule(static)
-        for (unsigned int j=1 ; j<ny_p ; j++) {
-            (*Bx2D)(0,j) -= dt_ov_dy * ( (*Ez2D)(0,j) - (*Ez2D)(0,j-1) );
-        }
-//    for (unsigned int i=0 ; i<nx_p;  i++) {
-    for (unsigned int i=1 ; i<nx_p;  i++) {
-        for (unsigned int j=1 ; j<ny_p ; j++) {
-            (*Bx2D)(i,j) -= dt_ov_dy * ( (*Ez2D)(i,j) - (*Ez2D)(i,j-1) );
-        }
-//    }
-    
-    // Magnetic field By^(d,p)
-//#pragma omp for schedule(static)
-//    for (unsigned int i=1 ; i<nx_d-1 ; i++) {
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            (*By2D)(i,j) += dt_ov_dx * ( (*Ez2D)(i,j) - (*Ez2D)(i-1,j) );
-        }
-    //}
-    
-    // Magnetic field Bz^(d,d)
-    //for (unsigned int i=1 ; i<nx_d-1 ; i++) {
-        for (unsigned int j=1 ; j<ny_p ; j++) {
-            (*Bz2D)(i,j) += dt_ov_dy * ( (*Ex2D)(i,j) - (*Ex2D)(i,j-1) )
-            -               dt_ov_dx * ( (*Ey2D)(i,j) - (*Ey2D)(i-1,j) );
-        }
-    }
-//}// end parallel
-#ifdef _PATCH_DEBUG
-    cout << "\tBz = "  << Bz_->norm() << endl;
-#endif
-}//END solveMaxwellFaraday
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -594,7 +541,7 @@ void ElectroMagn2D::centerMagneticFields()
 // ---------------------------------------------------------------------------------------------------------------------
 // Reset/Increment the averaged fields
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn2D::incrementAvgFields(unsigned int time_step, unsigned int ntime_step_avg)
+void ElectroMagn2D::incrementAvgFields(unsigned int time_step)
 {
     // Static cast of the fields
     Field2D* Ex2D     = static_cast<Field2D*>(Ex_);
@@ -609,16 +556,6 @@ void ElectroMagn2D::incrementAvgFields(unsigned int time_step, unsigned int ntim
     Field2D* Bx2D_avg = static_cast<Field2D*>(Bx_avg);
     Field2D* By2D_avg = static_cast<Field2D*>(By_avg);
     Field2D* Bz2D_avg = static_cast<Field2D*>(Bz_avg);
-    
-    // reset the averaged fields for (time_step-1)%ntime_step_avg == 0
-    if ( (time_step-1)%ntime_step_avg==0 ){
-        Ex2D_avg->put_to(0.0);
-        Ey2D_avg->put_to(0.0);
-        Ez2D_avg->put_to(0.0);
-        Bx2D_avg->put_to(0.0);
-        By2D_avg->put_to(0.0);
-        Bz2D_avg->put_to(0.0);
-    }
     
     // increment the time-averaged fields
     
@@ -718,8 +655,6 @@ void ElectroMagn2D::restartRhoJ()
     
 void ElectroMagn2D::restartRhoJs()
 {
-    unsigned int size_proj_buffer = 2*oversize[0]+clrw + 1 ;
-
     for (unsigned int ispec=0 ; ispec < n_species ; ispec++) {
         // -----------------------------------
         // Species currents and charge density
@@ -846,25 +781,35 @@ void ElectroMagn2D::computeTotalRhoJ()
 }
 
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Compute electromagnetic energy flows vectors on the border of the simulation box
+// ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn2D::computePoynting() {
 
+    Field2D* Ex2D     = static_cast<Field2D*>(Ex_);
+    Field2D* Ey2D     = static_cast<Field2D*>(Ey_);
+    Field2D* Ez2D     = static_cast<Field2D*>(Ez_);
+    Field2D* Bx2D_m   = static_cast<Field2D*>(Bx_m);
+    Field2D* By2D_m   = static_cast<Field2D*>(By_m);
+    Field2D* Bz2D_m   = static_cast<Field2D*>(Bz_m);
+
     if (isWestern) {
-        unsigned int iEy=istart[0][Ey_->isDual(0)];
-        unsigned int iBz=istart[0][Bz_m->isDual(0)];
-        unsigned int iEz=istart[0][Ez_->isDual(0)];
-        unsigned int iBy=istart[0][By_m->isDual(0)];
+        unsigned int iEy=istart[0][Ey2D->isDual(0)];
+        unsigned int iBz=istart[0][Bz2D_m->isDual(0)];
+        unsigned int iEz=istart[0][Ez2D->isDual(0)];
+        unsigned int iBy=istart[0][By2D_m->isDual(0)];
         
-        unsigned int jEy=istart[1][Ey_->isDual(1)];
-        unsigned int jBz=istart[1][Bz_m->isDual(1)];
-        unsigned int jEz=istart[1][Ez_->isDual(1)];
-        unsigned int jBy=istart[1][By_m->isDual(1)];
+        unsigned int jEy=istart[1][Ey2D->isDual(1)];
+        unsigned int jBz=istart[1][Bz2D_m->isDual(1)];
+        unsigned int jEz=istart[1][Ez2D->isDual(1)];
+        unsigned int jBy=istart[1][By2D_m->isDual(1)];
         
-        for (unsigned int j=0; j<=bufsize[1][Ez_->isDual(1)]; j++) {
+        for (unsigned int j=0; j<=bufsize[1][Ez2D->isDual(1)]; j++) {
             
-            double Ey__ = 0.5*((*Ey_)(iEy,jEy+j) + (*Ey_)(iEy, jEy+j+1));
-            double Bz__ = 0.25*((*Bz_m)(iBz,jBz+j)+(*Bz_m)(iBz+1,jBz+j)+(*Bz_m)(iBz,jBz+j+1)+(*Bz_m)(iBz+1,jBz+j+1));
-            double Ez__ = (*Ez_)(iEz,jEz+j);
-            double By__ = 0.5*((*By_m)(iBy,jBy+j) + (*By_m)(iBy+1, jBy+j));
+            double Ey__ = 0.5*((*Ey2D)(iEy,jEy+j) + (*Ey2D)(iEy, jEy+j+1));
+            double Bz__ = 0.25*((*Bz2D_m)(iBz,jBz+j)+(*Bz2D_m)(iBz+1,jBz+j)+(*Bz2D_m)(iBz,jBz+j+1)+(*Bz2D_m)(iBz+1,jBz+j+1));
+            double Ez__ = (*Ez2D)(iEz,jEz+j);
+            double By__ = 0.5*((*By2D_m)(iBy,jBy+j) + (*By2D_m)(iBy+1, jBy+j));
             
             poynting_inst[0][0] = dy*timestep*(Ey__*Bz__ - Ez__*By__);
             poynting[0][0]+= poynting_inst[0][0];
@@ -873,22 +818,22 @@ void ElectroMagn2D::computePoynting() {
     
     
     if (isEastern) {
-        unsigned int iEy=istart[0][Ey_->isDual(0)]  + bufsize[0][Ey_->isDual(0)] -1;
-        unsigned int iBz=istart[0][Bz_m->isDual(0)] + bufsize[0][Bz_m->isDual(0)]-1;
-        unsigned int iEz=istart[0][Ez_->isDual(0)]  + bufsize[0][Ez_->isDual(0)] -1;
-        unsigned int iBy=istart[0][By_m->isDual(0)] + bufsize[0][By_m->isDual(0)]-1;
+        unsigned int iEy=istart[0][Ey2D->isDual(0)]  + bufsize[0][Ey2D->isDual(0)] -1;
+        unsigned int iBz=istart[0][Bz2D_m->isDual(0)] + bufsize[0][Bz2D_m->isDual(0)]-1;
+        unsigned int iEz=istart[0][Ez2D->isDual(0)]  + bufsize[0][Ez2D->isDual(0)] -1;
+        unsigned int iBy=istart[0][By2D_m->isDual(0)] + bufsize[0][By2D_m->isDual(0)]-1;
         
-        unsigned int jEy=istart[1][Ey_->isDual(1)];
-        unsigned int jBz=istart[1][Bz_m->isDual(1)];
-        unsigned int jEz=istart[1][Ez_->isDual(1)];
-        unsigned int jBy=istart[1][By_m->isDual(1)];
+        unsigned int jEy=istart[1][Ey2D->isDual(1)];
+        unsigned int jBz=istart[1][Bz2D_m->isDual(1)];
+        unsigned int jEz=istart[1][Ez2D->isDual(1)];
+        unsigned int jBy=istart[1][By2D_m->isDual(1)];
         
-        for (unsigned int j=0; j<=bufsize[1][Ez_->isDual(1)]; j++) {
+        for (unsigned int j=0; j<=bufsize[1][Ez2D->isDual(1)]; j++) {
             
-            double Ey__ = 0.5*((*Ey_)(iEy,jEy+j) + (*Ey_)(iEy, jEy+j+1));
-            double Bz__ = 0.25*((*Bz_m)(iBz,jBz+j)+(*Bz_m)(iBz+1,jBz+j)+(*Bz_m)(iBz,jBz+j+1)+(*Bz_m)(iBz+1,jBz+j+1));
-            double Ez__ = (*Ez_)(iEz,jEz+j);
-            double By__ = 0.5*((*By_m)(iBy,jBy+j) + (*By_m)(iBy+1, jBy+j));
+            double Ey__ = 0.5*((*Ey2D)(iEy,jEy+j) + (*Ey2D)(iEy, jEy+j+1));
+            double Bz__ = 0.25*((*Bz2D_m)(iBz,jBz+j)+(*Bz2D_m)(iBz+1,jBz+j)+(*Bz2D_m)(iBz,jBz+j+1)+(*Bz2D_m)(iBz+1,jBz+j+1));
+            double Ez__ = (*Ez2D)(iEz,jEz+j);
+            double By__ = 0.5*((*By2D_m)(iBy,jBy+j) + (*By2D_m)(iBy+1, jBy+j));
             
             poynting_inst[1][0] = dy*timestep*(Ey__*Bz__ - Ez__*By__);
             poynting[1][0] -= poynting_inst[1][0];
@@ -907,11 +852,11 @@ void ElectroMagn2D::computePoynting() {
         unsigned int jEx=istart[1][Ex_->isDual(1)];
         unsigned int jBz=istart[1][Bz_m->isDual(1)];
         
-        for (unsigned int i=0; i<=bufsize[0][Ez_->isDual(0)]; i++) {
-            double Ez__ = (*Ez_)(iEz+i,jEz);
-            double Bx__ = 0.5*((*Bx_m)(iBx+i,jBx) + (*Bx_m)(iBx+i, jBx+1));
-            double Ex__ = 0.5*((*Ex_)(iEx+i,jEx) + (*Ex_)(iEx+i+1, jEx));
-            double Bz__ = 0.25*((*Bz_m)(iBz+i,jBz)+(*Bz_m)(iBz+i+1,jBz)+(*Bz_m)(iBz+i,jBz+1)+(*Bz_m)(iBz+i+1,jBz+1));
+        for (unsigned int i=0; i<=bufsize[0][Ez2D->isDual(0)]; i++) {
+            double Ez__ = (*Ez2D)(iEz+i,jEz);
+            double Bx__ = 0.5*((*Bx2D_m)(iBx+i,jBx) + (*Bx2D_m)(iBx+i, jBx+1));
+            double Ex__ = 0.5*((*Ex2D)(iEx+i,jEx) + (*Ex2D)(iEx+i+1, jEx));
+            double Bz__ = 0.25*((*Bz2D_m)(iBz+i,jBz)+(*Bz2D_m)(iBz+i+1,jBz)+(*Bz2D_m)(iBz+i,jBz+1)+(*Bz2D_m)(iBz+i+1,jBz+1));
             
             poynting_inst[0][1] = dx*timestep*(Ez__*Bx__ - Ex__*Bz__);
             poynting[0][1] += poynting_inst[0][1];
@@ -919,21 +864,21 @@ void ElectroMagn2D::computePoynting() {
     }// if South
     
     if (isNorthern) {
-        unsigned int iEz=istart[0][Ez_->isDual(0)];
-        unsigned int iBx=istart[0][Bx_m->isDual(0)]; 
-        unsigned int iEx=istart[0][Ex_->isDual(0)];
-        unsigned int iBz=istart[0][Bz_m->isDual(0)];
+        unsigned int iEz=istart[0][Ez2D->isDual(0)];
+        unsigned int iBx=istart[0][Bx2D_m->isDual(0)];
+        unsigned int iEx=istart[0][Ex2D->isDual(0)];
+        unsigned int iBz=istart[0][Bz2D_m->isDual(0)];
         
-        unsigned int jEz=istart[1][Ez_->isDual(1)]  + bufsize[1][Ez_->isDual(1)] -1;
-        unsigned int jBx=istart[1][Bx_m->isDual(1)] + bufsize[1][Bx_m->isDual(1)]-1;
-        unsigned int jEx=istart[1][Ex_->isDual(1)]  + bufsize[1][Ex_->isDual(1)] -1;
-        unsigned int jBz=istart[1][Bz_m->isDual(1)] + bufsize[1][Bz_m->isDual(1)]-1;
+        unsigned int jEz=istart[1][Ez2D->isDual(1)]  + bufsize[1][Ez2D->isDual(1)] -1;
+        unsigned int jBx=istart[1][Bx2D_m->isDual(1)] + bufsize[1][Bx2D_m->isDual(1)]-1;
+        unsigned int jEx=istart[1][Ex2D->isDual(1)]  + bufsize[1][Ex2D->isDual(1)] -1;
+        unsigned int jBz=istart[1][Bz2D_m->isDual(1)] + bufsize[1][Bz2D_m->isDual(1)]-1;
         
         for (unsigned int i=0; i<=bufsize[0][Ez_->isDual(0)]; i++) {
-            double Ez__ = (*Ez_)(iEz+i,jEz);
-            double Bx__ = 0.5*((*Bx_m)(iBx+i,jBx) + (*Bx_m)(iBx+i, jBx+1));
-            double Ex__ = 0.5*((*Ex_)(iEx+i,jEx) + (*Ex_)(iEx+i+1, jEx));
-            double Bz__ = 0.25*((*Bz_m)(iBz+i,jBz)+(*Bz_m)(iBz+i+1,jBz)+(*Bz_m)(iBz+i,jBz+1)+(*Bz_m)(iBz+i+1,jBz+1));
+            double Ez__ = (*Ez2D)(iEz+i,jEz);
+            double Bx__ = 0.5*((*Bx2D_m)(iBx+i,jBx) + (*Bx2D_m)(iBx+i, jBx+1));
+            double Ex__ = 0.5*((*Ex2D)(iEx+i,jEx) + (*Ex2D)(iEx+i+1, jEx));
+            double Bz__ = 0.25*((*Bz2D_m)(iBz+i,jBz)+(*Bz2D_m)(iBz+i+1,jBz)+(*Bz2D_m)(iBz+i,jBz+1)+(*Bz2D_m)(iBz+i+1,jBz+1));
             
             poynting_inst[1][1] = dx*timestep*(Ez__*Bx__ - Ex__*Bz__);
             poynting[1][1] -= poynting_inst[1][1];
@@ -941,3 +886,51 @@ void ElectroMagn2D::computePoynting() {
     }//if North
 
 }
+
+void ElectroMagn2D::applyExternalField(Field* my_field,  Profile *profile, Patch* patch) {
+    
+    Field2D* field2D=static_cast<Field2D*>(my_field);
+        
+    vector<double> pos(2,0);
+    pos[0]      = dx*((double)(patch->getCellStartingGlobalIndex(0))+(field2D->isDual(0)?-0.5:0.));
+    double pos1 = dy*((double)(patch->getCellStartingGlobalIndex(1))+(field2D->isDual(1)?-0.5:0.));
+    int N0 = (int)field2D->dims()[0];
+    int N1 = (int)field2D->dims()[1];
+    
+    // UNSIGNED INT LEADS TO PB IN PERIODIC BCs
+    for (int i=0 ; i<N0 ; i++) {
+        pos[1] = pos1;
+        for (int j=0 ; j<N1 ; j++) {
+            (*field2D)(i,j) += profile->valueAt(pos);
+            pos[1] += dy;
+        }
+        pos[0] += dx;
+    }
+    
+    if (emBoundCond[0]!=0) emBoundCond[0]->save_fields_BC2D_Long(my_field);
+    if (emBoundCond[1]!=0) emBoundCond[1]->save_fields_BC2D_Long(my_field);
+    if (emBoundCond[2]!=0) emBoundCond[2]->save_fields_BC2D_Trans(my_field);
+    if (emBoundCond[3]!=0) emBoundCond[3]->save_fields_BC2D_Trans(my_field);
+    
+}
+
+
+
+void ElectroMagn2D::initAntennas(Patch* patch)
+{
+    
+    // Filling the space profiles of antennas
+    for (unsigned int i=0; i<antennas.size(); i++) {
+        if      (antennas[i].fieldName == "Jx")
+            antennas[i].field = new Field2D(dimPrim, 0, false, "Jx");
+        else if (antennas[i].fieldName == "Jy")
+            antennas[i].field = new Field2D(dimPrim, 1, false, "Jy");
+        else if (antennas[i].fieldName == "Jz")
+            antennas[i].field = new Field2D(dimPrim, 2, false, "Jz");
+        
+        if (antennas[i].field) 
+            applyExternalField(antennas[i].field, antennas[i].space_profile, patch);
+    }
+
+}
+

@@ -6,7 +6,7 @@
 
 class Projector2D2Order : public Projector2D {
 public:
-    Projector2D2Order(PicParams&, Patch* patch);
+    Projector2D2Order(Params&, Patch* patch);
     ~Projector2D2Order();
 
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
@@ -23,11 +23,14 @@ public:
 
 
     //! Project local current densities if particles sorting activated in Species::dynamics
-    void operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_dim1);
-    void operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_dim1);
+    void operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_dim1, int* iold, double* delta);
+    void operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double gf, unsigned int bin, unsigned int b_dim1, int* iold, double* delta);
 
     //! Project global current densities if Ionization in Species::dynamics,
     void operator() (Field* Jx, Field* Jy, Field* Jz, Particles &particles, int ipart, LocalFields Jion);
+
+    //!Wrapper
+    void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, int diag_flag, int b_lastdim, int ispec);
 
 private:
     double one_third;

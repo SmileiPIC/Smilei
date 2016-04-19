@@ -4,9 +4,10 @@
 #include <map>
 
 #include "Tools.h"
-#include "PicParams.h"
+#include "Params.h"
 #include "Field.h"
 #include "Particles.h"
+
 
 //! Class Ionization: generic class allowing to define Ionization physics
 class Ionization
@@ -14,7 +15,7 @@ class Ionization
 
 public:
     //! Constructor for Ionization
-    Ionization(PicParams& params, int ispec);
+    Ionization(Params& params, Species * species);
     virtual ~Ionization();
 
     //! Overloading of () operator
@@ -33,7 +34,7 @@ protected:
     double EC_to_au;
     double au_to_w0;
 
-    double wavelength_SI;
+    double referenceAngularFrequency_SI;
     double dt;
     unsigned int nDim_field;
     unsigned int nDim_particle;

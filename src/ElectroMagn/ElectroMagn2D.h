@@ -4,14 +4,15 @@
 #include "ElectroMagn.h"
 #include "Field.h"
 #include "Field2D.h"
-class PicParams;
+
+class Params;
 
 //! class ElectroMagn2D containing all information on the electromagnetic fields & currents for 2d3v simulations
 class ElectroMagn2D : public ElectroMagn
 {
 public:
     //! Constructor for ElectroMagn2D
-    ElectroMagn2D(PicParams &params, LaserParams &laser_params, Patch* patch);
+    ElectroMagn2D(Params &params, std::vector<Species*>& vecSpecies, Patch* patch);
 
     //! Destructor for ElectroMagn2D
     ~ElectroMagn2D();
@@ -44,9 +45,6 @@ public:
     //! Method used to solve Maxwell-Ampere equation
     void solveMaxwellAmpere();
 
-    //! Method used to solve Maxwell-Faraday equation
-    void solveMaxwellFaraday();
-
     //! Method used to save the Magnetic fields (used to center them)
     void saveMagneticFields();
 
@@ -54,7 +52,7 @@ public:
     void centerMagneticFields();
 
     //! Method used to reset/increment the averaged fields
-    void incrementAvgFields(unsigned int time_step, unsigned int ntime_step_avg);
+    void incrementAvgFields(unsigned int time_step);
     
     //! Method used to initialize the total charge densities and currents
     void restartRhoJ();
@@ -104,6 +102,11 @@ public:
     //! compute Poynting on borders
     void computePoynting();
 
+    //! Method used to impose external fields
+    void applyExternalField(Field*, Profile*, Patch*);
+    
+    void initAntennas(Patch* patch);
+        
 private:
     
     //! from smpi is west

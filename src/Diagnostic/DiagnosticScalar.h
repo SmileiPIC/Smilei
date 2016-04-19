@@ -1,18 +1,11 @@
 #ifndef DIAGNOSTICSCALAR_H
 #define DIAGNOSTICSCALAR_H
 
-#include <vector>
-#include <string>
-#include <iostream>
-#include <fstream>
+#include "Diagnostic.h"
 
-#include "Tools.h"
-#include "Species.h"
-
-class PicParams;
-class ElectroMagn;
-class DiagParams;
-class Patch;
+#include "Params.h"
+#include "Patch.h"
+#include "SmileiMPI.h"
 
 
 //! double-int structure to communicate min/max and location trough MPI 
@@ -25,82 +18,91 @@ struct val_index
 };
 
 
-//! class that calculates scalars and writes them on a file
-
-//! the user who wants to implement a scalar diagnostic, can fill the scalars map in species::computeScalar
-class DiagnosticScalar {
-    friend class VectorPatch;
+class DiagnosticScalar : public Diagnostic {
     friend class SmileiMPI;
-    friend class SimWindow;
-public:
-    //! creator (called from Diagnostic)
-    DiagnosticScalar(PicParams &params, DiagParams &diagParams, Patch* patch);
-    //! destructor
-    ~DiagnosticScalar(){};
+
+public :
+    //! Default constructor
+    DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
+    //! Cloning constructor
+    DiagnosticScalar( DiagnosticScalar * scalar );
+    //! Default destructor
+    ~DiagnosticScalar();
     
-    //! close the file
-    void close();
-
-    //! close the file
-    void open();
-
-    //! calls the compute_proc_gather, compute and write
-    void run(int timestep, ElectroMagn* EMfields, std::vector<Species*>&);
-
-    //! ask to each processor to compute the scalars and gather them in the map mpi_spec_scalars[cpu][species]
-    void compute(ElectroMagn* EMfields, std::vector<Species*>&);
-
-    //! write the out_list data onto a file
-    void write(int timestep);
-
+    virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile );
+    virtual void setFile( Diagnostic* diag );
+    
+    virtual void closeFile();
+    
+    virtual bool prepare( Patch* patch, int timestep );
+    
+    virtual void run( Patch* patch, int timestep );
+    
+    virtual void write(int timestep);
+    
     //! get a particular scalar
     double getScalar(std::string name);
-    //! get a particular scalar
-    void setScalar(std::string name, double value);
-
-    std::vector<std::pair<std::string,double> >::iterator itDiagScalar;
-
-private:
-    //! check if patch is master (from patch)
-    bool isMaster;
+    
+    //! every for the standard pic timeloop output
+    unsigned int print_every;
     
     //! initial energy (kinetic + EM)
     double Energy_time_zero;
     
     //! energy used for the normalization of energy balance (former total energy)
     double EnergyUsedForNorm;
+
+
+private :
     
-    //! this is copied from params
-    const double res_time;
+    // Specific methods
+    void compute( Patch* patch, int timestep );
     
-    //! every step to calculate scalars
-    const unsigned int every;
     
-    //! copied from params
-    double cell_volume;
+    //! set a particular scalar
+    void setScalar(std::string name, double value);
+    
+    //! increment a particular scalar
+    void incrementScalar(std::string name, double value);
+    
+    //! append to outlist
+    void append(std::string, double);
+    
+    //! prepend to outlist
+    void prepend(std::string, double);
+    
+    //! check if key is allowed
+    bool allowedKey(std::string);
+    
+    bool defined(std::string);
     
     //! write precision
     unsigned int precision;
     
-    //! this is a list to keep variable name and value
-    std::vector<std::pair<std::string,double> > out_list;
-        
-    //! append to outlist
-    void append(std::string, double);
-
-    //! prepend to outlist
-    void prepend(std::string, double);
-
     //! list of keys for scalars to be written
     std::vector<std::string> vars;
-
-    //! check if key is allowed
-    bool allowedKey(std::string);
-
-protected :    
+    
+    //! these are lists to keep variable names and values
+    std::vector<std::string> out_key;
+    std::vector<double>      out_value;
+    //! width of each field
+    std::vector<unsigned int> out_width;
+    
+    //! copied from params
+    double cell_volume;
+    
+    //! this is copied from params
+    double res_time;
+    
+    double dt;
+    
     //! output stream
     std::ofstream fout;
+    
+
+
 
 };
 
 #endif
+

@@ -7,33 +7,67 @@
 
 #include "Field.h"
 #include "Tools.h"
-#include "LaserParams.h"
+#include "Profile.h"
+#include "Species.h"
 
-class PicParams;
-class Species;
+
+class Params;
 class Projector;
 class Laser;
 class ElectroMagnBC;
 class SimWindow;
 class Patch;
+class Solver;
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! This structure contains the properties of each ExtField
+// ---------------------------------------------------------------------------------------------------------------------
+struct ExtField {
+    //! fields to which apply the external field
+    std::vector<std::string> fields;
+    
+    Profile * profile;
+};
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! This structure contains the properties of each Antenna
+// ---------------------------------------------------------------------------------------------------------------------
+struct Antenna {
+    //! Jx, Jy or Jz
+    std::string fieldName;
+    
+    Profile *time_profile;
+    Profile *space_profile;
+    
+    Field* field;
+};
 
 //! class ElectroMagn: generic class containing all information on the electromagnetic fields and currents
-
 class ElectroMagn
 {
 
 public:
-
+    //! Constructor for Electromagn
+    ElectroMagn( Params &params, std::vector<Species*>& vecSpecies, Patch* patch );
+    //! Extra initialization. Used in ElectroMagnFactory
+    void finishInitialization(int nspecies, Patch* patch);
+    
+    //! Destructor for Electromagn
+    virtual ~ElectroMagn();
+    
+    void clean();
+        
     std::vector<unsigned int> dimPrim;
     std::vector<unsigned int> dimDual;
 
     std::vector<unsigned int> index_bc_min;
     std::vector<unsigned int> index_bc_max;
 
-    //! time-step (from picparams)
+    //! time-step (from Params)
     const double timestep;
     
-    //! cell length (from picparams)
+    //! cell length (from Params)
     const std::vector<double> cell_length;
 
     //! \todo Generalise this to none-cartersian geometry (e.g rz, MG & JD)
@@ -95,7 +129,12 @@ public:
     //! time-average z-component of the magnetic field
     Field* Bz_avg;
 
+    //! all Fields in electromagn (filled in ElectromagnFactory.h)
+    std::vector<Field*> allFields;
 
+    //! all Fields in electromagn (filled in ElectromagnFactory.h)
+    std::vector<Field*> allFields_avg;
+    
     //! Vector of charge density and currents for each species
     const unsigned int n_species;
     std::vector<Field*> Jx_s;
@@ -129,10 +168,7 @@ public:
     const std::vector<unsigned int> oversize;
 
     //! Constructor for Electromagn
-    ElectroMagn( PicParams &params, LaserParams &laser_params, Patch* patch );
-
-    //! Destructor for Electromagn
-    virtual ~ElectroMagn();
+    ElectroMagn( Params &params, Patch* patch );
 
     //! Method used to dump data contained in ElectroMagn
     void dump();
@@ -185,14 +221,16 @@ public:
     //! \todo check time_dual or time_prim (MG)
     //! method used to solve Maxwell's equation (takes current time and time-step as input parameter)
     virtual void solveMaxwellAmpere() = 0;
-    virtual void solveMaxwellFaraday() = 0;
+    //! Maxwell Faraday Solver
+    Solver* MaxwellFaradaySolver_;
     virtual void saveMagneticFields() = 0;
     virtual void centerMagneticFields() = 0;
-    void boundaryConditions(int itime, double time_dual, Patch* patch, PicParams &params, SimWindow* simWindow);
+    void boundaryConditions(int itime, double time_dual, Patch* patch, Params &params, SimWindow* simWindow);
 
     void movingWindow_x(unsigned int shift);
+    void laserDisabled();
     
-    virtual void incrementAvgFields(unsigned int time_step, unsigned int ntime_step_avg) = 0;
+    virtual void incrementAvgFields(unsigned int time_step) = 0;
         
     //! compute Poynting on borders
     virtual void computePoynting() = 0;
@@ -208,28 +246,76 @@ public:
 
     //! Compute local square norm of charge denisty is not null
     inline double computeRhoNorm2() {
-	return rho_->norm2(istart, bufsize);
+        return rho_->norm2(istart, bufsize);
     }
+    
+    //! external fields parameters the key string is the name of the field and the value is a vector of ExtField
+    std::vector<ExtField> extFields;
+    
+    //! Method used to impose external fields (apply to all Fields)
+    void applyExternalFields(Patch*);
+    
+    //! Method used to impose external fields (apply to a given Field)
+    virtual void applyExternalField(Field*, Profile*, Patch*) = 0 ;
+    
+    //! Antenna
+    std::vector<Antenna> antennas;
+    
+    //! Method used to impose external currents (aka antennas)
+    void applyAntennas(SmileiMPI*, double time);
+    
+    //! Method that fills the initial spatial profile of the antenna
+    virtual void initAntennas(Patch* patch) {};
 
     double computeNRJ();
     double getLostNrjMW() const {return nrj_mw_lost;}
     
     double getNewFieldsNRJ() const {return nrj_new_fields;}
+    
     void reinitDiags() {
-	nrj_mw_lost = 0.;
-	nrj_new_fields = 0.;
+        nrj_mw_lost = 0.;
+        nrj_new_fields = 0.;
     }
 
     inline void storeNRJlost( double nrj ) { nrj_mw_lost = nrj; }
-    void laserDisabled();
 
-private:
-    
+    inline int getMemFootPrint() {
+
+        // Size of temporary arrays in Species::createParticles
+        /*
+        int N1(1), N2(1);
+        if (nDim_field>1) {
+            N1 = dimPrim[1];
+            if (nDim_field>2) N2 = dimPrim[2];
+        }
+        int tmpArrayInit = (dimPrim[0]*N1*N2)*sizeof(double) //
+            + dimPrim[0]*sizeof(double**)
+            + dimPrim[0] * N1 * sizeof(double*);
+        tmpArrayInit *= 9;
+        std::cout << tmpArrayInit  << std::endl;
+        */
+
+        int emSize = 9+4; // 3 x (E, B, Bm) + 3 x J, rho
+        if (true) // For now, no test to compute or not per species
+            emSize += n_species * 4; // 3 x J, rho
+        if (true) // For now, no test to compute or not average
+            emSize += 6; // 3 x (E, B)
+
+        for (size_t i=0 ; i<nDim_field ; i++)
+            emSize *= dimPrim[i];
+
+        emSize *= sizeof(double);
+        return emSize;
+    }
+
     //! Vector of boundary-condition per side for the fields
     std::vector<ElectroMagnBC*> emBoundCond;
 
+private:
+    
     //! Accumulate nrj lost with moving window
     double nrj_mw_lost;
+
     //! Accumulate nrj added with new fields
     double nrj_new_fields;
 

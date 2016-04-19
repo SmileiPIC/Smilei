@@ -1,42 +1,49 @@
-#include "ElectroMagnBC.h"
 
 #include <cstdlib>
-
 #include <iostream>
 #include <string>
 
-#include "PicParams.h"
-#include "LaserParams.h"
+#include "ElectroMagnBC.h"
+
+#include "Params.h"
 #include "Laser.h"
 #include "Tools.h"
+#include "Patch.h"
 
 using namespace std;
 
-ElectroMagnBC::ElectroMagnBC( PicParams &params, LaserParams &laser_params )
+// Constructor for ElectromagnBC
+ElectroMagnBC::ElectroMagnBC( Params &params, Patch* patch )
 {
-    // check for laser conditions
-    laser_.resize(laser_params.n_laser);
-
-    for (unsigned int i=0; i<laser_.size(); i++) {
-        DEBUG(5,"Initializing Laser "<<i);        
-        laser_[i] = new Laser(params,laser_params, i);
-    }
-
+    vecLaser.resize(0);
+    
+    // time step
     dt = params.timestep;
-
 }
 
+// Destructor for ElectromagnBC
 ElectroMagnBC::~ElectroMagnBC()
 {
-    for (unsigned int i=0; i< laser_.size(); i++) {
-        delete laser_[i];
+    for (unsigned int i=0; i< vecLaser.size(); i++) {
+        delete vecLaser[i];
     }
 }
 
+
+void ElectroMagnBC::clean()
+{
+    for (unsigned int i=0; i<vecLaser.size(); i++) {
+        vecLaser[i]->clean();
+    }
+}
+
+
+
+// Disable all lasers when using moving window
 void ElectroMagnBC::laserDisabled()
 {
-    for (unsigned int i=0; i< laser_.size(); i++) {
-        laser_[i]->disabled();
+    for (unsigned int i=0; i< vecLaser.size(); i++) {
+        vecLaser[i]->disable();
     }
 }
 

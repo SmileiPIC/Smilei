@@ -13,16 +13,17 @@ class Interpolator2D4Order : public Interpolator2D
 {
 
 public:
-    Interpolator2D4Order(PicParams&, Patch*);
+    Interpolator2D4Order(Params&, Patch*);
     ~Interpolator2D4Order(){};
 
     void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc);
+    void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread);
     void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc);
     inline double compute( double* coeffx, double* coeffy, Field2D* f, int idx, int idy) {
 	double interp_res(0.);
-	for (int iloc=0 ; iloc<5 ; iloc++) {
-	    for (int jloc=0 ; jloc<5 ; jloc++) {
-		interp_res += coeffx[iloc] * coeffy[jloc] * (*f)(idx+iloc,idy+jloc);
+	for (int iloc=-2 ; iloc<3 ; iloc++) {
+	    for (int jloc=-2 ; jloc<3 ; jloc++) {
+		interp_res += *(coeffx+iloc) * *(coeffy+jloc) * (*f)(idx+iloc,idy+jloc);
 	    }
 	}
 	return interp_res;
@@ -45,6 +46,8 @@ private:
     int ip_, jp_;
     // Last dual index computed
     int id_, jd_;
+    // Last delta computed
+    double deltax, deltay;
     // Interpolation coefficient on Prim grid
     double coeffxp_[5], coeffyp_[5];
     // Interpolation coefficient on Dual grid

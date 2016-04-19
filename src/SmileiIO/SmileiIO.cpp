@@ -11,25 +11,32 @@
 
 #include <mpi.h>
 
-#include "PicParams.h"
-#include "DiagParams.h"
+#include "Params.h"
 #include "Patch.h"
+#include "SmileiMPI.h"
 #include "SimWindow.h"
 #include "ElectroMagn.h"
 #include "Species.h"
 
+
 using namespace std;
 
-SmileiIO::SmileiIO( PicParams& params, DiagParams& diagParams,  Patch* patch) : 
+SmileiIO::SmileiIO( Params& params, Patch* patch ) : 
 global_file_id_(0),
 global_file_id_avg(0)
 {
+    fieldsToDump.resize(0);
     //
     // Create property list for collective dataset write.
     //
     write_plist = H5Pcreate(H5P_DATASET_XFER);
-    H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);
+    if (!params.simu_is_cartesian)
+        H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);
+    else
+        H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_COLLECTIVE);
+    
 }
+
 
 void SmileiIO::setFiles( hid_t masterFileId, hid_t masterFileIdAvg )
 {
@@ -37,75 +44,75 @@ void SmileiIO::setFiles( hid_t masterFileId, hid_t masterFileIdAvg )
     global_file_id_avg = masterFileIdAvg;
 }
 
-void SmileiIO::createFiles( PicParams& params, DiagParams& diagParams,  Patch* patch)
+void SmileiIO::createFiles( Params& params, Patch* patch)
 {
+    
+    // ----------------------------
     // Management of global IO file
+    // ----------------------------
     MPI_Info info  = MPI_INFO_NULL;
     hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
     H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, info);
-    global_file_id_    = H5Fcreate( "Fields.h5",     H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+
+    // Fields.h5
+    // ---------
+    global_file_id_  = H5Fcreate( "Fields.h5",     H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+
+    // Create property list for collective dataset write: for Fields.h5
+    H5::attr(global_file_id_, "res_time", params.res_time);
+
+    H5::attr(global_file_id_, "res_space", params.res_space);
+    vector<double> my_cell_length=params.cell_length;
+    my_cell_length.resize(params.nDim_field);
+    H5::attr(global_file_id_, "cell_length", my_cell_length);
+    H5::attr(global_file_id_, "sim_length", params.sim_length);
+
+    // Fields_avg.h5
+    // -------------
     global_file_id_avg = 0;
-    if  (diagParams.ntime_step_avg!=0)
+    if  (dumpAvgFields_) {
         global_file_id_avg = H5Fcreate( "Fields_avg.h5", H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
-    H5Pclose(plist_id);
-	
-    hid_t sid  = H5Screate(H5S_SCALAR);
-    hid_t aid = H5Acreate (global_file_id_, "res_time", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, write_plist);
-    H5Awrite(aid, H5T_NATIVE_DOUBLE, &(params.res_time));
-    H5Sclose(sid);
-    H5Aclose(aid);
-
-    sid  = H5Screate(H5S_SCALAR);
-    aid = H5Acreate (global_file_id_, "every", H5T_NATIVE_UINT, sid, H5P_DEFAULT, write_plist);
-    H5Awrite(aid, H5T_NATIVE_UINT, &(diagParams.fieldDump_every));
-    H5Sclose(sid);
-    H5Aclose(aid);
+        
+        // Create property list for collective dataset write: for Fields.h5
+        H5::attr(global_file_id_avg, "res_time", params.res_time);
+        H5::attr(global_file_id_avg, "res_space", params.res_space);
+        H5::attr(global_file_id_avg, "cell_length", params.cell_length);
+        H5::attr(global_file_id_avg, "sim_length", params.sim_length);
+    }
     
-    hsize_t dimsPos = params.res_space.size();
-    sid = H5Screate_simple(1, &dimsPos, NULL);
-    aid = H5Acreate (global_file_id_, "res_space", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, write_plist);
-    H5Awrite(aid, H5T_NATIVE_DOUBLE, &(params.res_space[0]));
-    H5Aclose(aid);
-    H5Sclose(sid);
-
-    dimsPos = params.sim_length.size();
-    sid = H5Screate_simple(1, &dimsPos, NULL);
-    vector<double> sim_length_norm=params.sim_length;
-    std::transform(sim_length_norm.begin(), sim_length_norm.end(), sim_length_norm.begin(),std::bind1st(std::multiplies<double>(),1.0/params.conv_fac));
-
-    aid = H5Acreate (global_file_id_, "sim_length", H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, write_plist);
-    H5Awrite(aid, H5T_NATIVE_DOUBLE, &(sim_length_norm[0]));
-    H5Aclose(aid);
-    H5Sclose(sid);
-
+    H5Pclose(plist_id);
+    
 }
 
 SmileiIO::~SmileiIO()
 {
+    delete field_timeSelection;
+    delete avgfield_timeSelection;
+    
     // Management of global IO file
     if (global_file_id_ != 0)
-	H5Fclose( global_file_id_ );
+        H5Fclose( global_file_id_ );
     // Management of global IO file
     if (global_file_id_avg != 0)
         H5Fclose( global_file_id_avg );
-	
+    
     H5Pclose( write_plist );
 }
 
 
-void SmileiIO::createTimeStepInSingleFileTime( int time, DiagParams &diagParams )
+void SmileiIO::createTimeStepInSingleFileTime( int time )
 {
     ostringstream name_t;
     name_t.str("");
     name_t << "/" << setfill('0') << setw(10) << time;
-	
-    DEBUG(10,"[hdf] GROUP _________________________________ " << name_t.str());
+        
+    DEBUG("[hdf] GROUP _________________________________ " << name_t.str());
     hid_t group_id = H5Gcreate(global_file_id_, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     H5Gclose(group_id);
 
-    if (diagParams.ntime_step_avg!=0) {
-	group_id = H5Gcreate(global_file_id_avg, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	H5Gclose(group_id);
+    if (dumpAvgFields_) {
+        group_id = H5Gcreate(global_file_id_avg, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        H5Gclose(group_id);
     }
  
 }
@@ -113,64 +120,41 @@ void SmileiIO::createTimeStepInSingleFileTime( int time, DiagParams &diagParams 
 // ---------------------------------------------------------------------------------------------------------------------
 // Write all fields of all time step in the same file
 // ---------------------------------------------------------------------------------------------------------------------
-void SmileiIO::writeAllFieldsSingleFileTime( ElectroMagn* EMfields, int time )
+void SmileiIO::writeAllFieldsSingleFileTime( std::vector<Field*> &fields, int time, bool avg )
 {
+    // Make group name: "/0000000000", etc.
     ostringstream name_t;
     name_t.str("");
     name_t << "/" << setfill('0') << setw(10) << time;
-	
-    DEBUG(10,"[hdf] GROUP _________________________________ " << name_t.str());
-    hid_t group_id = H5Gopen(global_file_id_, name_t.str().c_str(), H5P_DEFAULT);
-	
-    writeFieldsSingleFileTime( EMfields->Ex_, group_id );
-    writeFieldsSingleFileTime( EMfields->Ey_, group_id );
-    writeFieldsSingleFileTime( EMfields->Ez_, group_id );
-    writeFieldsSingleFileTime( EMfields->Bx_m, group_id );
-    writeFieldsSingleFileTime( EMfields->By_m, group_id );
-    writeFieldsSingleFileTime( EMfields->Bz_m, group_id );
-    writeFieldsSingleFileTime( EMfields->Jx_, group_id );
-    writeFieldsSingleFileTime( EMfields->Jy_, group_id );
-    writeFieldsSingleFileTime( EMfields->Jz_, group_id );
-    writeFieldsSingleFileTime( EMfields->rho_, group_id );
-	
-    // for all species related quantities
-    for (unsigned int ispec=0; ispec<EMfields->n_species; ispec++) {
-        writeFieldsSingleFileTime( EMfields->rho_s[ispec], group_id );
-        writeFieldsSingleFileTime( EMfields->Jx_s[ispec],  group_id );
-        writeFieldsSingleFileTime( EMfields->Jy_s[ispec],  group_id );
-        writeFieldsSingleFileTime( EMfields->Jz_s[ispec],  group_id );
+
+    // Create group inside HDF5 file
+    hid_t file_id;
+    if( avg ) file_id = global_file_id_avg; // different file for avg fields
+    else      file_id = global_file_id_;
+    //hid_t group_id = H5::group(file_id, name_t.str());
+    hid_t group_id = H5Gopen(file_id, name_t.str().c_str(), H5P_DEFAULT);
+
+
+    
+    for (unsigned int i=0; i<fields.size(); i++) {
+        if (fieldsToDump.size()==0) {
+            //MESSAGE( "write all ...");
+            writeFieldsSingleFileTime(fields[i], group_id );
+            if (avg) fields[i]->put_to(0.0);
+        } else {
+            for (unsigned int j=0; j<fieldsToDump.size(); j++) {
+                if (fields[i]->name==fieldsToDump[j]) {
+                    //MESSAGE( "write " << fields[i]->name);
+                    writeFieldsSingleFileTime( fields[i], group_id );
+                }
+                if (avg) fields[i]->put_to(0.0);
+            }
+        }
     }
-	
+    
     H5Gclose(group_id);
-	
-    if (global_file_id_) H5Fflush(global_file_id_, H5F_SCOPE_GLOBAL );
-
+    
+    H5Fflush( file_id, H5F_SCOPE_GLOBAL );
+    
 }
 
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Write all fields of all time step in the same file
-// ---------------------------------------------------------------------------------------------------------------------
-void SmileiIO::writeAvgFieldsSingleFileTime( ElectroMagn* EMfields, int time )
-{
-    ostringstream name_t;
-    name_t.str("");
-    name_t << "/" << setfill('0') << setw(10) << time;
-	
-    DEBUG(10,"[hdf] GROUP _________________________________ " << name_t.str());
-    hid_t group_id = H5Gopen(global_file_id_avg, name_t.str().c_str(), H5P_DEFAULT);
-
-    writeFieldsSingleFileTime( EMfields->Ex_avg, group_id );
-    writeFieldsSingleFileTime( EMfields->Ey_avg, group_id );
-    writeFieldsSingleFileTime( EMfields->Ez_avg, group_id );
-    writeFieldsSingleFileTime( EMfields->Bx_avg, group_id );
-    writeFieldsSingleFileTime( EMfields->By_avg, group_id );
-    writeFieldsSingleFileTime( EMfields->Bz_avg, group_id );
-	
-	
-    H5Gclose(group_id);
-
-    if (global_file_id_avg) H5Fflush(global_file_id_avg, H5F_SCOPE_GLOBAL );
-	
-}
