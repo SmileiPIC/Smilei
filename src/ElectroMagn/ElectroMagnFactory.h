@@ -44,7 +44,6 @@ public:
         // -----------------
         unsigned int numExtFields=PyTools::nComponents("ExtField");
         for (unsigned int n_extfield = 0; n_extfield < numExtFields; n_extfield++) {
-            MESSAGE("ExtField " << n_extfield);
             ExtField extField;
             PyObject * profile;
             std::ostringstream name;
