@@ -606,55 +606,37 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
     // Set Index of the 1st patch of the vector yet on current MPI rank
     // Is this really necessary ? It should be done already ...
     refHindex_ = (*this)(0)->Hindex();
+
+    //Current number of patch
+    nPatches_now = this->size() ;
     
     //When going to openMP, these two vectors must be stored by patch and not by vectorPatch.
     recv_patch_id_.clear();
     send_patch_id_.clear();
     
-    
-    // define recv_patches_ parsing patch_count
-    // Go to 1st patch to recv (maybe yet on current CPU)
     // istart = Index of the futur 1st patch
-    // recv : store real Hindex
     int istart( 0 );
     for (int irk=0 ; irk<smpi->getRank() ; irk++) istart += smpi->patch_count[irk];
-    //recv_patch_id stores all the hindex this process must own at the end of the exchange.
+
+    // recv_patch_id_ = vector of the hindex this process must own at the end of the exchange.
     for (int ipatch=0 ; ipatch<smpi->patch_count[smpi->getRank()] ; ipatch++)
         recv_patch_id_.push_back( istart+ipatch );
     
-    
-    // define send_patches_ parsing patch_count
-    // send_patch_id_ stores indices from 0 to current npatch(before exchange)
-    //for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-    //    send_patch_id_.push_back( ipatch );
-    //}
-    //Current number of patch
-    nPatches_now = this->size() ;
-    
-    
-    //std::vector<int> tmp(0);
     //Loop on current patches...
-    //for (unsigned int ipatch=0 ; ipatch<send_patch_id_.size() ; ipatch++)
     for (unsigned int ipatch=0 ; ipatch < nPatches_now ; ipatch++)
       //if        current hindex        <  future refHindex  OR current hindex > future last hindex...
         if ( ( refHindex_+ipatch < recv_patch_id_[0] ) || ( refHindex_+ipatch > recv_patch_id_.back() ) )
-      //    put this patch in tmp. We will have to send it away.
-            //tmp.push_back( ipatch );
+      //    Put this patch in the send list. 
             send_patch_id_.push_back( ipatch );
     
-    //  nPatches <- future number of patches owned.
     // Backward loop on future patches...
     for ( int ipatch=recv_patch_id_.size()-1 ; ipatch>=0 ; ipatch--) {
       //if      future patch hindex  >= current refHindex             AND    future patch hindex <= current last hindex
-        //if ( ( recv_patch_id_[ipatch]>=refHindex_+send_patch_id_[0] ) && ( recv_patch_id_[ipatch]<=refHindex_+send_patch_id_[send_patch_id_.size()-1] ) ) {
-        //                                          send_patch_id_[0] should be equal to 0 ??
         if ( ( recv_patch_id_[ipatch]>=refHindex_ ) && ( recv_patch_id_[ipatch] <= refHindex_ + nPatches_now - 1 ) ) {
             //Remove this patch from the receive list because I already own it.
             recv_patch_id_.erase( recv_patch_id_.begin()+ipatch );
         }
     }
-    
-    //send_patch_id_ = tmp;
     
     if (simWindow) n_moved = simWindow->getNmoved(); 
     // Store in local vector future patches

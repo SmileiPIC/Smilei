@@ -94,6 +94,8 @@ void SmileiMPI::init( Params& params )
     // Initialize patch environment 
     patch_count.resize(smilei_sz, 0);
     target_patch_count.resize(smilei_sz, 0);
+    capabilities.resize(smilei_sz, 1);
+    Tcapabilities = smilei_sz;
 
     // Initialize patch distribution
     init_patch_count(params);
@@ -153,7 +155,7 @@ void SmileiMPI::init_patch_count( Params& params)
 
     unsigned int Npatches, r,Ncur,Pcoordinates[3],ncells_perpatch, Tcapabilities;
     double Tload,Tcur, Lcur, local_load, local_load_temp, above_target, below_target;
-    std::vector<unsigned int> mincell,maxcell,capabilities; //Min and max values of non empty cells for each species and in each dimension.
+    std::vector<unsigned int> mincell,maxcell; //Min and max values of non empty cells for each species and in each dimension.
     vector<double> density_length(params.nDim_field,0.);
     //Load of a cell = coef_cell*load of a particle.
     //Load of a frozen particle = coef_frozen*load of a particle.
@@ -162,12 +164,13 @@ void SmileiMPI::init_patch_count( Params& params)
     unsigned int tot_species_number = PyTools::nComponents("Species");
     mincell.resize(tot_species_number*3);
     maxcell.resize(tot_species_number*3);
-                     
-    capabilities.resize(smilei_sz, 1); //Capabilities of devices hosting the different mpi processes. All capabilities are assumed to be equal for the moment.
-    //Compute total capability: Tcapabilities
-    Tcapabilities = 0;
-    for (unsigned int i = 0; i < smilei_sz; i++)
-        Tcapabilities += capabilities[i];
+       
+    // Define capabilities here if not default.              
+    //Capabilities of devices hosting the different mpi processes. All capabilities are assumed to be equal for the moment.
+    //Compute total capability: Tcapabilities. Uncomment if cpability != 1 per MPI rank
+    //Tcapabilities = 0;
+    //for (unsigned int i = 0; i < smilei_sz; i++)
+    //    Tcapabilities += capabilities[i];
 
     //Compute target load: Tload = Total load * local capability / Total capability.
     
@@ -330,7 +333,6 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
 
     unsigned int Npatches, r,Ncur,Pcoordinates[3],ncells_perpatch, Tcapabilities, Lmin, Lmintemp;
     double Tload,Tcur, Lcur, above_target, below_target;
-    std::vector<unsigned int> mincell,maxcell,capabilities; //Min and max values of non empty cells for each species and in each dimension.
     //Load of a cell = coef_cell*load of a particle.
     //Load of a frozen particle = coef_frozen*load of a particle.
     std::vector<double> Lp,Lp_global;
@@ -351,12 +353,6 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
  
     unsigned int tot_species_number = PyTools::nComponents("Species");
 
-    mincell.resize(tot_species_number*3);
-    maxcell.resize(tot_species_number*3);
-    capabilities.resize(smilei_sz, 1); //Capabilities of devices hosting the different mpi processes. All capabilities are assumed to be equal for the moment.
-    Tcapabilities = 0;
-    for (unsigned int i = 0; i < smilei_sz; i++)
-        Tcapabilities += capabilities[i];
     Lp.resize(patch_count[smilei_rk],0.);
     Lp_global.resize(Npatches,0.);
 
