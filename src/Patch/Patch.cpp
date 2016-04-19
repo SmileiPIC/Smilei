@@ -77,10 +77,10 @@ void Patch::initStep1(Params& params)
     
     nbNeighbors_ = 2;
     neighbor_.resize(nDim_fields_);
-    corner_neighbor_.resize(params.nDim_field);
+    //corner_neighbor_.resize(params.nDim_field);
     for ( int iDim = 0 ; iDim < nDim_fields_ ; iDim++ ) {
         neighbor_[iDim].resize(2,MPI_PROC_NULL);
-        corner_neighbor_[iDim].resize(2,MPI_PROC_NULL);
+        //corner_neighbor_[iDim].resize(2,MPI_PROC_NULL);
     }
     MPI_neighbor_.resize(nDim_fields_);
     for ( int iDim = 0 ; iDim < nDim_fields_; iDim++ ) {
@@ -201,16 +201,6 @@ void Patch::updateMPIenv(SmileiMPI* smpi)
         for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++)
             MPI_neighbor_[iDim][iNeighbor] = smpi->hrank(neighbor_[iDim][iNeighbor]);
     
-#ifdef _PATCH_DEBUG
-        cout << "\n\tPatch Corner decomp : " << corner_neighbor_[0][1] << "\t" << neighbor_[1][1]  << "\t" << corner_neighbor_[1][1] << endl;
-        cout << "\tPatch Corner decomp : " << neighbor_[0][0] << "\t" << hindex << "\t" << neighbor_[0][1] << endl;
-        cout << "\tPatch Corner decomp : " << corner_neighbor_[0][0] << "\t" << neighbor_[1][0]  << "\t" << corner_neighbor_[1][0] << endl;
-        
-        cout << "\n\tMPI Corner decomp : " << "MPI_PROC_NULL" << "\t" << MPI_neighbor_[1][1]  << "\t" << "MPI_PROC_NULL" << endl;
-        cout << "\tMPI Corner decomp : " << MPI_neighbor_[0][0] << "\t" << smpi->getRank() << "\t" << MPI_neighbor_[0][1] << endl;
-        cout << "\tMPI Corner decomp : " << "MPI_PROC_NULL" << "\t" << MPI_neighbor_[1][0]  << "\t" << "MPI_PROC_NULL" << endl;
-#endif
-
 } // END updateMPIenv
 
 

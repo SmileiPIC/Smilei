@@ -216,7 +216,7 @@ protected:
     //! Hilbert index of neighbors patch
     std::vector< std::vector<int> > neighbor_;
     //! Hilbert index of corners neighbors patch
-    std::vector< std::vector<int> > corner_neighbor_; // Kept for Moving Windows
+    //std::vector< std::vector<int> > corner_neighbor_; // Kept for Moving Windows
 
     //! MPI rank of neighbors patch
     std::vector< std::vector<int> > MPI_neighbor_;

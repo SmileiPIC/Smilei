@@ -163,15 +163,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
 	if (vecPatches(ipatch)->neighbor_[0][0] != vecPatches(ipatch)->hindex) continue;
 	    
-	//For now also need to update neighbor_, corner_neighbor and their MPI counterparts even if these will be obsolete eventually.
-	vecPatches(ipatch)->corner_neighbor_[1][0]= vecPatches(ipatch)->neighbor_[1][0];
-	vecPatches(ipatch)->neighbor_[1][0]=        vecPatches(ipatch)->corner_neighbor_[0][0];
-
-
-	vecPatches(ipatch)->corner_neighbor_[1][1]= vecPatches(ipatch)->neighbor_[1][1];
-	vecPatches(ipatch)->neighbor_[1][1]=        vecPatches(ipatch)->corner_neighbor_[0][1];
-
-
 	//Compute missing part of the new neighborhood tables.
 	vecPatches(ipatch)->Pcoordinates[0]--;
 
@@ -179,12 +170,11 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 	int ycall = vecPatches(ipatch)->Pcoordinates[1]-1;
 	if (params.bc_em_type_x[0]=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
 	if (params.bc_em_type_y[0]=="periodic" && ycall <0) ycall += (1<<params.mi[1]);
-	vecPatches(ipatch)->corner_neighbor_[0][0] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, ycall);
-	ycall = vecPatches(ipatch)->Pcoordinates[1];
+	vecPatches(ipatch)->neighbor_[1][0] = generalhilbertindex(params.mi[0] , params.mi[1], vecPatches(ipatch)->Pcoordinates[0], ycall)       ;
 	vecPatches(ipatch)->neighbor_[0][0] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, vecPatches(ipatch)->Pcoordinates[1]);
 	ycall = vecPatches(ipatch)->Pcoordinates[1]+1;
 	if (params.bc_em_type_y[0]=="periodic" && ycall >= 1<<params.mi[1]) ycall -= (1<<params.mi[1]);
-	vecPatches(ipatch)->corner_neighbor_[0][1] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, ycall);
+	vecPatches(ipatch)->neighbor_[1][1] = generalhilbertindex(params.mi[0] , params.mi[1], vecPatches(ipatch)->Pcoordinates[0], ycall) ;
 	
     }
 
@@ -235,3 +225,157 @@ void SimWindow::setOperators(VectorPatch& vecPatches)
 
 
 }
+
+void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params)
+{
+  int xcall, ycall, h0;
+    Patch* mypatch;
+    int tid(0), nthds(1), tag, Rneighbor, Lneighbor;
+    #ifdef _OPENMP
+        tid = omp_get_thread_num();
+        nthds = omp_get_num_threads();
+    #endif
+
+    //Initialization for inter-process communications
+
+    h0 = vecPatches(0)->hindex;
+    int nSpecies( vecPatches(0)->vecSpecies.size() );
+    int nDim_Parts( vecPatches(0)->vecSpecies[0]->particles->dimension() );
+    vector<int> nbrOfPartsSend(nSpecies,0);
+    vector<int> nbrOfPartsRecv(nSpecies,0);
+    vector < vector<int> > store_npart_recv;
+    std::vector<Patch*> send_patches_;
+    MPI_Request srequest[8+3*nSpecies];//Number of calls made to MPI_Isend for each patch exchanged.
+    //vector <MPI_Request*> srequests;
+
+    #pragma omp single
+    {
+        for (unsigned int i=0; i< nthds; i++){
+            patch_to_be_created[i].clear();
+        }
+        vecPatches_old.resize(vecPatches.size());
+    }
+
+
+    #pragma omp for schedule(static)
+    for (unsigned int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++) {
+        vecPatches_old[ipatch] = vecPatches(ipatch);
+    } //Barrier at the end of this omp for is important to prevent an update of x_moved before resolution of isMoving in the main loop.
+    #pragma omp single
+    {
+        x_moved += cell_length_x_*params.n_space[0];
+        n_moved += params.n_space[0];
+    }
+
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++) {
+         mypatch = vecPatches_old[ipatch];
+
+        //If my right neighbor does not belong to me ...
+        if (mypatch->MPI_neighbor_[0][1] != mypatch->MPI_me_)
+            // Store it as a patch to be created later.
+            patch_to_be_created[tid].push_back(ipatch);
+
+        //If my left neighbor does not belong to me ...
+        if (mypatch->MPI_neighbor_[0][0] != mypatch->MPI_me_) {
+            //... I might have to MPI send myself to the left...
+            if (mypatch->MPI_neighbor_[0][0] != MPI_PROC_NULL){
+                send_patches_.push_back(mypatch); // Stores pointers to patches to be sent in send_patches_
+                //Tag is the index of the patch after reception (left neighbour index because it is sent to the left).
+                tag = mypatch->neighbor_[0][0];
+                for (int ispec=0 ; ispec<nSpecies ; ispec++) {
+	            nbrOfPartsSend[ispec] = mypatch->vecSpecies[ispec]->getNbrOfParticles();
+	        }
+                store_npart_recv.push_back(nbrOfPartsSend);
+                //Left neighbour to which the patch should be sent to.
+                Lneighbor = mypatch->MPI_neighbor_[0][0];
+                //Sends the number of particles first
+       //         srequests.push_back(srequest);
+//	        smpi->send( store_npart_recv.back(), Lneighbor, tag, &srequests.back()[0] );
+                //Then sends the patch
+//	        smpi->send( mypatch, Lneighbor, tag, &srequests.back()[1] );
+            } else {
+            //Erase my data right away. Data of sent patches will be erased later (after the receive has been completed)
+                //mypatch->Diags->probes.setFile(0);
+                //mypatch->sio->setFiles(0,0);
+                //delete (mypatch);
+                for (unsigned int ispec=0 ; ispec<mypatch->vecSpecies.size(); ispec++) delete (mypatch->vecSpecies[ispec]);
+	        mypatch->vecSpecies.clear();
+                delete (mypatch->EMfields);
+                delete (mypatch->Interp);
+                delete (mypatch->Proj);
+            }
+        } else { //In case my left neighbor does belong to me:
+            // I become my left neighbor.
+            //Nothing to do on global indexes or min_locals. The Patch structure remains the same and unmoved.
+            //Update hindex and coordinates.
+            mypatch->neighbor_[0][1] =  mypatch->hindex;
+            mypatch->hindex = mypatch->neighbor_[0][0];
+            mypatch->Pcoordinates[0] -= 1;
+
+            //Compute missing part of the new neighborhood tables.
+            xcall = mypatch->Pcoordinates[0]-1;
+            ycall = mypatch->Pcoordinates[1]-1;
+            if (params.bc_em_type_x[0]=="periodic" && xcall < 0) xcall += (1<<params.mi[0]);
+            if (params.bc_em_type_y[0]=="periodic" && ycall <0) ycall += (1<<params.mi[1]);
+	    mypatch->neighbor_[0][0] = generalhilbertindex(params.mi[0] , params.mi[1], xcall, mypatch->Pcoordinates[1]);
+	    mypatch->neighbor_[1][0] = generalhilbertindex(params.mi[0] , params.mi[1], mypatch->Pcoordinates[0], ycall );
+            ycall = mypatch->Pcoordinates[1]+1;
+            if (params.bc_em_type_y[0]=="periodic" && ycall >= 1<<params.mi[1]) ycall -= (1<<params.mi[1]);
+	    mypatch->neighbor_[1][1] = generalhilbertindex(params.mi[0] , params.mi[1], mypatch->Pcoordinates[0], ycall );
+            
+            //Reflect the changes on MPI neighbors
+            mypatch->MPI_neighbor_[0][0] = smpi->hrank(mypatch->neighbor_[0][0]);
+            mypatch->MPI_neighbor_[1][0] = smpi->hrank(mypatch->neighbor_[1][0]);
+            mypatch->MPI_neighbor_[1][1] = smpi->hrank(mypatch->neighbor_[1][1]);
+
+            //And finally put the patch at the correct rank in vecPatches.
+            vecPatches.patches_[mypatch->hindex - h0 ] = mypatch ; 
+             
+       }
+
+    }//End loop on Patches. This barrier matters.
+
+    //Creation of new Patches if necessary
+    //The "new" operator must be included in a single area otherwise conflicts arise for unknown reasons.
+    #pragma omp single
+    {
+         for (unsigned int i=0; i<nthds; i++){
+             for (unsigned int j=0; j< patch_to_be_created[i].size(); j++){
+                 vecPatches.patches_[patch_to_be_created[i][j]] = new Patch(params, laser_params, smpi, h0 + patch_to_be_created[i][j], n_moved);
+                 //stores all indices of patch_to_be_created in a single vector.
+                 if (i>0) patch_to_be_created[0].push_back(patch_to_be_created[i][j]);
+             }
+         }
+    } // This barrier is important.
+
+    //Initialization of new Patches if necessary.
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch = 0 ; ipatch < patch_to_be_created[0].size() ; ipatch++) {
+         mypatch = vecPatches(patch_to_be_created[0][ipatch]);
+         Rneighbor = mypatch->MPI_neighbor_[0][1];
+         //If I receive something from my right neighbour:
+         if (Rneighbor != MPI_PROC_NULL){
+             smpi->recv( &nbrOfPartsRecv, Rneighbor, mypatch->Hindex() );
+	     for (int ispec=0 ; ispec<nSpecies ; ispec++)
+	         mypatch->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv[ispec], nDim_Parts );
+             smpi->recv( mypatch, Rneighbor, mypatch->Hindex() );
+         }
+         // And else, nothing to do.
+    } //This barrier matters. 
+
+    //Each thread erases data of sent patches
+    for (int j= send_patches_.size()-1; j>=0; j--){
+        mypatch = send_patches_[j];
+        for (unsigned int ispec=0 ; ispec<mypatch->vecSpecies.size(); ispec++) delete (mypatch->vecSpecies[ispec]);
+	mypatch->vecSpecies.clear();
+        delete (mypatch->EMfields);
+        delete (mypatch->Interp);
+        delete (mypatch->Proj);
+        
+        //send_patches_[j]->Diags->probes.setFile(0);
+        //send_patches_[j]->sio->setFiles(0,0);
+        //delete send_patches_[j];
+    }
+}
+
