@@ -302,6 +302,8 @@ public:
         }
         
         newSpecies->initOperators(params, patch);
+        
+        return newSpecies;
     }
     
     
@@ -314,9 +316,11 @@ public:
         
         // read from python namelist
         unsigned int tot_species_number = PyTools::nComponents("Species");
+        bool ionization = false;
         for (unsigned int ispec = 0; ispec < tot_species_number; ispec++) {
             
             Species* thisSpecies = SpeciesFactory::create(params, ispec, patch);
+            if (thisSpecies->Ionize) ionization = true;
             
             // Put the newly created species in the vector of species
             retSpecies.push_back(thisSpecies);
@@ -325,8 +329,44 @@ public:
             if (patch->isMaster()) MESSAGE(2, "Species " << ispec << " (" << thisSpecies->species_type << ") created,\t check for scalars for the number of particles" );
         }
         
-        chooseElectronSpecies(retSpecies, patch);
-        
+        // we cycle species to fix electron species for ionizable species
+        if( ionization ) {
+            int electron_species_index = 0;
+            for (unsigned int ispec=0; ispec<retSpecies.size(); ispec++) {
+                if (retSpecies[ispec]->species_type=="electron") {
+                    if (electron_species_index) {
+                        if ( patch->isMaster() ) WARNING("Two species named electron : " << retSpecies[ispec]->speciesNumber << " and " << retSpecies[electron_species_index]->speciesNumber);
+                    } else {
+                        electron_species_index=ispec;
+                    }
+                }
+            }
+            if (!electron_species_index) {
+                for (unsigned int ispec=0; ispec<retSpecies.size(); ispec++) {
+                    double charge=0;
+                    PyTools::extract("charge",charge ,"Species",ispec);
+                    if (retSpecies[ispec]->mass==1 && charge==-1) {
+                        if (electron_species_index) {
+                            if ( patch->isMaster() )WARNING("Two electron species: " << retSpecies[ispec]->species_type << " and " << retSpecies[electron_species_index]->species_type);
+                        } else {
+                            electron_species_index=ispec;
+                        }
+                    }
+                }
+            }
+            for (unsigned int i=0; i<retSpecies.size(); i++) {
+                if (retSpecies[i]->Ionize)  {
+                    if (electron_species_index) {
+                        retSpecies[i]->electron_species = retSpecies[electron_species_index];
+                        retSpecies[i]->electron_species_index = electron_species_index;
+                        if (patch->isMaster() ) MESSAGE(1,"Ionization: Added " << retSpecies[i]->electron_species->species_type << " species to species " << retSpecies[i]->species_type);
+                    } else {
+                        if (patch->isMaster() ) ERROR("Ionization needs a species called \"electron\" to be defined");
+                    }
+                }
+            }
+        }
+                
         return retSpecies;
     }
     
@@ -341,48 +381,14 @@ public:
             retSpecies.push_back( newSpecies );
         }
         
-        chooseElectronSpecies(retSpecies, patch);
-        
-        return retSpecies;
-    }
-    
-    // Method to loop through species and find the electron species for ionization
-    static void chooseElectronSpecies(std::vector<Species*> vecSpecies, Patch* patch)
-    {
-        // we cycle species to fix electron species for ionizable species
-        for (unsigned int i=0; i<vecSpecies.size(); i++) {
-            if (vecSpecies[i]->Ionize)  {
-                Species *electron_species=NULL;
-                for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
-                    if (vecSpecies[ispec]->species_type=="electron") {
-                        if (electron_species) {
-                            if ( patch->isMaster() ) WARNING("Two species named electron : " << vecSpecies[ispec]->speciesNumber << " and " << electron_species->speciesNumber);
-                        } else {
-                            electron_species=vecSpecies[ispec];
-                        }
-                    }
-                }
-                if (!electron_species) {
-                    for (unsigned int ispec=0; ispec<vecSpecies.size(); ispec++) {
-                        double charge=0;
-                        PyTools::extract("charge",charge ,"Species",ispec);
-                        if (vecSpecies[ispec]->mass==1 && charge==-1) {
-                            if (electron_species) {
-                                if ( patch->isMaster() )WARNING("Two electron species: " << vecSpecies[ispec]->species_type << " and " << electron_species->species_type);
-                            } else {
-                                electron_species=vecSpecies[ispec];
-                            }
-                        }
-                    }
-                }
-                if (electron_species) {
-                    vecSpecies[i]->electron_species=electron_species;
-                    if (patch->isMaster() ) MESSAGE(1,"Ionization: Added " << electron_species->species_type << " species to species " << vecSpecies[i]->species_type);
-                } else {
-                    if (patch->isMaster() ) ERROR("Ionization needs a species called \"electron\" to be defined");
-                }
+        for (unsigned int i=0; i<retSpecies.size(); i++) {
+            if (retSpecies[i]->Ionize) {
+                retSpecies[i]->electron_species_index = vecSpecies[i]->electron_species_index;
+                retSpecies[i]->electron_species = retSpecies[retSpecies[i]->electron_species_index];
             }
         }
+        
+        return retSpecies;
     }
 
 };

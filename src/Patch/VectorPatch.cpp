@@ -630,13 +630,21 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
             send_patch_id_.push_back( ipatch );
     
     // Backward loop on future patches...
+    int existing_patch_id = -1;
     for ( int ipatch=recv_patch_id_.size()-1 ; ipatch>=0 ; ipatch--) {
       //if      future patch hindex  >= current refHindex             AND    future patch hindex <= current last hindex
         if ( ( recv_patch_id_[ipatch]>=refHindex_ ) && ( recv_patch_id_[ipatch] <= refHindex_ + nPatches_now - 1 ) ) {
+            existing_patch_id = recv_patch_id_[ipatch];
             //Remove this patch from the receive list because I already own it.
             recv_patch_id_.erase( recv_patch_id_.begin()+ipatch );
         }
     }
+    
+    // Get an existing patch that will be used for cloning
+    if( existing_patch_id<0 )
+        ERROR("No patch to clone. This should never happen!");
+    Patch * existing_patch = (*this)(existing_patch_id-refHindex_);
+    cout << smpi->getRank() <<"/"<< existing_patch->hindex << "/" << existing_patch_id << endl;
     
     if (simWindow) n_moved = simWindow->getNmoved(); 
     // Store in local vector future patches

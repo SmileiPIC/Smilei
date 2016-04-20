@@ -26,9 +26,9 @@ public:
     static Patch* clone(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch, unsigned int n_moved=0) {
         Patch* newPatch;
         if (params.geometry == "1d3v")
-            newPatch = new Patch1D(params, smpi, ipatch, n_moved);
+            newPatch = new Patch1D(static_cast<Patch1D*>(patch), params, smpi, ipatch, n_moved);
         else 
-            newPatch = new Patch2D(params, smpi, ipatch, n_moved);
+            newPatch = new Patch2D(static_cast<Patch2D*>(patch), params, smpi, ipatch, n_moved);
         return newPatch;
     }
     

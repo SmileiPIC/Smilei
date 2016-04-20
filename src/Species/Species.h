@@ -168,6 +168,7 @@ public:
     
     //! to keep rack of ionized electrons
     Species *electron_species;
+    int electron_species_index;
     
     //! Cluster width in number of cells
     unsigned int clrw; //Should divide the number of cells in X of a single MPI domain. 
