@@ -248,14 +248,11 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
     MPI_Request srequest[8+3*nSpecies];//Number of calls made to MPI_Isend for each patch exchanged.
     //vector <MPI_Request*> srequests;
 
-    #pragma omp single
-    {
-        for (unsigned int i=0; i< nthds; i++){
-            patch_to_be_created[i].clear();
-        }
-        vecPatches_old.resize(vecPatches.size());
+    #pragma omp for schedule(static)
+    for (unsigned int i=0; i< nthds; i++){
+        patch_to_be_created[i].clear();
     }
-
+    vecPatches_old.resize(vecPatches.size());
 
     #pragma omp for schedule(static)
     for (unsigned int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++) {
@@ -274,13 +271,13 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
         //If my right neighbor does not belong to me ...
         if (mypatch->MPI_neighbor_[0][1] != mypatch->MPI_me_)
             // Store it as a patch to be created later.
-            patch_to_be_created[tid].push_back(ipatch);
+            patch_to_be_created[tid].push_back(ipatch); //(shared omp vector of int)
 
         //If my left neighbor does not belong to me ...
         if (mypatch->MPI_neighbor_[0][0] != mypatch->MPI_me_) {
             //... I might have to MPI send myself to the left...
             if (mypatch->MPI_neighbor_[0][0] != MPI_PROC_NULL){
-                send_patches_.push_back(mypatch); // Stores pointers to patches to be sent in send_patches_
+                send_patches_.push_back(mypatch); // Stores pointers to patches to be sent in send_patches_ (private omp vector of pointers to patches)
                 //Tag is the index of the patch after reception (left neighbour index because it is sent to the left).
                 tag = mypatch->neighbor_[0][0];
                 for (int ispec=0 ; ispec<nSpecies ; ispec++) {
@@ -299,11 +296,21 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
                 //mypatch->Diags->probes.setFile(0);
                 //mypatch->sio->setFiles(0,0);
                 //delete (mypatch);
-                for (unsigned int ispec=0 ; ispec<mypatch->vecSpecies.size(); ispec++) delete (mypatch->vecSpecies[ispec]);
-	        mypatch->vecSpecies.clear();
-                delete (mypatch->EMfields);
-                delete (mypatch->Interp);
-                delete (mypatch->Proj);
+                //for (unsigned int ispec=0 ; ispec<mypatch->vecSpecies.size(); ispec++) delete (mypatch->vecSpecies[ispec]);
+	        //mypatch->vecSpecies.clear();
+                //delete (mypatch->EMfields);
+                //delete (mypatch->Interp);
+                //delete (mypatch->Proj);
+
+                // Compute energy lost 
+	        energy_field_lost += mypatch->EMfields->computeNRJ();
+	        for ( int ispec=0 ; ispec<vecPatches(0)->vecSpecies.size() ; ispec++ )
+	            energy_part_lost[ispec] += mypatch->vecSpecies[ispec]->computeNRJ();
+
+                mypatch->sio->setFiles(0,0);
+                delete  vecPatches_old.patches_[ipatch];
+                vecPatches.patches_[ipatch] = NULL; //Not necessary but for safety measures.
+
             }
         } else { //In case my left neighbor does belong to me:
             // I become my left neighbor.
