@@ -315,10 +315,10 @@ int main (int argc, char* argv[])
             simWindow->operate(vecPatches, smpiData, params);
         }
         timer[5].update();
-
-
-
-	if ((itime%params.balancing_freq == 0)&&(smpiData->getSize()!=1)) {
+        
+        
+        
+        if ((itime%params.balancing_freq == 0)&&(smpiData->getSize()!=1)) {
             timer[7].restart();
             //partperMPI = 0;
             //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
@@ -326,20 +326,19 @@ int main (int argc, char* argv[])
             //        partperMPI += vecPatches(ipatch)->vecSpecies[ispec]->getNbrOfParticles();
             //}
             //partperMPI = 0;
-
+            
             smpiData->recompute_patch_count( params, vecPatches, time_dual );
-
+            
             vecPatches.createPatches(params, smpiData, simWindow);
-
-	    vecPatches.exchangePatches(smpiData, params);
+            
+            vecPatches.exchangePatches(smpiData, params);
             //for (unsigned int irank=0 ; irank<smpiData->getSize() ; irank++){
             //    if(smpiData->getRank() == irank){
             //        vecPatches.output_exchanges(smpiData);
             //    }
             //    smpiData->barrier();
             //}
-
-
+            
             //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
             //    for (unsigned int ispec=0 ; ispec < vecPatches(0)->vecSpecies.size() ; ispec++)
             //        partperMPI += vecPatches(ipatch)->vecSpecies[ispec]->getNbrOfParticles();
@@ -360,13 +359,13 @@ int main (int argc, char* argv[])
     //                      HERE ENDS THE PIC LOOP
     // ------------------------------------------------------------------
     TITLE("End time loop, time dual = " << time_dual);
-
+    
     // ------------------------------------------------------------------------
     // check here if we can close the python interpreter
     // ------------------------------------------------------------------------
     TITLE("Cleaning up python runtime environement");
     params.cleanup(smpiData);
-   
+    
     //double timElapsed=smpiData->time_seconds();
     //if ( smpiData->isMaster() ) MESSAGE(0, "Time in time loop : " << timElapsed );
     timer[0].update();
@@ -423,7 +422,7 @@ void print_parallelism_params(Params& params, SmileiMPI* smpi)
 
     MESSAGE(1, "Patch size :");
     for (int iDim=0 ; iDim<params.nDim_field ; iDim++) 
-        MESSAGE(2, "dimension " << iDim << " - n_space : " << params.n_space[iDim] << " cells.");	
+        MESSAGE(2, "dimension " << iDim << " - n_space : " << params.n_space[iDim] << " cells.");        
 
     MESSAGE(1, "Dynamic load balancing frequency: every " << params.balancing_freq << " iterations." );
 
