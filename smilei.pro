@@ -121,6 +121,7 @@ HEADERS += \
     src/Tools/Tools.h \
     src/Tools/userFunctions.h \
     src/Smilei.h \
+    src/Species/PusherBorisNR.h \
     src/Species/PusherBorisNR.h
 
 SOURCES += \
@@ -197,6 +198,7 @@ SOURCES += \
     src/Tools/Tools.cpp \
     src/Tools/userFunctions.cpp \
     src/Smilei.cpp \
+    src/Species/PusherBorisNR.cpp \
     src/Species/PusherBorisNR.cpp
 
 
