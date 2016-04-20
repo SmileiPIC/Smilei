@@ -8,7 +8,9 @@ using namespace std;
 
 
 // Default constructor.
-Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name)
+Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name) :
+    nvariables(nvariables),
+    profileName("")
 {
     ostringstream info_("");
     info_ << nvariables << "D";
@@ -21,7 +23,6 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name)
     //  in a "hard-coded" function
     if( PyObject_HasAttrString(py_profile, "profileName") ) {
         
-        string profileName("");
         PyTools::getAttr(py_profile, "profileName", profileName );
         
         info_ << " built-in profile `" << profileName << "`" ;
@@ -170,11 +171,68 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name)
 }
 
 
+// Cloning constructor
+Profile::Profile(Profile *p)
+{
+    profileName = p->profileName;
+    nvariables  = p->nvariables ;
+    info        = p->info       ;
+    if( profileName != "" ) {
+        if( profileName == "constant" ) {
+            if     ( nvariables == 1 )
+                function = new Function_Constant1D(static_cast<Function_Constant1D*>(p->function));
+            else if( nvariables == 2 )
+                function = new Function_Constant2D(static_cast<Function_Constant2D*>(p->function));
+        } else if( profileName == "trapezoidal" ){
+            if     ( nvariables == 1 )
+                function = new Function_Trapezoidal1D(static_cast<Function_Trapezoidal1D*>(p->function));
+            else if( nvariables == 2 )
+                function = new Function_Trapezoidal2D(static_cast<Function_Trapezoidal2D*>(p->function));
+        } else if( profileName == "gaussian" ){
+            if     ( nvariables == 1 )
+                function = new Function_Gaussian1D(static_cast<Function_Gaussian1D*>(p->function));
+            else if( nvariables == 2 )
+                function = new Function_Gaussian2D(static_cast<Function_Gaussian2D*>(p->function));
+        } else if( profileName == "polygonal" ){
+            if     ( nvariables == 1 )
+                function = new Function_Polygonal1D(static_cast<Function_Polygonal1D*>(p->function));
+            else if( nvariables == 2 )
+                function = new Function_Polygonal2D(static_cast<Function_Polygonal2D*>(p->function));
+        } else if( profileName == "cosine" ){
+            if     ( nvariables == 1 )
+                function = new Function_Cosine1D(static_cast<Function_Cosine1D*>(p->function));
+            else if( nvariables == 2 )
+                function = new Function_Cosine2D(static_cast<Function_Cosine2D*>(p->function));
+        } else if( profileName == "polynomial" ){
+            if     ( nvariables == 1 )
+                function = new Function_Polynomial1D(static_cast<Function_Polynomial1D*>(p->function));
+            else if( nvariables == 2 )
+                function = new Function_Polynomial2D(static_cast<Function_Polynomial2D*>(p->function));
+        } else if( profileName == "tconstant" ){
+            function = new Function_TimeConstant(static_cast<Function_TimeConstant*>(p->function));
+        } else if( profileName == "ttrapezoidal" ){
+            function = new Function_TimeTrapezoidal(static_cast<Function_TimeTrapezoidal*>(p->function));
+        } else if( profileName == "tgaussian" ){
+            function = new Function_TimeGaussian(static_cast<Function_TimeGaussian*>(p->function));
+        } else if( profileName == "tpolygonal" ){
+            function = new Function_TimePolygonal(static_cast<Function_TimePolygonal*>(p->function));
+        } else if( profileName == "tcosine" ){
+            function = new Function_TimeCosine(static_cast<Function_TimeCosine*>(p->function));
+        } else if( profileName == "tpolynomial" ){
+            function = new Function_TimePolynomial(static_cast<Function_TimePolynomial*>(p->function));
+        }
+    } else {
+        if      ( nvariables == 1 ) function = new Function_Python1D(static_cast<Function_Python1D*>(p->function));
+        else if ( nvariables == 2 ) function = new Function_Python2D(static_cast<Function_Python2D*>(p->function));
+        else if ( nvariables == 3 ) function = new Function_Python3D(static_cast<Function_Python3D*>(p->function));
+    }
+}
+
+
 Profile::~Profile()
 {
     delete function;
 }
-
 
 
 // Functions to evaluate a python function with various numbers of arguments

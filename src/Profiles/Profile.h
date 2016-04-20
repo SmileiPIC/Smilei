@@ -40,6 +40,8 @@ class Profile
 public:
     //! Default constructor
     Profile(PyObject*, unsigned int, std::string);
+    //! Cloning constructor
+    Profile(Profile*);
     //! Default destructor
     ~Profile();
     
@@ -66,6 +68,12 @@ private:
     //! String containing some info on the profile
     std::string info;
     
+    //! Number of variables for the profile function
+    int nvariables;
+    
+    //! Name of the profile, in the case of a built-in profile
+    std::string profileName;
+    
 };//END class Profile
 
 
@@ -76,6 +84,7 @@ class Function_Python1D : public Function
 {
 public:
     Function_Python1D(PyObject *pp) : py_profile(pp) {};
+    Function_Python1D(Function_Python1D *f) : py_profile(f->py_profile) {};
     double valueAt(double); // time
     double valueAt(std::vector<double>); // space
 private:
@@ -87,6 +96,7 @@ class Function_Python2D : public Function
 {
 public:
     Function_Python2D(PyObject *pp) : py_profile(pp) {};
+    Function_Python2D(Function_Python2D *f) : py_profile(f->py_profile) {};
     double valueAt(std::vector<double>, double); // space + time
     double valueAt(std::vector<double>); // space
 private:
@@ -98,6 +108,7 @@ class Function_Python3D : public Function
 {
 public:
     Function_Python3D(PyObject *pp) : py_profile(pp) {};
+    Function_Python3D(Function_Python3D *f) : py_profile(f->py_profile) {};
     double valueAt(std::vector<double>, double); // space + time
     double valueAt(std::vector<double>); // space
 private:
@@ -109,6 +120,7 @@ class Function_Python4D : public Function
 {
 public:
     Function_Python4D(PyObject *pp) : py_profile(pp) {};
+    Function_Python4D(Function_Python4D *f) : py_profile(f->py_profile) {};
     double valueAt(std::vector<double>, double); // space + time
 private:
     PyObject *py_profile;
@@ -125,6 +137,10 @@ public:
         PyTools::getAttr(py_profile, "value"   , value    );
         PyTools::getAttr(py_profile, "xvacuum" , xvacuum  );
     };
+    Function_Constant1D ( Function_Constant1D *f ) {
+        value   = f->value  ;
+        xvacuum = f->xvacuum;
+    };
     double valueAt(std::vector<double>);
 private:
     double value, xvacuum;
@@ -138,6 +154,11 @@ public:
         PyTools::getAttr(py_profile, "value"   , value    );
         PyTools::getAttr(py_profile, "xvacuum" , xvacuum  );
         PyTools::getAttr(py_profile, "yvacuum" , yvacuum  );
+    };
+    Function_Constant2D ( Function_Constant2D *f ) {
+        value   = f->value  ;
+        xvacuum = f->xvacuum;
+        yvacuum = f->yvacuum;
     };
     double valueAt(std::vector<double>);
 private:
@@ -154,6 +175,15 @@ public:
         PyTools::getAttr(py_profile, "xplateau", xplateau );
         PyTools::getAttr(py_profile, "xslope1" , xslope1  );
         PyTools::getAttr(py_profile, "xslope2" , xslope2  );
+        invxslope1 = 1./xslope1;
+        invxslope2 = 1./xslope2;
+    };
+    Function_Trapezoidal1D ( Function_Trapezoidal1D *f ) {
+        value    = f->value   ;
+        xvacuum  = f->xvacuum ;
+        xplateau = f->xplateau;
+        xslope1  = f->xslope1 ;
+        xslope2  = f->xslope2 ;
         invxslope1 = 1./xslope1;
         invxslope2 = 1./xslope2;
     };
@@ -181,12 +211,26 @@ public:
         invyslope1 = 1./yslope1;
         invyslope2 = 1./yslope2;
     };
+    Function_Trapezoidal2D ( Function_Trapezoidal2D *f ) {
+        value    = f->value   ;
+        xvacuum  = f->xvacuum ;
+        xplateau = f->xplateau;
+        xslope1  = f->xslope1 ;
+        xslope2  = f->xslope2 ;
+        yvacuum  = f->yvacuum ;
+        yplateau = f->yplateau;
+        yslope1  = f->yslope1 ;
+        yslope2  = f->yslope2 ;
+        invxslope1 = 1./xslope1;
+        invxslope2 = 1./xslope2;
+        invyslope1 = 1./yslope1;
+        invyslope2 = 1./yslope2;
+    };
     double valueAt(std::vector<double>);
 private:
     double value, 
         xvacuum, xplateau, xslope1, xslope2, invxslope1, invxslope2,
         yvacuum, yplateau, yslope1, yslope2, invyslope1, invyslope2;
-       
 };
 
 
@@ -202,6 +246,14 @@ public:
         PyTools::getAttr(py_profile, "xcenter" , xcenter  );
         PyTools::getAttr(py_profile, "xorder"  , xorder   );
         invxsigma = 1./xsigma;
+    };
+    Function_Gaussian1D ( Function_Gaussian1D *f ) {
+        value     = f->value  ;
+        xvacuum   = f->xvacuum;
+        xlength   = f->xlength;
+        invxsigma = f->invxsigma ;
+        xcenter   = f->xcenter;
+        xorder    = f->xorder ;
     };
     double valueAt(std::vector<double>);
 private:
@@ -229,6 +281,19 @@ public:
         invxsigma = 1./xsigma;
         invysigma = 1./ysigma;
     };
+    Function_Gaussian2D ( Function_Gaussian2D *f ) {
+        value     = f->value  ;
+        xvacuum   = f->xvacuum;
+        xlength   = f->xlength;
+        invxsigma = f->invxsigma ;
+        xcenter   = f->xcenter;
+        xorder    = f->xorder ;
+        yvacuum   = f->yvacuum;
+        ylength   = f->ylength;
+        invysigma = f->invysigma ;
+        ycenter   = f->ycenter;
+        yorder    = f->yorder ;
+    };
     double valueAt(std::vector<double>);
 private:
     double value, 
@@ -247,6 +312,12 @@ public:
         PyTools::getAttr(py_profile, "xslopes" , xslopes );
         npoints = xpoints.size();
     };
+    Function_Polygonal1D ( Function_Polygonal1D *f ) {
+        xpoints = f->xpoints;
+        xvalues = f->xvalues;
+        xslopes = f->xslopes;
+        npoints = xpoints.size();
+    };
     double valueAt(std::vector<double>);
 private:
     std::vector<double> xpoints, xvalues, xslopes;
@@ -261,6 +332,12 @@ public:
         PyTools::getAttr(py_profile, "xpoints" , xpoints );
         PyTools::getAttr(py_profile, "xvalues" , xvalues );
         PyTools::getAttr(py_profile, "xslopes" , xslopes );
+        npoints = xpoints.size();
+    };
+    Function_Polygonal2D ( Function_Polygonal2D *f ) {
+        xpoints = f->xpoints;
+        xvalues = f->xvalues;
+        xslopes = f->xslopes;
         npoints = xpoints.size();
     };
     double valueAt(std::vector<double>);
@@ -283,6 +360,14 @@ public:
         PyTools::getAttr(py_profile, "xnumber"   , xnumber    );
         invxlength = 1./xlength;
         xfreq = 2.*M_PI*xnumber*invxlength;
+    };
+    Function_Cosine1D ( Function_Cosine1D *f ) {
+        base       = f->base      ;
+        xamplitude = f->xamplitude;
+        xvacuum    = f->xvacuum   ;
+        invxlength = f->invxlength;
+        xphi       = f->xphi      ;
+        xfreq      = f->xfreq     ;
     };
     double valueAt(std::vector<double>);
 private:
@@ -311,6 +396,19 @@ public:
         invylength = 1./ylength;
         yfreq = 2.*M_PI*ynumber*invylength;
     };
+    Function_Cosine2D ( Function_Cosine2D *f ) {
+        base       = f->base      ;
+        xamplitude = f->xamplitude;
+        xvacuum    = f->xvacuum   ;
+        invxlength = f->invxlength;
+        xphi       = f->xphi      ;
+        xfreq      = f->xfreq     ;
+        yamplitude = f->yamplitude;
+        yvacuum    = f->yvacuum   ;
+        invylength = f->invylength;
+        yphi       = f->yphi      ;
+        yfreq      = f->yfreq     ;
+    };
     double valueAt(std::vector<double>);
 private:
     double base, 
@@ -326,6 +424,11 @@ public:
         PyTools::getAttr(py_profile, "orders", orders );
         PyTools::getAttr(py_profile, "coeffs", coeffs );
         PyTools::getAttr(py_profile, "x0"    , x0     );
+    };
+    Function_Polynomial1D ( Function_Polynomial1D *f ) {
+        orders = f->orders;
+        coeffs = f->coeffs;
+        x0     = f->x0    ;
     };
     double valueAt(std::vector<double>);
 private:
@@ -347,6 +450,12 @@ public:
             if( coeffs[i].size() != orders[i]+1 )
                 ERROR("2D polynomial profile has a wrong number of coefficients for order "<<orders[i]);
     };
+    Function_Polynomial2D ( Function_Polynomial2D *f ) {
+        orders = f->orders;
+        coeffs = f->coeffs;
+        x0     = f->x0    ;
+        y0     = f->y0    ;
+    };
     double valueAt(std::vector<double>);
 private:
     double x0, y0;
@@ -360,6 +469,9 @@ class Function_TimeConstant : public Function
 public:
     Function_TimeConstant ( PyObject *py_profile ) {
         PyTools::getAttr(py_profile, "start", start);
+    };
+    Function_TimeConstant ( Function_TimeConstant *f ) {
+        start = f->start;
     };
     double valueAt(double);
 private:
@@ -375,6 +487,14 @@ public:
         PyTools::getAttr(py_profile, "plateau", plateau );
         PyTools::getAttr(py_profile, "slope1" , slope1  );
         PyTools::getAttr(py_profile, "slope2" , slope2  );
+        invslope1 = 1./slope1;
+        invslope2 = 1./slope2;
+    };
+    Function_TimeTrapezoidal ( Function_TimeTrapezoidal *f ) {
+        start   = f->start  ;
+        plateau = f->plateau;
+        slope1  = f->slope1 ;
+        slope2  = f->slope2 ;
         invslope1 = 1./slope1;
         invslope2 = 1./slope2;
     };
@@ -397,6 +517,13 @@ public:
         end = start + duration;
         invsigma = 1./sigma;
     };
+    Function_TimeGaussian ( Function_TimeGaussian *f ) {
+        start    = f->start   ;
+        end      = f->end     ;
+        invsigma = f->invsigma;
+        center   = f->center  ;
+        order    = f->order   ;
+    };
     double valueAt(double);
 private:
     double start, end, invsigma, center, order;
@@ -410,6 +537,12 @@ public:
         PyTools::getAttr(py_profile, "points" , points );
         PyTools::getAttr(py_profile, "values" , values );
         PyTools::getAttr(py_profile, "slopes" , slopes );
+        npoints = points.size();
+    };
+    Function_TimePolygonal ( Function_TimePolygonal *f ) {
+        points = f->points;
+        values = f->values;
+        slopes = f->slopes;
         npoints = points.size();
     };
     double valueAt(double);
@@ -432,6 +565,14 @@ public:
         PyTools::getAttr(py_profile, "freq"     , freq      );
         end = start + duration;
     };
+    Function_TimeCosine ( Function_TimeCosine *f ) {
+        base      = f->base     ;
+        amplitude = f->amplitude;
+        start     = f->start    ;
+        end       = f->end      ;
+        phi       = f->phi      ;
+        freq      = f->freq     ;
+    };
     double valueAt(double);
 private:
     double base, amplitude, start, end, phi, freq;
@@ -445,6 +586,11 @@ public:
         PyTools::getAttr(py_profile, "orders", orders );
         PyTools::getAttr(py_profile, "coeffs", coeffs );
         PyTools::getAttr(py_profile, "t0"    , t0     );
+    };
+    Function_TimePolynomial ( Function_TimePolynomial *f ) {
+        orders = f->orders;
+        coeffs = f->coeffs;
+        t0     = f->t0    ;
     };
     double valueAt(double);
 private:
