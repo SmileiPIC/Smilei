@@ -43,13 +43,13 @@ public:
     void finishCreation( Params& params, SmileiMPI* smpi );
     //! Last cloning step
     void finishCloning( Patch* patch, Params& params, SmileiMPI* smpi );
-    
+
     //! Destructor for Patch
     ~Patch();
 
     // Main PIC objects : data & operators
     // -----------------------------------
-    
+
     //! Species, Particles, of the current Patch
     std::vector<Species*> vecSpecies;
     //! Electromagnetic fields and densities (E, B, J, rho) of the current Patch
@@ -69,7 +69,7 @@ public:
 
     //! SmileiIO = Diag Fields
     SmileiIO* sio;
-    
+
 
     // Geometrical description
     // -----------------------
@@ -85,7 +85,7 @@ public:
     //   - fields communication specified per geometry (pure virtual)
     // --------------------------------------------------------------
 
-    //! manage Idx of particles per direction, 
+    //! manage Idx of particles per direction,
     void initExchParticles(SmileiMPI* smpi, int ispec, Params& params);
     //!init comm  nbr of particles/
     void initCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
@@ -112,30 +112,30 @@ public:
 
     // Create MPI_Datatype to exchange fields
     virtual void createType( Params& params ) = 0;
-    
+
     // Geometrical methods
     // --------------------
 
     //! Return the hibert index of current patch
     inline unsigned int Hindex() { return  hindex; }
-    
+
     //! Method to identify the rank 0 MPI process
     inline bool isMaster() { return (hindex==0); }
 
-    //! Should be pure virtual, see child classes 
+    //! Should be pure virtual, see child classes
     inline bool isWestern()  { return locateOnBorders(0, 0); }
-    //! Should be pure virtual, see child classes 
+    //! Should be pure virtual, see child classes
     inline bool isEastern()  { return locateOnBorders(0, 1); }
-    //! Should be pure virtual, see child classes 
+    //! Should be pure virtual, see child classes
     inline bool isSouthern() { return locateOnBorders(1, 0); }
-    //! Should be pure virtual, see child classes 
+    //! Should be pure virtual, see child classes
     inline bool isNorthern() { return locateOnBorders(1, 1); }
 
-    //! Test neighbbor's patch Id to apply ot not a boundary condition
+    //! Test neighbbor's patch Id to apply or not a boundary condition
     inline bool locateOnBorders(int dir, int way) {
-	if ( neighbor_[dir][way] == MPI_PROC_NULL ) 
-	    return true;
-	return false;
+    if ( neighbor_[dir][way] == MPI_PROC_NULL )
+        return true;
+    return false;
     }
 
     //! Return MPI rank of this->hrank +/- 1
@@ -148,9 +148,9 @@ public:
     //! Compute MPI rank of neigbors patch regarding neigbors patch Ids
     void updateMPIenv(SmileiMPI *smpi);
 
-    // Test who is MPI neighbor of current patch 
+    // Test who is MPI neighbor of current patch
     inline bool is_a_MPI_neighbor(int iDim, int iNeighbor) {
-	return( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (MPI_neighbor_[iDim][iNeighbor]!=MPI_me_) );
+    return( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (MPI_neighbor_[iDim][iNeighbor]!=MPI_me_) );
     }
 
     //! Return real (excluding oversize) min coordinates (ex : rank 0 returns 0.) for direction i

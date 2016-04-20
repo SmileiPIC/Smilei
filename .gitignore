@@ -21,4 +21,6 @@ src/smilei.*
 doc/Sphinx/_build/*
 *.o
 *.d
+*.user
+doc/html
 
