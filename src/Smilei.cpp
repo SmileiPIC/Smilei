@@ -312,7 +312,7 @@ int main (int argc, char* argv[])
             if ((start_moving==1) && (smpiData->isMaster()) ) {
                 MESSAGE(">>> Window starts moving");
             }
-            simWindow->operate(vecPatches, smpiData, params);
+            simWindow->operate_arnaud(vecPatches, smpiData, params);
         }
         timer[5].update();
 
