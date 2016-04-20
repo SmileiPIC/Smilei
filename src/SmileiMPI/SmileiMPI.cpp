@@ -153,7 +153,7 @@ void SmileiMPI::init_patch_count( Params& params)
 //    }
 //#endif
 
-    unsigned int Npatches, r,Ncur,Pcoordinates[3],ncells_perpatch, Tcapabilities;
+    unsigned int Npatches, r,Ncur,Pcoordinates[3],ncells_perpatch;
     double Tload,Tcur, Lcur, local_load, local_load_temp, above_target, below_target;
     std::vector<unsigned int> mincell,maxcell; //Min and max values of non empty cells for each species and in each dimension.
     vector<double> density_length(params.nDim_field,0.);
@@ -331,7 +331,7 @@ void SmileiMPI::init_patch_count( Params& params)
 void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, double time_dual )
 {
 
-    unsigned int Npatches, r,Ncur,Pcoordinates[3],ncells_perpatch, Tcapabilities, Lmin, Lmintemp;
+    unsigned int Npatches, r,Ncur,Pcoordinates[3],ncells_perpatch, Lmin, Lmintemp;
     double Tload,Tcur, Lcur, above_target, below_target;
     //Load of a cell = coef_cell*load of a particle.
     //Load of a frozen particle = coef_frozen*load of a particle.
@@ -380,8 +380,6 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     for(unsigned int hindex=0; hindex < Npatches; hindex++) Tload += Lp_global[hindex];
     Tload /= Tcapabilities; //Target load for each mpi process.
     Tcur = Tload * capabilities[0];  //Init.
-    //Tcur = 0;  //Init.
-
 
     //Loop over all patches
     for(unsigned int hindex=0; hindex < Npatches; hindex++){
@@ -397,15 +395,12 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
                 if(above_target > below_target) { // If we're closer to target without the current patch...
                     target_patch_count[r] = Ncur-1;      // ... include patches up to current one.
                     Ncur = 1;
-                    //Lcur = Lp_global[hindex];
                 } else {                          //Else ...
                     target_patch_count[r] = Ncur;        //...assign patches including the current one.
                     Ncur = 0;
-                    //Lcur = 0;
                 }
                 r++; //Move on to the next rank.
                 Tcur += Tload * capabilities[r];  //Target load for current rank r.
-                //Tcur = Tload * capabilities[r];  //Target load for current rank r.
             } 
         }// End if on r.
         if (hindex == Npatches-1){
@@ -661,7 +656,6 @@ void SmileiMPI::recv(Field* field, int from, int hindex)
     MPI_Recv( &((*field)(0)),field->globalDims_, MPI_DOUBLE, from, hindex, MPI_COMM_WORLD, &status );
 
 } // End recv ( Field )
-
 
 void SmileiMPI::isend( DiagnosticProbes* diags, int to, int tag )
 {

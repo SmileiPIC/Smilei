@@ -35,7 +35,6 @@
 
 using namespace std;
 
-
 // ---------------------------------------------------------------------------------------------------------------------
 // Patch constructor :
 //   Called by PatchXD constructor which will finalize initialization
@@ -62,7 +61,6 @@ Patch::Patch(Patch* patch, Params& params, SmileiMPI* smpi, unsigned int ipatch,
     initStep1(params);
     
 }
-
 
 void Patch::initStep1(Params& params)
 {
@@ -112,7 +110,6 @@ void Patch::initStep3( Params& params, SmileiMPI* smpi, unsigned int n_moved ) {
     min_local[0] += n_moved*params.cell_length[0];
     max_local[0] += n_moved*params.cell_length[0];
 }
-
 
 void Patch::finishCreation( Params& params, SmileiMPI* smpi ) {
     // initialize vector of Species (virtual)
@@ -164,7 +161,6 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi ) {
     
     createType(params);
 }
-
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Delete Patch members
