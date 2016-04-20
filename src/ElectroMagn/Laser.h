@@ -23,6 +23,7 @@ public:
     ~LaserProfile() {};
     virtual double getAmplitude(std::vector<double> pos, double t, int j) {return 0.;};
     virtual std::string getInfo() { return "?"; };
+    virtual void initFields(Params& params, Patch* patch) {};
 };
 
 
@@ -34,7 +35,7 @@ public:
     //! Normal laser constructor
     Laser(Params &params, int ilaser, Patch* patch);
     //! Cloning laser constructor
-    Laser(Laser*);
+    Laser(Laser*, Params&);
     ~Laser();
     void clean();
     
@@ -47,6 +48,12 @@ public:
         return profiles[1]->getAmplitude(pos, t, j);
     }
     
+    void initFields(Params& params, Patch* patch)
+    {
+        profiles[0]->initFields(params, patch);
+        profiles[1]->initFields(params, patch);
+    };
+    
     //! Side (west/east) from which the laser enters the box
     std::string boxSide;
     
@@ -57,6 +64,10 @@ private:
     //! Space and time profiles (Bx and By)
     std::vector<LaserProfile*> profiles;
     
+    //! True if spatio-temporal profile (Bx and By)
+    std::vector<bool> spacetime;
+    
+
 };
 
 
@@ -64,12 +75,15 @@ private:
 // Laser profile for separable space and time
 class LaserProfileSeparable : public LaserProfile {
 public:
-    LaserProfileSeparable(double, Profile*, Profile*, Profile*, Profile*, Params&, Patch*, bool);
-    
+    LaserProfileSeparable(double, Profile*, Profile*, Profile*, Profile*, bool);
+    LaserProfileSeparable(LaserProfileSeparable*);
+    ~LaserProfileSeparable();
+    void initFields(Params& params, Patch* patch);
     double getAmplitude(std::vector<double> pos, double t, int j);
 private:
+    bool primal;
     double omega;
-    Profile *timeProfile, *chirpProfile;
+    Profile *timeProfile, *chirpProfile, *spaceProfile, *phaseProfile;
     Field *space_envelope, *phase;
 };
 
@@ -78,7 +92,9 @@ class LaserProfileNonSeparable : public LaserProfile {
 public:
     LaserProfileNonSeparable(Profile * spaceAndTimeProfile)
      : spaceAndTimeProfile(spaceAndTimeProfile) {};
-    
+    LaserProfileNonSeparable(LaserProfileNonSeparable* lp)
+     : spaceAndTimeProfile(lp->spaceAndTimeProfile) {};
+    ~LaserProfileNonSeparable();
     inline double getAmplitude(std::vector<double> pos, double t, int j) {
         return spaceAndTimeProfile->valueAt(pos, t);
     }

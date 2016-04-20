@@ -68,6 +68,8 @@ public:
         vecPatches.createGlobalDiags( params, smpi );
         vecPatches.initAllDiags( params, smpi );
         
+        vecPatches.initExternals( params );
+        
         return vecPatches;
     }
 

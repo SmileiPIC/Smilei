@@ -94,8 +94,6 @@ oversize(params.oversize)
 void ElectroMagn::finishInitialization(int nspecies, Patch* patch)
 {
 
-    initAntennas(patch);
-    
     // Fill allfields
     allFields.push_back(Ex_ );
     allFields.push_back(Ey_ );
@@ -175,12 +173,6 @@ ElectroMagn::~ElectroMagn()
     
 }//END Destructer
 
-
-void ElectroMagn::clean()
-{
-    for ( int i=0 ; i<emBoundCond.size() ;i++ )
-        if (emBoundCond[i]!=NULL) emBoundCond[i]->clean();
-}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Maxwell solver using the FDTD scheme
@@ -313,6 +305,7 @@ string LowerCase(string in){
     std::transform(out.begin(), out.end(), out.begin(), ::tolower);
     return out;
 }
+
 
 void ElectroMagn::applyExternalFields(Patch* patch) {    
     Field * field;

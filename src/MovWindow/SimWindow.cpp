@@ -79,7 +79,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 
         if ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][1] ) {
             int patchid = vecPatches(ipatch)->neighbor_[0][1];
-            Patch* newPatch = PatchesFactory::create(params, smpi, patchid, n_moved );
+            Patch* newPatch = PatchesFactory::clone(vecPatches(0),params, smpi, patchid, n_moved );
             vecPatches.patches_.push_back( newPatch );
         }
     }

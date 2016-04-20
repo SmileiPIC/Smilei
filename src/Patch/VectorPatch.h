@@ -110,6 +110,10 @@ public :
 
     //! Solve Poisson to initialize E
     void solvePoisson( Params &params, SmileiMPI* smpi );
+    
+    //! For all patch initialize the externals (lasers, fields, antennas)
+    void initExternals(Params& params);
+
 
 
     //  Balancing methods

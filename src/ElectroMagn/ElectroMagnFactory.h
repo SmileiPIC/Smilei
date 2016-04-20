@@ -37,6 +37,8 @@ public:
                 EMfields->emBoundCond[0]->vecLaser.push_back( laser );
             else if( laser->boxSide == "east" && EMfields->emBoundCond[1])
                 EMfields->emBoundCond[1]->vecLaser.push_back( laser );
+            else
+                delete laser;
         }
         
         // -----------------
@@ -130,19 +132,14 @@ public:
         // Clone Lasers properties
         // -----------------
         int nlaser;
-        newEMfields->emBoundCond[0]->vecLaser.resize(0);
-        nlaser = EMfields->emBoundCond[0]->vecLaser.size();
-        for (int ilaser = 0; ilaser < nlaser; ilaser++) {
-            newEMfields->emBoundCond[0]->vecLaser.push_back(
-                new Laser(EMfields->emBoundCond[0]->vecLaser[ilaser])
-            );
-        }
-        newEMfields->emBoundCond[1]->vecLaser.resize(0);
-        nlaser = EMfields->emBoundCond[1]->vecLaser.size();
-        for (int ilaser = 0; ilaser < nlaser; ilaser++) {
-            newEMfields->emBoundCond[1]->vecLaser.push_back(
-                new Laser(EMfields->emBoundCond[1]->vecLaser[ilaser])
-            );
+        for( int iBC=0; iBC<2; iBC++ ) {
+            newEMfields->emBoundCond[iBC]->vecLaser.resize(0);
+            nlaser = EMfields->emBoundCond[iBC]->vecLaser.size();
+            for (int ilaser = 0; ilaser < nlaser; ilaser++) {
+                newEMfields->emBoundCond[iBC]->vecLaser.push_back(
+                    new Laser(EMfields->emBoundCond[iBC]->vecLaser[ilaser], params)
+                );
+            }
         }
         
         // -----------------

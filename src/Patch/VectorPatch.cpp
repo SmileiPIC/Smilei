@@ -42,7 +42,6 @@ void VectorPatch::close(SmileiMPI * smpiData)
         delete globalDiags[idiag];
     globalDiags.clear();
     
-    patches_[0]->EMfields->clean(); // This destructs the laser profiles only once
     for (unsigned int ipatch=0 ; ipatch<size(); ipatch++)
         delete patches_[ipatch];
     
@@ -167,6 +166,27 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
 
 } // END solveMaxwell
 
+
+void VectorPatch::initExternals(Params& params)
+{
+    // Init all lasers
+    for( int ipatch=0; ipatch<size(); ipatch++ ) {
+        // check if patch is on the border
+        int iBC;
+        if     ( (*this)(ipatch)->isWestern() ) iBC = 0;
+        else if( (*this)(ipatch)->isEastern() ) iBC = 1;
+        else continue;
+        // If patch is on border, then fill the fields arrays
+        int nlaser = (*this)(ipatch)->EMfields->emBoundCond[iBC]->vecLaser.size();
+        for (int ilaser = 0; ilaser < nlaser; ilaser++)
+             (*this)(ipatch)->EMfields->emBoundCond[iBC]->vecLaser[ilaser]->initFields(params, (*this)(ipatch));
+    }
+    
+    // Init all antennas
+    for( int ipatch=0; ipatch<size(); ipatch++ ) {
+        (*this)(ipatch)->EMfields->initAntennas((*this)(ipatch));
+    }
+}
 
 
 void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
