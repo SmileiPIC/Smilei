@@ -112,12 +112,13 @@ bc_em_type_x = ["silver-muller","silver-muller"]
 bc_em_type_y = ["silver-muller","silver-muller"]
 
 # Laser properties
+laser_fwhm = 19.80
 LaserGaussian2D(
     boxSide         = "west",
     a0              = 2.,
     focus           = [0., sim_length[1]/2.],
     waist           = 26.16,
-    time_envelope   = tgaussian(center=17.84, fwhm=19.80)
+    time_envelope   = tgaussian(center=2*laser_fwhm, fwhm=laser_fwhm)
 )
 
 

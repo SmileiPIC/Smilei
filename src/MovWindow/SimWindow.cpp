@@ -267,7 +267,6 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
         //If my right neighbor does not belong to me ...
         if (mypatch->MPI_neighbor_[0][1] != mypatch->MPI_me_){
             // Store it as a patch to be created later.
-            cout << mypatch->MPI_me_ << " patch " << h0 + ipatch << " to be created." << endl; 
             patch_to_be_created[tid].push_back(ipatch); //(shared omp vector of int)
         }
 
