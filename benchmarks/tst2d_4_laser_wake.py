@@ -16,7 +16,7 @@ interpolation_order = 2
 # sim_time: duration of the simulation in 1/w0 .
 
 timestep = 0.124
-sim_time = 93
+sim_time = 150
 
 # SIMULATION BOX : for all space directions (use vector)
 #n_space_win_x: Activates moving window. Number of cell in the total computation domain in the x direction.

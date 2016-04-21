@@ -234,11 +234,13 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
         tid = omp_get_thread_num();
         nthds = omp_get_num_threads();
     #endif
-
+    cout << "In Mov win nthds = " << nthds << endl;
+    cout << "This thread is " << tid << endl;
 
     //Initialization for inter-process communications
 
     h0 = vecPatches(0)->hindex;
+    int nPatches = vecPatches.size();
     int nSpecies( vecPatches(0)->vecSpecies.size() );
     int nmessage = 2*nSpecies+10;
     std::vector<Patch*> send_patches_;
@@ -248,28 +250,32 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
     {
         for (unsigned int i=0; i< nthds; i++)
             patch_to_be_created[i].clear();
-        vecPatches_old.resize(vecPatches.size());
+        vecPatches_old.resize(nPatches);
         x_moved += cell_length_x_*params.n_space[0];
         n_moved += params.n_space[0];
         //Handle diags
         vecPatches.closeAllDiags(smpi);
     }
-
+    cout << "Global file" << endl;
     hid_t globalFile    = vecPatches(0)->sio->global_file_id_;
     hid_t globalFileAvg = vecPatches(0)->sio->global_file_id_avg;
+    cout << "Global file end" << endl;
 
     //#pragma omp for schedule(static)
-    for (unsigned int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++)
+    for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++)
         vecPatches_old[ipatch] = vecPatches(ipatch);
 
     //#pragma omp for schedule(runtime)
-    for (unsigned int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++) {
+    cout << "starting main loop" << endl;
+    for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
          mypatch = vecPatches_old[ipatch];
 
         //If my right neighbor does not belong to me ...
-        if (mypatch->MPI_neighbor_[0][1] != mypatch->MPI_me_)
+        if (mypatch->MPI_neighbor_[0][1] != mypatch->MPI_me_){
             // Store it as a patch to be created later.
+            cout << mypatch->MPI_me_ << " patch " << h0 + ipatch << " to be created." << endl; 
             patch_to_be_created[tid].push_back(ipatch); //(shared omp vector of int)
+        }
 
         //If my left neighbor does not belong to me ...
         if (mypatch->MPI_neighbor_[0][0] != mypatch->MPI_me_) {
@@ -278,19 +284,22 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
                 send_patches_.push_back(mypatch); // Stores pointers to patches to be sent in send_patches_ (private omp vector of pointers to patches)
                 //Left neighbour to which the patch should be sent to.
                 Lneighbor = mypatch->MPI_neighbor_[0][0];
-                smpi->isend( mypatch, Lneighbor, (mypatch->hindex) * nmessage );
+                cout << mypatch->MPI_me_ << " sending patch " << mypatch->hindex << " to become " << mypatch->neighbor_[0][0] << endl;
+                smpi->isend( mypatch, Lneighbor, (mypatch->neighbor_[0][0]) * nmessage );
             } else {
 
+                cout << mypatch->MPI_me_ << " deletes patch " << mypatch->hindex << endl;
                 // Compute energy lost 
 	        energy_field_lost += mypatch->EMfields->computeNRJ();
-	        for ( int ispec=0 ; ispec<vecPatches(0)->vecSpecies.size() ; ispec++ )
+	        for ( int ispec=0 ; ispec<nSpecies ; ispec++ )
 	            energy_part_lost[ispec] += mypatch->vecSpecies[ispec]->computeNRJ();
-
+                   
                 mypatch->sio->setFiles(0,0);
-                delete  vecPatches_old[ipatch];
+                delete mypatch;
 
             }
         } else { //In case my left neighbor does belong to me:
+             cout << mypatch->MPI_me_ << " translates patch " << mypatch->hindex << endl;
             // I become my left neighbor.
             //Nothing to do on global indexes or min_locals. The Patch structure remains the same and unmoved.
             //Update hindex and coordinates.
@@ -320,6 +329,7 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
        }
 
     }//End loop on Patches. This barrier matters.
+    smpi->barrier();
 
     //Creation of new Patches if necessary
     //The "new" operator must be included in a single area otherwise conflicts arise for unknown reasons.
@@ -328,12 +338,15 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
          for (unsigned int i=0; i<nthds; i++){
              for (unsigned int j=0; j< patch_to_be_created[i].size(); j++){
                  //vecPatches.patches_[patch_to_be_created[i][j]] = new Patch(params, laser_params, smpi, h0 + patch_to_be_created[i][j], n_moved);
+                 cout << "creating patch " << h0 + patch_to_be_created[i][j] << endl;
                  vecPatches.patches_[patch_to_be_created[i][j]] = PatchesFactory::create(params, smpi, h0 + patch_to_be_created[i][j], n_moved );
                  //stores all indices of patch_to_be_created in a single vector.
                  if (i>0) patch_to_be_created[0].push_back(patch_to_be_created[i][j]);
              }
          }
     } // This barrier is important.
+
+    smpi->barrier();
 
     //Initialization of new Patches if necessary.
     //#pragma omp for schedule(runtime)
@@ -342,6 +355,7 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
          Rneighbor = mypatch->MPI_neighbor_[0][1];
          //If I receive something from my right neighbour:
          if (Rneighbor != MPI_PROC_NULL){
+             cout << mypatch->MPI_me_ << " receiving patch " << mypatch->Hindex() << endl;
              smpi->recv( mypatch, Rneighbor, (mypatch->Hindex())*nmessage, params );
          }
          // And else, nothing to do.
@@ -351,21 +365,22 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
     //pragma omp for schedule(static)
     for (int j=0; j < send_patches_.size()-1; j++){
         mypatch = send_patches_[j];
+        cout << mypatch->MPI_me_ << " deletes patch " << mypatch->hindex << endl;
 
        	energy_field_lost += mypatch->EMfields->computeNRJ();
-	for ( int ispec=0 ; ispec<vecPatches(0)->vecSpecies.size() ; ispec++ )
+	for ( int ispec=0 ; ispec<nSpecies ; ispec++ )
 	    energy_part_lost[ispec] += mypatch->vecSpecies[ispec]->computeNRJ();
 
         mypatch->sio->setFiles(0,0);
         delete  mypatch;
     }
-
-    int nPatches = vecPatches.size();
+    
 
     //#pragma omp for schedule(static)
     for (int ipatch=0 ; ipatch<nPatches ; ipatch++ )
 	vecPatches(ipatch)->EMfields->laserDisabled();
 
+    cout << "Laser disabled " << endl;
 
     //#pragma omp single
     { 
@@ -378,6 +393,7 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
         vecPatches.set_refHindex() ;
         vecPatches.update_field_list() ;
     }
+    cout << "Sim window done " << endl;
 
 }
 
