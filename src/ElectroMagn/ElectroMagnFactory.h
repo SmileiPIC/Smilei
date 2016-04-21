@@ -133,6 +133,7 @@ public:
         // -----------------
         int nlaser;
         for( int iBC=0; iBC<2; iBC++ ) {
+            if(! newEMfields->emBoundCond[iBC]) continue;
             newEMfields->emBoundCond[iBC]->vecLaser.resize(0);
             nlaser = EMfields->emBoundCond[iBC]->vecLaser.size();
             for (int ilaser = 0; ilaser < nlaser; ilaser++) {
