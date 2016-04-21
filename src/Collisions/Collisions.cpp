@@ -26,7 +26,8 @@ Collisions::Collisions(
     unsigned int nbins,
     int Z,
     bool ionizing,
-    int nDim
+    int nDim,
+    double referenceAngularFrequency_SI
 ) :
 n_collisions    (n_collisions    ),
 species_group1  (species_group1  ),
@@ -41,7 +42,11 @@ filename("")
     hid_t fileId;
     
     // Create the ionization object
-    Ionization = ionizing ? new CollisionalIonization(Z, nDim) : new CollisionalNoIonization();
+    if( ionizing ) {
+        Ionization = new CollisionalIonization(Z, nDim, referenceAngularFrequency_SI);
+    } else {
+        Ionization = new CollisionalNoIonization();
+    }
     
     // If debugging log requested
     if( debug_every>0 ) {
@@ -95,7 +100,11 @@ Collisions::Collisions( Collisions* coll, int nDim )
     atomic_number    = coll->atomic_number   ;
     filename         = coll->filename        ;
     
-    Ionization = atomic_number>0 ? new CollisionalIonization(coll->Ionization) : new CollisionalNoIonization();
+    if( atomic_number>0 ) {
+        Ionization = new CollisionalIonization(coll->Ionization);
+    } else {
+        Ionization = new CollisionalNoIonization();
+    }
     
     if( debug_every>0 ) {
         file_access = H5Pcreate(H5P_FILE_ACCESS);
@@ -107,6 +116,7 @@ Collisions::Collisions( Collisions* coll, int nDim )
 Collisions::~Collisions()
 {
     if( debug_every>0 ) H5Pclose(file_access);
+    delete Ionization;
 }
 
 
@@ -227,7 +237,19 @@ vector<Collisions*> Collisions::create(Params& params, Patch* patch, vector<Spec
         
         // Add new Collisions objects to vector
         vecCollisions.push_back(
-            new Collisions(patch, n_collisions, sgroup[0], sgroup[1], clog, intra, debug_every, vecSpecies[0]->bmin.size(), Z, ionizing, params.nDim_particle)
+            new Collisions(
+                patch,
+                n_collisions,
+                sgroup[0],
+                sgroup[1],
+                clog, intra,
+                debug_every,
+                vecSpecies[0]->bmin.size(),
+                Z,
+                ionizing,
+                params.nDim_particle,
+                params.referenceAngularFrequency_SI
+            )
         );
     }
     

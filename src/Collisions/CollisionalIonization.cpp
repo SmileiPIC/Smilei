@@ -14,7 +14,7 @@ const double CollisionalIonization::a1 = 510998.9 ; // = me*c^2/Emin
 const double CollisionalIonization::a2 = 6.142165 ; // = (npoints-1) / ln( Emax/Emin )
 
 // Constructor
-CollisionalIonization::CollisionalIonization(int Z, int nDim_)
+CollisionalIonization::CollisionalIonization(int Z, int nDim_, double referenceAngularFrequency_SI)
 {
     nDim = nDim_;
     atomic_number = Z;
@@ -22,7 +22,11 @@ CollisionalIonization::CollisionalIonization(int Z, int nDim_)
     irate.resize(Z);
     prob .resize(Z);
     new_electrons.initialize(0, nDim); // to be removed if bins removed
-
+    
+    if( Z>0 ) {
+        dataBaseIndex = createDatabase(referenceAngularFrequency_SI);
+        assignDatabase(dataBaseIndex);
+    }
 }
 
 // Cloning Constructor

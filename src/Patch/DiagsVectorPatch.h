@@ -14,7 +14,6 @@ public:
     static void initDumpFields    ( VectorPatch& vecPatches, Params& params, int timestep );
     static void finalizeDumpFields( VectorPatch& vecPatches, Params& params, int timestep );
     
-    static void initCollisions( VectorPatch& vecPatches, Params& params, SmileiMPI* smpi );
     
     static void definePatchDiagsMaster( VectorPatch& vecPatches, hid_t globalFile, hid_t globalFileAvg );
     static void updatePatchFieldDump  ( VectorPatch& vecPatches, Params& params );

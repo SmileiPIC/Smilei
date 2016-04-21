@@ -34,7 +34,7 @@ sim_time  = 100 * L0
 time_fields_frozen = 100000000000.
 
 # SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
-cell_length = [20.*L0]
+cell_length = [5.*L0]
 sim_length  = [160.*L0]
 
 # ELECTROMAGNETIC BOUNDARY CONDITIONS

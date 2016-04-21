@@ -58,7 +58,6 @@ public:
         // Patch initializations which needs some sync (parallel output, are data distribution)
         int itime(0);
         DiagsVectorPatch::initDumpFields(vecPatches, params, itime);
-        DiagsVectorPatch::initCollisions(vecPatches, params, smpi );
         
         vecPatches.update_field_list();
         

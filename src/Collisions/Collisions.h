@@ -44,7 +44,7 @@ class Collisions
 
 public:
     //! Constructor for Collisions between two species
-    Collisions(Patch*, unsigned int, std::vector<unsigned int>, std::vector<unsigned int>, double, bool, int, unsigned int, int, bool, int);
+    Collisions(Patch*, unsigned int, std::vector<unsigned int>, std::vector<unsigned int>, double, bool, int, unsigned int, int, bool, int, double);
     //! Cloning Constructor
     Collisions(Collisions*, int);
     //! destructor
