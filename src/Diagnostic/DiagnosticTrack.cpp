@@ -331,7 +331,7 @@ void DiagnosticTrack::setFileSplitting( Params& params, SmileiMPI* smpi, VectorP
         int sz(1);
         MPI_Comm_size( MPI_COMM_WORLD, &sz );
         std::vector<int> allNbrParticles(sz);
-        MPI_Allgather( &locNbrParticles, 1, MPI_INTEGER, &allNbrParticles[0], 1, MPI_INTEGER, MPI_COMM_WORLD );
+        MPI_Allgather( &locNbrParticles, 1, MPI_INT, &allNbrParticles[0], 1, MPI_INT, MPI_COMM_WORLD );
         
         int totNbrParts(0);
         for (int irk=0 ; irk<sz ; irk++) totNbrParts += allNbrParticles[irk];
@@ -358,7 +358,7 @@ void DiagnosticTrack::setFileSplitting( Params& params, SmileiMPI* smpi, VectorP
         allNbrParticles[0] = 0;
         
         int offset(0);
-        MPI_Scatter(&allNbrParticles[0], 1 , MPI_INTEGER, &offset, 1, MPI_INTEGER, 0, MPI_COMM_WORLD );
+        MPI_Scatter(&allNbrParticles[0], 1 , MPI_INT, &offset, 1, MPI_INT, 0, MPI_COMM_WORLD );
             
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
             vecPatches(ipatch)->vecSpecies[speciesId_]->particles->addIdOffsets(offset);
