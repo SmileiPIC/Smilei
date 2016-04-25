@@ -190,7 +190,7 @@ void Patch1D::initExchange( Field* field )
 
             if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
 
-                istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( 2*oversize[iDim] + isDual[iDim] );
+                istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( oversize[iDim] + 1 + isDual[iDim] );
                 ix = (1-iDim)*istart;
                 int tag = buildtag( hindex, iDim, iNeighbor );
                 MPI_Isend( &(f1D->data_[ix]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f1D->specMPI.patch_srequest[iDim][iNeighbor]) );
@@ -199,7 +199,7 @@ void Patch1D::initExchange( Field* field )
 
             if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
 
-                istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - 1 ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
+                istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - 1 - (oversize[iDim]-1) ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
                 ix = (1-iDim)*istart;
                  int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor );
                 MPI_Irecv( &(f1D->data_[ix]), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(f1D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]));
@@ -258,7 +258,7 @@ void Patch1D::initExchange( Field* field, int iDim )
 
         if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
 
-            istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( 2*oversize[iDim] + isDual[iDim] );
+            istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( oversize[iDim] + 1 + isDual[iDim] );
             ix = (1-iDim)*istart;
             int tag = buildtag( hindex, iDim, iNeighbor );
             MPI_Isend( &(f1D->data_[ix]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f1D->specMPI.patch_srequest[iDim][iNeighbor]) );
@@ -267,7 +267,7 @@ void Patch1D::initExchange( Field* field, int iDim )
 
         if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
 
-            istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - 1 ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
+            istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - 1 - (oversize[iDim]-1) ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
             ix = (1-iDim)*istart;
             int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor );
             MPI_Irecv( &(f1D->data_[ix]), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(f1D->specMPI.patch_rrequest[iDim][(iNeighbor+1)%2]));
@@ -312,7 +312,7 @@ void Patch1D::createType( Params& params )
     
     // MPI_Datatype ntype_[nDim][primDual]
     int nx;
-    int ny = 1;
+    int ny = oversize[0];
     int nline;
 
     for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
@@ -324,13 +324,21 @@ void Patch1D::createType( Params& params )
         MPI_Type_commit( &(ntype_[0][ix_isPrim]) );
 
         ntype_[1][ix_isPrim] = NULL;
-        MPI_Type_contiguous(ny*clrw, MPI_DOUBLE, &(ntype_[1][ix_isPrim]));   //clrw lines
+        MPI_Type_contiguous(clrw, MPI_DOUBLE, &(ntype_[1][ix_isPrim]));   //clrw lines
         MPI_Type_commit( &(ntype_[1][ix_isPrim]) );
 
         ntypeSum_[0][ix_isPrim] = NULL;
+
+        MPI_Datatype tmpType = NULL;
+        MPI_Type_contiguous(1, MPI_DOUBLE, &(tmpType));    //line
+        MPI_Type_commit( &(tmpType) );
+
+
         nline = 1 + 2*params.oversize[0] + ix_isPrim;
-        MPI_Type_contiguous(nline, ntype_[0][ix_isPrim], &(ntypeSum_[0][ix_isPrim]));    //line
+        MPI_Type_contiguous(nline, tmpType, &(ntypeSum_[0][ix_isPrim]));    //line
         MPI_Type_commit( &(ntypeSum_[0][ix_isPrim]) );
+
+        MPI_Type_free( &tmpType );
             
     }
     
