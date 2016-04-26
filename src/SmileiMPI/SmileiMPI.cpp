@@ -624,6 +624,29 @@ void SmileiMPI::isend(ElectroMagn* fields, int to, int tag)
     isend( fields->By_m, to, tag+7);
     isend( fields->Bz_m, to, tag+8);
 
+    for (int antennaId=0 ; antennaId<fields->antennas.size() ; antennaId++)
+        isend( fields->antennas[antennaId].field, to, tag+9+antennaId );
+
+    tag += 10 + fields->antennas.size();
+
+    for (int bcId=0 ; bcId<fields->emBoundCond.size() ; bcId++ ) {
+        for (int laserId=0 ; laserId<fields->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
+
+            for ( int profileId=0 ; profileId < fields->emBoundCond[bcId]->vecLaser[laserId]->profiles.size() ; profileId++ ) {
+
+                if ( fields->emBoundCond[bcId]->vecLaser[laserId]->spacetime[profileId] ) {
+                    LaserProfileSeparable* laser = static_cast<LaserProfileSeparable*> ( fields->emBoundCond[bcId]->vecLaser[laserId]->profiles[profileId] );
+                    isend( laser->space_envelope, to , tag );
+                    isend( laser->phase, to, tag + 1);
+                    tag = tag + 2;
+                }
+
+            }
+
+        }
+    }
+
+
 } // End isend ( ElectroMagn )
 
 
@@ -639,6 +662,27 @@ void SmileiMPI::recv(ElectroMagn* fields, int from, int tag)
     recv( fields->By_m, from, tag+7 );
     recv( fields->Bz_m, from, tag+8 );
 
+    for (int antennaId=0 ; antennaId<fields->antennas.size() ; antennaId++)
+        recv( fields->antennas[antennaId].field, from, tag+9+antennaId );
+
+    tag += 10 + fields->antennas.size();
+
+    for (int bcId=0 ; bcId<fields->emBoundCond.size() ; bcId++ ) {
+        for (int laserId=0 ; laserId<fields->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
+
+            for ( int profileId=0 ; profileId < fields->emBoundCond[bcId]->vecLaser[laserId]->profiles.size() ; profileId++ ) {
+
+                if ( fields->emBoundCond[bcId]->vecLaser[laserId]->spacetime[profileId] ) {
+                    LaserProfileSeparable* laser = static_cast<LaserProfileSeparable*> ( fields->emBoundCond[bcId]->vecLaser[laserId]->profiles[profileId] );
+                    recv( laser->space_envelope, from , tag );
+                    recv( laser->phase, from, tag + 1);
+                    tag = tag + 2;
+                }
+
+            }
+
+        }
+    }
 } // End recv ( ElectroMagn )
 
 

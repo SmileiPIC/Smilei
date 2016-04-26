@@ -18,6 +18,7 @@ class Patch;
 
 // Class for choosing specific profiles
 class LaserProfile {
+friend class SmileiMPI;
 public:
     LaserProfile() {};
     ~LaserProfile() {};
@@ -31,6 +32,7 @@ public:
 // Class for holding all information about one laser
 //  --------------------------------------------------------------------------------------------------------------------
 class Laser {
+friend class SmileiMPI;
 public:
     //! Normal laser constructor
     Laser(Params &params, int ilaser, Patch* patch);
@@ -74,6 +76,7 @@ private:
 
 // Laser profile for separable space and time
 class LaserProfileSeparable : public LaserProfile {
+friend class SmileiMPI;
 public:
     LaserProfileSeparable(double, Profile*, Profile*, Profile*, Profile*, bool);
     LaserProfileSeparable(LaserProfileSeparable*);
@@ -89,6 +92,7 @@ private:
 
 // Laser profile for non-separable space and time
 class LaserProfileNonSeparable : public LaserProfile {
+friend class SmileiMPI;
 public:
     LaserProfileNonSeparable(Profile * spaceAndTimeProfile)
      : spaceAndTimeProfile(spaceAndTimeProfile) {};
