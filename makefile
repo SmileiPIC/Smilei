@@ -1,9 +1,9 @@
 
 MPIVERSION = $(shell mpirun --version 2>&1| head -n 1)
 ifneq (,$(findstring Open MPI,$(MPIVERSION)))
-    SMILEICXX=mpicxx
+    SMILEICXX ?= mpicxx
 else
-    SMILEICXX=mpiicpc
+    SMILEICXX ?= mpiicpc
 endif
 
 
@@ -17,11 +17,6 @@ EXEC = smilei
 
 default: $(EXEC)
 
-openmpintelmpi:
-	make -C src openmp=intelmpi
-
-debug:
-	make -C src config=debug
 ####################################################
 DESCRIBE:=$(shell git describe 2>/dev/null || echo '??')
 BRANCH:=$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '??')
@@ -30,8 +25,13 @@ COMMITDATE:="$(shell git show -s --pretty="%ci" 2>/dev/null || echo '??')"
 
 CXXFLAGS += -D__VERSION=\"$(VERSION)\" -D__COMMITDATE=\"$(COMMITDATE)\" -D__CONFIG=\""$(config)"\"
 
-CXXFLAGS += -I${HDF5_ROOT_DIR}/include -std=c++0x 
-LDFLAGS += -L${HDF5_ROOT_DIR}/lib -lhdf5 
+CXXFLAGS += -std=c++0x 
+ifneq ($(strip $(HDF5_ROOT_DIR)),)
+CXXFLAGS += -I${HDF5_ROOT_DIR}/include 
+LDFLAGS += -L${HDF5_ROOT_DIR}/lib 
+endif
+LDFLAGS += -lhdf5 
+
 
 
 ifneq (,$(findstring poincare,$(HOSTNAME)))
@@ -55,7 +55,9 @@ PY_CXXFLAGS:=$(shell $(PYTHONCONFIG) --includes)
 CXXFLAGS+=$(PY_CXXFLAGS)
 
 
+ifneq ($(strip $(PYTHONHOME)),)
 LDFLAGS+=-L$(PYTHONHOME)/lib
+endif 
 
 PY_LDFLAGS:=$(shell $(PYTHONCONFIG) --ldflags)
 LDFLAGS+=$(PY_LDFLAGS)
@@ -69,7 +71,7 @@ else
 endif
 
 ifneq (,$(findstring scalasca,$(config)))
-    SMILEICXX = scalasca -instrument mpic++
+    SMILEICXX = scalasca -instrument $(SMILEICXX)
 endif
 
 ifneq (,$(findstring turing,$(config)))
@@ -106,12 +108,13 @@ env:
 # this generates a .h file containing a char[] with the python script in binary then
 # you can just include this file to get the contents (in Params/Params.cpp)
 $(BUILD_DIR)/%.pyh: %.py
+	@ if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
 	@ echo "Creating binary char for $< : $@"
-	@ mkdir -p "$(@D)" 
 	@ cd "$(<D)" && xxd -i "$(<F)" > "$(@F)"
 	@ mv "$(<D)/$(@F)" "$@"
 
 $(BUILD_DIR)/%.d: %.cpp
+	@ if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
 	@ echo "Checking dependencies for $<"
 # create and modify dependecy file .d to take into account the location subdir
 	@ $(SMILEICXX) $(CXXFLAGS) -MM $< 2>/dev/null | sed -e "s@\(^.*\)\.o:@$(BUILD_DIR)/$(shell  dirname $<)/\1.d $(BUILD_DIR)/$(shell  dirname $<)/\1.o:@" > $@  
@@ -125,7 +128,7 @@ $(EXEC): $(OBJS)
 
 # these are kept for backward compatibility and might be removed (see make help)
 obsolete:
-	@echo "[WARNING] Please consider using make config=\"$(MAKECMDGOALS)\""
+        @ echo "[WARNING] Please consider using make config=\"$(MAKECMDGOALS)\""
 
 debug: obsolete
 	make config=debug
@@ -137,18 +140,12 @@ scalasca: obsolete
 ifeq ($(filter clean help doc tar,$(MAKECMDGOALS)),) 
 # Let's try to make the next lines clear: we include $(DEPS) and pygenerator
 -include $(DEPS) pygenerator
-# we specify that pygenerator is not a file
-.PHONY : pygenerator buildtree
-# create the tree to store .d .o .pyh files
-buildtree:
-	@echo "Creating build dirtree in $(BUILD_DIR)"
-	@mkdir -p $(addprefix $(BUILD_DIR)/, $(DIRS))
 # and pygenerator will create all the $(PYHEADERS) (which are files)
-pygenerator : buildtree $(PYHEADERS)
+pygenerator : $(PYHEADERS)
 endif
 
 
-.PHONY: doc src help clean default tar
+.PHONY: pygenerator doc help clean default tar
 
 doc:
 	make -C doc all
@@ -168,7 +165,7 @@ help:
 	@echo '     make config=debug'
 	@echo '     make config=noopenmp'
 	@echo '     make config="debug noopenmp"'
-	@echo 
+	@echo ''
 	@echo 'Environment variables :'
 	@echo '     SMILEICXX     : mpi c++ compiler'
 	@echo '     HDF5_ROOT_DIR : HDF5 dir'
