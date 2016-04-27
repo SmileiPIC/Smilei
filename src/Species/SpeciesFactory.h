@@ -35,12 +35,12 @@ public:
         std::string dynamics_type = "norm"; // default value
         if (!PyTools::extract("dynamics_type", dynamics_type ,"Species",ispec) )
             if ( patch->isMaster() ) WARNING("For species '" << species_type << "' dynamics_type not defined: assumed = 'norm'.");
-            
+        
         // Create species object
         Species * thisSpecies=NULL;
-        if (dynamics_type=="norm") {
-            // Species with Boris dynamics
-            thisSpecies = new Species_norm(params, patch);
+        if (dynamics_type=="norm" || dynamics_type == "borisnr") {
+             // Species with Boris (relativistic =='norm', nonrelativistic=='borisnr') dynamics
+             thisSpecies = new Species_norm(params, patch);
         } else if (dynamics_type=="rrll") {
             // Species with Boris dynamics + Radiation Back-Reaction (using the Landau-Lifshitz formula)
             thisSpecies = new Species_rrll(params, patch);
@@ -61,7 +61,7 @@ public:
         } else if ( (thisSpecies->initPosition_type!="regular")&&(thisSpecies->initPosition_type!="random") ) {
             ERROR("For species '" << species_type << "' bad definition of initPosition_type " << thisSpecies->initPosition_type);
         }
-            
+        
         PyTools::extract("initMomentum_type",thisSpecies->initMomentum_type ,"Species",ispec);
         if ( (thisSpecies->initMomentum_type=="mj") || (thisSpecies->initMomentum_type=="maxj") ) {
             thisSpecies->initMomentum_type="maxwell-juettner";

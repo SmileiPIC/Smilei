@@ -18,27 +18,31 @@ interpolation_order = 2
 timestep = 0.124
 sim_time = 93
 
-#Moving window
-#n_space_win_x: Number of cell in the total computation domain.
-#t_move_win: Starting time of the moving window in 1/w0.
-#vx_win: Velocity of the moving window in c.
+# SIMULATION BOX : for all space directions (use vector)
+#n_space_win_x: Activates moving window. Number of cell in the total computation domain in the x direction.
 nspace_win_x = 896
-t_move_win = 60.
+# cell_length: length of one cell in c/w0.
+cell_length  = [0.125, 3.] 
+# sim_length: Total length of the simulation in c/w0 .
+sim_length = [ cell_length[0]*nspace_win_x,  120.]  
+
+#Moving window parameters
+#t_move_win: Starting time of the moving window in 1/w0.
+t_move_win = nspace_win_x*cell_length[0]
+#vx_win: Velocity of the moving window in c.
 vx_win = 0.9997
 
-# SIMULATION BOX : for all space directions (use vector)
-# cell_length: length of one cell in c/w0.
-# sim_length: Total length of the simulation in c/w0 .
-
-cell_length  = [0.125, 3.] 
-sim_length = [ cell_length[0]*nspace_win_x,  120.]  
-bc_em_type_x = ["silver-muller","silver-muller"]
-bc_em_type_y = ["silver-muller","silver-muller"]
-
+# ----------------
+# Dynamic Load Balancing
+# ----------------
+#Number of patches must divide number of cells (sim_length/cell_length).
+number_of_patches = [128, 8]
+#Rebalancing frequency
+balancing_freq = 20
+coef_cell = 1.
+coef_frozen = 0.1
 #clrw: width of a cluster in number of cell. Warning: clrw must divide nspace_win_x.
-number_of_patches = [128, 8] 
-balancing_freq = 150
-clrw = 1
+clrw = nspace_win_x/number_of_patches[0]
 
 # RANDOM seed 
 # this is used to randomize the random number generator.
@@ -102,12 +106,16 @@ Species(
 )
 
 # ----------------
-# LASER PROPERTIES
+# Boundary Conditions for fields
 # ----------------
+bc_em_type_x = ["silver-muller","silver-muller"]
+bc_em_type_y = ["silver-muller","silver-muller"]
+
+# Laser properties
 LaserGaussian2D(
     boxSide         = "west",
     a0              = 2.,
-    focus           = [0., 60.],
+    focus           = [0., sim_length[1]/2.],
     waist           = 26.16,
     time_envelope   = tgaussian(center=17.84, fwhm=19.80)
 )
@@ -121,7 +129,7 @@ LaserGaussian2D(
 print_every = 100
 
 # every for field dump
-fieldsToDump = ['Ex','Ey','Bx','Bz','Rho_electron','Rho_proton','Rho','Jx_electron']
+fieldsToDump = ['Ex','Ey','Rho_electron','Rho_proton','Jx_electron']
 fieldDump_every = 100
 
 # every for averagefield Dump

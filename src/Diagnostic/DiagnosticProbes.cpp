@@ -371,7 +371,7 @@ void DiagnosticProbes::setFileSplitting( Params& params, SmileiMPI* smpi, Vector
         
         if (hindex>0) {
             if ( patch->getMPIRank(hindex-1) != patch->MPI_me_ ) {
-                MPI_Recv( &(cuDiag->probesStart), 1, MPI_INTEGER, patch->getMPIRank(hindex-1), 0, MPI_COMM_WORLD, &status );
+                MPI_Recv( &(cuDiag->probesStart), 1, MPI_INT, patch->getMPIRank(hindex-1), 0, MPI_COMM_WORLD, &status );
             }
             else {
                 DiagnosticProbes* diag = static_cast<DiagnosticProbes*>( vecPatches( hindex-1-vecPatches.refHindex_ )->localDiags[probeId_] );
@@ -382,7 +382,7 @@ void DiagnosticProbes::setFileSplitting( Params& params, SmileiMPI* smpi, Vector
         int probeEnd = cuDiag->getLastPartId();
         if (hindex!=nPatches-1) {
             if ( patch->getMPIRank(hindex+1) != patch->MPI_me_ ) {
-                MPI_Send( &probeEnd, 1, MPI_INTEGER, patch->getMPIRank(hindex+1), 0, MPI_COMM_WORLD );
+                MPI_Send( &probeEnd, 1, MPI_INT, patch->getMPIRank(hindex+1), 0, MPI_COMM_WORLD );
             }
         }
         
