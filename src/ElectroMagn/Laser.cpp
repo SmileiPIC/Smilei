@@ -152,7 +152,7 @@ Laser::Laser(Laser* laser, Params& params)
     boxSide   = laser->boxSide;
     spacetime = laser->spacetime;
     profiles.resize(0);
-    if( spacetime[0] || spacetime[0] ) {
+    if( spacetime[0] || spacetime[1] ) {
         if( spacetime[0] ) {
             profiles.push_back( new LaserProfileNonSeparable(static_cast<LaserProfileNonSeparable*>(laser->profiles[0])) );
         } else {

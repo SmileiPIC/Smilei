@@ -193,12 +193,8 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
 {
     // globalDiags : scalars + particles
     for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
-        // For all diags createFile (if global, juste by mpi master, test inside)
-        if ( smpi->isMaster() )
-            globalDiags[idiag]->openFile( params, smpi, *this, true );
-    
-    } // END for globalDiags
-    
+        if( smpi->isMaster() ) globalDiags[idiag]->openFile( params, smpi, *this, true );
+    }
     
     // Initialize scalars (globalDiags[0], especially energy balance)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
@@ -208,40 +204,22 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
     
     // localDiags : probes, track & fields
     for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
+        string type = (*this)(0)->localDiags[idiag]->type_;
         
-        // track, compute global number of particles + compute global Idx
-        if ( (*this)(0)->localDiags[idiag]->type_ == "Track" ) {
-            DiagnosticTrack* diagTrack0 = static_cast<DiagnosticTrack*>( (*this)(0)->localDiags[idiag] );
-            diagTrack0->setFileSplitting( params, smpi, *this );
-            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-                DiagnosticTrack* diagTrack  = static_cast<DiagnosticTrack*>( (*this)(ipatch)->localDiags[idiag] );
-                diagTrack->setFile( diagTrack0->getFileId() );
-            }
+        // \todo The following conditions on "type" should disappear
+        
+        if( type != "Track" )
+            (*this)(0)->localDiags[idiag]->openFile( params, smpi, *this, true );
+        if( type != "Fields" )
+            (*this)(0)->localDiags[idiag]->setFileSplitting( params, smpi, *this );
+        
+        int fileId = (*this)(0)->localDiags[idiag]->getFileId();
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+            (*this)(ipatch)->localDiags[idiag]->setFileId( fileId );
+            if( type == "Probes" )
+                (static_cast<DiagnosticProbes*>((*this)(ipatch)->localDiags[idiag]))->writePositionIn( params );
         }
         
-        // For all diags createFile
-        //(*this)(0)->localDiags[idiag]->openFile( params, smpi, *this, true );
-        
-        if ( (*this)(0)->localDiags[idiag]->type_ == "Probes" ) {
-            (*this)(0)->localDiags[idiag]->openFile( params, smpi, *this, true );
-            DiagnosticProbes* diagProbes0 = static_cast<DiagnosticProbes*>( (*this)(0)->localDiags[idiag] );
-            diagProbes0->setFileSplitting( params, smpi, *this );
-            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-                DiagnosticProbes* diagProbes = static_cast<DiagnosticProbes*>( (*this)(ipatch)->localDiags[idiag] );
-                diagProbes->setFile( diagProbes0->getFileId() );
-                diagProbes->writePositionIn( params );
-            }// END  ipatch
-        
-        } // END if Probes
-
-
-        if ( (*this)(0)->localDiags[idiag]->type_ == "Fields" ) {
-            (*this)(0)->localDiags[idiag]->openFile( params, smpi, *this, true );
-            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-                (*this)(ipatch)->localDiags[idiag]->setFile( (*this)(0)->localDiags[idiag] );
-            }
-        } // END if Fields
-
     } // END for localDiags
     
 } // END initAllDiags
@@ -263,56 +241,18 @@ void VectorPatch::closeAllDiags(SmileiMPI* smpi)
 void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
 {
     for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
-        // For all diags createFile (if global, juste by mpi master, test inside)
         if ( smpi->isMaster() )
             globalDiags[idiag]->openFile( params, smpi, *this, false );
-    
-    } // END for globalDiags
-    
+    }
     
     for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
         (*this)(0)->localDiags[idiag]->openFile( params, smpi, *this, false );
         
-        if ( (*this)(0)->localDiags[idiag]->type_ == "Track" ) {
-            DiagnosticTrack* diagTrack0 = static_cast<DiagnosticTrack*>( (*this)(0)->localDiags[idiag] );
-            // Spli
-            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-                DiagnosticTrack* diagTrack  = static_cast<DiagnosticTrack*>( (*this)(ipatch)->localDiags[idiag] );
-                diagTrack->setFile( diagTrack0->getFileId() );
-            }
+        int fileId = (*this)(0)->localDiags[idiag]->getFileId();
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+            (*this)(ipatch)->localDiags[idiag]->setFileId( fileId );
         }
-        
-        if ( (*this)(0)->localDiags[idiag]->type_ == "Probes" ) {
-            DiagnosticProbes* diagProbes0 = static_cast<DiagnosticProbes*>( (*this)(0)->localDiags[idiag] );
-            //diagProbes0->setFileSplitting( params, smpi, *this );
-            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-                DiagnosticProbes* diagProbes = static_cast<DiagnosticProbes*>( (*this)(ipatch)->localDiags[idiag] );
-                diagProbes->setFile( diagProbes0->getFileId() );
-            }
-        }
-
-        if ( (*this)(0)->localDiags[idiag]->type_ == "Fields" ) {
-            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-                (*this)(ipatch)->localDiags[idiag]->setFile( (*this)(0)->localDiags[idiag] );
-            }
-        } // END if Fields
-
     }
-    
-    /*
-    // Should be OK with the implementation below :
-    //   abstract splitting too even if completely non sense for global diags ?
-    
-    for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
-        (*this)(0)->localDiags[idiag]->openFile( params, smpi, *this, false );
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
-            (*this)(ipatch)->localDiags[idiag]->setFile( (*this)(0)->localDiags[idiag] );
-        if ( (*this)(0)->localDiags[idiag]->type_ == "Probes" )
-            static_cast<DiagnosticProbes*>( (*this)(0)->localDiags[idiag] )->setFileSplitting( params, smpi, *this );
-    }
-    */
-
-
 }
 
 

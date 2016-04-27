@@ -6,9 +6,10 @@
 using namespace std;
 
 
-DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch* patch, int diagId ) :
-fileId_(0)
+DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch* patch, int diagId )
 {
+    fileId_ = 0;
+    
     int n_diag_particles = diagId;
 
     // n_diag_particles ...
@@ -202,12 +203,6 @@ void DiagnosticParticles::openFile( Params& params, SmileiMPI* smpi, VectorPatch
         fileId_ = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
     }
     
-}
-
-
-void DiagnosticParticles::setFile( Diagnostic* diag )
-{
-    fileId_ = static_cast<DiagnosticParticles*>(diag)->fileId_;  
 }
 
 

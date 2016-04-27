@@ -29,15 +29,8 @@ public :
     
     virtual void write(int timestep);
     
-    void setFile( hid_t fid );
-    virtual void setFile( Diagnostic* diag );
-    
     void setGlobalNbrParticles(int totNbrParts) {
         nbrParticles_ = totNbrParts;
-    }
-    
-    hid_t getFileId() {
-      return fileId_;
     }
     
 private :
@@ -58,9 +51,6 @@ private :
     
     // iterator for dataset extension
     int iter;
-    
-    //! hdf5 file ID
-    hid_t fileId_;
     
     template <class T> void append( hid_t fid, std::string name, T & property,  hid_t  mem_space, int nParticles, hid_t type, std::vector<hsize_t> &locator);
 };

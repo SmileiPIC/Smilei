@@ -37,8 +37,6 @@ public :
     
     
     void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches );
-    void setFile( hid_t masterFileId );
-    virtual void setFile( Diagnostic* diag );
     
     void writePositionIn( Params &params );
     void writePositions( int ndim_Particles, int probeDim, hid_t group_id );
@@ -48,13 +46,6 @@ public :
         return probesStart+probeParticles.size();
     }
     
-    hid_t getFileId() {
-        return fileId_;
-    }
-    
-protected:
-    //! hdf5 file ID
-    hid_t fileId_;
 
 private :
     //int probeId_;

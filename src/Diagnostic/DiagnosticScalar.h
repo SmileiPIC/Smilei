@@ -30,7 +30,6 @@ public :
     ~DiagnosticScalar();
     
     virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile );
-    virtual void setFile( Diagnostic* diag );
     
     virtual void closeFile();
     
@@ -51,13 +50,11 @@ public :
     
     //! energy used for the normalization of energy balance (former total energy)
     double EnergyUsedForNorm;
-
-
-private :
     
     // Specific methods
     void compute( Patch* patch, int timestep );
     
+private :
     
     //! set a particular scalar
     void setScalar(std::string name, double value);

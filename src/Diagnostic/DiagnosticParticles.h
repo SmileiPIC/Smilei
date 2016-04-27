@@ -43,7 +43,6 @@ public :
     ~DiagnosticParticles();
     
     virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile );
-    virtual void setFile( Diagnostic* diag );
     
     virtual void closeFile();
     
@@ -72,8 +71,6 @@ private :
     std::vector<double> data_sum;
     
     int output_size;
-    
-    hid_t fileId_;
 
 };
 

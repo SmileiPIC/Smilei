@@ -33,9 +33,9 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, Patch* patc
     //
     write_plist = H5Pcreate(H5P_DATASET_XFER);
     if (!params.simu_is_cartesian)
-	H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);
+        H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);
     else
-	H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_COLLECTIVE);
+        H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_COLLECTIVE);
 
     timeSelection    = new TimeSelection( PyTools::extract_py( name_every ), time_name );
 
@@ -52,9 +52,10 @@ DiagnosticFields::~DiagnosticFields()
 {
     // Management of global IO file
     if (fileId_ != 0)
-	H5Fclose(fileId_ );
+        H5Fclose(fileId_ );
 
-    H5Pclose( write_plist );}
+    H5Pclose( write_plist );
+}
 
 
 void DiagnosticFields::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile )
@@ -82,17 +83,11 @@ void DiagnosticFields::openFile( Params& params, SmileiMPI* smpi, VectorPatch& v
         H5Pclose(plist_id);
     }
     else {
-	hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
-	fileId_ = H5Fopen( filename.c_str(), H5F_ACC_RDWR, pid );
-	H5Pclose(pid);
+        hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
+        H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
+        fileId_ = H5Fopen( filename.c_str(), H5F_ACC_RDWR, pid );
+        H5Pclose(pid);
     }
-}
-
-
-void DiagnosticFields::setFile( Diagnostic* diag )
-{
-    fileId_ = static_cast<DiagnosticFields*>(diag)->fileId_;
 }
 
 
@@ -109,7 +104,7 @@ bool DiagnosticFields::prepare( Patch* patch, int timestep )
     ostringstream name_t;
     name_t.str("");
     name_t << "/" << setfill('0') << setw(10) << timestep;
-	
+        
     DEBUG("[hdf] GROUP _________________________________ " << name_t.str());
     hid_t group_id = H5Gcreate(fileId_, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     H5Gclose(group_id);
@@ -143,8 +138,8 @@ void DiagnosticFields::write(int timestep)
         else { // Write selected fields only
             for (unsigned int j=0; j<fieldsToDump.size(); j++) {
                 if (fields_[i]->name==fieldsToDump[j]) {
-		    writeFieldsSingleFileTime( fields_[i], group_id );
-		}
+                    writeFieldsSingleFileTime( fields_[i], group_id );
+                }
             }
         }
 

@@ -389,19 +389,6 @@ void DiagnosticProbes::setFileSplitting( Params& params, SmileiMPI* smpi, Vector
     } // END for ipatch
 }
 
-
-void DiagnosticProbes::setFile(hid_t masterFileId)
-{
-    fileId_ = masterFileId;  
-}
-
-
-void DiagnosticProbes::setFile( Diagnostic* diag )
-{
-    fileId_ = static_cast<DiagnosticProbes*>(diag)->fileId_;  
-}
-
-
 void DiagnosticProbes::writePositionIn( Params &params )
 {
     int probe_id = probeId_;
@@ -412,7 +399,6 @@ void DiagnosticProbes::writePositionIn( Params &params )
     writePositions( params.nDim_particle, dimProbe, group_id );
     // Close the group
     H5Gclose(group_id);
-
 }
 
 

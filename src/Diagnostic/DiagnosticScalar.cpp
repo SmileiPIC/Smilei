@@ -85,12 +85,6 @@ void DiagnosticScalar::openFile( Params& params, SmileiMPI* smpi, VectorPatch& v
 } // END openFile
 
 
-void DiagnosticScalar::setFile( Diagnostic* diag )
-{
-    ERROR( "Only master can write here ! fout = static_cast<DiagnosticScalar*>(diag)->fout; " );
-}
-
-
 void DiagnosticScalar::closeFile()
 {
     if (fout.is_open()) fout.close();
@@ -100,36 +94,20 @@ void DiagnosticScalar::closeFile()
 
 bool DiagnosticScalar::prepare( Patch* patch, int timestep )
 {
-    if ( timeSelection->theTimeIsNow(timestep) ) {
-        for (int iscalar=0 ; iscalar<out_value.size() ; iscalar++)
-            out_value[iscalar] = 0.;
-        return true;
-    }
-    return false;
-
+    return true; // Scalars always run even if they don't dump
 } // END prepare
 
 
 void DiagnosticScalar::run( Patch* patch, int timestep )
 {
-    // at timestep=0 initialize the energies
-    /*if (timestep==0) {
-        //compute( patch->EMfields, patch->vecSpecies );
-        compute( patch, timestep );
-        Energy_time_zero  = getScalar("Utot");
-        EnergyUsedForNorm = Energy_time_zero;
-    }*/
+    // Must keep track of Poynting flux even without diag
+    patch->EMfields->computePoynting(); 
     
-    // If within time-selection overall range
-    bool theTimeIsNow = timeSelection->theTimeIsNow(timestep); // must compute this in any case
-    if( timeSelection->inProgress(timestep) ) {
-        // Poynting must be calculated & incremented at every timesteps
-        patch->EMfields->computePoynting(); 
-        if ( theTimeIsNow ) {
-          //compute( patch-EMfields, patch-vecSpecies);
-            compute( patch, timestep );
-        }
-        
+    // Compute all scalars when needed
+    if ( timeSelection->theTimeIsNow(timestep) || timestep==0 ) {
+        for (int iscalar=0 ; iscalar<out_value.size() ; iscalar++)
+            out_value[iscalar] = 0.;
+        compute( patch, timestep );
     }
 
 } // END run

@@ -8,7 +8,6 @@
 using namespace std;
 
 DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, int diagId ) :
-Diagnostic(params,smpi,patch,diagId),
 nDim_particle(params.nDim_particle)
 {
     probeId_ = diagId; // Warning, not the index of the DiagTrack, but of all local diags
@@ -162,16 +161,6 @@ void DiagnosticTrack::openFile( Params& params, SmileiMPI* smpi, VectorPatch& ve
 
 }
 
-
-void DiagnosticTrack::setFile( hid_t fid )
-{
-    fileId_ = fid;
-}
-
-void DiagnosticTrack::setFile( Diagnostic* diag )
-{
-    fileId_ = static_cast<DiagnosticTrack*>(diag)->fileId_;  
-}
 
 void DiagnosticTrack::closeFile()
 {
