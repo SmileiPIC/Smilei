@@ -260,7 +260,9 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
     for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++)
         vecPatches_old[ipatch] = vecPatches(ipatch);
 
-    //#pragma omp for schedule(runtime)
+    //#pragma omp for schedule(static)
+    //#pragma omp single
+    {
     for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
          mypatch = vecPatches_old[ipatch];
 
@@ -320,11 +322,12 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
        }
 
     }//End loop on Patches. This barrier matters.
-
+    }
     //Creation of new Patches if necessary
     //The "new" operator must be included in a single area otherwise conflicts arise for unknown reasons.
     //#pragma omp single
     {
+         //#pragma omp for schedule(static)
          for (unsigned int i=0; i<nthds; i++){
              for (unsigned int j=0; j< patch_to_be_created[i].size(); j++){
                  //vecPatches.patches_[patch_to_be_created[i][j]] = new Patch(params, laser_params, smpi, h0 + patch_to_be_created[i][j], n_moved);
@@ -337,7 +340,7 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
 
 
     //Initialization of new Patches if necessary.
-    //#pragma omp for schedule(runtime)
+    //#pragma omp for schedule(static)
     for (unsigned int ipatch = 0 ; ipatch < patch_to_be_created[0].size() ; ipatch++) {
          mypatch = vecPatches(patch_to_be_created[0][ipatch]);
          Rneighbor = mypatch->MPI_neighbor_[0][1];
@@ -347,15 +350,14 @@ void SimWindow::operate_arnaud(VectorPatch& vecPatches, SmileiMPI* smpi, Params&
          // And else, nothing to do.
     } //This barrier matters. 
 
-    smpi->barrier();
+    //smpi->barrier();
     //Each thread erases data of sent patches
-    //pragma omp for schedule(static)
     for (int j=0; j < send_patches_.size(); j++){
         mypatch = send_patches_[j];
 
        	energy_field_lost += mypatch->EMfields->computeNRJ();
-	for ( int ispec=0 ; ispec<nSpecies ; ispec++ )
-	    energy_part_lost[ispec] += mypatch->vecSpecies[ispec]->computeNRJ();
+        for ( int ispec=0 ; ispec<nSpecies ; ispec++ )
+            energy_part_lost[ispec] += mypatch->vecSpecies[ispec]->computeNRJ();
 
         mypatch->sio->setFiles(0,0);
         delete  mypatch;
