@@ -123,11 +123,10 @@ int main (int argc, char* argv[])
         
         double restart_time_dual = (checkpoint.this_run_start_step +0.5) * params.timestep;
         time_dual = restart_time_dual;
-        // A revoir !
         if ( simWindow ) {
             simWindow->setOperators(vecPatches);
             if ( simWindow->isMoving(restart_time_dual) ) {
-                simWindow->operate(vecPatches, smpiData, params);
+                simWindow->operate_arnaud(vecPatches, smpiData, params);
             }
         }
         //smpiData->recompute_patch_count( params, vecPatches, restart_time_dual );
@@ -304,17 +303,17 @@ int main (int argc, char* argv[])
             #pragma omp barrier
             // ----------------------------------------------------------------------        
             
-        } //End omp parallel region
         
-        timer[5].restart();
-        if ( simWindow && simWindow->isMoving(time_dual) ) {
-            start_moving++;
-            if ((start_moving==1) && (smpiData->isMaster()) ) {
-                MESSAGE(">>> Window starts moving");
+        } //End omp parallel region
+            timer[5].restart();
+            if ( simWindow && simWindow->isMoving(time_dual) ) {
+                start_moving++;
+                if ((start_moving==1) && (smpiData->isMaster()) ) {
+                    MESSAGE(">>> Window starts moving");
+                }
+                simWindow->operate_arnaud(vecPatches, smpiData, params);
             }
-            simWindow->operate_arnaud(vecPatches, smpiData, params);
-        }
-        timer[5].update();
+            timer[5].update();
 
 
 
