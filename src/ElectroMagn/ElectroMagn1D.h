@@ -54,17 +54,10 @@ public:
     
     //! Method used to reset/increment the averaged fields
     void incrementAvgFields(unsigned int time_step);
-
-    //! Method used to restart the total charge densities and currents
-    void restartRhoJ();
-    //! Method used to restart the total charge densities and currents
-    void restartRhoJs();
-
+    
     //! Method used to compute the total charge density and currents by summing over all species
     void computeTotalRhoJ();
-
-    //! \todo Create properties the laser time-profile (MG & TV)
- 
+    
     //! Number of nodes on the primal grid
     unsigned int nx_p;
 

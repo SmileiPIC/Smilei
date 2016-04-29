@@ -269,10 +269,10 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
     // diag_flag = 1 if  :
     //   vecPatches.Diags->field_timeSelection->theTimeIsNow(itime)
     if  (*diag_flag){
+        (*this)(0)->sio->createTimeStepInSingleFileTime( itime );
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
             
             // Write EM fields dump in Fields.h5
-            if (ipatch==0) (*this)(ipatch)->sio->createTimeStepInSingleFileTime( itime );
             (*this)(ipatch)->sio->writeAllFieldsSingleFileTime( (*this)(ipatch)->EMfields->allFields, itime, 0 );
             
             // Check the dedicated fields output write frequency 
