@@ -54,11 +54,6 @@ public:
     //! Method used to reset/increment the averaged fields
     void incrementAvgFields(unsigned int time_step);
     
-    //! Method used to initialize the total charge densities and currents
-    void restartRhoJ();
-    //! Method used to initialize the total charge densities and currents of species
-    void restartRhoJs();
-
     //! Method used to compute the total charge density and currents by summing over all species
     void computeTotalRhoJ();
     void addToGlobalRho(int ispec, unsigned int clrw);

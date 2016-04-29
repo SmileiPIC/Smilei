@@ -272,6 +272,35 @@ void ElectroMagn::initRhoJ(vector<Species*>& vecSpecies, Projector* Proj)
 }
 
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Reinitialize the total charge densities and currents
+// - save current density as old density (charge conserving scheme)
+// - put the new density and currents to 0
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn::restartRhoJ()
+{
+    Jx_ ->put_to(0.);
+    Jy_ ->put_to(0.);
+    Jz_ ->put_to(0.);
+    rho_->put_to(0.);
+}
+
+void ElectroMagn::restartRhoJs()
+{
+    for (unsigned int ispec=0 ; ispec < n_species ; ispec++) {
+        Jx_s [ispec]->put_to(0.);
+        Jy_s [ispec]->put_to(0.);
+        Jz_s [ispec]->put_to(0.);
+        rho_s[ispec]->put_to(0.);
+    }
+    
+    Jx_ ->put_to(0.);
+    Jy_ ->put_to(0.);
+    Jz_ ->put_to(0.);
+    rho_->put_to(0.);
+}
+
 void ElectroMagn::movingWindow_x(unsigned int shift)
 {
     //! \todo{ Why the if test ? Remove it ? (AB for JD)}
