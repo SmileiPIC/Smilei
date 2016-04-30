@@ -359,15 +359,13 @@ void DiagnosticProbes::setFileSplitting( Params& params, SmileiMPI* smpi, Vector
         static_cast<DiagnosticProbes*>(vecPatches(ipatch)->localDiags[probeId_])->probesStart = 0;
     
     MPI_Status status;
+    int probeEnd;
     for (unsigned int ipatch=0 ; ipatch < vecPatches.size() ; ipatch++) {
         
         Patch* patch = vecPatches(ipatch);
         DiagnosticProbes* cuDiag = static_cast<DiagnosticProbes*>(patch->localDiags[probeId_]);
         
         int hindex = patch->Hindex();
-        
-        // probesStart
-        //probesStart = 0;
         
         if (hindex>0) {
             if ( patch->getMPIRank(hindex-1) != patch->MPI_me_ ) {
@@ -379,13 +377,12 @@ void DiagnosticProbes::setFileSplitting( Params& params, SmileiMPI* smpi, Vector
             }
         }
         
-        int probeEnd = cuDiag->getLastPartId();
+        probeEnd = cuDiag->getLastPartId();
         if (hindex!=nPatches-1) {
             if ( patch->getMPIRank(hindex+1) != patch->MPI_me_ ) {
                 MPI_Send( &probeEnd, 1, MPI_INT, patch->getMPIRank(hindex+1), 0, MPI_COMM_WORLD );
             }
         }
-        
     } // END for ipatch
 }
 
@@ -428,26 +425,25 @@ void DiagnosticProbes::writePositions( int ndim_Particles, int probeDim, hid_t g
             posArray->data_2D[ipb][idim] = probeParticles.position(idim,ipb);
     }
 
-
     // memspace OK : 1 block 
     hsize_t     chunk_parts[2];
-    chunk_parts[1] = probeParticles.size();
-    chunk_parts[0] = ndim_Particles; 
+    chunk_parts[0] = probeParticles.size();
+    chunk_parts[1] = ndim_Particles; 
     hid_t memspace  = H5Screate_simple(2, chunk_parts, NULL);
     // filespace :
     hsize_t dimsf[2], offset[2], stride[2], count[2];
-    dimsf[1] = nPart_total;
-    dimsf[0] = ndim_Particles;
+    dimsf[0] = nPart_total;
+    dimsf[1] = ndim_Particles;
     hid_t filespace = H5Screate_simple(2, dimsf, NULL);
-    offset[1] = probesStart;
-    offset[0] = 0;
+    offset[0] = probesStart;
+    offset[1] = 0;
     stride[0] = 1;
     stride[1] = 1;
     count[0] = 1;
     count[1] = 1;
     hsize_t     block[2];
-    block[1] = probeParticles.size();
-    block[0] = ndim_Particles;
+    block[0] = probeParticles.size();
+    block[1] = ndim_Particles;
     H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, stride, count, block);
 
     //define , write_plist
@@ -470,7 +466,6 @@ void DiagnosticProbes::writePositions( int ndim_Particles, int probeDim, hid_t g
 
     H5Sclose(filespace);
     H5Sclose(memspace);
-
 
 
     delete posArray;

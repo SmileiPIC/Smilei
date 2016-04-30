@@ -584,7 +584,7 @@ class Diagnostic(object):
 			xmax = self._xfactor*self._centers[0][-1]
 			extent = [xmin, xmax, self.times[0], self.times[-1]]
 			if self._log[0]: extent[0:2] = [self._np.log10(xmin), self._np.log10(xmax)]
-			im = ax.imshow(A, vmin = self.options.vmin, vmax = self.options.vmax, extent=extent, **self.options.image)
+			im = ax.imshow(self._np.flipud(A), vmin = self.options.vmin, vmax = self.options.vmax, extent=extent, **self.options.image)
 			ax.set_xlabel(self._xlabel)
 			ax.set_ylabel(ylabel)
 			self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
@@ -1651,17 +1651,20 @@ class Probe(Diagnostic):
 		self._naxes = self._ishape.size
 		self._sliceinfo = {}
 		self._slices = [None]*self._ndim
+		p = []
 		for iaxis in range(self._naxes):
 		
 			# calculate grid points locations
 			p0 = self._info["p0"            ] # reference point
 			pi = self._info["p"+str(iaxis+1)] # end point of this axis
+			p.append( pi-p0 )
 			centers = self._np.zeros((self._ishape[iaxis],p0.size))
 			for i in range(p0.size):
 				centers[:,i] = self._np.linspace(p0[i],pi[i],self._ishape[iaxis])
 			
 			label = {0:"axis1", 1:"axis2", 2:"axis3"}[iaxis]
 			axisunits = "L_r"
+			
 			
 			if label in slice:
 				# if slice is "all", then all the axis has to be summed
@@ -1725,6 +1728,33 @@ class Probe(Diagnostic):
 			self._edges = [X, Y]
 			self._label = ["x", "y"]
 			self._units = [axisunits, axisunits]
+		
+		# Prepare the reordering of the points for patches disorder
+		positions = self._h5probe["positions"].value # actual probe points positions
+		p = self._np.array(p) # matrix of the probe generating vectors
+		# Subtract by p0
+		p0 = self._info["p0"]
+		for i in range(p0.size):
+			positions[:,i] -= p0[i]
+		# If 1D probe, convert positions to distances
+		if self._naxes==1:
+			p  = self._np.sqrt(self._np.sum(p**2))
+			invp = self._np.array(1./p, ndmin=1)
+			positions = self._np.sqrt(self._np.sum(positions**2,1))
+		# If 2D probe, must calculate matrix inverse
+		else:
+			invp = self._np.linalg.inv(p.transpose())
+		self._ordering = self._np.zeros((positions.shape[0],), dtype=int)
+		for n in range(positions.shape[0]):
+			pos = positions[n]
+			ijk = self._np.dot(invp, pos)*(self._ishape-1) # find the indices of the point
+			i = ijk[0]
+			for l in range(1,len(ijk)): i=i*self._ishape[l]+ijk[l] # linearized index
+			try:
+				self._ordering[int(round(i))] = n
+			except:
+				pass
+		self.p = self._ordering
 		
 		# Build units
 		titles = {}
@@ -1825,11 +1855,14 @@ class Probe(Diagnostic):
 		op = "A=" + self.operation
 		for n in reversed(self._fieldn): # for each field in operation
 			B = self._np.double(self._h5probe[index][n,:]) # get array
-			B = self._np.reshape(B, self._ishape) # reshape array because it is flattened in the file
 			C.update({ n:B })
 			op = op.replace("#"+str(n), "C["+str(n)+"]")
 		# Calculate the operation
 		exec op in None
+		# Reorder probes for patch disorder
+		A = A[self._ordering]
+		# Reshape array because it is flattened in the file
+		A = self._np.reshape(A, self._ishape)
 		# Apply the slicing
 		for iaxis in range(self._naxes):
 			if self._slices[iaxis] is None: continue
@@ -1850,7 +1883,7 @@ class Probe(Diagnostic):
 	
 	# Overloading a plotting function in order to use pcolormesh instead of imshow
 	def _animateOnAxes_2D_(self, ax, A):
-		im = ax.pcolormesh(self._xfactor*self._edges[0], self._yfactor*self._edges[1], self._np.flipud(A.transpose()),
+		im = ax.pcolormesh(self._xfactor*self._edges[0], self._yfactor*self._edges[1], (A),
 			vmin = self.options.vmin, vmax = self.options.vmax, **self.options.image)
 		return im
 

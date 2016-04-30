@@ -102,8 +102,8 @@ void Patch::initStep3( Params& params, SmileiMPI* smpi, unsigned int n_moved ) {
     max_local.resize(params.nDim_field, 0.);
     cell_starting_global_index.resize(params.nDim_field, 0);
     for (int i = 0 ; i<params.nDim_field ; i++) {
-        min_local[i] = Pcoordinates[i]*params.n_space[i]*params.cell_length[i];
-        max_local[i] = min_local[i] + params.n_space[i]*params.cell_length[i];
+        min_local[i] =  Pcoordinates[i]   *params.n_space[i]*params.cell_length[i];
+        max_local[i] = (Pcoordinates[i]+1)*params.n_space[i]*params.cell_length[i];
         cell_starting_global_index[i] += Pcoordinates[i]*params.n_space[i];
         cell_starting_global_index[i] -= params.oversize[i];
     }
