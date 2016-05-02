@@ -653,7 +653,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     // Create particles in a space starting at cell_index
     vector<double> cell_index(3,0);
     for (int i=0 ; i<params.nDim_field ; i++) {
-        if (params.cell_length[i]!=0)
+        if (params.cell_length[i]!=0) // REALLY NECESSARY ????
             cell_index[i] = patch->getDomainLocalMin(i);
     }
     
@@ -683,7 +683,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     }
     
     int npart_effective = 0;
-    double remainder, nppc;
+    double remainder, nppc, inv_nDim_field = -1./params.nDim_field;
     for (unsigned int i=0; i<n_space_to_create[0]; i++) {
         for (unsigned int j=0; j<n_space_to_create[1]; j++) {
             for (unsigned int k=0; k<n_space_to_create[2]; k++) {
@@ -695,11 +695,12 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                 
                 // Obtain the number of particles per cell
                 nppc = ppcProfile->valueAt(x_cell);
-                // If not a round number, then we need to randomly decide how to round
-                remainder = nppc - floor(nppc);
+                // If not a round number, then we need to decide how to round
+                remainder = pow(nppc - floor(nppc), inv_nDim_field);
                 n_part_in_cell(i,j,k) = floor(nppc);
-                if( remainder > (double)rand() / RAND_MAX )
-                    n_part_in_cell(i,j,k) ++;
+                if( fmod(x_cell[0], remainder) < 1.
+                 && fmod(x_cell[1], remainder) < 1.
+                 && fmod(x_cell[2], remainder) < 1. ) n_part_in_cell(i,j,k)++;
                 // If zero or less, zero particles
                 if( n_part_in_cell(i,j,k)<=0. ) {
                     n_part_in_cell(i,j,k) = 0.;
