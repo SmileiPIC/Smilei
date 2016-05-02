@@ -683,6 +683,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     }
     
     int npart_effective = 0;
+    double remainder, nppc;
     for (unsigned int i=0; i<n_space_to_create[0]; i++) {
         for (unsigned int j=0; j<n_space_to_create[1]; j++) {
             for (unsigned int k=0; k<n_space_to_create[2]; k++) {
@@ -692,7 +693,14 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                 x_cell[1] = cell_index[1] + (j+0.5)*cell_length[1];
                 x_cell[2] = cell_index[2] + (k+0.5)*cell_length[2];
                 
-                n_part_in_cell(i,j,k) = round(ppcProfile->valueAt(x_cell));
+                // Obtain the number of particles per cell
+                nppc = ppcProfile->valueAt(x_cell);
+                // If not a round number, then we need to randomly decide how to round
+                remainder = nppc - floor(nppc);
+                n_part_in_cell(i,j,k) = floor(nppc);
+                if( remainder > (double)rand() / RAND_MAX )
+                    n_part_in_cell(i,j,k) ++;
+                // If zero or less, zero particles
                 if( n_part_in_cell(i,j,k)<=0. ) {
                     n_part_in_cell(i,j,k) = 0.;
                     density(i,j,k) = 0.;
