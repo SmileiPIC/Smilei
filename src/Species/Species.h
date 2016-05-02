@@ -166,9 +166,12 @@ public:
     //! Ionization method
     Ionization* Ionize;
     
-    //! to keep rack of ionized electrons
+    //! Pointer to the species where field-ionized electrons go
     Species *electron_species;
+    //! Index of the species where field-ionized electrons go
     int electron_species_index;
+    //! Name of the species where field-ionized electrons go
+    std::string ionization_electrons;
     
     //! Cluster width in number of cells
     unsigned int clrw; //Should divide the number of cells in X of a single MPI domain. 

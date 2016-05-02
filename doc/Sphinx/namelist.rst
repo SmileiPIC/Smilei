@@ -274,7 +274,13 @@ All the possible variables inside this block are explained here:
   
   :default: ``"none"``
   
-  :red:`to do`
+  The model for field ionization. Currently, only ``"tunnel"`` is available.
+  See :ref:`this <CollisionalIonization>` for collisional ionization instead.
+
+
+.. py:data:: ionization_electrons
+  
+  The name of the electron species that field ionization uses when creating new electrons.
 
 
 .. py:data:: radiating
@@ -296,8 +302,8 @@ All the possible variables inside this block are explained here:
   :default: 0
   
   Number of timesteps between each output of particles trajectories, **or** a :ref:`time selection <TimeSelections>`.
-  If non-zero, the particles will be tracked, and a file named ``TrackParticles_abc.h5``
-  (where ``abc`` is :py:data:`species_type`) will be created.
+  If non-zero, the particles positions will be tracked and written in a file named ``TrackParticles_abc.h5``
+  (where ``abc`` is :py:data:`species_type`).
 
 
 .. py:data:: c_part_max
@@ -880,6 +886,9 @@ All the possible variables inside this block are explained here:
   * If :math:`= 0`, the Coulomb logarithm is automatically computed for each collision.
   * If :math:`> 0`, the Coulomb logarithm is equal to this value.
 
+
+
+.. _CollisionalIonization:
 
 .. py:data:: ionizing
   

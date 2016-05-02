@@ -83,6 +83,7 @@ fieldDump_every=1
 Species(
 	species_type = 'helium',
 	ionization_model = 'tunnel',
+	ionization_electrons = 'electron',
 	atomic_number = 2,
 	initPosition_type = 'regular',
 	initMomentum_type = 'cold',

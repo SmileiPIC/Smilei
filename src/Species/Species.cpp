@@ -469,7 +469,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
             nrj_bc_lost += nrj_lost_per_thd[tid];
 
         // Needs to be reviewed 
-        if (Ionize && electron_species) {
+        if (Ionize) {
             for (unsigned int i=0; i < Ionize->new_electrons.size(); i++) {
                 // electron_species->(*particles).push_back(Ionize->new_electrons[i]);
                                 
@@ -488,7 +488,7 @@ void Species::dynamics(double time_dual, unsigned int ispec, ElectroMagn* EMfiel
                     electron_species->bmax[ii]++;
                 }
             }
-                        
+            
             // if (Ionize->new_electrons.size())
             //      DEBUG("number of electrons " << electron_species->(*particles).size() << " " << );
             Ionize->new_electrons.clear();

@@ -45,7 +45,7 @@ public:
             // Species with Boris dynamics + Radiation Back-Reaction (using the Landau-Lifshitz formula)
             thisSpecies = new Species_rrll(params, patch);
         } else {
-            ERROR("For species #" << ispec << ", dynamics_type must be either 'norm' or 'rrll'")
+            ERROR("For species `" << species_type << " dynamics_type must be either 'norm' or 'rrll'")
         }
         
         thisSpecies->species_type = species_type;
@@ -59,7 +59,7 @@ public:
         if (thisSpecies->initPosition_type.empty()) {
             ERROR("For species '" << species_type << "' empty initPosition_type");
         } else if ( (thisSpecies->initPosition_type!="regular")&&(thisSpecies->initPosition_type!="random") ) {
-            ERROR("For species '" << species_type << "' bad definition of initPosition_type " << thisSpecies->initPosition_type);
+            ERROR("For species '" << species_type << "' unknown initPosition_type: " << thisSpecies->initPosition_type);
         }
         
         PyTools::extract("initMomentum_type",thisSpecies->initMomentum_type ,"Species",ispec);
@@ -69,7 +69,7 @@ public:
         if (   (thisSpecies->initMomentum_type!="cold")
                && (thisSpecies->initMomentum_type!="maxwell-juettner")
                && (thisSpecies->initMomentum_type!="rectangular") ) {
-            ERROR("For species '" << species_type << "' bad definition of initMomentum_type");
+            ERROR("For species '" << species_type << "' unknown initMomentum_type: "<<thisSpecies->initMomentum_type);
         }
         
         PyTools::extract("c_part_max",thisSpecies->c_part_max,"Species",ispec);
@@ -106,20 +106,20 @@ public:
         bool thermVisDefined=false;
         if ( (thisSpecies->bc_part_type_west=="thermalize") || (thisSpecies->bc_part_type_east=="thermalize") ){
             thermTisDefined=PyTools::extract("thermT",thisSpecies->thermT,"Species",ispec);
-            if (!thermTisDefined) ERROR("thermT needs to be defined for species " <<ispec<< " due to x-BC thermalize");
+            if (!thermTisDefined) ERROR("For species '" << species_type << "' thermT needs to be defined due to x-BC thermalize");
             thermVisDefined=PyTools::extract("thermVelocity",thisSpecies->thermVelocity,"Species",ispec);
-            if (!thermVisDefined) ERROR("thermVelocity needs to be defined for species " <<ispec<< " due to x-BC thermalize");
+            if (!thermVisDefined) ERROR("For species '" << species_type << "' thermVelocity needs to be defined due to x-BC thermalize");
         }
         if ( (params.nDim_particle==2) && (!thermTisDefined) && (!thermVisDefined) &&
              (thisSpecies->bc_part_type_south=="thermalize" || thisSpecies->bc_part_type_north=="thermalize") ) {
             thermTisDefined=PyTools::extract("thermT",thisSpecies->thermT,"Species",ispec);
-            if (!thermTisDefined) ERROR("thermT needs to be defined for species " <<ispec<< " due to y-BC thermalize");
+            if (!thermTisDefined) ERROR("For species '" << species_type << "' thermT needs to be defined due to y-BC thermalize");
             thermVisDefined=PyTools::extract("thermVelocity",thisSpecies->thermVelocity,"Species",ispec);
-            if (!thermTisDefined) ERROR("thermVelocity needs to be defined for species " <<ispec<< " due to y-BC thermalize");
+            if (!thermTisDefined) ERROR("For species '" << species_type << "' thermVelocity needs to be defined due to y-BC thermalize");
         }
         if (thermTisDefined) {
             if (thisSpecies->thermT.size()==1) {
-                WARNING("Using thermT[0] for species " << species_type << " in all directions");
+                WARNING("For species '" << species_type << "' Using thermT[0] in all directions");
                 thisSpecies->thermT.resize(3);
                 for (unsigned int i=1; i<3;i++)
                     thisSpecies->thermT[i]=thisSpecies->thermT[0];
@@ -141,19 +141,27 @@ public:
             thisSpecies->thermalVelocity[i] = sqrt(2.*thisSpecies->thermT[i]/thisSpecies->mass);
             thisSpecies->thermalMomentum[i] = thisSpecies->thermalVelocity[i];
             // Caution: momentum in SMILEI actually correspond to p/m
-            if (thisSpecies->thermalVelocity[i]>0.3) ERROR("Thermalizing BCs for species " << species_type << " require non-relativistic thermT");
+            if (thisSpecies->thermalVelocity[i]>0.3) ERROR("For species '" << species_type << "' Thermalizing BCs require non-relativistic thermT");
         }
         
         
         
-        
+        // Manage the ionization parameters
         thisSpecies->atomic_number = 0;
         PyTools::extract("atomic_number", thisSpecies->atomic_number, "Species",ispec);
         
-        PyTools::extract("ionization_model", thisSpecies->ionization_model, "Species",ispec);
+        std::string model;
+        if( PyTools::extract("ionization_model", model, "Species",ispec) && model!="none" ) {
         
-        if (thisSpecies->ionization_model != "none" && thisSpecies->atomic_number==0) {
-            ERROR("For species '" << species_type << "', `atomic_number` not found => required for the ionization model .");
+            thisSpecies->ionization_model = model;
+            
+            if( ! PyTools::extract("ionization_electrons", thisSpecies->ionization_electrons, "Species",ispec) ) {
+                ERROR("For species '" << species_type << "' undefined ionization_electrons (required for ionization)");
+            }
+            
+            if( thisSpecies->atomic_number==0 ) {
+                ERROR("For species '" << species_type << "' undefined atomic_number (required for ionization)");
+            }
         }
         
         // Species geometry
@@ -210,9 +218,9 @@ public:
         thisSpecies->thermalMomentum.resize(3);
         
         if (thermTisDefined) {
-            if ( patch->isMaster() ) WARNING("\tUsing thermT[0] for species " << species_type << " in all directions");
+            if ( patch->isMaster() ) WARNING("\tFor species '" << species_type << "' Using thermT[0] in all directions");
             if (thisSpecies->thermalVelocity[0]>0.3) {
-                ERROR("for Species#"<<ispec<<" thermalising BCs require ThermT[0]="<<thisSpecies->thermT[0]<<"<<"<<thisSpecies->mass);
+                ERROR("For species '" << species_type << "' thermalising BCs require ThermT[0]="<<thisSpecies->thermT[0]<<"<<"<<thisSpecies->mass);
             }
             for (unsigned int i=0; i<3; i++) {
                 thisSpecies->thermalVelocity[i] = sqrt(2.*thisSpecies->thermT[0]/thisSpecies->mass);
@@ -236,7 +244,7 @@ public:
         
         // Verify they don't ionize
         if (thisSpecies->ionization_model!="none" && thisSpecies->particles->isTest) {
-            ERROR("For species '" << species_type << "', disabled for now : test & ionized");
+            ERROR("For species '" << species_type << "' test & ionized is currently impossible");
         }
         
         // Create the particles
@@ -322,57 +330,35 @@ public:
         
         // read from python namelist
         unsigned int tot_species_number = PyTools::nComponents("Species");
-        bool ionization = false;
         for (unsigned int ispec = 0; ispec < tot_species_number; ispec++) {
             
             Species* thisSpecies = SpeciesFactory::create(params, ispec, patch);
-            if (thisSpecies->Ionize) ionization = true;
             
             // Put the newly created species in the vector of species
             retSpecies.push_back(thisSpecies);
             
             // Print info
-            if (patch->isMaster()) MESSAGE(2, "Species " << ispec << " (" << thisSpecies->species_type << ") created,\t check for scalars for the number of particles" );
+            if (patch->isMaster()) MESSAGE(2, "Species " << ispec << " (" << thisSpecies->species_type << ") created,\t check scalars for the number of particles" );
         }
         
-        // we cycle species to fix electron species for ionizable species
-        if( ionization ) {
-            int electron_species_index = 0;
-            for (unsigned int ispec=0; ispec<retSpecies.size(); ispec++) {
-                if (retSpecies[ispec]->species_type=="electron") {
-                    if (electron_species_index) {
-                        if ( patch->isMaster() ) WARNING("Two species named electron : " << retSpecies[ispec]->speciesNumber << " and " << retSpecies[electron_species_index]->speciesNumber);
-                    } else {
-                        electron_species_index=ispec;
-                    }
-                }
-            }
-            if (!electron_species_index) {
-                for (unsigned int ispec=0; ispec<retSpecies.size(); ispec++) {
-                    double charge=0;
-                    PyTools::extract("charge",charge ,"Species",ispec);
-                    if (retSpecies[ispec]->mass==1 && charge==-1) {
-                        if (electron_species_index) {
-                            if ( patch->isMaster() )WARNING("Two electron species: " << retSpecies[ispec]->species_type << " and " << retSpecies[electron_species_index]->species_type);
-                        } else {
-                            electron_species_index=ispec;
-                        }
-                    }
-                }
-            }
-            for (unsigned int i=0; i<retSpecies.size(); i++) {
-                if (retSpecies[i]->Ionize)  {
-                    if (electron_species_index) {
-                        retSpecies[i]->electron_species = retSpecies[electron_species_index];
-                        retSpecies[i]->electron_species_index = electron_species_index;
-                        if (patch->isMaster() ) MESSAGE(1,"Ionization: Added " << retSpecies[i]->electron_species->species_type << " species to species " << retSpecies[i]->species_type);
-                    } else {
-                        if (patch->isMaster() ) ERROR("Ionization needs a species called \"electron\" to be defined");
-                    }
+        // Loop species to find the electron species for ionizable species
+        for (unsigned int ispec1 = 0; ispec1<retSpecies.size(); ispec1++) {
+            if( ! retSpecies[ispec1]->Ionize ) continue;
+            
+            // Loop all other species
+            for (unsigned int ispec2 = 0; ispec2<retSpecies.size(); ispec2++) {
+                if( retSpecies[ispec1]->ionization_electrons == retSpecies[ispec2]->species_type) {
+                    if( ispec1==ispec2 )
+                        ERROR("For species '"<<retSpecies[ispec1]->species_type<<"' ionization_electrons must be a distinct species");
+                    if (retSpecies[ispec2]->mass!=1)
+                        ERROR("For species '"<<retSpecies[ispec1]->species_type<<"' ionization_electrons must be a species with mass==1");
+                    retSpecies[ispec1]->electron_species_index = ispec2;
+                    retSpecies[ispec1]->electron_species = retSpecies[ispec2];
+                    break;
                 }
             }
         }
-                
+        
         return retSpecies;
     }
     

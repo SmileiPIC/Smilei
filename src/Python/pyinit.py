@@ -80,6 +80,7 @@ class Species(SmileiComponent):
     bc_part_type_north = None
     bc_part_type_south = None
     ionization_model = "none"
+    ionization_electrons = None
     atomic_number = None
     isTest = False
     track_every = 0
