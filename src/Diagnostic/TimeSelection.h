@@ -21,6 +21,9 @@ public:
     //! Default Constructor
     TimeSelection(PyObject*, std::string);
     
+    //! Empty selection constructor
+    TimeSelection();
+    
     //! Cloning Constructor
     TimeSelection(TimeSelection*);
     
