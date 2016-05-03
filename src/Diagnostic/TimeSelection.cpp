@@ -91,6 +91,20 @@ TimeSelection::TimeSelection(PyObject* timeSelection, string name)
 }
 
 
+// Empty time selection
+TimeSelection::TimeSelection()
+{
+    start   = maxint;
+    end     = maxint;
+    period  = 1;
+    repeat  = 1;
+    spacing = 1;
+    groupWidth   = 0;
+    TheTimeIsNow = false;
+    NextTime     = maxint;
+    PreviousTime = maxint;
+}
+
 // Cloning Constructor
 TimeSelection::TimeSelection(TimeSelection * timeSelection)
 {
