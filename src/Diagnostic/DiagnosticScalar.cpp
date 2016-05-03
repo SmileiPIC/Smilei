@@ -33,7 +33,7 @@ DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patc
         dt=params.timestep;
         cell_volume=params.cell_volume;
     } else {
-        timeSelection = NULL;
+        timeSelection = new TimeSelection();
     }
     
     // defining default values & reading diagnostic every-parameter

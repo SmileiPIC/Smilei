@@ -12,7 +12,7 @@ class DiagnosticTrack : public Diagnostic {
 
 public :
     //! Default constructor
-    DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
+    DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, int diagId, int );
     //! Cloning constructor
     DiagnosticTrack(DiagnosticTrack* track);
     //! Default destructor

@@ -66,7 +66,7 @@ public:
         // loop species and make a new track diag if particles have to be tracked
         for(unsigned int trackIdx=0; trackIdx<patch->vecSpecies.size(); trackIdx++) {
             if ( patch->vecSpecies[trackIdx]->particles->tracked ) {
-              vecDiagnostics.push_back( new DiagnosticTrack(params, smpi, patch, vecDiagnostics.size() ) ); // trackIdx not used, no python parsing to init
+              vecDiagnostics.push_back( new DiagnosticTrack(params, smpi, patch, vecDiagnostics.size(), trackIdx ) ); // trackIdx not used, no python parsing to init
             }
         }
 

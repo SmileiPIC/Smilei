@@ -448,7 +448,7 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
     // ------------------------------------------
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
         (*this)(ipatch)->EMfields->initE( (*this)(ipatch) );
-    
+
     SyncVectorPatch::exchangeE( *this );    
     
     // Centering of the electrostatic fields

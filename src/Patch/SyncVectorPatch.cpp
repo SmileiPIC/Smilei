@@ -167,7 +167,7 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches )
 
 void SyncVectorPatch::exchange( std::vector<Field*> fields, VectorPatch& vecPatches )
 {
-    unsigned int nx_, ny_, h0, oversize[2], n_space[2],gsp;
+    unsigned int nx_, ny_, h0, oversize[2], n_space[2],gsp[2];
     double *pt1,*pt2;
     h0 = vecPatches(0)->hindex;
 
@@ -182,38 +182,39 @@ void SyncVectorPatch::exchange( std::vector<Field*> fields, VectorPatch& vecPatc
     if (fields[0]->dims_.size()>1)
       ny_ = fields[0]->dims_[1];
 
-    //gsp = 2*oversize[0]+fields[0]->isDual_[0]; //Ghost size primal
+    //For minimum comm
+    //gsp[0] = 2*oversize[0]+fields[0]->isDual_[0]; //Ghost size primal
+    //gsp[1] = 2*oversize[1]+fields[0]->isDual_[1]; //Ghost size primal
     //for filter
-    gsp = ( oversize[0] + 1 + fields[0]->isDual_[0] ); //Ghost size primal
+    gsp[0] = ( oversize[0] + 1 + fields[0]->isDual_[0] ); //Ghost size primal
+    gsp[1] = ( oversize[1] + 1 + fields[0]->isDual_[1] ); //Ghost size primal
 
-    #pragma omp for schedule(runtime) private(pt1,pt2)
+    #pragma omp for schedule(runtime) 
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++) {
 
         if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[0][0]){
             pt1 = &(*fields[vecPatches(ipatch)->neighbor_[0][0]-h0])((n_space[0])*ny_);
-            //AB I think that is wrong. pt1 was correct// For filter pt1 = &(*fields[vecPatches(ipatch)->neighbor_[0][0]-h0])((n_space[0]-(oversize[0]-1))*ny_);
             pt2 = &(*fields[ipatch])(0);
+            //For minimum comm
             //memcpy( pt2, pt1, ny_*sizeof(double)); 
             //memcpy( pt1+gsp[0]*ny_, pt2+gsp[0]*ny_, ny_*sizeof(double)); 
             //for filter
             memcpy( pt2, pt1, oversize[0]*ny_*sizeof(double)); 
-            memcpy( pt1+gsp*ny_, pt2+gsp*ny_, oversize[0]*ny_*sizeof(double)); 
+            memcpy( pt1+gsp[0]*ny_, pt2+gsp[0]*ny_, oversize[0]*ny_*sizeof(double)); 
         } // End if ( MPI_me_ == MPI_neighbor_[0][0] ) 
 
         if (fields[0]->dims_.size()>1) {
-            //gsp = 2*oversize[1]+fields[0]->isDual_[1]; //Ghost size primal
-            //for filter
-            gsp = ( oversize[1] + 1 + fields[0]->isDual_[1] ); //Ghost size primal
             if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[1][0]){
                 pt1 = &(*fields[vecPatches(ipatch)->neighbor_[1][0]-h0])(n_space[1]);
                 pt2 = &(*fields[ipatch])(0);
                 for (unsigned int i = 0 ; i < nx_*ny_ ; i += ny_){
+                    //For minimum comm
                     //pt2[i] = pt1[i] ;
-                    //pt1[i+gsp] = pt2[i+gsp] ;
+                    //pt1[i+gsp[1]] = pt2[i+gsp[1]] ;
                     // for filter
                     for (unsigned int j = 0 ; j < oversize[1] ; j++ ){
                         pt2[i+j] = pt1[i+j] ;
-                        pt1[i+j+gsp] = pt2[i+j+gsp] ;
+                        pt1[i+j+gsp[1]] = pt2[i+j+gsp[1]] ;
                     }
                 } 
             } // End if ( MPI_me_ == MPI_neighbor_[1][0] ) 
