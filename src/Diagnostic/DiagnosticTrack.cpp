@@ -7,40 +7,23 @@
 
 using namespace std;
 
-DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, int diagId ) :
+DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, int diagId, int speciesId ) :
 Diagnostic(params,smpi,patch,diagId),
 nDim_particle(params.nDim_particle)
 {
     probeId_ = diagId; // Warning, not the index of the DiagTrack, but of all local diags
-    
-    // define speciesId_
-    speciesId_ = 0;
-    
-    // Count track diags instanciated
-    int nTrack(0);
-    for ( int idiag = 0 ; idiag < patch->localDiags.size() ; idiag++ ) {
-        if ( patch->localDiags[idiag]->type_ == "Track" )
-            nTrack++;
-    }
-    
-    // Go to next track species
-    int nTrackable(0), ispec; 
-    for (ispec = 0 ; ispec < patch->vecSpecies.size() ; ispec++ ) {
-        if ( patch->vecSpecies[ispec]->particles->tracked ) nTrackable++;
-        if ( nTrackable > nTrack ) break;
-    }
-    speciesId_ = ispec;
+    speciesId_ = speciesId;
     species = patch->vecSpecies[speciesId_];
     
-    string nameSpec="Ntot_"+ patch->vecSpecies[speciesId_]->species_type;
+    string nameSpec = "Ntot_"+ species->species_type;
     
     // Define the transfer type (collective is faster than independent)
     transfer = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio( transfer, H5FD_MPIO_INDEPENDENT);
     iter = 0;
     
-    // Get the time selection from the 
-    timeSelection = patch->vecSpecies[speciesId_]->particles->track_timeSelection;
+    // Get the time selection from the particles
+    timeSelection = species->particles->track_timeSelection;
     
     type_ = "Track";
 
