@@ -69,7 +69,7 @@ DiagnosticScalar::~DiagnosticScalar()
 } // END DiagnosticScalar::#DiagnosticScalar
 
 
-void DiagnosticScalar::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile )
+void DiagnosticScalar::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 {
     if (!smpi->isMaster()) return;
     
@@ -92,7 +92,7 @@ void DiagnosticScalar::closeFile()
 } // END closeFile
 
 
-bool DiagnosticScalar::prepare( Patch* patch, int timestep )
+bool DiagnosticScalar::prepare( int timestep )
 {
     return true; // Scalars always run even if they don't dump
 } // END prepare
@@ -117,8 +117,7 @@ void DiagnosticScalar::write(int itime)
 {
     unsigned int k, s=out_key.size();
     
-    
-    //MESSAGE ( "write : Number of diags = " << out_key.size() ) ;
+    if ( ! timeSelection->theTimeIsNow(itime) ) return;
     
     fout << std::scientific << setprecision(precision);
     // At the beginning of the file, we write some headers
@@ -149,19 +148,12 @@ void DiagnosticScalar::write(int itime)
         }
     }
     fout << endl;
-    
-    /*for (int iscalar=0 ; iscalar<out_value.size() ; iscalar++)
-      out_value[iscalar] = 0.;*/
 
 } // END write
 
 
 void DiagnosticScalar::compute( Patch* patch, int timestep )
 {
-    //out_key  .clear();
-    //out_value.clear();
-    // reset after write
-    
     ElectroMagn* EMfields = patch->EMfields;
     std::vector<Species*>& vecSpecies = patch->vecSpecies;
     

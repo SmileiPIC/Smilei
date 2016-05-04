@@ -42,18 +42,17 @@ public :
     //! Default destructor
     ~DiagnosticParticles();
     
-    virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile );
+    virtual void openFile( Params& params, SmileiMPI* smpi, bool newfile );
     
     virtual void closeFile();
     
-    virtual bool prepare( Patch* patch, int timestep );
+    virtual bool prepare( int timestep );
     
     virtual void run( Patch* patch, int timestep );
     
     virtual void write(int timestep);
      
 private :
-    void clean();
 
     //! number of timesteps during which outputs are averaged
     int time_average;

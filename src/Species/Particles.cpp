@@ -566,7 +566,7 @@ void Particles::create_particle()
 bool Particles::is_part_in_domain(int ipart, Patch* patch)
 {
     for (unsigned int i=0; i<Position.size(); i++) {
-	if (Position[i][ipart] <  patch->getDomainLocalMin(i) ) return false;
+        if (Position[i][ipart] <  patch->getDomainLocalMin(i) ) return false;
         if (Position[i][ipart] >= patch->getDomainLocalMax(i) ) return false;
     }
     return true;

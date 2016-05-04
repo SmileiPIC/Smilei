@@ -175,10 +175,8 @@ void SmileiMPI::init_patch_count( Params& params)
     //Compute target load: Tload = Total load * local capability / Total capability.
     
     Tload = 0.;
-    Npatches = params.number_of_patches[0];
-    for (unsigned int i = 1; i < params.nDim_field; i++)
-        Npatches *=  params.number_of_patches[i]; // Total number of patches.
-
+    Npatches = params.tot_number_of_patches;
+    
     ncells_perpatch = params.n_space[0]+2*params.oversize[0]; //Initialization
     for (unsigned int idim = 1; idim < params.nDim_field; idim++)
         ncells_perpatch *= params.n_space[idim]+2*params.oversize[idim];
@@ -342,11 +340,9 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     if (isMaster()) {
         fout.open ("patch_load.txt", std::ofstream::out | std::ofstream::app);
     }
-
-    Npatches = params.number_of_patches[0];
-    for (unsigned int i = 1; i < params.nDim_field; i++) 
-        Npatches *=  params.number_of_patches[i]; // Total number of patches.
-
+    
+    Npatches = params.tot_number_of_patches;
+    
     ncells_perpatch = params.n_space[0]+2*params.oversize[0]; //Initialization
     for (unsigned int idim = 1; idim < params.nDim_field; idim++)
         ncells_perpatch *= params.n_space[idim]+2*params.oversize[idim];
@@ -817,13 +813,7 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
             scalars->Energy_time_zero  = Utot;
             scalars->EnergyUsedForNorm = scalars->Energy_time_zero;
         }
-
-	//scalars->write(timestep);
-
     }
-        
-
-
 } // END computeGlobalDiags(DiagnosticScalar& scalars ...)
 
 
@@ -833,12 +823,6 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
 void SmileiMPI::computeGlobalDiags(DiagnosticParticles* diagParticles, int timestep)
 {
     if (timestep - diagParticles->timeSelection->previousTime() == diagParticles->time_average-1) {
-        MPI_Reduce(diagParticles->filename.size()?MPI_IN_PLACE:&diagParticles->data_sum[0], &diagParticles->data_sum[0], diagParticles->output_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
-        
-        if (smilei_rk==0)
-            diagParticles->write( timestep );
+        MPI_Reduce(diagParticles->filename.size()?MPI_IN_PLACE:&diagParticles->data_sum[0], &diagParticles->data_sum[0], diagParticles->output_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     }
-    if (diagParticles->time_average == 1)
-        diagParticles->clean();
-
 } // END computeGlobalDiags(DiagnosticParticles* diagParticles ...)

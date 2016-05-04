@@ -10,7 +10,7 @@ using namespace std;
 DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, int diagId, int speciesId ) :
 nDim_particle(params.nDim_particle)
 {
-    probeId_ = diagId; // Warning, not the index of the DiagTrack, but of all local diags
+    diagId_ = diagId; // Warning, not the index of the DiagTrack, but of all local diags
     speciesId_ = speciesId;
     species = patch->vecSpecies[speciesId_];
     
@@ -30,11 +30,11 @@ nDim_particle(params.nDim_particle)
 
 
 // cloning constructor
-DiagnosticTrack::DiagnosticTrack(DiagnosticTrack* track)
+DiagnosticTrack::DiagnosticTrack(DiagnosticTrack* track, Patch* patch)
 {
     nDim_particle = track->nDim_particle;
     speciesId_    = track->speciesId_;
-    species       = track->species;
+    species       = patch->vecSpecies[speciesId_];
     transfer      = track->transfer;
     iter          = track->iter;
     timeSelection = new TimeSelection(track->timeSelection);
@@ -47,7 +47,7 @@ DiagnosticTrack::~DiagnosticTrack()
 }
 
 
-void DiagnosticTrack::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile )
+void DiagnosticTrack::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 {
     
     
@@ -74,14 +74,14 @@ void DiagnosticTrack::openFile( Params& params, SmileiMPI* smpi, VectorPatch& ve
         
         //hid_t file_space = H5Screate_simple(2, dims, NULL);
         // Define maximum size
-        hsize_t maxDimsPart[2] = {H5S_UNLIMITED, nbrParticles_};
+        hsize_t maxDimsPart[2] = {H5S_UNLIMITED, (hsize_t)nbrParticles_};
         hid_t file_space = H5Screate_simple(2, dims, maxDimsPart);   
         
         // Create the overall dataset in the HDF5 file with a new chunk every timestep
         hid_t plist = H5Pcreate(H5P_DATASET_CREATE);
         H5Pset_layout(plist, H5D_CHUNKED);
         H5Pset_alloc_time(plist, H5D_ALLOC_TIME_EARLY); // necessary for collective dump
-        hsize_t chunk_dims[2] = {1, nbrParticles_};
+        hsize_t chunk_dims[2] = {1, (hsize_t)nbrParticles_};
         H5Pset_chunk(plist, 2, chunk_dims);
         
         // Create the datasets for x, y and z
@@ -151,7 +151,7 @@ void DiagnosticTrack::closeFile()
 }
 
 
-bool DiagnosticTrack::prepare( Patch* patch, int timestep )
+bool DiagnosticTrack::prepare( int timestep )
 {
     if( ! timeSelection->theTimeIsNow(timestep) ) return false;
     
@@ -172,7 +172,7 @@ bool DiagnosticTrack::prepare( Patch* patch, int timestep )
     datasets.push_back( "Weight" );
     datasets.push_back( "Charge" );
     datasets.push_back( "Id" );
-
+    
     for (int idsets = 0 ; idsets<datasets.size() ; idsets++) {
         string name = datasets[idsets];
         hid_t did = H5Dopen( fileId_, name.c_str(), H5P_DEFAULT );
@@ -202,7 +202,11 @@ bool DiagnosticTrack::prepare( Patch* patch, int timestep )
 
 void DiagnosticTrack::run( Patch* patch, int timestep )
 {
-    
+}
+
+
+void DiagnosticTrack::write(int timestep)
+{
     iter ++;
     
     int locNbrParticles = species->getNbrOfParticles();
@@ -213,17 +217,13 @@ void DiagnosticTrack::run( Patch* patch, int timestep )
         locator[i*2  ] = iter-1;
         locator[i*2+1] = species->particles->id(i)-1; // because particles label Id starts at 1
     }
-    // Now we increase the array size for the new timestep (new chunk)
-    // It is not applied to the HDF5 file yet
-    //dims[0] ++;
-    
     
     // Specify the memory dataspace (the size of the local array)
     hsize_t count[2] = {1, (hsize_t)locNbrParticles};
     hid_t mem_space = H5Screate_simple(2, count, NULL);
     
     // For each dataspace (x, y, z, px, py, pz, weight, charge and ID), add the local
-    // array to the HDF5 file -> see function appendTestParticles() in SmileiIO.h
+    // array to the HDF5 file
     ostringstream namePos("");
     for (int idim=0 ; idim<nDim_particle ; idim++) {
         namePos.str("");
@@ -242,15 +242,9 @@ void DiagnosticTrack::run( Patch* patch, int timestep )
     
     H5Sclose( mem_space );
     
-
     //MPI_Barrier(MPI_COMM_WORLD); // synchro to manage differently
     H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
 
-}
-
-
-void DiagnosticTrack::write(int timestep)
-{
 }
 
 template <class T>
@@ -258,9 +252,6 @@ void DiagnosticTrack::append( hid_t fid, string name, T & property,  hid_t  mem_
     
     // Open existing dataset
     hid_t did = H5Dopen( fid, name.c_str(), H5P_DEFAULT );
-    // Increase the size of the array with the previously defined size
-    
-    //H5Dset_extent(did, dims);
     
     // Get the extended file space
     hid_t file_space = H5Dget_space(did);
@@ -281,62 +272,37 @@ void DiagnosticTrack::append( hid_t fid, string name, T & property,  hid_t  mem_
 
 void DiagnosticTrack::setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches )
 {
-    // Communicate some stuff if this is a species that has to be dumped (particles have Id)
-    // Need to be placed after ALL createParticles()
-    if (vecPatches(0)->vecSpecies[speciesId_]->particles->tracked) {
-        
-        // Internal patches offset
-        
-        std::vector<int> localNbrParticles( vecPatches.size(), 0 );
-        localNbrParticles[0] = vecPatches(0)->vecSpecies[speciesId_]->getNbrOfParticles();
-        for (unsigned int ipatch=1 ; ipatch<vecPatches.size() ; ipatch++) {
-            // number of particles up to ipatch (including)
-            localNbrParticles[ipatch] += vecPatches(ipatch)->vecSpecies[speciesId_]->getNbrOfParticles() + localNbrParticles[ipatch-1];
-            vecPatches(ipatch)->vecSpecies[speciesId_]->particles->addIdOffsets(localNbrParticles[ipatch-1]);
-        }
-        int locNbrParticles = localNbrParticles[vecPatches.size()-1];
-        
-        
-        // MPI offset
-        
-        //int locNbrParticles = thisSpecies->getNbrOfParticles();
-        int sz(1);
-        MPI_Comm_size( MPI_COMM_WORLD, &sz );
-        std::vector<int> allNbrParticles(sz);
-        MPI_Allgather( &locNbrParticles, 1, MPI_INT, &allNbrParticles[0], 1, MPI_INT, MPI_COMM_WORLD );
-        
-        int totNbrParts(0);
-        for (int irk=0 ; irk<sz ; irk++) totNbrParts += allNbrParticles[irk];
-        // HDF5 file open by all patch master
-        this->setGlobalNbrParticles(totNbrParts);
-        vecPatches(0)->localDiags[probeId_]->openFile( params, smpi, vecPatches, true );
-        
-        // Set HDF5 context for other patches
-        for (unsigned int ipatch=1 ; ipatch<vecPatches.size() ; ipatch++) {
-            DiagnosticTrack* diag = static_cast<DiagnosticTrack*>( vecPatches(ipatch)->localDiags[probeId_] );
-            diag->setGlobalNbrParticles(totNbrParts);
-        }
-        
-        int nParticles(0);
-        
-        nParticles =  allNbrParticles[0];
-        for (int irk=1 ; irk<sz ; irk++){
-            allNbrParticles[irk] += nParticles;
-            nParticles = allNbrParticles[irk];
-        }
-        for (int irk=sz-1 ; irk>0 ; irk--){
-            allNbrParticles[irk] = allNbrParticles[irk-1];
-        }
-        allNbrParticles[0] = 0;
-        
-        int offset(0);
-        MPI_Scatter(&allNbrParticles[0], 1 , MPI_INT, &offset, 1, MPI_INT, 0, MPI_COMM_WORLD );
-            
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-            vecPatches(ipatch)->vecSpecies[speciesId_]->particles->addIdOffsets(offset);
+    
+    // 1 - Internal patches offset
+    
+    int localNbrParticles = 0;
+    for (int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        DiagnosticTrack* diag = static_cast<DiagnosticTrack*>(vecPatches(ipatch)->localDiags[diagId_]);
+        diag->species->particles->addIdOffsets(localNbrParticles);
+        localNbrParticles += diag->species->getNbrOfParticles();
+    }
+    
+    // 2 - MPI offset
+    
+    // Get the number of particles for each MPI
+    int sz = smpi->getSize();
+    std::vector<int> allNbrParticles(sz, 0);
+    MPI_Allgather( &localNbrParticles, 1, MPI_INT, &allNbrParticles[0], 1, MPI_INT, MPI_COMM_WORLD );
+    
+    // Calculate the cumulative sum
+    for (int irk=1 ; irk<sz ; irk++)
+        allNbrParticles[irk] += allNbrParticles[irk-1];
+    
+    // Calculate the MPI offset
+    int offset = 0;
+    if( ! smpi->isMaster() ) offset = allNbrParticles[smpi->getRank()-1];
+    
+    // Apply the MPI offset
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        DiagnosticTrack* diag = static_cast<DiagnosticTrack*>(vecPatches(ipatch)->localDiags[diagId_]);
+        diag->species->particles->addIdOffsets( offset );
+        diag->setGlobalNbrParticles(allNbrParticles[sz-1]);
+    }
 
-    } // End if tracked
-
-
-} // End initTrackParticles
+}
 

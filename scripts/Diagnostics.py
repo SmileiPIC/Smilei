@@ -1554,30 +1554,25 @@ class Probe(Diagnostic):
 		# Try to get the probe from the hdf5 file
 		self.probeNumber  = probeNumber
 		self._file = self._results_path+"/Probes"+str(self.probeNumber)+".h5"
-		f = self._h5py.File(self._file, 'r')
-		self._h5probe = None
-		for key in f.keys():
-			if key[0] != "p": continue
-			if int(key.strip("p"))==probeNumber:
-				self._h5probe = f[key]
-				break
-		if self._h5probe is None:
-			print "Cannot find probe "+str(probeNumber)+" in file "+self._file
-			f.close()
+		try:
+			self._h5probe = self._h5py.File(self._file, 'r')
+		except:
+			print "Cannot find probe "+str(probeNumber)
+			self._h5probe.close()
 			return None
 		
 		# Extract available fields
 		fields = self._h5probe.attrs["fields"].split(",")
 		if len(fields) == 0:
 			print "Probe #"+probeNumber+" is empty"
-			f.close()
+			self._h5probe.close()
 			return None
 		# If no field, print available fields
 		if field is None:
 			print "Printing available fields for probe #"+str(probeNumber)+":"
 			print "----------------------------------------"
 			print ", ".join(fields)
-			f.close()
+			self._h5probe.close()
 			return None
 		
 		# Get available times
@@ -1793,28 +1788,18 @@ class Probe(Diagnostic):
 	def _getInfo(self, probeNumber):
 		try:
 			file = self._results_path+"/Probes"+str(probeNumber)+".h5"
-			f = self._h5py.File(file, 'r')
+			probe = self._h5py.File(file, 'r')
 		except:
 			print "Cannot open file "+file
-			return {}
-		probe = None
-		for key in f.iterkeys():
-			if key[0] != "p": continue
-			if int(key.strip("p"))==int(probeNumber):
-				probe = f[key]
-				break
-		if probe is None:
-			print "Cannot find probe "+str(probeNumber)+" in file "+file
 			return {}
 		out = {}
 		out.update({"probeNumber":probeNumber, "dimension":probe.attrs["dimension"],
 			"shape":self._np.array(probe["number"]),"fields":probe.attrs["fields"] })
 		i = 0
 		while "p"+str(i) in probe.keys():
-			k = probe.keys().index("p"+str(i))
-			out.update({ "p"+str(i):self._np.array(probe.values()[k]) })
+			out.update({ "p"+str(i):self._np.array(probe["p"+str(i)]) })
 			i += 1
-		f.close()
+		probe.close()
 		return out
 	def _getMyInfo(self):
 		return self._getInfo(self.probeNumber)
@@ -1829,16 +1814,10 @@ class Probe(Diagnostic):
 	
 	# get all available timesteps
 	def getAvailableTimesteps(self):
-		try:
-			f = self._h5py.File(self._file, 'r')
-		except:
-			print "Cannot open file "+self._file
-			return self._np.array([])
 		times = []
 		for key in self._h5probe.iterkeys():
 			try   : times.append( int(key) )
 			except: pass
-		f.close()
 		return self._np.double(times)
 	
 	# Method to obtain the data only

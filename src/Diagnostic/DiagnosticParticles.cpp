@@ -171,7 +171,7 @@ DiagnosticParticles::~DiagnosticParticles()
 
 
 // Called only by patch master of process master
-void DiagnosticParticles::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile )
+void DiagnosticParticles::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 {
     if (!smpi->isMaster()) return;
 
@@ -202,7 +202,6 @@ void DiagnosticParticles::openFile( Params& params, SmileiMPI* smpi, VectorPatch
     else {
         fileId_ = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
     }
-    
 }
 
 
@@ -216,7 +215,7 @@ void DiagnosticParticles::closeFile()
 } // END closeFile
 
 
-bool DiagnosticParticles::prepare( Patch* patch, int timestep )
+bool DiagnosticParticles::prepare( int timestep )
 {
     // Get the previous timestep of the time selection
     int previousTime = timeSelection->previousTime(timestep);
@@ -303,7 +302,7 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
                     for (int ipart = bmin ; ipart < bmax ; ipart++)
                         axis_array[ipart] = (*y)[ipart];
                 
-                else if (axistype == "y"     )
+                else if (axistype == "z"     )
                     for (int ipart = bmin ; ipart < bmax ; ipart++)
                         axis_array[ipart] = (*z)[ipart];
                 
@@ -491,7 +490,7 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
                 data_sum[ind] += data_array[ipart];
             }
             
-        } // loop openMP bins
+        } // loop bins
         
     } // loop species
 
@@ -503,6 +502,8 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
 // called by MPI master only, when time-average has finished
 void DiagnosticParticles::write(int timestep)
 {
+    if (timestep - timeSelection->previousTime() != time_average-1) return;
+    
     double coeff;
     // if time_average, then we need to divide by the number of timesteps
     if (time_average > 1) {
@@ -515,15 +516,12 @@ void DiagnosticParticles::write(int timestep)
     mystream.str("");
     mystream << "timestep" << setw(8) << setfill('0') << timestep;
     // write the array
-    htri_t status = H5Lexists( fileId_, mystream.str().c_str(), H5P_DEFAULT ); 
-    if (!status)
+    if (! H5Lexists( fileId_, mystream.str().c_str(), H5P_DEFAULT ) )
         H5::vect(fileId_, mystream.str(), data_sum);
+    else
+        WARNING("DIAG PARTICLES COULD NOT WRITE");
+    
+    // Clear the array
+    data_sum.resize(0); 
 
 } // END write
-
-
-// call by all if (time_average==1) 
-void DiagnosticParticles::clean()
-{
-    data_sum.resize(0); 
-}

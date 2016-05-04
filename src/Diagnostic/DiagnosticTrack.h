@@ -14,16 +14,16 @@ public :
     //! Default constructor
     DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, int diagId, int );
     //! Cloning constructor
-    DiagnosticTrack(DiagnosticTrack* track);
+    DiagnosticTrack(DiagnosticTrack* track, Patch* patch);
     //! Default destructor
     ~DiagnosticTrack();
     
-    virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile );
+    virtual void openFile( Params& params, SmileiMPI* smpi, bool newfile );
     void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches );
     
     virtual void closeFile();
     
-    virtual bool prepare( Patch* patch, int timestep );
+    virtual bool prepare( int timestep );
     
     virtual void run( Patch* patch, int timestep );
     

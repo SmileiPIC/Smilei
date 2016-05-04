@@ -140,7 +140,9 @@ public:
     //! frequency of exchange particles (default = 1, disabled for now, incompatible with sort) 
     int exchange_particles_each;
     
-    //! Number of MPI process per direction (default : as square as possible)
+    //! Total number of patches
+    int tot_number_of_patches;
+    //! Number of patches per direction
     std::vector<int> number_of_patches;
     //! Load balancing frequency
     int balancing_freq;

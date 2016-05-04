@@ -213,9 +213,9 @@ public:
         unsigned int s = Id.size();
         for (unsigned int iPart=0; iPart<s; iPart++) Id[iPart] = iPart+1;
     }
-    void addIdOffsets(int startingId) {
+    void addIdOffsets(int offset) {
         unsigned int s = Id.size();
-        for (unsigned int iPart=0; iPart<s; iPart++) Id[iPart] += startingId;
+        for (unsigned int iPart=0; iPart<s; iPart++) Id[iPart] += offset;
     }
 
 

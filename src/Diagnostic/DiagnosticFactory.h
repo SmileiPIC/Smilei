@@ -84,7 +84,7 @@ public:
                 );
             } else if (vecDiagnostics[idiag]->type_ == "Track" ) {
                 newVecDiagnostics.push_back(
-                    new DiagnosticTrack(static_cast<DiagnosticTrack*>(vecDiagnostics[idiag]))
+                    new DiagnosticTrack(static_cast<DiagnosticTrack*>(vecDiagnostics[idiag]), patch)
                 );
             }
         }

@@ -25,21 +25,20 @@ public :
     
     void initParticles(Params&, Patch *);
     
-    virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile );
+    virtual void openFile( Params& params, SmileiMPI* smpi, bool newfile );
     
     virtual void closeFile();
     
-    virtual bool prepare( Patch* patch, int timestep );
+    virtual bool prepare( int timestep );
     
     virtual void run( Patch* patch, int timestep );
     
     virtual void write(int timestep);
     
-    
     void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches );
     
-    void writePositionIn( Params &params );
-    void writePositions( int ndim_Particles, int probeDim, hid_t group_id );
+    void init();
+    
     void compute(unsigned int timestep, ElectroMagn* EMfields);
     
     int getLastPartId() {
@@ -48,10 +47,12 @@ public :
     
 
 private :
-    //int probeId_;
     
     //! Dimension of the probe grid
     unsigned int dimProbe;
+    
+    //! Dimension of particle coordinates
+    unsigned int nDim_particle;
     
     //! Number of points in each dimension
     std::vector<unsigned int> vecNumber; 
@@ -78,10 +79,6 @@ private :
     
     //! Indices in the output array where each field goes
     std::vector<unsigned int> fieldlocation;
-    
-    
-    //! return name of the probe based on its number
-    std::string probeName();
     
     //! E local fields for the projector
     LocalFields Eloc_fields;

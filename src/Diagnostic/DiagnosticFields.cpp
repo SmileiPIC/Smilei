@@ -58,7 +58,7 @@ DiagnosticFields::~DiagnosticFields()
 }
 
 
-void DiagnosticFields::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile )
+void DiagnosticFields::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 {
     if ( newfile ) {
         // ----------------------------
@@ -97,7 +97,7 @@ void DiagnosticFields::closeFile()
 }
 
 
-bool DiagnosticFields::prepare( Patch* patch, int timestep )
+bool DiagnosticFields::prepare( int timestep )
 {
     if ( !timeSelection->theTimeIsNow(timestep) ) return false;
 
