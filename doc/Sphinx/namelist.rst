@@ -212,8 +212,7 @@ All the possible variables inside this block are explained here:
   :default: 0
 
   The atomic number of the particles, required only for ionization.
-  For field ionization, it must be lower than 8. For :ref:`collisional ionization 
-  <CollIonization>`, it must be lower than 101.
+  It must be lower than 101.
 
 
 .. py:data:: nb_density

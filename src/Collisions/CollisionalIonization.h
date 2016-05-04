@@ -66,11 +66,6 @@ private:
     //! Atomic number
     int atomic_number;
     
-    //! Table of first ionization energies of ions
-    static const double ionizationEnergy[];
-    //! Table of binding energies of all electrons in neutral atoms
-    static const double bindingEnergy[];
-    
     //! Global table of atomic numbers
     static std::vector<int> DB_Z;
     //! Global table of integrated cross-section
