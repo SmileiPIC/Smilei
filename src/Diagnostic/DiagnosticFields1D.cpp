@@ -7,8 +7,14 @@
 
 using namespace std;
 
-DiagnosticFields1D::DiagnosticFields1D( Params &params, SmileiMPI* smpi, Patch* patch, int diagId )
-    : DiagnosticFields( params, smpi, patch, diagId )
+DiagnosticFields1D::DiagnosticFields1D( Params &params, SmileiMPI* smpi, Patch* patch, bool avg )
+    : DiagnosticFields( params, smpi, patch, avg )
+{
+    createPattern(params,patch);
+}
+
+DiagnosticFields1D::DiagnosticFields1D( DiagnosticFields* diag, Params &params, Patch* patch )
+    : DiagnosticFields( diag, patch )
 {
     createPattern(params,patch);
 }

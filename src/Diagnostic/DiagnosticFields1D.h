@@ -10,9 +10,8 @@
 
 class DiagnosticFields1D : public DiagnosticFields {
 public:
-    //! Create // HDF5 environment
-    DiagnosticFields1D( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
-    DiagnosticFields1D();
+    DiagnosticFields1D( Params &params, SmileiMPI* smpi, Patch* patch, bool avg );
+    DiagnosticFields1D( DiagnosticFields* diag, Params &params, Patch* patch );
     //! Destructor for DiagnosticFields
     ~DiagnosticFields1D();
 

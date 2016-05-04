@@ -8,8 +8,8 @@ class DiagnosticFields  : public Diagnostic {
 
 public :
     
-    DiagnosticFields( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
-    DiagnosticFields();
+    DiagnosticFields( Params &params, SmileiMPI* smpi, Patch* patch, bool );
+    DiagnosticFields( DiagnosticFields*, Patch* );
     ~DiagnosticFields();
     
     virtual void openFile( Params& params, SmileiMPI* smpi, bool newfile );
@@ -23,8 +23,10 @@ public :
     virtual void write(int timestep);
     
 protected :
-    std::vector<Field*> fields_;
-    std::vector<std::string> fieldsToDump;
+    std::vector<Field*> fields;
+    std::vector<int> fields_indexes;
+    
+    bool avg;
     
     //! Property list for collective dataset write, set for // IO.
     hid_t write_plist;

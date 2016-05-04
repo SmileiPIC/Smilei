@@ -9,8 +9,15 @@
 
 using namespace std;
 
-DiagnosticFields2D::DiagnosticFields2D( Params &params, SmileiMPI* smpi, Patch* patch, int diagId )
-    : DiagnosticFields( params, smpi, patch, diagId )
+DiagnosticFields2D::DiagnosticFields2D( Params &params, SmileiMPI* smpi, Patch* patch, bool avg )
+    : DiagnosticFields( params, smpi, patch, avg )
+{
+    createPattern(params,patch);
+}
+
+
+DiagnosticFields2D::DiagnosticFields2D( DiagnosticFields* diag, Params &params, Patch* patch )
+    : DiagnosticFields( diag, patch )
 {
     createPattern(params,patch);
 }

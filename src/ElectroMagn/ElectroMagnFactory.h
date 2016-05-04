@@ -97,24 +97,6 @@ public:
         
         EMfields->finishInitialization(vecSpecies.size(), patch);
         
-        // Some output
-        std::stringstream ss;
-        for (std::vector<Field*>::iterator iterField=EMfields->allFields.begin(); iterField!=EMfields->allFields.end(); iterField++) {
-            ss << (*iterField)->name << " ";
-        }
-        if (patch->isMaster()) {
-            MESSAGE(1,"EM fields dump      :");
-            MESSAGE(2, ss.str() );
-        }
-        ss.str("");
-        for (std::vector<Field*>::iterator iterField=EMfields->allFields_avg.begin(); iterField!=EMfields->allFields_avg.end(); iterField++) {
-            ss << (*iterField)->name << " ";
-        }
-        if (patch->isMaster()) {
-            MESSAGE(1,"EM avg. fields dump :");
-            MESSAGE(2, ss.str() );
-        }
-        
         return EMfields;
     }
     

@@ -108,7 +108,6 @@ class Collisions(SmileiComponent):
 class DiagProbe(SmileiComponent):
     """Diagnostic probe"""
     every = None
-    time_range = [None, None]
     number = []
     pos = []
     pos_first = []
@@ -129,16 +128,24 @@ class DiagPhase(SmileiComponent):
     every=None
     first=[]
     second=[]
-    time_range = []
     deflate = 0
     pass
 
 class DiagScalar(SmileiComponent):
     """Diagnostic scalar"""
     every = None
-    time_range = []
     precision = 10
     vars = []
+
+class DiagFields(SmileiComponent):
+    """Diagnostic Fields"""
+    every = None
+    fields = []
+
+class DiagFieldsAvg(SmileiComponent):
+    """Diagnostic Fields"""
+    every = None
+    fields = []
 
 # external fields
 class ExtField(SmileiComponent):

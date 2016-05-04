@@ -151,7 +151,7 @@ public:
     //! Load coefficient applied to a frozen particle (default = 0.1)
     double coef_frozen;
     //! Return if number of patch = number of MPI process, to tune IO //ism
-    bool simu_is_cartesian;
+    bool one_patch_per_MPI;
 
 
     //! Log2 of the number of patch in the whole simulation box in every direction.
