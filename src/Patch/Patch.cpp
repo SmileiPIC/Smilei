@@ -75,14 +75,18 @@ void Patch::initStep1(Params& params)
     
     nbNeighbors_ = 2;
     neighbor_.resize(nDim_fields_);
+    tmp_neighbor_.resize(nDim_fields_);
     //corner_neighbor_.resize(params.nDim_field);
     for ( int iDim = 0 ; iDim < nDim_fields_ ; iDim++ ) {
         neighbor_[iDim].resize(2,MPI_PROC_NULL);
+        tmp_neighbor_[iDim].resize(2,MPI_PROC_NULL);
         //corner_neighbor_[iDim].resize(2,MPI_PROC_NULL);
     }
     MPI_neighbor_.resize(nDim_fields_);
+    tmp_MPI_neighbor_.resize(nDim_fields_);
     for ( int iDim = 0 ; iDim < nDim_fields_; iDim++ ) {
         MPI_neighbor_[iDim].resize(2,MPI_PROC_NULL);
+        tmp_MPI_neighbor_[iDim].resize(2,MPI_PROC_NULL);
     }
     
     oversize.resize( 2 );

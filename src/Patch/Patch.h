@@ -214,12 +214,12 @@ protected:
     int nbNeighbors_;
 
     //! Hilbert index of neighbors patch
-    std::vector< std::vector<int> > neighbor_;
+    std::vector< std::vector<int> > neighbor_, tmp_neighbor_;
     //! Hilbert index of corners neighbors patch
     //std::vector< std::vector<int> > corner_neighbor_; // Kept for Moving Windows
 
     //! MPI rank of neighbors patch
-    std::vector< std::vector<int> > MPI_neighbor_;
+    std::vector< std::vector<int> > MPI_neighbor_, tmp_MPI_neighbor_;
 
     //! "Real" min limit of local sub-subdomain (ghost data not concerned)
     //!     - "0." on rank 0
