@@ -30,7 +30,6 @@
 #include "ElectroMagnFactory.h"
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
-#include "SmileiIOFactory.h"
 #include "DiagnosticFactory.h"
 
 using namespace std;
@@ -128,7 +127,6 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi ) {
     
     // Initialize local diags
     localDiags = DiagnosticFactory::createLocalDiagnostics(params, smpi, this);
-    //sio = SmileiIOFactory::create(params, this);
     
     // Initialize the collisions
     vecCollisions = Collisions::create(params, this, vecSpecies);
@@ -154,7 +152,6 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi ) {
     
     // clone local diags
     localDiags = DiagnosticFactory::cloneLocalDiagnostics(patch->localDiags, params, smpi, this);
-    //sio = SmileiIOFactory::clone(patch->sio, params, this);
     
     // clone the collisions
     vecCollisions = Collisions::clone(patch->vecCollisions, params);
@@ -183,7 +180,6 @@ Patch::~Patch() {
     delete Interp;
     
     delete EMfields;
-    //delete sio;
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
     vecSpecies.clear();
     

@@ -9,7 +9,6 @@
 #include "PatchesFactory.h"
 #include "Species.h"
 #include "Particles.h"
-#include "SmileiIOFactory.h"
 
 using namespace std;
 

@@ -9,13 +9,11 @@
 #include "PatchesFactory.h"
 #include "Species.h"
 #include "Particles.h"
-#include "SmileiIOFactory.h"
 #include "SimWindow.h"
 #include "SolverFactory.h"
 #include "DiagnosticFactory.h"
 
 #include "SyncVectorPatch.h"
-#include "DiagsVectorPatch.h"
 
 #include "Timer.h"
 
@@ -266,27 +264,6 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
 {
     //// Dump Fields
     //// -------------------------------------------
-    //timer[6].restart();
-    //// diag_flag = 1 if  :
-    ////   vecPatches.Diags->field_timeSelection->theTimeIsNow(itime)
-    //if  (*diag_flag){
-    //    (*this)(0)->sio->createTimeStepInSingleFileTime( itime );
-    //    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-    //        
-    //        // Write EM fields dump in Fields.h5
-    //        (*this)(ipatch)->sio->writeAllFieldsSingleFileTime( (*this)(ipatch)->EMfields->allFields, itime, 0 );
-    //        
-    //        // Check the dedicated fields output write frequency 
-    //        if( (*this)(ipatch)->sio->dumpAvgFields_ && avgFieldTimeIsNow(itime) ) {
-    //            // Write EM average fields dump in Fields_avg.h5
-    //            (*this)(ipatch)->sio->writeAllFieldsSingleFileTime( (*this)(ipatch)->EMfields->allFields_avg, itime, 1 );
-    //        }
-    //        // Re-init rho, Jxyz per species for next diag timestep
-    //        (*this)(ipatch)->EMfields->restartRhoJs();
-    //    }
-    //    *diag_flag = 0 ;
-    //}
-    //timer[6].update();
     
     // Global diags: scalars + particles
     timer[3].restart();
@@ -620,9 +597,6 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
 {
     (*this).closeAllDiags(smpi);
     
-    //hid_t globalFile    = (*this)(0)->sio->global_file_id_;
-    //hid_t globalFileAvg = (*this)(0)->sio->global_file_id_avg;
-    
     int nSpecies( (*this)(0)->vecSpecies.size() );
     int newMPIrank, oldMPIrank;
     //int newMPIrankbis, oldMPIrankbis, tmp;
@@ -679,7 +653,6 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     int nPatchSend(send_patch_id_.size());
     for (int ipatch=nPatchSend-1 ; ipatch>=0 ; ipatch--) {
         //Ok while at least 1 old patch stay inon current CPU
-        //(*this)(send_patch_id_[ipatch])->sio->setFiles(0,0);
         delete (*this)(send_patch_id_[ipatch]);
         patches_[ send_patch_id_[ipatch] ] = NULL;
         patches_.erase( patches_.begin() + send_patch_id_[ipatch] );
@@ -699,9 +672,6 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     }
     
     (*this).openAllDiags(params,smpi);
-    
-    //DiagsVectorPatch::definePatchDiagsMaster( *this, globalFile, globalFileAvg );
-    //DiagsVectorPatch::updatePatchFieldDump( *this, params );
     
     (*this).set_refHindex() ;
     

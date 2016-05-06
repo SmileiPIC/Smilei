@@ -94,8 +94,10 @@ Species(
 # DIAGNOSTIC PARAMETERS
 # ---------------------
 
-fieldDump_every = int(rest/10.)
-fieldsToDump=('Ex','Rho_charges')
+DiagFields(
+	every = int(rest/10.),
+	fields = ['Ex','Rho_charges']
+)
 
 DiagScalar(
 	every = 1

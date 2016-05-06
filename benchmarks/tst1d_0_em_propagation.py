@@ -80,10 +80,10 @@ print_every = int(rest/2.0)
 DiagScalar(every = 1)
 
 # FIELD DUMPS
-# fieldDump_every = integer, nb of timesteps between each output
-# fieldsToDump    = ('string'), name of the fields to dump
-fieldDump_every = int(rest/2.0)
-fieldsToDump = ('Ex','Ey','Ez','By_m','Bz_m');
+DiagFields(
+	every = int(rest/2.0),
+	fields = ['Ex','Ey','Ez','By_m','Bz_m']
+)
  
 # PROBE DIAGNOSTICS 
 DiagProbe(

@@ -72,18 +72,7 @@ dump_request(smpi->getSize())
     if (SIG_ERR == signal(SIGUSR2, Checkpoint::signal_callback_handler)) {
         WARNING("Cannot catch signal SIGUSR2");
     }
-/*    // one of these below should be the soft linit signal for loadlever
-    if (SIG_ERR == signal(SIGXCPU, SmileiIO::signal_callback_handler)) {
-        WARNING("Cannot catch signal SIGXCPU");
-    }
-    if (SIG_ERR == signal(SIGTERM, SmileiIO::signal_callback_handler)) {
-        WARNING("Cannot catch signal SIGTERM");
-    }
-    if (SIG_ERR == signal(SIGINT, SmileiIO::signal_callback_handler)) {
-        WARNING("Cannot catch signal SIGINT");
-    }
-*/
-
+    
     nDim_particle=params.nDim_particle;
     //particleSize = nDim_particle + 3 + 1;
     

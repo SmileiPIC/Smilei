@@ -106,6 +106,8 @@ PartWall (
 #
 DiagScalar(every=globalEvery)
 
-fieldDump_every = globalEvery
-fieldsToDump = ['Ez','Rho_species0','Rho_species1']
+DiagFields(
+    every = globalEvery,
+    fields = ['Ez','Rho_species0','Rho_species1']
+)
 

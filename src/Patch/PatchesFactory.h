@@ -5,8 +5,6 @@
 #include "Patch1D.h"
 #include "Patch2D.h"
 
-#include "DiagsVectorPatch.h"
-
 #include "Tools.h"
 
 class PatchesFactory {
@@ -55,10 +53,6 @@ public:
             vecPatches.patches_[ipatch] = clone(vecPatches(0), params, smpi, firstpatch + ipatch);
         }
         vecPatches.set_refHindex();
-        
-        // Patch initializations which needs some sync (parallel output, are data distribution)
-        //int itime(0);
-        //DiagsVectorPatch::initDumpFields(vecPatches, params, itime);
         
         vecPatches.update_field_list();
         

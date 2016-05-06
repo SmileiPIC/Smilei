@@ -281,13 +281,6 @@ int main (int argc, char* argv[])
             if( time_dual > params.time_fields_frozen )
                 vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timer );
             
-            //// incrementing averaged electromagnetic fields
-            //if (vecPatches(0)->sio->dumpAvgFields_)
-            //    #pragma omp for schedule(static)
-            //    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-            //        vecPatches(ipatch)->EMfields->incrementAvgFields(itime);
-            //    }
-            
             // call the various diagnostics
             // ----------------------------
             #pragma omp master
@@ -389,8 +382,6 @@ int main (int argc, char* argv[])
     // ------------------------------
     //  Cleanup & End the simulation
     // ------------------------------
-    //DiagsVectorPatch::finalizeDumpFields(vecPatches, params, stepStop);
-    
     vecPatches.close( smpiData );
     
     MPI_Barrier(MPI_COMM_WORLD); // Don't know why but sync needed by HDF5 Phasespace managment

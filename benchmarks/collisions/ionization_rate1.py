@@ -121,9 +121,9 @@ Collisions(
 print_every = 100
 
 # DIAGNOSTICS ON FIELDS
-fieldDump_every    = 1
-avgfieldDump_every = 1
-ntime_step_avg     = 1
+DiagFields(
+	every = 1
+)
 
 
 # DIAGNOSTICS ON SCALARS

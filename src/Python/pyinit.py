@@ -200,12 +200,6 @@ vx_win = 1.
 every = 0
 print_every = None
 
-# Default field diagnostics
-fieldDump_every = 0
-fieldsToDump = []
-avgfieldDump_every = 0
-ntime_step_avg = 0
-
 # Default Misc
 referenceAngularFrequency_SI = 0.
 random_seed = None

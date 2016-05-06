@@ -104,9 +104,9 @@ Species(
 print_every = 10
 
 # DIAGNOSTICS ON FIELDS
-fieldDump_every    = 5
-avgfieldDump_every = 5
-ntime_step_avg     = 1
+DiagFields(
+    every = 5,
+)
 
 # DIAGNOSTICS ON SCALARS
 # every = integer, number of time-steps between each output

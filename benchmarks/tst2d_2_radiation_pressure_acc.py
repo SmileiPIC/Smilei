@@ -125,16 +125,8 @@ Species(
 globalEvery = int(rest/2.)
 
 DiagScalar(every=globalEvery)
-fieldDump_every = globalEvery
-fieldsToDump = ('Ex','Ey','Ez','Bx','By','Bz','Rho_ion','Rho_eon')
 
-# print_every (on screen text output) 
-# print_every = 100
-
-# DIAG ON SCALARS
-# every = number of time-steps between each output
-#
-#diagnostic scalar
-#        every = 60
-#end
-    
+DiagFields(
+    every = globalEvery,
+    fields = ['Ex','Ey','Ez','Bx','By','Bz','Rho_ion','Rho_eon']
+)

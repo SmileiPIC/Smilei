@@ -726,7 +726,7 @@ void SmileiMPI::recv( DiagnosticProbes* diags, int from, int tag )
 // Wrapper of MPI synchronization of all computing diags
 //   - concerns    : scalars, phasespace, particles
 //   - not concern : probes, fields, track particles (each patch write its own data)
-//   - called in VectorPatch::runAllDiags(...) after DiagsVectorPatch::computeGlobalDiags(...)
+//   - called in VectorPatch::runAllDiags(...)
 // ---------------------------------------------------------------------------------------------------------------------
 void SmileiMPI::computeGlobalDiags(Diagnostic* diag, int timestep)
 {
