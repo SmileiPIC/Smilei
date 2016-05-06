@@ -17,7 +17,7 @@ class DiagnosticProbes : public Diagnostic {
 public :
     
     //! Default constructor
-    DiagnosticProbes( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
+    DiagnosticProbes( Params &params, SmileiMPI* smpi, Patch* patch, int diagId, int n_probe );
     //! Cloning constructor
     DiagnosticProbes(DiagnosticProbes*, Params&, Patch* );
     //! Default destructor

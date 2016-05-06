@@ -56,8 +56,8 @@ public:
         vecPatches.set_refHindex();
         
         // Patch initializations which needs some sync (parallel output, are data distribution)
-        int itime(0);
-        DiagsVectorPatch::initDumpFields(vecPatches, params, itime);
+        //int itime(0);
+        //DiagsVectorPatch::initDumpFields(vecPatches, params, itime);
         
         vecPatches.update_field_list();
         

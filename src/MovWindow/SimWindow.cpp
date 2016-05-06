@@ -65,8 +65,8 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     vecPatches.closeAllDiags(smpi);
 
 
-    hid_t globalFile    = vecPatches(0)->sio->global_file_id_;
-    hid_t globalFileAvg = vecPatches(0)->sio->global_file_id_avg;
+    //hid_t globalFile    = vecPatches(0)->sio->global_file_id_;
+    //hid_t globalFileAvg = vecPatches(0)->sio->global_file_id_avg;
 
 
     // Shift the patches, new patches will be created directly with their good patchid
@@ -94,7 +94,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 	    for ( int ispec=0 ; ispec<vecPatches(0)->vecSpecies.size() ; ispec++ )
 		energy_part_lost[ispec] += vecPatches(ipatch)->vecSpecies[ispec]->computeNRJ();
 
-            vecPatches(ipatch)->sio->setFiles(0,0);
+            //vecPatches(ipatch)->sio->setFiles(0,0);
             delete  vecPatches.patches_[ipatch];
             vecPatches.patches_[ipatch] = NULL;
 	    vecPatches.patches_.erase( vecPatches.patches_.begin() + ipatch );
@@ -148,7 +148,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     for ( int ipatch = nPatches-1 ; ipatch >= 0 ; ipatch--) {
         if ( vecPatches(ipatch)->MPI_me_ != vecPatches(ipatch)->MPI_neighbor_[0][0] && vecPatches(ipatch)->hindex == vecPatches(ipatch)->neighbor_[0][0] ) {
 
-            vecPatches(ipatch)->sio->setFiles(0,0);
+            //vecPatches(ipatch)->sio->setFiles(0,0);
             delete vecPatches.patches_[ipatch];
             vecPatches.patches_[ipatch] = NULL;
 	    vecPatches.patches_.erase( vecPatches.patches_.begin() + ipatch );
@@ -200,8 +200,8 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     vecPatches.openAllDiags(params,smpi);
 
     //vecPatches.definePatchDiagsMaster();
-    DiagsVectorPatch::definePatchDiagsMaster( vecPatches, globalFile, globalFileAvg ); // sio
-    DiagsVectorPatch::updatePatchFieldDump( vecPatches, params );                      // sio
+    //DiagsVectorPatch::definePatchDiagsMaster( vecPatches, globalFile, globalFileAvg ); // sio
+    //DiagsVectorPatch::updatePatchFieldDump( vecPatches, params );                      // sio
 
     vecPatches.set_refHindex() ;
     vecPatches.update_field_list() ;

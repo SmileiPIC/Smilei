@@ -141,11 +141,7 @@ class DiagFields(SmileiComponent):
     """Diagnostic Fields"""
     every = None
     fields = []
-
-class DiagFieldsAvg(SmileiComponent):
-    """Diagnostic Fields"""
-    every = None
-    fields = []
+    time_average = 1
 
 # external fields
 class ExtField(SmileiComponent):

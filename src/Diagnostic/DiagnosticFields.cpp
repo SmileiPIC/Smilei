@@ -5,51 +5,74 @@
 
 using namespace std;
 
-DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, Patch* patch, bool avg ) :
-    avg(avg)
+DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, Patch* patch, int ndiag )
 {
-    string name;
+    // Extract the time_average parameter
+    time_average = 1;
+    PyTools::extract("time_average", time_average, "DiagFields", ndiag);
+    if( time_average < 1 )
+        time_average = 1;
+    
+    // Verify that only one diag of this type exists
+    int tavg;
+    for( int idiag=0; idiag<ndiag; idiag++ ) {
+        tavg = 1;
+        PyTools::extract("time_average", tavg, "DiagFields", idiag);
+        if( tavg < 1 )
+            tavg = 1;
+        if( tavg*time_average == 1 || (tavg>1 && time_average>1) )
+            ERROR("Cannot have two DiagFields with time_average "<<(tavg==1?"=":">")<<" 1");
+    }
+    
+    // Define the filename and get the list of fields
     std::vector<Field*> * allFields;
-    if ( ! avg ) {
-        name = "DiagFields";
-        filename = "new_Fields.h5";
+    if ( time_average==1 ) {
+        filename = "Fields.h5";
         allFields = &(patch->EMfields->allFields);
     }
     else {
-        name = "DiagFieldsAvg";
-        filename = "new_Fields_avg.h5";
+        filename = "Fields_avg.h5";
         allFields = &(patch->EMfields->allFields_avg);
     }
     
-    if( PyTools::nComponents(name)>1 )
-        ERROR("Only one "<<name<<" can be specified");
-    
+    // Extract the requested fields
     std::vector<std::string> fieldsToDump(0);
-    PyTools::extract("fields", fieldsToDump, name, 0);
+    PyTools::extract("fields", fieldsToDump, "DiagFields", ndiag);
     
+    // List all fields that are requested
     ostringstream ss("");
     fields.resize(0);
     fields_indexes.resize(0);
     bool hasfield;
     for( int i=0; i<allFields->size(); i++ ) {
-        hasfield = fieldsToDump.size()==0;
-        for( int j=0; j<fieldsToDump.size(); j++ ) {
-            if( (*allFields)[i]->name == fieldsToDump[j] ) {
-                hasfield = true;
-                break;
+        string field_name = (*allFields)[i]->name;
+        if( field_name.find("_avg") < string::npos ) field_name.erase(field_name.find("_avg"));
+        
+        if( fieldsToDump.size()==0 ) {
+            hasfield = true;
+        } else {
+            hasfield = false;
+            for( int j=0; j<fieldsToDump.size(); j++ ) {
+                if( field_name == fieldsToDump[j] ) {
+                    hasfield = true;
+                    break;
+                }
             }
         }
+        
         if( hasfield ) {
-            ss << (*allFields)[i]->name << " ";
+            ss << field_name << " ";
             fields.push_back( (*allFields)[i] );
             fields_indexes.push_back( i );
         }
     }
-    MESSAGE(1,"EM fields dump "<<(avg?"(avg)":"     ")<<" :");
+    MESSAGE(1,"EM fields dump "<<(time_average>1?"(avg)":"     ")<<" :");
     MESSAGE(2, ss.str() );
     
-    timeSelection = new TimeSelection( PyTools::extract_py( "every", name, 0 ), name );
+    // Extract the time selection
+    timeSelection = new TimeSelection( PyTools::extract_py( "every", "DiagFields", ndiag ), "DiagFields" );
     
+    // Prepare the property list for HDF5 output
     write_plist = H5Pcreate(H5P_DATASET_XFER);
     if (!params.one_patch_per_MPI)
         H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_INDEPENDENT);
@@ -62,12 +85,12 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, Patch* patc
 
 DiagnosticFields::DiagnosticFields( DiagnosticFields* diag, Patch* patch )
 {
-    avg            = diag->avg;
+    time_average   = diag->time_average;
     filename       = diag->filename;
     fields_indexes = diag->fields_indexes;
     write_plist    = diag->write_plist;
     
-    std::vector<Field*> * allFields = (avg?&(patch->EMfields->allFields_avg):&(patch->EMfields->allFields));
+    std::vector<Field*> * allFields = (time_average>1?&(patch->EMfields->allFields_avg):&(patch->EMfields->allFields));
     fields.resize(0);
     for( int i=0; i<fields_indexes.size(); i++ )
         fields.push_back( (*allFields)[fields_indexes[i]] );
@@ -85,6 +108,8 @@ DiagnosticFields::~DiagnosticFields()
         H5Fclose(fileId_ );
 
     H5Pclose( write_plist );
+    
+    delete timeSelection;
 }
 
 
@@ -129,15 +154,22 @@ void DiagnosticFields::closeFile()
 
 bool DiagnosticFields::prepare( int timestep )
 {
-    if ( !timeSelection->theTimeIsNow(timestep) ) return false;
-
-    ostringstream name_t;
-    name_t.str("");
-    name_t << "/" << setfill('0') << setw(10) << timestep;
-        
-    DEBUG("[hdf] GROUP _________________________________ " << name_t.str());
-    hid_t group_id = H5Gcreate(fileId_, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    H5Gclose(group_id);
+    // Get the previous selected time
+    int previousTime = timeSelection->previousTime(timestep);
+    
+    // Leave if the timestep is not the good one
+    if (timestep - previousTime >= time_average) return false;
+    
+    // Prepare HDF5 group if at right timestep
+    if (timestep - previousTime == time_average-1) {
+        ostringstream name_t;
+        name_t.str("");
+        name_t << "/" << setfill('0') << setw(10) << timestep;
+            
+        DEBUG("[hdf] GROUP _________________________________ " << name_t.str());
+        hid_t group_id = H5Gcreate(fileId_, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        H5Gclose(group_id);
+    }
     
     return true;
 }
@@ -145,12 +177,14 @@ bool DiagnosticFields::prepare( int timestep )
 
 void DiagnosticFields::run( Patch* patch, int timestep )
 {
+    if( time_average>1 )
+        patch->EMfields->incrementAvgFields(timestep);
 }
 
 
 void DiagnosticFields::write(int timestep)
 {
-    if ( !timeSelection->theTimeIsNow(timestep) ) return;
+    if (timestep - timeSelection->previousTime(timestep) != time_average-1) return;
     
     // Make group name: "/0000000000", etc.
     ostringstream name_t;
@@ -161,18 +195,15 @@ void DiagnosticFields::write(int timestep)
     hid_t group_id = H5Gopen(fileId_, name_t.str().c_str(), H5P_DEFAULT);
     
     for (unsigned int i=0; i<fields.size(); i++) {
-    
-        writeFieldsSingleFileTime(fields[i], group_id );
-    
+        
+        writeField(fields[i], group_id );
+        
         // Re-initialize average fields
-        if (filename == "new_Fields_avg.h5")
-            fields[i]->put_to(0.0);
-    
+        if (time_average>1) fields[i]->put_to(0.0);
     }
     
     H5Gclose(group_id);
     
     H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
-
 }
 

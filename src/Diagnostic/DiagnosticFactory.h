@@ -69,14 +69,12 @@ public:
     static std::vector<Diagnostic*> createLocalDiagnostics(Params& params, SmileiMPI* smpi, Patch* patch) {
         std::vector<Diagnostic*> vecDiagnostics;
         
-        if( PyTools::nComponents("DiagFields")>0 )
-            vecDiagnostics.push_back( DiagnosticFieldsFactory::create(params, smpi, patch, false) );
-        if( PyTools::nComponents("DiagFieldsAvg")>0 )
-            vecDiagnostics.push_back( DiagnosticFieldsFactory::create(params, smpi, patch, true) );
-        
+        for (unsigned int n_diag_fields = 0; n_diag_fields < PyTools::nComponents("DiagFields"); n_diag_fields++) {
+            vecDiagnostics.push_back( DiagnosticFieldsFactory::create(params, smpi, patch, n_diag_fields) );
+        }
         
         for (unsigned int n_diag_probes = 0; n_diag_probes < PyTools::nComponents("DiagProbe"); n_diag_probes++) {
-            vecDiagnostics.push_back( new DiagnosticProbes(params, smpi, patch, n_diag_probes) );
+            vecDiagnostics.push_back( new DiagnosticProbes(params, smpi, patch, vecDiagnostics.size(), n_diag_probes) );
         }
         
         // loop species and make a new track diag if particles have to be tracked

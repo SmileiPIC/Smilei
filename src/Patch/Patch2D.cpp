@@ -382,12 +382,12 @@ void Patch2D::createType( Params& params )
     // MPI_Datatype ntype_[nDim][primDual][primDual]
     int nx, ny;
     int nline, ncol;
-
+    
     for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
         nx = nx0 + ix_isPrim;
         for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {
             ny = ny0 + iy_isPrim;
-
+            
             // Standard Type
             ntype_[0][ix_isPrim][iy_isPrim] = NULL;
             MPI_Type_contiguous(params.oversize[0]*ny, MPI_DOUBLE, &(ntype_[0][ix_isPrim][iy_isPrim]));    //line
@@ -395,25 +395,25 @@ void Patch2D::createType( Params& params )
             ntype_[1][ix_isPrim][iy_isPrim] = NULL;
             MPI_Type_vector(nx, params.oversize[1], ny, MPI_DOUBLE, &(ntype_[1][ix_isPrim][iy_isPrim])); // column
             MPI_Type_commit( &(ntype_[1][ix_isPrim][iy_isPrim]) );
-
+            
             // Still used ???
             ntype_[2][ix_isPrim][iy_isPrim] = NULL;
             MPI_Type_contiguous(ny*clrw, MPI_DOUBLE, &(ntype_[2][ix_isPrim][iy_isPrim]));   //clrw lines
             MPI_Type_commit( &(ntype_[2][ix_isPrim][iy_isPrim]) );
-
+            
             ntypeSum_[0][ix_isPrim][iy_isPrim] = NULL;
             nline = 1 + 2*params.oversize[0] + ix_isPrim;
             //MPI_Type_contiguous(nline, ntype_[0][ix_isPrim][iy_isPrim], &(ntypeSum_[0][ix_isPrim][iy_isPrim]));    //line
- 
+            
             MPI_Datatype tmpType = NULL;
             MPI_Type_contiguous(ny, MPI_DOUBLE, &(tmpType));    //line
             MPI_Type_commit( &(tmpType) );
- 
+            
             MPI_Type_contiguous(nline, tmpType, &(ntypeSum_[0][ix_isPrim][iy_isPrim]));    //line
             MPI_Type_commit( &(ntypeSum_[0][ix_isPrim][iy_isPrim]) );
-	    
- 	    MPI_Type_free( &tmpType );
-
+            
+            MPI_Type_free( &tmpType );
+            
             ntypeSum_[1][ix_isPrim][iy_isPrim] = NULL;
             ncol  = 1 + 2*params.oversize[1] + iy_isPrim;
             MPI_Type_vector(nx, ncol, ny, MPI_DOUBLE, &(ntypeSum_[1][ix_isPrim][iy_isPrim])); // column

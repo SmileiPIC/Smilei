@@ -10,7 +10,7 @@
 
 class DiagnosticFields1D : public DiagnosticFields {
 public:
-    DiagnosticFields1D( Params &params, SmileiMPI* smpi, Patch* patch, bool avg );
+    DiagnosticFields1D( Params &params, SmileiMPI* smpi, Patch* patch, int );
     DiagnosticFields1D( DiagnosticFields* diag, Params &params, Patch* patch );
     //! Destructor for DiagnosticFields
     ~DiagnosticFields1D();
@@ -20,7 +20,7 @@ public:
     void updatePattern( Params& params, Patch* patch );
 
     //! Basic write current field in specified group of the global file
-    void writeFieldsSingleFileTime( Field* field, hid_t group_id );
+    void writeField( Field* field, hid_t group_id );
 
     //! Basic write field on its own file (debug)
     void write( Field* field );

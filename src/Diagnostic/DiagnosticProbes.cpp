@@ -8,9 +8,8 @@
 
 using namespace std;
 
-DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, Patch* patch, int diagId )
+DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, Patch* patch, int diagId, int n_probe )
 {
-    int n_probe = diagId;
     diagId_ = diagId;
     probesStart = 0;
     nDim_particle = params.nDim_particle;
@@ -108,7 +107,7 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, Patch* patc
     interp_ = InterpolatorFactory::create(params, patch);
     
     ostringstream mystream("");
-    mystream << "Probes" << diagId_ << ".h5";
+    mystream << "Probes" << n_probe << ".h5";
     filename = mystream.str();
     
     type_ = "Probes";

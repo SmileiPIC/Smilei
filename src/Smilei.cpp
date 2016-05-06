@@ -199,7 +199,7 @@ int main (int argc, char* argv[])
         time_prim += params.timestep;
         time_dual += params.timestep;
         
-        if ( vecPatches.fieldTimeIsNow(itime) ) diag_flag = 1;
+        //if ( vecPatches.fieldTimeIsNow(itime) ) diag_flag = 1;
         
         // send message at given time-steps
         // --------------------------------
@@ -281,12 +281,12 @@ int main (int argc, char* argv[])
             if( time_dual > params.time_fields_frozen )
                 vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timer );
             
-            // incrementing averaged electromagnetic fields
-            if (vecPatches(0)->sio->dumpAvgFields_)
-                #pragma omp for schedule(static)
-                for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-                    vecPatches(ipatch)->EMfields->incrementAvgFields(itime);
-                }
+            //// incrementing averaged electromagnetic fields
+            //if (vecPatches(0)->sio->dumpAvgFields_)
+            //    #pragma omp for schedule(static)
+            //    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+            //        vecPatches(ipatch)->EMfields->incrementAvgFields(itime);
+            //    }
             
             // call the various diagnostics
             // ----------------------------
@@ -389,7 +389,7 @@ int main (int argc, char* argv[])
     // ------------------------------
     //  Cleanup & End the simulation
     // ------------------------------
-    DiagsVectorPatch::finalizeDumpFields(vecPatches, params, stepStop);
+    //DiagsVectorPatch::finalizeDumpFields(vecPatches, params, stepStop);
     
     vecPatches.close( smpiData );
     
