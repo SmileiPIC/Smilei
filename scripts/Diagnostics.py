@@ -1195,7 +1195,6 @@ class Field(Diagnostic):
 				print "No fields found in '"+self._results_path+"'"
 			return None
 		
-
 		
 		# Get available times
 		self.times = self.getAvailableTimesteps()

@@ -27,6 +27,7 @@ using namespace std;
 
 VectorPatch::VectorPatch()
 {
+    fieldsTimeSelection = NULL;
 }
 
 
@@ -74,7 +75,7 @@ void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*this)(ipatch)->EMfields->restartRhoJ();
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
-            if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
+            if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || *diag_flag  ) {
                 species(ipatch, ispec)->dynamics(time_dual, ispec,
                                                  emfields(ipatch), interp(ipatch), proj(ipatch),
                                                  params, *diag_flag, partwalls(ipatch),
@@ -211,6 +212,9 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
             // Some more init
             (*this)(ipatch)->localDiags[idiag]->init();
         }
+        // If fields diag, save the timeSelection
+        if( fieldsTimeSelection==NULL && (*this)(0)->localDiags[idiag]->type_=="Fields" )
+            fieldsTimeSelection = new TimeSelection((*this)(0)->localDiags[idiag]->timeSelection);
     }
 } // END initAllDiags
 
@@ -241,8 +245,14 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
         (*this)(0)->localDiags[idiag]->openFile( params, smpi, false );
         // The file Id is passed to all patches
         int fileId = (*this)(0)->localDiags[idiag]->getFileId();
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
             (*this)(ipatch)->localDiags[idiag]->setFileId( fileId );
+            
+            //if( (*this)(ipatch)->localDiags[idiag]->type_=="Fields"){
+            //if( (*this)(ipatch)->Pcoordinates[0]!=params.number_of_patches[0]-1 )
+            //    static_cast<DiagnosticFields*>((*this)(ipatch)->localDiags[idiag])->updatePattern( params, (*this)(ipatch) );
+            //}
+        }
     }
 }
 
@@ -303,6 +313,8 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
                 (*this)(ipatch)->localDiags[idiag]->write( itime );
         }
     }
+    
+    *diag_flag = 0;
     timer[3].update();   
 
 } // END runAllDiags

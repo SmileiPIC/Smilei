@@ -143,6 +143,7 @@ void DiagnosticFields::openFile( Params& params, SmileiMPI* smpi, bool newfile )
         fileId_ = H5Fopen( filename.c_str(), H5F_ACC_RDWR, pid );
         H5Pclose(pid);
     }
+    
 }
 
 
@@ -177,33 +178,38 @@ bool DiagnosticFields::prepare( int timestep )
 
 void DiagnosticFields::run( Patch* patch, int timestep )
 {
+    // If time-averaging, increment the average
     if( time_average>1 )
         patch->EMfields->incrementAvgFields(timestep);
+    
+    // If writing timestep, then write
+    if (timestep - timeSelection->previousTime(timestep) == time_average-1) {
+        // Make group name: "/0000000000", etc.
+        ostringstream name_t;
+        name_t.str("");
+        name_t << "/" << setfill('0') << setw(10) << timestep;
+        
+        // Create group inside HDF5 file
+        hid_t group_id = H5Gopen(fileId_, name_t.str().c_str(), H5P_DEFAULT);
+        
+        for (unsigned int i=0; i<fields.size(); i++) {
+            
+            writeField(fields[i], group_id );
+            
+            // Re-initialize average fields
+            if (time_average>1) fields[i]->put_to(0.0);
+        }
+        
+        H5Gclose(group_id);
+        
+        H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
+        
+        patch->EMfields->restartRhoJs();
+    }
 }
 
 
 void DiagnosticFields::write(int timestep)
 {
-    if (timestep - timeSelection->previousTime(timestep) != time_average-1) return;
-    
-    // Make group name: "/0000000000", etc.
-    ostringstream name_t;
-    name_t.str("");
-    name_t << "/" << setfill('0') << setw(10) << timestep;
-    
-    // Create group inside HDF5 file
-    hid_t group_id = H5Gopen(fileId_, name_t.str().c_str(), H5P_DEFAULT);
-    
-    for (unsigned int i=0; i<fields.size(); i++) {
-        
-        writeField(fields[i], group_id );
-        
-        // Re-initialize average fields
-        if (time_average>1) fields[i]->put_to(0.0);
-    }
-    
-    H5Gclose(group_id);
-    
-    H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
 }
 

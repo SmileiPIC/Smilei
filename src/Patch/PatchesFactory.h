@@ -43,11 +43,12 @@ public:
         for (unsigned int impi = 0 ; impi < smpi->getRank() ; impi++) {
             firstpatch += smpi->patch_count[impi];
         }
+        
 #ifdef _DEBUGPATCH
         std::cout << smpi->getRank() << ", nPatch = " << npatches << " - starting at " << firstpatch << std::endl;        
 #endif
         
-        // create patches (create patch#0 then clone it)
+        // Create patches (create patch#0 then clone it)
         vecPatches.resize(npatches);
         vecPatches.patches_[0] = create(params, smpi, firstpatch);
         for (unsigned int ipatch = 1 ; ipatch < npatches ; ipatch++) {
@@ -61,12 +62,11 @@ public:
         
         vecPatches.update_field_list();
         
-        // Figure out if there are antennas
-        vecPatches.hasAntennas = ( vecPatches(0)->EMfields->antennas.size() > 0 );
-        
         vecPatches.createGlobalDiags( params, smpi );
         vecPatches.initAllDiags( params, smpi );
         
+        // Figure out if there are antennas
+        vecPatches.hasAntennas = ( vecPatches(0)->EMfields->antennas.size() > 0 );
         vecPatches.initExternals( params );
         
         return vecPatches;

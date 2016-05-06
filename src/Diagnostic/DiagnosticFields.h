@@ -22,6 +22,8 @@ public :
     
     virtual void write(int timestep);
     
+    virtual void updatePattern(Params& params, Patch* patch ) {};
+    
 protected :
     std::vector<Field*> fields;
     std::vector<int> fields_indexes;

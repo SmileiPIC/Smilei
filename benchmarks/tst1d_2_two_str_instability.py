@@ -123,14 +123,16 @@ every = 100
 # every       = integer, nb of timesteps between each output
 # tmin & tmax = floats, min & max times between which scalars are computed (optional)
 # precision   = integer, nb of digits for the outputs (default=10)
-DiagScalar(every = every, vars=['Utot','Ubal_norm','Uelm','Ukin'])	
+DiagScalar(
+    every = every,
+)	
 
 
 # FIELD DUMPS
-# fieldDump_every = integer, nb of timesteps between each output
-# fieldsToDump    = ('string'), name of the fields to dump
-fieldDump_every = every
-fieldsToDump = ('Ex','Ey','Ez','By_m','Bz_m');
+DiagFields(
+    every = every,
+    fields = ['Ex','Ey','Ez','By_m','Bz_m','Rho']
+)
 
 
 # PHASE-SPACE DIAGNOSTICS (new version from DiagParticles)

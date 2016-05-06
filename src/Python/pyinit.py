@@ -123,14 +123,6 @@ class DiagParticles(SmileiComponent):
     species = None
     axes = []
 
-class DiagPhase(SmileiComponent):
-    """Diagnostic phase"""
-    every=None
-    first=[]
-    second=[]
-    deflate = 0
-    pass
-
 class DiagScalar(SmileiComponent):
     """Diagnostic scalar"""
     every = None

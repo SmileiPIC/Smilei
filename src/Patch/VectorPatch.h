@@ -70,14 +70,17 @@ public :
     }
 
     bool fieldTimeIsNow( int timestep ) {
-        return patches_[0]->sio->field_timeSelection->theTimeIsNow( timestep);
-        //return patches_[0]->localDiags[0]->theTimeIsNow(itime);
+        //return patches_[0]->sio->field_timeSelection->theTimeIsNow( timestep);
+        if( fieldsTimeSelection!=NULL )
+            return fieldsTimeSelection->theTimeIsNow(timestep);
+        else
+            return false;
     }
 
-    bool avgFieldTimeIsNow( int timestep ) {
-        return patches_[0]->sio->avgfield_timeSelection->theTimeIsNow( timestep);
-        //return patches_[0]->localDiags[0]->theTimeIsNow(itime);
-    }
+    //bool avgFieldTimeIsNow( int timestep ) {
+    //    //return patches_[0]->sio->avgfield_timeSelection->theTimeIsNow( timestep);
+    //    return fieldTimeSelection_avg->theTimeIsNow(timestep);
+    //}
 
     bool printScalars( int timestep ) {
         return (timestep % static_cast<DiagnosticScalar*>(globalDiags[0])->print_every == 0);
@@ -146,9 +149,12 @@ public :
     
     //! True if any antennas
     bool hasAntennas;
-
+    
     //! 1st patch index of patches_ (stored for balancing op)
     int refHindex_;
+    
+    //! Copy of the fields time selection
+    TimeSelection * fieldsTimeSelection;
 
  private :
 
