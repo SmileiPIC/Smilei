@@ -607,76 +607,71 @@ void SmileiMPI::recv(std::vector<int> *vec, int from, int tag)
 } // End recv ( bmax )
 
 
-void SmileiMPI::isend(ElectroMagn* fields, int to, int tag)
+void SmileiMPI::isend(ElectroMagn* EM, int to, int tag)
 {
-
-    isend( fields->Ex_, to, tag+0);
-    isend( fields->Ey_, to, tag+1);
-    isend( fields->Ez_, to, tag+2);
-    isend( fields->Bx_, to, tag+3);
-    isend( fields->By_, to, tag+4);
-    isend( fields->Bz_, to, tag+5);
-    isend( fields->Bx_m, to, tag+6);
-    isend( fields->By_m, to, tag+7);
-    isend( fields->Bz_m, to, tag+8);
-
-    for (int antennaId=0 ; antennaId<fields->antennas.size() ; antennaId++)
-        isend( fields->antennas[antennaId].field, to, tag+9+antennaId );
-
-    tag += 10 + fields->antennas.size();
-
-    for (int bcId=0 ; bcId<fields->emBoundCond.size() ; bcId++ ) {
-        for (int laserId=0 ; laserId<fields->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
-
-            for ( int profileId=0 ; profileId < fields->emBoundCond[bcId]->vecLaser[laserId]->profiles.size() ; profileId++ ) {
-
-                if ( fields->emBoundCond[bcId]->vecLaser[laserId]->spacetime[profileId] ) {
-                    LaserProfileSeparable* laser = static_cast<LaserProfileSeparable*> ( fields->emBoundCond[bcId]->vecLaser[laserId]->profiles[profileId] );
+    isend( EM->Ex_, to, tag+0);
+    isend( EM->Ey_, to, tag+1);
+    isend( EM->Ez_, to, tag+2);
+    isend( EM->Bx_, to, tag+3);
+    isend( EM->By_, to, tag+4);
+    isend( EM->Bz_, to, tag+5);
+    isend( EM->Bx_m, to, tag+6);
+    isend( EM->By_m, to, tag+7);
+    isend( EM->Bz_m, to, tag+8);
+    
+    for (int antennaId=0 ; antennaId<EM->antennas.size() ; antennaId++)
+        isend( EM->antennas[antennaId].field, to, tag+9+antennaId );
+    
+    tag += 10 + EM->antennas.size();
+    
+    for (int bcId=0 ; bcId<EM->emBoundCond.size() ; bcId++ ) {
+        if(! EM->emBoundCond[bcId]) continue;
+        
+        for (int laserId=0 ; laserId<EM->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
+            
+            for ( int profileId=0 ; profileId < EM->emBoundCond[bcId]->vecLaser[laserId]->profiles.size() ; profileId++ ) {
+                if ( EM->emBoundCond[bcId]->vecLaser[laserId]->spacetime[profileId] ) {
+                    LaserProfileSeparable* laser = static_cast<LaserProfileSeparable*> ( EM->emBoundCond[bcId]->vecLaser[laserId]->profiles[profileId] );
                     isend( laser->space_envelope, to , tag );
                     isend( laser->phase, to, tag + 1);
                     tag = tag + 2;
                 }
-
             }
-
         }
     }
-
-
 } // End isend ( ElectroMagn )
 
 
-void SmileiMPI::recv(ElectroMagn* fields, int from, int tag)
+void SmileiMPI::recv(ElectroMagn* EM, int from, int tag)
 {
-    recv( fields->Ex_, from, tag+0 );
-    recv( fields->Ey_, from, tag+1 );
-    recv( fields->Ez_, from, tag+2 );
-    recv( fields->Bx_, from, tag+3 );
-    recv( fields->By_, from, tag+4 );
-    recv( fields->Bz_, from, tag+5 );
-    recv( fields->Bx_m, from, tag+6 );
-    recv( fields->By_m, from, tag+7 );
-    recv( fields->Bz_m, from, tag+8 );
-
-    for (int antennaId=0 ; antennaId<fields->antennas.size() ; antennaId++)
-        recv( fields->antennas[antennaId].field, from, tag+9+antennaId );
-
-    tag += 10 + fields->antennas.size();
-
-    for (int bcId=0 ; bcId<fields->emBoundCond.size() ; bcId++ ) {
-        for (int laserId=0 ; laserId<fields->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
-
-            for ( int profileId=0 ; profileId < fields->emBoundCond[bcId]->vecLaser[laserId]->profiles.size() ; profileId++ ) {
-
-                if ( fields->emBoundCond[bcId]->vecLaser[laserId]->spacetime[profileId] ) {
-                    LaserProfileSeparable* laser = static_cast<LaserProfileSeparable*> ( fields->emBoundCond[bcId]->vecLaser[laserId]->profiles[profileId] );
+    recv( EM->Ex_, from, tag+0 );
+    recv( EM->Ey_, from, tag+1 );
+    recv( EM->Ez_, from, tag+2 );
+    recv( EM->Bx_, from, tag+3 );
+    recv( EM->By_, from, tag+4 );
+    recv( EM->Bz_, from, tag+5 );
+    recv( EM->Bx_m, from, tag+6 );
+    recv( EM->By_m, from, tag+7 );
+    recv( EM->Bz_m, from, tag+8 );
+    
+    for (int antennaId=0 ; antennaId<EM->antennas.size() ; antennaId++)
+        recv( EM->antennas[antennaId].field, from, tag+9+antennaId );
+    
+    tag += 10 + EM->antennas.size();
+    
+    for (int bcId=0 ; bcId<EM->emBoundCond.size() ; bcId++ ) {
+        if(! EM->emBoundCond[bcId]) continue;
+        
+        for (int laserId=0 ; laserId<EM->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
+            
+            for ( int profileId=0 ; profileId < EM->emBoundCond[bcId]->vecLaser[laserId]->profiles.size() ; profileId++ ) {
+                if ( EM->emBoundCond[bcId]->vecLaser[laserId]->spacetime[profileId] ) {
+                    LaserProfileSeparable* laser = static_cast<LaserProfileSeparable*> ( EM->emBoundCond[bcId]->vecLaser[laserId]->profiles[profileId] );
                     recv( laser->space_envelope, from , tag );
                     recv( laser->phase, from, tag + 1);
                     tag = tag + 2;
                 }
-
             }
-
         }
     }
 } // End recv ( ElectroMagn )
