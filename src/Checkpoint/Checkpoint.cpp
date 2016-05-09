@@ -146,7 +146,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     MESSAGEALL("Step " << itime << " : DUMP fields and particles " << nameDump.str());    
 
     H5::attr(fid, "Version", string(__VERSION));
-    H5::attr(fid, "CommitDate", string(__COMMITDATE));
+    //H5::attr(fid, "CommitDate", string(__COMMITDATE));
     
     H5::attr(fid, "dump_step", itime);
     
@@ -196,7 +196,6 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
     }
 	
     H5Fflush( patch_gid, H5F_SCOPE_GLOBAL );
-	
     H5::attr(patch_gid, "species", vecSpecies.size());    
 
     for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
@@ -212,9 +211,9 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
 	H5Aclose(aid);
 	H5Sclose(sid);
 
-        H5::attr(gid, "partCapacity", vecSpecies[ispec]->particles->capacity());
-        H5::attr(gid, "partSize", vecSpecies[ispec]->particles->size());
-		
+        //H5::attr(gid, "partCapacity", vecSpecies[ispec]->particles->capacity());
+        //H5::attr(gid, "partSize", vecSpecies[ispec]->particles->size());
+        
 	if (vecSpecies[ispec]->particles->size()>0) {
 	    hsize_t dimsPart[1] = {vecSpecies[ispec]->getNbrOfParticles()};
 			
@@ -241,12 +240,12 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
             H5::vect(gid,"bmin", vecSpecies[ispec]->bmin);
             H5::vect(gid,"bmax", vecSpecies[ispec]->bmax);
 		
-	    H5Gclose(gid);
 
 	} // End if partSize
+        
+        H5Gclose(gid);
 
     } // End for ispec
-
 };
 
 void Checkpoint::dumpFieldsPerProc(hid_t fid, Field* field)

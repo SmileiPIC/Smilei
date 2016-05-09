@@ -186,6 +186,7 @@ int main (int argc, char* argv[])
 
     // save latestTimeStep (used to test if we are at the latest timestep when running diagnostics at run's end)
     unsigned int latestTimeStep=checkpoint.this_run_start_step;
+    bool exit(false);
     
     // ------------------------------------------------------------------
     //                     HERE STARTS THE PIC LOOP
@@ -293,11 +294,13 @@ int main (int argc, char* argv[])
             // Restart patched moving window : to do
             // Break in an OpenMP region
             #pragma omp master
-            checkpoint.dump(vecPatches, itime, smpiData, simWindow, params);
+            exit = checkpoint.dump(vecPatches, itime, smpiData, simWindow, params);
             #pragma omp barrier
             // ----------------------------------------------------------------------        
             
         } //End omp parallel region
+
+        if (exit) break;
         
         timer[5].restart();
         if ( simWindow && simWindow->isMoving(time_dual) ) {
