@@ -626,6 +626,8 @@ void SmileiMPI::isend(ElectroMagn* fields, int to, int tag)
     tag += 10 + fields->antennas.size();
 
     for (int bcId=0 ; bcId<fields->emBoundCond.size() ; bcId++ ) {
+
+        if (fields->emBoundCond[bcId]==NULL) continue;
         for (int laserId=0 ; laserId<fields->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
 
             for ( int profileId=0 ; profileId < fields->emBoundCond[bcId]->vecLaser[laserId]->profiles.size() ; profileId++ ) {
@@ -641,7 +643,6 @@ void SmileiMPI::isend(ElectroMagn* fields, int to, int tag)
 
         }
     }
-
 
 } // End isend ( ElectroMagn )
 
@@ -664,6 +665,8 @@ void SmileiMPI::recv(ElectroMagn* fields, int from, int tag)
     tag += 10 + fields->antennas.size();
 
     for (int bcId=0 ; bcId<fields->emBoundCond.size() ; bcId++ ) {
+
+        if (fields->emBoundCond[bcId]==NULL) continue;
         for (int laserId=0 ; laserId<fields->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
 
             for ( int profileId=0 ; profileId < fields->emBoundCond[bcId]->vecLaser[laserId]->profiles.size() ; profileId++ ) {
