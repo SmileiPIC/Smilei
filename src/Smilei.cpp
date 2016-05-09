@@ -378,7 +378,7 @@ int main (int argc, char* argv[])
     
     if (latestTimeStep==params.n_time)
         vecPatches.runAllDiags(params, smpiData, &diag_flag, params.n_time, timer);
-
+    
     // ------------------------------
     //  Cleanup & End the simulation
     // ------------------------------

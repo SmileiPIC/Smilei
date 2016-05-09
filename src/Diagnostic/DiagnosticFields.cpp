@@ -166,8 +166,11 @@ bool DiagnosticFields::prepare( int timestep )
         ostringstream name_t;
         name_t.str("");
         name_t << "/" << setfill('0') << setw(10) << timestep;
-            
         DEBUG("[hdf] GROUP _________________________________ " << name_t.str());
+        
+        // Do not output diag if this timestep has already been written
+        if( H5Lexists(fileId_, name_t.str().c_str(), H5P_DEFAULT) ) return false;
+        
         hid_t group_id = H5Gcreate(fileId_, name_t.str().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         H5Gclose(group_id);
     }
