@@ -27,6 +27,7 @@ ElectroMagnBC::~ElectroMagnBC()
     for (unsigned int i=0; i< vecLaser.size(); i++) {
         delete vecLaser[i];
     }
+    vecLaser.clear();
 }
 
 

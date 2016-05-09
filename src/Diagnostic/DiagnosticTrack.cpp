@@ -24,8 +24,12 @@ nDim_particle(params.nDim_particle)
     // Get the time selection from the particles
     timeSelection = species->particles->track_timeSelection;
     
+    // Create the filename
+    ostringstream hdf_filename("");
+    hdf_filename << "TrackParticles_" << species->species_type  << ".h5" ;
+    filename = hdf_filename.str();
+    
     type_ = "Track";
-
 }
 
 
@@ -37,6 +41,7 @@ DiagnosticTrack::DiagnosticTrack(DiagnosticTrack* track, Patch* patch)
     species       = patch->vecSpecies[speciesId_];
     transfer      = track->transfer;
     iter          = track->iter;
+    filename      = track->filename;
     timeSelection = new TimeSelection(track->timeSelection);
     type_ = "Track";
 }
@@ -50,13 +55,8 @@ DiagnosticTrack::~DiagnosticTrack()
 void DiagnosticTrack::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 {
     
-    
     if ( newfile ) {
         // Create HDF5 file
-        ostringstream hdf_filename("");
-        hdf_filename << "TrackParticles_" << species->species_type  << ".h5" ;
-        filename = hdf_filename.str();
-        
         hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
         H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
         fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid);
@@ -66,11 +66,9 @@ void DiagnosticTrack::openFile( Params& params, SmileiMPI* smpi, bool newfile )
         //hsize_t maxDimsPart[2] = {H5S_UNLIMITED, (hsize_t)nParticles};
         
         dims[0] = 0;//timeSelection->numberOfEvents(0, params.n_time);
-        if ( !nbrParticles_ ) {
+        if ( !nbrParticles_ )
             ERROR("DiagTrack empty or number of Particles in diag is null");
-        }
-        else
-            dims[1] = nbrParticles_;
+        dims[1] = nbrParticles_;
         
         //hid_t file_space = H5Screate_simple(2, dims, NULL);
         // Define maximum size
@@ -136,9 +134,19 @@ void DiagnosticTrack::openFile( Params& params, SmileiMPI* smpi, bool newfile )
         
     }
     else {
+        // Open the file
         hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
         H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
         fileId_ = H5Fopen( filename.c_str(), H5F_ACC_RDWR, pid);
+        
+        // Open the "Id" group to get the current dimensions
+        hid_t did = H5Dopen( fileId_, "Id", H5P_DEFAULT );
+        hid_t sid = H5Dget_space( did );
+        H5Sget_simple_extent_dims(sid, &dims[0], NULL );
+        
+        // Close all things but not the file
+        H5Sclose(sid);
+        H5Dclose(did);
         H5Pclose(pid);
    }
 
@@ -224,21 +232,17 @@ void DiagnosticTrack::write(int timestep)
     
     // For each dataspace (x, y, z, px, py, pz, weight, charge and ID), add the local
     // array to the HDF5 file
-    ostringstream namePos("");
-    for (int idim=0 ; idim<nDim_particle ; idim++) {
-        namePos.str("");
-        namePos << "Position-" << idim;
-        append( fileId_, namePos.str(), species->particles->position(idim)[0], mem_space, locNbrParticles, H5T_NATIVE_DOUBLE, locator );
-    }
-    ostringstream nameMom("");
-    for (int idim=0 ; idim<3 ; idim++) {
-        nameMom.str("");
-        nameMom << "Momentum-" << idim;
-        append( fileId_, nameMom.str(), species->particles->momentum(idim)[0], mem_space, locNbrParticles, H5T_NATIVE_DOUBLE, locator );
-    }
-    append( fileId_, "Weight", species->particles->weight()[0], mem_space, locNbrParticles, H5T_NATIVE_DOUBLE, locator );
-    append( fileId_, "Charge", species->particles->charge()[0], mem_space, locNbrParticles, H5T_NATIVE_SHORT , locator );
-    append( fileId_, "Id"    , species->particles->id()    [0], mem_space, locNbrParticles, H5T_NATIVE_UINT  , locator );
+    append( fileId_, "Position-0", species->particles->position(0)[0], mem_space, locNbrParticles, H5T_NATIVE_DOUBLE, locator );
+    if( nDim_particle>1 )
+        append( fileId_, "Position-1", species->particles->position(1)[0], mem_space, locNbrParticles, H5T_NATIVE_DOUBLE, locator );
+    if( nDim_particle>2 )
+        append( fileId_, "Position-2", species->particles->position(2)[0], mem_space, locNbrParticles, H5T_NATIVE_DOUBLE, locator );
+    append( fileId_, "Momentum-0", species->particles->momentum(0)[0], mem_space, locNbrParticles, H5T_NATIVE_DOUBLE, locator );
+    append( fileId_, "Momentum-1", species->particles->momentum(1)[0], mem_space, locNbrParticles, H5T_NATIVE_DOUBLE, locator );
+    append( fileId_, "Momentum-2", species->particles->momentum(2)[0], mem_space, locNbrParticles, H5T_NATIVE_DOUBLE, locator );
+    append( fileId_, "Weight"    , species->particles->weight()   [0], mem_space, locNbrParticles, H5T_NATIVE_DOUBLE, locator );
+    append( fileId_, "Charge"    , species->particles->charge()   [0], mem_space, locNbrParticles, H5T_NATIVE_SHORT , locator );
+    append( fileId_, "Id"        , species->particles->id()       [0], mem_space, locNbrParticles, H5T_NATIVE_UINT  , locator );
     
     H5Sclose( mem_space );
     

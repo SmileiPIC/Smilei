@@ -629,13 +629,17 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag)
         
         for (int laserId=0 ; laserId<EM->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
             
-            for ( int profileId=0 ; profileId < EM->emBoundCond[bcId]->vecLaser[laserId]->profiles.size() ; profileId++ ) {
-                if ( EM->emBoundCond[bcId]->vecLaser[laserId]->spacetime[profileId] ) {
-                    LaserProfileSeparable* laser = static_cast<LaserProfileSeparable*> ( EM->emBoundCond[bcId]->vecLaser[laserId]->profiles[profileId] );
-                    isend( laser->space_envelope, to , tag );
-                    isend( laser->phase, to, tag + 1);
-                    tag = tag + 2;
-                }
+            Laser * laser = EM->emBoundCond[bcId]->vecLaser[laserId];
+            if( !(laser->spacetime[0]) && !(laser->spacetime[1]) ){
+                LaserProfileSeparable* profile;
+                profile = static_cast<LaserProfileSeparable*> ( laser->profiles[0] );
+                if( ! profile->space_envelope ) continue;
+                isend( profile->space_envelope, to , tag );
+                isend( profile->phase, to, tag + 1);
+                profile = static_cast<LaserProfileSeparable*> ( laser->profiles[1] );
+                isend( profile->space_envelope, to , tag + 2 );
+                isend( profile->phase, to, tag + 3);
+                tag = tag + 4;
             }
         }
     }
@@ -663,14 +667,17 @@ void SmileiMPI::recv(ElectroMagn* EM, int from, int tag)
         if(! EM->emBoundCond[bcId]) continue;
         
         for (int laserId=0 ; laserId<EM->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
-            
-            for ( int profileId=0 ; profileId < EM->emBoundCond[bcId]->vecLaser[laserId]->profiles.size() ; profileId++ ) {
-                if ( EM->emBoundCond[bcId]->vecLaser[laserId]->spacetime[profileId] ) {
-                    LaserProfileSeparable* laser = static_cast<LaserProfileSeparable*> ( EM->emBoundCond[bcId]->vecLaser[laserId]->profiles[profileId] );
-                    recv( laser->space_envelope, from , tag );
-                    recv( laser->phase, from, tag + 1);
-                    tag = tag + 2;
-                }
+            Laser * laser = EM->emBoundCond[bcId]->vecLaser[laserId];
+            if( !(laser->spacetime[0]) && !(laser->spacetime[1]) ){
+                LaserProfileSeparable* profile;
+                profile = static_cast<LaserProfileSeparable*> ( laser->profiles[0] );
+                if( ! profile->space_envelope ) continue;
+                recv( profile->space_envelope, from , tag );
+                recv( profile->phase, from, tag + 1);
+                profile = static_cast<LaserProfileSeparable*> ( laser->profiles[1] );
+                recv( profile->space_envelope, from , tag + 2 );
+                recv( profile->phase, from, tag + 3);
+                tag = tag + 4;
             }
         }
     }

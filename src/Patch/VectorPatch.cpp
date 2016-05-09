@@ -115,8 +115,10 @@ void VectorPatch::sumDensities( int* diag_flag, vector<Timer>& timer )
     
     if(*diag_flag){
         for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
-            update_field_list(ispec);
-            SyncVectorPatch::sumRhoJs( (*this), ispec ); // MPI
+            if( ! (*this)(0)->vecSpecies[ispec]->particles->isTest ) {
+                update_field_list(ispec);
+                SyncVectorPatch::sumRhoJs( (*this), ispec ); // MPI
+            }
         }
     }
     timer[9].update();
@@ -130,6 +132,7 @@ void VectorPatch::sumDensities( int* diag_flag, vector<Timer>& timer )
 void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual, vector<Timer>& timer)
 {
     timer[2].restart();
+    
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
         // Saving magnetic fields (to compute centered fields used in the particle pusher)
@@ -292,7 +295,7 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
     }
     
     *diag_flag = 0;
-    timer[3].update();   
+    timer[3].update();
 
 } // END runAllDiags
 

@@ -283,8 +283,8 @@ void Particles::erase_particle(int ipart, int npart)
     Weight.erase( Weight.begin()+ipart,Weight.begin()+ipart+npart );
     Charge.erase( Charge.begin()+ipart,Charge.begin()+ipart+npart );
     
-    if (isTest)
-	Id.erase( Id.begin()+ipart,Id.begin()+ipart+npart );
+    if (tracked)
+        Id.erase( Id.begin()+ipart,Id.begin()+ipart+npart );
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
