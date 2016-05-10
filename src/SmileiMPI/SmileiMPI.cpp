@@ -749,6 +749,9 @@ void SmileiMPI::computeGlobalDiags(Diagnostic* diag, int timestep)
 void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
 {
     
+    if ( !(scalars->printNow(timestep))
+      && !(scalars->timeSelection->theTimeIsNow(timestep)) ) return;
+    
     int nscalars(0);
 
     vector<string>::iterator iterKey = scalars->out_key.begin();
@@ -790,16 +793,18 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
 
         // total energy in the simulation
         double Utot = Ukin + Uelm;
-
+        
+        if (timestep==0) {
+            scalars->Energy_time_zero  = Utot;
+            scalars->EnergyUsedForNorm = scalars->Energy_time_zero;
+        }
+        
         // expected total energy
         double Uexp = scalars->Energy_time_zero + Uelm_bnd + Ukin_inj_mvw + Uelm_inj_mvw
             -           ( Ukin_bnd + Ukin_out_mvw + Uelm_out_mvw );
         
         // energy balance
         double Ubal = Utot - Uexp;
-        
-        // energy used for normalization
-        scalars->EnergyUsedForNorm = Utot;
         
         // normalized energy balance
         double Ubal_norm(0.);
@@ -811,10 +816,6 @@ void SmileiMPI::computeGlobalDiags(DiagnosticScalar* scalars, int timestep)
         scalars->setScalar("Uexp",Uexp);
         scalars->setScalar("Utot",Utot);
 
-        if (timestep==0) {
-            scalars->Energy_time_zero  = Utot;
-            scalars->EnergyUsedForNorm = scalars->Energy_time_zero;
-        }
     }
 } // END computeGlobalDiags(DiagnosticScalar& scalars ...)
 

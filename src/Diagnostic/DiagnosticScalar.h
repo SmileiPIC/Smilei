@@ -51,8 +51,13 @@ public :
     //! energy used for the normalization of energy balance (former total energy)
     double EnergyUsedForNorm;
     
-    // Specific methods
+    //! Compute the various scalars when requested
     void compute( Patch* patch, int timestep );
+    
+    //! Tell whether a printout is needed now
+    inline bool printNow( int timestep ) {
+        return (timestep % print_every == 0.);
+    }
     
 private :
     

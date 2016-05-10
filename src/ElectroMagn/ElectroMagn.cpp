@@ -21,13 +21,15 @@ using namespace std;
 // Constructor for the virtual class ElectroMagn
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn::ElectroMagn(Params &params, vector<Species*>& vecSpecies, Patch* patch) :
-timestep(params.timestep),
-cell_length(params.cell_length),
-n_species(vecSpecies.size()),
-nDim_field(params.nDim_field),
-cell_volume(params.cell_volume),
-n_space(params.n_space),
-oversize(params.oversize)
+timestep       ( params.timestep   ),
+cell_length    ( params.cell_length),
+n_species      ( vecSpecies.size() ),
+nDim_field     ( params.nDim_field ),
+cell_volume    ( params.cell_volume),
+n_space        ( params.n_space    ),
+oversize       ( params.oversize   ),
+nrj_mw_lost    (  0.               ),
+nrj_new_fields (  0.               )
 {
     
     // initialize poynting vector
