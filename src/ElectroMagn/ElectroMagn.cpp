@@ -295,22 +295,6 @@ void ElectroMagn::restartRhoJs()
     rho_->put_to(0.);
 }
 
-void ElectroMagn::movingWindow_x(unsigned int shift)
-{
-    //! \todo{ Why the if test ? Remove it ? (AB for JD)}
-    if (emBoundCond[0]!=NULL)
-        emBoundCond[0]->laserDisabled();
-
-    // For nrj balance
-    //nrj_mw_lost += computeNRJ(); // Integreated in SimWindow::operate
-
-    // For now, fields introduced with moving window set to 0 
-    nrj_new_fields =+ 0.;
-
-    
-    //Here you might want to apply some new boundary conditions on the +x boundary. For the moment, all fields are set to 0.
-}
-
 void ElectroMagn::laserDisabled()
 {
     if ( emBoundCond.size() )

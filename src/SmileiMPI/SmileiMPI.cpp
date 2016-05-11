@@ -627,7 +627,7 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag)
     for (int bcId=0 ; bcId<EM->emBoundCond.size() ; bcId++ ) {
         if(! EM->emBoundCond[bcId]) continue;
         
-        for (int laserId=0 ; laserId<EM->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
+        for (int laserId=0 ; laserId < EM->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
             
             Laser * laser = EM->emBoundCond[bcId]->vecLaser[laserId];
             if( !(laser->spacetime[0]) && !(laser->spacetime[1]) ){
