@@ -606,7 +606,7 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     newMPIrank = smpi->getRank() -1;
     oldMPIrank = smpi->getRank() -1;
     int istart( 0 );
-    int nmessage = 2*nSpecies+10;
+    int nmessage = 2*nSpecies+14;
     
     
     for (int irk=0 ; irk<smpi->getRank() ; irk++) istart += smpi->patch_count[irk];

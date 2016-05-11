@@ -52,7 +52,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     // Don't move during this process
     int nPatches( vecPatches.size() );
     int nSpecies  ( vecPatches(0)->vecSpecies.size() );
-    int nmessage = 10+2*nSpecies;
+    int nmessage = 14+2*nSpecies;
     vector<int> nbrOfPartsSend(nSpecies,0);
     vector<int> nbrOfPartsRecv(nSpecies,0);
 
