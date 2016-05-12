@@ -94,7 +94,13 @@ void DiagnosticScalar::closeFile()
 
 bool DiagnosticScalar::prepare( int timestep )
 {
-    return true; // Scalars always run even if they don't dump
+    // At the right timestep, zero-out the scalars
+    if ( printNow(timestep) || timeSelection->theTimeIsNow(timestep) )
+        for (int iscalar=0 ; iscalar<out_value.size() ; iscalar++)
+            out_value[iscalar] = 0.;
+    
+    // Scalars always run even if they don't dump
+    return true;
 } // END prepare
 
 
@@ -104,11 +110,8 @@ void DiagnosticScalar::run( Patch* patch, int timestep )
     patch->EMfields->computePoynting(); 
     
     // Compute all scalars when needed
-    if ( printNow(timestep) || timeSelection->theTimeIsNow(timestep) ) {
-        for (int iscalar=0 ; iscalar<out_value.size() ; iscalar++)
-            out_value[iscalar] = 0.;
+    if ( printNow(timestep) || timeSelection->theTimeIsNow(timestep) )
         compute( patch, timestep );
-    }
 
 } // END run
 
