@@ -827,5 +827,7 @@ void SmileiMPI::computeGlobalDiags(DiagnosticParticles* diagParticles, int times
 {
     if (timestep - diagParticles->timeSelection->previousTime() == diagParticles->time_average-1) {
         MPI_Reduce(diagParticles->filename.size()?MPI_IN_PLACE:&diagParticles->data_sum[0], &diagParticles->data_sum[0], diagParticles->output_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        
+        if( !isMaster() ) diagParticles->data_sum.resize(0);
     }
 } // END computeGlobalDiags(DiagnosticParticles* diagParticles ...)

@@ -195,8 +195,10 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
 {
     // Global diags: scalars + particles
     for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
-        if( smpi->isMaster() )
+        if( smpi->isMaster() ){
             globalDiags[idiag]->openFile( params, smpi, true );
+            globalDiags[idiag]->closeFile();
+        }
     }
     
     // Local diags : probes, track & fields
@@ -277,8 +279,12 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, i
                 globalDiags[idiag]->run( (*this)(ipatch), itime );
             // MPI procs gather the data and compute
             smpi->computeGlobalDiags( globalDiags[idiag], itime);
-            // MPI master writes
-            if( smpi->isMaster() ) globalDiags[idiag]->write( itime );
+            // MPI master opens, writes, and closes
+            if ( smpi->isMaster() ) {
+                globalDiags[idiag]->openFile( params, smpi, false );
+                globalDiags[idiag]->write( itime );
+                globalDiags[idiag]->closeFile();
+            }
         }
     }
     

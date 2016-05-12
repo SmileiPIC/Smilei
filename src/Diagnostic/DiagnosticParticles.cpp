@@ -136,33 +136,6 @@ DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch
 } // END DiagnosticParticles::DiagnosticParticles
 
 
-// Cloning constructor // NOT USED
-DiagnosticParticles::DiagnosticParticles( DiagnosticParticles* diag)
-{
-    
-    output        = diag->output;
-    time_average  = diag->time_average;
-    species       = diag->species ;
-    timeSelection = new TimeSelection(diag->timeSelection);
-    
-    for (unsigned int iaxis=0; iaxis<diag->axes.size(); iaxis++ ) {
-        DiagnosticParticlesAxis tmpAxis;
-        tmpAxis.type           = diag->axes[iaxis].type;
-        tmpAxis.min            = diag->axes[iaxis].min;
-        tmpAxis.max            = diag->axes[iaxis].max;
-        tmpAxis.nbins          = diag->axes[iaxis].nbins;
-        tmpAxis.logscale       = diag->axes[iaxis].logscale;
-        tmpAxis.edge_inclusive = diag->axes[iaxis].edge_inclusive;
-        axes.push_back(tmpAxis);
-    }
-    
-    output_size = diag->output_size;
-    
-    type_ = "Particles";
-}
-
-
-
 DiagnosticParticles::~DiagnosticParticles()
 {
     delete timeSelection;
@@ -493,7 +466,7 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
         } // loop bins
         
     } // loop species
-
+    
 } // END run
 
 
@@ -522,6 +495,6 @@ void DiagnosticParticles::write(int timestep)
         WARNING("DIAG PARTICLES COULD NOT WRITE");
     
     // Clear the array
-    data_sum.resize(0); 
-
+    data_sum.resize(0);
+    
 } // END write

@@ -37,8 +37,6 @@ public :
     
     //! Default constructor
     DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
-    //! Cloning constructor
-    DiagnosticParticles( DiagnosticParticles* );
     //! Default destructor
     ~DiagnosticParticles();
     
