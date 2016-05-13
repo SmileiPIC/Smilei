@@ -49,6 +49,9 @@ public :
     virtual void run( Patch* patch, int timestep );
     
     virtual void write(int timestep);
+    
+    //! Clear the array
+    void clear();
      
 private :
 

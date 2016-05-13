@@ -495,6 +495,14 @@ void DiagnosticParticles::write(int timestep)
         WARNING("DIAG PARTICLES COULD NOT WRITE");
     
     // Clear the array
+    clear();
     data_sum.resize(0);
     
 } // END write
+
+
+//! Clear the array
+void DiagnosticParticles::clear() {
+    data_sum.resize(0);
+    vector<double>().swap( data_sum );
+}
