@@ -219,7 +219,7 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
     vector<int> index_array;
     vector<double> *x, *y, *z, *px, *py, *pz, *w, *chi=NULL, axis_array, data_array;
     vector<short> *q;
-    int nbins = vecSpecies[0]->bmin.size(); // number of bins in the particles binning (openMP)
+    int nbins = vecSpecies[0]->bmin.size(); // number of bins in the particles binning
     int bmin, bmax, axissize, ind;
     double axismin, axismax, mass, coeff;
     string axistype;
@@ -249,8 +249,7 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
         
         fill(index_array.begin(), index_array.end(), 0);
         
-        // loop each openMP bin
-        //! \todo Make OpenMP parallelization
+        // loop each bin
         for (int ibin=0 ; ibin<nbins ; ibin++) {
             
             bmin = s->bmin[ibin];

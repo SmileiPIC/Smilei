@@ -1972,22 +1972,22 @@ class TrackParticles(Diagnostic):
 					timeSelector = select[i+4:comma]
 					try:
 						s = self._re.sub(r"\bt\b","alltimes",timeSelector)
-						times = alltimes[eval(s)]
+						time_indices = self._np.nonzero(eval(s))[0]
 					except:
 						raise Exception("Error in selector syntax: time selector not understood in "+select[i:i+3]+"()")
 					try:
 						particleSelector = select[comma+1:parenthesis]
 						for prop in self._properties.keys():
-							particleSelector = self._re.sub(r"\b"+prop+r"\b", "self._np.double(self._h5items["+str(self._properties[prop])+"][t,:])", particleSelector)
+							particleSelector = self._re.sub(r"\b"+prop+r"\b", "self._np.double(self._h5items["+str(self._properties[prop])+"][ti,:])", particleSelector)
 					except:
 						raise Exception("Error in selector syntax: not understood: "+select[i:parenthesis+1])
 					if select[i:i+4] == "any(": selection = self._np.array([False]*self.nParticles)
 					if select[i:i+4] == "all(": selection = self._np.array([True]*self.nParticles)
 					#try:
 					ID = self._np.zeros((self.nParticles,), dtype=self._np.int16)
-					for t in times:
+					for ti in time_indices:
 						selectionAtTimeT = eval(particleSelector) # array of True or False
-						self._Id.read_direct(ID, source_sel=self._np.s_[t,:], dest_sel=self._np.s_[:]) # read the particle Ids
+						self._Id.read_direct(ID, source_sel=self._np.s_[ti,:], dest_sel=self._np.s_[:]) # read the particle Ids
 						selectionAtTimeT = selectionAtTimeT[ID>0] # remove zeros, which are dead particles
 						id = ID[ID>0]-1 # remove zeros, which are dead particles
 						selection[id] = function( selection[id], selectionAtTimeT)

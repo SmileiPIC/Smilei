@@ -195,6 +195,7 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
 {
     // Global diags: scalars + particles
     for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
+        // MPI master creates the file
         if( smpi->isMaster() ){
             globalDiags[idiag]->openFile( params, smpi, true );
             globalDiags[idiag]->closeFile();
