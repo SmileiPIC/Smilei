@@ -209,7 +209,7 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
         // Patch master opens the file
         (*this)(0)->localDiags[idiag]->openFile( params, smpi, true );
         // All patches initialize
-        int fileId = (*this)(0)->localDiags[idiag]->getFileId();
+        hid_t fileId = (*this)(0)->localDiags[idiag]->getFileId();
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
             // The file ID is passed to all patches
             (*this)(ipatch)->localDiags[idiag]->setFileId( fileId );
@@ -248,7 +248,7 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
         // Patch master opens the file
         (*this)(0)->localDiags[idiag]->openFile( params, smpi, false );
         // The file Id is passed to all patches
-        int fileId = (*this)(0)->localDiags[idiag]->getFileId();
+        hid_t fileId = (*this)(0)->localDiags[idiag]->getFileId();
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
             (*this)(ipatch)->localDiags[idiag]->setFileId( fileId );
             
