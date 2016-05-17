@@ -158,9 +158,6 @@ public:
     //! The number of patch in a given direction MUST be a power of 2 and is 2^(mi[i]).
     std::vector<unsigned int> mi;
     
-    //! global number of time exits (it will be used if not specified in various diags/fields)
-    unsigned int global_every;
-    
     //! string containing the whole clean namelist
     std::string namelist;
     

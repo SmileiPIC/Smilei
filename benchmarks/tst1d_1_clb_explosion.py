@@ -23,7 +23,7 @@ L = 2.0*math.pi
 #      3d3v = cartesian grid with 3d in space + 3d in velocity
 #      2drz = cylindrical (r,z) grid with 3d3v particles
 #
-dim = '1d3v'
+geometry = "1d3v"
  
 # order of interpolation
 #

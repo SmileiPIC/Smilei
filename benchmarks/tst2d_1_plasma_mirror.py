@@ -22,7 +22,7 @@ rest = 30.				# time of timestep in one optical cycle
 #      3d3v = cartesian grid with 3d in space + 3d in velocity
 #      2drz = cylindrical (r,z) grid with 3d3v particles
 #
-dim = '2d3v'
+geometry = "2d3v"
 
 # order of interpolation
 #

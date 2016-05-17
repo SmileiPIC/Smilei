@@ -6,7 +6,7 @@
 #      2drz = cylindrical (r,z) grid with 3d3v particles.
 #
 import math
-dim = "2d3v"
+geometry = "2d3v"
 
 # order of interpolation
 interpolation_order = 2

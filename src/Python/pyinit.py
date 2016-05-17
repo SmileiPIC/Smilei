@@ -2,13 +2,15 @@
     Definition of Smilei components
 """
 
+
+
 class SmileiComponentType(type):
     """Metaclass to all Smilei components"""
     
     # Constructor of classes
     def __init__(self, name, bases, attrs):
         self._list = []
-        self.verify = True
+        self._verify = True
         # Run standard metaclass init
         super(SmileiComponentType, self).__init__(name, bases, attrs)
     
@@ -56,9 +58,88 @@ class SmileiComponent(object):
             for key, value in kwargs.iteritems():
                 if key=="_list":
                     print "Python warning: in "+type(self).__name__+": cannot have argument named '_list'. Discarding."
+                elif not hasattr(type(self), key):
+                    raise Exception("ERROR in the namelist: cannot define `"+key+"` in block "+type(self).__name__+"()");
                 else:
                     setattr(self, key, value)
         type(self)._list.append(self) # add the current object to the static list "list"
+
+
+class SmileiSingletonType(SmileiComponentType):
+    """Metaclass to all Smilei singletons"""
+    
+    def __repr__(self):
+        return "<Smilei "+str(self.__name__)+">"
+
+class SmileiSingleton(object):
+    """Smilei singleton generic class"""
+    __metaclass__ = SmileiSingletonType
+    
+    # Prevent having two instances
+    def __new__(cls, **kwargs):
+        if len(cls._list) >= 1:
+            raise Exception("ERROR in the namelist: cannot define block "+cls.__name__+"() twice")
+        else:
+            return super(SmileiSingleton, cls).__new__(cls)
+    
+    # This constructor is used always for all child classes
+    def __init__(self, **kwargs):
+        if kwargs is not None: # add all kwargs as internal class variables
+            for key, value in kwargs.iteritems():
+                if key=="_list":
+                    print "Python warning: in "+type(self).__name__+": cannot have argument named '_list'. Discarding."
+                elif not hasattr(type(self), key):
+                    raise Exception("ERROR in the namelist: cannot define `"+key+"` in block "+type(self).__name__+"()");
+                else:
+                    setattr(type(self), key, value)
+        type(self)._list.append(type(self)) # add self to the list
+
+
+class Main(SmileiSingleton):
+    """Main parameters"""
+    
+    # Default geometry info
+    geometry = None
+    interpolation_order = 2
+    cell_length = []
+    sim_length = []
+    timestep = None
+    sim_time = None
+    clrw = 1
+    
+    # Default load balancing
+    balancing_freq = None
+    coef_cell = 1.0
+    coef_frozen = 0.1
+    
+    bc_em_type_x = []
+    bc_em_type_y = []
+    time_fields_frozen = 0.
+    
+    # Default moving window
+    nspace_win_x = 0
+    t_move_win = 0.
+    vx_win = 1.
+    
+    # Default screen print
+    print_every = None
+    
+    # Default Misc
+    referenceAngularFrequency_SI = 0.
+    random_seed = None
+    output_dir = None
+
+
+class Restart(SmileiSingleton):
+    """Restart parameters"""
+    
+    # Defautl launch, restart, dump
+    directory = None
+    dump_step = 0
+    dump_minutes = 0.0
+    dump_file_sequence = 2
+    dump_deflate = 0
+    exit_after_dump = True
 
 
 class Species(SmileiComponent):
@@ -160,46 +241,3 @@ class PartWall(SmileiComponent):
 smilei_mpi_rank = 0
 smilei_mpi_size = 1
 smilei_rand_max = 2**31-1
-
-# Defautl launch, restart, dump
-output_dir = None
-restart_dir = None
-restart = False
-dump_step = 0
-dump_minutes = 0.0
-dump_file_sequence = 2
-dump_deflate = 0
-exit_after_dump = True
-
-# Default load balancing
-balancing_freq = None
-coef_cell = 1.0
-coef_frozen = 0.1
-
-# Default geometry info
-interpolation_order = 2
-dim = ""
-cell_length = []
-sim_length = []
-timestep = None
-sim_time = None
-clrw = 1
-
-# Default electromagnetic stuff
-maxwell_sol = 'Yee'
-bc_em_type_x = []
-bc_em_type_y = []
-time_fields_frozen = 0.
-
-# Default moving window
-nspace_win_x = 0
-t_move_win = 0.
-vx_win = 1.
-
-# Default screen print
-every = 0
-print_every = None
-
-# Default Misc
-referenceAngularFrequency_SI = 0.
-random_seed = None

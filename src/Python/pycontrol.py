@@ -12,9 +12,10 @@ def _smilei_check():
     # Verify classes were not overriden
     for CheckClassName,CheckClass in {"SmileiComponent":SmileiComponent,"Species":Species,
             "Laser":Laser,"Collisions":Collisions,"DiagProbe":DiagProbe,"DiagParticles":DiagParticles,
-            "DiagScalar":DiagScalar,"DiagFields":DiagFields,"ExtField":ExtField}.iteritems():
+            "DiagScalar":DiagScalar,"DiagFields":DiagFields,"ExtField":ExtField,
+            "SmileiSingleton":SmileiSingleton,"Main":Main,"Restart":Restart}.iteritems():
         try:
-            if not CheckClass.verify: raise
+            if not CheckClass._verify: raise
         except:
             raise Exception("ERROR in the namelist: it seems that the name `"+CheckClassName+"` has been overriden")
     # Verify the output_dir
@@ -25,11 +26,11 @@ def _smilei_check():
             except OSError as exception:
                 raise Exception("ERROR in the namelist: output_dir "+output_dir+" does not exists and cannot be created")
         elif not os.path.isdir(output_dir):
-                raise Exception("ERROR in the namelist: output_dir "+output_dir+" exists and is not a dir")
+                raise Exception("ERROR in the namelist: output_dir "+output_dir+" exists and is not a directory")
     # Verify the restart_dir
-    if restart and restart_dir:
-        if not os.path.isdir(restart_dir):
-            raise Exception("ERROR in the namelist: restart_dir "+restart_dir+" is not a dir")
+    if len(Restart)==1 and Restart.directory:
+        if not os.path.isdir(Restart.directory):
+            raise Exception("ERROR in the namelist: Restart.directory "+Restart.directory+" is not a directory")
     # Verify that constant() and tconstant() were not redefined
     if not hasattr(constant, "_reserved") or not hasattr(tconstant, "_reserved"):
         raise Exception("Names `constant` and `tconstant` cannot be overriden")
