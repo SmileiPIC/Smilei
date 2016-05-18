@@ -57,9 +57,9 @@ class SimWindow {
     //! Total number of cell the window has moved along x up to now.
     unsigned int n_moved;
     //! Velocity of the moving window along x expressed in c.
-    double vx_win_;
+    double velocity_x_;
     //! Time at which the window starts moving.
-    double t_move_win_;
+    double delay_;
     //! Keep track of old patches assignement
     std::vector<Patch*> vecPatches_old;
     std::vector<std::vector<int> > patch_to_be_created;

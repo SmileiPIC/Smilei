@@ -52,17 +52,23 @@ class SmileiComponent(object):
     """Smilei component generic class"""
     __metaclass__ = SmileiComponentType
     
-    # This constructor is used always for all child classes
-    def __init__(self, **kwargs):
-        if kwargs is not None: # add all kwargs as internal class variables
+    # Function to initialize new components
+    def _fillObjectAndAddToList(self, cls, obj, **kwargs):
+        # add all kwargs as internal class variables
+        if kwargs is not None:
             for key, value in kwargs.iteritems():
                 if key=="_list":
-                    print "Python warning: in "+type(self).__name__+": cannot have argument named '_list'. Discarding."
-                elif not hasattr(type(self), key):
-                    raise Exception("ERROR in the namelist: cannot define `"+key+"` in block "+type(self).__name__+"()");
+                    print "Python warning: in "+cls.__name__+": cannot have argument named '_list'. Discarding."
+                elif not hasattr(cls, key):
+                    raise Exception("ERROR in the namelist: cannot define `"+key+"` in block "+cls.__name__+"()");
                 else:
-                    setattr(self, key, value)
-        type(self)._list.append(self) # add the current object to the static list "list"
+                    setattr(obj, key, value)
+        # add the new component to the "_list"
+        cls._list.append(obj)
+    
+    # Constructor for all SmileiComponents
+    def __init__(self, **kwargs):
+        self._fillObjectAndAddToList(type(self), self, **kwargs)
 
 
 class SmileiSingletonType(SmileiComponentType):
@@ -71,7 +77,7 @@ class SmileiSingletonType(SmileiComponentType):
     def __repr__(self):
         return "<Smilei "+str(self.__name__)+">"
 
-class SmileiSingleton(object):
+class SmileiSingleton(SmileiComponent):
     """Smilei singleton generic class"""
     __metaclass__ = SmileiSingletonType
     
@@ -79,20 +85,11 @@ class SmileiSingleton(object):
     def __new__(cls, **kwargs):
         if len(cls._list) >= 1:
             raise Exception("ERROR in the namelist: cannot define block "+cls.__name__+"() twice")
-        else:
-            return super(SmileiSingleton, cls).__new__(cls)
+        return super(SmileiSingleton, cls).__new__(cls)
     
-    # This constructor is used always for all child classes
+    # Constructor for all SmileiSingletons
     def __init__(self, **kwargs):
-        if kwargs is not None: # add all kwargs as internal class variables
-            for key, value in kwargs.iteritems():
-                if key=="_list":
-                    print "Python warning: in "+type(self).__name__+": cannot have argument named '_list'. Discarding."
-                elif not hasattr(type(self), key):
-                    raise Exception("ERROR in the namelist: cannot define `"+key+"` in block "+type(self).__name__+"()");
-                else:
-                    setattr(type(self), key, value)
-        type(self)._list.append(type(self)) # add self to the list
+        self._fillObjectAndAddToList(type(self), type(self), **kwargs)
 
 
 class Main(SmileiSingleton):
@@ -100,43 +97,49 @@ class Main(SmileiSingleton):
     
     # Default geometry info
     geometry = None
-    interpolation_order = 2
     cell_length = []
     sim_length = []
     timestep = None
     sim_time = None
+    interpolation_order = 2
+    number_of_patches = None
     clrw = 1
     
-    # Default load balancing
-    balancing_freq = None
-    coef_cell = 1.0
-    coef_frozen = 0.1
-    
+    # Default fields
+    maxwell_sol = 'Yee'
     bc_em_type_x = []
     bc_em_type_y = []
     time_fields_frozen = 0.
     
-    # Default moving window
-    nspace_win_x = 0
-    t_move_win = 0.
-    vx_win = 1.
-    
-    # Default screen print
-    print_every = None
-    
     # Default Misc
     referenceAngularFrequency_SI = 0.
-    random_seed = None
+    print_every = None
     output_dir = None
+    random_seed = None
 
 
-class Restart(SmileiSingleton):
-    """Restart parameters"""
+class LoadBalancing(SmileiSingleton):
+    """Load balancing parameters"""
     
-    # Defautl launch, restart, dump
-    directory = None
+    every = None
+    coef_cell = 1.0
+    coef_frozen = 0.1
+
+
+class MovingWindow(SmileiSingleton):
+    """Moving window parameters"""
+    
+    delay = 0.
+    velocity_x = 1.
+    nspace_x = 0
+
+
+class DumpRestart(SmileiSingleton):
+    """Dump and restart parameters"""
+    
+    restart_dir = None
     dump_step = 0
-    dump_minutes = 0.0
+    dump_minutes = 0.
     dump_file_sequence = 2
     dump_deflate = 0
     exit_after_dump = True
@@ -149,6 +152,8 @@ class Species(SmileiComponent):
     initMomentum_type = ""
     n_part_per_cell = None
     c_part_max = 1.0
+    mass = None
+    charge = None
     charge_density = None
     nb_density = None
     mean_velocity = [0.]

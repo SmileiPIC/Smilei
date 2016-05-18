@@ -93,9 +93,9 @@ public:
     //! window simulation box size in number of cells
     int nspace_win_x;
     //! Time at which the moving window starts.
-    double t_move_win;
+    double delay;
     //! Velocity of the moving window along x in c.
-    double vx_win;
+    double velocity_x;
     
     
     //! Clusters width
@@ -134,8 +134,10 @@ public:
     //! Oversize domain to exchange less particles
     std::vector<unsigned int> oversize;
     
-    //! restart namelist
+    //! True if restart requested
     bool restart;
+    //! Directory of restart
+    std::string restart_dir;
     
     //! frequency of exchange particles (default = 1, disabled for now, incompatible with sort) 
     int exchange_particles_each;

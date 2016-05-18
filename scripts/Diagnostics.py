@@ -462,21 +462,21 @@ class Diagnostic(object):
 		try:
 			# get number of dimensions
 			error = "Error extracting 'dim' from the input file"
-			self._ndim = int(self.namelist.dim[0])
+			self._ndim = int(self.namelist.Main.geometry[0])
 			if self._ndim not in [1,2,3]: raise
 			# get box size
 			error = "Error extracting 'sim_length' from the input file"
-			sim_length = self._np.atleast_1d(self._np.double(self.namelist.sim_length))
+			sim_length = self._np.atleast_1d(self._np.double(self.namelist.Main.sim_length))
 			if sim_length.size != self._ndim: raise
 			# get cell size
 			error = "Error extracting 'cell_length' from the input file"
-			self._cell_length = self._np.atleast_1d(self._np.double(self.namelist.cell_length))
+			self._cell_length = self._np.atleast_1d(self._np.double(self.namelist.Main.cell_length))
 			if self._cell_length.size != self._ndim: raise
 			# calculate number of cells in each dimension
 			self._ncels = sim_length/self._cell_length
 			# extract time-step
 			error = "Error extracting 'timestep' from the input file"
-			self.timestep = self._np.double(self.namelist.timestep)
+			self.timestep = self._np.double(self.namelist.Main.timestep)
 			if not self._np.isfinite(self.timestep): raise
 		except:
 			print error
@@ -488,7 +488,7 @@ class Diagnostic(object):
 		# Prepare units
 		self._dim = len(self._shape)
 		if self.valid:
-			try:    referenceAngularFrequency_SI = self.namelist.referenceAngularFrequency_SI
+			try:    referenceAngularFrequency_SI = self.namelist.Main.referenceAngularFrequency_SI
 			except: referenceAngularFrequency_SI = None
 			xunits = None
 			yunits = None

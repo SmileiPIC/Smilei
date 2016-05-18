@@ -74,7 +74,11 @@ namelist("")
     runScript(string(reinterpret_cast<const char*>(pycontrol_py), pycontrol_py_len),"pycontrol.py");
     
     smpi->barrier();
-
+    
+    // Error if no block Main() exists
+    if( PyTools::nComponents("Main") == 0 )
+        ERROR("Block Main() not defined");
+    
     // output dir: we force this to be the same on all mpi nodes
     string output_dir("");
     PyTools::extract("output_dir", output_dir, "Main");
@@ -112,11 +116,15 @@ namelist("")
     
     // --------------
     // Stop & Restart
-    // --------------   
+    // --------------
     
-    restart=false;
-    if( PyTools::nComponents("Restart") > 1 ) restart = true;
-    if (restart) MESSAGE("Code running from restart"); //! \todo Give info on restart properties
+    restart = false;
+    restart_dir = "";
+    if( PyTools::nComponents("DumpRestart")>0 && PyTools::extract("restart_dir", restart_dir, "DumpRestart") ) {
+        restart = true;
+        if( restart_dir.at(restart_dir.length()-1)!='/' ) restart_dir+="/";
+        MESSAGE("Code running from restart in directory "<<restart_dir);
+    }
     
     
     // ---------------------
@@ -214,28 +222,32 @@ namelist("")
     }
     
     // Maxwell Solver 
-        PyTools::extract("maxwell_sol", maxwell_sol, "Main");
+    PyTools::extract("maxwell_sol", maxwell_sol, "Main");
 
 
     // ------------------------
     // Moving window parameters
     // ------------------------
-    if (!PyTools::extract("nspace_win_x",nspace_win_x, "Main")) {
-        nspace_win_x = 0;
+    if( PyTools::nComponents("MovingWindow") ) {
+        if (!PyTools::extract("nspace_x",nspace_win_x, "MovingWindow")) {
+            nspace_win_x = 0;
+        }
+        
+        if (!PyTools::extract("delay",delay, "MovingWindow")) {
+            delay = 0.0;
+        }
+        
+        if (!PyTools::extract("velocity_x",velocity_x, "MovingWindow")) {
+            velocity_x = 1.;
+        }
     }
     
-    if (!PyTools::extract("t_move_win",t_move_win, "Main")) {
-        t_move_win = 0.0;
-    }
     
-    if (!PyTools::extract("vx_win",vx_win, "Main")) {
-        vx_win = 1.;
-    }
     
     if (!PyTools::extract("clrw",clrw, "Main")) {
         clrw = 1;
     }
-    
+        
     // --------------------
     // Number of patches
     // --------------------
@@ -259,12 +271,14 @@ namelist("")
     }
     
     
-    if ( !PyTools::extract("balancing_freq", balancing_freq, "Main") )
-        balancing_freq = 150;
-    if ( !PyTools::extract("coef_cell", coef_cell, "Main") )
-        coef_cell = 1.;
-    if ( !PyTools::extract("coef_frozen", coef_frozen, "Main") )
-        coef_frozen = 0.1;
+    balancing_freq = 150;
+    coef_cell = 1.;
+    coef_frozen = 0.1;
+    if( PyTools::nComponents("LoadBalancing")>0 ) {
+        PyTools::extract("frequency"  , balancing_freq, "LoadBalancing");
+        PyTools::extract("coef_cell"  , coef_cell     , "LoadBalancing");
+        PyTools::extract("coef_frozen", coef_frozen   , "LoadBalancing");
+    }
     
     //mi.resize(nDim_field, 0);
     mi.resize(3, 0);

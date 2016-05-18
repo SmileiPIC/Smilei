@@ -39,7 +39,7 @@ DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patc
     // defining default values & reading diagnostic every-parameter
     // ------------------------------------------------------------
     print_every=params.n_time/10;
-    PyTools::extract("print_every", print_every);
+    PyTools::extract("print_every", print_every, "Main");
     
     type_ = "Scalar";
     

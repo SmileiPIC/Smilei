@@ -21,19 +21,19 @@ SimWindow::SimWindow(Params& params)
     cell_length_x_   = params.cell_length[0];
     x_moved = 0.;      //The window has not moved at t=0. Warning: not true anymore for restarts.
     n_moved = 0;      //The window has not moved at t=0. Warning: not true anymore for restarts.
-    vx_win_ = params.vx_win; 
+    velocity_x_ = params.velocity_x; 
     int nthds(1);
     #ifdef _OPENMP
         nthds = omp_get_max_threads();
     #endif
     patch_to_be_created.resize(nthds);
 
-    t_move_win_ = params.t_move_win;
+    delay_ = params.delay;
     MESSAGE(1,"Moving window is active:");
     MESSAGE(2,"nspace_win_x_ : " << nspace_win_x_);
     MESSAGE(2,"cell_length_x_ : " << cell_length_x_);
-    MESSAGE(2,"vx_win_ : " << vx_win_);
-    MESSAGE(2,"t_move_win_ : " << t_move_win_);
+    MESSAGE(2,"velocity_x_ : " << velocity_x_);
+    MESSAGE(2,"delay_ : " << delay_);
     
 }
 
@@ -202,7 +202,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 
 bool SimWindow::isMoving(double time_dual)
 {
-    return ( (nspace_win_x_) && ((time_dual - t_move_win_)*vx_win_ > x_moved) );
+    return ( (nspace_win_x_) && ((time_dual - delay_)*velocity_x_ > x_moved) );
 }
 
 void SimWindow::setOperators(VectorPatch& vecPatches)

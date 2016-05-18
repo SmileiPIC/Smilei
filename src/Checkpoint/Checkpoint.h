@@ -122,7 +122,7 @@ private:
     //! int deflate dump value
     int dump_deflate;
     
-    //! write dump drectory
+    //! directory of the restart
     std::string restart_dir;
     
     std::vector<MPI_Request> dump_request;
