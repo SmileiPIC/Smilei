@@ -133,6 +133,15 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
 {
     timer[2].restart();
     
+    for (unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_int ; ipassfilter++){
+        #pragma omp for schedule(static)
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+            // Current spatial filtering
+            (*this)(ipatch)->EMfields->binomialCurrentFilter();
+        }
+        SyncVectorPatch::exchangeJ( (*this) );
+    }
+    
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
         // Saving magnetic fields (to compute centered fields used in the particle pusher)
@@ -140,7 +149,8 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
         (*this)(ipatch)->EMfields->saveMagneticFields();
         // Computes Ex_, Ey_, Ez_ on all points.
         // E is already synchronized because J has been synchronized before.
-        (*this)(ipatch)->EMfields->solveMaxwellAmpere();
+        //(*this)(ipatch)->EMfields->solveMaxwellAmpere();
+        (*(*this)(ipatch)->EMfields->MaxwellAmpereSolver_)((*this)(ipatch)->EMfields);
     }
     //(*this).exchangeE();
     
@@ -570,8 +580,8 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
     
     // Backward loop on future patches...
     int existing_patch_id = -1;
-    for ( int ipatch=recv_patch_id_.size()-1 ; ipatch>=0 ; ipatch--) {
       //if      future patch hindex  >= current refHindex             AND    future patch hindex <= current last hindex
+    for ( int ipatch=recv_patch_id_.size()-1 ; ipatch>=0 ; ipatch--) {
         if ( ( recv_patch_id_[ipatch]>=refHindex_ ) && ( recv_patch_id_[ipatch] <= refHindex_ + nPatches_now - 1 ) ) {
             existing_patch_id = recv_patch_id_[ipatch];
             //Remove this patch from the receive list because I already own it.
