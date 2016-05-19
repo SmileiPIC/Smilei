@@ -9,8 +9,15 @@
 
 using namespace std;
 
-DiagnosticFields2D::DiagnosticFields2D( Params &params, SmileiMPI* smpi, Patch* patch, int diagId )
-    : DiagnosticFields( params, smpi, patch, diagId )
+DiagnosticFields2D::DiagnosticFields2D( Params &params, SmileiMPI* smpi, Patch* patch, int ndiag )
+    : DiagnosticFields( params, smpi, patch, ndiag )
+{
+    createPattern(params,patch);
+}
+
+
+DiagnosticFields2D::DiagnosticFields2D( DiagnosticFields* diag, Params &params, Patch* patch )
+    : DiagnosticFields( diag, patch )
 {
     createPattern(params,patch);
 }
@@ -104,27 +111,27 @@ void DiagnosticFields2D::createPattern( Params& params, Patch* patch )
             memspace_ [ ix_isPrim ][ iy_isPrim ] = memspace;
 
 
-	    //if ( ( iy_isPrim == 0 ) && ( ix_isPrim == 1 ) ) {
-	    //    cout << smpi->getRank() << " " << offset[0] << " " << offset[1] << " " << stride[0] << " " << stride[1] << " " << count[0] << " " << count[1] << endl;
-	    //}
+            //if ( ( iy_isPrim == 0 ) && ( ix_isPrim == 1 ) ) {
+            //    cout << smpi->getRank() << " " << offset[0] << " " << offset[1] << " " << stride[0] << " " << stride[1] << " " << count[0] << " " << count[1] << endl;
+            //}
 
             // Each process defines dataset in memory and writes it to the hyperslab
             // in the file.
             //
             hsize_t     dimsf[2];
-	    if (!params.nspace_win_x)
-		dimsf[0] = params.n_space_global[0]+1+ix_isPrim;
-	    else
-		dimsf[0] = params.nspace_win_x+1+ix_isPrim;
-	    
+            if (!params.nspace_win_x)
+                dimsf[0] = params.n_space_global[0]+1+ix_isPrim;
+            else
+                dimsf[0] = params.nspace_win_x+1+ix_isPrim;
+            
             dimsf[1] = params.n_space_global[1]+1+iy_isPrim;
 
             hid_t filespace = H5Screate_simple(params.nDim_field, dimsf, NULL);
             //
             // Select hyperslab in the file.
             //
-	    offset[0] = patch->Pcoordinates[0]*params.n_space[0] - params.oversize[0]+istart[0];
-	    offset[1] = patch->Pcoordinates[1]*params.n_space[1] - params.oversize[1]+istart[1];
+            offset[0] = patch->Pcoordinates[0]*params.n_space[0] - params.oversize[0]+istart[0];
+            offset[1] = patch->Pcoordinates[1]*params.n_space[1] - params.oversize[1]+istart[1];
             stride[0] = 1;
             stride[1] = 1;
             count[0] = 1;
@@ -144,25 +151,23 @@ void DiagnosticFields2D::updatePattern( Params& params, Patch* patch )
 {
     for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
         for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {
-	    H5Sclose( memspace_ [ ix_isPrim ][ iy_isPrim ] );
-	    H5Sclose( filespace_[ ix_isPrim ][ iy_isPrim ] );
-	}
+            H5Sclose( memspace_ [ ix_isPrim ][ iy_isPrim ] );
+            H5Sclose( filespace_[ ix_isPrim ][ iy_isPrim ] );
+        }
     }
     createPattern( params, patch );
 }
 
 
-// ---------------------------------------------------------------------------------------------------------------------
-// For time iteration "itime", write current field in the time step dataset of the global file
-// ---------------------------------------------------------------------------------------------------------------------
-void DiagnosticFields2D::writeFieldsSingleFileTime( Field* field, hid_t group_id )
+// Write field in the time step dataset of the global file
+void DiagnosticFields2D::writeField( Field* field, hid_t group_id )
 {
     std::vector<unsigned int> isDual = field->isDual_;
     Field2D* f2D =  static_cast<Field2D*>(field);
-
+    
     hid_t memspace  = memspace_ [ isDual[0] ][ isDual[1] ];
     hid_t filespace = filespace_[ isDual[0] ][ isDual[1] ];
-
+    
     hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
     //    H5Pset_layout(plist_id, H5D_CHUNKED);
     //    vector<unsigned int> dimsInt(field->dims());
@@ -172,26 +177,24 @@ void DiagnosticFields2D::writeFieldsSingleFileTime( Field* field, hid_t group_id
     //    }
     //    H5Pset_chunk(plist_id, dimsInt.size(), mydims);
     //    H5Pset_deflate (plist_id, 5);
-
+    
     //H5Pset_chunk(plist_id, 2, chunk_dims); // Problem different dims for each process
     //hid_t dset_id = H5Dcreate(file_id, (field->name).c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
-
-
+    
+    
     //hid_t dset_id = H5Dcreate(group_id, (field->name).c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
     hid_t dset_id;
     htri_t status = H5Lexists( group_id, (field->name).c_str(), H5P_DEFAULT ); 
     if (!status)
-	dset_id  = H5Dcreate(group_id, (field->name).c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
+        dset_id  = H5Dcreate(group_id, (field->name).c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
     else
-	dset_id = H5Dopen(group_id, (field->name).c_str(), H5P_DEFAULT);		
-
+        dset_id = H5Dopen(group_id, (field->name).c_str(), H5P_DEFAULT);                
+    
     H5Pclose(plist_id);
-
+    
     H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &(f2D->data_2D[0][0]) );
     H5Dclose(dset_id);
-
-
-} // END writeFieldsSingleFileTime
+}
 
 
 //! this method writes a field on an hdf5 file should be used just for debug (doesn't use params.output_dir)

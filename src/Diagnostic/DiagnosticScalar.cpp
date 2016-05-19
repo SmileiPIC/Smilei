@@ -33,7 +33,7 @@ DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI* smpi, Patch* patc
         dt=params.timestep;
         cell_volume=params.cell_volume;
     } else {
-        timeSelection = NULL;
+        timeSelection = new TimeSelection();
     }
     
     // defining default values & reading diagnostic every-parameter
@@ -69,7 +69,7 @@ DiagnosticScalar::~DiagnosticScalar()
 } // END DiagnosticScalar::#DiagnosticScalar
 
 
-void DiagnosticScalar::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile )
+void DiagnosticScalar::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 {
     if (!smpi->isMaster()) return;
     
@@ -85,12 +85,6 @@ void DiagnosticScalar::openFile( Params& params, SmileiMPI* smpi, VectorPatch& v
 } // END openFile
 
 
-void DiagnosticScalar::setFile( Diagnostic* diag )
-{
-    ERROR( "Only master can write here ! fout = static_cast<DiagnosticScalar*>(diag)->fout; " );
-}
-
-
 void DiagnosticScalar::closeFile()
 {
     if (fout.is_open()) fout.close();
@@ -98,39 +92,26 @@ void DiagnosticScalar::closeFile()
 } // END closeFile
 
 
-bool DiagnosticScalar::prepare( Patch* patch, int timestep )
+bool DiagnosticScalar::prepare( int timestep )
 {
-    if ( timeSelection->theTimeIsNow(timestep) ) {
+    // At the right timestep, zero-out the scalars
+    if ( printNow(timestep) || timeSelection->theTimeIsNow(timestep) )
         for (int iscalar=0 ; iscalar<out_value.size() ; iscalar++)
             out_value[iscalar] = 0.;
-        return true;
-    }
-    return false;
-
+    
+    // Scalars always run even if they don't dump
+    return true;
 } // END prepare
 
 
 void DiagnosticScalar::run( Patch* patch, int timestep )
 {
-    // at timestep=0 initialize the energies
-    /*if (timestep==0) {
-        //compute( patch->EMfields, patch->vecSpecies );
-        compute( patch, timestep );
-        Energy_time_zero  = getScalar("Utot");
-        EnergyUsedForNorm = Energy_time_zero;
-    }*/
+    // Must keep track of Poynting flux even without diag
+    patch->EMfields->computePoynting(); 
     
-    // If within time-selection overall range
-    bool theTimeIsNow = timeSelection->theTimeIsNow(timestep); // must compute this in any case
-    if( timeSelection->inProgress(timestep) ) {
-        // Poynting must be calculated & incremented at every timesteps
-        patch->EMfields->computePoynting(); 
-        if ( theTimeIsNow ) {
-          //compute( patch-EMfields, patch-vecSpecies);
-            compute( patch, timestep );
-        }
-        
-    }
+    // Compute all scalars when needed
+    if ( printNow(timestep) || timeSelection->theTimeIsNow(timestep) )
+        compute( patch, timestep );
 
 } // END run
 
@@ -139,8 +120,7 @@ void DiagnosticScalar::write(int itime)
 {
     unsigned int k, s=out_key.size();
     
-    
-    //MESSAGE ( "write : Number of diags = " << out_key.size() ) ;
+    if ( ! timeSelection->theTimeIsNow(itime) ) return;
     
     fout << std::scientific << setprecision(precision);
     // At the beginning of the file, we write some headers
@@ -171,19 +151,12 @@ void DiagnosticScalar::write(int itime)
         }
     }
     fout << endl;
-    
-    /*for (int iscalar=0 ; iscalar<out_value.size() ; iscalar++)
-      out_value[iscalar] = 0.;*/
 
 } // END write
 
 
 void DiagnosticScalar::compute( Patch* patch, int timestep )
 {
-    //out_key  .clear();
-    //out_value.clear();
-    // reset after write
-    
     ElectroMagn* EMfields = patch->EMfields;
     std::vector<Species*>& vecSpecies = patch->vecSpecies;
     
@@ -402,27 +375,6 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     // FINAL steps
     // -----------
     
-    // total energy in the simulation
-    double Utot = Ukin + Uelm;
-    
-    // expected total energy
-    double Uexp = Energy_time_zero + Uelm_bnd + Ukin_inj_mvw + Uelm_inj_mvw
-        -           ( Ukin_bnd + Ukin_out_mvw + Uelm_out_mvw );
-    
-    // energy balance
-    double Ubal = Utot - Uexp;
-    
-    // energy used for normalization
-    EnergyUsedForNorm = Utot;
-    
-    // normalized energy balance
-    double Ubal_norm(0.);
-    if (EnergyUsedForNorm>0.)
-        Ubal_norm = Ubal / EnergyUsedForNorm;
-    
-    // outputs
-    // -------
-    
     // added & lost energies due to the moving window
     prepend("Ukin_out_mvw",Ukin_out_mvw);
     prepend("Ukin_inj_mvw",Ukin_inj_mvw);
@@ -433,13 +385,15 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     prepend("Ukin_bnd",Ukin_bnd);
     prepend("Uelm_bnd",Uelm_bnd);
     
-    // total energies & energy balance
+    // Total energies
     prepend("Ukin",Ukin);
     prepend("Uelm",Uelm);
-    prepend("Ubal_norm",Ubal_norm);
-    prepend("Ubal",Ubal);
-    prepend("Uexp",Uexp);
-    prepend("Utot",Utot);
+    
+    // total energies & energy balance (set later in SmileiMPI::computeGlobalDiags)
+    prepend("Ubal_norm",0.);
+    prepend("Ubal"     ,0.);
+    prepend("Uexp"     ,0.);
+    prepend("Utot"     ,0.);
     
     // Final thing to do: calculate the maximum size of the scalars names
     if (out_width.empty()) { // Only first time

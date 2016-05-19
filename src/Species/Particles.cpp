@@ -283,8 +283,8 @@ void Particles::erase_particle(int ipart, int npart)
     Weight.erase( Weight.begin()+ipart,Weight.begin()+ipart+npart );
     Charge.erase( Charge.begin()+ipart,Charge.begin()+ipart+npart );
     
-    if (isTest)
-	Id.erase( Id.begin()+ipart,Id.begin()+ipart+npart );
+    if (tracked)
+        Id.erase( Id.begin()+ipart,Id.begin()+ipart+npart );
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -566,7 +566,7 @@ void Particles::create_particle()
 bool Particles::is_part_in_domain(int ipart, Patch* patch)
 {
     for (unsigned int i=0; i<Position.size(); i++) {
-	if (Position[i][ipart] <  patch->getDomainLocalMin(i) ) return false;
+        if (Position[i][ipart] <  patch->getDomainLocalMin(i) ) return false;
         if (Position[i][ipart] >= patch->getDomainLocalMax(i) ) return false;
     }
     return true;

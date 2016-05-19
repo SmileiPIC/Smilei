@@ -133,10 +133,10 @@ DiagScalar(every = every)#, vars=['Utot','Ubal_norm','Uelm','Ukin','Ukin_ion','U
 
 
 # FIELD DUMPS
-# fieldDump_every = integer, nb of timesteps between each output
-# fieldsToDump    = ('string'), name of the fields to dump
-fieldDump_every = every
-fieldsToDump = ('Ex','Rho_ion','Rho_eon');
+DiagFields(
+    every = every,
+    fields = ['Ex','Rho_ion','Rho_eon']
+)
 
 # PHASE-SPACE DIAGNOSTICS (new version from DiagParticles)
 DiagParticles(

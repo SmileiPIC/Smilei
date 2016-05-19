@@ -15,7 +15,7 @@ class CollisionalIonization
 
 public:
     //! Constructor
-    CollisionalIonization(int, int);
+    CollisionalIonization(int, int, double);
     //! Cloning Constructor
     CollisionalIonization(CollisionalIonization*);
     //! Destructor
@@ -66,11 +66,6 @@ private:
     //! Atomic number
     int atomic_number;
     
-    //! Table of first ionization energies of ions
-    static const double ionizationEnergy[];
-    //! Table of binding energies of all electrons in neutral atoms
-    static const double bindingEnergy[];
-    
     //! Global table of atomic numbers
     static std::vector<int> DB_Z;
     //! Global table of integrated cross-section
@@ -109,7 +104,7 @@ private:
 class CollisionalNoIonization : public CollisionalIonization
 {
 public:
-    CollisionalNoIonization() : CollisionalIonization(0,0) {};
+    CollisionalNoIonization() : CollisionalIonization(0,0,0.) {};
     ~CollisionalNoIonization(){};
     
     virtual int  createDatabase(double) { return 0; };

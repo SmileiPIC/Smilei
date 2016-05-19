@@ -21,13 +21,15 @@ using namespace std;
 // Constructor for the virtual class ElectroMagn
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagn::ElectroMagn(Params &params, vector<Species*>& vecSpecies, Patch* patch) :
-timestep(params.timestep),
-cell_length(params.cell_length),
-n_species(vecSpecies.size()),
-nDim_field(params.nDim_field),
-cell_volume(params.cell_volume),
-n_space(params.n_space),
-oversize(params.oversize)
+timestep       ( params.timestep   ),
+cell_length    ( params.cell_length),
+n_species      ( vecSpecies.size() ),
+nDim_field     ( params.nDim_field ),
+cell_volume    ( params.cell_volume),
+n_space        ( params.n_space    ),
+oversize       ( params.oversize   ),
+nrj_mw_lost    (  0.               ),
+nrj_new_fields (  0.               )
 {
     
     // initialize poynting vector
@@ -94,8 +96,6 @@ oversize(params.oversize)
 void ElectroMagn::finishInitialization(int nspecies, Patch* patch)
 {
 
-    initAntennas(patch);
-    
     // Fill allfields
     allFields.push_back(Ex_ );
     allFields.push_back(Ey_ );
@@ -175,12 +175,6 @@ ElectroMagn::~ElectroMagn()
     
 }//END Destructer
 
-
-void ElectroMagn::clean()
-{
-    for ( int i=0 ; i<emBoundCond.size() ;i++ )
-        if (emBoundCond[i]!=NULL) emBoundCond[i]->clean();
-}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Maxwell solver using the FDTD scheme
@@ -272,20 +266,33 @@ void ElectroMagn::initRhoJ(vector<Species*>& vecSpecies, Projector* Proj)
 }
 
 
-void ElectroMagn::movingWindow_x(unsigned int shift)
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Reinitialize the total charge densities and currents
+// - save current density as old density (charge conserving scheme)
+// - put the new density and currents to 0
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn::restartRhoJ()
 {
-    //! \todo{ Why the if test ? Remove it ? (AB for JD)}
-    if (emBoundCond[0]!=NULL)
-        emBoundCond[0]->laserDisabled();
+    Jx_ ->put_to(0.);
+    Jy_ ->put_to(0.);
+    Jz_ ->put_to(0.);
+    rho_->put_to(0.);
+}
 
-    // For nrj balance
-    //nrj_mw_lost += computeNRJ(); // Integreated in SimWindow::operate
-
-    // For now, fields introduced with moving window set to 0 
-    nrj_new_fields =+ 0.;
-
+void ElectroMagn::restartRhoJs()
+{
+    for (unsigned int ispec=0 ; ispec < n_species ; ispec++) {
+        Jx_s [ispec]->put_to(0.);
+        Jy_s [ispec]->put_to(0.);
+        Jz_s [ispec]->put_to(0.);
+        rho_s[ispec]->put_to(0.);
+    }
     
-    //Here you might want to apply some new boundary conditions on the +x boundary. For the moment, all fields are set to 0.
+    Jx_ ->put_to(0.);
+    Jy_ ->put_to(0.);
+    Jz_ ->put_to(0.);
+    rho_->put_to(0.);
 }
 
 void ElectroMagn::laserDisabled()
@@ -313,6 +320,7 @@ string LowerCase(string in){
     std::transform(out.begin(), out.end(), out.begin(), ::tolower);
     return out;
 }
+
 
 void ElectroMagn::applyExternalFields(Patch* patch) {    
     Field * field;

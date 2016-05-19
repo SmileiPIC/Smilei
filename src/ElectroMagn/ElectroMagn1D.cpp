@@ -415,63 +415,6 @@ void ElectroMagn1D::incrementAvgFields(unsigned int time_step)
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Reinitialize the total charge density and transverse currents
-// - save current density as old density (charge conserving scheme)
-// - put the new density and currents to 0
-// ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn1D::restartRhoJ()
-{
-    Field1D* Jx1D    = static_cast<Field1D*>(Jx_);
-    Field1D* Jy1D    = static_cast<Field1D*>(Jy_);
-    Field1D* Jz1D    = static_cast<Field1D*>(Jz_);
-    Field1D* rho1D   = static_cast<Field1D*>(rho_);
-    
-    // --------------------------
-    // Total currents and density
-    // --------------------------
-    
-    // put longitudinal current to zero on the dual grid
-    for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
-        (*Jx1D)(ix)    = 0.0;
-    }
-    
-    // all fields are defined on the primal grid
-    for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
-        (*rho1D)(ix)   = 0.0;
-        (*Jy1D)(ix)    = 0.0;
-        (*Jz1D)(ix)    = 0.0;
-    }
-}    
-void ElectroMagn1D::restartRhoJs()
-{
-    for (unsigned int ispec=0 ; ispec < n_species ; ispec++){
-        // -----------------------------------
-        // Species currents and charge density
-        // -----------------------------------
-        Field1D* Jx1D_s  = static_cast<Field1D*>(Jx_s[ispec]);
-        Field1D* Jy1D_s  = static_cast<Field1D*>(Jy_s[ispec]);
-        Field1D* Jz1D_s  = static_cast<Field1D*>(Jz_s[ispec]);
-        Field1D* rho1D_s = static_cast<Field1D*>(rho_s[ispec]);
-
-        for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
-            (*rho1D_s)(ix) = 0.0;
-        }
-
-        // put longitudinal current to zero on the dual grid
-        for (unsigned int ix=0 ; ix<dimDual[0] ; ix++) {
-            (*Jx1D_s)(ix)  = 0.0;
-        }
-        for (unsigned int ix=0 ; ix<dimPrim[0] ; ix++) {
-            // all fields are defined on the primal grid
-            (*Jy1D_s)(ix)  = 0.0;
-            (*Jz1D_s)(ix)  = 0.0;
-        }
-    }
-}
-
-
-
-// ---------------------------------------------------------------------------------------------------------------------
 // Compute the total density and currents from species density and currents
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn1D::computeTotalRhoJ()

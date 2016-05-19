@@ -79,6 +79,8 @@ globalEvery = int(rest)
 #
 DiagScalar(every=globalEvery)
 
-fieldDump_every = globalEvery
-fieldToDump = ('Ex','Ey','Ez')
+DiagFields(
+    every = globalEvery,
+    fields = ['Ex','Ey','Ez']
+)
 

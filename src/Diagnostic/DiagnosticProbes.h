@@ -17,7 +17,7 @@ class DiagnosticProbes : public Diagnostic {
 public :
     
     //! Default constructor
-    DiagnosticProbes( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
+    DiagnosticProbes( Params &params, SmileiMPI* smpi, Patch* patch, int diagId, int n_probe );
     //! Cloning constructor
     DiagnosticProbes(DiagnosticProbes*, Params&, Patch* );
     //! Default destructor
@@ -25,42 +25,34 @@ public :
     
     void initParticles(Params&, Patch *);
     
-    virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile );
+    virtual void openFile( Params& params, SmileiMPI* smpi, bool newfile );
     
     virtual void closeFile();
     
-    virtual bool prepare( Patch* patch, int timestep );
+    virtual bool prepare( int timestep );
     
     virtual void run( Patch* patch, int timestep );
     
     virtual void write(int timestep);
     
-    
     void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches );
-    void setFile( hid_t masterFileId );
-    virtual void setFile( Diagnostic* diag );
     
-    void writePositionIn( Params &params );
-    void writePositions( int ndim_Particles, int probeDim, hid_t group_id );
+    void init();
+    
     void compute(unsigned int timestep, ElectroMagn* EMfields);
     
     int getLastPartId() {
         return probesStart+probeParticles.size();
     }
     
-    hid_t getFileId() {
-        return fileId_;
-    }
-    
-protected:
-    //! hdf5 file ID
-    hid_t fileId_;
 
 private :
-    //int probeId_;
     
     //! Dimension of the probe grid
     unsigned int dimProbe;
+    
+    //! Dimension of particle coordinates
+    unsigned int nDim_particle;
     
     //! Number of points in each dimension
     std::vector<unsigned int> vecNumber; 
@@ -87,10 +79,6 @@ private :
     
     //! Indices in the output array where each field goes
     std::vector<unsigned int> fieldlocation;
-    
-    
-    //! return name of the probe based on its number
-    std::string probeName();
     
     //! E local fields for the projector
     LocalFields Eloc_fields;

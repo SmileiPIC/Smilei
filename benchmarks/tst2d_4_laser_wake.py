@@ -129,12 +129,10 @@ LaserGaussian2D(
 # print_every (on screen text output) 
 print_every = 100
 
-# every for field dump
-fieldsToDump = ['Ex','Ey','Rho_electron','Rho_proton','Jx_electron']
-fieldDump_every = 100
-
-# every for averagefield Dump
-avgfieldDump_every = 0
+DiagFields(
+    every = 100,
+    fields = ['Ex','Ey','Rho_electron','Rho_proton','Jx_electron']
+)
 
 #Write a restart file every dump_step iterations. 0 for no dump.
 dump_step = 0

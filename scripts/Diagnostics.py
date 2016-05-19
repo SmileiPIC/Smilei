@@ -584,7 +584,7 @@ class Diagnostic(object):
 			xmax = self._xfactor*self._centers[0][-1]
 			extent = [xmin, xmax, self.times[0], self.times[-1]]
 			if self._log[0]: extent[0:2] = [self._np.log10(xmin), self._np.log10(xmax)]
-			im = ax.imshow(A, vmin = self.options.vmin, vmax = self.options.vmax, extent=extent, **self.options.image)
+			im = ax.imshow(self._np.flipud(A), vmin = self.options.vmin, vmax = self.options.vmax, extent=extent, **self.options.image)
 			ax.set_xlabel(self._xlabel)
 			ax.set_ylabel(ylabel)
 			self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
@@ -1195,7 +1195,6 @@ class Field(Diagnostic):
 				print "No fields found in '"+self._results_path+"'"
 			return None
 		
-
 		
 		# Get available times
 		self.times = self.getAvailableTimesteps()
@@ -1554,30 +1553,25 @@ class Probe(Diagnostic):
 		# Try to get the probe from the hdf5 file
 		self.probeNumber  = probeNumber
 		self._file = self._results_path+"/Probes"+str(self.probeNumber)+".h5"
-		f = self._h5py.File(self._file, 'r')
-		self._h5probe = None
-		for key in f.keys():
-			if key[0] != "p": continue
-			if int(key.strip("p"))==probeNumber:
-				self._h5probe = f[key]
-				break
-		if self._h5probe is None:
-			print "Cannot find probe "+str(probeNumber)+" in file "+self._file
-			f.close()
+		try:
+			self._h5probe = self._h5py.File(self._file, 'r')
+		except:
+			print "Cannot find probe "+str(probeNumber)
+			self._h5probe.close()
 			return None
 		
 		# Extract available fields
 		fields = self._h5probe.attrs["fields"].split(",")
 		if len(fields) == 0:
 			print "Probe #"+probeNumber+" is empty"
-			f.close()
+			self._h5probe.close()
 			return None
 		# If no field, print available fields
 		if field is None:
 			print "Printing available fields for probe #"+str(probeNumber)+":"
 			print "----------------------------------------"
 			print ", ".join(fields)
-			f.close()
+			self._h5probe.close()
 			return None
 		
 		# Get available times
@@ -1651,17 +1645,20 @@ class Probe(Diagnostic):
 		self._naxes = self._ishape.size
 		self._sliceinfo = {}
 		self._slices = [None]*self._ndim
+		p = []
 		for iaxis in range(self._naxes):
 		
 			# calculate grid points locations
 			p0 = self._info["p0"            ] # reference point
 			pi = self._info["p"+str(iaxis+1)] # end point of this axis
+			p.append( pi-p0 )
 			centers = self._np.zeros((self._ishape[iaxis],p0.size))
 			for i in range(p0.size):
 				centers[:,i] = self._np.linspace(p0[i],pi[i],self._ishape[iaxis])
 			
 			label = {0:"axis1", 1:"axis2", 2:"axis3"}[iaxis]
 			axisunits = "L_r"
+			
 			
 			if label in slice:
 				# if slice is "all", then all the axis has to be summed
@@ -1726,6 +1723,33 @@ class Probe(Diagnostic):
 			self._label = ["x", "y"]
 			self._units = [axisunits, axisunits]
 		
+		# Prepare the reordering of the points for patches disorder
+		positions = self._h5probe["positions"].value # actual probe points positions
+		p = self._np.array(p) # matrix of the probe generating vectors
+		# Subtract by p0
+		p0 = self._info["p0"]
+		for i in range(p0.size):
+			positions[:,i] -= p0[i]
+		# If 1D probe, convert positions to distances
+		if self._naxes==1:
+			p  = self._np.sqrt(self._np.sum(p**2))
+			invp = self._np.array(1./p, ndmin=1)
+			positions = self._np.sqrt(self._np.sum(positions**2,1))
+		# If 2D probe, must calculate matrix inverse
+		else:
+			invp = self._np.linalg.inv(p.transpose())
+		self._ordering = self._np.zeros((positions.shape[0],), dtype=int)
+		for n in range(positions.shape[0]):
+			pos = positions[n]
+			ijk = self._np.dot(invp, pos)*(self._ishape-1) # find the indices of the point
+			i = ijk[0]
+			for l in range(1,len(ijk)): i=i*self._ishape[l]+ijk[l] # linearized index
+			try:
+				self._ordering[int(round(i))] = n
+			except:
+				pass
+		self.p = self._ordering
+		
 		# Build units
 		titles = {}
 		fieldunits = {}
@@ -1763,28 +1787,18 @@ class Probe(Diagnostic):
 	def _getInfo(self, probeNumber):
 		try:
 			file = self._results_path+"/Probes"+str(probeNumber)+".h5"
-			f = self._h5py.File(file, 'r')
+			probe = self._h5py.File(file, 'r')
 		except:
 			print "Cannot open file "+file
-			return {}
-		probe = None
-		for key in f.iterkeys():
-			if key[0] != "p": continue
-			if int(key.strip("p"))==int(probeNumber):
-				probe = f[key]
-				break
-		if probe is None:
-			print "Cannot find probe "+str(probeNumber)+" in file "+file
 			return {}
 		out = {}
 		out.update({"probeNumber":probeNumber, "dimension":probe.attrs["dimension"],
 			"shape":self._np.array(probe["number"]),"fields":probe.attrs["fields"] })
 		i = 0
 		while "p"+str(i) in probe.keys():
-			k = probe.keys().index("p"+str(i))
-			out.update({ "p"+str(i):self._np.array(probe.values()[k]) })
+			out.update({ "p"+str(i):self._np.array(probe["p"+str(i)]) })
 			i += 1
-		f.close()
+		probe.close()
 		return out
 	def _getMyInfo(self):
 		return self._getInfo(self.probeNumber)
@@ -1799,16 +1813,10 @@ class Probe(Diagnostic):
 	
 	# get all available timesteps
 	def getAvailableTimesteps(self):
-		try:
-			f = self._h5py.File(self._file, 'r')
-		except:
-			print "Cannot open file "+self._file
-			return self._np.array([])
 		times = []
 		for key in self._h5probe.iterkeys():
 			try   : times.append( int(key) )
 			except: pass
-		f.close()
 		return self._np.double(times)
 	
 	# Method to obtain the data only
@@ -1825,11 +1833,14 @@ class Probe(Diagnostic):
 		op = "A=" + self.operation
 		for n in reversed(self._fieldn): # for each field in operation
 			B = self._np.double(self._h5probe[index][n,:]) # get array
-			B = self._np.reshape(B, self._ishape) # reshape array because it is flattened in the file
 			C.update({ n:B })
 			op = op.replace("#"+str(n), "C["+str(n)+"]")
 		# Calculate the operation
 		exec op in None
+		# Reorder probes for patch disorder
+		A = A[self._ordering]
+		# Reshape array because it is flattened in the file
+		A = self._np.reshape(A, self._ishape)
 		# Apply the slicing
 		for iaxis in range(self._naxes):
 			if self._slices[iaxis] is None: continue
@@ -1850,7 +1861,7 @@ class Probe(Diagnostic):
 	
 	# Overloading a plotting function in order to use pcolormesh instead of imshow
 	def _animateOnAxes_2D_(self, ax, A):
-		im = ax.pcolormesh(self._xfactor*self._edges[0], self._yfactor*self._edges[1], self._np.flipud(A.transpose()),
+		im = ax.pcolormesh(self._xfactor*self._edges[0], self._yfactor*self._edges[1], (A),
 			vmin = self.options.vmin, vmax = self.options.vmax, **self.options.image)
 		return im
 
@@ -1961,22 +1972,22 @@ class TrackParticles(Diagnostic):
 					timeSelector = select[i+4:comma]
 					try:
 						s = self._re.sub(r"\bt\b","alltimes",timeSelector)
-						times = alltimes[eval(s)]
+						time_indices = self._np.nonzero(eval(s))[0]
 					except:
 						raise Exception("Error in selector syntax: time selector not understood in "+select[i:i+3]+"()")
 					try:
 						particleSelector = select[comma+1:parenthesis]
 						for prop in self._properties.keys():
-							particleSelector = self._re.sub(r"\b"+prop+r"\b", "self._np.double(self._h5items["+str(self._properties[prop])+"][t,:])", particleSelector)
+							particleSelector = self._re.sub(r"\b"+prop+r"\b", "self._np.double(self._h5items["+str(self._properties[prop])+"][ti,:])", particleSelector)
 					except:
 						raise Exception("Error in selector syntax: not understood: "+select[i:parenthesis+1])
 					if select[i:i+4] == "any(": selection = self._np.array([False]*self.nParticles)
 					if select[i:i+4] == "all(": selection = self._np.array([True]*self.nParticles)
 					#try:
 					ID = self._np.zeros((self.nParticles,), dtype=self._np.int16)
-					for t in times:
+					for ti in time_indices:
 						selectionAtTimeT = eval(particleSelector) # array of True or False
-						self._Id.read_direct(ID, source_sel=self._np.s_[t,:], dest_sel=self._np.s_[:]) # read the particle Ids
+						self._Id.read_direct(ID, source_sel=self._np.s_[ti,:], dest_sel=self._np.s_[:]) # read the particle Ids
 						selectionAtTimeT = selectionAtTimeT[ID>0] # remove zeros, which are dead particles
 						id = ID[ID>0]-1 # remove zeros, which are dead particles
 						selection[id] = function( selection[id], selectionAtTimeT)

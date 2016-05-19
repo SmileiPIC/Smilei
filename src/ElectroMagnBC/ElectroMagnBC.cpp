@@ -27,23 +27,16 @@ ElectroMagnBC::~ElectroMagnBC()
     for (unsigned int i=0; i< vecLaser.size(); i++) {
         delete vecLaser[i];
     }
+    vecLaser.clear();
 }
-
-
-void ElectroMagnBC::clean()
-{
-    for (unsigned int i=0; i<vecLaser.size(); i++) {
-        vecLaser[i]->clean();
-    }
-}
-
 
 
 // Disable all lasers when using moving window
 void ElectroMagnBC::laserDisabled()
 {
-    for (unsigned int i=0; i< vecLaser.size(); i++) {
-        vecLaser[i]->disable();
-    }
+    //for (unsigned int i=0; i< vecLaser.size(); i++) {
+    //    vecLaser[i]->disable();
+    //}
+    vecLaser.resize(0);
 }
 

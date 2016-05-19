@@ -15,7 +15,6 @@
 #include "Params.h"
 #include "SmileiMPI.h"
 #include "SimWindow.h"
-#include "SmileiIO.h"
 
 class Field;
 class Timer;
@@ -70,17 +69,14 @@ public :
     }
 
     bool fieldTimeIsNow( int timestep ) {
-        return patches_[0]->sio->field_timeSelection->theTimeIsNow( timestep);
-        //return patches_[0]->localDiags[0]->theTimeIsNow(itime);
+        if( fieldsTimeSelection!=NULL )
+            return fieldsTimeSelection->theTimeIsNow(timestep);
+        else
+            return false;
     }
-
-    bool avgFieldTimeIsNow( int timestep ) {
-        return patches_[0]->sio->avgfield_timeSelection->theTimeIsNow( timestep);
-        //return patches_[0]->localDiags[0]->theTimeIsNow(itime);
-    }
-
+    
     bool printScalars( int timestep ) {
-        return (timestep % static_cast<DiagnosticScalar*>(globalDiags[0])->print_every == 0);
+        return static_cast<DiagnosticScalar*>(globalDiags[0])->printNow(timestep);
     }
 
 
@@ -110,6 +106,10 @@ public :
 
     //! Solve Poisson to initialize E
     void solvePoisson( Params &params, SmileiMPI* smpi );
+    
+    //! For all patch initialize the externals (lasers, fields, antennas)
+    void initExternals(Params& params);
+
 
 
     //  Balancing methods
@@ -142,9 +142,12 @@ public :
     
     //! True if any antennas
     bool hasAntennas;
-
+    
     //! 1st patch index of patches_ (stored for balancing op)
     int refHindex_;
+    
+    //! Copy of the fields time selection
+    TimeSelection * fieldsTimeSelection;
 
  private :
 

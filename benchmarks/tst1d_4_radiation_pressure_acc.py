@@ -120,8 +120,10 @@ LaserPlanar1D(
 
 every = int(rest/2.)
 
-fieldDump_every	= every
-fieldsToDump	= ('Ex','Ey','Ez','Rho_ion','Rho_eon')
+DiagFields(
+    every = every,
+    fields = ['Ex','Ey','Ez','Rho_ion','Rho_eon']
+)
 
 DiagScalar(every=every)
 

@@ -33,10 +33,16 @@ public:
         int nlaser = PyTools::nComponents("Laser");
         for (int ilaser = 0; ilaser < nlaser; ilaser++) {
             Laser * laser = new Laser(params, ilaser, patch);
-            if     ( laser->boxSide == "west" && EMfields->emBoundCond[0])
+            if     ( laser->boxSide == "west" && EMfields->emBoundCond[0]) {
+                if( patch->isWestern() ) laser->createFields(params, patch);
                 EMfields->emBoundCond[0]->vecLaser.push_back( laser );
-            else if( laser->boxSide == "east" && EMfields->emBoundCond[1])
+            }
+            else if( laser->boxSide == "east" && EMfields->emBoundCond[1]) {
+                if( patch->isEastern() ) laser->createFields(params, patch);
                 EMfields->emBoundCond[1]->vecLaser.push_back( laser );
+            }
+            else
+                delete laser;
         }
         
         // -----------------
@@ -95,24 +101,6 @@ public:
         
         EMfields->finishInitialization(vecSpecies.size(), patch);
         
-        // Some output
-        std::stringstream ss;
-        for (std::vector<Field*>::iterator iterField=EMfields->allFields.begin(); iterField!=EMfields->allFields.end(); iterField++) {
-            ss << (*iterField)->name << " ";
-        }
-        if (patch->isMaster()) {
-            MESSAGE(1,"EM fields dump      :");
-            MESSAGE(2, ss.str() );
-        }
-        ss.str("");
-        for (std::vector<Field*>::iterator iterField=EMfields->allFields_avg.begin(); iterField!=EMfields->allFields_avg.end(); iterField++) {
-            ss << (*iterField)->name << " ";
-        }
-        if (patch->isMaster()) {
-            MESSAGE(1,"EM avg. fields dump :");
-            MESSAGE(2, ss.str() );
-        }
-        
         return EMfields;
     }
     
@@ -130,19 +118,22 @@ public:
         // Clone Lasers properties
         // -----------------
         int nlaser;
-        newEMfields->emBoundCond[0]->vecLaser.resize(0);
-        nlaser = EMfields->emBoundCond[0]->vecLaser.size();
-        for (int ilaser = 0; ilaser < nlaser; ilaser++) {
-            newEMfields->emBoundCond[0]->vecLaser.push_back(
-                new Laser(EMfields->emBoundCond[0]->vecLaser[ilaser])
-            );
-        }
-        newEMfields->emBoundCond[1]->vecLaser.resize(0);
-        nlaser = EMfields->emBoundCond[1]->vecLaser.size();
-        for (int ilaser = 0; ilaser < nlaser; ilaser++) {
-            newEMfields->emBoundCond[1]->vecLaser.push_back(
-                new Laser(EMfields->emBoundCond[1]->vecLaser[ilaser])
-            );
+        for( int iBC=0; iBC<2; iBC++ ) { // east and west
+            if(! newEMfields->emBoundCond[iBC]) continue;
+            
+            newEMfields->emBoundCond[iBC]->vecLaser.resize(0);
+            nlaser = EMfields->emBoundCond[iBC]->vecLaser.size();
+            // Create lasers one by one
+            for (int ilaser = 0; ilaser < nlaser; ilaser++) {
+                // Create laser
+                Laser * laser = new Laser(EMfields->emBoundCond[iBC]->vecLaser[ilaser], params);
+                // If patch is on border, then fill the fields arrays
+                if( (iBC==0 && patch->isWestern())
+                 || (iBC==1 && patch->isEastern()) )
+                     laser->createFields(params, patch);
+                // Append the laser to the vector
+                newEMfields->emBoundCond[iBC]->vecLaser.push_back( laser );
+            }
         }
         
         // -----------------

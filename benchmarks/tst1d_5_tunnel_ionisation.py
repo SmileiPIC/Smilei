@@ -78,11 +78,11 @@ random_seed = 0
 # temperature        = list of floats or functions, temperature in units of m_e c^2
 # Predefined functions: constant, trapezoidal, gaussian, polygonal, cosine
 #
-fieldDump_every=1
 
 Species(
 	species_type = 'helium',
 	ionization_model = 'tunnel',
+	ionization_electrons = 'electron',
 	atomic_number = 2,
 	initPosition_type = 'regular',
 	initMomentum_type = 'cold',
@@ -124,13 +124,9 @@ LaserPlanar1D(
 # precision   = integer, nb of digits for the outputs (default=10)
 DiagScalar(every = 10)
  
-# --------- 
-# DUMP INFO
-# ---------
-#
-# dump_step = 2500
-# dump_minutes = 1
-# random_seed = 13121977
+DiagFields(
+    every = 1
+)
 
 DiagParticles(
 	output = "density",

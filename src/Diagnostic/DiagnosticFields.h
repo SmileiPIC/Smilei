@@ -7,33 +7,34 @@
 class DiagnosticFields  : public Diagnostic {
 
 public :
-
-   DiagnosticFields( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
-   DiagnosticFields();
-   ~DiagnosticFields();
-
-   virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile );
-   virtual void setFile( Diagnostic* diag );
-   virtual void closeFile();
-
-   virtual bool prepare( Patch* patch, int timestep );
-
-   virtual void run( Patch* patch, int timestep );
-
-   virtual void write(int timestep);
-
+    
+    DiagnosticFields( Params &params, SmileiMPI* smpi, Patch* patch, int );
+    DiagnosticFields( DiagnosticFields*, Patch* );
+    ~DiagnosticFields();
+    
+    virtual void openFile( Params& params, SmileiMPI* smpi, bool newfile );
+    
+    virtual void closeFile();
+    
+    virtual bool prepare( int timestep );
+    
+    virtual void run( Patch* patch, int timestep );
+    
+    virtual void write(int timestep);
+    
+    virtual void updatePattern(Params& params, Patch* patch ) {};
+    
 protected :
-   std::vector<Field*> fields_;
-   std::vector<std::string> fieldsToDump;
-
-   //! Id of "Fields.h5", contains all fields per timestep
-   hid_t fileId_;
-
-   //! Property list for collective dataset write, set for // IO.
-   hid_t write_plist;
-
-   //! Basic Write of a field in the specified group of the global file
-   virtual void writeFieldsSingleFileTime( Field* field, hid_t group_id ) = 0;
+    std::vector<Field*> fields;
+    std::vector<int> fields_indexes;
+    
+    int time_average;
+    
+    //! Property list for collective dataset write, set for // IO.
+    hid_t write_plist;
+    
+    //! Basic Write of a field in the specified group of the global file
+    virtual void writeField( Field* field, hid_t group_id ) = 0;
 };
 
 #endif

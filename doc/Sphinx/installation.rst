@@ -93,11 +93,11 @@ This installation procedure has been tested on OS X "El Capitan" 10.11.1
    .. code-block:: bash
 
      brew tap homebrew/science
-     brew install gcc
      brew cask install java
      brew install makedepend
-     HOMEBREW_CC=gcc-5 HOMEBREW_CXX=g++-5 brew install open-mpi --build-from-source
-     brew install hdf5 --with-mpi
+     brew install  gcc5
+     HOMEBREW_CC=gcc-5 HOMEBREW_CXX=g++-5 brew install -s openmpi --without-fortran --with-mpi-thread-multiple
+     brew install hdf5 --with-mpi     
      brew install python
 
 #. now you can compile :program:`smilei` (see :ref:`compile`)

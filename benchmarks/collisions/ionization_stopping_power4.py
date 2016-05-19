@@ -34,7 +34,7 @@ sim_time  = 170000 * L0
 time_fields_frozen = 100000000000.
 
 # SIMULATION BOX : for all space directions (in 2D & 3D use vector of doubles)
-cell_length = [2000.*L0]
+cell_length = [400.*L0]
 sim_length  = [8000.*L0]
 
 # ELECTROMAGNETIC BOUNDARY CONDITIONS
@@ -128,9 +128,9 @@ Collisions(
 print_every = 10000
 
 # DIAGNOSTICS ON FIELDS
-fieldDump_every    = 1000000
-avgfieldDump_every = 1000000
-ntime_step_avg     = 1000000
+DiagFields(
+	every = 1000000
+)
 
 
 # DIAGNOSTICS ON SCALARS

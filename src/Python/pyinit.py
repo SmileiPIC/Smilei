@@ -80,6 +80,7 @@ class Species(SmileiComponent):
     bc_part_type_north = None
     bc_part_type_south = None
     ionization_model = "none"
+    ionization_electrons = None
     atomic_number = None
     isTest = False
     track_every = 0
@@ -107,7 +108,6 @@ class Collisions(SmileiComponent):
 class DiagProbe(SmileiComponent):
     """Diagnostic probe"""
     every = None
-    time_range = [None, None]
     number = []
     pos = []
     pos_first = []
@@ -123,21 +123,17 @@ class DiagParticles(SmileiComponent):
     species = None
     axes = []
 
-class DiagPhase(SmileiComponent):
-    """Diagnostic phase"""
-    every=None
-    first=[]
-    second=[]
-    time_range = []
-    deflate = 0
-    pass
-
 class DiagScalar(SmileiComponent):
     """Diagnostic scalar"""
     every = None
-    time_range = []
     precision = 10
     vars = []
+
+class DiagFields(SmileiComponent):
+    """Diagnostic Fields"""
+    every = None
+    fields = []
+    time_average = 1
 
 # external fields
 class ExtField(SmileiComponent):
@@ -203,12 +199,6 @@ vx_win = 1.
 # Default screen print
 every = 0
 print_every = None
-
-# Default field diagnostics
-fieldDump_every = 0
-fieldsToDump = []
-avgfieldDump_every = 0
-ntime_step_avg = 0
 
 # Default Misc
 referenceAngularFrequency_SI = 0.

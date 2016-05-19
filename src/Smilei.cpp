@@ -185,6 +185,7 @@ int main (int argc, char* argv[])
 
     // save latestTimeStep (used to test if we are at the latest timestep when running diagnostics at run's end)
     unsigned int latestTimeStep=checkpoint.this_run_start_step;
+    bool exit(false);
     
     // ------------------------------------------------------------------
     //                     HERE STARTS THE PIC LOOP
@@ -210,19 +211,19 @@ int main (int argc, char* argv[])
             ostringstream my_msg;
             my_msg << setw(log10(params.n_time)+1) << itime <<
             "/"     << setw(log10(params.n_time)+1) << params.n_time <<
-            "t = "          << scientific << setprecision(3)   << time_dual <<
-            "  sec "    << scientific << setprecision(1)   << this_print_time <<
-            " ("    << scientific << setprecision(7)   << this_print_time - old_print_time << ")" <<
-            "   Utot = "   << scientific << setprecision(4)<< vecPatches.getScalar("Utot") <<
-            "   Uelm = "   << scientific << setprecision(4)<< vecPatches.getScalar("Uelm") <<
-            "   Ukin = "   << scientific << setprecision(4)<< vecPatches.getScalar("Ukin") <<
-            "   Ubal(%) = "<< scientific << fixed << setprecision(2) << 100.0*vecPatches.getScalar("Ubal_norm");
+            " t="          << scientific << setprecision(3)   << time_dual <<
+            " sec "    << scientific << setprecision(1)   << this_print_time <<
+            " ("    << scientific << setprecision(4)   << this_print_time - old_print_time << ")" <<
+            "  Utot= "   << scientific << setprecision(4)<< vecPatches.getScalar("Utot") <<
+            "  Uelm= "   << scientific << setprecision(4)<< vecPatches.getScalar("Uelm") <<
+            "  Ukin= "   << scientific << setprecision(4)<< vecPatches.getScalar("Ukin") <<
+            "  Ubal(%)= "<< scientific << fixed << setprecision(2) << 100.0*vecPatches.getScalar("Ubal_norm");
             
             if (simWindow) {
                 double Uinj_mvw = vecPatches.getScalar("Uelm_inj_mvw") + vecPatches.getScalar("Ukin_inj_mvw");
                 double Uout_mvw = vecPatches.getScalar("Uelm_out_mvw") + vecPatches.getScalar("Ukin_out_mvw");
-                my_msg << "   Uinj_mvw = " << scientific << setprecision(4) << Uinj_mvw <<
-                "   Uout_mvw = " << scientific << setprecision(4) << Uout_mvw;
+                my_msg << "  Uinj_mvw = " << scientific << setprecision(4) << Uinj_mvw <<
+                "  Uout_mvw = " << scientific << setprecision(4) << Uout_mvw;
 
             }//simWindow
 
@@ -280,13 +281,6 @@ int main (int argc, char* argv[])
             if( time_dual > params.time_fields_frozen )
                 vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timer );
             
-            // incrementing averaged electromagnetic fields
-            if (vecPatches(0)->sio->dumpAvgFields_)
-                #pragma omp for schedule(static)
-                for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-                    vecPatches(ipatch)->EMfields->incrementAvgFields(itime);
-                }
-            
             // call the various diagnostics
             // ----------------------------
             #pragma omp master
@@ -299,23 +293,23 @@ int main (int argc, char* argv[])
             // Restart patched moving window : to do
             // Break in an OpenMP region
             #pragma omp master
-            checkpoint.dump(vecPatches, itime, smpiData, simWindow, params);
+            exit = checkpoint.dump(vecPatches, itime, smpiData, simWindow, params);
             #pragma omp barrier
             // ----------------------------------------------------------------------        
             
+
         
         } //End omp parallel region
-            timer[5].restart();
-            if ( simWindow && simWindow->isMoving(time_dual) ) {
-                start_moving++;
-                if ((start_moving==1) && (smpiData->isMaster()) ) {
-                    MESSAGE(">>> Window starts moving");
-                }
-                simWindow->operate_arnaud(vecPatches, smpiData, params);
+        if (exit) break;
+        timer[5].restart();
+        if ( simWindow && simWindow->isMoving(time_dual) ) {
+            start_moving++;
+            if ((start_moving==1) && (smpiData->isMaster()) ) {
+                MESSAGE(">>> Window starts moving");
             }
-            timer[5].update();
-
-
+            simWindow->operate_arnaud(vecPatches, smpiData, params);
+        }
+        timer[5].update();
 
 	if ((itime%params.balancing_freq == 0)&&(smpiData->getSize()!=1)) {
             timer[7].restart();
@@ -325,20 +319,19 @@ int main (int argc, char* argv[])
             //        partperMPI += vecPatches(ipatch)->vecSpecies[ispec]->getNbrOfParticles();
             //}
             //partperMPI = 0;
-
+            
             smpiData->recompute_patch_count( params, vecPatches, time_dual );
-
+            
             vecPatches.createPatches(params, smpiData, simWindow);
-
-	    vecPatches.exchangePatches(smpiData, params);
+            
+            vecPatches.exchangePatches(smpiData, params);
             //for (unsigned int irank=0 ; irank<smpiData->getSize() ; irank++){
             //    if(smpiData->getRank() == irank){
             //        vecPatches.output_exchanges(smpiData);
             //    }
             //    smpiData->barrier();
             //}
-
-
+            
             //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++){
             //    for (unsigned int ispec=0 ; ispec < vecPatches(0)->vecSpecies.size() ; ispec++)
             //        partperMPI += vecPatches(ipatch)->vecSpecies[ispec]->getNbrOfParticles();
@@ -359,13 +352,13 @@ int main (int argc, char* argv[])
     //                      HERE ENDS THE PIC LOOP
     // ------------------------------------------------------------------
     TITLE("End time loop, time dual = " << time_dual);
-
+    
     // ------------------------------------------------------------------------
     // check here if we can close the python interpreter
     // ------------------------------------------------------------------------
     TITLE("Cleaning up python runtime environement");
     params.cleanup(smpiData);
-   
+    
     //double timElapsed=smpiData->time_seconds();
     //if ( smpiData->isMaster() ) MESSAGE(0, "Time in time loop : " << timElapsed );
     timer[0].update();
@@ -385,12 +378,10 @@ int main (int argc, char* argv[])
     
     if (latestTimeStep==params.n_time)
         vecPatches.runAllDiags(params, smpiData, &diag_flag, params.n_time, timer);
-
+    
     // ------------------------------
     //  Cleanup & End the simulation
     // ------------------------------
-    DiagsVectorPatch::finalizeDumpFields(vecPatches, params, stepStop);
-    
     vecPatches.close( smpiData );
     
     MPI_Barrier(MPI_COMM_WORLD); // Don't know why but sync needed by HDF5 Phasespace managment
@@ -422,7 +413,7 @@ void print_parallelism_params(Params& params, SmileiMPI* smpi)
 
     MESSAGE(1, "Patch size :");
     for (int iDim=0 ; iDim<params.nDim_field ; iDim++) 
-        MESSAGE(2, "dimension " << iDim << " - n_space : " << params.n_space[iDim] << " cells.");	
+        MESSAGE(2, "dimension " << iDim << " - n_space : " << params.n_space[iDim] << " cells.");        
 
     MESSAGE(1, "Dynamic load balancing frequency: every " << params.balancing_freq << " iterations." );
 

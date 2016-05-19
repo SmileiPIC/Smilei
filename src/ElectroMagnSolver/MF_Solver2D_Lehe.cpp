@@ -34,7 +34,6 @@ void MF_Solver2D_Lehe::operator() ( ElectroMagn* fields )
 
 
 
-#pragma omp for schedule(runtime)
 //    for (unsigned int i=0 ; i<nx_p;  i++) {
 //    for (unsigned int i=1 ; i<nx_d-1;  i++) {
     for (unsigned int i=1 ; i<nx_d-2;  i++) {
@@ -44,7 +43,6 @@ void MF_Solver2D_Lehe::operator() ( ElectroMagn* fields )
     }
     
     // Magnetic field By^(d,p)
-#pragma omp for schedule(runtime)
     for (unsigned int i=2 ; i<nx_d-2 ; i++) {
         for (unsigned int j=1 ; j<ny_p-1 ; j++) {
             (*By2D)(i,j) += dt_ov_dx * ( Beta_y*((*Ez2D)(i,j) - (*Ez2D)(i-1,j)) +beta_y*((*Ez2D)(i,j+1)- (*Ez2D)(i-1,j+1) +(*Ez2D)(i,j-1)- (*Ez2D)(i-1,j-1) ) +delta_x*( (*Ez2D)(i+1,j) - (*Ez2D)(i-2,j)));

@@ -107,9 +107,19 @@ Geometry
 
 .. py:data:: number_of_patches
   
-  A list of integers: the number of patches in each dimension. 
-  :red:`to do`
+  A list of integers: the number of patches in each direction.
+  Each integer must be a power of 2, and the total number of patches must be
+  greater or equal than the number of MPI processes.
+  See :doc:`parallelization`.
 
+
+.. py:data:: balancing_freq
+  
+  :default: 150
+  
+  An integer: the number of timesteps between each load balancing (patches are
+  exchanged between MPI processes to reduce load imbalance).
+  
 
 .. py:data:: clrw
   
@@ -212,8 +222,7 @@ All the possible variables inside this block are explained here:
   :default: 0
 
   The atomic number of the particles, required only for ionization.
-  For field ionization, it must be lower than 8. For :ref:`collisional ionization 
-  <CollIonization>`, it must be lower than 101.
+  It must be lower than 101.
 
 
 .. py:data:: nb_density
@@ -274,7 +283,13 @@ All the possible variables inside this block are explained here:
   
   :default: ``"none"``
   
-  :red:`to do`
+  The model for field ionization. Currently, only ``"tunnel"`` is available.
+  See :ref:`this <CollisionalIonization>` for collisional ionization instead.
+
+
+.. py:data:: ionization_electrons
+  
+  The name of the electron species that field ionization uses when creating new electrons.
 
 
 .. py:data:: radiating
@@ -296,8 +311,8 @@ All the possible variables inside this block are explained here:
   :default: 0
   
   Number of timesteps between each output of particles trajectories, **or** a :ref:`time selection <TimeSelections>`.
-  If non-zero, the particles will be tracked, and a file named ``TrackParticles_abc.h5``
-  (where ``abc`` is :py:data:`species_type`) will be created.
+  If non-zero, the particles positions will be tracked and written in a file named ``TrackParticles_abc.h5``
+  (where ``abc`` is :py:data:`species_type`).
 
 
 .. py:data:: c_part_max
@@ -881,6 +896,9 @@ All the possible variables inside this block are explained here:
   * If :math:`> 0`, the Coulomb logarithm is equal to this value.
 
 
+
+.. _CollisionalIonization:
+
 .. py:data:: ionizing
   
   :default: False
@@ -912,7 +930,6 @@ For more details about the collision scheme in :program:`Smilei`, see :doc:`coll
 This is done by including the block ``DiagScalar()`` in the namelist, for instance::
 
   DiagScalar( every = 10 ,
-              time_range = [0.1, 1.],
               vars = ["Utot", "Ukin", "Uelm"]
             )
 
@@ -923,19 +940,12 @@ All the possible variables inside this block are explained here:
   Number of timesteps between each output **or** a :ref:`time selection <TimeSelections>`.
 
 
-.. py:data:: time_range
-  
-  :default: ``[]``
-  
-  | List of two values: minimum and maximum times that will be used.
-  | Omit this argument to include all times.
-
-
 .. py:data:: precision
   
   :default: 10
   
   Number of digits of the outputs.
+
 
 .. py:data:: vars
   
@@ -1000,25 +1010,35 @@ Checkout the :doc:`post-processing <post-processing>` documentation as well.
 
 :program:`Smilei` can collect various field data (electromagnetic fields, currents and density)
 taken at the location of the PIC grid, both as instantaneous values and averaged values.
-This is done with the following instructions in the namelist:
+This is done by including the block ``DiagScalar()`` in the namelist, for instance::
 
-.. py:data:: fieldDump_every
+  DiagFields(
+      every = 10,
+      time_average = 2,
+      fields = ["Ex", "Ey", "Ez"]
+  )
+
+All the possible variables inside this block are explained here:
+
+.. py:data:: every
   
-  The number of timesteps between each output of the instantaneous fields, **or** a :ref:`time selection <TimeSelections>`.
+  Number of timesteps between each output **or** a :ref:`time selection <TimeSelections>`.
 
-.. py:data:: avgfieldDump_every
+
+.. py:data:: time_average
   
-  The number of timesteps between each output of the time-averaged fields, **or** a :ref:`time selection <TimeSelections>`.
-
-.. py:data:: ntime_step_avg
+  :default: ``1`` *(no averaging)*
   
   The number of timesteps for time-averaging.
+  Note that only one diagnostic with averaging, and one diagnostic without averaging
+  can be defined.
 
-.. py:data:: fieldsToDump
+
+.. py:data:: fields
   
-  :default: ``[]``
+  :default: ``[]`` *(all fields are written)*
   
-  List of field names that are saved. By default, they all are.
+  List of the field names that are saved. By default, they all are.
 
 
 The full list of fields that are saved by this diagnostic:
@@ -1331,56 +1351,6 @@ All the possible variables inside this block are explained here:
     	species = ["electron1"],
     	axes = [ ["charge",    -0.5,   10.5,   11] ]
     )
-
-
-
-----
-
-.. _DiagPhase:
-
-*DiagPhase* : phase space diagnostics
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-A *phase space diagnostic*: it collects data from the macro-particles and processes them 
-during runtime. It is similar but less powerful than *particle diagnostics* but should be faster.
-
-  :red:`to do TV,FP: we should test the above statement`
-
-All diagnostics will be written in the file 'PhaseSpace.h5'::
-
-    DiagPhase (
-        kind    = ['xpx', 'xpy'],
-        species = ['eon', 'ion'],
- 
-        first = [0,1.0, 50],
-        second = [-0.002, 0.002, 50],
-    
-        deflate=5
-    )
-
-All the possible variables inside this block are explained here:
-
-.. py:data:: kind
-
-    this is a list of projections to be done possible values are 'xpx' 'xpy' 'xpz' 'pxpy' 'pxpz' 'pypz' 'xlor'
-    in addition for 2D simulations there are 'ypx' 'ypy' 'ypz' 'ylor'
-    in addition for 3D simulations there are 'zpx' 'zpy' 'zpz' 'zlor'
-    
-.. py:data:: species
-
-    list of species to apply the projector 
-    
-.. py:data:: first
-
-    this is a triplet describing the first axis binning int the form [min, max, num]    
-    
-.. py:data:: second
-
-    this is a triplet describing the second axis binning int the form [min, max, num]    
-    
-.. py:data:: deflate
-
-    data compression in the HDF5 file    
-
 
 ----
 

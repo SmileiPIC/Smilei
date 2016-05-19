@@ -218,7 +218,7 @@ namelist("")
     }
     
     // Maxwell Solver 
-	PyTools::extract("maxwell_sol", maxwell_sol);
+        PyTools::extract("maxwell_sol", maxwell_sol);
 
 
     // ------------------------
@@ -248,39 +248,40 @@ namelist("")
     // Number of patches
     // --------------------
     if ( !PyTools::extract("number_of_patches", number_of_patches) ) {
-        number_of_patches.resize(nDim_field, 1);
-	simu_is_cartesian = true;
+        ERROR("The parameter `number_of_patches` must be defined as a list of integers");
     }
-    else {
-	int tot_number_of_patches(1);
-        for ( int iDim=0 ; iDim<nDim_field ; iDim++ ){
-            if( (number_of_patches[iDim] & number_of_patches[iDim]-1) != 0) ERROR("Number of patches in each direction must be a power of 2");
-            tot_number_of_patches *= number_of_patches[iDim];
-        }
-	if ( tot_number_of_patches == smpi->getSize() ){
-	    simu_is_cartesian = true;
-	} else {
-	    simu_is_cartesian = false;
-            if (tot_number_of_patches < smpi->getSize()) ERROR("The total number of patches must be greater or equal to the number of MPI processes"); 
-        }
+    for ( int iDim=0 ; iDim<nDim_field ; iDim++ )
+        if( (number_of_patches[iDim] & number_of_patches[iDim]-1) != 0)
+            ERROR("Number of patches in each direction must be a power of 2");
+    
+    tot_number_of_patches = 1;
+    for ( int iDim=0 ; iDim<nDim_field ; iDim++ )
+        tot_number_of_patches *= number_of_patches[iDim];
+    
+    if ( tot_number_of_patches == smpi->getSize() ){
+        one_patch_per_MPI = true;
+    } else {
+        one_patch_per_MPI = false;
+        if (tot_number_of_patches < smpi->getSize())
+            ERROR("The total number of patches must be greater or equal to the number of MPI processes"); 
     }
-    //simu_is_cartesian = false;
-
-
+    
+    
     if ( !PyTools::extract("balancing_freq", balancing_freq) )
         balancing_freq = 150;
     if ( !PyTools::extract("coef_cell", coef_cell) )
         coef_cell = 1.;
     if ( !PyTools::extract("coef_frozen", coef_frozen) )
         coef_frozen = 0.1;
-
+    
     //mi.resize(nDim_field, 0);
     mi.resize(3, 0);
     while ((number_of_patches[0] >> mi[0]) >1) mi[0]++ ;
     if (number_of_patches.size()>1)
-	while ((number_of_patches[1] >> mi[1]) >1) mi[1]++ ;
+        while ((number_of_patches[1] >> mi[1]) >1) mi[1]++ ;
     else if (number_of_patches.size()>2)
-	while ((number_of_patches[2] >> mi[2]) >1) mi[2]++ ;
+        while ((number_of_patches[2] >> mi[2]) >1) mi[2]++ ;
+    
     // -------------------------------------------------------
     // Compute usefull quantities and introduce normalizations
     // also defines defaults values for the species lengths
@@ -344,9 +345,9 @@ void Params::compute()
     
     //!\todo (MG to JD) Are these 2 lines really necessary ? It seems to me it has just been done before
     n_space.resize(3, 1);
-    cell_length.resize(3, 0.);	    //! \todo{3 but not real size !!! Pbs in Species::Species}
+    cell_length.resize(3, 0.);            //! \todo{3 but not real size !!! Pbs in Species::Species}
     
-    n_space_global.resize(3, 1);	//! \todo{3 but not real size !!! Pbs in Species::Species}
+    n_space_global.resize(3, 1);        //! \todo{3 but not real size !!! Pbs in Species::Species}
     oversize.resize(3, 0);
 
     //n_space_global.resize(nDim_field, 0);
@@ -355,7 +356,7 @@ void Params::compute()
         n_space_global[i] = n_space[i];
         n_space[i] /= number_of_patches[i];
         if(n_space_global[i]%number_of_patches[i] !=0) ERROR("ERROR in dimension " << i <<". Number of patches = " << number_of_patches[i] << " must divide n_space_global = " << n_space_global[i]);
-	if ( n_space[i] <= 2*oversize[i] ) ERROR ( "ERROR in dimension " << i <<". Patches length = "<<n_space[i] << " cells must be at least " << 2*oversize[i] +1 << " cells long. Increase number of cells or reduce number of patches in this direction. " );
+        if ( n_space[i] <= 2*oversize[i] ) ERROR ( "ERROR in dimension " << i <<". Patches length = "<<n_space[i] << " cells must be at least " << 2*oversize[i] +1 << " cells long. Increase number of cells or reduce number of patches in this direction. " );
     }
 
 }

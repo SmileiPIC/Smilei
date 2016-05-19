@@ -9,13 +9,11 @@
 #include "PatchesFactory.h"
 #include "Species.h"
 #include "Particles.h"
-#include "SmileiIOFactory.h"
 #include "SimWindow.h"
 #include "SolverFactory.h"
 #include "DiagnosticFactory.h"
 
 #include "SyncVectorPatch.h"
-#include "DiagsVectorPatch.h"
 
 #include "Timer.h"
 
@@ -27,6 +25,7 @@ using namespace std;
 
 VectorPatch::VectorPatch()
 {
+    fieldsTimeSelection = NULL;
 }
 
 
@@ -42,7 +41,6 @@ void VectorPatch::close(SmileiMPI * smpiData)
         delete globalDiags[idiag];
     globalDiags.clear();
     
-    patches_[0]->EMfields->clean(); // This destructs the laser profiles only once
     for (unsigned int ipatch=0 ; ipatch<size(); ipatch++)
         delete patches_[ipatch];
     
@@ -75,7 +73,7 @@ void VectorPatch::dynamics(Params& params, SmileiMPI* smpi, SimWindow* simWindow
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*this)(ipatch)->EMfields->restartRhoJ();
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
-            if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
+            if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || *diag_flag  ) {
                 species(ipatch, ispec)->dynamics(time_dual, ispec,
                                                  emfields(ipatch), interp(ipatch), proj(ipatch),
                                                  params, *diag_flag, partwalls(ipatch),
@@ -117,8 +115,10 @@ void VectorPatch::sumDensities( int* diag_flag, vector<Timer>& timer )
     
     if(*diag_flag){
         for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
-            update_field_list(ispec);
-            SyncVectorPatch::sumRhoJs( (*this), ispec ); // MPI
+            if( ! (*this)(0)->vecSpecies[ispec]->particles->isTest ) {
+                update_field_list(ispec);
+                SyncVectorPatch::sumRhoJs( (*this), ispec ); // MPI
+            }
         }
     }
     timer[9].update();
@@ -132,6 +132,7 @@ void VectorPatch::sumDensities( int* diag_flag, vector<Timer>& timer )
 void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual, vector<Timer>& timer)
 {
     timer[2].restart();
+    
     #pragma omp for schedule(static)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
         // Saving magnetic fields (to compute centered fields used in the particle pusher)
@@ -168,131 +169,95 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
 } // END solveMaxwell
 
 
+void VectorPatch::initExternals(Params& params)
+{
+    // Init all lasers
+    for( int ipatch=0; ipatch<size(); ipatch++ ) {
+        // check if patch is on the border
+        int iBC;
+        if     ( (*this)(ipatch)->isWestern() ) iBC = 0;
+        else if( (*this)(ipatch)->isEastern() ) iBC = 1;
+        else continue;
+        // If patch is on border, then fill the fields arrays
+        int nlaser = (*this)(ipatch)->EMfields->emBoundCond[iBC]->vecLaser.size();
+        for (int ilaser = 0; ilaser < nlaser; ilaser++)
+             (*this)(ipatch)->EMfields->emBoundCond[iBC]->vecLaser[ilaser]->initFields(params, (*this)(ipatch));
+    }
+    
+    // Init all antennas
+    for( int ipatch=0; ipatch<size(); ipatch++ ) {
+        (*this)(ipatch)->EMfields->initAntennas((*this)(ipatch));
+    }
+}
+
 
 void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
 {
-    // globalDiags : scalars + particles
+    // Global diags: scalars + particles
     for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
-        // For all diags createFile (if global, juste by mpi master, test inside)
-        if ( smpi->isMaster() )
-            globalDiags[idiag]->openFile( params, smpi, *this, true );
-    
-    } // END for globalDiags
-    
-    
-    // Initialize scalars (globalDiags[0], especially energy balance)
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-        globalDiags[0]->run( (*this)(ipatch), 0 );
-    }
-    smpi->computeGlobalDiags( globalDiags[0], 0 );
-    
-    // localDiags : probes, track & fields
-    for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
-        
-        // track, compute global number of particles + compute global Idx
-        if ( (*this)(0)->localDiags[idiag]->type_ == "Track" ) {
-            DiagnosticTrack* diagTrack0 = static_cast<DiagnosticTrack*>( (*this)(0)->localDiags[idiag] );
-            diagTrack0->setFileSplitting( params, smpi, *this );
-            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-                DiagnosticTrack* diagTrack  = static_cast<DiagnosticTrack*>( (*this)(ipatch)->localDiags[idiag] );
-                diagTrack->setFile( diagTrack0->getFileId() );
-            }
+        // MPI master creates the file
+        if( smpi->isMaster() ){
+            globalDiags[idiag]->openFile( params, smpi, true );
+            globalDiags[idiag]->closeFile();
         }
-        
-        // For all diags createFile
-        //(*this)(0)->localDiags[idiag]->openFile( params, smpi, *this, true );
-        
-        if ( (*this)(0)->localDiags[idiag]->type_ == "Probes" ) {
-            (*this)(0)->localDiags[idiag]->openFile( params, smpi, *this, true );
-            DiagnosticProbes* diagProbes0 = static_cast<DiagnosticProbes*>( (*this)(0)->localDiags[idiag] );
-            diagProbes0->setFileSplitting( params, smpi, *this );
-            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-                DiagnosticProbes* diagProbes = static_cast<DiagnosticProbes*>( (*this)(ipatch)->localDiags[idiag] );
-                diagProbes->setFile( diagProbes0->getFileId() );
-                diagProbes->writePositionIn( params );
-            }// END  ipatch
-        
-        } // END if Probes
-
-
-        if ( (*this)(0)->localDiags[idiag]->type_ == "Fields" ) {
-            (*this)(0)->localDiags[idiag]->openFile( params, smpi, *this, true );
-            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-                (*this)(ipatch)->localDiags[idiag]->setFile( (*this)(0)->localDiags[idiag] );
-            }
-        } // END if Fields
-
-    } // END for localDiags
+    }
     
+    // Local diags : probes, track & fields
+    for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
+        // Patch master manages splitting between patches
+        (*this)(0)->localDiags[idiag]->setFileSplitting( params, smpi, *this );
+        // Patch master opens the file
+        (*this)(0)->localDiags[idiag]->openFile( params, smpi, true );
+        // All patches initialize
+        hid_t fileId = (*this)(0)->localDiags[idiag]->getFileId();
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+            // The file ID is passed to all patches
+            (*this)(ipatch)->localDiags[idiag]->setFileId( fileId );
+            // Some more init
+            (*this)(ipatch)->localDiags[idiag]->init();
+        }
+        // If fields diag, save the timeSelection
+        if( fieldsTimeSelection==NULL && (*this)(0)->localDiags[idiag]->type_=="Fields" )
+            fieldsTimeSelection = new TimeSelection((*this)(0)->localDiags[idiag]->timeSelection);
+    }
 } // END initAllDiags
 
 
 void VectorPatch::closeAllDiags(SmileiMPI* smpi)
 {
-    for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
-        if ( smpi->isMaster() )
+    // MPI master closes all global diags
+    if ( smpi->isMaster() )
+        for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++)
             globalDiags[idiag]->closeFile();
-    }
-    for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
+    
+    // Patch master closes local diags
+    for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++)
         (*this)(0)->localDiags[idiag]->closeFile();
-    }
-
 }
 
 
 void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
 {
-    for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
-        // For all diags createFile (if global, juste by mpi master, test inside)
-        if ( smpi->isMaster() )
-            globalDiags[idiag]->openFile( params, smpi, *this, false );
+    // MPI master opens all global diags
+    if ( smpi->isMaster() )
+        for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++)
+            globalDiags[idiag]->openFile( params, smpi, false );
     
-    } // END for globalDiags
-    
-    
+    // Local diags
     for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
-        (*this)(0)->localDiags[idiag]->openFile( params, smpi, *this, false );
-        
-        if ( (*this)(0)->localDiags[idiag]->type_ == "Track" ) {
-            DiagnosticTrack* diagTrack0 = static_cast<DiagnosticTrack*>( (*this)(0)->localDiags[idiag] );
-            // Spli
-            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-                DiagnosticTrack* diagTrack  = static_cast<DiagnosticTrack*>( (*this)(ipatch)->localDiags[idiag] );
-                diagTrack->setFile( diagTrack0->getFileId() );
-            }
+        // Patch master opens the file
+        (*this)(0)->localDiags[idiag]->openFile( params, smpi, false );
+        // The file Id is passed to all patches
+        hid_t fileId = (*this)(0)->localDiags[idiag]->getFileId();
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+            (*this)(ipatch)->localDiags[idiag]->setFileId( fileId );
+            
+            //if( (*this)(ipatch)->localDiags[idiag]->type_=="Fields"){
+            //if( (*this)(ipatch)->Pcoordinates[0]!=params.number_of_patches[0]-1 )
+            //    static_cast<DiagnosticFields*>((*this)(ipatch)->localDiags[idiag])->updatePattern( params, (*this)(ipatch) );
+            //}
         }
-        
-        if ( (*this)(0)->localDiags[idiag]->type_ == "Probes" ) {
-            DiagnosticProbes* diagProbes0 = static_cast<DiagnosticProbes*>( (*this)(0)->localDiags[idiag] );
-            //diagProbes0->setFileSplitting( params, smpi, *this );
-            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-                DiagnosticProbes* diagProbes = static_cast<DiagnosticProbes*>( (*this)(ipatch)->localDiags[idiag] );
-                diagProbes->setFile( diagProbes0->getFileId() );
-            }
-        }
-
-        if ( (*this)(0)->localDiags[idiag]->type_ == "Fields" ) {
-            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-                (*this)(ipatch)->localDiags[idiag]->setFile( (*this)(0)->localDiags[idiag] );
-            }
-        } // END if Fields
-
     }
-    
-    /*
-    // Should be OK with the implementation below :
-    //   abstract splitting too even if completely non sense for global diags ?
-    
-    for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
-        (*this)(0)->localDiags[idiag]->openFile( params, smpi, *this, false );
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
-            (*this)(ipatch)->localDiags[idiag]->setFile( (*this)(0)->localDiags[idiag] );
-        if ( (*this)(0)->localDiags[idiag]->type_ == "Probes" )
-            static_cast<DiagnosticProbes*>( (*this)(0)->localDiags[idiag] )->setFileSplitting( params, smpi, *this );
-    }
-    */
-
-
 }
 
 
@@ -303,67 +268,41 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, int* diag_flag, int itime, vector<Timer>& timer)
 {
-    // Dump Fields
-    // -------------------------------------------
-    timer[6].restart();
-    // diag_flag = 1 if  :
-    //   vecPatches.Diags->field_timeSelection->theTimeIsNow(itime)
-    if  (*diag_flag){
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-            
-            // Write EM fields dump in Fields.h5
-            if (ipatch==0) (*this)(ipatch)->sio->createTimeStepInSingleFileTime( itime );
-            (*this)(ipatch)->sio->writeAllFieldsSingleFileTime( (*this)(ipatch)->EMfields->allFields, itime, 0 );
-            
-            // Check the dedicated fields output write frequency 
-            if( (*this)(ipatch)->sio->dumpAvgFields_ && avgFieldTimeIsNow(itime) ) {
-                // Write EM average fields dump in Fields_avg.h5
-                (*this)(ipatch)->sio->writeAllFieldsSingleFileTime( (*this)(ipatch)->EMfields->allFields_avg, itime, 1 );
-            }
-            // Re-init rho, Jxyz per species for next diag timestep
-            (*this)(ipatch)->EMfields->restartRhoJs();
-        }
-        *diag_flag = 0 ;
-    }
-    timer[6].update();
+    //// Dump Fields
+    //// -------------------------------------------
     
-    // globalDiags : scalars + particles
+    // Global diags: scalars + particles
     timer[3].restart();
     for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
-        if( globalDiags[idiag]->prepare( (*this)(0), itime ) ) {
-            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+        if( globalDiags[idiag]->prepare( itime ) ) {
+            // All patches run
+            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
                 globalDiags[idiag]->run( (*this)(ipatch), itime );
-            }
+            // MPI procs gather the data and compute
             smpi->computeGlobalDiags( globalDiags[idiag], itime);
-        }
-    } // END for globalDiags
-    
-    // move only scalars write call from SmileiMPI::computeGlobalDiags()
-    // Diagnostic Particles includes dedicated cleaning 
-    globalDiags[0]->write(itime);
-    
-    
-    // localDiags : probes, track & fields
-    for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
-        if( (*this)(0)->localDiags[idiag]->prepare( (*this)(0), itime ) ) {
-            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-                (*this)(ipatch)->localDiags[idiag]->run( (*this)(ipatch), itime );
-            }
-            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-                (*this)(ipatch)->localDiags[idiag]->write( itime );
+            // MPI master opens, writes, and closes
+            if ( smpi->isMaster() ) {
+                globalDiags[idiag]->openFile( params, smpi, false );
+                globalDiags[idiag]->write( itime );
+                globalDiags[idiag]->closeFile();
             }
         }
     }
-    /*
-        // track, compute global number of particles + compute global Idx
-        if ( (*this)(0)->localDiags[idiag]->type_ == "Track" ) {
-            DiagnosticTrack* diagTrack = static_cast<DiagnosticTrack*>( (*this)(0)->localDiags[idiag] );
-            diagTrack->setFileSize( params, smpi, *this );
+    
+    // Local diags : probes, track & fields
+    for (unsigned int idiag = 0 ; idiag < (*this)(0)->localDiags.size() ; idiag++) {
+        if( (*this)(0)->localDiags[idiag]->prepare( itime ) ) {
+            // All patches run
+            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
+                (*this)(ipatch)->localDiags[idiag]->run( (*this)(ipatch), itime );
+            // All patches write
+            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
+                (*this)(ipatch)->localDiags[idiag]->write( itime );
         }
-        
-    } // END for localDiags
-    */
-    timer[3].update();   
+    }
+    
+    *diag_flag = 0;
+    timer[3].update();
 
 } // END runAllDiags
 
@@ -488,7 +427,7 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
     // ------------------------------------------
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
         (*this)(ipatch)->EMfields->initE( (*this)(ipatch) );
-    
+
     SyncVectorPatch::exchangeE( *this );    
     
     // Centering of the electrostatic fields
@@ -630,13 +569,21 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
             send_patch_id_.push_back( ipatch );
     
     // Backward loop on future patches...
-    for ( int ipatch=recv_patch_id_.size()-1 ; ipatch>=0 ; ipatch--) {
+    int existing_patch_id = -1;
       //if      future patch hindex  >= current refHindex             AND    future patch hindex <= current last hindex
+    for ( int ipatch=recv_patch_id_.size()-1 ; ipatch>=0 ; ipatch--) {
         if ( ( recv_patch_id_[ipatch]>=refHindex_ ) && ( recv_patch_id_[ipatch] <= refHindex_ + nPatches_now - 1 ) ) {
+            //Store an existing patch id for cloning.
+            existing_patch_id = recv_patch_id_[ipatch];
             //Remove this patch from the receive list because I already own it.
             recv_patch_id_.erase( recv_patch_id_.begin()+ipatch );
         }
     }
+    
+    // Get an existing patch that will be used for cloning
+    if( existing_patch_id<0 )
+        ERROR("No patch to clone. This should never happen!");
+    Patch * existing_patch = (*this)(existing_patch_id-refHindex_);
     
     if (simWindow) n_moved = simWindow->getNmoved(); 
     // Store in local vector future patches
@@ -645,7 +592,7 @@ void VectorPatch::createPatches(Params& params, SmileiMPI* smpi, SimWindow* simW
         // density profile is initializes as if t = 0 !
         // Species will be cleared when, nbr of particles will be known
         //Creation of a new patch, ready to receive its content from MPI neighbours.
-        Patch* newPatch = PatchesFactory::create(params, smpi, recv_patch_id_[ipatch], n_moved );
+        Patch* newPatch = PatchesFactory::clone(existing_patch, params, smpi, recv_patch_id_[ipatch], n_moved );
         //Store pointers to newly created patch in recv_patches_.
         recv_patches_.push_back( newPatch );
     }
@@ -661,16 +608,13 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
 {
     (*this).closeAllDiags(smpi);
     
-    hid_t globalFile    = (*this)(0)->sio->global_file_id_;
-    hid_t globalFileAvg = (*this)(0)->sio->global_file_id_avg;
-    
     int nSpecies( (*this)(0)->vecSpecies.size() );
     int newMPIrank, oldMPIrank;
     //int newMPIrankbis, oldMPIrankbis, tmp;
     newMPIrank = smpi->getRank() -1;
     oldMPIrank = smpi->getRank() -1;
     int istart( 0 );
-    int nmessage = 2*nSpecies+10;
+    int nmessage = 2*nSpecies+14;
     
     
     for (int irk=0 ; irk<smpi->getRank() ; irk++) istart += smpi->patch_count[irk];
@@ -697,7 +641,6 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     int nPatchSend(send_patch_id_.size());
     for (int ipatch=nPatchSend-1 ; ipatch>=0 ; ipatch--) {
         //Ok while at least 1 old patch stay inon current CPU
-        (*this)(send_patch_id_[ipatch])->sio->setFiles(0,0);
         delete (*this)(send_patch_id_[ipatch]);
         patches_[ send_patch_id_[ipatch] ] = NULL;
         patches_.erase( patches_.begin() + send_patch_id_[ipatch] );
@@ -717,10 +660,6 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     }
     
     (*this).openAllDiags(params,smpi);
-    
-    //definePatchDiagsMaster();
-    DiagsVectorPatch::definePatchDiagsMaster( *this, globalFile, globalFileAvg );
-    DiagsVectorPatch::updatePatchFieldDump( *this, params );
     
     (*this).set_refHindex() ;
     

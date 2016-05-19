@@ -10,7 +10,6 @@
 #include "Params.h"
 #include "SmileiMPI.h"
 #include "SimWindow.h"
-#include "SmileiIO.h"
 #include "PartWall.h"
 #include "Collisions.h"
 
@@ -66,10 +65,6 @@ public:
     Projector* Proj;
 
     std::vector<Diagnostic*> localDiags;
-
-    //! SmileiIO = Diag Fields
-    SmileiIO* sio;
-
 
     // Geometrical description
     // -----------------------

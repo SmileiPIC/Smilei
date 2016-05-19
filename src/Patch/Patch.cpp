@@ -30,7 +30,6 @@
 #include "ElectroMagnFactory.h"
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
-#include "SmileiIOFactory.h"
 #include "DiagnosticFactory.h"
 
 using namespace std;
@@ -104,8 +103,8 @@ void Patch::initStep3( Params& params, SmileiMPI* smpi, unsigned int n_moved ) {
     max_local.resize(params.nDim_field, 0.);
     cell_starting_global_index.resize(params.nDim_field, 0);
     for (int i = 0 ; i<params.nDim_field ; i++) {
-        min_local[i] = Pcoordinates[i]*params.n_space[i]*params.cell_length[i];
-        max_local[i] = min_local[i] + params.n_space[i]*params.cell_length[i];
+        min_local[i] =  Pcoordinates[i]   *params.n_space[i]*params.cell_length[i];
+        max_local[i] = (Pcoordinates[i]+1)*params.n_space[i]*params.cell_length[i];
         cell_starting_global_index[i] += Pcoordinates[i]*params.n_space[i];
         cell_starting_global_index[i] -= params.oversize[i];
     }
@@ -129,7 +128,6 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi ) {
     
     // Initialize local diags
     localDiags = DiagnosticFactory::createLocalDiagnostics(params, smpi, this);
-    sio = SmileiIOFactory::create(params, this);
     
     // Initialize the collisions
     vecCollisions = Collisions::create(params, this, vecSpecies);
@@ -155,7 +153,6 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi ) {
     
     // clone local diags
     localDiags = DiagnosticFactory::cloneLocalDiagnostics(patch->localDiags, params, smpi, this);
-    sio = SmileiIOFactory::clone(patch->sio, params, this);
     
     // clone the collisions
     vecCollisions = Collisions::clone(patch->vecCollisions, params);
@@ -183,10 +180,9 @@ Patch::~Patch() {
     delete Interp;
     
     delete EMfields;
-    delete sio;
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
     vecSpecies.clear();
-            
+    
 } // END Patch::~Patch
 
 

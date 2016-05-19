@@ -29,7 +29,6 @@ class DiagnosticParticles;
 //! Class SmileiMPI
 //  --------------------------------------------------------------------------------------------------------------------
 class SmileiMPI {
-    friend class SmileiIO;
     friend class Checkpoint;
     friend class PatchesFactory;
     friend class Patch;

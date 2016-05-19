@@ -174,9 +174,9 @@ public:
     void dump();
 
     //! Method used to initialize the total charge currents and densities
-    virtual void restartRhoJ() = 0;
+    void restartRhoJ();
     //! Method used to initialize the total charge currents and densities of species
-    virtual void restartRhoJs() = 0;
+    void restartRhoJs();
 
     //! Method used to initialize the total charge density
     void initRhoJ(std::vector<Species*>& vecSpecies, Projector* Proj);
@@ -227,7 +227,6 @@ public:
     virtual void centerMagneticFields() = 0;
     void boundaryConditions(int itime, double time_dual, Patch* patch, Params &params, SimWindow* simWindow);
 
-    void movingWindow_x(unsigned int shift);
     void laserDisabled();
     
     virtual void incrementAvgFields(unsigned int time_step) = 0;

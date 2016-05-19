@@ -12,32 +12,25 @@ class DiagnosticTrack : public Diagnostic {
 
 public :
     //! Default constructor
-    DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
+    DiagnosticTrack( Params &params, SmileiMPI* smpi, Patch* patch, int diagId, int );
     //! Cloning constructor
-    DiagnosticTrack(DiagnosticTrack* track);
+    DiagnosticTrack(DiagnosticTrack* track, Patch* patch);
     //! Default destructor
     ~DiagnosticTrack();
     
-    virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile );
+    virtual void openFile( Params& params, SmileiMPI* smpi, bool newfile );
     void setFileSplitting( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches );
     
     virtual void closeFile();
     
-    virtual bool prepare( Patch* patch, int timestep );
+    virtual bool prepare( int timestep );
     
     virtual void run( Patch* patch, int timestep );
     
     virtual void write(int timestep);
     
-    void setFile( hid_t fid );
-    virtual void setFile( Diagnostic* diag );
-    
     void setGlobalNbrParticles(int totNbrParts) {
         nbrParticles_ = totNbrParts;
-    }
-    
-    hid_t getFileId() {
-      return fileId_;
     }
     
 private :
@@ -58,9 +51,6 @@ private :
     
     // iterator for dataset extension
     int iter;
-    
-    //! hdf5 file ID
-    hid_t fileId_;
     
     template <class T> void append( hid_t fid, std::string name, T & property,  hid_t  mem_space, int nParticles, hid_t type, std::vector<hsize_t> &locator);
 };

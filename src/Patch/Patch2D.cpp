@@ -9,7 +9,6 @@
 #include "PatchesFactory.h"
 #include "Species.h"
 #include "Particles.h"
-#include "SmileiIOFactory.h"
 
 using namespace std;
 
@@ -242,7 +241,7 @@ void Patch2D::initExchange( Field* field )
 
             if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
 
-                istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( 2*oversize[iDim] + isDual[iDim] );
+                istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( oversize[iDim] + 1 + isDual[iDim] );
                 ix = (1-iDim)*istart;
                 iy =    iDim *istart;
                 //int tag = buildtag( 4, hindex, neighbor_[iDim][iNeighbor]);
@@ -254,7 +253,7 @@ void Patch2D::initExchange( Field* field )
 
             if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
 
-                istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - 1 ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
+                istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - 1 - (oversize[iDim]-1) ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
                 ix = (1-iDim)*istart;
                 iy =    iDim *istart;
                  //int tag = buildtag( 4, neighbor_[iDim][(iNeighbor+1)%2], hindex);
@@ -319,7 +318,7 @@ void Patch2D::initExchange( Field* field, int iDim )
 
         if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
 
-            istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( 2*oversize[iDim] + isDual[iDim] );
+            istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( oversize[iDim] + 1 + isDual[iDim] );
             ix = (1-iDim)*istart;
             iy =    iDim *istart;
             int tag = buildtag( hindex, iDim, iNeighbor );
@@ -330,7 +329,7 @@ void Patch2D::initExchange( Field* field, int iDim )
 
         if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
 
-            istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - 1 ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
+            istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - 1- (oversize[iDim]-1) ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
             ix = (1-iDim)*istart;
             iy =    iDim *istart;
             int tag = buildtag( neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor );
@@ -382,27 +381,38 @@ void Patch2D::createType( Params& params )
     // MPI_Datatype ntype_[nDim][primDual][primDual]
     int nx, ny;
     int nline, ncol;
-
+    
     for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
         nx = nx0 + ix_isPrim;
         for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {
             ny = ny0 + iy_isPrim;
-
+            
             // Standard Type
             ntype_[0][ix_isPrim][iy_isPrim] = NULL;
-            MPI_Type_contiguous(ny, MPI_DOUBLE, &(ntype_[0][ix_isPrim][iy_isPrim]));    //line
+            MPI_Type_contiguous(params.oversize[0]*ny, MPI_DOUBLE, &(ntype_[0][ix_isPrim][iy_isPrim]));    //line
             MPI_Type_commit( &(ntype_[0][ix_isPrim][iy_isPrim]) );
             ntype_[1][ix_isPrim][iy_isPrim] = NULL;
-            MPI_Type_vector(nx, 1, ny, MPI_DOUBLE, &(ntype_[1][ix_isPrim][iy_isPrim])); // column
+            MPI_Type_vector(nx, params.oversize[1], ny, MPI_DOUBLE, &(ntype_[1][ix_isPrim][iy_isPrim])); // column
             MPI_Type_commit( &(ntype_[1][ix_isPrim][iy_isPrim]) );
+            
+            // Still used ???
             ntype_[2][ix_isPrim][iy_isPrim] = NULL;
             MPI_Type_contiguous(ny*clrw, MPI_DOUBLE, &(ntype_[2][ix_isPrim][iy_isPrim]));   //clrw lines
             MPI_Type_commit( &(ntype_[2][ix_isPrim][iy_isPrim]) );
-
+            
             ntypeSum_[0][ix_isPrim][iy_isPrim] = NULL;
             nline = 1 + 2*params.oversize[0] + ix_isPrim;
-            MPI_Type_contiguous(nline, ntype_[0][ix_isPrim][iy_isPrim], &(ntypeSum_[0][ix_isPrim][iy_isPrim]));    //line
+            //MPI_Type_contiguous(nline, ntype_[0][ix_isPrim][iy_isPrim], &(ntypeSum_[0][ix_isPrim][iy_isPrim]));    //line
+            
+            MPI_Datatype tmpType = NULL;
+            MPI_Type_contiguous(ny, MPI_DOUBLE, &(tmpType));    //line
+            MPI_Type_commit( &(tmpType) );
+            
+            MPI_Type_contiguous(nline, tmpType, &(ntypeSum_[0][ix_isPrim][iy_isPrim]));    //line
             MPI_Type_commit( &(ntypeSum_[0][ix_isPrim][iy_isPrim]) );
+            
+            MPI_Type_free( &tmpType );
+            
             ntypeSum_[1][ix_isPrim][iy_isPrim] = NULL;
             ncol  = 1 + 2*params.oversize[1] + iy_isPrim;
             MPI_Type_vector(nx, ncol, ny, MPI_DOUBLE, &(ntypeSum_[1][ix_isPrim][iy_isPrim])); // column

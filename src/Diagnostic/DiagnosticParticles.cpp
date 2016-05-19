@@ -6,9 +6,10 @@
 using namespace std;
 
 
-DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch* patch, int diagId ) :
-fileId_(0)
+DiagnosticParticles::DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch* patch, int diagId )
 {
+    fileId_ = 0;
+    
     int n_diag_particles = diagId;
 
     // n_diag_particles ...
@@ -135,33 +136,6 @@ fileId_(0)
 } // END DiagnosticParticles::DiagnosticParticles
 
 
-// Cloning constructor // NOT USED
-DiagnosticParticles::DiagnosticParticles( DiagnosticParticles* diag)
-{
-    
-    output        = diag->output;
-    time_average  = diag->time_average;
-    species       = diag->species ;
-    timeSelection = new TimeSelection(diag->timeSelection);
-    
-    for (unsigned int iaxis=0; iaxis<diag->axes.size(); iaxis++ ) {
-        DiagnosticParticlesAxis tmpAxis;
-        tmpAxis.type           = diag->axes[iaxis].type;
-        tmpAxis.min            = diag->axes[iaxis].min;
-        tmpAxis.max            = diag->axes[iaxis].max;
-        tmpAxis.nbins          = diag->axes[iaxis].nbins;
-        tmpAxis.logscale       = diag->axes[iaxis].logscale;
-        tmpAxis.edge_inclusive = diag->axes[iaxis].edge_inclusive;
-        axes.push_back(tmpAxis);
-    }
-    
-    output_size = diag->output_size;
-    
-    type_ = "Particles";
-}
-
-
-
 DiagnosticParticles::~DiagnosticParticles()
 {
     delete timeSelection;
@@ -170,7 +144,7 @@ DiagnosticParticles::~DiagnosticParticles()
 
 
 // Called only by patch master of process master
-void DiagnosticParticles::openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile )
+void DiagnosticParticles::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 {
     if (!smpi->isMaster()) return;
 
@@ -201,13 +175,6 @@ void DiagnosticParticles::openFile( Params& params, SmileiMPI* smpi, VectorPatch
     else {
         fileId_ = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
     }
-    
-}
-
-
-void DiagnosticParticles::setFile( Diagnostic* diag )
-{
-    fileId_ = static_cast<DiagnosticParticles*>(diag)->fileId_;  
 }
 
 
@@ -221,7 +188,7 @@ void DiagnosticParticles::closeFile()
 } // END closeFile
 
 
-bool DiagnosticParticles::prepare( Patch* patch, int timestep )
+bool DiagnosticParticles::prepare( int timestep )
 {
     // Get the previous timestep of the time selection
     int previousTime = timeSelection->previousTime(timestep);
@@ -252,7 +219,7 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
     vector<int> index_array;
     vector<double> *x, *y, *z, *px, *py, *pz, *w, *chi=NULL, axis_array, data_array;
     vector<short> *q;
-    int nbins = vecSpecies[0]->bmin.size(); // number of bins in the particles binning (openMP)
+    int nbins = vecSpecies[0]->bmin.size(); // number of bins in the particles binning
     int bmin, bmax, axissize, ind;
     double axismin, axismax, mass, coeff;
     string axistype;
@@ -282,8 +249,7 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
         
         fill(index_array.begin(), index_array.end(), 0);
         
-        // loop each openMP bin
-        //! \todo Make OpenMP parallelization
+        // loop each bin
         for (int ibin=0 ; ibin<nbins ; ibin++) {
             
             bmin = s->bmin[ibin];
@@ -308,7 +274,7 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
                     for (int ipart = bmin ; ipart < bmax ; ipart++)
                         axis_array[ipart] = (*y)[ipart];
                 
-                else if (axistype == "y"     )
+                else if (axistype == "z"     )
                     for (int ipart = bmin ; ipart < bmax ; ipart++)
                         axis_array[ipart] = (*z)[ipart];
                 
@@ -496,10 +462,10 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
                 data_sum[ind] += data_array[ipart];
             }
             
-        } // loop openMP bins
+        } // loop bins
         
     } // loop species
-
+    
 } // END run
 
 
@@ -508,6 +474,8 @@ void DiagnosticParticles::run( Patch* patch, int timestep )
 // called by MPI master only, when time-average has finished
 void DiagnosticParticles::write(int timestep)
 {
+    if (timestep - timeSelection->previousTime() != time_average-1) return;
+    
     double coeff;
     // if time_average, then we need to divide by the number of timesteps
     if (time_average > 1) {
@@ -520,15 +488,20 @@ void DiagnosticParticles::write(int timestep)
     mystream.str("");
     mystream << "timestep" << setw(8) << setfill('0') << timestep;
     // write the array
-    htri_t status = H5Lexists( fileId_, mystream.str().c_str(), H5P_DEFAULT ); 
-    if (!status)
+    if (! H5Lexists( fileId_, mystream.str().c_str(), H5P_DEFAULT ) )
         H5::vect(fileId_, mystream.str(), data_sum);
-
+    else
+        WARNING("DIAG PARTICLES COULD NOT WRITE");
+    
+    // Clear the array
+    clear();
+    data_sum.resize(0);
+    
 } // END write
 
 
-// call by all if (time_average==1) 
-void DiagnosticParticles::clean()
-{
-    data_sum.resize(0); 
+//! Clear the array
+void DiagnosticParticles::clear() {
+    data_sum.resize(0);
+    vector<double>().swap( data_sum );
 }

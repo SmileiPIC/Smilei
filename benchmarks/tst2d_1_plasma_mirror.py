@@ -128,9 +128,11 @@ Species(
 
 
 # DIAG ON SCALARS
-# every = number of time-steps between each output
-#
 DiagScalar(every=5)
-fieldDump_every = 15
-fieldsToDump = ('Ex','Ey','Rho_eon')
+
+
+DiagFields(
+    every = 15,
+    fields = ['Ex','Ey','Rho_eon']
+)
 

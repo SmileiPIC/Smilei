@@ -37,24 +37,23 @@ public :
     
     //! Default constructor
     DiagnosticParticles( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
-    //! Cloning constructor
-    DiagnosticParticles( DiagnosticParticles* );
     //! Default destructor
     ~DiagnosticParticles();
     
-    virtual void openFile( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, bool newfile );
-    virtual void setFile( Diagnostic* diag );
+    virtual void openFile( Params& params, SmileiMPI* smpi, bool newfile );
     
     virtual void closeFile();
     
-    virtual bool prepare( Patch* patch, int timestep );
+    virtual bool prepare( int timestep );
     
     virtual void run( Patch* patch, int timestep );
     
     virtual void write(int timestep);
+    
+    //! Clear the array
+    void clear();
      
 private :
-    void clean();
 
     //! number of timesteps during which outputs are averaged
     int time_average;
@@ -72,8 +71,6 @@ private :
     std::vector<double> data_sum;
     
     int output_size;
-    
-    hid_t fileId_;
 
 };
 
