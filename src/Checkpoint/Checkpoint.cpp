@@ -34,6 +34,8 @@ dump_step(0),
 dump_minutes(0.0),
 exit_after_dump(true),
 dump_file_sequence(2),
+dump_deflate(0),
+restart_dir(""),
 dump_request(smpi->getSize())
 {
     if (PyTools::extract("dump_step", dump_step)) {
@@ -265,18 +267,28 @@ void Checkpoint::dumpMovingWindow(hid_t fid, SimWindow* simWin)
 
 }
 
+
+string Checkpoint::dumpName(unsigned int num, SmileiMPI *smpi) {
+    ostringstream nameDumpTmp("");
+    nameDumpTmp << "dump-" << setfill('0') << setw(1+log10(dump_file_sequence)) << num << "-" << setfill('0') << setw(1+log10(smpi->getSize())) << smpi->getRank() << ".h5" ;
+    return nameDumpTmp.str();
+}
+
+
 void Checkpoint::restartAll( VectorPatch &vecPatches, unsigned int &itime,  SmileiMPI* smpi, SimWindow* simWin, Params &params )
 { 
 	
      string nameDump("");
 	
      // This will open both dumps and pick the last one
-     for (unsigned int i=0;i<dump_file_sequence; i++) {
-	 ostringstream nameDumpTmp("");
-	 nameDumpTmp << "dump-" << setfill('0') << setw(4) << i << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
-	 ifstream f(nameDumpTmp.str().c_str());
+     for (unsigned int num_dump=0;num_dump<dump_file_sequence; num_dump++) {
+	 //ostringstream nameDumpTmp("");
+	 //nameDumpTmp << "dump-" << setfill('0') << setw(4) << i << "-" << setfill('0') << setw(4) << smpi->getRank() << ".h5" ;
+	 //ifstream f(nameDumpTmp.str().c_str());
+         string dump_name=restart_dir+dumpName(num_dump,smpi);
+         ifstream f(dump_name.c_str());
 	 if (f.good()) {
-	     hid_t fid = H5Fopen( nameDumpTmp.str().c_str(), H5F_ACC_RDWR, H5P_DEFAULT);			
+	     hid_t fid = H5Fopen( dump_name.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);			
 	     hid_t aid = H5Aopen(fid, "dump_step", H5T_NATIVE_UINT);
 	     unsigned int itimeTmp=0;
 	     H5Aread(aid, H5T_NATIVE_UINT, &itimeTmp);	
@@ -284,8 +296,8 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, unsigned int &itime,  Smil
 	     H5Fclose(fid);
 	     if (itimeTmp>itime) {
 		 itime=itimeTmp;
-		 nameDump=nameDumpTmp.str();
-		 dump_times=i;
+		 nameDump=dump_name.c_str();
+		 dump_times=num_dump;
 	     }
 	 }
 	 f.close();
