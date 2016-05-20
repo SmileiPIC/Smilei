@@ -258,7 +258,7 @@ public:
     std::vector< std::vector<unsigned int>* > uint_prop;
 
 
-    bool test_move( int iPartStart, int iPartEnd, Params& params );
+    //bool test_move( int iPartStart, int iPartEnd, Params& params );
 
     inline double dist2( int iPart ) {
     double dist(0.);
